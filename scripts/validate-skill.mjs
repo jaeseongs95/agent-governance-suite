@@ -6,6 +6,11 @@ const PLACEHOLDER_PATTERN = /\[TODO:[^\]]*\]|\bTODO\b|\bTBD\b/u;
 const LINK_PATTERN = /\[[^\]]+\]\((?!https?:|#|mailto:)([^)]+)\)/gu;
 const INFRASTRUCTURE_SKILLS = new Set(["context-continuity", "session-board"]);
 
+/** Stable reason for a failed file operation: the system error code, else the error class. */
+function failureCode(error) {
+  return error?.code ?? error?.name ?? "UNKNOWN";
+}
+
 export async function validateSkill(name) {
   const errors = [];
   if (!NAME_PATTERN.test(name) || name.length > 64) {
@@ -17,8 +22,9 @@ export async function validateSkill(name) {
   let markdown;
   try {
     markdown = await readFile(skillFile, "utf8");
-  } catch {
-    return [`Missing skills/${name}/SKILL.md`];
+  } catch (error) {
+    if (error.code === "ENOENT") return [`Missing skills/${name}/SKILL.md`];
+    return [`cannot read skills/${name}/SKILL.md: ${failureCode(error)}`];
   }
 
   try {
@@ -36,10 +42,21 @@ export async function validateSkill(name) {
   for (const match of markdown.matchAll(LINK_PATTERN)) {
     const target = match[1].split("#", 1)[0];
     if (!target) continue;
+    let resolved;
     try {
-      await access(path.resolve(skillDirectory, decodeURIComponent(target)));
-    } catch {
-      errors.push(`broken relative link: ${match[1]}`);
+      resolved = path.resolve(skillDirectory, decodeURIComponent(target));
+    } catch (error) {
+      errors.push(`invalid link URI: ${match[1]} (${failureCode(error)})`);
+      continue;
+    }
+    try {
+      await access(resolved);
+    } catch (error) {
+      errors.push(
+        error.code === "ENOENT"
+          ? `broken relative link: ${match[1]}`
+          : `cannot access link target: ${match[1]} (${failureCode(error)})`,
+      );
     }
   }
 
@@ -63,8 +80,8 @@ export async function validateSkill(name) {
     }
     try {
       await access(path.join(ROOT, "tests", name));
-    } catch {
-      errors.push(`missing tests/${name}`);
+    } catch (error) {
+      errors.push(error.code === "ENOENT" ? `missing tests/${name}` : `cannot access tests/${name}: ${failureCode(error)}`);
     }
   }
 

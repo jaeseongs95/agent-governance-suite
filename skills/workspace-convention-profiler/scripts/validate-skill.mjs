@@ -2,8 +2,9 @@
 import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-const root = path.resolve(new URL("..", import.meta.url).pathname.replace(/^\/(?:[A-Za-z]:)/, (value) => value.slice(1)));
+const root = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const required = ["SKILL.md", "agents/openai.yaml", "contracts/workspace-profile-request.v1.schema.json", "contracts/workspace-convention-profile.v1.schema.json", "integration/skill-descriptor.json", "integration/provider-result.v1.schema.json"];
 const errors = [];
 for (const relative of required) try { await access(path.join(root, relative)); } catch { errors.push(`missing ${relative}`); }

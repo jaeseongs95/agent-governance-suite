@@ -17,7 +17,7 @@ const TABLES = Object.freeze({
 });
 
 export class UnifiedStateError extends Error {
-  constructor(code, message) { super(message); this.name = "UnifiedStateError"; this.code = code; }
+  constructor(code, message, options) { super(message, options); this.name = "UnifiedStateError"; this.code = code; }
 }
 function need(condition, code, message) { if (!condition) throw new UnifiedStateError(code, message); }
 function text(value, label) { need(typeof value === "string" && value.length > 0 && value.length <= 4096, "INVALID_INPUT", `${label}: a bounded string is required.`); return value; }
@@ -25,6 +25,10 @@ function integer(value, label, minimum = 0) { need(Number.isSafeInteger(value) &
 function scopeKey(scope) {
   need(scope && Object.keys(scope).sort().join(",") === "host,sessionId,taskId", "INVALID_SCOPE", "Exactly host/sessionId/taskId are required.");
   return canonicalJson({ host: text(scope.host, "host"), sessionId: text(scope.sessionId, "sessionId"), taskId: text(scope.taskId, "taskId") });
+}
+function parseJson(value, label) {
+  try { return JSON.parse(value); }
+  catch (error) { throw new UnifiedStateError("INVALID_JSON", `${label}: valid JSON is required.`, { cause: error }); }
 }
 function rejectSecrets(value, depth = 0) {
   need(depth <= 64, "INVALID_INPUT", "Fixture JSON nesting must be bounded.");
@@ -42,7 +46,7 @@ function normalizeRecord(entry, boundScope) {
   need(entry.row && Object.getPrototypeOf(entry.row) === Object.prototype, "INVALID_INPUT", "An explicit plain fixture row is required.");
   rejectSecrets(entry.row);
   for (const [column, value] of Object.entries(entry.row)) {
-    if (column.endsWith("_json") && typeof value === "string") rejectSecrets(JSON.parse(value));
+    if (column.endsWith("_json") && typeof value === "string") rejectSecrets(parseJson(value, column));
   }
   const key = Object.fromEntries(definition.keys.map((column) => {
     const value = entry.row[column];
@@ -114,7 +118,7 @@ export class InactiveUnifiedAuthority {
   #transaction(action) {
     this.#database.exec("BEGIN IMMEDIATE");
     try { const result = action(); this.#database.exec("COMMIT"); return result; }
-    catch (error) { this.#database.exec("ROLLBACK"); throw error; }
+    catch (error) { try { this.#database.exec("ROLLBACK"); } catch { /* Primary error wins. */ } throw error; }
   }
   #observedTimeTransaction(action) {
     return runObservedTimeTransaction(this.#database, () => this.#now(), action);
@@ -152,7 +156,7 @@ export class InactiveUnifiedAuthority {
     text(intentId, "intentId");
     need(typeof snapshotJson === "string" && Buffer.byteLength(snapshotJson) <= 1024 * 1024, "INVALID_INPUT", "An explicit fixture snapshot of at most 1 MiB is required.");
     need(hashBytes(snapshotJson) === sourceDigest, "SOURCE_DIGEST_MISMATCH", "Source bytes and supplied digest must match.");
-    const snapshot = JSON.parse(snapshotJson);
+    const snapshot = parseJson(snapshotJson, "snapshotJson");
     text(snapshot.sourceId, "sourceId");
     need(Array.isArray(snapshot.records) && snapshot.records.length <= 1000, "INVALID_INPUT", "Fixture records must be bounded.");
     integer(batchSize, "batchSize", 1);

@@ -1,8 +1,8 @@
-import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { type StageResultV1, WorkflowContractError } from "../../contracts/types.js";
 import { canonicalJson } from "./convergence-logic.js";
 import { ContractValidator } from "./schema-validator.js";
+import { runStageValidator } from "./stage-validator-process.js";
 
 /** Existing selected providers recheck raw files; this does not select skills or attest execution. */
 export function assertEngineeringStageBundle(
@@ -17,14 +17,12 @@ export function assertEngineeringStageBundle(
     throw new WorkflowContractError("MISSING_EVIDENCE", "Engineering review requires one verified local engineering-stage-bundle artifact.");
   }
   const root = path.dirname(reference.locator);
-  const checked = spawnSync(process.execPath, [path.join(rootDirectory, "runtime/engineering-practices/cli.mjs"), "check-stage-bundle",
-    "--root", root, "--input", path.basename(reference.locator), "--bundle-digest", reference.digest,
-    "--task-digest", taskDigest, "--capability", capability], { encoding: "utf8", timeout: 10_000, maxBuffer: 4 * 1024 * 1024, windowsHide: true });
-  let assessment: Record<string, unknown>;
-  try { assessment = JSON.parse(checked.stdout) as Record<string, unknown>; }
-  catch { throw new WorkflowContractError("INVALID_INPUT", "Engineering stage validator did not return bounded JSON."); }
-  if (checked.error || ![0, 1].includes(checked.status ?? -1) || assessment.kind !== "engineering-stage-check") {
-    throw new WorkflowContractError("GATE_FAILED", "Engineering stage files could not be validated.");
+  const assessment = runStageValidator("Engineering stage", path.join(rootDirectory, "runtime/engineering-practices/cli.mjs"), [
+    "check-stage-bundle", "--root", root, "--input", path.basename(reference.locator), "--bundle-digest", reference.digest,
+    "--task-digest", taskDigest, "--capability", capability], [0, 1]);
+  if (assessment.kind !== "engineering-stage-check") {
+    throw new WorkflowContractError("GATE_FAILED", "Engineering stage files could not be validated.",
+      {step: "kind", kind: typeof assessment.kind === "string" ? assessment.kind : null});
   }
   validator.planWorkflowRequest(assessment.task);
   if (canonicalJson(assessment.result, "Engineering result") !== canonicalJson(result.output.output, "Engineering provider output")) {

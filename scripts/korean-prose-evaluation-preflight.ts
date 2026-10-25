@@ -433,9 +433,11 @@ function stringField(
 }
 
 async function readJson(file: string): Promise<Record<string, unknown>> {
+  // A read failure (ENOENT, EIO, EACCES, ...) is not a JSON syntax error; let it surface with its own code.
+  const text = await readFile(file, "utf8");
   let value: unknown;
   try {
-    value = JSON.parse(await readFile(file, "utf8")) as unknown;
+    value = JSON.parse(text) as unknown;
   } catch (error) {
     throw new EvaluationPreflightError("INVALID_JSONL", "evaluation metadata is not valid JSON", {
       file,
