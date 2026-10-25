@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "AgsBoundedCiExecutionConfig.v1",
+  "unit": "AGS30-OFFICIAL-SOURCE-COMPLETE-SHARDS-20261025-R11",
+  "nonce": "432f6458-a007-4825-99e1-39b43a56796a",
+  "repository": "jaeseongs95/agent-governance-suite",
+  "repositoryId": 1362118877,
+  "branch": "release-3.0",
+  "node": "24.22.1",
+  "pnpm": "11.19.0",
+  "archive": {
+    "entries": 1647
+  },
+  "transport": {
+    "bytes": 330550,
+    "sha256": "6ae84e29d6b2060c48392e861c72ef98fdc95dc8b4d3b52b66953ddd518e51fe"
+  },
+  "portableId": "747d28622c066bc251f6016b88c5507b9b3b895318f633136a194699ca042a60",
+  "generated": [
+    "mcp-server/dist/server.mjs",
+    "runtime/schema-validation.mjs",
+    "mcp-server/dist/continuity-hook.mjs",
+    "mcp-server/dist/host-attestation-hook.mjs",
+    "mcp-server/dist/host-attestation-api.mjs",
+    "mcp-server/dist/session-board-hook.mjs",
+    "mcp-server/dist/session-message-broker.mjs",
+    "mcp-server/dist/session-message-relay.mjs",
+    "mcp-server/dist/session-message-hook.mjs",
+    "mcp-server/dist/session-message-cli.mjs",
+    "runtime/THIRD_PARTY_NOTICES.md"
+  ],
+  "selectors": [
+    "tests/mcp/model-capability-contract.test.ts",
+    "tests/mcp/codex-host-observation.test.ts",
+    "tests/mcp/host-attestation.test.ts",
+    "tests/mcp/host-attestation-failures.test.ts",
+    "tests/mcp/workflow-service.test.ts",
+    "tests/session-messaging/broker-process-lock.test.ts",
+    "tests/session-messaging/broker-lifecycle.test.ts",
+    "tests/session-messaging/session-message.test.ts",
+    "tests/mcp/jev-current-v1-contract-supplement.test.ts",
+    "tests/session-messaging/gemini-relay-host-identity.test.ts",
+    "tests/session-messaging/gemini-wake-launch.test.ts",
+    "tests/session-messaging/hook-execution-budget.test.ts",
+    "tests/session-messaging/hook-opaque-host-contract.test.ts",
+    "tests/session-messaging/hook-owned-cause-boundary.test.ts",
+    "tests/session-messaging/verified-relay-hook.test.ts",
+    "tests/mcp/skill-classification-native.test.ts",
+    "tests/session-messaging/broker-process-lock.os.test.ts"
+  ],
+  "artifactMaximumBytesPerJob": 8388608,
+  "provenance": {
+    "sourceCommit": "29a576ebda4cd40fa1f61de64f10e1e943be835f",
+    "sourceTree": "6ece3fc5171e4b2cb5ad51a41ef500fad8e3a99c",
+    "portableId": "747d28622c066bc251f6016b88c5507b9b3b895318f633136a194699ca042a60",
+    "originalPrivateR10Run": 40192541721,
+    "originalR10ResultsPreserved": true
+  },
+  "limitations": [
+    "Actual official source commit with CI-only wrapper commit; all product blobs must match.",
+    "8 unique OS/shard jobs, max-parallel2,15min/job12min collector,480s full suite,8MiB/job1day,one push/run/retry0.",
+    "Original R10 failure preserved; new OS004/005 and v5-long regressions execute in full shard union.",
+    "Existing125 paid JEV proof and model quality not claimed. No live credentials attached.",
+    "Generated runtime returned as candidate; installed/native real host/full acceptance not claimed."
+  ],
+  "osMutationCollector": {
+    "bytes": 11039,
+    "sha256": "74482213e0dc3c6185af9de82c1cadb6c17c1d1e8b16d0379bca59be31691ca8"
+  },
+  "osPlan": {
+    "bytes": 6643,
+    "sha256": "49c22a0727f94b4a8c69c7de7da0730b50769cc4b5f9e8bdabb87d4dc2d12a6e"
+  },
+  "gitContext": {
+    "repository": "https://github.com/jaeseongs95/agent-governance-suite.git",
+    "checkoutCommit": "29a576ebda4cd40fa1f61de64f10e1e943be835f",
+    "sourceTree": "6ece3fc5171e4b2cb5ad51a41ef500fad8e3a99c",
+    "skillBaseline": "7bc7753012227938be2a46f68bf3e29d29d5ef34"
+  },
+  "ownershipHelpers": {
+    "ags30-owned-command-r06.py": {
+      "bytes": 3267,
+      "sha256": "7b39a46ac775f2991d768c00268a8a4798e393c86805a6e0580ab1017e44bb66"
+    },
+    "ags30-linux-subreaper-r06.py": {
+      "bytes": 10177,
+      "sha256": "808cd0c131866af24b0e3759403018e909a89617baa7ab72edead0ae4c543ca7"
+    },
+    "ags30-owned-command-check-r06.mjs": {
+      "bytes": 2839,
+      "sha256": "7d23b792fb6afe731008d4b9d65a74c0b3d30900012e1a854f11a9590eb999f2"
+    },
+    "ags30-progress-r06.mjs": {
+      "bytes": 2884,
+      "sha256": "7e6ed2ebf0df49ee48f828862287ec96a3db2102ab3a5661631e4da506a5d542"
+    }
+  },
+  "wakeMixedRed": {
+    "bytes": 3723,
+    "sha256": "09dffa6be54f2892743d721357cd522c3e6c84c0beaebfcd9ce056630f92cb43"
+  },
+  "shardCount": 4,
+  "shardEvidence": {
+    "bytes": 3773,
+    "sha256": "23265fcbcc446715c49a41aee7ef1358039df77d0d0a76841eceea613937ed03"
+  },
+  "previousBroker": {
+    "version": "2.9.1",
+    "releaseId": 415158186,
+    "releaseCommit": "8064fd82d8bada33e74e46a668962636cf3bcf7e",
+    "bytes": 123758,
+    "sha256": "e6bd8820a423be82465318ca198d9ace9e0a4e418bd5ab7b8b890652386cc737",
+    "gitBlob": "ab594cacf49e76c573c0880f18ae0fede4bf4ce6",
+    "closure": "node built-in imports only; no local current-source rebuild"
+  },
+  "liveExternalAiCalls": 0,
+  "ciOnlyOverrides": [
+    ".github/workflows/ci.yml"
+  ]
+}

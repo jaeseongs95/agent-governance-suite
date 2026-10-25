@@ -6,16 +6,18 @@ on:
   push:
     branches:
       - main
+      - release-3.0
 
 permissions:
   contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/release-3.0' }}
 
 jobs:
   verify:
+    if: github.ref != 'refs/heads/release-3.0'
     name: Node ${{ matrix.node }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -164,3 +166,50 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         shell: bash
         run: git show --check --oneline --no-renames HEAD
+
+  verify-release:
+    concurrency:
+      group: ags30-official-r11-432f6458
+      cancel-in-progress: false
+    if: github.ref == 'refs/heads/release-3.0' && github.event_name == 'push'
+    name: verify-${{ matrix.os }}-shard-${{ matrix.shard }}
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+        shard: [1, 2, 3, 4]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      AGS_CI_SHARD_INDEX: ${{ matrix.shard }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.22.1
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Preserve phased evidence
+        id: collect
+        run: python -B .github/scripts/ags30-owned-command-r06.py .github/scripts/ags30-linux-subreaper-r06.py node .github/scripts/ags30-official-source-r11.mjs .github/ci/ags30-r11/execution-config.json
+      - name: Finalize available evidence independently
+        id: finalize
+        if: ${{ always() }}
+        run: node .github/scripts/ags30-official-source-r11.mjs --finalize '${{ steps.collect.outcome }}'
+      - name: Return bounded evidence
+        if: ${{ always() && steps.finalize.outputs.artifact_ok == 'true' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ags30-official-r11-432f6458-${{ runner.os }}-shard-${{ matrix.shard }}
+          path: ${{ steps.finalize.outputs.result_path }}
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 9

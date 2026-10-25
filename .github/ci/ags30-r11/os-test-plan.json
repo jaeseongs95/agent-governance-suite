@@ -1,0 +1,109 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "engineering-test-plan",
+  "taskId": "P1-0005-ORIGINAL-OS-RACES-PREPARATION",
+  "contractDigest": "sha256:32e98c829d22dd861ea1b24be32c34a17ce7b0a6a50102a0f04e5b49b4859b71",
+  "requirements": [
+    "P1-OS-001",
+    "P1-OS-002",
+    "P1-OS-003"
+  ],
+  "scopeFiles": [
+    "mcp-server/src/broker-process-lock.ts",
+    "tests/session-messaging/broker-process-lock.os.test.ts",
+    "tests/session-messaging/fixtures/broker-process-lock-worker.mjs"
+  ],
+  "runner": "Existing Vitest; source-only plan, no new runner",
+  "environment": "Proposed Ubuntu24.04/Windows2025 Node24.22.1; actual execution NOT_RUN; isolated owned temp files and tracked child handles",
+  "cases": [
+    {
+      "id": "OS-001",
+      "requirementIds": [
+        "P1-OS-001"
+      ],
+      "scenario": "private completed publication; maximum one live owner; 기존 fixture 종료확인 계약 보호",
+      "entryPoint": "Actual unmodified candidate mcp-server/src/broker-process-lock.ts imported in distinct Node children with experimental-strip-types; existing helper exports only, no production test hook/API.",
+      "level": "integration",
+      "expectedBehavior": "A pauses before private marker creation; public absent. B physically publishes and holds; A resumes→contended, exact B marker preserved, stages empty. 살아있는 B에 주입한 post-spawn control error는 exited/spawnFailed가 아니며 실제 exit 전 정리를 허용하지 않는다.",
+      "oracle": "A pauses before private marker creation; public absent. B physically publishes and holds; A resumes→contended, exact B marker preserved, stages empty. drivererror이벤트를actualexit로분류하면실패.",
+      "testFiles": [
+        "tests/session-messaging/broker-process-lock.os.test.ts",
+        "tests/session-messaging/fixtures/broker-process-lock-worker.mjs"
+      ],
+      "required": true,
+      "sensitivity": "mutation",
+      "sensitivityReason": "Only change acquire to create public lock directory before owner marker preparation, preserving the owner-marker mkdir site. Both stage/private and public marker preparation hit the same gate. Require red assertion to be public-absent oracle, not gate timeout/import failure. 현재 source-preparation 범위라 mutation/OS 실행은 NOT_RUN이며 잘못된 timeout/import 실패를 red로 셀 수 없다.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/session-messaging/broker-process-lock.os.test.ts",
+        "-t",
+        "OS-001:"
+      ]
+    },
+    {
+      "id": "OS-002",
+      "requirementIds": [
+        "P1-OS-002"
+      ],
+      "scenario": "stale observer cannot delete a fresh generation",
+      "entryPoint": "Actual unmodified candidate mcp-server/src/broker-process-lock.ts imported in distinct Node children with experimental-strip-types; existing helper exports only, no production test hook/API.",
+      "level": "integration",
+      "expectedBehavior": "Seed child exits without release and actual kill(pid,0) must be ESRCH. B pauses before observed marker removal. C reclaims and publishes while B waits; B resumes→contended and C exact owner remains.",
+      "oracle": "Seed child exits without release and actual kill(pid,0) must be ESRCH. B pauses before observed marker removal. C reclaims and publishes while B waits; B resumes→contended and C exact owner remains.",
+      "testFiles": [
+        "tests/session-messaging/broker-process-lock.os.test.ts",
+        "tests/session-messaging/fixtures/broker-process-lock-worker.mjs"
+      ],
+      "required": true,
+      "sensitivity": "mutation",
+      "sensitivityReason": "On missing old generation, delete public parent recursively; same case must detect missing C owner. 현재 source-preparation 범위라 mutation/OS 실행은 NOT_RUN이며 잘못된 timeout/import 실패를 red로 셀 수 없다.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/session-messaging/broker-process-lock.os.test.ts",
+        "-t",
+        "OS-002:"
+      ]
+    },
+    {
+      "id": "OS-003",
+      "requirementIds": [
+        "P1-OS-003"
+      ],
+      "scenario": "late old cleanup cannot remove new owner",
+      "entryPoint": "Actual unmodified candidate mcp-server/src/broker-process-lock.ts imported in distinct Node children with experimental-strip-types; existing helper exports only, no production test hook/API.",
+      "level": "integration",
+      "expectedBehavior": "B pauses after absent observation before rename. A publishes then releases and pauses before parent rmdir. POSIX actual rename replaces empty directory; Windows expected real collision error then A cleanup and B retry. Both require eventual B owner and A repeats old release while B alive; B exact owner survives.",
+      "oracle": "B pauses after absent observation before rename. A publishes then releases and pauses before parent rmdir. POSIX actual rename replaces empty directory; Windows expected real collision error then A cleanup and B retry. Both require eventual B owner and A repeats old release while B alive; B exact owner survives.",
+      "testFiles": [
+        "tests/session-messaging/broker-process-lock.os.test.ts",
+        "tests/session-messaging/fixtures/broker-process-lock-worker.mjs"
+      ],
+      "required": true,
+      "sensitivity": "mutation",
+      "sensitivityReason": "Only on old marker ENOENT, recursively remove public lock parent before returning. Keep the first normal release and its gate unchanged. The late repeated-release exact-current-owner assertion must reject missing B marker. Continuing with nonrecursive parent rmdir is an equivalent mutation here and is excluded. 현재 source-preparation 범위라 mutation/OS 실행은 NOT_RUN이며 잘못된 timeout/import 실패를 red로 셀 수 없다.",
+      "argv": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "tests/session-messaging/broker-process-lock.os.test.ts",
+        "-t",
+        "OS-003:"
+      ]
+    }
+  ],
+  "exclusions": [
+    "Source only; no import/parse/typecheck/OS execution/mutation proof.",
+    "Scheduler interposition controls timing and does not prove uninjected production probability/performance.",
+    "Not broker TLS/ping readiness integration; packaged lifecycle suites remain separate.",
+    "Permanent empty state, crash-stage cleanup, PID reuse, caller stderr remain open.",
+    "Local plan contractDigest binds PREPARATION.r01 only; not a signed TaskEnvelope or execution authorization.",
+    "CLI plan consistency checks are not runtime/acceptance/independent audit PASS."
+  ]
+}
