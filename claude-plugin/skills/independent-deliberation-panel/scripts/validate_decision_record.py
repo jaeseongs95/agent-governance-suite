@@ -204,10 +204,10 @@ def validate(record: Any) -> list[str]:
         reviewer_ids = {wid for wid, worker in worker_by_id.items() if eligible_reviewer(worker)}
         if fallback is None and (judge_id in reviewer_ids or judge_id in reused):
             errors.append("Judge must be fresh, not a reused reviewer")
-        if stage == "HIGH" and len(reviewer_ids) < 4 and assurance == "independent" and not run.get("capability_shortfall"):
+        if stage == "HIGH" and len(reviewer_ids) < 4 and (run.get("strict") is True or assurance == "independent") and not run.get("capability_shortfall"):
             errors.append("HIGH requires at least four eligible completed reviewers")
         if stage == "CRITICAL":
-            if not 5 <= len(reviewer_ids) <= 6 and assurance == "independent" and not run.get("capability_shortfall"):
+            if not 5 <= len(reviewer_ids) <= 6 and (run.get("strict") is True or assurance == "independent") and not run.get("capability_shortfall"):
                 errors.append("CRITICAL requires five or six completed/reused reviewers")
             roles = " ".join(str(worker_by_id[w].get("role", "")).lower() for w in reviewer_ids)
             if "red team" not in roles and "independent design-assurance" not in roles:

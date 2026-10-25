@@ -60,6 +60,24 @@
         ]
       },
       {
+        "id": "r5",
+        "role": "Independent Risk Reviewer",
+        "status": "completed",
+        "instantiated": true,
+        "requested_model": "NOT_OBSERVABLE",
+        "actual_model": null,
+        "requested_reasoning": "NOT_OBSERVABLE",
+        "actual_reasoning": null,
+        "fallback_reason": null,
+        "is_judge": null,
+        "classification": "reviewer",
+        "blind_round1": true,
+        "context_isolated": true,
+        "participated_stages": [
+          "round1"
+        ]
+      },
+      {
         "id": "r4",
         "role": "Release Planner",
         "status": "completed",
@@ -100,6 +118,7 @@
       "r1",
       "r2",
       "r3",
+      "r5",
       "r4",
       "judge"
     ],
@@ -277,6 +296,24 @@
     {
       "id": "r3",
       "role": "Safety Reviewer",
+      "status": "completed",
+      "instantiated": true,
+      "requested_model": "NOT_OBSERVABLE",
+      "actual_model": null,
+      "requested_reasoning": "NOT_OBSERVABLE",
+      "actual_reasoning": null,
+      "fallback_reason": null,
+      "is_judge": null,
+      "classification": "reviewer",
+      "blind_round1": true,
+      "context_isolated": true,
+      "participated_stages": [
+        "round1"
+      ]
+    },
+    {
+      "id": "r5",
+      "role": "Independent Risk Reviewer",
       "status": "completed",
       "instantiated": true,
       "requested_model": "NOT_OBSERVABLE",
