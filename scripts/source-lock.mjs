@@ -38,9 +38,7 @@ export async function readSkillVersion(skillDirectory) {
   try {
     return { version: (await readFile(path.join(skillDirectory, "VERSION"), "utf8")).trim(), source: "version-file" };
   } catch (error) {
-    if (error.code !== "ENOENT") {
-      throw new Error(`${path.relative(ROOT, skillDirectory)} VERSION is unreadable: ${error.code ?? error.name}`, { cause: error });
-    }
+    if (error.code !== "ENOENT") throw error;
     throw new Error(`${path.relative(ROOT, skillDirectory)} has neither metadata.version nor VERSION`, { cause: error });
   }
 }
