@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { validateInputSchema, validateReportSchema, validateReportValidationSchema } from "./schema-validation.mjs";
+import { validateInputSchema, validateReportSchema, validateReportValidationSchema, validateTaskEnvelopeSchema } from "./schema-validation.mjs";
 
 export class InputError extends Error {
   constructor(message, details = null) {
@@ -56,7 +56,7 @@ function exactKeys(value, allowed, name) {
 
 export function assertTaskEnvelope(task) {
   if (!task || typeof task !== "object" || Array.isArray(task)) throw new InputError("taskEnvelope must be an object.");
-  exactKeys(task, ["schemaVersion", "taskId", "objective", "scope", "acceptanceCriteria", "riskLevel", "workUnits", "requiredCapabilities", "constraints", "authorization", "decision", "orchestration"], "taskEnvelope");
+  if (!validateTaskEnvelopeSchema(task)) throw new InputError("TaskEnvelope.v1 validation failed.", { errors: structuredClone(validateTaskEnvelopeSchema.errors) });
   if (task.schemaVersion !== "1.0.0") throw new InputError("taskEnvelope.schemaVersion must be 1.0.0.");
   nonEmptyString(task.taskId, "taskEnvelope.taskId");
   nonEmptyString(task.objective, "taskEnvelope.objective");

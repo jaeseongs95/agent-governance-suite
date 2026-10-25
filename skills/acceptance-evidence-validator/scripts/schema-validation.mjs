@@ -7,7 +7,7 @@ import { Ajv2020 } from "../../../runtime/schema-validation.mjs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const load = (relative) => JSON.parse(readFileSync(path.join(root, relative), "utf8"));
 
-const taskEnvelopeSchema = load("contracts/upstream/task-envelope.v1.schema.json");
+const taskEnvelopeSchema = load("../../contracts/task-envelope.v1.schema.json");
 const inputSchema = load("contracts/acceptance-evidence-input.v1.schema.json");
 const reportSchema = load("contracts/acceptance-evidence-report.v1.schema.json");
 const reportValidationSchema = load("contracts/acceptance-report-validation.v1.schema.json");
@@ -18,6 +18,7 @@ const taskEnvelopeAlias = structuredClone(taskEnvelopeSchema);
 taskEnvelopeAlias.$id = new URL("./upstream/task-envelope.v1.schema.json", inputSchema.$id).href;
 ajv.addSchema(taskEnvelopeAlias);
 
+export const validateTaskEnvelopeSchema = ajv.compile(taskEnvelopeSchema);
 export const validateInputSchema = ajv.compile(inputSchema);
 export const validateReportSchema = ajv.compile(reportSchema);
 export const validateReportValidationSchema = ajv.compile(reportValidationSchema);

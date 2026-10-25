@@ -97,7 +97,7 @@ const descriptor: SkillDescriptorV2 = {
   ],
 };
 
-function task(overrides: Partial<TaskEnvelopeV1> = {}): TaskEnvelopeV1 {
+function task(overrides: Partial<TaskEnvelopeV1> = {}, fixtureDescriptor = descriptor): TaskEnvelopeV1 {
   return {
     schemaVersion: "1.0.0",
     taskId: "reference-only-prose",
@@ -107,6 +107,15 @@ function task(overrides: Partial<TaskEnvelopeV1> = {}): TaskEnvelopeV1 {
     riskLevel: "low",
     workUnits: [],
     requiredCapabilities: ["korean-prose-editing"],
+    // These are the fixture's declared producer targets, fixed before any stage result exists.
+    artifactContracts: fixtureDescriptor.providers.map((entry) => ({
+      capability: entry.capabilities[0]!,
+      produced: entry.producedArtifacts.map((artifactId) => ({
+        artifactId,
+        schemaId: "schema://korean-prose/receipt-v1",
+        targetDigest: `sha256:${"b".repeat(64)}` as const,
+      })),
+    })),
     constraints: ["Do not persist source prose."],
     authorization: { allowedActions: ["edit"], prohibitedActions: ["publish"], approvalRequired: [] },
     decision: { complexity: "simple", hasConflicts: false },
@@ -402,7 +411,7 @@ describe("descriptor-declared reference-only receipts", () => {
     const databasePath = join(databaseDirectory, "workflow.sqlite3");
     const firstStore = openStore(databasePath);
     const fixture = await createFixture(firstStore, genericDescriptor);
-    const genericTask = task({ requiredCapabilities: genericDescriptor.providers.flatMap((entry) => entry.capabilities) });
+    const genericTask = task({ requiredCapabilities: genericDescriptor.providers.flatMap((entry) => entry.capabilities) }, genericDescriptor);
     let receipt = fixture.service.startWorkflow(fixture.service.planWorkflow(genericTask).data!).data!;
     const boundActors = actors.map((actorId) => actorId.replace(/^1/, "2"));
     for (const stage of receipt.plan.stages.slice(0, 3)) {

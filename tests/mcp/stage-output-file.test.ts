@@ -48,6 +48,15 @@ function task(taskId: string, capabilities: string[] = ["task-decomposition"]): 
     riskLevel: "low",
     workUnits: [{ id: "unit-1", objective: "Run the fixture.", dependencies: [], writeTargets: ["fixture.md"] }],
     requiredCapabilities: capabilities,
+    // The existing output fixture uses target e; declare it independently of the recorded result.
+    ...(capabilities.includes("task-decomposition") ? {
+      artifactContracts: [{
+        capability: "task-decomposition",
+        produced: ["delegation-decision", "task-graph", "assignment-briefs", "integration-report"].map((artifactId) => ({
+          artifactId, schemaId: "fixture/v1", targetDigest: `sha256:${"e".repeat(64)}` as const,
+        })),
+      }],
+    } : {}),
     constraints: ["Use only fixture data."],
     authorization: { allowedActions: ["test"], prohibitedActions: ["deploy"], approvalRequired: [] },
     decision: { complexity: "simple", hasConflicts: false },

@@ -8,7 +8,7 @@ const files = {
   request: "contracts/change-scope-request.v1.schema.json",
   baseline: "contracts/workspace-baseline.v1.schema.json",
   report: "contracts/change-scope-report.v1.schema.json",
-  taskEnvelope: "contracts/upstream/task-envelope.v1.schema.json"
+  taskEnvelope: "../../contracts/task-envelope.v1.schema.json"
 };
 const schemas = Object.fromEntries(Object.entries(files).map(([name, file]) => [name, JSON.parse(readFileSync(join(root, file), "utf8"))]));
 const ajv = new Ajv2020({ allErrors: true, strict: true });

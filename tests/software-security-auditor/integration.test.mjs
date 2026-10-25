@@ -3,12 +3,14 @@ import { fileURLToPath } from "node:url";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
-import { digest } from "../../skills/software-security-auditor/scripts/core.mjs";
+import { digest, targetDigest } from "../../skills/software-security-auditor/scripts/core.mjs";
 import { fixture, finding } from "./fixture.mjs";
-import { analyzeAcceptance } from "../../skills/acceptance-evidence-validator/scripts/core.mjs";
+import { analyzeAcceptance, assertTaskEnvelope } from "../../skills/acceptance-evidence-validator/scripts/core.mjs";
 
 const context = { schemaVersion: "1.0.0", model: "fixture-deep", modelClass: "deep", reasoningEffort: "high", source: "runtime", observedAt: new Date().toISOString() };
-const task = (capabilities = ["software-security-audit"]) => ({ schemaVersion: "1.0.0", taskId: "security-integration", objective: "Produce security evidence", scope: { included: ["fixture"], excluded: [] }, acceptanceCriteria: ["Report uncertainty"], riskLevel: "low", workUnits: [], requiredCapabilities: capabilities, constraints: [], authorization: { allowedActions: ["read"], prohibitedActions: ["deploy"], approvalRequired: [] }, decision: { complexity: "simple", hasConflicts: false }, orchestration: { requested: true, mcpAvailable: true } });
+const task = (capabilities = ["software-security-audit"], artifactTarget = null) => ({ schemaVersion: "1.0.0", taskId: "security-integration", objective: "Produce security evidence", scope: { included: ["fixture"], excluded: [] }, acceptanceCriteria: ["Report uncertainty"], riskLevel: "low", workUnits: [], requiredCapabilities: capabilities, constraints: [], authorization: { allowedActions: ["read"], prohibitedActions: ["deploy"], approvalRequired: [] }, decision: { complexity: "simple", hasConflicts: false }, orchestration: { requested: true, mcpAvailable: true },
+  ...(artifactTarget ? { artifactContracts: [{ capability: "software-security-audit", produced: [{ artifactId: "security-audit-report", schemaId: "SecurityAuditReport.v1", targetDigest: artifactTarget }] }] } : {}),
+});
 function service(tree = "") {
   const validator = new ContractValidator();
   return new WorkflowService(new FileSkillRegistry(fileURLToPath(new URL(`../../${tree}skills/registry.json`, import.meta.url)), validator), validator, undefined, context);
@@ -22,18 +24,21 @@ function result(receipt, report) {
 }
 describe("security audit integration", () => {
   it.each(["", "claude-plugin/"])("loads schema and maps complete report with findings in %s", (tree) => {
-    const svc = service(tree); const plan = svc.planWorkflow(task()); expect(plan.ok, JSON.stringify(plan.error)).toBe(true);
+    const { request, report } = fixture();
+    const svc = service(tree); const plan = svc.planWorkflow(task(undefined, targetDigest(request))); expect(plan.ok, JSON.stringify(plan.error)).toBe(true);
     expect(plan.data.stages[0]).toMatchObject({ phase: "security-audit", executionRequirement: { minimumModelClass: "deep", minimumReasoningEffort: "high" } });
-    const receipt = svc.startWorkflow(plan.data).data; const { report } = fixture(); report.findings.push(finding());
+    const receipt = svc.startWorkflow(plan.data).data; report.findings.push(finding());
     const recorded = svc.recordStageResult(result(receipt, report)); expect(recorded.ok, JSON.stringify(recorded.error)).toBe(true);
   });
   it("rejects semantic lies even with schema-valid fields and verified booleans", () => {
-    const svc = service(); const receipt = svc.startWorkflow(svc.planWorkflow(task()).data).data;
-    const { report } = fixture(); report.checks[0].evidenceRefs = ["missing"];
+    const { request, report } = fixture();
+    const svc = service(); const receipt = svc.startWorkflow(svc.planWorkflow(task(undefined, targetDigest(request))).data).data;
+    report.checks[0].evidenceRefs = ["missing"];
     expect(svc.recordStageResult(result(receipt, report)).error.code).toBe("INVALID_INPUT");
   });
   it.each(["partial", "blocked"])("preserves %s rather than converting uncertainty to safety", (status) => {
-    const svc = service(); const receipt = svc.startWorkflow(svc.planWorkflow(task()).data).data; const { report } = fixture();
+    const { request, report } = fixture();
+    const svc = service(); const receipt = svc.startWorkflow(svc.planWorkflow(task(undefined, targetDigest(request))).data).data;
     if (status === "partial") {
       report.request.checks.push({ id: "C2", description: "missing runtime" });
       report.checks.push({ id: "C2", status: "not-checked", evidenceRefs: [], observation: "missing runtime", method: "not-executed" });
@@ -58,5 +63,23 @@ describe("security audit integration", () => {
     expect(acceptance.verifiedEvidenceIndex[0].targetDigest).toBe(report.targetDigest);
     input.evidence = []; input.knownLimitations = ["runtime was not checked"];
     expect(analyzeAcceptance(input).verdict).toBe("BLOCKED");
+  });
+  it("accepts artifact declarations on the shared TaskEnvelope at the direct acceptance boundary", () => {
+    const { request, report } = fixture();
+    const taskEnvelope = task(undefined, targetDigest(request));
+    expect(() => assertTaskEnvelope(taskEnvelope)).not.toThrow();
+    const input = { schemaVersion: "1.0.0", taskEnvelope,
+      target: { kind: "artifact", identifier: "fixture", digest: targetDigest(request) },
+      evidence: [{ id: "security-report", kind: "document", locator: "report.json", digest: digest(report),
+        targetDigest: targetDigest(request), verified: true, criterionIds: ["AC-001"], direction: "supports", observedResult: "Uncertainty is explicitly reported." }],
+      verificationCommands: [], knownLimitations: [], criterionOverrides: [] };
+    const acceptance = analyzeAcceptance(input);
+    expect(acceptance.verdict).toBe("PASS");
+    expect(acceptance.criteria).toMatchObject([{ criterionId: "AC-001", status: "satisfied", evidenceRefs: ["security-report"] }]);
+    const malformed = structuredClone(input);
+    malformed.taskEnvelope.artifactContracts[0].produced[0].targetDigest = "not-a-digest";
+    expect(() => assertTaskEnvelope(malformed.taskEnvelope)).toThrow();
+    expect(() => analyzeAcceptance(malformed)).toThrow();
+    expect(() => analyzeAcceptance({ ...input, taskEnvelope: { ...taskEnvelope, undeclaredField: true } })).toThrow();
   });
 });
