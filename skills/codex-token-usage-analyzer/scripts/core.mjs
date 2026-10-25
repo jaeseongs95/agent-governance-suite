@@ -797,7 +797,20 @@ export async function writeNewMarkdown(report, directory, options = {}) {
       return { path: candidate, digest: digest(content) };
     } catch (error) {
       try { await handle.close(); } catch { /* Best-effort close after a failed write. */ }
-      await rm(candidate, { force: true });
+      try {
+        await rm(candidate, { force: true });
+      } catch (cleanupError) {
+        // 최초 쓰기 실패가 주오류다. 정리 실패는 경로·메시지 없이 code만 보조 진단으로 분리한다.
+        if (error !== null && typeof error === "object") {
+          try {
+            Object.defineProperty(error, "secondaryDiagnostics", {
+              value: [{ step: "cleanup-rm", code: typeof cleanupError?.code === "string" ? cleanupError.code : "UNKNOWN" }],
+              enumerable: false,
+              configurable: true
+            });
+          } catch { /* Frozen errors keep the primary failure unchanged. */ }
+        }
+      }
       throw error;
     }
   }
