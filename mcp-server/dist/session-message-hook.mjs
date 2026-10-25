@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
-// mcp-server/src/failure-diagnostics.ts
+// mcp-server/src/hook-error-diagnostics.ts
+import { writeSync } from "node:fs";
+
+// runtime/failure-diagnostics.mjs
 import { createHash } from "node:crypto";
 import { types } from "node:util";
 var producerReasons = /* @__PURE__ */ new WeakMap();
@@ -87,6 +90,17 @@ function failureContext(error) {
   return describe(error, 0);
 }
 
+// mcp-server/src/hook-error-diagnostics.ts
+var defaultSyncStderr = (serialized) => {
+  writeSync(2, serialized);
+};
+function writeFailureDiagnostic(serialized, writer = defaultSyncStderr) {
+  try {
+    writer(serialized);
+  } catch {
+  }
+}
+
 // mcp-server/src/builtin-hook-host-adapters.ts
 import { createHash as createHash3 } from "node:crypto";
 import { types as utilTypes4 } from "node:util";
@@ -94,10 +108,83 @@ import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "n
 import path5 from "node:path";
 
 // mcp-server/src/host-input-adapter.ts
-import { types as utilTypes2 } from "node:util";
+import { types as utilTypes } from "node:util";
+var hostFailures = {
+  selection: ["INVALID_HOOK_HOST_SELECTION", "Invalid or ambiguous hook host."],
+  adapter: ["INVALID_HOOK_HOST_ADAPTER", "Invalid hook host adapter."],
+  duplicate: ["HOOK_HOST_ADAPTER_DUPLICATE", "Hook host adapter is already registered."],
+  unavailable: ["HOST_ADAPTER_UNAVAILABLE", "A host delivery adapter is required."]
+};
+function hookHostFailure(kind) {
+  const [reason, message] = hostFailures[kind];
+  return producerFailure(reason, message);
+}
+function resolveHookHost(arguments_, fallback) {
+  const selected = [];
+  for (let index = 0; index < arguments_.length; index++) {
+    const argument = arguments_[index];
+    if (argument === "--host") selected.push(arguments_[++index] ?? "");
+    else if (argument.startsWith("--host=")) selected.push(argument.slice(7));
+  }
+  if (selected.length === 0) return fallback;
+  if (selected.length !== 1 || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(selected[0])) throw hookHostFailure("selection");
+  return selected[0];
+}
+function adaptHostInput(input, host) {
+  const adapter = hookHostAdapters.get(host);
+  if (!adapter) throw hookHostFailure("unavailable");
+  return adapter.adaptInput?.(input, host) ?? {
+    lifecycle: "none",
+    outputEventName: "",
+    observation: {
+      host,
+      sessionId: "",
+      kind: "unknown",
+      actor: { kind: "unknown", observedBy: `${host}:unconfigured-input`, assurance: "unknown" }
+    }
+  };
+}
+function isGovernanceHookTool(host, toolName) {
+  return hookHostAdapters.get(host)?.ownsTool?.(toolName) === true;
+}
+var hookHostAdapters = /* @__PURE__ */ new Map();
+function registerHookHostAdapter(host, adapter) {
+  if (typeof host !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host) || !adapter || typeof adapter.deliveryProfile !== "function" || typeof adapter.processPid !== "function" || adapter.adaptInput !== void 0 && typeof adapter.adaptInput !== "function" || adapter.ownsTool !== void 0 && typeof adapter.ownsTool !== "function" || adapter.attestationKind !== void 0 && (typeof adapter.attestationKind !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(adapter.attestationKind))) throw hookHostFailure("adapter");
+  if (hookHostAdapters.has(host)) throw hookHostFailure("duplicate");
+  hookHostAdapters.set(host, Object.freeze({ ...adapter }));
+}
+function resolveHookProcessPid(host, explicitHostPid, hostProcess) {
+  const pid = hookHostAdapters.get(host)?.processPid(explicitHostPid, hostProcess);
+  if (hostProcess && hostProcess.pid !== pid) return void 0;
+  return pid;
+}
+function hostDeliveryProfile(host, environment = process.env, diagnose = (reason, observation) => {
+  const prefix = `[agent-governance-suite] ${host} queue settings: ${reason}.`;
+  let detail = null;
+  try {
+    if (observation && typeof observation === "object" && !utilTypes.isProxy(observation)) {
+      const phase = Object.getOwnPropertyDescriptor(observation, "phase")?.value;
+      const cleanup = Object.getOwnPropertyDescriptor(observation, "cleanup")?.value;
+      const failure = Object.getOwnPropertyDescriptor(observation, "failure")?.value;
+      const ownedReason = producerFailureReason(failure);
+      if (ownedReason && typeof phase === "string" && /^[a-z][a-z0-9-]{0,63}$/u.test(phase) && (cleanup === "not-acquired" || cleanup === "closed" || cleanup === "unknown")) {
+        detail = { phase, reason: ownedReason, cleanup, context: failureContext(failure) };
+      }
+    }
+  } catch {
+  }
+  console.error(prefix + (detail ? " " + JSON.stringify(detail) : ""));
+}, defaultQueueWake = false) {
+  const adapter = hookHostAdapters.get(host);
+  if (!adapter) throw hookHostFailure("unavailable");
+  return adapter.deliveryProfile(environment, diagnose, defaultQueueWake);
+}
+function nativePeerWait(observation) {
+  return hookHostAdapters.get(observation.host)?.peerWait?.(observation) ?? null;
+}
 
 // mcp-server/src/session-message-client.ts
-import { types as utilTypes } from "node:util";
+import { types as utilTypes2 } from "node:util";
 import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
@@ -105,23 +192,6 @@ import path2 from "node:path";
 import { performance } from "node:perf_hooks";
 import tls from "node:tls";
 import { fileURLToPath } from "node:url";
-
-// contracts/types.ts
-var CONTRACT_VERSION = "1.0.0";
-var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
-var WorkflowContractError = class extends Error {
-  constructor(code, message, details = null) {
-    super(message);
-    this.code = code;
-    this.details = details;
-    this.name = "WorkflowContractError";
-  }
-  code;
-  details;
-  toBody() {
-    return { code: this.code, message: this.message, details: this.details };
-  }
-};
 
 // skills/coordinate-subagents/references/model-routing-presets.json
 var model_routing_presets_default = {
@@ -410,7 +480,7 @@ function resolveFromProviderCatalog(providerId, host, policyRevision, providerEn
   if (!canonicalKey) return null;
   const entry = models[canonicalKey];
   const minimumReasoningEffort = minimumEfforts[rawModel] ?? minimumEfforts[canonicalKey] ?? entry.minimum_effort ?? null;
-  const supportedEfforts = entry.supported_efforts && entry.supported_efforts.length > 0 ? entry.supported_efforts : REASONING_EFFORT;
+  const supportedEfforts = entry.supported_efforts ?? [];
   return {
     provider: providerId,
     host,
@@ -523,8 +593,8 @@ var BrokerRequestRejected = class extends Error {
   constructor(message, details = null) {
     super(message);
     tagProducerFailure(this, "BROKER_REQUEST_REJECTED");
-    const record3 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
-    this.details = record3 && (record3.scope === "sender" || record3.scope === "global") && (record3.earliestReleaseAt === null || typeof record3.earliestReleaseAt === "string") ? { scope: record3.scope, earliestReleaseAt: record3.earliestReleaseAt } : null;
+    const record2 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
+    this.details = record2 && (record2.scope === "sender" || record2.scope === "global") && (record2.earliestReleaseAt === null || typeof record2.earliestReleaseAt === "string") ? { scope: record2.scope, earliestReleaseAt: record2.earliestReleaseAt } : null;
   }
 };
 var BROKER_STARTUP_TIMEOUT_MS = 15e3;
@@ -545,10 +615,10 @@ function deadlineError(message) {
   return tagProducerFailure(new Error(message), "BROKER_DEADLINE_EXPIRED");
 }
 function clientFailure(reason, message, cause) {
-  return utilTypes.isNativeError(cause) ? tagProducerFailure(cause, reason) : retainFailureCause(tagProducerFailure(new Error(message), reason), cause);
+  return utilTypes2.isNativeError(cause) ? tagProducerFailure(cause, reason) : retainFailureCause(tagProducerFailure(new Error(message), reason), cause);
 }
 function signalError(signal) {
-  return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : new Error("The session message operation was aborted.");
+  return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : retainFailureCause(tagProducerFailure(new Error("The session message operation was aborted."), "BROKER_OPERATION_ABORTED"), signal.reason);
 }
 function throwIfAborted(signal) {
   if (signal?.aborted) throw signalError(signal);
@@ -609,11 +679,19 @@ function sessionMessageBrokerEnvironment(environment = process.env) {
 async function readEndpoint(stateDirectory, signal) {
   throwIfAborted(signal);
   const paths = statePaths(stateDirectory);
-  const [rawEndpoint, rawToken, certificate] = await Promise.all([
-    readFile(paths.endpoint, { encoding: "utf8", signal }),
-    readFile(paths.token, { encoding: "utf8", signal }),
-    readFile(paths.certificate, { encoding: "utf8", signal })
-  ]);
+  let rawEndpoint;
+  let rawToken;
+  let certificate;
+  try {
+    [rawEndpoint, rawToken, certificate] = await Promise.all([
+      readFile(paths.endpoint, { encoding: "utf8", signal }),
+      readFile(paths.token, { encoding: "utf8", signal }),
+      readFile(paths.certificate, { encoding: "utf8", signal })
+    ]);
+  } catch (cause) {
+    throwIfAborted(signal);
+    throw clientFailure("BROKER_ENDPOINT_READ_FAILED", "Cannot read the session message broker endpoint.", cause);
+  }
   let endpoint;
   try {
     endpoint = JSON.parse(rawEndpoint);
@@ -807,9 +885,13 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         throwIfAborted(signal);
         if (error instanceof BrokerRequestRejected) throw error;
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);
-        else {
-          await mkdir(stateDirectory, { recursive: true, mode: 448 });
+        try {
+          if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);
+          else await mkdir(stateDirectory, { recursive: true, mode: 448 });
+        } catch (cause) {
+          throw clientFailure("BROKER_STATE_DIRECTORY_FAILED", "Cannot prepare the session message state directory.", cause);
+        }
+        if (!prepareStateDirectory) {
           if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
           try {
             await chmod(stateDirectory, 448);
@@ -821,12 +903,17 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         const adjacentBroker = fileURLToPath(new URL("./session-message-broker.mjs", import.meta.url));
         const brokerPath = existsSync(adjacentBroker) ? adjacentBroker : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
-          detached: true,
-          windowsHide: true,
-          stdio: "ignore",
-          env: sessionMessageBrokerEnvironment()
-        });
+        let child;
+        try {
+          child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+            detached: true,
+            windowsHide: true,
+            stdio: "ignore",
+            env: sessionMessageBrokerEnvironment()
+          });
+        } catch (cause) {
+          throw clientFailure("BROKER_START_FAILED", "Cannot start the session message broker.", cause);
+        }
         child.unref();
         await waitForSessionMessageBrokerReady(
           stateDirectory,
@@ -859,6 +946,11 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
         { enforceDeadline: true, ...options.onOperationWrite ? { onOperationWrite: options.onOperationWrite } : {} }
       );
     }
+    let operationWriteAttempted = false;
+    const onOperationWrite = () => {
+      operationWriteAttempted = true;
+      return options.onOperationWrite?.();
+    };
     try {
       return await requestSessionMessageOnce(
         operation,
@@ -866,12 +958,12 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
         stateDirectory,
         remainingMilliseconds(deadline, signal),
         signal,
-        { enforceDeadline: options.deadlineMonotonicMs !== void 0 }
+        { enforceDeadline: options.deadlineMonotonicMs !== void 0, onOperationWrite }
       );
     } catch (error) {
       try {
         throwIfAborted(signal);
-        if (error instanceof BrokerRequestRejected) throw error;
+        if (error instanceof BrokerRequestRejected || operationWriteAttempted) throw error;
         await ensureSessionMessageBroker(
           stateDirectory,
           remainingMilliseconds(deadline, signal),
@@ -885,7 +977,7 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
           stateDirectory,
           remainingMilliseconds(deadline, signal),
           signal,
-          { enforceDeadline: options.deadlineMonotonicMs !== void 0 }
+          { enforceDeadline: options.deadlineMonotonicMs !== void 0, onOperationWrite }
         );
       } catch (recoveryError) {
         throw retainFailureSecondary(recoveryError, error);
@@ -911,117 +1003,6 @@ function parseWakeMessages(value) {
     nonces.push(nonce);
   }
   return { nonces: [...new Set(nonces)], wakeOnly };
-}
-
-// mcp-server/src/host-input-adapter.ts
-var hostFailures = {
-  selection: ["INVALID_HOOK_HOST_SELECTION", "Invalid or ambiguous hook host."],
-  adapter: ["INVALID_HOOK_HOST_ADAPTER", "Invalid hook host adapter."],
-  duplicate: ["HOOK_HOST_ADAPTER_DUPLICATE", "Hook host adapter is already registered."],
-  unavailable: ["HOST_ADAPTER_UNAVAILABLE", "A host delivery adapter is required."]
-};
-function hookHostFailure(kind) {
-  const [reason, message] = hostFailures[kind];
-  return producerFailure(reason, message);
-}
-function resolveHookHost(arguments_, fallback) {
-  const selected = [];
-  for (let index = 0; index < arguments_.length; index++) {
-    const argument = arguments_[index];
-    if (argument === "--host") selected.push(arguments_[++index] ?? "");
-    else if (argument.startsWith("--host=")) selected.push(argument.slice(7));
-  }
-  if (selected.length === 0) return fallback;
-  if (selected.length !== 1 || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(selected[0])) throw hookHostFailure("selection");
-  return selected[0];
-}
-function text(value) {
-  return typeof value === "string" ? value : "";
-}
-function record(value) {
-  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
-}
-function actorObservation(input, host) {
-  if (!Object.hasOwn(input, "agent_id")) return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
-  if (typeof input.agent_id !== "string") return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
-  return {
-    kind: text(input.agent_id) ? "subagent" : "main",
-    observedBy: `${host}:hook-payload`,
-    assurance: "observed"
-  };
-}
-function adaptHostInput(input, host) {
-  const event = text(input.hook_event_name);
-  let kind = "unknown";
-  let lifecycle = "none";
-  let boundaryPhase;
-  if (event === "SessionStart") lifecycle = "start";
-  else if (event === "SessionEnd") {
-    kind = "turn-end";
-    lifecycle = "end";
-  } else if (event === "UserPromptSubmit") kind = "user-input";
-  else if (event === "PreToolUse") {
-    kind = "tool-boundary";
-    boundaryPhase = "before";
-  } else if (event === "PostToolUse") {
-    kind = "tool-boundary";
-    boundaryPhase = "after";
-  } else if (event === "Stop") kind = "turn-end";
-  const wake = kind === "user-input" ? parseWakeMessages(input.prompt) : { nonces: [], wakeOnly: false };
-  const workspaceId = text(input.workspace_id) || text(input.cwd);
-  const collaborationId = text(input.collaboration_id);
-  const role = text(input.role);
-  return {
-    lifecycle,
-    outputEventName: event,
-    observation: {
-      host,
-      sessionId: text(input.session_id),
-      kind,
-      actor: actorObservation(input, host),
-      ...boundaryPhase === void 0 ? {} : { boundaryPhase },
-      ...kind === "tool-boundary" ? { toolName: text(input.tool_name), toolInput: record(input.tool_input) } : {},
-      ...kind === "user-input" ? { wakeCandidates: wake.nonces, wakeOnly: wake.wakeOnly } : {},
-      ...workspaceId ? { workspaceId } : {},
-      ...collaborationId ? { collaborationId } : {},
-      ...role ? { role } : {}
-    }
-  };
-}
-var hookHostAdapters = /* @__PURE__ */ new Map();
-function registerHookHostAdapter(host, adapter) {
-  if (typeof host !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host) || !adapter || typeof adapter.deliveryProfile !== "function" || typeof adapter.processPid !== "function" || adapter.attestationKind !== void 0 && !["codex-rollout", "claude-hook"].includes(adapter.attestationKind)) throw hookHostFailure("adapter");
-  if (hookHostAdapters.has(host)) throw hookHostFailure("duplicate");
-  hookHostAdapters.set(host, Object.freeze({ ...adapter }));
-}
-function resolveHookProcessPid(host, explicitHostPid, hostProcess) {
-  const pid = hookHostAdapters.get(host)?.processPid(explicitHostPid, hostProcess);
-  if (hostProcess && hostProcess.pid !== pid) return void 0;
-  return pid;
-}
-function hostDeliveryProfile(host, environment = process.env, diagnose = (reason, observation) => {
-  const prefix = `[agent-governance-suite] ${host} queue settings: ${reason}.`;
-  let detail = null;
-  try {
-    if (observation && typeof observation === "object" && !utilTypes2.isProxy(observation)) {
-      const phase = Object.getOwnPropertyDescriptor(observation, "phase")?.value;
-      const cleanup = Object.getOwnPropertyDescriptor(observation, "cleanup")?.value;
-      const failure = Object.getOwnPropertyDescriptor(observation, "failure")?.value;
-      const ownedReason = producerFailureReason(failure);
-      if (ownedReason && typeof phase === "string" && /^[a-z][a-z0-9-]{0,63}$/u.test(phase) && (cleanup === "not-acquired" || cleanup === "closed" || cleanup === "unknown")) {
-        detail = { phase, reason: ownedReason, cleanup, context: failureContext(failure) };
-      }
-    }
-  } catch {
-  }
-  console.error(prefix + (detail ? " " + JSON.stringify(detail) : ""));
-}, defaultQueueWake = false) {
-  const adapter = hookHostAdapters.get(host);
-  if (!adapter) throw hookHostFailure("unavailable");
-  return adapter.deliveryProfile(environment, diagnose, defaultQueueWake);
-}
-function nativePeerWait(observation) {
-  return hookHostAdapters.get(observation.host)?.peerWait?.(observation) ?? null;
 }
 
 // mcp-server/src/peer-wait-policy.ts
@@ -1073,6 +1054,22 @@ import { chmodSync, mkdirSync } from "node:fs";
 import path3 from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+// contracts/types.ts
+var CONTRACT_VERSION = "1.0.0";
+var WorkflowContractError = class extends Error {
+  constructor(code, message, details = null) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    this.name = "WorkflowContractError";
+  }
+  code;
+  details;
+  toBody() {
+    return { code: this.code, message: this.message, details: this.details };
+  }
+};
+
 // mcp-server/src/workspace-identity.ts
 var SEGMENT_SEPARATOR = process.platform === "win32" ? /[\\/]/u : /\//u;
 
@@ -1087,8 +1084,8 @@ function canonicalJson(value, subject = "Convergence input") {
   }
   if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
   if (value && typeof value === "object") {
-    const record3 = value;
-    return `{${Object.keys(record3).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record3[key], subject)}`).join(",")}}`;
+    const record2 = value;
+    return `{${Object.keys(record2).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record2[key], subject)}`).join(",")}}`;
   }
   throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
 }
@@ -1297,7 +1294,6 @@ var TrustStore = class {
     const version = this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
     if (version > SCHEMA_VERSION) {
       throw tagProducerFailure(new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
-        databasePath: this.databasePath,
         supportedVersion: SCHEMA_VERSION,
         actualVersion: version
       }), "TRUST_SCHEMA_UNSUPPORTED");
@@ -1359,11 +1355,15 @@ var TrustStore = class {
       throw this.storageError(message, cause, details);
     }
   }
+  /**
+   * A storage or driver failure means the trust store is unavailable, never that the caller's input was invalid.
+   * Details keep a bounded, redacted cause (no message, path or SQL); the actual error stays a private producer cause.
+   */
   storageError(message, cause, details = {}) {
-    return retainFailureCause(tagProducerFailure(new WorkflowContractError("INVALID_INPUT", message, {
+    return retainFailureCause(tagProducerFailure(new WorkflowContractError("MCP_UNAVAILABLE", message, {
       ...details,
-      databasePath: this.databasePath,
-      cause: cause instanceof Error ? cause.message : String(cause)
+      reason: "TRUST_STORAGE_FAILED",
+      cause: failureContext(cause)
     }), "TRUST_STORAGE_FAILED"), cause);
   }
 };
@@ -1392,6 +1392,9 @@ function resolveGeminiAgentApi(environment = process.env, platform = process.pla
   const command = path4.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
   return { command: existsSync2(command) ? command : "agentapi", argsPrefix: [] };
 }
+function reportWakeFailure(phase, error) {
+  console.error(`agent-governance-suite wake diagnostic ${JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) })}`);
+}
 async function ringGemini(sessionId, message, environment = process.env) {
   const childEnv = { ...environment };
   const sourceProjectId = childEnv.ANTIGRAVITY_PROJECT_ID;
@@ -1411,9 +1414,13 @@ async function ringGemini(sessionId, message, environment = process.env) {
     });
     const parsed = JSON.parse(meta);
     const projectId = parsed.response?.conversationMetadata?.metadata?.projectId;
-    if (typeof projectId !== "string" || !projectId.trim()) return "definite-failure";
+    if (typeof projectId !== "string" || !projectId.trim()) {
+      throw producerFailure("GEMINI_METADATA_PROJECT_MISSING", "Gemini conversation metadata has no project identity.");
+    }
     targetProjectId = projectId;
-  } catch {
+  } catch (cause) {
+    const error = producerFailureReason(cause) ? cause : retainFailureCause(producerFailure("GEMINI_METADATA_FAILED", "Gemini conversation metadata lookup failed."), cause);
+    reportWakeFailure("gemini-metadata", error);
     return "definite-failure";
   }
   if (sourceProjectId !== targetProjectId) return "definite-failure";
@@ -1550,8 +1557,67 @@ function recordWakeHookObservation(observation, nowMs = Date.now()) {
 var IDENTITY_RECHECK_MS = 10 * 6e4;
 
 // mcp-server/src/builtin-hook-host-adapters.ts
-function record2(value) {
+function text(value) {
+  return typeof value === "string" ? value : "";
+}
+function record(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+function actorObservation(input, host) {
+  if (!Object.hasOwn(input, "agent_id")) return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
+  if (typeof input.agent_id !== "string") return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
+  return {
+    kind: text(input.agent_id) ? "subagent" : "main",
+    observedBy: `${host}:hook-payload`,
+    assurance: "observed"
+  };
+}
+function adaptBuiltinHookInput(input, host) {
+  const event = text(input.hook_event_name);
+  let kind = "unknown";
+  let lifecycle = "none";
+  let boundaryPhase;
+  if (event === "SessionStart") lifecycle = "start";
+  else if (event === "SessionEnd") {
+    kind = "turn-end";
+    lifecycle = "end";
+  } else if (event === "UserPromptSubmit") kind = "user-input";
+  else if (event === "PreToolUse") {
+    kind = "tool-boundary";
+    boundaryPhase = "before";
+  } else if (event === "PostToolUse") {
+    kind = "tool-boundary";
+    boundaryPhase = "after";
+  } else if (event === "Stop") kind = "turn-end";
+  const wake = kind === "user-input" ? parseWakeMessages(input.prompt) : { nonces: [], wakeOnly: false };
+  const workspaceId = text(input.workspace_id) || text(input.cwd);
+  const collaborationId = text(input.collaboration_id);
+  const role = text(input.role);
+  return {
+    lifecycle,
+    outputEventName: event,
+    observation: {
+      host,
+      sessionId: text(input.session_id),
+      kind,
+      actor: actorObservation(input, host),
+      ...boundaryPhase === void 0 ? {} : { boundaryPhase },
+      ...kind === "tool-boundary" ? { toolName: text(input.tool_name), toolInput: record(input.tool_input) } : {},
+      ...kind === "user-input" ? { wakeCandidates: wake.nonces, wakeOnly: wake.wakeOnly } : {},
+      ...workspaceId ? { workspaceId } : {},
+      ...collaborationId ? { collaborationId } : {},
+      ...role ? { role } : {}
+    }
+  };
+}
+var GOVERNANCE_TOOL_PREFIXES = /* @__PURE__ */ new Set([
+  "mcp__agent_governance_suite__",
+  "mcp__agent-governance-suite__",
+  "mcp__plugin_agent-governance-suite_agent-governance-suite__"
+]);
+function ownsGovernanceTool(toolName) {
+  const separator = toolName.lastIndexOf("__");
+  return separator > 0 && GOVERNANCE_TOOL_PREFIXES.has(toolName.slice(0, separator + 2));
 }
 function queueEnabled(host, explicit, environment, diagnose, defaultEnabled = false) {
   const disabled = (reason, observation) => {
@@ -1621,11 +1687,11 @@ function queueEnabled(host, explicit, environment, diagnose, defaultEnabled = fa
       if (length > 4096) return rejected("too-large");
       let settings;
       try {
-        settings = record2(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, length))));
+        settings = record(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, length))));
       } catch {
         return rejected("invalid-settings");
       }
-      const hostSettings = record2(settings[host]);
+      const hostSettings = record(settings[host]);
       if (settings.schemaVersion !== "1.0.0" || typeof hostSettings.queueWake !== "boolean") return rejected("invalid-settings");
       return hostSettings.queueWake;
     })();
@@ -1661,17 +1727,23 @@ function geminiQueueEnabled(environment, diagnose, defaultQueueWake) {
 }
 var builtinHookHostAdapters = /* @__PURE__ */ new Map([
   ["codex", {
+    adaptInput: adaptBuiltinHookInput,
+    ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", true),
     processPid: (pid) => pid,
     attestationKind: "codex-rollout",
     peerWait: codexNativePeerWait
   }],
   ["claude-code", {
+    adaptInput: adaptBuiltinHookInput,
+    ownsTool: ownsGovernanceTool,
     deliveryProfile: () => deliveryProfile("claude-inbox", false),
     processPid: () => process.ppid,
     attestationKind: "claude-hook"
   }],
   ["gemini", {
+    adaptInput: adaptBuiltinHookInput,
+    ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
     processPid: (pid, observation) => observation ? pid : void 0
   }]
@@ -1722,7 +1794,7 @@ function isObservedSubagent(observation) {
 
 // mcp-server/src/session-message-hook.ts
 var SESSION_BOUND_TOOLS = /* @__PURE__ */ new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
-var SUBAGENT_DENIED_TOOLS = /* @__PURE__ */ new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
+var MAIN_SESSION_TOOLS = /* @__PURE__ */ new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
 var HOST_CLAIM_MAX_MESSAGES = 1;
 var HOST_CLAIM_MAX_BODY_CHARS = 4096;
 var HOST_MESSAGE_REQUEST_TIMEOUT_MS = 8e3;
@@ -1755,16 +1827,17 @@ function reportHookFailure(phase, error) {
   const observed = reason !== "UNEXPECTED_FAILURE";
   const reasonBasis = observed ? "unverified-observation" : ownedReason ? "producer" : "unknown";
   if (!observed) reason = ownedReason ?? reason;
+  const failure = Object.freeze({
+    phase,
+    reason,
+    reasonBasis,
+    ...ownedReason ? { producerReason: ownedReason } : {}
+  });
   try {
-    console.error("[agent-governance-suite] peer-hook-failure " + JSON.stringify({
-      phase,
-      reason,
-      reasonBasis,
-      ...ownedReason ? { producerReason: ownedReason } : {},
-      context
-    }));
+    writeFailureDiagnostic("[agent-governance-suite] peer-hook-failure " + JSON.stringify({ ...failure, context }), (line) => console.error(line));
   } catch {
   }
+  return failure;
 }
 var observingClaimState = false;
 function remainingBudget(budget, reserve = 0) {
@@ -1841,7 +1914,7 @@ function startRelay(host, sessionId, instanceId, transport, explicitHostPid, hos
     stdio: "ignore",
     env: process.env
   });
-  if (relayId) child.once("error", (error) => {
+  child.once("error", (error) => {
     reportHookFailure("relay-start", error);
   });
   child.unref();
@@ -2056,15 +2129,15 @@ async function handleSessionMessageHook(input, host, explicitHostPid, options = 
         return additionalContext(adapted.outputEventName, "Peer wait policy is unavailable. Use a bounded query; async resume has not been confirmed.");
       }
     }
+    if (!isGovernanceHookTool(host, toolName)) return {};
     const localTool = toolName.split("__").at(-1) ?? "";
     if (!SESSION_BOUND_TOOLS.has(localTool)) return {};
-    if (subagent && SUBAGENT_DENIED_TOOLS.has(localTool)) {
+    if (MAIN_SESSION_TOOLS.has(localTool) && (observation.actor.kind !== "main" || observation.actor.assurance !== "observed")) {
       return { hookSpecificOutput: { hookEventName: adapted.outputEventName, permissionDecision: "deny" } };
     }
     return {
       hookSpecificOutput: {
         hookEventName: adapted.outputEventName,
-        permissionDecision: "allow",
         updatedInput: { ...observation.toolInput, _sessionBinding: localTool === "validate_collaboration_decision" ? {
           host,
           sessionId,
@@ -2129,7 +2202,7 @@ async function handleSessionMessageHook(input, host, explicitHostPid, options = 
   remainingBudget(budget);
   return additionalContext(adapted.outputEventName, envelope);
 }
-async function runSessionMessageHook(host, raw, explicitHostPid, options = {}) {
+async function runSessionMessageHookOutcome(host, raw, explicitHostPid, options = {}) {
   let phase = "options";
   try {
     options = snapshotOptions(options);
@@ -2143,43 +2216,49 @@ async function runSessionMessageHook(host, raw, explicitHostPid, options = {}) {
     phase = "serialize";
     const serialized = Object.keys(output).length > 0 ? JSON.stringify(output) : "";
     remainingBudget(options.executionBudget);
-    return serialized;
+    return { ok: true, output: serialized };
   } catch (error) {
-    reportHookFailure(phase, error);
-    return "";
+    return { ok: false, output: "", failure: reportHookFailure(phase, error) };
   }
 }
+async function runSessionMessageHook(host, raw, explicitHostPid, options = {}) {
+  return (await runSessionMessageHookOutcome(host, raw, explicitHostPid, options)).output;
+}
 if (path6.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
+  const failed = (phase, error) => {
+    reportHookFailure(phase, error);
+  };
   let raw = null;
   try {
     raw = readFileSync2(0, "utf8");
   } catch (error) {
-    reportHookFailure("stdin", error);
+    failed("stdin", error);
   }
   if (raw !== null) {
     const hostPidIndex = process.argv.indexOf("--host-pid");
     const hostPid = Number.parseInt(hostPidIndex >= 0 ? process.argv[hostPidIndex + 1] ?? "" : "", 10);
     try {
       const host = resolveHookHost(process.argv.slice(2), "codex");
-      void runSessionMessageHook(host, raw, Number.isInteger(hostPid) ? hostPid : void 0).then((output) => {
-        if (!output) return;
+      void runSessionMessageHookOutcome(host, raw, Number.isInteger(hostPid) ? hostPid : void 0).then((outcome) => {
+        if (!outcome.ok) return;
+        if (!outcome.output) return;
         let reported = false;
         const outputFailed = (error) => {
           if (reported) return;
           reported = true;
-          reportHookFailure("stdout", error);
+          failed("stdout", error);
         };
         process.stdout.on("error", outputFailed);
         try {
-          process.stdout.write(output, (error) => {
+          process.stdout.write(outcome.output, (error) => {
             if (error) outputFailed(error);
           });
         } catch (error) {
           outputFailed(error);
         }
-      }).catch((error) => reportHookFailure("stdout", error));
+      }).catch((error) => failed("stdout", error));
     } catch (error) {
-      reportHookFailure("host-entry", error);
+      failed("host-entry", error);
     }
   }
 }
@@ -2187,6 +2266,7 @@ export {
   handleSessionMessageHook,
   registerHookHostAdapter,
   runSessionMessageHook,
+  runSessionMessageHookOutcome,
   sessionMessageEnvelope,
   sessionMessageTransport
 };

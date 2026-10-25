@@ -9,7 +9,7 @@ import { setTimeout as delay2 } from "node:timers/promises";
 // mcp-server/src/session-message-client.ts
 import { types as utilTypes } from "node:util";
 
-// mcp-server/src/failure-diagnostics.ts
+// runtime/failure-diagnostics.mjs
 var producerReasons = /* @__PURE__ */ new WeakMap();
 var producerCauses = /* @__PURE__ */ new WeakMap();
 var secondaryFailures = /* @__PURE__ */ new WeakMap();
@@ -41,9 +41,6 @@ import path2 from "node:path";
 import { performance } from "node:perf_hooks";
 import tls from "node:tls";
 import { fileURLToPath } from "node:url";
-
-// contracts/types.ts
-var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
 
 // skills/coordinate-subagents/references/model-routing-presets.json
 var model_routing_presets_default = {
@@ -332,7 +329,7 @@ function resolveFromProviderCatalog(providerId, host, policyRevision, providerEn
   if (!canonicalKey) return null;
   const entry = models[canonicalKey];
   const minimumReasoningEffort = minimumEfforts[rawModel] ?? minimumEfforts[canonicalKey] ?? entry.minimum_effort ?? null;
-  const supportedEfforts = entry.supported_efforts && entry.supported_efforts.length > 0 ? entry.supported_efforts : REASONING_EFFORT;
+  const supportedEfforts = entry.supported_efforts ?? [];
   return {
     provider: providerId,
     host,
@@ -459,7 +456,7 @@ function clientFailure(reason, message, cause) {
   return utilTypes.isNativeError(cause) ? tagProducerFailure(cause, reason) : retainFailureCause(tagProducerFailure(new Error(message), reason), cause);
 }
 function signalError(signal) {
-  return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : new Error("The session message operation was aborted.");
+  return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : retainFailureCause(tagProducerFailure(new Error("The session message operation was aborted."), "BROKER_OPERATION_ABORTED"), signal.reason);
 }
 function throwIfAborted(signal) {
   if (signal?.aborted) throw signalError(signal);
@@ -520,11 +517,19 @@ function sessionMessageBrokerEnvironment(environment = process.env) {
 async function readEndpoint(stateDirectory, signal) {
   throwIfAborted(signal);
   const paths = statePaths(stateDirectory);
-  const [rawEndpoint, rawToken, certificate] = await Promise.all([
-    readFile(paths.endpoint, { encoding: "utf8", signal }),
-    readFile(paths.token, { encoding: "utf8", signal }),
-    readFile(paths.certificate, { encoding: "utf8", signal })
-  ]);
+  let rawEndpoint;
+  let rawToken;
+  let certificate;
+  try {
+    [rawEndpoint, rawToken, certificate] = await Promise.all([
+      readFile(paths.endpoint, { encoding: "utf8", signal }),
+      readFile(paths.token, { encoding: "utf8", signal }),
+      readFile(paths.certificate, { encoding: "utf8", signal })
+    ]);
+  } catch (cause) {
+    throwIfAborted(signal);
+    throw clientFailure("BROKER_ENDPOINT_READ_FAILED", "Cannot read the session message broker endpoint.", cause);
+  }
   let endpoint;
   try {
     endpoint = JSON.parse(rawEndpoint);
@@ -718,9 +723,13 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         throwIfAborted(signal);
         if (error instanceof BrokerRequestRejected) throw error;
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);
-        else {
-          await mkdir(stateDirectory, { recursive: true, mode: 448 });
+        try {
+          if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);
+          else await mkdir(stateDirectory, { recursive: true, mode: 448 });
+        } catch (cause) {
+          throw clientFailure("BROKER_STATE_DIRECTORY_FAILED", "Cannot prepare the session message state directory.", cause);
+        }
+        if (!prepareStateDirectory) {
           if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
           try {
             await chmod(stateDirectory, 448);
@@ -732,12 +741,17 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         const adjacentBroker = fileURLToPath(new URL("./session-message-broker.mjs", import.meta.url));
         const brokerPath = existsSync(adjacentBroker) ? adjacentBroker : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
-          detached: true,
-          windowsHide: true,
-          stdio: "ignore",
-          env: sessionMessageBrokerEnvironment()
-        });
+        let child;
+        try {
+          child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+            detached: true,
+            windowsHide: true,
+            stdio: "ignore",
+            env: sessionMessageBrokerEnvironment()
+          });
+        } catch (cause) {
+          throw clientFailure("BROKER_START_FAILED", "Cannot start the session message broker.", cause);
+        }
         child.unref();
         await waitForSessionMessageBrokerReady(
           stateDirectory,
@@ -770,6 +784,11 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
         { enforceDeadline: true, ...options.onOperationWrite ? { onOperationWrite: options.onOperationWrite } : {} }
       );
     }
+    let operationWriteAttempted = false;
+    const onOperationWrite = () => {
+      operationWriteAttempted = true;
+      return options.onOperationWrite?.();
+    };
     try {
       return await requestSessionMessageOnce(
         operation,
@@ -777,12 +796,12 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
         stateDirectory,
         remainingMilliseconds(deadline, signal),
         signal,
-        { enforceDeadline: options.deadlineMonotonicMs !== void 0 }
+        { enforceDeadline: options.deadlineMonotonicMs !== void 0, onOperationWrite }
       );
     } catch (error) {
       try {
         throwIfAborted(signal);
-        if (error instanceof BrokerRequestRejected) throw error;
+        if (error instanceof BrokerRequestRejected || operationWriteAttempted) throw error;
         await ensureSessionMessageBroker(
           stateDirectory,
           remainingMilliseconds(deadline, signal),
@@ -796,7 +815,7 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
           stateDirectory,
           remainingMilliseconds(deadline, signal),
           signal,
-          { enforceDeadline: options.deadlineMonotonicMs !== void 0 }
+          { enforceDeadline: options.deadlineMonotonicMs !== void 0, onOperationWrite }
         );
       } catch (recoveryError) {
         throw retainFailureSecondary(recoveryError, error);

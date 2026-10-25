@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // mcp-server/src/session-message-broker.ts
-import { createHash as createHash3, createPublicKey, randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual2, X509Certificate as X509Certificate2 } from "node:crypto";
+import { createHash as createHash5, createPublicKey, randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual2, X509Certificate as X509Certificate2 } from "node:crypto";
 import { existsSync, renameSync as renameSync2, rmSync, writeFileSync } from "node:fs";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import path5 from "node:path";
@@ -34,11 +34,92 @@ function sessionMessageLineReader(limitBytes) {
 // mcp-server/src/session-message-store.ts
 import { mkdirSync as mkdirSync2 } from "node:fs";
 import path3 from "node:path";
-import { createHash as createHash2, randomUUID as randomUUID3 } from "node:crypto";
+import { createHash as createHash3, randomUUID as randomUUID3 } from "node:crypto";
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
+import { types as utilTypes2 } from "node:util";
+
+// runtime/failure-diagnostics.mjs
+import { createHash } from "node:crypto";
+import { types } from "node:util";
+var producerReasons = /* @__PURE__ */ new WeakMap();
+var producerCauses = /* @__PURE__ */ new WeakMap();
+var secondaryFailures = /* @__PURE__ */ new WeakMap();
+function tagProducerFailure(error, reason) {
+  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
+  if (!producerReasons.has(error)) producerReasons.set(error, reason);
+  return error;
+}
+function retainFailureCause(error, cause) {
+  if (!producerCauses.has(error)) producerCauses.set(error, cause);
+  return error;
+}
+function retainFailureSecondary(error, secondary) {
+  if (error && (typeof error === "object" || typeof error === "function") && error !== secondary) {
+    const prior = secondaryFailures.get(error) ?? [];
+    if (prior.length < 2 && !prior.includes(secondary)) secondaryFailures.set(error, [...prior, secondary]);
+  }
+  return error;
+}
+function producerFailureReason(error) {
+  return error && (typeof error === "object" || typeof error === "function") ? producerReasons.get(error) ?? null : null;
+}
+function failureContext(error) {
+  const seen = /* @__PURE__ */ new Set();
+  function describe(value, depth) {
+    const type = value === null ? "null" : typeof value;
+    if (!value || typeof value !== "object" && typeof value !== "function") return { type };
+    if (types.isProxy(value)) return { type, opaque: "proxy" };
+    if (seen.has(value)) return { type, cycle: true };
+    seen.add(value);
+    try {
+      const prototype = Object.getPrototypeOf(value);
+      const context = {
+        type: prototype === SyntaxError.prototype ? "syntax-error" : prototype === TypeError.prototype ? "type-error" : prototype === RangeError.prototype ? "range-error" : types.isNativeError(value) ? "error" : type
+      };
+      const producerReason = producerFailureReason(value);
+      if (producerReason) context.producerReason = producerReason;
+      if (producerCauses.has(value)) context.producerCause = depth < 2 ? describe(producerCauses.get(value), depth + 1) : { truncated: true };
+      const secondary = secondaryFailures.get(value);
+      if (secondary) context.secondary = depth < 2 ? secondary.map((error2) => describe(error2, depth + 1)) : { truncated: true };
+      const code2 = Object.getOwnPropertyDescriptor(value, "code");
+      if (code2) {
+        if (!("value" in code2)) context.code = { type: "accessor", observed: false };
+        else if (typeof code2.value === "string") {
+          const prefix = code2.value.slice(0, 256);
+          context.code = {
+            type: "string",
+            length: code2.value.length,
+            prefixCodeUnits: prefix.length,
+            truncated: prefix.length !== code2.value.length,
+            encoding: "utf16le",
+            prefixSha256: createHash("sha256").update(Buffer.from(prefix, "utf16le")).digest("hex")
+          };
+        } else context.code = { type: code2.value === null ? "null" : typeof code2.value, observed: false };
+      }
+      if (code2 && "value" in code2 && code2.value === "ERR_SQLITE_ERROR") {
+        const detail = Object.getOwnPropertyDescriptor(value, "errcode");
+        if (detail && !("value" in detail)) context.sqlite = { type: "accessor", observed: false };
+        else if (detail && Number.isInteger(detail.value) && detail.value >= 1 && detail.value <= 65535 && (detail.value & 255) >= 1 && (detail.value & 255) <= 28) {
+          context.sqlite = { errcode: detail.value, primaryCode: detail.value & 255 };
+        } else context.sqlite = { observed: false };
+      }
+      const cause = Object.getOwnPropertyDescriptor(value, "cause");
+      if (cause) {
+        if (!("value" in cause)) context.cause = { type: "accessor", observed: false };
+        else context.cause = depth < 2 ? describe(cause.value, depth + 1) : { truncated: true };
+      }
+      return context;
+    } catch {
+      return { type, unreadable: true };
+    } finally {
+      seen.delete(value);
+    }
+  }
+  return describe(error, 0);
+}
 
 // mcp-server/src/session-message-wake-port.ts
-import { createHash, randomUUID as randomUUID2 } from "node:crypto";
+import { createHash as createHash2, randomUUID as randomUUID2 } from "node:crypto";
 
 // mcp-server/src/trust-store.ts
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
@@ -49,7 +130,6 @@ import { DatabaseSync } from "node:sqlite";
 
 // contracts/types.ts
 var CONTRACT_VERSION = "1.0.0";
-var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
 var WorkflowContractError = class extends Error {
   constructor(code2, message, details = null) {
     super(message);
@@ -82,27 +162,6 @@ function canonicalJson(value, subject = "Convergence input") {
     return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key], subject)}`).join(",")}}`;
   }
   throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
-}
-
-// mcp-server/src/failure-diagnostics.ts
-var producerReasons = /* @__PURE__ */ new WeakMap();
-var producerCauses = /* @__PURE__ */ new WeakMap();
-var secondaryFailures = /* @__PURE__ */ new WeakMap();
-function tagProducerFailure(error, reason) {
-  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
-  if (!producerReasons.has(error)) producerReasons.set(error, reason);
-  return error;
-}
-function retainFailureCause(error, cause) {
-  if (!producerCauses.has(error)) producerCauses.set(error, cause);
-  return error;
-}
-function retainFailureSecondary(error, secondary) {
-  if (error && (typeof error === "object" || typeof error === "function") && error !== secondary) {
-    const prior = secondaryFailures.get(error) ?? [];
-    if (prior.length < 2 && !prior.includes(secondary)) secondaryFailures.set(error, [...prior, secondary]);
-  }
-  return error;
 }
 
 // mcp-server/src/trust-store.ts
@@ -309,7 +368,6 @@ var TrustStore = class {
     const version = this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
     if (version > SCHEMA_VERSION) {
       throw tagProducerFailure(new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
-        databasePath: this.databasePath,
         supportedVersion: SCHEMA_VERSION,
         actualVersion: version
       }), "TRUST_SCHEMA_UNSUPPORTED");
@@ -371,11 +429,15 @@ var TrustStore = class {
       throw this.storageError(message, cause, details);
     }
   }
+  /**
+   * A storage or driver failure means the trust store is unavailable, never that the caller's input was invalid.
+   * Details keep a bounded, redacted cause (no message, path or SQL); the actual error stays a private producer cause.
+   */
   storageError(message, cause, details = {}) {
-    return retainFailureCause(tagProducerFailure(new WorkflowContractError("INVALID_INPUT", message, {
+    return retainFailureCause(tagProducerFailure(new WorkflowContractError("MCP_UNAVAILABLE", message, {
       ...details,
-      databasePath: this.databasePath,
-      cause: cause instanceof Error ? cause.message : String(cause)
+      reason: "TRUST_STORAGE_FAILED",
+      cause: failureContext(cause)
     }), "TRUST_STORAGE_FAILED"), cause);
   }
 };
@@ -667,7 +729,7 @@ function resolveFromProviderCatalog(providerId, host, policyRevision, providerEn
   if (!canonicalKey) return null;
   const entry = models[canonicalKey];
   const minimumReasoningEffort = minimumEfforts[rawModel] ?? minimumEfforts[canonicalKey] ?? entry.minimum_effort ?? null;
-  const supportedEfforts = entry.supported_efforts && entry.supported_efforts.length > 0 ? entry.supported_efforts : REASONING_EFFORT;
+  const supportedEfforts = entry.supported_efforts ?? [];
   return {
     provider: providerId,
     host,
@@ -777,7 +839,7 @@ function observationDigest(event) {
     event.actor.assurance,
     [...new Set(event.wakeCandidates)].sort()
   ];
-  return `sha256:${createHash("sha256").update(JSON.stringify(normalized)).digest("hex")}`;
+  return `sha256:${createHash2("sha256").update(JSON.stringify(normalized)).digest("hex")}`;
 }
 function verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, source = resolveTrustDatabasePath()) {
   const receipt = typeof source === "string" ? TrustStore.readVerifiedInputSource(source, sourceReceiptId) : source.readVerifiedInputSource(sourceReceiptId);
@@ -846,7 +908,7 @@ function iso(milliseconds) {
   return new Date(milliseconds).toISOString();
 }
 function nonceDigest(nonce) {
-  return createHash2("sha256").update(nonce).digest("hex");
+  return createHash3("sha256").update(nonce).digest("hex");
 }
 function boundedIdentity(value) {
   if (!isBoundedIdentity(value)) throw new Error("host and sessionId must use bounded identifier characters.");
@@ -915,6 +977,7 @@ var SessionMessageStore = class {
       relay_id TEXT NOT NULL,
       pid INTEGER NOT NULL,
       parent_pid INTEGER NOT NULL,
+      relay_start_token TEXT,
       lease_until TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       PRIMARY KEY (host, session_id, transport)
@@ -966,6 +1029,10 @@ var SessionMessageStore = class {
       CREATE INDEX IF NOT EXISTS prepared_messages_expiry ON prepared_messages (expires_at);
       CREATE INDEX IF NOT EXISTS prepared_messages_owner ON prepared_messages (sender_host, sender_session_id, receipt);`);
         const messageColumns = this.database.prepare("PRAGMA table_info(messages)").all();
+        const relayColumns = this.database.prepare("PRAGMA table_info(relay_leases)").all();
+        if (!relayColumns.some((column) => column.name === "relay_start_token")) {
+          this.database.exec("ALTER TABLE relay_leases ADD COLUMN relay_start_token TEXT;");
+        }
         if (!messageColumns.some((column) => column.name === "delivery_attempts")) {
           this.database.exec("ALTER TABLE messages ADD COLUMN delivery_attempts INTEGER NOT NULL DEFAULT 0;");
         }
@@ -1373,7 +1440,7 @@ var SessionMessageStore = class {
       WHERE expires_at > ? AND ((sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?)
         OR (sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?))
       ORDER BY created_at DESC, message_id DESC LIMIT 20`).all(iso(nowMs), sender.host, sender.sessionId, target.host, target.sessionId, target.host, target.sessionId, sender.host, sender.sessionId);
-    return { related: rows.length > 0, fingerprint: createHash2("sha256").update(JSON.stringify(rows)).digest("hex") };
+    return { related: rows.length > 0, fingerprint: createHash3("sha256").update(JSON.stringify(rows)).digest("hex") };
   }
   liveRelay(target, transport, nowMs = Date.now()) {
     boundedIdentity(target);
@@ -1426,9 +1493,9 @@ var SessionMessageStore = class {
   /** Retained startup reservation metadata; not a relay liveness view. */
   relayOwner(target, transport) {
     boundedIdentity(target);
-    const row = this.database.prepare("SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host=? AND session_id=? AND transport=?").get(target.host, target.sessionId, transport);
+    const row = this.database.prepare("SELECT relay_id, pid, parent_pid, relay_start_token FROM relay_leases WHERE host=? AND session_id=? AND transport=?").get(target.host, target.sessionId, transport);
     const generation = row?.relay_id.match(/^verified-relay-v1:[0-9a-f-]{36}:([0-9a-f]{64})$/u)?.[1];
-    return row ? { relayId: row.relay_id, pid: row.pid, parentPid: row.parent_pid, instanceId: generation ? "host-process-v1:" + generation : null } : null;
+    return row ? { relayId: row.relay_id, pid: row.pid, parentPid: row.parent_pid, instanceId: generation ? "host-process-v1:" + generation : null, relayStartToken: row.relay_start_token } : null;
   }
   /** Unknown pid=0 grants are never automatically TTL-retried. */
   prepareVerifiedRelay(input, nowMs = Date.now()) {
@@ -1439,7 +1506,7 @@ var SessionMessageStore = class {
     return this.transaction(() => {
       const previous = this.relayOwner(input, input.transport);
       const expected = input.expectedOwner;
-      if (previous === null ? expected !== null : !expected || previous.relayId !== expected.relayId || previous.pid !== expected.pid || previous.parentPid !== expected.parentPid || previous.instanceId !== expected.instanceId) {
+      if (previous === null ? expected !== null : !expected || previous.relayId !== expected.relayId || previous.pid !== expected.pid || previous.parentPid !== expected.parentPid || previous.instanceId !== expected.instanceId || previous.relayStartToken !== expected.relayStartToken) {
         return { spawn: false, relayId: null, instanceId: input.instanceId };
       }
       if (previous?.relayId.startsWith("verified-relay-v1:") && previous.instanceId === null) return { spawn: false, relayId: null, instanceId: input.instanceId };
@@ -1449,7 +1516,7 @@ var SessionMessageStore = class {
       }
       const relayId = "verified-relay-v1:" + randomUUID3() + ":" + input.instanceId.slice("host-process-v1:".length);
       this.startPresence(input, nowMs);
-      this.database.prepare("INSERT INTO relay_leases(host,session_id,transport,relay_id,pid,parent_pid,lease_until,updated_at) VALUES(?,?,?,?,0,?,'9999-12-31T23:59:59.999Z',?) ON CONFLICT(host,session_id,transport) DO UPDATE SET relay_id=excluded.relay_id,pid=0,parent_pid=excluded.parent_pid,lease_until=excluded.lease_until,updated_at=excluded.updated_at").run(input.host, input.sessionId, input.transport, relayId, input.parentPid, iso(nowMs));
+      this.database.prepare("INSERT INTO relay_leases(host,session_id,transport,relay_id,pid,parent_pid,lease_until,updated_at) VALUES(?,?,?,?,0,?,'9999-12-31T23:59:59.999Z',?) ON CONFLICT(host,session_id,transport) DO UPDATE SET relay_id=excluded.relay_id,pid=0,parent_pid=excluded.parent_pid,relay_start_token=NULL,lease_until=excluded.lease_until,updated_at=excluded.updated_at").run(input.host, input.sessionId, input.transport, relayId, input.parentPid, iso(nowMs));
       return { spawn: true, relayId, instanceId: input.instanceId };
     });
   }
@@ -1457,12 +1524,14 @@ var SessionMessageStore = class {
     boundedIdentity(input);
     if (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(input.relayId) || !Number.isInteger(input.pid) || input.pid < 1 || !Number.isInteger(input.parentPid) || input.parentPid < 1) throw new Error("Invalid verified relay activation.");
     if (!/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId) || !input.relayId.endsWith(":" + input.instanceId.slice("host-process-v1:".length))) return false;
+    const relayStartToken = input.relayStartToken ?? null;
+    if (relayStartToken !== null && (typeof relayStartToken !== "string" || !relayStartToken.trim() || relayStartToken.length > 200 || relayStartToken.includes("\0"))) throw new Error("Invalid relay process token.");
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.activateVerifiedRelay(input, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     return this.transaction(() => {
       const presence = this.presence(input, nowMs);
       if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport) return false;
-      return this.database.prepare("UPDATE relay_leases SET pid=?,lease_until=?,updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND parent_pid=? AND (pid=0 OR pid=?)").run(input.pid, iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId, input.parentPid, input.pid).changes === 1;
+      return this.database.prepare("UPDATE relay_leases SET pid=?,relay_start_token=?,lease_until=?,updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND parent_pid=? AND (pid=0 OR (pid=? AND relay_start_token IS ?))").run(input.pid, relayStartToken, iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId, input.parentPid, input.pid, relayStartToken).changes === 1;
     });
   }
   releaseVerifiedRelay(input, nowMs = Date.now()) {
@@ -1495,8 +1564,7 @@ var SessionMessageStore = class {
         lease_until = excluded.lease_until, updated_at = excluded.updated_at
       WHERE relay_leases.relay_id NOT LIKE 'verified-relay-v1:%' AND (
         relay_leases.lease_until <= excluded.updated_at
-        OR relay_leases.relay_id = excluded.relay_id
-        OR relay_leases.parent_pid = excluded.parent_pid)`).run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now);
+        OR relay_leases.relay_id = excluded.relay_id)`).run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now);
     return result.changes === 1;
   }
   heartbeatRelay(input, nowMs = Date.now()) {
@@ -1593,15 +1661,15 @@ var SessionMessageStore = class {
       dispatchEpoch: Number(row.dispatch_epoch)
     };
   }
-  reserveManagedWake(input, nowMs = Date.now()) {
+  reserveManagedWake(input, atMs) {
     boundedIdentity(input);
     if (!/^[A-Za-z0-9_-]{22,128}$/u.test(input.nonce)) throw new Error("Invalid wake nonce.");
     for (const value of [input.instanceId, input.relayId, input.transport]) {
       if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(value)) throw new Error("Invalid wake relay binding.");
     }
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.reserveManagedWake(input, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.reserveManagedWake(input, atMs));
     return this.transaction(() => {
+      const nowMs = this.shared ? this.shared.time(atMs ?? Date.now()) : atMs ?? Date.now();
       this.prune(nowMs);
       let attempt = null;
       let active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
@@ -1652,10 +1720,10 @@ var SessionMessageStore = class {
     });
   }
   /** CAS succeeds once. The caller must not call a host adapter without this committed start. */
-  startManagedWake(attempt, nowMs = Date.now()) {
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startManagedWake(attempt, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+  startManagedWake(attempt, atMs) {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startManagedWake(attempt, atMs));
     return this.transaction(() => {
+      const nowMs = this.shared ? this.shared.time(atMs ?? Date.now()) : atMs ?? Date.now();
       const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
         AND state = 'reserved' AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?`).get(
         nonceDigest(attempt.nonce),
@@ -1973,7 +2041,11 @@ var SessionMessageStore = class {
       this.database.exec("COMMIT");
       return result;
     } catch (error) {
-      this.database.exec("ROLLBACK");
+      try {
+        this.database.exec("ROLLBACK");
+      } catch (rollbackError) {
+        retainFailureSecondary(error, utilTypes2.isNativeError(rollbackError) ? tagProducerFailure(rollbackError, "SESSION_MESSAGE_ROLLBACK_FAILED") : rollbackError);
+      }
       throw error;
     }
   }
@@ -2106,27 +2178,38 @@ function processStartToken(pid, platform = process.platform, timeoutMs) {
 }
 
 // mcp-server/src/broker-process-lock.ts
-import { randomBytes as randomBytes3 } from "node:crypto";
+import { createHash as createHash4, randomBytes as randomBytes3 } from "node:crypto";
 import { lstatSync, mkdirSync as mkdirSync3, mkdtempSync, readdirSync, renameSync, rmdirSync } from "node:fs";
 import path4 from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-var OWNER = /^owner-([1-9][0-9]*)-([a-f0-9]{32})$/u;
+var OWNER = /^owner-([1-9][0-9]*)-([a-f0-9]{32})(?:-([a-f0-9]{64}))?$/u;
+var PUBLISH_RETRY_CODES = ["EEXIST", "ENOTEMPTY", "EPERM", "EACCES", "ENOENT"];
+var REOBSERVE_CODES = [
+  "BROKER_LOCK_EMPTY_DIRECTORY",
+  "BROKER_LOCK_CHANGED",
+  ...PUBLISH_RETRY_CODES.map((value) => "BROKER_LOCK_PUBLISH_" + value)
+];
 var code = (error) => error?.code;
+var startHash = (token) => createHash4("sha256").update(token).digest("hex");
+var ownStartHash;
 function unavailable(reason, cause) {
   throw Object.assign(
     new Error("Broker lock state requires inspection: " + reason + ".", { cause }),
     { code: "BROKER_LOCK_" + reason }
   );
 }
-function definitelyGone(pid) {
+function definitelyGone(pid, expectedStartHash) {
   try {
     process.kill(pid, 0);
-    return false;
   } catch (error) {
     if (code(error) === "ESRCH") return true;
     if (code(error) === "EPERM") return false;
     return unavailable("OWNER_UNVERIFIED", error);
   }
+  if (expectedStartHash === void 0) return false;
+  const actual = processStartToken(pid);
+  if (actual === null) return unavailable("OWNER_UNVERIFIED");
+  return startHash(actual) !== expectedStartHash;
 }
 function retireObservedDeadOwner(lockPath) {
   let info;
@@ -2151,7 +2234,7 @@ function retireObservedDeadOwner(lockPath) {
   if (!match || !entry.isDirectory() || entry.isSymbolicLink()) return unavailable("UNRECOGNIZED_OWNER");
   const pid = Number(match[1]);
   if (!Number.isSafeInteger(pid) || pid < 1) return unavailable("UNRECOGNIZED_OWNER");
-  if (!definitelyGone(pid)) return false;
+  if (!definitelyGone(pid, match[3])) return false;
   const marker = path4.join(lockPath, entry.name);
   try {
     rmdirSync(marker);
@@ -2168,9 +2251,49 @@ function retireObservedDeadOwner(lockPath) {
     throw error;
   }
 }
+function retireAbandonedStages(lockPath) {
+  const prefix = path4.basename(lockPath) + ".stage-";
+  for (const entry of readdirSync(path4.dirname(lockPath), { withFileTypes: true })) {
+    if (!entry.name.startsWith(prefix) || !entry.isDirectory() || entry.isSymbolicLink()) continue;
+    const stage = path4.join(path4.dirname(lockPath), entry.name);
+    const namedOwner = entry.name.slice(prefix.length, -7);
+    const namedMatch = /-[A-Za-z0-9]{6}$/u.test(entry.name) ? OWNER.exec(namedOwner) : null;
+    let children;
+    try {
+      children = readdirSync(stage, { withFileTypes: true });
+    } catch (error) {
+      if (code(error) === "ENOENT") continue;
+      throw error;
+    }
+    const marker = children.length === 1 ? children[0] : null;
+    const owner = marker?.name ?? (children.length === 0 && namedMatch?.[3] ? namedOwner : "");
+    const match = OWNER.exec(owner);
+    if (!match || marker && (!marker.isDirectory() || marker.isSymbolicLink()) || namedMatch && owner !== namedOwner) continue;
+    const pid = Number(match[1]);
+    if (!Number.isSafeInteger(pid) || pid < 1) continue;
+    try {
+      if (!definitelyGone(pid, match[3])) continue;
+    } catch (error) {
+      if (code(error) === "BROKER_LOCK_OWNER_UNVERIFIED") continue;
+      throw error;
+    }
+    try {
+      if (marker) rmdirSync(path4.join(stage, owner));
+      rmdirSync(stage);
+    } catch (error) {
+      if (!["ENOENT", "ENOTEMPTY", "EEXIST"].includes(code(error) ?? "")) throw error;
+    }
+  }
+}
 function acquireBrokerProcessLock(lockPath) {
-  const owner = "owner-" + process.pid + "-" + randomBytes3(16).toString("hex");
-  const stage = mkdtempSync(lockPath + ".stage-");
+  if (ownStartHash === void 0) {
+    const token = processStartToken(process.pid);
+    if (token === null) return unavailable("OWNER_UNVERIFIED");
+    ownStartHash = startHash(token);
+  }
+  const owner = "owner-" + process.pid + "-" + randomBytes3(16).toString("hex") + "-" + ownStartHash;
+  retireAbandonedStages(lockPath);
+  const stage = mkdtempSync(lockPath + ".stage-" + owner + "-");
   let markerCreated = false;
   let published = false;
   let result = null;
@@ -2186,7 +2309,7 @@ function acquireBrokerProcessLock(lockPath) {
         result = Object.freeze({ path: lockPath, owner });
         break;
       } catch (error) {
-        if (!["EEXIST", "ENOTEMPTY", "EPERM", "EACCES", "ENOENT"].includes(code(error) ?? "")) throw error;
+        if (!PUBLISH_RETRY_CODES.includes(code(error) ?? "")) throw error;
         if (attempt === 1) return unavailable("PUBLISH_" + (code(error) ?? "UNKNOWN"), error);
       }
     }
@@ -2226,15 +2349,7 @@ async function acquireBrokerProcessLockWhenReady(lockPath) {
     try {
       return acquireBrokerProcessLock(lockPath);
     } catch (error) {
-      if (attempt >= 19 || ![
-        "BROKER_LOCK_EMPTY_DIRECTORY",
-        "BROKER_LOCK_CHANGED",
-        "BROKER_LOCK_PUBLISH_EEXIST",
-        "BROKER_LOCK_PUBLISH_ENOTEMPTY",
-        "BROKER_LOCK_PUBLISH_EPERM",
-        "BROKER_LOCK_PUBLISH_EACCES",
-        "BROKER_LOCK_PUBLISH_ENOENT"
-      ].includes(code(error) ?? "")) throw error;
+      if (attempt >= 19 || !REOBSERVE_CODES.includes(code(error) ?? "")) throw error;
       await delay(25);
     }
   }
@@ -2459,7 +2574,7 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
       const owner = JSON.stringify(target);
       const binding = runtime.relays.get(owner);
       const presence = store.presence(target);
-      const wakeKeys = nonces.map((nonce) => createHash3("sha256").update(nonce).digest("hex"));
+      const wakeKeys = nonces.map((nonce) => createHash5("sha256").update(nonce).digest("hex"));
       const sameGeneration = wakeKeys.length > 0 && wakeKeys.every((key) => {
         const wake = runtime.wakes.get(key);
         return wake?.owner === owner && wake.instanceId === binding?.instanceId && wake.relayId === binding?.relayId;
@@ -2493,7 +2608,7 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
         const nonces = payload.observation.wakeCandidates ?? [];
         const owner = JSON.stringify(target);
         const presence = store.presence(target);
-        const keys = nonces.map((nonce) => createHash3("sha256").update(nonce).digest("hex"));
+        const keys = nonces.map((nonce) => createHash5("sha256").update(nonce).digest("hex"));
         if (keys.length > 0 && keys.every((key) => {
           const wake = runtime.wakes.get(key);
           return wake?.owner === owner && wake.instanceId === binding.instanceId && wake.relayId === binding.relayId;
@@ -2569,7 +2684,7 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
       const previous = store.relayOwner(target, transport);
       const deadline = performance.now() + timeout;
       if (processStartToken(parentPid, process.platform, Math.max(1, Math.floor(deadline - performance.now()))) !== parentStartToken || performance.now() >= deadline) throw new Error("Relay host generation is unverified.");
-      const instanceId = "host-process-v1:" + createHash3("sha256").update(JSON.stringify([target.host, target.sessionId, parentPid, parentStartToken])).digest("hex");
+      const instanceId = "host-process-v1:" + createHash5("sha256").update(JSON.stringify([target.host, target.sessionId, parentPid, parentStartToken])).digest("hex");
       const wakeVisibility = string(payload.wakeVisibility, "wakeVisibility");
       const idleWake = string(payload.idleWake, "idleWake");
       if (!["silent", "user-message", "none"].includes(wakeVisibility) || !["silent", "user-message", "none"].includes(idleWake)) throw new Error("Invalid relay delivery capabilities.");
@@ -2577,6 +2692,10 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
       if (previous && previous.pid > 0) {
         try {
           process.kill(previous.pid, 0);
+          if (typeof previous.relayStartToken === "string") {
+            const actual = processStartToken(previous.pid, process.platform, Math.max(1, Math.floor(deadline - performance.now())));
+            if (actual !== null && actual !== previous.relayStartToken) confirmedDead = { relayId: previous.relayId, pid: previous.pid };
+          }
         } catch (error) {
           if (error && typeof error === "object" && "code" in error && error.code === "ESRCH") confirmedDead = { relayId: previous.relayId, pid: previous.pid };
         }
@@ -2612,21 +2731,25 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
       const reserved = relayId.startsWith("verified-relay-v1:");
       if (reserved) {
         const parentStartToken = string(payload.parentStartToken, "parentStartToken");
-        const expected = "host-process-v1:" + createHash3("sha256").update(JSON.stringify([target.host, target.sessionId, parentPid, parentStartToken])).digest("hex");
+        const expected = "host-process-v1:" + createHash5("sha256").update(JSON.stringify([target.host, target.sessionId, parentPid, parentStartToken])).digest("hex");
         if (parentPid < 1 || !parentStartToken.trim() || string(payload.instanceId, "instanceId") !== expected || processStartToken(parentPid) !== parentStartToken) return { acquired: false };
       }
+      const pid = integer2(payload.pid, "pid");
+      const relayStartToken = reserved ? processStartToken(pid) : null;
+      if (reserved && relayStartToken === null) return { acquired: false };
       const acquired = reserved ? store.activateVerifiedRelay({
         ...target,
         transport: string(payload.transport, "transport"),
         relayId,
-        pid: integer2(payload.pid, "pid"),
+        pid,
+        relayStartToken,
         parentPid,
         instanceId: string(payload.instanceId, "instanceId")
       }) : store.acquireRelay({
         ...target,
         transport: string(payload.transport, "transport"),
         relayId: string(payload.relayId, "relayId"),
-        pid: integer2(payload.pid, "pid"),
+        pid,
         parentPid: integer2(payload.parentPid, "parentPid")
       });
       observePeerRelay(store, payload, acquired);
@@ -2710,7 +2833,7 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
           relayId: string(payload.relayId, "relayId"),
           transport: string(payload.transport, "transport"),
           ...payload.resume === void 0 ? {} : { resume: boolean(payload.resume, "resume") }
-        }, Date.now());
+        });
       }
       const shouldDispatch = store.reserveWake(target, nonce);
       const runtime = peerWaitRuntime(store);
@@ -2718,12 +2841,12 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
       const binding = runtime.relays.get(owner);
       if (shouldDispatch && binding && binding.instanceId === store.presence(target).instanceId) {
         if (runtime.wakes.size >= 1e3) runtime.wakes.delete(runtime.wakes.keys().next().value);
-        runtime.wakes.set(createHash3("sha256").update(nonce).digest("hex"), { owner, instanceId: binding.instanceId, relayId: binding.relayId, expiresAt: Date.now() + 36e5 });
+        runtime.wakes.set(createHash5("sha256").update(nonce).digest("hex"), { owner, instanceId: binding.instanceId, relayId: binding.relayId, expiresAt: Date.now() + 36e5 });
       }
       return { dispatch: shouldDispatch };
     }
     case "start-wake":
-      return store.startManagedWake(wakeAttempt(payload.attempt), Date.now());
+      return store.startManagedWake(wakeAttempt(payload.attempt));
     case "record-wake-outcome": {
       const outcome = string(payload.outcome, "outcome");
       if (outcome !== "submitted" && outcome !== "definite-failure" && outcome !== "accepted-or-unknown") throw new Error("Invalid wake dispatch outcome.");
@@ -2832,7 +2955,6 @@ async function startSessionMessageBroker(stateDirectory) {
     const historicalWakeVerifier = (target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs) => verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, trustDatabasePath);
     let lastActivity = Date.now();
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
-      lastActivity = Date.now();
       const readLine = sessionMessageLineReader(SESSION_MESSAGE_MAX_REQUEST_BYTES);
       socket.on("error", () => socket.destroy());
       socket.setTimeout(5e3, () => socket.destroy());
@@ -2851,6 +2973,7 @@ async function startSessionMessageBroker(stateDirectory) {
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
           const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader, historicalWakeVerifier);
+          if (!["ping", "relay-tick", "heartbeat-relay", "presence-heartbeat"].includes(request.operation)) lastActivity = Date.now();
           socket.end(`${JSON.stringify({ ok: true, data })}
 `);
         } catch (error) {
@@ -2882,7 +3005,7 @@ async function startSessionMessageBroker(stateDirectory) {
       startedAt: (/* @__PURE__ */ new Date()).toISOString(),
       certificateFingerprint256: fingerprint256
     };
-    temporary = `${endpointPath}.${process.pid}.${createHash3("sha256").update(String(Date.now())).digest("hex").slice(0, 8)}.tmp`;
+    temporary = `${endpointPath}.${process.pid}.${createHash5("sha256").update(String(Date.now())).digest("hex").slice(0, 8)}.tmp`;
     writeFileSync(temporary, `${JSON.stringify(endpoint)}
 `, { encoding: "utf8", mode: 384 });
     await publishEndpoint(temporary, endpointPath);

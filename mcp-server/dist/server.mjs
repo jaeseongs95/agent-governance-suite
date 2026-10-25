@@ -418,11 +418,11 @@ var require_codegen = __commonJS({
         const rhs = this.rhs === void 0 ? "" : ` = ${this.rhs}`;
         return `${varKind} ${this.name}${rhs};` + _n2;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         if (!names[this.name.str])
           return;
         if (this.rhs)
-          this.rhs = optimizeExpr(this.rhs, names, constants);
+          this.rhs = optimizeExpr(this.rhs, names, constants2);
         return this;
       }
       get names() {
@@ -439,10 +439,10 @@ var require_codegen = __commonJS({
       render({ _n: _n2 }) {
         return `${this.lhs} = ${this.rhs};` + _n2;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         if (this.lhs instanceof code_1.Name && !names[this.lhs.str] && !this.sideEffects)
           return;
-        this.rhs = optimizeExpr(this.rhs, names, constants);
+        this.rhs = optimizeExpr(this.rhs, names, constants2);
         return this;
       }
       get names() {
@@ -503,8 +503,8 @@ var require_codegen = __commonJS({
       optimizeNodes() {
         return `${this.code}` ? this : void 0;
       }
-      optimizeNames(names, constants) {
-        this.code = optimizeExpr(this.code, names, constants);
+      optimizeNames(names, constants2) {
+        this.code = optimizeExpr(this.code, names, constants2);
         return this;
       }
       get names() {
@@ -533,12 +533,12 @@ var require_codegen = __commonJS({
         }
         return nodes.length > 0 ? this : void 0;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         const { nodes } = this;
         let i = nodes.length;
         while (i--) {
           const n = nodes[i];
-          if (n.optimizeNames(names, constants))
+          if (n.optimizeNames(names, constants2))
             continue;
           subtractNames(names, n.names);
           nodes.splice(i, 1);
@@ -591,12 +591,12 @@ var require_codegen = __commonJS({
           return void 0;
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         var _a3;
-        this.else = (_a3 = this.else) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants);
-        if (!(super.optimizeNames(names, constants) || this.else))
+        this.else = (_a3 = this.else) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants2);
+        if (!(super.optimizeNames(names, constants2) || this.else))
           return;
-        this.condition = optimizeExpr(this.condition, names, constants);
+        this.condition = optimizeExpr(this.condition, names, constants2);
         return this;
       }
       get names() {
@@ -619,10 +619,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.iteration})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names, constants2) {
+        if (!super.optimizeNames(names, constants2))
           return;
-        this.iteration = optimizeExpr(this.iteration, names, constants);
+        this.iteration = optimizeExpr(this.iteration, names, constants2);
         return this;
       }
       get names() {
@@ -658,10 +658,10 @@ var require_codegen = __commonJS({
       render(opts) {
         return `for(${this.varKind} ${this.name} ${this.loop} ${this.iterable})` + super.render(opts);
       }
-      optimizeNames(names, constants) {
-        if (!super.optimizeNames(names, constants))
+      optimizeNames(names, constants2) {
+        if (!super.optimizeNames(names, constants2))
           return;
-        this.iterable = optimizeExpr(this.iterable, names, constants);
+        this.iterable = optimizeExpr(this.iterable, names, constants2);
         return this;
       }
       get names() {
@@ -703,11 +703,11 @@ var require_codegen = __commonJS({
         (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNodes();
         return this;
       }
-      optimizeNames(names, constants) {
+      optimizeNames(names, constants2) {
         var _a3, _b;
-        super.optimizeNames(names, constants);
-        (_a3 = this.catch) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants);
-        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants);
+        super.optimizeNames(names, constants2);
+        (_a3 = this.catch) === null || _a3 === void 0 ? void 0 : _a3.optimizeNames(names, constants2);
+        (_b = this.finally) === null || _b === void 0 ? void 0 : _b.optimizeNames(names, constants2);
         return this;
       }
       get names() {
@@ -1008,7 +1008,7 @@ var require_codegen = __commonJS({
     function addExprNames(names, from) {
       return from instanceof code_1._CodeOrName ? addNames(names, from.names) : names;
     }
-    function optimizeExpr(expr, names, constants) {
+    function optimizeExpr(expr, names, constants2) {
       if (expr instanceof code_1.Name)
         return replaceName(expr);
       if (!canOptimize(expr))
@@ -1023,14 +1023,14 @@ var require_codegen = __commonJS({
         return items;
       }, []));
       function replaceName(n) {
-        const c = constants[n.str];
+        const c = constants2[n.str];
         if (c === void 0 || names[n.str] !== 1)
           return n;
         delete names[n.str];
         return c;
       }
       function canOptimize(e) {
-        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names[c.str] === 1 && constants[c.str] !== void 0);
+        return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names[c.str] === 1 && constants2[c.str] !== void 0);
       }
     }
     function subtractNames(names, from) {
@@ -3270,8 +3270,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path21) {
-      let input2 = path21;
+    function removeDotSegments(path22) {
+      let input2 = path22;
       const output2 = [];
       let nextSlash = -1;
       let len = 0;
@@ -3680,8 +3680,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path21 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path21 && path21 !== "/" ? path21 : void 0;
+        const path22 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path22 && path22 !== "/" ? path22 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -7379,8 +7379,8 @@ var require_json_schema_2020_12 = __commonJS({
         with$data(this, validation)
       ].forEach((sch) => this.addMetaSchema(sch, void 0, false));
       return this;
-      function with$data(ajv, sch) {
-        return $data ? ajv.$dataMetaSchema(sch, META_SUPPORT_DATA) : sch;
+      function with$data(ajv2, sch) {
+        return $data ? ajv2.$dataMetaSchema(sch, META_SUPPORT_DATA) : sch;
       }
     }
     exports.default = addMetaSchema2020;
@@ -7980,9 +7980,9 @@ var require_limit = __commonJS({
       },
       dependencies: ["format"]
     };
-    var formatLimitPlugin = (ajv) => {
-      ajv.addKeyword(exports.formatLimitDefinition);
-      return ajv;
+    var formatLimitPlugin = (ajv2) => {
+      ajv2.addKeyword(exports.formatLimitDefinition);
+      return ajv2;
     };
     exports.default = formatLimitPlugin;
   }
@@ -7998,17 +7998,17 @@ var require_dist = __commonJS({
     var codegen_1 = require_codegen();
     var fullName = new codegen_1.Name("fullFormats");
     var fastName = new codegen_1.Name("fastFormats");
-    var formatsPlugin = (ajv, opts = { keywords: true }) => {
+    var formatsPlugin = (ajv2, opts = { keywords: true }) => {
       if (Array.isArray(opts)) {
-        addFormats2(ajv, opts, formats_1.fullFormats, fullName);
-        return ajv;
+        addFormats2(ajv2, opts, formats_1.fullFormats, fullName);
+        return ajv2;
       }
       const [formats, exportName] = opts.mode === "fast" ? [formats_1.fastFormats, fastName] : [formats_1.fullFormats, fullName];
       const list2 = opts.formats || formats_1.formatNames;
-      addFormats2(ajv, list2, formats, exportName);
+      addFormats2(ajv2, list2, formats, exportName);
       if (opts.keywords)
-        (0, limit_1.default)(ajv);
-      return ajv;
+        (0, limit_1.default)(ajv2);
+      return ajv2;
     };
     formatsPlugin.get = (name, mode = "full") => {
       const formats = mode === "fast" ? formats_1.fastFormats : formats_1.fullFormats;
@@ -8017,12 +8017,12 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f;
     };
-    function addFormats2(ajv, list2, fs2, exportName) {
+    function addFormats2(ajv2, list2, fs2, exportName) {
       var _a3;
       var _b;
-      (_a3 = (_b = ajv.opts.code).formats) !== null && _a3 !== void 0 ? _a3 : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
+      (_a3 = (_b = ajv2.opts.code).formats) !== null && _a3 !== void 0 ? _a3 : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
       for (const f of list2)
-        ajv.addFormat(f, fs2[f]);
+        ajv2.addFormat(f, fs2[f]);
     }
     module.exports = exports = formatsPlugin;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -8062,8 +8062,8 @@ __export(profiles_exports, {
   validateProviderProfile: () => validateProviderProfile
 });
 import { readFile as readFile3 } from "node:fs/promises";
-async function loadProviderProfileRegistry(path21) {
-  const bytes = await readFile3(path21);
+async function loadProviderProfileRegistry(path22) {
+  const bytes = await readFile3(path22);
   if (bytes.length > 1024 * 1024) throw new Error("PROVIDER_PROFILE_REGISTRY_TOO_LARGE");
   const value = JSON.parse(bytes.toString("utf8"));
   if (!isProviderProfileRegistry(value)) throw new Error("INVALID_PROVIDER_PROFILE_REGISTRY");
@@ -8074,7 +8074,7 @@ function object3(value) {
 }
 function isProviderConfiguration(profile) {
   if (!object3(profile) || !onlyKeys(profile, configurationKeys)) return false;
-  for (const field of ["profileId", "vendorId", "modelId", "modelRevision", "approvedRouteRef", "qualificationRevision", "adapterRevision", "promptRevision"]) if (!text2(profile[field])) return false;
+  for (const field2 of ["profileId", "vendorId", "modelId", "modelRevision", "approvedRouteRef", "qualificationRevision", "adapterRevision", "promptRevision"]) if (!text2(profile[field2])) return false;
   if (profile.providerKind !== "jev" && profile.providerKind !== "vendor") return false;
   if (profile.reasoningEffort !== null && !text2(profile.reasoningEffort)) return false;
   if (!positiveInteger(profile.maximumInputBytes) || !positiveInteger(profile.maximumOutputTokens)) return false;
@@ -8096,7 +8096,7 @@ function isProviderProfileRegistry(value) {
   return value.profiles.every((profile) => {
     if (!object3(profile) || !onlyKeys(profile, [...configurationKeys, "qualification"]) || !isProviderConfiguration(Object.fromEntries(Object.entries(profile).filter(([key]) => key !== "qualification")))) return false;
     const q2 = profile.qualification;
-    if (!object3(q2) || !onlyKeys(q2, ["status", "inventoryDigest", "taxonomyRevision", "modelRevision", "promptRevision", "validUntil", "profileConfigurationDigest"]) || !["PASS", "FAIL", "NOT_RUN"].includes(String(q2.status)) || !["inventoryDigest", "taxonomyRevision", "modelRevision", "promptRevision", "validUntil"].every((field) => text2(q2[field])) || typeof q2.profileConfigurationDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(q2.profileConfigurationDigest)) return false;
+    if (!object3(q2) || !onlyKeys(q2, ["status", "inventoryDigest", "taxonomyRevision", "modelRevision", "promptRevision", "validUntil", "profileConfigurationDigest"]) || !["PASS", "FAIL", "NOT_RUN"].includes(String(q2.status)) || !["inventoryDigest", "taxonomyRevision", "modelRevision", "promptRevision", "validUntil"].every((field2) => text2(q2[field2])) || typeof q2.profileConfigurationDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(q2.profileConfigurationDigest)) return false;
     const id = String(profile.profileId);
     if (ids2.has(id)) return false;
     ids2.add(id);
@@ -8884,10 +8884,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path21) {
-  if (!path21)
+function getElementAtPath(obj, path22) {
+  if (!path22)
     return obj;
-  return path21.reduce((acc, key) => acc?.[key], obj);
+  return path22.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -9299,11 +9299,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path21, issues) {
+function prefixIssues(path22, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path21);
+    iss.path.unshift(path22);
     return iss;
   });
 }
@@ -9736,16 +9736,16 @@ function flattenError(error61, mapper = (issue2) => issue2.message) {
 }
 function formatError(error61, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error62, path21 = []) => {
+  const processError = (error62, path22 = []) => {
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path21, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path22, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path21, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path22, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path21, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path22, ...issue2.path]);
       } else {
-        const fullpath = [...path21, ...issue2.path];
+        const fullpath = [...path22, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -9784,17 +9784,17 @@ function formatError(error61, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error61, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error62, path21 = []) => {
+  const processError = (error62, path22 = []) => {
     var _a3;
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path21, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path22, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path21, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path22, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path21, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path22, ...issue2.path]);
       } else {
-        const fullpath = [...path21, ...issue2.path];
+        const fullpath = [...path22, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -9833,8 +9833,8 @@ function treeifyError(error61, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path21 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path21) {
+  const path22 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path22) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -11618,14 +11618,14 @@ var $ZodObject = /* @__PURE__ */ $constructor("$ZodObject", (inst, def) => {
     const shape = zod.def.shape;
     const propValues = {};
     for (const key in shape) {
-      const field = shape[key]._zod;
-      if (field.values) {
+      const field2 = shape[key]._zod;
+      if (field2.values) {
         if (!Object.prototype.hasOwnProperty.call(propValues, key)) {
           assignProp(propValues, key, /* @__PURE__ */ new Set());
         }
-        for (const v of field.values)
+        for (const v of field2.values)
           propValues[key].add(v);
-        if (field.optin !== void 0)
+        if (field2.optin !== void 0)
           propValues[key].add(void 0);
       }
     }
@@ -24031,11 +24031,11 @@ var objectProcessor = (schema, ctx, _json, params) => {
   }
   const allKeys = new Set(Object.keys(shape));
   const requiredKeys = new Set([...allKeys].filter((key) => {
-    const field = def.shape[key];
+    const field2 = def.shape[key];
     if (ctx.io === "input") {
-      return inputOptin(field) === void 0;
+      return inputOptin(field2) === void 0;
     } else {
-      return field._zod.optout === void 0;
+      return field2._zod.optout === void 0;
     }
   }));
   if (requiredKeys.size > 0) {
@@ -26344,13 +26344,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path21 = ref.slice(1).split("/").filter(Boolean);
-  if (path21.length === 0) {
+  const path22 = ref.slice(1).split("/").filter(Boolean);
+  if (path22.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path21[0] === defsKey) {
-    const key = path21[1] === void 0 ? void 0 : decodeJSONPointerSegment(path21[1]);
+  if (path22[0] === defsKey) {
+    const key = path22[1] === void 0 ? void 0 : decodeJSONPointerSegment(path22[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -29892,7 +29892,10 @@ function boundedText(value, maxLength) {
   return value.length <= maxLength ? value : `${value.slice(0, maxLength - 1)}\u2026`;
 }
 function boundedStrings(values, maxItems, maxLength) {
-  return values.slice(0, maxItems).map((value) => boundedText(value, maxLength));
+  return values.slice(0, maxItems).map((value, index) => {
+    const omitted = values.length > maxItems && index === maxItems - 1 ? ` [+${values.length - maxItems} omitted]` : "";
+    return boundedText(value, maxLength - omitted.length) + omitted;
+  });
 }
 function encode3(value) {
   return Buffer.from(canonicalJson(value), "utf8").toString("base64url");
@@ -30105,8 +30108,9 @@ var ContinuityService = class {
       const args = value && typeof value === "object" && !Array.isArray(value) ? value : {};
       const token = typeof args._continuityBinding === "string" ? args._continuityBinding : "";
       const binding2 = this.verifyToolBinding("open_convergence_root", args, token);
-      this.store.bindRoot(binding2.c, binding2.e, rootId, this.now().toISOString());
+      return this.store.bindRoot(binding2.c, binding2.e, rootId, this.now().toISOString());
     } catch {
+      return false;
     }
   }
   candidateForSession(rawSessionId) {
@@ -30331,6 +30335,7 @@ var UnavailableContinuityService = class {
     return this.unavailable();
   }
   bindOpenedRoot() {
+    return false;
   }
 };
 
@@ -30621,7 +30626,7 @@ function resolveFromProviderCatalog(providerId, host, policyRevision, providerEn
   if (!canonicalKey) return null;
   const entry = models[canonicalKey];
   const minimumReasoningEffort = minimumEfforts[rawModel] ?? minimumEfforts[canonicalKey] ?? entry.minimum_effort ?? null;
-  const supportedEfforts = entry.supported_efforts && entry.supported_efforts.length > 0 ? entry.supported_efforts : REASONING_EFFORT;
+  const supportedEfforts = entry.supported_efforts ?? [];
   return {
     provider: providerId,
     host,
@@ -30781,7 +30786,9 @@ function assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePat
   }
 }
 function resolveToolSchemaProfile(environment = process.env) {
-  return environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE === "anthropic" ? "anthropic" : "default";
+  const configured = environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE;
+  if (configured === "anthropic") return "anthropic";
+  return configured?.trim().toLowerCase() === "inline-references" ? "inline-references" : "default";
 }
 function resolveHostAttestation(environment = process.env, adapters = defaultExecutionAdapters) {
   const host = environment.AGENT_GOVERNANCE_HOST_ATTESTATION;
@@ -30798,8 +30805,8 @@ import { readFileSync as readFileSync2, readdirSync } from "node:fs";
 import path6 from "node:path";
 var addFormats = import_ajv_formats.default;
 function loadSchema(fileName) {
-  const path21 = new URL(`../../contracts/${fileName}`, import.meta.url);
-  return JSON.parse(readFileSync2(path21, "utf8"));
+  const path22 = new URL(`../../contracts/${fileName}`, import.meta.url);
+  return JSON.parse(readFileSync2(path22, "utf8"));
 }
 var contractSchemas = {
   apiResult: loadSchema("api-result.v1.schema.json"),
@@ -30875,15 +30882,15 @@ function errorText(errors) {
 var ContractValidator = class {
   validators;
   constructor() {
-    const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
-    addFormats(ajv);
+    const ajv2 = new import__.Ajv2020({ allErrors: true, strict: false });
+    addFormats(ajv2);
     for (const schema of Object.values(contractSchemas)) {
-      ajv.addSchema(schema);
+      ajv2.addSchema(schema);
     }
     this.validators = Object.fromEntries(
-      Object.entries(contractSchemas).map(([name, schema]) => [name, ajv.getSchema(schema.$id)])
+      Object.entries(contractSchemas).map(([name, schema]) => [name, ajv2.getSchema(schema.$id)])
     );
-    this.validators.stateCleanupRootProtection = ajv.compile({
+    this.validators.stateCleanupRootProtection = ajv2.compile({
       $ref: `${contractSchemas.stateCleanupPlan.$id}#/properties/rootProtection`
     });
   }
@@ -31067,9 +31074,11 @@ var ContractValidator = class {
   assertSchemaFile(rootDirectory, reference, value, label) {
     const root = path6.resolve(rootDirectory);
     const targetSchema = this.readBoundSchema(rootDirectory, reference, label);
-    const ajv = new import__.Ajv2020({ allErrors: true, strict: false });
-    addFormats(ajv);
+    const ajv2 = new import__.Ajv2020({ allErrors: true, strict: false });
+    addFormats(ajv2);
     const schemas = /* @__PURE__ */ new Map();
+    const targetId = typeof targetSchema.$id === "string" ? targetSchema.$id : void 0;
+    if (targetId) schemas.set(targetId, targetSchema);
     for (const directory of [path6.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
       for (const candidate of this.schemaFiles(directory)) {
         const schema = JSON.parse(readFileSync2(candidate, "utf8"));
@@ -31077,9 +31086,8 @@ var ContractValidator = class {
         if (!schemas.has(id)) schemas.set(id, schema);
       }
     }
-    for (const schema of schemas.values()) ajv.addSchema(schema);
-    const targetId = typeof targetSchema.$id === "string" ? targetSchema.$id : void 0;
-    const validate2 = (targetId ? ajv.getSchema(targetId) : void 0) ?? ajv.compile(targetSchema);
+    for (const schema of schemas.values()) ajv2.addSchema(schema);
+    const validate2 = (targetId ? ajv2.getSchema(targetId) : void 0) ?? ajv2.compile(targetSchema);
     if (!validate2(value)) {
       throw new WorkflowContractError("INVALID_INPUT", `${label} does not match its declared schema.`, {
         schemaPath: reference.path,
@@ -32175,15 +32183,15 @@ function mergeCapabilities(base, additional) {
 var import_ajv = __toESM(require_ajv(), 1);
 var import_ajv_formats2 = __toESM(require_dist(), 1);
 function createDefaultAjvInstance() {
-  const ajv = new import_ajv.default({
+  const ajv2 = new import_ajv.default({
     strict: false,
     validateFormats: true,
     validateSchema: false,
     allErrors: true
   });
   const addFormats2 = import_ajv_formats2.default;
-  addFormats2(ajv);
-  return ajv;
+  addFormats2(ajv2);
+  return ajv2;
 }
 var AjvJsonSchemaValidator = class {
   /**
@@ -32206,8 +32214,8 @@ var AjvJsonSchemaValidator = class {
    * const validator = new AjvJsonSchemaValidator(ajv);
    * ```
    */
-  constructor(ajv) {
-    this._ajv = ajv ?? createDefaultAjvInstance();
+  constructor(ajv2) {
+    this._ajv = ajv2 ?? createDefaultAjvInstance();
   }
   /**
    * Create a validator for the given JSON Schema
@@ -32923,9 +32931,91 @@ function listSessions(db, now, current = null) {
   return db.prepare("SELECT * FROM sessions WHERE updated_at >= ? ORDER BY updated_at DESC").all(since).map((row) => view(row, current));
 }
 
+// runtime/failure-diagnostics.mjs
+import { createHash as createHash4 } from "node:crypto";
+import { types } from "node:util";
+var producerReasons = /* @__PURE__ */ new WeakMap();
+var producerCauses = /* @__PURE__ */ new WeakMap();
+var secondaryFailures = /* @__PURE__ */ new WeakMap();
+function tagProducerFailure(error61, reason) {
+  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
+  if (!producerReasons.has(error61)) producerReasons.set(error61, reason);
+  return error61;
+}
+function retainFailureCause(error61, cause) {
+  if (!producerCauses.has(error61)) producerCauses.set(error61, cause);
+  return error61;
+}
+function retainFailureSecondary(error61, secondary) {
+  if (error61 && (typeof error61 === "object" || typeof error61 === "function") && error61 !== secondary) {
+    const prior = secondaryFailures.get(error61) ?? [];
+    if (prior.length < 2 && !prior.includes(secondary)) secondaryFailures.set(error61, [...prior, secondary]);
+  }
+  return error61;
+}
+function producerFailureReason(error61) {
+  return error61 && (typeof error61 === "object" || typeof error61 === "function") ? producerReasons.get(error61) ?? null : null;
+}
+function failureContext(error61) {
+  const seen = /* @__PURE__ */ new Set();
+  function describe3(value, depth) {
+    const type = value === null ? "null" : typeof value;
+    if (!value || typeof value !== "object" && typeof value !== "function") return { type };
+    if (types.isProxy(value)) return { type, opaque: "proxy" };
+    if (seen.has(value)) return { type, cycle: true };
+    seen.add(value);
+    try {
+      const prototype = Object.getPrototypeOf(value);
+      const context = {
+        type: prototype === SyntaxError.prototype ? "syntax-error" : prototype === TypeError.prototype ? "type-error" : prototype === RangeError.prototype ? "range-error" : types.isNativeError(value) ? "error" : type
+      };
+      const producerReason = producerFailureReason(value);
+      if (producerReason) context.producerReason = producerReason;
+      if (producerCauses.has(value)) context.producerCause = depth < 2 ? describe3(producerCauses.get(value), depth + 1) : { truncated: true };
+      const secondary = secondaryFailures.get(value);
+      if (secondary) context.secondary = depth < 2 ? secondary.map((error62) => describe3(error62, depth + 1)) : { truncated: true };
+      const code = Object.getOwnPropertyDescriptor(value, "code");
+      if (code) {
+        if (!("value" in code)) context.code = { type: "accessor", observed: false };
+        else if (typeof code.value === "string") {
+          const prefix = code.value.slice(0, 256);
+          context.code = {
+            type: "string",
+            length: code.value.length,
+            prefixCodeUnits: prefix.length,
+            truncated: prefix.length !== code.value.length,
+            encoding: "utf16le",
+            prefixSha256: createHash4("sha256").update(Buffer.from(prefix, "utf16le")).digest("hex")
+          };
+        } else context.code = { type: code.value === null ? "null" : typeof code.value, observed: false };
+      }
+      if (code && "value" in code && code.value === "ERR_SQLITE_ERROR") {
+        const detail = Object.getOwnPropertyDescriptor(value, "errcode");
+        if (detail && !("value" in detail)) context.sqlite = { type: "accessor", observed: false };
+        else if (detail && Number.isInteger(detail.value) && detail.value >= 1 && detail.value <= 65535 && (detail.value & 255) >= 1 && (detail.value & 255) <= 28) {
+          context.sqlite = { errcode: detail.value, primaryCode: detail.value & 255 };
+        } else context.sqlite = { observed: false };
+      }
+      const cause = Object.getOwnPropertyDescriptor(value, "cause");
+      if (cause) {
+        if (!("value" in cause)) context.cause = { type: "accessor", observed: false };
+        else context.cause = depth < 2 ? describe3(cause.value, depth + 1) : { truncated: true };
+      }
+      return context;
+    } catch {
+      return { type, unreadable: true };
+    } finally {
+      seen.delete(value);
+    }
+  }
+  return describe3(error61, 0);
+}
+
 // mcp-server/src/tool-schema-inline.ts
 var ANNOTATION_ONLY_KEYS = /* @__PURE__ */ new Set(["$schema", "$id", "$defs", "definitions"]);
 var SCHEMA_MAP_KEYS = /* @__PURE__ */ new Set(["properties", "patternProperties", "dependentSchemas"]);
+var SCHEMA_ARRAY_KEYS = /* @__PURE__ */ new Set(["allOf", "anyOf", "oneOf", "prefixItems"]);
+var SCHEMA_VALUE_KEYS = /* @__PURE__ */ new Set(["additionalProperties", "unevaluatedProperties", "propertyNames", "items", "additionalItems", "unevaluatedItems", "contains", "not", "if", "then", "else", "contentSchema"]);
 var ANNOTATION_KEYWORDS = /* @__PURE__ */ new Set(["title", "description", "default", "examples", "$comment", "deprecated", "readOnly", "writeOnly"]);
 function isObject2(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -32949,6 +33039,14 @@ function inlineSchemaReferences(schema, documents) {
   }
   const rootBase = typeof schema.$id === "string" ? schema.$id : "urn:agent-governance:tool-schema";
   byId.set(rootBase, schema);
+  function keyword(name, value, base, active) {
+    if (SCHEMA_MAP_KEYS.has(name) && isObject2(value)) {
+      return Object.fromEntries(Object.entries(value).map(([property, subschema]) => [property, inline(subschema, base, active)]));
+    }
+    if (SCHEMA_ARRAY_KEYS.has(name) && Array.isArray(value)) return value.map((subschema) => inline(subschema, base, active));
+    if (SCHEMA_VALUE_KEYS.has(name)) return inline(value, base, active);
+    return value;
+  }
   function inline(node2, base, active) {
     if (Array.isArray(node2)) return node2.map((item) => inline(item, base, active));
     if (!isObject2(node2)) return node2;
@@ -32964,7 +33062,7 @@ function inlineSchemaReferences(schema, documents) {
       if (active.has(key)) throw new Error(`Recursive schema reference ${key} cannot be inlined`);
       const resolved = inline(pointer(document, fragment), documentId, /* @__PURE__ */ new Set([...active, key]));
       const siblings = Object.fromEntries(
-        Object.entries(node2).filter(([name]) => name !== "$ref" && !ANNOTATION_ONLY_KEYS.has(name)).map(([name, value]) => [name, inline(value, nodeBase, active)])
+        Object.entries(node2).filter(([name]) => name !== "$ref" && !ANNOTATION_ONLY_KEYS.has(name)).map(([name, value]) => [name, keyword(name, value, nodeBase, active)])
       );
       if (Object.keys(siblings).length === 0) return resolved;
       const constraining = Object.keys(siblings).some((name) => !ANNOTATION_KEYWORDS.has(name));
@@ -32974,7 +33072,7 @@ function inlineSchemaReferences(schema, documents) {
     const output2 = {};
     for (const [name, value] of Object.entries(node2)) {
       if (ANNOTATION_ONLY_KEYS.has(name)) continue;
-      output2[name] = SCHEMA_MAP_KEYS.has(name) && isObject2(value) ? Object.fromEntries(Object.entries(value).map(([property, subschema]) => [property, inline(subschema, nodeBase, active)])) : inline(value, nodeBase, active);
+      output2[name] = keyword(name, value, nodeBase, active);
     }
     return output2;
   }
@@ -33047,7 +33145,7 @@ function convergenceStatusSummary(status) {
 }
 
 // mcp-server/src/host-attestation.ts
-import { createHash as createHash4, createHmac as createHmac2, randomBytes as randomBytes2, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
+import { createHash as createHash5, createHmac as createHmac2, randomBytes as randomBytes2, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
 var HOST_ATTESTATION_FIELD = "_hostAttestation";
 var HOST_ATTESTATION_TOOLS = /* @__PURE__ */ new Set(["plan_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
 var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
@@ -33059,7 +33157,7 @@ function record2(value) {
 function nonEmpty(value) {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
-var hostIdentityDigest = (value) => createHash4("sha256").update(value, "utf8").digest("hex").slice(0, 24);
+var hostIdentityDigest = (value) => createHash5("sha256").update(value, "utf8").digest("hex").slice(0, 24);
 function hostActorId(host, sessionId, agentId = null) {
   return `${host}:session-${hostIdentityDigest(sessionId)}${agentId ? `:agent-${hostIdentityDigest(agentId)}` : ""}`;
 }
@@ -33163,7 +33261,7 @@ function issueHostAttestation(store, adapter, observation) {
     provenance: capability.provenance,
     actorId: observation.actorId,
     // Retrying the same host call cannot mint a second consumable observation.
-    observationId: createHash4("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
+    observationId: createHash5("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
     observedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + TOKEN_TTL_MS).toISOString()
   };
@@ -33201,7 +33299,7 @@ function verifyToken(store, adapter, token) {
   if (!value || value.v !== 1 || value.host !== adapter.host || !model || !capability || !MODEL_CLASS.includes(value.modelClass) || capability.modelClass !== value.modelClass || value.provider !== void 0 && value.provider !== capability.provider || value.resolvedModel !== void 0 && value.resolvedModel !== capability.resolvedModel || value.policyRevision !== void 0 && value.policyRevision !== capability.policyRevision || value.provenance !== void 0 && (typeof value.provenance !== "string" || value.provenance.length === 0) || !isReasoningEffort(value.reasoningEffort) || !satisfiesModelEffortPolicy(capability, value.reasoningEffort) || typeof value.session !== "string" || !/^[a-f0-9]{24}$/u.test(value.session) || typeof value.call !== "string" || !/^[a-f0-9]{24}$/u.test(value.call) || value.agent !== null && (typeof value.agent !== "string" || !/^[a-f0-9]{24}$/u.test(value.agent)) || value.turn !== null && (typeof value.turn !== "string" || !/^[a-f0-9]{24}$/u.test(value.turn)) || value.actorId !== `${adapter.host}:session-${String(value.session)}${value.agent ? `:agent-${String(value.agent)}` : ""}`) {
     throw invalid("Host attestation token payload is not a supported observation for the configured adapter.");
   }
-  return value;
+  return { payload: value, capability };
 }
 var HostAttestationProvider = class {
   constructor(store, adapter) {
@@ -33227,7 +33325,7 @@ var HostAttestationProvider = class {
       ...this.adapter.policyRevision ? { policyRevision: this.adapter.policyRevision } : {},
       status: "missing-call-observation",
       required: ["host-owned model", "reasoningEffort", "session", "current tool call", "signed input binding"],
-      connection: "Enable the host PreToolUse adapter, or supply host-owned observations through HostAttestationProvider.runObserved; caller executionContext is not trusted."
+      connection: "This call has no signed host observation. Check the host-owned adapter observation diagnostic for the current model, reasoning effort, session and call; adapter configuration alone does not prove an observation."
     };
   }
   run(tool, args, call) {
@@ -33245,18 +33343,14 @@ var HostAttestationProvider = class {
     this.lastVerifiedCapability = null;
     const current = this.current;
     if (!current?.token) return null;
-    const payload = verifyToken(this.store, this.adapter, current.token);
+    const { payload, capability } = verifyToken(this.store, this.adapter, current.token);
     if (payload.tool !== current.tool || payload.inputDigest !== convergenceDigest(current.input)) {
       throw invalid("Host attestation token was issued for a different tool call.");
     }
     if (payload.phase !== binding2.phase) throw invalid("Host attestation token was issued for a different phase.");
     const taskId = payload.phase === "stage" ? binding2.taskId : payload.taskId;
     if (!taskId) throw invalid("Host attestation token is missing its task binding.");
-    this.lastVerifiedCapability = resolveAdapterModelCapability(
-      this.adapter,
-      payload.model,
-      payload.provenance ?? `${this.adapter.host}:runtime`
-    );
+    this.lastVerifiedCapability = capability;
     return {
       schemaVersion: CONTRACT_VERSION,
       model: payload.model,
@@ -33279,88 +33373,6 @@ var HostAttestationProvider = class {
 import { createHash as createHash6 } from "node:crypto";
 import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 import { writeSync } from "node:fs";
-
-// mcp-server/src/failure-diagnostics.ts
-import { createHash as createHash5 } from "node:crypto";
-import { types } from "node:util";
-var producerReasons = /* @__PURE__ */ new WeakMap();
-var producerCauses = /* @__PURE__ */ new WeakMap();
-var secondaryFailures = /* @__PURE__ */ new WeakMap();
-function tagProducerFailure(error61, reason) {
-  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
-  if (!producerReasons.has(error61)) producerReasons.set(error61, reason);
-  return error61;
-}
-function retainFailureCause(error61, cause) {
-  if (!producerCauses.has(error61)) producerCauses.set(error61, cause);
-  return error61;
-}
-function retainFailureSecondary(error61, secondary) {
-  if (error61 && (typeof error61 === "object" || typeof error61 === "function") && error61 !== secondary) {
-    const prior = secondaryFailures.get(error61) ?? [];
-    if (prior.length < 2 && !prior.includes(secondary)) secondaryFailures.set(error61, [...prior, secondary]);
-  }
-  return error61;
-}
-function producerFailureReason(error61) {
-  return error61 && (typeof error61 === "object" || typeof error61 === "function") ? producerReasons.get(error61) ?? null : null;
-}
-function failureContext(error61) {
-  const seen = /* @__PURE__ */ new Set();
-  function describe3(value, depth) {
-    const type = value === null ? "null" : typeof value;
-    if (!value || typeof value !== "object" && typeof value !== "function") return { type };
-    if (types.isProxy(value)) return { type, opaque: "proxy" };
-    if (seen.has(value)) return { type, cycle: true };
-    seen.add(value);
-    try {
-      const prototype = Object.getPrototypeOf(value);
-      const context = {
-        type: prototype === SyntaxError.prototype ? "syntax-error" : prototype === TypeError.prototype ? "type-error" : prototype === RangeError.prototype ? "range-error" : types.isNativeError(value) ? "error" : type
-      };
-      const producerReason = producerFailureReason(value);
-      if (producerReason) context.producerReason = producerReason;
-      if (producerCauses.has(value)) context.producerCause = depth < 2 ? describe3(producerCauses.get(value), depth + 1) : { truncated: true };
-      const secondary = secondaryFailures.get(value);
-      if (secondary) context.secondary = depth < 2 ? secondary.map((error62) => describe3(error62, depth + 1)) : { truncated: true };
-      const code = Object.getOwnPropertyDescriptor(value, "code");
-      if (code) {
-        if (!("value" in code)) context.code = { type: "accessor", observed: false };
-        else if (typeof code.value === "string") {
-          const prefix = code.value.slice(0, 256);
-          context.code = {
-            type: "string",
-            length: code.value.length,
-            prefixCodeUnits: prefix.length,
-            truncated: prefix.length !== code.value.length,
-            encoding: "utf16le",
-            prefixSha256: createHash5("sha256").update(Buffer.from(prefix, "utf16le")).digest("hex")
-          };
-        } else context.code = { type: code.value === null ? "null" : typeof code.value, observed: false };
-      }
-      if (code && "value" in code && code.value === "ERR_SQLITE_ERROR") {
-        const detail = Object.getOwnPropertyDescriptor(value, "errcode");
-        if (detail && !("value" in detail)) context.sqlite = { type: "accessor", observed: false };
-        else if (detail && Number.isInteger(detail.value) && detail.value >= 1 && detail.value <= 65535 && (detail.value & 255) >= 1 && (detail.value & 255) <= 28) {
-          context.sqlite = { errcode: detail.value, primaryCode: detail.value & 255 };
-        } else context.sqlite = { observed: false };
-      }
-      const cause = Object.getOwnPropertyDescriptor(value, "cause");
-      if (cause) {
-        if (!("value" in cause)) context.cause = { type: "accessor", observed: false };
-        else context.cause = depth < 2 ? describe3(cause.value, depth + 1) : { truncated: true };
-      }
-      return context;
-    } catch {
-      return { type, unreadable: true };
-    } finally {
-      seen.delete(value);
-    }
-  }
-  return describe3(error61, 0);
-}
-
-// mcp-server/src/korean-prose-glossary.ts
 var KOREAN_PROSE_GLOSSARY_MAX_SOURCE_LENGTH = 2e5;
 var KOREAN_PROSE_GLOSSARY_MAX_MATCHES = 256;
 var DIGEST = /^[a-f0-9]{64}$/u;
@@ -33666,8 +33678,8 @@ function createClassificationRequest(input2) {
   const confirmedContext = contextSchema.parse({ taskRevision: null, objective: null, actions: null, targets: null, constraints: null, prohibitedActions: null, background: null, ...input2.confirmedContext });
   const contextSources = sourceSchema.parse(input2.contextSources ?? []);
   external_exports.array(metadataSchema).parse(input2.inventory.skills);
-  for (const [field, value] of Object.entries(confirmedContext)) {
-    if (value !== null && !contextSources.some((source) => source.field === field)) throw new Error("CONTEXT_SOURCE_MISSING");
+  for (const [field2, value] of Object.entries(confirmedContext)) {
+    if (value !== null && !contextSources.some((source) => source.field === field2)) throw new Error("CONTEXT_SOURCE_MISSING");
   }
   const request = {
     schemaVersion: "1.0.0",
@@ -33693,7 +33705,7 @@ function validateClassificationRequest(request) {
   contextSchema.parse(request.confirmedContext);
   sourceSchema.parse(request.contextSources);
   external_exports.array(metadataSchema).parse(request.skills);
-  for (const [field, value] of Object.entries(request.confirmedContext)) if (value !== null && !request.contextSources.some((source) => source.field === field)) throw new Error("CONTEXT_SOURCE_MISSING");
+  for (const [field2, value] of Object.entries(request.confirmedContext)) if (value !== null && !request.contextSources.some((source) => source.field === field2)) throw new Error("CONTEXT_SOURCE_MISSING");
   if (new Set(request.skills.map((skill) => skill.skillId)).size !== request.skills.length) throw new Error("DUPLICATE_SKILL_ID");
 }
 function projectClassificationRequest(request, maximumInputBytes) {
@@ -33824,8 +33836,8 @@ async function readInventory(options, directSkillDirectory = false) {
     allSources.set(relative, byteDigest(bytes));
     return bytes;
   };
-  const add = (skillId, code, field) => {
-    issues.push({ skillId, code, field });
+  const add = (skillId, code, field2) => {
+    issues.push({ skillId, code, field: field2 });
   };
   if (!directSkillDirectory) {
     let projectionBytes = null;
@@ -33916,8 +33928,8 @@ async function readInventory(options, directSkillDirectory = false) {
       const sourceMap = [
         { field: "skillId", path: entry ? "skills/registry.json" : `${base}/SKILL.md`, digest: entry ? allSources.get("skills/registry.json") : byteDigest(skillBytes) },
         { field: "description", path: `${base}/SKILL.md`, startLine: head.descriptionStart, endLine: head.descriptionEnd, digest: byteDigest(skillBytes) },
-        ...(entry ? ["version", "enabled", "capabilities", "phases"] : ["version"]).map((field) => ({ field, path: entry ? "skills/registry.json" : `${base}/SKILL.md`, digest: entry ? allSources.get("skills/registry.json") : byteDigest(skillBytes) })),
-        ...["actions", "targets", "constraints", "dependencies", "taxonomyRevision"].map((field) => ({ field, path: metadataPath, digest: allSources.get(metadataPath) }))
+        ...(entry ? ["version", "enabled", "capabilities", "phases"] : ["version"]).map((field2) => ({ field: field2, path: entry ? "skills/registry.json" : `${base}/SKILL.md`, digest: entry ? allSources.get("skills/registry.json") : byteDigest(skillBytes) })),
+        ...["actions", "targets", "constraints", "dependencies", "taxonomyRevision"].map((field2) => ({ field: field2, path: metadataPath, digest: allSources.get(metadataPath) }))
       ];
       if (!entry) sourceMap.push({ field: "capabilities", path: metadataPath, digest: allSources.get(metadataPath) });
       if (entry?.dependencies) {
@@ -33926,8 +33938,8 @@ async function readInventory(options, directSkillDirectory = false) {
       }
       const sourceRefs = /* @__PURE__ */ new Map([[`${base}/SKILL.md`, byteDigest(skillBytes)], [metadataPath, allSources.get(metadataPath)]]);
       if (entry) sourceRefs.set("skills/registry.json", allSources.get("skills/registry.json"));
-      const resolveSpans = async (spans, field) => {
-        currentField = field;
+      const resolveSpans = async (spans, field2) => {
+        currentField = field2;
         const result = [];
         for (const source of spans) {
           if (!source.path.startsWith(`${base}/`)) throw new Error("SOURCE_PATH_INVALID");
@@ -33949,7 +33961,7 @@ async function readInventory(options, directSkillDirectory = false) {
           if (!value) throw new Error("MISSING_APPLICABILITY_OR_EXCLUSION");
           if (!result.includes(value)) result.push(value);
           sourceRefs.set(source.path, digest5);
-          sourceMap.push({ field, path: source.path, startLine: source.startLine, endLine: source.endLine, digest: source.digest });
+          sourceMap.push({ field: field2, path: source.path, startLine: source.startLine, endLine: source.endLine, digest: source.digest });
         }
         return result;
       };
@@ -33995,9 +34007,19 @@ async function readInventory(options, directSkillDirectory = false) {
 }
 async function loadSkillInventory(options) {
   const inventories = [await readInventory(options)];
+  const loadedRoots = new Set(await Promise.all(inventories[0].skills.map(async (skill) => {
+    try {
+      return await realpath(path8.join(options.root, "skills", skill.skillId));
+    } catch {
+      return path8.resolve(options.root, "skills", skill.skillId);
+    }
+  })));
   for (const [index, externalRoot] of (options.externalSkillRoots ?? []).entries()) {
     try {
-      inventories.push(await readInventory({ ...options, root: externalRoot }, true));
+      const actualRoot = await realpath(externalRoot);
+      if (loadedRoots.has(actualRoot)) continue;
+      loadedRoots.add(actualRoot);
+      inventories.push(await readInventory({ ...options, root: actualRoot }, true));
     } catch {
       inventories.push({ skills: [], issues: [{ skillId: null, code: "EXTERNAL_SKILL_UNAVAILABLE", field: `externalSkillRoots[${index}]` }], taxonomyRevision: "invalid", inventoryDigest: digestClassificationValue({ externalRoot, unavailable: true }) });
     }
@@ -34155,6 +34177,9 @@ var ApprovedRouteClassificationProvider = class {
   route(profile) {
     const matches = this.routes.filter((route) => route.routeRef === profile.approvedRouteRef);
     return matches.length === 1 ? matches[0] : null;
+  }
+  routeKind(profile) {
+    return this.route(profile)?.kind ?? null;
   }
   transportMatches(route) {
     try {
@@ -34647,8 +34672,8 @@ function validateClassificationResponse(request, response) {
   const parsed = responseSchema.safeParse(response);
   if (!parsed.success) return ["INVALID_RESPONSE_SCHEMA"];
   const errors = [];
-  for (const field of ["requestId", "operationId", "requestDigest", "inventoryDigest"]) {
-    if (response[field] !== request[field]) errors.push(`RESPONSE_BINDING_${field}`);
+  for (const field2 of ["requestId", "operationId", "requestDigest", "inventoryDigest"]) {
+    if (response[field2] !== request[field2]) errors.push(`RESPONSE_BINDING_${field2}`);
   }
   const inventory = new Set(request.skills.map((skill) => skill.skillId));
   const seen = /* @__PURE__ */ new Set();
@@ -34680,8 +34705,8 @@ function validateDecision(result, decision, current) {
   if (decision.classificationResponseRef !== digestClassificationValue(result.response)) errors.push("CLASSIFICATION_RESPONSE_REF_MISMATCH");
   if ((result.response.error !== null || ["UNAVAILABLE", "INVALID"].includes(result.response.status)) && decision.selectionStatus === "SELECTED") errors.push("CLASSIFICATION_UNAVAILABLE_CANNOT_COMPLETE_SELECTION");
   for (const id of [...decision.explicitSkillIds, ...decision.ruleRequiredSkillIds]) needed.add(id);
-  for (const field of ["taskRevision", "configRevision", "profileRevision", "inventoryDigest", "requestDigest"]) {
-    if (result.snapshot[field] !== current[field] || decision[field] !== current[field]) errors.push(`STALE_${field}`);
+  for (const field2 of ["taskRevision", "configRevision", "profileRevision", "inventoryDigest", "requestDigest"]) {
+    if (result.snapshot[field2] !== current[field2] || decision[field2] !== current[field2]) errors.push(`STALE_${field2}`);
   }
   if (current.cancelled) errors.push("TASK_CANCELLED");
   const inventory = new Map(result.request.skills.map((skill) => [skill.skillId, skill]));
@@ -34711,7 +34736,7 @@ function validateDecision(result, decision, current) {
       if (!decision.selectionReasons.some((reason) => reason.skillId === id)) errors.push(`SELECTION_REASON_MISSING:${id}`);
       for (const dependency of skill.dependencies) if (!selected.includes(dependency)) errors.push(`DEPENDENCY_OMITTED:${id}:${dependency}`);
     }
-    if (decision.selectionStatus === "SELECTED" && (blockedItems.length > 0 || decision.unresolvedSkillReferences.length > 0)) errors.push("UNRESOLVED_SELECTION_MARKED_COMPLETE");
+    if (decision.selectionStatus === "SELECTED" && (blockedItems.some((item) => selected.includes(item.skillId) || decision.explicitSkillIds.includes(item.skillId) || decision.ruleRequiredSkillIds.includes(item.skillId)) || decision.unresolvedSkillReferences.length > 0)) errors.push("UNRESOLVED_SELECTION_MARKED_COMPLETE");
   }
   if (result.config.mode === "shadow" && decision.adviceApplied) errors.push("SHADOW_ADVICE_APPLIED");
   const unresolved2 = [...needed].filter((id) => !inventory.has(id));
@@ -34768,7 +34793,7 @@ var InMemoryClassificationBudget = class {
     return { limits: Object.fromEntries([...this.limits].map(([key, value]) => [key, { ...value }])), nativeAllowances: Object.fromEntries([...this.nativeAllowances].map(([key, value]) => [key, { ...value }])), invalidCostCeilings: [...this.invalidCostCeilings], reservations: [...this.reservations].map(([id, value]) => ({ id, ...value })) };
   }
 };
-var providerFailureCodes = /* @__PURE__ */ new Set(["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE", "CANCELLED", "INPUT_TOO_LONG", "INVALID_PROVIDER_REQUEST", "TRANSPORT_UNAVAILABLE", "AUTH_UNAVAILABLE", "RATE_LIMITED", "API_UNAVAILABLE", "INVALID_PROVIDER_RESPONSE", "PROVIDER_UNAVAILABLE", "STALE_CLASSIFICATION", "EXTERNAL_CLASSIFICATION_BLOCKED", "BUDGET_UNAVAILABLE", "INVALID_PROVIDER_USAGE", "PROVIDER_TIMEOUT", "OUTPUT_TOO_LONG", "NATIVE_SPAWN_UNAVAILABLE", "NATIVE_OUTPUT_TOO_LARGE", "NATIVE_PROCESS_UNAVAILABLE", "NATIVE_TIMEOUT", "NATIVE_PROFILE_UNSUPPORTED", "NATIVE_PROFILE_ENCODING_UNAVAILABLE", "NATIVE_CLEANUP_UNAVAILABLE", "PROVIDER_RESPONSE_TOO_LARGE", "INVALID_PROFILE", "QUALIFICATION_CONFIGURATION_MISMATCH", "PROFILE_UNQUALIFIED", "QUALIFICATION_MISMATCH", "QUALIFICATION_EXPIRED", "UNSUPPORTED_OPTIONS", "COST_UNKNOWN"]);
+var providerFailureCodes = /* @__PURE__ */ new Set(["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE", "CANCELLED", "INPUT_TOO_LONG", "INVALID_PROVIDER_REQUEST", "TRANSPORT_UNAVAILABLE", "AUTH_UNAVAILABLE", "RATE_LIMITED", "API_UNAVAILABLE", "INVALID_PROVIDER_RESPONSE", "PROVIDER_UNAVAILABLE", "STALE_CLASSIFICATION", "REMOTE_CONTENT_NOT_APPROVED", "EXTERNAL_CLASSIFICATION_BLOCKED", "BUDGET_UNAVAILABLE", "INVALID_PROVIDER_USAGE", "PROVIDER_TIMEOUT", "OUTPUT_TOO_LONG", "NATIVE_SPAWN_UNAVAILABLE", "NATIVE_OUTPUT_TOO_LARGE", "NATIVE_PROCESS_UNAVAILABLE", "NATIVE_TIMEOUT", "NATIVE_PROFILE_UNSUPPORTED", "NATIVE_PROFILE_ENCODING_UNAVAILABLE", "NATIVE_CLEANUP_UNAVAILABLE", "PROVIDER_RESPONSE_TOO_LARGE", "INVALID_PROFILE", "QUALIFICATION_CONFIGURATION_MISMATCH", "PROFILE_UNQUALIFIED", "QUALIFICATION_MISMATCH", "QUALIFICATION_EXPIRED", "UNSUPPORTED_OPTIONS", "COST_UNKNOWN"]);
 var stale = (a, b2) => b2.cancelled || a.taskRevision !== b2.taskRevision || a.configRevision !== b2.configRevision || a.profileRevision !== b2.profileRevision || a.inventoryDigest !== b2.inventoryDigest || a.requestDigest !== b2.requestDigest;
 var SkillClassificationService = class {
   constructor(options) {
@@ -34782,6 +34807,18 @@ var SkillClassificationService = class {
   requestOperations = /* @__PURE__ */ new Map();
   now;
   maxOperations;
+  /** Pure preflight: no credentials, availability, reservation or transport. Unknown ports stay closed. */
+  hasNativeRoute(input2) {
+    for (const kind of input2.config.jevEnabled ? ["jev", "vendor"] : ["vendor"]) {
+      const profile = selectFixedProfile(input2.registry, kind, input2.currentVendorId);
+      if (!profile || validateProviderProfile(profile, input2.request, this.now()) !== null) continue;
+      try {
+        if (this.options.providers[kind]?.routeKind?.(profile) === "native") return true;
+      } catch {
+      }
+    }
+    return false;
+  }
   classify(input2) {
     const frozen = { ...input2, request: structuredClone(input2.request), config: structuredClone(input2.config), registry: structuredClone(input2.registry) };
     const snapshot = this.snapshot(frozen);
@@ -34792,7 +34829,7 @@ var SkillClassificationService = class {
     }
     let identity;
     try {
-      identity = digestClassificationValue([frozen.request.requestId, frozen.request.requestDigest, snapshot, frozen.currentVendorId, frozen.config, frozen.registry]);
+      identity = digestClassificationValue([frozen.request.requestId, frozen.request.requestDigest, snapshot, frozen.currentVendorId, frozen.config, frozen.registry, frozen.remoteContentAllowed ?? true]);
     } catch {
       const code = !isProviderProfileRegistry(frozen.registry) ? "INVALID_PROFILE_REGISTRY" : !Number.isSafeInteger(frozen.config.timeoutMs) || (frozen.config.timeoutMs < 1 || frozen.config.timeoutMs > MAX_CLASSIFICATION_TIMEOUT_MS) ? "INVALID_TIMEOUT" : "INVALID_CLASSIFICATION_CONFIG";
       return Promise.resolve(this.failure(frozen, snapshot, code));
@@ -34894,12 +34931,14 @@ var SkillClassificationService = class {
     if (input2.signal?.aborted) controller.abort();
     const work = async () => {
       try {
+        if (input2.remoteContentAllowed === false && provider2.routeKind !== void 0 && provider2.routeKind(profile) !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
         const availability = await provider2.availability(profile);
         if (controller.signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
         if (!availability.available || !availability.approved) {
           const codes = ["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE"];
           throw new ClassificationProviderError(availability.reasonCode && codes.includes(availability.reasonCode) ? availability.reasonCode : "PROVIDER_UNAVAILABLE", "not-started");
         }
+        if (input2.remoteContentAllowed === false && availability.routeKind !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
         if (!input2.config.externalClassificationAllowed && availability.routeKind !== "native") throw new ClassificationProviderError("EXTERNAL_CLASSIFICATION_BLOCKED", "not-started");
         if (input2.getCurrentSnapshot && stale(snapshot, input2.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
         const invalid2 = validateProviderProfile(profile, input2.request, this.now());
@@ -34908,6 +34947,7 @@ var SkillClassificationService = class {
         reserved = true;
         dispatchState = "unknown";
         const beforeDispatch = () => {
+          if (input2.remoteContentAllowed === false && provider2.routeKind !== void 0 && provider2.routeKind(profile) !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
           if (controller.signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
           if (input2.getCurrentSnapshot && stale(snapshot, input2.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
           if (validateProviderProfile(profile, input2.request, this.now()) !== null) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
@@ -35056,7 +35096,13 @@ var RuntimeSkillClassificationGateway = class {
       classificationCriteriaRef: "skills/orchestrator/references/skill-classification.md"
     });
     const publicApproved = input2.publicSynthetic && runtime.approvedPublicRequestDigests?.includes(request.requestDigest) === true;
-    if (!publicApproved && !runtime.allowRemotePrivateContent && runtime.config.externalClassificationAllowed) {
+    const remoteContentAllowed = publicApproved || runtime.allowRemotePrivateContent;
+    if (!remoteContentAllowed && runtime.config.externalClassificationAllowed && !this.options.service.hasNativeRoute({
+      request,
+      config: runtime.config,
+      registry: runtime.registry,
+      currentVendorId: input2.vendorContext.vendorId
+    })) {
       return { status: "NEEDS_INPUT", errors: ["REMOTE_CONTENT_NOT_APPROVED"], response: null, agentSelectedSkillIds: null };
     }
     const observedInitialTask = this.options.observeTask?.(request, observation) ?? null;
@@ -35084,6 +35130,7 @@ var RuntimeSkillClassificationGateway = class {
       config: runtime.config,
       registry: runtime.registry,
       currentVendorId: input2.vendorContext.vendorId,
+      remoteContentAllowed,
       getCurrentSnapshot: () => {
         const current = this.options.observeTask?.(request, observation) ?? null;
         const sourcesUnchanged = sourcesCurrent();
@@ -35275,7 +35322,7 @@ function clientFailure(reason, message, cause) {
   return utilTypes.isNativeError(cause) ? tagProducerFailure(cause, reason) : retainFailureCause(tagProducerFailure(new Error(message), reason), cause);
 }
 function signalError(signal) {
-  return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : new Error("The session message operation was aborted.");
+  return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : retainFailureCause(tagProducerFailure(new Error("The session message operation was aborted."), "BROKER_OPERATION_ABORTED"), signal.reason);
 }
 function throwIfAborted(signal) {
   if (signal?.aborted) throw signalError(signal);
@@ -35336,11 +35383,19 @@ function sessionMessageBrokerEnvironment(environment = process.env) {
 async function readEndpoint(stateDirectory, signal) {
   throwIfAborted(signal);
   const paths = statePaths(stateDirectory);
-  const [rawEndpoint, rawToken, certificate] = await Promise.all([
-    readFile5(paths.endpoint, { encoding: "utf8", signal }),
-    readFile5(paths.token, { encoding: "utf8", signal }),
-    readFile5(paths.certificate, { encoding: "utf8", signal })
-  ]);
+  let rawEndpoint;
+  let rawToken;
+  let certificate;
+  try {
+    [rawEndpoint, rawToken, certificate] = await Promise.all([
+      readFile5(paths.endpoint, { encoding: "utf8", signal }),
+      readFile5(paths.token, { encoding: "utf8", signal }),
+      readFile5(paths.certificate, { encoding: "utf8", signal })
+    ]);
+  } catch (cause) {
+    throwIfAborted(signal);
+    throw clientFailure("BROKER_ENDPOINT_READ_FAILED", "Cannot read the session message broker endpoint.", cause);
+  }
   let endpoint;
   try {
     endpoint = JSON.parse(rawEndpoint);
@@ -35534,9 +35589,13 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         throwIfAborted(signal);
         if (error61 instanceof BrokerRequestRejected) throw error61;
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);
-        else {
-          await mkdir(stateDirectory, { recursive: true, mode: 448 });
+        try {
+          if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);
+          else await mkdir(stateDirectory, { recursive: true, mode: 448 });
+        } catch (cause) {
+          throw clientFailure("BROKER_STATE_DIRECTORY_FAILED", "Cannot prepare the session message state directory.", cause);
+        }
+        if (!prepareStateDirectory) {
           if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
           try {
             await chmod(stateDirectory, 448);
@@ -35548,12 +35607,17 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         const adjacentBroker = fileURLToPath2(new URL("./session-message-broker.mjs", import.meta.url));
         const brokerPath = existsSync2(adjacentBroker) ? adjacentBroker : fileURLToPath2(new URL("../dist/session-message-broker.mjs", import.meta.url));
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
-          detached: true,
-          windowsHide: true,
-          stdio: "ignore",
-          env: sessionMessageBrokerEnvironment()
-        });
+        let child;
+        try {
+          child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+            detached: true,
+            windowsHide: true,
+            stdio: "ignore",
+            env: sessionMessageBrokerEnvironment()
+          });
+        } catch (cause) {
+          throw clientFailure("BROKER_START_FAILED", "Cannot start the session message broker.", cause);
+        }
         child.unref();
         await waitForSessionMessageBrokerReady(
           stateDirectory,
@@ -35586,6 +35650,11 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
         { enforceDeadline: true, ...options.onOperationWrite ? { onOperationWrite: options.onOperationWrite } : {} }
       );
     }
+    let operationWriteAttempted = false;
+    const onOperationWrite = () => {
+      operationWriteAttempted = true;
+      return options.onOperationWrite?.();
+    };
     try {
       return await requestSessionMessageOnce(
         operation,
@@ -35593,12 +35662,12 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
         stateDirectory,
         remainingMilliseconds(deadline, signal),
         signal,
-        { enforceDeadline: options.deadlineMonotonicMs !== void 0 }
+        { enforceDeadline: options.deadlineMonotonicMs !== void 0, onOperationWrite }
       );
     } catch (error61) {
       try {
         throwIfAborted(signal);
-        if (error61 instanceof BrokerRequestRejected) throw error61;
+        if (error61 instanceof BrokerRequestRejected || operationWriteAttempted) throw error61;
         await ensureSessionMessageBroker(
           stateDirectory,
           remainingMilliseconds(deadline, signal),
@@ -35612,7 +35681,7 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
           stateDirectory,
           remainingMilliseconds(deadline, signal),
           signal,
-          { enforceDeadline: options.deadlineMonotonicMs !== void 0 }
+          { enforceDeadline: options.deadlineMonotonicMs !== void 0, onOperationWrite }
         );
       } catch (recoveryError) {
         throw retainFailureSecondary(recoveryError, error61);
@@ -35852,13 +35921,13 @@ function asRecord(value) {
 function integer2(value) {
   return typeof value === "number" && Number.isInteger(value) ? value : Number.NaN;
 }
-function responseMode(args, field) {
-  const value = args[field];
+function responseMode(args, field2) {
+  const value = args[field2];
   return value === void 0 || value === "full" ? "full" : value === "compact" ? "compact" : null;
 }
-function domainArguments(args, field) {
+function domainArguments(args, field2) {
   const result = { ...args };
-  delete result[field];
+  delete result[field2];
   delete result._continuityBinding;
   return result;
 }
@@ -35881,9 +35950,22 @@ function apiOk(data) {
 function invalidInput(message) {
   return apiError("INVALID_INPUT", message);
 }
-function apiError(code, message) {
-  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
+function apiError(code, message, details = null) {
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
 }
+function failureResult(error61, fallback, suffix = "") {
+  return error61 instanceof WorkflowContractError ? apiError(error61.code, `${error61.message}${suffix}`, error61.details) : invalidInput(`${error61 instanceof Error ? error61.message : fallback}${suffix}`);
+}
+var CLASSIFICATION_REQUEST_REJECTIONS = /* @__PURE__ */ new Set([
+  "OPERATION_DIGEST_CONFLICT",
+  "STALE_CLASSIFICATION_OPERATION",
+  "UNKNOWN_CLASSIFICATION_OPERATION",
+  "HOST_SELECTION_OBSERVATION_EXPIRED",
+  "CALLER_SELECTION_RECEIPT_REJECTED",
+  "AGENT_SELECTION_MISSING",
+  "REQUIRED_SKILL_SNAPSHOT_CHANGED",
+  "SELECTION_ALREADY_RECORDED"
+]);
 function unknownPresence(host, sessionId, brokerAnswered) {
   return {
     host,
@@ -35933,36 +36015,50 @@ async function sessionBoardResult(tool, args, databasePath, validator, sessionMe
       binding2 = validator.listSessionStatusRequest(args)._sessionBinding ?? null;
     }
   } catch (error61) {
-    return invalidInput(error61 instanceof Error ? error61.message : "Session board input is invalid.");
+    return failureResult(error61, "Session board input is invalid.");
   }
   if (tool === "update_session_status" && !binding2) {
-    return apiError("BINDING_REQUIRED", "The plugin hook records the session board line and did not run for this call.");
+    return apiError("BINDING_REQUIRED", "The session binding is missing; hook execution or binding delivery was not observed for this call.");
   }
   if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
   if (!existsSync3(databasePath)) {
     return tool === "list_session_status" ? apiOk({ sessions: [] }) : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
   }
   let board = null;
+  let step = "open";
+  const closeBoard = () => {
+    const opened = board;
+    board = null;
+    opened?.close();
+  };
   try {
     board = openBoard(databasePath);
     if (tool === "list_session_status") {
+      step = "list";
       const sessions = listSessions(board, (/* @__PURE__ */ new Date()).toISOString(), binding2);
-      board.close();
-      board = null;
+      step = "close";
+      closeBoard();
+      step = "presence";
       return apiOk({ sessions: withPresence(sessions, await sessionMessages.listPresence(sessions)) });
     }
+    step = "read";
     const row = readSession(board, binding2.host, binding2.sessionId);
+    step = "close";
+    closeBoard();
     return row && row.summary === summary ? apiOk(row) : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
-  } catch {
-    return apiError("MCP_UNAVAILABLE", "The session board is unavailable.");
-  } finally {
+  } catch (error61) {
     try {
-      board?.close();
-    } catch {
+      closeBoard();
+    } catch (closeError) {
+      retainFailureSecondary(error61, closeError);
     }
+    return apiError("MCP_UNAVAILABLE", "The session board is unavailable.", { step, cause: failureContext(error61) });
   }
 }
-var planWorkflowAnthropicInputSchema = {
+function usesInlineReferences(profile) {
+  return profile === "inline-references" || profile === "anthropic";
+}
+var planWorkflowInlineInputSchema = {
   type: "object",
   description: "Send either a TaskEnvelope.v1 object at the top level, or { schemaVersion, taskEnvelope, evaluationAuditPurpose? }. The server validates the exact PlanWorkflowRequest.v1 contract.",
   additionalProperties: false,
@@ -35973,7 +36069,7 @@ var planWorkflowAnthropicInputSchema = {
   }
 };
 function planWorkflowToolInputSchema(profile = "default") {
-  return profile === "anthropic" ? planWorkflowAnthropicInputSchema : planWorkflowInputSchema;
+  return usesInlineReferences(profile) ? planWorkflowInlineInputSchema : planWorkflowInputSchema;
 }
 var intake = readFileSync4(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8").match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1];
 if (!intake) throw new Error("Shared skill intake instructions are missing.");
@@ -35996,7 +36092,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
     { capabilities: { tools: {} }, instructions: serverInstructions() }
   );
   const contractDocuments = Object.values(contractSchemas);
-  const advertise = (tools) => toolSchemaProfile === "anthropic" ? tools.map((tool) => {
+  const advertise = (tools) => usesInlineReferences(toolSchemaProfile) ? tools.map((tool) => {
     if (!JSON.stringify(tool.inputSchema).includes('"$ref"')) return tool;
     try {
       return { ...tool, inputSchema: inlineSchemaReferences(tool.inputSchema, contractDocuments) };
@@ -36083,7 +36179,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "start_workflow",
-        description: "Create a durable running run from a ready orchestrated workflow plan.",
+        description: "Reject unguarded workflow starts. Use open_convergence_root, claim_workflow_attempt and start_guarded_workflow to start a bound run.",
         inputSchema: contractSchemas.workflowPlan,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
       },
@@ -36194,9 +36290,9 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const args = asRecord(request.params.arguments);
     const attested = (tool, call) => hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
-    const withMode = (field, call, project) => {
-      const mode = responseMode(args, field);
-      return mode === null ? invalidInput(`${field} must be compact or full.`) : projectResult(call(), mode, project);
+    const withMode = (field2, call, project) => {
+      const mode = responseMode(args, field2);
+      return mode === null ? invalidInput(`${field2} must be compact or full.`) : projectResult(call(), mode, project);
     };
     let updateStatus = null;
     let result;
@@ -36206,8 +36302,14 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       if (!classification2) result = apiError("MCP_UNAVAILABLE", "Skill classification is not configured for this server.");
       else {
         try {
+          if (request.params.name !== "get_skill_inventory") {
+            const callerInput = { ...args };
+            delete callerInput[HOST_ATTESTATION_FIELD];
+            const checked = (request.params.name === "classify_skills" ? classificationInputSchema : selectionInputSchema).safeParse(callerInput);
+            if (!checked.success) return toolResult(invalidInput("Skill classification input does not match its contract."));
+          }
           if (request.params.name === "get_skill_inventory") {
-            if (Object.keys(args).length > 0) throw new Error("INVALID_INPUT");
+            if (Object.keys(args).length > 0) return toolResult(invalidInput("get_skill_inventory accepts no arguments."));
             result = apiOk(await classification2.inventory());
           } else if (request.params.name === "classify_skills") {
             const classified = attested("classify_skills", (input2) => {
@@ -36223,8 +36325,20 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             });
             result = apiOk(await recorded);
           }
-        } catch {
-          result = invalidInput("Skill classification input, configuration or host observation is invalid; no selection was accepted.");
+        } catch (error61) {
+          if (error61 instanceof WorkflowContractError) {
+            result = apiError("INVALID_INPUT", "Skill classification host observation is invalid; no selection was accepted.", {
+              category: "host-observation",
+              reasonCode: error61.code
+            });
+          } else if (error61 instanceof Error && CLASSIFICATION_REQUEST_REJECTIONS.has(error61.message)) {
+            result = apiError("INVALID_INPUT", "Skill classification request was rejected; no selection was accepted.", {
+              category: "request-state",
+              reasonCode: error61.message
+            });
+          } else {
+            result = apiError("MCP_UNAVAILABLE", "Skill classification configuration or runtime is unavailable; no selection was accepted.");
+          }
         }
       }
     } else if (request.params.name === "lookup_korean_prose_terms") {
@@ -36233,7 +36347,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         const output2 = validator.koreanProseGlossaryLookupResult(glossary.lookup(input2));
         result = apiOk(output2);
       } catch (error61) {
-        result = invalidInput(error61 instanceof Error ? error61.message : "Glossary lookup input is invalid.");
+        result = failureResult(error61, "Glossary lookup input is invalid.");
       }
     } else if (request.params.name === "check_for_updates") {
       if (!validUpdateArguments(args)) {
@@ -36243,7 +36357,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         result = apiOk(updateStatus);
       }
     } else {
-      updateStatus = await updates.check(false);
+      updateStatus = updates.cachedStatus();
       switch (request.params.name) {
         case "get_trust_capabilities":
           result = Object.keys(args).length > 0 ? invalidInput("get_trust_capabilities accepts no arguments.") : trust ? trust.capabilities() : apiError("MCP_UNAVAILABLE", "The trust receipt store is unavailable.");
@@ -36256,7 +36370,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
           try {
             result = trust.validateCollaborationDecision(validator.validateCollaborationDecisionRequest(args));
           } catch (error61) {
-            result = invalidInput(error61 instanceof Error ? error61.message : "Collaboration decision validation input is invalid.");
+            result = failureResult(error61, "Collaboration decision validation input is invalid.");
           }
           break;
         case "plan_workflow":
@@ -36265,7 +36379,9 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
         case "open_convergence_root":
           result = withMode("responseMode", () => {
             const opened = service.openConvergenceRoot(domainArguments(args, "responseMode"));
-            if (opened.ok && opened.data) continuity.bindOpenedRoot(args, opened.data.rootId);
+            if (opened.ok && opened.data && !continuity.bindOpenedRoot(args, opened.data.rootId)) {
+              process.stderr.write(JSON.stringify({ event: "continuity-root-binding-unavailable" }) + "\n");
+            }
             return opened;
           }, convergenceRootHandle);
           break;
@@ -36327,7 +36443,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             validator.prepareSessionMessageRequest(args);
             result = await sessionMessages.prepare(args);
           } catch (error61) {
-            result = invalidInput(error61 instanceof Error ? error61.message : "Session message preparation is invalid.");
+            result = failureResult(error61, "Session message preparation is invalid.");
           }
           break;
         case "send_session_message":
@@ -36335,7 +36451,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             validator.sendSessionMessageRequest(args);
             result = await sessionMessages.send(args);
           } catch (error61) {
-            result = invalidInput(`${error61 instanceof Error ? error61.message : "Session message input is invalid."} Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status.`);
+            result = failureResult(error61, "Session message input is invalid.", " Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status.");
           }
           break;
         case "acknowledge_session_messages":
@@ -36343,7 +36459,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             validator.acknowledgeSessionMessagesRequest(args);
             result = await sessionMessages.acknowledge(args);
           } catch (error61) {
-            result = invalidInput(error61 instanceof Error ? error61.message : "Session message acknowledgement is invalid.");
+            result = failureResult(error61, "Session message acknowledgement is invalid.");
           }
           break;
         case "get_session_message_status":
@@ -36351,7 +36467,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
             validator.getSessionMessageStatusRequest(args);
             result = await sessionMessages.status(args);
           } catch (error61) {
-            result = invalidInput(error61 instanceof Error ? error61.message : "Session message status input is invalid.");
+            result = failureResult(error61, "Session message status input is invalid.");
           }
           break;
         case "execute_state_cleanup":
@@ -36400,6 +36516,8 @@ function compareStableVersionNumbers(leftVersion, rightVersion) {
 var SUCCESS_TTL_MS = 24 * 60 * 60 * 1e3;
 var FAILURE_RETRY_MS = 60 * 60 * 1e3;
 var REQUEST_TIMEOUT_MS = 3e3;
+var MAX_RESPONSE_BYTES = 1024 * 1024;
+var MAX_TAG_REFERENCES = 1e4;
 var STABLE_TAG = /^refs\/tags\/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/u;
 var TAG_OBJECT_URL_PREFIX = `${PLUGIN_INFO.tagsApi.split("/git/matching-refs/")[0]}/git/tags/`;
 var GITHUB_HEADERS = {
@@ -36413,6 +36531,41 @@ var UpdateCheckError = class extends Error {
   }
   code;
 };
+async function readUpdateJson(response) {
+  const reader = response.body?.getReader();
+  const chunks = [];
+  let length = 0;
+  if (reader) {
+    try {
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        length += chunk.value.byteLength;
+        if (length > MAX_RESPONSE_BYTES) {
+          try {
+            await reader.cancel();
+          } catch {
+          }
+          throw new UpdateCheckError("INVALID_RESPONSE", "GitHub update response exceeded the byte limit.");
+        }
+        chunks.push(chunk.value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+  const bytes = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  try {
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    throw new UpdateCheckError("INVALID_RESPONSE", "GitHub update response was not JSON.");
+  }
+}
 function safeDate(value) {
   if (value === null) return null;
   const parsed = Date.parse(value);
@@ -36459,6 +36612,17 @@ var PluginUpdateService = class {
   now;
   requestTimeoutMs;
   volatileState = null;
+  /** Reads advisory cached state without starting a remote update request. */
+  cachedStatus() {
+    const now = this.now();
+    const stored = this.readState();
+    if (!stored) return null;
+    try {
+      return this.publicStatus(this.withCurrentVersion(stored, now), now);
+    } catch {
+      return null;
+    }
+  }
   async check(force = false) {
     const now = this.now();
     const stored = this.readState();
@@ -36596,17 +36760,14 @@ var PluginUpdateService = class {
   }
   async fromResponse(response, state, now, signal) {
     if (!response.ok) throw new UpdateCheckError("HTTP", `GitHub tags request failed with HTTP ${response.status}.`);
-    let body;
-    try {
-      body = await response.json();
-    } catch {
-      throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tags response was not JSON.");
-    }
+    const body = await readUpdateJson(response);
     if (!Array.isArray(body)) throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tags response was not an array.");
+    if (body.length > MAX_TAG_REFERENCES) throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tags response exceeded the item limit.");
     const stable = body.flatMap((item) => {
       const reference = remoteReference(item);
       const match = reference ? STABLE_TAG.exec(reference.ref) : null;
-      return reference && match ? [{ reference, version: `${match[1]}.${match[2]}.${match[3]}` }] : [];
+      const version3 = match ? `${match[1]}.${match[2]}.${match[3]}` : null;
+      return reference && version3 && parseStableVersion(version3) ? [{ reference, version: version3 }] : [];
     });
     if (stable.length === 0) throw new UpdateCheckError("NO_STABLE_TAG", "GitHub returned no stable plugin tag.");
     stable.sort((left, right) => compareStableVersions(right.version, left.version));
@@ -36639,12 +36800,7 @@ var PluginUpdateService = class {
         signal
       });
       if (!response.ok) throw new UpdateCheckError("HTTP", `GitHub tag object request failed with HTTP ${response.status}.`);
-      let value;
-      try {
-        value = await response.json();
-      } catch {
-        throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object response was not JSON.");
-      }
+      const value = await readUpdateJson(response);
       if (!isRecord(value) || !isRecord(value.object)) {
         throw new UpdateCheckError("INVALID_RESPONSE", "GitHub tag object response was invalid.");
       }
@@ -37155,7 +37311,7 @@ var SqliteWorkflowStore = class {
       if (!leaseRow) return null;
       const lease = JSON.parse(leaseRow.lease_json);
       const proposal = JSON.parse(leaseRow.proposal_json);
-      const decisionTime = this.shared ? this.shared.time(Date.parse(consumedAt)) : Date.parse(consumedAt);
+      const decisionTime = this.shared ? this.shared.time(Date.parse(consumedAt)) : Math.max(Date.parse(consumedAt), Date.now());
       if (lease.state !== "issued" || lease.rootRevision !== expectedRootRevision || Date.parse(lease.expiresAt) <= decisionTime) return null;
       const rootRow = this.rootRow(lease.rootId);
       if (!rootRow || rootRow.revision !== expectedRootRevision) return null;
@@ -37446,15 +37602,15 @@ var SqliteWorkflowStore = class {
     this.closed = true;
   }
   initializeSchema() {
-    const row = { user_version: this.getSchemaVersion() };
-    if (row.user_version > SCHEMA_VERSION2) {
-      throw new WorkflowContractError("INVALID_INPUT", "Workflow database schema is newer than this server supports.", {
-        databasePath: this.databasePath,
-        supportedVersion: SCHEMA_VERSION2,
-        actualVersion: row.user_version
-      });
-    }
     this.transaction(() => {
+      const row = { user_version: this.getSchemaVersion() };
+      if (row.user_version > SCHEMA_VERSION2) {
+        throw new WorkflowContractError("INVALID_INPUT", "Workflow database schema is newer than this server supports.", {
+          databasePath: this.databasePath,
+          supportedVersion: SCHEMA_VERSION2,
+          actualVersion: row.user_version
+        });
+      }
       if (row.user_version > 0 && row.user_version < 4) {
         this.database.exec(`
           ALTER TABLE workflow_runs ADD COLUMN state TEXT;
@@ -37687,11 +37843,18 @@ var SqliteWorkflowStore = class {
     const message = cause instanceof Error ? cause.message : String(cause);
     return /database is locked|SQLITE_BUSY|UNIQUE constraint failed: convergence_leases/iu.test(message);
   }
+  /**
+   * A storage or driver failure means the workflow persistence layer is unavailable, never that the
+   * caller's input was invalid. A contract error raised inside the failed step keeps its own code;
+   * the original cause text and SQLite result code stay in details.
+   */
   storageError(message, cause, details = {}) {
-    return new WorkflowContractError("INVALID_INPUT", message, {
+    const errcode = typeof cause === "object" && cause !== null ? cause.errcode : void 0;
+    return new WorkflowContractError(cause instanceof WorkflowContractError ? cause.code : "MCP_UNAVAILABLE", message, {
       ...details,
       databasePath: this.databasePath,
-      cause: cause instanceof Error ? cause.message : String(cause)
+      cause: cause instanceof Error ? cause.message : String(cause),
+      ...typeof errcode === "number" ? { sqliteErrcode: errcode } : {}
     });
   }
 };
@@ -37754,6 +37917,22 @@ function validateDecisionRecordSemantics(record4) {
   const assurance = run.assurance;
   const cap = run.worker_cap;
   const strictShortfall = run.strict === true && run.capability_shortfall === true;
+  if (!["independent", "partially_independent", "single_agent", "provisional"].includes(String(assurance))) {
+    errors.push("run.assurance must be independent, partially_independent, single_agent, or provisional");
+  }
+  if (!strictShortfall) {
+    const fallbackRecorded = run.judge_fallback !== null && run.judge_fallback !== void 0;
+    const panelAssurances = ["independent", "partially_independent", "provisional"];
+    if (stage === "LOW" && !(fallbackRecorded ? ["single_agent", "provisional"] : ["single_agent"]).includes(String(assurance))) {
+      errors.push("LOW must use single_agent assurance unless a fallback is recorded");
+    }
+    if (stage === "MEDIUM" && !panelAssurances.includes(String(assurance))) {
+      errors.push("MEDIUM assurance is invalid");
+    }
+    if ((stage === "HIGH" || stage === "CRITICAL") && !panelAssurances.includes(String(assurance))) {
+      errors.push("HIGH/CRITICAL assurance is invalid");
+    }
+  }
   if (run.capability_shortfall !== missingSet.size > 0) {
     errors.push("run capability_shortfall must match preflight missing capabilities");
   }
@@ -37821,8 +38000,10 @@ function validateDecisionRecordSemantics(record4) {
     if (stage === "HIGH" && assurance === "independent" && run.capability_shortfall !== true && reviewerIds.size < 4) {
       errors.push("HIGH requires at least four eligible completed reviewers");
     }
-    if (stage === "CRITICAL" && assurance === "independent" && run.capability_shortfall !== true) {
-      if (reviewerIds.size < 5 || reviewerIds.size > 6) errors.push("CRITICAL requires five or six reviewers");
+    if (stage === "CRITICAL") {
+      if (assurance === "independent" && run.capability_shortfall !== true && (reviewerIds.size < 5 || reviewerIds.size > 6)) {
+        errors.push("CRITICAL requires five or six reviewers");
+      }
       const roles = [...reviewerIds].map((id) => String(workerById.get(id)?.role ?? "").toLowerCase()).join(" ");
       if (!roles.includes("red team") && !roles.includes("independent design-assurance")) {
         errors.push("CRITICAL requires a red-team or independent design-assurance reviewer");
@@ -37850,7 +38031,7 @@ function validateDecisionRecordSemantics(record4) {
     const cross2 = object4(record4.cross_examination);
     const emptyRunFields = ["workers", "completed_worker_ids", "reused_worker_ids", "failures", "specialist_additions", "redeliberations"];
     const emptyRootFields = ["panel_manifest", "material_claims", "issue_ledger", "axis_decisions"];
-    if (assurance !== "provisional" || record4.consensus_proposal !== null || judgeId !== null || fallback !== null || instantiated.size > 0 || missingSet.size === 0 || emptyRunFields.some((field) => array2(run[field]).length > 0) || emptyRootFields.some((field) => array2(record4[field]).length > 0) || cross2.decision !== "skip" || !nonempty(cross2.reason) || ["trigger_items", "selected_item_ids", "coverage", "followups"].some((field) => array2(cross2[field]).length > 0)) {
+    if (assurance !== "provisional" || record4.consensus_proposal !== null || judgeId !== null || fallback !== null || instantiated.size > 0 || missingSet.size === 0 || emptyRunFields.some((field2) => array2(run[field2]).length > 0) || emptyRootFields.some((field2) => array2(record4[field2]).length > 0) || cross2.decision !== "skip" || !nonempty(cross2.reason) || ["trigger_items", "selected_item_ids", "coverage", "followups"].some((field2) => array2(cross2[field2]).length > 0)) {
       errors.push("strict capability shortfall contract is inconsistent");
     }
     return errors;
@@ -38050,2598 +38231,11 @@ function validateDecisionRecordSemantics(record4) {
   return errors;
 }
 
-// skills/software-security-auditor/scripts/core.mjs
-import { createHash as createHash12 } from "node:crypto";
-function canonical(value) {
-  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
-  if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(",")}}`;
-  return JSON.stringify(value);
-}
-var digestBytes = (value) => `sha256:${createHash12("sha256").update(value).digest("hex")}`;
-var digest3 = (value) => digestBytes(canonical(value));
-var targetDigest = (request) => digest3(request.target);
-function safeRelative(value) {
-  return typeof value === "string" && value.length > 0 && !/[\\:\x00-\x1f]/u.test(value) && !value.startsWith("/") && value.split("/").every((part) => part && part !== "." && part !== "..");
-}
-function validateSemantics(report) {
-  const errors = [];
-  const request = report.request;
-  if (report.requestDigest !== digest3(request)) errors.push("REQUEST_DIGEST_MISMATCH");
-  if (report.targetDigest !== targetDigest(request)) errors.push("TARGET_DIGEST_MISMATCH");
-  const unique = (items, key, label) => {
-    const values = items.map((item) => item[key]);
-    if (new Set(values).size !== values.length) errors.push(`DUPLICATE_${label}`);
-    return new Set(values);
-  };
-  const paths = unique(request.target.files, "path", "TARGET_PATH");
-  unique(request.providedEvidence, "path", "PROVIDED_EVIDENCE");
-  const expected = unique(request.checks, "id", "REQUEST_CHECK");
-  const checks = unique(report.checks, "id", "CHECK");
-  const evidence = unique(report.evidence, "id", "EVIDENCE");
-  unique(report.findings, "id", "FINDING");
-  if (expected.size !== checks.size || [...expected].some((id) => !checks.has(id))) errors.push("CHECK_INVENTORY_MISMATCH");
-  for (const item of [...request.target.files, ...request.providedEvidence, ...report.evidence]) {
-    if (!safeRelative(item.path)) errors.push("UNSAFE_PATH");
-  }
-  for (const item of report.evidence) {
-    if (item.targetDigest !== report.targetDigest) errors.push("STALE_EVIDENCE");
-  }
-  const checkMap = new Map(report.checks.map((item) => [item.id, item]));
-  for (const item of [...report.checks, ...report.findings]) {
-    if (item.evidenceRefs.some((ref) => !evidence.has(ref))) errors.push("UNKNOWN_EVIDENCE");
-  }
-  for (const item of report.checks) {
-    if (item.status === "checked" && (item.evidenceRefs.length === 0 || item.method === "not-executed")) errors.push("CHECK_WITHOUT_EVIDENCE");
-    if (item.status !== "checked" && item.method !== "not-executed") errors.push("UNEXECUTED_CHECK_METHOD");
-  }
-  for (const item of report.findings) {
-    if (item.locations.some((location) => !paths.has(location.path))) errors.push("UNKNOWN_FINDING_LOCATION");
-    if (item.checkIds.some((id) => !expected.has(id) || checkMap.get(id)?.status !== "checked")) errors.push("UNVERIFIED_FINDING_CHECK");
-    if (item.status === "confirmed" && item.proof === "unverified") errors.push("UNVERIFIED_CONFIRMED_FINDING");
-    if (item.proof === "local-reproduction") {
-      if (!request.authorization.localReproduction || !item.checkIds.some((id) => checkMap.get(id)?.method === "local-reproduction")) errors.push("UNSUPPORTED_REPRODUCTION");
-    }
-  }
-  if (!request.authorization.localReproduction && report.checks.some((item) => item.method === "local-reproduction")) errors.push("UNAUTHORIZED_REPRODUCTION");
-  const missing = report.checks.filter((item) => item.status === "not-checked").length;
-  const checked = report.checks.filter((item) => item.status === "checked").length;
-  const expectedStatus = missing === 0 ? "complete" : checked > 0 ? "partial" : "blocked";
-  if (report.status !== expectedStatus) errors.push("STATUS_COVERAGE_MISMATCH");
-  if (missing > 0 && report.limitations.length === 0) errors.push("MISSING_LIMITATIONS");
-  return [...new Set(errors)];
-}
-
-// mcp-server/src/receipt-policy.ts
-var DIGEST2 = /^(?:sha256:)?[a-f0-9]{64}$/;
-var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-var RFC3339_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
-var REFERENCE = /^(?:artifact|digest|schema|urn|run|stage|commit|test|file|document|tool):(?:\/\/)?[A-Za-z0-9][A-Za-z0-9._~:/?#@!$&'()*+,;=%-]{7,}$/;
-var NIL_UUID = "00000000-0000-0000-0000-000000000000";
-var ERROR_DETAIL_KEYS = /* @__PURE__ */ new Set([
-  "actorId",
-  "actorIdPointer",
-  "actual",
-  "artifactId",
-  "artifactIds",
-  "code",
-  "conflictingStageId",
-  "digest",
-  "digests",
-  "expected",
-  "locator",
-  "locators",
-  "mode",
-  "policy",
-  "reference",
-  "references",
-  "runId",
-  "schemaId",
-  "stageId",
-  "targetDigest"
-]);
-var PROTOCOL_TOKENS = /* @__PURE__ */ new Set([
-  CONTRACT_VERSION,
-  ...ERROR_CODE,
-  ...WORKFLOW_STATE,
-  "output",
-  "adapter-error",
-  "user-input",
-  "file",
-  "test",
-  "document",
-  "tool",
-  "reference-only",
-  "verified",
-  "COOPERATIVE_PROVENANCE_ASSERTIONS",
-  "JSON_JSONL_ONLY_V1"
-]);
-function jsonPointer(value, pointer2) {
-  return pointer2.split("/").slice(1).reduce((current, token) => {
-    if (!current || typeof current !== "object") return void 0;
-    const key = token.replaceAll("~1", "/").replaceAll("~0", "~");
-    return current[key];
-  }, value);
-}
-function isOpaqueReference(value) {
-  return DIGEST2.test(value) || UUID.test(value) || REFERENCE.test(value);
-}
-function isSafeScalar(value) {
-  return isOpaqueReference(value) || RFC3339_TIMESTAMP.test(value);
-}
-function assertSafeString(value, fixedTokens, location, allowEmpty = false) {
-  if (allowEmpty && value === "" || fixedTokens.has(value) || PROTOCOL_TOKENS.has(value) || isSafeScalar(value)) return;
-  throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt policy rejected free text.", {
-    location
-  });
-}
-function assertSafeValue(value, fixedTokens, location) {
-  if (typeof value === "string") {
-    assertSafeString(value, fixedTokens, location);
-    return;
-  }
-  if (Array.isArray(value)) {
-    value.forEach((item, index) => assertSafeValue(item, fixedTokens, `${location}/${index}`));
-    return;
-  }
-  if (value && typeof value === "object") {
-    for (const [key, item] of Object.entries(value)) {
-      assertSafeValue(item, fixedTokens, `${location}/${key}`);
-    }
-  }
-}
-function assertSafeError(error61, fixedTokens, location) {
-  if (!error61) return;
-  assertSafeString(error61.message, fixedTokens, `${location}/message`);
-  if (error61.details) {
-    for (const [key, value] of Object.entries(error61.details)) {
-      if (!ERROR_DETAIL_KEYS.has(key)) {
-        throw new WorkflowContractError("INVALID_INPUT", "Reference-only error details contain an undeclared field.", {
-          location: `${location}/details/${key}`
-        });
-      }
-      assertSafeValue(value, fixedTokens, `${location}/details/${key}`);
-    }
-  }
-}
-function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
-  const policy = stage.receiptPolicy;
-  if (!policy) return;
-  const fixedTokens = /* @__PURE__ */ new Set([
-    ...outputFixedTokens,
-    ...stage.satisfiedCapabilities,
-    ...stage.requiredInputArtifacts,
-    ...stage.producedArtifacts,
-    ...stage.requiredArtifacts
-  ]);
-  assertSafeValue(result.output.output, fixedTokens, "/output/output");
-  const allowedArtifacts = /* @__PURE__ */ new Set([
-    ...stage.requiredInputArtifacts,
-    ...stage.producedArtifacts,
-    ...stage.requiredArtifacts
-  ]);
-  for (const [index, artifact] of result.output.artifacts.entries()) {
-    if (!allowedArtifacts.has(artifact.artifactId)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt contains an undeclared artifact.", {
-        stageId: stage.stageId,
-        artifactId: artifact.artifactId
-      });
-    }
-    assertSafeString(artifact.schemaId, fixedTokens, `/output/artifacts/${index}/schemaId`);
-    assertSafeString(artifact.locator, fixedTokens, `/output/artifacts/${index}/locator`);
-    if (!DIGEST2.test(artifact.digest) || !DIGEST2.test(artifact.targetDigest)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Reference-only artifact digests must be opaque SHA-256 references.", {
-        stageId: stage.stageId,
-        artifactId: artifact.artifactId
-      });
-    }
-  }
-  for (const [index, evidence] of result.evidence.entries()) {
-    if (!allowedArtifacts.has(evidence.artifactId)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt contains undeclared evidence.", {
-        stageId: stage.stageId,
-        artifactId: evidence.artifactId
-      });
-    }
-    assertSafeString(evidence.locator, fixedTokens, `/evidence/${index}/locator`);
-    assertSafeString(evidence.note, fixedTokens, `/evidence/${index}/note`, true);
-  }
-  result.findings.forEach((finding, index) => assertSafeString(finding, fixedTokens, `/findings/${index}`));
-  result.blockers.forEach((blocker, index) => assertSafeString(blocker, fixedTokens, `/blockers/${index}`));
-  assertSafeError(result.output.error, fixedTokens, "/output/error");
-  assertSafeError(result.error, fixedTokens, "/error");
-  const externalInputs = stage.requiredInputArtifacts.filter((artifactId) => !receipt.plan.stages.some(
-    (candidate) => candidate.stageId !== stage.stageId && candidate.producedArtifacts.includes(artifactId)
-  ));
-  const missingExternalInputs = externalInputs.filter((artifactId) => !result.evidence.some(
-    (evidence) => evidence.artifactId === artifactId && evidence.verified && isOpaqueReference(evidence.locator)
-  ));
-  if (missingExternalInputs.length > 0) {
-    throw new WorkflowContractError("MISSING_EVIDENCE", "Reference-only stage prerequisites require verified artifact references.", {
-      stageId: stage.stageId,
-      missingInputs: missingExternalInputs
-    });
-  }
-  if (policy.actorIdsMatch === "prior-policy-actors" && policy.actorIdsPointer) {
-    const priorActorStages = receipt.plan.stages.filter((candidate) => candidate.order < stage.order && candidate.receiptPolicy?.actorIdPointer).sort((left, right) => left.order - right.order);
-    const expectedActorIds = priorActorStages.map((priorStage) => {
-      const priorResult = receipt.stageResults.find((candidate) => candidate.stageId === priorStage.stageId);
-      const actorId2 = priorResult && jsonPointer(priorResult.output, priorStage.receiptPolicy.actorIdPointer);
-      if (typeof actorId2 !== "string" || actorId2 === NIL_UUID || !UUID.test(actorId2)) {
-        throw new WorkflowContractError("MISSING_EVIDENCE", "A prior policy stage has no valid actor binding.", {
-          stageId: stage.stageId,
-          conflictingStageId: priorStage.stageId
-        });
-      }
-      return actorId2;
-    });
-    const actorIds = jsonPointer(result.output, policy.actorIdsPointer);
-    if (!Array.isArray(actorIds) || actorIds.length !== expectedActorIds.length || new Set(actorIds).size !== actorIds.length || actorIds.some((actorId2, index) => actorId2 !== expectedActorIds[index])) {
-      throw new WorkflowContractError("GATE_FAILED", "Receipt actor IDs must exactly match prior policy actors in plan order.", {
-        stageId: stage.stageId,
-        actorIdsPointer: policy.actorIdsPointer
-      });
-    }
-  }
-  if (!policy.actorIdPointer) return;
-  const actorId = jsonPointer(result.output, policy.actorIdPointer);
-  if (typeof actorId !== "string" || actorId === NIL_UUID || !UUID.test(actorId)) {
-    throw new WorkflowContractError("INVALID_INPUT", "Receipt actor ID must be a nonempty canonical lowercase UUID.", {
-      stageId: stage.stageId,
-      actorIdPointer: policy.actorIdPointer
-    });
-  }
-  if (policy.uniqueness !== "run") return;
-  for (const priorResult of receipt.stageResults.filter((candidate) => candidate.stageId !== stage.stageId)) {
-    const priorStage = receipt.plan.stages.find((candidate) => candidate.stageId === priorResult.stageId);
-    if (!priorStage?.receiptPolicy?.actorIdPointer) continue;
-    if (jsonPointer(priorResult.output, priorStage.receiptPolicy.actorIdPointer) === actorId) {
-      throw new WorkflowContractError("GATE_FAILED", "Receipt actor ID must be unique across policy stages in this run.", {
-        stageId: stage.stageId,
-        conflictingStageId: priorStage.stageId
-      });
-    }
-  }
-}
-
-// mcp-server/src/stage-output-file.ts
-import { createHash as createHash13 } from "node:crypto";
-import { closeSync, fstatSync, openSync, readSync } from "node:fs";
-import path13 from "node:path";
-var MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
-function unreadable(locator) {
-  return new WorkflowContractError("INVALID_INPUT", "outputFile.locator is not a readable regular local file of at most 16 MiB.", { locator });
-}
-function readLocalStageOutputFile(locator) {
-  if (!path13.isAbsolute(locator)) {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must be an absolute local path.");
-  }
-  if (/^(?:\\\\|\/\/)/u.test(locator)) {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must not be a network path.");
-  }
-  let descriptor2 = null;
-  try {
-    descriptor2 = openSync(locator, "r");
-    const stats = fstatSync(descriptor2);
-    if (!stats.isFile() || stats.size > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(locator);
-    const buffer = Buffer.alloc(MAX_STAGE_OUTPUT_FILE_BYTES + 1);
-    let length = 0;
-    for (; ; ) {
-      const read = readSync(descriptor2, buffer, length, buffer.length - length, null);
-      if (read === 0) break;
-      length += read;
-      if (length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(locator);
-    }
-    return buffer.subarray(0, length);
-  } catch (error61) {
-    if (error61 instanceof WorkflowContractError) throw error61;
-    throw unreadable(locator);
-  } finally {
-    if (descriptor2 !== null) closeSync(descriptor2);
-  }
-}
-function loadStageOutputFile(reference, read = readLocalStageOutputFile) {
-  const bytes = read(reference.locator);
-  if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(reference.locator);
-  const digest5 = `sha256:${createHash13("sha256").update(bytes).digest("hex")}`;
-  if (digest5 !== reference.digest) {
-    throw new WorkflowContractError("INTEGRITY_FAILED", "outputFile content does not match its digest.", {
-      locator: reference.locator,
-      expected: reference.digest
-    });
-  }
-  let parsed;
-  try {
-    parsed = JSON.parse(bytes.toString("utf8").replace(/^\uFEFF/u, ""));
-  } catch {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile is not valid JSON.", { locator: reference.locator });
-  }
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile must contain a JSON object.", { locator: reference.locator });
-  }
-  return parsed;
-}
-
-// mcp-server/src/cs-engineering-validator.ts
+// mcp-server/src/provider-semantics.ts
 import path14 from "node:path";
 
-// mcp-server/src/stage-validator-process.ts
-import { spawnSync } from "node:child_process";
-function childError(...streams) {
-  for (const text5 of streams) {
-    try {
-      const parsed = JSON.parse(text5);
-      const source = typeof parsed.code === "string" ? parsed : parsed.error;
-      if (source && typeof source.code === "string") return { code: source.code, message: typeof source.message === "string" ? source.message : "" };
-    } catch {
-    }
-  }
-  return null;
-}
-function runStageValidator(label, script, args, okStatuses) {
-  const checked = spawnSync(
-    process.execPath,
-    [script, ...args],
-    { encoding: "utf8", timeout: 1e4, maxBuffer: 4 * 1024 * 1024, windowsHide: true }
-  );
-  const stdout = checked.stdout ?? "";
-  const stderr = checked.stderr ?? "";
-  if (checked.error) {
-    const errno = checked.error.code ?? null;
-    throw new WorkflowContractError(
-      "GATE_FAILED",
-      `${label} validator could not run (${errno ?? checked.error.name}).`,
-      { step: "spawn", errno, signal: checked.signal }
-    );
-  }
-  if (checked.signal) {
-    throw new WorkflowContractError(
-      "GATE_FAILED",
-      `${label} validator was terminated by ${checked.signal}.`,
-      { step: "terminated", signal: checked.signal, status: checked.status }
-    );
-  }
-  let parsed = null;
-  try {
-    parsed = JSON.parse(stdout);
-  } catch {
-  }
-  if (!okStatuses.includes(checked.status ?? -1) || !parsed && stderr.trim()) {
-    const cause = childError(stdout, stderr);
-    const code = cause && ERROR_CODE.includes(cause.code) ? cause.code : "GATE_FAILED";
-    throw new WorkflowContractError(
-      code,
-      cause?.message || `${label} validator exited with status ${checked.status}.`,
-      { step: "exit", status: checked.status, childCode: cause?.code ?? null, stderr: stderr.slice(0, 500) || null }
-    );
-  }
-  if (!parsed) throw new WorkflowContractError("INVALID_INPUT", `${label} validator did not return bounded JSON.`, { step: "parse", status: checked.status });
-  return parsed;
-}
-
-// mcp-server/src/cs-engineering-validator.ts
-function assertCsStageBundle(rootDirectory, taskDigest, result, validator) {
-  if (result.output.kind !== "output") return;
-  if (!taskDigest) throw new WorkflowContractError("BINDING_REQUIRED", "CS review requires a signed task digest.");
-  const references = result.output.artifacts.filter((artifact) => artifact.artifactId === "cs-review-bundle");
-  const reference = references[0];
-  if (references.length !== 1 || !reference?.verified || !path14.isAbsolute(reference.locator) || /^(?:\\\\|\/\/)/u.test(reference.locator)) {
-    throw new WorkflowContractError("MISSING_EVIDENCE", "CS review requires one verified local cs-review-bundle artifact.");
-  }
-  const root = path14.dirname(reference.locator);
-  const assessment = runStageValidator("CS stage bundle", path14.join(rootDirectory, "skills/cs-engineering/scripts/validate.mjs"), [
-    "check-stage-bundle",
-    "--root",
-    root,
-    "--input",
-    path14.basename(reference.locator),
-    "--bundle-digest",
-    reference.digest,
-    "--task-digest",
-    taskDigest
-  ], [0, 3, 4]);
-  if (assessment.kind !== "cs-bundle-check") {
-    throw new WorkflowContractError(
-      "GATE_FAILED",
-      "CS stage bundle could not be validated. Correct the supplied files and references.",
-      { step: "kind", kind: typeof assessment.kind === "string" ? assessment.kind : null }
-    );
-  }
-  validator.planWorkflowRequest(assessment.task);
-  if (canonicalJson(assessment.review, "CS review") !== canonicalJson(result.output.output, "CS provider output")) {
-    throw new WorkflowContractError("INTEGRITY_FAILED", "CS stage output differs from its validated bundle review.");
-  }
-  const reviewRef = assessment.reviewRef;
-  const reports = result.output.artifacts.filter((artifact) => artifact.artifactId === "cs-review-report");
-  const report = reports[0];
-  if (reports.length !== 1 || !report?.verified || report.digest !== reviewRef.digest || path14.resolve(report.locator) !== path14.resolve(root, reviewRef.path) || report.targetDigest !== assessment.candidateDigest || reference.targetDigest !== assessment.candidateDigest) {
-    throw new WorkflowContractError("INTEGRITY_FAILED", "CS report artifact and bundle must name the same review bytes and candidate.");
-  }
-}
-
-// mcp-server/src/engineering-practices-validator.ts
-import path15 from "node:path";
-function assertEngineeringStageBundle(rootDirectory, taskDigest, capability, result, validator) {
-  if (!["test-sensitivity-review", "change-code-review"].includes(capability) || result.output.kind !== "output") return;
-  if (!taskDigest) throw new WorkflowContractError("BINDING_REQUIRED", "Engineering review requires a signed task digest.");
-  const references = result.output.artifacts.filter((artifact) => artifact.artifactId === "engineering-stage-bundle");
-  const reference = references[0];
-  if (references.length !== 1 || !reference?.verified || !path15.isAbsolute(reference.locator) || /^(?:\\\\|\/\/)/u.test(reference.locator)) {
-    throw new WorkflowContractError("MISSING_EVIDENCE", "Engineering review requires one verified local engineering-stage-bundle artifact.");
-  }
-  const root = path15.dirname(reference.locator);
-  const assessment = runStageValidator("Engineering stage", path15.join(rootDirectory, "runtime/engineering-practices/cli.mjs"), [
-    "check-stage-bundle",
-    "--root",
-    root,
-    "--input",
-    path15.basename(reference.locator),
-    "--bundle-digest",
-    reference.digest,
-    "--task-digest",
-    taskDigest,
-    "--capability",
-    capability
-  ], [0, 1]);
-  if (assessment.kind !== "engineering-stage-check") {
-    throw new WorkflowContractError(
-      "GATE_FAILED",
-      "Engineering stage files could not be validated.",
-      { step: "kind", kind: typeof assessment.kind === "string" ? assessment.kind : null }
-    );
-  }
-  validator.planWorkflowRequest(assessment.task);
-  if (canonicalJson(assessment.result, "Engineering result") !== canonicalJson(result.output.output, "Engineering provider output")) {
-    throw new WorkflowContractError("INTEGRITY_FAILED", "Provider output differs from validated raw engineering files.");
-  }
-  const resultRef = assessment.resultRef;
-  const artifactId = capability === "test-sensitivity-review" ? "engineering-test-result" : "engineering-review-result";
-  const reports = result.output.artifacts.filter((artifact) => artifact.artifactId === artifactId);
-  const report = reports[0];
-  if (reports.length !== 1 || !report?.verified || report.digest !== resultRef.digest || path15.resolve(report.locator) !== path15.resolve(root, resultRef.path) || report.targetDigest !== assessment.targetDigest || reference.targetDigest !== assessment.targetDigest) {
-    throw new WorkflowContractError("INTEGRITY_FAILED", "Engineering artifacts must bind the validated result bytes and current candidate.");
-  }
-}
-
-// mcp-server/src/workflow-service.ts
-function asRecord2(value) {
-  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
-}
-function apiOk2(data) {
-  return { schemaVersion: CONTRACT_VERSION, ok: true, data, error: null };
-}
-function apiError2(error61) {
-  return { schemaVersion: CONTRACT_VERSION, ok: false, data: null, error: error61 };
-}
-function stageId(order, capability) {
-  return `stage-${String(order).padStart(2, "0")}-${capability}`;
-}
-var KOREAN_PROSE_CAPABILITIES = [
-  "korean-prose-selection",
-  "korean-prose-editing",
-  "korean-prose-verification",
-  "korean-prose-finalization"
-];
-var DETERMINISTIC_CAPABILITIES = /* @__PURE__ */ new Set([
-  "korean-prose-finalization"
-]);
-var USER_GATE_RECEIPT_STATES = /* @__PURE__ */ new Set([
-  "needs-input",
-  "needs-approval",
-  "needs-redesign"
-]);
-var HIGH_ASSURANCE_CAPABILITIES = /* @__PURE__ */ new Set([
-  "software-security-audit",
-  "independent-deliberation",
-  "independent-audit",
-  "evaluation-validity-audit",
-  "blocker-diagnosis",
-  "recovery-strategy-selection",
-  "iteration-frame-audit",
-  "korean-prose-selection",
-  "korean-prose-verification",
-  "acceptance-evidence-validation",
-  "mutation-risk-preflight"
-]);
-var TRUSTED_EXECUTION_MAX_AGE_MS = 5 * 60 * 1e3;
-var TRUSTED_EXECUTION_CLOCK_SKEW_MS = 5 * 1e3;
-var PLAN_INTEGRITY_TOKEN = /^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/u;
-function bumpedRoot(root, updatedAt) {
-  const next = clone2(root);
-  next.revision += 1;
-  next.updatedAt = updatedAt;
-  return next;
-}
-function consumedLeases(snapshot, epoch) {
-  return snapshot.leases.filter((lease) => lease.epoch === epoch && lease.state === "consumed");
-}
-var WorkflowService = class {
-  constructor(registry2, validator = new ContractValidator(), store = new InMemoryWorkflowStore(), defaultExecutionContext = null, trustedExecutionContextProvider = null) {
-    this.registry = registry2;
-    this.validator = validator;
-    this.store = store;
-    this.defaultExecutionContext = defaultExecutionContext;
-    this.trustedExecutionContextProvider = trustedExecutionContextProvider;
-    const encodedKey = this.store.getOrCreateSecret(PLAN_SIGNING_KEY, createPlanSigningKey);
-    this.planSigningKey = Buffer.from(encodedKey, "base64url");
-    if (this.planSigningKey.length !== 32) {
-      throw new WorkflowContractError("INVALID_INPUT", "Stored plan signing key is invalid.");
-    }
-  }
-  registry;
-  validator;
-  store;
-  defaultExecutionContext;
-  trustedExecutionContextProvider;
-  planSigningKey;
-  planWorkflow(rawTask, requireExecutionContext = false) {
-    return this.attempt(() => {
-      const request = this.validator.planWorkflowRequest(rawTask);
-      const wrapped = "taskEnvelope" in request;
-      const task = wrapped ? request.taskEnvelope : request;
-      const evaluationAuditPurpose = wrapped ? request.evaluationAuditPurpose : void 0;
-      let executionContext = this.defaultExecutionContext;
-      let trustedBootstrapContext = null;
-      if (task.requiredCapabilities.includes("evaluation-validity-audit") && evaluationAuditPurpose === void 0) {
-        throw new WorkflowContractError(
-          "INVALID_INPUT",
-          "Evaluation validity planning requires the structured request with evaluationAuditPurpose."
-        );
-      }
-      if (requireExecutionContext && task.orchestration.requested) {
-        const binding2 = {
-          phase: "bootstrap",
-          taskId: task.taskId,
-          runId: null,
-          stageId: null,
-          revision: null
-        };
-        trustedBootstrapContext = this.observeTrustedExecutionContext(binding2, "bootstrap orchestration");
-        this.assertTrustedExecutionContext(
-          this.bootstrapExecutionRequirement(task),
-          trustedBootstrapContext,
-          "bootstrap orchestration",
-          binding2
-        );
-        executionContext = trustedBootstrapContext;
-      }
-      this.validateWorkUnitGraph(task);
-      const plan = this.buildPlan(task, this.registry.read(), evaluationAuditPurpose, executionContext);
-      plan.integrityToken = this.signPlan(plan);
-      this.validator.workflowPlan(plan);
-      if (trustedBootstrapContext) this.consumeTrustedExecutionObservation(trustedBootstrapContext, "bootstrap orchestration");
-      return plan;
-    });
-  }
-  openConvergenceRoot(rawRequest) {
-    return this.attempt(() => {
-      const request = this.validator.openConvergenceRootRequest(rawRequest);
-      this.validateWorkUnitGraph(request.taskEnvelope);
-      this.assertConvergenceFrame(request.frame);
-      if (!request.taskEnvelope.orchestration.requested || !request.taskEnvelope.orchestration.mcpAvailable) {
-        throw new WorkflowContractError("INVALID_INPUT", "Convergence roots require an MCP-backed orchestrated task.");
-      }
-      if (request.parentRootId && request.userApprovalRefs.length === 0) {
-        throw new WorkflowContractError("INVALID_INPUT", "Replacing a convergence root requires user approval evidence.", {
-          parentRootId: request.parentRootId
-        });
-      }
-      if (request.parentRootId) {
-        const parent = this.requireConvergenceSnapshot(request.parentRootId).root;
-        if (!["needs-review", "needs-user"].includes(parent.state)) {
-          throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root may be replaced.", {
-            parentRootId: parent.rootId,
-            parentState: parent.state
-          });
-        }
-      }
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const digests = this.convergenceDigests(request.taskEnvelope, request.frame);
-      const root = {
-        schemaVersion: CONTRACT_VERSION,
-        rootId: `root-${randomUUID()}`,
-        parentRootId: request.parentRootId,
-        revision: 0,
-        state: "open",
-        currentEpoch: 1,
-        taskEnvelope: clone2(request.taskEnvelope),
-        frame: clone2(request.frame),
-        ...digests,
-        userApprovalRefs: [...request.userApprovalRefs],
-        createdAt: now,
-        updatedAt: now
-      };
-      this.validator.convergenceRoot(root);
-      const conflict = this.store.insertConvergenceRoot(root);
-      if (conflict) {
-        throw new WorkflowContractError("ROOT_CONFLICT", "An active convergence root already covers this workspace scope.", conflictDetails(conflict));
-      }
-      return clone2(root);
-    });
-  }
-  claimWorkflowAttempt(rawProposal, requireTrustedExecutionContext = false) {
-    return this.attempt(() => {
-      const proposal = clone2(this.normalizeAttemptProposal(rawProposal));
-      this.assertPlanIntegrity(proposal.plan);
-      if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(proposal.plan, "Workflow attempt");
-      this.assertConvergenceFrame(proposal.frame);
-      if (proposal.plan.executionMode !== "orchestrated" || proposal.plan.state !== "ready") {
-        throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready orchestrated plan can claim an attempt lease.");
-      }
-      if (proposal.plan.taskId !== proposal.taskEnvelope.taskId) {
-        throw new WorkflowContractError("INVALID_INPUT", "Attempt task and workflow plan IDs do not match.");
-      }
-      if (proposal.plan.taskDigest !== convergenceDigest(proposal.taskEnvelope)) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan is bound to a different task envelope.", {
-          rootId: proposal.rootId,
-          taskId: proposal.taskEnvelope.taskId
-        });
-      }
-      const evaluationAuditPurpose = proposal.plan.stages.find(
-        (stage) => stage.requiredCapability === "evaluation-validity-audit"
-      )?.evaluationAuditPurpose;
-      const expectedPlan = this.buildPlan(
-        proposal.taskEnvelope,
-        this.registry.read(),
-        evaluationAuditPurpose,
-        proposal.plan.bootstrapExecution?.context ?? this.defaultExecutionContext ?? void 0
-      );
-      expectedPlan.integrityToken = this.signPlan(expectedPlan);
-      if (canonicalJson(expectedPlan, "Plan") !== canonicalJson(proposal.plan, "Plan")) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan was not produced from the proposed task envelope.", {
-          rootId: proposal.rootId,
-          taskId: proposal.taskEnvelope.taskId
-        });
-      }
-      const snapshot = this.liveConvergenceSnapshot(proposal.rootId);
-      const root = snapshot.root;
-      if (snapshot.leases.some((lease2) => lease2.state === "issued")) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "A live attempt lease already exists for this convergence root.", {
-          rootId: root.rootId
-        });
-      }
-      if (proposal.expectedRevision !== root.revision) {
-        throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the convergence root.", {
-          expectedRevision: proposal.expectedRevision,
-          actualRevision: root.revision
-        });
-      }
-      const proposedDigests = this.convergenceDigests(proposal.taskEnvelope, proposal.frame);
-      const frameChanged = proposedDigests.taskDigest !== root.taskDigest || proposedDigests.workspaceDigest !== root.workspaceDigest || proposedDigests.controlDigest !== root.controlDigest || proposedDigests.operationalDigest !== root.operationalDigest || this.artifactRolesChanged(root.frame, proposal.frame);
-      if (frameChanged) {
-        if (root.state === "open") this.moveRootToReview(root);
-        throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "Task, control, workspace, operational, or artifact-role changes require independent review.", {
-          rootId: root.rootId,
-          expected: {
-            taskDigest: root.taskDigest,
-            workspaceDigest: root.workspaceDigest,
-            controlDigest: root.controlDigest,
-            operationalDigest: root.operationalDigest
-          },
-          proposed: proposedDigests
-        });
-      }
-      if (root.state !== "open") this.throwRootGate(root, snapshot);
-      const attempts = consumedLeases(snapshot, root.currentEpoch);
-      if (attempts.length >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
-        this.moveRootToReview(root);
-        throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Three full attempts have already started in this convergence epoch.", {
-          rootId: root.rootId,
-          epoch: root.currentEpoch,
-          attemptsUsed: attempts.length
-        });
-      }
-      const currentOutcomes = snapshot.outcomes.filter((outcome) => outcome.epoch === root.currentEpoch);
-      const latestOutcome = currentOutcomes.at(-1) ?? null;
-      if (currentOutcomes.length < attempts.length) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The previous full attempt is still active and must reach a terminal outcome before another lease can be claimed.", {
-          rootId: root.rootId,
-          epoch: root.currentEpoch
-        });
-      }
-      if (attempts.length === 0) {
-        if (proposal.priorFailure !== null) {
-          throw new WorkflowContractError("INVALID_INPUT", "The first attempt in an epoch must not claim a prior failure.");
-        }
-      } else {
-        if (!latestOutcome || latestOutcome.state === "passed") {
-          throw new WorkflowContractError("LEASE_CONFLICT", "The previous full attempt has not produced a retryable failure.", {
-            rootId: root.rootId
-          });
-        }
-        if (!proposal.priorFailure || proposal.priorFailure.fingerprint !== latestOutcome.failureFingerprint) {
-          this.rejectRetry(
-            root,
-            {
-              epoch: root.currentEpoch,
-              reason: "stale-fingerprint",
-              actorId: proposal.actorId,
-              expectedFingerprint: latestOutcome.failureFingerprint,
-              targetDigest: proposedDigests.targetDigest,
-              evidenceRefs: proposal.priorFailure?.evidenceRefs ?? [],
-              rejectedAt: (/* @__PURE__ */ new Date()).toISOString()
-            },
-            "A retry must bind the latest failure fingerprint and a discriminating hypothesis.",
-            { expectedFingerprint: latestOutcome.failureFingerprint }
-          );
-        }
-        const priorLease = attempts.at(-1);
-        const sameTarget = proposedDigests.targetDigest === priorLease.targetDigest;
-        const burned = (root.retryRejections ?? []).filter((item) => item.reason === "stale-evidence").flatMap((item) => item.evidenceRefs);
-        const usedProposals = new Set(snapshot.leases.filter((lease2) => lease2.state === "consumed").map((lease2) => lease2.proposalDigest));
-        const oldEvidence = /* @__PURE__ */ new Set([
-          ...snapshot.proposals.filter((item) => usedProposals.has(convergenceDigest(item))).flatMap((item) => item.priorFailure?.evidenceRefs ?? []),
-          ...snapshot.outcomes.flatMap((outcome) => outcome.evidenceRefs),
-          ...burned
-        ]);
-        const hasNewEvidence = proposal.priorFailure.evidenceRefs.some((reference) => !oldEvidence.has(reference));
-        if (sameTarget && !hasNewEvidence) {
-          this.rejectRetry(
-            root,
-            {
-              epoch: root.currentEpoch,
-              reason: "stale-evidence",
-              actorId: proposal.actorId,
-              expectedFingerprint: latestOutcome.failureFingerprint,
-              targetDigest: proposedDigests.targetDigest,
-              evidenceRefs: proposal.priorFailure.evidenceRefs,
-              rejectedAt: (/* @__PURE__ */ new Date()).toISOString()
-            },
-            "The proposed retry changes neither the target nor the observed evidence.",
-            { rootId: root.rootId, route: "diagnose" }
-          );
-        }
-      }
-      const now = /* @__PURE__ */ new Date();
-      const updatedRoot = bumpedRoot(root, now.toISOString());
-      const lease = {
-        schemaVersion: CONTRACT_VERSION,
-        leaseId: `lease-${randomUUID()}`,
-        rootId: root.rootId,
-        rootRevision: updatedRoot.revision,
-        epoch: root.currentEpoch,
-        ordinal: attempts.length + 1,
-        proposalDigest: convergenceDigest(proposal),
-        ...proposedDigests,
-        outputTargetsDigest: convergenceDigest(proposal.outputTargets),
-        planIntegrityToken: proposal.plan.integrityToken,
-        actorId: proposal.actorId,
-        outputTargets: [...proposal.outputTargets],
-        issuedAt: now.toISOString(),
-        expiresAt: new Date(now.getTime() + proposal.frame.operationalSettings.leaseTtlSeconds * 1e3).toISOString(),
-        state: "issued"
-      };
-      this.validator.attemptLease(lease);
-      if (!this.store.insertAttemptLease(updatedRoot, root.revision, proposal, lease)) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The convergence root changed while the lease was being claimed.", {
-          rootId: root.rootId
-        });
-      }
-      return clone2(lease);
-    });
-  }
-  startGuardedWorkflow(rawRequest, requireTrustedExecutionContext = false) {
-    return this.attempt(() => {
-      const request = this.normalizeGuardedWorkflowStartRequest(rawRequest);
-      const plan = clone2(request.plan);
-      this.assertPlanIntegrity(plan);
-      if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(plan, "Guarded workflow start");
-      if (plan.executionMode !== "orchestrated" || plan.state !== "ready") {
-        throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready orchestrated workflow can use a convergence lease.");
-      }
-      const binding2 = this.store.getAttemptLease(request.leaseId);
-      if (!binding2 || binding2.lease.state !== "issued") {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is missing, expired, or already consumed.", { leaseId: request.leaseId });
-      }
-      if (Date.parse(binding2.lease.expiresAt) <= Date.now()) {
-        this.store.expireAttemptLease(binding2.lease.leaseId);
-        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease expired before workflow start.", { leaseId: request.leaseId });
-      }
-      if (request.expectedRootRevision !== binding2.root.revision || request.expectedRootRevision !== binding2.lease.rootRevision) {
-        throw new WorkflowContractError("STALE_REVISION", "The guarded start does not target the current convergence revision.", {
-          expectedRevision: request.expectedRootRevision,
-          actualRevision: binding2.root.revision
-        });
-      }
-      if (plan.integrityToken !== binding2.lease.planIntegrityToken || canonicalJson(plan, "Plan") !== canonicalJson(binding2.proposal.plan, "Plan")) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is bound to a different workflow plan.", { leaseId: request.leaseId });
-      }
-      const receipt = this.newRunningReceipt(plan);
-      const started = this.store.insertGuardedRun(receipt, request.leaseId, request.expectedRootRevision, (/* @__PURE__ */ new Date()).toISOString());
-      if (!started) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease could not be consumed atomically.", { leaseId: request.leaseId });
-      }
-      return clone2(receipt);
-    });
-  }
-  normalizeAttemptProposal(rawProposal) {
-    const candidate = asRecord2(rawProposal);
-    const hasTaskEnvelope = Object.hasOwn(candidate, "taskEnvelope");
-    const hasFrame = Object.hasOwn(candidate, "frame");
-    if (hasTaskEnvelope !== hasFrame) {
-      throw new WorkflowContractError("INVALID_INPUT", "Attempt proposal must provide both taskEnvelope and frame, or omit both.");
-    }
-    if (hasTaskEnvelope) return this.validator.attemptProposal(rawProposal);
-    const rootId = typeof candidate.rootId === "string" ? candidate.rootId : "";
-    const root = this.requireConvergenceSnapshot(rootId).root;
-    return this.validator.attemptProposal({
-      ...candidate,
-      taskEnvelope: clone2(root.taskEnvelope),
-      frame: clone2(root.frame)
-    });
-  }
-  normalizeGuardedWorkflowStartRequest(rawRequest) {
-    const candidate = asRecord2(rawRequest);
-    if (Object.hasOwn(candidate, "plan")) return this.validator.guardedWorkflowStartRequest(rawRequest);
-    const leaseId = typeof candidate.leaseId === "string" ? candidate.leaseId : "";
-    const binding2 = this.store.getAttemptLease(leaseId);
-    if (!binding2) {
-      throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is missing, expired, or already consumed.", { leaseId });
-    }
-    return this.validator.guardedWorkflowStartRequest({
-      ...candidate,
-      plan: clone2(binding2.proposal.plan)
-    });
-  }
-  getConvergenceStatus(rootId) {
-    return this.attempt(() => {
-      const status = this.buildConvergenceStatus(this.liveConvergenceSnapshot(rootId));
-      this.validator.convergenceStatus(status);
-      return clone2(status);
-    });
-  }
-  resolveConvergenceGate(rawRequest) {
-    return this.attempt(() => {
-      const request = this.validator.resolveConvergenceGateRequest(rawRequest);
-      const review = clone2(request.review);
-      const snapshot = this.requireConvergenceSnapshot(request.rootId);
-      const root = snapshot.root;
-      if (request.expectedRevision !== root.revision || review.rootRevision !== root.revision) {
-        throw new WorkflowContractError("STALE_REVISION", "The convergence review does not target the current root revision.", {
-          expectedRevision: request.expectedRevision,
-          reviewRevision: review.rootRevision,
-          actualRevision: root.revision
-        });
-      }
-      if (review.rootId !== root.rootId || review.epoch !== root.currentEpoch) {
-        throw new WorkflowContractError("INVALID_INPUT", "The convergence review targets a different root or epoch.");
-      }
-      if (root.state !== "needs-review") {
-        throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root can be resolved.", { state: root.state });
-      }
-      const actualActors = [...new Set(snapshot.leases.filter((lease) => lease.state === "consumed").map((lease) => lease.actorId))].sort();
-      const reviewedActors = [...new Set(review.implementationActorIds)].sort();
-      if (!review.freshContext.confirmed || !review.freshContext.evidenceRef || actualActors.join("\0") !== reviewedActors.join("\0")) {
-        throw new WorkflowContractError("GATE_FAILED", "Independent frame review must be fresh and cover every implementation actor.", {
-          actualActors,
-          reviewedActors
-        });
-      }
-      if (actualActors.includes(review.reviewerActorId)) {
-        throw new WorkflowContractError("GATE_FAILED", "The frame reviewer must be independent from implementation actors.");
-      }
-      this.assertReviewRoute(review);
-      const updatedRoot = bumpedRoot(root, review.reviewedAt);
-      if (review.route === "stop") {
-        updatedRoot.state = "needs-user";
-      } else if (review.classification === "semantics-changing" || review.route === "needs-user") {
-        updatedRoot.state = "needs-user";
-      } else if (review.route === "panel" || review.route === "diagnose") {
-        updatedRoot.state = "needs-review";
-      } else if (review.route === "resume-new-epoch") {
-        if (updatedRoot.currentEpoch >= updatedRoot.frame.operationalSettings.maxEpochs) {
-          updatedRoot.state = "needs-user";
-        } else {
-          const proposedFrame = review.proposedFrame;
-          this.assertConvergenceFrame(proposedFrame);
-          const nextDigests = this.convergenceDigests(updatedRoot.taskEnvelope, proposedFrame);
-          if (nextDigests.workspaceDigest !== root.workspaceDigest || nextDigests.operationalDigest !== root.operationalDigest) {
-            throw new WorkflowContractError("INVALID_INPUT", "A semantics-preserving review cannot change workspace or guard policy.");
-          }
-          if (nextDigests.targetDigest === root.targetDigest) {
-            throw new WorkflowContractError("GATE_FAILED", "A new convergence epoch requires a verified target-frame correction.");
-          }
-          updatedRoot.currentEpoch += 1;
-          updatedRoot.state = "open";
-          updatedRoot.frame = clone2(proposedFrame);
-          Object.assign(updatedRoot, nextDigests);
-        }
-      }
-      this.validator.convergenceRoot(updatedRoot);
-      if (!this.store.updateConvergenceRoot(updatedRoot, root.revision, review)) {
-        throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while recording the review.");
-      }
-      return this.buildConvergenceStatus(this.requireConvergenceSnapshot(root.rootId));
-    });
-  }
-  rejectUnguardedWorkflow(rawPlan) {
-    return this.attempt(() => {
-      const plan = clone2(this.validator.workflowPlan(rawPlan));
-      this.assertPlanIntegrity(plan);
-      if (plan.executionMode === "orchestrated") {
-        throw new WorkflowContractError("LEASE_REQUIRED", "New orchestrated workflows must start through start_guarded_workflow.");
-      }
-      throw new WorkflowContractError("INVALID_TRANSITION", "Direct skill plans are not started by the MCP orchestrator.");
-    });
-  }
-  /** Embedding compatibility only. The MCP start_workflow tool rejects new unguarded orchestrated runs. */
-  startWorkflow(rawPlan) {
-    return this.attempt(() => {
-      const plan = clone2(this.validator.workflowPlan(rawPlan));
-      this.assertPlanIntegrity(plan);
-      if (plan.executionMode !== "orchestrated") {
-        throw new WorkflowContractError("INVALID_TRANSITION", "Direct skill plans are not started by the MCP orchestrator.");
-      }
-      if (plan.state !== "ready") {
-        const error61 = plan.errors.find((item) => item.code === "MCP_UNAVAILABLE");
-        if (error61) throw new WorkflowContractError(error61.code, error61.message, error61.details);
-        throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready workflow plan can be started.", {
-          planState: plan.state
-        });
-      }
-      const receipt = this.newRunningReceipt(plan);
-      this.store.insertRun(receipt);
-      return clone2(receipt);
-    });
-  }
-  recordStageResult(rawResult, requireTrustedExecutionContext = false) {
-    try {
-      const callerResult = asRecord2(rawResult);
-      if (requireTrustedExecutionContext && Object.prototype.hasOwnProperty.call(callerResult, "executionContext")) {
-        throw new WorkflowContractError(
-          "BINDING_INVALID",
-          "Strict MCP stage execution rejects caller-supplied executionContext."
-        );
-      }
-      const result = this.validator.stageResult(rawResult);
-      if (result.outputFile && result.output.output !== null) {
-        throw new WorkflowContractError("INVALID_INPUT", "output.output must be null when outputFile carries the provider output.");
-      }
-      return this.change(result.runId, result.expectedRevision, (receipt) => {
-        if (receipt.state !== "running") {
-          throw new WorkflowContractError("INVALID_TRANSITION", "Stage results require a running workflow.", {
-            state: receipt.state
-          });
-        }
-        const target = receipt.plan.stages.find((stage) => stage.stageId === result.stageId);
-        if (!target) {
-          throw new WorkflowContractError("INVALID_INPUT", "Stage does not belong to this run.", { stageId: result.stageId });
-        }
-        if (target.state !== "ready") {
-          throw new WorkflowContractError("INVALID_TRANSITION", "A stage result may only be recorded once.", {
-            stageId: result.stageId,
-            stageState: target.state
-          });
-        }
-        const priorStage = receipt.plan.stages.find(
-          (stage) => stage.order < target.order && stage.state !== "passed"
-        );
-        if (priorStage) {
-          throw new WorkflowContractError("INVALID_TRANSITION", "Stages must be recorded in plan order.", {
-            requiredStageId: priorStage.stageId,
-            requestedStageId: result.stageId
-          });
-        }
-        let loadedOutput;
-        if (result.outputFile) {
-          if (target.receiptPolicy) {
-            throw new WorkflowContractError("INVALID_INPUT", "Stages with a receipt policy must record their output inline.", {
-              stageId: target.stageId
-            });
-          }
-          loadedOutput = loadStageOutputFile(result.outputFile);
-        }
-        let trustedStageContext = null;
-        if (requireTrustedExecutionContext && result.state === "passed" && !target.executionRequirement && !DETERMINISTIC_CAPABILITIES.has(target.requiredCapability)) {
-          throw new WorkflowContractError(
-            "BINDING_REQUIRED",
-            `Stage '${target.stageId}' has no execution assurance requirement and cannot pass through the strict MCP boundary.`
-          );
-        }
-        if (requireTrustedExecutionContext && target.executionRequirement?.kind === "semantic") {
-          const binding2 = {
-            phase: "stage",
-            taskId: receipt.plan.taskId,
-            runId: receipt.runId,
-            stageId: target.stageId,
-            revision: result.expectedRevision
-          };
-          const subject = `Stage '${target.stageId}'`;
-          const enforced = result.state === "passed";
-          trustedStageContext = enforced ? this.observeTrustedExecutionContext(binding2, subject) : this.observeExecutionContext(binding2);
-          if (trustedStageContext) {
-            this.assertTrustedExecutionContext(
-              target.executionRequirement,
-              trustedStageContext,
-              subject,
-              binding2,
-              enforced
-            );
-            result.executionContext = clone2(trustedStageContext);
-          }
-        }
-        const checked = loadedOutput === void 0 ? result : { ...result, output: { ...result.output, output: loadedOutput } };
-        this.assertPlannedInputsAvailable(receipt, target, result.state === "passed");
-        this.assertResultSemantics(target, checked);
-        if (target.requiredCapability === "cs-implementation-review") {
-          assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
-        }
-        assertEngineeringStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, target.requiredCapability, checked, this.validator);
-        this.assertDeclaredReceiptPolicy(receipt, target, checked);
-        if (result.state === "passed") {
-          this.assertRequiredArtifacts(target, checked);
-          this.assertDeliberationGate(target, checked);
-          this.assertMandatoryAuditGate(target, checked);
-          this.assertEvaluationValidityGate(target, checked);
-        }
-        target.state = result.state;
-        if (trustedStageContext) this.consumeTrustedExecutionObservation(trustedStageContext, `Stage '${target.stageId}'`);
-        receipt.stageResults.push(clone2(result));
-        this.addUnique(receipt.blockers, result.blockers);
-        this.addUnique(receipt.unresolved, result.blockers);
-        if (result.state !== "passed") {
-          receipt.state = result.state;
-          receipt.plan.state = result.state;
-          receipt.error = result.error;
-          this.addUnique(receipt.unresolved, [`${target.stageId}:${result.state}`]);
-          if (result.state === "needs-input" || result.state === "needs-approval" || result.state === "needs-redesign") {
-            receipt.plan.currentStageId = target.stageId;
-          } else {
-            receipt.plan.currentStageId = null;
-          }
-          receipt.plan.nextStageId = null;
-        } else {
-          this.setRunningStagePointers(receipt.plan);
-        }
-      });
-    } catch (error61) {
-      return apiError2(this.toErrorBody(error61));
-    }
-  }
-  getWorkflowStatus(runId) {
-    return this.attempt(() => clone2(this.requireRun(runId)));
-  }
-  finalizeWorkflow(runId, expectedRevision) {
-    return this.change(runId, expectedRevision, (receipt) => {
-      if (receipt.state !== "running") {
-        throw new WorkflowContractError("INVALID_TRANSITION", "Only a running workflow can be finalized.", {
-          state: receipt.state
-        });
-      }
-      if (receipt.blockers.length > 0 || receipt.unresolved.length > 0) {
-        throw new WorkflowContractError("GATE_FAILED", "Workflow has unresolved blockers or findings.", {
-          blockers: receipt.blockers,
-          unresolved: receipt.unresolved
-        });
-      }
-      for (const stage of receipt.plan.stages) {
-        const result = receipt.stageResults.find((item) => item.stageId === stage.stageId);
-        if (!result || result.state !== "passed") {
-          throw new WorkflowContractError("GATE_FAILED", "Every planned stage must pass before finalization.", {
-            stageId: stage.stageId,
-            stageState: result?.state ?? "ready"
-          });
-        }
-        this.assertPlannedInputsAvailable(receipt, stage, true);
-        this.assertRequiredArtifacts(stage, result);
-        if (["cs-implementation-review", "test-sensitivity-review", "change-code-review"].includes(stage.requiredCapability)) {
-          const checked = result.outputFile ? { ...result, output: { ...result.output, output: loadStageOutputFile(result.outputFile) } } : result;
-          this.assertResultSemantics(stage, checked);
-          if (stage.requiredCapability === "cs-implementation-review") {
-            assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
-          }
-          assertEngineeringStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, stage.requiredCapability, checked, this.validator);
-        }
-        this.assertExecutionAssurance(stage, result);
-        this.assertDeclaredReceiptPolicy(receipt, stage, result);
-        this.assertEvaluationValidityGate(stage, result);
-      }
-      const mandatoryAudit = receipt.plan.stages.find((stage) => stage.riskGate === "mandatory");
-      if (mandatoryAudit && mandatoryAudit.state !== "passed") {
-        throw new WorkflowContractError("GATE_FAILED", "Mandatory audit stage did not pass.", {
-          stageId: mandatoryAudit.stageId
-        });
-      }
-      receipt.state = "passed";
-      receipt.plan.state = "passed";
-      receipt.plan.currentStageId = null;
-      receipt.plan.nextStageId = null;
-      receipt.error = null;
-    });
-  }
-  abortWorkflow(runId, expectedRevision) {
-    return this.change(runId, expectedRevision, (receipt) => {
-      if (receipt.state === "passed" || receipt.state === "failed" || receipt.state === "blocked") {
-        throw new WorkflowContractError("INVALID_TRANSITION", "A terminal workflow cannot be aborted.", {
-          state: receipt.state
-        });
-      }
-      receipt.state = "blocked";
-      receipt.plan.state = "blocked";
-      receipt.plan.currentStageId = null;
-      receipt.plan.nextStageId = null;
-      this.addUnique(receipt.blockers, ["aborted-by-caller"]);
-      this.addUnique(receipt.unresolved, ["aborted-by-caller"]);
-      receipt.error = null;
-    });
-  }
-  buildPlan(task, skills, evaluationAuditPurpose, executionContext) {
-    const executionMode = task.orchestration.requested ? "orchestrated" : "direct";
-    const errors = [];
-    const stages = [];
-    const selectedSkills = /* @__PURE__ */ new Set();
-    const selectedProviders = /* @__PURE__ */ new Map();
-    for (const capability of this.requiredCapabilities(task)) {
-      const skill = selectSkillByCapability(skills, capability);
-      if (!skill) {
-        errors.push({
-          code: "GATE_FAILED",
-          message: `No enabled registry descriptor provides '${capability}'.`,
-          details: { capability }
-        });
-        continue;
-      }
-      if (skill.executionClass === "bootstrap") {
-        errors.push({
-          code: "GATE_FAILED",
-          message: `Capability '${capability}' is a bootstrap provider and must run before plan_workflow.`,
-          details: { capability, providerKey: skill.providerKey }
-        });
-        continue;
-      }
-      const selected = selectedProviders.get(skill.providerKey);
-      if (selected) {
-        if (!selected.satisfiedCapabilities.includes(capability)) selected.satisfiedCapabilities.push(capability);
-      } else {
-        selectedProviders.set(skill.providerKey, { capability, satisfiedCapabilities: [capability], provider: skill });
-      }
-    }
-    const selectedProviderList = [...selectedProviders.values()];
-    const executionClasses = new Set(selectedProviderList.map(({ provider: provider2 }) => provider2.executionClass));
-    if (executionClasses.size > 1) {
-      errors.push({
-        code: "INVALID_TRANSITION",
-        message: "Recovery providers must run in a separate workflow.",
-        details: { executionClasses: [...executionClasses] }
-      });
-    }
-    for (const { provider: consumer } of selectedProviderList) {
-      for (const binding2 of consumer.inputBindings.filter((item) => item.operation === "require-external")) {
-        const producer = selectedProviderList.find(({ provider: provider2 }) => provider2.providerKey !== consumer.providerKey && provider2.producedArtifacts.includes(binding2.targetArtifact));
-        if (producer) {
-          errors.push({
-            code: "INVALID_TRANSITION",
-            message: `Artifact '${binding2.targetArtifact}' must come from a completed external run.`,
-            details: {
-              consumerProviderKey: consumer.providerKey,
-              producerProviderKey: producer.provider.providerKey
-            }
-          });
-        }
-      }
-    }
-    for (const { capability, satisfiedCapabilities, provider: skill } of this.orderProviders(selectedProviderList)) {
-      const producedArtifacts = skill.producedArtifacts;
-      const stageRequiredArtifacts = skill.gate.policy === "mandatory" ? [.../* @__PURE__ */ new Set([...producedArtifacts, "gate-verdict"])] : producedArtifacts;
-      const stageEvaluationAuditPurpose = capability === "evaluation-validity-audit" ? evaluationAuditPurpose : void 0;
-      if (capability === "evaluation-validity-audit" && stageEvaluationAuditPurpose === void 0) {
-        throw new WorkflowContractError("INVALID_INPUT", "Evaluation audit purpose is missing from the planning request.");
-      }
-      const order = stages.length + 1;
-      const artifactContract = this.plannedArtifactContract(task, satisfiedCapabilities, stageRequiredArtifacts);
-      stages.push({
-        stageId: stageId(order, capability),
-        order,
-        requiredCapability: capability,
-        ...stageEvaluationAuditPurpose !== void 0 ? { evaluationAuditPurpose: stageEvaluationAuditPurpose } : {},
-        satisfiedCapabilities,
-        skillId: skill.skillId,
-        phase: skill.phase,
-        selectionReason: `Selected '${skill.skillId}' because provider '${skill.providerKey}' supplies '${satisfiedCapabilities.join("', '")}' at priority ${skill.priority}.`,
-        state: "ready",
-        ...executionContext ? { executionRequirement: this.stageExecutionRequirement(task, capability, skill.gate.policy, skill) } : {},
-        ...artifactContract ? { artifactContract } : {},
-        requiredArtifacts: stageRequiredArtifacts,
-        riskGate: skill.gate.policy,
-        providerKey: skill.providerKey,
-        executionClass: skill.executionClass,
-        phaseOrder: skill.phaseOrder,
-        requiredInputArtifacts: skill.requiredInputArtifacts,
-        inputBindings: skill.inputBindings,
-        producedArtifacts: skill.producedArtifacts,
-        outputSchema: { path: skill.outputSchema, digest: skill.outputSchemaDigest },
-        resultSchema: { path: skill.resultSchema, digest: skill.resultSchemaDigest },
-        stateMapping: skill.stateMapping,
-        gate: skill.gate,
-        ...skill.receiptPolicy ? { receiptPolicy: skill.receiptPolicy } : {}
-      });
-      selectedSkills.add(skill.skillId);
-    }
-    if (executionMode === "orchestrated" && !task.orchestration.mcpAvailable) {
-      errors.unshift({
-        code: "MCP_UNAVAILABLE",
-        message: "The orchestrator is blocked because MCP is unavailable.",
-        details: null
-      });
-    }
-    for (const contract of task.artifactContracts ?? []) {
-      if (!stages.some((stage) => stage.satisfiedCapabilities.includes(contract.capability))) {
-        throw new WorkflowContractError("INVALID_INPUT", "Artifact contract capability is not in the selected plan.", {
-          capability: contract.capability
-        });
-      }
-    }
-    return {
-      schemaVersion: CONTRACT_VERSION,
-      taskId: task.taskId,
-      taskDigest: convergenceDigest(task),
-      integrityToken: "pending",
-      executionMode,
-      ...executionContext ? {
-        bootstrapExecution: {
-          requirement: this.bootstrapExecutionRequirement(task),
-          context: clone2(executionContext)
-        }
-      } : {},
-      state: errors.length > 0 ? "blocked" : "ready",
-      selectedSkills: [...selectedSkills],
-      stages,
-      currentStageId: null,
-      nextStageId: errors.length > 0 ? null : stages[0]?.stageId ?? null,
-      errors
-    };
-  }
-  requiredCapabilities(task) {
-    const auditRequested = task.requiredCapabilities.includes(POLICY_CAPABILITY.audit) || task.riskLevel === "high" || task.riskLevel === "critical";
-    const requestedWork = task.requiredCapabilities.filter((capability) => capability !== POLICY_CAPABILITY.audit);
-    const work = [];
-    let koreanProseExpanded = false;
-    for (const capability of requestedWork) {
-      if (KOREAN_PROSE_CAPABILITIES.includes(capability)) {
-        if (!koreanProseExpanded) work.push(...KOREAN_PROSE_CAPABILITIES);
-        koreanProseExpanded = true;
-      } else {
-        work.push(capability);
-      }
-    }
-    return [.../* @__PURE__ */ new Set([...work, ...auditRequested ? [POLICY_CAPABILITY.audit] : []])];
-  }
-  orderProviders(items) {
-    const producedBy = /* @__PURE__ */ new Map();
-    for (const [index, item] of items.entries()) {
-      for (const artifact of item.provider.producedArtifacts) {
-        const existing = producedBy.get(artifact);
-        if (existing !== void 0 && items[existing]?.provider.providerKey !== item.provider.providerKey) {
-          throw new WorkflowContractError("INVALID_INPUT", "Selected providers produce the same artifact.", {
-            artifact,
-            providers: [items[existing]?.provider.providerKey, item.provider.providerKey]
-          });
-        }
-        producedBy.set(artifact, index);
-      }
-    }
-    const outgoing = /* @__PURE__ */ new Map();
-    const indegree = items.map(() => 0);
-    for (const [consumerIndex, item] of items.entries()) {
-      for (const artifact of item.provider.requiredInputArtifacts) {
-        const producerIndex = producedBy.get(artifact);
-        if (producerIndex === void 0 || producerIndex === consumerIndex) continue;
-        const edges = outgoing.get(producerIndex) ?? /* @__PURE__ */ new Set();
-        if (!edges.has(consumerIndex)) {
-          edges.add(consumerIndex);
-          outgoing.set(producerIndex, edges);
-          indegree[consumerIndex] = (indegree[consumerIndex] ?? 0) + 1;
-        }
-      }
-    }
-    const compare = (left, right) => items[left].provider.phaseOrder - items[right].provider.phaseOrder || items[left].capability.localeCompare(items[right].capability) || items[left].provider.providerKey.localeCompare(items[right].provider.providerKey);
-    const ready = indegree.map((value, index) => value === 0 ? index : -1).filter((index) => index >= 0).sort(compare);
-    const ordered = [];
-    while (ready.length > 0) {
-      const index = ready.shift();
-      ordered.push(items[index]);
-      for (const next of outgoing.get(index) ?? []) {
-        indegree[next]--;
-        if (indegree[next] === 0) {
-          ready.push(next);
-          ready.sort(compare);
-        }
-      }
-    }
-    if (ordered.length !== items.length) {
-      throw new WorkflowContractError("INVALID_INPUT", "Selected provider artifact dependencies contain a cycle.");
-    }
-    return ordered;
-  }
-  assertResultSemantics(stage, result) {
-    const providerResult = this.validator.providerResult(
-      this.registry.rootDirectory,
-      stage.resultSchema,
-      stage.outputSchema,
-      result.output
-    );
-    if (stage.requiredCapability === "software-security-audit" && providerResult.kind === "output") {
-      const errors = validateSemantics(providerResult.output);
-      if (errors.length) throw new WorkflowContractError("INVALID_INPUT", "Security audit report is inconsistent.", { errors });
-    }
-    const rule = this.mappedState(stage, providerResult);
-    if (result.state !== rule.state) {
-      throw new WorkflowContractError("INVALID_TRANSITION", "Stage state does not match the provider state mapping.", {
-        stageId: result.stageId,
-        expectedState: rule.state,
-        actualState: result.state
-      });
-    }
-    const providerError = providerResult.error;
-    if (rule.errorRequired !== Boolean(providerError)) {
-      throw new WorkflowContractError("INVALID_TRANSITION", "Provider error presence does not match the state mapping.", {
-        stageId: result.stageId,
-        errorRequired: rule.errorRequired
-      });
-    }
-    if (providerError && rule.allowedErrorCodes && !rule.allowedErrorCodes.includes(providerError.code)) {
-      throw new WorkflowContractError("INVALID_TRANSITION", "Provider error code is not allowed by the state mapping.", {
-        stageId: result.stageId,
-        errorCode: providerError.code
-      });
-    }
-    if ((providerError?.code ?? null) !== (result.error?.code ?? null)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Stage error must mirror the provider result error.", {
-        stageId: result.stageId
-      });
-    }
-    if (result.state === "passed") {
-      this.assertExecutionAssurance(stage, result);
-      if (result.evidence.length === 0 || result.evidence.some((evidence) => !evidence.verified || !evidence.locator)) {
-        throw new WorkflowContractError("MISSING_EVIDENCE", "A passed stage requires verified evidence.", {
-          stageId: result.stageId
-        });
-      }
-      if (result.error) {
-        throw new WorkflowContractError("INVALID_INPUT", "A passed stage cannot contain an error.");
-      }
-    }
-    if ((result.state === "failed" || result.state === "blocked") && !result.error) {
-      throw new WorkflowContractError("INVALID_INPUT", "Failed or blocked stages require an error object.");
-    }
-  }
-  assertDeclaredReceiptPolicy(receipt, stage, result) {
-    if (!stage.receiptPolicy) return;
-    const fixedTokens = this.validator.referenceOnlyFixedTokens(
-      this.registry.rootDirectory,
-      stage.outputSchema
-    );
-    assertReceiptPolicy(receipt, stage, result, fixedTokens);
-  }
-  mappedState(stage, providerResult) {
-    if (providerResult.kind === "adapter-error") {
-      const errorCode = providerResult.error?.code;
-      if (!errorCode || !stage.stateMapping.adapterErrors.includes(errorCode)) {
-        throw new WorkflowContractError("INVALID_TRANSITION", "Adapter error is not allowed by the provider descriptor.", {
-          stageId: stage.stageId,
-          errorCode: errorCode ?? null
-        });
-      }
-      return { state: "blocked", errorRequired: true, allowedErrorCodes: stage.stateMapping.adapterErrors };
-    }
-    let rule = stage.stateMapping.default;
-    if (stage.stateMapping.selector) {
-      const value = jsonPointer(providerResult, stage.stateMapping.selector);
-      if (typeof value === "string") rule = stage.stateMapping.values?.[value] ?? "reject";
-    }
-    if (rule === "reject") {
-      throw new WorkflowContractError("INVALID_TRANSITION", "Provider verdict is not mapped by the descriptor.", {
-        stageId: stage.stageId,
-        selector: stage.stateMapping.selector ?? null
-      });
-    }
-    return rule;
-  }
-  plannedArtifactContract(task, capabilities, requiredArtifacts) {
-    const contracts = (task.artifactContracts ?? []).filter((item) => capabilities.includes(item.capability));
-    if (contracts.length === 0) return void 0;
-    if (contracts.length !== 1) {
-      throw new WorkflowContractError("INVALID_INPUT", "A selected stage needs one unambiguous artifact contract.");
-    }
-    const contract = contracts[0];
-    const ids2 = contract.produced.map((item) => item.artifactId);
-    if (ids2.length !== requiredArtifacts.length || new Set(ids2).size !== ids2.length || requiredArtifacts.some((id) => !ids2.includes(id))) {
-      throw new WorkflowContractError("INVALID_INPUT", "Artifact contract IDs must exactly match the planned outputs.");
-    }
-    return clone2(contract);
-  }
-  assertRequiredArtifacts(stage, result) {
-    for (const artifactId of stage.requiredArtifacts) {
-      const expected = stage.artifactContract?.produced.find((item) => item.artifactId === artifactId);
-      const actual = result.output.artifacts.filter((item) => item.artifactId === artifactId);
-      if (!expected || actual.length !== 1 || !actual[0].verified || !actual[0].locator || !actual[0].digest) {
-        throw new WorkflowContractError("MISSING_EVIDENCE", "Required artifact lacks a declared target or unique verified evidence.", {
-          stageId: stage.stageId,
-          artifactId
-        });
-      }
-      const targetDigest2 = actual[0].targetDigest.startsWith("sha256:") ? actual[0].targetDigest : `sha256:${actual[0].targetDigest}`;
-      if (actual[0].schemaId !== expected.schemaId || targetDigest2 !== expected.targetDigest) {
-        throw new WorkflowContractError("BINDING_INVALID", "Artifact schema or target differs from the signed plan.", {
-          stageId: stage.stageId,
-          artifactId
-        });
-      }
-    }
-  }
-  assertPlannedInputsAvailable(receipt, stage, requireDeclaredTarget) {
-    const missing = [];
-    for (const artifactId of stage.requiredInputArtifacts) {
-      const producer = receipt.plan.stages.find(
-        (candidate) => candidate.stageId !== stage.stageId && candidate.producedArtifacts.includes(artifactId)
-      );
-      if (!producer) continue;
-      const producerResult = receipt.stageResults.find((candidate) => candidate.stageId === producer.stageId);
-      if (requireDeclaredTarget && producerResult?.state === "passed") {
-        this.assertRequiredArtifacts(producer, producerResult);
-      }
-      const verified = producerResult?.state === "passed" && producerResult.output.artifacts.some(
-        (artifact) => artifact.artifactId === artifactId && artifact.verified && Boolean(artifact.locator) && Boolean(artifact.digest) && Boolean(artifact.targetDigest)
-      );
-      if (!verified) missing.push({ artifactId, producerStageId: producer.stageId });
-    }
-    if (missing.length > 0) {
-      throw new WorkflowContractError("MISSING_EVIDENCE", "Planned input artifacts are not backed by verified producer results.", {
-        stageId: stage.stageId,
-        missingInputs: missing
-      });
-    }
-  }
-  assertDeliberationGate(stage, result) {
-    if (!stage.requiredArtifacts.includes("decision-record")) return;
-    if (!stage.gate.validatorSchema) {
-      throw new WorkflowContractError("GATE_FAILED", "Deliberation provider must declare its decision record validator schema.", {
-        stageId: stage.stageId
-      });
-    }
-    let record4;
-    try {
-      record4 = this.validator.declaredSchema(
-        this.registry.rootDirectory,
-        stage.gate.validatorSchema,
-        result.output.output?.decisionRecord,
-        "deliberation decision record"
-      );
-    } catch (error61) {
-      throw new WorkflowContractError("GATE_FAILED", "Deliberation requires a schema-valid DecisionRecord.v1.", {
-        stageId: stage.stageId,
-        cause: error61 instanceof Error ? error61.message : String(error61)
-      });
-    }
-    const semanticErrors = validateDecisionRecordSemantics(record4);
-    if (semanticErrors.length > 0) {
-      throw new WorkflowContractError("GATE_FAILED", "DecisionRecord.v1 failed canonical semantic validation.", {
-        stageId: stage.stageId,
-        semanticErrors
-      });
-    }
-    const run = record4.run;
-    const proposal = record4.consensus_proposal;
-    if (run.assurance === "provisional" || run.capability_shortfall !== false || proposal === null || proposal.status === "no_consensus") {
-      throw new WorkflowContractError("GATE_FAILED", "Deliberation result is not eligible to advance the workflow.", {
-        stageId: stage.stageId,
-        assurance: run.assurance,
-        capabilityShortfall: run.capability_shortfall,
-        consensusStatus: proposal?.status ?? null
-      });
-    }
-    if ((run.stage === "HIGH" || run.stage === "CRITICAL") && run.strict !== true) {
-      throw new WorkflowContractError("GATE_FAILED", "HIGH and CRITICAL deliberation requires strict execution assurance.", {
-        stageId: stage.stageId,
-        stage: run.stage
-      });
-    }
-    if (proposal.status === "conditional_consensus" && result.output.output?.conditionsVerified !== true) {
-      throw new WorkflowContractError("GATE_FAILED", "Conditional consensus may advance only after its conditions are verified.", {
-        stageId: stage.stageId
-      });
-    }
-  }
-  assertEvaluationValidityGate(stage, result) {
-    if (stage.requiredCapability !== "evaluation-validity-audit") return;
-    const output2 = result.output.output;
-    const purpose = stage.evaluationAuditPurpose;
-    const isDesignReadiness = purpose === "design-readiness" && output2?.auditStage === "pre-execution" && output2?.verdict === "PASS" && output2?.qualifiesAsQualityOrReleaseEvidence === false;
-    const isQualityOrRelease = purpose === "quality-or-release" && output2?.auditStage === "post-execution" && output2?.verdict === "PASS" && output2?.qualifiesAsQualityOrReleaseEvidence === true;
-    if (isDesignReadiness || isQualityOrRelease) return;
-    throw new WorkflowContractError(
-      "GATE_FAILED",
-      "Evaluation validity PASS does not satisfy the frozen audit purpose.",
-      {
-        stageId: stage.stageId,
-        purpose: purpose ?? null,
-        auditStage: output2?.auditStage ?? null,
-        verdict: output2?.verdict ?? null,
-        qualifiesAsQualityOrReleaseEvidence: output2?.qualifiesAsQualityOrReleaseEvidence ?? null
-      }
-    );
-  }
-  assertMandatoryAuditGate(stage, result) {
-    if (stage.riskGate !== "mandatory") return;
-    const output2 = result.output.output;
-    const auditorId = output2?.auditorId;
-    const implementationActorIds = output2?.implementationActorIds;
-    const auditTarget = output2?.auditTarget;
-    const currentTarget = output2?.currentTarget;
-    const blockingFindings = output2?.blockingFindings;
-    const phase = output2?.phase;
-    if (output2?.gateVerdict !== "PASS" || typeof auditorId !== "string" || auditorId.length === 0 || !Array.isArray(implementationActorIds) || implementationActorIds.length === 0 || implementationActorIds.some((actorId) => typeof actorId !== "string" || actorId.length === 0) || typeof auditTarget !== "string" || auditTarget.length === 0 || typeof currentTarget !== "string" || currentTarget !== auditTarget || output2?.freshContext !== true || output2?.delegationAllowed !== false || !Array.isArray(blockingFindings) || blockingFindings.length > 0 || output2?.stale !== false || !["pre-execution", "post-execution", "pre-deploy", "post-deploy"].includes(String(phase)) || typeof output2?.postExecutionVerified !== "boolean") {
-      throw new WorkflowContractError("GATE_FAILED", "Mandatory audit requires a current, fresh, non-delegated PASS with no blocking findings.", {
-        stageId: stage.stageId
-      });
-    }
-    if ((phase === "post-execution" || phase === "post-deploy") && output2.postExecutionVerified !== true) {
-      throw new WorkflowContractError("GATE_FAILED", "Post-execution and post-deploy audits require verified resulting state.", {
-        stageId: stage.stageId,
-        phase
-      });
-    }
-    if (implementationActorIds.includes(auditorId)) {
-      throw new WorkflowContractError("GATE_FAILED", "Mandatory audit auditor must be independent from implementation actors.", {
-        stageId: stage.stageId,
-        auditorId,
-        implementationActorIds
-      });
-    }
-  }
-  bootstrapExecutionRequirement(task) {
-    const deepBootstrap = task.riskLevel === "high" || task.riskLevel === "critical" || task.decision.complexity === "complex";
-    return {
-      policyId: "semantic-execution-assurance-v1",
-      kind: "semantic",
-      minimumModelClass: deepBootstrap ? "deep" : "general",
-      minimumReasoningEffort: "high",
-      observationRequired: true
-    };
-  }
-  stageExecutionRequirement(task, capability, riskGate, provider2) {
-    if (DETERMINISTIC_CAPABILITIES.has(capability)) {
-      return {
-        policyId: "semantic-execution-assurance-v1",
-        kind: "deterministic",
-        minimumModelClass: null,
-        minimumReasoningEffort: null,
-        observationRequired: false
-      };
-    }
-    let minimumModelClass = "general";
-    let minimumReasoningEffort = "medium";
-    const providerRequiresHighAssurance = HIGH_ASSURANCE_CAPABILITIES.has(capability) || provider2.capabilities.some((providedCapability) => HIGH_ASSURANCE_CAPABILITIES.has(providedCapability));
-    if (providerRequiresHighAssurance) {
-      minimumModelClass = "deep";
-      minimumReasoningEffort = "high";
-    }
-    if (task.riskLevel === "high") {
-      minimumReasoningEffort = "high";
-    }
-    if (task.riskLevel === "critical" || riskGate === "mandatory") {
-      minimumModelClass = "deep";
-      minimumReasoningEffort = "high";
-    }
-    return {
-      policyId: "semantic-execution-assurance-v1",
-      kind: "semantic",
-      minimumModelClass,
-      minimumReasoningEffort,
-      observationRequired: true
-    };
-  }
-  /** What the host observed, or null when it observed nothing. */
-  observeExecutionContext(binding2) {
-    const context = this.trustedExecutionContextProvider?.observe(binding2) ?? null;
-    return context ? clone2(context) : null;
-  }
-  observeTrustedExecutionContext(binding2, subject) {
-    const context = this.observeExecutionContext(binding2);
-    if (!context) {
-      throw new WorkflowContractError(
-        "BINDING_REQUIRED",
-        `${subject} requires trusted host execution attestation.`,
-        { binding: binding2, observation: this.trustedExecutionContextProvider?.diagnose?.() ?? {
-          status: "provider-not-configured",
-          connection: "Connect a host-owned TrustedExecutionContextProvider or enable a supported host attestation adapter. Caller executionContext is not a trusted observation."
-        } }
-      );
-    }
-    return context;
-  }
-  assertTrustedExecutionContext(requirement, context, subject, binding2, enforceMinimum = true) {
-    this.assertExecutionContext(requirement, context, subject, enforceMinimum);
-    this.assertTrustedExecutionBinding(context, subject, binding2);
-    this.assertTrustedExecutionFreshness(context, subject);
-  }
-  assertTrustedExecutionBinding(context, subject, binding2) {
-    if (typeof context.observationId !== "string" || context.observationId.length < 16 || context.taskId !== binding2.taskId || context.runId !== binding2.runId || context.stageId !== binding2.stageId || context.revision !== binding2.revision || typeof context.actorId !== "string" || context.actorId.length === 0 || typeof context.expiresAt !== "string") {
-      throw new WorkflowContractError(
-        "BINDING_INVALID",
-        `${subject} trusted execution attestation is not bound to the requested task/run/stage/revision.`,
-        { binding: binding2, context }
-      );
-    }
-  }
-  assertTrustedExecutionFreshness(context, subject) {
-    const observedAt = Date.parse(context.observedAt);
-    const expiresAt = Date.parse(context.expiresAt ?? "");
-    const now = Date.now();
-    if (Number.isNaN(observedAt) || Number.isNaN(expiresAt) || observedAt > now + TRUSTED_EXECUTION_CLOCK_SKEW_MS || now - observedAt > TRUSTED_EXECUTION_MAX_AGE_MS || expiresAt <= now || expiresAt < observedAt || expiresAt - observedAt > TRUSTED_EXECUTION_MAX_AGE_MS) {
-      throw new WorkflowContractError(
-        "BINDING_INVALID",
-        `${subject} trusted execution attestation is stale, expired, or has an invalid validity window.`,
-        { observedAt: context.observedAt, expiresAt: context.expiresAt }
-      );
-    }
-  }
-  consumeTrustedExecutionObservation(context, subject) {
-    const observationId = context.observationId;
-    const expiresAt = context.expiresAt;
-    if (!observationId || !expiresAt) {
-      throw new WorkflowContractError(
-        "BINDING_INVALID",
-        `${subject} trusted execution attestation is missing its one-use claim fields.`,
-        { observationId: observationId ?? null, expiresAt: expiresAt ?? null }
-      );
-    }
-    const consumedAt = (/* @__PURE__ */ new Date()).toISOString();
-    const canonicalExpiry = new Date(expiresAt).toISOString();
-    if (!this.store.claimExecutionObservation(observationId, canonicalExpiry, consumedAt)) {
-      throw new WorkflowContractError(
-        "BINDING_INVALID",
-        `${subject} trusted execution attestation was already consumed.`,
-        { observationId }
-      );
-    }
-  }
-  assertStrictPlanExecutionAssurance(plan, subject) {
-    const bootstrap = plan.bootstrapExecution;
-    if (!bootstrap) {
-      throw new WorkflowContractError(
-        "BINDING_REQUIRED",
-        `${subject} requires a plan with trusted bootstrap execution assurance.`
-      );
-    }
-    const binding2 = {
-      phase: "bootstrap",
-      taskId: plan.taskId,
-      runId: null,
-      stageId: null,
-      revision: null
-    };
-    this.assertExecutionContext(bootstrap.requirement, bootstrap.context, `${subject} bootstrap`);
-    this.assertTrustedExecutionBinding(bootstrap.context, `${subject} bootstrap`, binding2);
-    for (const stage of plan.stages) {
-      if (!stage.executionRequirement && !DETERMINISTIC_CAPABILITIES.has(stage.requiredCapability)) {
-        throw new WorkflowContractError(
-          "BINDING_REQUIRED",
-          `${subject} stage '${stage.stageId}' has no execution assurance requirement.`
-        );
-      }
-    }
-  }
-  assertExecutionContext(requirement, context, subject, enforceMinimum = true) {
-    if (requirement.kind === "deterministic") return;
-    if (!context) {
-      throw new WorkflowContractError(
-        "BINDING_REQUIRED",
-        `${subject} requires observed model and reasoning metadata.`,
-        { requirement }
-      );
-    }
-    if (context.schemaVersion !== CONTRACT_VERSION || typeof context.model !== "string" || context.model.length === 0 || !["runtime", "spawn-result"].includes(context.source) || Number.isNaN(Date.parse(context.observedAt))) {
-      throw new WorkflowContractError(
-        "BINDING_INVALID",
-        `${subject} execution context is malformed or not host-observed.`,
-        { context }
-      );
-    }
-    const minimumModelClass = requirement.minimumModelClass;
-    const minimumReasoningEffort = requirement.minimumReasoningEffort;
-    if (!minimumModelClass || !minimumReasoningEffort) {
-      throw new WorkflowContractError(
-        "INVALID_INPUT",
-        `${subject} semantic requirement is incomplete.`,
-        { requirement }
-      );
-    }
-    if (!enforceMinimum) return;
-    const modelClassRank = MODEL_CLASS.indexOf(context.modelClass);
-    const minimumModelClassRank = MODEL_CLASS.indexOf(minimumModelClass);
-    const reasoningRank = REASONING_EFFORT.indexOf(context.reasoningEffort);
-    const minimumReasoningRank = REASONING_EFFORT.indexOf(minimumReasoningEffort);
-    if (modelClassRank < 0 || reasoningRank < 0 || modelClassRank < minimumModelClassRank || reasoningRank < minimumReasoningRank) {
-      throw new WorkflowContractError(
-        "BINDING_INVALID",
-        `${subject} execution profile is below the planned semantic assurance floor.`,
-        {
-          model: context.model,
-          modelClass: context.modelClass,
-          reasoningEffort: context.reasoningEffort,
-          minimumModelClass,
-          minimumReasoningEffort
-        }
-      );
-    }
-  }
-  assertExecutionAssurance(stage, result) {
-    if (!stage.executionRequirement || result.state !== "passed") return;
-    this.assertExecutionContext(
-      stage.executionRequirement,
-      result.executionContext,
-      `Stage '${stage.stageId}'`
-    );
-  }
-  validateWorkUnitGraph(task) {
-    const graph = /* @__PURE__ */ new Map();
-    for (const unit of task.workUnits) {
-      if (graph.has(unit.id)) {
-        throw new WorkflowContractError("INVALID_INPUT", "Work unit IDs must be unique.", { workUnitId: unit.id });
-      }
-      graph.set(unit.id, unit.dependencies);
-    }
-    for (const unit of task.workUnits) {
-      for (const dependencyId of unit.dependencies) {
-        if (!graph.has(dependencyId)) {
-          throw new WorkflowContractError("INVALID_INPUT", "Work unit dependency does not exist.", {
-            workUnitId: unit.id,
-            dependencyId
-          });
-        }
-      }
-    }
-    const visiting = /* @__PURE__ */ new Set();
-    const visited = /* @__PURE__ */ new Set();
-    const visit2 = (unitId) => {
-      if (visiting.has(unitId)) {
-        throw new WorkflowContractError("INVALID_INPUT", "Work unit dependencies must not contain a cycle.", {
-          workUnitId: unitId
-        });
-      }
-      if (visited.has(unitId)) return;
-      visiting.add(unitId);
-      for (const dependencyId of graph.get(unitId) ?? []) visit2(dependencyId);
-      visiting.delete(unitId);
-      visited.add(unitId);
-    };
-    for (const unit of task.workUnits) visit2(unit.id);
-  }
-  setRunningStagePointers(plan) {
-    const readyStages = plan.stages.filter((stage) => stage.state === "ready");
-    plan.currentStageId = readyStages[0]?.stageId ?? null;
-    plan.nextStageId = readyStages[1]?.stageId ?? null;
-  }
-  addUnique(destination, values) {
-    for (const value of values) {
-      if (!destination.includes(value)) destination.push(value);
-    }
-  }
-  signPlan(plan) {
-    return createHmac3("sha256", this.planSigningKey).update(canonicalJson(this.planWithoutIntegrityToken(plan), "Plan"), "utf8").digest("base64url");
-  }
-  assertPlanIntegrity(plan) {
-    if (!PLAN_INTEGRITY_TOKEN.test(plan.integrityToken)) {
-      throw new WorkflowContractError(
-        "INVALID_INPUT",
-        "Workflow plan integrity token is not canonical base64url."
-      );
-    }
-    const expected = Buffer.from(this.signPlan(plan), "base64url");
-    const supplied = Buffer.from(plan.integrityToken, "base64url");
-    if (supplied.toString("base64url") !== plan.integrityToken || supplied.length !== expected.length || !timingSafeEqual3(supplied, expected)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Workflow plan integrity token is missing, modified, or signed by a different workflow store.");
-    }
-  }
-  planWithoutIntegrityToken(plan) {
-    const unsignedPlan = { ...plan };
-    delete unsignedPlan.integrityToken;
-    return unsignedPlan;
-  }
-  convergenceDigests(task, frame) {
-    return {
-      ...frameDigests(frame),
-      taskDigest: convergenceDigest(task)
-    };
-  }
-  assertConvergenceFrame(frame) {
-    this.validator.convergenceFrame(frame);
-    const artifactIds = [...frame.controlArtifacts, ...frame.targetArtifacts].map((artifact) => artifact.artifactId);
-    if (new Set(artifactIds).size !== artifactIds.length) {
-      throw new WorkflowContractError("INVALID_INPUT", "Convergence artifact IDs must be unique across control and target frames.");
-    }
-    if (frame.operationalSettings.maxAttemptsPerEpoch !== 3 || frame.operationalSettings.maxEpochs !== 2) {
-      throw new WorkflowContractError("INVALID_INPUT", "The convergence guard policy is fixed at three attempts and two epochs.");
-    }
-  }
-  artifactRolesChanged(baseline, proposed) {
-    const baselineRoles = new Map([...baseline.controlArtifacts, ...baseline.targetArtifacts].map((artifact) => [artifact.artifactId, artifact.role]));
-    return [...proposed.controlArtifacts, ...proposed.targetArtifacts].some((artifact) => baselineRoles.has(artifact.artifactId) && baselineRoles.get(artifact.artifactId) !== artifact.role);
-  }
-  requireConvergenceSnapshot(rootId) {
-    const snapshot = this.store.getConvergenceSnapshot(rootId);
-    if (!snapshot) throw new WorkflowContractError("RUN_NOT_FOUND", "Convergence root was not found.", { rootId });
-    this.validator.convergenceRoot(snapshot.root);
-    return snapshot;
-  }
-  /** Expires stale issued leases, then rereads the root so callers see the current lease state. */
-  liveConvergenceSnapshot(rootId) {
-    const now = Date.now();
-    for (const lease of this.requireConvergenceSnapshot(rootId).leases) {
-      if (lease.state === "issued" && Date.parse(lease.expiresAt) <= now) this.store.expireAttemptLease(lease.leaseId);
-    }
-    return this.requireConvergenceSnapshot(rootId);
-  }
-  newRunningReceipt(plan) {
-    const runId = `run-${plan.taskId}-${this.store.nextRunSequence()}`;
-    plan.state = "running";
-    this.setRunningStagePointers(plan);
-    const receipt = {
-      schemaVersion: CONTRACT_VERSION,
-      runId,
-      revision: 0,
-      state: "running",
-      plan,
-      stageResults: [],
-      blockers: [],
-      unresolved: [],
-      error: null
-    };
-    this.assertReceipt(receipt);
-    return receipt;
-  }
-  /** Records a rejected retry on the root before failing, so its evidence cannot return as new. */
-  rejectRetry(root, entry, message, details) {
-    const recorded = root.retryRejections ?? [];
-    const identity = (item) => convergenceDigest({ ...item, rejectedAt: "" });
-    let rootRevision = root.revision;
-    if (!recorded.some((item) => identity(item) === identity(entry))) {
-      const updated = bumpedRoot(root, entry.rejectedAt);
-      updated.retryRejections = [...recorded, entry];
-      this.validator.convergenceRoot(updated);
-      if (!this.store.updateConvergenceRoot(updated, root.revision)) {
-        throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while recording the rejected retry.", {
-          rootId: root.rootId
-        });
-      }
-      rootRevision = updated.revision;
-    }
-    throw new WorkflowContractError("NEW_EVIDENCE_REQUIRED", message, { ...details, rootRevision });
-  }
-  moveRootToReview(root) {
-    const updated = bumpedRoot(root, (/* @__PURE__ */ new Date()).toISOString());
-    updated.state = "needs-review";
-    if (!this.store.updateConvergenceRoot(updated, root.revision)) {
-      throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while applying its gate.", {
-        rootId: root.rootId
-      });
-    }
-  }
-  throwRootGate(root, snapshot) {
-    const attempts = consumedLeases(snapshot, root.currentEpoch).length;
-    if (root.state === "needs-review" && attempts >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
-      throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Independent review is required before another full attempt.", {
-        rootId: root.rootId,
-        epoch: root.currentEpoch
-      });
-    }
-    throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "The convergence root is gated and cannot issue another lease.", {
-      rootId: root.rootId,
-      state: root.state
-    });
-  }
-  buildConvergenceStatus(snapshot) {
-    const attemptsUsed = consumedLeases(snapshot, snapshot.root.currentEpoch).length;
-    let gateError = null;
-    if (snapshot.root.state === "needs-review") {
-      gateError = attemptsUsed >= snapshot.root.frame.operationalSettings.maxAttemptsPerEpoch ? {
-        code: "ATTEMPT_BUDGET_EXHAUSTED",
-        message: "Independent review is required before another full attempt.",
-        details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch }
-      } : {
-        code: "FRAME_REVIEW_REQUIRED",
-        message: "A task or control-frame change requires independent review.",
-        details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch }
-      };
-    } else if (snapshot.root.state === "needs-user") {
-      gateError = {
-        code: "FRAME_REVIEW_REQUIRED",
-        message: "The proposed change requires a new user contract.",
-        details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch }
-      };
-    }
-    return {
-      schemaVersion: CONTRACT_VERSION,
-      root: clone2(snapshot.root),
-      currentEpoch: snapshot.root.currentEpoch,
-      maxAttemptsPerEpoch: 3,
-      maxEpochs: 2,
-      attemptsUsedInEpoch: attemptsUsed,
-      attemptsRemainingInEpoch: Math.max(0, 3 - attemptsUsed),
-      proposals: clone2(snapshot.proposals),
-      leases: clone2(snapshot.leases),
-      outcomes: clone2(snapshot.outcomes),
-      reviews: clone2(snapshot.reviews),
-      workflowRunIds: [...snapshot.workflowRunIds],
-      gateError
-    };
-  }
-  assertReviewRoute(review) {
-    if (review.evidenceRefs.length === 0) {
-      throw new WorkflowContractError("MISSING_EVIDENCE", "A convergence review requires evidence.");
-    }
-    if (review.classification === "semantics-preserving") {
-      if (review.route === "resume-new-epoch") {
-        if (!review.comparability.comparable || !review.proposedFrame) {
-          throw new WorkflowContractError("GATE_FAILED", "Resuming a new epoch requires a comparable, semantics-preserving frame.");
-        }
-      } else if (!["diagnose", "stop"].includes(review.route)) {
-        throw new WorkflowContractError("GATE_FAILED", "A semantics-preserving review has an incompatible route.", { route: review.route });
-      }
-    } else if (review.classification === "semantics-changing") {
-      if (review.route !== "needs-user" || review.proposedFrame === null) {
-        throw new WorkflowContractError("GATE_FAILED", "Semantics-changing reviews must return the proposed frame to the user.");
-      }
-    } else if (!["panel", "needs-user", "stop"].includes(review.route)) {
-      throw new WorkflowContractError("GATE_FAILED", "Ambiguous frame reviews must route to a panel, the user, or stop.");
-    }
-  }
-  convergenceOutcome(receipt, binding2) {
-    const recordedAt = (/* @__PURE__ */ new Date()).toISOString();
-    const expectedRootRevision = binding2.root.revision;
-    const root = bumpedRoot(binding2.root, recordedAt);
-    const aborted2 = receipt.blockers.includes("aborted-by-caller");
-    const passed = receipt.state === "passed";
-    const state = passed ? "passed" : aborted2 ? "aborted" : "failed";
-    const attemptsUsed = consumedLeases(this.requireConvergenceSnapshot(root.rootId), root.currentEpoch).length;
-    const needsUser = USER_GATE_RECEIPT_STATES.has(receipt.state);
-    if (!["needs-user", "abandoned"].includes(root.state)) {
-      if (needsUser) root.state = "needs-user";
-      else if (root.state !== "needs-review") {
-        if (passed) root.state = "completed";
-        else if (attemptsUsed >= root.frame.operationalSettings.maxAttemptsPerEpoch) root.state = "needs-review";
-        else root.state = "open";
-      }
-    }
-    const failureFingerprint = passed ? null : convergenceDigest({
-      state: receipt.state,
-      stage: receipt.stageResults.at(-1)?.stageId ?? null,
-      error: receipt.error?.code ?? null,
-      blockers: receipt.blockers,
-      unresolved: receipt.unresolved
-    });
-    const evidenceRefs = [...new Set(receipt.stageResults.flatMap((result) => [
-      ...result.evidence.map((evidence) => evidence.locator),
-      ...result.output.artifacts.map((artifact) => artifact.digest)
-    ]))];
-    const outcome = {
-      schemaVersion: CONTRACT_VERSION,
-      outcomeId: `outcome-${randomUUID()}`,
-      rootId: root.rootId,
-      rootRevision: root.revision,
-      leaseId: binding2.lease.leaseId,
-      epoch: binding2.lease.epoch,
-      ordinal: binding2.lease.ordinal,
-      workflowRunId: receipt.runId,
-      state,
-      receiptDigest: convergenceDigest(receipt),
-      failureFingerprint,
-      evidenceRefs,
-      recordedAt
-    };
-    this.validator.attemptOutcome(outcome);
-    return { root, expectedRootRevision, outcome };
-  }
-  change(runId, expectedRevision, mutate) {
-    return this.attempt(() => {
-      const receipt = this.requireRun(runId);
-      if (!Number.isInteger(expectedRevision) || expectedRevision !== receipt.revision) {
-        throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
-          expectedRevision,
-          actualRevision: receipt.revision
-        });
-      }
-      mutate(receipt);
-      receipt.revision += 1;
-      this.assertReceipt(receipt);
-      const binding2 = this.store.getGuardedRunBinding(runId);
-      const convergence = binding2 && !binding2.outcome && receipt.state !== "running" ? this.convergenceOutcome(receipt, binding2) : void 0;
-      if (!this.store.updateRun(receipt, expectedRevision, convergence)) {
-        const current = this.store.getRun(runId);
-        throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
-          expectedRevision,
-          actualRevision: current?.revision ?? null
-        });
-      }
-      return clone2(receipt);
-    });
-  }
-  requireRun(runId) {
-    const receipt = this.store.getRun(runId);
-    if (!receipt) {
-      throw new WorkflowContractError("RUN_NOT_FOUND", "Run was not found in workflow storage.", { runId });
-    }
-    this.assertReceipt(receipt);
-    return receipt;
-  }
-  assertReceipt(receipt) {
-    this.validator.workflowPlan(receipt.plan);
-    this.validator.workflowReceipt(receipt);
-  }
-  attempt(operation) {
-    try {
-      return apiOk2(operation());
-    } catch (error61) {
-      return apiError2(this.toErrorBody(error61));
-    }
-  }
-  toErrorBody(error61) {
-    if (error61 instanceof WorkflowContractError) return error61.toBody();
-    return {
-      code: "INVALID_INPUT",
-      message: "Workflow request could not be processed.",
-      details: { cause: error61 instanceof Error ? error61.message : String(error61) }
-    };
-  }
-};
-
-// mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash14, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
-import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
-import path16 from "node:path";
-var DAY_MS = 24 * 60 * 60 * 1e3;
-var TOKEN_TTL_MS2 = 15 * 60 * 1e3;
-var POLICY = {
-  workflowRetentionDays: 180,
-  continuityPayloadRetentionDays: 30,
-  continuityRecordRetentionDays: 180
-};
-function digest4(value) {
-  return `sha256:${createHash14("sha256").update(JSON.stringify(value)).digest("hex")}`;
-}
-function protection() {
-  return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
-}
-function databaseIdentity(databasePath) {
-  return databasePath === ":memory:" ? databasePath : path16.resolve(databasePath);
-}
-function apiError3(error61) {
-  const normalized = error61 instanceof WorkflowContractError ? error61 : new WorkflowContractError("INVALID_INPUT", error61 instanceof Error ? error61.message : String(error61));
-  return { schemaVersion: "1.0.0", ok: false, data: null, error: normalized.toBody() };
-}
-var StateCleanupService = class {
-  constructor(workflowStore, continuityStore, validator, clock = () => /* @__PURE__ */ new Date()) {
-    this.workflowStore = workflowStore;
-    this.continuityStore = continuityStore;
-    this.validator = validator;
-    this.clock = clock;
-    this.secret = Buffer.from(workflowStore.getOrCreateSecret(
-      "state-cleanup-signing-key",
-      () => randomBytes4(32).toString("base64url")
-    ), "base64url");
-  }
-  workflowStore;
-  continuityStore;
-  validator;
-  clock;
-  secret;
-  prepare(value) {
-    try {
-      this.validator.prepareStateCleanupRequest(value);
-      const created = this.clock();
-      const createdAt = created.toISOString();
-      const cutoffs = {
-        workflow: new Date(created.getTime() - POLICY.workflowRetentionDays * DAY_MS).toISOString(),
-        continuityPayload: new Date(created.getTime() - POLICY.continuityPayloadRetentionDays * DAY_MS).toISOString(),
-        continuityRecord: new Date(created.getTime() - POLICY.continuityRecordRetentionDays * DAY_MS).toISOString()
-      };
-      const { workflow, continuity, protectedContinuityTasks, candidates } = this.currentCandidates(cutoffs);
-      const candidateDigest = digest4({ candidates, linkedRuns: workflow.linkedRuns });
-      const rootProtection = { previewCreatedAt: createdAt, ...workflow.rootProtection };
-      const payload = {
-        schemaVersion: "1.0.0",
-        planId: randomUUID2(),
-        createdAt,
-        expiresAt: new Date(created.getTime() + TOKEN_TTL_MS2).toISOString(),
-        policy: POLICY,
-        cutoffs,
-        candidates,
-        candidateDigest,
-        linkedRuns: workflow.linkedRuns,
-        rootProtection,
-        databases: this.databaseIdentities()
-      };
-      const plan = {
-        schemaVersion: "1.0.0",
-        planId: payload.planId,
-        createdAt,
-        expiresAt: payload.expiresAt,
-        policy: POLICY,
-        cutoffs,
-        candidates,
-        counts: {
-          workflowRoots: workflow.roots.length,
-          workflowRuns: workflow.standaloneRuns.length + workflow.roots.reduce((count, root) => count + root.runIds.length, 0),
-          continuitySnapshots: continuity?.snapshots.length ?? 0,
-          continuityTasks: continuity?.tasks.length ?? 0,
-          protectedActiveRoots: workflow.protectedActiveRoots,
-          protectedActiveContinuityTasks: protectedContinuityTasks
-        },
-        candidateDigest,
-        protection: protection(),
-        planToken: this.sign(payload),
-        rootProtection
-      };
-      this.validator.stateCleanupPlan(plan);
-      return { schemaVersion: "1.0.0", ok: true, data: plan, error: null };
-    } catch (error61) {
-      return apiError3(error61);
-    }
-  }
-  execute(value) {
-    try {
-      const request = this.validator.executeStateCleanupRequest(value);
-      const payload = this.verify(request.planToken);
-      const now = this.clock();
-      if (Date.parse(payload.expiresAt) <= now.getTime()) {
-        throw new WorkflowContractError("STALE_REVISION", "The state cleanup plan token expired.", { planId: payload.planId });
-      }
-      this.assertDatabaseIdentity(payload);
-      const current = this.currentCandidates(payload.cutoffs);
-      const candidates = current.candidates;
-      const currentDigest = digest4({ candidates, linkedRuns: current.workflow.linkedRuns });
-      if (currentDigest !== payload.candidateDigest || JSON.stringify(candidates) !== JSON.stringify(payload.candidates) || JSON.stringify(current.workflow.linkedRuns) !== JSON.stringify(payload.linkedRuns)) {
-        throw new WorkflowContractError("STALE_REVISION", "State cleanup candidates changed after preview.", {
-          planId: payload.planId,
-          expectedDigest: payload.candidateDigest,
-          actualDigest: currentDigest
-        });
-      }
-      if (!this.workflowStore.claimCleanupPlan(payload.planId, payload.candidateDigest, now.toISOString())) {
-        throw new WorkflowContractError("STALE_REVISION", "The state cleanup plan token was already used.", { planId: payload.planId });
-      }
-      const workflowHasCandidates = candidates.workflowRoots.length > 0 || candidates.standaloneWorkflowRuns.length > 0;
-      const continuityHasCandidates = candidates.continuitySnapshots.length > 0 || candidates.continuityTasks.length > 0;
-      const workflowResult = {
-        status: "skipped",
-        backupPath: null,
-        deletedRoots: 0,
-        deletedRuns: 0,
-        error: null
-      };
-      const continuityResult = {
-        status: this.continuityStore ? "skipped" : "unavailable",
-        backupPath: null,
-        deletedSnapshots: 0,
-        deletedTasks: 0,
-        error: null
-      };
-      if (workflowHasCandidates) {
-        try {
-          workflowResult.backupPath = this.backupPath(this.workflowStore.databasePath, "workflows", payload.planId);
-          this.workflowStore.backupTo(workflowResult.backupPath);
-          this.protectBackup(workflowResult.backupPath);
-          const deleted = this.workflowStore.executeCleanup(current.workflow);
-          workflowResult.status = "completed";
-          workflowResult.deletedRoots = deleted.roots;
-          workflowResult.deletedRuns = deleted.runs;
-        } catch (error61) {
-          workflowResult.status = "failed";
-          workflowResult.error = error61 instanceof Error ? error61.message : String(error61);
-        }
-      }
-      if (continuityHasCandidates && this.continuityStore && current.continuity) {
-        try {
-          continuityResult.backupPath = this.backupPath(this.continuityStore.databasePath, "continuity", payload.planId);
-          this.continuityStore.backupTo(continuityResult.backupPath);
-          this.protectBackup(continuityResult.backupPath);
-          const guardedRootIds = [...current.continuity.tasks, ...current.continuity.snapshots].map((candidate) => candidate.rootId).filter((rootId) => rootId !== null);
-          const deleted = this.workflowStore.withInactiveRootGuard(guardedRootIds, () => this.continuityStore.executeCleanup(
-            current.continuity,
-            now.toISOString(),
-            payload.cutoffs.continuityPayload,
-            payload.cutoffs.continuityRecord
-          ));
-          continuityResult.status = "completed";
-          continuityResult.deletedSnapshots = deleted.snapshots;
-          continuityResult.deletedTasks = deleted.tasks;
-        } catch (error61) {
-          continuityResult.status = "failed";
-          continuityResult.error = error61 instanceof Error ? error61.message : String(error61);
-        }
-      }
-      const failures = workflowResult.status === "failed" || continuityResult.status === "failed";
-      const noOp = !workflowHasCandidates && !continuityHasCandidates;
-      const receipt = {
-        schemaVersion: "1.0.0",
-        planId: payload.planId,
-        status: noOp ? "no-op" : failures ? "partial" : "completed",
-        executedAt: now.toISOString(),
-        candidateDigest: payload.candidateDigest,
-        databases: { workflow: workflowResult, continuity: continuityResult },
-        ...payload.rootProtection === void 0 ? {} : { rootProtection: payload.rootProtection },
-        backupRetention: "manual-deletion-only",
-        protection: protection()
-      };
-      this.validator.stateCleanupReceipt(receipt);
-      return { schemaVersion: "1.0.0", ok: true, data: receipt, error: null };
-    } catch (error61) {
-      return apiError3(error61);
-    }
-  }
-  currentCandidates(cutoffs) {
-    const workflow = this.workflowStore.previewCleanup(cutoffs.workflow);
-    const continuity = this.continuityStore?.previewCleanup(cutoffs.continuityPayload, cutoffs.continuityRecord) ?? null;
-    let protectedContinuityTasks = continuity?.protectedActiveTasks ?? 0;
-    if (continuity) {
-      const protectedRootTaskIds = /* @__PURE__ */ new Set();
-      continuity.tasks = continuity.tasks.filter((task) => {
-        const active = task.rootId ? this.workflowStore.isConvergenceRootActive(task.rootId) : false;
-        if (active) protectedRootTaskIds.add(task.taskCorrelation);
-        return !active;
-      });
-      continuity.snapshots = continuity.snapshots.filter((snapshot) => {
-        const active = snapshot.rootId ? this.workflowStore.isConvergenceRootActive(snapshot.rootId) : false;
-        if (active) protectedRootTaskIds.add(snapshot.taskCorrelation);
-        return !active;
-      });
-      protectedContinuityTasks += protectedRootTaskIds.size;
-    }
-    const candidates = {
-      workflowRoots: workflow.roots,
-      standaloneWorkflowRuns: workflow.standaloneRuns,
-      continuitySnapshots: continuity?.snapshots ?? [],
-      continuityTasks: continuity?.tasks ?? []
-    };
-    return { workflow, continuity, protectedContinuityTasks, candidates };
-  }
-  databaseIdentities() {
-    return {
-      workflow: { path: databaseIdentity(this.workflowStore.databasePath), schemaVersion: this.workflowStore.getSchemaVersion() },
-      continuity: this.continuityStore ? { path: databaseIdentity(this.continuityStore.databasePath), schemaVersion: this.continuityStore.getSchemaVersion() } : null
-    };
-  }
-  sign(payload) {
-    const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-    const signature = createHmac4("sha256", this.secret).update(encoded).digest("base64url");
-    return `${encoded}.${signature}`;
-  }
-  verify(token) {
-    const [encoded, signature, extra] = token.split(".");
-    if (!encoded || !signature || extra) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
-    const expected = createHmac4("sha256", this.secret).update(encoded).digest();
-    let actual;
-    try {
-      actual = Buffer.from(signature, "base64url");
-    } catch {
-      throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
-    }
-    if (actual.toString("base64url") !== signature || actual.length !== expected.length || !timingSafeEqual4(actual, expected)) {
-      throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token signature is invalid.");
-    }
-    let payload;
-    try {
-      const payloadBytes = Buffer.from(encoded, "base64url");
-      if (payloadBytes.toString("base64url") !== encoded) throw new Error("non-canonical token payload");
-      const parsed = JSON.parse(payloadBytes.toString("utf8"));
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("invalid payload object");
-      payload = parsed;
-    } catch {
-      throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token payload is invalid.");
-    }
-    if (Object.prototype.hasOwnProperty.call(payload, "rootProtection")) {
-      let observed;
-      try {
-        observed = this.validator.stateCleanupRootProtection(payload.rootProtection);
-      } catch {
-        throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan root protection diagnostics are invalid.");
-      }
-      if (observed.previewCreatedAt !== payload.createdAt) {
-        throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan root protection preview timestamp does not match.");
-      }
-    }
-    return payload;
-  }
-  assertDatabaseIdentity(payload) {
-    const current = this.databaseIdentities();
-    const workflow = payload.databases.workflow;
-    if (workflow.path !== current.workflow.path || workflow.schemaVersion !== current.workflow.schemaVersion) {
-      throw new WorkflowContractError("STALE_REVISION", "The workflow database identity or schema changed after preview.");
-    }
-    if (JSON.stringify(current.continuity) !== JSON.stringify(payload.databases.continuity)) {
-      throw new WorkflowContractError("STALE_REVISION", "The continuity database identity or schema changed after preview.");
-    }
-  }
-  backupPath(databasePath, label, planId) {
-    if (databasePath === ":memory:") throw new WorkflowContractError("INVALID_INPUT", "In-memory databases cannot be cleaned destructively.");
-    const directory = path16.join(path16.dirname(path16.resolve(databasePath)), "backups");
-    mkdirSync4(directory, { recursive: true, mode: 448 });
-    return path16.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
-  }
-  protectBackup(targetPath) {
-    if (process.platform !== "win32") chmodSync3(targetPath, 384);
-  }
-};
-
-// mcp-server/src/trust-store.ts
-import { createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
-import { types as utilTypes2 } from "node:util";
-import { chmodSync as chmodSync4, mkdirSync as mkdirSync5 } from "node:fs";
-import path17 from "node:path";
-import { DatabaseSync as DatabaseSync5 } from "node:sqlite";
-var TRUST_SIGNING_KEY = "trust-signing-key";
-var SCHEMA_VERSION3 = 1;
-var INPUT_SOURCE_KEYS = /* @__PURE__ */ new Set([
-  "originKind",
-  "host",
-  "sessionId",
-  "eventId",
-  "contentDigest",
-  "observedAt",
-  "expiresAt",
-  "authorityEffect",
-  "attestation"
-]);
-var ATTESTATION_KEYS = /* @__PURE__ */ new Set(["kind", "adapter", "capabilityVersion"]);
-function verifyInputSource(receipt, signingKey2) {
-  try {
-    const { integrityToken, ...unsigned } = receipt;
-    const actual = Buffer.from(integrityToken, "base64url");
-    const expected = createHmac5("sha256", signingKey2).update(canonicalJson(unsigned, "Input source receipt")).digest();
-    return signingKey2.length === 32 && actual.length === expected.length && timingSafeEqual5(actual, expected);
-  } catch {
-    return false;
-  }
-}
-function rejectUnexpectedKeys(value, allowed, label) {
-  const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
-  if (unexpected.length > 0) {
-    throw new WorkflowContractError("INVALID_INPUT", `${label} contains unsupported fields.`, { unexpected });
-  }
-}
-var TrustStore = class {
-  database;
-  shared;
-  databasePath;
-  signingKey;
-  syntheticSecret;
-  closed = false;
-  constructor(input2, syntheticSecret, options = {}) {
-    const busyTimeoutMs = options.busyTimeoutMs ?? 5e3;
-    if (!Number.isInteger(busyTimeoutMs) || busyTimeoutMs < 0 || busyTimeoutMs > 2147483647 || typeof input2 !== "string" && options.busyTimeoutMs !== void 0) {
-      throw new WorkflowContractError("INVALID_INPUT", "A standalone trust store requires a valid busy timeout.");
-    }
-    this.shared = typeof input2 === "string" ? void 0 : input2;
-    this.databasePath = typeof input2 === "string" ? input2 : input2.databasePath;
-    this.syntheticSecret = syntheticSecret;
-    const databasePath = this.databasePath;
-    if (this.shared) {
-      this.database = this.shared.database;
-      if (!syntheticSecret || Buffer.from(syntheticSecret, "base64url").length !== 32) throw new WorkflowContractError("INVALID_INPUT", "An explicit new synthetic trust key is required.");
-      this.shared.initialize(() => this.initializeSchema());
-      this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
-      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
-      return;
-    }
-    if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
-    if (databasePath !== ":memory:") mkdirSync5(path17.dirname(path17.resolve(databasePath)), { recursive: true, mode: 448 });
-    this.database = new DatabaseSync5(databasePath);
-    try {
-      this.database.exec(`PRAGMA busy_timeout = ${busyTimeoutMs};`);
-      this.database.exec("PRAGMA synchronous = FULL;");
-      if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
-      this.initializeSchema();
-      this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
-      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
-      if (this.signingKey.length !== 32) throw tagProducerFailure(new Error("Stored trust signing key is invalid."), "TRUST_SIGNING_KEY_INVALID");
-      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync4(path17.resolve(databasePath), 384);
-    } catch (cause) {
-      let closeFailed = false;
-      let closeFailure;
-      try {
-        this.database.close();
-      } catch (closeError) {
-        closeFailed = true;
-        closeFailure = utilTypes2.isNativeError(closeError) ? tagProducerFailure(closeError, "TRUST_CLOSE_FAILED") : closeError;
-      }
-      const failure3 = cause instanceof WorkflowContractError ? cause : this.storageError("Cannot initialize the trust database.", cause);
-      if (closeFailed) retainFailureSecondary(failure3, closeFailure);
-      throw failure3;
-    }
-  }
-  recordInputSource(input2) {
-    rejectUnexpectedKeys(input2, INPUT_SOURCE_KEYS, "Input source metadata");
-    if (!input2.attestation || typeof input2.attestation !== "object" || Array.isArray(input2.attestation)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Input source attestation must be an object.");
-    }
-    rejectUnexpectedKeys(input2.attestation, ATTESTATION_KEYS, "Input source attestation");
-    if (input2.originKind === "user-turn" || input2.attestation.kind === "host-direct-user-event") {
-      throw new WorkflowContractError("BINDING_INVALID", "This release cannot attest direct-user approval sources.");
-    }
-    if (input2.originKind === "peer" && (input2.authorityEffect !== "none" || input2.attestation.kind !== "broker-peer-envelope")) {
-      throw new WorkflowContractError("BINDING_INVALID", "Peer input must be a non-authorizing broker envelope.");
-    }
-    if (input2.originKind !== "peer" && input2.attestation.kind === "broker-peer-envelope") {
-      throw new WorkflowContractError("BINDING_INVALID", "Broker peer attestations must be classified as peer input.");
-    }
-    const receipt = this.seal({
-      schemaVersion: CONTRACT_VERSION,
-      receiptId: `source-${randomUUID3()}`,
-      originKind: input2.originKind,
-      host: input2.host,
-      sessionId: input2.sessionId,
-      eventId: input2.eventId,
-      contentDigest: input2.contentDigest,
-      observedAt: input2.observedAt,
-      expiresAt: input2.expiresAt,
-      authorityEffect: input2.authorityEffect,
-      attestation: {
-        kind: input2.attestation.kind,
-        adapter: input2.attestation.adapter,
-        capabilityVersion: input2.attestation.capabilityVersion
-      }
-    });
-    return this.guard("Cannot record the input source receipt.", { receiptId: receipt.receiptId }, () => this.transaction(() => {
-      const existing = this.database.prepare(`
-        SELECT receipt_json FROM input_source_receipts
-        WHERE host = ? AND session_id = ? AND event_id = ?
-      `).get(receipt.host, receipt.sessionId, receipt.eventId);
-      if (existing) {
-        const prior = JSON.parse(existing.receipt_json);
-        const sameSecurityMetadata = prior.contentDigest === receipt.contentDigest && prior.originKind === receipt.originKind && prior.authorityEffect === receipt.authorityEffect && canonicalJson(prior.attestation, "Source attestation") === canonicalJson(receipt.attestation, "Source attestation");
-        if (sameSecurityMetadata) return structuredClone(prior);
-        throw tagProducerFailure(new WorkflowContractError("REQUEST_CONFLICT", "The input event was already recorded with different content or provenance metadata.", {
-          host: receipt.host,
-          sessionId: receipt.sessionId,
-          eventId: receipt.eventId
-        }), "TRUST_SOURCE_EVENT_CONFLICT");
-      }
-      this.database.prepare(`
-        INSERT INTO input_source_receipts (
-          receipt_id, host, session_id, event_id, origin_kind,
-          authority_effect, observed_at, expires_at, receipt_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        receipt.receiptId,
-        receipt.host,
-        receipt.sessionId,
-        receipt.eventId,
-        receipt.originKind,
-        receipt.authorityEffect,
-        receipt.observedAt,
-        receipt.expiresAt,
-        JSON.stringify(receipt)
-      );
-      return structuredClone(receipt);
-    }));
-  }
-  latestInputSource(binding2) {
-    return this.guard("Cannot read the latest input source receipt.", { ...binding2 }, () => {
-      const row = this.database.prepare(`
-        SELECT receipt_json FROM input_source_receipts
-        WHERE host = ? AND session_id = ?
-        ORDER BY observed_at DESC, receipt_id DESC LIMIT 1
-      `).get(binding2.host, binding2.sessionId);
-      return row ? JSON.parse(row.receipt_json) : null;
-    });
-  }
-  getInputSource(receiptId) {
-    return this.guard("Cannot read the input source receipt.", { receiptId }, () => {
-      const row = this.database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId);
-      return row ? JSON.parse(row.receipt_json) : null;
-    });
-  }
-  verify(receipt) {
-    return verifyInputSource(receipt, this.signingKey);
-  }
-  /** Existing key/receipt snapshot only: no schema, journal mode, key creation or receipt issuance. */
-  static readVerifiedInputSource(databasePath, receiptId) {
-    let database;
-    try {
-      database = new DatabaseSync5(databasePath, { readOnly: true });
-      database.exec("PRAGMA query_only = ON; BEGIN;");
-      const version3 = database.prepare("PRAGMA user_version").get().user_version;
-      if (version3 > SCHEMA_VERSION3) return null;
-      const key = database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(TRUST_SIGNING_KEY);
-      const row = database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId);
-      if (!key || !row) return null;
-      const receipt = JSON.parse(row.receipt_json);
-      return receipt?.receiptId === receiptId && verifyInputSource(receipt, Buffer.from(key.value, "base64url")) ? receipt : null;
-    } catch {
-      return null;
-    } finally {
-      database?.close();
-    }
-  }
-  close() {
-    if (this.closed) return;
-    try {
-      this.database.close();
-    } catch (cause) {
-      throw utilTypes2.isNativeError(cause) ? tagProducerFailure(cause, "TRUST_CLOSE_FAILED") : cause;
-    }
-    this.closed = true;
-  }
-  seal(unsigned) {
-    return {
-      ...unsigned,
-      integrityToken: createHmac5("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest("base64url")
-    };
-  }
-  initializeSchema() {
-    const version3 = this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
-    if (version3 > SCHEMA_VERSION3) {
-      throw tagProducerFailure(new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
-        databasePath: this.databasePath,
-        supportedVersion: SCHEMA_VERSION3,
-        actualVersion: version3
-      }), "TRUST_SCHEMA_UNSUPPORTED");
-    }
-    this.transaction(() => {
-      this.database.exec(`
-      CREATE TABLE IF NOT EXISTS trust_metadata (
-        key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL
-      ) STRICT;
-      CREATE TABLE IF NOT EXISTS input_source_receipts (
-        receipt_id TEXT PRIMARY KEY,
-        host TEXT NOT NULL,
-        session_id TEXT NOT NULL,
-        event_id TEXT NOT NULL,
-        origin_kind TEXT NOT NULL,
-        authority_effect TEXT NOT NULL,
-        observed_at TEXT NOT NULL,
-        expires_at TEXT NOT NULL,
-        receipt_json TEXT NOT NULL,
-        UNIQUE(host, session_id, event_id)
-      ) STRICT;
-      CREATE INDEX IF NOT EXISTS input_source_latest
-        ON input_source_receipts(host, session_id, observed_at DESC);
-    `);
-      if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION3);
-      else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION3};`);
-    });
-  }
-  getOrCreateSecret(name) {
-    return this.transaction(() => {
-      const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name);
-      if (existing) return existing.value;
-      const value = this.syntheticSecret ?? randomBytes5(32).toString("base64url");
-      this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
-      return value;
-    });
-  }
-  transaction(operation) {
-    if (this.shared) return this.shared.transaction(operation);
-    this.database.exec("BEGIN IMMEDIATE;");
-    try {
-      const result = operation();
-      this.database.exec("COMMIT;");
-      return result;
-    } catch (cause) {
-      try {
-        this.database.exec("ROLLBACK;");
-      } catch (rollbackError) {
-        retainFailureSecondary(cause, utilTypes2.isNativeError(rollbackError) ? tagProducerFailure(rollbackError, "TRUST_ROLLBACK_FAILED") : rollbackError);
-      }
-      throw cause;
-    }
-  }
-  guard(message, details, operation) {
-    try {
-      return operation();
-    } catch (cause) {
-      if (cause instanceof WorkflowContractError) throw cause;
-      throw this.storageError(message, cause, details);
-    }
-  }
-  storageError(message, cause, details = {}) {
-    return retainFailureCause(tagProducerFailure(new WorkflowContractError("INVALID_INPUT", message, {
-      ...details,
-      databasePath: this.databasePath,
-      cause: cause instanceof Error ? cause.message : String(cause)
-    }), "TRUST_STORAGE_FAILED"), cause);
-  }
-};
+// skills/acceptance-evidence-validator/scripts/core.mjs
+import { createHash as createHash12 } from "node:crypto";
 
 // runtime/schema-validation.mjs
 var vc = Object.create;
@@ -44558,6 +42152,3295 @@ var Zp = Zs(_c(), 1);
 var export_Ajv2020 = Wp.default;
 var export_addFormats = Zp.default;
 
+// contracts/task-envelope.v1.schema.json
+var task_envelope_v1_schema_default = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://skill-suite.local/contracts/task-envelope.v1.schema.json",
+  title: "TaskEnvelope.v1",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "taskId", "objective", "scope", "acceptanceCriteria", "riskLevel", "workUnits", "requiredCapabilities", "constraints", "authorization", "decision", "orchestration"],
+  properties: {
+    schemaVersion: { const: "1.0.0" },
+    taskId: { type: "string", minLength: 1 },
+    objective: { type: "string", minLength: 1 },
+    scope: {
+      type: "object",
+      additionalProperties: false,
+      required: ["included", "excluded"],
+      properties: {
+        included: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true },
+        excluded: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true }
+      }
+    },
+    acceptanceCriteria: { type: "array", minItems: 1, items: { type: "string", minLength: 1 }, uniqueItems: true },
+    riskLevel: { enum: ["low", "medium", "high", "critical"] },
+    workUnits: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["id", "objective", "dependencies", "writeTargets"],
+        properties: {
+          id: { type: "string", minLength: 1 },
+          objective: { type: "string", minLength: 1 },
+          dependencies: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true },
+          writeTargets: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true }
+        }
+      }
+    },
+    artifactContracts: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "capability",
+          "produced"
+        ],
+        properties: {
+          capability: {
+            type: "string",
+            minLength: 1
+          },
+          produced: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: [
+                "artifactId",
+                "schemaId",
+                "targetDigest"
+              ],
+              properties: {
+                artifactId: {
+                  type: "string",
+                  minLength: 1
+                },
+                schemaId: {
+                  type: "string",
+                  minLength: 1
+                },
+                targetDigest: {
+                  type: "string",
+                  pattern: "^sha256:[a-f0-9]{64}$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    requiredCapabilities: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true },
+    constraints: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true },
+    authorization: {
+      type: "object",
+      additionalProperties: false,
+      required: ["allowedActions", "prohibitedActions", "approvalRequired"],
+      properties: {
+        allowedActions: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true },
+        prohibitedActions: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true },
+        approvalRequired: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true }
+      }
+    },
+    decision: {
+      type: "object",
+      additionalProperties: false,
+      required: ["complexity", "hasConflicts"],
+      properties: {
+        complexity: { enum: ["simple", "complex"] },
+        hasConflicts: { type: "boolean" }
+      }
+    },
+    orchestration: {
+      type: "object",
+      additionalProperties: false,
+      required: ["requested", "mcpAvailable"],
+      properties: { requested: { type: "boolean" }, mcpAvailable: { type: "boolean" } }
+    }
+  }
+};
+
+// skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json
+var acceptance_evidence_input_v1_schema_default = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://agent-governance-skills.local/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json",
+  title: "AcceptanceEvidenceInput.v1",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "taskEnvelope", "target", "evidence", "verificationCommands", "knownLimitations", "criterionOverrides"],
+  properties: {
+    schemaVersion: { const: "1.0.0" },
+    taskEnvelope: { $ref: "./upstream/task-envelope.v1.schema.json" },
+    target: { $ref: "#/$defs/target" },
+    evidence: { type: "array", items: { $ref: "#/$defs/evidence" } },
+    verificationCommands: { type: "array", items: { $ref: "#/$defs/command" } },
+    knownLimitations: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true },
+    criterionOverrides: { type: "array", items: { $ref: "#/$defs/override" } }
+  },
+  $defs: {
+    target: {
+      type: "object",
+      additionalProperties: false,
+      required: ["kind", "identifier", "digest"],
+      properties: {
+        kind: { enum: ["commit", "diff", "artifact", "document", "observable-state"] },
+        identifier: { type: "string", minLength: 1 },
+        digest: { type: "string", pattern: "^sha256:[a-f0-9]{64}$" }
+      }
+    },
+    evidence: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "kind", "locator", "digest", "targetDigest", "verified", "criterionIds", "direction", "observedResult"],
+      properties: {
+        id: { type: "string", minLength: 1 },
+        kind: { enum: ["user-input", "file", "test", "document", "tool"] },
+        locator: { type: "string", minLength: 1 },
+        digest: { type: "string", pattern: "^sha256:[a-f0-9]{64}$" },
+        targetDigest: { type: "string", pattern: "^sha256:[a-f0-9]{64}$" },
+        verified: { type: "boolean" },
+        criterionIds: { type: "array", minItems: 1, items: { type: "string", pattern: "^AC-[0-9]{3,}$" }, uniqueItems: true },
+        direction: { enum: ["supports", "refutes"] },
+        observedResult: { type: "string", minLength: 1 }
+      }
+    },
+    command: {
+      type: "object",
+      additionalProperties: false,
+      required: ["id", "command", "exitCode", "locator", "targetDigest", "criterionIds"],
+      properties: {
+        id: { type: "string", minLength: 1 },
+        command: { type: "string", minLength: 1 },
+        exitCode: { type: "integer" },
+        locator: { type: "string", minLength: 1 },
+        targetDigest: { type: "string", pattern: "^sha256:[a-f0-9]{64}$" },
+        criterionIds: { type: "array", minItems: 1, items: { type: "string", pattern: "^AC-[0-9]{3,}$" }, uniqueItems: true }
+      }
+    },
+    override: {
+      type: "object",
+      additionalProperties: false,
+      required: ["criterionId", "status", "rationale", "authorityRef"],
+      properties: {
+        criterionId: { type: "string", pattern: "^AC-[0-9]{3,}$" },
+        status: { const: "not-applicable" },
+        rationale: { type: "string", minLength: 1 },
+        authorityRef: { type: "string", minLength: 1 }
+      }
+    }
+  }
+};
+
+// skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json
+var acceptance_evidence_report_v1_schema_default = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://agent-governance-skills.local/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
+  title: "AcceptanceEvidenceReport.v1",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "target", "criteria", "verifiedEvidenceIndex", "unresolvedCriteria", "limitations", "verdict"],
+  properties: {
+    schemaVersion: { const: "1.0.0" },
+    target: {
+      type: "object",
+      additionalProperties: false,
+      required: ["kind", "identifier", "digest"],
+      properties: {
+        kind: { enum: ["commit", "diff", "artifact", "document", "observable-state"] },
+        identifier: { type: "string", minLength: 1 },
+        digest: { type: "string", pattern: "^sha256:[a-f0-9]{64}$" }
+      }
+    },
+    criteria: {
+      type: "array",
+      minItems: 1,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["criterionId", "statement", "status", "evidenceRefs", "observedResult", "rationale"],
+        properties: {
+          criterionId: { type: "string", pattern: "^AC-[0-9]{3,}$" },
+          statement: { type: "string", minLength: 1 },
+          status: { enum: ["satisfied", "unsatisfied", "insufficient-evidence", "not-applicable"] },
+          evidenceRefs: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true },
+          observedResult: { type: "string" },
+          rationale: { type: "string", minLength: 1 }
+        }
+      }
+    },
+    verifiedEvidenceIndex: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["evidenceId", "kind", "locator", "digest", "targetDigest", "criterionIds", "direction"],
+        properties: {
+          evidenceId: { type: "string", minLength: 1 },
+          kind: { enum: ["user-input", "file", "test", "document", "tool", "verification-command"] },
+          locator: { type: "string", minLength: 1 },
+          digest: { type: "string", pattern: "^sha256:[a-f0-9]{64}$" },
+          targetDigest: { type: "string", pattern: "^sha256:[a-f0-9]{64}$" },
+          criterionIds: { type: "array", minItems: 1, items: { type: "string", pattern: "^AC-[0-9]{3,}$" }, uniqueItems: true },
+          direction: { enum: ["supports", "refutes"] }
+        }
+      }
+    },
+    unresolvedCriteria: { type: "array", items: { type: "string", pattern: "^AC-[0-9]{3,}$" }, uniqueItems: true },
+    limitations: { type: "array", items: { type: "string", minLength: 1 }, uniqueItems: true },
+    verdict: { enum: ["PASS", "FAIL", "BLOCKED", "NEEDS_INPUT"] }
+  }
+};
+
+// skills/acceptance-evidence-validator/contracts/acceptance-report-validation.v1.schema.json
+var acceptance_report_validation_v1_schema_default = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://agent-governance-skills.local/acceptance-evidence-validator/contracts/acceptance-report-validation.v1.schema.json",
+  title: "AcceptanceReportValidation.v1",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "request", "requestArtifact", "report"],
+  properties: {
+    schemaVersion: { const: "1.0.0" },
+    request: { $ref: "acceptance-evidence-input.v1.schema.json" },
+    requestArtifact: {
+      type: "object",
+      additionalProperties: false,
+      required: ["artifactId", "schemaId", "locator", "digest"],
+      properties: {
+        artifactId: { type: "string", minLength: 1 },
+        schemaId: { const: "https://agent-governance-skills.local/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json" },
+        locator: { type: "string", minLength: 1 },
+        digest: { type: "string", pattern: "^sha256:[a-f0-9]{64}$" }
+      }
+    },
+    report: { $ref: "acceptance-evidence-report.v1.schema.json" }
+  }
+};
+
+// skills/acceptance-evidence-validator/scripts/schema-validation.mjs
+var ajv = new export_Ajv2020({ allErrors: true, strict: true });
+var taskEnvelopeAlias = structuredClone(task_envelope_v1_schema_default);
+taskEnvelopeAlias.$id = new URL("./upstream/task-envelope.v1.schema.json", acceptance_evidence_input_v1_schema_default.$id).href;
+ajv.addSchema(taskEnvelopeAlias);
+var validateTaskEnvelopeSchema = ajv.compile(task_envelope_v1_schema_default);
+var validateInputSchema = ajv.compile(acceptance_evidence_input_v1_schema_default);
+var validateReportSchema = ajv.compile(acceptance_evidence_report_v1_schema_default);
+var validateReportValidationSchema = ajv.compile(acceptance_report_validation_v1_schema_default);
+
+// skills/acceptance-evidence-validator/scripts/core.mjs
+var InputError = class extends Error {
+  constructor(message, details = null) {
+    super(message);
+    this.name = "InputError";
+    this.details = details;
+  }
+};
+function canonicalJson2(value) {
+  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number" && Number.isFinite(value)) return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonicalJson2).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson2(value[key])}`).join(",")}}`;
+  }
+  throw new InputError("Input contains a non-JSON value.");
+}
+function sha2562(value) {
+  return `sha256:${createHash12("sha256").update(typeof value === "string" ? value : canonicalJson2(value), "utf8").digest("hex")}`;
+}
+function authorityEvidenceDigest(evidence, authorityValue) {
+  return sha2562({
+    id: evidence.id,
+    kind: evidence.kind,
+    locator: evidence.locator,
+    targetDigest: evidence.targetDigest,
+    verified: evidence.verified,
+    criterionIds: evidence.criterionIds,
+    direction: evidence.direction,
+    observedResult: evidence.observedResult,
+    authorityValue
+  });
+}
+function nonEmptyString(value, name) {
+  if (typeof value !== "string" || value.trim().length === 0) throw new InputError(`${name} must be a non-empty string.`);
+}
+function stringArray2(value, name, { min = 0 } = {}) {
+  if (!Array.isArray(value) || value.length < min || value.some((item) => typeof item !== "string" || item.trim().length === 0)) {
+    throw new InputError(`${name} must be an array of non-empty strings.`);
+  }
+  if (new Set(value).size !== value.length) throw new InputError(`${name} must not contain duplicates.`);
+}
+function exactKeys(value, allowed, name) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new InputError(`${name} must be an object.`);
+  const extras = Object.keys(value).filter((key) => !allowed.includes(key));
+  if (extras.length > 0) throw new InputError(`${name} contains unsupported fields: ${extras.join(", ")}.`);
+}
+function assertTaskEnvelope(task) {
+  if (!task || typeof task !== "object" || Array.isArray(task)) throw new InputError("taskEnvelope must be an object.");
+  if (!validateTaskEnvelopeSchema(task)) throw new InputError("TaskEnvelope.v1 validation failed.", { errors: structuredClone(validateTaskEnvelopeSchema.errors) });
+  if (task.schemaVersion !== "1.0.0") throw new InputError("taskEnvelope.schemaVersion must be 1.0.0.");
+  nonEmptyString(task.taskId, "taskEnvelope.taskId");
+  nonEmptyString(task.objective, "taskEnvelope.objective");
+  exactKeys(task.scope, ["included", "excluded"], "taskEnvelope.scope");
+  stringArray2(task.scope.included, "taskEnvelope.scope.included");
+  stringArray2(task.scope.excluded, "taskEnvelope.scope.excluded");
+  stringArray2(task.acceptanceCriteria, "taskEnvelope.acceptanceCriteria", { min: 1 });
+  if (!["low", "medium", "high", "critical"].includes(task.riskLevel)) throw new InputError("taskEnvelope.riskLevel is invalid.");
+  if (!Array.isArray(task.workUnits)) throw new InputError("taskEnvelope.workUnits must be an array.");
+  const workUnitIds = /* @__PURE__ */ new Set();
+  for (const unit of task.workUnits) {
+    exactKeys(unit, ["id", "objective", "dependencies", "writeTargets"], "taskEnvelope.workUnit");
+    nonEmptyString(unit.id, "taskEnvelope.workUnit.id");
+    if (workUnitIds.has(unit.id)) throw new InputError(`Duplicate work unit id: ${unit.id}.`);
+    workUnitIds.add(unit.id);
+    nonEmptyString(unit.objective, `taskEnvelope.workUnit ${unit.id} objective`);
+    stringArray2(unit.dependencies, `taskEnvelope.workUnit ${unit.id} dependencies`);
+    stringArray2(unit.writeTargets, `taskEnvelope.workUnit ${unit.id} writeTargets`);
+  }
+  for (const unit of task.workUnits) {
+    for (const dependency of unit.dependencies) if (!workUnitIds.has(dependency)) throw new InputError(`Unknown work unit dependency: ${dependency}.`);
+  }
+  const graph = new Map(task.workUnits.map((unit) => [unit.id, unit.dependencies]));
+  const visiting = /* @__PURE__ */ new Set();
+  const visited = /* @__PURE__ */ new Set();
+  const visit2 = (id) => {
+    if (visiting.has(id)) throw new InputError(`Work unit dependency cycle at ${id}.`);
+    if (visited.has(id)) return;
+    visiting.add(id);
+    for (const dependency of graph.get(id) ?? []) visit2(dependency);
+    visiting.delete(id);
+    visited.add(id);
+  };
+  for (const id of graph.keys()) visit2(id);
+  stringArray2(task.requiredCapabilities, "taskEnvelope.requiredCapabilities");
+  stringArray2(task.constraints, "taskEnvelope.constraints");
+  exactKeys(task.authorization, ["allowedActions", "prohibitedActions", "approvalRequired"], "taskEnvelope.authorization");
+  for (const key of ["allowedActions", "prohibitedActions", "approvalRequired"]) stringArray2(task.authorization[key], `taskEnvelope.authorization.${key}`);
+  exactKeys(task.decision, ["complexity", "hasConflicts"], "taskEnvelope.decision");
+  if (!["simple", "complex"].includes(task.decision.complexity) || typeof task.decision.hasConflicts !== "boolean") {
+    throw new InputError("taskEnvelope.decision is invalid.");
+  }
+  exactKeys(task.orchestration, ["requested", "mcpAvailable"], "taskEnvelope.orchestration");
+  if (typeof task.orchestration.requested !== "boolean" || typeof task.orchestration.mcpAvailable !== "boolean") {
+    throw new InputError("taskEnvelope.orchestration is invalid.");
+  }
+}
+function criterionId(index) {
+  return `AC-${String(index + 1).padStart(3, "0")}`;
+}
+function analyzeAcceptance(input2) {
+  if (!input2 || typeof input2 !== "object" || Array.isArray(input2)) throw new InputError("Input must be an object.");
+  if (!validateInputSchema(input2)) throw new InputError("AcceptanceEvidenceInput.v1 validation failed.", { errors: structuredClone(validateInputSchema.errors) });
+  if (input2.schemaVersion !== "1.0.0") throw new InputError("schemaVersion must be 1.0.0.");
+  exactKeys(input2, ["schemaVersion", "taskEnvelope", "target", "evidence", "verificationCommands", "knownLimitations", "criterionOverrides"], "input");
+  assertTaskEnvelope(input2.taskEnvelope);
+  if (!input2.target || typeof input2.target !== "object") throw new InputError("target is required.");
+  exactKeys(input2.target, ["kind", "identifier", "digest"], "target");
+  for (const key of ["kind", "identifier", "digest"]) nonEmptyString(input2.target[key], `target.${key}`);
+  if (!/^sha256:[a-f0-9]{64}$/u.test(input2.target.digest)) throw new InputError("target.digest must be a sha256 digest.");
+  if (!Array.isArray(input2.evidence)) throw new InputError("evidence must be an array.");
+  if (!Array.isArray(input2.verificationCommands)) throw new InputError("verificationCommands must be an array.");
+  stringArray2(input2.knownLimitations, "knownLimitations");
+  if (!Array.isArray(input2.criterionOverrides)) throw new InputError("criterionOverrides must be an array.");
+  const validCriterionIds = input2.taskEnvelope.acceptanceCriteria.map((_, index) => criterionId(index));
+  const validSet = new Set(validCriterionIds);
+  const evidenceIds = /* @__PURE__ */ new Set();
+  for (const evidence of input2.evidence) {
+    exactKeys(evidence, ["id", "kind", "locator", "digest", "targetDigest", "verified", "criterionIds", "direction", "observedResult"], `evidence ${evidence?.id ?? "unknown"}`);
+    nonEmptyString(evidence.id, "evidence.id");
+    if (evidenceIds.has(evidence.id)) throw new InputError(`Duplicate evidence id: ${evidence.id}`);
+    evidenceIds.add(evidence.id);
+    nonEmptyString(evidence.locator, `evidence ${evidence.id} locator`);
+    nonEmptyString(evidence.digest, `evidence ${evidence.id} digest`);
+    nonEmptyString(evidence.targetDigest, `evidence ${evidence.id} targetDigest`);
+    if (!/^sha256:[a-f0-9]{64}$/u.test(evidence.digest) || !/^sha256:[a-f0-9]{64}$/u.test(evidence.targetDigest)) throw new InputError(`evidence ${evidence.id} digests must be sha256 values.`);
+    if (!["user-input", "file", "test", "document", "tool"].includes(evidence.kind)) throw new InputError(`evidence ${evidence.id} kind is invalid.`);
+    if (typeof evidence.verified !== "boolean") throw new InputError(`evidence ${evidence.id} verified must be boolean.`);
+    if (!["supports", "refutes"].includes(evidence.direction)) throw new InputError(`evidence ${evidence.id} direction is invalid.`);
+    stringArray2(evidence.criterionIds, `evidence ${evidence.id} criterionIds`, { min: 1 });
+    for (const id of evidence.criterionIds) if (!validSet.has(id)) throw new InputError(`Evidence ${evidence.id} references unknown criterion ${id}.`);
+    nonEmptyString(evidence.observedResult, `evidence ${evidence.id} observedResult`);
+  }
+  const commandIds = /* @__PURE__ */ new Set();
+  for (const command of input2.verificationCommands) {
+    exactKeys(command, ["id", "command", "exitCode", "locator", "targetDigest", "criterionIds"], "verificationCommand");
+    nonEmptyString(command.id, "verificationCommand.id");
+    if (commandIds.has(command.id)) throw new InputError(`Duplicate verificationCommand id: ${command.id}.`);
+    commandIds.add(command.id);
+    if (evidenceIds.has(`command:${command.id}`)) throw new InputError(`Evidence id command:${command.id} is reserved for a verification command.`);
+    nonEmptyString(command.command, "verificationCommand.command");
+    if (!Number.isInteger(command.exitCode)) throw new InputError("verificationCommand.exitCode must be an integer.");
+    nonEmptyString(command.locator, "verificationCommand.locator");
+    if (!/^sha256:[a-f0-9]{64}$/u.test(command.targetDigest ?? "")) throw new InputError("verificationCommand.targetDigest must be a sha256 value.");
+    stringArray2(command.criterionIds, `verificationCommand ${command.id} criterionIds`, { min: 1 });
+    for (const id of command.criterionIds) if (!validSet.has(id)) throw new InputError(`Verification command ${command.id} references unknown criterion ${id}.`);
+  }
+  const overrides = /* @__PURE__ */ new Map();
+  for (const override of input2.criterionOverrides) {
+    exactKeys(override, ["criterionId", "status", "rationale", "authorityRef"], `override ${override?.criterionId ?? "unknown"}`);
+    if (!validSet.has(override.criterionId)) throw new InputError(`Override references unknown criterion ${override.criterionId}.`);
+    if (overrides.has(override.criterionId)) throw new InputError(`Duplicate override for ${override.criterionId}.`);
+    if (override.status !== "not-applicable") throw new InputError("Only not-applicable overrides are supported.");
+    nonEmptyString(override.rationale, `override ${override.criterionId} rationale`);
+    nonEmptyString(override.authorityRef, `override ${override.criterionId} authorityRef`);
+    overrides.set(override.criterionId, override);
+  }
+  const limitations = [...input2.knownLimitations];
+  const currentEvidence = input2.evidence.filter((item) => {
+    const current = item.targetDigest === input2.target.digest;
+    if (!current) limitations.push(`Evidence ${item.id} is stale for target ${input2.target.identifier}.`);
+    return current && item.verified;
+  }).map((item) => ({ ...item, evidenceId: item.id }));
+  const staleCommandCriteria = /* @__PURE__ */ new Set();
+  const commandEvidence = [];
+  for (const command of input2.verificationCommands) {
+    if (command.targetDigest !== input2.target.digest) {
+      limitations.push(`Verification command ${command.id} is stale for target ${input2.target.identifier}.`);
+      for (const id of command.criterionIds) staleCommandCriteria.add(id);
+      continue;
+    }
+    commandEvidence.push({
+      evidenceId: `command:${command.id}`,
+      kind: "verification-command",
+      locator: command.locator,
+      digest: sha2562({ command: command.command, exitCode: command.exitCode, locator: command.locator, targetDigest: command.targetDigest, criterionIds: command.criterionIds }),
+      targetDigest: command.targetDigest,
+      criterionIds: [...command.criterionIds],
+      direction: command.exitCode === 0 ? "supports" : "refutes",
+      observedResult: `Verification command exited with code ${command.exitCode}.`
+    });
+  }
+  const allCurrentEvidence = [...currentEvidence, ...commandEvidence];
+  for (const override of overrides.values()) {
+    const authority = currentEvidence.find((item) => item.evidenceId === override.authorityRef);
+    if (!authority || !["user-input", "document"].includes(authority.kind) || authority.direction !== "supports" || !authority.criterionIds.includes(override.criterionId)) {
+      throw new InputError(`Override ${override.criterionId} must reference verified current authority evidence for that criterion.`);
+    }
+    const match = /^task-envelope#\/(scope\/excluded|authorization\/prohibitedActions)\/([0-9]+)$/u.exec(authority.locator);
+    if (!match) throw new InputError(`Override ${override.criterionId} authority evidence must locate an excluded scope or prohibited action in TaskEnvelope.`);
+    const collection = match[1] === "scope/excluded" ? input2.taskEnvelope.scope.excluded : input2.taskEnvelope.authorization.prohibitedActions;
+    const value = collection[Number(match[2])];
+    if (typeof value !== "string" || value.length === 0) throw new InputError(`Override ${override.criterionId} authority locator does not resolve in TaskEnvelope.`);
+    const expectedDigest = authorityEvidenceDigest(authority, value);
+    if (authority.digest !== expectedDigest) throw new InputError(`Override ${override.criterionId} authority evidence digest does not match TaskEnvelope.`);
+  }
+  const criteria = input2.taskEnvelope.acceptanceCriteria.map((statement, index) => {
+    const id = criterionId(index);
+    const override = overrides.get(id);
+    const evidence = allCurrentEvidence.filter((item) => item.criterionIds.includes(id));
+    const refuting = evidence.filter((item) => item.direction === "refutes");
+    const supporting = evidence.filter((item) => item.direction === "supports");
+    if (refuting.length > 0) {
+      return {
+        criterionId: id,
+        statement,
+        status: "unsatisfied",
+        evidenceRefs: refuting.map((item) => item.evidenceId),
+        observedResult: refuting.map((item) => item.observedResult).join("; "),
+        rationale: "Current target evidence contradicts this acceptance criterion."
+      };
+    }
+    if (override) {
+      return {
+        criterionId: id,
+        statement,
+        status: "not-applicable",
+        evidenceRefs: [override.authorityRef],
+        observedResult: "Excluded by explicit authority.",
+        rationale: override.rationale
+      };
+    }
+    if (staleCommandCriteria.has(id)) {
+      return {
+        criterionId: id,
+        statement,
+        status: "insufficient-evidence",
+        evidenceRefs: [],
+        observedResult: "",
+        rationale: "A declared verification command does not match the current target."
+      };
+    }
+    if (supporting.length > 0) {
+      return {
+        criterionId: id,
+        statement,
+        status: "satisfied",
+        evidenceRefs: supporting.map((item) => item.evidenceId),
+        observedResult: supporting.map((item) => item.observedResult).join("; "),
+        rationale: "Verified evidence for the current target supports this criterion."
+      };
+    }
+    return {
+      criterionId: id,
+      statement,
+      status: "insufficient-evidence",
+      evidenceRefs: [],
+      observedResult: "",
+      rationale: "No verified evidence for the current target supports or refutes this criterion."
+    };
+  });
+  const unresolvedCriteria = criteria.filter((item) => item.status === "insufficient-evidence").map((item) => item.criterionId);
+  const verdict = input2.taskEnvelope.decision.hasConflicts ? "NEEDS_INPUT" : criteria.some((item) => item.status === "unsatisfied") ? "FAIL" : unresolvedCriteria.length > 0 ? "BLOCKED" : "PASS";
+  if (input2.taskEnvelope.decision.hasConflicts) limitations.push("TaskEnvelope records unresolved conflicts that require input before acceptance can be finalized.");
+  const verifiedEvidenceIndex = allCurrentEvidence.map((item) => ({
+    evidenceId: item.evidenceId,
+    kind: item.kind,
+    locator: item.locator,
+    digest: item.digest,
+    targetDigest: item.targetDigest,
+    criterionIds: [...item.criterionIds],
+    direction: item.direction
+  }));
+  return {
+    schemaVersion: "1.0.0",
+    target: { ...input2.target },
+    criteria,
+    verifiedEvidenceIndex,
+    unresolvedCriteria,
+    limitations: [...new Set(limitations)],
+    verdict
+  };
+}
+function validateReportAgainstRequest(report, request) {
+  const errors = [];
+  if (!report || typeof report !== "object" || Array.isArray(report)) return ["report must be an object"];
+  if (!validateReportSchema(report)) errors.push(`report schema validation failed: ${JSON.stringify(validateReportSchema.errors)}`);
+  if (report.schemaVersion !== "1.0.0") errors.push("report.schemaVersion must be 1.0.0");
+  if (!report.target || typeof report.target.digest !== "string") errors.push("report.target.digest is required");
+  if (!Array.isArray(report.criteria) || report.criteria.length === 0) errors.push("report.criteria must be non-empty");
+  if (!Array.isArray(report.unresolvedCriteria)) errors.push("report.unresolvedCriteria must be an array");
+  if (!Array.isArray(report.limitations)) errors.push("report.limitations must be an array");
+  if (!Array.isArray(report.verifiedEvidenceIndex)) errors.push("report.verifiedEvidenceIndex must be an array");
+  if (!["PASS", "FAIL", "BLOCKED", "NEEDS_INPUT"].includes(report.verdict)) errors.push("report.verdict is invalid");
+  const index = /* @__PURE__ */ new Map();
+  if (Array.isArray(report.verifiedEvidenceIndex)) {
+    for (const item of report.verifiedEvidenceIndex) {
+      if (index.has(item.evidenceId)) errors.push(`verified evidence ID is duplicated: ${item.evidenceId}`);
+      index.set(item.evidenceId, item);
+      if (item.targetDigest !== report.target?.digest) errors.push(`verified evidence ${item.evidenceId} is stale`);
+    }
+  }
+  if (Array.isArray(report.criteria)) {
+    const ids2 = report.criteria.map((item) => item.criterionId);
+    if (new Set(ids2).size !== ids2.length) errors.push("criterion IDs must be unique");
+    for (const item of report.criteria) {
+      if (!/^AC-[0-9]{3,}$/u.test(item.criterionId ?? "")) errors.push(`invalid criterion ID: ${item.criterionId}`);
+      if (!["satisfied", "unsatisfied", "insufficient-evidence", "not-applicable"].includes(item.status)) errors.push(`invalid status for ${item.criterionId}`);
+      if (item.status === "satisfied" && (!Array.isArray(item.evidenceRefs) || item.evidenceRefs.length === 0)) errors.push(`${item.criterionId} satisfied without evidence`);
+      if (item.status === "not-applicable" && (!item.rationale || !Array.isArray(item.evidenceRefs) || item.evidenceRefs.length === 0)) errors.push(`${item.criterionId} not-applicable without authority`);
+      for (const ref of item.evidenceRefs ?? []) {
+        const evidence = index.get(ref);
+        if (!evidence) errors.push(`${item.criterionId} references evidence absent from verifiedEvidenceIndex: ${ref}`);
+        else if (!evidence.criterionIds?.includes(item.criterionId)) errors.push(`${ref} is not bound to ${item.criterionId}`);
+        else if (item.status === "satisfied" && evidence.direction !== "supports") errors.push(`${item.criterionId} satisfied with non-supporting evidence ${ref}`);
+        else if (item.status === "unsatisfied" && evidence.direction !== "refutes") errors.push(`${item.criterionId} unsatisfied without refuting evidence ${ref}`);
+      }
+    }
+    const hasFailure = report.criteria.some((item) => item.status === "unsatisfied");
+    const hasMissing = report.criteria.some((item) => item.status === "insufficient-evidence");
+    const expected = hasFailure ? "FAIL" : hasMissing ? "BLOCKED" : "PASS";
+    if (report.verdict !== expected && report.verdict !== "NEEDS_INPUT") errors.push(`verdict must be ${expected}`);
+    const expectedUnresolved = report.criteria.filter((item) => item.status === "insufficient-evidence").map((item) => item.criterionId).sort();
+    const actualUnresolved = Array.isArray(report.unresolvedCriteria) ? [...report.unresolvedCriteria].sort() : [];
+    if (canonicalJson2(expectedUnresolved) !== canonicalJson2(actualUnresolved)) errors.push("unresolvedCriteria does not match criterion statuses");
+    try {
+      const expectedReport = analyzeAcceptance(request);
+      if (canonicalJson2(expectedReport.target) !== canonicalJson2(report.target)) errors.push("report target does not match request target");
+      if (canonicalJson2(expectedReport.criteria) !== canonicalJson2(report.criteria)) errors.push("report criteria do not match the request-derived criteria and evidence one-to-one");
+      if (canonicalJson2(expectedReport.verifiedEvidenceIndex) !== canonicalJson2(report.verifiedEvidenceIndex)) errors.push("verifiedEvidenceIndex does not exactly match current verified request evidence");
+      if (canonicalJson2(expectedReport.unresolvedCriteria) !== canonicalJson2(report.unresolvedCriteria)) errors.push("unresolvedCriteria does not match request-derived status");
+      if (canonicalJson2(expectedReport.limitations) !== canonicalJson2(report.limitations)) errors.push("limitations do not match request-derived limitations");
+      if (expectedReport.verdict !== report.verdict) errors.push(`verdict must be ${expectedReport.verdict}`);
+    } catch (error61) {
+      errors.push(`request cannot substantiate report: ${error61 instanceof Error ? error61.message : String(error61)}`);
+    }
+  }
+  return errors;
+}
+
+// skills/software-security-auditor/scripts/core.mjs
+import { createHash as createHash13 } from "node:crypto";
+function canonical(value) {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(",")}}`;
+  return JSON.stringify(value);
+}
+var digestBytes = (value) => `sha256:${createHash13("sha256").update(value).digest("hex")}`;
+var digest3 = (value) => digestBytes(canonical(value));
+var targetDigest = (request) => digest3(request.target);
+function safeRelative(value) {
+  return typeof value === "string" && value.length > 0 && !/[\\:\x00-\x1f]/u.test(value) && !value.startsWith("/") && value.split("/").every((part) => part && part !== "." && part !== "..");
+}
+function validateSemantics(report) {
+  const errors = [];
+  const request = report.request;
+  if (report.requestDigest !== digest3(request)) errors.push("REQUEST_DIGEST_MISMATCH");
+  if (report.targetDigest !== targetDigest(request)) errors.push("TARGET_DIGEST_MISMATCH");
+  const unique = (items, key, label) => {
+    const values = items.map((item) => item[key]);
+    if (new Set(values).size !== values.length) errors.push(`DUPLICATE_${label}`);
+    return new Set(values);
+  };
+  const paths = unique(request.target.files, "path", "TARGET_PATH");
+  unique(request.providedEvidence, "path", "PROVIDED_EVIDENCE");
+  const expected = unique(request.checks, "id", "REQUEST_CHECK");
+  const checks = unique(report.checks, "id", "CHECK");
+  const evidence = unique(report.evidence, "id", "EVIDENCE");
+  unique(report.findings, "id", "FINDING");
+  if (expected.size !== checks.size || [...expected].some((id) => !checks.has(id))) errors.push("CHECK_INVENTORY_MISMATCH");
+  for (const item of [...request.target.files, ...request.providedEvidence, ...report.evidence]) {
+    if (!safeRelative(item.path)) errors.push("UNSAFE_PATH");
+  }
+  for (const item of report.evidence) {
+    if (item.targetDigest !== report.targetDigest) errors.push("STALE_EVIDENCE");
+  }
+  const checkMap = new Map(report.checks.map((item) => [item.id, item]));
+  for (const item of [...report.checks, ...report.findings]) {
+    if (item.evidenceRefs.some((ref) => !evidence.has(ref))) errors.push("UNKNOWN_EVIDENCE");
+  }
+  for (const item of report.checks) {
+    if (item.status === "checked" && (item.evidenceRefs.length === 0 || item.method === "not-executed")) errors.push("CHECK_WITHOUT_EVIDENCE");
+    if (item.status !== "checked" && item.method !== "not-executed") errors.push("UNEXECUTED_CHECK_METHOD");
+  }
+  for (const item of report.findings) {
+    if (item.locations.some((location) => !paths.has(location.path))) errors.push("UNKNOWN_FINDING_LOCATION");
+    if (item.checkIds.some((id) => !expected.has(id) || checkMap.get(id)?.status !== "checked")) errors.push("UNVERIFIED_FINDING_CHECK");
+    if (item.status === "confirmed" && item.proof === "unverified") errors.push("UNVERIFIED_CONFIRMED_FINDING");
+    if (item.proof === "local-reproduction") {
+      if (!request.authorization.localReproduction || !item.checkIds.some((id) => checkMap.get(id)?.method === "local-reproduction")) errors.push("UNSUPPORTED_REPRODUCTION");
+    }
+  }
+  if (!request.authorization.localReproduction && report.checks.some((item) => item.method === "local-reproduction")) errors.push("UNAUTHORIZED_REPRODUCTION");
+  const missing = report.checks.filter((item) => item.status === "not-checked").length;
+  const checked = report.checks.filter((item) => item.status === "checked").length;
+  const expectedStatus = missing === 0 ? "complete" : checked > 0 ? "partial" : "blocked";
+  if (report.status !== expectedStatus) errors.push("STATUS_COVERAGE_MISMATCH");
+  if (missing > 0 && report.limitations.length === 0) errors.push("MISSING_LIMITATIONS");
+  return [...new Set(errors)];
+}
+
+// mcp-server/src/stage-output-file.ts
+import { createHash as createHash14 } from "node:crypto";
+import { closeSync, constants, fstatSync, openSync, readSync } from "node:fs";
+import path13 from "node:path";
+var MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
+function unreadable(locator) {
+  return new WorkflowContractError("INVALID_INPUT", "outputFile.locator is not a readable regular local file of at most 16 MiB.", { locator });
+}
+function readLocalStageOutputFile(locator) {
+  if (!path13.isAbsolute(locator)) {
+    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must be an absolute local path.");
+  }
+  if (/^[\\/]{2}/u.test(locator)) {
+    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must not be a network path.");
+  }
+  let descriptor2 = null;
+  try {
+    descriptor2 = openSync(locator, constants.O_RDONLY | constants.O_NONBLOCK);
+    const stats = fstatSync(descriptor2);
+    if (!stats.isFile() || stats.size > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(locator);
+    const buffer = Buffer.alloc(MAX_STAGE_OUTPUT_FILE_BYTES + 1);
+    let length = 0;
+    for (; ; ) {
+      const read = readSync(descriptor2, buffer, length, buffer.length - length, null);
+      if (read === 0) break;
+      length += read;
+      if (length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(locator);
+    }
+    return buffer.subarray(0, length);
+  } catch (error61) {
+    if (error61 instanceof WorkflowContractError) throw error61;
+    throw unreadable(locator);
+  } finally {
+    if (descriptor2 !== null) closeSync(descriptor2);
+  }
+}
+function loadStageOutputFile(reference, read = readLocalStageOutputFile) {
+  const bytes = read(reference.locator);
+  if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(reference.locator);
+  const digest5 = `sha256:${createHash14("sha256").update(bytes).digest("hex")}`;
+  if (digest5 !== reference.digest) {
+    throw new WorkflowContractError("INTEGRITY_FAILED", "outputFile content does not match its digest.", {
+      locator: reference.locator,
+      expected: reference.digest
+    });
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(bytes.toString("utf8").replace(/^\uFEFF/u, ""));
+  } catch {
+    throw new WorkflowContractError("INVALID_INPUT", "outputFile is not valid JSON.", { locator: reference.locator });
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new WorkflowContractError("INVALID_INPUT", "outputFile must contain a JSON object.", { locator: reference.locator });
+  }
+  return parsed;
+}
+
+// mcp-server/src/provider-semantics.ts
+var ACCEPTANCE_REQUEST_ARTIFACT = "acceptance-evidence-request";
+function sha256Form(digest5) {
+  return digest5.startsWith("sha256:") ? digest5 : `sha256:${digest5}`;
+}
+function field(value, key) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value[key] : void 0;
+}
+function acceptanceEvidenceSemantics({ taskId, taskDigest, stage, result, output: output2 }) {
+  if (!taskDigest) {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Acceptance evidence verification requires a signed task digest.", { stageId: stage.stageId });
+  }
+  const references = result.output.artifacts.filter((artifact) => artifact.artifactId === ACCEPTANCE_REQUEST_ARTIFACT);
+  const reference = references[0];
+  if (references.length !== 1 || !reference?.verified || !path14.isAbsolute(reference.locator) || /^(?:\\\\|\/\/)/u.test(reference.locator)) {
+    throw new WorkflowContractError("MISSING_EVIDENCE", "An acceptance evidence report requires one verified local acceptance-evidence-request artifact.", {
+      stageId: stage.stageId,
+      artifactId: ACCEPTANCE_REQUEST_ARTIFACT
+    });
+  }
+  const request = loadStageOutputFile({ locator: reference.locator, digest: sha256Form(reference.digest) });
+  const errors = validateReportAgainstRequest(output2, request);
+  if (errors.length > 0) return errors;
+  const requestTarget = field(request.target, "digest");
+  const requestTaskId = field(request.taskEnvelope, "taskId");
+  const requestTaskDigest = convergenceDigest(request.taskEnvelope);
+  const declaredTargets = (stage.artifactContract?.produced ?? []).map((item) => item.targetDigest);
+  if (requestTaskId !== taskId || requestTaskDigest !== taskDigest || requestTarget !== sha256Form(reference.targetDigest) || declaredTargets.some((declared) => declared !== requestTarget)) {
+    throw new WorkflowContractError("BINDING_INVALID", "The frozen acceptance request is not bound to this task and the signed plan target.", {
+      stageId: stage.stageId,
+      taskBound: requestTaskId === taskId && requestTaskDigest === taskDigest,
+      requestTarget: typeof requestTarget === "string" ? requestTarget : null,
+      declaredTargets
+    });
+  }
+  return [];
+}
+var PROVIDER_SEMANTIC_VALIDATORS = {
+  "software-security-audit": {
+    message: "Security audit report is inconsistent.",
+    validate: ({ output: output2 }) => validateSemantics(output2)
+  },
+  "acceptance-evidence-validation": {
+    message: "Acceptance evidence report is inconsistent.",
+    validate: acceptanceEvidenceSemantics
+  }
+};
+function assertProviderSemantics(context) {
+  const { stage } = context;
+  const names = new Set([stage.gate.validator, stage.requiredCapability, ...stage.satisfiedCapabilities].filter((name) => typeof name === "string" && Object.hasOwn(PROVIDER_SEMANTIC_VALIDATORS, name)));
+  for (const name of names) {
+    const validator = PROVIDER_SEMANTIC_VALIDATORS[name];
+    if (context.output === null) {
+      throw new WorkflowContractError("INVALID_INPUT", `${validator.message} The provider output is missing.`, {
+        stageId: stage.stageId,
+        validator: name
+      });
+    }
+    const errors = validator.validate({ ...context, output: context.output });
+    if (errors.length > 0) {
+      throw new WorkflowContractError("INVALID_INPUT", validator.message, { stageId: stage.stageId, validator: name, errors });
+    }
+  }
+}
+
+// mcp-server/src/receipt-policy.ts
+var DIGEST2 = /^(?:sha256:)?[a-f0-9]{64}$/;
+var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+var RFC3339_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+var REFERENCE = /^(?:artifact|digest|schema|urn|run|stage|commit|test|file|document|tool):(?:\/\/)?[A-Za-z0-9][A-Za-z0-9._~:/?#@!$&'()*+,;=%-]{7,}$/;
+var NIL_UUID = "00000000-0000-0000-0000-000000000000";
+var ERROR_DETAIL_KEYS = /* @__PURE__ */ new Set([
+  "actorId",
+  "actorIdPointer",
+  "actual",
+  "artifactId",
+  "artifactIds",
+  "code",
+  "conflictingStageId",
+  "digest",
+  "digests",
+  "expected",
+  "locator",
+  "locators",
+  "mode",
+  "policy",
+  "reference",
+  "references",
+  "runId",
+  "schemaId",
+  "stageId",
+  "targetDigest"
+]);
+var PROTOCOL_TOKENS = /* @__PURE__ */ new Set([
+  CONTRACT_VERSION,
+  ...ERROR_CODE,
+  ...WORKFLOW_STATE,
+  "output",
+  "adapter-error",
+  "user-input",
+  "file",
+  "test",
+  "document",
+  "tool",
+  "reference-only",
+  "verified",
+  "COOPERATIVE_PROVENANCE_ASSERTIONS",
+  "JSON_JSONL_ONLY_V1"
+]);
+function jsonPointer(value, pointer2) {
+  return pointer2.split("/").slice(1).reduce((current, token) => {
+    if (!current || typeof current !== "object") return void 0;
+    const key = token.replaceAll("~1", "/").replaceAll("~0", "~");
+    return current[key];
+  }, value);
+}
+function isOpaqueReference(value) {
+  return DIGEST2.test(value) || UUID.test(value) || REFERENCE.test(value);
+}
+function isSafeScalar(value) {
+  return isOpaqueReference(value) || RFC3339_TIMESTAMP.test(value);
+}
+function assertSafeString(value, fixedTokens, location, allowEmpty = false) {
+  if (allowEmpty && value === "" || fixedTokens.has(value) || PROTOCOL_TOKENS.has(value) || isSafeScalar(value)) return;
+  throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt policy rejected free text.", {
+    location
+  });
+}
+function assertSafeValue(value, fixedTokens, location) {
+  if (typeof value === "string") {
+    assertSafeString(value, fixedTokens, location);
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => assertSafeValue(item, fixedTokens, `${location}/${index}`));
+    return;
+  }
+  if (value && typeof value === "object") {
+    for (const [key, item] of Object.entries(value)) {
+      assertSafeValue(item, fixedTokens, `${location}/${key}`);
+    }
+  }
+}
+function assertSafeError(error61, fixedTokens, location) {
+  if (!error61) return;
+  assertSafeString(error61.message, fixedTokens, `${location}/message`);
+  if (error61.details) {
+    for (const [key, value] of Object.entries(error61.details)) {
+      if (!ERROR_DETAIL_KEYS.has(key)) {
+        throw new WorkflowContractError("INVALID_INPUT", "Reference-only error details contain an undeclared field.", {
+          location: `${location}/details/${key}`
+        });
+      }
+      assertSafeValue(value, fixedTokens, `${location}/details/${key}`);
+    }
+  }
+}
+function assertReceiptPolicy(receipt, stage, result, outputFixedTokens) {
+  const policy = stage.receiptPolicy;
+  if (!policy) return;
+  const fixedTokens = /* @__PURE__ */ new Set([
+    ...outputFixedTokens,
+    ...stage.satisfiedCapabilities,
+    ...stage.requiredInputArtifacts,
+    ...stage.producedArtifacts,
+    ...stage.requiredArtifacts
+  ]);
+  assertSafeValue(result.output.output, fixedTokens, "/output/output");
+  const allowedArtifacts = /* @__PURE__ */ new Set([
+    ...stage.requiredInputArtifacts,
+    ...stage.producedArtifacts,
+    ...stage.requiredArtifacts
+  ]);
+  for (const [index, artifact] of result.output.artifacts.entries()) {
+    if (!allowedArtifacts.has(artifact.artifactId)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt contains an undeclared artifact.", {
+        stageId: stage.stageId,
+        artifactId: artifact.artifactId
+      });
+    }
+    assertSafeString(artifact.schemaId, fixedTokens, `/output/artifacts/${index}/schemaId`);
+    assertSafeString(artifact.locator, fixedTokens, `/output/artifacts/${index}/locator`);
+    if (!DIGEST2.test(artifact.digest) || !DIGEST2.test(artifact.targetDigest)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Reference-only artifact digests must be opaque SHA-256 references.", {
+        stageId: stage.stageId,
+        artifactId: artifact.artifactId
+      });
+    }
+  }
+  for (const [index, evidence] of result.evidence.entries()) {
+    if (!allowedArtifacts.has(evidence.artifactId)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt contains undeclared evidence.", {
+        stageId: stage.stageId,
+        artifactId: evidence.artifactId
+      });
+    }
+    assertSafeString(evidence.locator, fixedTokens, `/evidence/${index}/locator`);
+    assertSafeString(evidence.note, fixedTokens, `/evidence/${index}/note`, true);
+  }
+  result.findings.forEach((finding, index) => assertSafeString(finding, fixedTokens, `/findings/${index}`));
+  result.blockers.forEach((blocker, index) => assertSafeString(blocker, fixedTokens, `/blockers/${index}`));
+  assertSafeError(result.output.error, fixedTokens, "/output/error");
+  assertSafeError(result.error, fixedTokens, "/error");
+  const externalInputs = stage.requiredInputArtifacts.filter((artifactId) => !receipt.plan.stages.some(
+    (candidate) => candidate.stageId !== stage.stageId && candidate.producedArtifacts.includes(artifactId)
+  ));
+  const missingExternalInputs = externalInputs.filter((artifactId) => !result.evidence.some(
+    (evidence) => evidence.artifactId === artifactId && evidence.verified && isOpaqueReference(evidence.locator)
+  ));
+  if (missingExternalInputs.length > 0) {
+    throw new WorkflowContractError("MISSING_EVIDENCE", "Reference-only stage prerequisites require verified artifact references.", {
+      stageId: stage.stageId,
+      missingInputs: missingExternalInputs
+    });
+  }
+  if (policy.actorIdsMatch === "prior-policy-actors" && policy.actorIdsPointer) {
+    const priorActorStages = receipt.plan.stages.filter((candidate) => candidate.order < stage.order && candidate.receiptPolicy?.actorIdPointer).sort((left, right) => left.order - right.order);
+    const expectedActorIds = priorActorStages.map((priorStage) => {
+      const priorResult = receipt.stageResults.find((candidate) => candidate.stageId === priorStage.stageId);
+      const actorId2 = priorResult && jsonPointer(priorResult.output, priorStage.receiptPolicy.actorIdPointer);
+      if (typeof actorId2 !== "string" || actorId2 === NIL_UUID || !UUID.test(actorId2)) {
+        throw new WorkflowContractError("MISSING_EVIDENCE", "A prior policy stage has no valid actor binding.", {
+          stageId: stage.stageId,
+          conflictingStageId: priorStage.stageId
+        });
+      }
+      return actorId2;
+    });
+    const actorIds = jsonPointer(result.output, policy.actorIdsPointer);
+    if (!Array.isArray(actorIds) || actorIds.length !== expectedActorIds.length || new Set(actorIds).size !== actorIds.length || actorIds.some((actorId2, index) => actorId2 !== expectedActorIds[index])) {
+      throw new WorkflowContractError("GATE_FAILED", "Receipt actor IDs must exactly match prior policy actors in plan order.", {
+        stageId: stage.stageId,
+        actorIdsPointer: policy.actorIdsPointer
+      });
+    }
+  }
+  if (!policy.actorIdPointer) return;
+  const actorId = jsonPointer(result.output, policy.actorIdPointer);
+  if (typeof actorId !== "string" || actorId === NIL_UUID || !UUID.test(actorId)) {
+    throw new WorkflowContractError("INVALID_INPUT", "Receipt actor ID must be a nonempty canonical lowercase UUID.", {
+      stageId: stage.stageId,
+      actorIdPointer: policy.actorIdPointer
+    });
+  }
+  if (policy.uniqueness !== "run") return;
+  for (const priorResult of receipt.stageResults.filter((candidate) => candidate.stageId !== stage.stageId)) {
+    const priorStage = receipt.plan.stages.find((candidate) => candidate.stageId === priorResult.stageId);
+    if (!priorStage?.receiptPolicy?.actorIdPointer) continue;
+    if (jsonPointer(priorResult.output, priorStage.receiptPolicy.actorIdPointer) === actorId) {
+      throw new WorkflowContractError("GATE_FAILED", "Receipt actor ID must be unique across policy stages in this run.", {
+        stageId: stage.stageId,
+        conflictingStageId: priorStage.stageId
+      });
+    }
+  }
+}
+
+// mcp-server/src/cs-engineering-validator.ts
+import path15 from "node:path";
+
+// mcp-server/src/stage-validator-process.ts
+import { spawnSync } from "node:child_process";
+function childError(...streams) {
+  for (const text5 of streams) {
+    try {
+      const parsed = JSON.parse(text5);
+      const source = typeof parsed.code === "string" ? parsed : parsed.error;
+      if (source && typeof source.code === "string") return { code: source.code, message: typeof source.message === "string" ? source.message : "" };
+    } catch {
+    }
+  }
+  return null;
+}
+function runStageValidator(label, script, args, okStatuses) {
+  const checked = spawnSync(
+    process.execPath,
+    [script, ...args],
+    { encoding: "utf8", timeout: 1e4, maxBuffer: 4 * 1024 * 1024, windowsHide: true }
+  );
+  const stdout = checked.stdout ?? "";
+  const stderr = checked.stderr ?? "";
+  if (checked.error) {
+    const errno = checked.error.code ?? null;
+    throw new WorkflowContractError(
+      "GATE_FAILED",
+      `${label} validator could not run (${errno ?? checked.error.name}).`,
+      { step: "spawn", errno, signal: checked.signal }
+    );
+  }
+  if (checked.signal) {
+    throw new WorkflowContractError(
+      "GATE_FAILED",
+      `${label} validator was terminated by ${checked.signal}.`,
+      { step: "terminated", signal: checked.signal, status: checked.status }
+    );
+  }
+  let parsed = null;
+  try {
+    parsed = JSON.parse(stdout);
+  } catch {
+  }
+  if (!okStatuses.includes(checked.status ?? -1) || !parsed && stderr.trim()) {
+    const cause = childError(stdout, stderr);
+    const code = cause && ERROR_CODE.includes(cause.code) ? cause.code : "GATE_FAILED";
+    throw new WorkflowContractError(
+      code,
+      cause?.message || `${label} validator exited with status ${checked.status}.`,
+      { step: "exit", status: checked.status, childCode: cause?.code ?? null, stderr: stderr.slice(0, 500) || null }
+    );
+  }
+  if (!parsed) throw new WorkflowContractError("INVALID_INPUT", `${label} validator did not return bounded JSON.`, { step: "parse", status: checked.status });
+  return parsed;
+}
+
+// mcp-server/src/cs-engineering-validator.ts
+function assertCsStageBundle(rootDirectory, taskDigest, result, validator) {
+  if (result.output.kind !== "output") return;
+  if (!taskDigest) throw new WorkflowContractError("BINDING_REQUIRED", "CS review requires a signed task digest.");
+  const references = result.output.artifacts.filter((artifact) => artifact.artifactId === "cs-review-bundle");
+  const reference = references[0];
+  if (references.length !== 1 || !reference?.verified || !path15.isAbsolute(reference.locator) || /^[\\/]{2}/u.test(reference.locator)) {
+    throw new WorkflowContractError("MISSING_EVIDENCE", "CS review requires one verified local cs-review-bundle artifact.");
+  }
+  const root = path15.dirname(reference.locator);
+  const assessment = runStageValidator("CS stage bundle", path15.join(rootDirectory, "skills/cs-engineering/scripts/validate.mjs"), [
+    "check-stage-bundle",
+    "--root",
+    root,
+    "--input",
+    path15.basename(reference.locator),
+    "--bundle-digest",
+    reference.digest,
+    "--task-digest",
+    taskDigest
+  ], [0, 3, 4]);
+  if (assessment.kind !== "cs-bundle-check") {
+    throw new WorkflowContractError(
+      "GATE_FAILED",
+      "CS stage bundle could not be validated. Correct the supplied files and references.",
+      { step: "kind", kind: typeof assessment.kind === "string" ? assessment.kind : null }
+    );
+  }
+  validator.planWorkflowRequest(assessment.task);
+  if (canonicalJson(assessment.review, "CS review") !== canonicalJson(result.output.output, "CS provider output")) {
+    throw new WorkflowContractError("INTEGRITY_FAILED", "CS stage output differs from its validated bundle review.");
+  }
+  const reviewRef = assessment.reviewRef;
+  const reports = result.output.artifacts.filter((artifact) => artifact.artifactId === "cs-review-report");
+  const report = reports[0];
+  if (reports.length !== 1 || !report?.verified || report.digest !== reviewRef.digest || path15.resolve(report.locator) !== path15.resolve(root, reviewRef.path) || report.targetDigest !== assessment.candidateDigest || reference.targetDigest !== assessment.candidateDigest) {
+    throw new WorkflowContractError("INTEGRITY_FAILED", "CS report artifact and bundle must name the same review bytes and candidate.");
+  }
+}
+
+// mcp-server/src/engineering-practices-validator.ts
+import path16 from "node:path";
+function assertEngineeringStageBundle(rootDirectory, taskDigest, capability, result, validator) {
+  if (!["test-sensitivity-review", "change-code-review"].includes(capability) || result.output.kind !== "output") return;
+  if (!taskDigest) throw new WorkflowContractError("BINDING_REQUIRED", "Engineering review requires a signed task digest.");
+  const references = result.output.artifacts.filter((artifact) => artifact.artifactId === "engineering-stage-bundle");
+  const reference = references[0];
+  if (references.length !== 1 || !reference?.verified || !path16.isAbsolute(reference.locator) || /^[\\/]{2}/u.test(reference.locator)) {
+    throw new WorkflowContractError("MISSING_EVIDENCE", "Engineering review requires one verified local engineering-stage-bundle artifact.");
+  }
+  const root = path16.dirname(reference.locator);
+  const assessment = runStageValidator("Engineering stage", path16.join(rootDirectory, "runtime/engineering-practices/cli.mjs"), [
+    "check-stage-bundle",
+    "--root",
+    root,
+    "--input",
+    path16.basename(reference.locator),
+    "--bundle-digest",
+    reference.digest,
+    "--task-digest",
+    taskDigest,
+    "--capability",
+    capability
+  ], [0, 1]);
+  if (assessment.kind !== "engineering-stage-check") {
+    throw new WorkflowContractError(
+      "GATE_FAILED",
+      "Engineering stage files could not be validated.",
+      { step: "kind", kind: typeof assessment.kind === "string" ? assessment.kind : null }
+    );
+  }
+  validator.planWorkflowRequest(assessment.task);
+  if (canonicalJson(assessment.result, "Engineering result") !== canonicalJson(result.output.output, "Engineering provider output")) {
+    throw new WorkflowContractError("INTEGRITY_FAILED", "Provider output differs from validated raw engineering files.");
+  }
+  const resultRef = assessment.resultRef;
+  const artifactId = capability === "test-sensitivity-review" ? "engineering-test-result" : "engineering-review-result";
+  const reports = result.output.artifacts.filter((artifact) => artifact.artifactId === artifactId);
+  const report = reports[0];
+  if (reports.length !== 1 || !report?.verified || report.digest !== resultRef.digest || path16.resolve(report.locator) !== path16.resolve(root, resultRef.path) || report.targetDigest !== assessment.targetDigest || reference.targetDigest !== assessment.targetDigest) {
+    throw new WorkflowContractError("INTEGRITY_FAILED", "Engineering artifacts must bind the validated result bytes and current candidate.");
+  }
+}
+
+// mcp-server/src/workflow-service.ts
+function asRecord2(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+function apiOk2(data) {
+  return { schemaVersion: CONTRACT_VERSION, ok: true, data, error: null };
+}
+function apiError2(error61) {
+  return { schemaVersion: CONTRACT_VERSION, ok: false, data: null, error: error61 };
+}
+function stageId(order, capability) {
+  return `stage-${String(order).padStart(2, "0")}-${capability}`;
+}
+var KOREAN_PROSE_CAPABILITIES = [
+  "korean-prose-selection",
+  "korean-prose-editing",
+  "korean-prose-verification",
+  "korean-prose-finalization"
+];
+var DETERMINISTIC_CAPABILITIES = /* @__PURE__ */ new Set([
+  "korean-prose-finalization"
+]);
+var USER_GATE_RECEIPT_STATES = /* @__PURE__ */ new Set([
+  "needs-input",
+  "needs-approval",
+  "needs-redesign"
+]);
+var HIGH_ASSURANCE_CAPABILITIES = /* @__PURE__ */ new Set([
+  "software-security-audit",
+  "independent-deliberation",
+  "independent-audit",
+  "evaluation-validity-audit",
+  "blocker-diagnosis",
+  "recovery-strategy-selection",
+  "iteration-frame-audit",
+  "korean-prose-selection",
+  "korean-prose-verification",
+  "acceptance-evidence-validation",
+  "mutation-risk-preflight"
+]);
+var SCHEMA_CAUSE_DETAIL_KEYS = ["schemaPath", "expectedDigest", "actualDigest", "validationErrors"];
+var TRUSTED_EXECUTION_MAX_AGE_MS = 5 * 60 * 1e3;
+var TRUSTED_EXECUTION_CLOCK_SKEW_MS = 5 * 1e3;
+var PLAN_INTEGRITY_TOKEN = /^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/u;
+function bumpedRoot(root, updatedAt) {
+  const next = clone2(root);
+  next.revision += 1;
+  next.updatedAt = updatedAt;
+  return next;
+}
+function evidenceKey(reference) {
+  return /^[a-f0-9]{64}$/u.test(reference) ? `sha256:${reference}` : reference;
+}
+function consumedLeases(snapshot, epoch) {
+  return snapshot.leases.filter((lease) => lease.epoch === epoch && lease.state === "consumed");
+}
+var WorkflowService = class {
+  constructor(registry2, validator = new ContractValidator(), store = new InMemoryWorkflowStore(), defaultExecutionContext = null, trustedExecutionContextProvider = null) {
+    this.registry = registry2;
+    this.validator = validator;
+    this.store = store;
+    this.defaultExecutionContext = defaultExecutionContext;
+    this.trustedExecutionContextProvider = trustedExecutionContextProvider;
+    const encodedKey = this.store.getOrCreateSecret(PLAN_SIGNING_KEY, createPlanSigningKey);
+    this.planSigningKey = Buffer.from(encodedKey, "base64url");
+    if (this.planSigningKey.length !== 32) {
+      throw new WorkflowContractError("INVALID_INPUT", "Stored plan signing key is invalid.");
+    }
+  }
+  registry;
+  validator;
+  store;
+  defaultExecutionContext;
+  trustedExecutionContextProvider;
+  planSigningKey;
+  planWorkflow(rawTask, requireExecutionContext = false) {
+    return this.attempt(() => {
+      const request = this.validator.planWorkflowRequest(rawTask);
+      const wrapped = "taskEnvelope" in request;
+      const task = wrapped ? request.taskEnvelope : request;
+      const evaluationAuditPurpose = wrapped ? request.evaluationAuditPurpose : void 0;
+      let executionContext = this.defaultExecutionContext;
+      let trustedBootstrapContext = null;
+      if (task.requiredCapabilities.includes("evaluation-validity-audit") && evaluationAuditPurpose === void 0) {
+        throw new WorkflowContractError(
+          "INVALID_INPUT",
+          "Evaluation validity planning requires the structured request with evaluationAuditPurpose."
+        );
+      }
+      if (requireExecutionContext && task.orchestration.requested) {
+        const binding2 = {
+          phase: "bootstrap",
+          taskId: task.taskId,
+          runId: null,
+          stageId: null,
+          revision: null
+        };
+        trustedBootstrapContext = this.observeTrustedExecutionContext(binding2, "bootstrap orchestration");
+        this.assertTrustedExecutionContext(
+          this.bootstrapExecutionRequirement(task),
+          trustedBootstrapContext,
+          "bootstrap orchestration",
+          binding2
+        );
+        executionContext = trustedBootstrapContext;
+      }
+      this.validateWorkUnitGraph(task);
+      const plan = this.buildPlan(task, this.registry.read(), evaluationAuditPurpose, executionContext);
+      plan.integrityToken = this.signPlan(plan);
+      this.validator.workflowPlan(plan);
+      if (trustedBootstrapContext) this.consumeTrustedExecutionObservation(trustedBootstrapContext, "bootstrap orchestration");
+      return plan;
+    });
+  }
+  openConvergenceRoot(rawRequest) {
+    return this.attempt(() => {
+      const request = this.validator.openConvergenceRootRequest(rawRequest);
+      this.validateWorkUnitGraph(request.taskEnvelope);
+      this.assertConvergenceFrame(request.frame);
+      if (!request.taskEnvelope.orchestration.requested || !request.taskEnvelope.orchestration.mcpAvailable) {
+        throw new WorkflowContractError("INVALID_INPUT", "Convergence roots require an MCP-backed orchestrated task.");
+      }
+      if (request.parentRootId && request.userApprovalRefs.length === 0) {
+        throw new WorkflowContractError("INVALID_INPUT", "Replacing a convergence root requires user approval evidence.", {
+          parentRootId: request.parentRootId
+        });
+      }
+      if (request.parentRootId) {
+        const parent = this.requireConvergenceSnapshot(request.parentRootId).root;
+        if (!["needs-review", "needs-user"].includes(parent.state)) {
+          throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root may be replaced.", {
+            parentRootId: parent.rootId,
+            parentState: parent.state
+          });
+        }
+      }
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const digests = this.convergenceDigests(request.taskEnvelope, request.frame);
+      const root = {
+        schemaVersion: CONTRACT_VERSION,
+        rootId: `root-${randomUUID()}`,
+        parentRootId: request.parentRootId,
+        revision: 0,
+        state: "open",
+        currentEpoch: 1,
+        taskEnvelope: clone2(request.taskEnvelope),
+        frame: clone2(request.frame),
+        ...digests,
+        userApprovalRefs: [...request.userApprovalRefs],
+        createdAt: now,
+        updatedAt: now
+      };
+      this.validator.convergenceRoot(root);
+      const conflict = this.store.insertConvergenceRoot(root);
+      if (conflict) {
+        throw new WorkflowContractError("ROOT_CONFLICT", "An active convergence root already covers this workspace scope.", conflictDetails(conflict));
+      }
+      return clone2(root);
+    });
+  }
+  claimWorkflowAttempt(rawProposal, requireTrustedExecutionContext = false) {
+    return this.attempt(() => {
+      const proposal = clone2(this.normalizeAttemptProposal(rawProposal));
+      this.assertPlanIntegrity(proposal.plan);
+      if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(proposal.plan, "Workflow attempt");
+      this.assertConvergenceFrame(proposal.frame);
+      if (proposal.plan.executionMode !== "orchestrated" || proposal.plan.state !== "ready") {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready orchestrated plan can claim an attempt lease.");
+      }
+      if (proposal.plan.taskId !== proposal.taskEnvelope.taskId) {
+        throw new WorkflowContractError("INVALID_INPUT", "Attempt task and workflow plan IDs do not match.");
+      }
+      if (proposal.plan.taskDigest !== convergenceDigest(proposal.taskEnvelope)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan is bound to a different task envelope.", {
+          rootId: proposal.rootId,
+          taskId: proposal.taskEnvelope.taskId
+        });
+      }
+      const evaluationAuditPurpose = proposal.plan.stages.find(
+        (stage) => stage.requiredCapability === "evaluation-validity-audit"
+      )?.evaluationAuditPurpose;
+      const expectedPlan = this.buildPlan(
+        proposal.taskEnvelope,
+        this.registry.read(),
+        evaluationAuditPurpose,
+        proposal.plan.bootstrapExecution?.context ?? this.defaultExecutionContext ?? void 0
+      );
+      expectedPlan.integrityToken = this.signPlan(expectedPlan);
+      if (canonicalJson(expectedPlan, "Plan") !== canonicalJson(proposal.plan, "Plan")) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan was not produced from the proposed task envelope.", {
+          rootId: proposal.rootId,
+          taskId: proposal.taskEnvelope.taskId
+        });
+      }
+      const snapshot = this.liveConvergenceSnapshot(proposal.rootId);
+      const root = snapshot.root;
+      if (snapshot.leases.some((lease2) => lease2.state === "issued")) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "A live attempt lease already exists for this convergence root.", {
+          rootId: root.rootId
+        });
+      }
+      if (proposal.expectedRevision !== root.revision) {
+        throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the convergence root.", {
+          expectedRevision: proposal.expectedRevision,
+          actualRevision: root.revision
+        });
+      }
+      const proposedDigests = this.convergenceDigests(proposal.taskEnvelope, proposal.frame);
+      const frameChanged = proposedDigests.taskDigest !== root.taskDigest || proposedDigests.workspaceDigest !== root.workspaceDigest || proposedDigests.controlDigest !== root.controlDigest || proposedDigests.operationalDigest !== root.operationalDigest || this.artifactRolesChanged(root.frame, proposal.frame);
+      if (frameChanged) {
+        if (root.state === "open") this.moveRootToReview(root);
+        throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "Task, control, workspace, operational, or artifact-role changes require independent review.", {
+          rootId: root.rootId,
+          expected: {
+            taskDigest: root.taskDigest,
+            workspaceDigest: root.workspaceDigest,
+            controlDigest: root.controlDigest,
+            operationalDigest: root.operationalDigest
+          },
+          proposed: proposedDigests
+        });
+      }
+      if (root.state !== "open") this.throwRootGate(root, snapshot);
+      const attempts = consumedLeases(snapshot, root.currentEpoch);
+      const currentOutcomes = snapshot.outcomes.filter((outcome) => outcome.epoch === root.currentEpoch);
+      const latestOutcome = currentOutcomes.at(-1) ?? null;
+      if (currentOutcomes.length < attempts.length) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The previous full attempt is still active and must reach a terminal outcome before another lease can be claimed.", {
+          rootId: root.rootId,
+          epoch: root.currentEpoch
+        });
+      }
+      if (attempts.length >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
+        this.moveRootToReview(root);
+        throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Three full attempts have already started in this convergence epoch.", {
+          rootId: root.rootId,
+          epoch: root.currentEpoch,
+          attemptsUsed: attempts.length
+        });
+      }
+      if (attempts.length === 0) {
+        if (proposal.priorFailure !== null) {
+          throw new WorkflowContractError("INVALID_INPUT", "The first attempt in an epoch must not claim a prior failure.");
+        }
+      } else {
+        if (!latestOutcome || latestOutcome.state === "passed") {
+          throw new WorkflowContractError("LEASE_CONFLICT", "The previous full attempt has not produced a retryable failure.", {
+            rootId: root.rootId
+          });
+        }
+        if (!proposal.priorFailure || proposal.priorFailure.fingerprint !== latestOutcome.failureFingerprint) {
+          this.rejectRetry(
+            root,
+            {
+              epoch: root.currentEpoch,
+              reason: "stale-fingerprint",
+              actorId: proposal.actorId,
+              expectedFingerprint: latestOutcome.failureFingerprint,
+              targetDigest: proposedDigests.targetDigest,
+              evidenceRefs: proposal.priorFailure?.evidenceRefs ?? [],
+              rejectedAt: (/* @__PURE__ */ new Date()).toISOString()
+            },
+            "A retry must bind the latest failure fingerprint and a discriminating hypothesis.",
+            { expectedFingerprint: latestOutcome.failureFingerprint }
+          );
+        }
+        const priorLease = attempts.at(-1);
+        const sameTarget = proposedDigests.targetDigest === priorLease.targetDigest;
+        const burned = (root.retryRejections ?? []).filter((item) => item.reason === "stale-evidence").flatMap((item) => item.evidenceRefs);
+        const usedProposals = new Set(snapshot.leases.filter((lease2) => lease2.state === "consumed").map((lease2) => lease2.proposalDigest));
+        const oldEvidence = new Set([
+          ...snapshot.proposals.filter((item) => usedProposals.has(convergenceDigest(item))).flatMap((item) => item.priorFailure?.evidenceRefs ?? []),
+          ...snapshot.outcomes.flatMap((outcome) => outcome.evidenceRefs),
+          ...burned
+        ].map(evidenceKey));
+        const hasNewEvidence = proposal.priorFailure.evidenceRefs.some((reference) => !oldEvidence.has(evidenceKey(reference)));
+        if (sameTarget && !hasNewEvidence) {
+          this.rejectRetry(
+            root,
+            {
+              epoch: root.currentEpoch,
+              reason: "stale-evidence",
+              actorId: proposal.actorId,
+              expectedFingerprint: latestOutcome.failureFingerprint,
+              targetDigest: proposedDigests.targetDigest,
+              evidenceRefs: proposal.priorFailure.evidenceRefs,
+              rejectedAt: (/* @__PURE__ */ new Date()).toISOString()
+            },
+            "The proposed retry changes neither the target nor the observed evidence.",
+            { rootId: root.rootId, route: "diagnose" }
+          );
+        }
+      }
+      const now = /* @__PURE__ */ new Date();
+      const updatedRoot = bumpedRoot(root, now.toISOString());
+      const lease = {
+        schemaVersion: CONTRACT_VERSION,
+        leaseId: `lease-${randomUUID()}`,
+        rootId: root.rootId,
+        rootRevision: updatedRoot.revision,
+        epoch: root.currentEpoch,
+        ordinal: attempts.length + 1,
+        proposalDigest: convergenceDigest(proposal),
+        ...proposedDigests,
+        outputTargetsDigest: convergenceDigest(proposal.outputTargets),
+        planIntegrityToken: proposal.plan.integrityToken,
+        actorId: proposal.actorId,
+        outputTargets: [...proposal.outputTargets],
+        issuedAt: now.toISOString(),
+        expiresAt: new Date(now.getTime() + proposal.frame.operationalSettings.leaseTtlSeconds * 1e3).toISOString(),
+        state: "issued"
+      };
+      this.validator.attemptLease(lease);
+      if (!this.store.insertAttemptLease(updatedRoot, root.revision, proposal, lease)) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The convergence root changed while the lease was being claimed.", {
+          rootId: root.rootId
+        });
+      }
+      return clone2(lease);
+    });
+  }
+  startGuardedWorkflow(rawRequest, requireTrustedExecutionContext = false) {
+    return this.attempt(() => {
+      const request = this.normalizeGuardedWorkflowStartRequest(rawRequest);
+      const plan = clone2(request.plan);
+      this.assertPlanIntegrity(plan);
+      if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(plan, "Guarded workflow start");
+      if (plan.executionMode !== "orchestrated" || plan.state !== "ready") {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready orchestrated workflow can use a convergence lease.");
+      }
+      const binding2 = this.store.getAttemptLease(request.leaseId);
+      if (!binding2 || binding2.lease.state !== "issued") {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is missing, expired, or already consumed.", { leaseId: request.leaseId });
+      }
+      if (Date.parse(binding2.lease.expiresAt) <= Date.now()) {
+        this.store.expireAttemptLease(binding2.lease.leaseId);
+        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease expired before workflow start.", { leaseId: request.leaseId });
+      }
+      if (request.expectedRootRevision !== binding2.root.revision || request.expectedRootRevision !== binding2.lease.rootRevision) {
+        throw new WorkflowContractError("STALE_REVISION", "The guarded start does not target the current convergence revision.", {
+          expectedRevision: request.expectedRootRevision,
+          actualRevision: binding2.root.revision
+        });
+      }
+      if (plan.integrityToken !== binding2.lease.planIntegrityToken || canonicalJson(plan, "Plan") !== canonicalJson(binding2.proposal.plan, "Plan")) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is bound to a different workflow plan.", { leaseId: request.leaseId });
+      }
+      const receipt = this.newRunningReceipt(plan);
+      const started = this.store.insertGuardedRun(receipt, request.leaseId, request.expectedRootRevision, (/* @__PURE__ */ new Date()).toISOString());
+      if (!started) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease could not be consumed atomically.", { leaseId: request.leaseId });
+      }
+      return clone2(receipt);
+    });
+  }
+  normalizeAttemptProposal(rawProposal) {
+    const candidate = asRecord2(rawProposal);
+    const hasTaskEnvelope = Object.hasOwn(candidate, "taskEnvelope");
+    const hasFrame = Object.hasOwn(candidate, "frame");
+    if (hasTaskEnvelope !== hasFrame) {
+      throw new WorkflowContractError("INVALID_INPUT", "Attempt proposal must provide both taskEnvelope and frame, or omit both.");
+    }
+    if (hasTaskEnvelope) return this.validator.attemptProposal(rawProposal);
+    const rootId = typeof candidate.rootId === "string" ? candidate.rootId : "";
+    const root = this.requireConvergenceSnapshot(rootId).root;
+    return this.validator.attemptProposal({
+      ...candidate,
+      taskEnvelope: clone2(root.taskEnvelope),
+      frame: clone2(root.frame)
+    });
+  }
+  normalizeGuardedWorkflowStartRequest(rawRequest) {
+    const candidate = asRecord2(rawRequest);
+    if (Object.hasOwn(candidate, "plan")) return this.validator.guardedWorkflowStartRequest(rawRequest);
+    const leaseId = typeof candidate.leaseId === "string" ? candidate.leaseId : "";
+    const binding2 = this.store.getAttemptLease(leaseId);
+    if (!binding2) {
+      throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is missing, expired, or already consumed.", { leaseId });
+    }
+    return this.validator.guardedWorkflowStartRequest({
+      ...candidate,
+      plan: clone2(binding2.proposal.plan)
+    });
+  }
+  getConvergenceStatus(rootId) {
+    return this.attempt(() => {
+      const status = this.buildConvergenceStatus(this.liveConvergenceSnapshot(rootId));
+      this.validator.convergenceStatus(status);
+      return clone2(status);
+    });
+  }
+  resolveConvergenceGate(rawRequest) {
+    return this.attempt(() => {
+      const request = this.validator.resolveConvergenceGateRequest(rawRequest);
+      const review = clone2(request.review);
+      const snapshot = this.requireConvergenceSnapshot(request.rootId);
+      const root = snapshot.root;
+      if (request.expectedRevision !== root.revision || review.rootRevision !== root.revision) {
+        throw new WorkflowContractError("STALE_REVISION", "The convergence review does not target the current root revision.", {
+          expectedRevision: request.expectedRevision,
+          reviewRevision: review.rootRevision,
+          actualRevision: root.revision
+        });
+      }
+      if (review.rootId !== root.rootId || review.epoch !== root.currentEpoch) {
+        throw new WorkflowContractError("INVALID_INPUT", "The convergence review targets a different root or epoch.");
+      }
+      if (root.state !== "needs-review") {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root can be resolved.", { state: root.state });
+      }
+      const actualActors = [...new Set(snapshot.leases.filter((lease) => lease.state === "consumed").map((lease) => lease.actorId))].sort();
+      const reviewedActors = [...new Set(review.implementationActorIds)].sort();
+      if (!review.freshContext.confirmed || !review.freshContext.evidenceRef || actualActors.join("\0") !== reviewedActors.join("\0")) {
+        throw new WorkflowContractError("GATE_FAILED", "Independent frame review must be fresh and cover every implementation actor.", {
+          actualActors,
+          reviewedActors
+        });
+      }
+      if (actualActors.includes(review.reviewerActorId)) {
+        throw new WorkflowContractError("GATE_FAILED", "The frame reviewer must be independent from implementation actors.");
+      }
+      this.assertReviewRoute(review);
+      const updatedRoot = bumpedRoot(root, review.reviewedAt);
+      if (review.route === "stop") {
+        updatedRoot.state = "needs-user";
+      } else if (review.classification === "semantics-changing" || review.route === "needs-user") {
+        updatedRoot.state = "needs-user";
+      } else if (review.route === "panel" || review.route === "diagnose") {
+        updatedRoot.state = "needs-review";
+      } else if (review.route === "resume-new-epoch") {
+        if (updatedRoot.currentEpoch >= updatedRoot.frame.operationalSettings.maxEpochs) {
+          updatedRoot.state = "needs-user";
+        } else {
+          const proposedFrame = review.proposedFrame;
+          this.assertConvergenceFrame(proposedFrame);
+          const nextDigests = this.convergenceDigests(updatedRoot.taskEnvelope, proposedFrame);
+          if (nextDigests.workspaceDigest !== root.workspaceDigest || nextDigests.operationalDigest !== root.operationalDigest) {
+            throw new WorkflowContractError("INVALID_INPUT", "A semantics-preserving review cannot change workspace or guard policy.");
+          }
+          if (nextDigests.targetDigest === root.targetDigest) {
+            throw new WorkflowContractError("GATE_FAILED", "A new convergence epoch requires a verified target-frame correction.");
+          }
+          updatedRoot.currentEpoch += 1;
+          updatedRoot.state = "open";
+          updatedRoot.frame = clone2(proposedFrame);
+          Object.assign(updatedRoot, nextDigests);
+        }
+      }
+      this.validator.convergenceRoot(updatedRoot);
+      if (!this.store.updateConvergenceRoot(updatedRoot, root.revision, review)) {
+        throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while recording the review.");
+      }
+      return this.buildConvergenceStatus(this.requireConvergenceSnapshot(root.rootId));
+    });
+  }
+  rejectUnguardedWorkflow(rawPlan) {
+    return this.attempt(() => {
+      const plan = clone2(this.validator.workflowPlan(rawPlan));
+      this.assertPlanIntegrity(plan);
+      if (plan.executionMode === "orchestrated") {
+        throw new WorkflowContractError("LEASE_REQUIRED", "New orchestrated workflows must start through start_guarded_workflow.");
+      }
+      throw new WorkflowContractError("INVALID_TRANSITION", "Direct skill plans are not started by the MCP orchestrator.");
+    });
+  }
+  /** Embedding compatibility only. The MCP start_workflow tool rejects new unguarded orchestrated runs. */
+  startWorkflow(rawPlan) {
+    return this.attempt(() => {
+      const plan = clone2(this.validator.workflowPlan(rawPlan));
+      this.assertPlanIntegrity(plan);
+      if (plan.executionMode !== "orchestrated") {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Direct skill plans are not started by the MCP orchestrator.");
+      }
+      if (plan.state !== "ready") {
+        const error61 = plan.errors.find((item) => item.code === "MCP_UNAVAILABLE");
+        if (error61) throw new WorkflowContractError(error61.code, error61.message, error61.details);
+        throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready workflow plan can be started.", {
+          planState: plan.state
+        });
+      }
+      const receipt = this.newRunningReceipt(plan);
+      this.store.insertRun(receipt);
+      return clone2(receipt);
+    });
+  }
+  recordStageResult(rawResult, requireTrustedExecutionContext = false) {
+    try {
+      const callerResult = asRecord2(rawResult);
+      if (requireTrustedExecutionContext && Object.prototype.hasOwnProperty.call(callerResult, "executionContext")) {
+        throw new WorkflowContractError(
+          "BINDING_INVALID",
+          "Strict MCP stage execution rejects caller-supplied executionContext."
+        );
+      }
+      const result = this.validator.stageResult(rawResult);
+      if (result.outputFile && result.output.output !== null) {
+        throw new WorkflowContractError("INVALID_INPUT", "output.output must be null when outputFile carries the provider output.");
+      }
+      return this.change(result.runId, result.expectedRevision, (receipt) => {
+        if (receipt.state !== "running") {
+          throw new WorkflowContractError("INVALID_TRANSITION", "Stage results require a running workflow.", {
+            state: receipt.state
+          });
+        }
+        const target = receipt.plan.stages.find((stage) => stage.stageId === result.stageId);
+        if (!target) {
+          throw new WorkflowContractError("INVALID_INPUT", "Stage does not belong to this run.", { stageId: result.stageId });
+        }
+        if (target.state !== "ready") {
+          throw new WorkflowContractError("INVALID_TRANSITION", "A stage result may only be recorded once.", {
+            stageId: result.stageId,
+            stageState: target.state
+          });
+        }
+        const priorStage = receipt.plan.stages.find(
+          (stage) => stage.order < target.order && stage.state !== "passed"
+        );
+        if (priorStage) {
+          throw new WorkflowContractError("INVALID_TRANSITION", "Stages must be recorded in plan order.", {
+            requiredStageId: priorStage.stageId,
+            requestedStageId: result.stageId
+          });
+        }
+        let loadedOutput;
+        if (result.outputFile) {
+          if (target.receiptPolicy) {
+            throw new WorkflowContractError("INVALID_INPUT", "Stages with a receipt policy must record their output inline.", {
+              stageId: target.stageId
+            });
+          }
+          loadedOutput = loadStageOutputFile(result.outputFile);
+        }
+        let trustedStageContext = null;
+        if (requireTrustedExecutionContext && result.state === "passed" && !target.executionRequirement && !DETERMINISTIC_CAPABILITIES.has(target.requiredCapability)) {
+          throw new WorkflowContractError(
+            "BINDING_REQUIRED",
+            `Stage '${target.stageId}' has no execution assurance requirement and cannot pass through the strict MCP boundary.`
+          );
+        }
+        if (requireTrustedExecutionContext && target.executionRequirement?.kind === "semantic") {
+          const binding2 = {
+            phase: "stage",
+            taskId: receipt.plan.taskId,
+            runId: receipt.runId,
+            stageId: target.stageId,
+            revision: result.expectedRevision
+          };
+          const subject = `Stage '${target.stageId}'`;
+          const enforced = result.state === "passed";
+          trustedStageContext = enforced ? this.observeTrustedExecutionContext(binding2, subject) : this.observeExecutionContext(binding2);
+          if (trustedStageContext) {
+            this.assertTrustedExecutionContext(
+              target.executionRequirement,
+              trustedStageContext,
+              subject,
+              binding2,
+              enforced
+            );
+            result.executionContext = clone2(trustedStageContext);
+          }
+        }
+        const checked = loadedOutput === void 0 ? result : { ...result, output: { ...result.output, output: loadedOutput } };
+        this.assertPlannedInputsAvailable(receipt, target, result.state === "passed");
+        this.assertResultSemantics(target, checked, receipt.plan.taskId, receipt.plan.taskDigest);
+        if (target.requiredCapability === "cs-implementation-review") {
+          assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
+        }
+        assertEngineeringStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, target.requiredCapability, checked, this.validator);
+        this.assertDeclaredReceiptPolicy(receipt, target, checked);
+        if (result.state === "passed") {
+          this.assertRequiredArtifacts(target, checked);
+          this.assertDeliberationGate(target, checked);
+          this.assertMandatoryAuditGate(target, checked);
+          this.assertEvaluationValidityGate(target, checked);
+        }
+        target.state = result.state;
+        if (trustedStageContext) this.consumeTrustedExecutionObservation(trustedStageContext, `Stage '${target.stageId}'`);
+        receipt.stageResults.push(clone2(result));
+        this.addUnique(receipt.blockers, result.blockers);
+        this.addUnique(receipt.unresolved, result.blockers);
+        if (result.state !== "passed") {
+          receipt.state = result.state;
+          receipt.plan.state = result.state;
+          receipt.error = result.error;
+          this.addUnique(receipt.unresolved, [`${target.stageId}:${result.state}`]);
+          if (result.state === "needs-input" || result.state === "needs-approval" || result.state === "needs-redesign") {
+            receipt.plan.currentStageId = target.stageId;
+          } else {
+            receipt.plan.currentStageId = null;
+          }
+          receipt.plan.nextStageId = null;
+        } else {
+          this.setRunningStagePointers(receipt.plan);
+        }
+      });
+    } catch (error61) {
+      return apiError2(this.toErrorBody(error61));
+    }
+  }
+  getWorkflowStatus(runId) {
+    return this.attempt(() => clone2(this.requireRun(runId)));
+  }
+  finalizeWorkflow(runId, expectedRevision) {
+    return this.change(runId, expectedRevision, (receipt) => {
+      if (receipt.state !== "running") {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Only a running workflow can be finalized.", {
+          state: receipt.state
+        });
+      }
+      if (receipt.blockers.length > 0 || receipt.unresolved.length > 0) {
+        throw new WorkflowContractError("GATE_FAILED", "Workflow has unresolved blockers or findings.", {
+          blockers: receipt.blockers,
+          unresolved: receipt.unresolved
+        });
+      }
+      for (const stage of receipt.plan.stages) {
+        const result = receipt.stageResults.find((item) => item.stageId === stage.stageId);
+        if (!result || result.state !== "passed") {
+          throw new WorkflowContractError("GATE_FAILED", "Every planned stage must pass before finalization.", {
+            stageId: stage.stageId,
+            stageState: result?.state ?? "ready"
+          });
+        }
+        this.assertPlannedInputsAvailable(receipt, stage, true);
+        this.assertRequiredArtifacts(stage, result);
+        if (["cs-implementation-review", "test-sensitivity-review", "change-code-review"].includes(stage.requiredCapability)) {
+          const checked = result.outputFile ? { ...result, output: { ...result.output, output: loadStageOutputFile(result.outputFile) } } : result;
+          this.assertResultSemantics(stage, checked, receipt.plan.taskId, receipt.plan.taskDigest);
+          if (stage.requiredCapability === "cs-implementation-review") {
+            assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
+          }
+          assertEngineeringStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, stage.requiredCapability, checked, this.validator);
+        }
+        this.assertExecutionAssurance(stage, result);
+        this.assertDeclaredReceiptPolicy(receipt, stage, result);
+        this.assertEvaluationValidityGate(stage, result);
+      }
+      const mandatoryAudit = receipt.plan.stages.find((stage) => stage.riskGate === "mandatory");
+      if (mandatoryAudit && mandatoryAudit.state !== "passed") {
+        throw new WorkflowContractError("GATE_FAILED", "Mandatory audit stage did not pass.", {
+          stageId: mandatoryAudit.stageId
+        });
+      }
+      receipt.state = "passed";
+      receipt.plan.state = "passed";
+      receipt.plan.currentStageId = null;
+      receipt.plan.nextStageId = null;
+      receipt.error = null;
+    });
+  }
+  abortWorkflow(runId, expectedRevision) {
+    return this.change(runId, expectedRevision, (receipt) => {
+      if (receipt.state === "passed" || receipt.state === "failed" || receipt.state === "blocked") {
+        throw new WorkflowContractError("INVALID_TRANSITION", "A terminal workflow cannot be aborted.", {
+          state: receipt.state
+        });
+      }
+      receipt.state = "blocked";
+      receipt.plan.state = "blocked";
+      receipt.plan.currentStageId = null;
+      receipt.plan.nextStageId = null;
+      this.addUnique(receipt.blockers, ["aborted-by-caller"]);
+      this.addUnique(receipt.unresolved, ["aborted-by-caller"]);
+      receipt.error = null;
+    });
+  }
+  buildPlan(task, skills, evaluationAuditPurpose, executionContext) {
+    const executionMode = task.orchestration.requested ? "orchestrated" : "direct";
+    const errors = [];
+    const stages = [];
+    const selectedSkills = /* @__PURE__ */ new Set();
+    const selectedProviders = /* @__PURE__ */ new Map();
+    for (const capability of this.requiredCapabilities(task)) {
+      const skill = selectSkillByCapability(skills, capability);
+      if (!skill) {
+        errors.push({
+          code: "GATE_FAILED",
+          message: `No enabled registry descriptor provides '${capability}'.`,
+          details: { capability }
+        });
+        continue;
+      }
+      if (skill.executionClass === "bootstrap") {
+        errors.push({
+          code: "GATE_FAILED",
+          message: `Capability '${capability}' is a bootstrap provider and must run before plan_workflow.`,
+          details: { capability, providerKey: skill.providerKey }
+        });
+        continue;
+      }
+      const selected = selectedProviders.get(skill.providerKey);
+      if (selected) {
+        if (!selected.satisfiedCapabilities.includes(capability)) selected.satisfiedCapabilities.push(capability);
+      } else {
+        selectedProviders.set(skill.providerKey, { capability, satisfiedCapabilities: [capability], provider: skill });
+      }
+    }
+    const selectedProviderList = [...selectedProviders.values()];
+    const executionClasses = new Set(selectedProviderList.map(({ provider: provider2 }) => provider2.executionClass));
+    if (executionClasses.size > 1) {
+      errors.push({
+        code: "INVALID_TRANSITION",
+        message: "Recovery providers must run in a separate workflow.",
+        details: { executionClasses: [...executionClasses] }
+      });
+    }
+    for (const { provider: consumer } of selectedProviderList) {
+      for (const binding2 of consumer.inputBindings.filter((item) => item.operation === "require-external")) {
+        const producer = selectedProviderList.find(({ provider: provider2 }) => provider2.providerKey !== consumer.providerKey && provider2.producedArtifacts.includes(binding2.targetArtifact));
+        if (producer) {
+          errors.push({
+            code: "INVALID_TRANSITION",
+            message: `Artifact '${binding2.targetArtifact}' must come from a completed external run.`,
+            details: {
+              consumerProviderKey: consumer.providerKey,
+              producerProviderKey: producer.provider.providerKey
+            }
+          });
+        }
+      }
+    }
+    for (const { capability, satisfiedCapabilities, provider: skill } of this.orderProviders(selectedProviderList)) {
+      const producedArtifacts = skill.producedArtifacts;
+      const stageRequiredArtifacts = skill.gate.policy === "mandatory" && skill.capabilities.includes(POLICY_CAPABILITY.audit) ? [.../* @__PURE__ */ new Set([...producedArtifacts, "gate-verdict"])] : producedArtifacts;
+      const stageEvaluationAuditPurpose = capability === "evaluation-validity-audit" ? evaluationAuditPurpose : void 0;
+      if (capability === "evaluation-validity-audit" && stageEvaluationAuditPurpose === void 0) {
+        throw new WorkflowContractError("INVALID_INPUT", "Evaluation audit purpose is missing from the planning request.");
+      }
+      const order = stages.length + 1;
+      const artifactContract = this.plannedArtifactContract(task, satisfiedCapabilities, stageRequiredArtifacts);
+      stages.push({
+        stageId: stageId(order, capability),
+        order,
+        requiredCapability: capability,
+        ...stageEvaluationAuditPurpose !== void 0 ? { evaluationAuditPurpose: stageEvaluationAuditPurpose } : {},
+        satisfiedCapabilities,
+        skillId: skill.skillId,
+        phase: skill.phase,
+        selectionReason: `Selected '${skill.skillId}' because provider '${skill.providerKey}' supplies '${satisfiedCapabilities.join("', '")}' at priority ${skill.priority}.`,
+        state: "ready",
+        ...executionContext ? { executionRequirement: this.stageExecutionRequirement(task, capability, skill.gate.policy, skill) } : {},
+        ...artifactContract ? { artifactContract } : {},
+        requiredArtifacts: stageRequiredArtifacts,
+        riskGate: skill.gate.policy,
+        providerKey: skill.providerKey,
+        executionClass: skill.executionClass,
+        phaseOrder: skill.phaseOrder,
+        requiredInputArtifacts: skill.requiredInputArtifacts,
+        inputBindings: skill.inputBindings,
+        producedArtifacts: skill.producedArtifacts,
+        outputSchema: { path: skill.outputSchema, digest: skill.outputSchemaDigest },
+        resultSchema: { path: skill.resultSchema, digest: skill.resultSchemaDigest },
+        stateMapping: skill.stateMapping,
+        gate: skill.gate,
+        ...skill.receiptPolicy ? { receiptPolicy: skill.receiptPolicy } : {}
+      });
+      selectedSkills.add(skill.skillId);
+    }
+    if (executionMode === "orchestrated" && !task.orchestration.mcpAvailable) {
+      errors.unshift({
+        code: "MCP_UNAVAILABLE",
+        message: "The orchestrator is blocked because MCP is unavailable.",
+        details: null
+      });
+    }
+    for (const contract of task.artifactContracts ?? []) {
+      if (!stages.some((stage) => stage.satisfiedCapabilities.includes(contract.capability))) {
+        throw new WorkflowContractError("INVALID_INPUT", "Artifact contract capability is not in the selected plan.", {
+          capability: contract.capability
+        });
+      }
+    }
+    return {
+      schemaVersion: CONTRACT_VERSION,
+      taskId: task.taskId,
+      taskDigest: convergenceDigest(task),
+      integrityToken: "pending",
+      executionMode,
+      ...executionContext ? {
+        bootstrapExecution: {
+          requirement: this.bootstrapExecutionRequirement(task),
+          context: clone2(executionContext)
+        }
+      } : {},
+      state: errors.length > 0 ? "blocked" : "ready",
+      selectedSkills: [...selectedSkills],
+      stages,
+      currentStageId: null,
+      nextStageId: errors.length > 0 ? null : stages[0]?.stageId ?? null,
+      errors
+    };
+  }
+  requiredCapabilities(task) {
+    const auditRequested = task.requiredCapabilities.includes(POLICY_CAPABILITY.audit) || task.riskLevel === "high" || task.riskLevel === "critical";
+    const requestedWork = task.requiredCapabilities.filter((capability) => capability !== POLICY_CAPABILITY.audit);
+    const work = [];
+    let koreanProseExpanded = false;
+    for (const capability of requestedWork) {
+      if (KOREAN_PROSE_CAPABILITIES.includes(capability)) {
+        if (!koreanProseExpanded) work.push(...KOREAN_PROSE_CAPABILITIES);
+        koreanProseExpanded = true;
+      } else {
+        work.push(capability);
+      }
+    }
+    return [.../* @__PURE__ */ new Set([...work, ...auditRequested ? [POLICY_CAPABILITY.audit] : []])];
+  }
+  orderProviders(items) {
+    const producedBy = /* @__PURE__ */ new Map();
+    for (const [index, item] of items.entries()) {
+      for (const artifact of item.provider.producedArtifacts) {
+        const existing = producedBy.get(artifact);
+        if (existing !== void 0 && items[existing]?.provider.providerKey !== item.provider.providerKey) {
+          throw new WorkflowContractError("INVALID_INPUT", "Selected providers produce the same artifact.", {
+            artifact,
+            providers: [items[existing]?.provider.providerKey, item.provider.providerKey]
+          });
+        }
+        producedBy.set(artifact, index);
+      }
+    }
+    const outgoing = /* @__PURE__ */ new Map();
+    const indegree = items.map(() => 0);
+    for (const [consumerIndex, item] of items.entries()) {
+      for (const artifact of item.provider.requiredInputArtifacts) {
+        const producerIndex = producedBy.get(artifact);
+        if (producerIndex === void 0 || producerIndex === consumerIndex) continue;
+        const edges = outgoing.get(producerIndex) ?? /* @__PURE__ */ new Set();
+        if (!edges.has(consumerIndex)) {
+          edges.add(consumerIndex);
+          outgoing.set(producerIndex, edges);
+          indegree[consumerIndex] = (indegree[consumerIndex] ?? 0) + 1;
+        }
+      }
+    }
+    const compare = (left, right) => items[left].provider.phaseOrder - items[right].provider.phaseOrder || items[left].capability.localeCompare(items[right].capability) || items[left].provider.providerKey.localeCompare(items[right].provider.providerKey);
+    const ready = indegree.map((value, index) => value === 0 ? index : -1).filter((index) => index >= 0).sort(compare);
+    const ordered = [];
+    while (ready.length > 0) {
+      const index = ready.shift();
+      ordered.push(items[index]);
+      for (const next of outgoing.get(index) ?? []) {
+        indegree[next]--;
+        if (indegree[next] === 0) {
+          ready.push(next);
+          ready.sort(compare);
+        }
+      }
+    }
+    if (ordered.length !== items.length) {
+      throw new WorkflowContractError("INVALID_INPUT", "Selected provider artifact dependencies contain a cycle.");
+    }
+    return ordered;
+  }
+  assertResultSemantics(stage, result, taskId, taskDigest) {
+    const providerResult = this.validator.providerResult(
+      this.registry.rootDirectory,
+      stage.resultSchema,
+      stage.outputSchema,
+      result.output
+    );
+    if (providerResult.kind === "output") {
+      assertProviderSemantics({ taskId, taskDigest, stage, result, output: providerResult.output });
+    }
+    const rule = this.mappedState(stage, providerResult);
+    if (result.state !== rule.state) {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Stage state does not match the provider state mapping.", {
+        stageId: result.stageId,
+        expectedState: rule.state,
+        actualState: result.state
+      });
+    }
+    const providerError = providerResult.error;
+    if (rule.errorRequired !== Boolean(providerError)) {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Provider error presence does not match the state mapping.", {
+        stageId: result.stageId,
+        errorRequired: rule.errorRequired
+      });
+    }
+    if (providerError && rule.allowedErrorCodes && !rule.allowedErrorCodes.includes(providerError.code)) {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Provider error code is not allowed by the state mapping.", {
+        stageId: result.stageId,
+        errorCode: providerError.code
+      });
+    }
+    if ((providerError?.code ?? null) !== (result.error?.code ?? null)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Stage error must mirror the provider result error.", {
+        stageId: result.stageId
+      });
+    }
+    if (result.state === "passed") {
+      this.assertExecutionAssurance(stage, result);
+      if (result.evidence.length === 0 || result.evidence.some((evidence) => !evidence.verified || !evidence.locator)) {
+        throw new WorkflowContractError("MISSING_EVIDENCE", "A passed stage requires verified evidence.", {
+          stageId: result.stageId
+        });
+      }
+      if (result.error) {
+        throw new WorkflowContractError("INVALID_INPUT", "A passed stage cannot contain an error.");
+      }
+    }
+    if ((result.state === "failed" || result.state === "blocked") && rule.errorRequired && !result.error) {
+      throw new WorkflowContractError("INVALID_INPUT", "Failed or blocked stages require an error object.");
+    }
+  }
+  assertDeclaredReceiptPolicy(receipt, stage, result) {
+    if (!stage.receiptPolicy) return;
+    const fixedTokens = this.validator.referenceOnlyFixedTokens(
+      this.registry.rootDirectory,
+      stage.outputSchema
+    );
+    assertReceiptPolicy(receipt, stage, result, fixedTokens);
+  }
+  mappedState(stage, providerResult) {
+    if (providerResult.kind === "adapter-error") {
+      const errorCode = providerResult.error?.code;
+      if (!errorCode || !stage.stateMapping.adapterErrors.includes(errorCode)) {
+        throw new WorkflowContractError("INVALID_TRANSITION", "Adapter error is not allowed by the provider descriptor.", {
+          stageId: stage.stageId,
+          errorCode: errorCode ?? null
+        });
+      }
+      return { state: "blocked", errorRequired: true, allowedErrorCodes: stage.stateMapping.adapterErrors };
+    }
+    let rule = stage.stateMapping.default;
+    if (stage.stateMapping.selector) {
+      const value = jsonPointer(providerResult, stage.stateMapping.selector);
+      if (typeof value === "string") rule = stage.stateMapping.values?.[value] ?? "reject";
+    }
+    if (rule === "reject") {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Provider verdict is not mapped by the descriptor.", {
+        stageId: stage.stageId,
+        selector: stage.stateMapping.selector ?? null
+      });
+    }
+    return rule;
+  }
+  plannedArtifactContract(task, capabilities, requiredArtifacts) {
+    const contracts = (task.artifactContracts ?? []).filter((item) => capabilities.includes(item.capability));
+    if (contracts.length === 0) return void 0;
+    if (contracts.length !== 1) {
+      throw new WorkflowContractError("INVALID_INPUT", "A selected stage needs one unambiguous artifact contract.");
+    }
+    const contract = contracts[0];
+    const ids2 = contract.produced.map((item) => item.artifactId);
+    if (ids2.length !== requiredArtifacts.length || new Set(ids2).size !== ids2.length || requiredArtifacts.some((id) => !ids2.includes(id))) {
+      throw new WorkflowContractError("INVALID_INPUT", "Artifact contract IDs must exactly match the planned outputs.");
+    }
+    return clone2(contract);
+  }
+  assertRequiredArtifacts(stage, result) {
+    const missingArtifacts = stage.requiredArtifacts.filter(
+      (artifactId) => !result.output.artifacts.some((artifact) => artifact.artifactId === artifactId)
+    );
+    if (missingArtifacts.length > 0) {
+      throw new WorkflowContractError("MISSING_EVIDENCE", "Required artifacts are missing from the stage result.", {
+        stageId: stage.stageId,
+        missingArtifacts
+      });
+    }
+    for (const artifactId of stage.requiredArtifacts) {
+      const expected = stage.artifactContract?.produced.find((item) => item.artifactId === artifactId);
+      const actual = result.output.artifacts.filter((item) => item.artifactId === artifactId);
+      if (!expected || actual.length !== 1 || !actual[0].verified || !actual[0].locator || !actual[0].digest) {
+        throw new WorkflowContractError("MISSING_EVIDENCE", "Required artifact lacks a declared target or unique verified evidence.", {
+          stageId: stage.stageId,
+          artifactId
+        });
+      }
+      const targetDigest2 = actual[0].targetDigest.startsWith("sha256:") ? actual[0].targetDigest : `sha256:${actual[0].targetDigest}`;
+      if (actual[0].schemaId !== expected.schemaId || targetDigest2 !== expected.targetDigest) {
+        throw new WorkflowContractError("BINDING_INVALID", "Artifact schema or target differs from the signed plan.", {
+          stageId: stage.stageId,
+          artifactId
+        });
+      }
+    }
+  }
+  assertPlannedInputsAvailable(receipt, stage, requireDeclaredTarget) {
+    const missing = [];
+    for (const artifactId of stage.requiredInputArtifacts) {
+      const producer = receipt.plan.stages.find(
+        (candidate) => candidate.stageId !== stage.stageId && candidate.producedArtifacts.includes(artifactId)
+      );
+      if (!producer) continue;
+      const producerResult = receipt.stageResults.find((candidate) => candidate.stageId === producer.stageId);
+      if (requireDeclaredTarget && producerResult?.state === "passed") {
+        this.assertRequiredArtifacts(producer, producerResult);
+      }
+      const verified = producerResult?.state === "passed" && producerResult.output.artifacts.some(
+        (artifact) => artifact.artifactId === artifactId && artifact.verified && Boolean(artifact.locator) && Boolean(artifact.digest) && Boolean(artifact.targetDigest)
+      );
+      if (!verified) missing.push({ artifactId, producerStageId: producer.stageId });
+    }
+    if (missing.length > 0) {
+      throw new WorkflowContractError("MISSING_EVIDENCE", "Planned input artifacts are not backed by verified producer results.", {
+        stageId: stage.stageId,
+        missingInputs: missing
+      });
+    }
+  }
+  assertDeliberationGate(stage, result) {
+    if (!stage.requiredArtifacts.includes("decision-record")) return;
+    if (!stage.gate.validatorSchema) {
+      throw new WorkflowContractError("GATE_FAILED", "Deliberation provider must declare its decision record validator schema.", {
+        stageId: stage.stageId
+      });
+    }
+    let record4;
+    try {
+      record4 = this.validator.declaredSchema(
+        this.registry.rootDirectory,
+        stage.gate.validatorSchema,
+        result.output.output?.decisionRecord,
+        "deliberation decision record"
+      );
+    } catch (error61) {
+      const contractError = error61 instanceof WorkflowContractError ? error61 : null;
+      const causeDetails = {};
+      for (const key of SCHEMA_CAUSE_DETAIL_KEYS) {
+        if (contractError?.details && Object.hasOwn(contractError.details, key)) causeDetails[key] = contractError.details[key];
+      }
+      throw new WorkflowContractError("GATE_FAILED", "Deliberation requires a schema-valid DecisionRecord.v1.", {
+        stageId: stage.stageId,
+        causeCode: contractError?.code ?? null,
+        causeDetails: Object.keys(causeDetails).length > 0 ? causeDetails : null,
+        cause: error61 instanceof Error ? error61.message : String(error61)
+      });
+    }
+    const semanticErrors = validateDecisionRecordSemantics(record4);
+    if (semanticErrors.length > 0) {
+      throw new WorkflowContractError("GATE_FAILED", "DecisionRecord.v1 failed canonical semantic validation.", {
+        stageId: stage.stageId,
+        semanticErrors
+      });
+    }
+    const run = record4.run;
+    const proposal = record4.consensus_proposal;
+    if (run.assurance === "provisional" || run.capability_shortfall !== false || proposal === null || proposal.status === "no_consensus") {
+      throw new WorkflowContractError("GATE_FAILED", "Deliberation result is not eligible to advance the workflow.", {
+        stageId: stage.stageId,
+        assurance: run.assurance,
+        capabilityShortfall: run.capability_shortfall,
+        consensusStatus: proposal?.status ?? null
+      });
+    }
+    if ((run.stage === "HIGH" || run.stage === "CRITICAL") && run.strict !== true) {
+      throw new WorkflowContractError("GATE_FAILED", "HIGH and CRITICAL deliberation requires strict execution assurance.", {
+        stageId: stage.stageId,
+        stage: run.stage
+      });
+    }
+    if (proposal.status === "conditional_consensus" && result.output.output?.conditionsVerified !== true) {
+      throw new WorkflowContractError("GATE_FAILED", "Conditional consensus may advance only after its conditions are verified.", {
+        stageId: stage.stageId
+      });
+    }
+  }
+  assertEvaluationValidityGate(stage, result) {
+    if (stage.requiredCapability !== "evaluation-validity-audit") return;
+    const output2 = result.output.output;
+    const purpose = stage.evaluationAuditPurpose;
+    const isDesignReadiness = purpose === "design-readiness" && output2?.auditStage === "pre-execution" && output2?.verdict === "PASS" && output2?.qualifiesAsQualityOrReleaseEvidence === false;
+    const isQualityOrRelease = purpose === "quality-or-release" && output2?.auditStage === "post-execution" && output2?.verdict === "PASS" && output2?.qualifiesAsQualityOrReleaseEvidence === true;
+    if (isDesignReadiness || isQualityOrRelease) return;
+    throw new WorkflowContractError(
+      "GATE_FAILED",
+      "Evaluation validity PASS does not satisfy the frozen audit purpose.",
+      {
+        stageId: stage.stageId,
+        purpose: purpose ?? null,
+        auditStage: output2?.auditStage ?? null,
+        verdict: output2?.verdict ?? null,
+        qualifiesAsQualityOrReleaseEvidence: output2?.qualifiesAsQualityOrReleaseEvidence ?? null
+      }
+    );
+  }
+  assertMandatoryAuditGate(stage, result) {
+    if (stage.riskGate !== "mandatory" || !stage.requiredArtifacts.includes("gate-verdict")) return;
+    const output2 = result.output.output;
+    const auditorId = output2?.auditorId;
+    const implementationActorIds = output2?.implementationActorIds;
+    const auditTarget = output2?.auditTarget;
+    const currentTarget = output2?.currentTarget;
+    const blockingFindings = output2?.blockingFindings;
+    const phase = output2?.phase;
+    if (output2?.gateVerdict !== "PASS" || typeof auditorId !== "string" || auditorId.length === 0 || !Array.isArray(implementationActorIds) || implementationActorIds.length === 0 || implementationActorIds.some((actorId) => typeof actorId !== "string" || actorId.length === 0) || typeof auditTarget !== "string" || auditTarget.length === 0 || typeof currentTarget !== "string" || currentTarget !== auditTarget || output2?.freshContext !== true || output2?.delegationAllowed !== false || !Array.isArray(blockingFindings) || blockingFindings.length > 0 || output2?.stale !== false || !["pre-execution", "post-execution", "pre-deploy", "post-deploy"].includes(String(phase)) || typeof output2?.postExecutionVerified !== "boolean") {
+      throw new WorkflowContractError("GATE_FAILED", "Mandatory audit requires a current, fresh, non-delegated PASS with no blocking findings.", {
+        stageId: stage.stageId
+      });
+    }
+    if ((phase === "post-execution" || phase === "post-deploy") && output2.postExecutionVerified !== true) {
+      throw new WorkflowContractError("GATE_FAILED", "Post-execution and post-deploy audits require verified resulting state.", {
+        stageId: stage.stageId,
+        phase
+      });
+    }
+    if (implementationActorIds.includes(auditorId)) {
+      throw new WorkflowContractError("GATE_FAILED", "Mandatory audit auditor must be independent from implementation actors.", {
+        stageId: stage.stageId,
+        auditorId,
+        implementationActorIds
+      });
+    }
+  }
+  bootstrapExecutionRequirement(task) {
+    const deepBootstrap = task.riskLevel === "high" || task.riskLevel === "critical" || task.decision.complexity === "complex";
+    return {
+      policyId: "semantic-execution-assurance-v1",
+      kind: "semantic",
+      minimumModelClass: deepBootstrap ? "deep" : "general",
+      minimumReasoningEffort: "high",
+      observationRequired: true
+    };
+  }
+  stageExecutionRequirement(task, capability, riskGate, provider2) {
+    if (DETERMINISTIC_CAPABILITIES.has(capability)) {
+      return {
+        policyId: "semantic-execution-assurance-v1",
+        kind: "deterministic",
+        minimumModelClass: null,
+        minimumReasoningEffort: null,
+        observationRequired: false
+      };
+    }
+    let minimumModelClass = "general";
+    let minimumReasoningEffort = "medium";
+    const providerRequiresHighAssurance = HIGH_ASSURANCE_CAPABILITIES.has(capability) || provider2.capabilities.some((providedCapability) => HIGH_ASSURANCE_CAPABILITIES.has(providedCapability));
+    if (providerRequiresHighAssurance) {
+      minimumModelClass = "deep";
+      minimumReasoningEffort = "high";
+    }
+    if (task.riskLevel === "high") {
+      minimumReasoningEffort = "high";
+    }
+    if (task.riskLevel === "critical" || riskGate === "mandatory") {
+      minimumModelClass = "deep";
+      minimumReasoningEffort = "high";
+    }
+    return {
+      policyId: "semantic-execution-assurance-v1",
+      kind: "semantic",
+      minimumModelClass,
+      minimumReasoningEffort,
+      observationRequired: true
+    };
+  }
+  /** What the host observed, or null when it observed nothing. */
+  observeExecutionContext(binding2) {
+    const context = this.trustedExecutionContextProvider?.observe(binding2) ?? null;
+    return context ? clone2(context) : null;
+  }
+  observeTrustedExecutionContext(binding2, subject) {
+    const context = this.observeExecutionContext(binding2);
+    if (!context) {
+      throw new WorkflowContractError(
+        "BINDING_REQUIRED",
+        `${subject} requires trusted host execution attestation.`,
+        { binding: binding2, observation: this.trustedExecutionContextProvider?.diagnose?.() ?? {
+          status: "provider-not-configured",
+          connection: "Connect a host-owned TrustedExecutionContextProvider or enable a supported host attestation adapter. Caller executionContext is not a trusted observation."
+        } }
+      );
+    }
+    return context;
+  }
+  assertTrustedExecutionContext(requirement, context, subject, binding2, enforceMinimum = true) {
+    this.assertExecutionContext(requirement, context, subject, enforceMinimum);
+    this.assertTrustedExecutionBinding(context, subject, binding2);
+    this.assertTrustedExecutionFreshness(context, subject);
+  }
+  assertTrustedExecutionBinding(context, subject, binding2) {
+    if (typeof context.observationId !== "string" || context.observationId.length < 16 || context.taskId !== binding2.taskId || context.runId !== binding2.runId || context.stageId !== binding2.stageId || context.revision !== binding2.revision || typeof context.actorId !== "string" || context.actorId.length === 0 || typeof context.expiresAt !== "string") {
+      throw new WorkflowContractError(
+        "BINDING_INVALID",
+        `${subject} trusted execution attestation is not bound to the requested task/run/stage/revision.`,
+        { binding: binding2, context }
+      );
+    }
+  }
+  assertTrustedExecutionFreshness(context, subject) {
+    const observedAt = Date.parse(context.observedAt);
+    const expiresAt = Date.parse(context.expiresAt ?? "");
+    const now = Date.now();
+    if (Number.isNaN(observedAt) || Number.isNaN(expiresAt) || observedAt > now + TRUSTED_EXECUTION_CLOCK_SKEW_MS || now - observedAt > TRUSTED_EXECUTION_MAX_AGE_MS || expiresAt <= now || expiresAt < observedAt || expiresAt - observedAt > TRUSTED_EXECUTION_MAX_AGE_MS) {
+      throw new WorkflowContractError(
+        "BINDING_INVALID",
+        `${subject} trusted execution attestation is stale, expired, or has an invalid validity window.`,
+        { observedAt: context.observedAt, expiresAt: context.expiresAt }
+      );
+    }
+  }
+  consumeTrustedExecutionObservation(context, subject) {
+    const observationId = context.observationId;
+    const expiresAt = context.expiresAt;
+    if (!observationId || !expiresAt) {
+      throw new WorkflowContractError(
+        "BINDING_INVALID",
+        `${subject} trusted execution attestation is missing its one-use claim fields.`,
+        { observationId: observationId ?? null, expiresAt: expiresAt ?? null }
+      );
+    }
+    const consumedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const canonicalExpiry = new Date(expiresAt).toISOString();
+    if (!this.store.claimExecutionObservation(observationId, canonicalExpiry, consumedAt)) {
+      throw new WorkflowContractError(
+        "BINDING_INVALID",
+        `${subject} trusted execution attestation was already consumed.`,
+        { observationId }
+      );
+    }
+  }
+  assertStrictPlanExecutionAssurance(plan, subject) {
+    const bootstrap = plan.bootstrapExecution;
+    if (!bootstrap) {
+      throw new WorkflowContractError(
+        "BINDING_REQUIRED",
+        `${subject} requires a plan with trusted bootstrap execution assurance.`
+      );
+    }
+    const binding2 = {
+      phase: "bootstrap",
+      taskId: plan.taskId,
+      runId: null,
+      stageId: null,
+      revision: null
+    };
+    this.assertExecutionContext(bootstrap.requirement, bootstrap.context, `${subject} bootstrap`);
+    this.assertTrustedExecutionBinding(bootstrap.context, `${subject} bootstrap`, binding2);
+    for (const stage of plan.stages) {
+      if (!stage.executionRequirement && !DETERMINISTIC_CAPABILITIES.has(stage.requiredCapability)) {
+        throw new WorkflowContractError(
+          "BINDING_REQUIRED",
+          `${subject} stage '${stage.stageId}' has no execution assurance requirement.`
+        );
+      }
+    }
+  }
+  assertExecutionContext(requirement, context, subject, enforceMinimum = true) {
+    if (requirement.kind === "deterministic") return;
+    if (!context) {
+      throw new WorkflowContractError(
+        "BINDING_REQUIRED",
+        `${subject} requires observed model and reasoning metadata.`,
+        { requirement }
+      );
+    }
+    if (context.schemaVersion !== CONTRACT_VERSION || typeof context.model !== "string" || context.model.length === 0 || !["runtime", "spawn-result"].includes(context.source) || Number.isNaN(Date.parse(context.observedAt))) {
+      throw new WorkflowContractError(
+        "BINDING_INVALID",
+        `${subject} execution context is malformed or not host-observed.`,
+        { context }
+      );
+    }
+    const minimumModelClass = requirement.minimumModelClass;
+    const minimumReasoningEffort = requirement.minimumReasoningEffort;
+    if (!minimumModelClass || !minimumReasoningEffort) {
+      throw new WorkflowContractError(
+        "INVALID_INPUT",
+        `${subject} semantic requirement is incomplete.`,
+        { requirement }
+      );
+    }
+    if (!enforceMinimum) return;
+    const modelClassRank = MODEL_CLASS.indexOf(context.modelClass);
+    const minimumModelClassRank = MODEL_CLASS.indexOf(minimumModelClass);
+    const reasoningRank = REASONING_EFFORT.indexOf(context.reasoningEffort);
+    const minimumReasoningRank = REASONING_EFFORT.indexOf(minimumReasoningEffort);
+    if (modelClassRank < 0 || reasoningRank < 0 || modelClassRank < minimumModelClassRank || reasoningRank < minimumReasoningRank) {
+      throw new WorkflowContractError(
+        "BINDING_INVALID",
+        `${subject} execution profile is below the planned semantic assurance floor.`,
+        {
+          model: context.model,
+          modelClass: context.modelClass,
+          reasoningEffort: context.reasoningEffort,
+          minimumModelClass,
+          minimumReasoningEffort
+        }
+      );
+    }
+  }
+  assertExecutionAssurance(stage, result) {
+    if (!stage.executionRequirement || result.state !== "passed") return;
+    this.assertExecutionContext(
+      stage.executionRequirement,
+      result.executionContext,
+      `Stage '${stage.stageId}'`
+    );
+  }
+  validateWorkUnitGraph(task) {
+    const graph = /* @__PURE__ */ new Map();
+    for (const unit of task.workUnits) {
+      if (graph.has(unit.id)) {
+        throw new WorkflowContractError("INVALID_INPUT", "Work unit IDs must be unique.", { workUnitId: unit.id });
+      }
+      graph.set(unit.id, unit.dependencies);
+    }
+    for (const unit of task.workUnits) {
+      for (const dependencyId of unit.dependencies) {
+        if (!graph.has(dependencyId)) {
+          throw new WorkflowContractError("INVALID_INPUT", "Work unit dependency does not exist.", {
+            workUnitId: unit.id,
+            dependencyId
+          });
+        }
+      }
+    }
+    const visiting = /* @__PURE__ */ new Set();
+    const visited = /* @__PURE__ */ new Set();
+    const visit2 = (unitId) => {
+      if (visiting.has(unitId)) {
+        throw new WorkflowContractError("INVALID_INPUT", "Work unit dependencies must not contain a cycle.", {
+          workUnitId: unitId
+        });
+      }
+      if (visited.has(unitId)) return;
+      visiting.add(unitId);
+      for (const dependencyId of graph.get(unitId) ?? []) visit2(dependencyId);
+      visiting.delete(unitId);
+      visited.add(unitId);
+    };
+    for (const unit of task.workUnits) visit2(unit.id);
+  }
+  setRunningStagePointers(plan) {
+    const readyStages = plan.stages.filter((stage) => stage.state === "ready");
+    plan.currentStageId = readyStages[0]?.stageId ?? null;
+    plan.nextStageId = readyStages[1]?.stageId ?? null;
+  }
+  addUnique(destination, values) {
+    for (const value of values) {
+      if (!destination.includes(value)) destination.push(value);
+    }
+  }
+  signPlan(plan) {
+    return createHmac3("sha256", this.planSigningKey).update(canonicalJson(this.planWithoutIntegrityToken(plan), "Plan"), "utf8").digest("base64url");
+  }
+  assertPlanIntegrity(plan) {
+    if (!PLAN_INTEGRITY_TOKEN.test(plan.integrityToken)) {
+      throw new WorkflowContractError(
+        "INVALID_INPUT",
+        "Workflow plan integrity token is not canonical base64url."
+      );
+    }
+    const expected = Buffer.from(this.signPlan(plan), "base64url");
+    const supplied = Buffer.from(plan.integrityToken, "base64url");
+    if (supplied.toString("base64url") !== plan.integrityToken || supplied.length !== expected.length || !timingSafeEqual3(supplied, expected)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Workflow plan integrity token is missing, modified, or signed by a different workflow store.");
+    }
+  }
+  planWithoutIntegrityToken(plan) {
+    const unsignedPlan = { ...plan };
+    delete unsignedPlan.integrityToken;
+    return unsignedPlan;
+  }
+  convergenceDigests(task, frame) {
+    return {
+      ...frameDigests(frame),
+      taskDigest: convergenceDigest(task)
+    };
+  }
+  assertConvergenceFrame(frame) {
+    this.validator.convergenceFrame(frame);
+    const artifactIds = [...frame.controlArtifacts, ...frame.targetArtifacts].map((artifact) => artifact.artifactId);
+    if (new Set(artifactIds).size !== artifactIds.length) {
+      throw new WorkflowContractError("INVALID_INPUT", "Convergence artifact IDs must be unique across control and target frames.");
+    }
+    if (frame.operationalSettings.maxAttemptsPerEpoch !== 3 || frame.operationalSettings.maxEpochs !== 2) {
+      throw new WorkflowContractError("INVALID_INPUT", "The convergence guard policy is fixed at three attempts and two epochs.");
+    }
+  }
+  artifactRolesChanged(baseline, proposed) {
+    const baselineRoles = new Map([...baseline.controlArtifacts, ...baseline.targetArtifacts].map((artifact) => [artifact.artifactId, artifact.role]));
+    return [...proposed.controlArtifacts, ...proposed.targetArtifacts].some((artifact) => baselineRoles.has(artifact.artifactId) && baselineRoles.get(artifact.artifactId) !== artifact.role);
+  }
+  requireConvergenceSnapshot(rootId) {
+    const snapshot = this.store.getConvergenceSnapshot(rootId);
+    if (!snapshot) throw new WorkflowContractError("RUN_NOT_FOUND", "Convergence root was not found.", { rootId });
+    this.validator.convergenceRoot(snapshot.root);
+    return snapshot;
+  }
+  /** Expires stale issued leases, then rereads the root so callers see the current lease state. */
+  liveConvergenceSnapshot(rootId) {
+    const now = Date.now();
+    for (const lease of this.requireConvergenceSnapshot(rootId).leases) {
+      if (lease.state === "issued" && Date.parse(lease.expiresAt) <= now) this.store.expireAttemptLease(lease.leaseId);
+    }
+    return this.requireConvergenceSnapshot(rootId);
+  }
+  newRunningReceipt(plan) {
+    const runId = `run-${plan.taskId}-${this.store.nextRunSequence()}`;
+    plan.state = "running";
+    this.setRunningStagePointers(plan);
+    const receipt = {
+      schemaVersion: CONTRACT_VERSION,
+      runId,
+      revision: 0,
+      state: "running",
+      plan,
+      stageResults: [],
+      blockers: [],
+      unresolved: [],
+      error: null
+    };
+    this.assertReceipt(receipt);
+    return receipt;
+  }
+  /** Records a rejected retry on the root before failing, so its evidence cannot return as new. */
+  rejectRetry(root, entry, message, details) {
+    const recorded = root.retryRejections ?? [];
+    const identity = (item) => convergenceDigest({ ...item, rejectedAt: "" });
+    let rootRevision = root.revision;
+    if (!recorded.some((item) => identity(item) === identity(entry))) {
+      const updated = bumpedRoot(root, entry.rejectedAt);
+      updated.retryRejections = [...recorded, entry];
+      this.validator.convergenceRoot(updated);
+      if (!this.store.updateConvergenceRoot(updated, root.revision)) {
+        throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while recording the rejected retry.", {
+          rootId: root.rootId
+        });
+      }
+      rootRevision = updated.revision;
+    }
+    throw new WorkflowContractError("NEW_EVIDENCE_REQUIRED", message, { ...details, rootRevision });
+  }
+  moveRootToReview(root) {
+    const updated = bumpedRoot(root, (/* @__PURE__ */ new Date()).toISOString());
+    updated.state = "needs-review";
+    if (!this.store.updateConvergenceRoot(updated, root.revision)) {
+      throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while applying its gate.", {
+        rootId: root.rootId
+      });
+    }
+  }
+  throwRootGate(root, snapshot) {
+    const attempts = consumedLeases(snapshot, root.currentEpoch).length;
+    if (root.state === "needs-review" && attempts >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
+      throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Independent review is required before another full attempt.", {
+        rootId: root.rootId,
+        epoch: root.currentEpoch
+      });
+    }
+    throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "The convergence root is gated and cannot issue another lease.", {
+      rootId: root.rootId,
+      state: root.state
+    });
+  }
+  buildConvergenceStatus(snapshot) {
+    const attemptsUsed = consumedLeases(snapshot, snapshot.root.currentEpoch).length;
+    let gateError = null;
+    if (snapshot.root.state === "needs-review") {
+      gateError = attemptsUsed >= snapshot.root.frame.operationalSettings.maxAttemptsPerEpoch ? {
+        code: "ATTEMPT_BUDGET_EXHAUSTED",
+        message: "Independent review is required before another full attempt.",
+        details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch }
+      } : {
+        code: "FRAME_REVIEW_REQUIRED",
+        message: "A task or control-frame change requires independent review.",
+        details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch }
+      };
+    } else if (snapshot.root.state === "needs-user") {
+      gateError = {
+        code: "FRAME_REVIEW_REQUIRED",
+        message: "The proposed change requires a new user contract.",
+        details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch }
+      };
+    }
+    return {
+      schemaVersion: CONTRACT_VERSION,
+      root: clone2(snapshot.root),
+      currentEpoch: snapshot.root.currentEpoch,
+      maxAttemptsPerEpoch: 3,
+      maxEpochs: 2,
+      attemptsUsedInEpoch: attemptsUsed,
+      attemptsRemainingInEpoch: Math.max(0, 3 - attemptsUsed),
+      proposals: clone2(snapshot.proposals),
+      leases: clone2(snapshot.leases),
+      outcomes: clone2(snapshot.outcomes),
+      reviews: clone2(snapshot.reviews),
+      workflowRunIds: [...snapshot.workflowRunIds],
+      gateError
+    };
+  }
+  assertReviewRoute(review) {
+    if (review.evidenceRefs.length === 0) {
+      throw new WorkflowContractError("MISSING_EVIDENCE", "A convergence review requires evidence.");
+    }
+    if (review.classification === "semantics-preserving") {
+      if (review.route === "resume-new-epoch") {
+        if (!review.comparability.comparable || !review.proposedFrame) {
+          throw new WorkflowContractError("GATE_FAILED", "Resuming a new epoch requires a comparable, semantics-preserving frame.");
+        }
+      } else if (!["diagnose", "stop"].includes(review.route)) {
+        throw new WorkflowContractError("GATE_FAILED", "A semantics-preserving review has an incompatible route.", { route: review.route });
+      }
+    } else if (review.classification === "semantics-changing") {
+      if (review.route !== "needs-user" || review.proposedFrame === null) {
+        throw new WorkflowContractError("GATE_FAILED", "Semantics-changing reviews must return the proposed frame to the user.");
+      }
+    } else if (!["panel", "needs-user", "stop"].includes(review.route)) {
+      throw new WorkflowContractError("GATE_FAILED", "Ambiguous frame reviews must route to a panel, the user, or stop.");
+    }
+  }
+  convergenceOutcome(receipt, binding2) {
+    const recordedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const expectedRootRevision = binding2.root.revision;
+    const root = bumpedRoot(binding2.root, recordedAt);
+    const aborted2 = receipt.blockers.includes("aborted-by-caller");
+    const passed = receipt.state === "passed";
+    const state = passed ? "passed" : aborted2 ? "aborted" : "failed";
+    const attemptsUsed = consumedLeases(this.requireConvergenceSnapshot(root.rootId), root.currentEpoch).length;
+    const needsUser = USER_GATE_RECEIPT_STATES.has(receipt.state);
+    if (!["needs-user", "abandoned"].includes(root.state)) {
+      if (needsUser) root.state = "needs-user";
+      else if (root.state !== "needs-review") {
+        if (passed) root.state = "completed";
+        else if (attemptsUsed >= root.frame.operationalSettings.maxAttemptsPerEpoch) root.state = "needs-review";
+        else root.state = "open";
+      }
+    }
+    const failureFingerprint = passed ? null : convergenceDigest({
+      state: receipt.state,
+      stage: receipt.stageResults.at(-1)?.stageId ?? null,
+      error: receipt.error?.code ?? null,
+      blockers: receipt.blockers,
+      unresolved: receipt.unresolved
+    });
+    const evidenceRefs = [...new Set(receipt.stageResults.flatMap((result) => [
+      ...result.evidence.map((evidence) => evidence.locator),
+      ...result.output.artifacts.map((artifact) => artifact.digest)
+    ]))];
+    const outcome = {
+      schemaVersion: CONTRACT_VERSION,
+      outcomeId: `outcome-${randomUUID()}`,
+      rootId: root.rootId,
+      rootRevision: root.revision,
+      leaseId: binding2.lease.leaseId,
+      epoch: binding2.lease.epoch,
+      ordinal: binding2.lease.ordinal,
+      workflowRunId: receipt.runId,
+      state,
+      receiptDigest: convergenceDigest(receipt),
+      failureFingerprint,
+      evidenceRefs,
+      recordedAt
+    };
+    this.validator.attemptOutcome(outcome);
+    return { root, expectedRootRevision, outcome };
+  }
+  change(runId, expectedRevision, mutate) {
+    return this.attempt(() => {
+      const receipt = this.requireRun(runId);
+      if (!Number.isInteger(expectedRevision) || expectedRevision !== receipt.revision) {
+        throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
+          expectedRevision,
+          actualRevision: receipt.revision
+        });
+      }
+      mutate(receipt);
+      receipt.revision += 1;
+      this.assertReceipt(receipt);
+      const binding2 = this.store.getGuardedRunBinding(runId);
+      const convergence = binding2 && !binding2.outcome && receipt.state !== "running" ? this.convergenceOutcome(receipt, binding2) : void 0;
+      if (!this.store.updateRun(receipt, expectedRevision, convergence)) {
+        const current = this.store.getRun(runId);
+        throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
+          expectedRevision,
+          actualRevision: current?.revision ?? null
+        });
+      }
+      return clone2(receipt);
+    });
+  }
+  requireRun(runId) {
+    const receipt = this.store.getRun(runId);
+    if (!receipt) {
+      throw new WorkflowContractError("RUN_NOT_FOUND", "Run was not found in workflow storage.", { runId });
+    }
+    this.assertReceipt(receipt);
+    return receipt;
+  }
+  assertReceipt(receipt) {
+    this.validator.workflowPlan(receipt.plan);
+    this.validator.workflowReceipt(receipt);
+  }
+  attempt(operation) {
+    try {
+      return apiOk2(operation());
+    } catch (error61) {
+      return apiError2(this.toErrorBody(error61));
+    }
+  }
+  toErrorBody(error61) {
+    if (error61 instanceof WorkflowContractError) return error61.toBody();
+    return {
+      code: "INVALID_INPUT",
+      message: "Workflow request could not be processed.",
+      details: { cause: error61 instanceof Error ? error61.message : String(error61) }
+    };
+  }
+};
+
+// mcp-server/src/state-cleanup-service.ts
+import { createHash as createHash15, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
+import path17 from "node:path";
+var DAY_MS = 24 * 60 * 60 * 1e3;
+var TOKEN_TTL_MS2 = 15 * 60 * 1e3;
+var MAX_PLAN_TOKEN_BYTES = 64 * 1024;
+var POLICY = {
+  workflowRetentionDays: 180,
+  continuityPayloadRetentionDays: 30,
+  continuityRecordRetentionDays: 180
+};
+function digest4(value) {
+  return `sha256:${createHash15("sha256").update(JSON.stringify(value)).digest("hex")}`;
+}
+function protection() {
+  return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
+}
+function databaseIdentity(databasePath) {
+  return databasePath === ":memory:" ? databasePath : path17.resolve(databasePath);
+}
+function apiError3(error61) {
+  const normalized = error61 instanceof WorkflowContractError ? error61 : new WorkflowContractError("INVALID_INPUT", error61 instanceof Error ? error61.message : String(error61));
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: normalized.toBody() };
+}
+var StateCleanupService = class {
+  constructor(workflowStore, continuityStore, validator, clock = () => /* @__PURE__ */ new Date()) {
+    this.workflowStore = workflowStore;
+    this.continuityStore = continuityStore;
+    this.validator = validator;
+    this.clock = clock;
+    this.secret = Buffer.from(workflowStore.getOrCreateSecret(
+      "state-cleanup-signing-key",
+      () => randomBytes4(32).toString("base64url")
+    ), "base64url");
+  }
+  workflowStore;
+  continuityStore;
+  validator;
+  clock;
+  secret;
+  prepare(value) {
+    try {
+      this.validator.prepareStateCleanupRequest(value);
+      const created = this.clock();
+      const createdAt = created.toISOString();
+      const cutoffs = {
+        workflow: new Date(created.getTime() - POLICY.workflowRetentionDays * DAY_MS).toISOString(),
+        continuityPayload: new Date(created.getTime() - POLICY.continuityPayloadRetentionDays * DAY_MS).toISOString(),
+        continuityRecord: new Date(created.getTime() - POLICY.continuityRecordRetentionDays * DAY_MS).toISOString()
+      };
+      const { workflow, continuity, protectedContinuityTasks, candidates } = this.currentCandidates(cutoffs);
+      const candidateDigest = digest4({ candidates, linkedRuns: workflow.linkedRuns });
+      const rootProtection = { previewCreatedAt: createdAt, ...workflow.rootProtection };
+      const payload = {
+        schemaVersion: "1.0.0",
+        planId: randomUUID2(),
+        createdAt,
+        expiresAt: new Date(created.getTime() + TOKEN_TTL_MS2).toISOString(),
+        policy: POLICY,
+        cutoffs,
+        candidateDigest,
+        rootProtection,
+        databases: this.databaseIdentities()
+      };
+      const plan = {
+        schemaVersion: "1.0.0",
+        planId: payload.planId,
+        createdAt,
+        expiresAt: payload.expiresAt,
+        policy: POLICY,
+        cutoffs,
+        candidates,
+        counts: {
+          workflowRoots: workflow.roots.length,
+          workflowRuns: workflow.standaloneRuns.length + workflow.roots.reduce((count, root) => count + root.runIds.length, 0),
+          continuitySnapshots: continuity?.snapshots.length ?? 0,
+          continuityTasks: continuity?.tasks.length ?? 0,
+          protectedActiveRoots: workflow.protectedActiveRoots,
+          protectedActiveContinuityTasks: protectedContinuityTasks
+        },
+        candidateDigest,
+        protection: protection(),
+        planToken: this.sign(payload),
+        rootProtection
+      };
+      this.validator.stateCleanupPlan(plan);
+      return { schemaVersion: "1.0.0", ok: true, data: plan, error: null };
+    } catch (error61) {
+      return apiError3(error61);
+    }
+  }
+  execute(value) {
+    try {
+      const request = this.validator.executeStateCleanupRequest(value);
+      const payload = this.verify(request.planToken);
+      const now = this.clock();
+      if (Date.parse(payload.expiresAt) <= now.getTime()) {
+        throw new WorkflowContractError("STALE_REVISION", "The state cleanup plan token expired.", { planId: payload.planId });
+      }
+      this.assertDatabaseIdentity(payload);
+      const current = this.currentCandidates(payload.cutoffs);
+      const candidates = current.candidates;
+      const currentDigest = digest4({ candidates, linkedRuns: current.workflow.linkedRuns });
+      if (currentDigest !== payload.candidateDigest || payload.candidates !== void 0 && JSON.stringify(candidates) !== JSON.stringify(payload.candidates) || payload.linkedRuns !== void 0 && JSON.stringify(current.workflow.linkedRuns) !== JSON.stringify(payload.linkedRuns)) {
+        throw new WorkflowContractError("STALE_REVISION", "State cleanup candidates changed after preview.", {
+          planId: payload.planId,
+          expectedDigest: payload.candidateDigest,
+          actualDigest: currentDigest
+        });
+      }
+      if (!this.workflowStore.claimCleanupPlan(payload.planId, payload.candidateDigest, now.toISOString())) {
+        throw new WorkflowContractError("STALE_REVISION", "The state cleanup plan token was already used.", { planId: payload.planId });
+      }
+      const workflowHasCandidates = candidates.workflowRoots.length > 0 || candidates.standaloneWorkflowRuns.length > 0;
+      const continuityHasCandidates = candidates.continuitySnapshots.length > 0 || candidates.continuityTasks.length > 0;
+      const workflowResult = {
+        status: "skipped",
+        backupPath: null,
+        deletedRoots: 0,
+        deletedRuns: 0,
+        error: null
+      };
+      const continuityResult = {
+        status: this.continuityStore ? "skipped" : "unavailable",
+        backupPath: null,
+        deletedSnapshots: 0,
+        deletedTasks: 0,
+        error: null
+      };
+      if (workflowHasCandidates) {
+        try {
+          workflowResult.backupPath = this.backupPath(this.workflowStore.databasePath, "workflows", payload.planId);
+          this.workflowStore.backupTo(workflowResult.backupPath);
+          this.protectBackup(workflowResult.backupPath);
+          const deleted = this.workflowStore.executeCleanup(current.workflow);
+          workflowResult.status = "completed";
+          workflowResult.deletedRoots = deleted.roots;
+          workflowResult.deletedRuns = deleted.runs;
+        } catch (error61) {
+          workflowResult.status = "failed";
+          workflowResult.error = error61 instanceof Error ? error61.message : String(error61);
+        }
+      }
+      if (continuityHasCandidates && this.continuityStore && current.continuity) {
+        try {
+          continuityResult.backupPath = this.backupPath(this.continuityStore.databasePath, "continuity", payload.planId);
+          this.continuityStore.backupTo(continuityResult.backupPath);
+          this.protectBackup(continuityResult.backupPath);
+          const guardedRootIds = [...current.continuity.tasks, ...current.continuity.snapshots].map((candidate) => candidate.rootId).filter((rootId) => rootId !== null);
+          const deleted = this.workflowStore.withInactiveRootGuard(guardedRootIds, () => this.continuityStore.executeCleanup(
+            current.continuity,
+            now.toISOString(),
+            payload.cutoffs.continuityPayload,
+            payload.cutoffs.continuityRecord
+          ));
+          continuityResult.status = "completed";
+          continuityResult.deletedSnapshots = deleted.snapshots;
+          continuityResult.deletedTasks = deleted.tasks;
+        } catch (error61) {
+          continuityResult.status = "failed";
+          continuityResult.error = error61 instanceof Error ? error61.message : String(error61);
+        }
+      }
+      const failures = workflowResult.status === "failed" || continuityResult.status === "failed";
+      const noOp = !workflowHasCandidates && !continuityHasCandidates;
+      const receipt = {
+        schemaVersion: "1.0.0",
+        planId: payload.planId,
+        status: noOp ? "no-op" : failures ? "partial" : "completed",
+        executedAt: now.toISOString(),
+        candidateDigest: payload.candidateDigest,
+        databases: { workflow: workflowResult, continuity: continuityResult },
+        ...payload.rootProtection === void 0 ? {} : { rootProtection: payload.rootProtection },
+        backupRetention: "manual-deletion-only",
+        protection: protection()
+      };
+      this.validator.stateCleanupReceipt(receipt);
+      return { schemaVersion: "1.0.0", ok: true, data: receipt, error: null };
+    } catch (error61) {
+      return apiError3(error61);
+    }
+  }
+  currentCandidates(cutoffs) {
+    const workflow = this.workflowStore.previewCleanup(cutoffs.workflow);
+    const continuity = this.continuityStore?.previewCleanup(cutoffs.continuityPayload, cutoffs.continuityRecord) ?? null;
+    let protectedContinuityTasks = continuity?.protectedActiveTasks ?? 0;
+    if (continuity) {
+      const protectedRootTaskIds = /* @__PURE__ */ new Set();
+      continuity.tasks = continuity.tasks.filter((task) => {
+        const active = task.rootId ? this.workflowStore.isConvergenceRootActive(task.rootId) : false;
+        if (active) protectedRootTaskIds.add(task.taskCorrelation);
+        return !active;
+      });
+      continuity.snapshots = continuity.snapshots.filter((snapshot) => {
+        const active = snapshot.rootId ? this.workflowStore.isConvergenceRootActive(snapshot.rootId) : false;
+        if (active) protectedRootTaskIds.add(snapshot.taskCorrelation);
+        return !active;
+      });
+      protectedContinuityTasks += protectedRootTaskIds.size;
+    }
+    const candidates = {
+      workflowRoots: workflow.roots,
+      standaloneWorkflowRuns: workflow.standaloneRuns,
+      continuitySnapshots: continuity?.snapshots ?? [],
+      continuityTasks: continuity?.tasks ?? []
+    };
+    return { workflow, continuity, protectedContinuityTasks, candidates };
+  }
+  databaseIdentities() {
+    return {
+      workflow: { path: databaseIdentity(this.workflowStore.databasePath), schemaVersion: this.workflowStore.getSchemaVersion() },
+      continuity: this.continuityStore ? { path: databaseIdentity(this.continuityStore.databasePath), schemaVersion: this.continuityStore.getSchemaVersion() } : null
+    };
+  }
+  sign(payload) {
+    const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+    const signature = createHmac4("sha256", this.secret).update(encoded).digest("base64url");
+    const token = `${encoded}.${signature}`;
+    if (Buffer.byteLength(token, "utf8") > MAX_PLAN_TOKEN_BYTES) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token exceeds the supported size.");
+    return token;
+  }
+  verify(token) {
+    if (Buffer.byteLength(token, "utf8") > MAX_PLAN_TOKEN_BYTES) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token exceeds the supported size.");
+    const [encoded, signature, extra] = token.split(".");
+    if (!encoded || !signature || extra) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
+    const expected = createHmac4("sha256", this.secret).update(encoded).digest();
+    let actual;
+    try {
+      actual = Buffer.from(signature, "base64url");
+    } catch {
+      throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
+    }
+    if (actual.toString("base64url") !== signature || actual.length !== expected.length || !timingSafeEqual4(actual, expected)) {
+      throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token signature is invalid.");
+    }
+    let payload;
+    try {
+      const payloadBytes = Buffer.from(encoded, "base64url");
+      if (payloadBytes.toString("base64url") !== encoded) throw new Error("non-canonical token payload");
+      const parsed = JSON.parse(payloadBytes.toString("utf8"));
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("invalid payload object");
+      payload = parsed;
+    } catch {
+      throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token payload is invalid.");
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, "rootProtection")) {
+      let observed;
+      try {
+        observed = this.validator.stateCleanupRootProtection(payload.rootProtection);
+      } catch {
+        throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan root protection diagnostics are invalid.");
+      }
+      if (observed.previewCreatedAt !== payload.createdAt) {
+        throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan root protection preview timestamp does not match.");
+      }
+    }
+    return payload;
+  }
+  assertDatabaseIdentity(payload) {
+    const current = this.databaseIdentities();
+    const workflow = payload.databases.workflow;
+    if (workflow.path !== current.workflow.path || workflow.schemaVersion !== current.workflow.schemaVersion) {
+      throw new WorkflowContractError("STALE_REVISION", "The workflow database identity or schema changed after preview.");
+    }
+    if (JSON.stringify(current.continuity) !== JSON.stringify(payload.databases.continuity)) {
+      throw new WorkflowContractError("STALE_REVISION", "The continuity database identity or schema changed after preview.");
+    }
+  }
+  backupPath(databasePath, label, planId) {
+    if (databasePath === ":memory:") throw new WorkflowContractError("INVALID_INPUT", "In-memory databases cannot be cleaned destructively.");
+    const directory = path17.join(path17.dirname(path17.resolve(databasePath)), "backups");
+    mkdirSync4(directory, { recursive: true, mode: 448 });
+    return path17.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);
+  }
+  protectBackup(targetPath) {
+    if (process.platform !== "win32") chmodSync3(targetPath, 384);
+  }
+};
+
+// mcp-server/src/trust-store.ts
+import { createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
+import { types as utilTypes2 } from "node:util";
+import { chmodSync as chmodSync4, mkdirSync as mkdirSync5 } from "node:fs";
+import path18 from "node:path";
+import { DatabaseSync as DatabaseSync5 } from "node:sqlite";
+var TRUST_SIGNING_KEY = "trust-signing-key";
+var SCHEMA_VERSION3 = 1;
+var INPUT_SOURCE_KEYS = /* @__PURE__ */ new Set([
+  "originKind",
+  "host",
+  "sessionId",
+  "eventId",
+  "contentDigest",
+  "observedAt",
+  "expiresAt",
+  "authorityEffect",
+  "attestation"
+]);
+var ATTESTATION_KEYS = /* @__PURE__ */ new Set(["kind", "adapter", "capabilityVersion"]);
+function verifyInputSource(receipt, signingKey2) {
+  try {
+    const { integrityToken, ...unsigned } = receipt;
+    const actual = Buffer.from(integrityToken, "base64url");
+    const expected = createHmac5("sha256", signingKey2).update(canonicalJson(unsigned, "Input source receipt")).digest();
+    return signingKey2.length === 32 && actual.length === expected.length && timingSafeEqual5(actual, expected);
+  } catch {
+    return false;
+  }
+}
+function rejectUnexpectedKeys(value, allowed, label) {
+  const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
+  if (unexpected.length > 0) {
+    throw new WorkflowContractError("INVALID_INPUT", `${label} contains unsupported fields.`, { unexpected });
+  }
+}
+var TrustStore = class {
+  database;
+  shared;
+  databasePath;
+  signingKey;
+  syntheticSecret;
+  closed = false;
+  constructor(input2, syntheticSecret, options = {}) {
+    const busyTimeoutMs = options.busyTimeoutMs ?? 5e3;
+    if (!Number.isInteger(busyTimeoutMs) || busyTimeoutMs < 0 || busyTimeoutMs > 2147483647 || typeof input2 !== "string" && options.busyTimeoutMs !== void 0) {
+      throw new WorkflowContractError("INVALID_INPUT", "A standalone trust store requires a valid busy timeout.");
+    }
+    this.shared = typeof input2 === "string" ? void 0 : input2;
+    this.databasePath = typeof input2 === "string" ? input2 : input2.databasePath;
+    this.syntheticSecret = syntheticSecret;
+    const databasePath = this.databasePath;
+    if (this.shared) {
+      this.database = this.shared.database;
+      if (!syntheticSecret || Buffer.from(syntheticSecret, "base64url").length !== 32) throw new WorkflowContractError("INVALID_INPUT", "An explicit new synthetic trust key is required.");
+      this.shared.initialize(() => this.initializeSchema());
+      this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
+      return;
+    }
+    if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
+    if (databasePath !== ":memory:") mkdirSync5(path18.dirname(path18.resolve(databasePath)), { recursive: true, mode: 448 });
+    this.database = new DatabaseSync5(databasePath);
+    try {
+      this.database.exec(`PRAGMA busy_timeout = ${busyTimeoutMs};`);
+      this.database.exec("PRAGMA synchronous = FULL;");
+      if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
+      this.initializeSchema();
+      this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
+      if (this.signingKey.length !== 32) throw tagProducerFailure(new Error("Stored trust signing key is invalid."), "TRUST_SIGNING_KEY_INVALID");
+      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync4(path18.resolve(databasePath), 384);
+    } catch (cause) {
+      let closeFailed = false;
+      let closeFailure;
+      try {
+        this.database.close();
+      } catch (closeError) {
+        closeFailed = true;
+        closeFailure = utilTypes2.isNativeError(closeError) ? tagProducerFailure(closeError, "TRUST_CLOSE_FAILED") : closeError;
+      }
+      const failure3 = cause instanceof WorkflowContractError ? cause : this.storageError("Cannot initialize the trust database.", cause);
+      if (closeFailed) retainFailureSecondary(failure3, closeFailure);
+      throw failure3;
+    }
+  }
+  recordInputSource(input2) {
+    rejectUnexpectedKeys(input2, INPUT_SOURCE_KEYS, "Input source metadata");
+    if (!input2.attestation || typeof input2.attestation !== "object" || Array.isArray(input2.attestation)) {
+      throw new WorkflowContractError("INVALID_INPUT", "Input source attestation must be an object.");
+    }
+    rejectUnexpectedKeys(input2.attestation, ATTESTATION_KEYS, "Input source attestation");
+    if (input2.originKind === "user-turn" || input2.attestation.kind === "host-direct-user-event") {
+      throw new WorkflowContractError("BINDING_INVALID", "This release cannot attest direct-user approval sources.");
+    }
+    if (input2.originKind === "peer" && (input2.authorityEffect !== "none" || input2.attestation.kind !== "broker-peer-envelope")) {
+      throw new WorkflowContractError("BINDING_INVALID", "Peer input must be a non-authorizing broker envelope.");
+    }
+    if (input2.originKind !== "peer" && input2.attestation.kind === "broker-peer-envelope") {
+      throw new WorkflowContractError("BINDING_INVALID", "Broker peer attestations must be classified as peer input.");
+    }
+    const receipt = this.seal({
+      schemaVersion: CONTRACT_VERSION,
+      receiptId: `source-${randomUUID3()}`,
+      originKind: input2.originKind,
+      host: input2.host,
+      sessionId: input2.sessionId,
+      eventId: input2.eventId,
+      contentDigest: input2.contentDigest,
+      observedAt: input2.observedAt,
+      expiresAt: input2.expiresAt,
+      authorityEffect: input2.authorityEffect,
+      attestation: {
+        kind: input2.attestation.kind,
+        adapter: input2.attestation.adapter,
+        capabilityVersion: input2.attestation.capabilityVersion
+      }
+    });
+    return this.guard("Cannot record the input source receipt.", { receiptId: receipt.receiptId }, () => this.transaction(() => {
+      const existing = this.database.prepare(`
+        SELECT receipt_json FROM input_source_receipts
+        WHERE host = ? AND session_id = ? AND event_id = ?
+      `).get(receipt.host, receipt.sessionId, receipt.eventId);
+      if (existing) {
+        const prior = JSON.parse(existing.receipt_json);
+        const sameSecurityMetadata = prior.contentDigest === receipt.contentDigest && prior.originKind === receipt.originKind && prior.authorityEffect === receipt.authorityEffect && canonicalJson(prior.attestation, "Source attestation") === canonicalJson(receipt.attestation, "Source attestation");
+        if (sameSecurityMetadata) return structuredClone(prior);
+        throw tagProducerFailure(new WorkflowContractError("REQUEST_CONFLICT", "The input event was already recorded with different content or provenance metadata.", {
+          host: receipt.host,
+          sessionId: receipt.sessionId,
+          eventId: receipt.eventId
+        }), "TRUST_SOURCE_EVENT_CONFLICT");
+      }
+      this.database.prepare(`
+        INSERT INTO input_source_receipts (
+          receipt_id, host, session_id, event_id, origin_kind,
+          authority_effect, observed_at, expires_at, receipt_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        receipt.receiptId,
+        receipt.host,
+        receipt.sessionId,
+        receipt.eventId,
+        receipt.originKind,
+        receipt.authorityEffect,
+        receipt.observedAt,
+        receipt.expiresAt,
+        JSON.stringify(receipt)
+      );
+      return structuredClone(receipt);
+    }));
+  }
+  latestInputSource(binding2) {
+    return this.guard("Cannot read the latest input source receipt.", { ...binding2 }, () => {
+      const row = this.database.prepare(`
+        SELECT receipt_json FROM input_source_receipts
+        WHERE host = ? AND session_id = ?
+        ORDER BY observed_at DESC, receipt_id DESC LIMIT 1
+      `).get(binding2.host, binding2.sessionId);
+      return row ? JSON.parse(row.receipt_json) : null;
+    });
+  }
+  getInputSource(receiptId) {
+    return this.guard("Cannot read the input source receipt.", { receiptId }, () => {
+      const row = this.database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId);
+      return row ? JSON.parse(row.receipt_json) : null;
+    });
+  }
+  verify(receipt) {
+    return verifyInputSource(receipt, this.signingKey);
+  }
+  /** Existing key/receipt snapshot only: no schema, journal mode, key creation or receipt issuance. */
+  static readVerifiedInputSource(databasePath, receiptId) {
+    let database;
+    try {
+      database = new DatabaseSync5(databasePath, { readOnly: true });
+      database.exec("PRAGMA query_only = ON; BEGIN;");
+      const version3 = database.prepare("PRAGMA user_version").get().user_version;
+      if (version3 > SCHEMA_VERSION3) return null;
+      const key = database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(TRUST_SIGNING_KEY);
+      const row = database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?").get(receiptId);
+      if (!key || !row) return null;
+      const receipt = JSON.parse(row.receipt_json);
+      return receipt?.receiptId === receiptId && verifyInputSource(receipt, Buffer.from(key.value, "base64url")) ? receipt : null;
+    } catch {
+      return null;
+    } finally {
+      database?.close();
+    }
+  }
+  close() {
+    if (this.closed) return;
+    try {
+      this.database.close();
+    } catch (cause) {
+      throw utilTypes2.isNativeError(cause) ? tagProducerFailure(cause, "TRUST_CLOSE_FAILED") : cause;
+    }
+    this.closed = true;
+  }
+  seal(unsigned) {
+    return {
+      ...unsigned,
+      integrityToken: createHmac5("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest("base64url")
+    };
+  }
+  initializeSchema() {
+    const version3 = this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
+    if (version3 > SCHEMA_VERSION3) {
+      throw tagProducerFailure(new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
+        supportedVersion: SCHEMA_VERSION3,
+        actualVersion: version3
+      }), "TRUST_SCHEMA_UNSUPPORTED");
+    }
+    this.transaction(() => {
+      this.database.exec(`
+      CREATE TABLE IF NOT EXISTS trust_metadata (
+        key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL
+      ) STRICT;
+      CREATE TABLE IF NOT EXISTS input_source_receipts (
+        receipt_id TEXT PRIMARY KEY,
+        host TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        event_id TEXT NOT NULL,
+        origin_kind TEXT NOT NULL,
+        authority_effect TEXT NOT NULL,
+        observed_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        receipt_json TEXT NOT NULL,
+        UNIQUE(host, session_id, event_id)
+      ) STRICT;
+      CREATE INDEX IF NOT EXISTS input_source_latest
+        ON input_source_receipts(host, session_id, observed_at DESC);
+    `);
+      if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION3);
+      else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION3};`);
+    });
+  }
+  getOrCreateSecret(name) {
+    return this.transaction(() => {
+      const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name);
+      if (existing) return existing.value;
+      const value = this.syntheticSecret ?? randomBytes5(32).toString("base64url");
+      this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
+      return value;
+    });
+  }
+  transaction(operation) {
+    if (this.shared) return this.shared.transaction(operation);
+    this.database.exec("BEGIN IMMEDIATE;");
+    try {
+      const result = operation();
+      this.database.exec("COMMIT;");
+      return result;
+    } catch (cause) {
+      try {
+        this.database.exec("ROLLBACK;");
+      } catch (rollbackError) {
+        retainFailureSecondary(cause, utilTypes2.isNativeError(rollbackError) ? tagProducerFailure(rollbackError, "TRUST_ROLLBACK_FAILED") : rollbackError);
+      }
+      throw cause;
+    }
+  }
+  guard(message, details, operation) {
+    try {
+      return operation();
+    } catch (cause) {
+      if (cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError(message, cause, details);
+    }
+  }
+  /**
+   * A storage or driver failure means the trust store is unavailable, never that the caller's input was invalid.
+   * Details keep a bounded, redacted cause (no message, path or SQL); the actual error stays a private producer cause.
+   */
+  storageError(message, cause, details = {}) {
+    return retainFailureCause(tagProducerFailure(new WorkflowContractError("MCP_UNAVAILABLE", message, {
+      ...details,
+      reason: "TRUST_STORAGE_FAILED",
+      cause: failureContext(cause)
+    }), "TRUST_STORAGE_FAILED"), cause);
+  }
+};
+
 // skills/orchestrator/contracts/collaboration-decision.v1.schema.json
 var collaboration_decision_v1_schema_default = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -44726,7 +45609,7 @@ var TrustService = class {
 };
 
 // mcp-server/src/index.ts
-import path20 from "node:path";
+import path21 from "node:path";
 
 // mcp-server/src/skill-classification/runtime.ts
 import { types as utilTypes3 } from "node:util";
@@ -44734,7 +45617,7 @@ import { readFile as readFile6 } from "node:fs/promises";
 
 // mcp-server/src/skill-classification/native-adapters.ts
 import { spawn as spawn2 } from "node:child_process";
-import path18 from "node:path";
+import path19 from "node:path";
 function resolveNativeClassificationAdapter(registry2, ref, evidenceRef, retryPolicyVerified) {
   const adapter = registry2.get(ref);
   if (!retryPolicyVerified || !adapter || adapter.capabilityEvidenceRef !== evidenceRef || adapter.retryPolicy !== "no-retry" || typeof adapter.invokeStructured !== "function") return null;
@@ -44746,7 +45629,7 @@ function assertNativeAdapterDataObject(value) {
 function assertEligibleNativeAdapterDefinition(value) {
   assertNativeAdapterDataObject(value);
   const data = value;
-  if (typeof data.adapterId !== "string" || !data.adapterId || typeof data.host !== "string" || !data.host || typeof data.executable !== "string" || !path18.isAbsolute(data.executable) || /\.(?:cmd|bat|ps1)$/iu.test(data.executable) || typeof data.workingDirectory !== "string" || !path18.isAbsolute(data.workingDirectory) || !Number.isSafeInteger(data.timeoutMs) || Number(data.timeoutMs) < 1 || Number(data.timeoutMs) > 3e5 || !Number.isSafeInteger(data.maximumOutputBytes) || Number(data.maximumOutputBytes) < 1 || Number(data.maximumOutputBytes) > 1024 * 1024 || !Array.isArray(data.isolationArgs) || data.isolationArgs.length > 64 || data.isolationArgs.some((arg) => typeof arg !== "string" || arg.length > 8192 || arg.includes("\0"))) throw new Error("INVALID_NATIVE_ADAPTER_DEFINITION");
+  if (typeof data.adapterId !== "string" || !data.adapterId || typeof data.host !== "string" || !data.host || typeof data.executable !== "string" || !path19.isAbsolute(data.executable) || /\.(?:cmd|bat|ps1)$/iu.test(data.executable) || typeof data.workingDirectory !== "string" || !path19.isAbsolute(data.workingDirectory) || !Number.isSafeInteger(data.timeoutMs) || Number(data.timeoutMs) < 1 || Number(data.timeoutMs) > 3e5 || !Number.isSafeInteger(data.maximumOutputBytes) || Number(data.maximumOutputBytes) < 1 || Number(data.maximumOutputBytes) > 1024 * 1024 || !Array.isArray(data.isolationArgs) || data.isolationArgs.length > 64 || data.isolationArgs.some((arg) => typeof arg !== "string" || arg.length > 8192 || arg.includes("\0"))) throw new Error("INVALID_NATIVE_ADAPTER_DEFINITION");
   if (typeof data.approvalRef !== "string" || typeof data.capabilityEvidenceRef !== "string" || typeof data.retryPolicyVerified !== "boolean" || typeof data.retryPolicyEvidenceRef !== "string" || typeof data.isolationEvidenceRef !== "string") throw new Error("INVALID_NATIVE_ADAPTER_DEFINITION");
 }
 function hasRequiredNativeAdapterEvidence(data) {
@@ -44882,12 +45765,14 @@ function createNativeClassificationAdapters(definitions, runner = runNativeClass
       const input2 = JSON.stringify(buildVendorMessages(fixedRequest));
       if (Buffer.byteLength(input2, "utf8") > fixedProfile.maximumInputBytes) throw new ClassificationProviderError("INPUT_TOO_LONG", "not-started");
       let cleanup;
+      let dispatchStarted = false;
       try {
         const prepared = await strategy.prepare(fixed, fixedProfile, schema);
         cleanup = prepared.cleanup;
         const args = Object.freeze([...prepared.args]);
         if (signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
         beforeDispatch?.();
+        dispatchStarted = true;
         const output2 = await runner({ executable: fixed.executable, args, cwd: fixed.workingDirectory, input: input2, timeoutMs: fixed.timeoutMs, maximumOutputBytes: fixed.maximumOutputBytes }, signal);
         if (signal.aborted) throw new ClassificationProviderError("CANCELLED", "unknown");
         if (Buffer.byteLength(output2.stdout, "utf8") > fixed.maximumOutputBytes) throw new ClassificationProviderError("NATIVE_OUTPUT_TOO_LARGE", "unknown");
@@ -44904,7 +45789,7 @@ function createNativeClassificationAdapters(definitions, runner = runNativeClass
         return { response: parsed.data, dispatchState: "started", diagnostics: null, usage: decoded.usage };
       } catch (error61) {
         if (error61 instanceof ClassificationProviderError) throw error61;
-        throw new ClassificationProviderError("NATIVE_PROCESS_UNAVAILABLE", "unknown");
+        throw new ClassificationProviderError("NATIVE_PROCESS_UNAVAILABLE", dispatchStarted ? "unknown" : "not-started");
       } finally {
         await cleanup?.();
       }
@@ -44996,14 +45881,14 @@ import { readFileSync as readFileSync5 } from "node:fs";
 
 // mcp-server/src/skill-classification/native-cli-strategies.ts
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
-import path19 from "node:path";
+import path20 from "node:path";
 var object5 = (value) => Boolean(value) && typeof value === "object" && !Array.isArray(value);
 var tokens = (value) => Number.isSafeInteger(value) && Number(value) >= 0 ? Number(value) : null;
 var canEncodeProfile = (profile) => typeof profile.reasoningEffort === "string" && /^[A-Za-z0-9][A-Za-z0-9._:-]*$/u.test(profile.reasoningEffort);
 async function removeNativeSchema(root, temporary) {
-  const target = path19.resolve(temporary);
-  const relative = path19.relative(path19.resolve(root), target);
-  if (!relative || relative === ".." || relative.startsWith(`..${path19.sep}`) || path19.isAbsolute(relative)) throw new ClassificationProviderError("NATIVE_CLEANUP_UNAVAILABLE", "unknown");
+  const target = path20.resolve(temporary);
+  const relative = path20.relative(path20.resolve(root), target);
+  if (!relative || relative === ".." || relative.startsWith(`..${path20.sep}`) || path20.isAbsolute(relative)) throw new ClassificationProviderError("NATIVE_CLEANUP_UNAVAILABLE", "unknown");
   await rm(target, { recursive: true, force: true });
 }
 var codexBehavior = {
@@ -45029,9 +45914,9 @@ var codexBehavior = {
       `model_reasoning_effort=${JSON.stringify(profile.reasoningEffort)}`,
       ...definition.isolationArgs
     ];
-    const temporary = await mkdtemp(path19.join(definition.workingDirectory, ".ags-native-"));
+    const temporary = await mkdtemp(path20.join(definition.workingDirectory, ".ags-native-"));
     try {
-      const schemaPath = path19.join(temporary, "response.schema.json");
+      const schemaPath = path20.join(temporary, "response.schema.json");
       await writeFile(schemaPath, schema, { encoding: "utf8", flag: "wx", mode: 384 });
       args.push("--output-schema", schemaPath, "-");
       return { args, cleanup: () => removeNativeSchema(definition.workingDirectory, temporary) };
@@ -45168,7 +46053,7 @@ async function main() {
   }
   const cleanup = new StateCleanupService(store, continuityStore, validator);
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
-  const classificationRoot = path20.dirname(path20.dirname(registryPath));
+  const classificationRoot = path21.dirname(path21.dirname(registryPath));
   const classificationConfig = process.env.AGENT_GOVERNANCE_CLASSIFICATION_CONFIG;
   let initializationFailed = false;
   let providerRuntimeRef;
@@ -45196,7 +46081,7 @@ async function main() {
     observeRuntime: () => {
       try {
         if (!classificationConfig) return "unconfigured";
-        const absolute = path20.resolve(classificationRoot, classificationConfig);
+        const absolute = path21.resolve(classificationRoot, classificationConfig);
         const read = (file2) => {
           const bytes = readFileSync5(file2);
           if (bytes.length > 1024 * 1024) throw new Error("CONFIG_TOO_LARGE");
@@ -45206,9 +46091,9 @@ async function main() {
         const data = JSON.parse(configBytes);
         return digestClassificationValue([
           configBytes,
-          read(path20.resolve(path20.dirname(absolute), data.config.providerProfileRegistryRef)),
-          data.providerRuntimeRef ? read(path20.resolve(path20.dirname(absolute), data.providerRuntimeRef)) : null,
-          data.nativeAdapterDefinitionsRef ? read(path20.resolve(path20.dirname(absolute), data.nativeAdapterDefinitionsRef)) : null
+          read(path21.resolve(path21.dirname(absolute), data.config.providerProfileRegistryRef)),
+          data.providerRuntimeRef ? read(path21.resolve(path21.dirname(absolute), data.providerRuntimeRef)) : null,
+          data.nativeAdapterDefinitionsRef ? read(path21.resolve(path21.dirname(absolute), data.nativeAdapterDefinitionsRef)) : null
         ]);
       } catch {
         return null;

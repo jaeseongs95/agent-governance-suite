@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 
-// mcp-server/src/failure-diagnostics.ts
+// mcp-server/src/builtin-hook-host-adapters.ts
+import { createHash as createHash2 } from "node:crypto";
+import { types as utilTypes2 } from "node:util";
+
+// runtime/failure-diagnostics.mjs
 import { createHash } from "node:crypto";
 import { types } from "node:util";
 var producerReasons = /* @__PURE__ */ new WeakMap();
@@ -87,101 +91,65 @@ function failureContext(error) {
   return describe(error, 0);
 }
 
-// mcp-server/src/session-board-hook.ts
-import { readFileSync } from "node:fs";
+// mcp-server/src/builtin-hook-host-adapters.ts
+import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
 import path4 from "node:path";
-import { fileURLToPath as fileURLToPath2 } from "node:url";
 
-// skills/session-board/scripts/board-store.mjs
-import { mkdirSync } from "node:fs";
-import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
-var SUMMARY_MAX_LENGTH = 200;
-var RETAIN_MS = 24 * 36e5;
-var READ_ONLY_COMMANDS = /* @__PURE__ */ new Set(["ls", "cat", "pwd", "rg", "grep"]);
-var READ_ONLY_GIT = /* @__PURE__ */ new Set(["status", "log", "diff", "show"]);
-function openBoard(input, { busyTimeoutMs = 5e3 } = {}) {
-  const shared = typeof input === "string" ? null : input;
-  const databasePath = shared ? shared.databasePath : input;
-  if (!shared && databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true });
-  const db = shared ? shared.database : new DatabaseSync(databasePath);
-  const initialize = () => {
-    try {
-      if (!shared) db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
-      if (!shared && databasePath !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
-      db.exec(`CREATE TABLE IF NOT EXISTS sessions (
-      host TEXT NOT NULL,
-      session_id TEXT NOT NULL,
-      cwd TEXT NOT NULL,
-      summary TEXT,
-      summary_at TEXT,
-      last_prompt_at TEXT,
-      denied_for TEXT,
-      started_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      PRIMARY KEY (host, session_id)
-    ) STRICT;`);
-    } catch (error) {
-      db.close();
-      throw error;
+// mcp-server/src/host-input-adapter.ts
+var hostFailures = {
+  selection: ["INVALID_HOOK_HOST_SELECTION", "Invalid or ambiguous hook host."],
+  adapter: ["INVALID_HOOK_HOST_ADAPTER", "Invalid hook host adapter."],
+  duplicate: ["HOOK_HOST_ADAPTER_DUPLICATE", "Hook host adapter is already registered."],
+  unavailable: ["HOST_ADAPTER_UNAVAILABLE", "A host delivery adapter is required."]
+};
+function hookHostFailure(kind) {
+  const [reason, message] = hostFailures[kind];
+  return producerFailure(reason, message);
+}
+function resolveHookHost(arguments_, fallback) {
+  const selected = [];
+  for (let index = 0; index < arguments_.length; index++) {
+    const argument = arguments_[index];
+    if (argument === "--host") selected.push(arguments_[++index] ?? "");
+    else if (argument.startsWith("--host=")) selected.push(argument.slice(7));
+  }
+  if (selected.length === 0) return fallback;
+  if (selected.length !== 1 || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(selected[0])) throw hookHostFailure("selection");
+  return selected[0];
+}
+function adaptHostInput(input, host) {
+  const adapter = hookHostAdapters.get(host);
+  if (!adapter) throw hookHostFailure("unavailable");
+  return adapter.adaptInput?.(input, host) ?? {
+    lifecycle: "none",
+    outputEventName: "",
+    observation: {
+      host,
+      sessionId: "",
+      kind: "unknown",
+      actor: { kind: "unknown", observedBy: `${host}:unconfigured-input`, assurance: "unknown" }
     }
-    if (shared) shared.setSchemaVersion(0);
   };
-  if (shared) shared.initialize(initialize);
-  else initialize();
-  return db;
 }
-function touchSession(db, { host, sessionId, cwd, now }) {
-  if (db.transaction && !db.inTransaction) return db.transaction(() => touchSession(db, { host, sessionId, cwd, now }));
-  db.prepare(`INSERT INTO sessions (host, session_id, cwd, started_at, updated_at) VALUES (?, ?, ?, ?, ?)
-    ON CONFLICT (host, session_id) DO UPDATE SET cwd = excluded.cwd, updated_at = excluded.updated_at`).run(host, sessionId, cwd, now, now);
+function isGovernanceHookTool(host, toolName) {
+  return hookHostAdapters.get(host)?.ownsTool?.(toolName) === true;
 }
-function recordPrompt(db, session) {
-  if (db.transaction && !db.inTransaction) return db.transaction(() => recordPrompt(db, session));
-  touchSession(db, session);
-  db.prepare("UPDATE sessions SET last_prompt_at = ? WHERE host = ? AND session_id = ?").run(session.now, session.host, session.sessionId);
-}
-function normalizeSummary(value) {
-  if (typeof value !== "string") return null;
-  const line = value.trim();
-  return line && !/[\r\n]/u.test(line) && line.length <= SUMMARY_MAX_LENGTH ? line : null;
-}
-function setSummary(db, session, summary) {
-  if (db.transaction && !db.inTransaction) return db.transaction(() => setSummary(db, session, summary));
-  const line = normalizeSummary(summary);
-  if (!line) throw new Error(`summary must be one non-empty line of at most ${SUMMARY_MAX_LENGTH} characters`);
-  touchSession(db, session);
-  db.prepare("UPDATE sessions SET summary = ?, summary_at = ? WHERE host = ? AND session_id = ?").run(line, session.now, session.host, session.sessionId);
-  return line;
-}
-function gateDecision(db, session) {
-  if (db.transaction && !db.inTransaction) return db.transaction(() => gateDecision(db, session));
-  touchSession(db, session);
-  const row = db.prepare("SELECT summary_at, last_prompt_at, started_at FROM sessions WHERE host = ? AND session_id = ?").get(session.host, session.sessionId);
-  const marker = row.last_prompt_at ?? row.started_at;
-  if (row.summary_at && row.summary_at >= marker) return "allow";
-  const claimed = db.prepare(`UPDATE sessions SET denied_for = ?
-    WHERE host = ? AND session_id = ? AND (denied_for IS NULL OR denied_for <> ?)`).run(marker, session.host, session.sessionId, marker);
-  return claimed.changes > 0 ? "deny" : "allow";
-}
-function pruneSessions(db, now) {
-  if (db.transaction && !db.inTransaction) return db.transaction(() => pruneSessions(db, now));
-  db.prepare("DELETE FROM sessions WHERE updated_at < ?").run(new Date(Date.parse(now) - RETAIN_MS).toISOString());
-}
-function isReadOnlyCommand(command) {
-  if (typeof command !== "string") return false;
-  const text2 = command.trim();
-  if (!text2 || /[;&|<>`$@(){}'"\\\r\n]/u.test(text2)) return false;
-  const [first, second, ...rest] = text2.split(/\s+/u);
-  if ([second, ...rest].some((argument) => /^--(?:output|ext-diff|pre)(?:=|$|-)/u.test(argument ?? ""))) return false;
-  if (READ_ONLY_COMMANDS.has(first)) return true;
-  if (first !== "git") return false;
-  if (READ_ONLY_GIT.has(second)) return true;
-  return second === "branch" && (rest.length === 0 || rest.length === 1 && rest[0] === "--list");
+var hookHostAdapters = /* @__PURE__ */ new Map();
+function registerHookHostAdapter(host, adapter) {
+  if (typeof host !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host) || !adapter || typeof adapter.deliveryProfile !== "function" || typeof adapter.processPid !== "function" || adapter.adaptInput !== void 0 && typeof adapter.adaptInput !== "function" || adapter.ownsTool !== void 0 && typeof adapter.ownsTool !== "function" || adapter.attestationKind !== void 0 && (typeof adapter.attestationKind !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(adapter.attestationKind))) throw hookHostFailure("adapter");
+  if (hookHostAdapters.has(host)) throw hookHostFailure("duplicate");
+  hookHostAdapters.set(host, Object.freeze({ ...adapter }));
 }
 
-// contracts/types.ts
-var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
+// mcp-server/src/session-message-client.ts
+import { types as utilTypes } from "node:util";
+import { existsSync } from "node:fs";
+import { chmod, mkdir, readFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import path2 from "node:path";
+import { performance } from "node:perf_hooks";
+import tls from "node:tls";
+import { fileURLToPath } from "node:url";
 
 // skills/coordinate-subagents/references/model-routing-presets.json
 var model_routing_presets_default = {
@@ -470,7 +438,7 @@ function resolveFromProviderCatalog(providerId, host, policyRevision, providerEn
   if (!canonicalKey) return null;
   const entry = models[canonicalKey];
   const minimumReasoningEffort = minimumEfforts[rawModel] ?? minimumEfforts[canonicalKey] ?? entry.minimum_effort ?? null;
-  const supportedEfforts = entry.supported_efforts && entry.supported_efforts.length > 0 ? entry.supported_efforts : REASONING_EFFORT;
+  const supportedEfforts = entry.supported_efforts ?? [];
   return {
     provider: providerId,
     host,
@@ -531,39 +499,29 @@ var geminiExecutionAdapter = defaultSuite.adapters.get("gemini");
 
 // mcp-server/src/runtime-config.ts
 import { homedir } from "node:os";
-import path2 from "node:path";
+import path from "node:path";
 function sharedUserStateDirectory(environment, homeDirectory) {
   const configured = environment.AGENT_GOVERNANCE_SHARED_STATE_DIR?.trim();
   if (configured) {
-    if (!path2.isAbsolute(configured)) {
+    if (!path.isAbsolute(configured)) {
       throw new Error("AGENT_GOVERNANCE_SHARED_STATE_DIR must be an absolute path.");
     }
-    return path2.normalize(configured);
+    return path.normalize(configured);
   }
-  return path2.resolve(homeDirectory, ".agent-governance-suite");
+  return path.resolve(homeDirectory, ".agent-governance-suite");
 }
 function resolveSessionMessageStateDirectory(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   void platform;
   const configured = environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim();
-  if (configured) return path2.resolve(currentWorkingDirectory, configured);
-  return path2.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
+  if (configured) return path.resolve(currentWorkingDirectory, configured);
+  return path.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
 }
 function resolveSessionBoardDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   void platform;
   const configured = environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH?.trim();
-  if (configured) return path2.resolve(currentWorkingDirectory, configured);
-  return path2.join(sharedUserStateDirectory(environment, homeDirectory), "session-board.sqlite3");
+  if (configured) return path.resolve(currentWorkingDirectory, configured);
+  return path.join(sharedUserStateDirectory(environment, homeDirectory), "session-board.sqlite3");
 }
-
-// mcp-server/src/session-message-client.ts
-import { types as utilTypes } from "node:util";
-import { existsSync } from "node:fs";
-import { chmod, mkdir, readFile } from "node:fs/promises";
-import { spawn } from "node:child_process";
-import path3 from "node:path";
-import { performance } from "node:perf_hooks";
-import tls from "node:tls";
-import { fileURLToPath } from "node:url";
 
 // mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
@@ -602,9 +560,9 @@ var deadlineMetadata = /* @__PURE__ */ new WeakMap();
 function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
   return {
     stateDirectory,
-    endpoint: path3.join(stateDirectory, "endpoint.json"),
-    token: path3.join(stateDirectory, "broker.token"),
-    certificate: path3.join(stateDirectory, "broker-cert.pem")
+    endpoint: path2.join(stateDirectory, "endpoint.json"),
+    token: path2.join(stateDirectory, "broker.token"),
+    certificate: path2.join(stateDirectory, "broker-cert.pem")
   };
 }
 function deadlineError(message) {
@@ -614,7 +572,7 @@ function clientFailure(reason, message, cause) {
   return utilTypes.isNativeError(cause) ? tagProducerFailure(cause, reason) : retainFailureCause(tagProducerFailure(new Error(message), reason), cause);
 }
 function signalError(signal) {
-  return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : new Error("The session message operation was aborted.");
+  return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : retainFailureCause(tagProducerFailure(new Error("The session message operation was aborted."), "BROKER_OPERATION_ABORTED"), signal.reason);
 }
 function throwIfAborted(signal) {
   if (signal?.aborted) throw signalError(signal);
@@ -675,11 +633,19 @@ function sessionMessageBrokerEnvironment(environment = process.env) {
 async function readEndpoint(stateDirectory, signal) {
   throwIfAborted(signal);
   const paths = statePaths(stateDirectory);
-  const [rawEndpoint, rawToken, certificate] = await Promise.all([
-    readFile(paths.endpoint, { encoding: "utf8", signal }),
-    readFile(paths.token, { encoding: "utf8", signal }),
-    readFile(paths.certificate, { encoding: "utf8", signal })
-  ]);
+  let rawEndpoint;
+  let rawToken;
+  let certificate;
+  try {
+    [rawEndpoint, rawToken, certificate] = await Promise.all([
+      readFile(paths.endpoint, { encoding: "utf8", signal }),
+      readFile(paths.token, { encoding: "utf8", signal }),
+      readFile(paths.certificate, { encoding: "utf8", signal })
+    ]);
+  } catch (cause) {
+    throwIfAborted(signal);
+    throw clientFailure("BROKER_ENDPOINT_READ_FAILED", "Cannot read the session message broker endpoint.", cause);
+  }
   let endpoint;
   try {
     endpoint = JSON.parse(rawEndpoint);
@@ -873,9 +839,13 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         throwIfAborted(signal);
         if (error instanceof BrokerRequestRejected) throw error;
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);
-        else {
-          await mkdir(stateDirectory, { recursive: true, mode: 448 });
+        try {
+          if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);
+          else await mkdir(stateDirectory, { recursive: true, mode: 448 });
+        } catch (cause) {
+          throw clientFailure("BROKER_STATE_DIRECTORY_FAILED", "Cannot prepare the session message state directory.", cause);
+        }
+        if (!prepareStateDirectory) {
           if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
           try {
             await chmod(stateDirectory, 448);
@@ -887,12 +857,17 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         const adjacentBroker = fileURLToPath(new URL("./session-message-broker.mjs", import.meta.url));
         const brokerPath = existsSync(adjacentBroker) ? adjacentBroker : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
-          detached: true,
-          windowsHide: true,
-          stdio: "ignore",
-          env: sessionMessageBrokerEnvironment()
-        });
+        let child;
+        try {
+          child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+            detached: true,
+            windowsHide: true,
+            stdio: "ignore",
+            env: sessionMessageBrokerEnvironment()
+          });
+        } catch (cause) {
+          throw clientFailure("BROKER_START_FAILED", "Cannot start the session message broker.", cause);
+        }
         child.unref();
         await waitForSessionMessageBrokerReady(
           stateDirectory,
@@ -925,6 +900,11 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
         { enforceDeadline: true, ...options.onOperationWrite ? { onOperationWrite: options.onOperationWrite } : {} }
       );
     }
+    let operationWriteAttempted = false;
+    const onOperationWrite = () => {
+      operationWriteAttempted = true;
+      return options.onOperationWrite?.();
+    };
     try {
       return await requestSessionMessageOnce(
         operation,
@@ -932,12 +912,12 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
         stateDirectory,
         remainingMilliseconds(deadline, signal),
         signal,
-        { enforceDeadline: options.deadlineMonotonicMs !== void 0 }
+        { enforceDeadline: options.deadlineMonotonicMs !== void 0, onOperationWrite }
       );
     } catch (error) {
       try {
         throwIfAborted(signal);
-        if (error instanceof BrokerRequestRejected) throw error;
+        if (error instanceof BrokerRequestRejected || operationWriteAttempted) throw error;
         await ensureSessionMessageBroker(
           stateDirectory,
           remainingMilliseconds(deadline, signal),
@@ -951,7 +931,7 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
           stateDirectory,
           remainingMilliseconds(deadline, signal),
           signal,
-          { enforceDeadline: options.deadlineMonotonicMs !== void 0 }
+          { enforceDeadline: options.deadlineMonotonicMs !== void 0, onOperationWrite }
         );
       } catch (recoveryError) {
         throw retainFailureSecondary(recoveryError, error);
@@ -979,28 +959,177 @@ function parseWakeMessages(value) {
   return { nonces: [...new Set(nonces)], wakeOnly };
 }
 
-// mcp-server/src/host-input-adapter.ts
-var hostFailures = {
-  selection: ["INVALID_HOOK_HOST_SELECTION", "Invalid or ambiguous hook host."],
-  adapter: ["INVALID_HOOK_HOST_ADAPTER", "Invalid hook host adapter."],
-  duplicate: ["HOOK_HOST_ADAPTER_DUPLICATE", "Hook host adapter is already registered."],
-  unavailable: ["HOST_ADAPTER_UNAVAILABLE", "A host delivery adapter is required."]
-};
-function hookHostFailure(kind) {
-  const [reason, message] = hostFailures[kind];
-  return producerFailure(reason, message);
+// mcp-server/src/peer-wait-policy.ts
+function identityKey(identity) {
+  return JSON.stringify([identity.host, identity.sessionId]);
 }
-function resolveHookHost(arguments_, fallback) {
-  const selected = [];
-  for (let index = 0; index < arguments_.length; index++) {
-    const argument = arguments_[index];
-    if (argument === "--host") selected.push(arguments_[++index] ?? "");
-    else if (argument.startsWith("--host=")) selected.push(argument.slice(7));
+function normalizePeerWaitTargets(targets) {
+  const unique = new Map(targets.map((target) => [identityKey(target), { host: target.host, sessionId: target.sessionId }]));
+  return [...unique.keys()].sort().map((key) => unique.get(key));
+}
+
+// mcp-server/src/session-message-wake-port.ts
+import { execFile } from "node:child_process";
+import { existsSync as existsSync2 } from "node:fs";
+import net from "node:net";
+import path3 from "node:path";
+
+// mcp-server/src/trust-store.ts
+import { DatabaseSync } from "node:sqlite";
+
+// mcp-server/src/workspace-identity.ts
+var SEGMENT_SEPARATOR = process.platform === "win32" ? /[\\/]/u : /\//u;
+
+// mcp-server/src/session-message-wake-port.ts
+function codexWakeOutcome(error, spawned) {
+  return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
+}
+function claudeWakeOutcome(hadError, connected, wrote) {
+  return !hadError && wrote ? "submitted" : connected || wrote ? "accepted-or-unknown" : "definite-failure";
+}
+function geminiWakeOutcome(error, spawned) {
+  return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
+}
+function resolveGeminiAgentApi(environment = process.env, platform = process.platform) {
+  const configured = environment.ANTIGRAVITY_AGENTAPI_EXE;
+  if (configured) {
+    if (platform === "win32") {
+      const root = path3.win32.parse(configured).root;
+      if (!path3.win32.isAbsolute(configured) || root === "\\" || root === "/" || path3.win32.extname(configured).toLowerCase() !== ".exe") return null;
+    }
+    return { command: configured, argsPrefix: ["agentapi"] };
   }
-  if (selected.length === 0) return fallback;
-  if (selected.length !== 1 || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(selected[0])) throw hookHostFailure("selection");
-  return selected[0];
+  if (platform === "win32") return null;
+  const homeDir = environment.USERPROFILE || environment.HOME || "";
+  const command = path3.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
+  return { command: existsSync2(command) ? command : "agentapi", argsPrefix: [] };
 }
+function reportWakeFailure(phase, error) {
+  console.error(`agent-governance-suite wake diagnostic ${JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) })}`);
+}
+async function ringGemini(sessionId, message, environment = process.env) {
+  const childEnv = { ...environment };
+  const sourceProjectId = childEnv.ANTIGRAVITY_PROJECT_ID;
+  if (typeof sourceProjectId !== "string" || !sourceProjectId.trim()) return "definite-failure";
+  const launch = resolveGeminiAgentApi(childEnv);
+  if (!launch) return "definite-failure";
+  const { command, argsPrefix } = launch;
+  let targetProjectId;
+  try {
+    const meta = await new Promise((resolve, reject) => {
+      execFile(
+        command,
+        [...argsPrefix, "get-conversation-metadata", sessionId],
+        { windowsHide: true, timeout: 5e3, env: childEnv, shell: false, windowsVerbatimArguments: false },
+        (error, stdout) => error ? reject(error) : resolve(stdout)
+      );
+    });
+    const parsed = JSON.parse(meta);
+    const projectId = parsed.response?.conversationMetadata?.metadata?.projectId;
+    if (typeof projectId !== "string" || !projectId.trim()) {
+      throw producerFailure("GEMINI_METADATA_PROJECT_MISSING", "Gemini conversation metadata has no project identity.");
+    }
+    targetProjectId = projectId;
+  } catch (cause) {
+    const error = producerFailureReason(cause) ? cause : retainFailureCause(producerFailure("GEMINI_METADATA_FAILED", "Gemini conversation metadata lookup failed."), cause);
+    reportWakeFailure("gemini-metadata", error);
+    return "definite-failure";
+  }
+  if (sourceProjectId !== targetProjectId) return "definite-failure";
+  return new Promise((resolve) => {
+    let spawned = false;
+    try {
+      const child = execFile(
+        command,
+        [...argsPrefix, "send-message", sessionId, message],
+        { windowsHide: true, timeout: 1e4, env: childEnv, shell: false, windowsVerbatimArguments: false },
+        (error) => resolve(geminiWakeOutcome(error, spawned))
+      );
+      child.once("spawn", () => {
+        spawned = true;
+      });
+      child.once("error", (error) => resolve(geminiWakeOutcome(error, spawned)));
+    } catch {
+      resolve("definite-failure");
+    }
+  });
+}
+function ringCodex(sessionId, message) {
+  return new Promise((resolve) => {
+    let spawned = false;
+    const child = execFile(
+      "codex",
+      ["queue", "--thread", sessionId, "--message", message],
+      { windowsHide: true, timeout: 1e4 },
+      (error) => resolve(codexWakeOutcome(error, spawned))
+    );
+    child.once("spawn", () => {
+      spawned = true;
+    });
+  });
+}
+async function ringClaude(message) {
+  const socketPath = process.env.CLAUDE_CODE_MESSAGING_SOCKET;
+  const token = process.env.CLAUDE_CODE_MESSAGING_TOKEN;
+  if (!socketPath || !token) return "definite-failure";
+  return new Promise((resolve) => {
+    let settled = false;
+    let connected = false;
+    let wrote = false;
+    const finish = (outcome) => {
+      if (settled) return;
+      settled = true;
+      resolve(outcome);
+    };
+    const socket = net.createConnection(socketPath);
+    socket.setTimeout(5e3, () => socket.destroy(new Error("Claude inbox timed out.")));
+    socket.once("connect", () => {
+      connected = true;
+      try {
+        wrote = true;
+        socket.end(`${JSON.stringify({ type: "auth", token })}
+${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" })}
+`);
+      } catch {
+        finish("accepted-or-unknown");
+      }
+    });
+    socket.once("close", (hadError) => finish(claudeWakeOutcome(hadError, connected, wrote)));
+    socket.once("error", () => finish(claudeWakeOutcome(true, connected, wrote)));
+  });
+}
+var ports = /* @__PURE__ */ new Map([
+  ["claude-inbox", {
+    capabilities: { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "silent" },
+    dispatch: (_target, message) => ringClaude(message)
+  }],
+  ["codex-queue", {
+    capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
+    dispatch: (target, message) => ringCodex(target.sessionId, message)
+  }],
+  ["codex-deferred", {
+    capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
+    dispatch: async () => "definite-failure"
+  }],
+  ["gemini-queue", {
+    capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
+    dispatch: (target, message) => ringGemini(target.sessionId, message)
+  }]
+]);
+function transportWakePort(transport) {
+  const port = ports.get(transport);
+  if (!port) throw new Error("Wake transport adapter is unavailable.");
+  return port;
+}
+function transportDeliveryCapabilities(transport) {
+  const capabilities = transportWakePort(transport).capabilities;
+  return { supportedInjection: [...capabilities.supportedInjection], idleWake: capabilities.idleWake };
+}
+
+// mcp-server/src/session-message-relay.ts
+var IDENTITY_RECHECK_MS = 10 * 6e4;
+
+// mcp-server/src/builtin-hook-host-adapters.ts
 function text(value) {
   return typeof value === "string" ? value : "";
 }
@@ -1016,7 +1145,7 @@ function actorObservation(input, host) {
     assurance: "observed"
   };
 }
-function adaptHostInput(input, host) {
+function adaptBuiltinHookInput(input, host) {
   const event = text(input.hook_event_name);
   let kind = "unknown";
   let lifecycle = "none";
@@ -1054,10 +1183,263 @@ function adaptHostInput(input, host) {
     }
   };
 }
+var GOVERNANCE_TOOL_PREFIXES = /* @__PURE__ */ new Set([
+  "mcp__agent_governance_suite__",
+  "mcp__agent-governance-suite__",
+  "mcp__plugin_agent-governance-suite_agent-governance-suite__"
+]);
+function ownsGovernanceTool(toolName) {
+  const separator = toolName.lastIndexOf("__");
+  return separator > 0 && GOVERNANCE_TOOL_PREFIXES.has(toolName.slice(0, separator + 2));
+}
+function queueEnabled(host, explicit, environment, diagnose, defaultEnabled = false) {
+  const disabled = (reason, observation) => {
+    if (observation) diagnose(reason, Object.freeze(observation));
+    else diagnose(reason);
+    return false;
+  };
+  const failed = (phase, cause) => retainFailureCause(
+    producerFailure(
+      phase === "directory-stat" ? "QUEUE_SETTINGS_DIRECTORY_STAT_FAILED" : phase === "open" ? "QUEUE_SETTINGS_OPEN_FAILED" : phase === "read" ? "QUEUE_SETTINGS_READ_FAILED" : "QUEUE_SETTINGS_CLOSE_FAILED",
+      "Queue settings I/O failed."
+    ),
+    cause
+  );
+  const absent = (error) => {
+    if (!error || typeof error !== "object" || utilTypes2.isProxy(error)) return false;
+    try {
+      return Object.getOwnPropertyDescriptor(error, "code")?.value === "ENOENT";
+    } catch {
+      return false;
+    }
+  };
+  if (explicit !== void 0) {
+    if (explicit === "1") return true;
+    return explicit === "0" ? false : disabled("invalid-environment");
+  }
+  const directory = environment.PLUGIN_DATA;
+  if (directory === void 0) return defaultEnabled;
+  if (!path4.isAbsolute(directory) || process.platform === "win32" && ["\\", "/"].includes(path4.parse(directory).root)) {
+    return disabled("invalid-plugin-data");
+  }
+  let descriptor = -1;
+  let validDirectory;
+  let acquisitionPhase = "directory-stat";
+  try {
+    validDirectory = statSync(directory).isDirectory();
+    if (validDirectory) {
+      acquisitionPhase = "open";
+      descriptor = openSync(path4.join(directory, "session-messaging.json"), constants.O_RDONLY | constants.O_NONBLOCK);
+    }
+  } catch (cause) {
+    return absent(cause) ? defaultEnabled : disabled("read-failed", { phase: acquisitionPhase, cleanup: "not-acquired", failure: failed(acquisitionPhase, cause) });
+  }
+  if (!validDirectory) return disabled("invalid-plugin-data");
+  let enabled = false;
+  let issue;
+  let primary;
+  let primaryPhase = "read";
+  let missingRead = false;
+  let closeFailed = false;
+  const rejected = (reason) => {
+    issue = reason;
+    return false;
+  };
+  try {
+    enabled = (() => {
+      const stat = fstatSync(descriptor);
+      if (!stat.isFile()) return rejected("invalid-file-type");
+      if (stat.size > 4096) return rejected("too-large");
+      const bytes = Buffer.alloc(4097);
+      let length = 0;
+      while (length < bytes.length) {
+        const count = readSync(descriptor, bytes, length, bytes.length - length, null);
+        if (count === 0) break;
+        length += count;
+      }
+      if (length > 4096) return rejected("too-large");
+      let settings;
+      try {
+        settings = record(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, length))));
+      } catch {
+        return rejected("invalid-settings");
+      }
+      const hostSettings = record(settings[host]);
+      if (settings.schemaVersion !== "1.0.0" || typeof hostSettings.queueWake !== "boolean") return rejected("invalid-settings");
+      return hostSettings.queueWake;
+    })();
+  } catch (cause) {
+    missingRead = absent(cause);
+    primary = failed("read", cause);
+  } finally {
+    try {
+      closeSync(descriptor);
+    } catch (cause) {
+      closeFailed = true;
+      const closeFailure = failed("close", cause);
+      if (primary) retainFailureSecondary(primary, closeFailure);
+      else {
+        primary = closeFailure;
+        primaryPhase = "close";
+      }
+    }
+  }
+  if (missingRead && !closeFailed) return defaultEnabled;
+  if (primary) return disabled(
+    issue ?? (primaryPhase === "close" ? "close-failed" : "read-failed"),
+    { phase: primaryPhase, cleanup: closeFailed ? "unknown" : "closed", failure: primary }
+  );
+  return issue === void 0 ? enabled : disabled(issue);
+}
+function codexQueueEnabled(environment, diagnose) {
+  return queueEnabled("codex", environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE, environment, diagnose);
+}
+function geminiQueueEnabled(environment, diagnose, defaultQueueWake) {
+  const defaultEnabled = defaultQueueWake === true || Boolean(environment.ANTIGRAVITY_AGENTAPI_EXE || environment.ANTIGRAVITY_CONVERSATION_ID || environment.ANTIGRAVITY_AGENT);
+  return queueEnabled("gemini", environment.AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE, environment, diagnose, defaultEnabled);
+}
+var builtinHookHostAdapters = /* @__PURE__ */ new Map([
+  ["codex", {
+    adaptInput: adaptBuiltinHookInput,
+    ownsTool: ownsGovernanceTool,
+    deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", true),
+    processPid: (pid) => pid,
+    attestationKind: "codex-rollout",
+    peerWait: codexNativePeerWait
+  }],
+  ["claude-code", {
+    adaptInput: adaptBuiltinHookInput,
+    ownsTool: ownsGovernanceTool,
+    deliveryProfile: () => deliveryProfile("claude-inbox", false),
+    processPid: () => process.ppid,
+    attestationKind: "claude-hook"
+  }],
+  ["gemini", {
+    adaptInput: adaptBuiltinHookInput,
+    ownsTool: ownsGovernanceTool,
+    deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
+    processPid: (pid, observation) => observation ? pid : void 0
+  }]
+]);
+function deliveryProfile(transport, blocksEmptyWakePrompt) {
+  return { transport, capabilities: transportDeliveryCapabilities(transport), blocksEmptyWakePrompt };
+}
+function codexNativePeerWait(observation) {
+  if (observation.toolName !== "mcp__codex_app__wait_threads") return null;
+  const input = observation.toolInput ?? {};
+  const timeoutMs = input.timeoutMs === void 0 ? 12e4 : input.timeoutMs;
+  if (typeof timeoutMs !== "number" || !Number.isInteger(timeoutMs) || timeoutMs < 0 || timeoutMs > 36e5) return null;
+  if (!Array.isArray(input.targets) || input.targets.length < 1 || input.targets.length > 8) return null;
+  const targets = [];
+  const cursors = /* @__PURE__ */ new Set();
+  for (const value of input.targets) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const target = value;
+    if (typeof target.threadId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(target.threadId)) return null;
+    if (target.hostId !== void 0 && target.hostId !== "local") return null;
+    if (target.afterCursor !== void 0 && typeof target.afterCursor !== "string") return null;
+    targets.push({ host: "codex", sessionId: target.threadId });
+    cursors.add(JSON.stringify([target.threadId, target.afterCursor ?? null]));
+  }
+  return {
+    targets: normalizePeerWaitTargets(targets),
+    timeoutMs,
+    queryRevision: createHash2("sha256").update(JSON.stringify([...cursors].sort())).digest("hex")
+  };
+}
+for (const [host, adapter] of builtinHookHostAdapters) registerHookHostAdapter(host, adapter);
 
-// mcp-server/src/input-observation.ts
-function isObservedSubagent(observation) {
-  return observation.actor.kind === "subagent" && observation.actor.assurance === "observed";
+// mcp-server/src/session-board-hook.ts
+import { readFileSync } from "node:fs";
+import path6 from "node:path";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
+
+// skills/session-board/scripts/board-store.mjs
+import { mkdirSync } from "node:fs";
+import path5 from "node:path";
+import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
+var SUMMARY_MAX_LENGTH = 200;
+var RETAIN_MS = 24 * 36e5;
+var READ_ONLY_COMMANDS = /* @__PURE__ */ new Set(["ls", "cat", "pwd", "rg", "grep"]);
+var READ_ONLY_GIT = /* @__PURE__ */ new Set(["status", "log", "diff", "show"]);
+function openBoard(input, { busyTimeoutMs = 5e3 } = {}) {
+  const shared = typeof input === "string" ? null : input;
+  const databasePath = shared ? shared.databasePath : input;
+  if (!shared && databasePath !== ":memory:") mkdirSync(path5.dirname(path5.resolve(databasePath)), { recursive: true });
+  const db = shared ? shared.database : new DatabaseSync2(databasePath);
+  const initialize = () => {
+    try {
+      if (!shared) db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
+      if (!shared && databasePath !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
+      db.exec(`CREATE TABLE IF NOT EXISTS sessions (
+      host TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      cwd TEXT NOT NULL,
+      summary TEXT,
+      summary_at TEXT,
+      last_prompt_at TEXT,
+      denied_for TEXT,
+      started_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (host, session_id)
+    ) STRICT;`);
+    } catch (error) {
+      db.close();
+      throw error;
+    }
+    if (shared) shared.setSchemaVersion(0);
+  };
+  if (shared) shared.initialize(initialize);
+  else initialize();
+  return db;
+}
+function touchSession(db, { host, sessionId, cwd, now }) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => touchSession(db, { host, sessionId, cwd, now }));
+  db.prepare(`INSERT INTO sessions (host, session_id, cwd, started_at, updated_at) VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT (host, session_id) DO UPDATE SET cwd = excluded.cwd, updated_at = excluded.updated_at`).run(host, sessionId, cwd, now, now);
+}
+function recordPrompt(db, session) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => recordPrompt(db, session));
+  touchSession(db, session);
+  db.prepare("UPDATE sessions SET last_prompt_at = ? WHERE host = ? AND session_id = ?").run(session.now, session.host, session.sessionId);
+}
+function normalizeSummary(value) {
+  if (typeof value !== "string") return null;
+  const line = value.trim();
+  return line && !/[\r\n]/u.test(line) && line.length <= SUMMARY_MAX_LENGTH ? line : null;
+}
+function setSummary(db, session, summary) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => setSummary(db, session, summary));
+  const line = normalizeSummary(summary);
+  if (!line) throw new Error(`summary must be one non-empty line of at most ${SUMMARY_MAX_LENGTH} characters`);
+  touchSession(db, session);
+  db.prepare("UPDATE sessions SET summary = ?, summary_at = ? WHERE host = ? AND session_id = ?").run(line, session.now, session.host, session.sessionId);
+  return line;
+}
+function gateDecision(db, session) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => gateDecision(db, session));
+  touchSession(db, session);
+  const row = db.prepare("SELECT summary_at, last_prompt_at, started_at FROM sessions WHERE host = ? AND session_id = ?").get(session.host, session.sessionId);
+  const marker = row.last_prompt_at ?? row.started_at;
+  if (row.summary_at && row.summary_at >= marker) return "allow";
+  const claimed = db.prepare(`UPDATE sessions SET denied_for = ?
+    WHERE host = ? AND session_id = ? AND (denied_for IS NULL OR denied_for <> ?)`).run(marker, session.host, session.sessionId, marker);
+  return claimed.changes > 0 ? "deny" : "allow";
+}
+function pruneSessions(db, now) {
+  if (db.transaction && !db.inTransaction) return db.transaction(() => pruneSessions(db, now));
+  db.prepare("DELETE FROM sessions WHERE updated_at < ?").run(new Date(Date.parse(now) - RETAIN_MS).toISOString());
+}
+function isReadOnlyCommand(command) {
+  if (typeof command !== "string") return false;
+  const text2 = command.trim();
+  if (!text2 || /[;&|<>`$@(){}'"\\\r\n]/u.test(text2)) return false;
+  const [first, second, ...rest] = text2.split(/\s+/u);
+  if ([second, ...rest].some((argument) => /^--(?:output|ext-diff|pre)(?:=|$|-)/u.test(argument ?? ""))) return false;
+  if (READ_ONLY_COMMANDS.has(first)) return true;
+  if (first !== "git") return false;
+  if (READ_ONLY_GIT.has(second)) return true;
+  return second === "branch" && (rest.length === 0 || rest.length === 1 && rest[0] === "--list");
 }
 
 // mcp-server/src/session-board-hook.ts
@@ -1076,54 +1458,59 @@ var GATED_TOOLS = /* @__PURE__ */ new Set(["Edit", "Write", "MultiEdit", "Notebo
 var SHELL_TOOLS = /* @__PURE__ */ new Set(["Bash", "PowerShell", "shell", "local_shell", "exec_command"]);
 var GATE_REASON = '\uC138\uC158 \uD604\uD669\uD310: \uC774 \uC694\uCCAD\uC5D0\uC11C \uBB34\uC5C7\uC744 \uD558\uB294\uC9C0 \uD55C \uC904\uB85C \uBA3C\uC800 \uC801\uC5B4\uC57C \uD569\uB2C8\uB2E4. update_session_status\uB97C {"schemaVersion":"1.0.0","summary":"<\uBB34\uC5C7\uC744 \xB7 \uC5B4\uB514\uC11C(\uBE0C\uB79C\uCE58) \xB7 \uB2E4\uC74C \uC678\uBD80 \uC791\uC5C5>"}\uB85C \uD638\uCD9C\uD55C \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694. \uAC19\uC740 \uC791\uC5C5\uC774 \uC774\uC5B4\uC9C0\uBA74 \uAC19\uC740 \uBB38\uC7A5\uB3C4 \uB429\uB2C8\uB2E4. \uB3C4\uAD6C\uB97C \uC4F8 \uC218 \uC5C6\uC73C\uBA74 \uADF8\uB300\uB85C \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694. \uB2E4\uC74C \uC2DC\uB3C4\uB294 \uD5C8\uC6A9\uB429\uB2C8\uB2E4.';
 function preToolUse(permissionDecision, extra) {
-  return { hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision, ...extra } };
+  return { hookSpecificOutput: { hookEventName: "PreToolUse", ...permissionDecision ? { permissionDecision } : {}, ...extra } };
 }
 function handleSessionBoardHook(input, board, host, now = (/* @__PURE__ */ new Date()).toISOString(), verifiedInternalWake = false) {
   const adapted = adaptHostInput(input, host);
   const observation = adapted.observation;
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
+  const main = observation.actor.kind === "main" && observation.actor.assurance === "observed";
+  const toolName = observation.toolName ?? "";
+  const toolInput = observation.toolInput ?? {};
+  const localTool = toolName.split("__").at(-1) ?? "";
+  const boardTool = observation.kind === "tool-boundary" && observation.boundaryPhase === "before" && isGovernanceHookTool(host, toolName) && BOARD_TOOLS.has(localTool);
+  if (boardTool && !main) return preToolUse("deny", {
+    permissionDecisionReason: "\uC138\uC158 \uD604\uD669\uD310 \uC870\uD68C\uC640 \uAC31\uC2E0\uC740 \uAD00\uCE21\uB41C \uBA54\uC778 \uC138\uC158\uB9CC \uC218\uD589\uD569\uB2C8\uB2E4."
+  });
+  if (!main || !board) return {};
   const session = { host, sessionId, cwd: observation.workspaceId || process.cwd(), now };
-  const subagent = isObservedSubagent(observation);
   if (adapted.lifecycle === "start") {
-    if (subagent) return {};
     pruneSessions(board, now);
     touchSession(board, session);
     return {};
   }
   if (observation.kind === "user-input") {
-    if (!subagent) {
-      pruneSessions(board, now);
-      if (verifiedInternalWake) touchSession(board, session);
-      else recordPrompt(board, session);
-    }
+    pruneSessions(board, now);
+    if (verifiedInternalWake) touchSession(board, session);
+    else recordPrompt(board, session);
     return {};
   }
   if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "before") return {};
-  const toolName = observation.toolName ?? "";
-  const toolInput = observation.toolInput ?? {};
-  const localTool = toolName.split("__").at(-1) ?? "";
-  if (toolName.startsWith("mcp__") && BOARD_TOOLS.has(localTool)) {
+  if (boardTool) {
     if (localTool === "update_session_status") {
-      if (subagent) return preToolUse("deny", { permissionDecisionReason: "\uC138\uC158 \uD604\uD669\uD310 \uC904\uC740 \uBA54\uC778 \uC138\uC158\uB9CC \uAC31\uC2E0\uD569\uB2C8\uB2E4. \uC11C\uBE0C\uC5D0\uC774\uC804\uD2B8\uB294 update_session_status\uB97C \uD638\uCD9C\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4." });
       if (!normalizeSummary(toolInput.summary)) {
         return preToolUse("deny", { permissionDecisionReason: `summary\uB294 ${SUMMARY_MAX_LENGTH}\uC790 \uC774\uD558\uC758 \uD55C \uC904\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.` });
       }
       setSummary(board, session, toolInput.summary);
     }
-    return preToolUse("allow", { updatedInput: { ...toolInput, _sessionBinding: { host, sessionId } } });
+    return preToolUse(void 0, { updatedInput: { ...toolInput, _sessionBinding: { host, sessionId } } });
   }
-  if (subagent || !GATED_TOOLS.has(toolName)) return {};
+  if (!GATED_TOOLS.has(toolName)) return {};
   if (SHELL_TOOLS.has(toolName) && isReadOnlyCommand(toolInput.command)) return {};
   return gateDecision(board, session) === "deny" ? preToolUse("deny", { permissionDecisionReason: GATE_REASON }) : {};
 }
 async function runSessionBoardHook(host, raw, request = sessionMessageRequest) {
   let board = null;
+  let phase = "stdin";
   try {
-    const input = JSON.parse(raw);
+    const text2 = typeof raw === "function" ? raw() : raw;
+    phase = "input";
+    const input = JSON.parse(text2);
     const observation = adaptHostInput(input, host).observation;
+    const main = observation.actor.kind === "main" && observation.actor.assurance === "observed";
     let verifiedInternalWake = false;
-    if (observation.kind === "user-input" && !isObservedSubagent(observation)) {
+    if (observation.kind === "user-input" && main) {
       const nonces = observation.wakeCandidates ?? [];
       const sessionId = observation.sessionId;
       let allRecognized = nonces.length > 0;
@@ -1132,34 +1519,36 @@ async function runSessionBoardHook(host, raw, request = sessionMessageRequest) {
           try {
             const result = await request("consume-wake", { target: { host, sessionId }, nonce });
             allRecognized &&= result.consumed;
-          } catch {
+          } catch (cause) {
             allRecognized = false;
+            reportBoardFailure("consume-wake", cause);
           }
         }
       } else allRecognized = false;
       verifiedInternalWake = observation.wakeOnly === true && allRecognized;
     }
-    board = openBoard(resolveSessionBoardDatabasePath(), { busyTimeoutMs: 500 });
+    if (main) {
+      phase = "open";
+      board = openBoard(resolveSessionBoardDatabasePath(), { busyTimeoutMs: 500 });
+    }
+    phase = "handle";
     const output = handleSessionBoardHook(input, board, host, (/* @__PURE__ */ new Date()).toISOString(), verifiedInternalWake);
     return Object.keys(output).length > 0 ? JSON.stringify(output) : "";
-  } catch {
+  } catch (cause) {
+    reportBoardFailure(phase, cause);
     return "";
   } finally {
     try {
       board?.close();
-    } catch {
+    } catch (cause) {
+      reportBoardFailure("close", cause);
     }
   }
 }
-if (path4.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
-  let raw = "";
-  try {
-    raw = readFileSync(0, "utf8");
-  } catch {
-  }
+if (path6.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
   try {
     const host = resolveHookHost(process.argv.slice(2), "codex");
-    void runSessionBoardHook(host, raw).then((output) => {
+    void runSessionBoardHook(host, () => readFileSync(0, "utf8")).then((output) => {
       if (!output) return;
       let reported = false;
       const outputFailed = (cause) => {

@@ -2,46 +2,8 @@
 
 // mcp-server/src/session-message-relay.ts
 import { randomUUID } from "node:crypto";
-
-// mcp-server/src/session-message-client.ts
-import { randomBytes } from "node:crypto";
-import { types as utilTypes } from "node:util";
-
-// mcp-server/src/failure-diagnostics.ts
-var producerReasons = /* @__PURE__ */ new WeakMap();
-var producerCauses = /* @__PURE__ */ new WeakMap();
-var secondaryFailures = /* @__PURE__ */ new WeakMap();
-function tagProducerFailure(error, reason) {
-  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
-  if (!producerReasons.has(error)) producerReasons.set(error, reason);
-  return error;
-}
-function retainFailureCause(error, cause) {
-  if (!producerCauses.has(error)) producerCauses.set(error, cause);
-  return error;
-}
-function retainFailureSecondary(error, secondary) {
-  if (error && (typeof error === "object" || typeof error === "function") && error !== secondary) {
-    const prior = secondaryFailures.get(error) ?? [];
-    if (prior.length < 2 && !prior.includes(secondary)) secondaryFailures.set(error, [...prior, secondary]);
-  }
-  return error;
-}
-function producerFailureReason(error) {
-  return error && (typeof error === "object" || typeof error === "function") ? producerReasons.get(error) ?? null : null;
-}
-
-// mcp-server/src/session-message-client.ts
-import { existsSync } from "node:fs";
-import { chmod, mkdir, readFile } from "node:fs/promises";
-import { spawn } from "node:child_process";
-import path2 from "node:path";
-import { performance } from "node:perf_hooks";
-import tls from "node:tls";
-import { fileURLToPath } from "node:url";
-
-// contracts/types.ts
-var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
+import { chmodSync, closeSync, constants, fchmodSync, fstatSync, ftruncateSync, lstatSync, mkdirSync, openSync, writeFileSync } from "node:fs";
+import path4 from "node:path";
 
 // skills/coordinate-subagents/references/model-routing-presets.json
 var model_routing_presets_default = {
@@ -330,7 +292,7 @@ function resolveFromProviderCatalog(providerId, host2, policyRevision, providerE
   if (!canonicalKey) return null;
   const entry = models[canonicalKey];
   const minimumReasoningEffort = minimumEfforts[rawModel] ?? minimumEfforts[canonicalKey] ?? entry.minimum_effort ?? null;
-  const supportedEfforts = entry.supported_efforts && entry.supported_efforts.length > 0 ? entry.supported_efforts : REASONING_EFFORT;
+  const supportedEfforts = entry.supported_efforts ?? [];
   return {
     provider: providerId,
     host: host2,
@@ -409,6 +371,104 @@ function resolveSessionMessageStateDirectory(environment = process.env, platform
   return path.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
 }
 
+// runtime/failure-diagnostics.mjs
+import { createHash } from "node:crypto";
+import { types } from "node:util";
+var producerReasons = /* @__PURE__ */ new WeakMap();
+var producerCauses = /* @__PURE__ */ new WeakMap();
+var secondaryFailures = /* @__PURE__ */ new WeakMap();
+function tagProducerFailure(error, reason) {
+  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
+  if (!producerReasons.has(error)) producerReasons.set(error, reason);
+  return error;
+}
+function retainFailureCause(error, cause) {
+  if (!producerCauses.has(error)) producerCauses.set(error, cause);
+  return error;
+}
+function retainFailureSecondary(error, secondary) {
+  if (error && (typeof error === "object" || typeof error === "function") && error !== secondary) {
+    const prior = secondaryFailures.get(error) ?? [];
+    if (prior.length < 2 && !prior.includes(secondary)) secondaryFailures.set(error, [...prior, secondary]);
+  }
+  return error;
+}
+function producerFailure(reason, message) {
+  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
+  const error = new Error(message);
+  Object.defineProperty(error, "code", { value: reason, enumerable: true });
+  producerReasons.set(error, reason);
+  return error;
+}
+function producerFailureReason(error) {
+  return error && (typeof error === "object" || typeof error === "function") ? producerReasons.get(error) ?? null : null;
+}
+function failureContext(error) {
+  const seen = /* @__PURE__ */ new Set();
+  function describe(value, depth) {
+    const type = value === null ? "null" : typeof value;
+    if (!value || typeof value !== "object" && typeof value !== "function") return { type };
+    if (types.isProxy(value)) return { type, opaque: "proxy" };
+    if (seen.has(value)) return { type, cycle: true };
+    seen.add(value);
+    try {
+      const prototype = Object.getPrototypeOf(value);
+      const context = {
+        type: prototype === SyntaxError.prototype ? "syntax-error" : prototype === TypeError.prototype ? "type-error" : prototype === RangeError.prototype ? "range-error" : types.isNativeError(value) ? "error" : type
+      };
+      const producerReason = producerFailureReason(value);
+      if (producerReason) context.producerReason = producerReason;
+      if (producerCauses.has(value)) context.producerCause = depth < 2 ? describe(producerCauses.get(value), depth + 1) : { truncated: true };
+      const secondary = secondaryFailures.get(value);
+      if (secondary) context.secondary = depth < 2 ? secondary.map((error2) => describe(error2, depth + 1)) : { truncated: true };
+      const code = Object.getOwnPropertyDescriptor(value, "code");
+      if (code) {
+        if (!("value" in code)) context.code = { type: "accessor", observed: false };
+        else if (typeof code.value === "string") {
+          const prefix = code.value.slice(0, 256);
+          context.code = {
+            type: "string",
+            length: code.value.length,
+            prefixCodeUnits: prefix.length,
+            truncated: prefix.length !== code.value.length,
+            encoding: "utf16le",
+            prefixSha256: createHash("sha256").update(Buffer.from(prefix, "utf16le")).digest("hex")
+          };
+        } else context.code = { type: code.value === null ? "null" : typeof code.value, observed: false };
+      }
+      if (code && "value" in code && code.value === "ERR_SQLITE_ERROR") {
+        const detail = Object.getOwnPropertyDescriptor(value, "errcode");
+        if (detail && !("value" in detail)) context.sqlite = { type: "accessor", observed: false };
+        else if (detail && Number.isInteger(detail.value) && detail.value >= 1 && detail.value <= 65535 && (detail.value & 255) >= 1 && (detail.value & 255) <= 28) {
+          context.sqlite = { errcode: detail.value, primaryCode: detail.value & 255 };
+        } else context.sqlite = { observed: false };
+      }
+      const cause = Object.getOwnPropertyDescriptor(value, "cause");
+      if (cause) {
+        if (!("value" in cause)) context.cause = { type: "accessor", observed: false };
+        else context.cause = depth < 2 ? describe(cause.value, depth + 1) : { truncated: true };
+      }
+      return context;
+    } catch {
+      return { type, unreadable: true };
+    } finally {
+      seen.delete(value);
+    }
+  }
+  return describe(error, 0);
+}
+
+// mcp-server/src/session-message-client.ts
+import { randomBytes } from "node:crypto";
+import { types as utilTypes } from "node:util";
+import { existsSync } from "node:fs";
+import { chmod, mkdir, readFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import path2 from "node:path";
+import { performance } from "node:perf_hooks";
+import tls from "node:tls";
+import { fileURLToPath } from "node:url";
+
 // mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
 var SESSION_MESSAGE_MAX_REQUEST_BYTES = 32 * 1024;
@@ -458,7 +518,7 @@ function clientFailure(reason, message, cause) {
   return utilTypes.isNativeError(cause) ? tagProducerFailure(cause, reason) : retainFailureCause(tagProducerFailure(new Error(message), reason), cause);
 }
 function signalError(signal) {
-  return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : new Error("The session message operation was aborted.");
+  return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : retainFailureCause(tagProducerFailure(new Error("The session message operation was aborted."), "BROKER_OPERATION_ABORTED"), signal.reason);
 }
 function throwIfAborted(signal) {
   if (signal?.aborted) throw signalError(signal);
@@ -519,11 +579,19 @@ function sessionMessageBrokerEnvironment(environment = process.env) {
 async function readEndpoint(stateDirectory, signal) {
   throwIfAborted(signal);
   const paths = statePaths(stateDirectory);
-  const [rawEndpoint, rawToken, certificate] = await Promise.all([
-    readFile(paths.endpoint, { encoding: "utf8", signal }),
-    readFile(paths.token, { encoding: "utf8", signal }),
-    readFile(paths.certificate, { encoding: "utf8", signal })
-  ]);
+  let rawEndpoint;
+  let rawToken;
+  let certificate;
+  try {
+    [rawEndpoint, rawToken, certificate] = await Promise.all([
+      readFile(paths.endpoint, { encoding: "utf8", signal }),
+      readFile(paths.token, { encoding: "utf8", signal }),
+      readFile(paths.certificate, { encoding: "utf8", signal })
+    ]);
+  } catch (cause) {
+    throwIfAborted(signal);
+    throw clientFailure("BROKER_ENDPOINT_READ_FAILED", "Cannot read the session message broker endpoint.", cause);
+  }
   let endpoint;
   try {
     endpoint = JSON.parse(rawEndpoint);
@@ -717,9 +785,13 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         throwIfAborted(signal);
         if (error instanceof BrokerRequestRejected) throw error;
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);
-        else {
-          await mkdir(stateDirectory, { recursive: true, mode: 448 });
+        try {
+          if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);
+          else await mkdir(stateDirectory, { recursive: true, mode: 448 });
+        } catch (cause) {
+          throw clientFailure("BROKER_STATE_DIRECTORY_FAILED", "Cannot prepare the session message state directory.", cause);
+        }
+        if (!prepareStateDirectory) {
           if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
           try {
             await chmod(stateDirectory, 448);
@@ -731,12 +803,17 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         const adjacentBroker = fileURLToPath(new URL("./session-message-broker.mjs", import.meta.url));
         const brokerPath = existsSync(adjacentBroker) ? adjacentBroker : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
-          detached: true,
-          windowsHide: true,
-          stdio: "ignore",
-          env: sessionMessageBrokerEnvironment()
-        });
+        let child;
+        try {
+          child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+            detached: true,
+            windowsHide: true,
+            stdio: "ignore",
+            env: sessionMessageBrokerEnvironment()
+          });
+        } catch (cause) {
+          throw clientFailure("BROKER_START_FAILED", "Cannot start the session message broker.", cause);
+        }
         child.unref();
         await waitForSessionMessageBrokerReady(
           stateDirectory,
@@ -769,6 +846,11 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
         { enforceDeadline: true, ...options.onOperationWrite ? { onOperationWrite: options.onOperationWrite } : {} }
       );
     }
+    let operationWriteAttempted = false;
+    const onOperationWrite = () => {
+      operationWriteAttempted = true;
+      return options.onOperationWrite?.();
+    };
     try {
       return await requestSessionMessageOnce(
         operation,
@@ -776,12 +858,12 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
         stateDirectory,
         remainingMilliseconds(deadline, signal),
         signal,
-        { enforceDeadline: options.deadlineMonotonicMs !== void 0 }
+        { enforceDeadline: options.deadlineMonotonicMs !== void 0, onOperationWrite }
       );
     } catch (error) {
       try {
         throwIfAborted(signal);
-        if (error instanceof BrokerRequestRejected) throw error;
+        if (error instanceof BrokerRequestRejected || operationWriteAttempted) throw error;
         await ensureSessionMessageBroker(
           stateDirectory,
           remainingMilliseconds(deadline, signal),
@@ -795,7 +877,7 @@ async function sessionMessageRequest(operation, payload, stateDirectory = resolv
           stateDirectory,
           remainingMilliseconds(deadline, signal),
           signal,
-          { enforceDeadline: options.deadlineMonotonicMs !== void 0 }
+          { enforceDeadline: options.deadlineMonotonicMs !== void 0, onOperationWrite }
         );
       } catch (recoveryError) {
         throw retainFailureSecondary(recoveryError, error);
@@ -888,6 +970,9 @@ function resolveGeminiAgentApi(environment = process.env, platform = process.pla
   const command = path3.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
   return { command: existsSync2(command) ? command : "agentapi", argsPrefix: [] };
 }
+function reportWakeFailure(phase, error) {
+  console.error(`agent-governance-suite wake diagnostic ${JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) })}`);
+}
 async function ringGemini(sessionId2, message, environment = process.env) {
   const childEnv = { ...environment };
   const sourceProjectId = childEnv.ANTIGRAVITY_PROJECT_ID;
@@ -907,9 +992,13 @@ async function ringGemini(sessionId2, message, environment = process.env) {
     });
     const parsed = JSON.parse(meta);
     const projectId = parsed.response?.conversationMetadata?.metadata?.projectId;
-    if (typeof projectId !== "string" || !projectId.trim()) return "definite-failure";
+    if (typeof projectId !== "string" || !projectId.trim()) {
+      throw producerFailure("GEMINI_METADATA_PROJECT_MISSING", "Gemini conversation metadata has no project identity.");
+    }
     targetProjectId = projectId;
-  } catch {
+  } catch (cause) {
+    const error = producerFailureReason(cause) ? cause : retainFailureCause(producerFailure("GEMINI_METADATA_FAILED", "Gemini conversation metadata lookup failed."), cause);
+    reportWakeFailure("gemini-metadata", error);
     return "definite-failure";
   }
   if (sourceProjectId !== targetProjectId) return "definite-failure";
@@ -1010,30 +1099,95 @@ function relayIdentityDecision(identity, previousUnknowns) {
   const unknowns = previousUnknowns + 1;
   return { proceed: false, stop: unknowns >= IDENTITY_UNKNOWN_LIMIT, unknowns };
 }
+function persistRelayFailure(serialized) {
+  if (Buffer.byteLength(serialized, "utf8") > 64 * 1024) return;
+  let descriptor;
+  try {
+    const directory = resolveSessionMessageStateDirectory();
+    mkdirSync(directory, { recursive: true, mode: 448 });
+    const directoryInfo = lstatSync(directory);
+    if (!directoryInfo.isDirectory() || directoryInfo.isSymbolicLink() || process.getuid && directoryInfo.uid !== process.getuid()) return;
+    try {
+      chmodSync(directory, 448);
+    } catch {
+      if (process.platform !== "win32") return;
+    }
+    const target = path4.join(directory, "relay-failure.latest.json");
+    descriptor = openSync(target, constants.O_WRONLY | constants.O_CREAT | constants.O_NONBLOCK | (constants.O_NOFOLLOW ?? 0), 384);
+    const opened = fstatSync(descriptor);
+    const linked = lstatSync(target);
+    if (!opened.isFile() || opened.nlink !== 1 || linked.isSymbolicLink() || !linked.isFile() || opened.dev !== linked.dev || opened.ino !== linked.ino || process.getuid && opened.uid !== process.getuid()) return;
+    try {
+      fchmodSync(descriptor, 384);
+    } catch {
+      if (process.platform !== "win32") return;
+    }
+    ftruncateSync(descriptor, 0);
+    writeFileSync(descriptor, serialized + "\n", { encoding: "utf8" });
+  } catch {
+  } finally {
+    if (descriptor !== void 0) try {
+      closeSync(descriptor);
+    } catch {
+    }
+  }
+}
+function reportRelayFailure(phase, error) {
+  try {
+    const serialized = JSON.stringify({
+      phase,
+      reason: producerFailureReason(error) ?? "UNEXPECTED_FAILURE",
+      context: failureContext(error)
+    });
+    persistRelayFailure(serialized);
+    console.error("[agent-governance-suite] relay-failure " + serialized);
+  } catch {
+  }
+}
 async function delay2(milliseconds) {
   await new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 async function dispatchManagedWake(options, relayId2, port, request = sessionMessageRequest) {
   if (port.capabilities.idleWake === "none" || !port.capabilities.supportedInjection.includes("peer-wake")) return false;
   const target = { host: options.host, sessionId: options.sessionId };
-  const reserved = await request("reserve-wake", {
-    target,
-    nonce: newWakeNonce(),
-    instanceId: options.instanceId,
-    transport: options.transport,
-    relayId: relayId2,
-    resume: true
-  });
-  if (!reserved.dispatch || !reserved.attempt) return false;
-  const started = await request("start-wake", { attempt: reserved.attempt });
-  if (!started.dispatch || !started.attempt) return false;
-  let outcome = "accepted-or-unknown";
+  let renewal = null;
+  const heartbeat = setInterval(() => {
+    if (renewal) return;
+    renewal = request("relay-tick", {
+      target,
+      transport: options.transport,
+      relayId: relayId2,
+      instanceId: options.instanceId,
+      includePending: false
+    }).then(() => {
+    }, () => {
+    }).finally(() => {
+      renewal = null;
+    });
+  }, LOOP_MS);
   try {
-    outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce));
-  } catch {
+    const reserved = await request("reserve-wake", {
+      target,
+      nonce: newWakeNonce(),
+      instanceId: options.instanceId,
+      transport: options.transport,
+      relayId: relayId2,
+      resume: true
+    });
+    if (!reserved.dispatch || !reserved.attempt) return false;
+    const started = await request("start-wake", { attempt: reserved.attempt });
+    if (!started.dispatch || !started.attempt) return false;
+    let outcome = "accepted-or-unknown";
+    try {
+      outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce));
+    } catch {
+    }
+    await request("record-wake-outcome", { attempt: started.attempt, outcome });
+    return true;
+  } finally {
+    clearInterval(heartbeat);
+    if (renewal) await renewal;
   }
-  await request("record-wake-outcome", { attempt: started.attempt, outcome });
-  return true;
 }
 async function runSessionMessageRelay(options, port = transportWakePort(options.transport)) {
   const target = { host: options.host, sessionId: options.sessionId };
@@ -1060,7 +1214,8 @@ async function runSessionMessageRelay(options, port = transportWakePort(options.
         acquired = result.acquired;
         if (acquired) break;
       }
-    } catch {
+    } catch (error) {
+      reportRelayFailure("acquire", error);
     }
     await delay2(3e3);
   }
@@ -1111,7 +1266,8 @@ async function runSessionMessageRelay(options, port = transportWakePort(options.
           nextIdentityCheck = now + IDENTITY_RECHECK_MS;
           await dispatchManagedWake(options, relayId2, port);
         }
-      } catch {
+      } catch (error) {
+        reportRelayFailure("tick", error);
       }
       await delay2(LOOP_MS);
     }
@@ -1122,7 +1278,8 @@ async function runSessionMessageRelay(options, port = transportWakePort(options.
       } else {
         await sessionMessageRequest("presence-end", { target, instanceId: options.instanceId, reason: "host-process-ended" }, void 0, { totalTimeoutMs: 3e3 });
       }
-    } catch {
+    } catch (error) {
+      reportRelayFailure("release", error);
     }
   }
 }
@@ -1142,6 +1299,7 @@ var relayIdArguments = process.argv.filter((value) => value === "--relay-id").le
 var relayId = argument("--relay-id");
 var invalidRelayId = relayIdArguments > 1 || relayIdArguments === 1 && (!relayId || !/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(relayId));
 if (invalidRelayId || !host || !sessionId || !instanceId || transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox" && transport !== "gemini-queue" || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
-else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken, ...relayId ? { relayId } : {} }).catch(() => {
+else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken, ...relayId ? { relayId } : {} }).catch((error) => {
+  reportRelayFailure("run", error);
   process.exitCode = 1;
 });
