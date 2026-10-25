@@ -121,7 +121,7 @@ it("strips the caller token and diagnoses a real observation read failure throug
   });
   expect(JSON.parse(result.stderr.trim())).toEqual({
     component: "host-attestation-hook", phase: "observation", reason: "TRANSCRIPT_READ_FAILED",
-    context: fixedCodeContext("TRANSCRIPT_READ_FAILED"),
+    context: { ...fixedCodeContext("TRANSCRIPT_READ_FAILED"), cause: expect.objectContaining({ type: "error" }) },
   });
   expect(result.stderr).not.toContain(directory);
   expect(result.stderr).not.toContain("caller-forged");

@@ -9,9 +9,11 @@ import {
   type PluginUpdateStatusV1,
   type KoreanProseGlossaryLookupResultV1,
   type ResponseModeV1,
+  WorkflowContractError,
 } from "../../contracts/types.js";
 import { listSessions, normalizeSummary, openBoard, readSession } from "../../skills/session-board/scripts/board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
+import { failureContext } from "./failure-diagnostics.js";
 import { inlineSchemaReferences } from "./tool-schema-inline.js";
 import { PLUGIN_INFO } from "./plugin-info.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
@@ -211,8 +213,8 @@ function invalidInput(message: string): ApiResultV1<never> {
   return apiError("INVALID_INPUT", message);
 }
 
-function apiError(code: ErrorCode, message: string): ApiResultV1<never> {
-  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details: null } };
+function apiError(code: ErrorCode, message: string, details: Record<string, unknown> | null = null): ApiResultV1<never> {
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
 }
 
 /**
@@ -287,20 +289,26 @@ async function sessionBoardResult(
       : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
   }
   let board: ReturnType<typeof openBoard> | null = null;
+  let step: "open" | "list" | "close" | "presence" | "read" = "open";
   try {
     board = openBoard(databasePath);
     if (tool === "list_session_status") {
+      step = "list";
       const sessions = listSessions(board, new Date().toISOString(), binding);
+      step = "close";
       board.close();
       board = null;
+      step = "presence";
       return apiOk({ sessions: withPresence(sessions, await sessionMessages.listPresence(sessions)) });
     }
+    step = "read";
     const row = readSession(board, binding!.host, binding!.sessionId);
     return row && row.summary === summary
       ? apiOk(row)
       : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
-  } catch {
-    return apiError("MCP_UNAVAILABLE", "The session board is unavailable.");
+  } catch (error) {
+    // Keep the failed step and a bounded, redacted cause (no message, path or SQL).
+    return apiError("MCP_UNAVAILABLE", "The session board is unavailable.", { step, cause: failureContext(error) });
   } finally {
     try { board?.close(); } catch { /* Read-only close failures do not change the result. */ }
   }
@@ -640,7 +648,10 @@ export function createMcpServer(
           try {
             result = trust.validateCollaborationDecision(validator.validateCollaborationDecisionRequest(args));
           } catch (error) {
-            result = invalidInput(error instanceof Error ? error.message : "Collaboration decision validation input is invalid.");
+            // Contract errors keep their own code and sanitized details (including storage diagnostics).
+            result = error instanceof WorkflowContractError
+              ? { schemaVersion: "1.0.0", ok: false, data: null, error: error.toBody() }
+              : invalidInput(error instanceof Error ? error.message : "Collaboration decision validation input is invalid.");
           }
           break;
         case "plan_workflow":

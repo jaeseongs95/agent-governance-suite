@@ -2,6 +2,8 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
+import { types as utilTypes } from "node:util";
+import { retainFailureSecondary, tagProducerFailure } from "./failure-diagnostics.js";
 import type { SharedModuleContext, SqlDatabase } from "../../runtime/unified-state/shared-connection.mjs";
 
 import { isBoundedIdentity, SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
@@ -1346,7 +1348,14 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (this.shared) return this.shared.transaction(operation);
     this.database.exec("BEGIN IMMEDIATE");
     try { const result = operation(); this.database.exec("COMMIT"); return result; }
-    catch (error) { try { this.database.exec("ROLLBACK"); } catch { /* Preserve the domain or commit failure. */ } throw error; }
+    catch (error) {
+      // The domain or COMMIT failure stays primary; a failed ROLLBACK is retained only as a secondary diagnostic.
+      try { this.database.exec("ROLLBACK"); } catch (rollbackError) {
+        retainFailureSecondary(error, utilTypes.isNativeError(rollbackError)
+          ? tagProducerFailure(rollbackError, "SESSION_MESSAGE_ROLLBACK_FAILED") : rollbackError);
+      }
+      throw error;
+    }
   }
 
 }

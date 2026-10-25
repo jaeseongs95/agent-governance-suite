@@ -19,7 +19,9 @@ import { sessionMessageRequest } from "./session-message-client.js";
 import { adaptHostInput, resolveHookHost } from "./host-input-adapter.js";
 import { isObservedSubagent } from "./input-observation.js";
 
-function reportBoardFailure(phase: "host-entry" | "stdout", cause: unknown): void {
+type BoardFailurePhase = "host-entry" | "stdout" | "input" | "consume-wake" | "open" | "handle" | "close";
+
+function reportBoardFailure(phase: BoardFailurePhase, cause: unknown): void {
   try { console.error("[agent-governance-suite] board-hook-failure " + JSON.stringify({
     phase, reason: hookFailureReason(cause) ?? "UNEXPECTED_FAILURE", context: hookFailureContext(cause),
   })); } catch { /* Diagnostics cannot change the fail-open behavior. */ }
@@ -90,6 +92,7 @@ export async function runSessionBoardHook(
   request: typeof sessionMessageRequest = sessionMessageRequest,
 ): Promise<string> {
   let board: Board | null = null;
+  let phase: BoardFailurePhase = "input";
   try {
     const input = JSON.parse(raw) as HookInput;
     const observation = adaptHostInput(input, host).observation;
@@ -104,18 +107,26 @@ export async function runSessionBoardHook(
             // Ownership check only: the message hook owns observation and atomic claim.
             const result = await request<{ consumed: boolean }>("consume-wake", { target: { host, sessionId }, nonce });
             allRecognized &&= result.consumed;
-          } catch { allRecognized = false; }
+          } catch (cause) {
+            // Unverified wake: treated as an ordinary prompt, but the cause stays observable.
+            allRecognized = false;
+            reportBoardFailure("consume-wake", cause);
+          }
         }
       } else allRecognized = false;
       verifiedInternalWake = observation.wakeOnly === true && allRecognized;
     }
+    phase = "open";
     board = openBoard(resolveSessionBoardDatabasePath(), { busyTimeoutMs: 500 });
+    phase = "handle";
     const output = handleSessionBoardHook(input, board, host, new Date().toISOString(), verifiedInternalWake);
     return Object.keys(output).length > 0 ? JSON.stringify(output) : "";
-  } catch {
+  } catch (cause) {
+    // Fail open, but keep the failed phase and redacted cause.
+    reportBoardFailure(phase, cause);
     return "";
   } finally {
-    try { board?.close(); } catch { /* Fail open. */ }
+    try { board?.close(); } catch (cause) { reportBoardFailure("close", cause); }
   }
 }
 

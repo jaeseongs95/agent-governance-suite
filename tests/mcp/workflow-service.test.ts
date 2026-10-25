@@ -1335,6 +1335,42 @@ describe("WorkflowService", () => {
     expect(service.recordStageResult(provisional).error?.code).toBe("GATE_FAILED");
   });
 
+  it("keeps the schema cause code and location when the deliberation gate rejects a record", async () => {
+    const { service, rootDirectory } = await createService();
+    const receipt = service.startWorkflow(service.planWorkflow(task({
+      taskId: "deliberation-cause",
+      requiredCapabilities: ["independent-deliberation", "draft"],
+    })).data!).data!;
+    const deliberation = receipt.plan.stages.find((stage) => stage.requiredArtifacts.includes("decision-record"))!;
+    const schemaPath = deliberation.gate.validatorSchema!.path;
+
+    const invalid = passedStage(receipt.runId, deliberation, receipt.revision);
+    invalid.output = { ...invalid.output, output: { decisionRecord: { run: {} } } };
+    const rejected = service.recordStageResult(invalid).error;
+    expect(rejected?.code).toBe("GATE_FAILED");
+    expect(rejected?.details).toMatchObject({
+      stageId: deliberation.stageId,
+      causeCode: "INVALID_INPUT",
+      causeDetails: { schemaPath, validationErrors: expect.any(String) },
+    });
+
+    const schemaFile = join(rootDirectory, schemaPath);
+    await writeFile(schemaFile, `${readFileSync(schemaFile, "utf8")}\n`, "utf8");
+    const stale = service.recordStageResult(passedStage(receipt.runId, deliberation, receipt.revision)).error;
+    expect(stale?.code).toBe("GATE_FAILED");
+    expect(stale?.details).toMatchObject({
+      stageId: deliberation.stageId,
+      causeCode: "STALE_REVISION",
+      causeDetails: {
+        schemaPath,
+        expectedDigest: deliberation.gate.validatorSchema!.digest,
+        actualDigest: expect.stringMatching(/^sha256:[a-f0-9]{64}$/u),
+      },
+    });
+    expect((stale?.details?.causeDetails as Record<string, unknown>).validationErrors).toBeUndefined();
+    expect(service.getWorkflowStatus(receipt.runId).data?.revision).toBe(0);
+  });
+
   it("validates a replacement deliberation provider without a hardcoded skill path", async () => {
     const replacementSkills = skills.map((skill) => skill.skillId === "reasoning-panel"
       ? { ...skill, skillId: "alternate-reasoner", path: "./alternate-reasoner" }
@@ -1399,6 +1435,37 @@ describe("WorkflowService", () => {
     ));
     expect(validateDecisionRecordSemantics(reordered), "object key order must not affect parity").toEqual([]);
  });
+
+  it("rejects HIGH/CRITICAL DecisionRecords whose assurance the stage does not allow", async () => {
+    type MutableRecord = Record<string, unknown> & {
+      run: Record<string, unknown>;
+      panel_manifest: Array<Record<string, unknown>>;
+    };
+    const singleAgent = structuredClone(validDecisionRecord) as MutableRecord;
+    singleAgent.run.assurance = "single_agent";
+    expect(validateDecisionRecordSemantics(singleAgent)).toContain("HIGH/CRITICAL assurance is invalid");
+
+    const critical = structuredClone(validDecisionRecord) as MutableRecord;
+    critical.run.stage = "CRITICAL";
+    critical.run.assurance = "partially_independent";
+    const generic = (worker: Record<string, unknown>): Record<string, unknown> => (
+      worker.classification === "reviewer" ? { ...worker, role: "generalist reviewer" } : worker
+    );
+    critical.run.workers = (critical.run.workers as Array<Record<string, unknown>>).map(generic);
+    critical.panel_manifest = critical.panel_manifest.map(generic);
+    expect(validateDecisionRecordSemantics(critical))
+      .toContain("CRITICAL requires a red-team or independent design-assurance reviewer");
+
+    const { service } = await createService();
+    const receipt = service.startWorkflow(service.planWorkflow(task({
+      taskId: "high-single-agent",
+      requiredCapabilities: ["independent-deliberation", "draft"],
+    })).data!).data!;
+    const deliberation = receipt.plan.stages.find((stage) => stage.requiredArtifacts.includes("decision-record"))!;
+    const result = passedStage(receipt.runId, deliberation, receipt.revision);
+    result.output = { ...result.output, output: { decisionRecord: singleAgent } };
+    expect(service.recordStageResult(result).error?.code).toBe("GATE_FAILED");
+  });
 
   it("rejects every canonical invalid DecisionRecord at the MCP gate", async () => {
     for (const fixture of decisionRecordFixtures(invalidDecisionRecordDirectory)) {

@@ -69,7 +69,7 @@ function signalError(signal: AbortSignal): Error {
   return signal.reason instanceof Error
     ? signal.reason
     : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal)!.message)
-      : new Error("The session message operation was aborted.");
+      : retainFailureCause(tagProducerFailure(new Error("The session message operation was aborted."), "BROKER_OPERATION_ABORTED"), signal.reason);
 }
 
 function throwIfAborted(signal?: AbortSignal): void {
@@ -142,11 +142,20 @@ export function sessionMessageBrokerEnvironment(environment: NodeJS.ProcessEnv =
 async function readEndpoint(stateDirectory?: string, signal?: AbortSignal): Promise<{ endpoint: BrokerEndpoint; token: string; certificate: string }> {
   throwIfAborted(signal);
   const paths = statePaths(stateDirectory);
-  const [rawEndpoint, rawToken, certificate] = await Promise.all([
-    readFile(paths.endpoint, { encoding: "utf8", signal }),
-    readFile(paths.token, { encoding: "utf8", signal }),
-    readFile(paths.certificate, { encoding: "utf8", signal }),
-  ]);
+  let rawEndpoint: string;
+  let rawToken: string;
+  let certificate: string;
+  try {
+    [rawEndpoint, rawToken, certificate] = await Promise.all([
+      readFile(paths.endpoint, { encoding: "utf8", signal }),
+      readFile(paths.token, { encoding: "utf8", signal }),
+      readFile(paths.certificate, { encoding: "utf8", signal }),
+    ]);
+  } catch (cause) {
+    // An aborted read reports the abort reason, not a read failure.
+    throwIfAborted(signal);
+    throw clientFailure("BROKER_ENDPOINT_READ_FAILED", "Cannot read the session message broker endpoint.", cause);
+  }
   let endpoint: BrokerEndpoint;
   try {
     endpoint = JSON.parse(rawEndpoint) as BrokerEndpoint;
@@ -349,9 +358,13 @@ export async function ensureSessionMessageBroker(
         throwIfAborted(signal);
         if (error instanceof BrokerRequestRejected) throw error;
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);
-        else {
-          await mkdir(stateDirectory, { recursive: true, mode: 0o700 });
+        try {
+          if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);
+          else await mkdir(stateDirectory, { recursive: true, mode: 0o700 });
+        } catch (cause) {
+          throw clientFailure("BROKER_STATE_DIRECTORY_FAILED", "Cannot prepare the session message state directory.", cause);
+        }
+        if (!prepareStateDirectory) {
           if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
           try { await chmod(stateDirectory, 0o700); } catch { /* Windows ACLs remain governed by the user profile. */ }
         }
@@ -362,12 +375,17 @@ export async function ensureSessionMessageBroker(
           ? adjacentBroker
           : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
-          detached: true,
-          windowsHide: true,
-          stdio: "ignore",
-          env: sessionMessageBrokerEnvironment(),
-        });
+        let child: ChildProcess;
+        try {
+          child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+            detached: true,
+            windowsHide: true,
+            stdio: "ignore",
+            env: sessionMessageBrokerEnvironment(),
+          });
+        } catch (cause) {
+          throw clientFailure("BROKER_START_FAILED", "Cannot start the session message broker.", cause);
+        }
         child.unref();
         await waitForSessionMessageBrokerReady(
           stateDirectory,

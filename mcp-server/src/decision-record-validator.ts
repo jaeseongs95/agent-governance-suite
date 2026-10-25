@@ -72,6 +72,22 @@ export function validateDecisionRecordSemantics(record: JsonObject): string[] {
   const assurance = run.assurance;
   const cap = run.worker_cap;
   const strictShortfall = run.strict === true && run.capability_shortfall === true;
+  if (!["independent", "partially_independent", "single_agent", "provisional"].includes(String(assurance))) {
+    errors.push("run.assurance must be independent, partially_independent, single_agent, or provisional");
+  }
+  if (!strictShortfall) {
+    const fallbackRecorded = run.judge_fallback !== null && run.judge_fallback !== undefined;
+    const panelAssurances = ["independent", "partially_independent", "provisional"];
+    if (stage === "LOW" && !(fallbackRecorded ? ["single_agent", "provisional"] : ["single_agent"]).includes(String(assurance))) {
+      errors.push("LOW must use single_agent assurance unless a fallback is recorded");
+    }
+    if (stage === "MEDIUM" && !panelAssurances.includes(String(assurance))) {
+      errors.push("MEDIUM assurance is invalid");
+    }
+    if ((stage === "HIGH" || stage === "CRITICAL") && !panelAssurances.includes(String(assurance))) {
+      errors.push("HIGH/CRITICAL assurance is invalid");
+    }
+  }
   if (run.capability_shortfall !== (missingSet.size > 0)) {
     errors.push("run capability_shortfall must match preflight missing capabilities");
   }
@@ -164,8 +180,10 @@ export function validateDecisionRecordSemantics(record: JsonObject): string[] {
     if (stage === "HIGH" && assurance === "independent" && run.capability_shortfall !== true && reviewerIds.size < 4) {
       errors.push("HIGH requires at least four eligible completed reviewers");
     }
-    if (stage === "CRITICAL" && assurance === "independent" && run.capability_shortfall !== true) {
-      if (reviewerIds.size < 5 || reviewerIds.size > 6) errors.push("CRITICAL requires five or six reviewers");
+    if (stage === "CRITICAL") {
+      if (assurance === "independent" && run.capability_shortfall !== true && (reviewerIds.size < 5 || reviewerIds.size > 6)) {
+        errors.push("CRITICAL requires five or six reviewers");
+      }
       const roles = [...reviewerIds].map((id) => String(workerById.get(id)?.role ?? "").toLowerCase()).join(" ");
       if (!roles.includes("red team") && !roles.includes("independent design-assurance")) {
         errors.push("CRITICAL requires a red-team or independent design-assurance reviewer");

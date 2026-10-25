@@ -1,9 +1,11 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { types } from "node:util";
 
 import { ContinuityService } from "./continuity-service.js";
-import { SqliteContinuityStore } from "./continuity-store.js";
+import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
+import { hookFailureContext, hookFailureReason } from "./hook-error-diagnostics.js";
 import {
   assertDistinctDatabasePaths,
   resolveContinuityDatabasePath,
@@ -86,13 +88,37 @@ export function handleContinuityHook(input: HookInput, service: ContinuityServic
   return {};
 }
 
-async function main(): Promise<void> {
+type ContinuityHookPhase = "stdin" | "input" | "storage" | "workflow-store" | "handle" | "close" | "stdout";
+
+/** Bounded diagnostics only: stable reason codes and error metadata, never session IDs, inputs, SQL or paths. */
+function reportContinuityFailure(phase: ContinuityHookPhase, cause: unknown): void {
+  try {
+    const isObject = Boolean(cause) && (typeof cause === "object" || typeof cause === "function");
+    const storeError = isObject && !types.isProxy(cause) && cause instanceof ContinuityStoreError ? cause : null;
+    const reason = hookFailureReason(cause)
+      ?? (storeError ? storeError.reason
+        : phase === "input" && isObject && !types.isProxy(cause) && cause instanceof SyntaxError ? "INVALID_JSON"
+          : "UNEXPECTED_FAILURE");
+    console.error("[agent-governance-suite] continuity-hook-failure " + JSON.stringify({
+      phase, reason, context: hookFailureContext(cause),
+      ...(storeError && storeError.causeValue !== undefined ? { storeCause: hookFailureContext(storeError.causeValue) } : {}),
+    }));
+  } catch { /* A broken diagnostic sink cannot block the host. */ }
+}
+
+/**
+ * Runs one lifecycle event and returns the JSON to print. Continuity stays optional (fail open with no
+ * context), but every failure is reported with its phase and original cause instead of being discarded.
+ */
+export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = process.env): string {
+  let phase: ContinuityHookPhase = "input";
   let continuity: SqliteContinuityStore | null = null;
   let workflow: SqliteWorkflowStore | null = null;
   try {
-    const input = JSON.parse(readFileSync(0, "utf8")) as HookInput;
-    const workflowDatabasePath = resolveWorkflowDatabasePath();
-    const continuityDatabasePath = resolveContinuityDatabasePath();
+    const input = JSON.parse(raw) as HookInput;
+    phase = "storage";
+    const workflowDatabasePath = resolveWorkflowDatabasePath(environment);
+    const continuityDatabasePath = resolveContinuityDatabasePath(environment);
     assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath);
     continuity = new SqliteContinuityStore(continuityDatabasePath);
     const event = input.hook_event_name;
@@ -100,16 +126,32 @@ async function main(): Promise<void> {
     const needsWorkflowProjection = event === "PreCompact"
       || (event === "SessionStart" && (source === "resume" || source === "compact"));
     if (needsWorkflowProjection) {
-      try { workflow = new SqliteWorkflowStore(workflowDatabasePath); } catch { workflow = null; }
+      try { workflow = new SqliteWorkflowStore(workflowDatabasePath); }
+      catch (cause) {
+        // The projection is optional; continue without it but keep the cause visible.
+        reportContinuityFailure("workflow-store", cause);
+        workflow = null;
+      }
     }
+    phase = "handle";
     const output = handleContinuityHook(input, new ContinuityService(continuity, null, workflow));
-    if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));
-  } catch {
-    // Continuity is optional: every lifecycle failure exits successfully and emits no context.
+    return Object.keys(output).length > 0 ? JSON.stringify(output) : "";
+  } catch (cause) {
+    reportContinuityFailure(phase, cause);
+    return "";
   } finally {
-    try { workflow?.close(); } catch { /* Fail open. */ }
-    try { continuity?.close(); } catch { /* Fail open. */ }
+    try { workflow?.close(); } catch (cause) { reportContinuityFailure("close", cause); }
+    try { continuity?.close(); } catch (cause) { reportContinuityFailure("close", cause); }
   }
 }
 
-if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) await main();
+function main(): void {
+  let raw: string;
+  try { raw = readFileSync(0, "utf8"); }
+  catch (cause) { reportContinuityFailure("stdin", cause); return; }
+  const output = runContinuityHook(raw);
+  if (!output) return;
+  try { process.stdout.write(output); } catch (cause) { reportContinuityFailure("stdout", cause); }
+}
+
+if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) main();
