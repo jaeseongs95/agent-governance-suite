@@ -1,6 +1,6 @@
 {
   "schemaVersion": "AgsCommitProvenance.v1",
-  "revision": "r02",
+  "revision": "r03",
   "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
   "taskRefSource": {
     "kind": "coordinator-technical-metadata",
@@ -84,6 +84,42 @@
       "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
       "formalDefectId": null,
       "auditRefs": []
+    },
+    {
+      "commit": "a3217674e01a24ba4838079750f63c0f9e288b00",
+      "unit": "r13-source-ci",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": [
+        "R13 run40202151861 original failure preserved"
+      ]
+    },
+    {
+      "commit": "d9dd480937a70ba71865c0dee03e1755d3a9ffa7",
+      "unit": "declared-target-artifact-contract",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": "AGS-D-0036",
+      "auditRefs": [
+        "R13 run40202151861 original failure preserved"
+      ]
+    },
+    {
+      "commit": "fb2cc559bfb0bac2770aeed3ef7b87f2c7882968",
+      "unit": "r13-ts2375-and-fixture-lint",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": [
+        "R13 run40202151861 original failure preserved"
+      ]
+    },
+    {
+      "commit": "bec619dfa4a2ce1da7ec9ac03564114c06062ffa",
+      "unit": "r13-ci-helper-lint17",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": [
+        "R13 run40202151861 original failure preserved"
+      ]
     }
   ],
   "limitations": [

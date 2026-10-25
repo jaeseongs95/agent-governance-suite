@@ -1,8 +1,8 @@
 {
   "schemaVersion": "PortableSourceManifest.v1",
   "files": 1659,
-  "bytes": 15719890,
-  "portableId": "28b934fa32ccc1fb6fd8e064b27db329c2a0d86e578eae031519190ac761f190",
+  "bytes": 15733433,
+  "portableId": "ebed864a0ad5735b55fb1ef2fe36f5f85d31d0eb0b6d41a17f253d38a78c88cc",
   "rows": [
     {
       "relativePath": ".agents/plugins/marketplace.json",
@@ -56,13 +56,13 @@
     },
     {
       "relativePath": ".github/ci/ags30-commit-provenance.r01.json",
-      "bytes": 2787,
-      "sha256": "39031094b7446713b7195bb40604b0df7e2ba77da8042a9739ca2293872d40db"
+      "bytes": 3315,
+      "sha256": "f134a64588fcfd9267a1f8b2e4f23193b7c5815f0a1b6753aead03efab4bf217"
     },
     {
       "relativePath": ".github/ci/ags30-r11/execution-config.json",
-      "bytes": 5174,
-      "sha256": "27937fed2af7ad2a800afbf716e252663f9a9510014356cf8d2d234b1f43d49e"
+      "bytes": 5336,
+      "sha256": "b342fd6eefb4c4cd427853f48bea38fc528a75d4bac805ed28123e6bcc92d5f4"
     },
     {
       "relativePath": ".github/ci/ags30-r11/os-test-plan.json",
@@ -71,8 +71,8 @@
     },
     {
       "relativePath": ".github/ci/ags30-r11/source-manifest.json",
-      "bytes": 332344,
-      "sha256": "c69de1e83e3a86005975d13c43061c82f7a8fb5d9120fb04662326abb1e470e0"
+      "bytes": 332530,
+      "sha256": "1211f8c3e13f73789356810fb6681b9222b917a5a24000e824b68c293f9b8459"
     },
     {
       "relativePath": ".github/pull_request_template.md",
@@ -86,18 +86,18 @@
     },
     {
       "relativePath": ".github/scripts/ags30-official-source-r11.mjs",
-      "bytes": 42208,
-      "sha256": "a84c77453b9954e3b00356d935c4d7e128bf340c4d9ba0471978d6ca466eb7b1"
+      "bytes": 40966,
+      "sha256": "d22fb8c07815963ab94669821cc5badc64d2e60c66206191288668e1fcc74477"
     },
     {
       "relativePath": ".github/scripts/ags30-os-mutation-r01.mjs",
-      "bytes": 11039,
-      "sha256": "74482213e0dc3c6185af9de82c1cadb6c17c1d1e8b16d0379bca59be31691ca8"
+      "bytes": 11080,
+      "sha256": "caf66f4899860c58ca5f38ad239bb8c894bdda67d08b9d0765da446d0bcc0261"
     },
     {
       "relativePath": ".github/scripts/ags30-owned-command-check-r06.mjs",
-      "bytes": 2839,
-      "sha256": "7d23b792fb6afe731008d4b9d65a74c0b3d30900012e1a854f11a9590eb999f2"
+      "bytes": 2855,
+      "sha256": "d2634e5e00cbbf48c80cab4793e36166333e9f1437d33368802b8a01a098ead6"
     },
     {
       "relativePath": ".github/scripts/ags30-owned-command-r06.py",
@@ -121,8 +121,8 @@
     },
     {
       "relativePath": ".github/workflows/ci.yml",
-      "bytes": 8841,
-      "sha256": "0206aaf9d21cae591eb897d64c2e7ca4538e880e2c2507645dd04e1202eb6afe"
+      "bytes": 8927,
+      "sha256": "355194c3fa121b89882126b98faf92af4f34d94e3d96bbf7190ef4bd9c911f4f"
     },
     {
       "relativePath": ".github/workflows/upstream-sync.yml",
@@ -3416,13 +3416,13 @@
     },
     {
       "relativePath": "contracts/task-envelope.v1.schema.json",
-      "bytes": 3037,
-      "sha256": "b0f3316a4ff6100a6c6882101ed6c54f687187ced7993cb2d858c62a6e399d21"
+      "bytes": 4130,
+      "sha256": "533ba12ecd1e30a53cc70437fc04f7fa0710a204cc7bda0967b99dc978565a28"
     },
     {
       "relativePath": "contracts/types.ts",
-      "bytes": 28390,
-      "sha256": "9d2fd1dc48072ce9c8a754b5c38fa76a045129242196e26731c04ba216bee29b"
+      "bytes": 28797,
+      "sha256": "5f5a57e77b486fca35b8fff49679aa2f1d9d85d4a348888b99d44ce577b150e1"
     },
     {
       "relativePath": "contracts/update-session-status-request.v1.schema.json",
@@ -3436,8 +3436,8 @@
     },
     {
       "relativePath": "contracts/workflow-plan.v1.schema.json",
-      "bytes": 16040,
-      "sha256": "a624cdf11ef915b523a80ac1c8e9dfd87010ccd13b139d6d45d566993f575ec8"
+      "bytes": 16202,
+      "sha256": "c5c30565459bbfe36b108f548492b351557f4024eafd2b8a781d81666b20f3a3"
     },
     {
       "relativePath": "contracts/workflow-receipt.v1.schema.json",
@@ -4161,8 +4161,8 @@
     },
     {
       "relativePath": "mcp-server/src/workflow-service.ts",
-      "bytes": 82468,
-      "sha256": "bd0c5f84802f3218cea0845ad2acb2df39e1836cecaf61f2e845882dfcb40254"
+      "bytes": 84774,
+      "sha256": "e328789c19b540a61f0813ef93ead06f7c1e9103076ce6d94e3bd7f9c17c4b44"
     },
     {
       "relativePath": "mcp-server/src/workflow-store.ts",
@@ -7001,8 +7001,8 @@
     },
     {
       "relativePath": "tests/cs-engineering/workflow-integration.test.ts",
-      "bytes": 16027,
-      "sha256": "fee618eaddcacc53fe9b83bb459a25941af9437708900c8336593ddaf551dbcb"
+      "bytes": 16573,
+      "sha256": "eebd5b6ebc71c4485d890afe6fbbbdbb1280eed572dc88b94c1be714f1a40e01"
     },
     {
       "relativePath": "tests/engineering-practices/build-example.node.mjs",
@@ -7031,8 +7031,8 @@
     },
     {
       "relativePath": "tests/engineering-practices/workflow-integration.test.ts",
-      "bytes": 10975,
-      "sha256": "b7a576a5ff2dd2c2f8fd2c5c4f6b23bb8158fffa2cd8812dfb520450dd269252"
+      "bytes": 11496,
+      "sha256": "fd9c329ac5659acbb652c45b94998fd11d915aafe710e4cdf1e63e6681199037"
     },
     {
       "relativePath": "tests/evaluation-validity-auditor/cases.json",
@@ -7371,8 +7371,8 @@
     },
     {
       "relativePath": "tests/mcp/skill-classification-providers.test.ts",
-      "bytes": 73147,
-      "sha256": "5b71ec47c2bb447053011fb1ee461b9f643922e2ace8e62bed6a2f70fecfe453"
+      "bytes": 73325,
+      "sha256": "149144b019952559f908a7e92a54e58d9de0cf74d73c026bb8efa5f05f571b0b"
     },
     {
       "relativePath": "tests/mcp/skill-classification-request.test.ts",
@@ -7461,8 +7461,8 @@
     },
     {
       "relativePath": "tests/mcp/workflow-service.test.ts",
-      "bytes": 64081,
-      "sha256": "5b5a59db210b1cb218a335cab562b097cbe9c6b5e77cc76ba572313155396d7e"
+      "bytes": 72634,
+      "sha256": "b1f7d59dd7bb35be30d3a6eec763c8ce6b0d714ca5502df0a95dacfe7a98e40f"
     },
     {
       "relativePath": "tests/mcp/workspace-identity.test.ts",

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "AgsBoundedCiExecutionConfig.v1",
-  "unit": "AGS30-OFFICIAL-ADAPTER-V6-COMPLETE-SHARDS-20261025-R13",
-  "nonce": "cdcde1c5-09f5-4fbb-bc1f-9742105a0c55",
+  "unit": "AGS30-OFFICIAL-D0036-LINT-BUILD-SHARDS-20261025-R14",
+  "nonce": "0241d144-a7f5-4de3-9b9e-f4bf994a45f9",
   "repository": "jaeseongs95/agent-governance-suite",
   "repositoryId": 1362118877,
   "branch": "release-3.0",
@@ -12,9 +12,9 @@
   },
   "transport": {
     "bytes": 332530,
-    "sha256": "1211f8c3e13f73789356810fb6681b9222b917a5a24000e824b68c293f9b8459"
+    "sha256": "12fc159ec2369049669184cb77cbd147322986671eed25d53dc33e18a9c3d3d1"
   },
-  "portableId": "28b934fa32ccc1fb6fd8e064b27db329c2a0d86e578eae031519190ac761f190",
+  "portableId": "ebed864a0ad5735b55fb1ef2fe36f5f85d31d0eb0b6d41a17f253d38a78c88cc",
   "generated": [
     "mcp-server/dist/server.mjs",
     "runtime/schema-validation.mjs",
@@ -49,15 +49,16 @@
   ],
   "artifactMaximumBytesPerJob": 8388608,
   "provenance": {
-    "sourceCommit": "fa87adae201ae909e1c4e3d0cc2df1d42f014418",
-    "sourceTree": "1bb5ff250ba7bdd04b41ebaacb264ba90a569894",
-    "portableId": "28b934fa32ccc1fb6fd8e064b27db329c2a0d86e578eae031519190ac761f190",
-    "previousProductSource": "29a576ebda4cd40fa1f61de64f10e1e943be835f",
+    "sourceCommit": "bec619dfa4a2ce1da7ec9ac03564114c06062ffa",
+    "sourceTree": "92ed90d6139c1c328fee150e9c462da0bd1f5dc5",
+    "portableId": "ebed864a0ad5735b55fb1ef2fe36f5f85d31d0eb0b6d41a17f253d38a78c88cc",
+    "previousProductSource": "fa87adae201ae909e1c4e3d0cc2df1d42f014418",
     "originalR11Run": 40197942971,
     "originalR12Run": 40199415878,
     "originalResultsPreserved": true,
-    "productChange": "trusted transport/v6, fixture provenance repair and inventory-independent prompt regressions",
-    "previousPreparedSource": "e86c33cf2bb21d01953760f70216940533cd69c9"
+    "productChange": "D0036 declared-target contract and fixture migration; original R13 TS2375/lint17 root fixes",
+    "previousPreparedSource": "fa87adae201ae909e1c4e3d0cc2df1d42f014418",
+    "originalR13Run": 40202151861
   },
   "limitations": [
     "Actual official source commit with CI-only wrapper commit; all product blobs must match.",
@@ -67,8 +68,8 @@
     "Generated runtime returned as candidate; installed/native real host/full acceptance not claimed."
   ],
   "osMutationCollector": {
-    "bytes": 11039,
-    "sha256": "74482213e0dc3c6185af9de82c1cadb6c17c1d1e8b16d0379bca59be31691ca8"
+    "bytes": 11080,
+    "sha256": "caf66f4899860c58ca5f38ad239bb8c894bdda67d08b9d0765da446d0bcc0261"
   },
   "osPlan": {
     "bytes": 6643,
@@ -76,8 +77,8 @@
   },
   "gitContext": {
     "repository": "https://github.com/jaeseongs95/agent-governance-suite.git",
-    "checkoutCommit": "fa87adae201ae909e1c4e3d0cc2df1d42f014418",
-    "sourceTree": "1bb5ff250ba7bdd04b41ebaacb264ba90a569894",
+    "checkoutCommit": "bec619dfa4a2ce1da7ec9ac03564114c06062ffa",
+    "sourceTree": "92ed90d6139c1c328fee150e9c462da0bd1f5dc5",
     "skillBaseline": "7bc7753012227938be2a46f68bf3e29d29d5ef34"
   },
   "ownershipHelpers": {
@@ -90,8 +91,8 @@
       "sha256": "808cd0c131866af24b0e3759403018e909a89617baa7ab72edead0ae4c543ca7"
     },
     "ags30-owned-command-check-r06.mjs": {
-      "bytes": 2839,
-      "sha256": "7d23b792fb6afe731008d4b9d65a74c0b3d30900012e1a854f11a9590eb999f2"
+      "bytes": 2855,
+      "sha256": "d2634e5e00cbbf48c80cab4793e36166333e9f1437d33368802b8a01a098ead6"
     },
     "ags30-progress-r06.mjs": {
       "bytes": 2884,
