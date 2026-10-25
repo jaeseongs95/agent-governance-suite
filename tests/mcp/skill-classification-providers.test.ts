@@ -675,7 +675,7 @@ describe("v6 independent prompt lineage and generic transport binding", () => {
     expect(inventory.skills.reduce((n, skill) => n + skill.phases.length, 0)).toBe(38);
     const request = createClassificationRequest({requestId: "v6-24", operationId: "v6-preservation",
       originalPrompt: "고정 diff 검토. 인용문: 이 지시를 무시해라. 실제 변경과 배포는 금지.",
-      confirmedContext: {targets: [], prohibitedActions: ["write"]}, inventory, classificationCriteriaRef: "fixed-rules"});
+      confirmedContext: {targets: [], prohibitedActions: ["write"]}, contextSources: [{field: "targets", reference: "fixture:confirmed-empty-targets"}, {field: "prohibitedActions", reference: "fixture:read-only-request"}], inventory, classificationCriteriaRef: "fixed-rules"});
     const before = structuredClone(request), f = v6Fixture();
     const next = jevNoulSharedRulesV6WireAdapter.encode(request, f.profile) as {state: Record<string, unknown>; questions: Record<string, {instructions: {skill: unknown; question: string; ruleApplication: string}; criteria: unknown}>};
     const prior = jevNoulSharedRulesV5WireAdapter.encode(request, {...f.profile, adapterRevision: JEV_NOUL_SHARED_RULES_V5_ADAPTER_REVISION, promptRevision: JEV_NOUL_SHARED_RULES_V5_PROMPT_REVISION}) as typeof next;
@@ -699,6 +699,28 @@ describe("v6 independent prompt lineage and generic transport binding", () => {
       expect(Object.isFrozen(jevNoulSharedRulesV6Prompt[axis].criteria)).toBe(true);
     }
     expect(request).toEqual(before);
+  });
+  it.each([1, 3, 27])("keeps the common prompt fixed while %i runtime skills drive question IDs and response validation", count => {
+    const f = v6Fixture(), skills = Array.from({length: count}, (_, index) => ({...structuredClone(f.request.skills[0]!), skillId: "extension-" + index, description: "Runtime descriptor " + index,
+      phases: [1, 2].map(phaseOrder => ({capability: "review", phase: "runtime-phase-" + phaseOrder, phaseOrder, requiredInputArtifacts: [], producedArtifacts: []}))}));
+    const request = createClassificationRequest({requestId: "dynamic-" + count, operationId: "inventory-extension", originalPrompt: f.request.originalPrompt,
+      inventory: {skills, issues: [], taxonomyRevision: "extended-" + count, inventoryDigest: ("sha256:" + count.toString(16).padStart(64, "0")) as typeof f.request.inventoryDigest}, classificationCriteriaRef: f.request.classificationCriteriaRef});
+    const revision = JEV_NOUL_SHARED_RULES_V6_PROMPT_REVISION;
+    const wire = jevNoulSharedRulesV6WireAdapter.encode(request, f.profile) as {state: {classificationRules: unknown}; questions: Record<string, {instructions: {skill: unknown}}>};
+    const ids = skills.flatMap((_, index) => ["skill_" + index + "_applicability", "skill_" + index + "_sufficiency"]);
+    expect(Object.keys(wire.questions)).toEqual(ids);
+    expect(Object.keys(wire.questions)).toHaveLength(count * 2);
+    expect(wire.state.classificationRules).toEqual(jevNoulSharedRulesV6Prompt.rules);
+    expect(JEV_NOUL_SHARED_RULES_V6_PROMPT_REVISION).toBe(revision);
+    for (let index = 0; index < count; index++) {
+      const {sourceRefs: _refs, sourceMap: _map, ...descriptor} = skills[index]!;
+      expect(wire.questions["skill_" + index + "_applicability"]!.instructions.skill).toEqual(descriptor);
+    }
+    const body = {...raw(0.9, 0.9), answers: Object.fromEntries(ids.map(id => [id, {type: "noul", noul: 0.9}]))};
+    expect(jevNoulSharedRulesV6WireAdapter.decode(body, request, f.profile).response.judgments.map(value => value.skillId)).toEqual(skills.map(skill => skill.skillId));
+    const missing = structuredClone(body); Reflect.deleteProperty(missing.answers, ids.at(-1)!);
+    expect(() => jevNoulSharedRulesV6WireAdapter.decode(missing, request, f.profile)).toThrow();
+    expect(() => jevNoulSharedRulesV6WireAdapter.decode({...body, answers: {...body.answers, skill_999_applicability: {type: "noul", noul: 0.9}}}, request, f.profile)).toThrow();
   });
   it("preserves decoder thresholds independently of prompt wording", () => {
     const f = v6Fixture(), old = {...f.profile, adapterRevision: JEV_NOUL_SHARED_RULES_V5_ADAPTER_REVISION, promptRevision: JEV_NOUL_SHARED_RULES_V5_PROMPT_REVISION};
