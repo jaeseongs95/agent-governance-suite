@@ -125,6 +125,10 @@ describe("recorded artifact digests", () => {
       riskLevel: "low",
       workUnits: [{ id: "unit-1", objective: "Run the fixture.", dependencies: [], writeTargets: ["fixture.md"] }],
       requiredCapabilities: ["change-scope-baseline-capture"],
+      artifactContracts: [{
+        capability: "change-scope-baseline-capture",
+        produced: [{ artifactId: "workspace-baseline", schemaId: "fixture/v1", targetDigest: `sha256:${bareDigest}` as const }],
+      }],
       constraints: ["Use only fixture data."],
       authorization: { allowedActions: ["test"], prohibitedActions: ["deploy"], approvalRequired: [] },
       decision: { complexity: "simple", hasConflicts: false },

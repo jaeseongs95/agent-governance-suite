@@ -97,6 +97,11 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
         scope: { included: ["fixture"], excluded: ["deployment"] }, acceptanceCriteria: ["Guarded fixture passes"], riskLevel: "low",
         workUnits: [{ id: "unit", objective: "Inspect fixture", dependencies: [], writeTargets: ["fixture.md"] }],
         requiredCapabilities: ["task-decomposition"], constraints: ["No external services"],
+        artifactContracts: [{ capability: "task-decomposition", produced:
+          ["delegation-decision", "task-graph", "assignment-briefs", "integration-report"].map((artifactId) => ({
+            artifactId, schemaId: "fixture/v1", targetDigest: `sha256:${"b".repeat(64)}` as const,
+          })),
+        }],
         authorization: { allowedActions: ["test"], prohibitedActions: ["deploy"], approvalRequired: [] },
         decision: { complexity: "simple", hasConflicts: false }, orchestration: { requested: true, mcpAvailable: true } };
       const planInput = { schemaVersion: "1.0.0", taskEnvelope: task };
@@ -124,8 +129,8 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       const stage = receipt.plan.stages[0]!;
       const recorded = await call<WorkflowReceiptV1>("record_stage_result", await signed("record_stage_result", {
         schemaVersion: "1.0.0", runId: receipt.runId, stageId: stage.stageId, expectedRevision: receipt.revision, state: "passed", responseMode: "full",
-        output: { schemaVersion: "1.0.0", kind: "output", output: { completed: true }, artifacts: stage.requiredArtifacts.map((artifactId) => ({
-          artifactId, schemaId: "fixture/v1", locator: `fixture:${artifactId}`, digest: "d".repeat(64), targetDigest: "e".repeat(64), verified: true })), error: null },
+        output: { schemaVersion: "1.0.0", kind: "output", output: { completed: true }, artifacts: task.artifactContracts[0]!.produced.map(({ artifactId, schemaId, targetDigest }) => ({
+          artifactId, schemaId, locator: `fixture:${artifactId}`, digest: "d".repeat(64), targetDigest, verified: true })), error: null },
         evidence: [{ artifactId: "fixture", kind: "test", locator: "host-attestation-stdio.test.ts", verified: true, note: "Synthetic host fixture, not native-host evidence" }],
         findings: [], blockers: [], error: null,
       }));

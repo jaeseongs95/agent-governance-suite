@@ -9,7 +9,7 @@ import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { assertTaskEnvelope } from "../../skills/acceptance-evidence-validator/scripts/core.mjs";
 import { analyzeEvaluation } from "../../skills/evaluation-validity-auditor/scripts/core.mjs";
 import { validateTaskContract } from "../../skills/task-contract/scripts/validate-task-contract.mjs";
-import { makeFixture, makePostFixture } from "./fixture.mjs";
+import { makeFixture, makePostFixture, rawDigest } from "./fixture.mjs";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 
@@ -23,6 +23,12 @@ function task() {
     riskLevel: "low",
     workUnits: [],
     requiredCapabilities: ["evaluation-validity-audit"],
+    artifactContracts: [{
+      capability: "evaluation-validity-audit",
+      produced: ["evaluation-validity-report", "verified-evaluation-evidence-index"].map((artifactId) => ({
+        artifactId, schemaId: "schema://evaluation-validity/report-v1", targetDigest: rawDigest("candidate-v1"),
+      })),
+    }],
     constraints: ["Keep receipt output reference-only."],
     authorization: { allowedActions: ["read"], prohibitedActions: ["write"], approvalRequired: [] },
     decision: { complexity: "simple", hasConflicts: false },

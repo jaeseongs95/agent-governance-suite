@@ -550,6 +550,12 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     const provider = new HostAttestationProvider(store, codexExecutionAdapter);
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
     const taskEnvelope = createTask("capability-stage-floor");
+    taskEnvelope.artifactContracts = [{
+      capability: "task-decomposition",
+      produced: ["delegation-decision", "task-graph", "assignment-briefs", "integration-report"].map((artifactId) => ({
+        artifactId, schemaId: "host-attestation/v1", targetDigest: `sha256:${"e".repeat(64)}` as const,
+      })),
+    }];
     const planArgs = { schemaVersion: "1.0.0", taskEnvelope };
     const bootstrapToken = issueHostAttestation(store, codexExecutionAdapter, {
       tool: "plan_workflow", input: planArgs, model: "gpt-6-astra", reasoningEffort: "high",

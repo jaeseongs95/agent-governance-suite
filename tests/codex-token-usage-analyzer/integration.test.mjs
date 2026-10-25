@@ -7,6 +7,7 @@ import addFormats from "ajv-formats";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { execute } from "../../skills/codex-token-usage-analyzer/scripts/cli.mjs";
+import { digest } from "../../skills/codex-token-usage-analyzer/scripts/core.mjs";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
@@ -26,6 +27,10 @@ function workflowTask(taskId) {
     riskLevel: "low",
     workUnits: [],
     requiredCapabilities: ["local-codex-token-usage-analysis"],
+    artifactContracts: [{
+      capability: "local-codex-token-usage-analysis",
+      produced: [{ artifactId: "token-usage-report", schemaId: "TokenUsageReport.v1", targetDigest: digest(threadId) }]
+    }],
     constraints: ["Do not write Markdown unless requested."],
     authorization: { allowedActions: ["read"], prohibitedActions: ["write"], approvalRequired: [] },
     decision: { complexity: "simple", hasConflicts: false },
@@ -132,6 +137,7 @@ describe("codex-token-usage-analyzer integration", () => {
     );
     const providerResult = structuredClone(execution.result);
     providerResult.output.verdict = verdict;
+    providerResult.artifacts[0].digest = digest(providerResult.output);
     expect(providerResult.artifacts.map((artifact) => artifact.artifactId)).toEqual(["token-usage-report"]);
 
     const service = new WorkflowService(new FileSkillRegistry(path.join(root, "skills", "registry.json"), new ContractValidator()));

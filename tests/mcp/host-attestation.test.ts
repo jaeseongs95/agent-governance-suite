@@ -252,7 +252,14 @@ describe("Claude Code host attestation through the MCP boundary", () => {
     { adapter: geminiExecutionAdapter, model: "gemini-2.5-pro", modelClass: "deep", stageModel: "gemini-ultra" },
   ])("completes an orchestrated workflow with $adapter.host observations", async ({ adapter, model, modelClass, stageModel }) => {
     const { store, call } = await harness(true, adapter);
-    const planned = await call<WorkflowPlanV1>("plan_workflow", attest(store, "plan_workflow", planArguments("attest-complete"), { adapter, model }));
+    const taskEnvelope = task("attest-complete");
+    taskEnvelope.artifactContracts = [{ capability: "task-decomposition", produced:
+      ["delegation-decision", "task-graph", "assignment-briefs", "integration-report"].map((artifactId) => ({
+        artifactId, schemaId: "host-attestation/v1", targetDigest: `sha256:${"b".repeat(64)}` as const,
+      })),
+    }];
+    const planned = await call<WorkflowPlanV1>("plan_workflow", attest(store, "plan_workflow",
+      { schemaVersion: "1.0.0", taskEnvelope }, { adapter, model }));
     expect(planned.error).toBeNull();
     const plan = planned.data!;
     expect(plan.bootstrapExecution?.context).toMatchObject({
@@ -265,7 +272,6 @@ describe("Claude Code host attestation through the MCP boundary", () => {
     });
     expect(JSON.stringify(plan)).not.toContain(SESSION);
 
-    const taskEnvelope = task("attest-complete");
     const taskFrame = frame(taskEnvelope.taskId);
     const root = (await call<ConvergenceRootV1>("open_convergence_root", {
       schemaVersion: "1.0.0", parentRootId: null, taskEnvelope, frame: taskFrame, userApprovalRefs: [],
@@ -295,12 +301,12 @@ describe("Claude Code host attestation through the MCP boundary", () => {
         schemaVersion: "1.0.0",
         kind: "output",
         output: { completed: true },
-        artifacts: stage.requiredArtifacts.map((artifactId) => ({
+        artifacts: taskEnvelope.artifactContracts[0]!.produced.map(({ artifactId, schemaId, targetDigest }) => ({
           artifactId,
-          schemaId: "host-attestation/v1",
+          schemaId,
           locator: `fixture:${artifactId}`,
           digest: "d".repeat(64),
-          targetDigest: "e".repeat(64),
+          targetDigest,
           verified: true,
         })),
         error: null,

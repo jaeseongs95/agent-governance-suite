@@ -10,6 +10,7 @@ import { scopeA, workflowRef, nextWorkflowRow, snapshot } from "../unified-state
 
 it("AGS-D-0227: authority commit aborts the outer transaction when savepoint rollback fails", () => {
   const directory = mkdtempSync(path.join(tmpdir(), "ags30-al07-d0227-"));
+  if (path.dirname(directory) !== path.resolve(tmpdir()) || !path.basename(directory).startsWith("ags30-al07-d0227-")) throw new Error("Cleanup escaped the owned fixture root.");
   const original = new Error("synthetic-domain-commit-fault");
   const rollbackFailure = new Error("synthetic-savepoint-rollback-fault");
   const commands: string[] = [];
@@ -27,7 +28,7 @@ it("AGS-D-0227: authority commit aborts the outer transaction when savepoint rol
     const exec = DatabaseSync.prototype.exec;
     const intercept = vi.spyOn(DatabaseSync.prototype, "exec").mockImplementation(function (this: DatabaseSync, sql: string) {
       commands.push(sql);
-      if (sql === "ROLLBACK TO domain_operation") throw rollbackFailure;
+      if (sql === "ROLLBACK TO domain_operation") { exec.call(this, sql); throw rollbackFailure; }
       return exec.call(this, sql);
     });
     injectDomainFailure = true;
@@ -47,7 +48,6 @@ it("AGS-D-0227: authority commit aborts the outer transaction when savepoint rol
     vi.restoreAllMocks();
     try { authority.close(); }
     finally {
-      if (path.dirname(directory) !== path.resolve(tmpdir()) || !path.basename(directory).startsWith("ags30-al07-d0227-")) throw new Error("Cleanup escaped the owned fixture root.");
       rmSync(directory, { recursive: true, force: true });
     }
   }
