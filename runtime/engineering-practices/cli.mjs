@@ -46,7 +46,8 @@ export function execute(argv) {
     const value = checkStageBundle(o.root, o.input, o['bundle-digest'], o['task-digest'], o.capability);
     return { value, exitCode: ['CONSISTENT', 'NO_BLOCKING_FINDINGS'].includes(value.result.verdict) ? 0 : 1 };
   }
-  return { value: providerResult(o.capability, read(o.result), o.locator, hashBytes(readBoundedFile(o.root, o.result, 8 * 1024 * 1024))), exitCode: 0 };
+  const resultBytes = readBoundedFile(o.root, o.result, 8 * 1024 * 1024);
+  return { value: providerResult(o.capability, parseJson(resultBytes), o.locator, hashBytes(resultBytes)), exitCode: 0 };
 }
 export async function main(argv) {
   try { const { value, exitCode } = execute(argv); console.log(JSON.stringify(value, null, 2)); process.exitCode = exitCode; }

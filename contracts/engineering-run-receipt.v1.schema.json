@@ -117,7 +117,8 @@
         "TIMED_OUT",
         "SPAWN_ERROR",
         "INPUT_CHANGED"
-      ]
+      ],
+      "description": "TIMED_OUT records spawnSync ETIMEDOUT after control returns; INPUT_CHANGED retains priority when captured inputs changed."
     },
     "exitCode": {
       "type": [
@@ -150,7 +151,8 @@
       "pattern": "^sha256:[a-f0-9]{64}$"
     },
     "timeoutMs": {
-      "type": "integer"
+      "type": "integer",
+      "description": "Timeout requests SIGKILL for the direct child. It is not a portable hard return deadline, a sandbox, or a guarantee that descendants have exited."
     },
     "executable": {
       "type": "string",
