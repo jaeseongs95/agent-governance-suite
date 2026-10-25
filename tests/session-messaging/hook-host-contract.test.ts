@@ -25,12 +25,12 @@ function fixture() {
 }
 
 // All public hook CLIs retain exit 0; bounded diagnostics distinguish a failed run.
-function hook(bundle: string, args: string[], input: Record<string, unknown>, environment: NodeJS.ProcessEnv, expectedStatus = 0): { hookSpecificOutput?: { updatedInput?: Record<string, unknown> } } {
+function hook(bundle: string, args: string[], input: Record<string, unknown>, environment: NodeJS.ProcessEnv): { hookSpecificOutput?: { updatedInput?: Record<string, unknown> } } {
   const result = spawnSync(process.execPath, [path.join(root, "mcp-server/dist", bundle + ".mjs"), ...args], {
     input: JSON.stringify(input), env: environment, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,
   });
   expect(result.error).toBeUndefined();
-  expect(result.status, result.stderr).toBe(expectedStatus);
+  expect(result.status, result.stderr).toBe(0);
   return result.stdout.trim() ? JSON.parse(result.stdout) as { hookSpecificOutput?: { updatedInput?: Record<string, unknown> } } : {};
 }
 
@@ -85,8 +85,7 @@ describe("explicit hook CLI host contract (synthetic packaged fixtures, not nati
       const input = attestationInput(f.directory);
       for (const bundle of ["host-attestation-hook", "session-message-hook", "session-board-hook"]) {
         const tool = bundle === "host-attestation-hook" ? "plan_workflow" : bundle === "session-message-hook" ? "prepare_session_message" : "list_session_status";
-        const output = hook(bundle, args, { ...input, tool_name: "mcp__agent_governance_suite__" + tool }, f.env,
-          0);
+        const output = hook(bundle, args, { ...input, tool_name: "mcp__agent_governance_suite__" + tool }, f.env);
         const updated = output.hookSpecificOutput?.updatedInput;
         expect(updated?._hostAttestation).toBeUndefined();
         expect(updated?._sessionBinding).toBeUndefined();
@@ -101,7 +100,7 @@ it("does not treat an unknown host as Claude attestation or Codex delivery", () 
   const f = fixture();
   const input = attestationInput(f.directory);
   for (const bundle of ["host-attestation-hook", "session-message-hook"]) {
-    const output = hook(bundle, ["--host=unregistered-host"], input, f.env, 0);
+    const output = hook(bundle, ["--host=unregistered-host"], input, f.env);
     expect(output.hookSpecificOutput?.updatedInput?._hostAttestation).toBeUndefined();
     expect(output.hookSpecificOutput?.updatedInput?._sessionBinding).toBeUndefined();
   }

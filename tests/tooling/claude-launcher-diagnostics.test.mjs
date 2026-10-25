@@ -35,16 +35,16 @@ function diagnostics(stderr) {
 
 describe("Claude launcher stage diagnostics", () => {
   // Both launchers preserve public exit 0; stage diagnostics distinguish failures from empty successes.
-  for (const [launcher, exportName, returns, failureStatus] of [
-    ["session-message-hook.mjs", "runSessionMessageHookOutcome", (value) => `({ ok: true, output: ${value} })`, 0],
-    ["session-board-hook.mjs", "runSessionBoardHook", (value) => value, 0],
+  for (const [launcher, exportName, returns] of [
+    ["session-message-hook.mjs", "runSessionMessageHookOutcome", (value) => `({ ok: true, output: ${value} })`],
+    ["session-board-hook.mjs", "runSessionBoardHook", (value) => value],
   ]) {
     const name = launcher.replace(/\.mjs$/u, "");
 
     it(`${name}: reports a missing bundle as the import stage and stays fail-open`, async () => {
       const directory = await install(launcher, null);
       const result = run(directory, launcher);
-      expect(result.status).toBe(failureStatus);
+      expect(result.status).toBe(0);
       expect(result.stdout).toBe("");
       expect(diagnostics(result.stderr)).toEqual([{ launcher: name, stage: "import", code: "ERR_MODULE_NOT_FOUND" }]);
       expect(result.stderr).not.toContain(directory);
@@ -53,7 +53,7 @@ describe("Claude launcher stage diagnostics", () => {
     it(`${name}: reports a renamed export as the export stage`, async () => {
       const directory = await install(launcher, `export async function ${exportName}Renamed() { return "never"; }\n`);
       const result = run(directory, launcher);
-      expect(result.status).toBe(failureStatus);
+      expect(result.status).toBe(0);
       expect(result.stdout).toBe("");
       expect(diagnostics(result.stderr)).toEqual([{ launcher: name, stage: "export", code: "LAUNCHER_EXPORT_MISSING" }]);
     });
@@ -61,7 +61,7 @@ describe("Claude launcher stage diagnostics", () => {
     it(`${name}: reports a rejected run with its original code but no message or input`, async () => {
       const directory = await install(launcher, `export async function ${exportName}() { throw Object.assign(new Error("PRIVATE_RUN_MESSAGE"), { code: "EACCES" }); }\n`);
       const result = run(directory, launcher);
-      expect(result.status).toBe(failureStatus);
+      expect(result.status).toBe(0);
       expect(result.stdout).toBe("");
       expect(diagnostics(result.stderr)).toEqual([{ launcher: name, stage: "run", code: "EACCES" }]);
       expect(result.stderr).not.toContain("PRIVATE_");
