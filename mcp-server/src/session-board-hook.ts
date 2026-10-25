@@ -19,7 +19,7 @@ import { sessionMessageRequest } from "./session-message-client.js";
 import { adaptHostInput, resolveHookHost } from "./host-input-adapter.js";
 import { isObservedSubagent } from "./input-observation.js";
 
-type BoardFailurePhase = "host-entry" | "stdout" | "input" | "consume-wake" | "open" | "handle" | "close";
+type BoardFailurePhase = "host-entry" | "stdin" | "stdout" | "input" | "consume-wake" | "open" | "handle" | "close";
 
 function reportBoardFailure(phase: BoardFailurePhase, cause: unknown): void {
   try { console.error("[agent-governance-suite] board-hook-failure " + JSON.stringify({
@@ -85,16 +85,21 @@ export function handleSessionBoardHook(input: HookInput, board: Board, host: str
   return gateDecision(board, session) === "deny" ? preToolUse("deny", { permissionDecisionReason: GATE_REASON }) : {};
 }
 
-/** Runs one hook event and returns the JSON to print; every failure lets the tool call through. */
+/**
+ * Runs one hook event and returns the JSON to print; every failure lets the tool call through.
+ * `raw` is either the already-read input or a reader; a reader failure is reported as the stdin phase with its cause.
+ */
 export async function runSessionBoardHook(
   host: string,
-  raw: string,
+  raw: string | (() => string),
   request: typeof sessionMessageRequest = sessionMessageRequest,
 ): Promise<string> {
   let board: Board | null = null;
-  let phase: BoardFailurePhase = "input";
+  let phase: BoardFailurePhase = "stdin";
   try {
-    const input = JSON.parse(raw) as HookInput;
+    const text = typeof raw === "function" ? raw() : raw;
+    phase = "input";
+    const input = JSON.parse(text) as HookInput;
     const observation = adaptHostInput(input, host).observation;
     let verifiedInternalWake = false;
     if (observation.kind === "user-input" && !isObservedSubagent(observation)) {
@@ -132,11 +137,10 @@ export async function runSessionBoardHook(
 
 // Direct execution is the Codex hook; the Claude Code launcher imports runSessionBoardHook instead.
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
-  let raw = "";
-  try { raw = readFileSync(0, "utf8"); } catch { /* Fail open. */ }
   try {
     const host = resolveHookHost(process.argv.slice(2), "codex");
-    void runSessionBoardHook(host, raw).then((output) => {
+    // The hook reads stdin itself so a read failure keeps its own phase and cause instead of becoming invalid input.
+    void runSessionBoardHook(host, () => readFileSync(0, "utf8")).then((output) => {
       if (!output) return;
       let reported = false;
       const outputFailed = (cause: unknown) => {

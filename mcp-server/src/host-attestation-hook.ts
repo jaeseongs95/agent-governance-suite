@@ -432,9 +432,11 @@ async function main(): Promise<void> {
   let input: HookInput = {};
   let output: Record<string, unknown>;
   let codex = false;
-  let phase = "input";
+  let phase = "stdin";
   try {
-    const parsed = record(JSON.parse(readFileSync(0, "utf8")));
+    const raw = readFileSync(0, "utf8");
+    phase = "input";
+    const parsed = record(JSON.parse(raw));
     if (!parsed) throw new HookObservationFailure("INVALID_HOOK_INPUT");
     input = parsed;
     phase = "host-entry";

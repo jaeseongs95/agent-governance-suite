@@ -13,7 +13,7 @@ import {
 } from "../../contracts/types.js";
 import { listSessions, normalizeSummary, openBoard, readSession } from "../../skills/session-board/scripts/board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
-import { failureContext } from "./failure-diagnostics.js";
+import { failureContext, retainFailureSecondary } from "./failure-diagnostics.js";
 import { inlineSchemaReferences } from "./tool-schema-inline.js";
 import { PLUGIN_INFO } from "./plugin-info.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
@@ -297,27 +297,34 @@ async function sessionBoardResult(
   }
   let board: ReturnType<typeof openBoard> | null = null;
   let step: "open" | "list" | "close" | "presence" | "read" = "open";
+  // Closes at most once; a close failure is reported, never discarded.
+  const closeBoard = (): void => {
+    const opened = board;
+    board = null;
+    opened?.close();
+  };
   try {
     board = openBoard(databasePath);
     if (tool === "list_session_status") {
       step = "list";
       const sessions = listSessions(board, new Date().toISOString(), binding);
       step = "close";
-      board.close();
-      board = null;
+      closeBoard();
       step = "presence";
       return apiOk({ sessions: withPresence(sessions, await sessionMessages.listPresence(sessions)) });
     }
     step = "read";
     const row = readSession(board, binding!.host, binding!.sessionId);
+    step = "close";
+    closeBoard();
     return row && row.summary === summary
       ? apiOk(row)
       : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
   } catch (error) {
+    // A close failure after the primary failure stays attached as a secondary cause.
+    try { closeBoard(); } catch (closeError) { retainFailureSecondary(error, closeError); }
     // Keep the failed step and a bounded, redacted cause (no message, path or SQL).
     return apiError("MCP_UNAVAILABLE", "The session board is unavailable.", { step, cause: failureContext(error) });
-  } finally {
-    try { board?.close(); } catch { /* Read-only close failures do not change the result. */ }
   }
 }
 
