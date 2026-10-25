@@ -145,7 +145,7 @@ async function fixture(mode: string, sessionId: string, message: string) {
         try {
           rmSync(directory, { recursive: true, maxRetries: 3, retryDelay: 100 });
           cleanup.rmResult = 'returned';
-        } catch (error) { cleanup.rmResult = 'threw'; throw error; }
+        } catch (error) { cleanup.rmResult = 'threw'; cleanupFailure = { error }; }
         finally { cleanup.rmEnded = performance.now(); }
       }
     } catch (error) { cleanupFailure = { error }; }
