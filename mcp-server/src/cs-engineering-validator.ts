@@ -1,8 +1,8 @@
-import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { type StageResultV1, WorkflowContractError } from "../../contracts/types.js";
 import { canonicalJson } from "./convergence-logic.js";
 import { ContractValidator } from "./schema-validator.js";
+import { runStageValidator } from "./stage-validator-process.js";
 
 /** A selected 2.x review checks its supplied bundle; it never activates a server policy. */
 export function assertCsStageBundle(
@@ -20,16 +20,13 @@ export function assertCsStageBundle(
     throw new WorkflowContractError("MISSING_EVIDENCE", "CS review requires one verified local cs-review-bundle artifact.");
   }
   const root = path.dirname(reference.locator);
-  const checked = spawnSync(process.execPath, [
-    path.join(rootDirectory, "skills/cs-engineering/scripts/validate.mjs"), "check-stage-bundle",
-    "--root", root, "--input", path.basename(reference.locator),
+  const assessment = runStageValidator("CS stage bundle", path.join(rootDirectory, "skills/cs-engineering/scripts/validate.mjs"), [
+    "check-stage-bundle", "--root", root, "--input", path.basename(reference.locator),
     "--bundle-digest", reference.digest, "--task-digest", taskDigest,
-  ], {encoding:"utf8", timeout:10_000, maxBuffer:4 * 1024 * 1024, windowsHide:true});
-  let assessment: Record<string, unknown>;
-  try { assessment = JSON.parse(checked.stdout) as Record<string, unknown>; }
-  catch { throw new WorkflowContractError("INVALID_INPUT", "CS stage bundle validator did not return bounded JSON."); }
-  if (checked.error || ![0, 3, 4].includes(checked.status ?? -1) || assessment.kind !== "cs-bundle-check") {
-    throw new WorkflowContractError("GATE_FAILED", "CS stage bundle could not be validated. Correct the supplied files and references.");
+  ], [0, 3, 4]);
+  if (assessment.kind !== "cs-bundle-check") {
+    throw new WorkflowContractError("GATE_FAILED", "CS stage bundle could not be validated. Correct the supplied files and references.",
+      {step: "kind", kind: typeof assessment.kind === "string" ? assessment.kind : null});
   }
   validator.planWorkflowRequest(assessment.task);
   if (canonicalJson(assessment.review, "CS review") !== canonicalJson(result.output.output, "CS provider output")) {
