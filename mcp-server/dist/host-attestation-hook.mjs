@@ -1,12 +1,92 @@
 #!/usr/bin/env node
 
-// mcp-server/src/host-attestation-hook.ts
-import { mkdirSync as mkdirSync2, readFileSync, renameSync, writeFileSync } from "node:fs";
-import path5 from "node:path";
-import { fileURLToPath } from "node:url";
+// mcp-server/src/failure-diagnostics.ts
+import { createHash } from "node:crypto";
+import { types } from "node:util";
+var producerReasons = /* @__PURE__ */ new WeakMap();
+var producerCauses = /* @__PURE__ */ new WeakMap();
+var secondaryFailures = /* @__PURE__ */ new WeakMap();
+function retainFailureCause(error, cause) {
+  if (!producerCauses.has(error)) producerCauses.set(error, cause);
+  return error;
+}
+function retainFailureSecondary(error, secondary) {
+  if (error && (typeof error === "object" || typeof error === "function") && error !== secondary) {
+    const prior = secondaryFailures.get(error) ?? [];
+    if (prior.length < 2 && !prior.includes(secondary)) secondaryFailures.set(error, [...prior, secondary]);
+  }
+  return error;
+}
+function producerFailure(reason, message) {
+  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
+  const error = new Error(message);
+  Object.defineProperty(error, "code", { value: reason, enumerable: true });
+  producerReasons.set(error, reason);
+  return error;
+}
+function producerFailureReason(error) {
+  return error && (typeof error === "object" || typeof error === "function") ? producerReasons.get(error) ?? null : null;
+}
+function failureContext(error) {
+  const seen = /* @__PURE__ */ new Set();
+  function describe(value, depth) {
+    const type = value === null ? "null" : typeof value;
+    if (!value || typeof value !== "object" && typeof value !== "function") return { type };
+    if (types.isProxy(value)) return { type, opaque: "proxy" };
+    if (seen.has(value)) return { type, cycle: true };
+    seen.add(value);
+    try {
+      const prototype = Object.getPrototypeOf(value);
+      const context = {
+        type: prototype === SyntaxError.prototype ? "syntax-error" : prototype === TypeError.prototype ? "type-error" : prototype === RangeError.prototype ? "range-error" : types.isNativeError(value) ? "error" : type
+      };
+      const producerReason = producerFailureReason(value);
+      if (producerReason) context.producerReason = producerReason;
+      if (producerCauses.has(value)) context.producerCause = depth < 2 ? describe(producerCauses.get(value), depth + 1) : { truncated: true };
+      const secondary = secondaryFailures.get(value);
+      if (secondary) context.secondary = depth < 2 ? secondary.map((error2) => describe(error2, depth + 1)) : { truncated: true };
+      const code = Object.getOwnPropertyDescriptor(value, "code");
+      if (code) {
+        if (!("value" in code)) context.code = { type: "accessor", observed: false };
+        else if (typeof code.value === "string") {
+          const prefix = code.value.slice(0, 256);
+          context.code = {
+            type: "string",
+            length: code.value.length,
+            prefixCodeUnits: prefix.length,
+            truncated: prefix.length !== code.value.length,
+            encoding: "utf16le",
+            prefixSha256: createHash("sha256").update(Buffer.from(prefix, "utf16le")).digest("hex")
+          };
+        } else context.code = { type: code.value === null ? "null" : typeof code.value, observed: false };
+      }
+      if (code && "value" in code && code.value === "ERR_SQLITE_ERROR") {
+        const detail = Object.getOwnPropertyDescriptor(value, "errcode");
+        if (detail && !("value" in detail)) context.sqlite = { type: "accessor", observed: false };
+        else if (detail && Number.isInteger(detail.value) && detail.value >= 1 && detail.value <= 65535 && (detail.value & 255) >= 1 && (detail.value & 255) <= 28) {
+          context.sqlite = { errcode: detail.value, primaryCode: detail.value & 255 };
+        } else context.sqlite = { observed: false };
+      }
+      const cause = Object.getOwnPropertyDescriptor(value, "cause");
+      if (cause) {
+        if (!("value" in cause)) context.cause = { type: "accessor", observed: false };
+        else context.cause = depth < 2 ? describe(cause.value, depth + 1) : { truncated: true };
+      }
+      return context;
+    } catch {
+      return { type, unreadable: true };
+    } finally {
+      seen.delete(value);
+    }
+  }
+  return describe(error, 0);
+}
 
-// mcp-server/src/host-attestation.ts
-import { createHash as createHash2, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+// mcp-server/src/builtin-hook-host-adapters.ts
+import { createHash as createHash3 } from "node:crypto";
+import { types as utilTypes } from "node:util";
+import { closeSync, constants, fstatSync, openSync, readSync, statSync as statSync2 } from "node:fs";
+import path5 from "node:path";
 
 // contracts/types.ts
 var MODEL_CLASS = ["lightweight", "general", "deep", "frontier"];
@@ -25,14 +105,434 @@ var WorkflowContractError = class extends Error {
   }
 };
 
+// skills/coordinate-subagents/references/model-routing-presets.json
+var model_routing_presets_default = {
+  schema_version: 1,
+  policy_revision: "2026-10-24.r02",
+  default_profile: "balanced",
+  roles: [
+    "discovery",
+    "general-implementation",
+    "complex-reasoning",
+    "independent-audit"
+  ],
+  model_class_order: [
+    "lightweight",
+    "general",
+    "deep",
+    "frontier"
+  ],
+  effort_order: [
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+    "ultra"
+  ],
+  invariants: {
+    controls_delegation: false,
+    controls_agent_count: false,
+    controls_batching: false,
+    user_override_precedence: true,
+    capability_check_required: true,
+    high_risk_minimum_model_class: "general",
+    high_risk_minimum_effort: "high"
+  },
+  providers: {
+    "openai-codex": {
+      host: "codex",
+      minimum_efforts: { "gpt-5.6-luna": "high" },
+      catalog: {
+        matching: "exact-only",
+        models: {
+          "gpt-6-astra": {
+            model_class: "frontier",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6-sol": {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6.1-sol": {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6-luna": {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-sol": {
+            model_class: "deep",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-terra": {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-luna": {
+            model_class: "lightweight",
+            minimum_effort: "high",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        aliases: {}
+      },
+      application: {
+        full_history_overrides: false,
+        context_field: "fork_turns",
+        default_context: "all",
+        full_history_value: "all",
+        limited_context_value: "none",
+        model_field: "model",
+        effort_field: "reasoning_effort",
+        model_delivery: ["spawn-argument"],
+        effort_delivery: ["spawn-argument"],
+        verification: "spawn-result"
+      },
+      profiles: {
+        economy: {
+          discovery: { model: "gpt-5.6-luna", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "gpt-5.6-terra", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "gpt-5.6-sol", effort: "medium", model_class: "deep" },
+          "independent-audit": { model: "gpt-5.6-sol", effort: "high", model_class: "deep" }
+        },
+        balanced: {
+          discovery: { model: "gpt-5.6-luna", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "gpt-5.6-terra", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "gpt-5.6-sol", effort: "high", model_class: "deep" },
+          "independent-audit": { model: "gpt-6-astra", effort: "high", model_class: "frontier" }
+        },
+        quality: {
+          discovery: { model: "gpt-5.6-terra", effort: "medium", model_class: "general" },
+          "general-implementation": { model: "gpt-5.6-sol", effort: "high", model_class: "deep" },
+          "complex-reasoning": { model: "gpt-6-astra", effort: "high", model_class: "frontier" },
+          "independent-audit": { model: "gpt-6-astra", effort: "xhigh", model_class: "frontier" }
+        }
+      }
+    },
+    "anthropic-claude-code": {
+      host: "claude-code",
+      catalog: {
+        matching: "claude-family-or-exact",
+        models: {
+          haiku: {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          sonnet: {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          opus: {
+            model_class: "deep",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          fable: {
+            model_class: "frontier",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        aliases: {}
+      },
+      application: {
+        model_field: "model",
+        effort_field: "effort",
+        model_delivery: ["per-invocation-argument", "subagent-frontmatter"],
+        effort_delivery: ["subagent-frontmatter", "cli-agent-definition"],
+        verification: "tasks-view"
+      },
+      profiles: {
+        economy: {
+          discovery: { model: "haiku", effort: "low", model_class: "lightweight" },
+          "general-implementation": { model: "sonnet", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "opus", effort: "medium", model_class: "deep" },
+          "independent-audit": { model: "opus", effort: "high", model_class: "deep" }
+        },
+        balanced: {
+          discovery: { model: "haiku", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "sonnet", effort: "high", model_class: "general" },
+          "complex-reasoning": { model: "opus", effort: "high", model_class: "deep" },
+          "independent-audit": { model: "fable", effort: "high", model_class: "frontier" }
+        },
+        quality: {
+          discovery: { model: "sonnet", effort: "high", model_class: "general" },
+          "general-implementation": { model: "opus", effort: "high", model_class: "deep" },
+          "complex-reasoning": { model: "fable", effort: "xhigh", model_class: "frontier" },
+          "independent-audit": { model: "fable", effort: "xhigh", model_class: "frontier" }
+        }
+      }
+    },
+    "google-gemini": {
+      host: "gemini",
+      catalog: {
+        matching: "gemini-family-or-exact",
+        models: {
+          "flash-lite": {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "flash-8b": {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          flash: {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          pro: {
+            model_class: "deep",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          ultra: {
+            model_class: "frontier",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        aliases: {
+          flash_lite: "flash-lite"
+        }
+      },
+      application: {
+        model_field: "model",
+        effort_field: "effort",
+        model_delivery: ["invoke-argument", "subagent-frontmatter"],
+        effort_delivery: ["subagent-frontmatter"],
+        verification: "host-task-view"
+      },
+      profiles: {
+        economy: {
+          discovery: { model: "flash-lite", effort: "low", model_class: "lightweight" },
+          "general-implementation": { model: "flash", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "pro", effort: "medium", model_class: "deep" },
+          "independent-audit": { model: "pro", effort: "high", model_class: "deep" }
+        },
+        balanced: {
+          discovery: { model: "flash-lite", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "flash", effort: "high", model_class: "general" },
+          "complex-reasoning": { model: "pro", effort: "high", model_class: "deep" },
+          "independent-audit": { model: "ultra", effort: "high", model_class: "frontier" }
+        },
+        quality: {
+          discovery: { model: "flash", effort: "high", model_class: "general" },
+          "general-implementation": { model: "pro", effort: "high", model_class: "deep" },
+          "complex-reasoning": { model: "ultra", effort: "xhigh", model_class: "frontier" },
+          "independent-audit": { model: "ultra", effort: "xhigh", model_class: "frontier" }
+        }
+      }
+    }
+  }
+};
+
+// skills/coordinate-subagents/scripts/model-catalog-adapter.mjs
+function escapeRegExp(literal) {
+  return literal.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+function buildClaudeFamilyRegex(keys) {
+  if (keys.length === 0) return null;
+  const sorted = [...keys].sort((left, right) => right.length - left.length).map(escapeRegExp);
+  return new RegExp(
+    `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(${sorted.join("|")})(?:[-@:.]|$)`,
+    "u"
+  );
+}
+function buildGeminiFamilyRegex(prefixedKeys, bareKeys) {
+  if (prefixedKeys.length === 0 && bareKeys.length === 0) return null;
+  const sortedPrefixed = [...prefixedKeys].sort((left, right) => right.length - left.length).map(escapeRegExp);
+  const sortedBare = [...bareKeys].sort((left, right) => right.length - left.length).map(escapeRegExp);
+  const branches = [];
+  if (sortedPrefixed.length > 0) {
+    branches.push(
+      `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)(${sortedPrefixed.join("|")})(?:[-@:.]|$)`
+    );
+  }
+  if (sortedBare.length > 0) {
+    branches.push(`^(${sortedBare.join("|")})$`);
+  }
+  return new RegExp(branches.join("|"), "u");
+}
+function resolveCatalogModel(catalog, rawModel, { allowProfileKeys = false } = {}) {
+  if (typeof rawModel !== "string" || rawModel.length === 0 || !catalog) return null;
+  const models = catalog.models ?? {};
+  const aliases = catalog.aliases ?? {};
+  let matchedToken = null;
+  if (allowProfileKeys && ["exact-only", "claude-family-or-exact", "gemini-family-or-exact"].includes(catalog.matching) && (Object.hasOwn(models, rawModel) || Object.hasOwn(aliases, rawModel))) {
+    matchedToken = rawModel;
+  } else if (catalog.matching === "exact-only") {
+    if (Object.hasOwn(models, rawModel) || Object.hasOwn(aliases, rawModel)) {
+      matchedToken = rawModel;
+    }
+  } else if (catalog.matching === "claude-family-or-exact") {
+    const allKeys = [.../* @__PURE__ */ new Set([...Object.keys(models), ...Object.keys(aliases)])];
+    const familyRegex = buildClaudeFamilyRegex(allKeys);
+    matchedToken = familyRegex?.exec(rawModel)?.[1] ?? null;
+  } else if (catalog.matching === "gemini-family-or-exact") {
+    const allKeys = [.../* @__PURE__ */ new Set([...Object.keys(models), ...Object.keys(aliases)])];
+    const bareKeys = allKeys.filter((key) => key !== "flash-8b");
+    const familyRegex = buildGeminiFamilyRegex(allKeys, bareKeys);
+    const match = familyRegex?.exec(rawModel);
+    matchedToken = match?.[1] ?? match?.[2] ?? null;
+    if (!matchedToken && (Object.hasOwn(models, rawModel) || Object.hasOwn(aliases, rawModel)) && rawModel !== "flash-8b") {
+      matchedToken = rawModel;
+    }
+  }
+  if (!matchedToken) return null;
+  const canonicalKey = Object.hasOwn(aliases, matchedToken) ? aliases[matchedToken] : matchedToken;
+  if (!Object.hasOwn(models, canonicalKey)) return null;
+  return canonicalKey;
+}
+
+// mcp-server/src/host-execution-adapters.ts
+function resolveFromProviderCatalog(providerId, host, policyRevision, providerEntry, rawModel, provenance = "adapter-policy") {
+  if (typeof rawModel !== "string" || rawModel.length === 0 || !providerEntry?.catalog) return null;
+  const catalog = providerEntry.catalog;
+  const models = catalog.models ?? {};
+  const minimumEfforts = providerEntry.minimum_efforts ?? {};
+  const canonicalKey = resolveCatalogModel(catalog, rawModel);
+  if (!canonicalKey) return null;
+  const entry = models[canonicalKey];
+  const minimumReasoningEffort = minimumEfforts[rawModel] ?? minimumEfforts[canonicalKey] ?? entry.minimum_effort ?? null;
+  const supportedEfforts = entry.supported_efforts && entry.supported_efforts.length > 0 ? entry.supported_efforts : REASONING_EFFORT;
+  return {
+    provider: providerId,
+    host,
+    rawModel,
+    resolvedModel: canonicalKey,
+    modelClass: entry.model_class,
+    minimumReasoningEffort,
+    supportedEfforts,
+    aliasUsed: rawModel !== canonicalKey,
+    policyRevision,
+    provenance
+  };
+}
+function createHostAdapter(providerId, host, policyRevision, providerEntry) {
+  return Object.freeze({
+    host,
+    provider: providerId,
+    policyRevision,
+    resolveModel(model, provenance = `${host}:adapter-policy`) {
+      return resolveFromProviderCatalog(providerId, host, policyRevision, providerEntry, model, provenance);
+    },
+    modelClassForModel(model) {
+      return resolveFromProviderCatalog(providerId, host, policyRevision, providerEntry, model)?.modelClass ?? null;
+    }
+  });
+}
+function createCatalogExecutionAdapters(presets = model_routing_presets_default) {
+  if (!presets || typeof presets !== "object" || Array.isArray(presets) || !presets.providers || typeof presets.providers !== "object" || Array.isArray(presets.providers)) throw new Error("INVALID_EXECUTION_ADAPTER_CONFIGURATION");
+  const policyRevision = typeof presets.policy_revision === "string" && presets.policy_revision.length > 0 ? presets.policy_revision : "1.0.0";
+  const adapters = /* @__PURE__ */ new Map();
+  for (const [providerId, entry] of Object.entries(presets.providers)) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error("INVALID_EXECUTION_ADAPTER_HOST");
+    const host = entry.host;
+    if (typeof host !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host)) throw new Error("INVALID_EXECUTION_ADAPTER_HOST");
+    if (adapters.has(host)) throw new Error("DUPLICATE_EXECUTION_ADAPTER_HOST");
+    adapters.set(host, createHostAdapter(providerId, host, policyRevision, entry));
+  }
+  const view = Object.freeze({
+    size: adapters.size,
+    get: (host) => adapters.get(host),
+    has: (host) => adapters.has(host),
+    entries: () => adapters.entries(),
+    keys: () => adapters.keys(),
+    values: () => adapters.values(),
+    forEach(callback, thisArg) {
+      adapters.forEach((value, key) => callback.call(thisArg, value, key, view));
+    },
+    [Symbol.iterator]: () => adapters[Symbol.iterator](),
+    [Symbol.toStringTag]: "ReadonlyMap"
+  });
+  return Object.freeze({ policyRevision, adapters: view });
+}
+var defaultSuite = createCatalogExecutionAdapters();
+var defaultExecutionAdapters = defaultSuite.adapters;
+var claudeCodeExecutionAdapter = defaultSuite.adapters.get("claude-code");
+var codexExecutionAdapter = defaultSuite.adapters.get("codex");
+var geminiExecutionAdapter = defaultSuite.adapters.get("gemini");
+
+// mcp-server/src/runtime-config.ts
+import { homedir } from "node:os";
+import path from "node:path";
+function resolveWorkflowDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
+  const configured = environment.AGENT_GOVERNANCE_DB_PATH?.trim();
+  if (configured) return path.resolve(currentWorkingDirectory, configured);
+  return path.resolve(userStateDirectory(environment, platform, homeDirectory), "workflows.sqlite3");
+}
+function userStateDirectory(environment, platform, homeDirectory) {
+  let stateRoot;
+  if (platform === "win32") {
+    stateRoot = environment.LOCALAPPDATA?.trim() || path.join(homeDirectory, "AppData", "Local");
+  } else if (platform === "darwin") {
+    stateRoot = path.join(homeDirectory, "Library", "Application Support");
+  } else {
+    stateRoot = environment.XDG_STATE_HOME?.trim() || path.join(homeDirectory, ".local", "state");
+  }
+  return path.resolve(stateRoot, "agent-governance-suite");
+}
+
+// mcp-server/src/session-message-protocol.ts
+var SESSION_MESSAGE_MAX_REQUEST_BYTES = 32 * 1024;
+var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
+
+// mcp-server/src/host-input-adapter.ts
+var hostFailures = {
+  selection: ["INVALID_HOOK_HOST_SELECTION", "Invalid or ambiguous hook host."],
+  adapter: ["INVALID_HOOK_HOST_ADAPTER", "Invalid hook host adapter."],
+  duplicate: ["HOOK_HOST_ADAPTER_DUPLICATE", "Hook host adapter is already registered."],
+  unavailable: ["HOST_ADAPTER_UNAVAILABLE", "A host delivery adapter is required."]
+};
+function hookHostFailure(kind) {
+  const [reason, message] = hostFailures[kind];
+  return producerFailure(reason, message);
+}
+function resolveHookHost(arguments_, fallback) {
+  const selected = [];
+  for (let index = 0; index < arguments_.length; index++) {
+    const argument = arguments_[index];
+    if (argument === "--host") selected.push(arguments_[++index] ?? "");
+    else if (argument.startsWith("--host=")) selected.push(argument.slice(7));
+  }
+  if (selected.length === 0) return fallback;
+  if (selected.length !== 1 || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(selected[0])) throw hookHostFailure("selection");
+  return selected[0];
+}
+var hookHostAdapters = /* @__PURE__ */ new Map();
+function registerHookHostAdapter(host, adapter) {
+  if (typeof host !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host) || !adapter || typeof adapter.deliveryProfile !== "function" || typeof adapter.processPid !== "function" || adapter.attestationKind !== void 0 && !["codex-rollout", "claude-hook"].includes(adapter.attestationKind)) throw hookHostFailure("adapter");
+  if (hookHostAdapters.has(host)) throw hookHostFailure("duplicate");
+  hookHostAdapters.set(host, Object.freeze({ ...adapter }));
+}
+function hookAttestationKind(host) {
+  return hookHostAdapters.get(host)?.attestationKind;
+}
+
+// mcp-server/src/peer-wait-policy.ts
+function identityKey(identity) {
+  return JSON.stringify([identity.host, identity.sessionId]);
+}
+function normalizePeerWaitTargets(targets) {
+  const unique = new Map(targets.map((target) => [identityKey(target), { host: target.host, sessionId: target.sessionId }]));
+  return [...unique.keys()].sort().map((key) => unique.get(key));
+}
+
+// mcp-server/src/session-message-wake-port.ts
+import { execFile } from "node:child_process";
+import { existsSync as existsSync2 } from "node:fs";
+import net from "node:net";
+import path4 from "node:path";
+
+// mcp-server/src/trust-store.ts
+import { DatabaseSync } from "node:sqlite";
+
 // mcp-server/src/convergence-logic.ts
-import { createHash } from "node:crypto";
+import { createHash as createHash2 } from "node:crypto";
 import { existsSync, statSync } from "node:fs";
-import path2 from "node:path";
+import path3 from "node:path";
 
 // mcp-server/src/workspace-identity.ts
 import fs from "node:fs";
-import path from "node:path";
+import path2 from "node:path";
 var WALK_LIMIT = 256;
 var READ_LIMIT = 4096;
 var URI_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]+:\/\//u;
@@ -70,17 +570,17 @@ function normalizedKey(value) {
   return slashed.replace(/\/+$/u, "");
 }
 function physicalPath(target) {
-  let current = path.resolve(target);
+  let current = path2.resolve(target);
   const suffix = [];
   for (let depth = 0; depth < WALK_LIMIT; depth += 1) {
     try {
       const existing = fs.realpathSync.native(current);
-      return { real: path.join(existing, ...suffix), existing };
+      return { real: path2.join(existing, ...suffix), existing };
     } catch (error) {
       const code = error.code;
-      const parent = path.dirname(current);
+      const parent = path2.dirname(current);
       if (code !== "ENOENT" && code !== "ENOTDIR" || parent === current) throw unresolved(target, code ?? "unreadable");
-      suffix.unshift(path.basename(current));
+      suffix.unshift(path2.basename(current));
       current = parent;
     }
   }
@@ -103,33 +603,33 @@ function readHead(file) {
 function discoverGit(physical) {
   let evidence = physical.existing;
   try {
-    let directory = isDirectory(physical.existing) ? physical.existing : path.dirname(physical.existing);
+    let directory = isDirectory(physical.existing) ? physical.existing : path2.dirname(physical.existing);
     for (let depth = 0; depth < WALK_LIMIT; depth += 1) {
-      evidence = path.join(directory, ".git");
+      evidence = path2.join(directory, ".git");
       const stat = fs.statSync(evidence, { throwIfNoEntry: false });
       if (stat) {
         let gitDir = evidence;
         if (!stat.isDirectory()) {
           const pointer = /^gitdir: ([^\r\n]+)/u.exec(readHead(evidence))?.[1];
           if (!pointer) throw unresolved(evidence, "missing gitdir line");
-          gitDir = path.resolve(directory, pointer);
+          gitDir = path2.resolve(directory, pointer);
           if (!isDirectory(gitDir)) throw unresolved(gitDir, "gitdir is not a directory");
         }
         let commonDir = gitDir;
-        evidence = path.join(gitDir, "commondir");
+        evidence = path2.join(gitDir, "commondir");
         if (fs.statSync(evidence, { throwIfNoEntry: false })) {
           const pointer = readHead(evidence).trim();
           if (!pointer) throw unresolved(evidence, "empty commondir");
-          commonDir = path.resolve(gitDir, pointer);
+          commonDir = path2.resolve(gitDir, pointer);
           if (!isDirectory(commonDir)) throw unresolved(commonDir, "commondir is not a directory");
         }
         return {
           commonDir: normalizedKey(fs.realpathSync.native(commonDir)),
           checkoutRoot: normalizedKey(directory),
-          relative: normalizedKey(path.relative(directory, physical.real))
+          relative: normalizedKey(path2.relative(directory, physical.real))
         };
       }
-      const parent = path.dirname(directory);
+      const parent = path2.dirname(directory);
       if (parent === directory) return null;
       directory = parent;
     }
@@ -144,8 +644,8 @@ function repositoryCheckouts(commonDir) {
   const complete = false;
   try {
     if (!isDirectory(commonDir)) return { roots: [], complete: false };
-    if (path.basename(commonDir) === ".git") roots.add(normalizedKey(physicalPath(path.dirname(commonDir)).real));
-    const worktrees = path.join(commonDir, "worktrees");
+    if (path2.basename(commonDir) === ".git") roots.add(normalizedKey(physicalPath(path2.dirname(commonDir)).real));
+    const worktrees = path2.join(commonDir, "worktrees");
     if (fs.statSync(worktrees, { throwIfNoEntry: false })) {
       const listing = fs.opendirSync(worktrees);
       try {
@@ -156,11 +656,11 @@ function repositoryCheckouts(commonDir) {
             break;
           }
           try {
-            const pointer = readHead(path.join(worktrees, name, "gitdir")).trim();
-            if (!pointer || isUnsupported(pointer) || normalizedKey(path.basename(pointer)) !== ".git") {
+            const pointer = readHead(path2.join(worktrees, name, "gitdir")).trim();
+            if (!pointer || isUnsupported(pointer) || normalizedKey(path2.basename(pointer)) !== ".git") {
               continue;
             }
-            roots.add(normalizedKey(physicalPath(path.dirname(path.resolve(worktrees, name, pointer))).real));
+            roots.add(normalizedKey(physicalPath(path2.dirname(path2.resolve(worktrees, name, pointer))).real));
           } catch {
           }
         }
@@ -183,7 +683,7 @@ function repositoryInDirectory(container, commonDir) {
       const key = normalizedKey(directory);
       if (visited.has(key)) continue;
       visited.add(key);
-      if (fs.statSync(path.join(directory, ".git"), { throwIfNoEntry: false })) {
+      if (fs.statSync(path2.join(directory, ".git"), { throwIfNoEntry: false })) {
         if (discoverGit({ real: directory, existing: directory })?.commonDir === commonDir) return "overlap";
       }
       const listing = fs.opendirSync(directory);
@@ -191,7 +691,7 @@ function repositoryInDirectory(container, commonDir) {
         for (let entry = listing.readSync(); entry; entry = listing.readSync()) {
           if (++inspected > READ_LIMIT) return "unknown";
           if (entry.name === ".git") continue;
-          const child = path.join(directory, entry.name);
+          const child = path2.join(directory, entry.name);
           if (entry.isDirectory()) pending.push(child);
           else if (entry.isSymbolicLink()) {
             if (isDirectory(child)) pending.push(child);
@@ -224,7 +724,7 @@ function resolveRootIdentity(workspaceLocator, entries, options = {}) {
     const target = globIndex < 0 ? entry : `${segments.slice(0, globIndex).join("/")}/`;
     return {
       entry,
-      ...identify(path.resolve(workspaceLocator, target)),
+      ...identify(path2.resolve(workspaceLocator, target)),
       conservative: globIndex < 0 ? null : "glob-prefix"
     };
   });
@@ -242,13 +742,13 @@ function canonicalJson(value, subject = "Convergence input") {
   }
   if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item, subject)).join(",")}]`;
   if (value && typeof value === "object") {
-    const record4 = value;
-    return `{${Object.keys(record4).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record4[key], subject)}`).join(",")}}`;
+    const record5 = value;
+    return `{${Object.keys(record5).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record5[key], subject)}`).join(",")}}`;
   }
   throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
 }
 function convergenceDigest(value) {
-  return `sha256:${createHash("sha256").update(canonicalJson(value), "utf8").digest("hex")}`;
+  return `sha256:${createHash2("sha256").update(canonicalJson(value), "utf8").digest("hex")}`;
 }
 function writeSurface(root) {
   return [
@@ -264,7 +764,7 @@ function surfaceDigest(root) {
   return convergenceDigest({ locator: root.frame.workspace.locator, entries: writeSurface(root) });
 }
 function normalizedScope(value, workspaceLocator) {
-  const normalized = path2.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
+  const normalized = path3.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
   return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }
 function inferredSurfaces(identity) {
@@ -277,7 +777,7 @@ function coversEarlierCheckout(current, earlier) {
 }
 function surfaceBacked(surface, observedOutsideCheckouts) {
   const unchanged = observedOutsideCheckouts && surface.git === null && !surface.conservative;
-  return existsSync((unchanged ? path2.posix.dirname(surface.physical) : surface.physical) || "/");
+  return existsSync((unchanged ? path3.posix.dirname(surface.physical) : surface.physical) || "/");
 }
 function activeRootIdentity(root, stored) {
   const digest2 = surfaceDigest(root);
@@ -429,23 +929,326 @@ function planRootInsertion(root, actives) {
   };
 }
 function normalizeWorkspaceLocator(locator) {
-  const resolved = path2.resolve(locator);
+  const resolved = path3.resolve(locator);
   return process.platform === "win32" ? resolved.toLowerCase() : resolved;
 }
 
+// mcp-server/src/session-message-wake-port.ts
+function codexWakeOutcome(error, spawned) {
+  return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
+}
+function claudeWakeOutcome(hadError, connected, wrote) {
+  return !hadError && wrote ? "submitted" : connected || wrote ? "accepted-or-unknown" : "definite-failure";
+}
+function geminiWakeOutcome(error, spawned) {
+  return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
+}
+function resolveGeminiAgentApi(environment = process.env, platform = process.platform) {
+  const configured = environment.ANTIGRAVITY_AGENTAPI_EXE;
+  if (configured) {
+    if (platform === "win32") {
+      const root = path4.win32.parse(configured).root;
+      if (!path4.win32.isAbsolute(configured) || root === "\\" || root === "/" || path4.win32.extname(configured).toLowerCase() !== ".exe") return null;
+    }
+    return { command: configured, argsPrefix: ["agentapi"] };
+  }
+  if (platform === "win32") return null;
+  const homeDir = environment.USERPROFILE || environment.HOME || "";
+  const command = path4.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
+  return { command: existsSync2(command) ? command : "agentapi", argsPrefix: [] };
+}
+async function ringGemini(sessionId, message, environment = process.env) {
+  const childEnv = { ...environment };
+  const sourceProjectId = childEnv.ANTIGRAVITY_PROJECT_ID;
+  if (typeof sourceProjectId !== "string" || !sourceProjectId.trim()) return "definite-failure";
+  const launch = resolveGeminiAgentApi(childEnv);
+  if (!launch) return "definite-failure";
+  const { command, argsPrefix } = launch;
+  let targetProjectId;
+  try {
+    const meta = await new Promise((resolve, reject) => {
+      execFile(
+        command,
+        [...argsPrefix, "get-conversation-metadata", sessionId],
+        { windowsHide: true, timeout: 5e3, env: childEnv, shell: false, windowsVerbatimArguments: false },
+        (error, stdout) => error ? reject(error) : resolve(stdout)
+      );
+    });
+    const parsed = JSON.parse(meta);
+    const projectId = parsed.response?.conversationMetadata?.metadata?.projectId;
+    if (typeof projectId !== "string" || !projectId.trim()) return "definite-failure";
+    targetProjectId = projectId;
+  } catch {
+    return "definite-failure";
+  }
+  if (sourceProjectId !== targetProjectId) return "definite-failure";
+  return new Promise((resolve) => {
+    let spawned = false;
+    try {
+      const child = execFile(
+        command,
+        [...argsPrefix, "send-message", sessionId, message],
+        { windowsHide: true, timeout: 1e4, env: childEnv, shell: false, windowsVerbatimArguments: false },
+        (error) => resolve(geminiWakeOutcome(error, spawned))
+      );
+      child.once("spawn", () => {
+        spawned = true;
+      });
+      child.once("error", (error) => resolve(geminiWakeOutcome(error, spawned)));
+    } catch {
+      resolve("definite-failure");
+    }
+  });
+}
+function ringCodex(sessionId, message) {
+  return new Promise((resolve) => {
+    let spawned = false;
+    const child = execFile(
+      "codex",
+      ["queue", "--thread", sessionId, "--message", message],
+      { windowsHide: true, timeout: 1e4 },
+      (error) => resolve(codexWakeOutcome(error, spawned))
+    );
+    child.once("spawn", () => {
+      spawned = true;
+    });
+  });
+}
+async function ringClaude(message) {
+  const socketPath = process.env.CLAUDE_CODE_MESSAGING_SOCKET;
+  const token = process.env.CLAUDE_CODE_MESSAGING_TOKEN;
+  if (!socketPath || !token) return "definite-failure";
+  return new Promise((resolve) => {
+    let settled = false;
+    let connected = false;
+    let wrote = false;
+    const finish = (outcome) => {
+      if (settled) return;
+      settled = true;
+      resolve(outcome);
+    };
+    const socket = net.createConnection(socketPath);
+    socket.setTimeout(5e3, () => socket.destroy(new Error("Claude inbox timed out.")));
+    socket.once("connect", () => {
+      connected = true;
+      try {
+        wrote = true;
+        socket.end(`${JSON.stringify({ type: "auth", token })}
+${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" })}
+`);
+      } catch {
+        finish("accepted-or-unknown");
+      }
+    });
+    socket.once("close", (hadError) => finish(claudeWakeOutcome(hadError, connected, wrote)));
+    socket.once("error", () => finish(claudeWakeOutcome(true, connected, wrote)));
+  });
+}
+var ports = /* @__PURE__ */ new Map([
+  ["claude-inbox", {
+    capabilities: { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "silent" },
+    dispatch: (_target, message) => ringClaude(message)
+  }],
+  ["codex-queue", {
+    capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
+    dispatch: (target, message) => ringCodex(target.sessionId, message)
+  }],
+  ["codex-deferred", {
+    capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
+    dispatch: async () => "definite-failure"
+  }],
+  ["gemini-queue", {
+    capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
+    dispatch: (target, message) => ringGemini(target.sessionId, message)
+  }]
+]);
+function transportWakePort(transport) {
+  const port = ports.get(transport);
+  if (!port) throw new Error("Wake transport adapter is unavailable.");
+  return port;
+}
+function transportDeliveryCapabilities(transport) {
+  const capabilities = transportWakePort(transport).capabilities;
+  return { supportedInjection: [...capabilities.supportedInjection], idleWake: capabilities.idleWake };
+}
+
+// mcp-server/src/session-message-relay.ts
+var IDENTITY_RECHECK_MS = 10 * 6e4;
+
+// mcp-server/src/builtin-hook-host-adapters.ts
+function record(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+function queueEnabled(host, explicit, environment, diagnose, defaultEnabled = false) {
+  const disabled = (reason, observation) => {
+    if (observation) diagnose(reason, Object.freeze(observation));
+    else diagnose(reason);
+    return false;
+  };
+  const failed = (phase, cause) => retainFailureCause(
+    producerFailure(
+      phase === "directory-stat" ? "QUEUE_SETTINGS_DIRECTORY_STAT_FAILED" : phase === "open" ? "QUEUE_SETTINGS_OPEN_FAILED" : phase === "read" ? "QUEUE_SETTINGS_READ_FAILED" : "QUEUE_SETTINGS_CLOSE_FAILED",
+      "Queue settings I/O failed."
+    ),
+    cause
+  );
+  const absent = (error) => {
+    if (!error || typeof error !== "object" || utilTypes.isProxy(error)) return false;
+    try {
+      return Object.getOwnPropertyDescriptor(error, "code")?.value === "ENOENT";
+    } catch {
+      return false;
+    }
+  };
+  if (explicit !== void 0) {
+    if (explicit === "1") return true;
+    return explicit === "0" ? false : disabled("invalid-environment");
+  }
+  const directory = environment.PLUGIN_DATA;
+  if (directory === void 0) return defaultEnabled;
+  if (!path5.isAbsolute(directory) || process.platform === "win32" && ["\\", "/"].includes(path5.parse(directory).root)) {
+    return disabled("invalid-plugin-data");
+  }
+  let descriptor = -1;
+  let validDirectory;
+  let acquisitionPhase = "directory-stat";
+  try {
+    validDirectory = statSync2(directory).isDirectory();
+    if (validDirectory) {
+      acquisitionPhase = "open";
+      descriptor = openSync(path5.join(directory, "session-messaging.json"), constants.O_RDONLY | constants.O_NONBLOCK);
+    }
+  } catch (cause) {
+    return absent(cause) ? defaultEnabled : disabled("read-failed", { phase: acquisitionPhase, cleanup: "not-acquired", failure: failed(acquisitionPhase, cause) });
+  }
+  if (!validDirectory) return disabled("invalid-plugin-data");
+  let enabled = false;
+  let issue;
+  let primary;
+  let primaryPhase = "read";
+  let missingRead = false;
+  let closeFailed = false;
+  const rejected = (reason) => {
+    issue = reason;
+    return false;
+  };
+  try {
+    enabled = (() => {
+      const stat = fstatSync(descriptor);
+      if (!stat.isFile()) return rejected("invalid-file-type");
+      if (stat.size > 4096) return rejected("too-large");
+      const bytes = Buffer.alloc(4097);
+      let length = 0;
+      while (length < bytes.length) {
+        const count = readSync(descriptor, bytes, length, bytes.length - length, null);
+        if (count === 0) break;
+        length += count;
+      }
+      if (length > 4096) return rejected("too-large");
+      let settings;
+      try {
+        settings = record(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, length))));
+      } catch {
+        return rejected("invalid-settings");
+      }
+      const hostSettings = record(settings[host]);
+      if (settings.schemaVersion !== "1.0.0" || typeof hostSettings.queueWake !== "boolean") return rejected("invalid-settings");
+      return hostSettings.queueWake;
+    })();
+  } catch (cause) {
+    missingRead = absent(cause);
+    primary = failed("read", cause);
+  } finally {
+    try {
+      closeSync(descriptor);
+    } catch (cause) {
+      closeFailed = true;
+      const closeFailure = failed("close", cause);
+      if (primary) retainFailureSecondary(primary, closeFailure);
+      else {
+        primary = closeFailure;
+        primaryPhase = "close";
+      }
+    }
+  }
+  if (missingRead && !closeFailed) return defaultEnabled;
+  if (primary) return disabled(
+    issue ?? (primaryPhase === "close" ? "close-failed" : "read-failed"),
+    { phase: primaryPhase, cleanup: closeFailed ? "unknown" : "closed", failure: primary }
+  );
+  return issue === void 0 ? enabled : disabled(issue);
+}
+function codexQueueEnabled(environment, diagnose) {
+  return queueEnabled("codex", environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE, environment, diagnose);
+}
+function geminiQueueEnabled(environment, diagnose, defaultQueueWake) {
+  const defaultEnabled = defaultQueueWake === true || Boolean(environment.ANTIGRAVITY_AGENTAPI_EXE || environment.ANTIGRAVITY_CONVERSATION_ID || environment.ANTIGRAVITY_AGENT);
+  return queueEnabled("gemini", environment.AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE, environment, diagnose, defaultEnabled);
+}
+var builtinHookHostAdapters = /* @__PURE__ */ new Map([
+  ["codex", {
+    deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", true),
+    processPid: (pid) => pid,
+    attestationKind: "codex-rollout",
+    peerWait: codexNativePeerWait
+  }],
+  ["claude-code", {
+    deliveryProfile: () => deliveryProfile("claude-inbox", false),
+    processPid: () => process.ppid,
+    attestationKind: "claude-hook"
+  }],
+  ["gemini", {
+    deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
+    processPid: (pid, observation) => observation ? pid : void 0
+  }]
+]);
+function deliveryProfile(transport, blocksEmptyWakePrompt) {
+  return { transport, capabilities: transportDeliveryCapabilities(transport), blocksEmptyWakePrompt };
+}
+function codexNativePeerWait(observation) {
+  if (observation.toolName !== "mcp__codex_app__wait_threads") return null;
+  const input = observation.toolInput ?? {};
+  const timeoutMs = input.timeoutMs === void 0 ? 12e4 : input.timeoutMs;
+  if (typeof timeoutMs !== "number" || !Number.isInteger(timeoutMs) || timeoutMs < 0 || timeoutMs > 36e5) return null;
+  if (!Array.isArray(input.targets) || input.targets.length < 1 || input.targets.length > 8) return null;
+  const targets = [];
+  const cursors = /* @__PURE__ */ new Set();
+  for (const value of input.targets) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const target = value;
+    if (typeof target.threadId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/.test(target.threadId)) return null;
+    if (target.hostId !== void 0 && target.hostId !== "local") return null;
+    if (target.afterCursor !== void 0 && typeof target.afterCursor !== "string") return null;
+    targets.push({ host: "codex", sessionId: target.threadId });
+    cursors.add(JSON.stringify([target.threadId, target.afterCursor ?? null]));
+  }
+  return {
+    targets: normalizePeerWaitTargets(targets),
+    timeoutMs,
+    queryRevision: createHash3("sha256").update(JSON.stringify([...cursors].sort())).digest("hex")
+  };
+}
+for (const [host, adapter] of builtinHookHostAdapters) registerHookHostAdapter(host, adapter);
+
+// mcp-server/src/host-attestation-hook.ts
+import { mkdirSync as mkdirSync2, readFileSync, renameSync, writeFileSync, writeSync } from "node:fs";
+import path7 from "node:path";
+import { fileURLToPath } from "node:url";
+
 // mcp-server/src/host-attestation.ts
+import { createHash as createHash4, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 var HOST_ATTESTATION_FIELD = "_hostAttestation";
 var HOST_ATTESTATION_TOOLS = /* @__PURE__ */ new Set(["plan_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
 var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
 var TOKEN_PREFIX = "aghs1";
 var TOKEN_TTL_MS = 5 * 60 * 1e3;
-function record(value) {
+function record2(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
 function nonEmpty(value) {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
-var hostIdentityDigest = (value) => createHash2("sha256").update(value, "utf8").digest("hex").slice(0, 24);
+var hostIdentityDigest = (value) => createHash4("sha256").update(value, "utf8").digest("hex").slice(0, 24);
 function hostActorId(host, sessionId, agentId = null) {
   return `${host}:session-${hostIdentityDigest(sessionId)}${agentId ? `:agent-${hostIdentityDigest(agentId)}` : ""}`;
 }
@@ -454,6 +1257,35 @@ function lowerReasoningEffort(left, right) {
 }
 function isReasoningEffort(value) {
   return typeof value === "string" && REASONING_EFFORT.includes(value);
+}
+function resolveAdapterModelCapability(adapter, model, provenance = `${adapter.host}:runtime`) {
+  if (typeof model !== "string" || model.length === 0) return null;
+  if (typeof adapter.resolveModel === "function") {
+    const resolved = adapter.resolveModel(model, provenance);
+    if (!resolved || !MODEL_CLASS.includes(resolved.modelClass)) return null;
+    return resolved;
+  }
+  const modelClass = adapter.modelClassForModel(model);
+  if (!modelClass || !MODEL_CLASS.includes(modelClass)) return null;
+  return {
+    provider: adapter.provider ?? adapter.host,
+    host: adapter.host,
+    rawModel: model,
+    resolvedModel: model,
+    modelClass,
+    minimumReasoningEffort: null,
+    supportedEfforts: REASONING_EFFORT,
+    aliasUsed: false,
+    policyRevision: adapter.policyRevision ?? "1.0.0",
+    provenance
+  };
+}
+function satisfiesModelEffortPolicy(capability, effort) {
+  if (!capability.supportedEfforts.includes(effort)) return false;
+  if (capability.minimumReasoningEffort && REASONING_EFFORT.indexOf(effort) < REASONING_EFFORT.indexOf(capability.minimumReasoningEffort)) {
+    return false;
+  }
+  return true;
 }
 function withoutHostAttestation(input) {
   const copy = { ...input };
@@ -466,11 +1298,11 @@ function hostAttestationBinding(tool, input) {
     return taskId ? { phase: "bootstrap", taskId, runId: null, stageId: null, revision: null } : null;
   }
   if (tool === "record_skill_selection") {
-    const taskId = nonEmpty(record(input.decision)?.requestDigest);
+    const taskId = nonEmpty(record2(input.decision)?.requestDigest);
     return taskId ? { phase: "bootstrap", taskId, runId: null, stageId: null, revision: null } : null;
   }
   if (tool === "plan_workflow") {
-    const taskId = nonEmpty(record(input.taskEnvelope)?.taskId) ?? nonEmpty(input.taskId);
+    const taskId = nonEmpty(record2(input.taskEnvelope)?.taskId) ?? nonEmpty(input.taskId);
     return taskId ? { phase: "bootstrap", taskId, runId: null, stageId: null, revision: null } : null;
   }
   if (tool === "record_stage_result") {
@@ -497,8 +1329,9 @@ function issueHostAttestation(store, adapter, observation) {
   if (!HOST_ATTESTATION_TOOLS.has(observation.tool)) return null;
   const input = withoutHostAttestation(observation.input);
   const binding = hostAttestationBinding(observation.tool, input);
-  const modelClass = adapter.modelClassForModel(observation.model);
-  if (!binding || !modelClass || !MODEL_CLASS.includes(modelClass) || !adapter.host || !isReasoningEffort(observation.reasoningEffort) || !observation.actorId || !observation.sessionId || !observation.toolUseId || observation.actorId !== hostActorId(adapter.host, observation.sessionId, observation.agentId ?? null)) return null;
+  const provenance = nonEmpty(observation.provenance) ?? `${adapter.host}:runtime`;
+  const capability = resolveAdapterModelCapability(adapter, observation.model, provenance);
+  if (!binding || !capability || !MODEL_CLASS.includes(capability.modelClass) || !adapter.host || !isReasoningEffort(observation.reasoningEffort) || !satisfiesModelEffortPolicy(capability, observation.reasoningEffort) || !observation.actorId || !observation.sessionId || !observation.toolUseId || observation.actorId !== hostActorId(adapter.host, observation.sessionId, observation.agentId ?? null)) return null;
   const now = observation.now ?? /* @__PURE__ */ new Date();
   const scope = {
     host: adapter.host,
@@ -510,15 +1343,19 @@ function issueHostAttestation(store, adapter, observation) {
   const payload = {
     v: 1,
     ...scope,
+    provider: capability.provider,
     tool: observation.tool,
     inputDigest: convergenceDigest(input),
     ...binding,
     model: observation.model,
-    modelClass,
+    resolvedModel: capability.resolvedModel,
+    modelClass: capability.modelClass,
     reasoningEffort: observation.reasoningEffort,
+    policyRevision: capability.policyRevision,
+    provenance: capability.provenance,
     actorId: observation.actorId,
     // Retrying the same host call cannot mint a second consumable observation.
-    observationId: createHash2("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
+    observationId: createHash4("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
     observedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + TOKEN_TTL_MS).toISOString()
   };
@@ -526,53 +1363,23 @@ function issueHostAttestation(store, adapter, observation) {
   return `${body}.${mac(signingKey(store), body)}`;
 }
 
-// mcp-server/src/host-execution-adapters.ts
-var CLAUDE_CLASSES = {
-  haiku: "lightweight",
-  sonnet: "general",
-  opus: "deep",
-  fable: "frontier"
-};
-var CLAUDE_MODEL_ID = /^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\.)?(?:anthropic\.)?claude-(?:\d+(?:-\d+)?-)?(haiku|sonnet|opus|fable)(?:[-@:.]|$)/u;
-function modelClassForClaudeModel(model) {
-  const family = CLAUDE_MODEL_ID.exec(model)?.[1];
-  return family ? CLAUDE_CLASSES[family] ?? null : null;
-}
-var CODEX_CLASSES = {
-  "gpt-6-astra": "frontier",
-  // Conservative governance classes for the host's workhorse/easier-task roles, not measured quality claims.
-  "gpt-6-sol": "general",
-  "gpt-6-luna": "lightweight",
-  "gpt-5.6-sol": "deep",
-  "gpt-5.6-terra": "general",
-  "gpt-5.6-luna": "lightweight"
-};
-var claudeCodeExecutionAdapter = {
-  host: "claude-code",
-  modelClassForModel: modelClassForClaudeModel
-};
-var codexExecutionAdapter = {
-  host: "codex",
-  modelClassForModel: (model) => Object.hasOwn(CODEX_CLASSES, model) ? CODEX_CLASSES[model] : null
-};
-
 // mcp-server/src/codex-host-observation.ts
-import { closeSync, fstatSync, openSync, readSync } from "node:fs";
+import { closeSync as closeSync2, fstatSync as fstatSync2, openSync as openSync2, readSync as readSync2 } from "node:fs";
 var CODEX_METADATA_HEAD_BYTES = 256 * 1024;
 var CODEX_METADATA_TAIL_BYTES = 8 * 1024 * 1024;
-function record2(value) {
+function record3(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
 var text = (value) => typeof value === "string" && value.length > 0 ? value : null;
 function readCodexMetadata(file) {
   let descriptor = null;
   try {
-    descriptor = openSync(file, "r");
-    const stats = fstatSync(descriptor);
+    descriptor = openSync2(file, "r");
+    const stats = fstatSync2(descriptor);
     if (!stats.isFile()) return null;
     const read = (position2, bytes) => {
       const buffer = Buffer.alloc(bytes);
-      return buffer.subarray(0, readSync(descriptor, buffer, 0, bytes, position2)).toString("utf8");
+      return buffer.subarray(0, readSync2(descriptor, buffer, 0, bytes, position2)).toString("utf8");
     };
     const head = read(0, Math.min(stats.size, CODEX_METADATA_HEAD_BYTES));
     const position = Math.max(0, stats.size - CODEX_METADATA_TAIL_BYTES);
@@ -581,11 +1388,12 @@ function readCodexMetadata(file) {
   } catch {
     return null;
   } finally {
-    if (descriptor !== null) closeSync(descriptor);
+    if (descriptor !== null) closeSync2(descriptor);
   }
 }
 function observeCodexHook(input, options = {}) {
   const missing = (reason) => ({ observation: null, reason });
+  const adapter = options.adapter ?? codexExecutionAdapter;
   const sessionId = text(input.session_id);
   const turnId = text(input.turn_id);
   const toolUseId = text(input.tool_use_id);
@@ -597,23 +1405,23 @@ function observeCodexHook(input, options = {}) {
   if (!window) return missing("host-metadata-unreadable");
   let metadata = null;
   try {
-    const first = record2(JSON.parse(window.head.split("\n", 1)[0] ?? ""));
-    if (first?.type === "session_meta") metadata = record2(first.payload);
+    const first = record3(JSON.parse(window.head.split("\n", 1)[0] ?? ""));
+    if (first?.type === "session_meta") metadata = record3(first.payload);
   } catch {
   }
   if (!metadata || metadata.id !== sessionId || metadata.session_id !== void 0 && metadata.session_id !== sessionId) {
     return missing("host-session-mismatch-or-unsupported-metadata");
   }
-  if (record2(metadata.source)?.subagent || record2(metadata.thread_source)?.subagent) return missing("subagent-identity-not-supported");
+  if (record3(metadata.source)?.subagent || record3(metadata.thread_source)?.subagent) return missing("subagent-identity-not-supported");
   let context = null;
   const lines = window.tail.split("\n");
   for (let index = lines.length - 1; index >= 0; index -= 1) {
     const line = lines[index];
     if (!line) continue;
     try {
-      const entry = record2(JSON.parse(line));
+      const entry = record3(JSON.parse(line));
       if (entry?.type === "turn_context") {
-        context = record2(entry.payload);
+        context = record3(entry.payload);
         break;
       }
     } catch {
@@ -623,44 +1431,27 @@ function observeCodexHook(input, options = {}) {
   if (context.turn_id !== turnId) return missing("host-turn-mismatch");
   if (context.model !== model) return missing("host-model-mismatch");
   if (!isReasoningEffort(context.effort)) return missing("host-reasoning-effort-missing-or-unsupported");
-  if (!codexExecutionAdapter.modelClassForModel(model)) return missing("host-model-policy-unsupported");
+  const capability = resolveAdapterModelCapability(adapter, model, `${adapter.host}:rollout-turn-context`);
+  if (!capability) return missing("host-model-policy-unsupported");
+  if (!satisfiesModelEffortPolicy(capability, context.effort)) return missing("host-reasoning-effort-below-model-minimum-or-unsupported");
   return {
     observation: {
       model,
       reasoningEffort: context.effort,
-      actorId: hostActorId(codexExecutionAdapter.host, sessionId),
+      actorId: hostActorId(adapter.host, sessionId),
       sessionId,
       turnId,
-      toolUseId
+      toolUseId,
+      provenance: capability.provenance
     },
     reason: null
   };
 }
 
-// mcp-server/src/runtime-config.ts
-import { homedir } from "node:os";
-import path3 from "node:path";
-function resolveWorkflowDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
-  const configured = environment.AGENT_GOVERNANCE_DB_PATH?.trim();
-  if (configured) return path3.resolve(currentWorkingDirectory, configured);
-  return path3.resolve(userStateDirectory(environment, platform, homeDirectory), "workflows.sqlite3");
-}
-function userStateDirectory(environment, platform, homeDirectory) {
-  let stateRoot;
-  if (platform === "win32") {
-    stateRoot = environment.LOCALAPPDATA?.trim() || path3.join(homeDirectory, "AppData", "Local");
-  } else if (platform === "darwin") {
-    stateRoot = path3.join(homeDirectory, "Library", "Application Support");
-  } else {
-    stateRoot = environment.XDG_STATE_HOME?.trim() || path3.join(homeDirectory, ".local", "state");
-  }
-  return path3.resolve(stateRoot, "agent-governance-suite");
-}
-
 // mcp-server/src/sqlite-workflow-store.ts
 import { chmodSync, mkdirSync } from "node:fs";
-import path4 from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import path6 from "node:path";
+import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 
 // mcp-server/src/plugin-version.ts
 function parseStableVersion(version) {
@@ -741,18 +1532,18 @@ var SqliteWorkflowStore = class {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
     }
     if (databasePath !== ":memory:") {
-      mkdirSync(path4.dirname(path4.resolve(databasePath)), { recursive: true, mode: 448 });
+      mkdirSync(path6.dirname(path6.resolve(databasePath)), { recursive: true, mode: 448 });
     }
     let openedDatabase = null;
     try {
-      openedDatabase = new DatabaseSync(databasePath);
+      openedDatabase = new DatabaseSync2(databasePath);
       this.database = openedDatabase;
       this.database.exec("PRAGMA busy_timeout = 5000;");
       this.database.exec("PRAGMA synchronous = FULL;");
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       if (databasePath !== ":memory:" && process.platform !== "win32") {
-        chmodSync(path4.resolve(databasePath), 384);
+        chmodSync(path6.resolve(databasePath), 384);
       }
     } catch (cause) {
       try {
@@ -1113,23 +1904,53 @@ var SqliteWorkflowStore = class {
     });
   }
   previewCleanup(cutoff) {
-    const roots = this.database.prepare(`
+    return this.guard("Cannot preview workflow state cleanup.", {}, () => this.transaction(() => {
+      const roots = this.database.prepare(`
       SELECT root_id, revision, state, updated_at
       FROM convergence_roots
       WHERE state IN ('completed', 'abandoned') AND updated_at <= ?
       ORDER BY root_id
     `).all(cutoff);
-    const linkedRuns = this.database.prepare(`
-      SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY run_id
+      const linkedRuns = this.database.prepare(`
+      SELECT links.run_id, runs.revision, runs.state, runs.updated_at
+      FROM workflow_attempt_links links LEFT JOIN workflow_runs runs ON runs.run_id = links.run_id
+      WHERE links.root_id = ? ORDER BY links.run_id
     `);
-    const rootCandidates = roots.map((root) => ({
-      rootId: root.root_id,
-      revision: root.revision,
-      state: root.state,
-      updatedAt: root.updated_at,
-      runIds: linkedRuns.all(root.root_id).map((row) => row.run_id)
-    }));
-    const runs = this.database.prepare(`
+      const linkedSnapshots = [];
+      const rootCandidates = [];
+      let linkedNonTerminalRoots = 0;
+      let linkedRecentRoots = 0;
+      let linkedMissingReceiptRoots = 0;
+      let protectedLinkedRoots = 0;
+      for (const root of roots) {
+        const rows = linkedRuns.all(root.root_id);
+        const reasons = /* @__PURE__ */ new Set();
+        for (const row of rows) {
+          if (row.revision === null || row.state === null || row.updated_at === null) {
+            reasons.add("missing");
+            continue;
+          }
+          if (!["failed", "passed", "blocked"].includes(row.state)) reasons.add("non-terminal");
+          if (row.updated_at > cutoff) reasons.add("recent");
+        }
+        if (reasons.size > 0) {
+          if (reasons.has("non-terminal")) linkedNonTerminalRoots++;
+          if (reasons.has("recent")) linkedRecentRoots++;
+          if (reasons.has("missing")) linkedMissingReceiptRoots++;
+          protectedLinkedRoots++;
+          continue;
+        }
+        const runs2 = rows.map((row) => ({ runId: row.run_id, revision: row.revision, state: row.state, updatedAt: row.updated_at }));
+        rootCandidates.push({
+          rootId: root.root_id,
+          revision: root.revision,
+          state: root.state,
+          updatedAt: root.updated_at,
+          runIds: runs2.map((run) => run.runId)
+        });
+        linkedSnapshots.push({ rootId: root.root_id, runs: runs2 });
+      }
+      const runs = this.database.prepare(`
       SELECT run_id, revision, state, updated_at
       FROM workflow_runs
       WHERE state IN ('failed', 'passed', 'blocked')
@@ -1137,20 +1958,29 @@ var SqliteWorkflowStore = class {
         AND NOT EXISTS (SELECT 1 FROM workflow_attempt_links links WHERE links.run_id = workflow_runs.run_id)
       ORDER BY run_id
     `).all(cutoff);
-    const protectedRow = this.database.prepare(`
+      const protectedRow = this.database.prepare(`
       SELECT COUNT(*) AS count FROM convergence_roots
       WHERE state IN ('open', 'needs-review', 'needs-user')
     `).get();
-    return {
-      roots: rootCandidates,
-      standaloneRuns: runs.map((run) => ({
-        runId: run.run_id,
-        revision: run.revision,
-        state: run.state,
-        updatedAt: run.updated_at
-      })),
-      protectedActiveRoots: protectedRow.count
-    };
+      return {
+        roots: rootCandidates,
+        standaloneRuns: runs.map((run) => ({
+          runId: run.run_id,
+          revision: run.revision,
+          state: run.state,
+          updatedAt: run.updated_at
+        })),
+        protectedActiveRoots: protectedRow.count,
+        rootProtection: {
+          activeRoots: protectedRow.count,
+          linkedNonTerminalRoots,
+          linkedRecentRoots,
+          linkedMissingReceiptRoots,
+          totalProtectedRoots: protectedRow.count + protectedLinkedRoots
+        },
+        linkedRuns: linkedSnapshots
+      };
+    }));
   }
   claimCleanupPlan(planId, planDigest, claimedAt) {
     return this.guard("Cannot claim the state cleanup plan.", { planId }, () => {
@@ -1168,7 +1998,7 @@ var SqliteWorkflowStore = class {
     }
     this.guard("Cannot create a verified workflow cleanup backup.", { targetPath }, () => {
       this.database.prepare("VACUUM INTO ?").run(targetPath);
-      const backup = new DatabaseSync(targetPath, { readOnly: true });
+      const backup = new DatabaseSync2(targetPath, { readOnly: true });
       try {
         const result = backup.prepare("PRAGMA integrity_check").get();
         if (result.integrity_check !== "ok") throw new Error(`integrity_check returned ${result.integrity_check}`);
@@ -1195,6 +2025,16 @@ var SqliteWorkflowStore = class {
         `).all(root.rootId).map((item) => item.run_id);
         if (JSON.stringify(actualRunIds) !== JSON.stringify(root.runIds)) {
           throw new WorkflowContractError("STALE_REVISION", "A cleanup root's linked runs changed after preview.", { rootId: root.rootId });
+        }
+        const expected = preview.linkedRuns.find((item) => item.rootId === root.rootId);
+        if (!expected || JSON.stringify(expected.runs.map((run) => run.runId)) !== JSON.stringify(root.runIds)) {
+          throw new WorkflowContractError("STALE_REVISION", "A cleanup root's linked receipt snapshot is missing.", { rootId: root.rootId });
+        }
+        for (const run of expected.runs) {
+          const row2 = verifyRun.get(run.runId);
+          if (!row2 || row2.state !== run.state || row2.revision !== run.revision || row2.updated_at !== run.updatedAt) {
+            throw new WorkflowContractError("STALE_REVISION", "A cleanup linked workflow run changed after preview.", { rootId: root.rootId, runId: run.runId });
+          }
         }
       }
       for (const run of preview.standaloneRuns) {
@@ -1485,7 +2325,31 @@ var SqliteWorkflowStore = class {
 };
 
 // mcp-server/src/host-attestation-hook.ts
-function record3(value) {
+var HOST_SKILL_OBSERVATION_FIELD = "_hostSkillObservation";
+function withoutCallerHostClaims(input) {
+  const clean = withoutHostAttestation(input);
+  delete clean[HOST_SKILL_OBSERVATION_FIELD];
+  return clean;
+}
+var HookObservationFailure = class extends Error {
+  constructor(code) {
+    super(code);
+    this.code = code;
+  }
+  code;
+};
+function reportObservationFailure(phase, reason, cause) {
+  try {
+    writeSync(2, JSON.stringify({
+      component: "host-attestation-hook",
+      phase,
+      reason,
+      ...cause === void 0 ? {} : { context: failureContext(cause) }
+    }) + "\n");
+  } catch {
+  }
+}
+function record4(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
 function text2(value) {
@@ -1494,8 +2358,9 @@ function text2(value) {
 function readTextOrNull(file) {
   try {
     return readFileSync(file, "utf8");
-  } catch {
-    return null;
+  } catch (cause) {
+    if (cause.code === "ENOENT") return null;
+    throw new HookObservationFailure("TRANSCRIPT_READ_FAILED");
   }
 }
 var digest = hostIdentityDigest;
@@ -1508,7 +2373,7 @@ function sleepSync(milliseconds) {
 function transcriptCandidates(transcriptPath, sessionId, agentId) {
   const candidates = [transcriptPath];
   if (agentId) {
-    candidates.push(path5.join(path5.dirname(transcriptPath), sessionId, "subagents", `agent-${agentId}.jsonl`));
+    candidates.push(path7.join(path7.dirname(transcriptPath), sessionId, "subagents", `agent-${agentId}.jsonl`));
   }
   return [...new Set(candidates)];
 }
@@ -1516,17 +2381,17 @@ function findToolUseObservation(transcript, toolUseId, sessionId, agentId) {
   const lines = transcript.split("\n");
   for (let index = lines.length - 1; index >= 0; index -= 1) {
     const line = lines[index];
-    if (!line?.includes(toolUseId)) continue;
+    if (!line || !mentionsToolUseId(line, toolUseId)) continue;
     let entry;
     try {
-      entry = record3(JSON.parse(line));
+      entry = record4(JSON.parse(line));
     } catch {
       continue;
     }
     if (!entry || entry.type !== "assistant") continue;
-    const message = record3(entry.message);
+    const message = record4(entry.message);
     const content = Array.isArray(message?.content) ? message.content : [];
-    const issued = content.some((block) => record3(block)?.type === "tool_use" && record3(block)?.id === toolUseId);
+    const issued = content.some((block) => record4(block)?.type === "tool_use" && record4(block)?.id === toolUseId);
     if (!issued) continue;
     if (entry.sessionId !== void 0 && entry.sessionId !== sessionId) return null;
     if (agentId ? entry.agentId !== agentId : entry.isSidechain === true) return null;
@@ -1536,14 +2401,14 @@ function findToolUseObservation(transcript, toolUseId, sessionId, agentId) {
   }
   return null;
 }
-function findLatestAssistantObservation(transcript, sessionId, agentId, nowMs = Date.now()) {
+function findLatestAssistantObservation(transcript, sessionId, agentId, nowMs = Date.now(), adapter = claudeCodeExecutionAdapter) {
   const lines = transcript.split("\n");
   for (let index = lines.length - 1; index >= 0; index -= 1) {
     const line = lines[index];
     if (!line?.includes('"assistant"')) continue;
     let entry;
     try {
-      entry = record3(JSON.parse(line));
+      entry = record4(JSON.parse(line));
     } catch {
       continue;
     }
@@ -1552,23 +2417,59 @@ function findLatestAssistantObservation(transcript, sessionId, agentId, nowMs = 
     if (agentId ? entry.agentId !== agentId : entry.isSidechain === true) continue;
     const at = Date.parse(text2(entry.timestamp) ?? "");
     if (Number.isNaN(at) || at > nowMs) continue;
-    const model = text2(record3(entry.message)?.model);
-    if (!model || !modelClassForClaudeModel(model)) continue;
+    const model = text2(record4(entry.message)?.model);
+    if (!model || !resolveAdapterModelCapability(adapter, model, `${adapter.host}:transcript-latest`)) continue;
     return { model, at };
   }
   return null;
 }
-function hasIssuingMessage(transcript, toolUseId) {
-  return transcript.split("\n").some((line) => {
-    if (!line.includes(toolUseId)) return false;
+function mentionsToolUseId(line, toolUseId) {
+  if (line.includes(toolUseId)) return true;
+  if (!line.includes("\\")) return false;
+  if (/^[A-Za-z0-9._:-]+$/u.test(toolUseId) && !line.includes("\\u")) return false;
+  const decoded = line.replace(
+    /\\(?:u[0-9a-fA-F]{4}|["\\/bfnrt])/gu,
+    (escape) => JSON.parse('"' + escape + '"')
+  );
+  return decoded.includes(toolUseId);
+}
+function probeIssuingMessage(transcript, toolUseId) {
+  for (const line of transcript.split("\n")) {
+    if (!mentionsToolUseId(line, toolUseId)) continue;
+    let entry;
     try {
-      const entry = record3(JSON.parse(line));
-      const content = record3(entry?.message)?.content;
-      return entry?.type === "assistant" && Array.isArray(content) && content.some((block) => record3(block)?.type === "tool_use" && record3(block)?.id === toolUseId);
+      entry = record4(JSON.parse(line));
     } catch {
-      return false;
+      return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_JSON" };
     }
-  });
+    if (!entry) return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
+    const message = record4(entry.message);
+    if (entry.type !== "assistant") {
+      if (entry.type !== "user" && entry.type !== "system" && Array.isArray(message?.content) && message.content.some((value) => record4(value)?.id === toolUseId)) {
+        return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
+      }
+      continue;
+    }
+    if (!message || !Array.isArray(message.content)) {
+      return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
+    }
+    for (const value of message.content) {
+      const block = record4(value);
+      if (!block) {
+        if (typeof value === "string" && value.includes(toolUseId))
+          return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
+        continue;
+      }
+      if (block.id === toolUseId) {
+        if (block.type === "tool_use") return { state: "present" };
+        if (block.type !== "text" && block.type !== "tool_result")
+          return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
+      }
+      if (block.type !== "tool_use") continue;
+      if (!text2(block.id)) return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" };
+    }
+  }
+  return { state: "absent" };
 }
 function sessionModelUpdate(input, now = /* @__PURE__ */ new Date()) {
   const sessionId = text2(input.session_id);
@@ -1578,7 +2479,7 @@ function sessionModelUpdate(input, now = /* @__PURE__ */ new Date()) {
   return source && model ? { sessionId, record: { model, source, observedAt: now.toISOString() } } : null;
 }
 function sessionModelFile(directory, sessionId) {
-  return path5.join(directory, `${digest(sessionId)}.json`);
+  return path7.join(directory, `${digest(sessionId)}.json`);
 }
 function writeSessionModel(directory, sessionId, value) {
   mkdirSync2(directory, { recursive: true });
@@ -1589,13 +2490,18 @@ function writeSessionModel(directory, sessionId, value) {
 }
 function readSessionModel(directory, sessionId) {
   try {
-    const value = record3(JSON.parse(readFileSync(sessionModelFile(directory, sessionId), "utf8")));
+    const value = record4(JSON.parse(readFileSync(sessionModelFile(directory, sessionId), "utf8")));
     const model = text2(value?.model);
     const source = value?.source === "session-start" || value?.source === "model-switch" ? value.source : null;
     const observedAt = text2(value?.observedAt);
-    return model && source && observedAt && !Number.isNaN(Date.parse(observedAt)) ? { model, source, observedAt } : null;
-  } catch {
-    return null;
+    if (!model || !source || !observedAt || Number.isNaN(Date.parse(observedAt))) {
+      throw new HookObservationFailure("SESSION_MODEL_INVALID");
+    }
+    return { model, source, observedAt };
+  } catch (cause) {
+    if (cause.code === "ENOENT") return null;
+    if (cause instanceof HookObservationFailure) throw cause;
+    throw new HookObservationFailure(cause instanceof SyntaxError ? "SESSION_MODEL_INVALID" : "SESSION_MODEL_READ_FAILED");
   }
 }
 function attestedToolInput(input) {
@@ -1603,16 +2509,16 @@ function attestedToolInput(input) {
   const canonicalName = text2(input.tool_name) ?? "";
   if (!/^mcp__(?:plugin_agent-governance-suite_agent-governance-suite|agent[-_]governance[-_]suite)__/u.test(canonicalName)) return null;
   const tool = canonicalName.split("__").at(-1) ?? "";
-  const toolInput = record3(input.tool_input);
+  const toolInput = record4(input.tool_input);
   return HOST_ATTESTATION_TOOLS.has(tool) && toolInput ? { tool, toolInput } : null;
 }
 function withoutCallerAttestation(input) {
   const target = attestedToolInput(input);
-  if (!target || !Object.prototype.hasOwnProperty.call(target.toolInput, HOST_ATTESTATION_FIELD)) return {};
+  if (!target || !Object.prototype.hasOwnProperty.call(target.toolInput, HOST_ATTESTATION_FIELD) && !Object.prototype.hasOwnProperty.call(target.toolInput, HOST_SKILL_OBSERVATION_FIELD)) return {};
   return {
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
-      updatedInput: withoutHostAttestation(target.toolInput)
+      updatedInput: withoutCallerHostClaims(target.toolInput)
     }
   };
 }
@@ -1625,7 +2531,9 @@ function observedEffort(hookEffort, messageEffort) {
 function handleHostAttestationHook(input, store, options = {}) {
   const target = attestedToolInput(input);
   if (!target) return {};
-  const { tool, toolInput } = target;
+  const { tool } = target;
+  const adapter = options.adapter ?? claudeCodeExecutionAdapter;
+  const toolInput = withoutCallerHostClaims(target.toolInput);
   const unattested = () => withoutCallerAttestation(input);
   const sessionId = text2(input.session_id);
   const toolUseId = text2(input.tool_use_id);
@@ -1638,6 +2546,7 @@ function handleHostAttestationHook(input, store, options = {}) {
   const pollIntervalMs = options.pollIntervalMs ?? 100;
   const candidates = transcriptCandidates(transcriptPath, sessionId, agentId);
   let observation = null;
+  let provenance = `${adapter.host}:transcript-tool-use`;
   for (let waited = 0; ; waited += pollIntervalMs) {
     for (const candidate of candidates) {
       const transcript = readText(candidate);
@@ -1649,30 +2558,40 @@ function handleHostAttestationHook(input, store, options = {}) {
   }
   if (!observation) {
     const transcripts = candidates.map((candidate) => readText(candidate) ?? "");
-    if (transcripts.some((transcript) => hasIssuingMessage(transcript, toolUseId))) return unattested();
+    for (const transcript of transcripts) {
+      const probe = probeIssuingMessage(transcript, toolUseId);
+      if (probe.state === "indeterminate") {
+        reportObservationFailure("fallback", probe.reason);
+        return unattested();
+      }
+      if (probe.state === "present") return unattested();
+    }
     const nowMs = (options.now?.() ?? /* @__PURE__ */ new Date()).getTime();
     let latest = null;
     for (const transcript of transcripts) {
-      latest = findLatestAssistantObservation(transcript, sessionId, agentId, nowMs);
+      latest = findLatestAssistantObservation(transcript, sessionId, agentId, nowMs, adapter);
       if (latest) break;
     }
     const session = agentId ? null : options.readSessionModel?.(sessionId) ?? null;
-    const model = session && (!latest || Date.parse(session.observedAt) >= latest.at) ? session.model : latest?.model;
+    const useSession = Boolean(session && (!latest || Date.parse(session.observedAt) >= latest.at));
+    const model = useSession ? session.model : latest?.model;
+    provenance = useSession ? `${adapter.host}:${session.source}` : `${adapter.host}:transcript-latest`;
     observation = model ? { model, effort: null } : null;
   }
   if (!observation) return unattested();
-  const effort = observedEffort(text2(record3(input.effort)?.level), observation.effort);
+  const effort = observedEffort(text2(record4(input.effort)?.level), observation.effort);
   if (!effort) return unattested();
-  const token = issueHostAttestation(store, claudeCodeExecutionAdapter, {
+  const token = issueHostAttestation(store, adapter, {
     tool,
     input: toolInput,
     model: observation.model,
     reasoningEffort: effort,
-    actorId: claudeCodeActorId(sessionId, agentId),
+    actorId: hostActorId(adapter.host, sessionId, agentId),
     sessionId,
     agentId,
     turnId: text2(input.turn_id),
     toolUseId,
+    provenance,
     ...options.now ? { now: options.now() } : {}
   });
   if (!token) return unattested();
@@ -1686,9 +2605,10 @@ function handleHostAttestationHook(input, store, options = {}) {
 function handleCodexHostAttestationHook(input, store, options = {}) {
   const target = attestedToolInput(input);
   if (!target) return {};
+  const adapter = options.adapter ?? codexExecutionAdapter;
   const observed = observeCodexHook(input, options);
-  const clean = withoutHostAttestation(target.toolInput);
-  const token = observed.observation ? issueHostAttestation(store, codexExecutionAdapter, {
+  const clean = withoutCallerHostClaims(target.toolInput);
+  const token = observed.observation ? issueHostAttestation(store, adapter, {
     ...observed.observation,
     tool: target.tool,
     input: clean,
@@ -1699,7 +2619,7 @@ function handleCodexHostAttestationHook(input, store, options = {}) {
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
       permissionDecision: "allow",
-      updatedInput: { ...clean, ...token ? { [HOST_ATTESTATION_FIELD]: token } : {} }
+      updatedInput: token ? { ...clean, [HOST_ATTESTATION_FIELD]: token } : clean
     }
   };
 }
@@ -1707,41 +2627,58 @@ async function main() {
   let store = null;
   let input = {};
   let output;
-  const codex = process.argv.includes("--host=codex");
+  let codex = false;
+  let phase = "input";
   try {
-    input = JSON.parse(readFileSync(0, "utf8"));
+    const parsed = record4(JSON.parse(readFileSync(0, "utf8")));
+    if (!parsed) throw new HookObservationFailure("INVALID_HOOK_INPUT");
+    input = parsed;
+    phase = "host-entry";
+    const host = resolveHookHost(process.argv.slice(2), "claude-code");
+    const attestationKind = hookAttestationKind(host);
+    if (!attestationKind) {
+      output = withoutCallerAttestation(input);
+      if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));
+      return;
+    }
+    codex = attestationKind === "codex-rollout";
+    phase = "storage";
     const databasePath = resolveWorkflowDatabasePath();
-    const modelDirectory = path5.join(path5.dirname(databasePath), "host-models");
+    const modelDirectory = path7.join(path7.dirname(databasePath), "host-models");
     const update = codex ? null : sessionModelUpdate(input);
     if (update) {
       writeSessionModel(modelDirectory, update.sessionId, update.record);
       return;
     }
     store = new SqliteWorkflowStore(databasePath);
+    phase = "observation";
     output = codex ? handleCodexHostAttestationHook(input, store) : handleHostAttestationHook(input, store, { readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId) });
-  } catch {
+  } catch (cause) {
+    const reason = producerFailureReason(cause) ?? (cause instanceof HookObservationFailure ? cause.code : cause instanceof SyntaxError && phase === "input" ? "INVALID_JSON" : "OBSERVATION_UNAVAILABLE");
+    reportObservationFailure(phase, reason, cause);
     output = withoutCallerAttestation(input);
     if (codex && attestedToolInput(input)) {
       output.systemMessage = "AGS execution observation unavailable: adapter-read-or-storage-failed. No caller attestation is trusted.";
-      if (record3(output.hookSpecificOutput)) output.hookSpecificOutput.permissionDecision = "allow";
+      if (record4(output.hookSpecificOutput)) output.hookSpecificOutput.permissionDecision = "allow";
     }
   } finally {
     try {
       store?.close();
     } catch {
+      reportObservationFailure("store-close", "STORE_CLOSE_FAILED");
     }
   }
   if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));
 }
-if (path5.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) await main();
+if (path7.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) await main();
 export {
   claudeCodeActorId,
   findLatestAssistantObservation,
   findToolUseObservation,
   handleCodexHostAttestationHook,
   handleHostAttestationHook,
-  hasIssuingMessage,
   observedEffort,
+  probeIssuingMessage,
   readSessionModel,
   sessionModelUpdate,
   transcriptCandidates,

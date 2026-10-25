@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 // mcp-server/src/session-message-broker.ts
-import { createHash as createHash3, createPublicKey, randomBytes as randomBytes3, timingSafeEqual as timingSafeEqual2, X509Certificate as X509Certificate2 } from "node:crypto";
-import { closeSync, existsSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { createHash as createHash3, createPublicKey, randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual2, X509Certificate as X509Certificate2 } from "node:crypto";
+import { existsSync, renameSync as renameSync2, rmSync, writeFileSync } from "node:fs";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
-import path4 from "node:path";
+import path5 from "node:path";
 import tls from "node:tls";
-import { setTimeout as delay } from "node:timers/promises";
+import { setTimeout as delay2 } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 // mcp-server/src/session-message-protocol.ts
@@ -42,16 +42,18 @@ import { createHash, randomUUID as randomUUID2 } from "node:crypto";
 
 // mcp-server/src/trust-store.ts
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { types as utilTypes } from "node:util";
 import { chmodSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 // contracts/types.ts
 var CONTRACT_VERSION = "1.0.0";
+var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
 var WorkflowContractError = class extends Error {
-  constructor(code, message, details = null) {
+  constructor(code2, message, details = null) {
     super(message);
-    this.code = code;
+    this.code = code2;
     this.details = details;
     this.name = "WorkflowContractError";
   }
@@ -80,6 +82,27 @@ function canonicalJson(value, subject = "Convergence input") {
     return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key], subject)}`).join(",")}}`;
   }
   throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
+}
+
+// mcp-server/src/failure-diagnostics.ts
+var producerReasons = /* @__PURE__ */ new WeakMap();
+var producerCauses = /* @__PURE__ */ new WeakMap();
+var secondaryFailures = /* @__PURE__ */ new WeakMap();
+function tagProducerFailure(error, reason) {
+  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
+  if (!producerReasons.has(error)) producerReasons.set(error, reason);
+  return error;
+}
+function retainFailureCause(error, cause) {
+  if (!producerCauses.has(error)) producerCauses.set(error, cause);
+  return error;
+}
+function retainFailureSecondary(error, secondary) {
+  if (error && (typeof error === "object" || typeof error === "function") && error !== secondary) {
+    const prior = secondaryFailures.get(error) ?? [];
+    if (prior.length < 2 && !prior.includes(secondary)) secondaryFailures.set(error, [...prior, secondary]);
+  }
+  return error;
 }
 
 // mcp-server/src/trust-store.ts
@@ -120,7 +143,11 @@ var TrustStore = class {
   signingKey;
   syntheticSecret;
   closed = false;
-  constructor(input, syntheticSecret) {
+  constructor(input, syntheticSecret, options = {}) {
+    const busyTimeoutMs = options.busyTimeoutMs ?? 5e3;
+    if (!Number.isInteger(busyTimeoutMs) || busyTimeoutMs < 0 || busyTimeoutMs > 2147483647 || typeof input !== "string" && options.busyTimeoutMs !== void 0) {
+      throw new WorkflowContractError("INVALID_INPUT", "A standalone trust store requires a valid busy timeout.");
+    }
     this.shared = typeof input === "string" ? void 0 : input;
     this.databasePath = typeof input === "string" ? input : input.databasePath;
     this.syntheticSecret = syntheticSecret;
@@ -137,21 +164,26 @@ var TrustStore = class {
     if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 448 });
     this.database = new DatabaseSync(databasePath);
     try {
-      this.database.exec("PRAGMA busy_timeout = 5000;");
+      this.database.exec(`PRAGMA busy_timeout = ${busyTimeoutMs};`);
       this.database.exec("PRAGMA synchronous = FULL;");
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
       if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
-      if (this.signingKey.length !== 32) throw new Error("Stored trust signing key is invalid.");
+      if (this.signingKey.length !== 32) throw tagProducerFailure(new Error("Stored trust signing key is invalid."), "TRUST_SIGNING_KEY_INVALID");
       if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path.resolve(databasePath), 384);
     } catch (cause) {
+      let closeFailed = false;
+      let closeFailure;
       try {
         this.database.close();
-      } catch {
+      } catch (closeError) {
+        closeFailed = true;
+        closeFailure = utilTypes.isNativeError(closeError) ? tagProducerFailure(closeError, "TRUST_CLOSE_FAILED") : closeError;
       }
-      if (cause instanceof WorkflowContractError) throw cause;
-      throw this.storageError("Cannot initialize the trust database.", cause);
+      const failure = cause instanceof WorkflowContractError ? cause : this.storageError("Cannot initialize the trust database.", cause);
+      if (closeFailed) retainFailureSecondary(failure, closeFailure);
+      throw failure;
     }
   }
   recordInputSource(input) {
@@ -195,11 +227,11 @@ var TrustStore = class {
         const prior = JSON.parse(existing.receipt_json);
         const sameSecurityMetadata = prior.contentDigest === receipt.contentDigest && prior.originKind === receipt.originKind && prior.authorityEffect === receipt.authorityEffect && canonicalJson(prior.attestation, "Source attestation") === canonicalJson(receipt.attestation, "Source attestation");
         if (sameSecurityMetadata) return structuredClone(prior);
-        throw new WorkflowContractError("REQUEST_CONFLICT", "The input event was already recorded with different content or provenance metadata.", {
+        throw tagProducerFailure(new WorkflowContractError("REQUEST_CONFLICT", "The input event was already recorded with different content or provenance metadata.", {
           host: receipt.host,
           sessionId: receipt.sessionId,
           eventId: receipt.eventId
-        });
+        }), "TRUST_SOURCE_EVENT_CONFLICT");
       }
       this.database.prepare(`
         INSERT INTO input_source_receipts (
@@ -260,7 +292,11 @@ var TrustStore = class {
   }
   close() {
     if (this.closed) return;
-    this.database.close();
+    try {
+      this.database.close();
+    } catch (cause) {
+      throw utilTypes.isNativeError(cause) ? tagProducerFailure(cause, "TRUST_CLOSE_FAILED") : cause;
+    }
     this.closed = true;
   }
   seal(unsigned) {
@@ -272,11 +308,11 @@ var TrustStore = class {
   initializeSchema() {
     const version = this.shared?.getSchemaVersion() ?? this.database.prepare("PRAGMA user_version").get().user_version;
     if (version > SCHEMA_VERSION) {
-      throw new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
+      throw tagProducerFailure(new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
         databasePath: this.databasePath,
         supportedVersion: SCHEMA_VERSION,
         actualVersion: version
-      });
+      }), "TRUST_SCHEMA_UNSUPPORTED");
     }
     this.transaction(() => {
       this.database.exec(`
@@ -321,7 +357,8 @@ var TrustStore = class {
     } catch (cause) {
       try {
         this.database.exec("ROLLBACK;");
-      } catch {
+      } catch (rollbackError) {
+        retainFailureSecondary(cause, utilTypes.isNativeError(rollbackError) ? tagProducerFailure(rollbackError, "TRUST_ROLLBACK_FAILED") : rollbackError);
       }
       throw cause;
     }
@@ -335,13 +372,359 @@ var TrustStore = class {
     }
   }
   storageError(message, cause, details = {}) {
-    return new WorkflowContractError("INVALID_INPUT", message, {
+    return retainFailureCause(tagProducerFailure(new WorkflowContractError("INVALID_INPUT", message, {
       ...details,
       databasePath: this.databasePath,
       cause: cause instanceof Error ? cause.message : String(cause)
-    });
+    }), "TRUST_STORAGE_FAILED"), cause);
   }
 };
+
+// skills/coordinate-subagents/references/model-routing-presets.json
+var model_routing_presets_default = {
+  schema_version: 1,
+  policy_revision: "2026-10-24.r02",
+  default_profile: "balanced",
+  roles: [
+    "discovery",
+    "general-implementation",
+    "complex-reasoning",
+    "independent-audit"
+  ],
+  model_class_order: [
+    "lightweight",
+    "general",
+    "deep",
+    "frontier"
+  ],
+  effort_order: [
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+    "ultra"
+  ],
+  invariants: {
+    controls_delegation: false,
+    controls_agent_count: false,
+    controls_batching: false,
+    user_override_precedence: true,
+    capability_check_required: true,
+    high_risk_minimum_model_class: "general",
+    high_risk_minimum_effort: "high"
+  },
+  providers: {
+    "openai-codex": {
+      host: "codex",
+      minimum_efforts: { "gpt-5.6-luna": "high" },
+      catalog: {
+        matching: "exact-only",
+        models: {
+          "gpt-6-astra": {
+            model_class: "frontier",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6-sol": {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6.1-sol": {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6-luna": {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-sol": {
+            model_class: "deep",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-terra": {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-luna": {
+            model_class: "lightweight",
+            minimum_effort: "high",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        aliases: {}
+      },
+      application: {
+        full_history_overrides: false,
+        context_field: "fork_turns",
+        default_context: "all",
+        full_history_value: "all",
+        limited_context_value: "none",
+        model_field: "model",
+        effort_field: "reasoning_effort",
+        model_delivery: ["spawn-argument"],
+        effort_delivery: ["spawn-argument"],
+        verification: "spawn-result"
+      },
+      profiles: {
+        economy: {
+          discovery: { model: "gpt-5.6-luna", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "gpt-5.6-terra", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "gpt-5.6-sol", effort: "medium", model_class: "deep" },
+          "independent-audit": { model: "gpt-5.6-sol", effort: "high", model_class: "deep" }
+        },
+        balanced: {
+          discovery: { model: "gpt-5.6-luna", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "gpt-5.6-terra", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "gpt-5.6-sol", effort: "high", model_class: "deep" },
+          "independent-audit": { model: "gpt-6-astra", effort: "high", model_class: "frontier" }
+        },
+        quality: {
+          discovery: { model: "gpt-5.6-terra", effort: "medium", model_class: "general" },
+          "general-implementation": { model: "gpt-5.6-sol", effort: "high", model_class: "deep" },
+          "complex-reasoning": { model: "gpt-6-astra", effort: "high", model_class: "frontier" },
+          "independent-audit": { model: "gpt-6-astra", effort: "xhigh", model_class: "frontier" }
+        }
+      }
+    },
+    "anthropic-claude-code": {
+      host: "claude-code",
+      catalog: {
+        matching: "claude-family-or-exact",
+        models: {
+          haiku: {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          sonnet: {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          opus: {
+            model_class: "deep",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          fable: {
+            model_class: "frontier",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        aliases: {}
+      },
+      application: {
+        model_field: "model",
+        effort_field: "effort",
+        model_delivery: ["per-invocation-argument", "subagent-frontmatter"],
+        effort_delivery: ["subagent-frontmatter", "cli-agent-definition"],
+        verification: "tasks-view"
+      },
+      profiles: {
+        economy: {
+          discovery: { model: "haiku", effort: "low", model_class: "lightweight" },
+          "general-implementation": { model: "sonnet", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "opus", effort: "medium", model_class: "deep" },
+          "independent-audit": { model: "opus", effort: "high", model_class: "deep" }
+        },
+        balanced: {
+          discovery: { model: "haiku", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "sonnet", effort: "high", model_class: "general" },
+          "complex-reasoning": { model: "opus", effort: "high", model_class: "deep" },
+          "independent-audit": { model: "fable", effort: "high", model_class: "frontier" }
+        },
+        quality: {
+          discovery: { model: "sonnet", effort: "high", model_class: "general" },
+          "general-implementation": { model: "opus", effort: "high", model_class: "deep" },
+          "complex-reasoning": { model: "fable", effort: "xhigh", model_class: "frontier" },
+          "independent-audit": { model: "fable", effort: "xhigh", model_class: "frontier" }
+        }
+      }
+    },
+    "google-gemini": {
+      host: "gemini",
+      catalog: {
+        matching: "gemini-family-or-exact",
+        models: {
+          "flash-lite": {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "flash-8b": {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          flash: {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          pro: {
+            model_class: "deep",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          ultra: {
+            model_class: "frontier",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        aliases: {
+          flash_lite: "flash-lite"
+        }
+      },
+      application: {
+        model_field: "model",
+        effort_field: "effort",
+        model_delivery: ["invoke-argument", "subagent-frontmatter"],
+        effort_delivery: ["subagent-frontmatter"],
+        verification: "host-task-view"
+      },
+      profiles: {
+        economy: {
+          discovery: { model: "flash-lite", effort: "low", model_class: "lightweight" },
+          "general-implementation": { model: "flash", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "pro", effort: "medium", model_class: "deep" },
+          "independent-audit": { model: "pro", effort: "high", model_class: "deep" }
+        },
+        balanced: {
+          discovery: { model: "flash-lite", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "flash", effort: "high", model_class: "general" },
+          "complex-reasoning": { model: "pro", effort: "high", model_class: "deep" },
+          "independent-audit": { model: "ultra", effort: "high", model_class: "frontier" }
+        },
+        quality: {
+          discovery: { model: "flash", effort: "high", model_class: "general" },
+          "general-implementation": { model: "pro", effort: "high", model_class: "deep" },
+          "complex-reasoning": { model: "ultra", effort: "xhigh", model_class: "frontier" },
+          "independent-audit": { model: "ultra", effort: "xhigh", model_class: "frontier" }
+        }
+      }
+    }
+  }
+};
+
+// skills/coordinate-subagents/scripts/model-catalog-adapter.mjs
+function escapeRegExp(literal) {
+  return literal.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+function buildClaudeFamilyRegex(keys) {
+  if (keys.length === 0) return null;
+  const sorted = [...keys].sort((left, right) => right.length - left.length).map(escapeRegExp);
+  return new RegExp(
+    `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(${sorted.join("|")})(?:[-@:.]|$)`,
+    "u"
+  );
+}
+function buildGeminiFamilyRegex(prefixedKeys, bareKeys) {
+  if (prefixedKeys.length === 0 && bareKeys.length === 0) return null;
+  const sortedPrefixed = [...prefixedKeys].sort((left, right) => right.length - left.length).map(escapeRegExp);
+  const sortedBare = [...bareKeys].sort((left, right) => right.length - left.length).map(escapeRegExp);
+  const branches = [];
+  if (sortedPrefixed.length > 0) {
+    branches.push(
+      `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)(${sortedPrefixed.join("|")})(?:[-@:.]|$)`
+    );
+  }
+  if (sortedBare.length > 0) {
+    branches.push(`^(${sortedBare.join("|")})$`);
+  }
+  return new RegExp(branches.join("|"), "u");
+}
+function resolveCatalogModel(catalog, rawModel, { allowProfileKeys = false } = {}) {
+  if (typeof rawModel !== "string" || rawModel.length === 0 || !catalog) return null;
+  const models = catalog.models ?? {};
+  const aliases = catalog.aliases ?? {};
+  let matchedToken = null;
+  if (allowProfileKeys && ["exact-only", "claude-family-or-exact", "gemini-family-or-exact"].includes(catalog.matching) && (Object.hasOwn(models, rawModel) || Object.hasOwn(aliases, rawModel))) {
+    matchedToken = rawModel;
+  } else if (catalog.matching === "exact-only") {
+    if (Object.hasOwn(models, rawModel) || Object.hasOwn(aliases, rawModel)) {
+      matchedToken = rawModel;
+    }
+  } else if (catalog.matching === "claude-family-or-exact") {
+    const allKeys = [.../* @__PURE__ */ new Set([...Object.keys(models), ...Object.keys(aliases)])];
+    const familyRegex = buildClaudeFamilyRegex(allKeys);
+    matchedToken = familyRegex?.exec(rawModel)?.[1] ?? null;
+  } else if (catalog.matching === "gemini-family-or-exact") {
+    const allKeys = [.../* @__PURE__ */ new Set([...Object.keys(models), ...Object.keys(aliases)])];
+    const bareKeys = allKeys.filter((key) => key !== "flash-8b");
+    const familyRegex = buildGeminiFamilyRegex(allKeys, bareKeys);
+    const match = familyRegex?.exec(rawModel);
+    matchedToken = match?.[1] ?? match?.[2] ?? null;
+    if (!matchedToken && (Object.hasOwn(models, rawModel) || Object.hasOwn(aliases, rawModel)) && rawModel !== "flash-8b") {
+      matchedToken = rawModel;
+    }
+  }
+  if (!matchedToken) return null;
+  const canonicalKey = Object.hasOwn(aliases, matchedToken) ? aliases[matchedToken] : matchedToken;
+  if (!Object.hasOwn(models, canonicalKey)) return null;
+  return canonicalKey;
+}
+
+// mcp-server/src/host-execution-adapters.ts
+function resolveFromProviderCatalog(providerId, host, policyRevision, providerEntry, rawModel, provenance = "adapter-policy") {
+  if (typeof rawModel !== "string" || rawModel.length === 0 || !providerEntry?.catalog) return null;
+  const catalog = providerEntry.catalog;
+  const models = catalog.models ?? {};
+  const minimumEfforts = providerEntry.minimum_efforts ?? {};
+  const canonicalKey = resolveCatalogModel(catalog, rawModel);
+  if (!canonicalKey) return null;
+  const entry = models[canonicalKey];
+  const minimumReasoningEffort = minimumEfforts[rawModel] ?? minimumEfforts[canonicalKey] ?? entry.minimum_effort ?? null;
+  const supportedEfforts = entry.supported_efforts && entry.supported_efforts.length > 0 ? entry.supported_efforts : REASONING_EFFORT;
+  return {
+    provider: providerId,
+    host,
+    rawModel,
+    resolvedModel: canonicalKey,
+    modelClass: entry.model_class,
+    minimumReasoningEffort,
+    supportedEfforts,
+    aliasUsed: rawModel !== canonicalKey,
+    policyRevision,
+    provenance
+  };
+}
+function createHostAdapter(providerId, host, policyRevision, providerEntry) {
+  return Object.freeze({
+    host,
+    provider: providerId,
+    policyRevision,
+    resolveModel(model, provenance = `${host}:adapter-policy`) {
+      return resolveFromProviderCatalog(providerId, host, policyRevision, providerEntry, model, provenance);
+    },
+    modelClassForModel(model) {
+      return resolveFromProviderCatalog(providerId, host, policyRevision, providerEntry, model)?.modelClass ?? null;
+    }
+  });
+}
+function createCatalogExecutionAdapters(presets = model_routing_presets_default) {
+  if (!presets || typeof presets !== "object" || Array.isArray(presets) || !presets.providers || typeof presets.providers !== "object" || Array.isArray(presets.providers)) throw new Error("INVALID_EXECUTION_ADAPTER_CONFIGURATION");
+  const policyRevision = typeof presets.policy_revision === "string" && presets.policy_revision.length > 0 ? presets.policy_revision : "1.0.0";
+  const adapters = /* @__PURE__ */ new Map();
+  for (const [providerId, entry] of Object.entries(presets.providers)) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error("INVALID_EXECUTION_ADAPTER_HOST");
+    const host = entry.host;
+    if (typeof host !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host)) throw new Error("INVALID_EXECUTION_ADAPTER_HOST");
+    if (adapters.has(host)) throw new Error("DUPLICATE_EXECUTION_ADAPTER_HOST");
+    adapters.set(host, createHostAdapter(providerId, host, policyRevision, entry));
+  }
+  const view = Object.freeze({
+    size: adapters.size,
+    get: (host) => adapters.get(host),
+    has: (host) => adapters.has(host),
+    entries: () => adapters.entries(),
+    keys: () => adapters.keys(),
+    values: () => adapters.values(),
+    forEach(callback, thisArg) {
+      adapters.forEach((value, key) => callback.call(thisArg, value, key, view));
+    },
+    [Symbol.iterator]: () => adapters[Symbol.iterator](),
+    [Symbol.toStringTag]: "ReadonlyMap"
+  });
+  return Object.freeze({ policyRevision, adapters: view });
+}
+var defaultSuite = createCatalogExecutionAdapters();
+var defaultExecutionAdapters = defaultSuite.adapters;
+var claudeCodeExecutionAdapter = defaultSuite.adapters.get("claude-code");
+var codexExecutionAdapter = defaultSuite.adapters.get("codex");
+var geminiExecutionAdapter = defaultSuite.adapters.get("gemini");
 
 // mcp-server/src/runtime-config.ts
 import { homedir } from "node:os";
@@ -664,7 +1047,7 @@ var SessionMessageStore = class {
           AND p.sender_host = messages.sender_host AND p.sender_session_id = messages.sender_session_id
           AND p.target_host = messages.target_host AND p.target_session_id = messages.target_session_id AND p.expires_at > ?)))`).run(acknowledgedBefore, now, now);
     this.database.prepare("UPDATE messages SET body = '', body_bytes = 0 WHERE acknowledged_at IS NOT NULL AND expires_at <= ?").run(now);
-    this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
+    this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ? AND relay_id NOT LIKE 'verified-relay-v1:%'").run(now);
     this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
     this.retireUnobservedWakes(nowMs);
     this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted', 'expired-unobserved')
@@ -939,7 +1322,8 @@ var SessionMessageStore = class {
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acknowledge(target, messageIds, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL
-      WHERE message_id = ? AND target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL`);
+      WHERE message_id = ? AND target_host = ? AND target_session_id = ?
+        AND claimed_at IS NOT NULL AND acknowledged_at IS NULL`);
     const receipt = this.database.prepare("UPDATE prepared_messages SET expires_at = min(expires_at, ?) WHERE message_id = ? AND receipt IS NOT NULL");
     let count = 0;
     return this.transaction(() => {
@@ -995,7 +1379,7 @@ var SessionMessageStore = class {
     boundedIdentity(target);
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.liveRelay(target, transport, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    const row = this.database.prepare("SELECT relay_id, pid, parent_pid, updated_at FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lease_until > ?").get(target.host, target.sessionId, transport, iso(nowMs));
+    const row = this.database.prepare("SELECT relay_id, pid, parent_pid, updated_at FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lease_until > ? AND pid > 0").get(target.host, target.sessionId, transport, iso(nowMs));
     return row ? { relayId: row.relay_id, pid: row.pid, parentPid: row.parent_pid, updatedAt: row.updated_at } : null;
   }
   /**
@@ -1039,6 +1423,62 @@ var SessionMessageStore = class {
         AND (claim_until IS NULL OR claim_until <= ?)`).get(target.host, target.sessionId, now, now);
     return row.count;
   }
+  /** Retained startup reservation metadata; not a relay liveness view. */
+  relayOwner(target, transport) {
+    boundedIdentity(target);
+    const row = this.database.prepare("SELECT relay_id, pid, parent_pid FROM relay_leases WHERE host=? AND session_id=? AND transport=?").get(target.host, target.sessionId, transport);
+    const generation = row?.relay_id.match(/^verified-relay-v1:[0-9a-f-]{36}:([0-9a-f]{64})$/u)?.[1];
+    return row ? { relayId: row.relay_id, pid: row.pid, parentPid: row.parent_pid, instanceId: generation ? "host-process-v1:" + generation : null } : null;
+  }
+  /** Unknown pid=0 grants are never automatically TTL-retried. */
+  prepareVerifiedRelay(input, nowMs = Date.now()) {
+    boundedIdentity(input);
+    if (!Number.isInteger(input.parentPid) || input.parentPid < 1 || !/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId)) throw new Error("Invalid verified relay generation.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.prepareVerifiedRelay(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
+      const previous = this.relayOwner(input, input.transport);
+      const expected = input.expectedOwner;
+      if (previous === null ? expected !== null : !expected || previous.relayId !== expected.relayId || previous.pid !== expected.pid || previous.parentPid !== expected.parentPid || previous.instanceId !== expected.instanceId) {
+        return { spawn: false, relayId: null, instanceId: input.instanceId };
+      }
+      if (previous?.relayId.startsWith("verified-relay-v1:") && previous.instanceId === null) return { spawn: false, relayId: null, instanceId: input.instanceId };
+      if (previous && previous.instanceId === input.instanceId && previous.parentPid === input.parentPid) {
+        const dead = previous.pid > 0 && input.confirmedDead?.pid === previous.pid && input.confirmedDead.relayId === previous.relayId;
+        if (!dead) return { spawn: false, relayId: previous.relayId, instanceId: input.instanceId };
+      }
+      const relayId = "verified-relay-v1:" + randomUUID3() + ":" + input.instanceId.slice("host-process-v1:".length);
+      this.startPresence(input, nowMs);
+      this.database.prepare("INSERT INTO relay_leases(host,session_id,transport,relay_id,pid,parent_pid,lease_until,updated_at) VALUES(?,?,?,?,0,?,'9999-12-31T23:59:59.999Z',?) ON CONFLICT(host,session_id,transport) DO UPDATE SET relay_id=excluded.relay_id,pid=0,parent_pid=excluded.parent_pid,lease_until=excluded.lease_until,updated_at=excluded.updated_at").run(input.host, input.sessionId, input.transport, relayId, input.parentPid, iso(nowMs));
+      return { spawn: true, relayId, instanceId: input.instanceId };
+    });
+  }
+  activateVerifiedRelay(input, nowMs = Date.now()) {
+    boundedIdentity(input);
+    if (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(input.relayId) || !Number.isInteger(input.pid) || input.pid < 1 || !Number.isInteger(input.parentPid) || input.parentPid < 1) throw new Error("Invalid verified relay activation.");
+    if (!/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId) || !input.relayId.endsWith(":" + input.instanceId.slice("host-process-v1:".length))) return false;
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.activateVerifiedRelay(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
+      const presence = this.presence(input, nowMs);
+      if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport) return false;
+      return this.database.prepare("UPDATE relay_leases SET pid=?,lease_until=?,updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND parent_pid=? AND (pid=0 OR pid=?)").run(input.pid, iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId, input.parentPid, input.pid).changes === 1;
+    });
+  }
+  releaseVerifiedRelay(input, nowMs = Date.now()) {
+    boundedIdentity(input);
+    if (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(input.relayId) || !Number.isInteger(input.pid) || input.pid < 1 || !/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId)) throw new Error("Invalid verified relay release.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.releaseVerifiedRelay(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
+      const owner = this.relayOwner(input, input.transport);
+      if (!owner || owner.instanceId !== input.instanceId) return false;
+      const removed = this.database.prepare("DELETE FROM relay_leases WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND pid=?").run(input.host, input.sessionId, input.transport, input.relayId, input.pid).changes === 1;
+      const presence = this.presence(input, nowMs);
+      if (removed && presence.instanceId === input.instanceId && presence.transport === input.transport) this.endPresence(input, "host-process-ended", input.instanceId, nowMs);
+      return removed;
+    });
+  }
   acquireRelay(input, nowMs = Date.now()) {
     boundedIdentity(input);
     if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128) throw new Error("Invalid relay identity.");
@@ -1053,16 +1493,17 @@ var SessionMessageStore = class {
       ON CONFLICT (host, session_id, transport) DO UPDATE SET
         relay_id = excluded.relay_id, pid = excluded.pid, parent_pid = excluded.parent_pid,
         lease_until = excluded.lease_until, updated_at = excluded.updated_at
-      WHERE relay_leases.lease_until <= excluded.updated_at
+      WHERE relay_leases.relay_id NOT LIKE 'verified-relay-v1:%' AND (
+        relay_leases.lease_until <= excluded.updated_at
         OR relay_leases.relay_id = excluded.relay_id
-        OR relay_leases.parent_pid = excluded.parent_pid`).run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now);
+        OR relay_leases.parent_pid = excluded.parent_pid)`).run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now);
     return result.changes === 1;
   }
   heartbeatRelay(input, nowMs = Date.now()) {
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.heartbeatRelay(input, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     const result = this.database.prepare(`UPDATE relay_leases SET lease_until = ?, updated_at = ?
-      WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?`).run(iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId);
+      WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ? AND pid > 0`).run(iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId);
     return result.changes === 1;
   }
   /** One relay cycle; an old generation cannot renew either lease. */
@@ -1365,17 +1806,17 @@ var SessionMessageStore = class {
         return rejected;
       }
       const rows = digests.map((digest) => this.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?").get(digest, target.host, target.sessionId));
-      if (rows.some((row) => !row || !["legacy", "started", "submitted", "unknown", "expired-unobserved"].includes(String(row.state)))) {
+      const alreadyObserved = (row) => row.state === "observed" && typeof row.observed_at === "string" && typeof row.consumed_at === "string" && typeof row.nonce === "string" && row.nonce_digest === nonceDigest(row.nonce);
+      if (rows.some((row) => !row || !alreadyObserved(row) && !["legacy", "started", "submitted", "unknown", "expired-unobserved"].includes(String(row.state)))) {
         return rejected;
       }
+      if (rows.every((row) => alreadyObserved(row))) return rejected;
       this.recordActivity(target, nowMs);
       const presence = this.presence(target, nowMs);
       this.database.prepare(`UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?)
         WHERE host = ? AND session_id = ? AND state = 'expired-unobserved' AND nonce_digest IN (SELECT value FROM json_each(?))`).run(iso(nowMs), target.host, target.sessionId, JSON.stringify(digests));
-      const live = rows.filter((row) => row.state !== "expired-unobserved");
-      if (live.length === 0) {
-        return { ...rejected, retired: true };
-      }
+      const live = rows.filter((row) => row.state !== "expired-unobserved" && !alreadyObserved(row));
+      if (live.length === 0) return rows.every((row) => row.state === "expired-unobserved") ? { ...rejected, retired: true } : rejected;
       const valid = live.every((row) => row.state === "legacy" ? row.consumed_at === null && String(row.expires_at) > iso(nowMs) : row.instance_id === presence.instanceId && row.birth_generation === presence.startedAt && row.transport === presence.transport && presence.state === "online" && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row.expires_at) > iso(nowMs));
       if (!valid) {
         for (const row of live) if (row.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
@@ -1638,9 +2079,199 @@ ${encoded}
   return { privateKeyPem, certificatePem, fingerprint256: new X509Certificate(certificatePem).fingerprint256 };
 }
 
+// mcp-server/src/process-identity.ts
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+function processStartToken(pid, platform = process.platform, timeoutMs) {
+  if (!Number.isInteger(pid) || pid < 1) return null;
+  if (timeoutMs !== void 0 && (!Number.isFinite(timeoutMs) || timeoutMs < 1)) return null;
+  try {
+    if (platform === "win32") {
+      return execFileSync("powershell.exe", [
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        `(Get-Process -Id ${pid} -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')`
+      ], { encoding: "utf8", windowsHide: true, timeout: Math.min(5e3, Math.floor(timeoutMs ?? 5e3)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
+    }
+    if (platform === "linux") {
+      const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
+      const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
+      return fields[19] ?? null;
+    }
+    return execFileSync("ps", ["-p", String(pid), "-o", "lstart="], { encoding: "utf8", timeout: Math.min(3e3, Math.floor(timeoutMs ?? 3e3)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
+  } catch {
+    return null;
+  }
+}
+
+// mcp-server/src/broker-process-lock.ts
+import { randomBytes as randomBytes3 } from "node:crypto";
+import { lstatSync, mkdirSync as mkdirSync3, mkdtempSync, readdirSync, renameSync, rmdirSync } from "node:fs";
+import path4 from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
+var OWNER = /^owner-([1-9][0-9]*)-([a-f0-9]{32})$/u;
+var code = (error) => error?.code;
+function unavailable(reason, cause) {
+  throw Object.assign(
+    new Error("Broker lock state requires inspection: " + reason + ".", { cause }),
+    { code: "BROKER_LOCK_" + reason }
+  );
+}
+function definitelyGone(pid) {
+  try {
+    process.kill(pid, 0);
+    return false;
+  } catch (error) {
+    if (code(error) === "ESRCH") return true;
+    if (code(error) === "EPERM") return false;
+    return unavailable("OWNER_UNVERIFIED", error);
+  }
+}
+function retireObservedDeadOwner(lockPath) {
+  let info;
+  try {
+    info = lstatSync(lockPath);
+  } catch (error) {
+    if (code(error) === "ENOENT") return true;
+    throw error;
+  }
+  if (!info.isDirectory() || info.isSymbolicLink()) return unavailable("UNSUPPORTED_PATH");
+  let entries;
+  try {
+    entries = readdirSync(lockPath, { withFileTypes: true });
+  } catch (error) {
+    if (code(error) === "ENOENT") return true;
+    throw error;
+  }
+  if (entries.length === 0) return unavailable("EMPTY_DIRECTORY");
+  if (entries.length !== 1) return unavailable("UNRECOGNIZED_OWNER");
+  const entry = entries[0];
+  const match = OWNER.exec(entry.name);
+  if (!match || !entry.isDirectory() || entry.isSymbolicLink()) return unavailable("UNRECOGNIZED_OWNER");
+  const pid = Number(match[1]);
+  if (!Number.isSafeInteger(pid) || pid < 1) return unavailable("UNRECOGNIZED_OWNER");
+  if (!definitelyGone(pid)) return false;
+  const marker = path4.join(lockPath, entry.name);
+  try {
+    rmdirSync(marker);
+  } catch (error) {
+    if (["ENOENT", "ENOTEMPTY", "EEXIST", "ENOTDIR"].includes(code(error) ?? "")) return unavailable("CHANGED", error);
+    throw error;
+  }
+  try {
+    rmdirSync(lockPath);
+    return true;
+  } catch (error) {
+    if (code(error) === "ENOENT") return true;
+    if (["ENOTEMPTY", "EEXIST"].includes(code(error) ?? "")) return unavailable("CHANGED", error);
+    throw error;
+  }
+}
+function acquireBrokerProcessLock(lockPath) {
+  const owner = "owner-" + process.pid + "-" + randomBytes3(16).toString("hex");
+  const stage = mkdtempSync(lockPath + ".stage-");
+  let markerCreated = false;
+  let published = false;
+  let result = null;
+  let failure = null;
+  try {
+    mkdirSync3(path4.join(stage, owner), { mode: 448 });
+    markerCreated = true;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (!retireObservedDeadOwner(lockPath)) break;
+      try {
+        renameSync(stage, lockPath);
+        published = true;
+        result = Object.freeze({ path: lockPath, owner });
+        break;
+      } catch (error) {
+        if (!["EEXIST", "ENOTEMPTY", "EPERM", "EACCES", "ENOENT"].includes(code(error) ?? "")) throw error;
+        if (attempt === 1) return unavailable("PUBLISH_" + (code(error) ?? "UNKNOWN"), error);
+      }
+    }
+  } catch (error) {
+    failure = { error };
+  }
+  if (!published) {
+    const cleanup = [];
+    for (const target of [...markerCreated ? [path4.join(stage, owner)] : [], stage]) {
+      try {
+        rmdirSync(target);
+      } catch (error) {
+        if (code(error) !== "ENOENT") cleanup.push(error);
+      }
+    }
+    if (cleanup.length) {
+      if (failure) throw Object.assign(
+        new AggregateError(
+          [failure.error, ...cleanup],
+          "Broker lock preparation and cleanup both failed.",
+          { cause: failure.error }
+        ),
+        { code: "BROKER_LOCK_PREPARATION_CLEANUP_FAILED" }
+      );
+      if (cleanup.length === 1) throw cleanup[0];
+      throw Object.assign(
+        new AggregateError(cleanup, "Broker lock preparation cleanup failed.", { cause: cleanup[0] }),
+        { code: "BROKER_LOCK_PREPARATION_CLEANUP_FAILED" }
+      );
+    }
+  }
+  if (failure) throw failure.error;
+  return result;
+}
+async function acquireBrokerProcessLockWhenReady(lockPath) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return acquireBrokerProcessLock(lockPath);
+    } catch (error) {
+      if (attempt >= 19 || ![
+        "BROKER_LOCK_EMPTY_DIRECTORY",
+        "BROKER_LOCK_CHANGED",
+        "BROKER_LOCK_PUBLISH_EEXIST",
+        "BROKER_LOCK_PUBLISH_ENOTEMPTY",
+        "BROKER_LOCK_PUBLISH_EPERM",
+        "BROKER_LOCK_PUBLISH_EACCES",
+        "BROKER_LOCK_PUBLISH_ENOENT"
+      ].includes(code(error) ?? "")) throw error;
+      await delay(25);
+    }
+  }
+}
+function ownsBrokerProcessLock(lock) {
+  try {
+    const info = lstatSync(lock.path);
+    if (!info.isDirectory() || info.isSymbolicLink()) return false;
+    const entries = readdirSync(lock.path, { withFileTypes: true });
+    return entries.length === 1 && entries[0].name === lock.owner && entries[0].isDirectory() && !entries[0].isSymbolicLink();
+  } catch (error) {
+    if (code(error) === "ENOENT") return false;
+    throw error;
+  }
+}
+function releaseBrokerProcessLock(lock) {
+  try {
+    rmdirSync(path4.join(lock.path, lock.owner));
+  } catch (error) {
+    if (code(error) === "ENOENT") return;
+    throw error;
+  }
+  try {
+    rmdirSync(lock.path);
+  } catch (error) {
+    if (!["ENOENT", "ENOTEMPTY", "EEXIST"].includes(code(error) ?? "")) throw error;
+  }
+}
+
 // mcp-server/src/session-message-broker.ts
+import { performance } from "node:perf_hooks";
 var IDLE_EXIT_MS = 6e4;
-var SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy"];
+var SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start"];
+function brokerFailureCode(error) {
+  const code2 = error?.code;
+  return typeof code2 === "string" && /^[A-Z0-9_]+$/u.test(code2) ? code2 : "STARTUP_FAILED";
+}
 function argument(name) {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] ?? null : null;
@@ -1705,29 +2336,10 @@ function alive(pid) {
     return false;
   }
 }
-function acquireProcessLock(lockPath) {
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      const descriptor = openSync(lockPath, "wx", 384);
-      writeFileSync(descriptor, `${process.pid}
-`, "utf8");
-      return descriptor;
-    } catch {
-      try {
-        const owner = Number.parseInt(readFileSync(lockPath, "utf8").trim(), 10);
-        if (Number.isInteger(owner) && alive(owner)) return null;
-        rmSync(lockPath, { force: true });
-      } catch {
-        return null;
-      }
-    }
-  }
-  return null;
-}
 async function credentials(stateDirectory) {
-  const keyPath = path4.join(stateDirectory, "broker-key.pem");
-  const certificatePath = path4.join(stateDirectory, "broker-cert.pem");
-  const tokenPath = path4.join(stateDirectory, "broker.token");
+  const keyPath = path5.join(stateDirectory, "broker-key.pem");
+  const certificatePath = path5.join(stateDirectory, "broker-cert.pem");
+  const tokenPath = path5.join(stateDirectory, "broker.token");
   let key = "";
   let certificate = "";
   let regenerate = true;
@@ -1759,15 +2371,15 @@ async function credentials(stateDirectory) {
         writeFile(temporaryKey, key, { encoding: "utf8", mode: 384 }),
         writeFile(temporaryCertificate, certificate, { encoding: "utf8", mode: 384 })
       ]);
-      renameSync(temporaryKey, keyPath);
-      renameSync(temporaryCertificate, certificatePath);
+      renameSync2(temporaryKey, keyPath);
+      renameSync2(temporaryCertificate, certificatePath);
     }
   }
   let token;
   if (existsSync(tokenPath)) token = (await readFile(tokenPath, "utf8")).trim();
   else token = "";
   if (!/^[A-Za-z0-9_-]{43}$/u.test(token)) {
-    token = randomBytes3(32).toString("base64url");
+    token = randomBytes4(32).toString("base64url");
     await writeFile(tokenPath, `${token}
 `, { encoding: "utf8", mode: 384 });
   }
@@ -1947,9 +2559,70 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
     }
     case "pending":
       return { count: store.pendingCount(identity(payload.target)) };
+    case "ensure-relay": {
+      const target = identity(payload.target);
+      const parentPid = integer2(payload.parentPid, "parentPid");
+      const parentStartToken = string(payload.parentStartToken, "parentStartToken");
+      const timeout = integer2(payload.identityTimeoutMs, "identityTimeoutMs");
+      if (parentPid < 1 || !parentStartToken.trim() || parentStartToken.length > 200 || timeout < 1 || timeout > 8e3) throw new Error("Invalid relay host observation or budget.");
+      const transport = string(payload.transport, "transport");
+      const previous = store.relayOwner(target, transport);
+      const deadline = performance.now() + timeout;
+      if (processStartToken(parentPid, process.platform, Math.max(1, Math.floor(deadline - performance.now()))) !== parentStartToken || performance.now() >= deadline) throw new Error("Relay host generation is unverified.");
+      const instanceId = "host-process-v1:" + createHash3("sha256").update(JSON.stringify([target.host, target.sessionId, parentPid, parentStartToken])).digest("hex");
+      const wakeVisibility = string(payload.wakeVisibility, "wakeVisibility");
+      const idleWake = string(payload.idleWake, "idleWake");
+      if (!["silent", "user-message", "none"].includes(wakeVisibility) || !["silent", "user-message", "none"].includes(idleWake)) throw new Error("Invalid relay delivery capabilities.");
+      let confirmedDead;
+      if (previous && previous.pid > 0) {
+        try {
+          process.kill(previous.pid, 0);
+        } catch (error) {
+          if (error && typeof error === "object" && "code" in error && error.code === "ESRCH") confirmedDead = { relayId: previous.relayId, pid: previous.pid };
+        }
+      }
+      if (performance.now() >= deadline) throw new Error("Relay ensure budget expired.");
+      return store.prepareVerifiedRelay({
+        ...target,
+        instanceId,
+        transport,
+        parentPid,
+        expectedOwner: previous,
+        wakeVisibility,
+        canWakeSilently: boolean(payload.canWakeSilently, "canWakeSilently"),
+        deliveryCapabilities: { supportedInjection: supportedInjection(payload.supportedInjection), idleWake },
+        ...confirmedDead ? { confirmedDead } : {},
+        ...optionalString(payload, "collaborationId") ? { collaborationId: optionalString(payload, "collaborationId") } : {},
+        ...optionalString(payload, "workspaceId") ? { workspaceId: optionalString(payload, "workspaceId") } : {},
+        ...optionalString(payload, "role") ? { role: optionalString(payload, "role") } : {}
+      });
+    }
+    case "release-verified-relay":
+      return { released: store.releaseVerifiedRelay({
+        ...identity(payload.target),
+        transport: string(payload.transport, "transport"),
+        relayId: string(payload.relayId, "relayId"),
+        instanceId: string(payload.instanceId, "instanceId"),
+        pid: integer2(payload.pid, "pid")
+      }) };
     case "acquire-relay": {
       const target = identity(payload.target);
-      const acquired = store.acquireRelay({
+      const relayId = string(payload.relayId, "relayId");
+      const parentPid = integer2(payload.parentPid, "parentPid");
+      const reserved = relayId.startsWith("verified-relay-v1:");
+      if (reserved) {
+        const parentStartToken = string(payload.parentStartToken, "parentStartToken");
+        const expected = "host-process-v1:" + createHash3("sha256").update(JSON.stringify([target.host, target.sessionId, parentPid, parentStartToken])).digest("hex");
+        if (parentPid < 1 || !parentStartToken.trim() || string(payload.instanceId, "instanceId") !== expected || processStartToken(parentPid) !== parentStartToken) return { acquired: false };
+      }
+      const acquired = reserved ? store.activateVerifiedRelay({
+        ...target,
+        transport: string(payload.transport, "transport"),
+        relayId,
+        pid: integer2(payload.pid, "pid"),
+        parentPid,
+        instanceId: string(payload.instanceId, "instanceId")
+      }) : store.acquireRelay({
         ...target,
         transport: string(payload.transport, "transport"),
         relayId: string(payload.relayId, "relayId"),
@@ -2081,12 +2754,12 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
 async function publishEndpoint(temporary, endpointPath) {
   for (let attempt = 0; ; attempt += 1) {
     try {
-      renameSync(temporary, endpointPath);
+      renameSync2(temporary, endpointPath);
       return;
     } catch (error) {
-      const code = error.code;
-      if (attempt >= 4 || !["EPERM", "EACCES", "EBUSY"].includes(code ?? "")) throw error;
-      await delay(50 * 2 ** attempt);
+      const code2 = error.code;
+      if (attempt >= 4 || !["EPERM", "EACCES", "EBUSY"].includes(code2 ?? "")) throw error;
+      await delay2(50 * 2 ** attempt);
     }
   }
 }
@@ -2096,11 +2769,11 @@ async function startSessionMessageBroker(stateDirectory) {
     await chmod(stateDirectory, 448);
   } catch {
   }
-  const lockPath = path4.join(stateDirectory, "broker.lock");
-  const lockDescriptor = acquireProcessLock(lockPath);
-  if (lockDescriptor === null) return "already-running";
-  const endpointPath = path4.join(stateDirectory, "endpoint.json");
-  const databasePath = path4.join(stateDirectory, "session-messages.sqlite3");
+  const lockPath = path5.join(stateDirectory, "broker.lock");
+  const processLock = await acquireBrokerProcessLockWhenReady(lockPath);
+  if (processLock === null) return "already-running";
+  const endpointPath = path5.join(stateDirectory, "endpoint.json");
+  const databasePath = path5.join(stateDirectory, "session-messages.sqlite3");
   let store;
   let server;
   let temporary;
@@ -2125,11 +2798,11 @@ async function startSessionMessageBroker(stateDirectory) {
       store?.close();
     } catch {
     }
-    if (published) {
-      try {
-        rmSync(endpointPath, { force: true });
-      } catch {
-      }
+    try {
+      if (published && ownsBrokerProcessLock(processLock)) rmSync(endpointPath, { force: true });
+    } catch (error) {
+      process.stderr.write(`Session message broker endpoint cleanup failed (${brokerFailureCode(error)}).
+`);
     }
     if (temporary) {
       try {
@@ -2138,12 +2811,10 @@ async function startSessionMessageBroker(stateDirectory) {
       }
     }
     try {
-      closeSync(lockDescriptor);
-    } catch {
-    }
-    try {
-      rmSync(lockPath, { force: true });
-    } catch {
+      releaseBrokerProcessLock(processLock);
+    } catch (error) {
+      process.stderr.write(`Session message broker lock release failed (${brokerFailureCode(error)}).
+`);
     }
     process.off("exit", cleanup);
     process.off("SIGTERM", onSignal);
@@ -2156,7 +2827,7 @@ async function startSessionMessageBroker(stateDirectory) {
     const { key, certificate, token, fingerprint256 } = await credentials(stateDirectory);
     const activeStore = new SessionMessageStore(databasePath);
     store = activeStore;
-    const trustDatabasePath = process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim() ? path4.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path4.join(stateDirectory, "trust.sqlite3");
+    const trustDatabasePath = process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim() ? path5.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path5.join(stateDirectory, "trust.sqlite3");
     const wakeHookObservationReader = createWakeHookObservationReader(trustDatabasePath);
     const historicalWakeVerifier = (target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs) => verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, trustDatabasePath);
     let lastActivity = Date.now();
@@ -2228,14 +2899,13 @@ async function startSessionMessageBroker(stateDirectory) {
     throw error;
   }
 }
-if (path4.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
+if (path5.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
   const stateDirectory = argument("--state-directory");
   if (!stateDirectory) process.exitCode = 2;
-  else void startSessionMessageBroker(path4.resolve(stateDirectory)).then((result) => {
+  else void startSessionMessageBroker(path5.resolve(stateDirectory)).then((result) => {
     if (result === "already-running") process.exit(0);
   }).catch((error) => {
-    const code = error?.code;
-    const safeCode = typeof code === "string" && /^[A-Z0-9_]+$/u.test(code) ? code : "STARTUP_FAILED";
+    const safeCode = brokerFailureCode(error);
     process.stderr.write(`Session message broker startup failed (${safeCode}).
 `);
     process.exitCode = 1;

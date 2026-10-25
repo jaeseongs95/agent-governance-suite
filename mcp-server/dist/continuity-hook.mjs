@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 // contracts/types.ts
+var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
 var WorkflowContractError = class extends Error {
   constructor(code, message, details = null) {
     super(message);
@@ -595,6 +596,18 @@ var SqliteContinuityStore = class {
       return result.changes === 1;
     }, taskCorrelation);
   }
+  /** Synchronous critical read; clear/root changes cannot commit between guard and body.
+   * Historical getSnapshot remains available for authorized old-epoch purge.
+   */
+  readCurrentState(taskCorrelation, epoch, source, read, allowSuppressed = false) {
+    return this.transaction("Cannot read current continuity state.", () => {
+      const task = this.readTask(taskCorrelation);
+      if (!task || task.currentEpoch !== epoch) return { kind: "epoch-mismatch" };
+      if (source === "direct" && task.rootId !== null || source === "workflow" && task.rootId === null) return { kind: "source-conflict" };
+      if (task.suppressed && !allowSuppressed) return { kind: "suppressed" };
+      return { kind: "available", task, value: read(task) };
+    }, taskCorrelation);
+  }
   getSnapshot(taskCorrelation, epoch) {
     const row = this.database.prepare(`
       SELECT snapshot_json FROM continuity_snapshots WHERE task_correlation = ? AND epoch = ?
@@ -618,6 +631,9 @@ var SqliteContinuityStore = class {
   }
   checkpoint(taskCorrelation, epoch, expectedRevision, requestHash, commandDigest, snapshot) {
     return this.transaction("Cannot store the continuity checkpoint.", () => {
+      const task = this.readTask(taskCorrelation);
+      if (!task || task.currentEpoch !== epoch) return { kind: "epoch-mismatch" };
+      if (task.rootId !== null) return { kind: "source-conflict" };
       const replay = this.getRequest(taskCorrelation, epoch, requestHash);
       if (replay) return replay.commandDigest === commandDigest ? { kind: "replay", request: replay } : { kind: "conflict" };
       const current = this.getSnapshot(taskCorrelation, epoch);
@@ -645,8 +661,10 @@ var SqliteContinuityStore = class {
       return { kind: "stored" };
     }, taskCorrelation);
   }
-  purge(taskCorrelation, epoch, expectedRevision, requestHash, commandDigest, tombstoneDigest, now) {
+  purge(taskCorrelation, epoch, expectedRevision, requestHash, commandDigest, tombstoneDigest, now, authorityEpoch) {
     return this.transaction("Cannot purge the continuity checkpoint.", () => {
+      const task = this.readTask(taskCorrelation);
+      if (!task || task.currentEpoch !== authorityEpoch) return { kind: "epoch-mismatch" };
       const replay = this.getRequest(taskCorrelation, epoch, requestHash);
       if (replay) return replay.commandDigest === commandDigest ? { kind: "replay", request: replay } : { kind: "conflict" };
       const current = this.getSnapshot(taskCorrelation, epoch);
@@ -683,6 +701,9 @@ var SqliteContinuityStore = class {
   }
   setPendingMarker(taskCorrelation, epoch, source, revision, digest, rootId, now) {
     return this.transaction("Cannot mark pending continuity restore.", () => {
+      const task = this.readTask(taskCorrelation);
+      if (!task || task.currentEpoch !== epoch || task.suppressed) return false;
+      if (source === "direct" ? task.rootId !== null || rootId !== null : !rootId || task.rootId !== rootId) return false;
       const result = this.database.prepare(`
         UPDATE continuity_tasks SET pending_source = ?, pending_revision = ?, pending_digest = ?,
           pending_root_id = ?, pending_consumed = 0, updated_at = ?
@@ -691,13 +712,14 @@ var SqliteContinuityStore = class {
       return result.changes === 1;
     }, taskCorrelation);
   }
-  consumeWorkflowMarker(taskCorrelation, epoch, revision, digest, now) {
+  consumeWorkflowMarker(taskCorrelation, epoch, rootId, revision, digest, now) {
     return this.transaction("Cannot consume continuity restore.", () => {
       const result = this.database.prepare(`
         UPDATE continuity_tasks SET pending_consumed = 1, last_auto_injected_revision = ?, updated_at = ?
-        WHERE task_correlation = ? AND current_epoch = ? AND pending_source = 'workflow'
+        WHERE task_correlation = ? AND current_epoch = ? AND suppressed = 0
+          AND root_id = ? AND pending_root_id = ? AND pending_source = 'workflow'
           AND pending_revision = ? AND pending_digest = ? AND pending_consumed = 0
-      `).run(revision, now, taskCorrelation, epoch, revision, digest);
+      `).run(revision, now, taskCorrelation, epoch, rootId, rootId, revision, digest);
       return result.changes === 1;
     }, taskCorrelation);
   }
@@ -1118,7 +1140,13 @@ var ContinuityService = class {
       const task = this.currentTask(binding);
       if (task.rootId) throw new WorkflowContractError("SNAPSHOT_CONFLICT", "Direct checkpoints are disabled after a workflow root is bound.", { rootId: task.rootId });
       const now = this.now().toISOString();
-      const current = this.store.getSnapshot(binding.c, binding.e);
+      const current = this.currentReadValue(this.store.readCurrentState(
+        binding.c,
+        binding.e,
+        "direct",
+        () => this.store.getSnapshot(binding.c, binding.e),
+        true
+      ));
       const base = {
         schemaVersion: "1.0.0",
         source: "direct",
@@ -1135,9 +1163,17 @@ var ContinuityService = class {
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request));
       const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot);
+      if (stored.kind === "epoch-mismatch") return failure("BINDING_INVALID", "Continuity task binding is stale.");
+      if (stored.kind === "source-conflict") return failure("SNAPSHOT_CONFLICT", "Direct checkpoints are disabled after a workflow root is bound.");
       if (stored.kind === "replay") {
         const receipt = JSON.parse(stored.request.resultJson);
-        const replaySnapshot = this.store.getSnapshot(binding.c, binding.e);
+        const replaySnapshot = this.currentReadValue(this.store.readCurrentState(
+          binding.c,
+          binding.e,
+          "direct",
+          () => this.store.getSnapshot(binding.c, binding.e),
+          true
+        ));
         if (receipt.kind !== "checkpoint" || receipt.epoch !== binding.e || !replaySnapshot || replaySnapshot.revision !== receipt.revision || replaySnapshot.snapshotDigest !== receipt.snapshotDigest) {
           return failure("STALE_REVISION", "The idempotent checkpoint result is no longer available after replacement or purge.");
         }
@@ -1152,7 +1188,8 @@ var ContinuityService = class {
     return this.guard(() => {
       const request = this.validator.inspectContextRequest(value);
       const binding = this.verifyToolBinding("inspect_context", request, request._continuityBinding);
-      return ok(this.candidateFor(binding.c));
+      this.currentTask(binding);
+      return ok(this.candidateFor(binding.c, binding.e));
     });
   }
   loadContext(value) {
@@ -1164,7 +1201,12 @@ var ContinuityService = class {
       const task = this.currentTask(binding);
       if (task.suppressed) throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", "Restore is suppressed for the current epoch.");
       if (candidate.s === "direct") {
-        const snapshot = this.store.getSnapshot(binding.c, binding.e);
+        const snapshot = this.currentReadValue(this.store.readCurrentState(
+          binding.c,
+          binding.e,
+          "direct",
+          () => this.store.getSnapshot(binding.c, binding.e)
+        ));
         if (!snapshot || snapshot.revision !== candidate.r || snapshot.snapshotDigest !== candidate.d) {
           throw new WorkflowContractError("STALE_REVISION", "The direct restore candidate is stale.");
         }
@@ -1172,7 +1214,12 @@ var ContinuityService = class {
         if (convergenceDigest(base) !== snapshotDigest) throw new WorkflowContractError("INTEGRITY_FAILED", "The direct snapshot digest is invalid.");
         return ok(snapshot);
       }
-      const card = this.workflowProjection(task);
+      const card = this.currentReadValue(this.store.readCurrentState(
+        binding.c,
+        binding.e,
+        "workflow",
+        (current) => this.workflowProjection(current)
+      ));
       if (!card || card.revision !== candidate.r || card.snapshotDigest !== candidate.d) {
         throw new WorkflowContractError("STALE_REVISION", "The workflow restore candidate is stale.");
       }
@@ -1210,7 +1257,8 @@ var ContinuityService = class {
         purgeRequestHash: requestHash
       });
       const now = this.now().toISOString();
-      const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now);
+      const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now, binding.e);
+      if (purged.kind === "epoch-mismatch") return failure("BINDING_INVALID", "Continuity task binding is stale.");
       if (purged.kind === "replay") {
         let replay = null;
         try {
@@ -1260,10 +1308,16 @@ var ContinuityService = class {
     if (task.suppressed || task.pendingConsumed) return null;
     const summary = this.summary(task);
     if (!summary || task.pendingRevision !== summary.revision || task.pendingDigest !== summary.snapshotDigest || task.pendingSource !== summary.source) return null;
-    if (summary.source === "direct") return this.formatCandidate(this.candidateFor(task.taskCorrelation));
-    const card = this.workflowProjection(task);
+    if (summary.source === "direct") return this.formatCandidate(this.candidateFor(task.taskCorrelation, task.currentEpoch));
+    const selected = this.store.readCurrentState(
+      task.taskCorrelation,
+      task.currentEpoch,
+      "workflow",
+      (current) => this.workflowProjection(current)
+    );
+    const card = selected.kind === "available" ? selected.value : null;
     if (!card || task.pendingRootId !== card.rootId) return null;
-    if (!this.store.consumeWorkflowMarker(task.taskCorrelation, task.currentEpoch, card.revision, card.snapshotDigest, this.now().toISOString())) return null;
+    if (!this.store.consumeWorkflowMarker(task.taskCorrelation, task.currentEpoch, card.rootId, card.revision, card.snapshotDigest, this.now().toISOString())) return null;
     return this.formatWorkflowCard(card);
   }
   recordPostCompact(rawSessionId, rawTurnId, success) {
@@ -1292,9 +1346,9 @@ var ContinuityService = class {
       "Reconcile this projected state with the latest user request before acting."
     ].join("\n");
   }
-  candidateFor(taskCorrelation) {
+  candidateFor(taskCorrelation, expectedEpoch) {
     const task = this.store.getTask(taskCorrelation);
-    if (!task) return { schemaVersion: "1.0.0", decision: "REJECT", reasonCodes: ["NO_TASK_BINDING"], summary: null, restoreToken: null };
+    if (!task || expectedEpoch !== void 0 && task.currentEpoch !== expectedEpoch) return { schemaVersion: "1.0.0", decision: "REJECT", reasonCodes: ["NO_TASK_BINDING"], summary: null, restoreToken: null };
     if (task.suppressed) return { schemaVersion: "1.0.0", decision: "REJECT", reasonCodes: ["RESTORE_SUPPRESSED"], summary: null, restoreToken: null };
     const summary = this.summary(task);
     if (!summary) return { schemaVersion: "1.0.0", decision: "REJECT", reasonCodes: ["NO_RESTORE_CANDIDATE"], summary: null, restoreToken: null };
@@ -1310,29 +1364,38 @@ var ContinuityService = class {
     return { schemaVersion: "1.0.0", decision: "DEFER", reasonCodes: ["EXPLICIT_LOAD_REQUIRED"], summary, restoreToken: this.sign(payload) };
   }
   summary(task) {
-    const card = task.rootId ? this.workflowProjection(task) : null;
-    if (card) return {
-      schemaVersion: "1.0.0",
-      source: "workflow",
-      taskCorrelation: task.taskCorrelation,
-      epoch: task.currentEpoch,
-      revision: card.revision,
-      status: card.rootState,
-      snapshotDigest: card.snapshotDigest,
-      updatedAt: card.updatedAt
-    };
-    const snapshot = this.store.getSnapshot(task.taskCorrelation, task.currentEpoch);
-    if (!snapshot) return null;
-    return {
-      schemaVersion: "1.0.0",
-      source: "direct",
-      taskCorrelation: task.taskCorrelation,
-      epoch: task.currentEpoch,
-      revision: snapshot.revision,
-      status: snapshot.status,
-      snapshotDigest: snapshot.snapshotDigest,
-      updatedAt: snapshot.updatedAt
-    };
+    const selected = this.store.readCurrentState(
+      task.taskCorrelation,
+      task.currentEpoch,
+      "either",
+      (current) => {
+        if (current.rootId) {
+          const card = this.workflowProjection(current);
+          return card ? {
+            schemaVersion: "1.0.0",
+            source: "workflow",
+            taskCorrelation: current.taskCorrelation,
+            epoch: current.currentEpoch,
+            revision: card.revision,
+            status: card.rootState,
+            snapshotDigest: card.snapshotDigest,
+            updatedAt: card.updatedAt
+          } : null;
+        }
+        const snapshot = this.store.getSnapshot(current.taskCorrelation, current.currentEpoch);
+        return snapshot ? {
+          schemaVersion: "1.0.0",
+          source: "direct",
+          taskCorrelation: current.taskCorrelation,
+          epoch: current.currentEpoch,
+          revision: snapshot.revision,
+          status: snapshot.status,
+          snapshotDigest: snapshot.snapshotDigest,
+          updatedAt: snapshot.updatedAt
+        } : null;
+      }
+    );
+    return selected.kind === "available" ? selected.value : null;
   }
   workflowProjection(task) {
     if (!task.rootId || !this.workflowStore) return null;
@@ -1372,6 +1435,12 @@ var ContinuityService = class {
       updatedAt: snapshot.root.updatedAt
     };
     return { ...base, snapshotDigest: convergenceDigest(base) };
+  }
+  currentReadValue(result) {
+    if (result.kind === "epoch-mismatch") throw new WorkflowContractError("BINDING_INVALID", "Continuity task binding is stale.");
+    if (result.kind === "source-conflict") throw new WorkflowContractError("SNAPSHOT_CONFLICT", "The continuity source changed.");
+    if (result.kind === "suppressed") throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", "Restore is suppressed for the current epoch.");
+    return result.value;
   }
   currentTask(binding) {
     const task = this.store.getTask(binding.c);
@@ -1421,6 +1490,352 @@ var ContinuityService = class {
     }
   }
 };
+
+// skills/coordinate-subagents/references/model-routing-presets.json
+var model_routing_presets_default = {
+  schema_version: 1,
+  policy_revision: "2026-10-24.r02",
+  default_profile: "balanced",
+  roles: [
+    "discovery",
+    "general-implementation",
+    "complex-reasoning",
+    "independent-audit"
+  ],
+  model_class_order: [
+    "lightweight",
+    "general",
+    "deep",
+    "frontier"
+  ],
+  effort_order: [
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+    "ultra"
+  ],
+  invariants: {
+    controls_delegation: false,
+    controls_agent_count: false,
+    controls_batching: false,
+    user_override_precedence: true,
+    capability_check_required: true,
+    high_risk_minimum_model_class: "general",
+    high_risk_minimum_effort: "high"
+  },
+  providers: {
+    "openai-codex": {
+      host: "codex",
+      minimum_efforts: { "gpt-5.6-luna": "high" },
+      catalog: {
+        matching: "exact-only",
+        models: {
+          "gpt-6-astra": {
+            model_class: "frontier",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6-sol": {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6.1-sol": {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6-luna": {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-sol": {
+            model_class: "deep",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-terra": {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-luna": {
+            model_class: "lightweight",
+            minimum_effort: "high",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        aliases: {}
+      },
+      application: {
+        full_history_overrides: false,
+        context_field: "fork_turns",
+        default_context: "all",
+        full_history_value: "all",
+        limited_context_value: "none",
+        model_field: "model",
+        effort_field: "reasoning_effort",
+        model_delivery: ["spawn-argument"],
+        effort_delivery: ["spawn-argument"],
+        verification: "spawn-result"
+      },
+      profiles: {
+        economy: {
+          discovery: { model: "gpt-5.6-luna", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "gpt-5.6-terra", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "gpt-5.6-sol", effort: "medium", model_class: "deep" },
+          "independent-audit": { model: "gpt-5.6-sol", effort: "high", model_class: "deep" }
+        },
+        balanced: {
+          discovery: { model: "gpt-5.6-luna", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "gpt-5.6-terra", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "gpt-5.6-sol", effort: "high", model_class: "deep" },
+          "independent-audit": { model: "gpt-6-astra", effort: "high", model_class: "frontier" }
+        },
+        quality: {
+          discovery: { model: "gpt-5.6-terra", effort: "medium", model_class: "general" },
+          "general-implementation": { model: "gpt-5.6-sol", effort: "high", model_class: "deep" },
+          "complex-reasoning": { model: "gpt-6-astra", effort: "high", model_class: "frontier" },
+          "independent-audit": { model: "gpt-6-astra", effort: "xhigh", model_class: "frontier" }
+        }
+      }
+    },
+    "anthropic-claude-code": {
+      host: "claude-code",
+      catalog: {
+        matching: "claude-family-or-exact",
+        models: {
+          haiku: {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          sonnet: {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          opus: {
+            model_class: "deep",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          fable: {
+            model_class: "frontier",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        aliases: {}
+      },
+      application: {
+        model_field: "model",
+        effort_field: "effort",
+        model_delivery: ["per-invocation-argument", "subagent-frontmatter"],
+        effort_delivery: ["subagent-frontmatter", "cli-agent-definition"],
+        verification: "tasks-view"
+      },
+      profiles: {
+        economy: {
+          discovery: { model: "haiku", effort: "low", model_class: "lightweight" },
+          "general-implementation": { model: "sonnet", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "opus", effort: "medium", model_class: "deep" },
+          "independent-audit": { model: "opus", effort: "high", model_class: "deep" }
+        },
+        balanced: {
+          discovery: { model: "haiku", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "sonnet", effort: "high", model_class: "general" },
+          "complex-reasoning": { model: "opus", effort: "high", model_class: "deep" },
+          "independent-audit": { model: "fable", effort: "high", model_class: "frontier" }
+        },
+        quality: {
+          discovery: { model: "sonnet", effort: "high", model_class: "general" },
+          "general-implementation": { model: "opus", effort: "high", model_class: "deep" },
+          "complex-reasoning": { model: "fable", effort: "xhigh", model_class: "frontier" },
+          "independent-audit": { model: "fable", effort: "xhigh", model_class: "frontier" }
+        }
+      }
+    },
+    "google-gemini": {
+      host: "gemini",
+      catalog: {
+        matching: "gemini-family-or-exact",
+        models: {
+          "flash-lite": {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "flash-8b": {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          flash: {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          pro: {
+            model_class: "deep",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          ultra: {
+            model_class: "frontier",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        aliases: {
+          flash_lite: "flash-lite"
+        }
+      },
+      application: {
+        model_field: "model",
+        effort_field: "effort",
+        model_delivery: ["invoke-argument", "subagent-frontmatter"],
+        effort_delivery: ["subagent-frontmatter"],
+        verification: "host-task-view"
+      },
+      profiles: {
+        economy: {
+          discovery: { model: "flash-lite", effort: "low", model_class: "lightweight" },
+          "general-implementation": { model: "flash", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "pro", effort: "medium", model_class: "deep" },
+          "independent-audit": { model: "pro", effort: "high", model_class: "deep" }
+        },
+        balanced: {
+          discovery: { model: "flash-lite", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "flash", effort: "high", model_class: "general" },
+          "complex-reasoning": { model: "pro", effort: "high", model_class: "deep" },
+          "independent-audit": { model: "ultra", effort: "high", model_class: "frontier" }
+        },
+        quality: {
+          discovery: { model: "flash", effort: "high", model_class: "general" },
+          "general-implementation": { model: "pro", effort: "high", model_class: "deep" },
+          "complex-reasoning": { model: "ultra", effort: "xhigh", model_class: "frontier" },
+          "independent-audit": { model: "ultra", effort: "xhigh", model_class: "frontier" }
+        }
+      }
+    }
+  }
+};
+
+// skills/coordinate-subagents/scripts/model-catalog-adapter.mjs
+function escapeRegExp(literal) {
+  return literal.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+function buildClaudeFamilyRegex(keys) {
+  if (keys.length === 0) return null;
+  const sorted = [...keys].sort((left, right) => right.length - left.length).map(escapeRegExp);
+  return new RegExp(
+    `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(${sorted.join("|")})(?:[-@:.]|$)`,
+    "u"
+  );
+}
+function buildGeminiFamilyRegex(prefixedKeys, bareKeys) {
+  if (prefixedKeys.length === 0 && bareKeys.length === 0) return null;
+  const sortedPrefixed = [...prefixedKeys].sort((left, right) => right.length - left.length).map(escapeRegExp);
+  const sortedBare = [...bareKeys].sort((left, right) => right.length - left.length).map(escapeRegExp);
+  const branches = [];
+  if (sortedPrefixed.length > 0) {
+    branches.push(
+      `^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)(${sortedPrefixed.join("|")})(?:[-@:.]|$)`
+    );
+  }
+  if (sortedBare.length > 0) {
+    branches.push(`^(${sortedBare.join("|")})$`);
+  }
+  return new RegExp(branches.join("|"), "u");
+}
+function resolveCatalogModel(catalog, rawModel, { allowProfileKeys = false } = {}) {
+  if (typeof rawModel !== "string" || rawModel.length === 0 || !catalog) return null;
+  const models = catalog.models ?? {};
+  const aliases = catalog.aliases ?? {};
+  let matchedToken = null;
+  if (allowProfileKeys && ["exact-only", "claude-family-or-exact", "gemini-family-or-exact"].includes(catalog.matching) && (Object.hasOwn(models, rawModel) || Object.hasOwn(aliases, rawModel))) {
+    matchedToken = rawModel;
+  } else if (catalog.matching === "exact-only") {
+    if (Object.hasOwn(models, rawModel) || Object.hasOwn(aliases, rawModel)) {
+      matchedToken = rawModel;
+    }
+  } else if (catalog.matching === "claude-family-or-exact") {
+    const allKeys = [.../* @__PURE__ */ new Set([...Object.keys(models), ...Object.keys(aliases)])];
+    const familyRegex = buildClaudeFamilyRegex(allKeys);
+    matchedToken = familyRegex?.exec(rawModel)?.[1] ?? null;
+  } else if (catalog.matching === "gemini-family-or-exact") {
+    const allKeys = [.../* @__PURE__ */ new Set([...Object.keys(models), ...Object.keys(aliases)])];
+    const bareKeys = allKeys.filter((key) => key !== "flash-8b");
+    const familyRegex = buildGeminiFamilyRegex(allKeys, bareKeys);
+    const match = familyRegex?.exec(rawModel);
+    matchedToken = match?.[1] ?? match?.[2] ?? null;
+    if (!matchedToken && (Object.hasOwn(models, rawModel) || Object.hasOwn(aliases, rawModel)) && rawModel !== "flash-8b") {
+      matchedToken = rawModel;
+    }
+  }
+  if (!matchedToken) return null;
+  const canonicalKey = Object.hasOwn(aliases, matchedToken) ? aliases[matchedToken] : matchedToken;
+  if (!Object.hasOwn(models, canonicalKey)) return null;
+  return canonicalKey;
+}
+
+// mcp-server/src/host-execution-adapters.ts
+function resolveFromProviderCatalog(providerId, host, policyRevision, providerEntry, rawModel, provenance = "adapter-policy") {
+  if (typeof rawModel !== "string" || rawModel.length === 0 || !providerEntry?.catalog) return null;
+  const catalog = providerEntry.catalog;
+  const models = catalog.models ?? {};
+  const minimumEfforts = providerEntry.minimum_efforts ?? {};
+  const canonicalKey = resolveCatalogModel(catalog, rawModel);
+  if (!canonicalKey) return null;
+  const entry = models[canonicalKey];
+  const minimumReasoningEffort = minimumEfforts[rawModel] ?? minimumEfforts[canonicalKey] ?? entry.minimum_effort ?? null;
+  const supportedEfforts = entry.supported_efforts && entry.supported_efforts.length > 0 ? entry.supported_efforts : REASONING_EFFORT;
+  return {
+    provider: providerId,
+    host,
+    rawModel,
+    resolvedModel: canonicalKey,
+    modelClass: entry.model_class,
+    minimumReasoningEffort,
+    supportedEfforts,
+    aliasUsed: rawModel !== canonicalKey,
+    policyRevision,
+    provenance
+  };
+}
+function createHostAdapter(providerId, host, policyRevision, providerEntry) {
+  return Object.freeze({
+    host,
+    provider: providerId,
+    policyRevision,
+    resolveModel(model, provenance = `${host}:adapter-policy`) {
+      return resolveFromProviderCatalog(providerId, host, policyRevision, providerEntry, model, provenance);
+    },
+    modelClassForModel(model) {
+      return resolveFromProviderCatalog(providerId, host, policyRevision, providerEntry, model)?.modelClass ?? null;
+    }
+  });
+}
+function createCatalogExecutionAdapters(presets = model_routing_presets_default) {
+  if (!presets || typeof presets !== "object" || Array.isArray(presets) || !presets.providers || typeof presets.providers !== "object" || Array.isArray(presets.providers)) throw new Error("INVALID_EXECUTION_ADAPTER_CONFIGURATION");
+  const policyRevision = typeof presets.policy_revision === "string" && presets.policy_revision.length > 0 ? presets.policy_revision : "1.0.0";
+  const adapters = /* @__PURE__ */ new Map();
+  for (const [providerId, entry] of Object.entries(presets.providers)) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error("INVALID_EXECUTION_ADAPTER_HOST");
+    const host = entry.host;
+    if (typeof host !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host)) throw new Error("INVALID_EXECUTION_ADAPTER_HOST");
+    if (adapters.has(host)) throw new Error("DUPLICATE_EXECUTION_ADAPTER_HOST");
+    adapters.set(host, createHostAdapter(providerId, host, policyRevision, entry));
+  }
+  const view = Object.freeze({
+    size: adapters.size,
+    get: (host) => adapters.get(host),
+    has: (host) => adapters.has(host),
+    entries: () => adapters.entries(),
+    keys: () => adapters.keys(),
+    values: () => adapters.values(),
+    forEach(callback, thisArg) {
+      adapters.forEach((value, key) => callback.call(thisArg, value, key, view));
+    },
+    [Symbol.iterator]: () => adapters[Symbol.iterator](),
+    [Symbol.toStringTag]: "ReadonlyMap"
+  });
+  return Object.freeze({ policyRevision, adapters: view });
+}
+var defaultSuite = createCatalogExecutionAdapters();
+var defaultExecutionAdapters = defaultSuite.adapters;
+var claudeCodeExecutionAdapter = defaultSuite.adapters.get("claude-code");
+var codexExecutionAdapter = defaultSuite.adapters.get("codex");
+var geminiExecutionAdapter = defaultSuite.adapters.get("gemini");
 
 // mcp-server/src/runtime-config.ts
 import { realpathSync } from "node:fs";
@@ -1941,23 +2356,53 @@ var SqliteWorkflowStore = class {
     });
   }
   previewCleanup(cutoff) {
-    const roots = this.database.prepare(`
+    return this.guard("Cannot preview workflow state cleanup.", {}, () => this.transaction(() => {
+      const roots = this.database.prepare(`
       SELECT root_id, revision, state, updated_at
       FROM convergence_roots
       WHERE state IN ('completed', 'abandoned') AND updated_at <= ?
       ORDER BY root_id
     `).all(cutoff);
-    const linkedRuns = this.database.prepare(`
-      SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY run_id
+      const linkedRuns = this.database.prepare(`
+      SELECT links.run_id, runs.revision, runs.state, runs.updated_at
+      FROM workflow_attempt_links links LEFT JOIN workflow_runs runs ON runs.run_id = links.run_id
+      WHERE links.root_id = ? ORDER BY links.run_id
     `);
-    const rootCandidates = roots.map((root) => ({
-      rootId: root.root_id,
-      revision: root.revision,
-      state: root.state,
-      updatedAt: root.updated_at,
-      runIds: linkedRuns.all(root.root_id).map((row) => row.run_id)
-    }));
-    const runs = this.database.prepare(`
+      const linkedSnapshots = [];
+      const rootCandidates = [];
+      let linkedNonTerminalRoots = 0;
+      let linkedRecentRoots = 0;
+      let linkedMissingReceiptRoots = 0;
+      let protectedLinkedRoots = 0;
+      for (const root of roots) {
+        const rows = linkedRuns.all(root.root_id);
+        const reasons = /* @__PURE__ */ new Set();
+        for (const row of rows) {
+          if (row.revision === null || row.state === null || row.updated_at === null) {
+            reasons.add("missing");
+            continue;
+          }
+          if (!["failed", "passed", "blocked"].includes(row.state)) reasons.add("non-terminal");
+          if (row.updated_at > cutoff) reasons.add("recent");
+        }
+        if (reasons.size > 0) {
+          if (reasons.has("non-terminal")) linkedNonTerminalRoots++;
+          if (reasons.has("recent")) linkedRecentRoots++;
+          if (reasons.has("missing")) linkedMissingReceiptRoots++;
+          protectedLinkedRoots++;
+          continue;
+        }
+        const runs2 = rows.map((row) => ({ runId: row.run_id, revision: row.revision, state: row.state, updatedAt: row.updated_at }));
+        rootCandidates.push({
+          rootId: root.root_id,
+          revision: root.revision,
+          state: root.state,
+          updatedAt: root.updated_at,
+          runIds: runs2.map((run) => run.runId)
+        });
+        linkedSnapshots.push({ rootId: root.root_id, runs: runs2 });
+      }
+      const runs = this.database.prepare(`
       SELECT run_id, revision, state, updated_at
       FROM workflow_runs
       WHERE state IN ('failed', 'passed', 'blocked')
@@ -1965,20 +2410,29 @@ var SqliteWorkflowStore = class {
         AND NOT EXISTS (SELECT 1 FROM workflow_attempt_links links WHERE links.run_id = workflow_runs.run_id)
       ORDER BY run_id
     `).all(cutoff);
-    const protectedRow = this.database.prepare(`
+      const protectedRow = this.database.prepare(`
       SELECT COUNT(*) AS count FROM convergence_roots
       WHERE state IN ('open', 'needs-review', 'needs-user')
     `).get();
-    return {
-      roots: rootCandidates,
-      standaloneRuns: runs.map((run) => ({
-        runId: run.run_id,
-        revision: run.revision,
-        state: run.state,
-        updatedAt: run.updated_at
-      })),
-      protectedActiveRoots: protectedRow.count
-    };
+      return {
+        roots: rootCandidates,
+        standaloneRuns: runs.map((run) => ({
+          runId: run.run_id,
+          revision: run.revision,
+          state: run.state,
+          updatedAt: run.updated_at
+        })),
+        protectedActiveRoots: protectedRow.count,
+        rootProtection: {
+          activeRoots: protectedRow.count,
+          linkedNonTerminalRoots,
+          linkedRecentRoots,
+          linkedMissingReceiptRoots,
+          totalProtectedRoots: protectedRow.count + protectedLinkedRoots
+        },
+        linkedRuns: linkedSnapshots
+      };
+    }));
   }
   claimCleanupPlan(planId, planDigest, claimedAt) {
     return this.guard("Cannot claim the state cleanup plan.", { planId }, () => {
@@ -2023,6 +2477,16 @@ var SqliteWorkflowStore = class {
         `).all(root.rootId).map((item) => item.run_id);
         if (JSON.stringify(actualRunIds) !== JSON.stringify(root.runIds)) {
           throw new WorkflowContractError("STALE_REVISION", "A cleanup root's linked runs changed after preview.", { rootId: root.rootId });
+        }
+        const expected = preview.linkedRuns.find((item) => item.rootId === root.rootId);
+        if (!expected || JSON.stringify(expected.runs.map((run) => run.runId)) !== JSON.stringify(root.runIds)) {
+          throw new WorkflowContractError("STALE_REVISION", "A cleanup root's linked receipt snapshot is missing.", { rootId: root.rootId });
+        }
+        for (const run of expected.runs) {
+          const row2 = verifyRun.get(run.runId);
+          if (!row2 || row2.state !== run.state || row2.revision !== run.revision || row2.updated_at !== run.updatedAt) {
+            throw new WorkflowContractError("STALE_REVISION", "A cleanup linked workflow run changed after preview.", { rootId: root.rootId, runId: run.runId });
+          }
         }
       }
       for (const run of preview.standaloneRuns) {
