@@ -120,7 +120,7 @@ async function fixture(mode: string, sessionId: string, message: string) {
       for (const record of children) if (!record.done) record.child.kill('SIGKILL');
       try { await bounded(Promise.all(children.map(record => record.closed)), 3_000); }
       catch (error) { cleanupFailure = { error: new Error(`Owned child cleanup failed; retained fixture at ${directory}`, { cause: error }) }; }
-      if (!cleanupFailure) rmSync(directory, { recursive: true });
+      if (!cleanupFailure) rmSync(directory, { recursive: true, maxRetries: 3, retryDelay: 100 });
     } catch (error) { cleanupFailure = { error }; }
   }
   if (cleanupFailure) {
