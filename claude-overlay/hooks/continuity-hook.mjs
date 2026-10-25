@@ -33,7 +33,7 @@ try {
 }
 
 const hookPath = fileURLToPath(new URL("../mcp-server/dist/continuity-hook.mjs", import.meta.url));
-const result = spawnSync(process.execPath, [hookPath], {
+const result = spawnSync(process.execPath, [hookPath, "--host=claude-code"], {
   stdio: "inherit",
   timeout: 9000,
   env: {

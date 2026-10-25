@@ -1,3 +1,4 @@
+import "./builtin-hook-host-adapters.js";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,6 +7,7 @@ import { types } from "node:util";
 import { ContinuityService } from "./continuity-service.js";
 import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
 import { hookFailureContext, hookFailureReason } from "./hook-error-diagnostics.js";
+import { adaptHostInput, isGovernanceHookTool, resolveHookHost } from "./host-input-adapter.js";
 import {
   assertDistinctDatabasePaths,
   resolveContinuityDatabasePath,
@@ -24,11 +26,8 @@ const BOUND_TOOLS = new Set([
   "purge_direct_context",
 ]);
 
-function record(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
-}
-
-function localToolName(canonicalName: string): string | null {
+function localToolName(host: string, canonicalName: string): string | null {
+  if (!isGovernanceHookTool(host, canonicalName)) return null;
   const tool = canonicalName.includes("__") ? canonicalName.split("__").at(-1)! : canonicalName;
   return BOUND_TOOLS.has(tool) ? tool : null;
 }
@@ -39,9 +38,11 @@ function sessionOutput(additionalContext: string | null): Record<string, unknown
   } : {};
 }
 
-export function handleContinuityHook(input: HookInput, service: ContinuityService): Record<string, unknown> {
+export function handleContinuityHook(input: HookInput, service: ContinuityService, host = "codex"): Record<string, unknown> {
+  const adapted = adaptHostInput(input, host);
+  const observation = adapted.observation;
   const event = typeof input.hook_event_name === "string" ? input.hook_event_name : "";
-  const sessionId = typeof input.session_id === "string" ? input.session_id : "";
+  const sessionId = observation.sessionId;
   if (!sessionId) return {};
 
   if (event === "SessionStart") {
@@ -70,16 +71,15 @@ export function handleContinuityHook(input: HookInput, service: ContinuityServic
     return {};
   }
 
-  if (event === "PreToolUse") {
-    const canonicalName = typeof input.tool_name === "string" ? input.tool_name : "";
-    const toolName = localToolName(canonicalName);
+  if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
+    if (observation.actor.kind !== "main" || observation.actor.assurance !== "observed") return {};
+    const toolName = localToolName(host, observation.toolName ?? "");
     if (!toolName) return {};
-    const toolInput = record(input.tool_input);
+    const toolInput = observation.toolInput ?? {};
     const token = service.issueToolBinding(sessionId, toolName, toolInput);
     return {
       hookSpecificOutput: {
-        hookEventName: "PreToolUse",
-        permissionDecision: "allow",
+        hookEventName: adapted.outputEventName,
         updatedInput: { ...toolInput, _continuityBinding: token },
       },
     };
@@ -88,7 +88,7 @@ export function handleContinuityHook(input: HookInput, service: ContinuityServic
   return {};
 }
 
-type ContinuityHookPhase = "stdin" | "input" | "storage" | "workflow-store" | "handle" | "close" | "stdout";
+type ContinuityHookPhase = "host-entry" | "stdin" | "input" | "storage" | "workflow-store" | "handle" | "close" | "stdout";
 
 /** Bounded diagnostics only: stable reason codes and error metadata, never session IDs, inputs, SQL or paths. */
 function reportContinuityFailure(phase: ContinuityHookPhase, cause: unknown): void {
@@ -110,7 +110,7 @@ function reportContinuityFailure(phase: ContinuityHookPhase, cause: unknown): vo
  * Runs one lifecycle event and returns the JSON to print. Continuity stays optional (fail open with no
  * context), but every failure is reported with its phase and original cause instead of being discarded.
  */
-export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = process.env): string {
+export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = process.env, host = "codex"): string {
   let phase: ContinuityHookPhase = "input";
   let continuity: SqliteContinuityStore | null = null;
   let workflow: SqliteWorkflowStore | null = null;
@@ -134,7 +134,7 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
       }
     }
     phase = "handle";
-    const output = handleContinuityHook(input, new ContinuityService(continuity, null, workflow));
+    const output = handleContinuityHook(input, new ContinuityService(continuity, null, workflow), host);
     return Object.keys(output).length > 0 ? JSON.stringify(output) : "";
   } catch (cause) {
     reportContinuityFailure(phase, cause);
@@ -149,7 +149,9 @@ function main(): void {
   let raw: string;
   try { raw = readFileSync(0, "utf8"); }
   catch (cause) { reportContinuityFailure("stdin", cause); return; }
-  const output = runContinuityHook(raw);
+  let output: string;
+  try { output = runContinuityHook(raw, process.env, resolveHookHost(process.argv.slice(2), "codex")); }
+  catch (cause) { reportContinuityFailure("host-entry", cause); return; }
   if (!output) return;
   try { process.stdout.write(output); } catch (cause) { reportContinuityFailure("stdout", cause); }
 }

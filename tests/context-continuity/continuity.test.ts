@@ -455,12 +455,14 @@ describe("workflow projection and fail-open lifecycle", () => {
     const service = createService(databasePath);
     const input = handleContinuityHook({
       hook_event_name: "PreToolUse",
+      agent_id: "",
       session_id: "raw-secret-session-id",
       turn_id: "raw-secret-turn-id",
       tool_name: "mcp__agent-governance-suite__inspect_context",
       tool_input: { schemaVersion: "1.0.0" },
     }, service);
-    expect(input).toMatchObject({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "allow" } });
+    expect(input).toMatchObject({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { _continuityBinding: expect.any(String) } } });
+    expect(input.hookSpecificOutput).not.toHaveProperty("permissionDecision");
     expect(JSON.stringify(input)).not.toContain("raw-secret-session-id");
     expect(handleContinuityHook({ hook_event_name: "PreToolUse", session_id: "s", tool_name: "Bash", tool_input: {} }, service)).toEqual({});
     handleContinuityHook({

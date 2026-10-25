@@ -142,7 +142,7 @@ describe("2.7.x continuity schema compatibility", () => {
     const purge = bound(service, "purge_direct_context", { schemaVersion: "1.0.0", requestId: "purge", expectedEpoch: 1, expectedRevision: 1 });
     attachReceiver(databasePath, snapshot.taskCorrelation);
     const before = state(databasePath);
-    const hook = handleContinuityHook({ hook_event_name: "PreToolUse", session_id: "compat-session",
+    const hook = handleContinuityHook({ hook_event_name: "PreToolUse", agent_id: "", session_id: "compat-session",
       tool_name: "mcp__agent-governance-suite__inspect_context", tool_input: { schemaVersion: "1.0.0" } }, service);
     const hookInput = (hook.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput;
     expect(hookInput._continuityBinding).toEqual(expect.any(String));

@@ -412,6 +412,7 @@ describe("bundled STDIO MCP server", () => {
       };
       const checkpointHook = runContinuityHook(environment, {
         hook_event_name: "PreToolUse",
+        agent_id: "",
         session_id: "stdio-continuity-session",
         tool_name: "mcp__agent-governance-suite__checkpoint_context",
         tool_input: checkpoint,
@@ -422,6 +423,7 @@ describe("bundled STDIO MCP server", () => {
       const inspect = { schemaVersion: "1.0.0" };
       const inspectHook = runContinuityHook(environment, {
         hook_event_name: "PreToolUse",
+        agent_id: "",
         session_id: "stdio-continuity-session",
         tool_name: "mcp__agent_governance_suite__inspect_context",
         tool_input: inspect,
@@ -441,6 +443,7 @@ describe("bundled STDIO MCP server", () => {
       };
       const loadHook = runContinuityHook(environment, {
         hook_event_name: "PreToolUse",
+        agent_id: "",
         session_id: "stdio-continuity-session",
         tool_name: "mcp__agent-governance-suite__load_context",
         tool_input: load,

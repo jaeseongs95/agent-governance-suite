@@ -26,6 +26,7 @@ async function environment() {
 function toolInput() {
   return JSON.stringify({
     hook_event_name: "PreToolUse",
+    agent_id: "",
     session_id: "private-session-marker",
     tool_name: "mcp__agent-governance-suite__inspect_context",
     tool_input: { schemaVersion: "1.0.0", marker: "private-input-marker" },
@@ -65,8 +66,9 @@ describe("continuity hook failure reporting (AGS-D-0055)", () => {
     const { env } = await environment();
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const output = runContinuityHook(toolInput(), env);
-    expect(JSON.parse(output)).toMatchObject({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "allow",
+    expect(JSON.parse(output)).toMatchObject({ hookSpecificOutput: { hookEventName: "PreToolUse",
       updatedInput: { _continuityBinding: expect.any(String) } } });
+    expect(JSON.parse(output).hookSpecificOutput).not.toHaveProperty("permissionDecision");
     expect(failureLines(spy)).toHaveLength(0);
   });
 });
