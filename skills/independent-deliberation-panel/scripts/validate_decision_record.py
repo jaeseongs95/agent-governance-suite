@@ -475,6 +475,7 @@ def validate_issues(record: Any) -> list[tuple[str, str]]:
         ("violates schema minitems", "schema.min_items"), ("violates schema maxitems", "schema.max_items"),
         ("violates schema minlength", "schema.min_length"), ("violates schema pattern", "schema.pattern"),
         ("violates schema minimum", "schema.minimum"), ("violates schema maximum", "schema.maximum"),
+        ("run.assurance must be", "run.assurance"),
         ("LOW must not", "run.low_workers"), ("worker cap", "run.worker_cap"),
         ("HIGH requires", "run.high_contract"),
         ("MEDIUM", "run.medium_contract"), ("CRITICAL requires", "run.critical_contract"),
