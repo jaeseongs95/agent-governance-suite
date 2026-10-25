@@ -285,7 +285,7 @@ async function main() {
     const decodeBlob = line => { const tab = line.indexOf('\t'); return [line.slice(tab + 1), line.slice(0, tab)]; };
     const workflowMap = new Map(workflowBlobs.map(decodeBlob));
     for (const line of sourceBlobs) { const [file, identity] = decodeBlob(line); if (!config.ciOnlyOverrides.includes(file)) assert.equal(workflowMap.get(file), identity, 'Workflow product blob differs: ' + file); }
-    assert.deepEqual(config.ciOnlyOverrides, [".github/workflows/ci.yml",".github/scripts/ags30-official-source-r11.mjs",".github/ci/ags30-r11/execution-config.json",".github/ci/ags30-r11/source-manifest.json"]);
+    assert.deepEqual(config.ciOnlyOverrides, [".github/workflows/ci.yml",".github/scripts/ags30-official-source-r11.mjs",".github/ci/ags30-r11/execution-config.json",".github/ci/ags30-r11/source-manifest.json",".github/ci/ags30-commit-provenance.r01.json"]);
     for (const file of workflowMap.keys()) assert(tracked.includes(file) || file.startsWith('.github/scripts/') || file.startsWith('.github/ci/'), 'Unexpected workflow-only product path: ' + file);
     await writeJson('git-context.json', { repository: config.gitContext.repository, head, sourceTree, workflowHead: process.env.GITHUB_SHA,
       skillBaseline: config.gitContext.skillBaseline, trackedFiles: tracked.length, candidatePortableId: config.portableId,

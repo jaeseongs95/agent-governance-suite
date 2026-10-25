@@ -1,6 +1,6 @@
 {
   "schemaVersion": "AgsCommitProvenance.v1",
-  "revision": "r01",
+  "revision": "r02",
   "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
   "taskRefSource": {
     "kind": "coordinator-technical-metadata",
@@ -67,6 +67,20 @@
     {
       "commit": "e86c33cf2bb21d01953760f70216940533cd69c9",
       "unit": "adapter-transport-and-v6",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": []
+    },
+    {
+      "commit": "cb4f035e10001d9a386074e888054989bd42a734",
+      "unit": "r13-prepared-ci-binding",
+      "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
+      "formalDefectId": null,
+      "auditRefs": []
+    },
+    {
+      "commit": "fa87adae201ae909e1c4e3d0cc2df1d42f014418",
+      "unit": "v6-context-provenance-and-dynamic-inventory-tests",
       "taskRef": "AGS:ags30:whole-source-structural-review-and-repair-20261024-r01",
       "formalDefectId": null,
       "auditRefs": []

@@ -1,8 +1,8 @@
 {
   "schemaVersion": "PortableSourceManifest.v1",
-  "files": 1658,
-  "bytes": 15712557,
-  "portableId": "8e41a959c2e3d0867443df2a762c81b9534748b993bab0ce5e3c8b359ab92ec6",
+  "files": 1659,
+  "bytes": 15719890,
+  "portableId": "28b934fa32ccc1fb6fd8e064b27db329c2a0d86e578eae031519190ac761f190",
   "rows": [
     {
       "relativePath": ".agents/plugins/marketplace.json",
@@ -55,9 +55,14 @@
       "sha256": "345d4a86bf234a50112607aad8e012704b04291c565613b36528db1b23997fad"
     },
     {
+      "relativePath": ".github/ci/ags30-commit-provenance.r01.json",
+      "bytes": 2787,
+      "sha256": "39031094b7446713b7195bb40604b0df7e2ba77da8042a9739ca2293872d40db"
+    },
+    {
       "relativePath": ".github/ci/ags30-r11/execution-config.json",
-      "bytes": 5165,
-      "sha256": "86b45eecdf4f553935252946b3986fbfc90d2d3cb27d78cd2491db04b1f69390"
+      "bytes": 5174,
+      "sha256": "27937fed2af7ad2a800afbf716e252663f9a9510014356cf8d2d234b1f43d49e"
     },
     {
       "relativePath": ".github/ci/ags30-r11/os-test-plan.json",
@@ -66,8 +71,8 @@
     },
     {
       "relativePath": ".github/ci/ags30-r11/source-manifest.json",
-      "bytes": 330550,
-      "sha256": "6ae84e29d6b2060c48392e861c72ef98fdc95dc8b4d3b52b66953ddd518e51fe"
+      "bytes": 332344,
+      "sha256": "c69de1e83e3a86005975d13c43061c82f7a8fb5d9120fb04662326abb1e470e0"
     },
     {
       "relativePath": ".github/pull_request_template.md",
@@ -81,8 +86,8 @@
     },
     {
       "relativePath": ".github/scripts/ags30-official-source-r11.mjs",
-      "bytes": 42071,
-      "sha256": "ce27a8d88cf0af20af9fc6e12781ae7aa572ead84f9ac052d45a9314fd4892e0"
+      "bytes": 42208,
+      "sha256": "a84c77453b9954e3b00356d935c4d7e128bf340c4d9ba0471978d6ca466eb7b1"
     },
     {
       "relativePath": ".github/scripts/ags30-os-mutation-r01.mjs",
@@ -117,7 +122,7 @@
     {
       "relativePath": ".github/workflows/ci.yml",
       "bytes": 8841,
-      "sha256": "87fa644f9d087df64c065a321bd3b5fd228dd1c521e9e6d6500e08c93287a05d"
+      "sha256": "0206aaf9d21cae591eb897d64c2e7ca4538e880e2c2507645dd04e1202eb6afe"
     },
     {
       "relativePath": ".github/workflows/upstream-sync.yml",
@@ -7366,8 +7371,8 @@
     },
     {
       "relativePath": "tests/mcp/skill-classification-providers.test.ts",
-      "bytes": 70541,
-      "sha256": "41164c7fd20b64d9e479dca62c3c81318e06091ce1edbc6e2b4b1c5f048aa2a2"
+      "bytes": 73147,
+      "sha256": "5b71ec47c2bb447053011fb1ee461b9f643922e2ace8e62bed6a2f70fecfe453"
     },
     {
       "relativePath": "tests/mcp/skill-classification-request.test.ts",

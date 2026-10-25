@@ -8,13 +8,13 @@
   "node": "24.22.1",
   "pnpm": "11.19.0",
   "archive": {
-    "entries": 1658
+    "entries": 1659
   },
   "transport": {
-    "bytes": 332344,
-    "sha256": "c69de1e83e3a86005975d13c43061c82f7a8fb5d9120fb04662326abb1e470e0"
+    "bytes": 332530,
+    "sha256": "1211f8c3e13f73789356810fb6681b9222b917a5a24000e824b68c293f9b8459"
   },
-  "portableId": "8e41a959c2e3d0867443df2a762c81b9534748b993bab0ce5e3c8b359ab92ec6",
+  "portableId": "28b934fa32ccc1fb6fd8e064b27db329c2a0d86e578eae031519190ac761f190",
   "generated": [
     "mcp-server/dist/server.mjs",
     "runtime/schema-validation.mjs",
@@ -49,14 +49,15 @@
   ],
   "artifactMaximumBytesPerJob": 8388608,
   "provenance": {
-    "sourceCommit": "e86c33cf2bb21d01953760f70216940533cd69c9",
-    "sourceTree": "8d6d304a52aff192e639717d53b1be866cfb50b2",
-    "portableId": "8e41a959c2e3d0867443df2a762c81b9534748b993bab0ce5e3c8b359ab92ec6",
+    "sourceCommit": "fa87adae201ae909e1c4e3d0cc2df1d42f014418",
+    "sourceTree": "1bb5ff250ba7bdd04b41ebaacb264ba90a569894",
+    "portableId": "28b934fa32ccc1fb6fd8e064b27db329c2a0d86e578eae031519190ac761f190",
     "previousProductSource": "29a576ebda4cd40fa1f61de64f10e1e943be835f",
     "originalR11Run": 40197942971,
     "originalR12Run": 40199415878,
     "originalResultsPreserved": true,
-    "productChange": "trusted transport boundary and separate v6 prompt557819"
+    "productChange": "trusted transport/v6, fixture provenance repair and inventory-independent prompt regressions",
+    "previousPreparedSource": "e86c33cf2bb21d01953760f70216940533cd69c9"
   },
   "limitations": [
     "Actual official source commit with CI-only wrapper commit; all product blobs must match.",
@@ -75,8 +76,8 @@
   },
   "gitContext": {
     "repository": "https://github.com/jaeseongs95/agent-governance-suite.git",
-    "checkoutCommit": "e86c33cf2bb21d01953760f70216940533cd69c9",
-    "sourceTree": "8d6d304a52aff192e639717d53b1be866cfb50b2",
+    "checkoutCommit": "fa87adae201ae909e1c4e3d0cc2df1d42f014418",
+    "sourceTree": "1bb5ff250ba7bdd04b41ebaacb264ba90a569894",
     "skillBaseline": "7bc7753012227938be2a46f68bf3e29d29d5ef34"
   },
   "ownershipHelpers": {
@@ -120,6 +121,7 @@
     ".github/workflows/ci.yml",
     ".github/scripts/ags30-official-source-r11.mjs",
     ".github/ci/ags30-r11/execution-config.json",
-    ".github/ci/ags30-r11/source-manifest.json"
+    ".github/ci/ags30-r11/source-manifest.json",
+    ".github/ci/ags30-commit-provenance.r01.json"
   ]
 }
