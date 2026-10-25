@@ -964,11 +964,18 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     return /database is locked|SQLITE_BUSY|UNIQUE constraint failed: convergence_leases/iu.test(message);
   }
 
+  /**
+   * A storage or driver failure means the workflow persistence layer is unavailable, never that the
+   * caller's input was invalid. A contract error raised inside the failed step keeps its own code;
+   * the original cause text and SQLite result code stay in details.
+   */
   private storageError(message: string, cause: unknown, details: Record<string, unknown> = {}): WorkflowContractError {
-    return new WorkflowContractError("INVALID_INPUT", message, {
+    const errcode = typeof cause === "object" && cause !== null ? (cause as { errcode?: unknown }).errcode : undefined;
+    return new WorkflowContractError(cause instanceof WorkflowContractError ? cause.code : "MCP_UNAVAILABLE", message, {
       ...details,
       databasePath: this.databasePath,
       cause: cause instanceof Error ? cause.message : String(cause),
+      ...(typeof errcode === "number" ? { sqliteErrcode: errcode } : {}),
     });
   }
 }
