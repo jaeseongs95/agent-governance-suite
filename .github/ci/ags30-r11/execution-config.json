@@ -1,7 +1,7 @@
 {
   "schemaVersion": "AgsBoundedCiExecutionConfig.v1",
-  "unit": "AGS30-OFFICIAL-AUDIT-AND-CI-REGRESSION-REPAIRS-20261026-R20",
-  "nonce": "c473a711-315b-458e-8112-91e2173a714e",
+  "unit": "AGS30-OFFICIAL-CLAUDE-PACKAGING-AND-WINDOWS-OBSERVATION-20261026-R21",
+  "nonce": "1b418382-bd8c-43e5-ac8e-1416ac62eca0",
   "repository": "jaeseongs95/agent-governance-suite",
   "repositoryId": 1362118877,
   "branch": "release-3.0",
