@@ -143,6 +143,15 @@ try {
     riskLevel: "low",
     workUnits: [],
     requiredCapabilities: ["korean-prose-editing"],
+    artifactContracts: ([
+      ["korean-prose-selection", "edit-decision-set"],
+      ["korean-prose-editing", "edit-candidate"],
+      ["korean-prose-verification", "edit-verification-report"],
+      ["korean-prose-finalization", "final-text-receipt"],
+    ] as const).map(([capability, artifactId]) => ({
+      capability,
+      produced: [{ artifactId, schemaId: `schema://korean-prose/${artifactId}`, targetDigest: `sha256:${digests.source}` as const }],
+    })),
     constraints: ["MCP receipts contain metadata only."],
     authorization: { allowedActions: ["record-evaluation-receipts"], prohibitedActions: ["publish"], approvalRequired: [] },
     decision: { complexity: "simple", hasConflicts: false },

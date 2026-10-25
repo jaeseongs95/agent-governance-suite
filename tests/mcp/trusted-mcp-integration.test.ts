@@ -37,6 +37,14 @@ function task(taskId: string): TaskEnvelopeV1 {
     riskLevel: "low",
     workUnits: [{ id: "unit-1", objective: "Run the fixture.", dependencies: [], writeTargets: ["fixture.md"] }],
     requiredCapabilities: ["task-decomposition"],
+    artifactContracts: [{
+      capability: "task-decomposition",
+      produced: ["delegation-decision", "task-graph", "assignment-briefs", "integration-report"].map((artifactId) => ({
+        artifactId,
+        schemaId: "trusted-integration/v1",
+        targetDigest: `sha256:${"e".repeat(64)}` as const,
+      })),
+    }],
     constraints: ["Use only fixture data."],
     authorization: { allowedActions: ["test"], prohibitedActions: ["deploy"], approvalRequired: [] },
     decision: { complexity: "simple", hasConflicts: false },
@@ -181,10 +189,12 @@ describe("trusted MCP server boundary", () => {
         blockers: [],
         error: null,
       };
-      const recorded = result<WorkflowReceiptV1>(await client.callTool({
+      const recordedResult = result<WorkflowReceiptV1>(await client.callTool({
         name: "record_stage_result",
         arguments: stageResult as unknown as Record<string, unknown>,
-      })).data!;
+      }));
+      expect(recordedResult.ok, JSON.stringify(recordedResult.error)).toBe(true);
+      const recorded = recordedResult.data!;
       expect(recorded.stageResults[0]?.executionContext).toMatchObject({
         runId: recorded.runId,
         stageId: stage.stageId,
