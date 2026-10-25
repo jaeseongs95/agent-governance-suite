@@ -6,6 +6,7 @@ import path from "node:path";
 import type { DeliveryCapabilities, InputObservation } from "./input-observation.js";
 import type { SessionIdentity } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
+import { failureContext, producerFailure, producerFailureReason, retainFailureCause } from "./failure-diagnostics.js";
 import type { InputSourceReceiptV1 } from "../../contracts/types.js";
 
 export interface VerifiedInputSourceReader {
@@ -49,6 +50,10 @@ export function resolveGeminiAgentApi(
   const command = path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
   return { command: existsSync(command) ? command : "agentapi", argsPrefix: [] };
 }
+/** Bounded diagnostic only: failureContext never emits messages, argv, stdout or paths. */
+function reportWakeFailure(phase: string, error: Error): void {
+  console.error(`agent-governance-suite wake diagnostic ${JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) })}`);
+}
 async function ringGemini(sessionId: string, message: string, environment: NodeJS.ProcessEnv = process.env): Promise<WakeDispatchOutcome> {
   const childEnv: NodeJS.ProcessEnv = { ...environment };
   const sourceProjectId = childEnv.ANTIGRAVITY_PROJECT_ID;
@@ -67,10 +72,15 @@ async function ringGemini(sessionId: string, message: string, environment: NodeJ
       response?: { conversationMetadata?: { metadata?: { projectId?: unknown } } };
     };
     const projectId = parsed.response?.conversationMetadata?.metadata?.projectId;
-    if (typeof projectId !== "string" || !projectId.trim()) return "definite-failure";
+    if (typeof projectId !== "string" || !projectId.trim()) {
+      throw producerFailure("GEMINI_METADATA_PROJECT_MISSING", "Gemini conversation metadata has no project identity.");
+    }
     targetProjectId = projectId;
-  } catch {
-    // Metadata failure happens before any send-message process is started.
+  } catch (cause) {
+    // Metadata failure happens before any send-message process is started. Keep the actual cause; never send.
+    const error = producerFailureReason(cause) ? cause as Error
+      : retainFailureCause(producerFailure("GEMINI_METADATA_FAILED", "Gemini conversation metadata lookup failed."), cause);
+    reportWakeFailure("gemini-metadata", error);
     return "definite-failure";
   }
   if (sourceProjectId !== targetProjectId) return "definite-failure";
