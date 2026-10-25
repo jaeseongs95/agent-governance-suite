@@ -1,7 +1,7 @@
 {
   "schemaVersion": "AgsBoundedCiExecutionConfig.v1",
-  "unit": "AGS30-OFFICIAL-SOURCE-COMPLETE-SHARDS-20261025-R11",
-  "nonce": "432f6458-a007-4825-99e1-39b43a56796a",
+  "unit": "AGS30-OFFICIAL-SOURCE-COMPLETE-SHARDS-20261025-R12",
+  "nonce": "bac7e4ee-68db-4c33-b0dc-8669ff59418e",
   "repository": "jaeseongs95/agent-governance-suite",
   "repositoryId": 1362118877,
   "branch": "release-3.0",
@@ -53,7 +53,14 @@
     "sourceTree": "6ece3fc5171e4b2cb5ad51a41ef500fad8e3a99c",
     "portableId": "747d28622c066bc251f6016b88c5507b9b3b895318f633136a194699ca042a60",
     "originalPrivateR10Run": 40192541721,
-    "originalR10ResultsPreserved": true
+    "originalR10ResultsPreserved": true,
+    "previousCiDefect": {
+      "unit": "AGS30-OFFICIAL-SOURCE-COMPLETE-SHARDS-20261025-R11",
+      "runId": 40197942971,
+      "head": "193bf17ecfda856eb2b65dedf42a097fd00bb374",
+      "status": "PARTIAL_MATRIX_CANCELLED_UNSUITABLE_FOR_FULL_ACCEPTANCE",
+      "productSourceUnchanged": true
+    }
   },
   "limitations": [
     "Actual official source commit with CI-only wrapper commit; all product blobs must match.",

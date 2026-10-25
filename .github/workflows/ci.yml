@@ -168,9 +168,6 @@ jobs:
         run: git show --check --oneline --no-renames HEAD
 
   verify-release:
-    concurrency:
-      group: ags30-official-r11-432f6458
-      cancel-in-progress: false
     if: github.ref == 'refs/heads/release-3.0' && github.event_name == 'push'
     name: verify-${{ matrix.os }}-shard-${{ matrix.shard }}
     strategy:
@@ -208,7 +205,7 @@ jobs:
         if: ${{ always() && steps.finalize.outputs.artifact_ok == 'true' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ags30-official-r11-432f6458-${{ runner.os }}-shard-${{ matrix.shard }}
+          name: ags30-official-r12-bac7e4ee-${{ runner.os }}-shard-${{ matrix.shard }}
           path: ${{ steps.finalize.outputs.result_path }}
           if-no-files-found: error
           retention-days: 1
