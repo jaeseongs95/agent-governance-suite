@@ -229,7 +229,7 @@ it("a real send reply loss retries the known ID once and survives broker restart
   expect(count(store)).toBe(1);
 }, 15_000);
 
-it.each([false, true])("claim response loss preserves legacy retry but opt-in no replay=%s claims at most one body", async (noOperationReplay) => {
+it.each([false, true])("claim response loss never replays a non-idempotent request (noOperationReplay=%s)", async (noOperationReplay) => {
   const { state } = await launch("claim");
   const drafts = [];
   for (const body of ["Synthetic A", "Synthetic B"]) {
@@ -245,18 +245,15 @@ it.each([false, true])("claim response loss preserves legacy retry but opt-in no
   const before = (await sequence()).length;
   const onOperationWrite = vi.fn();
   const pending = sessionMessageRequest<{ messages: { messageId: string }[] }>("claim", { target, maxMessages: 1 }, state,
-    { totalTimeoutMs: 7000, ...(noOperationReplay ? { noOperationReplay, deadlineMonotonicMs: performance.now() + 7000, onOperationWrite } : {}) });
-  if (noOperationReplay) await expect(pending).rejects.toThrow();
-  else expect((await pending).messages).toMatchObject([{ messageId: drafts[1]!.messageId }]);
+    { totalTimeoutMs: 7000, onOperationWrite, ...(noOperationReplay ? { noOperationReplay, deadlineMonotonicMs: performance.now() + 7000 } : {}) });
+  await expect(pending).rejects.toThrow();
   const operations = (await sequence()).slice(before);
-  expect(operations.filter((operation) => operation === "claim")).toHaveLength(noOperationReplay ? 1 : 2);
-  if (noOperationReplay) {
-    expect(operations).toEqual(["ping", "claim"]);
-    expect(onOperationWrite).toHaveBeenCalledTimes(1);
-  }
-  expect(JSON.parse(await readFile(path.join(state, "operation-counts.json"), "utf8"))).toMatchObject({ claim: noOperationReplay ? 1 : 2, responseDrops: 1 });
+  expect(operations.filter((operation) => operation === "claim")).toHaveLength(1);
+  expect(operations).toEqual(noOperationReplay ? ["ping", "claim"] : ["claim"]);
+  expect(onOperationWrite).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(await readFile(path.join(state, "operation-counts.json"), "utf8"))).toMatchObject({ claim: 1, responseDrops: 1 });
   expect(store.status(sender, drafts[0]!.messageId)).toMatchObject({ state: "delivered", deliveryAttempts: 1, acknowledgedAt: null });
-  expect(store.status(sender, drafts[1]!.messageId)).toMatchObject({ state: noOperationReplay ? "queued" : "delivered", deliveryAttempts: noOperationReplay ? 0 : 1, acknowledgedAt: null });
+  expect(store.status(sender, drafts[1]!.messageId)).toMatchObject({ state: "queued", deliveryAttempts: 0, acknowledgedAt: null });
 }, 15_000);
 
 it.each(["lost-reply", "success", "receipt-failure"])("the actual hook retains claim phases across real TLS and receipt handling: %s", async (mode) => {

@@ -440,7 +440,8 @@ export async function sessionMessageRequest<T>(
     } catch (error) {
       try {
         throwIfAborted(signal);
-        if (error instanceof BrokerRequestRejected || operationWriteAttempted) throw error;
+        // Only issued-ID send has a retained receipt that makes a post-write retry safe.
+        if (error instanceof BrokerRequestRejected || (operationWriteAttempted && operation !== "send")) throw error;
         await ensureSessionMessageBroker(
           stateDirectory,
           remainingMilliseconds(deadline, signal),
