@@ -4,6 +4,7 @@ import { access, cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import { retainFailureSecondary } from "../runtime/failure-diagnostics.mjs";
 import { SKILL_RUNTIME_ENTRYPOINTS } from "./runtime-entrypoints.mjs";
 
 const MESSAGING_RUNTIME_PROBES = [
@@ -23,16 +24,28 @@ async function assertMissing(target) {
   throw new Error(`Clean-room dependency leak: ${target} exists.`);
 }
 
+async function removeRuntimeCleanRoom(cleanRoot, primaryFailure) {
+  try {
+    await rm(cleanRoot, { recursive: true, force: true });
+  } catch (error) {
+    if (primaryFailure === null) throw error;
+    retainFailureSecondary(primaryFailure.error, error);
+  }
+}
+
 export async function runRuntimeSmokeCheck(sourceRoot) {
   const cleanRoot = await mkdtemp(path.join(tmpdir(), "agent-governance-runtime-"));
+  let primaryFailure = null;
   try {
     await mkdir(path.join(cleanRoot, "mcp-server", "dist"), { recursive: true });
-    await Promise.all([
+    const copies = await Promise.allSettled([
       ...["contracts", "runtime", "skills"].map((directory) => cp(path.join(sourceRoot, directory), path.join(cleanRoot, directory), { recursive: true })),
       ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "host-attestation-api.mjs", "session-board-hook.mjs", ...MESSAGING_RUNTIME_PROBES.map(({ bundle }) => bundle)].map((bundle) => (
         cp(path.join(sourceRoot, "mcp-server", "dist", bundle), path.join(cleanRoot, "mcp-server", "dist", bundle))
       )),
     ]);
+    const failedCopy = copies.find(copy => copy.status === "rejected");
+    if (failedCopy) throw failedCopy.reason;
     await assertMissing(path.join(cleanRoot, "node_modules"));
 
     const environment = { ...process.env };
@@ -241,7 +254,10 @@ try {
       throw new Error(`instruction-scope-resolver returned an unexpected clean-room result.\n${resolverResult.stdout}`);
     }
     return results;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
   } finally {
-    await rm(cleanRoot, { recursive: true, force: true });
+    await removeRuntimeCleanRoom(cleanRoot, primaryFailure);
   }
 }
