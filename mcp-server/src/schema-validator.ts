@@ -404,6 +404,9 @@ export class ContractValidator {
     const ajv = new Ajv2020({ allErrors: true, strict: false });
     addFormats(ajv);
     const schemas = new Map<string, JsonSchema>();
+    // The digest-bound target wins over an unrelated schema that reuses its $id.
+    const targetId = typeof targetSchema.$id === "string" ? targetSchema.$id : undefined;
+    if (targetId) schemas.set(targetId, targetSchema);
     for (const directory of [path.join(root, "contracts"), this.skillSchemaRoot(root, reference.path)]) {
       for (const candidate of this.schemaFiles(directory)) {
         const schema = JSON.parse(readFileSync(candidate, "utf8")) as JsonSchema;
@@ -412,7 +415,6 @@ export class ContractValidator {
       }
     }
     for (const schema of schemas.values()) ajv.addSchema(schema);
-    const targetId = typeof targetSchema.$id === "string" ? targetSchema.$id : undefined;
     const validate = (targetId ? ajv.getSchema(targetId) : undefined) ?? ajv.compile(targetSchema);
     if (!validate(value)) {
       throw new WorkflowContractError("INVALID_INPUT", `${label} does not match its declared schema.`, {

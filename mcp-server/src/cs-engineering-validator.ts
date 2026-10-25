@@ -16,7 +16,7 @@ export function assertCsStageBundle(
   const references = result.output.artifacts.filter((artifact) => artifact.artifactId === "cs-review-bundle");
   const reference = references[0];
   if (references.length !== 1 || !reference?.verified || !path.isAbsolute(reference.locator)
-    || /^(?:\\\\|\/\/)/u.test(reference.locator)) {
+    || /^[\\/]{2}/u.test(reference.locator)) {
     throw new WorkflowContractError("MISSING_EVIDENCE", "CS review requires one verified local cs-review-bundle artifact.");
   }
   const root = path.dirname(reference.locator);

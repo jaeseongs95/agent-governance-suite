@@ -372,6 +372,14 @@ export class WorkflowService {
       if (root.state !== "open") this.throwRootGate(root, snapshot);
 
       const attempts = consumedLeases(snapshot, root.currentEpoch);
+      const currentOutcomes = snapshot.outcomes.filter((outcome) => outcome.epoch === root.currentEpoch);
+      const latestOutcome = currentOutcomes.at(-1) ?? null;
+      if (currentOutcomes.length < attempts.length) {
+        throw new WorkflowContractError("LEASE_CONFLICT", "The previous full attempt is still active and must reach a terminal outcome before another lease can be claimed.", {
+          rootId: root.rootId,
+          epoch: root.currentEpoch,
+        });
+      }
       if (attempts.length >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
         this.moveRootToReview(root);
         throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Three full attempts have already started in this convergence epoch.", {
@@ -381,14 +389,6 @@ export class WorkflowService {
         });
       }
 
-      const currentOutcomes = snapshot.outcomes.filter((outcome) => outcome.epoch === root.currentEpoch);
-      const latestOutcome = currentOutcomes.at(-1) ?? null;
-      if (currentOutcomes.length < attempts.length) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The previous full attempt is still active and must reach a terminal outcome before another lease can be claimed.", {
-          rootId: root.rootId,
-          epoch: root.currentEpoch,
-        });
-      }
       if (attempts.length === 0) {
         if (proposal.priorFailure !== null) {
           throw new WorkflowContractError("INVALID_INPUT", "The first attempt in an epoch must not claim a prior failure.");
@@ -940,7 +940,7 @@ export class WorkflowService {
       // Descriptor requiredArtifacts are inputs/preconditions. Only declared
       // producedArtifacts become evidence obligations for a completed stage.
       const producedArtifacts = skill.producedArtifacts;
-      const stageRequiredArtifacts = skill.gate.policy === "mandatory"
+      const stageRequiredArtifacts = skill.gate.policy === "mandatory" && skill.capabilities.includes(POLICY_CAPABILITY.audit)
         ? [...new Set([...producedArtifacts, "gate-verdict"])]
         : producedArtifacts;
       const stageEvaluationAuditPurpose = capability === "evaluation-validity-audit"
@@ -1148,7 +1148,7 @@ export class WorkflowService {
         throw new WorkflowContractError("INVALID_INPUT", "A passed stage cannot contain an error.");
       }
     }
-    if ((result.state === "failed" || result.state === "blocked") && !result.error) {
+    if ((result.state === "failed" || result.state === "blocked") && rule.errorRequired && !result.error) {
       throw new WorkflowContractError("INVALID_INPUT", "Failed or blocked stages require an error object.");
     }
   }
@@ -1211,6 +1211,14 @@ export class WorkflowService {
   }
 
   private assertRequiredArtifacts(stage: PlannedStageV1, result: StageResultV1): void {
+    const missingArtifacts = stage.requiredArtifacts.filter(
+      (artifactId) => !result.output.artifacts.some((artifact) => artifact.artifactId === artifactId),
+    );
+    if (missingArtifacts.length > 0) {
+      throw new WorkflowContractError("MISSING_EVIDENCE", "Required artifacts are missing from the stage result.", {
+        stageId: stage.stageId, missingArtifacts,
+      });
+    }
     for (const artifactId of stage.requiredArtifacts) {
       const expected = stage.artifactContract?.produced.find((item) => item.artifactId === artifactId);
       const actual = result.output.artifacts.filter((item) => item.artifactId === artifactId);
@@ -1350,7 +1358,7 @@ export class WorkflowService {
   }
 
   private assertMandatoryAuditGate(stage: PlannedStageV1, result: StageResultV1): void {
-    if (stage.riskGate !== "mandatory") return;
+    if (stage.riskGate !== "mandatory" || !stage.requiredArtifacts.includes("gate-verdict")) return;
     const output = result.output.output;
     const auditorId = output?.auditorId;
     const implementationActorIds = output?.implementationActorIds;

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { closeSync, fstatSync, openSync, readSync } from "node:fs";
+import { closeSync, constants, fstatSync, openSync, readSync } from "node:fs";
 import path from "node:path";
 
 import { type StageOutputFileV1, WorkflowContractError } from "../../contracts/types.js";
@@ -22,12 +22,12 @@ export function readLocalStageOutputFile(locator: string): Buffer {
   if (!path.isAbsolute(locator)) {
     throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must be an absolute local path.");
   }
-  if (/^(?:\\\\|\/\/)/u.test(locator)) {
+  if (/^[\\/]{2}/u.test(locator)) {
     throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must not be a network path.");
   }
   let descriptor: number | null = null;
   try {
-    descriptor = openSync(locator, "r");
+    descriptor = openSync(locator, constants.O_RDONLY | constants.O_NONBLOCK);
     const stats = fstatSync(descriptor);
     if (!stats.isFile() || stats.size > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(locator);
     const buffer = Buffer.alloc(MAX_STAGE_OUTPUT_FILE_BYTES + 1);

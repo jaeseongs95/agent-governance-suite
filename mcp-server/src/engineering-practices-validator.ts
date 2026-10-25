@@ -13,7 +13,7 @@ export function assertEngineeringStageBundle(
   if (!taskDigest) throw new WorkflowContractError("BINDING_REQUIRED", "Engineering review requires a signed task digest.");
   const references = result.output.artifacts.filter(artifact => artifact.artifactId === "engineering-stage-bundle");
   const reference = references[0];
-  if (references.length !== 1 || !reference?.verified || !path.isAbsolute(reference.locator) || /^(?:\\\\|\/\/)/u.test(reference.locator)) {
+  if (references.length !== 1 || !reference?.verified || !path.isAbsolute(reference.locator) || /^[\\/]{2}/u.test(reference.locator)) {
     throw new WorkflowContractError("MISSING_EVIDENCE", "Engineering review requires one verified local engineering-stage-bundle artifact.");
   }
   const root = path.dirname(reference.locator);
