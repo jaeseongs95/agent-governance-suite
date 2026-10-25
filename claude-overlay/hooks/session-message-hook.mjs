@@ -6,11 +6,8 @@ import { readFileSync, writeSync } from "node:fs";
 import { types } from "node:util";
 
 const LAUNCHER = "session-message-hook";
-// Non-blocking failure status: the host continues, but a failed hook stays distinct from an empty success.
-const FAILURE_EXIT_CODE = 1;
 
 function reportLauncherFailure(stage, cause) {
-  process.exitCode = FAILURE_EXIT_CODE;
   try {
     let code;
     if (cause && (typeof cause === "object" || typeof cause === "function") && !types.isProxy(cause)) {
@@ -35,9 +32,8 @@ try {
   if (!outcome || typeof outcome !== "object" || typeof outcome.ok !== "boolean" || typeof outcome.output !== "string") {
     throw Object.assign(new Error("Launcher outcome is invalid."), { code: "LAUNCHER_OUTCOME_INVALID" });
   }
-  // The bundle already reported the failed phase and reason; the launcher carries the failure into the exit status.
-  if (!outcome.ok) process.exitCode = FAILURE_EXIT_CODE;
-  else if (outcome.output) {
+  // The bundle owns the failed phase/reason diagnostic; stdout and exit remain fail-open.
+  if (outcome.ok && outcome.output) {
     stage = "stdout";
     process.stdout.on("error", (cause) => reportLauncherFailure("stdout", cause));
     process.stdout.write(outcome.output);

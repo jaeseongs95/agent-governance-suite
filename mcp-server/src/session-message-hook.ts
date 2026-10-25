@@ -499,15 +499,10 @@ export async function runSessionMessageHook(host: SupportedHookHost, raw: string
   return (await runSessionMessageHookOutcome(host, raw, explicitHostPid, options)).output;
 }
 
-/** CLI status for a failed run. Hosts treat a non-zero status other than the blocking one as a non-blocking hook
- * error, so messaging still never blocks the host while a failure stays distinct from a successful empty result. */
-const HOOK_FAILURE_EXIT_CODE = 1;
-
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
-  // Every failed stage keeps its own phase/reason diagnostic and sets the failure status; the output stays empty.
+  // Fail-open stdout/exit status stay unchanged; each failed stage retains its phase/reason diagnostic.
   const failed = (phase: HookFailurePhase, error: unknown): void => {
     reportHookFailure(phase, error);
-    process.exitCode = HOOK_FAILURE_EXIT_CODE;
   };
   let raw: string | null = null;
   try { raw = readFileSync(0, "utf8"); } catch (error) { failed("stdin", error); }
@@ -518,11 +513,8 @@ if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
       const host = resolveHookHost(process.argv.slice(2), "codex");
       void runSessionMessageHookOutcome(host, raw, Number.isInteger(hostPid) ? hostPid : undefined)
         .then((outcome) => {
-          // The outcome already reported its failed phase and reason; only the status is left to carry.
-          if (!outcome.ok) {
-            process.exitCode = HOOK_FAILURE_EXIT_CODE;
-            return;
-          }
+          // The typed outcome already reported its failed phase and reason; public exit remains fail-open.
+          if (!outcome.ok) return;
           if (!outcome.output) return;
           let reported = false;
           const outputFailed = (error: unknown) => {

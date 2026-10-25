@@ -24,7 +24,7 @@ function fixture() {
   } };
 }
 
-// The message hook CLI exits 1 (non-blocking failure) when its fail-open run failed; other hooks still exit 0.
+// All public hook CLIs retain exit 0; bounded diagnostics distinguish a failed run.
 function hook(bundle: string, args: string[], input: Record<string, unknown>, environment: NodeJS.ProcessEnv, expectedStatus = 0): { hookSpecificOutput?: { updatedInput?: Record<string, unknown> } } {
   const result = spawnSync(process.execPath, [path.join(root, "mcp-server/dist", bundle + ".mjs"), ...args], {
     input: JSON.stringify(input), env: environment, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,
@@ -86,7 +86,7 @@ describe("explicit hook CLI host contract (synthetic packaged fixtures, not nati
       for (const bundle of ["host-attestation-hook", "session-message-hook", "session-board-hook"]) {
         const tool = bundle === "host-attestation-hook" ? "plan_workflow" : bundle === "session-message-hook" ? "prepare_session_message" : "list_session_status";
         const output = hook(bundle, args, { ...input, tool_name: "mcp__agent_governance_suite__" + tool }, f.env,
-          bundle === "session-message-hook" ? 1 : 0);
+          0);
         const updated = output.hookSpecificOutput?.updatedInput;
         expect(updated?._hostAttestation).toBeUndefined();
         expect(updated?._sessionBinding).toBeUndefined();
@@ -101,7 +101,7 @@ it("does not treat an unknown host as Claude attestation or Codex delivery", () 
   const f = fixture();
   const input = attestationInput(f.directory);
   for (const bundle of ["host-attestation-hook", "session-message-hook"]) {
-    const output = hook(bundle, ["--host=unregistered-host"], input, f.env, bundle === "session-message-hook" ? 1 : 0);
+    const output = hook(bundle, ["--host=unregistered-host"], input, f.env, 0);
     expect(output.hookSpecificOutput?.updatedInput?._hostAttestation).toBeUndefined();
     expect(output.hookSpecificOutput?.updatedInput?._sessionBinding).toBeUndefined();
   }
@@ -123,8 +123,8 @@ it("reports a closed stdout pipe once without retrying or failing the hook proce
   child.stdin.end(JSON.stringify({ hook_event_name: "PreToolUse", session_id: "stdout-synthetic-session", agent_id: "",
     tool_name: "mcp__agent_governance_suite__prepare_session_message",
     tool_input: { schemaVersion: "1.0.0", marker: "secret-canary-output" } }));
-  // Fail-open (no retry, no crash), but the failed stdout stage is visible in the non-blocking failure status.
-  expect(await closed).toBe(1);
+  // Fail-open (exit 0, no retry, no crash); the failed stdout stage remains visible in its diagnostic.
+  expect(await closed).toBe(0);
   expect(diagnostic.match(/"phase":"stdout"/gu)).toHaveLength(1);
   expect(diagnostic).not.toContain("secret-canary-output");
   expect(diagnostic).not.toContain("stdout-synthetic-session");
@@ -140,7 +140,7 @@ it("distinguishes a missing host adapter from an unexpected hook failure without
       env: { ...f.env, NODE_NO_WARNINGS: "1" }, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,
     });
   expect(result.error).toBeUndefined();
-  expect(result.status).toBe(1);
+  expect(result.status).toBe(0);
   expect(result.stdout).toBe("");
   expect(result.stderr).toContain('"phase":"handle","reason":"HOST_ADAPTER_UNAVAILABLE"');
   expect(result.stderr).not.toContain("UNEXPECTED_FAILURE");
@@ -148,6 +148,49 @@ it("distinguishes a missing host adapter from an unexpected hook failure without
   expect(result.stderr).not.toContain("adapter-failure-session");
   expect(existsSync(f.database)).toBe(false);
 });
+
+it.each(["empty", "input", "stdin", "broker"] as const)(
+  "public message hook keeps exit 0 and distinguishes the %s path with bounded diagnostics", (scenario) => {
+    const f = fixture();
+    const args = [path.join(root, "mcp-server/dist/session-message-hook.mjs"), "--host=claude-code"];
+    let input = "{}";
+    if (scenario === "input") input = "{\n";
+    if (scenario === "stdin") {
+      const preload = path.join(f.directory, "stdin-failure.mjs");
+      writeFileSync(preload, [
+        'import fs from "node:fs";',
+        'import { syncBuiltinESMExports } from "node:module";',
+        "const original = fs.readFileSync;",
+        'fs.readFileSync = (file, ...rest) => { if (file === 0) throw Object.assign(new Error("PRIVATE_STDIN_MESSAGE"), { code: "EIO" }); return original(file, ...rest); };',
+        "syncBuiltinESMExports();",
+      ].join("\n"), "utf8");
+      args.unshift("--import", pathToFileURL(preload).href);
+    }
+    if (scenario === "broker") {
+      // The client fails state-directory preparation before any broker process or DB can start.
+      writeFileSync(f.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR, "PRIVATE_STATE_FILE");
+      input = JSON.stringify({ hook_event_name: "Stop", session_id: "PRIVATE_SESSION", agent_id: "" });
+    }
+    const result = spawnSync(process.execPath, args, {
+      input, env: { ...f.env, NODE_NO_WARNINGS: "1" }, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe("");
+    const prefix = "[agent-governance-suite] peer-hook-failure ";
+    const diagnostics = result.stderr.split(/\r?\n/u).filter(line => line.startsWith(prefix))
+      .map(line => JSON.parse(line.slice(prefix.length)));
+    if (scenario === "empty") expect(diagnostics).toEqual([]);
+    else {
+      const [phase, reason] = scenario === "broker" ? ["handle", "BROKER_STATE_DIRECTORY_FAILED"]
+        : scenario === "stdin" ? ["stdin", "EIO"] : ["input", "INVALID_JSON"];
+      expect(diagnostics).toEqual([expect.objectContaining({ phase, reason })]);
+    }
+    for (const secret of ["PRIVATE_STDIN_MESSAGE", "PRIVATE_STATE_FILE", "PRIVATE_SESSION", f.directory]) {
+      expect(result.stderr).not.toContain(secret);
+    }
+    expect(existsSync(f.database)).toBe(false);
+  }, 15_000);
 
 describe("L3 packaged failure diagnostics", () => {
   it("reports the host selection producer reason in every CLI without leaking input or touching state", () => {
@@ -158,7 +201,7 @@ describe("L3 packaged failure diagnostics", () => {
           tool_name: "mcp__agent_governance_suite__plan_workflow", tool_input: { marker: "private-tool-marker" } }),
         env: { ...f.env, NODE_NO_WARNINGS: "1" }, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,
       });
-      expect(result.error).toBeUndefined(); expect(result.status).toBe(bundle === "session-message-hook" ? 1 : 0);
+      expect(result.error).toBeUndefined(); expect(result.status).toBe(0);
       expect(result.stderr).toContain('"phase":"host-entry","reason":"INVALID_HOOK_HOST_SELECTION"');
       expect(result.stderr).toContain('"context":');
       for (const marker of ["private-host-marker", "private-session-marker", "private-tool-marker"])

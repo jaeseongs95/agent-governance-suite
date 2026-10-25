@@ -34,10 +34,9 @@ function diagnostics(stderr) {
 }
 
 describe("Claude launcher stage diagnostics", () => {
-  // The message launcher carries a failed stage or bundle outcome into the non-blocking failure status (exit 1);
-  // the board launcher still exits 0 (AGS-D-0010 residual).
+  // Both launchers preserve public exit 0; stage diagnostics distinguish failures from empty successes.
   for (const [launcher, exportName, returns, failureStatus] of [
-    ["session-message-hook.mjs", "runSessionMessageHookOutcome", (value) => `({ ok: true, output: ${value} })`, 1],
+    ["session-message-hook.mjs", "runSessionMessageHookOutcome", (value) => `({ ok: true, output: ${value} })`, 0],
     ["session-board-hook.mjs", "runSessionBoardHook", (value) => value, 0],
   ]) {
     const name = launcher.replace(/\.mjs$/u, "");
@@ -78,19 +77,21 @@ describe("Claude launcher stage diagnostics", () => {
   }
 
   // Fake bundles export both entries like the real bundle, so the launcher's choice of entry is what is tested.
-  const messageBundle = (outcome) => [
+  const messageBundle = (outcome, diagnostic) => [
     'export async function runSessionMessageHook() { return ""; }',
-    `export async function runSessionMessageHookOutcome() { return ${outcome}; }`,
+    `export async function runSessionMessageHookOutcome() { ${diagnostic ? `console.error("[agent-governance-suite] peer-hook-failure " + ${JSON.stringify(JSON.stringify(diagnostic))});` : ""} return ${outcome}; }`,
     "",
   ].join("\n");
 
-  it("session-message-hook: a failed bundle outcome exits with the failure status instead of an empty success", async () => {
+  it("session-message-hook: a failed bundle outcome retains exit 0 and its bounded diagnostic", async () => {
+    const failure = { phase: "handle", reason: "BROKER_DEADLINE_EXPIRED", reasonBasis: "producer", producerReason: "BROKER_DEADLINE_EXPIRED" };
     const directory = await install("session-message-hook.mjs", messageBundle(
-      '{ ok: false, output: "", failure: { phase: "handle", reason: "BROKER_DEADLINE_EXPIRED", reasonBasis: "producer", producerReason: "BROKER_DEADLINE_EXPIRED" } }'));
+      `{ ok: false, output: "", failure: ${JSON.stringify(failure)} }`, failure));
     const result = run(directory, "session-message-hook.mjs");
-    expect(result.status).toBe(1);
+    expect(result.status).toBe(0);
     expect(result.stdout).toBe("");
-    // The bundle owns the phase/reason diagnostic; the launcher adds no stage failure of its own.
+    // The bundle owns the phase/reason diagnostic; the launcher adds no duplicate stage failure.
+    expect(result.stderr.trim()).toBe("[agent-governance-suite] peer-hook-failure " + JSON.stringify(failure));
     expect(diagnostics(result.stderr)).toEqual([]);
   });
 
@@ -99,13 +100,14 @@ describe("Claude launcher stage diagnostics", () => {
     const result = run(directory, "session-message-hook.mjs");
     expect(result.status).toBe(0);
     expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("");
     expect(diagnostics(result.stderr)).toEqual([]);
   });
 
   it("session-message-hook: reports an invalid bundle outcome as the outcome stage", async () => {
     const directory = await install("session-message-hook.mjs", messageBundle('{ ok: "yes" }'));
     const result = run(directory, "session-message-hook.mjs");
-    expect(result.status).toBe(1);
+    expect(result.status).toBe(0);
     expect(result.stdout).toBe("");
     expect(diagnostics(result.stderr)).toEqual([{ launcher: "session-message-hook", stage: "outcome", code: "LAUNCHER_OUTCOME_INVALID" }]);
   });

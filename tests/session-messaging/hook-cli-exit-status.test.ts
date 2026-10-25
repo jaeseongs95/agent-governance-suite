@@ -73,11 +73,12 @@ async function settled(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 50));
 }
 
-it("sets the failure exit status when the broker claim fails instead of an empty success", async () => {
+it("keeps the broker failure diagnostic distinct while retaining fail-open exit 0", async () => {
   await runCli(stop, ["--host=claude-code"], ({ hookFailure }) => {
     f.request.mockRejectedValueOnce(hookFailure("BROKER_DEADLINE_EXPIRED", "The session message request deadline expired."));
   });
-  await vi.waitFor(() => expect(process.exitCode).toBe(1));
+  await vi.waitFor(() => expect(failures()).toHaveLength(1));
+  expect(process.exitCode).toBeUndefined();
   expect(f.request).toHaveBeenCalledTimes(1);
   expect(written).toEqual([]);
   expect(failures()).toEqual([expect.objectContaining({ phase: "handle", reason: "BROKER_DEADLINE_EXPIRED" })]);
@@ -96,9 +97,10 @@ it.each([
   ["input", "{", ["--host=claude-code"], "INVALID_JSON"],
   ["stdin", Object.assign(new Error("private-stdin-message"), { code: "EIO" }), ["--host=claude-code"], "EIO"],
   ["host-entry", stop, ["--host=../private-host-marker"], "INVALID_HOOK_HOST_SELECTION"],
-] as const)("sets the failure exit status for a failed %s stage", async (phase, raw, args, reason) => {
+] as const)("retains the failed %s stage diagnostic and fail-open exit 0", async (phase, raw, args, reason) => {
   await runCli(raw, args);
-  await vi.waitFor(() => expect(process.exitCode).toBe(1));
+  await vi.waitFor(() => expect(failures()).toHaveLength(1));
+  expect(process.exitCode).toBeUndefined();
   expect(written).toEqual([]);
   expect(failures()).toEqual([expect.objectContaining({ phase, reason })]);
   expect(f.request).not.toHaveBeenCalled();
@@ -111,16 +113,19 @@ it("writes a successful hook output once and leaves the exit status unset", asyn
   await runCli(bindable);
   await vi.waitFor(() => expect(written).toHaveLength(1));
   await settled();
-  expect(JSON.parse(written[0]!)).toMatchObject({ hookSpecificOutput: { permissionDecision: "allow",
+  const output = JSON.parse(written[0]!);
+  expect(output).toMatchObject({ hookSpecificOutput: {
     updatedInput: { _sessionBinding: { host: "claude-code", sessionId: "cli-target" } } } });
+  expect(output.hookSpecificOutput).not.toHaveProperty("permissionDecision");
   expect(process.exitCode).toBeUndefined();
   expect(failures()).toEqual([]);
 });
 
-it("sets the failure exit status when the stdout write fails", async () => {
+it("retains the stdout failure diagnostic and fail-open exit 0", async () => {
   stdoutError = Object.assign(new Error("private-stdout-message"), { code: "EPIPE" });
   await runCli(bindable);
-  await vi.waitFor(() => expect(process.exitCode).toBe(1));
+  await vi.waitFor(() => expect(failures()).toHaveLength(1));
+  expect(process.exitCode).toBeUndefined();
   expect(failures()).toEqual([expect.objectContaining({ phase: "stdout", reason: "EPIPE" })]);
   const lines = vi.mocked(console.error).mock.calls.map((call) => String(call[0])).join("\n");
   expect(lines).not.toContain("private-stdout-message");
