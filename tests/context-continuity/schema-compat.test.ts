@@ -302,7 +302,7 @@ describe("source STDIO continuity startup diagnostics", () => {
     const hookArguments = (tool: string, value: Record<string, unknown>) => {
       const hook = spawnSync(process.execPath, ["--import", "tsx", fileURLToPath(new URL("../../mcp-server/src/continuity-hook.ts", import.meta.url))],
         { cwd: fileURLToPath(new URL("../../", import.meta.url)), env: environment, windowsHide: true, encoding: "utf8", timeout: 10_000,
-          input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "compat-session", tool_name: tool, tool_input: value }) });
+          input: JSON.stringify({ hook_event_name: "PreToolUse", agent_id: "", session_id: "compat-session", tool_name: `mcp__agent_governance_suite__${tool}`, tool_input: value }) });
       expect(hook.status, hook.stderr).toBe(0);
       return JSON.parse(hook.stdout).hookSpecificOutput.updatedInput as Record<string, unknown>;
     };

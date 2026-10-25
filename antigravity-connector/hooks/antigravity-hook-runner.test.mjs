@@ -91,6 +91,7 @@ try {
   {
     const validPayload = JSON.stringify({
       conversationId: TEST_SESSION_ID,
+      agent_id: "",
       workspacePaths: [tmpDir],
       stepIdx: 42,
       toolCall: {

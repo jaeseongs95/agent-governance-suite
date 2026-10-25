@@ -162,7 +162,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       transcript_path: codexTranscriptPath,
     }), ["--host=codex"]);
     const codexOutput = codexHook.status === 0 && codexHook.stdout ? JSON.parse(codexHook.stdout) : null;
-    if (codexHook.error || codexOutput?.hookSpecificOutput?.permissionDecision !== "allow"
+    if (codexHook.error || Object.hasOwn(codexOutput?.hookSpecificOutput ?? {}, "permissionDecision")
       || !String(codexOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs1.")) {
       throw new Error(`host attestation hook failed its Codex fixture smoke check.\n${codexHook.stderr ?? ""}`);
     }
