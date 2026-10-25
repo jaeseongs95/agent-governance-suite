@@ -185,7 +185,7 @@ try {
     }
 
     // The session board gate denies the first edit of a session without a summary once, then lets it through.
-    const gateInput = `${JSON.stringify({ hook_event_name: "PreToolUse", session_id: "clean-room-board", cwd: cleanRoot, tool_name: "Edit", tool_input: {} })}\n`;
+    const gateInput = `${JSON.stringify({ hook_event_name: "PreToolUse", session_id: "clean-room-board", agent_id: "", cwd: cleanRoot, tool_name: "Edit", tool_input: {} })}\n`;
     const firstGate = runNode("mcp-server/dist/session-board-hook.mjs", gateInput);
     const secondGate = runNode("mcp-server/dist/session-board-hook.mjs", gateInput);
     const firstDecision = firstGate.status === 0 && firstGate.stdout ? JSON.parse(firstGate.stdout).hookSpecificOutput?.permissionDecision : null;
