@@ -1,6 +1,6 @@
-import { hookFailureContext, hookFailureReason } from "./hook-error-diagnostics.js";
+import { hookFailureContext, hookFailureReason, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
 import "./builtin-hook-host-adapters.js";
-import { mkdirSync, readFileSync, renameSync, writeFileSync, writeSync } from "node:fs";
+import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync, writeSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -35,10 +35,16 @@ function withoutCallerHostClaims(input: HookInput): HookInput {
 }
 
 type HookObservationFailureCode = "TRANSCRIPT_READ_FAILED" | "CURRENT_CALL_INVALID_JSON"
-  | "SESSION_MODEL_READ_FAILED" | "SESSION_MODEL_INVALID" | "INVALID_HOOK_INPUT" | "CURRENT_CALL_INVALID_SHAPE";
+  | "SESSION_MODEL_READ_FAILED" | "SESSION_MODEL_INVALID" | "SESSION_MODEL_WRITE_FAILED"
+  | "INVALID_HOOK_INPUT" | "CURRENT_CALL_INVALID_SHAPE";
 
+/** The failed step is the code; the actual I/O or parse error is kept as the cause. */
 class HookObservationFailure extends Error {
-  constructor(readonly code: HookObservationFailureCode) { super(code); }
+  readonly code: HookObservationFailureCode;
+  constructor(code: HookObservationFailureCode, cause?: unknown) {
+    super(code, cause === undefined ? undefined : { cause });
+    this.code = code;
+  }
 }
 
 function reportObservationFailure(phase: string, reason: string, cause?: unknown): void {
@@ -82,7 +88,7 @@ function readTextOrNull(file: string): string | null {
     return readFileSync(file, "utf8");
   } catch (cause) {
     if ((cause as NodeJS.ErrnoException).code === "ENOENT") return null;
-    throw new HookObservationFailure("TRANSCRIPT_READ_FAILED");
+    throw new HookObservationFailure("TRANSCRIPT_READ_FAILED", cause);
   }
 }
 
@@ -248,11 +254,17 @@ function sessionModelFile(directory: string, sessionId: string): string {
 }
 
 export function writeSessionModel(directory: string, sessionId: string, value: SessionModelRecord): void {
-  mkdirSync(directory, { recursive: true });
   const file = sessionModelFile(directory, sessionId);
   const temporary = `${file}.${process.pid}.tmp`;
-  writeFileSync(temporary, JSON.stringify(value), "utf8");
-  renameSync(temporary, file);
+  try {
+    mkdirSync(directory, { recursive: true });
+    writeFileSync(temporary, JSON.stringify(value), "utf8");
+    renameSync(temporary, file);
+  } catch (cause) {
+    const failure = new HookObservationFailure("SESSION_MODEL_WRITE_FAILED", cause);
+    try { rmSync(temporary, { force: true }); } catch (cleanup) { retainHookFailureSecondary(failure, cleanup); }
+    throw failure;
+  }
 }
 
 export function readSessionModel(directory: string, sessionId: string): SessionModelRecord | null {
@@ -268,7 +280,7 @@ export function readSessionModel(directory: string, sessionId: string): SessionM
   } catch (cause) {
     if ((cause as NodeJS.ErrnoException).code === "ENOENT") return null;
     if (cause instanceof HookObservationFailure) throw cause;
-    throw new HookObservationFailure(cause instanceof SyntaxError ? "SESSION_MODEL_INVALID" : "SESSION_MODEL_READ_FAILED");
+    throw new HookObservationFailure(cause instanceof SyntaxError ? "SESSION_MODEL_INVALID" : "SESSION_MODEL_READ_FAILED", cause);
   }
 }
 
@@ -455,7 +467,7 @@ async function main(): Promise<void> {
     // Without a token the server fails closed with BINDING_REQUIRED; never block the tool call here.
     output = withoutCallerAttestation(input);
     if (codex && attestedToolInput(input)) {
-      output.systemMessage = "AGS execution observation unavailable: adapter-read-or-storage-failed. No caller attestation is trusted.";
+      output.systemMessage = `AGS execution observation unavailable: ${phase}:${reason}. No caller attestation is trusted.`;
       if (record(output.hookSpecificOutput)) (output.hookSpecificOutput as Record<string, unknown>).permissionDecision = "allow";
     }
   } finally {
