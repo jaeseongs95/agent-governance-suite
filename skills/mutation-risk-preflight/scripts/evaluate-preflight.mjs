@@ -176,7 +176,8 @@ export function evaluatePreflight(input, options = {}) {
   const recoveryRequired = RECOVERY_ACTIONS.has(input.actionClass) || externalImpact;
   const recoverySufficient = !recoveryRequired || (input.recoveryPlan.available
     && Boolean(input.recoveryPlan.method && input.recoveryPlan.backupRef && input.recoveryPlan.restoreProcedureRef)
-    && (Boolean(input.recoveryPlan.restoreTestEvidenceRef) || input.recoveryPlan.irreversibilityAccepted));
+    && (Boolean(input.recoveryPlan.restoreTestEvidenceRef) || input.recoveryPlan.irreversibilityAccepted))
+    || (!input.recoveryPlan.available && input.recoveryPlan.irreversibilityAccepted);
   const blastRadiusMatched = input.expectedBlastRadius.affectedTargets >= targets.length;
 
   const checks = [
@@ -220,17 +221,30 @@ export function evaluatePreflight(input, options = {}) {
 
 async function readInput(argv) {
   const index = argv.indexOf("--input");
-  if (index >= 0) return JSON.parse(await readFile(argv[index + 1], "utf8"));
+  if (index >= 0) {
+    if (!argv[index + 1]) throw new SyntaxError("--input에 JSON 파일 경로가 필요합니다.");
+    return JSON.parse(await readFile(argv[index + 1], "utf8"));
+  }
   let raw = "";
   for await (const chunk of process.stdin) raw += chunk;
-  if (!raw.trim()) throw new Error("stdin 또는 --input으로 JSON 입력이 필요합니다.");
+  if (!raw.trim()) throw new SyntaxError("stdin 또는 --input으로 JSON 입력이 필요합니다.");
   return JSON.parse(raw);
 }
 
 async function main() {
-  let output;
-  try { output = evaluatePreflight(await readInput(process.argv.slice(2))); }
-  catch (error) { output = blockedReport({}, [error instanceof Error ? error.message : String(error)], new Date()); }
+  let output, phase = "input-read";
+  try {
+    const input = await readInput(process.argv.slice(2));
+    phase = "evaluation";
+    output = evaluatePreflight(input);
+  } catch (error) {
+    if (phase === "input-read" && error instanceof SyntaxError) output = blockedReport({}, [error.message], new Date());
+    else {
+      process.stderr.write(`${JSON.stringify({ component: "mutation-risk-preflight", phase, errorCode: "PREFLIGHT_RUNTIME_ERROR" })}\n`);
+      process.exitCode = 2;
+      return;
+    }
+  }
   process.stdout.write(`${JSON.stringify(output)}\n`);
   process.exitCode = output.verdict === "READY" ? 0 : 2;
 }
