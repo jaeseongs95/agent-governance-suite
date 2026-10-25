@@ -112,7 +112,8 @@ function approvalStatus(input, now, required) {
       && targetLocators.every((target) => approval.targetLocators.map(canonicalLocator).includes(target))
       && input.targets.every((target) => approval.environments.includes(target.environment));
     if (!matches) continue;
-    if (Date.parse(approval.expiresAt) <= now.getTime()) sawMatchingExpired = true;
+    const expiresAt = Date.parse(approval.expiresAt);
+    if (!Number.isFinite(expiresAt) || expiresAt <= now.getTime()) sawMatchingExpired = true;
     else return { status: "observed", refs: [approval.locator] };
   }
   return { status: sawMatchingExpired ? "stale" : "mismatched", refs: refLocators(input.approvalEvidenceRefs) };
