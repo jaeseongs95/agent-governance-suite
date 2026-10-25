@@ -225,14 +225,80 @@ function mentionsToolUseId(line: string, toolUseId: string): boolean {
   return decoded.includes(toolUseId);
 }
 
+/**
+ * An open issuer block cannot prove the current call absent before its ID finishes.
+ * The closed copy is only a refusal hint; it never supplies an observation.
+ */
+function hasIncompleteIssuer(line: string, toolUseId: string): boolean {
+  const closers: string[] = [];
+  let inString = false;
+  let escaped = false;
+  let stringStart = -1;
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') inString = false;
+    } else if (char === '"') {
+      inString = true;
+      stringStart = index;
+    } else if (char === "{") closers.push("}");
+    else if (char === "[") closers.push("]");
+    else if ((char === "}" || char === "]") && closers.pop() !== char) return false;
+  }
+  if (closers.length === 0) return false;
+  let fragment = line.trimEnd();
+  let prefix = "";
+  // Longer than the entire source line, so no existing JSON string can equal it.
+  const unfinished = "!".repeat(line.length + 1);
+  if (inString) {
+    const tail = line.slice(stringStart + 1);
+    try { prefix = JSON.parse('"' + tail + '"') as string; }
+    catch {
+      // A writer can stop within a JSON escape, including a Unicode code unit.
+      const incompleteEscape = /\\(?:u[0-9a-fA-F]{0,3})?$/u.exec(tail)?.[0];
+      if (!incompleteEscape) return false;
+      try { prefix = JSON.parse('"' + tail.slice(0, -incompleteEscape.length) + '"') as string; }
+      catch { return false; }
+    }
+    fragment = line.slice(0, stringStart) + JSON.stringify(unfinished);
+  } else if (fragment.endsWith(",")) fragment = fragment.slice(0, -1);
+  else if (fragment.endsWith(":")) fragment += "null";
+  if (!inString) {
+    // A value may be unfinished inside input before the issuer's ID is written.
+    const partialValue = /(?:^|[[:,])\s*(t|tr|tru|f|fa|fal|fals|n|nu|nul|-|-?(?:0|[1-9]\d*)\.|-?(?:0|[1-9]\d*)(?:\.\d+)?[eE][+-]?)$/u.exec(fragment)?.[1];
+    if (partialValue) fragment = fragment.slice(0, -partialValue.length) + "null";
+  }
+  const closing = closers.reverse().join("");
+  let entry: Record<string, unknown> | null;
+  try { entry = record(JSON.parse(fragment + closing)); }
+  catch {
+    // A key may be unfinished, or complete with its colon not written yet.
+    try { entry = record(JSON.parse(fragment + ":null" + closing)); }
+    catch { return false; }
+  }
+  if (!entry || entry.type === "user" || entry.type === "system") return false;
+  const content = record(entry.message)?.content;
+  const block = Array.isArray(content) ? record(content.at(-1)) : null;
+  if (!block || block.type === "text" || block.type === "tool_result") return false;
+  if (block.id === unfinished) return toolUseId.startsWith(prefix);
+  // A complete different ID proves this open block belongs to another call.
+  if (text(block.id)) return false;
+  return block.type === "tool_use" || (block.type === unfinished && "tool_use".startsWith(prefix));
+}
+
 export type IssuingMessageProbe =
   | { state: "absent" | "present" }
-  | { state: "indeterminate"; reason: "CURRENT_CALL_INVALID_JSON" | "CURRENT_CALL_INVALID_SHAPE" };
+  | { state: "indeterminate"; reason: "CURRENT_CALL_INVALID_JSON" | "CURRENT_CALL_INVALID_SHAPE" | "CURRENT_CALL_INCOMPLETE" };
 
 /** A current-call parsing failure is not evidence that its issuing message is absent. */
 export function probeIssuingMessage(transcript: string, toolUseId: string): IssuingMessageProbe {
   for (const line of transcript.split("\n")) {
-    if (!mentionsToolUseId(line, toolUseId)) continue;
+    if (!mentionsToolUseId(line, toolUseId)) {
+      if (hasIncompleteIssuer(line, toolUseId)) return { state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" };
+      continue;
+    }
     let entry: Record<string, unknown> | null;
     try { entry = record(JSON.parse(line)); }
     catch { return { state: "indeterminate", reason: "CURRENT_CALL_INVALID_JSON" }; }
