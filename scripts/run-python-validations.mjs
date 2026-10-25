@@ -9,8 +9,9 @@ for (const entry of testEntries.filter((candidate) => candidate.isDirectory()).s
   const script = path.join(ROOT, "tests", entry.name, "validate_skill.py");
   try {
     await access(script);
-  } catch {
-    continue;
+  } catch (error) {
+    if (error.code === "ENOENT") continue;
+    throw error;
   }
   runPython(python, script);
 }

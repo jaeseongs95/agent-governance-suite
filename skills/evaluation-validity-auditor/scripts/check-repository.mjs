@@ -28,7 +28,9 @@ const required = [
 const text = async (relative) => readFile(path.join(root, relative), "utf8");
 const failures = [];
 for (const relative of required) {
-  try { await text(relative); } catch { failures.push(`missing required file: ${relative}`); }
+  try { await text(relative); } catch (error) {
+    failures.push(error.code === "ENOENT" ? `missing required file: ${relative}` : `cannot read required file: ${relative}: ${error.code ?? "UNKNOWN"}: ${error.message}`);
+  }
 }
 
 const packageJson = JSON.parse(await text("package.json"));
@@ -48,14 +50,18 @@ const runtimeBytes = await readFile(path.join(root, "runtime/schema-validation.m
 const runtimeDigest = `sha256:${createHash("sha256").update(runtimeBytes).digest("hex")}`;
 if (runtimeDigest !== runtimeLock.bundleDigest) failures.push("runtime schema validator bundle digest mismatch");
 
-const entries = await readdir(root, { recursive: true });
+const entries = await readdir(root, { recursive: true, withFileTypes: true });
 const domainSpecificPattern = new RegExp(["korean", "prose"].join("-"), "iu");
 for (const entry of entries) {
-  if (entry.startsWith(".git") || entry.startsWith("node_modules")) continue;
+  if (entry.isDirectory()) continue;
+  const relative = path.relative(root, path.join(entry.parentPath, entry.name));
+  if (relative.startsWith(".git") || relative.startsWith("node_modules")) continue;
   try {
-    const value = await text(entry);
-    if (domainSpecificPattern.test(value)) failures.push(`domain-specific coupling remains: ${entry.replaceAll("\\", "/")}`);
-  } catch {}
+    const value = await text(relative);
+    if (domainSpecificPattern.test(value)) failures.push(`domain-specific coupling remains: ${relative.replaceAll("\\", "/")}`);
+  } catch (error) {
+    failures.push(`cannot read ${relative}: ${error.code ?? "UNKNOWN"}: ${error.message}`);
+  }
 }
 
 try { compileAllSchemas(); } catch (error) { failures.push(`schema compilation failed: ${error instanceof Error ? error.message : String(error)}`); }

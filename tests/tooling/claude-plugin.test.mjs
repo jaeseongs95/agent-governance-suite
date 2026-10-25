@@ -151,7 +151,7 @@ describe("generated Claude plugin", () => {
     const files = listed.stdout.split("\0").filter((file) => file && !allowed.has(file));
     expect(files.length).toBeGreaterThan(500);
     for (const file of files) {
-      const text = await readFile(path.join(root, file), "utf8").catch(() => "");
+      const text = await readFile(path.join(root, file), "utf8");
       for (const sentence of sentences) expect(text.includes(sentence), `${file}: ${sentence}`).toBe(false);
     }
   });
