@@ -21,6 +21,32 @@ export function classifyInitial(receipt, stderr, generated) {
   return matches.length === 1 && generated.includes(matches[0][1]) ? 'EXPECTED_STALE_FAIL' : 'UNEXPECTED_FAILURE';
 }
 
+export function summarizeSuiteLoading(report, progressText, source) {
+  assert(Array.isArray(report.testResults));
+  const relative = file => {
+    assert(typeof file === 'string');
+    const value = path.relative(source, path.isAbsolute(file) ? file : path.resolve(source, file)).split(path.sep).join('/');
+    assert(safePath(value), 'Unsafe suite-load path');
+    return value;
+  };
+  const events = progressText.split(/\r?\n/u).filter(Boolean).map(line => JSON.parse(line));
+  const collectionFailures = [...new Set(events.filter(event => event.event === 'collection-failed').map(event => relative(event.file)))].sort(ordinal);
+  const files = report.testResults.map(row => {
+    assert(Array.isArray(row.assertionResults));
+    return { file: relative(row.name), status: row.status, cases: row.assertionResults.length,
+      failedCases: row.assertionResults.filter(item => item.status === 'failed').length };
+  });
+  const recoveryFile = 'tests/recovery-strategy-selector/recovery-selector.test.mjs';
+  const recovery = files.find(row => row.file === recoveryFile);
+  return { schemaVersion: 'AgsSuiteLoadObservation.v1', basis: 'EXISTING_PROGRESS_COLLECTION_EVENTS_AND_FULL_REPORT_CASES',
+    collectionFailures, failedFilesWithoutCases: files.filter(row => row.status === 'failed' && row.cases === 0).map(row => row.file).sort(ordinal),
+    failedCases: files.reduce((sum, row) => sum + row.failedCases, 0),
+    recovery: { file: recoveryFile, status: collectionFailures.includes(recoveryFile) ? 'COLLECTION_FAILED'
+      : !recovery ? 'NOT_IN_SHARD_REPORT' : recovery.cases === 0 ? 'REPORTED_WITHOUT_CASES' : 'CASE_RESULTS_REPORTED',
+      cases: recovery?.cases ?? null, failedCases: recovery?.failedCases ?? null },
+    conclusion: 'OBSERVATION_ONLY_NOT_A_SUITE_LOAD_PASS_OR_NEW_GATE' };
+}
+
 export function assertRows(rows) {
   assert(Array.isArray(rows) && rows.length > 0);
   const seen = new Set();
@@ -197,7 +223,7 @@ export async function finalizePartial(output, githubOutput, outcome, cap = 8 * 1
 
 async function finalizeFromRunner() {
   assert(['Linux', 'Windows'].includes(process.env.RUNNER_OS));
-  const work = path.join(path.resolve(process.env.RUNNER_TEMP), `ags30-b9e88935-c395-4923-af95-4a92425492af-${process.env.RUNNER_OS}`);
+  const work = path.join(path.resolve(process.env.RUNNER_TEMP), `ags30-3e9e29f4-2f40-4d34-a864-8e2ee41a8ae6-${process.env.RUNNER_OS}`);
   try { await fs.mkdir(work); } catch (error) { if (error.code !== 'EEXIST') throw error; }
   const info = await fs.lstat(work);
   assert(info.isDirectory() && !info.isSymbolicLink(), 'Unsafe work directory');
@@ -352,7 +378,7 @@ async function main() {
       before.filter(r => !generated.has(r.relativePath) && !optional.has(r.relativePath)), 'Non-generated source changed');
   }
   try {
-    assert.equal(config.nonce, 'b9e88935-c395-4923-af95-4a92425492af');
+    assert.equal(config.nonce, '3e9e29f4-2f40-4d34-a864-8e2ee41a8ae6');
     for (const [name, expected] of Object.entries(config.ownershipHelpers)) {
       const helper = await fs.readFile(new URL('./' + name, import.meta.url));
       assert.equal(helper.length, expected.bytes); assert.equal(sha(helper), expected.sha256);
@@ -601,8 +627,11 @@ async function main() {
     const full = await pnpm('08-full-test', ['test', '--shard='+shardRef, '--maxWorkers=2', '--fileParallelism=true', '--reporter=default', '--reporter=json', `--reporter=${progressReporter}`, `--outputFile=${fullReportFile}`], Math.min(480_000, Math.max(1_000, deadline - Date.now() - 120_000)), { AGS_CI_PROGRESS_FILE: progressFile });
     if (full.receipt.status !== 'PASS') testsPass = false;
     let fullCounts;
+    let suiteLoading = { status: 'NO_VERIFIED_SUITE_LOAD_REPORT' };
     try {
       const fullReport = JSON.parse(await fs.readFile(fullReportFile, 'utf8'));
+      try { suiteLoading = summarizeSuiteLoading(fullReport, await fs.readFile(progressFile, 'utf8'), source); }
+      catch (error) { suiteLoading = { status: 'NO_VERIFIED_SUITE_LOAD_REPORT', error: error.message }; }
       const moduleBinding = bindShardReport(fullReport,allFiles,source,shardIndex,config.shardCount);
       await writeJson('08-full-test.module-binding.json',moduleBinding);
       if(moduleBinding.status!=='COMPLETE_SHARD_PASS')testsPass=false;
@@ -613,6 +642,7 @@ async function main() {
       fullCounts = Object.fromEntries(['numTotalTests', 'numPassedTests', 'numFailedTests', 'numPendingTests', 'numTodoTests', 'numTotalTestSuites', 'numFailedTestSuites'].map(key => [key, fullReport[key] ?? null]));
     } catch (error) { fullCounts = { error: error.message, status: 'NO_VERIFIED_FULL_COUNTS' }; testsPass = false; }
     await writeJson('08-full-test.counts.json', fullCounts);
+    await writeJson('08-full-test.suite-load.json', suiteLoading);
     const repositoryChecks = {};
     const officialHome = path.join(work, 'official-validation', 'codex-home');
     for (const [name, script] of [['08c-runtime-check', 'runtime:check'], ['08d-validate-all', 'validate:all'], ['08e-validate-official', 'validate:official']]) {
@@ -661,7 +691,7 @@ async function main() {
     repositoryChecks.gitDiffCheck = diffCheck.receipt.status;
     if (diffCheck.receipt.status !== 'PASS') testsPass = false;
     const finalFreshness = await pnpm('09-final-freshness', ['bundle:check'], 120_000);
-    record.fullValidation = { claudeDrift: drift.receipt.status, repositoryChecks, lint: lint.receipt.status, officialTest: full.receipt.status, independentNodeSuites: independentNodeStatus, counts: fullCounts };
+    record.fullValidation = { claudeDrift: drift.receipt.status, repositoryChecks, lint: lint.receipt.status, officialTest: full.receipt.status, independentNodeSuites: independentNodeStatus, counts: fullCounts, suiteLoading };
     const after = await tree(source);
     await writeJson('source-after.json', { files: after.length, portableId: portable(after), rows: after });
     sameNonGenerated(before, after);

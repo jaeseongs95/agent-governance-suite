@@ -1,7 +1,7 @@
 {
   "schemaVersion": "AgsBoundedCiExecutionConfig.v1",
-  "unit": "AGS30-OFFICIAL-D0036-LINT-BUILD-SHARDS-20261025-R14",
-  "nonce": "b9e88935-c395-4923-af95-4a92425492af",
+  "unit": "AGS30-OFFICIAL-OWNED-REPAIRS-SOURCE-INTEGRATION-20261026-R15",
+  "nonce": "3e9e29f4-2f40-4d34-a864-8e2ee41a8ae6",
   "repository": "jaeseongs95/agent-governance-suite",
   "repositoryId": 1362118877,
   "branch": "release-3.0",
