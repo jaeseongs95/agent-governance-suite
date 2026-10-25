@@ -133,7 +133,8 @@ describe("approved classification wire adapters", () => {
     f.profile.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(f.profile);
     const encode = vi.fn((request, profile) => ({model: profile.modelId, reasoning: profile.reasoningEffort, max_output_tokens: profile.maximumOutputTokens, messages: buildVendorMessages(request)}));
     const decode = vi.fn(() => ({response: {schemaVersion: "1.0.0" as const, requestId: f.request.requestId, operationId: f.request.operationId, requestDigest: f.request.requestDigest, inventoryDigest: f.request.inventoryDigest, status: "SUCCESS" as const, judgments: [{skillId: "review", judgment: "needed" as const, reasonRefs: ["fixture"], uncertaintyReason: null}], unresolvedItems: [], error: null}, dispatchState: "started" as const, usage: unknownUsage(), diagnostics: null}));
-    const route: ApprovedClassificationRoute = {...f.route, providerKind: "vendor", vendorId: "current-vendor", modelIds: ["model-a"], reasoningEfforts: ["low"], adapter: {encode, decode}};
+    if (f.route.kind !== "remote") throw new Error("fixture");
+    const route: ApprovedClassificationRoute = bindClassificationRouteTransport({...f.route, providerKind: "vendor", vendorId: "current-vendor", modelIds: ["model-a"], reasoningEfforts: ["low"], adapter: {encode, decode}});
     const provider = new ApprovedRouteClassificationProvider([route], f.fetcher);
     await provider.classify(f.request, f.profile, new AbortController().signal);
     const wire = JSON.parse(String(f.fetcher.mock.calls[0]?.[1]?.body)); expect(wire).toMatchObject({model: "model-a", reasoning: "low", max_output_tokens: 1000});
@@ -713,7 +714,8 @@ describe("v6 independent prompt lineage and generic transport binding", () => {
     expect(wire.state.classificationRules).toEqual(jevNoulSharedRulesV6Prompt.rules);
     expect(JEV_NOUL_SHARED_RULES_V6_PROMPT_REVISION).toBe(revision);
     for (let index = 0; index < count; index++) {
-      const {sourceRefs: _refs, sourceMap: _map, ...descriptor} = skills[index]!;
+      const descriptor = structuredClone(skills[index]!);
+      Reflect.deleteProperty(descriptor, "sourceRefs"); Reflect.deleteProperty(descriptor, "sourceMap");
       expect(wire.questions["skill_" + index + "_applicability"]!.instructions.skill).toEqual(descriptor);
     }
     const body = {...raw(0.9, 0.9), answers: Object.fromEntries(ids.map(id => [id, {type: "noul", noul: 0.9}]))};
