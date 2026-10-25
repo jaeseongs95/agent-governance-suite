@@ -3,6 +3,7 @@ import { once } from "node:events";
 import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { performance } from "node:perf_hooks";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterEach, expect, it, vi } from "vitest";
@@ -43,6 +44,71 @@ function directory(): string {
   cleanup.push(() => rmSync(created, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 }));
   return created;
 }
+
+/** Test-only observation; the native child and the original 5000ms readiness check stay unchanged. */
+async function observedBroker(label: "large-board" | "slow-board", state: string, imports: string[] = [], env?: NodeJS.ProcessEnv) {
+  const started = performance.now();
+  const trace: Record<string, unknown>[] = [];
+  const safeCodes = new Set(["ETIMEDOUT", "ENOENT", "EACCES", "EPERM", "EINTR", "ENOBUFS", "ERR_CHILD_PROCESS_STDIO_MAXBUFFER"]);
+  const safeCode = (error: unknown) => {
+    try { const value = Object.getOwnPropertyDescriptor(error, "code")?.value; return safeCodes.has(value) ? value : null; }
+    catch { return null; }
+  };
+  let stderrBytes = 0;
+  let discarded = 0;
+  let tail = "";
+  let readinessStartedAtMs: number | null = null;
+  const elapsed = () => performance.now() - started;
+  const child = spawn(process.execPath, ["--import", new URL("./fixtures/presence-startup-trace.mjs", import.meta.url).href,
+    "--import", "tsx", ...imports.flatMap(value => ["--import", value]), sourceBroker, "--state-directory", state],
+  { windowsHide: true, stdio: ["ignore", "ignore", "pipe"], ...(env ? { env } : {}) });
+  const report = (phase: string, code: string | null = null) => {
+    try { console.info("AGS_PRESENCE_PARENT " + JSON.stringify({ label, phase, elapsedMs: elapsed(), readinessStartedAtMs, code,
+      exitCode: child.exitCode, signalCode: child.signalCode, stderrBytes, discarded, trace })); }
+    catch { /* Diagnostics must not replace the readiness or cleanup result. */ }
+  };
+  child.stderr!.on("data", (chunk: Buffer) => {
+    stderrBytes += chunk.length;
+    const lines = (tail + chunk.toString("utf8")).split("\n");
+    tail = lines.pop()!;
+    if (tail.length > 1024) { tail = ""; discarded++; }
+    for (const line of lines) {
+      // Drain all bytes; retain only bounded, explicitly shaped, path-free preload records.
+      if (trace.length >= 20 || line.length > 512 || !line.startsWith("AGS_PRESENCE_STARTUP ")) { discarded++; continue; }
+      try {
+        const value = JSON.parse(line.slice("AGS_PRESENCE_STARTUP ".length)) as Record<string, unknown>;
+        if (!value || !["preload", "powershell-start", "powershell-end"].includes(value.event as string)
+          || typeof value.atMs !== "number" || !Number.isFinite(value.atMs) || value.atMs < 0) { discarded++; continue; }
+        const record: Record<string, unknown> = { event: value.event, childMs: value.atMs, receivedAtMs: elapsed() };
+        if (value.event !== "preload") {
+          if (!Number.isInteger(value.call) || (value.call as number) < 1 || (value.call as number) > 8) { discarded++; continue; }
+          record.call = value.call;
+        }
+        if (value.event === "powershell-end") {
+          if (typeof value.durationMs !== "number" || !Number.isFinite(value.durationMs) || value.durationMs < 0
+            || !["return", "throw"].includes(value.outcome as string)) { discarded++; continue; }
+          record.durationMs = value.durationMs; record.outcome = value.outcome;
+          record.code = safeCodes.has(value.code as string) ? value.code : null;
+        }
+        trace.push(record);
+      } catch { discarded++; }
+    }
+  });
+  child.stderr!.on("error", error => report("stderr-error", safeCode(error)));
+  child.once("spawn", () => report("spawn"));
+  child.once("error", error => report("child-error", safeCode(error)));
+  child.once("exit", () => report("exit"));
+  // Observe close without introducing a new cleanup wait; the existing runner owns all descendants.
+  child.once("close", () => report("closed-drained"));
+  cleanup.push(async () => {
+    if (child.exitCode === null && child.signalCode === null) {
+      const exit = once(child, "exit"); report("cleanup-kill"); child.kill(); await exit;
+    }
+  });
+  try { readinessStartedAtMs = elapsed(); await waitForSessionMessageBrokerReady(state, child, 5000); report("ready"); }
+  catch (error) { report("ready-failed", safeCode(error)); throw error; }
+}
+
 function open(database: string): Store {
   const store = new SessionMessageStore(database);
   cleanup.push(() => store.close());
@@ -106,11 +172,7 @@ it("serves board presence from a 342-identity, 1302-row database through a real 
   const state = directory();
   const now = Date.now();
   expect(largeFixture(path.join(state, "session-messages.sqlite3"), now)).toEqual({ rows: 1302, identities: 342 });
-  const child = spawn(process.execPath, ["--import", "tsx", sourceBroker, "--state-directory", state], { windowsHide: true, stdio: "ignore" });
-  cleanup.push(async () => {
-    if (child.exitCode === null && child.signalCode === null) { const exit = once(child, "exit"); child.kill(); await exit; }
-  });
-  await waitForSessionMessageBrokerReady(state, child, 5000);
+  await observedBroker("large-board", state);
   // The board shows sessions updated in the last 24 hours: the recent and live ones, plus a few long-gone identities.
   const board = [...Array.from({ length: 40 }, (_, index) => `recent-${index}`), "live-0", "live-1", "old-0", "old-299"]
     .map((sessionId) => ({ host: "portable", sessionId }));
@@ -132,12 +194,7 @@ it("serves board presence from a 342-identity, 1302-row database through a real 
 it("ends a board lookup against a slow real broker at one overall client deadline", async () => {
   const state = directory();
   const slow = pathToFileURL(fileURLToPath(new URL("./fixtures/slow-list-presence.mjs", import.meta.url))).href;
-  const child = spawn(process.execPath, ["--import", "tsx", "--import", slow, sourceBroker, "--state-directory", state],
-    { windowsHide: true, stdio: "ignore", env: { ...process.env, AGS_TEST_LIST_PRESENCE_DELAY_MS: "1000" } });
-  cleanup.push(async () => {
-    if (child.exitCode === null && child.signalCode === null) { const exit = once(child, "exit"); child.kill(); await exit; }
-  });
-  await waitForSessionMessageBrokerReady(state, child, 5000);
+  await observedBroker("slow-board", state, [slow], { ...process.env, AGS_TEST_LIST_PRESENCE_DELAY_MS: "1000" });
   // 90 board sessions are 30 batches; at 1 s each (inside the 2.5 s per-request limit) the lookup would take 30 s.
   const board = Array.from({ length: 90 }, (_, index) => ({ host: "portable", sessionId: `slow-${index}` }));
   const started = Date.now();
