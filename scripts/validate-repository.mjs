@@ -26,12 +26,22 @@ const requiredFiles = [
 ];
 const errors = [];
 
-for (const relativePath of requiredFiles) {
+// Only ENOENT means the path is absent; any other failure (EACCES, EIO, ENOTDIR, ...) is a read failure.
+async function checkAccess(relativePath, missingMessage) {
   try {
     await access(path.join(ROOT, relativePath));
-  } catch {
-    errors.push(`missing required file: ${relativePath}`);
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      errors.push(missingMessage);
+      return;
+    }
+    const code = typeof error?.code === "string" && /^[A-Z0-9_]{1,32}$/u.test(error.code) ? error.code : "UNKNOWN";
+    errors.push(`cannot access ${relativePath} (${code}): read check failed`);
   }
+}
+
+for (const relativePath of requiredFiles) {
+  await checkAccess(relativePath, `missing required file: ${relativePath}`);
 }
 
 if (errors.length === 0) {
@@ -60,11 +70,7 @@ if (errors.length === 0) {
       errors.push("plugin skills and mcpServers must use relative ./ paths");
       continue;
     }
-    try {
-      await access(path.join(ROOT, manifestPath));
-    } catch {
-      errors.push(`plugin manifest path does not exist: ${manifestPath}`);
-    }
+    await checkAccess(manifestPath, `plugin manifest path does not exist: ${manifestPath}`);
   }
 
   const registryDocument = await readJson(path.join(ROOT, "skills", "registry.json"));
@@ -79,11 +85,8 @@ if (errors.length === 0) {
     if (descriptor.path !== `./${descriptor.skillId}`) {
       errors.push(`registry path for ${descriptor.skillId} must be ./${descriptor.skillId}`);
     }
-    try {
-      await access(path.join(ROOT, "skills", descriptor.skillId, "SKILL.md"));
-    } catch {
-      errors.push(`registry skill path does not exist: skills/${descriptor.skillId}/SKILL.md`);
-    }
+    const skillFile = `skills/${descriptor.skillId}/SKILL.md`;
+    await checkAccess(skillFile, `registry skill path does not exist: ${skillFile}`);
   }
 
   const descriptorSchema = await readJson(path.join(ROOT, "contracts", "skill-descriptor.v2.schema.json"));
