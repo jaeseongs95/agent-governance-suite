@@ -295,16 +295,26 @@ export function analyzeAcceptance(input) {
 }
 
 export function validateReport(validation) {
-  const errors = [];
   if (!validation || typeof validation !== "object" || Array.isArray(validation)) return ["validation input must be an object"];
   if (!validateReportValidationSchema(validation)) {
     return [`validation input schema validation failed: ${JSON.stringify(validateReportValidationSchema.errors)}`];
   }
   const { report, request, requestArtifact } = validation;
-  const expectedRequestDigest = sha256(request);
-  if (requestArtifact.digest !== expectedRequestDigest) {
+  if (!report || typeof report !== "object" || Array.isArray(report)) return ["report must be an object"];
+  const errors = [];
+  if (requestArtifact.digest !== sha256(request)) {
     errors.push("requestArtifact.digest does not match the canonical frozen request");
   }
+  return [...errors, ...validateReportAgainstRequest(report, request)];
+}
+
+/**
+ * Canonical report checks against an already frozen request: report schema, self-consistency and one-to-one
+ * agreement with analyzeAcceptance(request). Callers that hold the request bytes themselves (the MCP stage gate)
+ * use this directly; validateReport adds the requestArtifact digest binding on top.
+ */
+export function validateReportAgainstRequest(report, request) {
+  const errors = [];
   if (!report || typeof report !== "object" || Array.isArray(report)) return ["report must be an object"];
   if (!validateReportSchema(report)) errors.push(`report schema validation failed: ${JSON.stringify(validateReportSchema.errors)}`);
   if (report.schemaVersion !== "1.0.0") errors.push("report.schemaVersion must be 1.0.0");

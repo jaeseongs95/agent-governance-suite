@@ -21,6 +21,7 @@ export interface SharedModuleContext {
   time(milliseconds: number): number;
 }
 export class SharedStateError extends Error { readonly code: string; }
+export function retainCleanupFailure(primary: unknown, reason: string, cleanup: () => void): boolean;
 export function resolveInactiveSharedDatabasePath(directory: string): string;
 export function runObservedTimeTransaction<T>(database: SqlDatabase, observe: () => number, operation: (now: number) => T, afterDomain?: () => void): T;
 export class InactiveSharedConnection {

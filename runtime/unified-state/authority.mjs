@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { canonicalJson, hashBytes, hashJson } from "../engineering-practices/io.mjs";
-import { runObservedTimeTransaction, resolveInactiveSharedDatabasePath, SharedStateError } from "./shared-connection.mjs";
+import { retainCleanupFailure, runObservedTimeTransaction, resolveInactiveSharedDatabasePath, SharedStateError } from "./shared-connection.mjs";
 
 const APPLICATION_ID = 0x41475355;
 const SCHEMA_VERSION = 1;
@@ -113,12 +113,12 @@ export class InactiveUnifiedAuthority {
         this.#database.exec(`PRAGMA application_id=${APPLICATION_ID}; PRAGMA user_version=${SCHEMA_VERSION};`);
       });
       this.#database.exec("PRAGMA journal_mode=WAL;");
-    } catch (error) { this.#database.close(); throw error; }
+    } catch (error) { retainCleanupFailure(error, "AUTHORITY_DATABASE_CLOSE_FAILED", () => this.#database.close()); throw error; }
   }
   #transaction(action) {
     this.#database.exec("BEGIN IMMEDIATE");
     try { const result = action(); this.#database.exec("COMMIT"); return result; }
-    catch (error) { try { this.#database.exec("ROLLBACK"); } catch { /* Primary error wins. */ } throw error; }
+    catch (error) { retainCleanupFailure(error, "TRANSACTION_ROLLBACK_FAILED", () => this.#database.exec("ROLLBACK")); throw error; }
   }
   #observedTimeTransaction(action) {
     return runObservedTimeTransaction(this.#database, () => this.#now(), action);

@@ -499,29 +499,43 @@ export async function runSessionMessageHook(host: SupportedHookHost, raw: string
   return (await runSessionMessageHookOutcome(host, raw, explicitHostPid, options)).output;
 }
 
+/** CLI status for a failed run. Hosts treat a non-zero status other than the blocking one as a non-blocking hook
+ * error, so messaging still never blocks the host while a failure stays distinct from a successful empty result. */
+const HOOK_FAILURE_EXIT_CODE = 1;
+
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
+  // Every failed stage keeps its own phase/reason diagnostic and sets the failure status; the output stays empty.
+  const failed = (phase: HookFailurePhase, error: unknown): void => {
+    reportHookFailure(phase, error);
+    process.exitCode = HOOK_FAILURE_EXIT_CODE;
+  };
   let raw: string | null = null;
-  try { raw = readFileSync(0, "utf8"); } catch (error) { reportHookFailure("stdin", error); }
+  try { raw = readFileSync(0, "utf8"); } catch (error) { failed("stdin", error); }
   if (raw !== null) {
     const hostPidIndex = process.argv.indexOf("--host-pid");
     const hostPid = Number.parseInt(hostPidIndex >= 0 ? process.argv[hostPidIndex + 1] ?? "" : "", 10);
     try {
       const host = resolveHookHost(process.argv.slice(2), "codex");
-      void runSessionMessageHook(host, raw, Number.isInteger(hostPid) ? hostPid : undefined)
-        .then((output) => {
-          if (!output) return;
+      void runSessionMessageHookOutcome(host, raw, Number.isInteger(hostPid) ? hostPid : undefined)
+        .then((outcome) => {
+          // The outcome already reported its failed phase and reason; only the status is left to carry.
+          if (!outcome.ok) {
+            process.exitCode = HOOK_FAILURE_EXIT_CODE;
+            return;
+          }
+          if (!outcome.output) return;
           let reported = false;
           const outputFailed = (error: unknown) => {
             if (reported) return;
             reported = true;
-            reportHookFailure("stdout", error);
+            failed("stdout", error);
           };
           // This CLI writes once. A stream error may follow its write callback.
           process.stdout.on("error", outputFailed);
-          try { process.stdout.write(output, (error) => { if (error) outputFailed(error); }); }
+          try { process.stdout.write(outcome.output, (error) => { if (error) outputFailed(error); }); }
           catch (error) { outputFailed(error); }
         })
-        .catch((error) => reportHookFailure("stdout", error));
-    } catch (error) { reportHookFailure("host-entry", error); }
+        .catch((error) => failed("stdout", error));
+    } catch (error) { failed("host-entry", error); }
   }
 }

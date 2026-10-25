@@ -12,7 +12,7 @@ import {
   WorkflowContractError,
 } from "../../contracts/types.js";
 import { canonicalJson } from "./convergence-logic.js";
-import { retainFailureCause, retainFailureSecondary, tagProducerFailure } from "./failure-diagnostics.js";
+import { failureContext, retainFailureCause, retainFailureSecondary, tagProducerFailure } from "./failure-diagnostics.js";
 
 type UnsignedInputSource = Omit<InputSourceReceiptV1, "schemaVersion" | "receiptId" | "integrityToken">;
 interface ReceiptRow { receipt_json: string }
@@ -31,23 +31,6 @@ function verifyInputSource(receipt: InputSourceReceiptV1, signingKey: Buffer): b
     const expected = createHmac("sha256", signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest();
     return signingKey.length === 32 && actual.length === expected.length && timingSafeEqual(actual, expected);
   } catch { return false; }
-}
-
-/** Sanitized storage diagnostics: fixed reason plus an allow-listed native code; never raw input or secrets. */
-function storageDiagnostic(cause: unknown): Record<string, unknown> {
-  const storage: Record<string, unknown> = { reason: "TRUST_STORAGE_FAILED" };
-  if (!utilTypes.isNativeError(cause)) return storage;
-  const code = Object.getOwnPropertyDescriptor(cause, "code");
-  if (code && "value" in code && typeof code.value === "string" && /^[A-Z][A-Z0-9_]{0,63}$/u.test(code.value)) {
-    storage.nativeCode = code.value;
-    if (code.value === "ERR_SQLITE_ERROR") {
-      const errcode = Object.getOwnPropertyDescriptor(cause, "errcode");
-      if (errcode && "value" in errcode && Number.isInteger(errcode.value) && errcode.value >= 1 && errcode.value <= 65535) {
-        storage.sqliteErrcode = errcode.value;
-      }
-    }
-  }
-  return storage;
 }
 
 function rejectUnexpectedKeys(value: object, allowed: Set<string>, label: string): void {
@@ -239,7 +222,6 @@ export class TrustStore {
     const version = this.shared?.getSchemaVersion() ?? (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
     if (version > SCHEMA_VERSION) {
       throw tagProducerFailure(new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
-        databasePath: this.databasePath,
         supportedVersion: SCHEMA_VERSION,
         actualVersion: version,
       }), "TRUST_SCHEMA_UNSUPPORTED");
@@ -304,12 +286,15 @@ export class TrustStore {
     }
   }
 
+  /**
+   * A storage or driver failure means the trust store is unavailable, never that the caller's input was invalid.
+   * Details keep a bounded, redacted cause (no message, path or SQL); the actual error stays a private producer cause.
+   */
   private storageError(message: string, cause: unknown, details: Record<string, unknown> = {}): WorkflowContractError {
-    return retainFailureCause(tagProducerFailure(new WorkflowContractError("INVALID_INPUT", message, {
+    return retainFailureCause(tagProducerFailure(new WorkflowContractError("MCP_UNAVAILABLE", message, {
       ...details,
-      databasePath: this.databasePath,
-      cause: cause instanceof Error ? cause.message : String(cause),
-      storage: storageDiagnostic(cause),
+      reason: "TRUST_STORAGE_FAILED",
+      cause: failureContext(cause),
     }), "TRUST_STORAGE_FAILED"), cause);
   }
 }

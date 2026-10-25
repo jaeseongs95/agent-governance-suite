@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -28,6 +29,11 @@ function temp(): string {
   return directory;
 }
 
+/** Raw and JSON-escaped forms: on Windows JSON doubles every backslash, so the raw form alone never matches. */
+function pathForms(value: string): string[] {
+  return [value, JSON.stringify(value).slice(1, -1)];
+}
+
 function lines(spy: { mock: { calls: unknown[][] } }): string[] {
   return spy.mock.calls.map((call) => String(call[0])).filter((line) => line.includes("board-hook-failure "));
 }
@@ -55,6 +61,22 @@ describe("session board hook failure cause", () => {
     expect(line).not.toContain("PRIVATE_WAKE_MESSAGE");
   });
 
+  it("reports an unreadable stdin as its own phase with the read cause, not as invalid input", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const unreadable = (() => {
+      throw Object.assign(new Error("PRIVATE_STDIN_MESSAGE"), { code: "EAGAIN" });
+    }) as unknown as string;
+    expect(await runSessionBoardHook("codex", unreadable)).toBe("");
+    const reported = lines(spy);
+    expect(reported).toHaveLength(1);
+    const line = reported[0]!;
+    const value = JSON.parse(line.slice(line.indexOf("{"))) as Record<string, unknown>;
+    expect(value).toMatchObject({ phase: "stdin", context: { type: "error", code: {
+      type: "string", prefixSha256: createHash("sha256").update(Buffer.from("EAGAIN", "utf16le")).digest("hex"),
+    } } });
+    expect(line).not.toContain("PRIVATE_STDIN_MESSAGE");
+  });
+
   it("reports the failed open phase when the board is unusable", async () => {
     const directory = temp();
     const blocker = path.join(directory, "file");
@@ -66,7 +88,7 @@ describe("session board hook failure cause", () => {
     }))).toBe("");
     const line = lines(spy).find((value) => value.includes('"phase":"open"'));
     expect(line).toBeDefined();
-    expect(line).not.toContain(directory);
+    for (const form of pathForms(directory)) expect(line).not.toContain(form);
   });
 });
 
@@ -93,6 +115,6 @@ describe("session board MCP failure cause", () => {
     expect(result.ok).toBe(false);
     expect(result.error?.code).toBe("MCP_UNAVAILABLE");
     expect(result.error?.details).toMatchObject({ step: "open", cause: { type: "error" } });
-    expect(text).not.toContain(databasePath);
+    for (const form of pathForms(databasePath)) expect(text).not.toContain(form);
   });
 });
