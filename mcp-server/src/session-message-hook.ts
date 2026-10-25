@@ -163,8 +163,9 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     stdio: "ignore",
     env: process.env,
   });
-  if (relayId) child.once("error", (error) => {
-    reportHookFailure("relay-start", error); // Unknown startup remains latched; no automatic respawn.
+  // Spawn failure is asynchronous for every startup path; without a listener it would escape the hook unreported.
+  child.once("error", (error) => {
+    reportHookFailure("relay-start", error); // A verified startup remains latched; no automatic respawn.
   });
   child.unref();
 }

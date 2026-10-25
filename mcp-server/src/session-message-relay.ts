@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import { failureContext, producerFailureReason } from "./failure-diagnostics.js";
 import { newWakeNonce, sessionMessageRequest, wakeMessage } from "./session-message-client.js";
 import { processExists, processIdentityState, type ProcessIdentityState } from "./process-identity.js";
 import { transportWakePort, transportDeliveryCapabilities, wakeBackoffDelay, type WakeDispatchPort, type WakeDispatchOutcome } from "./session-message-wake-port.js";
@@ -23,6 +24,16 @@ export function relayIdentityDecision(identity: ProcessIdentityState, previousUn
 }
 
 export type SessionMessageTransport = string;
+
+export type RelayFailurePhase = "acquire" | "tick" | "release" | "run";
+
+/** Local diagnostic only: producer reason plus bounded fingerprinted context, never messages, paths or bodies. */
+export function reportRelayFailure(phase: RelayFailurePhase, error: unknown): void {
+  try {
+    console.error("[agent-governance-suite] relay-failure " + JSON.stringify({ phase,
+      reason: producerFailureReason(error) ?? "UNEXPECTED_FAILURE", context: failureContext(error) }));
+  } catch { /* A broken diagnostic sink cannot stop the relay or its cleanup. */ }
+}
 
 export interface RelayOptions {
   host: string;
@@ -106,7 +117,9 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
         acquired = result.acquired;
         if (acquired) break;
       }
-    } catch { /* Retry while a stale lease expires. */ }
+    } catch (error) {
+      reportRelayFailure("acquire", error); // Retry while a stale lease expires.
+    }
     await delay(3000);
   }
   if (!acquired) return;
@@ -154,8 +167,9 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
         nextIdentityCheck = now + IDENTITY_RECHECK_MS;
         await dispatchManagedWake(options, relayId, port);
       }
-    } catch {
+    } catch (error) {
       // Messages remain durable. A committed start is never retried on an uncertain response.
+      reportRelayFailure("tick", error);
     }
       await delay(LOOP_MS);
     }
@@ -166,6 +180,8 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
       } else {
         await sessionMessageRequest("presence-end",{target,instanceId:options.instanceId,reason:"host-process-ended"},undefined,{totalTimeoutMs:3000});
       }
-    } catch { /* Lease expiry still provides an unreachable fallback. */ }
+    } catch (error) {
+      reportRelayFailure("release", error); // Lease expiry still provides an unreachable fallback.
+    }
   }
 }
