@@ -226,66 +226,118 @@ function mentionsToolUseId(line: string, toolUseId: string): boolean {
 }
 
 /**
- * An open issuer block cannot prove the current call absent before its ID finishes.
- * The closed copy is only a refusal hint; it never supplies an observation.
+ * A damaged content block stays unknown unless intact metadata proves it unrelated.
+ * Prefix checks never supply model, effort, identity or signing observations.
  */
 function hasIncompleteIssuer(line: string, toolUseId: string): boolean {
-  const closers: string[] = [];
+  try {
+    const entry = record(JSON.parse(line));
+    const content = record(entry?.message)?.content;
+    return entry?.type !== "user" && entry?.type !== "system" && Array.isArray(content)
+      && content.some(value => record(value)?.type === "tool_use" && !text(record(value)?.id));
+  } catch { /* A damaged row needs absence evidence, not successful recovery. */ }
+
+  type Role = "root" | "message" | "content" | "block" | "other";
+  type Prefix = { end: number; closing: string; partial?: "id" | "type"; value?: string; start?: number };
+  const frames: { closing: string; role: Role }[] = [];
+  let hasBlock = false;
   let inString = false;
   let escaped = false;
   let stringStart = -1;
+  let stringField: unknown = null;
+  let lastTokenWasString = false;
+  let field: unknown = null;
+  let rootType: Prefix | null = null;
+  let blockType: Prefix | null = null;
+  let blockId: Prefix | null = null;
+  let typeStart = -1;
+  let idStart = -1;
+  const snapshot = (end: number): Prefix => ({ end, closing: frames.map(frame => frame.closing).reverse().join("") });
+
   for (let index = 0; index < line.length; index += 1) {
     const char = line[index];
+    const parent = frames.at(-1)?.role;
     if (inString) {
       if (escaped) escaped = false;
       else if (char === "\\") escaped = true;
-      else if (char === '"') inString = false;
-    } else if (char === '"') {
-      inString = true;
-      stringStart = index;
-    } else if (char === "{") closers.push("}");
-    else if (char === "[") closers.push("]");
-    else if ((char === "}" || char === "]") && closers.pop() !== char) return false;
-  }
-  if (closers.length === 0) return false;
-  let fragment = line.trimEnd();
-  let prefix = "";
-  // Longer than the entire source line, so no existing JSON string can equal it.
-  const unfinished = "!".repeat(line.length + 1);
-  if (inString) {
-    const tail = line.slice(stringStart + 1);
-    try { prefix = JSON.parse('"' + tail + '"') as string; }
-    catch {
-      // A writer can stop within a JSON escape, including a Unicode code unit.
-      const incompleteEscape = /\\(?:u[0-9a-fA-F]{0,3})?$/u.exec(tail)?.[0];
-      if (!incompleteEscape) return false;
-      try { prefix = JSON.parse('"' + tail.slice(0, -incompleteEscape.length) + '"') as string; }
-      catch { return false; }
+      else if (char === '"') {
+        inString = false;
+        lastTokenWasString = true;
+        if (parent === "root" && stringField === "type") rootType = snapshot(index + 1);
+        if (parent === "block" && stringField === "type") blockType = snapshot(index + 1);
+        if (parent === "block" && stringField === "id") blockId = snapshot(index + 1);
+      }
+      continue;
     }
-    fragment = line.slice(0, stringStart) + JSON.stringify(unfinished);
-  } else if (fragment.endsWith(",")) fragment = fragment.slice(0, -1);
-  else if (fragment.endsWith(":")) fragment += "null";
-  if (!inString) {
-    // A value may be unfinished inside input before the issuer's ID is written.
-    const partialValue = /(?:^|[[:,])\s*(t|tr|tru|f|fa|fal|fals|n|nu|nul|-|-?(?:0|[1-9]\d*)\.|-?(?:0|[1-9]\d*)(?:\.\d+)?[eE][+-]?)$/u.exec(fragment)?.[1];
-    if (partialValue) fragment = fragment.slice(0, -partialValue.length) + "null";
+    if (!char?.trim()) continue;
+    if (char === ":" && lastTokenWasString) {
+      try { field = JSON.parse(line.slice(stringStart, index).trimEnd()); } catch { field = null; }
+      if (parent === "block" && field === "id") idStart = index;
+      if (parent === "block" && field === "type") typeStart = index;
+    } else {
+      const valueField = field;
+      field = null;
+      if (char === '"') {
+        inString = true;
+        stringStart = index;
+        stringField = valueField;
+      } else if (char === "{" || char === "[") {
+        const role: Role = char === "{" && frames.length === 0 ? "root"
+          : char === "{" && parent === "root" && valueField === "message" ? "message"
+            : char === "[" && parent === "message" && valueField === "content" ? "content"
+              : char === "{" && parent === "content" ? "block" : "other";
+        frames.push({ closing: char === "{" ? "}" : "]", role });
+        if (role === "block") {
+          hasBlock = true;
+          blockType = null; blockId = null; typeStart = -1; idStart = -1;
+        }
+      } else if ((char === "}" || char === "]") && frames.pop()?.closing !== char) break;
+    }
+    lastTokenWasString = false;
   }
-  const closing = closers.reverse().join("");
-  let entry: Record<string, unknown> | null;
-  try { entry = record(JSON.parse(fragment + closing)); }
-  catch {
-    // A key may be unfinished, or complete with its colon not written yet.
-    try { entry = record(JSON.parse(fragment + ":null" + closing)); }
-    catch { return false; }
+  if (!hasBlock) return false; // Preserve unrelated root damage and actual absence.
+  if (rootType) {
+    try {
+      const entry = record(JSON.parse(line.slice(0, rootType.end) + rootType.closing));
+      if (entry?.type === "user" || entry?.type === "system") return false;
+    } catch { /* No non-issuer proof. */ }
   }
-  if (!entry || entry.type === "user" || entry.type === "system") return false;
-  const content = record(entry.message)?.content;
-  const block = Array.isArray(content) ? record(content.at(-1)) : null;
-  if (!block || block.type === "text" || block.type === "tool_result") return false;
-  if (block.id === unfinished) return toolUseId.startsWith(prefix);
-  // A complete different ID proves this open block belongs to another call.
-  if (text(block.id)) return false;
-  return block.type === "tool_use" || (block.type === unfinished && "tool_use".startsWith(prefix));
+
+  let partial: Prefix | null = null;
+  if (inString && frames.at(-1)?.role === "block" && (stringField === "id" || stringField === "type")) {
+    const tail = line.slice(stringStart + 1);
+    let value: string | null = null;
+    try { value = JSON.parse('"' + tail + '"') as string; }
+    catch {
+      const escape = /\\(?:u[0-9a-fA-F]{0,3})?$/u.exec(tail)?.[0];
+      if (escape) {
+        try { value = JSON.parse('"' + tail.slice(0, -escape.length) + '"') as string; } catch { /* Unknown metadata. */ }
+      }
+    }
+    if (value !== null) partial = { ...snapshot(line.length), partial: stringField, value, start: stringStart };
+  }
+  const proofs = [partial, blockId, blockType].filter((value): value is Prefix => value !== null)
+    .sort((left, right) => right.end - left.end);
+  for (const proof of proofs) {
+    try {
+      const prefix = proof.partial ? line.slice(0, proof.start) + JSON.stringify(proof.value) : line.slice(0, proof.end);
+      const entry = record(JSON.parse(prefix + proof.closing));
+      if (entry?.type === "user" || entry?.type === "system") return false;
+      const content = record(entry?.message)?.content;
+      // A later non-issuer cannot erase an earlier unidentified tool-use block.
+      if (Array.isArray(content) && content.some(value => record(value)?.type === "tool_use" && !text(record(value)?.id))) return true;
+      const block = Array.isArray(content) ? record(content.at(-1)) : null;
+      if (!block) continue;
+      const type = typeStart > proof.end ? null : text(block.type);
+      const id = idStart > proof.end ? null : text(block.id);
+      if (type === "text" || type === "tool_result") return false;
+      if (proof.partial === "id" && id !== null) return toolUseId.startsWith(id);
+      if (id !== null && id !== toolUseId) return false;
+      if (proof.partial === "type" && type !== null) return "tool_use".startsWith(type);
+      return true;
+    } catch { /* Failed metadata proof leaves a possible issuer unknown. */ }
+  }
+  return true;
 }
 
 export type IssuingMessageProbe =

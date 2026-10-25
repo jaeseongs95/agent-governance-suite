@@ -98,6 +98,140 @@ function payload(output: Record<string, unknown>): Record<string, unknown> {
 beforeEach(() => { diagnostics.write.mockReset(); });
 
 describe("AGS-D-0179 unfinished issuer identity", () => {
+  it.each([
+    issuer + '"type":"tool_use"},{"type":"text","text":"\\q',
+    issuer + '"type":"tool_use"},{"type":"tool_result","tool_use_id":"other"},{"type":"tool_use","id":"other"},{"type":"text","text":"\\q',
+  ])("does not let later unrelated blocks erase an earlier unidentified issuer: %s", damaged => {
+    const f = fixture();
+    try {
+      expect(probeIssuingMessage(damaged, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
+      const output = handleHostAttestationHook(f.input, f.store, { ...f.options,
+        readText: () => row("toolu_previous_179") + "\n" + damaged });
+      expect(output).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: f.clean } });
+      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).not.toHaveBeenCalled();
+    } finally { f.key.mockRestore(); }
+  });
+
+  it("retains an unidentified issuer after text, tool-result and a complete other ID", () => {
+    const f = fixture();
+    const damaged = issuer + '"type":"text","text":"earlier"},{"type":"tool_result","tool_use_id":"other"},{"type":"tool_use","id":"other"},{"type":"tool_use","name":"\\q';
+    try {
+      expect(probeIssuingMessage(damaged, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
+      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, readText: () => damaged });
+      expect(updated(output)).toEqual(f.clean);
+      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).not.toHaveBeenCalled();
+    } finally { f.key.mockRestore(); }
+  });
+
+  it("keeps absence when every preceding block is clearly unrelated to the current issuer", () => {
+    const f = fixture();
+    const unrelated = issuer + '"type":"tool_use","id":"other"},{"type":"tool_result","tool_use_id":"other"},{"type":"text","text":"\\q';
+    try {
+      expect(probeIssuingMessage(unrelated, CALL)).toEqual({ state: "absent" });
+      const output = handleHostAttestationHook(f.input, f.store, { ...f.options,
+        readText: () => row("toolu_previous_179") + "\n" + unrelated });
+      expect(payload(output)).toMatchObject({ model: MODEL, provenance: "claude-code:session-start" });
+      expect(f.cache).toHaveBeenCalledTimes(1); expect(f.key).toHaveBeenCalledTimes(1);
+    } finally { f.key.mockRestore(); }
+  });
+
+  it.each([false, true])("keeps valid exact precedence over an unidentified earlier content block: %s", damagedFirst => {
+    const f = fixture();
+    const rows = [row(), issuer + '"type":"tool_use"},{"type":"text","text":"\\q'];
+    if (damagedFirst) rows.reverse();
+    try {
+      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, readText: () => rows.join("\n") });
+      expect(payload(output)).toMatchObject({ model: MODEL, call: hostIdentityDigest(CALL), provenance: "claude-code:transcript-tool-use" });
+      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).toHaveBeenCalledTimes(1);
+    } finally { f.key.mockRestore(); }
+  });
+
+  it.each([
+    issuer + '"type":"tool_use","name":"\\q',
+    issuer + '"type":"tool_use","extra":truX',
+    issuer + '"input":{"flag":truX},"type":"tool_use"',
+    issuer + '"name":"\\q',
+    issuer + '"input":{"flag":truX',
+    '{"type":"assistant","extra":truX,"message":{"content":[{"type":"tool_use","name":"\\q',
+    '{"type":"assistant","message":{"content":[{"type":"text","text":"earlier"},{"input":{"flag":truX},"type":"tool_use"',
+    JSON.stringify({ type: "assistant", message: { content: [{ input: {}, type: "tool_use" }] } }),
+  ])("keeps a possible issuer unknown independently of damaged field name or key order: %s", damaged => {
+    const f = fixture();
+    try {
+      expect(probeIssuingMessage(damaged, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
+      const output = handleHostAttestationHook(f.input, f.store, { ...f.options,
+        readText: () => row("toolu_previous_179") + "\n" + damaged });
+      expect(output).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: f.clean } });
+      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).not.toHaveBeenCalled();
+    } finally { f.key.mockRestore(); }
+  });
+
+  it.each([
+    issuer + '"type":"text","name":"\\q',
+    issuer + '"type":"tool_result","name":"\\q',
+    issuer + '"id":"toolu_previous_179","name":"\\q',
+    '{"type":"system","message":{"content":[{"name":"\\q',
+    '{"type":"user","extra":truX,"message":{"content":[{"name":"\\q',
+    '{"type":"assistant","extra":{"content":[{"name":"\\q',
+  ])("retains proved non-issuers and unrelated structure without input-specific assumptions: %s", unrelated => {
+    const f = fixture();
+    try {
+      expect(probeIssuingMessage(unrelated, CALL)).toEqual({ state: "absent" });
+      const output = handleHostAttestationHook(f.input, f.store, { ...f.options,
+        readText: () => row("toolu_previous_179") + "\n" + unrelated });
+      expect(payload(output)).toMatchObject({ model: MODEL, provenance: "claude-code:session-start" });
+      expect(f.cache).toHaveBeenCalledTimes(1); expect(f.key).toHaveBeenCalledTimes(1);
+    } finally { f.key.mockRestore(); }
+  });
+
+  it.each([
+    issuer + '"type":"tool_use","input":{"flag":truX',
+    issuer + '"type":"tool_use","input":{"flag":"\\q',
+    issuer + '"type":"tool_use","input":{"flag":"\\u00xz',
+    issuer + '"type":"tool_use","input":{"flag":truX},"id":"toolu_cur',
+    issuer + '"type":"tool_use","input":{"flag":true]',
+    issuer + '"type":"tool_use","input":{"flag":truX}}]}}',
+  ])("does not turn unrecoverable issuer input into absent and sign from fallback: %s", damaged => {
+    const f = fixture();
+    let reads = 0;
+    try {
+      expect(probeIssuingMessage(damaged, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
+      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, maxWaitMs: 20, pollIntervalMs: 10,
+        readText: () => { reads++; return row("toolu_previous_179") + "\n" + damaged; } });
+      expect(output).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: f.clean } });
+      expect(reads).toBe(4); expect(f.cache).not.toHaveBeenCalled(); expect(f.key).not.toHaveBeenCalled();
+    } finally { f.key.mockRestore(); }
+  });
+
+  it.each([
+    '{"type":"assistant","unrelated":truX',
+    JSON.stringify({ type: "assistant", message: { content: [{ type: "tool_use", input: { flag: true }, id: "toolu_previous_179" }] } }),
+    issuer + '"type":"text","input":{"flag":truX',
+    '{"type":"user","message":{"content":[{"type":"tool_use","input":{"flag":truX',
+    issuer + '"type":"tool_use","id":"toolu_previous_179","input":{"flag":truX',
+    issuer + '"type":"tool_use","id":"toolu_previous_179","input":{"flag":"\\q',
+  ])("keeps proved non-current or unrelated damage eligible for fallback: %s", unrelated => {
+    const f = fixture();
+    try {
+      expect(probeIssuingMessage(unrelated, CALL)).toEqual({ state: "absent" });
+      const output = handleHostAttestationHook(f.input, f.store, { ...f.options,
+        readText: () => row("toolu_previous_179") + "\n" + unrelated });
+      expect(payload(output)).toMatchObject({ model: MODEL, provenance: "claude-code:session-start" });
+      expect(f.cache).toHaveBeenCalledTimes(1); expect(f.key).toHaveBeenCalledTimes(1);
+    } finally { f.key.mockRestore(); }
+  });
+
+  it.each([false, true])("keeps actual valid exact precedence over unrecoverable issuer input: %s", damagedFirst => {
+    const f = fixture();
+    const rows = [row(), issuer + '"type":"tool_use","input":{"flag":truX'];
+    if (damagedFirst) rows.reverse();
+    try {
+      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, readText: () => rows.join("\n") });
+      expect(payload(output)).toMatchObject({ model: MODEL, call: hostIdentityDigest(CALL), provenance: "claude-code:transcript-tool-use" });
+      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).toHaveBeenCalledTimes(1);
+    } finally { f.key.mockRestore(); }
+  });
+
   it.each(partials)("does not sign from older/session evidence while issuer identity is incomplete: %s", partial => {
     const f = fixture();
     try {
