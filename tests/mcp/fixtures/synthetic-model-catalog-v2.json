@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "policy_revision": "synthetic-2026-10-24.v2",
+  "default_profile": "balanced",
+  "roles": [
+    "discovery",
+    "general-implementation",
+    "complex-reasoning",
+    "independent-audit"
+  ],
+  "model_class_order": [
+    "lightweight",
+    "general",
+    "deep",
+    "frontier"
+  ],
+  "effort_order": [
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+    "ultra"
+  ],
+  "invariants": {
+    "controls_delegation": false,
+    "controls_agent_count": false,
+    "controls_batching": false,
+    "user_override_precedence": true,
+    "capability_check_required": true,
+    "high_risk_minimum_model_class": "general",
+    "high_risk_minimum_effort": "high"
+  },
+  "providers": {
+    "openai-codex": {
+      "host": "codex",
+      "minimum_efforts": {
+        "gpt-5.6-luna": "high",
+        "gpt-6.5-nova": "xhigh"
+      },
+      "catalog": {
+        "matching": "exact-only",
+        "models": {
+          "gpt-6-astra": {
+            "model_class": "frontier",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6-sol": {
+            "model_class": "general",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6.1-sol": {
+            "model_class": "general",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6-luna": {
+            "model_class": "lightweight",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-sol": {
+            "model_class": "deep",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-terra": {
+            "model_class": "general",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-luna": {
+            "model_class": "lightweight",
+            "minimum_effort": "high",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6.5-nova": {
+            "model_class": "frontier",
+            "minimum_effort": "xhigh",
+            "supported_efforts": ["high", "xhigh", "max", "ultra"]
+          }
+        },
+        "aliases": {
+          "gpt-6.5-nova-canonical": "gpt-6.5-nova"
+        }
+      },
+      "application": {
+        "full_history_overrides": false,
+        "context_field": "fork_turns",
+        "default_context": "all",
+        "full_history_value": "all",
+        "limited_context_value": "none",
+        "model_field": "model",
+        "effort_field": "reasoning_effort",
+        "model_delivery": ["spawn-argument"],
+        "effort_delivery": ["spawn-argument"],
+        "verification": "spawn-result"
+      },
+      "profiles": {
+        "economy": {
+          "discovery": {"model": "gpt-5.6-luna", "effort": "high", "model_class": "lightweight"},
+          "general-implementation": {"model": "gpt-5.6-terra", "effort": "medium", "model_class": "general"},
+          "complex-reasoning": {"model": "gpt-5.6-sol", "effort": "medium", "model_class": "deep"},
+          "independent-audit": {"model": "gpt-6.5-nova", "effort": "xhigh", "model_class": "frontier"}
+        },
+        "balanced": {
+          "discovery": {"model": "gpt-5.6-luna", "effort": "high", "model_class": "lightweight"},
+          "general-implementation": {"model": "gpt-6.1-sol", "effort": "high", "model_class": "general"},
+          "complex-reasoning": {"model": "gpt-5.6-sol", "effort": "high", "model_class": "deep"},
+          "independent-audit": {"model": "gpt-6.5-nova", "effort": "xhigh", "model_class": "frontier"}
+        },
+        "quality": {
+          "discovery": {"model": "gpt-6.1-sol", "effort": "medium", "model_class": "general"},
+          "general-implementation": {"model": "gpt-5.6-sol", "effort": "high", "model_class": "deep"},
+          "complex-reasoning": {"model": "gpt-6.5-nova", "effort": "xhigh", "model_class": "frontier"},
+          "independent-audit": {"model": "gpt-6.5-nova", "effort": "ultra", "model_class": "frontier"}
+        }
+      }
+    },
+    "anthropic-claude-code": {
+      "host": "claude-code",
+      "catalog": {
+        "matching": "claude-family-or-exact",
+        "models": {
+          "haiku": {
+            "model_class": "lightweight",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "sonnet": {
+            "model_class": "general",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "opus": {
+            "model_class": "deep",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "fable": {
+            "model_class": "frontier",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "mythos": {
+            "model_class": "frontier",
+            "minimum_effort": "high",
+            "supported_efforts": ["high", "xhigh", "max", "ultra"]
+          }
+        },
+        "aliases": {
+          "mythos-preview": "mythos"
+        }
+      },
+      "application": {
+        "model_field": "model",
+        "effort_field": "effort",
+        "model_delivery": ["per-invocation-argument", "subagent-frontmatter"],
+        "effort_delivery": ["subagent-frontmatter", "cli-agent-definition"],
+        "verification": "tasks-view"
+      },
+      "profiles": {
+        "economy": {
+          "discovery": {"model": "haiku", "effort": "low", "model_class": "lightweight"},
+          "general-implementation": {"model": "sonnet", "effort": "medium", "model_class": "general"},
+          "complex-reasoning": {"model": "opus", "effort": "medium", "model_class": "deep"},
+          "independent-audit": {"model": "mythos", "effort": "high", "model_class": "frontier"}
+        },
+        "balanced": {
+          "discovery": {"model": "haiku", "effort": "high", "model_class": "lightweight"},
+          "general-implementation": {"model": "sonnet", "effort": "high", "model_class": "general"},
+          "complex-reasoning": {"model": "opus", "effort": "high", "model_class": "deep"},
+          "independent-audit": {"model": "mythos", "effort": "high", "model_class": "frontier"}
+        },
+        "quality": {
+          "discovery": {"model": "sonnet", "effort": "high", "model_class": "general"},
+          "general-implementation": {"model": "opus", "effort": "high", "model_class": "deep"},
+          "complex-reasoning": {"model": "mythos", "effort": "xhigh", "model_class": "frontier"},
+          "independent-audit": {"model": "mythos", "effort": "xhigh", "model_class": "frontier"}
+        }
+      }
+    },
+    "google-gemini": {
+      "host": "gemini",
+      "catalog": {
+        "matching": "gemini-family-or-exact",
+        "models": {
+          "flash-lite": {
+            "model_class": "lightweight",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "flash-8b": {
+            "model_class": "lightweight",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "flash": {
+            "model_class": "general",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "pro": {
+            "model_class": "deep",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "ultra": {
+            "model_class": "frontier",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "argon": {
+            "model_class": "deep",
+            "minimum_effort": "medium",
+            "supported_efforts": ["medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        "aliases": {
+          "flash_lite": "flash-lite",
+          "argon_pro": "argon"
+        }
+      },
+      "application": {
+        "model_field": "model",
+        "effort_field": "effort",
+        "model_delivery": ["invoke-argument", "subagent-frontmatter"],
+        "effort_delivery": ["subagent-frontmatter"],
+        "verification": "host-task-view"
+      },
+      "profiles": {
+        "economy": {
+          "discovery": {"model": "flash-lite", "effort": "low", "model_class": "lightweight"},
+          "general-implementation": {"model": "flash", "effort": "medium", "model_class": "general"},
+          "complex-reasoning": {"model": "argon", "effort": "medium", "model_class": "deep"},
+          "independent-audit": {"model": "argon", "effort": "high", "model_class": "deep"}
+        },
+        "balanced": {
+          "discovery": {"model": "flash-lite", "effort": "high", "model_class": "lightweight"},
+          "general-implementation": {"model": "flash", "effort": "high", "model_class": "general"},
+          "complex-reasoning": {"model": "argon", "effort": "high", "model_class": "deep"},
+          "independent-audit": {"model": "ultra", "effort": "high", "model_class": "frontier"}
+        },
+        "quality": {
+          "discovery": {"model": "flash", "effort": "high", "model_class": "general"},
+          "general-implementation": {"model": "argon", "effort": "high", "model_class": "deep"},
+          "complex-reasoning": {"model": "ultra", "effort": "xhigh", "model_class": "frontier"},
+          "independent-audit": {"model": "ultra", "effort": "xhigh", "model_class": "frontier"}
+        }
+      }
+    }
+  }
+}

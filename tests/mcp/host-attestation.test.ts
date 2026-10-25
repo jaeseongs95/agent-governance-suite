@@ -4,7 +4,7 @@ import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type {
   ApiResultV1,
@@ -26,7 +26,10 @@ import {
 import {
   claudeCodeExecutionAdapter,
   codexExecutionAdapter,
+  createCatalogExecutionAdapters,
+  defaultExecutionAdapters,
   geminiExecutionAdapter,
+  type ModelRoutingPresetsV1,
   modelClassForClaudeModel,
   modelClassForGeminiModel,
 } from "../../mcp-server/src/host-execution-adapters.js";
@@ -34,6 +37,7 @@ import {
   claudeCodeActorId,
   findToolUseObservation,
   handleHostAttestationHook,
+  probeIssuingMessage,
   handleCodexHostAttestationHook,
   observedEffort,
   readSessionModel,
@@ -49,6 +53,7 @@ import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { resolveHostAttestation } from "../../mcp-server/src/runtime-config.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
+import { classificationInputSchema, selectionInputSchema, type SkillClassificationGateway } from "../../mcp-server/src/skill-classification/gateway.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "./version-fixtures.js";
@@ -169,6 +174,8 @@ function result<T>(response: unknown): ApiResultV1<T> {
 }
 
 interface Harness {
+  updates: PluginUpdateService;
+  service: WorkflowService;
   client: Client;
   store: InMemoryWorkflowStore;
   call<T>(name: string, args: Record<string, unknown>): Promise<ApiResultV1<T>>;
@@ -180,7 +187,7 @@ afterEach(async () => {
   while (openServers.length > 0) await openServers.pop()!();
 });
 
-async function harness(withProvider: boolean, adapter: HostExecutionAdapter = claudeCodeExecutionAdapter): Promise<Harness> {
+async function harness(withProvider: boolean, adapter: HostExecutionAdapter = claudeCodeExecutionAdapter, classification: SkillClassificationGateway | null = null): Promise<Harness> {
   const validator = new ContractValidator();
   const store = new InMemoryWorkflowStore();
   const provider = withProvider ? new HostAttestationProvider(store, adapter) : null;
@@ -201,15 +208,20 @@ async function harness(withProvider: boolean, adapter: HostExecutionAdapter = cl
     lastNotifiedAt: null,
     lastErrorCode: null,
   });
+  const updates = new PluginUpdateService(updateStore);
   const server = createMcpServer(
     service,
-    new PluginUpdateService(updateStore),
+    updates,
     undefined,
     undefined,
     undefined,
     validator,
     "anthropic",
     provider,
+    null,
+    undefined,
+    null,
+    classification,
   );
   const client = new Client({ name: "host-attestation", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -220,6 +232,8 @@ async function harness(withProvider: boolean, adapter: HostExecutionAdapter = cl
     await server.close();
   });
   return {
+    updates,
+    service,
     client,
     store,
     call: async <T>(name: string, args: Record<string, unknown>) => result<T>(await client.callTool({ name, arguments: args })),
@@ -380,6 +394,18 @@ describe("Claude Code host attestation through the MCP boundary", () => {
     expect((await call<WorkflowPlanV1>("plan_workflow", lowEffort)).error?.code).toBe("BINDING_INVALID");
   });
 
+  it.each([claudeCodeExecutionAdapter, codexExecutionAdapter])("strips caller skill observations before signing %s tool arguments", async (adapter) => {
+    const { store, call } = await harness(true, adapter);
+    const clean = planArguments(`caller-skill-claims-${adapter.host}`);
+    const signed = attest(store, "plan_workflow", { ...clean,
+      [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged",
+      _hostSkillObservation: { actorId: "caller", sourceRef: "caller", skills: [] },
+    }, { adapter });
+    expect(signed).toEqual({ ...clean, [HOST_ATTESTATION_FIELD]: expect.any(String) });
+    expect(signed[HOST_ATTESTATION_FIELD]).not.toBe("aghs1.caller.forged");
+    expect((await call<WorkflowPlanV1>("plan_workflow", signed)).error).toBeNull();
+  });
+
   it("keeps Sol general and Luna lightweight below a deep bootstrap floor", async () => {
     const adapter = codexExecutionAdapter;
     const { store, call } = await harness(true, adapter);
@@ -424,17 +450,25 @@ describe("host attestation hook", () => {
   });
 
   it("removes a caller-supplied token whenever it cannot attest the call", async () => {
-    const callerInput = { taskId: "hook-task", [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged" };
+    const callerInput = { taskId: "hook-task", [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged",
+      _hostSkillObservation: { actorId: "caller", sourceRef: "caller", skills: [] } };
     const unattested = [
       handleHostAttestationHook({ ...base, tool_input: callerInput }, store, { ...noWait, maxWaitMs: 0, readText: () => null }),
       handleHostAttestationHook({ ...base, tool_input: callerInput }, store, { ...noWait, readText: () => transcriptLine("toolu_hook", { model: "gpt-5.6-sol" }) }),
       handleHostAttestationHook({ ...base, tool_input: callerInput, transcript_path: undefined }, store, noWait),
       withoutCallerAttestation({ ...base, tool_input: callerInput }),
     ];
+    const codexFailure = handleCodexHostAttestationHook({ ...base, tool_input: callerInput }, store,
+      { readMetadata: () => ({ head: "", tail: "" }) });
+    expect((codexFailure.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput)
+      .toEqual({ taskId: "hook-task" });
     for (const output of unattested) {
       expect(output).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { taskId: "hook-task" } } });
     }
     expect(withoutCallerAttestation(base)).toEqual({});
+    expect(withoutCallerAttestation({ ...base, tool_input: { taskId: "hook-task",
+      _hostSkillObservation: { actorId: "caller", sourceRef: "caller", skills: [] } } }))
+      .toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { taskId: "hook-task" } } });
     expect(withoutCallerAttestation({ ...base, tool_name: "Bash", tool_input: callerInput })).toEqual({});
 
     // A stripped call reaches the server without a token and fails closed.
@@ -572,7 +606,7 @@ describe("host attestation hook", () => {
       expect(sessionModelUpdate({ hook_event_name: "PostModelSwitch", session_id: SESSION, agent_id: "agent123", to_model: "claude-opus-5" }, now)).toBeNull();
     });
 
-    it("stores the session model under a digest of the session ID and ignores damaged records", () => {
+    it("stores the session model under a digest and preserves the inherited F6 missing/damaged distinction", () => {
       const directory = mkdtempSync(path.join(tmpdir(), "host-models-"));
       try {
         const stored = { model: "claude-opus-5", source: "session-start" as const, observedAt: "2026-09-19T00:10:01.000Z" };
@@ -581,7 +615,7 @@ describe("host attestation hook", () => {
         expect(readSessionModel(directory, SESSION)).toEqual(stored);
         expect(readSessionModel(directory, "other")).toBeNull();
         writeFileSync(path.join(directory, readdirSync(directory)[0]!), "{not json");
-        expect(readSessionModel(directory, SESSION)).toBeNull();
+        expect(() => readSessionModel(directory, SESSION)).toThrow("SESSION_MODEL_INVALID");
       } finally {
         rmSync(directory, { recursive: true, force: true });
       }
@@ -596,12 +630,144 @@ describe("host attestation hook", () => {
 });
 
 describe("host attestation configuration", () => {
-  it("enables only the supported host adapters", () => {
+  it("selects actual bundled adapters and keeps missing names without a provider", () => {
     expect(resolveHostAttestation({})).toBeNull();
-    expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "codex" })).toBe("codex");
+    expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "codex" })).toBe(codexExecutionAdapter);
     expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "unconfigured-host" })).toBeNull();
-    expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "claude-code" })).toBe("claude-code");
-    expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "gemini" })).toBe("gemini");
+    expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "claude-code" })).toBe(claudeCodeExecutionAdapter);
+    expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "gemini" })).toBe(geminiExecutionAdapter);
+  });
+
+  function fourthHostCatalog(): ModelRoutingPresetsV1 {
+    return {schema_version: 1, policy_revision: "synthetic-fourth-r1",
+      model_class_order: ["lightweight", "general", "deep", "frontier"], effort_order: ["low", "high"],
+      providers: {"synthetic-fourth-provider": {host: "synthetic-fourth-host", catalog: {matching: "exact-only",
+        models: {"opaque-fourth-model": {model_class: "deep", minimum_effort: "high", supported_efforts: ["high"]}}}}}};
+  }
+
+  it("binds one actual fourth-host adapter through the same resolver and signed MCP boundary", async () => {
+    const suite = createCatalogExecutionAdapters(fourthHostCatalog());
+    const adapter = resolveHostAttestation({AGENT_GOVERNANCE_HOST_ATTESTATION: "synthetic-fourth-host"}, suite.adapters);
+    expect(adapter).toBe(suite.adapters.get("synthetic-fourth-host"));
+    expect(adapter!.resolveModel!("opaque-fourth-model")).toMatchObject({host: "synthetic-fourth-host", provider: "synthetic-fourth-provider", modelClass: "deep", supportedEfforts: ["high"]});
+    const {store, call} = await harness(true, adapter!);
+    const args = planArguments("fourth-host-task");
+    const observation = {tool: "plan_workflow", input: args, model: "opaque-fourth-model", reasoningEffort: "high",
+      actorId: hostActorId(adapter!.host, SESSION), sessionId: SESSION, turnId: "fourth-turn", toolUseId: "fourth-call"};
+    const token = issueHostAttestation(store, adapter!, observation);
+    expect(token).toEqual(expect.any(String));
+    // Fresh unconsumed token: preserve task identity while changing only signed input.
+    const wrongArgs = {...args, taskEnvelope: {...(args.taskEnvelope as Record<string, unknown>), objective: "changed signed input"}};
+    const wrongInput = await call<WorkflowPlanV1>("plan_workflow", {...wrongArgs, [HOST_ATTESTATION_FIELD]: token});
+    expect(wrongInput).toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
+    const planned = await call<WorkflowPlanV1>("plan_workflow", {...args, [HOST_ATTESTATION_FIELD]: token});
+    expect(planned.ok).toBe(true);
+    expect(planned.data!.bootstrapExecution!.context).toMatchObject({model: "opaque-fourth-model", modelClass: "deep", reasoningEffort: "high", actorId: hostActorId(adapter!.host, SESSION)});
+    expect(issueHostAttestation(store, adapter!, {...observation, actorId: hostActorId("codex", SESSION)})).toBeNull();
+    expect(issueHostAttestation(store, adapter!, {...observation, model: "unobserved-model"})).toBeNull();
+    expect(issueHostAttestation(store, adapter!, {...observation, reasoningEffort: "low"})).toBeNull();
+    const noProvider = await harness(false);
+    expect(await noProvider.call<WorkflowPlanV1>("plan_workflow", args))
+      .toMatchObject({ok: false, error: {code: "BINDING_REQUIRED"}});
+    // A hook token without its verification provider is an explicit binding configuration error.
+    expect(await noProvider.call<WorkflowPlanV1>("plan_workflow", {...args, [HOST_ATTESTATION_FIELD]: token}))
+      .toMatchObject({ok: false, error: {code: "BINDING_REQUIRED"}});
+    // Synthetic fixture authority only; this does not qualify or enable a live fourth host.
+  });
+
+  it.each(["plan_workflow", "record_stage_result", "classify_skills", "record_skill_selection"])(
+    "rejects an unverifiable hook field before dispatching providerless %s", async (tool) => {
+      const classification: SkillClassificationGateway = {
+        inventory: vi.fn(async () => ({})),
+        classify: vi.fn(async (input: unknown) => classificationInputSchema.parse(input)),
+        accept: vi.fn(async (input: unknown) => selectionInputSchema.parse(input)),
+      };
+      const server = await harness(false, claudeCodeExecutionAdapter, classification);
+      const updateCheck = vi.spyOn(server.updates, "check");
+      const plan = vi.spyOn(server.service, "planWorkflow");
+      const stage = vi.spyOn(server.service, "recordStageResult");
+      const input = tool === "plan_workflow" ? planArguments("providerless-guard") : {};
+      for (const token of ["synthetic-unverified-hook-token", null]) {
+        const rejected = await server.call(tool, { ...input, [HOST_ATTESTATION_FIELD]: token });
+        expect(rejected).toMatchObject({ ok: false, data: null, error: { code: "BINDING_REQUIRED" } });
+        expect(rejected.error!.message).toContain("not configured");
+        expect(JSON.stringify(rejected)).not.toContain("synthetic-unverified-hook-token");
+      }
+      // A rejected configuration must not trigger unrelated update or provider I/O.
+      expect(updateCheck).not.toHaveBeenCalled();
+      expect(plan).not.toHaveBeenCalled();
+      expect(stage).not.toHaveBeenCalled();
+      expect(classification.classify).not.toHaveBeenCalled();
+      expect(classification.accept).not.toHaveBeenCalled();
+      // Field absence keeps the previous schema/service dispatch, including its original error.
+      const plain = await server.call(tool, input);
+      expect(plain).toMatchObject({ ok: false, error: { code: tool === "plan_workflow" ? "BINDING_REQUIRED" : "INVALID_INPUT" } });
+      if (tool === "plan_workflow") expect(plan).toHaveBeenCalledTimes(1);
+      if (tool === "record_stage_result") expect(stage).toHaveBeenCalledTimes(1);
+      if (tool === "classify_skills") expect(classification.classify).toHaveBeenCalledTimes(1);
+      if (tool === "record_skill_selection") expect(classification.accept).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("preserves normal argument rejection for a tool outside the attested set", async () => {
+    const classification: SkillClassificationGateway = {
+      inventory: vi.fn(async () => ({ status: "synthetic inventory" })),
+      classify: vi.fn(async () => null),
+      accept: vi.fn(async () => null),
+    };
+    const server = await harness(false, claudeCodeExecutionAdapter, classification);
+    const rejected = await server.call("get_skill_inventory", { [HOST_ATTESTATION_FIELD]: "synthetic-unverified-hook-token" });
+    expect(rejected).toMatchObject({ ok: false, error: { code: "INVALID_INPUT" } });
+    expect(classification.inventory).not.toHaveBeenCalled();
+    expect(await server.call("get_skill_inventory", {})).toMatchObject({ ok: true, data: { status: "synthetic inventory" } });
+    expect(classification.inventory).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not create an adapter from an environment name, a missing host, or a mismatched registry entry", () => {
+    const suite = createCatalogExecutionAdapters(fourthHostCatalog());
+    expect(resolveHostAttestation({AGENT_GOVERNANCE_HOST_ATTESTATION: "codex"}, suite.adapters)).toBeNull();
+    expect(resolveHostAttestation({AGENT_GOVERNANCE_HOST_ATTESTATION: "forged-host"}, suite.adapters)).toBeNull();
+    expect(resolveHostAttestation({AGENT_GOVERNANCE_HOST_ATTESTATION: "forged-host"}, new Map([["forged-host", codexExecutionAdapter]]))).toBeNull();
+    const catalog = fourthHostCatalog();
+    const providerCatalog = catalog.providers["synthetic-fourth-provider"]!.catalog;
+    if (!providerCatalog) throw new Error("Missing synthetic provider catalog fixture");
+    const missing = {...catalog, providers: {"synthetic-fourth-provider": {catalog: providerCatalog}}};
+    expect(() => createCatalogExecutionAdapters(missing)).toThrow("INVALID_EXECUTION_ADAPTER_HOST");
+    const invalidHost = {...catalog, providers: {"synthetic-fourth-provider": {...catalog.providers["synthetic-fourth-provider"]!, host: "invalid host"}}};
+    expect(() => createCatalogExecutionAdapters(invalidHost)).toThrow("INVALID_EXECUTION_ADAPTER_HOST");
+    for (const malformed of [null, {}, [], {providers: null}, {providers: []}]) {
+      expect(() => createCatalogExecutionAdapters(malformed as unknown as ModelRoutingPresetsV1)).toThrow("INVALID_EXECUTION_ADAPTER_CONFIGURATION");
+    }
+    expect(() => createCatalogExecutionAdapters({...catalog, providers: {invalid: null}} as unknown as ModelRoutingPresetsV1))
+      .toThrow("INVALID_EXECUTION_ADAPTER_HOST");
+    const ambiguous = fourthHostCatalog();
+    const duplicate = {...ambiguous, providers: {...ambiguous.providers, "another-provider": ambiguous.providers["synthetic-fourth-provider"]!}};
+    expect(() => createCatalogExecutionAdapters(duplicate)).toThrow("DUPLICATE_EXECUTION_ADAPTER_HOST");
+  });
+
+  it("keeps registry entries immutable through every exposed map view", () => {
+    const suite = createCatalogExecutionAdapters(fourthHostCatalog());
+    const view = suite.adapters, selected = view.get("synthetic-fourth-host")!;
+    expect(Object.isFrozen(view)).toBe(true); expect(Object.isFrozen(selected)).toBe(true);
+    expect(Object.prototype.toString.call(view)).toBe("[object ReadonlyMap]");
+    expect(view instanceof Map).toBe(false);
+    expect(() => (view as Map<string, HostExecutionAdapter>).set("evil", codexExecutionAdapter)).toThrow(TypeError);
+    expect(() => Map.prototype.set.call(view, "evil", codexExecutionAdapter)).toThrow(TypeError);
+    expect(() => Map.prototype.delete.call(view, selected.host)).toThrow(TypeError);
+    expect(() => Map.prototype.clear.call(view)).toThrow(TypeError);
+    const thisArg = {marker: "readonly-view"};
+    const callback = vi.fn(function(this: typeof thisArg, value: HostExecutionAdapter, host: string, callbackView: ReadonlyMap<string, HostExecutionAdapter>) {
+      expect(this).toBe(thisArg); expect(callbackView).toBe(view);
+      expect(value).toBe(selected); expect(host).toBe(selected.host);
+      expect(() => (callbackView as Map<string, HostExecutionAdapter>).clear()).toThrow(TypeError);
+    });
+    view.forEach(callback, thisArg);
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith(selected, selected.host, view);
+    const pair = [...view][0]!; pair[0] = "evil";
+    expect(view.has("evil")).toBe(false); expect(view.get(selected.host)).toBe(selected); expect(view.size).toBe(1);
+    expect(() => (defaultExecutionAdapters as Map<string, HostExecutionAdapter>).set("codex", selected)).toThrow(TypeError);
+    expect(resolveHostAttestation({AGENT_GOVERNANCE_HOST_ATTESTATION: "codex"})).toBe(codexExecutionAdapter);
   });
 
   it("maps Gemini model families to the routing preset classes", () => {
@@ -647,4 +813,235 @@ describe("host attestation configuration", () => {
     expect(observedEffort("turbo", "high")).toBe("high");
     expect(observedEffort(null, null)).toBeNull();
   });
+});
+
+
+describe("AGS-D-0179 correlated issuing observations", () => {
+  function fixture179(toolInput = planArguments("d0179")) {
+    const now = new Date();
+    const older = JSON.stringify({ ...JSON.parse(transcriptLine("toolu_previous", { model: "claude-opus-5" })),
+      timestamp: new Date(now.getTime() - 1000).toISOString() });
+    const malformed = transcriptLine("toolu_hook", { model: "claude-haiku-4-5-20251001" }).slice(0, -1);
+    const cache = vi.fn((): SessionModelRecord => ({ model: "claude-opus-5", source: "session-start",
+      observedAt: new Date(now.getTime() - 500).toISOString() }));
+    return { older, malformed, cache, toolInput, input: { hook_event_name: "PreToolUse", session_id: SESSION,
+      transcript_path: TRANSCRIPT, tool_name: TOOL_PREFIX + "plan_workflow", tool_use_id: "toolu_hook",
+      effort: { level: "high" }, tool_input: { ...toolInput, [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged" } },
+      options: { maxWaitMs: 0, sleep: () => {}, now: () => now, readSessionModel: cache } };
+  }
+  const updated179 = (value: Record<string, unknown>) =>
+    (value.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput;
+  const payload179 = (value: Record<string, unknown>) =>
+    JSON.parse(Buffer.from(String(updated179(value)[HOST_ATTESTATION_FIELD]).split(".")[1]!, "base64url").toString("utf8")) as Record<string, unknown>;
+
+  it("keeps absent, present and indeterminate distinct without treating mentions as issuers", () => {
+    const f = fixture179();
+    expect(probeIssuingMessage(f.older, "toolu_hook")).toEqual({ state: "absent" });
+    expect(probeIssuingMessage(transcriptLine("toolu_hook"), "toolu_hook")).toEqual({ state: "present" });
+    expect(probeIssuingMessage(f.malformed, "toolu_hook")).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INVALID_JSON" });
+    const mention = JSON.stringify({ type: "user", message: { content: [{ type: "tool_result", tool_use_id: "toolu_hook" }] } });
+    expect(probeIssuingMessage(mention, "toolu_hook")).toEqual({ state: "absent" });
+    expect(probeIssuingMessage(JSON.stringify({ type: "assistant", message: { content: [{ type: "text", text: "toolu_hook" }] } }), "toolu_hook"))
+      .toEqual({ state: "absent" });
+    expect(probeIssuingMessage('{"type":"assistant","id":"unrelated"', "toolu_hook")).toEqual({ state: "absent" });
+  });
+
+  it("does not mint from an older strong model after a current malformed line, and the MCP stays BINDING_REQUIRED", async () => {
+    const { store, client } = await harness(true);
+    const f = fixture179();
+    const key = vi.spyOn(store, "getOrCreateSecret");
+    try {
+      const output = handleHostAttestationHook(f.input, store, { ...f.options, readText: () => f.older + "\n" + f.malformed });
+      expect(updated179(output)).toEqual(f.toolInput);
+      expect(f.cache).not.toHaveBeenCalled(); expect(key).not.toHaveBeenCalled();
+      const reply = await client.callTool({ name: "plan_workflow", arguments: updated179(output) });
+      expect(reply.isError).toBe(true);
+      expect(result<WorkflowPlanV1>(reply)).toMatchObject({ ok: false, error: { code: "BINDING_REQUIRED" } });
+    } finally { key.mockRestore(); }
+  });
+
+  it("does not use a strong main-session cache after a malformed current issuer", () => {
+    const store = new InMemoryWorkflowStore();
+    const f = fixture179();
+    const key = vi.spyOn(store, "getOrCreateSecret");
+    try {
+      expect(updated179(handleHostAttestationHook(f.input, store, { ...f.options, readText: () => f.malformed }))).toEqual(f.toolInput);
+      expect(f.cache).not.toHaveBeenCalled(); expect(key).not.toHaveBeenCalled();
+    } finally { key.mockRestore(); }
+  });
+
+  it("keeps exact current evidence and its normal strict consumer path", async () => {
+    const { store, call } = await harness(true);
+    const f = fixture179();
+    const output = handleHostAttestationHook(f.input, store, { ...f.options, readText: () => transcriptLine("toolu_hook") });
+    expect(updated179(output)[HOST_ATTESTATION_FIELD]).not.toBe("aghs1.caller.forged");
+    expect(payload179(output)).toMatchObject({ model: "claude-opus-5", tool: "plan_workflow" });
+    expect((await call<WorkflowPlanV1>("plan_workflow", updated179(output))).error).toBeNull();
+    expect(f.cache).not.toHaveBeenCalled();
+  });
+
+  it("keeps genuine absence and ignores unrelated damaged rows", () => {
+    const store = new InMemoryWorkflowStore();
+    const f = fixture179();
+    const input = f.older + '\n{"type":"assistant","unrelated":';
+    const output = handleHostAttestationHook(f.input, store, { ...f.options, readText: () => input });
+    expect(payload179(output)).toMatchObject({ model: "claude-opus-5", reasoningEffort: "high" });
+    expect(f.cache).toHaveBeenCalledTimes(1);
+    expect(payload179(handleHostAttestationHook(f.input, store, { ...f.options, readText: () => null })))
+      .toMatchObject({ model: "claude-opus-5", provenance: "claude-code:session-start" });
+  });
+
+  it("does not use fallback for correlated assistant metadata with an invalid content shape", () => {
+    const f = fixture179();
+    const malformedShape = JSON.stringify({ type: "assistant", message: { content: "toolu_hook" } });
+    expect(probeIssuingMessage(malformedShape, "toolu_hook")).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" });
+    expect(updated179(handleHostAttestationHook(f.input, new InMemoryWorkflowStore(), { ...f.options, readText: () => malformedShape }))).toEqual(f.toolInput);
+    expect(f.cache).not.toHaveBeenCalled();
+  });
+
+  it("preserves bounded partial-to-valid polling while refusing persistent malformed evidence", () => {
+    const f = fixture179();
+    let reads = 0;
+    const sleep = vi.fn();
+    const output = handleHostAttestationHook(f.input, new InMemoryWorkflowStore(), { ...f.options, maxWaitMs: 20,
+      pollIntervalMs: 10, sleep, readText: () => ++reads === 1 ? f.malformed : transcriptLine("toolu_hook") });
+    expect(payload179(output)).toMatchObject({ model: "claude-opus-5" });
+    expect(reads).toBe(2); expect(sleep.mock.calls).toEqual([[10]]);
+    reads = 0; sleep.mockClear();
+    const refused = handleHostAttestationHook(f.input, new InMemoryWorkflowStore(), { ...f.options, maxWaitMs: 20,
+      pollIntervalMs: 10, sleep, readText: () => { reads++; return f.malformed; } });
+    expect(updated179(refused)).toEqual(f.toolInput);
+    expect(reads).toBe(4); expect(sleep.mock.calls).toEqual([[10], [10]]);
+    expect(f.cache).not.toHaveBeenCalled();
+  });
+
+  it("retains existing valid-exact precedence over damaged duplicates and a subagent never uses the main cache", () => {
+    const f = fixture179();
+    const subagent = { ...f.input, agent_id: "d0179-agent" };
+    const own = transcriptLine("toolu_hook", { agentId: "d0179-agent", isSidechain: true });
+    const ownPath = transcriptCandidates(TRANSCRIPT, SESSION, "d0179-agent")[1]!;
+    const output = handleHostAttestationHook(subagent, new InMemoryWorkflowStore(), { ...f.options,
+      readText: (file) => file === ownPath ? own : f.malformed });
+    expect(payload179(output)).toMatchObject({ model: "claude-opus-5", actorId: claudeCodeActorId(SESSION, "d0179-agent") });
+    const sameCandidate = handleHostAttestationHook(f.input, new InMemoryWorkflowStore(), { ...f.options,
+      readText: () => transcriptLine("toolu_hook") + "\n" + f.malformed });
+    expect(payload179(sameCandidate)).toMatchObject({ model: "claude-opus-5" });
+    expect(updated179(handleHostAttestationHook(subagent, new InMemoryWorkflowStore(), { ...f.options,
+      readText: () => f.older + "\n" + f.malformed }))).toEqual(f.toolInput);
+    expect(f.cache).not.toHaveBeenCalled();
+  });
+
+  it("preserves the injected capability boundary for an opaque model without changing product catalogs", () => {
+    const f = fixture179();
+    const model = "synthetic-opaque-0179";
+    const trusted: HostExecutionAdapter = { host: "claude-code", provider: "synthetic", policyRevision: "fixture-0179",
+      modelClassForModel: (value) => value === model ? "deep" : null };
+    const old = JSON.stringify({ ...JSON.parse(transcriptLine("toolu_previous", { model })),
+      timestamp: new Date(f.options.now().getTime() - 1000).toISOString() });
+    const output = handleHostAttestationHook(f.input, new InMemoryWorkflowStore(), { ...f.options, adapter: trusted,
+      readText: () => old, readSessionModel: () => null });
+    expect(payload179(output)).toMatchObject({ model, modelClass: "deep", provider: "synthetic" });
+    const unqualified = { ...trusted, modelClassForModel: () => null };
+    expect(updated179(handleHostAttestationHook(f.input, new InMemoryWorkflowStore(), { ...f.options, adapter: unqualified,
+      readText: () => old, readSessionModel: () => null }))).toEqual(f.toolInput);
+    // Hook preservation only: the full opaque-model workflow policy (0086 etc.) remains a separate obligation.
+  });
+
+  it.each([undefined, null, 1, "", "not-tool-use"])("does not treat a current-ID block with invalid type %j as absence", (type) => {
+    const f = fixture179();
+    const block = { ...(type === undefined ? {} : { type }), id: "toolu_hook", name: "plan_workflow", input: {} };
+    const transcript = JSON.stringify({ type: "assistant", message: { content: [block] } });
+    const store = new InMemoryWorkflowStore(); const key = vi.spyOn(store, "getOrCreateSecret");
+    try {
+      expect(probeIssuingMessage(transcript, "toolu_hook")).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" });
+      expect(updated179(handleHostAttestationHook(f.input, store, { ...f.options, readText: () => transcript }))).toEqual(f.toolInput);
+      expect(key).not.toHaveBeenCalled(); expect(f.cache).not.toHaveBeenCalled();
+    } finally { key.mockRestore(); }
+  });
+
+  it.each([undefined, 1, "assistant-typo"])("does not call an unrecognized issuer-shaped row %j absent", (type) => {
+    const f = fixture179();
+    const transcript = JSON.stringify({ ...(type === undefined ? {} : { type }),
+      message: { content: [{ type: "tool_use", id: "toolu_hook" }] } });
+    expect(probeIssuingMessage(transcript, "toolu_hook")).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INVALID_SHAPE" });
+    expect(updated179(handleHostAttestationHook(f.input, new InMemoryWorkflowStore(), { ...f.options, readText: () => transcript }))).toEqual(f.toolInput);
+    expect(f.cache).not.toHaveBeenCalled();
+  });
+
+  it("compares decoded current IDs for exact and rejected issuing observations", () => {
+    const f = fixture179();
+    const noModel = JSON.stringify({ type: "assistant", message: { content: [{ type: "tool_use", id: "toolu_hook" }] } })
+      .replace("toolu_hook", "toolu_\\u0068ook");
+    expect(probeIssuingMessage(noModel, "toolu_hook")).toEqual({ state: "present" });
+    const store = new InMemoryWorkflowStore(); const key = vi.spyOn(store, "getOrCreateSecret");
+    try {
+      expect(updated179(handleHostAttestationHook(f.input, store, { ...f.options, readText: () => f.older + "\n" + noModel }))).toEqual(f.toolInput);
+      expect(key).not.toHaveBeenCalled(); expect(f.cache).not.toHaveBeenCalled();
+      const valid = transcriptLine("toolu_hook").replace("toolu_hook", "toolu_\\u0068ook");
+      expect(payload179(handleHostAttestationHook(f.input, store, { ...f.options, readText: () => valid }))).toMatchObject({ model: "claude-opus-5" });
+      expect(f.cache).not.toHaveBeenCalled();
+    } finally { key.mockRestore(); }
+  });
+
+  it.each([
+    '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"toolu_\\u0068ook"}]}',
+    '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"toolu_\\u0068ook',
+    '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"toolu_\\u0068ook\\q"}]}}',
+  ])("does not turn a damaged escaped current-ID row into absence: %s", (transcript) => {
+    const f = fixture179();
+    expect(probeIssuingMessage(transcript, "toolu_hook")).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INVALID_JSON" });
+    const store = new InMemoryWorkflowStore(); const key = vi.spyOn(store, "getOrCreateSecret");
+    try {
+      expect(updated179(handleHostAttestationHook(f.input, store, { ...f.options, readText: () => transcript }))).toEqual(f.toolInput);
+      expect(key).not.toHaveBeenCalled(); expect(f.cache).not.toHaveBeenCalled();
+    } finally { key.mockRestore(); }
+  });
+
+  it("does not recursively decode unrelated double-escaped text in a damaged row", () => {
+    const f = fixture179();
+    const transcript = JSON.stringify({ type: "user", message: { text: "toolu_\\u0068ook" } }).slice(0, -1);
+    expect(probeIssuingMessage(transcript, "toolu_hook")).toEqual({ state: "absent" });
+    expect(payload179(handleHostAttestationHook(f.input, new InMemoryWorkflowStore(), { ...f.options, readText: () => f.older + "\n" + transcript })))
+      .toMatchObject({ model: "claude-opus-5" });
+  });
+
+
+  it("does not JSON-parse unrelated ASCII-ID rows or decode their quote escapes", () => {
+    const row = JSON.stringify({type: "assistant", message: {content: [{type: "text", text: 'unrelated "quoted" material '.repeat(64)}]}});
+    const transcript = transcriptLine("toolu_hook") + "\n" + Array(128).fill(row).join("\n");
+    const parse = vi.spyOn(JSON, "parse");
+    try {
+      expect(findToolUseObservation(transcript, "toolu_hook", SESSION, null)).toMatchObject({model: "claude-opus-5"});
+      expect(parse).toHaveBeenCalledTimes(1);
+    } finally { parse.mockRestore(); }
+  });
+
+  it.each([false, true])("preserves valid exact precedence for either same-carrier duplicate order: %s", (damagedFirst) => {
+    const f = fixture179();
+    const rows = [transcriptLine("toolu_hook"), f.malformed];
+    if (damagedFirst) rows.reverse();
+    expect(payload179(handleHostAttestationHook(f.input, new InMemoryWorkflowStore(), {...f.options, readText: () => rows.join("\n")})))
+      .toMatchObject({model: "claude-opus-5"});
+    expect(f.cache).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])("preserves same-actor exact precedence in either main/subagent candidate: %s", (exactInMain) => {
+    const f = fixture179();
+    const own = transcriptLine("toolu_hook", {agentId: "d0179-agent", isSidechain: true});
+    const ownPath = transcriptCandidates(TRANSCRIPT, SESSION, "d0179-agent")[1]!;
+    const output = handleHostAttestationHook({...f.input, agent_id: "d0179-agent"}, new InMemoryWorkflowStore(), {...f.options,
+      readText: file => (file === ownPath) !== exactInMain ? own : f.malformed});
+    expect(payload179(output)).toMatchObject({actorId: claudeCodeActorId(SESSION, "d0179-agent")});
+    expect(f.cache).not.toHaveBeenCalled();
+  });
+
+  it("does not let a main actor's valid row replace a damaged subagent observation", () => {
+    const f = fixture179();
+    const ownPath = transcriptCandidates(TRANSCRIPT, SESSION, "d0179-agent")[1]!;
+    const output = handleHostAttestationHook({...f.input, agent_id: "d0179-agent"}, new InMemoryWorkflowStore(), {...f.options,
+      readText: file => file === ownPath ? f.malformed : transcriptLine("toolu_hook")});
+    expect(updated179(output)).toEqual(f.toolInput);
+    expect(f.cache).not.toHaveBeenCalled();
+  });
+
 });

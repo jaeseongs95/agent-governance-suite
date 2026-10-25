@@ -187,8 +187,19 @@ describe("host-owned hookless provider ingress", () => {
     const missing = provider.runObserved("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: "caller-token" }, () => null,
       (args) => service.planWorkflow(args, true));
     expect(missing.error).toMatchObject({ code: "BINDING_REQUIRED", details: { observation: { host: adapter.host, status: "missing-call-observation" } } });
-    const low = provider.runObserved("plan_workflow", input, () => ({ ...context, reasoningEffort: "low" }), (args) => service.planWorkflow(args, true));
-    expect(low.error?.code).toBe("BINDING_INVALID");
+    const low = provider.runObserved("plan_workflow", input,
+      () => ({ ...context, reasoningEffort: "low", toolUseId: "host-owned-low-call" }),
+      (args) => service.planWorkflow(args, true));
+    expect(low.error).toMatchObject({
+      code: "BINDING_INVALID",
+      message: expect.stringContaining("below the planned semantic assurance floor"),
+      details: { model, reasoningEffort: "low", minimumModelClass: "general", minimumReasoningEffort: "high" },
+    });
+    const freshHigh = provider.runObserved("plan_workflow", input,
+      () => ({ ...context, toolUseId: "host-owned-fresh-high-call" }),
+      (args) => service.planWorkflow(args, true));
+    expect(freshHigh.ok).toBe(true);
+    expect(freshHigh.data?.bootstrapExecution?.context.reasoningEffort).toBe("high");
     const foreignActor = provider.runObserved("plan_workflow", input, () => ({ ...context, actorId: "another-actor", toolUseId: "different-call" }),
       (args) => service.planWorkflow(args, true));
     expect(foreignActor.error?.code).toBe("BINDING_REQUIRED");

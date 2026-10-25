@@ -28,10 +28,27 @@ const TOKEN_PREFIX = "aghs1";
 // The server accepts observations up to five minutes old; the token may wait on a permission prompt.
 const TOKEN_TTL_MS = 5 * 60 * 1000;
 
+/** Vendor-neutral resolved model and capability descriptor produced at the adapter boundary. */
+export interface ResolvedModelCapabilityV1 {
+  readonly provider: string;
+  readonly host: string;
+  readonly rawModel: string;
+  readonly resolvedModel: string;
+  readonly modelClass: ModelClassV1;
+  readonly minimumReasoningEffort: ReasoningEffortV1 | null;
+  readonly supportedEfforts: readonly ReasoningEffortV1[];
+  readonly aliasUsed: boolean;
+  readonly policyRevision: string;
+  readonly provenance: string;
+}
+
 /** Adapter policy owns model mapping, never signing, binding, freshness or replay checks. */
 export interface HostExecutionAdapter {
   host: string;
+  provider?: string;
+  policyRevision?: string;
   modelClassForModel(model: string): ModelClassV1 | null;
+  resolveModel?(model: string, provenance?: string): ResolvedModelCapabilityV1 | null;
 }
 
 export interface HostAttestationBindingV1 {
@@ -45,6 +62,7 @@ export interface HostAttestationBindingV1 {
 interface HostAttestationPayloadV1 extends HostAttestationBindingV1 {
   v: 1;
   host: string;
+  provider?: string;
   session: string;
   agent: string | null;
   turn: string | null;
@@ -52,8 +70,11 @@ interface HostAttestationPayloadV1 extends HostAttestationBindingV1 {
   tool: string;
   inputDigest: string;
   model: string;
+  resolvedModel?: string;
   modelClass: ModelClassV1;
   reasoningEffort: ReasoningEffortV1;
+  policyRevision?: string;
+  provenance?: string;
   actorId: string;
   observationId: string;
   observedAt: string;
@@ -82,6 +103,49 @@ export function lowerReasoningEffort(left: ReasoningEffortV1, right: ReasoningEf
 
 export function isReasoningEffort(value: unknown): value is ReasoningEffortV1 {
   return typeof value === "string" && (REASONING_EFFORT as readonly string[]).includes(value);
+}
+
+/** Resolves a vendor model identifier into a vendor-neutral capability contract at the adapter boundary. */
+export function resolveAdapterModelCapability(
+  adapter: HostExecutionAdapter,
+  model: string,
+  provenance: string = `${adapter.host}:runtime`,
+): ResolvedModelCapabilityV1 | null {
+  if (typeof model !== "string" || model.length === 0) return null;
+  if (typeof adapter.resolveModel === "function") {
+    const resolved = adapter.resolveModel(model, provenance);
+    if (!resolved || !MODEL_CLASS.includes(resolved.modelClass)) return null;
+    return resolved;
+  }
+  const modelClass = adapter.modelClassForModel(model);
+  if (!modelClass || !MODEL_CLASS.includes(modelClass)) return null;
+  return {
+    provider: adapter.provider ?? adapter.host,
+    host: adapter.host,
+    rawModel: model,
+    resolvedModel: model,
+    modelClass,
+    minimumReasoningEffort: null,
+    supportedEfforts: REASONING_EFFORT,
+    aliasUsed: false,
+    policyRevision: adapter.policyRevision ?? "1.0.0",
+    provenance,
+  };
+}
+
+/** Checks whether the observed reasoning effort satisfies the model's supported set and minimum floor. */
+export function satisfiesModelEffortPolicy(
+  capability: ResolvedModelCapabilityV1,
+  effort: ReasoningEffortV1,
+): boolean {
+  if (!capability.supportedEfforts.includes(effort)) return false;
+  if (
+    capability.minimumReasoningEffort
+    && REASONING_EFFORT.indexOf(effort) < REASONING_EFFORT.indexOf(capability.minimumReasoningEffort)
+  ) {
+    return false;
+  }
+  return true;
 }
 
 export function withoutHostAttestation(input: Record<string, unknown>): Record<string, unknown> {
@@ -137,6 +201,7 @@ export interface HostObservation {
   agentId?: string | null;
   turnId: string | null;
   toolUseId: string;
+  provenance?: string;
   now?: Date;
 }
 
@@ -145,10 +210,12 @@ export function issueHostAttestation(store: WorkflowStore, adapter: HostExecutio
   if (!HOST_ATTESTATION_TOOLS.has(observation.tool)) return null;
   const input = withoutHostAttestation(observation.input);
   const binding = hostAttestationBinding(observation.tool, input);
-  const modelClass = adapter.modelClassForModel(observation.model);
-  if (!binding || !modelClass || !MODEL_CLASS.includes(modelClass) || !adapter.host
-    || !isReasoningEffort(observation.reasoningEffort) || !observation.actorId
-    || !observation.sessionId || !observation.toolUseId
+  const provenance = nonEmpty(observation.provenance) ?? `${adapter.host}:runtime`;
+  const capability = resolveAdapterModelCapability(adapter, observation.model, provenance);
+  if (!binding || !capability || !MODEL_CLASS.includes(capability.modelClass) || !adapter.host
+    || !isReasoningEffort(observation.reasoningEffort)
+    || !satisfiesModelEffortPolicy(capability, observation.reasoningEffort)
+    || !observation.actorId || !observation.sessionId || !observation.toolUseId
     || observation.actorId !== hostActorId(adapter.host, observation.sessionId, observation.agentId ?? null)) return null;
   const now = observation.now ?? new Date();
   const scope = {
@@ -161,12 +228,16 @@ export function issueHostAttestation(store: WorkflowStore, adapter: HostExecutio
   const payload: HostAttestationPayloadV1 = {
     v: 1,
     ...scope,
+    provider: capability.provider,
     tool: observation.tool,
     inputDigest: convergenceDigest(input),
     ...binding,
     model: observation.model,
-    modelClass,
+    resolvedModel: capability.resolvedModel,
+    modelClass: capability.modelClass,
     reasoningEffort: observation.reasoningEffort,
+    policyRevision: capability.policyRevision,
+    provenance: capability.provenance,
     actorId: observation.actorId,
     // Retrying the same host call cannot mint a second consumable observation.
     observationId: createHash("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
@@ -213,14 +284,24 @@ function verifyToken(store: WorkflowStore, adapter: HostExecutionAdapter, token:
     throw invalid("Host attestation token payload is malformed.");
   }
   const value = record(payload);
+  const model = typeof value?.model === "string" ? value.model : null;
+  const capability = model
+    ? resolveAdapterModelCapability(adapter, model, typeof value?.provenance === "string" ? value.provenance : `${adapter.host}:runtime`)
+    : null;
   if (
     !value
     || value.v !== 1
     || value.host !== adapter.host
-    || typeof value.model !== "string"
+    || !model
+    || !capability
     || !MODEL_CLASS.includes(value.modelClass as ModelClassV1)
-    || adapter.modelClassForModel(value.model) !== value.modelClass
+    || capability.modelClass !== value.modelClass
+    || (value.provider !== undefined && value.provider !== capability.provider)
+    || (value.resolvedModel !== undefined && value.resolvedModel !== capability.resolvedModel)
+    || (value.policyRevision !== undefined && value.policyRevision !== capability.policyRevision)
+    || (value.provenance !== undefined && (typeof value.provenance !== "string" || value.provenance.length === 0))
     || !isReasoningEffort(value.reasoningEffort)
+    || !satisfiesModelEffortPolicy(capability, value.reasoningEffort)
     || typeof value.session !== "string" || !/^[a-f0-9]{24}$/u.test(value.session)
     || typeof value.call !== "string" || !/^[a-f0-9]{24}$/u.test(value.call)
     || (value.agent !== null && (typeof value.agent !== "string" || !/^[a-f0-9]{24}$/u.test(value.agent)))
@@ -238,6 +319,7 @@ function verifyToken(store: WorkflowStore, adapter: HostExecutionAdapter, token:
  */
 export class HostAttestationProvider implements TrustedExecutionContextProvider {
   private current: { tool: string; input: Record<string, unknown>; token: string | null } | null = null;
+  private lastVerifiedCapability: ResolvedModelCapabilityV1 | null = null;
 
   constructor(private readonly store: WorkflowStore, private readonly adapter: HostExecutionAdapter) {}
 
@@ -251,9 +333,16 @@ export class HostAttestationProvider implements TrustedExecutionContextProvider 
     return withHostObservation(this.store, this.adapter, tool, args, observe, (input) => this.run(tool, input, call));
   }
 
+  /** Returns the vendor-neutral capability metadata and policy revision verified on the latest observe() call. */
+  lastObservedCapability(): ResolvedModelCapabilityV1 | null {
+    return this.lastVerifiedCapability;
+  }
+
   diagnose(): Record<string, unknown> {
     return {
       host: this.adapter.host,
+      ...(this.adapter.provider ? { provider: this.adapter.provider } : {}),
+      ...(this.adapter.policyRevision ? { policyRevision: this.adapter.policyRevision } : {}),
       status: "missing-call-observation",
       required: ["host-owned model", "reasoningEffort", "session", "current tool call", "signed input binding"],
       connection: "Enable the host PreToolUse adapter, or supply host-owned observations through HostAttestationProvider.runObserved; caller executionContext is not trusted.",
@@ -273,6 +362,7 @@ export class HostAttestationProvider implements TrustedExecutionContextProvider 
   }
 
   observe(binding: ExecutionObservationBindingV1): ExecutionContextV1 | null {
+    this.lastVerifiedCapability = null;
     const current = this.current;
     if (!current?.token) return null;
     const payload = verifyToken(this.store, this.adapter, current.token);
@@ -283,6 +373,11 @@ export class HostAttestationProvider implements TrustedExecutionContextProvider 
     // A stage call carries no task ID; its run, stage and revision bind the task.
     const taskId = payload.phase === "stage" ? binding.taskId : payload.taskId;
     if (!taskId) throw invalid("Host attestation token is missing its task binding.");
+    this.lastVerifiedCapability = resolveAdapterModelCapability(
+      this.adapter,
+      payload.model,
+      payload.provenance ?? `${this.adapter.host}:runtime`,
+    );
     return {
       schemaVersion: CONTRACT_VERSION,
       model: payload.model,

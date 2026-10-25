@@ -1,6 +1,13 @@
 import { closeSync, fstatSync, openSync, readSync } from "node:fs";
 
-import { hostActorId, type HostObservation, isReasoningEffort } from "./host-attestation.js";
+import {
+  hostActorId,
+  type HostExecutionAdapter,
+  type HostObservation,
+  isReasoningEffort,
+  resolveAdapterModelCapability,
+  satisfiesModelEffortPolicy,
+} from "./host-attestation.js";
 import { codexExecutionAdapter } from "./host-execution-adapters.js";
 
 export const CODEX_METADATA_HEAD_BYTES = 256 * 1024;
@@ -9,6 +16,7 @@ export const CODEX_METADATA_TAIL_BYTES = 8 * 1024 * 1024;
 export interface CodexMetadataWindow { head: string; tail: string }
 export interface CodexObservationOptions {
   readMetadata?: (file: string) => CodexMetadataWindow | null;
+  adapter?: HostExecutionAdapter;
 }
 export type CodexObservationResult =
   | { observation: Omit<HostObservation, "tool" | "input">; reason: null }
@@ -44,6 +52,7 @@ export function readCodexMetadata(file: string): CodexMetadataWindow | null {
 /** Bounded JSONL is decoded to identify host metadata; chat content, credentials and tool bodies are not exported. */
 export function observeCodexHook(input: Record<string, unknown>, options: CodexObservationOptions = {}): CodexObservationResult {
   const missing = (reason: string): CodexObservationResult => ({ observation: null, reason });
+  const adapter = options.adapter ?? codexExecutionAdapter;
   const sessionId = text(input.session_id);
   const turnId = text(input.turn_id);
   const toolUseId = text(input.tool_use_id);
@@ -77,12 +86,15 @@ export function observeCodexHook(input: Record<string, unknown>, options: CodexO
   if (context.turn_id !== turnId) return missing("host-turn-mismatch");
   if (context.model !== model) return missing("host-model-mismatch");
   if (!isReasoningEffort(context.effort)) return missing("host-reasoning-effort-missing-or-unsupported");
-  if (!codexExecutionAdapter.modelClassForModel(model)) return missing("host-model-policy-unsupported");
+  const capability = resolveAdapterModelCapability(adapter, model, `${adapter.host}:rollout-turn-context`);
+  if (!capability) return missing("host-model-policy-unsupported");
+  if (!satisfiesModelEffortPolicy(capability, context.effort)) return missing("host-reasoning-effort-below-model-minimum-or-unsupported");
   return {
     observation: {
       model, reasoningEffort: context.effort,
-      actorId: hostActorId(codexExecutionAdapter.host, sessionId),
+      actorId: hostActorId(adapter.host, sessionId),
       sessionId, turnId, toolUseId,
+      provenance: capability.provenance,
     },
     reason: null,
   };
