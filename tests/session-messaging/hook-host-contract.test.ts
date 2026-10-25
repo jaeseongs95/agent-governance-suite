@@ -24,12 +24,13 @@ function fixture() {
   } };
 }
 
-function hook(bundle: string, args: string[], input: Record<string, unknown>, environment: NodeJS.ProcessEnv): { hookSpecificOutput?: { updatedInput?: Record<string, unknown> } } {
+// The message hook CLI exits 1 (non-blocking failure) when its fail-open run failed; other hooks still exit 0.
+function hook(bundle: string, args: string[], input: Record<string, unknown>, environment: NodeJS.ProcessEnv, expectedStatus = 0): { hookSpecificOutput?: { updatedInput?: Record<string, unknown> } } {
   const result = spawnSync(process.execPath, [path.join(root, "mcp-server/dist", bundle + ".mjs"), ...args], {
     input: JSON.stringify(input), env: environment, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,
   });
   expect(result.error).toBeUndefined();
-  expect(result.status, result.stderr).toBe(0);
+  expect(result.status, result.stderr).toBe(expectedStatus);
   return result.stdout.trim() ? JSON.parse(result.stdout) as { hookSpecificOutput?: { updatedInput?: Record<string, unknown> } } : {};
 }
 
@@ -84,7 +85,8 @@ describe("explicit hook CLI host contract (synthetic packaged fixtures, not nati
       const input = attestationInput(f.directory);
       for (const bundle of ["host-attestation-hook", "session-message-hook", "session-board-hook"]) {
         const tool = bundle === "host-attestation-hook" ? "plan_workflow" : bundle === "session-message-hook" ? "prepare_session_message" : "list_session_status";
-        const output = hook(bundle, args, { ...input, tool_name: "mcp__agent_governance_suite__" + tool }, f.env);
+        const output = hook(bundle, args, { ...input, tool_name: "mcp__agent_governance_suite__" + tool }, f.env,
+          bundle === "session-message-hook" ? 1 : 0);
         const updated = output.hookSpecificOutput?.updatedInput;
         expect(updated?._hostAttestation).toBeUndefined();
         expect(updated?._sessionBinding).toBeUndefined();
@@ -99,7 +101,7 @@ it("does not treat an unknown host as Claude attestation or Codex delivery", () 
   const f = fixture();
   const input = attestationInput(f.directory);
   for (const bundle of ["host-attestation-hook", "session-message-hook"]) {
-    const output = hook(bundle, ["--host=unregistered-host"], input, f.env);
+    const output = hook(bundle, ["--host=unregistered-host"], input, f.env, bundle === "session-message-hook" ? 1 : 0);
     expect(output.hookSpecificOutput?.updatedInput?._hostAttestation).toBeUndefined();
     expect(output.hookSpecificOutput?.updatedInput?._sessionBinding).toBeUndefined();
   }
@@ -121,7 +123,8 @@ it("reports a closed stdout pipe once without retrying or failing the hook proce
   child.stdin.end(JSON.stringify({ hook_event_name: "PreToolUse", session_id: "stdout-synthetic-session", agent_id: "",
     tool_name: "mcp__agent_governance_suite__prepare_session_message",
     tool_input: { schemaVersion: "1.0.0", marker: "secret-canary-output" } }));
-  expect(await closed).toBe(0);
+  // Fail-open (no retry, no crash), but the failed stdout stage is visible in the non-blocking failure status.
+  expect(await closed).toBe(1);
   expect(diagnostic.match(/"phase":"stdout"/gu)).toHaveLength(1);
   expect(diagnostic).not.toContain("secret-canary-output");
   expect(diagnostic).not.toContain("stdout-synthetic-session");
@@ -137,7 +140,7 @@ it("distinguishes a missing host adapter from an unexpected hook failure without
       env: { ...f.env, NODE_NO_WARNINGS: "1" }, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,
     });
   expect(result.error).toBeUndefined();
-  expect(result.status).toBe(0);
+  expect(result.status).toBe(1);
   expect(result.stdout).toBe("");
   expect(result.stderr).toContain('"phase":"handle","reason":"HOST_ADAPTER_UNAVAILABLE"');
   expect(result.stderr).not.toContain("UNEXPECTED_FAILURE");
@@ -155,7 +158,7 @@ describe("L3 packaged failure diagnostics", () => {
           tool_name: "mcp__agent_governance_suite__plan_workflow", tool_input: { marker: "private-tool-marker" } }),
         env: { ...f.env, NODE_NO_WARNINGS: "1" }, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,
       });
-      expect(result.error).toBeUndefined(); expect(result.status).toBe(0);
+      expect(result.error).toBeUndefined(); expect(result.status).toBe(bundle === "session-message-hook" ? 1 : 0);
       expect(result.stderr).toContain('"phase":"host-entry","reason":"INVALID_HOOK_HOST_SELECTION"');
       expect(result.stderr).toContain('"context":');
       for (const marker of ["private-host-marker", "private-session-marker", "private-tool-marker"])
