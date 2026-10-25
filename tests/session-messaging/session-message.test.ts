@@ -34,7 +34,7 @@ import { resolveGeminiAgentApi } from "../../mcp-server/src/session-message-wake
 import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
 import { processIdentityState } from "../../mcp-server/src/process-identity.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "../../mcp-server/src/session-message-protocol.js";
-import { adaptHostInput, hostDeliveryProfile } from "../../mcp-server/src/host-input-adapter.js";
+import { adaptHostInput, hostDeliveryProfile, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { supportsInjection, type DeliveryCapabilities } from "../../mcp-server/src/input-observation.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
@@ -707,6 +707,15 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
   });
 
   it("maps vendor input once and keeps mixed user text as a user-input observation", () => {
+    registerHookHostAdapter("fake-host", {
+      adaptInput: (input, selectedHost) => {
+        const adapted = adaptHostInput(input, "codex");
+        return {...adapted, observation: {...adapted.observation, host: selectedHost,
+          actor: {...adapted.observation.actor, observedBy: `${selectedHost}:hook-payload`}}};
+      },
+      deliveryProfile: () => ({transport: "claude-inbox", capabilities: {supportedInjection: [], idleWake: "none"}, blocksEmptyWakePrompt: false}),
+      processPid: () => undefined,
+    });
     const nonce = "a".repeat(32);
     const mixed = adaptHostInput({
       hook_event_name: "UserPromptSubmit",
@@ -739,7 +748,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       hook_event_name: "PreToolUse",
       session_id: "parent-session",
       agent_id: "subagent-1",
-      tool_name: "mcp__suite__send_session_message",
+      tool_name: "mcp__agent_governance_suite__send_session_message",
       tool_input: { body: "do not send" },
     }, "claude-code");
     expect(denied).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny" } });
@@ -748,7 +757,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       hook_event_name: "PreToolUse",
       session_id: "parent-session",
       agent_id: "subagent-1",
-      tool_name: "mcp__suite__validate_collaboration_decision",
+      tool_name: "mcp__agent_governance_suite__validate_collaboration_decision",
       tool_input: { _sessionBinding: { host: "forged", sessionId: "forged" } },
     }, "claude-code");
     expect(validation).toMatchObject({ hookSpecificOutput: { updatedInput: { _sessionBinding: {
@@ -769,6 +778,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     const hook = (hook_event_name: string, extra: Record<string, unknown> = {}) => JSON.stringify({
       hook_event_name,
       session_id: sessionId,
+      agent_id: "",
       cwd: "D:/work/repo",
       ...extra,
     });
@@ -1509,10 +1519,12 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     const output = await handleSessionMessageHook({
       hook_event_name: "PreToolUse",
       session_id: "third-party-session",
-      tool_name: "mcp__suite__send_session_message",
+      agent_id: "",
+      tool_name: "mcp__agent_governance_suite__send_session_message",
       tool_input: { targetHost: "spark", targetSessionId: "s-1", body: "hello", _sessionBinding: { host: "forged", sessionId: "forged" } },
     }, "codex");
-    expect(output).toMatchObject({ hookSpecificOutput: { permissionDecision: "allow", updatedInput: { _sessionBinding: { host: "codex", sessionId: "third-party-session" } } } });
+    expect(output).toMatchObject({ hookSpecificOutput: { updatedInput: { _sessionBinding: { host: "codex", sessionId: "third-party-session" } } } });
+    expect((output.hookSpecificOutput as Record<string, unknown>).permissionDecision).toBeUndefined();
   });
 
   it("does not speak plaintext on the loopback port", async () => {

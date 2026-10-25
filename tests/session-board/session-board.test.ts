@@ -128,7 +128,7 @@ describe("session board store", () => {
 });
 
 describe("session board hook", () => {
-  const input = (event: string, extra: Record<string, unknown> = {}) => ({ hook_event_name: event, session_id: "s1", cwd: "D:/work/repo", ...extra });
+  const input = (event: string, extra: Record<string, unknown> = {}) => ({ hook_event_name: event, session_id: "s1", agent_id: "", cwd: "D:/work/repo", ...extra });
   const tool = (name: string, toolInput: Record<string, unknown> = {}, extra: Record<string, unknown> = {}) => input("PreToolUse", { tool_name: name, tool_input: toolInput, ...extra });
   const boardTool = (name: string) => `mcp__plugin_agent-governance-suite_agent-governance-suite__${name}`;
 
@@ -147,7 +147,7 @@ describe("session board hook", () => {
     expect(decision(run(tool(boardTool("update_session_status"), { schemaVersion: "1.0.0", summary: "x" }, { agent_id: "sub-1" }), 6))).toBe("deny");
     expect(decision(run(tool(boardTool("update_session_status"), { schemaVersion: "1.0.0", summary: "둘\n줄" }), 7))).toBe("deny");
     const updated = run(tool(boardTool("update_session_status"), { schemaVersion: "1.0.0", summary: "현황판 구현", _sessionBinding: { host: "x", sessionId: "forged" } }), 8);
-    expect(updated).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "allow", updatedInput: { schemaVersion: "1.0.0", summary: "현황판 구현", _sessionBinding: { host: "claude-code", sessionId: "s1" } } } });
+    expect(updated).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { schemaVersion: "1.0.0", summary: "현황판 구현", _sessionBinding: { host: "claude-code", sessionId: "s1" } } } });
 
     run(input("UserPromptSubmit", { agent_id: "sub-1", prompt: "서브에이전트 입력" }), 9);
     expect(listSessions(board, at(9))[0]).toMatchObject({ summary: "현황판 구현", stale: false });
@@ -161,7 +161,8 @@ describe("session board hook", () => {
     expect(JSON.stringify(listSessions(board, at(11)))).not.toContain("비밀 요청 원문");
 
     const listed = run(tool(boardTool("list_session_status"), { schemaVersion: "1.0.0" }, { agent_id: "sub-1" }), 14);
-    expect(listed).toMatchObject({ hookSpecificOutput: { permissionDecision: "allow", updatedInput: { _sessionBinding: { host: "claude-code", sessionId: "s1" } } } });
+    expect(listed).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
+    expect((listed.hookSpecificOutput as Record<string, unknown>).updatedInput).toBeUndefined();
   });
 
   it("does not create a new request boundary for a broker-verified wake bell", () => {
@@ -289,7 +290,7 @@ describe("session board MCP tools", () => {
     delete env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
     delete env.AGENT_GOVERNANCE_DB_PATH;
     const repository = fileURLToPath(new URL("../../", import.meta.url));
-    const update = (sessionId: string, toolName: string, summary: string) => JSON.stringify({ hook_event_name: "PreToolUse", session_id: sessionId, cwd: "D:/work/repo", tool_name: toolName, tool_input: { schemaVersion: "1.0.0", summary } });
+    const update = (sessionId: string, toolName: string, summary: string) => JSON.stringify({ hook_event_name: "PreToolUse", session_id: sessionId, agent_id: "", cwd: "D:/work/repo", tool_name: toolName, tool_input: { schemaVersion: "1.0.0", summary } });
     const run = (script: string, input: string) => spawnSync(process.execPath, [path.join(repository, script)], { env, input, encoding: "utf8", windowsHide: true });
     const claude = run("claude-plugin/hooks/session-board-hook.mjs", update("claude-1", "mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status", "Claude 작업"));
     const codex = run("mcp-server/dist/session-board-hook.mjs", update("codex-1", "mcp__agent-governance-suite__update_session_status", "Codex 작업"));
@@ -311,7 +312,7 @@ describe("session board MCP tools", () => {
   it("reads back the hook-written line, lists the host board and refuses unbound updates", async () => {
     const databasePath = boardPath();
     const board = open(databasePath);
-    handleSessionBoardHook({ hook_event_name: "PreToolUse", session_id: "s1", cwd: "D:/work/repo", tool_name: "mcp__x__update_session_status", tool_input: { summary: "릴리스 준비" } }, board, "claude-code");
+    handleSessionBoardHook({ hook_event_name: "PreToolUse", session_id: "s1", agent_id: "", cwd: "D:/work/repo", tool_name: "mcp__agent_governance_suite__update_session_status", tool_input: { summary: "릴리스 준비" } }, board, "claude-code");
     const client = await connect(databasePath);
     const binding = { host: "claude-code", sessionId: "s1" };
 

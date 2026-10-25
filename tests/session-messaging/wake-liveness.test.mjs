@@ -9,11 +9,23 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, test, vi } from 'vitest';
 import { SessionMessageStore, WAKE_TTL_MS, WAKE_RETIRE_GRACE_MS } from '../../mcp-server/src/session-message-store.ts';
 import { dispatchSessionMessageBrokerOperation as dispatch } from '../../mcp-server/src/session-message-broker.ts';
-import { adaptHostInput } from '../../mcp-server/src/host-input-adapter.ts';
+import '../../mcp-server/src/builtin-hook-host-adapters.ts';
+import { adaptHostInput, registerHookHostAdapter } from '../../mcp-server/src/host-input-adapter.ts';
 import { recordWakeHookObservation, wakeHookObservationReader } from '../../mcp-server/src/session-message-wake-port.ts';
 import { ContractValidator } from '../../mcp-server/src/schema-validator.ts';
 
 // The process fixture binds the same target identity.
+// This synthetic host explicitly elects the builtin fixture input schema; it grants no delivery authority.
+registerHookHostAdapter("portable", {
+    adaptInput: (input, selectedHost) => {
+      const adapted = adaptHostInput(input, "codex");
+      return {...adapted, observation: {...adapted.observation, host: selectedHost,
+        actor: {...adapted.observation.actor, observedBy: `${selectedHost}:hook-payload`}}};
+    },
+  deliveryProfile: () => ({transport: "claude-inbox", capabilities: {supportedInjection: [], idleWake: "none"}, blocksEmptyWakePrompt: false}),
+  processPid: () => undefined,
+});
+
 const target = { host: 'portable', sessionId: 'wake-target' };
 const sender = { host: 'portable', sessionId: 'liveness-sender' };
 const capabilities = { supportedInjection: ['peer-wake', 'tool-boundary'], idleWake: 'silent' };

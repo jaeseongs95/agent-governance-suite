@@ -11,7 +11,7 @@ vi.mock("../../mcp-server/src/process-identity.js", async (original) => ({
   ...await original<typeof import("../../mcp-server/src/process-identity.js")>(), processStartToken: f.token,
 }));
 import { handleSessionMessageHook, runSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
-import { registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+import { adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 
 const input = { hook_event_name: "SessionStart", session_id: "verified-hook-fixture", agent_id: "" };
 const digest = "c90c8e2e1a02a4a7a96730c77bf0875e2cc86506f2de87332c2442c55dc93e29";
@@ -196,6 +196,11 @@ it("accepts an opaque new host with an adapter delivery contract using unchanged
   const syntheticInstance = "host-process-v1:" + syntheticDigest;
   const syntheticRelay = "verified-relay-v1:11111111-1111-4111-8111-111111111111:" + syntheticDigest;
   registerHookHostAdapter("synthetic-host", {
+    adaptInput: (input, selectedHost) => {
+      const adapted = adaptHostInput(input, "codex");
+      return {...adapted, observation: {...adapted.observation, host: selectedHost,
+        actor: {...adapted.observation.actor, observedBy: `${selectedHost}:hook-payload`}}};
+    },
     deliveryProfile: () => ({ transport: "gemini-queue", capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" }, blocksEmptyWakePrompt: false }),
     processPid: (pid) => pid,
   });

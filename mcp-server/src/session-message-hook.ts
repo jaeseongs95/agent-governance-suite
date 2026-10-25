@@ -1,4 +1,4 @@
-import { hookFailure, hookFailureContext, hookFailureReason, retainHookFailureCause, retainHookFailureSecondary, tagHookFailure } from "./hook-error-diagnostics.js";
+import { hookFailure, hookFailureContext, hookFailureReason, retainHookFailureCause, retainHookFailureSecondary, tagHookFailure, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 import "./builtin-hook-host-adapters.js";
 import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
@@ -14,7 +14,7 @@ import type { SessionMessageTransport } from "./session-message-relay.js";
 import type { SessionMessage } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
 import { processStartToken } from "./process-identity.js";
-import { adaptHostInput, hostDeliveryProfile, nativePeerWait, resolveHookHost, resolveHookProcessPid, type SupportedHookHost } from "./host-input-adapter.js";
+import { adaptHostInput, hostDeliveryProfile, isGovernanceHookTool, nativePeerWait, resolveHookHost, resolveHookProcessPid, type SupportedHookHost } from "./host-input-adapter.js";
 
 // Addons register and consume this exact bundled namespace; other bundles/processes have separate registries.
 export { registerHookHostAdapter } from "./host-input-adapter.js";
@@ -23,7 +23,7 @@ import type { PeerWaitDecision } from "./peer-wait-policy.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "./session-message-protocol.js";
 
 const SESSION_BOUND_TOOLS = new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
-const SUBAGENT_DENIED_TOOLS = new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
+const MAIN_SESSION_TOOLS = new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
 const HOST_CLAIM_MAX_MESSAGES = 1;
 const HOST_CLAIM_MAX_BODY_CHARS = 4096;
 const HOST_MESSAGE_REQUEST_TIMEOUT_MS = 8_000;
@@ -89,7 +89,7 @@ function reportHookFailure(phase: HookFailurePhase, error: unknown): SessionMess
   if (!observed) reason = ownedReason ?? reason;
   const failure: SessionMessageHookFailure = Object.freeze({ phase, reason, reasonBasis,
     ...(ownedReason ? {producerReason: ownedReason} : {}) });
-  try { console.error("[agent-governance-suite] peer-hook-failure " + JSON.stringify({ ...failure, context })); }
+  try { writeFailureDiagnostic("[agent-governance-suite] peer-hook-failure " + JSON.stringify({ ...failure, context }), (line) => console.error(line)); }
   catch { /* A broken diagnostic sink cannot block a hook or authorize replay. */ }
   return failure;
 }
@@ -388,15 +388,15 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         return additionalContext(adapted.outputEventName, "Peer wait policy is unavailable. Use a bounded query; async resume has not been confirmed.");
       }
     }
+    if (!isGovernanceHookTool(host, toolName)) return {};
     const localTool = toolName.split("__").at(-1) ?? "";
     if (!SESSION_BOUND_TOOLS.has(localTool)) return {};
-    if (subagent && SUBAGENT_DENIED_TOOLS.has(localTool)) {
+    if (MAIN_SESSION_TOOLS.has(localTool) && (observation.actor.kind !== "main" || observation.actor.assurance !== "observed")) {
       return { hookSpecificOutput: { hookEventName: adapted.outputEventName, permissionDecision: "deny" } };
     }
     return {
       hookSpecificOutput: {
         hookEventName: adapted.outputEventName,
-        permissionDecision: "allow",
         updatedInput: { ...observation.toolInput, _sessionBinding: localTool === "validate_collaboration_decision" ? {
           host,
           sessionId,

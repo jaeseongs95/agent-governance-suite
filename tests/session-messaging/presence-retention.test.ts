@@ -11,8 +11,20 @@ import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/sess
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import * as protocol from "../../mcp-server/src/session-message-protocol.js";
 import * as storeModule from "../../mcp-server/src/session-message-store.js";
-import { adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
+import "../../mcp-server/src/builtin-hook-host-adapters.js";
+import { adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { recordWakeHookObservation, wakeHookObservationReader } from "../../mcp-server/src/session-message-wake-port.js";
+
+// This synthetic host explicitly elects the builtin fixture input schema; it grants no delivery authority.
+registerHookHostAdapter("portable", {
+    adaptInput: (input, selectedHost) => {
+      const adapted = adaptHostInput(input, "codex");
+      return {...adapted, observation: {...adapted.observation, host: selectedHost,
+        actor: {...adapted.observation.actor, observedBy: `${selectedHost}:hook-payload`}}};
+    },
+  deliveryProfile: () => ({transport: "claude-inbox", capabilities: {supportedInjection: [], idleWake: "none"}, blocksEmptyWakePrompt: false}),
+  processPid: () => undefined,
+});
 
 const { SessionMessageStore, WAKE_TTL_MS, WAKE_RETIRE_GRACE_MS } = storeModule;
 type Store = InstanceType<typeof SessionMessageStore>;

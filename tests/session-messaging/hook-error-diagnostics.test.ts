@@ -2,10 +2,15 @@ import { createHash } from "node:crypto";
 import { runSessionMessageHook, sessionMessageEnvelope, type RecordedSessionMessage, type SessionMessageHookOptions } from "../../mcp-server/src/session-message-hook.js";
 import { describe, expect, it, vi } from "vitest";
 import { hookFailureContext, hookFailure, hookFailureReason } from "../../mcp-server/src/hook-error-diagnostics.js";
-import { hostDeliveryProfile, registerHookHostAdapter, resolveHookHost } from "../../mcp-server/src/host-input-adapter.js";
+import { adaptHostInput, hostDeliveryProfile, registerHookHostAdapter, resolveHookHost } from "../../mcp-server/src/host-input-adapter.js";
 
 const digest = (value: string) => createHash("sha256").update(Buffer.from(value, "utf16le")).digest("hex");
-const adapter = { deliveryProfile: () => ({ transport: "claude-inbox" as const,
+function fixtureInput(input: Record<string, unknown>, selectedHost: string) {
+  const adapted = adaptHostInput(input, "codex");
+  return {...adapted, observation: {...adapted.observation, host: selectedHost,
+    actor: {...adapted.observation.actor, observedBy: `${selectedHost}:hook-payload`}}};
+}
+const adapter = { adaptInput: fixtureInput, deliveryProfile: () => ({ transport: "claude-inbox" as const,
   capabilities: { supportedInjection: [], idleWake: "none" as const }, blocksEmptyWakePrompt: false }), processPid: () => undefined };
 function failure(action: () => unknown): unknown { try { action(); } catch (cause) { return cause; } throw new Error("expected producer failure"); }
 

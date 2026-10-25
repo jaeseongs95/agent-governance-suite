@@ -3,13 +3,78 @@ import { types as utilTypes } from "node:util";
 import { hookFailure, retainHookFailureCause, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
 import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
 import path from "node:path";
-import { registerHookHostAdapter, type HookHostAdapter, type HostDeliveryProfile, type NativePeerWaitObservation, type HookSettingsDiagnostic } from "./host-input-adapter.js";
-import type { InputObservation } from "./input-observation.js";
+import { registerHookHostAdapter, type HookHostAdapter, type HostDeliveryProfile, type NativePeerWaitObservation, type HookSettingsDiagnostic, type AdaptedHostInput, type HostLifecycle } from "./host-input-adapter.js";
+import { parseWakeMessages } from "./session-message-client.js";
+import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import { transportDeliveryCapabilities, type SessionMessageTransport } from "./session-message-relay.js";
 
+function text(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function actorObservation(input: Record<string, unknown>, host: string): InputObservation["actor"] {
+  if (!Object.hasOwn(input, "agent_id")) return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
+  if (typeof input.agent_id !== "string") return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
+  return {
+    kind: text(input.agent_id) ? "subagent" : "main",
+    observedBy: `${host}:hook-payload`,
+    assurance: "observed",
+  };
+}
+
+/** Keeps vendor event names and actor fields at the host adapter boundary. */
+function adaptBuiltinHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
+  const event = text(input.hook_event_name);
+  let kind: InputObservationKind = "unknown";
+  let lifecycle: HostLifecycle = "none";
+  let boundaryPhase: "before" | "after" | undefined;
+  if (event === "SessionStart") lifecycle = "start";
+  else if (event === "SessionEnd") {
+    kind = "turn-end";
+    lifecycle = "end";
+  } else if (event === "UserPromptSubmit") kind = "user-input";
+  else if (event === "PreToolUse") {
+    kind = "tool-boundary";
+    boundaryPhase = "before";
+  } else if (event === "PostToolUse") {
+    kind = "tool-boundary";
+    boundaryPhase = "after";
+  } else if (event === "Stop") kind = "turn-end";
+
+  const wake = kind === "user-input" ? parseWakeMessages(input.prompt) : { nonces: [], wakeOnly: false };
+  const workspaceId = text(input.workspace_id) || text(input.cwd);
+  const collaborationId = text(input.collaboration_id);
+  const role = text(input.role);
+  return {
+    lifecycle,
+    outputEventName: event,
+    observation: {
+      host,
+      sessionId: text(input.session_id),
+      kind,
+      actor: actorObservation(input, host),
+      ...(boundaryPhase === undefined ? {} : { boundaryPhase }),
+      ...(kind === "tool-boundary" ? { toolName: text(input.tool_name), toolInput: record(input.tool_input) } : {}),
+      ...(kind === "user-input" ? { wakeCandidates: wake.nonces, wakeOnly: wake.wakeOnly } : {}),
+      ...(workspaceId ? { workspaceId } : {}),
+      ...(collaborationId ? { collaborationId } : {}),
+      ...(role ? { role } : {}),
+    },
+  };
+}
+
+const GOVERNANCE_TOOL_PREFIXES = new Set([
+  "mcp__agent_governance_suite__", "mcp__agent-governance-suite__",
+  "mcp__plugin_agent-governance-suite_agent-governance-suite__",
+]);
+function ownsGovernanceTool(toolName: string): boolean {
+  const separator = toolName.lastIndexOf("__");
+  return separator > 0 && GOVERNANCE_TOOL_PREFIXES.has(toolName.slice(0, separator + 2));
 }
 
 function queueEnabled(host: string, explicit: string | undefined, environment: NodeJS.ProcessEnv,
@@ -112,14 +177,17 @@ function geminiQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: s
 // Builtin wiring belongs to this composition module; core registration has no vendor list.
 const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
   ["codex", {
+    adaptInput: adaptBuiltinHookInput, ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", true),
     processPid: (pid) => pid, attestationKind: "codex-rollout", peerWait: codexNativePeerWait,
   }],
   ["claude-code", {
+    adaptInput: adaptBuiltinHookInput, ownsTool: ownsGovernanceTool,
     deliveryProfile: () => deliveryProfile("claude-inbox", false),
     processPid: () => process.ppid, attestationKind: "claude-hook",
   }],
   ["gemini", {
+    adaptInput: adaptBuiltinHookInput, ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
     processPid: (pid, observation) => observation ? pid : undefined,
   }],

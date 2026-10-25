@@ -1,7 +1,6 @@
 import { types as utilTypes } from "node:util";
 import { hookFailure, hookFailureContext, hookFailureReason } from "./hook-error-diagnostics.js";
-import { parseWakeMessages } from "./session-message-client.js";
-import type { DeliveryCapabilities, InputObservation, InputObservationKind } from "./input-observation.js";
+import type { DeliveryCapabilities, InputObservation } from "./input-observation.js";
 import type { SessionMessageTransport } from "./session-message-relay.js";
 
 const hostFailures = {
@@ -39,63 +38,20 @@ export interface AdaptedHostInput {
   outputEventName: string;
 }
 
-function text(value: unknown): string {
-  return typeof value === "string" ? value : "";
-}
-
-function record(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
-}
-
-function actorObservation(input: Record<string, unknown>, host: string): InputObservation["actor"] {
-  if (!Object.hasOwn(input, "agent_id")) return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
-  if (typeof input.agent_id !== "string") return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
-  return {
-    kind: text(input.agent_id) ? "subagent" : "main",
-    observedBy: `${host}:hook-payload`,
-    assurance: "observed",
-  };
-}
-
-/** Keeps vendor event names and actor fields at the host adapter boundary. */
+/** No host payload schema or actor convention is assumed by the common hook layer. */
 export function adaptHostInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
-  const event = text(input.hook_event_name);
-  let kind: InputObservationKind = "unknown";
-  let lifecycle: HostLifecycle = "none";
-  let boundaryPhase: "before" | "after" | undefined;
-  if (event === "SessionStart") lifecycle = "start";
-  else if (event === "SessionEnd") {
-    kind = "turn-end";
-    lifecycle = "end";
-  } else if (event === "UserPromptSubmit") kind = "user-input";
-  else if (event === "PreToolUse") {
-    kind = "tool-boundary";
-    boundaryPhase = "before";
-  } else if (event === "PostToolUse") {
-    kind = "tool-boundary";
-    boundaryPhase = "after";
-  } else if (event === "Stop") kind = "turn-end";
-
-  const wake = kind === "user-input" ? parseWakeMessages(input.prompt) : { nonces: [], wakeOnly: false };
-  const workspaceId = text(input.workspace_id) || text(input.cwd);
-  const collaborationId = text(input.collaboration_id);
-  const role = text(input.role);
-  return {
-    lifecycle,
-    outputEventName: event,
-    observation: {
-      host,
-      sessionId: text(input.session_id),
-      kind,
-      actor: actorObservation(input, host),
-      ...(boundaryPhase === undefined ? {} : { boundaryPhase }),
-      ...(kind === "tool-boundary" ? { toolName: text(input.tool_name), toolInput: record(input.tool_input) } : {}),
-      ...(kind === "user-input" ? { wakeCandidates: wake.nonces, wakeOnly: wake.wakeOnly } : {}),
-      ...(workspaceId ? { workspaceId } : {}),
-      ...(collaborationId ? { collaborationId } : {}),
-      ...(role ? { role } : {}),
-    },
+  const adapter = hookHostAdapters.get(host);
+  if (!adapter) throw hookHostFailure("unavailable");
+  return adapter.adaptInput?.(input, host) ?? {
+    lifecycle: "none", outputEventName: "",
+    observation: { host, sessionId: "", kind: "unknown",
+      actor: { kind: "unknown", observedBy: `${host}:unconfigured-input`, assurance: "unknown" } },
   };
+}
+
+/** Tool ownership is configured at the adapter boundary, never inferred from a local suffix. */
+export function isGovernanceHookTool(host: string, toolName: string): boolean {
+  return hookHostAdapters.get(host)?.ownsTool?.(toolName) === true;
 }
 
 export interface HostDeliveryProfile {
@@ -115,11 +71,15 @@ export interface HookSettingsDiagnostic {
 }
 
 export interface HookHostAdapter {
+  /** Explicit input schema and actor observation strategy. Missing strategies issue no identity. */
+  adaptInput?: (input: Record<string, unknown>, host: string) => AdaptedHostInput;
+  /** Exact namespaces owned by this plugin in the host tool surface. */
+  ownsTool?: (toolName: string) => boolean;
   /** Call-local setting default; adapters without a configurable queue default ignore it. */
   deliveryProfile(environment: NodeJS.ProcessEnv, diagnose: (reason: string, observation?: unknown) => void, defaultQueueWake?: boolean): HostDeliveryProfile;
   processPid(explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>): number | undefined;
-  /** A configured observation strategy, never inferred from an opaque host name. */
-  attestationKind?: "codex-rollout" | "claude-hook";
+  /** Opaque trusted strategy identifier; the attestation entry owns registration and dispatch. */
+  attestationKind?: string;
   peerWait?: (observation: InputObservation) => NativePeerWaitObservation | null;
 }
 
@@ -129,7 +89,10 @@ const hookHostAdapters = new Map<string, Readonly<HookHostAdapter>>();
 export function registerHookHostAdapter(host: string, adapter: HookHostAdapter): void {
   if (typeof host !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host)
     || !adapter || typeof adapter.deliveryProfile !== "function" || typeof adapter.processPid !== "function"
-    || (adapter.attestationKind !== undefined && !["codex-rollout", "claude-hook"].includes(adapter.attestationKind))) throw hookHostFailure("adapter");
+    || (adapter.adaptInput !== undefined && typeof adapter.adaptInput !== "function")
+    || (adapter.ownsTool !== undefined && typeof adapter.ownsTool !== "function")
+    || (adapter.attestationKind !== undefined && (typeof adapter.attestationKind !== "string"
+      || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(adapter.attestationKind)))) throw hookHostFailure("adapter");
   if (hookHostAdapters.has(host)) throw hookHostFailure("duplicate");
   hookHostAdapters.set(host, Object.freeze({ ...adapter }));
 }

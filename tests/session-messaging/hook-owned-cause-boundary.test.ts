@@ -25,13 +25,19 @@ vi.mock("node:sqlite", () => ({DatabaseSync: class {
 }}));
 
 import {runSessionMessageHook} from "../../mcp-server/src/session-message-hook.js";
-import {registerHookHostAdapter} from "../../mcp-server/src/host-input-adapter.js";
+import {registerHookHostAdapter, type AdaptedHostInput} from "../../mcp-server/src/host-input-adapter.js";
 import {BrokerRequestRejected, requestSessionMessageOnce, sessionMessageRequest} from "../../mcp-server/src/session-message-client.js";
 import {hookFailureContext, hookFailureReason, retainHookFailureCause, retainHookFailureSecondary, tagHookFailure} from "../../mcp-server/src/hook-error-diagnostics.js";
 import {SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL} from "../../mcp-server/src/session-message-protocol.js";
 
 const host = "owned-cause-fixture";
-registerHookHostAdapter(host, {deliveryProfile: () => ({
+function fixtureInput(_input: Record<string, unknown>, selectedHost: string): AdaptedHostInput {
+  return { lifecycle: "none", outputEventName: "PostToolUse", observation: {
+    host: selectedHost, sessionId: "PRIVATE_SESSION", kind: "tool-boundary", boundaryPhase: "after",
+    actor: {kind: "main", observedBy: "owned-cause-fixture:adapter", assurance: "observed"}, toolName: "read_file", toolInput: {},
+  } };
+}
+registerHookHostAdapter(host, {adaptInput: fixtureInput, deliveryProfile: () => ({
   transport: "claude-inbox", capabilities: {supportedInjection: ["tool-boundary"], idleWake: "none"}, blocksEmptyWakePrompt: false,
 }), processPid: () => undefined});
 const fingerprint = Array(32).fill("AA").join(":");
@@ -164,7 +170,7 @@ describe("0024 actual client producer through actual hook and safe report", () =
   it("does not promote a forged public code or an owned nested cause in the actual hook", async () => {
     const nested = tagHookFailure(new Error("PRIVATE_NESTED"), "OWNED_NESTED");
     const external = Object.assign(new Error("PRIVATE_EXTERNAL", {cause: nested}), {code: "BROKER_ENDPOINT_INVALID"});
-    registerHookHostAdapter("owned-cause-counterfeit", {deliveryProfile: () => {throw external;}, processPid: () => undefined});
+    registerHookHostAdapter("owned-cause-counterfeit", {adaptInput: fixtureInput, deliveryProfile: () => {throw external;}, processPid: () => undefined});
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(await runSessionMessageHook("owned-cause-counterfeit", input, undefined, options)).toBe("");
     expect(diagnosticValue(spy)).toMatchObject({reason: "UNEXPECTED_FAILURE", reasonBasis: "unknown", context: {cause: {producerReason: "OWNED_NESTED"}}});

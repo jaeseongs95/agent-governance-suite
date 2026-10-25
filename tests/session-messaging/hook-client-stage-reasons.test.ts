@@ -7,12 +7,18 @@ vi.mock("node:child_process", async original => ({...await original<typeof impor
 vi.mock("node:fs/promises", async original => ({...await original<typeof import("node:fs/promises")>(), readFile: f.read, mkdir: f.mkdir, chmod: f.chmod}));
 
 import {runSessionMessageHook} from "../../mcp-server/src/session-message-hook.js";
-import {registerHookHostAdapter} from "../../mcp-server/src/host-input-adapter.js";
+import {adaptHostInput, registerHookHostAdapter} from "../../mcp-server/src/host-input-adapter.js";
 import {requestSessionMessageOnce, sessionMessageRequest} from "../../mcp-server/src/session-message-client.js";
 import {hookFailureContext, hookFailureReason} from "../../mcp-server/src/hook-error-diagnostics.js";
 
 const host = "client-stage-fixture";
-registerHookHostAdapter(host, {deliveryProfile: () => ({
+registerHookHostAdapter(host, {
+    adaptInput: (input, selectedHost) => {
+      const adapted = adaptHostInput(input, "codex");
+      return {...adapted, observation: {...adapted.observation, host: selectedHost,
+        actor: {...adapted.observation.actor, observedBy: `${selectedHost}:hook-payload`}}};
+    },
+  deliveryProfile: () => ({
   transport: "claude-inbox", capabilities: {supportedInjection: ["tool-boundary"], idleWake: "none"}, blocksEmptyWakePrompt: false,
 }), processPid: () => undefined});
 const input = JSON.stringify({hook_event_name: "PostToolUse", session_id: "PRIVATE_SESSION", agent_id: "", tool_name: "read_file"});
