@@ -35,7 +35,7 @@ export function assertionWitness(id, report, receipt) {
   const failed = cases.filter(item => item.status === 'failed');
   assert.equal(failed.length, 1, 'Red must fail exactly the selected test');
   assert(failed[0].fullName.includes(id + ':'), 'Wrong red test failed');
-  const message = failed[0].failureMessages.join('\n').replace(/\x1b\[[0-9;]*m/g, '');
+  const message = failed[0].failureMessages.join('\n').replace(new RegExp(String.fromCharCode(0x1b) + '\\[[0-9;]*m', 'g'), '');
   assert(!/deadline|timed out|Cannot find module|Failed to (?:load|resolve)|SyntaxError/i.test(message),
     'Scheduling, import and runner failures are not red evidence');
   const observed = {

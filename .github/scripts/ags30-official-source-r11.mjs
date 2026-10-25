@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { setTimeout, clearTimeout } from 'node:timers';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -157,13 +158,12 @@ async function main() {
   await fs.mkdir(work);
   const output = path.join(work, 'result');
   const source = path.join(work, 'source');
-  const unpacked = path.join(work, 'unpacked-source');
   await fs.mkdir(output);
   const record = { schemaVersion: 'AgsBoundedCiResult.v1', unit: config.unit, nonce: config.nonce,
     startedAt: new Date().toISOString(), shardIndex, shardCount: config.shardCount, status: 'FAIL', sourceFreshness: 'NOT_RUN',
     runtimeCandidate: 'NOT_GENERATED', originalJev: { tasks: 3, cases: 125, acceptanceCriteria: 10, completionIncrease: 0 },
     mutationSensitivity: 'NOT_RUN', formalEngineeringProof: 'NOT_COLLECTED', phases: [] };
-  let artifactOk = false;
+  let artifactOk;
   let beforeRows = null;
   let afterBuildRows = null;
   const writeJson = (name, value) => fs.writeFile(path.join(output, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
@@ -337,24 +337,6 @@ async function main() {
       await fs.copyFile(path.join(source, row.relativePath), destination);
     }
     let testsPass = lint.receipt.status === 'PASS' && drift.receipt.status === 'PASS';
-    const collectTests = async (name, selectors, extra = []) => {
-      const reportFile = path.join(output, `${name}.vitest.json`);
-      const result = await pnpm(name, ['exec', 'vitest', 'run', ...selectors, ...extra, '--reporter=json', `--outputFile=${reportFile}`], 180_000);
-      let counts;
-      try {
-        const report = JSON.parse(await fs.readFile(reportFile, 'utf8'));
-        counts = Object.fromEntries(['numTotalTests', 'numPassedTests', 'numFailedTests', 'numPendingTests', 'numTodoTests',
-          'numTotalTestSuites', 'numFailedTestSuites'].map(k => [k, report[k] ?? null]));
-        assert(Number.isSafeInteger(counts.numTotalTests) && counts.numTotalTests > 0);
-        assert.equal(counts.numFailedTests, 0);
-        assert.equal(counts.numFailedTestSuites, 0);
-        // Only the named OS case may be filtered; selected regression files may not silently skip tests.
-        if (extra.length === 0) { assert.equal(counts.numPendingTests, 0); assert.equal(counts.numTodoTests, 0); }
-        else assert.equal(counts.numPassedTests, 1);
-      } catch (error) { testsPass = false; counts = { observed: counts ?? null, validationError: error.message }; }
-      if (result.receipt.status !== 'PASS') testsPass = false;
-      await writeJson(`${name}.counts.json`, counts);
-    };
     let independentNodeStatus = 'DELEGATED_SHARD_1';
     if (shardIndex === 1) {
     mustPass(await command('07a-path-normalization', process.execPath, ['--test', 'tests/mutation-risk-preflight/path-normalization.node-test.mjs'], source, 60_000));
@@ -485,8 +467,8 @@ async function main() {
           mustPass(await command('08e2-python-version', 'python', ['-c',
             'import sys,yaml; print(sys.version); print(yaml.__version__); assert sys.version_info[:2] == (3,12) and yaml.__version__ == "6.0.3"'], work, 10_000));
           for (const item of [{"source":"codex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py","destination":"skills/.system/plugin-creator/scripts/validate_plugin.py","sha256":"f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944"},{"source":"codex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py","destination":"skills/.system/plugin-creator/scripts/identifier_validation.py","sha256":"a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223"},{"source":"codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py","destination":"skills/.system/skill-creator/scripts/quick_validate.py","sha256":"ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c"},{"source":"LICENSE","destination":".supplier/LICENSE","sha256":"d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc"},{"source":"NOTICE","destination":".supplier/NOTICE","sha256":"9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915"}]) {
-            const response = await fetch('https://raw.githubusercontent.com/openai/codex/' + preparation.commit + '/' + item.source,
-              { redirect: 'error', signal: AbortSignal.timeout(Math.min(30_000, Math.max(1, deadline - Date.now()))) });
+            const response = await globalThis.fetch('https://raw.githubusercontent.com/openai/codex/' + preparation.commit + '/' + item.source,
+              { redirect: 'error', signal: globalThis.AbortSignal.timeout(Math.min(30_000, Math.max(1, deadline - Date.now()))) });
             assert.equal(response.status, 200, 'Official validator supplier download failed');
             const chunks = []; let length = 0;
             for await (const bytes of response.body) {

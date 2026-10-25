@@ -2,8 +2,7 @@ import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
-const root=path.dirname(fileURLToPath(import.meta.url));
+import {setTimeout, clearTimeout} from 'node:timers';
 const owner=process.argv[2];
 const subreaper=process.argv[3];
 const output=process.argv[4];await fs.mkdir(output);
@@ -13,7 +12,7 @@ async function run(args, cancel=false) {
   let stdout='',stderr='';child.stdout.on('data',b=>stdout+=b);child.stderr.on('data',b=>stderr+=b);
   const closed=new Promise((resolve,reject)=>{child.on('error',reject);child.on('close',(code,signal)=>resolve({code,signal,stdout,stderr}));});
   if(cancel){
-    for(let i=0;i<100;i++) {try {JSON.parse(await fs.readFile(path.join(output,'owned-pids.json'),'utf8'));break;}catch{} await delay(30);}
+    for(let i=0;i<100;i++) {try {JSON.parse(await fs.readFile(path.join(output,'owned-pids.json'),'utf8'));break;}catch{/* The child has not written a complete PID witness yet. */} await delay(30);}
     child.kill('SIGTERM');
   }
   const guard=setTimeout(()=>child.kill('SIGKILL'),15000);
