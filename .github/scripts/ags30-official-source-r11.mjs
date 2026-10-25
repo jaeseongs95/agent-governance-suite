@@ -68,6 +68,90 @@ export async function buildHeadManifest(treeText, readBlob, binding) {
     generatedRuntime: 'UNVERIFIED_COMMITTED_BYTES', rows };
 }
 
+const sourceArchiveVerifier = String.raw`import hashlib, json, pathlib, re, sys, tarfile
+archive, manifest_path, inventory_path = map(pathlib.Path, sys.argv[1:4])
+manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+rows = {row['relativePath']: row for row in manifest['rows']}
+assert len(rows) == len(manifest['rows']) == manifest['files']
+expected = {}
+for entry in inventory_path.read_bytes().decode('utf-8').split('\0'):
+    if not entry:
+        continue
+    match = re.fullmatch(r'([0-7]{6}) blob ([a-f0-9]{40}) +(\d+)\t([\s\S]+)', entry)
+    assert match, 'Invalid Git inventory'
+    mode, oid, size, name = match.groups()
+    assert mode in ('100644', '100755') and name not in expected
+    expected[name] = (mode, oid, int(size))
+assert set(expected) == set(rows)
+seen, folded, files, total = set(), set(), 0, 0
+with tarfile.open(archive, 'r:gz') as packed:
+    assert packed.pax_headers.get('comment') == manifest['head'], 'Archive HEAD differs'
+    for member in packed:
+        name = member.name
+        assert name and not any(ord(c) < 32 for c in name)
+        assert not any(c in name for c in '\\:') and not name.startswith('/')
+        assert all(part and part not in ('.', '..') for part in name.split('/'))
+        assert name.casefold() not in folded, 'Archive duplicate/collision'
+        folded.add(name.casefold())
+        if member.isdir():
+            assert member.size == 0 and any(p.startswith(name + '/') for p in rows)
+            continue
+        assert member.isfile() and name in rows and name not in seen, 'Archive member is not an expected regular blob'
+        mode, oid, size = expected[name]
+        row = rows[name]
+        assert member.size == size == row['bytes']
+        assert not member.mode & ~0o777 and member.mode & 0o111 == int(mode, 8) & 0o111
+        digest, git = hashlib.sha256(), hashlib.sha1(b'blob ' + str(size).encode('ascii') + b'\0')
+        length = 0
+        with packed.extractfile(member) as stream:
+            while block := stream.read(1024 * 1024):
+                length += len(block)
+                assert length <= size
+                digest.update(block)
+                git.update(block)
+        assert length == size and digest.hexdigest() == row['sha256'] and git.hexdigest() == oid, 'Archive blob bytes differ'
+        seen.add(name)
+        files += 1
+        total += length
+assert seen == set(rows), 'Archive omitted Git blobs'
+archive_hash = hashlib.sha256()
+with archive.open('rb') as stream:
+    while block := stream.read(1024 * 1024):
+        archive_hash.update(block)
+print(json.dumps({'bytes': archive.stat().st_size, 'sha256': archive_hash.hexdigest(), 'files': files, 'sourceBytes': total, 'head': manifest['head'], 'sourceTree': manifest['sourceTree'], 'portableId': manifest['portableId'], 'gitBlobVerification': 'ALL_PATHS_SIZES_SHA256_GIT_OIDS_AND_EXECUTABILITY_MATCH'}))
+`;
+
+export function planSourceArchive(existingRows, record, archive, cap) {
+  assertRows(existingRows);
+  assert(Number.isSafeInteger(cap) && cap >= 1 && cap <= 8 * 1024 * 1024);
+  const bytes = value => Buffer.byteLength(JSON.stringify(value, null, 2) + '\n');
+  const row = (relativePath, size) => ({ relativePath, bytes: size, sha256: '0'.repeat(64) });
+  const maximum = descriptor => {
+    const rows = [...existingRows, row('source-archive.json', bytes(descriptor)),
+      row('result.json', bytes({ ...record, sourceArchive: descriptor }))];
+    if (descriptor.status === 'RETURNED') rows.push(row('source.actual-head.tar.gz', archive.bytes));
+    rows.sort((a, b) => ordinal(a.relativePath, b.relativePath));
+    rows.push(row('result-files.json', bytes({ rows: [...rows], manifestSelfExcluded: true })));
+    // cancelled is the longest Actions step outcome; timestamps and SHA-256 strings have fixed lengths.
+    const outcome = 'cancelled';
+    const finalization = { outcome, finalizedAt: '0000-00-00T00:00:00.000Z',
+      evidenceState: 'OBSERVED_FILES_MAY_BE_PARTIAL', collectorCompletionRequired: false,
+      hardKillOrRunnerLossRecovery: 'NOT_GUARANTEED', artifactMaximumBytes: cap };
+    rows.push(row('finalization.json', bytes(finalization)));
+    rows.sort((a, b) => ordinal(a.relativePath, b.relativePath));
+    return rows.reduce((sum, entry) => sum + entry.bytes, 0) +
+      bytes({ rows, manifestSelfExcluded: true, collectorOutcome: outcome, partialEvidencePossible: true });
+  };
+  let descriptor = { schemaVersion: 'AgsConsumedSourceArchive.v1', status: 'RETURNED',
+    unit: record.unit, nonce: record.nonce, role: 'SNAPSHOT_OF_ACTUAL_CONSUMED_PREBUILD_GIT_SOURCE', ...archive,
+    sourceBinding: record.sourceBinding,
+    locator: { kind: 'same-result-artifact-member', member: 'source.actual-head.tar.gz',
+      runId: record.sourceBinding.runId, attempt: record.sourceBinding.attempt,
+      runnerOs: 'Linux', shardIndex: 2 } };
+  if (maximum(descriptor) > cap) descriptor = { ...descriptor, status: 'NOT_RETURNED_CAP', locator: null };
+  return { descriptor, maximumBytes: maximum(descriptor) };
+}
+
 export async function finalizePartial(output, githubOutput, outcome, cap = 8 * 1024 * 1024) {
   assert(Number.isSafeInteger(cap) && cap >= 1 && cap <= 8 * 1024 * 1024);
   const root = path.resolve(output);
@@ -191,6 +275,9 @@ async function main() {
   let artifactOk;
   let beforeRows = null;
   let afterBuildRows = null;
+  let sourceArchive = null;
+  record.sourceArchive = { status: process.env.RUNNER_OS === 'Linux' && shardIndex === 2 ? 'NOT_PREPARED' : 'NOT_SELECTED_SHARD',
+    owner: { runnerOs: 'Linux', shardIndex: 2 }, locator: null };
   const writeJson = (name, value) => fs.writeFile(path.join(output, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
   const deadline = Date.now() + 12 * 60_000;
   async function command(name, executable, args, cwd, maxMs, extraEnv = {}) {
@@ -350,6 +437,23 @@ async function main() {
     beforeRows = before;
     assert.deepEqual(before, manifest.rows);
     await writeJson('source-before.json', { files: before.length, portableId: portable(before), rows: before });
+    if (process.env.RUNNER_OS === 'Linux' && shardIndex === 2) {
+      try {
+        const archivePath = path.join(work, 'actual-head.tar.gz');
+        mustPass(await git('01k-pack-source-archive', ['archive', '--format=tar.gz', '--output=' + archivePath, head], source, 60_000));
+        const verified = mustPass(await command('01l-verify-source-archive', 'python', ['-B', '-c', sourceArchiveVerifier,
+          archivePath, path.join(output, 'source-manifest.json'), path.join(output, '01i-source-blobs.stdout.bin')], work, 30_000));
+        const metadata = JSON.parse(verified.stdout.toString('utf8'));
+        assert.equal(metadata.head, head); assert.equal(metadata.sourceTree, sourceTree);
+        assert.equal(metadata.files, manifest.files); assert.equal(metadata.portableId, manifest.portableId);
+        assert(Number.isSafeInteger(metadata.bytes) && metadata.bytes >= 0 && /^[a-f0-9]{64}$/.test(metadata.sha256));
+        sourceArchive = { path: archivePath, metadata };
+        record.sourceArchive = { status: 'PREPARED_NOT_RETURNED', ...metadata, locator: null };
+      } catch (error) {
+        record.sourceArchive = { status: 'PREPARATION_FAILED', locator: null,
+          error: { name: error.name, message: error.message, code: error.code ?? null } };
+      }
+    }
     const tools = path.join(work, 'tools');
     await fs.mkdir(tools);
     // The .cmd shim is never invoked through shell; npm's JS entry point is supplied by setup-node.
@@ -586,6 +690,17 @@ async function main() {
       }
     }
     record.endedAt = new Date().toISOString();
+    if (sourceArchive) {
+      const planned = planSourceArchive(await tree(output), record, sourceArchive.metadata, config.artifactMaximumBytesPerJob);
+      if (planned.descriptor.status === 'RETURNED') {
+        const archiveBytes = await fs.readFile(sourceArchive.path);
+        assert.equal(archiveBytes.length, sourceArchive.metadata.bytes);
+        assert.equal(sha(archiveBytes), sourceArchive.metadata.sha256, 'Prepared source archive changed');
+        await fs.writeFile(path.join(output, 'source.actual-head.tar.gz'), archiveBytes, { flag: 'wx' });
+      }
+      record.sourceArchive = planned.descriptor;
+      await writeJson('source-archive.json', planned.descriptor);
+    }
     await writeJson('result.json', record);
     const rows = await tree(output);
     await writeJson('result-files.json', { rows, manifestSelfExcluded: true });
