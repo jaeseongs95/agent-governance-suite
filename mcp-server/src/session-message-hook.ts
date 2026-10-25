@@ -51,11 +51,24 @@ export interface SessionMessageHookOptions {
   onClaimState?: (state: Readonly<{ phase: "request-attempted" | "response-received"; messageIds: readonly string[] }>) => void;
 }
 
-type HookFailurePhase = "options" | "input" | "handle" | "serialize" | "stdin" | "host-entry" | "stdout"
+export type HookFailurePhase = "options" | "input" | "handle" | "serialize" | "stdin" | "host-entry" | "stdout"
   | "presence-start" | "clear-deferred" | "ensure-relay" | "relay-start" | "recovery" | "peer-wait" | "observer-sync" | "observer-async";
 
+/** The same bounded classification that the diagnostic line carries; never messages, paths or peer bodies. */
+export type SessionMessageHookFailure = Readonly<{
+  phase: HookFailurePhase;
+  reason: string;
+  reasonBasis: "unverified-observation" | "producer" | "unknown";
+  producerReason?: string;
+}>;
+
+/** Distinguishes a failed hook from a successful hook that had nothing to inject. Both stay fail-open (empty output). */
+export type SessionMessageHookOutcome =
+  | Readonly<{ ok: true; output: string }>
+  | Readonly<{ ok: false; output: ""; failure: SessionMessageHookFailure }>;
+
 /** Fixed producer/OS reasons plus bounded metadata; never error messages, SQL, paths or peer bodies. */
-function reportHookFailure(phase: HookFailurePhase, error: unknown): void {
+function reportHookFailure(phase: HookFailurePhase, error: unknown): SessionMessageHookFailure {
   const context = hookFailureContext(error);
   let reason = "UNEXPECTED_FAILURE";
   try {
@@ -72,11 +85,13 @@ function reportHookFailure(phase: HookFailurePhase, error: unknown): void {
   } catch { /* Unreadable error properties are not trusted diagnostics. */ }
   const ownedReason = hookFailureReason(error);
   const observed = reason !== "UNEXPECTED_FAILURE";
-  const reasonBasis = observed ? "unverified-observation" : ownedReason ? "producer" : "unknown";
+  const reasonBasis: SessionMessageHookFailure["reasonBasis"] = observed ? "unverified-observation" : ownedReason ? "producer" : "unknown";
   if (!observed) reason = ownedReason ?? reason;
-  try { console.error("[agent-governance-suite] peer-hook-failure " + JSON.stringify({ phase, reason, reasonBasis,
-    ...(ownedReason ? {producerReason: ownedReason} : {}), context })); }
+  const failure: SessionMessageHookFailure = Object.freeze({ phase, reason, reasonBasis,
+    ...(ownedReason ? {producerReason: ownedReason} : {}) });
+  try { console.error("[agent-governance-suite] peer-hook-failure " + JSON.stringify({ ...failure, context })); }
   catch { /* A broken diagnostic sink cannot block a hook or authorize replay. */ }
+  return failure;
 }
 
 type HookBudget = SessionMessageHookOptions["executionBudget"];
@@ -455,8 +470,9 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   return additionalContext(adapted.outputEventName, envelope);
 }
 
-/** Every broker failure is fail-open so messaging never blocks the host. */
-export async function runSessionMessageHook(host: SupportedHookHost, raw: string, explicitHostPid?: number, options: SessionMessageHookOptions = {}): Promise<string> {
+/** Every failure is fail-open (empty output), but the outcome keeps the failed step and reason distinct from an
+ * empty success so a caller can tell "no message" from "messaging failed". */
+export async function runSessionMessageHookOutcome(host: SupportedHookHost, raw: string, explicitHostPid?: number, options: SessionMessageHookOptions = {}): Promise<SessionMessageHookOutcome> {
   let phase: HookFailurePhase = "options";
   try {
     options = snapshotOptions(options);
@@ -470,11 +486,16 @@ export async function runSessionMessageHook(host: SupportedHookHost, raw: string
     phase = "serialize";
     const serialized = Object.keys(output).length > 0 ? JSON.stringify(output) : "";
     remainingBudget(options.executionBudget);
-    return serialized;
+    return { ok: true, output: serialized };
   } catch (error) {
-    reportHookFailure(phase, error);
-    return "";
+    return { ok: false, output: "", failure: reportHookFailure(phase, error) };
   }
+}
+
+/** Every broker failure is fail-open so messaging never blocks the host. Use runSessionMessageHookOutcome to
+ * distinguish a failure from an empty success. */
+export async function runSessionMessageHook(host: SupportedHookHost, raw: string, explicitHostPid?: number, options: SessionMessageHookOptions = {}): Promise<string> {
+  return (await runSessionMessageHookOutcome(host, raw, explicitHostPid, options)).output;
 }
 
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
