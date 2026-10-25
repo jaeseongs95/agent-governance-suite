@@ -1,5 +1,5 @@
 import type { ChildProcess } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -10,14 +10,22 @@ import { expect, it as baseIt, vi } from 'vitest';
 const it = baseIt.skipIf(process.platform !== 'win32' || process.env.AGS_WINDOWS_ARGV_OPT_IN !== '1');
 
 // Instrument the real execFile; never replace its argv, options, events or callback.
-const owned = vi.hoisted(() => [] as { child: ChildProcess; closed: Promise<void>; done: boolean; spawned: boolean }[]);
+const owned = vi.hoisted(() => [] as {
+  child: ChildProcess; closed: Promise<void>; done: boolean; spawned: boolean;
+  requestedAt: number; spawnAt: number | null; exitAt: number | null; closeAt: number | null;
+}[]);
 vi.mock('node:child_process', async (importOriginal) => {
   const real = await importOriginal<typeof import('node:child_process')>();
   return { ...real, execFile: (...args: Parameters<typeof real.execFile>) => {
+    const requestedAt = performance.now();
     const child = real.execFile(...args);
-    const record = { child, closed: Promise.resolve(), done: false, spawned: false };
-    record.closed = new Promise<void>((resolve) => child.once('close', () => { record.done = true; resolve(); }));
-    child.once('spawn', () => { record.spawned = true; });
+    const record = { child, closed: Promise.resolve(), done: false, spawned: false, requestedAt,
+      spawnAt: null as number | null, exitAt: null as number | null, closeAt: null as number | null };
+    record.closed = new Promise<void>((resolve) => child.once('close', () => {
+      record.closeAt = performance.now(); record.done = true; resolve();
+    }));
+    child.once('spawn', () => { record.spawnAt = performance.now(); record.spawned = true; });
+    child.once('exit', () => { record.exitAt = performance.now(); });
     owned.push(record);
     return child;
   } };
@@ -59,6 +67,14 @@ async function fixture(mode: string, sessionId: string, message: string) {
   const executable = path.join(work, 'native & %AGS_ARGV_TOKEN% 실행.exe');
   const witnessPath = path.join(directory, 'witness.jsonl');
   const first = owned.length;
+  const observationStart = performance.now();
+  const lifetimeCaseId = expect.getState().currentTestName?.match(/WARGV-\d{3}/u)?.[0] ?? null;
+  let witnessWritten = false;
+  const cleanup = {
+    phase: 'restore' as 'restore' | 'children' | 'remove', cwdRestored: null as boolean | null,
+    children: [] as typeof owned, rmStarted: null as number | null, rmEnded: null as number | null,
+    rmResult: 'not-attempted' as 'not-attempted' | 'returned' | 'threw',
+  };
   let outcome: string;
   let elapsed: number;
   let witness: Witness[];
@@ -106,22 +122,68 @@ async function fixture(mode: string, sessionId: string, message: string) {
       caseId, platform: process.platform, executable, outcome, elapsedMs: elapsed, witness, spawned, lifecycle,
       childCloseObserved: true, standInOnly: true,
     }, null, 2) + '\n', { encoding: 'utf8', flag: 'wx' });
+    witnessWritten = true;
   } catch (error) {
     failure = { error };
   } finally {
+    cleanup.children = owned.slice(first);
     try {
       process.chdir(oldCwd);
+      cleanup.cwdRestored = process.cwd() === oldCwd;
       for (const key of envKeys) {
         const value = oldEnv.get(key);
         if (value === undefined) delete process.env[key]; else process.env[key] = value;
       }
       // Only retained ChildProcess handles from this fixture; no PID scans/taskkill.
       const children = owned.splice(first);
+      cleanup.phase = 'children'; cleanup.children = children;
       for (const record of children) if (!record.done) record.child.kill('SIGKILL');
       try { await bounded(Promise.all(children.map(record => record.closed)), 3_000); }
       catch (error) { cleanupFailure = { error: new Error(`Owned child cleanup failed; retained fixture at ${directory}`, { cause: error }) }; }
-      if (!cleanupFailure) rmSync(directory, { recursive: true, maxRetries: 3, retryDelay: 100 });
+      if (!cleanupFailure) {
+        cleanup.phase = 'remove'; cleanup.rmStarted = performance.now();
+        try {
+          rmSync(directory, { recursive: true, maxRetries: 3, retryDelay: 100 });
+          cleanup.rmResult = 'returned';
+        } catch (error) { cleanup.rmResult = 'threw'; throw error; }
+        finally { cleanup.rmEnded = performance.now(); }
+      }
     } catch (error) { cleanupFailure = { error }; }
+    // Observation only: no witness rewrite, extra file, wait, spawn or cleanup attempt.
+    try {
+      const targets = [['root', directory], ['work', work], ['executable', executable],
+        ['entry', path.join(work, 'agentapi')], ['package', path.join(work, 'package.json')], ['witness', witnessPath]] as const;
+      const short = (value: unknown) => typeof value === 'string' ? value.slice(0, 32) : null;
+      const errorFields = (error: unknown) => {
+        const value = (error && typeof error === 'object' ? error : {}) as Partial<NodeJS.ErrnoException>;
+        return { code: short(value.code), errno: typeof value.errno === 'number' ? value.errno : null,
+          syscall: short(value.syscall), target: targets.find(([, target]) => target === value.path)?.[0] ?? 'unknown' };
+      };
+      const relativeMs = (time: number | null) => time === null ? null : Math.round((time - observationStart) * 1000) / 1000;
+      const remaining = cleanupFailure ? targets.map(([target, file]) => {
+        try {
+          const stat = lstatSync(file);
+          return { target, kind: stat.isDirectory() ? 'directory' : stat.isFile() ? 'file' : 'other', mode: stat.mode, code: null };
+        } catch (error) { return { target, kind: null, mode: null, code: errorFields(error).code }; }
+      }) : [];
+      const lifetime = {
+        schemaVersion: '1.0.0', caseId: lifetimeCaseId, capturedAfterCleanup: true, holder: 'UNKNOWN', sourceFixed: false,
+        worker: { pid: process.pid, parentPid: process.ppid }, witnessWritten, bodyFailed: failure !== null,
+        cwdRestored: cleanup.cwdRestored, phase: cleanup.phase,
+        childrenOverflow: cleanup.children.length > 2,
+        children: cleanup.children.slice(0, 2).map(record => ({ pid: record.child.pid ?? null,
+          requestedMs: relativeMs(record.requestedAt), spawnMs: relativeMs(record.spawnAt),
+          exitMs: relativeMs(record.exitAt), closeMs: relativeMs(record.closeAt), done: record.done,
+          killed: record.child.killed, exitCode: record.child.exitCode, signalCode: record.child.signalCode })),
+        rm: { startedMs: relativeMs(cleanup.rmStarted), endedMs: relativeMs(cleanup.rmEnded), result: cleanup.rmResult },
+        failure: cleanupFailure ? errorFields(cleanupFailure.error) : null, remaining,
+      };
+      const json = JSON.stringify(lifetime);
+      // <= 2048 payload bytes per case: all 11 marker lines remain below 32 KiB.
+      const boundedJson = Buffer.byteLength(json, 'utf8') <= 2048 ? json
+        : JSON.stringify({ schemaVersion: '1.0.0', caseId: lifetimeCaseId, holder: 'UNKNOWN', sourceFixed: false, observation: 'UNKNOWN_BUDGET' });
+      console.error('__AGS_WARGV_LIFETIME__ ' + boundedJson);
+    } catch { /* Missing/failed diagnostic output is UNKNOWN; preserve the original test failure. */ }
   }
   if (cleanupFailure) {
     if (failure) throw new AggregateError([failure.error, cleanupFailure.error], 'Windows argv body and cleanup both failed.', { cause: failure.error });
