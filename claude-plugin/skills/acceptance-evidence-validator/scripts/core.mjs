@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { validateInputSchema, validateReportSchema, validateReportValidationSchema } from "./schema-validation.mjs";
+import { validateInputSchema, validateReportSchema, validateReportValidationSchema, validateTaskEnvelopeSchema } from "./schema-validation.mjs";
 
 export class InputError extends Error {
   constructor(message, details = null) {
@@ -56,7 +56,7 @@ function exactKeys(value, allowed, name) {
 
 export function assertTaskEnvelope(task) {
   if (!task || typeof task !== "object" || Array.isArray(task)) throw new InputError("taskEnvelope must be an object.");
-  exactKeys(task, ["schemaVersion", "taskId", "objective", "scope", "acceptanceCriteria", "riskLevel", "workUnits", "requiredCapabilities", "constraints", "authorization", "decision", "orchestration"], "taskEnvelope");
+  if (!validateTaskEnvelopeSchema(task)) throw new InputError("TaskEnvelope.v1 validation failed.", { errors: structuredClone(validateTaskEnvelopeSchema.errors) });
   if (task.schemaVersion !== "1.0.0") throw new InputError("taskEnvelope.schemaVersion must be 1.0.0.");
   nonEmptyString(task.taskId, "taskEnvelope.taskId");
   nonEmptyString(task.objective, "taskEnvelope.objective");
@@ -214,16 +214,6 @@ export function analyzeAcceptance(input) {
   const criteria = input.taskEnvelope.acceptanceCriteria.map((statement, index) => {
     const id = criterionId(index);
     const override = overrides.get(id);
-    if (override) {
-      return {
-        criterionId: id,
-        statement,
-        status: "not-applicable",
-        evidenceRefs: [override.authorityRef],
-        observedResult: "Excluded by explicit authority.",
-        rationale: override.rationale
-      };
-    }
     const evidence = allCurrentEvidence.filter((item) => item.criterionIds.includes(id));
     const refuting = evidence.filter((item) => item.direction === "refutes");
     const supporting = evidence.filter((item) => item.direction === "supports");
@@ -235,6 +225,16 @@ export function analyzeAcceptance(input) {
         evidenceRefs: refuting.map((item) => item.evidenceId),
         observedResult: refuting.map((item) => item.observedResult).join("; "),
         rationale: "Current target evidence contradicts this acceptance criterion."
+      };
+    }
+    if (override) {
+      return {
+        criterionId: id,
+        statement,
+        status: "not-applicable",
+        evidenceRefs: [override.authorityRef],
+        observedResult: "Excluded by explicit authority.",
+        rationale: override.rationale
       };
     }
     if (staleCommandCriteria.has(id)) {
@@ -295,16 +295,26 @@ export function analyzeAcceptance(input) {
 }
 
 export function validateReport(validation) {
-  const errors = [];
   if (!validation || typeof validation !== "object" || Array.isArray(validation)) return ["validation input must be an object"];
   if (!validateReportValidationSchema(validation)) {
     return [`validation input schema validation failed: ${JSON.stringify(validateReportValidationSchema.errors)}`];
   }
   const { report, request, requestArtifact } = validation;
-  const expectedRequestDigest = sha256(request);
-  if (requestArtifact.digest !== expectedRequestDigest) {
+  if (!report || typeof report !== "object" || Array.isArray(report)) return ["report must be an object"];
+  const errors = [];
+  if (requestArtifact.digest !== sha256(request)) {
     errors.push("requestArtifact.digest does not match the canonical frozen request");
   }
+  return [...errors, ...validateReportAgainstRequest(report, request)];
+}
+
+/**
+ * Canonical report checks against an already frozen request: report schema, self-consistency and one-to-one
+ * agreement with analyzeAcceptance(request). Callers that hold the request bytes themselves (the MCP stage gate)
+ * use this directly; validateReport adds the requestArtifact digest binding on top.
+ */
+export function validateReportAgainstRequest(report, request) {
+  const errors = [];
   if (!report || typeof report !== "object" || Array.isArray(report)) return ["report must be an object"];
   if (!validateReportSchema(report)) errors.push(`report schema validation failed: ${JSON.stringify(validateReportSchema.errors)}`);
   if (report.schemaVersion !== "1.0.0") errors.push("report.schemaVersion must be 1.0.0");

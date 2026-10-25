@@ -5,16 +5,31 @@
 // is issued, a token the caller put in the arguments is removed, so strict
 // orchestration fails closed with BINDING_REQUIRED instead of trusting it.
 import { spawnSync } from "node:child_process";
-import { mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { types } from "node:util";
 
 const FIELD = "_hostAttestation";
+const LAUNCHER = "host-attestation-hook";
+
+/** Names the failed launcher stage with a bounded code; never messages, paths or input. */
+function reportLauncherFailure(stage, cause, observed = {}) {
+  try {
+    let code;
+    if (cause && (typeof cause === "object" || typeof cause === "function") && !types.isProxy(cause)) {
+      const descriptor = Object.getOwnPropertyDescriptor(cause, "code");
+      if (descriptor && "value" in descriptor && typeof descriptor.value === "string" && /^[A-Z][A-Z0-9_]{0,63}$/u.test(descriptor.value)) code = descriptor.value;
+    }
+    writeSync(2, `[agent-governance-suite] launcher-failure ${JSON.stringify({ launcher: LAUNCHER, stage, ...(code ? { code } : {}), ...observed })}\n`);
+  } catch { /* A broken diagnostic sink cannot block the host. */ }
+}
 
 let raw = "";
 try {
   raw = readFileSync(0, "utf8");
-} catch {
+} catch (cause) {
+  reportLauncherFailure("stdin", cause);
   process.exit(0);
 }
 
@@ -43,7 +58,8 @@ if (!dataDirectory) finish(withoutCallerToken());
 
 try {
   mkdirSync(dataDirectory, { recursive: true });
-} catch {
+} catch (cause) {
+  reportLauncherFailure("data-directory", cause);
   finish(withoutCallerToken());
 }
 
@@ -58,5 +74,8 @@ const result = spawnSync(process.execPath, [hookPath], {
     AGENT_GOVERNANCE_DB_PATH: path.join(dataDirectory, "workflows.sqlite3"),
   },
 });
+const signal = typeof result.signal === "string" && /^[A-Z][A-Z0-9_]{0,63}$/u.test(result.signal) ? { signal: result.signal } : {};
+if (result.error) reportLauncherFailure("spawn", result.error, signal);
+else if (result.status !== 0) reportLauncherFailure("hook-exit", null, { status: Number.isInteger(result.status) ? result.status : null, ...signal });
 const output = result.status === 0 && !result.error && typeof result.stdout === "string" ? result.stdout : "";
 finish(output || withoutCallerToken());

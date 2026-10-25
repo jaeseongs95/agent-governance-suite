@@ -25,7 +25,7 @@ export const validateBindingReportSchema = ajv.compile(bindingReportSchema);
 export const validateDiagnosisReportSchema = ajv.compile(diagnosisReportSchema);
 export const validateTaskEnvelopeSchema = ajv.compile(taskEnvelopeSchema);
 const workflowAjv = new Ajv2020({ allErrors: true, strict: false });
-for (const schema of [workflowPlanSchema, stageResultSchema, workflowReceiptSchema]) workflowAjv.addSchema(schema);
+for (const schema of [taskEnvelopeSchema, workflowPlanSchema, stageResultSchema, workflowReceiptSchema]) workflowAjv.addSchema(schema);
 export const validateWorkflowReceiptSchema = workflowAjv.getSchema(workflowReceiptSchema.$id);
 
 export function compileAllSchemas() {
@@ -38,7 +38,8 @@ export function compileAllSchemas() {
   isolated.compile(diagnosisReportSchema);
   isolated.compile(taskEnvelopeSchema);
   const isolatedWorkflow = new Ajv2020({ allErrors: true, strict: false });
-  for (const schema of [workflowPlanSchema, stageResultSchema, workflowReceiptSchema]) isolatedWorkflow.addSchema(schema);
+  for (const schema of [taskEnvelopeSchema, workflowPlanSchema, stageResultSchema, workflowReceiptSchema]) isolatedWorkflow.addSchema(schema);
+  isolatedWorkflow.getSchema(workflowReceiptSchema.$id);
 }
 
 export function schemaErrors(validate) {

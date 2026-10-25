@@ -12,7 +12,7 @@ const ROOT = path.resolve(SCRIPT_DIRECTORY, "..");
 export function isPathWithin(root, candidate, pathApi = path) {
   const caseInsensitive = pathApi === path.win32;
   const normalize = (value) => {
-    const normalized = pathApi.resolve(value).replace(/[\\/]+$/, "");
+    const normalized = pathApi.resolve(value);
     return caseInsensitive ? normalized.toLowerCase() : normalized;
   };
   const normalizedRoot = normalize(root);
@@ -92,16 +92,36 @@ function ancestors(root, targetDirectory) {
   return result;
 }
 
-async function selectedInstruction(directory, authorizedRoots) {
+const DEFAULT_INSTRUCTION_FILES = Object.freeze([
+  Object.freeze({ name: "AGENTS.override.md", kind: "override" }),
+  Object.freeze({ name: "AGENTS.md", kind: "agents" }),
+]);
+
+// Host adapters supply an explicit ordered descriptor. Requests cannot select a
+// host policy; absent adapter configuration always keeps the common AGENTS rule.
+function instructionFiles(options) {
+  if (!options || typeof options !== "object" || Array.isArray(options)
+    || Object.keys(options).some(key => key !== "instructionFiles")) throw invalid("Invalid instruction adapter options.");
+  const files = options.instructionFiles ?? DEFAULT_INSTRUCTION_FILES;
+  if (!Array.isArray(files) || files.length === 0 || files.length > 8) throw invalid("Invalid instruction file descriptor.");
+  const seen = new Set();
+  return files.map(file => {
+    if (!file || typeof file !== "object" || Array.isArray(file)
+      || Object.keys(file).some(key => !["name", "kind"].includes(key))
+      || typeof file.name !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}\.md$/u.test(file.name)
+      || !["agents", "override"].includes(file.kind) || seen.has(file.name.toLowerCase())) {
+      throw invalid("Invalid instruction file descriptor.");
+    }
+    seen.add(file.name.toLowerCase());
+    return { name: file.name, kind: file.kind };
+  });
+}
+
+async function selectedInstruction(directory, authorizedRoots, files) {
   if (!(await exists(directory))) return null;
   const stats = await lstat(directory);
   if (!stats.isDirectory()) return null;
-  for (const [filename, kind] of [
-    ["GEMINI.override.md", "override"],
-    ["AGENTS.override.md", "override"],
-    ["GEMINI.md", "agents"],
-    ["AGENTS.md", "agents"],
-  ]) {
+  for (const { name: filename, kind } of files) {
     const candidate = path.join(directory, filename);
     if (!(await exists(candidate))) continue;
     const actual = await realpath(candidate);
@@ -122,7 +142,8 @@ async function selectedInstruction(directory, authorizedRoots) {
   return null;
 }
 
-export async function resolveInstructionFiles(request) {
+export async function resolveInstructionFiles(request, adapterOptions = {}) {
+  const files = instructionFiles(adapterOptions);
   const check = await validators();
   if (!check.request(request)) {
     throw invalid("InstructionScopeRequest.v1 validation failed.", { errors: check.request.errors });
@@ -175,7 +196,7 @@ export async function resolveInstructionFiles(request) {
     });
     const chain = [];
     for (const [directory] of orderedDirectories) {
-      const instruction = await selectedInstruction(directory, authorizedRoots);
+      const instruction = await selectedInstruction(directory, authorizedRoots, files);
       if (!instruction || chain.some((item) => item.path === instruction.path)) continue;
       instruction.precedence = chain.length + 1;
       chain.push(instruction);
@@ -219,9 +240,9 @@ async function readInput(argv) {
   return JSON.parse(body);
 }
 
-export async function runCli(argv = process.argv.slice(2)) {
+export async function runCli(argv = process.argv.slice(2), adapterOptions = {}) {
   try {
-    const output = await resolveInstructionFiles(await readInput(argv));
+    const output = await resolveInstructionFiles(await readInput(argv), adapterOptions);
     process.stdout.write(`${JSON.stringify({ schemaVersion: "1.0.0", ok: true, output, error: null })}\n`);
   } catch (error) {
     process.stdout.write(`${JSON.stringify({

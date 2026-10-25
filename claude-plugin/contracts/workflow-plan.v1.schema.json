@@ -254,6 +254,9 @@
         },
         "executionRequirement": {
           "$ref": "#/$defs/executionRequirement"
+        },
+        "artifactContract": {
+          "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json#/properties/artifactContracts/items"
         }
       },
       "allOf": [

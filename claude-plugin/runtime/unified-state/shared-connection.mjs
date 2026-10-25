@@ -1,6 +1,8 @@
 import { existsSync, lstatSync, mkdirSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { types } from "node:util";
+import { retainFailureSecondary, tagProducerFailure } from "../failure-diagnostics.mjs";
 
 const APPLICATION_ID = 0x4147534e; // AGSN: inactive native format, distinct from R1 opaque fixtures.
 const FORMAT_VERSION = 1;
@@ -17,6 +19,15 @@ export class SharedStateError extends Error {
 function need(condition, code, message) { if (!condition) throw new SharedStateError(code, message); }
 function milliseconds(value) { need(Number.isSafeInteger(value) && value >= 0, "INVALID_CLOCK", "A nonnegative safe integer clock is required."); return value; }
 function synchronous(value) { need(!value || typeof value.then !== "function", "ASYNC_TRANSACTION_UNSUPPORTED", "SQLite transaction callbacks must be synchronous."); return value; }
+
+/** Cleanup after a primary failure: a cleanup failure never replaces the primary, it is kept only as a tagged secondary diagnostic. */
+export function retainCleanupFailure(primary, reason, cleanup) {
+  try { cleanup(); return true; }
+  catch (secondary) {
+    retainFailureSecondary(primary, types.isNativeError(secondary) ? tagProducerFailure(secondary, reason) : secondary);
+    return false;
+  }
+}
 
 export function resolveInactiveSharedDatabasePath(directory) {
   need(path.isAbsolute(directory) && !directory.startsWith("\\\\"), "INVALID_PATH", "An explicit local, caller-owned inactive directory is required.");
@@ -37,12 +48,16 @@ export function runObservedTimeTransaction(database, observe, operation, afterDo
     const now = observe();
     database.exec("SAVEPOINT domain_operation");
     try { result = synchronous(operation(now)); }
-    catch (error) { rejected = true; rejection = error; database.exec("ROLLBACK TO domain_operation"); }
+    catch (error) {
+      rejected = true; rejection = error;
+      if (!retainCleanupFailure(error, "SAVEPOINT_ROLLBACK_FAILED", () => database.exec("ROLLBACK TO domain_operation"))) throw error;
+    }
     database.exec("RELEASE domain_operation");
     afterDomain();
     database.exec("COMMIT");
   } catch (error) {
-    try { database.exec("ROLLBACK"); } catch { /* Preserve the clock/storage failure. */ }
+    // Preserve the clock/storage failure; a ROLLBACK failure is only a secondary diagnostic.
+    retainCleanupFailure(error, "TRANSACTION_ROLLBACK_FAILED", () => database.exec("ROLLBACK"));
     throw error;
   }
   if (rejected) throw rejection;
@@ -71,7 +86,7 @@ export class InactiveSharedConnection {
       this.#database.exec("BEGIN IMMEDIATE");
       this.#ready = this.#validateFormat();
       this.#database.exec("COMMIT");
-    } catch (error) { this.#database.close(); throw error; }
+    } catch (error) { retainCleanupFailure(error, "SHARED_DATABASE_CLOSE_FAILED", () => this.#database.close()); throw error; }
   }
   #open() { need(!this.#closed, "CONNECTION_CLOSED", "The shared owner is closed."); }
   #tables() { return this.#database.prepare("SELECT name FROM sqlite_schema WHERE type='table' AND name <> 'sqlite_sequence' ORDER BY name").all().map(row => row.name); }
@@ -84,7 +99,7 @@ export class InactiveSharedConnection {
     return !empty;
   }
   #shape(module) {
-    return JSON.stringify(MODULES[module].tables.map(name => ({ name, columns: this.#database.prepare(`PRAGMA table_info(${name})`).all(), sql: this.#database.prepare("SELECT sql FROM sqlite_schema WHERE type='table' AND name=?").get(name)?.sql })));
+    return JSON.stringify(MODULES[module].tables.map(name => ({ name, columns: this.#database.prepare(`PRAGMA table_info(${name})`).all(), sql: this.#database.prepare("SELECT sql FROM sqlite_schema WHERE type='table' AND name=?").get(name)?.sql, indexes: this.#database.prepare("SELECT name,sql FROM sqlite_schema WHERE type='index' AND tbl_name=? ORDER BY name").all(name).map(index => ({ ...index, columns: this.#database.prepare("SELECT * FROM pragma_index_xinfo(?)").all(index.name) })) })));
   }
   #validate() {
     const expected = ["authority_time", "shared_module_schema", ...Object.values(MODULES).flatMap(module => module.tables)].sort();
@@ -106,7 +121,11 @@ export class InactiveSharedConnection {
       this.#database.exec(`PRAGMA application_id=${APPLICATION_ID}; PRAGMA user_version=${FORMAT_VERSION}; COMMIT;`);
       this.#ready = true;
       this.#database.exec("PRAGMA journal_mode=WAL;");
-    } catch (error) { try { this.#database.exec("ROLLBACK"); } catch { /* Primary error wins. */ } throw error; }
+    } catch (error) {
+      // Primary error wins; after COMMIT (e.g. WAL setup) there is no transaction left to roll back.
+      retainCleanupFailure(error, "TRANSACTION_ROLLBACK_FAILED", () => { if (this.#database.isTransaction) this.#database.exec("ROLLBACK"); });
+      throw error;
+    }
     finally { this.#initializing = false; }
   }
   #observe(value) {
@@ -123,7 +142,7 @@ export class InactiveSharedConnection {
       const savepoint = `shared_${++this.#counter}`;
       this.#database.exec(`SAVEPOINT ${savepoint}`);
       try { const result = synchronous(operation()); this.#database.exec(`RELEASE ${savepoint}`); return result; }
-      catch (error) { this.#database.exec(`ROLLBACK TO ${savepoint}; RELEASE ${savepoint};`); throw error; }
+      catch (error) { retainCleanupFailure(error, "SAVEPOINT_ROLLBACK_FAILED", () => this.#database.exec(`ROLLBACK TO ${savepoint}; RELEASE ${savepoint};`)); throw error; }
     }
     // Nested observations are also retained after an outer domain rollback, under the same writer lock.
     this.#highWater = 0;

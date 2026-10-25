@@ -19,7 +19,7 @@
     },
     {
       "path": "contracts/engineering-run-receipt.v1.schema.json",
-      "digest": "sha256:1c1805e177859f55dad8febcdd03fb6f0962199434b0c81bc9fcb28d13492aee"
+      "digest": "sha256:9de618bbebfcf16d4a5ba1c105354d8fab957cc8760046510eda3a31848b79b9"
     },
     {
       "path": "contracts/engineering-snapshot.v1.schema.json",
@@ -43,7 +43,7 @@
     },
     {
       "path": "runtime/engineering-practices/cli.mjs",
-      "digest": "sha256:7b23bb7db8e74a5acf11bfdbab3704656c8400d68e7b4191ccc8fc101ea203b9"
+      "digest": "sha256:118be91e187ea538f07a5918dfb4d7c53dba6071bdf63eceb0cc876eadeff840"
     },
     {
       "path": "runtime/engineering-practices/core.mjs",
@@ -67,7 +67,7 @@
     },
     {
       "path": "runtime/engineering-practices/runner.mjs",
-      "digest": "sha256:17003dc8ba6a12ae44593d8c949bc8625726639f79e00593a1d307f4d6b33f4f"
+      "digest": "sha256:2f7590c87c555821a1b1215eaf6eb45bab5eaa31e039fd1a9b12114c79a9a58b"
     },
     {
       "path": "runtime/engineering-practices/schema.mjs",

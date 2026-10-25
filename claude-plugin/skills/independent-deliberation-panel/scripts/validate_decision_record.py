@@ -113,8 +113,9 @@ def validate(record: Any) -> list[str]:
         cap = 8
     assurance = run.get("assurance")
     strict_shortfall = run.get("strict") is True and run.get("capability_shortfall") is True
-    if assurance not in {"independent", "partially_independent", "single_agent", "provisional"}:
+    if not isinstance(assurance, str) or assurance not in {"independent", "partially_independent", "single_agent", "provisional"}:
         errors.append("run.assurance must be independent, partially_independent, single_agent, or provisional")
+        assurance = None
     if not strict_shortfall:
         if stage == "LOW" and assurance not in ({"single_agent", "provisional"} if run.get("judge_fallback") is not None else {"single_agent"}): errors.append("LOW must use single_agent assurance unless a fallback is recorded")
         if stage == "MEDIUM" and assurance not in {"independent", "partially_independent", "provisional"}: errors.append("MEDIUM assurance is invalid")
@@ -389,11 +390,14 @@ def validate(record: Any) -> list[str]:
         if (not eligible_reviewer(reviewer) or len(item_ids) != len(set(item_ids))
                 or not set(item_ids).issubset(set(selected))):
             errors.append("cross followup must use eligible reviewer and selected items")
+        if decision == "run" and any(reviewer_id not in coverage_by_item.get(item_id, []) for item_id in item_ids):
+            errors.append("cross followup must match its reviewer coverage")
     if any(count > 1 for count in followup_counts.values()): errors.append("a reviewer may receive at most one cross-examination follow-up")
     if decision == "run":
         for item_id, reviewer_ids in coverage_by_item.items():
-            if not any(entry.get("reviewer_id") in reviewer_ids and item_id in entry.get("item_ids", []) for entry in followups if isinstance(entry, dict)):
-                errors.append("cross coverage must be backed by a matching reviewer followup")
+            for reviewer_id in reviewer_ids:
+                if not any(entry.get("reviewer_id") == reviewer_id and item_id in entry.get("item_ids", []) for entry in followups if isinstance(entry, dict)):
+                    errors.append("cross coverage must be backed by a matching reviewer followup")
 
     axes = _list(root.get("axis_decisions"), "axis_decisions", errors)
     axis_names = set()
@@ -471,6 +475,7 @@ def validate_issues(record: Any) -> list[tuple[str, str]]:
         ("violates schema minitems", "schema.min_items"), ("violates schema maxitems", "schema.max_items"),
         ("violates schema minlength", "schema.min_length"), ("violates schema pattern", "schema.pattern"),
         ("violates schema minimum", "schema.minimum"), ("violates schema maximum", "schema.maximum"),
+        ("run.assurance must be", "run.assurance"),
         ("LOW must not", "run.low_workers"), ("worker cap", "run.worker_cap"),
         ("HIGH requires", "run.high_contract"),
         ("MEDIUM", "run.medium_contract"), ("CRITICAL requires", "run.critical_contract"),

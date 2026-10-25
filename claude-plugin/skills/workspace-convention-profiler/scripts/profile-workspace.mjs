@@ -79,9 +79,12 @@ async function collectCandidates(root, limits) {
   return { files, directories, excludedDirectories };
 }
 
-async function evidenceFor(file, maxBytesPerFile) {
+async function evidenceFor(file, maxBytesPerFile, limitations) {
   const stat = await lstat(file.absolute);
-  if (stat.size > maxBytesPerFile) return null;
+  if (stat.size > maxBytesPerFile) {
+    limitations.push(`근거 파일을 maxBytesPerFile(${maxBytesPerFile}) 제한으로 생략했습니다: ${file.relative} (${stat.size} bytes).`);
+    return null;
+  }
   const content = await readFile(file.absolute);
   const digest = `sha256:${sha256(content)}`;
   return { locator: file.relative, digest, size: stat.size, kind: "file", content: content.toString("utf8"), ref: `${file.relative}#${digest}` };
@@ -165,7 +168,8 @@ export async function profileWorkspace(input) {
     }
 
     const { files, directories, excludedDirectories } = await collectCandidates(root, input.evidenceLimits);
-    const evidence = (await Promise.all(files.map((file) => evidenceFor(file, input.evidenceLimits.maxBytesPerFile)))).filter(Boolean);
+    const limitations = [];
+    const evidence = (await Promise.all(files.map((file) => evidenceFor(file, input.evidenceLimits.maxBytesPerFile, limitations)))).filter(Boolean);
     const relativeFiles = evidence.map((item) => item.locator);
     const ecosystems = [];
     const commands = [];
@@ -175,9 +179,10 @@ export async function profileWorkspace(input) {
       if (base === "package.json") {
         let manifest;
         try { manifest = JSON.parse(item.content); } catch { continue; }
-        ecosystems.push({ language: "JavaScript/TypeScript", packageManager: inferPackageManager(relativeFiles, item.locator), manifestRefs: [item.ref] });
+        const packageManager = inferPackageManager(relativeFiles, item.locator);
+        ecosystems.push({ language: "JavaScript/TypeScript", packageManager, manifestRefs: [item.ref] });
         for (const [name, command] of Object.entries(manifest.scripts ?? {}).sort(([a], [b]) => a.localeCompare(b))) {
-          if (typeof command === "string") commands.push({ purpose: purposeFor(name), command: `${inferPackageManager(relativeFiles, item.locator) ?? "npm"} ${inferPackageManager(relativeFiles, item.locator) === "npm" ? "run " : ""}${name}`, workingDirectory: path.posix.dirname(item.locator) === "." ? "." : path.posix.dirname(item.locator), sourceRef: item.ref });
+          if (typeof command === "string") commands.push({ purpose: purposeFor(name), command: `${packageManager ?? "npm"} ${packageManager === null || packageManager === "npm" ? "run " : ""}${name}`, workingDirectory: path.posix.dirname(item.locator) === "." ? "." : path.posix.dirname(item.locator), sourceRef: item.ref });
         }
       } else if (base === "pyproject.toml" || base === "requirements.txt") {
         ecosystems.push({ language: "Python", packageManager: base === "pyproject.toml" && item.content.includes("[tool.poetry]") ? "poetry" : null, manifestRefs: [item.ref] });
@@ -231,7 +236,7 @@ export async function profileWorkspace(input) {
       schemaVersion: CONTRACT_VERSION,
       workspace,
       ecosystems: uniqueEcosystems, structure, conventions, commands, changeHotspots, generatedOrVendoredPaths,
-      openQuestions: [...new Set(openQuestions)].sort(), limitations: [],
+      openQuestions: [...new Set(openQuestions)].sort(), limitations: limitations.sort(),
       evidenceIndex,
       observedAt: new Date().toISOString(), verdict: "PASS",
     };

@@ -15,7 +15,9 @@ const required = [
 ];
 const errors = [];
 for (const relative of required) {
-  try { await access(path.join(root, relative)); } catch { errors.push(`missing ${relative}`); }
+  try { await access(path.join(root, relative)); } catch (error) {
+    errors.push(error.code === "ENOENT" ? `missing ${relative}` : `cannot access ${relative}: ${error.code ?? "UNKNOWN"}: ${error.message}`);
+  }
 }
 for (const relative of required.filter((item) => item.endsWith(".json"))) {
   try { JSON.parse(await readFile(path.join(root, relative), "utf8")); } catch (error) { errors.push(`invalid JSON ${relative}: ${error.message}`); }

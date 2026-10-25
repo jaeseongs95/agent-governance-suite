@@ -20,7 +20,7 @@ function contractError(message, details = null) {
 
 async function compileValidation() {
   const schemas = {
-    envelope: await json("contracts/upstream/task-envelope.v1.schema.json"),
+    envelope: await json("../../contracts/task-envelope.v1.schema.json"),
     evidence: await json("contracts/acceptance-evidence-plan.v1.schema.json"),
     request: await json("contracts/task-contract-request.v1.schema.json"),
     report: await json("contracts/task-contract-report.v1.schema.json"),

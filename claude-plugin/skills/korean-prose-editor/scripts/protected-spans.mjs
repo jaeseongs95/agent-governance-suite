@@ -38,11 +38,26 @@ export function extractProtectedSpans(source, protectedStrings = []) {
     }
   }
 
-  for (const match of source.matchAll(/\[[^\]\n]*\]\(([^)\n]+)\)/gu)) {
-    const target = match[1];
-    const relativeStart = match[0].lastIndexOf(target);
-    const start = match.index + relativeStart;
-    candidates.push({ kind: "markdown-target", start, end: start + target.length, text: target, priority: 80 });
+  for (const match of source.matchAll(/\[[^\]\n]*\]\(/gu)) {
+    const start = match.index + match[0].length;
+    // The outer ')' closes the target; escaped, angled and titled parentheses do not.
+    let depth = 1;
+    let angle = false;
+    let quote = "";
+    for (let end = start; end < source.length; end += 1) {
+      const character = source[end];
+      if (character === "\n" || character === "\r") break;
+      if (character === "\\") { end += 1; continue; }
+      if (quote) { if (character === quote) quote = ""; continue; }
+      if (angle) { if (character === ">") angle = false; continue; }
+      if (character === "<" && /^[ \t]*$/u.test(source.slice(start, end))) { angle = true; continue; }
+      if ((character === '"' || character === "'") && /\s/u.test(source[end - 1]) && depth === 1) { quote = character; continue; }
+      if (character === "(") depth += 1;
+      else if (character === ")" && --depth === 0) {
+        if (end > start) candidates.push({ kind: "markdown-target", start, end, text: source.slice(start, end), priority: 80 });
+        break;
+      }
+    }
   }
 
   for (const value of new Set(protectedStrings)) {

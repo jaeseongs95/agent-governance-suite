@@ -9,6 +9,18 @@
     "planId": { "type": "string", "format": "uuid" },
     "status": { "enum": ["completed", "partial", "no-op"] },
     "executedAt": { "type": "string", "format": "date-time" },
+    "rootProtection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["previewCreatedAt", "activeRoots", "linkedNonTerminalRoots", "linkedRecentRoots", "linkedMissingReceiptRoots", "totalProtectedRoots"],
+      "properties": {
+        "previewCreatedAt": { "type": "string", "format": "date-time" },
+        "activeRoots": { "type": "integer", "minimum": 0 },
+        "linkedNonTerminalRoots": { "type": "integer", "minimum": 0 },
+        "linkedRecentRoots": { "type": "integer", "minimum": 0 },
+        "linkedMissingReceiptRoots": { "type": "integer", "minimum": 0 },
+        "totalProtectedRoots": { "type": "integer", "minimum": 0 }
+      }
+    },
     "candidateDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
     "databases": {
       "type": "object", "additionalProperties": false,

@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "policy_revision": "2026-10-24.r02",
   "default_profile": "balanced",
   "roles": [
     "discovery",
@@ -32,7 +33,43 @@
   },
   "providers": {
     "openai-codex": {
+      "host": "codex",
       "minimum_efforts": { "gpt-5.6-luna": "high" },
+      "catalog": {
+        "matching": "exact-only",
+        "models": {
+          "gpt-6-astra": {
+            "model_class": "frontier",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6-sol": {
+            "model_class": "general",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6.1-sol": {
+            "model_class": "general",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6-luna": {
+            "model_class": "lightweight",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-sol": {
+            "model_class": "deep",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-terra": {
+            "model_class": "general",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-luna": {
+            "model_class": "lightweight",
+            "minimum_effort": "high",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        "aliases": {}
+      },
       "application": {
         "full_history_overrides": false,
         "context_field": "fork_turns",
@@ -67,6 +104,29 @@
       }
     },
     "anthropic-claude-code": {
+      "host": "claude-code",
+      "catalog": {
+        "matching": "claude-family-or-exact",
+        "models": {
+          "haiku": {
+            "model_class": "lightweight",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "sonnet": {
+            "model_class": "general",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "opus": {
+            "model_class": "deep",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "fable": {
+            "model_class": "frontier",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        "aliases": {}
+      },
       "application": {
         "model_field": "model",
         "effort_field": "effort",
@@ -96,6 +156,35 @@
       }
     },
     "google-gemini": {
+      "host": "gemini",
+      "catalog": {
+        "matching": "gemini-family-or-exact",
+        "models": {
+          "flash-lite": {
+            "model_class": "lightweight",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "flash-8b": {
+            "model_class": "lightweight",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "flash": {
+            "model_class": "general",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "pro": {
+            "model_class": "deep",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "ultra": {
+            "model_class": "frontier",
+            "supported_efforts": ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        "aliases": {
+          "flash_lite": "flash-lite"
+        }
+      },
       "application": {
         "model_field": "model",
         "effort_field": "effort",

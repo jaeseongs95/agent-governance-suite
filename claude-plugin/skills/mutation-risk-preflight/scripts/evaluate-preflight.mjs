@@ -26,19 +26,21 @@ function digest(value) {
 export function canonicalLocator(value) {
   const uriInput = String(value).trim().replaceAll("\\", "/");
   const uri = uriInput.match(/^([a-z][a-z0-9+.-]*:\/\/)(.*)$/i);
-  if (uri) return uri[1].toLowerCase() + uri[2].replace(/\/+/g, "/").replace(/\/$/, "");
+  if (uri && !/^[a-z]:/i.test(uriInput)) return uri[1].toLowerCase() + uri[2].replace(/\/+/g, "/").replace(/\/$/, "");
   const raw = String(value).trim().replaceAll("\\", "/");
   const text = raw.startsWith("//") ? `//${raw.slice(2).replace(/\/+/g, "/")}` : raw.replace(/\/+/g, "/");
-  return text.replace(/^([A-Z]):/, (_, drive) => `${drive.toLowerCase()}:`).replace(/\/$/, "") || "/";
+  // Lexical only: filesystem evidence must establish any symlink/realpath identity.
+  const normalized = /^[a-z]:$/i.test(text) ? text : (/^[a-z]:/i.test(text) || text.startsWith("//") ? path.win32 : path.posix).normalize(text).replaceAll("\\", "/");
+  return normalized.replace(/^([A-Z]):/, (_, drive) => `${drive.toLowerCase()}:`).replace(/\/$/, "") || "/";
 }
 
 export function unsafeTarget(target) {
   const locator = canonicalLocator(target.locator);
   if (["/", ".", "..", "~"].includes(locator)) return "filesystem, home 또는 현재 디렉터리 루트는 허용되지 않습니다.";
-  if (/^[a-z]:$/i.test(locator)) return "drive root는 허용되지 않습니다.";
+  if (/^[a-z]:(?:\.)?$/i.test(locator)) return "drive root는 허용되지 않습니다.";
   if (/^\/\/[^/]+\/[^/]+$/.test(locator)) return "UNC share root는 허용되지 않습니다.";
-  if (/[*?\[\]]/.test(locator)) return "해석되지 않은 glob이 있습니다.";
-  if (/\$\{|\$[A-Za-z_]|%[^%]+%/.test(locator)) return "해석되지 않은 환경변수가 있습니다.";
+  if (/[*?\[\]]/.test(target.locator)) return "해석되지 않은 glob이 있습니다.";
+  if (/\$\{|\$[A-Za-z_]|%[^%]+%/.test(target.locator)) return "해석되지 않은 환경변수가 있습니다.";
   if (/^(home|filesystem-root|drive-root|repository-root)$/i.test(target.targetType)) return `${target.targetType} 전체는 허용되지 않습니다.`;
   return null;
 }
@@ -110,7 +112,8 @@ function approvalStatus(input, now, required) {
       && targetLocators.every((target) => approval.targetLocators.map(canonicalLocator).includes(target))
       && input.targets.every((target) => approval.environments.includes(target.environment));
     if (!matches) continue;
-    if (Date.parse(approval.expiresAt) <= now.getTime()) sawMatchingExpired = true;
+    const expiresAt = Date.parse(approval.expiresAt);
+    if (!Number.isFinite(expiresAt) || expiresAt <= now.getTime()) sawMatchingExpired = true;
     else return { status: "observed", refs: [approval.locator] };
   }
   return { status: sawMatchingExpired ? "stale" : "mismatched", refs: refLocators(input.approvalEvidenceRefs) };
@@ -154,7 +157,7 @@ export function evaluatePreflight(input, options = {}) {
   if (validationErrors.length) return blockedReport(input, validationErrors, now);
 
   const targets = input.targets.map((target) => ({ ...target, locator: canonicalLocator(target.locator) }));
-  const unsafe = targets.map((target) => unsafeTarget(target)).filter(Boolean);
+  const unsafe = input.targets.map((target) => unsafeTarget(target)).filter(Boolean);
   const targetDigest = targetDigestFor({ ...input, targets });
   const actionDigest = actionDigestFor(input, targetDigest);
   const externalImpact = Boolean(input.expectedBlastRadius.external || targets.some((target) => /^(production|prod|shared|external)$/i.test(target.environment)));
@@ -173,7 +176,8 @@ export function evaluatePreflight(input, options = {}) {
   const recoveryRequired = RECOVERY_ACTIONS.has(input.actionClass) || externalImpact;
   const recoverySufficient = !recoveryRequired || (input.recoveryPlan.available
     && Boolean(input.recoveryPlan.method && input.recoveryPlan.backupRef && input.recoveryPlan.restoreProcedureRef)
-    && (Boolean(input.recoveryPlan.restoreTestEvidenceRef) || input.recoveryPlan.irreversibilityAccepted));
+    && (Boolean(input.recoveryPlan.restoreTestEvidenceRef) || input.recoveryPlan.irreversibilityAccepted))
+    || (!input.recoveryPlan.available && input.recoveryPlan.irreversibilityAccepted);
   const blastRadiusMatched = input.expectedBlastRadius.affectedTargets >= targets.length;
 
   const checks = [
@@ -217,17 +221,30 @@ export function evaluatePreflight(input, options = {}) {
 
 async function readInput(argv) {
   const index = argv.indexOf("--input");
-  if (index >= 0) return JSON.parse(await readFile(argv[index + 1], "utf8"));
+  if (index >= 0) {
+    if (!argv[index + 1]) throw new SyntaxError("--input에 JSON 파일 경로가 필요합니다.");
+    return JSON.parse(await readFile(argv[index + 1], "utf8"));
+  }
   let raw = "";
   for await (const chunk of process.stdin) raw += chunk;
-  if (!raw.trim()) throw new Error("stdin 또는 --input으로 JSON 입력이 필요합니다.");
+  if (!raw.trim()) throw new SyntaxError("stdin 또는 --input으로 JSON 입력이 필요합니다.");
   return JSON.parse(raw);
 }
 
 async function main() {
-  let output;
-  try { output = evaluatePreflight(await readInput(process.argv.slice(2))); }
-  catch (error) { output = blockedReport({}, [error instanceof Error ? error.message : String(error)], new Date()); }
+  let output, phase = "input-read";
+  try {
+    const input = await readInput(process.argv.slice(2));
+    phase = "evaluation";
+    output = evaluatePreflight(input);
+  } catch (error) {
+    if (phase === "input-read" && error instanceof SyntaxError) output = blockedReport({}, [error.message], new Date());
+    else {
+      process.stderr.write(`${JSON.stringify({ component: "mutation-risk-preflight", phase, errorCode: "PREFLIGHT_RUNTIME_ERROR" })}\n`);
+      process.exitCode = 2;
+      return;
+    }
+  }
   process.stdout.write(`${JSON.stringify(output)}\n`);
   process.exitCode = output.verdict === "READY" ? 0 : 2;
 }

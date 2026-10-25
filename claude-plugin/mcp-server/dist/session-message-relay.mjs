@@ -2,16 +2,354 @@
 
 // mcp-server/src/session-message-relay.ts
 import { randomUUID } from "node:crypto";
+import { chmodSync, closeSync, constants, fchmodSync, fstatSync, ftruncateSync, lstatSync, mkdirSync, openSync, writeFileSync } from "node:fs";
+import path4 from "node:path";
 
-// mcp-server/src/session-message-client.ts
-import { randomBytes } from "node:crypto";
-import { existsSync } from "node:fs";
-import { chmod, mkdir, readFile } from "node:fs/promises";
-import { spawn } from "node:child_process";
-import path2 from "node:path";
-import { performance } from "node:perf_hooks";
-import tls from "node:tls";
-import { fileURLToPath } from "node:url";
+// skills/coordinate-subagents/references/model-routing-presets.json
+var model_routing_presets_default = {
+  schema_version: 1,
+  policy_revision: "2026-10-24.r02",
+  default_profile: "balanced",
+  roles: [
+    "discovery",
+    "general-implementation",
+    "complex-reasoning",
+    "independent-audit"
+  ],
+  model_class_order: [
+    "lightweight",
+    "general",
+    "deep",
+    "frontier"
+  ],
+  effort_order: [
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+    "ultra"
+  ],
+  invariants: {
+    controls_delegation: false,
+    controls_agent_count: false,
+    controls_batching: false,
+    user_override_precedence: true,
+    capability_check_required: true,
+    high_risk_minimum_model_class: "general",
+    high_risk_minimum_effort: "high"
+  },
+  providers: {
+    "openai-codex": {
+      host: "codex",
+      minimum_efforts: { "gpt-5.6-luna": "high" },
+      catalog: {
+        matching: "exact-only",
+        models: {
+          "gpt-6-astra": {
+            model_class: "frontier",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6-sol": {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6.1-sol": {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-6-luna": {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-sol": {
+            model_class: "deep",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-terra": {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "gpt-5.6-luna": {
+            model_class: "lightweight",
+            minimum_effort: "high",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        aliases: {}
+      },
+      application: {
+        full_history_overrides: false,
+        context_field: "fork_turns",
+        default_context: "all",
+        full_history_value: "all",
+        limited_context_value: "none",
+        model_field: "model",
+        effort_field: "reasoning_effort",
+        model_delivery: ["spawn-argument"],
+        effort_delivery: ["spawn-argument"],
+        verification: "spawn-result"
+      },
+      profiles: {
+        economy: {
+          discovery: { model: "gpt-5.6-luna", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "gpt-5.6-terra", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "gpt-5.6-sol", effort: "medium", model_class: "deep" },
+          "independent-audit": { model: "gpt-5.6-sol", effort: "high", model_class: "deep" }
+        },
+        balanced: {
+          discovery: { model: "gpt-5.6-luna", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "gpt-5.6-terra", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "gpt-5.6-sol", effort: "high", model_class: "deep" },
+          "independent-audit": { model: "gpt-6-astra", effort: "high", model_class: "frontier" }
+        },
+        quality: {
+          discovery: { model: "gpt-5.6-terra", effort: "medium", model_class: "general" },
+          "general-implementation": { model: "gpt-5.6-sol", effort: "high", model_class: "deep" },
+          "complex-reasoning": { model: "gpt-6-astra", effort: "high", model_class: "frontier" },
+          "independent-audit": { model: "gpt-6-astra", effort: "xhigh", model_class: "frontier" }
+        }
+      }
+    },
+    "anthropic-claude-code": {
+      host: "claude-code",
+      catalog: {
+        matching: "claude-family-or-exact",
+        models: {
+          haiku: {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          sonnet: {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          opus: {
+            model_class: "deep",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          fable: {
+            model_class: "frontier",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        aliases: {}
+      },
+      application: {
+        model_field: "model",
+        effort_field: "effort",
+        model_delivery: ["per-invocation-argument", "subagent-frontmatter"],
+        effort_delivery: ["subagent-frontmatter", "cli-agent-definition"],
+        verification: "tasks-view"
+      },
+      profiles: {
+        economy: {
+          discovery: { model: "haiku", effort: "low", model_class: "lightweight" },
+          "general-implementation": { model: "sonnet", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "opus", effort: "medium", model_class: "deep" },
+          "independent-audit": { model: "opus", effort: "high", model_class: "deep" }
+        },
+        balanced: {
+          discovery: { model: "haiku", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "sonnet", effort: "high", model_class: "general" },
+          "complex-reasoning": { model: "opus", effort: "high", model_class: "deep" },
+          "independent-audit": { model: "fable", effort: "high", model_class: "frontier" }
+        },
+        quality: {
+          discovery: { model: "sonnet", effort: "high", model_class: "general" },
+          "general-implementation": { model: "opus", effort: "high", model_class: "deep" },
+          "complex-reasoning": { model: "fable", effort: "xhigh", model_class: "frontier" },
+          "independent-audit": { model: "fable", effort: "xhigh", model_class: "frontier" }
+        }
+      }
+    },
+    "google-gemini": {
+      host: "gemini",
+      catalog: {
+        matching: "gemini-family-or-exact",
+        models: {
+          "flash-lite": {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          "flash-8b": {
+            model_class: "lightweight",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          flash: {
+            model_class: "general",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          pro: {
+            model_class: "deep",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          },
+          ultra: {
+            model_class: "frontier",
+            supported_efforts: ["low", "medium", "high", "xhigh", "max", "ultra"]
+          }
+        },
+        aliases: {
+          flash_lite: "flash-lite"
+        }
+      },
+      application: {
+        model_field: "model",
+        effort_field: "effort",
+        model_delivery: ["invoke-argument", "subagent-frontmatter"],
+        effort_delivery: ["subagent-frontmatter"],
+        verification: "host-task-view"
+      },
+      profiles: {
+        economy: {
+          discovery: { model: "flash-lite", effort: "low", model_class: "lightweight" },
+          "general-implementation": { model: "flash", effort: "medium", model_class: "general" },
+          "complex-reasoning": { model: "pro", effort: "medium", model_class: "deep" },
+          "independent-audit": { model: "pro", effort: "high", model_class: "deep" }
+        },
+        balanced: {
+          discovery: { model: "flash-lite", effort: "high", model_class: "lightweight" },
+          "general-implementation": { model: "flash", effort: "high", model_class: "general" },
+          "complex-reasoning": { model: "pro", effort: "high", model_class: "deep" },
+          "independent-audit": { model: "ultra", effort: "high", model_class: "frontier" }
+        },
+        quality: {
+          discovery: { model: "flash", effort: "high", model_class: "general" },
+          "general-implementation": { model: "pro", effort: "high", model_class: "deep" },
+          "complex-reasoning": { model: "ultra", effort: "xhigh", model_class: "frontier" },
+          "independent-audit": { model: "ultra", effort: "xhigh", model_class: "frontier" }
+        }
+      }
+    }
+  }
+};
+
+// skills/coordinate-subagents/scripts/model-catalog-adapter.mjs
+function escapeRegExp(literal) {
+  return literal.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+}
+function buildClaudeFamilyRegex(keys) {
+  if (keys.length === 0) return null;
+  const sorted = [...keys].sort((left, right) => right.length - left.length).map(escapeRegExp);
+  return new RegExp(
+    "^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:anthropic\\.)?claude-(?:\\d+(?:-\\d+)?-)?(".concat(sorted.join("|"), ")(?:[-@:.]|$)"),
+    "u"
+  );
+}
+function buildGeminiFamilyRegex(prefixedKeys, bareKeys) {
+  if (prefixedKeys.length === 0 && bareKeys.length === 0) return null;
+  const sortedPrefixed = [...prefixedKeys].sort((left, right) => right.length - left.length).map(escapeRegExp);
+  const sortedBare = [...bareKeys].sort((left, right) => right.length - left.length).map(escapeRegExp);
+  const branches = [];
+  if (sortedPrefixed.length > 0) {
+    branches.push(
+      "^(?:[a-z]{2,6}(?:-[a-z]{2,4})?\\.)?(?:google[./-])?(?:models\\/)?(?:gemini-(?:\\d+(?:\\.\\d+)?-)?)" + "(".concat(sortedPrefixed.join("|"), ")(?:[-@:.]|$)")
+    );
+  }
+  if (sortedBare.length > 0) {
+    branches.push("^(".concat(sortedBare.join("|"), ")$"));
+  }
+  return new RegExp(branches.join("|"), "u");
+}
+function resolveCatalogModel(catalog, rawModel, { allowProfileKeys = false } = {}) {
+  if (typeof rawModel !== "string" || rawModel.length === 0 || !catalog) return null;
+  const models = catalog.models ?? {};
+  const aliases = catalog.aliases ?? {};
+  let matchedToken = null;
+  if (allowProfileKeys && ["exact-only", "claude-family-or-exact", "gemini-family-or-exact"].includes(catalog.matching) && (Object.hasOwn(models, rawModel) || Object.hasOwn(aliases, rawModel))) {
+    matchedToken = rawModel;
+  } else if (catalog.matching === "exact-only") {
+    if (Object.hasOwn(models, rawModel) || Object.hasOwn(aliases, rawModel)) {
+      matchedToken = rawModel;
+    }
+  } else if (catalog.matching === "claude-family-or-exact") {
+    const allKeys = [.../* @__PURE__ */ new Set([...Object.keys(models), ...Object.keys(aliases)])];
+    const familyRegex = buildClaudeFamilyRegex(allKeys);
+    matchedToken = familyRegex?.exec(rawModel)?.[1] ?? null;
+  } else if (catalog.matching === "gemini-family-or-exact") {
+    const allKeys = [.../* @__PURE__ */ new Set([...Object.keys(models), ...Object.keys(aliases)])];
+    const bareKeys = allKeys.filter((key) => key !== "flash-8b");
+    const familyRegex = buildGeminiFamilyRegex(allKeys, bareKeys);
+    const match = familyRegex?.exec(rawModel);
+    matchedToken = match?.[1] ?? match?.[2] ?? null;
+    if (!matchedToken && (Object.hasOwn(models, rawModel) || Object.hasOwn(aliases, rawModel)) && rawModel !== "flash-8b") {
+      matchedToken = rawModel;
+    }
+  }
+  if (!matchedToken) return null;
+  const canonicalKey = Object.hasOwn(aliases, matchedToken) ? aliases[matchedToken] : matchedToken;
+  if (!Object.hasOwn(models, canonicalKey)) return null;
+  return canonicalKey;
+}
+
+// mcp-server/src/host-execution-adapters.ts
+function resolveFromProviderCatalog(providerId, host2, policyRevision, providerEntry, rawModel, provenance = "adapter-policy") {
+  if (typeof rawModel !== "string" || rawModel.length === 0 || !providerEntry?.catalog) return null;
+  const catalog = providerEntry.catalog;
+  const models = catalog.models ?? {};
+  const minimumEfforts = providerEntry.minimum_efforts ?? {};
+  const canonicalKey = resolveCatalogModel(catalog, rawModel);
+  if (!canonicalKey) return null;
+  const entry = models[canonicalKey];
+  const minimumReasoningEffort = minimumEfforts[rawModel] ?? minimumEfforts[canonicalKey] ?? entry.minimum_effort ?? null;
+  const supportedEfforts = entry.supported_efforts ?? [];
+  return {
+    provider: providerId,
+    host: host2,
+    rawModel,
+    resolvedModel: canonicalKey,
+    modelClass: entry.model_class,
+    minimumReasoningEffort,
+    supportedEfforts,
+    aliasUsed: rawModel !== canonicalKey,
+    policyRevision,
+    provenance
+  };
+}
+function createHostAdapter(providerId, host2, policyRevision, providerEntry) {
+  return Object.freeze({
+    host: host2,
+    provider: providerId,
+    policyRevision,
+    resolveModel(model, provenance = "".concat(host2, ":adapter-policy")) {
+      return resolveFromProviderCatalog(providerId, host2, policyRevision, providerEntry, model, provenance);
+    },
+    modelClassForModel(model) {
+      return resolveFromProviderCatalog(providerId, host2, policyRevision, providerEntry, model)?.modelClass ?? null;
+    }
+  });
+}
+function createCatalogExecutionAdapters(presets = model_routing_presets_default) {
+  if (!presets || typeof presets !== "object" || Array.isArray(presets) || !presets.providers || typeof presets.providers !== "object" || Array.isArray(presets.providers)) throw new Error("INVALID_EXECUTION_ADAPTER_CONFIGURATION");
+  const policyRevision = typeof presets.policy_revision === "string" && presets.policy_revision.length > 0 ? presets.policy_revision : "1.0.0";
+  const adapters = /* @__PURE__ */ new Map();
+  for (const [providerId, entry] of Object.entries(presets.providers)) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error("INVALID_EXECUTION_ADAPTER_HOST");
+    const host2 = entry.host;
+    if (typeof host2 !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host2)) throw new Error("INVALID_EXECUTION_ADAPTER_HOST");
+    if (adapters.has(host2)) throw new Error("DUPLICATE_EXECUTION_ADAPTER_HOST");
+    adapters.set(host2, createHostAdapter(providerId, host2, policyRevision, entry));
+  }
+  const view = Object.freeze({
+    size: adapters.size,
+    get: (host2) => adapters.get(host2),
+    has: (host2) => adapters.has(host2),
+    entries: () => adapters.entries(),
+    keys: () => adapters.keys(),
+    values: () => adapters.values(),
+    forEach(callback, thisArg) {
+      adapters.forEach((value, key) => callback.call(thisArg, value, key, view));
+    },
+    [Symbol.iterator]: () => adapters[Symbol.iterator](),
+    [Symbol.toStringTag]: "ReadonlyMap"
+  });
+  return Object.freeze({ policyRevision, adapters: view });
+}
+var defaultSuite = createCatalogExecutionAdapters();
+var defaultExecutionAdapters = defaultSuite.adapters;
+var claudeCodeExecutionAdapter = defaultSuite.adapters.get("claude-code");
+var codexExecutionAdapter = defaultSuite.adapters.get("codex");
+var geminiExecutionAdapter = defaultSuite.adapters.get("gemini");
 
 // mcp-server/src/runtime-config.ts
 import { homedir } from "node:os";
@@ -32,6 +370,104 @@ function resolveSessionMessageStateDirectory(environment = process.env, platform
   if (configured) return path.resolve(currentWorkingDirectory, configured);
   return path.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
 }
+
+// runtime/failure-diagnostics.mjs
+import { createHash } from "node:crypto";
+import { types } from "node:util";
+var producerReasons = /* @__PURE__ */ new WeakMap();
+var producerCauses = /* @__PURE__ */ new WeakMap();
+var secondaryFailures = /* @__PURE__ */ new WeakMap();
+function tagProducerFailure(error, reason) {
+  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
+  if (!producerReasons.has(error)) producerReasons.set(error, reason);
+  return error;
+}
+function retainFailureCause(error, cause) {
+  if (!producerCauses.has(error)) producerCauses.set(error, cause);
+  return error;
+}
+function retainFailureSecondary(error, secondary) {
+  if (error && (typeof error === "object" || typeof error === "function") && error !== secondary) {
+    const prior = secondaryFailures.get(error) ?? [];
+    if (prior.length < 2 && !prior.includes(secondary)) secondaryFailures.set(error, [...prior, secondary]);
+  }
+  return error;
+}
+function producerFailure(reason, message) {
+  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
+  const error = new Error(message);
+  Object.defineProperty(error, "code", { value: reason, enumerable: true });
+  producerReasons.set(error, reason);
+  return error;
+}
+function producerFailureReason(error) {
+  return error && (typeof error === "object" || typeof error === "function") ? producerReasons.get(error) ?? null : null;
+}
+function failureContext(error) {
+  const seen = /* @__PURE__ */ new Set();
+  function describe(value, depth) {
+    const type = value === null ? "null" : typeof value;
+    if (!value || typeof value !== "object" && typeof value !== "function") return { type };
+    if (types.isProxy(value)) return { type, opaque: "proxy" };
+    if (seen.has(value)) return { type, cycle: true };
+    seen.add(value);
+    try {
+      const prototype = Object.getPrototypeOf(value);
+      const context = {
+        type: prototype === SyntaxError.prototype ? "syntax-error" : prototype === TypeError.prototype ? "type-error" : prototype === RangeError.prototype ? "range-error" : types.isNativeError(value) ? "error" : type
+      };
+      const producerReason = producerFailureReason(value);
+      if (producerReason) context.producerReason = producerReason;
+      if (producerCauses.has(value)) context.producerCause = depth < 2 ? describe(producerCauses.get(value), depth + 1) : { truncated: true };
+      const secondary = secondaryFailures.get(value);
+      if (secondary) context.secondary = depth < 2 ? secondary.map((error2) => describe(error2, depth + 1)) : { truncated: true };
+      const code = Object.getOwnPropertyDescriptor(value, "code");
+      if (code) {
+        if (!("value" in code)) context.code = { type: "accessor", observed: false };
+        else if (typeof code.value === "string") {
+          const prefix = code.value.slice(0, 256);
+          context.code = {
+            type: "string",
+            length: code.value.length,
+            prefixCodeUnits: prefix.length,
+            truncated: prefix.length !== code.value.length,
+            encoding: "utf16le",
+            prefixSha256: createHash("sha256").update(Buffer.from(prefix, "utf16le")).digest("hex")
+          };
+        } else context.code = { type: code.value === null ? "null" : typeof code.value, observed: false };
+      }
+      if (code && "value" in code && code.value === "ERR_SQLITE_ERROR") {
+        const detail = Object.getOwnPropertyDescriptor(value, "errcode");
+        if (detail && !("value" in detail)) context.sqlite = { type: "accessor", observed: false };
+        else if (detail && Number.isInteger(detail.value) && detail.value >= 1 && detail.value <= 65535 && (detail.value & 255) >= 1 && (detail.value & 255) <= 28) {
+          context.sqlite = { errcode: detail.value, primaryCode: detail.value & 255 };
+        } else context.sqlite = { observed: false };
+      }
+      const cause = Object.getOwnPropertyDescriptor(value, "cause");
+      if (cause) {
+        if (!("value" in cause)) context.cause = { type: "accessor", observed: false };
+        else context.cause = depth < 2 ? describe(cause.value, depth + 1) : { truncated: true };
+      }
+      return context;
+    } catch {
+      return { type, unreadable: true };
+    } finally {
+      seen.delete(value);
+    }
+  }
+  return describe(error, 0);
+}
+
+// mcp-server/src/session-message-client.ts
+import { randomBytes } from "node:crypto";
+import { types as utilTypes } from "node:util";
+import { existsSync } from "node:fs";
+import { chmod, mkdir, readFile } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import path2 from "node:path";
+import { performance } from "node:perf_hooks";
+import tls from "node:tls";
+import { fileURLToPath } from "node:url";
 
 // mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
@@ -56,6 +492,7 @@ var BrokerRequestRejected = class extends Error {
   details;
   constructor(message, details = null) {
     super(message);
+    tagProducerFailure(this, "BROKER_REQUEST_REJECTED");
     const record = details && typeof details === "object" && !Array.isArray(details) ? details : null;
     this.details = record && (record.scope === "sender" || record.scope === "global") && (record.earliestReleaseAt === null || typeof record.earliestReleaseAt === "string") ? { scope: record.scope, earliestReleaseAt: record.earliestReleaseAt } : null;
   }
@@ -75,10 +512,13 @@ function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
   };
 }
 function deadlineError(message) {
-  return new Error(message);
+  return tagProducerFailure(new Error(message), "BROKER_DEADLINE_EXPIRED");
+}
+function clientFailure(reason, message, cause) {
+  return utilTypes.isNativeError(cause) ? tagProducerFailure(cause, reason) : retainFailureCause(tagProducerFailure(new Error(message), reason), cause);
 }
 function signalError(signal) {
-  return signal.reason instanceof Error ? signal.reason : deadlineError(deadlineMetadata.get(signal)?.message ?? SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE);
+  return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : retainFailureCause(tagProducerFailure(new Error("The session message operation was aborted."), "BROKER_OPERATION_ABORTED"), signal.reason);
 }
 function throwIfAborted(signal) {
   if (signal?.aborted) throw signalError(signal);
@@ -93,11 +533,12 @@ function remainingMilliseconds(deadline, signal, message = SESSION_MESSAGE_REQUE
 function assertWithinDeadline(deadline, signal, message) {
   remainingMilliseconds(deadline, signal, message);
 }
-async function withDeadline(timeoutMs, parentSignal, message, work) {
+async function withDeadline(timeoutMs, parentSignal, message, work, absoluteDeadline) {
   const parentDeadline = parentSignal ? deadlineMetadata.get(parentSignal) : void 0;
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw deadlineError(parentDeadline?.message ?? message);
   const now = performance.now();
-  const requestedDeadline = now + timeoutMs;
+  if (absoluteDeadline !== void 0 && !Number.isFinite(absoluteDeadline)) throw deadlineError(message);
+  const requestedDeadline = Math.min(now + timeoutMs, absoluteDeadline ?? Infinity);
   const inherited = parentDeadline && parentDeadline.deadline <= requestedDeadline ? parentDeadline : void 0;
   const deadline = inherited?.deadline ?? requestedDeadline;
   const deadlineMessage = inherited?.message ?? message;
@@ -107,7 +548,11 @@ async function withDeadline(timeoutMs, parentSignal, message, work) {
   const onParentAbort = () => controller.abort(parentSignal ? signalError(parentSignal) : deadlineError(message));
   if (parentSignal?.aborted) onParentAbort();
   else parentSignal?.addEventListener("abort", onParentAbort, { once: true });
-  deadlineMetadata.set(controller.signal, { deadline, message: deadlineMessage });
+  deadlineMetadata.set(controller.signal, {
+    deadline,
+    message: deadlineMessage,
+    enforceDeadline: absoluteDeadline !== void 0 || parentDeadline?.enforceDeadline === true
+  });
   const timer = setTimeout(() => controller.abort(deadlineError(deadlineMessage)), remaining);
   let removeAbortListener = () => {
   };
@@ -134,20 +579,35 @@ function sessionMessageBrokerEnvironment(environment = process.env) {
 async function readEndpoint(stateDirectory, signal) {
   throwIfAborted(signal);
   const paths = statePaths(stateDirectory);
-  const [rawEndpoint, rawToken, certificate] = await Promise.all([
-    readFile(paths.endpoint, { encoding: "utf8", signal }),
-    readFile(paths.token, { encoding: "utf8", signal }),
-    readFile(paths.certificate, { encoding: "utf8", signal })
-  ]);
-  const endpoint = JSON.parse(rawEndpoint);
-  if (endpoint.protocolVersion !== SESSION_MESSAGE_PROTOCOL || endpoint.address !== "127.0.0.1" || !Number.isInteger(endpoint.port) || endpoint.port < 1 || endpoint.port > 65535 || !/^(?:[0-9A-F]{2}:){31}[0-9A-F]{2}$/u.test(endpoint.certificateFingerprint256) || !/^[A-Za-z0-9_-]{43}$/u.test(rawToken.trim())) {
-    throw new Error("The session message broker endpoint is invalid.");
+  let rawEndpoint;
+  let rawToken;
+  let certificate;
+  try {
+    [rawEndpoint, rawToken, certificate] = await Promise.all([
+      readFile(paths.endpoint, { encoding: "utf8", signal }),
+      readFile(paths.token, { encoding: "utf8", signal }),
+      readFile(paths.certificate, { encoding: "utf8", signal })
+    ]);
+  } catch (cause) {
+    throwIfAborted(signal);
+    throw clientFailure("BROKER_ENDPOINT_READ_FAILED", "Cannot read the session message broker endpoint.", cause);
+  }
+  let endpoint;
+  try {
+    endpoint = JSON.parse(rawEndpoint);
+    if (endpoint.protocolVersion !== SESSION_MESSAGE_PROTOCOL || endpoint.address !== "127.0.0.1" || !Number.isInteger(endpoint.port) || endpoint.port < 1 || endpoint.port > 65535 || !/^(?:[0-9A-F]{2}:){31}[0-9A-F]{2}$/u.test(endpoint.certificateFingerprint256) || !/^[A-Za-z0-9_-]{43}$/u.test(rawToken.trim())) {
+      throw new Error("The session message broker endpoint is invalid.");
+    }
+  } catch (cause) {
+    throw clientFailure("BROKER_ENDPOINT_INVALID", "The session message broker endpoint is invalid.", cause);
   }
   return { endpoint, token: rawToken.trim(), certificate };
 }
-async function requestSessionMessageOnce(operation, payload, stateDirectory, timeoutMs = BROKER_REQUEST_TIMEOUT_MS, parentSignal) {
-  return withDeadline(Math.min(BROKER_REQUEST_TIMEOUT_MS, timeoutMs), parentSignal, "The session message broker timed out.", async (signal) => {
+async function requestSessionMessageOnce(operation, payload, stateDirectory, timeoutMs = BROKER_REQUEST_TIMEOUT_MS, parentSignal, options = {}) {
+  return withDeadline(Math.min(BROKER_REQUEST_TIMEOUT_MS, timeoutMs), parentSignal, "The session message broker timed out.", async (signal, deadline) => {
+    const enforceDeadline = options.enforceDeadline === true || deadlineMetadata.get(signal)?.enforceDeadline === true;
     const { endpoint, token, certificate } = await readEndpoint(stateDirectory, signal);
+    if (enforceDeadline) assertWithinDeadline(deadline, signal, "The session message broker timed out.");
     return new Promise((resolve, reject) => {
       let settled = false;
       const readLine = sessionMessageLineReader(SESSION_MESSAGE_MAX_RESPONSE_BYTES);
@@ -159,7 +619,7 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
         minVersion: "TLSv1.3",
         maxVersion: "TLSv1.3",
         rejectUnauthorized: true,
-        checkServerIdentity: (_host, certificate2) => certificate2.fingerprint256 === endpoint.certificateFingerprint256 ? void 0 : new Error("The session message broker certificate pin did not match.")
+        checkServerIdentity: (_host, certificate2) => certificate2.fingerprint256 === endpoint.certificateFingerprint256 ? void 0 : tagProducerFailure(new Error("The session message broker certificate pin did not match."), "BROKER_CERTIFICATE_PIN_MISMATCH")
       });
       const finish = (error, value) => {
         if (settled) return;
@@ -172,32 +632,68 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
       const onAbort = () => finish(signalError(signal));
       signal.addEventListener("abort", onAbort, { once: true });
       if (signal.aborted) return onAbort();
+      let writeObserved = false;
       socket.once("secureConnect", () => {
-        const peer = socket.getPeerCertificate();
-        if (!peer.fingerprint256 || peer.fingerprint256 !== endpoint.certificateFingerprint256) {
-          finish(new Error("The session message broker certificate pin did not match."));
-          return;
+        if (settled) return;
+        try {
+          if (enforceDeadline) assertWithinDeadline(deadline, signal, "The session message broker timed out.");
+          const peer = socket.getPeerCertificate();
+          if (!peer.fingerprint256 || peer.fingerprint256 !== endpoint.certificateFingerprint256) {
+            finish(tagProducerFailure(new Error("The session message broker certificate pin did not match."), "BROKER_CERTIFICATE_PIN_MISMATCH"));
+            return;
+          }
+          let frame;
+          try {
+            frame = "".concat(JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload }), "\n");
+          } catch (cause) {
+            throw clientFailure("BROKER_REQUEST_ENCODING_FAILED", "Cannot encode the broker request.", cause);
+          }
+          if (enforceDeadline) assertWithinDeadline(deadline, signal, "The session message broker timed out.");
+          try {
+            socket.write(frame);
+          } catch (cause) {
+            throw clientFailure("BROKER_WRITE_FAILED", "The broker write failed.", cause);
+          } finally {
+            if (!writeObserved) {
+              writeObserved = true;
+              try {
+                Promise.resolve(options.onOperationWrite?.()).catch(() => {
+                });
+              } catch {
+              }
+            }
+          }
+        } catch (error) {
+          finish(clientFailure("BROKER_REQUEST_PREPARATION_FAILED", "The broker request preparation failed.", error));
         }
-        socket.write(`${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload })}
-`);
       });
       socket.on("data", (chunk) => {
+        if (settled) return;
         let line;
         try {
           line = readLine(chunk);
-        } catch {
-          return finish(new Error("The broker response exceeded its limit."));
+        } catch (cause) {
+          return finish(retainFailureCause(tagProducerFailure(new Error("The broker response exceeded its limit."), "BROKER_RESPONSE_TOO_LARGE"), cause));
         }
         if (line === null) return;
         try {
           const response = JSON.parse(line);
           if (!response.ok) finish(new BrokerRequestRejected(response.error || "The broker rejected the request.", response.details));
-          else finish(void 0, response.data);
-        } catch {
-          finish(new Error("The broker returned invalid JSON."));
+          else {
+            if (enforceDeadline) assertWithinDeadline(deadline, signal, "The session message broker timed out.");
+            finish(void 0, response.data);
+          }
+        } catch (error) {
+          const failure = enforceDeadline && error instanceof Error ? error : new Error("The broker returned invalid JSON.");
+          finish(producerFailureReason(failure) ? failure : failure === error ? tagProducerFailure(failure, "BROKER_RESPONSE_INVALID_JSON") : retainFailureCause(tagProducerFailure(failure, "BROKER_RESPONSE_INVALID_JSON"), error));
         }
       });
-      socket.once("error", (error) => finish(error));
+      socket.once("error", (error) => finish(tagProducerFailure(error, "BROKER_TRANSPORT_FAILED")));
+      if (enforceDeadline) {
+        const onClosed = () => finish(tagProducerFailure(new Error("The broker connection closed before a complete response."), "BROKER_RESPONSE_INCOMPLETE"));
+        socket.once("end", onClosed);
+        socket.once("close", onClosed);
+      }
     });
   });
 }
@@ -217,48 +713,58 @@ async function delay(milliseconds, signal) {
   });
 }
 async function waitForSessionMessageBrokerReady(stateDirectory, child, timeoutMs = BROKER_STARTUP_TIMEOUT_MS, parentSignal) {
-  return withDeadline(timeoutMs, parentSignal, BROKER_STARTUP_DEADLINE_MESSAGE, async (signal, deadline) => {
-    let spawnError = null;
-    const onError = (error) => {
-      spawnError = error;
-    };
-    child.once("error", onError);
-    try {
-      while (true) {
-        throwIfAborted(signal);
-        if (spawnError) throw spawnError;
-        if (child.exitCode !== null && child.exitCode !== 0 || child.signalCode !== null) {
-          throw new Error(
-            `The session message broker exited before it was ready (code ${String(child.exitCode)}, signal ${String(child.signalCode)}).`
-          );
-        }
-        await delay(Math.min(100, remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE)), signal);
-        try {
-          await requestSessionMessageOnce(
-            "ping",
-            {},
-            stateDirectory,
-            remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE),
-            signal
-          );
-          return;
-        } catch (error) {
-          throwIfAborted(signal);
-          if (error instanceof BrokerRequestRejected) throw error;
-        }
-      }
-    } finally {
-      child.off("error", onError);
-    }
-  });
-}
-async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessageStateDirectory(), timeoutMs = BROKER_STARTUP_TIMEOUT_MS, parentSignal, prepareStateDirectory = async (directory) => {
-  await mkdir(directory, { recursive: true, mode: 448 });
+  let probeFailed = false;
+  let lastProbeFailure;
   try {
-    await chmod(directory, 448);
-  } catch {
+    return await withDeadline(timeoutMs, parentSignal, BROKER_STARTUP_DEADLINE_MESSAGE, async (signal, deadline) => {
+      let spawnError = null;
+      const onError = (error) => {
+        spawnError = tagProducerFailure(error, "BROKER_START_FAILED");
+      };
+      child.once("error", onError);
+      const retainLastProbe = () => {
+        if (probeFailed) retainFailureSecondary(signal.reason, lastProbeFailure);
+      };
+      signal.addEventListener("abort", retainLastProbe, { once: true });
+      try {
+        while (true) {
+          throwIfAborted(signal);
+          if (spawnError) throw spawnError;
+          if (child.exitCode !== null && child.exitCode !== 0 || child.signalCode !== null) {
+            throw tagProducerFailure(new Error(
+              "The session message broker exited before it was ready (code ".concat(String(child.exitCode), ", signal ").concat(String(child.signalCode), ").")
+            ), "BROKER_EXITED_BEFORE_READY");
+          }
+          await delay(Math.min(100, remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE)), signal);
+          try {
+            await requestSessionMessageOnce(
+              "ping",
+              {},
+              stateDirectory,
+              remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE),
+              signal
+            );
+            return;
+          } catch (error) {
+            if (!signal.aborted) {
+              probeFailed = true;
+              lastProbeFailure = error;
+            }
+            throwIfAborted(signal);
+            if (error instanceof BrokerRequestRejected) throw error;
+          }
+        }
+      } finally {
+        signal.removeEventListener("abort", retainLastProbe);
+        child.off("error", onError);
+      }
+    });
+  } catch (error) {
+    if (probeFailed) retainFailureSecondary(error, lastProbeFailure);
+    throw error;
   }
-}) {
+}
+async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessageStateDirectory(), timeoutMs = BROKER_STARTUP_TIMEOUT_MS, parentSignal, prepareStateDirectory) {
   return withDeadline(Math.min(BROKER_STARTUP_TIMEOUT_MS, timeoutMs), parentSignal, BROKER_STARTUP_DEADLINE_MESSAGE, async (signal, deadline) => {
     try {
       await requestSessionMessageOnce(
@@ -270,56 +776,116 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
       );
       return;
     } catch (error) {
-      throwIfAborted(signal);
-      if (error instanceof BrokerRequestRejected) throw error;
-      await prepareStateDirectory(stateDirectory);
-      throwIfAborted(signal);
-      assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-      const adjacentBroker = fileURLToPath(new URL("./session-message-broker.mjs", import.meta.url));
-      const brokerPath = existsSync(adjacentBroker) ? adjacentBroker : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
-      const child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
-        detached: true,
-        windowsHide: true,
-        stdio: "ignore",
-        env: sessionMessageBrokerEnvironment()
-      });
-      child.unref();
-      await waitForSessionMessageBrokerReady(
-        stateDirectory,
-        child,
-        remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE),
-        signal
-      );
+      const retainInitialFailure = () => {
+        retainFailureSecondary(signal.reason, error);
+      };
+      signal.addEventListener("abort", retainInitialFailure, { once: true });
+      try {
+        throwIfAborted(signal);
+        if (error instanceof BrokerRequestRejected) throw error;
+        if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
+        try {
+          if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);
+          else await mkdir(stateDirectory, { recursive: true, mode: 448 });
+        } catch (cause) {
+          throw clientFailure("BROKER_STATE_DIRECTORY_FAILED", "Cannot prepare the session message state directory.", cause);
+        }
+        if (!prepareStateDirectory) {
+          if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
+          try {
+            await chmod(stateDirectory, 448);
+          } catch {
+          }
+        }
+        throwIfAborted(signal);
+        assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
+        const adjacentBroker = fileURLToPath(new URL("./session-message-broker.mjs", import.meta.url));
+        const brokerPath = existsSync(adjacentBroker) ? adjacentBroker : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
+        if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
+        let child;
+        try {
+          child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+            detached: true,
+            windowsHide: true,
+            stdio: "ignore",
+            env: sessionMessageBrokerEnvironment()
+          });
+        } catch (cause) {
+          throw clientFailure("BROKER_START_FAILED", "Cannot start the session message broker.", cause);
+        }
+        child.unref();
+        await waitForSessionMessageBrokerReady(
+          stateDirectory,
+          child,
+          remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE),
+          signal
+        );
+      } catch (recoveryError) {
+        throw retainFailureSecondary(recoveryError, error);
+      } finally {
+        signal.removeEventListener("abort", retainInitialFailure);
+      }
     }
   });
 }
 async function sessionMessageRequest(operation, payload, stateDirectory = resolveSessionMessageStateDirectory(), options = {}) {
+  options = { ...options };
   const totalTimeoutMs = options.totalTimeoutMs ?? SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
+  const absoluteDeadline = options.deadlineMonotonicMs ?? (options.noOperationReplay ? performance.now() + totalTimeoutMs : void 0);
   return withDeadline(totalTimeoutMs, void 0, SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE, async (signal, deadline) => {
+    if (options.noOperationReplay) {
+      await ensureSessionMessageBroker(stateDirectory, remainingMilliseconds(deadline, signal), signal, options.prepareStateDirectory);
+      assertWithinDeadline(deadline, signal, SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE);
+      return requestSessionMessageOnce(
+        operation,
+        payload,
+        stateDirectory,
+        remainingMilliseconds(deadline, signal),
+        signal,
+        { enforceDeadline: true, ...options.onOperationWrite ? { onOperationWrite: options.onOperationWrite } : {} }
+      );
+    }
+    let operationWriteAttempted = false;
+    const onOperationWrite = () => {
+      operationWriteAttempted = true;
+      return options.onOperationWrite?.();
+    };
     try {
       return await requestSessionMessageOnce(
         operation,
         payload,
         stateDirectory,
         remainingMilliseconds(deadline, signal),
-        signal
+        signal,
+        { enforceDeadline: options.deadlineMonotonicMs !== void 0, onOperationWrite }
       );
     } catch (error) {
-      throwIfAborted(signal);
-      if (error instanceof BrokerRequestRejected) throw error;
-      await ensureSessionMessageBroker(
-        stateDirectory,
-        remainingMilliseconds(deadline, signal),
-        signal,
-        options.prepareStateDirectory
-      );
-      throwIfAborted(signal);
-      return requestSessionMessageOnce(operation, payload, stateDirectory, remainingMilliseconds(deadline, signal), signal);
+      try {
+        throwIfAborted(signal);
+        if (error instanceof BrokerRequestRejected || operationWriteAttempted && operation !== "send") throw error;
+        await ensureSessionMessageBroker(
+          stateDirectory,
+          remainingMilliseconds(deadline, signal),
+          signal,
+          options.prepareStateDirectory
+        );
+        throwIfAborted(signal);
+        return await requestSessionMessageOnce(
+          operation,
+          payload,
+          stateDirectory,
+          remainingMilliseconds(deadline, signal),
+          signal,
+          { enforceDeadline: options.deadlineMonotonicMs !== void 0, onOperationWrite }
+        );
+      } catch (recoveryError) {
+        throw retainFailureSecondary(recoveryError, error);
+      }
     }
-  });
+  }, absoluteDeadline);
 }
 function wakeMessage(nonce) {
-  return `${WAKE_PREFIX}${nonce}]`;
+  return "".concat(WAKE_PREFIX).concat(nonce, "]");
 }
 function newWakeNonce() {
   return randomBytes(24).toString("base64url");
@@ -328,23 +894,24 @@ function newWakeNonce() {
 // mcp-server/src/process-identity.ts
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-function processStartToken(pid, platform = process.platform) {
+function processStartToken(pid, platform = process.platform, timeoutMs) {
   if (!Number.isInteger(pid) || pid < 1) return null;
+  if (timeoutMs !== void 0 && (!Number.isFinite(timeoutMs) || timeoutMs < 1)) return null;
   try {
     if (platform === "win32") {
       return execFileSync("powershell.exe", [
         "-NoProfile",
         "-NonInteractive",
         "-Command",
-        `(Get-Process -Id ${pid} -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')`
-      ], { encoding: "utf8", windowsHide: true, timeout: 5e3, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
+        "(Get-Process -Id ".concat(pid, " -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')")
+      ], { encoding: "utf8", windowsHide: true, timeout: Math.min(5e3, Math.floor(timeoutMs ?? 5e3)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
     }
     if (platform === "linux") {
-      const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
+      const stat = readFileSync("/proc/".concat(pid, "/stat"), "utf8");
       const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
       return fields[19] ?? null;
     }
-    return execFileSync("ps", ["-p", String(pid), "-o", "lstart="], { encoding: "utf8", timeout: 3e3, stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
+    return execFileSync("ps", ["-p", String(pid), "-o", "lstart="], { encoding: "utf8", timeout: Math.min(3e3, Math.floor(timeoutMs ?? 3e3)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
   } catch {
     return null;
   }
@@ -388,60 +955,68 @@ function claudeWakeOutcome(hadError, connected, wrote) {
 function geminiWakeOutcome(error, spawned) {
   return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
 }
-function resolveGeminiAgentApi(environment = process.env) {
-  if (environment.ANTIGRAVITY_AGENTAPI_EXE) {
-    return { command: environment.ANTIGRAVITY_AGENTAPI_EXE, argsPrefix: ["agentapi"] };
+function resolveGeminiAgentApi(environment = process.env, platform = process.platform) {
+  const configured = environment.ANTIGRAVITY_AGENTAPI_EXE;
+  if (configured) {
+    if (platform === "win32") {
+      const root = path3.win32.parse(configured).root;
+      if (!path3.win32.isAbsolute(configured) || root === "\\" || root === "/" || path3.win32.extname(configured).toLowerCase() !== ".exe") return null;
+    }
+    return { command: configured, argsPrefix: ["agentapi"] };
   }
+  if (platform === "win32") return null;
   const homeDir = environment.USERPROFILE || environment.HOME || "";
-  const batPath = path3.join(homeDir, ".gemini", "antigravity", "bin", "agentapi.bat");
-  const shPath = path3.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
-  if (process.platform === "win32" && existsSync2(batPath)) {
-    return { command: batPath, argsPrefix: [] };
-  }
-  if (existsSync2(shPath)) {
-    return { command: shPath, argsPrefix: [] };
-  }
-  return { command: "agentapi", argsPrefix: [] };
+  const command = path3.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
+  return { command: existsSync2(command) ? command : "agentapi", argsPrefix: [] };
+}
+function reportWakeFailure(phase, error) {
+  console.error("agent-governance-suite wake diagnostic ".concat(JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) })));
 }
 async function ringGemini(sessionId2, message, environment = process.env) {
-  const { command, argsPrefix } = resolveGeminiAgentApi(environment);
+  const childEnv = { ...environment };
+  const sourceProjectId = childEnv.ANTIGRAVITY_PROJECT_ID;
+  if (typeof sourceProjectId !== "string" || !sourceProjectId.trim()) return "definite-failure";
+  const launch = resolveGeminiAgentApi(childEnv);
+  if (!launch) return "definite-failure";
+  const { command, argsPrefix } = launch;
   let targetProjectId;
   try {
-    const meta = await new Promise((metaResolve, metaReject) => {
+    const meta = await new Promise((resolve, reject) => {
       execFile(
         command,
         [...argsPrefix, "get-conversation-metadata", sessionId2],
-        { windowsHide: true, timeout: 5e3, env: environment },
-        (err, stdout) => err ? metaReject(err) : metaResolve(stdout)
+        { windowsHide: true, timeout: 5e3, env: childEnv, shell: false, windowsVerbatimArguments: false },
+        (error, stdout) => error ? reject(error) : resolve(stdout)
       );
     });
     const parsed = JSON.parse(meta);
-    const response = parsed.response;
-    const conversationMetadata = response?.conversationMetadata;
-    const metadata = conversationMetadata?.metadata;
-    if (typeof metadata?.projectId === "string") {
-      targetProjectId = metadata.projectId;
+    const projectId = parsed.response?.conversationMetadata?.metadata?.projectId;
+    if (typeof projectId !== "string" || !projectId.trim()) {
+      throw producerFailure("GEMINI_METADATA_PROJECT_MISSING", "Gemini conversation metadata has no project identity.");
     }
-  } catch {
+    targetProjectId = projectId;
+  } catch (cause) {
+    const error = producerFailureReason(cause) ? cause : retainFailureCause(producerFailure("GEMINI_METADATA_FAILED", "Gemini conversation metadata lookup failed."), cause);
+    reportWakeFailure("gemini-metadata", error);
+    return "definite-failure";
   }
-  const childEnv = { ...environment };
-  if (targetProjectId) {
-    childEnv.ANTIGRAVITY_PROJECT_ID = targetProjectId;
-  }
-  delete childEnv.ANTIGRAVITY_SOURCE_METADATA;
+  if (sourceProjectId !== targetProjectId) return "definite-failure";
   return new Promise((resolve) => {
     let spawned = false;
-    const args = [...argsPrefix, "send-message", sessionId2, message];
-    const child = execFile(
-      command,
-      args,
-      { windowsHide: true, timeout: 1e4, env: childEnv },
-      (error) => resolve(geminiWakeOutcome(error, spawned))
-    );
-    child.once("spawn", () => {
-      spawned = true;
-    });
-    child.once("error", (error) => resolve(geminiWakeOutcome(error, spawned)));
+    try {
+      const child = execFile(
+        command,
+        [...argsPrefix, "send-message", sessionId2, message],
+        { windowsHide: true, timeout: 1e4, env: childEnv, shell: false, windowsVerbatimArguments: false },
+        (error) => resolve(geminiWakeOutcome(error, spawned))
+      );
+      child.once("spawn", () => {
+        spawned = true;
+      });
+      child.once("error", (error) => resolve(geminiWakeOutcome(error, spawned)));
+    } catch {
+      resolve("definite-failure");
+    }
   });
 }
 function ringCodex(sessionId2, message) {
@@ -477,9 +1052,7 @@ async function ringClaude(message) {
       connected = true;
       try {
         wrote = true;
-        socket.end(`${JSON.stringify({ type: "auth", token })}
-${JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" })}
-`);
+        socket.end("".concat(JSON.stringify({ type: "auth", token }), "\n").concat(JSON.stringify({ type: "user", message: { role: "user", content: message }, priority: "next" }), "\n"));
       } catch {
         finish("accepted-or-unknown");
       }
@@ -523,34 +1096,100 @@ function relayIdentityDecision(identity, previousUnknowns) {
   const unknowns = previousUnknowns + 1;
   return { proceed: false, stop: unknowns >= IDENTITY_UNKNOWN_LIMIT, unknowns };
 }
+function persistRelayFailure(serialized) {
+  if (Buffer.byteLength(serialized, "utf8") > 64 * 1024) return;
+  let descriptor;
+  try {
+    const directory = resolveSessionMessageStateDirectory();
+    mkdirSync(directory, { recursive: true, mode: 448 });
+    const directoryInfo = lstatSync(directory);
+    if (!directoryInfo.isDirectory() || directoryInfo.isSymbolicLink() || process.getuid && directoryInfo.uid !== process.getuid()) return;
+    try {
+      chmodSync(directory, 448);
+    } catch {
+      if (process.platform !== "win32") return;
+    }
+    const target = path4.join(directory, "relay-failure.latest.json");
+    descriptor = openSync(target, constants.O_WRONLY | constants.O_CREAT | constants.O_NONBLOCK | (constants.O_NOFOLLOW ?? 0), 384);
+    const opened = fstatSync(descriptor);
+    const linked = lstatSync(target);
+    if (!opened.isFile() || opened.nlink !== 1 || linked.isSymbolicLink() || !linked.isFile() || opened.dev !== linked.dev || opened.ino !== linked.ino || process.getuid && opened.uid !== process.getuid()) return;
+    try {
+      fchmodSync(descriptor, 384);
+    } catch {
+      if (process.platform !== "win32") return;
+    }
+    ftruncateSync(descriptor, 0);
+    writeFileSync(descriptor, serialized + "\n", { encoding: "utf8" });
+  } catch {
+  } finally {
+    if (descriptor !== void 0) try {
+      closeSync(descriptor);
+    } catch {
+    }
+  }
+}
+function reportRelayFailure(phase, error) {
+  try {
+    const serialized = JSON.stringify({
+      phase,
+      reason: producerFailureReason(error) ?? "UNEXPECTED_FAILURE",
+      context: failureContext(error)
+    });
+    persistRelayFailure(serialized);
+    console.error("[agent-governance-suite] relay-failure " + serialized);
+  } catch {
+  }
+}
 async function delay2(milliseconds) {
   await new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
-async function dispatchManagedWake(options, relayId, port, request = sessionMessageRequest) {
+async function dispatchManagedWake(options, relayId2, port, request = sessionMessageRequest) {
   if (port.capabilities.idleWake === "none" || !port.capabilities.supportedInjection.includes("peer-wake")) return false;
   const target = { host: options.host, sessionId: options.sessionId };
-  const reserved = await request("reserve-wake", {
-    target,
-    nonce: newWakeNonce(),
-    instanceId: options.instanceId,
-    transport: options.transport,
-    relayId,
-    resume: true
-  });
-  if (!reserved.dispatch || !reserved.attempt) return false;
-  const started = await request("start-wake", { attempt: reserved.attempt });
-  if (!started.dispatch || !started.attempt) return false;
-  let outcome = "accepted-or-unknown";
+  let renewal = null;
+  const heartbeat = setInterval(() => {
+    if (renewal) return;
+    renewal = request("relay-tick", {
+      target,
+      transport: options.transport,
+      relayId: relayId2,
+      instanceId: options.instanceId,
+      includePending: false
+    }).then(() => {
+    }, () => {
+    }).finally(() => {
+      renewal = null;
+    });
+  }, LOOP_MS);
   try {
-    outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce));
-  } catch {
+    const reserved = await request("reserve-wake", {
+      target,
+      nonce: newWakeNonce(),
+      instanceId: options.instanceId,
+      transport: options.transport,
+      relayId: relayId2,
+      resume: true
+    });
+    if (!reserved.dispatch || !reserved.attempt) return false;
+    const started = await request("start-wake", { attempt: reserved.attempt });
+    if (!started.dispatch || !started.attempt) return false;
+    let outcome = "accepted-or-unknown";
+    try {
+      outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce));
+    } catch {
+    }
+    await request("record-wake-outcome", { attempt: started.attempt, outcome });
+    return true;
+  } finally {
+    clearInterval(heartbeat);
+    if (renewal) await renewal;
   }
-  await request("record-wake-outcome", { attempt: started.attempt, outcome });
-  return true;
 }
 async function runSessionMessageRelay(options, port = transportWakePort(options.transport)) {
   const target = { host: options.host, sessionId: options.sessionId };
-  const relayId = randomUUID();
+  if (options.relayId !== void 0 && (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(options.relayId) || !/^host-process-v1:[0-9a-f]{64}$/u.test(options.instanceId) || !options.relayId.endsWith(":" + options.instanceId.slice("host-process-v1:".length)))) throw new Error("Invalid relay startup reservation.");
+  const relayId2 = options.relayId ?? randomUUID();
   let acquired = false;
   let acquisitionUnknowns = 0;
   for (let attempt = 0; attempt < 6; attempt += 1) {
@@ -563,15 +1202,17 @@ async function runSessionMessageRelay(options, port = transportWakePort(options.
         const result = await sessionMessageRequest("acquire-relay", {
           target,
           transport: options.transport,
-          relayId,
+          relayId: relayId2,
           pid: process.pid,
           parentPid: options.parentPid,
-          instanceId: options.instanceId
+          instanceId: options.instanceId,
+          ...options.relayId ? { parentStartToken: options.parentStartToken } : {}
         });
         acquired = result.acquired;
         if (acquired) break;
       }
-    } catch {
+    } catch (error) {
+      reportRelayFailure("acquire", error);
     }
     await delay2(3e3);
   }
@@ -599,7 +1240,7 @@ async function runSessionMessageRelay(options, port = transportWakePort(options.
         const pending = await sessionMessageRequest("relay-tick", {
           target,
           transport: options.transport,
-          relayId,
+          relayId: relayId2,
           instanceId: options.instanceId,
           includePending: port.capabilities.idleWake !== "none"
         });
@@ -620,20 +1261,22 @@ async function runSessionMessageRelay(options, port = transportWakePort(options.
           }
           identityUnknowns = 0;
           nextIdentityCheck = now + IDENTITY_RECHECK_MS;
-          await dispatchManagedWake(options, relayId, port);
+          await dispatchManagedWake(options, relayId2, port);
         }
-      } catch {
+      } catch (error) {
+        reportRelayFailure("tick", error);
       }
       await delay2(LOOP_MS);
     }
   } finally {
     try {
-      await sessionMessageRequest("presence-end", {
-        target,
-        instanceId: options.instanceId,
-        reason: "host-process-ended"
-      }, void 0, { totalTimeoutMs: 3e3 });
-    } catch {
+      if (options.relayId) {
+        await sessionMessageRequest("release-verified-relay", { target, transport: options.transport, relayId: relayId2, instanceId: options.instanceId, pid: process.pid }, void 0, { totalTimeoutMs: 3e3, noOperationReplay: true });
+      } else {
+        await sessionMessageRequest("presence-end", { target, instanceId: options.instanceId, reason: "host-process-ended" }, void 0, { totalTimeoutMs: 3e3 });
+      }
+    } catch (error) {
+      reportRelayFailure("release", error);
     }
   }
 }
@@ -649,7 +1292,11 @@ var instanceId = argument("--instance-id");
 var transport = argument("--transport");
 var parentPid = Number.parseInt(argument("--parent-pid") ?? "", 10);
 var parentStartToken = argument("--parent-start-token");
-if (!host || !sessionId || !instanceId || transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox" && transport !== "gemini-queue" || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
-else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken }).catch(() => {
+var relayIdArguments = process.argv.filter((value) => value === "--relay-id").length;
+var relayId = argument("--relay-id");
+var invalidRelayId = relayIdArguments > 1 || relayIdArguments === 1 && (!relayId || !/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(relayId));
+if (invalidRelayId || !host || !sessionId || !instanceId || transport !== "codex-deferred" && transport !== "codex-queue" && transport !== "claude-inbox" && transport !== "gemini-queue" || !Number.isInteger(parentPid) || !parentStartToken) process.exitCode = 2;
+else void runSessionMessageRelay({ host, sessionId, instanceId, transport, parentPid, parentStartToken, ...relayId ? { relayId } : {} }).catch((error) => {
+  reportRelayFailure("run", error);
   process.exitCode = 1;
 });

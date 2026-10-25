@@ -334,7 +334,7 @@ function validProtectedManifest(manifest, source) {
   for (const span of manifest.spans) {
     if (!span || typeof span !== "object" || Array.isArray(span) || !hasExactKeys(span, ["id", "kind", "start", "end", "text", "digest"])) return false;
     const item = /** @type {Record<string, unknown>} */ (span);
-    if (typeof item.id !== "string" || !/^span-[0-9]{4}$/u.test(item.id) || ids.has(item.id) || typeof item.kind !== "string" || !PROTECTED_KINDS.has(item.kind) || !Number.isInteger(item.start) || !Number.isInteger(item.end)) return false;
+    if (typeof item.id !== "string" || !/^span-[0-9]{4,}$/u.test(item.id) || ids.has(item.id) || typeof item.kind !== "string" || !PROTECTED_KINDS.has(item.kind) || !Number.isInteger(item.start) || !Number.isInteger(item.end)) return false;
     const start = /** @type {number} */ (item.start);
     const end = /** @type {number} */ (item.end);
     if (start < previousEnd || end <= start || end > source.length || typeof item.text !== "string" || item.text !== source.slice(start, end) || item.digest !== sha256(item.text)) return false;

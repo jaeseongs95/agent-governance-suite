@@ -1,9 +1,11 @@
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { resolveCatalogModel } from "./model-catalog-adapter.mjs";
 
 const presets = JSON.parse(readFileSync(new URL("../references/model-routing-presets.json", import.meta.url), "utf8"));
-const classes = presets.model_class_order;
-const efforts = presets.effort_order;
+const classes = Object.freeze(["lightweight", "general", "deep", "frontier"]);
+const efforts = Object.freeze(["low", "medium", "high", "xhigh", "max", "ultra"]);
+const defaultRoles = Object.freeze(["discovery", "general-implementation", "complex-reasoning", "independent-audit"]);
 
 function check(condition, message) {
   if (!condition) throw new Error(message);
@@ -13,20 +15,78 @@ function same(left, right) {
   return Boolean(left && right && left.model === right.model && left.effort === right.effort);
 }
 
-function supportedSetting(setting, options) {
-  if (!setting || typeof setting.model !== "string" || !efforts.includes(setting.effort)) return false;
-  const capability = options.supported.find((item) => item.model === setting.model);
-  if (!capability?.efforts.includes(setting.effort)) return false;
-  const minimum = presets.providers[options.provider]?.minimum_efforts?.[setting.model];
-  if (minimum && efforts.indexOf(setting.effort) < efforts.indexOf(minimum)) return false;
-  return !options.highRisk || (
-    classes.indexOf(capability.modelClass) >= classes.indexOf("general")
-    && efforts.indexOf(setting.effort) >= efforts.indexOf("high")
-  );
+function activePresets(customPresets = presets) {
+  return customPresets && typeof customPresets === "object" && !Array.isArray(customPresets)
+    ? customPresets
+    : presets;
 }
 
-function validateOptions(options) {
+function assertImmutablePolicyOrder(currentPresets) {
+  if (currentPresets.model_class_order !== undefined) {
+    check(
+      Array.isArray(currentPresets.model_class_order)
+        && currentPresets.model_class_order.length === classes.length
+        && currentPresets.model_class_order.every((item, index) => item === classes[index]),
+      "model_class_order is an immutable contract and cannot be reordered",
+    );
+  }
+  if (currentPresets.effort_order !== undefined) {
+    check(
+      Array.isArray(currentPresets.effort_order)
+        && currentPresets.effort_order.length === efforts.length
+        && currentPresets.effort_order.every((item, index) => item === efforts[index]),
+      "effort_order is an immutable contract and cannot be reordered",
+    );
+  }
+}
+
+export function getPolicyRevision(customPresets = presets) {
+  const revision = activePresets(customPresets)?.policy_revision;
+  return typeof revision === "string" && revision.length > 0 ? revision : "1.0.0";
+}
+
+function resolveSupportedSetting(setting, options, currentPresets = presets) {
+  if (!setting || typeof setting.model !== "string" || !efforts.includes(setting.effort)) return null;
+  const providerEntry = Object.hasOwn(currentPresets.providers ?? {}, options.provider)
+    ? currentPresets.providers[options.provider]
+    : null;
+  const resolvedModel = providerEntry?.catalog
+    ? resolveCatalogModel(providerEntry.catalog, setting.model, { allowProfileKeys: true })
+    : setting.model;
+  if (providerEntry?.catalog && !resolvedModel) return null;
+  const directCapability = options.supported.find((item) => item.model === setting.model);
+  const canonicalCapability = !directCapability && resolvedModel && resolvedModel !== setting.model
+    ? options.supported.find((item) => item.model === resolvedModel)
+    : null;
+  const capability = directCapability ?? canonicalCapability;
+  if (!capability?.efforts.includes(setting.effort)) return null;
+  const catalogEntry = resolvedModel && providerEntry?.catalog?.models && Object.hasOwn(providerEntry.catalog.models, resolvedModel)
+    ? providerEntry.catalog.models[resolvedModel]
+    : null;
+  if (Array.isArray(catalogEntry?.supported_efforts) && catalogEntry.supported_efforts.length > 0) {
+    if (!catalogEntry.supported_efforts.includes(setting.effort)) return null;
+  }
+  const minimum = providerEntry?.minimum_efforts?.[setting.model]
+    ?? (resolvedModel ? providerEntry?.minimum_efforts?.[resolvedModel] : undefined)
+    ?? catalogEntry?.minimum_effort;
+  if (minimum && efforts.indexOf(setting.effort) < efforts.indexOf(minimum)) return null;
+  if (
+    options.highRisk && (
+      classes.indexOf(capability.modelClass) < classes.indexOf("general")
+      || (catalogEntry && classes.indexOf(catalogEntry.model_class) < classes.indexOf("general"))
+      || efforts.indexOf(setting.effort) < efforts.indexOf("high")
+    )
+  ) {
+    return null;
+  }
+  return { model: capability.model, effort: setting.effort };
+}
+
+function validateOptions(options, currentPresets = presets) {
+  assertImmutablePolicyOrder(currentPresets);
+  const currentRoles = Array.isArray(currentPresets.roles) ? currentPresets.roles : defaultRoles;
   check(options && typeof options.provider === "string", "provider is required");
+  check(!Object.hasOwn(options, "presets"), "policy presets cannot be overridden via caller options");
   check(typeof options.highRisk === "boolean", "highRisk must be explicit");
   check(Array.isArray(options.supported), "supported must come from current host capabilities");
   const names = new Set();
@@ -36,9 +96,9 @@ function validateOptions(options) {
     check(item.modelClass === null || classes.includes(item.modelClass), "unknown modelClass must be null");
     check(Array.isArray(item.efforts) && item.efforts.every((effort) => efforts.includes(effort)), "invalid supported efforts");
   }
-  check(presets.roles.includes(options.role), "unknown assignment role");
+  check(currentRoles.includes(options.role), "unknown assignment role");
   check(options.role !== "independent-audit" || options.highRisk, "independent-audit requires highRisk: true");
-  check(["economy", "balanced", "quality"].includes(options.profile ?? presets.default_profile), "unknown profile");
+  check(["economy", "balanced", "quality"].includes(options.profile ?? currentPresets.default_profile ?? presets.default_profile), "unknown profile");
   check(options.inheritOnly === undefined || typeof options.inheritOnly === "boolean", "inheritOnly must be boolean");
   check(options.inheritanceSupported === undefined || typeof options.inheritanceSupported === "boolean", "inheritanceSupported must be boolean");
   if (options.user) {
@@ -49,11 +109,14 @@ function validateOptions(options) {
 }
 
 // This checks a supplied host capability snapshot; it does not discover capabilities or launch workers.
-export function resolveModelSelection(options) {
-  validateOptions(options);
-  const provider = Object.hasOwn(presets.providers, options.provider) ? presets.providers[options.provider] : null;
-  const profile = options.profile ?? presets.default_profile;
-  let recommendation = provider?.profiles[profile]?.[options.role];
+export function resolveModelSelection(options, customPresets = presets) {
+  const currentPresets = activePresets(customPresets);
+  validateOptions(options, currentPresets);
+  const provider = Object.hasOwn(currentPresets.providers ?? {}, options.provider)
+    ? currentPresets.providers[options.provider]
+    : null;
+  const profile = options.profile ?? currentPresets.default_profile ?? presets.default_profile;
+  let recommendation = provider?.profiles?.[profile]?.[options.role];
   if (recommendation && options.highRisk) {
     if (classes.indexOf(recommendation.model_class) < classes.indexOf("general")) {
       recommendation = provider.profiles[profile]["general-implementation"];
@@ -66,12 +129,14 @@ export function resolveModelSelection(options) {
   const requested = baseline || options.user
     ? { model: options.user?.model ?? baseline?.model ?? null, effort: options.user?.effort ?? baseline?.effort ?? null }
     : null;
-  if (!options.inheritOnly && supportedSetting(requested, options)) {
-    return { requested, selection: requested, delivery: "explicit", fallbackReason: null };
+  const explicitSelection = !options.inheritOnly ? resolveSupportedSetting(requested, options, currentPresets) : null;
+  if (explicitSelection) {
+    return { requested, selection: explicitSelection, delivery: "explicit", fallbackReason: null };
   }
-  if (supportedSetting(options.inherited, options)) {
+  const inheritedSelection = resolveSupportedSetting(options.inherited, options, currentPresets);
+  if (inheritedSelection) {
     return {
-      requested, selection: { model: options.inherited.model, effort: options.inherited.effort }, delivery: "inherited",
+      requested, selection: inheritedSelection, delivery: "inherited",
       fallbackReason: options.inheritOnly ? "Host/context requires inheritance" : "Requested combination unavailable or below risk floor",
     };
   }
@@ -82,11 +147,13 @@ export function resolveModelSelection(options) {
 }
 
 // Observations are caller-visible evidence, not cryptographic execution attestation.
-export function recordModelApplication(input) {
+export function recordModelApplication(input, customPresets = presets) {
   check(typeof input.assignmentId === "string" && input.assignmentId.length > 0, "assignmentId is required");
   check(typeof input.selectionReason === "string" && input.selectionReason.length > 0, "selectionReason is required");
-  const plan = resolveModelSelection(input.options);
-  const application = presets.providers[input.options.provider]?.application;
+  check(!Object.hasOwn(input, "presets"), "policy presets cannot be overridden via caller input");
+  const currentPresets = activePresets(customPresets);
+  const plan = resolveModelSelection(input.options, currentPresets);
+  const application = currentPresets.providers?.[input.options.provider]?.application;
   check(application, "Application recording requires a provider adapter");
   const args = input.spawnArguments;
   check(args && typeof args === "object" && !Array.isArray(args), "spawnArguments must contain actual host settings arguments");
@@ -116,7 +183,7 @@ export function recordModelApplication(input) {
     check(typeof observation.reference === "string" && observation.reference.length > 0, "Observation requires an evidence reference");
   }
   const confirmed = same(observation, plan.selection) || (
-    plan.delivery === "inherited" && plan.selection === null && supportedSetting(observation, input.options)
+    plan.delivery === "inherited" && plan.selection === null && Boolean(resolveSupportedSetting(observation, input.options, currentPresets))
   );
   const settingsArguments = Object.fromEntries([application.model_field, application.effort_field, application.context_field]
     .filter((key) => key && Object.hasOwn(args, key)).map((key) => [key, args[key]]));

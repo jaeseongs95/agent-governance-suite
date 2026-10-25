@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { canonicalJson, hashBytes, hashJson } from "../engineering-practices/io.mjs";
-import { runObservedTimeTransaction, resolveInactiveSharedDatabasePath, SharedStateError } from "./shared-connection.mjs";
+import { retainCleanupFailure, runObservedTimeTransaction, resolveInactiveSharedDatabasePath, SharedStateError } from "./shared-connection.mjs";
 
 const APPLICATION_ID = 0x41475355;
 const SCHEMA_VERSION = 1;
@@ -16,8 +16,22 @@ const TABLES = Object.freeze({
   input_source_receipts: { module: "trust", keys: ["receipt_id"] },
 });
 
+const AUTHORITY_SCHEMA_SQL = `
+          CREATE TABLE IF NOT EXISTS module_schema(module TEXT PRIMARY KEY, candidate_version INTEGER NOT NULL, source_versions_json TEXT NOT NULL) STRICT;
+          CREATE TABLE IF NOT EXISTS authority_time(singleton INTEGER PRIMARY KEY CHECK(singleton=1), last_ms INTEGER NOT NULL CHECK(last_ms>=0)) STRICT;
+          CREATE TABLE IF NOT EXISTS records(scope_key TEXT NOT NULL, module TEXT NOT NULL REFERENCES module_schema(module), source_id TEXT NOT NULL, table_name TEXT NOT NULL, key_json TEXT NOT NULL, revision INTEGER NOT NULL CHECK(revision>=0), epoch INTEGER NOT NULL CHECK(epoch>=0), payload_digest TEXT NOT NULL, row_json TEXT NOT NULL, PRIMARY KEY(scope_key,module,source_id,table_name,key_json)) STRICT;
+          CREATE TABLE IF NOT EXISTS record_history(scope_key TEXT NOT NULL, module TEXT NOT NULL, source_id TEXT NOT NULL, table_name TEXT NOT NULL, key_json TEXT NOT NULL, revision INTEGER NOT NULL, epoch INTEGER NOT NULL, payload_digest TEXT NOT NULL, row_json TEXT NOT NULL, PRIMARY KEY(scope_key,module,source_id,table_name,key_json,revision)) STRICT;
+          CREATE TABLE IF NOT EXISTS import_sources(scope_key TEXT NOT NULL, source_id TEXT NOT NULL, source_digest TEXT NOT NULL, schema_json TEXT NOT NULL, PRIMARY KEY(scope_key,source_id)) STRICT;
+          CREATE TABLE IF NOT EXISTS import_intents(scope_key TEXT NOT NULL, intent_id TEXT NOT NULL, source_id TEXT NOT NULL, source_digest TEXT NOT NULL, next_index INTEGER NOT NULL, total INTEGER NOT NULL, state TEXT NOT NULL CHECK(state IN ('PENDING','COMPLETE','CONFLICT')), PRIMARY KEY(scope_key,intent_id)) STRICT;
+          CREATE TABLE IF NOT EXISTS import_journal(scope_key TEXT NOT NULL, intent_id TEXT NOT NULL, row_index INTEGER NOT NULL, payload_digest TEXT NOT NULL, outcome TEXT NOT NULL CHECK(outcome IN ('INSERTED','IDENTICAL')), PRIMARY KEY(scope_key,intent_id,row_index), FOREIGN KEY(scope_key,intent_id) REFERENCES import_intents(scope_key,intent_id)) STRICT;
+          CREATE TABLE IF NOT EXISTS conflicts(scope_key TEXT NOT NULL, intent_id TEXT NOT NULL, row_index INTEGER NOT NULL, reason TEXT NOT NULL, existing_digest TEXT, incoming_digest TEXT NOT NULL, PRIMARY KEY(scope_key,intent_id,row_index,reason)) STRICT;
+          CREATE TABLE IF NOT EXISTS leases(scope_key TEXT NOT NULL, module TEXT NOT NULL, source_id TEXT NOT NULL, table_name TEXT NOT NULL, key_json TEXT NOT NULL, generation INTEGER NOT NULL CHECK(generation>=1), owner TEXT NOT NULL, expires_ms INTEGER NOT NULL, PRIMARY KEY(scope_key,module,source_id,table_name,key_json)) STRICT;
+          CREATE TABLE IF NOT EXISTS write_intents(scope_key TEXT NOT NULL, intent_id TEXT NOT NULL, command_digest TEXT NOT NULL, receipt_id TEXT NOT NULL, response_state TEXT NOT NULL CHECK(response_state IN ('UNKNOWN','ACKED')), result_json TEXT NOT NULL, PRIMARY KEY(scope_key,intent_id)) STRICT;
+        `;
+function schemaSql(sql) { return sql.replace(/CREATE TABLE IF NOT EXISTS /giu, "CREATE TABLE ").replace(/\s+/gu, " ").trim(); }
+
 export class UnifiedStateError extends Error {
-  constructor(code, message) { super(message); this.name = "UnifiedStateError"; this.code = code; }
+  constructor(code, message, options) { super(message, options); this.name = "UnifiedStateError"; this.code = code; }
 }
 function need(condition, code, message) { if (!condition) throw new UnifiedStateError(code, message); }
 function text(value, label) { need(typeof value === "string" && value.length > 0 && value.length <= 4096, "INVALID_INPUT", `${label}: a bounded string is required.`); return value; }
@@ -26,11 +40,17 @@ function scopeKey(scope) {
   need(scope && Object.keys(scope).sort().join(",") === "host,sessionId,taskId", "INVALID_SCOPE", "Exactly host/sessionId/taskId are required.");
   return canonicalJson({ host: text(scope.host, "host"), sessionId: text(scope.sessionId, "sessionId"), taskId: text(scope.taskId, "taskId") });
 }
+function parseJson(value, label) {
+  try { return JSON.parse(value); }
+  catch (error) { throw new UnifiedStateError("INVALID_JSON", `${label}: valid JSON is required.`, { cause: error }); }
+}
 function rejectSecrets(value, depth = 0) {
   need(depth <= 64, "INVALID_INPUT", "Fixture JSON nesting must be bounded.");
   if (!value || typeof value !== "object") return;
   for (const [key, child] of Object.entries(value)) {
-    need(!/secret|private.?key|signing.?key|access.?token|refresh.?token/iu.test(key), "SECRET_IMPORT_UNSUPPORTED", "Secret/key transfer is outside this inactive candidate.");
+    const normalizedKey = key.replace(/[^a-z0-9]/giu, "").toLowerCase();
+    need(!/secret|password|passwd|privatekey|signingkey|apikey|accesskey|accesstoken|refreshtoken|authtoken|apitoken|bearertoken|sessiontoken|authorization|credential|cookie/iu.test(normalizedKey)
+      && !["token", "pwd"].includes(normalizedKey), "SECRET_IMPORT_UNSUPPORTED", "Secret/key transfer is outside this inactive candidate.");
     rejectSecrets(child, depth + 1);
   }
 }
@@ -42,7 +62,7 @@ function normalizeRecord(entry, boundScope) {
   need(entry.row && Object.getPrototypeOf(entry.row) === Object.prototype, "INVALID_INPUT", "An explicit plain fixture row is required.");
   rejectSecrets(entry.row);
   for (const [column, value] of Object.entries(entry.row)) {
-    if (column.endsWith("_json") && typeof value === "string") rejectSecrets(JSON.parse(value));
+    if (column.endsWith("_json") && typeof value === "string") rejectSecrets(parseJson(value, column));
   }
   const key = Object.fromEntries(definition.keys.map((column) => {
     const value = entry.row[column];
@@ -88,33 +108,25 @@ export class InactiveUnifiedAuthority {
         const tables = this.#database.prepare("SELECT name FROM sqlite_schema WHERE type='table'").all();
         need(app === APPLICATION_ID && version === SCHEMA_VERSION || app === 0 && version === 0 && tables.length === 0, "FOREIGN_OR_NEWER_DATABASE", "Existing files must already be this inactive candidate, or empty.");
         if (app === APPLICATION_ID) {
+          const actualSchema = this.#database.prepare("SELECT sql FROM sqlite_schema WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%'").all().map(row => schemaSql(row.sql)).sort();
+          const expectedSchema = AUTHORITY_SCHEMA_SQL.split(";").map(schemaSql).filter(Boolean).sort();
+          need(canonicalJson(actualSchema) === canonicalJson(expectedSchema), "CANDIDATE_SCHEMA_DRIFT", "Existing candidate table and index definitions must match the declared schema.");
           need(canonicalJson(tables.map((table) => table.name).sort()) === canonicalJson(CANDIDATE_TABLES), "CANDIDATE_SCHEMA_DRIFT", "An existing candidate must retain all expected state tables.");
           const modules = this.#database.prepare("SELECT * FROM module_schema").all();
           need(modules.length === 5 && modules.every((module) => module.candidate_version === 1 && canonicalJson(JSON.parse(module.source_versions_json)) === canonicalJson(MODULE_VERSIONS[module.module])), "CANDIDATE_SCHEMA_DRIFT", "Stored module schema metadata must match the candidate version.");
         }
-        this.#database.exec(`
-          CREATE TABLE IF NOT EXISTS module_schema(module TEXT PRIMARY KEY, candidate_version INTEGER NOT NULL, source_versions_json TEXT NOT NULL) STRICT;
-          CREATE TABLE IF NOT EXISTS authority_time(singleton INTEGER PRIMARY KEY CHECK(singleton=1), last_ms INTEGER NOT NULL CHECK(last_ms>=0)) STRICT;
-          CREATE TABLE IF NOT EXISTS records(scope_key TEXT NOT NULL, module TEXT NOT NULL REFERENCES module_schema(module), source_id TEXT NOT NULL, table_name TEXT NOT NULL, key_json TEXT NOT NULL, revision INTEGER NOT NULL CHECK(revision>=0), epoch INTEGER NOT NULL CHECK(epoch>=0), payload_digest TEXT NOT NULL, row_json TEXT NOT NULL, PRIMARY KEY(scope_key,module,source_id,table_name,key_json)) STRICT;
-          CREATE TABLE IF NOT EXISTS record_history(scope_key TEXT NOT NULL, module TEXT NOT NULL, source_id TEXT NOT NULL, table_name TEXT NOT NULL, key_json TEXT NOT NULL, revision INTEGER NOT NULL, epoch INTEGER NOT NULL, payload_digest TEXT NOT NULL, row_json TEXT NOT NULL, PRIMARY KEY(scope_key,module,source_id,table_name,key_json,revision)) STRICT;
-          CREATE TABLE IF NOT EXISTS import_sources(scope_key TEXT NOT NULL, source_id TEXT NOT NULL, source_digest TEXT NOT NULL, schema_json TEXT NOT NULL, PRIMARY KEY(scope_key,source_id)) STRICT;
-          CREATE TABLE IF NOT EXISTS import_intents(scope_key TEXT NOT NULL, intent_id TEXT NOT NULL, source_id TEXT NOT NULL, source_digest TEXT NOT NULL, next_index INTEGER NOT NULL, total INTEGER NOT NULL, state TEXT NOT NULL CHECK(state IN ('PENDING','COMPLETE','CONFLICT')), PRIMARY KEY(scope_key,intent_id)) STRICT;
-          CREATE TABLE IF NOT EXISTS import_journal(scope_key TEXT NOT NULL, intent_id TEXT NOT NULL, row_index INTEGER NOT NULL, payload_digest TEXT NOT NULL, outcome TEXT NOT NULL CHECK(outcome IN ('INSERTED','IDENTICAL')), PRIMARY KEY(scope_key,intent_id,row_index), FOREIGN KEY(scope_key,intent_id) REFERENCES import_intents(scope_key,intent_id)) STRICT;
-          CREATE TABLE IF NOT EXISTS conflicts(scope_key TEXT NOT NULL, intent_id TEXT NOT NULL, row_index INTEGER NOT NULL, reason TEXT NOT NULL, existing_digest TEXT, incoming_digest TEXT NOT NULL, PRIMARY KEY(scope_key,intent_id,row_index,reason)) STRICT;
-          CREATE TABLE IF NOT EXISTS leases(scope_key TEXT NOT NULL, module TEXT NOT NULL, source_id TEXT NOT NULL, table_name TEXT NOT NULL, key_json TEXT NOT NULL, generation INTEGER NOT NULL CHECK(generation>=1), owner TEXT NOT NULL, expires_ms INTEGER NOT NULL, PRIMARY KEY(scope_key,module,source_id,table_name,key_json)) STRICT;
-          CREATE TABLE IF NOT EXISTS write_intents(scope_key TEXT NOT NULL, intent_id TEXT NOT NULL, command_digest TEXT NOT NULL, receipt_id TEXT NOT NULL, response_state TEXT NOT NULL CHECK(response_state IN ('UNKNOWN','ACKED')), result_json TEXT NOT NULL, PRIMARY KEY(scope_key,intent_id)) STRICT;
-        `);
+        this.#database.exec(AUTHORITY_SCHEMA_SQL);
         for (const [module, versions] of Object.entries(MODULE_VERSIONS)) this.#database.prepare("INSERT OR IGNORE INTO module_schema VALUES (?,1,?)").run(module, JSON.stringify(versions));
         this.#database.prepare("INSERT OR IGNORE INTO authority_time VALUES (1,0)").run();
         this.#database.exec(`PRAGMA application_id=${APPLICATION_ID}; PRAGMA user_version=${SCHEMA_VERSION};`);
       });
       this.#database.exec("PRAGMA journal_mode=WAL;");
-    } catch (error) { this.#database.close(); throw error; }
+    } catch (error) { retainCleanupFailure(error, "AUTHORITY_DATABASE_CLOSE_FAILED", () => this.#database.close()); throw error; }
   }
   #transaction(action) {
     this.#database.exec("BEGIN IMMEDIATE");
     try { const result = action(); this.#database.exec("COMMIT"); return result; }
-    catch (error) { this.#database.exec("ROLLBACK"); throw error; }
+    catch (error) { retainCleanupFailure(error, "TRANSACTION_ROLLBACK_FAILED", () => this.#database.exec("ROLLBACK")); throw error; }
   }
   #observedTimeTransaction(action) {
     return runObservedTimeTransaction(this.#database, () => this.#now(), action);
@@ -152,7 +164,7 @@ export class InactiveUnifiedAuthority {
     text(intentId, "intentId");
     need(typeof snapshotJson === "string" && Buffer.byteLength(snapshotJson) <= 1024 * 1024, "INVALID_INPUT", "An explicit fixture snapshot of at most 1 MiB is required.");
     need(hashBytes(snapshotJson) === sourceDigest, "SOURCE_DIGEST_MISMATCH", "Source bytes and supplied digest must match.");
-    const snapshot = JSON.parse(snapshotJson);
+    const snapshot = parseJson(snapshotJson, "snapshotJson");
     text(snapshot.sourceId, "sourceId");
     need(Array.isArray(snapshot.records) && snapshot.records.length <= 1000, "INVALID_INPUT", "Fixture records must be bounded.");
     integer(batchSize, "batchSize", 1);
@@ -241,7 +253,8 @@ export class InactiveUnifiedAuthority {
         return { applied: false, receipt: this.#receipt(scope, intentId) };
       }
       const record = this.#row(scope, ref);
-      need(record?.epoch === normalized.epoch, "EPOCH_CHANGE_UNSUPPORTED", "Epoch/correlation changes require a separate approved migration/rebind contract.");
+      need(record, "STALE_REVISION", "Commit requires an existing current record.");
+      need(record.epoch === normalized.epoch, "EPOCH_CHANGE_UNSUPPORTED", "Epoch/correlation changes require a separate approved migration/rebind contract.");
       const update = this.#database.prepare(`UPDATE records SET revision=?,payload_digest=?,row_json=?
         WHERE scope_key=? AND module=? AND source_id=? AND table_name=? AND key_json=? AND revision=?
         AND EXISTS(SELECT 1 FROM leases WHERE scope_key=? AND module=? AND source_id=? AND table_name=? AND key_json=? AND generation=? AND owner=? AND expires_ms>?)`)

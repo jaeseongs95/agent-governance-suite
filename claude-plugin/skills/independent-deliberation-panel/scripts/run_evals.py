@@ -421,6 +421,16 @@ def codex_cli_version() -> str:
     return line[0][:120] if result.returncode == 0 and line else "NOT_OBSERVABLE"
 
 
+def sanitized_enum(value: object, allowed: tuple[str, ...]) -> str:
+    """Persist only contract-defined labels, never arbitrary model text/objects."""
+    return value if isinstance(value, str) and value in allowed else "NOT_OBSERVABLE"
+
+
+def sanitized_count(value: object) -> int | str:
+    """Observability counts are nonnegative integers; bool is not a count."""
+    return value if type(value) is int and value >= 0 else "NOT_OBSERVABLE"
+
+
 def failure_classification(stdout: str, stderr: str) -> str:
     """Reduce transient CLI diagnostics to a non-sensitive stable category."""
     diagnostic = (stdout + "\n" + stderr).lower()
@@ -477,11 +487,11 @@ def main() -> int:
     plan = [(item, repeat) for item in chosen for repeat in range(1, args.repeat + 1)]
     print(f"Evaluation plan: {len(chosen)} case(s) × {args.repeat} = {len(plan)} invocation(s)")
     runner_model = args.model or "default"
-    runner_cli = codex_cli_version()
     for item, repeat in plan: print(f"- {item['id']} / repeat {repeat}: codex exec --ephemeral --ignore-user-config --enable multi_agent --skip-git-repo-check{' --model ' + args.model if args.model else ''} --json --sandbox read-only --output-schema {SCHEMA.name} (model={runner_model}; candidate SHA verified on execution)")
     if args.dry_run or not args.execute:
         if not args.dry_run: print("No calls made. Re-run with --execute to invoke Codex.")
         return 0
+    runner_cli = codex_cli_version()
     args.results_dir.mkdir(parents=True, exist_ok=True)
     failures = 0
     # A repo-local temporary skill root makes each invocation self-contained.
@@ -498,7 +508,7 @@ def main() -> int:
         for item, repeat in plan:
             # Evaluation corpus excludes strict-shortfall: force an object verdict
             # and the declared stage without changing the canonical base schema.
-            case_schema = skill_root / "contracts" / f"eval-{item['id']}.schema.json"
+            case_schema = Path(temp_name) / f"eval-{item['id']}.schema.json"
             case_schema_data = json.loads(json.dumps(schema_data))
             case_schema_data["$defs"]["run"]["properties"]["candidate_skill_sha256"] = {"type": "string", "pattern": "^[0-9a-f]{64}$"}
             case_schema_data["properties"]["consensus_proposal"]["type"] = "object"
@@ -535,6 +545,8 @@ def main() -> int:
                 record = reported_record(completed.stdout)
                 record_run = record.get("run", {}) if isinstance(record, dict) and isinstance(record.get("run"), dict) else {}
                 observed_sha256 = record_run.get("candidate_skill_sha256") if isinstance(record_run.get("candidate_skill_sha256"), str) else None
+                if observed_sha256 is not None and (len(observed_sha256) != 64 or any(char not in "0123456789abcdef" for char in observed_sha256)):
+                    observed_sha256 = None
                 failure_class = failure_classification(completed.stdout, completed.stderr)
                 outcome = "ok" if exit_code == 0 and observed_sha256 == artifact_sha256 else "command_failed"
                 if exit_code == 0 and observed_sha256 != artifact_sha256: outcome = "candidate_mismatch"
@@ -589,7 +601,7 @@ def main() -> int:
             completion_identity_match = "behavior.completed_identity_mismatch" not in behavior if record else False
             # This result is intentionally an allowlist of scalar/count metadata.
             # Do not add raw command output, worker IDs, prompts, or messages.
-            result = {"case_id": item["id"], "repeat": repeat, "runner_model": runner_model, "runner_cli_version": runner_cli, "outcome": outcome, "failure_class": failure_class if outcome == "command_failed" else None, "exit_code": exit_code, "wall_time_seconds": elapsed, "candidate_bundle_sha256": artifact_sha256, "observed_candidate_bundle_sha256": observed_sha256, "validation_errors": error_codes, "behavior_errors": behavior, "validation_error_codes": error_codes, "behavior_error_codes": behavior, **metrics, "record_stage": run_record.get("stage", "NOT_OBSERVABLE"), "recorded_manifest_workers_count": len(manifest_workers) if record else "NOT_OBSERVABLE", "recorded_completed_workers_count": len(lifecycle_completed) if record else "NOT_OBSERVABLE", "recorded_reviewer_count": reviewer_count if record else "NOT_OBSERVABLE", "recorded_judge_count": judge_count if record else "NOT_OBSERVABLE", "recorded_specialist_count": specialist_count if record else "NOT_OBSERVABLE", "recorded_redeliberation_count": len(run_record.get("redeliberations", [])) if isinstance(run_record.get("redeliberations"), list) else "NOT_OBSERVABLE", "recorded_material_claim_count": len(claims) if record else "NOT_OBSERVABLE", "recorded_verified_claim_count": len(verified_claim_ids) if record else "NOT_OBSERVABLE", "recorded_axis_count": len(axis_records) if record else "NOT_OBSERVABLE", "recorded_supported_claim_count": len(supported_claim_ids) if record else "NOT_OBSERVABLE", "recorded_axis_alignment_count": len(axis_alignment) if record else "NOT_OBSERVABLE", "record_declared_roles_and_stages": True if record else False, "spawned_ids_match_manifest": identity_match, "completed_ids_match_record": completion_identity_match, **workflow, "runtime_isolation_evidence": "NOT_OBSERVABLE", "hidden_system_prompt_evidence": "NOT_OBSERVABLE", "cross_examination_decision": record.get("cross_examination", {}).get("decision", "NOT_OBSERVABLE") if isinstance(record, dict) and isinstance(record.get("cross_examination"), dict) else "NOT_OBSERVABLE", "has_nonverified_provenance": bool(nonverified_claim_ids), "nonverified_claims_linked_to_consensus": bool(nonverified_claim_ids & supported_claim_ids), "critical_design_assurance_present": "red team" in roles or "independent design-assurance" in roles, "no_consensus_complete": no_consensus_complete, "assurance": run_record.get("assurance", "NOT_OBSERVABLE"), "consensus_status": proposal_record.get("status", "NOT_OBSERVABLE"), "workers": len(manifest_workers) if record else "NOT_OBSERVABLE", "tokens": observability.get("tokens", "NOT_OBSERVABLE"), "tool_calls": observability.get("tool_calls", "NOT_OBSERVABLE")}
+            result = {"case_id": item["id"], "repeat": repeat, "runner_model": runner_model, "runner_cli_version": runner_cli, "outcome": outcome, "failure_class": failure_class if outcome == "command_failed" else None, "exit_code": exit_code, "wall_time_seconds": elapsed, "candidate_bundle_sha256": artifact_sha256, "observed_candidate_bundle_sha256": observed_sha256, "validation_errors": error_codes, "behavior_errors": behavior, "validation_error_codes": error_codes, "behavior_error_codes": behavior, **metrics, "record_stage": sanitized_enum(run_record.get("stage"), ("LOW", "MEDIUM", "HIGH", "CRITICAL")), "recorded_manifest_workers_count": len(manifest_workers) if record else "NOT_OBSERVABLE", "recorded_completed_workers_count": len(lifecycle_completed) if record else "NOT_OBSERVABLE", "recorded_reviewer_count": reviewer_count if record else "NOT_OBSERVABLE", "recorded_judge_count": judge_count if record else "NOT_OBSERVABLE", "recorded_specialist_count": specialist_count if record else "NOT_OBSERVABLE", "recorded_redeliberation_count": len(run_record.get("redeliberations", [])) if isinstance(run_record.get("redeliberations"), list) else "NOT_OBSERVABLE", "recorded_material_claim_count": len(claims) if record else "NOT_OBSERVABLE", "recorded_verified_claim_count": len(verified_claim_ids) if record else "NOT_OBSERVABLE", "recorded_axis_count": len(axis_records) if record else "NOT_OBSERVABLE", "recorded_supported_claim_count": len(supported_claim_ids) if record else "NOT_OBSERVABLE", "recorded_axis_alignment_count": len(axis_alignment) if record else "NOT_OBSERVABLE", "record_declared_roles_and_stages": True if record else False, "spawned_ids_match_manifest": identity_match, "completed_ids_match_record": completion_identity_match, **workflow, "runtime_isolation_evidence": "NOT_OBSERVABLE", "hidden_system_prompt_evidence": "NOT_OBSERVABLE", "cross_examination_decision": sanitized_enum(record.get("cross_examination", {}).get("decision"), ("run", "skip")) if isinstance(record, dict) and isinstance(record.get("cross_examination"), dict) else "NOT_OBSERVABLE", "has_nonverified_provenance": bool(nonverified_claim_ids), "nonverified_claims_linked_to_consensus": bool(nonverified_claim_ids & supported_claim_ids), "critical_design_assurance_present": "red team" in roles or "independent design-assurance" in roles, "no_consensus_complete": no_consensus_complete, "assurance": sanitized_enum(run_record.get("assurance"), ("independent", "partially_independent", "single_agent", "provisional")), "consensus_status": sanitized_enum(proposal_record.get("status"), ("consensus", "conditional_consensus", "no_consensus")), "workers": len(manifest_workers) if record else "NOT_OBSERVABLE", "tokens": sanitized_count(observability.get("tokens")), "tool_calls": sanitized_count(observability.get("tool_calls"))}
             (args.results_dir / f"{item['id']}.r{repeat}.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             print(f"{item['id']} r{repeat}: {outcome} ({elapsed}s)")
             failures += outcome != "ok"

@@ -1,5 +1,6 @@
 // Capture a command explicitly supplied by the caller. Never execute a command from a report, rule, log or downloaded document.
-// This runner is NOT a sandbox. timeout terminates the direct child; descendants may outlive it on some platforms.
+// This runner is NOT a sandbox. timeout requests SIGKILL for the direct child.
+// Synchronous return still depends on OS termination/stdio; descendants may outlive it. No hard return bound is promised.
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { verifySnapshot, captureSnapshot, seal, assertReceipt } from './core.mjs';
@@ -14,7 +15,13 @@ export function runCommand(root, snapshot, argv, { timeoutMs = 30000, environmen
   delete childEnv.NODE_TEST_CONTEXT;
   environmentNote += ' Child NODE_TEST_CONTEXT is cleared to avoid nested-runner suppression.';
   const startedAt = new Date().toISOString();
-  const child = spawnSync(argv[0], argv.slice(1), { cwd: path.resolve(root), shell: false, env: childEnv, encoding: 'utf8', timeout: timeoutMs, maxBuffer: 1024 * 1024, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  // Validate every caller-controlled receipt field (including the appended note) before executing any command.
+  const base = { schemaVersion: '1.0.0', kind: 'engineering-run-receipt', argv, snapshot, afterDigest: snapshot.digest,
+    startedAt, finishedAt: startedAt, status: 'SPAWN_ERROR', exitCode: null, signal: null, stdout: '', stderr: '',
+    stdoutDigest: hashBytes(''), stderrDigest: hashBytes(''), timeoutMs, executable: argv[0],
+    nodeVersion: process.versions.node, platform: process.platform, environmentNote };
+  assertReceipt(seal(base));
+  const child = spawnSync(argv[0], argv.slice(1), { cwd: path.resolve(root), shell: false, env: childEnv, encoding: 'utf8', timeout: timeoutMs, killSignal: 'SIGKILL', maxBuffer: 1024 * 1024, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   const finishedAt = new Date().toISOString();
   let afterDigest;
   try { afterDigest = captureSnapshot(root, snapshot.files.map(f => f.path)).digest; }
@@ -25,6 +32,6 @@ export function runCommand(root, snapshot, argv, { timeoutMs = 30000, environmen
   else if (child.error?.code === 'ETIMEDOUT') status = 'TIMED_OUT';
   else if (child.error || child.signal) status = 'SPAWN_ERROR';
   else status = child.status === 0 ? 'PASS' : 'FAIL';
-  const receipt = seal({ schemaVersion: '1.0.0', kind: 'engineering-run-receipt', argv, snapshot, afterDigest, startedAt, finishedAt, status, exitCode: child.status ?? null, signal: child.signal ?? null, stdout, stderr, stdoutDigest: hashBytes(stdout), stderrDigest: hashBytes(stderr), timeoutMs, executable: argv[0], nodeVersion: process.versions.node, platform: process.platform, environmentNote });
+  const receipt = seal({ ...base, afterDigest, finishedAt, status, exitCode: child.status ?? null, signal: child.signal ?? null, stdout, stderr, stdoutDigest: hashBytes(stdout), stderrDigest: hashBytes(stderr) });
   return assertReceipt(receipt);
 }
