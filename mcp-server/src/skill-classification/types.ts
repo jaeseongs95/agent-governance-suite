@@ -130,6 +130,8 @@ export interface ProviderEvaluation {
   rateLimitObservation?: ClassificationRateLimitObservation | null;
 }
 export interface SkillClassificationProviderPort {
+  /** Trusted route metadata only; availability still establishes capability and approval. */
+  routeKind?(profile: ProviderProfile): "native" | "remote" | null;
   availability(profile: ProviderProfile): Promise<ProviderAvailability>;
   /** Synchronous trusted state fence, consumed immediately before the actual side effect. */
   classify(request: SkillClassificationRequestV1, profile: ProviderProfile, signal: AbortSignal, beforeDispatch?: () => void): Promise<ProviderEvaluation>;

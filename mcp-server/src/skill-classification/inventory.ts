@@ -252,8 +252,17 @@ async function readInventory(options: InventoryOptions, directSkillDirectory = f
 /** Union local plugin metadata with approved host discovery, without inventing missing taxonomy. */
 export async function loadSkillInventory(options: InventoryOptions): Promise<SkillInventory> {
   const inventories = [await readInventory(options)];
+  const loadedRoots = new Set(await Promise.all(inventories[0]!.skills.map(async skill => {
+    try { return await realpath(path.join(options.root, "skills", skill.skillId)); }
+    catch { return path.resolve(options.root, "skills", skill.skillId); }
+  })));
   for (const [index, externalRoot] of (options.externalSkillRoots ?? []).entries()) {
-    try { inventories.push(await readInventory({ ...options, root: externalRoot }, true)); }
+    try {
+      const actualRoot = await realpath(externalRoot);
+      if (loadedRoots.has(actualRoot)) continue;
+      loadedRoots.add(actualRoot);
+      inventories.push(await readInventory({ ...options, root: actualRoot }, true));
+    }
     catch { inventories.push({ skills: [], issues: [{ skillId: null, code: "EXTERNAL_SKILL_UNAVAILABLE", field: `externalSkillRoots[${index}]` }], taxonomyRevision: "invalid", inventoryDigest: digestClassificationValue({ externalRoot, unavailable: true }) }); }
   }
   const issues = inventories.flatMap((inventory) => inventory.issues).filter((issue) => issue.code !== "DEPENDENCY_UNAVAILABLE");

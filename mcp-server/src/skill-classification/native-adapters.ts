@@ -191,12 +191,14 @@ export function createNativeClassificationAdapters(definitions: readonly BoundNa
       const input = JSON.stringify(buildVendorMessages(fixedRequest));
       if (Buffer.byteLength(input, "utf8") > fixedProfile.maximumInputBytes) throw new ClassificationProviderError("INPUT_TOO_LONG", "not-started");
       let cleanup: (() => Promise<void>) | undefined;
+      let dispatchStarted = false;
       try {
         const prepared = await strategy.prepare(fixed, fixedProfile, schema);
         cleanup = prepared.cleanup;
         const args = Object.freeze([...prepared.args]);
         if (signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
         beforeDispatch?.();
+        dispatchStarted = true;
         const output = await runner({executable: fixed.executable, args, cwd: fixed.workingDirectory, input, timeoutMs: fixed.timeoutMs, maximumOutputBytes: fixed.maximumOutputBytes}, signal);
         if (signal.aborted) throw new ClassificationProviderError("CANCELLED", "unknown");
         if (Buffer.byteLength(output.stdout, "utf8") > fixed.maximumOutputBytes) throw new ClassificationProviderError("NATIVE_OUTPUT_TOO_LARGE", "unknown");
@@ -210,7 +212,7 @@ export function createNativeClassificationAdapters(definitions: readonly BoundNa
         return {response: parsed.data, dispatchState: "started", diagnostics: null, usage: decoded.usage};
       } catch (error) {
         if (error instanceof ClassificationProviderError) throw error;
-        throw new ClassificationProviderError("NATIVE_PROCESS_UNAVAILABLE", "unknown");
+        throw new ClassificationProviderError("NATIVE_PROCESS_UNAVAILABLE", dispatchStarted ? "unknown" : "not-started");
       } finally {
         await cleanup?.();
       }

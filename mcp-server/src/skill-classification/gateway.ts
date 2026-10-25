@@ -103,7 +103,9 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
       confirmedContext: input.confirmedContext, contextSources: input.contextSources, inventory, classificationCriteriaRef: "skills/orchestrator/references/skill-classification.md"});
     // Approval binds every transmitted context and inventory byte, not just the prompt.
     const publicApproved = input.publicSynthetic && runtime.approvedPublicRequestDigests?.includes(request.requestDigest) === true;
-    if (!publicApproved && !runtime.allowRemotePrivateContent && runtime.config.externalClassificationAllowed) {
+    const remoteContentAllowed = publicApproved || runtime.allowRemotePrivateContent;
+    if (!remoteContentAllowed && runtime.config.externalClassificationAllowed && !this.options.service.hasNativeRoute({request,
+      config: runtime.config, registry: runtime.registry, currentVendorId: input.vendorContext.vendorId})) {
       return {status: "NEEDS_INPUT", errors: ["REMOTE_CONTENT_NOT_APPROVED"], response: null, agentSelectedSkillIds: null};
     }
     const observedInitialTask = this.options.observeTask?.(request, observation) ?? null;
@@ -123,6 +125,7 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     const snapshot: ClassificationSnapshot = {taskRevision: request.confirmedContext.taskRevision, requestDigest: request.requestDigest, inventoryDigest: request.inventoryDigest, configRevision: runtime.config.configRevision, profileRevision: runtime.registry.profileRevision, cancelled: task?.cancelled ?? false};
     const sourcesCurrent = sourceFence(this.options.root, request, hostSourceRefs);
     const invoke = () => this.options.service.classify({request, config: runtime.config, registry: runtime.registry, currentVendorId: input.vendorContext.vendorId,
+      remoteContentAllowed,
       getCurrentSnapshot: () => {
         const current = this.options.observeTask?.(request, observation) ?? null;
         const sourcesUnchanged = sourcesCurrent();

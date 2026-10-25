@@ -87,6 +87,9 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
     const matches = this.routes.filter((route) => route.routeRef === profile.approvedRouteRef);
     return matches.length === 1 ? matches[0]! : null;
   }
+  routeKind(profile: ProviderProfile): "native" | "remote" | null {
+    return this.route(profile)?.kind ?? null;
+  }
   private transportMatches(route: ApprovedClassificationRoute): boolean {
     try {
       const contract = route.transport === undefined ? this.defaultTransport : route.transport;

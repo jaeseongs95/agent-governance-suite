@@ -102,7 +102,7 @@ export function validateDecision(result: ClassificationResult, decision: SkillSe
       if (!decision.selectionReasons.some(reason => reason.skillId === id)) errors.push(`SELECTION_REASON_MISSING:${id}`);
       for (const dependency of skill.dependencies) if (!selected.includes(dependency)) errors.push(`DEPENDENCY_OMITTED:${id}:${dependency}`);
     }
-    if (decision.selectionStatus === "SELECTED" && (blockedItems.length > 0 || decision.unresolvedSkillReferences.length > 0)) errors.push("UNRESOLVED_SELECTION_MARKED_COMPLETE");
+    if (decision.selectionStatus === "SELECTED" && (blockedItems.some(item => selected.includes(item.skillId) || decision.explicitSkillIds.includes(item.skillId) || decision.ruleRequiredSkillIds.includes(item.skillId)) || decision.unresolvedSkillReferences.length > 0)) errors.push("UNRESOLVED_SELECTION_MARKED_COMPLETE");
   }
   if (result.config.mode === "shadow" && decision.adviceApplied) errors.push("SHADOW_ADVICE_APPLIED");
   const unresolved = [...needed].filter(id => !inventory.has(id));

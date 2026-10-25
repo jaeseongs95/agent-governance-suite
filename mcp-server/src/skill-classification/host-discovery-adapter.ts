@@ -6,6 +6,8 @@ import {loadSkillInventory} from "./inventory.js";
 import {digestClassificationValue} from "./request.js";
 import type {SkillInventory} from "./types.js";
 
+export const HOST_SKILL_OBSERVATION_FIELD = "_hostSkillObservation";
+
 const text = z.string().min(1).max(4096);
 const hostSnapshotSchema = z.strictObject({
   schemaVersion: z.literal("1.0.0"), sourceRef: text, revision: text, observedAt: z.iso.datetime(), expiresAt: z.iso.datetime(),
