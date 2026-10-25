@@ -1,7 +1,7 @@
 {
   "schemaVersion": "AgsBoundedCiExecutionConfig.v1",
-  "unit": "AGS30-OFFICIAL-CLAUDE-PACKAGING-AND-WINDOWS-OBSERVATION-20261026-R21",
-  "nonce": "1b418382-bd8c-43e5-ac8e-1416ac62eca0",
+  "unit": "AGS30-OFFICIAL-CLAUDE-GENERATED-AND-LINT-REPAIR-20261026-R22",
+  "nonce": "707529a4-3fc0-41ec-8e89-4f4278d46cd2",
   "repository": "jaeseongs95/agent-governance-suite",
   "repositoryId": 1362118877,
   "branch": "release-3.0",
