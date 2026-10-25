@@ -1,7 +1,7 @@
 {
   "schemaVersion": "AgsBoundedCiExecutionConfig.v1",
-  "unit": "AGS30-OFFICIAL-OS-DIAGNOSTIC-BOUNDARIES-20261026-R24",
-  "nonce": "f393475b-0a7b-4674-83d4-935aa9a60bda",
+  "unit": "AGS30-OFFICIAL-STRICT-PANEL-REPAIR-20261026-R25",
+  "nonce": "c0a5adbc-aff1-4aed-a0b2-2e35ebb9f90f",
   "repository": "jaeseongs95/agent-governance-suite",
   "repositoryId": 1362118877,
   "branch": "release-3.0",
