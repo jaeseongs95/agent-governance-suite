@@ -134,6 +134,14 @@ function bumpedRoot(root: ConvergenceRootV1, updatedAt: string): ConvergenceRoot
   return next;
 }
 
+/**
+ * Artifact digests are accepted bare or sha256:-prefixed, and outcomes keep the provider's
+ * spelling. Evidence is compared under one spelling so a digest cannot return as new evidence.
+ */
+function evidenceKey(reference: string): string {
+  return /^[a-f0-9]{64}$/u.test(reference) ? `sha256:${reference}` : reference;
+}
+
 function consumedLeases(snapshot: ConvergenceSnapshot, epoch: number): AttemptLeaseV1[] {
   return snapshot.leases.filter((lease) => lease.epoch === epoch && lease.state === "consumed");
 }
@@ -379,8 +387,8 @@ export class WorkflowService {
             .flatMap((item) => item.priorFailure?.evidenceRefs ?? []),
           ...snapshot.outcomes.flatMap((outcome) => outcome.evidenceRefs),
           ...burned,
-        ]);
-        const hasNewEvidence = proposal.priorFailure.evidenceRefs.some((reference) => !oldEvidence.has(reference));
+        ].map(evidenceKey));
+        const hasNewEvidence = proposal.priorFailure.evidenceRefs.some((reference) => !oldEvidence.has(evidenceKey(reference)));
         if (sameTarget && !hasNewEvidence) {
           this.rejectRetry(
             root,

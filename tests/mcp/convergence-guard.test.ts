@@ -720,6 +720,40 @@ describe("local MCP convergence guard", () => {
     expect(accepted.data?.ordinal).toBe(2);
   });
 
+  it("treats a bare and a sha256:-prefixed outcome artifact digest as the same evidence", async () => {
+    const { service } = await createHarness();
+    const root = openRoot(service);
+    const attempt = claimAndStart(service, root);
+    const digest = "d".repeat(64);
+    const failure = failedStage(attempt.receipt);
+    failure.output.artifacts = [{
+      artifactId: "candidate",
+      schemaId: "fixture/v1",
+      locator: "tests/results/candidate.json",
+      digest,
+      targetDigest: "e".repeat(64),
+      verified: true,
+    }];
+    expect(service.recordStageResult(failure).error).toBeNull();
+    let current = status(service, root.rootId);
+    expect(current.outcomes.at(-1)?.evidenceRefs).toContain(digest);
+
+    const recycled = service.claimWorkflowAttempt(proposal(service, current.root, {
+      priorFailure: latestFailure(current, `sha256:${digest}`),
+    }));
+    expect(recycled.error?.code).toBe("NEW_EVIDENCE_REQUIRED");
+    expect(recycled.error?.details).toMatchObject({ route: "diagnose" });
+    current = status(service, root.rootId);
+    expect(current.leases).toHaveLength(1);
+    expect(current.attemptsUsedInEpoch).toBe(1);
+
+    const accepted = service.claimWorkflowAttempt(proposal(service, current.root, {
+      priorFailure: latestFailure(current, "test:fresh-after-digest"),
+    }));
+    expect(accepted.error).toBeNull();
+    expect(accepted.data?.ordinal).toBe(2);
+  });
+
   it("remembers earlier outcome evidence across a store restart", async () => {
     const harness = await createHarness();
     const root = openRoot(harness.service);
