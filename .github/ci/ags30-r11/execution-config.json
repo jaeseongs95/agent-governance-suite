@@ -48,8 +48,8 @@
     "Generated runtime returned as candidate; installed/native real host/full acceptance not claimed."
   ],
   "osMutationCollector": {
-    "bytes": 12445,
-    "sha256": "beb24fb4503f726fd38bc64f28c4968f9c2c5c7f301b6f2fc5bc44b5e30788b6"
+    "bytes": 12573,
+    "sha256": "48efad00e1ef881c43a7000835b55188fd76fd95ec4051b3ba1aec76c2858da6"
   },
   "osPlan": {
     "bytes": 6643,

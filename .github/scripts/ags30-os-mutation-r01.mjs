@@ -56,11 +56,12 @@ export async function collectOSMutations({ sourceRoot, planFile, outputRoot, dea
   const { hashJson, hashBytes } = await load('runtime/engineering-practices/io.mjs');
   const baselinePlan = JSON.parse(await fs.readFile(planFile, 'utf8'));
   const plan = structuredClone(baselinePlan);
-  plan.scopeFiles = [...plan.scopeFiles, 'mcp-server/src/process-identity.ts'];
+  plan.scopeFiles = [...plan.scopeFiles, 'mcp-server/src/process-identity.ts',
+    'mcp-server/src/failure-diagnostics.ts', 'runtime/failure-diagnostics.mjs'];
   const vitestCli = await fs.realpath(path.join(sourceRoot, 'node_modules/vitest/vitest.mjs'));
   plan.runner = 'Existing Vitest via exact Node/realpath Vitest CLI argv; engineering runCommand receipts';
   const environmentNote = `Node ${process.version}; ${process.platform}/${process.arch}; same pinned pnpm/dependency tree; ` +
-    'red has only the declared production mutation, unchanged original test scope plus its unchanged process-identity dependency and copied package.json/vitest.config.mjs. ' +
+    'red has only the declared production mutation, unchanged original test scope plus its unchanged process-identity and failure-diagnostics dependencies and copied package.json/vitest.config.mjs. ' +
     'Full non-generated source is bound separately by the outer collector. Receipt logs are UTF-8 diagnostic strings, not raw-byte archives.';
   plan.environment = environmentNote;
   plan.exclusions = [
@@ -161,7 +162,7 @@ export async function collectOSMutations({ sourceRoot, planFile, outputRoot, dea
       assert.equal(passed.length, 1);
       assert(passed[0].fullName.includes(item.id + ':'));
       Object.assign(entry, { status: 'DEMONSTRATED', red: redRef, green: greenRef, mutationPaths: [production],
-        assertionWitness: witness, reason: 'Original test candidate and process-identity dependency unchanged; intended oracle failed under the exact isolated production mutation, then same argv passed on original production bytes.' });
+        assertionWitness: witness, reason: 'Original test candidate and process-identity/failure-diagnostics dependencies unchanged; intended oracle failed under the exact isolated production mutation, then same argv passed on original production bytes.' });
       observation.status = 'DEMONSTRATED';
       observation.counts = { red: { total: redReport.numTotalTests, failed: redReport.numFailedTests, pending: redReport.numPendingTests },
         green: { total: greenReport.numTotalTests, passed: greenReport.numPassedTests, pending: greenReport.numPendingTests } };
