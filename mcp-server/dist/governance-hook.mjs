@@ -655,6 +655,12 @@ function assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePat
     throw new Error("Workflow and continuity databases must use different files.");
   }
 }
+function resolveHostAttestation(environment = process.env, adapters = defaultExecutionAdapters) {
+  const host = environment.AGENT_GOVERNANCE_HOST_ATTESTATION;
+  if (!host) return null;
+  const adapter = adapters.get(host);
+  return adapter && adapter.host === host && typeof adapter.modelClassForModel === "function" && (adapter.resolveModel === void 0 || typeof adapter.resolveModel === "function") ? adapter : null;
+}
 
 // mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
@@ -24428,13 +24434,15 @@ registerHookAttestationStrategy("claude-hook", {
     }
     return handleHostAttestationHook(input2, context.openStore(), {
       host: context.host ?? claudeCodeExecutionAdapter.host,
+      adapter: context.adapter,
       readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId)
     });
   }
 });
 registerHookAttestationStrategy("codex-rollout", {
   observe: (input2, context) => handleCodexHostAttestationHook(input2, context.openStore(), {
-    host: context.host ?? codexExecutionAdapter.host
+    host: context.host ?? codexExecutionAdapter.host,
+    adapter: context.adapter
   }),
   unavailable(input2, failure2) {
     const host = failure2.host ?? codexExecutionAdapter.host;
@@ -24507,7 +24515,7 @@ function record6(value) {
 function denied(reasonCode) {
   return { hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: reasonCode } };
 }
-async function runGovernanceHook(host, raw, environment = process.env) {
+async function runGovernanceHook(host, raw, environment = process.env, executionAdapters) {
   let store;
   let output2 = {};
   let failure2;
@@ -24539,7 +24547,11 @@ async function runGovernanceHook(host, raw, environment = process.env) {
     } else if (HOST_ATTESTATION_TOOLS.has(tool)) {
       const kind = hookAttestationKind(host);
       if (!kind) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.");
-      domainOutput = handleRegisteredHostAttestationHook(kind, currentInput, { host, databasePath, openStore: () => store });
+      const adapter = executionAdapters === void 0 ? void 0 : resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: host }, executionAdapters);
+      if (adapter === null) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.", {
+        reasonCode: "HOST_EXECUTION_ADAPTER_UNAVAILABLE"
+      });
+      domainOutput = handleRegisteredHostAttestationHook(kind, currentInput, { host, databasePath, adapter, openStore: () => store });
     }
     if (domainOutput) {
       const specific = record6(domainOutput.hookSpecificOutput);

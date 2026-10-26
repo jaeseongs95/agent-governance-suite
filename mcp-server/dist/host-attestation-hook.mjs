@@ -21667,13 +21667,15 @@ registerHookAttestationStrategy("claude-hook", {
     }
     return handleHostAttestationHook(input2, context.openStore(), {
       host: context.host ?? claudeCodeExecutionAdapter.host,
+      adapter: context.adapter,
       readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId)
     });
   }
 });
 registerHookAttestationStrategy("codex-rollout", {
   observe: (input2, context) => handleCodexHostAttestationHook(input2, context.openStore(), {
-    host: context.host ?? codexExecutionAdapter.host
+    host: context.host ?? codexExecutionAdapter.host,
+    adapter: context.adapter
   }),
   unavailable(input2, failure) {
     const host = failure.host ?? codexExecutionAdapter.host;

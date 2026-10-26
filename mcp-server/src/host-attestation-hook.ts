@@ -578,6 +578,8 @@ export function handleCodexHostAttestationHook(
 
 export interface HookAttestationStrategyContext {
   host?: string;
+  /** Optional authority supplied by trusted installation code, never hook input. */
+  adapter?: HostExecutionAdapter;
   databasePath: string;
   openStore(): WorkflowStore;
 }
@@ -616,6 +618,7 @@ registerHookAttestationStrategy("claude-hook", {
     }
     return handleHostAttestationHook(input, context.openStore(), {
       host: context.host ?? claudeCodeExecutionAdapter.host,
+      adapter: context.adapter,
       readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId),
     });
   },
@@ -624,6 +627,7 @@ registerHookAttestationStrategy("claude-hook", {
 registerHookAttestationStrategy("codex-rollout", {
   observe: (input, context) => handleCodexHostAttestationHook(input, context.openStore(), {
     host: context.host ?? codexExecutionAdapter.host,
+    adapter: context.adapter,
   }),
   unavailable(input, failure) {
     const host = failure.host ?? codexExecutionAdapter.host;

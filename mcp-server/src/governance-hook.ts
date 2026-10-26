@@ -5,11 +5,11 @@ import { adaptHostInput, hookAttestationKind, isGovernanceHookTool, resolveHookH
 import { actorAccess } from "./input-observation.js";
 import { SessionActorProofs, SESSION_PROOF_FIELD, withoutSessionProof } from "./session-actor-proof.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
-import { resolveWorkflowDatabasePath } from "./runtime-config.js";
+import { resolveHostAttestation, resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { runSessionBoardHook } from "./session-board-hook.js";
 import { handleSessionMessageHook } from "./session-message-hook.js";
 import { runContinuityHook } from "./continuity-hook.js";
-import { HOST_ATTESTATION_TOOLS } from "./host-attestation.js";
+import { HOST_ATTESTATION_TOOLS, type HostExecutionAdapter } from "./host-attestation.js";
 import { handleRegisteredHostAttestationHook } from "./host-attestation-hook.js";
 import { WorkflowContractError } from "../../contracts/types.js";
 import { hookFailureContext, retainHookFailureSecondary, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
@@ -27,7 +27,10 @@ function denied(reasonCode: string): RecordValue {
 
 /** One authorization entry per governance call. Domain hooks run before signing;
  * missing/failed domain output cannot turn into a valid root proof. */
-export async function runGovernanceHook(host: string, raw: string, environment: NodeJS.ProcessEnv = process.env): Promise<{ ok: boolean; output: string }> {
+export async function runGovernanceHook(
+  host: string, raw: string, environment: NodeJS.ProcessEnv = process.env,
+  executionAdapters?: ReadonlyMap<string, HostExecutionAdapter>,
+): Promise<{ ok: boolean; output: string }> {
   let store: SqliteWorkflowStore | undefined;
   let output: RecordValue = {};
   let failure: unknown;
@@ -59,7 +62,13 @@ export async function runGovernanceHook(host: string, raw: string, environment: 
     } else if (HOST_ATTESTATION_TOOLS.has(tool)) {
       const kind = hookAttestationKind(host);
       if (!kind) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.");
-      domainOutput = handleRegisteredHostAttestationHook(kind, currentInput, { host, databasePath, openStore: () => store! });
+      // Only trusted installation composition supplies adapters; hook JSON cannot register authority.
+      const adapter = executionAdapters === undefined ? undefined
+        : resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: host }, executionAdapters);
+      if (adapter === null) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.", {
+        reasonCode: "HOST_EXECUTION_ADAPTER_UNAVAILABLE",
+      });
+      domainOutput = handleRegisteredHostAttestationHook(kind, currentInput, { host, databasePath, adapter, openStore: () => store! });
     }
     if (domainOutput) {
       const specific = record(domainOutput.hookSpecificOutput);
