@@ -2,7 +2,9 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { build } from 'esbuild';
+import { captureSnapshot } from '../../runtime/engineering-practices/core.mjs';
 import { afterEach, expect, it, vi } from 'vitest';
 import { collectOSMutations } from '../../.github/scripts/ags30-os-mutation-r01.mjs';
 import { emitCollectorSummary, osProofFailure, recordCollectorFailure, recordOSProofEvidence,
@@ -17,23 +19,33 @@ afterEach(async () => {
   await Promise.all(temporary.splice(0).map(directory => fs.rm(directory, { recursive: true, force: true })));
 });
 
-async function fixture(mode) {
+async function fixture(mode, snapshotRoot = root) {
   const work = await fs.mkdtemp(path.join(tmpdir(), 'al08-d0253-PRIVATE_IMPORT_SENTINEL-'));
   temporary.push(work);
   const sourceRoot = path.join(work, 'source'), outputRoot = path.join(work, 'result', 'os-proof');
-  const copy = async (relative, target = relative) => {
+  const copy = async (relative, target = relative, from = root) => {
     const destination = path.join(sourceRoot, target);
     await fs.mkdir(path.dirname(destination), { recursive: true });
-    await fs.copyFile(path.join(root, relative), destination);
+    await fs.copyFile(path.join(from, relative), destination);
   };
-  for (const file of ['core.mjs', 'io.mjs', 'schema.mjs']) await copy(`runtime/engineering-practices/${file}`);
   await copy('runtime/schema-validation.mjs');
   for (const file of (await fs.readdir(path.join(root, 'contracts'))).filter(file => /^engineering-.*\.v1\.schema\.json$/u.test(file))) await copy(`contracts/${file}`);
   const runner = 'runtime/engineering-practices/runner.mjs';
   await copy('tests/tooling/fixtures/al08-d0253-runner.mjs', runner);
   expect(await fs.readFile(path.join(sourceRoot, runner))).toEqual(await fs.readFile(path.join(root, 'tests/tooling/fixtures/al08-d0253-runner.mjs')));
   const plan = JSON.parse(await fs.readFile(path.join(root, '.github/ci/ags30-r11/os-test-plan.json'), 'utf8'));
-  for (const file of [...plan.scopeFiles, 'mcp-server/src/process-identity.ts', 'package.json', 'vitest.config.mjs']) await copy(file);
+  // Keep the declared seeds, including computed worker inputs, and derive their
+  // local runtime and engineering-core dependencies instead of mirroring imports by hand.
+  const graph = await build({ absWorkingDir: snapshotRoot,
+    entryPoints: [...plan.scopeFiles, 'runtime/engineering-practices/core.mjs'],
+    outdir: 'diagnostic-fixture-closure', bundle: true, write: false, metafile: true,
+    platform: 'node', format: 'esm', target: 'node24', packages: 'external', logLevel: 'silent' });
+  const inputs = Object.keys(graph.metafile.inputs).map(file =>
+    path.relative(snapshotRoot, path.resolve(snapshotRoot, file)).split(path.sep).join('/'));
+  for (const file of captureSnapshot(snapshotRoot, [...new Set([...plan.scopeFiles, ...inputs])]).files) {
+    await copy(file.path, file.path, snapshotRoot);
+  }
+  for (const file of ['package.json', 'vitest.config.mjs']) await copy(file);
   const callsFile = path.join(work, 'runner-calls.jsonl');
   const production = await fs.readFile(path.join(sourceRoot, 'mcp-server/src/broker-process-lock.ts'));
   plan.scopeFiles.push('diagnostic-fixture.json');
@@ -184,4 +196,30 @@ it('D0253 projection refuses unknown cases, arbitrary paths and malformed refere
   const positive = { aggregateFailures: [{ code: 'EXISTING_FAILURE' }] };
   expect(recordOSProofEvidence(positive, { verdict: 'CONSISTENT' })).toBe(true);
   expect(positive.aggregateFailures).toEqual([{ code: 'EXISTING_FAILURE' }]);
+});
+
+it('D0253 fixture copies and snapshot-binds a newly added transitive local dependency', async () => {
+  const original = await fixture('witness-reject');
+  const additions = {
+    'mcp-server/src/diagnostic-fixture-link.mjs': 'export { diagnosticFixtureValue } from "../../runtime/diagnostic-fixture-leaf.mjs";\n',
+    'runtime/diagnostic-fixture-leaf.mjs': 'export const diagnosticFixtureValue = 73;\n',
+  };
+  for (const [relative, text] of Object.entries(additions)) await fs.writeFile(path.join(original.sourceRoot, relative), text);
+  await fs.appendFile(path.join(original.sourceRoot, 'mcp-server/src/process-identity.ts'),
+    '\nexport * from "./diagnostic-fixture-link.mjs";\n');
+  await fs.writeFile(path.join(original.sourceRoot, 'runtime/engineering-practices/diagnostic-fixture-extension.mjs'),
+    'export const engineeringFixtureValue = 91;\n');
+  await fs.appendFile(path.join(original.sourceRoot, 'runtime/engineering-practices/core.mjs'),
+    '\nexport * from "./diagnostic-fixture-extension.mjs";\n');
+  const f = await fixture('witness-reject', original.sourceRoot);
+  await f.collect();
+  const proof = JSON.parse(await fs.readFile(path.join(f.outputRoot, 'engineering-test-proof.json'), 'utf8'));
+  for (const relative of Object.keys(additions)) {
+    expect(await fs.readFile(path.join(f.outputRoot, relative))).toEqual(await fs.readFile(path.join(original.sourceRoot, relative)));
+    expect(proof.candidate.files.some(file => file.path === relative)).toBe(true);
+  }
+  const imported = await import(pathToFileURL(path.join(f.outputRoot, 'mcp-server/src/diagnostic-fixture-link.mjs')).href);
+  expect(imported.diagnosticFixtureValue).toBe(73);
+  const core = await import(pathToFileURL(path.join(f.sourceRoot, 'runtime/engineering-practices/core.mjs')).href);
+  expect(core.engineeringFixtureValue).toBe(91);
 });
