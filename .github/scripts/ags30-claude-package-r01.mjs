@@ -18,8 +18,9 @@ const source = path.resolve(sourceArg), output = path.resolve(outputArg);
 assert.equal(await fs.realpath(fileURLToPath(import.meta.url)),
   await fs.realpath(path.join(source, '.github/scripts/ags30-claude-package-r01.mjs')));
 const cap = 8 * 1024 * 1024;
-// R19 left 1,783,374 bytes; reserve 283,374 for new receipts and observations.
-const maximumExportBytes = 1_500_000;
+// Actual 07d follow-up evidence grew 1,481,177 bytes; reserve 1.5 MiB.
+// The unchanged final collector still checks every returned byte against the 8 MiB cap.
+const followupReceiptReserveBytes = 1.5 * 1024 * 1024;
 const archiveName = 'claude-package.actual.tar.gz';
 const manifestName = 'claude-package.manifest.json';
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -172,8 +173,8 @@ try {
   };
   const existing = await rowsAt(output, await fileNames(output));
   const existingBytes = existing.reduce((sum, row) => sum + row.bytes, 0);
-  const budget = Math.min(maximumExportBytes, cap - existingBytes);
-  manifest.exportBudget = { maximumBytes: maximumExportBytes, existingBytesAtPacking: existingBytes,
+  const budget = Math.max(0, cap - existingBytes - followupReceiptReserveBytes);
+  manifest.exportBudget = { maximumBytes: budget, totalArtifactMaximumBytes: cap, followupReceiptReserveBytes, existingBytesAtPacking: existingBytes,
     availableBytesAtPacking: budget, finalCollectorCapStillRequired: true };
   manifest.archive.status = 'RETURNED';
   let manifestBytes = Buffer.from(JSON.stringify(manifest, null, 2) + '\n');
