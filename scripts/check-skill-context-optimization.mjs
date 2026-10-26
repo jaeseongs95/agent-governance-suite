@@ -135,6 +135,23 @@ const CLASSIFICATION_UPDATE = Object.freeze({
     "skills/workspace-convention-profiler/classification.json": "15c01583cc8a233fd969ea873cf5ba0d56a6fc305cd2a9ff7ed7b57338cb2853",
   }),
 });
+// Exact current policy successor; historical optimization/classification pins remain intact.
+const PONYTAIL_POLICY_SUCCESSOR = Object.freeze({
+  baselineRevision: "3b7555015dac80a601db8690430baa18f1d7b60b",
+  hashes: Object.freeze({
+    "skills/ponytail/SKILL.md": "953fd16ff07c23b9481e9bdfca12dbb0d115422ebdbd6626bae6b574838a777c",
+    "skills/ponytail/agents/openai.yaml": "99b2f27b7983ae2543010244c90280519152c061c7ab8f817e629d5eb63fb64b",
+    "skills/ponytail/classification.json": "beffd9f692ee156074e6c4a12f0afafd8d82c0b26c316b3d373754241fe2f401",
+    "skills/orchestrator/SKILL.md": "1cfaf8503aacae72fb7e2591e708bea507848ae338e21855c15e4b1ccb635cd1",
+    "skills/orchestrator/classification.json": "6e1ab44e91e1be1d9ee6be473ec332bed670a9f20ae80fab8deedd68d6a8ec76"
+}),
+});
+
+export function matchesPonytailPolicySuccessor(path, bytes) {
+  return Object.hasOwn(PONYTAIL_POLICY_SUCCESSOR.hashes, path)
+    && createHash("sha256").update(bytes).digest("hex") === PONYTAIL_POLICY_SUCCESSOR.hashes[path];
+}
+
 // Exact implementation bytes integrated after the historical optimization.
 // This validates source identity only; it grants no review or execution authority.
 const CURRENT_IMPLEMENTATION_PINS = Object.freeze({
@@ -265,11 +282,13 @@ export function matchesReviewedImplementationUpdate(path, bytes) {
 }
 
 export function matchesClassificationUpdate(path, bytes) {
-  return Object.hasOwn(CLASSIFICATION_UPDATE.hashes, path)
+  return matchesPonytailPolicySuccessor(path, bytes) || Object.hasOwn(CLASSIFICATION_UPDATE.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === CLASSIFICATION_UPDATE.hashes[path];
 }
 
 function withoutClassificationAddition(skillId, bytes, root = ROOT) {
+  const currentPath = `skills/${skillId}/SKILL.md`;
+  if (matchesPonytailPolicySuccessor(currentPath, bytes)) bytes = git("show", `${PONYTAIL_POLICY_SUCCESSOR.baselineRevision}:${currentPath}`);
   const frozen = CLASSIFICATION_UPDATE.additions[skillId];
   const fixture = readFileSync(join(root, frozen.path));
   const addition = Buffer.concat([fixture, Buffer.from(frozen.suffix ?? "")]);
@@ -310,6 +329,9 @@ export function checkSkillContextOptimization() {
   const errors = [];
   for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) {
     if (!matchesClassificationUpdate(reviewedPath, readFileSync(join(ROOT, reviewedPath)))) errors.push(`classification: reviewed bytes differ: ${reviewedPath}`);
+  }
+  for (const currentPath of Object.keys(PONYTAIL_POLICY_SUCCESSOR.hashes)) {
+    if (!matchesPonytailPolicySuccessor(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`policy successor bytes differ: ${currentPath}`);
   }
   for (const currentPath of Object.keys(CURRENT_IMPLEMENTATION_PINS.hashes)) {
     if (!matchesCurrentImplementationPin(currentPath, readFileSync(join(ROOT, currentPath)))) {
@@ -438,7 +460,7 @@ export function checkSkillContextOptimization() {
   const ponytailChanged = [...new Set([
     ...git("diff", "--name-only", BASELINE, "--", "skills/ponytail").toString("utf8").trim().split(/\r?\n/u),
     ...git("ls-files", "--others", "--exclude-standard", "--", "skills/ponytail").toString("utf8").trim().split(/\r?\n/u),
-  ].filter(Boolean))].filter((file) => !Object.hasOwn(CLASSIFICATION_UPDATE.hashes, file));
+  ].filter(Boolean))].filter((file) => !Object.hasOwn(CLASSIFICATION_UPDATE.hashes, file) && !Object.hasOwn(PONYTAIL_POLICY_SUCCESSOR.hashes, file));
   if (ponytailChanged.length) errors.push(`excluded skill ponytail unexpected changes: ${ponytailChanged.join(", ")}`);
   if (candidateBytes >= baselineBytes) errors.push("combined initial SKILL.md bytes did not shrink");
 
@@ -452,6 +474,7 @@ export function checkSkillContextOptimization() {
     activeReviewedOutputContractUpdates: [REVIEWED_RESOLVER_N_DESC_RULE],
     reviewedClassificationUpdates: [CLASSIFICATION_UPDATE],
     currentImplementationPins: [CURRENT_IMPLEMENTATION_PINS],
+    currentPolicySuccessors: [PONYTAIL_POLICY_SUCCESSOR],
     runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
     pass: errors.length === 0,
     errors,

@@ -14,7 +14,7 @@ code is the code never written.
 ## Persistence
 
 ACTIVE EVERY RESPONSE THAT WRITES OR CHANGES CODE. No drift back to
-over-building. Still active if unsure. Off only: "stop ponytail" / "normal mode". Default: **full**.
+over-building while the skill is available and enabled. Explicit disable or user override takes precedence over automatic selection and mandatory-first wording. Do not reactivate a disabled skill or stop the task because it is absent: continue with ordinary engineering, preserving requirements and necessary tests. "stop ponytail" / "normal mode" are examples, not the only ways to disable it. A later explicit user request may enable this skill for that request; it does not change persistent settings. Default: **full**.
 Switch: `/agent-governance-suite:ponytail lite|full|ultra`.
 
 ## The ladder
@@ -40,6 +40,11 @@ edit, grep every caller of the function you're about to touch. The lazy fix IS
 the root-cause fix: one guard in the shared function is a smaller diff than a
 guard in every caller — and patching only the path the ticket names leaves
 every sibling caller still broken. Fix it once, where all callers route through.
+Same for a hand-written list that must mirror the code (files to copy,
+imports, paths): one more entry is the caller-by-caller patch. Derive the list
+with existing code, or add a check that fails when it is incomplete; deliberate
+allowlists and test case tables stay hand-written. A typo or wrong constant in
+the line itself is its own root cause: fix the line.
 
 ## Rules
 
@@ -78,7 +83,8 @@ Example: "Add a cache for these API responses."
 ## When NOT to be lazy
 
 Never simplify away: input validation at trust boundaries, error handling
-that prevents data loss, security measures, accessibility basics, anything
+that prevents data loss or tells the caller what failed (never swallow or
+flatten an error to shorten code), security measures, accessibility basics, anything
 explicitly requested. User insists on the full version → build it, no
 re-arguing.
 
@@ -97,7 +103,9 @@ loop, a parser, a money/security path) leaves ONE runnable check behind, the
 smallest thing that fails if the logic breaks: an `assert`-based
 `demo()`/`__main__` self-check or one small `test_*.py`. No frameworks, no
 fixtures, no per-function suites unless asked. Trivial one-liners need no
-test, YAGNI applies to tests too.
+test, YAGNI applies to tests too. A bug fix's check is the command or CI step
+that originally failed, passing where it failed; a new test counts only if it
+fails on the pre-fix code.
 
 ## Boundaries
 
@@ -108,7 +116,6 @@ reviews, audits, verification, completion reports, or non-coding answers.
 User, project, and repository instructions (report format, language, test
 location and tooling) override the Output and test rules above. Requested
 behavior and acceptance criteria are never cut; offer cuts as suggestions.
-"stop ponytail" / "normal mode": revert. Level persists until changed or
-session end.
+Explicit disable and user overrides apply to the entire skill, not only Output and test rules. Level persists only while enabled, until changed or session end.
 
 The shortest path to done is the right path.

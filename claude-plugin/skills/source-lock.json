@@ -150,14 +150,14 @@
       },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:60dc9353cf86e1e6714dd946ac29558f8833d3589f614bb9dab140edb4c6bf93",
-      "integratedChecksum": "sha256:75225d62eb2984812d7b899b4a01de49380f7391b5ee2bb1ecde01ef99c5319c",
+      "integratedChecksum": "sha256:b010f84e905b78e248620a709911de3940a0340f91a07824ee0c19454c15b5a2",
       "checksumScope": "relative paths and normalized text bytes under skills/ponytail",
       "downstreamModifications": [
         "Drop the argument-hint frontmatter key, which the Codex skill validator rejects; the Claude overlay restores it.",
         "Add agents/openai.yaml with the display name and implicit-invocation policy used by the other suite skills.",
         "Add LICENSE copied from the upstream repository root, which the skill directory does not carry.",
         "Remove reviewing from the description's coding-task list and exclude code review, audits, verification, and completion checks, so implicit invocation does not load the skill during governance review stages.",
-        "Scope persistence to responses that write or change code, and replace the Boundaries paragraph so reviews, audits, verification, completion reports and non-coding answers are excluded, user, project and repository instructions override the Output and test rules, requested behavior and acceptance criteria are never cut, and the Caveman pairing, which the suite does not ship, is dropped.",
+        "Scope persistence to responses that write or change code, and replace the Boundaries paragraph so reviews, audits, verification, completion reports and non-coding answers are excluded, user, project and repository instructions override the Output and test rules, requested behavior and acceptance criteria are never cut, and the Caveman pairing, which the suite does not ship, is dropped. Clarify the existing bug-fix paragraph with derived code-mirroring lists or completeness checks, intentional allowlist/test-table and line-local typo exceptions; preserve original-failure verification and diagnostic errors. Explicit disable/user overrides precede implicit or mandatory-first use; later explicit use stays request-scoped. No separate defect gate or mandatory commit format is added.",
         "Originally imported from https://github.com/jaeseongs95/ponytail.git at commit 83b2cbc3bc50df3030c49d1dfe598ccefe850a85. After that URI became unavailable, verify the same commit and upstream checksum through https://github.com/DietrichGebert/ponytail.git. Future stable-tag notifications now use this public upstream; notify-only policy and automaticInstall: false remain unchanged."
       ]
     },
