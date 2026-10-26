@@ -188,7 +188,7 @@ export function checkBundle({ root, binding, task, policy, review, candidate, pa
   const candidateDigest = validateCandidate(candidate);
   let count = 2;
   for (const ref of request.sourceRefs) { readArtifact(root, ref); count++; }
-  for (const ref of candidate.files) { readArtifact(root, ref); count++; }
+  for (const ref of candidate.files) { readArtifact(root, ref, 8 * 1024 * 1024); count++; }
   const assessment = validateReviewReport(review, { constraint, candidateDigest, pack });
   for (const ref of review.evidence) { readArtifact(root, ref); count++; }
   return {

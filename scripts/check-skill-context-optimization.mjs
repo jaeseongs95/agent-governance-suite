@@ -202,6 +202,15 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
   }
 });
 
+const CS_RAW_CANDIDATE_CAP_SOURCE_SUCCESSOR = Object.freeze({
+  "revision": "cs-raw-candidate-cap-source-successor-r01",
+  "authorityEffect": "none",
+  "predecessorMetadataDigest": "sha256:03f1c94a531c961c86c599bea80cc98c24b075d23c51980e6a577dd352a21ae3",
+  "hashes": {
+    "skills/cs-engineering/scripts/core.mjs": "07b53170986c6c0360bcda3427995e77df081d3402a336a7af3f6364745f501d"
+  }
+});
+
 export function matchesGovernanceSourceSuccessor(path, bytes) {
   return Object.hasOwn(GOVERNANCE_SOURCE_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === GOVERNANCE_SOURCE_SUCCESSOR.hashes[path];
@@ -448,6 +457,11 @@ export function checkSkillContextOptimization() {
       errors.push(`governance source successor bytes differ: ${currentPath}`);
     }
   }
+  for (const [currentPath, sha256] of Object.entries(CS_RAW_CANDIDATE_CAP_SOURCE_SUCCESSOR.hashes)) {
+    if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== sha256) {
+      errors.push(`CS raw candidate cap source successor bytes differ: ${currentPath}`);
+    }
+  }
   const detailOwners = readdirSync(join(ROOT, "skills"), { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
@@ -590,6 +604,7 @@ export function checkSkillContextOptimization() {
     currentPolicySuccessors: [PONYTAIL_POLICY_SUCCESSOR],
     currentAuthorizationPolicySuccessors: [TASK_CONTRACT_AUTHORIZATION_SUCCESSOR],
     currentGovernanceSourceSuccessors: [GOVERNANCE_SOURCE_SUCCESSOR],
+    currentCsRawCandidateCapSourceSuccessors: [CS_RAW_CANDIDATE_CAP_SOURCE_SUCCESSOR],
     runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
     pass: errors.length === 0,
     errors,

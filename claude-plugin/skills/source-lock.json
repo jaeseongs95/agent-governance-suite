@@ -176,7 +176,7 @@
       "version": "0.2.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:30f9011355202edf2dde2d3b234ff3d06ee087405451d3302661f764c5f7f326",
+      "integratedChecksum": "sha256:8bfa7623b11986af581a271be0648894345ce4117e028c623d64f867b46288a5",
       "checksumScope": "relative paths and normalized text bytes under skills/cs-engineering"
     },
     {

@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { ROOT, SKILL, EXAMPLE, scratch, fixture } from './helpers.mjs';
-import { hashJson } from '../../skills/cs-engineering/scripts/core.mjs';
+import { hashJson, hashBytes } from '../../skills/cs-engineering/scripts/core.mjs';
 const cli=path.join(SKILL,'scripts/validate.mjs');
 const run=(args,script=cli,cwd=ROOT)=>spawnSync(process.execPath,[script,...args],{cwd,encoding:'utf8',timeout:15000,env:{...process.env,NODE_PATH:''}});
 const bundleArgs=root=>['check-bundle','--root',root,'--binding','binding.json','--task','task.json','--policy','policy.json','--review','review.json','--candidate','candidate.json'];
@@ -17,3 +17,44 @@ test('skill-only clean-room installation works without repository or node_module
 test('an existing broken AGS runtime never silently falls back',t=>{const root=scratch(t);cpSync(SKILL,path.join(root,'skills/cs-engineering'),{recursive:true});mkdirSync(path.join(root,'runtime'));writeFileSync(path.join(root,'runtime/schema-validation.mjs'),'throw new Error("broken-existing-runtime");\n');const r=run(['self-check'],path.join(root,'skills/cs-engineering/scripts/validate.mjs'),root);assert.notEqual(r.status,0);assert.ok(r.stderr.includes('broken-existing-runtime'));});
 test('provider-result command returns the passing AGS result envelope',()=>{const r=run(['provider-result','--root',EXAMPLE,'--input','review.json','--mode','review','--constraint','constraints.json','--candidate','candidate.json']);assert.equal(r.status,0,r.stdout);const o=JSON.parse(r.stdout);assert.equal(o.schemaVersion,'1.0.0');assert.equal(o.kind,'output');assert.equal(o.output.verdict,'PASS');assert.equal(o.error,null);});
 test('provider-result command keeps BLOCKED exit status in its nested output',t=>{const root=scratch(t,true),f=fixture();Object.assign(f.review.verificationResults[0],{executionStatus:'NOT_RUN',result:'UNKNOWN',evidenceRefs:[]});Object.assign(f.review.findings[0],{status:'UNVERIFIED',evidenceRefs:[]});f.review.unverifiedRequiredObligationIds=['OB-CLAIM'];f.review.verdict='BLOCKED';writeFileSync(path.join(root,'review.json'),JSON.stringify(f.review));const r=run(['provider-result','--root',root,'--input','review.json','--mode','review','--constraint','constraints.json','--candidate','candidate.json']);assert.equal(r.status,4,r.stdout);assert.equal(JSON.parse(r.stdout).error.code,'MISSING_EVIDENCE');});
+
+function bundleWithRawCandidate(t, size) {
+  const root = scratch(t, true), f = fixture(), body = Buffer.alloc(size, 32);
+  body.write("// synthetic bounded server bundle\n");
+  writeFileSync(path.join(root, 'candidate/server.mjs'), body);
+  f.candidate.files = [{path: 'candidate/server.mjs', digest: hashBytes(body)}];
+  const targetDigest = hashJson(f.candidate);
+  f.review.candidateDigest = targetDigest;
+  for (const result of f.review.verificationResults) result.targetDigest = targetDigest;
+  for (const evidence of f.review.evidence) evidence.targetDigest = targetDigest;
+  for (const name of ['candidate', 'review']) writeFileSync(path.join(root, name + '.json'), JSON.stringify(f[name]));
+  return root;
+}
+for (const size of [1024 * 1024 + 1, 8 * 1024 * 1024]) test('D270 artifact cap CLI accepts raw bundle bytes ' + size, t => {
+  const root = bundleWithRawCandidate(t, size), result = run(bundleArgs(root));
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.equal(JSON.parse(result.stdout).verdict, 'PASS');
+});
+test('D270 artifact cap CLI rejects raw bundle above 8MiB', t => {
+  const root = bundleWithRawCandidate(t, 8 * 1024 * 1024 + 1), result = run(bundleArgs(root));
+  assert.equal(result.status, 2, result.stdout + result.stderr);
+  assert.equal(JSON.parse(result.stdout).error.message, 'Artifact exceeds the byte limit.');
+});
+test('D270 artifact cap CLI still rejects tampered digest above 1MiB', t => {
+  const root = bundleWithRawCandidate(t, 2 * 1024 * 1024), file = path.join(root, 'candidate/server.mjs');
+  const body = readFileSync(file); body[body.length - 1] = 33; writeFileSync(file, body);
+  const result = run(bundleArgs(root));
+  assert.equal(result.status, 2, result.stdout + result.stderr);
+  assert.equal(JSON.parse(result.stdout).error.code, 'INTEGRITY_FAILED');
+});
+for (const name of ['candidate', 'constraints']) test('D270 artifact cap CLI keeps structured JSON at 1MiB: ' + name, t => {
+  const root = bundleWithRawCandidate(t, 32), file = path.join(root, name + '.json'), json = readFileSync(file);
+  const body = Buffer.concat([json, Buffer.alloc(1024 * 1024 + 1 - json.length, 32)]); writeFileSync(file, body);
+  if (name === 'constraints') {
+    const binding = JSON.parse(readFileSync(path.join(root, 'binding.json'), 'utf8'));
+    binding.constraintReportRef.digest = hashBytes(body); writeFileSync(path.join(root, 'binding.json'), JSON.stringify(binding));
+  }
+  const result = run(bundleArgs(root));
+  assert.equal(result.status, 2, result.stdout + result.stderr);
+  assert.equal(JSON.parse(result.stdout).error.message, 'Artifact exceeds the byte limit.');
+});
