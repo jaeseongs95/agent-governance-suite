@@ -36,9 +36,10 @@ function commit(directory, message) {
 }
 
 async function fixture() {
-  const longParent = await fs.mkdtemp(path.join(tmpdir(), 'ci-longpath-' + 'x'.repeat(55) + '-'));
-  temporary.push(longParent);
-  const directory = await fs.mkdtemp(path.join(longParent, 'ci-execution-identity-'));
+  const tempRoot = path.resolve(tmpdir());
+  const pad = Math.max(0, 123 - tempRoot.length - runnerOs.length);
+  const directory = await fs.mkdtemp(path.join(tempRoot, `ci-execution-identity-${'x'.repeat(pad)}`));
+  temporary.push(directory);
   const checkout = path.join(directory, 'checkout');
   await fs.mkdir(path.join(checkout, 'skills'), { recursive: true });
   await fs.writeFile(path.join(checkout, 'skills/fixture.txt'), 'CI-only Git source fixture\n');
@@ -84,10 +85,29 @@ async function collect(f, overrides = {}) {
   expect(result.error).toBeUndefined();
   expect(result.signal).toBeNull();
   expect(result.status).toBe(1);
-  const output = path.join(runnerTemp, `ags30-${nonce}-${runnerOs}`, 'result');
+  const work = path.join(runnerTemp, `ags30-${nonce}-${runnerOs}`);
+  const source = path.join(work, 'source');
+  expect(work.length).toBeGreaterThanOrEqual(208);
+  expect(work.length).toBeLessThanOrEqual(240);
+  expect(source.length).toBeLessThanOrEqual(247);
+  const output = path.join(work, 'result');
   const record = JSON.parse(await fs.readFile(path.join(output, 'result.json'), 'utf8'));
   expect(record).toMatchObject({ unit, nonce, status: 'FAIL', sourceFreshness: 'NOT_RUN', runtimeCandidate: 'NOT_GENERATED' });
   expect(record.phases.some(phase => phase.name.startsWith('02-'))).toBe(false);
+  if (record.phases.some(phase => phase.name === '01c-checkout-official-source' && phase.status === 'PASS')) {
+    const clonedHelper = path.join(source, helperRelative);
+    expect(clonedHelper.length).toBeGreaterThan(260);
+    expect((await fs.stat(clonedHelper)).isFile()).toBe(true);
+    const objectRoot = path.join(source, '.git', 'objects');
+    const buckets = (await fs.readdir(objectRoot, { withFileTypes: true }))
+      .filter(entry => entry.isDirectory() && /^[a-f0-9]{2}$/.test(entry.name));
+    expect(buckets.length).toBeGreaterThan(0);
+    const objects = await fs.readdir(path.join(objectRoot, buckets[0].name));
+    expect(objects.length).toBeGreaterThan(0);
+    const looseObject = path.join(objectRoot, buckets[0].name, objects[0]);
+    expect(looseObject.length).toBeGreaterThan(260);
+    expect((await fs.stat(looseObject)).isFile()).toBe(true);
+  }
   return { result, env, output, githubOutput, record };
 }
 
