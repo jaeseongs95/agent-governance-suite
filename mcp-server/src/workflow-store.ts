@@ -41,6 +41,8 @@ export interface GuardedRunBinding {
 }
 
 export interface WorkflowStore {
+  /** UTC milliseconds from this store's clock provider; failures must not fall back to another clock. */
+  currentTimeMilliseconds(): number;
   getOrCreateSecret(name: string, create: () => string): string;
   claimExecutionObservation(observationId: string, expiresAt: string, consumedAt: string): boolean;
   nextRunSequence(): number;
@@ -84,6 +86,8 @@ export class InMemoryWorkflowStore implements WorkflowStore {
   private readonly identities = new Map<string, StoredIdentity>();
   private readonly guardedRuns = new Map<string, { rootId: string; leaseId: string }>();
   private runSequence = 0;
+
+  currentTimeMilliseconds(): number { return Date.now(); }
 
   getOrCreateSecret(name: string, create: () => string): string {
     const existing = this.secrets.get(name);

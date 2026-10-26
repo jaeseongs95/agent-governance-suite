@@ -323,6 +323,44 @@ describe("session actor proof rejection diagnostics", () => {
 });
 
 describe("session actor proof SQLite connections", () => {
+  it("uses native store UTC despite an 8ms process Date divergence and still rejects replay", () => {
+    const databasePath = path.join(ownedDirectory(), "workflow.sqlite3");
+    const issuerStore = new SqliteWorkflowStore(databasePath);
+    let verifierStore: SqliteWorkflowStore | undefined;
+    try {
+      verifierStore = new SqliteWorkflowStore(databasePath);
+      const processNow = Date.now();
+      const localClock = vi.spyOn(Date, "now").mockReturnValue(processNow + 8);
+      const signed = withProof(new SessionActorProofs(issuerStore), "get_trust_capabilities");
+      localClock.mockReturnValue(processNow);
+      const verifier = new SessionActorProofs(verifierStore);
+      expect(verifier.verify("get_trust_capabilities", signed)).toMatchObject({ sessionId: "fixture-root" });
+      expectContractFailure(() => verifier.verify("get_trust_capabilities", signed), "BINDING_INVALID", "ROOT_PROOF_ALREADY_CONSUMED");
+    } finally {
+      try { verifierStore?.close(); } finally { issuerStore.close(); }
+    }
+  });
+
+  it("preserves clock read failure without falling back or consuming the genuine proof", () => {
+    const store = new SqliteWorkflowStore(path.join(ownedDirectory(), "workflow.sqlite3"));
+    try {
+      const proofs = new SessionActorProofs(store);
+      const signed = withProof(proofs, "get_trust_capabilities");
+      const failure = new WorkflowContractError("MCP_UNAVAILABLE", "Fixture clock unavailable.");
+      const clock = vi.spyOn(store, "currentTimeMilliseconds").mockImplementation(() => { throw failure; });
+      expect(() => proofs.issue(fakeObservation({ callId: "other-call" }), "get_trust_capabilities", {})).toThrow(failure);
+      expect(() => proofs.verify("get_trust_capabilities", signed)).toThrow(failure);
+      clock.mockRestore();
+      expect(proofs.verify("get_trust_capabilities", signed)).toMatchObject({ sessionId: "fixture-root" });
+    } finally { store.close(); }
+  });
+
+  it("reports a closed store clock as unavailable instead of using process time", () => {
+    const store = new SqliteWorkflowStore(path.join(ownedDirectory(), "workflow.sqlite3"));
+    store.close();
+    expect(() => store.currentTimeMilliseconds()).toThrow(expect.objectContaining({ code: "MCP_UNAVAILABLE" }));
+  });
+
   it.each([0, 1])("allows one claim across two real owned connections, first verifier %i", first => {
     const databasePath = path.join(ownedDirectory(), "workflow.sqlite3");
     const left = new SqliteWorkflowStore(databasePath);

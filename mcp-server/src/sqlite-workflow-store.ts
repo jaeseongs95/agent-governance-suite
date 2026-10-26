@@ -143,6 +143,19 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     }
   }
 
+  currentTimeMilliseconds(): number {
+    // Read the native VFS UTC clock on both processes; Date.now can use process-local calibration.
+    // This is wall time, not a monotonic clock: rollback remains a strict proof rejection.
+    return this.guard("Cannot read the workflow clock.", {}, () => {
+      const row = this.database.prepare("SELECT CAST(round(unixepoch('subsec') * 1000) AS INTEGER) AS now_ms").get();
+      const now = row?.now_ms;
+      if (typeof now !== "number" || !Number.isSafeInteger(now) || now < 0) {
+        throw new WorkflowContractError("MCP_UNAVAILABLE", "The workflow clock did not return valid UTC milliseconds.");
+      }
+      return now;
+    });
+  }
+
   getOrCreateSecret(name: string, create: () => string): string {
     return this.guard("Cannot read or create workflow metadata.", { key: name }, () => this.transaction(() => {
       const existing = this.database.prepare("SELECT value FROM workflow_metadata WHERE key = ?").get(name) as MetadataRow | undefined;

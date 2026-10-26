@@ -51,7 +51,7 @@ function invalid(reasonCode: string, diagnostics?: RootProofDiagnostics): never 
  * no identity registry, polling, process inference or host-specific rule lives here.
  * A same-user process can read the key: this is a hook contract, not OS isolation. */
 export class SessionActorProofs implements SessionActorProofVerifier {
-  constructor(private readonly store: WorkflowStore, private readonly now: () => number = Date.now) {}
+  constructor(private readonly store: WorkflowStore, private readonly now: () => number = () => store.currentTimeMilliseconds()) {}
 
   private key(): Buffer {
     const key = Buffer.from(this.store.getOrCreateSecret(KEY, () => randomBytes(32).toString("base64url")), "base64url");

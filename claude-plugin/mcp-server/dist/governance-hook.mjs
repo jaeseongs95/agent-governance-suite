@@ -2374,7 +2374,7 @@ function invalid(reasonCode, diagnostics) {
   throw new WorkflowContractError("BINDING_INVALID", "The current root hook proof is invalid.", { reasonCode, ...diagnostics });
 }
 var SessionActorProofs = class {
-  constructor(store, now = Date.now) {
+  constructor(store, now = () => store.currentTimeMilliseconds()) {
     this.store = store;
     this.now = now;
   }
@@ -2555,6 +2555,16 @@ var SqliteWorkflowStore = class {
       }
       throw this.storageError("Cannot initialize the workflow database.", cause);
     }
+  }
+  currentTimeMilliseconds() {
+    return this.guard("Cannot read the workflow clock.", {}, () => {
+      const row = this.database.prepare("SELECT CAST(round(unixepoch('subsec') * 1000) AS INTEGER) AS now_ms").get();
+      const now = row?.now_ms;
+      if (typeof now !== "number" || !Number.isSafeInteger(now) || now < 0) {
+        throw new WorkflowContractError("MCP_UNAVAILABLE", "The workflow clock did not return valid UTC milliseconds.");
+      }
+      return now;
+    });
   }
   getOrCreateSecret(name, create) {
     return this.guard("Cannot read or create workflow metadata.", { key: name }, () => this.transaction(() => {
