@@ -51,6 +51,7 @@ async function fixture(mode, snapshotRoot = root) {
   plan.scopeFiles.push('diagnostic-fixture.json');
   await fs.writeFile(path.join(sourceRoot, 'diagnostic-fixture.json'), JSON.stringify({ mode, callsFile, productionDigest: `sha256:${sha(production)}` }));
   await fs.mkdir(path.join(sourceRoot, 'node_modules/vitest'), { recursive: true });
+  await fs.symlink(await fs.realpath(path.join(root, 'node_modules/esbuild')), path.join(sourceRoot, 'node_modules/esbuild'), 'junction');
   // realpath input only: the fixture runner never executes this data file.
   await copy('LICENSE', 'node_modules/vitest/vitest.mjs');
   const planFile = path.join(work, 'plan.json');
