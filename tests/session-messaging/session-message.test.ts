@@ -32,7 +32,7 @@ import { SessionMessageService } from "../../mcp-server/src/session-message-serv
 import { claudeWakeOutcome, codexWakeOutcome, geminiWakeOutcome, relayIdentityDecision, ringClaude, shouldReleaseWake, transportWakeCapabilities, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
 import { resolveGeminiAgentApi } from "../../mcp-server/src/session-message-wake-port.js";
 import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
-import { processIdentityState } from "../../mcp-server/src/process-identity.js";
+import { processIdentityState, processStartToken } from "../../mcp-server/src/process-identity.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "../../mcp-server/src/session-message-protocol.js";
 import { adaptHostInput, hostDeliveryProfile, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { supportsInjection, type DeliveryCapabilities } from "../../mcp-server/src/input-observation.js";
@@ -88,10 +88,14 @@ async function brokerLockPid(target: string): Promise<number | null> {
     if (info.isDirectory()) {
       const entries = await readdir(target, { withFileTypes: true });
       const match = entries.length === 1 && entries[0]!.isDirectory()
-        && !entries[0]!.isSymbolicLink() ? /^owner-([1-9][0-9]*)-[a-f0-9]{32}$/u.exec(entries[0]!.name) : null;
+        && !entries[0]!.isSymbolicLink() ? /^owner-([1-9][0-9]*)-[a-f0-9]{32}-([a-f0-9]{64})$/u.exec(entries[0]!.name) : null;
       if (!match) throw new Error("The test broker lock owner is invalid.");
       const pid = Number(match[1]);
       if (!Number.isSafeInteger(pid)) throw new Error("The test broker PID is invalid.");
+      const token = processStartToken(pid);
+      if (token === null || createHash("sha256").update(token).digest("hex") !== match[2]) {
+        throw new Error("The test broker lock owner cannot be verified.");
+      }
       return pid;
     }
     // The deliberately silent legacy fixture below still publishes its own known PID file.
@@ -597,6 +601,24 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     await writeFile(path.join(silentDirectory, "broker.lock"), `${String(silent.pid)}\n`, "utf8");
     await terminateBroker(silentDirectory);
     await silentExit;
+  });
+
+  it("verifies the current broker lock owner before cleanup", async () => {
+    const lockPath = path.join(stateDirectory(), "broker.lock");
+    const lock = acquireBrokerProcessLock(lockPath);
+    expect(lock).not.toBeNull();
+    try {
+      expect(await brokerLockPid(lockPath)).toBe(process.pid);
+    } finally {
+      if (lock) releaseBrokerProcessLock(lock);
+    }
+
+    await mkdir(path.join(lockPath, `owner-${process.pid}-${"0".repeat(32)}-${"0".repeat(64)}`), { recursive: true });
+    try {
+      await expect(brokerLockPid(lockPath)).rejects.toThrow("The test broker lock owner cannot be verified.");
+    } finally {
+      await rm(lockPath, { recursive: true, force: true });
+    }
   });
 
   it("converges simultaneous startup requests on one broker", async () => {
