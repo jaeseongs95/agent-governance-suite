@@ -51,11 +51,31 @@ describe("Codex current host observation", () => {
     { input: {}, context: {}, session: { session_id: "different-session" }, reason: "host-session-mismatch-or-unsupported-metadata" },
     { input: { agent_id: "child-agent" }, context: {}, session: {}, reason: "subagent-identity-not-supported" },
     { input: {}, context: {}, session: { source: { subagent: { parent_thread_id: "parent" } } }, reason: "subagent-identity-not-supported" },
-    { input: { model: "unknown-model" }, context: { model: "unknown-model" }, session: {}, reason: "host-model-policy-unsupported" },
-    { input: { model: "constructor" }, context: { model: "constructor" }, session: {}, reason: "host-model-policy-unsupported" },
   ])("rejects $reason", ({ input, context, session, reason }) => {
     expect(observeCodexHook({ ...hook, ...input }, { readMetadata: () => metadata(context, session) }))
       .toEqual({ observation: null, reason });
+  });
+
+  it.each(["unknown-model", "constructor"])("retains raw %s while the real provider denies execution eligibility", model => {
+    const input = { ...hook, model };
+    const readMetadata = () => metadata({ model });
+    expect(observeCodexHook(input, { readMetadata })).toMatchObject({ reason: null,
+      observation: { model, reasoningEffort: "high", sessionId: hook.session_id, toolUseId: hook.tool_use_id } });
+    const store = new InMemoryWorkflowStore();
+    const output = handleCodexHostAttestationHook(input, store, { readMetadata });
+    const signed = (output.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput;
+    expect(signed[HOST_ATTESTATION_FIELD]).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
+    expect(JSON.parse(Buffer.from(String(signed[HOST_ATTESTATION_FIELD]).split(".")[1]!, "base64url").toString("utf8")))
+      .toMatchObject({ v: 2, model, eligibility: null });
+    const provider = new HostAttestationProvider(store, codexExecutionAdapter);
+    let failure: unknown;
+    try {
+      provider.run("plan_workflow", signed, () => provider.observe({ phase: "bootstrap", taskId: "hook-task",
+        runId: null, stageId: null, revision: null }));
+    } catch (error) { failure = error; }
+    expect(failure).toMatchObject({ code: "BINDING_INVALID",
+      message: "Host observation has no matching trusted execution capability and policy revision." });
+    expect(provider.lastObservedCapability()).toBeNull();
   });
 
   it("never searches past a newer turn for an older matching context", () => {

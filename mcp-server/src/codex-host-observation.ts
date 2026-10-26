@@ -5,8 +5,6 @@ import {
   type HostExecutionAdapter,
   type HostObservation,
   isReasoningEffort,
-  resolveAdapterModelCapability,
-  satisfiesModelEffortPolicy,
 } from "./host-attestation.js";
 import { codexExecutionAdapter } from "./host-execution-adapters.js";
 
@@ -86,15 +84,13 @@ export function observeCodexHook(input: Record<string, unknown>, options: CodexO
   if (context.turn_id !== turnId) return missing("host-turn-mismatch");
   if (context.model !== model) return missing("host-model-mismatch");
   if (!isReasoningEffort(context.effort)) return missing("host-reasoning-effort-missing-or-unsupported");
-  const capability = resolveAdapterModelCapability(adapter, model, `${adapter.host}:rollout-turn-context`);
-  if (!capability) return missing("host-model-policy-unsupported");
-  if (!satisfiesModelEffortPolicy(capability, context.effort)) return missing("host-reasoning-effort-below-model-minimum-or-unsupported");
+  // Observed model/effort are facts; the server resolves capability and policy floors.
   return {
     observation: {
       model, reasoningEffort: context.effort,
       actorId: hostActorId(adapter.host, sessionId),
       sessionId, turnId, toolUseId,
-      provenance: capability.provenance,
+      provenance: `${adapter.host}:rollout-turn-context`,
     },
     reason: null,
   };

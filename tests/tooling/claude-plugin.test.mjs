@@ -330,7 +330,7 @@ describe("generated Claude plugin", () => {
     expect(result.status).toBe(0);
     const output = JSON.parse(result.stdout);
     expect(output.hookSpecificOutput.permissionDecision).toBeUndefined();
-    expect(output.hookSpecificOutput.updatedInput).toMatchObject({ taskId: "t", _hostAttestation: expect.stringMatching(/^aghs1\./u) });
+    expect(output.hookSpecificOutput.updatedInput).toMatchObject({ taskId: "t", _hostAttestation: expect.stringMatching(/^aghs2\./u) });
     expect(await readdir(data)).toContain("workflows.sqlite3");
   });
 

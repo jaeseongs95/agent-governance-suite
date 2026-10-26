@@ -109,7 +109,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     });
 
     // F06 regression: bare subagent routing profile tokens ("opus", "sonnet", "haiku", "fable")
-    // must remain rejected at the Claude runtime observation boundary unless prefixed as claude-...
+    // remain ineligible capabilities; raw observation does not grant runtime execution.
     expect(resolveAdapterModelCapability(claudeCodeExecutionAdapter, "opus")).toBeNull();
     expect(resolveAdapterModelCapability(claudeCodeExecutionAdapter, "sonnet")).toBeNull();
     expect(resolveAdapterModelCapability(claudeCodeExecutionAdapter, "haiku")).toBeNull();
@@ -155,7 +155,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     expect(blockedByModelMinimum.delivery).toBe("blocked");
 
     // 2. Codex hook and server attestation accept synthetic "gpt-6.5-nova-canonical" alias at "xhigh"
-    //    and reject it at "high" (below minimum_effort).
+    //    and retain its raw observation at "high" while rejecting execution below minimum_effort.
     const store = new InMemoryWorkflowStore();
     const validator = new ContractValidator();
     const provider = new HostAttestationProvider(store, syntheticSuite.adapters.get("codex")!);
@@ -178,10 +178,19 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
         }),
       },
     );
-    expect(lowEffortHook).toEqual({
-      observation: null,
-      reason: "host-reasoning-effort-below-model-minimum-or-unsupported",
+    expect(lowEffortHook).toMatchObject({ reason: null,
+      observation: { model: "gpt-6.5-nova-canonical", reasoningEffort: "high" } });
+    const lowArgs = { schemaVersion: "1.0.0", taskEnvelope: createTask("synthetic-codex-low", "high") };
+    const lowToken = issueHostAttestation(store, syntheticSuite.adapters.get("codex")!, {
+      ...lowEffortHook.observation!, tool: "plan_workflow", input: lowArgs,
     });
+    expect(lowToken).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
+    expect(JSON.parse(Buffer.from(lowToken!.split(".")[1]!, "base64url").toString("utf8"))).toMatchObject({ eligibility: null });
+    const belowMinimum = provider.run("plan_workflow", { ...lowArgs, [HOST_ATTESTATION_FIELD]: lowToken },
+      clean => service.planWorkflow(clean, true));
+    expect(belowMinimum).toMatchObject({ ok: false, error: { code: "BINDING_INVALID",
+      message: "Host observation has no matching trusted execution capability and policy revision." } });
+    expect(provider.lastObservedCapability()).toBeNull();
 
     const validCodexOutput = handleCodexHostAttestationHook(
       {
@@ -393,9 +402,10 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
 
     const store = new InMemoryWorkflowStore();
     const narrowedSuite = createCatalogExecutionAdapters(narrowedCatalog as unknown as ModelRoutingPresetsV1);
+    const narrowedArgs = { schemaVersion: "1.0.0", taskEnvelope: createTask("narrowed-effort-task", "high") };
     const rejectedToken = issueHostAttestation(store, narrowedSuite.adapters.get("codex")!, {
       tool: "plan_workflow",
-      input: { schemaVersion: "1.0.0", taskEnvelope: createTask("narrowed-effort-task", "high") },
+      input: narrowedArgs,
       model: "gpt-6.5-nova",
       reasoningEffort: "ultra",
       actorId: hostActorId("codex", SESSION),
@@ -403,7 +413,16 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       turnId: "turn-narrow",
       toolUseId: "call-narrow-1",
     });
-    expect(rejectedToken).toBeNull();
+    expect(rejectedToken).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
+    expect(JSON.parse(Buffer.from(rejectedToken!.split(".")[1]!, "base64url").toString("utf8"))).toMatchObject({ eligibility: null });
+    const narrowedProvider = new HostAttestationProvider(store, narrowedSuite.adapters.get("codex")!);
+    const narrowedValidator = new ContractValidator();
+    const narrowedService = new WorkflowService(new FileSkillRegistry(registryPath, narrowedValidator), narrowedValidator, store, null, narrowedProvider);
+    const unsupported = narrowedProvider.run("plan_workflow", { ...narrowedArgs, [HOST_ATTESTATION_FIELD]: rejectedToken },
+      clean => narrowedService.planWorkflow(clean, true));
+    expect(unsupported).toMatchObject({ ok: false, error: { code: "BINDING_INVALID",
+      message: "Host observation has no matching trusted execution capability and policy revision." } });
+    expect(narrowedProvider.lastObservedCapability()).toBeNull();
   });
 
   it("preserves policyRevision, provenance, unknown-model rejection, tampering, expiry, replay, and assurance floors (AC4)", () => {
@@ -467,7 +486,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     );
     expect(expiredResult.error?.code).toBe("BINDING_INVALID");
 
-    // And a token for gpt-5.6-luna with effort "medium" (below model minimum "high") cannot be minted at all.
+    // Raw Luna/medium is signed; below-model-minimum eligibility still cannot produce an ExecutionContext.
     const lunaBelowFloor = issueHostAttestation(store, codexExecutionAdapter, {
       tool: "plan_workflow",
       input: planArgs,
@@ -478,7 +497,13 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       turnId: "turn-luna",
       toolUseId: "call-luna-1",
     });
-    expect(lunaBelowFloor).toBeNull();
+    expect(lunaBelowFloor).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
+    expect(JSON.parse(Buffer.from(lunaBelowFloor!.split(".")[1]!, "base64url").toString("utf8"))).toMatchObject({ eligibility: null });
+    const belowModelFloor = defaultProvider.run("plan_workflow", { ...planArgs, [HOST_ATTESTATION_FIELD]: lunaBelowFloor },
+      clean => defaultService.planWorkflow(clean, true));
+    expect(belowModelFloor).toMatchObject({ ok: false, error: { code: "BINDING_INVALID",
+      message: "Host observation has no matching trusted execution capability and policy revision." } });
+    expect(defaultProvider.lastObservedCapability()).toBeNull();
 
     // Even when a lightweight model ("gpt-5.6-luna" at "high") mints a valid token, high-risk bootstrap assurance floor ("general"/"high") rejects it.
     const lunaHighToken = issueHostAttestation(store, codexExecutionAdapter, {

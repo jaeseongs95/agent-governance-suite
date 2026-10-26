@@ -19,6 +19,7 @@ import type {
 import {
   HOST_ATTESTATION_FIELD,
   hostActorId,
+  hostAttestationBinding,
   HostAttestationProvider,
   type HostExecutionAdapter,
   issueHostAttestation,
@@ -63,6 +64,22 @@ const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.
 const TOOL_PREFIX = "mcp__plugin_agent-governance-suite_agent-governance-suite__";
 const SESSION = "session-attest";
 const TRANSCRIPT = path.join("transcripts", `${SESSION}.jsonl`);
+
+// Raw observation is retained; only the real provider may create an ExecutionContext.
+function expectIneligibleObservation(store: WorkflowStore, adapter: HostExecutionAdapter, input: Record<string, unknown>): void {
+  const token = input[HOST_ATTESTATION_FIELD];
+  expect(token).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
+  expect(JSON.parse(Buffer.from(String(token).split(".")[1]!, "base64url").toString("utf8")))
+    .toMatchObject({ v: 2, eligibility: null });
+  const provider = new HostAttestationProvider(store, adapter);
+  let failure: unknown;
+  try {
+    provider.run("plan_workflow", input, () => provider.observe(hostAttestationBinding("plan_workflow", input)!));
+  } catch (error) { failure = error; }
+  expect(failure).toMatchObject({ code: "BINDING_INVALID",
+    message: "Host observation has no matching trusted execution capability and policy revision." });
+  expect(provider.lastObservedCapability()).toBeNull();
+}
 
 function task(taskId: string): TaskEnvelopeV1 {
   return {
@@ -468,16 +485,20 @@ describe("host attestation hook", () => {
     const updated = (output.hookSpecificOutput as { updatedInput: Record<string, unknown>; permissionDecision?: string });
     expect(updated.permissionDecision).toBeUndefined();
     expect(updated.updatedInput.taskId).toBe("hook-task");
-    expect(updated.updatedInput[HOST_ATTESTATION_FIELD]).toMatch(/^aghs1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/u);
+    expect(updated.updatedInput[HOST_ATTESTATION_FIELD]).toMatch(/^aghs2\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/u);
     expect(updated.updatedInput[HOST_ATTESTATION_FIELD]).not.toBe("aghs1.caller.forged");
   });
 
   it("removes a caller-supplied token whenever it cannot attest the call", async () => {
     const callerInput = { taskId: "hook-task", [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged",
       _hostSkillObservation: { actorId: "caller", sourceRef: "caller", skills: [] } };
+    const unknownModel = handleHostAttestationHook({ ...base, tool_input: callerInput }, store,
+      { ...noWait, readText: () => transcriptLine("toolu_hook", { model: "gpt-5.6-sol" }) });
+    const unknownInput = (unknownModel.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput;
+    expect(unknownInput[HOST_ATTESTATION_FIELD]).not.toBe("aghs1.caller.forged");
+    expectIneligibleObservation(store, claudeCodeExecutionAdapter, unknownInput);
     const unattested = [
       handleHostAttestationHook({ ...base, tool_input: callerInput }, store, { ...noWait, maxWaitMs: 0, readText: () => null }),
-      handleHostAttestationHook({ ...base, tool_input: callerInput }, store, { ...noWait, readText: () => transcriptLine("toolu_hook", { model: "gpt-5.6-sol" }) }),
       handleHostAttestationHook({ ...base, tool_input: callerInput, transcript_path: undefined }, store, noWait),
       withoutCallerAttestation({ ...base, tool_input: callerInput }),
     ];
@@ -523,9 +544,11 @@ describe("host attestation hook", () => {
     expect(slept).toBe(500);
   });
 
-  it("does not attest unknown models, missing effort, foreign sessions or sidechain messages", () => {
+  it("retains unknown-model observations but rejects missing effort, foreign sessions or sidechain messages", () => {
     const read = (line: string) => ({ ...noWait, maxWaitMs: 0, readText: () => line });
-    expect(handleHostAttestationHook(base, store, read(transcriptLine("toolu_hook", { model: "gpt-5.6-sol" })))).toEqual({});
+    const unknown = handleHostAttestationHook(base, store, read(transcriptLine("toolu_hook", { model: "gpt-5.6-sol" })));
+    expectIneligibleObservation(store, claudeCodeExecutionAdapter,
+      (unknown.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput);
     expect(handleHostAttestationHook(base, store, read(transcriptLine("toolu_hook", { sessionId: "other" })))).toEqual({});
     expect(handleHostAttestationHook(base, store, read(transcriptLine("toolu_hook", { isSidechain: true })))).toEqual({});
     const noEffortLine = JSON.stringify({ ...JSON.parse(transcriptLine("toolu_hook")), effort: undefined });
@@ -543,7 +566,7 @@ describe("host attestation hook", () => {
     const output = handleHostAttestationHook({ ...base, agent_id: "agent123" }, store, { ...noWait, readText: (file) => files[file] ?? null });
     const token = String((output.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput[HOST_ATTESTATION_FIELD]);
     const payload = JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8")) as Record<string, unknown>;
-    expect(payload).toMatchObject({ model: "claude-sonnet-5", modelClass: "general", actorId: claudeCodeActorId(SESSION, "agent123") });
+    expect(payload).toMatchObject({ model: "claude-sonnet-5", eligibility: { modelClass: "general" }, actorId: claudeCodeActorId(SESSION, "agent123") });
     expect(claudeCodeActorId(SESSION, "agent123")).toMatch(/^claude-code:session-[0-9a-f]{24}:agent-[0-9a-f]{24}$/u);
     expect(claudeCodeActorId(SESSION, "agent123")).not.toBe(claudeCodeActorId(SESSION, "agent456"));
   });
@@ -569,9 +592,9 @@ describe("host attestation hook", () => {
 
     it("prefers the newer of the last written message and the session model record", () => {
       const switched = record("claude-sonnet-5", "2026-09-19T00:10:18.000Z");
-      expect(payloadOf(run(written({ model: "claude-opus-5" }), switched))).toMatchObject({ model: "claude-sonnet-5", modelClass: "general" });
+      expect(payloadOf(run(written({ model: "claude-opus-5" }), switched))).toMatchObject({ model: "claude-sonnet-5", eligibility: { modelClass: "general" } });
       const started = record("claude-sonnet-5", "2026-09-19T00:10:01.000Z", "session-start");
-      expect(payloadOf(run(written({ model: "claude-opus-5" }), started))).toMatchObject({ model: "claude-opus-5", modelClass: "deep" });
+      expect(payloadOf(run(written({ model: "claude-opus-5" }), started))).toMatchObject({ model: "claude-opus-5", eligibility: { modelClass: "deep" } });
     });
 
     it("takes effort only from the hook, never from an earlier message that may belong to another model", () => {
@@ -604,10 +627,12 @@ describe("host attestation hook", () => {
       expect(run(noModel, session, callerInput)).toEqual(stripped);
     });
 
-    it("fails closed without a model source, without effort, or for an unknown switched model", () => {
+    it("requires model and effort observations and retains an ineligible switched model", () => {
       expect(run(null, null, callerInput)).toEqual(stripped);
       expect(run(null, record("claude-opus-5", "2026-09-19T00:10:01.000Z", "session-start"), { ...callerInput, effort: undefined })).toEqual(stripped);
-      expect(run(written(), record("claude-next", "2026-09-19T00:10:18.000Z"), callerInput)).toEqual(stripped);
+      const unknown = run(written(), record("claude-next", "2026-09-19T00:10:18.000Z"), callerInput);
+      expectIneligibleObservation(store, claudeCodeExecutionAdapter,
+        (unknown.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput);
     });
 
     it("uses only the subagent's own written messages, never the session model", () => {
@@ -687,8 +712,16 @@ describe("host attestation configuration", () => {
     expect(planned.ok).toBe(true);
     expect(planned.data!.bootstrapExecution!.context).toMatchObject({model: "opaque-fourth-model", modelClass: "deep", reasoningEffort: "high", actorId: hostActorId(adapter!.host, SESSION)});
     expect(issueHostAttestation(store, adapter!, {...observation, actorId: hostActorId("codex", SESSION)})).toBeNull();
-    expect(issueHostAttestation(store, adapter!, {...observation, model: "unobserved-model"})).toBeNull();
-    expect(issueHostAttestation(store, adapter!, {...observation, reasoningEffort: "low"})).toBeNull();
+    for (const rejected of [
+      {...observation, model: "unobserved-model", toolUseId: "fourth-unknown"},
+      {...observation, reasoningEffort: "low", toolUseId: "fourth-low"},
+    ]) {
+      const rawToken = issueHostAttestation(store, adapter!, rejected);
+      expectIneligibleObservation(store, adapter!, {...args, [HOST_ATTESTATION_FIELD]: rawToken});
+      expect(await call<WorkflowPlanV1>("plan_workflow", {...args, [HOST_ATTESTATION_FIELD]: rawToken}))
+        .toMatchObject({ok: false, error: {code: "BINDING_INVALID",
+          message: "Host observation has no matching trusted execution capability and policy revision."}});
+    }
     const noProvider = await harness(false);
     expect(await noProvider.call<WorkflowPlanV1>("plan_workflow", args))
       .toMatchObject({ok: false, error: {code: "BINDING_REQUIRED"}});
@@ -964,10 +997,12 @@ describe("AGS-D-0179 correlated issuing observations", () => {
       timestamp: new Date(f.options.now().getTime() - 1000).toISOString() });
     const output = handleHostAttestationHook(f.input, new InMemoryWorkflowStore(), { ...f.options, adapter: trusted,
       readText: () => old, readSessionModel: () => null });
-    expect(payload179(output)).toMatchObject({ model, modelClass: "deep", provider: "synthetic" });
+    expect(payload179(output)).toMatchObject({ model, eligibility: { modelClass: "deep", provider: "synthetic" } });
     const unqualified = { ...trusted, modelClassForModel: () => null };
-    expect(updated179(handleHostAttestationHook(f.input, new InMemoryWorkflowStore(), { ...f.options, adapter: unqualified,
-      readText: () => old, readSessionModel: () => null }))).toEqual(f.toolInput);
+    const unqualifiedStore = new InMemoryWorkflowStore();
+    const raw = handleHostAttestationHook(f.input, unqualifiedStore, { ...f.options, adapter: unqualified,
+      readText: () => old, readSessionModel: () => null });
+    expectIneligibleObservation(unqualifiedStore, unqualified, updated179(raw));
     // Hook preservation only: the full opaque-model workflow policy (0086 etc.) remains a separate obligation.
   });
 

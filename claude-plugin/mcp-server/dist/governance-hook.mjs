@@ -4781,7 +4781,7 @@ import { createHash as createHash7, createHmac as createHmac4, randomBytes as ra
 var HOST_ATTESTATION_FIELD = "_hostAttestation";
 var HOST_ATTESTATION_TOOLS = /* @__PURE__ */ new Set(["plan_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
 var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
-var TOKEN_PREFIX = "aghs1";
+var OBSERVATION_TOKEN_PREFIX = "aghs2";
 var TOKEN_TTL_MS = 5 * 60 * 1e3;
 function record2(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
@@ -4871,8 +4871,15 @@ function issueHostAttestation(store, adapter, observation) {
   const input2 = withoutHostAttestation(observation.input);
   const binding = hostAttestationBinding(observation.tool, input2);
   const provenance = nonEmpty(observation.provenance) ?? "".concat(adapter.host, ":runtime");
+  if (!binding || !adapter.host || !nonEmpty(observation.model) || !isReasoningEffort(observation.reasoningEffort) || !observation.actorId || !observation.sessionId || !observation.toolUseId || observation.actorId !== hostActorId(adapter.host, observation.sessionId, observation.agentId ?? null)) return null;
   const capability = resolveAdapterModelCapability(adapter, observation.model, provenance);
-  if (!binding || !capability || !MODEL_CLASS.includes(capability.modelClass) || !adapter.host || !isReasoningEffort(observation.reasoningEffort) || !satisfiesModelEffortPolicy(capability, observation.reasoningEffort) || !observation.actorId || !observation.sessionId || !observation.toolUseId || observation.actorId !== hostActorId(adapter.host, observation.sessionId, observation.agentId ?? null)) return null;
+  const policyRevision = nonEmpty(adapter.policyRevision) ?? nonEmpty(capability?.policyRevision);
+  const eligibility = capability && MODEL_CLASS.includes(capability.modelClass) && satisfiesModelEffortPolicy(capability, observation.reasoningEffort) ? {
+    provider: capability.provider,
+    resolvedModel: capability.resolvedModel,
+    modelClass: capability.modelClass,
+    policyRevision: capability.policyRevision
+  } : null;
   const now = observation.now ?? /* @__PURE__ */ new Date();
   const scope = {
     host: adapter.host,
@@ -4882,25 +4889,23 @@ function issueHostAttestation(store, adapter, observation) {
     call: hostIdentityDigest(observation.toolUseId)
   };
   const payload = {
-    v: 1,
+    v: 2,
     ...scope,
-    provider: capability.provider,
     tool: observation.tool,
     inputDigest: convergenceDigest(input2),
     ...binding,
     model: observation.model,
-    resolvedModel: capability.resolvedModel,
-    modelClass: capability.modelClass,
     reasoningEffort: observation.reasoningEffort,
-    policyRevision: capability.policyRevision,
-    provenance: capability.provenance,
+    policyRevision,
+    eligibility,
+    provenance,
     actorId: observation.actorId,
     // Retrying the same host call cannot mint a second consumable observation.
     observationId: createHash7("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
     observedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + TOKEN_TTL_MS).toISOString()
   };
-  const body = "".concat(TOKEN_PREFIX, ".").concat(Buffer.from(JSON.stringify(payload), "utf8").toString("base64url"));
+  const body = "".concat(OBSERVATION_TOKEN_PREFIX, ".").concat(Buffer.from(JSON.stringify(payload), "utf8").toString("base64url"));
   return "".concat(body, ".").concat(mac(signingKey(store), body));
 }
 
@@ -4976,9 +4981,6 @@ function observeCodexHook(input2, options = {}) {
   if (context.turn_id !== turnId) return missing("host-turn-mismatch");
   if (context.model !== model) return missing("host-model-mismatch");
   if (!isReasoningEffort(context.effort)) return missing("host-reasoning-effort-missing-or-unsupported");
-  const capability = resolveAdapterModelCapability(adapter, model, "".concat(adapter.host, ":rollout-turn-context"));
-  if (!capability) return missing("host-model-policy-unsupported");
-  if (!satisfiesModelEffortPolicy(capability, context.effort)) return missing("host-reasoning-effort-below-model-minimum-or-unsupported");
   return {
     observation: {
       model,
@@ -4987,7 +4989,7 @@ function observeCodexHook(input2, options = {}) {
       sessionId,
       turnId,
       toolUseId,
-      provenance: capability.provenance
+      provenance: "".concat(adapter.host, ":rollout-turn-context")
     },
     reason: null
   };

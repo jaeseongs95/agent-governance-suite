@@ -33123,6 +33123,7 @@ var HOST_ATTESTATION_FIELD = "_hostAttestation";
 var HOST_ATTESTATION_TOOLS = /* @__PURE__ */ new Set(["plan_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
 var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
 var TOKEN_PREFIX = "aghs1";
+var OBSERVATION_TOKEN_PREFIX = "aghs2";
 var TOKEN_TTL_MS = 5 * 60 * 1e3;
 function record2(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
@@ -33209,8 +33210,15 @@ function issueHostAttestation(store, adapter, observation) {
   const input2 = withoutHostAttestation(observation.input);
   const binding2 = hostAttestationBinding(observation.tool, input2);
   const provenance = nonEmpty(observation.provenance) ?? "".concat(adapter.host, ":runtime");
+  if (!binding2 || !adapter.host || !nonEmpty(observation.model) || !isReasoningEffort(observation.reasoningEffort) || !observation.actorId || !observation.sessionId || !observation.toolUseId || observation.actorId !== hostActorId(adapter.host, observation.sessionId, observation.agentId ?? null)) return null;
   const capability = resolveAdapterModelCapability(adapter, observation.model, provenance);
-  if (!binding2 || !capability || !MODEL_CLASS.includes(capability.modelClass) || !adapter.host || !isReasoningEffort(observation.reasoningEffort) || !satisfiesModelEffortPolicy(capability, observation.reasoningEffort) || !observation.actorId || !observation.sessionId || !observation.toolUseId || observation.actorId !== hostActorId(adapter.host, observation.sessionId, observation.agentId ?? null)) return null;
+  const policyRevision = nonEmpty(adapter.policyRevision) ?? nonEmpty(capability?.policyRevision);
+  const eligibility = capability && MODEL_CLASS.includes(capability.modelClass) && satisfiesModelEffortPolicy(capability, observation.reasoningEffort) ? {
+    provider: capability.provider,
+    resolvedModel: capability.resolvedModel,
+    modelClass: capability.modelClass,
+    policyRevision: capability.policyRevision
+  } : null;
   const now = observation.now ?? /* @__PURE__ */ new Date();
   const scope = {
     host: adapter.host,
@@ -33220,25 +33228,23 @@ function issueHostAttestation(store, adapter, observation) {
     call: hostIdentityDigest(observation.toolUseId)
   };
   const payload = {
-    v: 1,
+    v: 2,
     ...scope,
-    provider: capability.provider,
     tool: observation.tool,
     inputDigest: convergenceDigest(input2),
     ...binding2,
     model: observation.model,
-    resolvedModel: capability.resolvedModel,
-    modelClass: capability.modelClass,
     reasoningEffort: observation.reasoningEffort,
-    policyRevision: capability.policyRevision,
-    provenance: capability.provenance,
+    policyRevision,
+    eligibility,
+    provenance,
     actorId: observation.actorId,
     // Retrying the same host call cannot mint a second consumable observation.
     observationId: createHash6("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
     observedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + TOKEN_TTL_MS).toISOString()
   };
-  const body = "".concat(TOKEN_PREFIX, ".").concat(Buffer.from(JSON.stringify(payload), "utf8").toString("base64url"));
+  const body = "".concat(OBSERVATION_TOKEN_PREFIX, ".").concat(Buffer.from(JSON.stringify(payload), "utf8").toString("base64url"));
   return "".concat(body, ".").concat(mac3(signingKey(store), body));
 }
 function withHostObservation(store, adapter, tool, args, observe, dispatch) {
@@ -33252,7 +33258,7 @@ function invalid2(message) {
 }
 function verifyToken(store, adapter, token) {
   const [prefix, encodedPayload, signature, ...rest] = token.split(".");
-  if (prefix !== TOKEN_PREFIX || !encodedPayload || !signature || rest.length > 0) {
+  if (prefix !== TOKEN_PREFIX && prefix !== OBSERVATION_TOKEN_PREFIX || !encodedPayload || !signature || rest.length > 0) {
     throw invalid2("Host attestation token is malformed.");
   }
   const expected = Buffer.from(mac3(signingKey(store), "".concat(prefix, ".").concat(encodedPayload)), "utf8");
@@ -33268,8 +33274,28 @@ function verifyToken(store, adapter, token) {
   }
   const value = record2(payload);
   const model = typeof value?.model === "string" ? value.model : null;
-  const capability = model ? resolveAdapterModelCapability(adapter, model, typeof value?.provenance === "string" ? value.provenance : "".concat(adapter.host, ":runtime")) : null;
-  if (!value || value.v !== 1 || value.host !== adapter.host || !model || !capability || !MODEL_CLASS.includes(value.modelClass) || capability.modelClass !== value.modelClass || value.provider !== void 0 && value.provider !== capability.provider || value.resolvedModel !== void 0 && value.resolvedModel !== capability.resolvedModel || value.policyRevision !== void 0 && value.policyRevision !== capability.policyRevision || value.provenance !== void 0 && (typeof value.provenance !== "string" || value.provenance.length === 0) || !isReasoningEffort(value.reasoningEffort) || !satisfiesModelEffortPolicy(capability, value.reasoningEffort) || typeof value.session !== "string" || !/^[a-f0-9]{24}$/u.test(value.session) || typeof value.call !== "string" || !/^[a-f0-9]{24}$/u.test(value.call) || value.agent !== null && (typeof value.agent !== "string" || !/^[a-f0-9]{24}$/u.test(value.agent)) || value.turn !== null && (typeof value.turn !== "string" || !/^[a-f0-9]{24}$/u.test(value.turn)) || value.actorId !== "".concat(adapter.host, ":session-").concat(String(value.session)).concat(value.agent ? ":agent-".concat(String(value.agent)) : "")) {
+  if (!value || value.v !== (prefix === TOKEN_PREFIX ? 1 : 2) || value.host !== adapter.host || !model || value.v === 2 && (!Object.hasOwn(value, "policyRevision") || value.policyRevision !== null && !nonEmpty(value.policyRevision) || !Object.hasOwn(value, "eligibility")) || value.provenance !== void 0 && (typeof value.provenance !== "string" || value.provenance.length === 0) || !isReasoningEffort(value.reasoningEffort) || typeof value.session !== "string" || !/^[a-f0-9]{24}$/u.test(value.session) || typeof value.call !== "string" || !/^[a-f0-9]{24}$/u.test(value.call) || value.agent !== null && (typeof value.agent !== "string" || !/^[a-f0-9]{24}$/u.test(value.agent)) || value.turn !== null && (typeof value.turn !== "string" || !/^[a-f0-9]{24}$/u.test(value.turn)) || value.actorId !== "".concat(adapter.host, ":session-").concat(String(value.session)).concat(value.agent ? ":agent-".concat(String(value.agent)) : "")) {
+    throw invalid2("Host attestation token payload is not a supported observation for the configured adapter.");
+  }
+  const capability = resolveAdapterModelCapability(
+    adapter,
+    model,
+    typeof value.provenance === "string" ? value.provenance : "".concat(adapter.host, ":runtime")
+  );
+  if (!capability) {
+    throw invalid2(value.v === 1 ? "Host attestation token payload is not a supported observation for the configured adapter." : "Host observation has no matching trusted execution capability and policy revision.");
+  }
+  if (value.v === 1) {
+    if (!MODEL_CLASS.includes(value.modelClass) || capability.modelClass !== value.modelClass || value.provider !== void 0 && value.provider !== capability.provider || value.resolvedModel !== void 0 && value.resolvedModel !== capability.resolvedModel || value.policyRevision !== void 0 && value.policyRevision !== capability.policyRevision) {
+      throw invalid2("Host attestation token payload is not a supported observation for the configured adapter.");
+    }
+  } else {
+    const eligibility = record2(value.eligibility);
+    if (Object.hasOwn(value, "modelClass") || Object.hasOwn(value, "resolvedModel") || Object.hasOwn(value, "provider") || !eligibility || eligibility.modelClass !== capability.modelClass || eligibility.provider !== capability.provider || eligibility.resolvedModel !== capability.resolvedModel || eligibility.policyRevision !== capability.policyRevision || !nonEmpty(value.policyRevision) || value.policyRevision !== capability.policyRevision || adapter.policyRevision !== void 0 && adapter.policyRevision !== capability.policyRevision || capability.host !== adapter.host || capability.rawModel !== model || !nonEmpty(capability.provider) || !nonEmpty(capability.resolvedModel) || !nonEmpty(capability.policyRevision) || !Array.isArray(capability.supportedEfforts) || !capability.supportedEfforts.every(isReasoningEffort) || capability.minimumReasoningEffort !== null && !isReasoningEffort(capability.minimumReasoningEffort)) {
+      throw invalid2("Host observation has no matching trusted execution capability and policy revision.");
+    }
+  }
+  if (!satisfiesModelEffortPolicy(capability, value.reasoningEffort)) {
     throw invalid2("Host attestation token payload is not a supported observation for the configured adapter.");
   }
   return { payload: value, capability };
@@ -33327,7 +33353,7 @@ var HostAttestationProvider = class {
     return {
       schemaVersion: CONTRACT_VERSION,
       model: payload.model,
-      modelClass: payload.modelClass,
+      modelClass: capability.modelClass,
       reasoningEffort: payload.reasoningEffort,
       source: "runtime",
       observedAt: payload.observedAt,

@@ -116,7 +116,7 @@ function defaultSpawnResponse(scriptPath, args, options) {
         hookSpecificOutput: {
           updatedInput: {
             ...parsed.tool_input,
-            _hostAttestation: "aghs1.fixture",
+            _hostAttestation: "aghs2.fixture",
           },
         },
       }),

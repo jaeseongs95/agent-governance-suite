@@ -91,7 +91,7 @@ function updated(output: Record<string, unknown>): Record<string, unknown> {
 }
 function payload(output: Record<string, unknown>): Record<string, unknown> {
   const token = updated(output)[HOST_ATTESTATION_FIELD];
-  expect(token).toEqual(expect.stringMatching(/^aghs1\.[^.]+\.[^.]+$/u));
+  expect(token).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
   return JSON.parse(Buffer.from(String(token).split(".")[1]!, "base64url").toString("utf8")) as Record<string, unknown>;
 }
 

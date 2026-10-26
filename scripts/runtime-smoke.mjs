@@ -191,7 +191,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     const attestationOutput = attestationResult.status === 0 && attestationResult.stdout ? JSON.parse(attestationResult.stdout) : null;
     if (
       attestationResult.error
-      || !String(attestationOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs1.")
+      || !String(attestationOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs2.")
       || attestationOutput.hookSpecificOutput.updatedInput.taskId !== "clean-room-task"
     ) {
       throw new Error(`host attestation hook failed its node_modules-free smoke check.\n${attestationResult.stderr ?? ""}`);
@@ -205,7 +205,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     if (
       sessionStart.error || sessionStart.status !== 0 || sessionStart.stdout !== ""
       || interactive.error
-      || !String(interactiveOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs1.")
+      || !String(interactiveOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs2.")
     ) {
       throw new Error(`host attestation hook failed its interactive-session smoke check.\n${sessionStart.stderr ?? ""}${interactive.stderr ?? ""}`);
     }
@@ -221,7 +221,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     }), ["--host=codex"]);
     const codexOutput = codexHook.status === 0 && codexHook.stdout ? JSON.parse(codexHook.stdout) : null;
     if (codexHook.error || Object.hasOwn(codexOutput?.hookSpecificOutput ?? {}, "permissionDecision")
-      || !String(codexOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs1.")) {
+      || !String(codexOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs2.")) {
       throw new Error(`host attestation hook failed its Codex fixture smoke check.\n${codexHook.stderr ?? ""}`);
     }
 
@@ -233,7 +233,7 @@ try {
     () => ({ model: "gpt-6-astra", reasoningEffort: "high", actorId: hostActorId("codex", "wrapper-session"),
       sessionId: "wrapper-session", turnId: "wrapper-turn", toolUseId: "wrapper-call" }),
     (input) => input);
-  if (!signed._hostAttestation?.startsWith("aghs1.")) throw new Error("Host wrapper observation missing");
+  if (!signed._hostAttestation?.startsWith("aghs2.")) throw new Error("Host wrapper observation missing");
   process.stdout.write("host-wrapper-fixture: ready");
 } finally { attestation.close(); }
 `, "utf8");

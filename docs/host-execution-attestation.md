@@ -2,6 +2,18 @@
 
 공통 `HostAttestationProvider`가 서명과 입력 digest를 검증하고, `WorkflowService`가 task/run/stage/revision, 유효기간, 한 번 소비와 실행 하한을 집행한다. 벤더별 adapter는 모델 정책과 실제 호스트 관측만 담당한다. `executionContext` caller JSON이나 설정 희망값은 관측을 대신하지 않는다.
 
+## 관측 서명과 실행 자격
+
+새로 발급하는 `_hostAttestation`은 `aghs2`의 v2 관측 token이다. 호스트가 확인한 raw model·effort·actor·session·turn·call과 정확한 도구 입력을 서명한다. 모델 이름의 catalog 등록 여부나 모델별 effort 하한은 관측 서명 발급 조건이 아니다. Codex decoder도 현재 session·turn·model·effort를 확인한 뒤 관측을 반환하며, capability가 없다는 이유만으로 관측을 폐기하지 않는다. 이 분리는 native actor 관측의 지원 범위나 권한을 확대하지 않는다.
+
+v2는 raw 관측과 별도로 `eligibility` snapshot 또는 `null`을 서명한다. 기존 trusted descriptor가 있고 관측한 effort가 기존 지원 목록·minimum을 충족할 때만 class·provider·resolved model·policy revision snapshot을 담는다. 조건이 충족되지 않아도 raw 관측 서명은 발급된다. 서버는 snapshot이 있어야 하며, 그 값들을 현재 trusted descriptor와 모두 대조한 뒤에만 실행 context를 만든다. 같은 revision 아래 class·provider·resolved model이 바뀌어도 기존 signed snapshot과 불일치하면 거부한다. workflow의 task/run/stage/revision 결속, freshness, 한 번 소비와 단계별 class·effort 하한 검사는 기존 경로에서 계속 집행한다. 유효한 관측 서명만으로 실행 자격을 얻지는 않는다.
+
+`policyRevision` 필드는 v2 서명 본문에 항상 있으며 실제 revision 문자열 또는 `null`이다. issuer는 설치된 adapter가 선언한 revision을 우선 사용하고, 선언이 없으면 기존 `resolveAdapterModelCapability`가 반환한 effective revision을 사용한다. 여기에는 기존 trusted `modelClassForModel` mapping이 승인한 legacy capability의 `1.0.0`도 포함된다. 선언 revision과 capability가 모두 없으면 `null`을 서명하므로 관측 token은 발급되지만 실행 자격은 거부된다. unknown 모델에 새 기본 revision을 만들거나 서버의 현재 revision으로 보충하지 않는다. 선언 revision과 현재 descriptor revision이 서로 달라도 실행을 거부한다.
+
+기존 `aghs1` v1 token은 원래 class·정책 결속 검증을 그대로 받는다. v1의 필수 class를 선택 항목으로 바꾸지 않는다. 두 버전은 기존 서명 키와 host/session/agent/turn/call 범위의 동일 observation ID 및 한 번 소비 원장을 공유한다. 같은 호출을 버전만 바꾸어 다시 소비할 수 없으며 새 키·DB·issuer·capability registry는 추가하지 않는다.
+
+기본 hook의 named adapter와 서버의 기본 adapter map은 같은 설치물의 기존 `defaultSuite` 정책을 사용한다. 이 변경은 새 capability 공급자를 등록하지 않는다. 기존 승인 family/alias 정책으로 새 raw identifier를 해석하거나 이미 신뢰된 resolver가 동등 descriptor를 제공하면 별도 이름 등록 조건 없이 소비할 수 있다. 현재 기본 catalog에서 해석되지 않고 별도 권위 descriptor도 없는 모델은 관측 token이 있어도 실행을 거부한다. 그 경우를 지원 완료로 표시하지 않는다.
+
 ## 배포물의 연결
 
 | 경로 | 관측과 선택 | 한계 |
@@ -21,7 +33,7 @@ Codex adapter는 첫 256 KiB에서 `session_meta.id`를, 마지막 8 MiB에서 �
 
 Codex subagent Hook의 session ID는 parent일 수 있다. `agent_id`, subagent metadata 또는 session/turn 불일치를 발견하면 parent의 모델·effort를 빌려 쓰지 않는다. 현재 adapter는 독립된 child 신원을 증명하지 못하는 subagent 경로를 지원 완료로 표시하지 않는다.
 
-모델 class는 추론이 아닌 명시적 제품 정책이다. Codex adapter는 기존 preset의 `gpt-6-astra=frontier`, `gpt-5.6-sol=deep`, `gpt-5.6-terra=general`, `gpt-5.6-luna=lightweight`를 사용한다. 이번 지원 정책은 host tool metadata의 workhorse/easier-task 역할 설명을 근거로 `gpt-6-sol=general`, `gpt-6-luna=lightweight`를 보수적으로 추가한다. 이는 품질 실측이나 5.6 후계 등급의 자동 복제가 아니다. `deep` 이상을 요구하는 단계는 Sol에서 거절되며 이를 통과시키려고 관측값이나 정책 하한을 높이거나 낮추지 않는다. 정확한 ID 외의 알 수 없는 모델은 `host-model-policy-unsupported`다. Claude의 Haiku/Sonnet/Opus/Fable mapping은 그대로 유지한다. Gemini adapter는 `flash-lite`=lightweight, `flash`=general, `pro`=deep, `ultra`=frontier 매핑을 적용한다. `reasoningEffort`가 없거나 지원 목록 밖이면 필수 관측 누락이며 다른 모델·턴의 값으로 보충하지 않는다.
+모델 class는 추론이 아닌 명시적 제품 정책이다. Codex adapter는 기존 preset의 `gpt-6-astra=frontier`, `gpt-5.6-sol=deep`, `gpt-5.6-terra=general`, `gpt-5.6-luna=lightweight`를 사용한다. 이번 지원 정책은 host tool metadata의 workhorse/easier-task 역할 설명을 근거로 `gpt-6-sol=general`, `gpt-6-luna=lightweight`를 보수적으로 추가한다. 이는 품질 실측이나 5.6 후계 등급의 자동 복제가 아니다. `deep` 이상을 요구하는 단계는 Sol에서 거절되며 이를 통과시키려고 관측값이나 정책 하한을 높이거나 낮추지 않는다. 정확한 ID 정책에서 해석되지 않는 모델은 기본 실행 자격을 얻지 못하지만, 확인된 raw 관측의 서명 자체를 막지는 않는다. Claude의 Haiku/Sonnet/Opus/Fable mapping은 그대로 유지한다. Gemini adapter는 `flash-lite`=lightweight, `flash`=general, `pro`=deep, `ultra`=frontier 매핑을 적용한다. `reasoningEffort`가 없거나 공통 enum 밖이면 필수 관측 누락이며 다른 모델·턴의 값으로 보충하지 않는다. 관측한 effort가 모델의 지원 목록이나 minimum을 충족하지 않으면 서버가 실행 자격을 거부한다.
 
 ## Hook 없는 호스트
 
