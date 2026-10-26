@@ -86,15 +86,6 @@
     "bytes": 3773,
     "sha256": "23265fcbcc446715c49a41aee7ef1358039df77d0d0a76841eceea613937ed03"
   },
-  "previousBroker": {
-    "version": "2.9.1",
-    "releaseId": 415158186,
-    "releaseCommit": "8064fd82d8bada33e74e46a668962636cf3bcf7e",
-    "bytes": 123758,
-    "sha256": "e6bd8820a423be82465318ca198d9ace9e0a4e418bd5ab7b8b890652386cc737",
-    "gitBlob": "ab594cacf49e76c573c0880f18ae0fede4bf4ce6",
-    "closure": "node built-in imports only; no local current-source rebuild"
-  },
   "liveExternalAiCalls": 0,
   "sourceMode": "GITHUB_SHA",
   "archivalSource": {

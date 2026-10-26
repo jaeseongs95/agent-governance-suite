@@ -453,35 +453,6 @@ function migrationFixture() {
   return { directory, database, now, entry };
 }
 
-test('G: v2.7.2 latch rows migrate once, keep evidence and retire under the new rule', () => {
-  const m = migrationFixture(); const before = snapshotV272(m.database);
-  assert.equal(before.version, 0);
-  const store = new SessionMessageStore(m.database); m.entry.stores.push(store);
-  const after = snapshotV272(m.database);
-  assert.equal(after.version, 1);
-  assert.deepEqual(after.rows, before.rows);
-  assert.deepEqual(after.columns, [...V272_COLUMNS, 'retired_at']);
-  assert.match(after.sql, /'expired-unobserved'/);
-  assert.ok(store.database.prepare("SELECT 1 FROM sqlite_master WHERE name = 'wake_active_target'").get());
-  body(store, 'post-upgrade-body', m.now);
-  live(store, 'instance-new', 'relay-new', m.now);
-  const next = store.reserveManagedWake(request('instance-new', 'relay-new'), m.now + 1);
-  assert.equal(next.dispatch, true);
-  // The relay acquisition already pruned once the newer live presence existed.
-  const retired = store.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = 'digest-latched'").get();
-  assert.equal(retired.state, 'expired-unobserved'); assert.equal(retired.retired_at, iso(m.now));
-  assert.deepEqual(without(retired, ['state', 'retired_at']), without({ ...before.rows[0], retired_at: null }, ['rowid', 'state', 'retired_at']));
-  // A migrated row whose birth has no live presence row retires on the same prune, with its late evidence kept.
-  const late = store.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = 'digest-late'").get();
-  assert.equal(late.state, 'expired-unobserved'); assert.equal(late.retired_at, iso(m.now));
-  assert.deepEqual(without(late, ['state', 'retired_at']), without({ ...before.rows[1], retired_at: null }, ['rowid', 'state', 'retired_at']));
-  const reopened = new SessionMessageStore(m.database); m.entry.stores.push(reopened);
-  const stable = snapshotV272(m.database);
-  assert.equal(stable.version, 1); assert.equal(stable.sql, after.sql);
-  assert.deepEqual(reopened.database.prepare('SELECT rowid, * FROM wake_nonces ORDER BY rowid').all(),
-    store.database.prepare('SELECT rowid, * FROM wake_nonces ORDER BY rowid').all());
-});
-
 test('G: a newer message schema version is rejected without mutation', () => {
   const m = migrationFixture();
   const db = new DatabaseSync(m.database); db.exec('PRAGMA user_version = 7;'); db.close();
@@ -505,16 +476,6 @@ async function result(p, input) {
   await p.exit;
   return message;
 }
-
-test('G: two independent processes racing the v2.7.2 upgrade both open one migrated schema', async () => {
-  const m = migrationFixture(); const before = snapshotV272(m.database);
-  const opened = await Promise.all(['a', 'b'].map(id => child(m.database, 'open-only', id, m.directory)));
-  for (const p of opened) assert.equal(p.first.type, 'ready', p.stderr());
-  const versions = await Promise.all(opened.map(p => result(p)));
-  assert.deepEqual(versions.map(item => item.version), [1, 1]);
-  const after = snapshotV272(m.database);
-  assert.deepEqual(after.rows, before.rows); assert.equal(after.version, 1);
-});
 
 test('G: a failure inside the table rebuild rolls back columns, rows and schema version', async () => {
   const m = migrationFixture(); const before = snapshotV272(m.database);

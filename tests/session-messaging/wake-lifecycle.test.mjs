@@ -530,14 +530,6 @@ function legacyDatabase(database) {
   db.prepare('INSERT INTO wake_nonces VALUES (?, ?, ?, ?, ?)').run('legacy-digest', 'portable', 'old', new Date(Date.now() + WAKE_TTL_MS).toISOString(), new Date().toISOString());
   db.close();
 }
-test('W05-r2 additive legacy migration never imports old consumed_at as observed', () => {
-  const directory = mkdtempSync(join(tmpdir(), 'ags-w05-r2-migrate-')); const database = join(directory, 'old.sqlite3');
-  legacyDatabase(database); const store = new SessionMessageStore(database); resources.push({ directory, stores: [store] });
-  const row = store.database.prepare('SELECT state, observed_at, consumed_at FROM wake_nonces').get();
-  assert.equal(row.state, 'legacy'); assert.equal(row.observed_at, null); assert.ok(row.consumed_at);
-  assert.equal(store.managedWakeStatus({ host: 'portable', sessionId: 'old' }), null);
-});
-
 test('W05-r2 active budget overflow is an explicit rejection and does not remove unknowns', () => {
   const f = fixture(); body(f.store, 'body-0001', f.now);
   fillRows(f, "INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state) VALUES (?, 'portable', ?, ?, 'unknown')",

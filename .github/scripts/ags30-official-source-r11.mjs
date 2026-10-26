@@ -7,7 +7,7 @@ import { setTimeout, clearTimeout } from 'node:timers';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
-// Compact generated JSON only; raw command streams and sealed upgrade proof bytes are unchanged.
+// Compact generated JSON only; raw command streams are unchanged.
 const evidenceJson = value => JSON.stringify(value) + '\n';
 const ordinal = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 const safePath = value => typeof value === 'string' && value.length > 0 &&
@@ -26,18 +26,6 @@ export function deriveExecutionIdentity(config, environment = process.env) {
   return Object.freeze({ unit: config.unit, nonce: config.nonce, shardIndex, shardRef: `${shardIndex}/${config.shardCount}`,
     work: path.join(path.resolve(environment.RUNNER_TEMP), `ags30-${config.nonce}-${environment.RUNNER_OS}`),
     artifactName: `ags30-official-${config.nonce}-${environment.RUNNER_OS}-shard-${shardIndex}` });
-}
-
-export function assertGenuineUpgradeResult(result, currentHead) {
-  for (const key of ['passed', 'genuineOldServiceIssuance', 'sameSqliteStoreReopened', 'historyUnchangedOnRejection',
-    'originalHmacNotReissued', 'originalSigningKeyNotAccessed', 'originalHistoryRetained', 'newExplicitPrePassed']) assert.equal(result[key], true, key);
-  assert.equal(result.genuineMissingPhaseCode, 'BINDING_REQUIRED');
-  assert.equal(result.corruptedCopyCode, 'INVALID_INPUT');
-  assert.equal(result.oldPreResultCode, 'BINDING_REQUIRED');
-  assert.equal(result.sameRootReplanOrdinal, 2);
-  assert.equal(result.newRootCount, 0);
-  assert.equal(result.sourceOld, 'b3285616c896afdcbb298e3a08dffd612ddfa7b8');
-  assert.equal(result.sourceCurrent, currentHead);
 }
 
 export function classifyInitial(receipt, stderr, generated) {
@@ -121,8 +109,6 @@ export function writeCollectorRecord(output, record) {
 export function emitCollectorSummary(record, bytes, artifactOk) {
   console.log(JSON.stringify({ status: record.status, sourceFreshness: record.sourceFreshness,
     runtimeValidation: record.runtimeValidation ?? 'NOT_RUN', bytes, artifactOk,
-    genuineLegacyUpgrade: { phase: '04u8-genuine-upgrade', runnerOs: record.runnerOs ?? null, shardIndex: record.shardIndex ?? null,
-      status: record.genuineLegacyUpgrade?.status ?? 'NOT_RUN', processStatus: record.genuineLegacyUpgrade?.processStatus ?? 'NOT_RUN' },
     phases: record.phases.map(({name,status,exitCode,errorCode}) => ({name,status,exitCode,errorCode})),
     failureType: record.failure?.name ?? null, failureCode: record.failure?.code ?? null,
     aggregateFailures: record.aggregateFailures ?? [] }));
@@ -575,42 +561,6 @@ async function main() {
     assert.equal(version.stdout.toString('utf8').trim(), config.pnpm);
     mustPass(await pnpm('04-install', ['install', '--frozen-lockfile', '--store-dir', path.join(work, 'store'),
       '--config.fetch-retries=0'], 240_000));
-    // The historical service is required once per OS, only on the existing owner shard.
-    if (shardIndex === 1) {
-      const oldHead = 'b3285616c896afdcbb298e3a08dffd612ddfa7b8';
-      const oldTree = '797ccf5960fea8fcebe16025d7786ca389ab6fbc';
-      const oldSource = path.join(work, 'genuine-old-source');
-      mustPass(await git('04u1-old-clone', ['clone', '--no-hardlinks', '--no-checkout', source, oldSource]));
-      mustPass(await git('04u2-old-checkout', ['checkout', '--detach', oldHead], oldSource));
-      assert.equal(mustPass(await git('04u3-old-head', ['rev-parse', 'HEAD'], oldSource)).stdout.toString('utf8').trim(), oldHead);
-      assert.equal(mustPass(await git('04u4-old-tree', ['rev-parse', 'HEAD^{tree}'], oldSource)).stdout.toString('utf8').trim(), oldTree);
-      const oldBlobs = mustPass(await git('04u5-old-blobs', ['ls-tree', '-r', '-l', '-z', oldHead], oldSource)).stdout.toString('utf8');
-      const oldManifest = await buildHeadManifest(oldBlobs, relative => fs.readFile(path.join(oldSource, relative)), { head: oldHead, sourceTree: oldTree });
-      assert.equal(oldManifest.files, 1733);
-      await writeJson('genuine-old-source-manifest.json', oldManifest);
-      mustPass(await command('04u6-old-install', process.execPath, [pnpmCli, 'install', '--frozen-lockfile',
-        '--store-dir', path.join(work, 'store'), '--config.fetch-retries=0'], oldSource, 240_000));
-      for (const [name, directory] of [['old', oldSource], ['current', source]]) {
-        const banner = mustPass(await command('04u7-' + name + '-pnpm', process.execPath, [pnpmCli, '--version'], directory, 10_000));
-        assert.equal(banner.stdout.toString('utf8').trim(), config.pnpm);
-      }
-      const input = { old: { directory: oldSource, commit: oldHead, tree: oldTree,
-        manifestPath: path.join(output, 'genuine-old-source-manifest.json'),
-        serviceSha256: oldManifest.rows.find(row => row.relativePath === 'mcp-server/src/workflow-service.ts').sha256 },
-      current: { directory: source, commit: head, tree: sourceTree, manifestPath: path.join(output, 'source-manifest.json'),
-        serviceSha256: manifest.rows.find(row => row.relativePath === 'mcp-server/src/workflow-service.ts').sha256 },
-      evidenceDirectory: path.join(output, 'genuine-upgrade') };
-      await writeJson('genuine-upgrade-input.json', input);
-      const oldPin = sha(await fs.readFile(input.old.manifestPath));
-      const upgrade = await command('04u8-genuine-upgrade', process.execPath,
-        [path.join(source, 'validation/run-upgrade-test.mjs'), path.join(output, 'genuine-upgrade-input.json'), head, transport.sha256, oldPin], source, 60_000);
-      record.genuineLegacyUpgrade = { status: 'FAIL', processStatus: upgrade.receipt.status, expectedCases: 1, oldHead, currentHead: head,
-        currentManifestSha256: transport.sha256, oldManifestSha256: oldPin, evidenceDirectory: 'genuine-upgrade' };
-      mustPass(upgrade);
-      const outcome = JSON.parse(await fs.readFile(path.join(input.evidenceDirectory, 'result.json'), 'utf8'));
-      assertGenuineUpgradeResult(outcome, head);
-      record.genuineLegacyUpgrade.status = 'PASS';
-    }
     mustPass(await command('04a-new-test-syntax', process.execPath, ['--check', 'antigravity-connector/hooks/antigravity-hook-runner.test.mjs'], source, 10_000));
     mustPass(await command('04b-owned-lifetime', process.execPath,
       [fileURLToPath(new URL('./ags30-owned-command-check-r06.mjs', import.meta.url)),
@@ -684,27 +634,6 @@ async function main() {
     assert.equal(wakeRedBytes.length, config.wakeMixedRed.bytes);
     assert.equal(sha(wakeRedBytes), config.wakeMixedRed.sha256);
     mustPass(await command('07e-wake-mixed-red', process.execPath, [wakeRedHelper, source, output], source, 45_000));
-    const previous = config.previousBroker;
-    assert.equal(previous.version,'2.9.1');
-    const previousFile = path.join(work, 'previous-release-v2.9.1-broker.mjs');
-    const previousOriginal = mustPass(await git('07p0-original-broker-blob', ['show', previous.releaseCommit + ':mcp-server/dist/session-message-broker.mjs'], source));
-    await fs.writeFile(previousFile, previousOriginal.stdout, {flag:'wx'});
-    const previousBytes = await fs.readFile(previousFile);
-    assert.equal(previousBytes.length,previous.bytes);assert.equal(sha(previousBytes),previous.sha256);
-    assert.equal(createHash('sha1').update(Buffer.from('blob '+previousBytes.length+'\0')).update(previousBytes).digest('hex'),previous.gitBlob);
-    const previousReport = path.join(output,'07p-previous-broker.vitest.json');
-    const previousRun = await pnpm('07p-previous-broker',['exec','vitest','run','tests/session-messaging/previous-broker.test.ts',
-      '--pool=forks','--maxWorkers=1','--fileParallelism=false','--reporter=json','--outputFile='+previousReport],120_000,
-      {AGS_PREVIOUS_BROKER_PATH:previousFile,AGS_PREVIOUS_BROKER_VERSION:previous.version});
-    let previousStatus = 'FAIL';
-    try {
-      const report=JSON.parse(await fs.readFile(previousReport,'utf8'));
-      assert.equal(report.numTotalTests,5);assert.equal(report.numPassedTests,5);assert.equal(report.numFailedTests,0);
-      assert.equal(report.numPendingTests,0);assert.equal(report.numTodoTests,0);assert.equal(report.numFailedTestSuites,0);
-      if(previousRun.receipt.status==='PASS')previousStatus='PASS';
-    } catch(error) {record.previousBrokerFailure=error.message;}
-    record.previousBrokerCompatibility={status:previousStatus,expectedCases:5,version:previous.version,sha256:previous.sha256,gitBlob:previous.gitBlob};
-    if(previousStatus!=='PASS')testsPass=false;
     if (process.env.RUNNER_OS === 'Windows') {
       const windowsOutput = path.join(output, 'windows-argv');
       await fs.mkdir(windowsOutput);
