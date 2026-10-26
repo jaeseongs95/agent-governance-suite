@@ -137,6 +137,25 @@ import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "n
 import path6 from "node:path";
 
 // mcp-server/src/host-input-adapter.ts
+import { AsyncLocalStorage } from "node:async_hooks";
+
+// contracts/types.ts
+var CONTRACT_VERSION = "1.0.0";
+var WorkflowContractError = class extends Error {
+  constructor(code, message, details = null) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    this.name = "WorkflowContractError";
+  }
+  code;
+  details;
+  toBody() {
+    return { code: this.code, message: this.message, details: this.details };
+  }
+};
+
+// mcp-server/src/host-input-adapter.ts
 import { types as utilTypes2 } from "node:util";
 var hostFailures = {
   selection: ["INVALID_HOOK_HOST_SELECTION", "Invalid or ambiguous hook host."],
@@ -163,9 +182,17 @@ function resolveHookHost(arguments_, fallback) {
   return selected[0];
 }
 function adaptHostInput(input, host) {
-  const adapter = hookHostAdapters.get(host);
+  const adapter = selectedHookHostAdapter(host);
   if (!adapter) throw hookHostFailure("unavailable");
-  return adapter.adaptInput?.(input, host) ?? {
+  const call = callHostAdapter.getStore();
+  if (call?.adapted) {
+    const toolInput = Object.getOwnPropertyDescriptor(input, "tool_input")?.value;
+    if (!toolInput || typeof toolInput !== "object" || Array.isArray(toolInput)) {
+      throw new WorkflowContractError("BINDING_REQUIRED", "Canonical hook arguments unavailable.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
+    }
+    return { ...call.adapted, observation: { ...call.adapted.observation, toolInput } };
+  }
+  const adapted = adapter.adaptInput?.(input, host) ?? {
     lifecycle: "none",
     outputEventName: "",
     observation: {
@@ -175,9 +202,17 @@ function adaptHostInput(input, host) {
       actor: { role: "indeterminate", basis: "unavailable", reasonCode: "HOST_ACTOR_OBSERVATION_UNAVAILABLE" }
     }
   };
+  if (!call) return adapted;
+  if (adapted.observation.host !== host) {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host observation differs from its selected composition.", { reasonCode: "HOST_HOOK_OBSERVATION_MISMATCH" });
+  }
+  const actor = adapted.observation.actor;
+  const snapshotActor = actorAccess(actor).allowed ? Object.freeze({ role: actor.role, basis: actor.basis, reasonCode: actor.reasonCode }) : actor;
+  call.adapted = Object.freeze({ ...adapted, observation: Object.freeze({ ...adapted.observation, actor: snapshotActor }) });
+  return call.adapted;
 }
 function isGovernanceHookTool(host, toolName) {
-  return hookHostAdapters.get(host)?.ownsTool?.(toolName) === true;
+  return selectedHookHostAdapter(host)?.ownsTool?.(toolName) === true;
 }
 var hookHostAdapters = /* @__PURE__ */ new Map();
 function registerHookHostAdapter(host, adapter) {
@@ -185,8 +220,17 @@ function registerHookHostAdapter(host, adapter) {
   if (hookHostAdapters.has(host)) throw hookHostFailure("duplicate");
   hookHostAdapters.set(host, Object.freeze({ ...adapter }));
 }
+var callHostAdapter = new AsyncLocalStorage();
+function selectedHookHostAdapter(host) {
+  const call = callHostAdapter.getStore();
+  if (!call) return hookHostAdapters.get(host);
+  if (!call.active || call.host !== host) {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host hook composition is inactive or has a different host.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
+  }
+  return call.adapter;
+}
 function resolveHookProcessPid(host, explicitHostPid, hostProcess) {
-  const pid = hookHostAdapters.get(host)?.processPid(explicitHostPid, hostProcess);
+  const pid = selectedHookHostAdapter(host)?.processPid(explicitHostPid, hostProcess);
   if (hostProcess && hostProcess.pid !== pid) return void 0;
   return pid;
 }
@@ -207,12 +251,12 @@ function hostDeliveryProfile(host, environment = process.env, diagnose = (reason
   }
   console.error(prefix + (detail ? " " + JSON.stringify(detail) : ""));
 }, defaultQueueWake = false) {
-  const adapter = hookHostAdapters.get(host);
+  const adapter = selectedHookHostAdapter(host);
   if (!adapter) throw hookHostFailure("unavailable");
   return adapter.deliveryProfile(environment, diagnose, defaultQueueWake);
 }
 function nativePeerWait(observation) {
-  return hookHostAdapters.get(observation.host)?.peerWait?.(observation) ?? null;
+  return selectedHookHostAdapter(observation.host)?.peerWait?.(observation) ?? null;
 }
 
 // mcp-server/src/session-message-client.ts
@@ -1158,22 +1202,6 @@ import { types as utilTypes4 } from "node:util";
 import { chmodSync, mkdirSync } from "node:fs";
 import path4 from "node:path";
 import { DatabaseSync } from "node:sqlite";
-
-// contracts/types.ts
-var CONTRACT_VERSION = "1.0.0";
-var WorkflowContractError = class extends Error {
-  constructor(code, message, details = null) {
-    super(message);
-    this.code = code;
-    this.details = details;
-    this.name = "WorkflowContractError";
-  }
-  code;
-  details;
-  toBody() {
-    return { code: this.code, message: this.message, details: this.details };
-  }
-};
 
 // mcp-server/src/workspace-identity.ts
 var SEGMENT_SEPARATOR = process.platform === "win32" ? /[\\/]/u : /\//u;

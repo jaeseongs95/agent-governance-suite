@@ -1,6 +1,8 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+import { WorkflowContractError } from "../../contracts/types.js";
 import { types as utilTypes } from "node:util";
 import { hookFailure, hookFailureContext, hookFailureReason } from "./hook-error-diagnostics.js";
-import type { DeliveryCapabilities, InputObservation } from "./input-observation.js";
+import { actorAccess, type DeliveryCapabilities, type InputObservation } from "./input-observation.js";
 import type { SessionMessageTransport } from "./session-message-relay.js";
 
 const hostFailures = {
@@ -43,18 +45,37 @@ export interface AdaptedHostInput {
 
 /** No host payload schema or actor convention is assumed by the common hook layer. */
 export function adaptHostInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
-  const adapter = hookHostAdapters.get(host);
+  const adapter = selectedHookHostAdapter(host);
   if (!adapter) throw hookHostFailure("unavailable");
-  return adapter.adaptInput?.(input, host) ?? {
+  const call = callHostAdapter.getStore();
+  if (call?.adapted) {
+    // Only the core supplies this own canonical record after the one host-schema translation.
+    const toolInput: unknown = Object.getOwnPropertyDescriptor(input, "tool_input")?.value;
+    if (!toolInput || typeof toolInput !== "object" || Array.isArray(toolInput)) {
+      throw new WorkflowContractError("BINDING_REQUIRED", "Canonical hook arguments unavailable.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
+    }
+    return { ...call.adapted, observation: { ...call.adapted.observation, toolInput: toolInput as Record<string, unknown> } };
+  }
+  const adapted = adapter.adaptInput?.(input, host) ?? {
     lifecycle: "none", outputEventName: "",
     observation: { host, sessionId: "", kind: "unknown",
       actor: { role: "indeterminate", basis: "unavailable", reasonCode: "HOST_ACTOR_OBSERVATION_UNAVAILABLE" } },
-  };
+  } satisfies AdaptedHostInput;
+  if (!call) return adapted;
+  if (adapted.observation.host !== host) {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host observation differs from its selected composition.", { reasonCode: "HOST_HOOK_OBSERVATION_MISMATCH" });
+  }
+  const actor = adapted.observation.actor;
+  // Never turn rejected getter/proxy actor fields into accepted plain data while snapshotting.
+  const snapshotActor = actorAccess(actor).allowed
+    ? Object.freeze({ role: actor.role, basis: actor.basis, reasonCode: actor.reasonCode }) : actor;
+  call.adapted = Object.freeze({ ...adapted, observation: Object.freeze({ ...adapted.observation, actor: snapshotActor }) });
+  return call.adapted;
 }
 
 /** Tool ownership is configured at the adapter boundary, never inferred from a local suffix. */
 export function isGovernanceHookTool(host: string, toolName: string): boolean {
-  return hookHostAdapters.get(host)?.ownsTool?.(toolName) === true;
+  return selectedHookHostAdapter(host)?.ownsTool?.(toolName) === true;
 }
 
 export interface HostDeliveryProfile {
@@ -100,12 +121,50 @@ export function registerHookHostAdapter(host: string, adapter: HookHostAdapter):
   hookHostAdapters.set(host, Object.freeze({ ...adapter }));
 }
 
+function snapshotHookHostAdapter(host: string, adapter: HookHostAdapter): Readonly<HookHostAdapter> {
+  const { adaptInput, ownsTool, deliveryProfile, processPid, attestationKind, peerWait } = adapter ?? {};
+  if (typeof host !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host)
+    || typeof deliveryProfile !== "function" || typeof processPid !== "function"
+    || (adaptInput !== undefined && typeof adaptInput !== "function")
+    || (ownsTool !== undefined && typeof ownsTool !== "function")
+    || (peerWait !== undefined && typeof peerWait !== "function")
+    || (attestationKind !== undefined && (typeof attestationKind !== "string"
+      || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(attestationKind)))) {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host hook composition unavailable.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
+  }
+  // Freeze selection, not producer state; prototype/private-state methods retain their original receiver.
+  return Object.freeze({ deliveryProfile: deliveryProfile.bind(adapter), processPid: processPid.bind(adapter),
+    ...(adaptInput ? { adaptInput: adaptInput.bind(adapter) } : {}), ...(ownsTool ? { ownsTool: ownsTool.bind(adapter) } : {}),
+    ...(attestationKind === undefined ? {} : { attestationKind }), ...(peerWait ? { peerWait: peerWait.bind(adapter) } : {}) });
+}
+
+const callHostAdapter = new AsyncLocalStorage<{ host: string; adapter: Readonly<HookHostAdapter>; active: boolean; adapted?: AdaptedHostInput }>();
+
+function selectedHookHostAdapter(host: string): Readonly<HookHostAdapter> | undefined {
+  const call = callHostAdapter.getStore();
+  if (!call) return hookHostAdapters.get(host);
+  if (!call.active || call.host !== host) {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host hook composition is inactive or has a different host.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
+  }
+  return call.adapter;
+}
+
+/** One governance call/event only; nested domain hooks reuse its translation and cleaned canonical arguments. */
+export async function withHookHostAdapter<T>(host: string, adapter: HookHostAdapter,
+  run: (snapshot: Readonly<HookHostAdapter>) => Promise<T>): Promise<T> {
+  const call = { host, adapter: snapshotHookHostAdapter(host, adapter), active: true };
+  return callHostAdapter.run(call, async () => {
+    try { return await run(call.adapter); }
+    finally { call.active = false; }
+  });
+}
+
 export function hookAttestationKind(host: string): HookHostAdapter["attestationKind"] {
-  return hookHostAdapters.get(host)?.attestationKind;
+  return selectedHookHostAdapter(host)?.attestationKind;
 }
 
 export function resolveHookProcessPid(host: string, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>): number | undefined {
-  const pid = hookHostAdapters.get(host)?.processPid(explicitHostPid, hostProcess);
+  const pid = selectedHookHostAdapter(host)?.processPid(explicitHostPid, hostProcess);
   if (hostProcess && hostProcess.pid !== pid) return undefined;
   return pid;
 }
@@ -128,11 +187,11 @@ export function hostDeliveryProfile(host: string, environment: NodeJS.ProcessEnv
     } catch { /* Opaque observations cannot supply producer diagnostics. */ }
     console.error(prefix + (detail ? " " + JSON.stringify(detail) : ""));
   }, defaultQueueWake = false): HostDeliveryProfile {
-  const adapter = hookHostAdapters.get(host);
+  const adapter = selectedHookHostAdapter(host);
   if (!adapter) throw hookHostFailure("unavailable");
   return adapter.deliveryProfile(environment, diagnose, defaultQueueWake);
 }
 
 export function nativePeerWait(observation: InputObservation): NativePeerWaitObservation | null {
-  return hookHostAdapters.get(observation.host)?.peerWait?.(observation) ?? null;
+  return selectedHookHostAdapter(observation.host)?.peerWait?.(observation) ?? null;
 }

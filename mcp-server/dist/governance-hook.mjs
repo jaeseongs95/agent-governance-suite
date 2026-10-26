@@ -125,7 +125,49 @@ import { closeSync, constants, fstatSync, openSync, readSync, statSync as statSy
 import path8 from "node:path";
 
 // mcp-server/src/host-input-adapter.ts
+import { AsyncLocalStorage } from "node:async_hooks";
+
+// contracts/types.ts
+var CONTRACT_VERSION = "1.0.0";
+var MODEL_CLASS = ["lightweight", "general", "deep", "frontier"];
+var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
+var WorkflowContractError = class extends Error {
+  constructor(code, message, details = null) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    this.name = "WorkflowContractError";
+  }
+  code;
+  details;
+  toBody() {
+    return { code: this.code, message: this.message, details: this.details };
+  }
+};
+
+// mcp-server/src/host-input-adapter.ts
+import { types as utilTypes2 } from "node:util";
+
+// mcp-server/src/input-observation.ts
 import { types as utilTypes } from "node:util";
+function supportsInjection(capabilities, kind) {
+  return capabilities.supportedInjection.includes(kind);
+}
+function actorAccess(actor) {
+  const invalid2 = { allowed: false, reasonCode: "ACTOR_OBSERVATION_INVALID" };
+  if (!actor || typeof actor !== "object" || utilTypes.isProxy(actor) || Array.isArray(actor)) return invalid2;
+  try {
+    const role = Object.getOwnPropertyDescriptor(actor, "role")?.value;
+    const basis = Object.getOwnPropertyDescriptor(actor, "basis")?.value;
+    const reasonCode = Object.getOwnPropertyDescriptor(actor, "reasonCode")?.value;
+    if (role !== "root" && role !== "child" && role !== "indeterminate" || basis !== "observed" && basis !== "inferred" && basis !== "unavailable" || typeof reasonCode !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(reasonCode)) return invalid2;
+    return { allowed: role === "root" && (basis === "observed" || basis === "inferred"), reasonCode };
+  } catch {
+    return invalid2;
+  }
+}
+
+// mcp-server/src/host-input-adapter.ts
 var hostFailures = {
   selection: ["INVALID_HOOK_HOST_SELECTION", "Invalid or ambiguous hook host."],
   adapter: ["INVALID_HOOK_HOST_ADAPTER", "Invalid hook host adapter."],
@@ -151,9 +193,17 @@ function resolveHookHost(arguments_, fallback) {
   return selected[0];
 }
 function adaptHostInput(input2, host) {
-  const adapter = hookHostAdapters.get(host);
+  const adapter = selectedHookHostAdapter(host);
   if (!adapter) throw hookHostFailure("unavailable");
-  return adapter.adaptInput?.(input2, host) ?? {
+  const call = callHostAdapter.getStore();
+  if (call?.adapted) {
+    const toolInput = Object.getOwnPropertyDescriptor(input2, "tool_input")?.value;
+    if (!toolInput || typeof toolInput !== "object" || Array.isArray(toolInput)) {
+      throw new WorkflowContractError("BINDING_REQUIRED", "Canonical hook arguments unavailable.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
+    }
+    return { ...call.adapted, observation: { ...call.adapted.observation, toolInput } };
+  }
+  const adapted = adapter.adaptInput?.(input2, host) ?? {
     lifecycle: "none",
     outputEventName: "",
     observation: {
@@ -163,9 +213,17 @@ function adaptHostInput(input2, host) {
       actor: { role: "indeterminate", basis: "unavailable", reasonCode: "HOST_ACTOR_OBSERVATION_UNAVAILABLE" }
     }
   };
+  if (!call) return adapted;
+  if (adapted.observation.host !== host) {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host observation differs from its selected composition.", { reasonCode: "HOST_HOOK_OBSERVATION_MISMATCH" });
+  }
+  const actor = adapted.observation.actor;
+  const snapshotActor = actorAccess(actor).allowed ? Object.freeze({ role: actor.role, basis: actor.basis, reasonCode: actor.reasonCode }) : actor;
+  call.adapted = Object.freeze({ ...adapted, observation: Object.freeze({ ...adapted.observation, actor: snapshotActor }) });
+  return call.adapted;
 }
 function isGovernanceHookTool(host, toolName) {
-  return hookHostAdapters.get(host)?.ownsTool?.(toolName) === true;
+  return selectedHookHostAdapter(host)?.ownsTool?.(toolName) === true;
 }
 var hookHostAdapters = /* @__PURE__ */ new Map();
 function registerHookHostAdapter(host, adapter) {
@@ -173,11 +231,44 @@ function registerHookHostAdapter(host, adapter) {
   if (hookHostAdapters.has(host)) throw hookHostFailure("duplicate");
   hookHostAdapters.set(host, Object.freeze({ ...adapter }));
 }
+function snapshotHookHostAdapter(host, adapter) {
+  const { adaptInput, ownsTool, deliveryProfile: deliveryProfile2, processPid, attestationKind, peerWait } = adapter ?? {};
+  if (typeof host !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host) || typeof deliveryProfile2 !== "function" || typeof processPid !== "function" || adaptInput !== void 0 && typeof adaptInput !== "function" || ownsTool !== void 0 && typeof ownsTool !== "function" || peerWait !== void 0 && typeof peerWait !== "function" || attestationKind !== void 0 && (typeof attestationKind !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(attestationKind))) {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host hook composition unavailable.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
+  }
+  return Object.freeze({
+    deliveryProfile: deliveryProfile2.bind(adapter),
+    processPid: processPid.bind(adapter),
+    ...adaptInput ? { adaptInput: adaptInput.bind(adapter) } : {},
+    ...ownsTool ? { ownsTool: ownsTool.bind(adapter) } : {},
+    ...attestationKind === void 0 ? {} : { attestationKind },
+    ...peerWait ? { peerWait: peerWait.bind(adapter) } : {}
+  });
+}
+var callHostAdapter = new AsyncLocalStorage();
+function selectedHookHostAdapter(host) {
+  const call = callHostAdapter.getStore();
+  if (!call) return hookHostAdapters.get(host);
+  if (!call.active || call.host !== host) {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host hook composition is inactive or has a different host.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
+  }
+  return call.adapter;
+}
+async function withHookHostAdapter(host, adapter, run) {
+  const call = { host, adapter: snapshotHookHostAdapter(host, adapter), active: true };
+  return callHostAdapter.run(call, async () => {
+    try {
+      return await run(call.adapter);
+    } finally {
+      call.active = false;
+    }
+  });
+}
 function hookAttestationKind(host) {
-  return hookHostAdapters.get(host)?.attestationKind;
+  return selectedHookHostAdapter(host)?.attestationKind;
 }
 function resolveHookProcessPid(host, explicitHostPid, hostProcess) {
-  const pid = hookHostAdapters.get(host)?.processPid(explicitHostPid, hostProcess);
+  const pid = selectedHookHostAdapter(host)?.processPid(explicitHostPid, hostProcess);
   if (hostProcess && hostProcess.pid !== pid) return void 0;
   return pid;
 }
@@ -185,7 +276,7 @@ function hostDeliveryProfile(host, environment = process.env, diagnose = (reason
   const prefix = "[agent-governance-suite] ".concat(host, " queue settings: ").concat(reason, ".");
   let detail = null;
   try {
-    if (observation && typeof observation === "object" && !utilTypes.isProxy(observation)) {
+    if (observation && typeof observation === "object" && !utilTypes2.isProxy(observation)) {
       const phase = Object.getOwnPropertyDescriptor(observation, "phase")?.value;
       const cleanup = Object.getOwnPropertyDescriptor(observation, "cleanup")?.value;
       const failure2 = Object.getOwnPropertyDescriptor(observation, "failure")?.value;
@@ -198,16 +289,16 @@ function hostDeliveryProfile(host, environment = process.env, diagnose = (reason
   }
   console.error(prefix + (detail ? " " + JSON.stringify(detail) : ""));
 }, defaultQueueWake = false) {
-  const adapter = hookHostAdapters.get(host);
+  const adapter = selectedHookHostAdapter(host);
   if (!adapter) throw hookHostFailure("unavailable");
   return adapter.deliveryProfile(environment, diagnose, defaultQueueWake);
 }
 function nativePeerWait(observation) {
-  return hookHostAdapters.get(observation.host)?.peerWait?.(observation) ?? null;
+  return selectedHookHostAdapter(observation.host)?.peerWait?.(observation) ?? null;
 }
 
 // mcp-server/src/session-message-client.ts
-import { types as utilTypes2 } from "node:util";
+import { types as utilTypes3 } from "node:util";
 import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
@@ -717,7 +808,7 @@ function deadlineError(message) {
   return tagProducerFailure(new Error(message), "BROKER_DEADLINE_EXPIRED");
 }
 function clientFailure(reason, message, cause) {
-  return utilTypes2.isNativeError(cause) ? tagProducerFailure(cause, reason) : retainFailureCause(tagProducerFailure(new Error(message), reason), cause);
+  return utilTypes3.isNativeError(cause) ? tagProducerFailure(cause, reason) : retainFailureCause(tagProducerFailure(new Error(message), reason), cause);
 }
 function signalError(signal) {
   return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : retainFailureCause(tagProducerFailure(new Error("The session message operation was aborted."), "BROKER_OPERATION_ABORTED"), signal.reason);
@@ -1214,49 +1305,12 @@ import { existsSync as existsSync3 } from "node:fs";
 import net from "node:net";
 import path7 from "node:path";
 
-// mcp-server/src/input-observation.ts
-import { types as utilTypes3 } from "node:util";
-function supportsInjection(capabilities, kind) {
-  return capabilities.supportedInjection.includes(kind);
-}
-function actorAccess(actor) {
-  const invalid2 = { allowed: false, reasonCode: "ACTOR_OBSERVATION_INVALID" };
-  if (!actor || typeof actor !== "object" || utilTypes3.isProxy(actor) || Array.isArray(actor)) return invalid2;
-  try {
-    const role = Object.getOwnPropertyDescriptor(actor, "role")?.value;
-    const basis = Object.getOwnPropertyDescriptor(actor, "basis")?.value;
-    const reasonCode = Object.getOwnPropertyDescriptor(actor, "reasonCode")?.value;
-    if (role !== "root" && role !== "child" && role !== "indeterminate" || basis !== "observed" && basis !== "inferred" && basis !== "unavailable" || typeof reasonCode !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(reasonCode)) return invalid2;
-    return { allowed: role === "root" && (basis === "observed" || basis === "inferred"), reasonCode };
-  } catch {
-    return invalid2;
-  }
-}
-
 // mcp-server/src/trust-store.ts
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { types as utilTypes4 } from "node:util";
 import { chmodSync, mkdirSync } from "node:fs";
 import path6 from "node:path";
 import { DatabaseSync } from "node:sqlite";
-
-// contracts/types.ts
-var CONTRACT_VERSION = "1.0.0";
-var MODEL_CLASS = ["lightweight", "general", "deep", "frontier"];
-var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
-var WorkflowContractError = class extends Error {
-  constructor(code, message, details = null) {
-    super(message);
-    this.code = code;
-    this.details = details;
-    this.name = "WorkflowContractError";
-  }
-  code;
-  details;
-  toBody() {
-    return { code: this.code, message: this.message, details: this.details };
-  }
-};
 
 // mcp-server/src/convergence-logic.ts
 import { createHash as createHash2 } from "node:crypto";
@@ -24421,8 +24475,15 @@ function registerHookAttestationStrategy(kind, strategy) {
   if (attestationStrategies.has(kind)) throw new Error("DUPLICATE_HOOK_ATTESTATION_STRATEGY");
   attestationStrategies.set(kind, Object.freeze({ ...strategy }));
 }
-function handleRegisteredHostAttestationHook(kind, input2, context) {
-  return attestationStrategies.get(kind)?.observe(input2, context) ?? withoutCallerAttestation(input2, context.host);
+function snapshotHookAttestationStrategy(kind, strategy) {
+  const { observe, unavailable } = strategy ?? {};
+  if (typeof kind !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(kind) || typeof observe !== "function" || unavailable !== void 0 && typeof unavailable !== "function") {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host attestation strategy unavailable.", { reasonCode: "HOST_ATTESTATION_STRATEGY_UNAVAILABLE" });
+  }
+  return Object.freeze({ observe: observe.bind(strategy), ...unavailable ? { unavailable: unavailable.bind(strategy) } : {} });
+}
+function handleRegisteredHostAttestationHook(kind, input2, context, strategy) {
+  return (strategy ?? attestationStrategies.get(kind))?.observe(input2, context) ?? withoutCallerAttestation(input2, context.host);
 }
 registerHookAttestationStrategy("claude-hook", {
   observe(input2, context) {
@@ -24515,60 +24576,108 @@ function record6(value) {
 function denied(reasonCode) {
   return { hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: reasonCode } };
 }
-async function runGovernanceHook(host, raw, environment = process.env, executionAdapters) {
+async function runGovernanceHook(host, raw, environment = process.env, executionAdapters, composition) {
   let store;
   let output2 = {};
   let failure2;
   let failed = false;
   try {
-    const input2 = record6(JSON.parse(raw));
-    const { observation } = adaptHostInput(input2, host);
-    const toolName = observation.toolName ?? "";
-    if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "before" || !isGovernanceHookTool(host, toolName)) {
-      return { ok: true, output: "" };
-    }
-    const access = actorAccess(observation.actor);
-    if (!access.allowed) return { ok: true, output: JSON.stringify(denied(access.reasonCode)) };
-    const tool = toolName.split("__").at(-1);
-    let args = withoutSessionProof(observation.toolInput ?? {});
-    if (Object.hasOwn(args, "_sessionBinding")) return { ok: true, output: JSON.stringify(denied("CALLER_SESSION_BINDING_REJECTED")) };
-    const currentInput = { ...input2, tool_input: args };
-    let domainOutput = null;
-    const databasePath = resolveWorkflowDatabasePath(environment);
-    store = new SqliteWorkflowStore(databasePath);
-    if (BOARD_TOOLS2.has(tool)) {
-      const encoded = await runSessionBoardHook(host, JSON.stringify(currentInput), void 0, true);
-      domainOutput = encoded ? record6(JSON.parse(encoded)) : {};
-    } else if (MESSAGE_TOOLS.has(tool)) {
-      domainOutput = await handleSessionMessageHook(currentInput, host);
-    } else if (CONTINUITY_TOOLS.has(tool)) {
-      const encoded = runContinuityHook(JSON.stringify(currentInput), environment, host, true);
-      domainOutput = encoded ? record6(JSON.parse(encoded)) : {};
-    } else if (HOST_ATTESTATION_TOOLS.has(tool)) {
-      const kind = hookAttestationKind(host);
-      if (!kind) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.");
-      const adapter = executionAdapters === void 0 ? void 0 : resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: host }, executionAdapters);
-      if (adapter === null) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.", {
-        reasonCode: "HOST_EXECUTION_ADAPTER_UNAVAILABLE"
-      });
-      domainOutput = handleRegisteredHostAttestationHook(kind, currentInput, { host, databasePath, ...adapter ? { adapter } : {}, openStore: () => store });
-    }
-    if (domainOutput) {
-      const specific = record6(domainOutput.hookSpecificOutput);
-      if (specific.permissionDecision === "deny") output2 = domainOutput;
-      else {
-        if (!specific.updatedInput || typeof specific.updatedInput !== "object" || Array.isArray(specific.updatedInput)) {
-          throw new WorkflowContractError("BINDING_REQUIRED", "The required domain hook did not complete.");
+    const execute = async (inputAdapter) => {
+      let selectedStrategy;
+      let selectedExecution;
+      if (composition !== void 0) {
+        const attestation = composition.attestation;
+        if (!inputAdapter?.adaptInput || !inputAdapter.ownsTool || !inputAdapter.attestationKind || !attestation || inputAdapter.attestationKind !== attestation.kind) {
+          throw new WorkflowContractError("BINDING_REQUIRED", "Host hook composition unavailable.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
         }
-        args = { ...record6(specific.updatedInput) };
-        delete args._sessionBinding;
-        output2 = { ...domainOutput, hookSpecificOutput: { ...specific, updatedInput: args } };
+        selectedStrategy = snapshotHookAttestationStrategy(attestation.kind, attestation.strategy);
+        const adapter = executionAdapters === void 0 ? null : resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: host }, executionAdapters);
+        if (!adapter) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.", {
+          reasonCode: "HOST_EXECUTION_ADAPTER_UNAVAILABLE"
+        });
+        const { host: adapterHost, provider: provider2, policyRevision, modelClassForModel, resolveModel } = adapter;
+        if (adapterHost !== host || typeof modelClassForModel !== "function" || resolveModel !== void 0 && typeof resolveModel !== "function") {
+          throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.", { reasonCode: "HOST_EXECUTION_ADAPTER_UNAVAILABLE" });
+        }
+        selectedExecution = Object.freeze({
+          host: adapterHost,
+          modelClassForModel: modelClassForModel.bind(adapter),
+          ...provider2 === void 0 ? {} : { provider: provider2 },
+          ...policyRevision === void 0 ? {} : { policyRevision },
+          ...resolveModel ? { resolveModel: resolveModel.bind(adapter) } : {}
+        });
       }
-    }
-    if (record6(output2.hookSpecificOutput).permissionDecision !== "deny") {
-      const proof = new SessionActorProofs(store).issue(observation, tool, args);
-      output2 = { ...output2, hookSpecificOutput: { ...record6(output2.hookSpecificOutput), hookEventName: "PreToolUse", updatedInput: { ...args, [SESSION_PROOF_FIELD]: proof } } };
-    }
+      const input2 = record6(JSON.parse(raw));
+      const { observation } = adaptHostInput(input2, host);
+      const toolName = observation.toolName ?? "";
+      if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "before" || !isGovernanceHookTool(host, toolName)) {
+        return { ok: true, output: "" };
+      }
+      const access = actorAccess(observation.actor);
+      if (!access.allowed) return { ok: true, output: JSON.stringify(denied(access.reasonCode)) };
+      const tool = toolName.split("__").at(-1);
+      let args = withoutSessionProof(observation.toolInput ?? {});
+      if (composition !== void 0 && HOST_ATTESTATION_TOOLS.has(tool)) args = withoutHostAttestation(args);
+      if (Object.hasOwn(args, "_sessionBinding")) return { ok: true, output: JSON.stringify(denied("CALLER_SESSION_BINDING_REJECTED")) };
+      const currentInput = { ...input2, tool_input: args };
+      let domainOutput = null;
+      const databasePath = resolveWorkflowDatabasePath(environment);
+      store = new SqliteWorkflowStore(databasePath);
+      if (BOARD_TOOLS2.has(tool)) {
+        const encoded = await runSessionBoardHook(host, JSON.stringify(currentInput), void 0, true);
+        domainOutput = encoded ? record6(JSON.parse(encoded)) : {};
+      } else if (MESSAGE_TOOLS.has(tool)) {
+        domainOutput = await handleSessionMessageHook(currentInput, host);
+      } else if (CONTINUITY_TOOLS.has(tool)) {
+        const encoded = runContinuityHook(JSON.stringify(currentInput), environment, host, true);
+        domainOutput = encoded ? record6(JSON.parse(encoded)) : {};
+      } else if (HOST_ATTESTATION_TOOLS.has(tool)) {
+        const kind = hookAttestationKind(host);
+        if (!kind) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.");
+        const adapter = composition === void 0 ? executionAdapters === void 0 ? void 0 : resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: host }, executionAdapters) : selectedExecution;
+        if (adapter === null) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.", {
+          reasonCode: "HOST_EXECUTION_ADAPTER_UNAVAILABLE"
+        });
+        domainOutput = handleRegisteredHostAttestationHook(kind, currentInput, {
+          host,
+          databasePath,
+          ...adapter ? { adapter } : {},
+          ...composition === void 0 ? {} : { observation: { ...observation, toolInput: args }, toolInput: args },
+          openStore: () => store
+        }, selectedStrategy);
+        if (composition !== void 0) {
+          const specific = record6(record6(domainOutput).hookSpecificOutput);
+          if (!domainOutput || typeof domainOutput !== "object" || Array.isArray(domainOutput) || specific.permissionDecision !== "deny" && (!specific.updatedInput || typeof specific.updatedInput !== "object" || Array.isArray(specific.updatedInput))) {
+            throw new WorkflowContractError("BINDING_REQUIRED", "The required host observation did not complete.", {
+              reasonCode: "HOST_ATTESTATION_STRATEGY_UNAVAILABLE"
+            });
+          }
+        }
+      }
+      if (domainOutput) {
+        const specific = record6(domainOutput.hookSpecificOutput);
+        if (specific.permissionDecision === "deny") output2 = domainOutput;
+        else {
+          if (!specific.updatedInput || typeof specific.updatedInput !== "object" || Array.isArray(specific.updatedInput)) {
+            throw new WorkflowContractError("BINDING_REQUIRED", "The required domain hook did not complete.");
+          }
+          args = { ...record6(specific.updatedInput) };
+          if (composition !== void 0 && HOST_ATTESTATION_TOOLS.has(tool) && (typeof args[HOST_ATTESTATION_FIELD] !== "string" || args[HOST_ATTESTATION_FIELD] === "")) {
+            throw new WorkflowContractError("BINDING_REQUIRED", "The required host observation did not complete.", {
+              reasonCode: "HOST_ATTESTATION_STRATEGY_UNAVAILABLE"
+            });
+          }
+          delete args._sessionBinding;
+          output2 = { ...domainOutput, hookSpecificOutput: { ...specific, updatedInput: args } };
+        }
+      }
+      if (record6(output2.hookSpecificOutput).permissionDecision !== "deny") {
+        const proof = new SessionActorProofs(store).issue(observation, tool, args);
+        output2 = { ...output2, hookSpecificOutput: { ...record6(output2.hookSpecificOutput), hookEventName: "PreToolUse", updatedInput: { ...args, [SESSION_PROOF_FIELD]: proof } } };
+      }
+    };
+    const early = composition === void 0 ? await execute() : await withHookHostAdapter(host, composition.inputAdapter, execute);
+    if (early) return early;
   } catch (cause) {
     failure2 = cause;
     failed = true;

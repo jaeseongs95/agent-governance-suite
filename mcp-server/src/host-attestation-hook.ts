@@ -1,4 +1,5 @@
 import { isHookEntry } from "./hook-entry.js";
+import { WorkflowContractError } from "../../contracts/types.js";
 import { hookFailureContext, hookFailureReason, retainHookFailureSecondary, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 import "./builtin-hook-host-adapters.js";
 import { closeSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, renameSync, rmSync, writeFileSync } from "node:fs";
@@ -21,6 +22,7 @@ import { observeCodexHook, type CodexObservationOptions } from "./codex-host-obs
 import { resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import type { WorkflowStore } from "./workflow-store.js";
+import type { InputObservation } from "./input-observation.js";
 import { hookAttestationKind, isGovernanceHookTool, resolveHookHost } from "./host-input-adapter.js";
 import { HOST_SKILL_OBSERVATION_FIELD } from "./skill-classification/host-discovery-adapter.js";
 
@@ -578,6 +580,9 @@ export function handleCodexHostAttestationHook(
 
 export interface HookAttestationStrategyContext {
   host?: string;
+  /** Present only for explicit call-local composition; raw input remains observation material. */
+  observation?: Readonly<InputObservation>;
+  toolInput?: Readonly<Record<string, unknown>>;
   /** Optional authority supplied by trusted installation code, never hook input. */
   adapter?: HostExecutionAdapter;
   databasePath: string;
@@ -602,10 +607,21 @@ export function registerHookAttestationStrategy(kind: string, strategy: HookAtte
   attestationStrategies.set(kind, Object.freeze({ ...strategy }));
 }
 
+/** Call-local counterpart to registration; retains stateful strategy receivers. */
+export function snapshotHookAttestationStrategy(kind: string, strategy: HookAttestationStrategy): Readonly<HookAttestationStrategy> {
+  const { observe, unavailable } = strategy ?? {};
+  if (typeof kind !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(kind)
+    || typeof observe !== "function" || (unavailable !== undefined && typeof unavailable !== "function")) {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host attestation strategy unavailable.", { reasonCode: "HOST_ATTESTATION_STRATEGY_UNAVAILABLE" });
+  }
+  return Object.freeze({ observe: observe.bind(strategy), ...(unavailable ? { unavailable: unavailable.bind(strategy) } : {}) });
+}
+
 export function handleRegisteredHostAttestationHook(
   kind: string, input: HookInput, context: HookAttestationStrategyContext,
+  strategy?: Readonly<HookAttestationStrategy>,
 ): Record<string, unknown> {
-  return attestationStrategies.get(kind)?.observe(input, context) ?? withoutCallerAttestation(input, context.host);
+  return (strategy ?? attestationStrategies.get(kind))?.observe(input, context) ?? withoutCallerAttestation(input, context.host);
 }
 
 registerHookAttestationStrategy("claude-hook", {

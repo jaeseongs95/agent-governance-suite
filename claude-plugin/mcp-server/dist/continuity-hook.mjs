@@ -117,6 +117,24 @@ import { closeSync, constants, fstatSync, openSync, readSync, statSync as statSy
 import path6 from "node:path";
 
 // mcp-server/src/host-input-adapter.ts
+import { AsyncLocalStorage } from "node:async_hooks";
+
+// contracts/types.ts
+var WorkflowContractError = class extends Error {
+  constructor(code, message, details = null) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    this.name = "WorkflowContractError";
+  }
+  code;
+  details;
+  toBody() {
+    return { code: this.code, message: this.message, details: this.details };
+  }
+};
+
+// mcp-server/src/host-input-adapter.ts
 var hostFailures = {
   selection: ["INVALID_HOOK_HOST_SELECTION", "Invalid or ambiguous hook host."],
   adapter: ["INVALID_HOOK_HOST_ADAPTER", "Invalid hook host adapter."],
@@ -142,9 +160,17 @@ function resolveHookHost(arguments_, fallback) {
   return selected[0];
 }
 function adaptHostInput(input, host) {
-  const adapter = hookHostAdapters.get(host);
+  const adapter = selectedHookHostAdapter(host);
   if (!adapter) throw hookHostFailure("unavailable");
-  return adapter.adaptInput?.(input, host) ?? {
+  const call = callHostAdapter.getStore();
+  if (call?.adapted) {
+    const toolInput = Object.getOwnPropertyDescriptor(input, "tool_input")?.value;
+    if (!toolInput || typeof toolInput !== "object" || Array.isArray(toolInput)) {
+      throw new WorkflowContractError("BINDING_REQUIRED", "Canonical hook arguments unavailable.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
+    }
+    return { ...call.adapted, observation: { ...call.adapted.observation, toolInput } };
+  }
+  const adapted = adapter.adaptInput?.(input, host) ?? {
     lifecycle: "none",
     outputEventName: "",
     observation: {
@@ -154,15 +180,32 @@ function adaptHostInput(input, host) {
       actor: { role: "indeterminate", basis: "unavailable", reasonCode: "HOST_ACTOR_OBSERVATION_UNAVAILABLE" }
     }
   };
+  if (!call) return adapted;
+  if (adapted.observation.host !== host) {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host observation differs from its selected composition.", { reasonCode: "HOST_HOOK_OBSERVATION_MISMATCH" });
+  }
+  const actor = adapted.observation.actor;
+  const snapshotActor = actorAccess(actor).allowed ? Object.freeze({ role: actor.role, basis: actor.basis, reasonCode: actor.reasonCode }) : actor;
+  call.adapted = Object.freeze({ ...adapted, observation: Object.freeze({ ...adapted.observation, actor: snapshotActor }) });
+  return call.adapted;
 }
 function isGovernanceHookTool(host, toolName) {
-  return hookHostAdapters.get(host)?.ownsTool?.(toolName) === true;
+  return selectedHookHostAdapter(host)?.ownsTool?.(toolName) === true;
 }
 var hookHostAdapters = /* @__PURE__ */ new Map();
 function registerHookHostAdapter(host, adapter) {
   if (typeof host !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host) || !adapter || typeof adapter.deliveryProfile !== "function" || typeof adapter.processPid !== "function" || adapter.adaptInput !== void 0 && typeof adapter.adaptInput !== "function" || adapter.ownsTool !== void 0 && typeof adapter.ownsTool !== "function" || adapter.attestationKind !== void 0 && (typeof adapter.attestationKind !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(adapter.attestationKind))) throw hookHostFailure("adapter");
   if (hookHostAdapters.has(host)) throw hookHostFailure("duplicate");
   hookHostAdapters.set(host, Object.freeze({ ...adapter }));
+}
+var callHostAdapter = new AsyncLocalStorage();
+function selectedHookHostAdapter(host) {
+  const call = callHostAdapter.getStore();
+  if (!call) return hookHostAdapters.get(host);
+  if (!call.active || call.host !== host) {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host hook composition is inactive or has a different host.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
+  }
+  return call.adapter;
 }
 
 // skills/coordinate-subagents/references/model-routing-presets.json
@@ -617,21 +660,6 @@ import path5 from "node:path";
 
 // mcp-server/src/trust-store.ts
 import { DatabaseSync } from "node:sqlite";
-
-// contracts/types.ts
-var WorkflowContractError = class extends Error {
-  constructor(code, message, details = null) {
-    super(message);
-    this.code = code;
-    this.details = details;
-    this.name = "WorkflowContractError";
-  }
-  code;
-  details;
-  toBody() {
-    return { code: this.code, message: this.message, details: this.details };
-  }
-};
 
 // mcp-server/src/convergence-logic.ts
 import { createHash as createHash2 } from "node:crypto";

@@ -15,6 +15,23 @@ function isHookEntry(url2, name) {
   return basename === "".concat(name, ".mjs") || basename === "".concat(name, ".ts");
 }
 
+// contracts/types.ts
+var MODEL_CLASS = ["lightweight", "general", "deep", "frontier"];
+var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
+var WorkflowContractError = class extends Error {
+  constructor(code, message, details = null) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    this.name = "WorkflowContractError";
+  }
+  code;
+  details;
+  toBody() {
+    return { code: this.code, message: this.message, details: this.details };
+  }
+};
+
 // mcp-server/src/hook-error-diagnostics.ts
 import { writeSync } from "node:fs";
 
@@ -118,6 +135,7 @@ import { closeSync, constants, fstatSync, openSync, readSync, statSync as statSy
 import path6 from "node:path";
 
 // mcp-server/src/host-input-adapter.ts
+import { AsyncLocalStorage } from "node:async_hooks";
 var hostFailures = {
   selection: ["INVALID_HOOK_HOST_SELECTION", "Invalid or ambiguous hook host."],
   adapter: ["INVALID_HOOK_HOST_ADAPTER", "Invalid hook host adapter."],
@@ -143,7 +161,7 @@ function resolveHookHost(arguments_, fallback) {
   return selected[0];
 }
 function isGovernanceHookTool(host, toolName) {
-  return hookHostAdapters.get(host)?.ownsTool?.(toolName) === true;
+  return selectedHookHostAdapter(host)?.ownsTool?.(toolName) === true;
 }
 var hookHostAdapters = /* @__PURE__ */ new Map();
 function registerHookHostAdapter(host, adapter) {
@@ -151,8 +169,17 @@ function registerHookHostAdapter(host, adapter) {
   if (hookHostAdapters.has(host)) throw hookHostFailure("duplicate");
   hookHostAdapters.set(host, Object.freeze({ ...adapter }));
 }
+var callHostAdapter = new AsyncLocalStorage();
+function selectedHookHostAdapter(host) {
+  const call = callHostAdapter.getStore();
+  if (!call) return hookHostAdapters.get(host);
+  if (!call.active || call.host !== host) {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host hook composition is inactive or has a different host.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
+  }
+  return call.adapter;
+}
 function hookAttestationKind(host) {
-  return hookHostAdapters.get(host)?.attestationKind;
+  return selectedHookHostAdapter(host)?.attestationKind;
 }
 
 // skills/coordinate-subagents/references/model-routing-presets.json
@@ -564,23 +591,6 @@ import path5 from "node:path";
 
 // mcp-server/src/trust-store.ts
 import { DatabaseSync } from "node:sqlite";
-
-// contracts/types.ts
-var MODEL_CLASS = ["lightweight", "general", "deep", "frontier"];
-var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
-var WorkflowContractError = class extends Error {
-  constructor(code, message, details = null) {
-    super(message);
-    this.code = code;
-    this.details = details;
-    this.name = "WorkflowContractError";
-  }
-  code;
-  details;
-  toBody() {
-    return { code: this.code, message: this.message, details: this.details };
-  }
-};
 
 // mcp-server/src/convergence-logic.ts
 import { createHash as createHash2 } from "node:crypto";
@@ -21654,8 +21664,15 @@ function registerHookAttestationStrategy(kind, strategy) {
   if (attestationStrategies.has(kind)) throw new Error("DUPLICATE_HOOK_ATTESTATION_STRATEGY");
   attestationStrategies.set(kind, Object.freeze({ ...strategy }));
 }
-function handleRegisteredHostAttestationHook(kind, input2, context) {
-  return attestationStrategies.get(kind)?.observe(input2, context) ?? withoutCallerAttestation(input2, context.host);
+function snapshotHookAttestationStrategy(kind, strategy) {
+  const { observe, unavailable } = strategy ?? {};
+  if (typeof kind !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(kind) || typeof observe !== "function" || unavailable !== void 0 && typeof unavailable !== "function") {
+    throw new WorkflowContractError("BINDING_REQUIRED", "Host attestation strategy unavailable.", { reasonCode: "HOST_ATTESTATION_STRATEGY_UNAVAILABLE" });
+  }
+  return Object.freeze({ observe: observe.bind(strategy), ...unavailable ? { unavailable: unavailable.bind(strategy) } : {} });
+}
+function handleRegisteredHostAttestationHook(kind, input2, context, strategy) {
+  return (strategy ?? attestationStrategies.get(kind))?.observe(input2, context) ?? withoutCallerAttestation(input2, context.host);
 }
 registerHookAttestationStrategy("claude-hook", {
   observe(input2, context) {
@@ -21750,6 +21767,7 @@ export {
   readSessionModel,
   registerHookAttestationStrategy,
   sessionModelUpdate,
+  snapshotHookAttestationStrategy,
   transcriptCandidates,
   withoutCallerAttestation,
   writeSessionModel
