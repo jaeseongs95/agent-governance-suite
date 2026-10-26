@@ -4,7 +4,7 @@ import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 
 const workflow = await readFile(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
-const block = /^concurrency:\r?\n  group: ([^\r\n]+)\r?\n  cancel-in-progress: ([^\r\n]+)/mu.exec(workflow);
+const block = /^concurrency:\r?\n {2}group: ([^\r\n]+)\r?\n {2}cancel-in-progress: ([^\r\n]+)/mu.exec(workflow);
 assert.ok(block, 'The workflow concurrency group and cancellation policy must be explicit.');
 // The authored expressions use string contexts, ==, && and ||. Evaluate that
 // shared subset only; this is not a claim to execute the GitHub Actions engine.
