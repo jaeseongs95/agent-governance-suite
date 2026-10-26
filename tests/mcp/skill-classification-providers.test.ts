@@ -39,12 +39,12 @@ describe("approved classification wire adapters", () => {
     expect(result.diagnostics).toEqual({scoreKind: "noul_probability", scores: [{skillId: "review", value: 0.82}]});
     expect(JSON.stringify(result)).not.toContain("SECRET_SENTINEL"); expect(JSON.stringify(result)).not.toContain("confidence");
   });
-  it.each([401, 403, 429, 529, 500])("SS30/32 HTTP %i is sanitized and is never retried", async status => {
+  it.each([400, 401, 403, 404, 408, 422, 429, 529, 500, 502, 503, 504, 501, 505, 599])("SS30/32 HTTP %i is sanitized and is never retried", async status => {
     const f = fixture(); f.fetcher.mockResolvedValue(new Response("SECRET_SENTINEL private exception", {status}));
     const error = await f.provider.classify(f.request, f.profile, new AbortController().signal).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(ClassificationProviderError); expect(JSON.stringify(error)).not.toContain("SECRET_SENTINEL");
     expect(f.fetcher).toHaveBeenCalledTimes(1);
-    expect(error).toMatchObject({dispatchState: "started", code: status === 401 || status === 403 ? "AUTH_UNAVAILABLE" : status === 429 || status === 529 ? "RATE_LIMITED" : "API_UNAVAILABLE"});
+    expect(error).toMatchObject({dispatchState: "started", code: status === 401 || status === 403 ? "AUTH_UNAVAILABLE" : status === 429 || status === 529 ? "RATE_LIMITED" : [500, 502, 503, 504].includes(status) ? "SERVER_UNAVAILABLE" : "API_UNAVAILABLE"});
   });
   it.each(["unknown-id", "missing-id", "wrong-type", "nan", "out-of-range", "wrong-model", "malformed"])("SS27/28 rejects %s responses rather than producing no-skill", async variant => {
     const f = fixture(); let body: unknown = f.body;
@@ -181,7 +181,7 @@ describe("approved classification wire adapters", () => {
     const first = await f.provider.classify(f.request, f.profile, new AbortController().signal).catch((value: unknown) => value);
     const second = await f.provider.classify(f.request, f.profile, new AbortController().signal).catch((value: unknown) => value);
     expect(first).toMatchObject({rateLimitObservation: {httpStatus: 429, retryAfter: null}});
-    expect(second).toMatchObject({code: "API_UNAVAILABLE", rateLimitObservation: null});
+    expect(second).toMatchObject({code: "SERVER_UNAVAILABLE", rateLimitObservation: null});
     expect(f.fetcher).toHaveBeenCalledTimes(2);
   });
   it.each(["approval", "approval-ref", "model", "reasoning", "endpoint", "adapter-revision", "adapter-function", "credential-function", "profile", "qualification", "request"])("PRE %s mutation during credential await prevents transport", async change => {

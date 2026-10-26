@@ -216,7 +216,8 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
       const rateLimitObservation: ClassificationRateLimitObservation | null = response.status === 429 || response.status === 529
         ? {httpStatus: response.status, retryAfter: retryAfterObservation(response.headers.get("retry-after"))} : null;
       try { await response.body?.cancel(); } catch { /* Do not expose error body details. */ }
-      const code = response.status === 401 || response.status === 403 ? "AUTH_UNAVAILABLE" : response.status === 429 || response.status === 529 ? "RATE_LIMITED" : "API_UNAVAILABLE";
+      // Only these observed HTTP server faults establish a definite helper failure; other API causes remain coarse.
+      const code = response.status === 401 || response.status === 403 ? "AUTH_UNAVAILABLE" : response.status === 429 || response.status === 529 ? "RATE_LIMITED" : [500, 502, 503, 504].includes(response.status) ? "SERVER_UNAVAILABLE" : "API_UNAVAILABLE";
       throw new ClassificationProviderError(code, "started", false, rateLimitObservation);
     }
     const bodyText = await this.readResponse(response);

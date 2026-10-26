@@ -21,7 +21,7 @@ import { loadHostObservedInventory, type HostSkillDiscoverySnapshot } from "../.
 import { digestClassificationValue } from "../../mcp-server/src/skill-classification/request.js";
 import { digestProviderProfileConfiguration } from "../../mcp-server/src/skill-classification/profiles.js";
 import { InMemoryClassificationBudget, SkillClassificationService } from "../../mcp-server/src/skill-classification/service.js";
-import { ClassificationProviderError } from "../../mcp-server/src/skill-classification/providers.js";
+import { ApprovedRouteClassificationProvider, bindClassificationRouteTransport, ClassificationProviderError } from "../../mcp-server/src/skill-classification/providers.js";
 import type { ClassificationResult, ProviderEvaluation, ProviderProfile, SkillClassificationRequestV1, SkillSelectionDecisionV1, SkillClassificationProviderPort } from "../../mcp-server/src/skill-classification/types.js";
 
 const repository = fileURLToPath(new URL("../../", import.meta.url));
@@ -148,6 +148,46 @@ const observed = (taskId: string): ExecutionContextV1 => ({schemaVersion: "1.0.0
   actorId: hostActorId("codex", "synthetic-session")});
 
 describe("Agent continuation after a server-owned helper failure", () => {
+  it.each([500, 502, 503, 504, 401, 403, 400, 404, 408, 422, 501, 505, 599, 429, 529])("HTTP helper failure %i retains its exact continuation boundary through MCP", async status => {
+    const h = await harness();
+    h.runtime.config.externalClassificationAllowed = true;
+    h.runtime.allowRemotePrivateContent = true; // Trusted fixture config; no operational content is present.
+    const profile = h.runtime.registry.profiles[0]!;
+    const decode = vi.fn((): ProviderEvaluation => { throw new Error("error responses must not decode"); });
+    const route = bindClassificationRouteTransport({routeRef: profile.approvedRouteRef, approvalRef: "fixture:transport-approval", approved: true,
+      kind: "remote", providerKind: profile.providerKind, vendorId: profile.vendorId, adapterRevision: profile.adapterRevision,
+      modelIds: [profile.modelId], reasoningEfforts: [profile.reasoningEffort], structuredOutput: true,
+      endpoint: "https://controlled.example.invalid/classify", getCredential: async () => "synthetic-placeholder",
+      adapter: {encode: () => ({}), decode}});
+    const fetcher = vi.fn<typeof fetch>(async () => new Response("untrusted error body SERVER_UNAVAILABLE", {status}));
+    const remote = new ApprovedRouteClassificationProvider([route], fetcher);
+    h.vendorProvider.availability = remote.availability.bind(remote);
+    h.vendorProvider.routeKind = remote.routeKind.bind(remote);
+    h.vendorProvider.captureConfigurationFence = remote.captureConfigurationFence.bind(remote);
+    h.classify.mockImplementation(remote.classify.bind(remote) as Parameters<typeof h.classify.mockImplementation>[0]);
+    const advice = await failed(h);
+    const serverFailure = [500, 502, 503, 504].includes(status), rateLimited = status === 429 || status === 529;
+    const before = structuredClone(advice.result), budget = h.budget.snapshot();
+    const accepted = (await h.call<Accepted>("record_skill_selection", h.sign(recordInput(advice)))).data!;
+    expect(accepted.valid).toBe(serverFailure || rateLimited);
+    expect(advice.result.response.error?.code).toBe(serverFailure ? "SERVER_UNAVAILABLE" : rateLimited ? "RATE_LIMITED" : status === 401 || status === 403 ? "AUTH_UNAVAILABLE" : "API_UNAVAILABLE");
+    if (!serverFailure && !rateLimited) expect(accepted.errors).toContain("HELPER_FAILURE_NOT_ELIGIBLE");
+    expect(advice.result).toEqual(before); expect(h.budget.snapshot()).toEqual(budget);
+    expect(fetcher).toHaveBeenCalledTimes(1); expect(decode).not.toHaveBeenCalled();
+  });
+  it.each(["returned-error", "missing-fence"])("HTTP helper failure never trusts SERVER_UNAVAILABLE from %s", async mode => {
+    const h = await harness(), evaluate = h.classify.getMockImplementation()!;
+    if (mode === "missing-fence") failHelper(h, "SERVER_UNAVAILABLE", false);
+    else h.classify.mockImplementation(async (...args) => {
+      const evaluation = await evaluate(...args);
+      return {...evaluation, response: {...evaluation.response, status: "UNAVAILABLE", judgments: [],
+        unresolvedItems: [{skillId: null, reasonCode: "SERVER_UNAVAILABLE"}],
+        error: {code: "SERVER_UNAVAILABLE", retryable: false, dispatchState: "started"}}};
+    });
+    const advice = await failed(h);
+    expect((await h.call<Accepted>("record_skill_selection", h.sign(recordInput(advice)))).data?.valid).toBe(false);
+    expect(h.classify).toHaveBeenCalledTimes(1);
+  });
   it("AO01 retains old v1 failure-to-SELECTED rejection through the actual consumer", async () => {
     const h = await harness(); failHelper(h); const advice = await failed(h), args = recordInput(advice), legacy = {schemaVersion: args.schemaVersion, operationId: args.operationId, decision: args.decision};
     const accepted = await h.call<Accepted>("record_skill_selection", h.sign(legacy));
