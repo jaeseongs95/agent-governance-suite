@@ -105,11 +105,11 @@ test('GOV11 cannot rewrite known violations into PASS or INCONCLUSIVE even with 
   writeFileSync(join(repo, 'unplanned.txt'), 'new\n');
   const report = verify(repo, t, baseline, 'forged-report');
   for (const verdict of ['PASS', 'INCONCLUSIVE', 'NEEDS_APPROVAL']) {
-    const { reportSha256: ignored, ...unsigned } = { ...report, verdict };
+    const { reportSha256: _ignored, ...unsigned } = { ...report, verdict };
     const forged = { ...unsigned, reportSha256: sha256(canonicalJson(unsigned)) };
     assert.throws(() => validateReport(forged, forged.reportSha256), /does not match|schema validation/);
   }
-  const { reportSha256: ignored, ...missingBaseline } = { ...report, baselineDigest: '0'.repeat(64), verdict: 'INCONCLUSIVE' };
+  const { reportSha256: _ignored, ...missingBaseline } = { ...report, baselineDigest: '0'.repeat(64), verdict: 'INCONCLUSIVE' };
   const hidden = { ...missingBaseline, reportSha256: sha256(canonicalJson(missingBaseline)) };
   assert.throws(() => validateReport(hidden, hidden.reportSha256), /cannot classify known scope changes/);
   assert.throws(() => validateReport(report, 'f'.repeat(64)), /frozen digest/);
