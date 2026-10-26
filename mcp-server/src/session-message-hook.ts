@@ -43,7 +43,7 @@ export interface SessionMessageHookOptions {
   /** Reconnect on an observed main-session event, using the same atomic startup grant. */
   recoverExistingSession?: boolean;
   /** Host adapter callback; called only when a targeted liveness view needs recovery. */
-  resolveHostProcess?: () => Readonly<{ pid: number; startToken: string }> | null;
+  resolveHostProcess?: () => Readonly<{ pid: number; startToken: string }> | null | Promise<Readonly<{ pid: number; startToken: string }> | null>;
   /** Adapter starts this same-process monotonic deadline before imports/resolution, excluding its stdout reserve. */
   executionBudget?: Readonly<{ deadlineMonotonicMs: number; postClaimReserveMs: number }>;
   /** Synchronous observation only, IDs only. Returns are ignored; throws/rejections cannot change claim or cleanup.
@@ -418,7 +418,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         && (current.autoWake?.state === "available" || current.autoWake?.state === "latched");
       if (!relayLive) {
         remainingBudget(budget);
-        const observed = options.hostProcess ?? options.resolveHostProcess?.();
+        const observed = options.hostProcess ?? await options.resolveHostProcess?.();
         const hostProcess = observed ? { pid: observed.pid, startToken: observed.startToken } : null;
         remainingBudget(budget);
         if (hostProcess) await ensureVerifiedRelay(hostProcess);

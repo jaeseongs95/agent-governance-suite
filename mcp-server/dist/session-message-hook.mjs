@@ -2129,7 +2129,7 @@ async function handleSessionMessageHook(input, host, explicitHostPid, options = 
       const relayLive = current?.state === "online" && current.transport === profile.transport && (current.autoWake?.state === "available" || current.autoWake?.state === "latched");
       if (!relayLive) {
         remainingBudget(budget);
-        const observed = options.hostProcess ?? options.resolveHostProcess?.();
+        const observed = options.hostProcess ?? await options.resolveHostProcess?.();
         const hostProcess = observed ? { pid: observed.pid, startToken: observed.startToken } : null;
         remainingBudget(budget);
         if (hostProcess) await ensureVerifiedRelay(hostProcess);

@@ -2,8 +2,9 @@
 // Antigravity/Gemini isolated hook connector (r09).
 // Translates Antigravity camelCase hook inputs and output contracts at the
 // host boundary without touching shared Codex/Claude hook contracts.
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFile, execFileSync, spawnSync } from "node:child_process";
 import { readFileSync, readlinkSync } from "node:fs";
+import { readFile, readlink } from "node:fs/promises";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
@@ -256,9 +257,8 @@ export function extractLinuxProcStatStartToken(statText = "") {
   return token || null;
 }
 
-function defaultWindowsProcessChain(startPid, maxDepth, timeoutMs) {
-  if (!Number.isInteger(startPid) || startPid < 1 || timeoutMs < MIN_RESOLVER_BUDGET_MS) return null;
-  const script = [
+function windowsProcessChainScript(startPid, maxDepth, timeoutMs) {
+  return [
     "$agsRows = [System.Collections.Generic.List[object]]::new()",
     "$agsSeen = @{}",
     "$agsWatch = [System.Diagnostics.Stopwatch]::StartNew()",
@@ -280,6 +280,11 @@ function defaultWindowsProcessChain(startPid, maxDepth, timeoutMs) {
     "}",
     "ConvertTo-Json -InputObject @($agsRows.ToArray()) -Compress -Depth 3",
   ].join("; ");
+}
+
+function defaultWindowsProcessChain(startPid, maxDepth, timeoutMs) {
+  if (!Number.isInteger(startPid) || startPid < 1 || timeoutMs < MIN_RESOLVER_BUDGET_MS) return null;
+  const script = windowsProcessChainScript(startPid, maxDepth, timeoutMs);
   const output = execFileSync("powershell.exe",["-NoProfile","-NonInteractive","-Command",script],{
     encoding:"utf8",windowsHide:true,timeout:Math.min(PID_RESOLVER_TIMEOUT_MS,Math.floor(timeoutMs)),
     maxBuffer:16384,stdio:["ignore","pipe","ignore"],
@@ -449,6 +454,112 @@ export function resolveLongLivedHostProcess(startPid = process.ppid, platform = 
   } catch {
     return null;
   }
+}
+
+// Actual hook callers await native inspection; the synchronous resolver above remains
+// compatible with existing injected inspection consumers.
+function inspectionFailure(code, phase, cause) {
+  return Object.assign(new Error("Antigravity host process inspection failed.", { cause }), { code, phase });
+}
+
+function inspectionBudget(options) {
+  const now = typeof options?.now === "function" ? options.now : () => performance.now();
+  let last = Number(now());
+  if (!Number.isFinite(last) || (Number.isFinite(options?.entryMonotonicMs) && last < options.entryMonotonicMs)) {
+    throw inspectionFailure("HOST_PROCESS_CLOCK_INVALID", "clock");
+  }
+  const configured = record(options?.pidResolverOptions).timeoutMs;
+  const timeout = configured === undefined ? PID_RESOLVER_TIMEOUT_MS : Math.floor(Number(configured));
+  if (!Number.isFinite(timeout) || timeout < MIN_RESOLVER_BUDGET_MS) {
+    throw inspectionFailure("HOST_PROCESS_BUDGET_EXHAUSTED", "budget");
+  }
+  const callerDeadline = buildExecutionBudgetOption(options)?.deadlineMonotonicMs ?? Infinity;
+  const deadline = Math.min(callerDeadline, last + Math.min(PID_RESOLVER_TIMEOUT_MS, timeout));
+  const checkedNow = () => {
+    const current = Number(now());
+    if (!Number.isFinite(current) || current < last) throw inspectionFailure("HOST_PROCESS_CLOCK_INVALID", "clock");
+    last = current;
+    return current;
+  };
+  const remaining = () => {
+    const current = checkedNow();
+    const callerRemaining = typeof options?.remainingBudgetMs === "function" ? Number(options.remainingBudgetMs()) : Infinity;
+    const left = Math.floor(Math.min(deadline - current, callerRemaining));
+    if (!Number.isFinite(left) || left < MIN_RESOLVER_BUDGET_MS) {
+      throw inspectionFailure("HOST_PROCESS_BUDGET_EXHAUSTED", "budget");
+    }
+    return left;
+  };
+  return { now: checkedNow, remaining };
+}
+
+function reportInspectionFailure(error, options) {
+  try {
+    const failure = error?.phase ? error : inspectionFailure("HOST_PROCESS_INSPECTION_FAILED", "inspection", error);
+    if (typeof options?.onProcessIdentityFailure === "function") {
+      Promise.resolve(options.onProcessIdentityFailure(failure)).catch(() => {});
+    } else {
+      const nativeCode = typeof failure.cause?.code === "string" ? failure.cause.code.slice(0, 32) : null;
+      console.error(JSON.stringify({ agsAntigravityProcessIdentityFailure: { reason: failure.code, phase: failure.phase, nativeCode } }));
+    }
+  } catch { /* Diagnostics do not grant identity or change cleanup. */ }
+  return null;
+}
+
+async function inspectNativeHostProcess(startPid, platform, options, budget) {
+  const maxDepth = Math.min(MAX_ANCESTOR_DEPTH, Number.isInteger(options.maxDepth) && options.maxDepth > 0 ? options.maxDepth : MAX_ANCESTOR_DEPTH);
+  if (typeof options.inspectProcess === "function" || typeof options.inspectProcessChain === "function") {
+    const result = resolveLongLivedHostProcess(startPid, platform, { ...options, timeoutMs: budget.remaining(), now: budget.now });
+    budget.remaining();
+    return result;
+  }
+  const query = async (command, args) => {
+    const timeout = budget.remaining();
+    // execFile's callback follows child close, including timeout/error cleanup.
+    const output = await new Promise((resolve, reject) => execFile(command, args, {
+      encoding: "utf8", windowsHide: true, timeout, killSignal: "SIGKILL", maxBuffer: 16384, stdio: ["ignore", "pipe", "ignore"],
+    }, (error, stdout) => error ? reject(inspectionFailure("HOST_PROCESS_INSPECTION_FAILED", "spawn", error)) : resolve(stdout)));
+    budget.remaining();
+    return String(output).trim();
+  };
+  let rows;
+  if (platform === "win32") {
+    const timeout = budget.remaining();
+    const output = await query("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", windowsProcessChainScript(startPid, maxDepth, timeout)]);
+    rows = output ? JSON.parse(output) : null;
+    if (!Array.isArray(rows) || rows.length < 1 || rows.length > maxDepth) return null;
+  } else {
+    rows = [];
+    let pid = startPid;
+    const seen = new Set();
+    for (let depth = 0; depth < maxDepth && Number.isInteger(pid) && pid > 0 && !seen.has(pid); depth++) {
+      seen.add(pid);
+      const output = await query("ps", ["-p", String(pid), "-o", "ppid=,comm=,args="]);
+      const match = /^(\d+)\s+(\S+)(?:\s+(.*))?$/u.exec(output);
+      if (!match) return null;
+      const parentPid = Number.parseInt(match[1], 10);
+      let command = match[3] ?? match[2];
+      let startToken;
+      if (platform === "linux") {
+        budget.remaining();
+        command = (await readlink(`/proc/${pid}/exe`)).trim();
+        budget.remaining();
+        startToken = extractLinuxProcStatStartToken(await readFile(`/proc/${pid}/stat`, "utf8"));
+      } else startToken = await query("ps", ["-p", String(pid), "-o", "lstart="]);
+      budget.remaining();
+      if (!command || command.endsWith(" (deleted)") || !startToken) return null;
+      const row = { pid, parentPid, name: match[2], command, startToken };
+      rows.push(row);
+      if (isRecognizedAntigravityHostProcess(row.name, row.command, options.env)) break;
+      pid = parentPid;
+    }
+  }
+  budget.remaining();
+  const byPid = new Map(rows.map(row => [row.pid, row]));
+  const result = resolveLongLivedHostProcess(startPid, platform, { ...options, timeoutMs: budget.remaining(), now: budget.now,
+    inspectProcess: platform === "win32" ? undefined : pid => byPid.get(pid), inspectProcessChain: () => rows });
+  budget.remaining();
+  return result;
 }
 
 export function validateExplicitEvent(explicitEvent, rawInput) {
@@ -750,46 +861,29 @@ export function formatSecretFreeClaimDiagnosticLine(claimTracker) {
 //   (4th options arg) when verified; an unverified pair skips ensure entirely.
 export function resolveVerifiedAntigravityHostProcess(options = {}) {
   try {
-    const resolvePid = typeof options?.resolveHostProcess === "function"
-      ? options.resolveHostProcess
-      : resolveLongLivedHostProcess;
-    const rawRemaining = typeof options?.remainingBudgetMs === "function"
-      ? Math.floor(Number(options.remainingBudgetMs()))
-      : undefined;
-    // #3313 N3 / #3317 M2: Do not clamp negative or < 100ms remaining budget up to 100ms; skip resolver immediately.
-    if (rawRemaining !== undefined && (!Number.isFinite(rawRemaining) || rawRemaining < MIN_RESOLVER_BUDGET_MS)) {
-      return null;
-    }
-    const remainingForResolver = rawRemaining !== undefined
-      ? Math.min(PID_RESOLVER_TIMEOUT_MS, rawRemaining)
-      : undefined;
-    const rawHostInfo = resolvePid(process.ppid, process.platform, {
-      ...(remainingForResolver !== undefined ? { timeoutMs: remainingForResolver } : {}),
-      ...record(options?.pidResolverOptions),
-      ...(typeof options?.now === "function" ? { now: options.now } : {}),
-    });
-    const snappedPid = rawHostInfo && Number.isInteger(rawHostInfo.pid) && rawHostInfo.pid > 0
-      ? Number(rawHostInfo.pid)
-      : 0;
-    const snappedToken = rawHostInfo && typeof rawHostInfo.startToken === "string"
-      ? String(rawHostInfo.startToken).trim()
-      : "";
-    if (snappedPid > 0 && snappedToken.length > 0) {
-      return Object.freeze({
-        pid: snappedPid,
-        startToken: snappedToken,
-      });
-    }
-    return null;
-  } catch {
-    return null;
+    const budget = inspectionBudget(options);
+    const resolverOptions = { ...record(options?.pidResolverOptions), timeoutMs: budget.remaining(), now: budget.now };
+    const raw = typeof options?.resolveHostProcess === "function"
+      ? options.resolveHostProcess(process.ppid, process.platform, resolverOptions)
+      : inspectNativeHostProcess(process.ppid, process.platform, resolverOptions, budget);
+    const snapshot = (info) => {
+      budget.remaining();
+      const pid = info && Number.isInteger(info.pid) && info.pid > 0 ? Number(info.pid) : 0;
+      const startToken = info && typeof info.startToken === "string" ? info.startToken.trim() : "";
+      return pid > 0 && startToken ? Object.freeze({ pid, startToken }) : null;
+    };
+    return raw && typeof raw.then === "function"
+      ? Promise.resolve(raw).then(snapshot).catch(error => reportInspectionFailure(error, options))
+      : snapshot(raw);
+  } catch (error) {
+    return reportInspectionFailure(error, options);
   }
 }
 
 export async function startAntigravitySessionPresenceAndRelay(canonicalInput, options = {}) {
   try {
     if (!isObservedMainPayload(canonicalInput)) return;
-    const hostProcess = resolveVerifiedAntigravityHostProcess(options);
+    const hostProcess = await resolveVerifiedAntigravityHostProcess(options);
     if (!hostProcess) return;
     const executionBudget = buildExecutionBudgetOption(options);
     if (!executionBudget) return;
