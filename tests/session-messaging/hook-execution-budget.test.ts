@@ -27,6 +27,13 @@ vi.mock("../../mcp-server/src/session-message-wake-port.js", async (original) =>
 }));
 
 import { handleSessionMessageHook, runSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
+import { registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+const syntheticCore = await import(new URL("./fixtures/synthetic-core-hook-driver.mjs", import.meta.url).href) as {
+  SYNTHETIC_CORE_HOST: string;
+  registerSyntheticCoreAdapters: (register: typeof registerHookHostAdapter, selectTransport: () => "codex-deferred") => void;
+};
+syntheticCore.registerSyntheticCoreAdapters(registerHookHostAdapter, () => "codex-deferred");
+const syntheticRootHost = syntheticCore.SYNTHETIC_CORE_HOST;
 import { requestSessionMessageOnce, sessionMessageRequest as mockedRequest } from "../../mcp-server/src/session-message-client.js";
 import { SESSION_MESSAGE_PROTOCOL } from "../../mcp-server/src/session-message-protocol.js";
 
@@ -135,7 +142,7 @@ it("snapshots the budget and T1 before an await, then refuses relay spawn after 
   f.request.mockImplementationOnce(async () => {
     executionBudget.deadlineMonotonicMs = 9000; hostProcess.startToken = "T2"; f.now = 1000; return {};
   });
-  expect(await runSessionMessageHook("gemini", JSON.stringify(start), 424242, { executionBudget, hostProcess })).toBe("");
+  expect(await runSessionMessageHook(syntheticRootHost, JSON.stringify({ ...start, syntheticActor: "root" }), 424242, { executionBudget, hostProcess })).toBe("");
   expect(f.token).toHaveBeenCalledWith(424242, process.platform, 900); expect(f.spawn).not.toHaveBeenCalled();
 });
 
@@ -300,4 +307,11 @@ it.each(["late-response", "partial-close", "success"])("actual response settling
   if (mode === "success") expect(result.value).toEqual({ messages: [] });
   else expect(result.error).toBeInstanceOf(Error);
   expect(onOperationWrite).toHaveBeenCalledTimes(1); expect(socket.destroy).toHaveBeenCalledTimes(1);
+});
+
+it.each(["codex", "gemini", "antigravity"])("does not spend a native %s lifecycle budget on identity or presence", async (host) => {
+  expect(await runSessionMessageHook(host, JSON.stringify(start), 424242,
+    { executionBudget: budget(), hostProcess: { pid: 424242, startToken: "T1" } })).toBe("");
+  expect(f.request).not.toHaveBeenCalled(); expect(f.token).not.toHaveBeenCalled();
+  expect(f.spawn).not.toHaveBeenCalled(); expect(f.open).not.toHaveBeenCalled();
 });

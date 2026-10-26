@@ -3,11 +3,13 @@ import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { registerHookHostAdapter, resolveHookHost } from "../../mcp-server/src/host-input-adapter.js";
+import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const directories: string[] = [];
-afterEach(() => { for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true }); });
+afterEach(() => { vi.unstubAllEnvs(); for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true }); });
 
 function fixture() {
   const directory = mkdtempSync(path.join(tmpdir(), "ags-hook-host-contract-"));
@@ -25,13 +27,13 @@ function fixture() {
 }
 
 // All public hook CLIs retain exit 0; bounded diagnostics distinguish a failed run.
-function hook(bundle: string, args: string[], input: Record<string, unknown>, environment: NodeJS.ProcessEnv): { hookSpecificOutput?: { updatedInput?: Record<string, unknown> } } {
+function hook(bundle: string, args: string[], input: Record<string, unknown>, environment: NodeJS.ProcessEnv): { hookSpecificOutput?: { updatedInput?: Record<string, unknown>; permissionDecision?: string } } {
   const result = spawnSync(process.execPath, [path.join(root, "mcp-server/dist", bundle + ".mjs"), ...args], {
     input: JSON.stringify(input), env: environment, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,
   });
   expect(result.error).toBeUndefined();
   expect(result.status, result.stderr).toBe(0);
-  return result.stdout.trim() ? JSON.parse(result.stdout) as { hookSpecificOutput?: { updatedInput?: Record<string, unknown> } } : {};
+  return result.stdout.trim() ? JSON.parse(result.stdout) as { hookSpecificOutput?: { updatedInput?: Record<string, unknown>; permissionDecision?: string } } : {};
 }
 
 function attestationInput(directory: string) {
@@ -69,13 +71,21 @@ describe("explicit hook CLI host contract (synthetic packaged fixtures, not nati
       { args: ["--host=claude-code"], host: "claude-code" }, { args: ["--host=gemini"], host: "gemini" },
       { args: ["--host", "gemini"], host: "gemini" }])(
       bundle + " binds the selected host while retaining its default ($host/$args)", ({ args, host }) => {
+        expect(resolveHookHost(args, "codex")).toBe(host);
         const f = fixture();
         const tool = bundle === "session-message-hook" ? "prepare_session_message" : "list_session_status";
         const output = hook(bundle, args, { hook_event_name: "PreToolUse", session_id: "host-contract-session", ...(host === "claude-code" ? {} : { agent_id: "" }),
           tool_name: "mcp__agent_governance_suite__" + tool,
           tool_input: { schemaVersion: "1.0.0", marker: "preserve", _sessionBinding: { host: "wrong", sessionId: "wrong" } } }, f.env);
-        expect(output.hookSpecificOutput!.updatedInput!).toEqual({ schemaVersion: "1.0.0", marker: "preserve",
-          _sessionBinding: { host, sessionId: "host-contract-session" } });
+        if (host === "claude-code") {
+          expect(output.hookSpecificOutput!.updatedInput!).toEqual({ schemaVersion: "1.0.0", marker: "preserve",
+            _sessionBinding: { host, sessionId: "host-contract-session" } });
+        } else {
+          expect(output.hookSpecificOutput?.permissionDecision).toBe("deny");
+          expect(output.hookSpecificOutput?.updatedInput).toBeUndefined();
+          for (const file of ["board.sqlite3", "workflow.sqlite3", "trust.sqlite3", "messaging"])
+            expect(existsSync(path.join(f.directory, file))).toBe(false);
+        }
       });
   }
 
@@ -231,4 +241,34 @@ describe("L3 packaged failure diagnostics", () => {
     expect(result.stderr.split("\n").filter((line) => line.includes('"phase":"stdout"'))).toHaveLength(1);
     expect(result.stderr).not.toContain("private-stdout-message");
   });
+});
+
+it("preserves positive message and board binding with an explicit fake core root", async () => {
+  const f = fixture();
+  const driver = fileURLToPath(new URL("./fixtures/synthetic-core-hook-driver.mjs", import.meta.url));
+  const syntheticCore = await import(pathToFileURL(driver).href) as {
+    SYNTHETIC_CORE_HOST: string;
+    registerSyntheticCoreAdapters: (register: typeof registerHookHostAdapter, selectTransport: () => "codex-deferred") => void;
+  };
+  const host = syntheticCore.SYNTHETIC_CORE_HOST;
+  syntheticCore.registerSyntheticCoreAdapters(registerHookHostAdapter, () => "codex-deferred");
+  for (const [bundle, tool] of [["session-message-hook", "prepare_session_message"], ["session-board-hook", "list_session_status"]]) {
+    const input = { hook_event_name: "PreToolUse", session_id: "host-contract-session", syntheticActor: "root",
+      tool_name: "mcp__agent_governance_suite__" + tool,
+      tool_input: { schemaVersion: "1.0.0", marker: "preserve", _sessionBinding: { host: "wrong", sessionId: "wrong" } } };
+    let output;
+    if (bundle === "session-message-hook") {
+      // The driver registers in the exact bundled consumer namespace.
+      const result = spawnSync(process.execPath, [driver, path.join(root, "mcp-server/dist/session-message-hook.mjs"), host], {
+        input: JSON.stringify(input), env: f.env, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,
+      });
+      expect(result.error).toBeUndefined(); expect(result.status, result.stderr).toBe(0);
+      output = JSON.parse(result.stdout);
+    } else {
+      vi.stubEnv("AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH", f.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH);
+      output = JSON.parse(await runSessionBoardHook(host, JSON.stringify(input)));
+    }
+    expect(output.hookSpecificOutput.updatedInput).toEqual({ schemaVersion: "1.0.0", marker: "preserve",
+      _sessionBinding: { host, sessionId: "host-contract-session" } });
+  }
 });

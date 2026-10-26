@@ -123,7 +123,7 @@ describe("L5 queue default origin and precedence", () => {
         },
       });
     }
-    expect(seen).toEqual(Array.from({ length: 4 }, () => ({ host: "gemini", supplied: true, transport: "codex-deferred" })));
+    expect(seen).toEqual(Array.from({ length: 4 }, () => ({ host: "antigravity", supplied: true, transport: "codex-deferred" })));
     expect(process.env.AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE).toBe(before);
   });
 });

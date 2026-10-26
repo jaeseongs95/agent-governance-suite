@@ -11,6 +11,13 @@ vi.mock("../../mcp-server/src/process-identity.js", async (original) => ({
   processStartToken: f.token, processExists: f.exists, processIdentityState: f.identity,
 }));
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
+import { registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+const syntheticCore = await import(new URL("./fixtures/synthetic-core-hook-driver.mjs", import.meta.url).href) as {
+  SYNTHETIC_CORE_HOST: string;
+  registerSyntheticCoreAdapters: (register: typeof registerHookHostAdapter, selectTransport: () => "codex-deferred") => void;
+};
+syntheticCore.registerSyntheticCoreAdapters(registerHookHostAdapter, () => "codex-deferred");
+const syntheticRootHost = syntheticCore.SYNTHETIC_CORE_HOST;
 import { runSessionMessageRelay } from "../../mcp-server/src/session-message-relay.js";
 import { tagProducerFailure } from "../../mcp-server/src/failure-diagnostics.js";
 import type { WakeDispatchPort } from "../../mcp-server/src/session-message-wake-port.js";
@@ -43,7 +50,7 @@ afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.restoreAllMocks(); 
 it("reports an asynchronous legacy relay spawn failure instead of escaping the hook", async () => {
   const stderr = vi.spyOn(console, "error").mockImplementation(() => {});
   f.request.mockResolvedValue({});
-  await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: "legacy-spawn", agent_id: "" }, "codex", 424242);
+  await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: "legacy-spawn", syntheticActor: "root" }, syntheticRootHost, 424242);
   expect(f.spawn).toHaveBeenCalledTimes(1);
   const child = f.spawn.mock.results[0]!.value as EventEmitter;
   expect(() => child.emit("error", Object.assign(new Error("secret-canary spawn"), { code: "ENOENT" }))).not.toThrow();
@@ -91,4 +98,10 @@ it("reports acquire and tick failures while keeping retry and loop behavior", as
   expect(reported[0]).toMatchObject({ reason: "BROKER_TRANSPORT_FAILED" });
   expect(reported[1]).toMatchObject({ reason: "BROKER_DEADLINE_EXPIRED" });
   expect(allText(stderr)).not.toContain("secret-canary");
+});
+
+it.each(["codex", "gemini", "antigravity"])("unsupported native %s cannot reach legacy relay spawn", async (host) => {
+  await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: "legacy-spawn", agent_id: "" }, host, 424242,
+    { hostProcess: { pid: 424242, startToken: "T1" } });
+  expect(f.request).not.toHaveBeenCalled(); expect(f.token).not.toHaveBeenCalled(); expect(f.spawn).not.toHaveBeenCalled();
 });

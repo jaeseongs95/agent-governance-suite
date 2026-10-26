@@ -9,6 +9,8 @@ import { afterEach, expect, it, vi } from "vitest";
 import { SessionMessageStore, MESSAGE_DRAFT_TTL_MS } from "../../mcp-server/src/session-message-store.js";
 import { dispatchSessionMessageBrokerOperation as dispatch } from "../../mcp-server/src/session-message-broker.js";
 import { requestSessionMessageOnce, sessionMessageRequest, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
+import type { registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+import type { SessionMessageHookOptions } from "../../mcp-server/src/session-message-hook.js";
 import { runSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import { TrustStore } from "../../mcp-server/src/trust-store.js";
 
@@ -330,11 +332,12 @@ it("packaged CLI discovers prepare/send and rejects old or unknown send with zer
   expect(JSON.parse(cli("pending", { target }).stdout).data.count).toBe(1);
 }, 15_000);
 
-// r11 integration: use the adapter's default generated-module import, with no sessionMessageHook injection.
-// The two source-only unit suites alone cannot establish that the built consumer accepts fourth options.
+// r11: native default remains denied; an explicit fake-root bridge tests fourth
+// options against the actual built consumer over real TLS (not native evidence).
+let builtSyntheticRegistered = false;
 it.each(['success', 'lost-reply'])('r11 adapter consumes actual built common fourth options over real TLS: %s', async (mode) => {
   const { state } = await launch(mode === 'lost-reply' ? 'claim-deferred' : '');
-  const recipient = { host: 'gemini', sessionId: 'r11-built-consumer-recipient' };
+  const recipient = { host: 'synthetic-message-core', sessionId: 'r11-built-consumer-recipient' };
   const drafts: { messageId: string }[] = [];
   for (const body of ['Synthetic r11 A', 'Synthetic r11 B']) {
     const draft = await requestSessionMessageOnce<{ messageId: string }>('prepare', { sender, target: recipient, body, ttlSeconds: 60 }, state);
@@ -350,11 +353,41 @@ it.each(['success', 'lost-reply'])('r11 adapter consumes actual built common fou
   try {
     const { executeAntigravityHookEvent, createClaimStateTracker, finalizeConnectorOutput } = await import(
       pathToFileURL(path.join(root, 'antigravity-connector/hooks/antigravity-hook-runner.mjs')).href);
+    const built = await import(pathToFileURL(path.join(root, 'mcp-server/dist/session-message-hook.mjs')).href) as {
+      registerHookHostAdapter: typeof registerHookHostAdapter;
+      handleSessionMessageHook: typeof import("../../mcp-server/src/session-message-hook.js").handleSessionMessageHook;
+    };
+    const syntheticCore = await import(new URL('./fixtures/synthetic-core-hook-driver.mjs', import.meta.url).href) as {
+      registerSyntheticCoreAdapters: (register: typeof registerHookHostAdapter, selectTransport: () => "codex-deferred") => void;
+    };
+    // This bundle namespace is cached across the two modes; register only once.
+    if (!builtSyntheticRegistered) {
+      syntheticCore.registerSyntheticCoreAdapters(built.registerHookHostAdapter, () => "codex-deferred");
+      builtSyntheticRegistered = true;
+    }
+    const nativePhases: unknown[] = [];
+    expect(await executeAntigravityHookEvent({ conversationId: recipient.sessionId, agent_id: '' }, 'PreInvocation', 'session-message', {
+      entryMonotonicMs: performance.now(), totalBudgetMs: 7000, postClaimReserveMs: 500,
+      onClaimState: (value: unknown) => { nativePhases.push(value); },
+    })).toEqual({});
+    expect(nativePhases).toEqual([]);
+    const nativeCounts = JSON.parse(await readFile(path.join(state, 'operation-counts.json'), 'utf8'));
+    for (const operation of ['claim-deferred', 'presence-start', 'ensure-relay', 'acknowledge'])
+      expect(nativeCounts[operation] ?? 0).toBe(0);
+    expect(await readFile(path.join(state, 'r11-trust.sqlite3')).then(() => true, () => false)).toBe(false);
+    expect(store.status(sender, drafts[0]!.messageId)).toMatchObject({ state: 'queued', deliveryAttempts: 0, acknowledgedAt: null });
+    expect(store.status(sender, drafts[1]!.messageId)).toMatchObject({ state: 'queued', deliveryAttempts: 0, acknowledgedAt: null });
+    let callbacks = 0;
     const phases: { phase: string; messageIds: readonly string[] }[] = [];
     const tracker = createClaimStateTracker((value: { phase: string; messageIds: readonly string[] }) => { phases.push(value); });
     const output = await executeAntigravityHookEvent({ conversationId: recipient.sessionId, agent_id: '' }, 'PreInvocation', 'session-message', {
       entryMonotonicMs: performance.now(), totalBudgetMs: 7000, postClaimReserveMs: 500, claimTracker: tracker,
+      sessionMessageHook: (input: Record<string, unknown>, host: string, pid: number | undefined, options: SessionMessageHookOptions) => {
+        callbacks++; expect(host).toBe('antigravity');
+        return built.handleSessionMessageHook({ ...input, syntheticActor: 'root' }, recipient.host, pid, options);
+      },
     });
+    expect(callbacks).toBe(1);
     expect(phases).toEqual(mode === 'lost-reply' ? [{ phase: 'request-attempted', messageIds: [] }] : [
       { phase: 'request-attempted', messageIds: [] }, { phase: 'response-received', messageIds: [drafts[0]!.messageId] },
     ]);

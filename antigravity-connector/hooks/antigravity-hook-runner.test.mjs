@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
@@ -21,6 +21,7 @@ import {
   resolveLongLivedHostProcess,
   runConnectorFromRaw,
   startAntigravitySessionPresenceAndRelay,
+  translateCanonicalOutputToAntigravity,
 } from "./antigravity-hook-runner.mjs";
 
 const runnerPath = fileURLToPath(new URL("./antigravity-hook-runner.mjs", import.meta.url));
@@ -87,7 +88,7 @@ try {
     assert.equal(parsed.decision, "deny");
   }
 
-  // 3. [F1 + G1 Timing + 9517df5a Boundary 3 + R02-F04]: Valid PreToolUse with _hostAttestation on update_session_status -> strips _hostAttestation, injects _sessionBinding.host="gemini" using isolated temp DB and synthetic sessionId, within bounded latency.
+  // 3. [F1 + G1 Timing + R02-F04]: The real common native adapter denies unsupported actor input within the latency bound; no forged binding or state survives.
   {
     const validPayload = JSON.stringify({
       conversationId: TEST_SESSION_ID,
@@ -111,15 +112,25 @@ try {
     assert.equal(res.status, 0);
     assert.ok(res.elapsedMs < 3000, `Expected Handler 2 elapsedMs < 3000ms, got ${res.elapsedMs}ms`);
     const parsed = JSON.parse(res.stdout);
-    assert.equal(parsed.decision, "allow");
-    assert.equal(Object.hasOwn(parsed.overwrite.Arguments, "_hostAttestation"), false);
-    assert.deepEqual(parsed.overwrite.Arguments._sessionBinding, {
-      host: "gemini",
-      sessionId: TEST_SESSION_ID,
-    });
+    assert.equal(parsed.decision, "deny");
+    assert.equal(parsed.overwrite?.Arguments?._hostAttestation, undefined);
+    assert.equal(parsed.overwrite?.Arguments?._sessionBinding, undefined);
+    for (const file of ["session-board.sqlite3", "trust.sqlite3", "workflows.sqlite3", "session-messaging"])
+      assert.equal(existsSync(path.join(tmpDir, file)), false);
+    // The public translator retains positive wrapper overwrite semantics;
+    // this explicit synthetic output is not native actor authority evidence.
+    const boundary = buildCanonicalHookInput(JSON.parse(validPayload), "PreToolUse", "session-board").toolBoundary;
+    const routed = translateCanonicalOutputToAntigravity("PreToolUse", { hookSpecificOutput: {
+      permissionDecision: "allow", updatedInput: { schemaVersion: "1.0.0", summary: "synthetic translation",
+        _sessionBinding: { host: "synthetic-connector-core", sessionId: TEST_SESSION_ID } },
+    } }, boundary);
+    assert.equal(routed.decision, "allow");
+    assert.equal(routed.overwrite.Arguments._hostAttestation, undefined);
+    assert.deepEqual(routed.overwrite.Arguments._sessionBinding, { host: "synthetic-connector-core", sessionId: TEST_SESSION_ID });
   }
 
-  // 4. [G1 + G2]: Fast standalone --hook=host-attestation (Handler 1) strips _hostAttestation on call_mcp_tool wrapper and denies non-wrapper direct tool calls carrying _hostAttestation.
+  // 4. [G1 + G2]: Fast --hook=host-attestation and direct calls both preserve
+  // actual common native denial before any unsupported actor receives authority.
   {
     const wrapperPayload = JSON.stringify({
       conversationId: TEST_SESSION_ID,
@@ -136,8 +147,9 @@ try {
     assert.equal(resWrapper.status, 0);
     assert.ok(resWrapper.elapsedMs < 2000, `Expected Handler 1 elapsedMs < 2000ms, got ${resWrapper.elapsedMs}ms`);
     const parsedWrapper = JSON.parse(resWrapper.stdout);
-    assert.equal(parsedWrapper.decision, "allow");
-    assert.deepEqual(parsedWrapper.overwrite, { Arguments: { schemaVersion: "1.0.0" } });
+    assert.equal(parsedWrapper.decision, "deny");
+    assert.equal(parsedWrapper.reason, "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED");
+    assert.equal(parsedWrapper.overwrite, undefined);
 
     const directPayload = JSON.stringify({
       conversationId: TEST_SESSION_ID,
@@ -150,7 +162,8 @@ try {
     assert.equal(resDirect.status, 0);
     const parsedDirect = JSON.parse(resDirect.stdout);
     assert.equal(parsedDirect.decision, "deny");
-    assert.match(parsedDirect.reason, /Direct tool call cannot carry unverified _hostAttestation/);
+    assert.equal(parsedDirect.reason, "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED");
+    assert.equal(parsedDirect.overwrite, undefined);
   }
 
   // 5. [9517df5a Boundary 1]: Unknown or missing --event, or conflicting payload hook_event_name -> rejected ({}).
@@ -543,16 +556,22 @@ try {
     assert.equal(resMsg.status, 0);
     assert.ok(resMsg.elapsedMs < 3000, `Expected Handler 2 prepare_session_message elapsedMs < 3000ms, got ${resMsg.elapsedMs}ms`);
     const parsedMsg = JSON.parse(resMsg.stdout);
-    assert.equal(parsedMsg.decision, "allow");
-    assert.deepEqual(parsedMsg.overwrite.Arguments._sessionBinding, {
-      host: "gemini",
-      sessionId: TEST_SESSION_ID,
-    });
+    assert.equal(parsedMsg.decision, "deny");
+    assert.equal(parsedMsg.overwrite?.Arguments?._sessionBinding, undefined);
+    for (const file of ["session-board.sqlite3", "trust.sqlite3", "session-messaging"])
+      assert.equal(existsSync(path.join(tmpDir, file)), false);
+    const boundary = buildCanonicalHookInput(JSON.parse(msgToolPayload), "PreToolUse", "session-message").toolBoundary;
+    const routed = translateCanonicalOutputToAntigravity("PreToolUse", { hookSpecificOutput: {
+      updatedInput: { schemaVersion: "1.0.0", targetHost: "gemini", targetSessionId: TEST_TARGET_SESSION_ID, body: "hello",
+        _sessionBinding: { host: "synthetic-connector-core", sessionId: TEST_SESSION_ID } },
+    } }, boundary);
+    assert.equal(routed.decision, "allow");
+    assert.deepEqual(routed.overwrite.Arguments._sessionBinding, { host: "synthetic-connector-core", sessionId: TEST_SESSION_ID });
   }
 
-  // 10. [R02-F05]: All 3 reserved binding keys (_hostAttestation, _sessionBinding, _continuityBinding) are stripped
-  // synchronously on PreToolUse entry BEFORE any stage executes, so even if downstream stages throw, forged keys never survive.
-  // Also verifies non-wrapper direct tool calls carrying _sessionBinding or _continuityBinding are denied immediately.
+  // 10. [R02-F05]: Native common denial precedes advisory stages, so forged
+  // binding keys cannot survive through a fail-open advisory-stage exception.
+  // Both wrapper and direct reserved-key attempts remain denied without output bindings.
   {
     const forgedWrapperInput = {
       conversationId: TEST_SESSION_ID,
@@ -571,12 +590,14 @@ try {
         },
       },
     };
+    let advisoryStageCalls = 0;
     const outWhenStagesThrow = await executeAntigravityHookEvent(
       forgedWrapperInput,
       "PreToolUse",
       "",
       {
         stageRunner: async (stage, _event, _raw, currentToolInput) => {
+          advisoryStageCalls++;
           if (stage === "host-attestation") {
             return { output: {}, updatedToolInput: currentToolInput, mutated: false };
           }
@@ -584,12 +605,12 @@ try {
         },
       },
     );
-    assert.equal(outWhenStagesThrow.decision, "allow");
-    assert.deepEqual(outWhenStagesThrow.overwrite, {
-      Arguments: {
-        schemaVersion: "1.0.0",
-      },
-    });
+    assert.equal(outWhenStagesThrow.decision, "deny");
+    assert.equal(outWhenStagesThrow.reason, "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED");
+    assert.equal(outWhenStagesThrow.overwrite, undefined);
+    // The early common governance entry owns AGS authorization. Advisory-stage
+    // failure injection must not bypass it or convert unsupported input to allow.
+    assert.equal(advisoryStageCalls, 0);
 
     const directForgedSession = await executeAntigravityHookEvent(
       {
@@ -606,7 +627,8 @@ try {
       "",
     );
     assert.equal(directForgedSession.decision, "deny");
-    assert.match(directForgedSession.reason, /Direct tool call cannot carry unverified _sessionBinding/);
+    assert.equal(directForgedSession.reason, "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED");
+    assert.equal(directForgedSession.overwrite, undefined);
 
     const directForgedContinuity = await executeAntigravityHookEvent(
       {
@@ -623,23 +645,24 @@ try {
       "",
     );
     assert.equal(directForgedContinuity.decision, "deny");
-    assert.match(directForgedContinuity.reason, /Direct tool call cannot carry unverified _continuityBinding/);
+    assert.equal(directForgedContinuity.reason, "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED");
+    assert.equal(directForgedContinuity.overwrite, undefined);
   }
 
   // 11. [R04-F01, R04-F04, R05-F02 & R05-F03 Full Entrypoint & Mutable Observer Oracle]:
   // Verifies BOTH helper calls AND full entrypoint (`executeAntigravityHookEvent(..., "SessionStart", "session-message", ...)`):
-  // - Observed subagent (`agent_id: "subagent-42"`) through `executeAntigravityHookEvent` is blocked BEFORE PID resolution or `sessionMessageHook`.
-  // - Observed main (`agent_id: ""`) through `executeAntigravityHookEvent` preserves `agent_id: ""` all the way to `sessionMessageHook`,
+  // - Raw actor fields are forwarded to the common hook; callback routing alone grants no actor authority.
+  // - Raw `agent_id: ""` through `executeAntigravityHookEvent` preserves `agent_id: ""` all the way to `sessionMessageHook`,
   //   and forwards 3rd arg `explicitPid` AND 4th arg `{ hostProcess: { pid, startToken }, executionBudget: { deadlineMonotonicMs, postClaimReserveMs } }`
   //   (`R05-F03` & `R05-F02` central contract `0cdb9b8b`/`feaa4fb5`).
   // - Mutable observer counterexample: even if the caller/resolver mutates the returned `{ pid, startToken }` object after resolution,
   //   the `{ hostProcess: { pid, startToken } }` passed to `sessionMessageHook` is an immutable snapshot and cannot be corrupted.
-  // - Unverified host (`null` or empty `startToken`) passes `explicitPid: undefined` and `hookOptions: undefined`.
+  // - Unverified host (`null` or empty `startToken`) never invokes the hook.
   {
     let pidResolvedCount = 0;
     const hookCalls = [];
 
-    // (a) Full entrypoint (`executeAntigravityHookEvent`) with observed subagent (`agent_id: "subagent-42"`) -> 0 PID resolution, 0 hook calls
+    // (a) The connector routes the raw child marker; the actual common adapter denies its authority.
     await executeAntigravityHookEvent(
       {
         conversationId: TEST_SESSION_ID,
@@ -659,8 +682,15 @@ try {
         },
       },
     );
-    assert.equal(pidResolvedCount, 0, "Full entrypoint SessionStart with subagent must not resolve host PID");
-    assert.equal(hookCalls.length, 0, "Full entrypoint SessionStart with subagent must not invoke sessionMessageHook");
+    assert.equal(pidResolvedCount, 1);
+    assert.equal(hookCalls.length, 1);
+    assert.equal(hookCalls[0].host, "antigravity"); assert.equal(hookCalls[0].input.agent_id, "subagent-42");
+    const { handleSessionMessageHook } = await import("../../mcp-server/dist/session-message-hook.mjs");
+    assert.deepEqual(await handleSessionMessageHook(hookCalls[0].input, hookCalls[0].host,
+      hookCalls[0].explicitPid, hookCalls[0].hookOptions), {});
+    for (const file of ["session-board.sqlite3", "trust.sqlite3", "session-messaging"])
+      assert.equal(existsSync(path.join(tmpDir, file)), false);
+    hookCalls.length = 0; pidResolvedCount = 0;
 
     // (b) Full entrypoint (`executeAntigravityHookEvent`) with observed main (`agent_id: ""`) + mutable observer counterexample
     const mutableHostRecord = { pid: 41804, startToken: "2026-10-22T00:00:00.000Z" };
@@ -691,7 +721,7 @@ try {
     );
     assert.equal(pidResolvedCount, 1);
     assert.equal(hookCalls.length, 1);
-    assert.equal(hookCalls[0].host, "gemini");
+    assert.equal(hookCalls[0].host, "antigravity");
     assert.equal(hookCalls[0].explicitPid, 41804);
     assert.equal(hookCalls[0].input.agent_id, "");
     assert.deepEqual(hookCalls[0].hookOptions, {

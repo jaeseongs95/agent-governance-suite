@@ -9,7 +9,19 @@ vi.mock("../../mcp-server/src/session-message-client.js", async (importOriginal)
 vi.mock("../../mcp-server/src/process-identity.js", async (importOriginal) => ({
   ...await importOriginal<typeof import("../../mcp-server/src/process-identity.js")>(), processStartToken: startTokenMock,
 }));
+import { registerHookHostAdapter, resolveHookProcessPid } from "../../mcp-server/src/host-input-adapter.js";
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
+
+// Owned synthetic schema; these are core process-generation tests, not native capture.
+const syntheticCore = await import(new URL("./fixtures/synthetic-core-hook-driver.mjs", import.meta.url).href) as {
+  registerSyntheticCoreAdapters: (register: typeof registerHookHostAdapter, selectTransport: () => "codex-deferred") => void;
+};
+const directHost = "synthetic-direct-relay-pid";
+const pairedHost = "synthetic-paired-relay-pid";
+syntheticCore.registerSyntheticCoreAdapters((_host, adapter) => {
+  registerHookHostAdapter(directHost, adapter);
+  registerHookHostAdapter(pairedHost, { ...adapter, processPid: (pid, observation) => observation ? pid : undefined });
+}, () => "codex-deferred");
 
 beforeEach(() => {
   spawnMock.mockReset(); requestMock.mockReset(); startTokenMock.mockReset();
@@ -19,10 +31,10 @@ beforeEach(() => {
   vi.stubEnv("AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", "0");
 });
 afterEach(() => vi.unstubAllEnvs());
-const input = { hook_event_name: "SessionStart", session_id: "synthetic-relay-host", agent_id: "" };
+const input = { hook_event_name: "SessionStart", session_id: "synthetic-relay-host", syntheticActor: "root" };
 
-it.each(["codex", "gemini"] as const)("uses the explicit %s host PID and its observed start token", async (host) => {
-  await handleSessionMessageHook(input, host, 424242, host === "gemini"
+it.each([directHost, pairedHost])("uses the explicit %s host PID and its observed start token", async (host) => {
+  await handleSessionMessageHook(input, host, 424242, host === pairedHost
     ? { hostProcess: { pid: 424242, startToken: "synthetic-start-token" } } : undefined);
   expect(startTokenMock).toHaveBeenCalledWith(424242);
   expect(spawnMock).toHaveBeenCalledTimes(1);
@@ -32,6 +44,8 @@ it.each(["codex", "gemini"] as const)("uses the explicit %s host PID and its obs
 });
 
 it("does not substitute a short-lived hook shell for an unknown Gemini host PID", async () => {
+  expect(resolveHookProcessPid("gemini")).toBeUndefined();
+  expect(resolveHookProcessPid("gemini", 424242)).toBeUndefined();
   await handleSessionMessageHook(input, "gemini");
   expect(startTokenMock).not.toHaveBeenCalled();
   expect(spawnMock).not.toHaveBeenCalled();
@@ -44,10 +58,10 @@ it("preserves the Claude launcher parent selection", async () => {
 
 it("does not start a relay when the explicit identity is unobservable or the actor is a subagent", async () => {
   startTokenMock.mockReturnValue(null);
-  await handleSessionMessageHook(input, "gemini", 424242, { hostProcess: { pid: 424242, startToken: "synthetic-start-token" } });
+  await handleSessionMessageHook(input, pairedHost, 424242, { hostProcess: { pid: 424242, startToken: "synthetic-start-token" } });
   expect(spawnMock).not.toHaveBeenCalled();
   requestMock.mockClear(); startTokenMock.mockClear();
-  await handleSessionMessageHook({ ...input, agent_id: "synthetic-child" }, "gemini", 424242, { hostProcess: { pid: 424242, startToken: "synthetic-start-token" } });
+  await handleSessionMessageHook({ ...input, syntheticActor: "child" }, pairedHost, 424242, { hostProcess: { pid: 424242, startToken: "synthetic-start-token" } });
   expect(requestMock).not.toHaveBeenCalled(); expect(startTokenMock).not.toHaveBeenCalled();
   expect(spawnMock).not.toHaveBeenCalled();
 });
@@ -55,7 +69,7 @@ it("does not start a relay when the explicit identity is unobservable or the act
 const observedHostProcess = () => ({ pid: 424242, startToken: "synthetic-start-token" });
 
 it("keeps the observed process generation and exact presence instance across the await", async () => {
-  await handleSessionMessageHook(input, "gemini", 424242, { hostProcess: observedHostProcess() });
+  await handleSessionMessageHook(input, pairedHost, 424242, { hostProcess: observedHostProcess() });
   expect(requestMock).toHaveBeenCalledTimes(1);
   expect(requestMock.mock.calls[0]![0]).toBe("presence-start");
   const presence = requestMock.mock.calls[0]![1] as { instanceId: string; transport: string };
@@ -70,7 +84,7 @@ it("keeps the observed process generation and exact presence instance across the
 it.each(["replacement-generation", null])("does not adopt a changed or unknown process token after presence: %s", async (afterToken) => {
   let releasePresence!: () => void;
   requestMock.mockImplementationOnce(() => new Promise<void>((resolve) => { releasePresence = resolve; }));
-  const pending = handleSessionMessageHook(input, "gemini", 424242, { hostProcess: observedHostProcess() });
+  const pending = handleSessionMessageHook(input, pairedHost, 424242, { hostProcess: observedHostProcess() });
   expect(requestMock).toHaveBeenCalledTimes(1);
   expect(spawnMock).not.toHaveBeenCalled();
   startTokenMock.mockReturnValue(afterToken);
@@ -86,16 +100,22 @@ it("snapshots the caller observation before presence instead of accepting its la
     startTokenMock.mockReturnValue("replacement-generation");
     return {};
   });
-  await handleSessionMessageHook(input, "gemini", 424242, { hostProcess });
+  await handleSessionMessageHook(input, pairedHost, 424242, { hostProcess });
   expect(spawnMock).not.toHaveBeenCalled();
 });
 
 it("requires a complete matching Gemini observation before starting presence", async () => {
-  await handleSessionMessageHook(input, "gemini", 424242);
-  await handleSessionMessageHook(input, "gemini", 424242, { hostProcess: { pid: 424243, startToken: "synthetic-start-token" } });
-  await handleSessionMessageHook(input, "gemini", 424242, { hostProcess: { pid: 424242, startToken: "" } });
+  await handleSessionMessageHook(input, pairedHost, 424242);
+  await handleSessionMessageHook(input, pairedHost, 424242, { hostProcess: { pid: 424243, startToken: "synthetic-start-token" } });
+  await handleSessionMessageHook(input, pairedHost, 424242, { hostProcess: { pid: 424242, startToken: "" } });
   startTokenMock.mockReturnValue("replacement-generation");
-  await handleSessionMessageHook(input, "gemini", 424242, { hostProcess: observedHostProcess() });
+  await handleSessionMessageHook(input, pairedHost, 424242, { hostProcess: observedHostProcess() });
   expect(requestMock).not.toHaveBeenCalled();
   expect(spawnMock).not.toHaveBeenCalled();
+});
+
+it.each(["codex", "gemini", "antigravity"])("denies unsupported native %s lifecycle before presence and process effects", async (host) => {
+  await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: input.session_id, agent_id: "" }, host, 424242,
+    { hostProcess: observedHostProcess() });
+  expect(requestMock).not.toHaveBeenCalled(); expect(startTokenMock).not.toHaveBeenCalled(); expect(spawnMock).not.toHaveBeenCalled();
 });

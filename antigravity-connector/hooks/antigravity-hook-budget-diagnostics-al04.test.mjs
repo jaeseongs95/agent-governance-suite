@@ -39,7 +39,6 @@ vi.mock("node:fs", async original => {
 });
 vi.mock("../../mcp-server/src/builtin-hook-host-adapters.js", () => ({}));
 vi.mock("../../mcp-server/src/runtime-config.js", () => ({ resolveTrustDatabasePath: () => { throw new Error("DB forbidden"); } }));
-vi.mock("../../mcp-server/src/input-observation.js", () => ({ supportsInjection: (capabilities, point) => capabilities.supportedInjection.includes(point) }));
 vi.mock("../../mcp-server/src/session-message-client.js", () => ({ sessionMessageRequest: async operation => {
   f.requests.push(operation);
   if (operation === "list-presence") return { sessions: [] };
@@ -49,12 +48,18 @@ vi.mock("../../mcp-server/src/session-message-client.js", () => ({ sessionMessag
 vi.mock("../../mcp-server/src/trust-store.js", () => ({ TrustStore: class { constructor() { throw new Error("DB forbidden in AL04 fixture"); } } }));
 vi.mock("../../mcp-server/src/process-identity.js", () => ({ processStartToken: () => f.birth }));
 vi.mock("../../mcp-server/src/session-message-wake-port.js", () => ({ recordWakeHookObservation: () => { throw new Error("receipt forbidden"); } }));
-vi.mock("../../mcp-server/src/host-input-adapter.js", () => ({
-  registerHookHostAdapter() {}, resolveHookHost: () => "gemini", isGovernanceHookTool: () => false, nativePeerWait: () => null, resolveHookProcessPid: () => undefined,
-  hostDeliveryProfile: () => ({ transport: "gemini-queue", blocksEmptyWakePrompt: false, capabilities: { idleWake: "none", supportedInjection: ["tool-boundary"] } }),
-  adaptHostInput: input => ({ lifecycle: "none", outputEventName: "PostToolUse", observation: { host: "gemini", sessionId: "AL04_PRIVATE", kind: "tool-boundary", boundaryPhase: "after",
-    actor: { kind: input.agent_id === "" ? "main" : input.agent_id ? "subagent" : "unknown", assurance: input.agent_id === undefined ? "unknown" : "observed" } } }),
-}));
+import { registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+import { registerSyntheticCoreAdapters, SYNTHETIC_CORE_HOST } from "../../tests/session-messaging/fixtures/synthetic-core-hook-driver.mjs";
+registerSyntheticCoreAdapters((host, adapter) => registerHookHostAdapter(host, { ...adapter,
+  adaptInput(input, selectedHost) {
+    const adapted = adapter.adaptInput(input, selectedHost);
+    if (input.syntheticActor === "indeterminate") adapted.observation.actor = {
+      role: "indeterminate", basis: "unavailable", reasonCode: "SYNTHETIC_CORE_UNKNOWN",
+    };
+    return adapted;
+  },
+}), () => "gemini-queue");
+const coreInput = { session_id: "AL04_PRIVATE", hook_event_name: "PostToolUse", syntheticActor: "root" };
 import { executeAntigravityHookEvent, resolveVerifiedAntigravityHostProcess } from "./antigravity-hook-runner.mjs";
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.ts";
 const pair = Object.freeze({ pid: process.ppid, startToken: "9001" });
@@ -122,23 +127,23 @@ test("F4 native timeout settles only after the owned child has closed", async ()
 });
 
 for (const provider of [() => pair, async () => pair]) test(`F4 core actual recovery awaits ${provider.constructor.name} without changing the sync oracle`, async () => {
-  const result = await handleSessionMessageHook({ agent_id: "" }, "gemini", undefined, { recoverExistingSession: true, resolveHostProcess: provider,
+  const result = await handleSessionMessageHook(coreInput, SYNTHETIC_CORE_HOST, undefined, { recoverExistingSession: true, resolveHostProcess: provider,
     executionBudget: { deadlineMonotonicMs: performance.now() + 2000, postClaimReserveMs: 0 } });
   assert.deepEqual(result, {}); assert.equal(f.requests.filter(operation => operation === "ensure-relay").length, 1);
 });
 
 test("F4 core recovery consumes the original deadline and rejects late success", async () => {
   let release; const pending = new Promise(resolve => { release = resolve; }); let settled = false;
-  const result = handleSessionMessageHook({ agent_id: "" }, "gemini", undefined, { recoverExistingSession: true, resolveHostProcess: () => pending,
+  const result = handleSessionMessageHook(coreInput, SYNTHETIC_CORE_HOST, undefined, { recoverExistingSession: true, resolveHostProcess: () => pending,
     executionBudget: { deadlineMonotonicMs: performance.now() + 120, postClaimReserveMs: 0 } }).then(() => { settled = true; }, () => { settled = true; });
   await turn(); assert.equal(settled, false);
   await new Promise(resolve => setTimeout(resolve, 160)); release(pair); await result;
   assert.equal(f.requests.includes("ensure-relay"), false); assert.equal(f.requests.includes("claim-deferred"), false);
 });
 
-for (const actor of [{}, { agent_id: "child" }]) test(`F4 unknown/subagent recovery never invokes identity provider ${JSON.stringify(actor)}`, async () => {
+for (const actor of [{ syntheticActor: "indeterminate" }, { syntheticActor: "child" }]) test(`F4 unknown/subagent recovery never invokes identity provider ${JSON.stringify(actor)}`, async () => {
   let calls = 0;
-  await handleSessionMessageHook(actor, "gemini", undefined, { recoverExistingSession: true, resolveHostProcess: async () => { calls++; return pair; },
+  await handleSessionMessageHook({ ...coreInput, ...actor }, SYNTHETIC_CORE_HOST, undefined, { recoverExistingSession: true, resolveHostProcess: async () => { calls++; return pair; },
     executionBudget: { deadlineMonotonicMs: performance.now() + 2000, postClaimReserveMs: 0 } });
   assert.equal(calls, 0); assert.equal(f.requests.includes("ensure-relay"), false);
 });
@@ -161,9 +166,10 @@ test("F4 late native query result cannot become a host identity", async () => {
 });
 
 test("F4 reused PID with a different native T2 token cannot ensure a relay", async () => {
-  await handleSessionMessageHook({ agent_id: "" }, "gemini", undefined, { recoverExistingSession: true,
+  await handleSessionMessageHook(coreInput, SYNTHETIC_CORE_HOST, undefined, { recoverExistingSession: true,
     resolveHostProcess: () => { f.birth = "9002"; return pair; },
     executionBudget: { deadlineMonotonicMs: performance.now() + 2000, postClaimReserveMs: 0 } });
+  assert.equal(f.requests.includes("list-presence"), true);
   assert.equal(f.requests.includes("ensure-relay"), false);
 });
 
