@@ -638,8 +638,8 @@ async function main() {
       await fs.mkdir(path.dirname(destination), { recursive: true });
       await fs.copyFile(path.join(source, row.relativePath), destination);
     }
-    record.claudePackaging = { status: 'SKIP_NOT_LINUX_SHARD_1', reason: 'One packaging export across the existing eight jobs' };
-    if (process.platform === 'linux' && shardIndex === 1) {
+    record.claudePackaging = { status: 'SKIP_NOT_LINUX_SHARD_3', reason: 'One packaging export across the existing eight jobs' };
+    if (process.platform === 'linux' && shardIndex === 3) {
       const packaging = await command('06a-claude-package', process.execPath,
         [path.join(source, '.github/scripts/ags30-claude-package-r01.mjs'), source, output], source, 90_000);
       record.claudePackaging = { status: packaging.receipt.status === 'PASS' ? 'GENERATED_NOT_ACCEPTED' : 'FAIL',

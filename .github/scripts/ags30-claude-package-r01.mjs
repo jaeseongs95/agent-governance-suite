@@ -12,7 +12,8 @@ import { retainFailureSecondary } from '../../runtime/failure-diagnostics.mjs';
 const [sourceArg, outputArg] = process.argv.slice(2);
 assert(sourceArg && outputArg && process.platform === 'linux');
 assert.equal(process.env.GITHUB_ACTIONS, 'true');
-assert.equal(process.env.AGS_CI_SHARD_INDEX, '1');
+assert.equal(process.env.AGS_CI_SHARD_INDEX, '3');
+assert.equal(process.env.RUNNER_OS, 'Linux');
 const source = path.resolve(sourceArg), output = path.resolve(outputArg);
 assert.equal(await fs.realpath(fileURLToPath(import.meta.url)),
   await fs.realpath(path.join(source, '.github/scripts/ags30-claude-package-r01.mjs')));
@@ -71,6 +72,10 @@ const config = await json(path.join(source, '.github/ci/ags30-r11/execution-conf
 assert.equal(config.artifactMaximumBytesPerJob, cap);
 assert.equal(config.generated.length, 11);
 const sourceManifest = await json(path.join(output, 'source-manifest.json'));
+assert.equal(sourceManifest.runId, process.env.GITHUB_RUN_ID);
+assert.equal(sourceManifest.attempt, process.env.GITHUB_RUN_ATTEMPT);
+assert.equal(sourceManifest.job, process.env.GITHUB_JOB);
+assert.equal(sourceManifest.shardIndex, 3);
 const executionSources = ['.github/scripts/ags30-claude-package-r01.mjs', 'runtime/failure-diagnostics.mjs',
   'scripts/build-claude-plugin.mjs', 'scripts/lib.mjs'].map(relativePath => {
   const row = sourceManifest.rows.find(row => row.relativePath === relativePath);
@@ -152,8 +157,8 @@ try {
   const manifest = {
     schemaVersion: 'AgsOfficialClaudePackage.v1', status: 'GENERATED_NOT_ACCEPTED',
     unit: config.unit, nonce: config.nonce, runId: sourceManifest.runId, attempt: sourceManifest.attempt,
-    job: sourceManifest.job, runnerOs: 'Linux', shardIndex: 1,
-    generator: { path: 'scripts/build-claude-plugin.mjs', build: 'PASS', check: 'PASS', execution: 'OFFICIAL_CI_LINUX_SHARD_1',
+    job: sourceManifest.job, runnerOs: 'Linux', shardIndex: 3,
+    generator: { path: 'scripts/build-claude-plugin.mjs', build: 'PASS', check: 'PASS', execution: 'OFFICIAL_CI_LINUX_SHARD_3',
       buildOutputSha256: sha(Buffer.from(buildOutput)), checkOutputSha256: sha(Buffer.from(checkOutput)) },
     loaderValidation: { status: 'PASS', scope: 'PACKAGED_STDIO_INITIALIZE_TOOLS_LIST_ONLY',
       tools: tools.map(tool => tool.name), fullRuntimeSmoke: 'NOT_RUN_EXCLUDED_CODEX_CLI', liveHostAndModelCapability: 'NOT_CLAIMED' },
