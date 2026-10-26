@@ -1,0 +1,102 @@
+import {readFileSync} from "node:fs";
+import {fileURLToPath} from "node:url";
+import {describe, expect, it} from "vitest";
+import type {RoutedSkillProviderV2, TaskEnvelopeV1} from "../../contracts/types.js";
+import {FileSkillRegistry} from "../../mcp-server/src/registry.js";
+import {ContractValidator} from "../../mcp-server/src/schema-validator.js";
+import {WorkflowService} from "../../mcp-server/src/workflow-service.js";
+
+const prose = ["korean-prose-selection", "korean-prose-editing", "korean-prose-verification", "korean-prose-finalization"];
+// Only the synthetic test registry enables the existing prose providers; production qualification/defaults stay untouched.
+class ProseFixtureRegistry extends FileSkillRegistry {
+  override read(): RoutedSkillProviderV2[] {return super.read().map(provider => provider.skillId === "korean-prose-editor" ? {...provider, enabled: true} : provider);}
+}
+const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
+const instructions = (file: string) => readFileSync(new URL("../../skills/orchestrator/" + file, import.meta.url), "utf8");
+function service() {const validator = new ContractValidator(); return new WorkflowService(new ProseFixtureRegistry(registryPath, validator), validator);}
+function task(capabilities: string[], riskLevel: TaskEnvelopeV1["riskLevel"] = "low"): TaskEnvelopeV1 {
+  return {schemaVersion: "1.0.0", taskId: "governance-autonomy", objective: "요청한 단계만 수행하고 한국어로 결과를 설명한다.",
+    scope: {included: ["requested synthetic work"], excluded: ["publication"]}, acceptanceCriteria: ["요청 밖 단계나 사용자 승인 관문을 추가하지 않는다."],
+    riskLevel, workUnits: [], requiredCapabilities: capabilities, constraints: ["원문은 영수증에 저장하지 않는다."],
+    authorization: {allowedActions: ["local-test"], prohibitedActions: ["publish"], approvalRequired: []}, decision: {complexity: "simple", hasConflicts: false},
+    orchestration: {requested: true, mcpAvailable: true}};
+}
+
+describe("GOV01/06 actual orchestrator capability and instruction consumption", () => {
+  it.each(prose)("does not expand a request for only %s into unrequested language stages", capability => {
+    const result = service().planWorkflow(task([capability]));
+    expect(result.ok, result.error?.message).toBe(true);
+    expect(result.data!.stages.map(stage => stage.requiredCapability)).toEqual([capability]);
+    expect(result.data!.stages[0]!.requiredArtifacts).not.toContain("gate-verdict");
+  });
+  it("keeps an ordinary Korean result report free of implicit editor, diagnosis, coordination and audit stages", () => {
+    const input = task([]); input.objective = "첫 수정 실패의 원 오류를 읽고 필요한 최소 수리 뒤 시험 결과를 한국어로 보고한다.";
+    const result = service().planWorkflow(input);
+    expect(result.ok, result.error?.message).toBe(true); expect(result.data!.stages).toEqual([]);
+    expect(input.requiredCapabilities).toEqual([]);
+  });
+  it("retains a requested full prose workflow and its exact metadata order/dependency/privacy contracts", () => {
+    const result = service().planWorkflow(task([...prose].reverse()));
+    expect(result.ok, result.error?.message).toBe(true);
+    expect(result.data!.stages.map(stage => stage.requiredCapability)).toEqual(prose);
+    expect(result.data!.stages.map(stage => stage.phaseOrder)).toEqual([50, 55, 60, 65]);
+    expect(result.data!.stages.every(stage => stage.receiptPolicy?.mode === "reference-only")).toBe(true);
+    expect(result.data!.stages[1]!.requiredInputArtifacts).toContain("edit-decision-set");
+    expect(result.data!.stages[2]!.requiredInputArtifacts).toContain("edit-candidate");
+    expect(result.data!.stages[3]!.requiredInputArtifacts).toContain("edit-verification-report");
+    expect(result.data!.stages[3]!.receiptPolicy).toMatchObject({actorIdsMatch: "prior-policy-actors"});
+  });
+  it.each(["high", "critical"] as const)("retains the mandatory independent audit for %s work without expanding the prose request", risk => {
+    const result = service().planWorkflow(task([prose[0]!], risk));
+    expect(result.ok, result.error?.message).toBe(true);
+    expect(result.data!.stages.map(stage => stage.requiredCapability)).toEqual([prose[0], "independent-audit"]);
+    expect(result.data!.stages[1]).toMatchObject({riskGate: "mandatory"});
+    expect(result.data!.stages[1]!.requiredArtifacts).toContain("gate-verdict");
+  });
+  it("retains an explicit independent audit", () => {
+    const result = service().planWorkflow(task([prose[0]!, "independent-audit"]));
+    expect(result.ok, result.error?.message).toBe(true);
+    expect(result.data!.stages.map(stage => stage.requiredCapability)).toEqual([prose[0], "independent-audit"]);
+  });
+  it("keeps the public contract rejection of duplicate requested capabilities", () => {
+    expect(service().planWorkflow(task([prose[0]!, prose[0]!])).error?.code).toBe("INVALID_INPUT");
+  });
+  it("does not invent artifacts from unrequested producer stages", () => {
+    const result = service().planWorkflow(task([prose[1]!]));
+    expect(result.ok, result.error?.message).toBe(true);
+    expect(result.data!.stages).toHaveLength(1);
+    expect(result.data!.stages[0]!.requiredInputArtifacts).toContain("edit-decision-set");
+    expect(result.data!.stages[0]!.producedArtifacts).not.toContain("edit-decision-set");
+  });
+  it("removes the first-failure diagnosis mandate from the actual loaded entry while preserving repeated-failure discrimination", () => {
+    const text = instructions("references/entry-details.md");
+    expect(text).not.toMatch(/첫 수정 실패[^\n]*일반 재시도 대신[^\n]*blocker-diagnosis/u);
+    expect(text).toContain("한 번 실패했다는 이유로 새 계약, recovery workflow나 `blocker-diagnosis`를 먼저 요구하지 않는다");
+    expect(text).toContain("같은 안정된 실패가 반복되거나");
+    expect(text).toContain("새 관측이나 입력 변화가 없는 같은 검사를 반복하지 않는다");
+  });
+  it("keeps ordinary Korean reporting separate from an explicitly selected specialist workflow in the host-loaded skill", () => {
+    const text = instructions("SKILL.md");
+    expect(text).not.toContain("한국어 산문을 작성·편집하거나 자연스러움을 검증하는 요청은 일부 단계만 선택하지 않는다");
+    expect(text).toContain("일반 한국어 답변·진행 보고·결과 설명은 요청 목적에 맞게 직접 작성한다");
+    expect(text).toContain("일부 단계만 요청하면 필요한 기존 artifact를 제공");
+    expect(text).toContain("reference-only policy는 유지한다");
+    expect(text).toContain("분류는 오류 가능한 조언");
+    expect(text).toContain("채택·교정·기각하고 최종 선택");
+    expect(text).toContain("점수는 정답이나 실행 승인이 아니다");
+    const classification = instructions("references/skill-classification.md");
+    expect(classification).toContain("오류 가능한 분류 조언");
+    expect(classification).toContain("점수나 분류 결과를 정답·실행 승인으로 취급하지 않는다");
+  });
+  it("does not require another PRE for ordinary branch commits, pushes or CI", () => {
+    const text = instructions("references/entry-details.md");
+    expect(text).not.toContain("배포·push·태그처럼 사전 점검 대상");
+    expect(text).toContain("시험 실행, 작업 브랜치의 커밋·push와 CI 실행에는 추가 PRE나 승인을 요구하지 않는다");
+    expect(text).toContain("배포·태그처럼 별도 승인 경계");
+  });
+  it("makes the dedicated evaluation recorder request its declared full artifact workflow explicitly", () => {
+    const text = readFileSync(new URL("../../scripts/record-korean-prose-run.ts", import.meta.url), "utf8");
+    expect(text).toContain("requiredCapabilities: artifactContracts.map(({capability}) => capability)");
+    expect(text).not.toContain('requiredCapabilities: ["korean-prose-editing"]');
+  });
+});

@@ -60,7 +60,7 @@ the line itself is its own root cause: fix the line.
 
 ## Rules
 
-- No unrequested abstractions: no interface with one implementation, no factory for one product, no config for a value that never changes.
+- No speculative abstractions: require a current caller, variation axis, or contract boundary; no factory for one product or config for a value that never changes. A vendor/host adapter may have one implementation and still be necessary to isolate protocol, permissions, transport, or resource lifetime. Preserve that boundary and use the smallest existing function, port, or interface; do not add layers just to increase implementation count.
 - No boilerplate, no scaffolding "for later", later can scaffold for itself.
 - Deletion over addition. Boring over clever, clever is what someone decodes at 3am.
 - Fewest files possible. Shortest working diff wins — but only once you understand the problem. The smallest change in the wrong place isn't lazy, it's a second bug.

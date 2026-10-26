@@ -43277,12 +43277,6 @@ function apiError2(error61) {
 function stageId(order, capability) {
   return "stage-".concat(String(order).padStart(2, "0"), "-").concat(capability);
 }
-var KOREAN_PROSE_CAPABILITIES = [
-  "korean-prose-selection",
-  "korean-prose-editing",
-  "korean-prose-verification",
-  "korean-prose-finalization"
-];
 var DETERMINISTIC_CAPABILITIES = /* @__PURE__ */ new Set([
   "korean-prose-finalization"
 ]);
@@ -44066,17 +44060,7 @@ var WorkflowService = class {
   requiredCapabilities(task) {
     const auditRequested = task.requiredCapabilities.includes(POLICY_CAPABILITY.audit) || task.riskLevel === "high" || task.riskLevel === "critical";
     const requestedWork = task.requiredCapabilities.filter((capability) => capability !== POLICY_CAPABILITY.audit);
-    const work = [];
-    let koreanProseExpanded = false;
-    for (const capability of requestedWork) {
-      if (KOREAN_PROSE_CAPABILITIES.includes(capability)) {
-        if (!koreanProseExpanded) work.push(...KOREAN_PROSE_CAPABILITIES);
-        koreanProseExpanded = true;
-      } else {
-        work.push(capability);
-      }
-    }
-    return [.../* @__PURE__ */ new Set([...work, ...auditRequested ? [POLICY_CAPABILITY.audit] : []])];
+    return [.../* @__PURE__ */ new Set([...requestedWork, ...auditRequested ? [POLICY_CAPABILITY.audit] : []])];
   }
   orderProviders(items) {
     const producedBy = /* @__PURE__ */ new Map();

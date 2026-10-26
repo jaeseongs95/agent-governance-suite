@@ -261,7 +261,7 @@ export function compareScope(request, now = new Date()) {
   const findings = changes.filter((item) => !new Set(["in-scope", "preexisting-untouched"]).has(item.classification)).map((item) => `${item.classification}:${item.path}`);
   let verdict = "PASS";
   if (summary.excluded > 0) verdict = "BLOCKED";
-  else if (summary["preexisting-overlap"] > 0 || summary.unplanned > 0) verdict = "NEEDS_APPROVAL";
+  else if (summary["preexisting-overlap"] > 0 || summary.unplanned > 0) verdict = "NEEDS_REVIEW";
 
   return finalizeReport({
     schemaVersion: "1.0.0",
@@ -362,10 +362,11 @@ export function validateReport(value, expectedArtifactDigest) {
   }
   if (value.changes.some((item) => !item || typeof item.path !== "string" || (item.matchedRule !== null && typeof item.matchedRule !== "string"))) throw new Error("change path or matchedRule is invalid");
   if (new Set(value.changes.map((item) => item.path)).size !== value.changes.length) throw new Error("change paths must be unique");
+  if (value.baselineDigest === "0".repeat(64) && value.changes.some((item) => item.classification !== "ownership-unknown")) throw new Error("a missing baseline cannot classify known scope changes");
   let expected = "PASS";
-  if (value.summary["ownership-unknown"] > 0) expected = "INCONCLUSIVE";
+  if (value.baselineDigest === "0".repeat(64) || value.summary["ownership-unknown"] > 0) expected = "INCONCLUSIVE";
   else if (value.summary.excluded > 0) expected = "BLOCKED";
-  else if (value.summary["preexisting-overlap"] > 0 || value.summary.unplanned > 0) expected = "NEEDS_APPROVAL";
+  else if (value.summary["preexisting-overlap"] > 0 || value.summary.unplanned > 0) expected = "NEEDS_REVIEW";
   if (value.verdict !== expected) throw new Error(`verdict ${value.verdict} does not match ${expected}`);
   if (!/^[a-f0-9]{64}$/.test(value.baselineDigest) || !/^[a-f0-9]{64}$/.test(value.currentDigest)) throw new Error("report digest is invalid");
   const expectedFindings = value.changes

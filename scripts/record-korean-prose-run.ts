@@ -134,6 +134,15 @@ const validator = new ContractValidator();
 const store = new SqliteWorkflowStore(databasePath);
 try {
   const service = new WorkflowService(new EvaluationSkillRegistry(path.join(repositoryRoot, "skills", "registry.json"), validator), validator, store);
+  const artifactContracts: NonNullable<TaskEnvelopeV1["artifactContracts"]> = ([
+      ["korean-prose-selection", "edit-decision-set"],
+      ["korean-prose-editing", "edit-candidate"],
+      ["korean-prose-verification", "edit-verification-report"],
+      ["korean-prose-finalization", "final-text-receipt"],
+    ] as const).map(([capability, artifactId]) => ({
+      capability,
+      produced: [{ artifactId, schemaId: `schema://korean-prose/${artifactId}`, targetDigest: `sha256:${digests.source}` as const }],
+    }));
   const task: TaskEnvelopeV1 = {
     schemaVersion: "1.0.0",
     taskId: `korean-prose-evaluation-run-${run}`,
@@ -142,16 +151,8 @@ try {
     acceptanceCriteria: ["Preserve reference-only receipts.", "Use three distinct language actors."],
     riskLevel: "low",
     workUnits: [],
-    requiredCapabilities: ["korean-prose-editing"],
-    artifactContracts: ([
-      ["korean-prose-selection", "edit-decision-set"],
-      ["korean-prose-editing", "edit-candidate"],
-      ["korean-prose-verification", "edit-verification-report"],
-      ["korean-prose-finalization", "final-text-receipt"],
-    ] as const).map(([capability, artifactId]) => ({
-      capability,
-      produced: [{ artifactId, schemaId: `schema://korean-prose/${artifactId}`, targetDigest: `sha256:${digests.source}` as const }],
-    })),
+    requiredCapabilities: artifactContracts.map(({capability}) => capability),
+    artifactContracts,
     constraints: ["MCP receipts contain metadata only."],
     authorization: { allowedActions: ["record-evaluation-receipts"], prohibitedActions: ["publish"], approvalRequired: [] },
     decision: { complexity: "simple", hasConflicts: false },

@@ -111,7 +111,7 @@
     },
     {
       "path": "skills/orchestrator/references/engineering-practices/catalog.json",
-      "digest": "sha256:936714985d22b8ea67b51c5d74cceef2d1321efac8dbfca58989ba124bff3d81"
+      "digest": "sha256:1bd90817d65a175b40cd1adc9b447ada117eca05f4868c90b9e8f96c247ae1c3"
     },
     {
       "path": "skills/orchestrator/references/engineering-practices/cli.md",
@@ -131,7 +131,7 @@
     },
     {
       "path": "skills/orchestrator/references/engineering-practices/implementation.md",
-      "digest": "sha256:4b338f1d4b7dd51726f8f007c927bcae575c120283142136f802e64590defbd1"
+      "digest": "sha256:57dc9ffcba25928a0da81e677512f75ad801812ff133a80b9dda3b4030150a4b"
     },
     {
       "path": "skills/orchestrator/references/engineering-practices/index.md",

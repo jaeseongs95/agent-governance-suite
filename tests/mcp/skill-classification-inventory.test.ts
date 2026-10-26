@@ -135,10 +135,10 @@ describe("signed source evidence and selection context regression", () => {
 
   it.each([
     ["software-security-auditor", "감사자는 새 재현 코드를 작성·실행하지 않고"],
-    ["independent-audit-gate", "감사자는 새 재현 코드를 직접 작성하거나 실행하지 않는다"],
+    ["independent-audit-gate", "감사자는 기존 검증을 직접 실행할 수 있다"],
     ["session-board", "공유 checkout 수정 전에"],
     ["recovery-strategy-selector", "원본 diagnosis request·외부 동결 digest"],
-    ["blocker-diagnostician", "read-only 검사도 명시적 허용 없이는"],
+    ["blocker-diagnostician", "기존 작업 범위의 통상 read-only 검사는 별도 check ID 허용이나 재승인 없이"],
     ["independent-deliberation-panel", "worker를 한 명도 instantiate하지 않는다"],
   ])("preserves %s omitted context through common REQ and JEV", async (skillId, needle) => {
     const inventory = await loadSkillInventory({ root: process.cwd() });

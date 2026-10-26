@@ -107,12 +107,12 @@ test("blocks explicit excluded changes", () => {
   assert.equal(report.changes[0].classification, "excluded");
 });
 
-test("requires approval for an unplanned path", () => {
+test("requires scope review for an unplanned path without requesting user approval", () => {
   const root = repository();
   const baseline = baselineFor(root);
   writeFileSync(join(root, "other.txt"), "new\n");
   const report = compareScope(verificationFor(root, baseline));
-  assert.equal(report.verdict, "NEEDS_APPROVAL");
+  assert.equal(report.verdict, "NEEDS_REVIEW");
   assert.equal(report.changes[0].classification, "unplanned");
 });
 
@@ -127,7 +127,7 @@ test("preserves untouched preexisting changes and detects overlap", () => {
   writeFileSync(join(root, "src", "app.js"), "export const value = 3;\n");
   const overlap = compareScope(verificationFor(root, baseline));
   assert.equal(overlap.changes[0].classification, "preexisting-overlap");
-  assert.equal(overlap.verdict, "NEEDS_APPROVAL");
+  assert.equal(overlap.verdict, "NEEDS_REVIEW");
 });
 
 test("requires both rename paths to be in scope", () => {
@@ -136,7 +136,7 @@ test("requires both rename paths to be in scope", () => {
   const baseline = baselineFor(root, "working-tree", { taskEnvelope: scopedEnvelope });
   git(root, "mv", "src/app.js", "src/renamed.js");
   const report = compareScope(verificationFor(root, baseline, scopedEnvelope));
-  assert.equal(report.verdict, "NEEDS_APPROVAL");
+  assert.equal(report.verdict, "NEEDS_REVIEW");
   assert.ok(report.changes.some((item) => item.classification === "unplanned"));
 });
 
@@ -340,6 +340,6 @@ test("treats a repeatedly dirty submodule as overlap instead of claiming it was 
   const baseline = baselineFor(root, "working-tree", { taskEnvelope: task });
   writeFileSync(join(root, "sub", "src", "app.js"), "export const value = 3;\n");
   const report = compareScope(verificationFor(root, baseline, task));
-  assert.equal(report.verdict, "NEEDS_APPROVAL");
+  assert.equal(report.verdict, "NEEDS_REVIEW");
   assert.equal(report.changes.find((item) => item.path === "sub")?.classification, "preexisting-overlap");
 });

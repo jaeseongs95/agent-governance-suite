@@ -147,7 +147,77 @@ const PONYTAIL_POLICY_SUCCESSOR = Object.freeze({
 }),
 });
 
+// Selected current-source bindings; original provenance and optimization baselines stay frozen.
+const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
+  "revision": "governance-selected-source-successor-r03",
+  "authorityEffect": "none",
+  "baselineRevision": "92b81a84d44d79fc03a06a3493005eb114191eb9",
+  "hashes": {
+    "skills/blocker-diagnostician/README.md": "3ec56113a02752cea6939f1d53ea8251f16eda4f99ba9e87ac45bc0a11e26c73",
+    "skills/blocker-diagnostician/SKILL.md": "0b2ed15e57c2c344661a3ae64073181d6f7b8940b7ef4e315daf010629c7f0de",
+    "skills/blocker-diagnostician/classification.json": "76fd1350e10e6f2763b5d25bd66a0af09e59b6e77c3aec8fc24a56049eb179af",
+    "skills/blocker-diagnostician/references/diagnosis-protocol.md": "4fffd3c0656ffee3caca1eb072a5f9a3f6a3c91ba7f15644c973c9050c9437c1",
+    "skills/blocker-diagnostician/references/entry-details.md": "90d37e3edae634cf0a44260d8c67f8c356db3b1805666757810ae80d27a520dc",
+    "skills/blocker-diagnostician/scripts/core.mjs": "7b2031fae6dceac8b82877a03ef2b6662abd8a168360ee9188ce0a3be65cc998",
+    "skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json": "c8c3929dd667b971dbc3c93c092c543969895a2df12e9f78d290ea8c55dcbd98",
+    "skills/change-scope-guardian/integration/skill-descriptor.json": "0383344088d90c7306cc9de937b8ba0445985529c7291a54cf36aab7fcb0d65b",
+    "skills/change-scope-guardian/references/entry-details.md": "58fcf7660d9e2ab3dd775aeee528d547250af2df02537affb3a9af4c5bb66af1",
+    "skills/change-scope-guardian/references/verdict-rules.md": "b656378815a59a40d37a9f7fdcd790f9880d9d59759bc1732141c49c7ea49988",
+    "skills/change-scope-guardian/scripts/lib.mjs": "ee44ea2dd431868a9a86b96fd98f74a32910ede0111ccb7f12a1e8058285a66b",
+    "skills/coordinate-subagents/references/model-routing.md": "d96706299185ce0d6df5e0669b481aaf1b7404ecf7841e1b4cf910a4953262b9",
+    "skills/coordinate-subagents/scripts/model-routing.mjs": "899bffe5d345b5ef064c8730ffe47f90ae185144b4ae3c27ed3cb295d25e6de9",
+    "skills/evaluation-validity-auditor/classification.json": "1de15023a9e0e1175404bc5e6ee68462717bbb23b33005b12abc5de07d858b42",
+    "skills/evaluation-validity-auditor/references/entry-details.md": "dc8fd042c3576fa0c890e88a13cac54c343cf4a420c3968f1ca7f5627aa17090",
+    "skills/evaluation-validity-auditor/scripts/cli.mjs": "e23e6a1a1f87fc91e2471ca93d79e348f621c02c8e0bdb89497c71a2c78c42d8",
+    "skills/evaluation-validity-auditor/scripts/io.mjs": "b671251499880f72c02a1a7640f0e7cc238f5c552fa95c2400c5b6c4e20b1ae5",
+    "skills/evaluation-validity-auditor/scripts/validate-report.mjs": "785b162b082a827bee7072a7a8e5469795e17a7a1e9c5f78cab9b865d8222780",
+    "skills/independent-audit-gate/SKILL.md": "26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29",
+    "skills/independent-audit-gate/classification.json": "80a4192630678554a8dc2c05221228abcfcaee73ec12ebf54d739fbd03883576",
+    "skills/independent-audit-gate/references/audit-protocol.md": "0fc4cb86a3c68cef24c69487e9088bd8c5e07a6f2bff7a120211881d3540c30d",
+    "skills/independent-audit-gate/references/entry-details.md": "830d33d1e68e125a52f324652af09096d9d1771124bd7518ec2ae2097fc17e38",
+    "skills/independent-audit-gate/scripts/validate_skill.py": "9126bda57ea5985f268eb8558a80158270f8ccac200d988e98a9176932469e35",
+    "skills/independent-deliberation-panel/references/orchestration-policy.md": "ff72d35b11196ccb73e85fe73eda04caf26380f7c264fb800357c9f55c0b62c1",
+    "skills/model-effort-advisor/SKILL.md": "fa84d128bf1d9a6742b74f13080db98f304803e84168b8de39a9e120a01a9a6a",
+    "skills/model-effort-advisor/classification.json": "9dee08d541f2a0dae21352cbbd4d1e8c3cbf7cdaefcf7db94bf0cf8598f17518",
+    "skills/orchestrator/SKILL.md": "b90c19a956f4dd3b239e4f4a527ebea319128dbae239018f8f3b0b5445cc43ac",
+    "skills/orchestrator/classification.json": "dbeb13d177c67b8fc9d697931d6fbcf789aec6af6b3d0e412110e8146bb18b1c",
+    "skills/orchestrator/references/engineering-practices/catalog.json": "1bd90817d65a175b40cd1adc9b447ada117eca05f4868c90b9e8f96c247ae1c3",
+    "skills/orchestrator/references/engineering-practices/implementation.md": "57dc9ffcba25928a0da81e677512f75ad801812ff133a80b9dda3b4030150a4b",
+    "skills/orchestrator/references/entry-details.md": "7fdb556e8c6546d819b868cb8084e561507d4e9c850a292f657749c0a09285b3",
+    "skills/orchestrator/references/skill-classification.md": "c9274214f8fb85ffdf5d138e9a4382b2f2906127b9d47db82dfa542ed28ed2c8",
+    "skills/ponytail/SKILL.md": "907667b8b625eab0438b462a4737a056e3833f972c66e432817a12e6f643ac76",
+    "skills/ponytail/classification.json": "19b81d57825cecd7a366b50efb9f220446f5208839b26faee2710af00da3d926"
+  },
+  "previousHashes": {
+    "skills/blocker-diagnostician/SKILL.md": "5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
+    "skills/blocker-diagnostician/references/entry-details.md": "5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf",
+    "skills/change-scope-guardian/references/entry-details.md": "d164e59584763265a4bd8ccfd6a4ee75560f1df4ef30cd44dee68d814baf185b",
+    "skills/evaluation-validity-auditor/references/entry-details.md": "7d31114e9200454d084dd7df04db34f1afc4c3ac23f3feb09c5eef6a85be8950",
+    "skills/independent-audit-gate/SKILL.md": "6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
+    "skills/independent-audit-gate/references/entry-details.md": "3f117c44ba584885a2dc9b370a20f3f4ae4a8e672dae1bd174586d8d27b9ca7e",
+    "skills/model-effort-advisor/SKILL.md": "55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
+    "skills/orchestrator/SKILL.md": "1cfaf8503aacae72fb7e2591e708bea507848ae338e21855c15e4b1ccb635cd1",
+    "skills/orchestrator/references/entry-details.md": "2c50a92c5cc59676ae6ac2bae1f9d86f337cdc7870b20ff9df12e8e3cd09670b",
+    "skills/ponytail/SKILL.md": "953fd16ff07c23b9481e9bdfca12dbb0d115422ebdbd6626bae6b574838a777c"
+  }
+});
+
+export function matchesGovernanceSourceSuccessor(path, bytes) {
+  return Object.hasOwn(GOVERNANCE_SOURCE_SUCCESSOR.hashes, path)
+    && createHash("sha256").update(bytes).digest("hex") === GOVERNANCE_SOURCE_SUCCESSOR.hashes[path];
+}
+
+function beforeGovernanceSuccessor(path, bytes) {
+  if (!matchesGovernanceSourceSuccessor(path, bytes)) return bytes;
+  const original = git("show", `${GOVERNANCE_SOURCE_SUCCESSOR.baselineRevision}:${path}`);
+  if (createHash("sha256").update(original).digest("hex") !== GOVERNANCE_SOURCE_SUCCESSOR.previousHashes[path]) {
+    throw new Error(`Historical governance source differs: ${path}`);
+  }
+  return original;
+}
+
 export function matchesPonytailPolicySuccessor(path, bytes) {
+  if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
   return Object.hasOwn(PONYTAIL_POLICY_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === PONYTAIL_POLICY_SUCCESSOR.hashes[path];
 }
@@ -216,6 +286,7 @@ export function matchesTaskContractAuthorizationSuccessor(path, bytes) {
 }
 
 export function matchesCurrentImplementationPin(path, bytes) {
+  if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
   if (matchesTaskContractAuthorizationSuccessor(path, bytes)) return true;
   return Object.hasOwn(CURRENT_IMPLEMENTATION_PINS.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === CURRENT_IMPLEMENTATION_PINS.hashes[path];
@@ -275,6 +346,7 @@ function sameSet(left, right) {
 }
 
 export function matchesNode24ReadmeUpdate(skillId, baseline, candidate) {
+  if (matchesGovernanceSourceSuccessor(`skills/${skillId}/README.md`, Buffer.from(candidate))) return true;
   const minimum = NODE24_README_MINIMUMS[skillId];
   return Boolean(minimum) && baseline.split(minimum).length === 2
     && candidate === baseline.replace(minimum, "Node.js 24.0.0 이상");
@@ -287,6 +359,7 @@ export function matchesOrchestratorIntakeUpdate(kind, bytes) {
 
 export function matchesEngineeringReferenceUpdate(name, bytes) {
   const reviewedPath = `skills/orchestrator/references/engineering-practices/${name}`;
+  if (matchesGovernanceSourceSuccessor(reviewedPath, bytes)) return true;
   if (Object.hasOwn(REVIEWED_IMPLEMENTATION_R1.hashes, reviewedPath)) {
     return matchesReviewedImplementationUpdate(reviewedPath, bytes);
   }
@@ -295,12 +368,14 @@ export function matchesEngineeringReferenceUpdate(name, bytes) {
 }
 
 export function matchesReviewedImplementationUpdate(path, bytes) {
+  if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
   const reviewed = Object.hasOwn(REVIEWED_IMPLEMENTATION_R2.hashes, path) ? REVIEWED_IMPLEMENTATION_R2 : REVIEWED_IMPLEMENTATION_R1;
   return Object.hasOwn(reviewed.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === reviewed.hashes[path];
 }
 
 export function matchesClassificationUpdate(path, bytes) {
+  if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
   return matchesPonytailPolicySuccessor(path, bytes) || Object.hasOwn(CLASSIFICATION_UPDATE.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === CLASSIFICATION_UPDATE.hashes[path];
 }
@@ -320,9 +395,9 @@ function withoutClassificationAddition(skillId, bytes, root = ROOT) {
 }
 
 export function reconstructOptimizedSkill(skillId, root = ROOT) {
-  const bytes = readFileSync(join(root, "skills", skillId, "SKILL.md"));
+  const bytes = beforeGovernanceSuccessor(`skills/${skillId}/SKILL.md`, readFileSync(join(root, "skills", skillId, "SKILL.md")));
   const candidate = skillId === "orchestrator" ? withoutClassificationAddition(skillId, bytes, root) : bytes;
-  let detail = readFileSync(join(root, "skills", skillId, "references", "entry-details.md"));
+  let detail = beforeGovernanceSuccessor(`skills/${skillId}/references/entry-details.md`, readFileSync(join(root, "skills", skillId, "references", "entry-details.md")));
   if (skillId === "orchestrator") {
     const engineeringAddition = readFileSync(join(root, ENGINEERING_ADDITION));
     if (createHash("sha256").update(engineeringAddition).digest("hex") !== ENGINEERING_ADDITION_SHA256
@@ -366,6 +441,11 @@ export function checkSkillContextOptimization() {
   for (const currentPath of Object.keys(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes)) {
     if (!matchesTaskContractAuthorizationSuccessor(currentPath, readFileSync(join(ROOT, currentPath)))) {
       errors.push(`task-contract authorization successor bytes differ: ${currentPath}`);
+    }
+  }
+  for (const currentPath of Object.keys(GOVERNANCE_SOURCE_SUCCESSOR.hashes)) {
+    if (!matchesGovernanceSourceSuccessor(currentPath, readFileSync(join(ROOT, currentPath)))) {
+      errors.push(`governance source successor bytes differ: ${currentPath}`);
     }
   }
   const detailOwners = readdirSync(join(ROOT, "skills"), { withFileTypes: true })
@@ -415,7 +495,8 @@ export function checkSkillContextOptimization() {
       if (createHash("sha256").update(reconstructed).digest("hex") !== REVIEWED_IMPLEMENTATION_R2.modelReconstructedSha256) {
         errors.push("model-effort-advisor: reconstructed reviewed implementation differs");
       }
-      if (candidate.length > REVIEWED_IMPLEMENTATION_R1.modelInitialMaxBytes) errors.push("model-effort-advisor: initial load exceeds its reviewed limit");
+      // Preserve the historical optimization cap; exact current successor bytes are checked separately.
+      if (beforeGovernanceSuccessor(skillPath, candidate).length > REVIEWED_IMPLEMENTATION_R1.modelInitialMaxBytes) errors.push("model-effort-advisor: initial load exceeds its reviewed limit");
       if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push("model-effort-advisor: frontmatter changed");
     } else if (skillId === "instruction-scope-resolver") {
       for (const [reviewedPath, sha256] of Object.entries(REVIEWED_RESOLVER_N_DESC_RULE.hashes)) {
@@ -437,6 +518,7 @@ export function checkSkillContextOptimization() {
     if (!readFileSync(join(ROOT, ...descriptorPath.split("/"))).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
 
     const allowed = new Set([skillPath, detailPath]);
+    for (const currentPath of Object.keys(GOVERNANCE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     for (const currentPath of Object.keys(CURRENT_IMPLEMENTATION_PINS.hashes)) {
       if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     }
@@ -507,6 +589,7 @@ export function checkSkillContextOptimization() {
     currentImplementationPins: [CURRENT_IMPLEMENTATION_PINS],
     currentPolicySuccessors: [PONYTAIL_POLICY_SUCCESSOR],
     currentAuthorizationPolicySuccessors: [TASK_CONTRACT_AUTHORIZATION_SUCCESSOR],
+    currentGovernanceSourceSuccessors: [GOVERNANCE_SOURCE_SUCCESSOR],
     runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
     pass: errors.length === 0,
     errors,

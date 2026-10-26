@@ -67,14 +67,14 @@
         "selector": "/output/verdict",
         "values": {
           "PASS": { "state": "passed", "errorRequired": false },
-          "NEEDS_APPROVAL": { "state": "needs-approval", "errorRequired": false },
+          "NEEDS_REVIEW": { "state": "blocked", "errorRequired": false },
           "BLOCKED": { "state": "blocked", "errorRequired": true, "allowedErrorCodes": ["MISSING_EVIDENCE", "INVALID_INPUT"] },
           "INCONCLUSIVE": { "state": "needs-input", "errorRequired": false }
         },
         "default": "reject",
         "adapterErrors": ["MISSING_EVIDENCE", "INVALID_INPUT"]
       },
-      "failureHandling": "Preserve all changes and request approval or a new task contract and baseline.",
+      "failureHandling": "Preserve all changes. Review exact scope and ownership against the original request, goal and instructions; resolve findings before passing. Refresh the task contract and baseline for authorized scope changes. Ask the user only when the intended action actually requires new authorization.",
       "gate": { "kind": "precondition", "policy": "conditional", "validator": "change-scope-report.v1" }
     }
   ]

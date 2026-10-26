@@ -54,11 +54,11 @@ test("boundary: an external check without approval is not selected as executable
   assert.equal(report.nextDiscriminatingTest.checkId, "production-read");
 });
 
-test("authorization is explicit even for read-only checks", async () => {
+test("ordinary task-scoped read-only checks need no extra check ID approval", async () => {
   const input = await fixture("same-failure");
   input.authorization.allowedChecks = [];
   const report = analyzeDiagnosis(input);
-  assert.equal(report.verdict, "NEEDS_APPROVAL");
+  assert.equal(report.verdict, "NEXT_TEST");
   assert.equal(report.nextDiscriminatingTest.checkId, "read-cache-acl");
 });
 

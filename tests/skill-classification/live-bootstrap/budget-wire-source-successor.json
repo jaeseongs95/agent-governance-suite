@@ -1,218 +1,223 @@
 {
   "schemaVersion": "1.0.0",
-  "revision": "ags-bootstrap-budget-source-binding-r01",
+  "revision": "ags-bootstrap-budget-source-binding-r02",
   "scope": "CURRENT_OFFLINE_SYNTHETIC_INPUTS_ONLY_NOT_PAID_RESULTS_OR_QUALIFICATION",
-  "sourceCommit": "05713916a4e7a7b254e45e0612bee8259b99463a",
+  "sourceCommit": "92b81a84d44d79fc03a06a3493005eb114191eb9",
   "parentBudgetDigest": "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56",
   "parentPrecisionDigest": "sha256:618afb36e06a7372656e9a4139bf3f91e45f12d1487bac42e72f0994a7d2f835",
-  "fixtureDigest": "sha256:a7b6c5ea425a24bf53ae3178ed7c0afb0dd783662404fe3194c462aff908f3f9",
-  "fixtureOracleDigest": "sha256:da3ee5b3b718d3b0d4a19d7dadd279f721fd88c6944121ef8848ffbb316a2a10",
-  "inventoryDigest": "sha256:7f73f0912515ffaff510766254a9826cb2e7da1d8cd0966a8aef35b5409e6042",
-  "corpusSemanticDigest": "sha256:8069d5479dff519557e58ec2589fb4ef9dcb899213582ff419fca83791ee7422",
-  "provenance": "Existing prepare and jevNoulWireAdapter capture public wire inputs; independent Python Fraction evaluates immutable prices and per-request ceiling. No preflight reservation output read.",
-  "boundaryRebase": "Only two synthetic probe prices follow the changed maximum wire length to preserve exact MAX_SAFE and immediately-unsafe picoUSD roles. Parent price inputs remain immutable; actual route price and budget policy do not change.",
+  "fixtureDigest": "sha256:49d327a6dca9557312d90014410702f8466e839175b3187bc91693b6cccd4789",
+  "fixtureOracleDigest": "sha256:96a7c48283c995dd79c662860b179298bd99d474c899d58820de17d7b8770239",
+  "inventoryDigest": "sha256:9ec085566e541e082cc51ea6dd1b6de507443b5380ab95e9ea3777749cc652a1",
+  "corpusSemanticDigest": "sha256:3fefd6ced872d836c615d4e8d012d6dbe07059122fb9cdc4c659f715c1884deb",
+  "predecessorSourceBinding": {
+    "digest": "sha256:7efc9900460ab5addeed97cbfa6cf0ea521f4221336b3ca61eef02c74cb43cb5",
+    "revision": "ags-bootstrap-budget-source-binding-r01",
+    "sourceCommit": "05713916a4e7a7b254e45e0612bee8259b99463a"
+  },
+  "provenance": "Explicit official prepare/codec capture only; independent Python Fraction(decimal Number text)*bytes*10^9 and per-request ceiling. No reservation output read. Historical original oracles remain byte-identical.",
+  "boundaryRebase": "Only two synthetic MAX_SAFE probe price literals follow the new maximum wire length. Equal reaches MAX_SAFE exactly; above is the immediately next representable Number price. Actual price 42000 picoUSD/byte, budgets, timeouts, thresholds, case roles and old oracles are unchanged.",
   "rows": [
     {
       "caseId": "SS01",
-      "requestDigest": "sha256:97bda4e5499bc1fe52d4eb89938ac9a74e0912e2edb5d104a13d8d5d95879fba",
-      "wireDigest": "sha256:263046ffcd0a982e62a00bcc5166a716df03db817cc4ec77e10320021afc0b1c",
-      "utf8Bytes": 110963,
-      "reservedPicoUsd": "4660446000",
-      "reservedUsdDecimal": "0.004660446000"
+      "requestDigest": "sha256:d2a99625788844b74356eb090cb40c626cedf4bbd22c5ce09f05c8ea6fc76952",
+      "wireDigest": "sha256:8fe733cc7bf1746f80731832c407431fb2280ee5a0183169cf14abade48e43bc",
+      "utf8Bytes": 113205,
+      "reservedPicoUsd": "4754610000",
+      "reservedUsdDecimal": "0.004754610000"
     },
     {
       "caseId": "SS02",
-      "requestDigest": "sha256:92e4b40b91e31b43430ab24a635ea09bc47e24518146d414f55e1ff7d17ead29",
-      "wireDigest": "sha256:548b34b7abe024194e169e8890947d60e8c6bdeebef15d9ea2cad8120a7068fa",
-      "utf8Bytes": 110932,
-      "reservedPicoUsd": "4659144000",
-      "reservedUsdDecimal": "0.004659144000"
+      "requestDigest": "sha256:94253812b70767383269ab606d9242456dd2635f52acd1cbf23e76d8dc53b9a7",
+      "wireDigest": "sha256:c8640374f8a778008bdfffb1ce029ce3e5cf2fe2e26089ace2a8c98cec7d29d0",
+      "utf8Bytes": 113174,
+      "reservedPicoUsd": "4753308000",
+      "reservedUsdDecimal": "0.004753308000"
     },
     {
       "caseId": "SS03",
-      "requestDigest": "sha256:4fdc475450bb6fbfcce27ee108b44f6692386f7a1052907c49ee8a533b662933",
-      "wireDigest": "sha256:d60c2c9610b18879045ddbf1717e8899e77563480af967031c6d4f492d1e9770",
-      "utf8Bytes": 111035,
-      "reservedPicoUsd": "4663470000",
-      "reservedUsdDecimal": "0.004663470000"
+      "requestDigest": "sha256:0c146ec25dab5d6d6453f6374019cdff3cc262244ac2b44f48d056d4c8c6a92f",
+      "wireDigest": "sha256:ef19fe9cb986c38c511d3f6af40a80f3d8bd88f96edce1bb32023980ba65177a",
+      "utf8Bytes": 113277,
+      "reservedPicoUsd": "4757634000",
+      "reservedUsdDecimal": "0.004757634000"
     },
     {
       "caseId": "SS04",
-      "requestDigest": "sha256:ce05c33fb956d72529bd281ac0134ebd90bdc82161b795f4eefbc4ce5bdcd741",
-      "wireDigest": "sha256:5b5e89e112f8f62feabc64bebf17b452ada171ea7694f50977a7aedac263cafd",
-      "utf8Bytes": 111032,
-      "reservedPicoUsd": "4663344000",
-      "reservedUsdDecimal": "0.004663344000"
+      "requestDigest": "sha256:ed9e9c5ab5ab3eb5593c72546030e097a178f6f34f3e949610be80394317198a",
+      "wireDigest": "sha256:f68b121e445402f2fc27b1e66706dd68ac8f5755c33790a2690d58a1405c69bd",
+      "utf8Bytes": 113274,
+      "reservedPicoUsd": "4757508000",
+      "reservedUsdDecimal": "0.004757508000"
     },
     {
       "caseId": "SS05",
-      "requestDigest": "sha256:9944d1ed230440008281e94629aa2e38efcf20c3023d9699370b38dabdbec4e9",
-      "wireDigest": "sha256:dd022595b6f7ad4fe6c7c4c99cff89a664eebb4c58eb230741bcc1266f59223a",
-      "utf8Bytes": 110967,
-      "reservedPicoUsd": "4660614000",
-      "reservedUsdDecimal": "0.004660614000"
+      "requestDigest": "sha256:cfc64ce550e69920f698294d272362e6933c0c7e99a737fbc5ba54973a825959",
+      "wireDigest": "sha256:28484f8e406d7dbd1c5b2b67ffe06c20d5bb5fa97ac276d0bdf49ff271014689",
+      "utf8Bytes": 113209,
+      "reservedPicoUsd": "4754778000",
+      "reservedUsdDecimal": "0.004754778000"
     },
     {
       "caseId": "SS06",
-      "requestDigest": "sha256:a42c547402b2f1b8294c9925843e6550f5390dc1b0d4d971edb7f86288ac86fc",
-      "wireDigest": "sha256:0b13c1a7132ffedbbcf22cce5a5cae1361ababe84bf12ab21f0cd4ddd4e1a964",
-      "utf8Bytes": 110981,
-      "reservedPicoUsd": "4661202000",
-      "reservedUsdDecimal": "0.004661202000"
+      "requestDigest": "sha256:833a9d84139967932652f5e777583c5462d2ef59ebf55bacc57780179f846745",
+      "wireDigest": "sha256:a7f84d3415ffebfe4fd00bd04893bedb7d62b438e5edeb90e402791c6d3992c6",
+      "utf8Bytes": 113223,
+      "reservedPicoUsd": "4755366000",
+      "reservedUsdDecimal": "0.004755366000"
     },
     {
       "caseId": "SS07",
-      "requestDigest": "sha256:3155ca25ff2e66e8122ccfb46e2d891484cf82cb66146015f5d6a8a9d5272e02",
-      "wireDigest": "sha256:dff852705ee44a411c66f9e4ab54367f93ebe98db245572129e843841cabdf40",
-      "utf8Bytes": 110997,
-      "reservedPicoUsd": "4661874000",
-      "reservedUsdDecimal": "0.004661874000"
+      "requestDigest": "sha256:c809b168a00d6af4648517310a60d74b3fd62bf3c978ca3b18003be35c79a627",
+      "wireDigest": "sha256:d5d51977877e2ac94edf3e57fff46a2822f59aa43b9e68e5e91187d0899f5cb7",
+      "utf8Bytes": 113239,
+      "reservedPicoUsd": "4756038000",
+      "reservedUsdDecimal": "0.004756038000"
     },
     {
       "caseId": "SS08",
-      "requestDigest": "sha256:6789c34f4df13f8a29f464db2e94fb3e3ca1621c5e7b93ec5a4136bb9ae008cb",
-      "wireDigest": "sha256:43eab55a84e3461bd84d8c3dc5c3f74f257be26ae07e672359467213fc1c4a33",
-      "utf8Bytes": 110952,
-      "reservedPicoUsd": "4659984000",
-      "reservedUsdDecimal": "0.004659984000"
+      "requestDigest": "sha256:7d004c97c9d280604500e622412af6b81e1e373841b0d1ee0b911b66612118f8",
+      "wireDigest": "sha256:3f6f8d08ae707192f7fb0046327a45ff7afed5b9cf29c13441baccf47384febe",
+      "utf8Bytes": 113194,
+      "reservedPicoUsd": "4754148000",
+      "reservedUsdDecimal": "0.004754148000"
     },
     {
       "caseId": "SS09",
-      "requestDigest": "sha256:67daac47cd075cb5452a889d98cac7dfa6aa264a8c3ecc42004e154838c83a5b",
-      "wireDigest": "sha256:c8f2d8105a1fcba52118d13c9647115ebf6ef86244b4fc9a52a17fb35dabccb2",
-      "utf8Bytes": 110936,
-      "reservedPicoUsd": "4659312000",
-      "reservedUsdDecimal": "0.004659312000"
+      "requestDigest": "sha256:044f374c7b3843b7e1be0af5c51f0c77086f8913c2e20e69e96dc1fcf88e9ee7",
+      "wireDigest": "sha256:a50ce6bb859a79dbdf781a87f3f0c49cae970474697881cb2870b782a41336ad",
+      "utf8Bytes": 113178,
+      "reservedPicoUsd": "4753476000",
+      "reservedUsdDecimal": "0.004753476000"
     },
     {
       "caseId": "SS10",
-      "requestDigest": "sha256:3047110ede0643e59f8c6ce5a1eae9df9f290619d58739c99feb40f7dc182d13",
-      "wireDigest": "sha256:b35e55efe2a7fad02ea3f4d79434af4331494c516fc222022428a6c553595224",
-      "utf8Bytes": 110947,
-      "reservedPicoUsd": "4659774000",
-      "reservedUsdDecimal": "0.004659774000"
+      "requestDigest": "sha256:138280347199b156534c0c7ffd86640d5607c7d53cbd10b733f1736f74474176",
+      "wireDigest": "sha256:f5b140460a40c98fefca399cfb884c01e0f0bb17aa809515630c2fbf8e302ef5",
+      "utf8Bytes": 113189,
+      "reservedPicoUsd": "4753938000",
+      "reservedUsdDecimal": "0.004753938000"
     },
     {
       "caseId": "SS11",
-      "requestDigest": "sha256:b138fc436cc31073ee0379bd92d1ca518e5b90914f44ca2b6c4db993cdfa6f0c",
-      "wireDigest": "sha256:f3f26b3a6e7901a0665c8dbc9705bbf58d37799c46cd5576ffe5a232b7d15317",
-      "utf8Bytes": 110999,
-      "reservedPicoUsd": "4661958000",
-      "reservedUsdDecimal": "0.004661958000"
+      "requestDigest": "sha256:b85ccfb03f7aef1ccaab5625b9abda53da4a60fdc7e83ef5436003b49f300d05",
+      "wireDigest": "sha256:36946effdcd8a4072ff3dc5979b3bb2b0bdbf699f2272069561b1d4d92d7a96c",
+      "utf8Bytes": 113241,
+      "reservedPicoUsd": "4756122000",
+      "reservedUsdDecimal": "0.004756122000"
     },
     {
       "caseId": "SS12",
-      "requestDigest": "sha256:6a38119dbb0ee9cbbfef540de1d4fa7a226bed41a93bf13c3acc7ca57a312b01",
-      "wireDigest": "sha256:77b39bb9d5cc95b10cc1015d2e18232382eb20a0cd09e349386fc08e16302b20",
-      "utf8Bytes": 110836,
-      "reservedPicoUsd": "4655112000",
-      "reservedUsdDecimal": "0.004655112000"
+      "requestDigest": "sha256:458fee2fd1504692d1eca2cc28e900f6f66933c9e61a96259bbf3290cf6c3979",
+      "wireDigest": "sha256:4cd56d968224e15371bba4c89fc8ff7338da8e224b04754b6ffc008d3be42832",
+      "utf8Bytes": 113078,
+      "reservedPicoUsd": "4749276000",
+      "reservedUsdDecimal": "0.004749276000"
     },
     {
       "caseId": "SS13",
-      "requestDigest": "sha256:c6abce26e3aebbd685274725f73b3fbe1ff8a95e148a163cf35f9c4c2890528c",
-      "wireDigest": "sha256:d91c9c0aca72829294d8bc198e63c9e29282ef0a1e0cb114e2948bbaa4d5ca78",
-      "utf8Bytes": 110877,
-      "reservedPicoUsd": "4656834000",
-      "reservedUsdDecimal": "0.004656834000"
+      "requestDigest": "sha256:1bd04da986fbbf7f4e3050570806ff2e03804e3d5b18cf99b16e49a55c7f557d",
+      "wireDigest": "sha256:eff4e85537d6b8c618755fdaba67f3ee121b21fc6175ddd945becd81ed321608",
+      "utf8Bytes": 113119,
+      "reservedPicoUsd": "4750998000",
+      "reservedUsdDecimal": "0.004750998000"
     },
     {
       "caseId": "SS14",
-      "requestDigest": "sha256:4100a754f779636ea404b0deebd58ba89c681bc7d31d1bf7617bcfa215b0f1b3",
-      "wireDigest": "sha256:df610904f04728b674a0be5f7339875ffe1ed0a203ccba23a6f304dc3f780fac",
-      "utf8Bytes": 110973,
-      "reservedPicoUsd": "4660866000",
-      "reservedUsdDecimal": "0.004660866000"
+      "requestDigest": "sha256:82c8198f037e01a698d97bc12d6119bfe90af32e9707323cd28d47dd2d81e9cb",
+      "wireDigest": "sha256:e0655b9b9270d2e7a23e8d8509acf8171ec4d34db3aa40cde8d09e1a904fafb5",
+      "utf8Bytes": 113215,
+      "reservedPicoUsd": "4755030000",
+      "reservedUsdDecimal": "0.004755030000"
     },
     {
       "caseId": "SS15",
-      "requestDigest": "sha256:f608942a5cf09dc290c7fc489eebe9feb36bc86b9724b510dcc5c62326908d23",
-      "wireDigest": "sha256:e382a681e8219d809db820e92860856300bd6e65e13a40b6580dd8c2fd89dbd9",
-      "utf8Bytes": 110851,
-      "reservedPicoUsd": "4655742000",
-      "reservedUsdDecimal": "0.004655742000"
+      "requestDigest": "sha256:2c079609880156b781955a2c7d820ddfc7b360d5741011c9594cd3d8c4ac0e31",
+      "wireDigest": "sha256:6563deb2b6fdf375f429947b53ae3abaa47ced1d34b5214e80fd3230d9c356a5",
+      "utf8Bytes": 113093,
+      "reservedPicoUsd": "4749906000",
+      "reservedUsdDecimal": "0.004749906000"
     },
     {
       "caseId": "SS16",
-      "requestDigest": "sha256:61595717ee3a30bb75498676cbf7e6402fffcb78bdecf9a9b7508ade84504b1a",
-      "wireDigest": "sha256:39c26af3225a873b8b7747ceb3d3e12177d2f014aff91619fcf33205ddebe600",
-      "utf8Bytes": 110939,
-      "reservedPicoUsd": "4659438000",
-      "reservedUsdDecimal": "0.004659438000"
+      "requestDigest": "sha256:60a83454a781b303a4ed2d77ffc47d58f97b1db0b6fe28a2f81499e0ca11515f",
+      "wireDigest": "sha256:af10b29d5cc486afdc15dd439e889c61bddcab1b0d58f384655ce3bafadb8254",
+      "utf8Bytes": 113181,
+      "reservedPicoUsd": "4753602000",
+      "reservedUsdDecimal": "0.004753602000"
     },
     {
       "caseId": "SS17",
-      "requestDigest": "sha256:392c9516f19adea9493730afe9c3fe4d60acbfb575c5f9fc51cb83513b887f0f",
-      "wireDigest": "sha256:520718015febf8064370ea864e8b9c3ad785dc8e3b5a154603bcedb763c75f33",
-      "utf8Bytes": 110999,
-      "reservedPicoUsd": "4661958000",
-      "reservedUsdDecimal": "0.004661958000"
+      "requestDigest": "sha256:3232d8ac0d08caf8deca9a283a8c0b37c6771a20eb5fdf079a2ee1f9aed86962",
+      "wireDigest": "sha256:2f371fb66523cf5327e70932410ae7c07d378fad9de30a328d8159da6076222b",
+      "utf8Bytes": 113241,
+      "reservedPicoUsd": "4756122000",
+      "reservedUsdDecimal": "0.004756122000"
     },
     {
       "caseId": "SS18",
-      "requestDigest": "sha256:844c733548214a4f79502edd64c96c26be037b992ceac02144ae23c7b7dfdc22",
-      "wireDigest": "sha256:5c6144bfd478e124c976e4fe9ad296355fb9d3b64423723db1abdd4561baa220",
-      "utf8Bytes": 110910,
-      "reservedPicoUsd": "4658220000",
-      "reservedUsdDecimal": "0.004658220000"
+      "requestDigest": "sha256:c8cb75091d65a3a605de50f8b229f3986157d652296caafc4377fc3498e51fed",
+      "wireDigest": "sha256:f28c61edb0d53c9e366fb88ba57ea33221cff2ded22f143215581bef061aaaff",
+      "utf8Bytes": 113152,
+      "reservedPicoUsd": "4752384000",
+      "reservedUsdDecimal": "0.004752384000"
     },
     {
       "caseId": "SS23",
-      "requestDigest": "sha256:676c810c19f692d0536f1ac06a0c17b0f0f81d16e8acdf6f687af8bec03162e7",
-      "wireDigest": "sha256:e49ecc3515825833e2c65e0326b63a6e915e087e7aa284f64928cd0f2c7223c4",
-      "utf8Bytes": 110920,
-      "reservedPicoUsd": "4658640000",
-      "reservedUsdDecimal": "0.004658640000"
+      "requestDigest": "sha256:f20e50d6ce187f763542bd901719074d39f9f724687b3d7340694e963667a5a5",
+      "wireDigest": "sha256:7104a26ebc5d94fa0de882e61809df3b0d9e8d83d4e2a191b5b6484d5fea271f",
+      "utf8Bytes": 113162,
+      "reservedPicoUsd": "4752804000",
+      "reservedUsdDecimal": "0.004752804000"
     },
     {
       "caseId": "SS28",
-      "requestDigest": "sha256:35e55664eb86122285f5639e251dd8c486dba32ca62064db66e62943c0b9f2f1",
-      "wireDigest": "sha256:8706573b1d2546b6ac8c47520d5d6278626c4a7181e1e6e6ba1fb92a65db429a",
-      "utf8Bytes": 110843,
-      "reservedPicoUsd": "4655406000",
-      "reservedUsdDecimal": "0.004655406000"
+      "requestDigest": "sha256:72aa107bf99a29e4afe919a90d46742314cad4ca352210f6357acce8aba97a5c",
+      "wireDigest": "sha256:752173a6f9d2ab8cd9acf792d6264311887de916a9d804ba5fb1b927f6aa7ee2",
+      "utf8Bytes": 113085,
+      "reservedPicoUsd": "4749570000",
+      "reservedUsdDecimal": "0.004749570000"
     },
     {
       "caseId": "SS37",
-      "requestDigest": "sha256:553b6f1538727a01eceb1edd2bdf2ce746b50de0d05e258d35a4966234765d4c",
-      "wireDigest": "sha256:86ee142403653fe85b066b09a5b92c9ee82d2adb270b6b4426d3e85bf194a668",
-      "utf8Bytes": 110873,
-      "reservedPicoUsd": "4656666000",
-      "reservedUsdDecimal": "0.004656666000"
+      "requestDigest": "sha256:7a4cf6cb5b27f0ebcde2608ff8c39d2ef6715fbd0f0fd367a69597ee09b53ec8",
+      "wireDigest": "sha256:29c51c40194ea3b8f38e085c1ff646404029091318b61f0d3a17fb1aca67a68c",
+      "utf8Bytes": 113115,
+      "reservedPicoUsd": "4750830000",
+      "reservedUsdDecimal": "0.004750830000"
     }
   ],
   "totals": {
-    "utf8Bytes": "2329762",
-    "reservedPicoUsd": "97850004000",
-    "reservedUsdDecimal": "0.097850004000",
-    "firstTwoPicoUsd": "9319590000",
-    "firstTwoUsdDecimal": "0.009319590000"
+    "utf8Bytes": "2376844",
+    "reservedPicoUsd": "99827448000",
+    "reservedUsdDecimal": "0.099827448000",
+    "firstTwoPicoUsd": "9507918000",
+    "firstTwoUsdDecimal": "0.009507918000"
   },
   "syntheticOverBudgetCases": [
     {
       "id": "uncovered-batch-current-oracle",
-      "currentRequestReservationUsd": "0.097850004000",
-      "oldInputCurrentTotalUsd": "0.127850004000",
-      "additionalSyntheticConfirmedUsd": "0.022149997000",
-      "proposedSyntheticConfirmedUsd": "0.022149997000",
+      "currentRequestReservationUsd": "0.099827448000",
+      "oldInputCurrentTotalUsd": "0.129827448000",
+      "additionalSyntheticConfirmedUsd": "0.020172553000",
+      "proposedSyntheticConfirmedUsd": "0.020172553000",
       "proposedTotalPicoUsd": "150000001000",
       "proposedTotalUsd": "0.150000001000"
     },
     {
       "id": "pilot-plus-full-121-current-oracle",
-      "currentRequestReservationUsd": "0.097850004000",
-      "oldInputCurrentTotalUsd": "0.103584726000",
-      "additionalSyntheticConfirmedUsd": "0.017415275000",
-      "proposedSyntheticConfirmedUsd": "0.017415275000",
+      "currentRequestReservationUsd": "0.099827448000",
+      "oldInputCurrentTotalUsd": "0.105562170000",
+      "additionalSyntheticConfirmedUsd": "0.015437831000",
+      "proposedSyntheticConfirmedUsd": "0.015437831000",
       "proposedTotalPicoUsd": "121000001000",
       "proposedTotalUsd": "0.121000001000"
     },
     {
       "id": "confirmed-plus-unknown-current-oracle",
-      "currentRequestReservationUsd": "0.009319590000",
-      "oldInputCurrentTotalUsd": "0.149319590000",
-      "additionalSyntheticConfirmedUsd": "0.000680411000",
-      "proposedSyntheticConfirmedUsd": "0.080680411000",
+      "currentRequestReservationUsd": "0.009507918000",
+      "oldInputCurrentTotalUsd": "0.149507918000",
+      "additionalSyntheticConfirmedUsd": "0.000492083000",
+      "proposedSyntheticConfirmedUsd": "0.080492083000",
       "proposedTotalPicoUsd": "150000001000",
       "proposedTotalUsd": "0.150000001000"
     }
@@ -221,112 +226,112 @@
     "rows": [
       {
         "caseId": "SS01",
-        "utf8Bytes": 110963,
-        "reservedPicoUsd": "55482"
+        "utf8Bytes": 113205,
+        "reservedPicoUsd": "56603"
       },
       {
         "caseId": "SS02",
-        "utf8Bytes": 110932,
-        "reservedPicoUsd": "55466"
+        "utf8Bytes": 113174,
+        "reservedPicoUsd": "56587"
       },
       {
         "caseId": "SS03",
-        "utf8Bytes": 111035,
-        "reservedPicoUsd": "55518"
+        "utf8Bytes": 113277,
+        "reservedPicoUsd": "56639"
       },
       {
         "caseId": "SS04",
-        "utf8Bytes": 111032,
-        "reservedPicoUsd": "55516"
+        "utf8Bytes": 113274,
+        "reservedPicoUsd": "56637"
       },
       {
         "caseId": "SS05",
-        "utf8Bytes": 110967,
-        "reservedPicoUsd": "55484"
+        "utf8Bytes": 113209,
+        "reservedPicoUsd": "56605"
       },
       {
         "caseId": "SS06",
-        "utf8Bytes": 110981,
-        "reservedPicoUsd": "55491"
+        "utf8Bytes": 113223,
+        "reservedPicoUsd": "56612"
       },
       {
         "caseId": "SS07",
-        "utf8Bytes": 110997,
-        "reservedPicoUsd": "55499"
+        "utf8Bytes": 113239,
+        "reservedPicoUsd": "56620"
       },
       {
         "caseId": "SS08",
-        "utf8Bytes": 110952,
-        "reservedPicoUsd": "55476"
+        "utf8Bytes": 113194,
+        "reservedPicoUsd": "56597"
       },
       {
         "caseId": "SS09",
-        "utf8Bytes": 110936,
-        "reservedPicoUsd": "55468"
+        "utf8Bytes": 113178,
+        "reservedPicoUsd": "56589"
       },
       {
         "caseId": "SS10",
-        "utf8Bytes": 110947,
-        "reservedPicoUsd": "55474"
+        "utf8Bytes": 113189,
+        "reservedPicoUsd": "56595"
       },
       {
         "caseId": "SS11",
-        "utf8Bytes": 110999,
-        "reservedPicoUsd": "55500"
+        "utf8Bytes": 113241,
+        "reservedPicoUsd": "56621"
       },
       {
         "caseId": "SS12",
-        "utf8Bytes": 110836,
-        "reservedPicoUsd": "55418"
+        "utf8Bytes": 113078,
+        "reservedPicoUsd": "56539"
       },
       {
         "caseId": "SS13",
-        "utf8Bytes": 110877,
-        "reservedPicoUsd": "55439"
+        "utf8Bytes": 113119,
+        "reservedPicoUsd": "56560"
       },
       {
         "caseId": "SS14",
-        "utf8Bytes": 110973,
-        "reservedPicoUsd": "55487"
+        "utf8Bytes": 113215,
+        "reservedPicoUsd": "56608"
       },
       {
         "caseId": "SS15",
-        "utf8Bytes": 110851,
-        "reservedPicoUsd": "55426"
+        "utf8Bytes": 113093,
+        "reservedPicoUsd": "56547"
       },
       {
         "caseId": "SS16",
-        "utf8Bytes": 110939,
-        "reservedPicoUsd": "55470"
+        "utf8Bytes": 113181,
+        "reservedPicoUsd": "56591"
       },
       {
         "caseId": "SS17",
-        "utf8Bytes": 110999,
-        "reservedPicoUsd": "55500"
+        "utf8Bytes": 113241,
+        "reservedPicoUsd": "56621"
       },
       {
         "caseId": "SS18",
-        "utf8Bytes": 110910,
-        "reservedPicoUsd": "55455"
+        "utf8Bytes": 113152,
+        "reservedPicoUsd": "56576"
       },
       {
         "caseId": "SS23",
-        "utf8Bytes": 110920,
-        "reservedPicoUsd": "55460"
+        "utf8Bytes": 113162,
+        "reservedPicoUsd": "56581"
       },
       {
         "caseId": "SS28",
-        "utf8Bytes": 110843,
-        "reservedPicoUsd": "55422"
+        "utf8Bytes": 113085,
+        "reservedPicoUsd": "56543"
       },
       {
         "caseId": "SS37",
-        "utf8Bytes": 110873,
-        "reservedPicoUsd": "55437"
+        "utf8Bytes": 113115,
+        "reservedPicoUsd": "56558"
       }
     ],
-    "sumOfPerRequestCeilPicoUsd": "1164888",
-    "invalidRoundAfterSummingPicoUsd": "1164881",
+    "sumOfPerRequestCeilPicoUsd": "1188429",
+    "invalidRoundAfterSummingPicoUsd": "1188422",
     "differencePicoUsd": "7"
   },
   "precisionCases": [
@@ -426,91 +431,91 @@
       "expectedRows": [
         {
           "caseId": "SS01",
-          "reservedPicoUsd": "55482"
+          "reservedPicoUsd": "56603"
         },
         {
           "caseId": "SS02",
-          "reservedPicoUsd": "55466"
+          "reservedPicoUsd": "56587"
         },
         {
           "caseId": "SS03",
-          "reservedPicoUsd": "55518"
+          "reservedPicoUsd": "56639"
         },
         {
           "caseId": "SS04",
-          "reservedPicoUsd": "55516"
+          "reservedPicoUsd": "56637"
         },
         {
           "caseId": "SS05",
-          "reservedPicoUsd": "55484"
+          "reservedPicoUsd": "56605"
         },
         {
           "caseId": "SS06",
-          "reservedPicoUsd": "55491"
+          "reservedPicoUsd": "56612"
         },
         {
           "caseId": "SS07",
-          "reservedPicoUsd": "55499"
+          "reservedPicoUsd": "56620"
         },
         {
           "caseId": "SS08",
-          "reservedPicoUsd": "55476"
+          "reservedPicoUsd": "56597"
         },
         {
           "caseId": "SS09",
-          "reservedPicoUsd": "55468"
+          "reservedPicoUsd": "56589"
         },
         {
           "caseId": "SS10",
-          "reservedPicoUsd": "55474"
+          "reservedPicoUsd": "56595"
         },
         {
           "caseId": "SS11",
-          "reservedPicoUsd": "55500"
+          "reservedPicoUsd": "56621"
         },
         {
           "caseId": "SS12",
-          "reservedPicoUsd": "55418"
+          "reservedPicoUsd": "56539"
         },
         {
           "caseId": "SS13",
-          "reservedPicoUsd": "55439"
+          "reservedPicoUsd": "56560"
         },
         {
           "caseId": "SS14",
-          "reservedPicoUsd": "55487"
+          "reservedPicoUsd": "56608"
         },
         {
           "caseId": "SS15",
-          "reservedPicoUsd": "55426"
+          "reservedPicoUsd": "56547"
         },
         {
           "caseId": "SS16",
-          "reservedPicoUsd": "55470"
+          "reservedPicoUsd": "56591"
         },
         {
           "caseId": "SS17",
-          "reservedPicoUsd": "55500"
+          "reservedPicoUsd": "56621"
         },
         {
           "caseId": "SS18",
-          "reservedPicoUsd": "55455"
+          "reservedPicoUsd": "56576"
         },
         {
           "caseId": "SS23",
-          "reservedPicoUsd": "55460"
+          "reservedPicoUsd": "56581"
         },
         {
           "caseId": "SS28",
-          "reservedPicoUsd": "55422"
+          "reservedPicoUsd": "56543"
         },
         {
           "caseId": "SS37",
-          "reservedPicoUsd": "55437"
+          "reservedPicoUsd": "56558"
         }
       ],
-      "expectedSumPicoUsd": "1164888",
-      "expectedMaxPicoUsd": "55518"
+      "expectedSumPicoUsd": "1188429",
+      "expectedMaxPicoUsd": "56639"
     },
     {
       "id": "minimum-positive",
@@ -605,15 +610,15 @@
     },
     {
       "id": "safe-equal",
-      "priceNumberText": "81.12036073977566",
+      "priceNumberText": "79.514811080281",
       "expectedRows": [
         {
           "caseId": "SS01",
-          "reservedPicoUsd": "9001358588767727"
+          "reservedPicoUsd": "9001474188343211"
         },
         {
           "caseId": "SS02",
-          "reservedPicoUsd": "8998843857584794"
+          "reservedPicoUsd": "8999009229199722"
         },
         {
           "caseId": "SS03",
@@ -621,262 +626,262 @@
         },
         {
           "caseId": "SS04",
-          "reservedPicoUsd": "9006955893658772"
+          "reservedPicoUsd": "9006960710307750"
         },
         {
           "caseId": "SS05",
-          "reservedPicoUsd": "9001683070210686"
+          "reservedPicoUsd": "9001792247587532"
         },
         {
           "caseId": "SS06",
-          "reservedPicoUsd": "9002818755261043"
+          "reservedPicoUsd": "9002905454942656"
         },
         {
           "caseId": "SS07",
-          "reservedPicoUsd": "9004116681032879"
+          "reservedPicoUsd": "9004177691919941"
         },
         {
           "caseId": "SS08",
-          "reservedPicoUsd": "9000466264799590"
+          "reservedPicoUsd": "9000599525421328"
         },
         {
           "caseId": "SS09",
-          "reservedPicoUsd": "8999168339027753"
+          "reservedPicoUsd": "8999327288444044"
         },
         {
           "caseId": "SS10",
-          "reservedPicoUsd": "9000060662995891"
+          "reservedPicoUsd": "9000201951365927"
         },
         {
           "caseId": "SS11",
-          "reservedPicoUsd": "9004278921754359"
+          "reservedPicoUsd": "9004336721542101"
         },
         {
           "caseId": "SS12",
-          "reservedPicoUsd": "8991056302953776"
+          "reservedPicoUsd": "8991375807336015"
         },
         {
           "caseId": "SS13",
-          "reservedPicoUsd": "8994382237744106"
+          "reservedPicoUsd": "8994635914590307"
         },
         {
           "caseId": "SS14",
-          "reservedPicoUsd": "9002169792375125"
+          "reservedPicoUsd": "9002269336454014"
         },
         {
           "caseId": "SS15",
-          "reservedPicoUsd": "8992273108364872"
+          "reservedPicoUsd": "8992568529502220"
         },
         {
           "caseId": "SS16",
-          "reservedPicoUsd": "8999411700109972"
+          "reservedPicoUsd": "8999565832877284"
         },
         {
           "caseId": "SS17",
-          "reservedPicoUsd": "9004278921754359"
+          "reservedPicoUsd": "9004336721542101"
         },
         {
           "caseId": "SS18",
-          "reservedPicoUsd": "8997059209648519"
+          "reservedPicoUsd": "8997259903355956"
         },
         {
           "caseId": "SS23",
-          "reservedPicoUsd": "8997870413255917"
+          "reservedPicoUsd": "8998055051466759"
         },
         {
           "caseId": "SS28",
-          "reservedPicoUsd": "8991624145478954"
+          "reservedPicoUsd": "8991932411013577"
         },
         {
           "caseId": "SS37",
-          "reservedPicoUsd": "8994057756301147"
+          "reservedPicoUsd": "8994317855345986"
         }
       ],
-      "expectedSumPicoUsd": "188991133877821232",
+      "expectedSumPicoUsd": "188994301627299422",
       "expectedMaxPicoUsd": "9007199254740991"
     },
     {
       "id": "safe-above",
-      "priceNumberText": "81.12036073977568",
+      "priceNumberText": "79.51481108028102",
       "expectedRows": [
         {
           "caseId": "SS01",
-          "reservedPicoUsd": "9001358588767729"
+          "reservedPicoUsd": "9001474188343213"
         },
         {
           "caseId": "SS02",
-          "reservedPicoUsd": "8998843857584796"
+          "reservedPicoUsd": "8999009229199725"
         },
         {
           "caseId": "SS03",
-          "reservedPicoUsd": "9007199254740993"
+          "reservedPicoUsd": "9007199254740994"
         },
         {
           "caseId": "SS04",
-          "reservedPicoUsd": "9006955893658774"
+          "reservedPicoUsd": "9006960710307753"
         },
         {
           "caseId": "SS05",
-          "reservedPicoUsd": "9001683070210688"
+          "reservedPicoUsd": "9001792247587534"
         },
         {
           "caseId": "SS06",
-          "reservedPicoUsd": "9002818755261045"
+          "reservedPicoUsd": "9002905454942658"
         },
         {
           "caseId": "SS07",
-          "reservedPicoUsd": "9004116681032882"
+          "reservedPicoUsd": "9004177691919943"
         },
         {
           "caseId": "SS08",
-          "reservedPicoUsd": "9000466264799592"
+          "reservedPicoUsd": "9000599525421330"
         },
         {
           "caseId": "SS09",
-          "reservedPicoUsd": "8999168339027755"
+          "reservedPicoUsd": "8999327288444046"
         },
         {
           "caseId": "SS10",
-          "reservedPicoUsd": "9000060662995893"
+          "reservedPicoUsd": "9000201951365929"
         },
         {
           "caseId": "SS11",
-          "reservedPicoUsd": "9004278921754361"
+          "reservedPicoUsd": "9004336721542103"
         },
         {
           "caseId": "SS12",
-          "reservedPicoUsd": "8991056302953778"
+          "reservedPicoUsd": "8991375807336018"
         },
         {
           "caseId": "SS13",
-          "reservedPicoUsd": "8994382237744109"
+          "reservedPicoUsd": "8994635914590309"
         },
         {
           "caseId": "SS14",
-          "reservedPicoUsd": "9002169792375127"
+          "reservedPicoUsd": "9002269336454016"
         },
         {
           "caseId": "SS15",
-          "reservedPicoUsd": "8992273108364874"
+          "reservedPicoUsd": "8992568529502222"
         },
         {
           "caseId": "SS16",
-          "reservedPicoUsd": "8999411700109975"
+          "reservedPicoUsd": "8999565832877287"
         },
         {
           "caseId": "SS17",
-          "reservedPicoUsd": "9004278921754361"
+          "reservedPicoUsd": "9004336721542103"
         },
         {
           "caseId": "SS18",
-          "reservedPicoUsd": "8997059209648521"
+          "reservedPicoUsd": "8997259903355958"
         },
         {
           "caseId": "SS23",
-          "reservedPicoUsd": "8997870413255919"
+          "reservedPicoUsd": "8998055051466761"
         },
         {
           "caseId": "SS28",
-          "reservedPicoUsd": "8991624145478956"
+          "reservedPicoUsd": "8991932411013580"
         },
         {
           "caseId": "SS37",
-          "reservedPicoUsd": "8994057756301149"
+          "reservedPicoUsd": "8994317855345988"
         }
       ],
-      "expectedSumPicoUsd": "188991133877821277",
-      "expectedMaxPicoUsd": "9007199254740993"
+      "expectedSumPicoUsd": "188994301627299470",
+      "expectedMaxPicoUsd": "9007199254740994"
     },
     {
       "id": "exponent-overflow",
       "expectedRows": [
         {
           "caseId": "SS01",
-          "reservedPicoUsd": "110963000000000000000000000000000000"
+          "reservedPicoUsd": "113205000000000000000000000000000000"
         },
         {
           "caseId": "SS02",
-          "reservedPicoUsd": "110932000000000000000000000000000000"
+          "reservedPicoUsd": "113174000000000000000000000000000000"
         },
         {
           "caseId": "SS03",
-          "reservedPicoUsd": "111035000000000000000000000000000000"
+          "reservedPicoUsd": "113277000000000000000000000000000000"
         },
         {
           "caseId": "SS04",
-          "reservedPicoUsd": "111032000000000000000000000000000000"
+          "reservedPicoUsd": "113274000000000000000000000000000000"
         },
         {
           "caseId": "SS05",
-          "reservedPicoUsd": "110967000000000000000000000000000000"
+          "reservedPicoUsd": "113209000000000000000000000000000000"
         },
         {
           "caseId": "SS06",
-          "reservedPicoUsd": "110981000000000000000000000000000000"
+          "reservedPicoUsd": "113223000000000000000000000000000000"
         },
         {
           "caseId": "SS07",
-          "reservedPicoUsd": "110997000000000000000000000000000000"
+          "reservedPicoUsd": "113239000000000000000000000000000000"
         },
         {
           "caseId": "SS08",
-          "reservedPicoUsd": "110952000000000000000000000000000000"
+          "reservedPicoUsd": "113194000000000000000000000000000000"
         },
         {
           "caseId": "SS09",
-          "reservedPicoUsd": "110936000000000000000000000000000000"
+          "reservedPicoUsd": "113178000000000000000000000000000000"
         },
         {
           "caseId": "SS10",
-          "reservedPicoUsd": "110947000000000000000000000000000000"
+          "reservedPicoUsd": "113189000000000000000000000000000000"
         },
         {
           "caseId": "SS11",
-          "reservedPicoUsd": "110999000000000000000000000000000000"
+          "reservedPicoUsd": "113241000000000000000000000000000000"
         },
         {
           "caseId": "SS12",
-          "reservedPicoUsd": "110836000000000000000000000000000000"
+          "reservedPicoUsd": "113078000000000000000000000000000000"
         },
         {
           "caseId": "SS13",
-          "reservedPicoUsd": "110877000000000000000000000000000000"
+          "reservedPicoUsd": "113119000000000000000000000000000000"
         },
         {
           "caseId": "SS14",
-          "reservedPicoUsd": "110973000000000000000000000000000000"
+          "reservedPicoUsd": "113215000000000000000000000000000000"
         },
         {
           "caseId": "SS15",
-          "reservedPicoUsd": "110851000000000000000000000000000000"
+          "reservedPicoUsd": "113093000000000000000000000000000000"
         },
         {
           "caseId": "SS16",
-          "reservedPicoUsd": "110939000000000000000000000000000000"
+          "reservedPicoUsd": "113181000000000000000000000000000000"
         },
         {
           "caseId": "SS17",
-          "reservedPicoUsd": "110999000000000000000000000000000000"
+          "reservedPicoUsd": "113241000000000000000000000000000000"
         },
         {
           "caseId": "SS18",
-          "reservedPicoUsd": "110910000000000000000000000000000000"
+          "reservedPicoUsd": "113152000000000000000000000000000000"
         },
         {
           "caseId": "SS23",
-          "reservedPicoUsd": "110920000000000000000000000000000000"
+          "reservedPicoUsd": "113162000000000000000000000000000000"
         },
         {
           "caseId": "SS28",
-          "reservedPicoUsd": "110843000000000000000000000000000000"
+          "reservedPicoUsd": "113085000000000000000000000000000000"
         },
         {
           "caseId": "SS37",
-          "reservedPicoUsd": "110873000000000000000000000000000000"
+          "reservedPicoUsd": "113115000000000000000000000000000000"
         }
       ],
-      "expectedSumPicoUsd": "2329762000000000000000000000000000000",
-      "expectedMaxPicoUsd": "111035000000000000000000000000000000"
+      "expectedSumPicoUsd": "2376844000000000000000000000000000000",
+      "expectedMaxPicoUsd": "113277000000000000000000000000000000"
     },
     {
       "id": "negative"

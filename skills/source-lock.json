@@ -7,7 +7,7 @@
       "version": "1.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:1af63a7e491089d66402d14f524150eacd0b6c6a93099993409294fe22095175",
+      "integratedChecksum": "sha256:31a525d400e73c29ec8f6b6d0cdebccfa766f583897feeb60df4ec187f60a27f",
       "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
     },
     {
@@ -16,7 +16,7 @@
       "version": "1.0.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:19f8e573750720e5b7cb70dd8a5151142d55e54c784d4c75f5cd1612948d09a2",
+      "integratedChecksum": "sha256:ef95f6850b60efca49c3e6219e4a7e7c5238d162294e6b07003e51012330ff1c",
       "checksumScope": "relative paths and normalized text bytes under skills/independent-audit-gate"
     },
     {
@@ -25,7 +25,7 @@
       "version": "1.0.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:e84610bc9461d2502dac447fbbf622e3f21c5cb107c916563f5cf2078d1820d5",
+      "integratedChecksum": "sha256:d397534f9d4e2f882363d159d30f72c1268568024a2dc644062925b3bcd1b062",
       "checksumScope": "relative paths and normalized text bytes under skills/independent-deliberation-panel"
     },
     {
@@ -52,7 +52,7 @@
       "version": "1.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:ff3c656b39afe450258d8b95df8c46739829f70c3012a89c012e05767d62a5c0",
+      "integratedChecksum": "sha256:3679149580c74afb5f4c2429fb6da84e21ea61e2cc4fd73227643b2c1f1107a6",
       "checksumScope": "relative paths and normalized text bytes under skills/blocker-diagnostician"
     },
     {
@@ -88,7 +88,7 @@
       "version": "1.0.0",
       "versionSource": "version-file",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:1e92bb9ed492df045147f90e3d6f8402a9a9586487f2976f08453683a749f69e",
+      "integratedChecksum": "sha256:9bb3402d7ffa91702f890ccdbf17ef95f32e6ba3563c0d22396ccb22ac30bc86",
       "checksumScope": "relative paths and normalized text bytes under skills/change-scope-guardian"
     },
     {
@@ -97,7 +97,7 @@
       "version": "0.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:b6ef313c9414c39c72c73f3adfbc141c32523c13950625ad9e6c1842fe34b133",
+      "integratedChecksum": "sha256:ac507fd3844f8e4469e82aac46f48610ac6c5f5c7d8020307bfc3fc866352b75",
       "checksumScope": "relative paths and normalized text bytes under skills/model-effort-advisor"
     },
     {
@@ -133,7 +133,7 @@
       "version": "1.0.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:60ddc3aa46b3e0a728431f6b7a0916ca726c57f0161d9d713a7203cddc4fed9a",
+      "integratedChecksum": "sha256:0329691efcdd21d882823c6bf67b1f0dc494d6c35b89f7842c9cfe3369e8a368",
       "checksumScope": "relative paths and normalized text bytes under skills/evaluation-validity-auditor"
     },
     {
@@ -159,7 +159,7 @@
       },
       "updatePolicy": "notify-only",
       "upstreamChecksum": "sha256:60dc9353cf86e1e6714dd946ac29558f8833d3589f614bb9dab140edb4c6bf93",
-      "integratedChecksum": "sha256:b010f84e905b78e248620a709911de3940a0340f91a07824ee0c19454c15b5a2",
+      "integratedChecksum": "sha256:9c5111f0ffab601f3abeddbd10555d86830afc23d5ba6bed8c91fc6674cfbcc0",
       "checksumScope": "relative paths and normalized text bytes under skills/ponytail",
       "downstreamModifications": [
         "Drop the argument-hint frontmatter key, which the Codex skill validator rejects; the Claude overlay restores it.",

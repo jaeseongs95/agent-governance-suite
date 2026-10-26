@@ -245,7 +245,9 @@ function authorizationDisposition(candidate, authorization) {
   const authorities = [candidate.checkId, ...candidate.requiredAuthorization];
   if (authorities.some((item) => authorization.prohibitedChecks.includes(item))) return "prohibited";
   if (authorities.some((item) => authorization.approvalRequired.includes(item))) return "approval-required";
-  if (authorities.every((item) => authorization.allowedChecks.includes(item))) return "allowed";
+  // Task-scoped read-only checks do not need a second grant for their diagnostic ID.
+  const required = candidate.risk === "read-only" ? candidate.requiredAuthorization : authorities;
+  if (required.every((item) => authorization.allowedChecks.includes(item))) return "allowed";
   return "approval-required";
 }
 
@@ -298,7 +300,7 @@ export function analyzeDiagnosis(input) {
           .filter((binding) => binding.relation === "supports" && binding.hypothesisIds.includes(confirmed.id) && confirmed.supportingEvidence.includes(binding.evidenceRef))
           .map((binding) => structuredClone(binding))
       },
-      recommendedNextAction: "Use the confirmed cause as input to a separately authorized remediation task.",
+      recommendedNextAction: "Continue remediation within the original request, goal, or project authorization; obtain approval only for newly required actions.",
       limitations,
       verdict: "CAUSE_CONFIRMED"
     };

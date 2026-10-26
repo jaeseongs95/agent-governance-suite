@@ -106,7 +106,7 @@ function task(overrides: Partial<TaskEnvelopeV1> = {}, fixtureDescriptor = descr
     acceptanceCriteria: ["Preserve meaning."],
     riskLevel: "low",
     workUnits: [],
-    requiredCapabilities: ["korean-prose-editing"],
+    requiredCapabilities: [...capabilities],
     // These are the fixture's declared producer targets, fixed before any stage result exists.
     artifactContracts: fixtureDescriptor.providers.map((entry) => ({
       capability: entry.capabilities[0]!,

@@ -155,7 +155,7 @@ POLICY_REQUIRED_CLAUSES = {
         "For Codex collaboration tools, pass the selected `model` and `reasoning_effort` as spawn arguments only when the current schema supports that exact combination.",
     ),
     "routing.claude-code-adapter": (
-        "For Claude Code, prefer stable aliases such as `haiku`, `sonnet`, `opus`, and `fable` instead of pinning dated model IDs.",
+        "For Claude Code, resolve the selected model or alias through the current adapter catalog and verify that the host advertises the resolved value.",
         "Apply `model` and `effort` in a custom subagent definition or CLI agent definition; a per-invocation model argument may override the definition when the current host supports it.",
         "Claude Code effort levels are calibrated within each model, so do not treat the same label as an exact match to a Codex reasoning level.",
     ),
@@ -164,9 +164,9 @@ POLICY_REQUIRED_CLAUSES = {
         "Never report an unsupported or unverified setting as applied.",
         "Use modes such as `Fast` and `Pro`, or effort levels such as `ultra` and `ultracode`, only when the user explicitly requests them and the current host documents and exposes the control.",
     ),
-    "routing.luna-high-minimum": (
-        "Use `gpt-5.6-luna` only at `high` reasoning or above.",
-        "If that combination is unsupported, choose another supported model instead of lowering Luna's reasoning.",
+    "routing.adapter-minimum-effort": (
+        "Read the selected adapter's `minimum_efforts` and catalog `minimum_effort` for the chosen model; combine them with the unchanged risk floor.",
+        "If the required combination is unsupported, choose another observed supported combination instead of lowering the adapter's minimum.",
     ),
     "routing.full-history-inherits": (
         "With `fork_turns=\"all\"`, inherit the parent model and reasoning effort; do not set model or reasoning overrides.",
@@ -197,8 +197,8 @@ POLICY_FORBIDDEN_CLAUSES = {
     "completion.report-facts": (
         "Present unrun checks or unverified settings as completed.",
     ),
-    "routing.luna-high-minimum": (
-        "Lower Luna's reasoning when the requested combination is unavailable.",
+    "routing.adapter-minimum-effort": (
+        "Lower the adapter's required minimum when the requested combination is unavailable.",
     ),
 }
 POLICY_FORBIDDEN_PATTERNS = {
@@ -511,9 +511,12 @@ def validate_routing_presets() -> None:
                         f"routing selection {provider_name}/{profile_name}/{role_name} has invalid effort")
                 require(selection["model_class"] in document["model_class_order"],
                         f"routing selection {provider_name}/{profile_name}/{role_name} has invalid model class")
-                if selection["model"] == "gpt-5.6-luna":
-                    require(effort_order.index(selection["effort"]) >= effort_order.index("high"),
-                            "gpt-5.6-luna routing entries must use high effort or above")
+                minimum = provider.get("minimum_efforts", {}).get(selection["model"])
+                if minimum is None:
+                    minimum = provider.get("catalog", {}).get("models", {}).get(selection["model"], {}).get("minimum_effort")
+                if minimum is not None:
+                    require(minimum in effort_order and effort_order.index(selection["effort"]) >= effort_order.index(minimum),
+                            "routing entries must preserve the selected adapter's declared minimum effort")
                 if provider_name == "anthropic-claude-code":
                     require(selection["model"] in claude_aliases,
                             "Claude Code routing entries must use documented stable aliases")
@@ -853,12 +856,19 @@ def evaluate_model_policy(inputs: dict[str, object]) -> dict[str, object]:
             "set_explicit_override": preferred_supported,
             "invent_support": False,
         }
-    if action == "luna-reasoning":
-        effort_order = {"low": 0, "medium": 1, "high": 2, "xhigh": 3, "max": 4, "ultra": 5}
-        valid = effort_order.get(str(inputs.get("reasoning")), -1) >= effort_order["high"]
+    if action == "adapter-minimum-effort":
+        document = load_routing_presets()
+        provider = document.get("providers", {}).get(str(inputs.get("provider")), {})
+        model = str(inputs.get("model"))
+        minimum = provider.get("minimum_efforts", {}).get(model)
+        if minimum is None:
+            minimum = provider.get("catalog", {}).get("models", {}).get(model, {}).get("minimum_effort")
+        effort_order = document["effort_order"]
+        reasoning = inputs.get("reasoning")
+        valid = minimum in effort_order and reasoning in effort_order and effort_order.index(reasoning) >= effort_order.index(minimum)
         return {
             "valid_combination": valid,
-            "lower_luna_reasoning": False,
+            "lower_adapter_minimum": False,
             "fallback": "none" if valid else "another-supported-model",
         }
     if action == "fast-mode":

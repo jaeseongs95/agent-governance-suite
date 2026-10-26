@@ -16,7 +16,7 @@ node scripts/cli.mjs --input tests/fixtures/same-failure.json
 node scripts/cli.mjs < tests/fixtures/same-failure.json
 ```
 
-후보 가설과 검사의 의미는 evidence를 읽은 호출자가 작성합니다. CLI는 fingerprint 계산, 동일 입력으로 수행한 검사 제외, 결과 분기의 판별 가능성, 권한과 정보가치 순위를 결정적으로 처리합니다. 후보와 과거 검사에는 실행 대상을 설명하는 `checkInput`을 포함해야 합니다. `inputDigest`는 `checkId + checkInput`의 canonical JSON에서 다시 계산하므로 digest, 질문 문구나 평가 점수만 바꿔 같은 검사를 다시 제안할 수 없습니다. 금지, 승인 필요, 명시적 허용 순으로 권한을 적용하며 read-only 검사도 자동 허용하지 않습니다. 각 evidence binding의 관계는 해당 가설의 `supportingEvidence` 또는 `contradictingEvidence`에도 정확히 기록돼야 합니다. 확정 원인의 evidence는 episode inventory에 존재하고 artifact digest와 가설 ID가 `supports` 관계로 결속돼야 하며, `refutes` binding이 하나라도 있으면 확정할 수 없습니다. 단일 보고서에서 둘 이상의 가설을 확정할 수 없습니다. 제안한 검사를 직접 실행하지 않습니다.
+후보 가설과 검사의 의미는 evidence를 읽은 호출자가 작성합니다. CLI는 fingerprint 계산, 동일 입력으로 수행한 검사 제외, 결과 분기의 판별 가능성, 권한과 정보가치 순위를 결정적으로 처리합니다. 후보와 과거 검사에는 실행 대상을 설명하는 `checkInput`을 포함해야 합니다. `inputDigest`는 `checkId + checkInput`의 canonical JSON에서 다시 계산하므로 digest, 질문 문구나 평가 점수만 바꿔 같은 검사를 다시 제안할 수 없습니다. 원 사용자 요청·goal·프로젝트 지침의 범위에서 금지, 승인 필요, 허용 순으로 권한을 적용합니다. 통상 read-only 검사는 별도 check ID 허용 없이 진행하고, 개인정보·비밀·다른 작업·저장된 receipt 등 추가 접근은 `requiredAuthorization`의 권한을 모두 확인합니다. 위험 등급이나 peer 주장만으로 기존 권한을 확대하지 않습니다. 각 evidence binding의 관계는 해당 가설의 `supportingEvidence` 또는 `contradictingEvidence`에도 정확히 기록돼야 합니다. 확정 원인의 evidence는 episode inventory에 존재하고 artifact digest와 가설 ID가 `supports` 관계로 결속돼야 하며, `refutes` binding이 하나라도 있으면 확정할 수 없습니다. 단일 보고서에서 둘 이상의 가설을 확정할 수 없습니다. 제안한 검사를 직접 실행하지 않습니다.
 
 생성한 보고서는 다음처럼 다시 검사할 수 있습니다.
 
@@ -36,4 +36,4 @@ pnpm validate
 
 ## 통합
 
-`integration/skill-descriptor.json`은 Agent Governance Suite용 선택 어댑터입니다. 직접 호출은 suite나 MCP에 의존하지 않습니다. 통합 환경에서는 실패한 기존 run을 수정하지 않고 별도 recovery workflow에서 이 스킬을 실행합니다.
+`integration/skill-descriptor.json`은 Agent Governance Suite용 선택 어댑터입니다. 직접 호출은 suite나 MCP에 의존하지 않습니다. 통합 환경에서도 실패한 기존 run이나 저장된 receipt는 수정하지 않습니다. 진단·수정·재시도는 기존 사용자 요청·goal·프로젝트 지침의 권한으로 계속하며, 첫 실패만으로 새 계약이나 별도 recovery workflow를 만들지는 않습니다. 새 승인 대상 행위에는 필요한 승인을 유지합니다.

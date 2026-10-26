@@ -202,9 +202,13 @@ export function recordModelApplication(input, customPresets = presets) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const [operation, inputPath, ...extra] = process.argv.slice(2);
-    check(["resolve", "record"].includes(operation) && inputPath && extra.length === 0, "Usage: node model-routing.mjs resolve|record input.json");
+    const explicitPresets = extra.length === 2 && extra[0] === "--presets" && extra[1];
+    check(["resolve", "record"].includes(operation) && inputPath && (extra.length === 0 || explicitPresets), "Usage: node model-routing.mjs resolve|record input.json [--presets presets.json]");
     const input = JSON.parse(readFileSync(inputPath, "utf8"));
-    const result = operation === "resolve" ? resolveModelSelection(input) : recordModelApplication(input);
+    // Same supplied-data boundary as the API's customPresets; this does not authenticate policy or host evidence.
+    const currentPresets = explicitPresets ? JSON.parse(readFileSync(explicitPresets, "utf8")) : presets;
+    check(currentPresets && typeof currentPresets === "object" && !Array.isArray(currentPresets), "presets must contain a JSON object");
+    const result = operation === "resolve" ? resolveModelSelection(input, currentPresets) : recordModelApplication(input, currentPresets);
     console.log(JSON.stringify(result, null, 2));
     if (result.delivery === "blocked") process.exitCode = 1;
   } catch (error) {

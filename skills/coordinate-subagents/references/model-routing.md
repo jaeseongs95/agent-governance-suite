@@ -1,6 +1,6 @@
 # Provider-neutral model-routing presets
 
-This policy supplies portable model and reasoning-effort recommendations for hosts that expose compatible subagent controls. The machine-readable source is [`model-routing-presets.json`](model-routing-presets.json).
+This policy supplies portable model and reasoning-effort recommendations for hosts that expose compatible subagent controls. The bundled machine-readable example is [`model-routing-presets.json`](model-routing-presets.json). Concrete model IDs, aliases and per-model minimums belong to versioned provider adapter data. They do not define portable reviewer, Judge, or implementation roles. A different provider can supply the same role/profile/catalog/application contract without changing shared selection code.
 
 Explicit user choices, higher-priority instructions, repository rules, current host capabilities, and runtime restrictions take precedence over every preset.
 
@@ -29,12 +29,11 @@ Select the profile and role first, then resolve the current host's provider entr
 ## Apply the OpenAI Codex adapter
 
 <!-- policy-contract: routing.codex-adapter -->
-<!-- policy-contract: routing.luna-high-minimum -->
 <!-- policy-contract: routing.full-history-inherits -->
 
 For Codex collaboration tools, pass the selected `model` and `reasoning_effort` as spawn arguments only when the current schema supports that exact combination. With `fork_turns="all"`, inherit the parent model and reasoning effort; do not set model or reasoning overrides. For an explicit override, use `fork_turns="none"` or a positive recent-turn count and include missing context in the brief.
 
-Use `gpt-5.6-luna` only at `high` reasoning or above. If that combination is unsupported, choose another supported model instead of lowering Luna's reasoning. For other models, use `xhigh`, `max`, or `ultra` only when the added review value is concrete.
+Choose stronger supported reasoning only when the added review value is concrete; model-specific minimums are resolved from the selected adapter data below.
 
 Consult the current collaboration tool schema first and use the [official OpenAI model-selection guide](https://developers.openai.com/api/docs/guides/latest-model) when current product guidance is needed.
 
@@ -42,7 +41,7 @@ Consult the current collaboration tool schema first and use the [official OpenAI
 
 <!-- policy-contract: routing.claude-code-adapter -->
 
-For Claude Code, prefer stable aliases such as `haiku`, `sonnet`, `opus`, and `fable` instead of pinning dated model IDs. Apply `model` and `effort` in a custom subagent definition or CLI agent definition; a per-invocation model argument may override the definition when the current host supports it. Keep effort in the subagent definition or inherit the active effort when per-invocation effort is unavailable.
+For Claude Code, resolve the selected model or alias through the current adapter catalog and verify that the host advertises the resolved value. Stable aliases are adapter data, not shared role preferences. Apply `model` and `effort` in a custom subagent definition or CLI agent definition; a per-invocation model argument may override the definition when the current host supports it. Keep effort in the subagent definition or inherit the active effort when per-invocation effort is unavailable.
 
 Before dispatch, check the installed Claude Code version, organization allowlist, provider availability, and any environment variable that forces a model. After dispatch, use the task view to confirm the actual model and effort when verification matters. Claude Code effort levels are calibrated within each model, so do not treat the same label as an exact match to a Codex reasoning level.
 
@@ -50,14 +49,17 @@ Use the official Claude Code documentation for [model configuration](https://cod
 
 ## Apply the Google Gemini adapter
 
-For Google Gemini and Antigravity, prefer stable aliases such as `flash-lite`, `flash`, `pro`, and `ultra`. For subagent invocation via `invoke_subagent`, deliver the selected model using the `Model` argument (`inherit`, `flash_lite`, `flash`, `pro`) or specify it in the subagent definition frontmatter.
+For Google Gemini and Antigravity, resolve model IDs and aliases through the current adapter catalog and host capabilities. Translate the selection into the current invocation schema or subagent definition using the adapter application metadata; do not assume a fixed list of model argument values.
 
-For high-risk work, enforce the `general` model floor (`flash` or higher) and `high` effort. Verify actual dispatch against the host task view or invocation result.
+For high-risk work, enforce the `general` model-class floor and `high` effort. Verify actual dispatch against the host task view or invocation result.
 
 ## Apply runtime constraints
 
 <!-- policy-contract: routing.settings-supported -->
 <!-- policy-contract: routing.unsupported-fallback -->
+<!-- policy-contract: routing.adapter-minimum-effort -->
+
+Read the selected adapter's `minimum_efforts` and catalog `minimum_effort` for the chosen model; combine them with the unchanged risk floor. If the required combination is unsupported, choose another observed supported combination instead of lowering the adapter's minimum. Never infer model class or effort support from a model name.
 
 Inspect the current host schema and capabilities before setting an override. Never report an unsupported or unverified setting as applied. Treat subscription details as context, not proof that a model, usage allowance, or runtime control is available.
 
@@ -70,24 +72,18 @@ Use modes such as `Fast` and `Pro`, or effort levels such as `ultra` and `ultrac
 Use the dependency-free [model-routing CLI](../scripts/model-routing.mjs) before dispatch:
 
 ```text
-node <skill-root>/scripts/model-routing.mjs resolve <selection-input.json>
+node <skill-root>/scripts/model-routing.mjs resolve <selection-input.json> [--presets <explicit-presets.json>]
 ```
 
-Supply `provider`, `profile` (default `balanced`), `role`, explicit `highRisk` (`true` is required for `independent-audit`), and `supported` entries `{model, modelClass, efforts}` from current host capabilities. Use `modelClass: null` when unknown; do not infer a class from a name. The bundled recommendation supplies maintainers' model classes for its listed models, not a host observation. Optional `user: {model, effort}` supports either override separately; optional `inherited: {model, effort}` is an observed inherited combination. When the host supports inheritance but hides its effective settings, set `inheritanceSupported: true` without inventing `inherited` values. This permits low-risk inheritance with `unverified` application; it never establishes a high-risk floor. Set `inheritOnly: true` when the host/context prevents overrides. Unknown providers can use a supported explicit user combination or inheritance. A partial user override uses a known inherited combination as its baseline when no provider recommendation exists; missing values remain explicit nulls rather than silently discarding the user choice. Application recording requires a declared provider adapter. A `blocked` result is not permission to weaken the risk floor.
+The optional `--presets` argument supplies the existing `customPresets` API input explicitly to both `resolve` and `record`. Without it, the bundled data is unchanged; the CLI does not discover nearby files or load environment overrides. This file is supplied policy data, not authenticated authority: the caller must establish its source, current host capabilities, and permitted settings separately. It cannot grant delegation, satisfy workflow admission or establish execution attestation. Catalog/support/risk/context and observed-application checks still apply. A malformed explicit file fails rather than falling back to bundled policy.
 
-For example, this input selects a supported ordinary implementation configuration:
+Supply `provider`, `profile` (default `balanced`), `role`, explicit `highRisk` (`true` is required for `independent-audit`), and `supported` entries `{model, modelClass, efforts}` from current host capabilities. Use `modelClass: null` when unknown; do not infer a class from a name. The selected provider adapter supplies model classes for its catalog, not a host observation. A name absent from that catalog is not rescued by caller-supplied class claims; update reviewed adapter data through its existing contract instead. Optional `user: {model, effort}` supports either override separately; optional `inherited: {model, effort}` is an observed inherited combination. When the host supports inheritance but hides its effective settings, set `inheritanceSupported: true` without inventing `inherited` values. This permits low-risk inheritance with `unverified` application; it never establishes a high-risk floor. Set `inheritOnly: true` when the host/context prevents overrides. Unknown providers can use a supported explicit user combination or inheritance. A partial user override uses a known inherited combination as its baseline when no provider recommendation exists; missing values remain explicit nulls rather than silently discarding the user choice. Application recording requires a declared provider adapter. A `blocked` result is not permission to weaken the risk floor.
 
-```json
-{
-  "provider": "openai-codex", "profile": "balanced",
-  "role": "general-implementation", "highRisk": false,
-  "supported": [{"model": "gpt-5.6-terra", "modelClass": "general", "efforts": ["medium", "high"]}]
-}
-```
+Build the selection input from the current host capability snapshot and the selected provider/profile/role entry in [adapter data](model-routing-presets.json). Copy only observed supported combinations; do not substitute a fixed model example or treat the data as host execution evidence.
 
 Translate the returned `selection` into the current host adapter's actual fields. For Codex explicit delivery, pass both `model` and `reasoning_effort` with `fork_turns="none"` or a positive recent-turn count. For inherited delivery, pass neither override. Inspect the actual call rather than copying the intended selection into a record.
 
-After dispatch, run `node <skill-root>/scripts/model-routing.mjs record <dispatch-input.json>`. Supply `assignmentId`, `selectionReason`, the same selection input under `options`, `spawnArguments` containing the actual model, effort, and context arguments in the host adapter's field names, and `contextReason` for full history. For Codex, copy `model`, `reasoning_effort`, and `fork_turns` from the actual call; omitted `fork_turns` defaults to full history. The recorder derives `contextMode` and normalized `dispatched` from these arguments and rejects a contradictory optional `contextMode`. For adapters without a context field, provide `contextMode` (`limited` or `full-history`) explicitly. Keep task bodies and secrets out of the settings record. Supply `observation: null` if the response exposes no effective settings. Otherwise supply `{model, effort, source, reference}`: source is `spawn-result`, `host-task-view`, or an explicit `tool-contract` guaranteeing the passed combination; reference locates the evidence seen by the caller.
+After dispatch, run `node <skill-root>/scripts/model-routing.mjs record <dispatch-input.json> [--presets <explicit-presets.json>]`. Supply `assignmentId`, `selectionReason`, the same selection input under `options`, `spawnArguments` containing the actual model, effort, and context arguments in the host adapter's field names, and `contextReason` for full history. For Codex, copy `model`, `reasoning_effort`, and `fork_turns` from the actual call; omitted `fork_turns` defaults to full history. The recorder derives `contextMode` and normalized `dispatched` from these arguments and rejects a contradictory optional `contextMode`. For adapters without a context field, provide `contextMode` (`limited` or `full-history`) explicitly. Keep task bodies and secrets out of the settings record. Supply `observation: null` if the response exposes no effective settings. Otherwise supply `{model, effort, source, reference}`: source is `spawn-result`, `host-task-view`, or an explicit `tool-contract` guaranteeing the passed combination; reference locates the evidence seen by the caller.
 
 The result distinguishes `applied`, `inherited`, and `unverified`. Passing both arguments alone does not prove application. Worker self-report, assumed parent settings, and later evaluator inspection are not caller-visible host evidence. Keep later inspection separate as posthoc evidence. If the observed settings differ, preserve them and investigate before relying on the worker for a mandatory risk floor. `unverified` never establishes that floor. The CLI validates records against supplied observations; it does not authenticate evidence, launch agents, or grant permission.
 

@@ -75,13 +75,6 @@ function stageId(order: number, capability: string): string {
   return `stage-${String(order).padStart(2, "0")}-${capability}`;
 }
 
-const KOREAN_PROSE_CAPABILITIES = [
-  "korean-prose-selection",
-  "korean-prose-editing",
-  "korean-prose-verification",
-  "korean-prose-finalization",
-] as const;
-
 const DETERMINISTIC_CAPABILITIES = new Set<string>([
   "korean-prose-finalization",
 ]);
@@ -995,17 +988,8 @@ export class WorkflowService {
       || task.riskLevel === "high"
       || task.riskLevel === "critical";
     const requestedWork = task.requiredCapabilities.filter((capability) => capability !== POLICY_CAPABILITY.audit);
-    const work: string[] = [];
-    let koreanProseExpanded = false;
-    for (const capability of requestedWork) {
-      if (KOREAN_PROSE_CAPABILITIES.includes(capability as (typeof KOREAN_PROSE_CAPABILITIES)[number])) {
-        if (!koreanProseExpanded) work.push(...KOREAN_PROSE_CAPABILITIES);
-        koreanProseExpanded = true;
-      } else {
-        work.push(capability);
-      }
-    }
-    return [...new Set([...work, ...(auditRequested ? [POLICY_CAPABILITY.audit] : [])])];
+    // Capability selection belongs to the request. Preserve dependency checks without expanding a language workflow.
+    return [...new Set([...requestedWork, ...(auditRequested ? [POLICY_CAPABILITY.audit] : [])])];
   }
 
   private orderProviders(

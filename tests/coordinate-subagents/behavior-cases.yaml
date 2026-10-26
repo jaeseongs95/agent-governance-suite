@@ -30,7 +30,7 @@
     "routing.codex-adapter": {"source": "skills/coordinate-subagents/references/model-routing.md", "section": "Apply the OpenAI Codex adapter"},
     "routing.claude-code-adapter": {"source": "skills/coordinate-subagents/references/model-routing.md", "section": "Apply the Anthropic Claude Code adapter"},
     "routing.settings-supported": {"source": "skills/coordinate-subagents/references/model-routing.md", "section": "Apply runtime constraints"},
-    "routing.luna-high-minimum": {"source": "skills/coordinate-subagents/references/model-routing.md", "section": "Apply the OpenAI Codex adapter"},
+    "routing.adapter-minimum-effort": {"source": "skills/coordinate-subagents/references/model-routing.md", "section": "Apply runtime constraints"},
     "routing.full-history-inherits": {"source": "skills/coordinate-subagents/references/model-routing.md", "section": "Apply the OpenAI Codex adapter"},
     "routing.unsupported-fallback": {"source": "skills/coordinate-subagents/references/model-routing.md", "section": "Apply runtime constraints"},
     "routing.no-mechanical-retry": {"source": "skills/coordinate-subagents/references/model-routing.md", "section": "Diagnose before retrying"}
@@ -222,11 +222,13 @@
     {
       "id": "unsupported-model-fallback",
       "scenario": "Runtime model constraints preserve delegation without inventing support or cycling through models.",
-      "contracts": ["routing.settings-supported", "routing.luna-high-minimum", "routing.unsupported-fallback", "routing.no-mechanical-retry"],
+      "contracts": ["routing.settings-supported", "routing.adapter-minimum-effort", "routing.unsupported-fallback", "routing.no-mechanical-retry"],
       "rule": "model-policy",
       "vectors": [
         {"id": "inherit-supported-fallback", "input": {"action": "fallback", "preferred_supported": false, "inherited_supported": true}, "expected": {"delegate": true, "set_explicit_override": false, "invent_support": false}},
-        {"id": "luna-below-high", "input": {"action": "luna-reasoning", "reasoning": "medium"}, "expected": {"valid_combination": false, "lower_luna_reasoning": false, "fallback": "another-supported-model"}},
+        {"id": "adapter-below-minimum", "input": {"action": "adapter-minimum-effort", "provider": "openai-codex", "model": "gpt-5.6-luna", "reasoning": "medium"}, "expected": {"valid_combination": false, "lower_adapter_minimum": false, "fallback": "another-supported-model"}},
+        {"id": "adapter-at-minimum", "input": {"action": "adapter-minimum-effort", "provider": "openai-codex", "model": "gpt-5.6-luna", "reasoning": "high"}, "expected": {"valid_combination": true, "lower_adapter_minimum": false, "fallback": "none"}},
+        {"id": "adapter-missing-minimum", "input": {"action": "adapter-minimum-effort", "provider": "opaque-unregistered-provider", "model": "opaque-model", "reasoning": "high"}, "expected": {"valid_combination": false, "lower_adapter_minimum": false, "fallback": "another-supported-model"}},
         {"id": "fast-not-explicit", "input": {"action": "fast-mode", "explicit_request": false, "supported": true}, "expected": {"valid_combination": false, "claim_applied": false}},
         {"id": "unsupported-pro-setting", "input": {"action": "setting-support", "setting": "Pro", "supported": false}, "expected": {"verify_tool_schema": true, "verify_official_docs_when_needed": true, "claim_applied": false}},
         {"id": "permission-failure", "input": {"action": "retry-diagnosis", "failure_reason": "permissions"}, "expected": {"retry_with_other_models": false, "resolve_actual_blocker": true}}

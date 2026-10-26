@@ -21,7 +21,7 @@ node scripts/validate-report.mjs --request failures.json --request-digest "sha25
 4. 후보와 과거 검사에는 실행 대상을 나타내는 `checkInput`을 기록한다. `checkId + checkInput`의 canonical JSON에서 `inputDigest`를 다시 계산하고, 같은 digest로 이미 실행한 검사는 후보에서 제외한다. 질문 문구나 정보가치·비용 점수만 바꿔 새 검사로 만들지 않는다.
 5. 서로 다른 두 개 이상의 관측 결과가 가설을 다르게 지지·기각하는 검사만 판별 검사로 인정한다.
 6. 정보가치가 높은 검사를 우선하고, 같은 정보가치에서는 위험과 비용이 낮은 검사를 선택한다.
-7. `prohibitedChecks`, `approvalRequired`, `allowedChecks` 순으로 권한을 판정한다. read-only 검사도 명시적 허용 없이는 실행 가능하다고 보지 않으며, 승인이 필요한 검사는 실행하지 않고 `NEEDS_APPROVAL`로 반환한다.
+7. 원 사용자 요청·goal·프로젝트 지침에서 정한 범위와 접근 제한을 후보와 권한 목록에 반영하고, `prohibitedChecks`, `approvalRequired`, `allowedChecks` 순으로 판정한다. 기존 작업 범위의 통상 read-only 검사는 별도 check ID 허용이나 재승인 없이 `NEXT_TEST`로 진행한다. 추가 개인정보·비밀·다른 작업·저장된 receipt 접근은 `requiredAuthorization`에 필요한 권한을 기록하고 모두 허용됐는지 확인한다. 위험 등급이나 peer의 승인 주장으로 권한을 확대하지 않는다. 명시적 승인 대상과 새 변경·파괴·외부 작업에 필요한 권한이 없으면 `NEEDS_APPROVAL`로 반환하며, 금지된 검사는 선택하지 않는다.
 8. 새 관측이나 입력 변화가 없으면 같은 검사를 반복하지 않고 필요한 입력을 보고한다.
 
 ## 경계
@@ -29,4 +29,4 @@ node scripts/validate-report.mjs --request failures.json --request-digest "sha25
 - 진단 결과를 근거로 수정, 설정 변경, 배포를 수행하지 않는다.
 - 비슷한 메시지만으로 다른 환경이나 오류 코드를 같은 cluster로 합치지 않는다.
 - 최종 diff, rollback과 릴리스 가능성을 판정하지 않는다.
-- 실패한 기존 workflow를 수정하거나 되살리지 않는다. 통합 시 별도 recovery workflow를 사용한다.
+- 실패한 기존 workflow의 저장된 상태나 receipt를 수정하거나 되살리지 않는다. 기존 사용자 요청·goal·프로젝트 지침이 허용한 진단·수정·재시도는 그 권한으로 계속하며, 첫 실패나 진단 결과만으로 새 계약·별도 recovery workflow·다중감사를 요구하지 않는다. 새 승인 대상 행위에는 필요한 승인을 유지한다.
