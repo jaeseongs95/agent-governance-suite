@@ -435,8 +435,8 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
 
     const planArgs = { schemaVersion: "1.0.0", taskEnvelope: createTask("revision-mismatch-task", "high") };
 
-    // A token minted under default policyRevision ("2026-10-24.r02") is rejected by a server configured with v2 ("synthetic-2026-10-24.v2").
-    const v1Token = issueHostAttestation(store, codexExecutionAdapter, {
+    // This wire-v2 token uses the default catalog policy ("2026-10-24.r02"); the server uses the synthetic v2 catalog policy ("synthetic-2026-10-24.v2").
+    const defaultPolicyToken = issueHostAttestation(store, codexExecutionAdapter, {
       tool: "plan_workflow",
       input: planArgs,
       model: "gpt-6-astra",
@@ -447,17 +447,17 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       toolUseId: "call-rev-1",
       provenance: "codex:rollout-turn-context",
     });
-    expect(v1Token).toBeTruthy();
+    expect(defaultPolicyToken).toBeTruthy();
     const crossRevision = v2Provider.run(
       "plan_workflow",
-      { ...planArgs, [HOST_ATTESTATION_FIELD]: v1Token },
+      { ...planArgs, [HOST_ATTESTATION_FIELD]: defaultPolicyToken },
       (clean) => v2Service.planWorkflow(clean, true),
     );
     expect(crossRevision.error?.code).toBe("BINDING_INVALID");
     expect(v2Provider.lastObservedCapability()).toBeNull();
 
     // Tampered token signature is rejected fail-closed.
-    const tamperedToken = `${v1Token}tampered`;
+    const tamperedToken = `${defaultPolicyToken}tampered`;
     const defaultService = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, defaultProvider);
     const tampered = defaultProvider.run(
       "plan_workflow",
@@ -524,10 +524,10 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     );
     expect(belowBootstrapFloor.error?.code).toBe("BINDING_INVALID");
 
-    // Under defaultProvider, the valid v1Token works once and fails closed on replay.
+    // Under defaultProvider, the valid default-policy wire-v2 token works once and fails closed on replay.
     const first = defaultProvider.run(
       "plan_workflow",
-      { ...planArgs, [HOST_ATTESTATION_FIELD]: v1Token },
+      { ...planArgs, [HOST_ATTESTATION_FIELD]: defaultPolicyToken },
       (clean) => defaultService.planWorkflow(clean, true),
     );
     expect(first.ok).toBe(true);
@@ -535,7 +535,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
 
     const replay = defaultProvider.run(
       "plan_workflow",
-      { ...planArgs, [HOST_ATTESTATION_FIELD]: v1Token },
+      { ...planArgs, [HOST_ATTESTATION_FIELD]: defaultPolicyToken },
       (clean) => defaultService.planWorkflow(clean, true),
     );
     expect(replay.error?.code).toBe("BINDING_INVALID");

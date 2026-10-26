@@ -106,6 +106,21 @@ describe("C observation token eligibility controls", () => {
     expect(missingClass.run(v1Fixture(missingClass.args, state.value, { modelClass: undefined })))
       .toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
   });
+  it.each([
+    { field: "provider", value: "other-provider" },
+    { field: "resolvedModel", value: "other-policy-model" },
+    { field: "policyRevision", value: "owned-r2" },
+    { field: "modelClass", value: "invalid-model-class" },
+  ])("rejects correctly signed v1 metadata mismatch: $field", ({ field, value }) => {
+    const { adapter, state } = modern(), f = fixture(adapter);
+    // v1Fixture signs after applying this one-field patch; all other claims stay valid.
+    const token = v1Fixture(f.args, state.value, { [field]: value });
+    expect(token).toMatch(/^aghs1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/u);
+    const result = f.run(token);
+    expect(result).toMatchObject({ ok: false, error: { code: "BINDING_INVALID",
+      message: "Host attestation token payload is not a supported observation for the configured adapter." } });
+    expect(f.provider.lastObservedCapability()).toBeNull();
+  });
   it.each(["v1-first", "v2-first"])("shares the actual one-use workflow claim across versions: %s", order => {
     const { adapter, state } = modern(), f = fixture(adapter), v1 = v1Fixture(f.args, state.value), v2 = f.issue();
     const v1Payload = JSON.parse(Buffer.from(v1.split(".")[1]!, "base64url").toString("utf8")) as { observationId: string };
