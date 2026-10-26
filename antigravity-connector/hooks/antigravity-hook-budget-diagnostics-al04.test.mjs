@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { performance } from "node:perf_hooks";
+import { setTimeout } from "node:timers";
 import { setImmediate as turn } from "node:timers/promises";
 import { afterEach, beforeEach, test, vi } from "vitest";
 
@@ -69,7 +70,7 @@ test("F4 actual cold caller yields during OS query, clips caller budget, and pre
   const hooks = [];
   const result = executeAntigravityHookEvent(main, "SessionStart", "session-message", options({ totalBudgetMs: 600,
     pidResolverOptions: { timeoutMs: 1500 }, sessionMessageHook: async (...args) => { hooks.push(args); return {}; } }));
-  let unrelated = false; await turn(); unrelated = true;
+  let unrelated; await turn(); unrelated = true;
   assert.equal(unrelated, true); assert.equal(f.sync.length, 0, "actual caller must not execute a synchronous OS query");
   assert.equal(f.calls.length, 1); assert.equal(hooks.length, 0);
   assert.equal(f.calls[0].options.timeout, 600);
