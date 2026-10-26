@@ -145,7 +145,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
 
   currentTimeMilliseconds(): number {
     // Read the native VFS UTC clock on both processes; Date.now can use process-local calibration.
-    // This is wall time, not a monotonic clock: rollback remains a strict proof rejection.
+    // This is wall time; the original strict proof timestamp comparisons still apply.
     return this.guard("Cannot read the workflow clock.", {}, () => {
       const row = this.database.prepare("SELECT CAST(round(unixepoch('subsec') * 1000) AS INTEGER) AS now_ms").get();
       const now = row?.now_ms;

@@ -323,6 +323,13 @@ describe("session actor proof rejection diagnostics", () => {
 });
 
 describe("session actor proof SQLite connections", () => {
+  it("keeps an explicit proof clock independent of the store clock", () => {
+    const store = new InMemoryWorkflowStore();
+    vi.spyOn(store, "currentTimeMilliseconds").mockImplementation(() => { throw new Error("Store clock must not run."); });
+    const proofs = new SessionActorProofs(store, () => NOW);
+    expect(proofs.verify("get_trust_capabilities", withProof(proofs, "get_trust_capabilities"))).toMatchObject({ sessionId: "fixture-root" });
+  });
+
   it("uses native store UTC despite an 8ms process Date divergence and still rejects replay", () => {
     const databasePath = path.join(ownedDirectory(), "workflow.sqlite3");
     const issuerStore = new SqliteWorkflowStore(databasePath);
