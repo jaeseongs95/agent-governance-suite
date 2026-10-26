@@ -11,20 +11,61 @@ const modulePath = fileURLToPath(new URL("../../mcp-server/src/broker-process-lo
 type Lease = { path: string; owner: string };
 type Note = { pid: number; outcome?: string; code?: string | null; lease?: Lease };
 type Gate = { phase: "acquire" | "release"; op: string; when: "before" | "after"; kind: string; name: string };
-type Worker = { id: string; child: ChildProcess; exited: boolean; spawned: boolean; spawnFailed: boolean; output: string; outputBytes: number; outputLimitHit: boolean; done: Promise<{code: number | null; signal: string | null}> };
+type Worker = { id: string; child: ChildProcess; exited: boolean; spawned: boolean; spawnFailed: boolean; closed?: {code: number | null; signal: string | null}; output: string; outputBytes: number; outputLimitHit: boolean; done: Promise<{code: number | null; signal: string | null}> };
 const heldGate = (name: string, phase: Gate["phase"], op: string, kind: string, when: Gate["when"] = "before"): Gate => ({name, phase, op, kind, when});
+
+const diagnosticEnums: Record<string, readonly string[]> = {
+  event: ["bootstrap", "import-begin", "import-end", "acquire-begin", "acquire-end", "query-begin", "query-return", "query-throw", "publish-begin", "publish-end", "gate", "worker-error", "exit", "cap"],
+  query: ["windows", "posix", "other"], phase: ["acquire", "release", "late-release"],
+  op: ["mkdirSync", "renameSync", "rmdirSync"], when: ["before", "after"],
+  kind: ["marker-preparation", "publication", "parent", "observed-marker", "other"],
+  note: ["prepared", "result", "failure", "done", "observed", "publish", "renamed", "cleanup", "released", "other"],
+  outcome: ["ok", "error", "lease", "no-lease"],
+  code: ["ENOENT", "EACCES", "EPERM", "ETIMEDOUT", "ENOBUFS", "EIO", "EINVAL", "ESRCH", "ABORT_ERR", "OTHER"],
+};
+function workerDiagnostics(w: Worker) {
+  const events: Record<string, string | number | boolean>[] = [];
+  let parseErrors = 0;
+  for (const line of w.output.split("\n")) {
+    if (!line.startsWith("AGS_OS_TRACE ")) continue;
+    try {
+      const value = JSON.parse(line.slice("AGS_OS_TRACE ".length)) as Record<string, unknown>;
+      if (!value || typeof value !== "object" || !diagnosticEnums.event!.includes(value.event as string)
+        || !Number.isSafeInteger(value.ms) || (value.ms as number) < 0) throw new Error("Invalid fixture observation");
+      const event: Record<string, string | number | boolean> = { event: value.event as string, ms: value.ms as number };
+      for (const [key, choices] of Object.entries(diagnosticEnums)) if (key !== "event" && key in value) {
+        if (!choices.includes(value[key] as string)) throw new Error("Invalid fixture observation enum");
+        event[key] = value[key] as string;
+      }
+      if ("matched" in value) {
+        if (typeof value.matched !== "boolean") throw new Error("Invalid fixture gate observation");
+        event.matched = value.matched;
+      }
+      events.push(event);
+    } catch { parseErrors++; } // Includes a truncated final prefix JSON; never replaces the original failure.
+  }
+  return { spawned: w.spawned, spawnFailed: w.spawnFailed, exited: w.exited, outputLimitHit: w.outputLimitHit,
+    events: events.slice(-24), omittedEvents: Math.max(0, events.length - 24), parseErrors };
+}
 
 async function scenario(body: (s: Awaited<ReturnType<typeof controller>>) => Promise<void>) {
   const s = await controller();
   try { await body(s); }
   catch (primary) {
+    const atFailure = s.snapshot();
     let cleanupFailure: {error: unknown} | null = null;
     try { await s.cleanup(); }
     catch (cleanup) { cleanupFailure = {error: cleanup}; }
-    if (cleanupFailure) throw new AggregateError([primary, cleanupFailure.error], "OS race body and cleanup failed", {cause: primary});
+    if (cleanupFailure) {
+      const combined = new AggregateError([primary, cleanupFailure.error], "OS race body and cleanup failed", {cause: primary});
+      s.annotate(combined, atFailure);
+      throw combined;
+    }
+    s.annotate(primary, atFailure);
     throw primary;
   }
-  await s.cleanup();
+  try { await s.cleanup(); }
+  catch (cleanup) { s.annotate(cleanup, s.snapshot()); throw cleanup; }
 }
 async function controller() {
   const root = await mkdtemp(path.join(os.tmpdir(), "ags-broker-os-"));
@@ -39,7 +80,7 @@ async function controller() {
     const w: Worker = {id, child, exited: false, spawned: false, spawnFailed: false, output: "", outputBytes: 0, outputLimitHit: false, done: Promise.resolve({code: null, signal: null})};
     w.done = new Promise(resolve => {
       child.once("exit", () => { w.exited = true; });
-      child.once("close", (code, signal) => { resolve({code, signal}); });
+      child.once("close", (code, signal) => { w.closed = {code, signal}; resolve({code, signal}); });
       child.once("spawn", () => { w.spawned = true; });
       child.on("error", error => {
         w.output += String(error);
@@ -116,7 +157,21 @@ async function controller() {
       || !info.isDirectory() || info.isSymbolicLink()) throw new Error("Unsafe fixture cleanup target");
     await rm(resolved, {recursive: true, force: false});
   }
-  return {root, lockPath, start, note, resume, command, finish, owner, noStages, cleanup};
+  const snapshot = () => ({ workers: workers.slice(0, 4).map(workerDiagnostics), omittedWorkers: Math.max(0, workers.length - 4) });
+  function annotate(error: unknown, atFailure: ReturnType<typeof snapshot>) {
+    if (!(error instanceof Error)) return;
+    try {
+      const afterCleanup = workers.slice(0, 4).map(w => ({ exited: w.exited, closed: w.closed ? {
+        code: w.closed.code === 0 ? "zero" : w.closed.code === 1 ? "one" : w.closed.code === null ? "null" : "other",
+        signal: w.closed.signal === null ? "none" : ["SIGTERM", "SIGKILL", "SIGINT", "SIGBREAK"].includes(w.closed.signal) ? w.closed.signal : "other",
+      } : null }));
+      const suffix = "\nAGS_OS_DIAGNOSTIC " + JSON.stringify({ atFailure, afterCleanup });
+      const originalStack = error.stack;
+      error.message += suffix;
+      if (originalStack) error.stack = originalStack + suffix;
+    } catch { /* Preserve even a non-writable original Error; diagnostics never replace it. */ }
+  }
+  return {root, lockPath, start, note, resume, command, finish, owner, noStages, cleanup, snapshot, annotate};
 }
 
 it("OS-001: private preparation pause cannot expose an empty public owner", async () => {

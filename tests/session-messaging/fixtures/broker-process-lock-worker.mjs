@@ -1,8 +1,43 @@
 import fs from "node:fs";
+import childProcess from "node:child_process";
 import path from "node:path";
 import { syncBuiltinESMExports } from "node:module";
 import { pathToFileURL } from "node:url";
 import { setTimeout as delay } from "node:timers/promises";
+
+// Private fixture breadcrumbs only; never serialize arguments, paths or native output.
+const observedAt = performance.now();
+let observations = 0;
+const allowedCodes = new Set(["ENOENT", "EACCES", "EPERM", "ETIMEDOUT", "ENOBUFS", "EIO", "EINVAL", "ESRCH", "ABORT_ERR"]);
+function observedCode(error) {
+  try {
+    const code = Object.getOwnPropertyDescriptor(error, "code")?.value;
+    return allowedCodes.has(code) ? code : "OTHER";
+  } catch { return "OTHER"; }
+}
+function observe(event, fields = {}) {
+  if (observations >= 48) return;
+  // Observation failures must not replace a native return or the original throw.
+  try {
+    if (++observations === 48) { event = "cap"; fields = {}; }
+    fs.writeSync(2, "AGS_OS_TRACE " + JSON.stringify({ event, ms: Math.floor(performance.now() - observedAt), ...fields }) + "\n");
+  } catch { /* Best-effort observer; the original fixture operation still runs. */ }
+}
+observe("bootstrap");
+process.once("exit", code => observe("exit", { outcome: code === 0 ? "ok" : "error" }));
+const nativeExecFileSync = childProcess.execFileSync;
+childProcess.execFileSync = function (...args) {
+  const query = args[0] === "powershell.exe" ? "windows" : args[0] === "ps" ? "posix" : "other";
+  observe("query-begin", { query });
+  try {
+    const result = Reflect.apply(nativeExecFileSync, this, args);
+    observe("query-return", { query });
+    return result;
+  } catch (error) {
+    observe("query-throw", { query, code: observedCode(error) });
+    throw error;
+  }
+};
 
 // Scheduler interposition only: every filesystem operation still reaches the OS.
 const cfg = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
@@ -11,10 +46,13 @@ let phase = "acquire";
 const gates = (cfg.gates ?? []).map(g => ({ ...g, used: false }));
 const sleepCell = new Int32Array(new SharedArrayBuffer(4));
 function signal(name, value) {
+  const note = ["prepared", "result", "failure", "done", "observed", "publish", "renamed", "cleanup", "released"].includes(name) ? name : "other";
+  observe("publish-begin", { note });
   const target = path.join(cfg.root, cfg.id + "." + name + ".json");
   const tmp = target + ".tmp";
   native.writeFileSync(tmp, JSON.stringify({ pid: process.pid, ...value }), { flag: "wx" });
   native.renameSync(tmp, target);
+  observe("publish-end", { note });
 }
 function gate(op, when, args, error) {
   const target = op === "renameSync" ? args[1] : args[0];
@@ -25,6 +63,7 @@ function gate(op, when, args, error) {
     : op === "renameSync" && target === cfg.lockPath ? "publication"
     : target === cfg.lockPath ? "parent" : target === cfg.marker ? "observed-marker" : "other";
   const g = gates.find(g => !g.used && g.phase === phase && g.op === op && g.when === when && g.kind === kind);
+  observe("gate", { phase, op, when, kind, matched: Boolean(g) });
   if (!g) return;
   g.used = true;
   signal(g.name, { op, when, kind, outcome: error ? "error" : "ok", code: error?.code ?? null });
@@ -48,8 +87,12 @@ syncBuiltinESMExports();
 let lease;
 let api;
 try {
+  observe("import-begin");
   api = await import(pathToFileURL(cfg.modulePath).href);
+  observe("import-end");
+  observe("acquire-begin");
   lease = await api.acquireBrokerProcessLockWhenReady(cfg.lockPath);
+  observe("acquire-end", { outcome: lease ? "lease" : "no-lease" });
   signal("result", { outcome: lease ? "acquired" : "contended", lease });
   if (lease) {
     const command = path.join(cfg.root, cfg.id + ".command.json");
@@ -74,6 +117,7 @@ try {
     signal("done", { action });
   }
 } catch (error) {
+  observe("worker-error", { code: observedCode(error) });
   signal("failure", { code: error?.code ?? "TEST_WORKER_ERROR", message: String(error?.message ?? error) });
   process.exitCode = 1;
 }
