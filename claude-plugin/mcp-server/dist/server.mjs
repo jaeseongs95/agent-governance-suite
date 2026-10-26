@@ -35700,7 +35700,8 @@ var planWorkflowInputSchema = {
       properties: {
         schemaVersion: { const: "1.0.0" },
         taskEnvelope: taskEnvelopeInputSchema,
-        evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] }
+        evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] },
+        requiredAuditPhase: { enum: ["pre-execution", "post-execution", "pre-deploy", "post-deploy"] }
       },
       allOf: [{
         if: {
@@ -35931,12 +35932,13 @@ function usesInlineReferences(profile) {
 }
 var planWorkflowInlineInputSchema = {
   type: "object",
-  description: "Send either a TaskEnvelope.v1 object at the top level, or { schemaVersion, taskEnvelope, evaluationAuditPurpose? }. The server validates the exact PlanWorkflowRequest.v1 contract.",
+  description: "Send either a TaskEnvelope.v1 object at the top level, or { schemaVersion, taskEnvelope, evaluationAuditPurpose?, requiredAuditPhase? }. The server validates the exact PlanWorkflowRequest.v1 contract.",
   additionalProperties: false,
   properties: {
     ...structuredClone(taskEnvelopeInputSchema.properties ?? {}),
     taskEnvelope: structuredClone(taskEnvelopeInputSchema),
-    evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] }
+    evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] },
+    requiredAuditPhase: { enum: ["pre-execution", "post-execution", "pre-deploy", "post-deploy"] }
   }
 };
 function planWorkflowToolInputSchema(profile = "default") {
@@ -43027,6 +43029,7 @@ var WorkflowService = class {
       const wrapped = "taskEnvelope" in request;
       const task = wrapped ? request.taskEnvelope : request;
       const evaluationAuditPurpose = wrapped ? request.evaluationAuditPurpose : void 0;
+      const requiredAuditPhase = wrapped ? request.requiredAuditPhase : void 0;
       let executionContext = this.defaultExecutionContext;
       let trustedBootstrapContext = null;
       if (task.requiredCapabilities.includes("evaluation-validity-audit") && evaluationAuditPurpose === void 0) {
@@ -43053,7 +43056,7 @@ var WorkflowService = class {
         executionContext = trustedBootstrapContext;
       }
       this.validateWorkUnitGraph(task);
-      const plan = this.buildPlan(task, this.registry.read(), evaluationAuditPurpose, executionContext);
+      const plan = this.buildPlan(task, this.registry.read(), evaluationAuditPurpose, executionContext, requiredAuditPhase);
       plan.integrityToken = this.signPlan(plan);
       this.validator.workflowPlan(plan);
       if (trustedBootstrapContext) this.consumeTrustedExecutionObservation(trustedBootstrapContext, "bootstrap orchestration");
@@ -43127,11 +43130,15 @@ var WorkflowService = class {
       const evaluationAuditPurpose = proposal.plan.stages.find(
         (stage) => stage.requiredCapability === "evaluation-validity-audit"
       )?.evaluationAuditPurpose;
+      const requiredAuditPhase = proposal.plan.stages.find(
+        (stage) => stage.riskGate === "mandatory" && stage.requiredArtifacts.includes("gate-verdict")
+      )?.requiredAuditPhase;
       const expectedPlan = this.buildPlan(
         proposal.taskEnvelope,
         this.registry.read(),
         evaluationAuditPurpose,
-        proposal.plan.bootstrapExecution?.context ?? this.defaultExecutionContext ?? void 0
+        proposal.plan.bootstrapExecution?.context ?? this.defaultExecutionContext ?? void 0,
+        requiredAuditPhase
       );
       expectedPlan.integrityToken = this.signPlan(expectedPlan);
       if (canonicalJson(expectedPlan, "Plan") !== canonicalJson(proposal.plan, "Plan")) {
@@ -43571,13 +43578,14 @@ var WorkflowService = class {
         }
         this.assertPlannedInputsAvailable(receipt, stage, true);
         this.assertRequiredArtifacts(stage, result);
-        if (["cs-implementation-review", "test-sensitivity-review", "change-code-review"].includes(stage.requiredCapability)) {
+        if (["cs-implementation-review", "test-sensitivity-review", "change-code-review"].includes(stage.requiredCapability) || stage.riskGate === "mandatory" && stage.requiredArtifacts.includes("gate-verdict")) {
           const checked = result.outputFile ? { ...result, output: { ...result.output, output: loadStageOutputFile(result.outputFile) } } : result;
           this.assertResultSemantics(stage, checked, receipt.plan.taskId, receipt.plan.taskDigest);
           if (stage.requiredCapability === "cs-implementation-review") {
             assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
           }
           assertEngineeringStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, stage.requiredCapability, checked, this.validator);
+          this.assertMandatoryAuditGate(stage, checked);
         }
         this.assertExecutionAssurance(stage, result);
         this.assertDeclaredReceiptPolicy(receipt, stage, result);
@@ -43612,7 +43620,7 @@ var WorkflowService = class {
       receipt.error = null;
     });
   }
-  buildPlan(task, skills, evaluationAuditPurpose, executionContext) {
+  buildPlan(task, skills, evaluationAuditPurpose, executionContext, requiredAuditPhase = "post-execution") {
     const executionMode = task.orchestration.requested ? "orchestrated" : "direct";
     const errors = [];
     const stages = [];
@@ -43681,6 +43689,7 @@ var WorkflowService = class {
         order,
         requiredCapability: capability,
         ...stageEvaluationAuditPurpose !== void 0 ? { evaluationAuditPurpose: stageEvaluationAuditPurpose } : {},
+        ...skill.gate.policy === "mandatory" && stageRequiredArtifacts.includes("gate-verdict") ? { requiredAuditPhase } : {},
         satisfiedCapabilities,
         skillId: skill.skillId,
         phase: skill.phase,
@@ -44025,6 +44034,7 @@ var WorkflowService = class {
   }
   assertMandatoryAuditGate(stage, result) {
     if (stage.riskGate !== "mandatory" || !stage.requiredArtifacts.includes("gate-verdict")) return;
+    const requiredPhase = this.requireAuditPhase(stage);
     const output2 = result.output.output;
     const auditorId = output2?.auditorId;
     const implementationActorIds = output2?.implementationActorIds;
@@ -44032,15 +44042,16 @@ var WorkflowService = class {
     const currentTarget = output2?.currentTarget;
     const blockingFindings = output2?.blockingFindings;
     const phase = output2?.phase;
-    if (output2?.gateVerdict !== "PASS" || typeof auditorId !== "string" || auditorId.length === 0 || !Array.isArray(implementationActorIds) || implementationActorIds.length === 0 || implementationActorIds.some((actorId) => typeof actorId !== "string" || actorId.length === 0) || typeof auditTarget !== "string" || auditTarget.length === 0 || typeof currentTarget !== "string" || currentTarget !== auditTarget || output2?.freshContext !== true || output2?.delegationAllowed !== false || !Array.isArray(blockingFindings) || blockingFindings.length > 0 || output2?.stale !== false || !["pre-execution", "post-execution", "pre-deploy", "post-deploy"].includes(String(phase)) || typeof output2?.postExecutionVerified !== "boolean") {
+    if (output2?.gateVerdict !== "PASS" || typeof auditorId !== "string" || auditorId.length === 0 || !Array.isArray(implementationActorIds) || implementationActorIds.length === 0 || implementationActorIds.some((actorId) => typeof actorId !== "string" || actorId.length === 0) || typeof auditTarget !== "string" || auditTarget.length === 0 || typeof currentTarget !== "string" || currentTarget !== auditTarget || output2?.freshContext !== true || output2?.delegationAllowed !== false || !Array.isArray(blockingFindings) || blockingFindings.length > 0 || output2?.stale !== false || phase !== requiredPhase || typeof output2?.postExecutionVerified !== "boolean") {
       throw new WorkflowContractError("GATE_FAILED", "Mandatory audit requires a current, fresh, non-delegated PASS with no blocking findings.", {
-        stageId: stage.stageId
+        stageId: stage.stageId,
+        requiredPhase
       });
     }
-    if ((phase === "post-execution" || phase === "post-deploy") && output2.postExecutionVerified !== true) {
+    if ((requiredPhase === "post-execution" || requiredPhase === "post-deploy") && output2.postExecutionVerified !== true) {
       throw new WorkflowContractError("GATE_FAILED", "Post-execution and post-deploy audits require verified resulting state.", {
         stageId: stage.stageId,
-        phase
+        phase: requiredPhase
       });
     }
     if (implementationActorIds.includes(auditorId)) {
@@ -44050,6 +44061,14 @@ var WorkflowService = class {
         implementationActorIds
       });
     }
+  }
+  requireAuditPhase(stage) {
+    if (stage.requiredAuditPhase === void 0) {
+      throw new WorkflowContractError("BINDING_REQUIRED", "Mandatory audit plan has no frozen required phase; create a new plan without modifying the signed plan.", {
+        stageId: stage.stageId
+      });
+    }
+    return stage.requiredAuditPhase;
   }
   bootstrapExecutionRequirement(task) {
     const deepBootstrap = task.riskLevel === "high" || task.riskLevel === "critical" || task.decision.complexity === "complex";
@@ -44294,6 +44313,9 @@ var WorkflowService = class {
     const supplied = Buffer.from(plan.integrityToken, "base64url");
     if (supplied.toString("base64url") !== plan.integrityToken || supplied.length !== expected.length || !timingSafeEqual3(supplied, expected)) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow plan integrity token is missing, modified, or signed by a different workflow store.");
+    }
+    for (const stage of plan.stages) {
+      if (stage.riskGate === "mandatory" && stage.requiredArtifacts.includes("gate-verdict")) this.requireAuditPhase(stage);
     }
   }
   planWithoutIntegrityToken(plan) {
