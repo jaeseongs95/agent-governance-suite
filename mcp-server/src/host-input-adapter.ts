@@ -20,6 +20,11 @@ function hookHostFailure(kind: keyof typeof hostFailures): Error {
 export type SupportedHookHost = string;
 export type HostLifecycle = "start" | "end" | "none";
 
+/** Adapter-owned continuity semantics; common hooks never decode native lifecycle labels. */
+export type ContinuityAction =
+  | Readonly<{ kind: "startup" | "clear" | "resume" | "compact" | "pre-compact" }>
+  | Readonly<{ kind: "post-compact"; turnId: string | null; successful: boolean }>;
+
 /** Explicit CLI host selection; payloads and environment cannot change an entry point default. */
 export function resolveHookHost(arguments_: readonly string[], fallback?: SupportedHookHost): SupportedHookHost {
   const selected: string[] = [];
@@ -41,6 +46,7 @@ export interface AdaptedHostInput {
   observation: InputObservation;
   lifecycle: HostLifecycle;
   outputEventName: string;
+  continuityAction?: ContinuityAction;
 }
 
 /** No host payload schema or actor convention is assumed by the common hook layer. */
@@ -62,14 +68,16 @@ export function adaptHostInput(input: Record<string, unknown>, host: string): Ad
       actor: { role: "indeterminate", basis: "unavailable", reasonCode: "HOST_ACTOR_OBSERVATION_UNAVAILABLE" } },
   } satisfies AdaptedHostInput;
   if (!call) return adapted;
-  if (adapted.observation.host !== host) {
+  const { observation: sourceObservation, ...snapshot } = adapted;
+  const observation = { ...sourceObservation };
+  if (observation.host !== host) {
     throw new WorkflowContractError("BINDING_REQUIRED", "Host observation differs from its selected composition.", { reasonCode: "HOST_HOOK_OBSERVATION_MISMATCH" });
   }
-  const actor = adapted.observation.actor;
+  const actor = observation.actor;
   // Never turn rejected getter/proxy actor fields into accepted plain data while snapshotting.
   const snapshotActor = actorAccess(actor).allowed
     ? Object.freeze({ role: actor.role, basis: actor.basis, reasonCode: actor.reasonCode }) : actor;
-  call.adapted = Object.freeze({ ...adapted, observation: Object.freeze({ ...adapted.observation, actor: snapshotActor }) });
+  call.adapted = Object.freeze({ ...snapshot, observation: Object.freeze({ ...observation, actor: snapshotActor }) });
   return call.adapted;
 }
 

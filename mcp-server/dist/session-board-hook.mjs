@@ -186,12 +186,14 @@ function adaptHostInput(input, host) {
     }
   };
   if (!call) return adapted;
-  if (adapted.observation.host !== host) {
+  const { observation: sourceObservation, ...snapshot } = adapted;
+  const observation = { ...sourceObservation };
+  if (observation.host !== host) {
     throw new WorkflowContractError("BINDING_REQUIRED", "Host observation differs from its selected composition.", { reasonCode: "HOST_HOOK_OBSERVATION_MISMATCH" });
   }
-  const actor = adapted.observation.actor;
+  const actor = observation.actor;
   const snapshotActor = actorAccess(actor).allowed ? Object.freeze({ role: actor.role, basis: actor.basis, reasonCode: actor.reasonCode }) : actor;
-  call.adapted = Object.freeze({ ...adapted, observation: Object.freeze({ ...adapted.observation, actor: snapshotActor }) });
+  call.adapted = Object.freeze({ ...snapshot, observation: Object.freeze({ ...observation, actor: snapshotActor }) });
   return call.adapted;
 }
 function isGovernanceHookTool(host, toolName) {
@@ -1234,9 +1236,13 @@ function adaptBuiltinHookInput(input, host, actor) {
   const event = text(input.hook_event_name);
   let kind = "unknown";
   let lifecycle = "none";
+  let continuityAction;
   let boundaryPhase;
-  if (event === "SessionStart") lifecycle = "start";
-  else if (event === "SessionEnd") {
+  if (event === "SessionStart") {
+    lifecycle = "start";
+    const source = input.source;
+    if (source === "startup" || source === "clear" || source === "resume" || source === "compact") continuityAction = { kind: source };
+  } else if (event === "SessionEnd") {
     kind = "turn-end";
     lifecycle = "end";
   } else if (event === "UserPromptSubmit") kind = "user-input";
@@ -1247,6 +1253,11 @@ function adaptBuiltinHookInput(input, host, actor) {
     kind = "tool-boundary";
     boundaryPhase = "after";
   } else if (event === "Stop") kind = "turn-end";
+  if (event === "PreCompact") continuityAction = { kind: "pre-compact" };
+  else if (event === "PostCompact") {
+    const turnId = input.turn_id, error = input.error;
+    continuityAction = { kind: "post-compact", turnId: typeof turnId === "string" ? turnId : null, successful: error === void 0 || error === null };
+  }
   const wake = kind === "user-input" ? parseWakeMessages(input.prompt) : { nonces: [], wakeOnly: false };
   const workspaceId = text(input.workspace_id) || text(input.cwd);
   const callId = text(input.tool_use_id).trim();
@@ -1255,6 +1266,7 @@ function adaptBuiltinHookInput(input, host, actor) {
   return {
     lifecycle,
     outputEventName: event,
+    ...continuityAction ? { continuityAction } : {},
     observation: {
       host,
       sessionId: text(input.session_id),

@@ -3,7 +3,7 @@ import { types as utilTypes } from "node:util";
 import { hookFailure, retainHookFailureCause, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
 import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
 import path from "node:path";
-import { registerHookHostAdapter, type HookHostAdapter, type HostDeliveryProfile, type NativePeerWaitObservation, type HookSettingsDiagnostic, type AdaptedHostInput, type HostLifecycle } from "./host-input-adapter.js";
+import { registerHookHostAdapter, type HookHostAdapter, type HostDeliveryProfile, type NativePeerWaitObservation, type HookSettingsDiagnostic, type AdaptedHostInput, type HostLifecycle, type ContinuityAction } from "./host-input-adapter.js";
 import { parseWakeMessages } from "./session-message-client.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { normalizePeerWaitTargets } from "./peer-wait-policy.js";
@@ -22,8 +22,13 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
   const event = text(input.hook_event_name);
   let kind: InputObservationKind = "unknown";
   let lifecycle: HostLifecycle = "none";
+  let continuityAction: ContinuityAction | undefined;
   let boundaryPhase: "before" | "after" | undefined;
-  if (event === "SessionStart") lifecycle = "start";
+  if (event === "SessionStart") {
+    lifecycle = "start";
+    const source = input.source;
+    if (source === "startup" || source === "clear" || source === "resume" || source === "compact") continuityAction = { kind: source };
+  }
   else if (event === "SessionEnd") {
     kind = "turn-end";
     lifecycle = "end";
@@ -35,6 +40,11 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
     kind = "tool-boundary";
     boundaryPhase = "after";
   } else if (event === "Stop") kind = "turn-end";
+  if (event === "PreCompact") continuityAction = { kind: "pre-compact" };
+  else if (event === "PostCompact") {
+    const turnId = input.turn_id, error = input.error;
+    continuityAction = { kind: "post-compact", turnId: typeof turnId === "string" ? turnId : null, successful: error === undefined || error === null };
+  }
 
   const wake = kind === "user-input" ? parseWakeMessages(input.prompt) : { nonces: [], wakeOnly: false };
   const workspaceId = text(input.workspace_id) || text(input.cwd);
@@ -44,6 +54,7 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
   return {
     lifecycle,
     outputEventName: event,
+    ...(continuityAction ? { continuityAction } : {}),
     observation: {
       host,
       sessionId: text(input.session_id),

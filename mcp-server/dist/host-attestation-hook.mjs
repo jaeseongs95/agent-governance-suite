@@ -1158,9 +1158,13 @@ function adaptBuiltinHookInput(input2, host, actor) {
   const event = text(input2.hook_event_name);
   let kind = "unknown";
   let lifecycle = "none";
+  let continuityAction;
   let boundaryPhase;
-  if (event === "SessionStart") lifecycle = "start";
-  else if (event === "SessionEnd") {
+  if (event === "SessionStart") {
+    lifecycle = "start";
+    const source = input2.source;
+    if (source === "startup" || source === "clear" || source === "resume" || source === "compact") continuityAction = { kind: source };
+  } else if (event === "SessionEnd") {
     kind = "turn-end";
     lifecycle = "end";
   } else if (event === "UserPromptSubmit") kind = "user-input";
@@ -1171,6 +1175,11 @@ function adaptBuiltinHookInput(input2, host, actor) {
     kind = "tool-boundary";
     boundaryPhase = "after";
   } else if (event === "Stop") kind = "turn-end";
+  if (event === "PreCompact") continuityAction = { kind: "pre-compact" };
+  else if (event === "PostCompact") {
+    const turnId = input2.turn_id, error61 = input2.error;
+    continuityAction = { kind: "post-compact", turnId: typeof turnId === "string" ? turnId : null, successful: error61 === void 0 || error61 === null };
+  }
   const wake = kind === "user-input" ? parseWakeMessages(input2.prompt) : { nonces: [], wakeOnly: false };
   const workspaceId = text(input2.workspace_id) || text(input2.cwd);
   const callId = text(input2.tool_use_id).trim();
@@ -1179,6 +1188,7 @@ function adaptBuiltinHookInput(input2, host, actor) {
   return {
     lifecycle,
     outputEventName: event,
+    ...continuityAction ? { continuityAction } : {},
     observation: {
       host,
       sessionId: text(input2.session_id),

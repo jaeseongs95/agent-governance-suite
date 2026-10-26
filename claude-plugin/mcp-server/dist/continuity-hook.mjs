@@ -26,6 +26,21 @@ function actorAccess(actor) {
   }
 }
 
+// contracts/types.ts
+var WorkflowContractError = class extends Error {
+  constructor(code, message, details = null) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    this.name = "WorkflowContractError";
+  }
+  code;
+  details;
+  toBody() {
+    return { code: this.code, message: this.message, details: this.details };
+  }
+};
+
 // mcp-server/src/builtin-hook-host-adapters.ts
 import { createHash as createHash3 } from "node:crypto";
 import { types as utilTypes2 } from "node:util";
@@ -118,23 +133,6 @@ import path6 from "node:path";
 
 // mcp-server/src/host-input-adapter.ts
 import { AsyncLocalStorage } from "node:async_hooks";
-
-// contracts/types.ts
-var WorkflowContractError = class extends Error {
-  constructor(code, message, details = null) {
-    super(message);
-    this.code = code;
-    this.details = details;
-    this.name = "WorkflowContractError";
-  }
-  code;
-  details;
-  toBody() {
-    return { code: this.code, message: this.message, details: this.details };
-  }
-};
-
-// mcp-server/src/host-input-adapter.ts
 var hostFailures = {
   selection: ["INVALID_HOOK_HOST_SELECTION", "Invalid or ambiguous hook host."],
   adapter: ["INVALID_HOOK_HOST_ADAPTER", "Invalid hook host adapter."],
@@ -181,12 +179,14 @@ function adaptHostInput(input, host) {
     }
   };
   if (!call) return adapted;
-  if (adapted.observation.host !== host) {
+  const { observation: sourceObservation, ...snapshot } = adapted;
+  const observation = { ...sourceObservation };
+  if (observation.host !== host) {
     throw new WorkflowContractError("BINDING_REQUIRED", "Host observation differs from its selected composition.", { reasonCode: "HOST_HOOK_OBSERVATION_MISMATCH" });
   }
-  const actor = adapted.observation.actor;
+  const actor = observation.actor;
   const snapshotActor = actorAccess(actor).allowed ? Object.freeze({ role: actor.role, basis: actor.basis, reasonCode: actor.reasonCode }) : actor;
-  call.adapted = Object.freeze({ ...adapted, observation: Object.freeze({ ...adapted.observation, actor: snapshotActor }) });
+  call.adapted = Object.freeze({ ...snapshot, observation: Object.freeze({ ...observation, actor: snapshotActor }) });
   return call.adapted;
 }
 function isGovernanceHookTool(host, toolName) {
@@ -1227,9 +1227,13 @@ function adaptBuiltinHookInput(input, host, actor) {
   const event = text(input.hook_event_name);
   let kind = "unknown";
   let lifecycle = "none";
+  let continuityAction;
   let boundaryPhase;
-  if (event === "SessionStart") lifecycle = "start";
-  else if (event === "SessionEnd") {
+  if (event === "SessionStart") {
+    lifecycle = "start";
+    const source = input.source;
+    if (source === "startup" || source === "clear" || source === "resume" || source === "compact") continuityAction = { kind: source };
+  } else if (event === "SessionEnd") {
     kind = "turn-end";
     lifecycle = "end";
   } else if (event === "UserPromptSubmit") kind = "user-input";
@@ -1240,6 +1244,11 @@ function adaptBuiltinHookInput(input, host, actor) {
     kind = "tool-boundary";
     boundaryPhase = "after";
   } else if (event === "Stop") kind = "turn-end";
+  if (event === "PreCompact") continuityAction = { kind: "pre-compact" };
+  else if (event === "PostCompact") {
+    const turnId = input.turn_id, error = input.error;
+    continuityAction = { kind: "post-compact", turnId: typeof turnId === "string" ? turnId : null, successful: error === void 0 || error === null };
+  }
   const wake = kind === "user-input" ? parseWakeMessages(input.prompt) : { nonces: [], wakeOnly: false };
   const workspaceId = text(input.workspace_id) || text(input.cwd);
   const callId = text(input.tool_use_id).trim();
@@ -1248,6 +1257,7 @@ function adaptBuiltinHookInput(input, host, actor) {
   return {
     lifecycle,
     outputEventName: event,
+    ...continuityAction ? { continuityAction } : {},
     observation: {
       host,
       sessionId: text(input.session_id),
@@ -3035,54 +3045,88 @@ function localToolName(host, canonicalName) {
   const tool = canonicalName.includes("__") ? canonicalName.split("__").at(-1) : canonicalName;
   return BOUND_TOOLS.has(tool) ? tool : null;
 }
-function sessionOutput(additionalContext) {
+function continuityConflict() {
+  throw new WorkflowContractError("BINDING_INVALID", "Continuity lifecycle conflicts with the normalized host observation.", {
+    reasonCode: "CONTINUITY_HOOK_OBSERVATION_CONFLICT"
+  });
+}
+function normalizedContinuityInput(adapted) {
+  const { observation: sourceObservation, lifecycle, outputEventName, continuityAction: sourceAction } = adapted;
+  const observation = { ...sourceObservation };
+  let action;
+  if (observation.kind === "tool-boundary") {
+    if (lifecycle !== "none" || sourceAction !== void 0) continuityConflict();
+  } else if (sourceAction !== void 0) {
+    if (!sourceAction || typeof sourceAction !== "object" || Array.isArray(sourceAction)) continuityConflict();
+    const kind = sourceAction.kind;
+    switch (kind) {
+      case "startup":
+      case "clear":
+      case "resume":
+      case "compact":
+        if (lifecycle !== "start") continuityConflict();
+        action = Object.freeze({ kind });
+        break;
+      case "pre-compact":
+        if (lifecycle !== "none") continuityConflict();
+        action = Object.freeze({ kind });
+        break;
+      case "post-compact": {
+        const { turnId, successful } = sourceAction;
+        if (lifecycle !== "none" || turnId !== null && typeof turnId !== "string" || typeof successful !== "boolean") continuityConflict();
+        action = Object.freeze({ kind, turnId, successful });
+        break;
+      }
+      default:
+        continuityConflict();
+    }
+    if (observation.boundaryPhase !== void 0) continuityConflict();
+  }
+  return { observation, outputEventName, action };
+}
+function sessionOutput(eventName, additionalContext) {
   return additionalContext ? {
-    hookSpecificOutput: { hookEventName: "SessionStart", additionalContext }
+    hookSpecificOutput: { hookEventName: eventName, additionalContext }
   } : {};
 }
-function handleContinuityHook(input, service, host = "codex") {
-  const adapted = adaptHostInput(input, host);
-  const observation = adapted.observation;
-  const event = typeof input.hook_event_name === "string" ? input.hook_event_name : "";
+function handleNormalizedContinuityHook(input, service, host) {
+  const { observation, action, outputEventName } = input;
   const sessionId = observation.sessionId;
   if (!sessionId || !actorAccess(observation.actor).allowed) return {};
-  if (event === "SessionStart") {
-    const source = input.source;
-    if (source === "startup") {
+  switch (action?.kind) {
+    case "startup":
       service.ensureSession(sessionId);
       return {};
-    }
-    if (source === "clear") {
+    case "clear":
       service.clearSession(sessionId);
       return {};
-    }
-    if (source === "resume") return sessionOutput(service.formatCandidate(service.candidateForSession(sessionId)));
-    if (source === "compact") return sessionOutput(service.compactContext(sessionId));
-    return {};
-  }
-  if (event === "PreCompact") {
-    service.markPreCompact(sessionId);
-    return {};
-  }
-  if (event === "PostCompact") {
-    const turnId = typeof input.turn_id === "string" ? input.turn_id : null;
-    service.recordPostCompact(sessionId, turnId, input.error === void 0 || input.error === null);
-    return {};
+    case "resume":
+      return sessionOutput(outputEventName, service.formatCandidate(service.candidateForSession(sessionId)));
+    case "compact":
+      return sessionOutput(outputEventName, service.compactContext(sessionId));
+    case "pre-compact":
+      service.markPreCompact(sessionId);
+      return {};
+    case "post-compact":
+      service.recordPostCompact(sessionId, action.turnId, action.successful);
+      return {};
   }
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
-    if (!actorAccess(observation.actor).allowed) return {};
     const toolName = localToolName(host, observation.toolName ?? "");
     if (!toolName) return {};
     const toolInput = observation.toolInput ?? {};
     const token = service.issueToolBinding(sessionId, toolName, toolInput);
     return {
       hookSpecificOutput: {
-        hookEventName: adapted.outputEventName,
+        hookEventName: outputEventName,
         updatedInput: { ...toolInput, _continuityBinding: token }
       }
     };
   }
   return {};
+}
+function handleContinuityHook(input, service, host = "codex") {
+  return handleNormalizedContinuityHook(normalizedContinuityInput(adaptHostInput(input, host)), service, host);
 }
 function reportContinuityFailure(phase, cause) {
   try {
@@ -3109,14 +3153,13 @@ function runContinuityHook(raw, environment = process.env, host = "codex", failC
   let cleanupFailed = false;
   try {
     const input = JSON.parse(raw);
+    const normalized = normalizedContinuityInput(adaptHostInput(input, host));
     phase = "storage";
     const workflowDatabasePath = resolveWorkflowDatabasePath(environment);
     const continuityDatabasePath = resolveContinuityDatabasePath(environment);
     assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath);
     continuity = new SqliteContinuityStore(continuityDatabasePath);
-    const event = input.hook_event_name;
-    const source = input.source;
-    const needsWorkflowProjection = event === "PreCompact" || event === "SessionStart" && (source === "resume" || source === "compact");
+    const needsWorkflowProjection = normalized.action?.kind === "pre-compact" || normalized.action?.kind === "resume" || normalized.action?.kind === "compact";
     if (needsWorkflowProjection) {
       try {
         workflow = new SqliteWorkflowStore(workflowDatabasePath);
@@ -3126,7 +3169,7 @@ function runContinuityHook(raw, environment = process.env, host = "codex", failC
       }
     }
     phase = "handle";
-    const output = handleContinuityHook(input, new ContinuityService(continuity, null, workflow), host);
+    const output = handleNormalizedContinuityHook(normalized, new ContinuityService(continuity, null, workflow), host);
     result = Object.keys(output).length > 0 ? JSON.stringify(output) : "";
   } catch (cause) {
     primary = cause;
