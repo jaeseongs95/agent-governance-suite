@@ -45584,7 +45584,8 @@ var TrustService = class {
         receiptIntegrity: integrityValid ? "valid" : "invalid",
         receiptBoundToCaller: integrityValid && binding2 ? receipt.host === binding2.host && receipt.sessionId === binding2.sessionId : null,
         receiptFreshness: integrityValid ? Date.parse(receipt.expiresAt) > now.getTime() ? "fresh" : "stale" : null,
-        sourceClaimMatch: integrityValid ? receipt.originKind === decision.sourceOriginKind : null
+        // A receipt can refine provenance, never undo an already rejected child claim.
+        sourceClaimMatch: base.sourceClaimMatch === false ? false : integrityValid ? receipt.originKind === decision.sourceOriginKind : null
       },
       error: null
     };

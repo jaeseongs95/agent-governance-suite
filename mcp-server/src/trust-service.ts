@@ -80,7 +80,9 @@ export class TrustService {
         receiptFreshness: integrityValid
           ? Date.parse(receipt.expiresAt) > now.getTime() ? "fresh" : "stale"
           : null,
-        sourceClaimMatch: integrityValid ? receipt.originKind === decision.sourceOriginKind : null,
+        // A receipt can refine provenance, never undo an already rejected child claim.
+        sourceClaimMatch: base.sourceClaimMatch === false ? false
+          : integrityValid ? receipt.originKind === decision.sourceOriginKind : null,
       },
       error: null,
     };

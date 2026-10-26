@@ -306,6 +306,26 @@ describe("trust provenance", () => {
     });
   });
 
+  it("preserves a child user-turn rejection when a found receipt has invalid integrity", async () => {
+    const { store, path } = await openStore();
+    const receipt = store.recordInputSource(peerInput("owned-invalid-child-source"));
+    const database = new DatabaseSync(path);
+    database.prepare("UPDATE input_source_receipts SET receipt_json = json_set(receipt_json, '$.integrityToken', ?) WHERE receipt_id = ?")
+      .run("x".repeat(43), receipt.receiptId);
+    database.close();
+    const service = new TrustService(store);
+    const claim = decision({ sourceOriginKind: "user-turn", sourceReceiptId: receipt.receiptId });
+    const child = { ...binding, actorKind: "subagent" as const, observedBy: "owned-fake-adapter" };
+    const rejected = service.validateCollaborationDecision({ decision: claim, _sessionBinding: child });
+    expect(rejected.data).toMatchObject({
+      receiptFound: true, receiptIntegrity: "invalid", receiptBoundToCaller: null,
+      receiptFreshness: null, sourceClaimMatch: false,
+    });
+    // An invalid signature still supplies no provenance for any other caller.
+    expect(service.validateCollaborationDecision({ decision: claim, _sessionBinding: binding }).data)
+      .toMatchObject({ receiptIntegrity: "invalid", sourceClaimMatch: null });
+  });
+
   it("exposes read-only MCP validation without trusting an arbitrary caller host name", async () => {
     const { store } = await openStore();
     const validator = new ContractValidator();
