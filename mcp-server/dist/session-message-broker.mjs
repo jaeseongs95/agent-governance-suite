@@ -2174,7 +2174,7 @@ function acquireBrokerProcessLock(lockPath, budget) {
   const owner = "owner-" + process.pid + "-" + randomBytes3(16).toString("hex") + "-" + ownStartHash;
   retireAbandonedStages(lockPath, budget);
   remaining(budget);
-  const stage = mkdtempSync(lockPath + ".stage-" + owner + "-");
+  const stage = mkdtempSync(path4.toNamespacedPath(lockPath + ".stage-" + owner + "-"));
   let markerCreated = false;
   let published = false;
   let result = null;

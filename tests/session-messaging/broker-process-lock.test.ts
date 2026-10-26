@@ -12,7 +12,7 @@ import { acquireBrokerProcessLock, acquireBrokerProcessLockWhenReady, ownsBroker
 
 type Kind = "directory" | "file" | "link";
 type Op = "lstat" | "mkdir" | "mkdtemp" | "readdir" | "rename" | "rmdir";
-const root = path.resolve("synthetic-owned-broker-state");
+const root = path.toNamespacedPath(path.resolve("synthetic-owned-broker-state"));
 const lockPath = path.join(root, "broker.lock");
 const deadPid = 999999;
 const deadOwner = "owner-" + deadPid + "-" + "f".repeat(32);

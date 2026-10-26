@@ -130,7 +130,7 @@ export function acquireBrokerProcessLock(lockPath: string, budget?: ProcessIdent
   const owner = "owner-" + process.pid + "-" + randomBytes(16).toString("hex") + "-" + ownStartHash;
   retireAbandonedStages(lockPath, budget);
   remaining(budget);
-  const stage = mkdtempSync(lockPath + ".stage-" + owner + "-");
+  const stage = mkdtempSync(path.toNamespacedPath(lockPath + ".stage-" + owner + "-"));
   let markerCreated = false;
   let published = false;
   let result: BrokerProcessLock | null = null;
