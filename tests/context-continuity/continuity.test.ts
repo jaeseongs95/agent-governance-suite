@@ -1,4 +1,6 @@
 import { writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -10,8 +12,10 @@ import type {
   TaskEnvelopeV1,
 } from "../../contracts/types.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
-import { handleContinuityHook as handleNativeContinuityHook } from "../../mcp-server/src/continuity-hook.js";
-import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+import { handleContinuityHook as handleNativeContinuityHook, runContinuityHook as runNativeContinuityHook } from "../../mcp-server/src/continuity-hook.js";
+import { runGovernanceHook } from "../../mcp-server/src/governance-hook.js";
+import { SessionActorProofs, withoutSessionProof } from "../../mcp-server/src/session-actor-proof.js";
+import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter, withHookHostAdapter, type AdaptedHostInput, type ContinuityAction, type HookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { ContinuityService, UnavailableContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
@@ -742,5 +746,174 @@ describe("current continuity authority versus historical payload", () => {
     expect(bundle.continuity.getTask(c)).toEqual(beforeRollback);
     expect(service.candidateForSession("shared-workflow").summary?.source).toBe("workflow");
     expect(bundle.workflow.getConvergenceSnapshot(root.rootId)?.root).toEqual(root);
+  });
+});
+
+// Owned synthetic lifecycle/identity fixtures; these are not native capture evidence.
+function normalizedAdapter(observation: () => AdaptedHostInput): HookHostAdapter {
+  return { processPid: () => undefined, attestationKind: "owned-continuity",
+    deliveryProfile: () => ({ transport: "owned-continuity", capabilities: { supportedInjection: [], idleWake: "none" }, blocksEmptyWakePrompt: false }),
+    ownsTool: tool => tool.startsWith("owned__"), adaptInput: observation };
+}
+
+function normalizedLifecycle(host: string, sessionId: string, action: ContinuityAction): AdaptedHostInput {
+  return { lifecycle: action.kind === "pre-compact" || action.kind === "post-compact" ? "none" : "start",
+    outputEventName: "LifecycleNotice", continuityAction: action,
+    observation: { host, sessionId, kind: "unknown", actor: { role: "root", basis: "observed", reasonCode: "OWNED_NORMALIZED_ROOT" } } };
+}
+
+async function normalizedEnvironment() {
+  const directory = await mkdtemp(join(tmpdir(), "normalized-continuity-"));
+  temporaryDirectories.push(directory);
+  return { directory, env: { AGENT_GOVERNANCE_DB_PATH: join(directory, "workflow.sqlite3"),
+    AGENT_GOVERNANCE_CONTINUITY_DB_PATH: join(directory, "continuity.sqlite3") } };
+}
+
+function seedCompactMarker(service: ContinuityService, session: string) {
+  const checkpoint = directCheckpoint(service, session);
+  expect(checkpoint.error).toBeNull();
+  service.markPreCompact(session);
+  const state = service.store.getTask(service.correlateSession(session))!;
+  expect(state).toMatchObject({ pendingSource: "direct", pendingRevision: checkpoint.data!.revision,
+    pendingDigest: checkpoint.data!.snapshotDigest, pendingConsumed: false });
+  expect(state.pendingRevision).not.toBeNull(); expect(state.pendingDigest).not.toBeNull();
+  return state;
+}
+
+describe("normalized continuity semantics and one-call snapshots", () => {
+  it("ignores raw clear/action decoys while issuing valid root and continuity proofs without changing the epoch or compact marker", async () => {
+    const { env } = await normalizedEnvironment(), host = `owned-${randomUUID()}`, session = "normalized-inspect-session";
+    const service = createService(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH, new InMemoryWorkflowStore(), () => new Date());
+    const before = seedCompactMarker(service, session);
+    let translations = 0;
+    const adapter = normalizedAdapter(() => {
+      expect(++translations).toBe(1);
+      return { lifecycle: "none", outputEventName: "BeforeOperation", observation: { host, sessionId: session, callId: randomUUID(),
+        kind: "tool-boundary", boundaryPhase: "before", toolName: "owned__inspect_context", toolInput: { schemaVersion: "1.0.0" },
+        actor: { role: "root", basis: "observed", reasonCode: "OWNED_NORMALIZED_ROOT" } } };
+    });
+    const result = await runGovernanceHook(host, JSON.stringify({ hook_event_name: "SessionStart", source: "clear",
+      continuityAction: { kind: "clear" }, turn_id: "raw-decoy-turn", error: null }), env,
+    new Map([[host, { host, modelClassForModel: () => null }]]), {
+      inputAdapter: adapter, attestation: { kind: "owned-continuity", strategy: { observe() { throw new Error("A continuity read must not request model attestation."); } } },
+    });
+    expect(result.ok).toBe(true);
+    const output = JSON.parse(result.output);
+    expect(output.hookSpecificOutput).toMatchObject({ hookEventName: "PreToolUse", updatedInput: {
+      _sessionProof: expect.any(String), _continuityBinding: expect.any(String),
+    } });
+    expect(output.hookSpecificOutput).not.toHaveProperty("permissionDecision");
+    const args = output.hookSpecificOutput.updatedInput as Record<string, unknown>, workflow = new SqliteWorkflowStore(env.AGENT_GOVERNANCE_DB_PATH);
+    try { expect(new SessionActorProofs(workflow).verify("inspect_context", args)).toMatchObject({ host, sessionId: session, actor: { role: "root", basis: "observed" } }); }
+    finally { workflow.close(); }
+    const inspected = service.inspectContext(withoutSessionProof(args));
+    expect(inspected.error).toBeNull(); expect(inspected.data?.summary?.snapshotDigest).toBe(before.pendingDigest);
+    expect(translations).toBe(1);
+    expect(service.store.getTask(service.correlateSession(session))).toEqual(before);
+  });
+
+  it("preserves startup, clear, resume, compact and pre/post state transitions without native event fields", async () => {
+    const { env } = await normalizedEnvironment(), host = `owned-${randomUUID()}`, session = "normalized-lifecycle-session";
+    const service = createService(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
+    const event = (action: ContinuityAction) => withHookHostAdapter(host, normalizedAdapter(() => normalizedLifecycle(host, session, action)),
+      async () => handleNativeContinuityHook({}, service, host));
+    const correlation = service.correlateSession(session);
+    expect(service.store.getTask(correlation)).toBeNull();
+    await event({ kind: "startup" }); expect(service.store.getTask(correlation)?.currentEpoch).toBe(1);
+    const checkpoint = directCheckpoint(service, session); expect(checkpoint.error).toBeNull();
+    const resumed = await event({ kind: "resume" });
+    expect(resumed).toMatchObject({ hookSpecificOutput: { hookEventName: "LifecycleNotice", additionalContext: expect.stringContaining("decision=DEFER") } });
+    await event({ kind: "pre-compact" });
+    const marker = service.store.getTask(service.correlateSession(session))!;
+    expect(marker).toMatchObject({ pendingSource: "direct", pendingRevision: checkpoint.data!.revision, pendingDigest: checkpoint.data!.snapshotDigest });
+    const compacted = await event({ kind: "compact" });
+    expect(compacted).toMatchObject({ hookSpecificOutput: { hookEventName: "LifecycleNotice", additionalContext: expect.stringContaining("decision=DEFER") } });
+    await event({ kind: "post-compact", turnId: "normalized-turn", successful: false });
+    const database = new DatabaseSync(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
+    try { expect(database.prepare("SELECT task_correlation, turn_hash, success FROM continuity_observations").get()).toMatchObject({
+      task_correlation: service.correlateSession(session), turn_hash: service.hashOpaque("turn", "normalized-turn"), success: 0,
+    }); } finally { database.close(); }
+    await event({ kind: "clear" });
+    expect(service.store.getTask(service.correlateSession(session))).toMatchObject({ currentEpoch: 2, pendingSource: null, pendingRevision: null, pendingDigest: null });
+  });
+
+  it("uses normalized actions for workflow projection and translates the direct run entry once", async () => {
+    const { env } = await normalizedEnvironment(), host = `owned-${randomUUID()}`, session = "normalized-projection-session";
+    const service = createService(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
+    const checkpoint = directCheckpoint(service, session); expect(checkpoint.error).toBeNull();
+    const close = vi.spyOn(SqliteWorkflowStore.prototype, "close");
+    for (const action of [{ kind: "pre-compact" }, { kind: "resume" }, { kind: "compact" }] satisfies ContinuityAction[]) {
+      let translations = 0;
+      const adapter = normalizedAdapter(() => { expect(++translations).toBe(1); return normalizedLifecycle(host, session, action); });
+      const output = await withHookHostAdapter(host, adapter, async () => runNativeContinuityHook("{}", env, host, true));
+      expect(translations).toBe(1);
+      if (action.kind !== "pre-compact") expect(JSON.parse(output)).toMatchObject({ hookSpecificOutput: { hookEventName: "LifecycleNotice", additionalContext: expect.any(String) } });
+    }
+    expect(close).toHaveBeenCalledTimes(3);
+    expect(service.store.getTask(service.correlateSession(session))).toMatchObject({ pendingSource: "direct", pendingRevision: checkpoint.data!.revision, pendingDigest: checkpoint.data!.snapshotDigest });
+  });
+
+  it("rejects contradictory lifecycle/tool semantics before any epoch or marker mutation", async () => {
+    const service = createService(), host = `owned-${randomUUID()}`, session = "normalized-conflict-session";
+    const before = seedCompactMarker(service, session);
+    const base: AdaptedHostInput = { lifecycle: "none", outputEventName: "BeforeOperation", observation: {
+      host, sessionId: session, kind: "tool-boundary", boundaryPhase: "before", toolName: "owned__inspect_context", toolInput: { schemaVersion: "1.0.0" },
+      actor: { role: "root", basis: "observed", reasonCode: "OWNED_NORMALIZED_ROOT" } } };
+    for (const adapted of [{ ...base, continuityAction: { kind: "clear" } }, { ...base, lifecycle: "start" },
+      { ...base, lifecycle: "end", observation: { host, sessionId: session, kind: "unknown", actor: base.observation.actor }, continuityAction: { kind: "clear" } },
+    ] satisfies AdaptedHostInput[]) {
+      await expect(withHookHostAdapter(host, normalizedAdapter(() => adapted), async () => handleNativeContinuityHook({ hook_event_name: "SessionStart", source: "clear" }, service, host)))
+        .rejects.toMatchObject({ code: "BINDING_INVALID", details: { reasonCode: "CONTINUITY_HOOK_OBSERVATION_CONFLICT" } });
+      expect(service.store.getTask(service.correlateSession(session))).toEqual(before);
+    }
+    const { env } = await normalizedEnvironment();
+    const bad = normalizedAdapter(() => ({ ...base, continuityAction: { kind: "clear" } }));
+    await expect(withHookHostAdapter(host, bad, async () => runNativeContinuityHook("{}", env, host, true)))
+      .rejects.toMatchObject({ details: { reasonCode: "CONTINUITY_HOOK_OBSERVATION_CONFLICT" } });
+    expect(existsSync(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH)).toBe(false); expect(existsSync(env.AGENT_GOVERNANCE_DB_PATH)).toBe(false);
+  });
+
+  it("pins selected host identity before checking a getter-backed observation and issuing its actual root proof", async () => {
+    const { env } = await normalizedEnvironment(), host = `owned-${randomUUID()}`, session = "snapshot-host-session";
+    let outerReads = 0, hostReads = 0;
+    const observation = { get host() { return ++hostReads === 1 ? host : "other-owned-host"; }, sessionId: session, callId: randomUUID(),
+      kind: "tool-boundary" as const, boundaryPhase: "before" as const, toolName: "owned__get_trust_capabilities", toolInput: {},
+      actor: { role: "root" as const, basis: "observed" as const, reasonCode: "OWNED_NORMALIZED_ROOT" } };
+    const adapter = normalizedAdapter(() => ({ lifecycle: "none", outputEventName: "BeforeOperation", get observation() { outerReads++; return observation; } }));
+    const result = await runGovernanceHook(host, "{}", env, new Map([[host, { host, modelClassForModel: () => null }]]), {
+      inputAdapter: adapter, attestation: { kind: "owned-continuity", strategy: { observe: () => ({}) } },
+    });
+    expect(result.ok).toBe(true); expect(outerReads).toBe(1); expect(hostReads).toBe(1);
+    const args = JSON.parse(result.output).hookSpecificOutput.updatedInput as Record<string, unknown>, workflow = new SqliteWorkflowStore(env.AGENT_GOVERNANCE_DB_PATH);
+    try { expect(new SessionActorProofs(workflow).verify("get_trust_capabilities", args)).toMatchObject({ host, sessionId: session, actor: { role: "root", basis: "observed" } }); }
+    finally { workflow.close(); }
+  });
+
+  it("uses one lifecycle/action scalar snapshot for post-compact validation and storage", async () => {
+    const { env } = await normalizedEnvironment(), host = `owned-${randomUUID()}`, session = "snapshot-post-session";
+    const service = createService(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
+    let kindReads = 0, turnReads = 0, successReads = 0, lifecycleReads = 0;
+    const action: ContinuityAction = { get kind(): "post-compact" { kindReads++; return "post-compact"; },
+      get turnId() { return ++turnReads === 1 ? "normalized-first-turn" : "changed-turn"; }, get successful() { return ++successReads !== 1; } };
+    const adapter = normalizedAdapter(() => ({ ...normalizedLifecycle(host, session, { kind: "post-compact", turnId: null, successful: true }),
+      get lifecycle() { return ++lifecycleReads === 1 ? "none" : "start"; }, continuityAction: action }));
+    await withHookHostAdapter(host, adapter, async () => handleNativeContinuityHook({ hook_event_name: "PostCompact", turn_id: "raw-decoy", error: null }, service, host));
+    expect([kindReads, turnReads, successReads, lifecycleReads]).toEqual([1, 1, 1, 1]);
+    const database = new DatabaseSync(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
+    try { expect(database.prepare("SELECT turn_hash, success FROM continuity_observations").get()).toMatchObject({ turn_hash: service.hashOpaque("turn", "normalized-first-turn"), success: 0 }); }
+    finally { database.close(); }
+  });
+
+  it("keeps builtin native lifecycle translation and the existing Claude compact actor denial separate", () => {
+    for (const source of ["startup", "clear", "resume", "compact"] as const) {
+      const mapped = adaptHostInput({ hook_event_name: "SessionStart", source, session_id: "builtin-session" }, "claude-code");
+      expect(mapped.lifecycle).toBe("start"); expect(mapped.continuityAction).toEqual({ kind: source });
+    }
+    const pre = adaptHostInput({ hook_event_name: "PreCompact", session_id: "builtin-session" }, "claude-code");
+    expect(pre.continuityAction).toEqual({ kind: "pre-compact" }); expect(pre.observation.actor.role).toBe("indeterminate");
+    for (const [error, successful] of [[undefined, true], [null, true], [false, false], ["failed", false]] as const) {
+      const post = adaptHostInput({ hook_event_name: "PostCompact", session_id: "builtin-session", turn_id: "builtin-turn", error }, "claude-code");
+      expect(post.continuityAction).toEqual({ kind: "post-compact", turnId: "builtin-turn", successful }); expect(post.observation.actor.role).toBe("indeterminate");
+    }
   });
 });
