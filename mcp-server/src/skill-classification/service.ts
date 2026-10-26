@@ -276,7 +276,14 @@ export class SkillClassificationService {
           if (this.validateProfile(profile, input.request, this.now()) !== null || !bindingCurrent()) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
           dispatchFenced = true;
         };
-        const evaluation = await provider.classify(input.request, profile, controller.signal, beforeDispatch);
+        let evaluation: ProviderEvaluation;
+        let providerFailure: ClassificationProviderError | null = null;
+        try { evaluation = await provider.classify(input.request, profile, controller.signal, beforeDispatch); }
+        catch (error) {
+          if (!(error instanceof ClassificationProviderError) || !error.usage) throw error;
+          providerFailure = error;
+          evaluation = {response: unavailableResponse(input.request, error.code, error.dispatchState), usage: error.usage, dispatchState: error.dispatchState, diagnostics: null};
+        }
         if (controller.signal.aborted) return evaluation; // only the already-settled race may publish
         const usage = evaluation.usage;
         // Classification/token errors do not erase an independently valid reported charge.
@@ -290,6 +297,7 @@ export class SkillClassificationService {
             || new Set(evaluation.diagnostics.scores.map(score => score.skillId)).size !== evaluation.diagnostics.scores.length
             || evaluation.diagnostics.scores.some((score) => !input.request.skills.some(skill => skill.skillId === score.skillId) || !Number.isFinite(score.value))))) throw new ClassificationProviderError("INVALID_PROVIDER_USAGE", "unknown", true);
         retainedUsage = {...usage};
+        if (providerFailure) throw providerFailure;
         if (validateClassificationResponse(input.request, evaluation.response).length > 0) throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", evaluation.dispatchState, true);
         if (usage.actualCostUsd !== null && usage.actualCostUsd > profile.maximumCostUsd!) return {...evaluation,
           response: unavailableResponse(input.request, "COST_CEILING_EXCEEDED", evaluation.dispatchState)};

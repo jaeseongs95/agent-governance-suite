@@ -26,7 +26,7 @@ export function sanitizeRateLimitObservation(value: unknown): ClassificationRate
   return null;
 }
 export class ClassificationProviderError extends Error {
-  constructor(readonly code: string, readonly dispatchState: DispatchState, readonly invalid = false, readonly rateLimitObservation: ClassificationRateLimitObservation | null = null) { super(code); }
+  constructor(readonly code: string, readonly dispatchState: DispatchState, readonly invalid = false, readonly rateLimitObservation: ClassificationRateLimitObservation | null = null, readonly usage: ClassificationUsage | null = null) { super(code); }
 }
 
 function retryAfterObservation(value: string | null): ClassificationRateLimitObservation["retryAfter"] {
@@ -228,7 +228,11 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
       evaluation = decode.call(adapter, parsed, fixedRequest, fixedProfile);
     }
     catch { throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", "started", true); }
-    assertCurrent("started");
+    try { assertCurrent("started"); }
+    catch (error) {
+      if (error instanceof ClassificationProviderError) throw new ClassificationProviderError(error.code, error.dispatchState, error.invalid, error.rateLimitObservation, evaluation.usage);
+      throw error;
+    }
     return evaluation;
   }
   private async readResponse(response: Response): Promise<string> {

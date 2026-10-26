@@ -34031,17 +34031,19 @@ function sanitizeRateLimitObservation(value) {
   return null;
 }
 var ClassificationProviderError = class extends Error {
-  constructor(code, dispatchState, invalid2 = false, rateLimitObservation = null) {
+  constructor(code, dispatchState, invalid2 = false, rateLimitObservation = null, usage = null) {
     super(code);
     this.code = code;
     this.dispatchState = dispatchState;
     this.invalid = invalid2;
     this.rateLimitObservation = rateLimitObservation;
+    this.usage = usage;
   }
   code;
   dispatchState;
   invalid;
   rateLimitObservation;
+  usage;
 };
 function retryAfterObservation(value) {
   if (value === null || value.length > 64) return null;
@@ -34243,7 +34245,12 @@ var ApprovedRouteClassificationProvider = class {
     } catch {
       throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", "started", true);
     }
-    assertCurrent("started");
+    try {
+      assertCurrent("started");
+    } catch (error61) {
+      if (error61 instanceof ClassificationProviderError) throw new ClassificationProviderError(error61.code, error61.dispatchState, error61.invalid, error61.rateLimitObservation, evaluation.usage);
+      throw error61;
+    }
     return evaluation;
   }
   async readResponse(response) {
@@ -35078,12 +35085,21 @@ var SkillClassificationService = class {
           if (this.validateProfile(profile, input2.request, this.now()) !== null || !bindingCurrent()) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
           dispatchFenced = true;
         };
-        const evaluation2 = await provider2.classify(input2.request, profile, controller.signal, beforeDispatch);
+        let evaluation2;
+        let providerFailure = null;
+        try {
+          evaluation2 = await provider2.classify(input2.request, profile, controller.signal, beforeDispatch);
+        } catch (error61) {
+          if (!(error61 instanceof ClassificationProviderError) || !error61.usage) throw error61;
+          providerFailure = error61;
+          evaluation2 = { response: unavailableResponse(input2.request, error61.code, error61.dispatchState), usage: error61.usage, dispatchState: error61.dispatchState, diagnostics: null };
+        }
         if (controller.signal.aborted) return evaluation2;
         const usage = evaluation2.usage;
         if (usage && Number.isFinite(usage.actualCostUsd) && usage.actualCostUsd >= 0) retainedUsage.actualCostUsd = usage.actualCostUsd;
         if (!["not-started", "started", "unknown"].includes(evaluation2.dispatchState) || !usage || ![usage.inputTokens, usage.outputTokens, usage.cachedInputTokens].every((n) => n === null || Number.isSafeInteger(n) && n >= 0) || usage.actualCostUsd !== null && (!Number.isFinite(usage.actualCostUsd) || usage.actualCostUsd < 0) || usage.inputTokens !== null && usage.cachedInputTokens !== null && usage.cachedInputTokens > usage.inputTokens || evaluation2.diagnostics !== null && (!evaluation2.diagnostics || typeof evaluation2.diagnostics.scoreKind !== "string" || !Array.isArray(evaluation2.diagnostics.scores) || evaluation2.diagnostics.scoreKind.length === 0 || evaluation2.diagnostics.scoreKind.length > 128 || new Set(evaluation2.diagnostics.scores.map((score) => score.skillId)).size !== evaluation2.diagnostics.scores.length || evaluation2.diagnostics.scores.some((score) => !input2.request.skills.some((skill) => skill.skillId === score.skillId) || !Number.isFinite(score.value)))) throw new ClassificationProviderError("INVALID_PROVIDER_USAGE", "unknown", true);
         retainedUsage = { ...usage };
+        if (providerFailure) throw providerFailure;
         if (validateClassificationResponse(input2.request, evaluation2.response).length > 0) throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", evaluation2.dispatchState, true);
         if (usage.actualCostUsd !== null && usage.actualCostUsd > profile.maximumCostUsd) return {
           ...evaluation2,

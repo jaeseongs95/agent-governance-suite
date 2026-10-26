@@ -325,3 +325,78 @@ it.each([false, true])("D270 diagnostic accepting validator identity at gateway 
   expect(accepted.valid, "Gateway must retain the advice validator identity until selection commit").toBe(!replaceHook);
   if (!replaceHook) {if (!("decision" in accepted)) throw new Error("EXPECTED_ACCEPTED_DECISION"); expect(accepted.decision.agentSelectedSkillIds).toEqual([]);}
 });
+
+it.each([false, true])("D270 diagnostic decoded charge at identity fence replaceHook=%s", async replaceHook => {
+  const f = fixture(), originalDecode = f.adapter.decode;
+  let decodedCharge: number | null = null;
+  const decode = vi.fn((...args: Parameters<typeof originalDecode>) => {
+    const evaluation = originalDecode(...args);
+    decodedCharge = evaluation.usage.actualCostUsd;
+    if (replaceHook) f.adapter.validateConfiguration = () => null;
+    return evaluation;
+  });
+  f.adapter.decode = decode;
+  const settle = vi.spyOn(f.budget, "settle");
+  const result = await f.service.classify(f.input);
+  expect(decode).toHaveBeenCalledTimes(1); expect(decodedCharge).toBe(.01);
+  expect(f.fetcher).toHaveBeenCalledTimes(1); expect(settle).toHaveBeenCalledTimes(1);
+  const budget = f.budget.snapshot(), attempt = result.attempts[0];
+  console.info(JSON.stringify({diagnostic: "D270_DECODED_CHARGE_AT_IDENTITY_FENCE", replaceHook,
+    decoderCalls: decode.mock.calls.length, decodedCharge, resultStatus: result.response.status,
+    resultError: result.response.error, attempt, settlement: settle.mock.calls[0], budget,
+    syntheticFetcherCalls: f.fetcher.mock.calls.length, realExternalCalls: 0}));
+  expect(attempt?.dispatchState).toBe("started");
+  if (!replaceHook) {
+    expect(result.response.status).toBe("SUCCESS"); expect(attempt?.usage.actualCostUsd).toBe(.01);
+    expect(budget.limits.jev?.spentUsd).toBe(.01); expect(budget.reservations).toHaveLength(0);
+  } else {
+    expect(result.response.error).not.toBeNull();
+    // Stale advice stays rejected; independent charge assertions below apply to both variants.
+  }
+  expect(settle.mock.calls[0]?.slice(1)).toEqual([.01, "started"]);
+  expect(attempt?.usage).toEqual({inputTokens: 1, outputTokens: 1, cachedInputTokens: null, actualCostUsd: .01});
+  expect(budget.limits.jev?.spentUsd).toBe(.01); expect(budget.reservations).toHaveLength(0);
+  if (replaceHook) expect(attempt?.errorCode).toBe("STALE_CLASSIFICATION");
+});
+
+it.each([null, NaN, -0.1, Infinity])("D270 cost preservation keeps unknown or invalid decoded charge conservative: %s", async cost => {
+  const f = fixture(), decode = f.adapter.decode;
+  f.adapter.decode = (...args) => {const evaluation = decode(...args); evaluation.usage.actualCostUsd = cost; f.adapter.validateConfiguration = () => null; return evaluation;};
+  const result = await f.service.classify(f.input), attempt = result.attempts[0]!;
+  expect(result.response.error).not.toBeNull(); expect(attempt.usage.actualCostUsd).toBeNull();
+  expect(attempt.errorCode).toBe(cost === null ? "STALE_CLASSIFICATION" : "INVALID_PROVIDER_USAGE");
+  expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(0);
+  expect(f.budget.snapshot().reservations).toMatchObject([{maximumUsd: .1}]);
+});
+it("D270 cost preservation validates decoded tokens and retains only independently valid charge", async () => {
+  const f = fixture(), decode = f.adapter.decode;
+  f.adapter.decode = (...args) => {const evaluation = decode(...args); evaluation.usage.inputTokens = NaN; f.adapter.validateConfiguration = () => null; return evaluation;};
+  const result = await f.service.classify(f.input);
+  expect(result.response.error).not.toBeNull();
+  expect(result.attempts[0]).toMatchObject({errorCode: "INVALID_PROVIDER_USAGE", usage: {inputTokens: null, outputTokens: null, cachedInputTokens: null, actualCostUsd: .01}});
+  expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(.01); expect(f.budget.snapshot().reservations).toEqual([]);
+});
+it("D270 cost preservation still invalidates an exceeded decoded ceiling after stale rejection", async () => {
+  const f = fixture(), decode = f.adapter.decode;
+  f.adapter.decode = (...args) => {const evaluation = decode(...args); evaluation.usage.actualCostUsd = .2; f.adapter.validateConfiguration = () => null; return evaluation;};
+  const result = await f.service.classify(f.input);
+  expect(result.response.error).not.toBeNull(); expect(result.attempts[0]).toMatchObject({errorCode: "STALE_CLASSIFICATION", usage: {actualCostUsd: .2}});
+  expect(f.budget.snapshot()).toMatchObject({limits: {jev: {spentUsd: .2}}, invalidCostCeilings: [f.profile.profileId], reservations: []});
+  expect(f.budget.reserve(f.profile, "after-known-overrun", .1)).toBe(false);
+});
+it("D270 cost preservation never invents a charge when the fence rejects before decode", async () => {
+  const f = fixture(), decode = vi.spyOn(f.adapter, "decode");
+  f.fetcher.mockImplementation(async () => {f.adapter.validateConfiguration = () => null; return new Response("{}");});
+  const result = await f.service.classify(f.input);
+  expect(decode).not.toHaveBeenCalled(); expect(result.response.error).not.toBeNull();
+  expect(result.attempts[0]).toMatchObject({errorCode: "STALE_CLASSIFICATION", dispatchState: "started", usage: {actualCostUsd: null}});
+  expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(0); expect(f.budget.snapshot().reservations).toMatchObject([{maximumUsd: .1}]);
+});
+it("D270 cost preservation never republishes a decoded charge after cancellation wins", async () => {
+  const f = fixture(), decode = f.adapter.decode, controller = new AbortController(), settle = vi.spyOn(f.budget, "settle");
+  f.adapter.decode = (...args) => {const evaluation = decode(...args); controller.abort(); return evaluation;};
+  const result = await f.service.classify({...f.input, signal: controller.signal}); await Promise.resolve();
+  expect(result.response.error).not.toBeNull(); expect(result.attempts[0]!.usage.actualCostUsd).toBeNull();
+  expect(settle).toHaveBeenCalledTimes(1); expect(settle.mock.calls[0]![1]).toBeNull();
+  expect(f.budget.snapshot().limits.jev?.spentUsd).toBe(0); expect(f.budget.snapshot().reservations).toMatchObject([{maximumUsd: .1}]);
+});
