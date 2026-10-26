@@ -727,12 +727,12 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       .toEqual({ nonces: [first], wakeOnly: false });
   });
 
-  it("maps vendor input once and keeps mixed user text as a user-input observation", () => {
+  it("maps synthetic input shape while leaving actor authority unavailable", () => {
     registerHookHostAdapter("fake-host", {
       adaptInput: (input, selectedHost) => {
         const adapted = adaptHostInput(input, "codex");
         return {...adapted, observation: {...adapted.observation, host: selectedHost,
-          actor: {...adapted.observation.actor, observedBy: `${selectedHost}:hook-payload`}}};
+          actor: {role: "indeterminate", basis: "unavailable", reasonCode: "SYNTHETIC_SCHEMA_ONLY"}}};
       },
       deliveryProfile: () => ({transport: "claude-inbox", capabilities: {supportedInjection: [], idleWake: "none"}, blocksEmptyWakePrompt: false}),
       processPid: () => undefined,
@@ -748,12 +748,12 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       kind: "user-input",
       wakeOnly: false,
       wakeCandidates: [nonce],
-      actor: { kind: "unknown", assurance: "unknown" },
+      actor: { role: "indeterminate", basis: "unavailable", reasonCode: "SYNTHETIC_SCHEMA_ONLY" },
     });
     expect(adaptHostInput({ hook_event_name: "PreToolUse", session_id: "s", agent_id: 42 }, "fake-host").observation.actor)
-      .toMatchObject({ kind: "unknown", assurance: "unknown" });
+      .toMatchObject({ role: "indeterminate", basis: "unavailable", reasonCode: "SYNTHETIC_SCHEMA_ONLY" });
     expect(adaptHostInput({ hook_event_name: "PreToolUse", session_id: "s", agent_id: "sub-1" }, "fake-host").observation.actor)
-      .toMatchObject({ kind: "subagent", assurance: "observed" });
+      .toMatchObject({ role: "indeterminate", basis: "unavailable", reasonCode: "SYNTHETIC_SCHEMA_ONLY" });
   });
 
   it("keeps injection and idle wake as separate arbitrary-host capabilities", () => {
@@ -764,7 +764,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(deferred.idleWake).toBe("none");
   });
 
-  it("denies observed subagents before session-bound message calls and binds collaboration validation observations", async () => {
+  it("denies observed children before every session-bound message or collaboration call", async () => {
     const denied = await handleSessionMessageHook({
       hook_event_name: "PreToolUse",
       session_id: "parent-session",
@@ -781,12 +781,8 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       tool_name: "mcp__agent_governance_suite__validate_collaboration_decision",
       tool_input: { _sessionBinding: { host: "forged", sessionId: "forged" } },
     }, "claude-code");
-    expect(validation).toMatchObject({ hookSpecificOutput: { updatedInput: { _sessionBinding: {
-      host: "claude-code",
-      sessionId: "parent-session",
-      actorKind: "subagent",
-      assurance: "observed",
-    } } } });
+    expect(validation).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
+    expect(validation).not.toHaveProperty("hookSpecificOutput.updatedInput");
   });
 
   it("treats merged wake bells as internal only when every nonce is broker-recognized", async () => {

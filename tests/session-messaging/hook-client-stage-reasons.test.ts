@@ -16,7 +16,7 @@ registerHookHostAdapter(host, {
     adaptInput: (input, selectedHost) => {
       const adapted = adaptHostInput(input, "codex");
       return {...adapted, observation: {...adapted.observation, host: selectedHost,
-        actor: {...adapted.observation.actor, observedBy: `${selectedHost}:hook-payload`}}};
+        actor: {role: "root" as const, basis: "observed" as const, reasonCode: "SYNTHETIC_CORE_ROOT"}}};
     },
   deliveryProfile: () => ({
   transport: "claude-inbox", capabilities: {supportedInjection: ["tool-boundary"], idleWake: "none"}, blocksEmptyWakePrompt: false,

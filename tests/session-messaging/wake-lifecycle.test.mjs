@@ -24,12 +24,13 @@ afterEach(() => {
     rmSync(directory, { recursive: true, force: true });
   }
 });
-// This synthetic host explicitly elects the builtin fixture input schema; it grants no delivery authority.
+// Explicit synthetic root adapter for core regression cases; not native capture or R7 evidence.
+// The builtin decoder supplies event shape only; actor authority is this fake fixture contract.
 registerHookHostAdapter("portable", {
     adaptInput: (input, selectedHost) => {
       const adapted = adaptHostInput(input, "codex");
       return {...adapted, observation: {...adapted.observation, host: selectedHost,
-        actor: {...adapted.observation.actor, observedBy: `${selectedHost}:hook-payload`}}};
+        actor: {role: "root", basis: "observed", reasonCode: "SYNTHETIC_CORE_ROOT"}}};
     },
   deliveryProfile: () => ({transport: "claude-inbox", capabilities: {supportedInjection: [], idleWake: "none"}, blocksEmptyWakePrompt: false}),
   processPid: () => undefined,
@@ -354,7 +355,7 @@ test('W05-r2 ordinary peer provenance, expired hook receipts and changed observa
       authorityEffect: 'none', attestation: { kind: 'broker-peer-envelope', adapter: 'session-message-hook', capabilityVersion: '1.0.0' } });
   } finally { trust.close(); }
   assert.equal(hostClaim(f, { ...observed, sourceReceiptId: ordinary.receiptId }, f.now + 3).recognized, false);
-  assert.equal(hostClaim(f, { ...observed, observation: { ...observed.observation, actor: { ...observed.observation.actor, kind: 'unknown' } } }, f.now + 3).recognized, false);
+  assert.equal(hostClaim(f, { ...observed, observation: { ...observed.observation, actor: { role: 'indeterminate', basis: 'unavailable', reasonCode: 'SYNTHETIC_CHANGED_ACTOR' } } }, f.now + 3).recognized, false);
   assert.equal(hostClaim(f, observed, f.now + 30_003).recognized, false);
   assert.equal(f.store.managedWakeStatus(target, f.now + 30_003).state, 'started');
 });

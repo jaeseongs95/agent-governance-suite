@@ -17,12 +17,13 @@ import { recordWakeHookObservation, createWakeHookObservationReader, verifyHisto
 import { waitForSessionMessageBrokerReady } from '../../mcp-server/src/session-message-client.ts';
 import { TrustStore } from '../../mcp-server/src/trust-store.ts';
 
-// This synthetic host explicitly elects the builtin fixture input schema; it grants no delivery authority.
+// Explicit synthetic root adapter for core regression cases; not native capture or R7 evidence.
+// The builtin decoder supplies event shape only; actor authority is this fake fixture contract.
 registerHookHostAdapter("portable", {
     adaptInput: (input, selectedHost) => {
       const adapted = adaptHostInput(input, "codex");
       return {...adapted, observation: {...adapted.observation, host: selectedHost,
-        actor: {...adapted.observation.actor, observedBy: `${selectedHost}:hook-payload`}}};
+        actor: {role: "root", basis: "observed", reasonCode: "SYNTHETIC_CORE_ROOT"}}};
     },
   deliveryProfile: () => ({transport: "claude-inbox", capabilities: {supportedInjection: [], idleWake: "none"}, blocksEmptyWakePrompt: false}),
   processPid: () => undefined,
@@ -137,11 +138,20 @@ test.each(['before-start', 'after-late', 'expiry-at-late', 'not-expired', 'inval
     const before = snapshot(f); assert.equal(reconcile(f).reconciled, false); assert.deepEqual(snapshot(f), before);
   });
 
-test.each([['main', 'observed'], ['main', 'unknown'], ['unknown', 'observed'], ['unknown', 'unknown']])('reconstructs only the exact signed actor digest %s/%s', (kind, assurance) => {
+test.each([['root', 'observed'], ['root', 'inferred']])('reconstructs only an admitted synthetic root digest %s/%s', (role, basis) => {
     const f = fixture();
-    f.sourceReceiptId = recordWakeHookObservation({ ...f.observation, actor: { ...f.observation.actor, kind, assurance } }, f.now + 10);
+    f.sourceReceiptId = recordWakeHookObservation({ ...f.observation, actor: { role, basis, reasonCode: "SYNTHETIC_HISTORY_ROOT" } }, f.now + 10);
     assert.equal(reconcile(f).reconciled, true);
   });
+
+test.each([
+  {role: 'child', basis: 'observed', reasonCode: 'SYNTHETIC_CHILD'},
+  {role: 'indeterminate', basis: 'unavailable', reasonCode: 'SYNTHETIC_INDETERMINATE'},
+  {role: 'root', basis: 'unavailable', reasonCode: 'SYNTHETIC_ROOT_UNAVAILABLE'},
+])('refuses a historical receipt for non-authorizing synthetic actor $role/$basis', actor => {
+  const f = fixture();
+  assert.throws(() => recordWakeHookObservation({...f.observation, actor}, f.now + 10), /Invalid host wake observation/u);
+});
 
 test('a signed multiple-nonce observation cannot be approximated by a single old nonce', () => {
   const f = fixture();

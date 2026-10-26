@@ -16,12 +16,13 @@ import "../../mcp-server/src/builtin-hook-host-adapters.js";
 import { adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { recordWakeHookObservation, wakeHookObservationReader } from "../../mcp-server/src/session-message-wake-port.js";
 
-// This synthetic host explicitly elects the builtin fixture input schema; it grants no delivery authority.
+// Explicit synthetic root adapter for core regression cases; not native capture or R7 evidence.
+// The builtin decoder supplies event shape only; actor authority is this fake fixture contract.
 registerHookHostAdapter("portable", {
     adaptInput: (input, selectedHost) => {
       const adapted = adaptHostInput(input, "codex");
       return {...adapted, observation: {...adapted.observation, host: selectedHost,
-        actor: {...adapted.observation.actor, observedBy: `${selectedHost}:hook-payload`}}};
+        actor: {role: "root" as const, basis: "observed" as const, reasonCode: "SYNTHETIC_CORE_ROOT"}}};
     },
   deliveryProfile: () => ({transport: "claude-inbox", capabilities: {supportedInjection: [], idleWake: "none"}, blocksEmptyWakePrompt: false}),
   processPid: () => undefined,

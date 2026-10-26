@@ -5,10 +5,11 @@ import { hookFailureContext, hookFailure, hookFailureReason } from "../../mcp-se
 import { adaptHostInput, hostDeliveryProfile, registerHookHostAdapter, resolveHookHost } from "../../mcp-server/src/host-input-adapter.js";
 
 const digest = (value: string) => createHash("sha256").update(Buffer.from(value, "utf16le")).digest("hex");
+// Explicit synthetic root for core diagnostics, not native capture.
 function fixtureInput(input: Record<string, unknown>, selectedHost: string) {
   const adapted = adaptHostInput(input, "codex");
   return {...adapted, observation: {...adapted.observation, host: selectedHost,
-    actor: {...adapted.observation.actor, observedBy: `${selectedHost}:hook-payload`}}};
+    actor: {role: "root" as const, basis: "observed" as const, reasonCode: "SYNTHETIC_CORE_ROOT"}}};
 }
 const adapter = { adaptInput: fixtureInput, deliveryProfile: () => ({ transport: "claude-inbox" as const,
   capabilities: { supportedInjection: [], idleWake: "none" as const }, blocksEmptyWakePrompt: false }), processPid: () => undefined };

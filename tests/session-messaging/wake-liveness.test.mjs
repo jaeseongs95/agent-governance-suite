@@ -15,12 +15,13 @@ import { recordWakeHookObservation, wakeHookObservationReader } from '../../mcp-
 import { ContractValidator } from '../../mcp-server/src/schema-validator.ts';
 
 // The process fixture binds the same target identity.
-// This synthetic host explicitly elects the builtin fixture input schema; it grants no delivery authority.
+// Explicit synthetic root adapter for core regression cases; not native capture or R7 evidence.
+// The builtin decoder supplies event shape only; actor authority is this fake fixture contract.
 registerHookHostAdapter("portable", {
     adaptInput: (input, selectedHost) => {
       const adapted = adaptHostInput(input, "codex");
       return {...adapted, observation: {...adapted.observation, host: selectedHost,
-        actor: {...adapted.observation.actor, observedBy: `${selectedHost}:hook-payload`}}};
+        actor: {role: "root", basis: "observed", reasonCode: "SYNTHETIC_CORE_ROOT"}}};
     },
   deliveryProfile: () => ({transport: "claude-inbox", capabilities: {supportedInjection: [], idleWake: "none"}, blocksEmptyWakePrompt: false}),
   processPid: () => undefined,
