@@ -812,6 +812,11 @@ async function waitForSessionMessageBrokerReady(stateDirectory, child, timeoutMs
               remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE),
               signal
             );
+            if (child.pid !== void 0 && child.exitCode === null) {
+              const { endpoint } = await readEndpoint(stateDirectory, signal);
+              if (!Number.isSafeInteger(endpoint.pid) || endpoint.pid < 1 || endpoint.pid !== child.pid) continue;
+            }
+            if (spawnError || child.signalCode !== null || child.exitCode !== null && child.exitCode !== 0) continue;
             return;
           } catch (error) {
             if (!signal.aborted) {
