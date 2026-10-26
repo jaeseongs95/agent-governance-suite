@@ -20,7 +20,7 @@ async function fixture() {
   for (const directory of ["contracts", "runtime", "skills", "mcp-server/dist"]) {
     await mkdir(path.join(root, directory), { recursive: true });
   }
-  for (const bundle of ["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "host-attestation-api.mjs", "session-board-hook.mjs"]) {
+  for (const bundle of ["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "host-attestation-api.mjs", "session-board-hook.mjs", "governance-hook.mjs"]) {
     await writeFile(path.join(root, "mcp-server/dist", bundle), "", "utf8");
   }
   const trace = path.join(root, "trace.jsonl");

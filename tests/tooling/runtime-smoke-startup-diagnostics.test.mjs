@@ -128,15 +128,22 @@ function defaultSpawnResponse(scriptPath, args, options) {
   }
   if (base === "session-board-hook.mjs") {
     const input = JSON.parse(options.input);
-    if (input.hook_event_name === "UserPromptSubmit") defaultSpawnResponse.boardPromptAt = "2026-10-26T00:00:00.000Z";
     const boardTool = input.tool_name?.endsWith("__update_session_status");
-    const denied = boardTool && (input.agent_id !== "" || input.tool_input.summary.includes("\n"));
+    // Synthetic CLI responses model the explicit host contract, never native evidence.
+    if (args.includes("--host=codex")) {
+      return { status: 0, signal: null, stdout: boardTool ? JSON.stringify({
+        hookSpecificOutput: { permissionDecision: "deny" },
+      }) : "", stderr: "" };
+    }
+    expect(args).toEqual(["--host=claude-code"]);
+    if (input.hook_event_name === "UserPromptSubmit") defaultSpawnResponse.boardPromptAt = "2026-10-26T00:00:00.000Z";
+    const denied = boardTool && (Object.hasOwn(input, "agent_id") || input.tool_input.summary.includes("\n"));
     if (boardTool && !denied) defaultSpawnResponse.boardSummary = input.tool_input.summary;
     return {
       status: 0,
       signal: null,
       stdout: boardTool ? JSON.stringify({ hookSpecificOutput: denied ? { permissionDecision: "deny" } : {
-        updatedInput: { ...input.tool_input, _sessionBinding: { host: "codex", sessionId: input.session_id } },
+        updatedInput: { ...input.tool_input, _sessionBinding: { host: "claude-code", sessionId: input.session_id } },
       } }) : "",
       stderr: "",
     };
@@ -144,7 +151,23 @@ function defaultSpawnResponse(scriptPath, args, options) {
   if (base === "read-board.mjs") {
     return { status: 0, signal: null, stdout: JSON.stringify({ summary: defaultSpawnResponse.boardSummary, last_prompt_at: defaultSpawnResponse.boardPromptAt }), stderr: "" };
   }
+  if (base === "governance-hook.mjs") {
+    const input = JSON.parse(options.input);
+    expect(args).toEqual(["--host=claude-code"]);
+    expect(input).toMatchObject({ hook_event_name: "PreToolUse", session_id: "clean-room-mcp-root", cwd: cleanRoot });
+    expect(input).not.toHaveProperty("agent_id");
+    return { status: 0, signal: null, stdout: JSON.stringify({ hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      updatedInput: { ...input.tool_input, _sessionProof: `ags-root-v3.fixture-${input.tool_use_id}.signature` },
+    } }), stderr: "" };
+  }
   if (base === "server.mjs") {
+    const toolCalls = String(options.input).trim().split("\n").map(line => JSON.parse(line)).filter(message => message.method === "tools/call");
+    expect(toolCalls.map(message => message.params.name)).toEqual(["lookup_korean_prose_terms", "validate_collaboration_decision", "get_trust_capabilities"]);
+    for (const message of toolCalls) {
+      expect(message.params.arguments._sessionProof).toMatch(/^ags-root-v3\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/u);
+      expect(message.params.arguments).not.toHaveProperty("_sessionBinding");
+    }
     const lookupEnvelope = { ok: true, data: { status: "matched", matches: [{ term: "MCP" }, { term: "SQLite" }] } };
     const validationEnvelope = {
       ok: true,
@@ -161,6 +184,9 @@ function defaultSpawnResponse(scriptPath, args, options) {
       stdout: [
         JSON.stringify({ jsonrpc: "2.0", id: 2, result: { content: [{ text: JSON.stringify(lookupEnvelope) }] } }),
         JSON.stringify({ jsonrpc: "2.0", id: 3, result: { content: [{ text: JSON.stringify(validationEnvelope) }] } }),
+        JSON.stringify({ jsonrpc: "2.0", id: 4, result: { content: [{ text: JSON.stringify({ ok: true, data: {
+          provenanceRecording: true, directUserInputAttestation: false, authorityIssuance: false, scopedDelegation: false,
+        } }) }] } }),
       ].join("\n") + "\n",
       stderr: "",
     };
@@ -470,5 +496,120 @@ describe("continuity-hook runtime startup smoke diagnostics", () => {
     expect(publicOutput).not.toContain("PRIVATE_SIGNAL_MARKER");
     expect(publicOutput).toContain(`stdout=${JSON.stringify(expectedOutDesc)}`);
     expect(publicOutput).toContain(`stderr=${JSON.stringify(expectedErrDesc)}`);
+  });
+});
+
+describe("runtime smoke synthetic actor and proof fixture contracts", () => {
+  it("runs explicit Claude positives and unsupported Codex negatives inside the same dependency-free clean room", async () => {
+    await runRuntimeSmokeCheck(sourceRoot);
+    const calls = boundary.spawnSync.mock.calls;
+    const governance = calls.filter(([, [script]]) => path.basename(script) === "governance-hook.mjs");
+    const server = calls.filter(([, [script]]) => path.basename(script) === "server.mjs");
+    expect(governance).toHaveLength(3);
+    expect(server).toHaveLength(1);
+    expect(boundary.cp).toHaveBeenCalledWith(
+      path.join(sourceRoot, "mcp-server", "dist", "governance-hook.mjs"),
+      path.join(cleanRoot, "mcp-server", "dist", "governance-hook.mjs"),
+    );
+    for (const [executable, [script], options] of governance) {
+      expect(executable).toBe(process.execPath);
+      expect(script).toBe(path.join(cleanRoot, "mcp-server", "dist", "governance-hook.mjs"));
+      expect(options).toMatchObject({ cwd: cleanRoot, timeout: 10_000, windowsHide: true, env: {
+        AGENT_GOVERNANCE_DB_PATH: path.join(cleanRoot, "state", "workflows.sqlite3"),
+        AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(cleanRoot, "state", "continuity.sqlite3"),
+      } });
+      expect(options.env).not.toHaveProperty("NODE_OPTIONS");
+      expect(options.env).not.toHaveProperty("NODE_PATH");
+      expect(options.env).not.toHaveProperty("AGENT_GOVERNANCE_ROOT");
+    }
+    const issued = governance.map(([, , options]) => JSON.parse(options.input));
+    expect(issued.map(input => input.tool_use_id)).toEqual([
+      "clean-room-mcp-call-1", "clean-room-mcp-call-2", "clean-room-mcp-call-3",
+    ]);
+    const outgoing = server[0][2].input.trim().split("\n").map(line => JSON.parse(line)).filter(message => message.method === "tools/call");
+    for (let index = 0; index < issued.length; index++) {
+      const { _sessionProof, ...args } = outgoing[index].params.arguments;
+      expect(outgoing[index].params.name).toBe(issued[index].tool_name.replace("mcp__agent_governance_suite__", ""));
+      expect(args).toEqual(issued[index].tool_input);
+      expect(_sessionProof).toBe(`ags-root-v3.fixture-${issued[index].tool_use_id}.signature`);
+    }
+    const boardCalls = calls.filter(([, [script]]) => path.basename(script) === "session-board-hook.mjs");
+    expect(boardCalls.slice(0, 2).map(([, [, ...args]]) => args)).toEqual([["--host=codex"], ["--host=codex"]]);
+    for (const [, [, ...args]] of boardCalls.slice(2)) expect(args).toEqual(["--host=claude-code"]);
+    expect(boundary.access).toHaveBeenCalledWith(path.join(cleanRoot, "state", "session-board.sqlite3"));
+    expect(boundary.access).toHaveBeenCalledWith(path.join(cleanRoot, "node_modules"));
+    const boardReadSource = boundary.writeFile.mock.calls.find(([file]) => path.basename(file) === "read-board.mjs")[1];
+    expect(boardReadSource).toContain('.get("claude-code", "clean-room-board")');
+    expect(boardReadSource).not.toContain('.get("codex",');
+    expect(boundary.rm).toHaveBeenCalledExactlyOnceWith(cleanRoot, { recursive: true, force: true });
+  });
+
+  it.each([
+    ["spawn error", response => ({ ...response, error: Object.assign(new Error("synthetic timeout"), { code: "ETIMEDOUT" }) }), "governance hook failed its clean-room root proof issuance."],
+    ["nonzero exit", response => ({ ...response, status: 2 }), "governance hook failed its clean-room root proof issuance."],
+    ["empty stdout", response => ({ ...response, stdout: "" }), "governance hook failed its clean-room root proof issuance."],
+    ["malformed JSON", response => ({ ...response, stdout: "{" }), "governance hook returned malformed clean-room JSON."],
+    ["missing proof", response => {
+      const value = JSON.parse(response.stdout);
+      delete value.hookSpecificOutput.updatedInput._sessionProof;
+      return { ...response, stdout: JSON.stringify(value) };
+    }, "governance hook did not issue a clean-room root proof."],
+    ["deny output", response => {
+      const value = JSON.parse(response.stdout);
+      value.hookSpecificOutput.permissionDecision = "deny";
+      return { ...response, stdout: JSON.stringify(value) };
+    }, "governance hook did not issue a clean-room root proof."],
+    ["caller binding", response => {
+      const value = JSON.parse(response.stdout);
+      value.hookSpecificOutput.updatedInput._sessionBinding = { host: "forged", sessionId: "forged" };
+      return { ...response, stdout: JSON.stringify(value) };
+    }, "governance hook did not issue a clean-room root proof."],
+    ["malformed proof token", response => {
+      const value = JSON.parse(response.stdout);
+      value.hookSpecificOutput.updatedInput._sessionProof = "not-a-proof";
+      return { ...response, stdout: JSON.stringify(value) };
+    }, "governance hook did not issue a clean-room root proof."],
+    ["altered tool arguments", response => {
+      const value = JSON.parse(response.stdout);
+      value.hookSpecificOutput.updatedInput.changed = true;
+      return { ...response, stdout: JSON.stringify(value) };
+    }, "governance hook changed clean-room tool arguments."],
+  ])("rejects governance CLI %s before sending any MCP call", async (_label, change, expectedMessage) => {
+    boundary.spawnSync.mockImplementation((_executable, [script, ...args], options) => {
+      const response = defaultSpawnResponse(script, args, options);
+      return path.basename(script) === "governance-hook.mjs" ? change(response) : response;
+    });
+    await expect(runRuntimeSmokeCheck(sourceRoot)).rejects.toThrow(expectedMessage);
+    expect(boundary.spawnSync.mock.calls.filter(([, [script]]) => path.basename(script) === "governance-hook.mjs")).toHaveLength(1);
+    expect(boundary.spawnSync.mock.calls.filter(([, [script]]) => path.basename(script) === "server.mjs")).toHaveLength(0);
+    expect(boundary.rm).toHaveBeenCalledExactlyOnceWith(cleanRoot, { recursive: true, force: true });
+  });
+
+  it("does not replace the unsupported Codex denial with a successful caller binding", async () => {
+    boundary.spawnSync.mockImplementation((_executable, [script, ...args], options) => {
+      if (path.basename(script) === "session-board-hook.mjs" && args.includes("--host=codex")
+        && JSON.parse(options.input).hook_event_name === "PreToolUse") {
+        return { status: 0, signal: null, stdout: JSON.stringify({ hookSpecificOutput: {
+          updatedInput: { _sessionBinding: { host: "codex", sessionId: "forged" } },
+        } }), stderr: "" };
+      }
+      return defaultSpawnResponse(script, args, options);
+    });
+    await expect(runRuntimeSmokeCheck(sourceRoot)).rejects.toThrow("session board hook accepted unsupported Codex actor input.");
+    expect(boundary.spawnSync.mock.calls.filter(([, [script]]) => path.basename(script) === "governance-hook.mjs")).toHaveLength(0);
+    expect(boundary.rm).toHaveBeenCalledExactlyOnceWith(cleanRoot, { recursive: true, force: true });
+  });
+
+  it("rejects board state created by unsupported input before starting Claude positive fixtures", async () => {
+    const boardPath = path.join(cleanRoot, "state", "session-board.sqlite3");
+    boundary.access.mockImplementation(async target => {
+      if (target === boardPath) return;
+      throw Object.assign(new Error("synthetic missing dependency"), { code: "ENOENT" });
+    });
+    await expect(runRuntimeSmokeCheck(sourceRoot)).rejects.toThrow(`Clean-room dependency leak: ${boardPath} exists.`);
+    const boardCalls = boundary.spawnSync.mock.calls.filter(([, [script]]) => path.basename(script) === "session-board-hook.mjs");
+    expect(boardCalls).toHaveLength(2);
+    for (const [, [, ...args]] of boardCalls) expect(args).toEqual(["--host=codex"]);
+    expect(boundary.rm).toHaveBeenCalledExactlyOnceWith(cleanRoot, { recursive: true, force: true });
   });
 });

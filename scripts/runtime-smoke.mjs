@@ -78,7 +78,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     await mkdir(path.join(cleanRoot, "mcp-server", "dist"), { recursive: true });
     const copies = await Promise.allSettled([
       ...["contracts", "runtime", "skills"].map((directory) => cp(path.join(sourceRoot, directory), path.join(cleanRoot, directory), { recursive: true })),
-      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "host-attestation-api.mjs", "session-board-hook.mjs", ...MESSAGING_RUNTIME_PROBES.map(({ bundle }) => bundle)].map((bundle) => (
+      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "host-attestation-api.mjs", "session-board-hook.mjs", "governance-hook.mjs", ...MESSAGING_RUNTIME_PROBES.map(({ bundle }) => bundle)].map((bundle) => (
         cp(path.join(sourceRoot, "mcp-server", "dist", bundle), path.join(cleanRoot, "mcp-server", "dist", bundle))
       )),
     ]);
@@ -90,6 +90,11 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     delete environment.AGENT_GOVERNANCE_ROOT;
     delete environment.NODE_OPTIONS;
     delete environment.NODE_PATH;
+    delete environment.AGENT_GOVERNANCE_CLASSIFICATION_CONFIG;
+    delete environment.AGENT_GOVERNANCE_HOST_ATTESTATION;
+    environment.SKILL_REGISTRY_PATH = path.join(cleanRoot, "skills", "registry.json");
+    environment.AGENT_GOVERNANCE_SHARED_STATE_DIR = path.join(cleanRoot, "state");
+    environment.PLUGIN_DATA = path.join(cleanRoot, "state");
     environment.AGENT_GOVERNANCE_DB_PATH = path.join(cleanRoot, "state", "workflows.sqlite3");
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = path.join(cleanRoot, "state", "continuity.sqlite3");
     environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = path.join(cleanRoot, "state", "session-board.sqlite3");
@@ -238,13 +243,24 @@ try {
     }
 
     // Lifecycle events record activity; a missing summary must not gate ordinary tools.
-    const boardInput = { session_id: "clean-room-board", agent_id: "", cwd: cleanRoot };
-    const runBoardHook = (input) => runNode("mcp-server/dist/session-board-hook.mjs", `${JSON.stringify({ ...boardInput, ...input })}\n`);
+    // Synthetic Claude hook input exercises storage; it is not native capture evidence.
+    const boardInput = { session_id: "clean-room-board", cwd: cleanRoot };
+    const runBoardHook = (input, host = "claude-code") => runNode("mcp-server/dist/session-board-hook.mjs", `${JSON.stringify({ ...boardInput, ...input })}\n`, [`--host=${host}`]);
+    const boardTool = { hook_event_name: "PreToolUse", tool_name: "mcp__agent_governance_suite__update_session_status" };
+    const unsupportedStart = runBoardHook({ hook_event_name: "SessionStart", session_id: "clean-room-codex-board", agent_id: "" }, "codex");
+    const unsupportedWrite = runBoardHook({ ...boardTool, session_id: "clean-room-codex-board", agent_id: "", tool_input: { summary: "forbidden Codex write" } }, "codex");
+    const unsupportedOutput = unsupportedWrite.status === 0 && unsupportedWrite.stdout ? JSON.parse(unsupportedWrite.stdout).hookSpecificOutput : null;
+    if (unsupportedStart.error || unsupportedStart.status !== 0 || unsupportedStart.stdout !== ""
+      || unsupportedWrite.error || unsupportedWrite.status !== 0 || unsupportedOutput?.permissionDecision !== "deny"
+      || Object.hasOwn(unsupportedOutput, "updatedInput")) {
+      throw new Error("session board hook accepted unsupported Codex actor input.");
+    }
+    await assertMissing(environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH);
     await writeFile(path.join(cleanRoot, "state", "read-board.mjs"), `
 import { DatabaseSync } from "node:sqlite";
 const board = new DatabaseSync(process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH, { readOnly: true });
 try {
-  process.stdout.write(JSON.stringify(board.prepare("SELECT summary, last_prompt_at FROM sessions WHERE host = ? AND session_id = ?").get("codex", "clean-room-board") ?? null));
+  process.stdout.write(JSON.stringify(board.prepare("SELECT summary, last_prompt_at FROM sessions WHERE host = ? AND session_id = ?").get("claude-code", "clean-room-board") ?? null));
 } finally { board.close(); }
 `, "utf8");
     const readBoard = () => {
@@ -270,15 +286,14 @@ try {
         throw new Error(`session board hook gated an ordinary clean-room edit.\n${edit.stderr ?? ""}`);
       }
     }
-    const boardTool = { hook_event_name: "PreToolUse", tool_name: "mcp__agent_governance_suite__update_session_status" };
     const boardUpdate = runBoardHook({ ...boardTool, tool_input: { summary: "clean-room work" } });
     const boardOutput = boardUpdate.status === 0 && boardUpdate.stdout ? JSON.parse(boardUpdate.stdout).hookSpecificOutput : null;
     if (boardUpdate.error || !boardOutput || Object.hasOwn(boardOutput, "permissionDecision")
-      || boardOutput.updatedInput?._sessionBinding?.host !== "codex"
+      || boardOutput.updatedInput?._sessionBinding?.host !== "claude-code"
       || boardOutput.updatedInput?._sessionBinding?.sessionId !== boardInput.session_id) {
       throw new Error(`session board hook failed its clean-room binding smoke check.\n${boardUpdate.stderr ?? ""}`);
     }
-    for (const extra of [{ agent_id: "subagent" }, { agent_id: undefined }, { tool_input: { summary: "two\nlines" } }]) {
+    for (const extra of [{ agent_id: "subagent" }, { agent_id: "" }, { agent_id: " " }, { agent_id: null }, { agent_id: 42 }, { tool_input: { summary: "two\nlines" } }]) {
       const denied = runBoardHook({ ...boardTool, tool_input: { summary: "forbidden write" }, ...extra });
       const output = denied.status === 0 && denied.stdout ? JSON.parse(denied.stdout).hookSpecificOutput : null;
       if (denied.error || output?.permissionDecision !== "deny" || Object.hasOwn(output, "updatedInput")) {
@@ -289,6 +304,34 @@ try {
     if (finalBoard?.summary !== "clean-room work" || finalBoard?.last_prompt_at !== promptedBoard.last_prompt_at) {
       throw new Error("session board hook changed clean-room activity or summary across rejected writes.");
     }
+
+    let proofCall = 0;
+    const withRootProof = (name, args) => {
+      // Owned synthetic hook events use the built CLI and the server's clean-room workflow DB.
+      const issued = runNode("mcp-server/dist/governance-hook.mjs", `${JSON.stringify({
+        hook_event_name: "PreToolUse", session_id: "clean-room-mcp-root", cwd: cleanRoot,
+        tool_use_id: `clean-room-mcp-call-${++proofCall}`,
+        tool_name: `mcp__agent_governance_suite__${name}`, tool_input: args,
+      })}\n`, ["--host=claude-code"]);
+      if (issued.error || issued.status !== 0 || typeof issued.stdout !== "string" || !issued.stdout.trim()) {
+        throw new Error(`governance hook failed its clean-room root proof issuance.\n${formatContinuityHookFailure(issued)}`);
+      }
+      let output;
+      try { output = JSON.parse(issued.stdout); }
+      catch (cause) { throw new Error("governance hook returned malformed clean-room JSON.", { cause }); }
+      const specific = output?.hookSpecificOutput;
+      const updated = specific?.updatedInput;
+      if (specific?.hookEventName !== "PreToolUse" || Object.hasOwn(specific, "permissionDecision")
+        || !updated || typeof updated !== "object" || Array.isArray(updated)
+        || Object.hasOwn(updated, "_sessionBinding")
+        || typeof updated._sessionProof !== "string" || !/^ags-root-v3\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/u.test(updated._sessionProof)) {
+        throw new Error("governance hook did not issue a clean-room root proof.");
+      }
+      const exactInput = { ...updated };
+      delete exactInput._sessionProof;
+      if (JSON.stringify(exactInput) !== JSON.stringify(args)) throw new Error("governance hook changed clean-room tool arguments.");
+      return updated;
+    };
 
     const sourceText = "MCP와 SQLite";
     const lookupInput = [
@@ -301,7 +344,11 @@ try {
         netBenefitCriteria: { independentlyCompletable: true, parallelBottleneckReduced: true,
           limitedContextSufficient: true, singleWriterOwnership: true, netBenefitAfterOverhead: true },
       } } } },
-    ].map((message) => JSON.stringify(message)).join("\n");
+      { jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "get_trust_capabilities", arguments: {} } },
+    ].map((message) => {
+      if (message.method === "tools/call") message.params.arguments = withRootProof(message.params.name, message.params.arguments);
+      return JSON.stringify(message);
+    }).join("\n");
     const serverResult = runNode("mcp-server/dist/server.mjs", `${lookupInput}\n`);
     if (serverResult.error || serverResult.status !== 0) {
       throw new Error(`MCP server failed its node_modules-free glossary lookup.\n${serverResult.stderr ?? ""}`);
@@ -317,6 +364,14 @@ try {
       || validationEnvelope.data.receiptFound !== false || validationEnvelope.data.receiptBoundToCaller !== null
       || validationEnvelope.data.authorityCapabilities?.authorityIssuance !== false) {
       throw new Error(`MCP provenance validation failed its node_modules-free smoke check.\n${serverResult.stdout ?? ""}`);
+    }
+
+    const capabilitiesResponse = String(serverResult.stdout).split(/\r?\n/u).filter(Boolean).map((line) => JSON.parse(line)).find((message) => message.id === 4);
+    const capabilitiesEnvelope = capabilitiesResponse?.result?.content?.[0]?.text ? JSON.parse(capabilitiesResponse.result.content[0].text) : null;
+    if (capabilitiesEnvelope?.ok !== true || capabilitiesEnvelope.data?.provenanceRecording !== true
+      || capabilitiesEnvelope.data.directUserInputAttestation !== false || capabilitiesEnvelope.data.authorityIssuance !== false
+      || capabilitiesEnvelope.data.scopedDelegation !== false) {
+      throw new Error(`MCP trust capabilities failed its node_modules-free smoke check.\n${serverResult.stdout ?? ""}`);
     }
 
     const workspace = path.join(cleanRoot, "resolver-fixture");
