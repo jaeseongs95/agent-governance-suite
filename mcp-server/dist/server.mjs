@@ -45991,8 +45991,9 @@ function bindNativeClassificationDefinitions(definitions, behaviors = builtInBeh
 }
 
 // mcp-server/src/index.ts
-async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map(), executionAdapters) {
+async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map(), executionAdapters, nativeBehaviors) {
   const installedWireAdapters = new Map(wireAdapters);
+  const installedNativeBehaviors = nativeBehaviors === void 0 ? void 0 : new Map(nativeBehaviors);
   const registryPath = resolveRegistryPath();
   const workflowDatabasePath = resolveWorkflowDatabasePath();
   const continuityDatabasePath = resolveContinuityDatabasePath();
@@ -46055,7 +46056,7 @@ async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map(), executio
     if (nativeDefinitionBytes && nativeDefinitionBytes.length > 1024 * 1024) throw new Error("NATIVE_ADAPTER_DEFINITIONS_TOO_LARGE");
     nativeDefinitionDigest = nativeDefinitionBytes ? digestClassificationValue(nativeDefinitionBytes.toString("utf8")) : null;
     const nativeDefinitions = nativeDefinitionBytes ? JSON.parse(nativeDefinitionBytes.toString("utf8")) : [];
-    const nativeAdapters = createNativeClassificationAdapters(bindNativeClassificationDefinitions(nativeDefinitions));
+    const nativeAdapters = createNativeClassificationAdapters(bindNativeClassificationDefinitions(nativeDefinitions, installedNativeBehaviors));
     if (providerRuntimeRef) providerRuntime = await loadClassificationProviderRuntime(providerRuntimeRef, { nativeAdapters, wireAdapters: installedWireAdapters });
   } catch (error61) {
     initializationFailed = true;

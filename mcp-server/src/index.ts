@@ -35,15 +35,17 @@ import { readFileSync } from "node:fs";
 import { digestClassificationValue } from "./skill-classification/request.js";
 import { listSessions, openBoard } from "../../skills/session-board/scripts/board-store.mjs";
 import { hostActorId } from "./host-attestation.js";
-import { createNativeClassificationAdapters, type NativeClassificationAdapterDefinition } from "./skill-classification/native-adapters.js";
+import { createNativeClassificationAdapters, type NativeClassificationAdapterDefinition, type NativeCliBehavior } from "./skill-classification/native-adapters.js";
 import { bindNativeClassificationDefinitions } from "./skill-classification/native-cli-strategies.js";
 
 /** Trusted installation code supplies adapters; request JSON and environment names cannot register them. */
 export async function startMcpServer(
   wireAdapters: ReadonlyMap<string, ClassificationWireAdapter> = new Map(),
   executionAdapters?: ReadonlyMap<string, HostExecutionAdapter>,
+  nativeBehaviors?: ReadonlyMap<string, NativeCliBehavior>,
 ): Promise<void> {
   const installedWireAdapters = new Map(wireAdapters);
+  const installedNativeBehaviors = nativeBehaviors === undefined ? undefined : new Map(nativeBehaviors);
   const registryPath = resolveRegistryPath();
   const workflowDatabasePath = resolveWorkflowDatabasePath();
   const continuityDatabasePath = resolveContinuityDatabasePath();
@@ -107,7 +109,7 @@ export async function startMcpServer(
     if (nativeDefinitionBytes && nativeDefinitionBytes.length > 1024 * 1024) throw new Error("NATIVE_ADAPTER_DEFINITIONS_TOO_LARGE");
     nativeDefinitionDigest = nativeDefinitionBytes ? digestClassificationValue(nativeDefinitionBytes.toString("utf8")) : null;
     const nativeDefinitions: NativeClassificationAdapterDefinition[] = nativeDefinitionBytes ? JSON.parse(nativeDefinitionBytes.toString("utf8")) as NativeClassificationAdapterDefinition[] : [];
-    const nativeAdapters = createNativeClassificationAdapters(bindNativeClassificationDefinitions(nativeDefinitions));
+    const nativeAdapters = createNativeClassificationAdapters(bindNativeClassificationDefinitions(nativeDefinitions, installedNativeBehaviors));
     if (providerRuntimeRef) providerRuntime = await loadClassificationProviderRuntime(providerRuntimeRef, {nativeAdapters, wireAdapters: installedWireAdapters});
   } catch (error) {
     initializationFailed = true;
