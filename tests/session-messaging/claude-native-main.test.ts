@@ -18,11 +18,10 @@ const payload = (tool: string, tool_input: Record<string, unknown>, actor: Recor
   tool_name: `mcp__agent_governance_suite__${tool}`, tool_input, ...actor,
 });
 
-// Native contract: https://code.claude.com/docs/en/hooks#common-input-fields
-// agent_id identifies a subagent; agent_type can also describe a --agent main session.
-it.each([{}, {agent_type: "synthetic-custom-agent"}])("binds actual Claude message and board hooks for native main %j", async actor => {
+// Synthetic payloads exercise the agreed Claude inference rule, not native capture or R7 evidence.
+it.each([{}, {agent_type: "synthetic-custom-agent"}])("binds synthetic Claude root-inferred message and board inputs %j", async actor => {
   const board = fixture(), message = payload("prepare_session_message", {body: "synthetic"}, actor);
-  expect(adaptHostInput(message, "claude-code").observation.actor).toMatchObject({kind: "main", assurance: "observed", observedBy: "claude-code:hook-payload"});
+  expect(adaptHostInput(message, "claude-code").observation.actor).toMatchObject({role: "root", basis: "inferred", reasonCode: "CLAUDE_NATIVE_ROOT_AGENT_ID_ABSENT"});
   const output = await handleSessionMessageHook(message, "claude-code");
   expect(output).toMatchObject({hookSpecificOutput: {updatedInput: {body: "synthetic", _sessionBinding: {host: "claude-code", sessionId: message.session_id}}}});
   const updated = handleSessionBoardHook(payload("update_session_status", {summary: "synthetic native main"}, actor), board, "claude-code");
@@ -35,15 +34,21 @@ it.each([
   {agent_id: ""}, {agent_id: " "}, {agent_id: null}, {agent_id: 42}, {agent_id: false}, {agent_id: []}, {agent_id: {}}, {agent_id: undefined},
   {agent_type: null}, {agent_type: 42}, {agent_type: ""}, {agent_type: " "},
   {hook_event_name: "UnknownEvent"}, {hook_event_name: "SubagentStart"}, {hook_event_name: "SubagentStop"}, {hook_event_name: undefined}, {session_id: ""},
-])("keeps invalid or explicit child input unbound through both actual hooks: %j", async actor => {
+])("keeps malformed or explicit child synthetic input unbound through both hooks: %j", async actor => {
   const board = fixture(), input = payload("prepare_session_message", {}, actor);
-  expect(adaptHostInput(input, "claude-code").observation.actor.kind).not.toBe("main");
+  expect(adaptHostInput(input, "claude-code").observation.actor.role).not.toBe("root");
   expect((await handleSessionMessageHook(input, "claude-code")) as {hookSpecificOutput?: {updatedInput?: unknown}}).not.toHaveProperty("hookSpecificOutput.updatedInput");
   expect(handleSessionBoardHook(payload("update_session_status", {summary: "must not write"}, actor), board, "claude-code")).not.toHaveProperty("hookSpecificOutput.updatedInput");
   expect(listSessions(board, new Date().toISOString())).toEqual([]);
 });
 
-it.each(["codex", "gemini"])("preserves %s missing-actor UNKNOWN and its existing explicit empty-main contract", host => {
-  expect(adaptHostInput(payload("prepare_session_message", {}), host).observation.actor).toMatchObject({kind: "unknown", assurance: "unknown"});
-  expect(adaptHostInput(payload("prepare_session_message", {}, {agent_id: ""}), host).observation.actor).toMatchObject({kind: "main", assurance: "observed"});
+it.each([
+  ["codex", "CODEX_NATIVE_CAPTURE_REQUIRED"],
+  ["gemini", "GEMINI_ACTOR_OBSERVATION_UNSUPPORTED"],
+  ["antigravity", "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED"],
+])("keeps %s missing and empty actor IDs unavailable", (host, reasonCode) => {
+  for (const extra of [{}, {agent_id: ""}]) {
+    expect(adaptHostInput(payload("prepare_session_message", {}, extra), host!).observation.actor)
+      .toMatchObject({role: "indeterminate", basis: "unavailable", reasonCode});
+  }
 });

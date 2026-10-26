@@ -14,9 +14,21 @@ import "../../mcp-server/src/builtin-hook-host-adapters.js";
 import {adaptHostInput, hookAttestationKind, hostDeliveryProfile, isGovernanceHookTool, registerHookHostAdapter, type HookHostAdapter} from "../../mcp-server/src/host-input-adapter.js";
 import {handleSessionBoardHook, runSessionBoardHook} from "../../mcp-server/src/session-board-hook.js";
 
+import type {ActorObservation} from "../../mcp-server/src/input-observation.js";
+
 const board = {close: f.close} as unknown as NonNullable<Parameters<typeof handleSessionBoardHook>[1]>;
 const now = "2026-10-25T00:00:00.000Z";
-const tool = (name: string, actor: Record<string, unknown> = {agent_id: ""}) => ({
+// Explicit synthetic adapter for mocked board-core cases; not native evidence.
+const syntheticHost = "synthetic-al04-board";
+const syntheticRoot: ActorObservation = {role: "root", basis: "observed", reasonCode: "SYNTHETIC_BOARD_ROOT"};
+registerHookHostAdapter(syntheticHost, {
+  deliveryProfile: () => ({transport: "claude-inbox", capabilities: {supportedInjection: [], idleWake: "none"}, blocksEmptyWakePrompt: false}),
+  processPid: () => undefined, ownsTool: name => isGovernanceHookTool("codex", name),
+  adaptInput: (payload, host) => {const mapped = adaptHostInput(payload, "codex"); return {...mapped, observation: {...mapped.observation, host,
+    actor: payload.syntheticActor as ActorObservation}};},
+});
+
+const tool = (name: string, actor: Record<string, unknown> = {syntheticActor: syntheticRoot}) => ({
   hook_event_name: "PreToolUse", session_id: "AL04_PRIVATE_PARENT", ...actor,
   tool_name: name, tool_input: {summary: "AL04 회귀", _sessionBinding: {host: "forged", sessionId: "forged"}},
 });
@@ -32,7 +44,7 @@ afterEach(() => {vi.restoreAllMocks();});
 
 describe("AL04 board actor, namespace and host permission boundaries", () => {
   it.each(["list_session_status", "update_session_status"])("D0018 denies a subagent %s before issuing its parent binding", name => {
-    const output = handleSessionBoardHook(tool(prefix + name, {agent_id: "subagent"}), board, "codex", now);
+    const output = handleSessionBoardHook(tool(prefix + name, {syntheticActor: {role: "child", basis: "observed", reasonCode: "SYNTHETIC_BOARD_CHILD"}}), board, syntheticHost, now);
     expect(output).toMatchObject({hookSpecificOutput: {permissionDecision: "deny"}});
     expect((output.hookSpecificOutput as Record<string, unknown>).updatedInput).toBeUndefined();
     noWrites();
@@ -51,9 +63,9 @@ describe("AL04 board actor, namespace and host permission boundaries", () => {
     "mcp__agent_governance_suite__", "mcp__agent-governance-suite__",
     "mcp__plugin_agent-governance-suite_agent-governance-suite__",
   ])("D0020 preserves host permission checks when attaching an owned binding through %s", namespace => {
-    const output = handleSessionBoardHook(tool(namespace + "update_session_status"), board, "codex", now);
+    const output = handleSessionBoardHook(tool(namespace + "update_session_status"), board, syntheticHost, now);
     expect(output).toEqual({hookSpecificOutput: {hookEventName: "PreToolUse", updatedInput: {
-      summary: "AL04 회귀", _sessionBinding: {host: "codex", sessionId: "AL04_PRIVATE_PARENT"},
+      summary: "AL04 회귀", _sessionBinding: {host: syntheticHost, sessionId: "AL04_PRIVATE_PARENT"},
     }}});
     expect(f.summary).toHaveBeenCalledTimes(1);
   });
@@ -61,14 +73,14 @@ describe("AL04 board actor, namespace and host permission boundaries", () => {
     "mcp__foreign__update_session_status", "mcp__agent_governance_suite_other__list_session_status",
     "mcp__foreign__mcp__agent_governance_suite__list_session_status", "list_session_status",
   ])("D0021 does not bind or allow a foreign tool %s", name => {
-    expect(handleSessionBoardHook(tool(name), board, "codex", now)).toEqual({}); noWrites();
+    expect(handleSessionBoardHook(tool(name), board, syntheticHost, now)).toEqual({}); noWrites();
   });
   it("preserves malformed-summary denial without turning coordination into an ordinary-tool gate", () => {
     const input = tool(prefix + "update_session_status"); input.tool_input.summary = "둘\n줄";
-    expect(handleSessionBoardHook(input, board, "codex", now)).toMatchObject({hookSpecificOutput: {permissionDecision: "deny"}});
+    expect(handleSessionBoardHook(input, board, syntheticHost, now)).toMatchObject({hookSpecificOutput: {permissionDecision: "deny"}});
     expect(f.summary).not.toHaveBeenCalled();
     f.gate.mockReturnValue("deny");
-    expect(handleSessionBoardHook(tool("apply_patch"), board, "codex", now)).toEqual({});
+    expect(handleSessionBoardHook(tool("apply_patch"), board, syntheticHost, now)).toEqual({});
     expect(f.gate).not.toHaveBeenCalled();
   });
 });
@@ -81,7 +93,7 @@ describe("AL04 explicit host adapter contracts", () => {
   it("D0028 does not apply builtin event or actor fields to a delivery-only adapter", () => {
     registerHookHostAdapter("al04-delivery-only", {deliveryProfile: delivery, processPid: () => undefined});
     expect(adaptHostInput(tool(prefix + "list_session_status"), "al04-delivery-only")).toMatchObject({
-      lifecycle: "none", outputEventName: "", observation: {host: "al04-delivery-only", sessionId: "", kind: "unknown", actor: {kind: "unknown", assurance: "unknown"}},
+      lifecycle: "none", outputEventName: "", observation: {host: "al04-delivery-only", sessionId: "", kind: "unknown", actor: {role: "indeterminate", basis: "unavailable", reasonCode: "HOST_ACTOR_OBSERVATION_UNAVAILABLE"}},
     });
     expect(isGovernanceHookTool("al04-delivery-only", prefix + "list_session_status")).toBe(false);
   });
@@ -91,11 +103,11 @@ describe("AL04 explicit host adapter contracts", () => {
       ownsTool: name => name === "owned:board",
       adaptInput: (input, configuredHost) => ({lifecycle: "none", outputEventName: "before-call", observation: {
         host: configuredHost, sessionId: String(input.conversation), kind: "tool-boundary", boundaryPhase: "before",
-        actor: {kind: "main", assurance: "observed", observedBy: "al04:configured-fixture"}, toolName: "owned:board", toolInput: {},
+        actor: {role: "root", basis: "observed", reasonCode: "SYNTHETIC_CONFIGURED_BOARD_ROOT"}, toolName: "owned:board", toolInput: {},
       }}),
     });
     expect(adaptHostInput({conversation: "explicit-session", hook_event_name: "SessionEnd", agent_id: "unrelated"}, host)).toMatchObject({
-      lifecycle: "none", outputEventName: "before-call", observation: {host, sessionId: "explicit-session", kind: "tool-boundary", actor: {kind: "main"}},
+      lifecycle: "none", outputEventName: "before-call", observation: {host, sessionId: "explicit-session", kind: "tool-boundary", actor: {role: "root", basis: "observed"}},
     });
     expect(isGovernanceHookTool(host, "owned:board")).toBe(true);
     expect(isGovernanceHookTool(host, prefix + "list_session_status")).toBe(false);

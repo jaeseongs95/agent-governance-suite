@@ -1,13 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ContinuityService } from "../../mcp-server/src/continuity-service.js";
-import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
-import { registerHookHostAdapter, type HookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+import { handleContinuityHook as handleNativeContinuityHook } from "../../mcp-server/src/continuity-hook.js";
+import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter, type HookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+
+import type { ActorObservation } from "../../mcp-server/src/input-observation.js";
 
 const issue = vi.fn(() => "opaque-binding");
 const service = { issueToolBinding: issue } as unknown as ContinuityService;
 const input = { schemaVersion: "1.0.0", marker: "retained", _continuityBinding: "forged" };
 const owned = "mcp__agent_governance_suite__inspect_context";
-function event(toolName = owned, actor: Record<string, unknown> = { agent_id: "" }) {
+// Explicit synthetic adapter for mocked core behavior; not native capture.
+const syntheticHost = "synthetic-al07-continuity";
+const syntheticRoot: ActorObservation = { role: "root", basis: "observed", reasonCode: "SYNTHETIC_CONTINUITY_ROOT" };
+registerHookHostAdapter(syntheticHost, {
+  deliveryProfile: () => ({ transport: "claude-inbox", capabilities: { supportedInjection: [], idleWake: "none" }, blocksEmptyWakePrompt: false }),
+  processPid: () => undefined, ownsTool: name => isGovernanceHookTool("codex", name),
+  adaptInput: (payload, host) => {
+    const mapped = adaptHostInput(payload, "codex");
+    return { ...mapped, observation: { ...mapped.observation, host, actor: payload.syntheticActor as ActorObservation } };
+  },
+});
+const handleContinuityHook = (payload: Record<string, unknown>, value: ContinuityService, host = syntheticHost) => handleNativeContinuityHook(payload, value, host);
+
+function event(toolName = owned, actor: Record<string, unknown> = { syntheticActor: syntheticRoot }) {
   return { hook_event_name: "PreToolUse", session_id: "observed-session", tool_name: toolName, tool_input: input, ...actor };
 }
 beforeEach(() => { issue.mockClear(); });
@@ -50,7 +65,7 @@ describe("AGS-D-0020/0021 continuity tool authority boundaries", () => {
       ownsTool: name => name === "configured__inspect_context",
       adaptInput: payload => ({ lifecycle: "none", outputEventName: "BeforeInvocation", observation: {
         host, sessionId: String(payload.conversation), kind: "tool-boundary", boundaryPhase: "before",
-        actor: { kind: "main", assurance: "observed", observedBy: "al07:configured-adapter" },
+        actor: { role: "root", basis: "observed", reasonCode: "SYNTHETIC_CONFIGURED_CONTINUITY_ROOT" },
         toolName: "configured__inspect_context", toolInput: input,
       } }),
     });
@@ -58,12 +73,12 @@ describe("AGS-D-0020/0021 continuity tool authority boundaries", () => {
       .toEqual({ hookSpecificOutput: { hookEventName: "BeforeInvocation", updatedInput: { ...input, _continuityBinding: "opaque-binding" } } });
     expect(issue).toHaveBeenCalledWith("adapter-session", "inspect_context", input);
   });
-  it("does not treat an adapter's unobserved main claim as observed", () => {
+  it("does not authorize an adapter root claim with unavailable basis", () => {
     const host = "al07-r15-unobserved";
     registerHookHostAdapter(host, { deliveryProfile: delivery, processPid: () => undefined, ownsTool: () => true,
       adaptInput: () => ({ lifecycle: "none", outputEventName: "PreToolUse", observation: {
         host, sessionId: "adapter-session", kind: "tool-boundary", boundaryPhase: "before",
-        actor: { kind: "main", assurance: "unknown", observedBy: "al07:unobserved" }, toolName: owned, toolInput: input,
+        actor: { role: "root", basis: "unavailable", reasonCode: "SYNTHETIC_CONTINUITY_UNAVAILABLE" }, toolName: owned, toolInput: input,
       } }),
     });
     expect(handleContinuityHook(event(), service, host)).toEqual({}); expect(issue).not.toHaveBeenCalled();

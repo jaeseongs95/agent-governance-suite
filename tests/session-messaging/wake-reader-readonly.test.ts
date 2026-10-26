@@ -11,15 +11,16 @@ import { createWakeHookObservationReader } from "../../mcp-server/src/session-me
 import type { InputSourceReceiptV1 } from "../../contracts/types.js";
 import type { InputObservation } from "../../mcp-server/src/input-observation.js";
 
+// Explicit synthetic root receipt fixture, not native host evidence.
 const target = { host: "synthetic-host", sessionId: "synthetic-session" };
 const observation: InputObservation = { ...target, kind: "user-input", wakeOnly: true,
-  wakeCandidates: ["synthetic-nonce-abcdefghijklmnop"], actor: { kind: "unknown", assurance: "unknown", observedBy: "synthetic-host:hook-payload" } };
+  wakeCandidates: ["synthetic-nonce-abcdefghijklmnop"], actor: { role: "root", basis: "observed", reasonCode: "SYNTHETIC_READONLY_ROOT" } };
 const key = Buffer.alloc(32, 31);
 const contentDigest = `sha256:${createHash("sha256").update(JSON.stringify([target.host, target.sessionId,
-  "user-input", true, "unknown", "synthetic-host:hook-payload", "unknown", observation.wakeCandidates])).digest("hex")}` as const;
+  "user-input", true, "root", "observed", observation.wakeCandidates])).digest("hex")}` as const;
 const unsigned = { schemaVersion: "1.0.0" as const, receiptId: "source-synthetic-readonly", originKind: "peer" as const,
   ...target, eventId: "synthetic-event", contentDigest, observedAt: new Date(100).toISOString(), expiresAt: new Date(1000).toISOString(),
-  authorityEffect: "none" as const, attestation: { kind: "broker-peer-envelope" as const, adapter: "session-message-wake-hook", capabilityVersion: "1.0.0" } };
+  authorityEffect: "none" as const, attestation: { kind: "broker-peer-envelope" as const, adapter: "session-message-wake-hook", capabilityVersion: "3.0.0" } };
 const receipt: InputSourceReceiptV1 = { ...unsigned, integrityToken: createHmac("sha256", key).update(canonicalJson(unsigned, "Synthetic receipt")).digest("base64url") };
 const directories: string[] = [];
 const resources = new Set<{ close(): void }>();

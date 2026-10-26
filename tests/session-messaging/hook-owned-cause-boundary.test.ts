@@ -30,11 +30,12 @@ import {BrokerRequestRejected, requestSessionMessageOnce, sessionMessageRequest}
 import {hookFailureContext, hookFailureReason, retainHookFailureCause, retainHookFailureSecondary, tagHookFailure} from "../../mcp-server/src/hook-error-diagnostics.js";
 import {SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL} from "../../mcp-server/src/session-message-protocol.js";
 
+// Explicit synthetic core adapter; no native actor capture is represented.
 const host = "owned-cause-fixture";
 function fixtureInput(_input: Record<string, unknown>, selectedHost: string): AdaptedHostInput {
   return { lifecycle: "none", outputEventName: "PostToolUse", observation: {
     host: selectedHost, sessionId: "PRIVATE_SESSION", kind: "tool-boundary", boundaryPhase: "after",
-    actor: {kind: "main", observedBy: "owned-cause-fixture:adapter", assurance: "observed"}, toolName: "read_file", toolInput: {},
+    actor: {role: "root", basis: "observed", reasonCode: "SYNTHETIC_OWNED_CAUSE_ROOT"}, toolName: "read_file", toolInput: {},
   } };
 }
 registerHookHostAdapter(host, {adaptInput: fixtureInput, deliveryProfile: () => ({
