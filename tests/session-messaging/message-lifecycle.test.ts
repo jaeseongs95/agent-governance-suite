@@ -267,7 +267,7 @@ it.each(["lost-reply", "success", "receipt-failure"])("the actual hook retains c
   const close = vi.spyOn(TrustStore.prototype, "close");
   const verify = mode === "receipt-failure" ? vi.spyOn(TrustStore.prototype, "verify").mockReturnValue(false) : undefined;
   try {
-    const output = await runSessionMessageHook("claude-code", JSON.stringify({ hook_event_name: "Stop", agent_id: "", session_id: recipient.sessionId }), undefined, {
+    const output = await runSessionMessageHook("claude-code", JSON.stringify({ hook_event_name: "Stop", session_id: recipient.sessionId }), undefined, {
       executionBudget: { deadlineMonotonicMs: performance.now() + 7000, postClaimReserveMs: 500 },
       onClaimState: (value) => { phases.push(value); },
     });

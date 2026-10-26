@@ -38,7 +38,7 @@ it("does not substitute a short-lived hook shell for an unknown Gemini host PID"
 });
 
 it("preserves the Claude launcher parent selection", async () => {
-  await handleSessionMessageHook(input, "claude-code", 424242);
+  await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: input.session_id }, "claude-code", 424242);
   expect(startTokenMock).toHaveBeenCalledWith(process.ppid);
 });
 

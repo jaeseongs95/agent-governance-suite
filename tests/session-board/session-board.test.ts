@@ -128,7 +128,7 @@ describe("session board store", () => {
 });
 
 describe("session board hook", () => {
-  const input = (event: string, extra: Record<string, unknown> = {}) => ({ hook_event_name: event, session_id: "s1", agent_id: "", cwd: "D:/work/repo", ...extra });
+  const input = (event: string, extra: Record<string, unknown> = {}) => ({ hook_event_name: event, session_id: "s1", cwd: "D:/work/repo", ...extra });
   const tool = (name: string, toolInput: Record<string, unknown> = {}, extra: Record<string, unknown> = {}) => input("PreToolUse", { tool_name: name, tool_input: toolInput, ...extra });
   const boardTool = (name: string) => `mcp__plugin_agent-governance-suite_agent-governance-suite__${name}`;
 
@@ -288,10 +288,10 @@ describe("session board MCP tools", () => {
     delete env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
     delete env.AGENT_GOVERNANCE_DB_PATH;
     const repository = fileURLToPath(new URL("../../", import.meta.url));
-    const update = (sessionId: string, toolName: string, summary: string) => JSON.stringify({ hook_event_name: "PreToolUse", session_id: sessionId, agent_id: "", cwd: "D:/work/repo", tool_name: toolName, tool_input: { schemaVersion: "1.0.0", summary } });
+    const update = (sessionId: string, toolName: string, summary: string, host: "codex" | "claude-code") => JSON.stringify({ hook_event_name: "PreToolUse", session_id: sessionId, ...(host === "claude-code" ? {} : { agent_id: "" }), cwd: "D:/work/repo", tool_name: toolName, tool_input: { schemaVersion: "1.0.0", summary } });
     const run = (script: string, input: string) => spawnSync(process.execPath, [path.join(repository, script)], { env, input, encoding: "utf8", windowsHide: true });
-    const claude = run("claude-plugin/hooks/session-board-hook.mjs", update("claude-1", "mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status", "Claude 작업"));
-    const codex = run("mcp-server/dist/session-board-hook.mjs", update("codex-1", "mcp__agent-governance-suite__update_session_status", "Codex 작업"));
+    const claude = run("claude-plugin/hooks/session-board-hook.mjs", update("claude-1", "mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status", "Claude 작업", "claude-code"));
+    const codex = run("mcp-server/dist/session-board-hook.mjs", update("codex-1", "mcp__agent-governance-suite__update_session_status", "Codex 작업", "codex"));
     expect([claude.status, codex.status]).toEqual([0, 0]);
     expect(claude.stdout).toContain('"host":"claude-code"');
     expect(codex.stdout).toContain('"host":"codex"');
@@ -310,7 +310,7 @@ describe("session board MCP tools", () => {
   it("reads back the hook-written line, lists the host board and refuses unbound updates", async () => {
     const databasePath = boardPath();
     const board = open(databasePath);
-    handleSessionBoardHook({ hook_event_name: "PreToolUse", session_id: "s1", agent_id: "", cwd: "D:/work/repo", tool_name: "mcp__agent_governance_suite__update_session_status", tool_input: { summary: "릴리스 준비" } }, board, "claude-code");
+    handleSessionBoardHook({ hook_event_name: "PreToolUse", session_id: "s1", cwd: "D:/work/repo", tool_name: "mcp__agent_governance_suite__update_session_status", tool_input: { summary: "릴리스 준비" } }, board, "claude-code");
     const client = await connect(databasePath);
     const binding = { host: "claude-code", sessionId: "s1" };
     const tool = (await client.listTools()).tools.find((item) => item.name === "update_session_status");

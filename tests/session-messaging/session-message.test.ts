@@ -799,7 +799,6 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     const hook = (hook_event_name: string, extra: Record<string, unknown> = {}) => JSON.stringify({
       hook_event_name,
       session_id: sessionId,
-      agent_id: "",
       cwd: "D:/work/repo",
       ...extra,
     });
@@ -1289,7 +1288,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       } finally { store.close(); }
       const prompt = scenario === "forged" ? "[agent-governance-suite:wake:unregistered-nonce-abcdefghijklmnop]"
         : `[agent-governance-suite:wake:${nonce}]${scenario === "mixed" ? "\nactual user request" : ""}`;
-      const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, agent_id: "", prompt };
+      const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, ...(scenario === "claude" ? {} : { agent_id: "" }), prompt };
       const invoke = () => {
         if (scenario === "claude" || entrypoint === "source") return handleSessionMessageHook(input, scenario === "claude" ? "claude-code" : "codex");
         const child = spawnSync(process.execPath, [bundledSessionMessageHook], { input: JSON.stringify(input), encoding: "utf8",
@@ -1346,7 +1345,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
         presence("new-instance", Date.now());
         expect(store.database.prepare("SELECT state FROM wake_nonces WHERE nonce = ?").get(nonce)).toEqual({ state: "expired-unobserved" });
       } finally { store.close(); }
-      const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, agent_id: "", prompt: `[agent-governance-suite:wake:${nonce}]` };
+      const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, ...(host === "claude-code" ? {} : { agent_id: "" }), prompt: `[agent-governance-suite:wake:${nonce}]` };
       let output: Record<string, unknown>;
       if (host === "claude-code" || entrypoint === "source") output = await handleSessionMessageHook(input, host === "claude-code" ? "claude-code" : "codex");
       else {
@@ -1550,7 +1549,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       const target = { host: "claude-code", sessionId: "stop-hook" };
       const sent = await prepareAndSend(directory, { sender: { host: "codex", sessionId: "sender" }, target, body: "hello", ttlSeconds: 600 });
 
-      const output = await handleSessionMessageHook({ hook_event_name: "Stop", agent_id: "", session_id: target.sessionId }, "claude-code");
+      const output = await handleSessionMessageHook({ hook_event_name: "Stop", session_id: target.sessionId }, "claude-code");
       expect((output.hookSpecificOutput as { additionalContext: string }).additionalContext).toContain((sent.data as { messageId: string }).messageId);
     } finally {
       if (previous === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;

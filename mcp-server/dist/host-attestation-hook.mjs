@@ -1188,6 +1188,18 @@ function adaptCodexHookInput(input2, host) {
   }
   return adapted;
 }
+function adaptClaudeHookInput(input2, host) {
+  const adapted = adaptBuiltinHookInput(input2, host);
+  const hasAgentId = Object.hasOwn(input2, "agent_id");
+  const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown";
+  const validAgentType = !Object.hasOwn(input2, "agent_type") || typeof input2.agent_type === "string" && input2.agent_type.trim().length > 0;
+  if (!knownEvent || !adapted.observation.sessionId.trim() || !validAgentType || hasAgentId && (typeof input2.agent_id !== "string" || !input2.agent_id.trim())) {
+    adapted.observation.actor = { kind: "unknown", observedBy: "".concat(host, ":invalid-native-actor"), assurance: "unknown" };
+  } else if (!hasAgentId) {
+    adapted.observation.actor = { kind: "main", observedBy: "".concat(host, ":native-main-hook"), assurance: "observed" };
+  }
+  return adapted;
+}
 var GOVERNANCE_TOOL_PREFIXES = /* @__PURE__ */ new Set([
   "mcp__agent_governance_suite__",
   "mcp__agent-governance-suite__",
@@ -1313,7 +1325,7 @@ var builtinHookHostAdapters = /* @__PURE__ */ new Map([
     peerWait: codexNativePeerWait
   }],
   ["claude-code", {
-    adaptInput: adaptBuiltinHookInput,
+    adaptInput: adaptClaudeHookInput,
     ownsTool: ownsGovernanceTool,
     deliveryProfile: () => deliveryProfile("claude-inbox", false),
     processPid: () => process.ppid,

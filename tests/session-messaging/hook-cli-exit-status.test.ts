@@ -21,8 +21,8 @@ vi.mock("node:fs", async (original) => {
 });
 
 const entry = fileURLToPath(new URL("../../mcp-server/src/session-message-hook.ts", import.meta.url));
-const stop = JSON.stringify({ hook_event_name: "Stop", session_id: "cli-target", agent_id: "" });
-const bindable = JSON.stringify({ hook_event_name: "PreToolUse", session_id: "cli-target", agent_id: "",
+const stop = JSON.stringify({ hook_event_name: "Stop", session_id: "cli-target" });
+const bindable = JSON.stringify({ hook_event_name: "PreToolUse", session_id: "cli-target",
   tool_name: "mcp__agent_governance_suite__prepare_session_message", tool_input: { schemaVersion: "1.0.0", marker: "cli-secret-marker" } });
 
 const originalArgv = process.argv;

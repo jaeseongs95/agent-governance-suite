@@ -71,7 +71,7 @@ describe("explicit hook CLI host contract (synthetic packaged fixtures, not nati
       bundle + " binds the selected host while retaining its default ($host/$args)", ({ args, host }) => {
         const f = fixture();
         const tool = bundle === "session-message-hook" ? "prepare_session_message" : "list_session_status";
-        const output = hook(bundle, args, { hook_event_name: "PreToolUse", session_id: "host-contract-session", agent_id: "",
+        const output = hook(bundle, args, { hook_event_name: "PreToolUse", session_id: "host-contract-session", ...(host === "claude-code" ? {} : { agent_id: "" }),
           tool_name: "mcp__agent_governance_suite__" + tool,
           tool_input: { schemaVersion: "1.0.0", marker: "preserve", _sessionBinding: { host: "wrong", sessionId: "wrong" } } }, f.env);
         expect(output.hookSpecificOutput!.updatedInput!).toEqual({ schemaVersion: "1.0.0", marker: "preserve",
@@ -168,7 +168,7 @@ it.each(["empty", "input", "stdin", "broker"] as const)(
     if (scenario === "broker") {
       // The client fails state-directory preparation before any broker process or DB can start.
       writeFileSync(f.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR, "PRIVATE_STATE_FILE");
-      input = JSON.stringify({ hook_event_name: "Stop", session_id: "PRIVATE_SESSION", agent_id: "" });
+      input = JSON.stringify({ hook_event_name: "Stop", session_id: "PRIVATE_SESSION" });
     }
     const result = spawnSync(process.execPath, args, {
       input, env: { ...f.env, NODE_NO_WARNINGS: "1" }, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,

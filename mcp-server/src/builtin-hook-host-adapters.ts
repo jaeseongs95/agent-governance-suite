@@ -82,6 +82,23 @@ function adaptCodexHookInput(input: Record<string, unknown>, host: string): Adap
   return adapted;
 }
 
+/** Claude's native main hooks omit agent_id, including --agent sessions with agent_type.
+ * Only this registered host strategy owns that absence; explicit invalid IDs never imply main.
+ * https://code.claude.com/docs/en/hooks#common-input-fields */
+function adaptClaudeHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
+  const adapted = adaptBuiltinHookInput(input, host);
+  const hasAgentId = Object.hasOwn(input, "agent_id");
+  const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown";
+  const validAgentType = !Object.hasOwn(input, "agent_type") || (typeof input.agent_type === "string" && input.agent_type.trim().length > 0);
+  if (!knownEvent || !adapted.observation.sessionId.trim() || !validAgentType
+    || (hasAgentId && (typeof input.agent_id !== "string" || !input.agent_id.trim()))) {
+    adapted.observation.actor = {kind: "unknown", observedBy: `${host}:invalid-native-actor`, assurance: "unknown"};
+  } else if (!hasAgentId) {
+    adapted.observation.actor = {kind: "main", observedBy: `${host}:native-main-hook`, assurance: "observed"};
+  }
+  return adapted;
+}
+
 const GOVERNANCE_TOOL_PREFIXES = new Set([
   "mcp__agent_governance_suite__", "mcp__agent-governance-suite__",
   "mcp__plugin_agent-governance-suite_agent-governance-suite__",
@@ -196,7 +213,7 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
     processPid: (pid) => pid, attestationKind: "codex-rollout", peerWait: codexNativePeerWait,
   }],
   ["claude-code", {
-    adaptInput: adaptBuiltinHookInput, ownsTool: ownsGovernanceTool,
+    adaptInput: adaptClaudeHookInput, ownsTool: ownsGovernanceTool,
     deliveryProfile: () => deliveryProfile("claude-inbox", false),
     processPid: () => process.ppid, attestationKind: "claude-hook",
   }],

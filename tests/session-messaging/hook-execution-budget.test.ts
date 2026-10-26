@@ -31,8 +31,8 @@ import { requestSessionMessageOnce, sessionMessageRequest as mockedRequest } fro
 import { SESSION_MESSAGE_PROTOCOL } from "../../mcp-server/src/session-message-protocol.js";
 
 const budget = () => ({ deadlineMonotonicMs: 1000, postClaimReserveMs: 200 });
-const input = { hook_event_name: "Stop", session_id: "budget-target", agent_id: "" };
-const start = { ...input, hook_event_name: "SessionStart" };
+const input = { hook_event_name: "Stop", session_id: "budget-target" };
+const start = { ...input, agent_id: "", hook_event_name: "SessionStart" };
 const message = {
   messageId: "synthetic-issued-id", sender: { host: "claude-code", sessionId: "sender" },
   recipient: { host: "claude-code", sessionId: "budget-target" }, body: "Synthetic peer body",

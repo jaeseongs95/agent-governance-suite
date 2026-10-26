@@ -101,14 +101,14 @@ it("absorbs asynchronous spawn failure without retrying an uncertain reservation
 
 it.each(["codex", "claude-code"] as const)("preserves %s observed-PID mismatch rejection when ensure is false", async (host) => {
   const pid = process.ppid + 1;
-  await handleSessionMessageHook(input, host, undefined, { ensureRelay: false, hostProcess: { pid, startToken: "T1" } });
+  await handleSessionMessageHook(host === "claude-code" ? { hook_event_name: "SessionStart", session_id: input.session_id } : input, host, undefined, { ensureRelay: false, hostProcess: { pid, startToken: "T1" } });
   expect(f.request).not.toHaveBeenCalled();
   expect(f.spawn).not.toHaveBeenCalled();
 });
 
 it.each(["codex", "claude-code"] as const)("keeps the legacy %s startup operation without ensure options", async (host) => {
   f.request.mockResolvedValue({});
-  await handleSessionMessageHook(input, host, 424242);
+  await handleSessionMessageHook(host === "claude-code" ? { hook_event_name: "SessionStart", session_id: input.session_id } : input, host, 424242);
   expect(f.request).toHaveBeenCalledTimes(1);
   expect(f.request.mock.calls[0]![0]).toBe("presence-start");
   expect(f.spawn).toHaveBeenCalledTimes(1);

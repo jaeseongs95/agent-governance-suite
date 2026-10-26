@@ -53,7 +53,7 @@ describe("session board hook failure cause", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const nonce = "a".repeat(32);
     expect(await runSessionBoardHook("claude-code", JSON.stringify({
-      hook_event_name: "UserPromptSubmit", session_id: "s1", agent_id: "", prompt: `[agent-governance-suite:wake:${nonce}]`,
+      hook_event_name: "UserPromptSubmit", session_id: "s1", prompt: `[agent-governance-suite:wake:${nonce}]`,
     }), request)).toBe("");
     const line = lines(spy).find((value) => value.includes('"phase":"consume-wake"'));
     expect(line).toBeDefined();
@@ -84,7 +84,7 @@ describe("session board hook failure cause", () => {
     vi.stubEnv("AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH", path.join(blocker, "session-board.sqlite3"));
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(await runSessionBoardHook("claude-code", JSON.stringify({
-      hook_event_name: "PreToolUse", session_id: "s1", agent_id: "", tool_name: "Edit", tool_input: {},
+      hook_event_name: "PreToolUse", session_id: "s1", tool_name: "Edit", tool_input: {},
     }))).toBe("");
     const line = lines(spy).find((value) => value.includes('"phase":"open"'));
     expect(line).toBeDefined();

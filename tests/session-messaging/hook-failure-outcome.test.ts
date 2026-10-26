@@ -8,7 +8,7 @@ vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
 import { runSessionMessageHook, runSessionMessageHookOutcome } from "../../mcp-server/src/session-message-hook.js";
 import { hookFailure } from "../../mcp-server/src/hook-error-diagnostics.js";
 
-const stop = JSON.stringify({ hook_event_name: "Stop", session_id: "outcome-target", agent_id: "" });
+const stop = JSON.stringify({ hook_event_name: "Stop", session_id: "outcome-target" });
 
 beforeEach(() => {
   f.request.mockReset();
