@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -34,9 +34,16 @@ function syntheticRootArguments(database: string, tool: string, args: Record<str
   } finally { store.close(); }
 }
 
+function observationPayload(input: Record<string, unknown>): Record<string, unknown> {
+  const token = input._hostAttestation as string;
+  expect(token).toMatch(/^aghs2\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/u);
+  return JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8")) as Record<string, unknown>;
+}
+
 describe("packaged execution observation fixtures (not native-host evidence)", () => {
   it.each([
     { host: "claude-code", model: "claude-opus-5", ingress: "hook" },
+    { host: "claude-code", model: "claude-opus-5-default-entry-fixture-20261027", ingress: "hook" },
   ])("completes guarded STDIO and keeps restart replay rejection for $host/$ingress/$model", async ({ host, model }) => {
     const isolated = await mkdtemp(path.join(tmpdir(), "ags-attestation-stdio-"));
     const state = path.join(isolated, "state");
@@ -50,6 +57,13 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(state, "shared"),
       AGENT_GOVERNANCE_HOST_ATTESTATION: host,
     };
+    const catalogRelative = "skills/coordinate-subagents/references/model-routing-presets.json";
+    const catalogBefore = await readFile(path.join(root, catalogRelative));
+    const catalog = JSON.parse(catalogBefore.toString("utf8"));
+    const providerCatalog = catalog.providers["anthropic-claude-code"].catalog;
+    expect(providerCatalog.matching).toBe("claude-family-or-exact");
+    expect(Object.hasOwn(providerCatalog.models, model)).toBe(false);
+    expect(Object.hasOwn(providerCatalog.aliases ?? {}, model)).toBe(false);
     let connection: { client: Client; transport: StdioClientTransport } | null = null;
     try {
       await mkdir(path.join(isolated, "mcp-server", "dist"), { recursive: true });
@@ -84,14 +98,14 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       const rawCall = async <T>(name: string, input: Record<string, unknown>) => result<T>(await connection!.client.callTool({ name, arguments: input }));
       const call = async <T>(name: string, input: Record<string, unknown>) => rawCall<T>(name, Object.hasOwn(input, "_sessionProof") ? input : await signed(name, input));
       let sequence = 0;
-      const signed = async (tool: string, input: Record<string, unknown>) => {
+      const signed = async (tool: string, input: Record<string, unknown>, observedModel = model) => {
         const callId = `fixture-call-${++sequence}`;
         const transcript = path.join(state, "transcript.jsonl");
         const entries = [{ type: "assistant", sessionId: "fixture-session", isSidechain: false, effort: "high",
-          message: { model, content: [{ type: "tool_use", id: callId, name: tool, input }] } }];
+          message: { model: observedModel, content: [{ type: "tool_use", id: callId, name: tool, input }] } }];
         await writeFile(transcript, entries.map((entry) => JSON.stringify(entry)).join("\n") + "\n", "utf8");
         const hooked = spawnSync(process.execPath, [path.join(isolated, "mcp-server", "dist", "governance-hook.mjs"), "--host=claude-code"], {
-          input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "fixture-session", turn_id: "fixture-turn", model,
+          input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "fixture-session", turn_id: "fixture-turn", model: observedModel,
             tool_use_id: callId, transcript_path: transcript, tool_name: `mcp__agent_governance_suite__${tool}`, tool_input: input, effort: { level: "high" } }),
           env: environment, encoding: "utf8", timeout: 10_000, windowsHide: true,
         });
@@ -118,10 +132,47 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       expect(forged.error).toMatchObject({ code: "BINDING_INVALID", details: { reasonCode: "CALLER_SESSION_BINDING_REJECTED" } });
       const missingModel = await rawCall<WorkflowPlanV1>("plan_workflow", syntheticRootArguments(database, "plan_workflow", planInput, "missing-model"));
       expect(missingModel.error, JSON.stringify(missingModel)).toMatchObject({ code: "BINDING_REQUIRED", details: { observation: { host } } });
+      // Both observations use the shipped default CLI/server registration, not an injected adapter or catalog.
+      const knownArgs = await signed("plan_workflow", planInput, "claude-opus-5");
+      const knownObservation = observationPayload(knownArgs);
+      const knownPlan = await rawCall<WorkflowPlanV1>("plan_workflow", knownArgs);
+      expect(knownPlan.error).toBeNull();
       const attestedPlan = await signed("plan_workflow", planInput);
+      const currentObservation = observationPayload(attestedPlan);
+      expect(currentObservation).toMatchObject({
+        model, host, policyRevision: catalog.policy_revision, reasoningEffort: "high",
+        eligibility: { provider: "anthropic-claude-code", resolvedModel: "opus", modelClass: "deep", policyRevision: catalog.policy_revision },
+      });
+      expect(currentObservation.eligibility).toEqual(knownObservation.eligibility);
       const planned = await call<WorkflowPlanV1>("plan_workflow", attestedPlan);
       expect(planned.error).toBeNull();
       const plan = planned.data!;
+      expect(plan.bootstrapExecution?.context).toMatchObject({
+        model, modelClass: knownPlan.data!.bootstrapExecution!.context.modelClass,
+        reasoningEffort: knownPlan.data!.bootstrapExecution!.context.reasoningEffort,
+      });
+
+      const opaqueArgs = await signed("plan_workflow", planInput, "opaque-unapproved-default-entry-fixture");
+      expect(observationPayload(opaqueArgs)).toMatchObject({ model: "opaque-unapproved-default-entry-fixture", eligibility: null });
+      const opaque = await rawCall<WorkflowPlanV1>("plan_workflow", opaqueArgs);
+      expect(opaque.data).toBeNull();
+      expect(opaque.error).toMatchObject({ code: "BINDING_INVALID", message: "Host observation has no matching trusted execution capability and policy revision." });
+
+      const belowFloorArgs = await signed("plan_workflow", planInput, "claude-haiku-5");
+      expect(observationPayload(belowFloorArgs)).toMatchObject({ model: "claude-haiku-5", eligibility: { modelClass: "lightweight" } });
+      const belowFloor = await rawCall<WorkflowPlanV1>("plan_workflow", belowFloorArgs);
+      expect(belowFloor.data).toBeNull();
+      expect(belowFloor.error).toMatchObject({ code: "BINDING_INVALID", details: { modelClass: "lightweight", minimumModelClass: "general" } });
+
+      const forgedClassArgs = withoutSessionProof(await signed("plan_workflow", planInput));
+      const forgedPayload = observationPayload(forgedClassArgs);
+      forgedPayload.eligibility = { ...(forgedPayload.eligibility as Record<string, unknown>), modelClass: "frontier" };
+      const [prefix, , signature] = (forgedClassArgs._hostAttestation as string).split(".");
+      forgedClassArgs._hostAttestation = `${prefix}.${Buffer.from(JSON.stringify(forgedPayload)).toString("base64url")}.${signature}`;
+      const forgedClass = await rawCall<WorkflowPlanV1>("plan_workflow",
+        syntheticRootArguments(database, "plan_workflow", forgedClassArgs, "fresh-root-for-forged-class"));
+      expect(forgedClass.data).toBeNull();
+      expect(forgedClass.error).toMatchObject({ code: "BINDING_INVALID", message: "Host attestation token signature is invalid." });
       const frame = { schemaVersion: "1.0.0", workspace: { workspaceId: "packaged-attestation", locator: "fixture:workspace" },
         controlArtifacts: [{ artifactId: "acceptance", role: "pass-condition", locator: "fixture:acceptance", digest: `sha256:${"a".repeat(64)}` }],
         targetArtifacts: [{ artifactId: "candidate", role: "candidate", locator: "fixture:candidate", digest: `sha256:${"b".repeat(64)}` }],
@@ -159,6 +210,8 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       const modelReplay = await rawCall<WorkflowPlanV1>("plan_workflow", syntheticRootArguments(database, "plan_workflow", withoutSessionProof(attestedPlan), "fresh-root-for-old-model"));
       expect(modelReplay.error?.code).toBe("BINDING_INVALID");
       expect(modelReplay.error?.details?.reasonCode).not.toBe("ROOT_PROOF_ALREADY_CONSUMED");
+      expect(await readFile(path.join(root, catalogRelative))).toEqual(catalogBefore);
+      expect(await readFile(path.join(isolated, catalogRelative))).toEqual(catalogBefore);
     } finally {
       await connection?.client.close();
       await connection?.transport.close();

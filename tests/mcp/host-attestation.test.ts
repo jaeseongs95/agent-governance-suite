@@ -72,9 +72,12 @@ function expectIneligibleObservation(store: WorkflowStore, adapter: HostExecutio
   expect(JSON.parse(Buffer.from(String(token).split(".")[1]!, "base64url").toString("utf8")))
     .toMatchObject({ v: 2, eligibility: null });
   const provider = new HostAttestationProvider(store, adapter);
+  const binding = hostAttestationBinding("plan_workflow", input);
+  const taskId = binding?.taskId;
+  if (!binding || !taskId) throw new Error("Owned bootstrap fixture is missing its task binding.");
   let failure: unknown;
   try {
-    provider.run("plan_workflow", input, () => provider.observe(hostAttestationBinding("plan_workflow", input)!));
+    provider.run("plan_workflow", input, () => provider.observe({ ...binding, taskId }));
   } catch (error) { failure = error; }
   expect(failure).toMatchObject({ code: "BINDING_INVALID",
     message: "Host observation has no matching trusted execution capability and policy revision." });
