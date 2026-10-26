@@ -14,6 +14,6 @@
     { "id": "excluded-change", "expectedVerdict": "BLOCKED" },
     { "id": "preexisting-overlap", "expectedVerdict": "NEEDS_REVIEW" },
     { "id": "missing-baseline", "expectedVerdict": "INCONCLUSIVE" },
-    { "id": "foreign-baseline", "expectedError": "INVALID_INPUT" }
+    { "id": "foreign-baseline", "expectedError": "baseline repository identity does not match" }
   ]
 }

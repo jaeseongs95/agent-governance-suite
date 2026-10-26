@@ -8,6 +8,11 @@ import { canonicalJson, captureBaseline, compareScope, resolveRepository, sha256
 
 const roots = [];
 const behaviorCases = JSON.parse(readFileSync(new URL("./behavior-cases.json", import.meta.url), "utf8"));
+function behaviorCase(id) {
+  const matches = ["normal", "boundary", "failure"].flatMap(group => behaviorCases[group]).filter(item => item.id === id);
+  assert.equal(matches.length, 1, `Behavior fixture must contain exactly one case: ${id}`);
+  return matches[0];
+}
 
 function removeFixture(target, options) {
   const rel = relative(realpathSync(tmpdir()), realpathSync(target));
@@ -95,6 +100,7 @@ test("classifies an allowed source change as in-scope", () => {
   writeFileSync(join(root, "src", "app.js"), "export const value = 2;\n");
   const report = compareScope(verificationFor(root, baseline));
   assert.equal(report.verdict, "PASS");
+  assert.equal(report.verdict, behaviorCase("working-tree-in-scope").expectedVerdict);
   assert.equal(report.changes[0].matchedRule, "src/**");
   assert.deepEqual(report.changes.map(({ path, classification }) => ({ path, classification })), [{ path: "src/app.js", classification: "in-scope" }]);
 });
@@ -105,6 +111,7 @@ test("blocks explicit excluded changes", () => {
   writeFileSync(join(root, "docs", "note.md"), "changed\n");
   const report = compareScope(verificationFor(root, baseline));
   assert.equal(report.verdict, "BLOCKED");
+  assert.equal(report.verdict, behaviorCase("excluded-change").expectedVerdict);
   assert.equal(report.changes[0].classification, "excluded");
 });
 
@@ -123,13 +130,14 @@ test("preserves untouched preexisting changes and detects overlap", () => {
   const baseline = baselineFor(root);
   const untouched = compareScope(verificationFor(root, baseline));
   assert.equal(untouched.changes[0].classification, "preexisting-untouched");
+  assert.equal(untouched.changes[0].classification, behaviorCase("dirty-preexisting-untouched").expectedClassification);
   assert.equal(untouched.verdict, "PASS");
 
   writeFileSync(join(root, "src", "app.js"), "export const value = 3;\n");
   const overlap = compareScope(verificationFor(root, baseline));
   assert.equal(overlap.changes[0].classification, "preexisting-overlap");
   assert.equal(overlap.verdict, "NEEDS_REVIEW");
-  assert.equal(overlap.verdict, behaviorCases.failure.find(({ id }) => id === "preexisting-overlap").expectedVerdict);
+  assert.equal(overlap.verdict, behaviorCase("preexisting-overlap").expectedVerdict);
 });
 
 test("requires both rename paths to be in scope", () => {
@@ -147,6 +155,7 @@ test("rejects a baseline from another repository", () => {
   const second = repository();
   const baseline = baselineFor(first);
   assert.throws(() => compareScope(verificationFor(second, baseline)), /identity does not match/);
+  assert.throws(() => compareScope(verificationFor(second, baseline)), { message: behaviorCase("foreign-baseline").expectedError });
 });
 
 test("returns INCONCLUSIVE instead of guessing ownership without a baseline", () => {
@@ -154,6 +163,7 @@ test("returns INCONCLUSIVE instead of guessing ownership without a baseline", ()
   writeFileSync(join(root, "src", "app.js"), "export const value = 2;\n");
   const report = compareScope(verificationFor(root));
   assert.equal(report.verdict, "INCONCLUSIVE");
+  assert.equal(report.verdict, behaviorCase("missing-baseline").expectedVerdict);
   assert.equal(report.changes[0].classification, "ownership-unknown");
 });
 
@@ -168,6 +178,7 @@ test("index comparison ignores unstaged content and sees staged content", () => 
   git(root, "add", "src/app.js");
   const staged = compareScope(verificationFor(root, baseline, envelope(), { comparisonTarget: "index" }));
   assert.equal(staged.changes[0].classification, "in-scope");
+  assert.equal(staged.verdict, behaviorCase("index-staged-only").expectedVerdict);
 });
 
 test("keeps actual index absence and staged deletion classification", () => {
@@ -207,6 +218,7 @@ test("compares two fixed commits without reading working-tree content", () => {
   writeFileSync(join(root, "src", "app.js"), "working tree differs\n");
   const report = compareScope(verificationFor(root, baseline, envelope(), { comparisonTarget: "commit", commit: second }));
   assert.equal(report.verdict, "PASS");
+  assert.equal(report.verdict, behaviorCase("commit-to-commit").expectedVerdict);
   assert.equal(report.changes[0].classification, "in-scope");
 });
 
@@ -225,6 +237,7 @@ test("preserves Unicode and spaces in repository-relative paths", () => {
   writeFileSync(join(root, "src", "한 글.js"), "export default true;\n");
   const report = compareScope(verificationFor(root, baseline));
   assert.equal(report.verdict, "PASS");
+  assert.equal(report.verdict, behaviorCase("unicode-space-path").expectedVerdict);
   assert.equal(report.changes[0].path, "src/한 글.js");
 });
 
@@ -234,6 +247,7 @@ test("captures a repository with no commits", () => {
   git(root, "init", "-q");
   const baseline = baselineFor(root);
   assert.equal(baseline.head, null);
+  assert.equal(baseline.head, behaviorCase("no-commit-repository").expectedHead);
   assert.deepEqual(baseline.entries, []);
 });
 
