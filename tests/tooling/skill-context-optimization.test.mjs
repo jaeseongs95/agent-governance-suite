@@ -57,7 +57,7 @@ describe("skill context optimization", () => {
       expect(matchesCurrentImplementationPin(relative + ".unlisted", bytes)).toBe(false);
     }
     expect(report.baselineRevision).toBe("7bc7753012227938be2a46f68bf3e29d29d5ef34");
-    expect(report.totals).toMatchObject({ skillCount: 20, baselineBytes: 115679, candidateBytes: 46292 });
+    expect(report.totals).toMatchObject({ skillCount: 20, baselineBytes: 115679, candidateBytes: 46679 });
   });
   it.each([
     "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
@@ -314,9 +314,9 @@ describe("skill context optimization", () => {
       totals: {
         skillCount: 20,
         baselineBytes: 115679,
-        candidateBytes: 46292,
-        reducedBytes: 69387,
-        reductionPercent: 59.982365
+        candidateBytes: 46679,
+        reducedBytes: 69000,
+        reductionPercent: 59.647819
       }
     });
     expect(report.skills).toHaveLength(20);

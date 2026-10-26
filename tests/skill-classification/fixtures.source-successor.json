@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "classification-source-binding-successor",
+  "activeSourceRevision": "9254f21a56efeb8fea1c87aba4ff201e91d549ed",
+  "predecessor": {
+    "path": "tests/skill-classification/fixtures.json",
+    "gitBlob": "26b1fa1526f1e6bd38768409e0fa77943a4a4db8",
+    "bytes": 142450,
+    "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+    "fixtureRevision": "ags-classification-seq7-oracle-v1",
+    "oracleRevision": "pre-live-source-reviewed-v1",
+    "oracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+  },
+  "successor": {
+    "fixtureRevision": "ags-classification-seq7-oracle-v1-source-binding-r02",
+    "oracleRevision": "pre-live-source-reviewed-v1-source-binding-r02",
+    "oracleDigest": "sha256:da3ee5b3b718d3b0d4a19d7dadd279f721fd88c6944121ef8848ffbb316a2a10"
+  },
+  "semanticProjection": {
+    "omittedRevisionFields": [
+      "fixtureRevision",
+      "oracleRevision",
+      "oracleDigest"
+    ],
+    "omittedDigestPaths": [
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md"
+      },
+      {
+        "skillId": "ponytail",
+        "path": "skills/ponytail/SKILL.md"
+      }
+    ],
+    "digest": "sha256:8069d5479dff519557e58ec2589fb4ef9dcb899213582ff419fca83791ee7422"
+  },
+  "bindings": [
+    {
+      "skillId": "orchestrator",
+      "path": "skills/orchestrator/SKILL.md",
+      "previousDigest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+      "digest": "sha256:1cfaf8503aacae72fb7e2591e708bea507848ae338e21855c15e4b1ccb635cd1"
+    },
+    {
+      "skillId": "ponytail",
+      "path": "skills/ponytail/SKILL.md",
+      "previousDigest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+      "digest": "sha256:953fd16ff07c23b9481e9bdfca12dbb0d115422ebdbd6626bae6b574838a777c"
+    }
+  ],
+  "reboundReferences": 34,
+  "review": {
+    "caseIds": [
+      "SS01",
+      "SS02",
+      "SS03",
+      "SS04",
+      "SS05",
+      "SS06",
+      "SS07",
+      "SS08",
+      "SS09",
+      "SS10",
+      "SS11",
+      "SS12",
+      "SS13",
+      "SS14",
+      "SS15",
+      "SS16",
+      "SS17",
+      "SS18",
+      "SS19",
+      "SS20",
+      "SS21",
+      "SS22",
+      "SS23",
+      "SS24",
+      "SS25",
+      "SS26",
+      "SS27",
+      "SS28",
+      "SS29",
+      "SS30",
+      "SS31",
+      "SS32",
+      "SS33",
+      "SS34",
+      "SS35",
+      "SS36",
+      "SS37",
+      "SS38",
+      "SS39"
+    ],
+    "adjudicatedCases": 18,
+    "publicSyntheticCases": 21,
+    "rationale": "Only two current instruction source bindings change after the reviewed root-cause/disable repair. Existing coding, read-only, orchestration and safety boundaries for these unchanged prompts remain the same; no required/allowed/forbidden/intent/spec/split/denominator changes. Historical component-manifest and locked proofs remain unchanged. New bindings require fresh runs and grant no historical evaluation acceptance.",
+    "modelBehavior": "NOT_RUN"
+  }
+}
