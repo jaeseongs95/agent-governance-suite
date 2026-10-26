@@ -18,8 +18,10 @@ function signal(name, value) {
 }
 function gate(op, when, args, error) {
   const target = op === "renameSync" ? args[1] : args[0];
+  const markerParent = path.toNamespacedPath(path.dirname(target));
+  const lockPath = path.toNamespacedPath(cfg.lockPath);
   const kind = op === "mkdirSync" && path.basename(target).startsWith("owner-")
-    && (path.dirname(target).startsWith(cfg.lockPath + ".stage-") || path.dirname(target) === cfg.lockPath) ? "marker-preparation"
+    && (markerParent.startsWith(lockPath + ".stage-") || markerParent === lockPath) ? "marker-preparation"
     : op === "renameSync" && target === cfg.lockPath ? "publication"
     : target === cfg.lockPath ? "parent" : target === cfg.marker ? "observed-marker" : "other";
   const g = gates.find(g => !g.used && g.phase === phase && g.op === op && g.when === when && g.kind === kind);
