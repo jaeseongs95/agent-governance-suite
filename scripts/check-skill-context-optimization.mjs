@@ -12,7 +12,9 @@ const SESSION_BOARD_ADDITION = "scripts/fixtures/session-board-peer-message-guid
 const SESSION_BOARD_ADDITION_SHA256 = "381be4018118086b3c4087be043c004d8d6de986d42a6c0c14f182c2d76ed76f";
 const CS_HANDOFF_ADDITION = "scripts/fixtures/cs-engineering-handoff.2.8.0.md";
 const CS_HANDOFF_SHA256 = "c8937d58fd2d9193f191d86c629c9b54731d08d82ec12cb3249ff82e6362ed52";
-const CS_REGISTRY_SHA256 = "63fc38d9dff8570173af73092e320c4ff2467d26185fb6528ea33a8af59db6a9";
+// D280 exact three-field scope-review producer correction on 902a8693.
+// Historical 2.8.0 registry SHA256: 63fc38d9dff8570173af73092e320c4ff2467d26185fb6528ea33a8af59db6a9.
+const CS_REGISTRY_SHA256 = "1cc8d24a204a505ec815295abef93d5590763d3e29e937cb3df158eb988fb2be";
 const ENGINEERING_ADDITION = "scripts/fixtures/engineering-practices-handoff.2.8.1.md";
 const ENGINEERING_ADDITION_SHA256 = "6f4bc0fd90113630f077415038492cbceddbaafb9e4e566c750111fafb3abef1";
 const ENGINEERING_REGISTRY_SHA256 = "dd9c818c5e50d15316b3adc82c77c06810f3efbc6633c957855c1655d6159adc";

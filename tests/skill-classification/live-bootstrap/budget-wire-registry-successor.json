@@ -1,0 +1,140 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "ags-bootstrap-budget-registry-binding-r04",
+  "scope": "CURRENT_OFFLINE_SYNTHETIC_INPUT_BINDINGS_ONLY_NO_MONEY_OR_QUALIFICATION_CHANGE",
+  "sourceCommit": "902a86934658c23bb369c8fa5aad77d5c4e1f4fc",
+  "parentSourceDigest": "sha256:580819f41a2f61621cf09f6a6357b1cd21b138ee775752455e49d74c68213dfe",
+  "registryDigest": "sha256:b7b510fbc759a5c690ee2cfc3d1e31b2b22730e32916ab9e956b5925e3822577",
+  "inventoryDigest": "sha256:50b7420478d7e334e6ccbe72e7caaa71792f8ce381c01ccd880da71ba44d0a91",
+  "fixtureDigest": "sha256:7a69d6681e02aa1ce4925e0b3b3eb421cde064dd5a578d16af190e07db24f57b",
+  "fixtureOracleDigest": "sha256:92b7f4d74d88ae5ebae6de59891e7050bec6dacda92ab02e209216bb26d66ee8",
+  "provenance": "D280 exact registry producer correction only: NEEDS_REVIEW maps blocked and scoped failureHandling. Public prepare/codec capture; all 21 UTF8 byte lengths equal r03. Original budget/precision oracles, r03, money, thresholds, and case roles unchanged.",
+  "rows": [
+    {
+      "caseId": "SS01",
+      "requestDigest": "sha256:af74a07e2076b49a0b28233bee172282e5d2b00b01242a9abc01d81ccf5c5eeb",
+      "wireDigest": "sha256:21b7086b8fcdf5fa68979a2b77a744be1be7762ee16d77be57191510dbafaf41",
+      "utf8Bytes": 112933
+    },
+    {
+      "caseId": "SS02",
+      "requestDigest": "sha256:b9bd19c7c24af0e543af1aedaa5658f25281426d656c2c8753170f3c87e77243",
+      "wireDigest": "sha256:268efd98911106e3dc0af4d2ecde7a25a98696fbe89a49194ed60f1f6ecc5f74",
+      "utf8Bytes": 112902
+    },
+    {
+      "caseId": "SS03",
+      "requestDigest": "sha256:1885df615e2af4082819ef31f8221250bc788c3a72ffb9e3c7494f72138a26cf",
+      "wireDigest": "sha256:d61cf0abed79c5cc6d4c188fc8aae508fb272758dc41c4836ed31edc8620fd5f",
+      "utf8Bytes": 113005
+    },
+    {
+      "caseId": "SS04",
+      "requestDigest": "sha256:565e86295bac782cbb1b4c5e8ad785a07c226839c369b549a2fb318803a024ca",
+      "wireDigest": "sha256:8db65d3e7196e2e07737eefe40c0fe45fc7d2dea47daf27fad27a1cad1ad7d33",
+      "utf8Bytes": 113002
+    },
+    {
+      "caseId": "SS05",
+      "requestDigest": "sha256:81975a947201e214ce0a54e60001f612ab74e883fed04c3f97cac22de32c45d4",
+      "wireDigest": "sha256:7e3af2de95be64287dc46e5c82e729ab7351fe89cbdaffc44fc23f8cc89204b4",
+      "utf8Bytes": 112937
+    },
+    {
+      "caseId": "SS06",
+      "requestDigest": "sha256:bf7233e3c28d4ab72ea8d316d819dac778d1b9566d9af2ea333ecdacfa83b219",
+      "wireDigest": "sha256:f21545030e85106109fa8957451c2f226024e5fb10d89790ec2e9753cd87912d",
+      "utf8Bytes": 112951
+    },
+    {
+      "caseId": "SS07",
+      "requestDigest": "sha256:5d36bcef0218351c406809af39fac6b8913f95055a99bd16e4a7b5400946500c",
+      "wireDigest": "sha256:adf577b8e65c1a4877c77fa9e2a4416d5287860ec121967371242724a80f76a9",
+      "utf8Bytes": 112967
+    },
+    {
+      "caseId": "SS08",
+      "requestDigest": "sha256:4f32ac3129e5721f165d273c93f7036bb3f54559f48e17cf097260bf38c15cf1",
+      "wireDigest": "sha256:aa1bef8f5408a7dddda8d79ad3c8a91efc74dd5f7eb8076f176e421769c7ae39",
+      "utf8Bytes": 112922
+    },
+    {
+      "caseId": "SS09",
+      "requestDigest": "sha256:140fbd0e1eb254d88cae8a547dcdc02b7b2cc12e9d9de000e5bc42cd8ba72efd",
+      "wireDigest": "sha256:ed72757a67c28f6c6f933f4c45a7088830fb701ac12932120bfb7986839be201",
+      "utf8Bytes": 112906
+    },
+    {
+      "caseId": "SS10",
+      "requestDigest": "sha256:0d05f83faf003cea8409d54f0ea3577214c427d2a3fc7127e1c49735d4af8da0",
+      "wireDigest": "sha256:8b42e6c8a344fd7ab7317d3e018e82955b175f4450383a08c355599c29fa9d32",
+      "utf8Bytes": 112917
+    },
+    {
+      "caseId": "SS11",
+      "requestDigest": "sha256:5f3cfe8efd9419db8e6b8f40ad54e310f6546c1b6fe5d175c71fb4bf178a76da",
+      "wireDigest": "sha256:c9a9b585b9091d2919219352d397d5378d59279df16f8253468ebc12eb746aa1",
+      "utf8Bytes": 112969
+    },
+    {
+      "caseId": "SS12",
+      "requestDigest": "sha256:dd232eea335d1aead1b8979639df895f4a8ce208d313dd3df4e627213ad19e12",
+      "wireDigest": "sha256:eaf5c8eb2981eaab99a71670efda08a7efed590570cb8b0eda49d8b9a95b8810",
+      "utf8Bytes": 112806
+    },
+    {
+      "caseId": "SS13",
+      "requestDigest": "sha256:67664d4f30328e83c4ca97379621ada613135ed0087a242d4e89e23fb3073322",
+      "wireDigest": "sha256:5d99b8acb8098d65c30ca05a256ea79ecc1e509ab2c98e2ee98c2f7b40cab69c",
+      "utf8Bytes": 112847
+    },
+    {
+      "caseId": "SS14",
+      "requestDigest": "sha256:49880085f1dfde69d438a69e78e083e63526b95b324bd546347e07f9037f3779",
+      "wireDigest": "sha256:bf6c60ecaeff4ada64f6bb0a4420cd5246934102347f2f3aba14294cf4f29736",
+      "utf8Bytes": 112943
+    },
+    {
+      "caseId": "SS15",
+      "requestDigest": "sha256:17ecd0b704217e107c011e8c6fc8ba18b868cb5e3136c518d0eebf7d7b309adf",
+      "wireDigest": "sha256:cd55ddac1efe277c1fbaa565c54244fa11203687654b12bd6c5dd89f26c0f93f",
+      "utf8Bytes": 112821
+    },
+    {
+      "caseId": "SS16",
+      "requestDigest": "sha256:bebf1b611119caf687d68fe2ccaa0fd98f218f4cab3547922f56b8625c0e3f8c",
+      "wireDigest": "sha256:77c65cc33fa5e32bcf075847ec9fa1e09daeb16c2fef046a4317ed5fc4e1f139",
+      "utf8Bytes": 112909
+    },
+    {
+      "caseId": "SS17",
+      "requestDigest": "sha256:c6902517c4a8ec8e3eb835e5c2e51dad293316c58cfc2d0083ebe220fd4df726",
+      "wireDigest": "sha256:b30bd409151639de789b2b51439c9c26cc2fddb83db4fc4a22009265d120c58f",
+      "utf8Bytes": 112969
+    },
+    {
+      "caseId": "SS18",
+      "requestDigest": "sha256:e925cbeaa5969208648b43d7023089e2721e559fefd18a441922c833a4cdf86d",
+      "wireDigest": "sha256:b499d2504cb5a70513588aa79ba22923fca71ed2c2df35fc43e311ceefba87dd",
+      "utf8Bytes": 112880
+    },
+    {
+      "caseId": "SS23",
+      "requestDigest": "sha256:6621e5b53fcf2d481e3fcf12b3e31511095164217ecee164e8c496a063d03a1d",
+      "wireDigest": "sha256:04aaaa2c1ec205e239c239f49a206c863127cd50744d3c5eda3065a9e3620cd6",
+      "utf8Bytes": 112890
+    },
+    {
+      "caseId": "SS28",
+      "requestDigest": "sha256:db27d7e7a2c3980ba0fd9ebd96ab339c87bb2c53382bd1ebb7aedb84187305ce",
+      "wireDigest": "sha256:cfb5e7f81f6954cdfde5ae99aa9cd27d4d699bdba9daca2b2e3a46fee59b6350",
+      "utf8Bytes": 112813
+    },
+    {
+      "caseId": "SS37",
+      "requestDigest": "sha256:a7e8f60aab71f1261b97e99fa52f667d4a2a6206751d893c74f3cb06c722ac51",
+      "wireDigest": "sha256:7c0f6f3afb7556a99e97f3463bb802281cbba12e42adc0729b08153371149b18",
+      "utf8Bytes": 112843
+    }
+  ]
+}

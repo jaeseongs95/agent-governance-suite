@@ -134,15 +134,31 @@ export async function loadCurrentBudgetFixture(repo: string) {
   assert.equal(successor.fixtureDigest, hash(await readFile(path.join(repo, "tests/skill-classification/fixtures.json"))));
   assert.deepEqual(successor.rows.map((row: {caseId: string}) => row.caseId), predecessor.rows.map((row: {caseId: string}) => row.caseId));
   assert.deepEqual(successor.precisionCases.map((row: {id: string}) => row.id), precision.cases.map((row: {id: string}) => row.id));
-  const oracle = {...predecessor, inventoryDigest: successor.inventoryDigest, fixtureDigest: successor.fixtureDigest,
-    fixtureOracleDigest: successor.fixtureOracleDigest, rows: successor.rows, totals: successor.totals,
+  // D280 changes inventory/request bindings only; preserve every frozen money and byte-length expectation.
+  const registryBytes = await readFile(new URL("./budget-wire-registry-successor.json", import.meta.url));
+  assert.equal(hash(registryBytes), "sha256:d91aa491dc94817d44fe61eb2fd6f488e963687a6d88172c4719168ac41a2111");
+  const registrySuccessor = JSON.parse(registryBytes.toString("utf8"));
+  assert.equal(registrySuccessor.revision, "ags-bootstrap-budget-registry-binding-r04");
+  assert.equal(registrySuccessor.parentSourceDigest, hash(successorBytes));
+  assert.equal(registrySuccessor.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
+  assert.equal(registrySuccessor.fixtureDigest, successor.fixtureDigest);
+  assert.equal(registrySuccessor.fixtureOracleDigest, successor.fixtureOracleDigest);
+  assert.equal(registrySuccessor.rows.length, successor.rows.length);
+  const currentRows = successor.rows.map((row: {caseId: string; utf8Bytes: number}, index: number) => {
+    const binding = registrySuccessor.rows[index];
+    assert.equal(binding.caseId, row.caseId);
+    assert.equal(binding.utf8Bytes, row.utf8Bytes);
+    return {...row, requestDigest: binding.requestDigest, wireDigest: binding.wireDigest};
+  });
+  const oracle = {...predecessor, inventoryDigest: registrySuccessor.inventoryDigest, fixtureDigest: successor.fixtureDigest,
+    fixtureOracleDigest: successor.fixtureOracleDigest, rows: currentRows, totals: successor.totals,
     syntheticOverBudgetCases: predecessor.syntheticOverBudgetCases.map((row: {id: string}, index: number) => {
       assert.equal(successor.syntheticOverBudgetCases[index].id, row.id);
       return {...row, ...successor.syntheticOverBudgetCases[index]};
     }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...successor.fractionalRoundingFixture}};
   return {oracleBytes, boundaryBytes, oracle, precision: {...precision,
     cases: precision.cases.map((row: {id: string}, index: number) => ({...row, ...successor.precisionCases[index]}))},
-  successorDigest: hash(successorBytes), successorRevision: successor.revision};
+  successorDigest: hash(registryBytes), successorRevision: registrySuccessor.revision};
 }
 
 // Explicit authoring command captures only current public request/wire inputs. It neither runs nor qualifies a provider.
