@@ -94,21 +94,26 @@ async function brokerLockPid(target: string): Promise<number | null> {
   }
 }
 
-async function terminateBroker(stateDirectory: string): Promise<void> {
+async function terminateBroker(stateDirectory: string, observe?: (event: string) => void): Promise<void> {
+  observe?.("endpoint-read-enter");
   const endpointPath = path.join(stateDirectory, "endpoint.json");
   const lockPath = path.join(stateDirectory, "broker.lock");
   const rawEndpoint = await optionalFile(endpointPath);
+  observe?.("endpoint-read-returned");
   const lockPid = rawEndpoint === null ? await brokerLockPid(lockPath) : null;
   if (rawEndpoint === null && lockPid === null) return;
   const pid = rawEndpoint === null
     ? (lockPid ?? 0)
     : (JSON.parse(rawEndpoint) as { pid: number }).pid;
   if (!Number.isInteger(pid) || pid < 1) throw new Error("The test broker PID is invalid.");
+  observe?.("signal-enter");
   try { process.kill(pid, "SIGTERM"); }
   catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ESRCH") return;
     throw error;
   }
+  observe?.("signal-returned");
+  observe?.("liveness-enter");
   await waitUntil(async () => {
     try { process.kill(pid, 0); return false; }
     catch (error) {
@@ -116,6 +121,7 @@ async function terminateBroker(stateDirectory: string): Promise<void> {
       throw error;
     }
   }, 10_000);
+  observe?.("liveness-returned");
 }
 
 async function startSourceBroker(stateDirectory: string): Promise<void> {
@@ -126,12 +132,27 @@ async function startSourceBroker(stateDirectory: string): Promise<void> {
   await waitForSessionMessageBrokerReady(stateDirectory, child, 5000);
 }
 
-afterEach(async () => {
+afterEach(async (context) => {
+  const traced = context.task.name === "converges simultaneous startup requests on one broker";
+  const startedAt = performance.now();
+  let records = 0;
+  const observe = traced ? (event: string) => {
+    if (records++ >= 16) return;
+    try {
+      process.stderr.write(`AGS_CONVERGENCE_CLEANUP ${JSON.stringify({ event, atMs: performance.now() - startedAt })}\n`);
+    } catch { /* Observation must not replace the original cleanup result or error. */ }
+  } : undefined;
+  observe?.("hook-enter");
   vi.unstubAllEnvs();
   for (const directory of directories.splice(0)) {
-    await terminateBroker(directory);
+    observe?.("terminate-enter");
+    await terminateBroker(directory, observe);
+    observe?.("terminate-returned");
+    observe?.("rm-enter");
     await rm(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+    observe?.("rm-returned");
   }
+  observe?.("hook-returned");
 });
 
 function stateDirectory(): string {
