@@ -172,7 +172,7 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       const forgedClass = await rawCall<WorkflowPlanV1>("plan_workflow",
         syntheticRootArguments(database, "plan_workflow", forgedClassArgs, "fresh-root-for-forged-class"));
       expect(forgedClass.data).toBeNull();
-      expect(forgedClass.error).toMatchObject({ code: "BINDING_INVALID", message: "Host attestation token signature is invalid." });
+      expect(forgedClass.error, JSON.stringify(forgedClass)).toMatchObject({ code: "BINDING_INVALID", message: "Host attestation token signature is invalid." });
       const frame = { schemaVersion: "1.0.0", workspace: { workspaceId: "packaged-attestation", locator: "fixture:workspace" },
         controlArtifacts: [{ artifactId: "acceptance", role: "pass-condition", locator: "fixture:acceptance", digest: `sha256:${"a".repeat(64)}` }],
         targetArtifacts: [{ artifactId: "candidate", role: "candidate", locator: "fixture:candidate", digest: `sha256:${"b".repeat(64)}` }],

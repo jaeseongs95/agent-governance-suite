@@ -100,7 +100,8 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
       const token = issueHostAttestation(store, adapter, observation);
       expect(token).toEqual(expect.any(String));
       if (mode === "name-only" || mode === "mismatched") {
-        expect(await call({...args, [HOST_ATTESTATION_FIELD]: token})).toMatchObject({ok: false, error: {code: "BINDING_REQUIRED"}});
+        const unconfiguredToken = await call({...args, [HOST_ATTESTATION_FIELD]: token});
+        expect(unconfiguredToken, JSON.stringify(unconfiguredToken)).toMatchObject({ok: false, error: {code: "BINDING_REQUIRED"}});
         expect(await call(args)).toMatchObject({ok: false, error: {code: "BINDING_REQUIRED"}});
       } else {
         expect(await call({...args, taskEnvelope: {...args.taskEnvelope, objective: "tampered signed input"}, [HOST_ATTESTATION_FIELD]: token}))
@@ -108,14 +109,26 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
         expect(await call({...args, [HOST_ATTESTATION_FIELD]: "synthetic-forged-token"}))
           .toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
         const planned = await call({...args, [HOST_ATTESTATION_FIELD]: token});
-        expect(planned.ok).toBe(true);
+        expect(planned.ok, JSON.stringify(planned)).toBe(true);
         expect(planned.data!.bootstrapExecution!.context).toMatchObject({model: selectedModel, modelClass: mode === "builtin-default" ? "frontier" : "deep",
           reasoningEffort: "high", actorId: hostActorId(selectedHost, session)});
         expect(await call({...args, [HOST_ATTESTATION_FIELD]: token})).toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
-        expect(issueHostAttestation(store, adapter, {...observation, model: "unobserved-model"})).toBeNull();
+        const unknown = issueHostAttestation(store, adapter, {...observation, model: "unobserved-model", toolUseId: "unknown-call"});
+        expect(unknown).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
+        expect(JSON.parse(Buffer.from(unknown!.split(".")[1]!, "base64url").toString("utf8")))
+          .toMatchObject({v: 2, model: "unobserved-model", reasoningEffort: "high", eligibility: null});
+        const unknownResult = await call({...args, [HOST_ATTESTATION_FIELD]: unknown});
+        expect(unknownResult, JSON.stringify(unknownResult)).toMatchObject({ok: false, error: {code: "BINDING_INVALID",
+          message: "Host observation has no matching trusted execution capability and policy revision."}});
         expect(issueHostAttestation(store, adapter, {...observation, actorId: hostActorId("forged-host", session)})).toBeNull();
         if (mode === "installed") {
-          expect(issueHostAttestation(store, adapter, {...observation, reasoningEffort: "low"})).toBeNull();
+          const low = issueHostAttestation(store, adapter, {...observation, reasoningEffort: "low", toolUseId: "low-call"});
+          expect(low).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
+          expect(JSON.parse(Buffer.from(low!.split(".")[1]!, "base64url").toString("utf8")))
+            .toMatchObject({v: 2, model: selectedModel, reasoningEffort: "low", eligibility: null});
+          const lowResult = await call({...args, [HOST_ATTESTATION_FIELD]: low});
+          expect(lowResult, JSON.stringify(lowResult)).toMatchObject({ok: false, error: {code: "BINDING_INVALID",
+            message: "Host observation has no matching trusted execution capability and policy revision."}});
           const weakArgs = argumentsFor("entrypoint-insufficient-capability");
           const weak = issueHostAttestation(store, adapter, {...observation, input: weakArgs, model: "opaque-fourth-light", toolUseId: "weak-call"});
           expect(weak).toEqual(expect.any(String));

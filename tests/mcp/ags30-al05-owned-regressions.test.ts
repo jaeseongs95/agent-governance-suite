@@ -101,8 +101,21 @@ describe("AGS-D-0033 latest actual model identity", () => {
     const key = vi.spyOn(store, "getOrCreateSecret");
     const output = handleHostAttestationHook(input, store, { adapter, maxWaitMs: 0, now,
       readText: () => transcript, readSessionModel: () => session("2026-10-25T00:00:20.000Z") });
-    expect(updated(output)).toEqual(clean);
-    expect(key).not.toHaveBeenCalled();
+    const signed = updated(output);
+    expect(signed).toEqual({...clean, [HOST_ATTESTATION_FIELD]: expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u)});
+    const token = String(signed[HOST_ATTESTATION_FIELD]);
+    expect(JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8")))
+      .toMatchObject({v: 2, model: "al05-unknown-new-model", reasoningEffort: "high", eligibility: null});
+    expect(key).toHaveBeenCalled();
+    const provider = new HostAttestationProvider(store, adapter);
+    let failure: unknown;
+    try {
+      provider.run("plan_workflow", signed, () =>
+        provider.observe({phase: "bootstrap", taskId: clean.taskId, runId: null, stageId: null, revision: null}));
+    } catch (error) { failure = error; }
+    expect(failure).toMatchObject({code: "BINDING_INVALID",
+      message: "Host observation has no matching trusted execution capability and policy revision."});
+    expect(provider.lastObservedCapability()).toBeNull();
   });
 
   it("keeps a genuinely newer session model and the synthetic-placeholder control", () => {
@@ -165,9 +178,21 @@ it.each([{ label: "missing", supported: undefined }, { label: "empty", supported
     expect(selected.resolveModel!(model)?.supportedEfforts).toEqual([]);
     const store = new InMemoryWorkflowStore();
     const key = vi.spyOn(store, "getOrCreateSecret");
-    expect(issueHostAttestation(store, selected, { tool: "plan_workflow", input: clean, model,
+    const token = issueHostAttestation(store, selected, { tool: "plan_workflow", input: clean, model,
       reasoningEffort: "high", actorId: hostActorId(adapter.host, sessionId), sessionId,
-      turnId: "catalog-turn", toolUseId: "catalog-call" })).toBeNull();
-    expect(key).not.toHaveBeenCalled();
+      turnId: "catalog-turn", toolUseId: "catalog-call" });
+    expect(token).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
+    expect(JSON.parse(Buffer.from(token!.split(".")[1]!, "base64url").toString("utf8")))
+      .toMatchObject({v: 2, model, reasoningEffort: "high", eligibility: null});
+    expect(key).toHaveBeenCalled();
+    const provider = new HostAttestationProvider(store, selected);
+    let failure: unknown;
+    try {
+      provider.run("plan_workflow", {...clean, [HOST_ATTESTATION_FIELD]: token}, () =>
+        provider.observe({phase: "bootstrap", taskId: clean.taskId, runId: null, stageId: null, revision: null}));
+    } catch (error) { failure = error; }
+    expect(failure).toMatchObject({code: "BINDING_INVALID",
+      message: "Host observation has no matching trusted execution capability and policy revision."});
+    expect(provider.lastObservedCapability()).toBeNull();
   },
 );
