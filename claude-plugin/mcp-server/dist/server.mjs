@@ -34572,7 +34572,8 @@ var jevSkillSelectionChoiceWireAdapter = {
       const probabilities = answer.probabilities;
       if (Object.keys(probabilities).length !== labels.length || Object.keys(probabilities).some((label) => !labels.some((expected2) => expected2 === label)) || labels.some((label) => typeof probabilities[label] !== "number" || !Number.isFinite(probabilities[label]) || probabilities[label] < 0 || probabilities[label] > 1))
         throw new Error("INVALID_JEV_CHOICE_DISTRIBUTION");
-      if (Math.abs(labels.reduce((sum, label) => sum + probabilities[label], 0) - 1) > 1e-9) throw new Error("INVALID_JEV_CHOICE_DISTRIBUTION");
+      const maximumRoundingError = labels.length * 5e-3 + Number.EPSILON * labels.length;
+      if (Math.abs(labels.reduce((sum, label) => sum + probabilities[label], 0) - 1) > maximumRoundingError) throw new Error("INVALID_JEV_CHOICE_DISTRIBUTION");
       const judgment = answer.choice;
       const selectedProbability = probabilities[judgment];
       if (labels.some((label) => probabilities[label] > selectedProbability)) throw new Error("INVALID_JEV_CHOICE_WINNER");

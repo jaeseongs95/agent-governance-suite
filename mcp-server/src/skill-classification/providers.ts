@@ -523,8 +523,10 @@ export const jevSkillSelectionChoiceWireAdapter: ClassificationWireAdapter = {
       if (Object.keys(probabilities).length !== labels.length || Object.keys(probabilities).some(label => !labels.some(expected => expected === label))
         || labels.some(label => typeof probabilities[label] !== "number" || !Number.isFinite(probabilities[label]) || probabilities[label] < 0 || probabilities[label] > 1))
         throw new Error("INVALID_JEV_CHOICE_DISTRIBUTION");
-      // Only floating-point summation tolerance; this is not a judgment threshold.
-      if (Math.abs(labels.reduce((sum, label) => sum + (probabilities[label] as number), 0) - 1) > 1e-9) throw new Error("INVALID_JEV_CHOICE_DISTRIBUTION");
+      // Observed two-decimal wire rounding: half a .01 step per label, plus FP slack.
+      // This is a validation allowance, not a semantic threshold or normalization.
+      const maximumRoundingError = labels.length * .005 + Number.EPSILON * labels.length;
+      if (Math.abs(labels.reduce((sum, label) => sum + (probabilities[label] as number), 0) - 1) > maximumRoundingError) throw new Error("INVALID_JEV_CHOICE_DISTRIBUTION");
       const judgment = answer.choice as typeof labels[number];
       const selectedProbability = probabilities[judgment] as number;
       if (labels.some(label => (probabilities[label] as number) > selectedProbability)) throw new Error("INVALID_JEV_CHOICE_WINNER");

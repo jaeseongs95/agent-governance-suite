@@ -319,3 +319,34 @@ describe("Choice selected-label probability consistency", () => {
     expect(jevSkillSelectionChoiceWireAdapter.decode(f.body, f.request, f.profile).response.judgments[0]!.judgment).toBe("uncertain");
   });
 });
+
+describe("Choice observed two-decimal quantization envelope", () => {
+  it.each([
+    [.99, true], [1.01, true], [.98, false], [1.02, false], [0, false],
+    [.985, true], [1.015, true], [.985 - 1e-12, false], [1.015 + 1e-12, false],
+  ] as const)("validates synthetic sum %s with accepted=%s at both public adapter boundaries", async (sum, accepted) => {
+    for (const long of [false, true]) {
+      const f = long ? longChoiceFixture() : fixture(1);
+      const adapter = long ? jevSkillSelectionChoiceLongContextWireAdapter : jevSkillSelectionChoiceWireAdapter;
+      const answer = f.body.answers["skill-0"]!;
+      answer.choice = "not-needed";
+      // Synthetic, not a copy of a live response. Only the wire sum/rounding condition is reproduced.
+      answer.probabilities = sum === 0 ? {needed: 0, "not-needed": 0, uncertain: 0}
+        : {needed: .25, "not-needed": .5, uncertain: sum - .75};
+      const original = structuredClone(f.body);
+      const decode = () => adapter.decode(f.body, f.request, f.profile);
+      if (accepted) {
+        expect(decode).not.toThrow();
+        const value = decode();
+        expect(value.response.judgments[0]!.judgment).toBe("not-needed");
+        expect(value.diagnostics!.scores[0]!.value).toBe(.4);
+        expect((await f.provider.classify(f.request, f.profile, new AbortController().signal)).response.judgments[0]!.judgment).toBe("not-needed");
+      } else {
+        expect(decode).toThrow("INVALID_JEV_CHOICE_DISTRIBUTION");
+        await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "INVALID_PROVIDER_RESPONSE", invalid: true});
+      }
+      expect(f.fetcher).toHaveBeenCalledTimes(1);
+      expect(f.body).toEqual(original);
+    }
+  });
+});
