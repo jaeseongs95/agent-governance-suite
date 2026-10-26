@@ -1,9 +1,8 @@
+import { isHookEntry } from "./hook-entry.js";
 import { actorAccess } from "./input-observation.js";
 import "./builtin-hook-host-adapters.js";
-import { hookFailureContext, hookFailureReason } from "./hook-error-diagnostics.js";
+import { hookFailureContext, hookFailureReason, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
 import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import {
   SUMMARY_MAX_LENGTH,
@@ -88,9 +87,12 @@ export async function runSessionBoardHook(
   host: string,
   raw: string | (() => string),
   request: typeof sessionMessageRequest = sessionMessageRequest,
+  failClosed = false,
 ): Promise<string> {
   let board: Board | null = null;
   let phase: BoardFailurePhase = "stdin";
+  let primary: unknown;
+  let failed = false;
   try {
     const text = typeof raw === "function" ? raw() : raw;
     phase = "input";
@@ -125,16 +127,24 @@ export async function runSessionBoardHook(
     const output = handleSessionBoardHook(input, board, host, new Date().toISOString(), verifiedInternalWake);
     return Object.keys(output).length > 0 ? JSON.stringify(output) : "";
   } catch (cause) {
-    // Fail open, but keep the failed phase and redacted cause.
+    primary = cause;
+    failed = true;
     reportBoardFailure(phase, cause);
+    if (failClosed) throw cause;
     return "";
   } finally {
-    try { board?.close(); } catch (cause) { reportBoardFailure("close", cause); }
+    try { board?.close(); } catch (cause) {
+      reportBoardFailure("close", cause);
+      if (failClosed) {
+        if (!failed) throw cause;
+        if (primary instanceof Error) retainHookFailureSecondary(primary, cause);
+      }
+    }
   }
 }
 
 // Direct execution is the Codex hook; the Claude Code launcher imports runSessionBoardHook instead.
-if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
+if (isHookEntry(import.meta.url, "session-board-hook")) {
   try {
     const host = resolveHookHost(process.argv.slice(2), "codex");
     // The hook reads stdin itself so a read failure keeps its own phase and cause instead of becoming invalid input.

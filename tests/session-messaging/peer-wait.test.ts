@@ -7,13 +7,29 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import "../../mcp-server/src/builtin-hook-host-adapters.js";
-import { nativePeerWait, adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
+import { nativePeerWait, adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { PeerWaitPolicy } from "../../mcp-server/src/peer-wait-policy.js";
 import { dispatchSessionMessageBrokerOperation as dispatch } from "../../mcp-server/src/session-message-broker.js";
 import { requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 
-const sender = { host: "codex", sessionId: "peer-wait-owner" };
+import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
+import type { ActorObservation } from "../../mcp-server/src/input-observation.js";
+
+// Explicit fake root for parser/policy core tests; not native capture or R7 evidence.
+const syntheticHost = "synthetic-peer-wait";
+const syntheticRoot: ActorObservation = {role: "root", basis: "observed", reasonCode: "SYNTHETIC_PEER_WAIT_ROOT"};
+registerHookHostAdapter(syntheticHost, {
+  adaptInput: (input, host) => {
+    const mapped = adaptHostInput(input, "codex");
+    return {...mapped, observation: {...mapped.observation, host, actor: input.syntheticActor as ActorObservation}};
+  },
+  // Delegate to the actual wait argument parser, without treating the synthetic role as native evidence.
+  peerWait: observation => nativePeerWait({...observation, host: "codex"}),
+  deliveryProfile: () => ({transport: "codex-queue", capabilities: {supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message"}, blocksEmptyWakePrompt: true}),
+  processPid: () => undefined,
+});
+const sender = { host: syntheticHost, sessionId: "peer-wait-owner" };
 const target = { host: "codex", sessionId: "peer-wait-worker" };
 const secondTarget = { host: "codex", sessionId: "peer-wait-worker-2" };
 const root = process.env.PEER_WAIT_TEST_PLUGIN_ROOT ?? fileURLToPath(new URL("../../", import.meta.url));
@@ -22,6 +38,7 @@ const directories: string[] = [];
 const stores: SessionMessageStore[] = [];
 afterEach(async () => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
   for (const store of stores.splice(0)) store.close();
   for (const child of children.splice(0)) {
     if (child.exitCode === null && child.signalCode === null) {
@@ -32,8 +49,8 @@ afterEach(async () => {
 });
 
 function observedWait(overrides: Record<string, unknown> = {}) {
-  return adaptHostInput({ hook_event_name: "PreToolUse", session_id: sender.sessionId, agent_id: "",
-    tool_name: "mcp__codex_app__wait_threads", tool_input: { targets: [{ threadId: target.sessionId }], timeoutMs: 60_000 }, ...overrides }, "codex").observation;
+  return adaptHostInput({ hook_event_name: "PreToolUse", session_id: sender.sessionId, syntheticActor: syntheticRoot,
+    tool_name: "mcp__codex_app__wait_threads", tool_input: { targets: [{ threadId: target.sessionId }], timeoutMs: 60_000 }, ...overrides }, syntheticHost).observation;
 }
 function storeFixture() {
   const store = new SessionMessageStore(":memory:"); stores.push(store);
@@ -53,7 +70,7 @@ function decision(store: SessionMessageStore, timeoutMs = 60_000, extra: Record<
 }
 
 describe("peer wait policy boundaries", () => {
-  it.each(["key-order", "local-default", "target-order", "duplicate"])("normalizes native semantic equivalence: %s", (variant) => {
+  it.each(["key-order", "local-default", "target-order", "duplicate"])("normalizes actual parser semantic equivalence under a synthetic root: %s", (variant) => {
     const store = storeFixture(); proveWake(store);
     store.send({ sender, target: secondTarget, body: "Second synthetic request" });
     const rows = [{ threadId: target.sessionId, afterCursor: "cursor-a" }, { threadId: secondTarget.sessionId, afterCursor: "cursor-b" }];
@@ -91,7 +108,7 @@ describe("peer wait policy boundaries", () => {
     expect(nativePeerWait(observedWait({ tool_input: { targets: [{ threadId: target.sessionId, afterCursor: 1 }], timeoutMs: 0 } }))).toBeNull();
   });
 
-  it("recognizes exactly the local native wait surface and arguments", () => {
+  it("parses exactly the supported local wait surface and arguments under a synthetic root", () => {
     expect(nativePeerWait(observedWait())).toMatchObject({ targets: [target], timeoutMs: 60_000 });
     expect(nativePeerWait(observedWait({ tool_input: { targets: [{ threadId: target.sessionId, hostId: "local" }], timeoutMs: 0 } }))).toMatchObject({ timeoutMs: 0 });
     expect(nativePeerWait(observedWait({ tool_input: { targets: [{ threadId: target.sessionId }] } }))).toMatchObject({ timeoutMs: 120_000 });
@@ -225,7 +242,9 @@ async function preparePackaged(directory: string) {
   await requestSessionMessageOnce("acquire-relay", { target: sender, instanceId: "packaged-instance", transport: "codex-queue", relayId: "packaged-relay", pid: process.pid, parentPid: process.pid }, directory);
   const replyId = await sendSynthetic(directory, { sender: target, target: sender, body: "Synthetic reply" });
   await requestSessionMessageOnce("reserve-wake", { target: sender, nonce: "nonce-packaged-peer-wait" }, directory);
-  packaged(directory, "session-message-hook.mjs", { hook_event_name: "UserPromptSubmit", session_id: sender.sessionId, agent_id: "", prompt: "[agent-governance-suite:wake:nonce-packaged-peer-wait]" });
+  // Broker core fixture supplies consumed-wake evidence directly; no native hook actor is fabricated.
+  expect(await requestSessionMessageOnce("claim-wake", {target: sender, nonces: ["nonce-packaged-peer-wait"]}, directory))
+    .toMatchObject({recognized: true});
   return { requestId, replyId };
 }
 async function sendSynthetic(directory: string, payload: Record<string, unknown>): Promise<string> {
@@ -233,16 +252,27 @@ async function sendSynthetic(directory: string, payload: Record<string, unknown>
   await requestSessionMessageOnce("send", { sender: payload.sender, messageId }, directory);
   return messageId;
 }
-const hookInput = (timeoutMs: number, extra: Record<string, unknown> = {}) => ({ hook_event_name: "PreToolUse", session_id: sender.sessionId, agent_id: "", tool_name: "mcp__codex_app__wait_threads", tool_input: { targets: [{ threadId: target.sessionId }], timeoutMs }, ...extra });
+const hookInput = (timeoutMs: number, extra: Record<string, unknown> = {}) => ({ hook_event_name: "PreToolUse", session_id: sender.sessionId, syntheticActor: syntheticRoot, tool_name: "mcp__codex_app__wait_threads", tool_input: { targets: [{ threadId: target.sessionId }], timeoutMs }, ...extra });
 
-it("enforces native wait through the public packaged hook and preserves unrelated waits", async () => {
+async function syntheticHook(directory: string, input: Record<string, unknown>) {
+  vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", directory);
+  return await handleSessionMessageHook(input, syntheticHost) as {hookSpecificOutput?: {permissionDecision?: string}};
+}
+
+it("enforces core wait policy through a synthetic root hook and keeps native Codex unavailable", async () => {
   const { directory } = await launch(); await preparePackaged(directory);
-  expect(packaged(directory, "session-message-hook.mjs", hookInput(60_000))).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
-  expect(packaged(directory, "session-message-hook.mjs", hookInput(0)).hookSpecificOutput.permissionDecision).toBeUndefined();
-  expect(packaged(directory, "session-message-hook.mjs", hookInput(0))).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
-  for (const extra of [{ tool_name: "clock.sleep" }, { tool_name: "exec_command" }, { agent_id: "child" }, { agent_id: undefined },
+  expect((await syntheticHook(directory, hookInput(60_000)))).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
+  expect((await syntheticHook(directory, hookInput(0))).hookSpecificOutput?.permissionDecision).toBeUndefined();
+  expect((await syntheticHook(directory, hookInput(0)))).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
+  for (const extra of [{ tool_name: "clock.sleep" }, { tool_name: "exec_command" }, { syntheticActor: {role: "child", basis: "observed", reasonCode: "SYNTHETIC_CHILD"} }, { syntheticActor: {role: "indeterminate", basis: "unavailable", reasonCode: "SYNTHETIC_UNAVAILABLE"} },
     { tool_input: { targets: [{ threadId: target.sessionId }, { threadId: "other-chat" }], timeoutMs: 60_000 } }]) {
-    expect(packaged(directory, "session-message-hook.mjs", hookInput(60_000, extra)).hookSpecificOutput?.permissionDecision).not.toBe("deny");
+    expect((await syntheticHook(directory, hookInput(60_000, extra))).hookSpecificOutput?.permissionDecision).not.toBe("deny");
+  }
+  // Actual host adapter negatives stay separate from the synthetic core-positive checks.
+  for (const actor of [{}, {agent_id: ""}, {agent_id: "synthetic-child"}]) {
+    const nativeInput = {...hookInput(60_000), ...actor};
+    expect(adaptHostInput(nativeInput, "codex").observation.actor).toEqual({role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_CAPTURE_REQUIRED"});
+    expect(packaged(directory, "session-message-hook.mjs", nativeInput).hookSpecificOutput?.permissionDecision).not.toBe("deny");
   }
   const config = JSON.parse(await readFile(path.join(root, "hooks/hooks.json"), "utf8"));
   expect(config.hooks.PreToolUse.some((entry: { matcher: string }) => new RegExp(entry.matcher).test("mcp__codex_app__wait_threads"))).toBe(true);
@@ -258,16 +288,16 @@ it("the public CLI consumes the decision before delay and sends no repeated poll
   expect(endpoint.pid).toBe(children.at(-1)!.pid);
 }, 15_000);
 
-it("public native hook suppresses equivalent payloads but permits actual cursor change", async () => {
+it("synthetic root hook suppresses equivalent payloads but permits actual cursor change", async () => {
   const { directory } = await launch(); await preparePackaged(directory);
   await sendSynthetic(directory, { sender, target: secondTarget, body: "Second synthetic request" });
   const rows = [{ threadId: target.sessionId, afterCursor: "a" }, { threadId: secondTarget.sessionId, afterCursor: "b" }];
   const input = (targets: unknown[]) => hookInput(0, { tool_input: { targets, timeoutMs: 0 } });
-  expect(packaged(directory, "session-message-hook.mjs", input(rows)).hookSpecificOutput?.permissionDecision).toBeUndefined();
+  expect((await syntheticHook(directory, input(rows))).hookSpecificOutput?.permissionDecision).toBeUndefined();
   const equivalent = [...rows].reverse().map(({ threadId, afterCursor }) => ({ afterCursor, hostId: "local", threadId }));
-  expect(packaged(directory, "session-message-hook.mjs", input([...equivalent, equivalent[0]]))).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
-  expect(packaged(directory, "session-message-hook.mjs", input([{ ...rows[0], afterCursor: "c" }, rows[1]])).hookSpecificOutput?.permissionDecision).toBeUndefined();
-  expect(packaged(directory, "session-message-hook.mjs", input([{ threadId: target.sessionId, afterCursor: 1 }])).hookSpecificOutput?.permissionDecision).toBeUndefined();
+  expect((await syntheticHook(directory, input([...equivalent, equivalent[0]])))).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
+  expect((await syntheticHook(directory, input([{ ...rows[0], afterCursor: "c" }, rows[1]]))).hookSpecificOutput?.permissionDecision).toBeUndefined();
+  expect((await syntheticHook(directory, input([{ threadId: target.sessionId, afterCursor: 1 }]))).hookSpecificOutput?.permissionDecision).toBeUndefined();
 }, 15_000);
 
 it("public CLI equivalent retransmissions consume one decision each and state change restores a snapshot", async () => {

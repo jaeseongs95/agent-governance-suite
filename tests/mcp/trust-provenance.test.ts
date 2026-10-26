@@ -18,6 +18,7 @@ import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
+import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
 
 const directories: string[] = [];
 const stores = new Set<TrustStore>();
@@ -326,10 +327,11 @@ describe("trust provenance", () => {
       .toMatchObject({ receiptIntegrity: "invalid", sourceClaimMatch: null });
   });
 
-  it("exposes read-only MCP validation without trusting an arbitrary caller host name", async () => {
+  it("exposes read-only MCP validation while rejecting missing proof and arbitrary caller identity", async () => {
     const { store } = await openStore();
     const validator = new ContractValidator();
-    const server = createMcpServer({} as WorkflowService, updateService(), undefined, undefined, undefined, validator, "default", null, null, undefined, new TrustService(store));
+    const root = createSyntheticRootProofFixture();
+    const server = createMcpServer({} as WorkflowService, updateService(), undefined, undefined, undefined, validator, "default", null, null, undefined, new TrustService(store), null, root.proofs);
     const client = new Client({ name: "trust-provenance", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
@@ -337,12 +339,35 @@ describe("trust provenance", () => {
     try {
       const listed = (await client.listTools()).tools.find((tool) => tool.name === "validate_collaboration_decision");
       expect(listed?.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false });
-      const response = await client.callTool({
+      const missing = await client.callTool({
+        name: "validate_collaboration_decision",
+        arguments: { decision: decision({ sourceOriginKind: "unknown" }) },
+      });
+      const missingText = (missing.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")?.text ?? "{}";
+      expect(JSON.parse(missingText)).toMatchObject({
+        ok: false,
+        data: null,
+        error: { code: "BINDING_REQUIRED", details: { reasonCode: "ROOT_HOOK_PROOF_REQUIRED" } },
+      });
+      // Caller-supplied identity remains a negative boundary case, never proof authority.
+      const arbitrary = await client.callTool({
         name: "validate_collaboration_decision",
         arguments: {
           decision: decision({ sourceOriginKind: "unknown" }),
           _sessionBinding: { host: "arbitrary-name", sessionId: "caller-supplied", actorKind: "main", observedBy: "caller" },
         },
+      });
+      const arbitraryText = (arbitrary.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")?.text ?? "{}";
+      expect(JSON.parse(arbitraryText)).toMatchObject({
+        ok: false,
+        data: null,
+        error: { code: "BINDING_INVALID", details: { reasonCode: "CALLER_SESSION_BINDING_REJECTED" } },
+      });
+      const response = await client.callTool({
+        name: "validate_collaboration_decision",
+        arguments: root.argumentsFor("validate_collaboration_decision", {
+          decision: decision({ sourceOriginKind: "unknown" }),
+        }),
       });
       const text = (response.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")?.text ?? "{}";
       expect(JSON.parse(text)).toMatchObject({
@@ -350,6 +375,11 @@ describe("trust provenance", () => {
         data: {
           structuralValidity: "valid",
           receiptFound: false,
+          callerObservation: {
+            host: "synthetic-root-host", sessionId: "synthetic-root-session",
+            actorKind: "main", observedBy: "SYNTHETIC_TEST_ROOT_OBSERVATION", assurance: "observed",
+          },
+          callerBindingAssurance: "observational",
           authorityCapabilities: { directUserInputAttestation: false, authorityIssuance: false, scopedDelegation: false },
         },
       });

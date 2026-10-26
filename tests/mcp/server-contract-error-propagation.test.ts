@@ -9,6 +9,7 @@ import { createMcpServer } from "../../mcp-server/src/server.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import type { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import type { WorkflowService } from "../../mcp-server/src/workflow-service.js";
+import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
 
 function updateService(): PluginUpdateService {
   const store = new InMemoryPluginUpdateStore();
@@ -37,7 +38,8 @@ describe("MCP boundary contract error propagation", () => {
         throw new WorkflowContractError("MCP_UNAVAILABLE", "Synthetic message storage is unavailable.", { reason: "SYNTHETIC_STORAGE_FAILED" });
       },
     } as unknown as SessionMessageService;
-    const server = createMcpServer({} as WorkflowService, updateService(), undefined, undefined, undefined, new ContractValidator(), "default", null, null, failing);
+    const root = createSyntheticRootProofFixture();
+    const server = createMcpServer({} as WorkflowService, updateService(), undefined, undefined, undefined, new ContractValidator(), "default", null, null, failing, null, null, root.proofs);
     const client = new Client({ name: "contract-error-propagation", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
@@ -45,7 +47,7 @@ describe("MCP boundary contract error propagation", () => {
     try {
       const response = await client.callTool({
         name: "prepare_session_message",
-        arguments: { schemaVersion: "1.0.0", targetHost: "synthetic-host", targetSessionId: "synthetic-session", body: "hello" },
+        arguments: root.argumentsFor("prepare_session_message", { schemaVersion: "1.0.0", targetHost: "synthetic-host", targetSessionId: "synthetic-session", body: "hello" }),
       });
       const text = (response.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")?.text ?? "{}";
       const parsed = JSON.parse(text);

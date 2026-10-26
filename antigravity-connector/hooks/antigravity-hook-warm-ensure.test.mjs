@@ -1,4 +1,12 @@
-import { test } from "vitest";
+import { test, vi } from "vitest";
+
+const effects = vi.hoisted(() => ({request: vi.fn(), spawn: vi.fn(), token: vi.fn(() => "synthetic-T1")}));
+vi.mock("node:perf_hooks", () => ({performance: {now: () => 100}}));
+vi.mock("node:child_process", async original => ({...await original(), spawn: effects.spawn}));
+vi.mock("../../mcp-server/src/session-message-client.ts", async original => ({...await original(), sessionMessageRequest: effects.request}));
+vi.mock("../../mcp-server/src/process-identity.ts", async original => ({...await original(), processStartToken: effects.token}));
+import {handleSessionMessageHook} from "../../mcp-server/src/session-message-hook.ts";
+import {adaptHostInput} from "../../mcp-server/src/host-input-adapter.ts";
 import assert from "node:assert/strict";
 import {
   executeAntigravityHookEvent,
@@ -6,26 +14,52 @@ import {
   startAntigravitySessionPresenceAndRelay,
 } from "./antigravity-hook-runner.mjs";
 
-test("warm ensure and host process identity scenarios", async () => {
+test("Antigravity routing/process observations never authorize unsupported actor warm ensure", async () => {
 const pair = Object.freeze({ pid: 1234, startToken: "synthetic-T1" });
 const payload = (event, extra = {}) => ({ conversationId: "warm-fixture", agent_id: "", hook_event_name: event, ...extra });
 const calls = [];
+const results = [];
 let resolutions = 0;
 const options = () => ({
   now: () => 100, entryMonotonicMs: 100,
   resolveHostProcess: () => { resolutions++; return pair; },
-  sessionMessageHook: async (...args) => { calls.push(args); return {}; },
+  sessionMessageHook: async (...args) => {
+    calls.push(args);
+    assert.equal(args[1], "antigravity");
+    assert.deepEqual(adaptHostInput(args[0], args[1]).observation.actor,
+      {role: "indeterminate", basis: "unavailable", reasonCode: "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED"});
+    // Exercise the actual common role gate with broker/process/spawn effects isolated.
+    const result = await handleSessionMessageHook(...args);
+    results.push(result);
+    return result;
+  },
 });
-const reset = () => { calls.length = 0; resolutions = 0; };
+const assertNoAuthorityEffects = () => {
+  // Runner failures are advisory and can be swallowed; every injected common call must finish.
+  assert.equal(results.length, calls.length, "common role gate must finish without an advisory runner catch hiding a failure");
+  for (const args of calls) {
+    assert.equal(args[1], "antigravity");
+    assert.deepEqual(adaptHostInput(args[0], args[1]).observation.actor,
+      {role: "indeterminate", basis: "unavailable", reasonCode: "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED"});
+  }
+  assert.equal(effects.request.mock.calls.length, 0, "unsupported actor must not issue broker operations");
+  assert.equal(effects.spawn.mock.calls.length, 0, "unsupported actor must not spawn a relay");
+  assert.equal(effects.token.mock.calls.length, 0, "unsupported actor must not inspect a host token in the common hook");
+};
+const reset = () => {
+  assertNoAuthorityEffects();
+  calls.length = 0; results.length = 0; resolutions = 0;
+};
 
-// Source-proposed only: these injected callbacks do not exercise native PowerShell or a broker.
+// Synthetic process/routing fixture, not native actor capture or R7 evidence.
+// The injected callback runs the actual common gate; broker effects and process tokens are mocked.
 {
   reset();
   await executeAntigravityHookEvent(payload("SessionStart"), "SessionStart", "session-message", options());
   assert.equal(resolutions, 1);
   assert.equal(calls.length, 1);
   assert.equal(calls[0][0].hook_event_name, "SessionStart");
-  assert.equal(calls[0][1], "gemini");
+  assert.equal(calls[0][1], "antigravity");
   assert.equal(calls[0][2], pair.pid);
   assert.equal(calls[0][3].ensureRelay, true);
   assert.equal(calls[0][3].defaultQueueWake, true);
@@ -39,11 +73,11 @@ for (const event of ["PreInvocation", "PostInvocation", "Stop"]) {
   assert.equal(calls.length, 1, event);
   assert.equal(calls[0][0].hook_event_name, "PostToolUse", event);
   assert.equal(calls[0][3].ensureRelay, undefined, event);
-  assert.equal(calls[0][3].recoverExistingSession, true, event);
+  assert.equal(calls[0][3].recoverExistingSession, undefined, event);
   assert.equal(calls[0][3].defaultQueueWake, true, event);
-  assert.equal(typeof calls[0][3].resolveHostProcess, "function", event);
-  assert.deepEqual(calls[0][3].resolveHostProcess(), pair, event);
-  assert.equal(resolutions, 1, event);
+  assert.equal(calls[0][3].resolveHostProcess, undefined, event);
+  assert.equal(resolutions, 0, event);
+  assertNoAuthorityEffects();
 }
 for (const event of ["PreToolUse", "PostToolUse"]) {
   reset();
@@ -62,8 +96,9 @@ for (const extra of [{ terminationReason: "USER_CANCELED" }, { error: "synthetic
   reset();
   await executeAntigravityHookEvent(payload("SessionStart", { agent_id: "synthetic-child" }),
     "SessionStart", "session-message", options());
-  assert.equal(resolutions, 0);
-  assert.equal(calls.length, 0);
+  assert.equal(resolutions, 1);
+  assert.equal(calls.length, 1);
+  assertNoAuthorityEffects();
 }
 {
   reset();
@@ -125,13 +160,16 @@ for (const rows of [
     inspectProcessChain: () => { time = 1401; return [shell, host]; } }), null);
 }
 
-// A valid process pair never upgrades an absent or malformed actor identity to main.
+// A valid process pair may be routed, but never upgrades an absent/malformed actor to root authority.
 for (const actor of [{}, { agent_id: null }, { agent_id: 0 }]) {
   reset();
   await executeAntigravityHookEvent({ conversationId: "unknown-actor-fixture", ...actor },
     "SessionStart", "session-message", options());
-  assert.equal(resolutions, 0);
-  assert.equal(calls.length, 0);
+  assert.equal(resolutions, 1);
+  assert.equal(calls.length, 1);
+  assertNoAuthorityEffects();
 }
 
+assertNoAuthorityEffects();
+vi.restoreAllMocks();
 });

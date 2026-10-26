@@ -5,6 +5,16 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
+// mcp-server/src/hook-entry.ts
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+function isHookEntry(url2, name) {
+  const argument = process.argv[1];
+  if (!argument || path.resolve(argument) !== fileURLToPath(url2)) return false;
+  const basename = path.basename(argument);
+  return basename === "".concat(name, ".mjs") || basename === "".concat(name, ".ts");
+}
+
 // mcp-server/src/hook-error-diagnostics.ts
 import { writeSync } from "node:fs";
 
@@ -105,7 +115,7 @@ function writeFailureDiagnostic(serialized, writer = defaultSyncStderr) {
 import { createHash as createHash3 } from "node:crypto";
 import { types as utilTypes } from "node:util";
 import { closeSync, constants, fstatSync, openSync, readSync, statSync as statSync2 } from "node:fs";
-import path5 from "node:path";
+import path6 from "node:path";
 
 // mcp-server/src/host-input-adapter.ts
 var hostFailures = {
@@ -490,22 +500,22 @@ var geminiExecutionAdapter = defaultSuite.adapters.get("gemini");
 
 // mcp-server/src/runtime-config.ts
 import { homedir } from "node:os";
-import path from "node:path";
+import path2 from "node:path";
 function resolveWorkflowDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   const configured = environment.AGENT_GOVERNANCE_DB_PATH?.trim();
-  if (configured) return path.resolve(currentWorkingDirectory, configured);
-  return path.resolve(userStateDirectory(environment, platform, homeDirectory), "workflows.sqlite3");
+  if (configured) return path2.resolve(currentWorkingDirectory, configured);
+  return path2.resolve(userStateDirectory(environment, platform, homeDirectory), "workflows.sqlite3");
 }
 function userStateDirectory(environment, platform, homeDirectory) {
   let stateRoot;
   if (platform === "win32") {
-    stateRoot = environment.LOCALAPPDATA?.trim() || path.join(homeDirectory, "AppData", "Local");
+    stateRoot = environment.LOCALAPPDATA?.trim() || path2.join(homeDirectory, "AppData", "Local");
   } else if (platform === "darwin") {
-    stateRoot = path.join(homeDirectory, "Library", "Application Support");
+    stateRoot = path2.join(homeDirectory, "Library", "Application Support");
   } else {
-    stateRoot = environment.XDG_STATE_HOME?.trim() || path.join(homeDirectory, ".local", "state");
+    stateRoot = environment.XDG_STATE_HOME?.trim() || path2.join(homeDirectory, ".local", "state");
   }
-  return path.resolve(stateRoot, "agent-governance-suite");
+  return path2.resolve(stateRoot, "agent-governance-suite");
 }
 
 // mcp-server/src/session-message-protocol.ts
@@ -547,7 +557,7 @@ function normalizePeerWaitTargets(targets) {
 import { execFile } from "node:child_process";
 import { existsSync as existsSync2 } from "node:fs";
 import net from "node:net";
-import path4 from "node:path";
+import path5 from "node:path";
 
 // mcp-server/src/trust-store.ts
 import { DatabaseSync } from "node:sqlite";
@@ -572,11 +582,11 @@ var WorkflowContractError = class extends Error {
 // mcp-server/src/convergence-logic.ts
 import { createHash as createHash2 } from "node:crypto";
 import { existsSync, statSync } from "node:fs";
-import path3 from "node:path";
+import path4 from "node:path";
 
 // mcp-server/src/workspace-identity.ts
 import fs from "node:fs";
-import path2 from "node:path";
+import path3 from "node:path";
 var WALK_LIMIT = 256;
 var READ_LIMIT = 4096;
 var URI_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]+:\/\//u;
@@ -614,17 +624,17 @@ function normalizedKey(value) {
   return slashed.replace(/\/+$/u, "");
 }
 function physicalPath(target) {
-  let current = path2.resolve(target);
+  let current = path3.resolve(target);
   const suffix = [];
   for (let depth = 0; depth < WALK_LIMIT; depth += 1) {
     try {
       const existing = fs.realpathSync.native(current);
-      return { real: path2.join(existing, ...suffix), existing };
+      return { real: path3.join(existing, ...suffix), existing };
     } catch (error61) {
       const code = error61.code;
-      const parent = path2.dirname(current);
+      const parent = path3.dirname(current);
       if (code !== "ENOENT" && code !== "ENOTDIR" || parent === current) throw unresolved(target, code ?? "unreadable");
-      suffix.unshift(path2.basename(current));
+      suffix.unshift(path3.basename(current));
       current = parent;
     }
   }
@@ -647,33 +657,33 @@ function readHead(file2) {
 function discoverGit(physical) {
   let evidence = physical.existing;
   try {
-    let directory = isDirectory(physical.existing) ? physical.existing : path2.dirname(physical.existing);
+    let directory = isDirectory(physical.existing) ? physical.existing : path3.dirname(physical.existing);
     for (let depth = 0; depth < WALK_LIMIT; depth += 1) {
-      evidence = path2.join(directory, ".git");
+      evidence = path3.join(directory, ".git");
       const stat = fs.statSync(evidence, { throwIfNoEntry: false });
       if (stat) {
         let gitDir = evidence;
         if (!stat.isDirectory()) {
           const pointer = /^gitdir: ([^\r\n]+)/u.exec(readHead(evidence))?.[1];
           if (!pointer) throw unresolved(evidence, "missing gitdir line");
-          gitDir = path2.resolve(directory, pointer);
+          gitDir = path3.resolve(directory, pointer);
           if (!isDirectory(gitDir)) throw unresolved(gitDir, "gitdir is not a directory");
         }
         let commonDir = gitDir;
-        evidence = path2.join(gitDir, "commondir");
+        evidence = path3.join(gitDir, "commondir");
         if (fs.statSync(evidence, { throwIfNoEntry: false })) {
           const pointer = readHead(evidence).trim();
           if (!pointer) throw unresolved(evidence, "empty commondir");
-          commonDir = path2.resolve(gitDir, pointer);
+          commonDir = path3.resolve(gitDir, pointer);
           if (!isDirectory(commonDir)) throw unresolved(commonDir, "commondir is not a directory");
         }
         return {
           commonDir: normalizedKey(fs.realpathSync.native(commonDir)),
           checkoutRoot: normalizedKey(directory),
-          relative: normalizedKey(path2.relative(directory, physical.real))
+          relative: normalizedKey(path3.relative(directory, physical.real))
         };
       }
-      const parent = path2.dirname(directory);
+      const parent = path3.dirname(directory);
       if (parent === directory) return null;
       directory = parent;
     }
@@ -688,8 +698,8 @@ function repositoryCheckouts(commonDir) {
   const complete = false;
   try {
     if (!isDirectory(commonDir)) return { roots: [], complete: false };
-    if (path2.basename(commonDir) === ".git") roots.add(normalizedKey(physicalPath(path2.dirname(commonDir)).real));
-    const worktrees = path2.join(commonDir, "worktrees");
+    if (path3.basename(commonDir) === ".git") roots.add(normalizedKey(physicalPath(path3.dirname(commonDir)).real));
+    const worktrees = path3.join(commonDir, "worktrees");
     if (fs.statSync(worktrees, { throwIfNoEntry: false })) {
       const listing = fs.opendirSync(worktrees);
       try {
@@ -700,11 +710,11 @@ function repositoryCheckouts(commonDir) {
             break;
           }
           try {
-            const pointer = readHead(path2.join(worktrees, name, "gitdir")).trim();
-            if (!pointer || isUnsupported(pointer) || normalizedKey(path2.basename(pointer)) !== ".git") {
+            const pointer = readHead(path3.join(worktrees, name, "gitdir")).trim();
+            if (!pointer || isUnsupported(pointer) || normalizedKey(path3.basename(pointer)) !== ".git") {
               continue;
             }
-            roots.add(normalizedKey(physicalPath(path2.dirname(path2.resolve(worktrees, name, pointer))).real));
+            roots.add(normalizedKey(physicalPath(path3.dirname(path3.resolve(worktrees, name, pointer))).real));
           } catch {
           }
         }
@@ -727,7 +737,7 @@ function repositoryInDirectory(container, commonDir) {
       const key = normalizedKey(directory);
       if (visited.has(key)) continue;
       visited.add(key);
-      if (fs.statSync(path2.join(directory, ".git"), { throwIfNoEntry: false })) {
+      if (fs.statSync(path3.join(directory, ".git"), { throwIfNoEntry: false })) {
         if (discoverGit({ real: directory, existing: directory })?.commonDir === commonDir) return "overlap";
       }
       const listing = fs.opendirSync(directory);
@@ -735,7 +745,7 @@ function repositoryInDirectory(container, commonDir) {
         for (let entry = listing.readSync(); entry; entry = listing.readSync()) {
           if (++inspected > READ_LIMIT) return "unknown";
           if (entry.name === ".git") continue;
-          const child = path2.join(directory, entry.name);
+          const child = path3.join(directory, entry.name);
           if (entry.isDirectory()) pending.push(child);
           else if (entry.isSymbolicLink()) {
             if (isDirectory(child)) pending.push(child);
@@ -768,7 +778,7 @@ function resolveRootIdentity(workspaceLocator, entries, options = {}) {
     const target = globIndex < 0 ? entry : "".concat(segments.slice(0, globIndex).join("/"), "/");
     return {
       entry,
-      ...identify(path2.resolve(workspaceLocator, target)),
+      ...identify(path3.resolve(workspaceLocator, target)),
       conservative: globIndex < 0 ? null : "glob-prefix"
     };
   });
@@ -808,7 +818,7 @@ function surfaceDigest(root) {
   return convergenceDigest({ locator: root.frame.workspace.locator, entries: writeSurface(root) });
 }
 function normalizedScope(value, workspaceLocator) {
-  const normalized = path3.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
+  const normalized = path4.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
   return process.platform === "win32" ? normalized.toLowerCase() : normalized;
 }
 function inferredSurfaces(identity) {
@@ -821,7 +831,7 @@ function coversEarlierCheckout(current, earlier) {
 }
 function surfaceBacked(surface, observedOutsideCheckouts) {
   const unchanged = observedOutsideCheckouts && surface.git === null && !surface.conservative;
-  return existsSync((unchanged ? path3.posix.dirname(surface.physical) : surface.physical) || "/");
+  return existsSync((unchanged ? path4.posix.dirname(surface.physical) : surface.physical) || "/");
 }
 function activeRootIdentity(root, stored) {
   const digest3 = surfaceDigest(root);
@@ -973,7 +983,7 @@ function planRootInsertion(root, actives) {
   };
 }
 function normalizeWorkspaceLocator(locator) {
-  const resolved = path3.resolve(locator);
+  const resolved = path4.resolve(locator);
   return process.platform === "win32" ? resolved.toLowerCase() : resolved;
 }
 
@@ -991,14 +1001,14 @@ function resolveGeminiAgentApi(environment = process.env, platform = process.pla
   const configured = environment.ANTIGRAVITY_AGENTAPI_EXE;
   if (configured) {
     if (platform === "win32") {
-      const root = path4.win32.parse(configured).root;
-      if (!path4.win32.isAbsolute(configured) || root === "\\" || root === "/" || path4.win32.extname(configured).toLowerCase() !== ".exe") return null;
+      const root = path5.win32.parse(configured).root;
+      if (!path5.win32.isAbsolute(configured) || root === "\\" || root === "/" || path5.win32.extname(configured).toLowerCase() !== ".exe") return null;
     }
     return { command: configured, argsPrefix: ["agentapi"] };
   }
   if (platform === "win32") return null;
   const homeDir = environment.USERPROFILE || environment.HOME || "";
-  const command = path4.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
+  const command = path5.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
   return { command: existsSync2(command) ? command : "agentapi", argsPrefix: [] };
 }
 function reportWakeFailure(phase, error61) {
@@ -1246,7 +1256,7 @@ function queueEnabled(host, explicit, environment, diagnose, defaultEnabled = fa
   }
   const directory = environment.PLUGIN_DATA;
   if (directory === void 0) return defaultEnabled;
-  if (!path5.isAbsolute(directory) || process.platform === "win32" && ["\\", "/"].includes(path5.parse(directory).root)) {
+  if (!path6.isAbsolute(directory) || process.platform === "win32" && ["\\", "/"].includes(path6.parse(directory).root)) {
     return disabled("invalid-plugin-data");
   }
   let descriptor2 = -1;
@@ -1256,7 +1266,7 @@ function queueEnabled(host, explicit, environment, diagnose, defaultEnabled = fa
     validDirectory = statSync2(directory).isDirectory();
     if (validDirectory) {
       acquisitionPhase = "open";
-      descriptor2 = openSync(path5.join(directory, "session-messaging.json"), constants.O_RDONLY | constants.O_NONBLOCK);
+      descriptor2 = openSync(path6.join(directory, "session-messaging.json"), constants.O_RDONLY | constants.O_NONBLOCK);
     }
   } catch (cause) {
     return absent(cause) ? defaultEnabled : disabled("read-failed", { phase: acquisitionPhase, cleanup: "not-acquired", failure: failed(acquisitionPhase, cause) });
@@ -1384,8 +1394,7 @@ for (const [host, adapter] of builtinHookHostAdapters) registerHookHostAdapter(h
 
 // mcp-server/src/host-attestation-hook.ts
 import { closeSync as closeSync3, fstatSync as fstatSync3, mkdirSync as mkdirSync2, openSync as openSync3, readFileSync, readSync as readSync3, renameSync, rmSync, writeFileSync } from "node:fs";
-import path8 from "node:path";
-import { fileURLToPath } from "node:url";
+import path9 from "node:path";
 
 // mcp-server/src/host-attestation.ts
 import { createHash as createHash4, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
@@ -1602,7 +1611,7 @@ function observeCodexHook(input2, options = {}) {
 
 // mcp-server/src/sqlite-workflow-store.ts
 import { chmodSync, mkdirSync } from "node:fs";
-import path6 from "node:path";
+import path7 from "node:path";
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 
 // mcp-server/src/plugin-version.ts
@@ -1684,7 +1693,7 @@ var SqliteWorkflowStore = class {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
     }
     if (databasePath !== ":memory:") {
-      mkdirSync(path6.dirname(path6.resolve(databasePath)), { recursive: true, mode: 448 });
+      mkdirSync(path7.dirname(path7.resolve(databasePath)), { recursive: true, mode: 448 });
     }
     let openedDatabase = null;
     try {
@@ -1695,7 +1704,7 @@ var SqliteWorkflowStore = class {
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       if (databasePath !== ":memory:" && process.platform !== "win32") {
-        chmodSync(path6.resolve(databasePath), 384);
+        chmodSync(path7.resolve(databasePath), 384);
       }
     } catch (cause) {
       try {
@@ -2241,7 +2250,7 @@ var SqliteWorkflowStore = class {
 };
 
 // mcp-server/src/skill-classification/host-discovery-adapter.ts
-import path7 from "node:path";
+import path8 from "node:path";
 
 // node_modules/.pnpm/zod@4.5.4/node_modules/zod/v4/classic/external.js
 var external_exports = {};
@@ -2987,10 +2996,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path9) {
-  if (!path9)
+function getElementAtPath(obj, path10) {
+  if (!path10)
     return obj;
-  return path9.reduce((acc, key) => acc?.[key], obj);
+  return path10.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -3402,11 +3411,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path9, issues) {
+function prefixIssues(path10, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path9);
+    iss.path.unshift(path10);
     return iss;
   });
 }
@@ -3839,16 +3848,16 @@ function flattenError(error61, mapper = (issue2) => issue2.message) {
 }
 function formatError(error61, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error62, path9 = []) => {
+  const processError = (error62, path10 = []) => {
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path9, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path10, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else {
-        const fullpath = [...path9, ...issue2.path];
+        const fullpath = [...path10, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -3887,17 +3896,17 @@ function formatError(error61, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error61, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error62, path9 = []) => {
+  const processError = (error62, path10 = []) => {
     var _a3;
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path9, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path10, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else {
-        const fullpath = [...path9, ...issue2.path];
+        const fullpath = [...path10, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -3936,8 +3945,8 @@ function treeifyError(error61, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path9 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path9) {
+  const path10 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path10) {
     if (typeof seg === "number")
       segs.push("[".concat(seg, "]"));
     else if (typeof seg === "symbol")
@@ -20395,13 +20404,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path9 = ref.slice(1).split("/").filter(Boolean);
-  if (path9.length === 0) {
+  const path10 = ref.slice(1).split("/").filter(Boolean);
+  if (path10.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path9[0] === defsKey) {
-    const key = path9[1] === void 0 ? void 0 : decodeJSONPointerSegment(path9[1]);
+  if (path10[0] === defsKey) {
+    const key = path10[1] === void 0 ? void 0 : decodeJSONPointerSegment(path10[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error("Reference not found: ".concat(ref));
     }
@@ -21166,7 +21175,7 @@ var hostSnapshotSchema = external_exports.strictObject({
     enabled: external_exports.boolean(),
     installed: external_exports.boolean(),
     hostSupported: external_exports.boolean(),
-    root: text3.refine((value) => path7.isAbsolute(value) && !value.includes("\0")).nullable()
+    root: text3.refine((value) => path8.isAbsolute(value) && !value.includes("\0")).nullable()
   })).max(1e3)
 });
 
@@ -21245,7 +21254,7 @@ function sleepSync(milliseconds) {
 function transcriptCandidates(transcriptPath, sessionId, agentId) {
   const candidates = [transcriptPath];
   if (agentId) {
-    candidates.push(path8.join(path8.dirname(transcriptPath), sessionId, "subagents", "agent-".concat(agentId, ".jsonl")));
+    candidates.push(path9.join(path9.dirname(transcriptPath), sessionId, "subagents", "agent-".concat(agentId, ".jsonl")));
   }
   return [...new Set(candidates)];
 }
@@ -21467,7 +21476,7 @@ function sessionModelUpdate(input2, now = /* @__PURE__ */ new Date()) {
   return source && model ? { sessionId, record: { model, source, observedAt: now.toISOString() } } : null;
 }
 function sessionModelFile(directory, sessionId) {
-  return path8.join(directory, "".concat(digest2(sessionId), ".json"));
+  return path9.join(directory, "".concat(digest2(sessionId), ".json"));
 }
 function writeSessionModel(directory, sessionId, value) {
   const file2 = sessionModelFile(directory, sessionId);
@@ -21635,7 +21644,7 @@ function handleRegisteredHostAttestationHook(kind, input2, context) {
 }
 registerHookAttestationStrategy("claude-hook", {
   observe(input2, context) {
-    const modelDirectory = path8.join(path8.dirname(context.databasePath), "host-models");
+    const modelDirectory = path9.join(path9.dirname(context.databasePath), "host-models");
     const update = sessionModelUpdate(input2);
     if (update) {
       writeSessionModel(modelDirectory, update.sessionId, update.record);
@@ -21710,7 +21719,7 @@ async function main() {
   }
   if (Object.keys(output2).length > 0) process.stdout.write(JSON.stringify(output2));
 }
-if (path8.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) await main();
+if (isHookEntry(import.meta.url, "host-attestation-hook")) await main();
 export {
   CLAUDE_TRANSCRIPT_MAX_BYTES,
   claudeCodeActorId,

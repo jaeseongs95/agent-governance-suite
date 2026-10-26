@@ -13,6 +13,7 @@ import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
+import { SESSION_PROOF_FIELD, SessionActorProofs } from "../../mcp-server/src/session-actor-proof.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { RuntimeSkillClassificationGateway, type ClassificationRuntimeSnapshot, type CurrentClassificationTask } from "../../mcp-server/src/skill-classification/gateway.js";
@@ -106,11 +107,12 @@ async function harness(options: { root?: string; needed?: string[]; uncertain?: 
   const gateway = new RuntimeSkillClassificationGateway({ root, service, readRuntime,
     observeRuntime: () => digestClassificationValue({ runtime, additionalSource: runtimeBytes.additionalSource }), observeTask, observeHostSkills });
   const validator = new ContractValidator(), store = new InMemoryWorkflowStore();
+  const sessionProofs = new SessionActorProofs(store);
   const attestation = options.attest === false ? null : new HostAttestationProvider(store, adapter);
   const workflow = new WorkflowService(new FileSkillRegistry(path.join(repository, "skills/registry.json"), validator), validator, store, null, attestation);
   const updateFetcher = vi.fn(async () => { throw new Error("NETWORK_FORBIDDEN_IN_MOCK_TEST"); });
   const updates = new PluginUpdateService(new InMemoryPluginUpdateStore(), { fetcher: updateFetcher });
-  const server = createMcpServer(workflow, updates, undefined, undefined, undefined, validator, "default", attestation, null, undefined, null, gateway);
+  const server = createMcpServer(workflow, updates, undefined, undefined, undefined, validator, "default", attestation, null, undefined, null, gateway, sessionProofs);
   const client = new Client({ name: "classification-offline-boundary", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport); await client.connect(clientTransport);
@@ -122,7 +124,14 @@ async function harness(options: { root?: string; needed?: string[]; uncertain?: 
     expect(token).not.toBeNull(); return { ...args, [HOST_ATTESTATION_FIELD]: token };
   };
   const call = async <T>(name: string, args: Record<string, unknown>, expectClassificationFailure = false, sessionId = "synthetic-session"): Promise<ApiResultV1<T>> => {
-    const response = await client.callTool({ name, arguments: name === "classify_skills" && options.attest !== false ? sign(args, undefined, name, sessionId) : args }, undefined,
+    const observedInput = name === "classify_skills" && options.attest !== false ? sign(args, undefined, name, sessionId) : args;
+    // Synthetic root fixture only; this does not observe native host or process identity.
+    // Sign after host attestation so the one-use root proof binds the exact transported input.
+    const callInput = { ...observedInput, [SESSION_PROOF_FIELD]: sessionProofs.issue({
+      host: adapter.host, sessionId, callId: `fixture-root-call-${++sequence}`, kind: "tool-boundary", boundaryPhase: "before",
+      actor: { role: "root", basis: "observed", reasonCode: "SYNTHETIC_CLASSIFICATION_ROOT" },
+    }, name, observedInput) };
+    const response = await client.callTool({ name, arguments: callInput }, undefined,
       options.requestTimeoutMs === undefined ? undefined : { timeout: options.requestTimeoutMs });
     const text = response.content as { type: string; text?: string }[];
     const result = JSON.parse(text.find(x => x.type === "text")!.text!) as ApiResultV1<T>;

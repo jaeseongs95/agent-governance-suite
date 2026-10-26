@@ -1,10 +1,10 @@
+import { isHookEntry } from "./hook-entry.js";
 import { actorAccess } from "./input-observation.js";
 import { hookFailure, hookFailureContext, hookFailureReason, retainHookFailureCause, retainHookFailureSecondary, tagHookFailure, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 import "./builtin-hook-host-adapters.js";
 import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
-import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 
@@ -497,7 +497,7 @@ export async function runSessionMessageHook(host: SupportedHookHost, raw: string
   return (await runSessionMessageHookOutcome(host, raw, explicitHostPid, options)).output;
 }
 
-if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
+if (isHookEntry(import.meta.url, "session-message-hook")) {
   // Fail-open stdout/exit status stay unchanged; each failed stage retains its phase/reason diagnostic.
   const failed = (phase: HookFailurePhase, error: unknown): void => {
     reportHookFailure(phase, error);

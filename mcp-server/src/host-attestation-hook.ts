@@ -1,8 +1,8 @@
+import { isHookEntry } from "./hook-entry.js";
 import { hookFailureContext, hookFailureReason, retainHookFailureSecondary, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 import "./builtin-hook-host-adapters.js";
 import { closeSync, fstatSync, mkdirSync, openSync, readFileSync, readSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import {
   HOST_ATTESTATION_FIELD,
@@ -684,4 +684,4 @@ async function main(): Promise<void> {
   if (Object.keys(output).length > 0) process.stdout.write(JSON.stringify(output));
 }
 
-if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) await main();
+if (isHookEntry(import.meta.url, "host-attestation-hook")) await main();

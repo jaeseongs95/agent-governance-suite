@@ -1,7 +1,6 @@
+import { isHookEntry } from "./hook-entry.js";
 import "./builtin-hook-host-adapters.js";
 import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { adaptHostInput, hookAttestationKind, isGovernanceHookTool, resolveHookHost } from "./host-input-adapter.js";
 import { actorAccess } from "./input-observation.js";
 import { SessionActorProofs, SESSION_PROOF_FIELD, withoutSessionProof } from "./session-actor-proof.js";
@@ -49,12 +48,12 @@ export async function runGovernanceHook(host: string, raw: string, environment: 
     const databasePath = resolveWorkflowDatabasePath(environment);
     store = new SqliteWorkflowStore(databasePath);
     if (BOARD_TOOLS.has(tool)) {
-      const encoded = await runSessionBoardHook(host, JSON.stringify(currentInput));
+      const encoded = await runSessionBoardHook(host, JSON.stringify(currentInput), undefined, true);
       domainOutput = encoded ? record(JSON.parse(encoded)) : {};
     } else if (MESSAGE_TOOLS.has(tool)) {
       domainOutput = await handleSessionMessageHook(currentInput, host);
     } else if (CONTINUITY_TOOLS.has(tool)) {
-      const encoded = runContinuityHook(JSON.stringify(currentInput), environment, host);
+      const encoded = runContinuityHook(JSON.stringify(currentInput), environment, host, true);
       domainOutput = encoded ? record(JSON.parse(encoded)) : {};
     } else if (HOST_ATTESTATION_TOOLS.has(tool)) {
       const kind = hookAttestationKind(host);
@@ -95,7 +94,7 @@ export async function runGovernanceHook(host: string, raw: string, environment: 
   return { ok: true, output: JSON.stringify(output) };
 }
 
-if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
+if (isHookEntry(import.meta.url, "governance-hook")) {
   try {
     const result = await runGovernanceHook(resolveHookHost(process.argv.slice(2), "codex"), readFileSync(0, "utf8"));
     if (result.output) process.stdout.write(result.output);

@@ -25,6 +25,7 @@ try {
   const environment = {
     ...process.env,
     AGENT_GOVERNANCE_DB_PATH: path.join(dataDirectory, "workflows.sqlite3"),
+    AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(dataDirectory, "continuity.sqlite3"),
   };
   stage = "import";
   const bundle = await import("../mcp-server/dist/governance-hook.mjs");

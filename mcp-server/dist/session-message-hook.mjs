@@ -1,5 +1,15 @@
 #!/usr/bin/env node
 
+// mcp-server/src/hook-entry.ts
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+function isHookEntry(url, name) {
+  const argument = process.argv[1];
+  if (!argument || path.resolve(argument) !== fileURLToPath(url)) return false;
+  const basename = path.basename(argument);
+  return basename === "".concat(name, ".mjs") || basename === "".concat(name, ".ts");
+}
+
 // mcp-server/src/input-observation.ts
 import { types as utilTypes } from "node:util";
 function supportsInjection(capabilities, kind) {
@@ -124,7 +134,7 @@ function writeFailureDiagnostic(serialized, writer = defaultSyncStderr) {
 import { createHash as createHash3 } from "node:crypto";
 import { types as utilTypes5 } from "node:util";
 import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
-import path5 from "node:path";
+import path6 from "node:path";
 
 // mcp-server/src/host-input-adapter.ts
 import { types as utilTypes2 } from "node:util";
@@ -207,10 +217,10 @@ import { types as utilTypes3 } from "node:util";
 import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
-import path2 from "node:path";
+import path3 from "node:path";
 import { performance as performance2 } from "node:perf_hooks";
 import tls from "node:tls";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
 
 // skills/coordinate-subagents/references/model-routing-presets.json
 var model_routing_presets_default = {
@@ -560,28 +570,28 @@ var geminiExecutionAdapter = defaultSuite.adapters.get("gemini");
 
 // mcp-server/src/runtime-config.ts
 import { homedir } from "node:os";
-import path from "node:path";
+import path2 from "node:path";
 function sharedUserStateDirectory(environment, homeDirectory) {
   const configured = environment.AGENT_GOVERNANCE_SHARED_STATE_DIR?.trim();
   if (configured) {
-    if (!path.isAbsolute(configured)) {
+    if (!path2.isAbsolute(configured)) {
       throw new Error("AGENT_GOVERNANCE_SHARED_STATE_DIR must be an absolute path.");
     }
-    return path.normalize(configured);
+    return path2.normalize(configured);
   }
-  return path.resolve(homeDirectory, ".agent-governance-suite");
+  return path2.resolve(homeDirectory, ".agent-governance-suite");
 }
 function resolveSessionMessageStateDirectory(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   void platform;
   const configured = environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR?.trim();
-  if (configured) return path.resolve(currentWorkingDirectory, configured);
-  return path.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
+  if (configured) return path2.resolve(currentWorkingDirectory, configured);
+  return path2.join(sharedUserStateDirectory(environment, homeDirectory), "session-messaging");
 }
 function resolveTrustDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   void platform;
   const configured = environment.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim();
-  if (configured) return path.resolve(currentWorkingDirectory, configured);
-  return path.join(
+  if (configured) return path2.resolve(currentWorkingDirectory, configured);
+  return path2.join(
     resolveSessionMessageStateDirectory(environment, platform, homeDirectory, currentWorkingDirectory),
     "trust.sqlite3"
   );
@@ -633,9 +643,9 @@ var deadlineMetadata = /* @__PURE__ */ new WeakMap();
 function statePaths(stateDirectory = resolveSessionMessageStateDirectory()) {
   return {
     stateDirectory,
-    endpoint: path2.join(stateDirectory, "endpoint.json"),
-    token: path2.join(stateDirectory, "broker.token"),
-    certificate: path2.join(stateDirectory, "broker-cert.pem")
+    endpoint: path3.join(stateDirectory, "endpoint.json"),
+    token: path3.join(stateDirectory, "broker.token"),
+    certificate: path3.join(stateDirectory, "broker-cert.pem")
   };
 }
 function deadlineError(message) {
@@ -937,8 +947,8 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         }
         throwIfAborted(signal);
         assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        const adjacentBroker = fileURLToPath(new URL("./session-message-broker.mjs", import.meta.url));
-        const brokerPath = existsSync(adjacentBroker) ? adjacentBroker : fileURLToPath(new URL("../dist/session-message-broker.mjs", import.meta.url));
+        const adjacentBroker = fileURLToPath2(new URL("./session-message-broker.mjs", import.meta.url));
+        const brokerPath = existsSync(adjacentBroker) ? adjacentBroker : fileURLToPath2(new URL("../dist/session-message-broker.mjs", import.meta.url));
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
         let child;
         try {
@@ -1137,13 +1147,13 @@ import { execFile as execFile2 } from "node:child_process";
 import { createHash as createHash2, randomUUID as randomUUID2 } from "node:crypto";
 import { existsSync as existsSync2 } from "node:fs";
 import net from "node:net";
-import path4 from "node:path";
+import path5 from "node:path";
 
 // mcp-server/src/trust-store.ts
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { types as utilTypes4 } from "node:util";
 import { chmodSync, mkdirSync } from "node:fs";
-import path3 from "node:path";
+import path4 from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 // contracts/types.ts
@@ -1238,7 +1248,7 @@ var TrustStore = class {
       return;
     }
     if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
-    if (databasePath !== ":memory:") mkdirSync(path3.dirname(path3.resolve(databasePath)), { recursive: true, mode: 448 });
+    if (databasePath !== ":memory:") mkdirSync(path4.dirname(path4.resolve(databasePath)), { recursive: true, mode: 448 });
     this.database = new DatabaseSync(databasePath);
     try {
       this.database.exec("PRAGMA busy_timeout = ".concat(busyTimeoutMs, ";"));
@@ -1248,7 +1258,7 @@ var TrustStore = class {
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
       if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
       if (this.signingKey.length !== 32) throw tagProducerFailure(new Error("Stored trust signing key is invalid."), "TRUST_SIGNING_KEY_INVALID");
-      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path3.resolve(databasePath), 384);
+      if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path4.resolve(databasePath), 384);
     } catch (cause) {
       let closeFailed = false;
       let closeFailure;
@@ -1444,14 +1454,14 @@ function resolveGeminiAgentApi(environment = process.env, platform = process.pla
   const configured = environment.ANTIGRAVITY_AGENTAPI_EXE;
   if (configured) {
     if (platform === "win32") {
-      const root = path4.win32.parse(configured).root;
-      if (!path4.win32.isAbsolute(configured) || root === "\\" || root === "/" || path4.win32.extname(configured).toLowerCase() !== ".exe") return null;
+      const root = path5.win32.parse(configured).root;
+      if (!path5.win32.isAbsolute(configured) || root === "\\" || root === "/" || path5.win32.extname(configured).toLowerCase() !== ".exe") return null;
     }
     return { command: configured, argsPrefix: ["agentapi"] };
   }
   if (platform === "win32") return null;
   const homeDir = environment.USERPROFILE || environment.HOME || "";
-  const command = path4.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
+  const command = path5.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
   return { command: existsSync2(command) ? command : "agentapi", argsPrefix: [] };
 }
 function reportWakeFailure(phase, error) {
@@ -1736,7 +1746,7 @@ function queueEnabled(host, explicit, environment, diagnose, defaultEnabled = fa
   }
   const directory = environment.PLUGIN_DATA;
   if (directory === void 0) return defaultEnabled;
-  if (!path5.isAbsolute(directory) || process.platform === "win32" && ["\\", "/"].includes(path5.parse(directory).root)) {
+  if (!path6.isAbsolute(directory) || process.platform === "win32" && ["\\", "/"].includes(path6.parse(directory).root)) {
     return disabled("invalid-plugin-data");
   }
   let descriptor = -1;
@@ -1746,7 +1756,7 @@ function queueEnabled(host, explicit, environment, diagnose, defaultEnabled = fa
     validDirectory = statSync(directory).isDirectory();
     if (validDirectory) {
       acquisitionPhase = "open";
-      descriptor = openSync(path5.join(directory, "session-messaging.json"), constants.O_RDONLY | constants.O_NONBLOCK);
+      descriptor = openSync(path6.join(directory, "session-messaging.json"), constants.O_RDONLY | constants.O_NONBLOCK);
     }
   } catch (cause) {
     return absent(cause) ? defaultEnabled : disabled("read-failed", { phase: acquisitionPhase, cleanup: "not-acquired", failure: failed(acquisitionPhase, cause) });
@@ -1876,9 +1886,8 @@ for (const [host, adapter] of builtinHookHostAdapters) registerHookHostAdapter(h
 import { spawn as spawn2 } from "node:child_process";
 import { createHash as createHash4, randomUUID as randomUUID3 } from "node:crypto";
 import { readFileSync as readFileSync2 } from "node:fs";
-import path6 from "node:path";
 import { performance as performance3 } from "node:perf_hooks";
-import { fileURLToPath as fileURLToPath2 } from "node:url";
+import { fileURLToPath as fileURLToPath3 } from "node:url";
 var SESSION_BOUND_TOOLS = /* @__PURE__ */ new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
 var HOST_CLAIM_MAX_MESSAGES = 1;
 var HOST_CLAIM_MAX_BODY_CHARS = 4096;
@@ -1971,7 +1980,7 @@ function readHostStartToken(pid, budget) {
 }
 function startRelay(host, sessionId, instanceId, transport, explicitHostPid, hostProcess, budget, relayId) {
   remainingBudget(budget);
-  const relayPath = fileURLToPath2(new URL("./session-message-relay.mjs", import.meta.url));
+  const relayPath = fileURLToPath3(new URL("./session-message-relay.mjs", import.meta.url));
   const hostPid = relayId ? hostProcess?.pid : resolveHookProcessPid(host, explicitHostPid, hostProcess);
   if (!hostPid || !Number.isInteger(hostPid) || hostPid < 1) return;
   const observedStartToken = readHostStartToken(hostPid, budget);
@@ -2307,7 +2316,7 @@ async function runSessionMessageHookOutcome(host, raw, explicitHostPid, options 
 async function runSessionMessageHook(host, raw, explicitHostPid, options = {}) {
   return (await runSessionMessageHookOutcome(host, raw, explicitHostPid, options)).output;
 }
-if (path6.resolve(process.argv[1] ?? "") === fileURLToPath2(import.meta.url)) {
+if (isHookEntry(import.meta.url, "session-message-hook")) {
   const failed = (phase, error) => {
     reportHookFailure(phase, error);
   };
