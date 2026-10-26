@@ -56,12 +56,40 @@ export async function collectOSMutations({ sourceRoot, planFile, outputRoot, dea
   const { hashJson, hashBytes } = await load('runtime/engineering-practices/io.mjs');
   const baselinePlan = JSON.parse(await fs.readFile(planFile, 'utf8'));
   const plan = structuredClone(baselinePlan);
-  plan.scopeFiles = [...plan.scopeFiles, 'mcp-server/src/process-identity.ts',
-    'mcp-server/src/failure-diagnostics.ts', 'runtime/failure-diagnostics.mjs'];
+  // Reuse the repository's pinned runtime bundler as a resolver only. Keep the
+  // original declared seeds (including computed worker inputs); never execute
+  // the product or substitute bundle output for the original source bytes.
+  captureSnapshot(sourceRoot, plan.scopeFiles);
+  const { build } = await import('esbuild');
+  const inputs = new Set();
+  let totalBytes = 0;
+  const relativeInput = file => path.relative(path.resolve(sourceRoot), file).split(path.sep).join('/');
+  const graph = await build({
+    absWorkingDir: path.resolve(sourceRoot), entryPoints: plan.scopeFiles,
+    outdir: 'os-mutation-closure', bundle: true, write: false, metafile: true,
+    platform: 'node', format: 'esm', target: 'node24', packages: 'external',
+    preserveSymlinks: true, treeShaking: false, logLevel: 'silent',
+    plugins: [{ name: 'bounded-local-source', setup(context) {
+      context.onLoad({ filter: /.*/, namespace: 'file' }, ({ path: file }) => {
+        const relative = relativeInput(file);
+        // Inspect lexical components before esbuild reads the file. Keeping
+        // symlinks unresolved prevents an in-repository alias hiding a junction.
+        const input = captureSnapshot(sourceRoot, [relative]).files[0];
+        if (!inputs.has(relative)) {
+          inputs.add(relative);
+          totalBytes += input.size;
+          assert(inputs.size <= 1000 && totalBytes <= 64 * 1024 * 1024, 'Dependency snapshot exceeds its file or byte bound');
+        }
+        return undefined;
+      });
+    } }],
+  });
+  plan.scopeFiles = [...new Set([...plan.scopeFiles,
+    ...Object.keys(graph.metafile.inputs).map(file => relativeInput(path.resolve(sourceRoot, file)))])].sort();
   const vitestCli = await fs.realpath(path.join(sourceRoot, 'node_modules/vitest/vitest.mjs'));
   plan.runner = 'Existing Vitest via exact Node/realpath Vitest CLI argv; engineering runCommand receipts';
   const environmentNote = `Node ${process.version}; ${process.platform}/${process.arch}; same pinned pnpm/dependency tree; ` +
-    'red has only the declared production mutation, unchanged original test scope plus its unchanged process-identity and failure-diagnostics dependencies and copied package.json/vitest.config.mjs. ' +
+    'red has only the declared production mutation, unchanged original test seeds plus their resolved local runtime dependencies and copied package.json/vitest.config.mjs. ' +
     'Full non-generated source is bound separately by the outer collector. Receipt logs are UTF-8 diagnostic strings, not raw-byte archives.';
   plan.environment = environmentNote;
   plan.exclusions = [
@@ -162,7 +190,7 @@ export async function collectOSMutations({ sourceRoot, planFile, outputRoot, dea
       assert.equal(passed.length, 1);
       assert(passed[0].fullName.includes(item.id + ':'));
       Object.assign(entry, { status: 'DEMONSTRATED', red: redRef, green: greenRef, mutationPaths: [production],
-        assertionWitness: witness, reason: 'Original test candidate and process-identity/failure-diagnostics dependencies unchanged; intended oracle failed under the exact isolated production mutation, then same argv passed on original production bytes.' });
+        assertionWitness: witness, reason: 'Original test candidate and resolved local runtime dependencies unchanged; intended oracle failed under the exact isolated production mutation, then same argv passed on original production bytes.' });
       observation.status = 'DEMONSTRATED';
       observation.counts = { red: { total: redReport.numTotalTests, failed: redReport.numFailedTests, pending: redReport.numPendingTests },
         green: { total: greenReport.numTotalTests, passed: greenReport.numPassedTests, pending: greenReport.numPendingTests } };
