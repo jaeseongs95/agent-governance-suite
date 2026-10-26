@@ -4,7 +4,7 @@ import { access, cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { retainFailureSecondary } from "../runtime/failure-diagnostics.mjs";
+import { failureContext, retainFailureCause, retainFailureSecondary } from "../runtime/failure-diagnostics.mjs";
 import { SKILL_RUNTIME_ENTRYPOINTS } from "./runtime-entrypoints.mjs";
 
 const MESSAGING_RUNTIME_PROBES = [
@@ -13,6 +13,44 @@ const MESSAGING_RUNTIME_PROBES = [
   { bundle: "session-message-cli.mjs", expectedExitCode: 1 },
   { bundle: "session-message-hook.mjs", expectedExitCode: 0, stdout: "", input: "{\n", stderrDiagnostic: { phase: "input", reason: "INVALID_JSON" } },
 ];
+
+const MAX_SMOKE_STREAM_CHARS = 512;
+const SAFE_POSIX_SIGNALS = new Set([
+  "SIGABRT", "SIGALRM", "SIGBUS", "SIGCHLD", "SIGCONT", "SIGFPE", "SIGHUP", "SIGILL",
+  "SIGINT", "SIGIO", "SIGIOT", "SIGKILL", "SIGPIPE", "SIGPOLL", "SIGPROF", "SIGPWR",
+  "SIGQUIT", "SIGSEGV", "SIGSTKFLT", "SIGSTOP", "SIGSYS", "SIGTERM", "SIGTRAP",
+  "SIGTSTP", "SIGTTIN", "SIGTTOU", "SIGUNUSED", "SIGURG", "SIGUSR1", "SIGUSR2",
+  "SIGVTALRM", "SIGWINCH", "SIGXCPU", "SIGXFSZ", "SIGBREAK", "SIGINFO", "SIGLOST",
+]);
+
+function formatBoundedStream(value) {
+  if (typeof value !== "string") {
+    return JSON.stringify({
+      type: value === null ? "null" : typeof value,
+      length: 0,
+      prefixCodeUnits: 0,
+      truncated: false,
+      encoding: "utf16le",
+      prefixSha256: null,
+    });
+  }
+  const prefix = value.slice(0, MAX_SMOKE_STREAM_CHARS);
+  return JSON.stringify({
+    type: "string",
+    length: value.length,
+    prefixCodeUnits: prefix.length,
+    truncated: prefix.length !== value.length,
+    encoding: "utf16le",
+    prefixSha256: createHash("sha256").update(Buffer.from(prefix, "utf16le")).digest("hex"),
+  });
+}
+
+function formatContinuityHookFailure(result) {
+  const errorToken = result.error ? JSON.stringify(failureContext(result.error)) : "none";
+  const statusToken = Number.isInteger(result.status) ? String(result.status) : "null";
+  const signalToken = typeof result.signal === "string" && SAFE_POSIX_SIGNALS.has(result.signal) ? result.signal : "null";
+  return `error=${errorToken} status=${statusToken} signal=${signalToken} stdout=${formatBoundedStream(result.stdout)} stderr=${formatBoundedStream(result.stderr)}`;
+}
 
 async function assertMissing(target) {
   try {
@@ -120,7 +158,9 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       `${JSON.stringify({ hook_event_name: "SessionStart", session_id: "clean-room-session", source: "startup" })}\n`,
     );
     if (hookResult.error || hookResult.status !== 0 || hookResult.stdout !== "") {
-      throw new Error(`continuity hook failed its node_modules-free startup smoke check.\n${hookResult.stderr ?? ""}`);
+      const failure = new Error(`continuity hook failed its node_modules-free startup smoke check.\n${formatContinuityHookFailure(hookResult)}`);
+      if (hookResult.error) retainFailureCause(failure, hookResult.error);
+      throw failure;
     }
 
     const transcriptPath = path.join(cleanRoot, "state", "transcript.jsonl");
