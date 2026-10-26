@@ -40,7 +40,7 @@ import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-st
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
-import { createMcpServer } from "../../mcp-server/src/server.js";
+import { createMcpServer, SESSION_MESSAGE_SERVER_INSTRUCTIONS } from "../../mcp-server/src/server.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "../mcp/version-fixtures.js";
@@ -1370,16 +1370,14 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       const context = (output.hookSpecificOutput as { additionalContext: string }).additionalContext;
       const bodyOffset = context.indexOf(maximumBody);
       const messageOffset = context.indexOf('"messageId":"hook-budget-0001"');
-      const acknowledgeOffset = context.indexOf('messageIds: ["hook-budget-0001"]');
+      expect(context).not.toContain("call acknowledge_session_messages");
       const beginOffset = context.indexOf("peer message BEGIN");
       const endOffset = context.indexOf("peer message END");
       expect(context.length).toBeLessThanOrEqual(8192);
       expect(messageOffset).toBeGreaterThanOrEqual(0);
-      expect(acknowledgeOffset).toBeGreaterThanOrEqual(0);
       expect(beginOffset).toBeLessThan(bodyOffset);
       expect(bodyOffset).toBeLessThan(messageOffset);
       expect(messageOffset).toBeLessThan(endOffset);
-      expect(endOffset).toBeLessThan(acknowledgeOffset);
       expect(context).toContain("hook-budget-0001");
       expect(context).not.toContain("hook-budget-0002");
       await expect(runSessionMessageCli(JSON.stringify({ operation: "pending", payload: { target } }), directory))
@@ -1389,6 +1387,16 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       else process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = previous;
     }
   }, 30_000);
+
+  it("does not demand a receipt lookup or separate acknowledgement after every peer envelope", () => {
+    const messages = ["batch-peer-01", "batch-peer-02"].map(messageId => ({messageId, sender: {host: "peer", sessionId: "sender"}, recipient: {host: "recipient", sessionId: "main"}, body: "business payload", createdAt: "2026-10-26T00:00:00.000Z", expiresAt: "2026-10-26T01:00:00.000Z", deliveryAttempt: 1, firstDeliveredAt: "2026-10-26T00:00:01.000Z", sourceReceiptId: `source-${messageId}`, contentDigest: "sha256:synthetic"}));
+    const context = sessionMessageEnvelope(messages);
+    expect(context).not.toContain("call acknowledge_session_messages");
+    expect(context).not.toContain("get_session_message_status");
+    for (const message of messages) expect(context).toContain(JSON.stringify(message.messageId));
+    expect(SESSION_MESSAGE_SERVER_INSTRUCTIONS).toContain("acknowledge_session_messages");
+    expect(SESSION_MESSAGE_SERVER_INSTRUCTIONS).toContain("한 번에");
+  });
 
   it("escapes peer bodies inside one bounded JSON block", async () => {
     const directory = stateDirectory();
@@ -1626,4 +1634,31 @@ describe("session message MCP tools", () => {
     expect(unknown.error?.message).toContain("delivery may be unknown");
     expect(unknown.error?.message).toContain("saved receipts/status");
   }, 30_000);
+  it("acknowledges processed peers in one bound batch without dropping foreign or unclaimed messages", async () => {
+    const directory = stateDirectory();
+    await startSourceBroker(directory);
+    const client = await connect(directory);
+    const sender = {host: "producer", sessionId: "main"};
+    const target = {host: "consumer", sessionId: "main"};
+    const foreign = {host: "consumer", sessionId: "other"};
+    try {
+      const sent = [];
+      for (const recipient of [target, target, target, foreign]) {
+        const result = await prepareAndSend(directory, {sender, target: recipient, body: "work", ttlSeconds: 600});
+        sent.push((result.data as {messageId: string}).messageId);
+      }
+      const claimed = await runSessionMessageCli(JSON.stringify({operation: "claim", payload: {target, maxMessages: 2}}), directory);
+      expect(claimed).toMatchObject({data: {messages: [{messageId: sent[0]}, {messageId: sent[1]}]}});
+      const duplicateIds = payload(await client.callTool({name: "acknowledge_session_messages", arguments: {schemaVersion: "1.0.0", messageIds: [sent[0], sent[0]], _sessionBinding: target}}));
+      expect(duplicateIds).toMatchObject({ok: false, error: {code: "INVALID_INPUT"}});
+      const result = payload(await client.callTool({name: "acknowledge_session_messages", arguments: {schemaVersion: "1.0.0", messageIds: [sent[0], sent[1], sent[2], sent[3]], _sessionBinding: target}}));
+      expect(result, result.error?.message).toMatchObject({ok: true, data: {acknowledged: 2}});
+      expect(payload(await client.callTool({name: "acknowledge_session_messages", arguments: {schemaVersion: "1.0.0", messageIds: [sent[0], sent[1]], _sessionBinding: target}}))).toMatchObject({ok: true, data: {acknowledged: 0}});
+      expect(await runSessionMessageCli(JSON.stringify({operation: "pending", payload: {target}}), directory)).toMatchObject({data: {count: 1}});
+      expect(await runSessionMessageCli(JSON.stringify({operation: "pending", payload: {target: foreign}}), directory)).toMatchObject({data: {count: 1}});
+      const remaining = await runSessionMessageCli(JSON.stringify({operation: "claim", payload: {target}}), directory);
+      expect(remaining).toMatchObject({data: {messages: [{messageId: sent[2]}]}});
+    } finally { await client.close(); }
+  }, 30_000);
+
 });

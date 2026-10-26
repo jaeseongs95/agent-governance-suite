@@ -6,8 +6,6 @@ import { fileURLToPath } from "node:url";
 
 import {
   SUMMARY_MAX_LENGTH,
-  gateDecision,
-  isReadOnlyCommand,
   normalizeSummary,
   openBoard,
   pruneSessions,
@@ -31,12 +29,6 @@ type HookInput = Record<string, unknown>;
 type Board = ReturnType<typeof openBoard>;
 
 const BOARD_TOOLS = new Set(["update_session_status", "list_session_status"]);
-// Claude Code tool names plus candidate Codex shell/patch tool names; a name a host never sends is never gated.
-const GATED_TOOLS = new Set(["Edit", "Write", "MultiEdit", "NotebookEdit", "Bash", "PowerShell", "Agent", "Task", "shell", "local_shell", "exec_command", "apply_patch"]);
-const SHELL_TOOLS = new Set(["Bash", "PowerShell", "shell", "local_shell", "exec_command"]);
-
-export const GATE_REASON = "세션 현황판: 이 요청에서 무엇을 하는지 한 줄로 먼저 적어야 합니다. update_session_status를 {\"schemaVersion\":\"1.0.0\",\"summary\":\"<무엇을 · 어디서(브랜치) · 다음 외부 작업>\"}로 호출한 뒤 다시 시도하세요. 같은 작업이 이어지면 같은 문장도 됩니다. 도구를 쓸 수 없으면 그대로 다시 시도하세요. 다음 시도는 허용됩니다.";
-
 function preToolUse(permissionDecision: "deny" | undefined, extra: Record<string, unknown>): Record<string, unknown> {
   return { hookSpecificOutput: { hookEventName: "PreToolUse", ...(permissionDecision ? { permissionDecision } : {}), ...extra } };
 }
@@ -83,9 +75,8 @@ export function handleSessionBoardHook(input: HookInput, board: Board | null, ho
     return preToolUse(undefined, { updatedInput: { ...toolInput, _sessionBinding: { host, sessionId } } });
   }
 
-  if (!GATED_TOOLS.has(toolName)) return {};
-  if (SHELL_TOOLS.has(toolName) && isReadOnlyCommand(toolInput.command)) return {};
-  return gateDecision(board, session) === "deny" ? preToolUse("deny", { permissionDecisionReason: GATE_REASON }) : {};
+  // Lifecycle events already record observed activity; the board is coordination, not tool authorization.
+  return {};
 }
 
 /**

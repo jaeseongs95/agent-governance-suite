@@ -63,12 +63,13 @@ describe("AL04 board actor, namespace and host permission boundaries", () => {
   ])("D0021 does not bind or allow a foreign tool %s", name => {
     expect(handleSessionBoardHook(tool(name), board, "codex", now)).toEqual({}); noWrites();
   });
-  it("preserves denial of malformed summaries and an unmet board gate", () => {
+  it("preserves malformed-summary denial without turning coordination into an ordinary-tool gate", () => {
     const input = tool(prefix + "update_session_status"); input.tool_input.summary = "둘\n줄";
     expect(handleSessionBoardHook(input, board, "codex", now)).toMatchObject({hookSpecificOutput: {permissionDecision: "deny"}});
     expect(f.summary).not.toHaveBeenCalled();
     f.gate.mockReturnValue("deny");
-    expect(handleSessionBoardHook(tool("apply_patch"), board, "codex", now)).toMatchObject({hookSpecificOutput: {permissionDecision: "deny"}});
+    expect(handleSessionBoardHook(tool("apply_patch"), board, "codex", now)).toEqual({});
+    expect(f.gate).not.toHaveBeenCalled();
   });
 });
 

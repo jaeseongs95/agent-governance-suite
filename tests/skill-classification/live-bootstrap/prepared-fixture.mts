@@ -125,10 +125,10 @@ export async function loadCurrentBudgetFixture(repo: string) {
   const successorBytes = await readFile(new URL("./budget-wire-source-successor.json", import.meta.url));
   assert.equal(hash(oracleBytes), "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56");
   assert.equal(hash(boundaryBytes), "sha256:618afb36e06a7372656e9a4139bf3f91e45f12d1487bac42e72f0994a7d2f835");
-  assert.equal(hash(successorBytes), "sha256:6bfd82e8082a21b063b0706460a2511a3a5c59a9532170b685137d1beff8e881");
+  assert.equal(hash(successorBytes), "sha256:580819f41a2f61621cf09f6a6357b1cd21b138ee775752455e49d74c68213dfe");
   const predecessor = JSON.parse(oracleBytes.toString("utf8")), precision = JSON.parse(boundaryBytes.toString("utf8"));
   const successor = JSON.parse(successorBytes.toString("utf8"));
-  assert.equal(successor.revision, "ags-bootstrap-budget-source-binding-r02");
+  assert.equal(successor.revision, "ags-bootstrap-budget-host-source-binding-r03");
   assert.equal(successor.parentBudgetDigest, hash(oracleBytes));
   assert.equal(successor.parentPrecisionDigest, hash(boundaryBytes));
   assert.equal(successor.fixtureDigest, hash(await readFile(path.join(repo, "tests/skill-classification/fixtures.json"))));

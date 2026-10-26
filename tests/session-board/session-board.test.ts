@@ -25,7 +25,7 @@ import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { resolveSessionBoardDatabasePath } from "../../mcp-server/src/runtime-config.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
-import { GATE_REASON, handleSessionBoardHook, runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
+import { handleSessionBoardHook, runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SessionMessageService, type SessionPresenceList } from "../../mcp-server/src/session-message-service.js";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
@@ -132,16 +132,14 @@ describe("session board hook", () => {
   const tool = (name: string, toolInput: Record<string, unknown> = {}, extra: Record<string, unknown> = {}) => input("PreToolUse", { tool_name: name, tool_input: toolInput, ...extra });
   const boardTool = (name: string) => `mcp__plugin_agent-governance-suite_agent-governance-suite__${name}`;
 
-  it("gates edits once per request, lets read-only commands and subagents through, and records the line", () => {
+  it("never denies ordinary tool calls for a missing or stale board line, while preserving explicit board identity checks", () => {
     const board = open();
     const run = (hookInput: Record<string, unknown>, minute: number) => handleSessionBoardHook(hookInput, board, "claude-code", at(minute));
     expect(run(input("UserPromptSubmit", { prompt: "비밀 요청 원문" }), 0)).toEqual({});
     expect(run(tool("Bash", { command: "git status" }), 1)).toEqual({});
     expect(run(tool("Edit", {}, { agent_id: "sub-1" }), 2)).toEqual({});
     expect(run(tool("Read"), 3)).toEqual({});
-    const denied = run(tool("Bash", { command: "git status && rm x" }), 4);
-    expect(decision(denied)).toBe("deny");
-    expect((denied.hookSpecificOutput as { permissionDecisionReason: string }).permissionDecisionReason).toBe(GATE_REASON);
+    expect(run(tool("Bash", { command: "git status && rm x" }), 4)).toEqual({});
     expect(run(tool("Write"), 5)).toEqual({});
 
     expect(decision(run(tool(boardTool("update_session_status"), { schemaVersion: "1.0.0", summary: "x" }, { agent_id: "sub-1" }), 6))).toBe("deny");
@@ -155,7 +153,7 @@ describe("session board hook", () => {
     expect(listSessions(board, at(10))[0]).toMatchObject({ summary: "현황판 구현", stale: false });
 
     run(input("UserPromptSubmit"), 11);
-    expect(decision(run(tool("Agent"), 12))).toBe("deny");
+    expect(decision(run(tool("Agent"), 12))).toBe(null);
     const row = listSessions(board, at(13))[0];
     expect(row).toMatchObject({ sessionId: "s1", cwd: "D:/work/repo", summary: "현황판 구현", stale: true });
     expect(JSON.stringify(listSessions(board, at(11)))).not.toContain("비밀 요청 원문");
@@ -172,7 +170,7 @@ describe("session board hook", () => {
     handleSessionBoardHook(input("UserPromptSubmit", { prompt: "verified wake" }), board, "claude-code", at(2), true);
     expect(decision(handleSessionBoardHook(tool("Edit"), board, "claude-code", at(3)))).toBe(null);
     handleSessionBoardHook(input("UserPromptSubmit", { prompt: "ordinary prompt" }), board, "claude-code", at(4));
-    expect(decision(handleSessionBoardHook(tool("Edit"), board, "claude-code", at(5)))).toBe("deny");
+    expect(decision(handleSessionBoardHook(tool("Edit"), board, "claude-code", at(5)))).toBe(null);
   });
 
   it("does not consume a parent wake from an observed subagent prompt", async () => {
@@ -204,13 +202,13 @@ describe("session board hook", () => {
     }
   });
 
-  it("denies exactly once when several hook processes race on the same request", async () => {
+  it("does not reject any ordinary call when several hook processes observe the same request", async () => {
     const databasePath = boardPath();
     open(databasePath); // The schema exists, so the processes race on the session row itself.
-    const bundle = fileURLToPath(new URL("../../mcp-server/dist/session-board-hook.mjs", import.meta.url));
+    const bundle = fileURLToPath(new URL("../../mcp-server/src/session-board-hook.ts", import.meta.url));
     const hookInput = JSON.stringify(tool("Edit"));
     const outputs = await Promise.all(Array.from({ length: 4 }, () => new Promise<{ status: number | null; stdout: string }>((resolve) => {
-      const child = spawn(process.execPath, [bundle], { env: { ...process.env, AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: databasePath }, windowsHide: true });
+      const child = spawn(process.execPath, ["--import", "tsx", bundle], { env: { ...process.env, AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: databasePath }, windowsHide: true });
       let stdout = "";
       child.stdout.on("data", (chunk: Buffer) => { stdout += chunk.toString("utf8"); });
       child.on("close", (status) => resolve({ status, stdout }));
@@ -218,7 +216,7 @@ describe("session board hook", () => {
     })));
     expect(outputs.every((output) => output.status === 0)).toBe(true);
     // Run directly, the bundle is the Codex host: a fresh row whose session start is the request marker.
-    expect(outputs.filter((output) => output.stdout.includes('"deny"'))).toHaveLength(1);
+    expect(outputs.filter((output) => output.stdout.includes('"deny"'))).toHaveLength(0);
   });
 
   it("points every Codex hook command at a bundle that exists", () => {

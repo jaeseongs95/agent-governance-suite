@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "targetRelease": "2.9.1",
-  "fixtureRevision": "ags-classification-governance-source-binding-r03",
-  "oracleRevision": "pre-live-governance-source-reviewed-r03",
+  "fixtureRevision": "ags-classification-host-source-binding-r04",
+  "oracleRevision": "pre-live-host-source-reviewed-r04",
   "freezePolicy": "Never change oracle in response to model outputs; revision changes require source/spec rationale and new run",
   "status": "NOT_RUN",
   "sourceSpecDigest": "sha256:0b8e0e446526bc2331feb91e44f6a400cb3644c227b5caf22bc95c04d52b0969",
@@ -105,7 +105,7 @@
     {
       "skillId": "session-board",
       "path": "skills/session-board/SKILL.md",
-      "digest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a"
+      "digest": "sha256:c23a8cebd2a794d9f281ba171f7dac073a5a91a68ceb9a26b748dd843a733bd2"
     },
     {
       "skillId": "software-security-auditor",
@@ -2906,7 +2906,7 @@
     ],
     "note": "Public source-known regression partitions, never claimed as independent unseen model quality evidence"
   },
-  "oracleDigest": "sha256:96a7c48283c995dd79c662860b179298bd99d474c899d58820de17d7b8770239",
+  "oracleDigest": "sha256:92b7f4d74d88ae5ebae6de59891e7050bec6dacda92ab02e209216bb26d66ee8",
   "goldenContentDigest": "sha256:f1fb423f04aeae7e3d0706322bec7e7a5198278f293b841a5acdb01cd5631fdf",
-  "sourceBindingRevision": "pre-live-source-binding-3"
+  "sourceBindingRevision": "pre-live-source-binding-4"
 }

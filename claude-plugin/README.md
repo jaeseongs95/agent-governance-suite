@@ -14,7 +14,7 @@
 - 이 플러그인의 루트는 `claude-plugin/`이다. 저장소 루트의 Codex용 `hooks/hooks.json`, `.mcp.json`, `.codex-plugin/`은 읽지 않는다.
 - MCP 서버에 `AGENT_GOVERNANCE_HOST_ATTESTATION=claude-code`를 넘겨 host attestation 토큰 검증을 켠다(아래 "실행 보증" 절).
 - MCP 서버에 `AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE=anthropic`을 넘겨 `plan_workflow`의 공개 스키마에서 최상위 `oneOf`를 없앤다. Anthropic API가 이 형태를 받지 않기 때문이다. 입력 검증은 기존 계약 그대로다.
-- MCP 서버는 schema profile과 관계없이 세션 `instructions`로 `skills/orchestrator/SKILL.md`의 공통 접수 기준(`skill-intake` marker 사이 원문)을 내보낸다. 환경 변수가 없는 Codex 서버도 같은 `instructions`를 내보낸다. 서버는 이 원문을 소스에 복사하지 않고 시작할 때 읽으며, 읽지 못하면 시작하지 않는다. 접수 기준의 내용은 이 문서에 옮겨 적지 않고 원문을 따른다.
+- MCP 서버는 schema profile과 관계없이 세션 `instructions`로 `skills/orchestrator/SKILL.md`의 공통 접수 기준(`skill-intake` marker 사이 원문)을 내보낸다. 환경 변수가 없는 Codex 서버도 같은 `instructions`를 내보낸다. Claude의 SessionStart 훅은 이 정책을 다시 주입하지 않고 호스트 호출 형식만 덧붙인다. 서버는 이 원문을 소스에 복사하지 않고 시작할 때 읽으며, 읽지 못하면 시작하지 않는다. 접수 기준의 내용은 이 문서에 옮겨 적지 않고 원문을 따른다.
 - `adaptations/orchestrator.json`은 생성된 orchestrator `SKILL.md`에서 공통 접수 block 뒤, navigation 앞에 "Claude Code에서의 호출과 관측" 절을 넣는다. 이 절은 Skill 도구와 `/agent-governance-suite:<skill-name>` 호출 방식, 독립 감사 서브에이전트 유형, SessionStart 훅의 역할과 실행 관측만 정하며 공통 선택 기준은 바꾸지 않는다.
 - workflow·continuity SQLite 상태는 `${CLAUDE_PLUGIN_DATA}`에 저장한다. 모든 호스트가 함께 쓰는 세션 현황판과 TLS 세션 메시지 broker만 사용자 상태 디렉터리에 둔다.
 - `codex-token-usage-analyzer`는 Codex 세션 로그 전용이라 포함하지 않는다.

@@ -156,7 +156,7 @@ describe("generated Claude plugin", () => {
     }
   });
 
-  it("projects the current common intake at session start without keyword selection", async () => {
+  it("keeps the session-start adapter thin while MCP supplies the common intake once", async () => {
     const directory = await mkdtemp(path.join(tmpdir(), "ags-intake-port-"));
     if (path.dirname(path.resolve(directory)) !== path.resolve(tmpdir())) throw new Error("Unexpected disposable fixture path");
     temporaryDirectories.push(directory);
@@ -176,7 +176,9 @@ describe("generated Claude plugin", () => {
     expect(start.stderr).toBe("");
     const context = JSON.parse(start.stdout).hookSpecificOutput;
     expect(context.hookEventName).toBe("SessionStart");
-    expect(context.additionalContext).toBe(intake + "\n\nClaude Code 호출: 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.");
+    expect(context.additionalContext).toBe("Claude Code 호출: MCP 서버 instructions의 공통 접수 기준을 따르고, 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.");
+    expect(context.additionalContext).not.toContain(intake);
+    expect(context.additionalContext).not.toContain("fixture-source-revision");
     for (const prompt of ["git rebase랑 merge 차이가 뭐예요? 간단히 설명해 주세요.", "안녕하세요!", "change.diff 파일에 있는 변경 사항을 리뷰해 주세요."]) {
       const result = invoke({ hook_event_name: "UserPromptSubmit", prompt });
       expect(result.status).toBe(0);

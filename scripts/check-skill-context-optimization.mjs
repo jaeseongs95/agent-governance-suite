@@ -211,12 +211,36 @@ const CS_RAW_CANDIDATE_CAP_SOURCE_SUCCESSOR = Object.freeze({
   }
 });
 
+const HOST_CONSUMPTION_SOURCE_SUCCESSOR = Object.freeze({
+  "revision": "host-consumption-source-successor-r01",
+  "authorityEffect": "none",
+  "baselineRevision": "b0b455b3ef737cc67e0a350cc1477f4ce6162828",
+  "hashes": {
+    "skills/session-board/SKILL.md": "c23a8cebd2a794d9f281ba171f7dac073a5a91a68ceb9a26b748dd843a733bd2",
+    "skills/session-board/classification.json": "eaef99de3c235b16e4b6a53747d2ce198082fc279b4db7ba503e0a3c640a41ef"
+  },
+  "previousHashes": {
+    "skills/session-board/SKILL.md": "b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
+    "skills/session-board/classification.json": "7193daa7a84da2918be65472c086624b5748f2122bf2071993c96e3afe20dd7e"
+  }
+});
+
+export function matchesHostConsumptionSourceSuccessor(path, bytes) {
+  return Object.hasOwn(HOST_CONSUMPTION_SOURCE_SUCCESSOR.hashes, path)
+    && createHash("sha256").update(bytes).digest("hex") === HOST_CONSUMPTION_SOURCE_SUCCESSOR.hashes[path];
+}
+
 export function matchesGovernanceSourceSuccessor(path, bytes) {
   return Object.hasOwn(GOVERNANCE_SOURCE_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === GOVERNANCE_SOURCE_SUCCESSOR.hashes[path];
 }
 
 function beforeGovernanceSuccessor(path, bytes) {
+  if (matchesHostConsumptionSourceSuccessor(path, bytes)) {
+    const original = git("show", `${HOST_CONSUMPTION_SOURCE_SUCCESSOR.baselineRevision}:${path}`);
+    if (createHash("sha256").update(original).digest("hex") !== HOST_CONSUMPTION_SOURCE_SUCCESSOR.previousHashes[path]) throw new Error(`Historical host consumption source differs: ${path}`);
+    return original;
+  }
   if (!matchesGovernanceSourceSuccessor(path, bytes)) return bytes;
   const original = git("show", `${GOVERNANCE_SOURCE_SUCCESSOR.baselineRevision}:${path}`);
   if (createHash("sha256").update(original).digest("hex") !== GOVERNANCE_SOURCE_SUCCESSOR.previousHashes[path]) {
@@ -400,6 +424,7 @@ export function matchesReviewedImplementationUpdate(path, bytes) {
 }
 
 export function matchesClassificationUpdate(path, bytes) {
+  if (matchesHostConsumptionSourceSuccessor(path, bytes)) return true;
   if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
   return matchesPonytailPolicySuccessor(path, bytes) || Object.hasOwn(CLASSIFICATION_UPDATE.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === CLASSIFICATION_UPDATE.hashes[path];
@@ -483,6 +508,9 @@ export function checkSkillContextOptimization() {
       errors.push(`CS raw candidate cap source successor bytes differ: ${currentPath}`);
     }
   }
+  for (const currentPath of Object.keys(HOST_CONSUMPTION_SOURCE_SUCCESSOR.hashes)) {
+    if (!matchesHostConsumptionSourceSuccessor(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`host consumption successor bytes differ: ${currentPath}`);
+  }
   const detailOwners = readdirSync(join(ROOT, "skills"), { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
@@ -545,7 +573,7 @@ export function checkSkillContextOptimization() {
       if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push("instruction-scope-resolver: frontmatter changed");
     } else {
       if (!reconstructed.equals(expectedBaseline)) errors.push(`${skillId}: SKILL.md plus entry-details.md does not reconstruct the baseline byte-for-byte`);
-      if (!frontmatter(candidate).equals(frontmatter(baseline))) errors.push(`${skillId}: frontmatter changed`);
+      if (!frontmatter(beforeGovernanceSuccessor(skillPath, candidate)).equals(frontmatter(baseline))) errors.push(`${skillId}: frontmatter changed`);
     }
     if (candidate.length >= baseline.length) errors.push(`${skillId}: initial SKILL.md did not shrink`);
 
@@ -615,6 +643,7 @@ export function checkSkillContextOptimization() {
 
   return {
     baselineRevision: BASELINE,
+    currentHostConsumptionSourceSuccessors: [HOST_CONSUMPTION_SOURCE_SUCCESSOR],
     currentPreflightAdditiveSourceSuccessors: [PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR],
     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
     policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],

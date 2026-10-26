@@ -240,7 +240,6 @@ export function sessionMessageEnvelope(messages: RecordedSessionMessage[]): stri
         receipt,
       }),
       "[agent-governance-suite peer message END]",
-      `After processing this peer message, call acknowledge_session_messages with messageIds: ${JSON.stringify([message.messageId])}. ACK records processing only; it is not success or approval.`,
     ];
     let encoded = block(message.body, "plain-json");
     if (Buffer.byteLength([...lines, ...encoded].join("\n"), "utf8") > SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES) {
