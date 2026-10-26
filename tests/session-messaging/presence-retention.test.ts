@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
@@ -59,12 +59,19 @@ async function observedBroker(label: "large-board" | "slow-board", state: string
   let tail = "";
   let readinessStartedAtMs: number | null = null;
   const elapsed = () => performance.now() - started;
+  const windowsQueryPhases = () => {
+    if (process.platform !== "win32") return [];
+    try {
+      const text = readFileSync(path.join(state, "startup-query-phases.log"), "utf8");
+      return text.length <= 1024 ? text.split(/\r?\n/u).filter(line => /^[1-8]:(?:script-enter|query-returned|query-finally)$/u.test(line)).slice(0, 24) : [];
+    } catch { return []; } // Missing observation is UNKNOWN, never query success.
+  };
   const child = spawn(process.execPath, ["--import", new URL("./fixtures/presence-startup-trace.mjs", import.meta.url).href,
     "--import", "tsx", ...imports.flatMap(value => ["--import", value]), sourceBroker, "--state-directory", state],
   { windowsHide: true, stdio: ["ignore", "ignore", "pipe"], ...(env ? { env } : {}) });
   const report = (phase: string, code: string | null = null) => {
     try { console.info("AGS_PRESENCE_PARENT " + JSON.stringify({ label, phase, elapsedMs: elapsed(), readinessStartedAtMs, code,
-      exitCode: child.exitCode, signalCode: child.signalCode, stderrBytes, discarded, trace })); }
+      exitCode: child.exitCode, signalCode: child.signalCode, stderrBytes, discarded, trace, windowsQueryPhases: windowsQueryPhases() })); }
     catch { /* Diagnostics must not replace the readiness or cleanup result. */ }
   };
   child.stderr!.on("data", (chunk: Buffer) => {
@@ -77,12 +84,16 @@ async function observedBroker(label: "large-board" | "slow-board", state: string
       if (trace.length >= 20 || line.length > 512 || !line.startsWith("AGS_PRESENCE_STARTUP ")) { discarded++; continue; }
       try {
         const value = JSON.parse(line.slice("AGS_PRESENCE_STARTUP ".length)) as Record<string, unknown>;
-        if (!value || !["preload", "powershell-start", "powershell-end"].includes(value.event as string)
+        if (!value || !["preload", "powershell-start", "powershell-end", "keygen-start", "keygen-end", "tls-create", "tls-created", "tls-listening"].includes(value.event as string)
           || typeof value.atMs !== "number" || !Number.isFinite(value.atMs) || value.atMs < 0) { discarded++; continue; }
         const record: Record<string, unknown> = { event: value.event, childMs: value.atMs, receivedAtMs: elapsed() };
-        if (value.event !== "preload") {
+        if (value.event === "powershell-start" || value.event === "powershell-end") {
           if (!Number.isInteger(value.call) || (value.call as number) < 1 || (value.call as number) > 8) { discarded++; continue; }
           record.call = value.call;
+        }
+        if (value.event === "powershell-start") {
+          if (["broker-lock", "relay-sync", "hook-sync", "unknown"].includes(value.caller as string)) record.caller = value.caller;
+          if (["self-start-token", "peer-start-token", "other"].includes(value.kind as string)) record.kind = value.kind;
         }
         if (value.event === "powershell-end") {
           if (typeof value.durationMs !== "number" || !Number.isFinite(value.durationMs) || value.durationMs < 0
