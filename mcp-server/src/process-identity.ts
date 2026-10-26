@@ -11,7 +11,7 @@ export function processStartToken(pid: number, platform: NodeJS.Platform = proce
         "-NoProfile",
         "-NonInteractive",
         "-Command",
-        `(Get-Process -Id ${pid} -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')`,
+        `[System.Diagnostics.Process]::GetProcessById(${pid}).StartTime.ToUniversalTime().ToString('o')`,
       ], { encoding: "utf8", windowsHide: true, timeout: Math.min(5000, Math.floor(timeoutMs ?? 5000)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
     }
     if (platform === "linux") {

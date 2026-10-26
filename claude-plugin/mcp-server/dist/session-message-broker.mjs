@@ -1934,7 +1934,7 @@ function processStartToken(pid, platform = process.platform, timeoutMs) {
         "-NoProfile",
         "-NonInteractive",
         "-Command",
-        "(Get-Process -Id ".concat(pid, " -ErrorAction Stop).StartTime.ToUniversalTime().ToString('o')")
+        "[System.Diagnostics.Process]::GetProcessById(".concat(pid, ").StartTime.ToUniversalTime().ToString('o')")
       ], { encoding: "utf8", windowsHide: true, timeout: Math.min(5e3, Math.floor(timeoutMs ?? 5e3)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
     }
     if (platform === "linux") {
