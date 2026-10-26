@@ -7,7 +7,7 @@
       "version": "1.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:31a525d400e73c29ec8f6b6d0cdebccfa766f583897feeb60df4ec187f60a27f",
+      "integratedChecksum": "sha256:cc34aa69f799249210b8cf4cc677f2f8d7f4f9f0bc2ea7886ae9f90ba1383aeb",
       "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
     },
     {

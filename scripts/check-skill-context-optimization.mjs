@@ -166,7 +166,8 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/change-scope-guardian/references/entry-details.md": "58fcf7660d9e2ab3dd775aeee528d547250af2df02537affb3a9af4c5bb66af1",
     "skills/change-scope-guardian/references/verdict-rules.md": "b656378815a59a40d37a9f7fdcd790f9880d9d59759bc1732141c49c7ea49988",
     "skills/change-scope-guardian/scripts/lib.mjs": "ee44ea2dd431868a9a86b96fd98f74a32910ede0111ccb7f12a1e8058285a66b",
-    "skills/coordinate-subagents/references/model-routing.md": "d96706299185ce0d6df5e0669b481aaf1b7404ecf7841e1b4cf910a4953262b9",
+    // D0095 reviewed source: eb30ea34168b4d4c3831f2fa8b9c82d9fc06b06c; historical baselines stay frozen.
+    "skills/coordinate-subagents/references/model-routing.md": "e0f99fadebef7848fc1e0706fac321cc8e9c59cbd59ca678d1d6c6484b48ca7d",
     "skills/coordinate-subagents/scripts/model-routing.mjs": "899bffe5d345b5ef064c8730ffe47f90ae185144b4ae3c27ed3cb295d25e6de9",
     "skills/evaluation-validity-auditor/classification.json": "1de15023a9e0e1175404bc5e6ee68462717bbb23b33005b12abc5de07d858b42",
     "skills/evaluation-validity-auditor/references/entry-details.md": "dc8fd042c3576fa0c890e88a13cac54c343cf4a420c3968f1ca7f5627aa17090",
