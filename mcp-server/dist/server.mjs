@@ -36392,7 +36392,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
     const inputSchema2 = structuredClone(tool.inputSchema);
     inputSchema2.properties = { ...inputSchema2.properties, [SESSION_PROOF_FIELD]: { type: "string", minLength: 16, maxLength: 8192, description: "Issued by the current root hook; caller identity claims are not accepted." } };
     delete inputSchema2.properties._sessionBinding;
-    inputSchema2.required = (inputSchema2.required ?? []).filter((name) => name !== "_sessionBinding");
+    inputSchema2.required = [.../* @__PURE__ */ new Set([...(inputSchema2.required ?? []).filter((name) => name !== "_sessionBinding"), SESSION_PROOF_FIELD])];
     if (usesInlineReferences(toolSchemaProfile) && JSON.stringify(inputSchema2).includes('"$ref"')) {
       return { ...tool, inputSchema: inlineSchemaReferences(inputSchema2, contractDocuments) };
     }

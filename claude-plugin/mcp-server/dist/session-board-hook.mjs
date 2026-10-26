@@ -139,7 +139,10 @@ function resolveHookHost(arguments_, fallback) {
     if (argument === "--host") selected.push(arguments_[++index] ?? "");
     else if (argument.startsWith("--host=")) selected.push(argument.slice(7));
   }
-  if (selected.length === 0) return fallback;
+  if (selected.length === 0) {
+    if (fallback !== void 0) return fallback;
+    throw hookHostFailure("selection");
+  }
   if (selected.length !== 1 || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(selected[0])) throw hookHostFailure("selection");
   return selected[0];
 }
@@ -1549,6 +1552,9 @@ async function runSessionBoardHook(host, raw, request = sessionMessageRequest, f
   let phase = "stdin";
   let primary;
   let failed = false;
+  let result = "";
+  let cleanup;
+  let cleanupFailed = false;
   try {
     const text2 = typeof raw === "function" ? raw() : raw;
     phase = "input";
@@ -1563,8 +1569,8 @@ async function runSessionBoardHook(host, raw, request = sessionMessageRequest, f
       if (sessionId) {
         for (const nonce of nonces) {
           try {
-            const result = await request("consume-wake", { target: { host, sessionId }, nonce });
-            allRecognized &&= result.consumed;
+            const result2 = await request("consume-wake", { target: { host, sessionId }, nonce });
+            allRecognized &&= result2.consumed;
           } catch (cause) {
             allRecognized = false;
             reportBoardFailure("consume-wake", cause);
@@ -1579,24 +1585,24 @@ async function runSessionBoardHook(host, raw, request = sessionMessageRequest, f
     }
     phase = "handle";
     const output = handleSessionBoardHook(input, board, host, (/* @__PURE__ */ new Date()).toISOString(), verifiedInternalWake);
-    return Object.keys(output).length > 0 ? JSON.stringify(output) : "";
+    result = Object.keys(output).length > 0 ? JSON.stringify(output) : "";
   } catch (cause) {
     primary = cause;
     failed = true;
     reportBoardFailure(phase, cause);
-    if (failClosed) throw cause;
-    return "";
   } finally {
     try {
       board?.close();
     } catch (cause) {
       reportBoardFailure("close", cause);
-      if (failClosed) {
-        if (!failed) throw cause;
-        if (primary instanceof Error) retainFailureSecondary(primary, cause);
-      }
+      cleanup = cause;
+      cleanupFailed = true;
+      if (failClosed && failed && primary instanceof Error) retainFailureSecondary(primary, cause);
     }
   }
+  if (failClosed && failed) throw primary;
+  if (failClosed && cleanupFailed) throw cleanup;
+  return result;
 }
 if (isHookEntry(import.meta.url, "session-board-hook")) {
   try {

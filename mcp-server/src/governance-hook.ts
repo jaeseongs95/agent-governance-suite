@@ -96,7 +96,7 @@ export async function runGovernanceHook(host: string, raw: string, environment: 
 
 if (isHookEntry(import.meta.url, "governance-hook")) {
   try {
-    const result = await runGovernanceHook(resolveHookHost(process.argv.slice(2), "codex"), readFileSync(0, "utf8"));
+    const result = await runGovernanceHook(resolveHookHost(process.argv.slice(2)), readFileSync(0, "utf8"));
     if (result.output) process.stdout.write(result.output);
     if (!result.ok) process.exitCode = 2;
     process.stdout.on("error", () => { process.exitCode = 2; });

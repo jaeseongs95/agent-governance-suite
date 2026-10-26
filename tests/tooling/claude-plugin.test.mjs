@@ -207,7 +207,7 @@ describe("generated Claude plugin", () => {
     }
   });
 
-  it("registers exec-form continuity and messaging hooks plus the Claude-only adapters", async () => {
+  it("registers one fail-closed governance entry for every AGS tool and preserves the advisory adapters", async () => {
     const claudeHooks = await readJson(pluginRoot, "hooks", "hooks.json");
     // Parity with the Codex hook events is reported as drift, so a new Codex event never fails this test.
     expect(Object.keys(claudeHooks.hooks).sort()).toEqual(["PostCompact", "PostModelSwitch", "PostToolUse", "PreCompact", "PreToolUse", "SessionEnd", "SessionStart", "Stop", "UserPromptSubmit"]);
@@ -217,56 +217,53 @@ describe("generated Claude plugin", () => {
       "${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs",
       "${CLAUDE_PLUGIN_ROOT}/hooks/session-board-hook.mjs",
       "${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs",
+      "${CLAUDE_PLUGIN_ROOT}/hooks/governance-hook.mjs",
     ];
-    for (const groups of Object.values(claudeHooks.hooks)) {
+    for (const [event, groups] of Object.entries(claudeHooks.hooks)) {
       for (const hook of groups.flatMap((group) => group.hooks)) {
         expect(hook).toMatchObject({ type: "command", command: "node" });
         expect(allowedScripts).toContain(hook.args[0]);
+        if (hook.args[0] === allowedScripts[5]) expect(event).toBe("PreToolUse");
+        else expect(hook.onFailure).toBeUndefined();
       }
     }
     // Messaging runs before the board; the intake has no per-prompt selector.
     expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[4], allowedScripts[3]]);
-    // The relay-launching hook must stay in direct args form: process.ppid is then the Claude host, not a transient shell.
+    // Relay startup keeps exec form so its parent is the host rather than a transient shell.
     const messageSessionStart = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[4]));
     expect(messageSessionStart).toHaveLength(1);
     expect(messageSessionStart[0].hooks).toEqual([expect.objectContaining({ command: "node", args: [allowedScripts[4]] })]);
-    const messageToolMatcher = new RegExp(claudeHooks.hooks.PreToolUse.find((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[4])).matcher, "u");
-    for (const tool of ["send_session_message", "acknowledge_session_messages", "get_session_message_status"]) {
-      expect(messageToolMatcher.test(`${toolPrefix}${tool}`)).toBe(true);
+
+    const governanceGroups = claudeHooks.hooks.PreToolUse.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[5]));
+    expect(governanceGroups).toHaveLength(1);
+    expect(governanceGroups[0].matcher).toBe("^mcp__plugin_agent-governance-suite_agent-governance-suite__.+$");
+    expect(governanceGroups[0].hooks).toEqual([{
+      type: "command", command: "node", args: [allowedScripts[5]], timeout: 10, onFailure: "block",
+    }]);
+    const matcher = new RegExp(governanceGroups[0].matcher, "u");
+    // Cover each former domain plus public reads and a future tool without another tool list.
+    const governanceNames = ["plan_workflow", "record_stage_result", "classify_skills", "record_skill_selection",
+      "prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision",
+      "update_session_status", "list_session_status", ...continuityTools, "get_trust_capabilities", "get_skill_inventory", "future_governance_tool"];
+    for (const tool of governanceNames) {
+      expect(matcher.test(`${toolPrefix}${tool}`), tool).toBe(true);
+      const matchingGroups = claudeHooks.hooks.PreToolUse.filter((group) => new RegExp(group.matcher, "u").test(`${toolPrefix}${tool}`));
+      expect(matchingGroups, tool).toHaveLength(1);
+      expect(matchingGroups[0].hooks.map((hook) => hook.args[0]), tool).toEqual([allowedScripts[5]]);
+      expect(matcher.test(`mcp__agent-governance-suite__${tool}`), tool).toBe(false);
     }
-    // The session board gates edits, shells and delegation, and binds only its own two MCP tools.
-    const boardMatchers = claudeHooks.hooks.PreToolUse
-      .filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[3]))
-      .map((group) => new RegExp(group.matcher, "u"));
-    for (const tool of ["Edit", "Write", "MultiEdit", "NotebookEdit", "Bash", "PowerShell", "Agent", "Task", `${toolPrefix}update_session_status`, `${toolPrefix}list_session_status`]) {
-      expect(boardMatchers.some((matcher) => matcher.test(tool))).toBe(true);
-    }
-    for (const tool of ["Read", "Grep", "Glob", `${toolPrefix}plan_workflow`, `${toolPrefix}record_stage_result`, ...continuityTools.map((name) => `${toolPrefix}${name}`)]) {
-      expect(boardMatchers.some((matcher) => matcher.test(tool))).toBe(false);
-    }
-    expect(claudeHooks.hooks.PreToolUse.some((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[1]))).toBe(false);
+    for (const tool of [toolPrefix, "Bash", "Edit", "Agent", "mcp__unrelated__get_trust_capabilities"]) expect(matcher.test(tool), tool).toBe(false);
+    // The only remaining direct domain hook is the advisory board for non-AGS tools.
+    expect(claudeHooks.hooks.PreToolUse).toHaveLength(2);
+    const boardGroups = claudeHooks.hooks.PreToolUse.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[3]));
+    expect(boardGroups).toHaveLength(1);
+    expect(boardGroups[0].hooks).toEqual([{ type: "command", command: "node", args: [allowedScripts[3]], timeout: 5 }]);
+    const boardMatcher = new RegExp(boardGroups[0].matcher, "u");
+    for (const tool of ["Edit", "Write", "MultiEdit", "NotebookEdit", "Bash", "PowerShell", "Agent", "Task"]) expect(boardMatcher.test(tool), tool).toBe(true);
+    for (const tool of ["Read", "Grep", "Glob", ...governanceNames.map((name) => `${toolPrefix}${name}`)]) expect(boardMatcher.test(tool), tool).toBe(false);
     const intakeGroups = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[1]));
     expect(intakeGroups).toHaveLength(1);
-    const continuityGroup = claudeHooks.hooks.PreToolUse.find((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[0]));
-    const matcher = new RegExp(continuityGroup.matcher, "u");
-    for (const tool of continuityTools) {
-      expect(matcher.test(`${toolPrefix}${tool}`)).toBe(true);
-      expect(matcher.test(`mcp__agent-governance-suite__${tool}`)).toBe(false);
-    }
-    expect(matcher.test(`${toolPrefix}plan_workflow`)).toBe(false);
-    // Host attestation is the only handler for exactly the two strict tools, so no other hook rewrites their input.
-    const attestationGroups = claudeHooks.hooks.PreToolUse.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[2]));
-    expect(attestationGroups).toHaveLength(1);
-    expect(attestationGroups[0].hooks.map((hook) => hook.args[0])).toEqual([allowedScripts[2]]);
-    const attestationMatcher = new RegExp(attestationGroups[0].matcher, "u");
-    for (const tool of ["plan_workflow", "record_stage_result"]) {
-      expect(attestationMatcher.test(`${toolPrefix}${tool}`)).toBe(true);
-      expect(claudeHooks.hooks.PreToolUse.filter((group) => new RegExp(group.matcher, "u").test(`${toolPrefix}${tool}`))).toHaveLength(1);
-    }
-    for (const tool of [...continuityTools, "claim_workflow_attempt", "start_guarded_workflow", "finalize_workflow"]) {
-      expect(attestationMatcher.test(`${toolPrefix}${tool}`)).toBe(false);
-    }
-    // Interactive sessions write the issuing message late, so the session model is recorded from these events.
+    // Interactive sessions still record the issuing model from these lifecycle events.
     for (const event of ["SessionStart", "PostModelSwitch"]) {
       const groups = claudeHooks.hooks[event].filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[2]));
       expect(groups).toHaveLength(1);

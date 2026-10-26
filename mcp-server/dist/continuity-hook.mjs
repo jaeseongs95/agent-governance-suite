@@ -134,7 +134,10 @@ function resolveHookHost(arguments_, fallback) {
     if (argument === "--host") selected.push(arguments_[++index] ?? "");
     else if (argument.startsWith("--host=")) selected.push(argument.slice(7));
   }
-  if (selected.length === 0) return fallback;
+  if (selected.length === 0) {
+    if (fallback !== void 0) return fallback;
+    throw hookHostFailure("selection");
+  }
   if (selected.length !== 1 || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(selected[0])) throw hookHostFailure("selection");
   return selected[0];
 }
@@ -3063,6 +3066,9 @@ function runContinuityHook(raw, environment = process.env, host = "codex", failC
   let workflow = null;
   let primary;
   let failed = false;
+  let result = "";
+  let cleanup;
+  let cleanupFailed = false;
   try {
     const input = JSON.parse(raw);
     phase = "storage";
@@ -3083,16 +3089,12 @@ function runContinuityHook(raw, environment = process.env, host = "codex", failC
     }
     phase = "handle";
     const output = handleContinuityHook(input, new ContinuityService(continuity, null, workflow), host);
-    return Object.keys(output).length > 0 ? JSON.stringify(output) : "";
+    result = Object.keys(output).length > 0 ? JSON.stringify(output) : "";
   } catch (cause) {
     primary = cause;
     failed = true;
     reportContinuityFailure(phase, cause);
-    if (failClosed) throw cause;
-    return "";
   } finally {
-    let cleanup;
-    let cleanupFailed = false;
     for (const resource of [workflow, continuity]) {
       try {
         resource?.close();
@@ -3104,11 +3106,11 @@ function runContinuityHook(raw, environment = process.env, host = "codex", failC
         } else if (cleanup instanceof Error) retainFailureSecondary(cleanup, cause);
       }
     }
-    if (failClosed && cleanupFailed) {
-      if (!failed) throw cleanup;
-      if (primary instanceof Error) retainFailureSecondary(primary, cleanup);
-    }
+    if (failClosed && failed && cleanupFailed && primary instanceof Error) retainFailureSecondary(primary, cleanup);
   }
+  if (failClosed && failed) throw primary;
+  if (failClosed && cleanupFailed) throw cleanup;
+  return result;
 }
 function main() {
   let raw;

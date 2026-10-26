@@ -24,6 +24,7 @@ import {
 } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "./version-fixtures.js";
+import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 
@@ -127,25 +128,29 @@ describe("trusted MCP server boundary", () => {
       lastNotifiedAt: null,
       lastErrorCode: null,
     });
-    const server = createMcpServer(service, new PluginUpdateService(updateStore), undefined, undefined, undefined, validator);
+    const rootProof = createSyntheticRootProofFixture();
+    const server = createMcpServer(service, new PluginUpdateService(updateStore), undefined, undefined, undefined, validator, "default", null, null, undefined, null, null, rootProof.proofs);
     const client = new Client({ name: "trusted-mcp-integration", version: "1.0.0" });
+    const callTool = (params: Parameters<Client["callTool"]>[0]) => client.callTool({
+      ...params, arguments: rootProof.argumentsFor(params.name, params.arguments ?? {}),
+    });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 
     await server.connect(serverTransport);
     await client.connect(clientTransport);
     try {
       const completeTask = task("trusted-complete");
-      const plan = result<WorkflowPlanV1>(await client.callTool({
+      const plan = result<WorkflowPlanV1>(await callTool({
         name: "plan_workflow",
         arguments: { schemaVersion: "1.0.0", taskEnvelope: completeTask },
       })).data!;
       expect(plan.bootstrapExecution?.context.actorId).toBe("trusted-integration-actor");
       const completeFrame = frame(completeTask.taskId);
-      const root = result<ConvergenceRootV1>(await client.callTool({
+      const root = result<ConvergenceRootV1>(await callTool({
         name: "open_convergence_root",
         arguments: { schemaVersion: "1.0.0", parentRootId: null, taskEnvelope: completeTask, frame: completeFrame, userApprovalRefs: [] },
       })).data!;
-      const lease = result<AttemptLeaseV1>(await client.callTool({
+      const lease = result<AttemptLeaseV1>(await callTool({
         name: "claim_workflow_attempt",
         arguments: {
           schemaVersion: "1.0.0",
@@ -159,7 +164,7 @@ describe("trusted MCP server boundary", () => {
           priorFailure: null,
         },
       })).data!;
-      const receipt = result<WorkflowReceiptV1>(await client.callTool({
+      const receipt = result<WorkflowReceiptV1>(await callTool({
         name: "start_guarded_workflow",
         arguments: { schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan },
       })).data!;
@@ -189,7 +194,7 @@ describe("trusted MCP server boundary", () => {
         blockers: [],
         error: null,
       };
-      const recordedResult = result<WorkflowReceiptV1>(await client.callTool({
+      const recordedResult = result<WorkflowReceiptV1>(await callTool({
         name: "record_stage_result",
         arguments: stageResult as unknown as Record<string, unknown>,
       }));
@@ -200,23 +205,23 @@ describe("trusted MCP server boundary", () => {
         stageId: stage.stageId,
         revision: 0,
       });
-      const finalized = result<WorkflowReceiptV1>(await client.callTool({
+      const finalized = result<WorkflowReceiptV1>(await callTool({
         name: "finalize_workflow",
         arguments: { runId: recorded.runId, expectedRevision: recorded.revision },
       }));
       expect(finalized.data).toMatchObject({ state: "passed", revision: 2 });
 
       const abortTask = task("trusted-abort");
-      const abortPlan = result<WorkflowPlanV1>(await client.callTool({
+      const abortPlan = result<WorkflowPlanV1>(await callTool({
         name: "plan_workflow",
         arguments: { schemaVersion: "1.0.0", taskEnvelope: abortTask },
       })).data!;
       const abortFrame = frame(abortTask.taskId);
-      const abortRoot = result<ConvergenceRootV1>(await client.callTool({
+      const abortRoot = result<ConvergenceRootV1>(await callTool({
         name: "open_convergence_root",
         arguments: { schemaVersion: "1.0.0", parentRootId: null, taskEnvelope: abortTask, frame: abortFrame, userApprovalRefs: [] },
       })).data!;
-      const abortLease = result<AttemptLeaseV1>(await client.callTool({
+      const abortLease = result<AttemptLeaseV1>(await callTool({
         name: "claim_workflow_attempt",
         arguments: {
           schemaVersion: "1.0.0",
@@ -230,11 +235,11 @@ describe("trusted MCP server boundary", () => {
           priorFailure: null,
         },
       })).data!;
-      const abortReceipt = result<WorkflowReceiptV1>(await client.callTool({
+      const abortReceipt = result<WorkflowReceiptV1>(await callTool({
         name: "start_guarded_workflow",
         arguments: { schemaVersion: "1.0.0", leaseId: abortLease.leaseId, expectedRootRevision: abortLease.rootRevision, plan: abortPlan },
       })).data!;
-      const aborted = result<WorkflowReceiptV1>(await client.callTool({
+      const aborted = result<WorkflowReceiptV1>(await callTool({
         name: "abort_workflow",
         arguments: { runId: abortReceipt.runId, expectedRevision: abortReceipt.revision },
       }));

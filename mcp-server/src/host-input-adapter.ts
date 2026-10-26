@@ -19,14 +19,17 @@ export type SupportedHookHost = string;
 export type HostLifecycle = "start" | "end" | "none";
 
 /** Explicit CLI host selection; payloads and environment cannot change an entry point default. */
-export function resolveHookHost(arguments_: readonly string[], fallback: SupportedHookHost): SupportedHookHost {
+export function resolveHookHost(arguments_: readonly string[], fallback?: SupportedHookHost): SupportedHookHost {
   const selected: string[] = [];
   for (let index = 0; index < arguments_.length; index++) {
     const argument = arguments_[index]!;
     if (argument === "--host") selected.push(arguments_[++index] ?? "");
     else if (argument.startsWith("--host=")) selected.push(argument.slice(7));
   }
-  if (selected.length === 0) return fallback;
+  if (selected.length === 0) {
+    if (fallback !== undefined) return fallback;
+    throw hookHostFailure("selection");
+  }
   if (selected.length !== 1 || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(selected[0]!)) throw hookHostFailure("selection");
   return selected[0]!;
 }

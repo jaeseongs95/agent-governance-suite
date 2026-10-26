@@ -1,8 +1,6 @@
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { build } from "esbuild";
-
 import { ROOT } from "./lib.mjs";
 
 export const RUNTIME_BUNDLES = Object.freeze([
@@ -151,6 +149,7 @@ async function buildThirdPartyNotices(metafile) {
 }
 
 export async function buildRuntimeBundle(target, outputRoot = ROOT) {
+  const { build } = await import("esbuild");
   return build({
     absWorkingDir: ROOT,
     entryPoints: [target.entry],

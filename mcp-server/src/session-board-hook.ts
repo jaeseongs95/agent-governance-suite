@@ -93,6 +93,9 @@ export async function runSessionBoardHook(
   let phase: BoardFailurePhase = "stdin";
   let primary: unknown;
   let failed = false;
+  let result = "";
+  let cleanup: unknown;
+  let cleanupFailed = false;
   try {
     const text = typeof raw === "function" ? raw() : raw;
     phase = "input";
@@ -125,22 +128,22 @@ export async function runSessionBoardHook(
     }
     phase = "handle";
     const output = handleSessionBoardHook(input, board, host, new Date().toISOString(), verifiedInternalWake);
-    return Object.keys(output).length > 0 ? JSON.stringify(output) : "";
+    result = Object.keys(output).length > 0 ? JSON.stringify(output) : "";
   } catch (cause) {
     primary = cause;
     failed = true;
     reportBoardFailure(phase, cause);
-    if (failClosed) throw cause;
-    return "";
   } finally {
     try { board?.close(); } catch (cause) {
       reportBoardFailure("close", cause);
-      if (failClosed) {
-        if (!failed) throw cause;
-        if (primary instanceof Error) retainHookFailureSecondary(primary, cause);
-      }
+      cleanup = cause;
+      cleanupFailed = true;
+      if (failClosed && failed && primary instanceof Error) retainHookFailureSecondary(primary, cause);
     }
   }
+  if (failClosed && failed) throw primary;
+  if (failClosed && cleanupFailed) throw cleanup;
+  return result;
 }
 
 // Direct execution is the Codex hook; the Claude Code launcher imports runSessionBoardHook instead.

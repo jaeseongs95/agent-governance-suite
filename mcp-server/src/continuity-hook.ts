@@ -116,6 +116,9 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
   let workflow: SqliteWorkflowStore | null = null;
   let primary: unknown;
   let failed = false;
+  let result = "";
+  let cleanup: unknown;
+  let cleanupFailed = false;
   try {
     const input = JSON.parse(raw) as HookInput;
     phase = "storage";
@@ -137,16 +140,12 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
     }
     phase = "handle";
     const output = handleContinuityHook(input, new ContinuityService(continuity, null, workflow), host);
-    return Object.keys(output).length > 0 ? JSON.stringify(output) : "";
+    result = Object.keys(output).length > 0 ? JSON.stringify(output) : "";
   } catch (cause) {
     primary = cause;
     failed = true;
     reportContinuityFailure(phase, cause);
-    if (failClosed) throw cause;
-    return "";
   } finally {
-    let cleanup: unknown;
-    let cleanupFailed = false;
     for (const resource of [workflow, continuity]) {
       try { resource?.close(); } catch (cause) {
         reportContinuityFailure("close", cause);
@@ -154,11 +153,11 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
         else if (cleanup instanceof Error) retainHookFailureSecondary(cleanup, cause);
       }
     }
-    if (failClosed && cleanupFailed) {
-      if (!failed) throw cleanup;
-      if (primary instanceof Error) retainHookFailureSecondary(primary, cleanup);
-    }
+    if (failClosed && failed && cleanupFailed && primary instanceof Error) retainHookFailureSecondary(primary, cleanup);
   }
+  if (failClosed && failed) throw primary;
+  if (failClosed && cleanupFailed) throw cleanup;
+  return result;
 }
 
 function main(): void {

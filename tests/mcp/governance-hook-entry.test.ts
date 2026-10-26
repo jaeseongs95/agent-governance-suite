@@ -157,6 +157,17 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     }
   });
 
+  it.each([[], ["--host"], ["--host=claude-code", "--host=codex"]])("requires an explicit unambiguous CLI host: %j", (...args) => {
+    const { environment } = fixture();
+    const child = spawnSync(process.execPath, [path.join(repository, "mcp-server/dist/governance-hook.mjs"), ...args], {
+      input: JSON.stringify(input()), env: environment, cwd: repository, encoding: "utf8", timeout: 10_000, windowsHide: true,
+    });
+    expect(child.error).toBeUndefined();
+    expect(child.status).toBe(2);
+    expect(child.stdout).toBe("");
+    expect(existsSync(environment.AGENT_GOVERNANCE_DB_PATH!)).toBe(false);
+  });
+
   it.each(["close", "handle-and-close"] as const)("F2: board %s failure prevents central proof issuance after actually closing both stores", async mode => {
     const { environment } = fixture();
     isolateAmbient(environment);

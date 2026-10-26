@@ -407,7 +407,7 @@ export function createMcpServer(
     const inputSchema = structuredClone(tool.inputSchema) as ObjectSchema;
     inputSchema.properties = { ...inputSchema.properties, [SESSION_PROOF_FIELD]: { type: "string", minLength: 16, maxLength: 8192, description: "Issued by the current root hook; caller identity claims are not accepted." } };
     delete inputSchema.properties._sessionBinding;
-    inputSchema.required = (inputSchema.required ?? []).filter(name => name !== "_sessionBinding");
+    inputSchema.required = [...new Set([...(inputSchema.required ?? []).filter(name => name !== "_sessionBinding"), SESSION_PROOF_FIELD])];
     if (usesInlineReferences(toolSchemaProfile) && JSON.stringify(inputSchema).includes('"$ref"')) {
       return { ...tool, inputSchema: inlineSchemaReferences(inputSchema, contractDocuments) };
     }
