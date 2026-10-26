@@ -174,7 +174,19 @@ export function evaluatePreflight(input, options = {}) {
     && targets.every((target) => input.authorizationRef.environments.includes(target.environment));
   const currentStateMatched = targets.every((target) => input.currentStateEvidenceRefs.some((evidence) => canonicalLocator(evidence.targetLocator) === target.locator && evidence.fingerprint === target.expectedFingerprint));
   const recoveryRequired = RECOVERY_ACTIONS.has(input.actionClass) || externalImpact;
-  const recoverySufficient = !recoveryRequired || (input.recoveryPlan.available
+  const containment = input.recoveryPlan.freshResourceContainment;
+  const containmentSufficient = Boolean(containment
+    && ["permission-change", "deploy", "other"].includes(input.actionClass)
+    && !externalImpact && !dataLossPotential
+    && input.recoveryPlan.available && !input.recoveryPlan.irreversibilityAccepted
+    && input.recoveryPlan.method?.trim() && input.recoveryPlan.restoreProcedureRef?.trim()
+    && containment.commandDigest === digest(input.plannedCommandOrTool)
+    && containment.targetDigest === targetDigest
+    && targets.every((target) => {
+      const observations = input.currentStateEvidenceRefs.filter((evidence) => canonicalLocator(evidence.targetLocator) === target.locator);
+      return observations.length > 0 && observations.every((evidence) => evidence.existence === "absent" && evidence.fingerprint === target.expectedFingerprint);
+    }));
+  const recoverySufficient = containment ? containmentSufficient : !recoveryRequired || (input.recoveryPlan.available
     && Boolean(input.recoveryPlan.method && input.recoveryPlan.backupRef && input.recoveryPlan.restoreProcedureRef)
     && (Boolean(input.recoveryPlan.restoreTestEvidenceRef) || input.recoveryPlan.irreversibilityAccepted))
     || (!input.recoveryPlan.available && input.recoveryPlan.irreversibilityAccepted);
@@ -186,7 +198,7 @@ export function evaluatePreflight(input, options = {}) {
     { checkId: "authorization-match", state: authorizationMatched ? "passed" : "failed", evidenceRefs: [input.authorizationRef.locator], message: authorizationMatched ? "행동, 대상과 환경이 허용 범위에 있습니다." : "권한 범위가 행동, 대상 또는 환경과 일치하지 않습니다." },
     { checkId: "current-state", state: currentStateMatched ? "passed" : "unknown", evidenceRefs: refLocators(input.currentStateEvidenceRefs), message: currentStateMatched ? "현재 fingerprint가 예상값과 일치합니다." : "모든 대상의 현재 fingerprint를 확인하지 못했습니다." },
     { checkId: "approval", state: approval.status === "observed" || approval.status === "not-required" ? "passed" : "unknown", evidenceRefs: approval.refs, message: `승인 상태: ${approval.status}` },
-    { checkId: "recovery", state: recoverySufficient ? "passed" : "failed", evidenceRefs: uniqueRefs([input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef]), message: recoverySufficient ? "복구 또는 명시적 비가역성 수용 근거가 있습니다." : "복구 설계를 보완해야 합니다." },
+    { checkId: "recovery", state: recoverySufficient ? "passed" : "failed", evidenceRefs: uniqueRefs([input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef, containment?.guardEvidenceRef.locator]), message: containmentSufficient ? "새 자원만 추가하고 실패 시 중단·보존하는 containment 근거가 있습니다. 복원 검증 완료를 뜻하지 않습니다." : recoverySufficient ? "복구 또는 명시적 비가역성 수용 근거가 있습니다." : "복구 설계를 보완해야 합니다." },
     { checkId: "blast-radius", state: blastRadiusMatched ? "passed" : "failed", evidenceRefs: [], message: blastRadiusMatched ? "예상 영향 범위가 모든 대상을 포함합니다." : "예상 영향 범위가 대상 수보다 작습니다." },
   ];
   const unresolved = [];
@@ -206,13 +218,13 @@ export function evaluatePreflight(input, options = {}) {
     if (!blastRadiusMatched) unresolved.push("영향 범위를 다시 계산해야 합니다.");
   }
 
-  const recoveryRefs = uniqueRefs([input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef]);
+  const recoveryRefs = uniqueRefs([input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef, containment?.guardEvidenceRef.locator]);
   return {
     schemaVersion: VERSION, operationId: input.operationId, actionDigest, targetDigest,
-    classification: { actionClass: input.actionClass, reversibility: input.recoveryPlan.irreversibilityAccepted ? "irreversible" : (recoverySufficient ? "reversible" : "conditional"), externalImpact, dataLossPotential, permissionImpact },
+    classification: { actionClass: input.actionClass, reversibility: input.recoveryPlan.irreversibilityAccepted ? "irreversible" : (recoverySufficient && !containment ? "reversible" : "conditional"), externalImpact, dataLossPotential, permissionImpact },
     checks,
     approval: { required: approvalRequired, status: approval.status, evidenceRefs: approval.refs },
-    recovery: { available: input.recoveryPlan.available, restoreTested: Boolean(input.recoveryPlan.restoreTestEvidenceRef), irreversibilityAccepted: input.recoveryPlan.irreversibilityAccepted, evidenceRefs: recoveryRefs },
+    recovery: { available: input.recoveryPlan.available, restoreTested: !containment && Boolean(input.recoveryPlan.restoreTestEvidenceRef), irreversibilityAccepted: input.recoveryPlan.irreversibilityAccepted, evidenceRefs: recoveryRefs },
     blastRadius: input.expectedBlastRadius, unresolved: [...new Set(unresolved)],
     invalidationTriggers: ["action 또는 planned tool 변경", "target 또는 environment 변경", "current-state evidence 또는 fingerprint 변경", "scope 또는 authorization 변경", "승인 evidence의 만료 또는 범위 변경", "복구 계획 변경", "예상 blast radius 변경"],
     validUntil: new Date(now.getTime() + PREFLIGHT_VALIDITY_MINUTES * 60_000).toISOString(), observedAt: now.toISOString(), verdict,

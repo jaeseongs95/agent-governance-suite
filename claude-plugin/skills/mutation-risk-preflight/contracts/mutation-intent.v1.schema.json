@@ -24,8 +24,20 @@
     "scope": { "type": "object", "additionalProperties": false, "required": ["locator", "digest", "includedTargets", "excludedTargets"], "properties": { "locator": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" }, "includedTargets": { "type": "array", "items": { "type": "string" } }, "excludedTargets": { "type": "array", "items": { "type": "string" } } } },
     "authorization": { "type": "object", "additionalProperties": false, "required": ["locator", "digest", "allowedActions", "allowedTargets", "environments"], "properties": { "locator": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" }, "allowedActions": { "type": "array", "items": { "type": "string" } }, "allowedTargets": { "type": "array", "items": { "type": "string" } }, "environments": { "type": "array", "items": { "type": "string" } } } },
     "approval": { "type": "object", "additionalProperties": false, "required": ["locator", "digest", "operationId", "actionClass", "targetLocators", "environments", "expiresAt"], "properties": { "locator": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" }, "operationId": { "type": "string" }, "actionClass": { "type": "string" }, "targetLocators": { "type": "array", "items": { "type": "string" } }, "environments": { "type": "array", "items": { "type": "string" } }, "expiresAt": { "type": "string", "format": "date-time" } } },
-    "currentState": { "type": "object", "additionalProperties": false, "required": ["locator", "digest", "targetLocator", "fingerprint"], "properties": { "locator": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" }, "targetLocator": { "type": "string" }, "fingerprint": { "$ref": "#/$defs/digest" } } },
-    "recovery": { "type": "object", "additionalProperties": false, "required": ["available", "method", "backupRef", "restoreProcedureRef", "restoreTestEvidenceRef", "irreversibilityAccepted"], "properties": { "available": { "type": "boolean" }, "method": { "type": ["string", "null"] }, "backupRef": { "type": ["string", "null"] }, "restoreProcedureRef": { "type": ["string", "null"] }, "restoreTestEvidenceRef": { "type": ["string", "null"] }, "irreversibilityAccepted": { "type": "boolean" } } },
+    "currentState": { "type": "object", "additionalProperties": false, "required": ["locator", "digest", "targetLocator", "fingerprint"], "properties": { "locator": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" }, "targetLocator": { "type": "string" }, "fingerprint": { "$ref": "#/$defs/digest" }, "existence": { "enum": ["absent", "present", "unknown"] } } },
+    "recovery": { "type": "object", "additionalProperties": false, "required": ["available", "method", "backupRef", "restoreProcedureRef", "restoreTestEvidenceRef", "irreversibilityAccepted"], "properties": { "available": { "type": "boolean" }, "method": { "type": ["string", "null"] }, "backupRef": { "type": ["string", "null"] }, "restoreProcedureRef": { "type": ["string", "null"] }, "restoreTestEvidenceRef": { "type": ["string", "null"] }, "irreversibilityAccepted": { "type": "boolean" }, "freshResourceContainment": { "$ref": "#/$defs/freshResourceContainment" } } },
+    "freshResourceContainment": {
+      "description": "Evidence of create-only effects, execution-time identity/absence collision guards, and a stop/preserve procedure; not an authorization or a completed restore.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commandDigest", "targetDigest", "guardEvidenceRef", "partialFailure"],
+      "properties": {
+        "commandDigest": { "$ref": "#/$defs/digest" },
+        "targetDigest": { "$ref": "#/$defs/digest" },
+        "guardEvidenceRef": { "type": "object", "additionalProperties": false, "required": ["locator", "digest"], "properties": { "locator": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" } } },
+        "partialFailure": { "const": "stop-preserve" }
+      }
+    },
     "blastRadius": { "type": "object", "additionalProperties": false, "required": ["affectedTargets", "affectedUsers", "external", "description"], "properties": { "affectedTargets": { "type": "integer", "minimum": 1 }, "affectedUsers": { "type": "integer", "minimum": 0 }, "external": { "type": "boolean" }, "description": { "type": "string", "minLength": 1 } } }
   }
 }

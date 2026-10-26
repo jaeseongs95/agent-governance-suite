@@ -294,7 +294,23 @@ export function matchesTaskContractAuthorizationSuccessor(path, bytes) {
     && createHash("sha256").update(bytes).digest("hex") === TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes[path];
 }
 
+const PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR = Object.freeze({
+  "revision": "preflight-additive-source-successor-r01",
+  "authorityEffect": "none",
+  "hashes": {
+    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": "fb633fdd9e49cc48dedfaed0afc49e4173f7c9d64818e615965a98fce37a8319",
+    "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json": "eaf3bc82d4d18372544e54f39cfe0d6214ade77e983589de62789828207b8dc6",
+    "skills/mutation-risk-preflight/references/recovery-requirements.md": "973da35b3d3080878c746bf32563764a6d7c580dc7912ab040edd68123086d19"
+  }
+});
+
+export function matchesPreflightAdditiveSourceSuccessor(path, bytes) {
+  return Object.hasOwn(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes, path)
+    && createHash("sha256").update(bytes).digest("hex") === PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes[path];
+}
+
 export function matchesCurrentImplementationPin(path, bytes) {
+  if (matchesPreflightAdditiveSourceSuccessor(path, bytes)) return true;
   if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
   if (matchesTaskContractAuthorizationSuccessor(path, bytes)) return true;
   return Object.hasOwn(CURRENT_IMPLEMENTATION_PINS.hashes, path)
@@ -447,6 +463,11 @@ export function checkSkillContextOptimization() {
       errors.push(`current implementation bytes differ: ${currentPath}`);
     }
   }
+  for (const currentPath of Object.keys(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes)) {
+    if (!matchesPreflightAdditiveSourceSuccessor(currentPath, readFileSync(join(ROOT, currentPath)))) {
+      errors.push(`preflight additive successor bytes differ: ${currentPath}`);
+    }
+  }
   for (const currentPath of Object.keys(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes)) {
     if (!matchesTaskContractAuthorizationSuccessor(currentPath, readFileSync(join(ROOT, currentPath)))) {
       errors.push(`task-contract authorization successor bytes differ: ${currentPath}`);
@@ -532,6 +553,7 @@ export function checkSkillContextOptimization() {
     if (!readFileSync(join(ROOT, ...descriptorPath.split("/"))).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
 
     const allowed = new Set([skillPath, detailPath]);
+    for (const currentPath of Object.keys(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     for (const currentPath of Object.keys(GOVERNANCE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     for (const currentPath of Object.keys(CURRENT_IMPLEMENTATION_PINS.hashes)) {
       if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
@@ -593,6 +615,7 @@ export function checkSkillContextOptimization() {
 
   return {
     baselineRevision: BASELINE,
+    currentPreflightAdditiveSourceSuccessors: [PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR],
     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
     policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],
     reviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R1],
