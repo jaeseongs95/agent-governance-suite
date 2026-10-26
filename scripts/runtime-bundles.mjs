@@ -20,6 +20,12 @@ export const RUNTIME_BUNDLES = Object.freeze([
     executable: true,
   }),
   Object.freeze({
+    id: "governance-hook",
+    entry: "mcp-server/src/governance-hook.ts",
+    output: "mcp-server/dist/governance-hook.mjs",
+    executable: true,
+  }),
+  Object.freeze({
     id: "continuity-hook",
     entry: "mcp-server/src/continuity-hook.ts",
     output: "mcp-server/dist/continuity-hook.mjs",

@@ -1,5 +1,24 @@
 #!/usr/bin/env node
 
+// mcp-server/src/input-observation.ts
+import { types as utilTypes } from "node:util";
+function supportsInjection(capabilities, kind) {
+  return capabilities.supportedInjection.includes(kind);
+}
+function actorAccess(actor) {
+  const invalid = { allowed: false, reasonCode: "ACTOR_OBSERVATION_INVALID" };
+  if (!actor || typeof actor !== "object" || utilTypes.isProxy(actor) || Array.isArray(actor)) return invalid;
+  try {
+    const role = Object.getOwnPropertyDescriptor(actor, "role")?.value;
+    const basis = Object.getOwnPropertyDescriptor(actor, "basis")?.value;
+    const reasonCode = Object.getOwnPropertyDescriptor(actor, "reasonCode")?.value;
+    if (role !== "root" && role !== "child" && role !== "indeterminate" || basis !== "observed" && basis !== "inferred" && basis !== "unavailable" || typeof reasonCode !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(reasonCode)) return invalid;
+    return { allowed: role === "root" && (basis === "observed" || basis === "inferred"), reasonCode };
+  } catch {
+    return invalid;
+  }
+}
+
 // mcp-server/src/hook-error-diagnostics.ts
 import { writeSync } from "node:fs";
 
@@ -103,12 +122,12 @@ function writeFailureDiagnostic(serialized, writer = defaultSyncStderr) {
 
 // mcp-server/src/builtin-hook-host-adapters.ts
 import { createHash as createHash3 } from "node:crypto";
-import { types as utilTypes4 } from "node:util";
+import { types as utilTypes5 } from "node:util";
 import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
 import path5 from "node:path";
 
 // mcp-server/src/host-input-adapter.ts
-import { types as utilTypes } from "node:util";
+import { types as utilTypes2 } from "node:util";
 var hostFailures = {
   selection: ["INVALID_HOOK_HOST_SELECTION", "Invalid or ambiguous hook host."],
   adapter: ["INVALID_HOOK_HOST_ADAPTER", "Invalid hook host adapter."],
@@ -140,7 +159,7 @@ function adaptHostInput(input, host) {
       host,
       sessionId: "",
       kind: "unknown",
-      actor: { kind: "unknown", observedBy: "".concat(host, ":unconfigured-input"), assurance: "unknown" }
+      actor: { role: "indeterminate", basis: "unavailable", reasonCode: "HOST_ACTOR_OBSERVATION_UNAVAILABLE" }
     }
   };
 }
@@ -162,7 +181,7 @@ function hostDeliveryProfile(host, environment = process.env, diagnose = (reason
   const prefix = "[agent-governance-suite] ".concat(host, " queue settings: ").concat(reason, ".");
   let detail = null;
   try {
-    if (observation && typeof observation === "object" && !utilTypes.isProxy(observation)) {
+    if (observation && typeof observation === "object" && !utilTypes2.isProxy(observation)) {
       const phase = Object.getOwnPropertyDescriptor(observation, "phase")?.value;
       const cleanup = Object.getOwnPropertyDescriptor(observation, "cleanup")?.value;
       const failure = Object.getOwnPropertyDescriptor(observation, "failure")?.value;
@@ -184,7 +203,7 @@ function nativePeerWait(observation) {
 }
 
 // mcp-server/src/session-message-client.ts
-import { types as utilTypes2 } from "node:util";
+import { types as utilTypes3 } from "node:util";
 import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
@@ -623,7 +642,7 @@ function deadlineError(message) {
   return tagProducerFailure(new Error(message), "BROKER_DEADLINE_EXPIRED");
 }
 function clientFailure(reason, message, cause) {
-  return utilTypes2.isNativeError(cause) ? tagProducerFailure(cause, reason) : retainFailureCause(tagProducerFailure(new Error(message), reason), cause);
+  return utilTypes3.isNativeError(cause) ? tagProducerFailure(cause, reason) : retainFailureCause(tagProducerFailure(new Error(message), reason), cause);
 }
 function signalError(signal) {
   return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : retainFailureCause(tagProducerFailure(new Error("The session message operation was aborted."), "BROKER_OPERATION_ABORTED"), signal.reason);
@@ -1122,7 +1141,7 @@ import path4 from "node:path";
 
 // mcp-server/src/trust-store.ts
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
-import { types as utilTypes3 } from "node:util";
+import { types as utilTypes4 } from "node:util";
 import { chmodSync, mkdirSync } from "node:fs";
 import path3 from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -1237,7 +1256,7 @@ var TrustStore = class {
         this.database.close();
       } catch (closeError) {
         closeFailed = true;
-        closeFailure = utilTypes3.isNativeError(closeError) ? tagProducerFailure(closeError, "TRUST_CLOSE_FAILED") : closeError;
+        closeFailure = utilTypes4.isNativeError(closeError) ? tagProducerFailure(closeError, "TRUST_CLOSE_FAILED") : closeError;
       }
       const failure = cause instanceof WorkflowContractError ? cause : this.storageError("Cannot initialize the trust database.", cause);
       if (closeFailed) retainFailureSecondary(failure, closeFailure);
@@ -1341,7 +1360,7 @@ var TrustStore = class {
     try {
       this.database.close();
     } catch (cause) {
-      throw utilTypes3.isNativeError(cause) ? tagProducerFailure(cause, "TRUST_CLOSE_FAILED") : cause;
+      throw utilTypes4.isNativeError(cause) ? tagProducerFailure(cause, "TRUST_CLOSE_FAILED") : cause;
     }
     this.closed = true;
   }
@@ -1385,7 +1404,7 @@ var TrustStore = class {
       try {
         this.database.exec("ROLLBACK;");
       } catch (rollbackError) {
-        retainFailureSecondary(cause, utilTypes3.isNativeError(rollbackError) ? tagProducerFailure(rollbackError, "TRUST_ROLLBACK_FAILED") : rollbackError);
+        retainFailureSecondary(cause, utilTypes4.isNativeError(rollbackError) ? tagProducerFailure(rollbackError, "TRUST_ROLLBACK_FAILED") : rollbackError);
       }
       throw cause;
     }
@@ -1554,12 +1573,11 @@ function transportDeliveryCapabilities(transport) {
   const capabilities = transportWakePort(transport).capabilities;
   return { supportedInjection: [...capabilities.supportedInjection], idleWake: capabilities.idleWake };
 }
-var WAKE_ACTOR_KINDS = ["main", "unknown"];
-var WAKE_ACTOR_ASSURANCES = ["observed", "unknown"];
+var WAKE_CAPABILITY_VERSION = "3.0.0";
 function isWakeHookObservation(value, target) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const event = value;
-  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && event.actor?.observedBy === "".concat(target.host, ":hook-payload") && WAKE_ACTOR_KINDS.some((kind) => kind === event.actor.kind) && WAKE_ACTOR_ASSURANCES.some((assurance) => assurance === event.actor.assurance) && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
+  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && actorAccess(event.actor).allowed && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
 }
 function observationDigest(event) {
   const normalized = [
@@ -1567,9 +1585,8 @@ function observationDigest(event) {
     event.sessionId,
     event.kind,
     event.wakeOnly,
-    event.actor.kind,
-    event.actor.observedBy,
-    event.actor.assurance,
+    event.actor.role,
+    event.actor.basis,
     [...new Set(event.wakeCandidates)].sort()
   ];
   return "sha256:".concat(createHash2("sha256").update(JSON.stringify(normalized)).digest("hex"));
@@ -1587,7 +1604,7 @@ function recordWakeHookObservation(observation, nowMs = Date.now()) {
       observedAt: new Date(nowMs).toISOString(),
       expiresAt: new Date(nowMs + 3e4).toISOString(),
       authorityEffect: "none",
-      attestation: { kind: "broker-peer-envelope", adapter: "session-message-wake-hook", capabilityVersion: "1.0.0" }
+      attestation: { kind: "broker-peer-envelope", adapter: "session-message-wake-hook", capabilityVersion: WAKE_CAPABILITY_VERSION }
     }).receiptId;
   } finally {
     trust.close();
@@ -1604,16 +1621,7 @@ function text(value) {
 function record(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
-function actorObservation(input, host) {
-  if (!Object.hasOwn(input, "agent_id")) return { kind: "unknown", observedBy: "".concat(host, ":hook-payload"), assurance: "unknown" };
-  if (typeof input.agent_id !== "string") return { kind: "unknown", observedBy: "".concat(host, ":hook-payload"), assurance: "unknown" };
-  return {
-    kind: text(input.agent_id) ? "subagent" : "main",
-    observedBy: "".concat(host, ":hook-payload"),
-    assurance: "observed"
-  };
-}
-function adaptBuiltinHookInput(input, host) {
+function adaptBuiltinHookInput(input, host, actor) {
   const event = text(input.hook_event_name);
   let kind = "unknown";
   let lifecycle = "none";
@@ -1632,6 +1640,7 @@ function adaptBuiltinHookInput(input, host) {
   } else if (event === "Stop") kind = "turn-end";
   const wake = kind === "user-input" ? parseWakeMessages(input.prompt) : { nonces: [], wakeOnly: false };
   const workspaceId = text(input.workspace_id) || text(input.cwd);
+  const callId = text(input.tool_use_id).trim();
   const collaborationId = text(input.collaboration_id);
   const role = text(input.role);
   return {
@@ -1641,7 +1650,8 @@ function adaptBuiltinHookInput(input, host) {
       host,
       sessionId: text(input.session_id),
       kind,
-      actor: actorObservation(input, host),
+      actor,
+      ...callId ? { callId } : {},
       ...boundaryPhase === void 0 ? {} : { boundaryPhase },
       ...kind === "tool-boundary" ? { toolName: text(input.tool_name), toolInput: record(input.tool_input) } : {},
       ...kind === "user-input" ? { wakeCandidates: wake.nonces, wakeOnly: wake.wakeOnly } : {},
@@ -1652,26 +1662,43 @@ function adaptBuiltinHookInput(input, host) {
   };
 }
 function adaptCodexHookInput(input, host) {
-  const adapted = adaptBuiltinHookInput(input, host);
-  if (adapted.lifecycle === "none") return adapted;
-  if (Object.hasOwn(input, "agent_type")) {
-    adapted.observation.actor = { kind: "unknown", observedBy: "".concat(host, ":root-lifecycle-conflict"), assurance: "unknown" };
-  } else if (!Object.hasOwn(input, "agent_id")) {
-    adapted.observation.actor = { kind: "main", observedBy: "".concat(host, ":native-root-lifecycle"), assurance: "observed" };
-  }
-  return adapted;
+  return adaptBuiltinHookInput(input, host, {
+    role: "indeterminate",
+    basis: "unavailable",
+    reasonCode: "CODEX_NATIVE_CAPTURE_REQUIRED"
+  });
 }
 function adaptClaudeHookInput(input, host) {
-  const adapted = adaptBuiltinHookInput(input, host);
-  const hasAgentId = Object.hasOwn(input, "agent_id");
+  const actor = {
+    role: "indeterminate",
+    basis: "unavailable",
+    reasonCode: "CLAUDE_NATIVE_EVENT_UNRECOGNIZED"
+  };
+  const adapted = adaptBuiltinHookInput(input, host, actor);
   const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown";
-  const validAgentType = !Object.hasOwn(input, "agent_type") || typeof input.agent_type === "string" && input.agent_type.trim().length > 0;
-  if (!knownEvent || !adapted.observation.sessionId.trim() || !validAgentType || hasAgentId && (typeof input.agent_id !== "string" || !input.agent_id.trim())) {
-    adapted.observation.actor = { kind: "unknown", observedBy: "".concat(host, ":invalid-native-actor"), assurance: "unknown" };
-  } else if (!hasAgentId) {
-    adapted.observation.actor = { kind: "main", observedBy: "".concat(host, ":hook-payload"), assurance: "observed" };
-  }
+  if (!knownEvent) return adapted;
+  if (!adapted.observation.sessionId.trim()) actor.reasonCode = "CLAUDE_NATIVE_SESSION_ID_INVALID";
+  else if (Object.hasOwn(input, "agent_type") && (typeof input.agent_type !== "string" || !input.agent_type.trim())) {
+    actor.reasonCode = "CLAUDE_NATIVE_AGENT_TYPE_INVALID";
+  } else if (Object.hasOwn(input, "agent_id")) {
+    if (typeof input.agent_id !== "string" || !input.agent_id.trim()) actor.reasonCode = "CLAUDE_NATIVE_AGENT_ID_INVALID";
+    else Object.assign(actor, { role: "child", basis: "observed", reasonCode: "CLAUDE_NATIVE_CHILD_AGENT_ID" });
+  } else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: "CLAUDE_NATIVE_ROOT_AGENT_ID_ABSENT" });
   return adapted;
+}
+function adaptGeminiHookInput(input, host) {
+  return adaptBuiltinHookInput(input, host, {
+    role: "indeterminate",
+    basis: "unavailable",
+    reasonCode: "GEMINI_ACTOR_OBSERVATION_UNSUPPORTED"
+  });
+}
+function adaptAntigravityHookInput(input, host) {
+  return adaptBuiltinHookInput(input, host, {
+    role: "indeterminate",
+    basis: "unavailable",
+    reasonCode: "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED"
+  });
 }
 var GOVERNANCE_TOOL_PREFIXES = /* @__PURE__ */ new Set([
   "mcp__agent_governance_suite__",
@@ -1696,7 +1723,7 @@ function queueEnabled(host, explicit, environment, diagnose, defaultEnabled = fa
     cause
   );
   const absent = (error) => {
-    if (!error || typeof error !== "object" || utilTypes4.isProxy(error)) return false;
+    if (!error || typeof error !== "object" || utilTypes5.isProxy(error)) return false;
     try {
       return Object.getOwnPropertyDescriptor(error, "code")?.value === "ENOENT";
     } catch {
@@ -1805,7 +1832,13 @@ var builtinHookHostAdapters = /* @__PURE__ */ new Map([
     attestationKind: "claude-hook"
   }],
   ["gemini", {
-    adaptInput: adaptBuiltinHookInput,
+    adaptInput: adaptGeminiHookInput,
+    ownsTool: ownsGovernanceTool,
+    deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
+    processPid: (pid, observation) => observation ? pid : void 0
+  }],
+  ["antigravity", {
+    adaptInput: adaptAntigravityHookInput,
     ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
     processPid: (pid, observation) => observation ? pid : void 0
@@ -1846,15 +1879,7 @@ import { readFileSync as readFileSync2 } from "node:fs";
 import path6 from "node:path";
 import { performance as performance3 } from "node:perf_hooks";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
-
-// mcp-server/src/input-observation.ts
-function supportsInjection(capabilities, kind) {
-  return capabilities.supportedInjection.includes(kind);
-}
-
-// mcp-server/src/session-message-hook.ts
 var SESSION_BOUND_TOOLS = /* @__PURE__ */ new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
-var MAIN_SESSION_TOOLS = /* @__PURE__ */ new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
 var HOST_CLAIM_MAX_MESSAGES = 1;
 var HOST_CLAIM_MAX_BODY_CHARS = 4096;
 var HOST_MESSAGE_REQUEST_TIMEOUT_MS = 8e3;
@@ -2070,7 +2095,7 @@ async function handleSessionMessageHook(input, host, explicitHostPid, options = 
   const observation = adapted.observation;
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
-  const main = observation.actor.kind === "main" && observation.actor.assurance === "observed";
+  const main = actorAccess(observation.actor).allowed;
   const profile = hostDeliveryProfile(host, process.env, void 0, options.defaultQueueWake);
   const target = { host, sessionId };
   if (budget && observation.kind === "user-input" && observation.wakeOnly && observation.wakeCandidates?.length && supportsInjection(profile.capabilities, "peer-wake")) {
@@ -2173,7 +2198,7 @@ async function handleSessionMessageHook(input, host, explicitHostPid, options = 
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
     const toolName = observation.toolName ?? "";
     const wait = nativePeerWait(observation);
-    if (wait && observation.actor.kind === "main" && observation.actor.assurance === "observed") {
+    if (wait && actorAccess(observation.actor).allowed) {
       try {
         const decision = await request("peer-wait", { sender: target, ...wait });
         return { hookSpecificOutput: {
@@ -2190,7 +2215,7 @@ async function handleSessionMessageHook(input, host, explicitHostPid, options = 
     if (!isGovernanceHookTool(host, toolName)) return {};
     const localTool = toolName.split("__").at(-1) ?? "";
     if (!SESSION_BOUND_TOOLS.has(localTool)) return {};
-    if (MAIN_SESSION_TOOLS.has(localTool) && (observation.actor.kind !== "main" || observation.actor.assurance !== "observed")) {
+    if (!actorAccess(observation.actor).allowed) {
       return { hookSpecificOutput: { hookEventName: adapted.outputEventName, permissionDecision: "deny" } };
     }
     return {
@@ -2199,15 +2224,15 @@ async function handleSessionMessageHook(input, host, explicitHostPid, options = 
         updatedInput: { ...observation.toolInput, _sessionBinding: localTool === "validate_collaboration_decision" ? {
           host,
           sessionId,
-          actorKind: observation.actor.kind,
-          observedBy: observation.actor.observedBy,
-          assurance: observation.actor.assurance
+          actorKind: "main",
+          observedBy: observation.actor.reasonCode,
+          assurance: observation.actor.basis
         } : { host, sessionId } }
       }
     };
   }
   if (!main) return {};
-  if (options.recoverExistingSession && observation.actor.kind === "main" && observation.actor.assurance === "observed" && (observation.kind === "user-input" || observation.kind === "turn-end" || observation.kind === "tool-boundary" && observation.boundaryPhase === "after")) {
+  if (options.recoverExistingSession && actorAccess(observation.actor).allowed && (observation.kind === "user-input" || observation.kind === "turn-end" || observation.kind === "tool-boundary" && observation.boundaryPhase === "after")) {
     try {
       const listed = await request("list-presence", { targets: [target] });
       const current = listed.sessions.find((session) => session.host === host && session.sessionId === sessionId);

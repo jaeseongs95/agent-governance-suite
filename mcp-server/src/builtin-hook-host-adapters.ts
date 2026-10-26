@@ -17,18 +17,8 @@ function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 
-function actorObservation(input: Record<string, unknown>, host: string): InputObservation["actor"] {
-  if (!Object.hasOwn(input, "agent_id")) return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
-  if (typeof input.agent_id !== "string") return { kind: "unknown", observedBy: `${host}:hook-payload`, assurance: "unknown" };
-  return {
-    kind: text(input.agent_id) ? "subagent" : "main",
-    observedBy: `${host}:hook-payload`,
-    assurance: "observed",
-  };
-}
-
 /** Keeps vendor event names and actor fields at the host adapter boundary. */
-function adaptBuiltinHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
+function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, actor: InputObservation["actor"]): AdaptedHostInput {
   const event = text(input.hook_event_name);
   let kind: InputObservationKind = "unknown";
   let lifecycle: HostLifecycle = "none";
@@ -48,6 +38,7 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string): Ad
 
   const wake = kind === "user-input" ? parseWakeMessages(input.prompt) : { nonces: [], wakeOnly: false };
   const workspaceId = text(input.workspace_id) || text(input.cwd);
+  const callId = text(input.tool_use_id).trim();
   const collaborationId = text(input.collaboration_id);
   const role = text(input.role);
   return {
@@ -57,7 +48,8 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string): Ad
       host,
       sessionId: text(input.session_id),
       kind,
-      actor: actorObservation(input, host),
+      actor,
+      ...(callId ? { callId } : {}),
       ...(boundaryPhase === undefined ? {} : { boundaryPhase }),
       ...(kind === "tool-boundary" ? { toolName: text(input.tool_name), toolInput: record(input.tool_input) } : {}),
       ...(kind === "user-input" ? { wakeCandidates: wake.nonces, wakeOnly: wake.wakeOnly } : {}),
@@ -68,35 +60,42 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string): Ad
   };
 }
 
-/** Codex 0.163 dispatches these lifecycle events only for root threads. Its
- * native wire schema omits actor fields; the registered strategy owns that fact.
- * Other events still need their own actor evidence. */
+/** No native role capture has been accepted yet, including lifecycle events. */
 function adaptCodexHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
-  const adapted = adaptBuiltinHookInput(input, host);
-  if (adapted.lifecycle === "none") return adapted;
-  if (Object.hasOwn(input, "agent_type")) {
-    adapted.observation.actor = { kind: "unknown", observedBy: `${host}:root-lifecycle-conflict`, assurance: "unknown" };
-  } else if (!Object.hasOwn(input, "agent_id")) {
-    adapted.observation.actor = { kind: "main", observedBy: `${host}:native-root-lifecycle`, assurance: "observed" };
-  }
+  return adaptBuiltinHookInput(input, host, {
+    role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_CAPTURE_REQUIRED",
+  });
+}
+
+/** Claude's supported native hook schema omits agent_id for root calls.
+ * Absence supports inference only; an explicit empty or malformed ID never does. */
+function adaptClaudeHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
+  const actor: InputObservation["actor"] = {
+    role: "indeterminate", basis: "unavailable", reasonCode: "CLAUDE_NATIVE_EVENT_UNRECOGNIZED",
+  };
+  const adapted = adaptBuiltinHookInput(input, host, actor);
+  const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown";
+  if (!knownEvent) return adapted;
+  if (!adapted.observation.sessionId.trim()) actor.reasonCode = "CLAUDE_NATIVE_SESSION_ID_INVALID";
+  else if (Object.hasOwn(input, "agent_type") && (typeof input.agent_type !== "string" || !input.agent_type.trim())) {
+    actor.reasonCode = "CLAUDE_NATIVE_AGENT_TYPE_INVALID";
+  } else if (Object.hasOwn(input, "agent_id")) {
+    if (typeof input.agent_id !== "string" || !input.agent_id.trim()) actor.reasonCode = "CLAUDE_NATIVE_AGENT_ID_INVALID";
+    else Object.assign(actor, { role: "child", basis: "observed", reasonCode: "CLAUDE_NATIVE_CHILD_AGENT_ID" });
+  } else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: "CLAUDE_NATIVE_ROOT_AGENT_ID_ABSENT" });
   return adapted;
 }
 
-/** Claude's native main hooks omit agent_id, including --agent sessions with agent_type.
- * Only this registered host strategy owns that absence; explicit invalid IDs never imply main.
- * https://code.claude.com/docs/en/hooks#common-input-fields */
-function adaptClaudeHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
-  const adapted = adaptBuiltinHookInput(input, host);
-  const hasAgentId = Object.hasOwn(input, "agent_id");
-  const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown";
-  const validAgentType = !Object.hasOwn(input, "agent_type") || (typeof input.agent_type === "string" && input.agent_type.trim().length > 0);
-  if (!knownEvent || !adapted.observation.sessionId.trim() || !validAgentType
-    || (hasAgentId && (typeof input.agent_id !== "string" || !input.agent_id.trim()))) {
-    adapted.observation.actor = {kind: "unknown", observedBy: `${host}:invalid-native-actor`, assurance: "unknown"};
-  } else if (!hasAgentId) {
-    adapted.observation.actor = {kind: "main", observedBy: `${host}:hook-payload`, assurance: "observed"};
-  }
-  return adapted;
+function adaptGeminiHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
+  return adaptBuiltinHookInput(input, host, {
+    role: "indeterminate", basis: "unavailable", reasonCode: "GEMINI_ACTOR_OBSERVATION_UNSUPPORTED",
+  });
+}
+
+function adaptAntigravityHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
+  return adaptBuiltinHookInput(input, host, {
+    role: "indeterminate", basis: "unavailable", reasonCode: "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED",
+  });
 }
 
 const GOVERNANCE_TOOL_PREFIXES = new Set([
@@ -218,7 +217,12 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
     processPid: () => process.ppid, attestationKind: "claude-hook",
   }],
   ["gemini", {
-    adaptInput: adaptBuiltinHookInput, ownsTool: ownsGovernanceTool,
+    adaptInput: adaptGeminiHookInput, ownsTool: ownsGovernanceTool,
+    deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
+    processPid: (pid, observation) => observation ? pid : undefined,
+  }],
+  ["antigravity", {
+    adaptInput: adaptAntigravityHookInput, ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
     processPid: (pid, observation) => observation ? pid : undefined,
   }],

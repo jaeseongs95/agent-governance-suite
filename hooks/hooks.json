@@ -102,47 +102,25 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "^mcp__agent[-_]governance[-_]suite__(plan_workflow|record_stage_result|classify_skills|record_skill_selection)$",
+        "matcher": "^mcp__agent[-_]governance[-_]suite__.+$",
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/host-attestation-hook.mjs\" --host=codex",
-            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\host-attestation-hook.mjs\" --host=codex",
+            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/governance-hook.mjs\" --host=codex",
+            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\governance-hook.mjs\" --host=codex",
             "timeout": 10,
-            "statusMessage": "Binding host execution observation"
+            "statusMessage": "Checking governance call identity"
           }
         ]
       },
       {
-        "matcher": "^(mcp__agent[-_]governance[-_]suite__(prepare_session_message|send_session_message|acknowledge_session_messages|get_session_message_status|validate_collaboration_decision)|mcp__codex_app__wait_threads)$",
+        "matcher": "^mcp__codex_app__wait_threads$",
         "hooks": [
           {
             "type": "command",
             "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs\"",
             "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\"",
             "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "^mcp__agent[-_]governance[-_]suite__(open_convergence_root|checkpoint_context|inspect_context|load_context|suppress_context_restore|purge_direct_context)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/continuity-hook.mjs\"",
-            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\continuity-hook.mjs\"",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "^mcp__agent[-_]governance[-_]suite__(update_session_status|list_session_status)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-board-hook.mjs\"",
-            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-board-hook.mjs\"",
-            "timeout": 5
           }
         ]
       },

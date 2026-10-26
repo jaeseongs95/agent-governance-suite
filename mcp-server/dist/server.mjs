@@ -5128,8 +5128,8 @@ var require_multipleOf = __commonJS({
         const { gen, data, schemaCode, it } = cxt;
         const prec = it.opts.multipleOfPrecision;
         const res = gen.let("res");
-        const invalid2 = prec ? (0, codegen_1._)(_c || (_c = __template(["Math.abs(Math.round(", ") - ", ") > 1e-", ""])), res, res, prec) : (0, codegen_1._)(_d || (_d = __template(["", " !== parseInt(", ")"])), res, res);
-        cxt.fail$data((0, codegen_1._)(_e || (_e = __template(["(", " === 0 || (", " = ", "/", ", ", "))"])), schemaCode, res, data, schemaCode, invalid2));
+        const invalid3 = prec ? (0, codegen_1._)(_c || (_c = __template(["Math.abs(Math.round(", ") - ", ") > 1e-", ""])), res, res, prec) : (0, codegen_1._)(_d || (_d = __template(["", " !== parseInt(", ")"])), res, res);
+        cxt.fail$data((0, codegen_1._)(_e || (_e = __template(["(", " === 0 || (", " = ", "/", ", ", "))"])), schemaCode, res, data, schemaCode, invalid3));
       }
     };
     exports.default = def;
@@ -8139,7 +8139,7 @@ var require_dist = __commonJS({
 });
 
 // mcp-server/src/skill-classification/digest.ts
-import { createHash as createHash7 } from "node:crypto";
+import { createHash as createHash8 } from "node:crypto";
 function digestClassificationValue(value) {
   const canonical2 = (item) => {
     if (item === null || typeof item === "string" || typeof item === "boolean") return JSON.stringify(item);
@@ -8150,7 +8150,7 @@ function digestClassificationValue(value) {
     }
     throw new Error("INVALID_JSON_VALUE");
   };
-  return "sha256:".concat(createHash7("sha256").update(canonical2(value), "utf8").digest("hex"));
+  return "sha256:".concat(createHash8("sha256").update(canonical2(value), "utf8").digest("hex"));
 }
 var init_digest = __esm({
   "mcp-server/src/skill-classification/digest.ts"() {
@@ -8247,6 +8247,584 @@ var init_profile_validation = __esm({
     configurationKeys = ["profileId", "providerKind", "vendorId", "modelId", "modelRevision", "reasoningEffort", "supportedOptions", "approvedRouteRef", "qualificationRevision", "adapterRevision", "promptRevision", "maximumInputBytes", "maximumOutputTokens", "maximumCostUsd", "judgmentPolicy"];
   }
 });
+
+// mcp-server/src/session-actor-proof.ts
+import { createHash as createHash2, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+
+// contracts/types.ts
+var CONTRACT_VERSION = "1.0.0";
+var WORKFLOW_STATE = [
+  "ready",
+  "running",
+  "needs-input",
+  "needs-approval",
+  "needs-redesign",
+  "failed",
+  "passed",
+  "blocked"
+];
+var ERROR_CODE = [
+  "INVALID_INPUT",
+  "RUN_NOT_FOUND",
+  "STALE_REVISION",
+  "INVALID_TRANSITION",
+  "MISSING_EVIDENCE",
+  "GATE_FAILED",
+  "MCP_UNAVAILABLE",
+  "LEASE_REQUIRED",
+  "LEASE_CONFLICT",
+  "FRAME_REVIEW_REQUIRED",
+  "ATTEMPT_BUDGET_EXHAUSTED",
+  "NEW_EVIDENCE_REQUIRED",
+  "ROOT_CONFLICT",
+  "CONTINUITY_UNAVAILABLE",
+  "BINDING_REQUIRED",
+  "BINDING_INVALID",
+  "SNAPSHOT_NOT_FOUND",
+  "SNAPSHOT_CONFLICT",
+  "REQUEST_CONFLICT",
+  "INTEGRITY_FAILED"
+];
+var MODEL_CLASS = ["lightweight", "general", "deep", "frontier"];
+var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
+var POLICY_CAPABILITY = {
+  coordination: "subagent-coordination",
+  deliberation: "independent-deliberation",
+  audit: "independent-audit"
+};
+var WorkflowContractError = class extends Error {
+  constructor(code, message, details = null) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    this.name = "WorkflowContractError";
+  }
+  code;
+  details;
+  toBody() {
+    return { code: this.code, message: this.message, details: this.details };
+  }
+};
+
+// mcp-server/src/convergence-logic.ts
+import { createHash } from "node:crypto";
+import { existsSync, statSync } from "node:fs";
+import path2 from "node:path";
+
+// mcp-server/src/workspace-identity.ts
+import fs from "node:fs";
+import path from "node:path";
+var WALK_LIMIT = 256;
+var READ_LIMIT = 4096;
+var URI_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]+:\/\//u;
+var GLOB_META = /[*?[\]{}]/u;
+var SEGMENT_SEPARATOR = process.platform === "win32" ? /[\\/]/u : /\//u;
+function isUnsupported(entry) {
+  if (URI_PATTERN.test(entry)) return true;
+  for (let index = 0; index < entry.length; index += 1) {
+    const code = entry.charCodeAt(index);
+    if (code <= 31 || code === 127) return true;
+  }
+  return false;
+}
+function assertSupportedScopeEntry(entry) {
+  if (isUnsupported(entry)) {
+    throw new WorkflowContractError(
+      "INVALID_INPUT",
+      "Scope entries must be file system paths without control characters.",
+      { reason: "UNSUPPORTED_SCOPE_ENTRY", entry }
+    );
+  }
+}
+function pathWithin(child, parent) {
+  return parent === "" || child === parent || child.startsWith("".concat(parent, "/"));
+}
+function unresolved(target, cause) {
+  return new WorkflowContractError(
+    "INVALID_INPUT",
+    "Workspace identity cannot be resolved for ".concat(target, ": ").concat(cause, "."),
+    { reason: "WORKSPACE_IDENTITY_UNRESOLVED", path: target, cause }
+  );
+}
+function normalizedKey(value) {
+  const slashed = process.platform === "win32" ? value.replaceAll("\\", "/").toLowerCase() : value;
+  return slashed.replace(/\/+$/u, "");
+}
+function physicalPath(target) {
+  let current = path.resolve(target);
+  const suffix = [];
+  for (let depth = 0; depth < WALK_LIMIT; depth += 1) {
+    try {
+      const existing = fs.realpathSync.native(current);
+      return { real: path.join(existing, ...suffix), existing };
+    } catch (error61) {
+      const code = error61.code;
+      const parent = path.dirname(current);
+      if (code !== "ENOENT" && code !== "ENOTDIR" || parent === current) throw unresolved(target, code ?? "unreadable");
+      suffix.unshift(path.basename(current));
+      current = parent;
+    }
+  }
+  throw unresolved(target, "walk limit reached");
+}
+function isDirectory(target) {
+  return fs.statSync(target, { throwIfNoEntry: false })?.isDirectory() === true;
+}
+function readHead(file2) {
+  const descriptor2 = fs.openSync(file2, "r");
+  try {
+    const buffer = Buffer.alloc(READ_LIMIT + 1);
+    const length = fs.readSync(descriptor2, buffer, 0, READ_LIMIT + 1, 0);
+    if (length > READ_LIMIT) throw unresolved(file2, "pointer file too large");
+    return buffer.toString("utf8", 0, length);
+  } finally {
+    fs.closeSync(descriptor2);
+  }
+}
+function discoverGit(physical) {
+  let evidence = physical.existing;
+  try {
+    let directory = isDirectory(physical.existing) ? physical.existing : path.dirname(physical.existing);
+    for (let depth = 0; depth < WALK_LIMIT; depth += 1) {
+      evidence = path.join(directory, ".git");
+      const stat = fs.statSync(evidence, { throwIfNoEntry: false });
+      if (stat) {
+        let gitDir = evidence;
+        if (!stat.isDirectory()) {
+          const pointer2 = /^gitdir: ([^\r\n]+)/u.exec(readHead(evidence))?.[1];
+          if (!pointer2) throw unresolved(evidence, "missing gitdir line");
+          gitDir = path.resolve(directory, pointer2);
+          if (!isDirectory(gitDir)) throw unresolved(gitDir, "gitdir is not a directory");
+        }
+        let commonDir = gitDir;
+        evidence = path.join(gitDir, "commondir");
+        if (fs.statSync(evidence, { throwIfNoEntry: false })) {
+          const pointer2 = readHead(evidence).trim();
+          if (!pointer2) throw unresolved(evidence, "empty commondir");
+          commonDir = path.resolve(gitDir, pointer2);
+          if (!isDirectory(commonDir)) throw unresolved(commonDir, "commondir is not a directory");
+        }
+        return {
+          commonDir: normalizedKey(fs.realpathSync.native(commonDir)),
+          checkoutRoot: normalizedKey(directory),
+          relative: normalizedKey(path.relative(directory, physical.real))
+        };
+      }
+      const parent = path.dirname(directory);
+      if (parent === directory) return null;
+      directory = parent;
+    }
+    throw unresolved(physical.existing, "walk limit reached");
+  } catch (error61) {
+    if (error61 instanceof WorkflowContractError) throw error61;
+    throw unresolved(evidence, error61.code ?? "unreadable");
+  }
+}
+function repositoryCheckouts(commonDir) {
+  const roots = /* @__PURE__ */ new Set();
+  const complete = false;
+  try {
+    if (!isDirectory(commonDir)) return { roots: [], complete: false };
+    if (path.basename(commonDir) === ".git") roots.add(normalizedKey(physicalPath(path.dirname(commonDir)).real));
+    const worktrees = path.join(commonDir, "worktrees");
+    if (fs.statSync(worktrees, { throwIfNoEntry: false })) {
+      const listing = fs.opendirSync(worktrees);
+      try {
+        for (let count = 0; ; count += 1) {
+          const name = listing.readSync()?.name;
+          if (name === void 0) break;
+          if (count >= WALK_LIMIT) {
+            break;
+          }
+          try {
+            const pointer2 = readHead(path.join(worktrees, name, "gitdir")).trim();
+            if (!pointer2 || isUnsupported(pointer2) || normalizedKey(path.basename(pointer2)) !== ".git") {
+              continue;
+            }
+            roots.add(normalizedKey(physicalPath(path.dirname(path.resolve(worktrees, name, pointer2))).real));
+          } catch {
+          }
+        }
+      } finally {
+        listing.closeSync();
+      }
+    }
+  } catch {
+  }
+  return { roots: [...roots], complete };
+}
+function repositoryInDirectory(container, commonDir) {
+  const pending = [container];
+  const visited = /* @__PURE__ */ new Set();
+  let inspected = 0;
+  try {
+    while (pending.length > 0) {
+      if (++inspected > READ_LIMIT) return "unknown";
+      const directory = fs.realpathSync.native(pending.pop());
+      const key = normalizedKey(directory);
+      if (visited.has(key)) continue;
+      visited.add(key);
+      if (fs.statSync(path.join(directory, ".git"), { throwIfNoEntry: false })) {
+        if (discoverGit({ real: directory, existing: directory })?.commonDir === commonDir) return "overlap";
+      }
+      const listing = fs.opendirSync(directory);
+      try {
+        for (let entry = listing.readSync(); entry; entry = listing.readSync()) {
+          if (++inspected > READ_LIMIT) return "unknown";
+          if (entry.name === ".git") continue;
+          const child = path.join(directory, entry.name);
+          if (entry.isDirectory()) pending.push(child);
+          else if (entry.isSymbolicLink()) {
+            if (isDirectory(child)) pending.push(child);
+            else if (identify(child).git?.commonDir === commonDir) return "overlap";
+          }
+        }
+      } finally {
+        listing.closeSync();
+      }
+    }
+    return "none";
+  } catch {
+    return "unknown";
+  }
+}
+function identify(target) {
+  const physical = physicalPath(target);
+  return { physical: normalizedKey(physical.real), git: discoverGit(physical) };
+}
+function resolveRootIdentity(workspaceLocator, entries, options = {}) {
+  if (!options.legacy) for (const entry of entries) assertSupportedScopeEntry(entry);
+  const workspace = identify(workspaceLocator);
+  const surfaces = entries.map((entry) => {
+    if (isUnsupported(entry)) return { entry, ...workspace, conservative: "legacy-unsupported" };
+    const segments = entry.split(SEGMENT_SEPARATOR);
+    const globIndex = segments.findIndex((segment) => GLOB_META.test(segment));
+    if (globIndex === 0) {
+      return workspace.git ? { entry, physical: workspace.git.checkoutRoot, git: { ...workspace.git, relative: "" }, conservative: "leading-glob" } : { entry, ...workspace, conservative: "leading-glob" };
+    }
+    const target = globIndex < 0 ? entry : "".concat(segments.slice(0, globIndex).join("/"), "/");
+    return {
+      entry,
+      ...identify(path.resolve(workspaceLocator, target)),
+      conservative: globIndex < 0 ? null : "glob-prefix"
+    };
+  });
+  return { version: 1, workspacePhysical: workspace.physical, surfaces };
+}
+
+// mcp-server/src/convergence-logic.ts
+function canonicalJson(value, subject = "Convergence input") {
+  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      throw new WorkflowContractError("INVALID_INPUT", "".concat(subject, " contains a non-finite number."));
+    }
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return "[".concat(value.map((item) => canonicalJson(item, subject)).join(","), "]");
+  if (value && typeof value === "object") {
+    const record4 = value;
+    return "{".concat(Object.keys(record4).sort().map((key) => "".concat(JSON.stringify(key), ":").concat(canonicalJson(record4[key], subject))).join(","), "}");
+  }
+  throw new WorkflowContractError("INVALID_INPUT", "".concat(subject, " contains a non-serializable value."));
+}
+function convergenceDigest(value) {
+  return "sha256:".concat(createHash("sha256").update(canonicalJson(value), "utf8").digest("hex"));
+}
+function frameDigests(frame) {
+  return {
+    frameDigest: convergenceDigest(frame),
+    workspaceDigest: convergenceDigest(frame.workspace),
+    controlDigest: convergenceDigest(frame.controlArtifacts),
+    targetDigest: convergenceDigest(frame.targetArtifacts),
+    operationalDigest: convergenceDigest(frame.operationalSettings)
+  };
+}
+function writeSurface(root) {
+  return [
+    ...root.taskEnvelope.scope.included,
+    ...root.taskEnvelope.workUnits.flatMap((unit) => unit.writeTargets),
+    ...root.frame.targetArtifacts.map((artifact) => artifact.locator)
+  ];
+}
+function rootIdentity(root, legacy = false) {
+  return resolveRootIdentity(root.frame.workspace.locator, writeSurface(root), { legacy });
+}
+function surfaceDigest(root) {
+  return convergenceDigest({ locator: root.frame.workspace.locator, entries: writeSurface(root) });
+}
+function normalizedScope(value, workspaceLocator) {
+  const normalized = path2.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
+  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
+}
+function inferredSurfaces(identity) {
+  return identity.surfaces.map((surface) => !existsSync(surface.physical || "/"));
+}
+function coversEarlierCheckout(current, earlier) {
+  if (earlier.git === null) return false;
+  if (current.git === null) return true;
+  return earlier.git.checkoutRoot !== current.git.checkoutRoot && pathWithin(earlier.git.checkoutRoot, current.git.checkoutRoot);
+}
+function surfaceBacked(surface, observedOutsideCheckouts) {
+  const unchanged = observedOutsideCheckouts && surface.git === null && !surface.conservative;
+  return existsSync((unchanged ? path2.posix.dirname(surface.physical) : surface.physical) || "/");
+}
+function activeRootIdentity(root, stored) {
+  const digest5 = surfaceDigest(root);
+  const observed = stored && stored.surfaceDigest === digest5 ? stored.identity : null;
+  const wasInferred = (index) => observed !== null && stored.inferred[index] === true;
+  const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest5 };
+  if (observed && observed.surfaces.every((surface, index) => surface.git !== null && !wasInferred(index))) {
+    return { ...known, identity: observed, resolved: true, fresh: false, inferred: stored.inferred };
+  }
+  let derived = null;
+  try {
+    derived = rootIdentity(root, true);
+  } catch (cause) {
+    if (!(cause instanceof WorkflowContractError)) throw cause;
+  }
+  const locator = root.frame.workspace.locator;
+  if (!observed && !derived) {
+    const identity2 = {
+      version: 1,
+      workspacePhysical: normalizedScope(".", locator),
+      surfaces: writeSurface(root).map((entry) => ({ entry, physical: normalizedScope(entry, locator), git: null, conservative: null }))
+    };
+    return { ...known, identity: identity2, resolved: false, fresh: false, inferred: [] };
+  }
+  const workspaceExists = existsSync(locator);
+  let resolved = true;
+  const surfaces = (observed ?? derived).surfaces.map((surface, index) => {
+    const current = derived?.surfaces[index];
+    if (wasInferred(index)) {
+      if (!current) resolved = false;
+      return current && !coversEarlierCheckout(current, surface) ? current : surface;
+    }
+    if (observed && surface.git !== null) return surface;
+    if (current && workspaceExists && surfaceBacked(current, observed !== null)) return current;
+    resolved = false;
+    return surface;
+  });
+  const identity = {
+    version: 1,
+    workspacePhysical: observed?.workspacePhysical ?? derived.workspacePhysical,
+    surfaces
+  };
+  const inferred = surfaces.map((surface, index) => wasInferred(index) && !existsSync(surface.physical || "/"));
+  const fresh = resolved && JSON.stringify({ identity, inferred }) !== JSON.stringify({ identity: observed, inferred: stored?.inferred });
+  return { ...known, identity, resolved, fresh, inferred };
+}
+var GATED_STATES = ["needs-review", "needs-user"];
+function overlaps(left, right) {
+  return pathWithin(left, right) || pathWithin(right, left);
+}
+function sharesLineage(left, right) {
+  return left.git !== null && right.git !== null && left.git.commonDir === right.git.commonDir;
+}
+function insideParentSurface(surface, parent) {
+  return parent.surfaces.some((owned) => pathWithin(surface.physical, owned.physical) || sharesLineage(surface, owned) && pathWithin(surface.git.relative, owned.git.relative));
+}
+function lineageRelation(left, right, checkouts, scans) {
+  if (sharesLineage(left, right) && overlaps(left.git.relative, right.git.relative)) {
+    return "overlap";
+  }
+  let uncertain = false;
+  for (const [container, member] of [[left, right], [right, left]]) {
+    if (!member.git || container.conservative === null && statSync(container.physical || "/", { throwIfNoEntry: false })?.isDirectory() !== true) continue;
+    const commonDir = member.git.commonDir;
+    if (!checkouts.has(commonDir)) checkouts.set(commonDir, repositoryCheckouts(commonDir));
+    const listing = checkouts.get(commonDir);
+    if (listing.roots.some((checkout) => pathWithin(checkout, container.physical))) return "overlap";
+    if (!listing.complete) {
+      const scanKey = "".concat(commonDir, "\0").concat(container.physical);
+      if (!scans.has(scanKey)) scans.set(scanKey, repositoryInDirectory(container.physical || "/", commonDir));
+      const scanned = scans.get(scanKey);
+      if (scanned === "overlap") return "overlap";
+      uncertain ||= scanned === "unknown";
+    }
+  }
+  return uncertain ? "unknown" : "none";
+}
+function outsideEveryRepository(surface) {
+  return surface.git === null && surface.conservative === null && statSync(surface.physical || "/", { throwIfNoEntry: false })?.isDirectory() !== true;
+}
+function findRootConflict(candidate, parent, actives) {
+  const checkouts = /* @__PURE__ */ new Map();
+  const scans = /* @__PURE__ */ new Map();
+  for (const active of actives) {
+    if (active.root.rootId === candidate.root.parentRootId) continue;
+    for (const requested of candidate.identity.surfaces) {
+      for (const existing of active.identity.surfaces) {
+        if (overlaps(requested.physical, existing.physical)) {
+          return { root: active.root, kind: "physical", requested, existing };
+        }
+      }
+    }
+    if (!GATED_STATES.includes(active.root.state)) continue;
+    for (const requested of candidate.identity.surfaces) {
+      if (parent && insideParentSurface(requested, parent)) continue;
+      for (const existing of active.identity.surfaces) {
+        if (!active.resolved) {
+          if (outsideEveryRepository(requested)) continue;
+          return { root: active.root, kind: "lineage-unresolved", requested, existing };
+        }
+        const relation = lineageRelation(requested, existing, checkouts, scans);
+        if (relation !== "none") {
+          return { root: active.root, kind: relation === "overlap" ? "lineage" : "lineage-unresolved", requested, existing };
+        }
+      }
+    }
+  }
+  return null;
+}
+function replacementMatch(candidate, parent) {
+  if (!parent.resolved) {
+    if (!parent.legacy) {
+      return parent.observedWorkspace && candidate.identity.workspacePhysical === parent.identity.workspacePhysical ? "physical" : null;
+    }
+    const sameNamedWorkspace = parent.root.frame.workspace.workspaceId === candidate.root.frame.workspace.workspaceId && normalizeWorkspaceLocator(parent.root.frame.workspace.locator) === normalizeWorkspaceLocator(candidate.root.frame.workspace.locator);
+    return sameNamedWorkspace ? "legacy-locator" : null;
+  }
+  if (candidate.identity.workspacePhysical === parent.identity.workspacePhysical) return "physical";
+  const parentRepositories = new Set(parent.identity.surfaces.flatMap((surface) => surface.git ? [surface.git.commonDir] : []));
+  const sameLineage = candidate.identity.surfaces.length > 0 && candidate.identity.surfaces.every((surface) => surface.git !== null && parentRepositories.has(surface.git.commonDir));
+  return sameLineage ? "lineage" : null;
+}
+function planRootInsertion(root, actives) {
+  const identity = rootIdentity(root);
+  let parent = null;
+  let match = null;
+  if (root.parentRootId) {
+    parent = actives.find((active) => active.root.rootId === root.parentRootId) ?? null;
+    if (!parent || !GATED_STATES.includes(parent.root.state)) {
+      throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root may be replaced.", {
+        parentRootId: root.parentRootId,
+        parentState: parent?.root.state ?? null
+      });
+    }
+    match = replacementMatch({ root, identity }, parent);
+    if (!match) {
+      throw new WorkflowContractError("INVALID_INPUT", "A replacement root must remain bound to the same workspace.", {
+        parentRootId: root.parentRootId,
+        ...parent.resolved ? {} : { reason: "WORKSPACE_IDENTITY_UNRESOLVED" }
+      });
+    }
+  }
+  return {
+    identity,
+    surfaceDigest: surfaceDigest(root),
+    inferred: inferredSurfaces(identity),
+    match,
+    conflict: findRootConflict({ root, identity }, parent?.identity ?? null, actives)
+  };
+}
+function conflictDetails(conflict) {
+  return {
+    rootId: conflict.root.rootId,
+    workspaceId: conflict.root.frame.workspace.workspaceId,
+    scope: conflict.root.taskEnvelope.scope.included,
+    blockerState: conflict.root.state,
+    conflictKind: conflict.kind,
+    ...conflict.kind === "lineage-unresolved" ? { reason: "WORKSPACE_IDENTITY_UNRESOLVED" } : {},
+    requestedEntry: conflict.requested.entry,
+    existingEntry: conflict.existing.entry,
+    conservativeExpansion: [conflict.requested.conservative, conflict.existing.conservative].filter((reason) => reason !== null)
+  };
+}
+function normalizeWorkspaceLocator(locator) {
+  const resolved = path2.resolve(locator);
+  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
+}
+
+// mcp-server/src/input-observation.ts
+import { types as utilTypes } from "node:util";
+function actorAccess(actor) {
+  const invalid3 = { allowed: false, reasonCode: "ACTOR_OBSERVATION_INVALID" };
+  if (!actor || typeof actor !== "object" || utilTypes.isProxy(actor) || Array.isArray(actor)) return invalid3;
+  try {
+    const role = Object.getOwnPropertyDescriptor(actor, "role")?.value;
+    const basis = Object.getOwnPropertyDescriptor(actor, "basis")?.value;
+    const reasonCode = Object.getOwnPropertyDescriptor(actor, "reasonCode")?.value;
+    if (role !== "root" && role !== "child" && role !== "indeterminate" || basis !== "observed" && basis !== "inferred" && basis !== "unavailable" || typeof reasonCode !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(reasonCode)) return invalid3;
+    return { allowed: role === "root" && (basis === "observed" || basis === "inferred"), reasonCode };
+  } catch {
+    return invalid3;
+  }
+}
+
+// mcp-server/src/session-actor-proof.ts
+var SESSION_PROOF_FIELD = "_sessionProof";
+var KEY = "governance-root-call-key-v3";
+var PREFIX = "ags-root-v3";
+var TTL_MS = 5 * 6e4;
+function withoutSessionProof(args) {
+  const input2 = { ...args };
+  delete input2[SESSION_PROOF_FIELD];
+  return input2;
+}
+function invalid(reasonCode) {
+  throw new WorkflowContractError("BINDING_INVALID", "The current root hook proof is invalid.", { reasonCode });
+}
+var SessionActorProofs = class {
+  constructor(store, now = Date.now) {
+    this.store = store;
+    this.now = now;
+  }
+  store;
+  now;
+  key() {
+    const key = Buffer.from(this.store.getOrCreateSecret(KEY, () => randomBytes(32).toString("base64url")), "base64url");
+    if (key.length !== 32) return invalid("ROOT_PROOF_KEY_INVALID");
+    return key;
+  }
+  issue(observation, tool, args) {
+    const access = actorAccess(observation.actor);
+    if (!access.allowed) return invalid(access.reasonCode);
+    if (!observation.host || !observation.sessionId || !observation.callId) return invalid("ROOT_CALL_ID_MISSING");
+    if (Object.hasOwn(args, "_sessionBinding")) return invalid("CALLER_SESSION_BINDING_REJECTED");
+    const issuedAt = this.now();
+    const proof = {
+      version: 3,
+      host: observation.host,
+      sessionId: observation.sessionId,
+      actor: { ...observation.actor },
+      tool,
+      inputDigest: convergenceDigest(withoutSessionProof(args)),
+      call: createHash2("sha256").update(JSON.stringify([observation.host, observation.sessionId, observation.callId])).digest("hex"),
+      issuedAt,
+      expiresAt: issuedAt + TTL_MS
+    };
+    const body = "".concat(PREFIX, ".").concat(Buffer.from(JSON.stringify(proof)).toString("base64url"));
+    return "".concat(body, ".").concat(createHmac("sha256", this.key()).update(body).digest("base64url"));
+  }
+  verify(tool, args) {
+    if (Object.hasOwn(args, "_sessionBinding")) return invalid("CALLER_SESSION_BINDING_REJECTED");
+    const token = args[SESSION_PROOF_FIELD];
+    if (typeof token !== "string" || !token) {
+      throw new WorkflowContractError("BINDING_REQUIRED", "A current root hook proof is required.", { reasonCode: "ROOT_HOOK_PROOF_REQUIRED" });
+    }
+    if (token.length > 8192) return invalid("ROOT_PROOF_TOO_LARGE");
+    const [prefix, encoded, signature, extra] = token.split(".");
+    if (prefix !== PREFIX || !encoded || !signature || extra !== void 0) return invalid("ROOT_PROOF_FORMAT_INVALID");
+    const expected = createHmac("sha256", this.key()).update("".concat(prefix, ".").concat(encoded)).digest();
+    const actual = Buffer.from(signature, "base64url");
+    if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) return invalid("ROOT_PROOF_SIGNATURE_INVALID");
+    let proof;
+    try {
+      proof = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
+    } catch {
+      return invalid("ROOT_PROOF_PAYLOAD_INVALID");
+    }
+    const now = this.now();
+    if (!proof || proof.version !== 3 || typeof proof.host !== "string" || !proof.host || typeof proof.sessionId !== "string" || !proof.sessionId || !proof.actor || !actorAccess(proof.actor).allowed || typeof proof.call !== "string" || !/^[a-f0-9]{64}$/u.test(proof.call) || !Number.isFinite(proof.issuedAt) || !Number.isFinite(proof.expiresAt) || proof.issuedAt > now || proof.expiresAt <= now || proof.expiresAt - proof.issuedAt !== TTL_MS || proof.tool !== tool || proof.inputDigest !== convergenceDigest(withoutSessionProof(args))) {
+      return invalid("ROOT_PROOF_SCOPE_OR_TIME_INVALID");
+    }
+    if (!this.store.claimExecutionObservation("".concat(PREFIX, ":").concat(proof.call), new Date(proof.expiresAt).toISOString(), new Date(now).toISOString())) {
+      return invalid("ROOT_PROOF_ALREADY_CONSUMED");
+    }
+    return { host: proof.host, sessionId: proof.sessionId, actor: { ...proof.actor } };
+  }
+};
 
 // node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 import process3 from "node:process";
@@ -28689,71 +29267,14 @@ var StdioServerTransport = class {
 };
 
 // mcp-server/src/registry.ts
-import { createHash } from "node:crypto";
+import { createHash as createHash3 } from "node:crypto";
 import { readFileSync } from "node:fs";
-import path from "node:path";
-
-// contracts/types.ts
-var CONTRACT_VERSION = "1.0.0";
-var WORKFLOW_STATE = [
-  "ready",
-  "running",
-  "needs-input",
-  "needs-approval",
-  "needs-redesign",
-  "failed",
-  "passed",
-  "blocked"
-];
-var ERROR_CODE = [
-  "INVALID_INPUT",
-  "RUN_NOT_FOUND",
-  "STALE_REVISION",
-  "INVALID_TRANSITION",
-  "MISSING_EVIDENCE",
-  "GATE_FAILED",
-  "MCP_UNAVAILABLE",
-  "LEASE_REQUIRED",
-  "LEASE_CONFLICT",
-  "FRAME_REVIEW_REQUIRED",
-  "ATTEMPT_BUDGET_EXHAUSTED",
-  "NEW_EVIDENCE_REQUIRED",
-  "ROOT_CONFLICT",
-  "CONTINUITY_UNAVAILABLE",
-  "BINDING_REQUIRED",
-  "BINDING_INVALID",
-  "SNAPSHOT_NOT_FOUND",
-  "SNAPSHOT_CONFLICT",
-  "REQUEST_CONFLICT",
-  "INTEGRITY_FAILED"
-];
-var MODEL_CLASS = ["lightweight", "general", "deep", "frontier"];
-var REASONING_EFFORT = ["low", "medium", "high", "xhigh", "max", "ultra"];
-var POLICY_CAPABILITY = {
-  coordination: "subagent-coordination",
-  deliberation: "independent-deliberation",
-  audit: "independent-audit"
-};
-var WorkflowContractError = class extends Error {
-  constructor(code, message, details = null) {
-    super(message);
-    this.code = code;
-    this.details = details;
-    this.name = "WorkflowContractError";
-  }
-  code;
-  details;
-  toBody() {
-    return { code: this.code, message: this.message, details: this.details };
-  }
-};
-
-// mcp-server/src/registry.ts
+import path3 from "node:path";
 var FileSkillRegistry = class {
   constructor(registryPath, validator) {
     this.registryPath = registryPath;
     this.validator = validator;
-    this.rootDirectory = path.dirname(path.dirname(path.resolve(registryPath)));
+    this.rootDirectory = path3.dirname(path3.dirname(path3.resolve(registryPath)));
   }
   registryPath;
   validator;
@@ -28808,7 +29329,7 @@ var FileSkillRegistry = class {
         path: descriptor2.path
       });
     }
-    const skillRoot = path.resolve(this.rootDirectory, "skills", descriptor2.skillId);
+    const skillRoot = path3.resolve(this.rootDirectory, "skills", descriptor2.skillId);
     for (const provider2 of descriptor2.providers) {
       const bindings = new Set(provider2.inputBindings.map((binding2) => binding2.targetArtifact));
       for (const artifact of provider2.requiredInputArtifacts) {
@@ -28822,14 +29343,14 @@ var FileSkillRegistry = class {
       }
       const gateSchema = provider2.gate.validator?.endsWith(".schema.json") ? provider2.gate.validator : null;
       for (const schemaPath of [provider2.outputSchema, provider2.resultSchema, ...gateSchema ? [gateSchema] : []]) {
-        const resolved = path.resolve(this.rootDirectory, schemaPath);
-        if (resolved !== this.rootDirectory && !resolved.startsWith("".concat(this.rootDirectory).concat(path.sep))) {
+        const resolved = path3.resolve(this.rootDirectory, schemaPath);
+        if (resolved !== this.rootDirectory && !resolved.startsWith("".concat(this.rootDirectory).concat(path3.sep))) {
           throw new WorkflowContractError("INVALID_INPUT", "Provider schema path escapes the plugin root.", {
             skillId: descriptor2.skillId,
             schemaPath
           });
         }
-        if (schemaPath.startsWith("skills/") && resolved !== skillRoot && !resolved.startsWith("".concat(skillRoot).concat(path.sep))) {
+        if (schemaPath.startsWith("skills/") && resolved !== skillRoot && !resolved.startsWith("".concat(skillRoot).concat(path3.sep))) {
           throw new WorkflowContractError("INVALID_INPUT", "Skill-local schema path must remain inside its skill directory.", {
             skillId: descriptor2.skillId,
             schemaPath
@@ -28840,7 +29361,7 @@ var FileSkillRegistry = class {
   }
   schemaDigest(relativePath) {
     try {
-      return "sha256:".concat(createHash("sha256").update(readFileSync(path.resolve(this.rootDirectory, relativePath))).digest("hex"));
+      return "sha256:".concat(createHash3("sha256").update(readFileSync(path3.resolve(this.rootDirectory, relativePath))).digest("hex"));
     } catch (cause) {
       throw new WorkflowContractError("INVALID_INPUT", "Cannot read a provider schema.", {
         schemaPath: relativePath,
@@ -28876,437 +29397,7 @@ function selectSkillByCapability(providers, capability) {
 }
 
 // mcp-server/src/continuity-service.ts
-import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-
-// mcp-server/src/convergence-logic.ts
-import { createHash as createHash2 } from "node:crypto";
-import { existsSync, statSync } from "node:fs";
-import path3 from "node:path";
-
-// mcp-server/src/workspace-identity.ts
-import fs from "node:fs";
-import path2 from "node:path";
-var WALK_LIMIT = 256;
-var READ_LIMIT = 4096;
-var URI_PATTERN = /^[A-Za-z][A-Za-z0-9+.-]+:\/\//u;
-var GLOB_META = /[*?[\]{}]/u;
-var SEGMENT_SEPARATOR = process.platform === "win32" ? /[\\/]/u : /\//u;
-function isUnsupported(entry) {
-  if (URI_PATTERN.test(entry)) return true;
-  for (let index = 0; index < entry.length; index += 1) {
-    const code = entry.charCodeAt(index);
-    if (code <= 31 || code === 127) return true;
-  }
-  return false;
-}
-function assertSupportedScopeEntry(entry) {
-  if (isUnsupported(entry)) {
-    throw new WorkflowContractError(
-      "INVALID_INPUT",
-      "Scope entries must be file system paths without control characters.",
-      { reason: "UNSUPPORTED_SCOPE_ENTRY", entry }
-    );
-  }
-}
-function pathWithin(child, parent) {
-  return parent === "" || child === parent || child.startsWith("".concat(parent, "/"));
-}
-function unresolved(target, cause) {
-  return new WorkflowContractError(
-    "INVALID_INPUT",
-    "Workspace identity cannot be resolved for ".concat(target, ": ").concat(cause, "."),
-    { reason: "WORKSPACE_IDENTITY_UNRESOLVED", path: target, cause }
-  );
-}
-function normalizedKey(value) {
-  const slashed = process.platform === "win32" ? value.replaceAll("\\", "/").toLowerCase() : value;
-  return slashed.replace(/\/+$/u, "");
-}
-function physicalPath(target) {
-  let current = path2.resolve(target);
-  const suffix = [];
-  for (let depth = 0; depth < WALK_LIMIT; depth += 1) {
-    try {
-      const existing = fs.realpathSync.native(current);
-      return { real: path2.join(existing, ...suffix), existing };
-    } catch (error61) {
-      const code = error61.code;
-      const parent = path2.dirname(current);
-      if (code !== "ENOENT" && code !== "ENOTDIR" || parent === current) throw unresolved(target, code ?? "unreadable");
-      suffix.unshift(path2.basename(current));
-      current = parent;
-    }
-  }
-  throw unresolved(target, "walk limit reached");
-}
-function isDirectory(target) {
-  return fs.statSync(target, { throwIfNoEntry: false })?.isDirectory() === true;
-}
-function readHead(file2) {
-  const descriptor2 = fs.openSync(file2, "r");
-  try {
-    const buffer = Buffer.alloc(READ_LIMIT + 1);
-    const length = fs.readSync(descriptor2, buffer, 0, READ_LIMIT + 1, 0);
-    if (length > READ_LIMIT) throw unresolved(file2, "pointer file too large");
-    return buffer.toString("utf8", 0, length);
-  } finally {
-    fs.closeSync(descriptor2);
-  }
-}
-function discoverGit(physical) {
-  let evidence = physical.existing;
-  try {
-    let directory = isDirectory(physical.existing) ? physical.existing : path2.dirname(physical.existing);
-    for (let depth = 0; depth < WALK_LIMIT; depth += 1) {
-      evidence = path2.join(directory, ".git");
-      const stat = fs.statSync(evidence, { throwIfNoEntry: false });
-      if (stat) {
-        let gitDir = evidence;
-        if (!stat.isDirectory()) {
-          const pointer2 = /^gitdir: ([^\r\n]+)/u.exec(readHead(evidence))?.[1];
-          if (!pointer2) throw unresolved(evidence, "missing gitdir line");
-          gitDir = path2.resolve(directory, pointer2);
-          if (!isDirectory(gitDir)) throw unresolved(gitDir, "gitdir is not a directory");
-        }
-        let commonDir = gitDir;
-        evidence = path2.join(gitDir, "commondir");
-        if (fs.statSync(evidence, { throwIfNoEntry: false })) {
-          const pointer2 = readHead(evidence).trim();
-          if (!pointer2) throw unresolved(evidence, "empty commondir");
-          commonDir = path2.resolve(gitDir, pointer2);
-          if (!isDirectory(commonDir)) throw unresolved(commonDir, "commondir is not a directory");
-        }
-        return {
-          commonDir: normalizedKey(fs.realpathSync.native(commonDir)),
-          checkoutRoot: normalizedKey(directory),
-          relative: normalizedKey(path2.relative(directory, physical.real))
-        };
-      }
-      const parent = path2.dirname(directory);
-      if (parent === directory) return null;
-      directory = parent;
-    }
-    throw unresolved(physical.existing, "walk limit reached");
-  } catch (error61) {
-    if (error61 instanceof WorkflowContractError) throw error61;
-    throw unresolved(evidence, error61.code ?? "unreadable");
-  }
-}
-function repositoryCheckouts(commonDir) {
-  const roots = /* @__PURE__ */ new Set();
-  const complete = false;
-  try {
-    if (!isDirectory(commonDir)) return { roots: [], complete: false };
-    if (path2.basename(commonDir) === ".git") roots.add(normalizedKey(physicalPath(path2.dirname(commonDir)).real));
-    const worktrees = path2.join(commonDir, "worktrees");
-    if (fs.statSync(worktrees, { throwIfNoEntry: false })) {
-      const listing = fs.opendirSync(worktrees);
-      try {
-        for (let count = 0; ; count += 1) {
-          const name = listing.readSync()?.name;
-          if (name === void 0) break;
-          if (count >= WALK_LIMIT) {
-            break;
-          }
-          try {
-            const pointer2 = readHead(path2.join(worktrees, name, "gitdir")).trim();
-            if (!pointer2 || isUnsupported(pointer2) || normalizedKey(path2.basename(pointer2)) !== ".git") {
-              continue;
-            }
-            roots.add(normalizedKey(physicalPath(path2.dirname(path2.resolve(worktrees, name, pointer2))).real));
-          } catch {
-          }
-        }
-      } finally {
-        listing.closeSync();
-      }
-    }
-  } catch {
-  }
-  return { roots: [...roots], complete };
-}
-function repositoryInDirectory(container, commonDir) {
-  const pending = [container];
-  const visited = /* @__PURE__ */ new Set();
-  let inspected = 0;
-  try {
-    while (pending.length > 0) {
-      if (++inspected > READ_LIMIT) return "unknown";
-      const directory = fs.realpathSync.native(pending.pop());
-      const key = normalizedKey(directory);
-      if (visited.has(key)) continue;
-      visited.add(key);
-      if (fs.statSync(path2.join(directory, ".git"), { throwIfNoEntry: false })) {
-        if (discoverGit({ real: directory, existing: directory })?.commonDir === commonDir) return "overlap";
-      }
-      const listing = fs.opendirSync(directory);
-      try {
-        for (let entry = listing.readSync(); entry; entry = listing.readSync()) {
-          if (++inspected > READ_LIMIT) return "unknown";
-          if (entry.name === ".git") continue;
-          const child = path2.join(directory, entry.name);
-          if (entry.isDirectory()) pending.push(child);
-          else if (entry.isSymbolicLink()) {
-            if (isDirectory(child)) pending.push(child);
-            else if (identify(child).git?.commonDir === commonDir) return "overlap";
-          }
-        }
-      } finally {
-        listing.closeSync();
-      }
-    }
-    return "none";
-  } catch {
-    return "unknown";
-  }
-}
-function identify(target) {
-  const physical = physicalPath(target);
-  return { physical: normalizedKey(physical.real), git: discoverGit(physical) };
-}
-function resolveRootIdentity(workspaceLocator, entries, options = {}) {
-  if (!options.legacy) for (const entry of entries) assertSupportedScopeEntry(entry);
-  const workspace = identify(workspaceLocator);
-  const surfaces = entries.map((entry) => {
-    if (isUnsupported(entry)) return { entry, ...workspace, conservative: "legacy-unsupported" };
-    const segments = entry.split(SEGMENT_SEPARATOR);
-    const globIndex = segments.findIndex((segment) => GLOB_META.test(segment));
-    if (globIndex === 0) {
-      return workspace.git ? { entry, physical: workspace.git.checkoutRoot, git: { ...workspace.git, relative: "" }, conservative: "leading-glob" } : { entry, ...workspace, conservative: "leading-glob" };
-    }
-    const target = globIndex < 0 ? entry : "".concat(segments.slice(0, globIndex).join("/"), "/");
-    return {
-      entry,
-      ...identify(path2.resolve(workspaceLocator, target)),
-      conservative: globIndex < 0 ? null : "glob-prefix"
-    };
-  });
-  return { version: 1, workspacePhysical: workspace.physical, surfaces };
-}
-
-// mcp-server/src/convergence-logic.ts
-function canonicalJson(value, subject = "Convergence input") {
-  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", "".concat(subject, " contains a non-finite number."));
-    }
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) return "[".concat(value.map((item) => canonicalJson(item, subject)).join(","), "]");
-  if (value && typeof value === "object") {
-    const record4 = value;
-    return "{".concat(Object.keys(record4).sort().map((key) => "".concat(JSON.stringify(key), ":").concat(canonicalJson(record4[key], subject))).join(","), "}");
-  }
-  throw new WorkflowContractError("INVALID_INPUT", "".concat(subject, " contains a non-serializable value."));
-}
-function convergenceDigest(value) {
-  return "sha256:".concat(createHash2("sha256").update(canonicalJson(value), "utf8").digest("hex"));
-}
-function frameDigests(frame) {
-  return {
-    frameDigest: convergenceDigest(frame),
-    workspaceDigest: convergenceDigest(frame.workspace),
-    controlDigest: convergenceDigest(frame.controlArtifacts),
-    targetDigest: convergenceDigest(frame.targetArtifacts),
-    operationalDigest: convergenceDigest(frame.operationalSettings)
-  };
-}
-function writeSurface(root) {
-  return [
-    ...root.taskEnvelope.scope.included,
-    ...root.taskEnvelope.workUnits.flatMap((unit) => unit.writeTargets),
-    ...root.frame.targetArtifacts.map((artifact) => artifact.locator)
-  ];
-}
-function rootIdentity(root, legacy = false) {
-  return resolveRootIdentity(root.frame.workspace.locator, writeSurface(root), { legacy });
-}
-function surfaceDigest(root) {
-  return convergenceDigest({ locator: root.frame.workspace.locator, entries: writeSurface(root) });
-}
-function normalizedScope(value, workspaceLocator) {
-  const normalized = path3.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
-  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
-}
-function inferredSurfaces(identity) {
-  return identity.surfaces.map((surface) => !existsSync(surface.physical || "/"));
-}
-function coversEarlierCheckout(current, earlier) {
-  if (earlier.git === null) return false;
-  if (current.git === null) return true;
-  return earlier.git.checkoutRoot !== current.git.checkoutRoot && pathWithin(earlier.git.checkoutRoot, current.git.checkoutRoot);
-}
-function surfaceBacked(surface, observedOutsideCheckouts) {
-  const unchanged = observedOutsideCheckouts && surface.git === null && !surface.conservative;
-  return existsSync((unchanged ? path3.posix.dirname(surface.physical) : surface.physical) || "/");
-}
-function activeRootIdentity(root, stored) {
-  const digest5 = surfaceDigest(root);
-  const observed = stored && stored.surfaceDigest === digest5 ? stored.identity : null;
-  const wasInferred = (index) => observed !== null && stored.inferred[index] === true;
-  const known = { root, legacy: stored === null, observedWorkspace: observed !== null, surfaceDigest: digest5 };
-  if (observed && observed.surfaces.every((surface, index) => surface.git !== null && !wasInferred(index))) {
-    return { ...known, identity: observed, resolved: true, fresh: false, inferred: stored.inferred };
-  }
-  let derived = null;
-  try {
-    derived = rootIdentity(root, true);
-  } catch (cause) {
-    if (!(cause instanceof WorkflowContractError)) throw cause;
-  }
-  const locator = root.frame.workspace.locator;
-  if (!observed && !derived) {
-    const identity2 = {
-      version: 1,
-      workspacePhysical: normalizedScope(".", locator),
-      surfaces: writeSurface(root).map((entry) => ({ entry, physical: normalizedScope(entry, locator), git: null, conservative: null }))
-    };
-    return { ...known, identity: identity2, resolved: false, fresh: false, inferred: [] };
-  }
-  const workspaceExists = existsSync(locator);
-  let resolved = true;
-  const surfaces = (observed ?? derived).surfaces.map((surface, index) => {
-    const current = derived?.surfaces[index];
-    if (wasInferred(index)) {
-      if (!current) resolved = false;
-      return current && !coversEarlierCheckout(current, surface) ? current : surface;
-    }
-    if (observed && surface.git !== null) return surface;
-    if (current && workspaceExists && surfaceBacked(current, observed !== null)) return current;
-    resolved = false;
-    return surface;
-  });
-  const identity = {
-    version: 1,
-    workspacePhysical: observed?.workspacePhysical ?? derived.workspacePhysical,
-    surfaces
-  };
-  const inferred = surfaces.map((surface, index) => wasInferred(index) && !existsSync(surface.physical || "/"));
-  const fresh = resolved && JSON.stringify({ identity, inferred }) !== JSON.stringify({ identity: observed, inferred: stored?.inferred });
-  return { ...known, identity, resolved, fresh, inferred };
-}
-var GATED_STATES = ["needs-review", "needs-user"];
-function overlaps(left, right) {
-  return pathWithin(left, right) || pathWithin(right, left);
-}
-function sharesLineage(left, right) {
-  return left.git !== null && right.git !== null && left.git.commonDir === right.git.commonDir;
-}
-function insideParentSurface(surface, parent) {
-  return parent.surfaces.some((owned) => pathWithin(surface.physical, owned.physical) || sharesLineage(surface, owned) && pathWithin(surface.git.relative, owned.git.relative));
-}
-function lineageRelation(left, right, checkouts, scans) {
-  if (sharesLineage(left, right) && overlaps(left.git.relative, right.git.relative)) {
-    return "overlap";
-  }
-  let uncertain = false;
-  for (const [container, member] of [[left, right], [right, left]]) {
-    if (!member.git || container.conservative === null && statSync(container.physical || "/", { throwIfNoEntry: false })?.isDirectory() !== true) continue;
-    const commonDir = member.git.commonDir;
-    if (!checkouts.has(commonDir)) checkouts.set(commonDir, repositoryCheckouts(commonDir));
-    const listing = checkouts.get(commonDir);
-    if (listing.roots.some((checkout) => pathWithin(checkout, container.physical))) return "overlap";
-    if (!listing.complete) {
-      const scanKey = "".concat(commonDir, "\0").concat(container.physical);
-      if (!scans.has(scanKey)) scans.set(scanKey, repositoryInDirectory(container.physical || "/", commonDir));
-      const scanned = scans.get(scanKey);
-      if (scanned === "overlap") return "overlap";
-      uncertain ||= scanned === "unknown";
-    }
-  }
-  return uncertain ? "unknown" : "none";
-}
-function outsideEveryRepository(surface) {
-  return surface.git === null && surface.conservative === null && statSync(surface.physical || "/", { throwIfNoEntry: false })?.isDirectory() !== true;
-}
-function findRootConflict(candidate, parent, actives) {
-  const checkouts = /* @__PURE__ */ new Map();
-  const scans = /* @__PURE__ */ new Map();
-  for (const active of actives) {
-    if (active.root.rootId === candidate.root.parentRootId) continue;
-    for (const requested of candidate.identity.surfaces) {
-      for (const existing of active.identity.surfaces) {
-        if (overlaps(requested.physical, existing.physical)) {
-          return { root: active.root, kind: "physical", requested, existing };
-        }
-      }
-    }
-    if (!GATED_STATES.includes(active.root.state)) continue;
-    for (const requested of candidate.identity.surfaces) {
-      if (parent && insideParentSurface(requested, parent)) continue;
-      for (const existing of active.identity.surfaces) {
-        if (!active.resolved) {
-          if (outsideEveryRepository(requested)) continue;
-          return { root: active.root, kind: "lineage-unresolved", requested, existing };
-        }
-        const relation = lineageRelation(requested, existing, checkouts, scans);
-        if (relation !== "none") {
-          return { root: active.root, kind: relation === "overlap" ? "lineage" : "lineage-unresolved", requested, existing };
-        }
-      }
-    }
-  }
-  return null;
-}
-function replacementMatch(candidate, parent) {
-  if (!parent.resolved) {
-    if (!parent.legacy) {
-      return parent.observedWorkspace && candidate.identity.workspacePhysical === parent.identity.workspacePhysical ? "physical" : null;
-    }
-    const sameNamedWorkspace = parent.root.frame.workspace.workspaceId === candidate.root.frame.workspace.workspaceId && normalizeWorkspaceLocator(parent.root.frame.workspace.locator) === normalizeWorkspaceLocator(candidate.root.frame.workspace.locator);
-    return sameNamedWorkspace ? "legacy-locator" : null;
-  }
-  if (candidate.identity.workspacePhysical === parent.identity.workspacePhysical) return "physical";
-  const parentRepositories = new Set(parent.identity.surfaces.flatMap((surface) => surface.git ? [surface.git.commonDir] : []));
-  const sameLineage = candidate.identity.surfaces.length > 0 && candidate.identity.surfaces.every((surface) => surface.git !== null && parentRepositories.has(surface.git.commonDir));
-  return sameLineage ? "lineage" : null;
-}
-function planRootInsertion(root, actives) {
-  const identity = rootIdentity(root);
-  let parent = null;
-  let match = null;
-  if (root.parentRootId) {
-    parent = actives.find((active) => active.root.rootId === root.parentRootId) ?? null;
-    if (!parent || !GATED_STATES.includes(parent.root.state)) {
-      throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root may be replaced.", {
-        parentRootId: root.parentRootId,
-        parentState: parent?.root.state ?? null
-      });
-    }
-    match = replacementMatch({ root, identity }, parent);
-    if (!match) {
-      throw new WorkflowContractError("INVALID_INPUT", "A replacement root must remain bound to the same workspace.", {
-        parentRootId: root.parentRootId,
-        ...parent.resolved ? {} : { reason: "WORKSPACE_IDENTITY_UNRESOLVED" }
-      });
-    }
-  }
-  return {
-    identity,
-    surfaceDigest: surfaceDigest(root),
-    inferred: inferredSurfaces(identity),
-    match,
-    conflict: findRootConflict({ root, identity }, parent?.identity ?? null, actives)
-  };
-}
-function conflictDetails(conflict) {
-  return {
-    rootId: conflict.root.rootId,
-    workspaceId: conflict.root.frame.workspace.workspaceId,
-    scope: conflict.root.taskEnvelope.scope.included,
-    blockerState: conflict.root.state,
-    conflictKind: conflict.kind,
-    ...conflict.kind === "lineage-unresolved" ? { reason: "WORKSPACE_IDENTITY_UNRESOLVED" } : {},
-    requestedEntry: conflict.requested.entry,
-    existingEntry: conflict.existing.entry,
-    conservativeExpansion: [conflict.requested.conservative, conflict.existing.conservative].filter((reason) => reason !== null)
-  };
-}
-function normalizeWorkspaceLocator(locator) {
-  const resolved = path3.resolve(locator);
-  return process.platform === "win32" ? resolved.toLowerCase() : resolved;
-}
+import { createHmac as createHmac2, randomBytes as randomBytes2, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
 
 // mcp-server/src/continuity-store.ts
 import { chmodSync, mkdirSync } from "node:fs";
@@ -29808,7 +29899,7 @@ var ContinuityService = class {
     this.validator = validator;
     this.workflowStore = workflowStore;
     this.now = now;
-    this.secret = store.getOrCreateSecret(() => randomBytes(32).toString("base64url"));
+    this.secret = store.getOrCreateSecret(() => randomBytes2(32).toString("base64url"));
   }
   store;
   validator;
@@ -30172,20 +30263,20 @@ var ContinuityService = class {
   }
   sign(value) {
     const body = encode3(value);
-    const signature = createHmac("sha256", this.secret).update(body).digest("base64url");
+    const signature = createHmac2("sha256", this.secret).update(body).digest("base64url");
     return "".concat(body, ".").concat(signature);
   }
   verifySigned(token) {
     const parsed = parseJsonToken(token);
     if (!parsed) throw new WorkflowContractError("BINDING_INVALID", "Signed continuity token is malformed.");
-    const expected = createHmac("sha256", this.secret).update(parsed.body).digest();
-    if (expected.length !== parsed.signature.length || !timingSafeEqual(expected, parsed.signature)) {
+    const expected = createHmac2("sha256", this.secret).update(parsed.body).digest();
+    if (expected.length !== parsed.signature.length || !timingSafeEqual2(expected, parsed.signature)) {
       throw new WorkflowContractError("BINDING_INVALID", "Signed continuity token failed verification.");
     }
     return parsed.payload;
   }
   hmac(value) {
-    return createHmac("sha256", this.secret).update(value, "utf8").digest("hex");
+    return createHmac2("sha256", this.secret).update(value, "utf8").digest("hex");
   }
   guard(action) {
     try {
@@ -30686,7 +30777,7 @@ function resolveHostAttestation(environment = process.env, adapters = defaultExe
 // mcp-server/src/schema-validator.ts
 var import__ = __toESM(require__(), 1);
 var import_ajv_formats = __toESM(require_dist(), 1);
-import { createHash as createHash3 } from "node:crypto";
+import { createHash as createHash4 } from "node:crypto";
 import { readFileSync as readFileSync2, readdirSync } from "node:fs";
 import path6 from "node:path";
 var addFormats = import_ajv_formats.default;
@@ -30991,7 +31082,7 @@ var ContractValidator = class {
       });
     }
     const raw = readFileSync2(schemaPath);
-    const digest5 = "sha256:".concat(createHash3("sha256").update(raw).digest("hex"));
+    const digest5 = "sha256:".concat(createHash4("sha256").update(raw).digest("hex"));
     if (digest5 !== reference.digest) {
       throw new WorkflowContractError("STALE_REVISION", "".concat(label, " schema changed after planning."), {
         schemaPath: reference.path,
@@ -32807,7 +32898,7 @@ function listSessions(db, now, current = null) {
 }
 
 // runtime/failure-diagnostics.mjs
-import { createHash as createHash4 } from "node:crypto";
+import { createHash as createHash5 } from "node:crypto";
 import { types } from "node:util";
 var producerReasons = /* @__PURE__ */ new WeakMap();
 var producerCauses = /* @__PURE__ */ new WeakMap();
@@ -32867,7 +32958,7 @@ function failureContext(error61) {
             prefixCodeUnits: prefix.length,
             truncated: prefix.length !== code.value.length,
             encoding: "utf16le",
-            prefixSha256: createHash4("sha256").update(Buffer.from(prefix, "utf16le")).digest("hex")
+            prefixSha256: createHash5("sha256").update(Buffer.from(prefix, "utf16le")).digest("hex")
           };
         } else context.code = { type: code.value === null ? "null" : typeof code.value, observed: false };
       }
@@ -33027,7 +33118,7 @@ function convergenceStatusSummary(status) {
 }
 
 // mcp-server/src/host-attestation.ts
-import { createHash as createHash5, createHmac as createHmac2, randomBytes as randomBytes2, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
+import { createHash as createHash6, createHmac as createHmac3, randomBytes as randomBytes3, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
 var HOST_ATTESTATION_FIELD = "_hostAttestation";
 var HOST_ATTESTATION_TOOLS = /* @__PURE__ */ new Set(["plan_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
 var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
@@ -33039,7 +33130,7 @@ function record2(value) {
 function nonEmpty(value) {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
-var hostIdentityDigest = (value) => createHash5("sha256").update(value, "utf8").digest("hex").slice(0, 24);
+var hostIdentityDigest = (value) => createHash6("sha256").update(value, "utf8").digest("hex").slice(0, 24);
 function hostActorId(host, sessionId, agentId = null) {
   return "".concat(host, ":session-").concat(hostIdentityDigest(sessionId)).concat(agentId ? ":agent-".concat(hostIdentityDigest(agentId)) : "");
 }
@@ -33104,14 +33195,14 @@ function hostAttestationBinding(tool, input2) {
 }
 function signingKey(store) {
   const key = Buffer.from(
-    store.getOrCreateSecret(HOST_ATTESTATION_KEY, () => randomBytes2(32).toString("base64url")),
+    store.getOrCreateSecret(HOST_ATTESTATION_KEY, () => randomBytes3(32).toString("base64url")),
     "base64url"
   );
   if (key.length !== 32) throw new WorkflowContractError("INVALID_INPUT", "Stored host attestation key is invalid.");
   return key;
 }
 function mac3(key, body) {
-  return createHmac2("sha256", key).update(body, "utf8").digest("base64url");
+  return createHmac3("sha256", key).update(body, "utf8").digest("base64url");
 }
 function issueHostAttestation(store, adapter, observation) {
   if (!HOST_ATTESTATION_TOOLS.has(observation.tool)) return null;
@@ -33143,7 +33234,7 @@ function issueHostAttestation(store, adapter, observation) {
     provenance: capability.provenance,
     actorId: observation.actorId,
     // Retrying the same host call cannot mint a second consumable observation.
-    observationId: createHash5("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
+    observationId: createHash6("sha256").update(JSON.stringify(scope), "utf8").digest("base64url"),
     observedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + TOKEN_TTL_MS).toISOString()
   };
@@ -33156,30 +33247,30 @@ function withHostObservation(store, adapter, tool, args, observe, dispatch) {
   const token = observation ? issueHostAttestation(store, adapter, { ...observation, tool, input: input2 }) : null;
   return dispatch({ ...input2, ...token ? { [HOST_ATTESTATION_FIELD]: token } : {} });
 }
-function invalid(message) {
+function invalid2(message) {
   return new WorkflowContractError("BINDING_INVALID", message);
 }
 function verifyToken(store, adapter, token) {
   const [prefix, encodedPayload, signature, ...rest] = token.split(".");
   if (prefix !== TOKEN_PREFIX || !encodedPayload || !signature || rest.length > 0) {
-    throw invalid("Host attestation token is malformed.");
+    throw invalid2("Host attestation token is malformed.");
   }
   const expected = Buffer.from(mac3(signingKey(store), "".concat(prefix, ".").concat(encodedPayload)), "utf8");
   const actual = Buffer.from(signature, "utf8");
-  if (expected.length !== actual.length || !timingSafeEqual2(expected, actual)) {
-    throw invalid("Host attestation token signature is invalid.");
+  if (expected.length !== actual.length || !timingSafeEqual3(expected, actual)) {
+    throw invalid2("Host attestation token signature is invalid.");
   }
   let payload;
   try {
     payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8"));
   } catch {
-    throw invalid("Host attestation token payload is malformed.");
+    throw invalid2("Host attestation token payload is malformed.");
   }
   const value = record2(payload);
   const model = typeof value?.model === "string" ? value.model : null;
   const capability = model ? resolveAdapterModelCapability(adapter, model, typeof value?.provenance === "string" ? value.provenance : "".concat(adapter.host, ":runtime")) : null;
   if (!value || value.v !== 1 || value.host !== adapter.host || !model || !capability || !MODEL_CLASS.includes(value.modelClass) || capability.modelClass !== value.modelClass || value.provider !== void 0 && value.provider !== capability.provider || value.resolvedModel !== void 0 && value.resolvedModel !== capability.resolvedModel || value.policyRevision !== void 0 && value.policyRevision !== capability.policyRevision || value.provenance !== void 0 && (typeof value.provenance !== "string" || value.provenance.length === 0) || !isReasoningEffort(value.reasoningEffort) || !satisfiesModelEffortPolicy(capability, value.reasoningEffort) || typeof value.session !== "string" || !/^[a-f0-9]{24}$/u.test(value.session) || typeof value.call !== "string" || !/^[a-f0-9]{24}$/u.test(value.call) || value.agent !== null && (typeof value.agent !== "string" || !/^[a-f0-9]{24}$/u.test(value.agent)) || value.turn !== null && (typeof value.turn !== "string" || !/^[a-f0-9]{24}$/u.test(value.turn)) || value.actorId !== "".concat(adapter.host, ":session-").concat(String(value.session)).concat(value.agent ? ":agent-".concat(String(value.agent)) : "")) {
-    throw invalid("Host attestation token payload is not a supported observation for the configured adapter.");
+    throw invalid2("Host attestation token payload is not a supported observation for the configured adapter.");
   }
   return { payload: value, capability };
 }
@@ -33227,11 +33318,11 @@ var HostAttestationProvider = class {
     if (!current?.token) return null;
     const { payload, capability } = verifyToken(this.store, this.adapter, current.token);
     if (payload.tool !== current.tool || payload.inputDigest !== convergenceDigest(current.input)) {
-      throw invalid("Host attestation token was issued for a different tool call.");
+      throw invalid2("Host attestation token was issued for a different tool call.");
     }
-    if (payload.phase !== binding2.phase) throw invalid("Host attestation token was issued for a different phase.");
+    if (payload.phase !== binding2.phase) throw invalid2("Host attestation token was issued for a different phase.");
     const taskId = payload.phase === "stage" ? binding2.taskId : payload.taskId;
-    if (!taskId) throw invalid("Host attestation token is missing its task binding.");
+    if (!taskId) throw invalid2("Host attestation token is missing its task binding.");
     this.lastVerifiedCapability = capability;
     return {
       schemaVersion: CONTRACT_VERSION,
@@ -33252,7 +33343,7 @@ var HostAttestationProvider = class {
 };
 
 // mcp-server/src/korean-prose-glossary.ts
-import { createHash as createHash6 } from "node:crypto";
+import { createHash as createHash7 } from "node:crypto";
 import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 import { writeSync } from "node:fs";
 var KOREAN_PROSE_GLOSSARY_MAX_SOURCE_LENGTH = 2e5;
@@ -33466,7 +33557,7 @@ function unavailableResult(sourceText) {
   return { schemaVersion: "1.0.0", status: "unavailable", sourceDigest: sha256(sourceText), glossary: null, matches: [], matchSetDigest: null, warnings: ["GLOSSARY_UNAVAILABLE"] };
 }
 function sha256(value) {
-  return createHash6("sha256").update(value).digest("hex");
+  return createHash7("sha256").update(value).digest("hex");
 }
 function stableJson(value) {
   if (Array.isArray(value)) return "[".concat(value.map(stableJson).join(","), "]");
@@ -33480,21 +33571,21 @@ function compareText(left, right) {
 // mcp-server/src/skill-classification/gateway.ts
 import { readFile as readFile4 } from "node:fs/promises";
 import { readFileSync as readFileSync3, realpathSync as realpathSync2, statSync as statSync2 } from "node:fs";
-import { createHash as createHash11 } from "node:crypto";
+import { createHash as createHash12 } from "node:crypto";
 import path10 from "node:path";
 
 // mcp-server/src/skill-classification/host-discovery-adapter.ts
 import { readFile as readFile2 } from "node:fs/promises";
-import { createHash as createHash10 } from "node:crypto";
+import { createHash as createHash11 } from "node:crypto";
 import path9 from "node:path";
 
 // mcp-server/src/skill-classification/inventory.ts
-import { createHash as createHash9 } from "node:crypto";
+import { createHash as createHash10 } from "node:crypto";
 import { readFile, readdir, realpath } from "node:fs/promises";
 import path8 from "node:path";
 
 // mcp-server/src/skill-classification/request.ts
-import { createHash as createHash8 } from "node:crypto";
+import { createHash as createHash9 } from "node:crypto";
 init_digest();
 init_digest();
 var list = external_exports.array(external_exports.string());
@@ -33568,7 +33659,7 @@ function createClassificationRequest(input2) {
     requestId: input2.requestId,
     operationId: input2.operationId,
     originalPrompt: input2.originalPrompt,
-    promptDigest: "sha256:".concat(createHash8("sha256").update(input2.originalPrompt, "utf8").digest("hex")),
+    promptDigest: "sha256:".concat(createHash9("sha256").update(input2.originalPrompt, "utf8").digest("hex")),
     confirmedContext,
     contextSources,
     skills: structuredClone(input2.inventory.skills),
@@ -33583,7 +33674,7 @@ function createClassificationRequest(input2) {
 function validateClassificationRequest(request) {
   classificationRequestSchema.parse(request);
   const { requestDigest, ...body } = request;
-  if (request.schemaVersion !== "1.0.0" || typeof request.originalPrompt !== "string" || request.promptDigest !== "sha256:".concat(createHash8("sha256").update(request.originalPrompt, "utf8").digest("hex")) || requestDigest !== digestClassificationValue(body)) throw new Error("REQUEST_INTEGRITY_FAILED");
+  if (request.schemaVersion !== "1.0.0" || typeof request.originalPrompt !== "string" || request.promptDigest !== "sha256:".concat(createHash9("sha256").update(request.originalPrompt, "utf8").digest("hex")) || requestDigest !== digestClassificationValue(body)) throw new Error("REQUEST_INTEGRITY_FAILED");
   contextSchema.parse(request.confirmedContext);
   sourceSchema.parse(request.contextSources);
   external_exports.array(metadataSchema).parse(request.skills);
@@ -33687,7 +33778,7 @@ function frontmatter(text5) {
   return { name, description, version: metadataVersion ?? rootVersion, descriptionStart: start + 1, descriptionEnd: stop };
 }
 function byteDigest(bytes) {
-  return "sha256:".concat(createHash9("sha256").update(bytes).digest("hex"));
+  return "sha256:".concat(createHash10("sha256").update(bytes).digest("hex"));
 }
 async function readInventory(options, directSkillDirectory = false) {
   const root = await realpath(options.root);
@@ -33946,7 +34037,7 @@ async function loadHostObservedInventory(options) {
       const bytes = await readFile2(options.hostDiscoveryRef);
       if (bytes.length > 1024 * 1024) throw new Error("HOST_DISCOVERY_TOO_LARGE");
       raw = JSON.parse(bytes.toString("utf8"));
-      sourceRefs.push({ path: path9.resolve(options.hostDiscoveryRef), digest: "sha256:".concat(createHash10("sha256").update(bytes).digest("hex")) });
+      sourceRefs.push({ path: path9.resolve(options.hostDiscoveryRef), digest: "sha256:".concat(createHash11("sha256").update(bytes).digest("hex")) });
     }
     if (raw !== null) {
       const parsed = hostSnapshotSchema.parse(raw);
@@ -34031,11 +34122,11 @@ function sanitizeRateLimitObservation(value) {
   return null;
 }
 var ClassificationProviderError = class extends Error {
-  constructor(code, dispatchState, invalid2 = false, rateLimitObservation = null, usage = null) {
+  constructor(code, dispatchState, invalid3 = false, rateLimitObservation = null, usage = null) {
     super(code);
     this.code = code;
     this.dispatchState = dispatchState;
-    this.invalid = invalid2;
+    this.invalid = invalid3;
     this.rateLimitObservation = rateLimitObservation;
     this.usage = usage;
   }
@@ -34983,8 +35074,8 @@ var SkillClassificationService = class {
     if (result.response.error === null && ["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status)) {
       const attempt = result.attempts.at(-1);
       const profile = input2.registry.profiles.find((profile2) => profile2.profileId === attempt?.profileId);
-      const invalid2 = profile ? this.validateProfile(profile, input2.request, this.now()) : "PROFILE_UNAVAILABLE";
-      if (invalid2) return this.failure(input2, result.snapshot, invalid2, result.attempts);
+      const invalid3 = profile ? this.validateProfile(profile, input2.request, this.now()) : "PROFILE_UNAVAILABLE";
+      if (invalid3) return this.failure(input2, result.snapshot, invalid3, result.attempts);
       const bindingError = this.validateResultBinding(result);
       if (bindingError) return this.failure(input2, result.snapshot, bindingError, result.attempts);
     }
@@ -35006,10 +35097,10 @@ var SkillClassificationService = class {
         if (kind === "jev") continue;
         return this.bindHelperFailure(this.failure(input2, snapshot, !profile ? "PROFILE_UNAVAILABLE" : "PROVIDER_UNAVAILABLE", attempts), !profile ? helperFailure : null, !profile ? helperBinding : void 0);
       }
-      const invalid2 = this.validateProfile(profile, input2.request, this.now());
-      if (invalid2) {
+      const invalid3 = this.validateProfile(profile, input2.request, this.now());
+      if (invalid3) {
         if (kind === "jev") continue;
-        return this.failure(input2, snapshot, invalid2, attempts);
+        return this.failure(input2, snapshot, invalid3, attempts);
       }
       try {
         projectClassificationRequest(input2.request, profile.maximumInputBytes);
@@ -35072,8 +35163,8 @@ var SkillClassificationService = class {
         if (input2.remoteContentAllowed === false && availability.routeKind !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
         if (!input2.config.externalClassificationAllowed && availability.routeKind !== "native") throw new ClassificationProviderError("EXTERNAL_CLASSIFICATION_BLOCKED", "not-started");
         if (input2.getCurrentSnapshot && stale(snapshot, input2.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
-        const invalid2 = this.validateProfile(profile, input2.request, this.now());
-        if (invalid2) throw new ClassificationProviderError(invalid2, "not-started");
+        const invalid3 = this.validateProfile(profile, input2.request, this.now());
+        if (invalid3) throw new ClassificationProviderError(invalid3, "not-started");
         if (!this.options.budget.reserve(profile, reservationId, profile.maximumCostUsd, availability.routeKind)) throw new ClassificationProviderError("BUDGET_UNAVAILABLE", "not-started");
         reserved = true;
         dispatchState = "unknown";
@@ -35190,7 +35281,7 @@ function sourceFence(root, request, observedSources) {
           if (realpathSync2(pin.file) !== pin.real) return false;
           const status = statSync2(pin.real);
           totalBytes += status.size;
-          return status.isFile() && totalBytes <= 8 * 1024 * 1024 && "sha256:".concat(createHash11("sha256").update(readFileSync3(pin.real)).digest("hex")) === pin.digest;
+          return status.isFile() && totalBytes <= 8 * 1024 * 1024 && "sha256:".concat(createHash12("sha256").update(readFileSync3(pin.real)).digest("hex")) === pin.digest;
         });
       } catch {
         return false;
@@ -35388,8 +35479,8 @@ var RuntimeSkillClassificationGateway = class {
     if (successful || independent) {
       const attempt = operation.result.attempts.at(-1);
       const profile = runtime.registry.profiles.find((profile2) => profile2.profileId === (proof?.profileId ?? attempt?.profileId));
-      const invalid2 = profile ? this.options.service.validateProfile(profile, operation.result.request, (this.options.now?.() ?? /* @__PURE__ */ new Date()).getTime()) : "PROFILE_UNAVAILABLE";
-      if (invalid2) return { valid: false, errors: [invalid2], agentSelectedSkillIds: null };
+      const invalid3 = profile ? this.options.service.validateProfile(profile, operation.result.request, (this.options.now?.() ?? /* @__PURE__ */ new Date()).getTime()) : "PROFILE_UNAVAILABLE";
+      if (invalid3) return { valid: false, errors: [invalid3], agentSelectedSkillIds: null };
       const bindingError = this.options.service.validateResultBinding(operation.result);
       if (bindingError) return { valid: false, errors: [bindingError], agentSelectedSkillIds: null };
     }
@@ -35444,7 +35535,7 @@ async function readClassificationRuntime(file2, root) {
 }
 
 // mcp-server/src/session-message-client.ts
-import { types as utilTypes } from "node:util";
+import { types as utilTypes2 } from "node:util";
 import { existsSync as existsSync2 } from "node:fs";
 import { chmod, mkdir, readFile as readFile5 } from "node:fs/promises";
 import { spawn } from "node:child_process";
@@ -35511,7 +35602,7 @@ function deadlineError(message) {
   return tagProducerFailure(new Error(message), "BROKER_DEADLINE_EXPIRED");
 }
 function clientFailure(reason, message, cause) {
-  return utilTypes.isNativeError(cause) ? tagProducerFailure(cause, reason) : retainFailureCause(tagProducerFailure(new Error(message), reason), cause);
+  return utilTypes2.isNativeError(cause) ? tagProducerFailure(cause, reason) : retainFailureCause(tagProducerFailure(new Error(message), reason), cause);
 }
 function signalError(signal) {
   return signal.reason instanceof Error ? signal.reason : deadlineMetadata.has(signal) ? deadlineError(deadlineMetadata.get(signal).message) : retainFailureCause(tagProducerFailure(new Error("The session message operation was aborted."), "BROKER_OPERATION_ABORTED"), signal.reason);
@@ -36226,7 +36317,7 @@ async function sessionBoardResult(tool, args, databasePath, validator, sessionMe
   } catch (error61) {
     return failureResult(error61, "Session board input is invalid.");
   }
-  if (tool === "update_session_status" && !binding2) {
+  if (!binding2) {
     return apiError("BINDING_REQUIRED", "The session binding is missing; hook execution or binding delivery was not observed for this call.");
   }
   if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
@@ -36291,20 +36382,22 @@ var SESSION_MESSAGE_SERVER_INSTRUCTIONS = "\uC138\uC158 \uBA54\uC2DC\uC9C0\uB294
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, classification2 = null) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, classification2 = null, sessionActorProof = null) {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} }, instructions: serverInstructions() }
   );
   const contractDocuments = Object.values(contractSchemas);
-  const advertise = (tools) => usesInlineReferences(toolSchemaProfile) ? tools.map((tool) => {
-    if (!JSON.stringify(tool.inputSchema).includes('"$ref"')) return tool;
-    try {
-      return { ...tool, inputSchema: inlineSchemaReferences(tool.inputSchema, contractDocuments) };
-    } catch {
-      return tool;
+  const advertise = (tools) => tools.map((tool) => {
+    const inputSchema2 = structuredClone(tool.inputSchema);
+    inputSchema2.properties = { ...inputSchema2.properties, [SESSION_PROOF_FIELD]: { type: "string", minLength: 16, maxLength: 8192, description: "Issued by the current root hook; caller identity claims are not accepted." } };
+    delete inputSchema2.properties._sessionBinding;
+    inputSchema2.required = (inputSchema2.required ?? []).filter((name) => name !== "_sessionBinding");
+    if (usesInlineReferences(toolSchemaProfile) && JSON.stringify(inputSchema2).includes('"$ref"')) {
+      return { ...tool, inputSchema: inlineSchemaReferences(inputSchema2, contractDocuments) };
     }
-  }) : tools;
+    return { ...tool, inputSchema: inputSchema2 };
+  });
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: advertise([
       {
@@ -36493,7 +36586,18 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
     ])
   }));
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const args = asRecord(request.params.arguments);
+    let args = asRecord(request.params.arguments);
+    if (Object.hasOwn(args, "_sessionBinding")) return toolResult(apiError("BINDING_INVALID", "Caller session bindings are not accepted.", { reasonCode: "CALLER_SESSION_BINDING_REJECTED" }));
+    if (!sessionActorProof) return toolResult(apiError("BINDING_REQUIRED", "The root hook proof verifier is not configured.", { reasonCode: "ROOT_HOOK_PROOF_REQUIRED" }));
+    try {
+      const verified = sessionActorProof.verify(request.params.name, args);
+      args = withoutSessionProof(args);
+      if (["update_session_status", "list_session_status", "prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"].includes(request.params.name)) {
+        args._sessionBinding = request.params.name === "validate_collaboration_decision" ? { host: verified.host, sessionId: verified.sessionId, actorKind: "main", observedBy: verified.actor.reasonCode, assurance: verified.actor.basis } : { host: verified.host, sessionId: verified.sessionId };
+      }
+    } catch (error61) {
+      return toolResult(error61 instanceof WorkflowContractError ? apiError(error61.code, error61.message, error61.details) : apiError("MCP_UNAVAILABLE", "Root hook proof verification is unavailable.", { reasonCode: "ROOT_PROOF_VERIFICATION_FAILED" }));
+    }
     const attested = (tool, call) => hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
     const withMode = (field2, call, project) => {
       const mode = responseMode(args, field2);
@@ -37048,7 +37152,7 @@ import path12 from "node:path";
 import { DatabaseSync as DatabaseSync4 } from "node:sqlite";
 
 // mcp-server/src/workflow-store.ts
-import { randomBytes as randomBytes3 } from "node:crypto";
+import { randomBytes as randomBytes4 } from "node:crypto";
 var PLAN_SIGNING_KEY = "plan-signing-key";
 function clone2(value) {
   return JSON.parse(JSON.stringify(value));
@@ -37206,7 +37310,7 @@ var InMemoryWorkflowStore = class {
   }
 };
 function createPlanSigningKey() {
-  return randomBytes3(32).toString("base64url");
+  return randomBytes4(32).toString("base64url");
 }
 
 // mcp-server/src/plugin-update-store.ts
@@ -37822,7 +37926,7 @@ var SqliteWorkflowStore = class {
 };
 
 // mcp-server/src/workflow-service.ts
-import { createHmac as createHmac3, randomUUID, timingSafeEqual as timingSafeEqual3 } from "node:crypto";
+import { createHmac as createHmac4, randomUUID, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 
 // mcp-server/src/decision-record-validator.ts
 import { isDeepStrictEqual } from "node:util";
@@ -38197,7 +38301,7 @@ function validateDecisionRecordSemantics(record4) {
 import path14 from "node:path";
 
 // skills/acceptance-evidence-validator/scripts/core.mjs
-import { createHash as createHash12 } from "node:crypto";
+import { createHash as createHash13 } from "node:crypto";
 
 // runtime/schema-validation.mjs
 var ah = Object.create;
@@ -42456,7 +42560,7 @@ function canonicalJson2(value) {
   throw new InputError("Input contains a non-JSON value.");
 }
 function sha2562(value) {
-  return "sha256:".concat(createHash12("sha256").update(typeof value === "string" ? value : canonicalJson2(value), "utf8").digest("hex"));
+  return "sha256:".concat(createHash13("sha256").update(typeof value === "string" ? value : canonicalJson2(value), "utf8").digest("hex"));
 }
 function authorityEvidenceDigest(evidence, authorityValue) {
   return sha2562({
@@ -42769,13 +42873,13 @@ function validateReportAgainstRequest(report, request) {
 }
 
 // skills/software-security-auditor/scripts/core.mjs
-import { createHash as createHash13 } from "node:crypto";
+import { createHash as createHash14 } from "node:crypto";
 function canonical(value) {
   if (Array.isArray(value)) return "[".concat(value.map(canonical).join(","), "]");
   if (value && typeof value === "object") return "{".concat(Object.keys(value).sort().map((key) => "".concat(JSON.stringify(key), ":").concat(canonical(value[key]))).join(","), "}");
   return JSON.stringify(value);
 }
-var digestBytes = (value) => "sha256:".concat(createHash13("sha256").update(value).digest("hex"));
+var digestBytes = (value) => "sha256:".concat(createHash14("sha256").update(value).digest("hex"));
 var digest3 = (value) => digestBytes(canonical(value));
 var targetDigest = (request) => digest3(request.target);
 function safeRelative(value) {
@@ -42830,7 +42934,7 @@ function validateSemantics(report) {
 }
 
 // mcp-server/src/stage-output-file.ts
-import { createHash as createHash14 } from "node:crypto";
+import { createHash as createHash15 } from "node:crypto";
 import { closeSync, constants, fstatSync, openSync, readSync } from "node:fs";
 import path13 from "node:path";
 var MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
@@ -42868,7 +42972,7 @@ function readLocalStageOutputFile(locator) {
 function loadStageOutputFile(reference, read = readLocalStageOutputFile) {
   const bytes = read(reference.locator);
   if (bytes.length > MAX_STAGE_OUTPUT_FILE_BYTES) throw unreadable(reference.locator);
-  const digest5 = "sha256:".concat(createHash14("sha256").update(bytes).digest("hex"));
+  const digest5 = "sha256:".concat(createHash15("sha256").update(bytes).digest("hex"));
   if (digest5 !== reference.digest) {
     throw new WorkflowContractError("INTEGRITY_FAILED", "outputFile content does not match its digest.", {
       locator: reference.locator,
@@ -44621,7 +44725,7 @@ var WorkflowService = class {
     }
   }
   signPlan(plan) {
-    return createHmac3("sha256", this.planSigningKey).update(canonicalJson(this.planWithoutIntegrityToken(plan), "Plan"), "utf8").digest("base64url");
+    return createHmac4("sha256", this.planSigningKey).update(canonicalJson(this.planWithoutIntegrityToken(plan), "Plan"), "utf8").digest("base64url");
   }
   assertPlanIntegrity(plan) {
     if (!PLAN_INTEGRITY_TOKEN.test(plan.integrityToken)) {
@@ -44632,7 +44736,7 @@ var WorkflowService = class {
     }
     const expected = Buffer.from(this.signPlan(plan), "base64url");
     const supplied = Buffer.from(plan.integrityToken, "base64url");
-    if (supplied.toString("base64url") !== plan.integrityToken || supplied.length !== expected.length || !timingSafeEqual3(supplied, expected)) {
+    if (supplied.toString("base64url") !== plan.integrityToken || supplied.length !== expected.length || !timingSafeEqual4(supplied, expected)) {
       throw new WorkflowContractError("INVALID_INPUT", "Workflow plan integrity token is missing, modified, or signed by a different workflow store.");
     }
     for (const stage of plan.stages) {
@@ -44892,7 +44996,7 @@ var WorkflowService = class {
 };
 
 // mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash15, createHmac as createHmac4, randomBytes as randomBytes4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHash as createHash16, createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
 import path17 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
@@ -44904,7 +45008,7 @@ var POLICY = {
   continuityRecordRetentionDays: 180
 };
 function digest4(value) {
-  return "sha256:".concat(createHash15("sha256").update(JSON.stringify(value)).digest("hex"));
+  return "sha256:".concat(createHash16("sha256").update(JSON.stringify(value)).digest("hex"));
 }
 function protection() {
   return process.platform === "win32" ? "os-managed-unverified" : "filesystem-mode-0600";
@@ -44924,7 +45028,7 @@ var StateCleanupService = class {
     this.clock = clock;
     this.secret = Buffer.from(workflowStore.getOrCreateSecret(
       "state-cleanup-signing-key",
-      () => randomBytes4(32).toString("base64url")
+      () => randomBytes5(32).toString("base64url")
     ), "base64url");
   }
   workflowStore;
@@ -45108,7 +45212,7 @@ var StateCleanupService = class {
   }
   sign(payload) {
     const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-    const signature = createHmac4("sha256", this.secret).update(encoded).digest("base64url");
+    const signature = createHmac5("sha256", this.secret).update(encoded).digest("base64url");
     const token = "".concat(encoded, ".").concat(signature);
     if (Buffer.byteLength(token, "utf8") > MAX_PLAN_TOKEN_BYTES) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token exceeds the supported size.");
     return token;
@@ -45117,14 +45221,14 @@ var StateCleanupService = class {
     if (Buffer.byteLength(token, "utf8") > MAX_PLAN_TOKEN_BYTES) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token exceeds the supported size.");
     const [encoded, signature, extra] = token.split(".");
     if (!encoded || !signature || extra) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
-    const expected = createHmac4("sha256", this.secret).update(encoded).digest();
+    const expected = createHmac5("sha256", this.secret).update(encoded).digest();
     let actual;
     try {
       actual = Buffer.from(signature, "base64url");
     } catch {
       throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
     }
-    if (actual.toString("base64url") !== signature || actual.length !== expected.length || !timingSafeEqual4(actual, expected)) {
+    if (actual.toString("base64url") !== signature || actual.length !== expected.length || !timingSafeEqual5(actual, expected)) {
       throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token signature is invalid.");
     }
     let payload;
@@ -45172,8 +45276,8 @@ var StateCleanupService = class {
 };
 
 // mcp-server/src/trust-store.ts
-import { createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
-import { types as utilTypes2 } from "node:util";
+import { createHmac as createHmac6, randomBytes as randomBytes6, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual6 } from "node:crypto";
+import { types as utilTypes3 } from "node:util";
 import { chmodSync as chmodSync4, mkdirSync as mkdirSync5 } from "node:fs";
 import path18 from "node:path";
 import { DatabaseSync as DatabaseSync5 } from "node:sqlite";
@@ -45195,8 +45299,8 @@ function verifyInputSource(receipt, signingKey2) {
   try {
     const { integrityToken, ...unsigned } = receipt;
     const actual = Buffer.from(integrityToken, "base64url");
-    const expected = createHmac5("sha256", signingKey2).update(canonicalJson(unsigned, "Input source receipt")).digest();
-    return signingKey2.length === 32 && actual.length === expected.length && timingSafeEqual5(actual, expected);
+    const expected = createHmac6("sha256", signingKey2).update(canonicalJson(unsigned, "Input source receipt")).digest();
+    return signingKey2.length === 32 && actual.length === expected.length && timingSafeEqual6(actual, expected);
   } catch {
     return false;
   }
@@ -45250,7 +45354,7 @@ var TrustStore = class {
         this.database.close();
       } catch (closeError) {
         closeFailed = true;
-        closeFailure = utilTypes2.isNativeError(closeError) ? tagProducerFailure(closeError, "TRUST_CLOSE_FAILED") : closeError;
+        closeFailure = utilTypes3.isNativeError(closeError) ? tagProducerFailure(closeError, "TRUST_CLOSE_FAILED") : closeError;
       }
       const failure3 = cause instanceof WorkflowContractError ? cause : this.storageError("Cannot initialize the trust database.", cause);
       if (closeFailed) retainFailureSecondary(failure3, closeFailure);
@@ -45354,14 +45458,14 @@ var TrustStore = class {
     try {
       this.database.close();
     } catch (cause) {
-      throw utilTypes2.isNativeError(cause) ? tagProducerFailure(cause, "TRUST_CLOSE_FAILED") : cause;
+      throw utilTypes3.isNativeError(cause) ? tagProducerFailure(cause, "TRUST_CLOSE_FAILED") : cause;
     }
     this.closed = true;
   }
   seal(unsigned) {
     return {
       ...unsigned,
-      integrityToken: createHmac5("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest("base64url")
+      integrityToken: createHmac6("sha256", this.signingKey).update(canonicalJson(unsigned, "Input source receipt")).digest("base64url")
     };
   }
   initializeSchema() {
@@ -45382,7 +45486,7 @@ var TrustStore = class {
     return this.transaction(() => {
       const existing = this.database.prepare("SELECT value FROM trust_metadata WHERE key = ?").get(name);
       if (existing) return existing.value;
-      const value = this.syntheticSecret ?? randomBytes5(32).toString("base64url");
+      const value = this.syntheticSecret ?? randomBytes6(32).toString("base64url");
       this.database.prepare("INSERT INTO trust_metadata (key, value, updated_at) VALUES (?, ?, ?)").run(name, value, (/* @__PURE__ */ new Date()).toISOString());
       return value;
     });
@@ -45398,7 +45502,7 @@ var TrustStore = class {
       try {
         this.database.exec("ROLLBACK;");
       } catch (rollbackError) {
-        retainFailureSecondary(cause, utilTypes2.isNativeError(rollbackError) ? tagProducerFailure(rollbackError, "TRUST_ROLLBACK_FAILED") : rollbackError);
+        retainFailureSecondary(cause, utilTypes3.isNativeError(rollbackError) ? tagProducerFailure(rollbackError, "TRUST_ROLLBACK_FAILED") : rollbackError);
       }
       throw cause;
     }
@@ -45597,7 +45701,7 @@ import path21 from "node:path";
 import { pathToFileURL } from "node:url";
 
 // mcp-server/src/skill-classification/runtime.ts
-import { types as utilTypes3 } from "node:util";
+import { types as utilTypes4 } from "node:util";
 import { readFile as readFile6 } from "node:fs/promises";
 
 // mcp-server/src/skill-classification/native-adapters.ts
@@ -45839,7 +45943,7 @@ function reportClassificationInitializationFailure(error61, report = (record4) =
 }) {
   let reason = "CLASSIFICATION_CONFIGURATION_UNAVAILABLE";
   try {
-    const message = error61 && typeof error61 === "object" && !utilTypes3.isProxy(error61) ? Object.getOwnPropertyDescriptor(error61, "message")?.value : null;
+    const message = error61 && typeof error61 === "object" && !utilTypes4.isProxy(error61) ? Object.getOwnPropertyDescriptor(error61, "message")?.value : null;
     if (typeof message === "string" && [
       "INVALID_NATIVE_ADAPTER_DEFINITION",
       "DUPLICATE_NATIVE_ADAPTER",
@@ -46105,7 +46209,7 @@ async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map(), executio
     },
     service: new SkillClassificationService(providerRuntime)
   });
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), void 0, trust, classification2);
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), void 0, trust, classification2, new SessionActorProofs(store));
   await server.connect(new StdioServerTransport());
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path21.resolve(process.argv[1])).href) {

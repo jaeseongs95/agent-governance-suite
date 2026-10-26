@@ -36,7 +36,7 @@ import { mkdirSync as mkdirSync2 } from "node:fs";
 import path3 from "node:path";
 import { createHash as createHash3, randomUUID as randomUUID3 } from "node:crypto";
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
-import { types as utilTypes2 } from "node:util";
+import { types as utilTypes3 } from "node:util";
 
 // runtime/failure-diagnostics.mjs
 import { createHash } from "node:crypto";
@@ -128,9 +128,25 @@ function failureContext(error) {
 // mcp-server/src/session-message-wake-port.ts
 import { createHash as createHash2, randomUUID as randomUUID2 } from "node:crypto";
 
+// mcp-server/src/input-observation.ts
+import { types as utilTypes } from "node:util";
+function actorAccess(actor) {
+  const invalid = { allowed: false, reasonCode: "ACTOR_OBSERVATION_INVALID" };
+  if (!actor || typeof actor !== "object" || utilTypes.isProxy(actor) || Array.isArray(actor)) return invalid;
+  try {
+    const role = Object.getOwnPropertyDescriptor(actor, "role")?.value;
+    const basis = Object.getOwnPropertyDescriptor(actor, "basis")?.value;
+    const reasonCode = Object.getOwnPropertyDescriptor(actor, "reasonCode")?.value;
+    if (role !== "root" && role !== "child" && role !== "indeterminate" || basis !== "observed" && basis !== "inferred" && basis !== "unavailable" || typeof reasonCode !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(reasonCode)) return invalid;
+    return { allowed: role === "root" && (basis === "observed" || basis === "inferred"), reasonCode };
+  } catch {
+    return invalid;
+  }
+}
+
 // mcp-server/src/trust-store.ts
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
-import { types as utilTypes } from "node:util";
+import { types as utilTypes2 } from "node:util";
 import { chmodSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -245,7 +261,7 @@ var TrustStore = class {
         this.database.close();
       } catch (closeError) {
         closeFailed = true;
-        closeFailure = utilTypes.isNativeError(closeError) ? tagProducerFailure(closeError, "TRUST_CLOSE_FAILED") : closeError;
+        closeFailure = utilTypes2.isNativeError(closeError) ? tagProducerFailure(closeError, "TRUST_CLOSE_FAILED") : closeError;
       }
       const failure = cause instanceof WorkflowContractError ? cause : this.storageError("Cannot initialize the trust database.", cause);
       if (closeFailed) retainFailureSecondary(failure, closeFailure);
@@ -349,7 +365,7 @@ var TrustStore = class {
     try {
       this.database.close();
     } catch (cause) {
-      throw utilTypes.isNativeError(cause) ? tagProducerFailure(cause, "TRUST_CLOSE_FAILED") : cause;
+      throw utilTypes2.isNativeError(cause) ? tagProducerFailure(cause, "TRUST_CLOSE_FAILED") : cause;
     }
     this.closed = true;
   }
@@ -393,7 +409,7 @@ var TrustStore = class {
       try {
         this.database.exec("ROLLBACK;");
       } catch (rollbackError) {
-        retainFailureSecondary(cause, utilTypes.isNativeError(rollbackError) ? tagProducerFailure(rollbackError, "TRUST_ROLLBACK_FAILED") : rollbackError);
+        retainFailureSecondary(cause, utilTypes2.isNativeError(rollbackError) ? tagProducerFailure(rollbackError, "TRUST_ROLLBACK_FAILED") : rollbackError);
       }
       throw cause;
     }
@@ -798,12 +814,12 @@ function resolveTrustDatabasePath(environment = process.env, platform = process.
 function wakeBackoffDelay(attempt) {
   return Math.min(10 * 6e4, 3e4 * 2 ** Math.max(0, attempt));
 }
-var WAKE_ACTOR_KINDS = ["main", "unknown"];
-var WAKE_ACTOR_ASSURANCES = ["observed", "unknown"];
+var WAKE_ACTOR_BASES = ["observed", "inferred"];
+var WAKE_CAPABILITY_VERSION = "3.0.0";
 function isWakeHookObservation(value, target) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const event = value;
-  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && event.actor?.observedBy === "".concat(target.host, ":hook-payload") && WAKE_ACTOR_KINDS.some((kind) => kind === event.actor.kind) && WAKE_ACTOR_ASSURANCES.some((assurance) => assurance === event.actor.assurance) && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
+  return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input" && event.wakeOnly === true && actorAccess(event.actor).allowed && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0 && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string" && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
 }
 function observationDigest(event) {
   const normalized = [
@@ -811,16 +827,15 @@ function observationDigest(event) {
     event.sessionId,
     event.kind,
     event.wakeOnly,
-    event.actor.kind,
-    event.actor.observedBy,
-    event.actor.assurance,
+    event.actor.role,
+    event.actor.basis,
     [...new Set(event.wakeCandidates)].sort()
   ];
   return "sha256:".concat(createHash2("sha256").update(JSON.stringify(normalized)).digest("hex"));
 }
 function verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, source = resolveTrustDatabasePath()) {
   const receipt = typeof source === "string" ? TrustStore.readVerifiedInputSource(source, sourceReceiptId) : source.readVerifiedInputSource(sourceReceiptId);
-  if (!receipt || receipt.schemaVersion !== "1.0.0" || receipt.host !== target.host || receipt.sessionId !== target.sessionId || receipt.originKind !== "peer" || receipt.authorityEffect !== "none" || receipt.attestation?.kind !== "broker-peer-envelope" || receipt.attestation.adapter !== "session-message-wake-hook" || receipt.attestation.capabilityVersion !== "1.0.0") return null;
+  if (!receipt || receipt.schemaVersion !== "1.0.0" || receipt.receiptId !== sourceReceiptId || receipt.host !== target.host || receipt.sessionId !== target.sessionId || receipt.originKind !== "peer" || receipt.authorityEffect !== "none" || receipt.attestation?.kind !== "broker-peer-envelope" || receipt.attestation.adapter !== "session-message-wake-hook" || receipt.attestation.capabilityVersion !== WAKE_CAPABILITY_VERSION) return null;
   const [started, observed, late, expires] = [
     Date.parse(startedAt),
     Date.parse(receipt.observedAt),
@@ -829,13 +844,13 @@ function verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, started
   ];
   if (![started, observed, late, expires, nowMs].every(Number.isFinite) || !(started <= observed && observed <= late && late < expires && expires <= nowMs)) return null;
   let matches = 0;
-  for (const kind of WAKE_ACTOR_KINDS) for (const assurance of WAKE_ACTOR_ASSURANCES) {
+  for (const basis of WAKE_ACTOR_BASES) {
     const observation = {
       ...target,
       kind: "user-input",
       wakeOnly: true,
       wakeCandidates: [nonce],
-      actor: { kind, assurance, observedBy: "".concat(target.host, ":hook-payload") }
+      actor: { role: "root", basis, reasonCode: "HISTORICAL_WAKE_RECONSTRUCTION" }
     };
     if (isWakeHookObservation(observation, target) && observationDigest(observation) === receipt.contentDigest) matches++;
   }
@@ -851,7 +866,7 @@ function createWakeHookObservationReader(source = resolveTrustDatabasePath()) {
     verifyObservation(target, observation, receiptId, nowMs) {
       if (!isWakeHookObservation(observation, target) || !receiptId) return false;
       const receipt = typeof source === "string" ? TrustStore.readVerifiedInputSource(source, receiptId) : source.readVerifiedInputSource(receiptId);
-      return receipt !== null && receipt.host === target.host && receipt.sessionId === target.sessionId && receipt.originKind === "peer" && receipt.authorityEffect === "none" && receipt.attestation.kind === "broker-peer-envelope" && receipt.attestation.adapter === "session-message-wake-hook" && receipt.attestation.capabilityVersion === "1.0.0" && receipt.contentDigest === observationDigest(observation) && Date.parse(receipt.observedAt) <= nowMs && Date.parse(receipt.expiresAt) > nowMs;
+      return receipt !== null && receipt.schemaVersion === "1.0.0" && receipt.receiptId === receiptId && receipt.host === target.host && receipt.sessionId === target.sessionId && receipt.originKind === "peer" && receipt.authorityEffect === "none" && receipt.attestation?.kind === "broker-peer-envelope" && receipt.attestation.adapter === "session-message-wake-hook" && receipt.attestation.capabilityVersion === WAKE_CAPABILITY_VERSION && receipt.contentDigest === observationDigest(observation) && Date.parse(receipt.observedAt) <= nowMs && Date.parse(receipt.expiresAt) > nowMs;
     }
   };
 }
@@ -1825,7 +1840,7 @@ var SessionMessageStore = class {
       try {
         this.database.exec("ROLLBACK");
       } catch (rollbackError) {
-        retainFailureSecondary(error, utilTypes2.isNativeError(rollbackError) ? tagProducerFailure(rollbackError, "SESSION_MESSAGE_ROLLBACK_FAILED") : rollbackError);
+        retainFailureSecondary(error, utilTypes3.isNativeError(rollbackError) ? tagProducerFailure(rollbackError, "SESSION_MESSAGE_ROLLBACK_FAILED") : rollbackError);
       }
       throw error;
     }

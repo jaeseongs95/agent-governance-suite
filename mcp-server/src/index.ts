@@ -1,3 +1,4 @@
+import { SessionActorProofs } from "./session-actor-proof.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { FileSkillRegistry } from "./registry.js";
@@ -145,7 +146,7 @@ export async function startMcpServer(
     },
     service: new SkillClassificationService(providerRuntime),
   });
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, classification);
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, classification, new SessionActorProofs(store));
   await server.connect(new StdioServerTransport());
 }
 

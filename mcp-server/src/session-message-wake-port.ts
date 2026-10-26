@@ -3,7 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
-import type { DeliveryCapabilities, InputObservation } from "./input-observation.js";
+import { actorAccess, type DeliveryCapabilities, type InputObservation } from "./input-observation.js";
 import type { SessionIdentity } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
 import { failureContext, producerFailure, producerFailureReason, retainFailureCause } from "./failure-diagnostics.js";
@@ -154,16 +154,14 @@ export function transportDeliveryCapabilities(transport: string): DeliveryCapabi
   return { supportedInjection: [...capabilities.supportedInjection], idleWake: capabilities.idleWake };
 }
 
-/** Local hook liveness only; this cannot attest an actor, permission, or W06 authority. */
-const WAKE_ACTOR_KINDS = ["main", "unknown"] as const;
-const WAKE_ACTOR_ASSURANCES = ["observed", "unknown"] as const;
+/** Local root-hook liveness only; this cannot attest permission or W06 authority. */
+const WAKE_ACTOR_BASES = ["observed", "inferred"] as const;
+const WAKE_CAPABILITY_VERSION = "3.0.0";
 export function isWakeHookObservation(value: unknown, target: SessionIdentity): value is InputObservation {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const event = value as InputObservation;
   return event.host === target.host && event.sessionId === target.sessionId && event.kind === "user-input"
-    && event.wakeOnly === true && event.actor?.observedBy === `${target.host}:hook-payload`
-    && WAKE_ACTOR_KINDS.some((kind) => kind === event.actor.kind)
-    && WAKE_ACTOR_ASSURANCES.some((assurance) => assurance === event.actor.assurance)
+    && event.wakeOnly === true && actorAccess(event.actor).allowed
     && Array.isArray(event.wakeCandidates) && event.wakeCandidates.length > 0
     && event.wakeCandidates.length <= 10 && event.wakeCandidates.every((nonce) => typeof nonce === "string"
       && /^[A-Za-z0-9_-]{22,128}$/u.test(nonce));
@@ -174,7 +172,7 @@ export interface WakeHookObservationReader {
 }
 function observationDigest(event: InputObservation): `sha256:${string}` {
   const normalized = [event.host, event.sessionId, event.kind, event.wakeOnly,
-    event.actor.kind, event.actor.observedBy, event.actor.assurance, [...new Set(event.wakeCandidates)].sort()];
+    event.actor.role, event.actor.basis, [...new Set(event.wakeCandidates)].sort()];
   return `sha256:${createHash("sha256").update(JSON.stringify(normalized)).digest("hex")}`;
 }
 
@@ -190,20 +188,20 @@ export function verifyHistoricalWakeObservation(target: SessionIdentity, nonce: 
   startedAt: string, lateObservedAt: string, nowMs: number,
   source: string | VerifiedInputSourceReader = resolveTrustDatabasePath()): HistoricalWakeEvidence | null {
   const receipt = typeof source === "string" ? TrustStore.readVerifiedInputSource(source, sourceReceiptId) : source.readVerifiedInputSource(sourceReceiptId);
-  if (!receipt || receipt.schemaVersion !== "1.0.0" || receipt.host !== target.host || receipt.sessionId !== target.sessionId
+  if (!receipt || receipt.schemaVersion !== "1.0.0" || receipt.receiptId !== sourceReceiptId
+    || receipt.host !== target.host || receipt.sessionId !== target.sessionId
     || receipt.originKind !== "peer" || receipt.authorityEffect !== "none"
     || receipt.attestation?.kind !== "broker-peer-envelope" || receipt.attestation.adapter !== "session-message-wake-hook"
-    || receipt.attestation.capabilityVersion !== "1.0.0") return null;
+    || receipt.attestation.capabilityVersion !== WAKE_CAPABILITY_VERSION) return null;
   const [started, observed, late, expires] = [Date.parse(startedAt), Date.parse(receipt.observedAt),
     Date.parse(lateObservedAt), Date.parse(receipt.expiresAt)] as const;
   if (![started, observed, late, expires, nowMs].every(Number.isFinite)
     || !(started <= observed && observed <= late && late < expires && expires <= nowMs)) return null;
-  // The stored digest selects exactly one supported normalization. No actor default,
-  // nonce subset search or approximation can stand in for the original signed digest.
+  // Exactly two admitted root observations; diagnostic reasons never enter the signed digest.
   let matches = 0;
-  for (const kind of WAKE_ACTOR_KINDS) for (const assurance of WAKE_ACTOR_ASSURANCES) {
+  for (const basis of WAKE_ACTOR_BASES) {
     const observation: InputObservation = { ...target, kind: "user-input", wakeOnly: true, wakeCandidates: [nonce],
-      actor: { kind, assurance, observedBy: `${target.host}:hook-payload` } };
+      actor: { role: "root", basis, reasonCode: "HISTORICAL_WAKE_RECONSTRUCTION" } };
     if (isWakeHookObservation(observation, target) && observationDigest(observation) === receipt.contentDigest) matches++;
   }
   return matches === 1 ? { sourceReceiptId, contentDigest: receipt.contentDigest, observedAt: receipt.observedAt,
@@ -217,7 +215,7 @@ export function recordWakeHookObservation(observation: InputObservation, nowMs =
     return trust.recordInputSource({ originKind: "peer", host: observation.host, sessionId: observation.sessionId,
       eventId: `wake-hook-${randomUUID()}`, contentDigest: observationDigest(observation),
       observedAt: new Date(nowMs).toISOString(), expiresAt: new Date(nowMs + 30_000).toISOString(), authorityEffect: "none",
-      attestation: { kind: "broker-peer-envelope", adapter: "session-message-wake-hook", capabilityVersion: "1.0.0" } }).receiptId;
+      attestation: { kind: "broker-peer-envelope", adapter: "session-message-wake-hook", capabilityVersion: WAKE_CAPABILITY_VERSION } }).receiptId;
   } finally { trust.close(); }
 }
 export function createWakeHookObservationReader(source: string | VerifiedInputSourceReader = resolveTrustDatabasePath()): WakeHookObservationReader {
@@ -225,10 +223,11 @@ export function createWakeHookObservationReader(source: string | VerifiedInputSo
   verifyObservation(target, observation, receiptId, nowMs) {
     if (!isWakeHookObservation(observation, target) || !receiptId) return false;
     const receipt = typeof source === "string" ? TrustStore.readVerifiedInputSource(source, receiptId) : source.readVerifiedInputSource(receiptId);
-    return receipt !== null && receipt.host === target.host && receipt.sessionId === target.sessionId
+    return receipt !== null && receipt.schemaVersion === "1.0.0" && receipt.receiptId === receiptId
+      && receipt.host === target.host && receipt.sessionId === target.sessionId
       && receipt.originKind === "peer" && receipt.authorityEffect === "none"
-      && receipt.attestation.kind === "broker-peer-envelope" && receipt.attestation.adapter === "session-message-wake-hook"
-      && receipt.attestation.capabilityVersion === "1.0.0" && receipt.contentDigest === observationDigest(observation)
+      && receipt.attestation?.kind === "broker-peer-envelope" && receipt.attestation.adapter === "session-message-wake-hook"
+      && receipt.attestation.capabilityVersion === WAKE_CAPABILITY_VERSION && receipt.contentDigest === observationDigest(observation)
       && Date.parse(receipt.observedAt) <= nowMs && Date.parse(receipt.expiresAt) > nowMs;
   },
   };

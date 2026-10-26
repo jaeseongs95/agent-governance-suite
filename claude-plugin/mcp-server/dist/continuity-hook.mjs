@@ -1,8 +1,24 @@
 #!/usr/bin/env node
 
+// mcp-server/src/input-observation.ts
+import { types as utilTypes } from "node:util";
+function actorAccess(actor) {
+  const invalid = { allowed: false, reasonCode: "ACTOR_OBSERVATION_INVALID" };
+  if (!actor || typeof actor !== "object" || utilTypes.isProxy(actor) || Array.isArray(actor)) return invalid;
+  try {
+    const role = Object.getOwnPropertyDescriptor(actor, "role")?.value;
+    const basis = Object.getOwnPropertyDescriptor(actor, "basis")?.value;
+    const reasonCode = Object.getOwnPropertyDescriptor(actor, "reasonCode")?.value;
+    if (role !== "root" && role !== "child" && role !== "indeterminate" || basis !== "observed" && basis !== "inferred" && basis !== "unavailable" || typeof reasonCode !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(reasonCode)) return invalid;
+    return { allowed: role === "root" && (basis === "observed" || basis === "inferred"), reasonCode };
+  } catch {
+    return invalid;
+  }
+}
+
 // mcp-server/src/builtin-hook-host-adapters.ts
 import { createHash as createHash3 } from "node:crypto";
-import { types as utilTypes } from "node:util";
+import { types as utilTypes2 } from "node:util";
 
 // runtime/failure-diagnostics.mjs
 import { createHash } from "node:crypto";
@@ -122,7 +138,7 @@ function adaptHostInput(input, host) {
       host,
       sessionId: "",
       kind: "unknown",
-      actor: { kind: "unknown", observedBy: "".concat(host, ":unconfigured-input"), assurance: "unknown" }
+      actor: { role: "indeterminate", basis: "unavailable", reasonCode: "HOST_ACTOR_OBSERVATION_UNAVAILABLE" }
     }
   };
 }
@@ -1166,16 +1182,7 @@ function text(value) {
 function record(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
-function actorObservation(input, host) {
-  if (!Object.hasOwn(input, "agent_id")) return { kind: "unknown", observedBy: "".concat(host, ":hook-payload"), assurance: "unknown" };
-  if (typeof input.agent_id !== "string") return { kind: "unknown", observedBy: "".concat(host, ":hook-payload"), assurance: "unknown" };
-  return {
-    kind: text(input.agent_id) ? "subagent" : "main",
-    observedBy: "".concat(host, ":hook-payload"),
-    assurance: "observed"
-  };
-}
-function adaptBuiltinHookInput(input, host) {
+function adaptBuiltinHookInput(input, host, actor) {
   const event = text(input.hook_event_name);
   let kind = "unknown";
   let lifecycle = "none";
@@ -1194,6 +1201,7 @@ function adaptBuiltinHookInput(input, host) {
   } else if (event === "Stop") kind = "turn-end";
   const wake = kind === "user-input" ? parseWakeMessages(input.prompt) : { nonces: [], wakeOnly: false };
   const workspaceId = text(input.workspace_id) || text(input.cwd);
+  const callId = text(input.tool_use_id).trim();
   const collaborationId = text(input.collaboration_id);
   const role = text(input.role);
   return {
@@ -1203,7 +1211,8 @@ function adaptBuiltinHookInput(input, host) {
       host,
       sessionId: text(input.session_id),
       kind,
-      actor: actorObservation(input, host),
+      actor,
+      ...callId ? { callId } : {},
       ...boundaryPhase === void 0 ? {} : { boundaryPhase },
       ...kind === "tool-boundary" ? { toolName: text(input.tool_name), toolInput: record(input.tool_input) } : {},
       ...kind === "user-input" ? { wakeCandidates: wake.nonces, wakeOnly: wake.wakeOnly } : {},
@@ -1214,26 +1223,43 @@ function adaptBuiltinHookInput(input, host) {
   };
 }
 function adaptCodexHookInput(input, host) {
-  const adapted = adaptBuiltinHookInput(input, host);
-  if (adapted.lifecycle === "none") return adapted;
-  if (Object.hasOwn(input, "agent_type")) {
-    adapted.observation.actor = { kind: "unknown", observedBy: "".concat(host, ":root-lifecycle-conflict"), assurance: "unknown" };
-  } else if (!Object.hasOwn(input, "agent_id")) {
-    adapted.observation.actor = { kind: "main", observedBy: "".concat(host, ":native-root-lifecycle"), assurance: "observed" };
-  }
-  return adapted;
+  return adaptBuiltinHookInput(input, host, {
+    role: "indeterminate",
+    basis: "unavailable",
+    reasonCode: "CODEX_NATIVE_CAPTURE_REQUIRED"
+  });
 }
 function adaptClaudeHookInput(input, host) {
-  const adapted = adaptBuiltinHookInput(input, host);
-  const hasAgentId = Object.hasOwn(input, "agent_id");
+  const actor = {
+    role: "indeterminate",
+    basis: "unavailable",
+    reasonCode: "CLAUDE_NATIVE_EVENT_UNRECOGNIZED"
+  };
+  const adapted = adaptBuiltinHookInput(input, host, actor);
   const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown";
-  const validAgentType = !Object.hasOwn(input, "agent_type") || typeof input.agent_type === "string" && input.agent_type.trim().length > 0;
-  if (!knownEvent || !adapted.observation.sessionId.trim() || !validAgentType || hasAgentId && (typeof input.agent_id !== "string" || !input.agent_id.trim())) {
-    adapted.observation.actor = { kind: "unknown", observedBy: "".concat(host, ":invalid-native-actor"), assurance: "unknown" };
-  } else if (!hasAgentId) {
-    adapted.observation.actor = { kind: "main", observedBy: "".concat(host, ":hook-payload"), assurance: "observed" };
-  }
+  if (!knownEvent) return adapted;
+  if (!adapted.observation.sessionId.trim()) actor.reasonCode = "CLAUDE_NATIVE_SESSION_ID_INVALID";
+  else if (Object.hasOwn(input, "agent_type") && (typeof input.agent_type !== "string" || !input.agent_type.trim())) {
+    actor.reasonCode = "CLAUDE_NATIVE_AGENT_TYPE_INVALID";
+  } else if (Object.hasOwn(input, "agent_id")) {
+    if (typeof input.agent_id !== "string" || !input.agent_id.trim()) actor.reasonCode = "CLAUDE_NATIVE_AGENT_ID_INVALID";
+    else Object.assign(actor, { role: "child", basis: "observed", reasonCode: "CLAUDE_NATIVE_CHILD_AGENT_ID" });
+  } else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: "CLAUDE_NATIVE_ROOT_AGENT_ID_ABSENT" });
   return adapted;
+}
+function adaptGeminiHookInput(input, host) {
+  return adaptBuiltinHookInput(input, host, {
+    role: "indeterminate",
+    basis: "unavailable",
+    reasonCode: "GEMINI_ACTOR_OBSERVATION_UNSUPPORTED"
+  });
+}
+function adaptAntigravityHookInput(input, host) {
+  return adaptBuiltinHookInput(input, host, {
+    role: "indeterminate",
+    basis: "unavailable",
+    reasonCode: "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED"
+  });
 }
 var GOVERNANCE_TOOL_PREFIXES = /* @__PURE__ */ new Set([
   "mcp__agent_governance_suite__",
@@ -1258,7 +1284,7 @@ function queueEnabled(host, explicit, environment, diagnose, defaultEnabled = fa
     cause
   );
   const absent = (error) => {
-    if (!error || typeof error !== "object" || utilTypes.isProxy(error)) return false;
+    if (!error || typeof error !== "object" || utilTypes2.isProxy(error)) return false;
     try {
       return Object.getOwnPropertyDescriptor(error, "code")?.value === "ENOENT";
     } catch {
@@ -1367,7 +1393,13 @@ var builtinHookHostAdapters = /* @__PURE__ */ new Map([
     attestationKind: "claude-hook"
   }],
   ["gemini", {
-    adaptInput: adaptBuiltinHookInput,
+    adaptInput: adaptGeminiHookInput,
+    ownsTool: ownsGovernanceTool,
+    deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
+    processPid: (pid, observation) => observation ? pid : void 0
+  }],
+  ["antigravity", {
+    adaptInput: adaptAntigravityHookInput,
     ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
     processPid: (pid, observation) => observation ? pid : void 0
@@ -2964,7 +2996,7 @@ function handleContinuityHook(input, service, host = "codex") {
   const observation = adapted.observation;
   const event = typeof input.hook_event_name === "string" ? input.hook_event_name : "";
   const sessionId = observation.sessionId;
-  if (!sessionId) return {};
+  if (!sessionId || !actorAccess(observation.actor).allowed) return {};
   if (event === "SessionStart") {
     const source = input.source;
     if (source === "startup") {
@@ -2989,7 +3021,7 @@ function handleContinuityHook(input, service, host = "codex") {
     return {};
   }
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
-    if (observation.actor.kind !== "main" || observation.actor.assurance !== "observed") return {};
+    if (!actorAccess(observation.actor).allowed) return {};
     const toolName = localToolName(host, observation.toolName ?? "");
     if (!toolName) return {};
     const toolInput = observation.toolInput ?? {};

@@ -1,3 +1,4 @@
+import { SESSION_PROOF_FIELD, withoutSessionProof, type SessionActorProofVerifier } from "./session-actor-proof.js";
 import { existsSync, readFileSync } from "node:fs";
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -292,7 +293,7 @@ async function sessionBoardResult(
   } catch (error) {
     return failureResult(error, "Session board input is invalid.");
   }
-  if (tool === "update_session_status" && !binding) {
+  if (!binding) {
     return apiError("BINDING_REQUIRED", "The session binding is missing; hook execution or binding delivery was not observed for this call.");
   }
   if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
@@ -393,6 +394,7 @@ export function createMcpServer(
   sessionMessages: SessionMessageService = new SessionMessageService(),
   trust: TrustService | null = null,
   classification: SkillClassificationGateway | null = null,
+  sessionActorProof: SessionActorProofVerifier | null = null,
 ): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -401,18 +403,16 @@ export function createMcpServer(
 
   const contractDocuments = Object.values(contractSchemas) as Array<Record<string, unknown>>;
   // Anthropic hosts cannot resolve $ref in tool schemas, so they receive fully inlined copies.
-  const advertise = <T extends { inputSchema: Record<string, unknown> }>(tools: T[]): T[] =>
-    usesInlineReferences(toolSchemaProfile)
-      ? tools.map((tool) => {
-        if (!JSON.stringify(tool.inputSchema).includes('"$ref"')) return tool;
-        try {
-          return { ...tool, inputSchema: inlineSchemaReferences(tool.inputSchema, contractDocuments) };
-        } catch {
-          // A schema that cannot be inlined keeps its references rather than hiding every tool.
-          return tool;
-        }
-      })
-      : tools;
+  const advertise = <T extends { inputSchema: Record<string, unknown> }>(tools: T[]): T[] => tools.map((tool) => {
+    const inputSchema = structuredClone(tool.inputSchema) as ObjectSchema;
+    inputSchema.properties = { ...inputSchema.properties, [SESSION_PROOF_FIELD]: { type: "string", minLength: 16, maxLength: 8192, description: "Issued by the current root hook; caller identity claims are not accepted." } };
+    delete inputSchema.properties._sessionBinding;
+    inputSchema.required = (inputSchema.required ?? []).filter(name => name !== "_sessionBinding");
+    if (usesInlineReferences(toolSchemaProfile) && JSON.stringify(inputSchema).includes('"$ref"')) {
+      return { ...tool, inputSchema: inlineSchemaReferences(inputSchema, contractDocuments) };
+    }
+    return { ...tool, inputSchema };
+  });
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: advertise([
@@ -603,7 +603,22 @@ export function createMcpServer(
   }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const args = asRecord(request.params.arguments);
+    let args = asRecord(request.params.arguments);
+    if (Object.hasOwn(args, "_sessionBinding")) return toolResult(apiError("BINDING_INVALID", "Caller session bindings are not accepted.", {reasonCode: "CALLER_SESSION_BINDING_REJECTED"}));
+    if (!sessionActorProof) return toolResult(apiError("BINDING_REQUIRED", "The root hook proof verifier is not configured.", {reasonCode: "ROOT_HOOK_PROOF_REQUIRED"}));
+    try {
+      const verified = sessionActorProof.verify(request.params.name, args);
+      args = withoutSessionProof(args);
+      if (["update_session_status", "list_session_status", "prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"].includes(request.params.name)) {
+        args._sessionBinding = request.params.name === "validate_collaboration_decision"
+          ? {host: verified.host, sessionId: verified.sessionId, actorKind: "main", observedBy: verified.actor.reasonCode, assurance: verified.actor.basis}
+          : {host: verified.host, sessionId: verified.sessionId};
+      }
+    } catch (error) {
+      return toolResult(error instanceof WorkflowContractError
+        ? apiError(error.code, error.message, error.details)
+        : apiError("MCP_UNAVAILABLE", "Root hook proof verification is unavailable.", {reasonCode: "ROOT_PROOF_VERIFICATION_FAILED"}));
+    }
     // Only a host with an attestation adapter strips and verifies the hook token.
     const attested = <T>(tool: string, call: (input: Record<string, unknown>) => T): T =>
       hostAttestation ? hostAttestation.run(tool, args, call) : call(args);

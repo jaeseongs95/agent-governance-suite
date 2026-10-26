@@ -13,6 +13,7 @@ import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { ROOT } from "./lib.mjs";
+import { RUNTIME_BUNDLES } from "./runtime-bundles.mjs";
 
 export const OUTPUT_DIRECTORY = "claude-plugin";
 export const OVERLAY_DIRECTORY = "claude-overlay";
@@ -22,15 +23,7 @@ export const EXCLUDED_SKILLS = Object.freeze(["codex-token-usage-analyzer"]);
 const SHARED_ROOTS = Object.freeze(["skills/", "runtime/", "contracts/"]);
 const SHARED_FILES = Object.freeze([
   "LICENSE",
-  "mcp-server/dist/server.mjs",
-  "mcp-server/dist/continuity-hook.mjs",
-  "mcp-server/dist/host-attestation-hook.mjs",
-  "mcp-server/dist/host-attestation-api.mjs",
-  "mcp-server/dist/session-board-hook.mjs",
-  "mcp-server/dist/session-message-broker.mjs",
-  "mcp-server/dist/session-message-relay.mjs",
-  "mcp-server/dist/session-message-hook.mjs",
-  "mcp-server/dist/session-message-cli.mjs",
+  ...RUNTIME_BUNDLES.map(target => target.output).filter(output => output.startsWith("mcp-server/dist/")),
 ]);
 const ADAPTATION_KEYS = Object.freeze(["description", "replacements"]);
 // Codex-only wording that must not reach model-visible Claude files.

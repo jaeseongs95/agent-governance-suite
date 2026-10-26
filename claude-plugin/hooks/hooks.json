@@ -101,46 +101,14 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(prepare_session_message|send_session_message|acknowledge_session_messages|get_session_message_status|validate_collaboration_decision)$",
+        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__.+$",
         "hooks": [
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"],
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(open_convergence_root|checkpoint_context|inspect_context|load_context|suppress_context_restore|purge_direct_context)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"],
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(plan_workflow|record_stage_result|classify_skills|record_skill_selection)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/host-attestation-hook.mjs"],
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "^mcp__plugin_agent-governance-suite_agent-governance-suite__(update_session_status|list_session_status)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-board-hook.mjs"],
-            "timeout": 5
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/governance-hook.mjs"],
+            "timeout": 10,
+            "onFailure": "block"
           }
         ]
       },

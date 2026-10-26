@@ -1,3 +1,4 @@
+import { actorAccess } from "./input-observation.js";
 import { hookFailure, hookFailureContext, hookFailureReason, retainHookFailureCause, retainHookFailureSecondary, tagHookFailure, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 import "./builtin-hook-host-adapters.js";
 import { spawn } from "node:child_process";
@@ -23,7 +24,6 @@ import type { PeerWaitDecision } from "./peer-wait-policy.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "./session-message-protocol.js";
 
 const SESSION_BOUND_TOOLS = new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
-const MAIN_SESSION_TOOLS = new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status"]);
 const HOST_CLAIM_MAX_MESSAGES = 1;
 const HOST_CLAIM_MAX_BODY_CHARS = 4096;
 const HOST_MESSAGE_REQUEST_TIMEOUT_MS = 8_000;
@@ -266,7 +266,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   const observation = adapted.observation;
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
-  const main = observation.actor.kind === "main" && observation.actor.assurance === "observed";
+  const main = actorAccess(observation.actor).allowed;
   const profile = hostDeliveryProfile(host, process.env, undefined, options.defaultQueueWake);
   const target = { host, sessionId };
   // This path opens a second provenance store before claiming; it is not budget-enabled yet.
@@ -374,7 +374,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
     const toolName = observation.toolName ?? "";
     const wait = nativePeerWait(observation);
-    if (wait && observation.actor.kind === "main" && observation.actor.assurance === "observed") {
+    if (wait && actorAccess(observation.actor).allowed) {
       try {
         const decision = await request<PeerWaitDecision>("peer-wait", { sender: target, ...wait });
         return { hookSpecificOutput: { hookEventName: adapted.outputEventName,
@@ -389,7 +389,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     if (!isGovernanceHookTool(host, toolName)) return {};
     const localTool = toolName.split("__").at(-1) ?? "";
     if (!SESSION_BOUND_TOOLS.has(localTool)) return {};
-    if (MAIN_SESSION_TOOLS.has(localTool) && (observation.actor.kind !== "main" || observation.actor.assurance !== "observed")) {
+    if (!actorAccess(observation.actor).allowed) {
       return { hookSpecificOutput: { hookEventName: adapted.outputEventName, permissionDecision: "deny" } };
     }
     return {
@@ -398,16 +398,16 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         updatedInput: { ...observation.toolInput, _sessionBinding: localTool === "validate_collaboration_decision" ? {
           host,
           sessionId,
-          actorKind: observation.actor.kind,
-          observedBy: observation.actor.observedBy,
-          assurance: observation.actor.assurance,
+          actorKind: "main",
+          observedBy: observation.actor.reasonCode,
+          assurance: observation.actor.basis,
         } : { host, sessionId } },
       },
     };
   }
   if (!main) return {};
 
-  if (options.recoverExistingSession && observation.actor.kind === "main" && observation.actor.assurance === "observed"
+  if (options.recoverExistingSession && actorAccess(observation.actor).allowed
     && (observation.kind === "user-input" || observation.kind === "turn-end"
       || (observation.kind === "tool-boundary" && observation.boundaryPhase === "after"))) {
     try {

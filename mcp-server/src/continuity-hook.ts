@@ -1,3 +1,4 @@
+import { actorAccess } from "./input-observation.js";
 import "./builtin-hook-host-adapters.js";
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -43,7 +44,7 @@ export function handleContinuityHook(input: HookInput, service: ContinuityServic
   const observation = adapted.observation;
   const event = typeof input.hook_event_name === "string" ? input.hook_event_name : "";
   const sessionId = observation.sessionId;
-  if (!sessionId) return {};
+  if (!sessionId || !actorAccess(observation.actor).allowed) return {};
 
   if (event === "SessionStart") {
     const source = input.source;
@@ -72,7 +73,7 @@ export function handleContinuityHook(input: HookInput, service: ContinuityServic
   }
 
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
-    if (observation.actor.kind !== "main" || observation.actor.assurance !== "observed") return {};
+    if (!actorAccess(observation.actor).allowed) return {};
     const toolName = localToolName(host, observation.toolName ?? "");
     if (!toolName) return {};
     const toolInput = observation.toolInput ?? {};

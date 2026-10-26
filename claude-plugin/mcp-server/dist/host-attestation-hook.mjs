@@ -1131,16 +1131,7 @@ function text(value) {
 function record(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
-function actorObservation(input2, host) {
-  if (!Object.hasOwn(input2, "agent_id")) return { kind: "unknown", observedBy: "".concat(host, ":hook-payload"), assurance: "unknown" };
-  if (typeof input2.agent_id !== "string") return { kind: "unknown", observedBy: "".concat(host, ":hook-payload"), assurance: "unknown" };
-  return {
-    kind: text(input2.agent_id) ? "subagent" : "main",
-    observedBy: "".concat(host, ":hook-payload"),
-    assurance: "observed"
-  };
-}
-function adaptBuiltinHookInput(input2, host) {
+function adaptBuiltinHookInput(input2, host, actor) {
   const event = text(input2.hook_event_name);
   let kind = "unknown";
   let lifecycle = "none";
@@ -1159,6 +1150,7 @@ function adaptBuiltinHookInput(input2, host) {
   } else if (event === "Stop") kind = "turn-end";
   const wake = kind === "user-input" ? parseWakeMessages(input2.prompt) : { nonces: [], wakeOnly: false };
   const workspaceId = text(input2.workspace_id) || text(input2.cwd);
+  const callId = text(input2.tool_use_id).trim();
   const collaborationId = text(input2.collaboration_id);
   const role = text(input2.role);
   return {
@@ -1168,7 +1160,8 @@ function adaptBuiltinHookInput(input2, host) {
       host,
       sessionId: text(input2.session_id),
       kind,
-      actor: actorObservation(input2, host),
+      actor,
+      ...callId ? { callId } : {},
       ...boundaryPhase === void 0 ? {} : { boundaryPhase },
       ...kind === "tool-boundary" ? { toolName: text(input2.tool_name), toolInput: record(input2.tool_input) } : {},
       ...kind === "user-input" ? { wakeCandidates: wake.nonces, wakeOnly: wake.wakeOnly } : {},
@@ -1179,26 +1172,43 @@ function adaptBuiltinHookInput(input2, host) {
   };
 }
 function adaptCodexHookInput(input2, host) {
-  const adapted = adaptBuiltinHookInput(input2, host);
-  if (adapted.lifecycle === "none") return adapted;
-  if (Object.hasOwn(input2, "agent_type")) {
-    adapted.observation.actor = { kind: "unknown", observedBy: "".concat(host, ":root-lifecycle-conflict"), assurance: "unknown" };
-  } else if (!Object.hasOwn(input2, "agent_id")) {
-    adapted.observation.actor = { kind: "main", observedBy: "".concat(host, ":native-root-lifecycle"), assurance: "observed" };
-  }
-  return adapted;
+  return adaptBuiltinHookInput(input2, host, {
+    role: "indeterminate",
+    basis: "unavailable",
+    reasonCode: "CODEX_NATIVE_CAPTURE_REQUIRED"
+  });
 }
 function adaptClaudeHookInput(input2, host) {
-  const adapted = adaptBuiltinHookInput(input2, host);
-  const hasAgentId = Object.hasOwn(input2, "agent_id");
+  const actor = {
+    role: "indeterminate",
+    basis: "unavailable",
+    reasonCode: "CLAUDE_NATIVE_EVENT_UNRECOGNIZED"
+  };
+  const adapted = adaptBuiltinHookInput(input2, host, actor);
   const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown";
-  const validAgentType = !Object.hasOwn(input2, "agent_type") || typeof input2.agent_type === "string" && input2.agent_type.trim().length > 0;
-  if (!knownEvent || !adapted.observation.sessionId.trim() || !validAgentType || hasAgentId && (typeof input2.agent_id !== "string" || !input2.agent_id.trim())) {
-    adapted.observation.actor = { kind: "unknown", observedBy: "".concat(host, ":invalid-native-actor"), assurance: "unknown" };
-  } else if (!hasAgentId) {
-    adapted.observation.actor = { kind: "main", observedBy: "".concat(host, ":hook-payload"), assurance: "observed" };
-  }
+  if (!knownEvent) return adapted;
+  if (!adapted.observation.sessionId.trim()) actor.reasonCode = "CLAUDE_NATIVE_SESSION_ID_INVALID";
+  else if (Object.hasOwn(input2, "agent_type") && (typeof input2.agent_type !== "string" || !input2.agent_type.trim())) {
+    actor.reasonCode = "CLAUDE_NATIVE_AGENT_TYPE_INVALID";
+  } else if (Object.hasOwn(input2, "agent_id")) {
+    if (typeof input2.agent_id !== "string" || !input2.agent_id.trim()) actor.reasonCode = "CLAUDE_NATIVE_AGENT_ID_INVALID";
+    else Object.assign(actor, { role: "child", basis: "observed", reasonCode: "CLAUDE_NATIVE_CHILD_AGENT_ID" });
+  } else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: "CLAUDE_NATIVE_ROOT_AGENT_ID_ABSENT" });
   return adapted;
+}
+function adaptGeminiHookInput(input2, host) {
+  return adaptBuiltinHookInput(input2, host, {
+    role: "indeterminate",
+    basis: "unavailable",
+    reasonCode: "GEMINI_ACTOR_OBSERVATION_UNSUPPORTED"
+  });
+}
+function adaptAntigravityHookInput(input2, host) {
+  return adaptBuiltinHookInput(input2, host, {
+    role: "indeterminate",
+    basis: "unavailable",
+    reasonCode: "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED"
+  });
 }
 var GOVERNANCE_TOOL_PREFIXES = /* @__PURE__ */ new Set([
   "mcp__agent_governance_suite__",
@@ -1332,7 +1342,13 @@ var builtinHookHostAdapters = /* @__PURE__ */ new Map([
     attestationKind: "claude-hook"
   }],
   ["gemini", {
-    adaptInput: adaptBuiltinHookInput,
+    adaptInput: adaptGeminiHookInput,
+    ownsTool: ownsGovernanceTool,
+    deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
+    processPid: (pid, observation) => observation ? pid : void 0
+  }],
+  ["antigravity", {
+    adaptInput: adaptAntigravityHookInput,
     ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
     processPid: (pid, observation) => observation ? pid : void 0

@@ -45,7 +45,7 @@ export function adaptHostInput(input: Record<string, unknown>, host: string): Ad
   return adapter.adaptInput?.(input, host) ?? {
     lifecycle: "none", outputEventName: "",
     observation: { host, sessionId: "", kind: "unknown",
-      actor: { kind: "unknown", observedBy: `${host}:unconfigured-input`, assurance: "unknown" } },
+      actor: { role: "indeterminate", basis: "unavailable", reasonCode: "HOST_ACTOR_OBSERVATION_UNAVAILABLE" } },
   };
 }
 

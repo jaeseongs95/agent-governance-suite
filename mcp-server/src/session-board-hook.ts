@@ -1,3 +1,4 @@
+import { actorAccess } from "./input-observation.js";
 import "./builtin-hook-host-adapters.js";
 import { hookFailureContext, hookFailureReason } from "./hook-error-diagnostics.js";
 import { readFileSync } from "node:fs";
@@ -39,7 +40,7 @@ export function handleSessionBoardHook(input: HookInput, board: Board | null, ho
   const observation = adapted.observation;
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
-  const main = observation.actor.kind === "main" && observation.actor.assurance === "observed";
+  const main = actorAccess(observation.actor).allowed;
   const toolName = observation.toolName ?? "";
   const toolInput = observation.toolInput ?? {};
   const localTool = toolName.split("__").at(-1) ?? "";
@@ -95,7 +96,7 @@ export async function runSessionBoardHook(
     phase = "input";
     const input = JSON.parse(text) as HookInput;
     const observation = adaptHostInput(input, host).observation;
-    const main = observation.actor.kind === "main" && observation.actor.assurance === "observed";
+    const main = actorAccess(observation.actor).allowed;
     let verifiedInternalWake = false;
     if (observation.kind === "user-input" && main) {
       const nonces = observation.wakeCandidates ?? [];

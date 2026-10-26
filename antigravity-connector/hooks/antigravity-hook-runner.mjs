@@ -33,21 +33,6 @@ export const NON_CONTINUABLE_STOP_REASONS = new Set([
   "TERMINAL_CUSTOM_HOOK",
 ]);
 
-const SESSION_BOUND_TOOLS = new Set([
-  "prepare_session_message",
-  "send_session_message",
-  "acknowledge_session_messages",
-  "get_session_message_status",
-  "validate_collaboration_decision",
-]);
-
-const SUBAGENT_DENIED_TOOLS = new Set([
-  "prepare_session_message",
-  "send_session_message",
-  "acknowledge_session_messages",
-  "get_session_message_status",
-]);
-
 const CONTINUITY_BOUND_TOOLS = new Set([
   "open_convergence_root",
   "checkpoint_context",
@@ -141,14 +126,6 @@ function firstString(value) {
     if (typeof item === "string" && item.length > 0) return item;
   }
   return "";
-}
-
-export function isObservedSubagentPayload(rawInput) {
-  return Object.hasOwn(rawInput, "agent_id") && typeof rawInput.agent_id === "string" && rawInput.agent_id.length > 0;
-}
-
-function isObservedMainPayload(rawInput) {
-  return Object.hasOwn(rawInput, "agent_id") && rawInput.agent_id === "";
 }
 
 function extractPrimaryExecutableToken(commandOrPath = "") {
@@ -898,7 +875,6 @@ export function resolveVerifiedAntigravityHostProcess(options = {}) {
 
 export async function startAntigravitySessionPresenceAndRelay(canonicalInput, options = {}) {
   try {
-    if (!isObservedMainPayload(canonicalInput)) return;
     const hostProcess = await resolveVerifiedAntigravityHostProcess(options);
     if (!hostProcess) return;
     const executionBudget = buildExecutionBudgetOption(options);
@@ -906,7 +882,7 @@ export async function startAntigravitySessionPresenceAndRelay(canonicalInput, op
     const hookHandler = typeof options?.sessionMessageHook === "function"
       ? options.sessionMessageHook
       : (await import("../../mcp-server/dist/session-message-hook.mjs")).handleSessionMessageHook;
-    await hookHandler(canonicalInput, "gemini", hostProcess.pid, Object.freeze({
+    await hookHandler(canonicalInput, "antigravity", hostProcess.pid, Object.freeze({
       ensureRelay: true, hostProcess, executionBudget, defaultQueueWake: true,
     }));
   } catch {
@@ -957,61 +933,8 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
       }
     }
 
-    // b70204be (3) & G1: On PreToolUse, Gemini never calls nativePeerWait (Codex-only), and _sessionBinding
-    // injection requires zero broker I/O. Compute _sessionBinding synchronously in-process without withTimeout
-    // so there is zero broker delay and zero risk of a timed-out claim losing messages.
-    if (event === "PreToolUse") {
-      let cleanArgs = currentToolInput;
-      let mutated = false;
-      if (Object.hasOwn(cleanArgs, "_sessionBinding")) {
-        if (!toolBoundary?.isMcpWrapperCall) {
-          return {
-            output: { decision: "deny", reason: "Direct tool call cannot carry unverified caller _sessionBinding on Antigravity." },
-            updatedToolInput: currentToolInput,
-            mutated: false,
-          };
-        }
-        cleanArgs = { ...cleanArgs };
-        delete cleanArgs._sessionBinding;
-        mutated = true;
-      }
-      const localTool = toolBoundary?.localTool ?? "";
-      if (!SESSION_BOUND_TOOLS.has(localTool)) {
-        return { output: {}, updatedToolInput: cleanArgs, mutated };
-      }
-      const hasAgentId = Object.hasOwn(rawInput, "agent_id") && typeof rawInput.agent_id === "string";
-      const isSubagent = hasAgentId && rawInput.agent_id.length > 0;
-      if (isSubagent && SUBAGENT_DENIED_TOOLS.has(localTool)) {
-        return {
-          output: { decision: "deny", reason: "Subagents cannot invoke session messaging tools." },
-          updatedToolInput: cleanArgs,
-          mutated: false,
-        };
-      }
-      const actorKind = hasAgentId ? (isSubagent ? "subagent" : "main") : "unknown";
-      const assurance = hasAgentId ? "observed" : "unknown";
-      const binding = localTool === "validate_collaboration_decision"
-        ? {
-          host: "gemini",
-          sessionId: canonicalInput.session_id,
-          actorKind,
-          observedBy: "gemini:hook-payload",
-          assurance,
-        }
-        : { host: "gemini", sessionId: canonicalInput.session_id };
-      const updated = { ...cleanArgs, _sessionBinding: binding };
-      return {
-        output: {
-          hookSpecificOutput: {
-            hookEventName: "PreToolUse",
-            permissionDecision: "allow",
-            updatedInput: updated,
-          },
-        },
-        updatedToolInput: updated,
-        mutated: true,
-      };
-    }
+    // AGS PreToolUse is handled once by the common governance entry below.
+    if (event === "PreToolUse") return { output: {}, updatedToolInput: currentToolInput, mutated: false };
 
     if (event === "SessionStart") {
       await startAntigravitySessionPresenceAndRelay(canonicalInput, options);
@@ -1022,7 +945,7 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
     // For PreInvocation / PostInvocation / Stop where broker claim runs:
     // - Do NOT race with a short local Promise.race that would abandon an in-flight broker claim.
     // - Pass `options.executionBudget = { deadlineMonotonicMs, postClaimReserveMs }` and safe `options.onClaimState`
-    //   into `handleSessionMessageHook(effectiveInput, "gemini", undefined, hookOptions)`.
+    //   into `handleSessionMessageHook(effectiveInput, "antigravity", undefined, hookOptions)`.
     const hookHandler = typeof options?.sessionMessageHook === "function"
       ? options.sessionMessageHook
       : (await import("../../mcp-server/dist/session-message-hook.mjs")).handleSessionMessageHook;
@@ -1035,12 +958,8 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
       defaultQueueWake: true,
       ...(executionBudget ? { executionBudget } : {}),
       onClaimState: claimTracker.onClaimState,
-      ...(isObservedMainPayload(canonicalInput) ? {
-        recoverExistingSession: true,
-        resolveHostProcess: () => resolveVerifiedAntigravityHostProcess(options),
-      } : {}),
     });
-    const canonicalOutput = await hookHandler(effectiveInput, "gemini", undefined, hookOptions);
+    const canonicalOutput = await hookHandler(effectiveInput, "antigravity", undefined, hookOptions);
     return { output: canonicalOutput, updatedToolInput: currentToolInput, mutated: false };
   }
 
@@ -1072,7 +991,7 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
     const effectiveTimeoutMs = Math.max(250, Math.min(STAGE_TIMEOUT_MS, Math.floor(remainingBudgetMs)));
     const preservedSessionBinding = cleanArgs._sessionBinding;
     const hookPath = fileURLToPath(new URL("../../mcp-server/dist/continuity-hook.mjs", import.meta.url));
-    const res = spawnSync(process.execPath, [hookPath], {
+    const res = spawnSync(process.execPath, [hookPath, "--host=antigravity"], {
       input: JSON.stringify({ ...inputWithCurrentArgs, ...(toolBoundary ? { tool_input: cleanArgs } : {}) }),
       encoding: "utf8",
       stdio: ["pipe", "pipe", "ignore"],
@@ -1087,9 +1006,9 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
         // Defensive guard (R02-D): continuity-hook.ts only touches _continuityBinding today,
         // but preserve any caller-resolved Gemini _sessionBinding across updatedInput spreads.
         if (preservedSessionBinding !== undefined) {
-          cleanArgs._sessionBinding = { ...record(preservedSessionBinding), host: "gemini", sessionId: canonicalInput.session_id };
+          cleanArgs._sessionBinding = { ...record(preservedSessionBinding), host: "antigravity", sessionId: canonicalInput.session_id };
         } else if (Object.hasOwn(cleanArgs, "_sessionBinding") && record(cleanArgs._sessionBinding).host === "codex") {
-          cleanArgs._sessionBinding = { ...record(cleanArgs._sessionBinding), host: "gemini", sessionId: canonicalInput.session_id };
+          cleanArgs._sessionBinding = { ...record(cleanArgs._sessionBinding), host: "antigravity", sessionId: canonicalInput.session_id };
         }
         specific.updatedInput = cleanArgs;
         mutated = true;
@@ -1101,7 +1020,7 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
 
   if (hookName === "session-board") {
     const { runSessionBoardHook } = await import("../../mcp-server/dist/session-board-hook.mjs");
-    const outStr = await runSessionBoardHook("gemini", JSON.stringify({ ...inputWithCurrentArgs, ...(toolBoundary ? { tool_input: currentToolInput } : {}) }));
+    const outStr = await runSessionBoardHook("antigravity", JSON.stringify({ ...inputWithCurrentArgs, ...(toolBoundary ? { tool_input: currentToolInput } : {}) }));
     if (!outStr) return { output: {}, updatedToolInput: currentToolInput, mutated: false };
     const parsed = record(JSON.parse(outStr));
     const specific = record(parsed.hookSpecificOutput);
@@ -1122,6 +1041,23 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
   if (!event) return {};
 
   const { canonicalInput, toolBoundary } = buildCanonicalHookInput(rawInput, event, explicitHook || "session-message");
+  if (event === "PreToolUse" && toolBoundary?.canonicalName.startsWith("mcp__agent-governance-suite__")) {
+    try {
+      const { runGovernanceHook } = await import("../../mcp-server/dist/governance-hook.mjs");
+      const outcome = await runGovernanceHook("antigravity", JSON.stringify(canonicalInput));
+      if (!outcome || typeof outcome.ok !== "boolean" || typeof outcome.output !== "string" || !outcome.output.trim()) {
+        throw new Error("Invalid governance hook outcome.");
+      }
+      const output = translateCanonicalOutputToAntigravity("PreToolUse", JSON.parse(outcome.output), toolBoundary);
+      if ((!outcome.ok && output.decision !== "deny") || !["allow", "deny"].includes(output.decision)) {
+        throw new Error("Invalid governance hook decision.");
+      }
+      return output;
+    } catch {
+      return { decision: "deny", reason: "GOVERNANCE_HOOK_FAILED" };
+    }
+  }
+
   if (!canonicalInput.session_id) {
     // F1 + R02-F05 fail-closed: if PreToolUse carries any reserved binding key without a valid sessionId, deny immediately.
     if (event === "PreToolUse" && toolBoundary) {
