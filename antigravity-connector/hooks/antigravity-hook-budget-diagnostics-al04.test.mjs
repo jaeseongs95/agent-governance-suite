@@ -175,3 +175,55 @@ test("F4 clock reset before resolver entry cannot start an OS query", async () =
   assert.equal(result, null); assert.equal(f.calls.length + f.sync.length, 0);
   assert.equal(failures[0].code, "HOST_PROCESS_CLOCK_INVALID");
 });
+
+
+const privateDiagnosticMarker = "AL04_PRIVATE_DIAGNOSTIC_MARKER";
+const unsafeInspectionFailures = [
+  ["nested marker", () => ({ phase: { secret: privateDiagnosticMarker }, code: { secret: privateDiagnosticMarker }, cause: { code: privateDiagnosticMarker } })],
+  ["BigInt", () => ({ phase: 1n, code: 2n, cause: { code: 3n } })],
+  ["accessors", observed => Object.defineProperties(new Error("private"), Object.fromEntries(["phase", "code", "cause"].map(key => [key, { get() { observed.push(key); throw new Error(privateDiagnosticMarker); } }])) )],
+  ["Proxy", observed => new Proxy({}, Object.fromEntries(["get", "ownKeys", "getOwnPropertyDescriptor", "getPrototypeOf"].map(key => [key, () => { observed.push(key); throw new Error(privateDiagnosticMarker); }])) )],
+  ["unknown native code", () => Object.assign(new Error("private"), { code: privateDiagnosticMarker })],
+  ["oversized phase", () => ({ phase: privateDiagnosticMarker.repeat(1000), code: privateDiagnosticMarker })],
+];
+for (const [name, create] of unsafeInspectionFailures) for (const mode of ["throw", "reject"]) test(`F4 safe diagnostics ${name} ${mode} remains closed and preserves the original private error`, async () => {
+  const observed = []; const original = create(observed); const lines = [];
+  const resolver = () => { if (mode === "throw") throw original; return Promise.reject(original); };
+  const stderr = vi.spyOn(console, "error").mockImplementation(line => { lines.push(line); });
+  try {
+    assert.equal(await resolveVerifiedAntigravityHostProcess(options({ resolveHostProcess: resolver, onProcessIdentityFailure: undefined })), null);
+    assert.equal(lines.length, 1, "opaque errors must still produce one bounded fallback diagnostic");
+    assert.equal(typeof lines[0], "string"); assert.ok(lines[0].length < 4096); assert.equal(lines[0].includes(privateDiagnosticMarker), false);
+    const diagnostic = JSON.parse(lines[0]).agsAntigravityProcessIdentityFailure;
+    assert.deepEqual(Object.keys(diagnostic).sort(), ["context", "nativeCode", "phase", "reason"]);
+    assert.equal(diagnostic.reason, "HOST_PROCESS_INSPECTION_FAILED"); assert.equal(diagnostic.phase, "inspection"); assert.equal(diagnostic.nativeCode, null);
+    assert.equal(typeof diagnostic.context, "object");
+    const callbacks = [];
+    assert.equal(await resolveVerifiedAntigravityHostProcess(options({ resolveHostProcess: resolver, onProcessIdentityFailure: error => callbacks.push(error) })), null);
+    assert.equal(callbacks.length, 1); assert.equal(callbacks[0].cause, original); assert.equal(lines.length, 1, "private observer does not also serialize the error");
+    assert.deepEqual(observed, [], "diagnostics must not invoke error getters or Proxy traps");
+  } finally { stderr.mockRestore(); }
+});
+
+test("F4 safe diagnostics retains an allowlisted native code and fixed internal spawn phase", async () => {
+  f.failure = Object.assign(new Error(privateDiagnosticMarker), { code: "EACCES" }); const lines = [];
+  const stderr = vi.spyOn(console, "error").mockImplementation(line => { lines.push(line); });
+  try {
+    const result = resolveVerifiedAntigravityHostProcess(options({ onProcessIdentityFailure: undefined }));
+    await drain(); assert.equal(await result, null); assert.equal(lines.length, 1);
+    const diagnostic = JSON.parse(lines[0]).agsAntigravityProcessIdentityFailure;
+    assert.equal(diagnostic.reason, "HOST_PROCESS_INSPECTION_FAILED"); assert.equal(diagnostic.phase, "spawn"); assert.equal(diagnostic.nativeCode, "EACCES");
+    assert.equal(lines[0].includes(privateDiagnosticMarker), false);
+  } finally { stderr.mockRestore(); }
+});
+
+test("F4 safe diagnostics keeps identity closed when diagnostic output or private observer fails", async () => {
+  const original = new Error(privateDiagnosticMarker); const secondary = new Error("diagnostic transport failed");
+  const stderr = vi.spyOn(console, "error").mockImplementation(() => { throw secondary; });
+  try {
+    for (const observer of [undefined, () => { throw secondary; }, () => Promise.reject(secondary)]) {
+      assert.equal(await resolveVerifiedAntigravityHostProcess(options({ resolveHostProcess: () => { throw original; }, onProcessIdentityFailure: observer })), null);
+    }
+    await turn();
+  } finally { stderr.mockRestore(); }
+});

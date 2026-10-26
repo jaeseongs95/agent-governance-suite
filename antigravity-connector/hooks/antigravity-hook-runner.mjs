@@ -8,6 +8,8 @@ import { readFile, readlink } from "node:fs/promises";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
+import { types } from "node:util";
+import { failureContext, retainFailureCause, retainFailureSecondary } from "../../runtime/failure-diagnostics.mjs";
 
 // Queue wake defaults are passed per invocation; importing this module never changes user ENV.
 
@@ -458,8 +460,12 @@ export function resolveLongLivedHostProcess(startPid = process.ppid, platform = 
 
 // Actual hook callers await native inspection; the synchronous resolver above remains
 // compatible with existing injected inspection consumers.
+const inspectionFailures = new WeakMap();
+
 function inspectionFailure(code, phase, cause) {
-  return Object.assign(new Error("Antigravity host process inspection failed.", { cause }), { code, phase });
+  const failure = Object.assign(new Error("Antigravity host process inspection failed.", { cause }), { code, phase });
+  inspectionFailures.set(failure, { code, phase, cause });
+  return retainFailureCause(failure, cause);
 }
 
 function inspectionBudget(options) {
@@ -494,15 +500,25 @@ function inspectionBudget(options) {
 }
 
 function reportInspectionFailure(error, options) {
+  const failure = inspectionFailures.has(error) ? error : inspectionFailure("HOST_PROCESS_INSPECTION_FAILED", "inspection", error);
   try {
-    const failure = error?.phase ? error : inspectionFailure("HOST_PROCESS_INSPECTION_FAILED", "inspection", error);
     if (typeof options?.onProcessIdentityFailure === "function") {
-      Promise.resolve(options.onProcessIdentityFailure(failure)).catch(() => {});
+      Promise.resolve(options.onProcessIdentityFailure(failure)).catch(secondary => retainFailureSecondary(failure, secondary));
     } else {
-      const nativeCode = typeof failure.cause?.code === "string" ? failure.cause.code.slice(0, 32) : null;
-      console.error(JSON.stringify({ agsAntigravityProcessIdentityFailure: { reason: failure.code, phase: failure.phase, nativeCode } }));
+      const detail = inspectionFailures.get(failure);
+      // Match the core native-code allowlist; never evaluate arbitrary error accessors or Proxy traps.
+      let nativeCode;
+      try { nativeCode = detail.cause && !types.isProxy(detail.cause) ? Object.getOwnPropertyDescriptor(detail.cause, "code")?.value : undefined; }
+      catch { /* Opaque native values use the fixed fallback. */ }
+      const diagnostic = {
+        reason: ["HOST_PROCESS_CLOCK_INVALID", "HOST_PROCESS_BUDGET_EXHAUSTED", "HOST_PROCESS_INSPECTION_FAILED"].includes(detail.code) ? detail.code : "HOST_PROCESS_INSPECTION_FAILED",
+        phase: ["clock", "budget", "inspection", "spawn"].includes(detail.phase) ? detail.phase : "inspection",
+        nativeCode: typeof nativeCode === "string" && ["ENOENT", "EACCES", "EPERM", "ETIMEDOUT", "ENOBUFS", "EIO", "EINVAL", "ESRCH", "ABORT_ERR"].includes(nativeCode) ? nativeCode : null,
+        context: failureContext(failure),
+      };
+      console.error(JSON.stringify({ agsAntigravityProcessIdentityFailure: diagnostic }));
     }
-  } catch { /* Diagnostics do not grant identity or change cleanup. */ }
+  } catch (secondary) { retainFailureSecondary(failure, secondary); /* Diagnostics do not grant identity or change cleanup. */ }
   return null;
 }
 
