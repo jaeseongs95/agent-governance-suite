@@ -5,7 +5,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const hash = bytes => createHash("sha256").update(bytes).digest("hex");
-export async function verifyUpgradeSource(source, expectedHead, expectedPin) {
+export async function verifyUpgradeSource(source, expectedHead, expectedPin, { historical = false } = {}) {
   assert.match(expectedHead, /^[a-f0-9]{40}$/u);
   assert.match(expectedPin, /^[a-f0-9]{64}$/u);
   const manifestBytes = await readFile(source.manifestPath);
@@ -32,22 +32,36 @@ export async function verifyUpgradeSource(source, expectedHead, expectedPin) {
   }
   for (const required of ["package.json", "pnpm-lock.yaml", "scripts/run-tests.mjs", "mcp-server/src/workflow-service.ts"]) assert.ok(seen.has(required));
   const pkg = JSON.parse(await readFile(path.join(source.directory, "package.json")));
-  assert.equal(pkg.packageManager, "pnpm@11.19.0");
+  let toolchain = null;
+  if (historical) assert.equal(pkg.packageManager, "pnpm@11.19.0");
+  else {
+    const configPath = ".github/ci/ags30-r11/execution-config.json";
+    assert.ok(seen.has(configPath), "Current toolchain config must belong to the verified source manifest");
+    const config = JSON.parse(await readFile(path.join(source.directory, configPath)));
+    assert.match(config.pnpm, /^\d+\.\d+\.\d+$/u);
+    assert.match(config.node, /^\d+\.\d+\.\d+$/u);
+    assert.equal(pkg.packageManager, "pnpm@" + config.pnpm);
+    toolchain = { node: config.node, pnpm: config.pnpm };
+  }
   assert.ok((await lstat(path.join(source.directory, "node_modules/tsx/dist/loader.mjs"))).isFile(), "Frozen dependencies required");
   assert.equal(hash(await readFile(path.join(source.directory, "mcp-server/src/workflow-service.ts"))), source.serviceSha256);
-  return { head: expectedHead, tree: source.tree, files: manifest.files, manifestSha256: expectedPin };
+  return { head: expectedHead, tree: source.tree, files: manifest.files, manifestSha256: expectedPin, toolchain };
+}
+
+export function assertCurrentRuntime(toolchain, observedNode = process.version) {
+  assert.equal(observedNode, "v" + toolchain.node, "Current Node runtime must match the verified configuration");
 }
 
 async function main() {
   const [input, expectedCurrentHead, currentPin, oldPin] = process.argv.slice(2);
-  assert.equal(process.versions.node.split(".")[0], "24");
   const inputPath = path.resolve(input);
   const inputs = JSON.parse(await readFile(inputPath));
   if (process.env.GITHUB_SHA !== undefined) assert.equal(expectedCurrentHead, process.env.GITHUB_SHA, "CI must consume actual triggering SHA");
   assert.equal(inputs.old.tree, "797ccf5960fea8fcebe16025d7786ca389ab6fbc");
-  const old = await verifyUpgradeSource(inputs.old, "b3285616c896afdcbb298e3a08dffd612ddfa7b8", oldPin);
+  const old = await verifyUpgradeSource(inputs.old, "b3285616c896afdcbb298e3a08dffd612ddfa7b8", oldPin, { historical: true });
   assert.equal(old.files, 1733);
   const current = await verifyUpgradeSource(inputs.current, expectedCurrentHead, currentPin);
+  assertCurrentRuntime(current.toolchain);
   console.log(JSON.stringify({ wholeSourceVerification: { old, current }, node: process.version }));
   process.env.AL06_D0040_UPGRADE_INPUT = inputPath;
   process.env.AL06_D0040_VERIFIED_CURRENT_HEAD = expectedCurrentHead;

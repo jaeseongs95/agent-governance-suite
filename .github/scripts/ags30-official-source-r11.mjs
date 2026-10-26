@@ -119,6 +119,8 @@ export function writeCollectorRecord(output, record) {
 export function emitCollectorSummary(record, bytes, artifactOk) {
   console.log(JSON.stringify({ status: record.status, sourceFreshness: record.sourceFreshness,
     runtimeValidation: record.runtimeValidation ?? 'NOT_RUN', bytes, artifactOk,
+    genuineLegacyUpgrade: { phase: '04u8-genuine-upgrade', runnerOs: record.runnerOs ?? null, shardIndex: record.shardIndex ?? null,
+      status: record.genuineLegacyUpgrade?.status ?? 'NOT_RUN', processStatus: record.genuineLegacyUpgrade?.processStatus ?? 'NOT_RUN' },
     phases: record.phases.map(({name,status,exitCode,errorCode}) => ({name,status,exitCode,errorCode})),
     failureType: record.failure?.name ?? null, failureCode: record.failure?.code ?? null,
     aggregateFailures: record.aggregateFailures ?? [] }));
@@ -372,7 +374,7 @@ async function main() {
   const source = path.join(work, 'source');
   await fs.mkdir(output);
   const record = { schemaVersion: 'AgsBoundedCiResult.v1', unit: identity.unit, nonce: identity.nonce,
-    startedAt: new Date().toISOString(), shardIndex, shardCount: config.shardCount, status: 'FAIL', sourceFreshness: 'NOT_RUN',
+    startedAt: new Date().toISOString(), runnerOs: process.env.RUNNER_OS, shardIndex, shardCount: config.shardCount, status: 'FAIL', sourceFreshness: 'NOT_RUN',
     runtimeCandidate: 'NOT_GENERATED', originalJev: { tasks: 3, cases: 125, acceptanceCriteria: 10, completionIncrease: 0 },
     mutationSensitivity: 'NOT_RUN', formalEngineeringProof: 'NOT_COLLECTED', phases: [] };
   let artifactOk;
@@ -588,7 +590,7 @@ async function main() {
         '--store-dir', path.join(work, 'store'), '--config.fetch-retries=0'], oldSource, 240_000));
       for (const [name, directory] of [['old', oldSource], ['current', source]]) {
         const banner = mustPass(await command('04u7-' + name + '-pnpm', process.execPath, [pnpmCli, '--version'], directory, 10_000));
-        assert.equal(banner.stdout.toString('utf8').trim(), '11.19.0');
+        assert.equal(banner.stdout.toString('utf8').trim(), config.pnpm);
       }
       const input = { old: { directory: oldSource, commit: oldHead, tree: oldTree,
         manifestPath: path.join(output, 'genuine-old-source-manifest.json'),
