@@ -18,10 +18,12 @@ import type {
   WorkflowPlanV1,
 } from "../../contracts/types.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
+import { SessionActorProofs } from "../../mcp-server/src/session-actor-proof.js";
 import { CURRENT_VERSION, NEXT_TAG, NEXT_VERSION } from "./version-fixtures.js";
 
 const rootDirectory = fileURLToPath(new URL("../../", import.meta.url));
 const bundledServer = fileURLToPath(new URL("../../mcp-server/dist/server.mjs", import.meta.url));
+const bundledGovernanceHook = fileURLToPath(new URL("../../mcp-server/dist/governance-hook.mjs", import.meta.url));
 const bundledContinuityHook = fileURLToPath(new URL("../../mcp-server/dist/continuity-hook.mjs", import.meta.url));
 
 function isolatedEnvironment(stateDirectory: string): Record<string, string> {
@@ -30,6 +32,7 @@ function isolatedEnvironment(stateDirectory: string): Record<string, string> {
   environment.AGENT_GOVERNANCE_SHARED_STATE_DIR = join(stateDirectory, "shared-state");
   environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = messagingDirectory;
   environment.AGENT_GOVERNANCE_TRUST_DB_PATH = join(messagingDirectory, "trust.sqlite3");
+  environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = join(stateDirectory, "board.sqlite3");
   return environment;
 }
 
@@ -90,7 +93,7 @@ function seedAvailableUpdate(databasePath: string): void {
 }
 
 function runContinuityHook(environment: Record<string, string>, input: Record<string, unknown>): Record<string, unknown> {
-  const result = spawnSync(process.execPath, [bundledContinuityHook], {
+  const result = spawnSync(process.execPath, [bundledContinuityHook, "--host=claude-code"], {
     cwd: rootDirectory,
     env: environment,
     input: JSON.stringify(input),
@@ -104,6 +107,34 @@ function runContinuityHook(environment: Record<string, string>, input: Record<st
 
 function updatedHookInput(output: Record<string, unknown>): Record<string, unknown> {
   return ((output.hookSpecificOutput as { updatedInput?: Record<string, unknown> } | undefined)?.updatedInput) ?? {};
+}
+
+let rootCallSequence = 0;
+// Unavailable-domain and missing-model cases deliberately reach their existing consumer
+// with a real signed proof in this test's own workflow DB. This is synthetic core evidence.
+function rootArguments(environment: Record<string, string>, tool: string, args: Record<string, unknown>): Record<string, unknown> {
+  const store = new SqliteWorkflowStore(environment.AGENT_GOVERNANCE_DB_PATH!);
+  try {
+    return { ...args, _sessionProof: new SessionActorProofs(store).issue({
+      host: "synthetic-root-host", sessionId: "stdio-negative-session", callId: `negative-${++rootCallSequence}`,
+      kind: "tool-boundary", boundaryPhase: "before",
+      actor: { role: "root", basis: "observed", reasonCode: "SYNTHETIC_TEST_ROOT_OBSERVATION" },
+    }, tool, args) };
+  } finally { store.close(); }
+}
+
+function runGovernanceHook(environment: Record<string, string>, tool: string, input: Record<string, unknown>, isolatedRoot?: string): Record<string, unknown> {
+  const hook = isolatedRoot ? join(isolatedRoot, "mcp-server", "dist", "governance-hook.mjs") : bundledGovernanceHook;
+  const result = spawnSync(process.execPath, [hook, "--host=claude-code"], {
+    cwd: isolatedRoot ?? rootDirectory, env: environment,
+    input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "stdio-continuity-session",
+      tool_use_id: `governance-${++rootCallSequence}`, tool_name: `mcp__agent_governance_suite__${tool}`, tool_input: input }),
+    encoding: "utf8", windowsHide: true, timeout: 10_000,
+  });
+  if (result.error || result.status !== 0) throw result.error ?? new Error(result.stderr);
+  const args = updatedHookInput(JSON.parse(result.stdout) as Record<string, unknown>);
+  expect(args._sessionProof).toEqual(expect.any(String));
+  return args;
 }
 
 describe("bundled STDIO MCP server", () => {
@@ -121,6 +152,7 @@ describe("bundled STDIO MCP server", () => {
       await mkdir(join(isolatedRoot, "mcp-server", "dist"), { recursive: true });
       await Promise.all([
         cp(bundledServer, isolatedServer),
+        cp(bundledGovernanceHook, join(isolatedRoot, "mcp-server", "dist", "governance-hook.mjs")),
         cp(join(rootDirectory, "contracts"), join(isolatedRoot, "contracts"), { recursive: true }),
         cp(join(rootDirectory, "skills"), join(isolatedRoot, "skills"), { recursive: true }),
       ]);
@@ -174,7 +206,7 @@ describe("bundled STDIO MCP server", () => {
       const sourceText = "MCP와 SQLite는 보호하고 데이터 베이스는 문맥을 확인한다.";
       const glossary = toolData(await client.callTool({
         name: "lookup_korean_prose_terms",
-        arguments: { schemaVersion: "1.0.0", sourceText, sourceDigest: createHash("sha256").update(sourceText).digest("hex") },
+        arguments: runGovernanceHook(environment, "lookup_korean_prose_terms", { schemaVersion: "1.0.0", sourceText, sourceDigest: createHash("sha256").update(sourceText).digest("hex") }, isolatedRoot),
       }));
       expect(glossary.ok).toBe(true);
       expect(glossary.data).toMatchObject({ status: "matched", sourceDigest: createHash("sha256").update(sourceText).digest("hex") });
@@ -183,7 +215,7 @@ describe("bundled STDIO MCP server", () => {
       workflowDatabase.close();
       const unavailable = toolData(await client.callTool({
         name: "inspect_context",
-        arguments: { schemaVersion: "1.0.0", _continuityBinding: "untrusted-placeholder" },
+        arguments: rootArguments(environment, "inspect_context", { schemaVersion: "1.0.0", _continuityBinding: "untrusted-placeholder" }),
       }));
       expect(unavailable.error?.code).toBe("CONTINUITY_UNAVAILABLE");
     } finally {
@@ -221,7 +253,7 @@ describe("bundled STDIO MCP server", () => {
       expect((await client.listTools()).tools.some((tool) => tool.name === "plan_workflow")).toBe(true);
       const unavailable = toolData(await client.callTool({
         name: "inspect_context",
-        arguments: { schemaVersion: "1.0.0", _continuityBinding: "untrusted-placeholder" },
+        arguments: rootArguments(environment, "inspect_context", { schemaVersion: "1.0.0", _continuityBinding: "untrusted-placeholder" }),
       }));
       expect(unavailable.error?.code).toBe("CONTINUITY_UNAVAILABLE");
     } finally {
@@ -333,7 +365,7 @@ describe("bundled STDIO MCP server", () => {
       };
       const plannedResponse = await client.callTool({
         name: "plan_workflow",
-        arguments: assuredPlanArguments(task),
+        arguments: rootArguments(environment, "plan_workflow", assuredPlanArguments(task)),
       });
       const planned = toolData<WorkflowPlanV1>(plannedResponse);
       expect(planned.ok).toBe(false);
@@ -348,14 +380,14 @@ describe("bundled STDIO MCP server", () => {
 
       const cleanupPreview = toolData<StateCleanupPlanV1>(await client.callTool({
         name: "prepare_state_cleanup",
-        arguments: { schemaVersion: "1.0.0" },
+        arguments: runGovernanceHook(environment, "prepare_state_cleanup", { schemaVersion: "1.0.0" }),
       }));
       expect(cleanupPreview.ok).toBe(true);
       expect(cleanupPreview.data?.planToken).toEqual(expect.any(String));
 
       const updateStatus = toolData<PluginUpdateStatusV1>(await client.callTool({
         name: "check_for_updates",
-        arguments: { force: false },
+        arguments: runGovernanceHook(environment, "check_for_updates", { force: false }),
       }));
       expect(updateStatus.data).toMatchObject({
         currentVersion: CURRENT_VERSION,
@@ -367,7 +399,8 @@ describe("bundled STDIO MCP server", () => {
       const database = new DatabaseSync(databasePath, { readOnly: true });
       try {
         expect(database.prepare("SELECT COUNT(*) AS count FROM workflow_runs").get()).toEqual({ count: 0 });
-        expect(database.prepare("SELECT COUNT(*) AS count FROM execution_observation_claims").get()).toEqual({ count: 0 });
+        expect(database.prepare("SELECT COUNT(*) AS count FROM execution_observation_claims WHERE observation_id NOT LIKE 'ags-root-v3:%'").get()).toEqual({ count: 0 });
+        expect(database.prepare("SELECT COUNT(*) AS count FROM execution_observation_claims WHERE observation_id LIKE 'ags-root-v3:%'").get()).toEqual({ count: 3 });
       } finally {
         database.close();
       }
@@ -410,28 +443,14 @@ describe("bundled STDIO MCP server", () => {
         },
         evidenceRefs: [],
       };
-      const checkpointHook = runContinuityHook(environment, {
-        hook_event_name: "PreToolUse",
-        agent_id: "",
-        session_id: "stdio-continuity-session",
-        tool_name: "mcp__agent-governance-suite__checkpoint_context",
-        tool_input: checkpoint,
-      });
-      const stored = toolData(await client.callTool({ name: "checkpoint_context", arguments: updatedHookInput(checkpointHook) }));
+      const stored = toolData(await client.callTool({ name: "checkpoint_context", arguments: runGovernanceHook(environment, "checkpoint_context", checkpoint) }));
       expect(stored).toMatchObject({ ok: true, data: { revision: 1 } });
 
       const inspect = { schemaVersion: "1.0.0" };
-      const inspectHook = runContinuityHook(environment, {
-        hook_event_name: "PreToolUse",
-        agent_id: "",
-        session_id: "stdio-continuity-session",
-        tool_name: "mcp__agent_governance_suite__inspect_context",
-        tool_input: inspect,
-      });
       const candidate = toolData<{
         summary: { epoch: number; revision: number; snapshotDigest: string };
         restoreToken: string;
-      }>(await client.callTool({ name: "inspect_context", arguments: updatedHookInput(inspectHook) }));
+      }>(await client.callTool({ name: "inspect_context", arguments: runGovernanceHook(environment, "inspect_context", inspect) }));
       expect(JSON.stringify(candidate)).not.toContain("Resume this private direct task.");
 
       const load = {
@@ -441,14 +460,7 @@ describe("bundled STDIO MCP server", () => {
         revision: candidate.data!.summary.revision,
         digest: candidate.data!.summary.snapshotDigest,
       };
-      const loadHook = runContinuityHook(environment, {
-        hook_event_name: "PreToolUse",
-        agent_id: "",
-        session_id: "stdio-continuity-session",
-        tool_name: "mcp__agent-governance-suite__load_context",
-        tool_input: load,
-      });
-      expect(toolData<{ core: { objective: string } }>(await client.callTool({ name: "load_context", arguments: updatedHookInput(loadHook) })).data?.core.objective)
+      expect(toolData<{ core: { objective: string } }>(await client.callTool({ name: "load_context", arguments: runGovernanceHook(environment, "load_context", load) })).data?.core.objective)
         .toBe("Resume this private direct task.");
 
       const resume = runContinuityHook(environment, {

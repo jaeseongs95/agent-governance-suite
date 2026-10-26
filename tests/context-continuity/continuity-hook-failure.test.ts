@@ -2,8 +2,23 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { runContinuityHook as runNativeContinuityHook } from "../../mcp-server/src/continuity-hook.js";
+import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 
-import { runContinuityHook } from "../../mcp-server/src/continuity-hook.js";
+// Owned fake core observation only; this adapter is not native role evidence.
+const syntheticHost = "synthetic-continuity-failure";
+registerHookHostAdapter(syntheticHost, {
+  processPid: () => undefined,
+  deliveryProfile: () => ({ transport: "claude-inbox", capabilities: { supportedInjection: [], idleWake: "none" }, blocksEmptyWakePrompt: false }),
+  ownsTool: name => isGovernanceHookTool("codex", name),
+  adaptInput: (payload, host) => {
+    const mapped = adaptHostInput(payload, "codex");
+    return { ...mapped, observation: { ...mapped.observation, host,
+      actor: { role: "root", basis: "observed", reasonCode: "SYNTHETIC_CONTINUITY_ROOT" } } };
+  },
+});
+
+const runContinuityHook = (raw: string, env: NodeJS.ProcessEnv) => runNativeContinuityHook(raw, env, syntheticHost);
 
 const directories: string[] = [];
 afterEach(async () => {
@@ -26,7 +41,6 @@ async function environment() {
 function toolInput() {
   return JSON.stringify({
     hook_event_name: "PreToolUse",
-    agent_id: "",
     session_id: "private-session-marker",
     tool_name: "mcp__agent-governance-suite__inspect_context",
     tool_input: { schemaVersion: "1.0.0", marker: "private-input-marker" },
@@ -53,6 +67,13 @@ describe("continuity hook failure reporting (AGS-D-0055)", () => {
     for (const marker of ["private-session-marker", "private-input-marker", directory]) expect(line).not.toContain(marker);
   });
 
+  it("does not issue a native Codex binding while capture is required", async () => {
+    const { env } = await environment();
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(runNativeContinuityHook(toolInput(), env, "codex")).toBe("");
+    expect(failureLines(spy)).toHaveLength(0);
+  });
+
   it("reports invalid hook JSON as an input failure", async () => {
     const { env } = await environment();
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -62,7 +83,7 @@ describe("continuity hook failure reporting (AGS-D-0055)", () => {
     expect(JSON.parse(lines[0]!.slice(lines[0]!.indexOf("{")))).toMatchObject({ phase: "input", reason: "INVALID_JSON" });
   });
 
-  it("issues a binding without diagnostics when the store is healthy", async () => {
+  it("issues a binding without diagnostics for an explicit synthetic root when the store is healthy", async () => {
     const { env } = await environment();
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const output = runContinuityHook(toolInput(), env);

@@ -17,6 +17,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PLUGIN_INFO } from "../../mcp-server/src/plugin-info.js";
+import { createSyntheticRootProofFixture } from "../mcp/synthetic-root-proof-client.js";
 
 const repo = path.resolve(import.meta.dirname, "../..");
 const roots: string[] = [];
@@ -163,11 +164,12 @@ test("actual MCP tools validate a selected CS stage with synthetic server observ
   updates.putPluginUpdateState({targetId:"agent-governance-suite",currentVersion:PLUGIN_INFO.version,latestVersion:PLUGIN_INFO.version,
     latestTag:`v${PLUGIN_INFO.version}`,latestCommit:"c".repeat(40),etag:"cs-synthetic",comparison:"up-to-date",lastAttemptAt:"2026-10-06T00:00:00.000Z",
     lastSuccessfulCheckAt:"2026-10-06T00:00:00.000Z",nextCheckAt:"2099-01-01T00:00:00.000Z",lastNotifiedVersion:null,lastNotifiedAt:null,lastErrorCode:null});
-  const server=createMcpServer(service,new PluginUpdateService(updates),undefined,undefined,undefined,f.validator);
+  const rootProof=createSyntheticRootProofFixture();
+  const server=createMcpServer(service,new PluginUpdateService(updates),undefined,undefined,undefined,f.validator,"default",null,null,undefined,null,null,rootProof.proofs);
   const client=new Client({name:"cs-synthetic-fixture",version:"1.0.0"});
   const [a,b]=InMemoryTransport.createLinkedPair();await server.connect(b);await client.connect(a);
   const call=async (name:string,args:Record<string,unknown>) => {
-    const response=await client.callTool({name,arguments:args});const text=response.content as Array<{type:string;text?:string}>;
+    const response=await client.callTool({name,arguments:rootProof.argumentsFor(name,args)});const text=response.content as Array<{type:string;text?:string}>;
     return JSON.parse(text.find((c)=>c.type==="text")!.text!);
   };
   try {

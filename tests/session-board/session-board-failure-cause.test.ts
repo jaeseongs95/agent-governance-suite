@@ -19,6 +19,7 @@ import { SessionMessageService } from "../../mcp-server/src/session-message-serv
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "../mcp/version-fixtures.js";
+import { createSyntheticRootProofFixture } from "../mcp/synthetic-root-proof-client.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const directories: string[] = [];
@@ -104,12 +105,13 @@ describe("session board MCP failure cause", () => {
       lastSuccessfulCheckAt: "2026-09-19T00:00:00.000Z", nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null,
     });
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-    const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined, undefined, validator, "default", null, databasePath, new SessionMessageService());
+    const root = createSyntheticRootProofFixture();
+    const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined, undefined, validator, "default", null, databasePath, new SessionMessageService(), undefined, undefined, root.proofs);
     const client = new Client({ name: "session-board-cause", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
     await client.connect(clientTransport);
-    const response = await client.callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } });
+    const response = await client.callTool({ name: "list_session_status", arguments: root.argumentsFor("list_session_status", { schemaVersion: "1.0.0" }) });
     const text = (response as { content: Array<{ text: string }> }).content[0]!.text;
     const result = JSON.parse(text) as { ok: boolean; error: { code: string; details: Record<string, unknown> | null } | null };
     expect(result.ok).toBe(false);

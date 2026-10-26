@@ -4,21 +4,36 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtemp, rm } from "node:fs/promises";
 import { afterEach, describe, expect, it, vi } from "vitest";
-
 import type {
   CheckpointContextRequestV1,
   ConvergenceRootV1,
   TaskEnvelopeV1,
 } from "../../contracts/types.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
-import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
+import { handleContinuityHook as handleNativeContinuityHook } from "../../mcp-server/src/continuity-hook.js";
+import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { ContinuityService, UnavailableContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
-
 import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared-stores.js";
+
+// Owned fake core observation only; this adapter is not native role evidence.
+const syntheticHost = "synthetic-continuity-lifecycle";
+registerHookHostAdapter(syntheticHost, {
+  processPid: () => undefined,
+  deliveryProfile: () => ({ transport: "claude-inbox", capabilities: { supportedInjection: [], idleWake: "none" }, blocksEmptyWakePrompt: false }),
+  ownsTool: name => isGovernanceHookTool("codex", name),
+  adaptInput: (payload, host) => {
+    const mapped = adaptHostInput(payload, "codex");
+    return { ...mapped, observation: { ...mapped.observation, host,
+      actor: { role: "root", basis: "observed", reasonCode: "SYNTHETIC_CONTINUITY_ROOT" } } };
+  },
+});
+
+const handleContinuityHook = (payload: Record<string, unknown>, service: ContinuityService) => handleNativeContinuityHook(payload, service, syntheticHost);
+
 
 const sharedOwners = new Set<ReturnType<typeof createInactiveSharedStores>["owner"]>();
 const temporaryDirectories: string[] = [];
@@ -178,6 +193,14 @@ describe("direct task continuity", () => {
     const tampered = { ...loadInput, candidateToken: tamperedToken };
     expect(service.loadContext(bound(service, "raw-session", "load_context", tampered)).error?.code).toBe("BINDING_INVALID");
     expect(service.loadContext(bound(service, "other-session", "load_context", loadInput)).error?.code).toBe("BINDING_INVALID");
+  });
+
+  it.each(["SessionStart", "PreCompact", "PostCompact", "PreToolUse"])("native Codex %s cannot mutate lifecycle state or receive context without capture", (event) => {
+    const service = createService();
+    const output = handleNativeContinuityHook({ hook_event_name: event, session_id: "native-unobserved", source: "resume",
+      agent_id: "", turn_id: "native-turn", tool_name: "mcp__agent-governance-suite__inspect_context", tool_input: {} }, service, "codex");
+    expect(output).toEqual({});
+    expect(service.store.getTask(service.correlateSession("native-unobserved"))).toBeNull();
   });
 
   it("keeps direct compact and resume output candidate-only", () => {
@@ -455,7 +478,6 @@ describe("workflow projection and fail-open lifecycle", () => {
     const service = createService(databasePath);
     const input = handleContinuityHook({
       hook_event_name: "PreToolUse",
-      agent_id: "",
       session_id: "raw-secret-session-id",
       turn_id: "raw-secret-turn-id",
       tool_name: "mcp__agent-governance-suite__inspect_context",

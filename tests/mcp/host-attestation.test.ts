@@ -56,6 +56,7 @@ import { createMcpServer } from "../../mcp-server/src/server.js";
 import { classificationInputSchema, selectionInputSchema, type SkillClassificationGateway } from "../../mcp-server/src/skill-classification/gateway.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
+import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
 import { CURRENT_VERSION } from "./version-fixtures.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
@@ -178,6 +179,7 @@ interface Harness {
   service: WorkflowService;
   client: Client;
   store: InMemoryWorkflowStore;
+  rootArguments(tool: string, args: Record<string, unknown>): Record<string, unknown>;
   call<T>(name: string, args: Record<string, unknown>): Promise<ApiResultV1<T>>;
 }
 
@@ -188,6 +190,7 @@ afterEach(async () => {
 });
 
 async function harness(withProvider: boolean, adapter: HostExecutionAdapter = claudeCodeExecutionAdapter, classification: SkillClassificationGateway | null = null): Promise<Harness> {
+  const rootProof = createSyntheticRootProofFixture();
   const validator = new ContractValidator();
   const store = new InMemoryWorkflowStore();
   const provider = withProvider ? new HostAttestationProvider(store, adapter) : null;
@@ -222,6 +225,7 @@ async function harness(withProvider: boolean, adapter: HostExecutionAdapter = cl
     undefined,
     null,
     classification,
+    rootProof.proofs,
   );
   const client = new Client({ name: "host-attestation", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -236,7 +240,9 @@ async function harness(withProvider: boolean, adapter: HostExecutionAdapter = cl
     service,
     client,
     store,
-    call: async <T>(name: string, args: Record<string, unknown>) => result<T>(await client.callTool({ name, arguments: args })),
+    rootArguments: rootProof.argumentsFor,
+    // Sign the exact post-attestation arguments. A fresh root proof lets model replay checks reach their own verifier.
+    call: async <T>(name: string, args: Record<string, unknown>) => result<T>(await client.callTool({ name, arguments: rootProof.argumentsFor(name, args) })),
   };
 }
 
@@ -342,6 +348,17 @@ describe("Claude Code host attestation through the MCP boundary", () => {
     const withToken = await call<WorkflowPlanV1>("plan_workflow", { ...planArguments("default-token"), [HOST_ATTESTATION_FIELD]: token });
     expect(withToken.ok).toBe(false);
     expect(withToken.data).toBeNull();
+  });
+
+  it("rejects missing root proof and caller session bindings before host attestation", async () => {
+    const { client, service } = await harness(true);
+    const plan = vi.spyOn(service, "planWorkflow");
+    const args = planArguments("root-proof-negative");
+    const missing = result<WorkflowPlanV1>(await client.callTool({ name: "plan_workflow", arguments: args }));
+    expect(missing.error).toMatchObject({ code: "BINDING_REQUIRED", details: { reasonCode: "ROOT_HOOK_PROOF_REQUIRED" } });
+    const forged = result<WorkflowPlanV1>(await client.callTool({ name: "plan_workflow", arguments: { ...args, _sessionBinding: { host: "claude-code", sessionId: SESSION } } }));
+    expect(forged.error).toMatchObject({ code: "BINDING_INVALID", details: { reasonCode: "CALLER_SESSION_BINDING_REJECTED" } });
+    expect(plan).not.toHaveBeenCalled();
   });
 
   it("fails closed without a token", async () => {
@@ -854,14 +871,14 @@ describe("AGS-D-0179 correlated issuing observations", () => {
   });
 
   it("does not mint from an older strong model after a current malformed line, and the MCP stays BINDING_REQUIRED", async () => {
-    const { store, client } = await harness(true);
+    const { store, client, rootArguments } = await harness(true);
     const f = fixture179();
     const key = vi.spyOn(store, "getOrCreateSecret");
     try {
       const output = handleHostAttestationHook(f.input, store, { ...f.options, readText: () => f.older + "\n" + f.malformed });
       expect(updated179(output)).toEqual(f.toolInput);
       expect(f.cache).not.toHaveBeenCalled(); expect(key).not.toHaveBeenCalled();
-      const reply = await client.callTool({ name: "plan_workflow", arguments: updated179(output) });
+      const reply = await client.callTool({ name: "plan_workflow", arguments: rootArguments("plan_workflow", updated179(output)) });
       expect(reply.isError).toBe(true);
       expect(result<WorkflowPlanV1>(reply)).toMatchObject({ ok: false, error: { code: "BINDING_REQUIRED" } });
     } finally { key.mockRestore(); }

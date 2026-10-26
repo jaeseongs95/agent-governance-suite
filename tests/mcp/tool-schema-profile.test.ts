@@ -17,6 +17,7 @@ import { SESSION_MESSAGE_SERVER_INSTRUCTIONS, SKILL_INTAKE_SERVER_INSTRUCTIONS, 
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "./version-fixtures.js";
+import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
 
 const rootDirectory = fileURLToPath(new URL("../../", import.meta.url));
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
@@ -24,6 +25,7 @@ const bundledServer = fileURLToPath(new URL("../../mcp-server/dist/server.mjs", 
 const combinators = ["oneOf", "anyOf", "allOf", "not", "if", "then", "else"];
 
 type ListedTool = { name: string; inputSchema: Record<string, unknown> };
+const proofFixtures = new WeakMap<Client, ReturnType<typeof createSyntheticRootProofFixture>>();
 
 function updateService(): PluginUpdateService {
   const store = new InMemoryPluginUpdateStore();
@@ -48,10 +50,10 @@ function updateService(): PluginUpdateService {
 async function connect(profile?: ToolSchemaProfile): Promise<Client> {
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-  const server = profile === undefined
-    ? createMcpServer(service, updateService(), undefined, undefined, undefined, validator)
-    : createMcpServer(service, updateService(), undefined, undefined, undefined, validator, profile);
+  const root = createSyntheticRootProofFixture();
+  const server = createMcpServer(service, updateService(), undefined, undefined, undefined, validator, profile, null, null, undefined, null, null, root.proofs);
   const client = new Client({ name: "tool-schema-profile", version: "1.0.0" });
+  proofFixtures.set(client, root);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
   await client.connect(clientTransport);
@@ -65,14 +67,27 @@ function errorCode(response: unknown): string | null {
 }
 
 describe("MCP tool schema profiles", () => {
-  it("keeps the historical schemas when no profile is selected", async () => {
+  it("keeps default domain schemas with the common required root-proof contract when no profile is selected", async () => {
     const implicit = await connect();
     const explicit = await connect("default");
     try {
       const implicitTools = (await implicit.listTools()).tools;
       expect((await explicit.listTools()).tools).toEqual(implicitTools);
       const planning = implicitTools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
-      expect(planning).toEqual(planWorkflowToolInputSchema("default"));
+      const domain = planWorkflowToolInputSchema("default") as Record<string, unknown> & { properties?: Record<string, unknown>; required?: string[] };
+      expect(planning).toEqual({
+        ...domain,
+        properties: { ...domain.properties, _sessionProof: {
+          type: "string", minLength: 16, maxLength: 8192,
+          description: "Issued by the current root hook; caller identity claims are not accepted.",
+        } },
+        required: [...(domain.required ?? []).filter(name => name !== "_sessionBinding"), "_sessionProof"],
+      });
+      for (const tool of implicitTools) {
+        expect(tool.inputSchema.required, tool.name).toContain("_sessionProof");
+        expect(tool.inputSchema.properties, tool.name).not.toHaveProperty("_sessionBinding");
+        expect(tool.inputSchema.required, tool.name).not.toContain("_sessionBinding");
+      }
       expect(planning).toMatchObject({ type: "object", oneOf: expect.any(Array) });
     } finally {
       await implicit.close();
@@ -89,6 +104,8 @@ describe("MCP tool schema profiles", () => {
       expect(tools.map((tool) => tool.name)).toEqual(defaults.map((tool) => tool.name));
       for (const tool of tools) {
         expect(tool.inputSchema.type, tool.name).toBe("object");
+        expect(tool.inputSchema.required, tool.name).toContain("_sessionProof");
+        expect(tool.inputSchema.properties, tool.name).not.toHaveProperty("_sessionBinding");
         for (const keyword of combinators) expect(tool.inputSchema, `${tool.name}.${keyword}`).not.toHaveProperty(keyword);
       }
       const planning = tools.find((tool) => tool.name === "plan_workflow")!.inputSchema;
@@ -151,9 +168,11 @@ describe("MCP tool schema profiles", () => {
       for (const [name, input] of cases) {
         const inline = inlineAjv.compile(inlined.find((tool) => tool.name === name)!.inputSchema);
         const reference = compileReferenced(referenced.find((tool) => tool.name === name)!.inputSchema);
-        expect(inline(input), `${name} ${JSON.stringify(input).slice(0, 80)}`).toBe(reference(input));
+        // Schema-only fixture, not a cryptographic proof. Avoid masking domain checks with a missing field.
+        const provedInput = { ...input, _sessionProof: "ags-root-v3.schema-fixture.signature" };
+        expect(inline(provedInput), `${name} ${JSON.stringify(input).slice(0, 80)}`).toBe(reference(provedInput));
       }
-      expect(inlineAjv.compile(inlined.find((tool) => tool.name === "open_convergence_root")!.inputSchema)(open)).toBe(true);
+      expect(inlineAjv.compile(inlined.find((tool) => tool.name === "open_convergence_root")!.inputSchema)({ ...open, _sessionProof: "ags-root-v3.schema-fixture.signature" })).toBe(true);
     } finally {
       await anthropic.close();
       await fallback.close();
@@ -172,10 +191,10 @@ describe("MCP tool schema profiles", () => {
     ];
     try {
       for (const input of inputs) {
-        const fromAnthropic = errorCode(await anthropic.callTool({ name: "plan_workflow", arguments: input }));
-        const fromDefault = errorCode(await fallback.callTool({ name: "plan_workflow", arguments: input }));
+        const fromAnthropic = errorCode(await anthropic.callTool({ name: "plan_workflow", arguments: proofFixtures.get(anthropic)!.argumentsFor("plan_workflow", input) }));
+        const fromDefault = errorCode(await fallback.callTool({ name: "plan_workflow", arguments: proofFixtures.get(fallback)!.argumentsFor("plan_workflow", input) }));
         expect(fromAnthropic, JSON.stringify(input)).toBe(fromDefault);
-        expect(fromAnthropic, JSON.stringify(input)).not.toBeNull();
+        expect(fromAnthropic, JSON.stringify(input)).toBe("INVALID_INPUT");
       }
     } finally {
       await anthropic.close();
@@ -188,6 +207,17 @@ describe("MCP tool schema profiles", () => {
     expect(resolveToolSchemaProfile({ AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE: "" })).toBe("default");
     expect(resolveToolSchemaProfile({ AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE: "Anthropic" })).toBe("default");
     expect(resolveToolSchemaProfile({ AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE: "anthropic" })).toBe("anthropic");
+  });
+
+  it.each(["default", "anthropic"] as const)("keeps raw missing/forged proof and caller-binding requests negative in %s", async profile => {
+    const client = await connect(profile);
+    try {
+      expect(errorCode(await client.callTool({ name: "plan_workflow", arguments: {} }))).toBe("BINDING_REQUIRED");
+      expect(errorCode(await client.callTool({ name: "plan_workflow", arguments: { _sessionProof: "synthetic-forged-root-proof" } }))).toBe("BINDING_INVALID");
+      expect(errorCode(await client.callTool({ name: "plan_workflow", arguments: {
+        _sessionBinding: { host: "forged-host", sessionId: "forged-session" },
+      } }))).toBe("BINDING_INVALID");
+    } finally { await client.close(); }
   });
 
   it("advertises the same host-neutral intake instructions to every schema profile", async () => {

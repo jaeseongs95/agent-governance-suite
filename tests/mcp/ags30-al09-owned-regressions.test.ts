@@ -23,6 +23,7 @@ import {
   evaluateKoreanProseReadiness, REQUIRED_KOREAN_PROSE_THRESHOLDS,
 } from "../../scripts/korean-prose-readiness.js";
 import { NEXT_TAG, NEXT_VERSION } from "./version-fixtures.js";
+import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
 
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 const tagObjectUrl = `${PLUGIN_INFO.tagsApi.split("/git/matching-refs/")[0]}/git/tags/${"b".repeat(40)}`;
@@ -35,17 +36,20 @@ function payload(reply: unknown): { ok: boolean; error: { code: string; message:
 }
 
 async function withServer(
-  run: (client: Client) => Promise<void>,
+  run: (client: Client, call: (name: string, args: Record<string, unknown>) => ReturnType<Client["callTool"]>) => Promise<void>,
   options: { updates?: PluginUpdateService; classification?: SkillClassificationGateway; hostAttestation?: HostAttestationProvider } = {},
 ): Promise<void> {
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(path.join(repositoryRoot, "skills", "registry.json"), validator), validator, new InMemoryWorkflowStore());
   const updates = options.updates ?? new PluginUpdateService(new InMemoryPluginUpdateStore(), { fetcher: async () => { throw new Error("Unexpected network request."); } });
-  const server = createMcpServer(service, updates, undefined, undefined, undefined, validator, "default", options.hostAttestation, null, undefined, null, options.classification);
+  const root = createSyntheticRootProofFixture();
+  const server = createMcpServer(service, updates, undefined, undefined, undefined, validator, "default", options.hostAttestation, null, undefined, null, options.classification, root.proofs);
   const client = new Client({ name: "al09-owned-regressions", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
-  try { await client.connect(clientTransport); await run(client); }
+  // Explicit signed calls reach domain validation; raw client calls remain available for ingress negatives.
+  const call = (name: string, args: Record<string, unknown>) => client.callTool({ name, arguments: root.argumentsFor(name, args) });
+  try { await client.connect(clientTransport); await run(client, call); }
   finally { await client.close(); await server.close(); }
 }
 
@@ -53,11 +57,11 @@ describe("AL09 server boundary regressions", () => {
   it("D0069 separates malformed caller input from unavailable configuration", async () => {
     let calls = 0;
     const unavailable = async () => { calls += 1; throw new Error("PRIVATE_CONFIGURATION_PATH"); };
-    await withServer(async client => {
-      expect(payload(await client.callTool({ name: "classify_skills", arguments: {} })).error?.code).toBe("INVALID_INPUT");
-      expect(payload(await client.callTool({ name: "get_skill_inventory", arguments: { unexpected: true } })).error?.code).toBe("INVALID_INPUT");
+    await withServer(async (_client, call) => {
+      expect(payload(await call("classify_skills", {})).error?.code).toBe("INVALID_INPUT");
+      expect(payload(await call("get_skill_inventory", { unexpected: true })).error?.code).toBe("INVALID_INPUT");
       expect(calls).toBe(0);
-      const reply = await client.callTool({ name: "get_skill_inventory", arguments: {} });
+      const reply = await call("get_skill_inventory", {});
       expect(payload(reply).error?.code).toBe("MCP_UNAVAILABLE");
       expect(JSON.stringify(reply)).not.toContain("PRIVATE_CONFIGURATION_PATH");
       expect(calls).toBe(1);
@@ -71,13 +75,13 @@ describe("AL09 server boundary regressions", () => {
       classify: async () => { calls += 1; return null; }, accept: async () => null,
     };
     const hostAttestation = new HostAttestationProvider(new InMemoryWorkflowStore(), { host: "fixture", modelClassForModel: () => "general" });
-    await withServer(async client => {
-      const reply = await client.callTool({ name: "classify_skills", arguments: {
+    await withServer(async (_client, call) => {
+      const reply = await call("classify_skills", {
         schemaVersion: "1.0.0", requestId: "fixture", operationId: "fixture", originalPrompt: "fixture",
         confirmedContext: { taskRevision: null, objective: null, actions: null, targets: null, constraints: null, prohibitedActions: null, background: null },
         contextSources: [], explicitSkillIds: [], ruleRequiredSkillIds: [], vendorContext: { vendorId: "fixture", reference: "fixture" },
         publicSynthetic: true, _hostAttestation: "malformed",
-      } });
+      });
       expect(payload(reply).error?.code).toBe("INVALID_INPUT");
       expect(payload(reply).error?.details).toMatchObject({ category: "host-observation", reasonCode: "BINDING_INVALID" });
       expect(calls).toBe(0);
@@ -85,8 +89,8 @@ describe("AL09 server boundary regressions", () => {
   });
 
   it("D0069 keeps existing request-state rejection codes and supplies a safe reason", async () => {
-    await withServer(async client => {
-      const reply = await client.callTool({ name: "get_skill_inventory", arguments: {} });
+    await withServer(async (_client, call) => {
+      const reply = await call("get_skill_inventory", {});
       expect(payload(reply).error?.code).toBe("INVALID_INPUT");
       expect(payload(reply).error?.details).toMatchObject({ category: "request-state", reasonCode: "OPERATION_DIGEST_CONFLICT" });
     }, { classification: { inventory: async () => { throw new Error("OPERATION_DIGEST_CONFLICT"); }, classify: async () => null, accept: async () => null } });
@@ -95,27 +99,27 @@ describe("AL09 server boundary regressions", () => {
   it("D0077 keeps closed-world calls offline and still serves cached advisory notices", async () => {
     let fetches = 0;
     const updates = new PluginUpdateService(new InMemoryPluginUpdateStore(), { fetcher: async () => { fetches += 1; return jsonResponse([stableReference]); } });
-    await withServer(async client => {
-      await client.callTool({ name: "get_workflow_status", arguments: { runId: "missing" } });
+    await withServer(async (_client, call) => {
+      await call("get_workflow_status", { runId: "missing" });
       expect(fetches).toBe(0);
       await updates.check(true);
-      const reply = await client.callTool({ name: "get_workflow_status", arguments: { runId: "missing" } });
+      const reply = await call("get_workflow_status", { runId: "missing" });
       expect(fetches).toBe(1);
       expect(JSON.stringify(reply)).toContain("plugin-update-notice");
-      await client.callTool({ name: "check_for_updates", arguments: { force: true } });
+      await call("check_for_updates", { force: true });
       expect(fetches).toBe(2);
     }, { updates });
   });
 
   it("D0078 preserves structured contract validation causes", async () => {
-    await withServer(async client => {
-      const result = payload(await client.callTool({ name: "lookup_korean_prose_terms", arguments: {} }));
+    await withServer(async (_client, call) => {
+      const result = payload(await call("lookup_korean_prose_terms", {}));
       expect(result.error?.code).toBe("INVALID_INPUT");
       expect(result.error?.details?.validationErrors).toEqual(expect.any(String));
       expect(result.error?.details?.validationErrors).toContain("sourceDigest");
-      const rejected = await client.callTool({ name: "prepare_session_message", arguments: {
+      const rejected = await call("prepare_session_message", {
         schemaVersion: "1.0.0", targetHost: "fixture", targetSessionId: "fixture", body: "PRIVATE_MESSAGE_BODY", ttlSeconds: 10,
-      } });
+      });
       expect(payload(rejected).error?.details?.validationErrors).toContain("/ttlSeconds must be >= 30");
       expect(JSON.stringify(rejected)).not.toContain("PRIVATE_MESSAGE_BODY");
     });
@@ -133,16 +137,17 @@ describe("AL09 server boundary regressions", () => {
     await withServer(async client => {
       const result = payload(await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "fixture" } }));
       expect(result.error?.code).toBe("BINDING_REQUIRED");
-      expect(result.error?.message).toContain("not observed");
+      expect(result.error?.details).toMatchObject({ reasonCode: "ROOT_HOOK_PROOF_REQUIRED" });
+      expect(result.error?.message).toContain("current root hook proof");
       expect(result.error?.message).not.toContain("did not run");
     });
   });
 
   it("D0080 advertises the actual unguarded-start rejection", async () => {
-    await withServer(async client => {
+    await withServer(async (client, call) => {
       const tools = (await client.listTools()).tools;
       expect(tools.find(tool => tool.name === "start_workflow")?.description).toContain("Reject unguarded");
-      expect(payload(await client.callTool({ name: "start_workflow", arguments: {} })).ok).toBe(false);
+      expect(payload(await call("start_workflow", {})).error?.code).toBe("INVALID_INPUT");
     });
   });
 });

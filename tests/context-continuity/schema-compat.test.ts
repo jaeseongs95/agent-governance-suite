@@ -7,14 +7,30 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { spawnSync } from "node:child_process";
 import { afterEach, describe, expect, it, vi } from "vitest";
-
 import type { ApiResultV1, CheckpointContextRequestV1 } from "../../contracts/types.js";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
-import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
+import { handleContinuityHook as handleNativeContinuityHook } from "../../mcp-server/src/continuity-hook.js";
+import { SessionActorProofs, SESSION_PROOF_FIELD } from "../../mcp-server/src/session-actor-proof.js";
+import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { CURRENT_VERSION } from "../mcp/version-fixtures.js";
+
+// Owned fake core observation only; this adapter is not native role evidence.
+const syntheticHost = "synthetic-schema-compat";
+registerHookHostAdapter(syntheticHost, {
+  processPid: () => undefined,
+  deliveryProfile: () => ({ transport: "claude-inbox", capabilities: { supportedInjection: [], idleWake: "none" }, blocksEmptyWakePrompt: false }),
+  ownsTool: name => isGovernanceHookTool("codex", name),
+  adaptInput: (payload, host) => {
+    const mapped = adaptHostInput(payload, "codex");
+    return { ...mapped, observation: { ...mapped.observation, host,
+      actor: { role: "root", basis: "observed", reasonCode: "SYNTHETIC_CONTINUITY_ROOT" } } };
+  },
+});
+
+const handleContinuityHook = (payload: Record<string, unknown>, service: ContinuityService) => handleNativeContinuityHook(payload, service, syntheticHost);
 
 // Schema 3 addition from 152de1bf5a6a765c2cc0459f263c6daeee1ce0ea; no delta runtime is backported.
 const DELTA_SCHEMA = `CREATE TABLE continuity_delta_state (
@@ -142,7 +158,7 @@ describe("2.7.x continuity schema compatibility", () => {
     const purge = bound(service, "purge_direct_context", { schemaVersion: "1.0.0", requestId: "purge", expectedEpoch: 1, expectedRevision: 1 });
     attachReceiver(databasePath, snapshot.taskCorrelation);
     const before = state(databasePath);
-    const hook = handleContinuityHook({ hook_event_name: "PreToolUse", agent_id: "", session_id: "compat-session",
+    const hook = handleContinuityHook({ hook_event_name: "PreToolUse", session_id: "compat-session",
       tool_name: "mcp__agent-governance-suite__inspect_context", tool_input: { schemaVersion: "1.0.0" } }, service);
     const hookInput = (hook.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput;
     expect(hookInput._continuityBinding).toEqual(expect.any(String));
@@ -299,12 +315,17 @@ describe("source STDIO continuity startup diagnostics", () => {
     environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = path.join(directory, "board.sqlite3");
     environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = path.join(directory, "messaging");
     environment.AGENT_GOVERNANCE_TRUST_DB_PATH = path.join(directory, "trust.sqlite3");
+    let callSequence = 0;
     const hookArguments = (tool: string, value: Record<string, unknown>) => {
-      const hook = spawnSync(process.execPath, ["--import", "tsx", fileURLToPath(new URL("../../mcp-server/src/continuity-hook.ts", import.meta.url))],
+      // Built entry, synthetic per-call fixture: no native-capture success claim.
+      const hook = spawnSync(process.execPath, [fileURLToPath(new URL("../../mcp-server/dist/governance-hook.mjs", import.meta.url)), "--host=claude-code"],
         { cwd: fileURLToPath(new URL("../../", import.meta.url)), env: environment, windowsHide: true, encoding: "utf8", timeout: 10_000,
-          input: JSON.stringify({ hook_event_name: "PreToolUse", agent_id: "", session_id: "compat-session", tool_name: `mcp__agent_governance_suite__${tool}`, tool_input: value }) });
+          input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "compat-session", tool_use_id: `compat-hook-${++callSequence}`, tool_name: `mcp__agent_governance_suite__${tool}`, tool_input: value }) });
       expect(hook.status, hook.stderr).toBe(0);
-      return JSON.parse(hook.stdout).hookSpecificOutput.updatedInput as Record<string, unknown>;
+      const output = JSON.parse(hook.stdout).hookSpecificOutput;
+      expect(output.permissionDecision).toBeUndefined();
+      expect(output.updatedInput._sessionProof).toEqual(expect.any(String));
+      return output.updatedInput as Record<string, unknown>;
     };
     const workflow = new SqliteWorkflowStore(environment.AGENT_GOVERNANCE_DB_PATH);
     workflow.putPluginUpdateState({ targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION,
@@ -312,6 +333,17 @@ describe("source STDIO continuity startup diagnostics", () => {
       etag: "isolated", comparison: "up-to-date", lastAttemptAt: NOW, lastSuccessfulCheckAt: NOW,
       nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null });
     workflow.close();
+    // Actual issuer and source server share this isolated workflow DB. Signed core
+    // inputs reach storage diagnostics even when the continuity hook cannot open it.
+    const proofArguments = (tool: string, value: Record<string, unknown>) => {
+      const store = new SqliteWorkflowStore(environment.AGENT_GOVERNANCE_DB_PATH!);
+      try {
+        const observation = adaptHostInput({ hook_event_name: "PreToolUse", session_id: "compat-session",
+          tool_use_id: `compat-core-${++callSequence}`, tool_name: `mcp__agent_governance_suite__${tool}`, tool_input: value }, syntheticHost).observation;
+        const proof = new SessionActorProofs(store).issue(observation, tool, value);
+        return { ...value, [SESSION_PROOF_FIELD]: proof };
+      } finally { store.close(); }
+    };
     const transport = new StdioClientTransport({ command: process.execPath,
       args: ["--import", "tsx", fileURLToPath(new URL("../../mcp-server/src/index.ts", import.meta.url))],
       env: environment, cwd: fileURLToPath(new URL("../../", import.meta.url)), stderr: "pipe" });
@@ -321,11 +353,11 @@ describe("source STDIO continuity startup diagnostics", () => {
     try {
       await client.connect(transport);
       expect((await client.listTools()).tools.some((tool) => tool.name === "inspect_context")).toBe(true);
-      const info = await client.callTool({ name: "get_trust_capabilities", arguments: {} });
+      const info = await client.callTool({ name: "get_trust_capabilities", arguments: proofArguments("get_trust_capabilities", {}) });
       const infoText = (info.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")!.text;
       expect(JSON.parse(infoText).ok).toBe(true);
       const result = await client.callTool({ name: "inspect_context", arguments: issuer
-        ? hookArguments("inspect_context", { schemaVersion: "1.0.0" }) : { schemaVersion: "1.0.0" } });
+        ? hookArguments("inspect_context", { schemaVersion: "1.0.0" }) : proofArguments("inspect_context", { schemaVersion: "1.0.0" }) });
       const text = (result.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")!.text;
       if (issuer && kind === "healthy") {
         const candidate = JSON.parse(text).data;

@@ -24,6 +24,7 @@ import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
+import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
 import { CURRENT_VERSION } from "./version-fixtures.js";
 
 // Only SQLite ports are controlled. No helper-call mocks or arbitrary primitive,
@@ -153,6 +154,7 @@ it("a throwing build never writes diagnostics before its terminal caller handles
 });
 
 async function connect() {
+  const rootProof = createSyntheticRootProofFixture();
   const validator = new ContractValidator();
   const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
@@ -163,17 +165,17 @@ async function connect() {
     lastSuccessfulCheckAt: "2026-10-01T00:00:00.000Z", nextCheckAt: "2099-01-01T00:00:00.000Z",
     lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null });
   const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined,
-    new SqliteKoreanProseGlossary(databasePath), validator);
+    new SqliteKoreanProseGlossary(databasePath), validator, "default", null, null, undefined, null, null, rootProof.proofs);
   const client = new Client({ name: "glossary-failure-fixture", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
   await client.connect(clientTransport);
-  return { client, server };
+  return { client, server, rootProof };
 }
 async function lookupMcp() {
-  const { client, server } = await connect();
+  const { client, server, rootProof } = await connect();
   try {
-    const response = await client.callTool({ name: "lookup_korean_prose_terms", arguments: request });
+    const response = await client.callTool({ name: "lookup_korean_prose_terms", arguments: rootProof.argumentsFor("lookup_korean_prose_terms", request) });
     const content = response.content as Array<{ type: string; text?: string }>;
     return JSON.parse(content.find(item => item.type === "text")!.text!);
   } finally { await client.close(); await server.close(); }

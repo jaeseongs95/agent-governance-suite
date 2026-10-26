@@ -1,3 +1,4 @@
+import {execFileSync} from "node:child_process";
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {mkdtemp, rm, writeFile} from "node:fs/promises";
@@ -46,7 +47,16 @@ await startMcpServer(new Map([[${JSON.stringify(mode === "registered" ? "al09-in
   transport.stderr?.on("data", chunk => { diagnostics += String(chunk); if (diagnostics.includes("AL09_INSTALLED_WIRE_BOUND")) received(); });
   try {
     await client.connect(transport);
-    const reply = await client.callTool({name: "get_skill_inventory", arguments: {}});
+    // Built CLI on owned synthetic Claude input; no native identity collection.
+    const issued = execFileSync(process.execPath, [path.join(root, "mcp-server", "dist", "governance-hook.mjs"), "--host=claude-code"], {
+      cwd: root, env: environment, encoding: "utf8", timeout: 10_000, windowsHide: true,
+      input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "synthetic-startup-root", tool_use_id: "inventory-call",
+        tool_name: "mcp__agent_governance_suite__get_skill_inventory", tool_input: {}, cwd: directory }),
+    });
+    const rootOutput = JSON.parse(issued) as { hookSpecificOutput: { permissionDecision?: string; updatedInput: Record<string, unknown> } };
+    expect(rootOutput.hookSpecificOutput).not.toHaveProperty("permissionDecision");
+    expect(rootOutput.hookSpecificOutput.updatedInput._sessionProof).toEqual(expect.any(String));
+    const reply = await client.callTool({name: "get_skill_inventory", arguments: rootOutput.hookSpecificOutput.updatedInput});
     const text = (reply.content as Array<{type: string; text?: string}>).find(item => item.type === "text")!.text!;
     const result = JSON.parse(text) as {ok: boolean; data: {issues: Array<{code: string}>}};
     expect(result.ok).toBe(true);

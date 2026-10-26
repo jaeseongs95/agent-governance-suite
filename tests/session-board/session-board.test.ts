@@ -31,6 +31,21 @@ import { SessionMessageStore } from "../../mcp-server/src/session-message-store.
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "../mcp/version-fixtures.js";
+import { createSyntheticRootProofFixture } from "../mcp/synthetic-root-proof-client.js";
+import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+
+// Second host core fixture only: native Codex remains capture-required.
+const syntheticHost = "synthetic-board-root";
+registerHookHostAdapter(syntheticHost, {
+  processPid: () => undefined,
+  deliveryProfile: () => ({ transport: "claude-inbox", capabilities: { supportedInjection: [], idleWake: "none" }, blocksEmptyWakePrompt: false }),
+  ownsTool: name => isGovernanceHookTool("codex", name),
+  adaptInput: (payload, host) => {
+    const mapped = adaptHostInput(payload, "codex");
+    return { ...mapped, observation: { ...mapped.observation, host,
+      actor: { role: "root", basis: "observed", reasonCode: "SYNTHETIC_BOARD_ROOT" } } };
+  },
+});
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const directories: string[] = [];
@@ -215,8 +230,9 @@ describe("session board hook", () => {
       child.stdin.end(hookInput);
     })));
     expect(outputs.every((output) => output.status === 0)).toBe(true);
-    // Run directly, the bundle is the Codex host: a fresh row whose session start is the request marker.
+    // Native Codex cannot write a board row without capture; ordinary tools still fail open.
     expect(outputs.filter((output) => output.stdout.includes('"deny"'))).toHaveLength(0);
+    expect(listSessions(open(databasePath), at(0))).toEqual([]);
   });
 
   it("points every Codex hook command at a bundle that exists", () => {
@@ -255,6 +271,12 @@ describe("session board hook", () => {
 });
 
 describe("session board MCP tools", () => {
+  const roots = new WeakMap<Client, ReturnType<typeof createSyntheticRootProofFixture>>();
+  const proofArgs = (client: Client, tool: string, args: Record<string, unknown>, identity = { host: "synthetic-board-reader", sessionId: "reader" }) => {
+    const root = roots.get(client);
+    if (!root) throw new Error("Missing owned proof fixture.");
+    return root.argumentsFor(tool, args, identity);
+  };
   function sessionMessages(
     presence: ApiResultV1<SessionPresenceList> = { schemaVersion: "1.0.0", ok: false, data: null, error: { code: "MCP_UNAVAILABLE", message: "unavailable", details: null } },
   ) {
@@ -272,16 +294,18 @@ describe("session board MCP tools", () => {
       lastSuccessfulCheckAt: "2026-09-19T00:00:00.000Z", nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null,
     });
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-    const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined, undefined, validator, "default", null, databasePath, messages);
+    const root = createSyntheticRootProofFixture();
+    const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined, undefined, validator, "default", null, databasePath, messages, undefined, undefined, root.proofs);
     const client = new Client({ name: "session-board", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
     await client.connect(clientTransport);
+    roots.set(client, root);
     return client;
   }
   const payload = (response: unknown) => JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: unknown; error: { code: string } | null };
 
-  it("shares one board between the Claude launcher and the Codex hook and lists both hosts", async () => {
+  it("shares one board between the Claude launcher and a synthetic second host while native Codex stays denied", async () => {
     const state = mkdtempSync(path.join(tmpdir(), "session-board-state-"));
     directories.push(state);
     const env: NodeJS.ProcessEnv = { ...process.env, LOCALAPPDATA: state, XDG_STATE_HOME: state, HOME: state, AGENT_GOVERNANCE_SHARED_STATE_DIR: state, CLAUDE_PLUGIN_DATA: path.join(state, "plugin-data") };
@@ -294,16 +318,21 @@ describe("session board MCP tools", () => {
     const codex = run("mcp-server/dist/session-board-hook.mjs", update("codex-1", "mcp__agent-governance-suite__update_session_status", "Codex 작업", "codex"));
     expect([claude.status, codex.status]).toEqual([0, 0]);
     expect(claude.stdout).toContain('"host":"claude-code"');
-    expect(codex.stdout).toContain('"host":"codex"');
+    expect(JSON.parse(codex.stdout)).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
+    expect(JSON.parse(codex.stdout).hookSpecificOutput.updatedInput).toBeUndefined();
     const shared = resolveSessionBoardDatabasePath(env);
     expect(existsSync(shared)).toBe(true);
     expect(existsSync(env.CLAUDE_PLUGIN_DATA!)).toBe(false);
 
-    const listed = payload(await (await connect(shared)).callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0", _sessionBinding: { host: "codex", sessionId: "codex-1" } } }));
+    const syntheticBoard = open(shared);
+    const synthetic = handleSessionBoardHook(JSON.parse(update("synthetic-1", "mcp__agent-governance-suite__update_session_status", "두 번째 호스트 작업", "codex")), syntheticBoard, syntheticHost);
+    expect(synthetic).toMatchObject({ hookSpecificOutput: { updatedInput: { _sessionBinding: { host: syntheticHost, sessionId: "synthetic-1" } } } });
+    const client = await connect(shared);
+    const listed = payload(await client.callTool({ name: "list_session_status", arguments: proofArgs(client, "list_session_status", { schemaVersion: "1.0.0" }, { host: syntheticHost, sessionId: "synthetic-1" }) }));
     const sessions = (listed.data as { sessions: Array<{ host: string; sessionId: string; summary: string; current: boolean }> }).sessions;
     expect(sessions.map((row) => [row.host, row.sessionId, row.summary, row.current]).sort()).toEqual([
       ["claude-code", "claude-1", "Claude 작업", false],
-      ["codex", "codex-1", "Codex 작업", true],
+      [syntheticHost, "synthetic-1", "두 번째 호스트 작업", true],
     ]);
   });
 
@@ -317,18 +346,21 @@ describe("session board MCP tools", () => {
     expect(tool?.description).toContain("Do not repeat it for an unchanged task.");
     expect(tool?.description).not.toContain("when a request starts");
 
-    const recorded = payload(await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "릴리스 준비", _sessionBinding: binding } }));
+    const recorded = payload(await client.callTool({ name: "update_session_status", arguments: proofArgs(client, "update_session_status", { schemaVersion: "1.0.0", summary: "릴리스 준비" }, binding) }));
     expect(recorded).toMatchObject({ ok: true, data: { sessionId: "s1", summary: "릴리스 준비", current: true } });
-    expect(payload(await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "다른 줄", _sessionBinding: binding } })).error?.code).toBe("MCP_UNAVAILABLE");
+    expect(payload(await client.callTool({ name: "update_session_status", arguments: proofArgs(client, "update_session_status", { schemaVersion: "1.0.0", summary: "다른 줄" }, binding) })).error?.code).toBe("MCP_UNAVAILABLE");
     expect(payload(await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "릴리스 준비" } })).error?.code).toBe("BINDING_REQUIRED");
-    expect(payload(await client.callTool({ name: "update_session_status", arguments: { summary: "릴리스 준비", _sessionBinding: binding } })).error?.code).toBe("INVALID_INPUT");
+    expect(payload(await client.callTool({ name: "update_session_status", arguments: proofArgs(client, "update_session_status", { summary: "릴리스 준비" }, binding) })).error?.code).toBe("INVALID_INPUT");
 
-    const listed = payload(await client.callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } }));
+    const listed = payload(await client.callTool({ name: "list_session_status", arguments: proofArgs(client, "list_session_status", { schemaVersion: "1.0.0" }) }));
     expect(listed).toMatchObject({ ok: true, data: { sessions: [{ sessionId: "s1", summary: "릴리스 준비", current: false, presence: { state: "unknown", instanceId: null, wakeVisibility: "none", canWakeSilently: false } }] } });
-    expect(payload(await (await connect(null)).callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } })).error?.code).toBe("MCP_UNAVAILABLE");
+    expect(payload(await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "릴리스 준비", _sessionBinding: binding } })).error?.code).toBe("BINDING_INVALID");
+    const unavailable = await connect(null);
+    expect(payload(await unavailable.callTool({ name: "list_session_status", arguments: proofArgs(unavailable, "list_session_status", { schemaVersion: "1.0.0" }) })).error?.code).toBe("MCP_UNAVAILABLE");
     const missing = boardPath();
-    expect(payload(await (await connect(missing)).callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } }))).toMatchObject({ ok: true, data: { sessions: [] } });
-    expect(payload(await (await connect(missing)).callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "x", _sessionBinding: binding } })).error?.code).toBe("MCP_UNAVAILABLE");
+    const absent = await connect(missing);
+    expect(payload(await absent.callTool({ name: "list_session_status", arguments: proofArgs(absent, "list_session_status", { schemaVersion: "1.0.0" }) }))).toMatchObject({ ok: true, data: { sessions: [] } });
+    expect(payload(await absent.callTool({ name: "update_session_status", arguments: proofArgs(absent, "update_session_status", { schemaVersion: "1.0.0", summary: "x" }, binding) })).error?.code).toBe("MCP_UNAVAILABLE");
     expect(existsSync(missing)).toBe(false);
   });
 
@@ -355,7 +387,7 @@ describe("session board MCP tools", () => {
       error: null,
     }));
 
-    const listed = payload(await client.callTool({ name: "list_session_status", arguments: { schemaVersion: "1.0.0" } }));
+    const listed = payload(await client.callTool({ name: "list_session_status", arguments: proofArgs(client, "list_session_status", { schemaVersion: "1.0.0" }) }));
     const sessions = (listed.data as { sessions: Array<{ sessionId: string; presence: unknown }> }).sessions;
     expect(sessions.find((row) => row.sessionId === "online")?.presence).toEqual({
       host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", wakeVisibility: "silent",

@@ -10,9 +10,23 @@ import type {ApiResultV1, TaskEnvelopeV1, WorkflowPlanV1} from "../../contracts/
 import {HOST_ATTESTATION_FIELD, hostActorId, issueHostAttestation} from "../../mcp-server/src/host-attestation.js";
 import {codexExecutionAdapter, createCatalogExecutionAdapters, type ModelRoutingPresetsV1} from "../../mcp-server/src/host-execution-adapters.js";
 import {SqliteWorkflowStore} from "../../mcp-server/src/sqlite-workflow-store.js";
+import {adaptHostInput, registerHookHostAdapter} from "../../mcp-server/src/host-input-adapter.js";
+import {SessionActorProofs, SESSION_PROOF_FIELD} from "../../mcp-server/src/session-actor-proof.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const host = "synthetic-fourth-host", model = "opaque-fourth-model", session = "al09-entrypoint-session";
+// Explicit fake actor adapter; separate from the execution-adapter composition under test.
+// This is not a native Codex root observation or evidence of live host qualification.
+const proofHost = "synthetic-entrypoint-root-actor";
+registerHookHostAdapter(proofHost, {
+  deliveryProfile: () => ({transport: "claude-inbox", capabilities: {supportedInjection: [], idleWake: "none"}, blocksEmptyWakePrompt: false}),
+  ownsTool: name => name === "synthetic__plan_workflow",
+  adaptInput: (input, selectedHost) => ({lifecycle: "none", outputEventName: "PreToolUse", observation: {
+    host: selectedHost, sessionId: session, callId: String(input.tool_use_id), kind: "tool-boundary", boundaryPhase: "before",
+    actor: {role: "root", basis: "observed", reasonCode: "SYNTHETIC_ENTRYPOINT_ROOT"},
+    toolName: "synthetic__plan_workflow", toolInput: input.tool_input as Record<string, unknown>,
+  }}),
+});
 // Reuses the fourth-host authority contract in host-attestation.test.ts; no live host is qualified.
 const presets: ModelRoutingPresetsV1 = {schema_version: 1, policy_revision: "synthetic-fourth-r1",
   model_class_order: ["lightweight", "general", "deep", "frontier"], effort_order: ["low", "high"],
@@ -38,6 +52,8 @@ it.each(["installed", "name-only", "mismatched", "builtin-default"] as const)(
     expect(path.dirname(directory)).toBe(path.resolve(tmpdir()));
     const databasePath = path.join(directory, "workflow.sqlite3");
     const store = new SqliteWorkflowStore(databasePath);
+    const rootProofs = new SessionActorProofs(store);
+    let rootCall = 0;
     const selectedHost = mode === "builtin-default" ? "codex" : host;
     const adapter = mode === "builtin-default" ? codexExecutionAdapter : createCatalogExecutionAdapters(presets).adapters.get(host)!;
     const selectedModel = mode === "builtin-default" ? "gpt-6-astra" : model;
@@ -64,14 +80,20 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
     const client = new Client({name: "al09-entrypoint-fixture", version: "1.0.0"});
     let diagnostics = "";
     transport.stderr?.on("data", chunk => {diagnostics += String(chunk);});
-    async function call(input: Record<string, unknown>): Promise<ApiResultV1<WorkflowPlanV1>> {
-      const reply = await client.callTool({name: "plan_workflow", arguments: input});
+    async function call(input: Record<string, unknown>, proveRoot = true): Promise<ApiResultV1<WorkflowPlanV1>> {
+      const observation = proveRoot ? adaptHostInput({tool_use_id: `synthetic-root-call-${++rootCall}`, tool_input: input}, proofHost).observation : null;
+      const args = observation ? {...input, [SESSION_PROOF_FIELD]: rootProofs.issue(observation, "plan_workflow", input)} : input;
+      const reply = await client.callTool({name: "plan_workflow", arguments: args});
       const text = (reply.content as Array<{type: string; text?: string}>).find(item => item.type === "text")!.text!;
       return JSON.parse(text) as ApiResultV1<WorkflowPlanV1>;
     }
     try {
       await client.connect(transport);
       const args = argumentsFor(`entrypoint-${mode}`);
+      // Root ingress negatives stay raw, before the separate host-execution proof tests.
+      expect(await call(args, false)).toMatchObject({ok: false, error: {code: "BINDING_REQUIRED"}});
+      expect(await call({...args, [SESSION_PROOF_FIELD]: "synthetic-forged-root-proof"}, false))
+        .toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
       const observation = {tool: "plan_workflow", input: args, model: selectedModel, reasoningEffort: "high",
         actorId: hostActorId(selectedHost, session), sessionId: session, turnId: "fixture-turn", toolUseId: "fixture-call"};
       const token = issueHostAttestation(store, adapter, observation);
