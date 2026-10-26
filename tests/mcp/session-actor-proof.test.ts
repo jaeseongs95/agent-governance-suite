@@ -125,7 +125,10 @@ describe("session actor proof call identity", () => {
   it.each([undefined, ""])("rejects missing/empty callId before reading the signing key", callId => {
     const store = new InMemoryWorkflowStore();
     const key = vi.spyOn(store, "getOrCreateSecret");
-    expectContractFailure(() => new SessionActorProofs(store, () => NOW).issue(fakeObservation({ callId }), "get_trust_capabilities", {}), "BINDING_INVALID", "ROOT_CALL_ID_MISSING");
+    const observation = fakeObservation();
+    if (callId === undefined) delete observation.callId;
+    else observation.callId = callId;
+    expectContractFailure(() => new SessionActorProofs(store, () => NOW).issue(observation, "get_trust_capabilities", {}), "BINDING_INVALID", "ROOT_CALL_ID_MISSING");
     expect(key).not.toHaveBeenCalled();
   });
 
