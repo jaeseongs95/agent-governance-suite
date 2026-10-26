@@ -208,7 +208,7 @@ export async function readClassificationRuntime(file: string | undefined, root: 
   const bytes = await readFile(absolute);
   if (bytes.length > 1024 * 1024) throw new Error("CLASSIFICATION_CONFIG_TOO_LARGE");
   const raw = z.strictObject({config: z.strictObject({jevEnabled: z.boolean(), mode: z.enum(["shadow", "select"]), providerProfileRegistryRef: z.string().min(1), externalClassificationAllowed: z.boolean(), configRevision: z.string().min(1), timeoutMs: z.number().int().positive().max(MAX_CLASSIFICATION_TIMEOUT_MS)}), allowRemotePrivateContent: z.boolean(), approvedPublicRequestDigests: z.array(z.string().regex(/^sha256:[a-f0-9]{64}$/u)).optional(), providerRuntimeRef: z.string().min(1).nullable().optional(), nativeAdapterDefinitionsRef: z.string().min(1).nullable().optional(), externalSkillRoots: z.array(z.string().min(1)).optional(), hostDiscoveryRef: z.string().min(1).nullable().optional()}).parse(JSON.parse(bytes.toString("utf8")));
-  const {loadProviderProfileRegistry} = await import("./profiles.js");
+  const {loadProviderProfileRegistry} = await import("./profile-validation.js");
   const registry = await loadProviderProfileRegistry(path.resolve(path.dirname(absolute), raw.config.providerProfileRegistryRef));
   return {config: raw.config, allowRemotePrivateContent: raw.allowRemotePrivateContent, registry,
     ...(raw.approvedPublicRequestDigests ? {approvedPublicRequestDigests: raw.approvedPublicRequestDigests} : {}),
