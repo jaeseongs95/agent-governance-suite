@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { chmodSync, mkdtempSync, mkdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, relative } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
 import { canonicalJson, captureBaseline, compareScope, resolveRepository, sha256, validateBaseline, validateReport } from "../../skills/change-scope-guardian/scripts/lib.mjs";
 
 const roots = [];
+const behaviorCases = JSON.parse(readFileSync(new URL("./behavior-cases.json", import.meta.url), "utf8"));
 
 function removeFixture(target, options) {
   const rel = relative(realpathSync(tmpdir()), realpathSync(target));
@@ -128,6 +129,7 @@ test("preserves untouched preexisting changes and detects overlap", () => {
   const overlap = compareScope(verificationFor(root, baseline));
   assert.equal(overlap.changes[0].classification, "preexisting-overlap");
   assert.equal(overlap.verdict, "NEEDS_REVIEW");
+  assert.equal(overlap.verdict, behaviorCases.failure.find(({ id }) => id === "preexisting-overlap").expectedVerdict);
 });
 
 test("requires both rename paths to be in scope", () => {

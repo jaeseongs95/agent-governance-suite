@@ -12,7 +12,7 @@
   ],
   "failure": [
     { "id": "excluded-change", "expectedVerdict": "BLOCKED" },
-    { "id": "preexisting-overlap", "expectedVerdict": "NEEDS_APPROVAL" },
+    { "id": "preexisting-overlap", "expectedVerdict": "NEEDS_REVIEW" },
     { "id": "missing-baseline", "expectedVerdict": "INCONCLUSIVE" },
     { "id": "foreign-baseline", "expectedError": "INVALID_INPUT" }
   ]
