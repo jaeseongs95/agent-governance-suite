@@ -88,40 +88,58 @@ const LICENSE_FILENAMES = Object.freeze([
   "LICENCE.txt",
 ]);
 
-async function findPackageRoot(input) {
-  const dependencyRoot = path.join(ROOT, "node_modules");
-  let current = path.dirname(path.join(ROOT, input));
-  while (current.startsWith(dependencyRoot)) {
+async function findPackageRoot(input, root) {
+  const resolved = path.resolve(root, input);
+  // Metafile keys may be flat, relative physical paths outside ROOT, or absolute paths.
+  const relative = path.relative(root, resolved);
+  const outside = relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative);
+  if (!outside && !relative.split(path.sep).includes("node_modules")) return null;
+  let boundary = path.dirname(resolved);
+  while (path.basename(boundary) !== "node_modules") {
+    const parent = path.dirname(boundary);
+    if (parent === boundary) return null;
+    boundary = parent;
+  }
+  let current = path.dirname(resolved);
+  let missing;
+  while (current !== boundary) {
+    const metadataPath = path.join(current, "package.json");
     try {
-      await access(path.join(current, "package.json"));
+      await access(metadataPath);
       return current;
-    } catch {
+    } catch (cause) {
+      if (cause?.code !== "ENOENT") throw new Error(`Cannot access bundled package metadata at ${metadataPath}.`, { cause });
+      missing = cause;
       current = path.dirname(current);
     }
   }
-  return null;
+  throw new Error(`No package metadata for bundled dependency ${input} beneath ${boundary}.`, { cause: missing });
 }
 
 async function readLicense(packageRoot) {
   for (const filename of LICENSE_FILENAMES) {
     try {
       return (await readFile(path.join(packageRoot, filename), "utf8")).trim();
-    } catch {
-      // Try the next conventional license filename.
+    } catch (cause) {
+      if (cause?.code !== "ENOENT") throw new Error(`Cannot read bundled package license at ${path.join(packageRoot, filename)}.`, { cause });
+      // Only an absent conventional filename permits trying the next one.
     }
   }
   throw new Error(`Bundled package at ${packageRoot} has no supported license file.`);
 }
 
-async function buildThirdPartyNotices(metafile) {
+/** root is the metafile's absWorkingDir; normal generation keeps the existing ROOT default. */
+export async function buildThirdPartyNotices(metafile, root = ROOT) {
   const packageRoots = new Set();
   for (const input of Object.keys(metafile.inputs)) {
-    if (!input.replaceAll("\\", "/").includes("/node_modules/")) continue;
-    const packageRoot = await findPackageRoot(input);
+    const packageRoot = await findPackageRoot(input, root);
     if (packageRoot) packageRoots.add(packageRoot);
   }
   const packages = await Promise.all([...packageRoots].map(async (packageRoot) => {
-    const metadata = JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8"));
+    const metadataPath = path.join(packageRoot, "package.json");
+    let metadata;
+    try { metadata = JSON.parse(await readFile(metadataPath, "utf8")); }
+    catch (cause) { throw new Error(`Cannot read bundled package metadata at ${metadataPath}.`, { cause }); }
     return {
       name: metadata.name,
       version: metadata.version,
