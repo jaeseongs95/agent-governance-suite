@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,6 +15,7 @@ import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-st
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
+import { assertDistinctDatabasePaths } from "../../mcp-server/src/runtime-config.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
 import { SESSION_PROOF_FIELD, SessionActorProofs } from "../../mcp-server/src/session-actor-proof.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
@@ -24,6 +25,7 @@ import { TrustStore } from "../../mcp-server/src/trust-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION } from "./version-fixtures.js";
+import { concurrentClaims } from "../helpers/concurrent-claim-process.js";
 
 // IO spies start with real implementations; the denial test makes them fail fast.
 // The verifier is always the real SessionActorProofs implementation.
@@ -216,6 +218,90 @@ describe("session actor proof SQLite connections", () => {
       try { right?.close(); } finally { left.close(); }
     }
   });
+});
+
+type ProofClaimResult = {
+  ok: boolean;
+  pid: number;
+  actor?: { host: string; sessionId: string };
+  code?: string;
+  reasonCode?: string;
+};
+
+function issueSqliteProof(databasePath: string, observation = fakeObservation()): Record<string, unknown> {
+  const store = new SqliteWorkflowStore(databasePath);
+  try { return withProof(new SessionActorProofs(store, () => NOW), "get_trust_capabilities", {}, observation); }
+  finally { store.close(); }
+}
+
+async function concurrentlyVerifyProof(databasePaths: string[], args: Record<string, unknown>): Promise<void> {
+  // Existing helper waits for every opened connection's ready message before releasing
+  // all independent processes. These are competing attempts, not sequential verifiers.
+  const results = await concurrentClaims<ProofClaimResult>(
+    new URL("./fixtures/concurrent-session-proof-worker.ts", import.meta.url),
+    databasePaths.map(databasePath => ({ databasePath, tool: "get_trust_capabilities", args, now: NOW })),
+  );
+  expect(results).toHaveLength(2);
+  expect(new Set(results.map(result => result.pid)).size).toBe(2);
+  expect(results.every(result => Number.isInteger(result.pid) && result.pid !== process.pid)).toBe(true);
+  const accepted = results.filter(result => result.ok);
+  const rejected = results.filter(result => !result.ok);
+  expect(accepted).toHaveLength(1);
+  expect(accepted[0]?.actor).toMatchObject({ host: "fixture-host", sessionId: "fixture-root" });
+  expect(rejected).toHaveLength(1);
+  expect(rejected[0]).toMatchObject({ code: "BINDING_INVALID", reasonCode: "ROOT_PROOF_ALREADY_CONSUMED" });
+}
+
+describe("session actor proof concurrent SQLite claims and path aliases", () => {
+  // Local bound covers the reused helper's 15s ready/result deadlines and owned-child drain.
+  it("OB-CLAIM-CONCURRENT accepts exactly one proof across independent ready-barrier processes", async () => {
+    const databasePath = path.join(ownedDirectory(), "workflow.sqlite3");
+    const signed = issueSqliteProof(databasePath);
+    await concurrentlyVerifyProof([databasePath, databasePath], signed);
+    const reopened = new SqliteWorkflowStore(databasePath);
+    try {
+      expectContractFailure(() => new SessionActorProofs(reopened, () => NOW).verify("get_trust_capabilities", signed), "BINDING_INVALID", "ROOT_PROOF_ALREADY_CONSUMED");
+    } finally { reopened.close(); }
+  }, 45_000);
+
+  it("OB-PATH-ALIASES shares the proof secret and one-use claim through a directory symlink or junction", async context => {
+    const directory = ownedDirectory();
+    const realDirectory = path.join(directory, "real");
+    const aliasDirectory = path.join(directory, "alias");
+    mkdirSync(realDirectory);
+    try {
+      symlinkSync(realDirectory, aliasDirectory, process.platform === "win32" ? "junction" : "dir");
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code && ["EPERM", "EACCES", "ENOTSUP", "EOPNOTSUPP", "ENOSYS"].includes(code)) {
+        // Only inability to create this owned link is unsupported. Assertion, open,
+        // worker, signature, replay and timeout failures below must never become skips.
+        console.warn(`OB-PATH-ALIASES UNSUPPORTED: ${process.platform} cannot create owned directory link (${code}).`);
+        context.skip();
+        return;
+      }
+      throw error;
+    }
+    const databasePath = path.join(realDirectory, "workflow.sqlite3");
+    const aliasPath = path.join(aliasDirectory, "workflow.sqlite3");
+    const signed = issueSqliteProof(databasePath);
+    expect(databasePath).not.toBe(aliasPath);
+    expect(realpathSync.native(aliasPath)).toBe(realpathSync.native(databasePath));
+    expect(() => assertDistinctDatabasePaths(databasePath, aliasPath)).toThrow(/different files/u);
+
+    // Prove that an alias-issued HMAC is accepted through the canonical path too;
+    // this uses a distinct call so the competing proof remains unconsumed.
+    const aliasSigned = issueSqliteProof(aliasPath, fakeObservation({ callId: "alias-secret-check" }));
+    const canonical = new SqliteWorkflowStore(databasePath);
+    try {
+      expect(new SessionActorProofs(canonical, () => NOW).verify("get_trust_capabilities", aliasSigned)).toMatchObject({ sessionId: "fixture-root" });
+    } finally { canonical.close(); }
+    await concurrentlyVerifyProof([databasePath, aliasPath], signed);
+    const replay = new SqliteWorkflowStore(aliasPath);
+    try {
+      expectContractFailure(() => new SessionActorProofs(replay, () => NOW).verify("get_trust_capabilities", signed), "BINDING_INVALID", "ROOT_PROOF_ALREADY_CONSUMED");
+    } finally { replay.close(); }
+  }, 45_000);
 });
 
 function cachedUpdates(): PluginUpdateService {
