@@ -19,6 +19,7 @@ const host = "synthetic-fourth-host", model = "opaque-fourth-model", session = "
 // This is not a native Codex root observation or evidence of live host qualification.
 const proofHost = "synthetic-entrypoint-root-actor";
 registerHookHostAdapter(proofHost, {
+  processPid: () => undefined,
   deliveryProfile: () => ({transport: "claude-inbox", capabilities: {supportedInjection: [], idleWake: "none"}, blocksEmptyWakePrompt: false}),
   ownsTool: name => name === "synthetic__plan_workflow",
   adaptInput: (input, selectedHost) => ({lifecycle: "none", outputEventName: "PreToolUse", observation: {

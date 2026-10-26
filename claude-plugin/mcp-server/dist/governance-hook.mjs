@@ -24476,6 +24476,7 @@ async function runGovernanceHook(host, raw, environment = process.env) {
   let store;
   let output2 = {};
   let failure2;
+  let failed = false;
   try {
     const input2 = record6(JSON.parse(raw));
     const { observation } = adaptHostInput(input2, host);
@@ -24523,15 +24524,18 @@ async function runGovernanceHook(host, raw, environment = process.env) {
     }
   } catch (cause) {
     failure2 = cause;
+    failed = true;
   } finally {
     try {
       store?.close();
     } catch (cause) {
-      if (failure2 instanceof Error) retainFailureSecondary(failure2, cause);
-      else failure2 = cause;
+      if (!failed) {
+        failure2 = cause;
+        failed = true;
+      } else if (failure2 instanceof Error) retainFailureSecondary(failure2, cause);
     }
   }
-  if (failure2) {
+  if (failed) {
     const reasonCode = failure2 instanceof WorkflowContractError && typeof failure2.details?.reasonCode === "string" ? failure2.details.reasonCode : "GOVERNANCE_HOOK_FAILED";
     try {
       writeFailureDiagnostic(JSON.stringify({ component: "governance-hook", reasonCode, context: failureContext(failure2) }));

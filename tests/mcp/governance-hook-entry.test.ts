@@ -239,6 +239,27 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     expect(reported[0]).toMatchObject({ component: "governance-hook", context: { producerReason: "ENTRY_WORKFLOW_CLOSE_FAILED" } });
   });
 
+
+  it.each([undefined, null, 0, ""])("F2: falsy central workflow cleanup exception %j discards an otherwise complete root proof", async failure => {
+    const { environment } = fixture();
+    isolateAmbient(environment);
+    const reported = captureDiagnostics();
+    const workflows: SqliteWorkflowStore[] = [];
+    const originalClose = SqliteWorkflowStore.prototype.close;
+    vi.spyOn(SqliteWorkflowStore.prototype, "close").mockImplementation(function (this: SqliteWorkflowStore) {
+      originalClose.call(this); // Finalize the real resource before throwing even a falsy value.
+      workflows.push(this);
+      throw failure;
+    });
+
+    const outcome = await runGovernanceHook("claude-code", JSON.stringify(input()), environment);
+    assertWorkflowClosed(workflows);
+    denied(outcome);
+    expect(reported).toHaveLength(1);
+    expect(reported[0]).toMatchObject({ component: "governance-hook", context: {
+      type: failure === null ? "null" : typeof failure,
+    } });
+  });
   it("F2: strict continuity cleanup attempts both real resources even when the first close throws", () => {
     const { environment } = fixture();
     isolateAmbient(environment);

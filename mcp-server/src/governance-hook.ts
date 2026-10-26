@@ -31,6 +31,7 @@ export async function runGovernanceHook(host: string, raw: string, environment: 
   let store: SqliteWorkflowStore | undefined;
   let output: RecordValue = {};
   let failure: unknown;
+  let failed = false;
   try {
     const input = record(JSON.parse(raw));
     const { observation } = adaptHostInput(input, host);
@@ -77,14 +78,14 @@ export async function runGovernanceHook(host: string, raw: string, environment: 
       const proof = new SessionActorProofs(store).issue(observation, tool, args);
       output = { ...output, hookSpecificOutput: { ...record(output.hookSpecificOutput), hookEventName: "PreToolUse", updatedInput: { ...args, [SESSION_PROOF_FIELD]: proof } } };
     }
-  } catch (cause) { failure = cause; }
+  } catch (cause) { failure = cause; failed = true; }
   finally {
     try { store?.close(); } catch (cause) {
-      if (failure instanceof Error) retainHookFailureSecondary(failure, cause);
-      else failure = cause;
+      if (!failed) { failure = cause; failed = true; }
+      else if (failure instanceof Error) retainHookFailureSecondary(failure, cause);
     }
   }
-  if (failure) {
+  if (failed) {
     const reasonCode = failure instanceof WorkflowContractError && typeof failure.details?.reasonCode === "string"
       ? failure.details.reasonCode : "GOVERNANCE_HOOK_FAILED";
     try { writeFailureDiagnostic(JSON.stringify({ component: "governance-hook", reasonCode, context: hookFailureContext(failure) })); }
