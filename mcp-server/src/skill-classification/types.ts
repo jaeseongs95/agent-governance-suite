@@ -130,6 +130,8 @@ export interface ProviderEvaluation {
   rateLimitObservation?: ClassificationRateLimitObservation | null;
 }
 export interface SkillClassificationProviderPort {
+  /** Pure protocol validation from the actual bound route, never profile-supplied policy. */
+  validateConfiguration?(profile: ProviderConfiguration): string | null;
   /** Trusted route metadata only; availability still establishes capability and approval. */
   routeKind?(profile: ProviderProfile): "native" | "remote" | null;
   availability(profile: ProviderProfile): Promise<ProviderAvailability>;

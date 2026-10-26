@@ -1,9 +1,12 @@
 import type {ClassificationRateLimitObservation, ClassificationUsage, DispatchState, ProviderAvailability, ProviderConfiguration, ProviderEvaluation, ProviderProfile, SkillClassificationProviderPort, SkillClassificationRequestV1, SkillClassificationResponseV1} from "./types.js";
 import {digestClassificationValue, projectClassificationRequest} from "./request.js";
-import {validateProviderProfile, JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION, JEV_SKILL_SELECTION_CHOICE_PROMPT_REVISION, JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION} from "./profiles.js";
-import {skillSelectionAdvicePrompt} from "./skill-selection-advice.js";
+import {validateBoundProviderProfile} from "./profile-validation.js";
+import {skillSelectionAdvicePrompt, SKILL_SELECTION_ADVICE_PROMPT_DIGEST} from "./skill-selection-advice.js";
 export {skillSelectionAdvicePrompt, SKILL_SELECTION_ADVICE_PROMPT_DIGEST} from "./skill-selection-advice.js";
-export {JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION, JEV_SKILL_SELECTION_CHOICE_PROMPT_REVISION, JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION} from "./profiles.js";
+// A separate opt-in identity; this never aliases or replaces a production v6 profile.
+export const JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION = "jev-skill-selection-choice-r01";
+export const JEV_SKILL_SELECTION_CHOICE_PROMPT_REVISION = JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION + ":" + SKILL_SELECTION_ADVICE_PROMPT_DIGEST;
+export const JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION = JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION + "-long-context";
 
 export const unknownUsage = (): ClassificationUsage => ({inputTokens: null, outputTokens: null, cachedInputTokens: null, actualCostUsd: null});
 export type {ClassificationRateLimitObservation} from "./types.js";
@@ -44,6 +47,8 @@ export function unavailableResponse(request: SkillClassificationRequestV1, code:
 }
 
 export interface ClassificationWireAdapter {
+  /** Pure protocol policy supplied by the trusted installation, never by profile data. */
+  validateConfiguration?(profile: ProviderConfiguration): string | null;
   encode(request: SkillClassificationRequestV1, profile: ProviderConfiguration): unknown;
   decode(body: unknown, request: SkillClassificationRequestV1, profile: ProviderConfiguration): ProviderEvaluation;
   /** Optional wire-specific ambiguity check; JSON.parse remains the syntax authority. */
@@ -86,12 +91,21 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
     this.defaultTransport = options.defaultTransport ?? standardTransport;
     if (!Number.isSafeInteger(this.maximumResponseBytes) || this.maximumResponseBytes < 1 || this.maximumResponseBytes > 64 * 1024 * 1024) throw new Error("INVALID_RESPONSE_BYTE_LIMIT");
   }
-  private route(profile: ProviderProfile): ApprovedClassificationRoute | null {
+  private route(profile: ProviderConfiguration): ApprovedClassificationRoute | null {
     const matches = this.routes.filter((route) => route.routeRef === profile.approvedRouteRef);
     return matches.length === 1 ? matches[0]! : null;
   }
   routeKind(profile: ProviderProfile): "native" | "remote" | null {
     return this.route(profile)?.kind ?? null;
+  }
+  /** Pure metadata check: no credentials, availability or dispatch. */
+  validateConfiguration(profile: ProviderConfiguration): string | null {
+    const route = this.route(profile);
+    if (route?.kind === "remote" && route.providerKind === profile.providerKind && route.vendorId === profile.vendorId
+      && route.adapterRevision === profile.adapterRevision && route.adapter.validateConfiguration) {
+      return route.adapter.validateConfiguration(profile);
+    }
+    return validateLegacyProviderConfiguration(profile);
   }
   private transportMatches(route: ApprovedClassificationRoute): boolean {
     try {
@@ -143,7 +157,7 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
           && route.transport === routeTransport && transport.matches === transportMatches && transport.headers === transportHeaders && this.transportMatches(route)
           && digestClassificationValue(request) === requestBinding && digestClassificationValue(profile) === profileBinding
           && digestClassificationValue(fixedRequest) === requestBinding && digestClassificationValue(fixedProfile) === profileBinding
-          && validateProviderProfile(profile, fixedRequest, Date.now()) === null;
+          && validateBoundProviderProfile(profile, fixedRequest, Date.now(), value => this.validateConfiguration(value)) === null;
       } catch { /* Mutable or invalid bindings fail closed before dispatch. */ }
       if (!current) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
     };
@@ -153,10 +167,10 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
       return route.invokeStructured(fixedRequest, fixedProfile, signal, () => {assertCurrent(); beforeDispatch?.();});
     }
     const adapter = route.adapter, getCredential = route.getCredential;
-    const {encode, decode, validateRawResponse, transport: adapterTransport} = adapter;
+    const {encode, decode, validateRawResponse, validateConfiguration, transport: adapterTransport} = adapter;
     const assertRemoteCurrent = () => {
       assertCurrent();
-      if (route.getCredential !== getCredential || route.adapter !== adapter || adapter.encode !== encode || adapter.decode !== decode || adapter.validateRawResponse !== validateRawResponse || adapter.transport !== adapterTransport)
+      if (route.getCredential !== getCredential || route.adapter !== adapter || adapter.encode !== encode || adapter.decode !== decode || adapter.validateRawResponse !== validateRawResponse || adapter.validateConfiguration !== validateConfiguration || adapter.transport !== adapterTransport)
         throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
     };
     let endpoint: URL;
@@ -498,6 +512,10 @@ function assertSkillSelectionChoiceProfile(profile: ProviderConfiguration, adapt
 
 /** Explicit Choice labels express necessity; confidence never changes their meaning. */
 export const jevSkillSelectionChoiceWireAdapter: ClassificationWireAdapter = {
+  validateConfiguration(profile) {
+    try { assertSkillSelectionChoiceProfile(profile, JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION); return null; }
+    catch { return "UNSUPPORTED_OPTIONS"; }
+  },
   validateRawResponse: validateJevChoiceAnswerKeys,
   encode(request, profile) {
     assertSkillSelectionChoiceProfile(profile);
@@ -545,6 +563,10 @@ export const jevSkillSelectionChoiceWireAdapter: ClassificationWireAdapter = {
 
 /** Same Choice semantics; opt-in transport shares the production long-context header contract. */
 export const jevSkillSelectionChoiceLongContextWireAdapter: ClassificationWireAdapter = {
+  validateConfiguration(profile) {
+    try { assertSkillSelectionChoiceProfile(profile, JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION); return null; }
+    catch { return "UNSUPPORTED_OPTIONS"; }
+  },
   transport: Object.freeze({
     headers: jevNoulSharedRulesV6LongContextWireAdapter.transport!.headers,
     matches: (route: ApprovedClassificationRoute) => route.kind === "remote" && route.providerKind === "jev"
@@ -563,38 +585,43 @@ export const jevSkillSelectionChoiceLongContextWireAdapter: ClassificationWireAd
   },
 };
 
-// Protocol selection and reserved-revision rules belong to the trusted wire factory.
+// One trusted factory table owns both builtin lookup and reserved transport metadata.
+const builtinWireAdapters = new Map(Object.entries({
+  [JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION]: jevSkillSelectionChoiceWireAdapter,
+  [JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION]: jevSkillSelectionChoiceLongContextWireAdapter,
+  "jev-noul-v1": jevNoulWireAdapter,
+  [JEV_NOUL_SUFFICIENCY_ADAPTER_REVISION]: jevNoulSufficiencyWireAdapter,
+  [JEV_NOUL_SHARED_RULES_ADAPTER_REVISION]: jevNoulSharedRulesWireAdapter,
+  [JEV_NOUL_SHARED_RULES_V5_ADAPTER_REVISION]: jevNoulSharedRulesV5WireAdapter,
+  [JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION]: jevNoulSharedRulesV5LongContextWireAdapter,
+  [JEV_NOUL_SHARED_RULES_V6_ADAPTER_REVISION]: jevNoulSharedRulesV6WireAdapter,
+  [JEV_NOUL_SHARED_RULES_V6_LONG_CONTEXT_ADAPTER_REVISION]: jevNoulSharedRulesV6LongContextWireAdapter,
+}).map(([reference, adapter]) => [reference, Object.freeze({adapter, transport: adapter.transport, validateConfiguration: adapter.validateConfiguration})]));
+/** Compatibility for ports without a protocol hook; no revision list or null-policy exception. */
+export function validateLegacyProviderConfiguration(profile: ProviderConfiguration): string | null {
+  return profile.providerKind === "jev" && (profile.reasoningEffort !== null || profile.judgmentPolicy === null) ? "UNSUPPORTED_OPTIONS" : null;
+}
+/** Legacy inspection only. Dispatch uses the actual route's adapter instead of this lookup. */
+export function validateBuiltinProviderConfiguration(profile: ProviderConfiguration): string | null {
+  const validate = profile.providerKind === "jev" ? builtinWireAdapters.get(profile.adapterRevision)?.validateConfiguration : undefined;
+  return validate ? validate(profile) : validateLegacyProviderConfiguration(profile);
+}
+const reservedTransport = (revision: string) => builtinWireAdapters.get(revision)?.transport;
 const standardTransport: ClassificationTransportContract = Object.freeze({
   headers: Object.freeze({}),
-  matches: (route: ApprovedClassificationRoute) => route.adapterRevision !== JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION
-    && route.adapterRevision !== JEV_NOUL_SHARED_RULES_V6_LONG_CONTEXT_ADAPTER_REVISION
-    && route.adapterRevision !== JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION
+  matches: (route: ApprovedClassificationRoute) => reservedTransport(route.adapterRevision) === undefined
     && (route.kind !== "remote" || route.adapter?.transport === undefined),
 });
 export function bindClassificationRouteTransport(route: UnboundClassificationRoute): ApprovedClassificationRoute {
   let transport = route.kind === "remote" ? route.adapter.transport ?? standardTransport : standardTransport;
-  const reserved = route.adapterRevision === JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION ? jevNoulSharedRulesV5LongContextWireAdapter.transport
-    : route.adapterRevision === JEV_NOUL_SHARED_RULES_V6_LONG_CONTEXT_ADAPTER_REVISION ? jevNoulSharedRulesV6LongContextWireAdapter.transport
-    : route.adapterRevision === JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION ? jevSkillSelectionChoiceLongContextWireAdapter.transport : undefined;
+  const reserved = reservedTransport(route.adapterRevision);
   if (reserved && transport.matches !== reserved.matches) transport = standardTransport;
   return {...route, transport};
 }
 export function resolveClassificationWireAdapter(wireAdapterRef: string, route: Pick<RouteBase, "providerKind" | "adapterRevision">,
   registered?: ReadonlyMap<string, ClassificationWireAdapter>): ClassificationWireAdapter | undefined {
-  if ([JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION, JEV_NOUL_SHARED_RULES_V6_LONG_CONTEXT_ADAPTER_REVISION, JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION].includes(wireAdapterRef)
-    && (route.providerKind !== "jev" || route.adapterRevision !== wireAdapterRef)) throw new Error("INVALID_JEV_CONTEXT_ROUTE");
-  if (wireAdapterRef === JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION
-    && (route.providerKind !== "jev" || route.adapterRevision !== wireAdapterRef)) throw new Error("INVALID_JEV_CHOICE_ROUTE");
-  const builtins: Readonly<Record<string, ClassificationWireAdapter>> = {
-    [JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION]: jevSkillSelectionChoiceWireAdapter,
-    [JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION]: jevSkillSelectionChoiceLongContextWireAdapter,
-    "jev-noul-v1": jevNoulWireAdapter,
-    [JEV_NOUL_SUFFICIENCY_ADAPTER_REVISION]: jevNoulSufficiencyWireAdapter,
-    [JEV_NOUL_SHARED_RULES_ADAPTER_REVISION]: jevNoulSharedRulesWireAdapter,
-    [JEV_NOUL_SHARED_RULES_V5_ADAPTER_REVISION]: jevNoulSharedRulesV5WireAdapter,
-    [JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION]: jevNoulSharedRulesV5LongContextWireAdapter,
-    [JEV_NOUL_SHARED_RULES_V6_ADAPTER_REVISION]: jevNoulSharedRulesV6WireAdapter,
-    [JEV_NOUL_SHARED_RULES_V6_LONG_CONTEXT_ADAPTER_REVISION]: jevNoulSharedRulesV6LongContextWireAdapter,
-  };
-  return route.providerKind === "jev" && Object.hasOwn(builtins, wireAdapterRef) ? builtins[wireAdapterRef] : registered?.get(wireAdapterRef);
+  const builtin = builtinWireAdapters.get(wireAdapterRef);
+  if (builtin?.transport && (route.providerKind !== "jev" || route.adapterRevision !== wireAdapterRef)) throw new Error("INVALID_JEV_CONTEXT_ROUTE");
+  if (builtin?.validateConfiguration && (route.providerKind !== "jev" || route.adapterRevision !== wireAdapterRef)) throw new Error("INVALID_JEV_CHOICE_ROUTE");
+  return route.providerKind === "jev" && builtin ? builtin.adapter : registered?.get(wireAdapterRef);
 }

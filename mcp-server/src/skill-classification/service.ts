@@ -1,5 +1,6 @@
-import {selectFixedProfile, validateProviderProfile, isProviderProfileRegistry} from "./profiles.js";
-import {ClassificationProviderError, unavailableResponse, unknownUsage, sanitizeRateLimitObservation} from "./providers.js";
+import {validateBoundProviderProfile} from "./profile-validation.js";
+import {selectFixedProfile, isProviderProfileRegistry} from "./profiles.js";
+import {ClassificationProviderError, unavailableResponse, unknownUsage, sanitizeRateLimitObservation, validateLegacyProviderConfiguration} from "./providers.js";
 import {validateClassificationResponse} from "./validation.js";
 import {digestClassificationValue, projectClassificationRequest, validateClassificationRequest} from "./request.js";
 import type {ClassificationAttempt, ClassificationConfig, ClassificationResult, ClassificationSnapshot, DispatchState, ProviderEvaluation, ProviderProfile, ProviderProfileRegistry, SkillClassificationProviderPort, SkillClassificationRequestV1} from "./types.js";
@@ -90,11 +91,17 @@ export class SkillClassificationService {
     this.maxOperations = options.maxOperations ?? 256;
     if (!Number.isSafeInteger(this.maxOperations) || this.maxOperations < 1) throw new Error("INVALID_OPERATION_BOUND");
   }
+  /** Shared by run, rechecks and gateway acceptance; no availability or credential side effect. */
+  validateProfile(profile: ProviderProfile, request: SkillClassificationRequestV1, nowMs = this.now()): string | null {
+    const provider = this.options.providers[profile.providerKind];
+    return validateBoundProviderProfile(profile, request, nowMs,
+      value => provider?.validateConfiguration ? provider.validateConfiguration(value) : validateLegacyProviderConfiguration(value));
+  }
   /** Pure preflight: no credentials, availability, reservation or transport. Unknown ports stay closed. */
   hasNativeRoute(input: Pick<ClassificationServiceInput, "request" | "config" | "registry" | "currentVendorId">): boolean {
     for (const kind of input.config.jevEnabled ? ["jev", "vendor"] as const : ["vendor"] as const) {
       const profile = selectFixedProfile(input.registry, kind, input.currentVendorId);
-      if (!profile || validateProviderProfile(profile, input.request, this.now()) !== null) continue;
+      if (!profile || this.validateProfile(profile, input.request, this.now()) !== null) continue;
       try { if (this.options.providers[kind]?.routeKind?.(profile) === "native") return true; }
       catch { /* Unknown route metadata cannot authorize a content bypass. */ }
     }
@@ -142,7 +149,7 @@ export class SkillClassificationService {
     if (result.response.error === null && ["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status)) {
       const attempt = result.attempts.at(-1);
       const profile = input.registry.profiles.find(profile => profile.profileId === attempt?.profileId);
-      const invalid = profile ? validateProviderProfile(profile, input.request, this.now()) : "PROFILE_UNAVAILABLE";
+      const invalid = profile ? this.validateProfile(profile, input.request, this.now()) : "PROFILE_UNAVAILABLE";
       if (invalid) return this.failure(input, result.snapshot, invalid, result.attempts);
     }
     return result;
@@ -161,7 +168,7 @@ export class SkillClassificationService {
         if (kind === "jev") continue;
         return this.failure(input, snapshot, !profile ? "PROFILE_UNAVAILABLE" : "PROVIDER_UNAVAILABLE", attempts);
       }
-      const invalid = validateProviderProfile(profile, input.request, this.now());
+      const invalid = this.validateProfile(profile, input.request, this.now());
       if (invalid) {
         if (kind === "jev") continue;
         return this.failure(input, snapshot, invalid, attempts);
@@ -209,7 +216,7 @@ export class SkillClassificationService {
         if (input.remoteContentAllowed === false && availability.routeKind !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
         if (!input.config.externalClassificationAllowed && availability.routeKind !== "native") throw new ClassificationProviderError("EXTERNAL_CLASSIFICATION_BLOCKED", "not-started");
         if (input.getCurrentSnapshot && stale(snapshot, input.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
-        const invalid = validateProviderProfile(profile, input.request, this.now());
+        const invalid = this.validateProfile(profile, input.request, this.now());
         if (invalid) throw new ClassificationProviderError(invalid, "not-started");
         if (!this.options.budget.reserve(profile, reservationId, profile.maximumCostUsd!, availability.routeKind)) throw new ClassificationProviderError("BUDGET_UNAVAILABLE", "not-started");
         reserved = true;
@@ -218,7 +225,7 @@ export class SkillClassificationService {
           if (input.remoteContentAllowed === false && provider.routeKind !== undefined && provider.routeKind(profile) !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
           if (controller.signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
           if (input.getCurrentSnapshot && stale(snapshot, input.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
-          if (validateProviderProfile(profile, input.request, this.now()) !== null) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
+          if (this.validateProfile(profile, input.request, this.now()) !== null) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
         };
         const evaluation = await provider.classify(input.request, profile, controller.signal, beforeDispatch);
         if (controller.signal.aborted) return evaluation; // only the already-settled race may publish

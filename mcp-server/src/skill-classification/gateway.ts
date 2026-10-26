@@ -6,7 +6,6 @@ import { z } from "zod";
 import type { ExecutionContextV1 } from "../../../contracts/types.js";
 import { loadHostObservedInventory, type ObservedHostInventory } from "./host-discovery-adapter.js";
 import { createClassificationRequest, digestClassificationValue } from "./request.js";
-import {validateProviderProfile} from "./profiles.js";
 import { SkillClassificationService, MAX_CLASSIFICATION_TIMEOUT_MS } from "./service.js";
 import { decisionSchema, validateDecision } from "./validation.js";
 import type { ClassificationConfig, ClassificationResult, ClassificationSnapshot, ProviderProfileRegistry, SkillSelectionDecisionV1, SkillClassificationRequestV1 } from "./types.js";
@@ -191,7 +190,7 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     if (successful) {
       const attempt = operation.result.attempts.at(-1);
       const profile = runtime.registry.profiles.find(profile => profile.profileId === attempt?.profileId);
-      const invalid = profile ? validateProviderProfile(profile, operation.result.request, (this.options.now?.() ?? new Date()).getTime()) : "PROFILE_UNAVAILABLE";
+      const invalid = profile ? this.options.service.validateProfile(profile, operation.result.request, (this.options.now?.() ?? new Date()).getTime()) : "PROFILE_UNAVAILABLE";
       if (invalid) return {valid: false, errors: [invalid], agentSelectedSkillIds: null};
     }
     // The selection observation must still be live at this synchronous commit boundary.
