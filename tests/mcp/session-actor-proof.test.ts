@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -198,6 +199,126 @@ describe("session actor proof scope", () => {
       expect(proofs.verify("get_trust_capabilities", withProof(proofs, "get_trust_capabilities", {}, observation)))
         .toMatchObject({ host: observation.host, sessionId: observation.sessionId });
     }
+  });
+});
+
+describe("session actor proof rejection diagnostics", () => {
+  function rejectionDetails(action: () => unknown) {
+    let failure: unknown;
+    try { action(); } catch (error) { failure = error; }
+    expect(failure).toBeInstanceOf(WorkflowContractError);
+    expect(failure).toMatchObject({ code: "BINDING_INVALID", message: "The current root hook proof is invalid." });
+    return (failure as WorkflowContractError).details;
+  }
+
+  // Fixture-only mutation: the genuine token and existing key come from the real issuer/store.
+  function resign(store: InMemoryWorkflowStore, genuine: Record<string, unknown>, patch: Record<string, unknown>) {
+    const [prefix, encoded] = (genuine[SESSION_PROOF_FIELD] as string).split(".");
+    const payload = JSON.parse(Buffer.from(encoded!, "base64url").toString("utf8")) as Record<string, unknown>;
+    const body = `${prefix}.${Buffer.from(JSON.stringify({ ...payload, ...patch })).toString("base64url")}`;
+    const secret = store.getOrCreateSecret("governance-root-call-key-v3", () => { throw new Error("Fixture signing key must already exist."); });
+    const signature = createHmac("sha256", Buffer.from(secret, "base64url")).update(body).digest("base64url");
+    return { ...genuine, [SESSION_PROOF_FIELD]: `${body}.${signature}` };
+  }
+
+  it.each([
+    { offset: -1, tool: "fixture-operation", changeInput: false, failedCheck: "issuedInFuture",
+      relativeTimeMs: { issuedAtMinusNow: 1, expiresAtMinusNow: "above-range", lifetimeMinusTtl: 0 } },
+    { offset: TTL, tool: "fixture-operation", changeInput: false, failedCheck: "expired",
+      relativeTimeMs: { issuedAtMinusNow: -TTL, expiresAtMinusNow: 0, lifetimeMinusTtl: 0 } },
+    { offset: TTL + 1, tool: "fixture-operation", changeInput: false, failedCheck: "expired",
+      relativeTimeMs: { issuedAtMinusNow: "below-range", expiresAtMinusNow: -1, lifetimeMinusTtl: 0 } },
+    { offset: 0, tool: "another-operation", changeInput: false, failedCheck: "tool",
+      relativeTimeMs: { issuedAtMinusNow: 0, expiresAtMinusNow: TTL, lifetimeMinusTtl: 0 } },
+    { offset: 0, tool: "fixture-operation", changeInput: true, failedCheck: "inputDigest",
+      relativeTimeMs: { issuedAtMinusNow: 0, expiresAtMinusNow: TTL, lifetimeMinusTtl: 0 } },
+  ] as const)("reports only $failedCheck and bounded clock deltas at offset $offset without claiming", ({ offset, tool, changeInput, failedCheck, relativeTimeMs }) => {
+    let now = NOW;
+    const store = new InMemoryWorkflowStore();
+    const claim = vi.spyOn(store, "claimExecutionObservation");
+    const proofs = new SessionActorProofs(store, () => now);
+    const genuine = withProof(proofs, "fixture-operation", { value: 1 });
+    now += offset;
+    expect(rejectionDetails(() => proofs.verify(tool, changeInput ? { ...genuine, value: 2 } : genuine))).toEqual({
+      reasonCode: "ROOT_PROOF_SCOPE_OR_TIME_INVALID", failedChecks: [failedCheck], relativeTimeMs,
+    });
+    expect(claim).not.toHaveBeenCalled();
+    now = NOW;
+    expect(proofs.verify("fixture-operation", genuine).sessionId).toBe("fixture-root");
+    expect(claim).toHaveBeenCalledTimes(1);
+    expectContractFailure(() => proofs.verify("fixture-operation", genuine), "BINDING_INVALID", "ROOT_PROOF_ALREADY_CONSUMED");
+  });
+
+  it.each(["issuedInFuture", "tool"] as const)("preserves %s rejection before canonicalizing a non-serializable input", failedCheck => {
+    let now = NOW;
+    const store = new InMemoryWorkflowStore();
+    const claim = vi.spyOn(store, "claimExecutionObservation");
+    const proofs = new SessionActorProofs(store, () => now);
+    const genuine = withProof(proofs, "fixture-operation");
+    if (failedCheck === "issuedInFuture") now -= 1;
+    expect(rejectionDetails(() => proofs.verify("another-operation", { ...genuine, nonSerializable: undefined }))).toEqual({
+      reasonCode: "ROOT_PROOF_SCOPE_OR_TIME_INVALID", failedChecks: [failedCheck],
+      relativeTimeMs: { issuedAtMinusNow: failedCheck === "issuedInFuture" ? 1 : 0,
+        expiresAtMinusNow: failedCheck === "issuedInFuture" ? "above-range" : TTL, lifetimeMinusTtl: 0 },
+    });
+    expect(claim).not.toHaveBeenCalled();
+    now = NOW;
+    expect(proofs.verify("fixture-operation", genuine).sessionId).toBe("fixture-root");
+  });
+
+  it.each([
+    { patch: { host: null }, failedCheck: "shape" },
+    { patch: { issuedAt: null }, failedCheck: "shape" },
+    { patch: { actor: { role: "child", basis: "observed", reasonCode: "FIXTURE_CHILD_OBSERVED" } }, failedCheck: "actorInput" },
+  ])("reports $failedCheck without scope/time metadata for a signed invalid shape or actor", ({ patch, failedCheck }) => {
+    const store = new InMemoryWorkflowStore();
+    const claim = vi.spyOn(store, "claimExecutionObservation");
+    const proofs = new SessionActorProofs(store, () => NOW);
+    const genuine = withProof(proofs, "fixture-operation");
+    expect(rejectionDetails(() => proofs.verify("fixture-operation", resign(store, genuine, patch)))).toEqual({
+      reasonCode: "ROOT_PROOF_SCOPE_OR_TIME_INVALID", failedChecks: [failedCheck],
+    });
+    expect(claim).not.toHaveBeenCalled();
+    expect(proofs.verify("fixture-operation", genuine).sessionId).toBe("fixture-root");
+  });
+
+  it("keeps the exact TTL equality guard and reports only its relative deviation", () => {
+    const store = new InMemoryWorkflowStore();
+    const claim = vi.spyOn(store, "claimExecutionObservation");
+    const proofs = new SessionActorProofs(store, () => NOW);
+    const genuine = withProof(proofs, "fixture-operation");
+    expect(rejectionDetails(() => proofs.verify("fixture-operation", resign(store, genuine, { expiresAt: NOW + TTL + 1 })))).toEqual({
+      reasonCode: "ROOT_PROOF_SCOPE_OR_TIME_INVALID", failedChecks: ["ttl"],
+      relativeTimeMs: { issuedAtMinusNow: 0, expiresAtMinusNow: "above-range", lifetimeMinusTtl: 1 },
+    });
+    expect(claim).not.toHaveBeenCalled();
+    expect(proofs.verify("fixture-operation", genuine).sessionId).toBe("fixture-root");
+  });
+
+  it("represents overflowed relative deltas explicitly without changing expiration denial", () => {
+    let now = -Number.MAX_VALUE;
+    const store = new InMemoryWorkflowStore();
+    const claim = vi.spyOn(store, "claimExecutionObservation");
+    const proofs = new SessionActorProofs(store, () => now);
+    const genuine = withProof(proofs, "fixture-operation");
+    now = Number.MAX_VALUE;
+    expect(rejectionDetails(() => proofs.verify("fixture-operation", genuine))).toEqual({
+      reasonCode: "ROOT_PROOF_SCOPE_OR_TIME_INVALID", failedChecks: ["expired"],
+      relativeTimeMs: { issuedAtMinusNow: "non-finite", expiresAtMinusNow: "non-finite", lifetimeMinusTtl: -TTL },
+    });
+    expect(claim).not.toHaveBeenCalled();
+  });
+
+  it("checks the signature before exposing any rejection diagnostics and preserves the genuine proof", () => {
+    const store = new InMemoryWorkflowStore();
+    const claim = vi.spyOn(store, "claimExecutionObservation");
+    const proofs = new SessionActorProofs(store, () => NOW);
+    const genuine = withProof(proofs, "fixture-operation");
+    expect(rejectionDetails(() => proofs.verify("fixture-operation", {
+      [SESSION_PROOF_FIELD]: tamperSession(genuine[SESSION_PROOF_FIELD] as string),
+    }))).toEqual({ reasonCode: "ROOT_PROOF_SIGNATURE_INVALID" });
+    expect(claim).not.toHaveBeenCalled();
+    expect(proofs.verify("fixture-operation", genuine).sessionId).toBe("fixture-root");
   });
 });
 

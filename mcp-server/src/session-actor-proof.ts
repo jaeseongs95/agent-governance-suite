@@ -30,8 +30,21 @@ export function withoutSessionProof(args: Record<string, unknown>): Record<strin
   delete input[SESSION_PROOF_FIELD];
   return input;
 }
-function invalid(reasonCode: string): never {
-  throw new WorkflowContractError("BINDING_INVALID", "The current root hook proof is invalid.", { reasonCode });
+type RootProofFailedCheck = "shape" | "actorInput" | "issuedInFuture" | "expired" | "ttl" | "tool" | "inputDigest";
+type RelativeTimeDelta = number | "below-range" | "above-range" | "non-finite";
+interface RootProofDiagnostics {
+  // Reports the first failing predicate, preserving the original short-circuit order.
+  failedChecks: RootProofFailedCheck[];
+  relativeTimeMs?: { issuedAtMinusNow: RelativeTimeDelta; expiresAtMinusNow: RelativeTimeDelta; lifetimeMinusTtl: RelativeTimeDelta };
+}
+function boundedDelta(value: number): RelativeTimeDelta {
+  if (!Number.isFinite(value)) return "non-finite";
+  if (value < -TTL_MS) return "below-range";
+  if (value > TTL_MS) return "above-range";
+  return value;
+}
+function invalid(reasonCode: string, diagnostics?: RootProofDiagnostics): never {
+  throw new WorkflowContractError("BINDING_INVALID", "The current root hook proof is invalid.", { reasonCode, ...diagnostics });
 }
 
 /** Per-call proof only. Reuses workflow secrets and the atomic one-use observation claim;
@@ -79,12 +92,30 @@ export class SessionActorProofs implements SessionActorProofVerifier {
     catch { return invalid("ROOT_PROOF_PAYLOAD_INVALID"); }
     const now = this.now();
     if (!proof || proof.version !== 3 || typeof proof.host !== "string" || !proof.host
-      || typeof proof.sessionId !== "string" || !proof.sessionId || !proof.actor
-      || !actorAccess(proof.actor).allowed || typeof proof.call !== "string" || !/^[a-f0-9]{64}$/u.test(proof.call)
-      || !Number.isFinite(proof.issuedAt) || !Number.isFinite(proof.expiresAt)
-      || proof.issuedAt > now || proof.expiresAt <= now || proof.expiresAt - proof.issuedAt !== TTL_MS
-      || proof.tool !== tool || proof.inputDigest !== convergenceDigest(withoutSessionProof(args))) {
-      return invalid("ROOT_PROOF_SCOPE_OR_TIME_INVALID");
+      || typeof proof.sessionId !== "string" || !proof.sessionId || !proof.actor) {
+      return invalid("ROOT_PROOF_SCOPE_OR_TIME_INVALID", { failedChecks: ["shape"] });
+    }
+    if (!actorAccess(proof.actor).allowed) {
+      return invalid("ROOT_PROOF_SCOPE_OR_TIME_INVALID", { failedChecks: ["actorInput"] });
+    }
+    if (typeof proof.call !== "string" || !/^[a-f0-9]{64}$/u.test(proof.call)
+      || !Number.isFinite(proof.issuedAt) || !Number.isFinite(proof.expiresAt)) {
+      return invalid("ROOT_PROOF_SCOPE_OR_TIME_INVALID", { failedChecks: ["shape"] });
+    }
+    const failedCheck: RootProofFailedCheck | null = proof.issuedAt > now ? "issuedInFuture"
+      : proof.expiresAt <= now ? "expired"
+      : proof.expiresAt - proof.issuedAt !== TTL_MS ? "ttl"
+      : proof.tool !== tool ? "tool"
+      : proof.inputDigest !== convergenceDigest(withoutSessionProof(args)) ? "inputDigest" : null;
+    if (failedCheck) {
+      return invalid("ROOT_PROOF_SCOPE_OR_TIME_INVALID", {
+        failedChecks: [failedCheck],
+        relativeTimeMs: {
+          issuedAtMinusNow: boundedDelta(proof.issuedAt - now),
+          expiresAtMinusNow: boundedDelta(proof.expiresAt - now),
+          lifetimeMinusTtl: boundedDelta((proof.expiresAt - proof.issuedAt) - TTL_MS),
+        },
+      });
     }
     if (!this.store.claimExecutionObservation(`${PREFIX}:${proof.call}`, new Date(proof.expiresAt).toISOString(), new Date(now).toISOString())) {
       return invalid("ROOT_PROOF_ALREADY_CONSUMED");

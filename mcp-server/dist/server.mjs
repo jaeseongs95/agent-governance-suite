@@ -8762,8 +8762,14 @@ function withoutSessionProof(args) {
   delete input2[SESSION_PROOF_FIELD];
   return input2;
 }
-function invalid(reasonCode) {
-  throw new WorkflowContractError("BINDING_INVALID", "The current root hook proof is invalid.", { reasonCode });
+function boundedDelta(value) {
+  if (!Number.isFinite(value)) return "non-finite";
+  if (value < -TTL_MS) return "below-range";
+  if (value > TTL_MS) return "above-range";
+  return value;
+}
+function invalid(reasonCode, diagnostics) {
+  throw new WorkflowContractError("BINDING_INVALID", "The current root hook proof is invalid.", { reasonCode, ...diagnostics });
 }
 var SessionActorProofs = class {
   constructor(store, now = Date.now) {
@@ -8816,8 +8822,25 @@ var SessionActorProofs = class {
       return invalid("ROOT_PROOF_PAYLOAD_INVALID");
     }
     const now = this.now();
-    if (!proof || proof.version !== 3 || typeof proof.host !== "string" || !proof.host || typeof proof.sessionId !== "string" || !proof.sessionId || !proof.actor || !actorAccess(proof.actor).allowed || typeof proof.call !== "string" || !/^[a-f0-9]{64}$/u.test(proof.call) || !Number.isFinite(proof.issuedAt) || !Number.isFinite(proof.expiresAt) || proof.issuedAt > now || proof.expiresAt <= now || proof.expiresAt - proof.issuedAt !== TTL_MS || proof.tool !== tool || proof.inputDigest !== convergenceDigest(withoutSessionProof(args))) {
-      return invalid("ROOT_PROOF_SCOPE_OR_TIME_INVALID");
+    if (!proof || proof.version !== 3 || typeof proof.host !== "string" || !proof.host || typeof proof.sessionId !== "string" || !proof.sessionId || !proof.actor) {
+      return invalid("ROOT_PROOF_SCOPE_OR_TIME_INVALID", { failedChecks: ["shape"] });
+    }
+    if (!actorAccess(proof.actor).allowed) {
+      return invalid("ROOT_PROOF_SCOPE_OR_TIME_INVALID", { failedChecks: ["actorInput"] });
+    }
+    if (typeof proof.call !== "string" || !/^[a-f0-9]{64}$/u.test(proof.call) || !Number.isFinite(proof.issuedAt) || !Number.isFinite(proof.expiresAt)) {
+      return invalid("ROOT_PROOF_SCOPE_OR_TIME_INVALID", { failedChecks: ["shape"] });
+    }
+    const failedCheck = proof.issuedAt > now ? "issuedInFuture" : proof.expiresAt <= now ? "expired" : proof.expiresAt - proof.issuedAt !== TTL_MS ? "ttl" : proof.tool !== tool ? "tool" : proof.inputDigest !== convergenceDigest(withoutSessionProof(args)) ? "inputDigest" : null;
+    if (failedCheck) {
+      return invalid("ROOT_PROOF_SCOPE_OR_TIME_INVALID", {
+        failedChecks: [failedCheck],
+        relativeTimeMs: {
+          issuedAtMinusNow: boundedDelta(proof.issuedAt - now),
+          expiresAtMinusNow: boundedDelta(proof.expiresAt - now),
+          lifetimeMinusTtl: boundedDelta(proof.expiresAt - proof.issuedAt - TTL_MS)
+        }
+      });
     }
     if (!this.store.claimExecutionObservation("".concat(PREFIX, ":").concat(proof.call), new Date(proof.expiresAt).toISOString(), new Date(now).toISOString())) {
       return invalid("ROOT_PROOF_ALREADY_CONSUMED");
