@@ -607,6 +607,7 @@ export async function startSessionMessageBroker(stateDirectory: string, budget?:
     const historicalWakeVerifier: typeof verifyHistoricalWakeObservation = (target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs) =>
       verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, trustDatabasePath);
     let lastActivity = Date.now();
+    let activeRequests = 0;
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
       const readLine = sessionMessageLineReader(SESSION_MESSAGE_MAX_REQUEST_BYTES);
       // A failed client must not terminate the broker or undo a committed request.
@@ -619,9 +620,12 @@ export async function startSessionMessageBroker(stateDirectory: string, budget?:
           return;
         }
         if (line === null) return;
+        let authenticated = false;
         try {
           const request = JSON.parse(line) as BrokerRequest;
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
+          authenticated = true;
+          activeRequests += 1;
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
           const requestBudget = decodeIdentityDeadline(request.identityDeadlineNs);
           const data = ["ensure-relay", "acquire-relay"].includes(request.operation)
@@ -634,6 +638,8 @@ export async function startSessionMessageBroker(stateDirectory: string, budget?:
           // Older clients ignore the optional details field.
           socket.end(`${JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Broker request failed.",
             ...(error instanceof MessageCapacityError ? { details: error.details } : {}) })}\n`);
+        } finally {
+          if (authenticated) activeRequests -= 1;
         }
       });
     });
@@ -663,7 +669,7 @@ export async function startSessionMessageBroker(stateDirectory: string, budget?:
     published = true;
     remainingIdentityBudget(budget);
     idleTimer = setInterval(() => {
-      if (Date.now() - lastActivity < IDLE_EXIT_MS) return;
+      if (activeRequests > 0 || Date.now() - lastActivity < IDLE_EXIT_MS) return;
       cleanup();
       process.exit(0);
     }, 5000);
