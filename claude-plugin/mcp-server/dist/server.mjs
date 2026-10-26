@@ -36011,6 +36011,11 @@ var SessionMessageService = class {
   }
 };
 
+// mcp-server/src/session-actor-access.ts
+function isObservedSessionRoot(decision) {
+  return decision?.kind === "root" && typeof decision.identityId === "string" && decision.identityId.trim().length > 0 && decision.rootIdentityId === decision.identityId && decision.evidence?.kind === "observed" && typeof decision.evidence.reference === "string" && decision.evidence.reference.trim().length > 0;
+}
+
 // mcp-server/src/server.ts
 var responseModeProperty = { enum: ["compact", "full"], default: "full" };
 function toolSchema(source, options = {}) {
@@ -36291,7 +36296,7 @@ var SESSION_MESSAGE_SERVER_INSTRUCTIONS = "\uC138\uC158 \uBA54\uC2DC\uC9C0\uB294
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, classification2 = null) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, classification2 = null, sessionActorAdapter = null) {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} }, instructions: serverInstructions() }
@@ -36492,7 +36497,18 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       }
     ])
   }));
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, async (request, context) => {
+    try {
+      const actor = context.signal.aborted ? null : await sessionActorAdapter?.observeCall(request, context);
+      if (context.signal.aborted || !isObservedSessionRoot(actor)) {
+        return toolResult(apiError("BINDING_REQUIRED", "A verified session root is required to use AGS tools.", { reasonCode: "SESSION_ROOT_REQUIRED" }));
+      }
+    } catch (error61) {
+      return toolResult(apiError("MCP_UNAVAILABLE", "Session caller identity observation failed.", {
+        reasonCode: "SESSION_ACTOR_OBSERVATION_FAILED",
+        cause: failureContext(error61)
+      }));
+    }
     const args = asRecord(request.params.arguments);
     const attested = (tool, call) => hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
     const withMode = (field2, call, project) => {
