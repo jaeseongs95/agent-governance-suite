@@ -237,13 +237,57 @@ try {
       throw new Error(`host-owned wrapper API failed its dependency-free fixture check.\n${wrapper.stderr ?? ""}`);
     }
 
-    // The session board gate denies the first edit of a session without a summary once, then lets it through.
-    const gateInput = `${JSON.stringify({ hook_event_name: "PreToolUse", session_id: "clean-room-board", agent_id: "", cwd: cleanRoot, tool_name: "Edit", tool_input: {} })}\n`;
-    const firstGate = runNode("mcp-server/dist/session-board-hook.mjs", gateInput);
-    const secondGate = runNode("mcp-server/dist/session-board-hook.mjs", gateInput);
-    const firstDecision = firstGate.status === 0 && firstGate.stdout ? JSON.parse(firstGate.stdout).hookSpecificOutput?.permissionDecision : null;
-    if (firstGate.error || firstDecision !== "deny" || secondGate.error || secondGate.status !== 0 || secondGate.stdout !== "") {
-      throw new Error(`session board hook failed its node_modules-free deny-once smoke check.\n${firstGate.stderr ?? ""}${secondGate.stderr ?? ""}`);
+    // Lifecycle events record activity; a missing summary must not gate ordinary tools.
+    const boardInput = { session_id: "clean-room-board", agent_id: "", cwd: cleanRoot };
+    const runBoardHook = (input) => runNode("mcp-server/dist/session-board-hook.mjs", `${JSON.stringify({ ...boardInput, ...input })}\n`);
+    await writeFile(path.join(cleanRoot, "state", "read-board.mjs"), `
+import { DatabaseSync } from "node:sqlite";
+const board = new DatabaseSync(process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH, { readOnly: true });
+try {
+  process.stdout.write(JSON.stringify(board.prepare("SELECT summary, last_prompt_at FROM sessions WHERE host = ? AND session_id = ?").get("codex", "clean-room-board") ?? null));
+} finally { board.close(); }
+`, "utf8");
+    const readBoard = () => {
+      const result = runNode("state/read-board.mjs", "");
+      if (result.error || result.status !== 0) throw new Error(`session board clean-room read failed.\n${result.stderr ?? ""}`);
+      return JSON.parse(result.stdout);
+    };
+    const boardStart = runBoardHook({ hook_event_name: "SessionStart" });
+    const startedBoard = readBoard();
+    if (boardStart.error || boardStart.status !== 0 || boardStart.stdout !== ""
+      || startedBoard?.summary !== null || startedBoard?.last_prompt_at !== null) {
+      throw new Error(`session board hook failed its node_modules-free lifecycle smoke check.\n${boardStart.stderr ?? ""}`);
+    }
+    const boardPrompt = runBoardHook({ hook_event_name: "UserPromptSubmit", prompt: "clean-room request" });
+    const promptedBoard = readBoard();
+    if (boardPrompt.error || boardPrompt.status !== 0 || boardPrompt.stdout !== ""
+      || typeof promptedBoard?.last_prompt_at !== "string" || !Number.isFinite(Date.parse(promptedBoard.last_prompt_at))) {
+      throw new Error(`session board hook failed its node_modules-free activity smoke check.\n${boardPrompt.stderr ?? ""}`);
+    }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const edit = runBoardHook({ hook_event_name: "PreToolUse", tool_name: "Edit", tool_input: {} });
+      if (edit.error || edit.status !== 0 || edit.stdout !== "") {
+        throw new Error(`session board hook gated an ordinary clean-room edit.\n${edit.stderr ?? ""}`);
+      }
+    }
+    const boardTool = { hook_event_name: "PreToolUse", tool_name: "mcp__agent_governance_suite__update_session_status" };
+    const boardUpdate = runBoardHook({ ...boardTool, tool_input: { summary: "clean-room work" } });
+    const boardOutput = boardUpdate.status === 0 && boardUpdate.stdout ? JSON.parse(boardUpdate.stdout).hookSpecificOutput : null;
+    if (boardUpdate.error || !boardOutput || Object.hasOwn(boardOutput, "permissionDecision")
+      || boardOutput.updatedInput?._sessionBinding?.host !== "codex"
+      || boardOutput.updatedInput?._sessionBinding?.sessionId !== boardInput.session_id) {
+      throw new Error(`session board hook failed its clean-room binding smoke check.\n${boardUpdate.stderr ?? ""}`);
+    }
+    for (const extra of [{ agent_id: "subagent" }, { agent_id: undefined }, { tool_input: { summary: "two\nlines" } }]) {
+      const denied = runBoardHook({ ...boardTool, tool_input: { summary: "forbidden write" }, ...extra });
+      const output = denied.status === 0 && denied.stdout ? JSON.parse(denied.stdout).hookSpecificOutput : null;
+      if (denied.error || output?.permissionDecision !== "deny" || Object.hasOwn(output, "updatedInput")) {
+        throw new Error(`session board hook failed its clean-room authorization smoke check.\n${denied.stderr ?? ""}`);
+      }
+    }
+    const finalBoard = readBoard();
+    if (finalBoard?.summary !== "clean-room work" || finalBoard?.last_prompt_at !== promptedBoard.last_prompt_at) {
+      throw new Error("session board hook changed clean-room activity or summary across rejected writes.");
     }
 
     const sourceText = "MCP와 SQLite";

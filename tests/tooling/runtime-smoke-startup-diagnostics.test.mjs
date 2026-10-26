@@ -127,14 +127,22 @@ function defaultSpawnResponse(scriptPath, args, options) {
     return { status: 0, signal: null, stdout: "host-wrapper-fixture: ready", stderr: "" };
   }
   if (base === "session-board-hook.mjs") {
-    const first = !defaultSpawnResponse.sessionBoardSeen;
-    defaultSpawnResponse.sessionBoardSeen = true;
+    const input = JSON.parse(options.input);
+    if (input.hook_event_name === "UserPromptSubmit") defaultSpawnResponse.boardPromptAt = "2026-10-26T00:00:00.000Z";
+    const boardTool = input.tool_name?.endsWith("__update_session_status");
+    const denied = boardTool && (input.agent_id !== "" || input.tool_input.summary.includes("\n"));
+    if (boardTool && !denied) defaultSpawnResponse.boardSummary = input.tool_input.summary;
     return {
       status: 0,
       signal: null,
-      stdout: first ? JSON.stringify({ hookSpecificOutput: { permissionDecision: "deny" } }) : "",
+      stdout: boardTool ? JSON.stringify({ hookSpecificOutput: denied ? { permissionDecision: "deny" } : {
+        updatedInput: { ...input.tool_input, _sessionBinding: { host: "codex", sessionId: input.session_id } },
+      } }) : "",
       stderr: "",
     };
+  }
+  if (base === "read-board.mjs") {
+    return { status: 0, signal: null, stdout: JSON.stringify({ summary: defaultSpawnResponse.boardSummary, last_prompt_at: defaultSpawnResponse.boardPromptAt }), stderr: "" };
   }
   if (base === "server.mjs") {
     const lookupEnvelope = { ok: true, data: { status: "matched", matches: [{ term: "MCP" }, { term: "SQLite" }] } };
@@ -180,7 +188,8 @@ function mockContinuityHook(result) {
 
 beforeEach(() => {
   vi.resetAllMocks();
-  defaultSpawnResponse.sessionBoardSeen = false;
+  defaultSpawnResponse.boardPromptAt = null;
+  defaultSpawnResponse.boardSummary = null;
   boundary.mkdtemp.mockResolvedValue(cleanRoot);
   boundary.mkdir.mockResolvedValue(undefined);
   boundary.cp.mockResolvedValue(undefined);
