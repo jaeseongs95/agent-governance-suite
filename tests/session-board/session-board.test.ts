@@ -313,6 +313,9 @@ describe("session board MCP tools", () => {
     handleSessionBoardHook({ hook_event_name: "PreToolUse", session_id: "s1", agent_id: "", cwd: "D:/work/repo", tool_name: "mcp__agent_governance_suite__update_session_status", tool_input: { summary: "릴리스 준비" } }, board, "claude-code");
     const client = await connect(databasePath);
     const binding = { host: "claude-code", sessionId: "s1" };
+    const tool = (await client.listTools()).tools.find((item) => item.name === "update_session_status");
+    expect(tool?.description).toContain("Do not repeat it for an unchanged task.");
+    expect(tool?.description).not.toContain("when a request starts");
 
     const recorded = payload(await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "릴리스 준비", _sessionBinding: binding } }));
     expect(recorded).toMatchObject({ ok: true, data: { sessionId: "s1", summary: "릴리스 준비", current: true } });

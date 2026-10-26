@@ -819,11 +819,25 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
         body: "wake",
       });
       await expect(sessionMessageRequest("reserve-wake", { target, nonce: issued }, directory)).resolves.toEqual({ dispatch: true });
-      await runSessionBoardHook("claude-code", hook("UserPromptSubmit", {
-        prompt: `[agent-governance-suite:wake:${issued}]\n[agent-governance-suite:wake:${unissued}]`,
-      }));
-      const edit = await runSessionBoardHook("claude-code", hook("PreToolUse", { tool_name: "Edit", tool_input: {} }));
-      expect(edit).toContain('"permissionDecision":"deny"');
+      const board = new DatabaseSync(path.join(directory, "session-board.sqlite3"));
+      try {
+        // Fix the prior request marker without sleeping or changing the broker's clock.
+        const initialPromptAt = new Date(Date.now() - 60_000).toISOString();
+        board.prepare("UPDATE sessions SET last_prompt_at = ? WHERE host = ? AND session_id = ?")
+          .run(initialPromptAt, target.host, target.sessionId);
+        const lastPromptAt = () => (board.prepare("SELECT last_prompt_at FROM sessions WHERE host = ? AND session_id = ?")
+          .get(target.host, target.sessionId) as { last_prompt_at: string }).last_prompt_at;
+
+        // A repeated issued bell is recognized, but recognition of one bell must not bless an unissued one.
+        await runSessionBoardHook("claude-code", hook("UserPromptSubmit", {
+          prompt: `[agent-governance-suite:wake:${issued}]\n[agent-governance-suite:wake:${issued}]`,
+        }));
+        expect(lastPromptAt()).toBe(initialPromptAt);
+        await runSessionBoardHook("claude-code", hook("UserPromptSubmit", {
+          prompt: `[agent-governance-suite:wake:${issued}]\n[agent-governance-suite:wake:${unissued}]`,
+        }));
+        expect(Date.parse(lastPromptAt())).toBeGreaterThan(Date.parse(initialPromptAt));
+      } finally { board.close(); }
     } finally {
       if (previousMessageState === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
       else process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = previousMessageState;

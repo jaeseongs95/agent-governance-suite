@@ -1,16 +1,15 @@
 import assert from 'node:assert/strict';
 import { spawnSync, execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdirSync, mkdtempSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
-import test from 'node:test';
+import test, { after } from 'node:test';
+import { tmpdir } from 'node:os';
 import { canonicalJson, sha256, validateReport } from '../../skills/change-scope-guardian/scripts/lib.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
 const evidence = process.env.GOV11_EVIDENCE_DIR;
-const fixtureParent = evidence ? join(evidence, 'fixtures') : join(root, 'work/gov11-fixtures');
-mkdirSync(fixtureParent, { recursive: true });
 const descriptor = JSON.parse(readFileSync(join(root, 'skills/change-scope-guardian/integration/skill-descriptor.json'), 'utf8'));
 const stage = { stageId: 'gov11-scope', capability: 'change-scope-assurance', satisfiedCapabilities: ['change-scope-assurance'], gate: { validator: 'change-scope-report.v1' }, ...descriptor.providers[1] };
 const runtimeUrl = process.env.GOV11_WORKFLOW_SERVICE_URL ?? pathToFileURL(join(root, 'mcp-server/src/workflow-service.ts')).href;
@@ -19,6 +18,8 @@ register();
 const { WorkflowService } = await import(runtimeUrl);
 // No constructor, workflow store, signing key, registration or DB is needed for the real mapping consumer.
 const consumer = Object.create(WorkflowService.prototype);
+const fixtureParent = mkdtempSync(join(tmpdir(), 'ags-gov11-'));
+after(() => rmSync(fixtureParent, { recursive: true, force: true }));
 
 function task() {
   return { schemaVersion: '1.0.0', taskId: 'gov11', objective: 'Repair source', scope: { included: ['src/**'], excluded: ['excluded/**'] }, acceptanceCriteria: ['Scope is reviewed'], riskLevel: 'low', workUnits: [], requiredCapabilities: [], constraints: [], authorization: { allowedActions: ['edit'], prohibitedActions: ['main', 'tag', 'install', 'delete', 'DB'], approvalRequired: ['release', 'deploy', 'permission-expansion'] }, decision: { complexity: 'simple', hasConflicts: false }, orchestration: { requested: false, mcpAvailable: false } };

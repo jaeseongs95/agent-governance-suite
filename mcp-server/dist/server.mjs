@@ -36451,7 +36451,7 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
       },
       {
         name: "update_session_status",
-        description: "Write this session's one-line current work (what, where, next external step) to the local session board shared by every host on this machine. The plugin hook binds the session; call it when a request starts or the work changes.",
+        description: "Write this session's one-line current work (what, where, next external step) to the local session board shared by every host on this machine. The plugin hook binds the session; call it when the work or next external step changes. Do not repeat it for an unchanged task.",
         inputSchema: contractSchemas.updateSessionStatusRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
       },

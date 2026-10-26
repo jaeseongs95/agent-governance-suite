@@ -52,7 +52,9 @@ describe("ponytail at the implementation step", () => {
     for (const copy of ["skills/orchestrator/SKILL.md", "claude-plugin/skills/orchestrator/SKILL.md"]) {
       const text = `${readFileSync(`${root}${copy}`, "utf8")}\n${readFileSync(`${root}${copy.replace("SKILL.md", "references/entry-details.md")}`, "utf8")}`;
       expect(text).toContain("이 단계는 변경 전 기준선 뒤, 위험한 상태 변경의 사전 점검과 범위·수용 근거 확인 전에 실행된다.");
-      expect(text).toContain("배포·push·태그처럼 사전 점검 대상인 작업은 사전 점검 뒤에 실행하고");
+      expect(text).toContain("배포·태그처럼 별도 승인 경계에 있는 작업은 필요한 사전 점검 뒤에 실행한다.");
+      expect(text).toContain("시험 실행, 작업 브랜치의 커밋·push와 CI 실행에는 추가 PRE나 승인을 요구하지 않는다.");
+      expect(text).not.toContain("배포·push·태그처럼 사전 점검 대상인 작업은 사전 점검 뒤에 실행하고");
       expect(text).toContain("범위와 수용 기준은 명시적 요청으로 보고 줄이지 않으며");
       expect(text).toContain("작업 계약이 없으면 사용자 요청이 정한 범위를 같은 기준으로 삼는다.");
     }
