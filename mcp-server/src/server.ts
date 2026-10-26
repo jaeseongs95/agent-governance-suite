@@ -33,7 +33,6 @@ import { classificationInputSchema, selectionInputSchema, type SkillClassificati
 import { SessionMessageService, type SessionPresenceList } from "./session-message-service.js";
 import type { SessionPresenceView } from "./session-message-store.js";
 import { type TrustService } from "./trust-service.js";
-import { isObservedSessionRoot, type SessionActorAdapter } from "./session-actor-access.js";
 
 type ObjectSchema = Record<string, unknown> & {
   properties?: Record<string, unknown>;
@@ -394,7 +393,6 @@ export function createMcpServer(
   sessionMessages: SessionMessageService = new SessionMessageService(),
   trust: TrustService | null = null,
   classification: SkillClassificationGateway | null = null,
-  sessionActorAdapter: SessionActorAdapter | null = null,
 ): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -604,19 +602,7 @@ export function createMcpServer(
     ]),
   }));
 
-  server.setRequestHandler(CallToolRequestSchema, async (request, context) => {
-    // No AGS tool, including bootstrap and read-only tools, bypasses this policy.
-    // Existing workflow/receipt attestations remain separate, narrower checks.
-    try {
-      const actor = context.signal.aborted ? null : await sessionActorAdapter?.observeCall(request, context);
-      if (context.signal.aborted || !isObservedSessionRoot(actor)) {
-        return toolResult(apiError("BINDING_REQUIRED", "A verified session root is required to use AGS tools.", { reasonCode: "SESSION_ROOT_REQUIRED" }));
-      }
-    } catch (error) {
-      return toolResult(apiError("MCP_UNAVAILABLE", "Session caller identity observation failed.", {
-        reasonCode: "SESSION_ACTOR_OBSERVATION_FAILED", cause: failureContext(error),
-      }));
-    }
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const args = asRecord(request.params.arguments);
     // Only a host with an attestation adapter strips and verifies the hook token.
     const attested = <T>(tool: string, call: (input: Record<string, unknown>) => T): T =>
