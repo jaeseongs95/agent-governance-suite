@@ -19,7 +19,7 @@ import { createMcpServer } from "./server.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { WorkflowService } from "./workflow-service.js";
-import { HostAttestationProvider } from "./host-attestation.js";
+import { HostAttestationProvider, type HostExecutionAdapter } from "./host-attestation.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { SqliteKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { TrustStore } from "./trust-store.js";
@@ -38,8 +38,11 @@ import { hostActorId } from "./host-attestation.js";
 import { createNativeClassificationAdapters, type NativeClassificationAdapterDefinition } from "./skill-classification/native-adapters.js";
 import { bindNativeClassificationDefinitions } from "./skill-classification/native-cli-strategies.js";
 
-/** Trusted installation code supplies protocol implementations; request JSON cannot register adapters. */
-export async function startMcpServer(wireAdapters: ReadonlyMap<string, ClassificationWireAdapter> = new Map()): Promise<void> {
+/** Trusted installation code supplies adapters; request JSON and environment names cannot register them. */
+export async function startMcpServer(
+  wireAdapters: ReadonlyMap<string, ClassificationWireAdapter> = new Map(),
+  executionAdapters?: ReadonlyMap<string, HostExecutionAdapter>,
+): Promise<void> {
   const installedWireAdapters = new Map(wireAdapters);
   const registryPath = resolveRegistryPath();
   const workflowDatabasePath = resolveWorkflowDatabasePath();
@@ -60,7 +63,7 @@ export async function startMcpServer(wireAdapters: ReadonlyMap<string, Classific
   });
 
   const validator = new ContractValidator();
-  const executionAdapter = resolveHostAttestation();
+  const executionAdapter = resolveHostAttestation(process.env, executionAdapters);
   const hostAttestation = executionAdapter ? new HostAttestationProvider(store, executionAdapter) : null;
   // Neither bundled host currently exposes a cryptographically distinct direct-human approval event.
   const trust = new TrustService(trustStore);

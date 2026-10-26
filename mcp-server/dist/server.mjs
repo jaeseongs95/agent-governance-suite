@@ -45670,7 +45670,7 @@ function bindNativeClassificationDefinitions(definitions, behaviors = builtInBeh
 }
 
 // mcp-server/src/index.ts
-async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map()) {
+async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map(), executionAdapters) {
   const installedWireAdapters = new Map(wireAdapters);
   const registryPath = resolveRegistryPath();
   const workflowDatabasePath = resolveWorkflowDatabasePath();
@@ -45690,7 +45690,7 @@ async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map()) {
     store.close();
   });
   const validator = new ContractValidator();
-  const executionAdapter = resolveHostAttestation();
+  const executionAdapter = resolveHostAttestation(process.env, executionAdapters);
   const hostAttestation = executionAdapter ? new HostAttestationProvider(store, executionAdapter) : null;
   const trust = new TrustService(trustStore);
   const service = new WorkflowService(
