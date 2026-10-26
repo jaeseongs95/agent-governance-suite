@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import childProcess from "node:child_process";
+import { performance } from "node:perf_hooks";
 import path from "node:path";
 import { syncBuiltinESMExports } from "node:module";
 import { pathToFileURL } from "node:url";
