@@ -7,6 +7,8 @@ import { setTimeout, clearTimeout } from 'node:timers';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+// Compact generated JSON only; raw command streams and sealed upgrade proof bytes are unchanged.
+const evidenceJson = value => JSON.stringify(value) + '\n';
 const ordinal = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 const safePath = value => typeof value === 'string' && value.length > 0 &&
   !value.includes('\\') && !value.includes(':') && !value.includes('\0') &&
@@ -113,7 +115,7 @@ export function recordCollectorFailure(record, error) {
 }
 
 export function writeCollectorRecord(output, record) {
-  return fs.writeFile(path.join(output, 'result.json'), JSON.stringify(record, null, 2) + '\n', { flag: 'wx' });
+  return fs.writeFile(path.join(output, 'result.json'), evidenceJson(record), { flag: 'wx' });
 }
 
 export function emitCollectorSummary(record, bytes, artifactOk) {
@@ -229,7 +231,7 @@ print(json.dumps({'bytes': archive.stat().st_size, 'sha256': archive_hash.hexdig
 export function planSourceArchive(existingRows, record, archive, cap) {
   assertRows(existingRows);
   assert(Number.isSafeInteger(cap) && cap >= 1 && cap <= 8 * 1024 * 1024);
-  const bytes = value => Buffer.byteLength(JSON.stringify(value, null, 2) + '\n');
+  const bytes = value => Buffer.byteLength(evidenceJson(value));
   const row = (relativePath, size) => ({ relativePath, bytes: size, sha256: '0'.repeat(64) });
   const maximum = descriptor => {
     const rows = [...existingRows, row('source-archive.json', bytes(descriptor)),
@@ -262,7 +264,7 @@ export async function finalizePartial(output, githubOutput, outcome, cap = 8 * 1
   const root = path.resolve(output);
   const info = await fs.lstat(root);
   assert(info.isDirectory() && !info.isSymbolicLink(), 'Result directory must be a real directory');
-  const write = (name, value) => fs.writeFile(path.join(root, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+  const write = (name, value) => fs.writeFile(path.join(root, name), evidenceJson(value), { flag: 'wx' });
   // No PASS is inferred from a cancelled process or from files left by a partial write.
   await write('finalization.json', { outcome, finalizedAt: new Date().toISOString(),
     evidenceState: 'OBSERVED_FILES_MAY_BE_PARTIAL', collectorCompletionRequired: false,
@@ -383,7 +385,7 @@ async function main() {
   let sourceArchive = null;
   record.sourceArchive = { status: process.env.RUNNER_OS === 'Linux' && shardIndex === 2 ? 'NOT_PREPARED' : 'NOT_SELECTED_SHARD',
     owner: { runnerOs: 'Linux', shardIndex: 2 }, locator: null };
-  const writeJson = (name, value) => fs.writeFile(path.join(output, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+  const writeJson = (name, value) => fs.writeFile(path.join(output, name), evidenceJson(value), { flag: 'wx' });
   const deadline = Date.now() + 12 * 60_000;
   async function command(name, executable, args, cwd, maxMs, extraEnv = {}) {
     const remaining = deadline - Date.now();
@@ -491,7 +493,7 @@ async function main() {
     const binding = { runId: process.env.GITHUB_RUN_ID, attempt: process.env.GITHUB_RUN_ATTEMPT,
       job: process.env.GITHUB_JOB, shardIndex, head, sourceTree };
     const manifest = await buildHeadManifest(sourceBlobs, relative => fs.readFile(path.join(source, relative)), binding);
-    const manifestBytes = Buffer.from(JSON.stringify(manifest, null, 2) + '\n');
+    const manifestBytes = Buffer.from(evidenceJson(manifest));
     const transport = { bytes: manifestBytes.length, sha256: sha(manifestBytes) };
     Object.assign(config, { archive: { entries: manifest.files }, portableId: manifest.portableId, transport,
       gitContext: { ...config.gitContext, checkoutCommit: head, sourceTree }, sourceBinding: binding });
