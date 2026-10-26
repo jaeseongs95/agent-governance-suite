@@ -29,6 +29,13 @@ function retainFailureSecondary(error, secondary) {
   }
   return error;
 }
+function producerFailure(reason, message) {
+  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
+  const error = new Error(message);
+  Object.defineProperty(error, "code", { value: reason, enumerable: true });
+  producerReasons.set(error, reason);
+  return error;
+}
 function producerFailureReason(error) {
   return error && (typeof error === "object" || typeof error === "function") ? producerReasons.get(error) ?? null : null;
 }
@@ -38,7 +45,7 @@ import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import path2 from "node:path";
-import { performance } from "node:perf_hooks";
+import { performance as performance2 } from "node:perf_hooks";
 import tls from "node:tls";
 import { fileURLToPath } from "node:url";
 
@@ -425,6 +432,14 @@ function sessionMessageLineReader(limitBytes) {
   };
 }
 
+// mcp-server/src/broker-identity-budget.ts
+function encodeIdentityDeadline(deadlineMonotonicMs) {
+  const before = process.hrtime.bigint();
+  const remaining = Math.floor(deadlineMonotonicMs - performance.now());
+  if (!Number.isFinite(remaining) || remaining < 1) throw producerFailure("BROKER_IDENTITY_BUDGET_EXPIRED", "The broker identity budget expired.");
+  return String(before + BigInt(remaining) * 1000000n);
+}
+
 // mcp-server/src/session-message-client.ts
 var BrokerRequestRejected = class extends Error {
   details;
@@ -464,7 +479,7 @@ function throwIfAborted(signal) {
 function remainingMilliseconds(deadline, signal, message = SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE) {
   throwIfAborted(signal);
   const inherited = signal ? deadlineMetadata.get(signal) : void 0;
-  const remaining = (inherited?.deadline ?? deadline) - performance.now();
+  const remaining = (inherited?.deadline ?? deadline) - performance2.now();
   if (remaining < 1) throw deadlineError(inherited?.message ?? message);
   return remaining;
 }
@@ -474,7 +489,7 @@ function assertWithinDeadline(deadline, signal, message) {
 async function withDeadline(timeoutMs, parentSignal, message, work, absoluteDeadline) {
   const parentDeadline = parentSignal ? deadlineMetadata.get(parentSignal) : void 0;
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw deadlineError(parentDeadline?.message ?? message);
-  const now = performance.now();
+  const now = performance2.now();
   if (absoluteDeadline !== void 0 && !Number.isFinite(absoluteDeadline)) throw deadlineError(message);
   const requestedDeadline = Math.min(now + timeoutMs, absoluteDeadline ?? Infinity);
   const inherited = parentDeadline && parentDeadline.deadline <= requestedDeadline ? parentDeadline : void 0;
@@ -582,7 +597,13 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
           }
           let frame;
           try {
-            frame = "".concat(JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload }), "\n");
+            frame = "".concat(JSON.stringify({
+              protocolVersion: SESSION_MESSAGE_PROTOCOL,
+              token,
+              operation,
+              payload,
+              ...["ensure-relay", "acquire-relay"].includes(operation) ? { identityDeadlineNs: encodeIdentityDeadline(deadline) } : {}
+            }), "\n");
           } catch (cause) {
             throw clientFailure("BROKER_REQUEST_ENCODING_FAILED", "Cannot encode the broker request.", cause);
           }
@@ -742,7 +763,13 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
         let child;
         try {
-          child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+          child = spawn(process.execPath, [
+            brokerPath,
+            "--state-directory",
+            stateDirectory,
+            "--startup-identity-deadline-ns",
+            encodeIdentityDeadline(deadline)
+          ], {
             detached: true,
             windowsHide: true,
             stdio: "ignore",
@@ -769,7 +796,7 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
 async function sessionMessageRequest(operation, payload, stateDirectory = resolveSessionMessageStateDirectory(), options = {}) {
   options = { ...options };
   const totalTimeoutMs = options.totalTimeoutMs ?? SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
-  const absoluteDeadline = options.deadlineMonotonicMs ?? (options.noOperationReplay ? performance.now() + totalTimeoutMs : void 0);
+  const absoluteDeadline = options.deadlineMonotonicMs ?? (options.noOperationReplay ? performance2.now() + totalTimeoutMs : void 0);
   return withDeadline(totalTimeoutMs, void 0, SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE, async (signal, deadline) => {
     if (options.noOperationReplay) {
       await ensureSessionMessageBroker(stateDirectory, remainingMilliseconds(deadline, signal), signal, options.prepareStateDirectory);

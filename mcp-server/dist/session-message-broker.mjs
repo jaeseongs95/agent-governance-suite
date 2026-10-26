@@ -3,7 +3,7 @@
 // mcp-server/src/session-message-broker.ts
 import { createHash as createHash5, createPublicKey, randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual2, X509Certificate as X509Certificate2 } from "node:crypto";
 import { existsSync, renameSync as renameSync2, rmSync, writeFileSync } from "node:fs";
-import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile as readFile2, writeFile } from "node:fs/promises";
 import path5 from "node:path";
 import tls from "node:tls";
 import { setTimeout as delay2 } from "node:timers/promises";
@@ -58,6 +58,13 @@ function retainFailureSecondary(error, secondary) {
     const prior = secondaryFailures.get(error) ?? [];
     if (prior.length < 2 && !prior.includes(secondary)) secondaryFailures.set(error, [...prior, secondary]);
   }
+  return error;
+}
+function producerFailure(reason, message) {
+  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
+  const error = new Error(message);
+  Object.defineProperty(error, "code", { value: reason, enumerable: true });
+  producerReasons.set(error, reason);
   return error;
 }
 function producerFailureReason(error) {
@@ -1923,29 +1930,114 @@ function createSelfSignedCertificate(now = /* @__PURE__ */ new Date()) {
 }
 
 // mcp-server/src/process-identity.ts
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-function processStartToken(pid, platform = process.platform, timeoutMs) {
+import { readFile } from "node:fs/promises";
+import { types as types2 } from "node:util";
+function tokenCommand(pid, platform) {
+  return platform === "win32" ? ["powershell.exe", [
+    "-NoProfile",
+    "-NonInteractive",
+    "-Command",
+    "[System.Diagnostics.Process]::GetProcessById(".concat(pid, ").StartTime.ToUniversalTime().ToString('o')")
+  ]] : ["ps", ["-p", String(pid), "-o", "lstart="]];
+}
+function tokenOptions(platform, timeoutMs) {
+  const cap = platform === "win32" ? 5e3 : 3e3;
+  return {
+    encoding: "utf8",
+    windowsHide: true,
+    timeout: Math.min(cap, Math.floor(timeoutMs ?? cap)),
+    maxBuffer: 4096,
+    stdio: ["ignore", "pipe", "pipe"]
+  };
+}
+function identityFailure(error, platform, started, timeoutMs, observer, capturedStderr) {
+  const cause = error && (typeof error === "object" || typeof error === "function") ? error : new Error("Process identity query failed.", { cause: error });
+  tagProducerFailure(cause, "PROCESS_START_TOKEN_FAILED");
+  const field = (key) => {
+    try {
+      return types2.isProxy(cause) ? void 0 : Object.getOwnPropertyDescriptor(cause, key)?.value;
+    } catch {
+      return void 0;
+    }
+  };
+  const nativeCode = field("code"), status = field("status") ?? (typeof nativeCode === "number" ? nativeCode : void 0), signal = field("signal"), raw = capturedStderr ?? field("stderr");
+  const stderr = Buffer.isBuffer(raw) ? raw.subarray(0, 4096).toString("utf8") : typeof raw === "string" ? raw.slice(0, 4096) : "";
+  const diagnostic = Object.freeze({
+    stage: platform === "win32" ? "windows-query" : platform === "linux" ? "proc-read" : "posix-query",
+    elapsedMs: Math.max(0, performance.now() - started),
+    timeoutMs: platform === "linux" ? null : tokenOptions(platform, timeoutMs).timeout,
+    nativeCode: typeof nativeCode === "string" && ["ENOENT", "EACCES", "EPERM", "ETIMEDOUT", "ENOBUFS", "EIO", "EINVAL", "ESRCH", "ABORT_ERR"].includes(nativeCode) ? nativeCode : null,
+    status: typeof status === "number" && Number.isInteger(status) && Math.abs(status) <= 2147483648 ? status : null,
+    signal: typeof signal === "string" && ["SIGTERM", "SIGKILL", "SIGINT", "SIGBREAK", "SIGHUP", "SIGABRT"].includes(signal) ? signal : null,
+    // A fixed indication, never native error text or proof of the underlying OS cause.
+    stderrIndication: /UnauthorizedAccessException|PermissionDenied|AccessDenied/u.test(stderr) ? "permission-denied-indication" : stderr ? "unclassified" : null
+  });
+  try {
+    process.stderr.write("[agent-governance-suite] process-identity-failure " + JSON.stringify(diagnostic) + "\n");
+  } catch (secondary) {
+    retainFailureSecondary(cause, secondary);
+  }
+  try {
+    observer?.(cause, diagnostic);
+  } catch (secondary) {
+    retainFailureSecondary(cause, secondary);
+  }
+  return null;
+}
+function procToken(stat) {
+  const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
+  return fields[19] ?? null;
+}
+function processStartToken(pid, platform = process.platform, timeoutMs, onFailure) {
   if (!Number.isInteger(pid) || pid < 1) return null;
   if (timeoutMs !== void 0 && (!Number.isFinite(timeoutMs) || timeoutMs < 1)) return null;
+  const started = performance.now();
   try {
-    if (platform === "win32") {
-      return execFileSync("powershell.exe", [
-        "-NoProfile",
-        "-NonInteractive",
-        "-Command",
-        "[System.Diagnostics.Process]::GetProcessById(".concat(pid, ").StartTime.ToUniversalTime().ToString('o')")
-      ], { encoding: "utf8", windowsHide: true, timeout: Math.min(5e3, Math.floor(timeoutMs ?? 5e3)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
-    }
     if (platform === "linux") {
-      const stat = readFileSync("/proc/".concat(pid, "/stat"), "utf8");
-      const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
-      return fields[19] ?? null;
+      return procToken(readFileSync("/proc/".concat(pid, "/stat"), "utf8"));
     }
-    return execFileSync("ps", ["-p", String(pid), "-o", "lstart="], { encoding: "utf8", timeout: Math.min(3e3, Math.floor(timeoutMs ?? 3e3)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
-  } catch {
-    return null;
+    const [executable, args] = tokenCommand(pid, platform);
+    return execFileSync(executable, args, tokenOptions(platform, timeoutMs)).trim() || null;
+  } catch (error) {
+    return identityFailure(error, platform, started, timeoutMs, onFailure);
   }
+}
+async function processStartTokenAsync(pid, platform = process.platform, timeoutMs, onFailure, signal) {
+  if (!Number.isInteger(pid) || pid < 1 || timeoutMs !== void 0 && (!Number.isFinite(timeoutMs) || timeoutMs < 1)) return null;
+  const started = performance.now();
+  if (platform === "linux") {
+    try {
+      return procToken(await readFile("/proc/".concat(pid, "/stat"), { encoding: "utf8", signal }));
+    } catch (error) {
+      return identityFailure(error, platform, started, timeoutMs, onFailure);
+    }
+  }
+  const [executable, args] = tokenCommand(pid, platform);
+  try {
+    return await new Promise((resolve) => execFile(executable, args, { ...tokenOptions(platform, timeoutMs), signal }, (error, stdout, stderr) => {
+      resolve(error ? identityFailure(error, platform, started, timeoutMs, onFailure, stderr) : stdout.trim() || null);
+    }));
+  } catch (error) {
+    return identityFailure(error, platform, started, timeoutMs, onFailure);
+  }
+}
+
+// mcp-server/src/broker-identity-budget.ts
+function decodeIdentityDeadline(value) {
+  if (value === void 0) return void 0;
+  if (typeof value !== "string" || !/^[1-9][0-9]{0,29}$/u.test(value)) {
+    throw producerFailure("BROKER_IDENTITY_BUDGET_INVALID", "The broker identity budget is invalid.");
+  }
+  const deadline = BigInt(value);
+  return () => Number((deadline - process.hrtime.bigint()) / 1000000n);
+}
+function remainingIdentityBudget(budget) {
+  if (!budget) return void 0;
+  const remaining2 = Math.floor(budget());
+  if (!Number.isFinite(remaining2) || remaining2 < 1) throw producerFailure("BROKER_IDENTITY_BUDGET_EXPIRED", "The broker identity budget expired.");
+  return remaining2;
 }
 
 // mcp-server/src/broker-process-lock.ts
@@ -1969,7 +2061,23 @@ function unavailable(reason, cause) {
     { code: "BROKER_LOCK_" + reason }
   );
 }
-function definitelyGone(pid, expectedStartHash) {
+function remaining(budget) {
+  if (!budget) return void 0;
+  const value = Math.floor(budget());
+  if (!Number.isFinite(value) || value < 1) return unavailable("BUDGET_EXPIRED");
+  return value;
+}
+function startToken(pid, budget) {
+  let cause;
+  const token = processStartToken(pid, process.platform, remaining(budget), (error) => {
+    cause = error;
+  });
+  if (token === null) return unavailable("OWNER_UNVERIFIED", cause);
+  remaining(budget);
+  return token;
+}
+function definitelyGone(pid, expectedStartHash, budget) {
+  remaining(budget);
   try {
     process.kill(pid, 0);
   } catch (error) {
@@ -1978,11 +2086,11 @@ function definitelyGone(pid, expectedStartHash) {
     return unavailable("OWNER_UNVERIFIED", error);
   }
   if (expectedStartHash === void 0) return false;
-  const actual = processStartToken(pid);
-  if (actual === null) return unavailable("OWNER_UNVERIFIED");
+  const actual = startToken(pid, budget);
   return startHash(actual) !== expectedStartHash;
 }
-function retireObservedDeadOwner(lockPath) {
+function retireObservedDeadOwner(lockPath, budget) {
+  remaining(budget);
   let info;
   try {
     info = lstatSync(lockPath);
@@ -2005,7 +2113,7 @@ function retireObservedDeadOwner(lockPath) {
   if (!match || !entry.isDirectory() || entry.isSymbolicLink()) return unavailable("UNRECOGNIZED_OWNER");
   const pid = Number(match[1]);
   if (!Number.isSafeInteger(pid) || pid < 1) return unavailable("UNRECOGNIZED_OWNER");
-  if (!definitelyGone(pid, match[3])) return false;
+  if (!definitelyGone(pid, match[3], budget)) return false;
   const marker = path4.join(lockPath, entry.name);
   try {
     rmdirSync(marker);
@@ -2022,9 +2130,10 @@ function retireObservedDeadOwner(lockPath) {
     throw error;
   }
 }
-function retireAbandonedStages(lockPath) {
+function retireAbandonedStages(lockPath, budget) {
   const prefix = path4.basename(lockPath) + ".stage-";
   for (const entry of readdirSync(path4.dirname(lockPath), { withFileTypes: true })) {
+    remaining(budget);
     if (!entry.name.startsWith(prefix) || !entry.isDirectory() || entry.isSymbolicLink()) continue;
     const stage = path4.join(path4.dirname(lockPath), entry.name);
     const namedOwner = entry.name.slice(prefix.length, -7);
@@ -2043,7 +2152,7 @@ function retireAbandonedStages(lockPath) {
     const pid = Number(match[1]);
     if (!Number.isSafeInteger(pid) || pid < 1) continue;
     try {
-      if (!definitelyGone(pid, match[3])) continue;
+      if (!definitelyGone(pid, match[3], budget)) continue;
     } catch (error) {
       if (code(error) === "BROKER_LOCK_OWNER_UNVERIFIED") continue;
       throw error;
@@ -2056,14 +2165,15 @@ function retireAbandonedStages(lockPath) {
     }
   }
 }
-function acquireBrokerProcessLock(lockPath) {
+function acquireBrokerProcessLock(lockPath, budget) {
+  remaining(budget);
   if (ownStartHash === void 0) {
-    const token = processStartToken(process.pid);
-    if (token === null) return unavailable("OWNER_UNVERIFIED");
+    const token = startToken(process.pid, budget);
     ownStartHash = startHash(token);
   }
   const owner = "owner-" + process.pid + "-" + randomBytes3(16).toString("hex") + "-" + ownStartHash;
-  retireAbandonedStages(lockPath);
+  retireAbandonedStages(lockPath, budget);
+  remaining(budget);
   const stage = mkdtempSync(lockPath + ".stage-" + owner + "-");
   let markerCreated = false;
   let published = false;
@@ -2073,7 +2183,8 @@ function acquireBrokerProcessLock(lockPath) {
     mkdirSync3(path4.join(stage, owner), { mode: 448 });
     markerCreated = true;
     for (let attempt = 0; attempt < 2; attempt++) {
-      if (!retireObservedDeadOwner(lockPath)) break;
+      if (!retireObservedDeadOwner(lockPath, budget)) break;
+      remaining(budget);
       try {
         renameSync(stage, lockPath);
         published = true;
@@ -2115,13 +2226,13 @@ function acquireBrokerProcessLock(lockPath) {
   if (failure) throw failure.error;
   return result;
 }
-async function acquireBrokerProcessLockWhenReady(lockPath) {
+async function acquireBrokerProcessLockWhenReady(lockPath, budget) {
   for (let attempt = 0; ; attempt++) {
     try {
-      return acquireBrokerProcessLock(lockPath);
+      return acquireBrokerProcessLock(lockPath, budget);
     } catch (error) {
       if (attempt >= 19 || !REOBSERVE_CODES.includes(code(error) ?? "")) throw error;
-      await delay(25);
+      await delay(Math.min(25, remaining(budget) ?? 25));
     }
   }
 }
@@ -2151,7 +2262,7 @@ function releaseBrokerProcessLock(lock) {
 }
 
 // mcp-server/src/session-message-broker.ts
-import { performance } from "node:perf_hooks";
+import { performance as performance2 } from "node:perf_hooks";
 var IDLE_EXIT_MS = 6e4;
 var SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start"];
 function brokerFailureCode(error) {
@@ -2231,7 +2342,7 @@ async function credentials(stateDirectory) {
   let regenerate = true;
   if (existsSync(keyPath) && existsSync(certificatePath)) {
     try {
-      [key, certificate] = await Promise.all([readFile(keyPath, "utf8"), readFile(certificatePath, "utf8")]);
+      [key, certificate] = await Promise.all([readFile2(keyPath, "utf8"), readFile2(certificatePath, "utf8")]);
       const parsed = new X509Certificate2(certificate);
       const privatePublic = createPublicKey(key).export({ type: "spki", format: "der" });
       const certificatePublic = parsed.publicKey.export({ type: "spki", format: "der" });
@@ -2262,7 +2373,7 @@ async function credentials(stateDirectory) {
     }
   }
   let token;
-  if (existsSync(tokenPath)) token = (await readFile(tokenPath, "utf8")).trim();
+  if (existsSync(tokenPath)) token = (await readFile2(tokenPath, "utf8")).trim();
   else token = "";
   if (!/^[A-Za-z0-9_-]{43}$/u.test(token)) {
     token = randomBytes4(32).toString("base64url");
@@ -2304,6 +2415,136 @@ function observePeerRelay(store, payload, accepted) {
     expiresAt: Date.now() + 15e3,
     ...wakeObservedAt === void 0 ? {} : { wakeObservedAt }
   });
+}
+function* queryIdentity(pid, budget) {
+  const observation = yield { pid, timeoutMs: remainingIdentityBudget(budget) };
+  try {
+    remainingIdentityBudget(budget);
+  } catch (error) {
+    throw retainFailureCause(error, observation.cause);
+  }
+  return observation;
+}
+function deniedIdentity(observation) {
+  const denied = { acquired: false, ...observation.diagnostic ? { diagnostic: observation.diagnostic } : {} };
+  if (observation.cause !== void 0) Object.defineProperty(denied, "cause", { value: observation.cause });
+  return denied;
+}
+function runIdentitySync(steps) {
+  let step = steps.next();
+  while (!step.done) {
+    const observation = { token: null };
+    observation.token = processStartToken(
+      step.value.pid,
+      process.platform,
+      step.value.timeoutMs,
+      (cause, diagnostic) => Object.assign(observation, { cause, diagnostic })
+    );
+    step = steps.next(observation);
+  }
+  return step.value;
+}
+async function runIdentityAsync(steps, signal) {
+  let step = steps.next();
+  while (!step.done) {
+    const observation = { token: null };
+    observation.token = await processStartTokenAsync(
+      step.value.pid,
+      process.platform,
+      step.value.timeoutMs,
+      (cause, diagnostic) => Object.assign(observation, { cause, diagnostic }),
+      signal
+    );
+    if (signal.aborted) throw retainFailureCause(new Error("The broker identity query was cancelled."), observation.cause);
+    step = steps.next(observation);
+  }
+  return step.value;
+}
+function* relayIdentityOperation(store, operation, payload, requestBudget) {
+  switch (operation) {
+    case "ensure-relay": {
+      const target = identity(payload.target);
+      const parentPid = integer2(payload.parentPid, "parentPid");
+      const parentStartToken = string(payload.parentStartToken, "parentStartToken");
+      const timeout = integer2(payload.identityTimeoutMs, "identityTimeoutMs");
+      if (parentPid < 1 || !parentStartToken.trim() || parentStartToken.length > 200 || timeout < 1 || timeout > 8e3) throw new Error("Invalid relay host observation or budget.");
+      const transport = string(payload.transport, "transport");
+      const previous = store.relayOwner(target, transport);
+      const deadline = performance2.now() + timeout;
+      const budget = () => Math.min(deadline - performance2.now(), requestBudget?.() ?? Infinity);
+      const parent = yield* queryIdentity(parentPid, budget);
+      if (parent.token !== parentStartToken) throw retainFailureCause(new Error("Relay host generation is unverified."), parent.cause);
+      const instanceId = "host-process-v1:" + createHash5("sha256").update(JSON.stringify([target.host, target.sessionId, parentPid, parentStartToken])).digest("hex");
+      const wakeVisibility = string(payload.wakeVisibility, "wakeVisibility");
+      const idleWake = string(payload.idleWake, "idleWake");
+      if (!["silent", "user-message", "none"].includes(wakeVisibility) || !["silent", "user-message", "none"].includes(idleWake)) throw new Error("Invalid relay delivery capabilities.");
+      let confirmedDead;
+      if (previous && previous.pid > 0) {
+        try {
+          process.kill(previous.pid, 0);
+          if (typeof previous.relayStartToken === "string") {
+            const actual = (yield* queryIdentity(previous.pid, budget)).token;
+            if (actual !== null && actual !== previous.relayStartToken) confirmedDead = { relayId: previous.relayId, pid: previous.pid };
+          }
+        } catch (error) {
+          if (error && typeof error === "object" && "code" in error && error.code === "ESRCH") confirmedDead = { relayId: previous.relayId, pid: previous.pid };
+        }
+      }
+      remainingIdentityBudget(budget);
+      return store.prepareVerifiedRelay({
+        ...target,
+        instanceId,
+        transport,
+        parentPid,
+        expectedOwner: previous,
+        wakeVisibility,
+        canWakeSilently: boolean(payload.canWakeSilently, "canWakeSilently"),
+        deliveryCapabilities: { supportedInjection: supportedInjection(payload.supportedInjection), idleWake },
+        ...confirmedDead ? { confirmedDead } : {},
+        ...optionalString(payload, "collaborationId") ? { collaborationId: optionalString(payload, "collaborationId") } : {},
+        ...optionalString(payload, "workspaceId") ? { workspaceId: optionalString(payload, "workspaceId") } : {},
+        ...optionalString(payload, "role") ? { role: optionalString(payload, "role") } : {}
+      });
+    }
+    case "acquire-relay": {
+      const target = identity(payload.target);
+      const relayId = string(payload.relayId, "relayId");
+      const parentPid = integer2(payload.parentPid, "parentPid");
+      const reserved = relayId.startsWith("verified-relay-v1:");
+      let parent;
+      if (reserved) {
+        const parentStartToken = string(payload.parentStartToken, "parentStartToken");
+        const expected = "host-process-v1:" + createHash5("sha256").update(JSON.stringify([target.host, target.sessionId, parentPid, parentStartToken])).digest("hex");
+        if (parentPid < 1 || !parentStartToken.trim() || string(payload.instanceId, "instanceId") !== expected) return { acquired: false };
+        parent = yield* queryIdentity(parentPid, requestBudget);
+        if (parent.token !== parentStartToken) return deniedIdentity(parent);
+      }
+      const pid = integer2(payload.pid, "pid");
+      const relay = reserved ? yield* queryIdentity(pid, requestBudget) : void 0;
+      const relayStartToken = relay?.token ?? null;
+      if (reserved && relayStartToken === null) return deniedIdentity(relay);
+      remainingIdentityBudget(requestBudget);
+      const acquired = reserved ? store.activateVerifiedRelay({
+        ...target,
+        transport: string(payload.transport, "transport"),
+        relayId,
+        pid,
+        relayStartToken,
+        parentPid,
+        instanceId: string(payload.instanceId, "instanceId")
+      }) : store.acquireRelay({
+        ...target,
+        transport: string(payload.transport, "transport"),
+        relayId: string(payload.relayId, "relayId"),
+        pid,
+        parentPid: integer2(payload.parentPid, "parentPid")
+      });
+      observePeerRelay(store, payload, acquired);
+      return { acquired };
+    }
+    default:
+      throw new Error("Unknown identity operation.");
+  }
 }
 function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeObserver, historicalWakeVerifier = verifyHistoricalWakeObservation) {
   switch (operation) {
@@ -2444,48 +2685,8 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
     }
     case "pending":
       return { count: store.pendingCount(identity(payload.target)) };
-    case "ensure-relay": {
-      const target = identity(payload.target);
-      const parentPid = integer2(payload.parentPid, "parentPid");
-      const parentStartToken = string(payload.parentStartToken, "parentStartToken");
-      const timeout = integer2(payload.identityTimeoutMs, "identityTimeoutMs");
-      if (parentPid < 1 || !parentStartToken.trim() || parentStartToken.length > 200 || timeout < 1 || timeout > 8e3) throw new Error("Invalid relay host observation or budget.");
-      const transport = string(payload.transport, "transport");
-      const previous = store.relayOwner(target, transport);
-      const deadline = performance.now() + timeout;
-      if (processStartToken(parentPid, process.platform, Math.max(1, Math.floor(deadline - performance.now()))) !== parentStartToken || performance.now() >= deadline) throw new Error("Relay host generation is unverified.");
-      const instanceId = "host-process-v1:" + createHash5("sha256").update(JSON.stringify([target.host, target.sessionId, parentPid, parentStartToken])).digest("hex");
-      const wakeVisibility = string(payload.wakeVisibility, "wakeVisibility");
-      const idleWake = string(payload.idleWake, "idleWake");
-      if (!["silent", "user-message", "none"].includes(wakeVisibility) || !["silent", "user-message", "none"].includes(idleWake)) throw new Error("Invalid relay delivery capabilities.");
-      let confirmedDead;
-      if (previous && previous.pid > 0) {
-        try {
-          process.kill(previous.pid, 0);
-          if (typeof previous.relayStartToken === "string") {
-            const actual = processStartToken(previous.pid, process.platform, Math.max(1, Math.floor(deadline - performance.now())));
-            if (actual !== null && actual !== previous.relayStartToken) confirmedDead = { relayId: previous.relayId, pid: previous.pid };
-          }
-        } catch (error) {
-          if (error && typeof error === "object" && "code" in error && error.code === "ESRCH") confirmedDead = { relayId: previous.relayId, pid: previous.pid };
-        }
-      }
-      if (performance.now() >= deadline) throw new Error("Relay ensure budget expired.");
-      return store.prepareVerifiedRelay({
-        ...target,
-        instanceId,
-        transport,
-        parentPid,
-        expectedOwner: previous,
-        wakeVisibility,
-        canWakeSilently: boolean(payload.canWakeSilently, "canWakeSilently"),
-        deliveryCapabilities: { supportedInjection: supportedInjection(payload.supportedInjection), idleWake },
-        ...confirmedDead ? { confirmedDead } : {},
-        ...optionalString(payload, "collaborationId") ? { collaborationId: optionalString(payload, "collaborationId") } : {},
-        ...optionalString(payload, "workspaceId") ? { workspaceId: optionalString(payload, "workspaceId") } : {},
-        ...optionalString(payload, "role") ? { role: optionalString(payload, "role") } : {}
-      });
-    }
+    case "ensure-relay":
+      return runIdentitySync(relayIdentityOperation(store, operation, payload));
     case "release-verified-relay":
       return { released: store.releaseVerifiedRelay({
         ...identity(payload.target),
@@ -2494,37 +2695,8 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
         instanceId: string(payload.instanceId, "instanceId"),
         pid: integer2(payload.pid, "pid")
       }) };
-    case "acquire-relay": {
-      const target = identity(payload.target);
-      const relayId = string(payload.relayId, "relayId");
-      const parentPid = integer2(payload.parentPid, "parentPid");
-      const reserved = relayId.startsWith("verified-relay-v1:");
-      if (reserved) {
-        const parentStartToken = string(payload.parentStartToken, "parentStartToken");
-        const expected = "host-process-v1:" + createHash5("sha256").update(JSON.stringify([target.host, target.sessionId, parentPid, parentStartToken])).digest("hex");
-        if (parentPid < 1 || !parentStartToken.trim() || string(payload.instanceId, "instanceId") !== expected || processStartToken(parentPid) !== parentStartToken) return { acquired: false };
-      }
-      const pid = integer2(payload.pid, "pid");
-      const relayStartToken = reserved ? processStartToken(pid) : null;
-      if (reserved && relayStartToken === null) return { acquired: false };
-      const acquired = reserved ? store.activateVerifiedRelay({
-        ...target,
-        transport: string(payload.transport, "transport"),
-        relayId,
-        pid,
-        relayStartToken,
-        parentPid,
-        instanceId: string(payload.instanceId, "instanceId")
-      }) : store.acquireRelay({
-        ...target,
-        transport: string(payload.transport, "transport"),
-        relayId: string(payload.relayId, "relayId"),
-        pid,
-        parentPid: integer2(payload.parentPid, "parentPid")
-      });
-      observePeerRelay(store, payload, acquired);
-      return { acquired };
-    }
+    case "acquire-relay":
+      return runIdentitySync(relayIdentityOperation(store, operation, payload));
     case "heartbeat-relay": {
       const target = identity(payload.target);
       const isAlive = store.heartbeatRelay({ ...target, transport: string(payload.transport, "transport"), relayId: string(payload.relayId, "relayId") });
@@ -2643,26 +2815,28 @@ function dispatchSessionMessageBrokerOperation(store, operation, payload, wakeOb
       throw new Error("Unknown broker operation.");
   }
 }
-async function publishEndpoint(temporary, endpointPath) {
+async function publishEndpoint(temporary, endpointPath, budget) {
   for (let attempt = 0; ; attempt += 1) {
     try {
+      remainingIdentityBudget(budget);
       renameSync2(temporary, endpointPath);
       return;
     } catch (error) {
       const code2 = error.code;
       if (attempt >= 4 || !["EPERM", "EACCES", "EBUSY"].includes(code2 ?? "")) throw error;
-      await delay2(50 * 2 ** attempt);
+      await delay2(Math.min(50 * 2 ** attempt, remainingIdentityBudget(budget) ?? Infinity));
     }
   }
 }
-async function startSessionMessageBroker(stateDirectory) {
+async function startSessionMessageBroker(stateDirectory, budget) {
+  remainingIdentityBudget(budget);
   await mkdir(stateDirectory, { recursive: true, mode: 448 });
   try {
     await chmod(stateDirectory, 448);
   } catch {
   }
   const lockPath = path5.join(stateDirectory, "broker.lock");
-  const processLock = await acquireBrokerProcessLockWhenReady(lockPath);
+  const processLock = await acquireBrokerProcessLockWhenReady(lockPath, budget);
   if (processLock === null) return "already-running";
   const endpointPath = path5.join(stateDirectory, "endpoint.json");
   const databasePath = path5.join(stateDirectory, "session-messages.sqlite3");
@@ -2673,6 +2847,7 @@ async function startSessionMessageBroker(stateDirectory) {
   let cleaned = false;
   let idleTimer;
   const sockets = /* @__PURE__ */ new Set();
+  const identityQueries = new AbortController();
   const onSignal = () => {
     cleanup();
     process.exit(0);
@@ -2680,6 +2855,7 @@ async function startSessionMessageBroker(stateDirectory) {
   const cleanup = () => {
     if (cleaned) return;
     cleaned = true;
+    identityQueries.abort();
     clearInterval(idleTimer);
     for (const socket of sockets) socket.destroy();
     try {
@@ -2714,9 +2890,12 @@ async function startSessionMessageBroker(stateDirectory) {
   process.once("SIGTERM", onSignal);
   process.once("SIGINT", onSignal);
   try {
+    remainingIdentityBudget(budget);
     const { key, certificate, token, fingerprint256 } = await credentials(stateDirectory);
+    remainingIdentityBudget(budget);
     const activeStore = new SessionMessageStore(databasePath);
     store = activeStore;
+    remainingIdentityBudget(budget);
     const trustDatabasePath = process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim() ? path5.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path5.join(stateDirectory, "trust.sqlite3");
     const wakeHookObservationReader = createWakeHookObservationReader(trustDatabasePath);
     const historicalWakeVerifier = (target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs) => verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, trustDatabasePath);
@@ -2725,7 +2904,7 @@ async function startSessionMessageBroker(stateDirectory) {
       const readLine = sessionMessageLineReader(SESSION_MESSAGE_MAX_REQUEST_BYTES);
       socket.on("error", () => socket.destroy());
       socket.setTimeout(5e3, () => socket.destroy());
-      socket.on("data", (chunk) => {
+      socket.on("data", async (chunk) => {
         let line;
         try {
           line = readLine(chunk);
@@ -2738,7 +2917,8 @@ async function startSessionMessageBroker(stateDirectory) {
           const request = JSON.parse(line);
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
-          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader, historicalWakeVerifier);
+          const requestBudget = decodeIdentityDeadline(request.identityDeadlineNs);
+          const data = ["ensure-relay", "acquire-relay"].includes(request.operation) ? await runIdentityAsync(relayIdentityOperation(activeStore, request.operation, payload, requestBudget), identityQueries.signal) : dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader, historicalWakeVerifier);
           if (!["ping", "relay-tick", "heartbeat-relay", "presence-heartbeat"].includes(request.operation)) lastActivity = Date.now();
           socket.end("".concat(JSON.stringify({ ok: true, data }), "\n"));
         } catch (error) {
@@ -2759,6 +2939,7 @@ async function startSessionMessageBroker(stateDirectory) {
       activeServer.once("error", reject);
       activeServer.listen(0, "127.0.0.1", () => resolve());
     });
+    remainingIdentityBudget(budget);
     const address = activeServer.address();
     if (!address || typeof address === "string") throw new Error("The broker did not receive a TCP port.");
     const endpoint = {
@@ -2771,8 +2952,9 @@ async function startSessionMessageBroker(stateDirectory) {
     };
     temporary = "".concat(endpointPath, ".").concat(process.pid, ".").concat(createHash5("sha256").update(String(Date.now())).digest("hex").slice(0, 8), ".tmp");
     writeFileSync(temporary, "".concat(JSON.stringify(endpoint), "\n"), { encoding: "utf8", mode: 384 });
-    await publishEndpoint(temporary, endpointPath);
+    await publishEndpoint(temporary, endpointPath, budget);
     published = true;
+    remainingIdentityBudget(budget);
     idleTimer = setInterval(() => {
       if (Date.now() - lastActivity < IDLE_EXIT_MS) return;
       cleanup();
@@ -2788,7 +2970,10 @@ async function startSessionMessageBroker(stateDirectory) {
 if (path5.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
   const stateDirectory = argument("--state-directory");
   if (!stateDirectory) process.exitCode = 2;
-  else void startSessionMessageBroker(path5.resolve(stateDirectory)).then((result) => {
+  else void (async () => startSessionMessageBroker(
+    path5.resolve(stateDirectory),
+    decodeIdentityDeadline(argument("--startup-identity-deadline-ns") ?? void 0)
+  ))().then((result) => {
     if (result === "already-running") process.exit(0);
   }).catch((error) => {
     const safeCode = brokerFailureCode(error);

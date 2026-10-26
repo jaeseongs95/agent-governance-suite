@@ -32825,6 +32825,13 @@ function retainFailureSecondary(error61, secondary) {
   }
   return error61;
 }
+function producerFailure(reason, message) {
+  if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");
+  const error61 = new Error(message);
+  Object.defineProperty(error61, "code", { value: reason, enumerable: true });
+  producerReasons.set(error61, reason);
+  return error61;
+}
 function producerFailureReason(error61) {
   return error61 && (typeof error61 === "object" || typeof error61 === "function") ? producerReasons.get(error61) ?? null : null;
 }
@@ -35163,6 +35170,14 @@ function sessionMessageLineReader(limitBytes) {
   };
 }
 
+// mcp-server/src/broker-identity-budget.ts
+function encodeIdentityDeadline(deadlineMonotonicMs) {
+  const before = process.hrtime.bigint();
+  const remaining = Math.floor(deadlineMonotonicMs - performance.now());
+  if (!Number.isFinite(remaining) || remaining < 1) throw producerFailure("BROKER_IDENTITY_BUDGET_EXPIRED", "The broker identity budget expired.");
+  return String(before + BigInt(remaining) * 1000000n);
+}
+
 // mcp-server/src/session-message-client.ts
 var BrokerRequestRejected = class extends Error {
   details;
@@ -35320,7 +35335,13 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
           }
           let frame;
           try {
-            frame = "".concat(JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload }), "\n");
+            frame = "".concat(JSON.stringify({
+              protocolVersion: SESSION_MESSAGE_PROTOCOL,
+              token,
+              operation,
+              payload,
+              ...["ensure-relay", "acquire-relay"].includes(operation) ? { identityDeadlineNs: encodeIdentityDeadline(deadline) } : {}
+            }), "\n");
           } catch (cause) {
             throw clientFailure("BROKER_REQUEST_ENCODING_FAILED", "Cannot encode the broker request.", cause);
           }
@@ -35480,7 +35501,13 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
         let child;
         try {
-          child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+          child = spawn(process.execPath, [
+            brokerPath,
+            "--state-directory",
+            stateDirectory,
+            "--startup-identity-deadline-ns",
+            encodeIdentityDeadline(deadline)
+          ], {
             detached: true,
             windowsHide: true,
             stdio: "ignore",

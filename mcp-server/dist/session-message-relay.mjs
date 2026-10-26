@@ -465,7 +465,7 @@ import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import path2 from "node:path";
-import { performance } from "node:perf_hooks";
+import { performance as performance2 } from "node:perf_hooks";
 import tls from "node:tls";
 import { fileURLToPath } from "node:url";
 
@@ -484,6 +484,14 @@ function sessionMessageLineReader(limitBytes) {
     pending = Buffer.alloc(0);
     return line;
   };
+}
+
+// mcp-server/src/broker-identity-budget.ts
+function encodeIdentityDeadline(deadlineMonotonicMs) {
+  const before = process.hrtime.bigint();
+  const remaining = Math.floor(deadlineMonotonicMs - performance.now());
+  if (!Number.isFinite(remaining) || remaining < 1) throw producerFailure("BROKER_IDENTITY_BUDGET_EXPIRED", "The broker identity budget expired.");
+  return String(before + BigInt(remaining) * 1000000n);
 }
 
 // mcp-server/src/session-message-client.ts
@@ -526,7 +534,7 @@ function throwIfAborted(signal) {
 function remainingMilliseconds(deadline, signal, message = SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE) {
   throwIfAborted(signal);
   const inherited = signal ? deadlineMetadata.get(signal) : void 0;
-  const remaining = (inherited?.deadline ?? deadline) - performance.now();
+  const remaining = (inherited?.deadline ?? deadline) - performance2.now();
   if (remaining < 1) throw deadlineError(inherited?.message ?? message);
   return remaining;
 }
@@ -536,7 +544,7 @@ function assertWithinDeadline(deadline, signal, message) {
 async function withDeadline(timeoutMs, parentSignal, message, work, absoluteDeadline) {
   const parentDeadline = parentSignal ? deadlineMetadata.get(parentSignal) : void 0;
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw deadlineError(parentDeadline?.message ?? message);
-  const now = performance.now();
+  const now = performance2.now();
   if (absoluteDeadline !== void 0 && !Number.isFinite(absoluteDeadline)) throw deadlineError(message);
   const requestedDeadline = Math.min(now + timeoutMs, absoluteDeadline ?? Infinity);
   const inherited = parentDeadline && parentDeadline.deadline <= requestedDeadline ? parentDeadline : void 0;
@@ -644,7 +652,13 @@ async function requestSessionMessageOnce(operation, payload, stateDirectory, tim
           }
           let frame;
           try {
-            frame = "".concat(JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload }), "\n");
+            frame = "".concat(JSON.stringify({
+              protocolVersion: SESSION_MESSAGE_PROTOCOL,
+              token,
+              operation,
+              payload,
+              ...["ensure-relay", "acquire-relay"].includes(operation) ? { identityDeadlineNs: encodeIdentityDeadline(deadline) } : {}
+            }), "\n");
           } catch (cause) {
             throw clientFailure("BROKER_REQUEST_ENCODING_FAILED", "Cannot encode the broker request.", cause);
           }
@@ -804,7 +818,13 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
         let child;
         try {
-          child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+          child = spawn(process.execPath, [
+            brokerPath,
+            "--state-directory",
+            stateDirectory,
+            "--startup-identity-deadline-ns",
+            encodeIdentityDeadline(deadline)
+          ], {
             detached: true,
             windowsHide: true,
             stdio: "ignore",
@@ -831,7 +851,7 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
 async function sessionMessageRequest(operation, payload, stateDirectory = resolveSessionMessageStateDirectory(), options = {}) {
   options = { ...options };
   const totalTimeoutMs = options.totalTimeoutMs ?? SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
-  const absoluteDeadline = options.deadlineMonotonicMs ?? (options.noOperationReplay ? performance.now() + totalTimeoutMs : void 0);
+  const absoluteDeadline = options.deadlineMonotonicMs ?? (options.noOperationReplay ? performance2.now() + totalTimeoutMs : void 0);
   return withDeadline(totalTimeoutMs, void 0, SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE, async (signal, deadline) => {
     if (options.noOperationReplay) {
       await ensureSessionMessageBroker(stateDirectory, remainingMilliseconds(deadline, signal), signal, options.prepareStateDirectory);
@@ -892,28 +912,77 @@ function newWakeNonce() {
 }
 
 // mcp-server/src/process-identity.ts
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-function processStartToken(pid, platform = process.platform, timeoutMs) {
+import { types as types2 } from "node:util";
+function tokenCommand(pid, platform) {
+  return platform === "win32" ? ["powershell.exe", [
+    "-NoProfile",
+    "-NonInteractive",
+    "-Command",
+    "[System.Diagnostics.Process]::GetProcessById(".concat(pid, ").StartTime.ToUniversalTime().ToString('o')")
+  ]] : ["ps", ["-p", String(pid), "-o", "lstart="]];
+}
+function tokenOptions(platform, timeoutMs) {
+  const cap = platform === "win32" ? 5e3 : 3e3;
+  return {
+    encoding: "utf8",
+    windowsHide: true,
+    timeout: Math.min(cap, Math.floor(timeoutMs ?? cap)),
+    maxBuffer: 4096,
+    stdio: ["ignore", "pipe", "pipe"]
+  };
+}
+function identityFailure(error, platform, started, timeoutMs, observer, capturedStderr) {
+  const cause = error && (typeof error === "object" || typeof error === "function") ? error : new Error("Process identity query failed.", { cause: error });
+  tagProducerFailure(cause, "PROCESS_START_TOKEN_FAILED");
+  const field = (key) => {
+    try {
+      return types2.isProxy(cause) ? void 0 : Object.getOwnPropertyDescriptor(cause, key)?.value;
+    } catch {
+      return void 0;
+    }
+  };
+  const nativeCode = field("code"), status = field("status") ?? (typeof nativeCode === "number" ? nativeCode : void 0), signal = field("signal"), raw = capturedStderr ?? field("stderr");
+  const stderr = Buffer.isBuffer(raw) ? raw.subarray(0, 4096).toString("utf8") : typeof raw === "string" ? raw.slice(0, 4096) : "";
+  const diagnostic = Object.freeze({
+    stage: platform === "win32" ? "windows-query" : platform === "linux" ? "proc-read" : "posix-query",
+    elapsedMs: Math.max(0, performance.now() - started),
+    timeoutMs: platform === "linux" ? null : tokenOptions(platform, timeoutMs).timeout,
+    nativeCode: typeof nativeCode === "string" && ["ENOENT", "EACCES", "EPERM", "ETIMEDOUT", "ENOBUFS", "EIO", "EINVAL", "ESRCH", "ABORT_ERR"].includes(nativeCode) ? nativeCode : null,
+    status: typeof status === "number" && Number.isInteger(status) && Math.abs(status) <= 2147483648 ? status : null,
+    signal: typeof signal === "string" && ["SIGTERM", "SIGKILL", "SIGINT", "SIGBREAK", "SIGHUP", "SIGABRT"].includes(signal) ? signal : null,
+    // A fixed indication, never native error text or proof of the underlying OS cause.
+    stderrIndication: /UnauthorizedAccessException|PermissionDenied|AccessDenied/u.test(stderr) ? "permission-denied-indication" : stderr ? "unclassified" : null
+  });
+  try {
+    process.stderr.write("[agent-governance-suite] process-identity-failure " + JSON.stringify(diagnostic) + "\n");
+  } catch (secondary) {
+    retainFailureSecondary(cause, secondary);
+  }
+  try {
+    observer?.(cause, diagnostic);
+  } catch (secondary) {
+    retainFailureSecondary(cause, secondary);
+  }
+  return null;
+}
+function procToken(stat) {
+  const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
+  return fields[19] ?? null;
+}
+function processStartToken(pid, platform = process.platform, timeoutMs, onFailure) {
   if (!Number.isInteger(pid) || pid < 1) return null;
   if (timeoutMs !== void 0 && (!Number.isFinite(timeoutMs) || timeoutMs < 1)) return null;
+  const started = performance.now();
   try {
-    if (platform === "win32") {
-      return execFileSync("powershell.exe", [
-        "-NoProfile",
-        "-NonInteractive",
-        "-Command",
-        "[System.Diagnostics.Process]::GetProcessById(".concat(pid, ").StartTime.ToUniversalTime().ToString('o')")
-      ], { encoding: "utf8", windowsHide: true, timeout: Math.min(5e3, Math.floor(timeoutMs ?? 5e3)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
-    }
     if (platform === "linux") {
-      const stat = readFileSync("/proc/".concat(pid, "/stat"), "utf8");
-      const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
-      return fields[19] ?? null;
+      return procToken(readFileSync("/proc/".concat(pid, "/stat"), "utf8"));
     }
-    return execFileSync("ps", ["-p", String(pid), "-o", "lstart="], { encoding: "utf8", timeout: Math.min(3e3, Math.floor(timeoutMs ?? 3e3)), stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
-  } catch {
-    return null;
+    const [executable, args] = tokenCommand(pid, platform);
+    return execFileSync(executable, args, tokenOptions(platform, timeoutMs)).trim() || null;
+  } catch (error) {
+    return identityFailure(error, platform, started, timeoutMs, onFailure);
   }
 }
 function processExists(pid) {
@@ -934,7 +1003,7 @@ function processIdentityState(pid, expectedStartToken, readStartToken = processS
 }
 
 // mcp-server/src/session-message-wake-port.ts
-import { execFile } from "node:child_process";
+import { execFile as execFile2 } from "node:child_process";
 import { existsSync as existsSync2 } from "node:fs";
 import net from "node:net";
 import path3 from "node:path";
@@ -982,7 +1051,7 @@ async function ringGemini(sessionId2, message, environment = process.env) {
   let targetProjectId;
   try {
     const meta = await new Promise((resolve, reject) => {
-      execFile(
+      execFile2(
         command,
         [...argsPrefix, "get-conversation-metadata", sessionId2],
         { windowsHide: true, timeout: 5e3, env: childEnv, shell: false, windowsVerbatimArguments: false },
@@ -1004,7 +1073,7 @@ async function ringGemini(sessionId2, message, environment = process.env) {
   return new Promise((resolve) => {
     let spawned = false;
     try {
-      const child = execFile(
+      const child = execFile2(
         command,
         [...argsPrefix, "send-message", sessionId2, message],
         { windowsHide: true, timeout: 1e4, env: childEnv, shell: false, windowsVerbatimArguments: false },
@@ -1022,7 +1091,7 @@ async function ringGemini(sessionId2, message, environment = process.env) {
 function ringCodex(sessionId2, message) {
   return new Promise((resolve) => {
     let spawned = false;
-    const child = execFile(
+    const child = execFile2(
       "codex",
       ["queue", "--thread", sessionId2, "--message", message],
       { windowsHide: true, timeout: 1e4 },

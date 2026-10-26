@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { lstatSync, mkdirSync, mkdtempSync, readdirSync, renameSync, rmdirSync } from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { processStartToken } from "./process-identity.js";
+import { processStartToken, type ProcessIdentityBudget } from "./process-identity.js";
 
 export interface BrokerProcessLock {
   readonly path: string;
@@ -22,7 +22,23 @@ function unavailable(reason: string, cause?: unknown): never {
 }
 
 /** ESRCH or a verified different birth proves absence. EPERM/unknown preserve the contender. */
-function definitelyGone(pid: number, expectedStartHash?: string): boolean {
+function remaining(budget?: ProcessIdentityBudget): number | undefined {
+  if (!budget) return undefined;
+  const value = Math.floor(budget());
+  if (!Number.isFinite(value) || value < 1) return unavailable("BUDGET_EXPIRED");
+  return value;
+}
+
+function startToken(pid: number, budget?: ProcessIdentityBudget): string {
+  let cause: unknown;
+  const token = processStartToken(pid, process.platform, remaining(budget), error => { cause = error; });
+  if (token === null) return unavailable("OWNER_UNVERIFIED", cause);
+  remaining(budget); // A late result cannot authorize a marker or a reclaim.
+  return token;
+}
+
+function definitelyGone(pid: number, expectedStartHash?: string, budget?: ProcessIdentityBudget): boolean {
+  remaining(budget);
   try { process.kill(pid, 0); }
   catch (error) {
     if (code(error) === "ESRCH") return true;
@@ -30,12 +46,12 @@ function definitelyGone(pid: number, expectedStartHash?: string): boolean {
     return unavailable("OWNER_UNVERIFIED", error);
   }
   if (expectedStartHash === undefined) return false; // Legacy PID-only markers fail closed.
-  const actual = processStartToken(pid);
-  if (actual === null) return unavailable("OWNER_UNVERIFIED");
+  const actual = startToken(pid, budget);
   return startHash(actual) !== expectedStartHash;
 }
 
-function retireObservedDeadOwner(lockPath: string): boolean {
+function retireObservedDeadOwner(lockPath: string, budget?: ProcessIdentityBudget): boolean {
+  remaining(budget);
   let info;
   try { info = lstatSync(lockPath); }
   catch (error) { if (code(error) === "ENOENT") return true; throw error; }
@@ -51,7 +67,7 @@ function retireObservedDeadOwner(lockPath: string): boolean {
   if (!match || !entry.isDirectory() || entry.isSymbolicLink()) return unavailable("UNRECOGNIZED_OWNER");
   const pid = Number(match[1]);
   if (!Number.isSafeInteger(pid) || pid < 1) return unavailable("UNRECOGNIZED_OWNER");
-  if (!definitelyGone(pid, match[3])) return false;
+  if (!definitelyGone(pid, match[3], budget)) return false;
   const marker = path.join(lockPath, entry.name);
   // Exact, never-reused generation name is the removal witness. Losing observers
   // must not remove the parent after ENOENT or an unexpected/nonempty child.
@@ -69,9 +85,10 @@ function retireObservedDeadOwner(lockPath: string): boolean {
 }
 
 /** Stage names are never reused; reclaim only a recognizable, verified dead generation. */
-function retireAbandonedStages(lockPath: string): void {
+function retireAbandonedStages(lockPath: string, budget?: ProcessIdentityBudget): void {
   const prefix = path.basename(lockPath) + ".stage-";
   for (const entry of readdirSync(path.dirname(lockPath), { withFileTypes: true })) {
+    remaining(budget);
     if (!entry.name.startsWith(prefix) || !entry.isDirectory() || entry.isSymbolicLink()) continue;
     const stage = path.join(path.dirname(lockPath), entry.name);
     // New stage names retain the witness even if the process dies before mkdir(marker).
@@ -87,7 +104,7 @@ function retireAbandonedStages(lockPath: string): void {
       || (namedMatch && owner !== namedOwner)) continue;
     const pid = Number(match[1]);
     if (!Number.isSafeInteger(pid) || pid < 1) continue;
-    try { if (!definitelyGone(pid, match[3])) continue; }
+    try { if (!definitelyGone(pid, match[3], budget)) continue; }
     catch (error) { if (code(error) === "BROKER_LOCK_OWNER_UNVERIFIED") continue; throw error; }
     try {
       if (marker) rmdirSync(path.join(stage, owner));
@@ -104,14 +121,15 @@ function retireAbandonedStages(lockPath: string): void {
  * A live published owner is never empty, so another publisher cannot replace it.
  * This is not hostile same-user path isolation or crash durability.
  */
-export function acquireBrokerProcessLock(lockPath: string): BrokerProcessLock | null {
+export function acquireBrokerProcessLock(lockPath: string, budget?: ProcessIdentityBudget): BrokerProcessLock | null {
+  remaining(budget);
   if (ownStartHash === undefined) {
-    const token = processStartToken(process.pid);
-    if (token === null) return unavailable("OWNER_UNVERIFIED");
+    const token = startToken(process.pid, budget);
     ownStartHash = startHash(token);
   }
   const owner = "owner-" + process.pid + "-" + randomBytes(16).toString("hex") + "-" + ownStartHash;
-  retireAbandonedStages(lockPath);
+  retireAbandonedStages(lockPath, budget);
+  remaining(budget);
   const stage = mkdtempSync(lockPath + ".stage-" + owner + "-");
   let markerCreated = false;
   let published = false;
@@ -123,7 +141,8 @@ export function acquireBrokerProcessLock(lockPath: string): BrokerProcessLock | 
     for (let attempt = 0; attempt < 2; attempt++) {
       // Inspect first: a known empty/unknown pre-existing directory is preserved.
       // Under this protocol a competing published lock is always nonempty.
-      if (!retireObservedDeadOwner(lockPath)) break;
+      if (!retireObservedDeadOwner(lockPath, budget)) break;
+      remaining(budget);
       try {
         renameSync(stage, lockPath);
         published = true;
@@ -157,12 +176,12 @@ export function acquireBrokerProcessLock(lockPath: string): BrokerProcessLock | 
 }
 
 /** Reobserve short release/reclaim gaps; persistent unknown state is never deleted. */
-export async function acquireBrokerProcessLockWhenReady(lockPath: string): Promise<BrokerProcessLock | null> {
+export async function acquireBrokerProcessLockWhenReady(lockPath: string, budget?: ProcessIdentityBudget): Promise<BrokerProcessLock | null> {
   for (let attempt = 0; ; attempt++) {
-    try { return acquireBrokerProcessLock(lockPath); }
+    try { return acquireBrokerProcessLock(lockPath, budget); }
     catch (error) {
       if (attempt >= 19 || !REOBSERVE_CODES.includes(code(error) ?? "")) throw error;
-      await delay(25);
+      await delay(Math.min(25, remaining(budget) ?? 25));
     }
   }
 }

@@ -14,7 +14,9 @@ import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type 
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
-import { processStartToken } from "./process-identity.js";
+import { processStartToken, processStartTokenAsync, type ProcessIdentityBudget, type ProcessIdentityFailureObserver } from "./process-identity.js";
+import { decodeIdentityDeadline, remainingIdentityBudget } from "./broker-identity-budget.js";
+import { retainFailureCause } from "./failure-diagnostics.js";
 import { acquireBrokerProcessLockWhenReady, ownsBrokerProcessLock, releaseBrokerProcessLock } from "./broker-process-lock.js";
 import { performance } from "node:perf_hooks";
 
@@ -26,6 +28,7 @@ interface BrokerRequest {
   token: string;
   operation: string;
   payload: Record<string, unknown>;
+  identityDeadlineNs?: unknown;
 }
 
 function brokerFailureCode(error: unknown): string {
@@ -185,6 +188,122 @@ function observePeerRelay(store: SessionMessageStore, payload: Record<string, un
     ...(wakeObservedAt === undefined ? {} : { wakeObservedAt }) });
 }
 
+type IdentityObservation = { token: string | null; cause?: unknown; diagnostic?: Parameters<ProcessIdentityFailureObserver>[1] };
+type IdentityQuery = { pid: number; timeoutMs: number | undefined };
+type IdentitySteps = Generator<IdentityQuery, unknown, IdentityObservation>;
+
+function* queryIdentity(pid: number, budget?: ProcessIdentityBudget): Generator<IdentityQuery, IdentityObservation, IdentityObservation> {
+  const observation = yield { pid, timeoutMs: remainingIdentityBudget(budget) };
+  try { remainingIdentityBudget(budget); }
+  catch (error) { throw retainFailureCause(error as Error, observation.cause); }
+  return observation;
+}
+
+function deniedIdentity(observation: IdentityObservation) {
+  const denied = { acquired: false, ...(observation.diagnostic ? { diagnostic: observation.diagnostic } : {}) };
+  // Keep the actual local cause; JSON replies carry only the bounded diagnostic.
+  if (observation.cause !== undefined) Object.defineProperty(denied, "cause", { value: observation.cause });
+  return denied;
+}
+
+function runIdentitySync(steps: IdentitySteps): unknown {
+  let step = steps.next();
+  while (!step.done) {
+    const observation: IdentityObservation = { token: null };
+    observation.token = processStartToken(step.value.pid, process.platform, step.value.timeoutMs,
+      (cause, diagnostic) => Object.assign(observation, { cause, diagnostic }));
+    step = steps.next(observation);
+  }
+  return step.value;
+}
+
+async function runIdentityAsync(steps: IdentitySteps, signal: AbortSignal): Promise<unknown> {
+  let step = steps.next();
+  while (!step.done) {
+    const observation: IdentityObservation = { token: null };
+    observation.token = await processStartTokenAsync(step.value.pid, process.platform, step.value.timeoutMs,
+      (cause, diagnostic) => Object.assign(observation, { cause, diagnostic }), signal);
+    if (signal.aborted) throw retainFailureCause(new Error("The broker identity query was cancelled."), observation.cause);
+    step = steps.next(observation);
+  }
+  return step.value;
+}
+
+/** One authority path, with synchronous compatibility and an asynchronous network driver. */
+function* relayIdentityOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>,
+  requestBudget?: ProcessIdentityBudget): IdentitySteps {
+  switch (operation) {
+    case "ensure-relay": {
+      const target = identity(payload.target);
+      const parentPid = integer(payload.parentPid,"parentPid");
+      const parentStartToken = string(payload.parentStartToken,"parentStartToken");
+      const timeout = integer(payload.identityTimeoutMs,"identityTimeoutMs");
+      if (parentPid < 1 || !parentStartToken.trim() || parentStartToken.length > 200 || timeout < 1 || timeout > 8000) throw new Error("Invalid relay host observation or budget.");
+      const transport = string(payload.transport,"transport");
+      const previous = store.relayOwner(target,transport);
+      const deadline = performance.now() + timeout;
+      const budget = () => Math.min(deadline - performance.now(), requestBudget?.() ?? Infinity);
+      const parent = yield* queryIdentity(parentPid, budget);
+      if (parent.token !== parentStartToken) throw retainFailureCause(new Error("Relay host generation is unverified."), parent.cause);
+      const instanceId = "host-process-v1:" + createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
+      const wakeVisibility = string(payload.wakeVisibility,"wakeVisibility");
+      const idleWake = string(payload.idleWake,"idleWake");
+      if (!["silent","user-message","none"].includes(wakeVisibility) || !["silent","user-message","none"].includes(idleWake)) throw new Error("Invalid relay delivery capabilities.");
+      let confirmedDead: {relayId: string; pid: number} | undefined;
+      if (previous && previous.pid > 0) {
+        try {
+          process.kill(previous.pid,0);
+          if (typeof previous.relayStartToken === "string") {
+            const actual = (yield* queryIdentity(previous.pid, budget)).token;
+            if (actual !== null && actual !== previous.relayStartToken) confirmedDead = {relayId:previous.relayId,pid:previous.pid};
+          }
+        }
+        catch (error) {
+          if (error && typeof error === "object" && "code" in error && error.code === "ESRCH") confirmedDead = {relayId:previous.relayId,pid:previous.pid};
+        }
+      }
+      remainingIdentityBudget(budget);
+      return store.prepareVerifiedRelay({...target,instanceId,transport,parentPid,expectedOwner:previous,
+        wakeVisibility:wakeVisibility as "silent" | "user-message" | "none",canWakeSilently:boolean(payload.canWakeSilently,"canWakeSilently"),
+        deliveryCapabilities:{supportedInjection:supportedInjection(payload.supportedInjection),idleWake:idleWake as "silent" | "user-message" | "none"},
+        ...(confirmedDead ? {confirmedDead}:{}),
+        ...(optionalString(payload,"collaborationId") ? {collaborationId:optionalString(payload,"collaborationId")!}:{}),
+        ...(optionalString(payload,"workspaceId") ? {workspaceId:optionalString(payload,"workspaceId")!}:{}),
+        ...(optionalString(payload,"role") ? {role:optionalString(payload,"role")!}:{})});
+    }
+    case "acquire-relay": {
+      const target = identity(payload.target);
+      const relayId = string(payload.relayId,"relayId");
+      const parentPid = integer(payload.parentPid,"parentPid");
+      const reserved = relayId.startsWith("verified-relay-v1:");
+      let parent: IdentityObservation | undefined;
+      if (reserved) {
+        const parentStartToken = string(payload.parentStartToken,"parentStartToken");
+        const expected = "host-process-v1:" + createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
+        if (parentPid < 1 || !parentStartToken.trim() || string(payload.instanceId,"instanceId") !== expected) return {acquired:false};
+        parent = yield* queryIdentity(parentPid, requestBudget);
+        if (parent.token !== parentStartToken) return deniedIdentity(parent);
+      }
+      const pid = integer(payload.pid,"pid");
+      const relay = reserved ? yield* queryIdentity(pid, requestBudget) : undefined;
+      const relayStartToken = relay?.token ?? null;
+      if (reserved && relayStartToken === null) return deniedIdentity(relay!);
+      remainingIdentityBudget(requestBudget);
+      const acquired = reserved ? store.activateVerifiedRelay({...target,transport:string(payload.transport,"transport"),relayId,
+        pid,relayStartToken,parentPid,instanceId:string(payload.instanceId,"instanceId")}) : store.acquireRelay({
+        ...target,
+        transport: string(payload.transport, "transport"),
+        relayId: string(payload.relayId, "relayId"),
+        pid,
+        parentPid: integer(payload.parentPid, "parentPid"),
+      });
+      observePeerRelay(store, payload, acquired);
+      return { acquired };
+    }
+    default: throw new Error("Unknown identity operation.");
+  }
+}
+
 export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>,
   wakeObserver?: WakeHookObservationReader, historicalWakeVerifier = verifyHistoricalWakeObservation): unknown {
   switch (operation) {
@@ -316,68 +435,10 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       return { ...decision, peers: targets.map((target, index) => ({ target, related: states[index]!.related, stateDigest: states[index]!.fingerprint })) };
     }
     case "pending": return { count: store.pendingCount(identity(payload.target)) };
-    case "ensure-relay": {
-      const target = identity(payload.target);
-      const parentPid = integer(payload.parentPid,"parentPid");
-      const parentStartToken = string(payload.parentStartToken,"parentStartToken");
-      const timeout = integer(payload.identityTimeoutMs,"identityTimeoutMs");
-      if (parentPid < 1 || !parentStartToken.trim() || parentStartToken.length > 200 || timeout < 1 || timeout > 8000) throw new Error("Invalid relay host observation or budget.");
-      const transport = string(payload.transport,"transport");
-      const previous = store.relayOwner(target,transport);
-      const deadline = performance.now() + timeout;
-      if (processStartToken(parentPid,process.platform,Math.max(1,Math.floor(deadline-performance.now()))) !== parentStartToken || performance.now() >= deadline) throw new Error("Relay host generation is unverified.");
-      const instanceId = "host-process-v1:" + createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
-      const wakeVisibility = string(payload.wakeVisibility,"wakeVisibility");
-      const idleWake = string(payload.idleWake,"idleWake");
-      if (!["silent","user-message","none"].includes(wakeVisibility) || !["silent","user-message","none"].includes(idleWake)) throw new Error("Invalid relay delivery capabilities.");
-      let confirmedDead: {relayId: string; pid: number} | undefined;
-      if (previous && previous.pid > 0) {
-        try {
-          process.kill(previous.pid,0);
-          if (typeof previous.relayStartToken === "string") {
-            const actual = processStartToken(previous.pid, process.platform, Math.max(1, Math.floor(deadline - performance.now())));
-            if (actual !== null && actual !== previous.relayStartToken) confirmedDead = {relayId:previous.relayId,pid:previous.pid};
-          }
-        }
-        catch (error) {
-          if (error && typeof error === "object" && "code" in error && error.code === "ESRCH") confirmedDead = {relayId:previous.relayId,pid:previous.pid};
-        }
-      }
-      if (performance.now() >= deadline) throw new Error("Relay ensure budget expired.");
-      return store.prepareVerifiedRelay({...target,instanceId,transport,parentPid,expectedOwner:previous,
-        wakeVisibility:wakeVisibility as "silent" | "user-message" | "none",canWakeSilently:boolean(payload.canWakeSilently,"canWakeSilently"),
-        deliveryCapabilities:{supportedInjection:supportedInjection(payload.supportedInjection),idleWake:idleWake as "silent" | "user-message" | "none"},
-        ...(confirmedDead ? {confirmedDead}:{}),
-        ...(optionalString(payload,"collaborationId") ? {collaborationId:optionalString(payload,"collaborationId")!}:{}),
-        ...(optionalString(payload,"workspaceId") ? {workspaceId:optionalString(payload,"workspaceId")!}:{}),
-        ...(optionalString(payload,"role") ? {role:optionalString(payload,"role")!}:{})});
-    }
+    case "ensure-relay": return runIdentitySync(relayIdentityOperation(store, operation, payload));
     case "release-verified-relay": return {released:store.releaseVerifiedRelay({...identity(payload.target),
       transport:string(payload.transport,"transport"),relayId:string(payload.relayId,"relayId"),instanceId:string(payload.instanceId,"instanceId"),pid:integer(payload.pid,"pid")})};
-    case "acquire-relay": {
-      const target = identity(payload.target);
-      const relayId = string(payload.relayId,"relayId");
-      const parentPid = integer(payload.parentPid,"parentPid");
-      const reserved = relayId.startsWith("verified-relay-v1:");
-      if (reserved) {
-        const parentStartToken = string(payload.parentStartToken,"parentStartToken");
-        const expected = "host-process-v1:" + createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
-        if (parentPid < 1 || !parentStartToken.trim() || string(payload.instanceId,"instanceId") !== expected || processStartToken(parentPid) !== parentStartToken) return {acquired:false};
-      }
-      const pid = integer(payload.pid,"pid");
-      const relayStartToken = reserved ? processStartToken(pid) : null;
-      if (reserved && relayStartToken === null) return {acquired:false};
-      const acquired = reserved ? store.activateVerifiedRelay({...target,transport:string(payload.transport,"transport"),relayId,
-        pid,relayStartToken,parentPid,instanceId:string(payload.instanceId,"instanceId")}) : store.acquireRelay({
-        ...target,
-        transport: string(payload.transport, "transport"),
-        relayId: string(payload.relayId, "relayId"),
-        pid,
-        parentPid: integer(payload.parentPid, "parentPid"),
-      });
-      observePeerRelay(store, payload, acquired);
-      return { acquired };
-    }
+    case "acquire-relay": return runIdentitySync(relayIdentityOperation(store, operation, payload));
     case "heartbeat-relay": {
       const target = identity(payload.target);
       const isAlive = store.heartbeatRelay({ ...target, transport: string(payload.transport, "transport"), relayId: string(payload.relayId, "relayId") });
@@ -475,24 +536,26 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
   }
 }
 
-async function publishEndpoint(temporary: string, endpointPath: string): Promise<void> {
+async function publishEndpoint(temporary: string, endpointPath: string, budget?: ProcessIdentityBudget): Promise<void> {
   for (let attempt = 0; ; attempt += 1) {
     try {
+      remainingIdentityBudget(budget);
       renameSync(temporary, endpointPath);
       return;
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
       if (attempt >= 4 || !["EPERM", "EACCES", "EBUSY"].includes(code ?? "")) throw error;
-      await delay(50 * 2 ** attempt);
+      await delay(Math.min(50 * 2 ** attempt, remainingIdentityBudget(budget) ?? Infinity));
     }
   }
 }
 
-export async function startSessionMessageBroker(stateDirectory: string): Promise<"started" | "already-running"> {
+export async function startSessionMessageBroker(stateDirectory: string, budget?: ProcessIdentityBudget): Promise<"started" | "already-running"> {
+  remainingIdentityBudget(budget);
   await mkdir(stateDirectory, { recursive: true, mode: 0o700 });
   try { await chmod(stateDirectory, 0o700); } catch { /* Windows ACLs remain governed by the user profile. */ }
   const lockPath = path.join(stateDirectory, "broker.lock");
-  const processLock = await acquireBrokerProcessLockWhenReady(lockPath);
+  const processLock = await acquireBrokerProcessLockWhenReady(lockPath, budget);
   if (processLock === null) return "already-running";
   const endpointPath = path.join(stateDirectory, "endpoint.json");
   const databasePath = path.join(stateDirectory, "session-messages.sqlite3");
@@ -503,10 +566,12 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
   let cleaned = false;
   let idleTimer: NodeJS.Timeout | undefined;
   const sockets = new Set<tls.TLSSocket>();
+  const identityQueries = new AbortController();
   const onSignal = () => { cleanup(); process.exit(0); };
   const cleanup = () => {
     if (cleaned) return;
     cleaned = true;
+    identityQueries.abort();
     clearInterval(idleTimer);
     for (const socket of sockets) socket.destroy();
     try { server?.close(); } catch { /* Already closed. */ }
@@ -530,9 +595,12 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
   process.once("SIGTERM", onSignal);
   process.once("SIGINT", onSignal);
   try {
+    remainingIdentityBudget(budget);
     const { key, certificate, token, fingerprint256 } = await credentials(stateDirectory);
+    remainingIdentityBudget(budget);
     const activeStore = new SessionMessageStore(databasePath);
     store = activeStore;
+    remainingIdentityBudget(budget);
     const trustDatabasePath = process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim()
       ? path.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path.join(stateDirectory, "trust.sqlite3");
     const wakeHookObservationReader = createWakeHookObservationReader(trustDatabasePath);
@@ -544,7 +612,7 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
       // A failed client must not terminate the broker or undo a committed request.
       socket.on("error", () => socket.destroy());
       socket.setTimeout(5000, () => socket.destroy());
-      socket.on("data", (chunk: Buffer) => {
+      socket.on("data", async (chunk: Buffer) => {
         let line: string | null;
         try { line = readLine(chunk); } catch {
           socket.end(`${JSON.stringify({ ok: false, error: "Request exceeds the broker limit." })}\n`);
@@ -555,7 +623,10 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
           const request = JSON.parse(line) as BrokerRequest;
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
-          const data = dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader, historicalWakeVerifier);
+          const requestBudget = decodeIdentityDeadline(request.identityDeadlineNs);
+          const data = ["ensure-relay", "acquire-relay"].includes(request.operation)
+            ? await runIdentityAsync(relayIdentityOperation(activeStore, request.operation, payload, requestBudget), identityQueries.signal)
+            : dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader, historicalWakeVerifier);
           // Relay leases are maintained while the host is idle; maintenance is not user activity.
           if (!["ping", "relay-tick", "heartbeat-relay", "presence-heartbeat"].includes(request.operation)) lastActivity = Date.now();
           socket.end(`${JSON.stringify({ ok: true, data })}\n`);
@@ -575,6 +646,7 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
       activeServer.once("error", reject);
       activeServer.listen(0, "127.0.0.1", () => resolve());
     });
+    remainingIdentityBudget(budget);
     const address = activeServer.address();
     if (!address || typeof address === "string") throw new Error("The broker did not receive a TCP port.");
     const endpoint = {
@@ -587,8 +659,9 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
     };
     temporary = `${endpointPath}.${process.pid}.${createHash("sha256").update(String(Date.now())).digest("hex").slice(0, 8)}.tmp`;
     writeFileSync(temporary, `${JSON.stringify(endpoint)}\n`, { encoding: "utf8", mode: 0o600 });
-    await publishEndpoint(temporary, endpointPath);
+    await publishEndpoint(temporary, endpointPath, budget);
     published = true;
+    remainingIdentityBudget(budget);
     idleTimer = setInterval(() => {
       if (Date.now() - lastActivity < IDLE_EXIT_MS) return;
       cleanup();
@@ -605,7 +678,8 @@ export async function startSessionMessageBroker(stateDirectory: string): Promise
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
   const stateDirectory = argument("--state-directory");
   if (!stateDirectory) process.exitCode = 2;
-  else void startSessionMessageBroker(path.resolve(stateDirectory)).then((result) => {
+  else void (async () => startSessionMessageBroker(path.resolve(stateDirectory),
+    decodeIdentityDeadline(argument("--startup-identity-deadline-ns") ?? undefined)))().then((result) => {
     if (result === "already-running") process.exit(0);
   }).catch((error: unknown) => {
     const safeCode = brokerFailureCode(error);

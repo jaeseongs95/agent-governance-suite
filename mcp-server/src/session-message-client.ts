@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 
 import { resolveSessionMessageStateDirectory } from "./runtime-config.js";
 import { SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, sessionMessageLineReader } from "./session-message-protocol.js";
+import { encodeIdentityDeadline } from "./broker-identity-budget.js";
 
 export { SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
 export const WAKE_PREFIX = "[agent-governance-suite:wake:";
@@ -223,7 +224,8 @@ export async function requestSessionMessageOnce<T>(
             return;
           }
           let frame: string;
-          try { frame = `${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload })}\n`; }
+          try { frame = `${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload,
+            ...(["ensure-relay", "acquire-relay"].includes(operation) ? { identityDeadlineNs: encodeIdentityDeadline(deadline) } : {}) })}\n`; }
           catch (cause) { throw clientFailure("BROKER_REQUEST_ENCODING_FAILED", "Cannot encode the broker request.", cause); }
           if (enforceDeadline) assertWithinDeadline(deadline, signal, "The session message broker timed out.");
           try { socket.write(frame); }
@@ -377,7 +379,8 @@ export async function ensureSessionMessageBroker(
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
         let child: ChildProcess;
         try {
-          child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory], {
+          child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory,
+            "--startup-identity-deadline-ns", encodeIdentityDeadline(deadline)], {
             detached: true,
             windowsHide: true,
             stdio: "ignore",
