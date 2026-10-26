@@ -68,7 +68,7 @@ export async function runGovernanceHook(
       if (adapter === null) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.", {
         reasonCode: "HOST_EXECUTION_ADAPTER_UNAVAILABLE",
       });
-      domainOutput = handleRegisteredHostAttestationHook(kind, currentInput, { host, databasePath, adapter, openStore: () => store! });
+      domainOutput = handleRegisteredHostAttestationHook(kind, currentInput, { host, databasePath, ...(adapter ? { adapter } : {}), openStore: () => store! });
     }
     if (domainOutput) {
       const specific = record(domainOutput.hookSpecificOutput);

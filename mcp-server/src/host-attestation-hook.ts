@@ -618,7 +618,7 @@ registerHookAttestationStrategy("claude-hook", {
     }
     return handleHostAttestationHook(input, context.openStore(), {
       host: context.host ?? claudeCodeExecutionAdapter.host,
-      adapter: context.adapter,
+      ...(context.adapter ? { adapter: context.adapter } : {}),
       readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId),
     });
   },
@@ -627,7 +627,7 @@ registerHookAttestationStrategy("claude-hook", {
 registerHookAttestationStrategy("codex-rollout", {
   observe: (input, context) => handleCodexHostAttestationHook(input, context.openStore(), {
     host: context.host ?? codexExecutionAdapter.host,
-    adapter: context.adapter,
+    ...(context.adapter ? { adapter: context.adapter } : {}),
   }),
   unavailable(input, failure) {
     const host = failure.host ?? codexExecutionAdapter.host;

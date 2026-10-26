@@ -24434,7 +24434,7 @@ registerHookAttestationStrategy("claude-hook", {
     }
     return handleHostAttestationHook(input2, context.openStore(), {
       host: context.host ?? claudeCodeExecutionAdapter.host,
-      adapter: context.adapter,
+      ...context.adapter ? { adapter: context.adapter } : {},
       readSessionModel: (sessionId) => readSessionModel(modelDirectory, sessionId)
     });
   }
@@ -24442,7 +24442,7 @@ registerHookAttestationStrategy("claude-hook", {
 registerHookAttestationStrategy("codex-rollout", {
   observe: (input2, context) => handleCodexHostAttestationHook(input2, context.openStore(), {
     host: context.host ?? codexExecutionAdapter.host,
-    adapter: context.adapter
+    ...context.adapter ? { adapter: context.adapter } : {}
   }),
   unavailable(input2, failure2) {
     const host = failure2.host ?? codexExecutionAdapter.host;
@@ -24551,7 +24551,7 @@ async function runGovernanceHook(host, raw, environment = process.env, execution
       if (adapter === null) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.", {
         reasonCode: "HOST_EXECUTION_ADAPTER_UNAVAILABLE"
       });
-      domainOutput = handleRegisteredHostAttestationHook(kind, currentInput, { host, databasePath, adapter, openStore: () => store });
+      domainOutput = handleRegisteredHostAttestationHook(kind, currentInput, { host, databasePath, ...adapter ? { adapter } : {}, openStore: () => store });
     }
     if (domainOutput) {
       const specific = record6(domainOutput.hookSpecificOutput);
