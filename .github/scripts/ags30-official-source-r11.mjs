@@ -26,6 +26,18 @@ export function deriveExecutionIdentity(config, environment = process.env) {
     artifactName: `ags30-official-${config.nonce}-${environment.RUNNER_OS}-shard-${shardIndex}` });
 }
 
+export function assertGenuineUpgradeResult(result, currentHead) {
+  for (const key of ['passed', 'genuineOldServiceIssuance', 'sameSqliteStoreReopened', 'historyUnchangedOnRejection',
+    'originalHmacNotReissued', 'originalSigningKeyNotAccessed', 'originalHistoryRetained', 'newExplicitPrePassed']) assert.equal(result[key], true, key);
+  assert.equal(result.genuineMissingPhaseCode, 'BINDING_REQUIRED');
+  assert.equal(result.corruptedCopyCode, 'INVALID_INPUT');
+  assert.equal(result.oldPreResultCode, 'BINDING_REQUIRED');
+  assert.equal(result.sameRootReplanOrdinal, 2);
+  assert.equal(result.newRootCount, 0);
+  assert.equal(result.sourceOld, 'b3285616c896afdcbb298e3a08dffd612ddfa7b8');
+  assert.equal(result.sourceCurrent, currentHead);
+}
+
 export function classifyInitial(receipt, stderr, generated) {
   if (receipt.status === 'PASS') return 'PASS';
   if (receipt.status !== 'FAIL' || receipt.exitCode !== 1 || receipt.signal || receipt.errorCode) return 'UNEXPECTED_FAILURE';
@@ -559,6 +571,42 @@ async function main() {
     assert.equal(version.stdout.toString('utf8').trim(), config.pnpm);
     mustPass(await pnpm('04-install', ['install', '--frozen-lockfile', '--store-dir', path.join(work, 'store'),
       '--config.fetch-retries=0'], 240_000));
+    // The historical service is required once per OS, only on the existing owner shard.
+    if (shardIndex === 1) {
+      const oldHead = 'b3285616c896afdcbb298e3a08dffd612ddfa7b8';
+      const oldTree = '797ccf5960fea8fcebe16025d7786ca389ab6fbc';
+      const oldSource = path.join(work, 'genuine-old-source');
+      mustPass(await git('04u1-old-clone', ['clone', '--no-hardlinks', '--no-checkout', source, oldSource]));
+      mustPass(await git('04u2-old-checkout', ['checkout', '--detach', oldHead], oldSource));
+      assert.equal(mustPass(await git('04u3-old-head', ['rev-parse', 'HEAD'], oldSource)).stdout.toString('utf8').trim(), oldHead);
+      assert.equal(mustPass(await git('04u4-old-tree', ['rev-parse', 'HEAD^{tree}'], oldSource)).stdout.toString('utf8').trim(), oldTree);
+      const oldBlobs = mustPass(await git('04u5-old-blobs', ['ls-tree', '-r', '-l', '-z', oldHead], oldSource)).stdout.toString('utf8');
+      const oldManifest = await buildHeadManifest(oldBlobs, relative => fs.readFile(path.join(oldSource, relative)), { head: oldHead, sourceTree: oldTree });
+      assert.equal(oldManifest.files, 1733);
+      await writeJson('genuine-old-source-manifest.json', oldManifest);
+      mustPass(await command('04u6-old-install', process.execPath, [pnpmCli, 'install', '--frozen-lockfile',
+        '--store-dir', path.join(work, 'store'), '--config.fetch-retries=0'], oldSource, 240_000));
+      for (const [name, directory] of [['old', oldSource], ['current', source]]) {
+        const banner = mustPass(await command('04u7-' + name + '-pnpm', process.execPath, [pnpmCli, '--version'], directory, 10_000));
+        assert.equal(banner.stdout.toString('utf8').trim(), '11.19.0');
+      }
+      const input = { old: { directory: oldSource, commit: oldHead, tree: oldTree,
+        manifestPath: path.join(output, 'genuine-old-source-manifest.json'),
+        serviceSha256: oldManifest.rows.find(row => row.relativePath === 'mcp-server/src/workflow-service.ts').sha256 },
+      current: { directory: source, commit: head, tree: sourceTree, manifestPath: path.join(output, 'source-manifest.json'),
+        serviceSha256: manifest.rows.find(row => row.relativePath === 'mcp-server/src/workflow-service.ts').sha256 },
+      evidenceDirectory: path.join(output, 'genuine-upgrade') };
+      await writeJson('genuine-upgrade-input.json', input);
+      const oldPin = sha(await fs.readFile(input.old.manifestPath));
+      const upgrade = await command('04u8-genuine-upgrade', process.execPath,
+        [path.join(source, 'validation/run-upgrade-test.mjs'), path.join(output, 'genuine-upgrade-input.json'), head, transport.sha256, oldPin], source, 60_000);
+      record.genuineLegacyUpgrade = { status: 'FAIL', processStatus: upgrade.receipt.status, expectedCases: 1, oldHead, currentHead: head,
+        currentManifestSha256: transport.sha256, oldManifestSha256: oldPin, evidenceDirectory: 'genuine-upgrade' };
+      mustPass(upgrade);
+      const outcome = JSON.parse(await fs.readFile(path.join(input.evidenceDirectory, 'result.json'), 'utf8'));
+      assertGenuineUpgradeResult(outcome, head);
+      record.genuineLegacyUpgrade.status = 'PASS';
+    }
     mustPass(await command('04a-new-test-syntax', process.execPath, ['--check', 'antigravity-connector/hooks/antigravity-hook-runner.test.mjs'], source, 10_000));
     mustPass(await command('04b-owned-lifetime', process.execPath,
       [fileURLToPath(new URL('./ags30-owned-command-check-r06.mjs', import.meta.url)),
