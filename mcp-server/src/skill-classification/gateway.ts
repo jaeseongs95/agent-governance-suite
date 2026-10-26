@@ -192,6 +192,8 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
       const profile = runtime.registry.profiles.find(profile => profile.profileId === attempt?.profileId);
       const invalid = profile ? this.options.service.validateProfile(profile, operation.result.request, (this.options.now?.() ?? new Date()).getTime()) : "PROFILE_UNAVAILABLE";
       if (invalid) return {valid: false, errors: [invalid], agentSelectedSkillIds: null};
+      const bindingError = this.options.service.validateResultBinding(operation.result);
+      if (bindingError) return {valid: false, errors: [bindingError], agentSelectedSkillIds: null};
     }
     // The selection observation must still be live at this synchronous commit boundary.
     if (!Number.isFinite(Date.parse(observation.expiresAt ?? "")) || Date.parse(observation.expiresAt!) <= (this.options.now?.() ?? new Date()).getTime()) throw new Error("HOST_SELECTION_OBSERVATION_EXPIRED");

@@ -207,3 +207,121 @@ describe("trusted bound adapter protocol validation", () => {
     expect(digestClassificationValue(runtime)).toBe(digestClassificationValue({config: f.input.config, registry: f.input.registry, allowRemotePrivateContent: true}));
   });
 });
+
+it.each([false, true])("D270 diagnostic accepting validator identity after dispatch replaceHook=%s", async replaceHook => {
+  const f = fixture();
+  const adapter = f.adapter, initialHook = f.adapter.validateConfiguration;
+  const encode = f.adapter.encode, decode = f.adapter.decode;
+  const profileDigest = digestClassificationValue(f.profile);
+  const configDigest = digestClassificationValue(f.input.config);
+  const routeRevision = f.route.adapterRevision;
+  let hookChanged = false;
+  f.fetcher.mockImplementation(async () => {
+    // Synthetic transport only: this is the sole fetch stub, never real fetch.
+    // Resume after the provider reached its already-approved dispatch point.
+    await Promise.resolve();
+    if (replaceHook) {
+      f.adapter.validateConfiguration = () => null;
+      hookChanged = true;
+    }
+    return new Response("{}");
+  });
+  const result = await f.service.classify(f.input);
+  expect(f.fetcher).toHaveBeenCalledTimes(1);
+  expect(f.route.kind).toBe("remote");
+  if (f.route.kind !== "remote") throw new Error("DIAGNOSTIC_EXPECTED_REMOTE_FIXTURE");
+  expect(f.route.adapter).toBe(adapter);
+  expect(f.adapter).toBe(adapter);
+  expect(f.adapter.encode).toBe(encode); expect(f.adapter.decode).toBe(decode);
+  expect(f.route.adapterRevision).toBe(routeRevision);
+  expect(digestClassificationValue(f.profile)).toBe(profileDigest);
+  expect(digestClassificationValue(f.input.config)).toBe(configDigest);
+  expect(f.service.validateProfile(f.profile, f.request)).toBeNull();
+  expect(hookChanged).toBe(replaceHook);
+  if (replaceHook) expect(f.adapter.validateConfiguration).not.toBe(initialHook);
+  else expect(f.adapter.validateConfiguration).toBe(initialHook);
+  console.info(JSON.stringify({diagnostic: "D270_ACCEPTING_VALIDATOR_IDENTITY_AFTER_DISPATCH", replaceHook,
+    status: result.response.status, error: result.response.error, attempts: result.attempts,
+    profileDigestUnchanged: digestClassificationValue(f.profile) === profileDigest,
+    configDigestUnchanged: digestClassificationValue(f.input.config) === configDigest,
+    adapterObjectUnchanged: f.route.adapter === adapter, hookFunctionChanged: f.adapter.validateConfiguration !== initialHook,
+    syntheticFetcherCalls: f.fetcher.mock.calls.length, realExternalCalls: 0}));
+  if (replaceHook) expect(result.response.error, "A response from the previous validator identity must not be accepted under a replacement identity").not.toBeNull();
+  else expect(result.response.status).toBe("SUCCESS");
+});
+
+// Public provider boundaries: changes must fail even when the new policy accepts.
+it.each(["body", "raw", "decode"] as const)("fences accepting validator identity at the %s boundary", async stage => {
+  const f = fixture(), decode = f.adapter.decode;
+  const replace = () => {f.adapter.validateConfiguration = () => null;};
+  if (stage === "body") f.fetcher.mockImplementation(async () => new Response(new ReadableStream({
+    async pull(controller) {await Promise.resolve(); replace(); controller.enqueue(new TextEncoder().encode("{}")); controller.close();}
+  })));
+  if (stage === "raw") f.adapter.validateRawResponse = () => {replace();};
+  if (stage === "decode") f.adapter.decode = (...args) => {const evaluation = decode(...args); replace(); return evaluation;};
+  await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "started"});
+  expect(f.fetcher).toHaveBeenCalledTimes(1);
+});
+it.each(["adapter", "route", "provider-validator"] as const)("fences the actual %s identity at decoded return", async changed => {
+  const f = fixture(), decode = f.adapter.decode;
+  f.adapter.decode = (...args) => {
+    const evaluation = decode(...args);
+    if (changed === "adapter") {if (f.route.kind !== "remote") throw new Error("EXPECTED_REMOTE"); f.route.adapter = {...f.adapter};}
+    if (changed === "route") f.route.approvalRef = "fixture:new-approval";
+    if (changed === "provider-validator") f.provider.validateConfiguration = () => null;
+    return evaluation;
+  };
+  await expect(f.provider.classify(f.request, f.profile, new AbortController().signal)).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "started"});
+  expect(f.fetcher).toHaveBeenCalledTimes(1);
+});
+it("fences a replacement from the last dispatch callback before transport", async () => {
+  const f = fixture();
+  await expect(f.provider.classify(f.request, f.profile, new AbortController().signal,
+    () => {f.adapter.validateConfiguration = () => null;})).rejects.toMatchObject({code: "STALE_CLASSIFICATION", dispatchState: "not-started"});
+  expect(f.fetcher).not.toHaveBeenCalled();
+});
+
+it.each([false, true])("D270 diagnostic accepting validator identity at gateway commit replaceHook=%s", async replaceHook => {
+  const root = fileURLToPath(new URL("../../", import.meta.url)), local = await loadSkillInventory({root}), observedAt = new Date().toISOString();
+  const host: HostSkillDiscoverySnapshot = {schemaVersion: "1.0.0", sourceRef: "fixture:host", revision: "1", observedAt,
+    expiresAt: "2099-01-01T00:00:00Z", skills: local.skills.map(skill => ({skillId: skill.skillId, installed: true, enabled: true, hostSupported: true, root: null}))};
+  const observeHostSkills = async () => host;
+  const {inventory} = await loadHostObservedInventory({root, observeHostSkills}); expect(inventory.issues).toEqual([]);
+  const f = fixture(inventory), runtime = {config: f.input.config, registry: f.input.registry, allowRemotePrivateContent: true};
+  if (f.route.kind !== "remote") throw new Error("DIAGNOSTIC_EXPECTED_REMOTE_FIXTURE");
+  const adapter = f.adapter, originalHook = adapter.validateConfiguration, encode = adapter.encode, decode = adapter.decode;
+  const profileDigest = digestClassificationValue(f.profile), runtimeDigest = digestClassificationValue(runtime), routeRevision = f.route.adapterRevision;
+  const observation: ExecutionContextV1 = {schemaVersion: "1.0.0", model: "fixture-model", modelClass: "general", reasoningEffort: "high", taskId: "initial", actorId: "fixture:actor", source: "runtime", observationId: "fixture:observation", observedAt, expiresAt: "2099-01-01T00:00:00Z"};
+  let accepting = false, acceptReadCount = 0;
+  const gateway = new RuntimeSkillClassificationGateway({root, service: f.service, observeHostSkills,
+    readRuntime: async () => {
+      if (accepting) {acceptReadCount++; if (replaceHook) f.adapter.validateConfiguration = () => null;}
+      return runtime;
+    },
+    observeTask: req => ({taskRevision: req.confirmedContext.taskRevision, requestDigest: req.requestDigest, cancelled: false, sourceRef: "fixture:task"})});
+  const advice = await gateway.classify({schemaVersion: "1.0.0", requestId: f.request.requestId, operationId: f.request.operationId, originalPrompt: f.request.originalPrompt,
+    confirmedContext: f.request.confirmedContext, contextSources: [], explicitSkillIds: [], ruleRequiredSkillIds: [], vendorContext: {vendorId: "fixture", reference: "fixture:vendor"}, publicSynthetic: false}, observation);
+  if (!("result" in advice) || typeof advice.classificationResponseRef !== "string") throw new Error("EXPECTED_CLASSIFICATION_RESULT");
+  expect(advice.result.response.status).toBe("SUCCESS"); expect(adapter.validateConfiguration).toBe(originalHook);
+  const snap = advice.result.snapshot;
+  const decision: SkillSelectionDecisionV1 = {schemaVersion: "1.0.0", classificationResponseRef: advice.classificationResponseRef, requestDigest: snap.requestDigest,
+    inventoryDigest: snap.inventoryDigest, taskRevision: snap.taskRevision, configRevision: snap.configRevision, profileRevision: snap.profileRevision,
+    explicitSkillIds: [], ruleRequiredSkillIds: [], agentSelectedSkillIds: [], selectionReasons: [], applicabilityChecks: [], unresolvedSkillReferences: [],
+    selectionStatus: "SELECTED", adviceApplied: true, hostReceipt: null};
+  observation.taskId = snap.requestDigest; accepting = true;
+  const accepted = await gateway.accept({schemaVersion: "1.0.0", operationId: f.request.operationId, decision}, observation);
+  expect(acceptReadCount).toBe(1); expect(f.fetcher).toHaveBeenCalledTimes(1);
+  expect(f.route.adapter).toBe(adapter); expect(adapter.encode).toBe(encode); expect(adapter.decode).toBe(decode);
+  expect(f.route.adapterRevision).toBe(routeRevision); expect(digestClassificationValue(f.profile)).toBe(profileDigest);
+  expect(digestClassificationValue(runtime)).toBe(runtimeDigest); expect(f.state.allowed).toBe(true);
+  expect(f.service.validateProfile(f.profile, f.request)).toBeNull();
+  expect(adapter.validateConfiguration === originalHook).toBe(!replaceHook);
+  console.info(JSON.stringify({diagnostic: "D270_ACCEPTING_VALIDATOR_IDENTITY_GATEWAY_COMMIT", replaceHook,
+    classifyStatus: advice.result.response.status, acceptedValid: accepted.valid, acceptedErrors: accepted.errors,
+    decisionRecorded: "decision" in accepted, hookFunctionChanged: adapter.validateConfiguration !== originalHook,
+    adapterObjectUnchanged: f.route.adapter === adapter, profileDigestUnchanged: digestClassificationValue(f.profile) === profileDigest,
+    runtimeDigestUnchanged: digestClassificationValue(runtime) === runtimeDigest, acceptReadCount,
+    syntheticFetcherCalls: f.fetcher.mock.calls.length, realExternalCalls: 0}));
+  expect(accepted.valid, "Gateway must retain the advice validator identity until selection commit").toBe(!replaceHook);
+  if (!replaceHook) {if (!("decision" in accepted)) throw new Error("EXPECTED_ACCEPTED_DECISION"); expect(accepted.decision.agentSelectedSkillIds).toEqual([]);}
+});

@@ -84,6 +84,7 @@ const stale = (a: ClassificationSnapshot, b: ClassificationSnapshot) => b.cancel
 export class SkillClassificationService {
   private readonly operations = new Map<string, Operation>();
   private readonly requestOperations = new Map<string, string>();
+  private readonly resultFences = new WeakMap<ClassificationResult, () => boolean>();
   private readonly now: () => number;
   private readonly maxOperations: number;
   constructor(private readonly options: {providers: {jev?: SkillClassificationProviderPort; vendor?: SkillClassificationProviderPort}; budget: ClassificationBudgetPort; now?: () => number; maxOperations?: number}) {
@@ -96,6 +97,20 @@ export class SkillClassificationService {
     const provider = this.options.providers[profile.providerKind];
     return validateBoundProviderProfile(profile, request, nowMs,
       value => provider?.validateConfiguration ? provider.validateConfiguration(value) : validateLegacyProviderConfiguration(value));
+  }
+  /** Only the exact service-owned result can authorize later use of its original provider binding. */
+  validateResultBinding(result: ClassificationResult): string | null {
+    try {return this.resultFences.get(result)?.() === true ? null : "STALE_CLASSIFICATION";}
+    catch {return "STALE_CLASSIFICATION";}
+  }
+  private providerFence(provider: SkillClassificationProviderPort, profile: ProviderProfile): () => boolean {
+    const validate = provider.validateConfiguration, classify = provider.classify, availability = provider.availability;
+    const routeKind = provider.routeKind, capture = provider.captureConfigurationFence;
+    let current: (() => boolean) | undefined;
+    try {current = capture?.call(provider, profile);} catch {return () => false;}
+    return () => this.options.providers[profile.providerKind] === provider && provider.validateConfiguration === validate
+      && provider.classify === classify && provider.availability === availability && provider.routeKind === routeKind
+      && provider.captureConfigurationFence === capture && (capture === undefined || current?.() === true);
   }
   /** Pure preflight: no credentials, availability, reservation or transport. Unknown ports stay closed. */
   hasNativeRoute(input: Pick<ClassificationServiceInput, "request" | "config" | "registry" | "currentVendorId">): boolean {
@@ -151,6 +166,8 @@ export class SkillClassificationService {
       const profile = input.registry.profiles.find(profile => profile.profileId === attempt?.profileId);
       const invalid = profile ? this.validateProfile(profile, input.request, this.now()) : "PROFILE_UNAVAILABLE";
       if (invalid) return this.failure(input, result.snapshot, invalid, result.attempts);
+      const bindingError = this.validateResultBinding(result);
+      if (bindingError) return this.failure(input, result.snapshot, bindingError, result.attempts);
     }
     return result;
   }
@@ -181,6 +198,7 @@ export class SkillClassificationService {
       const evaluated = await this.attempt(input, snapshot, provider, profile);
       attempts.push(evaluated.attempt);
       const result: ClassificationResult = {request: input.request, config: input.config, profileRevision: input.registry.profileRevision, snapshot, attempts, response: evaluated.evaluation.response};
+      this.resultFences.set(result, evaluated.bindingCurrent);
       const current = this.current(input, result);
       if (current !== result) return current;
       if (["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status) && result.response.error === null) return result;
@@ -189,6 +207,7 @@ export class SkillClassificationService {
     return this.failure(input, snapshot, "PROVIDER_UNAVAILABLE", attempts);
   }
   private async attempt(input: ClassificationServiceInput, snapshot: ClassificationSnapshot, provider: SkillClassificationProviderPort, profile: ProviderProfile) {
+    const bindingCurrent = this.providerFence(provider, profile);
     const controller = new AbortController();
     let dispatchState: DispatchState = "not-started";
     let reserved = false;
@@ -225,7 +244,7 @@ export class SkillClassificationService {
           if (input.remoteContentAllowed === false && provider.routeKind !== undefined && provider.routeKind(profile) !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
           if (controller.signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
           if (input.getCurrentSnapshot && stale(snapshot, input.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
-          if (this.validateProfile(profile, input.request, this.now()) !== null) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
+          if (this.validateProfile(profile, input.request, this.now()) !== null || !bindingCurrent()) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
         };
         const evaluation = await provider.classify(input.request, profile, controller.signal, beforeDispatch);
         if (controller.signal.aborted) return evaluation; // only the already-settled race may publish
@@ -260,6 +279,6 @@ export class SkillClassificationService {
     if (reserved) this.options.budget.settle(reservationId, evaluation.usage.actualCostUsd, evaluation.dispatchState);
     const attempt: ClassificationAttempt = {providerKind: profile.providerKind, profileId: profile.profileId, modelId: profile.modelId, reasoningEffort: profile.reasoningEffort,
       dispatchState: evaluation.dispatchState, status: evaluation.response.status, errorCode: evaluation.response.error?.code ?? null, timedOut, usage: evaluation.usage, reservedCostUsd: reserved ? profile.maximumCostUsd! : 0, diagnostics: structuredClone(evaluation.diagnostics), rateLimitObservation: evaluation.response.error?.code === "RATE_LIMITED" ? sanitizeRateLimitObservation(evaluation.rateLimitObservation) : null};
-    return {evaluation, attempt};
+    return {evaluation, attempt, bindingCurrent};
   }
 }

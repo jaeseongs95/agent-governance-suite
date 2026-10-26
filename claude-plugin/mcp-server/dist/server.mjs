@@ -34120,6 +34120,30 @@ var ApprovedRouteClassificationProvider = class {
       (route.transport === void 0 ? this.defaultTransport : route.transport).headers
     ]);
   }
+  /** Server-owned identities survive JSON snapshots and remain checkable through selection commit. */
+  captureConfigurationFence(profile) {
+    try {
+      const fixedProfile = structuredClone(profile), route = this.route(fixedProfile);
+      if (!route) return () => false;
+      const binding2 = this.routeBinding(route), routeTransport = route.transport;
+      const transport = routeTransport === void 0 ? this.defaultTransport : routeTransport;
+      const matches = transport.matches, headers = transport.headers, validate2 = this.validateConfiguration;
+      const adapter = route.kind === "remote" ? route.adapter : null;
+      const encode4 = adapter?.encode, decode3 = adapter?.decode, validateRawResponse = adapter?.validateRawResponse;
+      const validateConfiguration = adapter?.validateConfiguration, adapterTransport = adapter?.transport;
+      const getCredential = route.kind === "remote" ? route.getCredential : null;
+      const invokeStructured = route.kind === "native" ? route.invokeStructured : null;
+      return () => {
+        try {
+          return this.validateConfiguration === validate2 && this.route(fixedProfile) === route && this.routeBinding(route) === binding2 && route.transport === routeTransport && transport.matches === matches && transport.headers === headers && (route.kind === "remote" ? route.adapter === adapter && route.getCredential === getCredential && adapter.encode === encode4 && adapter.decode === decode3 && adapter.validateRawResponse === validateRawResponse && adapter.validateConfiguration === validateConfiguration && adapter.transport === adapterTransport : route.invokeStructured === invokeStructured);
+        } catch {
+          return false;
+        }
+      };
+    } catch {
+      return () => false;
+    }
+  }
   async availability(profile) {
     const route = this.route(profile);
     const absent = (reasonCode) => ({ available: false, approved: false, routeKind: route?.kind ?? "remote", reasonCode });
@@ -34144,17 +34168,18 @@ var ApprovedRouteClassificationProvider = class {
     if (signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
     const fixedRequest = structuredClone(request), fixedProfile = structuredClone(profile);
     const routeTransport = route.transport, transport = routeTransport === void 0 ? this.defaultTransport : routeTransport;
-    const transportMatches = transport.matches, transportHeaders = transport.headers;
-    const fixedHeaders = { ...transportHeaders };
-    const requestBinding = digestClassificationValue(fixedRequest), profileBinding = digestClassificationValue(fixedProfile), routeBinding = this.routeBinding(route);
-    const assertCurrent = () => {
-      if (signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
+    const fixedHeaders = { ...transport.headers };
+    const configurationCurrent = this.captureConfigurationFence(fixedProfile);
+    const requestBinding = digestClassificationValue(fixedRequest), profileBinding = digestClassificationValue(fixedProfile);
+    const configurationValidator = this.validateConfiguration;
+    const assertCurrent = (dispatchState = "not-started") => {
+      if (signal.aborted) throw new ClassificationProviderError("CANCELLED", dispatchState);
       let current = false;
       try {
-        current = this.route(profile) === route && this.routeBinding(route) === routeBinding && route.transport === routeTransport && transport.matches === transportMatches && transport.headers === transportHeaders && this.transportMatches(route) && digestClassificationValue(request) === requestBinding && digestClassificationValue(profile) === profileBinding && digestClassificationValue(fixedRequest) === requestBinding && digestClassificationValue(fixedProfile) === profileBinding && validateBoundProviderProfile(profile, fixedRequest, Date.now(), (value) => this.validateConfiguration(value)) === null;
+        current = this.transportMatches(route) && configurationCurrent() && digestClassificationValue(request) === requestBinding && digestClassificationValue(profile) === profileBinding && digestClassificationValue(fixedRequest) === requestBinding && digestClassificationValue(fixedProfile) === profileBinding && (dispatchState !== "not-started" || validateBoundProviderProfile(profile, fixedRequest, Date.now(), (value) => configurationValidator.call(this, value)) === null);
       } catch {
       }
-      if (!current) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
+      if (!current) throw new ClassificationProviderError("STALE_CLASSIFICATION", dispatchState);
     };
     if (route.kind === "native") {
       if (typeof route.invokeStructured !== "function") throw new ClassificationProviderError("NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "not-started");
@@ -34165,12 +34190,7 @@ var ApprovedRouteClassificationProvider = class {
       });
     }
     const adapter = route.adapter, getCredential = route.getCredential;
-    const { encode: encode4, decode: decode3, validateRawResponse, validateConfiguration, transport: adapterTransport } = adapter;
-    const assertRemoteCurrent = () => {
-      assertCurrent();
-      if (route.getCredential !== getCredential || route.adapter !== adapter || adapter.encode !== encode4 || adapter.decode !== decode3 || adapter.validateRawResponse !== validateRawResponse || adapter.validateConfiguration !== validateConfiguration || adapter.transport !== adapterTransport)
-        throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
-    };
+    const { encode: encode4, decode: decode3, validateRawResponse } = adapter;
     let endpoint;
     try {
       endpoint = new URL(route.endpoint);
@@ -34185,7 +34205,7 @@ var ApprovedRouteClassificationProvider = class {
       throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started");
     }
     if (!key) throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started");
-    assertRemoteCurrent();
+    assertCurrent();
     let body;
     try {
       body = JSON.stringify(encode4.call(adapter, fixedRequest, fixedProfile));
@@ -34194,9 +34214,10 @@ var ApprovedRouteClassificationProvider = class {
     }
     if (typeof body !== "string") throw new ClassificationProviderError("INVALID_PROVIDER_REQUEST", "not-started", true);
     if (Buffer.byteLength(body, "utf8") > fixedProfile.maximumInputBytes) throw new ClassificationProviderError("INPUT_TOO_LONG", "not-started");
-    assertRemoteCurrent();
+    assertCurrent();
     const headers = { authorization: "Bearer ".concat(key), "content-type": "application/json", ...fixedHeaders };
     beforeDispatch?.();
+    assertCurrent();
     let response;
     try {
       response = await this.fetcher(endpoint, { method: "POST", headers, body, signal, redirect: "error" });
@@ -34213,13 +34234,17 @@ var ApprovedRouteClassificationProvider = class {
       throw new ClassificationProviderError(code, "started", false, rateLimitObservation);
     }
     const bodyText = await this.readResponse(response);
+    assertCurrent("started");
+    let evaluation;
     try {
       const parsed = JSON.parse(bodyText);
       validateRawResponse?.call(adapter, bodyText);
-      return decode3.call(adapter, parsed, fixedRequest, fixedProfile);
+      evaluation = decode3.call(adapter, parsed, fixedRequest, fixedProfile);
     } catch {
       throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", "started", true);
     }
+    assertCurrent("started");
+    return evaluation;
   }
   async readResponse(response) {
     if (!response.body) throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", "started", true);
@@ -34838,6 +34863,7 @@ var SkillClassificationService = class {
   options;
   operations = /* @__PURE__ */ new Map();
   requestOperations = /* @__PURE__ */ new Map();
+  resultFences = /* @__PURE__ */ new WeakMap();
   now;
   maxOperations;
   /** Shared by run, rechecks and gateway acceptance; no availability or credential side effect. */
@@ -34849,6 +34875,25 @@ var SkillClassificationService = class {
       nowMs,
       (value) => provider2?.validateConfiguration ? provider2.validateConfiguration(value) : validateLegacyProviderConfiguration(value)
     );
+  }
+  /** Only the exact service-owned result can authorize later use of its original provider binding. */
+  validateResultBinding(result) {
+    try {
+      return this.resultFences.get(result)?.() === true ? null : "STALE_CLASSIFICATION";
+    } catch {
+      return "STALE_CLASSIFICATION";
+    }
+  }
+  providerFence(provider2, profile) {
+    const validate2 = provider2.validateConfiguration, classify = provider2.classify, availability = provider2.availability;
+    const routeKind = provider2.routeKind, capture = provider2.captureConfigurationFence;
+    let current;
+    try {
+      current = capture?.call(provider2, profile);
+    } catch {
+      return () => false;
+    }
+    return () => this.options.providers[profile.providerKind] === provider2 && provider2.validateConfiguration === validate2 && provider2.classify === classify && provider2.availability === availability && provider2.routeKind === routeKind && provider2.captureConfigurationFence === capture && (capture === void 0 || current?.() === true);
   }
   /** Pure preflight: no credentials, availability, reservation or transport. Unknown ports stay closed. */
   hasNativeRoute(input2) {
@@ -34912,6 +34957,8 @@ var SkillClassificationService = class {
       const profile = input2.registry.profiles.find((profile2) => profile2.profileId === attempt?.profileId);
       const invalid2 = profile ? this.validateProfile(profile, input2.request, this.now()) : "PROFILE_UNAVAILABLE";
       if (invalid2) return this.failure(input2, result.snapshot, invalid2, result.attempts);
+      const bindingError = this.validateResultBinding(result);
+      if (bindingError) return this.failure(input2, result.snapshot, bindingError, result.attempts);
     }
     return result;
   }
@@ -34943,6 +34990,7 @@ var SkillClassificationService = class {
       const evaluated = await this.attempt(input2, snapshot, provider2, profile);
       attempts.push(evaluated.attempt);
       const result = { request: input2.request, config: input2.config, profileRevision: input2.registry.profileRevision, snapshot, attempts, response: evaluated.evaluation.response };
+      this.resultFences.set(result, evaluated.bindingCurrent);
       const current = this.current(input2, result);
       if (current !== result) return current;
       if (["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status) && result.response.error === null) return result;
@@ -34951,6 +34999,7 @@ var SkillClassificationService = class {
     return this.failure(input2, snapshot, "PROVIDER_UNAVAILABLE", attempts);
   }
   async attempt(input2, snapshot, provider2, profile) {
+    const bindingCurrent = this.providerFence(provider2, profile);
     const controller = new AbortController();
     let dispatchState = "not-started";
     let reserved = false;
@@ -34993,7 +35042,7 @@ var SkillClassificationService = class {
           if (input2.remoteContentAllowed === false && provider2.routeKind !== void 0 && provider2.routeKind(profile) !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
           if (controller.signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
           if (input2.getCurrentSnapshot && stale(snapshot, input2.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
-          if (this.validateProfile(profile, input2.request, this.now()) !== null) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
+          if (this.validateProfile(profile, input2.request, this.now()) !== null || !bindingCurrent()) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
         };
         const evaluation2 = await provider2.classify(input2.request, profile, controller.signal, beforeDispatch);
         if (controller.signal.aborted) return evaluation2;
@@ -35044,7 +35093,7 @@ var SkillClassificationService = class {
       diagnostics: structuredClone(evaluation.diagnostics),
       rateLimitObservation: evaluation.response.error?.code === "RATE_LIMITED" ? sanitizeRateLimitObservation(evaluation.rateLimitObservation) : null
     };
-    return { evaluation, attempt };
+    return { evaluation, attempt, bindingCurrent };
   }
 };
 
@@ -35272,6 +35321,8 @@ var RuntimeSkillClassificationGateway = class {
       const profile = runtime.registry.profiles.find((profile2) => profile2.profileId === attempt?.profileId);
       const invalid2 = profile ? this.options.service.validateProfile(profile, operation.result.request, (this.options.now?.() ?? /* @__PURE__ */ new Date()).getTime()) : "PROFILE_UNAVAILABLE";
       if (invalid2) return { valid: false, errors: [invalid2], agentSelectedSkillIds: null };
+      const bindingError = this.options.service.validateResultBinding(operation.result);
+      if (bindingError) return { valid: false, errors: [bindingError], agentSelectedSkillIds: null };
     }
     if (!Number.isFinite(Date.parse(observation.expiresAt ?? "")) || Date.parse(observation.expiresAt) <= (this.options.now?.() ?? /* @__PURE__ */ new Date()).getTime()) throw new Error("HOST_SELECTION_OBSERVATION_EXPIRED");
     operation.decision ??= decision;

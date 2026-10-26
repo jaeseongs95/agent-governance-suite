@@ -122,6 +122,30 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
       route.modelIds, route.reasoningEfforts, route.structuredOutput, route.kind, route.kind === "remote" ? route.endpoint : null,
       (route.transport === undefined ? this.defaultTransport : route.transport).headers]);
   }
+  /** Server-owned identities survive JSON snapshots and remain checkable through selection commit. */
+  captureConfigurationFence(profile: ProviderConfiguration): () => boolean {
+    try {
+      const fixedProfile = structuredClone(profile), route = this.route(fixedProfile);
+      if (!route) return () => false;
+      const binding = this.routeBinding(route), routeTransport = route.transport;
+      const transport = routeTransport === undefined ? this.defaultTransport : routeTransport;
+      const matches = transport.matches, headers = transport.headers, validate = this.validateConfiguration;
+      const adapter = route.kind === "remote" ? route.adapter : null;
+      const encode = adapter?.encode, decode = adapter?.decode, validateRawResponse = adapter?.validateRawResponse;
+      const validateConfiguration = adapter?.validateConfiguration, adapterTransport = adapter?.transport;
+      const getCredential = route.kind === "remote" ? route.getCredential : null;
+      const invokeStructured = route.kind === "native" ? route.invokeStructured : null;
+      return () => {
+        try {
+          return this.validateConfiguration === validate && this.route(fixedProfile) === route && this.routeBinding(route) === binding
+            && route.transport === routeTransport && transport.matches === matches && transport.headers === headers
+            && (route.kind === "remote" ? route.adapter === adapter && route.getCredential === getCredential
+              && adapter!.encode === encode && adapter!.decode === decode && adapter!.validateRawResponse === validateRawResponse
+              && adapter!.validateConfiguration === validateConfiguration && adapter!.transport === adapterTransport : route.invokeStructured === invokeStructured);
+        } catch {return false;}
+      };
+    } catch {return () => false;}
+  }
   async availability(profile: ProviderProfile): Promise<ProviderAvailability> {
     const route = this.route(profile);
     const absent = (reasonCode: string): ProviderAvailability => ({available: false, approved: false, routeKind: route?.kind ?? "remote", reasonCode});
@@ -146,20 +170,20 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
     if (signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
     const fixedRequest = structuredClone(request), fixedProfile = structuredClone(profile);
     const routeTransport = route.transport, transport = routeTransport === undefined ? this.defaultTransport : routeTransport;
-    const transportMatches = transport.matches, transportHeaders = transport.headers;
-    const fixedHeaders = {...transportHeaders};
-    const requestBinding = digestClassificationValue(fixedRequest), profileBinding = digestClassificationValue(fixedProfile), routeBinding = this.routeBinding(route);
-    const assertCurrent = () => {
-      if (signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
+    const fixedHeaders = {...transport.headers};
+    const configurationCurrent = this.captureConfigurationFence(fixedProfile);
+    const requestBinding = digestClassificationValue(fixedRequest), profileBinding = digestClassificationValue(fixedProfile);
+    const configurationValidator = this.validateConfiguration;
+    const assertCurrent = (dispatchState: DispatchState = "not-started") => {
+      if (signal.aborted) throw new ClassificationProviderError("CANCELLED", dispatchState);
       let current = false;
       try {
-        current = this.route(profile) === route && this.routeBinding(route) === routeBinding
-          && route.transport === routeTransport && transport.matches === transportMatches && transport.headers === transportHeaders && this.transportMatches(route)
+        current = this.transportMatches(route) && configurationCurrent()
           && digestClassificationValue(request) === requestBinding && digestClassificationValue(profile) === profileBinding
           && digestClassificationValue(fixedRequest) === requestBinding && digestClassificationValue(fixedProfile) === profileBinding
-          && validateBoundProviderProfile(profile, fixedRequest, Date.now(), value => this.validateConfiguration(value)) === null;
-      } catch { /* Mutable or invalid bindings fail closed before dispatch. */ }
-      if (!current) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
+          && (dispatchState !== "not-started" || validateBoundProviderProfile(profile, fixedRequest, Date.now(), value => configurationValidator.call(this, value)) === null);
+      } catch { /* Mutable or invalid bindings fail closed at each boundary. */ }
+      if (!current) throw new ClassificationProviderError("STALE_CLASSIFICATION", dispatchState);
     };
     if (route.kind === "native") {
       if (typeof route.invokeStructured !== "function") throw new ClassificationProviderError("NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "not-started");
@@ -167,27 +191,23 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
       return route.invokeStructured(fixedRequest, fixedProfile, signal, () => {assertCurrent(); beforeDispatch?.();});
     }
     const adapter = route.adapter, getCredential = route.getCredential;
-    const {encode, decode, validateRawResponse, validateConfiguration, transport: adapterTransport} = adapter;
-    const assertRemoteCurrent = () => {
-      assertCurrent();
-      if (route.getCredential !== getCredential || route.adapter !== adapter || adapter.encode !== encode || adapter.decode !== decode || adapter.validateRawResponse !== validateRawResponse || adapter.validateConfiguration !== validateConfiguration || adapter.transport !== adapterTransport)
-        throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
-    };
+    const {encode, decode, validateRawResponse} = adapter;
     let endpoint: URL;
     try { endpoint = new URL(route.endpoint); } catch { throw new ClassificationProviderError("INVALID_APPROVED_ENDPOINT", "not-started"); }
     if (endpoint.protocol !== "https:" || endpoint.username || endpoint.password) throw new ClassificationProviderError("INVALID_APPROVED_ENDPOINT", "not-started");
     let key: string | null;
     try { key = await getCredential.call(route); } catch { throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started"); }
     if (!key) throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started");
-    assertRemoteCurrent();
+    assertCurrent();
     let body: string;
     try { body = JSON.stringify(encode.call(adapter, fixedRequest, fixedProfile)); }
     catch { throw new ClassificationProviderError("INVALID_PROVIDER_REQUEST", "not-started", true); }
     if (typeof body !== "string") throw new ClassificationProviderError("INVALID_PROVIDER_REQUEST", "not-started", true);
     if (Buffer.byteLength(body, "utf8") > fixedProfile.maximumInputBytes) throw new ClassificationProviderError("INPUT_TOO_LONG", "not-started");
-    assertRemoteCurrent();
+    assertCurrent();
     const headers: Record<string, string> = {authorization: `Bearer ${key}`, "content-type": "application/json", ...fixedHeaders};
     beforeDispatch?.();
+    assertCurrent();
     let response: Response;
     // fetch has no SDK retry layer; one invocation is one transport attempt.
     try { response = await this.fetcher(endpoint, {method: "POST", headers, body, signal, redirect: "error"}); }
@@ -200,12 +220,16 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
       throw new ClassificationProviderError(code, "started", false, rateLimitObservation);
     }
     const bodyText = await this.readResponse(response);
+    assertCurrent("started");
+    let evaluation: ProviderEvaluation;
     try {
       const parsed: unknown = JSON.parse(bodyText);
       validateRawResponse?.call(adapter, bodyText);
-      return decode.call(adapter, parsed, fixedRequest, fixedProfile);
+      evaluation = decode.call(adapter, parsed, fixedRequest, fixedProfile);
     }
     catch { throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", "started", true); }
+    assertCurrent("started");
+    return evaluation;
   }
   private async readResponse(response: Response): Promise<string> {
     if (!response.body) throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", "started", true);
