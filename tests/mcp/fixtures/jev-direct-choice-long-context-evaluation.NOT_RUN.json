@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "configuration": {
+    "profileId": "offline-choice-long-context-evaluation",
+    "providerKind": "jev",
+    "vendorId": "offline",
+    "modelId": "offline",
+    "modelRevision": "offline-r1",
+    "reasoningEffort": null,
+    "supportedOptions": {
+      "reasoningEfforts": [
+        null
+      ],
+      "structuredOutput": true
+    },
+    "approvedRouteRef": "offline-route",
+    "qualificationRevision": "not-run",
+    "adapterRevision": "jev-skill-selection-choice-r01-long-context",
+    "promptRevision": "jev-skill-selection-choice-r01:sha256:1bb8fb5b716cb768c82bbcdc9b71dbcbbbee16f2563b114c97be9c4f3b38232c",
+    "maximumInputBytes": 1000000,
+    "maximumOutputTokens": 1000,
+    "maximumCostUsd": 0.01,
+    "judgmentPolicy": null
+  },
+  "configurationDigest": "sha256:4f7fba673344c6a276c976a16ac0a67c3b6289c68a4c434d43d53b63cbc19a75",
+  "evaluationState": {
+    "status": "NOT_RUN",
+    "inventoryDigest": "sha256:ef35aa67e0e41c8ba33bf7715db8f1a1489170c47e02d4a192aedf5e72c0b71f",
+    "taxonomyRevision": "fixture-taxonomy",
+    "modelRevision": "offline-r1",
+    "promptRevision": "jev-skill-selection-choice-r01:sha256:1bb8fb5b716cb768c82bbcdc9b71dbcbbbee16f2563b114c97be9c4f3b38232c"
+  },
+  "preparedAt": "2000-01-01T00:00:00.000Z",
+  "productionRegistryUsable": false
+}

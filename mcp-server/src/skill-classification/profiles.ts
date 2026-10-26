@@ -1,6 +1,12 @@
+import {SKILL_SELECTION_ADVICE_PROMPT_DIGEST} from "./skill-selection-advice.js";
 import {readFile} from "node:fs/promises";
 import {digestClassificationValue} from "./digest.js";
 import type {ProviderConfiguration, ProviderProfile, ProviderProfileRegistry, SkillClassificationRequestV1} from "./types.js";
+
+// A separate opt-in identity; this never aliases or replaces a production v6 profile.
+export const JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION = "jev-skill-selection-choice-r01";
+export const JEV_SKILL_SELECTION_CHOICE_PROMPT_REVISION = JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION + ":" + SKILL_SELECTION_ADVICE_PROMPT_DIGEST;
+export const JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION = JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION + "-long-context";
 
 // Registry data is supplied by the approved environment; there are no qualified defaults.
 export async function loadProviderProfileRegistry(path: string): Promise<ProviderProfileRegistry> {
@@ -73,7 +79,10 @@ export function validateProviderProfile(profile: ProviderProfile, request: Skill
   if (!Number.isFinite(Date.parse(q.validUntil)) || Date.parse(q.validUntil) <= nowMs) return "QUALIFICATION_EXPIRED";
   if (!profile.supportedOptions.structuredOutput || !profile.supportedOptions.reasoningEfforts.includes(profile.reasoningEffort)) return "UNSUPPORTED_OPTIONS";
   if (profile.maximumCostUsd === null) return "COST_UNKNOWN";
-  if (profile.providerKind === "jev" && (profile.judgmentPolicy === null || profile.reasoningEffort !== null)) return "UNSUPPORTED_OPTIONS";
+  const directChoice = [JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION, JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION].includes(profile.adapterRevision);
+  if (profile.providerKind === "jev" && (profile.reasoningEffort !== null
+    || (directChoice ? profile.promptRevision !== JEV_SKILL_SELECTION_CHOICE_PROMPT_REVISION || profile.judgmentPolicy !== null
+      : profile.judgmentPolicy === null))) return "UNSUPPORTED_OPTIONS";
   return null;
 }
 

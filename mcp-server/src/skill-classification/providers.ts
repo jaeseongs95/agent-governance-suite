@@ -1,6 +1,9 @@
 import type {ClassificationRateLimitObservation, ClassificationUsage, DispatchState, ProviderAvailability, ProviderConfiguration, ProviderEvaluation, ProviderProfile, SkillClassificationProviderPort, SkillClassificationRequestV1, SkillClassificationResponseV1} from "./types.js";
 import {digestClassificationValue, projectClassificationRequest} from "./request.js";
-import {validateProviderProfile} from "./profiles.js";
+import {validateProviderProfile, JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION, JEV_SKILL_SELECTION_CHOICE_PROMPT_REVISION, JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION} from "./profiles.js";
+import {skillSelectionAdvicePrompt} from "./skill-selection-advice.js";
+export {skillSelectionAdvicePrompt, SKILL_SELECTION_ADVICE_PROMPT_DIGEST} from "./skill-selection-advice.js";
+export {JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION, JEV_SKILL_SELECTION_CHOICE_PROMPT_REVISION, JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION} from "./profiles.js";
 
 export const unknownUsage = (): ClassificationUsage => ({inputTokens: null, outputTokens: null, cachedInputTokens: null, actualCostUsd: null});
 export type {ClassificationRateLimitObservation} from "./types.js";
@@ -472,25 +475,117 @@ export const jevNoulSharedRulesV6LongContextWireAdapter: ClassificationWireAdapt
   },
 };
 
+/** JSON.parse validates syntax first; duplicate keys cannot overwrite Choice bindings. */
+function validateJevChoiceAnswerKeys(bodyText: string): void {
+  const stack: (Set<string> | null)[] = [];
+  for (const match of bodyText.matchAll(/"(?:\\.|[^"\\])*"|[{}[\]]/gu)) {
+    const token = match[0];
+    if (token === "{") stack.push(new Set());
+    else if (token === "[") stack.push(null);
+    else if (token === "}" || token === "]") stack.pop();
+    else if (/^\s*:/u.test(bodyText.slice(match.index + token.length))) {
+      const seen = stack.at(-1), key = JSON.parse(token) as string;
+      if (seen?.has(key)) throw new Error("AMBIGUOUS_JEV_CHOICE_RESPONSE");
+      seen?.add(key);
+    }
+  }
+}
+function assertSkillSelectionChoiceProfile(profile: ProviderConfiguration, adapterRevision = JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION): void {
+  if (profile.providerKind !== "jev" || profile.adapterRevision !== adapterRevision
+    || profile.promptRevision !== JEV_SKILL_SELECTION_CHOICE_PROMPT_REVISION || profile.judgmentPolicy !== null || profile.reasoningEffort !== null)
+    throw new Error("JEV_CHOICE_PROFILE_MISMATCH");
+}
+
+/** Explicit Choice labels express necessity; confidence never changes their meaning. */
+export const jevSkillSelectionChoiceWireAdapter: ClassificationWireAdapter = {
+  validateRawResponse: validateJevChoiceAnswerKeys,
+  encode(request, profile) {
+    assertSkillSelectionChoiceProfile(profile);
+    const skills = projectClassificationRequest(request).payload.skills;
+    return {model: profile.modelId, state: {...classificationState(request), classificationRules: skillSelectionAdvicePrompt.rules},
+      questions: Object.fromEntries(skills.map(skill => [skill.skillId, {type: "choice",
+        instructions: {question: skillSelectionAdvicePrompt.question, skill}, criteria: skillSelectionAdvicePrompt.options}]))};
+  },
+  decode(body, request, profile) {
+    assertSkillSelectionChoiceProfile(profile);
+    const skills = projectClassificationRequest(request).payload.skills;
+    if (!record(body) || body.model !== profile.modelRevision || !record(body.answers) || !record(body.usage)
+      || tokenCount(body.usage.input_tokens) === null || tokenCount(body.usage.output_tokens) === null) throw new Error("INVALID_JEV_CHOICE_RESPONSE");
+    const answers = body.answers, expected = new Set(skills.map(skill => skill.skillId));
+    if (Object.keys(answers).length !== expected.size || Object.keys(answers).some(id => !expected.has(id))) throw new Error("INVALID_JEV_CHOICE_IDS");
+    const labels = ["needed", "not-needed", "uncertain"] as const;
+    const parsed = skills.map(skill => {
+      const answer = answers[skill.skillId];
+      if (!record(answer) || answer.type !== "choice" || !labels.some(label => label === answer.choice)
+        || typeof answer.confidence !== "number" || !Number.isFinite(answer.confidence) || answer.confidence < 0 || answer.confidence > 1
+        || !record(answer.probabilities)) throw new Error("INVALID_JEV_CHOICE_ANSWER");
+      const probabilities = answer.probabilities;
+      if (Object.keys(probabilities).length !== labels.length || Object.keys(probabilities).some(label => !labels.some(expected => expected === label))
+        || labels.some(label => typeof probabilities[label] !== "number" || !Number.isFinite(probabilities[label]) || probabilities[label] < 0 || probabilities[label] > 1))
+        throw new Error("INVALID_JEV_CHOICE_DISTRIBUTION");
+      // Only floating-point summation tolerance; this is not a judgment threshold.
+      if (Math.abs(labels.reduce((sum, label) => sum + (probabilities[label] as number), 0) - 1) > 1e-9) throw new Error("INVALID_JEV_CHOICE_DISTRIBUTION");
+      const judgment = answer.choice as typeof labels[number];
+      const selectedProbability = probabilities[judgment] as number;
+      if (labels.some(label => (probabilities[label] as number) > selectedProbability)) throw new Error("INVALID_JEV_CHOICE_WINNER");
+      return {skillId: skill.skillId, judgment, confidence: answer.confidence};
+    });
+    const judgments = parsed.map(({skillId, judgment}) => ({skillId, judgment,
+      reasonRefs: [`profile:${profile.profileId}:${profile.promptRevision}`], uncertaintyReason: judgment === "uncertain" ? "JEV_MATERIAL_FACT_UNRESOLVED" : null}));
+    const unresolvedItems = judgments.filter(item => item.judgment === "uncertain").map(item => ({skillId: item.skillId, reasonCode: "JEV_MATERIAL_FACT_UNRESOLVED"}));
+    return {response: {schemaVersion: "1.0.0", requestId: request.requestId, operationId: request.operationId, requestDigest: request.requestDigest,
+      inventoryDigest: request.inventoryDigest, status: unresolvedItems.length === 0 ? "SUCCESS" : unresolvedItems.length === judgments.length ? "UNCERTAIN" : "PARTIAL",
+      judgments, unresolvedItems, error: null}, dispatchState: "started",
+      usage: {inputTokens: body.usage.input_tokens as number, outputTokens: body.usage.output_tokens as number, cachedInputTokens: null, actualCostUsd: null},
+      diagnostics: {scoreKind: "choice_confidence", scores: parsed.map(({skillId, confidence}) => ({skillId, value: confidence}))}};
+  },
+};
+
+/** Same Choice semantics; opt-in transport shares the production long-context header contract. */
+export const jevSkillSelectionChoiceLongContextWireAdapter: ClassificationWireAdapter = {
+  transport: Object.freeze({
+    headers: jevNoulSharedRulesV6LongContextWireAdapter.transport!.headers,
+    matches: (route: ApprovedClassificationRoute) => route.kind === "remote" && route.providerKind === "jev"
+      && route.adapterRevision === JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION
+      && route.adapter.transport === route.transport && Object.keys(route.transport?.headers ?? {}).length === 1
+      && route.transport?.headers["TypeSafe-Danger-Zone-Long-Context"] === "true",
+  }),
+  validateRawResponse: validateJevChoiceAnswerKeys,
+  encode(request, profile) {
+    assertSkillSelectionChoiceProfile(profile, JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION);
+    return jevSkillSelectionChoiceWireAdapter.encode(request, {...profile, adapterRevision: JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION});
+  },
+  decode(body, request, profile) {
+    assertSkillSelectionChoiceProfile(profile, JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION);
+    return jevSkillSelectionChoiceWireAdapter.decode(body, request, {...profile, adapterRevision: JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION});
+  },
+};
+
 // Protocol selection and reserved-revision rules belong to the trusted wire factory.
 const standardTransport: ClassificationTransportContract = Object.freeze({
   headers: Object.freeze({}),
   matches: (route: ApprovedClassificationRoute) => route.adapterRevision !== JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION
     && route.adapterRevision !== JEV_NOUL_SHARED_RULES_V6_LONG_CONTEXT_ADAPTER_REVISION
+    && route.adapterRevision !== JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION
     && (route.kind !== "remote" || route.adapter?.transport === undefined),
 });
 export function bindClassificationRouteTransport(route: UnboundClassificationRoute): ApprovedClassificationRoute {
   let transport = route.kind === "remote" ? route.adapter.transport ?? standardTransport : standardTransport;
   const reserved = route.adapterRevision === JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION ? jevNoulSharedRulesV5LongContextWireAdapter.transport
-    : route.adapterRevision === JEV_NOUL_SHARED_RULES_V6_LONG_CONTEXT_ADAPTER_REVISION ? jevNoulSharedRulesV6LongContextWireAdapter.transport : undefined;
+    : route.adapterRevision === JEV_NOUL_SHARED_RULES_V6_LONG_CONTEXT_ADAPTER_REVISION ? jevNoulSharedRulesV6LongContextWireAdapter.transport
+    : route.adapterRevision === JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION ? jevSkillSelectionChoiceLongContextWireAdapter.transport : undefined;
   if (reserved && transport.matches !== reserved.matches) transport = standardTransport;
   return {...route, transport};
 }
 export function resolveClassificationWireAdapter(wireAdapterRef: string, route: Pick<RouteBase, "providerKind" | "adapterRevision">,
   registered?: ReadonlyMap<string, ClassificationWireAdapter>): ClassificationWireAdapter | undefined {
-  if ([JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION, JEV_NOUL_SHARED_RULES_V6_LONG_CONTEXT_ADAPTER_REVISION].includes(wireAdapterRef)
+  if ([JEV_NOUL_SHARED_RULES_V5_LONG_CONTEXT_ADAPTER_REVISION, JEV_NOUL_SHARED_RULES_V6_LONG_CONTEXT_ADAPTER_REVISION, JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION].includes(wireAdapterRef)
     && (route.providerKind !== "jev" || route.adapterRevision !== wireAdapterRef)) throw new Error("INVALID_JEV_CONTEXT_ROUTE");
+  if (wireAdapterRef === JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION
+    && (route.providerKind !== "jev" || route.adapterRevision !== wireAdapterRef)) throw new Error("INVALID_JEV_CHOICE_ROUTE");
   const builtins: Readonly<Record<string, ClassificationWireAdapter>> = {
+    [JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION]: jevSkillSelectionChoiceWireAdapter,
+    [JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION]: jevSkillSelectionChoiceLongContextWireAdapter,
     "jev-noul-v1": jevNoulWireAdapter,
     [JEV_NOUL_SUFFICIENCY_ADAPTER_REVISION]: jevNoulSufficiencyWireAdapter,
     [JEV_NOUL_SHARED_RULES_ADAPTER_REVISION]: jevNoulSharedRulesWireAdapter,
