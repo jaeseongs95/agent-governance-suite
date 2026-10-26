@@ -1,7 +1,9 @@
+import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
-import {mkdir, writeFile} from "node:fs/promises";
+import {mkdir, readFile, writeFile} from "node:fs/promises";
 import {realpathSync} from "node:fs";
 import path from "node:path";
+import {pathToFileURL} from "node:url";
 import type {PreparedBootstrapConfig} from "./bootstrap.mts";
 import type {SkillClassificationRequestV1} from "../../../mcp-server/src/skill-classification/types.js";
 
@@ -85,6 +87,13 @@ export async function readyMockFromBinding(api: Api, repo: string, outputDirecto
   return config;
 }
 
+/** Fixture authoring only. Every original preflight/run still freshly reads and checks the real source. */
+export function rebindPreparedFixture(prepared: Awaited<ReturnType<Api["prepare"]>>, runId: string) {
+  return {...prepared, requests: prepared.cases.map((row: {caseId: string; originalPrompt: string}) => ({caseId: row.caseId,
+    request: prepared.api.request.createClassificationRequest({requestId: `${runId}/${row.caseId}`, operationId: `${runId}/${row.caseId}`,
+      originalPrompt: row.originalPrompt, inventory: prepared.inventory, classificationCriteriaRef: "skills/orchestrator/references/skill-classification.md"})}))};
+}
+
 /** Synthetic reviewed-estimate fixture. Its wire observations configure admission; this is not a gold cost/quality oracle. */
 export async function readyEstimateMock(api: Api, repo: string, outputDirectory: string, runId: string) {
   const {config, prepared} = await readyMock(api, repo, outputDirectory, runId);
@@ -107,4 +116,49 @@ export async function readyEstimateMock(api: Api, repo: string, outputDirectory:
   config.profile = prepared.api.evaluationConfig.createProviderEvaluationConfiguration(configuration, prepared.inventory, config.profile!.preparedAt);
   await bindMockAuthorityAndEvidence(api, config);
   return {config, prepared, measurements};
+}
+
+/** Frozen input successor only: never derive expected money from preflight or during a test. */
+export async function loadCurrentBudgetFixture(repo: string) {
+  const oracleBytes = await readFile(new URL("./budget-wire-oracle.json", import.meta.url));
+  const boundaryBytes = await readFile(new URL("./precision-boundary-oracle.json", import.meta.url));
+  const successorBytes = await readFile(new URL("./budget-wire-source-successor.json", import.meta.url));
+  assert.equal(hash(oracleBytes), "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56");
+  assert.equal(hash(boundaryBytes), "sha256:618afb36e06a7372656e9a4139bf3f91e45f12d1487bac42e72f0994a7d2f835");
+  assert.equal(hash(successorBytes), "sha256:7efc9900460ab5addeed97cbfa6cf0ea521f4221336b3ca61eef02c74cb43cb5");
+  const predecessor = JSON.parse(oracleBytes.toString("utf8")), precision = JSON.parse(boundaryBytes.toString("utf8"));
+  const successor = JSON.parse(successorBytes.toString("utf8"));
+  assert.equal(successor.revision, "ags-bootstrap-budget-source-binding-r01");
+  assert.equal(successor.parentBudgetDigest, hash(oracleBytes));
+  assert.equal(successor.parentPrecisionDigest, hash(boundaryBytes));
+  assert.equal(successor.fixtureDigest, hash(await readFile(path.join(repo, "tests/skill-classification/fixtures.json"))));
+  assert.deepEqual(successor.rows.map((row: {caseId: string}) => row.caseId), predecessor.rows.map((row: {caseId: string}) => row.caseId));
+  assert.deepEqual(successor.precisionCases.map((row: {id: string}) => row.id), precision.cases.map((row: {id: string}) => row.id));
+  const oracle = {...predecessor, inventoryDigest: successor.inventoryDigest, fixtureDigest: successor.fixtureDigest,
+    fixtureOracleDigest: successor.fixtureOracleDigest, rows: successor.rows, totals: successor.totals,
+    syntheticOverBudgetCases: predecessor.syntheticOverBudgetCases.map((row: {id: string}, index: number) => {
+      assert.equal(successor.syntheticOverBudgetCases[index].id, row.id);
+      return {...row, ...successor.syntheticOverBudgetCases[index]};
+    }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...successor.fractionalRoundingFixture}};
+  return {oracleBytes, boundaryBytes, oracle, precision: {...precision,
+    cases: precision.cases.map((row: {id: string}, index: number) => ({...row, ...successor.precisionCases[index]}))},
+  successorDigest: hash(successorBytes), successorRevision: successor.revision};
+}
+
+// Explicit authoring command captures only current public request/wire inputs. It neither runs nor qualifies a provider.
+// Independent rational expectations are reviewed and frozen in the successor; tests never invoke this mode.
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  assert.equal(process.argv[2], "--capture-budget-wire");
+  assert.equal(process.argv.length, 4, "Usage: prepared-fixture.mts --capture-budget-wire OUTPUT_JSON");
+  const repo = path.resolve(import.meta.dirname, "../../..");
+  const api = await import(pathToFileURL(path.join(import.meta.dirname, "bootstrap.mts")).href) as Api;
+  const {config, preparedAt} = mockConfig(repo, path.dirname(path.resolve(process.argv[3]!)), "full-21-015", {requests: 21});
+  const prepared = await api.prepare(config);
+  const profile = mockProfile(config, prepared.inventory, preparedAt, prepared.api.evaluationConfig.createProviderEvaluationConfiguration);
+  const rows = prepared.requests.map(({caseId, request}: {caseId: string; request: SkillClassificationRequestV1}) => {
+    const wire = JSON.stringify(prepared.api.providers.jevNoulWireAdapter.encode(request, profile.configuration));
+    return {caseId, requestDigest: request.requestDigest, wireDigest: hash(wire), utf8Bytes: Buffer.byteLength(wire)};
+  });
+  await writeFile(path.resolve(process.argv[3]!), JSON.stringify({inventoryDigest: prepared.inventory.inventoryDigest,
+    fixtureDigest: prepared.fixtureFileDigest, fixtureOracleDigest: prepared.corpus.oracleDigest, rows}, null, 2) + "\n", {flag: "wx"});
 }

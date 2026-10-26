@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import {pathToFileURL} from "node:url";
 import type {BootstrapConfig} from "./bootstrap.mts";
+import {loadCurrentBudgetFixture, rebindPreparedFixture} from "./prepared-fixture.mts";
 
 type RunConfig = Extract<BootstrapConfig, {schemaVersion: "2.0.0"}>;
 interface OracleRow {caseId: string; requestDigest: string; wireDigest: string; utf8Bytes: number; reservedPicoUsd: string}
@@ -24,12 +25,11 @@ assert(process.argv[2] && process.argv[3], "Usage: precision-regression.mts REPO
 const api = await import(pathToFileURL(helper).href) as typeof import("./bootstrap.mts");
 const hash = (bytes: string) => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
 const env = {AGS_BOOTSTRAP_ENDPOINT: "https://mock.invalid/classify", AGS_BOOTSTRAP_JEV_KEY: "test-only-not-real"};
-const oracleBytes = await readFile(path.join(import.meta.dirname, "budget-wire-oracle.json"));
+const {oracleBytes, oracle: currentOracle, boundaryBytes, precision: currentPrecision, successorDigest, successorRevision} = await loadCurrentBudgetFixture(repo);
 assert.equal(hash(oracleBytes.toString("utf8")), "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56");
-const oracle = JSON.parse(oracleBytes.toString("utf8")) as BudgetWireOracle;
-const boundaryBytes = await readFile(path.join(import.meta.dirname, "precision-boundary-oracle.json"));
+const oracle = currentOracle as BudgetWireOracle;
 assert.equal(hash(boundaryBytes.toString("utf8")), "sha256:618afb36e06a7372656e9a4139bf3f91e45f12d1487bac42e72f0994a7d2f835");
-const precision = JSON.parse(boundaryBytes.toString("utf8")) as PrecisionOracle;
+const precision = currentPrecision as PrecisionOracle;
 assert.equal(precision.parentOracleSha256, oracleBytes.length && hash(oracleBytes.toString("utf8")).slice(7));
 assert.equal(precision.safeMaxPicoUsd, BigInt(Number.MAX_SAFE_INTEGER).toString());
 const frozenPrices = {billingMode: "token", inputUsdPer1k: Number(oracle.prices.inputUsdPer1000Tokens), outputUsdPer1k: Number(oracle.prices.outputUsdPer1000Tokens), fixedCallMaxUsd: Number(oracle.prices.fixedCallUsd)};
@@ -49,6 +49,7 @@ const exists = async (file: string) => {try {await access(file); return true;} c
       config.evidence[kind] = {path: `${kind}.json`, digest: hash(bytes)};
     }
   }
+  let fixturePrepared: Awaited<ReturnType<typeof api.prepare>> | undefined;
   async function ready(runId: string, estimate = true): Promise<RunConfig> {
     const config: RunConfig = {schemaVersion: "2.0.0", runId, repo, outputDirectory: path.join(root, runId), endpointEnv: "AGS_BOOTSTRAP_ENDPOINT", credentialEnv: "AGS_BOOTSTRAP_JEV_KEY",
       approvedEndpointDigest: hash(env.AGS_BOOTSTRAP_ENDPOINT), approvedRouteRef: "mock-route", approvalRef: "mock-only", profile: null,
@@ -59,7 +60,7 @@ const exists = async (file: string) => {try {await access(file); return true;} c
         priorRunUnknownReservedUsd: 0, accountBalanceUsd: null, accountPriorSpendUsd: null, accountUnknownReservedUsd: null,
         observedAt: new Date(Date.now() - 1000).toISOString(), validUntil: new Date(Date.now() + 60000).toISOString()},
       evidence: {route: null, price: null, priorLedger: null, remaining: null, hardTokenCaps: null, operatorAuthorization: null}};
-    const prepared = await api.prepare(config);
+    const prepared = rebindPreparedFixture(fixturePrepared ??= await api.prepare(config), config.runId);
     config.profile = {profileId: "mock-profile", providerKind: "jev", vendorId: "mock-vendor", modelId: "mock-model", modelRevision: "mock-revision", reasoningEffort: null,
       supportedOptions: {reasoningEfforts: [null], structuredOutput: true}, approvedRouteRef: config.approvedRouteRef, qualificationRevision: "mock-not-qualified",
       qualification: {status: "NOT_RUN", inventoryDigest: prepared.inventory.inventoryDigest, taxonomyRevision: prepared.inventory.taxonomyRevision, modelRevision: "mock-revision", promptRevision: "mock-question-v1", validUntil: config.budget!.validUntil, profileConfigurationDigest: ""},
@@ -134,7 +135,7 @@ try {
         }
         assert.equal(picoSum.toString(), spec.expectedSumPicoUsd);
       }
-      if (spec.id === "half-pico") {assert.equal(spec.expectedSumPicoUsd, "1139275"); assert.notEqual(spec.expectedSumPicoUsd, oracle.fractionalRoundingFixture.invalidRoundAfterSummingPicoUsd);}
+      if (spec.id === "half-pico") {assert.equal(spec.expectedSumPicoUsd, oracle.fractionalRoundingFixture.sumOfPerRequestCeilPicoUsd); assert.notEqual(spec.expectedSumPicoUsd, oracle.fractionalRoundingFixture.invalidRoundAfterSummingPicoUsd);}
       completed.push(spec.id);
     } catch (error) {
       const observed = error instanceof Error ? error as Error & {code?: unknown; actual?: unknown; expected?: unknown; operator?: string} : null;
@@ -144,7 +145,7 @@ try {
       failures.push(detail); await mkdir(caseDirectory, {recursive: true}); await writeFile(path.join(caseDirectory, "failure.json"), JSON.stringify(detail, null, 2) + "\n", {flag: "wx"});
     }
   }
-  await writeFile(path.join(root, "precision-summary.json"), JSON.stringify({completed, failures, actualApiCalls: 0, actualCredentialLookups: 0, environmentReads, credentialReads, mockFetches: fetches, helper, oracleDigest: hash(oracleBytes.toString("utf8")), boundaryOracleDigest: hash(boundaryBytes.toString("utf8"))}, null, 2) + "\n", {flag: "wx"});
+  await writeFile(path.join(root, "precision-summary.json"), JSON.stringify({completed, failures, actualApiCalls: 0, actualCredentialLookups: 0, environmentReads, credentialReads, mockFetches: fetches, helper, oracleDigest: hash(oracleBytes.toString("utf8")), boundaryOracleDigest: hash(boundaryBytes.toString("utf8")), successorDigest, successorRevision}, null, 2) + "\n", {flag: "wx"});
   assert.deepEqual(failures, [], "PRECISION_BOUNDARIES_FAILED; see preserved actual preflight and failure records");
   assert.equal(completed.length, precision.cases.length);
   console.log(JSON.stringify({status: "OFFLINE_PRECISION_REGRESSION_PASS", checks: completed, actualApiCalls: 0, actualCredentialLookups: 0, mockFetches: fetches, qualification: "NOT_RUN", hostLive: "NOT_RUN"}, null, 2));

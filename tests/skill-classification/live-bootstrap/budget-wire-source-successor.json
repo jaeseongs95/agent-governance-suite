@@ -1,0 +1,900 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "ags-bootstrap-budget-source-binding-r01",
+  "scope": "CURRENT_OFFLINE_SYNTHETIC_INPUTS_ONLY_NOT_PAID_RESULTS_OR_QUALIFICATION",
+  "sourceCommit": "05713916a4e7a7b254e45e0612bee8259b99463a",
+  "parentBudgetDigest": "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56",
+  "parentPrecisionDigest": "sha256:618afb36e06a7372656e9a4139bf3f91e45f12d1487bac42e72f0994a7d2f835",
+  "fixtureDigest": "sha256:a7b6c5ea425a24bf53ae3178ed7c0afb0dd783662404fe3194c462aff908f3f9",
+  "fixtureOracleDigest": "sha256:da3ee5b3b718d3b0d4a19d7dadd279f721fd88c6944121ef8848ffbb316a2a10",
+  "inventoryDigest": "sha256:7f73f0912515ffaff510766254a9826cb2e7da1d8cd0966a8aef35b5409e6042",
+  "corpusSemanticDigest": "sha256:8069d5479dff519557e58ec2589fb4ef9dcb899213582ff419fca83791ee7422",
+  "provenance": "Existing prepare and jevNoulWireAdapter capture public wire inputs; independent Python Fraction evaluates immutable prices and per-request ceiling. No preflight reservation output read.",
+  "boundaryRebase": "Only two synthetic probe prices follow the changed maximum wire length to preserve exact MAX_SAFE and immediately-unsafe picoUSD roles. Parent price inputs remain immutable; actual route price and budget policy do not change.",
+  "rows": [
+    {
+      "caseId": "SS01",
+      "requestDigest": "sha256:97bda4e5499bc1fe52d4eb89938ac9a74e0912e2edb5d104a13d8d5d95879fba",
+      "wireDigest": "sha256:263046ffcd0a982e62a00bcc5166a716df03db817cc4ec77e10320021afc0b1c",
+      "utf8Bytes": 110963,
+      "reservedPicoUsd": "4660446000",
+      "reservedUsdDecimal": "0.004660446000"
+    },
+    {
+      "caseId": "SS02",
+      "requestDigest": "sha256:92e4b40b91e31b43430ab24a635ea09bc47e24518146d414f55e1ff7d17ead29",
+      "wireDigest": "sha256:548b34b7abe024194e169e8890947d60e8c6bdeebef15d9ea2cad8120a7068fa",
+      "utf8Bytes": 110932,
+      "reservedPicoUsd": "4659144000",
+      "reservedUsdDecimal": "0.004659144000"
+    },
+    {
+      "caseId": "SS03",
+      "requestDigest": "sha256:4fdc475450bb6fbfcce27ee108b44f6692386f7a1052907c49ee8a533b662933",
+      "wireDigest": "sha256:d60c2c9610b18879045ddbf1717e8899e77563480af967031c6d4f492d1e9770",
+      "utf8Bytes": 111035,
+      "reservedPicoUsd": "4663470000",
+      "reservedUsdDecimal": "0.004663470000"
+    },
+    {
+      "caseId": "SS04",
+      "requestDigest": "sha256:ce05c33fb956d72529bd281ac0134ebd90bdc82161b795f4eefbc4ce5bdcd741",
+      "wireDigest": "sha256:5b5e89e112f8f62feabc64bebf17b452ada171ea7694f50977a7aedac263cafd",
+      "utf8Bytes": 111032,
+      "reservedPicoUsd": "4663344000",
+      "reservedUsdDecimal": "0.004663344000"
+    },
+    {
+      "caseId": "SS05",
+      "requestDigest": "sha256:9944d1ed230440008281e94629aa2e38efcf20c3023d9699370b38dabdbec4e9",
+      "wireDigest": "sha256:dd022595b6f7ad4fe6c7c4c99cff89a664eebb4c58eb230741bcc1266f59223a",
+      "utf8Bytes": 110967,
+      "reservedPicoUsd": "4660614000",
+      "reservedUsdDecimal": "0.004660614000"
+    },
+    {
+      "caseId": "SS06",
+      "requestDigest": "sha256:a42c547402b2f1b8294c9925843e6550f5390dc1b0d4d971edb7f86288ac86fc",
+      "wireDigest": "sha256:0b13c1a7132ffedbbcf22cce5a5cae1361ababe84bf12ab21f0cd4ddd4e1a964",
+      "utf8Bytes": 110981,
+      "reservedPicoUsd": "4661202000",
+      "reservedUsdDecimal": "0.004661202000"
+    },
+    {
+      "caseId": "SS07",
+      "requestDigest": "sha256:3155ca25ff2e66e8122ccfb46e2d891484cf82cb66146015f5d6a8a9d5272e02",
+      "wireDigest": "sha256:dff852705ee44a411c66f9e4ab54367f93ebe98db245572129e843841cabdf40",
+      "utf8Bytes": 110997,
+      "reservedPicoUsd": "4661874000",
+      "reservedUsdDecimal": "0.004661874000"
+    },
+    {
+      "caseId": "SS08",
+      "requestDigest": "sha256:6789c34f4df13f8a29f464db2e94fb3e3ca1621c5e7b93ec5a4136bb9ae008cb",
+      "wireDigest": "sha256:43eab55a84e3461bd84d8c3dc5c3f74f257be26ae07e672359467213fc1c4a33",
+      "utf8Bytes": 110952,
+      "reservedPicoUsd": "4659984000",
+      "reservedUsdDecimal": "0.004659984000"
+    },
+    {
+      "caseId": "SS09",
+      "requestDigest": "sha256:67daac47cd075cb5452a889d98cac7dfa6aa264a8c3ecc42004e154838c83a5b",
+      "wireDigest": "sha256:c8f2d8105a1fcba52118d13c9647115ebf6ef86244b4fc9a52a17fb35dabccb2",
+      "utf8Bytes": 110936,
+      "reservedPicoUsd": "4659312000",
+      "reservedUsdDecimal": "0.004659312000"
+    },
+    {
+      "caseId": "SS10",
+      "requestDigest": "sha256:3047110ede0643e59f8c6ce5a1eae9df9f290619d58739c99feb40f7dc182d13",
+      "wireDigest": "sha256:b35e55efe2a7fad02ea3f4d79434af4331494c516fc222022428a6c553595224",
+      "utf8Bytes": 110947,
+      "reservedPicoUsd": "4659774000",
+      "reservedUsdDecimal": "0.004659774000"
+    },
+    {
+      "caseId": "SS11",
+      "requestDigest": "sha256:b138fc436cc31073ee0379bd92d1ca518e5b90914f44ca2b6c4db993cdfa6f0c",
+      "wireDigest": "sha256:f3f26b3a6e7901a0665c8dbc9705bbf58d37799c46cd5576ffe5a232b7d15317",
+      "utf8Bytes": 110999,
+      "reservedPicoUsd": "4661958000",
+      "reservedUsdDecimal": "0.004661958000"
+    },
+    {
+      "caseId": "SS12",
+      "requestDigest": "sha256:6a38119dbb0ee9cbbfef540de1d4fa7a226bed41a93bf13c3acc7ca57a312b01",
+      "wireDigest": "sha256:77b39bb9d5cc95b10cc1015d2e18232382eb20a0cd09e349386fc08e16302b20",
+      "utf8Bytes": 110836,
+      "reservedPicoUsd": "4655112000",
+      "reservedUsdDecimal": "0.004655112000"
+    },
+    {
+      "caseId": "SS13",
+      "requestDigest": "sha256:c6abce26e3aebbd685274725f73b3fbe1ff8a95e148a163cf35f9c4c2890528c",
+      "wireDigest": "sha256:d91c9c0aca72829294d8bc198e63c9e29282ef0a1e0cb114e2948bbaa4d5ca78",
+      "utf8Bytes": 110877,
+      "reservedPicoUsd": "4656834000",
+      "reservedUsdDecimal": "0.004656834000"
+    },
+    {
+      "caseId": "SS14",
+      "requestDigest": "sha256:4100a754f779636ea404b0deebd58ba89c681bc7d31d1bf7617bcfa215b0f1b3",
+      "wireDigest": "sha256:df610904f04728b674a0be5f7339875ffe1ed0a203ccba23a6f304dc3f780fac",
+      "utf8Bytes": 110973,
+      "reservedPicoUsd": "4660866000",
+      "reservedUsdDecimal": "0.004660866000"
+    },
+    {
+      "caseId": "SS15",
+      "requestDigest": "sha256:f608942a5cf09dc290c7fc489eebe9feb36bc86b9724b510dcc5c62326908d23",
+      "wireDigest": "sha256:e382a681e8219d809db820e92860856300bd6e65e13a40b6580dd8c2fd89dbd9",
+      "utf8Bytes": 110851,
+      "reservedPicoUsd": "4655742000",
+      "reservedUsdDecimal": "0.004655742000"
+    },
+    {
+      "caseId": "SS16",
+      "requestDigest": "sha256:61595717ee3a30bb75498676cbf7e6402fffcb78bdecf9a9b7508ade84504b1a",
+      "wireDigest": "sha256:39c26af3225a873b8b7747ceb3d3e12177d2f014aff91619fcf33205ddebe600",
+      "utf8Bytes": 110939,
+      "reservedPicoUsd": "4659438000",
+      "reservedUsdDecimal": "0.004659438000"
+    },
+    {
+      "caseId": "SS17",
+      "requestDigest": "sha256:392c9516f19adea9493730afe9c3fe4d60acbfb575c5f9fc51cb83513b887f0f",
+      "wireDigest": "sha256:520718015febf8064370ea864e8b9c3ad785dc8e3b5a154603bcedb763c75f33",
+      "utf8Bytes": 110999,
+      "reservedPicoUsd": "4661958000",
+      "reservedUsdDecimal": "0.004661958000"
+    },
+    {
+      "caseId": "SS18",
+      "requestDigest": "sha256:844c733548214a4f79502edd64c96c26be037b992ceac02144ae23c7b7dfdc22",
+      "wireDigest": "sha256:5c6144bfd478e124c976e4fe9ad296355fb9d3b64423723db1abdd4561baa220",
+      "utf8Bytes": 110910,
+      "reservedPicoUsd": "4658220000",
+      "reservedUsdDecimal": "0.004658220000"
+    },
+    {
+      "caseId": "SS23",
+      "requestDigest": "sha256:676c810c19f692d0536f1ac06a0c17b0f0f81d16e8acdf6f687af8bec03162e7",
+      "wireDigest": "sha256:e49ecc3515825833e2c65e0326b63a6e915e087e7aa284f64928cd0f2c7223c4",
+      "utf8Bytes": 110920,
+      "reservedPicoUsd": "4658640000",
+      "reservedUsdDecimal": "0.004658640000"
+    },
+    {
+      "caseId": "SS28",
+      "requestDigest": "sha256:35e55664eb86122285f5639e251dd8c486dba32ca62064db66e62943c0b9f2f1",
+      "wireDigest": "sha256:8706573b1d2546b6ac8c47520d5d6278626c4a7181e1e6e6ba1fb92a65db429a",
+      "utf8Bytes": 110843,
+      "reservedPicoUsd": "4655406000",
+      "reservedUsdDecimal": "0.004655406000"
+    },
+    {
+      "caseId": "SS37",
+      "requestDigest": "sha256:553b6f1538727a01eceb1edd2bdf2ce746b50de0d05e258d35a4966234765d4c",
+      "wireDigest": "sha256:86ee142403653fe85b066b09a5b92c9ee82d2adb270b6b4426d3e85bf194a668",
+      "utf8Bytes": 110873,
+      "reservedPicoUsd": "4656666000",
+      "reservedUsdDecimal": "0.004656666000"
+    }
+  ],
+  "totals": {
+    "utf8Bytes": "2329762",
+    "reservedPicoUsd": "97850004000",
+    "reservedUsdDecimal": "0.097850004000",
+    "firstTwoPicoUsd": "9319590000",
+    "firstTwoUsdDecimal": "0.009319590000"
+  },
+  "syntheticOverBudgetCases": [
+    {
+      "id": "uncovered-batch-current-oracle",
+      "currentRequestReservationUsd": "0.097850004000",
+      "oldInputCurrentTotalUsd": "0.127850004000",
+      "additionalSyntheticConfirmedUsd": "0.022149997000",
+      "proposedSyntheticConfirmedUsd": "0.022149997000",
+      "proposedTotalPicoUsd": "150000001000",
+      "proposedTotalUsd": "0.150000001000"
+    },
+    {
+      "id": "pilot-plus-full-121-current-oracle",
+      "currentRequestReservationUsd": "0.097850004000",
+      "oldInputCurrentTotalUsd": "0.103584726000",
+      "additionalSyntheticConfirmedUsd": "0.017415275000",
+      "proposedSyntheticConfirmedUsd": "0.017415275000",
+      "proposedTotalPicoUsd": "121000001000",
+      "proposedTotalUsd": "0.121000001000"
+    },
+    {
+      "id": "confirmed-plus-unknown-current-oracle",
+      "currentRequestReservationUsd": "0.009319590000",
+      "oldInputCurrentTotalUsd": "0.149319590000",
+      "additionalSyntheticConfirmedUsd": "0.000680411000",
+      "proposedSyntheticConfirmedUsd": "0.080680411000",
+      "proposedTotalPicoUsd": "150000001000",
+      "proposedTotalUsd": "0.150000001000"
+    }
+  ],
+  "fractionalRoundingFixture": {
+    "rows": [
+      {
+        "caseId": "SS01",
+        "utf8Bytes": 110963,
+        "reservedPicoUsd": "55482"
+      },
+      {
+        "caseId": "SS02",
+        "utf8Bytes": 110932,
+        "reservedPicoUsd": "55466"
+      },
+      {
+        "caseId": "SS03",
+        "utf8Bytes": 111035,
+        "reservedPicoUsd": "55518"
+      },
+      {
+        "caseId": "SS04",
+        "utf8Bytes": 111032,
+        "reservedPicoUsd": "55516"
+      },
+      {
+        "caseId": "SS05",
+        "utf8Bytes": 110967,
+        "reservedPicoUsd": "55484"
+      },
+      {
+        "caseId": "SS06",
+        "utf8Bytes": 110981,
+        "reservedPicoUsd": "55491"
+      },
+      {
+        "caseId": "SS07",
+        "utf8Bytes": 110997,
+        "reservedPicoUsd": "55499"
+      },
+      {
+        "caseId": "SS08",
+        "utf8Bytes": 110952,
+        "reservedPicoUsd": "55476"
+      },
+      {
+        "caseId": "SS09",
+        "utf8Bytes": 110936,
+        "reservedPicoUsd": "55468"
+      },
+      {
+        "caseId": "SS10",
+        "utf8Bytes": 110947,
+        "reservedPicoUsd": "55474"
+      },
+      {
+        "caseId": "SS11",
+        "utf8Bytes": 110999,
+        "reservedPicoUsd": "55500"
+      },
+      {
+        "caseId": "SS12",
+        "utf8Bytes": 110836,
+        "reservedPicoUsd": "55418"
+      },
+      {
+        "caseId": "SS13",
+        "utf8Bytes": 110877,
+        "reservedPicoUsd": "55439"
+      },
+      {
+        "caseId": "SS14",
+        "utf8Bytes": 110973,
+        "reservedPicoUsd": "55487"
+      },
+      {
+        "caseId": "SS15",
+        "utf8Bytes": 110851,
+        "reservedPicoUsd": "55426"
+      },
+      {
+        "caseId": "SS16",
+        "utf8Bytes": 110939,
+        "reservedPicoUsd": "55470"
+      },
+      {
+        "caseId": "SS17",
+        "utf8Bytes": 110999,
+        "reservedPicoUsd": "55500"
+      },
+      {
+        "caseId": "SS18",
+        "utf8Bytes": 110910,
+        "reservedPicoUsd": "55455"
+      },
+      {
+        "caseId": "SS23",
+        "utf8Bytes": 110920,
+        "reservedPicoUsd": "55460"
+      },
+      {
+        "caseId": "SS28",
+        "utf8Bytes": 110843,
+        "reservedPicoUsd": "55422"
+      },
+      {
+        "caseId": "SS37",
+        "utf8Bytes": 110873,
+        "reservedPicoUsd": "55437"
+      }
+    ],
+    "sumOfPerRequestCeilPicoUsd": "1164888",
+    "invalidRoundAfterSummingPicoUsd": "1164881",
+    "differencePicoUsd": "7"
+  },
+  "precisionCases": [
+    {
+      "id": "zero",
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "0"
+        }
+      ],
+      "expectedSumPicoUsd": "0",
+      "expectedMaxPicoUsd": "0"
+    },
+    {
+      "id": "half-pico",
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "55482"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "55466"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "55518"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "55516"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "55484"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "55491"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "55499"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "55476"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "55468"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "55474"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "55500"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "55418"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "55439"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "55487"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "55426"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "55470"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "55500"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "55455"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "55460"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "55422"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "55437"
+        }
+      ],
+      "expectedSumPicoUsd": "1164888",
+      "expectedMaxPicoUsd": "55518"
+    },
+    {
+      "id": "minimum-positive",
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "1"
+        }
+      ],
+      "expectedSumPicoUsd": "21",
+      "expectedMaxPicoUsd": "1"
+    },
+    {
+      "id": "safe-equal",
+      "priceNumberText": "81.12036073977566",
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "9001358588767727"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "8998843857584794"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "9007199254740991"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "9006955893658772"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "9001683070210686"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "9002818755261043"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "9004116681032879"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "9000466264799590"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "8999168339027753"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "9000060662995891"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "9004278921754359"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "8991056302953776"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "8994382237744106"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "9002169792375125"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "8992273108364872"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "8999411700109972"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "9004278921754359"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "8997059209648519"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "8997870413255917"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "8991624145478954"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "8994057756301147"
+        }
+      ],
+      "expectedSumPicoUsd": "188991133877821232",
+      "expectedMaxPicoUsd": "9007199254740991"
+    },
+    {
+      "id": "safe-above",
+      "priceNumberText": "81.12036073977568",
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "9001358588767729"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "8998843857584796"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "9007199254740993"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "9006955893658774"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "9001683070210688"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "9002818755261045"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "9004116681032882"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "9000466264799592"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "8999168339027755"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "9000060662995893"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "9004278921754361"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "8991056302953778"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "8994382237744109"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "9002169792375127"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "8992273108364874"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "8999411700109975"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "9004278921754361"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "8997059209648521"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "8997870413255919"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "8991624145478956"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "8994057756301149"
+        }
+      ],
+      "expectedSumPicoUsd": "188991133877821277",
+      "expectedMaxPicoUsd": "9007199254740993"
+    },
+    {
+      "id": "exponent-overflow",
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "110963000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "110932000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "111035000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "111032000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "110967000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "110981000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "110997000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "110952000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "110936000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "110947000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "110999000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "110836000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "110877000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "110973000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "110851000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "110939000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "110999000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "110910000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "110920000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "110843000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "110873000000000000000000000000000000"
+        }
+      ],
+      "expectedSumPicoUsd": "2329762000000000000000000000000000000",
+      "expectedMaxPicoUsd": "111035000000000000000000000000000000"
+    },
+    {
+      "id": "negative"
+    },
+    {
+      "id": "nan"
+    },
+    {
+      "id": "positive-infinity"
+    },
+    {
+      "id": "negative-infinity"
+    },
+    {
+      "id": "legacy-fixed-control"
+    },
+    {
+      "id": "verified-upper-control"
+    }
+  ]
+}

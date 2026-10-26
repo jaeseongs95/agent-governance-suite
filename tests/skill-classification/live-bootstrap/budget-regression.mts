@@ -6,6 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import {fileURLToPath, pathToFileURL} from "node:url";
 import type {BootstrapConfig} from "./bootstrap.mts";
+import {loadCurrentBudgetFixture, rebindPreparedFixture} from "./prepared-fixture.mts";
 
 type RunConfig = Extract<BootstrapConfig, {schemaVersion: "2.0.0"}>;
 interface OracleRow {caseId: string; requestDigest: string; wireDigest: string; utf8Bytes: number; reservedPicoUsd: string}
@@ -35,11 +36,11 @@ if (process.argv[4] === "worker") {
     console.log(JSON.stringify({winner: result.status === "RAW_EVALUATION_RECORDED", calls}));
   } catch (error) {console.log(JSON.stringify({winner: false, calls, error: (error as NodeJS.ErrnoException).code ?? "RUN_REJECTED"}));}
 } else {
-  // UNAPPLIED proposal: independent ROOT r2 synthetic wire oracle SHA is fixed; integration/execution still requires approval.
+  // Historical ROOT r2 money policy remains fixed; current public wire inputs use an explicit reviewed successor.
   // It must come from reviewed wire bytes/order/price, never from preflight requestReservations.
-  const oracleBytes = await readFile(path.join(import.meta.dirname, "budget-wire-oracle.json"));
+  const {oracleBytes, oracle: currentOracle, successorDigest, successorRevision} = await loadCurrentBudgetFixture(repo);
   assert.equal(hash(oracleBytes.toString("utf8")), "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56");
-  const oracle = JSON.parse(oracleBytes.toString("utf8")) as BudgetWireOracle;
+  const oracle = currentOracle as BudgetWireOracle;
   assert.equal(oracle.schemaVersion, "1.0.0"); assert.equal(oracle.canonicalRunId, "full-21-015");
   assert.equal(oracle.rows.length, 21); assert.equal(new Set(oracle.rows.map((row: OracleRow) => row.caseId)).size, 21);
   assert.equal(typeof oracle.modelId, "string"); // ROOT r2 oracle explicit model binding; r1 has no model field.
@@ -86,6 +87,7 @@ if (process.argv[4] === "worker") {
       config.evidence[kind] = {path: `${kind}.json`, digest: hash(bytes)};
     }
   }
+  let fixturePrepared: Awaited<ReturnType<typeof api.prepare>> | undefined;
   async function ready(runId: string, estimate = true): Promise<RunConfig> {
     const config: RunConfig = {schemaVersion: "2.0.0", runId, repo, outputDirectory: path.join(root, runId), endpointEnv: "AGS_BOOTSTRAP_ENDPOINT", credentialEnv: "AGS_BOOTSTRAP_JEV_KEY",
       approvedEndpointDigest: hash(env.AGS_BOOTSTRAP_ENDPOINT), approvedRouteRef: "mock-route", approvalRef: "mock-only", profile: null,
@@ -96,7 +98,7 @@ if (process.argv[4] === "worker") {
         priorRunUnknownReservedUsd: 0, accountBalanceUsd: null, accountPriorSpendUsd: null, accountUnknownReservedUsd: null,
         observedAt: new Date(Date.now() - 1000).toISOString(), validUntil: new Date(Date.now() + 60000).toISOString()},
       evidence: {route: null, price: null, priorLedger: null, remaining: null, hardTokenCaps: null, operatorAuthorization: null}};
-    const prepared = await api.prepare(config);
+    const prepared = rebindPreparedFixture(fixturePrepared ??= await api.prepare(config), config.runId);
     config.profile = {profileId: "mock-profile", providerKind: "jev", vendorId: "mock-vendor", modelId: "mock-model", modelRevision: "mock-revision", reasoningEffort: null,
       supportedOptions: {reasoningEfforts: [null], structuredOutput: true}, approvedRouteRef: config.approvedRouteRef, qualificationRevision: "mock-not-qualified",
       qualification: {status: "NOT_RUN", inventoryDigest: prepared.inventory.inventoryDigest, taxonomyRevision: prepared.inventory.taxonomyRevision, modelRevision: "mock-revision", promptRevision: "mock-question-v1", validUntil: config.budget!.validUntil, profileConfigurationDigest: ""},
@@ -272,7 +274,7 @@ if (process.argv[4] === "worker") {
     });
     const claims = await Promise.all([worker(), worker()]); assert.equal(claims.filter(row => row.winner).length, 1); assert.equal(claims.reduce((sum, row) => sum + row.calls, 0), 1);
     checks.push("independent child processes compete for persistent wx claim: one winner, one mock fetch, no retry");
-    console.log(JSON.stringify({status: "OFFLINE_RUN_BUDGET_PASS", checks, claimResults: claims, actualApiCalls: 0, actualCredentialLookups: 0, qualification: "NOT_RUN", linuxLive: "NOT_RUN"}, null, 2));
+    console.log(JSON.stringify({status: "OFFLINE_RUN_BUDGET_PASS", successorDigest, successorRevision, checks, claimResults: claims, actualApiCalls: 0, actualCredentialLookups: 0, qualification: "NOT_RUN", linuxLive: "NOT_RUN"}, null, 2));
   } finally {
     const resolved = path.resolve(root); assert.equal(path.dirname(resolved), path.resolve(os.tmpdir())); assert(path.basename(resolved).startsWith("ags-budget-regression-"));
     const exportBase = process.env.AGS_BOOTSTRAP_TEST_EVIDENCE_DIR;
