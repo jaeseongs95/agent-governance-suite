@@ -120,7 +120,7 @@ test("binds every authorization action to exact authority evidence", async () =>
   await assert.rejects(validateTaskContract(mismatched), /exactly one request authority record/u);
 });
 
-test("rejects permission expansion and project instruction grants", async () => {
+test("rejects permission expansion and unbound project instruction grants", async () => {
   const expanded = await fixture("normal/simple-read.json");
   expanded.report.taskEnvelope.authorization.allowedActions.push("delete repository files");
   expanded.report.authorizationProvenance.push({
@@ -135,7 +135,7 @@ test("rejects permission expansion and project instruction grants", async () => 
   const projectGrant = await fixture("normal/simple-read.json");
   projectGrant.request.authorizationEvidence[0].authority = "project-instruction";
   projectGrant.report.authorizationProvenance[0].authority = "project-instruction";
-  await assert.rejects(validateTaskContract(projectGrant), /cannot expand allowed actions/u);
+  await assert.rejects(validateTaskContract(projectGrant), /instruction resolution reference/u);
 
   const omittedRestriction = await fixture("normal/simple-read.json");
   omittedRestriction.request.authorizationEvidence.push({

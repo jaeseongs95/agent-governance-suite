@@ -197,7 +197,26 @@ const CURRENT_IMPLEMENTATION_PINS = Object.freeze({
 }),
 });
 
+// Explicit current-source successor. Historical optimization/provenance bytes stay frozen.
+const TASK_CONTRACT_AUTHORIZATION_SUCCESSOR = Object.freeze({
+  "revision": "gov08-task-contract-authorization-r01",
+  "authorityEffect": "none",
+  "baselineRevision": "3a9f7b15d1ce879b5e9967bd72b19bce61cbbdf7",
+  "previousEntryDetailSha256": "e587fd4a1b94415ec30ad943bb1cc9d81f1cb988b07ecab3df3cedd4f6c7efc9",
+  "hashes": {
+    "skills/task-contract/scripts/validate-task-contract.mjs": "61e90f6acb355f4f031941a9dc521460cebc315f79191a63357a53c0cc7a10bf",
+    "skills/task-contract/references/risk-and-authorization-rubric.md": "717e1fb27d4ebf7b6481c84e20de018b8461fd7ff277c6434f6f2d52f7cca89e",
+    "skills/task-contract/references/entry-details.md": "401c494535eb2d62d0ec80810f1610c12071fcf5e3ed2c1cef23b23ba09440c2"
+  }
+});
+
+export function matchesTaskContractAuthorizationSuccessor(path, bytes) {
+  return Object.hasOwn(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes, path)
+    && createHash("sha256").update(bytes).digest("hex") === TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes[path];
+}
+
 export function matchesCurrentImplementationPin(path, bytes) {
+  if (matchesTaskContractAuthorizationSuccessor(path, bytes)) return true;
   return Object.hasOwn(CURRENT_IMPLEMENTATION_PINS.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === CURRENT_IMPLEMENTATION_PINS.hashes[path];
 }
@@ -318,6 +337,12 @@ export function reconstructOptimizedSkill(skillId, root = ROOT) {
     }
     detail = detail.subarray(0, detail.length - addition.length);
   }
+  if (skillId === "task-contract" && matchesTaskContractAuthorizationSuccessor("skills/task-contract/references/entry-details.md", detail)) {
+    detail = git("show", `${TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.baselineRevision}:skills/task-contract/references/entry-details.md`);
+    if (createHash("sha256").update(detail).digest("hex") !== TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.previousEntryDetailSha256) {
+      throw new Error("task-contract: historical entry-details bytes differ");
+    }
+  }
   const baselineRelativeDetail = Buffer.from(detail.toString("utf8").replace(/\]\((?![A-Za-z][A-Za-z0-9+.-]*:|#|\/)([^)\s]+)\)/gu, (_match, target) => `](${posix.normalize(posix.join("references", target))})`));
   const markerIndex = candidate.indexOf(NAVIGATION);
   if (markerIndex < 0) throw new Error(`${skillId}: navigation marker is missing`);
@@ -336,6 +361,11 @@ export function checkSkillContextOptimization() {
   for (const currentPath of Object.keys(CURRENT_IMPLEMENTATION_PINS.hashes)) {
     if (!matchesCurrentImplementationPin(currentPath, readFileSync(join(ROOT, currentPath)))) {
       errors.push(`current implementation bytes differ: ${currentPath}`);
+    }
+  }
+  for (const currentPath of Object.keys(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes)) {
+    if (!matchesTaskContractAuthorizationSuccessor(currentPath, readFileSync(join(ROOT, currentPath)))) {
+      errors.push(`task-contract authorization successor bytes differ: ${currentPath}`);
     }
   }
   const detailOwners = readdirSync(join(ROOT, "skills"), { withFileTypes: true })
@@ -411,6 +441,7 @@ export function checkSkillContextOptimization() {
       if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     }
     for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) if (reviewedPath.startsWith(`skills/${skillId}/`)) allowed.add(reviewedPath);
+    for (const currentPath of Object.keys(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     if (skillId === "session-board") {
       for (const reviewedPath of ["skills/session-board/scripts/board-store.mjs", "skills/session-board/scripts/board-store.d.mts"]) {
         if (!matchesReviewedImplementationUpdate(reviewedPath, readFileSync(join(ROOT, reviewedPath)))) {
@@ -475,6 +506,7 @@ export function checkSkillContextOptimization() {
     reviewedClassificationUpdates: [CLASSIFICATION_UPDATE],
     currentImplementationPins: [CURRENT_IMPLEMENTATION_PINS],
     currentPolicySuccessors: [PONYTAIL_POLICY_SUCCESSOR],
+    currentAuthorizationPolicySuccessors: [TASK_CONTRACT_AUTHORIZATION_SUCCESSOR],
     runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
     pass: errors.length === 0,
     errors,

@@ -99,8 +99,8 @@ function assertAuthorizationBound(request, report) {
         sourceReceiptId: evidence.sourceReceiptId,
       });
     }
-    if (evidence.effect === "allow" && evidence.authority === "project-instruction") {
-      throw contractError("Project instructions cannot expand allowed actions.", { action: evidence.action, sourceLocator: evidence.sourceLocator });
+    if (evidence.effect === "allow" && evidence.authority === "project-instruction" && !request.instructionResolutionRefs.includes(evidence.sourceLocator)) {
+      throw contractError("A project instruction grant must bind to a supplied instruction resolution reference.", { action: evidence.action, sourceLocator: evidence.sourceLocator });
     }
     if (evidence.effect !== "allow") {
       const group = groups.find((candidate) => candidate.effect === evidence.effect);

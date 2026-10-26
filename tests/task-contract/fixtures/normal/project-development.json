@@ -1,0 +1,240 @@
+{
+  "schemaVersion": "1.0.0",
+  "request": {
+    "schemaVersion": "1.0.0",
+    "taskId": "task-project-development",
+    "request": "범위 안의 검증 오류를 고쳐 줘. 프로젝트 지침은 필요한 로컬 시험, 작업 브랜치 commit/push, CI 실행을 허용하고 별도 승인 항목을 정한다.",
+    "instructionResolutionRefs": [
+      "artifact://instruction-scope-resolution/1"
+    ],
+    "pathSemantics": "windows",
+    "authorizationEvidence": [
+      {
+        "action": "modify scoped files",
+        "effect": "allow",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1"
+      },
+      {
+        "action": "run local tests",
+        "effect": "allow",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1"
+      },
+      {
+        "action": "commit and push work branch",
+        "effect": "allow",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1"
+      },
+      {
+        "action": "run CI",
+        "effect": "allow",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1"
+      },
+      {
+        "action": "merge default branch",
+        "effect": "require-approval",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1"
+      },
+      {
+        "action": "create tag or release",
+        "effect": "require-approval",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1"
+      },
+      {
+        "action": "install or deploy",
+        "effect": "require-approval",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1"
+      },
+      {
+        "action": "permanently delete data",
+        "effect": "require-approval",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1"
+      },
+      {
+        "action": "expand permissions",
+        "effect": "require-approval",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1"
+      },
+      {
+        "action": "modify production data",
+        "effect": "require-approval",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1"
+      }
+    ],
+    "suppliedFacts": [],
+    "userDecisions": []
+  },
+  "report": {
+    "schemaVersion": "1.0.0",
+    "taskEnvelope": {
+      "schemaVersion": "1.0.0",
+      "taskId": "task-project-development",
+      "objective": "범위 안의 검증 오류를 고치고 검증한다.",
+      "scope": {
+        "included": [
+          "skills/task-contract/"
+        ],
+        "excluded": [
+          "production data"
+        ]
+      },
+      "acceptanceCriteria": [
+        "[AC-001] 범위 안의 검증 오류를 고치고 시험 결과를 반환한다."
+      ],
+      "riskLevel": "medium",
+      "workUnits": [],
+      "requiredCapabilities": [],
+      "constraints": [],
+      "authorization": {
+        "allowedActions": [
+          "modify scoped files",
+          "run local tests",
+          "commit and push work branch",
+          "run CI"
+        ],
+        "prohibitedActions": [],
+        "approvalRequired": [
+          "merge default branch",
+          "create tag or release",
+          "install or deploy",
+          "permanently delete data",
+          "expand permissions",
+          "modify production data"
+        ]
+      },
+      "decision": {
+        "complexity": "simple",
+        "hasConflicts": false
+      },
+      "orchestration": {
+        "requested": false,
+        "mcpAvailable": false
+      }
+    },
+    "acceptanceEvidencePlan": {
+      "schemaVersion": "1.0.0",
+      "criteria": [
+        {
+          "criterionId": "AC-001",
+          "statement": "[AC-001] 범위 안의 검증 오류를 고치고 시험 결과를 반환한다.",
+          "verificationMethod": "변경된 검증기를 실제 CLI 입력으로 실행한다.",
+          "expectedEvidenceKinds": [
+            "file"
+          ],
+          "passCondition": "유효한 권한은 통과하고 위조·누락된 근거는 거부한다."
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "field": "/objective",
+        "valueSummary": "검증 오류 수정",
+        "sourceLocator": "user-request",
+        "basis": "explicit"
+      },
+      {
+        "field": "/scope",
+        "valueSummary": "task-contract 범위",
+        "sourceLocator": "user-request",
+        "basis": "explicit"
+      },
+      {
+        "field": "/riskLevel",
+        "valueSummary": "복구 가능한 로컬 변경",
+        "sourceLocator": "user-request",
+        "basis": "verified-inference"
+      },
+      {
+        "field": "/authorization",
+        "valueSummary": "프로젝트 지침의 작업 권한과 별도 승인 경계를 보존한다.",
+        "sourceLocator": "artifact://instruction-scope-resolution/1",
+        "basis": "instruction"
+      }
+    ],
+    "authorizationProvenance": [
+      {
+        "action": "modify scoped files",
+        "effect": "allow",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1",
+        "envelopeField": "/authorization/allowedActions"
+      },
+      {
+        "action": "run local tests",
+        "effect": "allow",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1",
+        "envelopeField": "/authorization/allowedActions"
+      },
+      {
+        "action": "commit and push work branch",
+        "effect": "allow",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1",
+        "envelopeField": "/authorization/allowedActions"
+      },
+      {
+        "action": "run CI",
+        "effect": "allow",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1",
+        "envelopeField": "/authorization/allowedActions"
+      },
+      {
+        "action": "merge default branch",
+        "effect": "require-approval",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1",
+        "envelopeField": "/authorization/approvalRequired"
+      },
+      {
+        "action": "create tag or release",
+        "effect": "require-approval",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1",
+        "envelopeField": "/authorization/approvalRequired"
+      },
+      {
+        "action": "install or deploy",
+        "effect": "require-approval",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1",
+        "envelopeField": "/authorization/approvalRequired"
+      },
+      {
+        "action": "permanently delete data",
+        "effect": "require-approval",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1",
+        "envelopeField": "/authorization/approvalRequired"
+      },
+      {
+        "action": "expand permissions",
+        "effect": "require-approval",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1",
+        "envelopeField": "/authorization/approvalRequired"
+      },
+      {
+        "action": "modify production data",
+        "effect": "require-approval",
+        "authority": "project-instruction",
+        "sourceLocator": "artifact://instruction-scope-resolution/1",
+        "envelopeField": "/authorization/approvalRequired"
+      }
+    ],
+    "assumptions": [],
+    "ambiguities": [],
+    "contradictions": [],
+    "verdict": "PASS"
+  }
+}
