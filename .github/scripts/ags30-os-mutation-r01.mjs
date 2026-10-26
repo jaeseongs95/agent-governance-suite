@@ -1,6 +1,7 @@
 // Draft helper only. Importing this module never imports or executes the product.
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -60,7 +61,9 @@ export async function collectOSMutations({ sourceRoot, planFile, outputRoot, dea
   // original declared seeds (including computed worker inputs); never execute
   // the product or substitute bundle output for the original source bytes.
   captureSnapshot(sourceRoot, plan.scopeFiles);
-  const { build } = await import('esbuild');
+  // The pinned helper executes outside the source tree where the collector
+  // installs dependencies. Resolve from that installed source, like Vitest.
+  const { build } = createRequire(path.resolve(sourceRoot, 'package.json'))('esbuild');
   const inputs = new Set();
   let totalBytes = 0;
   const relativeInput = file => path.relative(path.resolve(sourceRoot), file).split(path.sep).join('/');

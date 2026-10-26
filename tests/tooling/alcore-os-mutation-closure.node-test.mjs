@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { collectOSMutations } from '../../.github/scripts/ags30-os-mutation-r01.mjs';
 
 const repository = fileURLToPath(new URL('../../', import.meta.url));
 const planPath = '.github/ci/ags30-r11/os-test-plan.json';
@@ -27,6 +27,15 @@ async function fixture(t) {
     await fs.cp(path.join(repository, relative), path.join(sourceRoot, relative), { recursive: true });
   }
   await fs.symlink(path.join(repository, 'node_modules'), path.join(sourceRoot, 'node_modules'), 'junction');
+  // The official collector loads its pinned helper outside the source tree in
+  // which it installs dependencies. Reproduce that placement, with no package
+  // reachable from the executing helper's directory.
+  const helper = path.join(temporary, 'helpers', 'ags30-os-mutation-r01.mjs');
+  await fs.mkdir(path.dirname(helper));
+  await fs.copyFile(path.join(repository, '.github/scripts/ags30-os-mutation-r01.mjs'), helper);
+  assert.throws(() => createRequire(helper).resolve('esbuild'), { code: 'MODULE_NOT_FOUND' });
+  assert.ok(createRequire(path.join(sourceRoot, 'package.json')).resolve('esbuild'));
+  const { collectOSMutations } = await import(pathToFileURL(helper).href);
   return { temporary, sourceRoot, outputRoot, seedBytes,
     run: () => collectOSMutations({ sourceRoot, planFile: path.join(sourceRoot, planPath), outputRoot, deadline: 0, wholeSourcePortableId: 'preparation-only-fixture' }) };
 }
