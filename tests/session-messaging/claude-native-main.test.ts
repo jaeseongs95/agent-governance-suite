@@ -22,7 +22,7 @@ const payload = (tool: string, tool_input: Record<string, unknown>, actor: Recor
 // agent_id identifies a subagent; agent_type can also describe a --agent main session.
 it.each([{}, {agent_type: "synthetic-custom-agent"}])("binds actual Claude message and board hooks for native main %j", async actor => {
   const board = fixture(), message = payload("prepare_session_message", {body: "synthetic"}, actor);
-  expect(adaptHostInput(message, "claude-code").observation.actor).toMatchObject({kind: "main", assurance: "observed"});
+  expect(adaptHostInput(message, "claude-code").observation.actor).toMatchObject({kind: "main", assurance: "observed", observedBy: "claude-code:hook-payload"});
   const output = await handleSessionMessageHook(message, "claude-code");
   expect(output).toMatchObject({hookSpecificOutput: {updatedInput: {body: "synthetic", _sessionBinding: {host: "claude-code", sessionId: message.session_id}}}});
   const updated = handleSessionBoardHook(payload("update_session_status", {summary: "synthetic native main"}, actor), board, "claude-code");

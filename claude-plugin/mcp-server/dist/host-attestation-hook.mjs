@@ -1196,7 +1196,7 @@ function adaptClaudeHookInput(input2, host) {
   if (!knownEvent || !adapted.observation.sessionId.trim() || !validAgentType || hasAgentId && (typeof input2.agent_id !== "string" || !input2.agent_id.trim())) {
     adapted.observation.actor = { kind: "unknown", observedBy: "".concat(host, ":invalid-native-actor"), assurance: "unknown" };
   } else if (!hasAgentId) {
-    adapted.observation.actor = { kind: "main", observedBy: "".concat(host, ":native-main-hook"), assurance: "observed" };
+    adapted.observation.actor = { kind: "main", observedBy: "".concat(host, ":hook-payload"), assurance: "observed" };
   }
   return adapted;
 }

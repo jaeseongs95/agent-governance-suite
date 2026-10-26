@@ -94,7 +94,7 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
     || (hasAgentId && (typeof input.agent_id !== "string" || !input.agent_id.trim()))) {
     adapted.observation.actor = {kind: "unknown", observedBy: `${host}:invalid-native-actor`, assurance: "unknown"};
   } else if (!hasAgentId) {
-    adapted.observation.actor = {kind: "main", observedBy: `${host}:native-main-hook`, assurance: "observed"};
+    adapted.observation.actor = {kind: "main", observedBy: `${host}:hook-payload`, assurance: "observed"};
   }
   return adapted;
 }
