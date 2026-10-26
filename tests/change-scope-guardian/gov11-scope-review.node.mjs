@@ -139,3 +139,19 @@ test('GOV11 actual state consumer rejects approval and passing claims for unreso
     assert.doesNotThrow(() => consumer.assertResultSemantics(stage, { stageId: stage.stageId, state: 'blocked', output: provider, error: null, evidence: [] }, 'gov11', undefined));
   } finally { consumer.validator = originalValidator; consumer.registry = originalRegistry; }
 });
+
+
+test('GOV11 public registry provider maps real scope review to blocked without new approval', async () => {
+  const { FileSkillRegistry } = await import(pathToFileURL(join(root, 'mcp-server/src/registry.ts')).href);
+  const { ContractValidator } = await import(pathToFileURL(join(root, 'mcp-server/src/schema-validator.ts')).href);
+  const provider = new FileSkillRegistry(join(root, 'skills/registry.json'), new ContractValidator()).read()
+    .find(candidate => candidate.skillId === 'change-scope-guardian' && candidate.capabilities.includes('change-scope-assurance'));
+  assert.ok(provider, 'Public registry must route the scope assurance provider');
+  const repo = fixture(), t = task(), baseline = capture(repo, t, 'public-registry-capture');
+  writeFileSync(join(repo, 'unplanned.txt'), 'authorized scope review fixture\n');
+  const report = verify(repo, t, baseline, 'public-registry-review');
+  assert.equal(report.verdict, 'NEEDS_REVIEW');
+  check(report, 'public-registry-validate');
+  assert.deepEqual(consumer.mappedState({ stageId: 'public-scope', ...provider },
+    { kind: 'output', output: report, artifacts: [], error: null }), { state: 'blocked', errorRequired: false });
+});
