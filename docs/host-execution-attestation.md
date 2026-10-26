@@ -10,7 +10,7 @@ v2는 raw 관측과 별도로 `eligibility` snapshot 또는 `null`을 서명한�
 
 `policyRevision` 필드는 v2 서명 본문에 항상 있으며 실제 revision 문자열 또는 `null`이다. issuer는 설치된 adapter가 선언한 revision을 우선 사용하고, 선언이 없으면 기존 `resolveAdapterModelCapability`가 반환한 effective revision을 사용한다. 여기에는 기존 trusted `modelClassForModel` mapping이 승인한 legacy capability의 `1.0.0`도 포함된다. 선언 revision과 capability가 모두 없으면 `null`을 서명하므로 관측 token은 발급되지만 실행 자격은 거부된다. unknown 모델에 새 기본 revision을 만들거나 서버의 현재 revision으로 보충하지 않는다. 선언 revision과 현재 descriptor revision이 서로 달라도 실행을 거부한다.
 
-기존 `aghs1` v1 token은 원래 class·정책 결속 검증을 그대로 받는다. v1의 필수 class를 선택 항목으로 바꾸지 않는다. 두 버전은 기존 서명 키와 host/session/agent/turn/call 범위의 동일 observation ID 및 한 번 소비 원장을 공유한다. 같은 호출을 버전만 바꾸어 다시 소비할 수 없으며 새 키·DB·issuer·capability registry는 추가하지 않는다.
+`aghs1` v1 token은 유효한 서명이어도 거부한다. 현재 `aghs2` v2는 기존 서명 키와 host/session/agent/turn/call 범위의 observation ID 및 한 번 소비 원장을 그대로 사용한다. 새 키·DB·issuer·capability registry는 추가하지 않는다.
 
 기본 hook의 named adapter와 서버의 기본 adapter map은 같은 설치물의 기존 `defaultSuite` 정책을 사용한다. 이 변경은 새 capability 공급자를 등록하지 않는다. 기존 승인 family/alias 정책으로 새 raw identifier를 해석하거나 이미 신뢰된 resolver가 동등 descriptor를 제공하면 별도 이름 등록 조건 없이 소비할 수 있다. 현재 기본 catalog에서 해석되지 않고 별도 권위 descriptor도 없는 모델은 관측 token이 있어도 실행을 거부한다. 그 경우를 지원 완료로 표시하지 않는다.
 

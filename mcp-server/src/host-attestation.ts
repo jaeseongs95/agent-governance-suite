@@ -24,7 +24,6 @@ export const HOST_ATTESTATION_FIELD = "_hostAttestation";
 export const HOST_ATTESTATION_TOOLS: ReadonlySet<string> = new Set(["plan_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
 
 const HOST_ATTESTATION_KEY = "host_attestation_key_v1";
-const TOKEN_PREFIX = "aghs1";
 const OBSERVATION_TOKEN_PREFIX = "aghs2";
 // The server accepts observations up to five minutes old; the token may wait on a permission prompt.
 const TOKEN_TTL_MS = 5 * 60 * 1000;
@@ -60,10 +59,10 @@ export interface HostAttestationBindingV1 {
   revision: number | null;
 }
 
-interface HostAttestationPayloadV1 extends HostAttestationBindingV1 {
-  v: 1;
+/** Observation signing is independent of the nullable qualification snapshot. */
+interface HostAttestationPayloadV2 extends HostAttestationBindingV1 {
+  v: 2;
   host: string;
-  provider?: string;
   session: string;
   agent: string | null;
   turn: string | null;
@@ -71,21 +70,12 @@ interface HostAttestationPayloadV1 extends HostAttestationBindingV1 {
   tool: string;
   inputDigest: string;
   model: string;
-  resolvedModel?: string;
-  modelClass: ModelClassV1;
   reasoningEffort: ReasoningEffortV1;
-  policyRevision?: string;
   provenance?: string;
   actorId: string;
   observationId: string;
   observedAt: string;
   expiresAt: string;
-}
-
-/** Observation signing is independent of the nullable qualification snapshot. */
-interface HostAttestationPayloadV2 extends Omit<HostAttestationPayloadV1,
-  "v" | "provider" | "resolvedModel" | "modelClass" | "policyRevision"> {
-  v: 2;
   // Required in the signed payload; null records missing policy observation and cannot qualify execution.
   policyRevision: string | null;
   eligibility: {
@@ -95,7 +85,6 @@ interface HostAttestationPayloadV2 extends Omit<HostAttestationPayloadV1,
     policyRevision: string;
   } | null;
 }
-type HostAttestationPayload = HostAttestationPayloadV1 | HostAttestationPayloadV2;
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -292,11 +281,11 @@ function invalid(message: string): WorkflowContractError {
 }
 
 function verifyToken(store: WorkflowStore, adapter: HostExecutionAdapter, token: string): {
-  payload: HostAttestationPayload;
+  payload: HostAttestationPayloadV2;
   capability: ResolvedModelCapabilityV1;
 } {
   const [prefix, encodedPayload, signature, ...rest] = token.split(".");
-  if ((prefix !== TOKEN_PREFIX && prefix !== OBSERVATION_TOKEN_PREFIX) || !encodedPayload || !signature || rest.length > 0) {
+  if (prefix !== OBSERVATION_TOKEN_PREFIX || !encodedPayload || !signature || rest.length > 0) {
     throw invalid("Host attestation token is malformed.");
   }
   const expected = Buffer.from(mac(signingKey(store), `${prefix}.${encodedPayload}`), "utf8");
@@ -314,11 +303,11 @@ function verifyToken(store: WorkflowStore, adapter: HostExecutionAdapter, token:
   const model = typeof value?.model === "string" ? value.model : null;
   if (
     !value
-    || value.v !== (prefix === TOKEN_PREFIX ? 1 : 2)
+    || value.v !== 2
     || value.host !== adapter.host
     || !model
-    || (value.v === 2 && (!Object.hasOwn(value, "policyRevision")
-      || (value.policyRevision !== null && !nonEmpty(value.policyRevision)) || !Object.hasOwn(value, "eligibility")))
+    || !Object.hasOwn(value, "policyRevision")
+    || (value.policyRevision !== null && !nonEmpty(value.policyRevision)) || !Object.hasOwn(value, "eligibility")
     || (value.provenance !== undefined && (typeof value.provenance !== "string" || value.provenance.length === 0))
     || !isReasoningEffort(value.reasoningEffort)
     || typeof value.session !== "string" || !/^[a-f0-9]{24}$/u.test(value.session)
@@ -332,37 +321,26 @@ function verifyToken(store: WorkflowStore, adapter: HostExecutionAdapter, token:
   const capability = resolveAdapterModelCapability(adapter, model,
     typeof value.provenance === "string" ? value.provenance : `${adapter.host}:runtime`);
   if (!capability) {
-    throw invalid(value.v === 1 ? "Host attestation token payload is not a supported observation for the configured adapter."
-      : "Host observation has no matching trusted execution capability and policy revision.");
+    throw invalid("Host observation has no matching trusted execution capability and policy revision.");
   }
-  if (value.v === 1) {
-    // Preserve the existing v1 capability claims and optional metadata comparisons.
-    if (!MODEL_CLASS.includes(value.modelClass as ModelClassV1) || capability.modelClass !== value.modelClass
-      || (value.provider !== undefined && value.provider !== capability.provider)
-      || (value.resolvedModel !== undefined && value.resolvedModel !== capability.resolvedModel)
-      || (value.policyRevision !== undefined && value.policyRevision !== capability.policyRevision)) {
-      throw invalid("Host attestation token payload is not a supported observation for the configured adapter.");
-    }
-  } else {
-    // A raw v2 observation needs both its signed qualification snapshot and the
-    // current trusted descriptor. Null snapshots never inherit server-current eligibility.
-    const eligibility = record(value.eligibility);
-    if (Object.hasOwn(value, "modelClass") || Object.hasOwn(value, "resolvedModel") || Object.hasOwn(value, "provider")
-      || !eligibility || eligibility.modelClass !== capability.modelClass || eligibility.provider !== capability.provider
-      || eligibility.resolvedModel !== capability.resolvedModel || eligibility.policyRevision !== capability.policyRevision
-      || !nonEmpty(value.policyRevision) || value.policyRevision !== capability.policyRevision
-      || (adapter.policyRevision !== undefined && adapter.policyRevision !== capability.policyRevision)
-      || capability.host !== adapter.host || capability.rawModel !== model || !nonEmpty(capability.provider)
-      || !nonEmpty(capability.resolvedModel) || !nonEmpty(capability.policyRevision)
-      || !Array.isArray(capability.supportedEfforts) || !capability.supportedEfforts.every(isReasoningEffort)
-      || (capability.minimumReasoningEffort !== null && !isReasoningEffort(capability.minimumReasoningEffort))) {
-      throw invalid("Host observation has no matching trusted execution capability and policy revision.");
-    }
+  // A raw v2 observation needs both its signed qualification snapshot and the
+  // current trusted descriptor. Null snapshots never inherit server-current eligibility.
+  const eligibility = record(value.eligibility);
+  if (Object.hasOwn(value, "modelClass") || Object.hasOwn(value, "resolvedModel") || Object.hasOwn(value, "provider")
+    || !eligibility || eligibility.modelClass !== capability.modelClass || eligibility.provider !== capability.provider
+    || eligibility.resolvedModel !== capability.resolvedModel || eligibility.policyRevision !== capability.policyRevision
+    || !nonEmpty(value.policyRevision) || value.policyRevision !== capability.policyRevision
+    || (adapter.policyRevision !== undefined && adapter.policyRevision !== capability.policyRevision)
+    || capability.host !== adapter.host || capability.rawModel !== model || !nonEmpty(capability.provider)
+    || !nonEmpty(capability.resolvedModel) || !nonEmpty(capability.policyRevision)
+    || !Array.isArray(capability.supportedEfforts) || !capability.supportedEfforts.every(isReasoningEffort)
+    || (capability.minimumReasoningEffort !== null && !isReasoningEffort(capability.minimumReasoningEffort))) {
+    throw invalid("Host observation has no matching trusted execution capability and policy revision.");
   }
   if (!satisfiesModelEffortPolicy(capability, value.reasoningEffort as ReasoningEffortV1)) {
     throw invalid("Host attestation token payload is not a supported observation for the configured adapter.");
   }
-  return { payload: value as unknown as HostAttestationPayload, capability };
+  return { payload: value as unknown as HostAttestationPayloadV2, capability };
 }
 
 /**

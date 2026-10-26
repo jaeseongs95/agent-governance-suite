@@ -99,35 +99,22 @@ describe("C observation token eligibility controls", () => {
     expect(decoded(token).policyRevision).toBeNull();
     expect(f.run(token)).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
   });
-  it("accepts an unchanged signed v1 fixture and rejects missing required class", () => {
-    const { adapter, state } = modern(), valid = fixture(adapter);
-    expect(valid.run(v1Fixture(valid.args, state.value))).toMatchObject({ ok: true });
-    const missingClass = fixture(adapter);
-    expect(missingClass.run(v1Fixture(missingClass.args, state.value, { modelClass: undefined })))
-      .toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
-  });
-  it.each([
-    { field: "provider", value: "other-provider" },
-    { field: "resolvedModel", value: "other-policy-model" },
-    { field: "policyRevision", value: "owned-r2" },
-    { field: "modelClass", value: "invalid-model-class" },
-  ])("rejects correctly signed v1 metadata mismatch: $field", ({ field, value }) => {
+  it("rejects a valid signed v1 and permits the current v2 call", () => {
     const { adapter, state } = modern(), f = fixture(adapter);
-    // v1Fixture signs after applying this one-field patch; all other claims stay valid.
-    const token = v1Fixture(f.args, state.value, { [field]: value });
-    expect(token).toMatch(/^aghs1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/u);
-    const result = f.run(token);
-    expect(result).toMatchObject({ ok: false, error: { code: "BINDING_INVALID",
-      message: "Host attestation token payload is not a supported observation for the configured adapter." } });
+    const v1 = v1Fixture(f.args, state.value);
+    expect(f.run(v1)).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
     expect(f.provider.lastObservedCapability()).toBeNull();
+    expect(f.run(f.issue())).toMatchObject({ ok: true });
   });
-  it.each(["v1-first", "v2-first"])("shares the actual one-use workflow claim across versions: %s", order => {
-    const { adapter, state } = modern(), f = fixture(adapter), v1 = v1Fixture(f.args, state.value), v2 = f.issue();
-    const v1Payload = JSON.parse(Buffer.from(v1.split(".")[1]!, "base64url").toString("utf8")) as { observationId: string };
-    expect(decoded(v2).observationId).toBe(v1Payload.observationId);
-    const [first, second] = order === "v1-first" ? [v1, v2] : [v2, v1];
-    expect(f.run(first!)).toMatchObject({ ok: true });
-    const replay = f.run(second!);
+  it("rejects forged v2 signatures and consumes a valid v2 observation only once", () => {
+    const { adapter } = modern(), f = fixture(adapter), token = f.issue();
+    const [prefix, body, signature] = token.split(".");
+    const changedSignature = (signature![0] === "A" ? "B" : "A") + signature!.slice(1);
+    expect(f.run(`${prefix}.${body}.${changedSignature}`)).toMatchObject({
+      ok: false, error: { code: "BINDING_INVALID", message: "Host attestation token signature is invalid." },
+    });
+    expect(f.run(token)).toMatchObject({ ok: true });
+    const replay = f.run(f.issue());
     expect(replay).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
     expect(replay.error?.message).toContain("already consumed");
   });
