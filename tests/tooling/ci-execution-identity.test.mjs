@@ -21,7 +21,7 @@ afterEach(async () => {
 });
 
 function git(directory, args) {
-  const result = spawnSync('git', ['-c', 'core.autocrlf=false', ...args],
+  const result = spawnSync('git', ['-c', 'core.autocrlf=false', '-c', 'core.longpaths=true', ...args],
     { cwd: directory, encoding: 'utf8', windowsHide: true, timeout: 10_000, maxBuffer: 1024 * 1024 });
   expect(result.error).toBeUndefined();
   expect(result.status, result.stderr).toBe(0);
@@ -36,8 +36,9 @@ function commit(directory, message) {
 }
 
 async function fixture() {
-  const directory = await fs.mkdtemp(path.join(tmpdir(), 'ci-execution-identity-'));
-  temporary.push(directory);
+  const longParent = await fs.mkdtemp(path.join(tmpdir(), 'ci-longpath-' + 'x'.repeat(55) + '-'));
+  temporary.push(longParent);
+  const directory = await fs.mkdtemp(path.join(longParent, 'ci-execution-identity-'));
   const checkout = path.join(directory, 'checkout');
   await fs.mkdir(path.join(checkout, 'skills'), { recursive: true });
   await fs.writeFile(path.join(checkout, 'skills/fixture.txt'), 'CI-only Git source fixture\n');

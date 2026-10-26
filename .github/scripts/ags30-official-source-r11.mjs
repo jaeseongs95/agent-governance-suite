@@ -476,7 +476,7 @@ async function main() {
     assert.equal(config.sourceMode, 'GITHUB_SHA');
     const actualHead = process.env.GITHUB_SHA;
     assert(/^[a-f0-9]{40}$/.test(actualHead));
-    const git = (name, args, cwd = work, ms = 60_000) => command(name, 'git', ['-c', 'core.autocrlf=false', ...args], cwd, ms);
+    const git = (name, args, cwd = work, ms = 60_000) => command(name, 'git', ['-c', 'core.autocrlf=false', '-c', 'core.longpaths=true', ...args], cwd, ms);
     const checkoutRoot = path.resolve(process.env.GITHUB_WORKSPACE);
     assert.equal(path.resolve(dataRoot), path.join(checkoutRoot, '.github', 'ci', 'ags30-r11'));
     const checkoutHead = mustPass(await git('01b-observe-workflow-head', ['rev-parse', 'HEAD'], checkoutRoot)).stdout.toString('utf8').trim();
