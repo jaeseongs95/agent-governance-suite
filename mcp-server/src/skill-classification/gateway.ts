@@ -7,7 +7,7 @@ import type { ExecutionContextV1 } from "../../../contracts/types.js";
 import { loadHostObservedInventory, type ObservedHostInventory } from "./host-discovery-adapter.js";
 import { createClassificationRequest, digestClassificationValue } from "./request.js";
 import { SkillClassificationService, MAX_CLASSIFICATION_TIMEOUT_MS } from "./service.js";
-import { decisionSchema, validateDecision } from "./validation.js";
+import { decisionSchema, validateDecision, validateIndependentDecision } from "./validation.js";
 import type { ClassificationConfig, ClassificationResult, ClassificationSnapshot, ProviderProfileRegistry, SkillSelectionDecisionV1, SkillClassificationRequestV1 } from "./types.js";
 
 const strings = z.array(z.string().min(1));
@@ -20,11 +20,13 @@ export const classificationInputSchema = z.strictObject({
   vendorContext: z.strictObject({vendorId: z.string().min(1), reference: z.string().min(1)}),
   publicSynthetic: z.boolean(),
 });
-export const selectionInputSchema = z.strictObject({schemaVersion: z.literal("1.0.0"), operationId: z.string().min(1), decision: decisionSchema});
+const independentSource = "independent-agent-after-helper-failure";
+export const selectionInputSchema = z.strictObject({schemaVersion: z.literal("1.0.0"), operationId: z.string().min(1), decision: decisionSchema,
+  selectionSource: z.literal(independentSource).optional()});
 export interface ClassificationRuntimeSnapshot {config: ClassificationConfig; registry: ProviderProfileRegistry; allowRemotePrivateContent: boolean; approvedPublicRequestDigests?: string[]; providerRuntimeRef?: string | null; nativeAdapterDefinitionsRef?: string | null; externalSkillRoots?: string[]; hostDiscoveryRef?: string | null}
 export interface CurrentClassificationTask {taskRevision: string | null; requestDigest: string; cancelled: boolean; sourceRef: string}
 interface OperationIdentity {intakeDigest: string; runtimeDigest: string; runtimeObservation: string | null; hostDiscoveryDigest: string | null; task: CurrentClassificationTask | null}
-interface StoredOperation extends OperationIdentity {result: ClassificationResult; explicit: string[]; required: string[]; decision: SkillSelectionDecisionV1 | null; actorId: string | null}
+interface StoredOperation extends OperationIdentity {result: ClassificationResult; explicit: string[]; required: string[]; decision: SkillSelectionDecisionV1 | null; actorId: string | null; sourcesCurrent: () => boolean; hostExpiresAt: string | null; selectionSource: string | null; independentSelection: Record<string, unknown> | null}
 interface PendingOperation extends OperationIdentity {result: Promise<ClassificationResult>}
 
 /** The loader owns these references. Canonical virtual bytes are fenced by the actual projection reference. */
@@ -142,7 +144,7 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
       const flight: PendingOperation = {intakeDigest, runtimeDigest, runtimeObservation, hostDiscoveryDigest, task, result: Promise.resolve().then(invoke).then(value => {
         this.pendingOperations.delete(input.operationId);
         this.operations.set(input.operationId, {result: value, explicit: [...input.explicitSkillIds], required: [...input.ruleRequiredSkillIds],
-          decision: null, intakeDigest, runtimeDigest, runtimeObservation, hostDiscoveryDigest, task, actorId});
+          decision: null, intakeDigest, runtimeDigest, runtimeObservation, hostDiscoveryDigest, task, actorId, sourcesCurrent, hostExpiresAt, selectionSource: null, independentSelection: null});
         return value;
       }).finally(() => { if (this.pendingOperations.get(input.operationId) === flight) this.pendingOperations.delete(input.operationId); })};
       this.pendingOperations.set(input.operationId, flight);
@@ -150,7 +152,7 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     }
     const completed = this.operations.get(input.operationId);
     return {result, classificationResponseRef: digestClassificationValue(result.response), agentSelectedSkillIds: completed?.decision?.agentSelectedSkillIds ?? null,
-      selectionStatus: completed?.decision?.selectionStatus ?? "PROPOSED", adviceApplied: completed?.decision?.adviceApplied ?? false, discovery};
+      selectionStatus: completed?.decision?.selectionStatus ?? "PROPOSED", adviceApplied: completed?.decision?.adviceApplied ?? false, selectionSource: completed?.selectionSource ?? null, independentSelection: completed?.independentSelection ?? null, discovery};
   }
   async accept(raw: unknown, observation: ExecutionContextV1 | null) {
     const input = selectionInputSchema.parse(raw);
@@ -172,14 +174,18 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
       receiptId: observation.observationId, host: observation.actorId.split(":")[0]!, requestDigest: input.decision.requestDigest,
       inventoryDigest: inventory.inventoryDigest, agentSelectedSkillIds: [...input.decision.agentSelectedSkillIds], acceptedAt: observation.observedAt,
     }};
-    const checked = validateDecision(operation.result, decision, current);
+    const source = input.selectionSource ?? "helper-advice";
+    const independent = source === independentSource;
+    const proof = independent ? this.options.service.helperFailure(operation.result) : null;
+    const checked = independent ? validateIndependentDecision(operation.result, decision, current) : validateDecision(operation.result, decision, current);
+    if (independent && !proof) {checked.valid = false; checked.errors.push("HELPER_FAILURE_NOT_ELIGIBLE");}
     if (this.options.observeRuntime && operation.runtimeObservation !== this.options.observeRuntime()) {checked.valid = false; checked.errors.push("RUNTIME_SOURCE_CHANGED");}
     if (operation.runtimeDigest !== digestClassificationValue(runtime)) {checked.valid = false; checked.errors.push("RUNTIME_SOURCE_CHANGED");}
     if (operation.hostDiscoveryDigest !== observationDigest) {checked.valid = false; checked.errors.push("HOST_DISCOVERY_CHANGED");}
     if (expiresAt !== null && Date.parse(expiresAt) <= (this.options.now?.() ?? new Date()).getTime()) {checked.valid = false; checked.errors.push("HOST_DISCOVERY_EXPIRED");}
     if (inventory.issues.length > 0) {checked.valid = false; checked.errors.push("CURRENT_INVENTORY_INVALID");}
     if (!checked.valid) return {...checked, agentSelectedSkillIds: null};
-    if (operation.decision !== null && digestClassificationValue({...operation.decision, hostReceipt: null}) !== digestClassificationValue(input.decision)) throw new Error("SELECTION_ALREADY_RECORDED");
+    if (operation.decision !== null && (operation.selectionSource !== source || digestClassificationValue({...operation.decision, hostReceipt: null}) !== digestClassificationValue(input.decision))) throw new Error("SELECTION_ALREADY_RECORDED");
     // No await between this current-task fence and the in-memory selection commit.
     const finalTask = this.options.observeTask?.(operation.result.request, observation) ?? null;
     if (!finalTask || finalTask.cancelled || finalTask.taskRevision !== operation.task.taskRevision || finalTask.requestDigest !== operation.task.requestDigest || finalTask.sourceRef !== operation.task.sourceRef) {
@@ -187,18 +193,31 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     }
     // Recheck the exact attempted profile after every await and before accepting.
     const successful = operation.result.response.error === null && ["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(operation.result.response.status);
-    if (successful) {
+    if (successful || independent) {
       const attempt = operation.result.attempts.at(-1);
-      const profile = runtime.registry.profiles.find(profile => profile.profileId === attempt?.profileId);
+      const profile = runtime.registry.profiles.find(profile => profile.profileId === (proof?.profileId ?? attempt?.profileId));
       const invalid = profile ? this.options.service.validateProfile(profile, operation.result.request, (this.options.now?.() ?? new Date()).getTime()) : "PROFILE_UNAVAILABLE";
       if (invalid) return {valid: false, errors: [invalid], agentSelectedSkillIds: null};
       const bindingError = this.options.service.validateResultBinding(operation.result);
       if (bindingError) return {valid: false, errors: [bindingError], agentSelectedSkillIds: null};
     }
+    if (!operation.sourcesCurrent()) return {valid: false, errors: ["CLASSIFICATION_SOURCE_CHANGED"], agentSelectedSkillIds: null};
+    if (this.options.observeRuntime && operation.runtimeObservation !== this.options.observeRuntime()) return {valid: false, errors: ["RUNTIME_SOURCE_CHANGED"], agentSelectedSkillIds: null};
+    if ((operation.hostExpiresAt !== null && Date.parse(operation.hostExpiresAt) <= (this.options.now?.() ?? new Date()).getTime())
+      || (expiresAt !== null && Date.parse(expiresAt) <= (this.options.now?.() ?? new Date()).getTime())) return {valid: false, errors: ["HOST_DISCOVERY_EXPIRED"], agentSelectedSkillIds: null};
     // The selection observation must still be live at this synchronous commit boundary.
     if (!Number.isFinite(Date.parse(observation.expiresAt ?? "")) || Date.parse(observation.expiresAt!) <= (this.options.now?.() ?? new Date()).getTime()) throw new Error("HOST_SELECTION_OBSERVATION_EXPIRED");
-    operation.decision ??= decision;
-    return {...checked, decision: operation.decision, discovery, admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN"};
+    if (operation.decision === null) {
+      operation.decision = decision;
+      operation.selectionSource = source;
+      operation.independentSelection = proof ? {source, operationId: input.operationId, actorId: observation.actorId,
+        taskSourceRef: finalTask.sourceRef, observationId: observation.observationId, requestDigest: current.requestDigest,
+        inventoryDigest: current.inventoryDigest, runtimeDigest: operation.runtimeDigest,
+        helperResultDigest: proof.helperResultDigest, helperResponseRef: digestClassificationValue(operation.result.response),
+        helperAttemptsDigest: digestClassificationValue(operation.result.attempts), helperFailureCode: proof.errorCode,
+        decisionDigest: digestClassificationValue(input.decision)} : null;
+    }
+    return {...checked, selectionSource: operation.selectionSource, independentSelection: operation.independentSelection, decision: operation.decision, discovery, admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN"};
   }
 }
 

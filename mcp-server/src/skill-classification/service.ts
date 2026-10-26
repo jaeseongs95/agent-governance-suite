@@ -78,10 +78,15 @@ export interface ClassificationServiceInput {
 }
 interface Operation {identity: string; result: Promise<ClassificationResult>}
 const providerFailureCodes = new Set(["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE", "CANCELLED", "INPUT_TOO_LONG", "INVALID_PROVIDER_REQUEST", "TRANSPORT_UNAVAILABLE", "AUTH_UNAVAILABLE", "RATE_LIMITED", "API_UNAVAILABLE", "INVALID_PROVIDER_RESPONSE", "PROVIDER_UNAVAILABLE", "STALE_CLASSIFICATION", "REMOTE_CONTENT_NOT_APPROVED", "EXTERNAL_CLASSIFICATION_BLOCKED", "BUDGET_UNAVAILABLE", "INVALID_PROVIDER_USAGE", "PROVIDER_TIMEOUT", "OUTPUT_TOO_LONG", "NATIVE_SPAWN_UNAVAILABLE", "NATIVE_OUTPUT_TOO_LARGE", "NATIVE_PROCESS_UNAVAILABLE", "NATIVE_TIMEOUT", "NATIVE_PROFILE_UNSUPPORTED", "NATIVE_PROFILE_ENCODING_UNAVAILABLE", "NATIVE_CLEANUP_UNAVAILABLE", "PROVIDER_RESPONSE_TOO_LARGE", "INVALID_PROFILE", "QUALIFICATION_CONFIGURATION_MISMATCH", "PROFILE_UNQUALIFIED", "QUALIFICATION_MISMATCH", "QUALIFICATION_EXPIRED", "UNSUPPORTED_OPTIONS", "COST_UNKNOWN"]);
+// Only known helper execution/response faults after this service's dispatch fence qualify.
+// Coarse API/spawn/process failures may conceal request, permission or unknown causes.
+const continuationFailureCodes = new Set(["TRANSPORT_UNAVAILABLE", "RATE_LIMITED", "INVALID_PROVIDER_RESPONSE", "INVALID_PROVIDER_USAGE", "PROVIDER_TIMEOUT", "OUTPUT_TOO_LONG", "NATIVE_OUTPUT_TOO_LARGE", "NATIVE_TIMEOUT", "PROVIDER_RESPONSE_TOO_LARGE"]);
+interface HelperFailure {profileId: string; errorCode: string; helperResultDigest: string}
 const stale = (a: ClassificationSnapshot, b: ClassificationSnapshot) => b.cancelled || a.taskRevision !== b.taskRevision || a.configRevision !== b.configRevision
   || a.profileRevision !== b.profileRevision || a.inventoryDigest !== b.inventoryDigest || a.requestDigest !== b.requestDigest;
 
 export class SkillClassificationService {
+  readonly #helperFailures = new WeakMap<ClassificationResult, HelperFailure>();
   private readonly operations = new Map<string, Operation>();
   private readonly requestOperations = new Map<string, string>();
   private readonly resultFences = new WeakMap<ClassificationResult, () => boolean>();
@@ -111,6 +116,18 @@ export class SkillClassificationService {
     return () => this.options.providers[profile.providerKind] === provider && provider.validateConfiguration === validate
       && provider.classify === classify && provider.availability === availability && provider.routeKind === routeKind
       && provider.captureConfigurationFence === capture && (capture === undefined || current?.() === true);
+  }
+  /** Exact in-process terminal object and immutable digest; serialized caller results cannot mint evidence. */
+  helperFailure(result: ClassificationResult): Readonly<HelperFailure> | null {
+    const proof = this.#helperFailures.get(result);
+    return proof && result.response.error !== null && proof.helperResultDigest === digestClassificationValue(result) && this.validateResultBinding(result) === null ? {...proof} : null;
+  }
+  private bindHelperFailure(result: ClassificationResult, failure: Omit<HelperFailure, "helperResultDigest"> | null, bindingCurrent?: () => boolean): ClassificationResult {
+    if (failure) {
+      if (bindingCurrent) this.resultFences.set(result, bindingCurrent);
+      this.#helperFailures.set(result, {...failure, helperResultDigest: digestClassificationValue(result)});
+    }
+    return result;
   }
   /** Pure preflight: no credentials, availability, reservation or transport. Unknown ports stay closed. */
   hasNativeRoute(input: Pick<ClassificationServiceInput, "request" | "config" | "registry" | "currentVendorId">): boolean {
@@ -173,6 +190,8 @@ export class SkillClassificationService {
   }
   private async run(input: ClassificationServiceInput, snapshot: ClassificationSnapshot): Promise<ClassificationResult> {
     const attempts: ClassificationAttempt[] = [];
+    let helperFailure: Omit<HelperFailure, "helperResultDigest"> | null = null;
+    let helperBinding: (() => boolean) | undefined;
     if (snapshot.cancelled) return this.failure(input, snapshot, "CANCELLED");
     if (input.config.mode !== "shadow" && input.config.mode !== "select") return this.failure(input, snapshot, "UNSUPPORTED_MODE");
     if (!Number.isSafeInteger(input.config.timeoutMs) || (input.config.timeoutMs < 1 || input.config.timeoutMs > MAX_CLASSIFICATION_TIMEOUT_MS)) return this.failure(input, snapshot, "INVALID_TIMEOUT");
@@ -183,7 +202,7 @@ export class SkillClassificationService {
       const provider = this.options.providers[kind];
       if (!profile || !provider) {
         if (kind === "jev") continue;
-        return this.failure(input, snapshot, !profile ? "PROFILE_UNAVAILABLE" : "PROVIDER_UNAVAILABLE", attempts);
+        return this.bindHelperFailure(this.failure(input, snapshot, !profile ? "PROFILE_UNAVAILABLE" : "PROVIDER_UNAVAILABLE", attempts), !profile ? helperFailure : null, !profile ? helperBinding : undefined);
       }
       const invalid = this.validateProfile(profile, input.request, this.now());
       if (invalid) {
@@ -202,13 +221,22 @@ export class SkillClassificationService {
       const current = this.current(input, result);
       if (current !== result) return current;
       if (["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status) && result.response.error === null) return result;
-      if (kind === "vendor") return result;
+      helperFailure = evaluated.helperFailure;
+      helperBinding = helperFailure ? evaluated.bindingCurrent : undefined;
+      if (kind === "vendor") return this.bindHelperFailure(result, helperFailure);
     }
     return this.failure(input, snapshot, "PROVIDER_UNAVAILABLE", attempts);
   }
   private async attempt(input: ClassificationServiceInput, snapshot: ClassificationSnapshot, provider: SkillClassificationProviderPort, profile: ProviderProfile) {
     const bindingCurrent = this.providerFence(provider, profile);
     const controller = new AbortController();
+    let dispatchFenced = false;
+    const failures = new WeakMap<ProviderEvaluation, Omit<HelperFailure, "helperResultDigest">>();
+    const qualify = (evaluation: ProviderEvaluation) => {
+      const code = evaluation.response.error?.code;
+      if (dispatchFenced && code && continuationFailureCodes.has(code)) failures.set(evaluation, {profileId: profile.profileId, errorCode: code});
+      return evaluation;
+    };
     let dispatchState: DispatchState = "not-started";
     let reserved = false;
     let retainedUsage = unknownUsage();
@@ -216,7 +244,7 @@ export class SkillClassificationService {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const reservationId = JSON.stringify([input.request.operationId, input.request.requestDigest, profile.profileId]);
     const stopped = new Promise<ProviderEvaluation>((resolve) => {
-      const stop = (code: string) => {controller.abort(); resolve({response: unavailableResponse(input.request, code, dispatchState, dispatchState === "not-started" ? "UNAVAILABLE" : "UNCERTAIN"), usage: unknownUsage(), dispatchState, diagnostics: null});};
+      const stop = (code: string) => {controller.abort(); resolve(qualify({response: unavailableResponse(input.request, code, dispatchState, dispatchState === "not-started" ? "UNAVAILABLE" : "UNCERTAIN"), usage: unknownUsage(), dispatchState, diagnostics: null}));};
       timer = setTimeout(() => {timedOut = true; stop("PROVIDER_TIMEOUT");}, input.config.timeoutMs);
       controller.signal.addEventListener("abort", () => stop(timedOut ? "PROVIDER_TIMEOUT" : "CANCELLED"), {once: true});
     });
@@ -241,10 +269,12 @@ export class SkillClassificationService {
         reserved = true;
         dispatchState = "unknown";
         const beforeDispatch = () => {
+          dispatchFenced = false;
           if (input.remoteContentAllowed === false && provider.routeKind !== undefined && provider.routeKind(profile) !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
           if (controller.signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
           if (input.getCurrentSnapshot && stale(snapshot, input.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
           if (this.validateProfile(profile, input.request, this.now()) !== null || !bindingCurrent()) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
+          dispatchFenced = true;
         };
         const evaluation = await provider.classify(input.request, profile, controller.signal, beforeDispatch);
         if (controller.signal.aborted) return evaluation; // only the already-settled race may publish
@@ -263,14 +293,15 @@ export class SkillClassificationService {
         if (validateClassificationResponse(input.request, evaluation.response).length > 0) throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", evaluation.dispatchState, true);
         if (usage.actualCostUsd !== null && usage.actualCostUsd > profile.maximumCostUsd!) return {...evaluation,
           response: unavailableResponse(input.request, "COST_CEILING_EXCEEDED", evaluation.dispatchState)};
-        if (usage.outputTokens !== null && usage.outputTokens > profile.maximumOutputTokens) return {...evaluation,
-          response: unavailableResponse(input.request, "OUTPUT_TOO_LONG", evaluation.dispatchState, "INVALID")};
+        if (usage.outputTokens !== null && usage.outputTokens > profile.maximumOutputTokens) return qualify({...evaluation,
+          response: unavailableResponse(input.request, "OUTPUT_TOO_LONG", evaluation.dispatchState, "INVALID")});
+        // A returned response error alone is not trusted failure provenance.
         return evaluation;
       } catch (error) {
         const safe = error instanceof ClassificationProviderError ? new ClassificationProviderError(providerFailureCodes.has(error.code) ? error.code : "PROVIDER_UNAVAILABLE",
           ["not-started", "started", "unknown"].includes(error.dispatchState) ? error.dispatchState : "unknown", error.invalid === true, error.code === "RATE_LIMITED" ? sanitizeRateLimitObservation(error.rateLimitObservation) : null) : new ClassificationProviderError("PROVIDER_UNAVAILABLE", dispatchState);
         if (safe.code === "NATIVE_TIMEOUT" || safe.code === "PROVIDER_TIMEOUT") timedOut = true;
-        return {response: unavailableResponse(input.request, safe.code, safe.dispatchState, safe.invalid ? "INVALID" : timedOut && safe.dispatchState !== "not-started" ? "UNCERTAIN" : "UNAVAILABLE"), usage: retainedUsage, dispatchState: safe.dispatchState, diagnostics: null, rateLimitObservation: safe.rateLimitObservation};
+        return qualify({response: unavailableResponse(input.request, safe.code, safe.dispatchState, safe.invalid ? "INVALID" : timedOut && safe.dispatchState !== "not-started" ? "UNCERTAIN" : "UNAVAILABLE"), usage: retainedUsage, dispatchState: safe.dispatchState, diagnostics: null, rateLimitObservation: safe.rateLimitObservation});
       }
     };
     let evaluation: ProviderEvaluation;
@@ -279,6 +310,6 @@ export class SkillClassificationService {
     if (reserved) this.options.budget.settle(reservationId, evaluation.usage.actualCostUsd, evaluation.dispatchState);
     const attempt: ClassificationAttempt = {providerKind: profile.providerKind, profileId: profile.profileId, modelId: profile.modelId, reasoningEffort: profile.reasoningEffort,
       dispatchState: evaluation.dispatchState, status: evaluation.response.status, errorCode: evaluation.response.error?.code ?? null, timedOut, usage: evaluation.usage, reservedCostUsd: reserved ? profile.maximumCostUsd! : 0, diagnostics: structuredClone(evaluation.diagnostics), rateLimitObservation: evaluation.response.error?.code === "RATE_LIMITED" ? sanitizeRateLimitObservation(evaluation.rateLimitObservation) : null};
-    return {evaluation, attempt, bindingCurrent};
+    return {evaluation, attempt, bindingCurrent, helperFailure: failures.get(evaluation) ?? null};
   }
 }

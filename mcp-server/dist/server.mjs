@@ -34755,13 +34755,19 @@ function validateClassificationResponse(request, response) {
   return [...new Set(errors)];
 }
 function validateDecision(result, decision, current) {
+  return checkDecision(result, decision, current, false);
+}
+function validateIndependentDecision(result, decision, current) {
+  return checkDecision(result, decision, current, true);
+}
+function checkDecision(result, decision, current, independent) {
   const errors = [];
   const blockedItems = [];
-  const needed = new Set(result.response.judgments.filter((item) => item.judgment === "needed").map((item) => item.skillId));
+  const needed = new Set(independent ? [] : result.response.judgments.filter((item) => item.judgment === "needed").map((item) => item.skillId));
   const parsed = decisionSchema.safeParse(decision);
   if (!parsed.success) return { valid: false, errors: ["INVALID_DECISION_SCHEMA"], neededSkillIds: [...needed], runnableSkillIds: [], blockedItems };
   if (decision.classificationResponseRef !== digestClassificationValue(result.response)) errors.push("CLASSIFICATION_RESPONSE_REF_MISMATCH");
-  if ((result.response.error !== null || ["UNAVAILABLE", "INVALID"].includes(result.response.status)) && decision.selectionStatus === "SELECTED") errors.push("CLASSIFICATION_UNAVAILABLE_CANNOT_COMPLETE_SELECTION");
+  if (!independent && (result.response.error !== null || ["UNAVAILABLE", "INVALID"].includes(result.response.status)) && decision.selectionStatus === "SELECTED") errors.push("CLASSIFICATION_UNAVAILABLE_CANNOT_COMPLETE_SELECTION");
   for (const id2 of [...decision.explicitSkillIds, ...decision.ruleRequiredSkillIds]) needed.add(id2);
   for (const field2 of ["taskRevision", "configRevision", "profileRevision", "inventoryDigest", "requestDigest"]) {
     if (result.snapshot[field2] !== current[field2] || decision[field2] !== current[field2]) errors.push("STALE_".concat(field2));
@@ -34796,6 +34802,7 @@ function validateDecision(result, decision, current) {
     }
     if (decision.selectionStatus === "SELECTED" && (blockedItems.some((item) => selected.includes(item.skillId) || decision.explicitSkillIds.includes(item.skillId) || decision.ruleRequiredSkillIds.includes(item.skillId)) || decision.unresolvedSkillReferences.length > 0)) errors.push("UNRESOLVED_SELECTION_MARKED_COMPLETE");
   }
+  if (independent && decision.adviceApplied) errors.push("INDEPENDENT_SELECTION_CANNOT_APPLY_FAILED_ADVICE");
   if (result.config.mode === "shadow" && decision.adviceApplied) errors.push("SHADOW_ADVICE_APPLIED");
   const unresolved2 = [...needed].filter((id2) => !inventory.has(id2));
   for (const id2 of unresolved2) blockedItems.push({ skillId: id2, reasonCode: "UNKNOWN_REQUIRED_SKILL" });
@@ -34852,6 +34859,7 @@ var InMemoryClassificationBudget = class {
   }
 };
 var providerFailureCodes = /* @__PURE__ */ new Set(["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE", "CANCELLED", "INPUT_TOO_LONG", "INVALID_PROVIDER_REQUEST", "TRANSPORT_UNAVAILABLE", "AUTH_UNAVAILABLE", "RATE_LIMITED", "API_UNAVAILABLE", "INVALID_PROVIDER_RESPONSE", "PROVIDER_UNAVAILABLE", "STALE_CLASSIFICATION", "REMOTE_CONTENT_NOT_APPROVED", "EXTERNAL_CLASSIFICATION_BLOCKED", "BUDGET_UNAVAILABLE", "INVALID_PROVIDER_USAGE", "PROVIDER_TIMEOUT", "OUTPUT_TOO_LONG", "NATIVE_SPAWN_UNAVAILABLE", "NATIVE_OUTPUT_TOO_LARGE", "NATIVE_PROCESS_UNAVAILABLE", "NATIVE_TIMEOUT", "NATIVE_PROFILE_UNSUPPORTED", "NATIVE_PROFILE_ENCODING_UNAVAILABLE", "NATIVE_CLEANUP_UNAVAILABLE", "PROVIDER_RESPONSE_TOO_LARGE", "INVALID_PROFILE", "QUALIFICATION_CONFIGURATION_MISMATCH", "PROFILE_UNQUALIFIED", "QUALIFICATION_MISMATCH", "QUALIFICATION_EXPIRED", "UNSUPPORTED_OPTIONS", "COST_UNKNOWN"]);
+var continuationFailureCodes = /* @__PURE__ */ new Set(["TRANSPORT_UNAVAILABLE", "RATE_LIMITED", "INVALID_PROVIDER_RESPONSE", "INVALID_PROVIDER_USAGE", "PROVIDER_TIMEOUT", "OUTPUT_TOO_LONG", "NATIVE_OUTPUT_TOO_LARGE", "NATIVE_TIMEOUT", "PROVIDER_RESPONSE_TOO_LARGE"]);
 var stale = (a, b) => b.cancelled || a.taskRevision !== b.taskRevision || a.configRevision !== b.configRevision || a.profileRevision !== b.profileRevision || a.inventoryDigest !== b.inventoryDigest || a.requestDigest !== b.requestDigest;
 var SkillClassificationService = class {
   constructor(options) {
@@ -34861,6 +34869,7 @@ var SkillClassificationService = class {
     if (!Number.isSafeInteger(this.maxOperations) || this.maxOperations < 1) throw new Error("INVALID_OPERATION_BOUND");
   }
   options;
+  #helperFailures = /* @__PURE__ */ new WeakMap();
   operations = /* @__PURE__ */ new Map();
   requestOperations = /* @__PURE__ */ new Map();
   resultFences = /* @__PURE__ */ new WeakMap();
@@ -34894,6 +34903,18 @@ var SkillClassificationService = class {
       return () => false;
     }
     return () => this.options.providers[profile.providerKind] === provider2 && provider2.validateConfiguration === validate2 && provider2.classify === classify && provider2.availability === availability && provider2.routeKind === routeKind && provider2.captureConfigurationFence === capture && (capture === void 0 || current?.() === true);
+  }
+  /** Exact in-process terminal object and immutable digest; serialized caller results cannot mint evidence. */
+  helperFailure(result) {
+    const proof = this.#helperFailures.get(result);
+    return proof && result.response.error !== null && proof.helperResultDigest === digestClassificationValue(result) && this.validateResultBinding(result) === null ? { ...proof } : null;
+  }
+  bindHelperFailure(result, failure3, bindingCurrent) {
+    if (failure3) {
+      if (bindingCurrent) this.resultFences.set(result, bindingCurrent);
+      this.#helperFailures.set(result, { ...failure3, helperResultDigest: digestClassificationValue(result) });
+    }
+    return result;
   }
   /** Pure preflight: no credentials, availability, reservation or transport. Unknown ports stay closed. */
   hasNativeRoute(input2) {
@@ -34964,6 +34985,8 @@ var SkillClassificationService = class {
   }
   async run(input2, snapshot) {
     const attempts = [];
+    let helperFailure = null;
+    let helperBinding;
     if (snapshot.cancelled) return this.failure(input2, snapshot, "CANCELLED");
     if (input2.config.mode !== "shadow" && input2.config.mode !== "select") return this.failure(input2, snapshot, "UNSUPPORTED_MODE");
     if (!Number.isSafeInteger(input2.config.timeoutMs) || (input2.config.timeoutMs < 1 || input2.config.timeoutMs > MAX_CLASSIFICATION_TIMEOUT_MS)) return this.failure(input2, snapshot, "INVALID_TIMEOUT");
@@ -34974,7 +34997,7 @@ var SkillClassificationService = class {
       const provider2 = this.options.providers[kind];
       if (!profile || !provider2) {
         if (kind === "jev") continue;
-        return this.failure(input2, snapshot, !profile ? "PROFILE_UNAVAILABLE" : "PROVIDER_UNAVAILABLE", attempts);
+        return this.bindHelperFailure(this.failure(input2, snapshot, !profile ? "PROFILE_UNAVAILABLE" : "PROVIDER_UNAVAILABLE", attempts), !profile ? helperFailure : null, !profile ? helperBinding : void 0);
       }
       const invalid2 = this.validateProfile(profile, input2.request, this.now());
       if (invalid2) {
@@ -34994,13 +35017,22 @@ var SkillClassificationService = class {
       const current = this.current(input2, result);
       if (current !== result) return current;
       if (["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status) && result.response.error === null) return result;
-      if (kind === "vendor") return result;
+      helperFailure = evaluated.helperFailure;
+      helperBinding = helperFailure ? evaluated.bindingCurrent : void 0;
+      if (kind === "vendor") return this.bindHelperFailure(result, helperFailure);
     }
     return this.failure(input2, snapshot, "PROVIDER_UNAVAILABLE", attempts);
   }
   async attempt(input2, snapshot, provider2, profile) {
     const bindingCurrent = this.providerFence(provider2, profile);
     const controller = new AbortController();
+    let dispatchFenced = false;
+    const failures = /* @__PURE__ */ new WeakMap();
+    const qualify = (evaluation2) => {
+      const code = evaluation2.response.error?.code;
+      if (dispatchFenced && code && continuationFailureCodes.has(code)) failures.set(evaluation2, { profileId: profile.profileId, errorCode: code });
+      return evaluation2;
+    };
     let dispatchState = "not-started";
     let reserved = false;
     let retainedUsage = unknownUsage();
@@ -35010,7 +35042,7 @@ var SkillClassificationService = class {
     const stopped = new Promise((resolve) => {
       const stop = (code) => {
         controller.abort();
-        resolve({ response: unavailableResponse(input2.request, code, dispatchState, dispatchState === "not-started" ? "UNAVAILABLE" : "UNCERTAIN"), usage: unknownUsage(), dispatchState, diagnostics: null });
+        resolve(qualify({ response: unavailableResponse(input2.request, code, dispatchState, dispatchState === "not-started" ? "UNAVAILABLE" : "UNCERTAIN"), usage: unknownUsage(), dispatchState, diagnostics: null }));
       };
       timer = setTimeout(() => {
         timedOut = true;
@@ -35039,10 +35071,12 @@ var SkillClassificationService = class {
         reserved = true;
         dispatchState = "unknown";
         const beforeDispatch = () => {
+          dispatchFenced = false;
           if (input2.remoteContentAllowed === false && provider2.routeKind !== void 0 && provider2.routeKind(profile) !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
           if (controller.signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
           if (input2.getCurrentSnapshot && stale(snapshot, input2.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
           if (this.validateProfile(profile, input2.request, this.now()) !== null || !bindingCurrent()) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
+          dispatchFenced = true;
         };
         const evaluation2 = await provider2.classify(input2.request, profile, controller.signal, beforeDispatch);
         if (controller.signal.aborted) return evaluation2;
@@ -35055,10 +35089,10 @@ var SkillClassificationService = class {
           ...evaluation2,
           response: unavailableResponse(input2.request, "COST_CEILING_EXCEEDED", evaluation2.dispatchState)
         };
-        if (usage.outputTokens !== null && usage.outputTokens > profile.maximumOutputTokens) return {
+        if (usage.outputTokens !== null && usage.outputTokens > profile.maximumOutputTokens) return qualify({
           ...evaluation2,
           response: unavailableResponse(input2.request, "OUTPUT_TOO_LONG", evaluation2.dispatchState, "INVALID")
-        };
+        });
         return evaluation2;
       } catch (error61) {
         const safe = error61 instanceof ClassificationProviderError ? new ClassificationProviderError(
@@ -35068,7 +35102,7 @@ var SkillClassificationService = class {
           error61.code === "RATE_LIMITED" ? sanitizeRateLimitObservation(error61.rateLimitObservation) : null
         ) : new ClassificationProviderError("PROVIDER_UNAVAILABLE", dispatchState);
         if (safe.code === "NATIVE_TIMEOUT" || safe.code === "PROVIDER_TIMEOUT") timedOut = true;
-        return { response: unavailableResponse(input2.request, safe.code, safe.dispatchState, safe.invalid ? "INVALID" : timedOut && safe.dispatchState !== "not-started" ? "UNCERTAIN" : "UNAVAILABLE"), usage: retainedUsage, dispatchState: safe.dispatchState, diagnostics: null, rateLimitObservation: safe.rateLimitObservation };
+        return qualify({ response: unavailableResponse(input2.request, safe.code, safe.dispatchState, safe.invalid ? "INVALID" : timedOut && safe.dispatchState !== "not-started" ? "UNCERTAIN" : "UNAVAILABLE"), usage: retainedUsage, dispatchState: safe.dispatchState, diagnostics: null, rateLimitObservation: safe.rateLimitObservation });
       }
     };
     let evaluation;
@@ -35093,7 +35127,7 @@ var SkillClassificationService = class {
       diagnostics: structuredClone(evaluation.diagnostics),
       rateLimitObservation: evaluation.response.error?.code === "RATE_LIMITED" ? sanitizeRateLimitObservation(evaluation.rateLimitObservation) : null
     };
-    return { evaluation, attempt, bindingCurrent };
+    return { evaluation, attempt, bindingCurrent, helperFailure: failures.get(evaluation) ?? null };
   }
 };
 
@@ -35112,7 +35146,13 @@ var classificationInputSchema = external_exports.strictObject({
   vendorContext: external_exports.strictObject({ vendorId: external_exports.string().min(1), reference: external_exports.string().min(1) }),
   publicSynthetic: external_exports.boolean()
 });
-var selectionInputSchema = external_exports.strictObject({ schemaVersion: external_exports.literal("1.0.0"), operationId: external_exports.string().min(1), decision: decisionSchema });
+var independentSource = "independent-agent-after-helper-failure";
+var selectionInputSchema = external_exports.strictObject({
+  schemaVersion: external_exports.literal("1.0.0"),
+  operationId: external_exports.string().min(1),
+  decision: decisionSchema,
+  selectionSource: external_exports.literal(independentSource).optional()
+});
 function sourceFence(root, request, observedSources) {
   try {
     const references = /* @__PURE__ */ new Map();
@@ -35245,7 +35285,11 @@ var RuntimeSkillClassificationGateway = class {
           runtimeObservation,
           hostDiscoveryDigest,
           task,
-          actorId
+          actorId,
+          sourcesCurrent,
+          hostExpiresAt,
+          selectionSource: null,
+          independentSelection: null
         });
         return value;
       }).finally(() => {
@@ -35261,6 +35305,8 @@ var RuntimeSkillClassificationGateway = class {
       agentSelectedSkillIds: completed?.decision?.agentSelectedSkillIds ?? null,
       selectionStatus: completed?.decision?.selectionStatus ?? "PROPOSED",
       adviceApplied: completed?.decision?.adviceApplied ?? false,
+      selectionSource: completed?.selectionSource ?? null,
+      independentSelection: completed?.independentSelection ?? null,
       discovery
     };
   }
@@ -35288,7 +35334,14 @@ var RuntimeSkillClassificationGateway = class {
       agentSelectedSkillIds: [...input2.decision.agentSelectedSkillIds],
       acceptedAt: observation.observedAt
     } };
-    const checked = validateDecision(operation.result, decision, current);
+    const source = input2.selectionSource ?? "helper-advice";
+    const independent = source === independentSource;
+    const proof = independent ? this.options.service.helperFailure(operation.result) : null;
+    const checked = independent ? validateIndependentDecision(operation.result, decision, current) : validateDecision(operation.result, decision, current);
+    if (independent && !proof) {
+      checked.valid = false;
+      checked.errors.push("HELPER_FAILURE_NOT_ELIGIBLE");
+    }
     if (this.options.observeRuntime && operation.runtimeObservation !== this.options.observeRuntime()) {
       checked.valid = false;
       checked.errors.push("RUNTIME_SOURCE_CHANGED");
@@ -35310,23 +35363,44 @@ var RuntimeSkillClassificationGateway = class {
       checked.errors.push("CURRENT_INVENTORY_INVALID");
     }
     if (!checked.valid) return { ...checked, agentSelectedSkillIds: null };
-    if (operation.decision !== null && digestClassificationValue({ ...operation.decision, hostReceipt: null }) !== digestClassificationValue(input2.decision)) throw new Error("SELECTION_ALREADY_RECORDED");
+    if (operation.decision !== null && (operation.selectionSource !== source || digestClassificationValue({ ...operation.decision, hostReceipt: null }) !== digestClassificationValue(input2.decision))) throw new Error("SELECTION_ALREADY_RECORDED");
     const finalTask = this.options.observeTask?.(operation.result.request, observation) ?? null;
     if (!finalTask || finalTask.cancelled || finalTask.taskRevision !== operation.task.taskRevision || finalTask.requestDigest !== operation.task.requestDigest || finalTask.sourceRef !== operation.task.sourceRef) {
       return { valid: false, errors: ["HOST_TASK_CHANGED_OR_NOT_OBSERVED"], agentSelectedSkillIds: null };
     }
     const successful = operation.result.response.error === null && ["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(operation.result.response.status);
-    if (successful) {
+    if (successful || independent) {
       const attempt = operation.result.attempts.at(-1);
-      const profile = runtime.registry.profiles.find((profile2) => profile2.profileId === attempt?.profileId);
+      const profile = runtime.registry.profiles.find((profile2) => profile2.profileId === (proof?.profileId ?? attempt?.profileId));
       const invalid2 = profile ? this.options.service.validateProfile(profile, operation.result.request, (this.options.now?.() ?? /* @__PURE__ */ new Date()).getTime()) : "PROFILE_UNAVAILABLE";
       if (invalid2) return { valid: false, errors: [invalid2], agentSelectedSkillIds: null };
       const bindingError = this.options.service.validateResultBinding(operation.result);
       if (bindingError) return { valid: false, errors: [bindingError], agentSelectedSkillIds: null };
     }
+    if (!operation.sourcesCurrent()) return { valid: false, errors: ["CLASSIFICATION_SOURCE_CHANGED"], agentSelectedSkillIds: null };
+    if (this.options.observeRuntime && operation.runtimeObservation !== this.options.observeRuntime()) return { valid: false, errors: ["RUNTIME_SOURCE_CHANGED"], agentSelectedSkillIds: null };
+    if (operation.hostExpiresAt !== null && Date.parse(operation.hostExpiresAt) <= (this.options.now?.() ?? /* @__PURE__ */ new Date()).getTime() || expiresAt !== null && Date.parse(expiresAt) <= (this.options.now?.() ?? /* @__PURE__ */ new Date()).getTime()) return { valid: false, errors: ["HOST_DISCOVERY_EXPIRED"], agentSelectedSkillIds: null };
     if (!Number.isFinite(Date.parse(observation.expiresAt ?? "")) || Date.parse(observation.expiresAt) <= (this.options.now?.() ?? /* @__PURE__ */ new Date()).getTime()) throw new Error("HOST_SELECTION_OBSERVATION_EXPIRED");
-    operation.decision ??= decision;
-    return { ...checked, decision: operation.decision, discovery, admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN" };
+    if (operation.decision === null) {
+      operation.decision = decision;
+      operation.selectionSource = source;
+      operation.independentSelection = proof ? {
+        source,
+        operationId: input2.operationId,
+        actorId: observation.actorId,
+        taskSourceRef: finalTask.sourceRef,
+        observationId: observation.observationId,
+        requestDigest: current.requestDigest,
+        inventoryDigest: current.inventoryDigest,
+        runtimeDigest: operation.runtimeDigest,
+        helperResultDigest: proof.helperResultDigest,
+        helperResponseRef: digestClassificationValue(operation.result.response),
+        helperAttemptsDigest: digestClassificationValue(operation.result.attempts),
+        helperFailureCode: proof.errorCode,
+        decisionDigest: digestClassificationValue(input2.decision)
+      } : null;
+    }
+    return { ...checked, selectionSource: operation.selectionSource, independentSelection: operation.independentSelection, decision: operation.decision, discovery, admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN" };
   }
 };
 async function readClassificationRuntime(file2, root) {

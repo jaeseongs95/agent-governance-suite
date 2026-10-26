@@ -64,13 +64,21 @@ export interface SelectionValidation {
 
 /** Reports omissions; never creates or replaces the AGENT's final selection set. */
 export function validateDecision(result: ClassificationResult, decision: SkillSelectionDecisionV1, current: ClassificationSnapshot): SelectionValidation {
+  return checkDecision(result, decision, current, false);
+}
+
+/** Validates the independent set only; service-owned failure evidence remains a gateway obligation. */
+export function validateIndependentDecision(result: ClassificationResult, decision: SkillSelectionDecisionV1, current: ClassificationSnapshot): SelectionValidation {
+  return checkDecision(result, decision, current, true);
+}
+function checkDecision(result: ClassificationResult, decision: SkillSelectionDecisionV1, current: ClassificationSnapshot, independent: boolean): SelectionValidation {
   const errors: string[] = [];
   const blockedItems: SelectionValidation["blockedItems"] = [];
-  const needed = new Set(result.response.judgments.filter(item => item.judgment === "needed").map(item => item.skillId));
+  const needed = new Set(independent ? [] : result.response.judgments.filter(item => item.judgment === "needed").map(item => item.skillId));
   const parsed = decisionSchema.safeParse(decision);
   if (!parsed.success) return {valid: false, errors: ["INVALID_DECISION_SCHEMA"], neededSkillIds: [...needed], runnableSkillIds: [], blockedItems};
   if (decision.classificationResponseRef !== digestClassificationValue(result.response)) errors.push("CLASSIFICATION_RESPONSE_REF_MISMATCH");
-  if ((result.response.error !== null || ["UNAVAILABLE", "INVALID"].includes(result.response.status)) && decision.selectionStatus === "SELECTED") errors.push("CLASSIFICATION_UNAVAILABLE_CANNOT_COMPLETE_SELECTION");
+  if (!independent && (result.response.error !== null || ["UNAVAILABLE", "INVALID"].includes(result.response.status)) && decision.selectionStatus === "SELECTED") errors.push("CLASSIFICATION_UNAVAILABLE_CANNOT_COMPLETE_SELECTION");
   for (const id of [...decision.explicitSkillIds, ...decision.ruleRequiredSkillIds]) needed.add(id);
   for (const field of ["taskRevision", "configRevision", "profileRevision", "inventoryDigest", "requestDigest"] as const) {
     if (result.snapshot[field] !== current[field] || decision[field] !== current[field]) errors.push(`STALE_${field}`);
@@ -104,6 +112,7 @@ export function validateDecision(result: ClassificationResult, decision: SkillSe
     }
     if (decision.selectionStatus === "SELECTED" && (blockedItems.some(item => selected.includes(item.skillId) || decision.explicitSkillIds.includes(item.skillId) || decision.ruleRequiredSkillIds.includes(item.skillId)) || decision.unresolvedSkillReferences.length > 0)) errors.push("UNRESOLVED_SELECTION_MARKED_COMPLETE");
   }
+  if (independent && decision.adviceApplied) errors.push("INDEPENDENT_SELECTION_CANNOT_APPLY_FAILED_ADVICE");
   if (result.config.mode === "shadow" && decision.adviceApplied) errors.push("SHADOW_ADVICE_APPLIED");
   const unresolved = [...needed].filter(id => !inventory.has(id));
   for (const id of unresolved) blockedItems.push({skillId: id, reasonCode: "UNKNOWN_REQUIRED_SKILL"});
