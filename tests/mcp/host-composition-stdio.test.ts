@@ -154,7 +154,7 @@ process.stdout.write(result.output); if (!result.ok) process.exitCode = 2;
     };
     const rawCall = async <T>(name: string, args: Record<string, unknown>) => envelope<T>(await client!.callTool({ name, arguments: args }));
     const call = async <T>(name: string, args: Record<string, unknown>, model: string) => rawCall<T>(name, hook(name, args, model));
-    const rooted = (args: Record<string, unknown>) => {
+    const rooted = (args: Record<string, unknown>): Record<string, unknown> => {
       const store = new SqliteWorkflowStore(database), clean = withoutSessionProof(args);
       try { return { ...clean, _sessionProof: new SessionActorProofs(store).issue({ host, sessionId, callId: randomUUID(), kind: "tool-boundary", boundaryPhase: "before",
         actor: { role: "root", basis: "observed", reasonCode: "OWNED_SYNTHETIC_ROOT" } }, "plan_workflow", clean) }; } finally { store.close(); }
