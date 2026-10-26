@@ -371,7 +371,7 @@ describe("source STDIO continuity startup diagnostics", () => {
         return;
       }
       const failure = JSON.parse(text) as ApiResultV1<unknown>;
-      expect(failure).toMatchObject({ ok: false, data: null, error: { code: "CONTINUITY_UNAVAILABLE",
+      expect(failure, JSON.stringify(failure)).toMatchObject({ ok: false, data: null, error: { code: "CONTINUITY_UNAVAILABLE",
         details: { reason: { receiver: "RECEIVER_STATE_UNSUPPORTED", future: "UNSUPPORTED_SCHEMA", incompatible: "INCOMPATIBLE_SCHEMA", corrupt: "CORRUPT_DATABASE" }[kind] } } });
       expect(text + stderr).not.toContain("private body");
       expect(text + stderr).not.toContain("signing-secret");

@@ -117,7 +117,7 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       const forged = await rawCall<WorkflowPlanV1>("plan_workflow", { ...planInput, _sessionBinding: { host, sessionId: "fixture-session" } });
       expect(forged.error).toMatchObject({ code: "BINDING_INVALID", details: { reasonCode: "CALLER_SESSION_BINDING_REJECTED" } });
       const missingModel = await rawCall<WorkflowPlanV1>("plan_workflow", syntheticRootArguments(database, "plan_workflow", planInput, "missing-model"));
-      expect(missingModel.error).toMatchObject({ code: "BINDING_REQUIRED", details: { observation: { host } } });
+      expect(missingModel.error, JSON.stringify(missingModel)).toMatchObject({ code: "BINDING_REQUIRED", details: { observation: { host } } });
       const attestedPlan = await signed("plan_workflow", planInput);
       const planned = await call<WorkflowPlanV1>("plan_workflow", attestedPlan);
       expect(planned.error).toBeNull();
