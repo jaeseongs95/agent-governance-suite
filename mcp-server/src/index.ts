@@ -50,6 +50,7 @@ export async function startMcpServer(
   executionAdapters?: ReadonlyMap<string, HostExecutionAdapter>,
   nativeBehaviors?: ReadonlyMap<string, NativeCliBehavior>,
 ): Promise<void> {
+  const executionAdapter = resolveHostAttestation(process.env, executionAdapters);
   // Snapshot trusted composition before the first asynchronous operation.
   const installedWireAdapters = new Map(wireAdapters);
   const installedNativeBehaviors = nativeBehaviors === undefined ? undefined : new Map(nativeBehaviors);
@@ -60,7 +61,10 @@ export async function startMcpServer(
     loggingConfig = {...readDiagnosticConfig(undefined), categories: {lifecycle: "WARN" as const}};
   }
   diagnostics = await createDiagnostics(loggingConfig, new Set());
-  if (logConfigInvalid) diagnostics.event("lifecycle", "WARN", "configuration_invalid", {reasonCode: "LOG_CONFIG_INVALID"});
+  if (logConfigInvalid) {
+    diagnostics.event("lifecycle", "WARN", "configuration_invalid", {reasonCode: "LOG_CONFIG_INVALID"});
+    void diagnostics.close();
+  }
   let runtimeHash: string | undefined;
   try {if (loggingConfig.level !== "OFF" || Object.values(loggingConfig.categories ?? {}).some(level => level !== "OFF")) runtimeHash = createHash("sha256").update(await readFile(new URL(import.meta.url))).digest("hex");} catch { /* Startup diagnostics may be unavailable; never alter service startup. */ }
   diagnostics.event("lifecycle", "INFO", "startup", {buildVersion: PLUGIN_INFO.version, runtimeHash, runtimePath: import.meta.url});
@@ -84,7 +88,6 @@ export async function startMcpServer(
   });
 
   const validator = new ContractValidator();
-  const executionAdapter = resolveHostAttestation(process.env, executionAdapters);
   const hostAttestation = executionAdapter ? new HostAttestationProvider(store, executionAdapter) : null;
   // Neither bundled host currently exposes a cryptographically distinct direct-human approval event.
   const trust = new TrustService(trustStore);

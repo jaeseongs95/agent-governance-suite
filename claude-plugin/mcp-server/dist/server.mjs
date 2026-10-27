@@ -46498,6 +46498,7 @@ function bindNativeClassificationDefinitions(definitions, behaviors = builtInBeh
 // mcp-server/src/index.ts
 var diagnostics;
 async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map(), executionAdapters, nativeBehaviors) {
+  const executionAdapter = resolveHostAttestation(process.env, executionAdapters);
   const installedWireAdapters = new Map(wireAdapters);
   const installedNativeBehaviors = nativeBehaviors === void 0 ? void 0 : new Map(nativeBehaviors);
   let loggingConfig;
@@ -46509,7 +46510,10 @@ async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map(), executio
     loggingConfig = { ...readDiagnosticConfig(void 0), categories: { lifecycle: "WARN" } };
   }
   diagnostics = await createDiagnostics(loggingConfig, /* @__PURE__ */ new Set());
-  if (logConfigInvalid) diagnostics.event("lifecycle", "WARN", "configuration_invalid", { reasonCode: "LOG_CONFIG_INVALID" });
+  if (logConfigInvalid) {
+    diagnostics.event("lifecycle", "WARN", "configuration_invalid", { reasonCode: "LOG_CONFIG_INVALID" });
+    void diagnostics.close();
+  }
   let runtimeHash;
   try {
     if (loggingConfig.level !== "OFF" || Object.values(loggingConfig.categories ?? {}).some((level) => level !== "OFF")) runtimeHash = createHash17("sha256").update(await readFile7(new URL(import.meta.url))).digest("hex");
@@ -46537,7 +46541,6 @@ async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map(), executio
     store.close();
   });
   const validator = new ContractValidator();
-  const executionAdapter = resolveHostAttestation(process.env, executionAdapters);
   const hostAttestation = executionAdapter ? new HostAttestationProvider(store, executionAdapter) : null;
   const trust = new TrustService(trustStore);
   const service = new WorkflowService(

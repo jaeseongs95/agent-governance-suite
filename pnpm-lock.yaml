@@ -18,13 +18,13 @@ importers:
         specifier: 3.0.1
         version: 3.0.1(ajv@8.20.0)
       pino:
-        specifier: ^10.4.0
+        specifier: 10.4.0
         version: 10.4.0
       pino-roll:
-        specifier: ^4.0.0
+        specifier: 4.0.0
         version: 4.0.0
       sonic-boom:
-        specifier: ^5.0.2
+        specifier: 5.0.2
         version: 5.0.2
       zod:
         specifier: ^4.5.4

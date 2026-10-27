@@ -47,7 +47,7 @@ function argumentsFor(taskId: string): {schemaVersion: string; taskEnvelope: Tas
     decision: {complexity: "simple", hasConflicts: false}, orchestration: {requested: true, mcpAvailable: true}}};
 }
 
-it.each(["installed", "name-only", "mismatched", "builtin-default"] as const)(
+it.each(["installed", "snapshot", "name-only", "mismatched", "builtin-default"] as const)(
   "actual startMcpServer preserves trusted host authority for %s", async mode => {
     const directory = await mkdtemp(path.join(tmpdir(), "ags-al09-entrypoint-"));
     expect(path.dirname(directory)).toBe(path.resolve(tmpdir()));
@@ -67,11 +67,13 @@ import {createCatalogExecutionAdapters, codexExecutionAdapter} from ${JSON.strin
 globalThis.fetch = async () => { process.stderr.write("AL09_UNEXPECTED_FETCH\\n"); throw new Error("AL09_UNEXPECTED_FETCH"); };
 const suite = createCatalogExecutionAdapters(${JSON.stringify(presets)});
 ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
+      : mode === "snapshot" ? "const installed = new Map(suite.adapters); const started = startMcpServer(new Map(), installed); installed.clear(); await started;"
       : mode === "mismatched" ? `await startMcpServer(new Map(), new Map([[${JSON.stringify(host)}, codexExecutionAdapter]]));`
       : mode === "builtin-default" ? "await startMcpServer();" : "await startMcpServer(new Map());"}
 `, "utf8");
     const environment = Object.fromEntries(Object.entries({...process.env,
       AGENT_GOVERNANCE_CLASSIFICATION_CONFIG: "", AGENT_GOVERNANCE_HOST_ATTESTATION: selectedHost,
+      AGENT_GOVERNANCE_LOG_CONFIG: "",
       SKILL_REGISTRY_PATH: path.join(root, "skills", "registry.json"), AGENT_GOVERNANCE_SHARED_STATE_DIR: directory,
       AGENT_GOVERNANCE_DB_PATH: databasePath, AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(directory, "continuity.sqlite3"),
       AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"), AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: path.join(directory, "board.sqlite3"),
