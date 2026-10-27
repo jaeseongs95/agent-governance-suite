@@ -95,15 +95,16 @@ it("generates and checks the Claude package without loading development dependen
     enter("installed-verification");
     expect(await readdir(source)).not.toContain("node_modules");
     expect(await readdir(installed)).not.toContain("node_modules");
+    // Compare native bytes directly; deep matcher traversal consumes the test deadline.
     for (const relative of bundlePaths) {
       enter(`installed-read:${relative}`);
-      expect(await readFile(path.join(installed, relative)), relative).toEqual(sourceBytes.get(relative));
+      expect((await readFile(path.join(installed, relative))).equals(sourceBytes.get(relative)), relative).toBe(true);
     }
     enter("installed-read:hooks/governance-hook.mjs");
-    expect(await readFile(path.join(installed, "hooks/governance-hook.mjs"))).toEqual(sourceBytes.get("claude-overlay/hooks/governance-hook.mjs"));
+    expect((await readFile(path.join(installed, "hooks/governance-hook.mjs"))).equals(sourceBytes.get("claude-overlay/hooks/governance-hook.mjs"))).toBe(true);
     for (const [relative, bytes] of sourceBytes) {
       enter(`source-read:${relative}`);
-      expect(await readFile(path.join(source, relative)), relative).toEqual(bytes);
+      expect((await readFile(path.join(source, relative))).equals(bytes), relative).toBe(true);
     }
   } catch (error) {
     failureObservation = snapshot("body-failure-observed");
