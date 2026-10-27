@@ -93,7 +93,15 @@ async function brokerLockPid(target: string): Promise<number | null> {
       const pid = Number(match[1]);
       if (!Number.isSafeInteger(pid)) throw new Error("The test broker PID is invalid.");
       const token = processStartToken(pid);
-      if (token === null || createHash("sha256").update(token).digest("hex") !== match[2]) {
+      if (token === null) {
+        try { process.kill(pid, 0); }
+        catch (error) {
+          if ((error as NodeJS.ErrnoException).code === "ESRCH") return null;
+          throw new Error("The test broker lock owner cannot be verified.", { cause: error });
+        }
+        throw new Error("The test broker lock owner cannot be verified.");
+      }
+      if (createHash("sha256").update(token).digest("hex") !== match[2]) {
         throw new Error("The test broker lock owner cannot be verified.");
       }
       return pid;
@@ -619,6 +627,19 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     } finally {
       await rm(lockPath, { recursive: true, force: true });
     }
+  });
+
+  it("cleans up a lock only after its owner is proven dead", async () => {
+    const directory = stateDirectory();
+    const fixture = fileURLToPath(new URL("./fixtures/broker-startup-child.mjs", import.meta.url));
+    const child = spawn(process.execPath, [fixture, "exit-zero"], { stdio: "ignore" });
+    const [code] = await once(child, "exit");
+    expect(code).toBe(0);
+    expect(child.pid).toBeDefined();
+    const lockPath = path.join(directory, "broker.lock");
+    await mkdir(path.join(lockPath, `owner-${child.pid}-${"0".repeat(32)}-${"0".repeat(64)}`), { recursive: true });
+    await expect(brokerLockPid(lockPath)).resolves.toBeNull();
+    await expect(terminateBroker(directory)).resolves.toBeUndefined();
   });
 
   it("converges simultaneous startup requests on one broker", async () => {
