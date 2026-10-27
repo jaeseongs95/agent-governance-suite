@@ -954,10 +954,17 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
       : inputWithCurrentArgs;
     const executionBudget = buildExecutionBudgetOption(options);
     const claimTracker = options?.claimTracker ?? createClaimStateTracker(options?.onClaimState);
+    // ponytail: Antigravity fires SessionStart only once for a brand-new conversation and maps
+    // PreInvocation/PostInvocation to SessionStart only for session-board (:630), so existing or
+    // reloaded sessions must recover presence/relay via recoverExistingSession here. Because 3.0
+    // infers root for Antigravity (AGS-D-0317), child sessions sharing the parent sessionId also
+    // pass actorAccess until native actor capture and the child gate return after 3.0.
     const hookOptions = Object.freeze({
       defaultQueueWake: true,
       ...(executionBudget ? { executionBudget } : {}),
       onClaimState: claimTracker.onClaimState,
+      recoverExistingSession: true,
+      resolveHostProcess: () => resolveVerifiedAntigravityHostProcess(options),
     });
     const canonicalOutput = await hookHandler(effectiveInput, "antigravity", undefined, hookOptions);
     return { output: canonicalOutput, updatedToolInput: currentToolInput, mutated: false };

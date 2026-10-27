@@ -7,6 +7,7 @@ vi.mock("../../mcp-server/src/session-message-client.ts", async original => ({..
 vi.mock("../../mcp-server/src/process-identity.ts", async original => ({...await original(), processStartToken: effects.token}));
 import "../../mcp-server/src/builtin-hook-host-adapters.ts";
 import {adaptHostInput} from "../../mcp-server/src/host-input-adapter.ts";
+import {handleSessionMessageHook} from "../../mcp-server/src/session-message-hook.ts";
 import assert from "node:assert/strict";
 import {
   executeAntigravityHookEvent,
@@ -71,10 +72,11 @@ for (const event of ["PreInvocation", "PostInvocation", "Stop"]) {
   assert.equal(calls.length, 1, event);
   assert.equal(calls[0][0].hook_event_name, "PostToolUse", event);
   assert.equal(calls[0][3].ensureRelay, undefined, event);
-  assert.equal(calls[0][3].recoverExistingSession, undefined, event);
+  assert.equal(calls[0][3].recoverExistingSession, true, event);
   assert.equal(calls[0][3].defaultQueueWake, true, event);
-  assert.equal(calls[0][3].resolveHostProcess, undefined, event);
-  assert.equal(resolutions, 0, event);
+  assert.equal(typeof calls[0][3].resolveHostProcess, "function", event);
+  assert.deepEqual(calls[0][3].resolveHostProcess(), pair, event);
+  assert.equal(resolutions, 1, event);
   assertNoAuthorityEffects();
 }
 for (const event of ["PreToolUse", "PostToolUse"]) {
@@ -170,4 +172,51 @@ for (const actor of [{}, { agent_id: null }, { agent_id: 0 }]) {
 
 assertNoAuthorityEffects();
 vi.restoreAllMocks();
+});
+
+test("Antigravity PreInvocation recovers missing session presence and gemini-queue relay via handleSessionMessageHook", async () => {
+  effects.request.mockReset();
+  effects.spawn.mockReset();
+  effects.token.mockClear();
+
+  const pair = Object.freeze({ pid: 1234, startToken: "synthetic-T1" });
+  let resolutions = 0;
+  effects.request.mockImplementation(async (op) => {
+    if (op === "list-presence") return { sessions: [] };
+    if (op === "ensure-relay") return { spawn: false, relayId: null, instanceId: "host-process-v1:synthetic" };
+    if (op === "claim-deferred") return { messages: [] };
+    throw new Error(`Unexpected broker op: ${op}`);
+  });
+
+  await executeAntigravityHookEvent(
+    { conversationId: "35201385-6197-49fa-ab79-0ebe754a89e5", hook_event_name: "PreInvocation" },
+    "PreInvocation",
+    "session-message",
+    {
+      now: () => 100,
+      entryMonotonicMs: 100,
+      resolveHostProcess: () => {
+        resolutions++;
+        return pair;
+      },
+      sessionMessageHook: handleSessionMessageHook,
+    },
+  );
+
+  assert.equal(resolutions, 1);
+  assert.deepEqual(
+    effects.request.mock.calls.map((call) => call[0]),
+    ["list-presence", "ensure-relay", "claim-deferred"],
+  );
+  const ensurePayload = effects.request.mock.calls[1][1];
+  assert.deepEqual(ensurePayload.target, {
+    host: "antigravity",
+    sessionId: "35201385-6197-49fa-ab79-0ebe754a89e5",
+  });
+  assert.equal(ensurePayload.transport, "gemini-queue");
+  assert.equal(ensurePayload.parentPid, 1234);
+  assert.equal(ensurePayload.parentStartToken, "synthetic-T1");
+  assert.deepEqual(ensurePayload.supportedInjection, ["peer-wake", "tool-boundary"]);
+  assert.equal(ensurePayload.idleWake, "user-message");
+  vi.restoreAllMocks();
 });
