@@ -1,3 +1,6 @@
+import {createDiagnostics, readDiagnosticConfig, type Diagnostics} from "./diagnostics.js";
+import {createHash} from "node:crypto";
+import { PLUGIN_INFO } from "./plugin-info.js";
 import { SessionActorProofs } from "./session-actor-proof.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
@@ -39,12 +42,26 @@ import { hostActorId } from "./host-attestation.js";
 import { createNativeClassificationAdapters, type NativeClassificationAdapterDefinition, type NativeCliBehavior } from "./skill-classification/native-adapters.js";
 import { bindNativeClassificationDefinitions } from "./skill-classification/native-cli-strategies.js";
 
+let diagnostics: Diagnostics | undefined;
+
 /** Trusted installation code supplies adapters; request JSON and environment names cannot register them. */
 export async function startMcpServer(
   wireAdapters: ReadonlyMap<string, ClassificationWireAdapter> = new Map(),
   executionAdapters?: ReadonlyMap<string, HostExecutionAdapter>,
   nativeBehaviors?: ReadonlyMap<string, NativeCliBehavior>,
 ): Promise<void> {
+  let loggingConfig;
+  let logConfigInvalid = false;
+  try {loggingConfig = readDiagnosticConfig(process.env.AGENT_GOVERNANCE_LOG_CONFIG);} catch {
+    logConfigInvalid = true;
+    loggingConfig = {...readDiagnosticConfig(undefined), categories: {lifecycle: "WARN" as const}};
+  }
+  diagnostics = await createDiagnostics(loggingConfig, new Set());
+  if (logConfigInvalid) diagnostics.event("lifecycle", "WARN", "configuration_invalid", {reasonCode: "LOG_CONFIG_INVALID"});
+  let runtimeHash: string | undefined;
+  try {if (loggingConfig.level !== "OFF" || Object.values(loggingConfig.categories ?? {}).some(level => level !== "OFF")) runtimeHash = createHash("sha256").update(await readFile(new URL(import.meta.url))).digest("hex");} catch { /* Startup diagnostics may be unavailable; never alter service startup. */ }
+  diagnostics.event("lifecycle", "INFO", "startup", {buildVersion: PLUGIN_INFO.version, runtimeHash, runtimePath: import.meta.url});
+  process.once("beforeExit", () => {void diagnostics?.close();});
   const installedWireAdapters = new Map(wireAdapters);
   const installedNativeBehaviors = nativeBehaviors === undefined ? undefined : new Map(nativeBehaviors);
   const registryPath = resolveRegistryPath();
@@ -146,13 +163,17 @@ export async function startMcpServer(
     },
     service: new SkillClassificationService(providerRuntime),
   });
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, classification, new SessionActorProofs(store));
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, classification, new SessionActorProofs(store), diagnostics);
   await server.connect(new StdioServerTransport());
+  diagnostics.event("lifecycle", "INFO", "connected");
+  const previousClose = server.onclose;
+  server.onclose = () => {previousClose?.(); void diagnostics?.close();};
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  void startMcpServer().catch((error: unknown) => {
-    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+  void startMcpServer().catch(() => {
+    diagnostics?.event("lifecycle", "FATAL", "startup_failed");
+    void diagnostics?.close();
     process.exitCode = 1;
   });
 }

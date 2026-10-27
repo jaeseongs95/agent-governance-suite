@@ -113,3 +113,11 @@ it("does not treat an external shared file reached through a relative symlink as
   const notice = await buildThirdPartyNotices(result.metafile, root);
   expect(notice).not.toContain("## owned-shared");
 });
+
+it("uses the package root license when a nested export directory has its own package.json", async () => {
+  const root = await fixture(), dependency = await ownedPackage(root, "owned-nested-export");
+  await writeFile(path.join(dependency.directory, "lib", "package.json"), JSON.stringify({type: "module"}), "utf8");
+  const notice = await buildThirdPartyNotices({inputs: {[dependency.entry]: {}}}, root);
+  expect(notice).toContain("## owned-nested-export 1.2.3 (MIT)");
+  expect(notice).toContain("Owned fixture license text.");
+});

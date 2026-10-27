@@ -12,6 +12,12 @@ export const RUNTIME_BUNDLES = Object.freeze([
     executable: false,
   }),
   Object.freeze({
+    id: "diagnostics-worker",
+    entry: "mcp-server/src/diagnostics-worker.ts",
+    output: "mcp-server/dist/diagnostics-worker.mjs",
+    executable: true,
+  }),
+  Object.freeze({
     id: "mcp-server",
     entry: "mcp-server/src/index.ts",
     output: "mcp-server/dist/server.mjs",
@@ -100,20 +106,15 @@ async function findPackageRoot(input, root) {
     if (parent === boundary) return null;
     boundary = parent;
   }
-  let current = path.dirname(resolved);
-  let missing;
-  while (current !== boundary) {
-    const metadataPath = path.join(current, "package.json");
-    try {
-      await access(metadataPath);
-      return current;
-    } catch (cause) {
-      if (cause?.code !== "ENOENT") throw new Error(`Cannot access bundled package metadata at ${metadataPath}.`, { cause });
-      missing = cause;
-      current = path.dirname(current);
-    }
+  const parts = path.relative(boundary, resolved).split(path.sep);
+  const count = parts[0].startsWith("@") ? 2 : 1;
+  const current = path.join(boundary, ...parts.slice(0, count));
+  const metadataPath = path.join(current, "package.json");
+  try { await access(metadataPath); } catch (cause) {
+    if (cause?.code === "ENOENT") throw new Error(`No package metadata for bundled dependency ${input} beneath ${boundary}.`, {cause});
+    throw new Error(`Cannot access bundled package metadata at ${metadataPath}.`, {cause});
   }
-  throw new Error(`No package metadata for bundled dependency ${input} beneath ${boundary}.`, { cause: missing });
+  return current;
 }
 
 async function readLicense(packageRoot) {
@@ -158,7 +159,7 @@ export async function buildThirdPartyNotices(metafile, root = ROOT) {
   return [
     "# Third-Party Notices",
     "",
-    "The generated `runtime/schema-validation.mjs` bundle includes the packages below.",
+    "The generated runtime bundles include the packages below.",
     "Their copyright and license notices are reproduced verbatim from the installed packages.",
     "",
     ...sections,
@@ -182,18 +183,20 @@ export async function buildRuntimeBundle(target, outputRoot = ROOT) {
     legalComments: "external",
     metafile: true,
     minify: !target.executable,
-    banner: { js: target.executable ? "#!/usr/bin/env node" : "/* eslint-disable */" },
+    banner: { js: target.id === "diagnostics-worker" ? "#!/usr/bin/env node\nimport {createRequire as agsRequire} from 'node:module'; const require = agsRequire(import.meta.url);" : target.executable ? "#!/usr/bin/env node" : "/* eslint-disable */" },
   });
 }
 
 export async function buildRuntimeBundles(outputRoot = ROOT) {
   let schemaRuntimeMetafile;
+  const inputs = {};
   for (const target of RUNTIME_BUNDLES) {
     const result = await buildRuntimeBundle(target, outputRoot);
+    Object.assign(inputs, result.metafile.inputs);
     if (target.id === "skill-schema-runtime") schemaRuntimeMetafile = result.metafile;
   }
   if (!schemaRuntimeMetafile) throw new Error("The skill schema runtime bundle was not built.");
-  const notice = await buildThirdPartyNotices(schemaRuntimeMetafile);
+  const notice = await buildThirdPartyNotices({inputs});
   const noticePath = path.join(outputRoot, RUNTIME_NOTICES);
   await mkdir(path.dirname(noticePath), { recursive: true });
   await writeFile(noticePath, notice, "utf8");

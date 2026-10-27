@@ -41,6 +41,9 @@
     "@modelcontextprotocol/sdk": "^1.30.0",
     "ajv": "^8.20.0",
     "ajv-formats": "3.0.1",
+    "pino": "^10.4.0",
+    "pino-roll": "^4.0.0",
+    "sonic-boom": "^5.0.2",
     "zod": "^4.5.4"
   },
   "devDependencies": {

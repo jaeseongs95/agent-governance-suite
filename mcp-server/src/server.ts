@@ -1,3 +1,4 @@
+import type { Diagnostics, DiagnosticOutcome } from "./diagnostics.js";
 import { SESSION_PROOF_FIELD, withoutSessionProof, type SessionActorProofVerifier } from "./session-actor-proof.js";
 import { existsSync, readFileSync } from "node:fs";
 
@@ -395,6 +396,7 @@ export function createMcpServer(
   trust: TrustService | null = null,
   classification: SkillClassificationGateway | null = null,
   sessionActorProof: SessionActorProofVerifier | null = null,
+  diagnostics?: Diagnostics,
 ): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -414,8 +416,7 @@ export function createMcpServer(
     return { ...tool, inputSchema };
   });
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: advertise([
+  const tools = advertise([
       {
         name: "get_skill_inventory",
         description: "Read the full installed skill inventory from SKILL.md and registry source metadata, including infrastructure skills and source conflicts. No semantic selection or execution.",
@@ -599,15 +600,24 @@ export function createMcpServer(
         inputSchema: contractSchemas.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
-    ]),
-  }));
+    ]);
+  diagnostics?.registerMethods(tools.map(tool => tool.name));
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({tools}));
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    let diagnosticOutcome: DiagnosticOutcome | undefined;
+    const respond = <T>(result: ApiResultV1<T>) => {
+      diagnosticOutcome = {ok: result.ok, errorCode: result.error?.code,
+        reasonCode: result.error?.details?.reasonCode, failedChecks: result.error?.details?.failedChecks};
+      return toolResult(result);
+    };
+    const handle = async (correlation?: string) => {
     let args = asRecord(request.params.arguments);
-    if (Object.hasOwn(args, "_sessionBinding")) return toolResult(apiError("BINDING_INVALID", "Caller session bindings are not accepted.", {reasonCode: "CALLER_SESSION_BINDING_REJECTED"}));
-    if (!sessionActorProof) return toolResult(apiError("BINDING_REQUIRED", "The root hook proof verifier is not configured.", {reasonCode: "ROOT_HOOK_PROOF_REQUIRED"}));
+    if (Object.hasOwn(args, "_sessionBinding")) return respond(apiError("BINDING_INVALID", "Caller session bindings are not accepted.", {reasonCode: "CALLER_SESSION_BINDING_REJECTED"}));
+    if (!sessionActorProof) return respond(apiError("BINDING_REQUIRED", "The root hook proof verifier is not configured.", {reasonCode: "ROOT_HOOK_PROOF_REQUIRED"}));
     try {
       const verified = sessionActorProof.verify(request.params.name, args);
+      diagnostics?.event("binding", "DEBUG", "binding_check", {method: request.params.name, correlation, verified: true});
       args = withoutSessionProof(args);
       if (["update_session_status", "list_session_status", "prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"].includes(request.params.name)) {
         args._sessionBinding = request.params.name === "validate_collaboration_decision"
@@ -615,7 +625,7 @@ export function createMcpServer(
           : {host: verified.host, sessionId: verified.sessionId};
       }
     } catch (error) {
-      return toolResult(error instanceof WorkflowContractError
+      return respond(error instanceof WorkflowContractError
         ? apiError(error.code, error.message, error.details)
         : apiError("MCP_UNAVAILABLE", "Root hook proof verification is unavailable.", {reasonCode: "ROOT_PROOF_VERIFICATION_FAILED"}));
     }
@@ -640,10 +650,10 @@ export function createMcpServer(
             const callerInput = { ...args };
             delete callerInput[HOST_ATTESTATION_FIELD];
             const checked = (request.params.name === "classify_skills" ? classificationInputSchema : selectionInputSchema).safeParse(callerInput);
-            if (!checked.success) return toolResult(invalidInput("Skill classification input does not match its contract."));
+            if (!checked.success) return respond(invalidInput("Skill classification input does not match its contract."));
           }
           if (request.params.name === "get_skill_inventory") {
-            if (Object.keys(args).length > 0) return toolResult(invalidInput("get_skill_inventory accepts no arguments."));
+            if (Object.keys(args).length > 0) return respond(invalidInput("get_skill_inventory accepts no arguments."));
             result = apiOk(await classification.inventory());
           } else if (request.params.name === "classify_skills") {
             const classified = attested("classify_skills", input => {
@@ -830,10 +840,12 @@ export function createMcpServer(
       }
     }
 
-    const response = toolResult(result);
+    const response = respond(result);
     const notice = updateStatus ? updates.takeNotice(updateStatus) : null;
     if (notice) response.content.push({ type: "text", text: JSON.stringify(notice) });
     return response;
+    };
+    return diagnostics ? diagnostics.observe(request.params.name, request.params.arguments, handle, () => diagnosticOutcome) : handle();
   });
 
   return server;
