@@ -4,13 +4,14 @@ import { producerFailureReason, retainFailureCause, retainFailureSecondary, tagP
 import { existsSync } from "node:fs";
 import { chmod, mkdir, readFile } from "node:fs/promises";
 import { spawn, type ChildProcess } from "node:child_process";
+import type { Readable } from "node:stream";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 import tls from "node:tls";
 import { fileURLToPath } from "node:url";
 
 import { resolveSessionMessageStateDirectory } from "./runtime-config.js";
-import { SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, sessionMessageLineReader } from "./session-message-protocol.js";
+import { brokerStartupCode, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, sessionMessageLineReader } from "./session-message-protocol.js";
 import { encodeIdentityDeadline } from "./broker-identity-budget.js";
 
 export { SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
@@ -291,7 +292,25 @@ export async function waitForSessionMessageBrokerReady(
   child: ChildProcess,
   timeoutMs = BROKER_STARTUP_TIMEOUT_MS,
   parentSignal?: AbortSignal,
+  startupDiagnostic?: Readable | null,
 ): Promise<void> {
+  let diagnostic = "";
+  let diagnosticOverflow = false;
+  let diagnosticDone = !startupDiagnostic;
+  let diagnosticEnded = false;
+  let diagnosticFailed = false;
+  const onDiagnosticData = (chunk: Buffer) => {
+    if (diagnosticOverflow) return;
+    if (Buffer.byteLength(diagnostic, "utf8") + chunk.length > 128) { diagnostic = ""; diagnosticOverflow = true; return; }
+    diagnostic += chunk.toString("utf8");
+  };
+  const onDiagnosticEnd = () => { diagnosticEnded = true; diagnosticDone = true; };
+  const onDiagnosticClose = () => { diagnosticDone = true; };
+  const onDiagnosticError = () => { diagnosticFailed = true; diagnosticDone = true; };
+  startupDiagnostic?.on("data", onDiagnosticData);
+  startupDiagnostic?.once("end", onDiagnosticEnd);
+  startupDiagnostic?.once("close", onDiagnosticClose);
+  startupDiagnostic?.once("error", onDiagnosticError);
   let probeFailed = false;
   let lastProbeFailure: unknown;
   try {
@@ -306,8 +325,21 @@ export async function waitForSessionMessageBrokerReady(
           throwIfAborted(signal);
           if (spawnError) throw spawnError;
           if ((child.exitCode !== null && child.exitCode !== 0) || child.signalCode !== null) {
+            // exit can precede the last pipe data; never wait beyond the existing deadline.
+            if (startupDiagnostic && !diagnosticDone) await new Promise<void>((resolve) => {
+              const done = () => {
+                startupDiagnostic.off("end", done); startupDiagnostic.off("close", done);
+                startupDiagnostic.off("error", done); signal.removeEventListener("abort", done); resolve();
+              };
+              startupDiagnostic.once("end", done); startupDiagnostic.once("close", done);
+              startupDiagnostic.once("error", done); signal.addEventListener("abort", done, { once: true });
+              if (diagnosticDone || signal.aborted) done();
+            });
+            throwIfAborted(signal);
+            const frame = diagnosticEnded && !diagnosticFailed && !diagnosticOverflow ? /^([A-Z0-9_]+)\n$/u.exec(diagnostic) : null;
+            const code = brokerStartupCode(frame?.[1]);
             throw tagProducerFailure(new Error(
-              `The session message broker exited before it was ready (code ${String(child.exitCode)}, signal ${String(child.signalCode)}).`,
+              `The session message broker exited before it was ready (code ${String(child.exitCode)}, signal ${String(child.signalCode)})${code ? `; startup diagnostic: ${code}` : ""}.`,
             ), "BROKER_EXITED_BEFORE_READY");
           }
           await delay(Math.min(100, remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE)), signal);
@@ -341,6 +373,12 @@ export async function waitForSessionMessageBrokerReady(
   } catch (error) {
     if (probeFailed) retainFailureSecondary(error, lastProbeFailure);
     throw error;
+  } finally {
+    startupDiagnostic?.off("data", onDiagnosticData);
+    startupDiagnostic?.off("end", onDiagnosticEnd);
+    startupDiagnostic?.off("close", onDiagnosticClose);
+    startupDiagnostic?.off("error", onDiagnosticError);
+    startupDiagnostic?.destroy();
   }
 }
 
@@ -387,22 +425,29 @@ export async function ensureSessionMessageBroker(
         let child: ChildProcess;
         try {
           child = spawn(process.execPath, [brokerPath, "--state-directory", stateDirectory,
-            "--startup-identity-deadline-ns", encodeIdentityDeadline(deadline)], {
+            "--startup-identity-deadline-ns", encodeIdentityDeadline(deadline), "--startup-diagnostic"], {
             detached: true,
             windowsHide: true,
-            stdio: "ignore",
+            stdio: ["ignore", "ignore", "ignore", "pipe"],
             env: sessionMessageBrokerEnvironment(),
           });
         } catch (cause) {
           throw clientFailure("BROKER_START_FAILED", "Cannot start the session message broker.", cause);
         }
         child.unref();
-        await waitForSessionMessageBrokerReady(
-          stateDirectory,
-          child,
-          remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE),
-          signal,
-        );
+        const diagnostic = child.stdio[3] as Readable | null;
+        try {
+          await waitForSessionMessageBrokerReady(
+            stateDirectory,
+            child,
+            remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE),
+            signal,
+            diagnostic,
+          );
+        } finally {
+          // Also covers a deadline expiring before the readiness function is entered.
+          diagnostic?.destroy();
+        }
       } catch (recoveryError) { throw retainFailureSecondary(recoveryError, error); }
       finally { signal.removeEventListener("abort", retainInitialFailure); }
     }

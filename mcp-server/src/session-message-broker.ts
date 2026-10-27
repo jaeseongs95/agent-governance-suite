@@ -1,5 +1,5 @@
 import { createHash, createPublicKey, randomBytes, timingSafeEqual, X509Certificate } from "node:crypto";
-import { existsSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, renameSync, rmSync, writeFileSync, writeSync } from "node:fs";
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import tls from "node:tls";
@@ -7,7 +7,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import {
-  SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, SESSION_PRESENCE_LIST_MAX_TARGETS, sessionMessageLineReader,
+  brokerStartupCode, SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, SESSION_PRESENCE_LIST_MAX_TARGETS, sessionMessageLineReader,
 } from "./session-message-protocol.js";
 import { MessageCapacityError, SessionMessageStore, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
 import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type WakeHookObservationReader } from "./session-message-wake-port.js";
@@ -16,7 +16,7 @@ import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js"
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
 import { processStartToken, processStartTokenAsync, type ProcessIdentityBudget, type ProcessIdentityFailureObserver } from "./process-identity.js";
 import { decodeIdentityDeadline, remainingIdentityBudget } from "./broker-identity-budget.js";
-import { retainFailureCause } from "./failure-diagnostics.js";
+import { producerFailureReason, retainFailureCause } from "./failure-diagnostics.js";
 import { acquireBrokerProcessLockWhenReady, ownsBrokerProcessLock, releaseBrokerProcessLock } from "./broker-process-lock.js";
 import { performance } from "node:perf_hooks";
 
@@ -33,7 +33,7 @@ interface BrokerRequest {
 
 function brokerFailureCode(error: unknown): string {
   const code = (error as NodeJS.ErrnoException | null)?.code;
-  return typeof code === "string" && /^[A-Z0-9_]+$/u.test(code) ? code : "STARTUP_FAILED";
+  return brokerStartupCode(code) ?? brokerStartupCode(producerFailureReason(error)) ?? "STARTUP_FAILED";
 }
 
 function argument(name: string): string | null {
@@ -682,13 +682,23 @@ export async function startSessionMessageBroker(stateDirectory: string, budget?:
 }
 
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
+  // fd 3 is supplied only by our launcher; a standalone broker has no diagnostic pipe.
+  const diagnosticPipe = process.argv.includes("--startup-diagnostic");
+  const finishDiagnostic = (code?: string) => {
+    if (!diagnosticPipe) return;
+    // A caller may already have timed out and closed its end. Diagnostics are best effort.
+    try { if (code) writeSync(3, `${code}\n`); } catch { /* Closed or unavailable pipe. */ }
+    try { closeSync(3); } catch { /* Closed or unavailable pipe. */ }
+  };
   const stateDirectory = argument("--state-directory");
-  if (!stateDirectory) process.exitCode = 2;
+  if (!stateDirectory) { finishDiagnostic("STARTUP_FAILED"); process.exitCode = 2; }
   else void (async () => startSessionMessageBroker(path.resolve(stateDirectory),
     decodeIdentityDeadline(argument("--startup-identity-deadline-ns") ?? undefined)))().then((result) => {
+    finishDiagnostic();
     if (result === "already-running") process.exit(0);
   }).catch((error: unknown) => {
     const safeCode = brokerFailureCode(error);
+    finishDiagnostic(safeCode);
     process.stderr.write(`Session message broker startup failed (${safeCode}).\n`);
     process.exitCode = 1;
   });
