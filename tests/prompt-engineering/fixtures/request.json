@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "prompt-fixture-create-r1",
+  "mode": "create",
+  "objective": "Windows의 허용된 로그를 읽고 통합 보고서 하나를 반환하는 프롬프트를 작성한다.",
+  "snapshotRef": "fixture:log-analysis-r1",
+  "targets": [
+    "prompts/log-analysis.md"
+  ],
+  "instructionRefs": [
+    "fixture:applicable-instructions"
+  ],
+  "evidenceRefs": [
+    "fixture:user-request",
+    "fixture:windows-environment",
+    "fixture:example-input"
+  ],
+  "requirements": [
+    {
+      "id": "R-SCOPE",
+      "text": "허용된 로그 읽기만 수행하며 소스와 설정을 수정하지 않는다.",
+      "sourceRef": "fixture:user-request"
+    },
+    {
+      "id": "R-UNIT",
+      "text": "Windows 환경에서 전체 결과를 통합 보고서 하나로 반환한다.",
+      "sourceRef": "fixture:user-request"
+    }
+  ],
+  "environment": {
+    "summary": "Windows 11, PowerShell; 로그 읽기 도구 사용 가능.",
+    "verifiedRefs": [
+      "fixture:windows-environment"
+    ],
+    "unknowns": []
+  },
+  "baseline": null
+}

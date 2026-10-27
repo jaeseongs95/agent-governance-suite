@@ -177,7 +177,7 @@ MCP workflow는 계획된 단계의 순서, 결과 형식, 필수 근거와 감�
 <details>
 <summary>전문 스킬 전체 보기</summary>
 
-현재 작업 트리는 전문 스킬 22개, 로컬 인프라 스킬 2개와 오케스트레이터 1개로 구성됩니다.
+현재 작업 트리는 전문 스킬 23개, 로컬 인프라 스킬 2개와 오케스트레이터 1개로 구성됩니다.
 
 | 스킬 | 담당하는 일 |
 | --- | --- |
@@ -201,6 +201,7 @@ MCP workflow는 계획된 단계의 순서, 결과 형식, 필수 근거와 감�
 | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | 고정된 평가의 설계·입력·판정·집계를 독립 감사합니다. |
 | [`cs-engineering`](skills/cs-engineering/) | CS 원리를 설계 제약과 검증 의무로 연결하고 후보·근거의 일관성을 검사합니다. (v0.2.0) |
 | [`solid-design`](skills/solid-design/) | 실제 모듈·계약·어댑터 경계에 SOLID를 적용하고 기존 의무를 보존하는 최소 변경 방향을 제시합니다. 분석 단계이며 구현·수용·감사 승인을 대신하지 않습니다. (v0.1.0) |
+| [`prompt-engineering`](skills/prompt-engineering/) | 실제 LLM 프롬프트·지침·입력 템플릿을 설계·진단·개선하고 요구 보존과 비교 검증을 연결합니다. 선택형 전문 단계이며 최종 스킬 선택·권한·감사 승인을 대신하지 않습니다. (v0.1.0) |
 | [`test-engineering`](skills/test-engineering/) | 테스트 계획과 실제 코드 경계에서 사례를 설계하고 red/green·표적 mutation 근거의 결함 탐지 능력을 점검합니다. (v0.1.0) |
 | [`code-review`](skills/code-review/) | 고정된 diff·patch·PR의 실제 실패 경로를 검토하고 결함·권고·질문을 구분합니다. (v0.1.0) |
 

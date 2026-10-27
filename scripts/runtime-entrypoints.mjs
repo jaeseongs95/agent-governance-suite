@@ -22,6 +22,7 @@ export const SKILL_RUNTIME_ENTRYPOINTS = Object.freeze([
   { path: "skills/iteration-frame-auditor/scripts/validate-review.mjs", expectedExitCode: 1, outputIncludes: "review must be an object" },
   { path: "skills/orchestrator/scripts/query-registry.mjs", expectedExitCode: 2, outputIncludes: "Specify at least one" },
   { path: "skills/orchestrator/scripts/validate-collaboration-decision.mjs", expectedExitCode: 1, outputIncludes: "structural-only" },
+  { path: "skills/prompt-engineering/scripts/check-report.mjs", expectedExitCode: 1, outputIncludes: "Usage:" },
   { path: "skills/korean-prose-editor/scripts/finalize.mjs", expectedExitCode: 1, outputIncludes: "REQUEST_SCHEMA_VERSION" },
   { path: "skills/model-effort-advisor/scripts/support-guard.mjs", expectedExitCode: 2, outputIncludes: "INVALID_INPUT" },
   { path: "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs", expectedExitCode: 2, outputIncludes: '"operationId":"unknown"' },

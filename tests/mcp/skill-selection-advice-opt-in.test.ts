@@ -90,10 +90,10 @@ describe("direct Choice opt-in necessity contract", () => {
     expect(Object.keys(second.questions)).toEqual(reversed.skills.map(skill => skill.skillId));
     for (const skill of projectClassificationRequest(reversed).payload.skills) expect(second.questions[skill.skillId]!.instructions.skill).toEqual(skill);
   });
-  it("preserves all 25 real descriptors and 39 phases without a skill-name or count branch", async () => {
+  it("preserves all 26 real descriptors and 40 phases without a skill-name or count branch", async () => {
     const inventory = await loadSkillInventory({root: fileURLToPath(new URL("../../", import.meta.url))});
-    expect(inventory.issues).toEqual([]); expect(inventory.skills).toHaveLength(25);
-    expect(inventory.skills.reduce((n, skill) => n + skill.phases.length, 0)).toBe(39);
+    expect(inventory.issues).toEqual([]); expect(inventory.skills).toHaveLength(26);
+    expect(inventory.skills.reduce((n, skill) => n + skill.phases.length, 0)).toBe(40);
     const request = createClassificationRequest({requestId: "real-inventory", operationId: "full-wire", originalPrompt: "검토", inventory, classificationCriteriaRef: "fixture"});
     const wire = jevSkillSelectionChoiceWireAdapter.encode(request, configuration) as {questions: Record<string, {instructions: {skill: unknown}}>};
     expect(Object.keys(wire.questions)).toEqual(inventory.skills.map(skill => skill.skillId));

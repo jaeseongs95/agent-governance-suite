@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "design-llm-prompts",
+    "review-prompt-failures",
+    "improve-prompt-contracts",
+    "design-prompt-comparisons"
+  ],
+  "targets": [
+    "llm-prompt",
+    "agent-instruction",
+    "tool-description",
+    "model-input-template"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/prompt-engineering/SKILL.md",
+      "startLine": 4,
+      "endLine": 5,
+      "digest": "sha256:8f613fa02ddb64f272fc86c5dbeffd4258bb32d9b2ced5b121b5b3bf8b7cec04"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/prompt-engineering/SKILL.md",
+      "startLine": 6,
+      "endLine": 6,
+      "digest": "sha256:8f613fa02ddb64f272fc86c5dbeffd4258bb32d9b2ced5b121b5b3bf8b7cec04"
+    }
+  ]
+}

@@ -205,6 +205,15 @@
       "updatePolicy": "internal",
       "integratedChecksum": "sha256:05066ad53e6e0713a721348dfca71393a6bb624fc49ccc58aceb5cf96a45f475",
       "checksumScope": "relative paths and normalized text bytes under skills/solid-design"
+    },
+    {
+      "skillId": "prompt-engineering",
+      "path": "skills/prompt-engineering",
+      "version": "0.1.0",
+      "versionSource": "version-file",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:d438bc6e0e07ad9cc13617f49574b8161bac8e937eaba1feef3efe7b74ac9d79",
+      "checksumScope": "relative paths and normalized text bytes under skills/prompt-engineering"
     }
   ]
 }
