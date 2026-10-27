@@ -1,12 +1,18 @@
-import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, rm, symlink, unlink } from "node:fs/promises";
 import path from "node:path";
 import { afterEach, expect, it } from "vitest";
+import { build } from "esbuild";
 import { ROOT } from "../../scripts/lib.mjs";
 import { buildThirdPartyNotices } from "../../scripts/runtime-bundles.mjs";
 
-// Owned source/metafile fixtures only; no build or dependency installation is executed.
-const directories = [];
+// Owned fixtures only; esbuild runs without output files or dependency installation.
+const directories = [], links = [];
 afterEach(async () => {
+  // Remove every owned link first; if unlink fails, do not recursively remove its parent.
+  while (links.length > 0) {
+    await unlink(links[links.length - 1]);
+    links.pop();
+  }
   await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true })));
 });
 
@@ -69,4 +75,41 @@ it("rejects dependency metadata absence and preserves metadata or license I/O fa
   await expect(buildThirdPartyNotices({ inputs: { [badLicense.entry]: {} } }, root)).rejects.toMatchObject({
     message: expect.stringContaining("Cannot read bundled package license"), cause: { code: "EISDIR" },
   });
+});
+
+// Exercise the metafile supplied by esbuild, using only owned fixture packages.
+it("includes the license for an external node_modules package reached through a junction", async () => {
+  const directory = await fixture(), root = path.join(directory, "project");
+  const dependency = await ownedPackage(directory, "owned-junction-package");
+  await writeFile(path.join(dependency.directory, "package.json"), JSON.stringify({ name: "owned-junction-package", version: "1.2.3", license: "MIT", main: "lib/entry.js" }), "utf8");
+  await mkdir(path.join(root, "node_modules"), { recursive: true });
+  const link = path.join(root, "node_modules", "owned-junction-package");
+  await symlink(dependency.directory, link, "junction"); links.push(link);
+  await writeFile(path.join(root, "entry.js"), 'import { fixture } from "owned-junction-package"; console.log(fixture);\n', "utf8");
+  const result = await build({ absWorkingDir: root, entryPoints: ["entry.js"], bundle: true, write: false, metafile: true, platform: "node", format: "esm" });
+  const physicalInput = path.relative(root, dependency.entry).split(path.sep).join("/");
+  expect(physicalInput.startsWith("../")).toBe(true);
+  expect(Object.keys(result.metafile.inputs)).toContain(physicalInput);
+  const notice = await buildThirdPartyNotices(result.metafile, root);
+  expect(notice).toContain("## owned-junction-package 1.2.3 (MIT)");
+  expect(notice).toContain("Owned fixture license text.");
+});
+
+it("does not treat an external shared file reached through a relative symlink as a dependency", async (context) => {
+  const directory = await fixture(), root = path.join(directory, "project"), shared = path.join(directory, "shared");
+  await mkdir(root); await mkdir(shared);
+  await writeFile(path.join(shared, "package.json"), JSON.stringify({ name: "owned-shared", version: "1.2.3", license: "MIT" }), "utf8");
+  await writeFile(path.join(shared, "LICENSE"), "Shared source is not a dependency.\n", "utf8");
+  await writeFile(path.join(shared, "entry.js"), "export const shared = true;\n", "utf8");
+  const link = path.join(root, "linked-shared");
+  try { await symlink(path.relative(root, shared), link, "dir"); }
+  catch (error) { if (["EPERM", "EACCES"].includes(error?.code)) { context.skip(); return; } throw error; }
+  links.push(link);
+  await writeFile(path.join(root, "entry.js"), 'import { shared } from "./linked-shared/entry.js"; console.log(shared);\n', "utf8");
+  const result = await build({ absWorkingDir: root, entryPoints: ["entry.js"], bundle: true, write: false, metafile: true, platform: "node", format: "esm" });
+  const physicalInput = path.relative(root, path.join(shared, "entry.js")).split(path.sep).join("/");
+  expect(physicalInput.startsWith("../")).toBe(true);
+  expect(Object.keys(result.metafile.inputs)).toContain(physicalInput);
+  const notice = await buildThirdPartyNotices(result.metafile, root);
+  expect(notice).not.toContain("## owned-shared");
 });
