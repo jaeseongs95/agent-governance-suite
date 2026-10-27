@@ -1,8 +1,16 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
-import { assertRegistryAuthority, checkRegistryContextCompatibility } from "../../scripts/check-skill-context-optimization.mjs";
+import { RegistryAuthorityViolation, assertRegistryAuthority, checkRegistryContextCompatibility } from "../../scripts/check-skill-context-optimization.mjs";
 
 const read = (relative) => JSON.parse(readFileSync(new URL(`../../${relative}`, import.meta.url), "utf8"));
+
+function expectViolation(registry, expectedCode) {
+  let caught;
+  try { assertRegistryAuthority(registry); } catch (error) { caught = error; }
+  expect(caught).toBeInstanceOf(RegistryAuthorityViolation);
+  expect(caught.constructor.name).toBe("RegistryAuthorityViolation");
+  expect(caught.code).toBe(expectedCode);
+}
 
 describe("independent registry authority invariants", () => {
   it("checks both the current registry and the reviewed comparison fixture", () => {
@@ -28,6 +36,19 @@ describe("independent registry authority invariants", () => {
       return Reflect.get(target, key, receiver);
     }});
     expect(() => checkRegistryContextCompatibility(registry)).toThrow(fault);
+  });
+  it("preserves the identity of unexpected TypeError inside a protected rule", () => {
+    const registry = read("skills/registry.json");
+    const audit = registry.skills.find((item) => item.skillId === "independent-audit-gate").providers[0];
+    const fault = new TypeError("SYNTHETIC_UNEXPECTED_TYPE_ERROR");
+    Object.defineProperty(audit, "gate", {get() { throw fault; }});
+    let caught;
+    try { assertRegistryAuthority(registry); } catch (error) { caught = error; }
+    expect(caught).toBe(fault);
+    expect(caught).toBeInstanceOf(TypeError);
+    caught = undefined;
+    try { checkRegistryContextCompatibility(registry); } catch (error) { caught = error; }
+    expect(caught).toBe(fault);
   });
   it("rejects a paired audit-gate mutation through the public standalone checker", async () => {
     const registry = read("skills/registry.json");
@@ -56,6 +77,9 @@ describe("independent registry authority invariants", () => {
       expect(registry).toEqual(pairedFixture);
       expect(() => assertRegistryAuthority(registry), variation).toThrow();
       expect(() => assertRegistryAuthority(pairedFixture), variation).toThrow();
+      const code = id === "independent-deliberation-panel" ? "PANEL_BINDINGS" : id === "independent-audit-gate" ? "AUDIT_BINDINGS" : "PREFLIGHT_BINDINGS";
+      expectViolation(registry, code);
+      expectViolation(pairedFixture, code);
     }
   });
   it.each(["solid-role", "solid-gate", "solid-source", "solid-schema", "audit-gate", "audit-recovery", "preflight-authority", "panel-authority", "panel-gate", "audit-disabled", "audit-capability", "audit-outranked", "audit-raw-duplicate", "audit-result-schema", "audit-output-schema", "audit-required-raw", "audit-state-map", "duplicate-id", "ambiguous-capability"])(
@@ -86,6 +110,15 @@ describe("independent registry authority invariants", () => {
       expect(registry).toEqual(pairedFixture); // Existing pairwise equality alone accepts this mutation.
       expect(() => assertRegistryAuthority(registry)).toThrow();
       expect(() => assertRegistryAuthority(pairedFixture)).toThrow();
+      const codes = {
+        "solid-role": "SOLID_EXECUTION", "solid-gate": "SOLID_GATE", "solid-source": "SOLID_BINDINGS", "solid-schema": "SOLID_RESULT_SCHEMA",
+        "audit-gate": "AUDIT_GATE", "audit-recovery": "AUDIT_BINDINGS", "preflight-authority": "PREFLIGHT_BINDINGS", "panel-authority": "PANEL_BINDINGS", "panel-gate": "PANEL_GATE",
+        "audit-disabled": "DESCRIPTOR_ENABLED", "audit-capability": "AUDIT_CAPABILITIES", "audit-outranked": "AUDIT_CAPABILITY_OWNER",
+        "audit-raw-duplicate": "AUDIT_BINDINGS", "audit-result-schema": "AUDIT_RESULT_SCHEMA", "audit-output-schema": "AUDIT_OUTPUT_SCHEMA",
+        "audit-required-raw": "AUDIT_REQUIRED_INPUTS", "audit-state-map": "AUDIT_STATE_MAPPING", "duplicate-id": "REGISTRY_DUPLICATE_ID", "ambiguous-capability": "SOLID_CAPABILITY_OWNER",
+      };
+      expectViolation(registry, codes[change]);
+      expectViolation(pairedFixture, codes[change]);
     },
   );
 });

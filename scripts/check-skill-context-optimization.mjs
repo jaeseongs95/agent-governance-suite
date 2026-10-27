@@ -478,7 +478,7 @@ export function reconstructOptimizedSkill(skillId, root = ROOT) {
 
 // Independent review points: these literal security contracts do not come from
 // registry-contract.3.0.json. Expand them only with separately reviewed policy.
-class RegistryAuthorityViolation extends Error {
+export class RegistryAuthorityViolation extends Error {
   constructor(code) { super(code); this.code = code; }
 }
 
