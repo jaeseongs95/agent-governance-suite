@@ -374,7 +374,7 @@ export function serverInstructions(): string {
   return `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
 }
 
-export const SESSION_MESSAGE_SERVER_INSTRUCTIONS = "세션 메시지는 prepare_session_message로 대상·본문·TTL을 고정하고 시스템이 발급한 messageId를 받은 뒤 send_session_message(messageId)로 전송한다. ID를 직접 만들거나 send에 내용을 다시 넣지 않는다. 전송 결과가 불명확하면 받은 같은 ID로 status를 조회하거나 send를 재시도한다. unknown ID는 이전 전송 완료나 기록 정리 가능성이 있으므로 저장한 영수증과 대조한다. 새 prepare는 새 전송 의도에만 사용하며 불명확한 기존 전송을 무조건 다시 준비하지 않는다. 정상 전송 뒤에는 메시지마다 영수증·status 조회나 수신 확인 보고를 되풀이하지 않는다. 수신자는 실제 처리한 messageId만 모아 acknowledge_session_messages로 한 번에 ACK한다. 처리하지 못한 ID는 ACK하지 않아 재전달 가능성을 보존한다. ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다.";
+export const SESSION_MESSAGE_SERVER_INSTRUCTIONS = "세션 메시지는 prepare_session_message로 대상·본문·TTL을 고정하고 시스템이 발급한 messageId를 받은 뒤 send_session_message(messageId)로 전송한다. ID를 직접 만들거나 send에 내용을 다시 넣지 않는다. 전송 결과가 불명확하면 받은 같은 ID로 status를 조회하거나 send를 재시도한다. unknown ID는 이전 전송 완료나 기록 정리 가능성이 있으므로 저장한 영수증과 대조한다. 새 prepare는 새 전송 의도에만 사용하며 불명확한 기존 전송을 무조건 다시 준비하지 않는다. send 성공은 큐에 넣었다는 뜻이며 상대가 받거나 처리했다는 뜻이 아니다. 송신 결과의 autoWake.state가 available이 아니면 상대는 지금 깨어나지 않으므로 '보냈다'가 아니라 '큐에 넣었고 상대가 깨어날 때 전달된다'고 보고하고, 상대의 처리가 필요하면 그 사실을 사용자에게 알린다. 정상 전송 뒤에는 메시지마다 영수증·status 조회나 수신 확인 보고를 되풀이하지 않는다. 수신자는 실제 처리한 messageId만 모아 acknowledge_session_messages로 한 번에 ACK한다. 처리하지 못한 ID는 ACK하지 않아 재전달 가능성을 보존한다. ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다.";
 
 function validUpdateArguments(args: Record<string, unknown>): boolean {
   return Object.keys(args).every((key) => key === "force")
