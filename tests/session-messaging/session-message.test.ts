@@ -146,6 +146,15 @@ async function terminateBroker(stateDirectory: string, observe?: (event: string)
   observe?.("liveness-returned");
 }
 
+async function cleanupStateDirectory(directory: string, observe?: (event: string) => void): Promise<void> {
+  observe?.("terminate-enter");
+  await terminateBroker(directory, observe);
+  observe?.("terminate-returned");
+  observe?.("rm-enter");
+  await rm(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+  observe?.("rm-returned");
+}
+
 async function startSourceBroker(stateDirectory: string): Promise<void> {
   const child = spawn(process.execPath, ["--import", "tsx", sourceSessionMessageBroker, "--state-directory", stateDirectory], {
     windowsHide: true,
@@ -167,12 +176,7 @@ afterEach(async (context) => {
   observe?.("hook-enter");
   vi.unstubAllEnvs();
   for (const directory of directories.splice(0)) {
-    observe?.("terminate-enter");
-    await terminateBroker(directory, observe);
-    observe?.("terminate-returned");
-    observe?.("rm-enter");
-    await rm(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
-    observe?.("rm-returned");
+    await cleanupStateDirectory(directory, observe);
   }
   observe?.("hook-returned");
 });
@@ -645,18 +649,19 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(markers).toHaveLength(1);
     expect(markers[0]).toMatch(new RegExp(`^owner-${pid}-[a-f0-9]{32}-[a-f0-9]{64}$`, "u"));
 
-    let probeError = "ESRCH";
+    let probeError = "EPERM";
     const kill = vi.spyOn(process, "kill").mockImplementation((observedPid, signal) => {
       if (observedPid !== pid || signal !== 0) throw new Error("Unexpected signal in owned cleanup test.");
       throw Object.assign(new Error("Controlled process probe failure."), { code: probeError });
     });
     try {
-      await expect(brokerLockPid(lockPath)).resolves.toBeNull();
-      await expect(terminateBroker(directory)).resolves.toBeUndefined();
-      probeError = "EPERM";
       await expect(brokerLockPid(lockPath)).rejects.toMatchObject({ cause: { code: "EPERM" } });
-      await expect(terminateBroker(directory)).rejects.toMatchObject({ cause: { code: "EPERM" } });
+      await expect(cleanupStateDirectory(directory)).rejects.toMatchObject({ cause: { code: "EPERM" } });
       expect((await lstat(lockPath)).isDirectory()).toBe(true);
+      probeError = "ESRCH";
+      await expect(brokerLockPid(lockPath)).resolves.toBeNull();
+      await expect(cleanupStateDirectory(directory)).resolves.toBeUndefined();
+      await expect(lstat(directory)).rejects.toMatchObject({ code: "ENOENT" });
       expect(kill).toHaveBeenCalledTimes(4);
       expect(kill.mock.calls.every(([observedPid, signal]) => observedPid === pid && signal === 0)).toBe(true);
     } finally {
