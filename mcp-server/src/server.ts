@@ -320,7 +320,11 @@ async function sessionBoardResult(
       step = "close";
       closeBoard();
       step = "presence";
-      return apiOk({ sessions: withPresence(sessions, await sessionMessages.listPresence(sessions)) });
+      const listed = withPresence(sessions, await sessionMessages.listPresence(sessions));
+      // A row with no summary and no live presence tells nothing about current work (mostly child sessions,
+      // AGS-D-0018); listing each one only costs tokens, so it is counted instead.
+      const shown = listed.filter((session) => session.summary !== null || session.current || session.presence.state === "online");
+      return apiOk({ sessions: shown, omittedWithoutSummary: listed.length - shown.length });
     }
     step = "read";
     const row = readSession(board, binding!.host, binding!.sessionId);
@@ -572,7 +576,7 @@ export function createMcpServer(
       },
       {
         name: "list_session_status",
-        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
+        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Sessions with no current-work line and no live presence are only counted (omittedWithoutSummary). Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
         inputSchema: contractSchemas.listSessionStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },

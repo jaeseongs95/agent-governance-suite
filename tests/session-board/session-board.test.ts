@@ -403,4 +403,23 @@ describe("session board MCP tools", () => {
     });
     expect(sessions.find((row) => row.sessionId === "unasked")?.presence).toMatchObject({ state: "unknown", instanceId: null, autoWake: null });
   });
+
+  it("counts instead of listing rows with no summary and no live presence", async () => {
+    const databasePath = boardPath();
+    const board = open(databasePath);
+    const now = new Date().toISOString();
+    setSummary(board, session(now, "worker"), "작업 중");
+    for (const sessionId of ["child", "online", "caller"]) recordPrompt(board, session(now, sessionId));
+    const client = await connect(databasePath, sessionMessages({ schemaVersion: "1.0.0", ok: true, data: { sessions: [{
+      host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", wakeVisibility: "silent",
+      canWakeSilently: true, deliveryCapabilities: { supportedInjection: ["peer-wake"], idleWake: "silent" },
+      collaborationId: null, workspaceId: null, role: null,
+      startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",
+    }], unanswered: [] }, error: null }));
+
+    const listed = payload(await client.callTool({ name: "list_session_status", arguments: proofArgs(client, "list_session_status", { schemaVersion: "1.0.0" }, { host: "claude-code", sessionId: "caller" }) }));
+    const data = listed.data as { sessions: Array<{ sessionId: string }>; omittedWithoutSummary: number };
+    expect(data.sessions.map((row) => row.sessionId).sort()).toEqual(["caller", "online", "worker"]);
+    expect(data.omittedWithoutSummary).toBe(1);
+  });
 });
