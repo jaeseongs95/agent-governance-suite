@@ -90,10 +90,19 @@ describe("AGS-D-0019 synthetic builtin adapters", () => {
     expect(actor("claude-code", event, extra)).toEqual({ role: "indeterminate", basis: "unavailable", reasonCode });
   });
 
-  it.each([...supportedEvents, "UnrecognizedSyntheticEvent"])("requires native capture for Codex %s without lifecycle exceptions", event => {
-    for (const extra of [{}, { agent_id: "" }, { agent_id: "synthetic-child" }, { agent_type: "synthetic-root" }, { role: "root", basis: "observed" }]) {
-      expect(actor("codex", event, extra)).toEqual({ role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_CAPTURE_REQUIRED" });
+  // Child blocking on Codex is deferred past 3.0, so agent fields do not change the inferred root.
+  it.each(supportedEvents)("infers root for every recognized Codex %s with a session ID", event => {
+    for (const extra of [{}, { agent_id: "" }, { agent_id: "synthetic-child" }, { agent_type: "synthetic-root" }, { role: "child", basis: "observed" }]) {
+      expect(actor("codex", event, extra)).toEqual({ role: "root", basis: "inferred", reasonCode: "CODEX_ROOT_INFERRED_CHILD_GATE_DEFERRED" });
     }
+  });
+
+  it.each([
+    ["UnrecognizedSyntheticEvent", {}, "CODEX_NATIVE_EVENT_UNRECOGNIZED"],
+    ["PreToolUse", { session_id: " \t" }, "CODEX_NATIVE_SESSION_ID_INVALID"],
+    ["PreToolUse", { session_id: 42 }, "CODEX_NATIVE_SESSION_ID_INVALID"],
+  ] as const)("keeps invalid Codex %s input indeterminate", (event, extra, reasonCode) => {
+    expect(actor("codex", event, extra)).toEqual({ role: "indeterminate", basis: "unavailable", reasonCode });
   });
 
   it.each([

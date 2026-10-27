@@ -123,17 +123,13 @@ it.each(["codex", "claude-code"] as const)("preserves %s observed-PID mismatch r
 it.each(["codex", "claude-code"] as const)("uses only an admitted %s startup observation without ensure options", async (host) => {
   f.request.mockResolvedValue({});
   await handleSessionMessageHook(host === "claude-code" ? { hook_event_name: "SessionStart", session_id: input.session_id } : input, host, 424242);
-  if (host === "codex") {
-    expect(adaptHostInput(input, host).observation.actor).toMatchObject({role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_CAPTURE_REQUIRED"});
-    expect(f.request).not.toHaveBeenCalled(); expect(f.spawn).not.toHaveBeenCalled();
-    return;
-  }
   expect(f.request).toHaveBeenCalledTimes(1);
   expect(f.request.mock.calls[0]![0]).toBe("presence-start");
   expect(f.spawn).toHaveBeenCalledTimes(1);
   const args = f.spawn.mock.calls[0]![1] as string[];
   expect(args).not.toContain("--relay-id");
-  expect(args[args.indexOf("--parent-pid") + 1]).toBe(String(process.ppid));
+  // Codex passes the observed host PID through; Claude uses the hook parent.
+  expect(args[args.indexOf("--parent-pid") + 1]).toBe(host === "codex" ? "424242" : String(process.ppid));
 });
 
 const post = { ...input, hook_event_name: "PostToolUse", tool_name: "read_file", tool_input: {} };

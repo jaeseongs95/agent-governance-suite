@@ -259,7 +259,7 @@ async function syntheticHook(directory: string, input: Record<string, unknown>) 
   return await handleSessionMessageHook(input, syntheticHost) as {hookSpecificOutput?: {permissionDecision?: string}};
 }
 
-it("enforces core wait policy through a synthetic root hook and keeps native Codex unavailable", async () => {
+it("enforces core wait policy through a synthetic root hook and through native Codex inferred root", async () => {
   const { directory } = await launch(); await preparePackaged(directory);
   expect((await syntheticHook(directory, hookInput(60_000)))).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
   expect((await syntheticHook(directory, hookInput(0))).hookSpecificOutput?.permissionDecision).toBeUndefined();
@@ -268,10 +268,10 @@ it("enforces core wait policy through a synthetic root hook and keeps native Cod
     { tool_input: { targets: [{ threadId: target.sessionId }, { threadId: "other-chat" }], timeoutMs: 60_000 } }]) {
     expect((await syntheticHook(directory, hookInput(60_000, extra))).hookSpecificOutput?.permissionDecision).not.toBe("deny");
   }
-  // Actual host adapter negatives stay separate from the synthetic core-positive checks.
+  // 3.0 stopgap: native Codex is root/inferred (child blocking deferred); the packaged hook runs without a peer relation here.
   for (const actor of [{}, {agent_id: ""}, {agent_id: "synthetic-child"}]) {
     const nativeInput = {...hookInput(60_000), ...actor};
-    expect(adaptHostInput(nativeInput, "codex").observation.actor).toEqual({role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_CAPTURE_REQUIRED"});
+    expect(adaptHostInput(nativeInput, "codex").observation.actor).toEqual({role: "root", basis: "inferred", reasonCode: "CODEX_ROOT_INFERRED_CHILD_GATE_DEFERRED"});
     expect(packaged(directory, "session-message-hook.mjs", nativeInput).hookSpecificOutput?.permissionDecision).not.toBe("deny");
   }
   const config = JSON.parse(await readFile(path.join(root, "hooks/hooks.json"), "utf8"));

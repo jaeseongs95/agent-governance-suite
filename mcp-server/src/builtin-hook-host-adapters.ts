@@ -71,11 +71,17 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
   };
 }
 
-/** No native role capture has been accepted yet, including lifecycle events. */
+/** ponytail: 3.0 infers root for every recognized Codex event with a session ID, so a subagent
+ * (which carries the parent session ID) passes as root. Child blocking is deferred past 3.0. */
 function adaptCodexHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
-  return adaptBuiltinHookInput(input, host, {
-    role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_CAPTURE_REQUIRED",
-  });
+  const actor: InputObservation["actor"] = {
+    role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_EVENT_UNRECOGNIZED",
+  };
+  const adapted = adaptBuiltinHookInput(input, host, actor);
+  if (adapted.lifecycle === "none" && adapted.observation.kind === "unknown") return adapted;
+  if (!adapted.observation.sessionId.trim()) actor.reasonCode = "CODEX_NATIVE_SESSION_ID_INVALID";
+  else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: "CODEX_ROOT_INFERRED_CHILD_GATE_DEFERRED" });
+  return adapted;
 }
 
 /** Claude's supported native hook schema omits agent_id for root calls.

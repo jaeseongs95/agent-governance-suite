@@ -10,13 +10,13 @@ vi.mock("../../mcp-server/src/session-message-client.js", async original => ({
 }));
 import "../../mcp-server/src/builtin-hook-host-adapters.js";
 import { adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
-import { runSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 
 // Synthetic actor-free input; it is not a native capture or R7 evidence.
 const wire = (event: string) => ({ session_id: "root-ingress-fixture", transcript_path: null,
   cwd: "/synthetic", hook_event_name: event,
   ...(event === "SessionStart" ? { model: "synthetic", permission_mode: "default", source: "startup" } : { reason: "other" }),
 });
+const inferredRoot = { role: "root", basis: "inferred", reasonCode: "CODEX_ROOT_INFERRED_CHILD_GATE_DEFERRED" };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -24,31 +24,22 @@ beforeEach(() => {
   f.spawn.mockReturnValue({ once: vi.fn(), unref: vi.fn() });
 });
 
-describe("Codex actor observation remains unavailable pending native capture", () => {
-  it.each(["SessionStart", "SessionEnd"])("does not authorize actor-free synthetic %s lifecycle input", async event => {
-    const input = wire(event);
-    expect(adaptHostInput(input, "codex").observation.actor).toEqual({
-      role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_CAPTURE_REQUIRED",
-    });
-    expect(await runSessionMessageHook("codex", JSON.stringify(input), 4242)).toBe("");
-    expect(f.request).not.toHaveBeenCalled();
-    expect(f.spawn).not.toHaveBeenCalled();
+// 3.0 stopgap: Codex child blocking is deferred, so every recognized Codex event with a session ID is root/inferred.
+describe("Codex actor observation infers root until child blocking returns", () => {
+  it.each(["SessionStart", "SessionEnd", "UserPromptSubmit", "PostToolUse", "PreToolUse", "Stop"])("infers root for %s", event => {
+    expect(adaptHostInput(wire(event), "codex").observation.actor).toEqual(inferredRoot);
   });
 
-  it.each(["SessionStart", "SessionEnd"])("rejects explicit child, malformed or conflicting %s actor evidence before message I/O", async event => {
+  it.each(["SessionStart", "SessionEnd"])("does not let caller actor fields change the %s decision", event => {
     for (const actor of [{ agent_id: "child" }, { agent_id: null }, { agent_id: 42 },
-      { agent_type: "main" }, { agent_id: "", agent_type: "main" }]) {
-      const input = { ...wire(event), ...actor };
-      expect(adaptHostInput(input, "codex").observation.actor).toEqual({ role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_CAPTURE_REQUIRED" });
-      expect(await runSessionMessageHook("codex", JSON.stringify(input), 4242)).toBe("");
+      { agent_type: "main" }, { agent_id: "", agent_type: "main" }, { role: "child", basis: "observed" }]) {
+      expect(adaptHostInput({ ...wire(event), ...actor }, "codex").observation.actor).toEqual(inferredRoot);
     }
-    expect(f.request).not.toHaveBeenCalled();
-    expect(f.spawn).not.toHaveBeenCalled();
   });
 
-  it.each(["UserPromptSubmit", "PostToolUse", "PreToolUse", "Stop"])("keeps actor omission indeterminate for %s", event => {
-    expect(adaptHostInput({ ...wire(event), role: "main", host: "codex" }, "codex").observation.actor)
-      .toMatchObject({ role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_CAPTURE_REQUIRED" });
+  it("keeps an empty Codex session ID indeterminate", () => {
+    expect(adaptHostInput({ ...wire("PreToolUse"), session_id: "" }, "codex").observation.actor)
+      .toEqual({ role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_SESSION_ID_INVALID" });
   });
 
   it("does not extend Codex root semantics to an opaque delivery-only adapter", () => {

@@ -137,24 +137,24 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     } finally { store.close(); }
   });
 
-  it("F1: the built Codex CLI emits one capture-required denial and opens no domain state", () => {
+  it("F1: the built Codex CLI emits a root/inferred proof while child blocking is deferred", () => {
     const { environment } = fixture();
+    const payload = { ...input(), tool_name: "mcp__agent_governance_suite__get_trust_capabilities" };
     const child = spawnSync(process.execPath, [path.join(repository, "mcp-server/dist/governance-hook.mjs"), "--host=codex"], {
-      input: JSON.stringify({ ...input(), tool_name: "mcp__agent_governance_suite__get_trust_capabilities" }),
-      env: environment, cwd: repository, encoding: "utf8", timeout: 10_000, windowsHide: true,
+      input: JSON.stringify(payload), env: environment, cwd: repository, encoding: "utf8", timeout: 10_000, windowsHide: true,
     });
     expect(child.error).toBeUndefined();
     expect(child.signal).toBeNull();
     expect(child.status, child.stderr).toBe(0);
     expect(child.stdout.trim().split(/\r?\n/u)).toHaveLength(1);
-    expect(JSON.parse(child.stdout)).toEqual({ hookSpecificOutput: {
-      hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "CODEX_NATIVE_CAPTURE_REQUIRED",
-    } });
-    expect(child.stdout).not.toContain("_sessionProof");
-    for (const key of ["AGENT_GOVERNANCE_DB_PATH", "AGENT_GOVERNANCE_CONTINUITY_DB_PATH", "AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH",
-      "AGENT_GOVERNANCE_TRUST_DB_PATH", "AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", "AGENT_GOVERNANCE_SHARED_STATE_DIR"]) {
-      expect(existsSync(environment[key]!)).toBe(false);
-    }
+    const args = JSON.parse(child.stdout).hookSpecificOutput.updatedInput as Record<string, unknown>;
+    const store = new SqliteWorkflowStore(environment.AGENT_GOVERNANCE_DB_PATH!);
+    try {
+      expect(new SessionActorProofs(store).verify("get_trust_capabilities", args)).toEqual({
+        host: "codex", sessionId: payload.session_id,
+        actor: { role: "root", basis: "inferred", reasonCode: "CODEX_ROOT_INFERRED_CHILD_GATE_DEFERRED" },
+      });
+    } finally { store.close(); }
   });
 
   it.each([[], ["--host"], ["--host=claude-code", "--host=codex"]])("requires an explicit unambiguous CLI host: %j", (...args) => {

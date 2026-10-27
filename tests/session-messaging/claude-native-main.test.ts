@@ -43,7 +43,6 @@ it.each([
 });
 
 it.each([
-  ["codex", "CODEX_NATIVE_CAPTURE_REQUIRED"],
   ["gemini", "GEMINI_ACTOR_OBSERVATION_UNSUPPORTED"],
   ["antigravity", "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED"],
 ])("keeps %s missing and empty actor IDs unavailable", (host, reasonCode) => {

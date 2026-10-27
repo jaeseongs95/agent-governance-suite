@@ -16,9 +16,12 @@ does not interpret vendor fields, product names or diagnostic label strings.
   native event with a session ID and no `agent_id` means root/inferred, never
   root/observed. Empty or malformed IDs do not imply root. This also blocks
   in-process teammates that carry the child marker.
-- Codex: all events are indeterminate with `CODEX_NATIVE_CAPTURE_REQUIRED`
-  until version-bound main, built-in child and custom-child captures establish
-  an actual discriminator. Lifecycle events have no exception.
+- Codex (3.0 stopgap): every recognized event with a session ID is root/inferred
+  with `CODEX_ROOT_INFERRED_CHILD_GATE_DEFERRED`. Codex subagent hooks carry the
+  parent session ID, so a subagent passes as its parent root. Blocking Codex
+  children is deferred past 3.0 by user decision (2026-10-27). Until then the
+  native capture and U3 rules below describe the later child gate, not a 3.0
+  installation condition.
 - Gemini CLI and Antigravity: unsupported in 3.0 because a discriminating actor
   observation is not established. Each adapter returns its own unsupported
   reason code; core policy has no host-specific exception.
@@ -75,7 +78,8 @@ process running as the same OS user. Such a process can read plugin state or
 invoke a hook with fabricated input. Signed hook observation is not direct-user
 approval and must not be described as OS isolation.
 
-Installation remains HOLD until the actual proof/failure-path tests, native
-captures, U3 disposition and existing V5/V6/V10 release conditions are satisfied.
+For Codex child blocking (deferred past 3.0), installation of that gate remains
+HOLD until the actual proof/failure-path tests, native captures, U3 disposition
+and existing V5/V6/V10 release conditions are satisfied.
 Source generation, a targeted PASS, full CI, native POST and independent release
 acceptance are separate evidence scopes.
