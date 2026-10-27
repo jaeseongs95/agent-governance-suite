@@ -73,6 +73,17 @@ await readyAtMost(log);log.event('request','INFO','request_start',{method:'get_s
 });
 
 
+function rotationEvents(contents: string[]): Array<{event: string}> {
+  const events = contents.flatMap(data => data.split(/\r?\n/).filter(line => line.trim().length > 0).map(line => JSON.parse(line) as {event: string}));
+  expect(events.length).toBeGreaterThan(0);
+  return events;
+}
+
+it("requires an actual JSON event while permitting empty rotated files", () => {
+  expect(() => rotationEvents([" \n", "\t\n"])).toThrow();
+  expect(rotationEvents(["", '{"event":"request_start"}\n'])).toEqual([{event: "request_start"}]);
+});
+
 it("uses the library rotation and retention for a completed bounded batch",async()=>{
   const result=await execute(`
 import {createDiagnostics,readDiagnosticConfig} from './diagnostics.mjs';
@@ -85,8 +96,7 @@ await new Promise(r=>setTimeout(r,100));await log.close();console.log(JSON.strin
   const files=(await readdir(root)).filter(name=>name.startsWith('rotation-case-')&&name.endsWith('.log'));
   expect(files.length).toBeGreaterThan(1);expect(files.length).toBeLessThanOrEqual(3);
   const bytes=await Promise.all(files.map(file=>readFile(path.join(root,file),'utf8')));
-  expect(bytes.some(data=>data.length>0)).toBe(true);
-  expect(bytes.every(data=>data.trim().split(/\r?\n/).filter(Boolean).every(line=>JSON.parse(line).event==='request_start'||JSON.parse(line).event==='shutdown_start'))).toBe(true);
+  expect(rotationEvents(bytes).every(row=>row.event==='request_start'||row.event==='shutdown_start')).toBe(true);
 });
 
 
