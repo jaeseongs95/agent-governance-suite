@@ -9,6 +9,7 @@ const programs = [
   ["expiry-regression.mts", "OFFLINE_EXPIRY_REGRESSION_PASS"],
   ["budget-regression.mts", "OFFLINE_RUN_BUDGET_PASS"],
   ["precision-regression.mts", "OFFLINE_PRECISION_REGRESSION_PASS"],
+  ["dynamic-current-stale.mts", "CURRENT_STALE_REGISTRY_PASS"],
 ];
 
 describe("live bootstrap offline CLI contracts", () => {
