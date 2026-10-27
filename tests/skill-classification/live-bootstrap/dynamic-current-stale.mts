@@ -1,13 +1,25 @@
 import assert from "node:assert/strict";
-import {appendFile, cp, mkdir, mkdtemp, rm} from "node:fs/promises";
+import {appendFile, cp, mkdir, mkdtemp, realpath, rm, symlink, unlink} from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
-import * as api from "./bootstrap.mts";
+import {pathToFileURL} from "node:url";
 import {readyEstimateMock} from "./prepared-fixture.mts";
 
 const repo = path.resolve(process.argv[2] ?? ".");
-// The isolated child uses the repository's Node dependency resolution.
-const root = await mkdtemp(path.join(repo, ".ags-current-stale-"));
+const helper = path.resolve(process.argv[3] ?? path.join(import.meta.dirname, "bootstrap.mts"));
+const api = await import(pathToFileURL(helper).href) as typeof import("./bootstrap.mts");
+const parentOwnsRoot = process.argv[4] !== undefined;
+const root = parentOwnsRoot ? path.resolve(process.argv[4]!) : await mkdtemp(path.join(os.tmpdir(), "ags-current-stale-"));
+const dependencyLink = path.join(root, "node_modules/zod");
+let dependencyLinked = false;
 try {
+  const relative = path.relative(await realpath(repo), await realpath(root));
+  assert(relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative), "SCRATCH_MUST_BE_OUTSIDE_REPOSITORY");
+  await cp(path.join(repo, "package.json"), path.join(root, "package.json"));
+  // Fresh imports of copied TypeScript need only zod, not a node_modules copy.
+  await mkdir(path.dirname(dependencyLink), {recursive: true});
+  await symlink(await realpath(path.join(repo, "node_modules/zod")), dependencyLink, process.platform === "win32" ? "junction" : "dir");
+  dependencyLinked = true;
   await cp(path.join(repo, "skills"), path.join(root, "skills"), {recursive: true});
   await cp(path.join(repo, "mcp-server/src"), path.join(root, "mcp-server/src"), {recursive: true});
   await mkdir(path.join(root, "tests/skill-classification"), {recursive: true});
@@ -24,4 +36,9 @@ try {
   assert(result.blocked.includes("ESTIMATE_SOURCE_OR_INPUT_UNBOUND"), "STALE_REGISTRY_ESTIMATE_UNBOUND");
   assert.equal(envReads, 0); assert.equal(calls, 0);
   console.log(JSON.stringify({status: "CURRENT_STALE_REGISTRY_PASS", actualApiCalls: 0, actualCredentialLookups: 0}));
-} finally {await rm(root, {recursive: true, force: true});}
+} finally {
+  if (!parentOwnsRoot) {
+    if (dependencyLinked) await unlink(dependencyLink);
+    await rm(root, {recursive: true, force: true});
+  }
+}

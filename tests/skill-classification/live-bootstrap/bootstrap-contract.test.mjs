@@ -1,4 +1,6 @@
 import {spawnSync} from "node:child_process";
+import {existsSync, mkdtempSync, rmSync, unlinkSync} from "node:fs";
+import {tmpdir} from "node:os";
 import path from "node:path";
 import {describe, expect, it} from "vitest";
 
@@ -15,20 +17,31 @@ const programs = [
 describe("live bootstrap offline CLI contracts", () => {
   for (const [program, status] of programs) {
     it(`${program} preserves its standalone assertions`, () => {
-      const args = ["--import", "tsx", path.join(directory, program), repo];
-      if (program !== "contract-selfcheck.mts") args.push(path.join(directory, "bootstrap.mts"));
-      const result = spawnSync(process.execPath, args, {
-        cwd: repo, encoding: "utf8", windowsHide: true, timeout: 90_000, maxBuffer: 8 * 1024 * 1024,
-      });
-      const diagnostic = JSON.stringify({args, status: result.status, signal: result.signal,
-        error: result.error?.message, stdout: result.stdout, stderr: result.stderr});
-      expect(result.error, diagnostic).toBeUndefined();
-      expect(result.signal, diagnostic).toBeNull();
-      expect(result.status, diagnostic).toBe(0);
-      const report = JSON.parse(result.stdout);
-      expect(report.status).toBe(status);
-      expect(report.actualApiCalls).toBe(0);
-      expect(report.actualCredentialLookups).toBe(0);
+      const root = program === "dynamic-current-stale.mts" ? mkdtempSync(path.join(tmpdir(), "ags-current-stale-")) : null;
+      try {
+        const args = ["--import", "tsx", path.join(directory, program), repo];
+        if (program !== "contract-selfcheck.mts") args.push(path.join(directory, "bootstrap.mts"));
+        if (root) args.push(root);
+        const result = spawnSync(process.execPath, args, {
+          cwd: repo, encoding: "utf8", windowsHide: true, timeout: 90_000, maxBuffer: 8 * 1024 * 1024,
+        });
+        const diagnostic = JSON.stringify({args, status: result.status, signal: result.signal,
+          error: result.error?.message, stdout: result.stdout, stderr: result.stderr});
+        expect(result.error, diagnostic).toBeUndefined();
+        expect(result.signal, diagnostic).toBeNull();
+        expect(result.status, diagnostic).toBe(0);
+        const report = JSON.parse(result.stdout);
+        expect(report.status).toBe(status);
+        expect(report.actualApiCalls).toBe(0);
+        expect(report.actualCredentialLookups).toBe(0);
+      } finally {
+        if (root) {
+          // Unlink the package junction before recursively removing only our scratch.
+          const dependencyLink = path.join(root, "node_modules/zod");
+          if (existsSync(dependencyLink)) unlinkSync(dependencyLink);
+          rmSync(root, {recursive: true, force: true});
+        }
+      }
     }, 100_000);
   }
 });
