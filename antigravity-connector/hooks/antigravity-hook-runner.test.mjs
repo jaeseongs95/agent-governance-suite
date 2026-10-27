@@ -148,7 +148,7 @@ try {
     assert.ok(resWrapper.elapsedMs < 2000, `Expected Handler 1 elapsedMs < 2000ms, got ${resWrapper.elapsedMs}ms`);
     const parsedWrapper = JSON.parse(resWrapper.stdout);
     assert.equal(parsedWrapper.decision, "deny");
-    assert.equal(parsedWrapper.reason, "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED");
+    assert.match(parsedWrapper.reason, /_hostAttestation/);
     assert.equal(parsedWrapper.overwrite, undefined);
 
     const directPayload = JSON.stringify({
@@ -162,7 +162,7 @@ try {
     assert.equal(resDirect.status, 0);
     const parsedDirect = JSON.parse(resDirect.stdout);
     assert.equal(parsedDirect.decision, "deny");
-    assert.equal(parsedDirect.reason, "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED");
+    assert.match(parsedDirect.reason, /_hostAttestation/);
     assert.equal(parsedDirect.overwrite, undefined);
   }
 
@@ -556,7 +556,9 @@ try {
     assert.equal(resMsg.status, 0);
     assert.ok(resMsg.elapsedMs < 3000, `Expected Handler 2 prepare_session_message elapsedMs < 3000ms, got ${resMsg.elapsedMs}ms`);
     const parsedMsg = JSON.parse(resMsg.stdout);
-    assert.equal(parsedMsg.decision, "deny");
+    // 3.0 stopgap: Antigravity is inferred root, so the common hook issues a one-use root proof.
+    assert.equal(parsedMsg.decision, "allow");
+    assert.equal(typeof parsedMsg.overwrite?.Arguments?._sessionProof, "string");
     assert.equal(parsedMsg.overwrite?.Arguments?._sessionBinding, undefined);
     for (const file of ["session-board.sqlite3", "trust.sqlite3", "session-messaging"])
       assert.equal(existsSync(path.join(tmpDir, file)), false);
@@ -606,7 +608,7 @@ try {
       },
     );
     assert.equal(outWhenStagesThrow.decision, "deny");
-    assert.equal(outWhenStagesThrow.reason, "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED");
+    assert.match(outWhenStagesThrow.reason, /_hostAttestation/);
     assert.equal(outWhenStagesThrow.overwrite, undefined);
     // The early common governance entry owns AGS authorization. Advisory-stage
     // failure injection must not bypass it or convert unsupported input to allow.
@@ -627,7 +629,7 @@ try {
       "",
     );
     assert.equal(directForgedSession.decision, "deny");
-    assert.equal(directForgedSession.reason, "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED");
+    assert.match(directForgedSession.reason, /_sessionBinding/);
     assert.equal(directForgedSession.overwrite, undefined);
 
     const directForgedContinuity = await executeAntigravityHookEvent(
@@ -645,7 +647,7 @@ try {
       "",
     );
     assert.equal(directForgedContinuity.decision, "deny");
-    assert.equal(directForgedContinuity.reason, "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED");
+    assert.match(directForgedContinuity.reason, /_continuityBinding/);
     assert.equal(directForgedContinuity.overwrite, undefined);
   }
 

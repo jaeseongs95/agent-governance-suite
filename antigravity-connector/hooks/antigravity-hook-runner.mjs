@@ -1042,6 +1042,10 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
 
   const { canonicalInput, toolBoundary } = buildCanonicalHookInput(rawInput, event, explicitHook || "session-message");
   if (event === "PreToolUse" && toolBoundary?.canonicalName.startsWith("mcp__agent-governance-suite__")) {
+    // ponytail: 3.0 infers root for every Antigravity call, so caller binding keys are refused here
+    // instead of by the actor denial. Drop once the child gate returns after 3.0.
+    const forgedKey = findFirstReservedKey(toolBoundary.toolInput);
+    if (forgedKey) return { decision: "deny", reason: `Unverified caller ${forgedKey} rejected.` };
     try {
       const { runGovernanceHook } = await import("../../mcp-server/dist/governance-hook.mjs");
       const outcome = await runGovernanceHook("antigravity", JSON.stringify(canonicalInput));

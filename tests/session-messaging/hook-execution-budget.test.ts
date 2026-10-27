@@ -309,7 +309,7 @@ it.each(["late-response", "partial-close", "success"])("actual response settling
   expect(onOperationWrite).toHaveBeenCalledTimes(1); expect(socket.destroy).toHaveBeenCalledTimes(1);
 });
 
-it.each(["gemini", "antigravity"])("does not spend a native %s lifecycle budget on identity or presence", async (host) => {
+it.each(["gemini"])("does not spend a native %s lifecycle budget on identity or presence", async (host) => {
   expect(await runSessionMessageHook(host, JSON.stringify(start), 424242,
     { executionBudget: budget(), hostProcess: { pid: 424242, startToken: "T1" } })).toBe("");
   expect(f.request).not.toHaveBeenCalled(); expect(f.token).not.toHaveBeenCalled();

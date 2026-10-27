@@ -22,9 +22,14 @@ does not interpret vendor fields, product names or diagnostic label strings.
   children is deferred past 3.0 by user decision (2026-10-27). Until then the
   native capture and U3 rules below describe the later child gate, not a 3.0
   installation condition.
-- Gemini CLI and Antigravity: unsupported in 3.0 because a discriminating actor
-  observation is not established. Each adapter returns its own unsupported
-  reason code; core policy has no host-specific exception.
+- Antigravity: 3.0 stopgap (user decision, 2026-10-28) infers root for every
+  recognized event with a conversation ID, like Codex above, so a child passes
+  as root until the child gate returns after 3.0. Antigravity PreToolUse carries
+  no tool call ID, so the adapter draws a random one per hook run to keep the
+  root proof one-use, and the connector refuses caller binding keys itself.
+- Gemini CLI: unsupported in 3.0 because a discriminating actor observation is
+  not established. Its adapter returns its own unsupported reason code; core
+  policy has no host-specific exception.
 
 Split-pane teammates and nested CLI processes are independent sessions and use
 their own adapter's field rule. The initiating process cannot be reliably

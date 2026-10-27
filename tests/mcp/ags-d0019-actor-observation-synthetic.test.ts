@@ -90,11 +90,18 @@ describe("AGS-D-0019 synthetic builtin adapters", () => {
     expect(actor("claude-code", event, extra)).toEqual({ role: "indeterminate", basis: "unavailable", reasonCode });
   });
 
-  // Child blocking on Codex is deferred past 3.0, so agent fields do not change the inferred root.
-  it.each(supportedEvents)("infers root for every recognized Codex %s with a session ID", event => {
+  // Child blocking on Codex and Antigravity is deferred past 3.0, so agent fields do not change the inferred root.
+  it.each(supportedEvents.flatMap(event => [["codex", event], ["antigravity", event]]))("infers root for every recognized %s %s with a session ID", (host, event) => {
     for (const extra of [{}, { agent_id: "" }, { agent_id: "synthetic-child" }, { agent_type: "synthetic-root" }, { role: "child", basis: "observed" }]) {
-      expect(actor("codex", event, extra)).toEqual({ role: "root", basis: "inferred", reasonCode: "CODEX_ROOT_INFERRED_CHILD_GATE_DEFERRED" });
+      expect(actor(host!, event!, extra)).toEqual({ role: "root", basis: "inferred", reasonCode: `${host!.toUpperCase()}_ROOT_INFERRED_CHILD_GATE_DEFERRED` });
     }
+  });
+
+  it("draws a fresh Antigravity call ID because its PreToolUse carries none", () => {
+    expect(adaptHostInput(input("PreToolUse", { tool_use_id: "native-call" }), "antigravity").observation.callId).toBe("native-call");
+    const drawn = [1, 2].map(() => adaptHostInput(input("PreToolUse"), "antigravity").observation.callId);
+    expect(drawn[0]).toMatch(/^[0-9a-f-]{36}$/u);
+    expect(drawn[0]).not.toBe(drawn[1]);
   });
 
   it.each([
@@ -107,14 +114,18 @@ describe("AGS-D-0019 synthetic builtin adapters", () => {
 
   it.each([
     ["gemini", "GEMINI_ACTOR_OBSERVATION_UNSUPPORTED"],
-    ["antigravity", "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED"],
   ] as const)("registers %s with its distinct unsupported reason and existing transport", (host, reasonCode) => {
     for (const event of supportedEvents) expect(actor(host, event, { agent_id: "" })).toEqual({ role: "indeterminate", basis: "unavailable", reasonCode });
     expect(hostDeliveryProfile(host, {}, () => {}, true).transport).toBe("gemini-queue");
     expect(hostDeliveryProfile(host, {}, () => {}, false).transport).toBe("codex-deferred");
   });
 
-  it.each(["codex", "claude-code", "gemini", "antigravity"])("normalizes only nonblank string native call IDs for %s", host => {
+  it("keeps the Antigravity delivery transport", () => {
+    expect(hostDeliveryProfile("antigravity", {}, () => {}, true).transport).toBe("gemini-queue");
+    expect(hostDeliveryProfile("antigravity", {}, () => {}, false).transport).toBe("codex-deferred");
+  });
+
+  it.each(["codex", "claude-code", "gemini"])("normalizes only nonblank string native call IDs for %s", host => {
     expect(adaptHostInput(input("PreToolUse", { tool_use_id: " synthetic-call " }), host).observation.callId).toBe("synthetic-call");
     for (const tool_use_id of [undefined, null, "", " \t ", 42, {}, []]) {
       expect(adaptHostInput(input("PreToolUse", { tool_use_id, callId: "caller-claim" }), host).observation).not.toHaveProperty("callId");

@@ -114,7 +114,7 @@ it("requires a complete matching Gemini observation before starting presence", a
   expect(spawnMock).not.toHaveBeenCalled();
 });
 
-it.each(["gemini", "antigravity"])("denies unsupported native %s lifecycle before presence and process effects", async (host) => {
+it.each(["gemini"])("denies unsupported native %s lifecycle before presence and process effects", async (host) => {
   await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: input.session_id, agent_id: "" }, host, 424242,
     { hostProcess: observedHostProcess() });
   expect(requestMock).not.toHaveBeenCalled(); expect(startTokenMock).not.toHaveBeenCalled(); expect(spawnMock).not.toHaveBeenCalled();

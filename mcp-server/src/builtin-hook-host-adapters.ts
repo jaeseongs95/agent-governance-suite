@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { types as utilTypes } from "node:util";
 import { hookFailure, retainHookFailureCause, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
 import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
@@ -71,17 +71,21 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
   };
 }
 
-/** ponytail: 3.0 infers root for every recognized Codex event with a session ID, so a subagent
+/** ponytail: 3.0 infers root for every recognized event with a session ID, so a subagent
  * (which carries the parent session ID) passes as root. Child blocking is deferred past 3.0. */
-function adaptCodexHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
+function adaptInferredRootHookInput(input: Record<string, unknown>, host: string, prefix: "CODEX" | "ANTIGRAVITY"): AdaptedHostInput {
   const actor: InputObservation["actor"] = {
-    role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_EVENT_UNRECOGNIZED",
+    role: "indeterminate", basis: "unavailable", reasonCode: `${prefix}_NATIVE_EVENT_UNRECOGNIZED`,
   };
   const adapted = adaptBuiltinHookInput(input, host, actor);
   if (adapted.lifecycle === "none" && adapted.observation.kind === "unknown") return adapted;
-  if (!adapted.observation.sessionId.trim()) actor.reasonCode = "CODEX_NATIVE_SESSION_ID_INVALID";
-  else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: "CODEX_ROOT_INFERRED_CHILD_GATE_DEFERRED" });
+  if (!adapted.observation.sessionId.trim()) actor.reasonCode = `${prefix}_NATIVE_SESSION_ID_INVALID`;
+  else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: `${prefix}_ROOT_INFERRED_CHILD_GATE_DEFERRED` });
   return adapted;
+}
+
+function adaptCodexHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
+  return adaptInferredRootHookInput(input, host, "CODEX");
 }
 
 /** Claude's supported native hook schema omits agent_id for root calls.
@@ -109,10 +113,13 @@ function adaptGeminiHookInput(input: Record<string, unknown>, host: string): Ada
   });
 }
 
+/** ponytail: Antigravity PreToolUse carries no tool call ID (agy hooks.md), so each hook run
+ * draws a random one to keep the root proof one-use. Bind the native ID once Antigravity sends one. */
 function adaptAntigravityHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
-  return adaptBuiltinHookInput(input, host, {
-    role: "indeterminate", basis: "unavailable", reasonCode: "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED",
-  });
+  const adapted = adaptInferredRootHookInput(input, host, "ANTIGRAVITY");
+  const { observation } = adapted;
+  if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before" && !observation.callId) observation.callId = randomUUID();
+  return adapted;
 }
 
 const GOVERNANCE_TOOL_PREFIXES = new Set([

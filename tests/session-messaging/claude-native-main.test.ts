@@ -44,7 +44,6 @@ it.each([
 
 it.each([
   ["gemini", "GEMINI_ACTOR_OBSERVATION_UNSUPPORTED"],
-  ["antigravity", "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED"],
 ])("keeps %s missing and empty actor IDs unavailable", (host, reasonCode) => {
   for (const extra of [{}, {agent_id: ""}]) {
     expect(adaptHostInput(payload("prepare_session_message", {}, extra), host!).observation.actor)

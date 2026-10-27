@@ -221,7 +221,6 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
 
   it.each([
     { host: "gemini", model: "gemini-2.5-pro", ingress: "wrapper", agent: undefined, reasonCode: "GEMINI_ACTOR_OBSERVATION_UNSUPPORTED" },
-    { host: "antigravity", model: "fixture-model", ingress: "hook", agent: undefined, reasonCode: "ANTIGRAVITY_ACTOR_OBSERVATION_UNSUPPORTED" },
     { host: "claude-code", model: "claude-opus-5", ingress: "child", agent: "child-fixture", reasonCode: "CLAUDE_NATIVE_CHILD_AGENT_ID" },
     { host: "claude-code", model: "claude-opus-5", ingress: "empty-id", agent: "", reasonCode: "CLAUDE_NATIVE_AGENT_ID_INVALID" },
   ])("denies unavailable root authority before model attestation for $host/$ingress/$model", async ({ host, model, agent, reasonCode }) => {
