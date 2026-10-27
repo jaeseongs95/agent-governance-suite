@@ -3,6 +3,7 @@ import { once } from 'node:events';
 import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import type { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import { afterEach, expect, it } from 'vitest';
 import { waitForSessionMessageBrokerReady } from '../../mcp-server/src/session-message-client.js';
@@ -19,7 +20,7 @@ function start(code:string) {
   children.push(child); return child;
 }
 async function capture(child: ChildProcess, state:string) {
-  try { await (waitForSessionMessageBrokerReady as any)(state,child,3000,undefined,child.stdio[3]); throw new Error('unexpected ready'); }
+  try { await waitForSessionMessageBrokerReady(state,child,3000,undefined,child.stdio[3] as Readable | null); throw new Error('unexpected ready'); }
   catch (e) { return e as Error; }
 }
 it('real broker emits an allowed startup failure and complete fd3 EOF',async()=>{
