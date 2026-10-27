@@ -86,11 +86,11 @@ try {
   await bindMockAuthorityAndEvidence(api, config);
   const checked = await api.preflight(config, await api.prepare(config));
   const total = expected.reduce((sum, row) => sum + row.pico, 0n);
+  validateReservations(expected, checked.requestReservations);
+  const wrong = structuredClone(checked.requestReservations); wrong[0]!.reservedUsd += 0.5;
+  assert.throws(() => validateReservations(expected, wrong));
   if (total <= 150000000000n) {
-    validateReservations(expected, checked.requestReservations);
     assert.equal(checked.status, "READY_FOR_OPERATOR_DISPATCH");
-    const wrong = structuredClone(checked.requestReservations); wrong[0]!.reservedUsd += 0.5;
-    assert.throws(() => validateReservations(expected, wrong));
     let dispatched = 0, mismatch = false;
     const run = await api.run(config, {executionKind:"offline-mock", env:mockEnv, fetcher:async (_url, init) => {
       const gold = independent[dispatched++]; const body = typeof init?.body === "string" ? init.body : "";

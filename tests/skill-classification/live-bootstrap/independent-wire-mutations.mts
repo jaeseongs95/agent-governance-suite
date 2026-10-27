@@ -26,16 +26,24 @@ try {
     ["price", "tests/skill-classification/live-bootstrap/bootstrap.mts", "prices!.inputUsdPer1k.toString().toLowerCase()", "(prices!.inputUsdPer1k * 0.5).toString().toLowerCase()", "INDEPENDENT_RESERVATION_PRICE"],
   ] as const;
   const checks: string[] = [];
+  const runOracle = () => spawnSync(process.execPath,["--import","tsx",path.join(root,"tests/skill-classification/live-bootstrap/dynamic-current-oracle.mts"),root],{cwd:repo,encoding:"utf8",windowsHide:true,timeout:90000,
+    env:{...process.env,TEMP:childTemp,TMP:childTemp,TMPDIR:childTemp}});
+  const green = (id: string) => {
+    const result = runOracle();
+    assert.equal(result.status,0,`${id}:exit=${result.status} stderr=${result.stderr}`);
+    checks.push(`${id}: GREEN`);
+  };
+  green("baseline");
   for (const [id, file, before, after, marker] of cases) {
     const target = path.join(root,file), original = await readFile(target,"utf8"); assert.equal(original.split(before).length,2,`MUTATION_ANCHOR:${id}`);
     await writeFile(target,original.replace(before,after),"utf8");
     try {
-      const result = spawnSync(process.execPath,["--import","tsx",path.join(root,"tests/skill-classification/live-bootstrap/dynamic-current-oracle.mts"),root],{cwd:repo,encoding:"utf8",windowsHide:true,timeout:90000,
-        env:{...process.env,TEMP:childTemp,TMP:childTemp,TMPDIR:childTemp}});
+      const result = runOracle();
       assert.equal(result.status,1,`${id}:exit=${result.status} stderr=${result.stderr}`);
       assert(result.stderr.includes(marker),`${id}:expected ${marker}: ${result.stderr}`);
       checks.push(`${id}: RED ${marker}`);
     } finally { await writeFile(target,original,"utf8"); }
+    green(`${id}:restored`);
   }
   console.log(JSON.stringify({status:"INDEPENDENT_MUTATIONS_PASS",checks,actualApiCalls:0,actualCredentialLookups:0}));
 } finally {if (!parentOwnsRoot) removeSourceScratch(root);}
