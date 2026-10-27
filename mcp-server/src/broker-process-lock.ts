@@ -3,7 +3,7 @@ import { lstatSync, mkdirSync, mkdtempSync, readdirSync, renameSync, rmdirSync }
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { processStartToken, type ProcessIdentityBudget } from "./process-identity.js";
-import { BROKER_LOCK_PUBLISH_RETRY_CODES } from "./session-message-protocol.js";
+import { BROKER_LOCK_PUBLISH_RETRY_CODES, BROKER_LOCK_REASONS } from "./session-message-protocol.js";
 
 export interface BrokerProcessLock {
   readonly path: string;
@@ -11,13 +11,14 @@ export interface BrokerProcessLock {
 }
 const OWNER = /^owner-([1-9][0-9]*)-([a-f0-9]{32})(?:-([a-f0-9]{64}))?$/u;
 const PUBLISH_RETRY_CODES = BROKER_LOCK_PUBLISH_RETRY_CODES;
-const REOBSERVE_CODES = ["BROKER_LOCK_EMPTY_DIRECTORY", "BROKER_LOCK_CHANGED",
+const REOBSERVE_CODES = ["BROKER_LOCK_" + BROKER_LOCK_REASONS.EMPTY_DIRECTORY, "BROKER_LOCK_" + BROKER_LOCK_REASONS.CHANGED,
   ...PUBLISH_RETRY_CODES.map(value => "BROKER_LOCK_PUBLISH_" + value)];
 const code = (error: unknown) => (error as NodeJS.ErrnoException | null)?.code;
 const startHash = (token: string) => createHash("sha256").update(token).digest("hex");
 let ownStartHash: string | undefined;
 
-function unavailable(reason: string, cause?: unknown): never {
+type BrokerLockReason = typeof BROKER_LOCK_REASONS[keyof typeof BROKER_LOCK_REASONS] | `PUBLISH_${string}`;
+function unavailable(reason: BrokerLockReason, cause?: unknown): never {
   throw Object.assign(new Error("Broker lock state requires inspection: " + reason + ".", { cause }),
     { code: "BROKER_LOCK_" + reason });
 }
@@ -26,14 +27,14 @@ function unavailable(reason: string, cause?: unknown): never {
 function remaining(budget?: ProcessIdentityBudget): number | undefined {
   if (!budget) return undefined;
   const value = Math.floor(budget());
-  if (!Number.isFinite(value) || value < 1) return unavailable("BUDGET_EXPIRED");
+  if (!Number.isFinite(value) || value < 1) return unavailable(BROKER_LOCK_REASONS.BUDGET_EXPIRED);
   return value;
 }
 
 function startToken(pid: number, budget?: ProcessIdentityBudget): string {
   let cause: unknown;
   const token = processStartToken(pid, process.platform, remaining(budget), error => { cause = error; });
-  if (token === null) return unavailable("OWNER_UNVERIFIED", cause);
+  if (token === null) return unavailable(BROKER_LOCK_REASONS.OWNER_UNVERIFIED, cause);
   remaining(budget); // A late result cannot authorize a marker or a reclaim.
   return token;
 }
@@ -44,7 +45,7 @@ function definitelyGone(pid: number, expectedStartHash?: string, budget?: Proces
   catch (error) {
     if (code(error) === "ESRCH") return true;
     if (code(error) === "EPERM") return false;
-    return unavailable("OWNER_UNVERIFIED", error);
+    return unavailable(BROKER_LOCK_REASONS.OWNER_UNVERIFIED, error);
   }
   if (expectedStartHash === undefined) return false; // Legacy PID-only markers fail closed.
   const actual = startToken(pid, budget);
@@ -57,30 +58,30 @@ function retireObservedDeadOwner(lockPath: string, budget?: ProcessIdentityBudge
   try { info = lstatSync(lockPath); }
   catch (error) { if (code(error) === "ENOENT") return true; throw error; }
   // Unknown path state is preserved; it must not be reported as a running broker.
-  if (!info.isDirectory() || info.isSymbolicLink()) return unavailable("UNSUPPORTED_PATH");
+  if (!info.isDirectory() || info.isSymbolicLink()) return unavailable(BROKER_LOCK_REASONS.UNSUPPORTED_PATH);
   let entries;
   try { entries = readdirSync(lockPath, { withFileTypes: true }); }
   catch (error) { if (code(error) === "ENOENT") return true; throw error; }
-  if (entries.length === 0) return unavailable("EMPTY_DIRECTORY");
-  if (entries.length !== 1) return unavailable("UNRECOGNIZED_OWNER");
+  if (entries.length === 0) return unavailable(BROKER_LOCK_REASONS.EMPTY_DIRECTORY);
+  if (entries.length !== 1) return unavailable(BROKER_LOCK_REASONS.UNRECOGNIZED_OWNER);
   const entry = entries[0]!;
   const match = OWNER.exec(entry.name);
-  if (!match || !entry.isDirectory() || entry.isSymbolicLink()) return unavailable("UNRECOGNIZED_OWNER");
+  if (!match || !entry.isDirectory() || entry.isSymbolicLink()) return unavailable(BROKER_LOCK_REASONS.UNRECOGNIZED_OWNER);
   const pid = Number(match[1]);
-  if (!Number.isSafeInteger(pid) || pid < 1) return unavailable("UNRECOGNIZED_OWNER");
+  if (!Number.isSafeInteger(pid) || pid < 1) return unavailable(BROKER_LOCK_REASONS.UNRECOGNIZED_OWNER);
   if (!definitelyGone(pid, match[3], budget)) return false;
   const marker = path.join(lockPath, entry.name);
   // Exact, never-reused generation name is the removal witness. Losing observers
   // must not remove the parent after ENOENT or an unexpected/nonempty child.
   try { rmdirSync(marker); }
   catch (error) {
-    if (["ENOENT", "ENOTEMPTY", "EEXIST", "ENOTDIR"].includes(code(error) ?? "")) return unavailable("CHANGED", error);
+    if (["ENOENT", "ENOTEMPTY", "EEXIST", "ENOTDIR"].includes(code(error) ?? "")) return unavailable(BROKER_LOCK_REASONS.CHANGED, error);
     throw error;
   }
   try { rmdirSync(lockPath); return true; }
   catch (error) {
     if (code(error) === "ENOENT") return true;
-    if (["ENOTEMPTY", "EEXIST"].includes(code(error) ?? "")) return unavailable("CHANGED", error);
+    if (["ENOTEMPTY", "EEXIST"].includes(code(error) ?? "")) return unavailable(BROKER_LOCK_REASONS.CHANGED, error);
     throw error;
   }
 }
@@ -106,7 +107,7 @@ function retireAbandonedStages(lockPath: string, budget?: ProcessIdentityBudget)
     const pid = Number(match[1]);
     if (!Number.isSafeInteger(pid) || pid < 1) continue;
     try { if (!definitelyGone(pid, match[3], budget)) continue; }
-    catch (error) { if (code(error) === "BROKER_LOCK_OWNER_UNVERIFIED") continue; throw error; }
+    catch (error) { if (code(error) === "BROKER_LOCK_" + BROKER_LOCK_REASONS.OWNER_UNVERIFIED) continue; throw error; }
     try {
       if (marker) rmdirSync(path.join(stage, owner));
       rmdirSync(stage);
@@ -151,7 +152,7 @@ export function acquireBrokerProcessLock(lockPath: string, budget?: ProcessIdent
         break;
       } catch (error) {
         if (!PUBLISH_RETRY_CODES.includes(code(error) ?? "")) throw error;
-        if (attempt === 1) return unavailable("PUBLISH_" + (code(error) ?? "UNKNOWN"), error);
+        if (attempt === 1) return unavailable(`PUBLISH_${code(error) ?? "UNKNOWN"}`, error);
       }
     }
   } catch (error) {
@@ -166,10 +167,10 @@ export function acquireBrokerProcessLock(lockPath: string, budget?: ProcessIdent
     if (cleanup.length) {
       if (failure) throw Object.assign(new AggregateError([failure.error, ...cleanup],
         "Broker lock preparation and cleanup both failed.", { cause: failure.error }),
-        { code: "BROKER_LOCK_PREPARATION_CLEANUP_FAILED" });
+        { code: "BROKER_LOCK_" + BROKER_LOCK_REASONS.PREPARATION_CLEANUP_FAILED });
       if (cleanup.length === 1) throw cleanup[0];
       throw Object.assign(new AggregateError(cleanup, "Broker lock preparation cleanup failed.", { cause: cleanup[0] }),
-        { code: "BROKER_LOCK_PREPARATION_CLEANUP_FAILED" });
+        { code: "BROKER_LOCK_" + BROKER_LOCK_REASONS.PREPARATION_CLEANUP_FAILED });
     }
   }
   if (failure) throw failure.error;

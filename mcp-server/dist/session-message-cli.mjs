@@ -418,6 +418,19 @@ function resolveSessionMessageStateDirectory(environment = process.env, platform
 // mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
 var BROKER_LOCK_PUBLISH_RETRY_CODES = Object.freeze(["EEXIST", "ENOTEMPTY", "EPERM", "EACCES", "ENOENT"]);
+var BROKER_LOCK_REASONS = Object.freeze({
+  BUDGET_EXPIRED: "BUDGET_EXPIRED",
+  OWNER_UNVERIFIED: "OWNER_UNVERIFIED",
+  UNSUPPORTED_PATH: "UNSUPPORTED_PATH",
+  EMPTY_DIRECTORY: "EMPTY_DIRECTORY",
+  UNRECOGNIZED_OWNER: "UNRECOGNIZED_OWNER",
+  CHANGED: "CHANGED",
+  PREPARATION_CLEANUP_FAILED: "PREPARATION_CLEANUP_FAILED"
+});
+var BROKER_IDENTITY_BUDGET_CODES = Object.freeze({
+  EXPIRED: "BROKER_IDENTITY_BUDGET_EXPIRED",
+  INVALID: "BROKER_IDENTITY_BUDGET_INVALID"
+});
 var BROKER_STARTUP_CODES = /* @__PURE__ */ new Set([
   "EACCES",
   "EPERM",
@@ -432,15 +445,8 @@ var BROKER_STARTUP_CODES = /* @__PURE__ */ new Set([
   "SQLITE_CORRUPT",
   "SQLITE_IOERR",
   "SQLITE_READONLY",
-  "BROKER_LOCK_BUDGET_EXPIRED",
-  "BROKER_LOCK_OWNER_UNVERIFIED",
-  "BROKER_LOCK_UNSUPPORTED_PATH",
-  "BROKER_LOCK_EMPTY_DIRECTORY",
-  "BROKER_LOCK_UNRECOGNIZED_OWNER",
-  "BROKER_LOCK_CHANGED",
-  "BROKER_LOCK_PREPARATION_CLEANUP_FAILED",
-  "BROKER_IDENTITY_BUDGET_EXPIRED",
-  "BROKER_IDENTITY_BUDGET_INVALID",
+  ...Object.values(BROKER_LOCK_REASONS).map((reason) => "BROKER_LOCK_" + reason),
+  ...Object.values(BROKER_IDENTITY_BUDGET_CODES),
   ...BROKER_LOCK_PUBLISH_RETRY_CODES.map((code) => "BROKER_LOCK_PUBLISH_" + code),
   "STARTUP_FAILED"
 ]);
@@ -466,7 +472,7 @@ function sessionMessageLineReader(limitBytes) {
 function encodeIdentityDeadline(deadlineMonotonicMs) {
   const before = process.hrtime.bigint();
   const remaining = Math.floor(deadlineMonotonicMs - performance.now());
-  if (!Number.isFinite(remaining) || remaining < 1) throw producerFailure("BROKER_IDENTITY_BUDGET_EXPIRED", "The broker identity budget expired.");
+  if (!Number.isFinite(remaining) || remaining < 1) throw producerFailure(BROKER_IDENTITY_BUDGET_CODES.EXPIRED, "The broker identity budget expired.");
   return String(before + BigInt(remaining) * 1000000n);
 }
 
