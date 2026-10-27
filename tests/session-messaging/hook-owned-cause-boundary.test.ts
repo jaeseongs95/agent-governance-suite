@@ -1,4 +1,5 @@
 import {EventEmitter} from "node:events";
+import {performance as modulePerformance} from "node:perf_hooks";
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 
 const f = vi.hoisted(() => ({
@@ -8,7 +9,7 @@ const f = vi.hoisted(() => ({
   sqlExec: vi.fn(), sqlGet: vi.fn(), sqlRun: vi.fn(), sqlClose: vi.fn(),
   closeFailure: null as {value: unknown} | null, rollbackFailure: null as {value: unknown} | null,
 }));
-vi.mock("node:perf_hooks", () => ({performance: {now: () => f.now}}));
+vi.mock("node:perf_hooks", () => ({performance: {now: () => globalThis.performance.now()}}));
 vi.mock("node:tls", () => ({default: {connect: f.connect}}));
 vi.mock("node:child_process", async original => ({...await original<typeof import("node:child_process")>(), spawn: f.spawn}));
 vi.mock("node:fs", async original => ({...await original<typeof import("node:fs")>(), existsSync: () => true, mkdirSync: vi.fn(), chmodSync: vi.fn()}));
@@ -25,6 +26,7 @@ vi.mock("node:sqlite", () => ({DatabaseSync: class {
 }}));
 
 import {runSessionMessageHook} from "../../mcp-server/src/session-message-hook.js";
+import {remainingIdentityBudget} from "../../mcp-server/src/broker-identity-budget.js";
 import {registerHookHostAdapter, type AdaptedHostInput} from "../../mcp-server/src/host-input-adapter.js";
 import {BrokerRequestRejected, requestSessionMessageOnce, sessionMessageRequest} from "../../mcp-server/src/session-message-client.js";
 import {hookFailureContext, hookFailureReason, retainHookFailureCause, retainHookFailureSecondary, tagHookFailure} from "../../mcp-server/src/hook-error-diagnostics.js";
@@ -54,6 +56,11 @@ function diagnosticValue(spy: ReturnType<typeof vi.spyOn>) {
   expect(line).toBeDefined();
   for (const marker of ["PRIVATE_", "broker.token", "certificateFingerprint256", key]) expect(line).not.toContain(marker);
   return JSON.parse(line.slice(line.indexOf("{")));
+}
+function useFixtureTimers() {
+  vi.useFakeTimers();
+  const start = Date.now();
+  vi.stubGlobal("performance", {now: () => f.now + Date.now() - start});
 }
 beforeEach(() => {
   vi.stubGlobal("performance", {now: () => f.now});
@@ -122,6 +129,22 @@ beforeEach(() => {
 afterEach(() => {vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.useRealTimers(); vi.unstubAllGlobals();});
 
 describe("0024 actual client producer through actual hook and safe report", () => {
+  it("advances both monotonic clocks at timer boundaries", async () => {
+    useFixtureTimers();
+    const observed: Array<[number, number]> = [];
+    setTimeout(() => {
+      observed.push([performance.now(), modulePerformance.now()]);
+      expect(remainingIdentityBudget(() => 1000 - performance.now())).toBe(1);
+    }, 899);
+    setTimeout(() => {
+      observed.push([performance.now(), modulePerformance.now()]);
+      expect(() => remainingIdentityBudget(() => 1000 - performance.now())).toThrow("The broker identity budget expired.");
+    }, 900);
+    expect([performance.now(), modulePerformance.now()]).toEqual([100, 100]);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(observed).toEqual([[999, 999], [1000, 1000]]);
+    expect([performance.now(), modulePerformance.now()]).toEqual([1100, 1100]);
+  });
   it.each([
     ["endpoint", "BROKER_ENDPOINT_INVALID"], ["pin", "BROKER_CERTIFICATE_PIN_MISMATCH"],
     ["pin-callback", "BROKER_CERTIFICATE_PIN_MISMATCH"], ["write", "BROKER_WRITE_FAILED"],
@@ -140,7 +163,7 @@ describe("0024 actual client producer through actual hook and safe report", () =
     for (const socket of f.sockets) expect(socket.destroy).toHaveBeenCalledTimes(1);
   });
   it("reports the actual request deadline and destroys the target socket once", async () => {
-    vi.useFakeTimers(); vi.stubGlobal("performance", {now: () => f.now}); f.mode = "deadline";
+    useFixtureTimers(); f.mode = "deadline";
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const pending = runSessionMessageHook(host, input, undefined, options);
     await vi.advanceTimersByTimeAsync(1000);
@@ -203,7 +226,7 @@ describe("0024 actual client producer through actual hook and safe report", () =
     expect(f.connections).toBe(2);
   });
   it("keeps last observed repeated readiness pin failure on the inherited request-budget deadline", async () => {
-    vi.useFakeTimers(); vi.stubGlobal("performance", {now: () => f.now}); f.mode = "probe-history";
+    useFixtureTimers(); f.mode = "probe-history";
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const pending = runSessionMessageHook(host, input, undefined, options);
     await vi.advanceTimersByTimeAsync(1000);
