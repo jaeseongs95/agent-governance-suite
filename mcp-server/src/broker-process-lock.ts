@@ -152,7 +152,7 @@ export function acquireBrokerProcessLock(lockPath: string, budget?: ProcessIdent
         break;
       } catch (error) {
         if (!PUBLISH_RETRY_CODES.includes(code(error) ?? "")) throw error;
-        if (attempt === 1) return unavailable(`PUBLISH_${code(error) ?? "UNKNOWN"}`, error);
+        if (attempt === 1) return unavailable(("PUBLISH_" + (code(error) ?? "UNKNOWN")) as `PUBLISH_${string}`, error);
       }
     }
   } catch (error) {
