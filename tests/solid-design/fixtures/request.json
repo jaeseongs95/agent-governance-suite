@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "solid-example-01",
+  "objective": "단일 호스트 adapter의 책임 경계 검토",
+  "snapshotRef": "fixture:single-adapter-r1",
+  "targets": [
+    "core.ts",
+    "host-adapter.ts"
+  ],
+  "instructionRefs": [
+    "fixture:ags-host-neutral"
+  ],
+  "contractRefs": [
+    "fixture:send-port"
+  ],
+  "priorFindingRefs": []
+}

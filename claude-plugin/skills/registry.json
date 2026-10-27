@@ -2409,6 +2409,82 @@
           }
         }
       ]
+    },
+    {
+      "schemaVersion": "2.0.0",
+      "skillId": "solid-design",
+      "version": "0.1.0",
+      "path": "./solid-design",
+      "enabled": true,
+      "priority": 66,
+      "providers": [
+        {
+          "capabilities": [
+            "solid-design-assessment"
+          ],
+          "executionClass": "bootstrap",
+          "phase": "solid-design-assessment",
+          "phaseOrder": 26,
+          "requiredInputArtifacts": [
+            "solid-design-request"
+          ],
+          "inputBindings": [
+            {
+              "targetArtifact": "solid-design-request",
+              "sources": [
+                "task:solid-design-request"
+              ],
+              "operation": "require-external"
+            }
+          ],
+          "producedArtifacts": [
+            "solid-design-report"
+          ],
+          "outputSchema": "skills/solid-design/contracts/solid-design-report.v1.schema.json",
+          "resultSchema": "contracts/provider-result.v1.schema.json",
+          "stateMapping": {
+            "selector": "/output/status",
+            "values": {
+              "ANALYZED": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "NOT_APPLICABLE": {
+                "state": "passed",
+                "errorRequired": false
+              },
+              "NEEDS_INPUT": {
+                "state": "blocked",
+                "errorRequired": true,
+                "allowedErrorCodes": [
+                  "MISSING_EVIDENCE"
+                ]
+              }
+            },
+            "default": "reject",
+            "adapterErrors": [
+              "INVALID_INPUT",
+              "MISSING_EVIDENCE",
+              "INTEGRITY_FAILED"
+            ]
+          },
+          "selectionCriteria": [
+            "explicit-solid-design-assessment",
+            "observed-module-contract-or-adapter-boundary-decision"
+          ],
+          "preconditions": [
+            "The request explicitly asks for SOLID assessment or the authorized work requires a concrete module, public-contract, or host-adapter boundary decision.",
+            "Applicable instructions, the authorized scope, and inspected source or design references are known. Missing evidence remains missing.",
+            "This is advisory design assessment only. It does not implement changes, replace general diff review, require a new workflow, or grant acceptance, audit, or release authority."
+          ],
+          "failureHandling": "Return NEEDS_INPUT for missing material evidence. ANALYZED and NOT_APPLICABLE finish only this advisory stage; neither proves behavioral correctness nor waives existing obligations. Preserve concrete contract violations and route any scope change through the existing owner.",
+          "gate": {
+            "kind": "none",
+            "policy": "none",
+            "validator": null
+          }
+        }
+      ]
     }
   ]
 }

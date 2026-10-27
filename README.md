@@ -35,7 +35,7 @@ flowchart LR
 Node.js **24.0.0 이상**과 사용할 호스트의 플러그인 기능이 필요합니다. 협업에 참여할 호스트마다 AGS를 설치합니다. 플러그인 사용을 위해 이 저장소를 clone하거나 `pnpm install`을 실행할 필요는 없습니다.
 
 <!-- release-version:start -->
-이 문서는 2.9.1 공개 준비 안내이며, tag·Release 게시 후 현재 공개 릴리스는 `v2.9.1`로 전환됩니다. 거버넌스 전문 스킬 17개, 엔지니어링 전문 스킬 2개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개와 한국어 산문 워크플로 1개를 포함합니다. 2.9.0은 이미 공개돼 있으며 아래 v2.9.1 설치 예시는 tag·Release 게시 후 사용합니다. 이번 후보는 JEV 계층을 통한 스킬의 발견·분류·평가·추천을 지원하고, AGENT가 적용 조건을 대조해 최종 선택합니다. 실제 사용에는 승인된 JEV 또는 현재 벤더의 분류 설정·지원 프로필·예산과 호스트 발견 자료가 필요합니다. 실제 운영 DB 이전·공용 MCP 전환과 현재 후보의 양 Cloud·실제 호스트 검증은 완료로 주장하지 않습니다.
+이 문서는 2.9.1 공개 준비 안내이며, tag·Release 게시 후 현재 공개 릴리스는 `v2.9.1`로 전환됩니다. 거버넌스 전문 스킬 17개, 엔지니어링 전문 스킬 3개, 구현 단계 스킬 1개(`ponytail`), 로컬 인프라 스킬 2개와 한국어 산문 워크플로 1개를 포함합니다. 2.9.0은 이미 공개돼 있으며 아래 v2.9.1 설치 예시는 tag·Release 게시 후 사용합니다. 이번 후보는 JEV 계층을 통한 스킬의 발견·분류·평가·추천을 지원하고, AGENT가 적용 조건을 대조해 최종 선택합니다. 실제 사용에는 승인된 JEV 또는 현재 벤더의 분류 설정·지원 프로필·예산과 호스트 발견 자료가 필요합니다. 실제 운영 DB 이전·공용 MCP 전환과 현재 후보의 양 Cloud·실제 호스트 검증은 완료로 주장하지 않습니다.
 <!-- release-version:end -->
 
 ### Claude Code
@@ -177,6 +177,8 @@ MCP workflow는 계획된 단계의 순서, 결과 형식, 필수 근거와 감�
 <details>
 <summary>전문 스킬 전체 보기</summary>
 
+현재 작업 트리는 전문 스킬 22개, 로컬 인프라 스킬 2개와 오케스트레이터 1개로 구성됩니다.
+
 | 스킬 | 담당하는 일 |
 | --- | --- |
 | [`model-effort-advisor`](skills/model-effort-advisor/) | 관측한 모델·추론 수준이 작업의 난도와 위험에 맞는지 점검합니다. |
@@ -198,6 +200,7 @@ MCP workflow는 계획된 단계의 순서, 결과 형식, 필수 근거와 감�
 | [`software-security-auditor`](skills/software-security-auditor/) | 웹·API와 CLI·MCP의 공격 경로, 방어 수단과 검사 공백을 감사합니다. |
 | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | 고정된 평가의 설계·입력·판정·집계를 독립 감사합니다. |
 | [`cs-engineering`](skills/cs-engineering/) | CS 원리를 설계 제약과 검증 의무로 연결하고 후보·근거의 일관성을 검사합니다. (v0.2.0) |
+| [`solid-design`](skills/solid-design/) | 실제 모듈·계약·어댑터 경계에 SOLID를 적용하고 기존 의무를 보존하는 최소 변경 방향을 제시합니다. 분석 단계이며 구현·수용·감사 승인을 대신하지 않습니다. (v0.1.0) |
 | [`test-engineering`](skills/test-engineering/) | 테스트 계획과 실제 코드 경계에서 사례를 설계하고 red/green·표적 mutation 근거의 결함 탐지 능력을 점검합니다. (v0.1.0) |
 | [`code-review`](skills/code-review/) | 고정된 diff·patch·PR의 실제 실패 경로를 검토하고 결함·권고·질문을 구분합니다. (v0.1.0) |
 

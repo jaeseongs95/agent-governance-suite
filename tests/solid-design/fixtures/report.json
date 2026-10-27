@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "solid-example-01",
+  "requestDigest": "sha256:fc51d5e4e88dd17346f08e35446e878feb9174fdc8e6c9a275c55dd4a5fff842",
+  "snapshotRef": "fixture:single-adapter-r1",
+  "status": "ANALYZED",
+  "summary": "실제 호스트·권한·취소 경계를 담당하는 기존 adapter를 보존한다.",
+  "principlesConsidered": [
+    "DIP",
+    "LSP"
+  ],
+  "scope": {
+    "reviewed": [
+      "core.ts",
+      "host-adapter.ts"
+    ],
+    "notReviewed": []
+  },
+  "findings": [
+    {
+      "id": "S-1",
+      "kind": "preserve-boundary",
+      "principles": [
+        "DIP",
+        "LSP"
+      ],
+      "target": "host-adapter.ts",
+      "evidenceRefs": [
+        "fixture:host-adapter.ts:1-12",
+        "fixture:core.ts:1-5"
+      ],
+      "observation": "core는 send port만 참조하고 adapter가 SDK·권한·취소를 격리한다.",
+      "reasoning": "구현이 하나여도 소비자 계약과 호스트 세부의 분리 근거가 있다.",
+      "contractRefs": [
+        "fixture:send-port"
+      ],
+      "recommendation": "기존 adapter와 좁은 port를 보존하고 새 계층은 추가하지 않는다.",
+      "preserve": [
+        "오류·취소 의미",
+        "공용 코드의 호스트 중립"
+      ],
+      "verificationNeeds": [
+        "실제 구현 적용 때 취소 시 전송·ledger 부작용이 없는지 기존 테스트로 확인"
+      ],
+      "relatedFindingRefs": []
+    }
+  ],
+  "limitations": [
+    "설명용 fixture의 판단이며 실제 AGS 소스 결함이나 실행 검증 결과가 아니다."
+  ],
+  "handoffs": []
+}

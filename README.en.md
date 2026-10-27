@@ -35,7 +35,7 @@ AGS supports this workflow with task contracts, specialist skills, the session b
 You need Node.js **24.0.0 or later** and plugin support in the host you use. Install AGS in each participating host. Using the plugin does not require cloning this repository or running `pnpm install`.
 
 <!-- release-version:start -->
-This is a 2.9.1 publication preparation guide; after the tag and Release are published, the current public release is `v2.9.1`. It includes seventeen governance specialist skills, two engineering specialist skills, one implementation-step skill, two local infrastructure skills, and one Korean prose workflow. Version 2.9.0 has been published; use the v2.9.1 installation example below after the tag and Release are published. This candidate supports skill discovery, classification, evaluation, and recommendations through the JEV layer; the AGENT checks applicability conditions and makes the final selection. Actual use requires approved classification settings for JEV or the current vendor, supported profiles, budget, and host discovery data. Production database migration, shared MCP cutover, and current-candidate testing in both Clouds and native hosts are not claimed complete.
+This is a 2.9.1 publication preparation guide; after the tag and Release are published, the current public release is `v2.9.1`. It includes seventeen governance specialist skills, three engineering specialist skills, one implementation-step skill, two local infrastructure skills, and one Korean prose workflow. Version 2.9.0 has been published; use the v2.9.1 installation example below after the tag and Release are published. This candidate supports skill discovery, classification, evaluation, and recommendations through the JEV layer; the AGENT checks applicability conditions and makes the final selection. Actual use requires approved classification settings for JEV or the current vendor, supported profiles, budget, and host discovery data. Production database migration, shared MCP cutover, and current-candidate testing in both Clouds and native hosts are not claimed complete.
 <!-- release-version:end -->
 
 ### Claude Code
@@ -183,6 +183,8 @@ Test design and evidence review, fixed-change code review, security audits, inde
 <details>
 <summary>Browse all specialist skills</summary>
 
+The current working tree contains 22 specialist skills, two local infrastructure skills, and one orchestrator.
+
 | Skill | Responsibility |
 | --- | --- |
 | [`model-effort-advisor`](skills/model-effort-advisor/) | Checks observed model and reasoning effort against the task's difficulty and risk. |
@@ -204,6 +206,7 @@ Test design and evidence review, fixed-change code review, security audits, inde
 | [`software-security-auditor`](skills/software-security-auditor/) | Audits web/API and CLI/MCP attack paths, controls, and verification gaps. |
 | [`evaluation-validity-auditor`](skills/evaluation-validity-auditor/) | Independently audits a frozen evaluation's design, inputs, judgments, and aggregation. |
 | [`cs-engineering`](skills/cs-engineering/) | Derives CS constraints and verification obligations, then checks candidate/evidence consistency. (v0.2.0) |
+| [`solid-design`](skills/solid-design/) | Assesses concrete module, contract, and adapter boundaries with SOLID and proposes the smallest change that preserves existing obligations. It does not implement changes or grant acceptance, audit, or release approval. (v0.1.0) |
 | [`test-engineering`](skills/test-engineering/) | Designs cases at requirement and code boundaries and checks whether red/green or targeted-mutation evidence can detect defects. (v0.1.0) |
 | [`code-review`](skills/code-review/) | Reviews concrete diffs, patches, or PRs for real failure paths and separates findings, recommendations, and questions. (v0.1.0) |
 

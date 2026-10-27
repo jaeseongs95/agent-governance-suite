@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "assess-solid-design-boundaries"
+  ],
+  "targets": [
+    "module-responsibility",
+    "extension-point",
+    "behavioral-contract",
+    "consumer-interface",
+    "dependency-direction"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/solid-design/SKILL.md",
+      "startLine": 4,
+      "endLine": 5,
+      "digest": "sha256:38f03d44593d79f0a6bc0c2084187ae81eacf9a567c387c359ab4601278978a6"
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/solid-design/SKILL.md",
+      "startLine": 6,
+      "endLine": 6,
+      "digest": "sha256:38f03d44593d79f0a6bc0c2084187ae81eacf9a567c387c359ab4601278978a6"
+    }
+  ]
+}

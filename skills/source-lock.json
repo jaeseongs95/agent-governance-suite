@@ -205,6 +205,15 @@
       "updatePolicy": "internal",
       "integratedChecksum": "sha256:c109cc676ccf2c915bc902b191119ef08fff6478a451c2a623ddbb6524f6ed40",
       "checksumScope": "relative paths and normalized text bytes under skills/code-review"
+    },
+    {
+      "skillId": "solid-design",
+      "path": "skills/solid-design",
+      "version": "0.1.0",
+      "versionSource": "version-file",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:05066ad53e6e0713a721348dfca71393a6bb624fc49ccc58aceb5cf96a45f475",
+      "checksumScope": "relative paths and normalized text bytes under skills/solid-design"
     }
   ]
 }

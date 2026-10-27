@@ -116,10 +116,10 @@ describe("classification inventory source authority (SS26/SS37)", () => {
 });
 
 describe("signed source evidence and selection context regression", () => {
-  it("keeps all 24 skills while separating applicable evidence from exclusions", async () => {
+  it("keeps all 25 skills while separating applicable evidence from exclusions", async () => {
     const inventory = await loadSkillInventory({ root: process.cwd() });
     expect(inventory.issues).toEqual([]);
-    expect(inventory.skills).toHaveLength(24);
+    expect(inventory.skills).toHaveLength(25);
     for (const skill of inventory.skills) {
       expect(skill.applicability, skill.skillId).not.toEqual(skill.exclusions);
       expect(skill.applicability.filter(text => skill.exclusions.includes(text)), skill.skillId).toEqual([]);
@@ -148,7 +148,7 @@ describe("signed source evidence and selection context regression", () => {
     const projected = projectClassificationRequest(request);
     const wire = jevNoulWireAdapter.encode(request, { modelId: "synthetic-local-only" } as ProviderProfile) as { state: { originalPrompt: string }; questions: Record<string, { instructions: { skill: unknown } }> };
     expect(wire.state.originalPrompt).toBe(originalPrompt);
-    expect(Object.keys(wire.questions)).toHaveLength(24);
+    expect(Object.keys(wire.questions)).toHaveLength(25);
     for (const skill of [inventory.skills.find(s => s.skillId === skillId), request.skills.find(s => s.skillId === skillId), projected.payload.skills.find(s => s.skillId === skillId), wire.questions[skillId]!.instructions.skill]) expect(JSON.stringify(skill)).toContain(needle);
   });
 

@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
@@ -12,12 +13,8 @@ const SESSION_BOARD_ADDITION = "scripts/fixtures/session-board-peer-message-guid
 const SESSION_BOARD_ADDITION_SHA256 = "381be4018118086b3c4087be043c004d8d6de986d42a6c0c14f182c2d76ed76f";
 const CS_HANDOFF_ADDITION = "scripts/fixtures/cs-engineering-handoff.2.8.0.md";
 const CS_HANDOFF_SHA256 = "c8937d58fd2d9193f191d86c629c9b54731d08d82ec12cb3249ff82e6362ed52";
-// D280 exact three-field scope-review producer correction on 902a8693.
-// Historical 2.8.0 registry SHA256: 63fc38d9dff8570173af73092e320c4ff2467d26185fb6528ea33a8af59db6a9.
-const CS_REGISTRY_SHA256 = "1cc8d24a204a505ec815295abef93d5590763d3e29e937cb3df158eb988fb2be";
 const ENGINEERING_ADDITION = "scripts/fixtures/engineering-practices-handoff.2.8.1.md";
 const ENGINEERING_ADDITION_SHA256 = "6f4bc0fd90113630f077415038492cbceddbaafb9e4e566c750111fafb3abef1";
-const ENGINEERING_REGISTRY_SHA256 = "dd9c818c5e50d15316b3adc82c77c06810f3efbc6633c957855c1655d6159adc";
 const ENGINEERING_REFERENCES = Object.freeze({
   "agent-instructions.md": "a6df55ef522a75262b93381ad2f8b5fcaca4212a0afeab6cc0d1a90de2230424",
   "catalog.json": "936714985d22b8ea67b51c5d74cceef2d1321efac8dbfca58989ba124bff3d81",
@@ -478,6 +475,13 @@ export function reconstructOptimizedSkill(skillId, root = ROOT) {
   return Buffer.concat([candidate.subarray(0, markerIndex), baselineRelativeDetail, suffix, candidate.subarray(markerIndex + NAVIGATION.length)]);
 }
 
+export function checkRegistryContextCompatibility(registry) {
+  // Explicit 3.0 contract: every descriptor and registry-level field remains
+  // independently reviewable, including authority, bindings and gate semantics.
+  const expected = JSON.parse(readFileSync(join(ROOT, "scripts/fixtures/registry-contract.3.0.json"), "utf8"));
+  return isDeepStrictEqual(registry, expected) ? [] : ["registry differs from the 3.0 contract"];
+}
+
 export function checkSkillContextOptimization() {
   const errors = [];
   for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) {
@@ -630,11 +634,7 @@ export function checkSkillContextOptimization() {
   }
 
   const registry = JSON.parse(readFileSync(join(ROOT, "skills", "registry.json"), "utf8"));
-  const engineering = registry.skills.filter((skill) => ["test-engineering", "code-review"].includes(skill.skillId));
-  const frozenRegistry = { ...registry, skills: registry.skills.filter((skill) => !engineering.includes(skill)) };
-  const registryDigest = (value) => createHash("sha256").update(`${JSON.stringify(value, null, 2)}\n`).digest("hex");
-  if (registryDigest(frozenRegistry) !== CS_REGISTRY_SHA256) errors.push("existing skills/registry.json differs from pinned 2.8.0 candidate");
-  if (registryDigest(engineering) !== ENGINEERING_REGISTRY_SHA256) errors.push("Engineering Practices registry differs from pinned descriptors");
+  errors.push(...checkRegistryContextCompatibility(registry));
   const ponytail = readFileSync(join(ROOT, "skills/ponytail/SKILL.md"));
   if (!withoutClassificationAddition("ponytail", ponytail).equals(baselineFile("skills/ponytail/SKILL.md"))) errors.push("excluded skill ponytail historical instructions changed");
   const ponytailChanged = [...new Set([
