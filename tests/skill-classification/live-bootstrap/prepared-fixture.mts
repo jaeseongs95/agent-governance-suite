@@ -131,7 +131,6 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   assert.equal(successor.revision, "ags-bootstrap-budget-host-source-binding-r03");
   assert.equal(successor.parentBudgetDigest, hash(oracleBytes));
   assert.equal(successor.parentPrecisionDigest, hash(boundaryBytes));
-  assert.equal(successor.fixtureDigest, hash(await readFile(path.join(repo, "tests/skill-classification/fixtures.json"))));
   assert.deepEqual(successor.rows.map((row: {caseId: string}) => row.caseId), predecessor.rows.map((row: {caseId: string}) => row.caseId));
   assert.deepEqual(successor.precisionCases.map((row: {id: string}) => row.id), precision.cases.map((row: {id: string}) => row.id));
   // D280 changes inventory/request bindings only; preserve every frozen money and byte-length expectation.
@@ -150,28 +149,40 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   const solid = JSON.parse(solidBytes.toString("utf8"));
   assert.equal(solid.revision, "ags-bootstrap-budget-solid-binding-r05");
   assert.equal(solid.parentRegistryDigest, hash(registryBytes));
-  if (bindRegistry) assert.equal(solid.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
   assert.equal(solid.fixtureDigest, successor.fixtureDigest);
   assert.equal(solid.fixtureOracleDigest, successor.fixtureOracleDigest);
   assert.equal(solid.rows.length, successor.rows.length);
+  // r05 stays frozen history. r06 binds the skill policy wording and prompt-engineering sources
+  // to a new official capture and independently calculated reservations, without consulting preflight.
+  const policyBytes = await readFile(new URL("./budget-wire-skill-policy-successor.json", import.meta.url));
+  assert.equal(hash(policyBytes), "sha256:c1f3efa8bc1844c5353d6a03854f6917fbedcaabbb5b79aa737a3b3f2cc998b9");
+  const policy = JSON.parse(policyBytes.toString("utf8"));
+  assert.equal(policy.revision, "ags-bootstrap-budget-skill-policy-binding-r06");
+  assert.equal(policy.parentSolidDigest, hash(solidBytes));
+  if (bindRegistry) assert.equal(policy.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
+  assert.equal(policy.fixtureDigest, hash(await readFile(path.join(repo, "tests/skill-classification/fixtures.json"))));
+  assert.equal(policy.rows.length, successor.rows.length);
+  assert.deepEqual(policy.precisionCases.map((row: {id: string}) => row.id), solid.precisionCases.map((row: {id: string}) => row.id));
   const currentRows = successor.rows.map((row: {caseId: string; utf8Bytes: number}, index: number) => {
     const historical = registrySuccessor.rows[index];
     assert.equal(historical.caseId, row.caseId);
     assert.equal(historical.utf8Bytes, row.utf8Bytes);
-    const current = solid.rows[index];
+    assert.equal(solid.rows[index].caseId, row.caseId);
+    const current = policy.rows[index];
     assert.equal(current.caseId, row.caseId);
     return {...row, ...current};
   });
-  const oracle = {...predecessor, inventoryDigest: solid.inventoryDigest, fixtureDigest: successor.fixtureDigest,
-    fixtureOracleDigest: successor.fixtureOracleDigest, rows: currentRows, totals: solid.totals,
+  const oracle = {...predecessor, inventoryDigest: policy.inventoryDigest, fixtureDigest: policy.fixtureDigest,
+    fixtureOracleDigest: policy.fixtureOracleDigest, rows: currentRows, totals: policy.totals,
     syntheticOverBudgetCases: predecessor.syntheticOverBudgetCases.map((row: {id: string}, index: number) => {
       assert.equal(successor.syntheticOverBudgetCases[index].id, row.id);
       assert.equal(solid.syntheticOverBudgetCases[index].id, row.id);
-      return {...row, ...solid.syntheticOverBudgetCases[index]};
-    }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...solid.fractionalRoundingFixture}};
+      assert.equal(policy.syntheticOverBudgetCases[index].id, row.id);
+      return {...row, ...policy.syntheticOverBudgetCases[index]};
+    }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...policy.fractionalRoundingFixture}};
   return {oracleBytes, boundaryBytes, oracle, precision: {...precision,
-    cases: precision.cases.map((row: {id: string}, index: number) => ({...row, ...solid.precisionCases[index]}))},
-  successorDigest: hash(solidBytes), successorRevision: solid.revision};
+    cases: precision.cases.map((row: {id: string}, index: number) => ({...row, ...policy.precisionCases[index]}))},
+  successorDigest: hash(policyBytes), successorRevision: policy.revision};
 }
 
 // Explicit authoring command captures only current public request/wire inputs. It neither runs nor qualifies a provider.
