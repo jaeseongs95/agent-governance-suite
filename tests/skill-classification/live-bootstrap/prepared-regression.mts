@@ -16,6 +16,7 @@ assert(process.argv[2], "Usage: prepared-regression.mts REPO [HELPER]");
 const api = await import(pathToFileURL(helper).href) as Api;
 const root = await mkdtemp(path.join(os.tmpdir(), "ags-prepared-regression-"));
 const checks: string[] = [];
+let expectedSkills: string[] = [];
 const ledgerOf = (config: PreparedBootstrapConfig) => JSON.parse(fs.readFileSync(path.join(config.outputDirectory, "ledger.json"), "utf8"));
 const edit = (file: string, change: (record: Record<string, unknown>) => void) => {const value = JSON.parse(fs.readFileSync(file, "utf8")); change(value); fs.writeFileSync(file, JSON.stringify(value));};
 const authorityFile = (config: PreparedBootstrapConfig) => path.join(config.outputDirectory, config.currentAuthority!.reference.path);
@@ -36,7 +37,7 @@ function child(configFile: string, mode = "normal") {
     if (process.env[name]) processEnv[name] = process.env[name];
   }
   // Real independent processes; no credential values inherited, only explicit dummy mockEnv inside worker.
-  const process_ = spawn(process.execPath, ["--import", "tsx", worker, repo, helper, configFile, mode],
+  const process_ = spawn(process.execPath, ["--import", "tsx", worker, repo, helper, configFile, mode, JSON.stringify(expectedSkills)],
     {cwd: repo, env: processEnv, stdio: ["ignore", "pipe", "pipe", "ipc"], shell: false, windowsHide: true});
   type Message = {type: string; calls: number; status: string};
   const messages: Message[] = [], waiting = new Set<() => void>();
@@ -107,6 +108,14 @@ async function atFsBoundary(config: PreparedBootstrapConfig, phase: string, acti
 }
 try {
   const {config, prepared} = await fixture("nonexpiring");
+  expectedSkills = fs.readdirSync(path.join(repo, "skills"), {withFileTypes: true})
+    .filter(entry => entry.isDirectory())
+    .map(entry => {
+      for (const file of ["SKILL.md", "classification.json"]) assert(fs.existsSync(path.join(repo, "skills", entry.name, file)));
+      return entry.name;
+    }).sort();
+  assert(expectedSkills.length > 0 && new Set(expectedSkills).size === expectedSkills.length, "EXPECTED_INVENTORY_IDS_UNIQUE_AND_NONEMPTY");
+  assert.deepEqual(prepared.inventory.skills.map((skill: {skillId: string}) => skill.skillId).sort(), expectedSkills, "PREPARED_INVENTORY_COVERS_ALL_SKILL_DIRECTORIES");
   const future = Date.parse("2030-01-01T00:00:00.000Z");
   const pre = await api.preflight(config, prepared, future);
   assert.equal(pre.status, "READY_FOR_OPERATOR_DISPATCH", "PREPARATION_AGE_IS_NOT_AUTHORITY_EXPIRY");

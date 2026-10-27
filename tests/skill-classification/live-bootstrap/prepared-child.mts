@@ -6,8 +6,10 @@ import path from "node:path";
 import {pathToFileURL} from "node:url";
 import {mockEnv, mockResponse, hash} from "./prepared-fixture.mjs";
 
-const [, , repo, helper, configFile, mode = "normal"] = process.argv;
+const [, , repo, helper, configFile, mode = "normal", expectedSkillsJson] = process.argv;
 assert(repo && helper && configFile && process.send, "CHILD_REQUIRES_IPC_AND_EXPLICIT_INPUTS");
+assert(expectedSkillsJson, "CHILD_REQUIRES_EXPECTED_INVENTORY_IDS");
+const expectedSkills = JSON.parse(expectedSkillsJson) as string[];
 const api = await import(pathToFileURL(path.resolve(helper!)).href) as typeof import("./bootstrap.mts");
 const config = JSON.parse(await readFile(configFile!, "utf8"));
 const send = (value: unknown) => new Promise<void>((resolve, reject) => process.send!(value as object, error => error ? reject(error) : resolve()));
@@ -77,7 +79,7 @@ try {
     assert.equal(ledger.entries.length, config.limits.requests, "WHOLE_RUN_RESERVED_BEFORE_FIRST_TRANSPORT");
     assert.equal(ledger.entries.reduce((sum: number, row: {reservedUsd: number}) => sum + row.reservedUsd, 0), config.limits.requests * 0.001);
     const ids = Object.keys(JSON.parse(String(init?.body)).questions);
-    assert.equal(ids.length, 24, "NORMAL_SYNTHETIC_RESPONSE_COVERS_ALL_24_IDS");
+    assert.deepEqual(ids.sort(), expectedSkills, "NORMAL_SYNTHETIC_RESPONSE_COVERS_ALL_INVENTORY_IDS");
     if (mode === "crash") {
       await send({type: "DISPATCH", calls, entries: ledger.entries});
       return await new Promise<Response>(() => {}); // Parent kills this actual process after the durable UNKNOWN marker.
