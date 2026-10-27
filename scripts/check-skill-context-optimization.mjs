@@ -493,14 +493,14 @@ function rule(code, check) {
 export function assertRegistryAuthority(registry) {
   const ids = registry.skills.map((skill) => skill.skillId);
   rule("REGISTRY_DUPLICATE_ID", () => assert.equal(new Set(ids).size, ids.length, "duplicate skill ID"));
-  const one = (id) => {
+  const one = (id, label) => {
     const matches = registry.skills.filter((skill) => skill.skillId === id);
-    rule("DESCRIPTOR_COUNT", () => assert.equal(matches.length, 1, `${id}: missing or duplicate`));
-    rule("DESCRIPTOR_ENABLED", () => assert.equal(matches[0].enabled, true, `${id}: disabled`));
-    rule("DESCRIPTOR_PROVIDERS", () => assert.equal(matches[0].providers.length, 1, `${id}: provider count`));
+    rule(`${label}_DESCRIPTOR_COUNT`, () => assert.equal(matches.length, 1, `${id}: missing or duplicate`));
+    rule(`${label}_DESCRIPTOR_ENABLED`, () => assert.equal(matches[0].enabled, true, `${id}: disabled`));
+    rule(`${label}_DESCRIPTOR_PROVIDERS`, () => assert.equal(matches[0].providers.length, 1, `${id}: provider count`));
     return matches[0].providers[0];
   };
-  const solid = one("solid-design");
+  const solid = one("solid-design", "SOLID");
   rule("SOLID_EXECUTION", () => assert.equal(solid.executionClass, "bootstrap"));
   rule("SOLID_PHASE", () => assert.equal(solid.phase, "solid-design-assessment"));
   rule("SOLID_PHASE_ORDER", () => assert.equal(solid.phaseOrder, 26));
@@ -510,14 +510,14 @@ export function assertRegistryAuthority(registry) {
   rule("SOLID_OUTPUT_SCHEMA", () => assert.equal(solid.outputSchema, "skills/solid-design/contracts/solid-design-report.v1.schema.json"));
   rule("SOLID_RESULT_SCHEMA", () => assert.equal(solid.resultSchema, "contracts/provider-result.v1.schema.json"));
   rule("SOLID_CAPABILITY_OWNER", () => assert.equal(registry.skills.flatMap((skill) => skill.providers).filter((provider) => provider.capabilities.includes("solid-design-assessment")).length, 1, "ambiguous SOLID capability"));
-  const panel = one("independent-deliberation-panel");
+  const panel = one("independent-deliberation-panel", "PANEL");
   rule("PANEL_EXECUTION", () => assert.equal(panel.executionClass, "workflow"));
   rule("PANEL_PHASE", () => assert.equal(panel.phase, "decision-analysis"));
   rule("PANEL_GATE", () => assert.deepEqual(panel.gate, {kind: "none", policy: "none", validator: "skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json"}));
   rule("PANEL_BINDINGS", () => assert.deepEqual(panel.inputBindings.filter((binding) => binding.targetArtifact === "constraints"), [{
     targetArtifact: "constraints", sources: ["task-envelope:constraints", "task-envelope:authorization"], operation: "combine",
   }]));
-  const audit = one("independent-audit-gate");
+  const audit = one("independent-audit-gate", "AUDIT");
   const auditSkill = registry.skills.find((skill) => skill.skillId === "independent-audit-gate");
   rule("AUDIT_PRIORITY", () => assert.equal(auditSkill.priority, 90, "audit priority"));
   rule("AUDIT_CAPABILITIES", () => assert.deepEqual(audit.capabilities, ["independent-audit", "risk-classification", "evidence-verification", "release-gate"]));
@@ -544,7 +544,7 @@ export function assertRegistryAuthority(registry) {
     },
     default: "reject", adapterErrors: ["INVALID_INPUT", "MISSING_EVIDENCE"],
   }));
-  const preflight = one("mutation-risk-preflight");
+  const preflight = one("mutation-risk-preflight", "PREFLIGHT");
   rule("PREFLIGHT_GATE", () => assert.deepEqual(preflight.gate, {kind: "precondition", policy: "conditional", validator: "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json"}));
   rule("PREFLIGHT_BINDINGS", () => assert.deepEqual(preflight.inputBindings.filter((binding) => binding.targetArtifact === "authorization-boundary"), [{
     targetArtifact: "authorization-boundary", sources: ["bootstrap:task-envelope.authorization", "mutation-intent.authorizationRef"], operation: "combine",

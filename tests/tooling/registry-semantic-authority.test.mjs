@@ -62,6 +62,27 @@ describe("independent registry authority invariants", () => {
     } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
   });
   it.each([
+    ["solid-design", "SOLID"], ["independent-deliberation-panel", "PANEL"],
+    ["independent-audit-gate", "AUDIT"], ["mutation-risk-preflight", "PREFLIGHT"],
+  ])("identifies %s descriptor failures without exposing inputs", (id, label) => {
+    for (const variation of ["COUNT", "ENABLED", "PROVIDERS"]) {
+      const registry = read("skills/registry.json");
+      registry.privateMarker = "PRIVATE_SECRET_VALUE";
+      const skill = registry.skills.find((item) => item.skillId === id);
+      if (variation === "COUNT") registry.skills = registry.skills.filter((item) => item !== skill);
+      if (variation === "ENABLED") skill.enabled = false;
+      if (variation === "PROVIDERS") skill.providers = [];
+      const pair = structuredClone(registry);
+      expect(registry).toEqual(pair);
+      for (const value of [registry, pair]) {
+        expectViolation(value, `${label}_DESCRIPTOR_${variation}`);
+        const errors = checkRegistryContextCompatibility(value);
+        expect(errors).toContain(`registry authority violation: ${label}_DESCRIPTOR_${variation}`);
+        expect(JSON.stringify(errors)).not.toContain("PRIVATE_SECRET_VALUE");
+      }
+    }
+  });
+  it.each([
     ["independent-deliberation-panel", "constraints"],
     ["independent-audit-gate", "rollback-or-recovery-evidence"],
     ["mutation-risk-preflight", "authorization-boundary"],
@@ -113,7 +134,7 @@ describe("independent registry authority invariants", () => {
       const codes = {
         "solid-role": "SOLID_EXECUTION", "solid-gate": "SOLID_GATE", "solid-source": "SOLID_BINDINGS", "solid-schema": "SOLID_RESULT_SCHEMA",
         "audit-gate": "AUDIT_GATE", "audit-recovery": "AUDIT_BINDINGS", "preflight-authority": "PREFLIGHT_BINDINGS", "panel-authority": "PANEL_BINDINGS", "panel-gate": "PANEL_GATE",
-        "audit-disabled": "DESCRIPTOR_ENABLED", "audit-capability": "AUDIT_CAPABILITIES", "audit-outranked": "AUDIT_CAPABILITY_OWNER",
+        "audit-disabled": "AUDIT_DESCRIPTOR_ENABLED", "audit-capability": "AUDIT_CAPABILITIES", "audit-outranked": "AUDIT_CAPABILITY_OWNER",
         "audit-raw-duplicate": "AUDIT_BINDINGS", "audit-result-schema": "AUDIT_RESULT_SCHEMA", "audit-output-schema": "AUDIT_OUTPUT_SCHEMA",
         "audit-required-raw": "AUDIT_REQUIRED_INPUTS", "audit-state-map": "AUDIT_STATE_MAPPING", "duplicate-id": "REGISTRY_DUPLICATE_ID", "ambiguous-capability": "SOLID_CAPABILITY_OWNER",
       };
