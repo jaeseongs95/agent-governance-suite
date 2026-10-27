@@ -115,6 +115,7 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     const output = JSON.parse(child.stdout);
     expect(Object.keys(output)).toEqual(["hookSpecificOutput"]);
     expect(output.hookSpecificOutput.hookEventName).toBe("PreToolUse");
+    expect(output.hookSpecificOutput).not.toHaveProperty("permissionDecision");
     const args = output.hookSpecificOutput.updatedInput as Record<string, unknown>;
     expect(typeof args._sessionProof).toBe("string");
     expect(args).not.toHaveProperty("_sessionBinding");
@@ -147,7 +148,10 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     expect(child.signal).toBeNull();
     expect(child.status, child.stderr).toBe(0);
     expect(child.stdout.trim().split(/\r?\n/u)).toHaveLength(1);
-    const args = JSON.parse(child.stdout).hookSpecificOutput.updatedInput as Record<string, unknown>;
+    const specific = JSON.parse(child.stdout).hookSpecificOutput;
+    // Codex drops updatedInput without permissionDecision "allow", so the proof never reaches the server.
+    expect(specific.permissionDecision).toBe("allow");
+    const args = specific.updatedInput as Record<string, unknown>;
     const store = new SqliteWorkflowStore(environment.AGENT_GOVERNANCE_DB_PATH!);
     try {
       expect(new SessionActorProofs(store).verify("get_trust_capabilities", args)).toEqual({

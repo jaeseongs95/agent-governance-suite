@@ -227,6 +227,8 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
     adaptInput: adaptCodexHookInput, ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", true),
     processPid: (pid) => pid, attestationKind: "codex-rollout", peerWait: codexNativePeerWait,
+    // Codex ignores updatedInput unless permissionDecision is "allow" (hooks output_parser, 0.164.0).
+    rewriteDecision: "allow",
   }],
   ["claude-code", {
     adaptInput: adaptClaudeHookInput, ownsTool: ownsGovernanceTool,

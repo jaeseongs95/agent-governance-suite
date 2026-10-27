@@ -113,6 +113,8 @@ export interface HookHostAdapter {
   /** Opaque trusted strategy identifier; the attestation entry owns registration and dispatch. */
   attestationKind?: string;
   peerWait?: (observation: InputObservation) => NativePeerWaitObservation | null;
+  /** Native PreToolUse decision the host requires before it applies a rewritten tool input. */
+  rewriteDecision?: "allow";
 }
 
 // A host entry registers trusted adapter code in the same module namespace it consumes.
@@ -123,6 +125,7 @@ export function registerHookHostAdapter(host: string, adapter: HookHostAdapter):
     || !adapter || typeof adapter.deliveryProfile !== "function" || typeof adapter.processPid !== "function"
     || (adapter.adaptInput !== undefined && typeof adapter.adaptInput !== "function")
     || (adapter.ownsTool !== undefined && typeof adapter.ownsTool !== "function")
+    || (adapter.rewriteDecision !== undefined && adapter.rewriteDecision !== "allow")
     || (adapter.attestationKind !== undefined && (typeof adapter.attestationKind !== "string"
       || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(adapter.attestationKind)))) throw hookHostFailure("adapter");
   if (hookHostAdapters.has(host)) throw hookHostFailure("duplicate");
@@ -130,12 +133,13 @@ export function registerHookHostAdapter(host: string, adapter: HookHostAdapter):
 }
 
 function snapshotHookHostAdapter(host: string, adapter: HookHostAdapter): Readonly<HookHostAdapter> {
-  const { adaptInput, ownsTool, deliveryProfile, processPid, attestationKind, peerWait } = adapter ?? {};
+  const { adaptInput, ownsTool, deliveryProfile, processPid, attestationKind, peerWait, rewriteDecision } = adapter ?? {};
   if (typeof host !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host)
     || typeof deliveryProfile !== "function" || typeof processPid !== "function"
     || (adaptInput !== undefined && typeof adaptInput !== "function")
     || (ownsTool !== undefined && typeof ownsTool !== "function")
     || (peerWait !== undefined && typeof peerWait !== "function")
+    || (rewriteDecision !== undefined && rewriteDecision !== "allow")
     || (attestationKind !== undefined && (typeof attestationKind !== "string"
       || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(attestationKind)))) {
     throw new WorkflowContractError("BINDING_REQUIRED", "Host hook composition unavailable.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
@@ -143,7 +147,8 @@ function snapshotHookHostAdapter(host: string, adapter: HookHostAdapter): Readon
   // Freeze selection, not producer state; prototype/private-state methods retain their original receiver.
   return Object.freeze({ deliveryProfile: deliveryProfile.bind(adapter), processPid: processPid.bind(adapter),
     ...(adaptInput ? { adaptInput: adaptInput.bind(adapter) } : {}), ...(ownsTool ? { ownsTool: ownsTool.bind(adapter) } : {}),
-    ...(attestationKind === undefined ? {} : { attestationKind }), ...(peerWait ? { peerWait: peerWait.bind(adapter) } : {}) });
+    ...(attestationKind === undefined ? {} : { attestationKind }), ...(peerWait ? { peerWait: peerWait.bind(adapter) } : {}),
+    ...(rewriteDecision === undefined ? {} : { rewriteDecision }) });
 }
 
 const callHostAdapter = new AsyncLocalStorage<{ host: string; adapter: Readonly<HookHostAdapter>; active: boolean; adapted?: AdaptedHostInput }>();
@@ -169,6 +174,10 @@ export async function withHookHostAdapter<T>(host: string, adapter: HookHostAdap
 
 export function hookAttestationKind(host: string): HookHostAdapter["attestationKind"] {
   return selectedHookHostAdapter(host)?.attestationKind;
+}
+
+export function hookRewriteDecision(host: string): HookHostAdapter["rewriteDecision"] {
+  return selectedHookHostAdapter(host)?.rewriteDecision;
 }
 
 export function resolveHookProcessPid(host: string, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>): number | undefined {

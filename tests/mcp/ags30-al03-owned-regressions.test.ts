@@ -44,7 +44,7 @@ describe("AGS-D-0019/0020/0021 adapter-owned message tool boundary", () => {
   });
   it.each([undefined, "child"])("denies a main-session operation for an unknown or subagent actor: %s", async (agentId) => {
     const payload = {...pre, tool_name: "mcp__agent_governance_suite__send_session_message", ...(agentId === undefined ? {} : {agent_id: agentId})};
-    const output = JSON.parse(await runSessionMessageHook("codex", JSON.stringify(payload)));
+    const output = JSON.parse(await runSessionMessageHook("gemini", JSON.stringify(payload)));
     expect(output.hookSpecificOutput.permissionDecision).toBe("deny");
     expect(output.hookSpecificOutput.updatedInput).toBeUndefined(); expect(f.request).not.toHaveBeenCalled();
   });
@@ -55,11 +55,11 @@ describe("AGS-D-0019/0020/0021 adapter-owned message tool boundary", () => {
     expect(output.hookSpecificOutput.updatedInput).toEqual({...toolInput, _sessionBinding: {host: syntheticHost, sessionId: "al03-tool-session"}});
     expect(f.request).not.toHaveBeenCalled();
   });
-  it("keeps native Codex empty agent_id denied while capture is required", async () => {
+  it("binds native Codex as inferred root while child blocking is deferred", async () => {
     const output = JSON.parse(await runSessionMessageHook("codex", JSON.stringify({...pre,
       tool_name: "mcp__agent_governance_suite__send_session_message", agent_id: ""})));
-    expect(output.hookSpecificOutput.permissionDecision).toBe("deny");
-    expect(output.hookSpecificOutput.updatedInput).toBeUndefined();
+    expect(output.hookSpecificOutput.permissionDecision).toBeUndefined();
+    expect(output.hookSpecificOutput.updatedInput).toEqual({...toolInput, _sessionBinding: {host: "codex", sessionId: "al03-tool-session"}});
     expect(f.request).not.toHaveBeenCalled();
   });
   it("requires an explicit input adapter before a delivery-only host can issue a binding", async () => {

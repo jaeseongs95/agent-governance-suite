@@ -247,13 +247,13 @@ try {
     const boardInput = { session_id: "clean-room-board", cwd: cleanRoot };
     const runBoardHook = (input, host = "claude-code") => runNode("mcp-server/dist/session-board-hook.mjs", `${JSON.stringify({ ...boardInput, ...input })}\n`, [`--host=${host}`]);
     const boardTool = { hook_event_name: "PreToolUse", tool_name: "mcp__agent_governance_suite__update_session_status" };
-    const unsupportedStart = runBoardHook({ hook_event_name: "SessionStart", session_id: "clean-room-codex-board", agent_id: "" }, "codex");
-    const unsupportedWrite = runBoardHook({ ...boardTool, session_id: "clean-room-codex-board", agent_id: "", tool_input: { summary: "forbidden Codex write" } }, "codex");
+    const unsupportedStart = runBoardHook({ hook_event_name: "SessionStart", session_id: "clean-room-gemini-board", agent_id: "" }, "gemini");
+    const unsupportedWrite = runBoardHook({ ...boardTool, session_id: "clean-room-gemini-board", agent_id: "", tool_input: { summary: "forbidden Gemini write" } }, "gemini");
     const unsupportedOutput = unsupportedWrite.status === 0 && unsupportedWrite.stdout ? JSON.parse(unsupportedWrite.stdout).hookSpecificOutput : null;
     if (unsupportedStart.error || unsupportedStart.status !== 0 || unsupportedStart.stdout !== ""
       || unsupportedWrite.error || unsupportedWrite.status !== 0 || unsupportedOutput?.permissionDecision !== "deny"
       || Object.hasOwn(unsupportedOutput, "updatedInput")) {
-      throw new Error("session board hook accepted unsupported Codex actor input.");
+      throw new Error("session board hook accepted unsupported Gemini actor input.");
     }
     await assertMissing(environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH);
     await writeFile(path.join(cleanRoot, "state", "read-board.mjs"), `

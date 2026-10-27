@@ -77,7 +77,7 @@ describe("explicit hook CLI host contract (synthetic packaged fixtures, not nati
         const output = hook(bundle, args, { hook_event_name: "PreToolUse", session_id: "host-contract-session", ...(host === "claude-code" ? {} : { agent_id: "" }),
           tool_name: "mcp__agent_governance_suite__" + tool,
           tool_input: { schemaVersion: "1.0.0", marker: "preserve", _sessionBinding: { host: "wrong", sessionId: "wrong" } } }, f.env);
-        if (host === "claude-code") {
+        if (host !== "gemini") {
           expect(output.hookSpecificOutput!.updatedInput!).toEqual({ schemaVersion: "1.0.0", marker: "preserve",
             _sessionBinding: { host, sessionId: "host-contract-session" } });
         } else {

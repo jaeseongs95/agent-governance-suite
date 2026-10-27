@@ -305,7 +305,7 @@ describe("session board MCP tools", () => {
   }
   const payload = (response: unknown) => JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: unknown; error: { code: string } | null };
 
-  it("shares one board between the Claude launcher and a synthetic second host while native Codex stays denied", async () => {
+  it("shares one board between the Claude launcher and a synthetic second host while unsupported Gemini stays denied", async () => {
     const state = mkdtempSync(path.join(tmpdir(), "session-board-state-"));
     directories.push(state);
     const env: NodeJS.ProcessEnv = { ...process.env, LOCALAPPDATA: state, XDG_STATE_HOME: state, HOME: state, AGENT_GOVERNANCE_SHARED_STATE_DIR: state, CLAUDE_PLUGIN_DATA: path.join(state, "plugin-data") };
@@ -313,13 +313,13 @@ describe("session board MCP tools", () => {
     delete env.AGENT_GOVERNANCE_DB_PATH;
     const repository = fileURLToPath(new URL("../../", import.meta.url));
     const update = (sessionId: string, toolName: string, summary: string, host: "codex" | "claude-code") => JSON.stringify({ hook_event_name: "PreToolUse", session_id: sessionId, ...(host === "claude-code" ? {} : { agent_id: "" }), cwd: "D:/work/repo", tool_name: toolName, tool_input: { schemaVersion: "1.0.0", summary } });
-    const run = (script: string, input: string) => spawnSync(process.execPath, [path.join(repository, script)], { env, input, encoding: "utf8", windowsHide: true });
+    const run = (script: string, input: string, args: string[] = []) => spawnSync(process.execPath, [path.join(repository, script), ...args], { env, input, encoding: "utf8", windowsHide: true });
     const claude = run("claude-plugin/hooks/session-board-hook.mjs", update("claude-1", "mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status", "Claude 작업", "claude-code"));
-    const codex = run("mcp-server/dist/session-board-hook.mjs", update("codex-1", "mcp__agent-governance-suite__update_session_status", "Codex 작업", "codex"));
-    expect([claude.status, codex.status]).toEqual([0, 0]);
+    const gemini = run("mcp-server/dist/session-board-hook.mjs", update("gemini-1", "mcp__agent-governance-suite__update_session_status", "Gemini 작업", "codex"), ["--host=gemini"]);
+    expect([claude.status, gemini.status]).toEqual([0, 0]);
     expect(claude.stdout).toContain('"host":"claude-code"');
-    expect(JSON.parse(codex.stdout)).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
-    expect(JSON.parse(codex.stdout).hookSpecificOutput.updatedInput).toBeUndefined();
+    expect(JSON.parse(gemini.stdout)).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
+    expect(JSON.parse(gemini.stdout).hookSpecificOutput.updatedInput).toBeUndefined();
     const shared = resolveSessionBoardDatabasePath(env);
     expect(existsSync(shared)).toBe(true);
     expect(existsSync(env.CLAUDE_PLUGIN_DATA!)).toBe(false);

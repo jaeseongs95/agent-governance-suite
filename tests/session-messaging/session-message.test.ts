@@ -1042,14 +1042,14 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     const store = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
     let relayPid: number | undefined;
     try {
-      const native = spawnSync(process.execPath, [installedHook, "--host-pid", String(process.pid)], {
+      const native = spawnSync(process.execPath, [installedHook, "--host=gemini", "--host-pid", String(process.pid)], {
         input: JSON.stringify({ hook_event_name: "SessionStart", session_id: target.sessionId, agent_id: "" }),
         env: environment, cwd: directory, encoding: "utf8", timeout: 15_000, windowsHide: true,
       });
       expect(native.status, native.stderr).toBe(0);
       expect(native.stdout).toBe("");
-      expect(store.presence({ host: "codex", sessionId: target.sessionId }).state).not.toBe("online");
-      expect(store.liveRelay({ host: "codex", sessionId: target.sessionId }, "codex-queue")).toBeNull();
+      expect(store.presence({ host: "gemini", sessionId: target.sessionId }).state).not.toBe("online");
+      expect(store.liveRelay({ host: "gemini", sessionId: target.sessionId }, "gemini-queue")).toBeNull();
       const first = start(process.pid);
       expect(first.status, first.stderr).toBe(0);
       expect(first.stdout).toBe("");
@@ -1610,7 +1610,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
       AGENT_GOVERNANCE_SHARED_STATE_DIR: fallback,
     };
-    const hook = spawnSync(process.execPath, [bundledSessionMessageHook], {
+    const hook = spawnSync(process.execPath, [bundledSessionMessageHook, "--host=gemini"], {
       env,
       input: JSON.stringify({ hook_event_name: "SessionEnd", session_id: "packaged-session-end", reason: "other" }),
       encoding: "utf8",
@@ -1662,7 +1662,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(output).toMatchObject({ hookSpecificOutput: { updatedInput: { _sessionBinding: { host: syntheticRootHost, sessionId: "third-party-session" } } } });
     expect((output.hookSpecificOutput as Record<string, unknown>).permissionDecision).toBeUndefined();
     const denied = await handleSessionMessageHook({ hook_event_name: "PreToolUse", session_id: "third-party-session", agent_id: "",
-      tool_name: "mcp__agent_governance_suite__send_session_message", tool_input: {} }, "codex");
+      tool_name: "mcp__agent_governance_suite__send_session_message", tool_input: {} }, "gemini");
     expect(denied).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
     expect(denied).not.toHaveProperty("hookSpecificOutput.updatedInput");
     const child = await handleSessionMessageHook({ hook_event_name: "PreToolUse", session_id: "third-party-session", syntheticActor: "child",

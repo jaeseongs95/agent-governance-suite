@@ -1,7 +1,7 @@
 import { isHookEntry } from "./hook-entry.js";
 import "./builtin-hook-host-adapters.js";
 import { readFileSync } from "node:fs";
-import { adaptHostInput, hookAttestationKind, isGovernanceHookTool, resolveHookHost, withHookHostAdapter, type HookHostAdapter } from "./host-input-adapter.js";
+import { adaptHostInput, hookAttestationKind, hookRewriteDecision, isGovernanceHookTool, resolveHookHost, withHookHostAdapter, type HookHostAdapter } from "./host-input-adapter.js";
 import { actorAccess } from "./input-observation.js";
 import { SessionActorProofs, SESSION_PROOF_FIELD, withoutSessionProof } from "./session-actor-proof.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
@@ -134,7 +134,9 @@ export async function runGovernanceHook(
       }
       if (record(output.hookSpecificOutput).permissionDecision !== "deny") {
         const proof = new SessionActorProofs(store).issue(observation, tool, args);
-        output = { ...output, hookSpecificOutput: { ...record(output.hookSpecificOutput), hookEventName: "PreToolUse", updatedInput: { ...args, [SESSION_PROOF_FIELD]: proof } } };
+        const decision = hookRewriteDecision(host);
+        output = { ...output, hookSpecificOutput: { ...record(output.hookSpecificOutput), hookEventName: "PreToolUse",
+          ...(decision ? { permissionDecision: decision } : {}), updatedInput: { ...args, [SESSION_PROOF_FIELD]: proof } } };
       }
     };
     const early = composition === undefined ? await execute()

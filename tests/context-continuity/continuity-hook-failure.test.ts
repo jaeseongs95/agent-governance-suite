@@ -67,10 +67,10 @@ describe("continuity hook failure reporting (AGS-D-0055)", () => {
     for (const marker of ["private-session-marker", "private-input-marker", directory]) expect(line).not.toContain(marker);
   });
 
-  it("does not issue a native Codex binding while capture is required", async () => {
+  it("does not issue a binding for an unsupported native Gemini actor", async () => {
     const { env } = await environment();
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(runNativeContinuityHook(toolInput(), env, "codex")).toBe("");
+    expect(runNativeContinuityHook(toolInput(), env, "gemini")).toBe("");
     expect(failureLines(spy)).toHaveLength(0);
   });
 

@@ -100,7 +100,7 @@ it("reports acquire and tick failures while keeping retry and loop behavior", as
   expect(allText(stderr)).not.toContain("secret-canary");
 });
 
-it.each(["codex", "gemini", "antigravity"])("unsupported native %s cannot reach legacy relay spawn", async (host) => {
+it.each(["gemini", "antigravity"])("unsupported native %s cannot reach legacy relay spawn", async (host) => {
   await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: "legacy-spawn", agent_id: "" }, host, 424242,
     { hostProcess: { pid: 424242, startToken: "T1" } });
   expect(f.request).not.toHaveBeenCalled(); expect(f.token).not.toHaveBeenCalled(); expect(f.spawn).not.toHaveBeenCalled();

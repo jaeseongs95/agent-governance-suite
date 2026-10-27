@@ -199,10 +199,10 @@ describe("direct task continuity", () => {
     expect(service.loadContext(bound(service, "other-session", "load_context", loadInput)).error?.code).toBe("BINDING_INVALID");
   });
 
-  it.each(["SessionStart", "PreCompact", "PostCompact", "PreToolUse"])("native Codex %s cannot mutate lifecycle state or receive context without capture", (event) => {
+  it.each(["SessionStart", "PreCompact", "PostCompact", "PreToolUse"])("unsupported native Gemini %s cannot mutate lifecycle state or receive context", (event) => {
     const service = createService();
     const output = handleNativeContinuityHook({ hook_event_name: event, session_id: "native-unobserved", source: "resume",
-      agent_id: "", turn_id: "native-turn", tool_name: "mcp__agent-governance-suite__inspect_context", tool_input: {} }, service, "codex");
+      agent_id: "", turn_id: "native-turn", tool_name: "mcp__agent-governance-suite__inspect_context", tool_input: {} }, service, "gemini");
     expect(output).toEqual({});
     expect(service.store.getTask(service.correlateSession("native-unobserved"))).toBeNull();
   });

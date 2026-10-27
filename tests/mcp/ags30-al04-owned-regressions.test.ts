@@ -50,10 +50,10 @@ describe("AL04 board actor, namespace and host permission boundaries", () => {
     noWrites();
   });
   it.each([{}, {agent_id: null}, {agent_id: 42}])("D0019 keeps unknown actor %j from binding, writing or consuming parent wakes", async actor => {
-    const output = await runSessionBoardHook("codex", JSON.stringify(tool(prefix + "list_session_status", actor)));
+    const output = await runSessionBoardHook("gemini", JSON.stringify(tool(prefix + "list_session_status", actor)));
     expect(JSON.parse(output)).toMatchObject({hookSpecificOutput: {permissionDecision: "deny"}});
     for (const event of ["SessionStart", "UserPromptSubmit"]) {
-      expect(await runSessionBoardHook("codex", JSON.stringify({hook_event_name: event, session_id: "AL04_PRIVATE_PARENT", ...actor,
+      expect(await runSessionBoardHook("gemini", JSON.stringify({hook_event_name: event, session_id: "AL04_PRIVATE_PARENT", ...actor,
         ...(event === "SessionStart" && Object.keys(actor).length === 0 ? {agent_type: "unproven"} : {}),
         prompt: `[agent-governance-suite:wake:${"a".repeat(32)}]`}))).toBe("");
     }
