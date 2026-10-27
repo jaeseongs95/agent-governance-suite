@@ -19,9 +19,9 @@ export function mutateLock(text, id) {
   const imported = once(text, 'readdirSync, renameSync, rmdirSync } from "node:fs";',
     'readdirSync, renameSync, rmdirSync, rmSync } from "node:fs";');
   if (id === 'OS-002') return once(imported,
-    '    if (["ENOENT", "ENOTEMPTY", "EEXIST", "ENOTDIR"].includes(code(error) ?? "")) return unavailable("CHANGED", error);',
+    '    if (["ENOENT", "ENOTEMPTY", "EEXIST", "ENOTDIR"].includes(code(error) ?? "")) return unavailable(BROKER_LOCK_REASONS.CHANGED, error);',
     '    if (code(error) === "ENOENT") { rmSync(lockPath, { recursive: true, force: true }); return true; }\n' +
-    '    if (["ENOENT", "ENOTEMPTY", "EEXIST", "ENOTDIR"].includes(code(error) ?? "")) return unavailable("CHANGED", error);');
+    '    if (["ENOENT", "ENOTEMPTY", "EEXIST", "ENOTDIR"].includes(code(error) ?? "")) return unavailable(BROKER_LOCK_REASONS.CHANGED, error);');
   assert.equal(id, 'OS-003', 'Unknown mutation case');
   return once(imported,
     '  catch (error) { if (code(error) === "ENOENT") return; throw error; }',
