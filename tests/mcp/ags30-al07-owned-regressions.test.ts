@@ -95,7 +95,9 @@ describe("AGS30 AL07 owned regressions", () => {
     const raw = new DatabaseSync(filename);
     try {
       const insert = raw.prepare("INSERT INTO workflow_runs VALUES (?,1,'passed','{}',?,?)");
+      raw.exec("BEGIN;");
       for (let index = 0; index < 500; index++) insert.run(`candidate-${index}-${"x".repeat(100)}`, OLD, OLD);
+      raw.exec("COMMIT;");
     } finally { raw.close(); }
     const service = new StateCleanupService(workflow, null, new ContractValidator(), () => new Date(NOW));
     const plan = service.prepare({ schemaVersion: "1.0.0" });
