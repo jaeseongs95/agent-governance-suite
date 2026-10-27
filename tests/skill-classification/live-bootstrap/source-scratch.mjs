@@ -17,17 +17,20 @@ export function createSourceScratch(repo, prefix = "ags-bootstrap-source-") {
 export function prepareSourceScratch(repo, root) {
   assertExternal(repo, root);
   copyFileSync(path.join(repo, "package.json"), path.join(root, "package.json"));
-  const dependencyLink = path.join(root, "node_modules/zod");
-  mkdirSync(path.dirname(dependencyLink), {recursive: true});
-  symlinkSync(realpathSync(path.join(repo, "node_modules/zod")), dependencyLink, process.platform === "win32" ? "junction" : "dir");
+  mkdirSync(path.join(root, "node_modules"), {recursive: true});
+  for (const name of ["zod", "tsx"]) {
+    symlinkSync(realpathSync(path.join(repo, "node_modules", name)), path.join(root, "node_modules", name), process.platform === "win32" ? "junction" : "dir");
+  }
 }
 
 export function removeSourceScratch(root) {
-  const dependencyLink = path.join(root, "node_modules/zod");
-  const linked = lstatSync(dependencyLink, {throwIfNoEntry: false});
-  if (linked) {
-    assert(linked.isSymbolicLink(), "SCRATCH_ZOD_MUST_BE_LINK");
-    unlinkSync(dependencyLink);
+  for (const name of ["zod", "tsx"]) {
+    const dependencyLink = path.join(root, "node_modules", name);
+    const linked = lstatSync(dependencyLink, {throwIfNoEntry: false});
+    if (linked) {
+      assert(linked.isSymbolicLink(), "SCRATCH_DEPENDENCY_MUST_BE_LINK");
+      unlinkSync(dependencyLink);
+    }
   }
   rmSync(root, {recursive: true, force: true});
 }
