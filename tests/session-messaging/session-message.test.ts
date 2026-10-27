@@ -629,17 +629,40 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     }
   });
 
-  it("cleans up a lock only after its owner is proven dead", async () => {
+  it("preserves crashed producer locks unless the owner is proven absent", async () => {
     const directory = stateDirectory();
-    const fixture = fileURLToPath(new URL("./fixtures/broker-startup-child.mjs", import.meta.url));
-    const child = spawn(process.execPath, [fixture, "exit-zero"], { stdio: "ignore" });
-    const [code] = await once(child, "exit");
-    expect(code).toBe(0);
-    expect(child.pid).toBeDefined();
+    const fixture = fileURLToPath(new URL("./fixtures/d0254-lockstage-crash.mjs", import.meta.url));
+    const child = spawn(process.execPath, ["--import", "tsx", fixture], {
+      stdio: "ignore", windowsHide: true,
+      env: { ...process.env, AGENT_GOVERNANCE_D254_LOCK_ROOT: directory, AGENT_GOVERNANCE_D254_LOCK_CRASH: "published" },
+    });
+    const [code] = await once(child, "close");
+    expect(code).toBe(44);
+    const pid = child.pid;
+    expect(pid).toBeDefined();
     const lockPath = path.join(directory, "broker.lock");
-    await mkdir(path.join(lockPath, `owner-${child.pid}-${"0".repeat(32)}-${"0".repeat(64)}`), { recursive: true });
-    await expect(brokerLockPid(lockPath)).resolves.toBeNull();
-    await expect(terminateBroker(directory)).resolves.toBeUndefined();
+    const markers = await readdir(lockPath);
+    expect(markers).toHaveLength(1);
+    expect(markers[0]).toMatch(new RegExp(`^owner-${pid}-[a-f0-9]{32}-[a-f0-9]{64}$`, "u"));
+
+    let probeError = "ESRCH";
+    const kill = vi.spyOn(process, "kill").mockImplementation((observedPid, signal) => {
+      if (observedPid !== pid || signal !== 0) throw new Error("Unexpected signal in owned cleanup test.");
+      throw Object.assign(new Error("Controlled process probe failure."), { code: probeError });
+    });
+    try {
+      await expect(brokerLockPid(lockPath)).resolves.toBeNull();
+      await expect(terminateBroker(directory)).resolves.toBeUndefined();
+      probeError = "EPERM";
+      await expect(brokerLockPid(lockPath)).rejects.toMatchObject({ cause: { code: "EPERM" } });
+      await expect(terminateBroker(directory)).rejects.toMatchObject({ cause: { code: "EPERM" } });
+      expect((await lstat(lockPath)).isDirectory()).toBe(true);
+      expect(kill).toHaveBeenCalledTimes(4);
+      expect(kill.mock.calls.every(([observedPid, signal]) => observedPid === pid && signal === 0)).toBe(true);
+    } finally {
+      kill.mockRestore();
+      await rm(lockPath, { recursive: true, force: true });
+    }
   });
 
   it("converges simultaneous startup requests on one broker", async () => {
