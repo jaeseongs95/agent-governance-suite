@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
@@ -475,11 +476,61 @@ export function reconstructOptimizedSkill(skillId, root = ROOT) {
   return Buffer.concat([candidate.subarray(0, markerIndex), baselineRelativeDetail, suffix, candidate.subarray(markerIndex + NAVIGATION.length)]);
 }
 
+// Independent review points: these literal security contracts do not come from
+// registry-contract.3.0.json. Expand them only with separately reviewed policy.
+export function assertRegistryAuthority(registry) {
+  const ids = registry.skills.map((skill) => skill.skillId);
+  assert.equal(new Set(ids).size, ids.length, "duplicate skill ID");
+  const one = (id) => {
+    const matches = registry.skills.filter((skill) => skill.skillId === id);
+    assert.equal(matches.length, 1, `${id}: missing or duplicate`);
+    assert.equal(matches[0].enabled, true, `${id}: disabled`);
+    assert.equal(matches[0].providers.length, 1, `${id}: provider count`);
+    return matches[0].providers[0];
+  };
+  const solid = one("solid-design");
+  assert.equal(solid.executionClass, "bootstrap");
+  assert.equal(solid.phase, "solid-design-assessment");
+  assert.equal(solid.phaseOrder, 26);
+  assert.deepEqual(solid.capabilities, ["solid-design-assessment"]);
+  assert.deepEqual(solid.gate, {kind: "none", policy: "none", validator: null});
+  assert.deepEqual(solid.inputBindings, [{targetArtifact: "solid-design-request", sources: ["task:solid-design-request"], operation: "require-external"}]);
+  assert.equal(solid.outputSchema, "skills/solid-design/contracts/solid-design-report.v1.schema.json");
+  assert.equal(solid.resultSchema, "contracts/provider-result.v1.schema.json");
+  assert.equal(registry.skills.flatMap((skill) => skill.providers).filter((provider) => provider.capabilities.includes("solid-design-assessment")).length, 1, "ambiguous SOLID capability");
+  const panel = one("independent-deliberation-panel");
+  assert.equal(panel.executionClass, "workflow");
+  assert.equal(panel.phase, "decision-analysis");
+  assert.deepEqual(panel.gate, {kind: "none", policy: "none", validator: "skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json"});
+  assert.deepEqual(panel.inputBindings.filter((binding) => binding.targetArtifact === "constraints"), [{
+    targetArtifact: "constraints", sources: ["task-envelope:constraints", "task-envelope:authorization"], operation: "combine",
+  }]);
+  const audit = one("independent-audit-gate");
+  const auditSkill = registry.skills.find((skill) => skill.skillId === "independent-audit-gate");
+  assert.equal(auditSkill.priority, 90, "audit priority");
+  assert.deepEqual(audit.capabilities, ["independent-audit", "risk-classification", "evidence-verification", "release-gate"]);
+  assert(!registry.skills.some((skill) => skill.enabled && skill.skillId !== "independent-audit-gate" && skill.priority >= auditSkill.priority && skill.providers.some((provider) => provider.capabilities.includes("independent-audit"))), "audit capability outranked");
+  assert.equal(audit.executionClass, "workflow");
+  assert.equal(audit.phase, "completion-gate");
+  assert.deepEqual(audit.gate, {kind: "completion", policy: "mandatory", validator: "independent-audit"});
+  assert(audit.producedArtifacts.includes("gate-verdict"), "audit verdict missing");
+  assert.deepEqual(audit.inputBindings.filter((binding) => binding.targetArtifact === "rollback-or-recovery-evidence"), [{
+    targetArtifact: "rollback-or-recovery-evidence", sources: ["recovery-evidence", "workflow:rollback-evidence"], operation: "require-external",
+  }]);
+  const preflight = one("mutation-risk-preflight");
+  assert.deepEqual(preflight.gate, {kind: "precondition", policy: "conditional", validator: "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json"});
+  assert.deepEqual(preflight.inputBindings.filter((binding) => binding.targetArtifact === "authorization-boundary"), [{
+    targetArtifact: "authorization-boundary", sources: ["bootstrap:task-envelope.authorization", "mutation-intent.authorizationRef"], operation: "combine",
+  }]);
+}
+
 export function checkRegistryContextCompatibility(registry) {
   // Explicit 3.0 contract: every descriptor and registry-level field remains
   // independently reviewable, including authority, bindings and gate semantics.
   const expected = JSON.parse(readFileSync(join(ROOT, "scripts/fixtures/registry-contract.3.0.json"), "utf8"));
-  return isDeepStrictEqual(registry, expected) ? [] : ["registry differs from the 3.0 contract"];
+  const errors = isDeepStrictEqual(registry, expected) ? [] : ["registry differs from the 3.0 contract"];
+  try { assertRegistryAuthority(registry); } catch { errors.push("registry violates independent authority invariants"); }
+  return errors;
 }
 
 export function checkSkillContextOptimization() {

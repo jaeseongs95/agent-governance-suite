@@ -2,13 +2,14 @@ import { createHmac } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { type ExecutionContextV1, type PlannedStageV1, type SkillDescriptorV2, type StageResultV1, type TaskEnvelopeV1 } from "../../contracts/types.js";
 import { validateDecisionRecordSemantics } from "../../mcp-server/src/decision-record-validator.js";
-import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
+import { FileSkillRegistry, selectSkillByCapability } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import {
@@ -1080,6 +1081,32 @@ describe("WorkflowService", () => {
       ],
     }));
     expect(cycle.error?.code).toBe("INVALID_INPUT");
+  });
+
+  it("selects the actual mandatory independent audit for a high-risk plan", () => {
+    const validator = new ContractValidator();
+    const registry = new FileSkillRegistry(fileURLToPath(new URL("../../skills/registry.json", import.meta.url)), validator);
+    const selected = selectSkillByCapability(registry.read(), "independent-audit");
+    expect(selected).toMatchObject({skillId: "independent-audit-gate", enabled: true, gate: {kind: "completion", policy: "mandatory", validator: "independent-audit"}});
+    const service = new WorkflowService(registry, validator, undefined, TEST_EXECUTION_CONTEXT);
+    const result = service.planWorkflow(task({taskId: "actual-audit-high-risk", requiredCapabilities: [], workUnits: [], decision: {complexity: "simple", hasConflicts: false}, artifactContracts: [{capability: "independent-audit", produced: selected!.producedArtifacts.map((artifactId) => ({artifactId, schemaId: "fixture/v1", targetDigest: `sha256:${FIXTURE_ARTIFACT_TARGET}` as const}))}]}));
+    expect(result.data?.stages.some((stage) => stage.skillId === "independent-audit-gate" && stage.gate.policy === "mandatory")).toBe(true);
+  });
+
+  it("rejects the actual SOLID bootstrap capability as a workflow stage", async () => {
+    const solid = JSON.parse(readFileSync(new URL("../../skills/solid-design/integration/skill-descriptor.json", import.meta.url), "utf8")) as SkillDescriptorV2;
+    const { service, rootDirectory } = await createService([...skills, solid]);
+    await mkdir(join(rootDirectory, "skills/solid-design/contracts"), { recursive: true });
+    await copyFile(new URL("../../skills/solid-design/contracts/solid-design-report.v1.schema.json", import.meta.url), join(rootDirectory, "skills/solid-design/contracts/solid-design-report.v1.schema.json"));
+    const result = service.planWorkflow(task({
+      taskId: "solid-bootstrap-rejected",
+      riskLevel: "low",
+      workUnits: [],
+      requiredCapabilities: ["solid-design-assessment"],
+      decision: { complexity: "simple", hasConflicts: false },
+    }));
+    expect(result.data?.state).toBe("blocked");
+    expect(result.data?.errors[0]).toMatchObject({code: "GATE_FAILED", message: expect.stringContaining("bootstrap provider")});
   });
 
   it("keeps bootstrap providers before planning and isolates recovery workflows", async () => {
