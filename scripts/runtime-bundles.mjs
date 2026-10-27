@@ -183,6 +183,9 @@ export async function buildRuntimeBundle(target, outputRoot = ROOT) {
     legalComments: "external",
     metafile: true,
     minify: !target.executable,
+    // Omit path-bearing debug module keys/comments without changing dependency resolution.
+    minifyIdentifiers: true,
+    minifyWhitespace: true,
     banner: { js: target.id === "diagnostics-worker" ? "#!/usr/bin/env node\nimport {createRequire as agsRequire} from 'node:module'; const require = agsRequire(import.meta.url);" : target.executable ? "#!/usr/bin/env node" : "/* eslint-disable */" },
   });
 }
