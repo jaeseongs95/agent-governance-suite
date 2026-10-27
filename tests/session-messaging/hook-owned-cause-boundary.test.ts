@@ -56,6 +56,7 @@ function diagnosticValue(spy: ReturnType<typeof vi.spyOn>) {
   return JSON.parse(line.slice(line.indexOf("{")));
 }
 beforeEach(() => {
+  vi.stubGlobal("performance", {now: () => f.now});
   f.now = 100; f.mode = "normal"; f.code = "EPIPE"; f.endpointReads = 0; f.connections = 0; f.frames = []; f.sockets = [];
   for (const mock of [f.read, f.mkdir, f.chmod, f.connect, f.spawn, f.sqlExec, f.sqlGet, f.sqlRun, f.sqlClose]) mock.mockReset();
   f.closeFailure = null; f.rollbackFailure = null;
@@ -118,7 +119,7 @@ beforeEach(() => {
   vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", "/PRIVATE_STATE");
   vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", "/PRIVATE_TRUST");
 });
-afterEach(() => {vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.useRealTimers();});
+afterEach(() => {vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.useRealTimers(); vi.unstubAllGlobals();});
 
 describe("0024 actual client producer through actual hook and safe report", () => {
   it.each([
@@ -139,7 +140,7 @@ describe("0024 actual client producer through actual hook and safe report", () =
     for (const socket of f.sockets) expect(socket.destroy).toHaveBeenCalledTimes(1);
   });
   it("reports the actual request deadline and destroys the target socket once", async () => {
-    vi.useFakeTimers(); f.mode = "deadline";
+    vi.useFakeTimers(); vi.stubGlobal("performance", {now: () => f.now}); f.mode = "deadline";
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const pending = runSessionMessageHook(host, input, undefined, options);
     await vi.advanceTimersByTimeAsync(1000);
@@ -202,7 +203,7 @@ describe("0024 actual client producer through actual hook and safe report", () =
     expect(f.connections).toBe(2);
   });
   it("keeps last observed repeated readiness pin failure on the inherited request-budget deadline", async () => {
-    vi.useFakeTimers(); f.mode = "probe-history";
+    vi.useFakeTimers(); vi.stubGlobal("performance", {now: () => f.now}); f.mode = "probe-history";
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const pending = runSessionMessageHook(host, input, undefined, options);
     await vi.advanceTimersByTimeAsync(1000);
