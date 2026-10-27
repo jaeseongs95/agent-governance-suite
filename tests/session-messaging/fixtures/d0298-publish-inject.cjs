@@ -1,3 +1,5 @@
+/* global require, process */
+/* eslint-disable @typescript-eslint/no-require-imports -- Node --require uses this CommonJS preload. */
 const fs = require('node:fs');
 const { syncBuiltinESMExports } = require('node:module');
 const rename = fs.renameSync;
