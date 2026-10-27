@@ -2,7 +2,7 @@
 
 // mcp-server/src/session-message-broker.ts
 import { createHash as createHash5, createPublicKey, randomBytes as randomBytes4, timingSafeEqual as timingSafeEqual2, X509Certificate as X509Certificate2 } from "node:crypto";
-import { existsSync, renameSync as renameSync2, rmSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, renameSync as renameSync2, rmSync, writeFileSync, writeSync } from "node:fs";
 import { chmod, mkdir, readFile as readFile2, writeFile } from "node:fs/promises";
 import path5 from "node:path";
 import tls from "node:tls";
@@ -11,6 +11,34 @@ import { fileURLToPath } from "node:url";
 
 // mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
+var BROKER_STARTUP_CODES = /* @__PURE__ */ new Set([
+  "EACCES",
+  "EPERM",
+  "ENOENT",
+  "ENOSPC",
+  "EMFILE",
+  "ENFILE",
+  "EADDRINUSE",
+  "ETIMEDOUT",
+  "SQLITE_BUSY",
+  "SQLITE_CANTOPEN",
+  "SQLITE_CORRUPT",
+  "SQLITE_IOERR",
+  "SQLITE_READONLY",
+  "BROKER_LOCK_BUDGET_EXPIRED",
+  "BROKER_LOCK_OWNER_UNVERIFIED",
+  "BROKER_LOCK_UNSUPPORTED_PATH",
+  "BROKER_LOCK_EMPTY_DIRECTORY",
+  "BROKER_LOCK_UNRECOGNIZED_OWNER",
+  "BROKER_LOCK_CHANGED",
+  "BROKER_LOCK_PREPARATION_CLEANUP_FAILED",
+  "BROKER_IDENTITY_BUDGET_EXPIRED",
+  "BROKER_IDENTITY_BUDGET_INVALID",
+  "STARTUP_FAILED"
+]);
+function brokerStartupCode(value) {
+  return typeof value === "string" && BROKER_STARTUP_CODES.has(value) ? value : null;
+}
 var SESSION_MESSAGE_MAX_REQUEST_BYTES = 32 * 1024;
 var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
 var SESSION_MESSAGE_BODY_MAX_BYTES = 4096;
@@ -2282,7 +2310,7 @@ var IDLE_EXIT_MS = 6e4;
 var SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start"];
 function brokerFailureCode(error) {
   const code2 = error?.code;
-  return typeof code2 === "string" && /^[A-Z0-9_]+$/u.test(code2) ? code2 : "STARTUP_FAILED";
+  return brokerStartupCode(code2) ?? brokerStartupCode(producerFailureReason(error)) ?? "STARTUP_FAILED";
 }
 function argument(name) {
   const index = process.argv.indexOf(name);
@@ -2989,15 +3017,31 @@ async function startSessionMessageBroker(stateDirectory, budget) {
   }
 }
 if (path5.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
+  const diagnosticPipe = process.argv.includes("--startup-diagnostic");
+  const finishDiagnostic = (code2) => {
+    if (!diagnosticPipe) return;
+    try {
+      if (code2) writeSync(3, "".concat(code2, "\n"));
+    } catch {
+    }
+    try {
+      closeSync(3);
+    } catch {
+    }
+  };
   const stateDirectory = argument("--state-directory");
-  if (!stateDirectory) process.exitCode = 2;
-  else void (async () => startSessionMessageBroker(
+  if (!stateDirectory) {
+    finishDiagnostic("STARTUP_FAILED");
+    process.exitCode = 2;
+  } else void (async () => startSessionMessageBroker(
     path5.resolve(stateDirectory),
     decodeIdentityDeadline(argument("--startup-identity-deadline-ns") ?? void 0)
   ))().then((result) => {
+    finishDiagnostic();
     if (result === "already-running") process.exit(0);
   }).catch((error) => {
     const safeCode = brokerFailureCode(error);
+    finishDiagnostic(safeCode);
     process.stderr.write("Session message broker startup failed (".concat(safeCode, ").\n"));
     process.exitCode = 1;
   });

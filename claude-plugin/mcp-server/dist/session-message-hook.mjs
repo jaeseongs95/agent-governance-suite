@@ -648,6 +648,34 @@ function resolveTrustDatabasePath(environment = process.env, platform = process.
 
 // mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
+var BROKER_STARTUP_CODES = /* @__PURE__ */ new Set([
+  "EACCES",
+  "EPERM",
+  "ENOENT",
+  "ENOSPC",
+  "EMFILE",
+  "ENFILE",
+  "EADDRINUSE",
+  "ETIMEDOUT",
+  "SQLITE_BUSY",
+  "SQLITE_CANTOPEN",
+  "SQLITE_CORRUPT",
+  "SQLITE_IOERR",
+  "SQLITE_READONLY",
+  "BROKER_LOCK_BUDGET_EXPIRED",
+  "BROKER_LOCK_OWNER_UNVERIFIED",
+  "BROKER_LOCK_UNSUPPORTED_PATH",
+  "BROKER_LOCK_EMPTY_DIRECTORY",
+  "BROKER_LOCK_UNRECOGNIZED_OWNER",
+  "BROKER_LOCK_CHANGED",
+  "BROKER_LOCK_PREPARATION_CLEANUP_FAILED",
+  "BROKER_IDENTITY_BUDGET_EXPIRED",
+  "BROKER_IDENTITY_BUDGET_INVALID",
+  "STARTUP_FAILED"
+]);
+function brokerStartupCode(value) {
+  return typeof value === "string" && BROKER_STARTUP_CODES.has(value) ? value : null;
+}
 var SESSION_MESSAGE_MAX_REQUEST_BYTES = 32 * 1024;
 var SESSION_MESSAGE_MAX_RESPONSE_BYTES = 32 * 1024;
 var SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES = 8192;
@@ -904,7 +932,36 @@ async function delay(milliseconds, signal) {
     if (signal.aborted) onAbort();
   });
 }
-async function waitForSessionMessageBrokerReady(stateDirectory, child, timeoutMs = BROKER_STARTUP_TIMEOUT_MS, parentSignal) {
+async function waitForSessionMessageBrokerReady(stateDirectory, child, timeoutMs = BROKER_STARTUP_TIMEOUT_MS, parentSignal, startupDiagnostic) {
+  let diagnostic = "";
+  let diagnosticOverflow = false;
+  let diagnosticDone = !startupDiagnostic;
+  let diagnosticEnded = false;
+  let diagnosticFailed = false;
+  const onDiagnosticData = (chunk) => {
+    if (diagnosticOverflow) return;
+    if (Buffer.byteLength(diagnostic, "utf8") + chunk.length > 128) {
+      diagnostic = "";
+      diagnosticOverflow = true;
+      return;
+    }
+    diagnostic += chunk.toString("utf8");
+  };
+  const onDiagnosticEnd = () => {
+    diagnosticEnded = true;
+    diagnosticDone = true;
+  };
+  const onDiagnosticClose = () => {
+    diagnosticDone = true;
+  };
+  const onDiagnosticError = () => {
+    diagnosticFailed = true;
+    diagnosticDone = true;
+  };
+  startupDiagnostic?.on("data", onDiagnosticData);
+  startupDiagnostic?.once("end", onDiagnosticEnd);
+  startupDiagnostic?.once("close", onDiagnosticClose);
+  startupDiagnostic?.once("error", onDiagnosticError);
   let probeFailed = false;
   let lastProbeFailure;
   try {
@@ -923,8 +980,25 @@ async function waitForSessionMessageBrokerReady(stateDirectory, child, timeoutMs
           throwIfAborted(signal);
           if (spawnError) throw spawnError;
           if (child.exitCode !== null && child.exitCode !== 0 || child.signalCode !== null) {
+            if (startupDiagnostic && !diagnosticDone) await new Promise((resolve) => {
+              const done = () => {
+                startupDiagnostic.off("end", done);
+                startupDiagnostic.off("close", done);
+                startupDiagnostic.off("error", done);
+                signal.removeEventListener("abort", done);
+                resolve();
+              };
+              startupDiagnostic.once("end", done);
+              startupDiagnostic.once("close", done);
+              startupDiagnostic.once("error", done);
+              signal.addEventListener("abort", done, { once: true });
+              if (diagnosticDone || signal.aborted) done();
+            });
+            throwIfAborted(signal);
+            const frame = diagnosticEnded && !diagnosticFailed && !diagnosticOverflow ? /^([A-Z0-9_]+)\n$/u.exec(diagnostic) : null;
+            const code = brokerStartupCode(frame?.[1]);
             throw tagProducerFailure(new Error(
-              "The session message broker exited before it was ready (code ".concat(String(child.exitCode), ", signal ").concat(String(child.signalCode), ").")
+              "The session message broker exited before it was ready (code ".concat(String(child.exitCode), ", signal ").concat(String(child.signalCode), ")").concat(code ? "; startup diagnostic: ".concat(code) : "", ".")
             ), "BROKER_EXITED_BEFORE_READY");
           }
           await delay(Math.min(100, remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE)), signal);
@@ -959,6 +1033,12 @@ async function waitForSessionMessageBrokerReady(stateDirectory, child, timeoutMs
   } catch (error) {
     if (probeFailed) retainFailureSecondary(error, lastProbeFailure);
     throw error;
+  } finally {
+    startupDiagnostic?.off("data", onDiagnosticData);
+    startupDiagnostic?.off("end", onDiagnosticEnd);
+    startupDiagnostic?.off("close", onDiagnosticClose);
+    startupDiagnostic?.off("error", onDiagnosticError);
+    startupDiagnostic?.destroy();
   }
 }
 async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessageStateDirectory(), timeoutMs = BROKER_STARTUP_TIMEOUT_MS, parentSignal, prepareStateDirectory) {
@@ -1006,23 +1086,30 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
             "--state-directory",
             stateDirectory,
             "--startup-identity-deadline-ns",
-            encodeIdentityDeadline(deadline)
+            encodeIdentityDeadline(deadline),
+            "--startup-diagnostic"
           ], {
             detached: true,
             windowsHide: true,
-            stdio: "ignore",
+            stdio: ["ignore", "ignore", "ignore", "pipe"],
             env: sessionMessageBrokerEnvironment()
           });
         } catch (cause) {
           throw clientFailure("BROKER_START_FAILED", "Cannot start the session message broker.", cause);
         }
         child.unref();
-        await waitForSessionMessageBrokerReady(
-          stateDirectory,
-          child,
-          remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE),
-          signal
-        );
+        const diagnostic = child.stdio[3];
+        try {
+          await waitForSessionMessageBrokerReady(
+            stateDirectory,
+            child,
+            remainingMilliseconds(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE),
+            signal,
+            diagnostic
+          );
+        } finally {
+          diagnostic?.destroy();
+        }
       } catch (recoveryError) {
         throw retainFailureSecondary(recoveryError, error);
       } finally {
