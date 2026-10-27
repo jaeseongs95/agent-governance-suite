@@ -1,5 +1,8 @@
 export const SESSION_MESSAGE_PROTOCOL = "1.0.0";
 
+// The lock publisher and diagnostic allowlist share the same fixed retry codes.
+export const BROKER_LOCK_PUBLISH_RETRY_CODES: readonly string[] = Object.freeze(["EEXIST", "ENOTEMPTY", "EPERM", "EACCES", "ENOENT"]);
+
 // Only these stable codes may cross the startup diagnostic pipe.
 const BROKER_STARTUP_CODES = new Set([
   "EACCES", "EPERM", "ENOENT", "ENOSPC", "EMFILE", "ENFILE", "EADDRINUSE", "ETIMEDOUT",
@@ -7,6 +10,7 @@ const BROKER_STARTUP_CODES = new Set([
   "BROKER_LOCK_BUDGET_EXPIRED", "BROKER_LOCK_OWNER_UNVERIFIED", "BROKER_LOCK_UNSUPPORTED_PATH",
   "BROKER_LOCK_EMPTY_DIRECTORY", "BROKER_LOCK_UNRECOGNIZED_OWNER", "BROKER_LOCK_CHANGED",
   "BROKER_LOCK_PREPARATION_CLEANUP_FAILED", "BROKER_IDENTITY_BUDGET_EXPIRED", "BROKER_IDENTITY_BUDGET_INVALID",
+  ...BROKER_LOCK_PUBLISH_RETRY_CODES.map((code) => "BROKER_LOCK_PUBLISH_" + code),
   "STARTUP_FAILED",
 ]);
 export function brokerStartupCode(value: unknown): string | null {

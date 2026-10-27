@@ -11,6 +11,7 @@ import { fileURLToPath } from "node:url";
 
 // mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
+var BROKER_LOCK_PUBLISH_RETRY_CODES = Object.freeze(["EEXIST", "ENOTEMPTY", "EPERM", "EACCES", "ENOENT"]);
 var BROKER_STARTUP_CODES = /* @__PURE__ */ new Set([
   "EACCES",
   "EPERM",
@@ -34,6 +35,7 @@ var BROKER_STARTUP_CODES = /* @__PURE__ */ new Set([
   "BROKER_LOCK_PREPARATION_CLEANUP_FAILED",
   "BROKER_IDENTITY_BUDGET_EXPIRED",
   "BROKER_IDENTITY_BUDGET_INVALID",
+  ...BROKER_LOCK_PUBLISH_RETRY_CODES.map((code2) => "BROKER_LOCK_PUBLISH_" + code2),
   "STARTUP_FAILED"
 ]);
 function brokerStartupCode(value) {
@@ -2089,7 +2091,7 @@ import { lstatSync, mkdirSync as mkdirSync3, mkdtempSync, readdirSync, renameSyn
 import path4 from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 var OWNER = /^owner-([1-9][0-9]*)-([a-f0-9]{32})(?:-([a-f0-9]{64}))?$/u;
-var PUBLISH_RETRY_CODES = ["EEXIST", "ENOTEMPTY", "EPERM", "EACCES", "ENOENT"];
+var PUBLISH_RETRY_CODES = BROKER_LOCK_PUBLISH_RETRY_CODES;
 var REOBSERVE_CODES = [
   "BROKER_LOCK_EMPTY_DIRECTORY",
   "BROKER_LOCK_CHANGED",

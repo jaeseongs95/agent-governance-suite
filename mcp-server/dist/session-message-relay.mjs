@@ -471,6 +471,7 @@ import { fileURLToPath } from "node:url";
 
 // mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
+var BROKER_LOCK_PUBLISH_RETRY_CODES = Object.freeze(["EEXIST", "ENOTEMPTY", "EPERM", "EACCES", "ENOENT"]);
 var BROKER_STARTUP_CODES = /* @__PURE__ */ new Set([
   "EACCES",
   "EPERM",
@@ -494,6 +495,7 @@ var BROKER_STARTUP_CODES = /* @__PURE__ */ new Set([
   "BROKER_LOCK_PREPARATION_CLEANUP_FAILED",
   "BROKER_IDENTITY_BUDGET_EXPIRED",
   "BROKER_IDENTITY_BUDGET_INVALID",
+  ...BROKER_LOCK_PUBLISH_RETRY_CODES.map((code) => "BROKER_LOCK_PUBLISH_" + code),
   "STARTUP_FAILED"
 ]);
 function brokerStartupCode(value) {

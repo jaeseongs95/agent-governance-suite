@@ -3,13 +3,14 @@ import { lstatSync, mkdirSync, mkdtempSync, readdirSync, renameSync, rmdirSync }
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { processStartToken, type ProcessIdentityBudget } from "./process-identity.js";
+import { BROKER_LOCK_PUBLISH_RETRY_CODES } from "./session-message-protocol.js";
 
 export interface BrokerProcessLock {
   readonly path: string;
   readonly owner: string;
 }
 const OWNER = /^owner-([1-9][0-9]*)-([a-f0-9]{32})(?:-([a-f0-9]{64}))?$/u;
-const PUBLISH_RETRY_CODES = ["EEXIST", "ENOTEMPTY", "EPERM", "EACCES", "ENOENT"];
+const PUBLISH_RETRY_CODES = BROKER_LOCK_PUBLISH_RETRY_CODES;
 const REOBSERVE_CODES = ["BROKER_LOCK_EMPTY_DIRECTORY", "BROKER_LOCK_CHANGED",
   ...PUBLISH_RETRY_CODES.map(value => "BROKER_LOCK_PUBLISH_" + value)];
 const code = (error: unknown) => (error as NodeJS.ErrnoException | null)?.code;
