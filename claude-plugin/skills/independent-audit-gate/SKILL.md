@@ -16,7 +16,7 @@ metadata:
 
 - 인증, 인가, 비밀값, 암호화, 테넌트 격리 또는 외부 노출
 - 과금, 결제, 환불, 가격, 지급 또는 거래 실행
-- 영구 삭제, 대량 수정, 개인정보, 백업·복원 또는 데이터 정합성
+- 되돌리기 어려운 영구 삭제나 실데이터 대량 수정, 개인정보, 백업·복원 또는 운영 데이터 정합성
 - 스키마, 제약, 데이터 변환, 하위 호환성 또는 rollback 변경
 - 프로덕션 배포와 운영 인프라·가용성에 실제 영향을 주는 변경
 - 기본 권한, 보안 정책, 설치 또는 전역 설정처럼 실제 권한 경계와 다른 사용자·서비스의 동작을 바꾸는 변경
@@ -26,7 +26,7 @@ metadata:
 
 통상 읽기 전용 진단, 시험, 작업 브랜치 commit/push와 CI 실행은 기존 사용자 권한 안에서 진행하며 별도 PRE나 추가 사용자 승인을 요구하지 않는다. CI가 실제 배포·설치·권한 변경을 수행하면 그 변경에만 기존 승인과 독립 감사 조건을 적용한다. 기본 브랜치 병합, tag/release, 설치·배포, 영구 삭제, 권한 확대와 운영 데이터 변경의 사용자 승인 조건은 유지한다.
 
-단순 조사, 저위험 문서 수정, 일반 코드 리뷰, 구현 대상이 없는 설계 토론에는 이 스킬을 사용하지 않는다. 복잡한 선택지를 여러 관점에서 숙고하는 일은 별도의 deliberation workflow에 맡기고, 선택한 방안을 실제 고위험 변경으로 실행할 때 이 게이트를 적용한다.
+단순 조사, 저위험 문서 수정, 같은 디스크 안 이동처럼 되돌릴 수 있는 운영 작업, 일반 코드 리뷰, 구현 대상이 없는 설계 토론에는 이 스킬을 사용하지 않는다. 불확실하다는 이유만으로 고위험으로 올리지 않는다. 복잡한 선택지를 여러 관점에서 숙고하는 일은 별도의 deliberation workflow에 맡기고, 선택한 방안을 실제 고위험 변경으로 실행할 때 이 게이트를 적용한다.
 
 <!-- optimization-navigation:start condition="the skill is activated for the request" reference="references/entry-details.md" do-not-load-otherwise="true" -->
 - If the skill is activated for the request, read [entry details](references/entry-details.md) before producing any result or taking any action; otherwise do not read it.

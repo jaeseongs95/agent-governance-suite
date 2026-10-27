@@ -96,7 +96,7 @@ workers:
 
 `status`는 `planned | running | completed | failed | skipped | reused`, `classification`은 `reviewer | judge | adaptive_specialist` 중 하나다. 독립 Round 1 관점으로 세려면 실제 instantiated·completed reviewer이고 `blind_round1: true`, `context_isolated: true`, `participated_stages`에 `round1`이 있어야 한다. Judge는 `classification: judge`, `context_isolated: true`, `participated_stages: ["final_judge"]`이고 Round 1에는 참여하지 않는다. specialist는 `classification: adaptive_specialist`, `blind_round1: false`, `participated_stages`에 `adaptive_specialist`가 있어야 한다. `run.workers`와 `panel_manifest`는 일부 필드가 아니라 객체 전체가 같아야 한다.
 
-model fallback은 `requested_model`, `actual_model`, `requested_reasoning`, `actual_reasoning`, `fallback_reason`에 모두 남긴다. reviewer는 Terra `xhigh`, Judge는 Sol `xhigh`를 선호하되, capability·격리·도구 접근을 만족하는 실제 지원 구성을 고른다. Astra는 자동 fallback이 아니다.
+model fallback은 `requested_model`, `actual_model`, `requested_reasoning`, `actual_reasoning`, `fallback_reason`에 모두 남긴다. 구체 모델·추론 조합은 orchestration-policy의 capability 우선 규칙에 따라 현재 호스트 adapter에서 capability·격리·도구 접근을 만족하는 실제 지원 구성으로 고른다. 공용 정책은 특정 모델을 선호하거나 자동 fallback으로 정하지 않는다.
 
 ## Claims, cross-examination, issues, axes
 

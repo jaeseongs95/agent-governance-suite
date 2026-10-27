@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, it } from "vitest";
 import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
-const { matchesPonytailPolicySuccessor }: { matchesPonytailPolicySuccessor: (relative: string, bytes: Uint8Array) => boolean } = await import(new URL("../../scripts/check-skill-context-optimization.mjs", import.meta.url).href);
+const { matchesPonytailPolicySuccessor, matchesSkillPolicyWordingSuccessorBytes, readHistoricalSource }: { matchesPonytailPolicySuccessor: (relative: string, bytes: Uint8Array) => boolean; matchesSkillPolicyWordingSuccessorBytes: (relative: string, bytes: Uint8Array) => boolean; readHistoricalSource: (relative: string) => Buffer } = await import(new URL("../../scripts/check-skill-context-optimization.mjs", import.meta.url).href);
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const temporary: string[] = [];
@@ -83,7 +83,9 @@ it("rejects stale policy evidence rather than silently accepting a changed sourc
 
 it("accepts only exact successor bytes and rejects extra edits or unrelated paths", async () => {
   for (const relative of ["skills/ponytail/SKILL.md", "skills/ponytail/agents/openai.yaml", "skills/ponytail/classification.json", "skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json"]) {
-    const bytes = Buffer.from(await read(relative));
+    const current = Buffer.from(await read(relative));
+    const bytes = readHistoricalSource(relative);
+    if (!bytes.equals(current)) expect(matchesSkillPolicyWordingSuccessorBytes(relative, current)).toBe(true);
     expect(matchesPonytailPolicySuccessor(relative, bytes)).toBe(true);
     expect(matchesPonytailPolicySuccessor(relative, Buffer.concat([bytes, Buffer.from("\nextra")]))).toBe(false);
   }

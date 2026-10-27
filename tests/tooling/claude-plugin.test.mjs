@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { matchesGovernanceSourceSuccessor } from "../../scripts/check-skill-context-optimization.mjs";
+import { matchesGovernanceSourceSuccessor, matchesSkillPolicyWordingSuccessorBytes, readHistoricalSource } from "../../scripts/check-skill-context-optimization.mjs";
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -150,7 +150,8 @@ describe("generated Claude plugin", () => {
     const frozenAddition = await readFile(path.join(root, frozenAdditionPath), "utf8");
     // Frozen provenance stays intact; current governance intentionally replaces its imperative wording.
     expect(createHash("sha256").update(frozenAddition).digest("hex")).toBe("640b42d913010477835200f35303790cc2015fabc9740d97b4f0ddabbe6f7bd3");
-    expect(matchesGovernanceSourceSuccessor("skills/orchestrator/SKILL.md", Buffer.from(shared))).toBe(true);
+    expect(matchesSkillPolicyWordingSuccessorBytes("skills/orchestrator/SKILL.md", Buffer.from(shared))).toBe(true);
+    expect(matchesGovernanceSourceSuccessor("skills/orchestrator/SKILL.md", readHistoricalSource("skills/orchestrator/SKILL.md"))).toBe(true);
     const allowed = new Set(["skills/orchestrator/SKILL.md", "claude-plugin/skills/orchestrator/SKILL.md", "tests/tooling/claude-plugin.test.mjs", projectionPath, frozenAdditionPath]);
     const listed = spawnSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
     expect(listed.status).toBe(0);

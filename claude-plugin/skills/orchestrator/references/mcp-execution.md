@@ -8,7 +8,7 @@ MCP를 사용할 때는 연결이 성공했고 도구 목록과 입력 스키마
 2. 최초 전체 실행 전에 `open_convergence_root`를 `responseMode: "compact"`로 호출해 작업 계약과 control/target frame을 결속한다. 같은 작업을 요약하거나 fresh context에 넘겨도 발급된 `rootId`를 유지한다. 시작한 run의 계약을 바꿔 다시 시도하면 수렴 가드의 frame 검토(`FRAME_REVIEW_REQUIRED`)와 사용자 승인을 거친다.
 3. 계획이 `ready`이고 `executionMode`가 `orchestrated`이면 `claim_workflow_attempt`에서 이미 root에 결속된 `taskEnvelope`와 `frame`을 다시 보내지 않고 계획·실행자·출력 대상에 결속된 lease를 받는다. 이어 `start_guarded_workflow`를 plan 없이 `responseMode: "compact"`로 호출한다. 새 orchestrated run에 `start_workflow`를 사용하지 않는다.
 4. 계획에 기록된 순서대로 각 stage의 전문 스킬을 설치된 스킬 호출 방식으로 실제 실행한다. 계획, 문서 로드나 도구 호출 수락을 스킬 실행이나 `passed`로 기록하지 않는다. provider 결과와 산출물 참조를 `ProviderResult.v1`로 묶고, 이를 `StageResult.v1.output`에 넣어 현재 revision과 `responseMode: "compact"`로 `record_stage_result`에 전달한다.
-5. 사용자 입력이나 승인이 필요하면 해당 상태와 차단 사유를 그대로 보고하고 새 실행이 필요한지 판단한다. 순서를 건너뛰거나 이미 기록한 stage를 덮어쓰지 않는다.
+5. 사용자 입력이나 승인이 필요하면 그 stage에서 멈추고 대상·영향·실행할 명령을 담아 사용자에게 바로 한 번 묻는다. 답을 기다리는 동안 우회 구현이나 대체 산출물을 만들지 않는다. 순서를 건너뛰거나 이미 기록한 stage를 덮어쓰지 않는다.
 6. 필요할 때 `get_workflow_status`와 `get_convergence_status`를 `detail: "compact"`로 호출해 현재 revision, 다음 stage와 남은 실행 예산을 확인한다. compact 결과에 오류 코드나 0보다 큰 blocker·unresolved 수가 있거나 과거 원자료가 필요한 경우에만 해당 status를 `detail: "full"`로 한 번 다시 조회한다. 모든 필수 stage와 감사 게이트가 `passed`인 경우에만 `finalize_workflow`를 `responseMode: "compact"`로 호출한다.
 7. 통합 실행을 더 진행하지 않기로 확정하면 `abort_workflow`를 `responseMode: "compact"`로 호출해 해당 run을 닫는다. 시작된 run은 실패·중단돼도 해당 epoch의 시도 횟수에 남는다.
 

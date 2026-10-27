@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { checkSkillContextOptimization, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
+import { checkSkillContextOptimization, readHistoricalSource, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
 import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin } from "../../scripts/check-skill-context-optimization.mjs";
 
 describe("skill context optimization", () => {
@@ -50,7 +50,7 @@ describe("skill context optimization", () => {
       "skills/workspace-convention-profiler/scripts/validate-skill.mjs",
     ]);
     for (const relative of Object.keys(report.currentImplementationPins[0].hashes)) {
-      const bytes = readFileSync(new URL(`../../${relative}`, import.meta.url));
+      const bytes = readHistoricalSource(relative);
       expect(matchesCurrentImplementationPin(relative, bytes), relative).toBe(true);
       const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1;
       expect(matchesCurrentImplementationPin(relative, altered), relative).toBe(false);
@@ -86,7 +86,7 @@ describe("skill context optimization", () => {
       "skills/model-effort-advisor/scripts/support-guard.mjs",
       "skills/orchestrator/references/engineering-practices/cli.md",
     ]) {
-      const bytes = readFileSync(new URL(`../../${relative}`, import.meta.url));
+      const bytes = readHistoricalSource(relative);
       expect(matchesReviewedImplementationUpdate(relative, bytes), relative).toBe(true);
       const altered = Buffer.from(bytes);
       altered[altered.length - 1] ^= 1;
@@ -209,7 +209,7 @@ describe("skill context optimization", () => {
   it("accepts only the frozen engineering reference paths and bytes", () => {
     const directory = new URL("../../skills/orchestrator/references/engineering-practices/", import.meta.url);
     for (const name of readdirSync(directory)) {
-      const bytes = readFileSync(new URL(name, directory));
+      const bytes = readHistoricalSource(`skills/orchestrator/references/engineering-practices/${name}`);
       expect(matchesEngineeringReferenceUpdate(name, bytes), name).toBe(true);
       const altered = Buffer.from(bytes);
       altered[altered.length - 1] ^= 1;
@@ -222,12 +222,12 @@ describe("skill context optimization", () => {
     const sources = Object.keys(report.reviewedClassificationUpdates[0].hashes);
     expect(sources).toHaveLength(27);
     for (const relative of sources) {
-      const bytes = readFileSync(new URL(`../../${relative}`, import.meta.url));
+      const bytes = readHistoricalSource(relative);
       expect(matchesClassificationUpdate(relative, bytes), relative).toBe(true);
       const changed = Buffer.from(bytes); changed[changed.length - 1] ^= 1;
       expect(matchesClassificationUpdate(relative, changed), relative).toBe(false);
     }
-    expect(matchesClassificationUpdate("skills/orchestrator/classification-extra.json", readFileSync(new URL("../../skills/orchestrator/classification.json", import.meta.url)))).toBe(false);
+    expect(matchesClassificationUpdate("skills/orchestrator/classification-extra.json", readHistoricalSource("skills/orchestrator/classification.json"))).toBe(false);
   });
   it("reports one-byte metadata corruption through the public checker", async () => {
     const relative = "/skills/orchestrator/classification.json";
@@ -258,12 +258,11 @@ describe("skill context optimization", () => {
     } finally { vi.doUnmock("node:child_process"); vi.resetModules(); }
   });
   it("rejects a changed engineering bridge and still rejects changes to the preceding CS bridge", () => {
-    const root = path.resolve(import.meta.dirname, "../..");
     const directory = mkdtempSync(path.join(tmpdir(), "ags-engineering-bridge-"));
     try {
       for (const relative of ["skills/orchestrator/SKILL.md", "skills/orchestrator/references/entry-details.md", "scripts/fixtures/cs-engineering-handoff.2.8.0.md", "scripts/fixtures/engineering-practices-handoff.2.8.1.md", "scripts/fixtures/skill-classification-intake.2.9.1.md"]) {
         mkdirSync(path.dirname(path.join(directory, relative)), { recursive: true });
-        cpSync(path.join(root, relative), path.join(directory, relative));
+        writeFileSync(path.join(directory, relative), readHistoricalSource(relative));
       }
       expect(reconstructOptimizedSkill("orchestrator", directory)).toEqual(reconstructOptimizedSkill("orchestrator"));
       const relative = "skills/orchestrator/references/entry-details.md";
@@ -291,11 +290,11 @@ describe("skill context optimization", () => {
   });
 
   it("pins the intake revision and rejects a one-byte policy or reference change", () => {
-    const candidate = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import.meta.url));
+    const candidate = readHistoricalSource("skills/orchestrator/SKILL.md");
     const inputs = {
       reconstructed: reconstructOptimizedSkill("orchestrator"),
       frontmatter: candidate.subarray(0, candidate.indexOf(Buffer.from("\n---\n"), 4) + 5),
-      mcpExecution: readFileSync(new URL("../../skills/orchestrator/references/mcp-execution.md", import.meta.url)),
+      mcpExecution: readHistoricalSource("skills/orchestrator/references/mcp-execution.md"),
     };
     for (const [kind, bytes] of Object.entries(inputs)) {
       expect(matchesOrchestratorIntakeUpdate(kind, bytes), kind).toBe(true);

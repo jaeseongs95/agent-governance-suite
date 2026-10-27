@@ -92,6 +92,16 @@ Example: "Add a cache for these API responses."
 - full: "`@lru_cache(maxsize=1000)` on the fetch function. Skipped custom cache class, add when lru_cache measurably falls short."
 - ultra: "No cache until a profiler says so. When it does: `@lru_cache`. A hand-rolled TTL cache class is a bug farm with a hit rate."
 
+## Operational work
+
+Operational tasks (moving files, applying ledger rows, changing a setting, running a
+requested migration) climb the same ladder. Do the requested operation directly with the
+existing tool or command, then check the result directly: counts, hashes, one query, the
+existing test. Do not write an analysis document, a test harness, a new API, or a cloned
+environment before doing the asked operation. Real high-risk gates (permanent deletion,
+production data, deploy, permissions, secrets, payment) still apply. When approval is
+missing, ask once with the target, impact, and exact command instead of building around it.
+
 ## When NOT to be lazy
 
 Never simplify away: input validation at trust boundaries, error handling

@@ -16,7 +16,7 @@
       "path": "skills/independent-audit-gate/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29",
+      "digest": "sha256:abb5d4c1fa0607851018cd6f6a2f3ecf314cc829149ea0d15c5474ed9afd2a18",
       "startByte": 0,
       "endByte": 327
     },
@@ -24,25 +24,25 @@
       "path": "skills/independent-audit-gate/SKILL.md",
       "startLine": 9,
       "endLine": 25,
-      "digest": "sha256:26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29"
+      "digest": "sha256:abb5d4c1fa0607851018cd6f6a2f3ecf314cc829149ea0d15c5474ed9afd2a18"
     },
     {
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 1,
       "endLine": 1,
-      "digest": "sha256:830d33d1e68e125a52f324652af09096d9d1771124bd7518ec2ae2097fc17e38"
+      "digest": "sha256:2eebda7f49edaca4683afdd18899b6ebb34964edca8082034679a41672ea5c10"
     },
     {
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 4,
       "endLine": 4,
-      "digest": "sha256:830d33d1e68e125a52f324652af09096d9d1771124bd7518ec2ae2097fc17e38"
+      "digest": "sha256:2eebda7f49edaca4683afdd18899b6ebb34964edca8082034679a41672ea5c10"
     },
     {
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 7,
       "endLine": 7,
-      "digest": "sha256:830d33d1e68e125a52f324652af09096d9d1771124bd7518ec2ae2097fc17e38"
+      "digest": "sha256:2eebda7f49edaca4683afdd18899b6ebb34964edca8082034679a41672ea5c10"
     }
   ],
   "exclusions": [
@@ -50,7 +50,7 @@
       "path": "skills/independent-audit-gate/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29",
+      "digest": "sha256:abb5d4c1fa0607851018cd6f6a2f3ecf314cc829149ea0d15c5474ed9afd2a18",
       "startByte": 328,
       "endByte": 440
     },
@@ -58,43 +58,43 @@
       "path": "skills/independent-audit-gate/SKILL.md",
       "startLine": 27,
       "endLine": 27,
-      "digest": "sha256:26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29"
+      "digest": "sha256:abb5d4c1fa0607851018cd6f6a2f3ecf314cc829149ea0d15c5474ed9afd2a18"
     },
     {
       "path": "skills/independent-audit-gate/SKILL.md",
       "startLine": 29,
       "endLine": 29,
-      "digest": "sha256:26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29"
+      "digest": "sha256:abb5d4c1fa0607851018cd6f6a2f3ecf314cc829149ea0d15c5474ed9afd2a18"
     },
     {
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:830d33d1e68e125a52f324652af09096d9d1771124bd7518ec2ae2097fc17e38"
+      "digest": "sha256:2eebda7f49edaca4683afdd18899b6ebb34964edca8082034679a41672ea5c10"
     },
     {
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 5,
       "endLine": 5,
-      "digest": "sha256:830d33d1e68e125a52f324652af09096d9d1771124bd7518ec2ae2097fc17e38"
+      "digest": "sha256:2eebda7f49edaca4683afdd18899b6ebb34964edca8082034679a41672ea5c10"
     },
     {
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 6,
       "endLine": 6,
-      "digest": "sha256:830d33d1e68e125a52f324652af09096d9d1771124bd7518ec2ae2097fc17e38"
+      "digest": "sha256:2eebda7f49edaca4683afdd18899b6ebb34964edca8082034679a41672ea5c10"
     },
     {
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 8,
       "endLine": 8,
-      "digest": "sha256:830d33d1e68e125a52f324652af09096d9d1771124bd7518ec2ae2097fc17e38"
+      "digest": "sha256:2eebda7f49edaca4683afdd18899b6ebb34964edca8082034679a41672ea5c10"
     },
     {
       "path": "skills/independent-audit-gate/references/entry-details.md",
       "startLine": 19,
       "endLine": 19,
-      "digest": "sha256:830d33d1e68e125a52f324652af09096d9d1771124bd7518ec2ae2097fc17e38"
+      "digest": "sha256:2eebda7f49edaca4683afdd18899b6ebb34964edca8082034679a41672ea5c10"
     }
   ]
 }

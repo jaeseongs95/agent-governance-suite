@@ -20,23 +20,23 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
+      "digest": "sha256:9aa4e7cb143bb0ad9ffc5f6c03ed32331e1f14562cd4322fab0e36cd29c21ce1",
       "startByte": 0,
-      "endByte": 194
+      "endByte": 266
     },
     {
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 9,
       "endLine": 11,
-      "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
+      "digest": "sha256:9aa4e7cb143bb0ad9ffc5f6c03ed32331e1f14562cd4322fab0e36cd29c21ce1",
       "startByte": 0,
       "endByte": 179
     },
     {
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 13,
-      "endLine": 19,
-      "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
+      "endLine": 22,
+      "digest": "sha256:9aa4e7cb143bb0ad9ffc5f6c03ed32331e1f14562cd4322fab0e36cd29c21ce1"
     }
   ],
   "exclusions": [
@@ -44,23 +44,23 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
-      "startByte": 195,
-      "endByte": 262
+      "digest": "sha256:9aa4e7cb143bb0ad9ffc5f6c03ed32331e1f14562cd4322fab0e36cd29c21ce1",
+      "startByte": 267,
+      "endByte": 430
     },
     {
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 11,
       "endLine": 11,
-      "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
+      "digest": "sha256:9aa4e7cb143bb0ad9ffc5f6c03ed32331e1f14562cd4322fab0e36cd29c21ce1",
       "startByte": 153,
       "endByte": 265
     },
     {
       "path": "skills/mutation-risk-preflight/SKILL.md",
-      "startLine": 21,
-      "endLine": 21,
-      "digest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe"
+      "startLine": 24,
+      "endLine": 24,
+      "digest": "sha256:9aa4e7cb143bb0ad9ffc5f6c03ed32331e1f14562cd4322fab0e36cd29c21ce1"
     }
   ]
 }
