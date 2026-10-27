@@ -130,7 +130,7 @@ function defaultSpawnResponse(scriptPath, args, options) {
     const input = JSON.parse(options.input);
     const boardTool = input.tool_name?.endsWith("__update_session_status");
     // Synthetic CLI responses model the explicit host contract, never native evidence.
-    if (args.includes("--host=codex")) {
+    if (args.includes("--host=gemini")) {
       return { status: 0, signal: null, stdout: boardTool ? JSON.stringify({
         hookSpecificOutput: { permissionDecision: "deny" },
       }) : "", stderr: "" };
@@ -500,7 +500,7 @@ describe("continuity-hook runtime startup smoke diagnostics", () => {
 });
 
 describe("runtime smoke synthetic actor and proof fixture contracts", () => {
-  it("runs explicit Claude positives and unsupported Codex negatives inside the same dependency-free clean room", async () => {
+  it("runs explicit Claude positives and unsupported Gemini negatives inside the same dependency-free clean room", async () => {
     await runRuntimeSmokeCheck(sourceRoot);
     const calls = boundary.spawnSync.mock.calls;
     const governance = calls.filter(([, [script]]) => path.basename(script) === "governance-hook.mjs");
@@ -534,13 +534,13 @@ describe("runtime smoke synthetic actor and proof fixture contracts", () => {
       expect(_sessionProof).toBe(`ags-root-v3.fixture-${issued[index].tool_use_id}.signature`);
     }
     const boardCalls = calls.filter(([, [script]]) => path.basename(script) === "session-board-hook.mjs");
-    expect(boardCalls.slice(0, 2).map(([, [, ...args]]) => args)).toEqual([["--host=codex"], ["--host=codex"]]);
+    expect(boardCalls.slice(0, 2).map(([, [, ...args]]) => args)).toEqual([["--host=gemini"], ["--host=gemini"]]);
     for (const [, [, ...args]] of boardCalls.slice(2)) expect(args).toEqual(["--host=claude-code"]);
     expect(boundary.access).toHaveBeenCalledWith(path.join(cleanRoot, "state", "session-board.sqlite3"));
     expect(boundary.access).toHaveBeenCalledWith(path.join(cleanRoot, "node_modules"));
     const boardReadSource = boundary.writeFile.mock.calls.find(([file]) => path.basename(file) === "read-board.mjs")[1];
     expect(boardReadSource).toContain('.get("claude-code", "clean-room-board")');
-    expect(boardReadSource).not.toContain('.get("codex",');
+    expect(boardReadSource).not.toContain('.get("gemini",');
     expect(boundary.rm).toHaveBeenCalledExactlyOnceWith(cleanRoot, { recursive: true, force: true });
   });
 
@@ -585,17 +585,17 @@ describe("runtime smoke synthetic actor and proof fixture contracts", () => {
     expect(boundary.rm).toHaveBeenCalledExactlyOnceWith(cleanRoot, { recursive: true, force: true });
   });
 
-  it("does not replace the unsupported Codex denial with a successful caller binding", async () => {
+  it("does not replace the unsupported Gemini denial with a successful caller binding", async () => {
     boundary.spawnSync.mockImplementation((_executable, [script, ...args], options) => {
-      if (path.basename(script) === "session-board-hook.mjs" && args.includes("--host=codex")
+      if (path.basename(script) === "session-board-hook.mjs" && args.includes("--host=gemini")
         && JSON.parse(options.input).hook_event_name === "PreToolUse") {
         return { status: 0, signal: null, stdout: JSON.stringify({ hookSpecificOutput: {
-          updatedInput: { _sessionBinding: { host: "codex", sessionId: "forged" } },
+          updatedInput: { _sessionBinding: { host: "gemini", sessionId: "forged" } },
         } }), stderr: "" };
       }
       return defaultSpawnResponse(script, args, options);
     });
-    await expect(runRuntimeSmokeCheck(sourceRoot)).rejects.toThrow("session board hook accepted unsupported Codex actor input.");
+    await expect(runRuntimeSmokeCheck(sourceRoot)).rejects.toThrow("session board hook accepted unsupported Gemini actor input.");
     expect(boundary.spawnSync.mock.calls.filter(([, [script]]) => path.basename(script) === "governance-hook.mjs")).toHaveLength(0);
     expect(boundary.rm).toHaveBeenCalledExactlyOnceWith(cleanRoot, { recursive: true, force: true });
   });
@@ -609,7 +609,7 @@ describe("runtime smoke synthetic actor and proof fixture contracts", () => {
     await expect(runRuntimeSmokeCheck(sourceRoot)).rejects.toThrow(`Clean-room dependency leak: ${boardPath} exists.`);
     const boardCalls = boundary.spawnSync.mock.calls.filter(([, [script]]) => path.basename(script) === "session-board-hook.mjs");
     expect(boardCalls).toHaveLength(2);
-    for (const [, [, ...args]] of boardCalls) expect(args).toEqual(["--host=codex"]);
+    for (const [, [, ...args]] of boardCalls) expect(args).toEqual(["--host=gemini"]);
     expect(boundary.rm).toHaveBeenCalledExactlyOnceWith(cleanRoot, { recursive: true, force: true });
   });
 });
