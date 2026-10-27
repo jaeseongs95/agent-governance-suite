@@ -30,6 +30,13 @@ const RELAY_LEASE_MS = 15_000;
 export const WAKE_TTL_MS = 60 * 60_000;
 /** Covers hook timeout, broker restart and receipt TTL after the injection expiry, and equals the longest retry backoff. */
 export const WAKE_RETIRE_GRACE_MS = 10 * 60_000;
+/**
+ * An idle host that processes a handed-off notification reaches the observation hook within the hook timeout,
+ * the hook receipt TTL and host queue polling. Past this window an unobserved hand-off waits on host state the
+ * broker cannot see (a busy, interrupted or unloaded session), so it is reported as overdue instead of in flight.
+ * Reporting only: suppression, retirement and the injection expiry still follow WAKE_TTL_MS and the grace.
+ */
+export const WAKE_OBSERVATION_WINDOW_MS = 60_000;
 const MESSAGE_SCHEMA_VERSION = 1;
 const ACTIVE_WAKE_STATES = "('reserved', 'started', 'submitted', 'unknown')";
 const WAKE_STATE_CHECK = "CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted', 'expired-unobserved'))";
@@ -82,6 +89,14 @@ export type SessionPresenceView = SessionPresence & { autoWake?: SessionAutoWake
 
 function iso(milliseconds: number): string {
   return new Date(milliseconds).toISOString();
+}
+
+/** One rule for every advisory view: past the injection expiry, or handed to the host and unobserved past the window. */
+function wakeObservationOverdue(row: Record<string, unknown>, nowMs: number): boolean {
+  if (String(row.expires_at) <= iso(nowMs)) return true;
+  if (row.state !== "started" && row.state !== "submitted" && row.state !== "unknown") return false;
+  const handedOff = Date.parse(String(row.outcome_at ?? row.started_at ?? ""));
+  return Number.isFinite(handedOff) && handedOff + WAKE_OBSERVATION_WINDOW_MS <= nowMs;
 }
 
 function nonceDigest(nonce: string): string {
@@ -762,7 +777,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
     if (active) {
       const current = active.instance_id === presence.instanceId && active.birth_generation === presence.startedAt && active.transport === presence.transport;
-      return current && String(active.expires_at) > now ? outlook("available", "wake-in-flight", active.expires_at)
+      return current && !wakeObservationOverdue(active, nowMs) ? outlook("available", "wake-in-flight", active.expires_at)
         : outlook("latched", "wake-unobserved", active.expires_at);
     }
     const legacy = this.database.prepare(`SELECT expires_at FROM wake_nonces WHERE host = ? AND session_id = ?
@@ -1112,11 +1127,12 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     const active = ["reserved", "started", "submitted", "unknown"].includes(String(row.state));
     const retired = row.state === "expired-unobserved";
     return { state: row.state, observation: row.state === "observed" ? "observed" : retired ? "expired-unobserved"
-      : row.late_observed_at !== null ? "unknown" : active && String(row.expires_at) <= iso(nowMs) ? "observation-overdue"
+      : row.late_observed_at !== null ? "unknown" : active && wakeObservationOverdue(row, nowMs) ? "observation-overdue"
       : active ? "pending" : "not-submitted",
       deliveryState: row.state === "started" || row.state === "unknown" || retired ? "unknown" : row.state,
       retiredAt: row.retired_at,
       instanceId: row.instance_id, generation: row.birth_generation, attemptId: row.attempt_id,
+      startedAt: row.started_at, outcomeAt: row.outcome_at,
       dispatchEpoch: row.dispatch_epoch, retryNotBefore: row.retry_not_before, expiresAt: row.expires_at,
       observedAt: row.observed_at, lateObservedAt: row.late_observed_at };
   }

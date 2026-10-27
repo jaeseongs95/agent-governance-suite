@@ -404,6 +404,37 @@ test('autoWake is advisory and reports each delivery path state', () => {
   assert.equal(brokerStatus.status.autoWake, null);
 });
 
+// 2026-10-27 local incident: Codex markers handed to `codex queue` stayed unobserved for 70 minutes while send
+// results kept reporting available/wake-in-flight and status kept reporting pending.
+test('an unobserved hand-off stops being reported as in flight after the observation window', () => {
+  const OBSERVATION_WINDOW_MS = 60_000; // docs/session-message-lifecycle.md, observation window
+  for (const outcome of ['submitted', 'accepted-or-unknown', 'started']) {
+    const f = fixture();
+    const attempt = latched(f, outcome);
+    const row = attemptRow(f.store, attempt);
+    const handedOff = Date.parse(row.outcome_at ?? row.started_at);
+    const at = ms => { keepAlive(f.store, 'instance-1', 'relay-1', ms); return ms; };
+    const inFlight = at(handedOff + OBSERVATION_WINDOW_MS - 1);
+    assert.deepEqual(f.store.autoWakeOutlook(target, inFlight),
+      { state: 'available', reason: 'wake-in-flight', basisAt: row.expires_at, checkedAt: iso(inFlight), authorityEffect: 'none' }, outcome);
+    assert.equal(f.store.managedWakeStatus(target, inFlight).observation, 'pending', outcome);
+    const overdue = at(handedOff + OBSERVATION_WINDOW_MS);
+    assert.deepEqual(f.store.autoWakeOutlook(target, overdue),
+      { state: 'latched', reason: 'wake-unobserved', basisAt: row.expires_at, checkedAt: iso(overdue), authorityEffect: 'none' }, outcome);
+    const status = f.store.managedWakeStatus(target, overdue);
+    assert.equal(status.observation, 'observation-overdue', outcome);
+    assert.equal(status.state, row.state, outcome);
+    // The hand-off time behind the overdue state is visible, so a reader can tell it predates a later message.
+    assert.deepEqual([status.startedAt, status.outcomeAt], [row.started_at, row.outcome_at], outcome);
+    const sent = f.store.submitPrepared(sender, f.store.prepare({ sender, target, body: `after ${outcome}`, ttlSeconds: 600 }, overdue).messageId, overdue);
+    assert.equal(sent.autoWake.state, 'latched', outcome);
+    assert.equal(f.store.status(sender, sent.messageId, overdue).wake.observation, 'observation-overdue', outcome);
+    // Reporting only: suppression, retirement and the stored attempt are unchanged.
+    assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), overdue).dispatch, false, outcome);
+    assert.deepEqual(attemptRow(f.store, attempt), row, outcome);
+  }
+});
+
 function v272Database(path, rows) {
   const db = new DatabaseSync(path);
   db.exec(`CREATE TABLE wake_nonces (nonce_digest TEXT PRIMARY KEY, host TEXT NOT NULL, session_id TEXT NOT NULL,

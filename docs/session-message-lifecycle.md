@@ -103,7 +103,7 @@ receipt는 `authorityEffect: none`이다. 이 검사는 협력하는 로컬 hook
 
 현재 세대의 관측과 본문 claim은 하나의 transaction이며 batch/response budget 오류가 나면 둘 다 rollback한다. nonce는 한 번만 관측되고, 현재 세대의 알림이 해당 시점의 claimable batch를 전달한다. 빈 wake prompt를 막을 수 있는 host(delivery profile의 `blocksEmptyWakePrompt`, 현재 Codex)에서 현재 세대 managed wake가 검증되어 `recognized: true`이고 원자 claim 결과가 비어 있으면, hook은 `UserPromptSubmit`의 `decision: block`으로 해당 marker prompt를 모델 요청 전에 중단한다. 내부 응답의 `managed` 값은 검증된 `WakeAttempt` binding의 존재만 나타내며 새 권한이나 host queue 제거 영수증이 아니다. 본문이 있으면 기존 peer envelope를 전달한다. legacy, 이미 관측한 중복, 옛 세대·만료 marker, 미등록 nonce, 잘못된 receipt, 일반 입력과 marker가 섞인 prompt, broker 오류는 이 차단 조건에 들어가지 않는다. 차단하지 않은 입력은 기존 fail-open 처리를 따르며, 검증된 옛 도착의 종료는 다음 문단의 별도 규칙을 적용한다. 지원 의미는 [공식 Codex Hooks 문서](https://learn.chatgpt.com/docs/hooks#userpromptsubmit)를 따른다. `Stop`의 같은 decision은 continuation을 뜻하므로 이 처리에 사용하지 않는다. batch 밖 본문과 ACK가 유실된 본문은 기존 claim lease 규칙에 따라 안전한 boundary에서 전달할 수 있다. 메시지 전달 자체를 exactly-once 업무 실행으로 확대하지 않는다.
 
-만료 또는 옛 generation marker도 서명·대상·관측 digest·receipt TTL과 전체 nonce 검증을 통과한 실제 hook 도착이면 해당 managed attempt를 `observed`로 종료한다. `observedAt`, `consumed_at`과 `lateObservedAt`을 저장하지만 `recognized: false`, 빈 messages와 binding을 반환하므로 새 본문 claim, 현재 세대의 resume 관측이나 Codex prompt 차단을 허용하지 않는다. 이후 새 pending의 wake는 현재 presence·relay·claimable 검사를 거쳐 별도로 reserve/start한다. 옛 marker의 재소비나 늦은 outcome은 새 attempt를 바꾸지 못한다. 미등록 nonce가 섞인 batch, 잘못된 receipt·대상, 일반 입력이 섞인 prompt는 종료 근거가 아니며, 실제 도착이 없는 unknown은 ACK·세대 교체·lease·TTL 가운데 하나만으로 해제하지 않는다. 해제는 아래 퇴역 규칙으로만 하며 `observed`로 바꾸지 않는다. 관측 기한이 지난 미확정 상태는 `observation-overdue`로 표시한다. `wake-status`와 메시지 status의 `wake` diagnostic에 상태·generation·attempt·주입 만료·재시도 시각·관측 시각을 표시하며 본문이나 nonce는 포함하지 않는다.
+만료 또는 옛 generation marker도 서명·대상·관측 digest·receipt TTL과 전체 nonce 검증을 통과한 실제 hook 도착이면 해당 managed attempt를 `observed`로 종료한다. `observedAt`, `consumed_at`과 `lateObservedAt`을 저장하지만 `recognized: false`, 빈 messages와 binding을 반환하므로 새 본문 claim, 현재 세대의 resume 관측이나 Codex prompt 차단을 허용하지 않는다. 이후 새 pending의 wake는 현재 presence·relay·claimable 검사를 거쳐 별도로 reserve/start한다. 옛 marker의 재소비나 늦은 outcome은 새 attempt를 바꾸지 못한다. 미등록 nonce가 섞인 batch, 잘못된 receipt·대상, 일반 입력이 섞인 prompt는 종료 근거가 아니며, 실제 도착이 없는 unknown은 ACK·세대 교체·lease·TTL 가운데 하나만으로 해제하지 않는다. 해제는 아래 퇴역 규칙으로만 하며 `observed`로 바꾸지 않는다. 관측 기한이 지난 미확정 상태는 `observation-overdue`로 표시한다. 관측 기한은 주입 만료, 또는 host에 넘긴 시각(`outcome_at`, 응답이 없으면 `started_at`)부터 관측 창 60초 가운데 먼저 오는 쪽이다. idle host가 알림을 처리하면 hook timeout, hook receipt TTL과 host queue polling 안에 hook에 도착한다. 관측 창이 지나도 도착하지 않은 알림은 broker가 볼 수 없는 host 상태(실행 중, 중단, 미적재 세션)를 기다리는 것이므로 진행 중으로 보고하지 않는다. 관측 창은 표시에만 쓴다. 누적 억제, 퇴역과 주입 만료는 바꾸지 않는다. `wake-status`와 메시지 status의 `wake` diagnostic에 상태·generation·attempt·시작 시각(`startedAt`)·제출 결과 시각(`outcomeAt`)·주입 만료·재시도 시각·관측 시각을 표시하며 본문이나 nonce는 포함하지 않는다. 메시지 status의 `wake`는 그 메시지의 알림이 아니라 대상의 최신 알림이다. `startedAt`이 메시지 생성보다 이르면 앞선 알림이 자리를 차지해 이 메시지로는 새 알림이 나가지 않았다는 뜻이다.
 
 ### capability와 이관
 
@@ -168,9 +168,9 @@ start 이후 본문 claim과 외부 enqueue 사이 경합에서는 알림 하나
 | state | reason | basisAt |
 | --- | --- | --- |
 | `available` | `relay-live`: live relay가 새 wake를 예약할 수 있다 | relay lease 갱신 시각 |
-| `available` | `wake-in-flight`: 현재 세대 알림이 주입 기한 안에 있다 | 그 알림의 주입 만료 |
+| `available` | `wake-in-flight`: 현재 세대 알림이 관측 기한 안에 있다 | 그 알림의 주입 만료 |
 | `available` | `retry-backoff`: 확실한 무제출 뒤 대기 중이다 | 재시도 가능 시각 |
-| `latched` | `wake-unobserved`: 현재 세대가 아니거나 만료된 이전 알림이 새 wake를 막고 있다 | 그 알림의 주입 만료 |
+| `latched` | `wake-unobserved`: 현재 세대가 아니거나 관측 기한이 지난 이전 알림이 새 wake를 막고 있다. 수신자는 스스로 다음 turn이나 도구 경계에 이를 때까지 새 알림을 받지 않는다 | 그 알림의 주입 만료 |
 | `no-live-relay` | `presence-unknown`, `presence-not-online`, `relay-lease-missing` | 없음, presence lease 종료, 마지막 presence heartbeat |
 | `unsupported` | `no-idle-wake`: transport에 idle wake가 없다 | presence birth |
 
