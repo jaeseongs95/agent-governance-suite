@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
-import { assertRegistryAuthority } from "../../scripts/check-skill-context-optimization.mjs";
+import { assertRegistryAuthority, checkRegistryContextCompatibility } from "../../scripts/check-skill-context-optimization.mjs";
 
 const read = (relative) => JSON.parse(readFileSync(new URL(`../../${relative}`, import.meta.url), "utf8"));
 
@@ -8,6 +8,26 @@ describe("independent registry authority invariants", () => {
   it("checks both the current registry and the reviewed comparison fixture", () => {
     assertRegistryAuthority(read("skills/registry.json"));
     assertRegistryAuthority(read("scripts/fixtures/registry-contract.3.0.json"));
+  });
+  it("reports a fixed item code without exposing untrusted actual or expected values", () => {
+    const registry = read("skills/registry.json");
+    const audit = registry.skills.find((item) => item.skillId === "independent-audit-gate").providers[0];
+    audit.inputBindings[2].sources = ["PRIVATE_SECRET_VALUE"];
+    const errors = checkRegistryContextCompatibility(registry);
+    expect(errors).toContain("registry authority violation: AUDIT_BINDINGS");
+    expect(JSON.stringify(errors)).not.toContain("PRIVATE_SECRET_VALUE");
+    expect(JSON.stringify(errors)).not.toContain("verified-evidence-index:locators");
+    expect(JSON.stringify(errors)).not.toContain("actual");
+    expect(JSON.stringify(errors)).not.toContain("expected");
+  });
+  it("propagates an unexpected programming error instead of reporting an invariant violation", () => {
+    const registry = read("skills/registry.json");
+    const fault = new Error("SYNTHETIC_PROGRAMMING_ERROR");
+    registry.skills = new Proxy(registry.skills, {get(target, key, receiver) {
+      if (key === "map") throw fault;
+      return Reflect.get(target, key, receiver);
+    }});
+    expect(() => checkRegistryContextCompatibility(registry)).toThrow(fault);
   });
   it("rejects a paired audit-gate mutation through the public standalone checker", async () => {
     const registry = read("skills/registry.json");
@@ -38,7 +58,7 @@ describe("independent registry authority invariants", () => {
       expect(() => assertRegistryAuthority(pairedFixture), variation).toThrow();
     }
   });
-  it.each(["solid-role", "solid-gate", "solid-source", "solid-schema", "audit-gate", "audit-recovery", "preflight-authority", "panel-authority", "panel-gate", "audit-disabled", "audit-capability", "audit-outranked", "duplicate-id", "ambiguous-capability"])(
+  it.each(["solid-role", "solid-gate", "solid-source", "solid-schema", "audit-gate", "audit-recovery", "preflight-authority", "panel-authority", "panel-gate", "audit-disabled", "audit-capability", "audit-outranked", "audit-raw-duplicate", "audit-result-schema", "audit-output-schema", "audit-required-raw", "audit-state-map", "duplicate-id", "ambiguous-capability"])(
     "rejects the same invalid change to registry and fixture: %s", (change) => {
       const registry = read("skills/registry.json");
       const skill = (id) => registry.skills.find((item) => item.skillId === id);
@@ -52,6 +72,11 @@ describe("independent registry authority invariants", () => {
       if (change === "preflight-authority") skill("mutation-risk-preflight").providers[0].inputBindings.find((item) => item.targetArtifact === "authorization-boundary").sources.push("untrusted:approval");
       if (change === "panel-authority") skill("independent-deliberation-panel").providers[0].inputBindings.find((item) => item.targetArtifact === "constraints").sources[1] = "task:untrusted-authority";
       if (change === "panel-gate") skill("independent-deliberation-panel").providers[0].gate.policy = "conditional";
+      if (change === "audit-raw-duplicate") audit.inputBindings.push({targetArtifact: "raw-verification-results", sources: ["task:untrusted"], operation: "collect"});
+      if (change === "audit-result-schema") audit.resultSchema = "untrusted.json";
+      if (change === "audit-output-schema") audit.outputSchema = "untrusted.json";
+      if (change === "audit-required-raw") audit.requiredInputArtifacts = audit.requiredInputArtifacts.filter((item) => item !== "raw-verification-results");
+      if (change === "audit-state-map") audit.stateMapping.values.FAIL.state = "passed";
       if (change === "audit-disabled") skill("independent-audit-gate").enabled = false;
       if (change === "audit-capability") audit.capabilities = ["not-independent-audit"];
       if (change === "audit-outranked") {skill("task-contract").priority = 100; skill("task-contract").providers[0].capabilities.push("independent-audit");}

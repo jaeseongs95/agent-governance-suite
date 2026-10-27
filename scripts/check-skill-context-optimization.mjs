@@ -478,50 +478,77 @@ export function reconstructOptimizedSkill(skillId, root = ROOT) {
 
 // Independent review points: these literal security contracts do not come from
 // registry-contract.3.0.json. Expand them only with separately reviewed policy.
+class RegistryAuthorityViolation extends Error {
+  constructor(code) { super(code); this.code = code; }
+}
+
+function rule(code, check) {
+  try { check(); }
+  catch (error) {
+    if (error instanceof assert.AssertionError) throw new RegistryAuthorityViolation(code);
+    throw error;
+  }
+}
+
 export function assertRegistryAuthority(registry) {
   const ids = registry.skills.map((skill) => skill.skillId);
-  assert.equal(new Set(ids).size, ids.length, "duplicate skill ID");
+  rule("REGISTRY_DUPLICATE_ID", () => assert.equal(new Set(ids).size, ids.length, "duplicate skill ID"));
   const one = (id) => {
     const matches = registry.skills.filter((skill) => skill.skillId === id);
-    assert.equal(matches.length, 1, `${id}: missing or duplicate`);
-    assert.equal(matches[0].enabled, true, `${id}: disabled`);
-    assert.equal(matches[0].providers.length, 1, `${id}: provider count`);
+    rule("DESCRIPTOR_COUNT", () => assert.equal(matches.length, 1, `${id}: missing or duplicate`));
+    rule("DESCRIPTOR_ENABLED", () => assert.equal(matches[0].enabled, true, `${id}: disabled`));
+    rule("DESCRIPTOR_PROVIDERS", () => assert.equal(matches[0].providers.length, 1, `${id}: provider count`));
     return matches[0].providers[0];
   };
   const solid = one("solid-design");
-  assert.equal(solid.executionClass, "bootstrap");
-  assert.equal(solid.phase, "solid-design-assessment");
-  assert.equal(solid.phaseOrder, 26);
-  assert.deepEqual(solid.capabilities, ["solid-design-assessment"]);
-  assert.deepEqual(solid.gate, {kind: "none", policy: "none", validator: null});
-  assert.deepEqual(solid.inputBindings, [{targetArtifact: "solid-design-request", sources: ["task:solid-design-request"], operation: "require-external"}]);
-  assert.equal(solid.outputSchema, "skills/solid-design/contracts/solid-design-report.v1.schema.json");
-  assert.equal(solid.resultSchema, "contracts/provider-result.v1.schema.json");
-  assert.equal(registry.skills.flatMap((skill) => skill.providers).filter((provider) => provider.capabilities.includes("solid-design-assessment")).length, 1, "ambiguous SOLID capability");
+  rule("SOLID_EXECUTION", () => assert.equal(solid.executionClass, "bootstrap"));
+  rule("SOLID_PHASE", () => assert.equal(solid.phase, "solid-design-assessment"));
+  rule("SOLID_PHASE_ORDER", () => assert.equal(solid.phaseOrder, 26));
+  rule("SOLID_CAPABILITIES", () => assert.deepEqual(solid.capabilities, ["solid-design-assessment"]));
+  rule("SOLID_GATE", () => assert.deepEqual(solid.gate, {kind: "none", policy: "none", validator: null}));
+  rule("SOLID_BINDINGS", () => assert.deepEqual(solid.inputBindings, [{targetArtifact: "solid-design-request", sources: ["task:solid-design-request"], operation: "require-external"}]));
+  rule("SOLID_OUTPUT_SCHEMA", () => assert.equal(solid.outputSchema, "skills/solid-design/contracts/solid-design-report.v1.schema.json"));
+  rule("SOLID_RESULT_SCHEMA", () => assert.equal(solid.resultSchema, "contracts/provider-result.v1.schema.json"));
+  rule("SOLID_CAPABILITY_OWNER", () => assert.equal(registry.skills.flatMap((skill) => skill.providers).filter((provider) => provider.capabilities.includes("solid-design-assessment")).length, 1, "ambiguous SOLID capability"));
   const panel = one("independent-deliberation-panel");
-  assert.equal(panel.executionClass, "workflow");
-  assert.equal(panel.phase, "decision-analysis");
-  assert.deepEqual(panel.gate, {kind: "none", policy: "none", validator: "skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json"});
-  assert.deepEqual(panel.inputBindings.filter((binding) => binding.targetArtifact === "constraints"), [{
+  rule("PANEL_EXECUTION", () => assert.equal(panel.executionClass, "workflow"));
+  rule("PANEL_PHASE", () => assert.equal(panel.phase, "decision-analysis"));
+  rule("PANEL_GATE", () => assert.deepEqual(panel.gate, {kind: "none", policy: "none", validator: "skills/independent-deliberation-panel/contracts/decision-record.v1.schema.json"}));
+  rule("PANEL_BINDINGS", () => assert.deepEqual(panel.inputBindings.filter((binding) => binding.targetArtifact === "constraints"), [{
     targetArtifact: "constraints", sources: ["task-envelope:constraints", "task-envelope:authorization"], operation: "combine",
-  }]);
+  }]));
   const audit = one("independent-audit-gate");
   const auditSkill = registry.skills.find((skill) => skill.skillId === "independent-audit-gate");
-  assert.equal(auditSkill.priority, 90, "audit priority");
-  assert.deepEqual(audit.capabilities, ["independent-audit", "risk-classification", "evidence-verification", "release-gate"]);
-  assert(!registry.skills.some((skill) => skill.enabled && skill.skillId !== "independent-audit-gate" && skill.priority >= auditSkill.priority && skill.providers.some((provider) => provider.capabilities.includes("independent-audit"))), "audit capability outranked");
-  assert.equal(audit.executionClass, "workflow");
-  assert.equal(audit.phase, "completion-gate");
-  assert.deepEqual(audit.gate, {kind: "completion", policy: "mandatory", validator: "independent-audit"});
-  assert(audit.producedArtifacts.includes("gate-verdict"), "audit verdict missing");
-  assert.deepEqual(audit.inputBindings.filter((binding) => binding.targetArtifact === "rollback-or-recovery-evidence"), [{
-    targetArtifact: "rollback-or-recovery-evidence", sources: ["recovery-evidence", "workflow:rollback-evidence"], operation: "require-external",
-  }]);
+  rule("AUDIT_PRIORITY", () => assert.equal(auditSkill.priority, 90, "audit priority"));
+  rule("AUDIT_CAPABILITIES", () => assert.deepEqual(audit.capabilities, ["independent-audit", "risk-classification", "evidence-verification", "release-gate"]));
+  rule("AUDIT_CAPABILITY_OWNER", () => assert(!registry.skills.some((skill) => skill.enabled && skill.skillId !== "independent-audit-gate" && skill.priority >= auditSkill.priority && skill.providers.some((provider) => provider.capabilities.includes("independent-audit"))), "audit capability outranked"));
+  rule("AUDIT_EXECUTION", () => assert.equal(audit.executionClass, "workflow"));
+  rule("AUDIT_PHASE", () => assert.equal(audit.phase, "completion-gate"));
+  rule("AUDIT_GATE", () => assert.deepEqual(audit.gate, {kind: "completion", policy: "mandatory", validator: "independent-audit"}));
+  rule("AUDIT_VERDICT", () => assert(audit.producedArtifacts.includes("gate-verdict"), "audit verdict missing"));
+  rule("AUDIT_REQUIRED_INPUTS", () => assert.deepEqual(audit.requiredInputArtifacts, ["final-target-identifier", "final-diff-or-artifact-digest", "raw-verification-results", "rollback-or-recovery-evidence"]));
+  rule("AUDIT_BINDINGS", () => assert.deepEqual(audit.inputBindings, [
+    {targetArtifact: "final-target-identifier", sources: ["acceptance-evidence-report:target", "workflow:current-target"], operation: "select"},
+    {targetArtifact: "final-diff-or-artifact-digest", sources: ["acceptance-evidence-report:target-digest", "change-scope-report:final-digest"], operation: "combine"},
+    {targetArtifact: "raw-verification-results", sources: ["verified-evidence-index:locators"], operation: "collect"},
+    {targetArtifact: "rollback-or-recovery-evidence", sources: ["recovery-evidence", "workflow:rollback-evidence"], operation: "require-external"},
+  ]));
+  rule("AUDIT_OUTPUT_SCHEMA", () => assert.equal(audit.outputSchema, "contracts/freeform-output.v1.schema.json"));
+  rule("AUDIT_RESULT_SCHEMA", () => assert.equal(audit.resultSchema, "contracts/provider-result.v1.schema.json"));
+  rule("AUDIT_STATE_MAPPING", () => assert.deepEqual(audit.stateMapping, {
+    selector: "/output/gateVerdict",
+    values: {
+      PASS: {state: "passed", errorRequired: false},
+      FAIL: {state: "failed", errorRequired: true, allowedErrorCodes: ["GATE_FAILED"]},
+      BLOCKED: {state: "blocked", errorRequired: true, allowedErrorCodes: ["MISSING_EVIDENCE"]},
+    },
+    default: "reject", adapterErrors: ["INVALID_INPUT", "MISSING_EVIDENCE"],
+  }));
   const preflight = one("mutation-risk-preflight");
-  assert.deepEqual(preflight.gate, {kind: "precondition", policy: "conditional", validator: "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json"});
-  assert.deepEqual(preflight.inputBindings.filter((binding) => binding.targetArtifact === "authorization-boundary"), [{
+  rule("PREFLIGHT_GATE", () => assert.deepEqual(preflight.gate, {kind: "precondition", policy: "conditional", validator: "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json"}));
+  rule("PREFLIGHT_BINDINGS", () => assert.deepEqual(preflight.inputBindings.filter((binding) => binding.targetArtifact === "authorization-boundary"), [{
     targetArtifact: "authorization-boundary", sources: ["bootstrap:task-envelope.authorization", "mutation-intent.authorizationRef"], operation: "combine",
-  }]);
+  }]));
 }
 
 export function checkRegistryContextCompatibility(registry) {
@@ -529,7 +556,11 @@ export function checkRegistryContextCompatibility(registry) {
   // independently reviewable, including authority, bindings and gate semantics.
   const expected = JSON.parse(readFileSync(join(ROOT, "scripts/fixtures/registry-contract.3.0.json"), "utf8"));
   const errors = isDeepStrictEqual(registry, expected) ? [] : ["registry differs from the 3.0 contract"];
-  try { assertRegistryAuthority(registry); } catch { errors.push("registry violates independent authority invariants"); }
+  try { assertRegistryAuthority(registry); }
+  catch (error) {
+    if (!(error instanceof RegistryAuthorityViolation)) throw error;
+    errors.push("registry violates independent authority invariants", `registry authority violation: ${error.code}`);
+  }
   return errors;
 }
 
