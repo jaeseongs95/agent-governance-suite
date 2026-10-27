@@ -46498,6 +46498,8 @@ function bindNativeClassificationDefinitions(definitions, behaviors = builtInBeh
 // mcp-server/src/index.ts
 var diagnostics;
 async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map(), executionAdapters, nativeBehaviors) {
+  const installedWireAdapters = new Map(wireAdapters);
+  const installedNativeBehaviors = nativeBehaviors === void 0 ? void 0 : new Map(nativeBehaviors);
   let loggingConfig;
   let logConfigInvalid = false;
   try {
@@ -46517,8 +46519,6 @@ async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map(), executio
   process.once("beforeExit", () => {
     void diagnostics?.close();
   });
-  const installedWireAdapters = new Map(wireAdapters);
-  const installedNativeBehaviors = nativeBehaviors === void 0 ? void 0 : new Map(nativeBehaviors);
   const registryPath = resolveRegistryPath();
   const workflowDatabasePath = resolveWorkflowDatabasePath();
   const continuityDatabasePath = resolveContinuityDatabasePath();

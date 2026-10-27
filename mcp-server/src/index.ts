@@ -50,6 +50,9 @@ export async function startMcpServer(
   executionAdapters?: ReadonlyMap<string, HostExecutionAdapter>,
   nativeBehaviors?: ReadonlyMap<string, NativeCliBehavior>,
 ): Promise<void> {
+  // Snapshot trusted composition before the first asynchronous operation.
+  const installedWireAdapters = new Map(wireAdapters);
+  const installedNativeBehaviors = nativeBehaviors === undefined ? undefined : new Map(nativeBehaviors);
   let loggingConfig;
   let logConfigInvalid = false;
   try {loggingConfig = readDiagnosticConfig(process.env.AGENT_GOVERNANCE_LOG_CONFIG);} catch {
@@ -62,8 +65,6 @@ export async function startMcpServer(
   try {if (loggingConfig.level !== "OFF" || Object.values(loggingConfig.categories ?? {}).some(level => level !== "OFF")) runtimeHash = createHash("sha256").update(await readFile(new URL(import.meta.url))).digest("hex");} catch { /* Startup diagnostics may be unavailable; never alter service startup. */ }
   diagnostics.event("lifecycle", "INFO", "startup", {buildVersion: PLUGIN_INFO.version, runtimeHash, runtimePath: import.meta.url});
   process.once("beforeExit", () => {void diagnostics?.close();});
-  const installedWireAdapters = new Map(wireAdapters);
-  const installedNativeBehaviors = nativeBehaviors === undefined ? undefined : new Map(nativeBehaviors);
   const registryPath = resolveRegistryPath();
   const workflowDatabasePath = resolveWorkflowDatabasePath();
   const continuityDatabasePath = resolveContinuityDatabasePath();

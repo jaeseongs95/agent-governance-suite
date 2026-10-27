@@ -8248,8 +8248,11 @@ var init_profile_validation = __esm({
   }
 });
 
-// mcp-server/src/session-actor-proof.ts
-import { createHash as createHash2, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+// mcp-server/src/diagnostics.ts
+import { fork } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { randomUUID } from "node:crypto";
+import { performance as performance2 } from "node:perf_hooks";
 
 // contracts/types.ts
 var CONTRACT_VERSION = "1.0.0";
@@ -8305,6 +8308,9 @@ var WorkflowContractError = class extends Error {
     return { code: this.code, message: this.message, details: this.details };
   }
 };
+
+// mcp-server/src/session-actor-proof.ts
+import { createHash as createHash2, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 // mcp-server/src/convergence-logic.ts
 import { createHash } from "node:crypto";
@@ -8523,8 +8529,8 @@ function canonicalJson(value, subject = "Convergence input") {
   }
   if (Array.isArray(value)) return "[".concat(value.map((item) => canonicalJson(item, subject)).join(","), "]");
   if (value && typeof value === "object") {
-    const record4 = value;
-    return "{".concat(Object.keys(record4).sort().map((key) => "".concat(JSON.stringify(key), ":").concat(canonicalJson(record4[key], subject))).join(","), "}");
+    const record5 = value;
+    return "{".concat(Object.keys(record5).sort().map((key) => "".concat(JSON.stringify(key), ":").concat(canonicalJson(record5[key], subject))).join(","), "}");
   }
   throw new WorkflowContractError("INVALID_INPUT", "".concat(subject, " contains a non-serializable value."));
 }
@@ -8768,8 +8774,8 @@ function boundedDelta(value) {
   if (value > TTL_MS) return "above-range";
   return value;
 }
-function invalid(reasonCode, diagnostics) {
-  throw new WorkflowContractError("BINDING_INVALID", "The current root hook proof is invalid.", { reasonCode, ...diagnostics });
+function invalid(reasonCode, diagnostics2) {
+  throw new WorkflowContractError("BINDING_INVALID", "The current root hook proof is invalid.", { reasonCode, ...diagnostics2 });
 }
 var SessionActorProofs = class {
   constructor(store, now = () => store.currentTimeMilliseconds()) {
@@ -8848,6 +8854,244 @@ var SessionActorProofs = class {
     return { host: proof.host, sessionId: proof.sessionId, actor: { ...proof.actor } };
   }
 };
+
+// mcp-server/src/diagnostics.ts
+var LOG_LEVELS = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF"];
+var defaults = {
+  level: "OFF",
+  destination: "stderr",
+  format: "json",
+  bufferBytes: 65536,
+  rotationBytes: 1048576,
+  rotationIntervalMs: 1e3,
+  retainedFiles: 3,
+  flushDeadlineMs: 100
+};
+var categories = ["lifecycle", "request", "binding", "transport"];
+var reasons = /* @__PURE__ */ new Set([
+  "LOG_CONFIG_INVALID",
+  "CALLER_SESSION_BINDING_REJECTED",
+  "ROOT_HOOK_PROOF_REQUIRED",
+  "ROOT_PROOF_VERIFICATION_FAILED",
+  "ROOT_PROOF_KEY_INVALID",
+  "ROOT_PROOF_TOO_LARGE",
+  "ROOT_PROOF_FORMAT_INVALID",
+  "ROOT_PROOF_SIGNATURE_INVALID",
+  "ROOT_PROOF_PAYLOAD_INVALID",
+  "ROOT_PROOF_SCOPE_OR_TIME_INVALID",
+  "ROOT_PROOF_ALREADY_CONSUMED"
+]);
+var checks = /* @__PURE__ */ new Set(["shape", "actorInput", "issuedInFuture", "expired", "tool", "ttl", "inputDigest"]);
+var codes = new Set(ERROR_CODE);
+var record = (v) => v !== null && typeof v === "object" && !Array.isArray(v) ? v : {};
+function readDiagnosticConfig(raw) {
+  if (!raw) return { ...defaults };
+  if (raw.length > 8192) throw new Error("INVALID_LOG_CONFIGURATION");
+  const parsed = JSON.parse(raw);
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("INVALID_LOG_CONFIGURATION");
+  const value = record(parsed);
+  if (Object.keys(value).some((key) => ![...Object.keys(defaults), "categories", "file"].includes(key)) || value.categories !== void 0 && (value.categories === null || typeof value.categories !== "object" || Array.isArray(value.categories))) throw new Error("INVALID_LOG_CONFIGURATION");
+  const config2 = { ...defaults, ...value };
+  const level = (v) => typeof v === "string" && LOG_LEVELS.includes(v);
+  if (!level(config2.level) || !["stderr", "file"].includes(config2.destination) || config2.format !== "json" || config2.destination === "file" && (typeof config2.file !== "string" || !config2.file) || Object.entries(record(config2.categories)).some(([k, v]) => !categories.includes(k) || !level(v))) throw new Error("INVALID_LOG_CONFIGURATION");
+  for (const [key, min, max] of [
+    ["bufferBytes", 1024, 1048576],
+    ["rotationBytes", 1024, 1073741824],
+    ["rotationIntervalMs", 100, 864e5],
+    ["retainedFiles", 1, 100],
+    ["flushDeadlineMs", 1, 1e3]
+  ]) {
+    if (!Number.isInteger(config2[key]) || config2[key] < min || config2[key] > max) throw new Error("INVALID_LOG_CONFIGURATION");
+  }
+  return config2;
+}
+async function createDiagnostics(config2, registeredMethods) {
+  const instance = randomUUID();
+  const loss = { droppedRecords: 0, droppedBytes: 0, unconfirmedRecords: 0, unconfirmedBytes: 0, sinkErrors: 0, shutdownLossPossible: false };
+  const priorities = { TRACE: 10, DEBUG: 20, INFO: 30, WARN: 40, ERROR: 50, FATAL: 60, OFF: Infinity };
+  const enabled = (category, level) => priorities[level] >= priorities[config2.categories?.[category] ?? config2.level];
+  const active = config2.level !== "OFF" || Object.values(config2.categories ?? {}).some((level) => level !== "OFF");
+  const pending = /* @__PURE__ */ new Map();
+  let pendingBytes = 0, sequence = 0, unavailable = false, closed = false, flushed = false;
+  const accountUnconfirmed = () => {
+    loss.unconfirmedRecords += pending.size;
+    loss.unconfirmedBytes += pendingBytes;
+    pending.clear();
+    pendingBytes = 0;
+  };
+  let resolveReady = () => {
+  };
+  const ready = new Promise((resolve) => {
+    resolveReady = resolve;
+  });
+  let child;
+  if (active) {
+    try {
+      const source = import.meta.url.endsWith(".ts");
+      child = fork(fileURLToPath(new URL(source ? "./diagnostics-worker.ts" : "./diagnostics-worker.mjs", import.meta.url)), [], {
+        stdio: ["ignore", "ignore", "inherit", "ipc"],
+        execArgv: source ? ["--import", import.meta.resolve("tsx")] : [],
+        serialization: "json"
+      });
+      child.on("message", (message) => {
+        const response = record(message);
+        if (response.ready === true) resolveReady(true);
+        if (response.flushed === true) flushed = true;
+        if (typeof response.ack === "number") {
+          const bytes = pending.get(response.ack);
+          if (bytes !== void 0) {
+            pending.delete(response.ack);
+            pendingBytes -= bytes;
+          }
+        }
+        if (typeof response.droppedRecords === "number") loss.droppedRecords += response.droppedRecords;
+        if (typeof response.droppedBytes === "number") loss.droppedBytes += response.droppedBytes;
+        if (response.failed === true) {
+          loss.sinkErrors++;
+          unavailable = true;
+          resolveReady(false);
+        }
+      });
+      const failed = () => {
+        resolveReady(false);
+        if (!closed || !flushed || pending.size > 0) {
+          unavailable = true;
+          loss.sinkErrors++;
+          loss.shutdownLossPossible = true;
+          accountUnconfirmed();
+        }
+      };
+      child.on("error", failed);
+      child.on("exit", failed);
+      child.send({ config: config2, instance }, (error61) => {
+        if (error61) failed();
+      });
+      child.unref();
+      child.channel?.unref();
+    } catch {
+      loss.sinkErrors++;
+      unavailable = true;
+      resolveReady(false);
+    }
+  } else resolveReady(true);
+  function event(category, level, event2, fields = {}) {
+    if (!enabled(category, level) || closed) return;
+    const safe = { event: event2, ...loss };
+    if (typeof fields.correlation === "string" && /^[a-f0-9-]{36}$/.test(fields.correlation)) safe.correlation = fields.correlation;
+    if (typeof fields.method === "string") safe.method = registeredMethods.has(fields.method) ? fields.method : "UNKNOWN";
+    if (typeof fields.elapsedMs === "number" && Number.isFinite(fields.elapsedMs)) safe.elapsedMs = Math.max(0, fields.elapsedMs);
+    if (["success", "rejected", "thrown", "UNKNOWN"].includes(String(fields.outcome))) safe.outcome = fields.outcome;
+    if (typeof fields.errorCode === "string") safe.errorCode = codes.has(fields.errorCode) ? fields.errorCode : "UNKNOWN";
+    if (typeof fields.reasonCode === "string") safe.reasonCode = reasons.has(fields.reasonCode) ? fields.reasonCode : "UNKNOWN";
+    if (Array.isArray(fields.failedChecks)) safe.failedChecks = fields.failedChecks.filter((v) => typeof v === "string" && checks.has(v));
+    for (const key of ["proofPresent", "bindingPresent", "verified"]) if (typeof fields[key] === "boolean") safe[key] = fields[key];
+    if (typeof fields.buildVersion === "string" && /^[a-zA-Z0-9.+-]{1,64}$/.test(fields.buildVersion)) safe.buildVersion = fields.buildVersion;
+    if (typeof fields.runtimePath === "string" && fields.runtimePath.startsWith("file:")) safe.runtimePath = fields.runtimePath;
+    if (typeof fields.runtimeHash === "string" && /^[a-f0-9]{64}$/.test(fields.runtimeHash)) safe.runtimeHash = fields.runtimeHash;
+    safe.hookDelivery = "UNKNOWN";
+    safe.updatedInputApplied = "UNKNOWN";
+    const bytes = Buffer.byteLength(JSON.stringify(safe)) + 128;
+    if (!child || unavailable || pendingBytes + bytes > config2.bufferBytes) {
+      loss.droppedRecords++;
+      loss.droppedBytes += bytes;
+      return;
+    }
+    const id2 = ++sequence;
+    pending.set(id2, bytes);
+    pendingBytes += bytes;
+    try {
+      child.send({ id: id2, category, level, fields: safe }, (error61) => {
+        if (error61) {
+          unavailable = true;
+          loss.sinkErrors++;
+        }
+      });
+    } catch {
+      unavailable = true;
+      loss.sinkErrors++;
+    }
+  }
+  return {
+    event,
+    loss,
+    ready,
+    registerMethods(methods) {
+      for (const method of methods) registeredMethods.add(method);
+    },
+    async observe(method, args, call, outcome) {
+      const correlation = randomUUID(), started = performance2.now();
+      event("request", "DEBUG", "request_start", { method, correlation });
+      const input2 = record(args);
+      event("binding", "DEBUG", "binding_check", { method, correlation, bindingPresent: Object.hasOwn(input2, "_sessionBinding"), proofPresent: Object.hasOwn(input2, SESSION_PROOF_FIELD) });
+      try {
+        const response = await call(correlation);
+        const result = outcome?.();
+        event("request", result?.ok === true ? "INFO" : "WARN", "request_end", {
+          method,
+          correlation,
+          elapsedMs: performance2.now() - started,
+          outcome: result?.ok === true ? "success" : result ? "rejected" : "UNKNOWN",
+          errorCode: result?.errorCode,
+          reasonCode: result?.reasonCode,
+          failedChecks: result?.failedChecks
+        });
+        return response;
+      } catch (error61) {
+        event("request", "ERROR", "request_end", { method, correlation, elapsedMs: performance2.now() - started, outcome: "thrown" });
+        throw error61;
+      }
+    },
+    async close() {
+      if (!child || closed) return;
+      event("lifecycle", "INFO", "shutdown_start");
+      closed = true;
+      const target = child;
+      await new Promise((resolve) => {
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          if (!flushed || pending.size > 0) {
+            loss.shutdownLossPossible = true;
+            accountUnconfirmed();
+          }
+          clearTimeout(timer);
+          resolve();
+        };
+        const timer = setTimeout(() => {
+          loss.shutdownLossPossible = true;
+          accountUnconfirmed();
+          target.kill("SIGKILL");
+          finish();
+        }, config2.flushDeadlineMs);
+        target.once("exit", finish);
+        target.once("error", finish);
+        try {
+          target.send({ close: true }, (error61) => {
+            if (error61) {
+              target.kill("SIGKILL");
+              finish();
+            }
+          });
+        } catch {
+          target.kill("SIGKILL");
+          finish();
+        }
+      });
+    }
+  };
+}
+
+// mcp-server/src/index.ts
+import { createHash as createHash17 } from "node:crypto";
+
+// mcp-server/src/plugin-info.ts
+var PLUGIN_INFO = Object.freeze({
+  id: "agent-governance-suite",
+  version: "2.9.1",
+  repository: "https://github.com/jaeseongs95/agent-governance-suite",
+  tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
+});
 
 // node_modules/.pnpm/@modelcontextprotocol+sdk@1.30.0_zod@4.5.4/node_modules/@modelcontextprotocol/sdk/dist/esm/server/stdio.js
 import process3 from "node:process";
@@ -9057,7 +9301,7 @@ __export(external_exports, {
   properties: () => _properties,
   property: () => _property,
   readonly: () => readonly,
-  record: () => record,
+  record: () => record2,
   refine: () => refine,
   regex: () => _regex,
   regexes: () => regexes_exports,
@@ -9818,8 +10062,8 @@ var BIGINT_FORMAT_RANGES = {
 };
 function pick(schema, mask) {
   const currDef = schema._zod.def;
-  const checks = currDef.checks;
-  const hasChecks = checks && checks.length > 0;
+  const checks2 = currDef.checks;
+  const hasChecks = checks2 && checks2.length > 0;
   if (hasChecks) {
     throw new Error(".pick() cannot be used on object schemas containing refinements");
   }
@@ -9843,8 +10087,8 @@ function pick(schema, mask) {
 }
 function omit(schema, mask) {
   const currDef = schema._zod.def;
-  const checks = currDef.checks;
-  const hasChecks = checks && checks.length > 0;
+  const checks2 = currDef.checks;
+  const hasChecks = checks2 && checks2.length > 0;
   if (hasChecks) {
     throw new Error(".omit() cannot be used on object schemas containing refinements");
   }
@@ -9870,8 +10114,8 @@ function extend(schema, shape) {
   if (!isPlainObject(shape)) {
     throw new Error("Invalid input to extend: expected a plain object");
   }
-  const checks = schema._zod.def.checks;
-  const hasChecks = checks && checks.length > 0;
+  const checks2 = schema._zod.def.checks;
+  const hasChecks = checks2 && checks2.length > 0;
   if (hasChecks) {
     const existingShape = schema._zod.def.shape;
     for (const key of Reflect.ownKeys(shape)) {
@@ -9924,8 +10168,8 @@ function merge(a, b) {
 }
 function partial(Class2, schema, mask, name = "partial") {
   const currDef = schema._zod.def;
-  const checks = currDef.checks;
-  const hasChecks = checks && checks.length > 0;
+  const checks2 = currDef.checks;
+  const hasChecks = checks2 && checks2.length > 0;
   if (hasChecks) {
     throw new Error(".".concat(name, "() cannot be used on object schemas containing refinements"));
   }
@@ -11475,24 +11719,24 @@ var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
   inst._zod.bag = inst._zod.bag || {};
   inst._zod.version = version;
   const defChecks = inst._zod.def.checks;
-  const checks = inst._zod.traits.has("$ZodCheck") ? [inst, ...defChecks ?? []] : defChecks?.length ? [...defChecks] : [];
-  for (const ch2 of checks) {
+  const checks2 = inst._zod.traits.has("$ZodCheck") ? [inst, ...defChecks ?? []] : defChecks?.length ? [...defChecks] : [];
+  for (const ch2 of checks2) {
     for (const fn of ch2._zod.onattach) {
       fn(inst);
     }
   }
-  if (checks.length === 0) {
+  if (checks2.length === 0) {
     (_a3 = inst._zod).deferred ?? (_a3.deferred = []);
     inst._zod.deferred?.push(() => {
       inst._zod.run = inst._zod.parse;
     });
   } else {
-    const runChecks = (payload, checks2, ctx) => {
+    const runChecks = (payload, checks3, ctx) => {
       if (payload.memo)
         return payload;
       let isAborted = aborted(payload);
       let asyncResult;
-      for (const ch2 of checks2) {
+      for (const ch2 of checks3) {
         if (ch2._zod.def.when) {
           if (explicitlyAborted(payload))
             continue;
@@ -11538,7 +11782,7 @@ var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
         canary.aborted = true;
         return canary;
       }
-      const checkResult = runChecks(payload, checks, ctx);
+      const checkResult = runChecks(payload, checks2, ctx);
       if (checkResult instanceof Promise) {
         if (ctx.async === false)
           throw new $ZodAsyncError();
@@ -11563,9 +11807,9 @@ var $ZodType = /* @__PURE__ */ $constructor("$ZodType", (inst, def) => {
       if (result instanceof Promise) {
         if (ctx.async === false)
           throw new $ZodAsyncError();
-        return result.then((result2) => runChecks(result2, checks, ctx));
+        return result.then((result2) => runChecks(result2, checks2, ctx));
       }
-      return runChecks(result, checks, ctx);
+      return runChecks(result, checks2, ctx);
     };
   }
 }, {
@@ -24852,8 +25096,8 @@ function rewriteKeyNames(ctx) {
       bySchema.set(entry.schema, entry);
   }
   const rewrites = /* @__PURE__ */ new Map();
-  for (const record4 of pendingRecords.get(ctx) ?? []) {
-    const seen = ctx.seen.get(record4);
+  for (const record5 of pendingRecords.get(ctx) ?? []) {
+    const seen = ctx.seen.get(record5);
     const names = (seen?.def ?? seen?.schema)?.propertyNames;
     if (!names || names === true || rewrites.has(names))
       continue;
@@ -25318,7 +25562,7 @@ __export(schemas_exports2, {
   preprocess: () => preprocess,
   promise: () => promise,
   readonly: () => readonly,
-  record: () => record,
+  record: () => record2,
   refine: () => refine,
   set: () => set,
   strictObject: () => strictObject,
@@ -26373,7 +26617,7 @@ var ZodRecord = /* @__PURE__ */ $constructor("ZodRecord", (inst, def) => {
   inst.keyType = def.keyType;
   inst.valueType = def.valueType;
 });
-function record(keyType, valueType, params) {
+function record2(keyType, valueType, params) {
   if (!valueType || !valueType._zod) {
     return new ZodRecord({
       type: "record",
@@ -26841,7 +27085,7 @@ var stringbool = (...args) => _stringbool({
 }, ...args);
 function json(params) {
   const jsonSchema = lazy(() => {
-    return union([string2(params), number2(), boolean2(), _null3(), array(jsonSchema), record(string2(), jsonSchema)]);
+    return union([string2(params), number2(), boolean2(), _null3(), array(jsonSchema), record2(string2(), jsonSchema)]);
   });
   return jsonSchema;
 }
@@ -27612,11 +27856,11 @@ function deepPartial(schema) {
 }
 
 // node_modules/.pnpm/zod@4.5.4/node_modules/zod/v4/classic/in-out.js
-function withChecks(side, checks) {
-  if (!checks?.length)
+function withChecks(side, checks2) {
+  if (!checks2?.length)
     return side;
   const def = side._zod.def;
-  return clone(side, mergeDefs(def, { checks: [...def.checks ?? [], ...checks] }), { parent: true });
+  return clone(side, mergeDefs(def, { checks: [...def.checks ?? [], ...checks2] }), { parent: true });
 }
 function outSide(def) {
   return withChecks(def.out, def.checks);
@@ -27883,7 +28127,7 @@ var ImplementationSchema = BaseMetadataSchema.extend({
 });
 var FormElicitationCapabilitySchema = intersection(object({
   applyDefaults: boolean2().optional()
-}), record(string2(), unknown()));
+}), record2(string2(), unknown()));
 var ElicitationCapabilitySchema = preprocess((value) => {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     if (Object.keys(value).length === 0) {
@@ -27894,7 +28138,7 @@ var ElicitationCapabilitySchema = preprocess((value) => {
 }, intersection(object({
   form: FormElicitationCapabilitySchema.optional(),
   url: AssertObjectSchema.optional()
-}), record(string2(), unknown()).optional()));
+}), record2(string2(), unknown()).optional()));
 var ClientTasksCapabilitySchema = looseObject({
   /**
    * Present if the client supports listing tasks.
@@ -27947,7 +28191,7 @@ var ClientCapabilitiesSchema = object({
   /**
    * Experimental, non-standard capabilities that the client supports.
    */
-  experimental: record(string2(), AssertObjectSchema).optional(),
+  experimental: record2(string2(), AssertObjectSchema).optional(),
   /**
    * Present if the client supports sampling from an LLM.
    */
@@ -27982,7 +28226,7 @@ var ClientCapabilitiesSchema = object({
   /**
    * Extensions that the client supports. Keys are extension identifiers (vendor-prefix/extension-name).
    */
-  extensions: record(string2(), AssertObjectSchema).optional()
+  extensions: record2(string2(), AssertObjectSchema).optional()
 });
 var InitializeRequestParamsSchema = BaseRequestParamsSchema.extend({
   /**
@@ -28000,7 +28244,7 @@ var ServerCapabilitiesSchema = object({
   /**
    * Experimental, non-standard capabilities that the server supports.
    */
-  experimental: record(string2(), AssertObjectSchema).optional(),
+  experimental: record2(string2(), AssertObjectSchema).optional(),
   /**
    * Present if the server supports sending log messages to the client.
    */
@@ -28047,7 +28291,7 @@ var ServerCapabilitiesSchema = object({
   /**
    * Extensions that the server supports. Keys are extension identifiers (vendor-prefix/extension-name).
    */
-  extensions: record(string2(), AssertObjectSchema).optional()
+  extensions: record2(string2(), AssertObjectSchema).optional()
 });
 var InitializeResultSchema = ResultSchema.extend({
   /**
@@ -28185,7 +28429,7 @@ var ResourceContentsSchema = object({
    * See [MCP specification](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/47339c03c143bb4ec01a26e721a1b8fe66634ebe/docs/specification/draft/basic/index.mdx#general-fields)
    * for notes on _meta usage.
    */
-  _meta: record(string2(), unknown()).optional()
+  _meta: record2(string2(), unknown()).optional()
 });
 var TextResourceContentsSchema = ResourceContentsSchema.extend({
   /**
@@ -28379,7 +28623,7 @@ var GetPromptRequestParamsSchema = BaseRequestParamsSchema.extend({
   /**
    * Arguments to use for templating the prompt.
    */
-  arguments: record(string2(), string2()).optional()
+  arguments: record2(string2(), string2()).optional()
 });
 var GetPromptRequestSchema = RequestSchema.extend({
   method: literal("prompts/get"),
@@ -28399,7 +28643,7 @@ var TextContentSchema = object({
    * See [MCP specification](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/47339c03c143bb4ec01a26e721a1b8fe66634ebe/docs/specification/draft/basic/index.mdx#general-fields)
    * for notes on _meta usage.
    */
-  _meta: record(string2(), unknown()).optional()
+  _meta: record2(string2(), unknown()).optional()
 });
 var ImageContentSchema = object({
   type: literal("image"),
@@ -28419,7 +28663,7 @@ var ImageContentSchema = object({
    * See [MCP specification](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/47339c03c143bb4ec01a26e721a1b8fe66634ebe/docs/specification/draft/basic/index.mdx#general-fields)
    * for notes on _meta usage.
    */
-  _meta: record(string2(), unknown()).optional()
+  _meta: record2(string2(), unknown()).optional()
 });
 var AudioContentSchema = object({
   type: literal("audio"),
@@ -28439,7 +28683,7 @@ var AudioContentSchema = object({
    * See [MCP specification](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/47339c03c143bb4ec01a26e721a1b8fe66634ebe/docs/specification/draft/basic/index.mdx#general-fields)
    * for notes on _meta usage.
    */
-  _meta: record(string2(), unknown()).optional()
+  _meta: record2(string2(), unknown()).optional()
 });
 var ToolUseContentSchema = object({
   type: literal("tool_use"),
@@ -28457,12 +28701,12 @@ var ToolUseContentSchema = object({
    * Arguments to pass to the tool.
    * Must conform to the tool's inputSchema.
    */
-  input: record(string2(), unknown()),
+  input: record2(string2(), unknown()),
   /**
    * See [MCP specification](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/47339c03c143bb4ec01a26e721a1b8fe66634ebe/docs/specification/draft/basic/index.mdx#general-fields)
    * for notes on _meta usage.
    */
-  _meta: record(string2(), unknown()).optional()
+  _meta: record2(string2(), unknown()).optional()
 });
 var EmbeddedResourceSchema = object({
   type: literal("resource"),
@@ -28475,7 +28719,7 @@ var EmbeddedResourceSchema = object({
    * See [MCP specification](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/47339c03c143bb4ec01a26e721a1b8fe66634ebe/docs/specification/draft/basic/index.mdx#general-fields)
    * for notes on _meta usage.
    */
-  _meta: record(string2(), unknown()).optional()
+  _meta: record2(string2(), unknown()).optional()
 });
 var ResourceLinkSchema = ResourceSchema.extend({
   type: literal("resource_link")
@@ -28565,7 +28809,7 @@ var ToolSchema = object({
    */
   inputSchema: object({
     type: literal("object"),
-    properties: record(string2(), AssertObjectSchema).optional(),
+    properties: record2(string2(), AssertObjectSchema).optional(),
     required: array(string2()).optional()
   }).catchall(unknown()),
   /**
@@ -28575,7 +28819,7 @@ var ToolSchema = object({
    */
   outputSchema: object({
     type: literal("object"),
-    properties: record(string2(), AssertObjectSchema).optional(),
+    properties: record2(string2(), AssertObjectSchema).optional(),
     required: array(string2()).optional()
   }).catchall(unknown()).optional(),
   /**
@@ -28590,7 +28834,7 @@ var ToolSchema = object({
    * See [MCP specification](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/47339c03c143bb4ec01a26e721a1b8fe66634ebe/docs/specification/draft/basic/index.mdx#general-fields)
    * for notes on _meta usage.
    */
-  _meta: record(string2(), unknown()).optional()
+  _meta: record2(string2(), unknown()).optional()
 });
 var ListToolsRequestSchema = PaginatedRequestSchema.extend({
   method: literal("tools/list")
@@ -28611,7 +28855,7 @@ var CallToolResultSchema = ResultSchema.extend({
    *
    * If the Tool defines an outputSchema, this field MUST be present in the result, and contain a JSON object that matches the schema.
    */
-  structuredContent: record(string2(), unknown()).optional(),
+  structuredContent: record2(string2(), unknown()).optional(),
   /**
    * Whether the tool call ended in an error.
    *
@@ -28639,7 +28883,7 @@ var CallToolRequestParamsSchema = TaskAugmentedRequestParamsSchema.extend({
   /**
    * Arguments to pass to the tool.
    */
-  arguments: record(string2(), unknown()).optional()
+  arguments: record2(string2(), unknown()).optional()
 });
 var CallToolRequestSchema = RequestSchema.extend({
   method: literal("tools/call"),
@@ -28741,7 +28985,7 @@ var ToolResultContentSchema = object({
    * See [MCP specification](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/47339c03c143bb4ec01a26e721a1b8fe66634ebe/docs/specification/draft/basic/index.mdx#general-fields)
    * for notes on _meta usage.
    */
-  _meta: record(string2(), unknown()).optional()
+  _meta: record2(string2(), unknown()).optional()
 });
 var SamplingContentSchema = discriminatedUnion("type", [TextContentSchema, ImageContentSchema, AudioContentSchema]);
 var SamplingMessageContentBlockSchema = discriminatedUnion("type", [
@@ -28758,7 +29002,7 @@ var SamplingMessageSchema = object({
    * See [MCP specification](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/47339c03c143bb4ec01a26e721a1b8fe66634ebe/docs/specification/draft/basic/index.mdx#general-fields)
    * for notes on _meta usage.
    */
-  _meta: record(string2(), unknown()).optional()
+  _meta: record2(string2(), unknown()).optional()
 });
 var CreateMessageRequestParamsSchema = TaskAugmentedRequestParamsSchema.extend({
   messages: array(SamplingMessageSchema),
@@ -28946,7 +29190,7 @@ var ElicitRequestFormParamsSchema = TaskAugmentedRequestParamsSchema.extend({
    */
   requestedSchema: object({
     type: literal("object"),
-    properties: record(string2(), PrimitiveSchemaDefinitionSchema),
+    properties: record2(string2(), PrimitiveSchemaDefinitionSchema),
     required: array(string2()).optional()
   })
 });
@@ -28998,7 +29242,7 @@ var ElicitResultSchema = ResultSchema.extend({
    * Per MCP spec, content is "typically omitted" for decline/cancel actions.
    * We normalize null to undefined for leniency while maintaining type compatibility.
    */
-  content: preprocess((val) => val === null ? void 0 : val, record(string2(), union([string2(), number2(), boolean2(), array(string2())])).optional())
+  content: preprocess((val) => val === null ? void 0 : val, record2(string2(), union([string2(), number2(), boolean2(), array(string2())])).optional())
 });
 var ResourceTemplateReferenceSchema = object({
   type: literal("ref/resource"),
@@ -29033,7 +29277,7 @@ var CompleteRequestParamsSchema = BaseRequestParamsSchema.extend({
     /**
      * Previously-resolved variables in a URI template or prompt.
      */
-    arguments: record(string2(), string2()).optional()
+    arguments: record2(string2(), string2()).optional()
   }).optional()
 });
 var CompleteRequestSchema = RequestSchema.extend({
@@ -29069,7 +29313,7 @@ var RootSchema = object({
    * See [MCP specification](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/47339c03c143bb4ec01a26e721a1b8fe66634ebe/docs/specification/draft/basic/index.mdx#general-fields)
    * for notes on _meta usage.
    */
-  _meta: record(string2(), unknown()).optional()
+  _meta: record2(string2(), unknown()).optional()
 });
 var ListRootsRequestSchema = RequestSchema.extend({
   method: literal("roots/list"),
@@ -30689,12 +30933,12 @@ var geminiExecutionAdapter = defaultSuite.adapters.get("gemini");
 import { realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import path5 from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
 function resolveRegistryPath(environment = process.env, moduleUrl = import.meta.url) {
-  return environment.SKILL_REGISTRY_PATH ?? fileURLToPath(new URL("../../skills/registry.json", moduleUrl));
+  return environment.SKILL_REGISTRY_PATH ?? fileURLToPath2(new URL("../../skills/registry.json", moduleUrl));
 }
 function resolveKoreanProseGlossaryPath(moduleUrl = import.meta.url) {
-  return fileURLToPath(new URL("../../skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3", moduleUrl));
+  return fileURLToPath2(new URL("../../skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3", moduleUrl));
 }
 function resolveWorkflowDatabasePath(environment = process.env, platform = process.platform, homeDirectory = homedir(), currentWorkingDirectory = process.cwd()) {
   const configured = environment.AGENT_GOVERNANCE_DB_PATH?.trim();
@@ -31031,9 +31275,9 @@ var ContractValidator = class {
     const declaresVersion = Boolean(declared.properties && Object.prototype.hasOwnProperty.call(declared.properties, "schemaVersion"));
     let providerView = value;
     if (value && typeof value === "object" && !Array.isArray(value)) {
-      const record4 = declaresVersion ? { ...value } : Object.fromEntries(Object.entries(value).filter(([key]) => key !== "schemaVersion"));
-      if (Array.isArray(record4.artifacts)) record4.artifacts = record4.artifacts.map(artifactDigestView(declared));
-      providerView = record4;
+      const record5 = declaresVersion ? { ...value } : Object.fromEntries(Object.entries(value).filter(([key]) => key !== "schemaVersion"));
+      if (Array.isArray(record5.artifacts)) record5.artifacts = record5.artifacts.map(artifactDigestView(declared));
+      providerView = record5;
     }
     this.assertSchemaFile(rootDirectory, resultSchema, providerView, "provider result");
     const result = value;
@@ -31054,19 +31298,19 @@ var ContractValidator = class {
         value.forEach(visit2);
         return;
       }
-      const record4 = value;
-      if ((record4.type === "object" || record4.properties) && record4.additionalProperties !== false) {
+      const record5 = value;
+      if ((record5.type === "object" || record5.properties) && record5.additionalProperties !== false) {
         throw new WorkflowContractError(
           "INVALID_INPUT",
           "A reference-only provider output schema must close every declared object.",
           { schemaPath: reference.path }
         );
       }
-      if (typeof record4.const === "string") tokens2.add(record4.const);
-      if (Array.isArray(record4.enum)) {
-        for (const item of record4.enum) if (typeof item === "string") tokens2.add(item);
+      if (typeof record5.const === "string") tokens2.add(record5.const);
+      if (Array.isArray(record5.enum)) {
+        for (const item of record5.enum) if (typeof item === "string") tokens2.add(item);
       }
-      Object.values(record4).forEach(visit2);
+      Object.values(record5).forEach(visit2);
     };
     visit2(schema);
     return tokens2;
@@ -33075,14 +33319,6 @@ function inlineSchemaReferences(schema, documents) {
   return inline(schema, rootBase, /* @__PURE__ */ new Set());
 }
 
-// mcp-server/src/plugin-info.ts
-var PLUGIN_INFO = Object.freeze({
-  id: "agent-governance-suite",
-  version: "2.9.1",
-  repository: "https://github.com/jaeseongs95/agent-governance-suite",
-  tagsApi: "https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/matching-refs/tags/v"
-});
-
 // mcp-server/src/response-projections.ts
 function convergenceRootHandle(root) {
   return {
@@ -33147,7 +33383,7 @@ var HOST_ATTESTATION_TOOLS = /* @__PURE__ */ new Set(["plan_workflow", "record_s
 var HOST_ATTESTATION_KEY = "host_attestation_key_v1";
 var OBSERVATION_TOKEN_PREFIX = "aghs2";
 var TOKEN_TTL_MS = 5 * 60 * 1e3;
-function record2(value) {
+function record3(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
 }
 function nonEmpty(value) {
@@ -33200,11 +33436,11 @@ function hostAttestationBinding(tool, input2) {
     return taskId ? { phase: "bootstrap", taskId, runId: null, stageId: null, revision: null } : null;
   }
   if (tool === "record_skill_selection") {
-    const taskId = nonEmpty(record2(input2.decision)?.requestDigest);
+    const taskId = nonEmpty(record3(input2.decision)?.requestDigest);
     return taskId ? { phase: "bootstrap", taskId, runId: null, stageId: null, revision: null } : null;
   }
   if (tool === "plan_workflow") {
-    const taskId = nonEmpty(record2(input2.taskEnvelope)?.taskId) ?? nonEmpty(input2.taskId);
+    const taskId = nonEmpty(record3(input2.taskEnvelope)?.taskId) ?? nonEmpty(input2.taskId);
     return taskId ? { phase: "bootstrap", taskId, runId: null, stageId: null, revision: null } : null;
   }
   if (tool === "record_stage_result") {
@@ -33294,7 +33530,7 @@ function verifyToken(store, adapter, token) {
   } catch {
     throw invalid2("Host attestation token payload is malformed.");
   }
-  const value = record2(payload);
+  const value = record3(payload);
   const model = typeof value?.model === "string" ? value.model : null;
   if (!value || value.v !== 2 || value.host !== adapter.host || !model || !Object.hasOwn(value, "policyRevision") || value.policyRevision !== null && !nonEmpty(value.policyRevision) || !Object.hasOwn(value, "eligibility") || value.provenance !== void 0 && (typeof value.provenance !== "string" || value.provenance.length === 0) || !isReasoningEffort(value.reasoningEffort) || typeof value.session !== "string" || !/^[a-f0-9]{24}$/u.test(value.session) || typeof value.call !== "string" || !/^[a-f0-9]{24}$/u.test(value.call) || value.agent !== null && (typeof value.agent !== "string" || !/^[a-f0-9]{24}$/u.test(value.agent)) || value.turn !== null && (typeof value.turn !== "string" || !/^[a-f0-9]{24}$/u.test(value.turn)) || value.actorId !== "".concat(adapter.host, ":session-").concat(String(value.session)).concat(value.agent ? ":agent-".concat(String(value.agent)) : "")) {
     throw invalid2("Host attestation token payload is not a supported observation for the configured adapter.");
@@ -33307,7 +33543,7 @@ function verifyToken(store, adapter, token) {
   if (!capability) {
     throw invalid2("Host observation has no matching trusted execution capability and policy revision.");
   }
-  const eligibility = record2(value.eligibility);
+  const eligibility = record3(value.eligibility);
   if (Object.hasOwn(value, "modelClass") || Object.hasOwn(value, "resolvedModel") || Object.hasOwn(value, "provider") || !eligibility || eligibility.modelClass !== capability.modelClass || eligibility.provider !== capability.provider || eligibility.resolvedModel !== capability.resolvedModel || eligibility.policyRevision !== capability.policyRevision || !nonEmpty(value.policyRevision) || value.policyRevision !== capability.policyRevision || adapter.policyRevision !== void 0 && adapter.policyRevision !== capability.policyRevision || capability.host !== adapter.host || capability.rawModel !== model || !nonEmpty(capability.provider) || !nonEmpty(capability.resolvedModel) || !nonEmpty(capability.policyRevision) || !Array.isArray(capability.supportedEfforts) || !capability.supportedEfforts.every(isReasoningEffort) || capability.minimumReasoningEffort !== null && !isReasoningEffort(capability.minimumReasoningEffort)) {
     throw invalid2("Host observation has no matching trusted execution capability and policy revision.");
   }
@@ -34152,15 +34388,15 @@ var JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION = JEV_SKILL_SELECTI
 var unknownUsage = () => ({ inputTokens: null, outputTokens: null, cachedInputTokens: null, actualCostUsd: null });
 function sanitizeRateLimitObservation(value) {
   if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
-  const record4 = value;
-  if (Object.keys(record4).length !== 2 || !Object.hasOwn(record4, "httpStatus") || !Object.hasOwn(record4, "retryAfter") || record4.httpStatus !== 429 && record4.httpStatus !== 529) return null;
-  const retry = record4.retryAfter;
-  if (retry === null) return { httpStatus: record4.httpStatus, retryAfter: null };
+  const record5 = value;
+  if (Object.keys(record5).length !== 2 || !Object.hasOwn(record5, "httpStatus") || !Object.hasOwn(record5, "retryAfter") || record5.httpStatus !== 429 && record5.httpStatus !== 529) return null;
+  const retry = record5.retryAfter;
+  if (retry === null) return { httpStatus: record5.httpStatus, retryAfter: null };
   if (typeof retry !== "object" || Array.isArray(retry)) return null;
   const item = retry;
   if (Object.keys(item).length !== 2 || !Object.hasOwn(item, "kind")) return null;
-  if (item.kind === "delay-seconds" && Object.hasOwn(item, "seconds") && Number.isSafeInteger(item.seconds) && Number(item.seconds) >= 0) return { httpStatus: record4.httpStatus, retryAfter: { kind: "delay-seconds", seconds: item.seconds } };
-  if (item.kind === "http-date" && Object.hasOwn(item, "at") && typeof item.at === "string" && item.at.length <= 32 && Number.isFinite(Date.parse(item.at)) && new Date(item.at).toISOString() === item.at) return { httpStatus: record4.httpStatus, retryAfter: { kind: "http-date", at: item.at } };
+  if (item.kind === "delay-seconds" && Object.hasOwn(item, "seconds") && Number.isSafeInteger(item.seconds) && Number(item.seconds) >= 0) return { httpStatus: record5.httpStatus, retryAfter: { kind: "delay-seconds", seconds: item.seconds } };
+  if (item.kind === "http-date" && Object.hasOwn(item, "at") && typeof item.at === "string" && item.at.length <= 32 && Number.isFinite(Date.parse(item.at)) && new Date(item.at).toISOString() === item.at) return { httpStatus: record5.httpStatus, retryAfter: { kind: "http-date", at: item.at } };
   return null;
 }
 var ClassificationProviderError = class extends Error {
@@ -34432,7 +34668,7 @@ function buildVendorMessages(request) {
     { role: "user", content: JSON.stringify({ ...projectClassificationRequest(request).payload, schemaVersion: request.schemaVersion, requestId: request.requestId, operationId: request.operationId, requestDigest: request.requestDigest, inventoryDigest: request.inventoryDigest }) }
   ];
 }
-function record3(value) {
+function record4(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 function tokenCount(value) {
@@ -34468,13 +34704,13 @@ var jevNoulWireAdapter = {
     ])) };
   },
   decode(body, request, profile) {
-    if (!record3(body) || body.model !== profile.modelRevision || !record3(body.answers) || !record3(body.usage) || !profile.judgmentPolicy) throw new Error("INVALID_JEV_RESPONSE");
+    if (!record4(body) || body.model !== profile.modelRevision || !record4(body.answers) || !record4(body.usage) || !profile.judgmentPolicy) throw new Error("INVALID_JEV_RESPONSE");
     const answers = body.answers;
     const expected = new Set(request.skills.map((skill) => skill.skillId));
     if (Object.keys(answers).length !== expected.size || Object.keys(answers).some((id2) => !expected.has(id2))) throw new Error("INVALID_JEV_IDS");
     const scores = request.skills.map((skill) => {
       const answer = answers[skill.skillId];
-      if (!record3(answer) || answer.type !== "noul" || typeof answer.noul !== "number" || !Number.isFinite(answer.noul) || answer.noul < 0 || answer.noul > 1) throw new Error("INVALID_JEV_SCORE");
+      if (!record4(answer) || answer.type !== "noul" || typeof answer.noul !== "number" || !Number.isFinite(answer.noul) || answer.noul < 0 || answer.noul > 1) throw new Error("INVALID_JEV_SCORE");
       return { skillId: skill.skillId, value: answer.noul };
     });
     const { neededAt, notNeededAt } = profile.judgmentPolicy;
@@ -34542,7 +34778,7 @@ var jevNoulSufficiencyWireAdapter = {
   }
 };
 function decodeSufficiency(body, request, profile) {
-  if (!record3(body) || !record3(body.answers) || !profile.judgmentPolicy) throw new Error("INVALID_JEV_RESPONSE");
+  if (!record4(body) || !record4(body.answers) || !profile.judgmentPolicy) throw new Error("INVALID_JEV_RESPONSE");
   const answers = body.answers;
   const keys = request.skills.flatMap((_, index) => ["skill_".concat(index, "_applicability"), "skill_".concat(index, "_sufficiency")]);
   const expected = new Set(keys);
@@ -34550,7 +34786,7 @@ function decodeSufficiency(body, request, profile) {
   const pairs = request.skills.map((skill, index) => {
     const applicability = answers["skill_".concat(index, "_applicability")], sufficiency = answers["skill_".concat(index, "_sufficiency")];
     for (const answer of [applicability, sufficiency]) {
-      if (!record3(answer) || answer.type !== "noul" || typeof answer.noul !== "number" || !Number.isFinite(answer.noul) || answer.noul < 0 || answer.noul > 1) throw new Error("INVALID_JEV_SCORE");
+      if (!record4(answer) || answer.type !== "noul" || typeof answer.noul !== "number" || !Number.isFinite(answer.noul) || answer.noul < 0 || answer.noul > 1) throw new Error("INVALID_JEV_SCORE");
     }
     return { skillId: skill.skillId, applicability, sufficiency: sufficiency.noul };
   });
@@ -34731,13 +34967,13 @@ var jevSkillSelectionChoiceWireAdapter = {
   decode(body, request, profile) {
     assertSkillSelectionChoiceProfile(profile);
     const skills = projectClassificationRequest(request).payload.skills;
-    if (!record3(body) || body.model !== profile.modelRevision || !record3(body.answers) || !record3(body.usage) || tokenCount(body.usage.input_tokens) === null || tokenCount(body.usage.output_tokens) === null) throw new Error("INVALID_JEV_CHOICE_RESPONSE");
+    if (!record4(body) || body.model !== profile.modelRevision || !record4(body.answers) || !record4(body.usage) || tokenCount(body.usage.input_tokens) === null || tokenCount(body.usage.output_tokens) === null) throw new Error("INVALID_JEV_CHOICE_RESPONSE");
     const answers = body.answers, expected = new Set(skills.map((skill) => skill.skillId));
     if (Object.keys(answers).length !== expected.size || Object.keys(answers).some((id2) => !expected.has(id2))) throw new Error("INVALID_JEV_CHOICE_IDS");
     const labels = ["needed", "not-needed", "uncertain"];
     const parsed = skills.map((skill) => {
       const answer = answers[skill.skillId];
-      if (!record3(answer) || answer.type !== "choice" || !labels.some((label) => label === answer.choice) || typeof answer.confidence !== "number" || !Number.isFinite(answer.confidence) || answer.confidence < 0 || answer.confidence > 1 || !record3(answer.probabilities)) throw new Error("INVALID_JEV_CHOICE_ANSWER");
+      if (!record4(answer) || answer.type !== "choice" || !labels.some((label) => label === answer.choice) || typeof answer.confidence !== "number" || !Number.isFinite(answer.confidence) || answer.confidence < 0 || answer.confidence > 1 || !record4(answer.probabilities)) throw new Error("INVALID_JEV_CHOICE_ANSWER");
       const probabilities = answer.probabilities;
       if (Object.keys(probabilities).length !== labels.length || Object.keys(probabilities).some((label) => !labels.some((expected2) => expected2 === label)) || labels.some((label) => typeof probabilities[label] !== "number" || !Number.isFinite(probabilities[label]) || probabilities[label] < 0 || probabilities[label] > 1))
         throw new Error("INVALID_JEV_CHOICE_DISTRIBUTION");
@@ -34935,8 +35171,8 @@ function checkDecision(result, decision, current, independent) {
         errors.push("UNKNOWN_SELECTED_SKILL:".concat(id2));
         continue;
       }
-      const checks = decision.applicabilityChecks.filter((check2) => check2.skillId === id2);
-      if (checks.length !== 1 || checks[0]?.applies !== true || checks[0]?.excluded !== false || checks[0]?.reasonRefs.length === 0) errors.push("APPLICABILITY_UNRESOLVED:".concat(id2));
+      const checks2 = decision.applicabilityChecks.filter((check2) => check2.skillId === id2);
+      if (checks2.length !== 1 || checks2[0]?.applies !== true || checks2[0]?.excluded !== false || checks2[0]?.reasonRefs.length === 0) errors.push("APPLICABILITY_UNRESOLVED:".concat(id2));
       if (!decision.selectionReasons.some((reason) => reason.skillId === id2)) errors.push("SELECTION_REASON_MISSING:".concat(id2));
       for (const dependency of skill.dependencies) if (!selected.includes(dependency)) errors.push("DEPENDENCY_OMITTED:".concat(id2, ":").concat(dependency));
     }
@@ -35199,8 +35435,8 @@ var SkillClassificationService = class {
         const availability = await provider2.availability(profile);
         if (controller.signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
         if (!availability.available || !availability.approved) {
-          const codes = ["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE"];
-          throw new ClassificationProviderError(availability.reasonCode && codes.includes(availability.reasonCode) ? availability.reasonCode : "PROVIDER_UNAVAILABLE", "not-started");
+          const codes2 = ["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE"];
+          throw new ClassificationProviderError(availability.reasonCode && codes2.includes(availability.reasonCode) ? availability.reasonCode : "PROVIDER_UNAVAILABLE", "not-started");
         }
         if (input2.remoteContentAllowed === false && availability.routeKind !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
         if (!input2.config.externalClassificationAllowed && availability.routeKind !== "native") throw new ClassificationProviderError("EXTERNAL_CLASSIFICATION_BLOCKED", "not-started");
@@ -35582,9 +35818,9 @@ import { existsSync as existsSync2 } from "node:fs";
 import { chmod, mkdir, readFile as readFile5 } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import path11 from "node:path";
-import { performance as performance2 } from "node:perf_hooks";
+import { performance as performance3 } from "node:perf_hooks";
 import tls from "node:tls";
-import { fileURLToPath as fileURLToPath2 } from "node:url";
+import { fileURLToPath as fileURLToPath3 } from "node:url";
 
 // mcp-server/src/session-message-protocol.ts
 var SESSION_MESSAGE_PROTOCOL = "1.0.0";
@@ -35658,8 +35894,8 @@ var BrokerRequestRejected = class extends Error {
   constructor(message, details = null) {
     super(message);
     tagProducerFailure(this, "BROKER_REQUEST_REJECTED");
-    const record4 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
-    this.details = record4 && (record4.scope === "sender" || record4.scope === "global") && (record4.earliestReleaseAt === null || typeof record4.earliestReleaseAt === "string") ? { scope: record4.scope, earliestReleaseAt: record4.earliestReleaseAt } : null;
+    const record5 = details && typeof details === "object" && !Array.isArray(details) ? details : null;
+    this.details = record5 && (record5.scope === "sender" || record5.scope === "global") && (record5.earliestReleaseAt === null || typeof record5.earliestReleaseAt === "string") ? { scope: record5.scope, earliestReleaseAt: record5.earliestReleaseAt } : null;
   }
 };
 var BROKER_STARTUP_TIMEOUT_MS = 15e3;
@@ -35691,7 +35927,7 @@ function throwIfAborted(signal) {
 function remainingMilliseconds(deadline, signal, message = SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE) {
   throwIfAborted(signal);
   const inherited = signal ? deadlineMetadata.get(signal) : void 0;
-  const remaining = (inherited?.deadline ?? deadline) - performance2.now();
+  const remaining = (inherited?.deadline ?? deadline) - performance3.now();
   if (remaining < 1) throw deadlineError(inherited?.message ?? message);
   return remaining;
 }
@@ -35701,7 +35937,7 @@ function assertWithinDeadline(deadline, signal, message) {
 async function withDeadline(timeoutMs, parentSignal, message, work, absoluteDeadline) {
   const parentDeadline = parentSignal ? deadlineMetadata.get(parentSignal) : void 0;
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw deadlineError(parentDeadline?.message ?? message);
-  const now = performance2.now();
+  const now = performance3.now();
   if (absoluteDeadline !== void 0 && !Number.isFinite(absoluteDeadline)) throw deadlineError(message);
   const requestedDeadline = Math.min(now + timeoutMs, absoluteDeadline ?? Infinity);
   const inherited = parentDeadline && parentDeadline.deadline <= requestedDeadline ? parentDeadline : void 0;
@@ -36027,8 +36263,8 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
         }
         throwIfAborted(signal);
         assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
-        const adjacentBroker = fileURLToPath2(new URL("./session-message-broker.mjs", import.meta.url));
-        const brokerPath = existsSync2(adjacentBroker) ? adjacentBroker : fileURLToPath2(new URL("../dist/session-message-broker.mjs", import.meta.url));
+        const adjacentBroker = fileURLToPath3(new URL("./session-message-broker.mjs", import.meta.url));
+        const brokerPath = existsSync2(adjacentBroker) ? adjacentBroker : fileURLToPath3(new URL("../dist/session-message-broker.mjs", import.meta.url));
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
         let child;
         try {
@@ -36072,7 +36308,7 @@ async function ensureSessionMessageBroker(stateDirectory = resolveSessionMessage
 async function sessionMessageRequest(operation, payload, stateDirectory = resolveSessionMessageStateDirectory(), options = {}) {
   options = { ...options };
   const totalTimeoutMs = options.totalTimeoutMs ?? SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
-  const absoluteDeadline = options.deadlineMonotonicMs ?? (options.noOperationReplay ? performance2.now() + totalTimeoutMs : void 0);
+  const absoluteDeadline = options.deadlineMonotonicMs ?? (options.noOperationReplay ? performance3.now() + totalTimeoutMs : void 0);
   return withDeadline(totalTimeoutMs, void 0, SESSION_MESSAGE_REQUEST_DEADLINE_MESSAGE, async (signal, deadline) => {
     if (options.noOperationReplay) {
       await ensureSessionMessageBroker(stateDirectory, remainingMilliseconds(deadline, signal), signal, options.prepareStateDirectory);
@@ -36141,8 +36377,8 @@ function capacityRelease(details) {
 }
 function binding(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const record4 = value;
-  return typeof record4.host === "string" && record4.host && typeof record4.sessionId === "string" && record4.sessionId ? { host: record4.host, sessionId: record4.sessionId } : null;
+  const record5 = value;
+  return typeof record5.host === "string" && record5.host && typeof record5.sessionId === "string" && record5.sessionId ? { host: record5.host, sessionId: record5.sessionId } : null;
 }
 var SessionMessageService = class {
   stateDirectory;
@@ -36519,13 +36755,13 @@ var SESSION_MESSAGE_SERVER_INSTRUCTIONS = "\uC138\uC158 \uBA54\uC2DC\uC9C0\uB294
 function validUpdateArguments(args) {
   return Object.keys(args).every((key) => key === "force") && (args.force === void 0 || typeof args.force === "boolean");
 }
-function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, classification2 = null, sessionActorProof = null) {
+function createMcpServer(service, updates, continuity = new UnavailableContinuityService(), cleanup, glossary = new UnavailableKoreanProseGlossary(), validator = new ContractValidator(), toolSchemaProfile = "default", hostAttestation = null, sessionBoardPath = null, sessionMessages = new SessionMessageService(), trust = null, classification2 = null, sessionActorProof = null, diagnostics2) {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} }, instructions: serverInstructions() }
   );
   const contractDocuments = Object.values(contractSchemas);
-  const advertise = (tools) => tools.map((tool) => {
+  const advertise = (tools2) => tools2.map((tool) => {
     const inputSchema2 = structuredClone(tool.inputSchema);
     inputSchema2.properties = { ...inputSchema2.properties, [SESSION_PROOF_FIELD]: { type: "string", minLength: 16, maxLength: 8192, description: "Issued by the current root hook; caller identity claims are not accepted." } };
     delete inputSchema2.properties._sessionBinding;
@@ -36535,407 +36771,421 @@ function createMcpServer(service, updates, continuity = new UnavailableContinuit
     }
     return { ...tool, inputSchema: inputSchema2 };
   });
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: advertise([
-      {
-        name: "get_skill_inventory",
-        description: "Read the full installed skill inventory from SKILL.md and registry source metadata, including infrastructure skills and source conflicts. No semantic selection or execution.",
-        inputSchema: { type: "object", additionalProperties: false, properties: {} }
-      },
-      {
-        name: "classify_skills",
-        description: "Package the exact original prompt and confirmed context without an extra LLM; obtain bound classification advice through the configured JEV or current vendor fixed profile. The AGENT still makes the final selection. Missing routes, qualification or budget remain unavailable.",
-        inputSchema: external_exports.toJSONSchema(classificationInputSchema)
-      },
-      {
-        name: "record_skill_selection",
-        description: "Validate the AGENT's own selection against the bound advice, explicit/required skills, applicability, dependencies and current revisions. The host hook supplies actual call observation; caller receipts are rejected. Selection does not grant admission or prove reading/application/verification.",
-        inputSchema: external_exports.toJSONSchema(selectionInputSchema)
-      },
-      {
-        name: "lookup_korean_prose_terms",
-        description: "Look up curated Korean prose glossary terms once before MCP selection. The source and matches are never persisted.",
-        inputSchema: contractSchemas.koreanProseGlossaryLookupRequest,
-        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "check_for_updates",
-        description: "Check the fixed Agent Governance Suite repository for a newer stable plugin tag without installing it.",
-        inputSchema: updateCheckInputSchema,
-        annotations: { readOnlyHint: true, idempotentHint: false, destructiveHint: false, openWorldHint: true }
-      },
-      {
-        name: "get_trust_capabilities",
-        description: "Report the provenance and authority capabilities that this release can actually enforce.",
-        inputSchema: { type: "object", additionalProperties: false },
-        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "validate_collaboration_decision",
-        description: "Validate a collaboration decision structurally and report independent receipt provenance observations without issuing authority or attesting direct user input.",
-        inputSchema: contractSchemas.validateCollaborationDecisionRequest,
-        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "plan_workflow",
-        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose.",
-        inputSchema: planWorkflowToolInputSchema(toolSchemaProfile),
-        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "open_convergence_root",
-        description: "Create one durable immutable task lineage; use responseMode=compact to avoid echoing task and frame inputs.",
-        inputSchema: openConvergenceRootInputSchema,
-        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "claim_workflow_attempt",
-        description: "Issue a one-use lease after validating stability and attempt budget; taskEnvelope and frame may be omitted to reuse the bound root.",
-        inputSchema: attemptProposalInputSchema,
-        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "start_guarded_workflow",
-        description: "Atomically consume a lease and start its bound plan; plan may be omitted and responseMode=compact avoids returning the full receipt.",
-        inputSchema: guardedWorkflowStartInputSchema,
-        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "get_convergence_status",
-        description: "Read convergence state; detail=compact returns handles and counts, while the default full mode includes complete history.",
-        inputSchema: convergenceIdInputSchema,
-        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "resolve_convergence_gate",
-        description: "Record a fresh independent frame review; use responseMode=compact to return handles and counts only.",
-        inputSchema: resolveConvergenceGateInputSchema,
-        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "start_workflow",
-        description: "Reject unguarded workflow starts. Use open_convergence_root, claim_workflow_attempt and start_guarded_workflow to start a bound run.",
-        inputSchema: contractSchemas.workflowPlan,
-        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "record_stage_result",
-        description: "Record one ordered stage result; use responseMode=compact to avoid echoing the accumulated receipt.",
-        inputSchema: recordStageResultInputSchema,
-        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "get_workflow_status",
-        description: "Read workflow state; detail=compact returns fixed-size progress metadata, while the default full mode returns the receipt.",
-        inputSchema: workflowIdInputSchema,
-        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "finalize_workflow",
-        description: "Finalize a fully passed workflow; use responseMode=compact to avoid returning the full terminal receipt.",
-        inputSchema: revisionInputSchema,
-        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "abort_workflow",
-        description: "Abort a non-terminal workflow; use responseMode=compact to avoid returning the full terminal receipt.",
-        inputSchema: revisionInputSchema,
-        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false }
-      },
-      {
-        name: "checkpoint_context",
-        description: "Replace the current direct-task continuity snapshot using CAS and an idempotent requestId; nextActions remain historical candidates.",
-        inputSchema: contractSchemas.checkpointContextRequest,
-        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "inspect_context",
-        description: "Inspect continuity metadata and obtain an opaque restore candidate without returning snapshot body text.",
-        inputSchema: contractSchemas.inspectContextRequest,
-        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "load_context",
-        description: "Explicitly load a restore candidate after rechecking its task, epoch, revision, and digest.",
-        inputSchema: contractSchemas.loadContextRequest,
-        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "suppress_context_restore",
-        description: "Suppress automatic restore candidates for the current epoch without deleting stored payloads.",
-        inputSchema: contractSchemas.suppressContextRestoreRequest,
-        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "purge_direct_context",
-        description: "Delete the current direct-task payload and retain only a hash tombstone; workflow receipts are never deleted.",
-        inputSchema: contractSchemas.purgeDirectContextRequest,
-        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: true, openWorldHint: false }
-      },
-      {
-        name: "prepare_state_cleanup",
-        description: "Preview fixed retention cleanup candidates and issue a 15-minute, one-use token without deleting data.",
-        inputSchema: contractSchemas.prepareStateCleanupRequest,
-        annotations: { readOnlyHint: true, idempotentHint: false, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "execute_state_cleanup",
-        description: "Recheck a preview token, create verified SQLite backups, and atomically delete only the bound inactive candidates. Backups are retained until manually deleted.",
-        inputSchema: contractSchemas.executeStateCleanupRequest,
-        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false }
-      },
-      {
-        name: "update_session_status",
-        description: "Write this session's one-line current work (what, where, next external step) to the local session board shared by every host on this machine. The plugin hook binds the session; call it when the work or next external step changes. Do not repeat it for an unchanged task.",
-        inputSchema: contractSchemas.updateSessionStatusRequest,
-        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "list_session_status",
-        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
-        inputSchema: contractSchemas.listSessionStatusRequest,
-        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "prepare_session_message",
-        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft. When this sender (250) or all senders (1000) already hold the maximum retained receipts, no draft is created and error.details gives scope and earliestReleaseAt.",
-        inputSchema: prepareSessionMessageInputSchema,
-        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "send_session_message",
-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
-        inputSchema: contractSchemas.sendSessionMessageRequest,
-        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "acknowledge_session_messages",
-        description: "Acknowledge the distinct peer message IDs actually processed in one batch. Do not acknowledge unprocessed messages. This is processing evidence, not completion or approval. Unacknowledged messages remain eligible for redelivery after their claim lease expires.",
-        inputSchema: contractSchemas.acknowledgeSessionMessagesRequest,
-        annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      },
-      {
-        name: "get_session_message_status",
-        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend. Unacknowledged queue rows include the advisory autoWake recipient wake outlook with its basis time; it is not delivery, completion or permission evidence. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
-        inputSchema: contractSchemas.getSessionMessageStatusRequest,
-        annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
-      }
-    ])
-  }));
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    let args = asRecord(request.params.arguments);
-    if (Object.hasOwn(args, "_sessionBinding")) return toolResult(apiError("BINDING_INVALID", "Caller session bindings are not accepted.", { reasonCode: "CALLER_SESSION_BINDING_REJECTED" }));
-    if (!sessionActorProof) return toolResult(apiError("BINDING_REQUIRED", "The root hook proof verifier is not configured.", { reasonCode: "ROOT_HOOK_PROOF_REQUIRED" }));
-    try {
-      const verified = sessionActorProof.verify(request.params.name, args);
-      args = withoutSessionProof(args);
-      if (["update_session_status", "list_session_status", "prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"].includes(request.params.name)) {
-        args._sessionBinding = request.params.name === "validate_collaboration_decision" ? { host: verified.host, sessionId: verified.sessionId, actorKind: "main", observedBy: verified.actor.reasonCode, assurance: verified.actor.basis } : { host: verified.host, sessionId: verified.sessionId };
-      }
-    } catch (error61) {
-      return toolResult(error61 instanceof WorkflowContractError ? apiError(error61.code, error61.message, error61.details) : apiError("MCP_UNAVAILABLE", "Root hook proof verification is unavailable.", { reasonCode: "ROOT_PROOF_VERIFICATION_FAILED" }));
+  const tools = advertise([
+    {
+      name: "get_skill_inventory",
+      description: "Read the full installed skill inventory from SKILL.md and registry source metadata, including infrastructure skills and source conflicts. No semantic selection or execution.",
+      inputSchema: { type: "object", additionalProperties: false, properties: {} }
+    },
+    {
+      name: "classify_skills",
+      description: "Package the exact original prompt and confirmed context without an extra LLM; obtain bound classification advice through the configured JEV or current vendor fixed profile. The AGENT still makes the final selection. Missing routes, qualification or budget remain unavailable.",
+      inputSchema: external_exports.toJSONSchema(classificationInputSchema)
+    },
+    {
+      name: "record_skill_selection",
+      description: "Validate the AGENT's own selection against the bound advice, explicit/required skills, applicability, dependencies and current revisions. The host hook supplies actual call observation; caller receipts are rejected. Selection does not grant admission or prove reading/application/verification.",
+      inputSchema: external_exports.toJSONSchema(selectionInputSchema)
+    },
+    {
+      name: "lookup_korean_prose_terms",
+      description: "Look up curated Korean prose glossary terms once before MCP selection. The source and matches are never persisted.",
+      inputSchema: contractSchemas.koreanProseGlossaryLookupRequest,
+      annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "check_for_updates",
+      description: "Check the fixed Agent Governance Suite repository for a newer stable plugin tag without installing it.",
+      inputSchema: updateCheckInputSchema,
+      annotations: { readOnlyHint: true, idempotentHint: false, destructiveHint: false, openWorldHint: true }
+    },
+    {
+      name: "get_trust_capabilities",
+      description: "Report the provenance and authority capabilities that this release can actually enforce.",
+      inputSchema: { type: "object", additionalProperties: false },
+      annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "validate_collaboration_decision",
+      description: "Validate a collaboration decision structurally and report independent receipt provenance observations without issuing authority or attesting direct user input.",
+      inputSchema: contractSchemas.validateCollaborationDecisionRequest,
+      annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "plan_workflow",
+      description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose.",
+      inputSchema: planWorkflowToolInputSchema(toolSchemaProfile),
+      annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "open_convergence_root",
+      description: "Create one durable immutable task lineage; use responseMode=compact to avoid echoing task and frame inputs.",
+      inputSchema: openConvergenceRootInputSchema,
+      annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "claim_workflow_attempt",
+      description: "Issue a one-use lease after validating stability and attempt budget; taskEnvelope and frame may be omitted to reuse the bound root.",
+      inputSchema: attemptProposalInputSchema,
+      annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "start_guarded_workflow",
+      description: "Atomically consume a lease and start its bound plan; plan may be omitted and responseMode=compact avoids returning the full receipt.",
+      inputSchema: guardedWorkflowStartInputSchema,
+      annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "get_convergence_status",
+      description: "Read convergence state; detail=compact returns handles and counts, while the default full mode includes complete history.",
+      inputSchema: convergenceIdInputSchema,
+      annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "resolve_convergence_gate",
+      description: "Record a fresh independent frame review; use responseMode=compact to return handles and counts only.",
+      inputSchema: resolveConvergenceGateInputSchema,
+      annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "start_workflow",
+      description: "Reject unguarded workflow starts. Use open_convergence_root, claim_workflow_attempt and start_guarded_workflow to start a bound run.",
+      inputSchema: contractSchemas.workflowPlan,
+      annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "record_stage_result",
+      description: "Record one ordered stage result; use responseMode=compact to avoid echoing the accumulated receipt.",
+      inputSchema: recordStageResultInputSchema,
+      annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "get_workflow_status",
+      description: "Read workflow state; detail=compact returns fixed-size progress metadata, while the default full mode returns the receipt.",
+      inputSchema: workflowIdInputSchema,
+      annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "finalize_workflow",
+      description: "Finalize a fully passed workflow; use responseMode=compact to avoid returning the full terminal receipt.",
+      inputSchema: revisionInputSchema,
+      annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "abort_workflow",
+      description: "Abort a non-terminal workflow; use responseMode=compact to avoid returning the full terminal receipt.",
+      inputSchema: revisionInputSchema,
+      annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false }
+    },
+    {
+      name: "checkpoint_context",
+      description: "Replace the current direct-task continuity snapshot using CAS and an idempotent requestId; nextActions remain historical candidates.",
+      inputSchema: contractSchemas.checkpointContextRequest,
+      annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "inspect_context",
+      description: "Inspect continuity metadata and obtain an opaque restore candidate without returning snapshot body text.",
+      inputSchema: contractSchemas.inspectContextRequest,
+      annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "load_context",
+      description: "Explicitly load a restore candidate after rechecking its task, epoch, revision, and digest.",
+      inputSchema: contractSchemas.loadContextRequest,
+      annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "suppress_context_restore",
+      description: "Suppress automatic restore candidates for the current epoch without deleting stored payloads.",
+      inputSchema: contractSchemas.suppressContextRestoreRequest,
+      annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "purge_direct_context",
+      description: "Delete the current direct-task payload and retain only a hash tombstone; workflow receipts are never deleted.",
+      inputSchema: contractSchemas.purgeDirectContextRequest,
+      annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: true, openWorldHint: false }
+    },
+    {
+      name: "prepare_state_cleanup",
+      description: "Preview fixed retention cleanup candidates and issue a 15-minute, one-use token without deleting data.",
+      inputSchema: contractSchemas.prepareStateCleanupRequest,
+      annotations: { readOnlyHint: true, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "execute_state_cleanup",
+      description: "Recheck a preview token, create verified SQLite backups, and atomically delete only the bound inactive candidates. Backups are retained until manually deleted.",
+      inputSchema: contractSchemas.executeStateCleanupRequest,
+      annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false }
+    },
+    {
+      name: "update_session_status",
+      description: "Write this session's one-line current work (what, where, next external step) to the local session board shared by every host on this machine. The plugin hook binds the session; call it when the work or next external step changes. Do not repeat it for an unchanged task.",
+      inputSchema: contractSchemas.updateSessionStatusRequest,
+      annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "list_session_status",
+      description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
+      inputSchema: contractSchemas.listSessionStatusRequest,
+      annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "prepare_session_message",
+      description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft. When this sender (250) or all senders (1000) already hold the maximum retained receipts, no draft is created and error.details gives scope and earliestReleaseAt.",
+      inputSchema: prepareSessionMessageInputSchema,
+      annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "send_session_message",
+      description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
+      inputSchema: contractSchemas.sendSessionMessageRequest,
+      annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "acknowledge_session_messages",
+      description: "Acknowledge the distinct peer message IDs actually processed in one batch. Do not acknowledge unprocessed messages. This is processing evidence, not completion or approval. Unacknowledged messages remain eligible for redelivery after their claim lease expires.",
+      inputSchema: contractSchemas.acknowledgeSessionMessagesRequest,
+      annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false }
+    },
+    {
+      name: "get_session_message_status",
+      description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend. Unacknowledged queue rows include the advisory autoWake recipient wake outlook with its basis time; it is not delivery, completion or permission evidence. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
+      inputSchema: contractSchemas.getSessionMessageStatusRequest,
+      annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false }
     }
-    const attested = (tool, call) => hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
-    const withMode = (field2, call, project) => {
-      const mode = responseMode(args, field2);
-      return mode === null ? invalidInput("".concat(field2, " must be compact or full.")) : projectResult(call(), mode, project);
+  ]);
+  diagnostics2?.registerMethods(tools.map((tool) => tool.name));
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    let diagnosticOutcome;
+    const respond = (result) => {
+      diagnosticOutcome = {
+        ok: result.ok,
+        errorCode: result.error?.code,
+        reasonCode: result.error?.details?.reasonCode,
+        failedChecks: result.error?.details?.failedChecks
+      };
+      return toolResult(result);
     };
-    let updateStatus = null;
-    let result;
-    if (!hostAttestation && HOST_ATTESTATION_TOOLS.has(request.params.name) && Object.hasOwn(args, HOST_ATTESTATION_FIELD)) {
-      result = apiError("BINDING_REQUIRED", "Host attestation is not configured for this server; a hook token cannot be verified.");
-    } else if (["get_skill_inventory", "classify_skills", "record_skill_selection"].includes(request.params.name)) {
-      if (!classification2) result = apiError("MCP_UNAVAILABLE", "Skill classification is not configured for this server.");
-      else {
-        try {
-          if (request.params.name !== "get_skill_inventory") {
-            const callerInput = { ...args };
-            delete callerInput[HOST_ATTESTATION_FIELD];
-            const checked = (request.params.name === "classify_skills" ? classificationInputSchema : selectionInputSchema).safeParse(callerInput);
-            if (!checked.success) return toolResult(invalidInput("Skill classification input does not match its contract."));
-          }
-          if (request.params.name === "get_skill_inventory") {
-            if (Object.keys(args).length > 0) return toolResult(invalidInput("get_skill_inventory accepts no arguments."));
-            result = apiOk(await classification2.inventory());
-          } else if (request.params.name === "classify_skills") {
-            const classified = attested("classify_skills", (input2) => {
-              const observation = typeof input2.requestId === "string" ? hostAttestation?.observe({ phase: "bootstrap", taskId: input2.requestId, runId: null, stageId: null, revision: null }) ?? null : null;
-              return classification2.classify(input2, observation);
-            });
-            result = apiOk(await classified);
-          } else {
-            const recorded = attested("record_skill_selection", (input2) => {
-              const decision = asRecord(input2.decision);
-              const observation = typeof decision.requestDigest === "string" ? hostAttestation?.observe({ phase: "bootstrap", taskId: decision.requestDigest, runId: null, stageId: null, revision: null }) ?? null : null;
-              return classification2.accept(input2, observation);
-            });
-            result = apiOk(await recorded);
-          }
-        } catch (error61) {
-          if (error61 instanceof WorkflowContractError) {
-            result = apiError("INVALID_INPUT", "Skill classification host observation is invalid; no selection was accepted.", {
-              category: "host-observation",
-              reasonCode: error61.code
-            });
-          } else if (error61 instanceof Error && CLASSIFICATION_REQUEST_REJECTIONS.has(error61.message)) {
-            result = apiError("INVALID_INPUT", "Skill classification request was rejected; no selection was accepted.", {
-              category: "request-state",
-              reasonCode: error61.message
-            });
-          } else {
-            result = apiError("MCP_UNAVAILABLE", "Skill classification configuration or runtime is unavailable; no selection was accepted.");
+    const handle = async (correlation) => {
+      let args = asRecord(request.params.arguments);
+      if (Object.hasOwn(args, "_sessionBinding")) return respond(apiError("BINDING_INVALID", "Caller session bindings are not accepted.", { reasonCode: "CALLER_SESSION_BINDING_REJECTED" }));
+      if (!sessionActorProof) return respond(apiError("BINDING_REQUIRED", "The root hook proof verifier is not configured.", { reasonCode: "ROOT_HOOK_PROOF_REQUIRED" }));
+      try {
+        const verified = sessionActorProof.verify(request.params.name, args);
+        diagnostics2?.event("binding", "DEBUG", "binding_check", { method: request.params.name, correlation, verified: true });
+        args = withoutSessionProof(args);
+        if (["update_session_status", "list_session_status", "prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"].includes(request.params.name)) {
+          args._sessionBinding = request.params.name === "validate_collaboration_decision" ? { host: verified.host, sessionId: verified.sessionId, actorKind: "main", observedBy: verified.actor.reasonCode, assurance: verified.actor.basis } : { host: verified.host, sessionId: verified.sessionId };
+        }
+      } catch (error61) {
+        return respond(error61 instanceof WorkflowContractError ? apiError(error61.code, error61.message, error61.details) : apiError("MCP_UNAVAILABLE", "Root hook proof verification is unavailable.", { reasonCode: "ROOT_PROOF_VERIFICATION_FAILED" }));
+      }
+      const attested = (tool, call) => hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
+      const withMode = (field2, call, project) => {
+        const mode = responseMode(args, field2);
+        return mode === null ? invalidInput("".concat(field2, " must be compact or full.")) : projectResult(call(), mode, project);
+      };
+      let updateStatus = null;
+      let result;
+      if (!hostAttestation && HOST_ATTESTATION_TOOLS.has(request.params.name) && Object.hasOwn(args, HOST_ATTESTATION_FIELD)) {
+        result = apiError("BINDING_REQUIRED", "Host attestation is not configured for this server; a hook token cannot be verified.");
+      } else if (["get_skill_inventory", "classify_skills", "record_skill_selection"].includes(request.params.name)) {
+        if (!classification2) result = apiError("MCP_UNAVAILABLE", "Skill classification is not configured for this server.");
+        else {
+          try {
+            if (request.params.name !== "get_skill_inventory") {
+              const callerInput = { ...args };
+              delete callerInput[HOST_ATTESTATION_FIELD];
+              const checked = (request.params.name === "classify_skills" ? classificationInputSchema : selectionInputSchema).safeParse(callerInput);
+              if (!checked.success) return respond(invalidInput("Skill classification input does not match its contract."));
+            }
+            if (request.params.name === "get_skill_inventory") {
+              if (Object.keys(args).length > 0) return respond(invalidInput("get_skill_inventory accepts no arguments."));
+              result = apiOk(await classification2.inventory());
+            } else if (request.params.name === "classify_skills") {
+              const classified = attested("classify_skills", (input2) => {
+                const observation = typeof input2.requestId === "string" ? hostAttestation?.observe({ phase: "bootstrap", taskId: input2.requestId, runId: null, stageId: null, revision: null }) ?? null : null;
+                return classification2.classify(input2, observation);
+              });
+              result = apiOk(await classified);
+            } else {
+              const recorded = attested("record_skill_selection", (input2) => {
+                const decision = asRecord(input2.decision);
+                const observation = typeof decision.requestDigest === "string" ? hostAttestation?.observe({ phase: "bootstrap", taskId: decision.requestDigest, runId: null, stageId: null, revision: null }) ?? null : null;
+                return classification2.accept(input2, observation);
+              });
+              result = apiOk(await recorded);
+            }
+          } catch (error61) {
+            if (error61 instanceof WorkflowContractError) {
+              result = apiError("INVALID_INPUT", "Skill classification host observation is invalid; no selection was accepted.", {
+                category: "host-observation",
+                reasonCode: error61.code
+              });
+            } else if (error61 instanceof Error && CLASSIFICATION_REQUEST_REJECTIONS.has(error61.message)) {
+              result = apiError("INVALID_INPUT", "Skill classification request was rejected; no selection was accepted.", {
+                category: "request-state",
+                reasonCode: error61.message
+              });
+            } else {
+              result = apiError("MCP_UNAVAILABLE", "Skill classification configuration or runtime is unavailable; no selection was accepted.");
+            }
           }
         }
-      }
-    } else if (request.params.name === "lookup_korean_prose_terms") {
-      try {
-        const input2 = validator.koreanProseGlossaryLookupRequest(args);
-        const output2 = validator.koreanProseGlossaryLookupResult(glossary.lookup(input2));
-        result = apiOk(output2);
-      } catch (error61) {
-        result = failureResult(error61, "Glossary lookup input is invalid.");
-      }
-    } else if (request.params.name === "check_for_updates") {
-      if (!validUpdateArguments(args)) {
-        result = invalidInput("check_for_updates accepts only an optional boolean force field.");
+      } else if (request.params.name === "lookup_korean_prose_terms") {
+        try {
+          const input2 = validator.koreanProseGlossaryLookupRequest(args);
+          const output2 = validator.koreanProseGlossaryLookupResult(glossary.lookup(input2));
+          result = apiOk(output2);
+        } catch (error61) {
+          result = failureResult(error61, "Glossary lookup input is invalid.");
+        }
+      } else if (request.params.name === "check_for_updates") {
+        if (!validUpdateArguments(args)) {
+          result = invalidInput("check_for_updates accepts only an optional boolean force field.");
+        } else {
+          updateStatus = await updates.check(args.force === true);
+          result = apiOk(updateStatus);
+        }
       } else {
-        updateStatus = await updates.check(args.force === true);
-        result = apiOk(updateStatus);
-      }
-    } else {
-      updateStatus = updates.cachedStatus();
-      switch (request.params.name) {
-        case "get_trust_capabilities":
-          result = Object.keys(args).length > 0 ? invalidInput("get_trust_capabilities accepts no arguments.") : trust ? trust.capabilities() : apiError("MCP_UNAVAILABLE", "The trust receipt store is unavailable.");
-          break;
-        case "validate_collaboration_decision":
-          if (!trust) {
-            result = apiError("MCP_UNAVAILABLE", "The trust receipt store is unavailable.");
+        updateStatus = updates.cachedStatus();
+        switch (request.params.name) {
+          case "get_trust_capabilities":
+            result = Object.keys(args).length > 0 ? invalidInput("get_trust_capabilities accepts no arguments.") : trust ? trust.capabilities() : apiError("MCP_UNAVAILABLE", "The trust receipt store is unavailable.");
             break;
-          }
-          try {
-            result = trust.validateCollaborationDecision(validator.validateCollaborationDecisionRequest(args));
-          } catch (error61) {
-            result = failureResult(error61, "Collaboration decision validation input is invalid.");
-          }
-          break;
-        case "plan_workflow":
-          result = attested("plan_workflow", (input2) => service.planWorkflow(input2, true));
-          break;
-        case "open_convergence_root":
-          result = withMode("responseMode", () => {
-            const opened = service.openConvergenceRoot(domainArguments(args, "responseMode"));
-            if (opened.ok && opened.data && !continuity.bindOpenedRoot(args, opened.data.rootId)) {
-              process.stderr.write(JSON.stringify({ event: "continuity-root-binding-unavailable" }) + "\n");
+          case "validate_collaboration_decision":
+            if (!trust) {
+              result = apiError("MCP_UNAVAILABLE", "The trust receipt store is unavailable.");
+              break;
             }
-            return opened;
-          }, convergenceRootHandle);
-          break;
-        case "claim_workflow_attempt":
-          result = service.claimWorkflowAttempt(args, true);
-          break;
-        case "start_guarded_workflow":
-          result = withMode("responseMode", () => service.startGuardedWorkflow(domainArguments(args, "responseMode"), true), workflowStatusSummary);
-          break;
-        case "get_convergence_status":
-          result = withMode("detail", () => service.getConvergenceStatus(String(args.rootId ?? "")), convergenceStatusSummary);
-          break;
-        case "resolve_convergence_gate":
-          result = withMode("responseMode", () => service.resolveConvergenceGate(domainArguments(args, "responseMode")), convergenceStatusSummary);
-          break;
-        case "start_workflow":
-          result = service.rejectUnguardedWorkflow(args);
-          break;
-        case "record_stage_result":
-          result = withMode(
-            "responseMode",
-            () => attested("record_stage_result", (input2) => service.recordStageResult(domainArguments(input2, "responseMode"), true)),
-            workflowStatusSummary
-          );
-          break;
-        case "get_workflow_status":
-          result = withMode("detail", () => service.getWorkflowStatus(String(args.runId ?? "")), workflowStatusSummary);
-          break;
-        case "finalize_workflow":
-          result = withMode("responseMode", () => service.finalizeWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision)), workflowStatusSummary);
-          break;
-        case "abort_workflow":
-          result = withMode("responseMode", () => service.abortWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision)), workflowStatusSummary);
-          break;
-        case "checkpoint_context":
-          result = continuity.checkpointContext(args);
-          break;
-        case "inspect_context":
-          result = continuity.inspectContext(args);
-          break;
-        case "load_context":
-          result = continuity.loadContext(args);
-          break;
-        case "suppress_context_restore":
-          result = continuity.suppressContextRestore(args);
-          break;
-        case "purge_direct_context":
-          result = continuity.purgeDirectContext(args);
-          break;
-        case "prepare_state_cleanup":
-          result = cleanup ? cleanup.prepare(args) : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
-          break;
-        case "update_session_status":
-        case "list_session_status":
-          result = await sessionBoardResult(request.params.name, args, sessionBoardPath, validator, sessionMessages);
-          break;
-        case "prepare_session_message":
-          try {
-            validator.prepareSessionMessageRequest(args);
-            result = await sessionMessages.prepare(args);
-          } catch (error61) {
-            result = failureResult(error61, "Session message preparation is invalid.");
-          }
-          break;
-        case "send_session_message":
-          try {
-            validator.sendSessionMessageRequest(args);
-            result = await sessionMessages.send(args);
-          } catch (error61) {
-            result = failureResult(error61, "Session message input is invalid.", " Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status.");
-          }
-          break;
-        case "acknowledge_session_messages":
-          try {
-            validator.acknowledgeSessionMessagesRequest(args);
-            result = await sessionMessages.acknowledge(args);
-          } catch (error61) {
-            result = failureResult(error61, "Session message acknowledgement is invalid.");
-          }
-          break;
-        case "get_session_message_status":
-          try {
-            validator.getSessionMessageStatusRequest(args);
-            result = await sessionMessages.status(args);
-          } catch (error61) {
-            result = failureResult(error61, "Session message status input is invalid.");
-          }
-          break;
-        case "execute_state_cleanup":
-          result = cleanup ? cleanup.execute(args) : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
-          break;
-        default:
-          result = {
-            schemaVersion: "1.0.0",
-            ok: false,
-            data: null,
-            error: {
-              code: "INVALID_INPUT",
-              message: "Unknown workflow tool.",
-              details: { tool: request.params.name }
+            try {
+              result = trust.validateCollaborationDecision(validator.validateCollaborationDecisionRequest(args));
+            } catch (error61) {
+              result = failureResult(error61, "Collaboration decision validation input is invalid.");
             }
-          };
+            break;
+          case "plan_workflow":
+            result = attested("plan_workflow", (input2) => service.planWorkflow(input2, true));
+            break;
+          case "open_convergence_root":
+            result = withMode("responseMode", () => {
+              const opened = service.openConvergenceRoot(domainArguments(args, "responseMode"));
+              if (opened.ok && opened.data && !continuity.bindOpenedRoot(args, opened.data.rootId)) {
+                process.stderr.write(JSON.stringify({ event: "continuity-root-binding-unavailable" }) + "\n");
+              }
+              return opened;
+            }, convergenceRootHandle);
+            break;
+          case "claim_workflow_attempt":
+            result = service.claimWorkflowAttempt(args, true);
+            break;
+          case "start_guarded_workflow":
+            result = withMode("responseMode", () => service.startGuardedWorkflow(domainArguments(args, "responseMode"), true), workflowStatusSummary);
+            break;
+          case "get_convergence_status":
+            result = withMode("detail", () => service.getConvergenceStatus(String(args.rootId ?? "")), convergenceStatusSummary);
+            break;
+          case "resolve_convergence_gate":
+            result = withMode("responseMode", () => service.resolveConvergenceGate(domainArguments(args, "responseMode")), convergenceStatusSummary);
+            break;
+          case "start_workflow":
+            result = service.rejectUnguardedWorkflow(args);
+            break;
+          case "record_stage_result":
+            result = withMode(
+              "responseMode",
+              () => attested("record_stage_result", (input2) => service.recordStageResult(domainArguments(input2, "responseMode"), true)),
+              workflowStatusSummary
+            );
+            break;
+          case "get_workflow_status":
+            result = withMode("detail", () => service.getWorkflowStatus(String(args.runId ?? "")), workflowStatusSummary);
+            break;
+          case "finalize_workflow":
+            result = withMode("responseMode", () => service.finalizeWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision)), workflowStatusSummary);
+            break;
+          case "abort_workflow":
+            result = withMode("responseMode", () => service.abortWorkflow(String(args.runId ?? ""), integer2(args.expectedRevision)), workflowStatusSummary);
+            break;
+          case "checkpoint_context":
+            result = continuity.checkpointContext(args);
+            break;
+          case "inspect_context":
+            result = continuity.inspectContext(args);
+            break;
+          case "load_context":
+            result = continuity.loadContext(args);
+            break;
+          case "suppress_context_restore":
+            result = continuity.suppressContextRestore(args);
+            break;
+          case "purge_direct_context":
+            result = continuity.purgeDirectContext(args);
+            break;
+          case "prepare_state_cleanup":
+            result = cleanup ? cleanup.prepare(args) : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
+            break;
+          case "update_session_status":
+          case "list_session_status":
+            result = await sessionBoardResult(request.params.name, args, sessionBoardPath, validator, sessionMessages);
+            break;
+          case "prepare_session_message":
+            try {
+              validator.prepareSessionMessageRequest(args);
+              result = await sessionMessages.prepare(args);
+            } catch (error61) {
+              result = failureResult(error61, "Session message preparation is invalid.");
+            }
+            break;
+          case "send_session_message":
+            try {
+              validator.sendSessionMessageRequest(args);
+              result = await sessionMessages.send(args);
+            } catch (error61) {
+              result = failureResult(error61, "Session message input is invalid.", " Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status.");
+            }
+            break;
+          case "acknowledge_session_messages":
+            try {
+              validator.acknowledgeSessionMessagesRequest(args);
+              result = await sessionMessages.acknowledge(args);
+            } catch (error61) {
+              result = failureResult(error61, "Session message acknowledgement is invalid.");
+            }
+            break;
+          case "get_session_message_status":
+            try {
+              validator.getSessionMessageStatusRequest(args);
+              result = await sessionMessages.status(args);
+            } catch (error61) {
+              result = failureResult(error61, "Session message status input is invalid.");
+            }
+            break;
+          case "execute_state_cleanup":
+            result = cleanup ? cleanup.execute(args) : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
+            break;
+          default:
+            result = {
+              schemaVersion: "1.0.0",
+              ok: false,
+              data: null,
+              error: {
+                code: "INVALID_INPUT",
+                message: "Unknown workflow tool.",
+                details: { tool: request.params.name }
+              }
+            };
+        }
       }
-    }
-    const response = toolResult(result);
-    const notice = updateStatus ? updates.takeNotice(updateStatus) : null;
-    if (notice) response.content.push({ type: "text", text: JSON.stringify(notice) });
-    return response;
+      const response = respond(result);
+      const notice = updateStatus ? updates.takeNotice(updateStatus) : null;
+      if (notice) response.content.push({ type: "text", text: JSON.stringify(notice) });
+      return response;
+    };
+    return diagnostics2 ? diagnostics2.observe(request.params.name, request.params.arguments, handle, () => diagnosticOutcome) : handle();
   });
   return server;
 }
@@ -37826,19 +38076,19 @@ var SqliteWorkflowStore = class {
       let protectedLinkedRoots = 0;
       for (const root of roots) {
         const rows = linkedRuns.all(root.root_id);
-        const reasons = /* @__PURE__ */ new Set();
+        const reasons2 = /* @__PURE__ */ new Set();
         for (const row of rows) {
           if (row.revision === null || row.state === null || row.updated_at === null) {
-            reasons.add("missing");
+            reasons2.add("missing");
             continue;
           }
-          if (!["failed", "passed", "blocked"].includes(row.state)) reasons.add("non-terminal");
-          if (row.updated_at > cutoff) reasons.add("recent");
+          if (!["failed", "passed", "blocked"].includes(row.state)) reasons2.add("non-terminal");
+          if (row.updated_at > cutoff) reasons2.add("recent");
         }
-        if (reasons.size > 0) {
-          if (reasons.has("non-terminal")) linkedNonTerminalRoots++;
-          if (reasons.has("recent")) linkedRecentRoots++;
-          if (reasons.has("missing")) linkedMissingReceiptRoots++;
+        if (reasons2.size > 0) {
+          if (reasons2.has("non-terminal")) linkedNonTerminalRoots++;
+          if (reasons2.has("recent")) linkedRecentRoots++;
+          if (reasons2.has("missing")) linkedMissingReceiptRoots++;
           protectedLinkedRoots++;
           continue;
         }
@@ -38076,7 +38326,7 @@ var SqliteWorkflowStore = class {
 };
 
 // mcp-server/src/workflow-service.ts
-import { createHmac as createHmac4, randomUUID, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
+import { createHmac as createHmac4, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual4 } from "node:crypto";
 
 // mcp-server/src/decision-record-validator.ts
 import { isDeepStrictEqual } from "node:util";
@@ -38108,9 +38358,9 @@ function sameValues(left, right) {
 function duplicateFree(values) {
   return values.length === new Set(values).size;
 }
-function validateDecisionRecordSemantics(record4) {
+function validateDecisionRecordSemantics(record5) {
   const errors = [];
-  const preflight = object4(record4.preflight);
+  const preflight = object4(record5.preflight);
   const requiredCapabilities = stringArray(preflight.required_capabilities);
   const observedCapabilities = stringArray(preflight.observed_capabilities);
   const missingCapabilities = stringArray(preflight.missing_capabilities);
@@ -38124,11 +38374,11 @@ function validateDecisionRecordSemantics(record4) {
   if (!sameValues(expectedMissing, missingSet)) {
     errors.push("preflight missing capabilities must exactly equal required minus observed");
   }
-  const caseBrief = object4(record4.case_brief);
-  if (!isDeepStrictEqual(caseBrief.constraints, record4.constraints)) {
+  const caseBrief = object4(record5.case_brief);
+  if (!isDeepStrictEqual(caseBrief.constraints, record5.constraints)) {
     errors.push("case_brief constraints must match record constraints");
   }
-  const run = object4(record4.run);
+  const run = object4(record5.run);
   const stage = run.stage;
   const assurance = run.assurance;
   const cap = run.worker_cap;
@@ -38162,7 +38412,7 @@ function validateDecisionRecordSemantics(record4) {
       workerById.set(id2, worker);
     }
   }
-  const manifest = array2(record4.panel_manifest);
+  const manifest = array2(record5.panel_manifest);
   if (!isDeepStrictEqual(manifest, array2(run.workers))) {
     errors.push("panel_manifest must exactly equal run.workers");
   }
@@ -38244,10 +38494,10 @@ function validateDecisionRecordSemantics(record4) {
     if (run.strict === true) errors.push("strict execution cannot use a Judge fallback");
   }
   if (strictShortfall) {
-    const cross2 = object4(record4.cross_examination);
+    const cross2 = object4(record5.cross_examination);
     const emptyRunFields = ["workers", "completed_worker_ids", "reused_worker_ids", "failures", "specialist_additions", "redeliberations"];
     const emptyRootFields = ["panel_manifest", "material_claims", "issue_ledger", "axis_decisions"];
-    if (assurance !== "provisional" || record4.consensus_proposal !== null || judgeId !== null || fallback !== null || instantiated.size > 0 || missingSet.size === 0 || emptyRunFields.some((field2) => array2(run[field2]).length > 0) || emptyRootFields.some((field2) => array2(record4[field2]).length > 0) || cross2.decision !== "skip" || !nonempty(cross2.reason) || ["trigger_items", "selected_item_ids", "coverage", "followups"].some((field2) => array2(cross2[field2]).length > 0)) {
+    if (assurance !== "provisional" || record5.consensus_proposal !== null || judgeId !== null || fallback !== null || instantiated.size > 0 || missingSet.size === 0 || emptyRunFields.some((field2) => array2(run[field2]).length > 0) || emptyRootFields.some((field2) => array2(record5[field2]).length > 0) || cross2.decision !== "skip" || !nonempty(cross2.reason) || ["trigger_items", "selected_item_ids", "coverage", "followups"].some((field2) => array2(cross2[field2]).length > 0)) {
       errors.push("strict capability shortfall contract is inconsistent");
     }
     return errors;
@@ -38289,7 +38539,7 @@ function validateDecisionRecordSemantics(record4) {
     }
   }
   const claimStatuses = /* @__PURE__ */ new Map();
-  for (const claim2 of array2(record4.material_claims).map(object4)) {
+  for (const claim2 of array2(record5.material_claims).map(object4)) {
     if (!nonempty(claim2.id) || claimStatuses.has(claim2.id)) {
       errors.push("material claim ids must be unique nonempty strings");
       continue;
@@ -38319,24 +38569,24 @@ function validateDecisionRecordSemantics(record4) {
       }
     }
   };
-  scanForbidden(record4);
-  const constraints = new Set(stringArray(record4.constraints));
-  const requiredConstraints = new Set(stringArray(record4.required_constraints));
+  scanForbidden(record5);
+  const constraints = new Set(stringArray(record5.constraints));
+  const requiredConstraints = new Set(stringArray(record5.required_constraints));
   if ([...requiredConstraints].some((constraint) => !constraints.has(constraint))) {
     errors.push("required constraints must be declared constraints");
   }
-  const issues = array2(record4.issue_ledger).map(object4);
+  const issues = array2(record5.issue_ledger).map(object4);
   for (const issue2 of issues) {
     if (!ISSUE_STATUSES.has(String(issue2.status))) errors.push("issue ledger has invalid status");
   }
-  const observability = object4(record4.observability);
+  const observability = object4(record5.observability);
   for (const value of Object.values(observability)) {
     if (typeof value === "string" && value !== "NOT_OBSERVABLE") errors.push("observability strings must be NOT_OBSERVABLE");
   }
   if (typeof observability.worker_count === "number" && observability.worker_count !== instantiated.size) {
     errors.push("observability worker_count must match instantiated workers");
   }
-  const cross = object4(record4.cross_examination);
+  const cross = object4(record5.cross_examination);
   const triggers = array2(cross.trigger_items).map(object4);
   const selected = stringArray(cross.selected_item_ids);
   const coverage = array2(cross.coverage).map(object4);
@@ -38382,7 +38632,7 @@ function validateDecisionRecordSemantics(record4) {
     }
   }
   if ([...followupCounts.values()].some((count) => count > 1)) errors.push("reviewers may receive at most one cross follow-up");
-  const axes = array2(record4.axis_decisions).map(object4);
+  const axes = array2(record5.axis_decisions).map(object4);
   const axisNames = /* @__PURE__ */ new Set();
   for (const axis of axes) {
     if (!nonempty(axis.axis) || axisNames.has(axis.axis)) {
@@ -38407,7 +38657,7 @@ function validateDecisionRecordSemantics(record4) {
   if (assurance === "independent" && (missingSet.size || failures.length || reused.size)) {
     errors.push("independent assurance requires no missing capability, failures, or reuse");
   }
-  const proposal = object4(record4.consensus_proposal);
+  const proposal = object4(record5.consensus_proposal);
   const status = proposal.status;
   const supported = stringArray(proposal.supported_by_verified_claims);
   if ((status === "consensus" || status === "conditional_consensus") && (!supported.length || !axes.length)) {
@@ -43048,10 +43298,10 @@ function validateSemantics(report) {
   const paths = unique(request.target.files, "path", "TARGET_PATH");
   unique(request.providedEvidence, "path", "PROVIDED_EVIDENCE");
   const expected = unique(request.checks, "id", "REQUEST_CHECK");
-  const checks = unique(report.checks, "id", "CHECK");
+  const checks2 = unique(report.checks, "id", "CHECK");
   const evidence = unique(report.evidence, "id", "EVIDENCE");
   unique(report.findings, "id", "FINDING");
-  if (expected.size !== checks.size || [...expected].some((id2) => !checks.has(id2))) errors.push("CHECK_INVENTORY_MISMATCH");
+  if (expected.size !== checks2.size || [...expected].some((id2) => !checks2.has(id2))) errors.push("CHECK_INVENTORY_MISMATCH");
   for (const item of [...request.target.files, ...request.providedEvidence, ...report.evidence]) {
     if (!safeRelative(item.path)) errors.push("UNSAFE_PATH");
   }
@@ -43674,7 +43924,7 @@ var WorkflowService = class {
       const digests = this.convergenceDigests(request.taskEnvelope, request.frame);
       const root = {
         schemaVersion: CONTRACT_VERSION,
-        rootId: "root-".concat(randomUUID()),
+        rootId: "root-".concat(randomUUID2()),
         parentRootId: request.parentRootId,
         revision: 0,
         state: "open",
@@ -43835,7 +44085,7 @@ var WorkflowService = class {
       const updatedRoot = bumpedRoot(root, now.toISOString());
       const lease = {
         schemaVersion: CONTRACT_VERSION,
-        leaseId: "lease-".concat(randomUUID()),
+        leaseId: "lease-".concat(randomUUID2()),
         rootId: root.rootId,
         rootRevision: updatedRoot.revision,
         epoch: root.currentEpoch,
@@ -44538,9 +44788,9 @@ var WorkflowService = class {
         stageId: stage.stageId
       });
     }
-    let record4;
+    let record5;
     try {
-      record4 = this.validator.declaredSchema(
+      record5 = this.validator.declaredSchema(
         this.registry.rootDirectory,
         stage.gate.validatorSchema,
         result.output.output?.decisionRecord,
@@ -44559,15 +44809,15 @@ var WorkflowService = class {
         cause: error61 instanceof Error ? error61.message : String(error61)
       });
     }
-    const semanticErrors = validateDecisionRecordSemantics(record4);
+    const semanticErrors = validateDecisionRecordSemantics(record5);
     if (semanticErrors.length > 0) {
       throw new WorkflowContractError("GATE_FAILED", "DecisionRecord.v1 failed canonical semantic validation.", {
         stageId: stage.stageId,
         semanticErrors
       });
     }
-    const run = record4.run;
-    const proposal = record4.consensus_proposal;
+    const run = record5.run;
+    const proposal = record5.consensus_proposal;
     if (run.assurance === "provisional" || run.capability_shortfall !== false || proposal === null || proposal.status === "no_consensus") {
       throw new WorkflowContractError("GATE_FAILED", "Deliberation result is not eligible to advance the workflow.", {
         stageId: stage.stageId,
@@ -45076,7 +45326,7 @@ var WorkflowService = class {
     ]))];
     const outcome = {
       schemaVersion: CONTRACT_VERSION,
-      outcomeId: "outcome-".concat(randomUUID()),
+      outcomeId: "outcome-".concat(randomUUID2()),
       rootId: root.rootId,
       rootRevision: root.revision,
       leaseId: binding2.lease.leaseId,
@@ -45146,7 +45396,7 @@ var WorkflowService = class {
 };
 
 // mcp-server/src/state-cleanup-service.ts
-import { createHash as createHash16, createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID2, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
+import { createHash as createHash16, createHmac as createHmac5, randomBytes as randomBytes5, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual5 } from "node:crypto";
 import { chmodSync as chmodSync3, mkdirSync as mkdirSync4 } from "node:fs";
 import path17 from "node:path";
 var DAY_MS = 24 * 60 * 60 * 1e3;
@@ -45201,7 +45451,7 @@ var StateCleanupService = class {
       const rootProtection = { previewCreatedAt: createdAt, ...workflow.rootProtection };
       const payload = {
         schemaVersion: "1.0.0",
-        planId: randomUUID2(),
+        planId: randomUUID3(),
         createdAt,
         expiresAt: new Date(created.getTime() + TOKEN_TTL_MS2).toISOString(),
         policy: POLICY,
@@ -45426,7 +45676,7 @@ var StateCleanupService = class {
 };
 
 // mcp-server/src/trust-store.ts
-import { createHmac as createHmac6, randomBytes as randomBytes6, randomUUID as randomUUID3, timingSafeEqual as timingSafeEqual6 } from "node:crypto";
+import { createHmac as createHmac6, randomBytes as randomBytes6, randomUUID as randomUUID4, timingSafeEqual as timingSafeEqual6 } from "node:crypto";
 import { types as utilTypes3 } from "node:util";
 import { chmodSync as chmodSync4, mkdirSync as mkdirSync5 } from "node:fs";
 import path18 from "node:path";
@@ -45528,7 +45778,7 @@ var TrustStore = class {
     }
     const receipt = this.seal({
       schemaVersion: CONTRACT_VERSION,
-      receiptId: "source-".concat(randomUUID3()),
+      receiptId: "source-".concat(randomUUID4()),
       originKind: input2.originKind,
       host: input2.host,
       sessionId: input2.sessionId,
@@ -46088,8 +46338,8 @@ async function loadClassificationProviderRuntime(file2, options = {}) {
   if (bytes.length > 1024 * 1024) throw new Error("CLASSIFICATION_RUNTIME_TOO_LARGE");
   return createClassificationProviderRuntime(JSON.parse(bytes.toString("utf8")), options);
 }
-function reportClassificationInitializationFailure(error61, report = (record4) => {
-  console.error("[agent-governance-suite] classification-initialization-failed " + JSON.stringify(record4));
+function reportClassificationInitializationFailure(error61, report = (record5) => {
+  console.error("[agent-governance-suite] classification-initialization-failed " + JSON.stringify(record5));
 }) {
   let reason = "CLASSIFICATION_CONFIGURATION_UNAVAILABLE";
   try {
@@ -46246,9 +46496,29 @@ function bindNativeClassificationDefinitions(definitions, behaviors = builtInBeh
 }
 
 // mcp-server/src/index.ts
+var diagnostics;
 async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map(), executionAdapters, nativeBehaviors) {
   const installedWireAdapters = new Map(wireAdapters);
   const installedNativeBehaviors = nativeBehaviors === void 0 ? void 0 : new Map(nativeBehaviors);
+  let loggingConfig;
+  let logConfigInvalid = false;
+  try {
+    loggingConfig = readDiagnosticConfig(process.env.AGENT_GOVERNANCE_LOG_CONFIG);
+  } catch {
+    logConfigInvalid = true;
+    loggingConfig = { ...readDiagnosticConfig(void 0), categories: { lifecycle: "WARN" } };
+  }
+  diagnostics = await createDiagnostics(loggingConfig, /* @__PURE__ */ new Set());
+  if (logConfigInvalid) diagnostics.event("lifecycle", "WARN", "configuration_invalid", { reasonCode: "LOG_CONFIG_INVALID" });
+  let runtimeHash;
+  try {
+    if (loggingConfig.level !== "OFF" || Object.values(loggingConfig.categories ?? {}).some((level) => level !== "OFF")) runtimeHash = createHash17("sha256").update(await readFile7(new URL(import.meta.url))).digest("hex");
+  } catch {
+  }
+  diagnostics.event("lifecycle", "INFO", "startup", { buildVersion: PLUGIN_INFO.version, runtimeHash, runtimePath: import.meta.url });
+  process.once("beforeExit", () => {
+    void diagnostics?.close();
+  });
   const registryPath = resolveRegistryPath();
   const workflowDatabasePath = resolveWorkflowDatabasePath();
   const continuityDatabasePath = resolveContinuityDatabasePath();
@@ -46359,12 +46629,19 @@ async function startMcpServer(wireAdapters = /* @__PURE__ */ new Map(), executio
     },
     service: new SkillClassificationService(providerRuntime)
   });
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), void 0, trust, classification2, new SessionActorProofs(store));
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), void 0, trust, classification2, new SessionActorProofs(store), diagnostics);
   await server.connect(new StdioServerTransport());
+  diagnostics.event("lifecycle", "INFO", "connected");
+  const previousClose = server.onclose;
+  server.onclose = () => {
+    previousClose?.();
+    void diagnostics?.close();
+  };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path21.resolve(process.argv[1])).href) {
-  void startMcpServer().catch((error61) => {
-    process.stderr.write("".concat(error61 instanceof Error ? error61.message : String(error61), "\n"));
+  void startMcpServer().catch(() => {
+    diagnostics?.event("lifecycle", "FATAL", "startup_failed");
+    void diagnostics?.close();
     process.exitCode = 1;
   });
 }
