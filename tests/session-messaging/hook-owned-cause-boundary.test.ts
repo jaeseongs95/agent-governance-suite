@@ -69,7 +69,7 @@ beforeEach(() => {
     return String(file).endsWith("broker.token") ? "A".repeat(43) : "PRIVATE_CERTIFICATE";
   });
   f.spawn.mockImplementation(() => {
-    const child = Object.assign(new EventEmitter(), {exitCode: ["spawn-error", "probe-history"].includes(f.mode) ? null : 1, signalCode: null, unref: vi.fn()});
+    const child = Object.assign(new EventEmitter(), {exitCode: ["spawn-error", "probe-history"].includes(f.mode) ? null : 1, signalCode: null, stdio: [null, null, null, null], unref: vi.fn()});
     if (f.mode === "spawn-error") queueMicrotask(() => child.emit("error", Object.assign(new Error("PRIVATE_SPAWN"), {code: f.code})));
     return child;
   });
