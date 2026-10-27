@@ -1,4 +1,4 @@
-import {expect, it} from "vitest";
+import {expect, it, vi} from "vitest";
 import {createRequire} from "node:module";
 import {once} from "node:events";
 import {mkdtemp, readFile} from "node:fs/promises";
@@ -22,9 +22,13 @@ it("pins the direct logging libraries and checks the resolved rotation sink vers
 
 it("keeps the pinned library's reopen, ready and cleanup-complete rotation contract", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "ags-roll-contract-"));
-  const sink = await roll({file: path.join(directory, "event"), frequency: 100,
-    limit: {count: 1, removeOtherLogFiles: false}, sync: false, minLength: 0});
+  // Keep the first rotation behind listener registration, regardless of host load.
+  vi.useFakeTimers({toFake: ["Date", "setTimeout", "clearTimeout"]});
+  vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+  let sink: Awaited<ReturnType<typeof roll>> | undefined;
   try {
+    sink = await roll({file: path.join(directory, "event"), frequency: 100,
+    limit: {count: 1, removeOtherLogFiles: false}, sync: false, minLength: 0});
     await once(sink, "ready", {signal: AbortSignal.timeout(2000)});
     const initial = sink.file;
     const events: string[] = [];
@@ -33,7 +37,10 @@ it("keeps the pinned library's reopen, ready and cleanup-complete rotation contr
     sink.on("ready", () => events.push("ready"));
     sink.on("cleanup-complete", () => events.push("cleanup-complete"));
     const rotated = Promise.all([once(sink, "ready"), once(sink, "cleanup-complete", {signal: AbortSignal.timeout(2000)})]);
+    const written = once(sink, "write", {signal: AbortSignal.timeout(2000)});
     sink.write("before-rotation\n");
+    await written;
+    await vi.advanceTimersByTimeAsync(100);
     await rotated;
     expect(events[0]).toBe("reopen");
     expect(events).toContain("ready");
@@ -41,8 +48,14 @@ it("keeps the pinned library's reopen, ready and cleanup-complete rotation contr
     expect(sink.file).not.toBe(initial);
     expect(await readFile(initial, "utf8")).toBe("before-rotation\n");
   } finally {
-    const closed = once(sink, "close");
-    sink.end();
-    await closed;
+    try {
+      if (sink) {
+        const closed = once(sink, "close", {signal: AbortSignal.timeout(2000)});
+        sink.end();
+        await closed;
+      }
+    } finally {
+      vi.useRealTimers();
+    }
   }
 });
