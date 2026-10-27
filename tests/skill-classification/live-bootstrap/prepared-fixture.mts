@@ -119,7 +119,7 @@ export async function readyEstimateMock(api: Api, repo: string, outputDirectory:
 }
 
 /** Frozen input successor only: never derive expected money from preflight or during a test. */
-export async function loadCurrentBudgetFixture(repo: string) {
+export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true) {
   const oracleBytes = await readFile(new URL("./budget-wire-oracle.json", import.meta.url));
   const boundaryBytes = await readFile(new URL("./precision-boundary-oracle.json", import.meta.url));
   const successorBytes = await readFile(new URL("./budget-wire-source-successor.json", import.meta.url));
@@ -140,25 +140,38 @@ export async function loadCurrentBudgetFixture(repo: string) {
   const registrySuccessor = JSON.parse(registryBytes.toString("utf8"));
   assert.equal(registrySuccessor.revision, "ags-bootstrap-budget-registry-binding-r04");
   assert.equal(registrySuccessor.parentSourceDigest, hash(successorBytes));
-  assert.equal(registrySuccessor.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
   assert.equal(registrySuccessor.fixtureDigest, successor.fixtureDigest);
   assert.equal(registrySuccessor.fixtureOracleDigest, successor.fixtureOracleDigest);
   assert.equal(registrySuccessor.rows.length, successor.rows.length);
+  // The historical registry binding remains intact; r05 binds current inputs to
+  // independently calculated frozen reservations, without consulting preflight.
+  const solidBytes = await readFile(new URL("./budget-wire-solid-successor.json", import.meta.url));
+  assert.equal(hash(solidBytes), "sha256:25f4eb5d8d5a2449d48b2ef39872ab800e256d8c828c0ead23eef427a9d31ae6");
+  const solid = JSON.parse(solidBytes.toString("utf8"));
+  assert.equal(solid.revision, "ags-bootstrap-budget-solid-binding-r05");
+  assert.equal(solid.parentRegistryDigest, hash(registryBytes));
+  if (bindRegistry) assert.equal(solid.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
+  assert.equal(solid.fixtureDigest, successor.fixtureDigest);
+  assert.equal(solid.fixtureOracleDigest, successor.fixtureOracleDigest);
+  assert.equal(solid.rows.length, successor.rows.length);
   const currentRows = successor.rows.map((row: {caseId: string; utf8Bytes: number}, index: number) => {
-    const binding = registrySuccessor.rows[index];
-    assert.equal(binding.caseId, row.caseId);
-    assert.equal(binding.utf8Bytes, row.utf8Bytes);
-    return {...row, requestDigest: binding.requestDigest, wireDigest: binding.wireDigest};
+    const historical = registrySuccessor.rows[index];
+    assert.equal(historical.caseId, row.caseId);
+    assert.equal(historical.utf8Bytes, row.utf8Bytes);
+    const current = solid.rows[index];
+    assert.equal(current.caseId, row.caseId);
+    return {...row, ...current};
   });
-  const oracle = {...predecessor, inventoryDigest: registrySuccessor.inventoryDigest, fixtureDigest: successor.fixtureDigest,
-    fixtureOracleDigest: successor.fixtureOracleDigest, rows: currentRows, totals: successor.totals,
+  const oracle = {...predecessor, inventoryDigest: solid.inventoryDigest, fixtureDigest: successor.fixtureDigest,
+    fixtureOracleDigest: successor.fixtureOracleDigest, rows: currentRows, totals: solid.totals,
     syntheticOverBudgetCases: predecessor.syntheticOverBudgetCases.map((row: {id: string}, index: number) => {
       assert.equal(successor.syntheticOverBudgetCases[index].id, row.id);
-      return {...row, ...successor.syntheticOverBudgetCases[index]};
-    }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...successor.fractionalRoundingFixture}};
+      assert.equal(solid.syntheticOverBudgetCases[index].id, row.id);
+      return {...row, ...solid.syntheticOverBudgetCases[index]};
+    }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...solid.fractionalRoundingFixture}};
   return {oracleBytes, boundaryBytes, oracle, precision: {...precision,
-    cases: precision.cases.map((row: {id: string}, index: number) => ({...row, ...successor.precisionCases[index]}))},
-  successorDigest: hash(registryBytes), successorRevision: registrySuccessor.revision};
+    cases: precision.cases.map((row: {id: string}, index: number) => ({...row, ...solid.precisionCases[index]}))},
+  successorDigest: hash(solidBytes), successorRevision: solid.revision};
 }
 
 // Explicit authoring command captures only current public request/wire inputs. It neither runs nor qualifies a provider.

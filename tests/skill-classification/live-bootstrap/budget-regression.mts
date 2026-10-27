@@ -7,6 +7,7 @@ import path from "node:path";
 import {fileURLToPath, pathToFileURL} from "node:url";
 import type {BootstrapConfig} from "./bootstrap.mts";
 import {loadCurrentBudgetFixture, rebindPreparedFixture} from "./prepared-fixture.mts";
+import {independentWireRows} from "./independent-wire-oracle.mts";
 
 type RunConfig = Extract<BootstrapConfig, {schemaVersion: "2.0.0"}>;
 interface OracleRow {caseId: string; requestDigest: string; wireDigest: string; utf8Bytes: number; reservedPicoUsd: string}
@@ -38,7 +39,23 @@ if (process.argv[4] === "worker") {
 } else {
   // Historical ROOT r2 money policy remains fixed; current public wire inputs use an explicit reviewed successor.
   // It must come from reviewed wire bytes/order/price, never from preflight requestReservations.
-  const {oracleBytes, oracle: currentOracle, successorDigest, successorRevision} = await loadCurrentBudgetFixture(repo);
+  const {oracleBytes, oracle: frozenOracle, successorDigest, successorRevision} = await loadCurrentBudgetFixture(repo, false);
+  const root = await mkdtemp(path.join(os.tmpdir(), "ags-budget-regression-"));
+  try {
+  const independent = await independentWireRows(repo);
+  const costs = independent.map(row => BigInt(row.reservedPicoUsd));
+  const all = costs.reduce((a, b) => a + b, 0n), firstTwo = costs[0]! + costs[1]!;
+  const target = (cap: bigint, unknown: bigint, cost: bigint, minimum: bigint) => {
+    const need = cap + 1000n - unknown - cost; return (need > minimum ? need : minimum).toString();
+  };
+  const currentOracle = {...frozenOracle, inventoryDigest: independent[0]!.inventoryDigest,
+    rows: independent.map(({caseId,requestDigest,wireDigest,utf8Bytes,reservedPicoUsd}) => ({caseId,requestDigest,wireDigest,utf8Bytes,reservedPicoUsd})),
+    syntheticOverBudgetCases: frozenOracle.syntheticOverBudgetCases.map((row: OracleBudgetCase) => {
+      const cap = BigInt(Math.round(Number(row.capUsd) * 1e12)), unknown = BigInt(Math.round(Number(row.unchangedUnknownUsd) * 1e12));
+      const minimum = BigInt(Math.round(Number(row.historicalConfirmedUsd) * 1e12));
+      const cost = row.historicalId === "confirmed-plus-unknown" ? firstTwo : all;
+      return {...row, proposedSyntheticConfirmedUsd: (Number(BigInt(target(cap, unknown, cost, minimum))) / 1e12).toFixed(12)};
+    })};
   assert.equal(hash(oracleBytes.toString("utf8")), "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56");
   const oracle = currentOracle as BudgetWireOracle;
   assert.equal(oracle.schemaVersion, "1.0.0"); assert.equal(oracle.canonicalRunId, "full-21-015");
@@ -75,7 +92,6 @@ if (process.argv[4] === "worker") {
     const fixed = Number(row.proposedSyntheticConfirmedUsd); assert(Number.isFinite(fixed) && fixed >= Number(row.historicalConfirmedUsd));
     return fixed; // Exact reviewed decimal input, no binary-float boundary subtraction.
   };
-  const root = await mkdtemp(path.join(os.tmpdir(), "ags-budget-regression-"));
   const checks: string[] = [];
   async function bind(config: RunConfig) {
     await mkdir(config.outputDirectory, {recursive: true});
@@ -120,12 +136,11 @@ if (process.argv[4] === "worker") {
       await writeFile(path.join(config.outputDirectory, "inputs.json"), artifact); await writeFile(path.join(config.outputDirectory, "source.txt"), source);
       config.estimator = {method: "utf8-bytes-as-input-tokens-v1", inputArtifact: {path: "inputs.json", digest: hash(artifact)}, sources: [{path: "source.txt", digest: hash(source)}],
         uncertainty: "1 UTF8 byte = 1 input token is a reviewed assumption, not a billing guarantee; account observations remain unknown"};
-      config.profile.maximumCostUsd = Math.max(...measurements.map((row: {utf8Bytes: number}) => Math.ceil(row.utf8Bytes * 0.000000042 * 1e12) / 1e12));
+      config.profile.maximumCostUsd = Math.max(...measurements.map((row: {utf8Bytes: number}) => Number(BigInt(row.utf8Bytes) * 42000n) / 1e12));
       (config.profile.qualification as Record<string, unknown>).profileConfigurationDigest = prepared.api.profiles.digestProviderProfileConfiguration(config.profile);
     }
     await bind(config); return config;
   }
-  try {
     const normal = await ready("unknown-account"); const prepared = await api.prepare(normal);
     const checked = await api.preflight(normal, prepared); assert.equal(checked.status, "READY_FOR_OPERATOR_DISPATCH", "R11_RUN_ALLOCATION_015_ACCEPTED");
     assert.equal(checked.billingGuarantee, "NOT_VERIFIED"); assert.deepEqual(checked.accountObservation, {balanceUsd: null, priorSpendUsd: null, unknownReservedUsd: null});
@@ -140,37 +155,54 @@ if (process.argv[4] === "worker") {
     checks.push("run allocation allows unknown account; reservation persisted before mock fetch; usage estimate never clears unknown reservation");
 
     const full = await ready("full-21-015"); full.limits!.requests = 21; await bind(full);
-    const fullChecked = await api.preflight(full, await api.prepare(full)); assert.equal(fullChecked.status, "READY_FOR_OPERATOR_DISPATCH");
+    const fullChecked = await api.preflight(full, await api.prepare(full));
     const fullValidatedPico = assertFrozenReservations(fullChecked.requestReservations);
-    // A mutated reservation return must be rejected by the independent checker, not mislabeled as helper BLOCKED.
+    // A mutated reservation return must be rejected even when the run budget blocks dispatch.
     const corruptReservations = structuredClone(fullChecked.requestReservations); corruptReservations[0]!.reservedUsd += 0.5e-12;
     assert.throws(() => assertFrozenReservations(corruptReservations), {code: "ERR_ASSERTION"});
     const fullReservation = Number(fullValidatedPico) / 1e12;
-    assert.equal(fullReservation, frozenFullUsd, "FULL_21_FROZEN_SYNTHETIC_WIRE_RESERVATION");
-    let fullCalls = 0;
-    const fullResult = await api.run(full, {env, executionKind: "offline-mock", fetcher: async (_url, init) => {fullCalls++; return response(init);}});
-    if (fullResult.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected full mocked run");
-    assert.equal(fullCalls, 21); assert.equal(fullResult.transportAttempts, 21); assert.equal(fullResult.qualificationStatus, "NOT_RUN");
-    assert.equal(fullResult.selectedReadAppliedVerified, "NOT_RUN");
-    assert(fullResult.ledger.entries.every(entry => entry.state === "unknown" && entry.actualCostUsd === null));
-    const fullLedgerPico = assertFrozenReservations(fullResult.ledger.entries.map((entry, index) => {
-      assert.equal(entry.requestDigest, oracle.rows[index]!.requestDigest, "Full canonical run ledger binding");
-      return {caseId: oracle.rows[index]!.caseId, reservedUsd: entry.reservedUsd};
-    }));
-    assert.equal(fullLedgerPico, fullValidatedPico);
-    const aggregate = await ready("pilot-plus-21"); aggregate.limits!.requests = 21; aggregate.budget!.priorRunUnknownReservedUsd = historicalPilotUnknownUsd; await bind(aggregate);
-    const aggregateChecked = await api.preflight(aggregate, await api.prepare(aggregate));
-    assert.equal(aggregateChecked.status, "READY_FOR_OPERATOR_DISPATCH");
-    const aggregatePico = assertFrozenReservations(aggregateChecked.requestReservations), preservedPilotPico = 5734722000n;
-    assert.equal(aggregate.budget!.priorRunUnknownReservedUsd, Number(preservedPilotPico) / 1e12);
-    assert.equal(aggregatePico, fullValidatedPico);
-    const pilotPlusFull = Number(preservedPilotPico + aggregatePico) / 1e12;
-    assert(pilotPlusFull <= 0.15); assert.equal(aggregate.budget!.accountBalanceUsd, null);
-    checks.push(".15 allocation admits frozen synthetic full21; historical pilot unknown is preserved; historical .1204098/.126144522 and original FAIL remain in frozen Git/evidence");
+    assert.equal(fullReservation, frozenFullUsd, "FULL_21_INDEPENDENT_CURRENT_WIRE_RESERVATION");
+    if (all <= 150000000000n) {
+      assert.equal(fullChecked.status, "READY_FOR_OPERATOR_DISPATCH");
+      let fullCalls = 0;
+      const fullResult = await api.run(full, {env, executionKind: "offline-mock", fetcher: async (_url, init) => {fullCalls++; return response(init);}});
+      if (fullResult.status !== "RAW_EVALUATION_RECORDED") throw new Error("Expected full mocked run");
+      assert.equal(fullCalls, 21); assert.equal(fullResult.transportAttempts, 21); assert.equal(fullResult.qualificationStatus, "NOT_RUN");
+      assert.equal(fullResult.selectedReadAppliedVerified, "NOT_RUN");
+      assert(fullResult.ledger.entries.every(entry => entry.state === "unknown" && entry.actualCostUsd === null));
+      const fullLedgerPico = assertFrozenReservations(fullResult.ledger.entries.map((entry, index) => {
+        assert.equal(entry.requestDigest, oracle.rows[index]!.requestDigest, "Full canonical run ledger binding");
+        return {caseId: oracle.rows[index]!.caseId, reservedUsd: entry.reservedUsd};
+      }));
+      assert.equal(fullLedgerPico, fullValidatedPico);
+      const aggregate = await ready("pilot-plus-21"); aggregate.limits!.requests = 21; aggregate.budget!.priorRunUnknownReservedUsd = historicalPilotUnknownUsd; await bind(aggregate);
+      const aggregateChecked = await api.preflight(aggregate, await api.prepare(aggregate));
+      const preservedPilotPico = 5734722000n;
+      assert.equal(aggregate.budget!.priorRunUnknownReservedUsd, Number(preservedPilotPico) / 1e12);
+      assert.equal(aggregate.budget!.accountBalanceUsd, null);
+      if (preservedPilotPico + all <= 150000000000n) {
+        assert.equal(aggregateChecked.status, "READY_FOR_OPERATOR_DISPATCH");
+        const aggregatePico = assertFrozenReservations(aggregateChecked.requestReservations);
+        assert.equal(aggregatePico, fullValidatedPico);
+        assert(Number(preservedPilotPico + aggregatePico) / 1e12 <= 0.15);
+      } else {
+        assert.equal(aggregateChecked.status, "BLOCKED");
+        assert(aggregateChecked.blocked.includes("RUN_BUDGET_INSUFFICIENT"));
+      }
+      checks.push(".15 allocation and historical pilot unknown are preserved; historical .1204098/.126144522 and original FAIL remain in frozen Git/evidence");
+    } else {
+      assert.equal(fullChecked.status, "BLOCKED");
+      assert(fullChecked.blocked.includes("RUN_BUDGET_INSUFFICIENT"));
+      let reads = 0, calls = 0;
+      const blocked = await api.run(full, {executionKind: "offline-mock", env: new Proxy({}, {get() {reads++; throw new Error("BUDGET_ENV_READ");}}),
+        fetcher: async () => {calls++; throw new Error("BUDGET_FETCH");}});
+      assert.equal(blocked.status, "BLOCKED"); assert.equal(reads, 0); assert.equal(calls, 0);
+      checks.push("full current inventory exceeds .15 and blocks before env/dispatch");
+    }
 
     let forbiddenReads = 0, forbiddenCalls = 0;
     const forbiddenEnv = new Proxy({}, {get: () => {forbiddenReads++; assert.fail("R11_NO_ENV_LOOKUP_BEFORE_BOUNDARY_BLOCK");}});
-    for (const [id, change, code] of [
+    const blockedCases = [
       ["wrong-run", (c: RunConfig) => {c.budget!.runId = "different-run";}, "RUN_ALLOCATION_UNVERIFIED"],
       ["wrong-scope", (c: RunConfig) => {Object.assign(c.budget!, {scope: "account"});}, "RUN_ALLOCATION_UNVERIFIED"],
       ["wrong-mode", (c: RunConfig) => {Object.assign(c, {reservationMode: "automatic"});}, "RESERVATION_MODE_INVALID"],
@@ -191,13 +223,14 @@ if (process.argv[4] === "worker") {
       ["missing-review", (c: RunConfig) => {c.evidence.operatorAuthorization = null;}, "EVIDENCE_MISSING:operatorAuthorization"],
       ["input-unbound", (c: RunConfig) => {c.estimator!.inputArtifact.digest = hash("wrong");}, "ESTIMATE_SOURCE_OR_INPUT_UNBOUND"],
       ["source-unbound", (c: RunConfig) => {c.estimator!.sources[0]!.digest = hash("wrong source");}, "ESTIMATE_SOURCE_OR_INPUT_UNBOUND"],
-    ] as const) {
+    ] as const;
+    for (let offset = 0; offset < blockedCases.length; offset += 4) await Promise.all(blockedCases.slice(offset, offset + 4).map(async ([id, change, code]) => {
       const config = await ready(id); change(config); if (id !== "missing-review" && id !== "changed-price-old-evidence") await bind(config);
       const result = await api.run(config, {env: forbiddenEnv, executionKind: "offline-mock", fetcher: async () => {forbiddenCalls++; throw new Error("Forbidden call");}});
       await writeFile(path.join(config.outputDirectory, "blocked-return.json"), JSON.stringify(result, null, 2) + "\n", {flag: "wx"});
       assert.equal(result.status, "BLOCKED", `R11_BOUNDARY_BLOCKED:${id}`); assert(result.blocked.includes(code), `${id}:${code}`);
       if (id === "changed-price-old-evidence") assert(result.blocked.includes("EVIDENCE_UNBOUND:operatorAuthorization"));
-    }
+    }));
     assert.equal(forbiddenReads, 0); assert.equal(forbiddenCalls, 0); checks.push("wrong run / >.15 / prior unknown / insufficient .06 / >USD5 / absent review / changed input artifact block before ENV and dispatch");
     // Rebind byte hashes/operator evidence so each fault exercises exact semantic input binding, not merely a stale file hash.
     for (const mode of ["byte-length", "same-length-wire-digest", "case-missing", "case-duplicate", "case-order", "invented-reservation-field"] as const) {

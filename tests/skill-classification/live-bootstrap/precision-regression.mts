@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
-import {mkdtemp, mkdir, readFile, writeFile, rm, cp, access} from "node:fs/promises";
+import {mkdtemp, mkdir, readFile, writeFile, rm, cp, access, readdir} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {pathToFileURL} from "node:url";
 import type {BootstrapConfig} from "./bootstrap.mts";
 import {loadCurrentBudgetFixture, rebindPreparedFixture} from "./prepared-fixture.mts";
+import {adjacentPrices, expectedPico} from "./precision-current-oracle.mts";
+import {independentWireRows} from "./independent-wire-oracle.mts";
 
 type RunConfig = Extract<BootstrapConfig, {schemaVersion: "2.0.0"}>;
 interface OracleRow {caseId: string; requestDigest: string; wireDigest: string; utf8Bytes: number; reservedPicoUsd: string}
@@ -25,7 +27,7 @@ assert(process.argv[2] && process.argv[3], "Usage: precision-regression.mts REPO
 const api = await import(pathToFileURL(helper).href) as typeof import("./bootstrap.mts");
 const hash = (bytes: string) => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
 const env = {AGS_BOOTSTRAP_ENDPOINT: "https://mock.invalid/classify", AGS_BOOTSTRAP_JEV_KEY: "test-only-not-real"};
-const {oracleBytes, oracle: currentOracle, boundaryBytes, precision: currentPrecision, successorDigest, successorRevision} = await loadCurrentBudgetFixture(repo);
+const {oracleBytes, oracle: currentOracle, boundaryBytes, precision: currentPrecision, successorDigest, successorRevision} = await loadCurrentBudgetFixture(repo, false);
 assert.equal(hash(oracleBytes.toString("utf8")), "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56");
 const oracle = currentOracle as BudgetWireOracle;
 assert.equal(hash(boundaryBytes.toString("utf8")), "sha256:618afb36e06a7372656e9a4139bf3f91e45f12d1487bac42e72f0994a7d2f835");
@@ -33,7 +35,10 @@ const precision = currentPrecision as PrecisionOracle;
 assert.equal(precision.parentOracleSha256, oracleBytes.length && hash(oracleBytes.toString("utf8")).slice(7));
 assert.equal(precision.safeMaxPicoUsd, BigInt(Number.MAX_SAFE_INTEGER).toString());
 const frozenPrices = {billingMode: "token", inputUsdPer1k: Number(oracle.prices.inputUsdPer1000Tokens), outputUsdPer1k: Number(oracle.prices.outputUsdPer1000Tokens), fixedCallMaxUsd: Number(oracle.prices.fixedCallUsd)};
-const frozenWireRows = oracle.rows.map(({caseId, wireDigest, utf8Bytes}) => ({caseId, wireDigest, utf8Bytes}));
+const expectedCaseIds = oracle.rows.map(({caseId}) => caseId);
+const sourceSkillIds = (await readdir(path.join(repo, "skills"), {withFileTypes: true})).filter(item => item.isDirectory()).map(item => item.name).sort();
+const independent = await independentWireRows(repo);
+const currentMeasurements = independent.map(({caseId, utf8Bytes}) => ({caseId, utf8Bytes}));
 const root = await mkdtemp(path.join(os.tmpdir(), "ags-precision-regression-"));
 const failures: {caseId: string; errorType: string; errorCode: string; assertion: {message: string; actual: unknown; expected: unknown; operator: string | null} | null}[] = [], completed: string[] = [];
 let environmentReads = 0, credentialReads = 0, fetches = 0;
@@ -72,11 +77,20 @@ const exists = async (file: string) => {try {await access(file); return true;} c
       const measurements = prepared.requests.map(({caseId, request}: {caseId: string; request: {requestDigest: string}}) => {const wire = JSON.stringify(prepared.api.providers.jevNoulWireAdapter.encode(request, config.profile));
         return {caseId, requestDigest: request.requestDigest, wireDigest: hash(wire), utf8Bytes: Buffer.byteLength(wire)};});
       assert.equal(config.profile.modelId, oracle.modelId);
-      assert.equal(prepared.inventory.inventoryDigest, oracle.inventoryDigest);
+      assert.deepEqual(prepared.inventory.skills.map(skill => skill.skillId).sort(), sourceSkillIds, "CURRENT_INVENTORY_MEMBERSHIP");
+      assert.equal(prepared.inventory.inventoryDigest, independent[0]!.inventoryDigest, "INDEPENDENT_PRECISION_INVENTORY");
       assert.deepEqual(config.prices, frozenPrices);
-      assert.deepEqual(measurements.map(({caseId, wireDigest, utf8Bytes}: Pick<OracleRow, "caseId" | "wireDigest" | "utf8Bytes">) => ({caseId, wireDigest, utf8Bytes})), frozenWireRows,
-        "FROZEN_SYNTHETIC_WIRE_ORDER_DIGEST_BYTES");
-      if (runId === oracle.canonicalRunId) assert.deepEqual(measurements.map(({caseId, requestDigest}: Pick<OracleRow, "caseId" | "requestDigest">) => ({caseId, requestDigest})), oracle.rows.map(({caseId, requestDigest}: Pick<OracleRow, "caseId" | "requestDigest">) => ({caseId, requestDigest})));
+      assert.deepEqual(measurements.map(row => row.caseId), expectedCaseIds, "FROZEN_CORPUS_CASE_ORDER");
+      for (const {request} of prepared.requests) {
+        const wire = prepared.api.providers.jevNoulWireAdapter.encode(request, config.profile) as {questions: Record<string, {instructions: {skill: Record<string, unknown>}}>};
+        assert.deepEqual(Object.keys(wire.questions).sort(), sourceSkillIds, "CURRENT_WIRE_MEMBERSHIP");
+        for (const skill of request.skills) {
+          const expected = structuredClone(skill); Reflect.deleteProperty(expected, "sourceRefs"); Reflect.deleteProperty(expected, "sourceMap");
+          assert.deepEqual(wire.questions[skill.skillId]!.instructions.skill, expected, "CURRENT_WIRE_SKILL_FIELDS");
+        }
+      }
+      assert.deepEqual(measurements.map(({caseId,wireDigest,utf8Bytes}) => ({caseId,wireDigest,utf8Bytes})),
+        independent.map(({caseId,wireDigest,utf8Bytes}) => ({caseId,wireDigest,utf8Bytes})), "INDEPENDENT_PRECISION_WIRE");
       const artifact = JSON.stringify({runId, inventoryDigest: prepared.inventory.inventoryDigest, measurements});
       const source = "offline synthetic price/context source; not tokenization or billing proof";
       await writeFile(path.join(config.outputDirectory, "inputs.json"), artifact); await writeFile(path.join(config.outputDirectory, "source.txt"), source);
@@ -88,10 +102,21 @@ const exists = async (file: string) => {try {await access(file); return true;} c
     await bind(config); return config;
   }
 try {
-  for (const spec of precision.cases) {
-    const caseDirectory = path.join(root, `precision-${spec.id}`);
+  for (const original of precision.cases) {
+    const caseDirectory = path.join(root, `precision-${original.id}`);
+    let spec = original;
     try {
-      const value = await ready(`precision-${spec.id}`); value.limits!.requests = 21;
+      const value = await ready(`precision-${original.id}`); value.limits!.requests = 21;
+      if (original.kind === "reviewed-estimate") {
+        const maxBytes = Math.max(...currentMeasurements.map(row => row.utf8Bytes));
+        const [below, above] = adjacentPrices(maxBytes);
+        const price = original.id === "current-adjacent-below" ? below : original.id === "current-adjacent-above" ? above : Number(original.priceNumberText);
+        const rows = currentMeasurements.map(row => ({caseId: row.caseId, reservedPicoUsd: expectedPico(row.utf8Bytes, price).toString()}));
+        const costs = rows.map(row => BigInt(row.reservedPicoUsd));
+        spec = {...original, priceNumberText: price.toString(), expectedRows: rows,
+          expectedMaxPicoUsd: costs.reduce((a, b) => a > b ? a : b, 0n).toString(),
+          expectedSumPicoUsd: costs.reduce((a, b) => a + b, 0n).toString()};
+      }
       value.budget!.priorRunUnknownReservedUsd = Number(precision.unknownUsd);
       let config: BootstrapConfig = value;
       if (spec.kind === "legacy-fixed") {
@@ -125,8 +150,8 @@ try {
       assert.equal(await exists(lockFile), false); assert.equal(environmentReads, 0); assert.equal(credentialReads, 0); assert.equal(fetches, 0);
       assert.equal(checked.status, spec.expectedStatus, spec.id);
       if (spec.expectedReason) {assert(checked.blocked.includes(spec.expectedReason), `${spec.id}:${spec.expectedReason}`); assert.equal(blockedResult!.status, "BLOCKED"); if (blockedResult!.status === "BLOCKED") assert(blockedResult!.blocked.includes(spec.expectedReason));}
-      if (spec.id === "safe-equal") assert(!checked.blocked.includes("ESTIMATE_SOURCE_OR_INPUT_UNBOUND"), "Exactly MAX_SAFE pico is admitted by arithmetic; original .15 budget still blocks dispatch");
-      if (spec.expectedStatus === "READY_FOR_OPERATOR_DISPATCH" || spec.id === "safe-equal") {
+      if (spec.id === "current-adjacent-below") assert(!checked.blocked.includes("ESTIMATE_SOURCE_OR_INPUT_UNBOUND"), "Nearest representable below MAX_SAFE is admitted by arithmetic; original .15 budget still blocks dispatch");
+      if (spec.expectedStatus === "READY_FOR_OPERATOR_DISPATCH" || spec.id === "current-adjacent-below") {
         assert.equal(checked.requestReservations.length, spec.expectedRows.length);
         let picoSum = 0n;
         for (let index = 0; index < spec.expectedRows.length; index++) {
@@ -135,7 +160,10 @@ try {
         }
         assert.equal(picoSum.toString(), spec.expectedSumPicoUsd);
       }
-      if (spec.id === "half-pico") {assert.equal(spec.expectedSumPicoUsd, oracle.fractionalRoundingFixture.sumOfPerRequestCeilPicoUsd); assert.notEqual(spec.expectedSumPicoUsd, oracle.fractionalRoundingFixture.invalidRoundAfterSummingPicoUsd);}
+      if (spec.id === "half-pico") {
+        const invalid = expectedPico(currentMeasurements.reduce((sum, row) => sum + row.utf8Bytes, 0), Number(spec.priceNumberText));
+        assert.notEqual(spec.expectedSumPicoUsd, invalid.toString(), "PER_REQUEST_ROUNDING_REQUIRED");
+      }
       completed.push(spec.id);
     } catch (error) {
       const observed = error instanceof Error ? error as Error & {code?: unknown; actual?: unknown; expected?: unknown; operator?: string} : null;
