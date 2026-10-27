@@ -7,8 +7,10 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { StoredPluginUpdateState } from "../../mcp-server/src/plugin-update-store.js";
 import {
   InMemoryPluginUpdateStore,
+  mergePluginUpdateState,
   type PluginUpdateStore,
 } from "../../mcp-server/src/plugin-update-store.js";
+import { compareInstalledVersion, isInstalledVersion } from "../../mcp-server/src/plugin-version.js";
 import {
   compareStableVersions,
   PluginUpdateService,
@@ -65,6 +67,32 @@ describe("PluginUpdateService", () => {
     expect(compareStableVersions("2.0.0", "1.99.99")).toBe(1);
     expect(compareStableVersions("1.1.0", "1.1.0")).toBe(0);
     expect(() => compareStableVersions("1.1.0-beta.1", "1.1.0")).toThrow(/stable SemVer/u);
+  });
+
+  it("orders a prerelease build before its own stable release and after earlier ones", () => {
+    expect(compareInstalledVersion("3.0.0-rc.1", "2.9.1")).toBe(1);
+    expect(compareInstalledVersion("3.0.0-rc.1", "3.0.0")).toBe(-1);
+    expect(compareInstalledVersion("3.0.0-rc-1.2", "3.0.1")).toBe(-1);
+    expect(compareInstalledVersion("3.0.0", "3.0.0")).toBe(0);
+    expect(() => compareInstalledVersion("3.0.0-rc.1", "3.0.0-rc.1")).toThrow(/stable SemVer/u);
+    expect(isInstalledVersion("3.0.0-rc.1")).toBe(true);
+    for (const version of ["3.0.0-", "3.0.0-rc..1", "03.0.0-rc.1", "v3.0.0-rc.1"]) expect(isInstalledVersion(version), version).toBe(false);
+
+    const state: StoredPluginUpdateState = {
+      targetId: "agent-governance-suite", currentVersion: "3.0.0-rc.1", latestVersion: "2.9.1", latestTag: "v2.9.1",
+      latestCommit: commit, etag: null, comparison: "unknown", lastAttemptAt: "2026-09-13T00:00:00.000Z",
+      lastSuccessfulCheckAt: "2026-09-13T00:00:00.000Z", nextCheckAt: "2026-09-14T00:00:00.000Z",
+      lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null,
+    };
+    expect(mergePluginUpdateState(state, state).comparison).toBe("ahead-of-stable");
+    expect(mergePluginUpdateState(state, { ...state, latestVersion: "3.0.0", latestTag: "v3.0.0" }).comparison)
+      .toBe("update-available");
+    expect(() => new ContractValidator().pluginUpdateStatus({
+      schemaVersion: "1.0.0", pluginId: "agent-governance-suite", currentVersion: "3.0.0-rc.1", latestVersion: "2.9.1",
+      latestTag: "v2.9.1", latestCommit: commit, comparison: "ahead-of-stable", lastAttemptAt: state.lastAttemptAt,
+      lastSuccessfulCheckAt: state.lastSuccessfulCheckAt, nextCheckAt: state.nextCheckAt, stale: false, lastErrorCode: null,
+      automaticInstall: false,
+    })).not.toThrow();
   });
 
   it("caches a successful check for 24 hours and force bypasses the cache", async () => {

@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ApiResultV1, AttemptLeaseV1, ConvergenceRootV1, WorkflowPlanV1, WorkflowReceiptV1 } from "../../contracts/types.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
-import { CURRENT_VERSION } from "./version-fixtures.js";
+import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
 import { SessionActorProofs, withoutSessionProof } from "../../mcp-server/src/session-actor-proof.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -74,7 +74,7 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       ]);
       const seed = new SqliteWorkflowStore(database);
       seed.putPluginUpdateState({ targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION,
-        latestVersion: CURRENT_VERSION, latestTag: `v${CURRENT_VERSION}`, latestCommit: "c".repeat(40), etag: "attestation-fixture",
+        latestVersion: STABLE_VERSION, latestTag: `v${STABLE_VERSION}`, latestCommit: "c".repeat(40), etag: "attestation-fixture",
         comparison: "up-to-date", lastAttemptAt: new Date().toISOString(), lastSuccessfulCheckAt: new Date().toISOString(),
         nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null });
       seed.close();

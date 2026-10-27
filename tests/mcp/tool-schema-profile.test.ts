@@ -16,7 +16,7 @@ import { ContractValidator, contractSchemas } from "../../mcp-server/src/schema-
 import { SESSION_MESSAGE_SERVER_INSTRUCTIONS, SKILL_INTAKE_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
-import { CURRENT_VERSION } from "./version-fixtures.js";
+import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
 import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
 
 const rootDirectory = fileURLToPath(new URL("../../", import.meta.url));
@@ -32,8 +32,8 @@ function updateService(): PluginUpdateService {
   store.putPluginUpdateState({
     targetId: "agent-governance-suite",
     currentVersion: CURRENT_VERSION,
-    latestVersion: CURRENT_VERSION,
-    latestTag: `v${CURRENT_VERSION}`,
+    latestVersion: STABLE_VERSION,
+    latestTag: `v${STABLE_VERSION}`,
     latestCommit: "d".repeat(40),
     etag: "tool-schema-profile",
     comparison: "up-to-date",

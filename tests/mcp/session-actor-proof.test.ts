@@ -25,7 +25,7 @@ import { TrustService } from "../../mcp-server/src/trust-service.js";
 import { TrustStore } from "../../mcp-server/src/trust-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
-import { CURRENT_VERSION } from "./version-fixtures.js";
+import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
 import { concurrentClaims } from "../helpers/concurrent-claim-process.js";
 
 // IO spies start with real implementations; the denial test makes them fail fast.
@@ -473,8 +473,8 @@ describe("session actor proof concurrent SQLite claims and path aliases", () => 
 function cachedUpdates(): PluginUpdateService {
   const store = new InMemoryPluginUpdateStore();
   store.putPluginUpdateState({
-    targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION, latestVersion: CURRENT_VERSION,
-    latestTag: `v${CURRENT_VERSION}`, latestCommit: "a".repeat(40), etag: "owned-proof-fixture", comparison: "up-to-date",
+    targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION, latestVersion: STABLE_VERSION,
+    latestTag: `v${STABLE_VERSION}`, latestCommit: "a".repeat(40), etag: "owned-proof-fixture", comparison: "up-to-date",
     lastAttemptAt: "2026-10-27T00:00:00.000Z", lastSuccessfulCheckAt: "2026-10-27T00:00:00.000Z",
     nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null,
   });

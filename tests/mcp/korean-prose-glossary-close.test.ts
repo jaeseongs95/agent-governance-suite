@@ -25,7 +25,7 @@ import { createMcpServer } from "../../mcp-server/src/server.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
-import { CURRENT_VERSION } from "./version-fixtures.js";
+import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
 
 // Only SQLite ports are controlled. No helper-call mocks or arbitrary primitive,
 // saturated-history, reused-primary or function exceptions justify product layers.
@@ -160,7 +160,7 @@ async function connect() {
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
   const updates = new InMemoryPluginUpdateStore();
   updates.putPluginUpdateState({ targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION,
-    latestVersion: CURRENT_VERSION, latestTag: "v" + CURRENT_VERSION, latestCommit: "c".repeat(40),
+    latestVersion: STABLE_VERSION, latestTag: "v" + STABLE_VERSION, latestCommit: "c".repeat(40),
     etag: "glossary-failure-fixture", comparison: "up-to-date", lastAttemptAt: "2026-10-01T00:00:00.000Z",
     lastSuccessfulCheckAt: "2026-10-01T00:00:00.000Z", nextCheckAt: "2099-01-01T00:00:00.000Z",
     lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null });

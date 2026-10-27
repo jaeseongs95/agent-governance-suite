@@ -5,7 +5,16 @@ import {
   parseArguments,
   readFrontmatter
 } from "../../scripts/lib.mjs";
-import { assertMarkerPair, replaceExactlyOnce, syncReleaseMetadata } from "../../scripts/release-metadata.mjs";
+import {
+  assertMarkerPair,
+  PLUGIN_INFO_VERSION,
+  RELEASE_INSTALL,
+  RELEASE_VERSION_EN,
+  RELEASE_VERSION_KO,
+  replaceExactlyOnce,
+  SEMVER,
+  syncReleaseMetadata,
+} from "../../scripts/release-metadata.mjs";
 import { compareVersions, isSameVersionPinMismatch, isUpstreamUpdate, stableTagsFromLsRemote } from "../../scripts/source-lock.mjs";
 
 describe("repository tooling", () => {
@@ -88,6 +97,25 @@ describe("repository tooling", () => {
     expect(() => replaceExactlyOnce("start end start end", /start end/u, "x", "test")).toThrow(/found 2/u);
     expect(() => assertMarkerPair("<!-- release:start --><!-- release:start --><!-- release:end -->", "release", "test"))
       .toThrow(/found 2/u);
+  });
+
+  it("accepts a SemVer prerelease release version and replaces a written one whole", () => {
+    for (const version of ["2.9.1", "3.0.0-rc.1", "3.0.0-alpha.beta-2"]) expect(SEMVER.test(version), version).toBe(true);
+    for (const version of ["3.0", "v3.0.0", "3.0.0-", "3.0.0-rc..1", "3.0.0-rc.1+build"]) {
+      expect(SEMVER.test(version), version).toBe(false);
+    }
+    const surfaces = [
+      [RELEASE_VERSION_KO, "<!-- release-version:start -->\n현재 릴리스 후보는 `vOLD`입니다.\n<!-- release-version:end -->", "`v3.0.0`입니다."],
+      [RELEASE_VERSION_EN, "<!-- release-version:start -->\nThe current release candidate is `vOLD`.\n<!-- release-version:end -->", "`v3.0.0`."],
+      [RELEASE_INSTALL, "<!-- release-install:start -->\n```bash\nadd x --ref vOLD\n```\n<!-- release-install:end -->", "--ref v3.0.0\n"],
+    ];
+    for (const old of ["2.9.1", "3.0.0-rc.1"]) {
+      for (const [pattern, template, expected] of surfaces) {
+        expect(replaceExactlyOnce(template.replace("OLD", old), pattern, "$13.0.0$2", "test")).toContain(expected);
+      }
+      expect(replaceExactlyOnce(`  version: "${old}",\n`, PLUGIN_INFO_VERSION, 'version: "3.0.0"', "test"))
+        .toBe('  version: "3.0.0",\n');
+    }
   });
 
   it("keeps every generated release surface synchronized", async () => {

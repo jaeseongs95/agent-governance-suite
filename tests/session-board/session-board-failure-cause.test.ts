@@ -18,7 +18,7 @@ import type { sessionMessageRequest } from "../../mcp-server/src/session-message
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
-import { CURRENT_VERSION } from "../mcp/version-fixtures.js";
+import { CURRENT_VERSION, STABLE_VERSION } from "../mcp/version-fixtures.js";
 import { createSyntheticRootProofFixture } from "../mcp/synthetic-root-proof-client.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
@@ -100,7 +100,7 @@ describe("session board MCP failure cause", () => {
     const validator = new ContractValidator();
     const updates = new InMemoryPluginUpdateStore();
     updates.putPluginUpdateState({
-      targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION, latestVersion: CURRENT_VERSION, latestTag: `v${CURRENT_VERSION}`,
+      targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION, latestVersion: STABLE_VERSION, latestTag: `v${STABLE_VERSION}`,
       latestCommit: "d".repeat(40), etag: "session-board", comparison: "up-to-date", lastAttemptAt: "2026-09-19T00:00:00.000Z",
       lastSuccessfulCheckAt: "2026-09-19T00:00:00.000Z", nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null,
     });

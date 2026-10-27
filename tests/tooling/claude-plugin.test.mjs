@@ -19,6 +19,7 @@ import {
   replaceFrontmatterDescription,
   reportClaudePluginDrift,
 } from "../../scripts/build-claude-plugin.mjs";
+import { SEMVER } from "../../scripts/release-metadata.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const pluginRoot = path.join(root, OUTPUT_DIRECTORY);
@@ -60,8 +61,9 @@ describe("generated Claude plugin", () => {
     const release = await readJson(root, "release", "version.json");
     const manifest = await readJson(pluginRoot, ".claude-plugin", "plugin.json");
     expect(manifest.name).toBe("agent-governance-suite");
-    expect(manifest.version).toMatch(/^\d+\.\d+\.\d+$/u);
-    expect(compareVersions(manifest.version, release.version)).toBeLessThanOrEqual(0);
+    expect(manifest.version).toMatch(SEMVER);
+    // A fresh mirror carries the release version itself, which may be a prerelease; a lagging one an earlier release.
+    expect(manifest.version === release.version || compareVersions(manifest.version, release.version) < 0).toBe(true);
     const server = manifest.mcpServers["agent-governance-suite"];
     expect(server.args).toEqual(["${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/server.mjs"]);
     expect(server.env.AGENT_GOVERNANCE_DB_PATH).toBe("${CLAUDE_PLUGIN_DATA}/workflows.sqlite3");

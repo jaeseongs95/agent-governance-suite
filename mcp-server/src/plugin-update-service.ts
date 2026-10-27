@@ -6,7 +6,9 @@ import {
 } from "../../contracts/types.js";
 import { PLUGIN_INFO } from "./plugin-info.js";
 import {
+  compareInstalledVersion,
   compareStableVersionNumbers,
+  isInstalledVersion,
   parseStableVersion,
 } from "./plugin-version.js";
 import {
@@ -93,9 +95,9 @@ function stateTimestamp(state: StoredPluginUpdateState | null): number {
   );
 }
 
-export function compareStableVersions(current: string, latest: string): number {
+function versionOrder(compare: (left: string, right: string) => number, left: string, right: string): number {
   try {
-    return compareStableVersionNumbers(current, latest);
+    return compare(left, right);
   } catch (cause) {
     throw new UpdateCheckError(
       "INVALID_RESPONSE",
@@ -104,8 +106,12 @@ export function compareStableVersions(current: string, latest: string): number {
   }
 }
 
+export function compareStableVersions(current: string, latest: string): number {
+  return versionOrder(compareStableVersionNumbers, current, latest);
+}
+
 function comparison(current: string, latest: string): PluginUpdateComparison {
-  const order = compareStableVersions(current, latest);
+  const order = versionOrder(compareInstalledVersion, current, latest);
   return order < 0 ? "update-available" : order > 0 ? "ahead-of-stable" : "up-to-date";
 }
 
@@ -267,7 +273,7 @@ export class PluginUpdateService {
         && typeof state.latestCommit === "string"
         && /^[a-f0-9]{40}$/u.test(state.latestCommit);
     if (
-      !parseStableVersion(state.currentVersion)
+      !isInstalledVersion(state.currentVersion)
       || !latestIsValid
       || safeDate(state.nextCheckAt) === null
       || (state.lastAttemptAt !== null && safeDate(state.lastAttemptAt) === null)

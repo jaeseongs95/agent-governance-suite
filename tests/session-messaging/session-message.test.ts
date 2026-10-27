@@ -43,7 +43,7 @@ import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer, SESSION_MESSAGE_SERVER_INSTRUCTIONS } from "../../mcp-server/src/server.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
-import { CURRENT_VERSION } from "../mcp/version-fixtures.js";
+import { CURRENT_VERSION, STABLE_VERSION } from "../mcp/version-fixtures.js";
 import { createSyntheticRootProofFixture } from "../mcp/synthetic-root-proof-client.js";
 
 import { concurrentClaims } from "../helpers/concurrent-claim-process.js";
@@ -1693,7 +1693,7 @@ describe("session message MCP tools", () => {
     const validator = new ContractValidator();
     const updateStore = new InMemoryPluginUpdateStore();
     updateStore.putPluginUpdateState({
-      targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION, latestVersion: CURRENT_VERSION, latestTag: `v${CURRENT_VERSION}`,
+      targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION, latestVersion: STABLE_VERSION, latestTag: `v${STABLE_VERSION}`,
       latestCommit: "d".repeat(40), etag: "session-messages", comparison: "up-to-date", lastAttemptAt: "2026-09-19T00:00:00.000Z",
       lastSuccessfulCheckAt: "2026-09-19T00:00:00.000Z", nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null,
       lastNotifiedAt: null, lastErrorCode: null,

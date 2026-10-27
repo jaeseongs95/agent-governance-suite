@@ -15,7 +15,7 @@ import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from ".
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
-import { CURRENT_VERSION } from "../mcp/version-fixtures.js";
+import { CURRENT_VERSION, STABLE_VERSION } from "../mcp/version-fixtures.js";
 
 // Owned fake core observation only; this adapter is not native role evidence.
 const syntheticHost = "synthetic-schema-compat";
@@ -329,7 +329,7 @@ describe("source STDIO continuity startup diagnostics", () => {
     };
     const workflow = new SqliteWorkflowStore(environment.AGENT_GOVERNANCE_DB_PATH);
     workflow.putPluginUpdateState({ targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION,
-      latestVersion: CURRENT_VERSION, latestTag: `v${CURRENT_VERSION}`, latestCommit: "a".repeat(40),
+      latestVersion: STABLE_VERSION, latestTag: `v${STABLE_VERSION}`, latestCommit: "a".repeat(40),
       etag: "isolated", comparison: "up-to-date", lastAttemptAt: NOW, lastSuccessfulCheckAt: NOW,
       nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null });
     workflow.close();

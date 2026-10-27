@@ -23,7 +23,7 @@ import {
   WorkflowService,
 } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
-import { CURRENT_VERSION } from "./version-fixtures.js";
+import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
 import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
@@ -116,8 +116,8 @@ describe("trusted MCP server boundary", () => {
     updateStore.putPluginUpdateState({
       targetId: "agent-governance-suite",
       currentVersion: CURRENT_VERSION,
-      latestVersion: CURRENT_VERSION,
-      latestTag: `v${CURRENT_VERSION}`,
+      latestVersion: STABLE_VERSION,
+      latestTag: `v${STABLE_VERSION}`,
       latestCommit: "c".repeat(40),
       etag: "trusted-integration",
       comparison: "up-to-date",

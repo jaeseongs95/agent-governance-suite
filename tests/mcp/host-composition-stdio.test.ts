@@ -13,7 +13,7 @@ import { hostIdentityDigest, type HostExecutionAdapter } from "../../mcp-server/
 import { adaptHostInput, hookAttestationKind, hostDeliveryProfile, isGovernanceHookTool, nativePeerWait, resolveHookProcessPid, withHookHostAdapter, type HookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { SessionActorProofs, withoutSessionProof } from "../../mcp-server/src/session-actor-proof.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
-import { CURRENT_VERSION } from "./version-fixtures.js";
+import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
 
 const repository = fileURLToPath(new URL("../../", import.meta.url)), sessionId = "owned-host-session";
 function envelope<T>(response: Awaited<ReturnType<Client["callTool"]>>): ApiResultV1<T> {
@@ -49,8 +49,8 @@ async function fixture(host: string, modelClass: "deep" | "lightweight" = "deep"
       AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(state, "trust.sqlite3"), AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(state, "shared"),
       AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: path.join(state, "messages") };
     const seed = new SqliteWorkflowStore(database);
-    try { seed.putPluginUpdateState({ targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION, latestVersion: CURRENT_VERSION,
-      latestTag: `v${CURRENT_VERSION}`, latestCommit: "c".repeat(40), etag: "owned-host", comparison: "up-to-date",
+    try { seed.putPluginUpdateState({ targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION, latestVersion: STABLE_VERSION,
+      latestTag: `v${STABLE_VERSION}`, latestCommit: "c".repeat(40), etag: "owned-host", comparison: "up-to-date",
       lastAttemptAt: new Date().toISOString(), lastSuccessfulCheckAt: new Date().toISOString(), nextCheckAt: "2099-01-01T00:00:00.000Z",
       lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null }); } finally { seed.close(); }
     const authority = path.join(directory, "authority.mjs"), serverWrapper = path.join(directory, "installation-server.mjs"), hookWrapper = path.join(directory, "installation-hook.mjs");

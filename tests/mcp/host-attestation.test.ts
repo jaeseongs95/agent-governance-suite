@@ -58,7 +58,7 @@ import { classificationInputSchema, selectionInputSchema, type SkillClassificati
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
-import { CURRENT_VERSION } from "./version-fixtures.js";
+import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const TOOL_PREFIX = "mcp__plugin_agent-governance-suite_agent-governance-suite__";
@@ -219,8 +219,8 @@ async function harness(withProvider: boolean, adapter: HostExecutionAdapter = cl
   updateStore.putPluginUpdateState({
     targetId: "agent-governance-suite",
     currentVersion: CURRENT_VERSION,
-    latestVersion: CURRENT_VERSION,
-    latestTag: `v${CURRENT_VERSION}`,
+    latestVersion: STABLE_VERSION,
+    latestTag: `v${STABLE_VERSION}`,
     latestCommit: "c".repeat(40),
     etag: "host-attestation",
     comparison: "up-to-date",

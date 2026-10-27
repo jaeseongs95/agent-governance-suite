@@ -2,7 +2,7 @@ import {
   type PluginUpdateComparison,
   type PluginUpdateErrorCode,
 } from "../../contracts/types.js";
-import { compareStableVersionNumbers } from "./plugin-version.js";
+import { compareInstalledVersion, compareStableVersionNumbers } from "./plugin-version.js";
 import { clone } from "./workflow-store.js";
 
 export interface StoredPluginUpdateState {
@@ -35,7 +35,7 @@ function timestamp(value: string | null): number {
 
 function comparison(currentVersion: string, latestVersion: string | null): PluginUpdateComparison {
   if (!latestVersion) return "unknown";
-  const order = compareStableVersionNumbers(currentVersion, latestVersion);
+  const order = compareInstalledVersion(currentVersion, latestVersion);
   return order < 0 ? "update-available" : order > 0 ? "ahead-of-stable" : "up-to-date";
 }
 

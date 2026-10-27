@@ -30,7 +30,7 @@ import { SessionMessageService, type SessionPresenceList } from "../../mcp-serve
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
-import { CURRENT_VERSION } from "../mcp/version-fixtures.js";
+import { CURRENT_VERSION, STABLE_VERSION } from "../mcp/version-fixtures.js";
 import { createSyntheticRootProofFixture } from "../mcp/synthetic-root-proof-client.js";
 import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 
@@ -289,7 +289,7 @@ describe("session board MCP tools", () => {
     const validator = new ContractValidator();
     const updates = new InMemoryPluginUpdateStore();
     updates.putPluginUpdateState({
-      targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION, latestVersion: CURRENT_VERSION, latestTag: `v${CURRENT_VERSION}`,
+      targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION, latestVersion: STABLE_VERSION, latestTag: `v${STABLE_VERSION}`,
       latestCommit: "d".repeat(40), etag: "session-board", comparison: "up-to-date", lastAttemptAt: "2026-09-19T00:00:00.000Z",
       lastSuccessfulCheckAt: "2026-09-19T00:00:00.000Z", nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null,
     });

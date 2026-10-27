@@ -2,7 +2,7 @@ import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import { ROOT, readJson, walkFiles } from "./lib.mjs";
-import { syncReleaseMetadata } from "./release-metadata.mjs";
+import { SEMVER, syncReleaseMetadata } from "./release-metadata.mjs";
 import { verifySourceLockOffline } from "./source-lock.mjs";
 import { validateSkill } from "./validate-skill.mjs";
 
@@ -51,7 +51,7 @@ if (errors.length === 0) {
     errors.push(error instanceof Error ? error.message : String(error));
   }
   const plugin = await readJson(path.join(ROOT, ".codex-plugin", "plugin.json"));
-  if (plugin.name !== "agent-governance-suite" || !/^\d+\.\d+\.\d+$/u.test(plugin.version ?? "")) {
+  if (plugin.name !== "agent-governance-suite" || !SEMVER.test(plugin.version ?? "")) {
     errors.push("plugin name/version must be agent-governance-suite with a strict semantic version");
   }
   const packageDocument = await readJson(path.join(ROOT, "package.json"));
