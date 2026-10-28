@@ -40,7 +40,7 @@ import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-st
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
-import { createMcpServer, SESSION_MESSAGE_SERVER_INSTRUCTIONS } from "../../mcp-server/src/server.js";
+import { createMcpServer, serverInstructions, SESSION_MESSAGE_SERVER_INSTRUCTIONS } from "../../mcp-server/src/server.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "../mcp/version-fixtures.js";
@@ -1495,6 +1495,13 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     for (const message of messages) expect(context).toContain(JSON.stringify(message.messageId));
     expect(SESSION_MESSAGE_SERVER_INSTRUCTIONS).toContain("acknowledge_session_messages");
     expect(SESSION_MESSAGE_SERVER_INSTRUCTIONS).toContain("한 번에");
+  });
+
+  it("instructs senders to report queued-until-wake delivery when autoWake.state is not available (AGS-D-0311)", () => {
+    for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions()]) {
+      expect(instructions).toContain("send 성공은 큐에 넣었다는 뜻이며 상대가 받거나 처리했다는 뜻이 아니다.");
+      expect(instructions).toContain("송신 결과의 autoWake.state가 available이 아니면 상대는 지금 깨어나지 않으므로 '보냈다'가 아니라 '큐에 넣었고 상대가 깨어날 때 전달된다'고 보고하고, 상대의 처리가 필요하면 그 사실을 사용자에게 알린다.");
+    }
   });
 
   it("escapes peer bodies inside one bounded JSON block", async () => {
