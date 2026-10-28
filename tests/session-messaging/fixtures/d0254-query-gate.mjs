@@ -1,4 +1,5 @@
 import childProcess from 'node:child_process';
+import fs from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 import { existsSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -8,9 +9,17 @@ import { performance } from 'node:perf_hooks';
 import { setTimeout, clearTimeout, setInterval, clearInterval } from 'node:timers';
 const root=process.env.AGENT_GOVERNANCE_D254_FIXTURE_DIR;
 if(!root)throw new Error('Owned fixture directory required.');
+let phaseCount=0;
+const phase=(name)=>{
+  const index=phaseCount++;
+  if(index<=32)fs.appendFileSync(path.join(root,'startup-phases.jsonl'),JSON.stringify({phase:index===32?'trace-truncated':name,atNs:String(process.hrtime.bigint())})+'\n');
+};
+phase('fixture-enter');
+if(process.argv.includes('--d0350-fail-preload'))throw new Error('D0350-private-preload-detail');
 await delay(Number(process.env.AGENT_GOVERNANCE_D254_BOOT_DELAY_MS??0));
-const started=()=>writeFileSync(path.join(root,'query-started'),'1');
-const finished=()=>writeFileSync(path.join(root,'query-finished'),'1');
+phase('boot-delay-complete');
+const started=()=>{phase('controlled-query-begin');writeFileSync(path.join(root,'query-started'),'1');};
+const finished=()=>{phase('controlled-query-settled');writeFileSync(path.join(root,'query-finished'),'1');};
 const released=()=>existsSync(path.join(root,'release-query'));
 const target=(exe,args)=>exe==='powershell.exe'&&args.some(value=>typeof value==='string'&&(value.includes('GetProcessById(424242)')||value.includes('Get-Process -Id 424242')));
 const lateMs=Number(process.env.AGENT_GOVERNANCE_D254_LATE_QUERY_MS??0);
@@ -45,4 +54,18 @@ childProcess.execFile=function(exe,args,options,callback){
   },10);
   return {kill(){clearInterval(poll);}};
 };
+const querySync=childProcess.execFileSync;
+childProcess.execFileSync=function(...args){
+  phase(target(args[0],args[1])?'controlled-sync-begin':'passthrough-sync-begin');
+  try {const result=querySync.apply(this,args);phase('sync-returned');return result;}
+  catch(error){phase('sync-threw');throw error;}
+};
+const renameSync=fs.renameSync;
+fs.renameSync=function(...args){
+  const endpoint=args[1]===path.join(root,'state','endpoint.json');
+  if(endpoint)phase('endpoint-publish-begin');
+  try {const result=renameSync.apply(this,args);if(endpoint)phase('endpoint-published');return result;}
+  catch(error){if(endpoint)phase('endpoint-publish-threw');throw error;}
+};
 syncBuiltinESMExports();
+phase('patches-installed');

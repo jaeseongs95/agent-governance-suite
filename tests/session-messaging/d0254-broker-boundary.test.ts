@@ -10,6 +10,7 @@ import tls from "node:tls";
 import { afterEach, expect, it } from "vitest";
 import { requestSessionMessageOnce, waitForSessionMessageBrokerReady, SESSION_MESSAGE_PROTOCOL } from "../../mcp-server/src/session-message-client.js";
 import { processStartToken } from "../../mcp-server/src/process-identity.js";
+import { failureContext } from "../../mcp-server/src/failure-diagnostics.js";
 const resources: Array<{root: string;child: ChildProcess}> = [];
 afterEach(async () => {
   for(const {root,child} of resources.splice(0)) {
@@ -28,19 +29,51 @@ afterEach(async () => {
 function alive(pid:number) {try {process.kill(pid,0);return true;}catch{return false;}}
 function start(extraArgs: string[]=[],bootDelay=0,lateQuery=0,nativeQuery=false) {
   const root=mkdtempSync(path.join(tmpdir(),"ags-d254-broker-")),state=path.join(root,"state");
+  const events: Array<{phase:string;atNs:string;code?:number|null;signal?:NodeJS.Signals|null}>=[];
+  const stamp=(phase:string,code?:number|null,signal?:NodeJS.Signals|null)=>events.push({phase,atNs:String(process.hrtime.bigint()),code,signal});
+  stamp("spawn-requested");
   const fixture=new URL("./fixtures/d0254-query-gate.mjs",import.meta.url).href;
   const broker=fileURLToPath(new URL("../../mcp-server/src/session-message-broker.ts",import.meta.url));
   const child=spawn(process.execPath,["--import","tsx","--import",fixture,broker,"--state-directory",state,...extraArgs],{
     windowsHide:true,stdio:["ignore","pipe","pipe"],env:{...process.env,AGENT_GOVERNANCE_D254_FIXTURE_DIR:root,AGENT_GOVERNANCE_D254_BOOT_DELAY_MS:String(bootDelay),AGENT_GOVERNANCE_D254_LATE_QUERY_MS:String(lateQuery),AGENT_GOVERNANCE_D254_NATIVE_QUERY:nativeQuery?"1":"0"},
   });
+  child.once("spawn",()=>stamp("child-spawned"));
+  let spawnFailure: ReturnType<typeof failureContext>|undefined;
+  child.once("error",error=>{stamp("child-error");spawnFailure=failureContext(error);});
+  child.once("exit",(code,signal)=>stamp("child-exit",code,signal));
+  child.once("close",(code,signal)=>stamp("child-close",code,signal));
   let stderr="";child.stderr!.on("data",chunk=>{stderr=(stderr+String(chunk)).slice(-4096);});child.stdout!.resume();
-  resources.push({root,child});return {root,state,child,stderr:()=>stderr};
+  const ready=async()=>{
+    try {await waitForSessionMessageBrokerReady(state,child,5000);}
+    catch(cause){
+      let phases:unknown={state:"not-observed"},endpoint:unknown={exists:false};
+      try {
+        const trace=path.join(root,"startup-phases.jsonl");
+        if(existsSync(trace)){
+          const text=readFileSync(trace,"utf8");
+          phases=Buffer.byteLength(text)<=4096?text.trim().split("\n").map(line=>JSON.parse(line)):{state:"overflow"};
+        }
+      }catch(error){phases={state:"unreadable",failure:failureContext(error)};}
+      try {
+        const filename=path.join(state,"endpoint.json");
+        if(existsSync(filename)){
+          endpoint={exists:true,parseable:false};
+          const value=JSON.parse(readFileSync(filename,"utf8")) as {pid?:unknown};
+          endpoint={exists:true,parseable:true,ownPidMatch:value.pid===child.pid};
+        }
+      }catch(error){endpoint={exists:true,parseable:false,failure:failureContext(error)};}
+      throw new Error(`D0350 broker fixture readiness failed: ${JSON.stringify({events,phases,endpoint,
+        artifacts:Object.fromEntries(["broker.lock","broker-cert.pem","broker.token","session-messages.sqlite3"].map(name=>[name,existsSync(path.join(state,name))])),
+        exitCode:child.exitCode,signalCode:child.signalCode,spawnFailure,failure:failureContext(cause)})}`,{cause});
+    }
+  };
+  resources.push({root,child});return {root,state,child,ready,stderr:()=>stderr};
 }
 it("an inherited startup deadline includes child initialization and never restarts its budget",async()=>{
   const deadline=String(process.hrtime.bigint()+80_000_000n);
-  const {root,state,child,stderr}=start(["--startup-identity-deadline-ns",deadline],200);
+  const {root,state,child,ready,stderr}=start(["--startup-identity-deadline-ns",deadline],200);
   let becameReady=false;
-  try {await waitForSessionMessageBrokerReady(state,child,5000);becameReady=true;} catch {/* Assert the exact producer failure below. */}
+  try {await ready();becameReady=true;} catch {/* Assert the exact producer failure below. */}
   expect(becameReady).toBe(false);
   if(child.exitCode===null)await once(child,"close");
   expect(child.exitCode).toBe(1);
@@ -49,9 +82,27 @@ it("an inherited startup deadline includes child initialization and never restar
   expect(existsSync(path.join(state,"endpoint.json"))).toBe(false);
 });
 
+it("a failed fixture preload reports bounded startup stages and retains its original readiness failure",async()=>{
+  const {root,ready}=start(["--d0350-fail-preload"]);
+  let failure:unknown;
+  try {await ready();}catch(error){failure=error;}
+  expect(failure).toBeInstanceOf(Error);
+  const error=failure as Error;
+  expect(error.cause).toBeInstanceOf(Error);
+  const prefix="D0350 broker fixture readiness failed: ";
+  expect(error.message.startsWith(prefix)).toBe(true);
+  const diagnostic=JSON.parse(error.message.slice(prefix.length));
+  expect(diagnostic).toMatchObject({endpoint:{exists:false},exitCode:1,signalCode:null});
+  expect(diagnostic.events).toEqual(expect.arrayContaining([expect.objectContaining({phase:"spawn-requested"}),expect.objectContaining({phase:"child-exit",code:1})]));
+  expect(diagnostic.phases).toEqual([{phase:"fixture-enter",atNs:expect.stringMatching(/^\d+$/u)}]);
+  expect(BigInt(diagnostic.phases[0].atNs)).toBeGreaterThanOrEqual(BigInt(diagnostic.events[0].atNs));
+  expect(error.message).not.toContain(root);
+  expect(error.message).not.toContain("D0350-private-preload-detail");
+});
+
 it.runIf(process.platform==="win32")("a late successful query cannot authorize work after the caller deadline",async()=>{
-  const {root,state,child}=start([],0,600);
-  await waitForSessionMessageBrokerReady(state,child,5000);
+  const {root,state,child,ready}=start([],0,600);
+  await ready();
   const target={host:"portable",sessionId:"d254-late-query"},parentPid=424242,parentStartToken="fixture-parent-birth";
   const grant=await requestSessionMessageOnce<{relayId:string;instanceId:string}>("ensure-relay",{
     target,transport:"portable",parentPid,parentStartToken,identityTimeoutMs:2000,
@@ -77,8 +128,8 @@ it.runIf(process.platform==="win32")("a late successful query cannot authorize w
 });
 
 it("a normal verified relay still requires the exact OS parent generation and accepts its first verified child",async()=>{
-  const {state,child}=start();
-  await waitForSessionMessageBrokerReady(state,child,5000);
+  const {state,child,ready}=start();
+  await ready();
   const parentStartToken=processStartToken(process.pid);
   expect(typeof parentStartToken).toBe("string");
   const target={host:"portable",sessionId:"d254-normal-verified"};
@@ -93,8 +144,8 @@ it("a normal verified relay still requires the exact OS parent generation and ac
   await expect(requestSessionMessageOnce("acquire-relay",{...payload,parentStartToken:"synthetic-different-generation"},state)).resolves.toEqual({acquired:false});
 });
 it.runIf(process.platform==="win32")("a held OS identity query cannot block another authenticated client ping",async()=>{
-  const {root,state,child}=start();
-  await waitForSessionMessageBrokerReady(state,child,5000);
+  const {root,state,ready}=start();
+  await ready();
   const target={host:"portable",sessionId:"d254-owned-request"};
   const parentStartToken="fixture-parent-birth",parentPid=424242;
   const instanceId="host-process-v1:"+createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
@@ -110,8 +161,8 @@ it.runIf(process.platform==="win32")("a held OS identity query cannot block anot
 });
 
 it.runIf(process.platform==="win32")("an actual failed OS query remains denied and returns only bounded native diagnostics",async()=>{
-  const {state,child}=start();
-  await waitForSessionMessageBrokerReady(state,child,5000);
+  const {state,ready}=start();
+  await ready();
   const target={host:"portable",sessionId:"d254-native-failure"},parentPid=2147483647,parentStartToken="synthetic-not-an-OS-birth";
   const instanceId="host-process-v1:"+createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
   const result=await requestSessionMessageOnce("acquire-relay",{target,transport:"portable",relayId:"verified-relay-v1:d254-native",instanceId,parentPid,parentStartToken,pid:process.pid},state);
@@ -120,8 +171,8 @@ it.runIf(process.platform==="win32")("an actual failed OS query remains denied a
 });
 
 it.runIf(process.platform==="win32")("graceful broker cleanup cancels its own in-flight native identity child",async()=>{
-  const {root,state,child}=start([],0,0,true);
-  await waitForSessionMessageBrokerReady(state,child,5000);
+  const {root,state,child,ready}=start([],0,0,true);
+  await ready();
   const target={host:"portable",sessionId:"d254-native-cancel"},parentPid=424242,parentStartToken="fixture-parent-birth";
   const instanceId="host-process-v1:"+createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
   const acquired=requestSessionMessageOnce("acquire-relay",{target,transport:"portable",relayId:"verified-relay-v1:d254-cancel",instanceId,parentPid,parentStartToken,pid:process.pid},state).catch(error=>error);
