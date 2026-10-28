@@ -33,7 +33,15 @@ it.each(events)("denies a positive native child marker on %s even with parent se
   expect(actorAccess(observation.actor).allowed).toBe(false);
 });
 
-it.each(["", " \t", null, 42, {}, []])("does not infer root from malformed child marker %j", agent_id => {
+it.each([
+  { agent_id: "" },
+  { agent_id: " \t" },
+  { agent_id: null },
+  { agent_id: 42 },
+  { agent_id: {} },
+  { agent_id: [] },
+  { agent_id: undefined },
+])("does not infer root from malformed child marker $agent_id", ({ agent_id }) => {
   const { observation } = adaptHostInput(toolWire("list_session_status", { agent_id }), "codex");
   expect(observation.actor).toEqual({ role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_AGENT_ID_INVALID" });
   expect(actorAccess(observation.actor).allowed).toBe(false);
