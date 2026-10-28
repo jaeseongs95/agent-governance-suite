@@ -232,7 +232,7 @@ function geminiQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: s
 const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
   ["codex", {
     adaptInput: adaptCodexHookInput, ownsTool: ownsGovernanceTool,
-    deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", true),
+    deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", false),
     processPid: (pid) => pid, attestationKind: "codex-rollout", peerWait: codexNativePeerWait,
     // Codex ignores updatedInput unless permissionDecision is "allow" (hooks output_parser, 0.164.0).
     rewriteDecision: "allow",

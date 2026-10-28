@@ -961,9 +961,9 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     await writeFile(file, "secret malformed configuration");
     expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }, diagnose).transport).toBe("codex-queue");
     expect(hostDeliveryProfile("claude-code", environment, diagnose).transport).toBe("claude-inbox");
-    // The empty/retired wake prompt block is a host capability: Codex (queue and deferred) keeps it, Claude stays fail-open.
-    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }, diagnose).blocksEmptyWakePrompt).toBe(true);
-    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "0" }, diagnose).blocksEmptyWakePrompt).toBe(true);
+    // The empty/retired wake prompt block is a host capability: Codex and Claude stay fail-open so the turn is not cancelled.
+    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" }, diagnose).blocksEmptyWakePrompt).toBe(false);
+    expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "0" }, diagnose).blocksEmptyWakePrompt).toBe(false);
     expect(hostDeliveryProfile("claude-code", environment, diagnose).blocksEmptyWakePrompt).toBe(false);
     expect(diagnose).not.toHaveBeenCalled();
     expect(hostDeliveryProfile("codex", { ...environment, AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "true" }, diagnose).transport).toBe("codex-deferred");
@@ -1334,8 +1334,8 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "1");
     // The broker captures its trust DB at startup; inherit the same fixture path as the hook.
     await startSourceBroker(directory);
-    for (const scenario of ["submitted", "unknown", "duplicate", "late", "idle", "forged", "mixed", "claude", "legacy"]) {
-      const target = { host: scenario === "claude" ? "claude-code" : syntheticRootHost, sessionId: `empty-hook-${scenario}` };
+    for (const scenario of ["submitted", "unknown", "duplicate", "late", "idle", "forged", "mixed", "claude", "codex", "legacy"]) {
+      const target = { host: scenario === "claude" ? "claude-code" : scenario === "codex" ? "codex" : syntheticRootHost, sessionId: `empty-hook-${scenario}` };
       const nonce = `empty-hook-${scenario}-nonce-abcdefghijklmnop`;
       const store = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
       const now = Date.now();
@@ -1375,7 +1375,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
         : `[agent-governance-suite:wake:${nonce}]${scenario === "mixed" ? "\nactual user request" : ""}`;
       const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, prompt, syntheticWake: parseWakeMessages(prompt) };
       const invoke = () => {
-        if (scenario === "claude" || entrypoint === "source") return handleSessionMessageHook(input, target.host);
+        if (scenario === "claude" || scenario === "codex" || entrypoint === "source") return handleSessionMessageHook(input, target.host);
         const child = spawnSync(process.execPath, [syntheticCoreHookDriver, bundledSessionMessageHook, target.host], { input: JSON.stringify(input), encoding: "utf8",
           timeout: 10_000, windowsHide: true, env: { ...process.env } });
         expect(child.status, child.stderr).toBe(0);
@@ -1411,7 +1411,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     // The broker captures its trust DB at startup; inherit the same fixture path as the hook.
     await startSourceBroker(directory);
     const capabilities: DeliveryCapabilities = { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" };
-    for (const host of [syntheticRootHost, "claude-code"]) {
+    for (const host of [syntheticRootHost, "claude-code", "codex"]) {
       const target = { host, sessionId: `retired-hook-${host}` };
       const nonce = `retired-hook-${host}-nonce-abcdefghijklmnop`;
       const base = Date.now() - WAKE_TTL_MS - WAKE_RETIRE_GRACE_MS - 60_000;
@@ -1433,7 +1433,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       const prompt = `[agent-governance-suite:wake:${nonce}]`;
       const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, prompt, syntheticWake: parseWakeMessages(prompt) };
       let output: Record<string, unknown>;
-      if (host === "claude-code" || entrypoint === "source") output = await handleSessionMessageHook(input, host);
+      if (host === "claude-code" || host === "codex" || entrypoint === "source") output = await handleSessionMessageHook(input, host);
       else {
         const child = spawnSync(process.execPath, [syntheticCoreHookDriver, bundledSessionMessageHook, host], { input: JSON.stringify(input), encoding: "utf8",
           timeout: 10_000, windowsHide: true, env: { ...process.env } });

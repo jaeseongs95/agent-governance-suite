@@ -84,6 +84,7 @@ describe("MCP tool schema profiles", () => {
         required: [...(domain.required ?? []).filter(name => name !== "_sessionBinding"), "_sessionProof"],
       });
       for (const tool of implicitTools) {
+        expect(tool.description?.length ?? 0, tool.name).toBeLessThanOrEqual(1024);
         expect(tool.inputSchema.required, tool.name).toContain("_sessionProof");
         expect(tool.inputSchema.properties, tool.name).not.toHaveProperty("_sessionBinding");
         expect(tool.inputSchema.required, tool.name).not.toContain("_sessionBinding");
