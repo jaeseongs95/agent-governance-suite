@@ -1,6 +1,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 import {
+  CONVERGENCE_ROOT_STATE,
   type ApiResultV1,
   type ContinuityCandidateV1,
   type ContinuitySnapshotV1,
@@ -96,6 +97,8 @@ export interface ContinuityGateway {
   suppressContextRestore(value: unknown): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }>;
   purgeDirectContext(value: unknown): ApiResultV1<ContinuityPurgeResultV1>;
   bindOpenedRoot(value: unknown, rootId: string): boolean;
+  /** Called only with the session identity verified by the MCP ingress. */
+  prepareWorkflowStart(rawSessionId: string, rootId: string): void;
 }
 
 function ok<T>(data: T): ApiResultV1<T> {
@@ -177,15 +180,21 @@ export class ContinuityService implements ContinuityGateway {
     const rootId = task.rootId;
     const workflowStore = this.workflowStore;
     if (!rootId || !workflowStore) return task;
-    return this.store.rotateEpoch(task.taskCorrelation, now, {
+    // Keep workflow writers excluded until the separate continuity CAS commits.
+    return workflowStore.withWorkflowTransaction(() => this.store.rotateEpoch(task.taskCorrelation, now, {
       epoch: task.currentEpoch,
       rootId,
       isTerminal: () => {
         const snapshot = workflowStore.getConvergenceSnapshot(rootId);
-        if (!snapshot || snapshot.root.rootId !== rootId) return false;
-        if (snapshot.root.state === "abandoned") return true;
-        if (snapshot.root.state !== "completed") return false;
-        // Older epochs may still have a running attempt whose outcome can reopen the root.
+        if (!snapshot || snapshot.root.rootId !== rootId || !CONVERGENCE_ROOT_STATE.includes(snapshot.root.state)) return false;
+        const terminalRoot = snapshot.root.state === "completed" || snapshot.root.state === "abandoned";
+        if (!terminalRoot && snapshot.workflowRunIds.length === 0) return false;
+        // A finished run may leave its root open or awaiting review. Every linked
+        // run and every consumed lease, including older epochs, must be settled.
+        if (!snapshot.workflowRunIds.every(runId => {
+          const receipt = workflowStore.getRun(runId);
+          return receipt !== null && ["passed", "failed", "blocked"].includes(receipt.state);
+        })) return false;
         const finished = new Map(snapshot.outcomes.map(outcome => [outcome.leaseId, outcome]));
         return snapshot.leases.every(lease => {
           if (lease.state !== "consumed") return true;
@@ -193,7 +202,7 @@ export class ContinuityService implements ContinuityGateway {
           return outcome?.rootId === rootId && outcome.epoch === lease.epoch && outcome.ordinal === lease.ordinal;
         });
       },
-    });
+    }));
   }
 
   clearSession(rawSessionId: string): ContinuityTaskRecord {
@@ -367,6 +376,15 @@ export class ContinuityService implements ContinuityGateway {
     } catch {
       // The committed workflow result is independent; callers must observe missing correlation.
       return false;
+    }
+  }
+
+  prepareWorkflowStart(rawSessionId: string, rootId: string): void {
+    const now = this.now().toISOString();
+    const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
+    if ((task.rootId !== null && task.rootId !== rootId)
+      || !this.store.bindRoot(task.taskCorrelation, task.currentEpoch, rootId, now, task.rootId)) {
+      throw new WorkflowContractError("BINDING_INVALID", "The workflow start conflicts with the current continuity task.");
     }
   }
 
@@ -576,4 +594,6 @@ export class UnavailableContinuityService implements ContinuityGateway {
   suppressContextRestore(): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }> { return this.unavailable(); }
   purgeDirectContext(): ApiResultV1<ContinuityPurgeResultV1> { return this.unavailable(); }
   bindOpenedRoot(): boolean { return false; }
+  // Direct checkpoint access is unavailable too; preserve optional continuity.
+  prepareWorkflowStart(): void {}
 }

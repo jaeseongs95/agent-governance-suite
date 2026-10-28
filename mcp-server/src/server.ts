@@ -619,8 +619,10 @@ export function createMcpServer(
     let args = asRecord(request.params.arguments);
     if (Object.hasOwn(args, "_sessionBinding")) return respond(apiError("BINDING_INVALID", "Caller session bindings are not accepted.", {reasonCode: "CALLER_SESSION_BINDING_REJECTED"}));
     if (!sessionActorProof) return respond(apiError("BINDING_REQUIRED", "The root hook proof verifier is not configured.", {reasonCode: "ROOT_HOOK_PROOF_REQUIRED"}));
+    let verifiedSessionId: string;
     try {
       const verified = sessionActorProof.verify(request.params.name, args);
+      verifiedSessionId = verified.sessionId;
       diagnostics?.event("binding", "DEBUG", "binding_check", {method: request.params.name, correlation, verified: true});
       args = withoutSessionProof(args);
       if (["update_session_status", "list_session_status", "prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"].includes(request.params.name)) {
@@ -742,7 +744,8 @@ export function createMcpServer(
           result = service.claimWorkflowAttempt(args, true);
           break;
         case "start_guarded_workflow":
-          result = withMode("responseMode", () => service.startGuardedWorkflow(domainArguments(args, "responseMode"), true), workflowStatusSummary);
+          result = withMode("responseMode", () => service.startGuardedWorkflow(domainArguments(args, "responseMode"), true,
+            rootId => continuity.prepareWorkflowStart(verifiedSessionId, rootId)), workflowStatusSummary);
           break;
         case "get_convergence_status":
           result = withMode("detail", () => service.getConvergenceStatus(String(args.rootId ?? "")), convergenceStatusSummary);

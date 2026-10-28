@@ -18,7 +18,8 @@ import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.
 import { InMemoryWorkflowStore, type ConvergenceSnapshot, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
 
 // D0344 test plan: service/lifecycle + real SQLite conditional-rotation boundaries.
-// Terminal cases: E -> E+1, fresh direct revision 1, history preserved and old authority fenced.
+// AC B: settled linked runs permit E -> E+1 even while a root remains open/needs-review.
+// Fresh direct revision 1 preserves history and fences old authority.
 // Negative cases: active/missing/unavailable authority and unfinished older attempts never detach.
 // Race oracle: the exact E/root observed before entry may rotate once; a changed E/root survives.
 // Owned adapter/snapshot fixtures are synthetic authority observations, not native-host evidence.
@@ -146,8 +147,9 @@ function startSqliteAttempt(workflow: SqliteWorkflowStore, value: ConvergenceRoo
   return { receipt, lease: started!.lease, root: started!.root };
 }
 
-function settleSqliteAttempt(workflow: SqliteWorkflowStore, attempt: ReturnType<typeof startSqliteAttempt>, current: ConvergenceRootV1) {
-  const settledRoot = { ...current, revision: current.revision + 1, state: "completed" as const };
+function settleSqliteAttempt(workflow: SqliteWorkflowStore, attempt: ReturnType<typeof startSqliteAttempt>, current: ConvergenceRootV1,
+  state: "completed" | "abandoned" | "open" | "needs-review" = "completed") {
+  const settledRoot = { ...current, revision: current.revision + 1, state };
   const receipt = { ...attempt.receipt, revision: attempt.receipt.revision + 1, state: "passed" as const,
     plan: { ...attempt.receipt.plan, state: "passed" as const } };
   const finished = { ...outcome(attempt.lease), outcomeId: `${attempt.lease.leaseId}-outcome`, workflowRunId: receipt.runId, rootRevision: settledRoot.revision };
@@ -262,6 +264,13 @@ function outcome(lease: AttemptLeaseV1): AttemptOutcomeV1 {
     receiptDigest: null, failureFingerprint: null, evidenceRefs: [], recordedAt: now };
 }
 
+function transactionReceipt(runId: string): WorkflowReceiptV1 {
+  return { schemaVersion: "1.0.0", runId, revision: 1, state: "running",
+    plan: { schemaVersion: "1.0.0", taskId: "transaction-fixture", integrityToken: "synthetic-plan", executionMode: "orchestrated",
+      state: "running", selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [] },
+    stageResults: [], blockers: [], unresolved: [], error: null };
+}
+
 describe("D0344 completed root must be quiescent across all workflow epochs", () => {
   it.each(["absent", "root", "lease", "epoch", "ordinal"] as const)("%s outcome does not finish an older consumed lease", mismatch => {
     const workflow = new InMemoryWorkflowStore(), value = root(), target = service(workflow);
@@ -271,6 +280,11 @@ describe("D0344 completed root must be quiescent across all workflow epochs", ()
     const snapshot = workflow.getConvergenceSnapshot(value.rootId)!;
     snapshot.root = { ...terminal, currentEpoch: 2 };
     const lease = consumedLease(value), finished = outcome(lease);
+    workflow.insertRun({ schemaVersion: "1.0.0", runId: finished.workflowRunId, revision: 1, state: "passed",
+      plan: { schemaVersion: "1.0.0", taskId: value.taskEnvelope.taskId, integrityToken: "synthetic-plan", executionMode: "orchestrated",
+        state: "passed", selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [] },
+      stageResults: [], blockers: [], unresolved: [], error: null });
+    snapshot.workflowRunIds = [finished.workflowRunId];
     if (mismatch === "root") finished.rootId = "different-root";
     if (mismatch === "lease") finished.leaseId = "different-lease";
     if (mismatch === "epoch") finished.epoch = 2;
@@ -285,15 +299,19 @@ describe("D0344 completed root must be quiescent across all workflow epochs", ()
     expect(target.checkpointContext(bound(target, "checkpoint_context", checkpoint())).data).toMatchObject({ epoch: 2, revision: 1 });
   });
 
-  it("abandonment permits a fresh direct task even with an older consumed lease", () => {
-    const workflow = new InMemoryWorkflowStore(), value = root(), target = service(workflow);
+  it("abandonment cannot bypass a running consumed attempt, and exact settlement permits direct work", async () => {
+    const { target, workflow } = await sqliteFixture(), value = root();
     expect(workflow.insertConvergenceRoot(value)).toBeNull();
     bindRoot(target, value);
-    finish(workflow, value, "abandoned");
-    const snapshot = workflow.getConvergenceSnapshot(value.rootId)!;
-    snapshot.leases = [consumedLease(value)];
-    vi.spyOn(workflow, "getConvergenceSnapshot").mockReturnValue(snapshot);
+    const attempt = startSqliteAttempt(workflow, value, "abandoned-pending");
+    const abandoned = { ...attempt.root, revision: attempt.root.revision + 1, state: "abandoned" as const };
+    expect(workflow.updateConvergenceRoot(abandoned, attempt.root.revision)).toBe(true);
+    expect(workflow.getRun(attempt.receipt.runId)?.state).toBe("running");
+    expect(target.checkpointContext(bound(target, "checkpoint_context", checkpoint())).error?.code).toBe("SNAPSHOT_CONFLICT");
+    expect(target.store.getTask(target.correlateSession(session))).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
+    const settled = settleSqliteAttempt(workflow, attempt, abandoned, "abandoned");
     expect(target.checkpointContext(bound(target, "checkpoint_context", checkpoint())).data).toMatchObject({ epoch: 2, revision: 1 });
+    expect(workflow.getConvergenceSnapshot(value.rootId)?.root).toEqual(settled.root);
   });
 });
 
@@ -451,26 +469,51 @@ describe("D0344 SQLite service composition and transactional rollback", () => {
   });
 });
 
-describe("D0344 root state remains the authority", () => {
-  it("a finished run and matching outcome cannot detach an active root", () => {
-    const workflow = new InMemoryWorkflowStore(), value = root(), target = service(workflow);
+describe("D0344 settled runs and exact outcomes authorize direct work", () => {
+  it.each(["open", "needs-review"] as const)("a settled SQLite run permits direct work while its root is %s", async state => {
+    const { target, workflow } = await sqliteFixture(), value = root();
+    expect(workflow.insertConvergenceRoot(value)).toBeNull();
+    const historical = target.checkpointContext(bound(target, "checkpoint_context", checkpoint())).data!;
+    bindRoot(target, value);
+    const attempt = startSqliteAttempt(workflow, value, "settled-active-root");
+    const settled = settleSqliteAttempt(workflow, attempt, attempt.root, state);
+    const before = workflow.getConvergenceSnapshot(value.rootId);
+    expect(before).toMatchObject({ root: { state }, workflowRunIds: [attempt.receipt.runId], outcomes: [settled.outcome] });
+    expect(workflow.getRun(attempt.receipt.runId)?.state).toBe("passed");
+    const saved = target.checkpointContext(bound(target, "checkpoint_context", checkpoint()));
+    expect(saved.error).toBeNull();
+    expect(saved.data).toMatchObject({ epoch: 2, revision: 1 });
+    const correlation = target.correlateSession(session);
+    expect(target.store.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null });
+    expect(target.store.getSnapshot(correlation, 1)).toEqual(historical);
+    expect(target.store.getSnapshot(correlation, 2)).toEqual(saved.data);
+    expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(before);
+  });
+
+  it.each(["missing", "active"] as const)("a matching outcome cannot override a %s linked receipt", async receiptState => {
+    const { target, workflow } = await sqliteFixture(), value = root();
     expect(workflow.insertConvergenceRoot(value)).toBeNull();
     bindRoot(target, value);
-    const lease = consumedLease(value), finished = outcome(lease);
-    const receipt: WorkflowReceiptV1 = { schemaVersion: "1.0.0", runId: finished.workflowRunId, revision: 1, state: "passed",
-      plan: { schemaVersion: "1.0.0", taskId: value.taskEnvelope.taskId, integrityToken: "synthetic-plan", executionMode: "orchestrated",
-        state: "passed", selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [] },
-      stageResults: [], blockers: [], unresolved: [], error: null };
-    const claimed = { ...value, revision: 2 };
-    expect(workflow.insertAttemptLease(claimed, 1, { schemaVersion: "1.0.0", rootId: value.rootId, expectedRevision: 1,
-      taskEnvelope: value.taskEnvelope, frame: value.frame, plan: receipt.plan, actorId: lease.actorId, outputTargets: [], priorFailure: null }, lease)).toBe(true);
-    workflow.insertRun(receipt);
-    const active = { ...claimed, revision: 3 };
-    expect(workflow.updateRun({ ...receipt, revision: 2 }, 1, { root: active, expectedRootRevision: 2, outcome: finished })).toBe(true);
-    expect(workflow.getConvergenceSnapshot(value.rootId)).toMatchObject({ root: { state: "open" }, outcomes: [finished] });
-    expect(workflow.getRun(finished.workflowRunId)?.state).toBe("passed");
+    const attempt = startSqliteAttempt(workflow, value, "receipt-authority");
+    const settled = settleSqliteAttempt(workflow, attempt, attempt.root, "open");
+    if (receiptState === "missing") {
+      // Owned corruption fixture: retain the link/outcome while removing its authoritative receipt.
+      const database = new DatabaseSync(workflow.databasePath);
+      try {
+        database.exec("PRAGMA foreign_keys = OFF");
+        database.prepare("DELETE FROM workflow_runs WHERE run_id = ?").run(attempt.receipt.runId);
+      } finally { database.close(); }
+      expect(workflow.getRun(attempt.receipt.runId)).toBeNull();
+    } else {
+      expect(workflow.updateRun({ ...settled.receipt, revision: 3, state: "running",
+        plan: { ...settled.receipt.plan, state: "running" } }, settled.receipt.revision)).toBe(true);
+      expect(workflow.getRun(attempt.receipt.runId)?.state).toBe("running");
+    }
+    const before = workflow.getConvergenceSnapshot(value.rootId);
+    expect(before).toMatchObject({ workflowRunIds: [attempt.receipt.runId], outcomes: [settled.outcome] });
     expect(target.checkpointContext(bound(target, "checkpoint_context", checkpoint())).error?.code).toBe("SNAPSHOT_CONFLICT");
     expect(target.store.getTask(target.correlateSession(session))).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
+    expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(before);
   });
 
   it("an unrecognized state in a raw authority snapshot keeps the root bound", () => {
@@ -528,7 +571,7 @@ describe("D0344 persisted failure, settlement and repeated clear boundaries", ()
     }
   });
 
-  it("a settled newer SQLite attempt cannot hide an older consumed lease, and matching settlement permits one rotation", async () => {
+  it.each(["completed", "open", "needs-review"] as const)("%s: a settled newer attempt cannot hide an older consumed lease, then exact settlement permits one rotation", async state => {
     const { target, workflow } = await sqliteFixture(), value = root();
     expect(workflow.insertConvergenceRoot(value)).toBeNull();
     bindRoot(target, value);
@@ -536,15 +579,15 @@ describe("D0344 persisted failure, settlement and repeated clear boundaries", ()
     const nextEpoch = { ...older.root, revision: older.root.revision + 1, currentEpoch: 2 };
     expect(workflow.updateConvergenceRoot(nextEpoch, older.root.revision)).toBe(true);
     const newer = startSqliteAttempt(workflow, nextEpoch, "newer-finished");
-    const newerSettlement = settleSqliteAttempt(workflow, newer, newer.root);
+    const newerSettlement = settleSqliteAttempt(workflow, newer, newer.root, state);
     const before = workflow.getConvergenceSnapshot(value.rootId)!;
-    expect(before).toMatchObject({ root: { state: "completed", currentEpoch: 2 },
+    expect(before).toMatchObject({ root: { state, currentEpoch: 2 },
       leases: [{ leaseId: older.lease.leaseId, epoch: 1, state: "consumed" }, { leaseId: newer.lease.leaseId, epoch: 2, state: "consumed" }],
       outcomes: [{ leaseId: newer.lease.leaseId, epoch: 2 }] });
     expect(target.checkpointContext(bound(target, "checkpoint_context", checkpoint())).error?.code).toBe("SNAPSHOT_CONFLICT");
     expect(target.store.getTask(target.correlateSession(session))).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
     expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(before);
-    const olderSettlement = settleSqliteAttempt(workflow, older, newerSettlement.root);
+    const olderSettlement = settleSqliteAttempt(workflow, older, newerSettlement.root, state);
     const settledSnapshot = workflow.getConvergenceSnapshot(value.rootId);
     // A fresh receipt revision cannot settle the same guarded attempt twice; the failed write rolls back.
     expect(() => workflow.updateRun({ ...olderSettlement.receipt, revision: 3 }, 2, {
@@ -594,5 +637,115 @@ describe("D0344 persisted failure, settlement and repeated clear boundaries", ()
       expect(target.store.getTombstone(correlation, old.epoch)).toBeNull();
     }
     expect(workflow.getConvergenceSnapshot(value.rootId)?.root).toEqual(value);
+  });
+});
+
+describe("D0344 workflow transaction fence", () => {
+  it("a separate SQLite writer cannot enter from predicate read through continuity commit, then guarded start works after release", async () => {
+    const { target, workflow } = await sqliteFixture(), value = root();
+    expect(workflow.insertConvergenceRoot(value)).toBeNull();
+    bindRoot(target, value);
+    const previous = startSqliteAttempt(workflow, value, "fence-settled");
+    const settled = settleSqliteAttempt(workflow, previous, previous.root, "open");
+    const receipt = transactionReceipt("fence-new-run"), claimed = { ...settled.root, revision: settled.root.revision + 1 };
+    const proposal: AttemptProposalV1 = { schemaVersion: "1.0.0", rootId: value.rootId, expectedRevision: settled.root.revision,
+      taskEnvelope: value.taskEnvelope, frame: value.frame, plan: receipt.plan, actorId: "synthetic-actor", outputTargets: [], priorFailure: null };
+    const lease: AttemptLeaseV1 = { ...consumedLease(value), leaseId: "fence-issued", state: "issued", ordinal: 2,
+      rootRevision: claimed.revision, proposalDigest: convergenceDigest(proposal), expiresAt: "9999-01-01T00:00:00.000Z" };
+    expect(workflow.insertAttemptLease(claimed, settled.root.revision, proposal, lease)).toBe(true);
+    const competing = new DatabaseSync(workflow.databasePath);
+    competing.exec("PRAGMA busy_timeout = 0");
+    const blocked: string[] = [], snapshot = workflow.getConvergenceSnapshot.bind(workflow), rotate = target.store.rotateEpoch.bind(target.store);
+    const assertWriterBlocked = (point: string) => {
+      expect(() => competing.exec("BEGIN IMMEDIATE")).toThrow(/locked|busy/iu);
+      expect(competing.isTransaction).toBe(false);
+      blocked.push(point);
+    };
+    vi.spyOn(workflow, "getConvergenceSnapshot").mockImplementationOnce(rootId => {
+      const result = snapshot(rootId);
+      assertWriterBlocked("predicate-read");
+      return result;
+    });
+    vi.spyOn(target.store, "rotateEpoch").mockImplementationOnce((...args) => {
+      const result = rotate(...args);
+      assertWriterBlocked("continuity-committed-workflow-lock-held");
+      return result;
+    });
+    try {
+      expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 2, rootId: null });
+      expect(blocked).toEqual(["predicate-read", "continuity-committed-workflow-lock-held"]);
+      competing.exec("BEGIN IMMEDIATE");
+      competing.exec("ROLLBACK");
+      // The exact pending store operation is valid once the writer fence releases.
+      expect(workflow.insertGuardedRun(receipt, lease.leaseId, claimed.revision, now)?.lease.state).toBe("consumed");
+      target.prepareWorkflowStart(session, value.rootId);
+      expect(target.checkpointContext(bound(target, "checkpoint_context", checkpoint())).error?.code).toBe("SNAPSHOT_CONFLICT");
+    } finally { competing.close(); }
+  });
+
+  it.each(["memory", "sqlite"] as const)("%s nested writes roll back to their savepoint and preserve the original outer failure", async engine => {
+    const workflow: WorkflowStore = engine === "memory" ? new InMemoryWorkflowStore() : (await sqliteFixture()).workflow;
+    const value = root(), outerFailure = new Error("d0344-original-outer-failure"), innerFailure = new Error("d0344-original-inner-failure");
+    expect(workflow.insertConvergenceRoot(value)).toBeNull();
+    const before = workflow.getConvergenceSnapshot(value.rootId);
+    let caught: unknown, nestedChecked = false;
+    try {
+      workflow.withWorkflowTransaction(() => {
+        expect(workflow.nextRunSequence()).toBe(1);
+        workflow.insertRun(transactionReceipt("outer-transaction-run"));
+        const outerRoot = { ...value, revision: 2, state: "needs-review" as const };
+        expect(workflow.updateConvergenceRoot(outerRoot, 1)).toBe(true);
+        workflow.getOrCreateSecret("d0344-rollback-secret", () => "uncommitted-secret");
+        expect(workflow.claimExecutionObservation("d0344-rollback-observation", "9999-01-01T00:00:00.000Z", now)).toBe(true);
+        let innerCaught: unknown;
+        try {
+          workflow.withWorkflowTransaction(() => {
+            expect(workflow.nextRunSequence()).toBe(2);
+            workflow.insertRun(transactionReceipt("inner-transaction-run"));
+            expect(workflow.updateConvergenceRoot({ ...outerRoot, revision: 3, state: "needs-user" }, 2)).toBe(true);
+            throw innerFailure;
+          });
+        } catch (error) { innerCaught = error; }
+        expect(innerCaught).toBe(innerFailure);
+        expect(workflow.getRun("inner-transaction-run")).toBeNull();
+        expect(workflow.getRun("outer-transaction-run")).not.toBeNull();
+        expect(workflow.getConvergenceSnapshot(value.rootId)?.root).toEqual(outerRoot);
+        nestedChecked = true;
+        throw outerFailure;
+      });
+    } catch (error) { caught = error; }
+    expect(nestedChecked).toBe(true);
+    expect(caught).toBe(outerFailure);
+    expect(workflow.getRun("outer-transaction-run")).toBeNull();
+    expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(before);
+    expect(workflow.nextRunSequence()).toBe(1);
+    expect(workflow.getOrCreateSecret("d0344-rollback-secret", () => "fresh-secret")).toBe("fresh-secret");
+    expect(workflow.claimExecutionObservation("d0344-rollback-observation", "9999-01-01T00:00:00.000Z", now)).toBe(true);
+  });
+
+  it.each(["memory", "sqlite"] as const)("%s rejects thenables and rolls back synchronous writes made before their return", async engine => {
+    const workflow: WorkflowStore = engine === "memory" ? new InMemoryWorkflowStore() : (await sqliteFixture()).workflow;
+    let failure: unknown;
+    try {
+      workflow.withWorkflowTransaction(() => {
+        workflow.insertRun(transactionReceipt("async-transaction-run"));
+        return Promise.resolve("unsupported-async-result");
+      });
+    } catch (error) { failure = error; }
+    expect(failure).toMatchObject({ code: "INVALID_INPUT", message: "Workflow transaction callbacks must be synchronous." });
+    expect(workflow.getRun("async-transaction-run")).toBeNull();
+  });
+
+  it("workflow transaction entry failure propagates and leaves the current continuity task untouched", async () => {
+    const { target, workflow } = await sqliteFixture(), value = root();
+    expect(workflow.insertConvergenceRoot(value)).toBeNull();
+    bindRoot(target, value);
+    finish(workflow, value, "completed");
+    const before = target.store.getTask(target.correlateSession(session));
+    workflow.close();
+    let failure: unknown;
+    try { target.ensureSession(session); } catch (error) { failure = error; }
+    expect(failure).toMatchObject({ code: "MCP_UNAVAILABLE", message: "Cannot execute the workflow transaction.", details: { cause: expect.any(String) } });
+    expect(target.store.getTask(target.correlateSession(session))).toEqual(before);
   });
 });

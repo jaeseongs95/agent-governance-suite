@@ -105,6 +105,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   private readonly shared: SharedModuleContext | undefined;
   readonly databasePath: string;
   private closed = false;
+  private transactionDepth = 0;
 
   constructor(input: string | SharedModuleContext) {
     this.shared = typeof input === "string" ? undefined : input;
@@ -312,22 +313,46 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   getConvergenceSnapshot(rootId: string): ConvergenceSnapshot | null {
-    return this.guard("Cannot read convergence state.", { rootId }, () => this.transaction(() => {
-      const rootRow = this.rootRow(rootId);
-      if (!rootRow) return null;
-      const leases = this.database.prepare(`SELECT lease_json, proposal_json FROM convergence_leases WHERE root_id = ? ORDER BY epoch, ordinal, issued_at`).all(rootId) as unknown as ConvergenceLeaseRow[];
-      const outcomes = this.database.prepare(`SELECT outcome_json FROM convergence_attempts WHERE root_id = ? AND outcome_json IS NOT NULL ORDER BY epoch, ordinal`).all(rootId) as unknown as ConvergenceOutcomeRow[];
-      const reviews = this.database.prepare(`SELECT review_json FROM convergence_reviews WHERE root_id = ? ORDER BY reviewed_at, review_id`).all(rootId) as unknown as ConvergenceReviewRow[];
-      const links = this.database.prepare(`SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY epoch, ordinal`).all(rootId) as unknown as Array<{ run_id: string }>;
-      return {
-        root: JSON.parse(rootRow.root_json) as ConvergenceRootV1,
-        proposals: leases.map((row) => JSON.parse(row.proposal_json) as AttemptProposalV1),
-        leases: leases.map((row) => JSON.parse(row.lease_json) as AttemptLeaseV1),
-        outcomes: outcomes.map((row) => JSON.parse(row.outcome_json) as AttemptOutcomeV1),
-        reviews: reviews.map((row) => JSON.parse(row.review_json) as ConvergenceReviewV1),
-        workflowRunIds: links.map((row) => row.run_id),
-      };
-    }, "BEGIN;"));
+    return this.guard("Cannot read convergence state.", { rootId },
+      () => this.transaction(() => this.readConvergenceSnapshot(rootId), "BEGIN;"));
+  }
+
+  withWorkflowTransaction<T>(operation: () => T): T {
+    let callbackFailed = false;
+    try {
+      return this.transaction(() => {
+        try {
+          const result = operation();
+          if (typeof (result as { then?: unknown } | null | undefined)?.then === "function") {
+            throw new WorkflowContractError("INVALID_INPUT", "Workflow transaction callbacks must be synchronous.");
+          }
+          return result;
+        } catch (cause) {
+          callbackFailed = true;
+          throw cause;
+        }
+      });
+    } catch (cause) {
+      if (callbackFailed || cause instanceof WorkflowContractError) throw cause;
+      throw this.storageError("Cannot execute the workflow transaction.", cause);
+    }
+  }
+
+  private readConvergenceSnapshot(rootId: string): ConvergenceSnapshot | null {
+    const rootRow = this.rootRow(rootId);
+    if (!rootRow) return null;
+    const leases = this.database.prepare(`SELECT lease_json, proposal_json FROM convergence_leases WHERE root_id = ? ORDER BY epoch, ordinal, issued_at`).all(rootId) as unknown as ConvergenceLeaseRow[];
+    const outcomes = this.database.prepare(`SELECT outcome_json FROM convergence_attempts WHERE root_id = ? AND outcome_json IS NOT NULL ORDER BY epoch, ordinal`).all(rootId) as unknown as ConvergenceOutcomeRow[];
+    const reviews = this.database.prepare(`SELECT review_json FROM convergence_reviews WHERE root_id = ? ORDER BY reviewed_at, review_id`).all(rootId) as unknown as ConvergenceReviewRow[];
+    const links = this.database.prepare(`SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY epoch, ordinal`).all(rootId) as unknown as Array<{ run_id: string }>;
+    return {
+      root: JSON.parse(rootRow.root_json) as ConvergenceRootV1,
+      proposals: leases.map((row) => JSON.parse(row.proposal_json) as AttemptProposalV1),
+      leases: leases.map((row) => JSON.parse(row.lease_json) as AttemptLeaseV1),
+      outcomes: outcomes.map((row) => JSON.parse(row.outcome_json) as AttemptOutcomeV1),
+      reviews: reviews.map((row) => JSON.parse(row.review_json) as ConvergenceReviewV1),
+      workflowRunIds: links.map((row) => row.run_id),
+    };
   }
 
   updateConvergenceRoot(root: ConvergenceRootV1, expectedRevision: number, review?: ConvergenceReviewV1): boolean {
@@ -941,18 +966,22 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   /** Writers take the lock up front with BEGIN IMMEDIATE; snapshot reads pass "BEGIN;". */
   private transaction<T>(operation: () => T, begin = "BEGIN IMMEDIATE;"): T {
     if (this.shared) return this.shared.transaction(operation);
-    this.database.exec(begin);
+    const savepoint = this.transactionDepth > 0 ? `workflow_nested_${this.transactionDepth}` : null;
+    this.database.exec(savepoint ? `SAVEPOINT ${savepoint};` : begin);
+    this.transactionDepth += 1;
     try {
       const result = operation();
-      this.database.exec("COMMIT;");
+      this.database.exec(savepoint ? `RELEASE ${savepoint};` : "COMMIT;");
       return result;
     } catch (cause) {
       try {
-        this.database.exec("ROLLBACK;");
+        this.database.exec(savepoint ? `ROLLBACK TO ${savepoint}; RELEASE ${savepoint};` : "ROLLBACK;");
       } catch {
         // Preserve the original failure.
       }
       throw cause;
+    } finally {
+      this.transactionDepth -= 1;
     }
   }
 

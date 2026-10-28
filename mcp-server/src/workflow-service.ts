@@ -435,7 +435,28 @@ export class WorkflowService {
     });
   }
 
-  startGuardedWorkflow(rawRequest: unknown, requireTrustedExecutionContext = false): ApiResultV1<WorkflowReceiptV1> {
+  startGuardedWorkflow(rawRequest: unknown, requireTrustedExecutionContext = false,
+    beforeCommit?: (rootId: string) => void): ApiResultV1<WorkflowReceiptV1> {
+    if (beforeCommit) {
+      try {
+        return this.store.withWorkflowTransaction(() => {
+          const result = this.startGuardedWorkflow(rawRequest, requireTrustedExecutionContext);
+          if (result.ok && result.data) {
+            const binding = this.store.getGuardedRunBinding(result.data.runId);
+            if (!binding) throw new WorkflowContractError("LEASE_CONFLICT", "The started workflow has no guarded root binding.");
+            // Commit correlation before publishing the run. A correlation failure
+            // rolls back the run; a later workflow commit failure stays fail-closed.
+            const prepared: unknown = beforeCommit(binding.root.rootId);
+            if (typeof (prepared as { then?: unknown } | null | undefined)?.then === "function") {
+              throw new WorkflowContractError("INVALID_INPUT", "Workflow correlation callbacks must be synchronous.");
+            }
+          }
+          return result;
+        });
+      } catch (cause) {
+        return this.attempt(() => { throw cause; });
+      }
+    }
     return this.attempt(() => {
       const request = this.normalizeGuardedWorkflowStartRequest(rawRequest);
       const plan = clone(request.plan);

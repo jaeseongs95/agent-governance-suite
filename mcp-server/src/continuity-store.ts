@@ -236,12 +236,12 @@ export class SqliteContinuityStore {
     }, taskCorrelation);
   }
 
-  bindRoot(taskCorrelation: string, epoch: number, rootId: string, now: string): boolean {
+  bindRoot(taskCorrelation: string, epoch: number, rootId: string, now: string, expectedRootId?: string | null): boolean {
     return this.transaction("Cannot bind the continuity root.", () => {
       const result = this.database.prepare(`
         UPDATE continuity_tasks SET root_id = ?, suppressed = 0, updated_at = ?
-        WHERE task_correlation = ? AND current_epoch = ?
-      `).run(rootId, now, taskCorrelation, epoch);
+        WHERE task_correlation = ? AND current_epoch = ? AND (? = 0 OR root_id IS ?)
+      `).run(rootId, now, taskCorrelation, epoch, expectedRootId === undefined ? 0 : 1, expectedRootId ?? null);
       return result.changes === 1;
     }, taskCorrelation);
   }

@@ -56,6 +56,8 @@ export interface WorkflowStore {
   /** Returns the blocking root and the reason, or null once the root is stored. */
   insertConvergenceRoot(root: ConvergenceRootV1): RootConflict | null;
   getConvergenceSnapshot(rootId: string): ConvergenceSnapshot | null;
+  /** Keeps workflow writes excluded until the synchronous callback returns; callback failures roll back workflow writes. */
+  withWorkflowTransaction<T>(operation: () => T): T;
   updateConvergenceRoot(
     root: ConvergenceRootV1,
     expectedRevision: number,
@@ -79,12 +81,12 @@ export interface WorkflowStore {
 }
 
 export class InMemoryWorkflowStore implements WorkflowStore {
-  private readonly runs = new Map<string, WorkflowReceiptV1>();
-  private readonly secrets = new Map<string, string>();
-  private readonly executionObservations = new Map<string, string>();
-  private readonly convergence = new Map<string, ConvergenceSnapshot>();
-  private readonly identities = new Map<string, StoredIdentity>();
-  private readonly guardedRuns = new Map<string, { rootId: string; leaseId: string }>();
+  private runs = new Map<string, WorkflowReceiptV1>();
+  private secrets = new Map<string, string>();
+  private executionObservations = new Map<string, string>();
+  private convergence = new Map<string, ConvergenceSnapshot>();
+  private identities = new Map<string, StoredIdentity>();
+  private guardedRuns = new Map<string, { rootId: string; leaseId: string }>();
   private runSequence = 0;
 
   currentTimeMilliseconds(): number { return Date.now(); }
@@ -177,6 +179,35 @@ export class InMemoryWorkflowStore implements WorkflowStore {
   getConvergenceSnapshot(rootId: string): ConvergenceSnapshot | null {
     const snapshot = this.convergence.get(rootId);
     return snapshot ? clone(snapshot) : null;
+  }
+
+  withWorkflowTransaction<T>(operation: () => T): T {
+    // ponytail: rollback copies O(store) state; use the SQLite store for large or persistent workflows.
+    const previous = {
+      runs: new Map(clone([...this.runs])),
+      secrets: new Map(this.secrets),
+      executionObservations: new Map(this.executionObservations),
+      convergence: new Map(clone([...this.convergence])),
+      identities: new Map(clone([...this.identities])),
+      guardedRuns: new Map(clone([...this.guardedRuns])),
+      runSequence: this.runSequence,
+    };
+    try {
+      const result = operation();
+      if (typeof (result as { then?: unknown } | null | undefined)?.then === "function") {
+        throw new WorkflowContractError("INVALID_INPUT", "Workflow transaction callbacks must be synchronous.");
+      }
+      return result;
+    } catch (cause) {
+      this.runs = previous.runs;
+      this.secrets = previous.secrets;
+      this.executionObservations = previous.executionObservations;
+      this.convergence = previous.convergence;
+      this.identities = previous.identities;
+      this.guardedRuns = previous.guardedRuns;
+      this.runSequence = previous.runSequence;
+      throw cause;
+    }
   }
 
   updateConvergenceRoot(root: ConvergenceRootV1, expectedRevision: number, review?: ConvergenceReviewV1): boolean {
