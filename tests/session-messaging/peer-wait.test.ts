@@ -268,10 +268,14 @@ it("enforces core wait policy through a synthetic root hook and through native C
     { tool_input: { targets: [{ threadId: target.sessionId }, { threadId: "other-chat" }], timeoutMs: 60_000 } }]) {
     expect((await syntheticHook(directory, hookInput(60_000, extra))).hookSpecificOutput?.permissionDecision).not.toBe("deny");
   }
-  // 3.0 stopgap: native Codex is root/inferred (child blocking deferred); the packaged hook runs without a peer relation here.
-  for (const actor of [{}, {agent_id: ""}, {agent_id: "synthetic-child"}]) {
+  // A native wait tool is not an AGS tool. Child/invalid actors must not become root or query a parent peer relation.
+  for (const [actor, expected] of [
+    [{}, {role: "root", basis: "inferred", reasonCode: "CODEX_ROOT_INFERRED_CHILD_GATE_DEFERRED"}],
+    [{agent_id: ""}, {role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_AGENT_ID_INVALID"}],
+    [{agent_id: "synthetic-child"}, {role: "child", basis: "observed", reasonCode: "CODEX_NATIVE_CHILD_AGENT_ID"}],
+  ] as const) {
     const nativeInput = {...hookInput(60_000), ...actor};
-    expect(adaptHostInput(nativeInput, "codex").observation.actor).toEqual({role: "root", basis: "inferred", reasonCode: "CODEX_ROOT_INFERRED_CHILD_GATE_DEFERRED"});
+    expect(adaptHostInput(nativeInput, "codex").observation.actor).toEqual(expected);
     expect(packaged(directory, "session-message-hook.mjs", nativeInput).hookSpecificOutput?.permissionDecision).not.toBe("deny");
   }
   const config = JSON.parse(await readFile(path.join(root, "hooks/hooks.json"), "utf8"));
@@ -337,7 +341,7 @@ it("broker restart preserves messages but drops resume and repeat-suppression ev
   expect(await requestSessionMessageOnce("claim-wake", { target: sender, nonces: ["nonce-packaged-peer-wait"] }, directory)).toMatchObject({ recognized: false });
   expect(await requestSessionMessageOnce("peer-wait", wait, directory)).toEqual(before);
   await requestSessionMessageOnce("acquire-relay", { target: sender, instanceId: "packaged-instance", transport: "codex-queue", relayId: "packaged-relay", pid: process.pid, parentPid: process.pid }, directory);
-  packaged(directory, "session-message-hook.mjs", { hook_event_name: "UserPromptSubmit", session_id: sender.sessionId, agent_id: "", prompt: "[agent-governance-suite:wake:nonce-packaged-peer-wait]" });
+  packaged(directory, "session-message-hook.mjs", { hook_event_name: "UserPromptSubmit", session_id: sender.sessionId, prompt: "[agent-governance-suite:wake:nonce-packaged-peer-wait]" });
   expect(await requestSessionMessageOnce("peer-wait", wait, directory)).toMatchObject({ action: "bounded", resume: "unknown" });
   await requestSessionMessageOnce("acknowledge", { target: sender, messageIds: [replyId] }, directory);
   await sendSynthetic(directory, { sender: target, target: sender, body: "Fresh reply" });
