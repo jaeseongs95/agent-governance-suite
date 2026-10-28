@@ -7,9 +7,13 @@ import { verifySourceLockOffline } from "./source-lock.mjs";
 import { validateSkill } from "./validate-skill.mjs";
 
 const requiredFiles = [
+  "plugin.json",
   ".codex-plugin/plugin.json",
+  ".gemini-plugin/plugin.json",
   ".agents/plugins/marketplace.json",
   ".mcp.json",
+  "mcp_config.json",
+  "hooks.json",
   "skills/registry.json",
   "skills/source-lock.json",
   "contracts/source-lock.v3.schema.json",
@@ -57,6 +61,33 @@ if (errors.length === 0) {
   const packageDocument = await readJson(path.join(ROOT, "package.json"));
   if (packageDocument.name !== plugin.name || packageDocument.version !== plugin.version) {
     errors.push("package.json name/version must match the plugin manifest");
+  }
+  const allowedAntigravityManifestFields = new Set([
+    "name",
+    "displayName",
+    "description",
+    "version",
+    "suggestedPrompts",
+    "logo",
+    "disabled"
+  ]);
+  for (const manifestRelativePath of ["plugin.json", ".gemini-plugin/plugin.json"]) {
+    const antigravityManifest = await readJson(path.join(ROOT, manifestRelativePath));
+    if (antigravityManifest.name !== plugin.name || antigravityManifest.version !== plugin.version) {
+      errors.push(`${manifestRelativePath} name/version must match the plugin manifest`);
+    }
+    const extraFields = Object.keys(antigravityManifest).filter((key) => !allowedAntigravityManifestFields.has(key));
+    if (extraFields.length > 0) {
+      errors.push(`${manifestRelativePath} contains non-standard Antigravity manifest fields: ${extraFields.join(", ")}`);
+    }
+  }
+  const antigravityHooks = await readJson(path.join(ROOT, "hooks.json"));
+  if (
+    !antigravityHooks["ags-session-lifecycle"] ||
+    !antigravityHooks["ags-tool-boundary"] ||
+    typeof antigravityHooks.hooks !== "undefined"
+  ) {
+    errors.push("root hooks.json must declare Antigravity named hook groups (ags-session-lifecycle, ags-tool-boundary)");
   }
   const pluginInfoSource = await readFile(path.join(ROOT, "mcp-server", "src", "plugin-info.ts"), "utf8");
   if (!pluginInfoSource.includes(`id: "${plugin.name}"`) || !pluginInfoSource.includes(`version: "${plugin.version}"`)) {

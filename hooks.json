@@ -1,0 +1,65 @@
+{
+  "ags-session-lifecycle": {
+    "enabled": true,
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node ./antigravity-connector/hooks/antigravity-hook-runner.mjs --event=SessionStart",
+        "timeout": 10
+      }
+    ],
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "node ./antigravity-connector/hooks/antigravity-hook-runner.mjs --event=PreInvocation",
+        "timeout": 10
+      }
+    ],
+    "PostInvocation": [
+      {
+        "type": "command",
+        "command": "node ./antigravity-connector/hooks/antigravity-hook-runner.mjs --event=PostInvocation",
+        "timeout": 10
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node ./antigravity-connector/hooks/antigravity-hook-runner.mjs --event=Stop",
+        "timeout": 10
+      }
+    ]
+  },
+  "ags-tool-boundary": {
+    "enabled": true,
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./antigravity-connector/hooks/antigravity-hook-runner.mjs --hook=host-attestation --event=PreToolUse",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "node ./antigravity-connector/hooks/antigravity-hook-runner.mjs --event=PreToolUse",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./antigravity-connector/hooks/antigravity-hook-runner.mjs --event=PostToolUse",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

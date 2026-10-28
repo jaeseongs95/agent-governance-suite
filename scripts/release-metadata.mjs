@@ -60,6 +60,7 @@ export async function expectedReleaseFiles() {
   });
   return [
     await updateJson("package.json", (document) => { document.version = version; }),
+    await updateJson("plugin.json", (document) => { document.version = version; }),
     await updateJson(".codex-plugin/plugin.json", (document) => { document.version = version; }),
     await updateJson(".gemini-plugin/plugin.json", (document) => { document.version = version; }),
     await updateJson(".agents/plugins/marketplace.json", (document) => {

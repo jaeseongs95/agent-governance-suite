@@ -1,8 +1,11 @@
 {
   "name": "agent-governance-suite",
   "displayName": "Agent Governance Suite",
-  "version": "3.0.0-rc.1",
   "description": "Route governance and engineering specialists through declarative provider contracts, a local MCP convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
-  "skills": "./skills/",
-  "mcpServers": "./mcp_config.json"
+  "version": "3.0.0-rc.1",
+  "suggestedPrompts": [
+    "현재 작업에 필요한 거버넌스 전문 스킬을 분류하고 워크플로를 계획해 줘",
+    "활성 세션 현황판과 대기 중인 피어 메시지를 확인해 줘",
+    "변경 범위를 점검하고 수용 기준 대비 검증 근거를 확인해 줘"
+  ]
 }
