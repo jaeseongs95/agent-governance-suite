@@ -74,7 +74,8 @@ describe("explicit hook CLI host contract (synthetic packaged fixtures, not nati
         expect(resolveHookHost(args, "codex")).toBe(host);
         const f = fixture();
         const tool = bundle === "session-message-hook" ? "prepare_session_message" : "list_session_status";
-        const output = hook(bundle, args, { hook_event_name: "PreToolUse", session_id: "host-contract-session", ...(host === "claude-code" ? {} : { agent_id: "" }),
+        // Codex/Claude main hooks omit agent_id; keep the malformed marker on the unsupported Gemini case.
+        const output = hook(bundle, args, { hook_event_name: "PreToolUse", session_id: "host-contract-session", ...(host === "gemini" ? { agent_id: "" } : {}),
           tool_name: "mcp__agent_governance_suite__" + tool,
           tool_input: { schemaVersion: "1.0.0", marker: "preserve", _sessionBinding: { host: "wrong", sessionId: "wrong" } } }, f.env);
         if (host !== "gemini") {
@@ -129,7 +130,7 @@ it("reports a closed stdout pipe once without retrying or failing the hook proce
     child.once("error", reject);
     child.once("close", resolve);
   });
-  child.stdin.end(JSON.stringify({ hook_event_name: "PreToolUse", session_id: "stdout-synthetic-session", agent_id: "",
+  child.stdin.end(JSON.stringify({ hook_event_name: "PreToolUse", session_id: "stdout-synthetic-session",
     tool_name: "mcp__agent_governance_suite__prepare_session_message",
     tool_input: { schemaVersion: "1.0.0", marker: "secret-canary-output" } }));
   // Fail-open (exit 0, no retry, no crash); the failed stdout stage remains visible in its diagnostic.
@@ -232,7 +233,7 @@ describe("L3 packaged failure diagnostics", () => {
     ].join("\n"), "utf8");
     const result = spawnSync(process.execPath, ["--import", pathToFileURL(preload).href,
       path.join(root, "mcp-server/dist/session-board-hook.mjs"), "--host=codex"], {
-      input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "stdout-fixture", agent_id: "",
+      input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "stdout-fixture",
         tool_name: "mcp__agent_governance_suite__update_session_status",
         tool_input: { schemaVersion: "1.0.0", summary: "source fixture only" } }),
       env: { ...f.env, NODE_NO_WARNINGS: "1" }, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,

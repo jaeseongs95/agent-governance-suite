@@ -55,9 +55,9 @@ describe("AGS-D-0019/0020/0021 adapter-owned message tool boundary", () => {
     expect(output.hookSpecificOutput.updatedInput).toEqual({...toolInput, _sessionBinding: {host: syntheticHost, sessionId: "al03-tool-session"}});
     expect(f.request).not.toHaveBeenCalled();
   });
-  it("binds native Codex as inferred root while child blocking is deferred", async () => {
+  it("binds marker-free native Codex as inferred root while child blocking is deferred", async () => {
     const output = JSON.parse(await runSessionMessageHook("codex", JSON.stringify({...pre,
-      tool_name: "mcp__agent_governance_suite__send_session_message", agent_id: ""})));
+      tool_name: "mcp__agent_governance_suite__send_session_message"})));
     expect(output.hookSpecificOutput.permissionDecision).toBeUndefined();
     expect(output.hookSpecificOutput.updatedInput).toEqual({...toolInput, _sessionBinding: {host: "codex", sessionId: "al03-tool-session"}});
     expect(f.request).not.toHaveBeenCalled();
