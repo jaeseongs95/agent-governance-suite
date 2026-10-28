@@ -62,7 +62,7 @@ function start(extraArgs: string[]=[],bootDelay=0,lateQuery=0,nativeQuery=false)
           endpoint={exists:true,parseable:true,ownPidMatch:value.pid===child.pid};
         }
       }catch(error){endpoint={exists:true,parseable:false,failure:failureContext(error)};}
-      throw new Error(`D0350 broker fixture readiness failed: ${JSON.stringify({events,phases,endpoint,phaseRecordingFailed:stderr.includes("D0350_PHASE_RECORDING_FAILED"),
+      throw new Error(`D0350 broker fixture readiness failed: ${JSON.stringify({clockDomains:{events:"parent",phases:"child"},events,phases,endpoint,phaseRecordingFailed:stderr.includes("D0350_PHASE_RECORDING_FAILED"),
         artifacts:Object.fromEntries(["broker.lock","broker-cert.pem","broker.token","session-messages.sqlite3"].map(name=>[name,existsSync(path.join(state,name))])),
         exitCode:child.exitCode,signalCode:child.signalCode,spawnFailure,failure:failureContext(cause)})}`,{cause});
     }
@@ -95,7 +95,11 @@ it("a failed fixture preload reports bounded startup stages and retains its orig
   expect(diagnostic).toMatchObject({endpoint:{exists:false},exitCode:1,signalCode:null});
   expect(diagnostic.events).toEqual(expect.arrayContaining([expect.objectContaining({phase:"spawn-requested"}),expect.objectContaining({phase:"child-exit",code:1})]));
   expect(diagnostic.phases).toEqual([{phase:"fixture-enter",atNs:expect.stringMatching(/^\d+$/u)}]);
-  expect(BigInt(diagnostic.phases[0].atNs)).toBeGreaterThanOrEqual(BigInt(diagnostic.events[0].atNs));
+  // Compare monotonic stamps only within one process; the child has no clock anchor exchange.
+  expect(diagnostic.clockDomains).toEqual({events:"parent",phases:"child"});
+  for(let index=1;index<diagnostic.events.length;index++){
+    expect(BigInt(diagnostic.events[index].atNs)).toBeGreaterThanOrEqual(BigInt(diagnostic.events[index-1].atNs));
+  }
   expect(error.message).not.toContain(root);
   expect(error.message).not.toContain("D0350-private-preload-detail");
 });
