@@ -704,7 +704,7 @@ export function translateCanonicalOutputToAntigravity(event, canonicalOutput, to
       return { decision: "continue", reason: additionalContext };
     }
     if (event === "SessionStart" || event === "PreInvocation" || event === "PostInvocation") {
-      return { injectSteps: [{ ephemeralMessage: additionalContext }] };
+      return { injectSteps: [{ systemMessage: { systemMessage: additionalContext } }] };
     }
   }
 
@@ -1522,7 +1522,7 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
         const ctx = text(record(record(res.output).hookSpecificOutput).additionalContext);
         if (ctx && !seenTexts.has(ctx)) {
           seenTexts.add(ctx);
-          injected.push({ ephemeralMessage: ctx });
+          injected.push({ systemMessage: { systemMessage: ctx } });
         }
       } catch {
         // Fail open per stage.

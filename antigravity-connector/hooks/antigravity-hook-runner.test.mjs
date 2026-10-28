@@ -819,7 +819,7 @@ try {
 
     assert.deepEqual(executedStages, ["session-message"], "Secondary session-board stage must be skipped when remaining budget < minSecondaryBudgetMs");
     assert.deepEqual(preInvOut, {
-      injectSteps: [{ ephemeralMessage: peerEnvelope }],
+      injectSteps: [{ systemMessage: { systemMessage: peerEnvelope } }],
     });
   }
 
@@ -1600,7 +1600,46 @@ try {
     assert.equal(parseDiagEnv.ANTIGRAVITY_WAKE_ENV_DIAGNOSTIC.includes("secret-value"), false);
   }
 
-  console.log("antigravity-hook-runner tests: 14/14 passed");
+  // 15. [AGS-D-0320]: SessionStart, PreInvocation, and PostInvocation inject persistent nested
+  // systemMessage steps ({ systemMessage: { systemMessage: ... } }) instead of transient ephemeralMessage
+  // steps so claimed peer messages survive across planner steps and turns in the trajectory.
+  {
+    const peerEnvelope = "[agent-governance-suite peer message BEGIN]\n{\"message\":\"persist-across-turns\"}\n[agent-governance-suite peer message END]";
+    for (const ev of ["SessionStart", "PreInvocation", "PostInvocation"]) {
+      const translated = translateCanonicalOutputToAntigravity(
+        ev,
+        { hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: peerEnvelope } },
+        null,
+      );
+      assert.deepEqual(translated, {
+        injectSteps: [{ systemMessage: { systemMessage: peerEnvelope } }],
+      });
+      assert.equal(Object.hasOwn(translated.injectSteps[0], "ephemeralMessage"), false);
+    }
+
+    for (const ev of ["PreInvocation", "PostInvocation"]) {
+      const rawOut = await runConnectorFromRaw(
+        JSON.stringify({ conversationId: TEST_SESSION_ID, workspacePaths: [tmpDir] }),
+        ["node", runnerPath, `--event=${ev}`, "--hook=session-message"],
+        {
+          resolveHostProcess: () => null,
+          sessionMessageHook: async () => ({
+            hookSpecificOutput: {
+              hookEventName: "PostToolUse",
+              additionalContext: peerEnvelope,
+            },
+          }),
+        },
+      );
+      const parsed = JSON.parse(rawOut);
+      assert.deepEqual(parsed, {
+        injectSteps: [{ systemMessage: { systemMessage: peerEnvelope } }],
+      });
+      assert.equal(Object.hasOwn(parsed.injectSteps[0], "ephemeralMessage"), false);
+    }
+  }
+
+  console.log("antigravity-hook-runner tests: 15/15 passed");
 } finally {
   rmSync(tmpDir, { recursive: true, force: true });
 }
