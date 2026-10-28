@@ -39,10 +39,14 @@ if (process.argv[4] === "worker") {
 } else {
   // Historical ROOT r2 money policy remains fixed; current public wire inputs use an explicit reviewed successor.
   // It must come from reviewed wire bytes/order/price, never from preflight requestReservations.
-  const {oracleBytes, oracle: frozenOracle, successorDigest, successorRevision} = await loadCurrentBudgetFixture(repo, false);
+  const {oracleBytes, oracle: frozenOracle, successorDigest, successorRevision} = await loadCurrentBudgetFixture(repo);
   const root = await mkdtemp(path.join(os.tmpdir(), "ags-budget-regression-"));
   try {
   const independent = await independentWireRows(repo);
+  assert.equal(independent[0]!.inventoryDigest, frozenOracle.inventoryDigest, "CAPTURED_BUDGET_INVENTORY");
+  const capturedRows = ({caseId, requestDigest, wireDigest, utf8Bytes, reservedPicoUsd}: OracleRow) =>
+    ({caseId, requestDigest, wireDigest, utf8Bytes, reservedPicoUsd});
+  assert.deepEqual(independent.map(capturedRows), frozenOracle.rows.map(capturedRows), "CAPTURED_BUDGET_WIRE_AND_RESERVATIONS");
   const costs = independent.map(row => BigInt(row.reservedPicoUsd));
   const all = costs.reduce((a, b) => a + b, 0n), firstTwo = costs[0]! + costs[1]!;
   const target = (cap: bigint, unknown: bigint, cost: bigint, minimum: bigint) => {

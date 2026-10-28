@@ -27,7 +27,7 @@ assert(process.argv[2] && process.argv[3], "Usage: precision-regression.mts REPO
 const api = await import(pathToFileURL(helper).href) as typeof import("./bootstrap.mts");
 const hash = (bytes: string) => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
 const env = {AGS_BOOTSTRAP_ENDPOINT: "https://mock.invalid/classify", AGS_BOOTSTRAP_JEV_KEY: "test-only-not-real"};
-const {oracleBytes, oracle: currentOracle, boundaryBytes, precision: currentPrecision, successorDigest, successorRevision} = await loadCurrentBudgetFixture(repo, false);
+const {oracleBytes, oracle: currentOracle, boundaryBytes, precision: currentPrecision, successorDigest, successorRevision} = await loadCurrentBudgetFixture(repo);
 assert.equal(hash(oracleBytes.toString("utf8")), "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56");
 const oracle = currentOracle as BudgetWireOracle;
 assert.equal(hash(boundaryBytes.toString("utf8")), "sha256:618afb36e06a7372656e9a4139bf3f91e45f12d1487bac42e72f0994a7d2f835");
@@ -38,6 +38,10 @@ const frozenPrices = {billingMode: "token", inputUsdPer1k: Number(oracle.prices.
 const expectedCaseIds = oracle.rows.map(({caseId}) => caseId);
 const sourceSkillIds = (await readdir(path.join(repo, "skills"), {withFileTypes: true})).filter(item => item.isDirectory()).map(item => item.name).sort();
 const independent = await independentWireRows(repo);
+assert.equal(independent[0]!.inventoryDigest, oracle.inventoryDigest, "CAPTURED_PRECISION_INVENTORY");
+const capturedRows = ({caseId, requestDigest, wireDigest, utf8Bytes, reservedPicoUsd}: OracleRow) =>
+  ({caseId, requestDigest, wireDigest, utf8Bytes, reservedPicoUsd});
+assert.deepEqual(independent.map(capturedRows), oracle.rows.map(capturedRows), "CAPTURED_PRECISION_WIRE_AND_RESERVATIONS");
 const currentMeasurements = independent.map(({caseId, utf8Bytes}) => ({caseId, utf8Bytes}));
 const root = await mkdtemp(path.join(os.tmpdir(), "ags-precision-regression-"));
 const failures: {caseId: string; errorType: string; errorCode: string; assertion: {message: string; actual: unknown; expected: unknown; operator: string | null} | null}[] = [], completed: string[] = [];
