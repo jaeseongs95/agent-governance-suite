@@ -65,15 +65,23 @@ export type ModelCapabilityJudgmentV1 =
   | UndeterminedModelCapabilityV1;
 
 /** Adapter policy owns model mapping, never signing, binding, freshness or replay checks. */
-export interface HostExecutionAdapter {
+export interface HostExecutionAdapterBase {
   host: string;
-  provider?: string;
   providers?: readonly string[];
   policyRevision?: string;
   modelClassForModel(model: string): ModelClassV1 | null;
-  resolveModel?(model: string, provenance?: string): ResolvedModelCapabilityV1 | null;
   judgeModel?(model: string, provenance?: string): ModelCapabilityJudgmentV1;
 }
+
+export type HostExecutionAdapter =
+  | (HostExecutionAdapterBase & {
+      provider: string;
+      resolveModel?(model: string, provenance?: string): ResolvedModelCapabilityV1 | null;
+    })
+  | (HostExecutionAdapterBase & {
+      provider?: string;
+      resolveModel(model: string, provenance?: string): ResolvedModelCapabilityV1 | null;
+    });
 
 export interface HostAttestationBindingV1 {
   phase: "bootstrap" | "stage";
@@ -255,21 +263,19 @@ export function resolveAdapterModelCapability(
     if (!resolved || !nonEmpty(resolved.provider) || !MODEL_CLASS.includes(resolved.modelClass)) return null;
     return resolved;
   }
-  const provider = nonEmpty(adapter.provider);
-  if (!provider) return null;
-  const modelClass = adapter.modelClassForModel(model);
-  if (!modelClass || !MODEL_CLASS.includes(modelClass)) return null;
+  const judgment = judgeAdapterModelCapability(adapter, model, provenance);
+  if (judgment.status !== "resolved") return null;
   return {
-    provider,
-    host: adapter.host,
-    rawModel: model,
-    resolvedModel: model,
-    modelClass,
-    minimumReasoningEffort: null,
-    supportedEfforts: REASONING_EFFORT,
-    aliasUsed: false,
-    policyRevision: adapter.policyRevision ?? "1.0.0",
-    provenance,
+    provider: judgment.provider,
+    host: judgment.host,
+    rawModel: judgment.rawModel,
+    resolvedModel: judgment.resolvedModel,
+    modelClass: judgment.modelClass,
+    minimumReasoningEffort: judgment.minimumReasoningEffort,
+    supportedEfforts: judgment.supportedEfforts,
+    aliasUsed: judgment.aliasUsed,
+    policyRevision: judgment.policyRevision,
+    provenance: judgment.provenance,
   };
 }
 
@@ -359,7 +365,10 @@ export function issueHostAttestation(store: WorkflowStore, adapter: HostExecutio
   // retains the old issuer floor and signed class/provider/model/revision protections.
   const capability = resolveAdapterModelCapability(adapter, observation.model, provenance);
   const policyRevision = nonEmpty(adapter.policyRevision)
-    ?? nonEmpty(capability?.policyRevision);
+    ?? nonEmpty(capability?.policyRevision)
+    ?? (typeof adapter.judgeModel === "function"
+      ? nonEmpty(adapter.judgeModel(observation.model, provenance).policyRevision)
+      : null);
   const eligibility = capability && MODEL_CLASS.includes(capability.modelClass)
     && satisfiesModelEffortPolicy(capability, observation.reasoningEffort) ? {
       provider: capability.provider,
@@ -411,8 +420,8 @@ export function withHostObservation<T>(
   return dispatch({ ...input, ...(token ? { [HOST_ATTESTATION_FIELD]: token } : {}) });
 }
 
-function invalid(message: string): WorkflowContractError {
-  return new WorkflowContractError("BINDING_INVALID", message);
+function invalid(message: string, details?: Record<string, unknown>): WorkflowContractError {
+  return new WorkflowContractError("BINDING_INVALID", message, details);
 }
 
 function verifyToken(store: WorkflowStore, adapter: HostExecutionAdapter, token: string): {
@@ -453,10 +462,13 @@ function verifyToken(store: WorkflowStore, adapter: HostExecutionAdapter, token:
   ) {
     throw invalid("Host attestation token payload is not a supported observation for the configured adapter.");
   }
-  const capability = resolveAdapterModelCapability(adapter, model,
-    typeof value.provenance === "string" ? value.provenance : `${adapter.host}:runtime`);
+  const provenance = typeof value.provenance === "string" ? value.provenance : `${adapter.host}:runtime`;
+  const capability = resolveAdapterModelCapability(adapter, model, provenance);
   if (!capability) {
-    throw invalid("Host observation has no matching trusted execution capability and policy revision.");
+    const judgment = judgeAdapterModelCapability(adapter, model, provenance);
+    throw invalid("Host observation has no matching trusted execution capability and policy revision.", {
+      reasonCode: judgment.status === "undetermined" ? judgment.reason : "MODEL_CAPABILITY_UNRESOLVED",
+    });
   }
   // A raw v2 observation needs both its signed qualification snapshot and the
   // current trusted descriptor. Null snapshots never inherit server-current eligibility.

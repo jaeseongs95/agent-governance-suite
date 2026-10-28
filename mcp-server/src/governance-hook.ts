@@ -9,7 +9,7 @@ import { resolveHostAttestation, resolveWorkflowDatabasePath } from "./runtime-c
 import { runSessionBoardHook } from "./session-board-hook.js";
 import { handleSessionMessageHook } from "./session-message-hook.js";
 import { runContinuityHook } from "./continuity-hook.js";
-import { HOST_ATTESTATION_FIELD, HOST_ATTESTATION_TOOLS, withoutHostAttestation, type HostExecutionAdapter } from "./host-attestation.js";
+import { HOST_ATTESTATION_FIELD, HOST_ATTESTATION_TOOLS, withoutHostAttestation, type HostExecutionAdapter, type HostExecutionAdapterBase } from "./host-attestation.js";
 import { handleRegisteredHostAttestationHook, snapshotHookAttestationStrategy, type HookAttestationStrategy } from "./host-attestation-hook.js";
 import { WorkflowContractError } from "../../contracts/types.js";
 import { hookFailureContext, retainHookFailureSecondary, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
@@ -59,13 +59,32 @@ export async function runGovernanceHook(
         if (!adapter) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.", {
           reasonCode: "HOST_EXECUTION_ADAPTER_UNAVAILABLE",
         });
-        const { host: adapterHost, provider, policyRevision, modelClassForModel, resolveModel } = adapter;
-        if (adapterHost !== host || typeof modelClassForModel !== "function" || (resolveModel !== undefined && typeof resolveModel !== "function")) {
+        const { host: adapterHost, provider, providers, policyRevision, modelClassForModel, resolveModel, judgeModel } = adapter;
+        if (adapterHost !== host || typeof modelClassForModel !== "function"
+          || (resolveModel !== undefined && typeof resolveModel !== "function")
+          || (judgeModel !== undefined && typeof judgeModel !== "function")
+          || (!resolveModel && (typeof provider !== "string" || provider.length === 0))) {
           throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.", { reasonCode: "HOST_EXECUTION_ADAPTER_UNAVAILABLE" });
         }
-        selectedExecution = Object.freeze({ host: adapterHost, modelClassForModel: modelClassForModel.bind(adapter),
-          ...(provider === undefined ? {} : { provider }), ...(policyRevision === undefined ? {} : { policyRevision }),
-          ...(resolveModel ? { resolveModel: resolveModel.bind(adapter) } : {}) });
+        const boundBase: HostExecutionAdapterBase = {
+          host: adapterHost,
+          modelClassForModel: modelClassForModel.bind(adapter),
+          ...(Array.isArray(providers) ? { providers: Object.freeze([...providers]) } : {}),
+          ...(policyRevision === undefined ? {} : { policyRevision }),
+          ...(judgeModel ? { judgeModel: judgeModel.bind(adapter) } : {}),
+        };
+        selectedExecution = Object.freeze(
+          resolveModel
+            ? {
+                ...boundBase,
+                ...(provider === undefined ? {} : { provider }),
+                resolveModel: resolveModel.bind(adapter),
+              }
+            : {
+                ...boundBase,
+                provider: provider!,
+              },
+        );
       }
       const input = record(JSON.parse(raw));
       const { observation } = adaptHostInput(input, host);

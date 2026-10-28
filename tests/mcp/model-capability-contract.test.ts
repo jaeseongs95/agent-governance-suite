@@ -756,6 +756,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     expect(fresh.ok).toBe(true);
     expect(provider.lastObservedCapability()?.policyRevision).toBe("descriptor-r2");
 
+    // @ts-expect-error Legacy/custom adapter without resolveModel must declare provider at compile time.
     const providerlessLegacy: HostExecutionAdapter = {
       host: "codex", modelClassForModel: (model) => codexExecutionAdapter.modelClassForModel(model),
     };

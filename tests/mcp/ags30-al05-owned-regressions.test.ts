@@ -27,6 +27,7 @@ const callId = "al05-current-call";
 const model = "al05-observed-model";
 const adapter: HostExecutionAdapter = {
   host: "al05-synthetic-host",
+  provider: "al05-synthetic-provider",
   modelClassForModel: (value) => value === model ? "deep" : null,
 };
 const clean = { taskId: "al05-task" };

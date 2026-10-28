@@ -74,7 +74,7 @@ describe("AL09 server boundary regressions", () => {
       inventory: async () => null,
       classify: async () => { calls += 1; return null; }, accept: async () => null,
     };
-    const hostAttestation = new HostAttestationProvider(new InMemoryWorkflowStore(), { host: "fixture", modelClassForModel: () => "general" });
+    const hostAttestation = new HostAttestationProvider(new InMemoryWorkflowStore(), { host: "fixture", provider: "fixture-provider", modelClassForModel: () => "general" });
     await withServer(async (_client, call) => {
       const reply = await call("classify_skills", {
         schemaVersion: "1.0.0", requestId: "fixture", operationId: "fixture", originalPrompt: "fixture",

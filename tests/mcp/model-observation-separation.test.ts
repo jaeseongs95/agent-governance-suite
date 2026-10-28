@@ -87,7 +87,7 @@ describe("C observation token eligibility controls", () => {
     expect(f.run(token)).toMatchObject({ ok: true });
   });
   it("signs unsupported legacy observations without inventing eligibility or a revision", () => {
-    const f = fixture({ host: HOST, modelClassForModel: () => null }), token = f.issue("opaque-unsupported");
+    const f = fixture({ host: HOST, provider: "owned-provider", modelClassForModel: () => null }), token = f.issue("opaque-unsupported");
     expect(decoded(token)).toMatchObject({ model: "opaque-unsupported", policyRevision: null, eligibility: null });
     expect(f.run(token)).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
     expect(f.provider.lastObservedCapability()).toBeNull();

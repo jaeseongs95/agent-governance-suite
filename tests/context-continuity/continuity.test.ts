@@ -794,7 +794,7 @@ describe("normalized continuity semantics and one-call snapshots", () => {
     });
     const result = await runGovernanceHook(host, JSON.stringify({ hook_event_name: "SessionStart", source: "clear",
       continuityAction: { kind: "clear" }, turn_id: "raw-decoy-turn", error: null }), env,
-    new Map([[host, { host, modelClassForModel: () => null }]]), {
+    new Map([[host, { host, provider: "owned-provider", modelClassForModel: () => null }]]), {
       inputAdapter: adapter, attestation: { kind: "owned-continuity", strategy: { observe() { throw new Error("A continuity read must not request model attestation."); } } },
     });
     expect(result.ok).toBe(true);
@@ -880,7 +880,7 @@ describe("normalized continuity semantics and one-call snapshots", () => {
       kind: "tool-boundary" as const, boundaryPhase: "before" as const, toolName: "owned__get_trust_capabilities", toolInput: {},
       actor: { role: "root" as const, basis: "observed" as const, reasonCode: "OWNED_NORMALIZED_ROOT" } };
     const adapter = normalizedAdapter(() => ({ lifecycle: "none", outputEventName: "BeforeOperation", get observation() { outerReads++; return observation; } }));
-    const result = await runGovernanceHook(host, "{}", env, new Map([[host, { host, modelClassForModel: () => null }]]), {
+    const result = await runGovernanceHook(host, "{}", env, new Map([[host, { host, provider: "owned-provider", modelClassForModel: () => null }]]), {
       inputAdapter: adapter, attestation: { kind: "owned-continuity", strategy: { observe: () => ({}) } },
     });
     expect(result.ok).toBe(true); expect(outerReads).toBe(1); expect(hostReads).toBe(1);

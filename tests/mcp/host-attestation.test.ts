@@ -1377,8 +1377,37 @@ describe("AGS-D-0328 host and model-vendor separation", () => {
       policyRevision: "synthetic-d0328-unknown",
       provenance: "polyglot:test",
     });
+    const collidingStore = new InMemoryWorkflowStore();
+    const collidingArgs = { taskId: "d0328-colliding-task" };
+    const collidingToken = issueHostAttestation(collidingStore, adapter, {
+      tool: "plan_workflow",
+      input: collidingArgs,
+      model: "colliding-model",
+      reasoningEffort: "high",
+      actorId: hostActorId("synthetic-polyglot-host", "session-d0328"),
+      sessionId: "session-d0328",
+      turnId: "turn-d0328",
+      toolUseId: "call-d0328-colliding",
+    });
+    expect(collidingToken).toBeTruthy();
+    const collidingProvider = new HostAttestationProvider(collidingStore, adapter);
+    let collidingFailure: unknown;
+    try {
+      collidingProvider.run(
+        "plan_workflow",
+        { ...collidingArgs, [HOST_ATTESTATION_FIELD]: collidingToken },
+        () => collidingProvider.observe({ phase: "bootstrap", taskId: "d0328-colliding-task", runId: null, stageId: null, revision: null }),
+      );
+    } catch (error) {
+      collidingFailure = error;
+    }
+    expect(collidingFailure).toMatchObject({
+      code: "BINDING_INVALID",
+      details: { reasonCode: "AMBIGUOUS_PROVIDER_MATCH" },
+    });
 
     // Legacy/custom adapter without provider identity must not infer provider from adapter.host.
+    // @ts-expect-error Legacy/custom adapter without resolveModel must declare provider at compile time.
     const providerlessAdapter: HostExecutionAdapter = {
       host: "synthetic-host-only",
       modelClassForModel: () => "deep",
