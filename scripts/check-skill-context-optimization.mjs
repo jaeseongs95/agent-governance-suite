@@ -235,7 +235,16 @@ export function matchesHostConsumptionSourceSuccessor(path, bytes) {
     && createHash("sha256").update(bytes).digest("hex") === HOST_CONSUMPTION_SOURCE_SUCCESSOR.hashes[path];
 }
 
+const ORCHESTRATOR_MIDTASK_SOURCE_HASHES = Object.freeze({
+  "skills/orchestrator/SKILL.md": "56dabaa45041f8975eede0e08dd2b2c876ca71eca0fb5bc8256bfdaeb46098c5",
+  "skills/orchestrator/classification.json": "f034243569190280ebc060f5f1654fcfcf8ee4b4f60c9e5ac19d8a1ebc5f8074",
+});
+
 export function matchesGovernanceSourceSuccessor(path, bytes) {
+  // Current mid-task selection wording is an exact source successor, not a 2.x runtime contract.
+  // Historical reconstruction below still uses the separately pinned predecessor bytes.
+  if (Object.hasOwn(ORCHESTRATOR_MIDTASK_SOURCE_HASHES, path)
+    && createHash("sha256").update(bytes).digest("hex") === ORCHESTRATOR_MIDTASK_SOURCE_HASHES[path]) return true;
   return Object.hasOwn(GOVERNANCE_SOURCE_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === GOVERNANCE_SOURCE_SUCCESSOR.hashes[path];
 }

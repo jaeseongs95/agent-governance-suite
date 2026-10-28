@@ -27,7 +27,7 @@ const bindings = [
   {skillId: "independent-audit-gate", path: "skills/independent-audit-gate/SKILL.md", previousDigest: "sha256:26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29", digest: "sha256:abb5d4c1fa0607851018cd6f6a2f3ecf314cc829149ea0d15c5474ed9afd2a18"},
   {skillId: "independent-deliberation-panel", path: "skills/independent-deliberation-panel/SKILL.md", previousDigest: "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab", digest: "sha256:eb21677b0f377116250691a8cf84b44ec853c4de9c56e27ea17585016a151f54"},
   {skillId: "mutation-risk-preflight", path: "skills/mutation-risk-preflight/SKILL.md", previousDigest: "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe", digest: "sha256:9aa4e7cb143bb0ad9ffc5f6c03ed32331e1f14562cd4322fab0e36cd29c21ce1"},
-  {skillId: "orchestrator", path: "skills/orchestrator/SKILL.md", previousDigest: "sha256:b90c19a956f4dd3b239e4f4a527ebea319128dbae239018f8f3b0b5445cc43ac", digest: "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"},
+  {skillId: "orchestrator", path: "skills/orchestrator/SKILL.md", previousDigest: "sha256:b90c19a956f4dd3b239e4f4a527ebea319128dbae239018f8f3b0b5445cc43ac", digest: "sha256:56dabaa45041f8975eede0e08dd2b2c876ca71eca0fb5bc8256bfdaeb46098c5"},
   {skillId: "ponytail", path: "skills/ponytail/SKILL.md", previousDigest: "sha256:907667b8b625eab0438b462a4737a056e3833f972c66e432817a12e6f643ac76", digest: "sha256:2ce28db45c1a84e63fa2af7079e58a3803fc26b16ab7073436efd55b1e1214f9"},
   {skillId: "task-contract", path: "skills/task-contract/SKILL.md", previousDigest: "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100", digest: "sha256:92cf19444e6c97b1d1d017f8eed481135d708095d89411668ab215123d1266aa"}
 ];
@@ -55,9 +55,9 @@ it("preserves predecessor history and all frozen 39/18/21 semantics in a distinc
   expect(original.historicalSuccessor.digest).toBe("sha256:69ef37b636e35bfdce77103cbe84015c0e2e9482a41e46059d89ac557a8717f7");
   expect(original.successor.fixtureRevision).toBe(predecessor.fixtureRevision);
   expect(original.successor.oracleDigest).toBe(predecessor.oracleDigest);
-  expect(current.fixtureRevision).toBe("ags-classification-skill-policy-source-binding-r05");
-  expect(current.oracleRevision).toBe("pre-live-skill-policy-source-reviewed-r05");
-  expect(current.sourceBindingRevision).toBe("pre-live-source-binding-5");
+  expect(current.fixtureRevision).toBe("ags-classification-midtask-source-binding-r06");
+  expect(current.oracleRevision).toBe("pre-live-midtask-source-reviewed-r06");
+  expect(current.sourceBindingRevision).toBe("pre-live-source-binding-6");
   expect(current.fixtureRevision).toBe(successor.successor.fixtureRevision);
   expect(current.oracleRevision).toBe(successor.successor.oracleRevision);
   expect(successor.semanticProjection.digest).toBe(semanticDigest);
@@ -70,6 +70,17 @@ it("preserves predecessor history and all frozen 39/18/21 semantics in a distinc
   expect(oracleDigest(current)).toBe(current.oracleDigest);
   expect(current.oracleDigest).toBe(successor.successor.oracleDigest);
   expect(current.oracleDigest).not.toBe(predecessor.oracleDigest);
+  expect(successor.midtaskSourceSuccessor.predecessor).toEqual({
+    gitRevision: "45556669124efc64151be21be9958463e1f18d40",
+    gitBlob: "2078c29de99d2c5a2dc1693b9c68da9cac395bac",
+    digest: "sha256:3c7c2159bbaa74521c5c5aefbae21710a7a507a6235315608ec941fb1b1294f1", bytes: 142481,
+    fixtureRevision: "ags-classification-skill-policy-source-binding-r05",
+    oracleRevision: "pre-live-skill-policy-source-reviewed-r05",
+    oracleDigest: "sha256:307f07d6f78cba04e1f606f680e6609b9a17f22f499b802f1b0cf46329a1bd2e",
+  });
+  expect(successor.midtaskSourceSuccessor.reboundReferences).toBe(17);
+  expect(successor.midtaskSourceSuccessor.labelChanges).toEqual([]);
+  expect(successor.midtaskSourceSuccessor.modelBehavior).toBe("NOT_RUN");
 });
 it("binds exactly the nine changed skill policy sources across global and per-case evidence", () => {
   expect(successor.bindings).toEqual(bindings);

@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "kind": "classification-source-binding-successor",
-  "activeSourceRevision": "127d7910549159a75e5c14a86a30ffcf07fb6a3c",
+  "activeSourceRevision": "bb6aeb05b7c20d7d5fc22eac90fa116c6ae5b36b",
   "predecessor": {
     "path": "tests/skill-classification/fixtures.json",
     "gitBlob": "f7aedbf77d1547cb49f75ea391c152b3a6172c71",
@@ -12,9 +12,9 @@
     "oracleDigest": "sha256:92b7f4d74d88ae5ebae6de59891e7050bec6dacda92ab02e209216bb26d66ee8"
   },
   "successor": {
-    "fixtureRevision": "ags-classification-skill-policy-source-binding-r05",
-    "oracleRevision": "pre-live-skill-policy-source-reviewed-r05",
-    "oracleDigest": "sha256:307f07d6f78cba04e1f606f680e6609b9a17f22f499b802f1b0cf46329a1bd2e"
+    "fixtureRevision": "ags-classification-midtask-source-binding-r06",
+    "oracleRevision": "pre-live-midtask-source-reviewed-r06",
+    "oracleDigest": "sha256:d1d36cd7c0ff9293d35003a113f4f9768b0d44fddd5b34be424f83acc59f2999"
   },
   "semanticProjection": {
     "omittedRevisionFields": [
@@ -104,7 +104,7 @@
       "skillId": "orchestrator",
       "path": "skills/orchestrator/SKILL.md",
       "previousDigest": "sha256:b90c19a956f4dd3b239e4f4a527ebea319128dbae239018f8f3b0b5445cc43ac",
-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
+      "digest": "sha256:56dabaa45041f8975eede0e08dd2b2c876ca71eca0fb5bc8256bfdaeb46098c5"
     },
     {
       "skillId": "ponytail",
@@ -493,6 +493,24 @@
     "adjudicatedCases": 18,
     "publicSyntheticCases": 21,
     "rationale": "Skill policy wording source bindings only. Each public synthetic case was reviewed against the changed applicability and exclusion wording; no required, allowed, forbidden, not-applicable or conditional label changes. Prompts, labels, splits, matrices, thresholds and qualification frozen.",
+    "labelChanges": [],
+    "modelBehavior": "NOT_RUN"
+  },
+  "midtaskSourceSuccessor": {
+    "predecessor": {
+      "gitRevision": "45556669124efc64151be21be9958463e1f18d40",
+      "gitBlob": "2078c29de99d2c5a2dc1693b9c68da9cac395bac",
+      "digest": "sha256:3c7c2159bbaa74521c5c5aefbae21710a7a507a6235315608ec941fb1b1294f1",
+      "bytes": 142481,
+      "fixtureRevision": "ags-classification-skill-policy-source-binding-r05",
+      "oracleRevision": "pre-live-skill-policy-source-reviewed-r05",
+      "oracleDigest": "sha256:307f07d6f78cba04e1f606f680e6609b9a17f22f499b802f1b0cf46329a1bd2e"
+    },
+    "sourcePath": "skills/orchestrator/SKILL.md",
+    "previousDigest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
+    "digest": "sha256:56dabaa45041f8975eede0e08dd2b2c876ca71eca0fb5bc8256bfdaeb46098c5",
+    "reboundReferences": 17,
+    "rationale": "Mid-task reselection instruction only; frozen initial-request prompts, labels, conditions, split, matrices and thresholds unchanged. New source text and spans require a fresh source-binding revision and run.",
     "labelChanges": [],
     "modelBehavior": "NOT_RUN"
   }
