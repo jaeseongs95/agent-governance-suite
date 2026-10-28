@@ -22,25 +22,30 @@ it("pins the direct logging libraries and checks the resolved rotation sink vers
 
 it("keeps the pinned library's reopen, ready and cleanup-complete rotation contract", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "ags-roll-contract-"));
-  // Keep the first rotation behind listener registration, regardless of host load.
-  vi.useFakeTimers({toFake: ["Date", "setTimeout", "clearTimeout"]});
-  vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+  // Capture pino-roll's scheduleRoll callback instead of arming a wall-clock timer,
+  // so rotation triggers deterministically after initial ready, listener attachment, and write completion.
+  let triggerScheduledRoll: (() => void) | undefined;
+  const setTimeoutSpy = vi.spyOn(globalThis, "setTimeout").mockImplementation(((callback: (...args: unknown[]) => void) => {
+    triggerScheduledRoll = () => callback();
+    return {unref: () => ({})} as unknown as NodeJS.Timeout;
+  }) as typeof setTimeout);
   let sink: Awaited<ReturnType<typeof roll>> | undefined;
   try {
     sink = await roll({file: path.join(directory, "event"), frequency: 100,
-    limit: {count: 1, removeOtherLogFiles: false}, sync: false, minLength: 0});
-    await once(sink, "ready", {signal: AbortSignal.timeout(2000)});
+      limit: {count: 1, removeOtherLogFiles: false}, sync: false, minLength: 0});
+    await once(sink, "ready");
     const initial = sink.file;
     const events: string[] = [];
     const reopen = sink.reopen.bind(sink);
     sink.reopen = (...args) => {events.push("reopen"); reopen(...args);};
     sink.on("ready", () => events.push("ready"));
     sink.on("cleanup-complete", () => events.push("cleanup-complete"));
-    const rotated = Promise.all([once(sink, "ready"), once(sink, "cleanup-complete", {signal: AbortSignal.timeout(2000)})]);
-    const written = once(sink, "write", {signal: AbortSignal.timeout(2000)});
+    const rotated = Promise.all([once(sink, "ready"), once(sink, "cleanup-complete")]);
+    const written = once(sink, "write");
     sink.write("before-rotation\n");
     await written;
-    await vi.advanceTimersByTimeAsync(100);
+    expect(triggerScheduledRoll).toBeTypeOf("function");
+    triggerScheduledRoll!();
     await rotated;
     expect(events[0]).toBe("reopen");
     expect(events).toContain("ready");
@@ -50,12 +55,12 @@ it("keeps the pinned library's reopen, ready and cleanup-complete rotation contr
   } finally {
     try {
       if (sink) {
-        const closed = once(sink, "close", {signal: AbortSignal.timeout(2000)});
+        const closed = once(sink, "close");
         sink.end();
         await closed;
       }
     } finally {
-      vi.useRealTimers();
+      setTimeoutSpy.mockRestore();
     }
   }
 });
