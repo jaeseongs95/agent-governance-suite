@@ -29,7 +29,7 @@ afterEach(async () => {
 function alive(pid:number) {try {process.kill(pid,0);return true;}catch{return false;}}
 function start(extraArgs: string[]=[],bootDelay=0,lateQuery=0,nativeQuery=false) {
   const root=mkdtempSync(path.join(tmpdir(),"ags-d254-broker-")),state=path.join(root,"state");
-  const events: Array<{phase:string;atNs:string;code?:number|null;signal?:NodeJS.Signals|null}>=[];
+  const events: Array<{phase:string;atNs:string;code:number|null|undefined;signal:NodeJS.Signals|null|undefined}>=[];
   const stamp=(phase:string,code?:number|null,signal?:NodeJS.Signals|null)=>events.push({phase,atNs:String(process.hrtime.bigint()),code,signal});
   stamp("spawn-requested");
   const fixture=new URL("./fixtures/d0254-query-gate.mjs",import.meta.url).href;
