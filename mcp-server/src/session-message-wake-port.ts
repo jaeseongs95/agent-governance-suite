@@ -31,15 +31,15 @@ export function claudeWakeOutcome(hadError: boolean, connected: boolean, wrote: 
 export function geminiWakeOutcome(error: unknown, spawned: boolean): WakeDispatchOutcome {
   return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
 }
-function isVerifiedWindowsNativeExecutable(candidatePath: string): boolean {
+function isWindowsNativeExecutable(candidatePath: string): boolean {
   const root = path.win32.parse(candidatePath).root;
-  if (!path.win32.isAbsolute(candidatePath) || root === "\\" || root === "/"
-    || path.win32.extname(candidatePath).toLowerCase() !== ".exe") return false;
-  if (/(?:^|[\\/])\.\.(?:[\\/]|$)/u.test(candidatePath)
-    || /(?:^|[\\/])(?:tmp|var[\\/]tmp|dev[\\/]shm|temp|appdata[\\/]local[\\/]temp|users[\\/]public)(?:[\\/]|$)/iu.test(candidatePath)) {
-    return false;
-  }
-  return true;
+  return root !== "\\" && root !== "/" && path.win32.isAbsolute(candidatePath)
+    && path.win32.extname(candidatePath).toLowerCase() === ".exe"
+    && !/(?:^|[\\/])\.\.(?:[\\/]|$)/u.test(candidatePath);
+}
+function isVerifiedWindowsNativeExecutable(candidatePath: string): boolean {
+  return isWindowsNativeExecutable(candidatePath)
+    && !/(?:^|[\\/])(?:tmp|var[\\/]tmp|dev[\\/]shm|temp|appdata[\\/]local[\\/]temp|users[\\/]public)(?:[\\/]|$)/iu.test(candidatePath);
 }
 // # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
 export function resolveWindowsAgentApiFromShim(homeDir: string): { exe: string | null; diagnostic?: string } {
@@ -50,7 +50,7 @@ export function resolveWindowsAgentApiFromShim(homeDir: string): { exe: string |
   if (!homeDir) return { exe: null, diagnostic: "AGENTAPI_SHIM_MISSING" };
   let shimText: string;
   try {
-    shimText = readFileSync(path.win32.join(homeDir, ".gemini", "antigravity", "bin", "agentapi.bat"), "utf8");
+    shimText = readFileSync(path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi.bat"), "utf8");
   } catch (error) {
     const code = error && typeof error === "object" && "code" in error ? (error as { code?: unknown }).code : undefined;
     return { exe: null, diagnostic: code === "ENOENT" ? "AGENTAPI_SHIM_MISSING" : "AGENTAPI_SHIM_READ_FAILED" };
@@ -73,7 +73,7 @@ function resolveGeminiAgentApiWithDiagnostic(
         ? { launch: null, diagnostic: "missing-agentapi-exe:AGENTAPI_EXE_EMPTY" }
         : { launch: { command: "agentapi", argsPrefix: [] } };
     }
-    if (platform === "win32" && !isVerifiedWindowsNativeExecutable(configured)) {
+    if (platform === "win32" && !isWindowsNativeExecutable(configured)) {
       return { launch: null, diagnostic: "missing-agentapi-exe:AGENTAPI_EXE_UNVERIFIED" };
     }
     return { launch: { command: configured, argsPrefix: ["agentapi"] } };
