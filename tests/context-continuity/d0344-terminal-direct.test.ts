@@ -1,15 +1,16 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
-  AttemptLeaseV1, AttemptOutcomeV1, CheckpointContextRequestV1, ConvergenceRootV1,
+  AttemptLeaseV1, AttemptOutcomeV1, AttemptProposalV1, CheckpointContextRequestV1, ConvergenceRootV1,
   ContinuityCandidateV1, TaskEnvelopeV1, WorkflowReceiptV1,
 } from "../../contracts/types.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
-import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
+import { ContinuityStoreError, SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared-stores.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
@@ -118,6 +119,40 @@ async function sharedFixture() {
     syntheticKeys: { workflow: Buffer.alloc(32, 1).toString("base64url"), continuity: Buffer.alloc(32, 2).toString("base64url"), trust: Buffer.alloc(32, 3).toString("base64url") } });
   owners.add(bundle.owner);
   return { ...bundle, target: new ContinuityService(bundle.continuity, new ContractValidator(), bundle.workflow, () => new Date(now)) };
+}
+
+async function sqliteFixture() {
+  const directory = await mkdtemp(join(tmpdir(), "d0344-sqlite-failure-"));
+  directories.push(directory);
+  const workflow = new SqliteWorkflowStore(join(directory, "workflow.sqlite3"));
+  stores.add(workflow);
+  const continuityPath = join(directory, "continuity.sqlite3"), target = service(workflow, continuityPath);
+  return { target, workflow, continuityPath };
+}
+
+function startSqliteAttempt(workflow: SqliteWorkflowStore, value: ConvergenceRootV1, leaseId: string) {
+  const receipt: WorkflowReceiptV1 = { schemaVersion: "1.0.0", runId: `${leaseId}-run`, revision: 1, state: "running",
+    plan: { schemaVersion: "1.0.0", taskId: value.taskEnvelope.taskId, integrityToken: "synthetic-plan", executionMode: "orchestrated",
+      state: "running", selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [] },
+    stageResults: [], blockers: [], unresolved: [], error: null };
+  const proposal: AttemptProposalV1 = { schemaVersion: "1.0.0", rootId: value.rootId, expectedRevision: value.revision,
+    taskEnvelope: value.taskEnvelope, frame: value.frame, plan: receipt.plan, actorId: "synthetic-actor", outputTargets: [], priorFailure: null };
+  const claimed = { ...value, revision: value.revision + 1 };
+  const lease: AttemptLeaseV1 = { ...consumedLease(value), leaseId, state: "issued", epoch: value.currentEpoch,
+    rootRevision: claimed.revision, proposalDigest: convergenceDigest(proposal), expiresAt: "9999-01-01T00:00:00.000Z" };
+  expect(workflow.insertAttemptLease(claimed, value.revision, proposal, lease)).toBe(true);
+  const started = workflow.insertGuardedRun(receipt, lease.leaseId, claimed.revision, now);
+  expect(started).not.toBeNull();
+  return { receipt, lease: started!.lease, root: started!.root };
+}
+
+function settleSqliteAttempt(workflow: SqliteWorkflowStore, attempt: ReturnType<typeof startSqliteAttempt>, current: ConvergenceRootV1) {
+  const settledRoot = { ...current, revision: current.revision + 1, state: "completed" as const };
+  const receipt = { ...attempt.receipt, revision: attempt.receipt.revision + 1, state: "passed" as const,
+    plan: { ...attempt.receipt.plan, state: "passed" as const } };
+  const finished = { ...outcome(attempt.lease), outcomeId: `${attempt.lease.leaseId}-outcome`, workflowRunId: receipt.runId, rootRevision: settledRoot.revision };
+  expect(workflow.updateRun(receipt, attempt.receipt.revision, { root: settledRoot, expectedRootRevision: current.revision, outcome: finished })).toBe(true);
+  return { root: settledRoot, receipt, outcome: finished };
 }
 
 describe("D0344 terminal workflow to fresh direct task", () => {
@@ -449,5 +484,115 @@ describe("D0344 root state remains the authority", () => {
     expect(target.checkpointContext(bound(target, "checkpoint_context", checkpoint())).error?.code).toBe("SNAPSHOT_CONFLICT");
     expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
     expect(target.store.getSnapshot(target.correlateSession(session), 1)).toBeNull();
+  });
+});
+
+describe("D0344 persisted failure, settlement and repeated clear boundaries", () => {
+  it("an aborted epoch UPDATE preserves continuity and workflow history, then retries successfully", async () => {
+    const { target, workflow, continuityPath } = await sqliteFixture(), value = root();
+    expect(workflow.insertConvergenceRoot(value)).toBeNull();
+    const historical = target.checkpointContext(bound(target, "checkpoint_context", checkpoint())).data!;
+    bindRoot(target, value);
+    const attempt = startSqliteAttempt(workflow, value, "update-failure-lease");
+    target.markPreCompact(session);
+    const correlation = target.correlateSession(session), marker = target.store.getTask(correlation)!;
+    expect(target.store.consumeWorkflowMarker(correlation, 1, value.rootId, marker.pendingRevision!, marker.pendingDigest!, now)).toBe(true);
+    expect(target.store.setSuppressed(correlation, 1, now)).toBe(true);
+    settleSqliteAttempt(workflow, attempt, attempt.root);
+    const beforeTask = target.store.getTask(correlation), beforeWorkflow = workflow.getConvergenceSnapshot(value.rootId);
+    expect(beforeWorkflow).toMatchObject({ root: { state: "completed" }, leases: [{ state: "consumed" }], outcomes: [{ leaseId: attempt.lease.leaseId }] });
+    const requestHash = target.hashOpaque("request", "same-request-id"), beforeRequest = target.store.getRequest(correlation, 1, requestHash);
+    const database = new DatabaseSync(continuityPath);
+    try {
+      database.exec(`CREATE TRIGGER d0344_abort_rotation BEFORE UPDATE OF current_epoch ON continuity_tasks
+        WHEN NEW.current_epoch <> OLD.current_epoch BEGIN SELECT RAISE(ABORT, 'd0344-owned-rotation-abort'); END;`);
+      let failure: unknown;
+      try { target.ensureSession(session); } catch (error) { failure = error; }
+      expect(failure).toBeInstanceOf(ContinuityStoreError);
+      expect((failure as ContinuityStoreError).causeValue).toMatchObject({ message: expect.stringContaining("d0344-owned-rotation-abort") });
+      expect(target.store.getTask(correlation)).toEqual(beforeTask);
+      expect(target.store.getSnapshot(correlation, 1)).toEqual(historical);
+      expect(target.store.getSnapshot(correlation, 2)).toBeNull();
+      expect(target.store.getRequest(correlation, 1, requestHash)).toEqual(beforeRequest);
+      expect(target.store.getTombstone(correlation, 1)).toBeNull();
+      expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(beforeWorkflow);
+      database.exec("DROP TRIGGER d0344_abort_rotation");
+      expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 2, rootId: null, suppressed: false,
+        lastAutoInjectedRevision: null, pendingSource: null, pendingRevision: null, pendingDigest: null, pendingRootId: null, pendingConsumed: false });
+      expect(target.checkpointContext(bound(target, "checkpoint_context", checkpoint())).data).toMatchObject({ epoch: 2, revision: 1 });
+      expect(target.store.getSnapshot(correlation, 1)).toEqual(historical);
+      expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(beforeWorkflow);
+    } finally {
+      database.exec("DROP TRIGGER IF EXISTS d0344_abort_rotation");
+      database.close();
+    }
+  });
+
+  it("a settled newer SQLite attempt cannot hide an older consumed lease, and matching settlement permits one rotation", async () => {
+    const { target, workflow } = await sqliteFixture(), value = root();
+    expect(workflow.insertConvergenceRoot(value)).toBeNull();
+    bindRoot(target, value);
+    const older = startSqliteAttempt(workflow, value, "older-pending");
+    const nextEpoch = { ...older.root, revision: older.root.revision + 1, currentEpoch: 2 };
+    expect(workflow.updateConvergenceRoot(nextEpoch, older.root.revision)).toBe(true);
+    const newer = startSqliteAttempt(workflow, nextEpoch, "newer-finished");
+    const newerSettlement = settleSqliteAttempt(workflow, newer, newer.root);
+    const before = workflow.getConvergenceSnapshot(value.rootId)!;
+    expect(before).toMatchObject({ root: { state: "completed", currentEpoch: 2 },
+      leases: [{ leaseId: older.lease.leaseId, epoch: 1, state: "consumed" }, { leaseId: newer.lease.leaseId, epoch: 2, state: "consumed" }],
+      outcomes: [{ leaseId: newer.lease.leaseId, epoch: 2 }] });
+    expect(target.checkpointContext(bound(target, "checkpoint_context", checkpoint())).error?.code).toBe("SNAPSHOT_CONFLICT");
+    expect(target.store.getTask(target.correlateSession(session))).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
+    expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(before);
+    const olderSettlement = settleSqliteAttempt(workflow, older, newerSettlement.root);
+    const settledSnapshot = workflow.getConvergenceSnapshot(value.rootId);
+    // A fresh receipt revision cannot settle the same guarded attempt twice; the failed write rolls back.
+    expect(() => workflow.updateRun({ ...olderSettlement.receipt, revision: 3 }, 2, {
+      root: { ...olderSettlement.root, revision: olderSettlement.root.revision + 1 }, expectedRootRevision: olderSettlement.root.revision,
+      outcome: olderSettlement.outcome,
+    })).toThrow();
+    expect(workflow.getRun(older.receipt.runId)).toEqual(olderSettlement.receipt);
+    expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(settledSnapshot);
+    expect(target.checkpointContext(bound(target, "checkpoint_context", checkpoint())).data).toMatchObject({ epoch: 2, revision: 1 });
+    expect(target.ensureSession(session).currentEpoch).toBe(2);
+    expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(settledSnapshot);
+  });
+
+  it("repeated explicit clear resets every marker and keeps request conflicts scoped to the current epoch", async () => {
+    const { target, workflow } = await sqliteFixture(), value = root();
+    expect(workflow.insertConvergenceRoot(value)).toBeNull();
+    const correlation = target.correlateSession(session), requestHash = target.hashOpaque("request", "same-request-id");
+    const history = [];
+    for (const epoch of [1, 2]) {
+      const input = checkpoint({ core: { ...checkpoint().core, objective: `Epoch ${epoch} task.` } });
+      const snapshot = target.checkpointContext(bound(target, "checkpoint_context", input)).data!;
+      expect(snapshot).toMatchObject({ epoch, revision: 1 });
+      const receipt = target.store.getRequest(correlation, epoch, requestHash);
+      expect(receipt).not.toBeNull();
+      history.push({ epoch, snapshot, receipt });
+      bindRoot(target, value);
+      target.markPreCompact(session);
+      const marker = target.store.getTask(correlation)!;
+      expect(target.store.consumeWorkflowMarker(correlation, epoch, value.rootId, marker.pendingRevision!, marker.pendingDigest!, now)).toBe(true);
+      expect(target.store.setSuppressed(correlation, epoch, now)).toBe(true);
+      expect(target.store.getTask(correlation)).toMatchObject({ suppressed: true, pendingConsumed: true, pendingSource: "workflow",
+        pendingRootId: value.rootId, pendingRevision: value.revision, lastAutoInjectedRevision: value.revision });
+      expect(target.clearSession(session)).toMatchObject({ currentEpoch: epoch + 1, rootId: null, suppressed: false,
+        lastAutoInjectedRevision: null, pendingSource: null, pendingRevision: null, pendingDigest: null, pendingRootId: null, pendingConsumed: false });
+      expect(target.candidateForSession(session)).toMatchObject({ decision: "REJECT", summary: null, restoreToken: null });
+    }
+    const fresh = checkpoint({ core: { ...checkpoint().core, objective: "Epoch 3 task." } });
+    const saved = target.checkpointContext(bound(target, "checkpoint_context", fresh));
+    expect(saved.data).toMatchObject({ epoch: 3, revision: 1 });
+    expect(target.checkpointContext(bound(target, "checkpoint_context", fresh))).toEqual(saved);
+    const conflicting = { ...fresh, core: { ...fresh.core, objective: "Different payload for the current request." } };
+    expect(target.checkpointContext(bound(target, "checkpoint_context", conflicting)).error?.code).toBe("REQUEST_CONFLICT");
+    expect(target.store.getSnapshot(correlation, 3)).toEqual(saved.data);
+    for (const old of history) {
+      expect(target.store.getSnapshot(correlation, old.epoch)).toEqual(old.snapshot);
+      expect(target.store.getRequest(correlation, old.epoch, requestHash)).toEqual(old.receipt);
+      expect(target.store.getTombstone(correlation, old.epoch)).toBeNull();
+    }
+    expect(workflow.getConvergenceSnapshot(value.rootId)?.root).toEqual(value);
   });
 });
