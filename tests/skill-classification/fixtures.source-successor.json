@@ -2,19 +2,22 @@
   "schemaVersion": "1.0.0",
   "kind": "classification-source-binding-successor",
   "activeSourceRevision": "bb6aeb05b7c20d7d5fc22eac90fa116c6ae5b36b",
+  "activeSourceRevisionRole": "Historical r06 metadata only; the D0352 source base and exact source pins are in resourceImpactSourceSuccessor.",
   "predecessor": {
     "path": "tests/skill-classification/fixtures.json",
-    "gitBlob": "f7aedbf77d1547cb49f75ea391c152b3a6172c71",
-    "bytes": 142465,
-    "digest": "sha256:7a69d6681e02aa1ce4925e0b3b3eb421cde064dd5a578d16af190e07db24f57b",
-    "fixtureRevision": "ags-classification-host-source-binding-r04",
-    "oracleRevision": "pre-live-host-source-reviewed-r04",
-    "oracleDigest": "sha256:92b7f4d74d88ae5ebae6de59891e7050bec6dacda92ab02e209216bb26d66ee8"
-  },
-  "successor": {
+    "gitRevision": "57416208be14d2b5aae7b70181241b3d16310f37",
+    "gitBlob": "1cee3b74bbf755fc6955c9d35edabcfc4ad3560e",
+    "bytes": 142471,
+    "digest": "sha256:188d2f6b0bbc5ab1ac3931e70387f731ca85c463df0e177113d1b724403446bb",
     "fixtureRevision": "ags-classification-midtask-source-binding-r06",
     "oracleRevision": "pre-live-midtask-source-reviewed-r06",
     "oracleDigest": "sha256:d1d36cd7c0ff9293d35003a113f4f9768b0d44fddd5b34be424f83acc59f2999"
+  },
+  "successor": {
+    "fixtureRevision": "ags-classification-resource-impact-source-binding-r07",
+    "oracleRevision": "pre-live-resource-impact-source-reviewed-r07",
+    "oracleDigest": "sha256:45e034a812726867412b6ea78261c0dd98232679b2f66f9c265c6122e28cce33",
+    "sourceBindingRevision": "pre-live-source-binding-7"
   },
   "semanticProjection": {
     "omittedRevisionFields": [
@@ -104,7 +107,7 @@
       "skillId": "orchestrator",
       "path": "skills/orchestrator/SKILL.md",
       "previousDigest": "sha256:b90c19a956f4dd3b239e4f4a527ebea319128dbae239018f8f3b0b5445cc43ac",
-      "digest": "sha256:56dabaa45041f8975eede0e08dd2b2c876ca71eca0fb5bc8256bfdaeb46098c5"
+      "digest": "sha256:e5f2e1cf5bbfa49821a5aad81ad83b68cf5cae3ec75c92050a8a4cd13b56be45"
     },
     {
       "skillId": "ponytail",
@@ -121,24 +124,24 @@
   ],
   "reboundReferences": 58,
   "historicalSuccessor": {
-    "digest": "sha256:28f4840754da38b16bcf8165186271c77b4a883dd8cafa8e97aa686d60d9a075",
+    "digest": "sha256:ea2f56ae4bda02a8d96277a482c948a773357007d1765e5fe1e4cf7fea943ada",
     "document": {
       "schemaVersion": "1.0.0",
       "kind": "classification-source-binding-successor",
-      "activeSourceRevision": "b0b455b3ef737cc67e0a350cc1477f4ce6162828",
+      "activeSourceRevision": "bb6aeb05b7c20d7d5fc22eac90fa116c6ae5b36b",
       "predecessor": {
         "path": "tests/skill-classification/fixtures.json",
-        "gitBlob": "af8424b81e3fbc495cbd5f628d3e3d2157e705a2",
-        "bytes": 142477,
-        "digest": "sha256:49d327a6dca9557312d90014410702f8466e839175b3187bc91693b6cccd4789",
-        "fixtureRevision": "ags-classification-governance-source-binding-r03",
-        "oracleRevision": "pre-live-governance-source-reviewed-r03",
-        "oracleDigest": "sha256:96a7c48283c995dd79c662860b179298bd99d474c899d58820de17d7b8770239"
-      },
-      "successor": {
+        "gitBlob": "f7aedbf77d1547cb49f75ea391c152b3a6172c71",
+        "bytes": 142465,
+        "digest": "sha256:7a69d6681e02aa1ce4925e0b3b3eb421cde064dd5a578d16af190e07db24f57b",
         "fixtureRevision": "ags-classification-host-source-binding-r04",
         "oracleRevision": "pre-live-host-source-reviewed-r04",
         "oracleDigest": "sha256:92b7f4d74d88ae5ebae6de59891e7050bec6dacda92ab02e209216bb26d66ee8"
+      },
+      "successor": {
+        "fixtureRevision": "ags-classification-midtask-source-binding-r06",
+        "oracleRevision": "pre-live-midtask-source-reviewed-r06",
+        "oracleDigest": "sha256:d1d36cd7c0ff9293d35003a113f4f9768b0d44fddd5b34be424f83acc59f2999"
       },
       "semanticProjection": {
         "omittedRevisionFields": [
@@ -149,40 +152,120 @@
         ],
         "omittedDigestPaths": [
           {
-            "skillId": "session-board",
-            "path": "skills/session-board/SKILL.md"
+            "skillId": "acceptance-evidence-validator",
+            "path": "skills/acceptance-evidence-validator/SKILL.md"
+          },
+          {
+            "skillId": "coordinate-subagents",
+            "path": "skills/coordinate-subagents/SKILL.md"
+          },
+          {
+            "skillId": "cs-engineering",
+            "path": "skills/cs-engineering/SKILL.md"
+          },
+          {
+            "skillId": "independent-audit-gate",
+            "path": "skills/independent-audit-gate/SKILL.md"
+          },
+          {
+            "skillId": "independent-deliberation-panel",
+            "path": "skills/independent-deliberation-panel/SKILL.md"
+          },
+          {
+            "skillId": "mutation-risk-preflight",
+            "path": "skills/mutation-risk-preflight/SKILL.md"
+          },
+          {
+            "skillId": "orchestrator",
+            "path": "skills/orchestrator/SKILL.md"
+          },
+          {
+            "skillId": "ponytail",
+            "path": "skills/ponytail/SKILL.md"
+          },
+          {
+            "skillId": "task-contract",
+            "path": "skills/task-contract/SKILL.md"
           }
         ],
-        "digest": "sha256:6700d30def96ecbc7869f52dd5ab05e417d3b6ef42dfa3e390361054ff8ad2aa"
+        "digest": "sha256:9b9fe0389d497d4b25eac1998cb091d269e7612a92e57912a2cdc8279d8d6542"
       },
       "bindings": [
         {
-          "skillId": "session-board",
-          "path": "skills/session-board/SKILL.md",
-          "previousDigest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
-          "digest": "sha256:c23a8cebd2a794d9f281ba171f7dac073a5a91a68ceb9a26b748dd843a733bd2"
+          "skillId": "acceptance-evidence-validator",
+          "path": "skills/acceptance-evidence-validator/SKILL.md",
+          "previousDigest": "sha256:1ed22041c60ebbb2af76a6a90deca619301aa9d91cef72c3f6bba090e6e4d109",
+          "digest": "sha256:934cc5ef2e5d187c31e2eef086c61ff03b5e76cec50bf82be648eda87e228fda"
+        },
+        {
+          "skillId": "coordinate-subagents",
+          "path": "skills/coordinate-subagents/SKILL.md",
+          "previousDigest": "sha256:b8f988f615aa7a2c60abe5c8e1546d7bbf9ce5847ee67aa2be887db3b7d181e0",
+          "digest": "sha256:6ba85d995e098afe3cdeb8d20a0b130d383447a5ac6d1781c87e6b52461a7e2e"
+        },
+        {
+          "skillId": "cs-engineering",
+          "path": "skills/cs-engineering/SKILL.md",
+          "previousDigest": "sha256:aa5133cba109cb65e867f75e8a6d3a6602c49d72dd4fb5676cab3ddf0e2d0646",
+          "digest": "sha256:435939d54f74626d07cbfbedd87fcb1a8e13338bc6c0e46d5233d80a7733d681"
+        },
+        {
+          "skillId": "independent-audit-gate",
+          "path": "skills/independent-audit-gate/SKILL.md",
+          "previousDigest": "sha256:26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29",
+          "digest": "sha256:abb5d4c1fa0607851018cd6f6a2f3ecf314cc829149ea0d15c5474ed9afd2a18"
+        },
+        {
+          "skillId": "independent-deliberation-panel",
+          "path": "skills/independent-deliberation-panel/SKILL.md",
+          "previousDigest": "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
+          "digest": "sha256:eb21677b0f377116250691a8cf84b44ec853c4de9c56e27ea17585016a151f54"
+        },
+        {
+          "skillId": "mutation-risk-preflight",
+          "path": "skills/mutation-risk-preflight/SKILL.md",
+          "previousDigest": "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe",
+          "digest": "sha256:9aa4e7cb143bb0ad9ffc5f6c03ed32331e1f14562cd4322fab0e36cd29c21ce1"
+        },
+        {
+          "skillId": "orchestrator",
+          "path": "skills/orchestrator/SKILL.md",
+          "previousDigest": "sha256:b90c19a956f4dd3b239e4f4a527ebea319128dbae239018f8f3b0b5445cc43ac",
+          "digest": "sha256:56dabaa45041f8975eede0e08dd2b2c876ca71eca0fb5bc8256bfdaeb46098c5"
+        },
+        {
+          "skillId": "ponytail",
+          "path": "skills/ponytail/SKILL.md",
+          "previousDigest": "sha256:907667b8b625eab0438b462a4737a056e3833f972c66e432817a12e6f643ac76",
+          "digest": "sha256:2ce28db45c1a84e63fa2af7079e58a3803fc26b16ab7073436efd55b1e1214f9"
+        },
+        {
+          "skillId": "task-contract",
+          "path": "skills/task-contract/SKILL.md",
+          "previousDigest": "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100",
+          "digest": "sha256:92cf19444e6c97b1d1d017f8eed481135d708095d89411668ab215123d1266aa"
         }
       ],
-      "reboundReferences": 1,
+      "reboundReferences": 58,
       "historicalSuccessor": {
-        "digest": "sha256:69ef37b636e35bfdce77103cbe84015c0e2e9482a41e46059d89ac557a8717f7",
+        "digest": "sha256:28f4840754da38b16bcf8165186271c77b4a883dd8cafa8e97aa686d60d9a075",
         "document": {
           "schemaVersion": "1.0.0",
           "kind": "classification-source-binding-successor",
-          "activeSourceRevision": "92b81a84d44d79fc03a06a3493005eb114191eb9",
+          "activeSourceRevision": "b0b455b3ef737cc67e0a350cc1477f4ce6162828",
           "predecessor": {
             "path": "tests/skill-classification/fixtures.json",
-            "gitBlob": "ef36645f7f457bbd3714dc9c8869f15e0f25337e",
-            "bytes": 142488,
-            "digest": "sha256:a7b6c5ea425a24bf53ae3178ed7c0afb0dd783662404fe3194c462aff908f3f9",
-            "fixtureRevision": "ags-classification-seq7-oracle-v1-source-binding-r02",
-            "oracleRevision": "pre-live-source-reviewed-v1-source-binding-r02",
-            "oracleDigest": "sha256:da3ee5b3b718d3b0d4a19d7dadd279f721fd88c6944121ef8848ffbb316a2a10"
-          },
-          "successor": {
+            "gitBlob": "af8424b81e3fbc495cbd5f628d3e3d2157e705a2",
+            "bytes": 142477,
+            "digest": "sha256:49d327a6dca9557312d90014410702f8466e839175b3187bc91693b6cccd4789",
             "fixtureRevision": "ags-classification-governance-source-binding-r03",
             "oracleRevision": "pre-live-governance-source-reviewed-r03",
             "oracleDigest": "sha256:96a7c48283c995dd79c662860b179298bd99d474c899d58820de17d7b8770239"
+          },
+          "successor": {
+            "fixtureRevision": "ags-classification-host-source-binding-r04",
+            "oracleRevision": "pre-live-host-source-reviewed-r04",
+            "oracleDigest": "sha256:92b7f4d74d88ae5ebae6de59891e7050bec6dacda92ab02e209216bb26d66ee8"
           },
           "semanticProjection": {
             "omittedRevisionFields": [
@@ -193,88 +276,61 @@
             ],
             "omittedDigestPaths": [
               {
-                "skillId": "blocker-diagnostician",
-                "path": "skills/blocker-diagnostician/SKILL.md"
-              },
-              {
-                "skillId": "independent-audit-gate",
-                "path": "skills/independent-audit-gate/SKILL.md"
-              },
-              {
-                "skillId": "model-effort-advisor",
-                "path": "skills/model-effort-advisor/SKILL.md"
-              },
-              {
-                "skillId": "orchestrator",
-                "path": "skills/orchestrator/SKILL.md"
-              },
-              {
-                "skillId": "ponytail",
-                "path": "skills/ponytail/SKILL.md"
+                "skillId": "session-board",
+                "path": "skills/session-board/SKILL.md"
               }
             ],
-            "digest": "sha256:3fefd6ced872d836c615d4e8d012d6dbe07059122fb9cdc4c659f715c1884deb"
+            "digest": "sha256:6700d30def96ecbc7869f52dd5ab05e417d3b6ef42dfa3e390361054ff8ad2aa"
           },
           "bindings": [
             {
-              "skillId": "blocker-diagnostician",
-              "path": "skills/blocker-diagnostician/SKILL.md",
-              "previousDigest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
-              "digest": "sha256:0b2ed15e57c2c344661a3ae64073181d6f7b8940b7ef4e315daf010629c7f0de"
-            },
-            {
-              "skillId": "independent-audit-gate",
-              "path": "skills/independent-audit-gate/SKILL.md",
-              "previousDigest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
-              "digest": "sha256:26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29"
-            },
-            {
-              "skillId": "model-effort-advisor",
-              "path": "skills/model-effort-advisor/SKILL.md",
-              "previousDigest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
-              "digest": "sha256:fa84d128bf1d9a6742b74f13080db98f304803e84168b8de39a9e120a01a9a6a"
-            },
-            {
-              "skillId": "orchestrator",
-              "path": "skills/orchestrator/SKILL.md",
-              "previousDigest": "sha256:1cfaf8503aacae72fb7e2591e708bea507848ae338e21855c15e4b1ccb635cd1",
-              "digest": "sha256:b90c19a956f4dd3b239e4f4a527ebea319128dbae239018f8f3b0b5445cc43ac"
-            },
-            {
-              "skillId": "ponytail",
-              "path": "skills/ponytail/SKILL.md",
-              "previousDigest": "sha256:953fd16ff07c23b9481e9bdfca12dbb0d115422ebdbd6626bae6b574838a777c",
-              "digest": "sha256:907667b8b625eab0438b462a4737a056e3833f972c66e432817a12e6f643ac76"
+              "skillId": "session-board",
+              "path": "skills/session-board/SKILL.md",
+              "previousDigest": "sha256:b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
+              "digest": "sha256:c23a8cebd2a794d9f281ba171f7dac073a5a91a68ceb9a26b748dd843a733bd2"
             }
           ],
-          "reboundReferences": 38,
+          "reboundReferences": 1,
           "historicalSuccessor": {
-            "digest": "sha256:1994adee624778e58037701ab6f0eff8eb45e31df99e5e860a9542db2f815642",
+            "digest": "sha256:69ef37b636e35bfdce77103cbe84015c0e2e9482a41e46059d89ac557a8717f7",
             "document": {
               "schemaVersion": "1.0.0",
               "kind": "classification-source-binding-successor",
-              "activeSourceRevision": "9254f21a56efeb8fea1c87aba4ff201e91d549ed",
+              "activeSourceRevision": "92b81a84d44d79fc03a06a3493005eb114191eb9",
               "predecessor": {
                 "path": "tests/skill-classification/fixtures.json",
-                "gitBlob": "26b1fa1526f1e6bd38768409e0fa77943a4a4db8",
-                "bytes": 142450,
-                "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
-                "fixtureRevision": "ags-classification-seq7-oracle-v1",
-                "oracleRevision": "pre-live-source-reviewed-v1",
-                "oracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
-              },
-              "successor": {
+                "gitBlob": "ef36645f7f457bbd3714dc9c8869f15e0f25337e",
+                "bytes": 142488,
+                "digest": "sha256:a7b6c5ea425a24bf53ae3178ed7c0afb0dd783662404fe3194c462aff908f3f9",
                 "fixtureRevision": "ags-classification-seq7-oracle-v1-source-binding-r02",
                 "oracleRevision": "pre-live-source-reviewed-v1-source-binding-r02",
                 "oracleDigest": "sha256:da3ee5b3b718d3b0d4a19d7dadd279f721fd88c6944121ef8848ffbb316a2a10"
+              },
+              "successor": {
+                "fixtureRevision": "ags-classification-governance-source-binding-r03",
+                "oracleRevision": "pre-live-governance-source-reviewed-r03",
+                "oracleDigest": "sha256:96a7c48283c995dd79c662860b179298bd99d474c899d58820de17d7b8770239"
               },
               "semanticProjection": {
                 "omittedRevisionFields": [
                   "fixtureRevision",
                   "oracleRevision",
-                  "oracleDigest"
+                  "oracleDigest",
+                  "sourceBindingRevision"
                 ],
                 "omittedDigestPaths": [
+                  {
+                    "skillId": "blocker-diagnostician",
+                    "path": "skills/blocker-diagnostician/SKILL.md"
+                  },
+                  {
+                    "skillId": "independent-audit-gate",
+                    "path": "skills/independent-audit-gate/SKILL.md"
+                  },
+                  {
+                    "skillId": "model-effort-advisor",
+                    "path": "skills/model-effort-advisor/SKILL.md"
+                  },
                   {
                     "skillId": "orchestrator",
                     "path": "skills/orchestrator/SKILL.md"
@@ -284,23 +340,143 @@
                     "path": "skills/ponytail/SKILL.md"
                   }
                 ],
-                "digest": "sha256:8069d5479dff519557e58ec2589fb4ef9dcb899213582ff419fca83791ee7422"
+                "digest": "sha256:3fefd6ced872d836c615d4e8d012d6dbe07059122fb9cdc4c659f715c1884deb"
               },
               "bindings": [
                 {
+                  "skillId": "blocker-diagnostician",
+                  "path": "skills/blocker-diagnostician/SKILL.md",
+                  "previousDigest": "sha256:5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
+                  "digest": "sha256:0b2ed15e57c2c344661a3ae64073181d6f7b8940b7ef4e315daf010629c7f0de"
+                },
+                {
+                  "skillId": "independent-audit-gate",
+                  "path": "skills/independent-audit-gate/SKILL.md",
+                  "previousDigest": "sha256:6d46d2eda33237b9e67bb0f44d102a22ef24154bbef3478671b6ed863b6c7bd8",
+                  "digest": "sha256:26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29"
+                },
+                {
+                  "skillId": "model-effort-advisor",
+                  "path": "skills/model-effort-advisor/SKILL.md",
+                  "previousDigest": "sha256:55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
+                  "digest": "sha256:fa84d128bf1d9a6742b74f13080db98f304803e84168b8de39a9e120a01a9a6a"
+                },
+                {
                   "skillId": "orchestrator",
                   "path": "skills/orchestrator/SKILL.md",
-                  "previousDigest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
-                  "digest": "sha256:1cfaf8503aacae72fb7e2591e708bea507848ae338e21855c15e4b1ccb635cd1"
+                  "previousDigest": "sha256:1cfaf8503aacae72fb7e2591e708bea507848ae338e21855c15e4b1ccb635cd1",
+                  "digest": "sha256:b90c19a956f4dd3b239e4f4a527ebea319128dbae239018f8f3b0b5445cc43ac"
                 },
                 {
                   "skillId": "ponytail",
                   "path": "skills/ponytail/SKILL.md",
-                  "previousDigest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
-                  "digest": "sha256:953fd16ff07c23b9481e9bdfca12dbb0d115422ebdbd6626bae6b574838a777c"
+                  "previousDigest": "sha256:953fd16ff07c23b9481e9bdfca12dbb0d115422ebdbd6626bae6b574838a777c",
+                  "digest": "sha256:907667b8b625eab0438b462a4737a056e3833f972c66e432817a12e6f643ac76"
                 }
               ],
-              "reboundReferences": 34,
+              "reboundReferences": 38,
+              "historicalSuccessor": {
+                "digest": "sha256:1994adee624778e58037701ab6f0eff8eb45e31df99e5e860a9542db2f815642",
+                "document": {
+                  "schemaVersion": "1.0.0",
+                  "kind": "classification-source-binding-successor",
+                  "activeSourceRevision": "9254f21a56efeb8fea1c87aba4ff201e91d549ed",
+                  "predecessor": {
+                    "path": "tests/skill-classification/fixtures.json",
+                    "gitBlob": "26b1fa1526f1e6bd38768409e0fa77943a4a4db8",
+                    "bytes": 142450,
+                    "digest": "sha256:17ade7e27cc11ffee8cc0b7b2070785617861d4c3384448cf24fce75f40d87e9",
+                    "fixtureRevision": "ags-classification-seq7-oracle-v1",
+                    "oracleRevision": "pre-live-source-reviewed-v1",
+                    "oracleDigest": "sha256:5db1d67cef8719c40b17b0ab07003f01f765746d34ced0b326e59fadb2efe055"
+                  },
+                  "successor": {
+                    "fixtureRevision": "ags-classification-seq7-oracle-v1-source-binding-r02",
+                    "oracleRevision": "pre-live-source-reviewed-v1-source-binding-r02",
+                    "oracleDigest": "sha256:da3ee5b3b718d3b0d4a19d7dadd279f721fd88c6944121ef8848ffbb316a2a10"
+                  },
+                  "semanticProjection": {
+                    "omittedRevisionFields": [
+                      "fixtureRevision",
+                      "oracleRevision",
+                      "oracleDigest"
+                    ],
+                    "omittedDigestPaths": [
+                      {
+                        "skillId": "orchestrator",
+                        "path": "skills/orchestrator/SKILL.md"
+                      },
+                      {
+                        "skillId": "ponytail",
+                        "path": "skills/ponytail/SKILL.md"
+                      }
+                    ],
+                    "digest": "sha256:8069d5479dff519557e58ec2589fb4ef9dcb899213582ff419fca83791ee7422"
+                  },
+                  "bindings": [
+                    {
+                      "skillId": "orchestrator",
+                      "path": "skills/orchestrator/SKILL.md",
+                      "previousDigest": "sha256:96125291e406b124a6559a269842d434112b98bdf28c49c752ef67dea38700b8",
+                      "digest": "sha256:1cfaf8503aacae72fb7e2591e708bea507848ae338e21855c15e4b1ccb635cd1"
+                    },
+                    {
+                      "skillId": "ponytail",
+                      "path": "skills/ponytail/SKILL.md",
+                      "previousDigest": "sha256:f9531bdd7ec9f9a46cdd09e3cc4cbe34b9dce80330bd71cc99f52cbee2a910cd",
+                      "digest": "sha256:953fd16ff07c23b9481e9bdfca12dbb0d115422ebdbd6626bae6b574838a777c"
+                    }
+                  ],
+                  "reboundReferences": 34,
+                  "review": {
+                    "caseIds": [
+                      "SS01",
+                      "SS02",
+                      "SS03",
+                      "SS04",
+                      "SS05",
+                      "SS06",
+                      "SS07",
+                      "SS08",
+                      "SS09",
+                      "SS10",
+                      "SS11",
+                      "SS12",
+                      "SS13",
+                      "SS14",
+                      "SS15",
+                      "SS16",
+                      "SS17",
+                      "SS18",
+                      "SS19",
+                      "SS20",
+                      "SS21",
+                      "SS22",
+                      "SS23",
+                      "SS24",
+                      "SS25",
+                      "SS26",
+                      "SS27",
+                      "SS28",
+                      "SS29",
+                      "SS30",
+                      "SS31",
+                      "SS32",
+                      "SS33",
+                      "SS34",
+                      "SS35",
+                      "SS36",
+                      "SS37",
+                      "SS38",
+                      "SS39"
+                    ],
+                    "adjudicatedCases": 18,
+                    "publicSyntheticCases": 21,
+                    "rationale": "Only two current instruction source bindings change after the reviewed root-cause/disable repair. Existing coding, read-only, orchestration and safety boundaries for these unchanged prompts remain the same; no required/allowed/forbidden/intent/spec/split/denominator changes. Historical component-manifest and locked proofs remain unchanged. New bindings require fresh runs and grant no historical evaluation acceptance.",
+                    "modelBehavior": "NOT_RUN"
+                  }
+                }
+              },
               "review": {
                 "caseIds": [
                   "SS01",
@@ -345,7 +521,7 @@
                 ],
                 "adjudicatedCases": 18,
                 "publicSyntheticCases": 21,
-                "rationale": "Only two current instruction source bindings change after the reviewed root-cause/disable repair. Existing coding, read-only, orchestration and safety boundaries for these unchanged prompts remain the same; no required/allowed/forbidden/intent/spec/split/denominator changes. Historical component-manifest and locked proofs remain unchanged. New bindings require fresh runs and grant no historical evaluation acceptance.",
+                "rationale": "Explicit selected governance source bindings only; all corpus prompts, intent, labels, split, matrices, denominators, judgment thresholds and qualification remain frozen. No historical result acceptance.",
                 "modelBehavior": "NOT_RUN"
               }
             }
@@ -394,7 +570,7 @@
             ],
             "adjudicatedCases": 18,
             "publicSyntheticCases": 21,
-            "rationale": "Explicit selected governance source bindings only; all corpus prompts, intent, labels, split, matrices, denominators, judgment thresholds and qualification remain frozen. No historical result acceptance.",
+            "rationale": "Session board source binding only; prompts, labels, splits, matrices, thresholds and qualification frozen.",
             "modelBehavior": "NOT_RUN"
           }
         }
@@ -443,7 +619,26 @@
         ],
         "adjudicatedCases": 18,
         "publicSyntheticCases": 21,
-        "rationale": "Session board source binding only; prompts, labels, splits, matrices, thresholds and qualification frozen.",
+        "rationale": "Skill policy wording source bindings only. Each public synthetic case was reviewed against the changed applicability and exclusion wording; no required, allowed, forbidden, not-applicable or conditional label changes. Prompts, labels, splits, matrices, thresholds and qualification frozen.",
+        "labelChanges": [],
+        "modelBehavior": "NOT_RUN"
+      },
+      "midtaskSourceSuccessor": {
+        "predecessor": {
+          "gitRevision": "45556669124efc64151be21be9958463e1f18d40",
+          "gitBlob": "2078c29de99d2c5a2dc1693b9c68da9cac395bac",
+          "digest": "sha256:3c7c2159bbaa74521c5c5aefbae21710a7a507a6235315608ec941fb1b1294f1",
+          "bytes": 142481,
+          "fixtureRevision": "ags-classification-skill-policy-source-binding-r05",
+          "oracleRevision": "pre-live-skill-policy-source-reviewed-r05",
+          "oracleDigest": "sha256:307f07d6f78cba04e1f606f680e6609b9a17f22f499b802f1b0cf46329a1bd2e"
+        },
+        "sourcePath": "skills/orchestrator/SKILL.md",
+        "previousDigest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
+        "digest": "sha256:56dabaa45041f8975eede0e08dd2b2c876ca71eca0fb5bc8256bfdaeb46098c5",
+        "reboundReferences": 17,
+        "rationale": "Mid-task reselection instruction only; frozen initial-request prompts, labels, conditions, split, matrices and thresholds unchanged. New source text and spans require a fresh source-binding revision and run.",
+        "labelChanges": [],
         "modelBehavior": "NOT_RUN"
       }
     }
@@ -492,25 +687,41 @@
     ],
     "adjudicatedCases": 18,
     "publicSyntheticCases": 21,
-    "rationale": "Skill policy wording source bindings only. Each public synthetic case was reviewed against the changed applicability and exclusion wording; no required, allowed, forbidden, not-applicable or conditional label changes. Prompts, labels, splits, matrices, thresholds and qualification frozen.",
+    "rationale": "Resource-impact preflight and compaction-resume source binding only. Preserve all 39 prompts, 18 adjudications, 21 public synthetic cases, labels, split, matrices and thresholds.",
     "labelChanges": [],
     "modelBehavior": "NOT_RUN"
   },
-  "midtaskSourceSuccessor": {
+  "resourceImpactSourceSuccessor": {
+    "sourceBaseRevision": "57416208be14d2b5aae7b70181241b3d16310f37",
     "predecessor": {
-      "gitRevision": "45556669124efc64151be21be9958463e1f18d40",
-      "gitBlob": "2078c29de99d2c5a2dc1693b9c68da9cac395bac",
-      "digest": "sha256:3c7c2159bbaa74521c5c5aefbae21710a7a507a6235315608ec941fb1b1294f1",
-      "bytes": 142481,
-      "fixtureRevision": "ags-classification-skill-policy-source-binding-r05",
-      "oracleRevision": "pre-live-skill-policy-source-reviewed-r05",
-      "oracleDigest": "sha256:307f07d6f78cba04e1f606f680e6609b9a17f22f499b802f1b0cf46329a1bd2e"
+      "path": "tests/skill-classification/fixtures.json",
+      "gitRevision": "57416208be14d2b5aae7b70181241b3d16310f37",
+      "gitBlob": "1cee3b74bbf755fc6955c9d35edabcfc4ad3560e",
+      "bytes": 142471,
+      "digest": "sha256:188d2f6b0bbc5ab1ac3931e70387f731ca85c463df0e177113d1b724403446bb",
+      "fixtureRevision": "ags-classification-midtask-source-binding-r06",
+      "oracleRevision": "pre-live-midtask-source-reviewed-r06",
+      "oracleDigest": "sha256:d1d36cd7c0ff9293d35003a113f4f9768b0d44fddd5b34be424f83acc59f2999"
     },
+    "sourceBindings": [
+      {
+        "path": "skills/orchestrator/SKILL.md",
+        "previousDigest": "sha256:56dabaa45041f8975eede0e08dd2b2c876ca71eca0fb5bc8256bfdaeb46098c5",
+        "digest": "sha256:e5f2e1cf5bbfa49821a5aad81ad83b68cf5cae3ec75c92050a8a4cd13b56be45",
+        "bytes": 8449
+      },
+      {
+        "path": "skills/orchestrator/classification.json",
+        "previousDigest": "sha256:f034243569190280ebc060f5f1654fcfcf8ee4b4f60c9e5ac19d8a1ebc5f8074",
+        "digest": "sha256:6d33ef4bc3ae5daa8c15867f03dbdaf4c0cebf76fcfbd872ca1b8c3b6636baad",
+        "bytes": 4338
+      }
+    ],
     "sourcePath": "skills/orchestrator/SKILL.md",
-    "previousDigest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
-    "digest": "sha256:56dabaa45041f8975eede0e08dd2b2c876ca71eca0fb5bc8256bfdaeb46098c5",
+    "previousDigest": "sha256:56dabaa45041f8975eede0e08dd2b2c876ca71eca0fb5bc8256bfdaeb46098c5",
+    "digest": "sha256:e5f2e1cf5bbfa49821a5aad81ad83b68cf5cae3ec75c92050a8a4cd13b56be45",
     "reboundReferences": 17,
-    "rationale": "Mid-task reselection instruction only; frozen initial-request prompts, labels, conditions, split, matrices and thresholds unchanged. New source text and spans require a fresh source-binding revision and run.",
+    "rationale": "Two resource-impact and compaction-resume constraints only; rebind the existing orchestrator source references without changing fixture prompts or adjudications.",
     "labelChanges": [],
     "modelBehavior": "NOT_RUN"
   }
