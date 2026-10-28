@@ -75,7 +75,8 @@ describe("orchestrator resource-impact prompt propagation", () => {
     expect(impactLine).toContain("작업 범위·병렬 수·실행 위치와 종료·정리 조건");
     expect(impactLine).toContain("미확인 값은 추측하지 않는다");
     expect(impactLine).toContain("추가 승인이나 PRE로 만들지 않는다");
-    expect(impactLine).toContain("작은 읽기·편집마다 계측·보고·새 점검 도구를 만들지 않는다");
+    expect(impactLine).toContain("작은 읽기·편집마다 계측·보고·새 점검 도구를 만들지 않으며");
+    expect(impactLine).toContain("이 점검을 이미 허용된 빌드·시험·작업 브랜치 push·CI의 추가 승인이나 PRE로 만들지 않는다");
     expect(intake.indexOf(impactLine)).toBeLessThan(intake.indexOf(gateLine));
     expect(resumeLine).toContain("압축·새 세션·재부팅 뒤에는 해당 제약과 현재 환경을 다시 대조");
     expect(gateLine).toContain("mutation-risk-preflight");
