@@ -908,8 +908,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return this.transaction(() => {
       const presence = this.presence(input,nowMs);
       if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport) return false;
-      return this.database.prepare("UPDATE relay_leases SET relay_code_digest=CASE WHEN pid=0 THEN ? WHEN relay_code_id=relay_id || ':' || pid THEN relay_code_digest ELSE NULL END,relay_code_id=relay_id || ':' || ?,pid=?,relay_start_token=?,lease_until=?,updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND parent_pid=? AND (pid=0 OR (pid=? AND relay_start_token IS ?))")
-        .run(input.codeDigest ?? null,input.pid,input.pid,relayStartToken,iso(nowMs+RELAY_LEASE_MS),iso(nowMs),input.host,input.sessionId,input.transport,input.relayId,input.parentPid,input.pid,relayStartToken).changes === 1;
+      return this.database.prepare("UPDATE relay_leases SET relay_code_digest=CASE WHEN pid=0 THEN ? WHEN relay_code_id=relay_id || ':' || pid THEN relay_code_digest ELSE NULL END,relay_code_id=?,pid=?,relay_start_token=?,lease_until=?,updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND parent_pid=? AND (pid=0 OR (pid=? AND relay_start_token IS ?))")
+        .run(input.codeDigest ?? null,`${input.relayId}:${input.pid}`,input.pid,relayStartToken,iso(nowMs+RELAY_LEASE_MS),iso(nowMs),input.host,input.sessionId,input.transport,input.relayId,input.parentPid,input.pid,relayStartToken).changes === 1;
     });
   }
 

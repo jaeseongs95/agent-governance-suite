@@ -39,6 +39,14 @@ it("marks a live reused old relay outdated without respawning or renewing its pr
   expect(f.view().relayCode?.runningDigest).toBe(A);
 });
 
+it("stores the exact child-owner text independently of SQLite numeric parameter rendering", () => {
+  const f = fixture(); const grant = f.ensure(A);
+  expect(f.activate(grant.relayId!, A)).toBe(true);
+  const row = f.store.database.prepare("SELECT relay_code_id,pid FROM relay_leases").get();
+  expect(row).toEqual({relay_code_id: grant.relayId + ":200", pid: 200});
+  expect(f.view().relayCode).toEqual({status: "current", runningDigest: A, expectedDigest: A});
+});
+
 it("does not infer current code from a legacy relay or an unactivated grant", () => {
   const f = fixture(); const grant = f.ensure(B);
   expect(f.view().relayCode).toEqual({status: "unknown", runningDigest: null, expectedDigest: B});

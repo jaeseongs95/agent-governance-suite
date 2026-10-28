@@ -1,12 +1,18 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { failureContext } from "./failure-diagnostics.js";
+import { writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 
 /** Diagnostic entry-file observation, not attestation of all loaded dependencies. */
 export function readRelayCodeDigest(entry: URL): string | null {
   try { return "sha256:" + createHash("sha256").update(readFileSync(entry)).digest("hex"); }
   catch (error) {
-    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") return null;
-    throw error;
+    try {
+      writeFailureDiagnostic("[agent-governance-suite] relay-code-read-failure " + JSON.stringify({
+        reason: "RELAY_CODE_READ_FAILED", context: failureContext(error),
+      }) + "\n");
+    } catch { /* Code freshness is advisory; even diagnostic failure cannot stop relay or board work. */ }
+    return null;
   }
 }
 
