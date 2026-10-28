@@ -519,7 +519,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
     case "start-wake": return store.startManagedWake(wakeAttempt(payload.attempt));
     case "record-wake-outcome": {
       const outcome = string(payload.outcome, "outcome");
-      if (outcome !== "submitted" && outcome !== "definite-failure" && outcome !== "accepted-or-unknown") throw new Error("Invalid wake dispatch outcome.");
+      if (outcome !== "submitted" && outcome !== "definite-failure" && outcome !== "accepted-or-unknown" && outcome !== "target-unavailable") throw new Error("Invalid wake dispatch outcome.");
       return { recorded: store.recordManagedWakeOutcome(wakeAttempt(payload.attempt), outcome) };
     }
     case "reconcile-wake-observation": {

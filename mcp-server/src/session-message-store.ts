@@ -889,7 +889,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         if (!dead) return {spawn:false,relayId:previous.relayId,instanceId:input.instanceId};
       }
       const relayId = "verified-relay-v1:" + randomUUID() + ":" + input.instanceId.slice("host-process-v1:".length);
-      this.startPresence(input,nowMs);
+      const presence = this.startPresence(input,nowMs);
+      if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport) {
+        return {spawn:false,relayId:null,instanceId:input.instanceId};
+      }
       this.database.prepare("INSERT INTO relay_leases(host,session_id,transport,relay_id,pid,parent_pid,lease_until,updated_at) VALUES(?,?,?,?,0,?,'9999-12-31T23:59:59.999Z',?) ON CONFLICT(host,session_id,transport) DO UPDATE SET relay_id=excluded.relay_id,pid=0,parent_pid=excluded.parent_pid,relay_start_token=NULL,relay_code_digest=NULL,relay_code_id=NULL,lease_until=excluded.lease_until,updated_at=excluded.updated_at")
         .run(input.host,input.sessionId,input.transport,relayId,input.parentPid,iso(nowMs));
       return {spawn:true,relayId,instanceId:input.instanceId};
@@ -1165,7 +1168,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   recordManagedWakeOutcome(attempt: WakeAttempt, outcome: WakeDispatchOutcome, nowMs = Date.now()): boolean {
-    if (!["submitted", "definite-failure", "accepted-or-unknown"].includes(outcome)) throw new Error("Invalid wake dispatch outcome.");
+    if (!["submitted", "definite-failure", "accepted-or-unknown", "target-unavailable"].includes(outcome)) throw new Error("Invalid wake dispatch outcome.");
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.recordManagedWakeOutcome(attempt, outcome, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     return this.transaction(() => {
@@ -1175,6 +1178,17 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         AND state IN ('started', 'unknown')`).get(nonceDigest(attempt.nonce), attempt.host, attempt.sessionId,
           attempt.instanceId, attempt.generation, attempt.transport, attempt.relayId, attempt.attemptId, attempt.dispatchEpoch) as { retry_count: number } | undefined;
       if (!row) {  return false; }
+      if (outcome === "target-unavailable") {
+        // The attempt's birth and current relay must still own this target. A late
+        // host rejection must not retire a replacement, even with the same instanceId.
+        if (!this.wakeBindingCurrent(attempt, attempt.generation, nowMs)) return false;
+        this.database.prepare(`UPDATE wake_nonces SET state = 'not-submitted', outcome_at = ?, retry_not_before = NULL
+          WHERE nonce_digest = ?`).run(iso(nowMs), nonceDigest(attempt.nonce));
+        this.database.prepare("DELETE FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?")
+          .run(attempt.host, attempt.sessionId, attempt.transport, attempt.relayId);
+        this.endPresence(attempt, "target-unavailable", attempt.instanceId, nowMs);
+        return true;
+      }
       const retry = outcome === "definite-failure";
       const generationReplaced = retry && this.wakeGenerationReplaced(attempt, nowMs);
       const claimedWithNoneLeft = retry && !generationReplaced && !this.hasUnclaimedMessages(attempt, nowMs);
@@ -1353,7 +1367,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
           ELSE strftime('%Y-%m-%dT%H:%M:%fZ', session_presence.started_at, '+0.001 seconds') END
         ELSE session_presence.started_at END,
       heartbeat_at = excluded.heartbeat_at, lease_until = excluded.lease_until,
-      ended_at = NULL, end_reason = NULL`).run(
+      ended_at = NULL, end_reason = NULL
+      WHERE session_presence.end_reason IS NOT 'target-unavailable'`).run(
       input.host, input.sessionId, input.instanceId, input.transport, input.wakeVisibility,
       input.canWakeSilently ? 1 : 0, JSON.stringify(input.deliveryCapabilities?.supportedInjection ?? []),
       input.deliveryCapabilities?.idleWake ?? input.wakeVisibility, input.collaborationId ?? null, input.workspaceId ?? null,

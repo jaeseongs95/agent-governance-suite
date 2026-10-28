@@ -14,7 +14,8 @@ export interface VerifiedInputSourceReader {
 }
 import { resolveSessionMessageStateDirectory, resolveTrustDatabasePath } from "./runtime-config.js";
 
-export type WakeDispatchOutcome = "submitted" | "definite-failure" | "accepted-or-unknown";
+/** target-unavailable requires an authoritative host rejection for this exact target, never a generic transport error. */
+export type WakeDispatchOutcome = "submitted" | "definite-failure" | "accepted-or-unknown" | "target-unavailable";
 export interface WakeDispatchPort {
   capabilities: DeliveryCapabilities;
   dispatch(target: SessionIdentity, message: string): Promise<WakeDispatchOutcome>;
