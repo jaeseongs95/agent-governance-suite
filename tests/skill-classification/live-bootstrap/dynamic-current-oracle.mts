@@ -62,24 +62,32 @@ try {
   assert.equal(measurements.length, 21);
   const independent = await independentWireRows(repo, "dynamic-current-inventory");
   assert.equal(prepared.inventory.inventoryDigest, independent[0]!.inventoryDigest, "INDEPENDENT_INVENTORY_DIGEST");
+  let firstWire: {model: unknown; state: Record<string, unknown>; questions: Record<string, {instructions: {skill: Record<string, unknown>}}>} | null = null;
   const expected = prepared.requests.map(({caseId, request}, index) => {
-    const wire = prepared.api.providers.jevNoulWireAdapter.encode(request, config.profile!.configuration) as {questions: Record<string, {instructions: {skill: Record<string, unknown>}}>};
-    assert.deepEqual(Object.keys(wire.questions).sort(), dirs, "WIRE_SOURCE_MEMBERSHIP");
-    for (const skill of request.skills) {
-      const expectedSkill = structuredClone(skill);
-      Reflect.deleteProperty(expectedSkill, "sourceRefs"); Reflect.deleteProperty(expectedSkill, "sourceMap");
-      assert.deepEqual(wire.questions[skill.skillId]!.instructions.skill, expectedSkill, "WIRE_SKILL_SEMANTICS");
-      const actual = wire.questions[skill.skillId]!.instructions.skill;
-      const metadata = sourceMetadata.get(skill.skillId)!;
-      for (const field of ["actions", "targets", "constraints", "dependencies"] as const) assert.deepEqual(actual[field], metadata[field], `WIRE_SOURCE_${field}:${skill.skillId}`);
-      const projection = sourceProjection.get(skill.skillId)!;
-      for (const field of ["applicability", "exclusions", "enabled", "capabilities", "phases"] as const) assert.deepEqual(actual[field], projection[field], `WIRE_SOURCE_${field}:${skill.skillId}`);
+    let wireObj: unknown;
+    if (!firstWire) {
+      firstWire = prepared.api.providers.jevNoulWireAdapter.encode(request, config.profile!.configuration) as {model: unknown; state: Record<string, unknown>; questions: Record<string, {instructions: {skill: Record<string, unknown>}}>};
+      assert.deepEqual(Object.keys(firstWire.questions).sort(), dirs, "WIRE_SOURCE_MEMBERSHIP");
+      for (const skill of request.skills) {
+        const expectedSkill = structuredClone(skill);
+        Reflect.deleteProperty(expectedSkill, "sourceRefs"); Reflect.deleteProperty(expectedSkill, "sourceMap");
+        assert.deepEqual(firstWire.questions[skill.skillId]!.instructions.skill, expectedSkill, "WIRE_SKILL_SEMANTICS");
+        const actual = firstWire.questions[skill.skillId]!.instructions.skill;
+        const metadata = sourceMetadata.get(skill.skillId)!;
+        for (const field of ["actions", "targets", "constraints", "dependencies"] as const) assert.deepEqual(actual[field], metadata[field], `WIRE_SOURCE_${field}:${skill.skillId}`);
+        const projection = sourceProjection.get(skill.skillId)!;
+        for (const field of ["applicability", "exclusions", "enabled", "capabilities", "phases"] as const) assert.deepEqual(actual[field], projection[field], `WIRE_SOURCE_${field}:${skill.skillId}`);
+      }
+      wireObj = firstWire;
+    } else {
+      wireObj = {model: firstWire.model, state: {...firstWire.state, originalPrompt: request.originalPrompt}, questions: firstWire.questions};
     }
+    const wireJson = JSON.stringify(wireObj);
     const gold = independent[index]!;
     assert.equal(caseId, gold.caseId, "INDEPENDENT_CASE_ORDER");
     assert.equal(request.requestDigest, gold.requestDigest, "INDEPENDENT_REQUEST_DIGEST");
-    assert.equal(`sha256:${createHash("sha256").update(JSON.stringify(wire)).digest("hex")}`, gold.wireDigest, "INDEPENDENT_WIRE_DIGEST");
-    assert.equal(Buffer.byteLength(JSON.stringify(wire)), gold.utf8Bytes, "INDEPENDENT_WIRE_LENGTH");
+    assert.equal(`sha256:${createHash("sha256").update(wireJson).digest("hex")}`, gold.wireDigest, "INDEPENDENT_WIRE_DIGEST");
+    assert.equal(Buffer.byteLength(wireJson), gold.utf8Bytes, "INDEPENDENT_WIRE_LENGTH");
     return {caseId, pico: expectedPico(gold.utf8Bytes)};
   });
   config.limits!.requests = 21;

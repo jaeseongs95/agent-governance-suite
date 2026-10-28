@@ -87,11 +87,44 @@ export async function readyMockFromBinding(api: Api, repo: string, outputDirecto
   return config;
 }
 
+const skillsCanonicalCache = new WeakMap<object, string>();
+const canonicalizeFixtureValue = (item: unknown, skillsRef?: object, skillsCanonical?: string): string => {
+  if (skillsCanonical !== undefined && item === skillsRef) return skillsCanonical;
+  if (item === null || typeof item === "string" || typeof item === "boolean") return JSON.stringify(item);
+  if (typeof item === "number" && Number.isFinite(item)) return JSON.stringify(item);
+  if (Array.isArray(item)) return `[${item.map(entry => canonicalizeFixtureValue(entry, skillsRef, skillsCanonical)).join(",")}]`;
+  if (typeof item === "object" && item && Object.getPrototypeOf(item) === Object.prototype) {
+    return `{${Object.keys(item).sort().map(key => `${JSON.stringify(key)}:${canonicalizeFixtureValue((item as Record<string, unknown>)[key], skillsRef, skillsCanonical)}`).join(",")}}`;
+  }
+  throw new Error("INVALID_JSON_VALUE");
+};
+
 /** Fixture authoring only. Every original preflight/run still freshly reads and checks the real source. */
 export function rebindPreparedFixture(prepared: Awaited<ReturnType<Api["prepare"]>>, runId: string) {
-  return {...prepared, requests: prepared.cases.map((row: {caseId: string; originalPrompt: string}) => ({caseId: row.caseId,
-    request: prepared.api.request.createClassificationRequest({requestId: `${runId}/${row.caseId}`, operationId: `${runId}/${row.caseId}`,
-      originalPrompt: row.originalPrompt, inventory: prepared.inventory, classificationCriteriaRef: "skills/orchestrator/references/skill-classification.md"})}))};
+  const skillsRef = prepared.inventory.skills as object;
+  let skillsCanonical = skillsCanonicalCache.get(skillsRef);
+  if (!skillsCanonical) {
+    skillsCanonical = canonicalizeFixtureValue(skillsRef);
+    skillsCanonicalCache.set(skillsRef, skillsCanonical);
+  }
+  return {...prepared, requests: prepared.requests.map(({caseId, request: tpl}: {caseId: string; request: SkillClassificationRequestV1}) => {
+    const id = `${runId}/${caseId}`;
+    const body = {
+      schemaVersion: tpl.schemaVersion,
+      requestId: id,
+      operationId: id,
+      originalPrompt: tpl.originalPrompt,
+      promptDigest: tpl.promptDigest,
+      confirmedContext: {...tpl.confirmedContext},
+      contextSources: [...tpl.contextSources],
+      skills: skillsRef as SkillClassificationRequestV1["skills"],
+      inventoryDigest: tpl.inventoryDigest,
+      taxonomyRevision: tpl.taxonomyRevision,
+      classificationCriteriaRef: tpl.classificationCriteriaRef,
+    };
+    const requestDigest = hash(canonicalizeFixtureValue(body, skillsRef, skillsCanonical));
+    return {caseId, request: {...body, requestDigest}};
+  })};
 }
 
 /** Synthetic reviewed-estimate fixture. Its wire observations configure admission; this is not a gold cost/quality oracle. */
@@ -100,8 +133,12 @@ export async function readyEstimateMock(api: Api, repo: string, outputDirectory:
   config.reservationMode = "reviewed-estimate";
   config.prices = {billingMode: "token", inputUsdPer1k: 0.000042, outputUsdPer1k: 0, fixedCallMaxUsd: 0};
   const configuration = structuredClone(config.profile!.configuration);
+  let firstWire: {model: unknown; state: Record<string, unknown>; questions: unknown} | null = null;
   const measurements = prepared.requests.map(({caseId, request}: {caseId: string; request: SkillClassificationRequestV1}) => {
-    const wire = JSON.stringify(prepared.api.providers.jevNoulWireAdapter.encode(request, configuration));
+    const wireObj = firstWire
+      ? {model: firstWire.model, state: {...firstWire.state, originalPrompt: request.originalPrompt}, questions: firstWire.questions}
+      : (firstWire = prepared.api.providers.jevNoulWireAdapter.encode(request, configuration) as {model: unknown; state: Record<string, unknown>; questions: unknown});
+    const wire = JSON.stringify(wireObj);
     return {caseId, requestDigest: request.requestDigest, wireDigest: hash(wire), utf8Bytes: Buffer.byteLength(wire)};
   });
   if (measurements.length !== 21) throw new Error("EXPECTED_21_WHOLE_ESTIMATE_MEASUREMENTS");

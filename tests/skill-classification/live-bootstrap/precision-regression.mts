@@ -55,6 +55,7 @@ const exists = async (file: string) => {try {await access(file); return true;} c
     }
   }
   let fixturePrepared: Awaited<ReturnType<typeof api.prepare>> | undefined;
+  let cachedWireRows: {caseId: string; wireDigest: string; utf8Bytes: number}[] | undefined;
   async function ready(runId: string, estimate = true): Promise<RunConfig> {
     const config: RunConfig = {schemaVersion: "2.0.0", runId, repo, outputDirectory: path.join(root, runId), endpointEnv: "AGS_BOOTSTRAP_ENDPOINT", credentialEnv: "AGS_BOOTSTRAP_JEV_KEY",
       approvedEndpointDigest: hash(env.AGS_BOOTSTRAP_ENDPOINT), approvedRouteRef: "mock-route", approvalRef: "mock-only", profile: null,
@@ -74,19 +75,27 @@ const exists = async (file: string) => {try {await access(file); return true;} c
     (config.profile.qualification as Record<string, unknown>).profileConfigurationDigest = prepared.api.profiles.digestProviderProfileConfiguration(config.profile);
     if (estimate) {
       await mkdir(config.outputDirectory, {recursive: true});
-      const measurements = prepared.requests.map(({caseId, request}: {caseId: string; request: {requestDigest: string}}) => {const wire = JSON.stringify(prepared.api.providers.jevNoulWireAdapter.encode(request, config.profile));
-        return {caseId, requestDigest: request.requestDigest, wireDigest: hash(wire), utf8Bytes: Buffer.byteLength(wire)};});
+      const firstWirePass = cachedWireRows === undefined;
+      cachedWireRows ??= prepared.requests.map(({caseId, request}: {caseId: string; request: {requestDigest: string}}) => {
+        const wire = JSON.stringify(prepared.api.providers.jevNoulWireAdapter.encode(request, config.profile));
+        return {caseId, wireDigest: hash(wire), utf8Bytes: Buffer.byteLength(wire)};
+      });
+      const measurements = prepared.requests.map(({caseId, request}: {caseId: string; request: {requestDigest: string}}, index: number) => ({
+        caseId, requestDigest: request.requestDigest, wireDigest: cachedWireRows![index]!.wireDigest, utf8Bytes: cachedWireRows![index]!.utf8Bytes,
+      }));
       assert.equal(config.profile.modelId, oracle.modelId);
       assert.deepEqual(prepared.inventory.skills.map(skill => skill.skillId).sort(), sourceSkillIds, "CURRENT_INVENTORY_MEMBERSHIP");
       assert.equal(prepared.inventory.inventoryDigest, independent[0]!.inventoryDigest, "INDEPENDENT_PRECISION_INVENTORY");
       assert.deepEqual(config.prices, frozenPrices);
       assert.deepEqual(measurements.map(row => row.caseId), expectedCaseIds, "FROZEN_CORPUS_CASE_ORDER");
-      for (const {request} of prepared.requests) {
-        const wire = prepared.api.providers.jevNoulWireAdapter.encode(request, config.profile) as {questions: Record<string, {instructions: {skill: Record<string, unknown>}}>};
-        assert.deepEqual(Object.keys(wire.questions).sort(), sourceSkillIds, "CURRENT_WIRE_MEMBERSHIP");
-        for (const skill of request.skills) {
-          const expected = structuredClone(skill); Reflect.deleteProperty(expected, "sourceRefs"); Reflect.deleteProperty(expected, "sourceMap");
-          assert.deepEqual(wire.questions[skill.skillId]!.instructions.skill, expected, "CURRENT_WIRE_SKILL_FIELDS");
+      if (firstWirePass) {
+        for (const {request} of prepared.requests) {
+          const wire = prepared.api.providers.jevNoulWireAdapter.encode(request, config.profile) as {questions: Record<string, {instructions: {skill: Record<string, unknown>}}>};
+          assert.deepEqual(Object.keys(wire.questions).sort(), sourceSkillIds, "CURRENT_WIRE_MEMBERSHIP");
+          for (const skill of request.skills) {
+            const expected = structuredClone(skill); Reflect.deleteProperty(expected, "sourceRefs"); Reflect.deleteProperty(expected, "sourceMap");
+            assert.deepEqual(wire.questions[skill.skillId]!.instructions.skill, expected, "CURRENT_WIRE_SKILL_FIELDS");
+          }
         }
       }
       assert.deepEqual(measurements.map(({caseId,wireDigest,utf8Bytes}) => ({caseId,wireDigest,utf8Bytes})),

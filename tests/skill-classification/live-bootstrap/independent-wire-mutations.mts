@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {cp, mkdir, readFile, writeFile} from "node:fs/promises";
-import {spawnSync} from "node:child_process";
+import {spawn} from "node:child_process";
 import path from "node:path";
 const repo = path.resolve(process.argv[2] ?? ".");
 const directory = path.join(repo, "tests/skill-classification/live-bootstrap");
@@ -30,25 +30,35 @@ try {
   for (const file of ["fixtures.json", "evaluation.ts"]) await cp(path.join(repo,"tests/skill-classification",file),path.join(root,"tests/skill-classification",file));
   for (const file of ["bootstrap.mts","prepared-fixture.mts","independent-wire-oracle.mts","dynamic-current-oracle.mts"]) await cp(path.join(directory,file),path.join(root,"tests/skill-classification/live-bootstrap",file));
   const checks: string[] = [];
-  const runOracle = () => spawnSync(process.execPath,["--import","tsx",path.join(root,"tests/skill-classification/live-bootstrap/dynamic-current-oracle.mts"),root],{cwd:repo,encoding:"utf8",windowsHide:true,timeout:90000,
-    env:{...process.env,TEMP:childTemp,TMP:childTemp,TMPDIR:childTemp}});
-  const green = (id: string) => {
-    const result = runOracle();
+  const runOracle = () => new Promise<{status: number | null; stderr: string}>((resolve, reject) => {
+    const child = spawn(process.execPath, ["--import", "tsx", path.join(root, "tests/skill-classification/live-bootstrap/dynamic-current-oracle.mts"), root], {
+      cwd: repo, stdio: ["ignore", "pipe", "pipe"], windowsHide: true,
+      env: {...process.env, TEMP: childTemp, TMP: childTemp, TMPDIR: childTemp},
+    });
+    let stderr = "";
+    child.stdout.on("data", () => {});
+    child.stderr.on("data", chunk => {stderr += String(chunk);});
+    const timer = setTimeout(() => {child.kill(); reject(new Error("ORACLE_TIMEOUT"));}, 90000);
+    child.once("error", error => {clearTimeout(timer); reject(error);});
+    child.once("close", status => {clearTimeout(timer); resolve({status, stderr});});
+  });
+  const green = async (id: string) => {
+    const result = await runOracle();
     assert.equal(result.status,0,`${id}:exit=${result.status} stderr=${result.stderr}`);
     checks.push(`${id}: GREEN`);
   };
-  green("baseline");
+  await green("baseline");
   for (const [id, file, before, after, marker] of cases) {
     if (scenario !== undefined && id !== scenario) continue;
     const target = path.join(root,file), original = await readFile(target,"utf8"); assert.equal(original.split(before).length,2,`MUTATION_ANCHOR:${id}`);
     await writeFile(target,original.replace(before,after),"utf8");
     try {
-      const result = runOracle();
+      const result = await runOracle();
       assert.equal(result.status,1,`${id}:exit=${result.status} stderr=${result.stderr}`);
       assert(result.stderr.includes(marker),`${id}:expected ${marker}: ${result.stderr}`);
       checks.push(`${id}: RED ${marker}`);
     } finally { await writeFile(target,original,"utf8"); }
-    green(`${id}:restored`);
+    await green(`${id}:restored`);
   }
   console.log(JSON.stringify({status:"INDEPENDENT_MUTATIONS_PASS",checks,actualApiCalls:0,actualCredentialLookups:0}));
 } finally {if (!parentOwnsRoot) removeSourceScratch(root);}

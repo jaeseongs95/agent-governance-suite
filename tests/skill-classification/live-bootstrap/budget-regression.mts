@@ -104,6 +104,7 @@ if (process.argv[4] === "worker") {
     }
   }
   let fixturePrepared: Awaited<ReturnType<typeof api.prepare>> | undefined;
+  let cachedWireRows: {caseId: string; wireDigest: string; utf8Bytes: number}[] | undefined;
   async function ready(runId: string, estimate = true): Promise<RunConfig> {
     const config: RunConfig = {schemaVersion: "2.0.0", runId, repo, outputDirectory: path.join(root, runId), endpointEnv: "AGS_BOOTSTRAP_ENDPOINT", credentialEnv: "AGS_BOOTSTRAP_JEV_KEY",
       approvedEndpointDigest: hash(env.AGS_BOOTSTRAP_ENDPOINT), approvedRouteRef: "mock-route", approvalRef: "mock-only", profile: null,
@@ -123,8 +124,13 @@ if (process.argv[4] === "worker") {
     (config.profile.qualification as Record<string, unknown>).profileConfigurationDigest = prepared.api.profiles.digestProviderProfileConfiguration(config.profile);
     if (estimate) {
       await mkdir(config.outputDirectory, {recursive: true});
-      const measurements = prepared.requests.map(({caseId, request}: {caseId: string; request: {requestDigest: string}}) => {const wire = JSON.stringify(prepared.api.providers.jevNoulWireAdapter.encode(request, config.profile));
-        return {caseId, requestDigest: request.requestDigest, wireDigest: hash(wire), utf8Bytes: Buffer.byteLength(wire)};});
+      cachedWireRows ??= prepared.requests.map(({caseId, request}: {caseId: string; request: {requestDigest: string}}) => {
+        const wire = JSON.stringify(prepared.api.providers.jevNoulWireAdapter.encode(request, config.profile));
+        return {caseId, wireDigest: hash(wire), utf8Bytes: Buffer.byteLength(wire)};
+      });
+      const measurements = prepared.requests.map(({caseId, request}: {caseId: string; request: {requestDigest: string}}, index: number) => ({
+        caseId, requestDigest: request.requestDigest, wireDigest: cachedWireRows![index]!.wireDigest, utf8Bytes: cachedWireRows![index]!.utf8Bytes,
+      }));
       assert.equal(config.profile.modelId, oracle.modelId);
       assert.equal(prepared.inventory.inventoryDigest, oracle.inventoryDigest);
       assert.deepEqual(config.prices, frozenPrices);

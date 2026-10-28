@@ -1,5 +1,5 @@
 import {createHash, randomUUID} from "node:crypto";
-import {readFile, writeFile, mkdir, open, rename} from "node:fs/promises";
+import {readFile, writeFile, mkdir, open, rename, readdir} from "node:fs/promises";
 import {readFileSync, openSync, writeFileSync, fsyncSync, closeSync, renameSync, realpathSync, lstatSync} from "node:fs";
 import path from "node:path";
 import {pathToFileURL, fileURLToPath} from "node:url";
@@ -37,14 +37,41 @@ export type BootstrapConfig = LegacyBootstrapConfig | ScopedBootstrapConfig | Pr
 type LedgerEntry = {requestId: string; requestDigest: string; state: "reserved" | "unknown" | "known" | "not-started"; reservedUsd: number; actualCostUsd: number | null; estimatedCostUsd: number | null; dispatchState: string; resultDigest: string | null};
 type Ledger = {schemaVersion: "1.0.0" | "2.0.0" | "3.0.0"; runId: string; configDigest: string; budgetScope: "legacy-unscoped" | "run"; initialRemainingUsd: number; entries: LedgerEntry[]};
 const hash = (bytes: string | Buffer) => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
-const modules = async (repo: string) => {
+const canonicalizeValue = (item: unknown, skillsRef?: unknown, skillsJson?: string, skillsCanonical?: string): string => {
+  if (skillsCanonical !== undefined && Array.isArray(item) && ((item === skillsRef && (skillsJson === undefined || JSON.stringify(item) === skillsJson)) || (skillsJson !== undefined && JSON.stringify(item) === skillsJson))) {
+    return skillsCanonical;
+  }
+  if (item === null || typeof item === "string" || typeof item === "boolean") return JSON.stringify(item);
+  if (typeof item === "number" && Number.isFinite(item)) return JSON.stringify(item);
+  if (Array.isArray(item)) return `[${item.map(entry => canonicalizeValue(entry, skillsRef, skillsJson, skillsCanonical)).join(",")}]`;
+  if (typeof item === "object" && item && Object.getPrototypeOf(item) === Object.prototype) {
+    return `{${Object.keys(item).sort().map(key => `${JSON.stringify(key)}:${canonicalizeValue((item as Record<string, unknown>)[key], skillsRef, skillsJson, skillsCanonical)}`).join(",")}}`;
+  }
+  throw new Error("INVALID_JSON_VALUE");
+};
+const loadModules = async (repo: string) => {
   const source = (name: string) => import(pathToFileURL(path.join(repo, "mcp-server/src/skill-classification", name)).href);
   const [inventory, request, providers, profiles, validation, evaluationConfig, evaluation] = await Promise.all([
     source("inventory.ts"), source("request.ts"), source("providers.ts"), source("profiles.ts"), source("validation.ts"),
     source("evaluation-config.ts"),
     import(pathToFileURL(path.join(repo, "tests/skill-classification/evaluation.ts")).href),
   ]);
-  return {inventory, request, providers, profiles, validation, evaluationConfig, evaluation};
+  return {
+    inventory, request, providers, profiles, validation, evaluationConfig, evaluation,
+    defaultEncode: providers.jevNoulWireAdapter.encode,
+    defaultDecode: providers.jevNoulWireAdapter.decode,
+    defaultValidateRawResponse: providers.jevNoulWireAdapter.validateRawResponse,
+  };
+};
+const moduleCache = new Map<string, ReturnType<typeof loadModules>>();
+const modules = (repo: string) => {
+  const key = path.resolve(repo);
+  let cached = moduleCache.get(key);
+  if (!cached) {
+    cached = loadModules(key);
+    moduleCache.set(key, cached);
+  }
+  return cached;
 };
 const requireCondition = (value: unknown, code: string): void => {if (!value) throw new Error(code);};
 const finite = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0;
@@ -91,53 +118,215 @@ export function createPreparationEvidence(config: PreparedBootstrapConfig, kind:
     ...(policy.kind === "issuer" ? {validUntil: policy.validUntil} : {}), valuesDigest: evidenceValuesDigest(config, kind)};
 }
 
-function boundedLocalReference(config: BootstrapConfig, ref: Reference): string {
+function boundedLocalReference(config: BootstrapConfig, ref: Reference, canonicalRoot?: string): string {
   requireCondition(ref && sameKeys(ref, ["path", "digest"]) && typeof ref.path === "string" && /^sha256:[a-f0-9]{64}$/.test(ref.digest), "CURRENT_REFERENCE_INVALID");
-  const root = realpathSync(config.outputDirectory), file = path.resolve(root, ref.path);
-  requireCondition(!path.isAbsolute(ref.path) && !path.relative(root, file).startsWith("..") && lstatSync(file).isFile() && lstatSync(file).size <= 1024 * 1024
-    && realpathSync(file) === file, "CURRENT_REFERENCE_OUTSIDE_SCOPE");
+  const root = canonicalRoot ?? realpathSync(config.outputDirectory), file = path.resolve(root, ref.path);
+  requireCondition(!path.isAbsolute(ref.path) && !path.relative(root, file).startsWith(".."), "CURRENT_REFERENCE_OUTSIDE_SCOPE");
+  const stat = lstatSync(file);
+  requireCondition(stat.isFile() && !stat.isSymbolicLink() && stat.size <= 1024 * 1024
+    && (canonicalRoot !== undefined || realpathSync(file) === file), "CURRENT_REFERENCE_OUTSIDE_SCOPE");
   return file;
 }
 
 /** Trusted local issuer input, separate from the immutable preparation. No authority is minted here. */
-function assertCurrentAuthority(config: PreparedBootstrapConfig): void {
+function assertCurrentAuthority(config: PreparedBootstrapConfig, canonicalRoot?: string): void {
   const authority = config.currentAuthority;
   requireCondition(authority && sameKeys(authority, ["scope", "ownerId", "revision", "budgetRevision", "reference"])
     && authority.scope === "single-run-directory", "AUTHORITY_SCOPE_UNSUPPORTED");
   requireCondition([authority!.ownerId, authority!.revision, authority!.budgetRevision].every(value => typeof value === "string" && value.length > 0), "CURRENT_AUTHORITY_UNBOUND");
-  const bytes = readFileSync(boundedLocalReference(config, authority!.reference));
+  const root = canonicalRoot ?? realpathSync(config.outputDirectory);
+  const bytes = readFileSync(boundedLocalReference(config, authority!.reference, canonicalRoot));
   requireCondition(bytes.length <= 65536 && hash(bytes) === authority!.reference.digest, "CURRENT_AUTHORITY_CHANGED");
   const record = JSON.parse(bytes.toString("utf8"));
   requireCondition(record && sameKeys(record, ["schemaVersion", "scope", "runId", "outputDirectory", "ownerId", "revision", "budgetRevision", "approved", "cancelled", "valuesDigest"])
     && record.schemaVersion === "1.0.0" && record.scope === authority!.scope && record.runId === config.runId
-    && record.outputDirectory === realpathSync(config.outputDirectory) && record.ownerId === authority!.ownerId
+    && record.outputDirectory === root && record.ownerId === authority!.ownerId
     && record.revision === authority!.revision && record.budgetRevision === authority!.budgetRevision && record.approved === true && record.cancelled === false
     && record.valuesDigest === evidenceValuesDigest(config, "operatorAuthorization"), "CURRENT_AUTHORITY_REVOKED_OR_UNBOUND");
 }
 
+type RepoPrepareCacheEntry = {
+  api: Awaited<ReturnType<typeof loadModules>>;
+  corpus: any;
+  cases: {caseId: string; originalPrompt: string; oracle: unknown}[];
+  inventory: any;
+  fixtureFileDigest: string;
+  sourceBindings30: Reference[];
+  watchedFiles: Map<string, string | null>;
+  skillDirsKey: string;
+  templateRequests: {caseId: string; request: SkillClassificationRequestV1}[];
+  skillsRef: unknown;
+  skillsJson: string;
+  skillsCanonical: string;
+  questionsObj?: unknown;
+  wireCache: Map<string, {wireJson: string; wireDigest: string; utf8Bytes: number}>;
+};
+const repoPrepareCache = new Map<string, RepoPrepareCacheEntry>();
+const fileDigestOrNull = async (file: string): Promise<string | null> => {
+  try { return hash(await readFile(file)); } catch { return null; }
+};
+const listSkillDirsKey = async (repoRoot: string): Promise<string> => {
+  try {
+    return (await readdir(path.join(repoRoot, "skills"), {withFileTypes: true}))
+      .filter(entry => entry.isDirectory())
+      .map(entry => entry.name)
+      .sort()
+      .join("\0");
+  } catch { return ""; }
+};
+const fastDigestRequest = (repoRoot: string, prepared: Awaited<ReturnType<typeof prepare>>, value: unknown): string => {
+  const cached = repoPrepareCache.get(path.resolve(repoRoot));
+  if (cached && value && typeof value === "object" && "skills" in (value as Record<string, unknown>)) {
+    return hash(canonicalizeValue(value, cached.skillsRef, cached.skillsJson, cached.skillsCanonical));
+  }
+  return prepared.api.request.digestClassificationValue(value);
+};
+const encodeWireFast = (repoRoot: string, prepared: Awaited<ReturnType<typeof prepare>>, request: SkillClassificationRequestV1, profile: Record<string, unknown>): {wireJson: string; wireDigest: string; utf8Bytes: number} => {
+  const cached = repoPrepareCache.get(path.resolve(repoRoot));
+  const {requestDigest: currentRequestDigest, ...requestBody} = request;
+  const canReuse = cached
+    && prepared.api.providers.jevNoulWireAdapter.encode === cached.api.defaultEncode
+    && request.schemaVersion === "1.0.0"
+    && typeof profile.modelId === "string"
+    && typeof request.originalPrompt === "string"
+    && hash(request.originalPrompt) === request.promptDigest
+    && request.inventoryDigest === cached.inventory.inventoryDigest
+    && (request.skills === cached.skillsRef || JSON.stringify(request.skills) === cached.skillsJson)
+    && currentRequestDigest === hash(canonicalizeValue(requestBody, cached.skillsRef, cached.skillsJson, cached.skillsCanonical));
+  if (canReuse) {
+    const key = `${cached.inventory.inventoryDigest}\0${profile.modelId}\0${request.promptDigest}\0${request.taxonomyRevision}\0${request.classificationCriteriaRef}`;
+    let hit = cached.wireCache.get(key);
+    if (!hit) {
+      let wireObj: unknown;
+      if (cached.questionsObj !== undefined) {
+        wireObj = {
+          model: profile.modelId,
+          state: {
+            originalPrompt: request.originalPrompt,
+            confirmedContext: request.confirmedContext,
+            taxonomyRevision: request.taxonomyRevision,
+            classificationCriteriaRef: request.classificationCriteriaRef,
+          },
+          questions: cached.questionsObj,
+        };
+      } else {
+        const encoded = prepared.api.providers.jevNoulWireAdapter.encode(request, profile) as {questions?: unknown};
+        cached.questionsObj = encoded.questions;
+        wireObj = encoded;
+      }
+      const wireJson = JSON.stringify(wireObj);
+      hit = {wireJson, wireDigest: hash(wireJson), utf8Bytes: Buffer.byteLength(wireJson)};
+      cached.wireCache.set(key, hit);
+    }
+    return hit;
+  }
+  const wireJson = JSON.stringify(prepared.api.providers.jevNoulWireAdapter.encode(request, profile));
+  return {wireJson, wireDigest: hash(wireJson), utf8Bytes: Buffer.byteLength(wireJson)};
+};
+
 export async function prepare(config: BootstrapConfig) {
   requireCondition(["1.0.0", "2.0.0", "3.0.0"].includes(config.schemaVersion) && /^[a-z0-9][a-z0-9-]{0,63}$/.test(config.runId), "INVALID_RUN_ID");
   requireCondition(validConfigKeys(config) && sameKeys(config.evidence, [...references]), "UNKNOWN_CONFIG_FIELD");
-  const api = await modules(path.resolve(config.repo));
+  const resolvedRepo = path.resolve(config.repo);
+  const existing = repoPrepareCache.get(resolvedRepo);
+  if (existing) {
+    const watchedEntries = [...existing.watchedFiles.entries()];
+    const [currentDirsKey, ...currentDigests] = await Promise.all([
+      listSkillDirsKey(resolvedRepo),
+      ...watchedEntries.map(([file]) => fileDigestOrNull(file)),
+    ]);
+    if (currentDirsKey === existing.skillDirsKey && watchedEntries.every(([, expected], index) => currentDigests[index] === expected)) {
+      const requests = existing.templateRequests.map(({caseId, request: tpl}) => {
+        const id = `${config.runId}/${caseId}`;
+        const body = {
+          schemaVersion: tpl.schemaVersion,
+          requestId: id,
+          operationId: id,
+          originalPrompt: tpl.originalPrompt,
+          promptDigest: tpl.promptDigest,
+          confirmedContext: {...tpl.confirmedContext},
+          contextSources: [...tpl.contextSources],
+          skills: existing.skillsRef as SkillClassificationRequestV1["skills"],
+          inventoryDigest: tpl.inventoryDigest,
+          taxonomyRevision: tpl.taxonomyRevision,
+          classificationCriteriaRef: tpl.classificationCriteriaRef,
+        };
+        const requestDigest = hash(canonicalizeValue(body, existing.skillsRef, existing.skillsJson, existing.skillsCanonical));
+        return {caseId, request: {...body, requestDigest}};
+      });
+      const sourceBindings = config.schemaVersion === "3.0.0" ? existing.sourceBindings30.map(ref => ({...ref})) : [];
+      return {api: existing.api, corpus: existing.corpus, cases: existing.cases, inventory: existing.inventory, requests, fixtureFileDigest: existing.fixtureFileDigest, sourceBindings};
+    }
+  }
+  const api = await modules(resolvedRepo);
   const fixtureBytes = await readFile(path.join(config.repo, "tests/skill-classification/fixtures.json"));
   const corpus = JSON.parse(fixtureBytes.toString("utf8"));
   requireCondition(api.evaluation.oracleDigest(corpus) === corpus.oracleDigest, "FROZEN_ORACLE_DIGEST_MISMATCH");
   for (const source of corpus.sourceSkills) requireCondition(hash(await readFile(path.join(config.repo, source.path))) === source.digest, "ORACLE_SOURCE_MISMATCH");
   const cases = corpus.cases.filter((row: {publicSynthetic: boolean; originalPrompt: unknown}) => row.publicSynthetic === true && typeof row.originalPrompt === "string" && row.originalPrompt.length > 0);
   requireCondition(cases.length === 21 && new Set(cases.map((row: {caseId: string}) => row.caseId)).size === 21, "PUBLIC_FIXTURE_SET_MISMATCH");
-  const inventory = await api.inventory.loadSkillInventory({root: path.resolve(config.repo)});
+  const inventory = await api.inventory.loadSkillInventory({root: resolvedRepo});
   requireCondition(inventory.issues.length === 0, "INVENTORY_INCOMPLETE");
-  const requests = cases.map((row: {caseId: string; originalPrompt: string}) => ({caseId: row.caseId,
-    request: api.request.createClassificationRequest({requestId: `${config.runId}/${row.caseId}`, operationId: `${config.runId}/${row.caseId}`,
-      originalPrompt: row.originalPrompt, inventory, classificationCriteriaRef: "skills/orchestrator/references/skill-classification.md"})}));
-  const sourceBindings: Reference[] = [];
-  if (config.schemaVersion === "3.0.0") {
-    const names = ["inventory.ts", "request.ts", "providers.ts", "profiles.ts", "evaluation-config.ts", "validation.ts", "types.ts", "digest.ts"];
-    const files = [...names.map(name => path.join(config.repo, "mcp-server/src/skill-classification", name)),
-      path.join(config.repo, "tests/skill-classification/evaluation.ts"), fileURLToPath(import.meta.url), path.join(config.repo, "tests/skill-classification/fixtures.json"),
-      ...inventory.skills.flatMap((skill: {sourceRefs: Reference[]}) => skill.sourceRefs.map(ref => path.resolve(config.repo, ref.path)))];
-    for (const file of new Set<string>(files)) sourceBindings.push({path: file, digest: hash(await readFile(file))});
-  }
+  let firstCreated: SkillClassificationRequestV1 | null = null;
+  let firstSkillsCanonical = "";
+  const requests = cases.map((row: {caseId: string; originalPrompt: string}) => {
+    const input = {requestId: `${config.runId}/${row.caseId}`, operationId: `${config.runId}/${row.caseId}`,
+      originalPrompt: row.originalPrompt, inventory, classificationCriteriaRef: "skills/orchestrator/references/skill-classification.md"};
+    if (!firstCreated) {
+      const created = api.request.createClassificationRequest(input);
+      firstCreated = created;
+      firstSkillsCanonical = canonicalizeValue(created.skills);
+      return {caseId: row.caseId, request: created};
+    }
+    const body = {
+      schemaVersion: firstCreated.schemaVersion,
+      requestId: input.requestId,
+      operationId: input.operationId,
+      originalPrompt: input.originalPrompt,
+      promptDigest: hash(input.originalPrompt),
+      confirmedContext: {...firstCreated.confirmedContext},
+      contextSources: [...firstCreated.contextSources],
+      skills: firstCreated.skills,
+      inventoryDigest: firstCreated.inventoryDigest,
+      taxonomyRevision: firstCreated.taxonomyRevision,
+      classificationCriteriaRef: input.classificationCriteriaRef,
+    };
+    const requestDigest = hash(canonicalizeValue(body, firstCreated.skills, "", firstSkillsCanonical));
+    return {caseId: row.caseId, request: {...body, requestDigest}};
+  });
+  const names = ["inventory.ts", "request.ts", "providers.ts", "profiles.ts", "evaluation-config.ts", "validation.ts", "types.ts", "digest.ts"];
+  const files30 = [...new Set<string>([...names.map(name => path.join(config.repo, "mcp-server/src/skill-classification", name)),
+    path.join(config.repo, "tests/skill-classification/evaluation.ts"), fileURLToPath(import.meta.url), path.join(config.repo, "tests/skill-classification/fixtures.json"),
+    ...inventory.skills.flatMap((skill: {sourceRefs: Reference[]}) => skill.sourceRefs.map(ref => path.resolve(config.repo, ref.path)))])];
+  const sourceBindings30: Reference[] = [];
+  for (const file of files30) sourceBindings30.push({path: file, digest: hash(await readFile(file))});
+  const sourceBindings: Reference[] = config.schemaVersion === "3.0.0" ? sourceBindings30.map(ref => ({...ref})) : [];
+  const knownDigests = new Map<string, string>(sourceBindings30.map(ref => [path.resolve(ref.path), ref.digest]));
+  const watchedCandidates = [...new Set<string>([
+    path.join(resolvedRepo, "tests/skill-classification/fixtures.json"),
+    ...corpus.sourceSkills.map((source: {path: string}) => path.join(resolvedRepo, source.path)),
+    path.join(resolvedRepo, "skills/registry.json"),
+    path.join(resolvedRepo, "skills/classification-projection.json"),
+    path.join(resolvedRepo, "claude-plugin/skills/classification-projection.json"),
+    ...files30.map(file => path.resolve(file)),
+  ])];
+  const [skillDirsKey, ...watchedDigests] = await Promise.all([
+    listSkillDirsKey(resolvedRepo),
+    ...watchedCandidates.map(file => {
+      const known = knownDigests.get(file);
+      return known !== undefined ? Promise.resolve(known) : fileDigestOrNull(file);
+    }),
+  ]);
+  const watchedFiles = new Map<string, string | null>(watchedCandidates.map((file, index) => [file, watchedDigests[index]!]));
+  const skillsRef = inventory.skills;
+  const skillsJson = JSON.stringify(skillsRef);
+  const skillsCanonical = firstSkillsCanonical || canonicalizeValue(skillsRef);
+  for (const item of requests) item.request.skills = skillsRef;
+  repoPrepareCache.set(resolvedRepo, {
+    api, corpus, cases, inventory, fixtureFileDigest: hash(fixtureBytes), sourceBindings30, watchedFiles, skillDirsKey,
+    templateRequests: requests.map(({caseId, request}: {caseId: string; request: SkillClassificationRequestV1}) => ({caseId, request: {...request}})),
+    skillsRef, skillsJson, skillsCanonical, wireCache: new Map(),
+  });
   return {api, corpus, cases, inventory, requests, fixtureFileDigest: hash(fixtureBytes), sourceBindings};
 }
 
@@ -252,8 +441,10 @@ export async function preflight(config: BootstrapConfig, prepared: Awaited<Retur
       try {
         requireCondition(estimator && profile, "ESTIMATE_PLAN_MISSING");
         const inputArtifact = JSON.parse((await readBound(estimator!.inputArtifact)).toString("utf8"));
-        const measurements = prepared.requests.map(({caseId, request}: {caseId: string; request: any}) => {const wire = JSON.stringify(prepared.api.providers.jevNoulWireAdapter.encode(request, profile));
-          return {caseId, requestDigest: request.requestDigest, wireDigest: hash(wire), utf8Bytes: Buffer.byteLength(wire)};});
+        const measurements = prepared.requests.map(({caseId, request}: {caseId: string; request: any}) => {
+          const {wireDigest, utf8Bytes} = encodeWireFast(config.repo, prepared, request, profile!);
+          return {caseId, requestDigest: request.requestDigest, wireDigest, utf8Bytes};
+        });
         requireCondition(JSON.stringify(inputArtifact) === JSON.stringify({runId: config.runId, inventoryDigest: prepared.inventory.inventoryDigest, measurements}), "ESTIMATE_INPUT_UNBOUND");
         for (const ref of estimator!.sources) await readBound(ref);
         requireCondition(prices?.billingMode === "token" && finite(prices.inputUsdPer1k), "ESTIMATE_PRICE_INVALID");
@@ -281,7 +472,7 @@ export async function preflight(config: BootstrapConfig, prepared: Awaited<Retur
     } else fail(config.estimator === null, "UNEXPECTED_ESTIMATE_PLAN");
   }
   if (profile && limits && positiveInt(limits.inputBytes)) for (const {request} of prepared.requests) {
-    try {fail(Buffer.byteLength(JSON.stringify(prepared.api.providers.jevNoulWireAdapter.encode(request, profile))) <= limits.inputBytes, "INPUT_TOO_LONG");}
+    try {fail(encodeWireFast(config.repo, prepared, request, profile).utf8Bytes <= limits.inputBytes, "INPUT_TOO_LONG");}
     catch {blocked.push("WIRE_ENCODE_FAILED");}
   }
   let eligibleRequestCount = 0, cumulativeReservationUsd = 0;
@@ -366,11 +557,11 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
   const fetcher = options.fetcher ?? fetch;
   const prepared = await prepare(config);
   const requestBindings = new Map<SkillClassificationRequestV1, string>(prepared.requests.map(({request}: {request: SkillClassificationRequestV1}) =>
-    [request, prepared.api.request.digestClassificationValue(request)]));
+    [request, fastDigestRequest(config.repo, prepared, request)]));
   const checked = await preflight(config, prepared, now());
   if (checked.status === "BLOCKED") return checked;
   requireCondition(hash(JSON.stringify(sourceConfig)) === configDigest && hash(JSON.stringify(config)) === configDigest
-    && prepared.requests.every(({request}: {request: SkillClassificationRequestV1}) => requestBindings.get(request) === prepared.api.request.digestClassificationValue(request)), "STALE_CLASSIFICATION");
+    && prepared.requests.every(({request}: {request: SkillClassificationRequestV1}) => requestBindings.get(request) === fastDigestRequest(config.repo, prepared, request)), "STALE_CLASSIFICATION");
   requireCondition(config.schemaVersion === "3.0.0" || checked.validatedEvidenceDeadlineMs !== null, "BOUND_EVIDENCE_DEADLINE_MISSING");
   const evidenceExpired = () => {const current = now(); return !Number.isFinite(current) || (checked.validatedEvidenceDeadlineMs !== null && current >= checked.validatedEvidenceDeadlineMs);};
   const limits = config.limits!;
@@ -410,20 +601,22 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
       ledger.entries = reservations;
       ledgerDigest = durableJsonSync(ledgerFile, ledger, ledgerDigest);
     }
-    const assertExecutionState = () => {
+    const assertExecutionState = (checkSources = true, verifiedCanonicalRoot?: string) => {
       if (config.schemaVersion !== "3.0.0") return;
-      assertCurrentAuthority(config);
+      assertCurrentAuthority(config, verifiedCanonicalRoot);
       requireCondition(hash(readFileSync(lockFile)) === lockDigest && hash(readFileSync(ledgerFile)) === ledgerDigest, "RESERVATION_OWNER_OR_LEDGER_CHANGED");
-      for (const ref of prepared.sourceBindings) requireCondition(hash(readFileSync(ref.path)) === ref.digest, "PREPARED_SOURCE_CHANGED");
+      if (checkSources) {
+        for (const ref of prepared.sourceBindings) requireCondition(hash(readFileSync(ref.path)) === ref.digest, "PREPARED_SOURCE_CHANGED");
+      }
       for (const kind of references) {
         const ref = config.evidence[kind];
-        if (ref) requireCondition(hash(readFileSync(boundedLocalReference(config, ref))) === ref.digest, "CURRENT_EVIDENCE_CHANGED");
+        if (ref) requireCondition(hash(readFileSync(boundedLocalReference(config, ref, verifiedCanonicalRoot))) === ref.digest, "CURRENT_EVIDENCE_CHANGED");
       }
       if (config.estimator) for (const ref of [config.estimator.inputArtifact, ...config.estimator.sources]) {
-        requireCondition(hash(readFileSync(boundedLocalReference(config, ref))) === ref.digest, "CURRENT_ESTIMATE_INPUT_OR_SOURCE_CHANGED");
+        requireCondition(hash(readFileSync(boundedLocalReference(config, ref, verifiedCanonicalRoot))) === ref.digest, "CURRENT_ESTIMATE_INPUT_OR_SOURCE_CHANGED");
       }
     };
-    assertExecutionState();
+    assertExecutionState(true);
     const environment = options.env ?? process.env;
     const endpoint = environment[config.endpointEnv];
     requireCondition(endpoint && hash(endpoint) === config.approvedEndpointDigest, "APPROVED_ENDPOINT_ENV_MISMATCH");
@@ -434,7 +627,7 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
     let stopReason: string | null = null;
     const transport: typeof fetch = async (...args) => {
       if (evidenceExpired()) {evidenceExpiredBeforeFetch = true; throw new Error("BOUND_EVIDENCE_EXPIRED");}
-      assertExecutionState();
+      assertExecutionState(false, output);
       transportInvocations++;
       const response = await fetcher(...args);
       if (response.status === 402) billingOrBalanceFailure = true;
@@ -457,44 +650,50 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
     })();
     const providerObservations = new Map<string, ReturnType<typeof providerObservation>>();
     const classify = async (request: SkillClassificationRequestV1, signal: AbortSignal) => {
-      const fixedRequest = structuredClone(request), fixedProfile = structuredClone(profile) as unknown as ProviderConfiguration;
+      const fixedRequest = {...request, confirmedContext: {...request.confirmedContext}, contextSources: [...request.contextSources], skills: request.skills};
+      const fixedProfile = structuredClone(profile) as unknown as ProviderConfiguration;
       const requestBinding = requestBindings.get(request);
       const profileBinding = prepared.api.request.digestClassificationValue(fixedProfile);
       let started = false, claimed = false;
       const deadlineMs = config.schemaVersion === "3.0.0" ? now() + limits.timeoutMs : null;
-      const assertCurrent = () => {
+      const assertCurrent = (checkSources = false) => {
         const state = started || claimed ? "unknown" : "not-started";
         if (signal.aborted || (deadlineMs !== null && now() >= deadlineMs)) throw new ClassificationProviderError(started || claimed ? "DISPATCH_TIMEOUT_UNKNOWN" : "CANCELLED", state);
         if (evidenceExpired()) throw new ClassificationProviderError("BOUND_EVIDENCE_EXPIRED", state);
-        try {assertExecutionState();} catch {throw new ClassificationProviderError("CURRENT_AUTHORITY_OR_RESERVATION_CHANGED", state);}
+        try {assertExecutionState(checkSources, output);} catch {throw new ClassificationProviderError("CURRENT_AUTHORITY_OR_RESERVATION_CHANGED", state);}
         let current = false;
         try {
           current = hash(JSON.stringify(sourceConfig)) === configDigest && hash(JSON.stringify(config)) === configDigest
-            && prepared.api.request.digestClassificationValue(request) === requestBinding
-            && prepared.api.request.digestClassificationValue(fixedRequest) === requestBinding
+            && fastDigestRequest(config.repo, prepared, request) === requestBinding
+            && fastDigestRequest(config.repo, prepared, fixedRequest) === requestBinding
             && prepared.api.request.digestClassificationValue(profile) === profileBinding
             && prepared.api.request.digestClassificationValue(fixedProfile) === profileBinding
             && prepared.api.providers.jevNoulWireAdapter === adapter
             && adapter.encode === encode && adapter.decode === decode && adapter.validateRawResponse === validateRawResponse
             && (config.schemaVersion === "3.0.0" ? prepared.api.evaluationConfig.validateProviderEvaluationConfiguration(config.profile, prepared.inventory) === null
               : (fixedProfile as unknown as {qualification: {status: string; validUntil: string}}).qualification.status === "NOT_RUN"
-                && Date.parse((fixedProfile as unknown as {qualification: {validUntil: string}}).qualification.validUntil) > now());
+                && Date.parse((fixedProfile as unknown as {qualification: {status: string; validUntil: string}}).qualification.validUntil) > now());
         } catch { /* Changes to the approved evaluation inputs fail closed. */ }
         if (!current) throw new ClassificationProviderError("STALE_CLASSIFICATION", state);
       };
-      assertCurrent();
+      assertCurrent(false);
       if (!endpointUrl) throw new ClassificationProviderError("INVALID_APPROVED_ENDPOINT", "not-started");
       let key: string | null;
       try {key = await Promise.resolve(environment[config.credentialEnv] ?? null);}
       catch {throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started");}
-      assertCurrent();
+      assertCurrent(transportInvocations === 0 || Object.getOwnPropertyDescriptor(environment, config.credentialEnv)?.get !== undefined);
       if (!key) throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started");
       let body: string;
-      try {body = JSON.stringify(encode.call(adapter, fixedRequest, fixedProfile));}
+      const isDefaultEncode = adapter === prepared.api.providers.jevNoulWireAdapter && encode === prepared.api.defaultEncode;
+      try {
+        body = isDefaultEncode
+          ? encodeWireFast(config.repo, prepared, fixedRequest, fixedProfile as unknown as Record<string, unknown>).wireJson
+          : JSON.stringify(encode.call(adapter, fixedRequest, fixedProfile));
+      }
       catch {throw new ClassificationProviderError("INVALID_PROVIDER_REQUEST", "not-started", true);}
       if (typeof body !== "string") throw new ClassificationProviderError("INVALID_PROVIDER_REQUEST", "not-started", true);
       if (Buffer.byteLength(body, "utf8") > fixedProfile.maximumInputBytes) throw new ClassificationProviderError("INPUT_TOO_LONG", "not-started");
-      assertCurrent();
+      if (!isDefaultEncode) assertCurrent(true);
       let response: Response;
       // The ledger reservation was persisted by the caller; this is the only dispatch.
       try {
@@ -510,16 +709,16 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
           } finally {closeSync(fd);}
           claimed = true;
           entry!.state = "unknown"; entry!.dispatchState = "unknown";
-          assertCurrent(); // A consumed claim must not conceal changes made before journal persistence.
+          assertCurrent(false); // A consumed claim must not conceal changes made before journal persistence.
           ledgerDigest = durableJsonSync(ledgerFile, ledger, ledgerDigest);
-          assertCurrent(); // No await between the final claim/journal fence and the actual transport.
+          assertCurrent(false); // No await between the final claim/journal fence and the actual transport.
         }
         started = true;
         response = await transport(endpointUrl.href, {method: "POST", headers: {authorization: `Bearer ${key}`, "content-type": "application/json"}, body, signal, redirect: "error"});
       } catch (error) {if (error instanceof ClassificationProviderError) throw error; throw new ClassificationProviderError("TRANSPORT_UNAVAILABLE", started || claimed ? "unknown" : "not-started");}
       let staleResponse: unknown = null;
       const checkResponseState = () => {
-        try {assertCurrent();}
+        try {assertCurrent(false);}
         catch (error) {if (config.schemaVersion === "3.0.0" && !signal.aborted && deadlineMs !== null && now() < deadlineMs) staleResponse = error; else throw error;}
       };
       try {checkResponseState();}
@@ -537,7 +736,6 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
       let bytes = 0, bodyText: string;
       try {
         while (true) {
-          checkResponseState();
           let item: ReadableStreamReadResult<Uint8Array>;
           try {item = await reader.read();}
           catch {throw new ClassificationProviderError("TRANSPORT_UNAVAILABLE", "unknown");}
@@ -574,7 +772,9 @@ export async function run(config: BootstrapConfig, options: {fetcher?: typeof fe
         validateRawResponse?.call(adapter, bodyText);
         evaluation = decode.call(adapter, parsed, fixedRequest, fixedProfile);
       } catch {throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", "started", true);}
-      assertCurrent();
+      if (adapter !== prepared.api.providers.jevNoulWireAdapter || decode !== prepared.api.defaultDecode || validateRawResponse !== prepared.api.defaultValidateRawResponse) {
+        assertCurrent(false);
+      }
       return evaluation;
     };
     const observations: ClassificationObservation[] = [];

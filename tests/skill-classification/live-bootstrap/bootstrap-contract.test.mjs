@@ -1,6 +1,8 @@
-import {spawnSync} from "node:child_process";
+import {spawn} from "node:child_process";
 import {existsSync} from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import {clearTimeout, setTimeout} from "node:timers";
 import {describe, expect, it} from "vitest";
 import {createSourceScratch, removeSourceScratch} from "./source-scratch.mjs";
 
@@ -23,9 +25,80 @@ const programs = [
 const sourcePrograms = new Set(["dynamic-current-stale.mts", "independent-wire-mutations.mts",
   "history-r04-boundary.mjs", "history-r04-budget.mjs"]);
 
+const maxConcurrentChildren = Math.min(4, Math.max(2, os.availableParallelism()));
+let activeChildren = 0;
+const pendingQueue = [];
+function acquireSlot() {
+  if (activeChildren < maxConcurrentChildren) {
+    activeChildren++;
+    return Promise.resolve();
+  }
+  return new Promise(resolve => pendingQueue.push(resolve));
+}
+function releaseSlot() {
+  const next = pendingQueue.shift();
+  if (next) next();
+  else activeChildren--;
+}
+
+async function runCli(args, {cwd, timeout, maxBuffer = 8 * 1024 * 1024}) {
+  await acquireSlot();
+  try {
+    return await new Promise(resolve => {
+      const child = spawn(process.execPath, args, {
+        cwd, stdio: ["ignore", "pipe", "pipe"], windowsHide: true,
+      });
+      const stdoutChunks = [], stderrChunks = [];
+      let stdoutBytes = 0, stderrBytes = 0;
+      let error, settled = false;
+      const finish = (status, signal) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve({
+          status,
+          signal,
+          error,
+          stdout: Buffer.concat(stdoutChunks, stdoutBytes).toString("utf8"),
+          stderr: Buffer.concat(stderrChunks, stderrBytes).toString("utf8"),
+        });
+      };
+      const timer = setTimeout(() => {
+        error = Object.assign(new Error(`spawn ${process.execPath} ETIMEDOUT`), {code: "ETIMEDOUT"});
+        child.kill();
+      }, timeout);
+      child.stdout.on("data", chunk => {
+        if (stdoutBytes + chunk.length > maxBuffer) {
+          error ??= Object.assign(new Error("stdout maxBuffer length exceeded"), {code: "ERR_CHILD_PROCESS_STDIO_MAXBUFFER"});
+          child.kill();
+          return;
+        }
+        stdoutChunks.push(chunk);
+        stdoutBytes += chunk.length;
+      });
+      child.stderr.on("data", chunk => {
+        if (stderrBytes + chunk.length > maxBuffer) {
+          error ??= Object.assign(new Error("stderr maxBuffer length exceeded"), {code: "ERR_CHILD_PROCESS_STDIO_MAXBUFFER"});
+          child.kill();
+          return;
+        }
+        stderrChunks.push(chunk);
+        stderrBytes += chunk.length;
+      });
+      child.once("error", err => {
+        error ??= err;
+        finish(null, null);
+      });
+      child.once("close", (status, signal) => finish(status, signal));
+    });
+  } finally {
+    releaseSlot();
+  }
+}
+
 describe("live bootstrap offline CLI contracts", () => {
   for (const [program, status, timeout = 90_000, testTimeout = 100_000, scenario] of programs) {
-    it(`${program}${scenario ? ` (${scenario})` : ""} preserves its standalone assertions`, () => {
+    it.concurrent(`${program}${scenario ? ` (${scenario})` : ""} preserves its standalone assertions`, async () => {
       const root = sourcePrograms.has(program) ? createSourceScratch(repo,
         program === "dynamic-current-stale.mts" ? "ags-current-stale-" : "ags-bootstrap-source-") : null;
       try {
@@ -33,9 +106,7 @@ describe("live bootstrap offline CLI contracts", () => {
         if (program !== "contract-selfcheck.mts") args.push(path.join(directory, "bootstrap.mts"));
         if (root) args.push(root);
         if (scenario) args.push(scenario);
-        const result = spawnSync(process.execPath, args, {
-          cwd: repo, encoding: "utf8", windowsHide: true, timeout, maxBuffer: 8 * 1024 * 1024,
-        });
+        const result = await runCli(args, {cwd: repo, timeout, maxBuffer: 8 * 1024 * 1024});
         const diagnostic = JSON.stringify({args, status: result.status, signal: result.signal,
           error: result.error?.message, stdout: result.stdout, stderr: result.stderr});
         expect(result.error, diagnostic).toBeUndefined();
@@ -57,15 +128,13 @@ describe("live bootstrap offline CLI contracts", () => {
     }, testTimeout);
   }
 
-  it("independent-wire-mutations.mts rejects unknown scenarios before preparing scratch", () => {
+  it.concurrent("independent-wire-mutations.mts rejects unknown scenarios before preparing scratch", async () => {
     const parent = createSourceScratch(repo, "ags-invalid-mutation-");
     const root = path.join(parent, "unused-scratch");
     try {
       const args = ["--import", "tsx", path.join(directory, "independent-wire-mutations.mts"), repo,
         path.join(directory, "bootstrap.mts"), root, "unknown-scenario"];
-      const result = spawnSync(process.execPath, args, {
-        cwd: repo, encoding: "utf8", windowsHide: true, timeout: 90_000,
-      });
+      const result = await runCli(args, {cwd: repo, timeout: 90_000});
       expect(result.error).toBeUndefined();
       expect(result.signal).toBeNull();
       expect(result.status).toBe(1);
