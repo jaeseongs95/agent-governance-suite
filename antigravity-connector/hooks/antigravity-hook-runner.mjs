@@ -576,7 +576,7 @@ export function normalizeAntigravityToolCall(input) {
   if (rawName === "call_mcp_tool" || rawName === "default_api:call_mcp_tool") {
     const serverName = text(rawArgs.ServerName);
     const wrappedTool = text(rawArgs.ToolName);
-    if (/^(?:(?:plugin_)?agent[-_]governance[-_]suite_)?agent[-_]governance[-_]suite$/u.test(serverName) && wrappedTool) {
+    if (/^(?:(?:plugin_)?agent[-_]governance[-_]suite_)?(?:agent[-_]governance[-_]suite|ags)$/u.test(serverName) && wrappedTool) {
       return {
         canonicalName: `mcp__agent-governance-suite__${wrappedTool}`,
         localTool: wrappedTool,
@@ -588,7 +588,7 @@ export function normalizeAntigravityToolCall(input) {
     }
   }
 
-  const agsPrefix = /^(?:default_api:)?mcp_(?:(?:plugin_)?agent[-_]governance[-_]suite_)?agent[-_]governance[-_]suite_(.+)$/u.exec(rawName);
+  const agsPrefix = /^(?:default_api:)?mcp_(?:(?:plugin_)?agent[-_]governance[-_]suite_)?(?:agent[-_]governance[-_]suite|ags)_(.+)$/u.exec(rawName);
   if (agsPrefix?.[1]) {
     return {
       canonicalName: `mcp__agent-governance-suite__${agsPrefix[1]}`,

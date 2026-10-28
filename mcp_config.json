@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "agent-governance-suite": {
+    "ags": {
       "command": "node",
       "args": [
         "mcp-server/dist/server.mjs"

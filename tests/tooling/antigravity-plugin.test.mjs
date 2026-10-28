@@ -84,14 +84,65 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
     }
   });
 
-  it("exposes mcp_config.json and skills directory at the plugin root and normalizes plugin-namespaced MCP server calls", () => {
+  it("exposes mcp_config.json with short 'ags' server key so all 31 MCP tool names stay within Antigravity's 64-char limit (AGS-D-0322)", () => {
+    const manifest = JSON.parse(readFileSync(path.join(ROOT, "plugin.json"), "utf8"));
     const mcpConfigPath = path.join(ROOT, "mcp_config.json");
     expect(existsSync(mcpConfigPath)).toBe(true);
     const mcpConfig = JSON.parse(readFileSync(mcpConfigPath, "utf8"));
-    expect(mcpConfig.mcpServers?.["agent-governance-suite"]?.command).toBe("node");
+    expect(Object.keys(mcpConfig.mcpServers ?? {})).toEqual(["ags"]);
+    expect(mcpConfig.mcpServers?.ags?.command).toBe("node");
+    expect(mcpConfig.mcpServers?.ags?.env?.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("gemini");
     expect(existsSync(path.join(ROOT, "skills"))).toBe(true);
 
-    const wrapped = normalizeAntigravityToolCall({
+    // Codex and Claude manifests keep their own server key and hook matchers unchanged.
+    const codexMcp = JSON.parse(readFileSync(path.join(ROOT, ".mcp.json"), "utf8"));
+    expect(Object.keys(codexMcp.mcpServers ?? {})).toEqual(["agent-governance-suite"]);
+    const claudePlugin = JSON.parse(readFileSync(path.join(ROOT, "claude-overlay", ".claude-plugin", "plugin.json"), "utf8"));
+    expect(Object.keys(claudePlugin.mcpServers ?? {})).toEqual(["agent-governance-suite"]);
+
+    const serverSource = readFileSync(path.join(ROOT, "mcp-server", "src", "server.ts"), "utf8");
+    const advertiseBlock = serverSource.split("const tools = advertise([")[1]?.split("diagnostics?.registerMethods")[0] ?? "";
+    const toolNames = [...advertiseBlock.matchAll(/^\s*name:\s*"([^"]+)"/gmu)].map((m) => m[1]);
+    expect(toolNames.length).toBe(31);
+    expect(toolNames).toContain("validate_collaboration_decision");
+
+    const serverKey = Object.keys(mcpConfig.mcpServers)[0];
+    const legacyOverflowTools = [];
+    for (const toolName of toolNames) {
+      const combinedName = `mcp_${manifest.name}_${serverKey}_${toolName}`;
+      expect(combinedName.length, `${combinedName} exceeds 64 chars`).toBeLessThanOrEqual(64);
+      expect(combinedName).toMatch(/^[a-zA-Z0-9_-]{1,64}$/u);
+
+      const legacyName = `mcp_${manifest.name}_agent-governance-suite_${toolName}`;
+      if (legacyName.length > 64) legacyOverflowTools.push(toolName);
+
+      const wrapped = normalizeAntigravityToolCall({
+        toolCall: {
+          name: "default_api:call_mcp_tool",
+          args: {
+            ServerName: `${manifest.name}_${serverKey}`,
+            ToolName: toolName,
+            Arguments: { schemaVersion: "2.0.0" },
+          },
+        },
+      });
+      expect(wrapped.canonicalName).toBe(`mcp__agent-governance-suite__${toolName}`);
+      expect(wrapped.isMcpWrapperCall).toBe(true);
+
+      const direct = normalizeAntigravityToolCall({
+        toolCall: {
+          name: `default_api:${combinedName}`,
+          args: { schemaVersion: "2.0.0" },
+        },
+      });
+      expect(direct.canonicalName).toBe(`mcp__agent-governance-suite__${toolName}`);
+      expect(direct.isMcpWrapperCall).toBe(false);
+    }
+    // Red-to-green proof: with the legacy 22-char server key, 27 of the 31 tools exceeded 64 chars.
+    expect(legacyOverflowTools.length).toBe(27);
+
+    // Backward compatibility for legacy long server names.
+    const legacyWrapped = normalizeAntigravityToolCall({
       toolCall: {
         name: "default_api:call_mcp_tool",
         args: {
@@ -101,15 +152,15 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
         },
       },
     });
-    expect(wrapped.canonicalName).toBe("mcp__agent-governance-suite__get_skill_inventory");
-    expect(wrapped.isMcpWrapperCall).toBe(true);
+    expect(legacyWrapped.canonicalName).toBe("mcp__agent-governance-suite__get_skill_inventory");
+    expect(legacyWrapped.isMcpWrapperCall).toBe(true);
 
-    const direct = normalizeAntigravityToolCall({
+    const legacyDirect = normalizeAntigravityToolCall({
       toolCall: {
         name: "default_api:mcp_agent-governance-suite_agent-governance-suite_get_skill_inventory",
         args: { schemaVersion: "2.0.0" },
       },
     });
-    expect(direct.canonicalName).toBe("mcp__agent-governance-suite__get_skill_inventory");
+    expect(legacyDirect.canonicalName).toBe("mcp__agent-governance-suite__get_skill_inventory");
   });
 });
