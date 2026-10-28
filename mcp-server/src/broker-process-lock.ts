@@ -16,6 +16,7 @@ const REOBSERVE_CODES = ["BROKER_LOCK_" + BROKER_LOCK_REASONS.EMPTY_DIRECTORY, "
 const code = (error: unknown) => (error as NodeJS.ErrnoException | null)?.code;
 const startHash = (token: string) => createHash("sha256").update(token).digest("hex");
 let ownStartHash: string | undefined;
+const verifiedStartHashes = new Map<number, string>();
 
 type BrokerLockReason = typeof BROKER_LOCK_REASONS[keyof typeof BROKER_LOCK_REASONS] | `PUBLISH_${string}`;
 function unavailable(reason: BrokerLockReason, cause?: unknown): never {
@@ -43,13 +44,19 @@ function definitelyGone(pid: number, expectedStartHash?: string, budget?: Proces
   remaining(budget);
   try { process.kill(pid, 0); }
   catch (error) {
-    if (code(error) === "ESRCH") return true;
+    if (code(error) === "ESRCH") { verifiedStartHashes.delete(pid); return true; }
     if (code(error) === "EPERM") return false;
     return unavailable(BROKER_LOCK_REASONS.OWNER_UNVERIFIED, error);
   }
   if (expectedStartHash === undefined) return false; // Legacy PID-only markers fail closed.
-  const actual = startToken(pid, budget);
-  return startHash(actual) !== expectedStartHash;
+  if (verifiedStartHashes.get(pid) === expectedStartHash) return false;
+  const actualHash = startHash(startToken(pid, budget));
+  if (actualHash === expectedStartHash) {
+    verifiedStartHashes.set(pid, actualHash);
+    return false;
+  }
+  verifiedStartHashes.delete(pid);
+  return true;
 }
 
 function retireObservedDeadOwner(lockPath: string, budget?: ProcessIdentityBudget): boolean {
@@ -96,9 +103,17 @@ function retireAbandonedStages(lockPath: string, budget?: ProcessIdentityBudget)
     // New stage names retain the witness even if the process dies before mkdir(marker).
     const namedOwner = entry.name.slice(prefix.length, -7);
     const namedMatch = /-[A-Za-z0-9]{6}$/u.test(entry.name) ? OWNER.exec(namedOwner) : null;
+    let namedVerifiedDead = false;
+    if (namedMatch?.[3]) {
+      const namedPid = Number(namedMatch[1]);
+      if (!Number.isSafeInteger(namedPid) || namedPid < 1) continue;
+      try { if (!definitelyGone(namedPid, namedMatch[3], budget)) continue; }
+      catch (error) { if (code(error) === "BROKER_LOCK_" + BROKER_LOCK_REASONS.OWNER_UNVERIFIED) continue; throw error; }
+      namedVerifiedDead = true;
+    }
     let children;
     try { children = readdirSync(stage, { withFileTypes: true }); }
-    catch (error) { if (code(error) === "ENOENT") continue; throw error; }
+    catch (error) { if (["ENOENT", "EPERM", "EACCES", "ENOTDIR"].includes(code(error) ?? "")) continue; throw error; }
     const marker = children.length === 1 ? children[0]! : null;
     const owner = marker?.name ?? (children.length === 0 && namedMatch?.[3] ? namedOwner : "");
     const match = OWNER.exec(owner);
@@ -106,13 +121,15 @@ function retireAbandonedStages(lockPath: string, budget?: ProcessIdentityBudget)
       || (namedMatch && owner !== namedOwner)) continue;
     const pid = Number(match[1]);
     if (!Number.isSafeInteger(pid) || pid < 1) continue;
-    try { if (!definitelyGone(pid, match[3], budget)) continue; }
-    catch (error) { if (code(error) === "BROKER_LOCK_" + BROKER_LOCK_REASONS.OWNER_UNVERIFIED) continue; throw error; }
+    if (!namedVerifiedDead) {
+      try { if (!definitelyGone(pid, match[3], budget)) continue; }
+      catch (error) { if (code(error) === "BROKER_LOCK_" + BROKER_LOCK_REASONS.OWNER_UNVERIFIED) continue; throw error; }
+    }
     try {
       if (marker) rmdirSync(path.join(stage, owner));
       rmdirSync(stage);
     } catch (error) {
-      if (!["ENOENT", "ENOTEMPTY", "EEXIST"].includes(code(error) ?? "")) throw error;
+      if (!["ENOENT", "ENOTEMPTY", "EEXIST", "EPERM", "EACCES", "EBUSY"].includes(code(error) ?? "")) throw error;
     }
   }
 }

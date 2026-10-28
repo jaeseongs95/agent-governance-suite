@@ -1,13 +1,15 @@
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const ports = vi.hoisted(() => ({
   lstatSync: vi.fn(), mkdirSync: vi.fn(), mkdtempSync: vi.fn(),
   readdirSync: vi.fn(), renameSync: vi.fn(), rmdirSync: vi.fn(), delay: vi.fn(),
+  processStartToken: vi.fn(() => "synthetic-process-birth"),
 }));
 vi.mock("node:fs", () => ports);
 vi.mock("node:timers/promises", () => ({ setTimeout: ports.delay }));
-vi.mock("../../mcp-server/src/process-identity.js", () => ({ processStartToken: () => "synthetic-process-birth" }));
+vi.mock("../../mcp-server/src/process-identity.js", () => ({ processStartToken: ports.processStartToken }));
 import { acquireBrokerProcessLock, acquireBrokerProcessLockWhenReady, ownsBrokerProcessLock, releaseBrokerProcessLock } from "../../mcp-server/src/broker-process-lock.js";
 
 type Kind = "directory" | "file" | "link";
@@ -83,6 +85,7 @@ beforeEach(() => {
   ports.renameSync.mockImplementation((source, target) => fs.rename(source, target));
   ports.rmdirSync.mockImplementation(target => fs.rmdir(target));
   ports.delay.mockResolvedValue(undefined);
+  ports.processStartToken.mockReturnValue("synthetic-process-birth");
   vi.spyOn(process, "kill").mockImplementation(pid => {
     if (pid === deadPid) throw error("ESRCH");
     return true;
@@ -403,4 +406,39 @@ it("bounds repeated publication failure and retains the final syscall cause", as
   expect(ports.renameSync).toHaveBeenCalledTimes(40);
   expect(ports.delay).toHaveBeenCalledTimes(19);
   expect([...fs.nodes]).toEqual([[root, "directory"]]);
+});
+
+it("AGS-D-0298: skips opening live contender stages and caches verified owner birth hashes", () => {
+  const livePid = 424242;
+  const liveBirth = "live-contender-birth";
+  const liveHash = createHash("sha256").update(liveBirth).digest("hex");
+  const liveOwner = `owner-${livePid}-${"a".repeat(32)}-${liveHash}`;
+  const liveStage = `${lockPath}.stage-${liveOwner}-abc123`;
+  fs.nodes.set(liveStage, "directory");
+  fs.nodes.set(path.join(liveStage, liveOwner), "directory");
+  fs.owner(liveOwner);
+  ports.processStartToken.mockImplementation((pid?: number) =>
+    pid === livePid ? liveBirth : "synthetic-process-birth",
+  );
+
+  expect(acquireBrokerProcessLock(lockPath)).toBeNull();
+  expect(fs.calls.some(call => call.op === "readdir" && call.target === liveStage)).toBe(false);
+  expect(ports.processStartToken.mock.calls.filter(call => call[0] === livePid)).toHaveLength(1);
+});
+
+it("AGS-D-0298: ignores transient EPERM/EACCES/EBUSY/ENOTDIR during abandoned stage retirement", () => {
+  const staleOwnerA = `owner-${deadPid}-${"a".repeat(32)}-${"0".repeat(64)}`;
+  const staleOwnerB = `owner-${deadPid}-${"b".repeat(32)}-${"0".repeat(64)}`;
+  const staleStageA = `${lockPath}.stage-${staleOwnerA}-abc123`;
+  const staleStageB = `${lockPath}.stage-${staleOwnerB}-def456`;
+  fs.nodes.set(staleStageA, "directory");
+  fs.nodes.set(staleStageB, "directory");
+  fs.before = (op, target) => {
+    if (op === "readdir" && target === staleStageA) throw error("EPERM");
+    if (op === "rmdir" && target === staleStageB) throw error("EBUSY");
+  };
+
+  const lease = acquireBrokerProcessLock(lockPath);
+  expect(lease).not.toBeNull();
+  expect(ownsBrokerProcessLock(lease!)).toBe(true);
 });
