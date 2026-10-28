@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { deserializeMessage, serializeMessage } from "@modelcontextprotocol/sdk/shared/stdio.js";
 import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import { describe, expect, it } from "vitest";
@@ -26,6 +27,7 @@ const combinators = ["oneOf", "anyOf", "allOf", "not", "if", "then", "else"];
 
 type ListedTool = { name: string; inputSchema: Record<string, unknown> };
 const proofFixtures = new WeakMap<Client, ReturnType<typeof createSyntheticRootProofFixture>>();
+type ProtocolTrace = Array<{direction: "client" | "server"; wire: string}>;
 
 function updateService(): PluginUpdateService {
   const store = new InMemoryPluginUpdateStore();
@@ -47,7 +49,7 @@ function updateService(): PluginUpdateService {
   return new PluginUpdateService(store);
 }
 
-async function connect(profile?: ToolSchemaProfile): Promise<Client> {
+async function connect(profile?: ToolSchemaProfile, trace?: ProtocolTrace): Promise<Client> {
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
   const root = createSyntheticRootProofFixture();
@@ -55,6 +57,17 @@ async function connect(profile?: ToolSchemaProfile): Promise<Client> {
   const client = new Client({ name: "tool-schema-profile", version: "1.0.0" });
   proofFixtures.set(client, root);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  if (trace) {
+    for (const [direction, transport] of [["client", clientTransport], ["server", serverTransport]] as const) {
+      const send = transport.send.bind(transport);
+      transport.send = async (message, options) => {
+        // Use the production stdio codec; this observes MCP bytes, not the host's model-input projection.
+        const wire = serializeMessage(message);
+        trace.push({direction, wire});
+        await send(deserializeMessage(wire), options);
+      };
+    }
+  }
   await server.connect(serverTransport);
   await client.connect(clientTransport);
   return client;
@@ -239,10 +252,22 @@ describe("MCP tool schema profiles", () => {
     for (const hostSpecific of [/Skill 도구/u, /\/agent-governance-suite:/u, /(?<![\w$])\$[a-z][a-z0-9-]*/u, /Claude/u, /Codex/u, /Anthropic/iu, /UserPromptSubmit/u]) {
       expect(expected).not.toMatch(hostSpecific);
     }
-    const implicit = await connect();
-    const codex = await connect("default");
-    const claude = await connect("anthropic");
+    const traces: ProtocolTrace[] = [[], [], []];
+    const implicit = await connect(undefined, traces[0]);
+    const codex = await connect("default", traces[1]);
+    const claude = await connect("anthropic", traces[2]);
     try {
+      for (const trace of traces) {
+        const requests = trace.filter(row => row.direction === "client").map(row => JSON.parse(row.wire));
+        const initialize = requests.find(row => row.method === "initialize");
+        expect(initialize).toBeDefined();
+        // Intake must arrive before discovery or selection of any AGS tool.
+        expect(requests.some(row => row.method === "tools/list" || row.method === "tools/call")).toBe(false);
+        const response = trace.filter(row => row.direction === "server").map(row => JSON.parse(row.wire))
+          .find(row => row.id === initialize.id && row.result);
+        expect(response?.result.instructions).toBe(expected);
+        expect(Object.keys(response.result)).toEqual(expect.arrayContaining(["protocolVersion", "capabilities", "serverInfo", "instructions"]));
+      }
       expect(implicit.getInstructions()).toBe(expected);
       expect(codex.getInstructions()).toBe(expected);
       expect(claude.getInstructions()).toBe(expected);
