@@ -568,8 +568,11 @@ test('AGS-D-0304 (a): claiming a message while its wake is reserved for retry st
   body(f.store, 'f8b4539a', f.now);
   const first = begin(f.store, f.now);
   assert.equal(f.store.recordManagedWakeOutcome(first, 'definite-failure', f.now + 2), true);
-  assert.equal(f.store.managedWakeStatus(target, f.now + 3).state, 'reserved');
-  assert.equal(f.store.autoWakeOutlook(target, f.now + 3).reason, 'wake-in-flight');
+  const retrying = f.store.managedWakeStatus(target, f.now + 3);
+  assert.equal(retrying.state, 'reserved');
+  const retryOutlook = f.store.autoWakeOutlook(target, f.now + 3);
+  assert.equal(retryOutlook.reason, 'retry-backoff');
+  assert.equal(retryOutlook.basisAt, retrying.retryNotBefore);
 
   const claimed = f.store.claim(target, f.now + 10);
   assert.equal(claimed.length, 1);

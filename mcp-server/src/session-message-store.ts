@@ -822,8 +822,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
     if (active) {
       const current = active.instance_id === presence.instanceId && active.birth_generation === presence.startedAt && active.transport === presence.transport;
-      return current && !this.wakeObservationOverdue(target, active, nowMs) ? outlook("available", "wake-in-flight", active.expires_at)
-        : outlook("latched", "wake-unobserved", active.expires_at);
+      if (!current || this.wakeObservationOverdue(target, active, nowMs)) return outlook("latched", "wake-unobserved", active.expires_at);
+      // A definite failure re-reserves the row with a retry deadline: nothing is in flight until that deadline.
+      return active.state === "reserved" && active.retry_not_before !== null && String(active.retry_not_before) > now
+        ? outlook("available", "retry-backoff", active.retry_not_before) : outlook("available", "wake-in-flight", active.expires_at);
     }
     const legacy = this.database.prepare(`SELECT expires_at FROM wake_nonces WHERE host = ? AND session_id = ?
       AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ? ORDER BY expires_at DESC LIMIT 1`).get(target.host, target.sessionId, now) as { expires_at: string } | undefined;
