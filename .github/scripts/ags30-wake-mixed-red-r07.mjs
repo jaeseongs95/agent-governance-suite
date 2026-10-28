@@ -7,7 +7,12 @@ const [source, output] = process.argv.slice(2);
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const file = path.join(source, 'mcp-server/src/session-message-store.ts');
 const original = await fs.readFile(file);
-assert.equal(hash(original), '8a4796f9e19f977e4275999f5743f1a4598436ab4bdaf847b66f7e4f2af5075e');
+const sourceDigest = hash(original);
+const expectedMutantDigest = new Map([
+  ['8a4796f9e19f977e4275999f5743f1a4598436ab4bdaf847b66f7e4f2af5075e', 'd10b11b83bd4191de245dd8a6a1b9329550d7541e93b859b92df2f18ceae6d2f'],
+  ['b9856206e10b039c5f5dfc9f16ff9144bcd00fe73c460a74ce1d88e6021e82c0', '82d2be89a6960dddf21027d8c71cb69125d132be43f9fbeb07efc1ae54c1aa3a'],
+]).get(sourceDigest);
+assert.ok(expectedMutantDigest, `UNKNOWN_WAKE_MIXED_RED_SOURCE:${sourceDigest}`);
 const baseline = Buffer.from(original.toString('utf8')
   .replace("// A proven, already consumed arrival may recur beside a new marker in a\n      // fresh receipt. It is inert history, never authority for another body.\n      const alreadyObserved = (row: Record<string, unknown>) => row.state === \"observed\"\n        && typeof row.observed_at === \"string\" && typeof row.consumed_at === \"string\"\n        && typeof row.nonce === \"string\" && row.nonce_digest === nonceDigest(row.nonce);\n      if (rows.some((row) => !row || (!alreadyObserved(row)\n        && ![\"legacy\", \"started\", \"submitted\", \"unknown\", \"expired-unobserved\"].includes(String(row.state))))) {", "if (rows.some((row) => !row || ![\"legacy\", \"started\", \"submitted\", \"unknown\", \"expired-unobserved\"].includes(String(row.state)))) {")
   .replace('      if (rows.every((row) => alreadyObserved(row!))) return rejected;\n', '')
@@ -15,7 +20,7 @@ const baseline = Buffer.from(original.toString('utf8')
     'const live = rows.filter((row) => row!.state !== "expired-unobserved");')
   .replace('if (live.length === 0) return rows.every((row) => row!.state === "expired-unobserved") ? { ...rejected, retired: true } : rejected;',
     'if (live.length === 0) {  return { ...rejected, retired: true }; }'));
-assert.equal(hash(baseline), 'd10b11b83bd4191de245dd8a6a1b9329550d7541e93b859b92df2f18ceae6d2f');
+assert.equal(hash(baseline), expectedMutantDigest);
 const name = 'fresh verified observed A plus current B receipt claims only B once and preserves A';
 const report = path.join(output, '07e-wake-mixed-red.vitest.json');
 let result;
