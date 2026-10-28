@@ -467,7 +467,14 @@ test.each(['prestarted', 'client-ensure'])('packaged CLI binds history to explic
       try { process.kill(endpoint.pid); } catch { /* Already exited. */ }
       await closed;
       let alive = true;
-      try { process.kill(endpoint.pid, 0); } catch { alive = false; }
+      while (alive) {
+        try {
+          process.kill(endpoint.pid, 0);
+          await new Promise(resolve => setTimeout(resolve, 10));
+        } catch {
+          alive = false;
+        }
+      }
       assert.equal(alive, false);
     }
   }
