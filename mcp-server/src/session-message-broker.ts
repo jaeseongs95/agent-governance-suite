@@ -15,6 +15,7 @@ import type { InputObservation, InputObservationKind } from "./input-observation
 import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
 import { processStartToken, processStartTokenAsync, type ProcessIdentityBudget, type ProcessIdentityFailureObserver } from "./process-identity.js";
+import { readRelayCodeDigest, relayCodeDigest } from "./relay-code-identity.js";
 import { decodeIdentityDeadline, remainingIdentityBudget } from "./broker-identity-budget.js";
 import { producerFailureReason, retainFailureCause } from "./failure-diagnostics.js";
 import { acquireBrokerProcessLockWhenReady, ownsBrokerProcessLock, releaseBrokerProcessLock } from "./broker-process-lock.js";
@@ -290,11 +291,12 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
       if (reserved && relayStartToken === null) return deniedIdentity(relay!);
       remainingIdentityBudget(requestBudget);
       const acquired = reserved ? store.activateVerifiedRelay({...target,transport:string(payload.transport,"transport"),relayId,
-        pid,relayStartToken,parentPid,instanceId:string(payload.instanceId,"instanceId")}) : store.acquireRelay({
+        pid,relayStartToken,parentPid,instanceId:string(payload.instanceId,"instanceId"),codeDigest:relayCodeDigest(payload.codeDigest) ?? null}) : store.acquireRelay({
         ...target,
         transport: string(payload.transport, "transport"),
         relayId: string(payload.relayId, "relayId"),
         pid,
+        codeDigest: relayCodeDigest(payload.codeDigest) ?? null,
         parentPid: integer(payload.parentPid, "parentPid"),
       });
       observePeerRelay(store, payload, acquired);
@@ -489,7 +491,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         }
         targets = payload.targets.map(identity);
       }
-      const result = { sessions: store.listPresence(Date.now(), targets) };
+      const result = { sessions: store.listPresence(Date.now(), targets, readRelayCodeDigest(new URL("./session-message-relay.mjs", import.meta.url))) };
       // Refuse explicitly rather than send a reply the client would drop; the untargeted request can grow with the DB.
       if (Buffer.byteLength(`${JSON.stringify({ ok: true, data: result })}\n`, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
         throw new Error("The presence list exceeds the broker response limit; request fewer targets.");

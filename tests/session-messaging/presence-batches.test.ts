@@ -35,6 +35,7 @@ it("keeps successful batches when the broker refuses one batch and reports only 
   expect(result.data!.sessions.map((session) => session.sessionId)).toEqual(["a", "b", "c", "g"]);
   expect(result.data!.unanswered).toEqual([target("fail"), target("e"), target("f")]);
   expect(request).toHaveBeenCalledTimes(3);
+  expect(result.data!.sessions[0]!.relayCode).toEqual({status: "unknown", runningDigest: null, expectedDigest: null});
 });
 
 it("never asks the broker for identities outside its identifier pattern", async () => {

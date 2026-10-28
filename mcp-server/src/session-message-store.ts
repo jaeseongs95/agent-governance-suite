@@ -1,3 +1,4 @@
+import { relayCodeDigest } from "./relay-code-identity.js";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
@@ -85,7 +86,11 @@ export interface SessionPresence {
 }
 
 /** Board and service view; autoWake is absent or null only when a previous broker did not report it. */
-export type SessionPresenceView = SessionPresence & { autoWake?: SessionAutoWakeOutlookV1 | null };
+export type SessionPresenceView = SessionPresence & {
+  autoWake?: SessionAutoWakeOutlookV1 | null;
+  /** Advisory entry-file identity; absent on older brokers, never proof of runtime replacement. */
+  relayCode?: { status: "current" | "outdated" | "unknown"; runningDigest: string | null; expectedDigest: string | null };
+};
 
 function iso(milliseconds: number): string {
   return new Date(milliseconds).toISOString();
@@ -201,6 +206,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       pid INTEGER NOT NULL,
       parent_pid INTEGER NOT NULL,
       relay_start_token TEXT,
+      relay_code_digest TEXT,
+      relay_code_id TEXT,
       lease_until TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       PRIMARY KEY (host, session_id, transport)
@@ -255,6 +262,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       const relayColumns = this.database.prepare("PRAGMA table_info(relay_leases)").all() as Array<{ name: string }>;
       if (!relayColumns.some((column) => column.name === "relay_start_token")) {
         this.database.exec("ALTER TABLE relay_leases ADD COLUMN relay_start_token TEXT;");
+      }
+      for (const column of ["relay_code_digest", "relay_code_id"]) {
+        if (!relayColumns.some((entry) => entry.name === column)) this.database.exec(`ALTER TABLE relay_leases ADD COLUMN ${column} TEXT;`);
       }
       if (!messageColumns.some((column) => column.name === "delivery_attempts")) {
         this.database.exec("ALTER TABLE messages ADD COLUMN delivery_attempts INTEGER NOT NULL DEFAULT 0;");
@@ -880,16 +890,17 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       }
       const relayId = "verified-relay-v1:" + randomUUID() + ":" + input.instanceId.slice("host-process-v1:".length);
       this.startPresence(input,nowMs);
-      this.database.prepare("INSERT INTO relay_leases(host,session_id,transport,relay_id,pid,parent_pid,lease_until,updated_at) VALUES(?,?,?,?,0,?,'9999-12-31T23:59:59.999Z',?) ON CONFLICT(host,session_id,transport) DO UPDATE SET relay_id=excluded.relay_id,pid=0,parent_pid=excluded.parent_pid,relay_start_token=NULL,lease_until=excluded.lease_until,updated_at=excluded.updated_at")
+      this.database.prepare("INSERT INTO relay_leases(host,session_id,transport,relay_id,pid,parent_pid,lease_until,updated_at) VALUES(?,?,?,?,0,?,'9999-12-31T23:59:59.999Z',?) ON CONFLICT(host,session_id,transport) DO UPDATE SET relay_id=excluded.relay_id,pid=0,parent_pid=excluded.parent_pid,relay_start_token=NULL,relay_code_digest=NULL,relay_code_id=NULL,lease_until=excluded.lease_until,updated_at=excluded.updated_at")
         .run(input.host,input.sessionId,input.transport,relayId,input.parentPid,iso(nowMs));
       return {spawn:true,relayId,instanceId:input.instanceId};
     });
   }
 
-  activateVerifiedRelay(input: SessionIdentity & {transport: string; relayId: string; instanceId: string; pid: number; parentPid: number; relayStartToken?: string | null}, nowMs = Date.now()): boolean {
+  activateVerifiedRelay(input: SessionIdentity & {transport: string; relayId: string; instanceId: string; pid: number; parentPid: number; relayStartToken?: string | null; codeDigest?: string | null}, nowMs = Date.now()): boolean {
     boundedIdentity(input);
     if (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(input.relayId) || !Number.isInteger(input.pid) || input.pid < 1 || !Number.isInteger(input.parentPid) || input.parentPid < 1) throw new Error("Invalid verified relay activation.");
     if (!/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId) || !input.relayId.endsWith(":"+input.instanceId.slice("host-process-v1:".length))) return false;
+    relayCodeDigest(input.codeDigest);
     const relayStartToken = input.relayStartToken ?? null;
     if (relayStartToken !== null && (typeof relayStartToken !== "string" || !relayStartToken.trim() || relayStartToken.length > 200 || relayStartToken.includes("\0"))) throw new Error("Invalid relay process token.");
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.activateVerifiedRelay(input,nowMs));
@@ -897,8 +908,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return this.transaction(() => {
       const presence = this.presence(input,nowMs);
       if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport) return false;
-      return this.database.prepare("UPDATE relay_leases SET pid=?,relay_start_token=?,lease_until=?,updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND parent_pid=? AND (pid=0 OR (pid=? AND relay_start_token IS ?))")
-        .run(input.pid,relayStartToken,iso(nowMs+RELAY_LEASE_MS),iso(nowMs),input.host,input.sessionId,input.transport,input.relayId,input.parentPid,input.pid,relayStartToken).changes === 1;
+      return this.database.prepare("UPDATE relay_leases SET relay_code_digest=CASE WHEN pid=0 THEN ? WHEN relay_code_id=relay_id || ':' || pid THEN relay_code_digest ELSE NULL END,relay_code_id=relay_id || ':' || ?,pid=?,relay_start_token=?,lease_until=?,updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND parent_pid=? AND (pid=0 OR (pid=? AND relay_start_token IS ?))")
+        .run(input.codeDigest ?? null,input.pid,input.pid,relayStartToken,iso(nowMs+RELAY_LEASE_MS),iso(nowMs),input.host,input.sessionId,input.transport,input.relayId,input.parentPid,input.pid,relayStartToken).changes === 1;
     });
   }
 
@@ -918,8 +929,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  acquireRelay(input: SessionIdentity & { transport: string; relayId: string; pid: number; parentPid: number }, nowMs = Date.now()): boolean {
+  acquireRelay(input: SessionIdentity & { transport: string; relayId: string; pid: number; parentPid: number; codeDigest?: string | null }, nowMs = Date.now()): boolean {
     boundedIdentity(input);
+    relayCodeDigest(input.codeDigest);
     if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128) throw new Error("Invalid relay identity.");
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acquireRelay(input, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
@@ -927,15 +939,17 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     const now = iso(nowMs);
     const until = iso(nowMs + RELAY_LEASE_MS);
     const result = this.database.prepare(`INSERT INTO relay_leases
-      (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at,relay_code_digest,relay_code_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT (host, session_id, transport) DO UPDATE SET
+        relay_code_digest=CASE WHEN relay_leases.relay_id=excluded.relay_id AND relay_leases.relay_code_id=relay_leases.relay_id || ':' || relay_leases.pid AND relay_leases.pid=excluded.pid THEN relay_leases.relay_code_digest ELSE excluded.relay_code_digest END,
+        relay_code_id=excluded.relay_code_id,
         relay_id = excluded.relay_id, pid = excluded.pid, parent_pid = excluded.parent_pid,
         lease_until = excluded.lease_until, updated_at = excluded.updated_at
       WHERE relay_leases.relay_id NOT LIKE 'verified-relay-v1:%' AND (
         relay_leases.lease_until <= excluded.updated_at
         OR relay_leases.relay_id = excluded.relay_id)`)
-      .run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now);
+      .run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now, input.codeDigest ?? null,`${input.relayId}:${input.pid}`);
     return result.changes === 1;
   }
 
@@ -1410,14 +1424,24 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   /** Without targets every stored identity is listed (the pre-2.7.4 request); callers bound the batch themselves. */
-  listPresence(nowMs = Date.now(), targets?: SessionIdentity[]): SessionPresenceView[] {
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.listPresence(nowMs, targets));
+  listPresence(nowMs = Date.now(), targets?: SessionIdentity[], expectedCodeDigest: string | null = null): SessionPresenceView[] {
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.listPresence(nowMs, targets, expectedCodeDigest));
     if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
     const identities = targets ?? (this.database.prepare(`SELECT host, session_id FROM session_presence
       GROUP BY host, session_id ORDER BY host, session_id`).all() as Array<{ host: string; session_id: string }>)
       .map((row) => ({ host: row.host, sessionId: row.session_id }));
-    return identities.map((target) => ({ ...this.presence(target, nowMs), autoWake: this.autoWakeOutlook(target, nowMs) }));
+    relayCodeDigest(expectedCodeDigest);
+    return identities.map((target) => {
+      const presence = this.presence(target, nowMs);
+      const row = this.database.prepare("SELECT relay_id,pid,relay_code_id,relay_code_digest FROM relay_leases WHERE host=? AND session_id=? AND transport=?")
+        .get(target.host,target.sessionId,presence.transport ?? "") as {relay_id: string; pid: number; relay_code_id: string | null; relay_code_digest: string | null} | undefined;
+      // Old brokers may replace a lease without clearing new columns. Never adopt another owner's digest.
+      const bound = row && `${row.relay_id}:${row.pid}` === row.relay_code_id;
+      const runningDigest = bound ? row.relay_code_digest : null;
+      const status = !runningDigest || !expectedCodeDigest ? "unknown" : runningDigest === expectedCodeDigest ? "current" : "outdated";
+      return { ...presence, autoWake: this.autoWakeOutlook(target, nowMs), relayCode: {status,runningDigest,expectedDigest:expectedCodeDigest} };
+    });
   }
   private transaction<T>(operation: () => T): T {
     if (this.shared) return this.shared.transaction(operation);

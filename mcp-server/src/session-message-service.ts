@@ -122,6 +122,7 @@ export class SessionMessageService {
           ...session,
           deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
           autoWake: session.autoWake ?? null,
+          relayCode: session.relayCode ?? {status: "unknown", runningDigest: null, expectedDigest: null},
         })));
       } catch (error) {
         // A refusal answers this batch only. Any other failure means the broker is not answering: asking the rest would

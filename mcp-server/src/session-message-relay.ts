@@ -1,3 +1,4 @@
+import { readRelayCodeDigest } from "./relay-code-identity.js";
 import { randomUUID } from "node:crypto";
 
 import { failureContext, producerFailureReason } from "./failure-diagnostics.js";
@@ -8,6 +9,8 @@ import type { WakeReservation } from "./session-message-store.js";
 export { transportDeliveryCapabilities, wakeBackoffDelay, codexWakeOutcome, claudeWakeOutcome, geminiWakeOutcome, ringClaude,
   type WakeDispatchOutcome } from "./session-message-wake-port.js";
 
+// Capture once: later file replacement must not make this running relay report new code.
+const STARTUP_CODE_DIGEST = readRelayCodeDigest(new URL(import.meta.url));
 const LOOP_MS = 5000;
 const IDENTITY_RECHECK_MS = 10 * 60_000;
 const IDENTITY_RETRY_MS = 60_000;
@@ -124,6 +127,7 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
           transport: options.transport,
           relayId,
           pid: process.pid,
+          codeDigest: STARTUP_CODE_DIGEST,
           parentPid: options.parentPid,
           instanceId: options.instanceId,
           ...(options.relayId ? {parentStartToken:options.parentStartToken}:{}),
