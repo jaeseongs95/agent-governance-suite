@@ -955,7 +955,7 @@ export async function resolveEvaluationLayout(
 function legacyLayout(legacyBase: string, run: number): EvaluationRunLayout {
   const runDirectory = path.join(legacyBase, `run-${run}`);
   return {
-    cycleDirectory: null,
+    cycleDirectory: legacyBase,
     runDirectory,
     inputPath: path.join(legacyBase, "input.jsonl"),
     manifestPath: path.join(legacyBase, "manifest.json"),

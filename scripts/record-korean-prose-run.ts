@@ -57,7 +57,7 @@ if (layout.structured) {
   );
   if (run > structuredReadiness.runBudget) throw new Error(`run ${run} exceeds the frozen run budget ${structuredReadiness.runBudget}`);
 } else {
-  await preflightKoreanProseEvaluation("record", run, evaluationRoot);
+  await preflightKoreanProseEvaluation("record", run, evaluationRoot, cycleDirectory ? layout.cycleDirectory : null);
 }
 
 const [inputText, selectionText, editingText, verificationText, finalText, metricsText, manifestText, selectionMetaText, editingMetaText, verificationMetaText] = await Promise.all([

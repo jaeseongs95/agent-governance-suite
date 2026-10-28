@@ -14,6 +14,7 @@ import {
   type EvaluationRecordBinding,
 } from "../mcp-server/src/evaluation-preflight.js";
 import {
+  assertInside,
   evaluateKoreanProseReadiness,
   digestCanonical,
   exists,
@@ -205,9 +206,18 @@ export async function preflightKoreanProseEvaluation(
   phase: KoreanProseEvaluationPhase,
   run: number,
   evaluationRoot: string,
+  runsRootDirectory?: string | null,
 ): Promise<EvaluationPreflightResult> {
   const root = path.resolve(evaluationRoot);
-  const runsRoot = path.join(root, "evals", "runs");
+  let runsRoot = path.join(root, "evals", "runs");
+  if (runsRootDirectory) {
+    const [resolvedRoot, resolvedRuns] = await Promise.all([
+      realpath(root),
+      realpath(path.isAbsolute(runsRootDirectory) ? path.resolve(runsRootDirectory) : path.resolve(root, runsRootDirectory)),
+    ]);
+    assertInside(resolvedRoot, resolvedRuns, "cycle directory must be inside the evaluation root");
+    runsRoot = resolvedRuns;
+  }
   const runDirectory = path.join(runsRoot, `run-${run}`);
   const manifest = asManifest(await readJson(path.join(runsRoot, "manifest.json")));
   const inputText = await readFile(path.join(runsRoot, "input.jsonl"), "utf8");

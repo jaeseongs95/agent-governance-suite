@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -7,8 +8,14 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   preflightKoreanProseEvaluation,
 } from "../../scripts/korean-prose-evaluation-preflight.js";
+import { resolveEvaluationLayout } from "../../scripts/korean-prose-readiness.js";
 
 const temporaryDirectories: string[] = [];
+const repositoryRoot = path.resolve(import.meta.dirname, "../..");
+const recorderPath = path.resolve(import.meta.dirname, "../../scripts/record-korean-prose-run.ts");
+const selectorActor = "30000000-0000-4000-8000-000000000001";
+const editorActor = "30000000-0000-4000-8000-000000000002";
+const verifierActor = "30000000-0000-4000-8000-000000000003";
 
 afterEach(async () => {
   await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
@@ -70,7 +77,7 @@ describe("Korean prose evaluation preflight", () => {
     const rubric = "# Frozen rubric\n";
     await writeJson(metaPath, {
       role: "verification",
-      actorId: "editor-actor",
+      actorId: editorActor,
       caseCount: 2,
       verificationInputSha256: sha256(verificationInput),
       rubricSha256: sha256(rubric),
@@ -80,12 +87,72 @@ describe("Korean prose evaluation preflight", () => {
       code: "ACTOR_REUSE",
     });
   });
+
+  it("preflights and records an explicit legacy cycle directory instead of default evals/runs (AGS-D-0126)", async () => {
+    const root = await createFrozenRun("evals/custom-legacy");
+    const layout = await resolveEvaluationLayout(root, 1, "evals/custom-legacy");
+    expect(layout.structured).toBe(false);
+    expect(layout.cycleDirectory).toBe(path.join(root, "evals", "custom-legacy"));
+
+    const recorded = spawnSync(
+      process.execPath,
+      ["--import", "tsx", recorderPath, "1", root, "--cycle-dir", "evals/custom-legacy"],
+      { cwd: repositoryRoot, encoding: "utf8" },
+    );
+    expect(recorded.status, recorded.stderr).toBe(0);
+    await expect(
+      readFile(path.join(root, "evals", "custom-legacy", "run-1", "workflow-receipt.json"), "utf8"),
+    ).resolves.toContain("korean-prose-evaluation-run-1");
+
+    const mixedRoot = await createFrozenRun("evals/runs");
+    await populateFrozenRunAt(mixedRoot, "evals/bad-legacy");
+    const tamperedVerificationInput = [
+      JSON.stringify({ id: "case-1", sourceText: "변조된 원문", candidateText: "수정 하나" }),
+      JSON.stringify({ id: "case-2", sourceText: "원문 둘", candidateText: "원문 둘" }),
+    ].join("\n");
+    await writeFile(
+      path.join(mixedRoot, "evals", "bad-legacy", "run-1", "verification-input.jsonl"),
+      tamperedVerificationInput,
+      "utf8",
+    );
+    await writeJson(path.join(mixedRoot, "evals", "bad-legacy", "run-1", "verification-input-meta.json"), {
+      run: 1,
+      caseCount: 2,
+      sha256: sha256(tamperedVerificationInput),
+      containsExpectedDecision: false,
+      containsEditorRationale: false,
+      status: "frozen",
+    });
+    await writeJson(path.join(mixedRoot, "evals", "bad-legacy", "run-1", "verification-meta.json"), {
+      role: "verification",
+      actorId: verifierActor,
+      caseCount: 2,
+      verificationInputSha256: sha256(tamperedVerificationInput),
+      rubricSha256: sha256("# Frozen rubric\n"),
+    });
+
+    await expect(preflightKoreanProseEvaluation("record", 1, mixedRoot, "evals/bad-legacy")).rejects.toMatchObject({
+      code: "ARTIFACT_BINDING_MISMATCH",
+    });
+    const rejected = spawnSync(
+      process.execPath,
+      ["--import", "tsx", recorderPath, "1", mixedRoot, "--cycle-dir", "evals/bad-legacy"],
+      { cwd: repositoryRoot, encoding: "utf8" },
+    );
+    expect(rejected.status).not.toBe(0);
+    expect(rejected.stderr).toContain("ARTIFACT_BINDING_MISMATCH");
+  });
 });
 
-async function createFrozenRun(): Promise<string> {
+async function createFrozenRun(relativeRunsRoot = path.join("evals", "runs")): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), "korean-prose-preflight-"));
   temporaryDirectories.push(root);
-  const runsRoot = path.join(root, "evals", "runs");
+  await populateFrozenRunAt(root, relativeRunsRoot);
+  return root;
+}
+
+async function populateFrozenRunAt(root: string, relativeRunsRoot: string): Promise<void> {
+  const runsRoot = path.join(root, relativeRunsRoot);
   const runDirectory = path.join(runsRoot, "run-1");
   const references = path.join(root, "skills", "korean-prose-editor", "references");
   await Promise.all([
@@ -98,17 +165,17 @@ async function createFrozenRun(): Promise<string> {
     JSON.stringify({ id: "case-2", sourceText: "원문 둘" }),
   ].join("\n");
   const selection = [
-    JSON.stringify({ id: "case-1", actorId: "selector-actor", action: "edit" }),
-    JSON.stringify({ id: "case-2", actorId: "selector-actor", action: "retain" }),
+    JSON.stringify({ id: "case-1", actorId: selectorActor, action: "edit" }),
+    JSON.stringify({ id: "case-2", actorId: selectorActor, action: "retain" }),
   ].join("\n");
   const candidate = [
-    JSON.stringify({ id: "case-1", actorId: "editor-actor", candidateText: "수정 하나" }),
-    JSON.stringify({ id: "case-2", actorId: "editor-actor", candidateText: "원문 둘" }),
+    JSON.stringify({ id: "case-1", actorId: editorActor, candidateText: "수정 하나" }),
+    JSON.stringify({ id: "case-2", actorId: editorActor, candidateText: "원문 둘" }),
   ].join("\n");
   const verificationInput = await frozenVerificationInput();
   const verification = [
-    JSON.stringify({ id: "case-1", actorId: "verifier-actor", finalDecision: "accept" }),
-    JSON.stringify({ id: "case-2", actorId: "verifier-actor", finalDecision: "retain" }),
+    JSON.stringify({ id: "case-1", actorId: verifierActor, finalDecision: "accept" }),
+    JSON.stringify({ id: "case-2", actorId: verifierActor, finalDecision: "retain" }),
   ].join("\n");
   const final = [
     JSON.stringify({ id: "case-1", finalText: "수정 하나", finalAction: "edit" }),
@@ -127,7 +194,7 @@ async function createFrozenRun(): Promise<string> {
     writeJson(path.join(runDirectory, "selection-meta.json"), {
       run: 1,
       role: "selection",
-      actorId: "selector-actor",
+      actorId: selectorActor,
       caseCount: 2,
       inputSha256: sha256(input),
       status: "complete",
@@ -136,8 +203,8 @@ async function createFrozenRun(): Promise<string> {
     writeJson(path.join(runDirectory, "editing-meta.json"), {
       run: 1,
       role: "editing",
-      actorId: "editor-actor",
-      selectorActorId: "selector-actor",
+      actorId: editorActor,
+      selectorActorId: selectorActor,
       caseCount: 2,
       inputSha256: sha256(input),
       status: "complete",
@@ -154,15 +221,22 @@ async function createFrozenRun(): Promise<string> {
     writeFile(path.join(runDirectory, "verification.jsonl"), verification, "utf8"),
     writeJson(path.join(runDirectory, "verification-meta.json"), {
       role: "verification",
-      actorId: "verifier-actor",
+      actorId: verifierActor,
       caseCount: 2,
       verificationInputSha256: sha256(verificationInput),
       rubricSha256: sha256(rubric),
     }),
     writeFile(path.join(runDirectory, "final.jsonl"), final, "utf8"),
+    writeJson(path.join(runDirectory, "metrics.json"), {
+      actorIds: [selectorActor, editorActor, verifierActor],
+      counts: {
+        selection: { edit: 1, retain: 1 },
+        final: { edit: 1, retain: 1 },
+        restored: 0,
+      },
+    }),
     writeFile(path.join(references, "verification-rubric.md"), rubric, "utf8"),
   ]);
-  return root;
 }
 
 async function frozenVerificationInput(): Promise<string> {
