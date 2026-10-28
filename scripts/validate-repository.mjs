@@ -2,6 +2,7 @@ import { access, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import { ROOT, readJson, walkFiles } from "./lib.mjs";
+import { renderAntigravitySkillAdaptations } from "./build-claude-plugin.mjs";
 import { SEMVER, syncReleaseMetadata } from "./release-metadata.mjs";
 import { verifySourceLockOffline } from "./source-lock.mjs";
 import { validateSkill } from "./validate-skill.mjs";
@@ -88,6 +89,11 @@ if (errors.length === 0) {
     typeof antigravityHooks.hooks !== "undefined"
   ) {
     errors.push("root hooks.json must declare Antigravity named hook groups (ags-session-lifecycle, ags-tool-boundary)");
+  }
+  try {
+    await renderAntigravitySkillAdaptations(ROOT);
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : String(error));
   }
   const pluginInfoSource = await readFile(path.join(ROOT, "mcp-server", "src", "plugin-info.ts"), "utf8");
   if (!pluginInfoSource.includes(`id: "${plugin.name}"`) || !pluginInfoSource.includes(`version: "${plugin.version}"`)) {

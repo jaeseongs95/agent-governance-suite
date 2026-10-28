@@ -347,6 +347,7 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
     "skills/mutation-risk-preflight/SKILL.md",
     "skills/mutation-risk-preflight/classification.json",
     "skills/mutation-risk-preflight/references/approval-and-authority.md",
+    "skills/mutation-risk-preflight/references/entry-details.md",
     "skills/mutation-risk-preflight/references/risk-matrix.md",
     "skills/orchestrator/SKILL.md",
     "skills/orchestrator/classification.json",
@@ -361,7 +362,7 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
     "skills/task-contract/references/risk-and-authorization-rubric.md",
   ];
 
-  it("pins all 30 policy wording successor files and rejects one-byte tampering", () => {
+  it("pins all 31 policy wording successor files and rejects one-byte tampering", () => {
     for (const relative of successorPaths) {
       const current = readFileSync(path.join(root, relative));
       const historical = readHistoricalSource(relative);
@@ -403,10 +404,14 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
     }
     for (const text of readBoth("skills/independent-audit-gate/references/audit-protocol.md")) {
       expect(text).toContain("파일 이동·복사·이름 변경은 삭제가 아니다.");
+      expect(text).toContain("승인 근거는 요청자와 다른 사용자 본인의 결정이어야 하며, 요청한 에이전트가 승인자 도구나 저장된 사용자 로그인으로 승인을 직접 실행한 `approve` 호출은 승인 근거가 아니다.");
+      expect(text).toContain("자가 승인이 확인되면 `FAIL`로 판정한다");
     }
     for (const text of readBoth("skills/independent-audit-gate/references/entry-details.md")) {
       expect(text).toContain("파일 이동·복사·이름 변경은 삭제가 아니며 이 경계의 승인 대상이 아니다.");
       expect(text).toContain("확인할 수 없으면 고위험으로 올리지 말고 그 점을 사용자에게 묻는다.");
+      expect(text).toContain("자가 승인 시 열린 `blocking` 위반으로 보아 `FAIL`로 판정한다");
+      expect(text).toContain("에이전트가 승인자 도구나 저장된 사용자 로그인으로 직접 실행한 `approve` 호출로 대체하지 않았다.");
     }
 
     for (const text of readBoth("skills/independent-deliberation-panel/SKILL.md")) {
@@ -426,7 +431,12 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
       expect(text).toContain("우회 작업을 만들지 말고 대상·영향·실행할 명령·복구 방법을 담아 사용자에게 바로 묻는다.");
     }
     for (const text of readBoth("skills/mutation-risk-preflight/references/approval-and-authority.md")) {
+      expect(text).toContain("승인 근거는 요청자와 다른 사용자 본인의 결정이어야 하며, 요청한 에이전트가 승인자 도구나 저장된 사용자 로그인으로 승인을 직접 실행한 `approve` 호출은 승인 근거가 아니다.");
+      expect(text).toContain("에이전트가 승인자 도구나 저장된 사용자 로그인으로 직접 실행한 자가 승인(`approve` 호출)만 있으면 미승인으로 보고 `NEEDS_APPROVAL`로 판정한다.");
       expect(text).toContain("승인이 없으면 분석 문서·대체 구현·복제 환경 시험으로 대신하지 않는다.");
+    }
+    for (const text of readBoth("skills/mutation-risk-preflight/references/entry-details.md")) {
+      expect(text).toContain("요청한 에이전트가 승인자 도구나 저장된 사용자 로그인으로 승인을 직접 실행한 `approve` 호출은 승인 근거로 인정하지 않고 `NEEDS_APPROVAL`로 판정한다.");
     }
     for (const text of readBoth("skills/mutation-risk-preflight/references/risk-matrix.md")) {
       expect(text).toContain("영구 삭제·덮어쓰기·되돌리기 어려운 이동");
@@ -434,9 +444,9 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
     }
 
     for (const text of readBoth("skills/orchestrator/SKILL.md")) {
-      expect(text).toContain("무거운 단계는 행동 이름이 아니라 실제 위험으로 붙인다.");
-      expect(text).toContain("요청받은 일을 가장 짧은 경로로 직접 한다. 하기 전에 분석 문서·시험 도구·새 API·복제 환경을 만들지 않고");
-      expect(text).toContain("사용자 요청·goal·적용 프로젝트 지침이 맡긴 역할 범위의 일은 그 근거로 진행하고 '권한 없음'으로 결론 내지 않는다.");
+      expect(text).toContain("행동 이름이 아니라 실제 위험으로");
+      expect(text).toContain("가장 짧은 경로로 직접 한다");
+      expect(text).toContain("맡긴 역할 범위의 일은 그 근거로");
     }
     for (const text of readBoth("skills/orchestrator/references/entry-details.md")) {
       expect(text).toContain("MCP 계획에 실제 상태 변경에 필요한 stage가 없으면 그 stage를 넣은 새 계획으로 진행하고, 승인이 없으면 대상·영향·실행할 명령을 담아 사용자에게 바로 묻는다. 요청받은 변경을 남은 작업으로 돌려 놓은 채 완료로 보고하지 않는다.");

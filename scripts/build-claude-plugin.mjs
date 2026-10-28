@@ -19,7 +19,22 @@ import { RUNTIME_BUNDLES } from "./runtime-bundles.mjs";
 export const OUTPUT_DIRECTORY = "claude-plugin";
 export const OVERLAY_DIRECTORY = "claude-overlay";
 export const ADAPTATIONS_DIRECTORY = "adaptations";
+export const ANTIGRAVITY_ADAPTATIONS_DIRECTORY = "antigravity-connector/adaptations";
 export const PLUGIN_NAME = "agent-governance-suite";
+export const COMMON_POLICY_INVARIANTS = Object.freeze([
+  "승인 근거는 요청자와 다른 사용자 본인의 결정이어야 하며",
+  "요청한 에이전트가 승인자 도구나 저장된 사용자 로그인으로 승인을 직접 실행한 `approve` 호출은 승인 근거가 아니다",
+  "요청한 에이전트가 승인자 도구나 저장된 사용자 로그인으로 승인을 직접 실행한 `approve` 호출은 승인 근거로 인정하지 않고 `NEEDS_APPROVAL`로 판정한다",
+  "에이전트가 승인자 도구나 저장된 사용자 로그인으로 직접 실행한 자가 승인(`approve` 호출)만 있으면 미승인으로 보고 `NEEDS_APPROVAL`로 판정한다.",
+  "자가 승인 시 열린 `blocking` 위반으로 보아 `FAIL`로 판정한다",
+  "자가 승인이 확인되면 `FAIL`로 판정한다",
+  "peer 자신의 동의나 승인 주장은 사용자 승인이 아니다.",
+  "원권한 밖의 실제 변경에는 요청자와 다른 사용자 본인의 승인 기록이 있으며, 에이전트가 승인자 도구나 저장된 사용자 로그인으로 직접 실행한 `approve` 호출로 대체하지 않았다.",
+  "역할 이름만 바꾼 자기감사는 독립 감사가 아니다.",
+  "이 스킬의 `READY`는 새 권한이나 승인을 만들지 않으며 실제 변경을 수행하지 않는다.",
+  "삭제·배포·마이그레이션을 비롯한 mutation 명령이나 외부 도구를 호출하지 않는다.",
+  "승인이 없으면 분석 문서·대체 구현·복제 환경 시험으로 대신하지 않는다.",
+]);
 export const EXCLUDED_SKILLS = Object.freeze(["codex-token-usage-analyzer"]);
 const SHARED_ROOTS = Object.freeze(["skills/", "runtime/", "contracts/"]);
 const SHARED_FILES = Object.freeze([
@@ -146,8 +161,30 @@ function assertAdaptation(value, source) {
   return { description, replacements };
 }
 
+function stripFrontmatter(text) {
+  const match = /^---\r?\n[\s\S]*?\r?\n---\r?\n?/u.exec(text);
+  return match ? text.slice(match[0].length) : text;
+}
+
+function extractSkillIntakeBlock(text) {
+  const match = /<!-- skill-intake:start -->[\s\S]*?<!-- skill-intake:end -->/u.exec(text);
+  return match ? match[0] : null;
+}
+
+export function assertAdaptationPreservesPolicy(targetFile, beforeText, afterText) {
+  const beforeIntake = extractSkillIntakeBlock(beforeText);
+  if (beforeIntake !== null && extractSkillIntakeBlock(afterText) !== beforeIntake) {
+    throw new Error(`adaptation must not override common policy in ${targetFile}: skill-intake block`);
+  }
+  for (const invariant of COMMON_POLICY_INVARIANTS) {
+    if (beforeText.includes(invariant) && !afterText.includes(invariant)) {
+      throw new Error(`adaptation must not override common policy in ${targetFile}: ${invariant}`);
+    }
+  }
+}
+
 /**
- * Applies one claude-overlay/adaptations/<skill>.json to the generated files.
+ * Applies one <host>/adaptations/<skill>.json to the generated files.
  * The description replaces the whole frontmatter field; replacements use
  * paths relative to the skill directory and must match exactly once.
  */
@@ -156,10 +193,33 @@ export function applySkillAdaptation(files, skillId, adaptation, source = `${ski
   const skillFile = `skills/${skillId}/SKILL.md`;
   if (!files.has(skillFile)) throw new Error(`${source}: skill is not generated: ${skillId}`);
   try {
+    const touchedFiles = new Set([skillFile]);
+    const mappedReplacements = replacements.map((entry) => {
+      const file = `skills/${skillId}/${entry.file}`;
+      touchedFiles.add(file);
+      return { ...entry, file };
+    });
+    const beforeTexts = new Map();
+    for (const file of touchedFiles) {
+      const content = files.get(file);
+      if (content) beforeTexts.set(file, content.toString("utf8"));
+    }
+    for (const { file, find } of mappedReplacements) {
+      const beforeText = beforeTexts.get(file);
+      if (beforeText !== undefined) {
+        const body = stripFrontmatter(beforeText).trim();
+        if (body !== "" && find.trim() === body) {
+          throw new Error(`adaptation must not replace the entire skill body in ${file}`);
+        }
+      }
+    }
     if (description !== undefined) {
       files.set(skillFile, Buffer.from(replaceFrontmatterDescription(files.get(skillFile).toString("utf8"), description)));
     }
-    applyReplacements(files, replacements.map((entry) => ({ ...entry, file: `skills/${skillId}/${entry.file}` })));
+    applyReplacements(files, mappedReplacements);
+    for (const [file, beforeText] of beforeTexts) {
+      assertAdaptationPreservesPolicy(file, beforeText, files.get(file).toString("utf8"));
+    }
   } catch (error) {
     throw new Error(`${source}: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
   }
@@ -327,6 +387,29 @@ export async function renderClaudePlugin(root = ROOT) {
   projectClassificationSources(files, classificationSources);
   const wording = findCodexOnlyWording(files);
   if (wording.length > 0) throw new Error(`Claude overlay is incomplete:\n${wording.map((problem) => `- ${problem}`).join("\n")}`);
+  return files;
+}
+
+/**
+ * Applies antigravity-connector/adaptations/<skill>.json against the shared
+ * skills/ tree and verifies that every adaptation preserves common policy.
+ */
+export async function renderAntigravitySkillAdaptations(root = ROOT) {
+  const files = new Map();
+  const tracked = trackedFiles(root);
+  for (const relativePath of tracked) {
+    if (!relativePath.startsWith("skills/") || isExcludedSkillPath(relativePath) || isCodexOnlySkillPath(relativePath)) continue;
+    files.set(relativePath, await readFile(path.join(root, relativePath)));
+  }
+  const adaptationsRoot = path.join(root, ANTIGRAVITY_ADAPTATIONS_DIRECTORY);
+  if (!existsSync(adaptationsRoot)) return files;
+  const adaptationFiles = (await walk(adaptationsRoot)).sort();
+  for (const relativePath of adaptationFiles) {
+    const source = `${ANTIGRAVITY_ADAPTATIONS_DIRECTORY}/${relativePath}`;
+    const match = /^([a-z0-9]+(?:-[a-z0-9]+)*)\.json$/u.exec(relativePath);
+    if (!match) throw new Error(`unexpected adaptation file: ${source}`);
+    applySkillAdaptation(files, match[1], JSON.parse(await readFile(path.join(adaptationsRoot, relativePath), "utf8")), source);
+  }
   return files;
 }
 

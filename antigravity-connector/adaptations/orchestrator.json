@@ -1,0 +1,9 @@
+{
+  "replacements": [
+    {
+      "file": "SKILL.md",
+      "find": "<!-- optimization-navigation:start",
+      "replace": "## Antigravity에서의 호출과 도구 스키마 제약\n\n이 절은 호출 형식과 호스트 도구 스키마 제약만 안내하며 위의 공통 접수·선택 기준과 아래 참고 자료의 실행 순서·결과 기록 규칙은 그대로 적용한다.\n\n- 전문 스킬은 해당 `SKILL.md`를 직접 읽어 절차를 적용하고, 분리가 필요한 작업은 `invoke_subagent` 도구로 별도 서브에이전트 세션을 호출한다.\n- Antigravity 호스트는 `mcp_<serverName>_<toolName>` 조합 이름이 64자를 넘으면 도구 파라미터 스키마를 `null`로 비운다. 따라서 `mcp_config.json`의 서버 키는 `ags`(`mcp_agent-governance-suite_ags_<toolName>`, 최장 62자)로 유지한다.\n\n<!-- optimization-navigation:start"
+    }
+  ]
+}

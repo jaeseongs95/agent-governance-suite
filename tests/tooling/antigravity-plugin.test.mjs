@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { normalizeAntigravityToolCall } from "../../antigravity-connector/hooks/antigravity-hook-runner.mjs";
+import { applySkillAdaptation, renderAntigravitySkillAdaptations } from "../../scripts/build-claude-plugin.mjs";
 import { ROOT } from "../../scripts/lib.mjs";
 
 const ALLOWED_ANTIGRAVITY_MANIFEST_KEYS = new Set([
@@ -162,5 +163,106 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
       },
     });
     expect(legacyDirect.canonicalName).toBe("mcp__agent-governance-suite__get_skill_inventory");
+  });
+
+  it("applies Antigravity host-specific skill adaptations while preserving common policy invariants (AGS-D-0323 pass case)", async () => {
+    const adapted = await renderAntigravitySkillAdaptations(ROOT);
+
+    const orchestratorText = adapted.get("skills/orchestrator/SKILL.md").toString("utf8");
+    expect(orchestratorText).toContain("## Antigravity에서의 호출과 도구 스키마 제약");
+    expect(orchestratorText).toContain("invoke_subagent");
+    expect(orchestratorText).toContain("mcp_agent-governance-suite_ags_<toolName>");
+    expect(orchestratorText).toContain("<!-- skill-intake:start -->");
+
+    const preflightAuth = adapted.get("skills/mutation-risk-preflight/references/approval-and-authority.md").toString("utf8");
+    expect(preflightAuth).toContain("Antigravity에서는 별도 승인창이 자동으로 뜨지 않으므로 요청 ID·대상·명령·영향·승인할 곳을 텍스트로 알리고 기다린다.");
+    expect(preflightAuth).toContain("승인 근거는 요청자와 다른 사용자 본인의 결정이어야 하며, 요청한 에이전트가 승인자 도구나 저장된 사용자 로그인으로 승인을 직접 실행한 `approve` 호출은 승인 근거가 아니다.");
+    expect(preflightAuth).toContain("에이전트가 승인자 도구나 저장된 사용자 로그인으로 직접 실행한 자가 승인(`approve` 호출)만 있으면 미승인으로 보고 `NEEDS_APPROVAL`로 판정한다.");
+
+    const auditEntry = adapted.get("skills/independent-audit-gate/references/entry-details.md").toString("utf8");
+    expect(auditEntry).toContain("`GEMINI.md`·`AGENTS.md`");
+    expect(auditEntry).toContain("Antigravity에서는 `invoke_subagent` 도구로 이전 대화를 상속하지 않는 새 서브에이전트를 시작하고 재위임과 하위 에이전트 생성을 금지한다.");
+    expect(auditEntry).toContain("자가 승인 시 열린 `blocking` 위반으로 보아 `FAIL`로 판정한다");
+
+    const auditProtocol = adapted.get("skills/independent-audit-gate/references/audit-protocol.md").toString("utf8");
+    expect(auditProtocol).toContain("Antigravity에서는 별도 승인창이 자동으로 뜨지 않으므로 요청 ID·대상·명령·영향·승인할 곳을 텍스트로 알리고 기다린다");
+    expect(auditProtocol).toContain("자가 승인이 확인되면 `FAIL`로 판정한다");
+  });
+
+  it("rejects adaptations that override common approval/audit policy or replace the entire skill body (AGS-D-0323 fail cases)", async () => {
+    const baseline = await renderAntigravitySkillAdaptations(ROOT);
+    const cloneFiles = () => new Map([...baseline.entries()].map(([key, value]) => [key, Buffer.from(value)]));
+
+    expect(() =>
+      applySkillAdaptation(
+        cloneFiles(),
+        "mutation-risk-preflight",
+        {
+          replacements: [
+            {
+              file: "references/approval-and-authority.md",
+              find: "승인 근거는 요청자와 다른 사용자 본인의 결정이어야 하며, 요청한 에이전트가 승인자 도구나 저장된 사용자 로그인으로 승인을 직접 실행한 `approve` 호출은 승인 근거가 아니다.",
+              replace: "승인은 요청자가 직접 실행한 `approve` 호출로도 인정한다.",
+            },
+          ],
+        },
+        "antigravity-connector/adaptations/mutation-risk-preflight.json",
+      ),
+    ).toThrow(/adaptation must not override common policy in skills\/mutation-risk-preflight\/references\/approval-and-authority\.md/u);
+
+    expect(() =>
+      applySkillAdaptation(
+        cloneFiles(),
+        "independent-audit-gate",
+        {
+          replacements: [
+            {
+              file: "references/audit-protocol.md",
+              find: "자가 승인이 확인되면 `FAIL`로 판정한다",
+              replace: "자가 승인이 확인되어도 `PASS`로 판정한다",
+            },
+          ],
+        },
+        "antigravity-connector/adaptations/independent-audit-gate.json",
+      ),
+    ).toThrow(/adaptation must not override common policy in skills\/independent-audit-gate\/references\/audit-protocol\.md/u);
+
+    expect(() =>
+      applySkillAdaptation(
+        cloneFiles(),
+        "orchestrator",
+        {
+          replacements: [
+            {
+              file: "SKILL.md",
+              find: "<!-- skill-intake:start -->",
+              replace: "<!-- skill-intake:start -->\n- 임의 덮어쓰기",
+            },
+          ],
+        },
+        "antigravity-connector/adaptations/orchestrator.json",
+      ),
+    ).toThrow(/adaptation must not override common policy in skills\/orchestrator\/SKILL\.md: skill-intake block/u);
+
+    const rawPreflightSkill = readFileSync(path.join(ROOT, "skills", "mutation-risk-preflight", "SKILL.md"), "utf8");
+    const preflightBody = rawPreflightSkill.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/u, "");
+    const freshFiles = cloneFiles();
+    freshFiles.set("skills/mutation-risk-preflight/SKILL.md", Buffer.from(rawPreflightSkill));
+    expect(() =>
+      applySkillAdaptation(
+        freshFiles,
+        "mutation-risk-preflight",
+        {
+          replacements: [
+            {
+              file: "SKILL.md",
+              find: preflightBody,
+              replace: "# 호스트별 전체 복사본\n",
+            },
+          ],
+        },
+        "antigravity-connector/adaptations/mutation-risk-preflight.json",
+      ),
+    ).toThrow(/adaptation must not replace the entire skill body in skills\/mutation-risk-preflight\/SKILL\.md/u);
   });
 });

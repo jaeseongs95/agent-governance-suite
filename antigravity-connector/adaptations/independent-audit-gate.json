@@ -1,0 +1,19 @@
+{
+  "replacements": [
+    {
+      "file": "references/entry-details.md",
+      "find": "적용 가능한 상위 지침, `AGENTS.md`, 사용자 권한",
+      "replace": "적용 가능한 상위 지침, `GEMINI.md`·`AGENTS.md`, 사용자 권한"
+    },
+    {
+      "file": "references/entry-details.md",
+      "find": "협업 도구가 지원하면 `fork_turns:none`을 사용하고 재위임과 하위 에이전트 생성을 금지한다.",
+      "replace": "Antigravity에서는 `invoke_subagent` 도구로 이전 대화를 상속하지 않는 새 서브에이전트를 시작하고 재위임과 하위 에이전트 생성을 금지한다."
+    },
+    {
+      "file": "references/audit-protocol.md",
+      "find": "실제 배포·설치·영구 삭제·권한 확대·운영 데이터 변경은 기존 사용자 승인과 고위험 독립 감사 조건을 그대로 따른다. 승인 범위 밖이면 구체적인 대상과 영향을 제시해 승인을 받는다.",
+      "replace": "실제 배포·설치·영구 삭제·권한 확대·운영 데이터 변경은 기존 사용자 승인과 고위험 독립 감사 조건을 그대로 따른다. 승인 범위 밖이면 구체적인 대상과 영향을 제시해 승인을 받는다(Antigravity에서는 별도 승인창이 자동으로 뜨지 않으므로 요청 ID·대상·명령·영향·승인할 곳을 텍스트로 알리고 기다린다)."
+    }
+  ]
+}
