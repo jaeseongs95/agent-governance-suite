@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { chmodSync, closeSync, constants, existsSync, fchmodSync, fstatSync, ftruncateSync, lstatSync, mkdirSync, openSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, closeSync, constants, existsSync, fchmodSync, fstatSync, ftruncateSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { actorAccess, type DeliveryCapabilities, type InputObservation } from "./input-observation.js";
@@ -95,18 +95,13 @@ export function resolveGeminiAgentApi(
 ): { command: string; argsPrefix: string[] } | null {
   return resolveGeminiAgentApiWithDiagnostic(environment, platform).launch;
 }
-/** A single bounded observation file outlives detached stderr without inheriting a host pipe. */
-export function persistRelayFailure(serialized: string, environment: NodeJS.ProcessEnv = process.env): void {
-  if (Buffer.byteLength(serialized, "utf8") > 64 * 1024) return;
+// A writer lifetime is diagnostic provenance, not an authoritative relay lease generation.
+const failureWriter = `${Date.now().toString().padStart(13, "0")}-${process.pid}-${randomUUID()}`;
+const FAILURE_HISTORY_LIMIT = 64;
+
+function writeRelayFailureSnapshot(target: string, serialized: string): void {
   let descriptor: number | undefined;
   try {
-    const directory = resolveSessionMessageStateDirectory(environment);
-    mkdirSync(directory, { recursive: true, mode: 0o700 });
-    const directoryInfo = lstatSync(directory);
-    if (!directoryInfo.isDirectory() || directoryInfo.isSymbolicLink()
-      || (process.getuid && directoryInfo.uid !== process.getuid())) return;
-    try { chmodSync(directory, 0o700); } catch { if (process.platform !== "win32") return; }
-    const target = path.join(directory, "relay-failure.latest.json");
     // O_NOFOLLOW is not supplied on every platform; the opened descriptor is also checked before any write.
     descriptor = openSync(target, constants.O_WRONLY | constants.O_CREAT | constants.O_NONBLOCK
       | (constants.O_NOFOLLOW ?? 0), 0o600);
@@ -116,13 +111,57 @@ export function persistRelayFailure(serialized: string, environment: NodeJS.Proc
       || opened.dev !== linked.dev || opened.ino !== linked.ino
       || (process.getuid && opened.uid !== process.getuid())) return;
     try { fchmodSync(descriptor, 0o600); } catch { if (process.platform !== "win32") return; }
-    // Latest observation only: concurrent readers may see a partial record; no append, lock or authority.
+    // Best-effort snapshot: concurrent readers may see a partial record; never an authority source.
     ftruncateSync(descriptor, 0);
     writeFileSync(descriptor, serialized + "\n", { encoding: "utf8" });
-  } catch { /* Diagnostic I/O cannot change the relay failure or stop cleanup. */ }
-  finally {
+  } finally {
     if (descriptor !== undefined) try { closeSync(descriptor); } catch { /* No failure propagation from close. */ }
   }
+}
+
+/** Keep failure kinds separate so repeated tick failures cannot erase a wake failure. */
+function persistRelayFailureHistory(directory: string, serialized: string): void {
+  try {
+    const diagnostic: unknown = JSON.parse(serialized);
+    if (!diagnostic || typeof diagnostic !== "object" || Array.isArray(diagnostic)) return;
+    const { phase, reason } = diagnostic as { phase?: unknown; reason?: unknown };
+    const kind = createHash("sha256").update(JSON.stringify([
+      typeof phase === "string" ? phase : null, typeof reason === "string" ? reason : null,
+    ])).digest("hex").slice(0, 16);
+    const history = path.join(directory, "relay-failures");
+    mkdirSync(history, { recursive: true, mode: 0o700 });
+    const info = lstatSync(history);
+    if (!info.isDirectory() || info.isSymbolicLink() || (process.getuid && info.uid !== process.getuid())) return;
+    try { chmodSync(history, 0o700); } catch { if (process.platform !== "win32") return; }
+    writeRelayFailureSnapshot(path.join(history, `${failureWriter}-${kind}.json`), serialized);
+    // ponytail: at most 64 settled writer/kind snapshots (~4 MiB); concurrent writers can briefly exceed it.
+    const records = readdirSync(history, { withFileTypes: true })
+      .filter(entry => entry.isFile() && /^\d{13}-\d+-[a-f0-9-]{36}-[a-f0-9]{16}\.json$/u.test(entry.name))
+      .map(entry => entry.name).sort();
+    for (const name of records.slice(0, -FAILURE_HISTORY_LIMIT)) {
+      try { unlinkSync(path.join(history, name)); }
+      catch (cause) { if (!(cause && typeof cause === "object" && "code" in cause && cause.code === "ENOENT")) throw cause; }
+    }
+  } catch (cause) {
+    // A failed diagnostic sink cannot replace the original relay/wake outcome; expose only safe metadata.
+    try { console.error("[agent-governance-suite] relay-history-failure " + JSON.stringify(failureContext(cause))); }
+    catch { /* The primary failure remains independent of stderr too. */ }
+  }
+}
+
+/** Latest-file compatibility plus bounded per-writer/failure-kind observations. */
+export function persistRelayFailure(serialized: string, environment: NodeJS.ProcessEnv = process.env): void {
+  if (Buffer.byteLength(serialized, "utf8") > 64 * 1024) return;
+  try {
+    const directory = resolveSessionMessageStateDirectory(environment);
+    mkdirSync(directory, { recursive: true, mode: 0o700 });
+    const directoryInfo = lstatSync(directory);
+    if (!directoryInfo.isDirectory() || directoryInfo.isSymbolicLink()
+      || (process.getuid && directoryInfo.uid !== process.getuid())) return;
+    try { chmodSync(directory, 0o700); } catch { if (process.platform !== "win32") return; }
+    persistRelayFailureHistory(directory, serialized);
+    writeRelayFailureSnapshot(path.join(directory, "relay-failure.latest.json"), serialized);
+  } catch { /* Diagnostic I/O cannot change the relay failure or stop cleanup. */ }
 }
 function sanitizeWakeEnvDiagnostic(raw: unknown): string | undefined {
   if (typeof raw !== "string") return undefined;

@@ -45,7 +45,7 @@ describe("AL03 D0011 detached relay diagnostics", () => {
       expect(serialized).not.toContain(secret);
     }
     expect(failureContext(primary)).toEqual(before);
-    expect(fs.readdirSync(directory)).toEqual(["relay-failure.latest.json"]);
+    expect(fs.readdirSync(directory).sort()).toEqual(["relay-failure.latest.json", "relay-failures"]);
   });
 
   it("overwrites one bounded latest observation across every existing failure phase", () => {
@@ -56,7 +56,7 @@ describe("AL03 D0011 detached relay diagnostics", () => {
       expect(JSON.parse(fs.readFileSync(latest(), "utf8")).phase).toBe(phase);
       expect(fs.statSync(latest()).size).toBeLessThanOrEqual(64 * 1024 + 1);
     }
-    expect(fs.readdirSync(directory)).toEqual(["relay-failure.latest.json"]);
+    expect(fs.readdirSync(directory).sort()).toEqual(["relay-failure.latest.json", "relay-failures"]);
     if (process.platform !== "win32") {
       expect(fs.statSync(directory).mode & 0o777).toBe(0o700);
       expect(fs.statSync(latest()).mode & 0o777).toBe(0o600);
