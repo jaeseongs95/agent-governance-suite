@@ -186,8 +186,14 @@ describe("signed source evidence and selection context regression", () => {
   });
 
   it("keeps the no-specialist reply clause separate from orchestration exclusions", async () => {
-    const reply = "전문 스킬이 필요 없는 설명·인사·일반 질문은 그대로 답한다.";
-    const exclusion = "단독 전문 작업이나 스킬이 필요 없는 요청에 registry 조회·계획·workflow run을 만들지 않는다. 모든 요청에 실패 영향 분류나 생략 이유를 출력하지 않는다.";
+    const source = await readFile("skills/orchestrator/SKILL.md", "utf8");
+    const line = source.split("\n").find(text => text.startsWith("- 전문 스킬이 필요 없는"))!;
+    expect(line).toBeTypeOf("string");
+    const boundary = line.indexOf(". ");
+    expect(boundary).toBeGreaterThan(2);
+    // Split the source sentence independently of metadata byte offsets; do not duplicate canonical prose.
+    const reply = line.slice(2, boundary + 1), exclusion = line.slice(boundary + 2).trim();
+    expect(exclusion.length).toBeGreaterThan(0);
     const inventory = await loadSkillInventory({ root: process.cwd() });
     expect(inventory.issues).toEqual([]);
     const skill = inventory.skills.find(candidate => candidate.skillId === "orchestrator")!;
