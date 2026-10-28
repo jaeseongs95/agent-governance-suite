@@ -91,14 +91,6 @@ function iso(milliseconds: number): string {
   return new Date(milliseconds).toISOString();
 }
 
-/** One rule for every advisory view: past the injection expiry, or handed to the host and unobserved past the window. */
-function wakeObservationOverdue(row: Record<string, unknown>, nowMs: number): boolean {
-  if (String(row.expires_at) <= iso(nowMs)) return true;
-  if (row.state !== "started" && row.state !== "submitted" && row.state !== "unknown") return false;
-  const handedOff = Date.parse(String(row.outcome_at ?? row.started_at ?? ""));
-  return Number.isFinite(handedOff) && handedOff + WAKE_OBSERVATION_WINDOW_MS <= nowMs;
-}
-
 function nonceDigest(nonce: string): string {
   return createHash("sha256").update(nonce).digest("hex");
 }
@@ -564,11 +556,47 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
+  private hasUnclaimedMessages(target: SessionIdentity, nowMs: number, createdAtOrBefore?: string | null): boolean {
+    const now = iso(nowMs);
+    if (createdAtOrBefore) {
+      return Boolean(this.database.prepare(`SELECT 1 FROM messages
+        WHERE target_host = ? AND target_session_id = ? AND claimed_at IS NULL AND acknowledged_at IS NULL
+          AND expires_at > ? AND created_at <= ? LIMIT 1`)
+        .get(target.host, target.sessionId, now, createdAtOrBefore));
+    }
+    return Boolean(this.database.prepare(`SELECT 1 FROM messages
+      WHERE target_host = ? AND target_session_id = ? AND claimed_at IS NULL AND acknowledged_at IS NULL
+        AND expires_at > ? LIMIT 1`)
+      .get(target.host, target.sessionId, now));
+  }
+
+  private retireClaimedReservedWakes(target: SessionIdentity, nowMs: number): void {
+    if (this.hasUnclaimedMessages(target, nowMs)) return;
+    this.database.prepare(`UPDATE wake_nonces
+      SET state = 'not-submitted', outcome_at = coalesce(outcome_at, ?), retry_not_before = NULL
+      WHERE host = ? AND session_id = ? AND state = 'reserved'
+        AND late_observed_at IS NULL AND observed_at IS NULL AND consumed_at IS NULL
+        AND (retry_count > 0 OR outcome_at IS NOT NULL OR retry_not_before IS NOT NULL)`)
+      .run(iso(nowMs), target.host, target.sessionId);
+  }
+
+  /** One rule for every advisory view: past the injection expiry, all target messages claimed, or handed to the host and unobserved past the window. */
+  private wakeObservationOverdue(target: SessionIdentity, row: Record<string, unknown>, nowMs: number): boolean {
+    if (String(row.expires_at) <= iso(nowMs)) return true;
+    if (row.state === "reserved") return !this.hasUnclaimedMessages(target, nowMs);
+    if (row.state !== "started" && row.state !== "submitted" && row.state !== "unknown") return false;
+    const handedOffIso = String(row.outcome_at ?? row.started_at ?? "");
+    if (!this.hasUnclaimedMessages(target, nowMs, handedOffIso || null)) return true;
+    const handedOff = Date.parse(handedOffIso);
+    return Number.isFinite(handedOff) && handedOff + WAKE_OBSERVATION_WINDOW_MS <= nowMs;
+  }
+
   private consumePendingWakes(target: SessionIdentity, nowMs: number): void {
     const now = iso(nowMs);
     this.database.prepare(`UPDATE wake_nonces SET consumed_at = ?
       WHERE host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?`)
       .run(now, target.host, target.sessionId, now);
+    this.retireClaimedReservedWakes(target, nowMs);
   }
 
   claim(target: SessionIdentity, nowMs = Date.now(), limits: ClaimLimits = {}): SessionMessage[] {
@@ -693,6 +721,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
         count++;
       }
+      if (count > 0) this.retireClaimedReservedWakes(target, nowMs);
       this.recordActivity(target, nowMs);
 
       return count;
@@ -777,7 +806,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
     if (active) {
       const current = active.instance_id === presence.instanceId && active.birth_generation === presence.startedAt && active.transport === presence.transport;
-      return current && !wakeObservationOverdue(active, nowMs) ? outlook("available", "wake-in-flight", active.expires_at)
+      return current && !this.wakeObservationOverdue(target, active, nowMs) ? outlook("available", "wake-in-flight", active.expires_at)
         : outlook("latched", "wake-unobserved", active.expires_at);
     }
     const legacy = this.database.prepare(`SELECT expires_at FROM wake_nonces WHERE host = ? AND session_id = ?
@@ -1019,6 +1048,15 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       let active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
         AND state IN ('reserved', 'started', 'submitted', 'unknown')`).get(input.host, input.sessionId) as Record<string, unknown> | undefined;
       const currentPending = this.wakeBindingCurrent(input, null, nowMs) && this.wakeClaimable(input, nowMs);
+      if (active?.state === "reserved" && active.late_observed_at === null
+        && active.observed_at === null && active.consumed_at === null
+        && (Number(active.retry_count) > 0 || active.retry_not_before !== null || active.outcome_at !== null)
+        && !this.hasUnclaimedMessages(input, nowMs)
+        && !this.wakeGenerationReplaced(this.wakeAttempt(active), nowMs)) {
+        this.database.prepare(`UPDATE wake_nonces SET state = 'not-submitted', outcome_at = coalesce(outcome_at, ?), retry_not_before = NULL
+          WHERE nonce_digest = ? AND state = 'reserved'`).run(iso(nowMs), String(active.nonce_digest));
+        active = undefined;
+      }
       if (active?.state === "reserved" && currentPending && active.late_observed_at === null
         && active.observed_at === null && active.consumed_at === null
         && ((active.dispatch_epoch === 0 && active.started_at === null)
@@ -1034,7 +1072,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         if (active.state === "started" && !this.wakeBindingCurrent(this.wakeAttempt(active), String(active.birth_generation), nowMs)) {
           this.database.prepare("UPDATE wake_nonces SET state = 'unknown' WHERE nonce_digest = ? AND state = 'started'").run(String(active.nonce_digest));
         }
-        if (active.state === "reserved" && input.resume === true
+        if (active.state === "reserved" && input.resume === true && currentPending
           && input.instanceId === active.instance_id && input.transport === active.transport
           && this.wakeBindingCurrent(input, String(active.birth_generation), nowMs)
           && (active.retry_not_before === null || String(active.retry_not_before) <= iso(nowMs))) {
@@ -1082,7 +1120,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
          return { dispatch: false, attempt: null };
       }
       if (String(row.expires_at) <= iso(nowMs) || !this.wakeClaimable(attempt, nowMs)) {
-        this.database.prepare("UPDATE wake_nonces SET state = 'not-submitted', outcome_at = ? WHERE nonce_digest = ? AND state = 'reserved'")
+        this.database.prepare("UPDATE wake_nonces SET state = 'not-submitted', outcome_at = ?, retry_not_before = NULL WHERE nonce_digest = ? AND state = 'reserved'")
           .run(iso(nowMs), nonceDigest(attempt.nonce));
          return { dispatch: false, attempt: null };
       }
@@ -1106,11 +1144,14 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
           attempt.instanceId, attempt.generation, attempt.transport, attempt.relayId, attempt.attemptId, attempt.dispatchEpoch) as { retry_count: number } | undefined;
       if (!row) {  return false; }
       const retry = outcome === "definite-failure";
-      const nextState = retry ? this.wakeGenerationReplaced(attempt, nowMs) ? "not-submitted" : "reserved"
+      const generationReplaced = retry && this.wakeGenerationReplaced(attempt, nowMs);
+      const claimedWithNoneLeft = retry && !generationReplaced && !this.hasUnclaimedMessages(attempt, nowMs);
+      const nextState = retry ? (generationReplaced || claimedWithNoneLeft ? "not-submitted" : "reserved")
         : outcome === "submitted" ? "submitted" : "unknown";
       this.database.prepare(`UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ?
         WHERE nonce_digest = ?`).run(nextState, iso(nowMs),
-          retry ? iso(nowMs + wakeBackoffDelay(row.retry_count)) : null, row.retry_count + (retry ? 1 : 0), nonceDigest(attempt.nonce));
+          retry && !claimedWithNoneLeft ? iso(nowMs + wakeBackoffDelay(row.retry_count)) : null,
+          row.retry_count + (retry ? 1 : 0), nonceDigest(attempt.nonce));
        return true;
 
     });
@@ -1127,7 +1168,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     const active = ["reserved", "started", "submitted", "unknown"].includes(String(row.state));
     const retired = row.state === "expired-unobserved";
     return { state: row.state, observation: row.state === "observed" ? "observed" : retired ? "expired-unobserved"
-      : row.late_observed_at !== null ? "unknown" : active && wakeObservationOverdue(row, nowMs) ? "observation-overdue"
+      : row.late_observed_at !== null ? "unknown" : active && this.wakeObservationOverdue(target, row, nowMs) ? "observation-overdue"
       : active ? "pending" : "not-submitted",
       deliveryState: row.state === "started" || row.state === "unknown" || retired ? "unknown" : row.state,
       retiredAt: row.retired_at,

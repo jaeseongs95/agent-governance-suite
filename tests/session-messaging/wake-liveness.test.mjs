@@ -562,3 +562,70 @@ test('two independent relay processes racing retirement create one active attemp
   assert.equal(attemptRow(f.store, old).state, 'expired-unobserved');
   assert.equal(f.store.database.prepare("SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')").get().n, 1);
 });
+
+test('AGS-D-0304 (a): claiming a message while its wake is reserved for retry stops retries and clears wake-in-flight without blocking remaining unclaimed messages', () => {
+  const f = fixture();
+  body(f.store, 'f8b4539a', f.now);
+  const first = begin(f.store, f.now);
+  assert.equal(f.store.recordManagedWakeOutcome(first, 'definite-failure', f.now + 2), true);
+  assert.equal(f.store.managedWakeStatus(target, f.now + 3).state, 'reserved');
+  assert.equal(f.store.autoWakeOutlook(target, f.now + 3).reason, 'wake-in-flight');
+
+  const claimed = f.store.claim(target, f.now + 10);
+  assert.equal(claimed.length, 1);
+  const afterClaim = f.store.status(sender, 'f8b4539a', f.now + 11);
+  assert.equal(afterClaim.state, 'delivered');
+  assert.equal(afterClaim.wake.state, 'not-submitted');
+  assert.equal(afterClaim.wake.observation, 'not-submitted');
+  assert.equal(afterClaim.wake.retryNotBefore, null);
+  assert.equal(afterClaim.autoWake.state, 'available');
+  assert.equal(afterClaim.autoWake.reason, 'relay-live');
+
+  const backoffPassed = f.now + 35_000;
+  keepAlive(f.store, 'instance-1', 'relay-1', backoffPassed);
+  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), backoffPassed).dispatch, false);
+
+  f.store.acknowledge(target, ['f8b4539a'], backoffPassed + 1);
+  body(f.store, 'message-0001', backoffPassed + 2);
+  body(f.store, 'message-0002', backoffPassed + 3);
+  const batchWake = begin(f.store, backoffPassed + 4, request('instance-1', 'relay-1', 'batch-wake-nonce-abcdefghijklmnop'));
+  assert.equal(f.store.recordManagedWakeOutcome(batchWake, 'definite-failure', backoffPassed + 5), true);
+  assert.deepEqual(f.store.claim(target, backoffPassed + 6, { maxMessages: 1 }).map(m => m.messageId), ['message-0001']);
+  assert.equal(f.store.acknowledge(target, ['message-0001'], backoffPassed + 7), 1);
+  assert.equal(f.store.managedWakeStatus(target, backoffPassed + 8).state, 'reserved');
+  const nextRetry = backoffPassed + 35_000;
+  keepAlive(f.store, 'instance-1', 'relay-1', nextRetry);
+  const resumedForRemaining = f.store.reserveManagedWake(request('instance-1', 'relay-1', 'batch-wake-nonce-abcdefghijklmnop'), nextRetry);
+  assert.equal(resumedForRemaining.dispatch, true);
+  assert.equal(resumedForRemaining.attempt.attemptId, batchWake.attemptId);
+});
+
+test('AGS-D-0304 (b): claiming and acknowledging a message after a submitted wake immediately stops reporting wake-in-flight while keeping the duplicate fence', () => {
+  const f = fixture();
+  body(f.store, '417e2c85', f.now);
+  const attempt = begin(f.store, f.now);
+  const outcomeAt = f.now + 5_880;
+  assert.equal(f.store.recordManagedWakeOutcome(attempt, 'submitted', outcomeAt), true);
+  assert.equal(f.store.autoWakeOutlook(target, outcomeAt + 100).reason, 'wake-in-flight');
+
+  const claimAt = f.now + 38_000;
+  keepAlive(f.store, 'instance-1', 'relay-1', claimAt);
+  assert.deepEqual(f.store.claim(target, claimAt).map(m => m.messageId), ['417e2c85']);
+  const statusAfterClaim = f.store.status(sender, '417e2c85', claimAt + 100);
+  assert.equal(statusAfterClaim.state, 'delivered');
+  assert.equal(statusAfterClaim.wake.state, 'submitted');
+  assert.equal(statusAfterClaim.wake.observation, 'observation-overdue');
+  assert.equal(statusAfterClaim.autoWake.state, 'latched');
+  assert.equal(statusAfterClaim.autoWake.reason, 'wake-unobserved');
+
+  const ackAt = f.now + 54_000;
+  keepAlive(f.store, 'instance-1', 'relay-1', ackAt);
+  assert.equal(f.store.acknowledge(target, ['417e2c85'], ackAt), 1);
+  const statusAfterAck = f.store.status(sender, '417e2c85', ackAt + 100);
+  assert.equal(statusAfterAck.state, 'acknowledged');
+  assert.equal(statusAfterAck.wake.observation, 'observation-overdue');
+  assert.equal(f.store.autoWakeOutlook(target, ackAt + 100).state, 'latched');
+  assert.equal(f.store.autoWakeOutlook(target, ackAt + 100).reason, 'wake-unobserved');
+  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), ackAt + 200).dispatch, false);
+});
+
