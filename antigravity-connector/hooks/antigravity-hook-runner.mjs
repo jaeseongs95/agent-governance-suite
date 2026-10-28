@@ -954,7 +954,7 @@ export function resolveAntigravityAgentApiExeFromShim(homeDir = "", platform = p
     return { exe: "", reason: "AGENTAPI_SHIM_MISSING" };
   }
   if (platform === "win32") {
-    let shimText = "";
+    let shimText;
     try {
       shimText = readFileSync(shimPath, "utf8");
     } catch (error) {
@@ -988,7 +988,7 @@ export function resolveAntigravityLanguageServerFromProcess(hostProcess = null, 
       ? { command: text(hostProcess.command).trim(), commandLine: text(hostProcess.commandLine || hostProcess.command).trim() }
       : null);
 
-  let exe = "";
+  let exe;
   let exeReason = null;
   const existingExe = text(env?.ANTIGRAVITY_AGENTAPI_EXE).trim();
   if (existingExe) {
