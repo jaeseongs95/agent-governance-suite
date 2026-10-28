@@ -41,35 +41,59 @@ function isVerifiedWindowsNativeExecutable(candidatePath: string): boolean {
   }
   return true;
 }
+// # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
+export function resolveWindowsAgentApiFromShim(homeDir: string): { exe: string | null; diagnostic?: string } {
+  // Antigravity's native hook executor does not set ANTIGRAVITY_AGENTAPI_EXE when spawning hooks or
+  // detached relays, and instead writes <HOME>/.gemini/antigravity/bin/agentapi.bat wrapping the
+  // native language_server*.exe. Never execute the .bat shim or invoke cmd.exe (D-0311); read it
+  // as inert text and extract the quoted absolute .exe target only when it exists on disk.
+  if (!homeDir) return { exe: null, diagnostic: "AGENTAPI_SHIM_MISSING" };
+  let shimText: string;
+  try {
+    shimText = readFileSync(path.win32.join(homeDir, ".gemini", "antigravity", "bin", "agentapi.bat"), "utf8");
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error ? (error as { code?: unknown }).code : undefined;
+    return { exe: null, diagnostic: code === "ENOENT" ? "AGENTAPI_SHIM_MISSING" : "AGENTAPI_SHIM_READ_FAILED" };
+  }
+  const match = /^"([A-Za-z]:[\\/][^\r\n"]+?\.exe)"\s+agentapi(?:\s|$)/imu.exec(shimText);
+  const extracted = match?.[1]?.trim() ?? "";
+  if (!extracted) return { exe: null, diagnostic: "AGENTAPI_SHIM_FORMAT_UNRECOGNIZED" };
+  if (!isVerifiedWindowsNativeExecutable(extracted)) return { exe: null, diagnostic: "AGENTAPI_SHIM_TARGET_UNTRUSTED" };
+  if (!existsSync(extracted)) return { exe: null, diagnostic: "AGENTAPI_SHIM_TARGET_MISSING" };
+  return { exe: extracted };
+}
+function resolveGeminiAgentApiWithDiagnostic(
+  environment: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+): { launch: { command: string; argsPrefix: string[] } | null; diagnostic?: string } {
+  const configured = environment.ANTIGRAVITY_AGENTAPI_EXE;
+  if (configured !== undefined) {
+    if (!configured) {
+      return platform === "win32"
+        ? { launch: null, diagnostic: "missing-agentapi-exe:AGENTAPI_EXE_EMPTY" }
+        : { launch: { command: "agentapi", argsPrefix: [] } };
+    }
+    if (platform === "win32" && !isVerifiedWindowsNativeExecutable(configured)) {
+      return { launch: null, diagnostic: "missing-agentapi-exe:AGENTAPI_EXE_UNVERIFIED" };
+    }
+    return { launch: { command: configured, argsPrefix: ["agentapi"] } };
+  }
+  const homeDir = environment.USERPROFILE || environment.HOME || "";
+  if (platform === "win32") {
+    const shim = resolveWindowsAgentApiFromShim(homeDir);
+    if (shim.exe) {
+      return { launch: { command: shim.exe, argsPrefix: ["agentapi"] } };
+    }
+    return { launch: null, diagnostic: `missing-agentapi-exe:${shim.diagnostic ?? "AGENTAPI_SHIM_MISSING"}` };
+  }
+  const command = path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
+  return { launch: { command: existsSync(command) ? command : "agentapi", argsPrefix: [] } };
+}
 export function resolveGeminiAgentApi(
   environment: NodeJS.ProcessEnv = process.env,
   platform: NodeJS.Platform = process.platform,
 ): { command: string; argsPrefix: string[] } | null {
-  const configured = environment.ANTIGRAVITY_AGENTAPI_EXE;
-  if (configured !== undefined) {
-    if (!configured) return platform === "win32" ? null : { command: "agentapi", argsPrefix: [] };
-    if (platform === "win32" && !isVerifiedWindowsNativeExecutable(configured)) return null;
-    return { command: configured, argsPrefix: ["agentapi"] };
-  }
-  const homeDir = environment.USERPROFILE || environment.HOME || "";
-  if (platform === "win32") {
-    // ponytail: Antigravity's native hook executor does not set ANTIGRAVITY_AGENTAPI_EXE when spawning
-    // hooks or detached relays, and instead writes <HOME>/.gemini/antigravity/bin/agentapi.bat wrapping
-    // the native language_server*.exe. Never execute the .bat shim or invoke cmd.exe (D-0311); read it
-    // as inert text and extract the quoted absolute .exe target only when it exists on disk.
-    if (!homeDir) return null;
-    try {
-      const shimText = readFileSync(path.win32.join(homeDir, ".gemini", "antigravity", "bin", "agentapi.bat"), "utf8");
-      const match = /^"([A-Za-z]:[\\/][^\r\n"]+?\.exe)"\s+agentapi(?:\s|$)/imu.exec(shimText);
-      const extracted = match?.[1]?.trim() ?? "";
-      if (extracted && isVerifiedWindowsNativeExecutable(extracted) && existsSync(extracted)) {
-        return { command: extracted, argsPrefix: ["agentapi"] };
-      }
-    } catch { /* Missing or unreadable launcher shim falls back to null. */ }
-    return null;
-  }
-  const command = path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
-  return { command: existsSync(command) ? command : "agentapi", argsPrefix: [] };
+  return resolveGeminiAgentApiWithDiagnostic(environment, platform).launch;
 }
 /** A single bounded observation file outlives detached stderr without inheriting a host pipe. */
 export function persistRelayFailure(serialized: string, environment: NodeJS.ProcessEnv = process.env): void {
@@ -100,9 +124,35 @@ export function persistRelayFailure(serialized: string, environment: NodeJS.Proc
     if (descriptor !== undefined) try { closeSync(descriptor); } catch { /* No failure propagation from close. */ }
   }
 }
+function sanitizeWakeEnvDiagnostic(raw: unknown): string | undefined {
+  if (typeof raw !== "string") return undefined;
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed.length > 512) return undefined;
+  if (/^[A-Z0-9_,:;.-]+$/u.test(trimmed)) return trimmed;
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    const codes: string[] = [];
+    const collect = (val: unknown): void => {
+      if (typeof val === "string" && /^[A-Z][A-Z0-9_]{1,63}$/u.test(val)) codes.push(val);
+      else if (Array.isArray(val)) for (const item of val) collect(item);
+      else if (val && typeof val === "object") for (const item of Object.values(val as Record<string, unknown>)) collect(item);
+    };
+    collect(parsed);
+    return codes.length > 0 ? codes.join(",") : undefined;
+  } catch {
+    return undefined;
+  }
+}
 /** Bounded diagnostic only: failureContext never emits messages, argv, stdout or paths. */
-function reportWakeFailure(phase: string, error: Error, environment: NodeJS.ProcessEnv = process.env): void {
-  const serialized = JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) });
+function reportWakeFailure(phase: string, error: Error, environment: NodeJS.ProcessEnv = process.env, detail?: string): void {
+  const envDiag = sanitizeWakeEnvDiagnostic(environment.ANTIGRAVITY_WAKE_ENV_DIAGNOSTIC);
+  const mergedDetail = [detail, envDiag].filter(Boolean).join(";") || undefined;
+  const serialized = JSON.stringify({
+    phase,
+    reason: producerFailureReason(error),
+    ...(mergedDetail ? { detail: mergedDetail } : {}),
+    context: failureContext(error),
+  });
   persistRelayFailure(serialized, environment);
   console.error(`agent-governance-suite wake diagnostic ${serialized}`);
 }
@@ -110,12 +160,12 @@ async function ringGemini(sessionId: string, message: string, environment: NodeJ
   const childEnv: NodeJS.ProcessEnv = { ...environment };
   const sourceProjectId = childEnv.ANTIGRAVITY_PROJECT_ID;
   if (typeof sourceProjectId !== "string" || !sourceProjectId.trim()) {
-    reportWakeFailure("gemini-preflight", producerFailure("GEMINI_PROJECT_ID_MISSING", "Gemini source project identity is missing."), childEnv);
+    reportWakeFailure("gemini-preflight", producerFailure("GEMINI_PROJECT_ID_MISSING", "Gemini source project identity is missing."), childEnv, "missing-project-id");
     return "definite-failure";
   }
-  const launch = resolveGeminiAgentApi(childEnv);
+  const { launch, diagnostic: launchDiagnostic } = resolveGeminiAgentApiWithDiagnostic(childEnv);
   if (!launch) {
-    reportWakeFailure("gemini-preflight", producerFailure("GEMINI_AGENTAPI_UNAVAILABLE", "Gemini agentapi executable is unavailable."), childEnv);
+    reportWakeFailure("gemini-preflight", producerFailure("GEMINI_AGENTAPI_UNAVAILABLE", "Gemini agentapi executable is unavailable."), childEnv, launchDiagnostic ?? "missing-agentapi-exe");
     return "definite-failure";
   }
   const { command, argsPrefix } = launch;

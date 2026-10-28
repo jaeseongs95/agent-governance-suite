@@ -85,20 +85,37 @@ describe("Gemini metadata failure keeps its cause", () => {
       vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", stateDir);
 
       vi.stubEnv("ANTIGRAVITY_PROJECT_ID", "");
+      vi.stubEnv("ANTIGRAVITY_WAKE_ENV_DIAGNOSTIC", "PROJECT_ID_NOT_MATCHED,CSRF_TOKEN_NOT_FOUND");
       const missingProject = await diagnose();
       expect(missingProject.outcome).toBe("definite-failure");
-      expect(missingProject.diagnostic).toMatchObject({ phase: "gemini-preflight", reason: "GEMINI_PROJECT_ID_MISSING" });
+      expect(missingProject.diagnostic).toMatchObject({
+        phase: "gemini-preflight",
+        reason: "GEMINI_PROJECT_ID_MISSING",
+        detail: "missing-project-id;PROJECT_ID_NOT_MATCHED,CSRF_TOKEN_NOT_FOUND",
+      });
       const persistedMissing = JSON.parse(readFileSync(path.join(stateDir, "relay-failure.latest.json"), "utf8")) as Diagnostic;
-      expect(persistedMissing).toMatchObject({ phase: "gemini-preflight", reason: "GEMINI_PROJECT_ID_MISSING" });
+      expect(persistedMissing).toMatchObject({
+        phase: "gemini-preflight",
+        reason: "GEMINI_PROJECT_ID_MISSING",
+        detail: "missing-project-id;PROJECT_ID_NOT_MATCHED,CSRF_TOKEN_NOT_FOUND",
+      });
 
       vi.stubEnv("ANTIGRAVITY_PROJECT_ID", "fixture-project");
       vi.stubEnv("ANTIGRAVITY_AGENTAPI_EXE", "agentapi.bat");
       if (process.platform === "win32") {
         const missingExe = await diagnose();
         expect(missingExe.outcome).toBe("definite-failure");
-        expect(missingExe.diagnostic).toMatchObject({ phase: "gemini-preflight", reason: "GEMINI_AGENTAPI_UNAVAILABLE" });
+        expect(missingExe.diagnostic).toMatchObject({
+          phase: "gemini-preflight",
+          reason: "GEMINI_AGENTAPI_UNAVAILABLE",
+          detail: "missing-agentapi-exe:AGENTAPI_EXE_UNVERIFIED;PROJECT_ID_NOT_MATCHED,CSRF_TOKEN_NOT_FOUND",
+        });
         const persistedExe = JSON.parse(readFileSync(path.join(stateDir, "relay-failure.latest.json"), "utf8")) as Diagnostic;
-        expect(persistedExe).toMatchObject({ phase: "gemini-preflight", reason: "GEMINI_AGENTAPI_UNAVAILABLE" });
+        expect(persistedExe).toMatchObject({
+          phase: "gemini-preflight",
+          reason: "GEMINI_AGENTAPI_UNAVAILABLE",
+          detail: "missing-agentapi-exe:AGENTAPI_EXE_UNVERIFIED;PROJECT_ID_NOT_MATCHED,CSRF_TOKEN_NOT_FOUND",
+        });
       }
 
       vi.stubEnv("ANTIGRAVITY_AGENTAPI_EXE", "C:/Program Files/Antigravity/language_server.exe");

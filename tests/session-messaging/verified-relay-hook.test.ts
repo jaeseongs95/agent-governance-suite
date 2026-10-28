@@ -46,7 +46,13 @@ afterEach(() => vi.unstubAllEnvs());
 
 it("uses a single non-replayed ensure grant without emitting claim observations", async () => {
   const onClaimState = vi.fn();
-  await handleSessionMessageHook(input, syntheticHost, 424242, { ...options(), onClaimState });
+  const prevCsrf = process.env.ANTIGRAVITY_CSRF_TOKEN;
+  await handleSessionMessageHook(input, syntheticHost, 424242, {
+    ...options(),
+    onClaimState,
+    relayEnv: { ANTIGRAVITY_CSRF_TOKEN: "isolated-relay-token" },
+  });
+  expect(process.env.ANTIGRAVITY_CSRF_TOKEN).toBe(prevCsrf);
   expect(f.request).toHaveBeenCalledTimes(1);
   expect(f.request.mock.calls[0]![0]).toBe("ensure-relay");
   expect(f.request.mock.calls[0]![1]).toMatchObject({ parentPid: 424242, parentStartToken: "T1", transport: "gemini-queue" });
@@ -57,7 +63,12 @@ it("uses a single non-replayed ensure grant without emitting claim observations"
   for (const [flag, value] of [["--parent-pid", "424242"], ["--parent-start-token", "T1"], ["--instance-id", instanceId], ["--relay-id", relayId]] as const) {
     expect(args[args.indexOf(flag) + 1]).toBe(value);
   }
-  expect(f.spawn.mock.calls[0]![2]).toMatchObject({ windowsHide: true, detached: true, stdio: "ignore" });
+  expect(f.spawn.mock.calls[0]![2]).toMatchObject({
+    windowsHide: true,
+    detached: true,
+    stdio: "ignore",
+    env: expect.objectContaining({ ANTIGRAVITY_CSRF_TOKEN: "isolated-relay-token" }),
+  });
 });
 
 it.each([

@@ -10,7 +10,7 @@ vi.mock("node:child_process", async (importOriginal) => ({
   execFile: execFileMock,
 }));
 
-import { resolveGeminiAgentApi, transportWakePort } from "../../mcp-server/src/session-message-wake-port.js";
+import { resolveGeminiAgentApi, resolveWindowsAgentApiFromShim, transportWakePort } from "../../mcp-server/src/session-message-wake-port.js";
 
 type Callback = (error: Error | null, stdout: string, stderr: string) => void;
 type ExecOptions = { env: NodeJS.ProcessEnv; shell: boolean; windowsVerbatimArguments: boolean };
@@ -63,6 +63,19 @@ describe("Gemini native launch boundary", () => {
       }
       writeFileSync(path.join(binDir, "agentapi.bat"), `@echo off\r\n"C:\\Windows\\Temp\\language_server.exe" agentapi %*\r\n`, "utf8");
       expect(resolveGeminiAgentApi({ USERPROFILE: tempRoot }, "win32")).toBeNull();
+      expect(resolveWindowsAgentApiFromShim(tempRoot)).toEqual({
+        exe: null,
+        diagnostic: "AGENTAPI_SHIM_TARGET_UNTRUSTED",
+      });
+      writeFileSync(path.join(binDir, "agentapi.bat"), `@echo off\r\necho broken shim\r\n`, "utf8");
+      expect(resolveWindowsAgentApiFromShim(tempRoot)).toEqual({
+        exe: null,
+        diagnostic: "AGENTAPI_SHIM_FORMAT_UNRECOGNIZED",
+      });
+      expect(resolveWindowsAgentApiFromShim(path.join(tempRoot, "missing"))).toEqual({
+        exe: null,
+        diagnostic: "AGENTAPI_SHIM_MISSING",
+      });
       expect(execFileMock).not.toHaveBeenCalled();
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });

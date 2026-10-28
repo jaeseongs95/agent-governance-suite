@@ -44,6 +44,8 @@ export interface SessionMessageHookOptions {
   recoverExistingSession?: boolean;
   /** Host adapter callback; called only when a targeted liveness view needs recovery. */
   resolveHostProcess?: () => Readonly<{ pid: number; startToken: string }> | null | Promise<Readonly<{ pid: number; startToken: string }> | null>;
+  /** Adapter-scoped environment overrides passed only to a spawned detached relay child; never mutates process.env. */
+  relayEnv?: Readonly<Record<string, string | undefined>>;
   /** Adapter starts this same-process monotonic deadline before imports/resolution, excluding its stdout reserve. */
   executionBudget?: Readonly<{ deadlineMonotonicMs: number; postClaimReserveMs: number }>;
   /** Synchronous observation only, IDs only. Returns are ignored; throws/rejections cannot change claim or cleanup.
@@ -117,11 +119,15 @@ function snapshotOptions(options: SessionMessageHookOptions): SessionMessageHook
   if (options.ensureRelay !== undefined && typeof options.ensureRelay !== "boolean") throw hookFailure("INVALID_RELAY_ENSURE_OPTION", "Invalid relay ensure capability.");
   if (options.recoverExistingSession !== undefined && typeof options.recoverExistingSession !== "boolean") throw hookFailure("INVALID_RELAY_RECOVERY_OPTION", "Invalid relay recovery capability.");
   if (options.resolveHostProcess !== undefined && typeof options.resolveHostProcess !== "function") throw hookFailure("INVALID_HOST_PROCESS_RESOLVER", "Invalid host process resolver.");
+  if (options.relayEnv !== undefined && (!options.relayEnv || typeof options.relayEnv !== "object" || Array.isArray(options.relayEnv))) {
+    throw hookFailure("INVALID_RELAY_ENV", "Invalid relay environment overrides.");
+  }
   if (options.recoverExistingSession && (!budget || (!options.hostProcess && !options.resolveHostProcess))) throw hookFailure("RELAY_RECOVERY_CONTEXT_REQUIRED", "Relay recovery requires a host process resolver and budget.");
   if (options.ensureRelay && (!options.hostProcess || !budget)) throw hookFailure("RELAY_ENSURE_CONTEXT_REQUIRED", "Relay ensure requires a host process observation and budget.");
   remainingBudget(budget);
   return { ...options, ...(budget ? { executionBudget: budget } : {}),
-    ...(options.hostProcess ? { hostProcess: { ...options.hostProcess } } : {}) };
+    ...(options.hostProcess ? { hostProcess: { ...options.hostProcess } } : {}),
+    ...(options.relayEnv ? { relayEnv: options.relayEnv } : {}) };
 }
 
 function observeClaim(options: SessionMessageHookOptions, phase: "request-attempted" | "response-received", messageIds: string[]): void {
@@ -139,7 +145,7 @@ function readHostStartToken(pid: number, budget: HookBudget): string | null {
   return token;
 }
 
-function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>, budget?: HookBudget, relayId?: string): void {
+function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>, budget?: HookBudget, relayId?: string, relayEnv?: Readonly<Record<string, string | undefined>>): void {
   remainingBudget(budget);
   const relayPath = fileURLToPath(new URL("./session-message-relay.mjs", import.meta.url));
   const hostPid = relayId ? hostProcess?.pid : resolveHookProcessPid(host, explicitHostPid, hostProcess);
@@ -161,7 +167,7 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     detached: true,
     windowsHide: true,
     stdio: "ignore",
-    env: process.env,
+    env: relayEnv && Object.keys(relayEnv).length > 0 ? { ...process.env, ...relayEnv } : process.env,
   });
   // Spawn failure is asynchronous for every startup path; without a listener it would escape the hook unreported.
   child.once("error", (error) => {
@@ -318,7 +324,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         || !/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(result.relayId)
         || !result.relayId.endsWith(":" + expectedInstance.slice("host-process-v1:".length))) throw hookFailure("INVALID_STARTUP_GRANT", "Invalid relay startup grant.");
       remainingBudget(budget);
-      startRelay(host, sessionId, result.instanceId, transport, explicitHostPid, hostProcess, budget, result.relayId);
+      startRelay(host, sessionId, result.instanceId, transport, explicitHostPid, hostProcess, budget, result.relayId, options.relayEnv);
     } catch (error) {
       reportHookFailure("ensure-relay", error); // Never retry or fall back after an uncertain grant.
     }
@@ -355,7 +361,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       return {}; // No relay can start without a confirmed presence response.
     }
     remainingBudget(budget);
-    startRelay(host, sessionId, instanceId, transport, explicitHostPid, hostProcess, budget);
+    startRelay(host, sessionId, instanceId, transport, explicitHostPid, hostProcess, budget, undefined, options.relayEnv);
     return {};
   }
   if (adapted.lifecycle === "end") {

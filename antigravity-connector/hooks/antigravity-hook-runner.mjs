@@ -903,47 +903,96 @@ function normalizeWorkspacePathForMatch(rawPath, platform = process.platform) {
   }
 }
 
-function readTailUtf8(filePath, maxBytes = 65536) {
+// # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
+export function readTailUtf8(filePath, maxBytes = 65536) {
   let fd;
   try {
     fd = openSync(filePath, "r");
     const size = fstatSync(fd).size;
-    if (size <= 0) return "";
-    const length = Math.min(size, maxBytes);
-    const offset = Math.max(0, size - length);
-    const buffer = Buffer.allocUnsafe(length);
-    const bytesRead = readSync(fd, buffer, 0, length, offset);
-    return buffer.subarray(0, bytesRead).toString("utf8");
-  } catch {
-    return "";
+    if (size <= 0) return { ok: true, text: "", headText: "", tailText: "", reason: null };
+    if (size <= maxBytes * 2) {
+      const buffer = Buffer.allocUnsafe(size);
+      const bytesRead = readSync(fd, buffer, 0, size, 0);
+      const fullText = buffer.subarray(0, bytesRead).toString("utf8");
+      return { ok: true, text: fullText, headText: fullText, tailText: fullText, reason: null };
+    }
+    const headBuffer = Buffer.allocUnsafe(maxBytes);
+    const headBytes = readSync(fd, headBuffer, 0, maxBytes, 0);
+    const headText = headBuffer.subarray(0, headBytes).toString("utf8");
+    const tailOffset = Math.max(0, size - maxBytes);
+    const tailBuffer = Buffer.allocUnsafe(maxBytes);
+    const tailBytes = readSync(fd, tailBuffer, 0, maxBytes, tailOffset);
+    const tailText = tailBuffer.subarray(0, tailBytes).toString("utf8");
+    return {
+      ok: true,
+      text: `${headText}\n${tailText}`,
+      headText,
+      tailText,
+      reason: null,
+    };
+  } catch (error) {
+    const code = error && typeof error === "object" && typeof error.code === "string" ? error.code : "";
+    return { ok: false, text: "", headText: "", tailText: "", reason: code === "ENOENT" ? "LS_LOG_MISSING" : "LS_LOG_READ_FAILED" };
   } finally {
     if (fd !== undefined) {
-      try { closeSync(fd); } catch { /* ignore */ }
+      try { closeSync(fd); } catch { /* descriptor close cleanup */ }
     }
   }
 }
 
-// ponytail: Antigravity's native hook executor (command_hook_executor.go) only injects
-// ANTIGRAVITY_CONVERSATION_ID into hook subprocesses and omits ANTIGRAVITY_PROJECT_ID,
-// ANTIGRAVITY_AGENTAPI_EXE, ANTIGRAVITY_LS_ADDRESS, and ANTIGRAVITY_CSRF_TOKEN (which
-// Antigravity only injects into tool-execution / sidecar environments). Until Antigravity
-// passes these variables natively to hooks, derive them from the verified host process
-// command line, local project registry (<HOME>/.gemini/config/projects/*.json), inert
-// agentapi.bat text, and host log (<APPDATA>/Antigravity/logs/language_server.log) before
-// spawning the detached session-message relay.
-export function resolveAntigravityWakeEnvironment(canonicalInput = {}, hostProcess = null, options = {}) {
-  const env = record(options?.env ?? process.env);
-  const platform = text(options?.platform) || process.platform;
-  const homeDir = text(options?.homeDir ?? env.USERPROFILE ?? env.HOME).trim();
+// # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
+export function resolveAntigravityAgentApiExeFromShim(homeDir = "", platform = process.platform, env = process.env, options = {}) {
+  const explicitShim = text(options?.agentApiShimPath).trim();
+  const shimPath = explicitShim || (
+    homeDir
+      ? (platform === "win32"
+        ? path.win32.join(homeDir, ".gemini", "antigravity", "bin", "agentapi.bat")
+        : path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi"))
+      : ""
+  );
+  if (!shimPath) {
+    return { exe: "", reason: "AGENTAPI_SHIM_MISSING" };
+  }
+  if (platform === "win32") {
+    let shimText = "";
+    try {
+      shimText = readFileSync(shimPath, "utf8");
+    } catch (error) {
+      const code = error && typeof error === "object" && typeof error.code === "string" ? error.code : "";
+      return { exe: "", reason: code === "ENOENT" ? "AGENTAPI_SHIM_MISSING" : "AGENTAPI_SHIM_READ_FAILED" };
+    }
+    const match = /^"([A-Za-z]:[\\/][^\r\n"]+?\.exe)"\s+agentapi(?:\s|$)/imu.exec(shimText);
+    const extracted = normalizeCandidateExecutablePath(match?.[1] ?? "");
+    if (!extracted) {
+      return { exe: "", reason: "AGENTAPI_SHIM_FORMAT_UNRECOGNIZED" };
+    }
+    const extractedBase = path.win32.basename(extracted);
+    if (!isRecognizedAntigravityHostProcess(extractedBase, extracted, env)) {
+      return { exe: "", reason: "AGENTAPI_SHIM_TARGET_UNTRUSTED" };
+    }
+    if (!existsSync(extracted)) {
+      return { exe: "", reason: "AGENTAPI_SHIM_TARGET_MISSING" };
+    }
+    return { exe: extracted, reason: null };
+  }
+  if (existsSync(shimPath)) {
+    return { exe: shimPath, reason: null };
+  }
+  return { exe: "", reason: "AGENTAPI_SHIM_MISSING" };
+}
+
+// # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
+export function resolveAntigravityLanguageServerFromProcess(hostProcess = null, env = process.env, platform = process.platform, homeDir = "", options = {}) {
   const detail = hostProcessDetails.get(hostProcess)
     ?? (hostProcess && (typeof hostProcess.command === "string" || typeof hostProcess.commandLine === "string")
       ? { command: text(hostProcess.command).trim(), commandLine: text(hostProcess.commandLine || hostProcess.command).trim() }
       : null);
-  const resolved = {};
 
-  const existingExe = text(env.ANTIGRAVITY_AGENTAPI_EXE).trim();
+  let exe = "";
+  let exeReason = null;
+  const existingExe = text(env?.ANTIGRAVITY_AGENTAPI_EXE).trim();
   if (existingExe) {
-    resolved.ANTIGRAVITY_AGENTAPI_EXE = existingExe;
+    exe = existingExe;
   } else {
     const primaryExec = normalizeCandidateExecutablePath(extractPrimaryExecutableToken(detail?.command ?? ""));
     const baseName = primaryExec ? path.win32.basename(primaryExec) : "";
@@ -953,143 +1002,200 @@ export function resolveAntigravityWakeEnvironment(canonicalInput = {}, hostProce
       isRecognizedAntigravityHostProcess(baseName, primaryExec, env) &&
       existsSync(primaryExec)
     ) {
-      resolved.ANTIGRAVITY_AGENTAPI_EXE = primaryExec;
-    } else if (homeDir) {
-      const shimPath = platform === "win32"
-        ? path.win32.join(homeDir, ".gemini", "antigravity", "bin", "agentapi.bat")
-        : path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
-      try {
-        if (platform === "win32") {
-          const shimText = readFileSync(shimPath, "utf8");
-          const match = /^"([A-Za-z]:[\\/][^\r\n"]+?\.exe)"\s+agentapi(?:\s|$)/imu.exec(shimText);
-          const extracted = normalizeCandidateExecutablePath(match?.[1] ?? "");
-          const extractedBase = extracted ? path.win32.basename(extracted) : "";
-          if (
-            extracted &&
-            isRecognizedAntigravityHostProcess(extractedBase, extracted, env) &&
-            existsSync(extracted)
-          ) {
-            resolved.ANTIGRAVITY_AGENTAPI_EXE = extracted;
-          }
-        } else if (existsSync(shimPath)) {
-          resolved.ANTIGRAVITY_AGENTAPI_EXE = shimPath;
-        }
-      } catch { /* ignore unreadable shim */ }
+      exe = primaryExec;
+    } else {
+      const shimRes = resolveAntigravityAgentApiExeFromShim(homeDir, platform, env, options);
+      exe = shimRes.exe;
+      exeReason = shimRes.reason;
     }
   }
 
-  const existingToken = text(env.ANTIGRAVITY_CSRF_TOKEN).trim();
+  let csrfToken = "";
+  let csrfReason = null;
+  const existingToken = text(env?.ANTIGRAVITY_CSRF_TOKEN).trim();
   if (existingToken) {
-    resolved.ANTIGRAVITY_CSRF_TOKEN = existingToken;
+    csrfToken = existingToken;
   } else if (detail?.commandLine) {
     const csrfMatch = /(?:^|\s)--csrf_token(?:=|\s+)(?:"([^"\r\n]+)"|'([^'\r\n]+)'|([^\s"'\r\n]+))/u.exec(detail.commandLine);
     const token = (csrfMatch?.[1] ?? csrfMatch?.[2] ?? csrfMatch?.[3] ?? "").trim();
     if (token && /^[A-Za-z0-9._-]{8,256}$/u.test(token)) {
-      resolved.ANTIGRAVITY_CSRF_TOKEN = token;
+      csrfToken = token;
+    } else {
+      csrfReason = "CSRF_TOKEN_NOT_FOUND";
     }
+  } else {
+    csrfReason = "CSRF_TOKEN_NOT_FOUND";
   }
 
-  const existingAddress = text(env.ANTIGRAVITY_LS_ADDRESS).trim();
+  let lsAddress = "";
+  let lsReason = null;
+  const existingAddress = text(env?.ANTIGRAVITY_LS_ADDRESS).trim();
   if (existingAddress) {
-    resolved.ANTIGRAVITY_LS_ADDRESS = existingAddress;
+    lsAddress = existingAddress;
   } else {
+    const appDataDir = text(options?.appDataDir ?? env?.APPDATA).trim();
     const logPath = text(options?.logFilePath).trim() || (
       platform === "win32"
-        ? (text(env.APPDATA).trim()
-          ? path.win32.join(text(env.APPDATA).trim(), "Antigravity", "logs", "language_server.log")
+        ? (appDataDir
+          ? path.win32.join(appDataDir, "Antigravity", "logs", "language_server.log")
           : (homeDir ? path.win32.join(homeDir, "AppData", "Roaming", "Antigravity", "logs", "language_server.log") : ""))
         : platform === "darwin"
           ? (homeDir ? path.join(homeDir, "Library", "Application Support", "Antigravity", "logs", "language_server.log") : "")
-          : (text(env.XDG_CONFIG_HOME).trim()
-            ? path.join(text(env.XDG_CONFIG_HOME).trim(), "Antigravity", "logs", "language_server.log")
+          : (text(env?.XDG_CONFIG_HOME).trim()
+            ? path.join(text(env?.XDG_CONFIG_HOME).trim(), "Antigravity", "logs", "language_server.log")
             : (homeDir ? path.join(homeDir, ".config", "Antigravity", "logs", "language_server.log") : ""))
     );
-    if (logPath) {
-      const logTail = readTailUtf8(logPath, 65536);
-      if (logTail) {
-        const pid = hostProcess && Number.isInteger(hostProcess.pid) && hostProcess.pid > 0 ? hostProcess.pid : 0;
+    if (!logPath) {
+      lsReason = "LS_LOG_READ_FAILED";
+    } else {
+      const tailRes = readTailUtf8(logPath, 65536);
+      if (!tailRes.ok) {
+        lsReason = "LS_LOG_READ_FAILED";
+      } else if (!tailRes.text) {
+        lsReason = "LS_LOG_PORT_PATTERN_NOT_FOUND";
+      } else {
+        const pid = (hostProcess && Number.isInteger(hostProcess.pid) && hostProcess.pid > 0 ? hostProcess.pid : 0)
+          || (Number.isInteger(options?.hostPid) && options.hostPid > 0 ? Number(options.hostPid) : 0);
         const pidMarker = pid > 0 ? `Starting language server process with pid ${pid}` : "";
-        const markerIndex = pidMarker ? logTail.lastIndexOf(pidMarker) : -1;
-        const searchSlice = markerIndex >= 0 ? logTail.slice(markerIndex) : logTail;
-        const portPattern = /Language server listening on (?:random )?port at (\d{2,5}) for HTTP/gu;
+        const markerIndex = pidMarker ? tailRes.text.lastIndexOf(pidMarker) : -1;
+        const searchSlice = markerIndex >= 0 ? tailRes.text.slice(markerIndex) : tailRes.text;
+        const portPattern = /(?:Language server listening on (?:random )?port at|Listening on port) (\d{2,5}) for HTTP(?: JSON and Connect RPC)?/gu;
         let portMatch = null;
         for (const m of searchSlice.matchAll(portPattern)) portMatch = m;
         if (!portMatch && markerIndex >= 0) {
-          for (const m of logTail.matchAll(portPattern)) portMatch = m;
+          for (const m of tailRes.text.matchAll(portPattern)) portMatch = m;
         }
         const port = portMatch?.[1] ? Number.parseInt(portMatch[1], 10) : 0;
         if (Number.isInteger(port) && port >= 1024 && port <= 65535) {
-          resolved.ANTIGRAVITY_LS_ADDRESS = `localhost:${port}`;
+          lsAddress = `localhost:${port}`;
+        } else {
+          lsReason = "LS_LOG_PORT_PATTERN_NOT_FOUND";
         }
       }
     }
   }
 
-  const existingProject = text(env.ANTIGRAVITY_PROJECT_ID).trim();
+  return { exe, exeReason, csrfToken, csrfReason, lsAddress, lsReason };
+}
+
+// # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
+export function resolveAntigravityProjectIdFromWorkspace(canonicalInput = {}, homeDir = "", platform = process.platform, env = process.env, options = {}) {
+  const existingProject = text(env?.ANTIGRAVITY_PROJECT_ID).trim();
   if (existingProject) {
-    resolved.ANTIGRAVITY_PROJECT_ID = existingProject;
-  } else {
-    const projectsDir = text(options?.projectsDir).trim()
-      || (homeDir ? path.join(homeDir, ".gemini", "config", "projects") : "");
-    const candidates = [
-      text(canonicalInput?.workspace_id),
-      text(canonicalInput?.cwd),
-      text(options?.cwd),
-    ].map(c => normalizeWorkspacePathForMatch(c, platform)).filter(Boolean);
-    if (projectsDir && candidates.length > 0) {
-      try {
-        const entries = readdirSync(projectsDir).filter(name => name.endsWith(".json")).sort();
-        for (const entry of entries) {
-          try {
-            const project = record(JSON.parse(readFileSync(path.join(projectsDir, entry), "utf8")));
-            const projectId = text(project.id).trim();
-            const resources = Array.isArray( record(project.projectResources).resources )
-              ? record(project.projectResources).resources
-              : [];
-            if (!projectId) continue;
-            const matched = resources.some((res) => {
-              const folderPath = normalizeWorkspacePathForMatch(record(res).folderUri, platform);
-              return folderPath && candidates.includes(folderPath);
-            });
-            if (matched) {
-              resolved.ANTIGRAVITY_PROJECT_ID = projectId;
-              break;
-            }
-          } catch { /* ignore malformed project file */ }
-        }
-      } catch { /* ignore missing projects dir */ }
+    return { projectId: existingProject, reason: null };
+  }
+  const projectsDir = text(options?.projectsDir).trim()
+    || (homeDir ? path.join(homeDir, ".gemini", "config", "projects") : "");
+  const candidates = [
+    text(canonicalInput?.workspace_id),
+    text(canonicalInput?.cwd),
+    text(options?.cwd),
+  ].map(c => normalizeWorkspacePathForMatch(c, platform)).filter(Boolean);
+  if (!projectsDir) {
+    return { projectId: "", reason: "PROJECTS_DIR_READ_FAILED" };
+  }
+  if (candidates.length === 0) {
+    return { projectId: "", reason: "PROJECT_ID_NOT_MATCHED" };
+  }
+  let entries;
+  try {
+    entries = readdirSync(projectsDir).filter(name => name.endsWith(".json")).sort();
+  } catch {
+    return { projectId: "", reason: "PROJECTS_DIR_READ_FAILED" };
+  }
+  let hadParseFailure = false;
+  let hadReadFailure = false;
+  for (const entry of entries) {
+    let rawJson;
+    try {
+      rawJson = readFileSync(path.join(projectsDir, entry), "utf8");
+    } catch {
+      hadReadFailure = true;
+      continue;
     }
+    let parsed;
+    try {
+      parsed = record(JSON.parse(rawJson));
+    } catch {
+      hadParseFailure = true;
+      continue;
+    }
+    const projectId = text(parsed.id).trim();
+    const resources = Array.isArray(record(parsed.projectResources).resources)
+      ? record(parsed.projectResources).resources
+      : [];
+    if (!projectId) continue;
+    const matched = resources.some((res) => {
+      const folderPath = normalizeWorkspacePathForMatch(record(res).folderUri, platform);
+      return folderPath && candidates.includes(folderPath);
+    });
+    if (matched) {
+      return { projectId, reason: null };
+    }
+  }
+  if (hadParseFailure) return { projectId: "", reason: "PROJECT_JSON_PARSE_FAILED" };
+  if (hadReadFailure) return { projectId: "", reason: "PROJECTS_DIR_READ_FAILED" };
+  return { projectId: "", reason: "PROJECT_ID_NOT_MATCHED" };
+}
+
+// # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
+// Antigravity's native hook executor (command_hook_executor.go) only injects ANTIGRAVITY_CONVERSATION_ID
+// into hook subprocesses and omits ANTIGRAVITY_PROJECT_ID, ANTIGRAVITY_AGENTAPI_EXE, ANTIGRAVITY_LS_ADDRESS,
+// and ANTIGRAVITY_CSRF_TOKEN. Derive them into an isolated relayEnv object passed ONLY to the detached
+// session-message relay spawn without mutating process.env.
+export function resolveAntigravityWakeEnvironment(canonicalInput = {}, hostProcess = null, options = {}) {
+  const env = record(options?.env ?? process.env);
+  const platform = text(options?.platform) || process.platform;
+  const homeDir = text(options?.homeDir ?? env.USERPROFILE ?? env.HOME).trim();
+  const resolved = {};
+  const diagnostics = [];
+
+  const lsRes = resolveAntigravityLanguageServerFromProcess(hostProcess, env, platform, homeDir, options);
+  if (lsRes.exe) resolved.ANTIGRAVITY_AGENTAPI_EXE = lsRes.exe;
+  else if (lsRes.exeReason) diagnostics.push(lsRes.exeReason);
+
+  if (lsRes.csrfToken) resolved.ANTIGRAVITY_CSRF_TOKEN = lsRes.csrfToken;
+  else if (lsRes.csrfReason) diagnostics.push(lsRes.csrfReason);
+
+  if (lsRes.lsAddress) resolved.ANTIGRAVITY_LS_ADDRESS = lsRes.lsAddress;
+  else if (lsRes.lsReason) diagnostics.push(lsRes.lsReason);
+
+  const projRes = resolveAntigravityProjectIdFromWorkspace(canonicalInput, homeDir, platform, env, options);
+  if (projRes.projectId) resolved.ANTIGRAVITY_PROJECT_ID = projRes.projectId;
+  else if (projRes.reason) diagnostics.push(projRes.reason);
+
+  if (diagnostics.length > 0) {
+    resolved.ANTIGRAVITY_WAKE_ENV_DIAGNOSTIC = diagnostics.join(",");
   }
 
   return Object.freeze(resolved);
 }
 
-function applyAntigravityWakeEnvironment(canonicalInput, hostProcess, options = {}) {
-  const hasRealHostDetail = hostProcessDetails.has(hostProcess)
+function shouldResolveAntigravityWakeEnvironment(hostProcess, options = {}) {
+  // Never run wake-env discovery solely because options.env was passed; require verified host details or explicit targets.
+  return hostProcessDetails.has(hostProcess)
     || Boolean(hostProcess && (typeof hostProcess.command === "string" || typeof hostProcess.commandLine === "string"))
-    || Boolean(options?.projectsDir || options?.logFilePath || options?.homeDir || options?.env);
-  if (!hasRealHostDetail) return;
-  const targetEnv = options?.env ?? process.env;
-  const resolved = resolveAntigravityWakeEnvironment(canonicalInput, hostProcess, options);
-  for (const [key, value] of Object.entries(resolved)) {
-    if (typeof value === "string" && value && !text(targetEnv[key]).trim()) {
-      targetEnv[key] = value;
-    }
-  }
+    || Boolean(options?.hostPid || options?.appDataDir || options?.homeDir || options?.agentApiShimPath || options?.projectsDir || options?.logFilePath);
 }
 
 export async function startAntigravitySessionPresenceAndRelay(canonicalInput, options = {}) {
   try {
     const hostProcess = await resolveVerifiedAntigravityHostProcess(options);
     if (!hostProcess) return;
-    applyAntigravityWakeEnvironment(canonicalInput, hostProcess, options);
     const executionBudget = buildExecutionBudgetOption(options);
     if (!executionBudget) return;
+    const relayEnv = shouldResolveAntigravityWakeEnvironment(hostProcess, options)
+      ? resolveAntigravityWakeEnvironment(canonicalInput, hostProcess, options)
+      : undefined;
     const hookHandler = typeof options?.sessionMessageHook === "function"
       ? options.sessionMessageHook
       : (await import("../../mcp-server/dist/session-message-hook.mjs")).handleSessionMessageHook;
     await hookHandler(canonicalInput, "antigravity", hostProcess.pid, Object.freeze({
-      ensureRelay: true, hostProcess, executionBudget, defaultQueueWake: true,
+      ensureRelay: true,
+      hostProcess,
+      executionBudget,
+      defaultQueueWake: true,
+      ...(relayEnv && Object.keys(relayEnv).length > 0 ? { relayEnv } : {}),
     }));
   } catch {
     // Presence and relay startup are advisory and fail-open.
@@ -1165,15 +1271,31 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
     // reloaded sessions must recover presence/relay via recoverExistingSession here. Because 3.0
     // infers root for Antigravity (AGS-D-0317), child sessions sharing the parent sessionId also
     // pass actorAccess until native actor capture and the child gate return after 3.0.
+    let cachedHostProcess;
+    const relayEnv = {};
+    const populateRelayEnv = (hp) => {
+      if (hp && shouldResolveAntigravityWakeEnvironment(hp, options)) {
+        Object.assign(relayEnv, resolveAntigravityWakeEnvironment(canonicalInput, hp, options));
+      }
+      return hp;
+    };
+    const explicitRelayEnv = shouldResolveAntigravityWakeEnvironment(null, options)
+      ? resolveAntigravityWakeEnvironment(canonicalInput, null, options)
+      : null;
+    if (explicitRelayEnv) Object.assign(relayEnv, explicitRelayEnv);
     const hookOptions = Object.freeze({
       defaultQueueWake: true,
       ...(executionBudget ? { executionBudget } : {}),
       onClaimState: claimTracker.onClaimState,
       recoverExistingSession: true,
-      resolveHostProcess: async () => {
-        const hostProcess = await resolveVerifiedAntigravityHostProcess(options);
-        if (hostProcess) applyAntigravityWakeEnvironment(canonicalInput, hostProcess, options);
-        return hostProcess;
+      relayEnv,
+      resolveHostProcess: () => {
+        if (cachedHostProcess !== undefined) return cachedHostProcess;
+        const resolved = resolveVerifiedAntigravityHostProcess(options);
+        cachedHostProcess = resolved && typeof resolved.then === "function"
+          ? resolved.then(populateRelayEnv)
+          : populateRelayEnv(resolved);
+        return cachedHostProcess;
       },
     });
     const canonicalOutput = await hookHandler(effectiveInput, "antigravity", undefined, hookOptions);

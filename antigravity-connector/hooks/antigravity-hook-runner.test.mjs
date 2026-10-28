@@ -1479,6 +1479,7 @@ try {
     assert.deepEqual(resolvedHost, { pid: 41804, startToken: "2026-10-27T00:00:00.000Z" });
 
     const envWithoutConfiguredExe = {};
+    const prevProcessCsrf = process.env.ANTIGRAVITY_CSRF_TOKEN;
     const resolvedEnv = resolveAntigravityWakeEnvironment(
       { workspace_id: workspaceDir, cwd: workspaceDir },
       resolvedHost,
@@ -1492,6 +1493,111 @@ try {
     assert.equal(resolvedEnv.ANTIGRAVITY_PROJECT_ID, "resolved-project-uuid");
     assert.equal(resolvedEnv.ANTIGRAVITY_CSRF_TOKEN, "test-csrf-token-0015");
     assert.equal(resolvedEnv.ANTIGRAVITY_LS_ADDRESS, "localhost:58034");
+    assert.deepEqual(envWithoutConfiguredExe, {}, "options.env must never be mutated with CSRF tokens or wake variables");
+    assert.equal(process.env.ANTIGRAVITY_CSRF_TOKEN, prevProcessCsrf, "process.env must never be mutated with CSRF tokens");
+
+    // Verify large language_server.log (> 128KB) where "Listening on port <port> for HTTP JSON and Connect RPC"
+    // appears only at the very beginning (Head) and is pushed out of the last 64KB (Tail) by subsequent log lines.
+    const largeLogPath = path.join(wakeFixtureDir, "large_language_server.log");
+    writeFileSync(
+      largeLogPath,
+      `I1028 00:00:00.000000 41804 server.go:10] Listening on port 51234 for HTTP JSON and Connect RPC\n${"x".repeat(160 * 1024)}\n`,
+      "utf8",
+    );
+    const largeLogEnv = resolveAntigravityWakeEnvironment(
+      { workspace_id: workspaceDir, cwd: workspaceDir },
+      resolvedHost,
+      {
+        env: {},
+        homeDir: wakeFixtureDir,
+        projectsDir,
+        logFilePath: largeLogPath,
+      },
+    );
+    assert.equal(largeLogEnv.ANTIGRAVITY_LS_ADDRESS, "localhost:51234");
+
+    // Verify startAntigravitySessionPresenceAndRelay passes relayEnv via hookOptions without mutating process.env or options.env
+    const capturedHookOptions = [];
+    await startAntigravitySessionPresenceAndRelay(
+      { hook_event_name: "SessionStart", session_id: TEST_SESSION_ID, workspace_id: workspaceDir, cwd: workspaceDir },
+      {
+        now: () => 1000,
+        deadlineMonotonicMs: 10200,
+        env: envWithoutConfiguredExe,
+        homeDir: wakeFixtureDir,
+        projectsDir,
+        logFilePath: logPath,
+        resolveHostProcess: () => resolvedHost,
+        sessionMessageHook: async (_input, _host, _pid, hookOptions) => {
+          capturedHookOptions.push(hookOptions);
+          return {};
+        },
+      },
+    );
+    assert.equal(capturedHookOptions.length, 1);
+    assert.equal(capturedHookOptions[0].relayEnv?.ANTIGRAVITY_PROJECT_ID, "resolved-project-uuid");
+    assert.equal(capturedHookOptions[0].relayEnv?.ANTIGRAVITY_CSRF_TOKEN, "test-csrf-token-0015");
+    assert.equal(capturedHookOptions[0].relayEnv?.ANTIGRAVITY_LS_ADDRESS, "localhost:58034");
+    assert.deepEqual(envWithoutConfiguredExe, {});
+
+    // Passing options.env alone without verified host detail or explicit discovery targets must not trigger wake discovery
+    const envOnlyOptions = [];
+    await startAntigravitySessionPresenceAndRelay(
+      { hook_event_name: "SessionStart", session_id: TEST_SESSION_ID, workspace_id: workspaceDir },
+      {
+        now: () => 1000,
+        deadlineMonotonicMs: 10200,
+        env: { SOME_OTHER_VAR: "1" },
+        resolveHostProcess: () => ({ pid: 41804, startToken: "2026-10-27T00:00:00.000Z" }),
+        sessionMessageHook: async (_input, _host, _pid, hookOptions) => {
+          envOnlyOptions.push(hookOptions);
+          return {};
+        },
+      },
+    );
+    assert.equal(envOnlyOptions.length, 1);
+    assert.equal(envOnlyOptions[0].relayEnv, undefined);
+
+    // Verify diagnostic reason codes when files/patterns are missing or malformed (never swallowing errors or leaking secrets)
+    const missingDiagEnv = resolveAntigravityWakeEnvironment(
+      { workspace_id: workspaceDir, cwd: workspaceDir },
+      { pid: 41804, startToken: "2026-10-27T00:00:00.000Z", command: "", commandLine: "" },
+      {
+        env: {},
+        platform: "win32",
+        homeDir: path.join(wakeFixtureDir, "nonexistent-home"),
+        projectsDir: path.join(wakeFixtureDir, "nonexistent-projects"),
+        logFilePath: path.join(wakeFixtureDir, "nonexistent.log"),
+      },
+    );
+    assert.equal(
+      missingDiagEnv.ANTIGRAVITY_WAKE_ENV_DIAGNOSTIC,
+      "AGENTAPI_SHIM_MISSING,CSRF_TOKEN_NOT_FOUND,LS_LOG_READ_FAILED,PROJECTS_DIR_READ_FAILED",
+    );
+
+    const badShimPath = path.join(wakeFixtureDir, "bad-agentapi.bat");
+    const badLogPath = path.join(wakeFixtureDir, "no-port.log");
+    const badProjectsDir = path.join(wakeFixtureDir, "bad-projects");
+    mkdirSync(badProjectsDir, { recursive: true });
+    writeFileSync(badShimPath, "@echo off\r\necho invalid-shim\r\n", "utf8");
+    writeFileSync(badLogPath, "Starting language server process with pid 41804\nno port line here\n", "utf8");
+    writeFileSync(path.join(badProjectsDir, "broken.json"), "{not-valid-json", "utf8");
+    const parseDiagEnv = resolveAntigravityWakeEnvironment(
+      { workspace_id: workspaceDir, cwd: workspaceDir },
+      { pid: 41804, startToken: "2026-10-27T00:00:00.000Z", command: "", commandLine: "--other_flag=secret-value" },
+      {
+        env: {},
+        platform: "win32",
+        agentApiShimPath: badShimPath,
+        projectsDir: badProjectsDir,
+        logFilePath: badLogPath,
+      },
+    );
+    assert.equal(
+      parseDiagEnv.ANTIGRAVITY_WAKE_ENV_DIAGNOSTIC,
+      "AGENTAPI_SHIM_FORMAT_UNRECOGNIZED,CSRF_TOKEN_NOT_FOUND,LS_LOG_PORT_PATTERN_NOT_FOUND,PROJECT_JSON_PARSE_FAILED",
+    );
+    assert.equal(parseDiagEnv.ANTIGRAVITY_WAKE_ENV_DIAGNOSTIC.includes("secret-value"), false);
   }
 
   console.log("antigravity-hook-runner tests: 14/14 passed");
