@@ -402,6 +402,17 @@ describe("Claude overlay safeguards", () => {
     expect(await checkClaudePlugin(directory)).toEqual([]);
   });
 
+  it("includes untracked non-ignored shared skill files when rendering and checking the Claude plugin", async () => {
+    const { directory, refresh, write } = await distributionFixture();
+    const untrackedSkillScript = "skills/coordinate-subagents/scripts/model-catalog-adapter.mjs";
+    const scriptContent = "export const modelCatalogAdapter = true;\n";
+    await write(untrackedSkillScript, scriptContent);
+    expect(await checkClaudePlugin(directory)).toEqual([`missing file ${OUTPUT_DIRECTORY}/${untrackedSkillScript}`]);
+    await refresh();
+    expect(await readFile(path.join(directory, OUTPUT_DIRECTORY, untrackedSkillScript), "utf8")).toBe(scriptContent);
+    expect(await checkClaudePlugin(directory)).toEqual([]);
+  });
+
   it.each([
     ["missing evaluation configuration contract", evaluationSchema, "missing"],
     ["stale server bundle", serverBundle, "stale"],

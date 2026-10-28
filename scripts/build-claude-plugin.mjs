@@ -9,6 +9,7 @@
 //   --drift  report the same differences as warnings and exit 0
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -165,13 +166,15 @@ export function applySkillAdaptation(files, skillId, adaptation, source = `${ski
 }
 
 function trackedFiles(root) {
-  const output = execFileSync("git", ["ls-files", "-z"], {
+  const output = execFileSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], {
     cwd: root,
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
     stdio: ["ignore", "pipe", "pipe"],
   });
-  return output.split("\0").filter(Boolean);
+  return [...new Set(output.split("\0").filter(Boolean).map(toPosix))]
+    .filter((file) => existsSync(path.join(root, file)))
+    .sort();
 }
 
 const ENGINEERING_LOCK = "runtime/engineering-practices/CONTENT_LOCK.json";
