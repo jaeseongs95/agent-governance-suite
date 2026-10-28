@@ -26,7 +26,7 @@ import type { ClassificationResult, ProviderEvaluation, ProviderProfile, SkillCl
 
 const repository = fileURLToPath(new URL("../../", import.meta.url));
 const cleanup: (() => Promise<void>)[] = [];
-const adapter: HostExecutionAdapter = { host: "codex", modelClassForModel: model => model === "synthetic-host-model" ? "general" : null };
+const adapter: HostExecutionAdapter = { host: "codex", provider: "openai-codex", modelClassForModel: model => model === "synthetic-host-model" ? "general" : null };
 afterEach(async () => { while (cleanup.length) await cleanup.pop()!(); });
 function input(operationId = "operation-mcp") {
   return { schemaVersion: "1.0.0", requestId: `request-${operationId}`, operationId,

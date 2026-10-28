@@ -13,6 +13,7 @@ import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 const model = "al05-approval-neutral-model";
 const adapter: HostExecutionAdapter = {
   host: "al05-approval-neutral-model-policy",
+  provider: "al05-approval-neutral-provider",
   modelClassForModel: (value) => value === model ? "deep" : null,
 };
 const clean = { taskId: "al05-approval-neutral-task" };

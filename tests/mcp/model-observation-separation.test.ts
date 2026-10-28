@@ -80,7 +80,7 @@ function v1Fixture(args: ReturnType<typeof fixture>["args"], capability: Resolve
 
 describe("C observation token eligibility controls", () => {
   it("preserves the existing legacy effective revision and actual workflow positive (C-F1)", () => {
-    const legacy: HostExecutionAdapter = { host: HOST, modelClassForModel: model => model === MODEL ? "deep" : null };
+    const legacy: HostExecutionAdapter = { host: HOST, provider: "owned-provider", modelClassForModel: model => model === MODEL ? "deep" : null };
     expect(resolveAdapterModelCapability(legacy, MODEL)?.policyRevision).toBe("1.0.0");
     const f = fixture(legacy), token = f.issue();
     expect(decoded(token)).toMatchObject({ policyRevision: "1.0.0", eligibility: { modelClass: "deep", policyRevision: "1.0.0" } });
