@@ -239,12 +239,21 @@ const ORCHESTRATOR_MIDTASK_SOURCE_HASHES = Object.freeze({
   "skills/orchestrator/SKILL.md": "56dabaa45041f8975eede0e08dd2b2c876ca71eca0fb5bc8256bfdaeb46098c5",
   "skills/orchestrator/classification.json": "f034243569190280ebc060f5f1654fcfcf8ee4b4f60c9e5ac19d8a1ebc5f8074",
 });
+const ORCHESTRATOR_RESOURCE_IMPACT_SOURCE_HASHES = Object.freeze({
+  "skills/orchestrator/SKILL.md": "e5f2e1cf5bbfa49821a5aad81ad83b68cf5cae3ec75c92050a8a4cd13b56be45",
+  "skills/orchestrator/classification.json": "6d33ef4bc3ae5daa8c15867f03dbdaf4c0cebf76fcfbd872ca1b8c3b6636baad",
+});
+
+function matchesOrchestratorSourceSuccessor(path, bytes) {
+  const digest = createHash("sha256").update(bytes).digest("hex");
+  return [ORCHESTRATOR_MIDTASK_SOURCE_HASHES, ORCHESTRATOR_RESOURCE_IMPACT_SOURCE_HASHES]
+    .some(hashes => Object.hasOwn(hashes, path) && digest === hashes[path]);
+}
 
 export function matchesGovernanceSourceSuccessor(path, bytes) {
   // Current mid-task selection wording is an exact source successor, not a 2.x runtime contract.
   // Historical reconstruction below still uses the separately pinned predecessor bytes.
-  if (Object.hasOwn(ORCHESTRATOR_MIDTASK_SOURCE_HASHES, path)
-    && createHash("sha256").update(bytes).digest("hex") === ORCHESTRATOR_MIDTASK_SOURCE_HASHES[path]) return true;
+  if (matchesOrchestratorSourceSuccessor(path, bytes)) return true;
   return Object.hasOwn(GOVERNANCE_SOURCE_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === GOVERNANCE_SOURCE_SUCCESSOR.hashes[path];
 }
@@ -480,8 +489,7 @@ const SKILL_POLICY_WORDING_SUCCESSOR = Object.freeze({
 
 function matchesSkillPolicyWordingSuccessor(path, bytes) {
   // Exact reviewed mid-task successor follows the same pinned historical projection.
-  if (Object.hasOwn(ORCHESTRATOR_MIDTASK_SOURCE_HASHES, path)
-    && createHash("sha256").update(bytes).digest("hex") === ORCHESTRATOR_MIDTASK_SOURCE_HASHES[path]) return true;
+  if (matchesOrchestratorSourceSuccessor(path, bytes)) return true;
   return Object.hasOwn(SKILL_POLICY_WORDING_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === SKILL_POLICY_WORDING_SUCCESSOR.hashes[path];
 }
