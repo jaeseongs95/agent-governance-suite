@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -90,13 +90,17 @@ describe("Korean prose evaluation preflight", () => {
 
   it("preflights and records an explicit legacy cycle directory instead of default evals/runs (AGS-D-0126)", async () => {
     const root = await createFrozenRun("evals/custom-legacy");
-    const layout = await resolveEvaluationLayout(root, 1, "evals/custom-legacy");
+    const aliasContainer = await mkdtemp(path.join(tmpdir(), "korean-prose-alias-"));
+    temporaryDirectories.push(aliasContainer);
+    const nonCanonicalRoot = path.join(aliasContainer, "runner~1-alias");
+    await symlink(root, nonCanonicalRoot, process.platform === "win32" ? "junction" : "dir");
+    const layout = await resolveEvaluationLayout(nonCanonicalRoot, 1, "evals/custom-legacy");
     expect(layout.structured).toBe(false);
     expect(layout.cycleDirectory).toBe(path.join(root, "evals", "custom-legacy"));
 
     const recorded = spawnSync(
       process.execPath,
-      ["--import", "tsx", recorderPath, "1", root, "--cycle-dir", "evals/custom-legacy"],
+      ["--import", "tsx", recorderPath, "1", nonCanonicalRoot, "--cycle-dir", "evals/custom-legacy"],
       { cwd: repositoryRoot, encoding: "utf8" },
     );
     expect(recorded.status, recorded.stderr).toBe(0);
@@ -145,7 +149,8 @@ describe("Korean prose evaluation preflight", () => {
 });
 
 async function createFrozenRun(relativeRunsRoot = path.join("evals", "runs")): Promise<string> {
-  const root = await mkdtemp(path.join(tmpdir(), "korean-prose-preflight-"));
+  const rawRoot = await mkdtemp(path.join(tmpdir(), "korean-prose-preflight-"));
+  const root = await realpath(rawRoot);
   temporaryDirectories.push(root);
   await populateFrozenRunAt(root, relativeRunsRoot);
   return root;

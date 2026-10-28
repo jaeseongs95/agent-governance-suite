@@ -1,20 +1,21 @@
 import assert from 'node:assert/strict';
-import { fork, spawn, spawnSync } from 'node:child_process';
+import { fork, spawn } from 'node:child_process';
+import { createHmac, randomBytes } from 'node:crypto';
 import { once } from 'node:events';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
+import net from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { afterEach, test, vi } from 'vitest';
+import { canonicalJson } from '../../mcp-server/src/convergence-logic.ts';
 import { SessionMessageStore } from '../../mcp-server/src/session-message-store.ts';
 import { dispatchSessionMessageBrokerOperation as dispatch } from '../../mcp-server/src/session-message-broker.ts';
 import '../../mcp-server/src/builtin-hook-host-adapters.ts';
 import { adaptHostInput, registerHookHostAdapter } from '../../mcp-server/src/host-input-adapter.ts';
 import { recordWakeHookObservation, createWakeHookObservationReader, verifyHistoricalWakeObservation } from '../../mcp-server/src/session-message-wake-port.ts';
-import { waitForSessionMessageBrokerReady } from '../../mcp-server/src/session-message-client.ts';
 import { TrustStore } from '../../mcp-server/src/trust-store.ts';
 
 // Explicit synthetic root adapter for core regression cases; not native capture or R7 evidence.
@@ -75,6 +76,42 @@ function snapshot(f) {
   return { wake: row(f), messages: f.store.database.prepare('SELECT * FROM messages').all(),
     observations: f.store.database.prepare('SELECT * FROM input_observations').all(),
     presence: f.store.database.prepare('SELECT * FROM session_presence').all() };
+}
+async function startBrokerUntilReady(brokerPath, stateDirectory, options) {
+  const broker = spawn(process.execPath, [brokerPath, '--state-directory', stateDirectory, '--startup-diagnostic'], {
+    ...options,
+    stdio: ['ignore', 'ignore', 'pipe', 'pipe'],
+    windowsHide: true,
+  });
+  let stderr = '';
+  broker.stderr?.on('data', chunk => { stderr += String(chunk); });
+  const exited = once(broker, 'exit');
+  const diagnosticPipe = broker.stdio[3];
+  diagnosticPipe.resume();
+  await Promise.race([once(diagnosticPipe, 'close'), exited]);
+  assert.equal(broker.exitCode, null, stderr || 'broker exited before ready');
+  assert.equal(existsSync(join(stateDirectory, 'endpoint.json')), true, stderr || 'broker did not write endpoint.json');
+  return { broker, exited };
+}
+async function runNodeAsync(args, options = {}) {
+  const { input, ...spawnOptions } = options;
+  const child = spawn(process.execPath, args, {
+    ...spawnOptions,
+    stdio: ['pipe', 'pipe', 'pipe'],
+    windowsHide: true,
+  });
+  let stdout = '';
+  let stderr = '';
+  child.stdout.setEncoding('utf8');
+  child.stderr.setEncoding('utf8');
+  child.stdout.on('data', chunk => { stdout += chunk; });
+  child.stderr.on('data', chunk => { stderr += chunk; });
+  let spawnError;
+  child.once('error', error => { spawnError = error; });
+  if (input !== undefined) child.stdin.end(input);
+  else child.stdin.end();
+  const [status] = await once(child, 'close');
+  return { status, stdout, stderr, error: spawnError };
 }
 
 test('expired original evidence retires only the exact old attempt, preserving historical time and pending body', () => {
@@ -215,15 +252,13 @@ test('readonly version and receipt share a snapshot while an independent writer 
   const prepare = DatabaseSync.prototype.prepare; let writes = 0;
   const spy = vi.spyOn(DatabaseSync.prototype, 'prepare').mockImplementation(function (sql) {
     const statement = prepare.call(this, sql);
-    if (sql === 'PRAGMA user_version') {
+    if (sql === 'PRAGMA user_version' && this !== writer) {
       const get = statement.get.bind(statement);
       statement.get = (...args) => {
         const version = get(...args);
-        const child = spawnSync(process.execPath, ['--input-type=module', '-e', `
-          import { DatabaseSync } from 'node:sqlite';
-          const db = new DatabaseSync(process.argv[1]); db.exec('PRAGMA user_version = 2'); db.close();
-        `, f.trustPath], { encoding: 'utf8', windowsHide: true, timeout: 10_000 });
-        assert.equal(child.status, 0, child.stderr); writes++; return version;
+        writer.exec('PRAGMA user_version = 2');
+        writes++;
+        return version;
       };
     }
     return statement;
@@ -304,27 +339,22 @@ test('read-only verification holds one key/receipt snapshot while an independent
   let writes = 0;
   const spy = vi.spyOn(DatabaseSync.prototype, 'prepare').mockImplementation(function (sql) {
     const statement = prepare.call(this, sql);
-    if (sql === 'SELECT value FROM trust_metadata WHERE key = ?') {
+    if (sql === 'SELECT value FROM trust_metadata WHERE key = ?' && this !== writer) {
       const get = statement.get.bind(statement);
       statement.get = (...args) => {
         const key = get(...args);
-        const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', `
-          import { randomBytes, createHmac } from 'node:crypto';
-          import { DatabaseSync } from 'node:sqlite';
-          import { canonicalJson } from './mcp-server/src/convergence-logic.ts';
-          const db = new DatabaseSync(process.argv[1]);
-          db.exec('BEGIN IMMEDIATE');
-          const signingKey = randomBytes(32);
-          db.prepare('UPDATE trust_metadata SET value = ?').run(signingKey.toString('base64url'));
-          const receipts = db.prepare('SELECT receipt_id, receipt_json FROM input_source_receipts').all();
-          for (const row of receipts) {
-            const unsigned = JSON.parse(row.receipt_json); delete unsigned.integrityToken;
-            const integrityToken = createHmac('sha256', signingKey).update(canonicalJson(unsigned)).digest('base64url');
-            db.prepare('UPDATE input_source_receipts SET receipt_json = ? WHERE receipt_id = ?').run(JSON.stringify({ ...unsigned, integrityToken }), row.receipt_id);
-          }
-          db.exec('COMMIT'); db.close();
-        `, f.trustPath], { windowsHide: true, encoding: 'utf8', timeout: 10_000 });
-        assert.equal(child.status, 0, child.stderr); writes++; return key;
+        writer.exec('BEGIN IMMEDIATE');
+        const signingKey = randomBytes(32);
+        writer.prepare('UPDATE trust_metadata SET value = ?').run(signingKey.toString('base64url'));
+        const receipts = writer.prepare('SELECT receipt_id, receipt_json FROM input_source_receipts').all();
+        for (const row of receipts) {
+          const unsigned = JSON.parse(row.receipt_json); delete unsigned.integrityToken;
+          const integrityToken = createHmac('sha256', signingKey).update(canonicalJson(unsigned)).digest('base64url');
+          writer.prepare('UPDATE input_source_receipts SET receipt_json = ? WHERE receipt_id = ?').run(JSON.stringify({ ...unsigned, integrityToken }), row.receipt_id);
+        }
+        writer.exec('COMMIT');
+        writes++;
+        return key;
       };
     }
     return statement;
@@ -348,21 +378,19 @@ test('bundled public CLI forwards only IDs to the private broker and cannot repe
   const cliPath = join(install, 'session-message-cli.mjs');
   assert.equal(existsSync(join(install, 'node_modules')), false);
   const env = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: f.directory, AGENT_GOVERNANCE_TRUST_DB_PATH: f.trustPath };
-  const broker = spawn(process.execPath, [brokerPath, '--state-directory', f.directory], { env, cwd: install, stdio: 'ignore', windowsHide: true });
-  const exited = once(broker, 'exit');
+  const { broker, exited } = await startBrokerUntilReady(brokerPath, f.directory, { env, cwd: install });
   try {
-    await waitForSessionMessageBrokerReady(f.directory, broker, 5000);
-    const run = input => {
-      const output = spawnSync(process.execPath, [cliPath], { env, cwd: install, encoding: 'utf8', windowsHide: true, timeout: 10_000,
+    const run = async input => {
+      const output = await runNodeAsync([cliPath], { env, cwd: install,
         input: JSON.stringify({ operation: 'reconcile-wake-observation', payload: input }) });
       assert.equal(output.error, undefined); return { code: output.status, json: JSON.parse(output.stdout) };
     };
     const messages = snapshot(f).messages;
-    assert.equal(run({ ...payload(f), nowMs: Date.now() }).code, 1);
+    assert.equal((await run({ ...payload(f), nowMs: Date.now() })).code, 1);
     assert.equal(row(f).state, 'unknown');
-    const result = run(payload(f)); assert.equal(result.code, 0); assert.equal(result.json.data.reconciled, true);
+    const result = await run(payload(f)); assert.equal(result.code, 0); assert.equal(result.json.data.reconciled, true);
     assert.equal(result.json.data.evidence.oldBinding.attemptId, f.attempt.attemptId);
-    assert.deepEqual(run(payload(f)).json.data, { reconciled: false, evidence: null });
+    assert.deepEqual((await run(payload(f))).json.data, { reconciled: false, evidence: null });
     assert.deepEqual(snapshot(f).messages, messages);
     assert.deepEqual(snapshot(f).observations, []);
   } finally { broker.kill(); await exited; }
@@ -383,47 +411,44 @@ test.each(['prestarted', 'client-ensure'])('packaged CLI binds history to explic
   delete env.AGENT_GOVERNANCE_TRUST_DB_PATH;
   let broker; let exited;
   if (mode === 'prestarted') {
-    broker = spawn(process.execPath, [join(install, 'session-message-broker.mjs'), '--state-directory', f.directory],
-      { env, cwd: install, stdio: 'ignore', windowsHide: true });
-    exited = once(broker, 'exit');
+    ({ broker, exited } = await startBrokerUntilReady(join(install, 'session-message-broker.mjs'), f.directory, { env, cwd: install }));
   }
   try {
-    if (broker) await waitForSessionMessageBrokerReady(f.directory, broker, 5000);
-    const run = input => {
+    const run = async input => {
       const code = `import { readFileSync } from 'node:fs';
         import { runSessionMessageCli } from './session-message-cli.mjs';
         try { console.log(JSON.stringify(await runSessionMessageCli(readFileSync(0, 'utf8'), process.argv[1]))); }
         catch (error) { console.log(JSON.stringify({ ok: false, error: error.message })); process.exitCode = 1; }`;
-      const output = spawnSync(process.execPath, ['--input-type=module', '-e', code, f.directory], {
-        env, cwd: install, encoding: 'utf8', windowsHide: true, timeout: 15_000,
+      const output = await runNodeAsync(['--input-type=module', '-e', code, f.directory], {
+        env, cwd: install,
         input: JSON.stringify({ operation: 'reconcile-wake-observation', payload: input }) });
       assert.equal(output.error, undefined); return { code: output.status, json: JSON.parse(output.stdout) };
     };
     const before = snapshot(f);
-    const wrong = run({ ...payload(f), sourceReceiptId: 'source-missing' });
+    const wrong = await run({ ...payload(f), sourceReceiptId: 'source-missing' });
     assert.equal(wrong.code, 0); assert.deepEqual(wrong.json.data, { reconciled: false, evidence: null });
     assert.deepEqual(snapshot(f), before);
-    assert.equal(run({ ...payload(f), approved: true }).code, 1); assert.deepEqual(snapshot(f), before);
+    assert.equal((await run({ ...payload(f), approved: true })).code, 1); assert.deepEqual(snapshot(f), before);
     // Valid proof in the unrelated default DB must not replace the broker's selected DB.
     copyFileSync(f.trustPath, decoyPath); writeFileSync(f.trustPath, decoyBytes);
-    const unrelatedProof = run(payload(f)); assert.equal(unrelatedProof.code, 0);
+    const unrelatedProof = await run(payload(f)); assert.equal(unrelatedProof.code, 0);
     assert.deepEqual(unrelatedProof.json.data, { reconciled: false, evidence: null });
     assert.deepEqual(snapshot(f), before); assert.deepEqual(readFileSync(f.trustPath), decoyBytes);
     assert.deepEqual(readFileSync(decoyPath), trustBytes); assert.deepEqual(readdirSync(unrelated), ['trust.sqlite3']);
     rmSync(f.trustPath);
-    const missing = run(payload(f)); assert.equal(missing.code, 0);
+    const missing = await run(payload(f)); assert.equal(missing.code, 0);
     assert.deepEqual(missing.json.data, { reconciled: false, evidence: null });
     assert.equal(existsSync(f.trustPath), false); assert.deepEqual(snapshot(f), before);
     assert.deepEqual(readFileSync(decoyPath), trustBytes); assert.deepEqual(readdirSync(unrelated), ['trust.sqlite3']);
     writeFileSync(f.trustPath, trustBytes); writeFileSync(decoyPath, decoyBytes);
-    const result = run(payload(f)); assert.equal(result.code, 0);
+    const result = await run(payload(f)); assert.equal(result.code, 0);
     assert.equal(result.json.data.reconciled, true, JSON.stringify(result.json));
     assert.equal(result.json.data.evidence.sourceReceiptId, f.sourceReceiptId);
     assert.equal(result.json.data.evidence.oldBinding.attemptId, f.attempt.attemptId);
     assert.deepEqual(snapshot(f).messages, before.messages);
     assert.deepEqual(snapshot(f).presence, before.presence);
     assert.deepEqual(snapshot(f).observations, before.observations);
-    assert.deepEqual(run(payload(f)).json.data, { reconciled: false, evidence: null });
+    assert.deepEqual((await run(payload(f))).json.data, { reconciled: false, evidence: null });
     assert.deepEqual(readFileSync(f.trustPath), trustBytes);
     assert.deepEqual(readFileSync(decoyPath), decoyBytes);
     assert.deepEqual(readdirSync(unrelated), ['trust.sqlite3']);
@@ -432,14 +457,17 @@ test.each(['prestarted', 'client-ensure'])('packaged CLI binds history to explic
     if (broker) { broker.kill(); await exited; }
     else if (existsSync(join(f.directory, 'endpoint.json'))) {
       const endpoint = JSON.parse(readFileSync(join(f.directory, 'endpoint.json'), 'utf8'));
-      process.kill(endpoint.pid);
-      const deadline = Date.now() + 5000;
+      const watch = net.connect({ host: '127.0.0.1', port: endpoint.port });
+      watch.on('error', () => {});
+      const closed = new Promise(resolve => watch.once('close', resolve));
+      await new Promise(resolve => {
+        watch.once('connect', resolve);
+        watch.once('close', resolve);
+      });
+      try { process.kill(endpoint.pid); } catch { /* Already exited. */ }
+      await closed;
       let alive = true;
-      while (alive && Date.now() < deadline) {
-        try { process.kill(endpoint.pid, 0); }
-        catch { alive = false; }
-        if (alive) await delay(20);
-      }
+      try { process.kill(endpoint.pid, 0); } catch { alive = false; }
       assert.equal(alive, false);
     }
   }
@@ -461,22 +489,18 @@ test.each(schemaCliCases)('packaged %s CLI rejects unsupported trust schema with
   }
   assert.equal(existsSync(join(install, 'node_modules')), false);
   const env = { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: f.directory, AGENT_GOVERNANCE_TRUST_DB_PATH: f.trustPath };
-  const broker = spawn(process.execPath, [join(install, 'session-message-broker.mjs'), '--state-directory', f.directory],
-    { env, cwd: install, stdio: 'ignore', windowsHide: true });
-  const exited = once(broker, 'exit');
+  const { broker, exited } = await startBrokerUntilReady(join(install, 'session-message-broker.mjs'), f.directory, { env, cwd: install });
   try {
-    await waitForSessionMessageBrokerReady(f.directory, broker, 5000);
-    const run = () => spawnSync(process.execPath, [join(install, 'session-message-cli.mjs')], {
-      env, cwd: install, input: JSON.stringify({ operation: 'reconcile-wake-observation', payload: payload(f) }),
-      encoding: 'utf8', windowsHide: true, timeout: 10_000 });
-    const output = run(); assert.equal(output.error, undefined); assert.equal(output.status, 0, output.stderr);
+    const run = () => runNodeAsync([join(install, 'session-message-cli.mjs')], {
+      env, cwd: install, input: JSON.stringify({ operation: 'reconcile-wake-observation', payload: payload(f) }) });
+    const output = await run(); assert.equal(output.error, undefined); assert.equal(output.status, 0, output.stderr);
     const accepted = typeof version === 'number' && version <= 1;
     assert.equal(JSON.parse(output.stdout).data.reconciled, accepted);
     if (!accepted) assert.deepEqual(snapshot(f), before);
     assert.deepEqual(readFileSync(f.trustPath), authorityBytes);
     const wal = `${f.trustPath}-wal`;
     if (existsSync(wal)) assert.ok(readFileSync(wal).length <= 32, 'reader added WAL frames');
-    assert.deepEqual(JSON.parse(run().stdout).data, { reconciled: false, evidence: null });
+    assert.deepEqual(JSON.parse((await run()).stdout).data, { reconciled: false, evidence: null });
     assert.deepEqual(readFileSync(f.trustPath), authorityBytes);
   } finally { broker.kill(); await exited; }
 }, 20_000);

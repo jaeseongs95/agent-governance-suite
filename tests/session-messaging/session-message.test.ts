@@ -1,6 +1,6 @@
 import { mkdtempSync } from "node:fs";
 import { copyFile, lstat, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { createHash } from "node:crypto";
 import net from "node:net";
@@ -24,7 +24,6 @@ import {
   waitForSessionMessageBrokerReady,
 } from "../../mcp-server/src/session-message-client.js";
 import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
-import { acquireBrokerProcessLock, releaseBrokerProcessLock } from "../../mcp-server/src/broker-process-lock.js";
 import {
   executeSessionMessageCliFromStdin,
   formatSessionMessageStdinReadError,
@@ -36,7 +35,7 @@ import { SessionMessageService } from "../../mcp-server/src/session-message-serv
 import { claudeWakeOutcome, codexWakeOutcome, geminiWakeOutcome, relayIdentityDecision, ringClaude, shouldReleaseWake, transportWakeCapabilities, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
 import { resolveGeminiAgentApi } from "../../mcp-server/src/session-message-wake-port.js";
 import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
-import { processIdentityState, processStartToken } from "../../mcp-server/src/process-identity.js";
+import { processIdentityState, processStartTokenAsync } from "../../mcp-server/src/process-identity.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "../../mcp-server/src/session-message-protocol.js";
 import { adaptHostInput, hostDeliveryProfile, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { supportsInjection, type DeliveryCapabilities } from "../../mcp-server/src/input-observation.js";
@@ -85,7 +84,45 @@ async function optionalFile(target: string): Promise<string | null> {
   }
 }
 
-async function brokerLockPid(target: string): Promise<number | null> {
+let currentProcessStartTokenPromise: Promise<string | null> | null = null;
+
+function readCachedProcessStartToken(pid: number): Promise<string | null> {
+  if (pid === process.pid) {
+    currentProcessStartTokenPromise ??= processStartTokenAsync(pid);
+    return currentProcessStartTokenPromise;
+  }
+  return processStartTokenAsync(pid);
+}
+
+async function runNodeChild(
+  args: string[],
+  options: { input?: string; env?: NodeJS.ProcessEnv; cwd?: string } = {},
+): Promise<{ status: number | null; stdout: string; stderr: string }> {
+  return await new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, args, {
+      cwd: options.cwd,
+      env: options.env,
+      stdio: ["pipe", "pipe", "pipe"],
+      windowsHide: true,
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", (chunk: string) => { stdout += chunk; });
+    child.stderr.on("data", (chunk: string) => { stderr += chunk; });
+    child.once("error", reject);
+    child.once("close", (status) => { resolve({ status, stdout, stderr }); });
+    child.stdin.on("error", () => {});
+    if (options.input !== undefined) child.stdin.end(options.input, "utf8");
+    else child.stdin.end();
+  });
+}
+
+async function brokerLockPid(
+  target: string,
+  readStartToken: (pid: number) => Promise<string | null> | string | null = readCachedProcessStartToken,
+): Promise<number | null> {
   try {
     const info = await lstat(target);
     if (info.isSymbolicLink()) throw new Error("The test broker lock must not be a link.");
@@ -96,13 +133,13 @@ async function brokerLockPid(target: string): Promise<number | null> {
       if (!match) throw new Error("The test broker lock owner is invalid.");
       const pid = Number(match[1]);
       if (!Number.isSafeInteger(pid)) throw new Error("The test broker PID is invalid.");
-      const token = processStartToken(pid);
+      try { process.kill(pid, 0); }
+      catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ESRCH") return null;
+        throw new Error("The test broker lock owner cannot be verified.", { cause: error });
+      }
+      const token = await readStartToken(pid);
       if (token === null) {
-        try { process.kill(pid, 0); }
-        catch (error) {
-          if ((error as NodeJS.ErrnoException).code === "ESRCH") return null;
-          throw new Error("The test broker lock owner cannot be verified.", { cause: error });
-        }
         throw new Error("The test broker lock owner cannot be verified.");
       }
       if (createHash("sha256").update(token).digest("hex") !== match[2]) {
@@ -621,17 +658,19 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
 
   it("verifies the current broker lock owner before cleanup", async () => {
     const lockPath = path.join(stateDirectory(), "broker.lock");
-    const lock = acquireBrokerProcessLock(lockPath);
-    expect(lock).not.toBeNull();
+    const syntheticToken = "verified-current-owner-birth";
+    const expectedHash = createHash("sha256").update(syntheticToken).digest("hex");
+    await mkdir(path.join(lockPath, `owner-${process.pid}-${"a".repeat(32)}-${expectedHash}`), { recursive: true });
     try {
-      expect(await brokerLockPid(lockPath)).toBe(process.pid);
+      expect(await brokerLockPid(lockPath, () => syntheticToken)).toBe(process.pid);
     } finally {
-      if (lock) releaseBrokerProcessLock(lock);
+      await rm(lockPath, { recursive: true, force: true });
     }
 
     await mkdir(path.join(lockPath, `owner-${process.pid}-${"0".repeat(32)}-${"0".repeat(64)}`), { recursive: true });
     try {
-      await expect(brokerLockPid(lockPath)).rejects.toThrow("The test broker lock owner cannot be verified.");
+      await expect(brokerLockPid(lockPath, () => syntheticToken)).rejects.toThrow("The test broker lock owner cannot be verified.");
+      await expect(brokerLockPid(lockPath, () => null)).rejects.toThrow("The test broker lock owner cannot be verified.");
     } finally {
       await rm(lockPath, { recursive: true, force: true });
     }
@@ -759,9 +798,8 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     ]);
     await terminateBroker(directory);
     // Windows SIGTERM may terminate before cleanup. Reclaim only a proven-dead owner.
-    const fixtureLock = acquireBrokerProcessLock(path.join(directory, "broker.lock"));
-    if (fixtureLock === null) throw new Error("The test broker lock still has a live owner.");
-    releaseBrokerProcessLock(fixtureLock);
+    expect(await brokerLockPid(path.join(directory, "broker.lock"))).toBeNull();
+    await rm(path.join(directory, "broker.lock"), { recursive: true, force: true });
 
     const sockets = new Set<tls.TLSSocket>();
     const timers = new Set<NodeJS.Timeout>();
@@ -1040,22 +1078,22 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     delete environment.NODE_PATH;
     delete environment.NODE_OPTIONS;
     const target = { host: syntheticRootHost, sessionId: "plugin-profile-generation" };
-    const start = (hostPid: number) => spawnSync(process.execPath, [syntheticCoreHookDriver, installedHook, syntheticRootHost, String(hostPid)], {
+    const start = (hostPid: number) => runNodeChild([syntheticCoreHookDriver, installedHook, syntheticRootHost, String(hostPid)], {
       input: JSON.stringify({ hook_event_name: "SessionStart", session_id: target.sessionId }),
-      env: environment, cwd: directory, encoding: "utf8", timeout: 15_000, windowsHide: true,
+      env: environment, cwd: directory,
     });
     const store = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
     let relayPid: number | undefined;
     try {
-      const native = spawnSync(process.execPath, [installedHook, "--host=gemini", "--host-pid", String(process.pid)], {
+      const native = await runNodeChild([installedHook, "--host=gemini", "--host-pid", String(process.pid)], {
         input: JSON.stringify({ hook_event_name: "SessionStart", session_id: target.sessionId, agent_id: "" }),
-        env: environment, cwd: directory, encoding: "utf8", timeout: 15_000, windowsHide: true,
+        env: environment, cwd: directory,
       });
       expect(native.status, native.stderr).toBe(0);
       expect(native.stdout).toBe("");
       expect(store.presence({ host: "gemini", sessionId: target.sessionId }).state).not.toBe("online");
       expect(store.liveRelay({ host: "gemini", sessionId: target.sessionId }, "gemini-queue")).toBeNull();
-      const first = start(process.pid);
+      const first = await start(process.pid);
       expect(first.status, first.stderr).toBe(0);
       expect(first.stdout).toBe("");
       const presence = store.presence(target);
@@ -1067,7 +1105,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       await writeFile(file, '{"schemaVersion":"1.0.0","codex":{"queueWake":false}}');
       expect(store.presence(target)).toMatchObject({ instanceId: presence.instanceId, transport: "codex-queue" });
       expect(store.liveRelay(target, "codex-queue")?.pid).toBe(relayPid);
-      const resumed = start(0);
+      const resumed = await start(0);
       expect(resumed.status, resumed.stderr).toBe(0);
       const next = store.presence(target);
       expect(next).toMatchObject({ transport: "codex-deferred", state: "online", wakeVisibility: "none" });
@@ -1379,10 +1417,11 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       const prompt = scenario === "forged" ? "[agent-governance-suite:wake:unregistered-nonce-abcdefghijklmnop]"
         : `[agent-governance-suite:wake:${nonce}]${scenario === "mixed" ? "\nactual user request" : ""}`;
       const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, prompt, syntheticWake: parseWakeMessages(prompt) };
-      const invoke = () => {
+      const invoke = async () => {
         if (scenario === "claude" || scenario === "codex" || entrypoint === "source") return handleSessionMessageHook(input, target.host);
-        const child = spawnSync(process.execPath, [syntheticCoreHookDriver, bundledSessionMessageHook, target.host], { input: JSON.stringify(input), encoding: "utf8",
-          timeout: 10_000, windowsHide: true, env: { ...process.env } });
+        const child = await runNodeChild([syntheticCoreHookDriver, bundledSessionMessageHook, target.host], {
+          input: JSON.stringify(input), env: { ...process.env },
+        });
         expect(child.status, child.stderr).toBe(0);
         return child.stdout ? JSON.parse(child.stdout) as Record<string, unknown> : {};
       };
@@ -1440,8 +1479,9 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       let output: Record<string, unknown>;
       if (host === "claude-code" || host === "codex" || entrypoint === "source") output = await handleSessionMessageHook(input, host);
       else {
-        const child = spawnSync(process.execPath, [syntheticCoreHookDriver, bundledSessionMessageHook, host], { input: JSON.stringify(input), encoding: "utf8",
-          timeout: 10_000, windowsHide: true, env: { ...process.env } });
+        const child = await runNodeChild([syntheticCoreHookDriver, bundledSessionMessageHook, host], {
+          input: JSON.stringify(input), env: { ...process.env },
+        });
         expect(child.status, child.stderr).toBe(0);
         output = child.stdout ? JSON.parse(child.stdout) as Record<string, unknown> : {};
       }
@@ -1622,12 +1662,9 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
       AGENT_GOVERNANCE_SHARED_STATE_DIR: fallback,
     };
-    const hook = spawnSync(process.execPath, [bundledSessionMessageHook, "--host=gemini"], {
+    const hook = await runNodeChild([bundledSessionMessageHook, "--host=gemini"], {
       env,
       input: JSON.stringify({ hook_event_name: "SessionEnd", session_id: "packaged-session-end", reason: "other" }),
-      encoding: "utf8",
-      timeout: 3000,
-      windowsHide: true,
     });
     expect(hook.status, hook.stderr).toBe(0);
     expect(hook.stdout).toBe("");
@@ -1635,13 +1672,12 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     // The unsupported native hook must remain inert. Exercise the packaged core in
     // an owned real child with explicit synthetic root registration before isolation checks.
     expect(await readdir(directory)).toEqual([]);
-    const core = spawnSync(process.execPath, [syntheticCoreHookDriver, bundledSessionMessageHook, syntheticRootHost], {
+    const core = await runNodeChild([syntheticCoreHookDriver, bundledSessionMessageHook, syntheticRootHost], {
       env, input: JSON.stringify({ hook_event_name: "SessionEnd", session_id: "synthetic-packaged-session-end" }),
-      encoding: "utf8", timeout: 15_000, windowsHide: true,
     });
     expect(core.status, core.stderr).toBe(0);
     expect(core.stdout).toBe("");
-    const relay = spawnSync(process.execPath, [bundledSessionMessageRelay], { env, encoding: "utf8", timeout: 3000, windowsHide: true });
+    const relay = await runNodeChild([bundledSessionMessageRelay], { env });
     expect(relay.status, relay.stderr).toBe(2);
     expect(await readdir(directory)).toContain("broker.token");
     expect(await readdir(fallback)).toEqual([]);
