@@ -89,7 +89,8 @@ describe("orchestrator resource-impact prompt propagation", () => {
     const adaptation = JSON.parse(readFileSync(new URL("../../claude-overlay/adaptations/orchestrator.json", import.meta.url), "utf8")) as {
       replacements: Array<{ find: string; replace: string }>;
     };
-    const [{ find, replace }] = adaptation.replacements;
+    expect(adaptation.replacements).toHaveLength(1);
+    const { find, replace } = adaptation.replacements[0]!;
     expect(generated).toBe(shared.replace(find, replace));
     expect(generated).toContain(impactLine);
     expect(generated).toContain(resumeLine);
