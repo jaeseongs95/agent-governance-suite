@@ -756,8 +756,13 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     expect(fresh.ok).toBe(true);
     expect(provider.lastObservedCapability()?.policyRevision).toBe("descriptor-r2");
 
-    const legacy: HostExecutionAdapter = {
+    const providerlessLegacy: HostExecutionAdapter = {
       host: "codex", modelClassForModel: (model) => codexExecutionAdapter.modelClassForModel(model),
+    };
+    expect(resolveAdapterModelCapability(providerlessLegacy, "gpt-6-astra")).toBeNull();
+
+    const legacy: HostExecutionAdapter = {
+      host: "codex", provider: "openai-codex", modelClassForModel: (model) => codexExecutionAdapter.modelClassForModel(model),
     };
     expect(resolveAdapterModelCapability(legacy, "gpt-6-astra")?.policyRevision).toBe("1.0.0");
     const legacyProvider = new HostAttestationProvider(store, legacy);

@@ -51,7 +51,7 @@ Use the official Claude Code documentation for [model configuration](https://cod
 
 ## Apply the Google Gemini adapter
 
-For Google Gemini and Antigravity, resolve model IDs and aliases through the current adapter catalog and host capabilities. Translate the selection into the current invocation schema or subagent definition using the adapter application metadata; do not assume a fixed list of model argument values.
+Execution hosts (such as Antigravity, Gemini CLI, Claude Code, and Codex) are separate from model vendors: a single host may expose models from multiple vendor catalogs, and each observed model ID resolves its vendor and capability from the matching provider catalog in `model-routing-presets.json` rather than inferring the vendor from the host name. When dispatching a Google Gemini model on any compatible host, resolve model IDs and aliases through the `google-gemini` catalog and current host capabilities, then translate the selection into the current host's invocation schema or subagent definition using the adapter application metadata without assuming a fixed list of model argument values.
 
 For high-risk work, enforce the `general` model-class floor and `high` effort. Verify actual dispatch against the host task view or invocation result.
 

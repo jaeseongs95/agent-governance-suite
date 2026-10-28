@@ -42,13 +42,37 @@ export interface ResolvedModelCapabilityV1 {
   readonly provenance: string;
 }
 
+export type UndeterminedModelReasonV1 =
+  | "MODEL_NOT_IN_CATALOG"
+  | "AMBIGUOUS_PROVIDER_MATCH"
+  | "MISSING_PROVIDER_IDENTITY"
+  | "INVALID_MODEL_IDENTIFIER";
+
+/** Explicit undetermined result when a model ID is absent from or ambiguous across vendor catalogs. */
+export interface UndeterminedModelCapabilityV1 {
+  readonly status: "undetermined";
+  readonly reason: UndeterminedModelReasonV1;
+  readonly host: string;
+  readonly rawModel: string;
+  readonly provider: null;
+  readonly modelClass: null;
+  readonly policyRevision: string | null;
+  readonly provenance: string;
+}
+
+export type ModelCapabilityJudgmentV1 =
+  | ({ readonly status: "resolved" } & ResolvedModelCapabilityV1)
+  | UndeterminedModelCapabilityV1;
+
 /** Adapter policy owns model mapping, never signing, binding, freshness or replay checks. */
 export interface HostExecutionAdapter {
   host: string;
   provider?: string;
+  providers?: readonly string[];
   policyRevision?: string;
   modelClassForModel(model: string): ModelClassV1 | null;
   resolveModel?(model: string, provenance?: string): ResolvedModelCapabilityV1 | null;
+  judgeModel?(model: string, provenance?: string): ModelCapabilityJudgmentV1;
 }
 
 export interface HostAttestationBindingV1 {
@@ -110,6 +134,115 @@ export function isReasoningEffort(value: unknown): value is ReasoningEffortV1 {
   return typeof value === "string" && (REASONING_EFFORT as readonly string[]).includes(value);
 }
 
+/**
+ * Judges a model identifier against the host adapter's vendor catalogs and returns an explicit
+ * resolved capability or an explicit undetermined judgment without inferring vendor from host name.
+ */
+export function judgeAdapterModelCapability(
+  adapter: HostExecutionAdapter,
+  model: string,
+  provenance: string = `${adapter.host}:runtime`,
+): ModelCapabilityJudgmentV1 {
+  if (typeof model !== "string" || model.length === 0) {
+    return {
+      status: "undetermined",
+      reason: "INVALID_MODEL_IDENTIFIER",
+      host: adapter.host,
+      rawModel: typeof model === "string" ? model : "",
+      provider: null,
+      modelClass: null,
+      policyRevision: adapter.policyRevision ?? null,
+      provenance,
+    };
+  }
+  if (typeof adapter.judgeModel === "function") {
+    const judged = adapter.judgeModel(model, provenance);
+    if (judged.status === "undetermined") return judged;
+    const provider = nonEmpty(judged.provider);
+    if (!provider || !MODEL_CLASS.includes(judged.modelClass)) {
+      return {
+        status: "undetermined",
+        reason: !provider ? "MISSING_PROVIDER_IDENTITY" : "MODEL_NOT_IN_CATALOG",
+        host: adapter.host,
+        rawModel: model,
+        provider: null,
+        modelClass: null,
+        policyRevision: judged.policyRevision ?? adapter.policyRevision ?? null,
+        provenance,
+      };
+    }
+    return { ...judged, provider };
+  }
+  if (typeof adapter.resolveModel === "function") {
+    const resolved = adapter.resolveModel(model, provenance);
+    if (!resolved || !MODEL_CLASS.includes(resolved.modelClass)) {
+      return {
+        status: "undetermined",
+        reason: "MODEL_NOT_IN_CATALOG",
+        host: adapter.host,
+        rawModel: model,
+        provider: null,
+        modelClass: null,
+        policyRevision: adapter.policyRevision ?? null,
+        provenance,
+      };
+    }
+    const provider = nonEmpty(resolved.provider);
+    if (!provider) {
+      return {
+        status: "undetermined",
+        reason: "MISSING_PROVIDER_IDENTITY",
+        host: adapter.host,
+        rawModel: model,
+        provider: null,
+        modelClass: null,
+        policyRevision: resolved.policyRevision ?? adapter.policyRevision ?? null,
+        provenance,
+      };
+    }
+    return { status: "resolved", ...resolved, provider };
+  }
+  const provider = nonEmpty(adapter.provider);
+  if (!provider) {
+    return {
+      status: "undetermined",
+      reason: "MISSING_PROVIDER_IDENTITY",
+      host: adapter.host,
+      rawModel: model,
+      provider: null,
+      modelClass: null,
+      policyRevision: adapter.policyRevision ?? null,
+      provenance,
+    };
+  }
+  const modelClass = adapter.modelClassForModel(model);
+  if (!modelClass || !MODEL_CLASS.includes(modelClass)) {
+    return {
+      status: "undetermined",
+      reason: "MODEL_NOT_IN_CATALOG",
+      host: adapter.host,
+      rawModel: model,
+      provider: null,
+      modelClass: null,
+      policyRevision: adapter.policyRevision ?? "1.0.0",
+      provenance,
+    };
+  }
+  return {
+    status: "resolved",
+    provider,
+    host: adapter.host,
+    rawModel: model,
+    resolvedModel: model,
+    modelClass,
+    minimumReasoningEffort: null,
+    supportedEfforts: REASONING_EFFORT,
+    aliasUsed: false,
+    policyRevision: adapter.policyRevision ?? "1.0.0",
+    provenance,
+  };
+}
+
 /** Resolves a vendor model identifier into a vendor-neutral capability contract at the adapter boundary. */
 export function resolveAdapterModelCapability(
   adapter: HostExecutionAdapter,
@@ -119,13 +252,15 @@ export function resolveAdapterModelCapability(
   if (typeof model !== "string" || model.length === 0) return null;
   if (typeof adapter.resolveModel === "function") {
     const resolved = adapter.resolveModel(model, provenance);
-    if (!resolved || !MODEL_CLASS.includes(resolved.modelClass)) return null;
+    if (!resolved || !nonEmpty(resolved.provider) || !MODEL_CLASS.includes(resolved.modelClass)) return null;
     return resolved;
   }
+  const provider = nonEmpty(adapter.provider);
+  if (!provider) return null;
   const modelClass = adapter.modelClassForModel(model);
   if (!modelClass || !MODEL_CLASS.includes(modelClass)) return null;
   return {
-    provider: adapter.provider ?? adapter.host,
+    provider,
     host: adapter.host,
     rawModel: model,
     resolvedModel: model,

@@ -23,8 +23,11 @@ import {
   HostAttestationProvider,
   type HostExecutionAdapter,
   issueHostAttestation,
+  judgeAdapterModelCapability,
+  resolveAdapterModelCapability,
 } from "../../mcp-server/src/host-attestation.js";
 import {
+  antigravityExecutionAdapter,
   claudeCodeExecutionAdapter,
   codexExecutionAdapter,
   createCatalogExecutionAdapters,
@@ -496,7 +499,7 @@ describe("host attestation hook", () => {
     const callerInput = { taskId: "hook-task", [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged",
       _hostSkillObservation: { actorId: "caller", sourceRef: "caller", skills: [] } };
     const unknownModel = handleHostAttestationHook({ ...base, tool_input: callerInput }, store,
-      { ...noWait, readText: () => transcriptLine("toolu_hook", { model: "gpt-5.6-sol" }) });
+      { ...noWait, readText: () => transcriptLine("toolu_hook", { model: "unknown-model-id" }) });
     const unknownInput = (unknownModel.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput;
     expect(unknownInput[HOST_ATTESTATION_FIELD]).not.toBe("aghs1.caller.forged");
     expectIneligibleObservation(store, claudeCodeExecutionAdapter, unknownInput);
@@ -567,7 +570,7 @@ describe("host attestation hook", () => {
 
   it("retains unknown-model observations but rejects missing effort, foreign sessions or sidechain messages", () => {
     const read = (line: string) => ({ ...noWait, maxWaitMs: 0, readText: () => line });
-    const unknown = handleHostAttestationHook(base, store, read(transcriptLine("toolu_hook", { model: "gpt-5.6-sol" })));
+    const unknown = handleHostAttestationHook(base, store, read(transcriptLine("toolu_hook", { model: "unknown-model-id" })));
     expectIneligibleObservation(store, claudeCodeExecutionAdapter,
       (unknown.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput);
     expect(handleHostAttestationHook(base, store, read(transcriptLine("toolu_hook", { sessionId: "other" })))).toEqual({});
@@ -875,7 +878,14 @@ describe("host attestation configuration", () => {
       .toThrow("INVALID_EXECUTION_ADAPTER_HOST");
     const ambiguous = fourthHostCatalog();
     const duplicate = {...ambiguous, providers: {...ambiguous.providers, "another-provider": ambiguous.providers["synthetic-fourth-provider"]!}};
-    expect(() => createCatalogExecutionAdapters(duplicate)).toThrow("DUPLICATE_EXECUTION_ADAPTER_HOST");
+    const duplicateAdapter = createCatalogExecutionAdapters(duplicate).adapters.get("synthetic-fourth-host")!;
+    expect(duplicateAdapter.resolveModel!("opaque-fourth-model")).toBeNull();
+    expect(duplicateAdapter.judgeModel!("opaque-fourth-model")).toMatchObject({
+      status: "undetermined",
+      reason: "AMBIGUOUS_PROVIDER_MATCH",
+      provider: null,
+      modelClass: null,
+    });
   });
 
   it("keeps registry entries immutable through every exposed map view", () => {
@@ -1179,4 +1189,236 @@ describe("AGS-D-0179 correlated issuing observations", () => {
     expect(f.cache).not.toHaveBeenCalled();
   });
 
+});
+
+describe("AGS-D-0328 host and model-vendor separation", () => {
+  it("resolves 1 host x 3 vendors from a synthetic catalog by observed model ID without host-to-vendor fallback", () => {
+    const oneHostThreeVendors: ModelRoutingPresetsV1 = {
+      schema_version: 1,
+      policy_revision: "synthetic-d0328-1h3v",
+      model_class_order: ["lightweight", "general", "deep", "frontier"],
+      effort_order: ["low", "medium", "high", "xhigh", "max", "ultra"],
+      providers: {
+        "vendor-alpha": {
+          host: "synthetic-polyglot-host",
+          catalog: {
+            matching: "exact-only",
+            models: {
+              "alpha-frontier-1": {
+                model_class: "frontier",
+                minimum_effort: "high",
+                supported_efforts: ["high", "xhigh"],
+              },
+            },
+          },
+        },
+        "vendor-beta": {
+          host: "synthetic-polyglot-host",
+          catalog: {
+            matching: "exact-only",
+            models: {
+              "beta-deep-2": {
+                model_class: "deep",
+                supported_efforts: ["medium", "high"],
+              },
+            },
+          },
+        },
+        "vendor-gamma": {
+          host: "synthetic-polyglot-host",
+          catalog: {
+            matching: "exact-only",
+            models: {
+              "gamma-light-3": {
+                model_class: "lightweight",
+                supported_efforts: ["low", "medium", "high"],
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const suite = createCatalogExecutionAdapters(oneHostThreeVendors);
+    const adapter = suite.adapters.get("synthetic-polyglot-host");
+    expect(adapter).toBeDefined();
+    expect(adapter!.host).toBe("synthetic-polyglot-host");
+    // Multi-vendor host adapter must not hardcode a single vendor on the host object itself.
+    expect(adapter!.provider).toBeUndefined();
+
+    expect(resolveAdapterModelCapability(adapter!, "alpha-frontier-1", "polyglot:test")).toEqual({
+      provider: "vendor-alpha",
+      host: "synthetic-polyglot-host",
+      rawModel: "alpha-frontier-1",
+      resolvedModel: "alpha-frontier-1",
+      modelClass: "frontier",
+      minimumReasoningEffort: "high",
+      supportedEfforts: ["high", "xhigh"],
+      aliasUsed: false,
+      policyRevision: "synthetic-d0328-1h3v",
+      provenance: "polyglot:test",
+    });
+    expect(resolveAdapterModelCapability(adapter!, "beta-deep-2", "polyglot:test")).toMatchObject({
+      provider: "vendor-beta",
+      host: "synthetic-polyglot-host",
+      resolvedModel: "beta-deep-2",
+      modelClass: "deep",
+      minimumReasoningEffort: null,
+    });
+    expect(resolveAdapterModelCapability(adapter!, "gamma-light-3", "polyglot:test")).toMatchObject({
+      provider: "vendor-gamma",
+      host: "synthetic-polyglot-host",
+      resolvedModel: "gamma-light-3",
+      modelClass: "lightweight",
+    });
+  });
+
+  it("resolves 1 vendor x multiple hosts from a synthetic catalog with the same structure across all hosts", () => {
+    const oneVendorMultiHost = {
+      schema_version: 1,
+      policy_revision: "synthetic-d0328-1v3h",
+      model_class_order: ["lightweight", "general", "deep", "frontier"],
+      effort_order: ["low", "medium", "high", "xhigh", "max", "ultra"],
+      providers: {
+        "vendor-shared": {
+          hosts: ["host-one", "host-two", "host-three"],
+          catalog: {
+            matching: "exact-only",
+            models: {
+              "shared-deep-model": {
+                model_class: "deep",
+                minimum_effort: "high",
+                supported_efforts: ["high", "xhigh"],
+              },
+            },
+          },
+        },
+      },
+    } as unknown as ModelRoutingPresetsV1;
+
+    const suite = createCatalogExecutionAdapters(oneVendorMultiHost);
+    for (const host of ["host-one", "host-two", "host-three"]) {
+      const adapter = suite.adapters.get(host);
+      expect(adapter).toBeDefined();
+      expect(resolveAdapterModelCapability(adapter!, "shared-deep-model", `${host}:test`)).toEqual({
+        provider: "vendor-shared",
+        host,
+        rawModel: "shared-deep-model",
+        resolvedModel: "shared-deep-model",
+        modelClass: "deep",
+        minimumReasoningEffort: "high",
+        supportedEfforts: ["high", "xhigh"],
+        aliasUsed: false,
+        policyRevision: "synthetic-d0328-1v3h",
+        provenance: `${host}:test`,
+      });
+    }
+  });
+
+  it("explicitly reports undetermined for unknown models, ambiguous cross-vendor models, and providerless adapters without host fallback", () => {
+    const catalog = {
+      schema_version: 1,
+      policy_revision: "synthetic-d0328-unknown",
+      model_class_order: ["lightweight", "general", "deep", "frontier"],
+      effort_order: ["low", "medium", "high", "xhigh", "max", "ultra"],
+      providers: {
+        "vendor-alpha": {
+          host: "synthetic-polyglot-host",
+          catalog: {
+            matching: "exact-only",
+            models: {
+              "alpha-only": { model_class: "general", supported_efforts: ["high"] },
+              "colliding-model": { model_class: "general", supported_efforts: ["high"] },
+            },
+          },
+        },
+        "vendor-beta": {
+          host: "synthetic-polyglot-host",
+          catalog: {
+            matching: "exact-only",
+            models: {
+              "beta-only": { model_class: "deep", supported_efforts: ["high"] },
+              "colliding-model": { model_class: "deep", supported_efforts: ["high"] },
+            },
+          },
+        },
+      },
+    } as unknown as ModelRoutingPresetsV1;
+
+    const suite = createCatalogExecutionAdapters(catalog);
+    const adapter = suite.adapters.get("synthetic-polyglot-host")!;
+    expect(resolveAdapterModelCapability(adapter, "unlisted-model")).toBeNull();
+    expect(adapter.modelClassForModel("unlisted-model")).toBeNull();
+
+    const judgeModel = (adapter as unknown as {
+      judgeModel?: (model: string, provenance?: string) => unknown;
+    }).judgeModel;
+    expect(typeof judgeModel).toBe("function");
+    expect(judgeModel!.call(adapter, "unlisted-model", "polyglot:test")).toEqual({
+      status: "undetermined",
+      reason: "MODEL_NOT_IN_CATALOG",
+      host: "synthetic-polyglot-host",
+      rawModel: "unlisted-model",
+      provider: null,
+      modelClass: null,
+      policyRevision: "synthetic-d0328-unknown",
+      provenance: "polyglot:test",
+    });
+
+    // Ambiguous model claimed by two vendors on the same host must also be undetermined, never picking the first vendor.
+    expect(resolveAdapterModelCapability(adapter, "colliding-model")).toBeNull();
+    expect(judgeModel!.call(adapter, "colliding-model", "polyglot:test")).toEqual({
+      status: "undetermined",
+      reason: "AMBIGUOUS_PROVIDER_MATCH",
+      host: "synthetic-polyglot-host",
+      rawModel: "colliding-model",
+      provider: null,
+      modelClass: null,
+      policyRevision: "synthetic-d0328-unknown",
+      provenance: "polyglot:test",
+    });
+
+    // Legacy/custom adapter without provider identity must not infer provider from adapter.host.
+    const providerlessAdapter: HostExecutionAdapter = {
+      host: "synthetic-host-only",
+      modelClassForModel: () => "deep",
+    };
+    expect(resolveAdapterModelCapability(providerlessAdapter, "some-model")).toBeNull();
+    expect(judgeAdapterModelCapability(providerlessAdapter, "some-model", "synthetic:test")).toEqual({
+      status: "undetermined",
+      reason: "MISSING_PROVIDER_IDENTITY",
+      host: "synthetic-host-only",
+      rawModel: "some-model",
+      provider: null,
+      modelClass: null,
+      policyRevision: null,
+      provenance: "synthetic:test",
+    });
+
+    expect(resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: "antigravity" })).toBe(antigravityExecutionAdapter);
+    // Bundled hosts (codex, claude-code, gemini, antigravity) all resolve OpenAI, Anthropic, and Gemini models by model ID.
+    for (const hostName of ["codex", "claude-code", "gemini", "antigravity"]) {
+      const bundledAdapter = defaultExecutionAdapters.get(hostName);
+      expect(bundledAdapter, hostName).toBeDefined();
+      expect(resolveAdapterModelCapability(bundledAdapter!, "gpt-6-astra")).toMatchObject({
+        host: hostName,
+        provider: "openai-codex",
+        resolvedModel: "gpt-6-astra",
+        modelClass: "frontier",
+      });
+      expect(resolveAdapterModelCapability(bundledAdapter!, "claude-opus-5")).toMatchObject({
+        host: hostName,
+        provider: "anthropic-claude-code",
+        resolvedModel: "opus",
+        modelClass: "deep",
+      });
+      expect(resolveAdapterModelCapability(bundledAdapter!, "gemini-2.5-pro")).toMatchObject({
+        host: hostName,
+        provider: "google-gemini",
+        resolvedModel: "pro",
+        modelClass: "deep",
+      });
+      expect(resolveAdapterModelCapability(bundledAdapter!, "unknown-model-id")).toBeNull();
+    }
+  });
 });
