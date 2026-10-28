@@ -16,10 +16,16 @@ does not interpret vendor fields, product names or diagnostic label strings.
   native event with a session ID and no `agent_id` means root/inferred, never
   root/observed. Empty or malformed IDs do not imply root. This also blocks
   in-process teammates that carry the child marker.
-- Codex (3.0 stopgap): every recognized event with a session ID is root/inferred
-  with `CODEX_ROOT_INFERRED_CHILD_GATE_DEFERRED`. Codex subagent hooks carry the
-  parent session ID, so a subagent passes as its parent root. Blocking Codex
-  children is deferred past 3.0 by user decision (2026-10-27). Until then the
+- Codex: a nonempty native `agent_id` is child/observed; an explicit empty or
+  malformed ID is indeterminate. Codex 0.164.0 serializes this marker from the
+  native subagent context even when `session_id` identifies the parent
+  ([producer](https://github.com/openai/codex/blob/rust-v0.164.0/codex-rs/hooks/src/events/pre_tool_use.rs#L162),
+  [field mapping](https://github.com/openai/codex/blob/rust-v0.164.0/codex-rs/hooks/src/schema.rs#L65)).
+  This source-backed guard does not establish native capture acceptance.
+  Marker-free recognized events with a session ID retain root/inferred with
+  `CODEX_ROOT_INFERRED_CHILD_GATE_DEFERRED`, preserving the 3.0 stopgap. A child
+  without a marker can still pass as its parent; this unresolved case remains
+  deferred by user decision (2026-10-27). Until then the
   native capture and U3 rules below describe the later child gate, not a 3.0
   installation condition.
 - Antigravity: 3.0 stopgap (user decision, 2026-10-28) infers root for every

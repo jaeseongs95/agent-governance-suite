@@ -71,8 +71,8 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
   };
 }
 
-/** ponytail: 3.0 infers root for every recognized event with a session ID, so a subagent
- * (which carries the parent session ID) passes as root. Child blocking is deferred past 3.0. */
+/** 3.0 fallback for marker-free recognized events. Host adapters reject supported child markers;
+ * a child without such evidence can still inherit the parent session ID under the deferred gate. */
 function adaptInferredRootHookInput(input: Record<string, unknown>, host: string, prefix: "CODEX" | "ANTIGRAVITY"): AdaptedHostInput {
   const actor: InputObservation["actor"] = {
     role: "indeterminate", basis: "unavailable", reasonCode: `${prefix}_NATIVE_EVENT_UNRECOGNIZED`,
@@ -85,7 +85,14 @@ function adaptInferredRootHookInput(input: Record<string, unknown>, host: string
 }
 
 function adaptCodexHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
-  return adaptInferredRootHookInput(input, host, "CODEX");
+  const adapted = adaptInferredRootHookInput(input, host, "CODEX");
+  if (adapted.observation.actor.role !== "root" || !Object.hasOwn(input, "agent_id")) return adapted;
+  // Codex's native subagent hook context serializes agent_id even though session_id names the parent.
+  // Missing markers retain the 3.0 stopgap; a positive or malformed marker must never inherit it.
+  adapted.observation.actor = typeof input.agent_id === "string" && input.agent_id.trim()
+    ? { role: "child", basis: "observed", reasonCode: "CODEX_NATIVE_CHILD_AGENT_ID" }
+    : { role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_AGENT_ID_INVALID" };
+  return adapted;
 }
 
 /** Claude's supported native hook schema omits agent_id for root calls.

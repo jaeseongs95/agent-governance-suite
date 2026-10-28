@@ -24,15 +24,14 @@ beforeEach(() => {
   f.spawn.mockReturnValue({ once: vi.fn(), unref: vi.fn() });
 });
 
-// 3.0 stopgap: Codex child blocking is deferred, so every recognized Codex event with a session ID is root/inferred.
-describe("Codex actor observation infers root until child blocking returns", () => {
+// Missing native child markers retain the 3.0 stopgap; positive markers are handled separately.
+describe("Codex actor observation preserves the marker-free root stopgap", () => {
   it.each(["SessionStart", "SessionEnd", "UserPromptSubmit", "PostToolUse", "PreToolUse", "Stop"])("infers root for %s", event => {
     expect(adaptHostInput(wire(event), "codex").observation.actor).toEqual(inferredRoot);
   });
 
-  it.each(["SessionStart", "SessionEnd"])("does not let caller actor fields change the %s decision", event => {
-    for (const actor of [{ agent_id: "child" }, { agent_id: null }, { agent_id: 42 },
-      { agent_type: "main" }, { agent_id: "", agent_type: "main" }, { role: "child", basis: "observed" }]) {
+  it.each(["SessionStart", "SessionEnd"])("does not let generic actor claims change the %s decision", event => {
+    for (const actor of [{ agent_type: "main" }, { role: "child", basis: "observed" }]) {
       expect(adaptHostInput({ ...wire(event), ...actor }, "codex").observation.actor).toEqual(inferredRoot);
     }
   });

@@ -90,9 +90,11 @@ describe("AGS-D-0019 synthetic builtin adapters", () => {
     expect(actor("claude-code", event, extra)).toEqual({ role: "indeterminate", basis: "unavailable", reasonCode });
   });
 
-  // Child blocking on Codex and Antigravity is deferred past 3.0, so agent fields do not change the inferred root.
+  // Marker-free Codex and Antigravity calls retain the 3.0 stopgap. Only Codex has a documented child marker.
   it.each(supportedEvents.flatMap(event => [["codex", event], ["antigravity", event]]))("infers root for every recognized %s %s with a session ID", (host, event) => {
-    for (const extra of [{}, { agent_id: "" }, { agent_id: "synthetic-child" }, { agent_type: "synthetic-root" }, { role: "child", basis: "observed" }]) {
+    const extras = [{}, { agent_type: "synthetic-root" }, { role: "child", basis: "observed" },
+      ...(host === "antigravity" ? [{ agent_id: "" }, { agent_id: "synthetic-child" }] : [])];
+    for (const extra of extras) {
       expect(actor(host!, event!, extra)).toEqual({ role: "root", basis: "inferred", reasonCode: `${host!.toUpperCase()}_ROOT_INFERRED_CHILD_GATE_DEFERRED` });
     }
   });
