@@ -75,13 +75,13 @@ function captureDiagnostics() {
   return reported;
 }
 
-function closedWorkflows(failure?: Error) {
+function closedWorkflows(failure?: Error, failOnClose = 1) {
   const closed: SqliteWorkflowStore[] = [];
   const original = SqliteWorkflowStore.prototype.close;
   vi.spyOn(SqliteWorkflowStore.prototype, "close").mockImplementation(function (this: SqliteWorkflowStore) {
     original.call(this); // Close the real handle before injecting the cleanup failure.
     closed.push(this);
-    if (failure) throw failure;
+    if (failure && closed.length === failOnClose) throw failure;
   });
   return closed;
 }
@@ -208,7 +208,8 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     const handleFailure = diagnostics.hookFailure("ENTRY_CONTINUITY_HANDLE_FAILED", "synthetic continuity handle failure");
     const closeFailure = diagnostics.hookFailure("ENTRY_CONTINUITY_CLOSE_FAILED", "synthetic continuity cleanup failure");
     const workflowFailure = diagnostics.hookFailure("ENTRY_WORKFLOW_CLOSE_FAILED", "synthetic workflow cleanup failure");
-    const workflows = closedWorkflows(workflowFailure);
+    // The continuity hook owns an inner workflow store; the outer governance store closes second.
+    const workflows = closedWorkflows(workflowFailure, 2);
     const continuities: SqliteContinuityStore[] = [];
     const originalClose = SqliteContinuityStore.prototype.close;
     vi.spyOn(SqliteContinuityStore.prototype, "close").mockImplementation(function (this: SqliteContinuityStore) {
@@ -221,7 +222,7 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     denied(await runGovernanceHook("claude-code", JSON.stringify(input("inspect_context")), environment));
     expect(continuities).toHaveLength(1);
     expect(() => continuities[0]!.getOrCreateSecret(() => "unused")).toThrow();
-    assertWorkflowClosed(workflows);
+    assertWorkflowClosed(workflows, 2);
     expect(reported).toHaveLength(1);
     expect(reported[0]).toMatchObject({ component: "governance-hook", context: mode === "close" ? {
       producerReason: "ENTRY_CONTINUITY_CLOSE_FAILED", secondary: [{ producerReason: "ENTRY_WORKFLOW_CLOSE_FAILED" }],
