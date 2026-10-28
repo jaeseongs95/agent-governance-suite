@@ -94,6 +94,22 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     expect(text).toContain("시험 실행, 작업 브랜치의 커밋·push와 CI 실행에는 추가 PRE나 승인을 요구하지 않는다");
     expect(text).toContain("배포·태그처럼 별도 승인 경계");
   });
+  it("continues authorized work after a specialist result without expanding analysis-only requests or bypassing gates", () => {
+    const text = instructions("references/entry-details.md");
+    const integration = text.split("## 결과 통합\n")[1]!.split("## MCP 도구 사용 계약")[0]!;
+    expect(integration).toContain("해당 단계의 결과이며 사용자 요청 전체의 완료와 구분한다");
+    expect(integration).toContain("분석·계획만 요청받았다면 후속 변경을 실행하지 않는다");
+    expect(integration).toContain("사용자 요청에 구현·실행·검증이 포함되어 있고 이미 허용됐다면");
+    expect(integration).toContain("기존 담당 실행자·도구의 후속 작업 입력으로 연결");
+    expect(integration).toContain("그 작업과 필요한 검증까지 계속 수행");
+    expect(integration).toContain("실행 가능한 후속 확인을 사용자에게 넘기지 않는다");
+    expect(integration).toContain("승인·비밀값 입력·사용자 화면 조작");
+    expect(integration).toContain("독립적인 작업은 계속한다");
+    expect(integration).toContain("필수 입력이나 gate 실패로 막힌 의존 단계는 실행하지 않으며");
+    expect(integration).toContain("실제 실행·검증 근거와 남은 제약");
+    expect(integration).toContain("단독 전문 작업에 workflow나 새 보고서를 추가하지 않는다");
+    expect(text).toContain("`BINDING_REQUIRED` 또는 `BINDING_INVALID`를 반환하면 값을 임의로 보정·추정하지 않고 해당 workflow를 시작하지 않는다");
+  });
   it("makes the dedicated evaluation recorder request its declared full artifact workflow explicitly", () => {
     const text = readFileSync(new URL("../../scripts/record-korean-prose-run.ts", import.meta.url), "utf8");
     expect(text).toContain("requiredCapabilities: artifactContracts.map(({capability}) => capability)");
