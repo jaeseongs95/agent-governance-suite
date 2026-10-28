@@ -2,15 +2,23 @@ import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
-import type { CheckpointContextRequestV1, SkillDescriptorV2, StageResultV1, TaskEnvelopeV1, WorkflowReceiptV1 } from "../../contracts/types.js";
+import type { ApiResultV1, CheckpointContextRequestV1, ContinuitySnapshotV1, SkillDescriptorV2, StageResultV1, TaskEnvelopeV1, WorkflowReceiptV1 } from "../../contracts/types.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { runContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
+import { runGovernanceHook } from "../../mcp-server/src/governance-hook.js";
 import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
+import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
+import { createMcpServer } from "../../mcp-server/src/server.js";
+import { SessionActorProofs } from "../../mcp-server/src/session-actor-proof.js";
+import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 
@@ -94,7 +102,7 @@ async function harness() {
   const root = opened.data!;
   expect(initialContinuity.bindOpenedRoot({ ...openInput,
     _continuityBinding: initialContinuity.issueToolBinding(session, "open_convergence_root", openInput) }, root.rootId)).toBe(true);
-  return { env, workflow, continuity, service, initialContinuity, historical, root, task };
+  return { directory, env, workflow, continuity, service, initialContinuity, historical, root, task };
 }
 
 function start(fixture: Awaited<ReturnType<typeof harness>>) {
@@ -218,5 +226,65 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
     expect(fixture.continuity.getTask(correlation)).toEqual(before);
     expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
     expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(completed);
+  });
+});
+
+describe("D0344 governance proof through the actual MCP checkpoint handler", () => {
+  it.each(["completed", "aborted"] as const)("%s workflow reaches checkpoint domain validation with the exact hook-issued proofs", async state => {
+    const fixture = await harness(), attempt = start(fixture);
+    if (state === "completed") finalize(fixture, attempt.receipt);
+    else {
+      const aborted = fixture.service.abortWorkflow(attempt.receipt.runId, attempt.receipt.revision);
+      expect(aborted.error).toBeNull();
+      expect(aborted.data?.state).toBe("blocked");
+    }
+    const beforeWorkflow = fixture.workflow.getConvergenceSnapshot(fixture.root.rootId);
+    expect(beforeWorkflow).toMatchObject({ root: { state: state === "completed" ? "completed" : "open" },
+      outcomes: [{ leaseId: attempt.lease.leaseId, state: state === "completed" ? "passed" : "aborted" }] });
+    const hook = await runGovernanceHook(rootHost, JSON.stringify({ hook_event_name: "PreToolUse", session_id: session,
+      tool_use_id: `d0344-mcp-checkpoint-${state}`, tool_name: "mcp__agent-governance-suite__checkpoint_context",
+      tool_input: checkpoint() }), fixture.env);
+    expect(hook.ok).toBe(true);
+    const args = updatedInput(hook.output);
+    expect(args).toMatchObject({ _sessionProof: expect.any(String), _continuityBinding: expect.any(String) });
+    const correlation = fixture.initialContinuity.correlateSession(session);
+    expect(fixture.continuity.getTask(correlation)).toMatchObject(state === "completed"
+      ? { currentEpoch: 2, rootId: null } : { currentEpoch: 1, rootId: fixture.root.rootId });
+
+    const workflow = new SqliteWorkflowStore(fixture.env.AGENT_GOVERNANCE_DB_PATH);
+    const continuity = new SqliteContinuityStore(fixture.env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
+    stores.add(workflow); stores.add(continuity);
+    const validator = new ContractValidator();
+    const updates = new PluginUpdateService(new InMemoryPluginUpdateStore(), {
+      fetcher: async () => { throw new Error("Unexpected network request in the checkpoint transport test."); },
+    });
+    // Neither proof is reminted, and the new continuity service is never ensured or rebound manually.
+    const server = createMcpServer(fixture.service, updates, new ContinuityService(continuity, validator, workflow), undefined,
+      undefined, validator, "default", null, null, new SessionMessageService(join(fixture.directory, "unused-messaging")),
+      null, null, new SessionActorProofs(fixture.workflow));
+    const client = new Client({ name: "d0344-hook-mcp-boundary", version: "1.0.0" });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    try {
+      await server.connect(serverTransport);
+      await client.connect(clientTransport);
+      const reply = await client.callTool({ name: "checkpoint_context", arguments: args });
+      const content = reply.content as Array<{ type: string; text?: string }>;
+      const first = content.find(item => item.type === "text");
+      expect(first?.text).toBeTypeOf("string");
+      const result = JSON.parse(first!.text!) as ApiResultV1<ContinuitySnapshotV1>;
+      if (state === "completed") {
+        expect(result.error).toBeNull();
+        expect(result.data).toMatchObject({ source: "direct", epoch: 2, revision: 1, core: { objective: checkpoint().core.objective } });
+        expect(continuity.getSnapshot(correlation, 2)).toEqual(result.data);
+      } else {
+        // This domain error proves the genuine root proof passed the actual MCP ingress gate.
+        expect(result).toMatchObject({ ok: false, data: null, error: { code: "SNAPSHOT_CONFLICT" } });
+        expect(continuity.getSnapshot(correlation, 2)).toBeNull();
+      }
+      expect(continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
+      expect(workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(beforeWorkflow);
+    } finally {
+      try { await client.close(); } finally { await server.close(); }
+    }
   });
 });
