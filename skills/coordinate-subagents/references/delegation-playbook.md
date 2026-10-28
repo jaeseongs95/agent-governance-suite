@@ -34,7 +34,7 @@ Verify with: <checks and evidence to report>
 Coordination: <when to contact the coordinator before crossing scope>
 ```
 
-When reusing a completed agent, send a complete new brief. Do not assume the old responsibility remains active.
+When reusing a completed agent, send a complete new brief. Do not assume the old responsibility remains active. For auditor and Judge eligibility or reuse, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`).
 
 ## Batch and synchronize
 
@@ -47,7 +47,7 @@ When reusing a completed agent, send a complete new brief. Do not assume the old
 
 - When a required high-risk audit may not have access to a fresh identity later, reserve a non-implementing subagent and slot before assigning all implementation work.
 - Fill only currently available subagent slots after that calculation.
-- If more units remain, queue the next independent batch and reuse completed agents.
+- If more units remain, queue the next independent batch and reuse completed agents. When reusing completed agents across implementation batches, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge non-reuse.
 - Use a single writer for shared files. Other agents return proposed changes or evidence to that writer.
 - Start dependent work only after validating the upstream result it consumes.
 - After dispatch, the coordinator works on its own ready unit; it does not immediately wait while useful independent work remains. Collect finished results and refill available slots without a whole-batch barrier.
@@ -62,7 +62,7 @@ When reusing a completed agent, send a complete new brief. Do not assume the old
 If a spawn or dispatch fails, inspect agent status before deciding what happened. Then choose the narrowest applicable recovery:
 
 1. Retry a transient dispatch once when the status supports it.
-2. Reuse an idle existing agent with a fresh brief.
+2. Reuse an idle existing agent with a fresh brief. For auditor and Judge eligibility or reuse, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`).
 3. Queue the unit for a later batch.
 4. Keep the unit local only when delegation is no longer possible and disclose why.
 
@@ -80,7 +80,7 @@ Ask the auditor to check:
 - whether the verification evidence is meaningful and current;
 - which failure modes remain and how severe they are.
 
-Resolve every finding. If a fix changes an audited area, send the affected result back for re-audit. For a deployment, audit the final readiness state before execution, then inspect deployment logs, migration results, and post-deployment checks before completion. If no independent auditor is available, state the limitation and do not mark the high-risk task complete.
+Resolve every finding. If a fix changes an audited area, re-audit the affected result under `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`). For a deployment, audit the final readiness state before execution, then inspect deployment logs, migration results, and post-deployment checks before completion. If no independent auditor is available, state the limitation and do not mark the high-risk task complete.
 
 ## Integrate results
 

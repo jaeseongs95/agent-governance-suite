@@ -44,7 +44,7 @@ def main() -> int:
             assert result.returncode == 1 and case['sourceRule'] in result.stderr, (case['id'], result)
             print(f"{case['id']}: regression rejected by helper and CLI (exit {result.returncode})")
             checked += 1
-    assert checked == 8, checked
+    assert checked == 10, checked
     print(f'PASS: candidate instructions and {checked} negative source-policy mutations; model behavior NOT_RUN')
     return 0
 

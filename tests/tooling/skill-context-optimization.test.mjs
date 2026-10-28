@@ -335,12 +335,16 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
     "skills/blocker-diagnostician/references/entry-details.md",
     "skills/coordinate-subagents/SKILL.md",
     "skills/coordinate-subagents/classification.json",
+    "skills/coordinate-subagents/references/delegation-playbook.md",
+    "skills/coordinate-subagents/references/entry-details.md",
     "skills/cs-engineering/SKILL.md",
     "skills/cs-engineering/classification.json",
     "skills/independent-audit-gate/SKILL.md",
     "skills/independent-audit-gate/classification.json",
     "skills/independent-audit-gate/references/audit-protocol.md",
     "skills/independent-audit-gate/references/entry-details.md",
+    "skills/independent-audit-gate/references/orchestrator-integration.md",
+    "skills/independent-audit-gate/scripts/validate_skill.py",
     "skills/independent-deliberation-panel/SKILL.md",
     "skills/independent-deliberation-panel/classification.json",
     "skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md",
@@ -362,7 +366,7 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
     "skills/task-contract/references/risk-and-authorization-rubric.md",
   ];
 
-  it("pins all 31 policy wording successor files and rejects one-byte tampering", () => {
+  it("pins all 35 policy wording successor files and rejects one-byte tampering", () => {
     for (const relative of successorPaths) {
       const current = readFileSync(path.join(root, relative));
       const historical = readHistoricalSource(relative);
@@ -406,12 +410,34 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
       expect(text).toContain("파일 이동·복사·이름 변경은 삭제가 아니다.");
       expect(text).toContain("승인 근거는 요청자와 다른 사용자 본인의 결정이어야 하며, 요청한 에이전트가 승인자 도구나 저장된 사용자 로그인으로 승인을 직접 실행한 `approve` 호출은 승인 근거가 아니다.");
       expect(text).toContain("자가 승인이 확인되면 `FAIL`로 판정한다");
+      expect(text).toContain("감사·Judge 역할에 한 번이라도 쓰였거나 구현에 참여한 에이전트는, 이후 감사·재감사에 다시 배정되지 않는다. 재사용된 감사자는 거부되거나 `BLOCKED` 처리된다.");
     }
     for (const text of readBoth("skills/independent-audit-gate/references/entry-details.md")) {
       expect(text).toContain("파일 이동·복사·이름 변경은 삭제가 아니며 이 경계의 승인 대상이 아니다.");
       expect(text).toContain("확인할 수 없으면 고위험으로 올리지 말고 그 점을 사용자에게 묻는다.");
       expect(text).toContain("자가 승인 시 열린 `blocking` 위반으로 보아 `FAIL`로 판정한다");
       expect(text).toContain("에이전트가 승인자 도구나 저장된 사용자 로그인으로 직접 실행한 `approve` 호출로 대체하지 않았다.");
+      expect(text).toContain("[references/audit-protocol.md](audit-protocol.md)의 `2. 감사자 독립성`");
+    }
+    for (const text of readBoth("skills/independent-audit-gate/references/orchestrator-integration.md")) {
+      expect(text).toContain("`FAIL`은 확인된 차단성 결함을 수정한 뒤 [audit-protocol.md](audit-protocol.md)의 `2. 감사자 독립성`에 따라 영향 범위를 다시 확인해야 한다.");
+      expect(text).not.toContain("같은 감사자가 영향 범위를 다시 확인해야 한다.");
+    }
+    for (const text of readBoth("skills/coordinate-subagents/references/entry-details.md")) {
+      expect(text).toContain("For auditor and Judge eligibility or reuse, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`).");
+      expect(text).toContain("Follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge eligibility and non-reuse.");
+      expect(text).toContain("Follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) when assigning the re-audit.");
+    }
+    for (const text of readBoth("skills/coordinate-subagents/references/delegation-playbook.md")) {
+      expect(text).toContain("For auditor and Judge eligibility or reuse, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`).");
+      expect(text).toContain("If a fix changes an audited area, re-audit the affected result under `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`).");
+      expect(text).not.toContain("send the affected result back for re-audit");
+    }
+    const auditBehaviorCases = JSON.parse(readFileSync(path.join(root, "tests/independent-audit-gate/behavior-cases.json"), "utf8")).cases;
+    for (const behaviorCase of auditBehaviorCases.filter((entry) => entry.sourceRule)) {
+      const targetText = readFileSync(path.join(root, "skills/independent-audit-gate", behaviorCase.file), "utf8");
+      expect(targetText, behaviorCase.id).toContain(behaviorCase.required);
+      expect(targetText, behaviorCase.id).not.toContain(behaviorCase.regression);
     }
 
     for (const text of readBoth("skills/independent-deliberation-panel/SKILL.md")) {

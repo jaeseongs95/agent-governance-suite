@@ -36,7 +36,7 @@ Read [the provider-neutral model-routing presets and host adapters](model-routin
 <!-- policy-contract: allocation.keep-one-and-fill-slots -->
 <!-- policy-contract: allocation.batch-reuse -->
 
-When implementation delegation has been approved and two or more implementation units exist, keep one independent unit with the coordinator and assign the others across available slots. If the user explicitly asks to delegate the only implementation unit, assign that unit to a subagent and keep coordination and evidence review with the coordinator. Interpret slot counts from the host contract: when the host reports a total team capacity, the coordinator occupies one slot; when it reports subagent slots, those are all available to delegated work. When independent units exceed the usable slot count, run them in batches and reuse completed subagents with a fresh brief. Do not create artificial units merely to increase parallelism.
+When implementation delegation has been approved and two or more implementation units exist, keep one independent unit with the coordinator and assign the others across available slots. If the user explicitly asks to delegate the only implementation unit, assign that unit to a subagent and keep coordination and evidence review with the coordinator. Interpret slot counts from the host contract: when the host reports a total team capacity, the coordinator occupies one slot; when it reports subagent slots, those are all available to delegated work. When independent units exceed the usable slot count, run them in batches and reuse completed subagents with a fresh brief. For auditor and Judge eligibility or reuse, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`). Do not create artificial units merely to increase parallelism.
 
 <!-- policy-contract: audit.reserve-identity -->
 
@@ -77,12 +77,12 @@ Read [the delegation playbook](delegation-playbook.md) when preparing briefs, ba
 
 <!-- policy-contract: audit.independent-required -->
 
-Treat security, permissions, payments, data loss, schema migrations, deployments, and global configuration changes as high risk. Assign an auditor who did not implement the change. The auditor must inspect the requirements, final change, verification evidence, and plausible failure modes directly.
+Treat security, permissions, payments, data loss, schema migrations, deployments, and global configuration changes as high risk. Assign an auditor who did not implement the change. Follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge eligibility and non-reuse. The auditor must inspect the requirements, final change, verification evidence, and plausible failure modes directly.
 
 <!-- policy-contract: audit.no-completion-without-auditor -->
 <!-- policy-contract: audit.reaudit-after-change -->
 
-Do not report high-risk work as complete without an available independent auditor and resolved findings. If no auditor is available, state the limitation and do not claim that an independent audit occurred. If the audited area changes afterward, re-audit the affected portion. For deployments, audit readiness before execution and audit the resulting deployment evidence afterward.
+Do not report high-risk work as complete without an available independent auditor and resolved findings. If no auditor is available, state the limitation and do not claim that an independent audit occurred. If the audited area changes afterward, re-audit the affected portion. Follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) when assigning the re-audit. For deployments, audit readiness before execution and audit the resulting deployment evidence afterward.
 
 <!-- policy-contract: audit.finding-disposition -->
 

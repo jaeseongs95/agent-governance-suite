@@ -53,6 +53,8 @@ REQUIRED_BEHAVIOR_CASE_IDS = {
     "ordinary-low-risk-review",
     "auditor-not-independent",
     "orchestrated-audit-handoff",
+    "reused-auditor-or-judge-blocked",
+    "orchestrator-reaudit-no-same-auditor",
 }
 PLACEHOLDERS = (
     "TO" "DO",

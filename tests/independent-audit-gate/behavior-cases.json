@@ -104,6 +104,26 @@
       "file": "references/entry-details.md",
       "required": "역할 이름만 바꾼 자기감사는 독립 감사가 아니다.",
       "regression": "구현자가 역할 이름을 바꾸면 독립 감사다."
+    },
+    {
+      "id": "reused-auditor-or-judge-blocked",
+      "kind": "expected-failure",
+      "scenario": "재사용된 감사자·Judge 또는 구현에 참여한 에이전트가 이후 감사·재감사에 다시 배정된다.",
+      "expected": "재사용된 감사자는 거부되거나 BLOCKED 처리된다.",
+      "sourceRule": "audit-no-reuse",
+      "file": "references/audit-protocol.md",
+      "required": "감사·Judge 역할에 한 번이라도 쓰였거나 구현에 참여한 에이전트는, 이후 감사·재감사에 다시 배정되지 않는다. 재사용된 감사자는 거부되거나 `BLOCKED` 처리된다.",
+      "regression": "감사·Judge 역할에 쓰였던 에이전트를 이후 감사·재감사에 다시 배정할 수 있다."
+    },
+    {
+      "id": "orchestrator-reaudit-no-same-auditor",
+      "kind": "expected-failure",
+      "scenario": "FAIL 뒤 차단성 결함을 수정한 뒤 이전과 같은 감사자에게 재감사를 다시 맡기려 한다.",
+      "expected": "같은 감사자 재사용을 요구하지 않고 audit-protocol.md의 감사자 독립성 규칙을 참조해 새 감사자로 확인한다.",
+      "sourceRule": "orchestrator-reaudit-reference",
+      "file": "references/orchestrator-integration.md",
+      "required": "`FAIL`은 확인된 차단성 결함을 수정한 뒤 [audit-protocol.md](audit-protocol.md)의 `2. 감사자 독립성`에 따라 영향 범위를 다시 확인해야 한다.",
+      "regression": "`FAIL`은 확인된 차단성 결함을 수정한 뒤 같은 감사자가 영향 범위를 다시 확인해야 한다."
     }
   ]
 }

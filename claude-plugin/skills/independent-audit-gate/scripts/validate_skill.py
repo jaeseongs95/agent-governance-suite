@@ -121,6 +121,18 @@ def validate_policy(root: Path, errors: list[str]) -> None:
             "감사자와 구현자가 분리됐고 fresh context 여부를 확인했다.",
             "열린 `blocking` 발견사항이 없다.",
         ), ()),
+        ("audit-no-reuse", "references/audit-protocol.md", (
+            "감사·Judge 역할에 한 번이라도 쓰였거나 구현에 참여한 에이전트는, 이후 감사·재감사에 다시 배정되지 않는다.",
+            "재사용된 감사자는 거부되거나 `BLOCKED` 처리된다.",
+        ), (
+            "감사·Judge 역할에 쓰였던 에이전트를 이후 감사·재감사에 다시 배정할 수 있다.",
+            "같은 감사자가 영향 범위를 다시 확인해야 한다.",
+        )),
+        ("orchestrator-reaudit-reference", "references/orchestrator-integration.md", (
+            "`FAIL`은 확인된 차단성 결함을 수정한 뒤 [audit-protocol.md](audit-protocol.md)의 `2. 감사자 독립성`에 따라 영향 범위를 다시 확인해야 한다.",
+        ), (
+            "`FAIL`은 확인된 차단성 결함을 수정한 뒤 같은 감사자가 영향 범위를 다시 확인해야 한다.",
+        )),
     )
     for rule, relative, required, forbidden in rules:
         path = root / relative

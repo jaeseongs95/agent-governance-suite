@@ -83,6 +83,7 @@ POLICY_REQUIRED_CLAUSES = {
     ),
     "allocation.batch-reuse": (
         "When independent units exceed the usable slot count, run them in batches and reuse completed subagents with a fresh brief.",
+        "For auditor and Judge eligibility or reuse, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`).",
     ),
     "allocation.explicit-single-delegation-playbook": (
         "If the user explicitly delegates the only implementation unit, give it to the subagent and keep coordination and evidence review with the coordinator.",
@@ -106,6 +107,7 @@ POLICY_REQUIRED_CLAUSES = {
     ),
     "audit.independent-required": (
         "Assign an auditor who did not implement the change.",
+        "Follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge eligibility and non-reuse.",
         "The auditor must inspect the requirements, final change, verification evidence, and plausible failure modes directly.",
     ),
     "audit.reserve-identity": (
@@ -113,6 +115,7 @@ POLICY_REQUIRED_CLAUSES = {
     ),
     "audit.reserve-identity-playbook": (
         "When a required high-risk audit may not have access to a fresh identity later, reserve a non-implementing subagent and slot before assigning all implementation work.",
+        "When reusing completed agents across implementation batches, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge non-reuse.",
     ),
     "audit.no-completion-without-auditor": (
         "Do not report high-risk work as complete without an available independent auditor and resolved findings.",
@@ -120,6 +123,7 @@ POLICY_REQUIRED_CLAUSES = {
     ),
     "audit.reaudit-after-change": (
         "If the audited area changes afterward, re-audit the affected portion.",
+        "Follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) when assigning the re-audit.",
         "For deployments, audit readiness before execution and audit the resulting deployment evidence afterward.",
     ),
     "audit.finding-disposition": (
@@ -137,6 +141,7 @@ POLICY_REQUIRED_CLAUSES = {
     ),
     "dispatch.inspect-and-recover": (
         "If a spawn or dispatch fails, inspect agent status before deciding what happened.",
+        "For auditor and Judge eligibility or reuse, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`).",
         "Keep the unit local only when delegation is no longer possible and disclose why.",
     ),
     "routing.preset-does-not-delegate": (
@@ -676,10 +681,14 @@ def evaluate_audit_gate(inputs: dict[str, object]) -> dict[str, object]:
     implementers = inputs.get("implementers", [])
     require(isinstance(implementers, list) and all(isinstance(item, str) for item in implementers),
             "audit behavior vectors require an implementers list")
+    prior_auditors_or_judges = inputs.get("prior_auditors_or_judges", [])
+    require(isinstance(prior_auditors_or_judges, list) and all(isinstance(item, str) for item in prior_auditors_or_judges),
+            "audit behavior vectors require a prior_auditors_or_judges list")
     auditor_independent = (
         inputs.get("auditor_available") is True
         and inputs.get("auditor") is not None
         and inputs.get("auditor") not in implementers
+        and inputs.get("auditor") not in prior_auditors_or_judges
     )
     reaudit_required = requires_audit and inputs.get("changed_after_audit") is True
     findings = inputs.get("findings", [])
@@ -1023,6 +1032,24 @@ def validate_behavior_cases() -> None:
         for pattern in POLICY_FORBIDDEN_PATTERNS.get(contract_id, ()):
             require(re.search(pattern, section_text) is None,
                     f"policy contract {contract_id} contains a semantic reversal matching: {pattern!r}")
+
+    playbook_path = SKILL_ROOT / "references" / "delegation-playbook.md"
+    brief_section = read_markdown_section(playbook_path, "Prepare a delegation brief")
+    require(
+        "For auditor and Judge eligibility or reuse, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`)."
+        in brief_section,
+        "delegation-playbook.md 'Prepare a delegation brief' must reference independent-audit-gate auditor/Judge non-reuse rules",
+    )
+    audit_section = read_markdown_section(playbook_path, "Run an independent audit")
+    require(
+        "If a fix changes an audited area, re-audit the affected result under `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`)."
+        in audit_section,
+        "delegation-playbook.md 'Run an independent audit' must reference independent-audit-gate re-audit rules",
+    )
+    require(
+        "send the affected result back for re-audit" not in audit_section,
+        "delegation-playbook.md 'Run an independent audit' must not instruct sending results back to the same auditor",
+    )
 
     cases = document.get("cases")
     require(isinstance(cases, list), "behavior cases must contain a cases list")
