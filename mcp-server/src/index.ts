@@ -41,6 +41,8 @@ import { listSessions, openBoard } from "../../skills/session-board/scripts/boar
 import { hostActorId } from "./host-attestation.js";
 import { createNativeClassificationAdapters, type NativeClassificationAdapterDefinition, type NativeCliBehavior } from "./skill-classification/native-adapters.js";
 import { bindNativeClassificationDefinitions } from "./skill-classification/native-cli-strategies.js";
+import { failureContext } from "./failure-diagnostics.js";
+import { writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 
 let diagnostics: Diagnostics | undefined;
 
@@ -175,9 +177,11 @@ export async function startMcpServer(
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  void startMcpServer().catch(() => {
+  void startMcpServer().catch(error => {
+    process.exitCode = 1;
+    // Fatal startup must remain observable even before diagnostics exist or when logging is OFF.
+    writeFailureDiagnostic("[agent-governance-suite] startup-failure " + JSON.stringify({phase: "startup", context: failureContext(error)}) + "\n");
     diagnostics?.event("lifecycle", "FATAL", "startup_failed");
     void diagnostics?.close();
-    process.exitCode = 1;
   });
 }
