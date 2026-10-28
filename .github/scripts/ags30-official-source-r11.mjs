@@ -590,6 +590,18 @@ async function main() {
     }
     record.claudePackaging = { status: 'SKIP_NOT_LINUX_SHARD_3', reason: 'One packaging export across the existing eight jobs' };
     if (process.platform === 'linux' && shardIndex === 3) {
+      // Capture the changed public request bytes separately from frozen budget expectations.
+      // The existing authoring command and independent encoder make no provider calls;
+      // tests below still reject stale successors until these observations are reviewed.
+      const capture = await command('06b-classification-wire-capture', process.execPath,
+        ['--import', 'tsx', path.join(source, 'tests/skill-classification/live-bootstrap/prepared-fixture.mts'),
+          '--capture-budget-wire', path.join(output, 'classification-wire.actual.json')], source, 30_000);
+      const independentScript = `import {writeFile} from 'node:fs/promises'; import {independentWireRows} from ${JSON.stringify(pathToFileURL(path.join(source, 'tests/skill-classification/live-bootstrap/independent-wire-oracle.mts')).href)}; const rows=await independentWireRows(${JSON.stringify(source)}); await writeFile(${JSON.stringify(path.join(output, 'classification-wire.independent.json'))},JSON.stringify(rows,null,2)+String.fromCharCode(10),{flag:'wx'});`;
+      const independent = await command('06c-classification-wire-independent', process.execPath,
+        ['--import', 'tsx', '--input-type=module', '-e', independentScript], source, 30_000);
+      record.classificationWireCapture = { status: capture.receipt.status === 'PASS' && independent.receipt.status === 'PASS' ? 'CAPTURED_NOT_ACCEPTED' : 'FAIL',
+        actualMember: 'classification-wire.actual.json', independentMember: 'classification-wire.independent.json',
+        modelExecution: 'NOT_RUN', budgetAcceptance: 'NOT_CLAIMED' };
       const packaging = await command('06a-claude-package', process.execPath,
         [path.join(source, '.github/scripts/ags30-claude-package-r01.mjs'), source, output], source, 90_000);
       record.claudePackaging = { status: packaging.receipt.status === 'PASS' ? 'GENERATED_NOT_ACCEPTED' : 'FAIL',
@@ -601,7 +613,8 @@ async function main() {
       }
     }
     let testsPass = lint.receipt.status === 'PASS' && drift.receipt.status === 'PASS'
-      && claudeReleaseCheck.receipt.status === 'PASS' && !['FAIL', 'NOT_RETURNED_CAP'].includes(record.claudePackaging.status);
+      && claudeReleaseCheck.receipt.status === 'PASS' && !['FAIL', 'NOT_RETURNED_CAP'].includes(record.claudePackaging.status)
+      && record.classificationWireCapture?.status !== 'FAIL';
     let independentNodeStatus = 'DELEGATED_SHARD_1';
     if (shardIndex === 1) {
     mustPass(await command('07a-path-normalization', process.execPath, ['--test', 'tests/mutation-risk-preflight/path-normalization.node-test.mjs'], source, 60_000));

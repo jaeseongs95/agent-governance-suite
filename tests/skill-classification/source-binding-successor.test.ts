@@ -19,6 +19,7 @@ const predecessor = {
   oracleDigest: "sha256:92b7f4d74d88ae5ebae6de59891e7050bec6dacda92ab02e209216bb26d66ee8"
 };
 const r06SidecarDigest = "sha256:ea2f56ae4bda02a8d96277a482c948a773357007d1765e5fe1e4cf7fea943ada";
+const r07SidecarDigest = "sha256:9ed472c1bbca0945b6133f8d1fe66e1aefe12b97b0c20b640ddeb58d1acfc624";
 const historicalSidecarDigest = "sha256:28f4840754da38b16bcf8165186271c77b4a883dd8cafa8e97aa686d60d9a075";
 const semanticDigest = "sha256:9b9fe0389d497d4b25eac1998cb091d269e7612a92e57912a2cdc8279d8d6542";
 const bindings = [
@@ -28,7 +29,7 @@ const bindings = [
   {skillId: "independent-audit-gate", path: "skills/independent-audit-gate/SKILL.md", previousDigest: "sha256:26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29", digest: "sha256:abb5d4c1fa0607851018cd6f6a2f3ecf314cc829149ea0d15c5474ed9afd2a18"},
   {skillId: "independent-deliberation-panel", path: "skills/independent-deliberation-panel/SKILL.md", previousDigest: "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab", digest: "sha256:eb21677b0f377116250691a8cf84b44ec853c4de9c56e27ea17585016a151f54"},
   {skillId: "mutation-risk-preflight", path: "skills/mutation-risk-preflight/SKILL.md", previousDigest: "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe", digest: "sha256:9aa4e7cb143bb0ad9ffc5f6c03ed32331e1f14562cd4322fab0e36cd29c21ce1"},
-  {skillId: "orchestrator", path: "skills/orchestrator/SKILL.md", previousDigest: "sha256:b90c19a956f4dd3b239e4f4a527ebea319128dbae239018f8f3b0b5445cc43ac", digest: "sha256:e5f2e1cf5bbfa49821a5aad81ad83b68cf5cae3ec75c92050a8a4cd13b56be45"},
+  {skillId: "orchestrator", path: "skills/orchestrator/SKILL.md", previousDigest: "sha256:e5f2e1cf5bbfa49821a5aad81ad83b68cf5cae3ec75c92050a8a4cd13b56be45", digest: "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"},
   {skillId: "ponytail", path: "skills/ponytail/SKILL.md", previousDigest: "sha256:907667b8b625eab0438b462a4737a056e3833f972c66e432817a12e6f643ac76", digest: "sha256:2ce28db45c1a84e63fa2af7079e58a3803fc26b16ab7073436efd55b1e1214f9"},
   {skillId: "task-contract", path: "skills/task-contract/SKILL.md", previousDigest: "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100", digest: "sha256:92cf19444e6c97b1d1d017f8eed481135d708095d89411668ab215123d1266aa"}
 ];
@@ -46,17 +47,21 @@ function semantics(value: unknown, depth = 0): unknown {
 it("preserves predecessor history and all frozen 39/18/21 semantics in a distinct source revision", () => {
   expect(successor.predecessor).toEqual({
     path: "tests/skill-classification/fixtures.json",
-    gitRevision: "57416208be14d2b5aae7b70181241b3d16310f37",
-    gitBlob: "1cee3b74bbf755fc6955c9d35edabcfc4ad3560e",
-    bytes: 142471,
-    digest: "sha256:188d2f6b0bbc5ab1ac3931e70387f731ca85c463df0e177113d1b724403446bb",
-    fixtureRevision: "ags-classification-midtask-source-binding-r06",
-    oracleRevision: "pre-live-midtask-source-reviewed-r06",
-    oracleDigest: "sha256:d1d36cd7c0ff9293d35003a113f4f9768b0d44fddd5b34be424f83acc59f2999",
+    gitRevision: "f555748df4f4d74f2cb5d34454c7b3494c161186",
+    gitBlob: "b7d4d07d4ec603fad9d5052f7986f799316d6e9f",
+    bytes: 142487,
+    digest: "sha256:7ef33ec877a2496846a8d9333fb302eba73b467f7be99ccc7e6224026b864159",
+    fixtureRevision: "ags-classification-resource-impact-source-binding-r07",
+    oracleRevision: "pre-live-resource-impact-source-reviewed-r07",
+    oracleDigest: "sha256:45e034a812726867412b6ea78261c0dd98232679b2f66f9c265c6122e28cce33",
   });
-  expect(successor.historicalSuccessor.digest).toBe(r06SidecarDigest);
-  expect(hash(JSON.stringify(successor.historicalSuccessor.document, null, 2) + "\n")).toBe(r06SidecarDigest);
-  const r06 = successor.historicalSuccessor.document;
+  expect(successor.historicalSuccessor.digest).toBe(r07SidecarDigest);
+  expect(hash(JSON.stringify(successor.historicalSuccessor.document, null, 2) + "\n")).toBe(r07SidecarDigest);
+  const r07 = successor.historicalSuccessor.document;
+  expect(r07.successor.fixtureRevision).toBe("ags-classification-resource-impact-source-binding-r07");
+  expect(r07.historicalSuccessor.digest).toBe(r06SidecarDigest);
+  expect(hash(JSON.stringify(r07.historicalSuccessor.document, null, 2) + "\n")).toBe(r06SidecarDigest);
+  const r06 = r07.historicalSuccessor.document;
   expect(r06.successor.fixtureRevision).toBe("ags-classification-midtask-source-binding-r06");
   expect(r06.historicalSuccessor.digest).toBe(historicalSidecarDigest);
   expect(hash(JSON.stringify(r06.historicalSuccessor.document, null, 2) + "\n")).toBe(historicalSidecarDigest);
@@ -69,9 +74,9 @@ it("preserves predecessor history and all frozen 39/18/21 semantics in a distinc
   expect(original.historicalSuccessor.digest).toBe("sha256:69ef37b636e35bfdce77103cbe84015c0e2e9482a41e46059d89ac557a8717f7");
   expect(original.successor.fixtureRevision).toBe(predecessor.fixtureRevision);
   expect(original.successor.oracleDigest).toBe(predecessor.oracleDigest);
-  expect(current.fixtureRevision).toBe("ags-classification-resource-impact-source-binding-r07");
-  expect(current.oracleRevision).toBe("pre-live-resource-impact-source-reviewed-r07");
-  expect(current.sourceBindingRevision).toBe("pre-live-source-binding-7");
+  expect(current.fixtureRevision).toBe("ags-classification-governance-behavior-source-binding-r08");
+  expect(current.oracleRevision).toBe("pre-live-governance-behavior-source-reviewed-r08");
+  expect(current.sourceBindingRevision).toBe("pre-live-source-binding-8");
   expect(current.fixtureRevision).toBe(successor.successor.fixtureRevision);
   expect(current.oracleRevision).toBe(successor.successor.oracleRevision);
   expect(successor.semanticProjection.digest).toBe(semanticDigest);
@@ -84,16 +89,16 @@ it("preserves predecessor history and all frozen 39/18/21 semantics in a distinc
   expect(oracleDigest(current)).toBe(current.oracleDigest);
   expect(current.oracleDigest).toBe(successor.successor.oracleDigest);
   expect(current.oracleDigest).not.toBe(predecessor.oracleDigest);
-  expect(successor.resourceImpactSourceSuccessor.sourceBaseRevision).toBe("57416208be14d2b5aae7b70181241b3d16310f37");
-  expect(successor.resourceImpactSourceSuccessor.predecessor).toEqual(successor.predecessor);
-  expect(successor.resourceImpactSourceSuccessor.sourceBindings).toEqual([
-    {path: "skills/orchestrator/SKILL.md", previousDigest: "sha256:56dabaa45041f8975eede0e08dd2b2c876ca71eca0fb5bc8256bfdaeb46098c5", digest: "sha256:e5f2e1cf5bbfa49821a5aad81ad83b68cf5cae3ec75c92050a8a4cd13b56be45", bytes: 8449},
-    {path: "skills/orchestrator/classification.json", previousDigest: "sha256:f034243569190280ebc060f5f1654fcfcf8ee4b4f60c9e5ac19d8a1ebc5f8074", digest: "sha256:6d33ef4bc3ae5daa8c15867f03dbdaf4c0cebf76fcfbd872ca1b8c3b6636baad", bytes: 4338},
+  expect(successor.governanceBehaviorSourceSuccessor.sourceBaseRevision).toBe("f555748df4f4d74f2cb5d34454c7b3494c161186");
+  expect(successor.governanceBehaviorSourceSuccessor.predecessor).toEqual(successor.predecessor);
+  expect(successor.governanceBehaviorSourceSuccessor.sourceBindings).toEqual([
+    {path: "skills/orchestrator/SKILL.md", previousDigest: "sha256:e5f2e1cf5bbfa49821a5aad81ad83b68cf5cae3ec75c92050a8a4cd13b56be45", digest: "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b", bytes: 9285},
+    {path: "skills/orchestrator/classification.json", previousDigest: "sha256:6d33ef4bc3ae5daa8c15867f03dbdaf4c0cebf76fcfbd872ca1b8c3b6636baad", digest: "sha256:81ac5daaa54a6fc6947ba5e805bf7c1d3e4c061dd473be820f4a553a762dd577", bytes: 4577},
   ]);
-  expect(successor.resourceImpactSourceSuccessor.reboundReferences).toBe(17);
-  expect(successor.resourceImpactSourceSuccessor.labelChanges).toEqual([]);
-  expect(successor.resourceImpactSourceSuccessor.modelBehavior).toBe("NOT_RUN");
-  for (const binding of successor.resourceImpactSourceSuccessor.sourceBindings) {
+  expect(successor.governanceBehaviorSourceSuccessor.reboundReferences).toBe(17);
+  expect(successor.governanceBehaviorSourceSuccessor.labelChanges).toEqual([]);
+  expect(successor.governanceBehaviorSourceSuccessor.modelBehavior).toBe("NOT_RUN");
+  for (const binding of successor.governanceBehaviorSourceSuccessor.sourceBindings) {
     expect(hash(readFileSync(path.join(root, binding.path)))).toBe(binding.digest);
   }
   expect(r06.midtaskSourceSuccessor.predecessor).toEqual({
@@ -104,9 +109,9 @@ it("preserves predecessor history and all frozen 39/18/21 semantics in a distinc
     oracleRevision: "pre-live-skill-policy-source-reviewed-r05",
     oracleDigest: "sha256:307f07d6f78cba04e1f606f680e6609b9a17f22f499b802f1b0cf46329a1bd2e",
   });
-  expect(successor.midtaskSourceSuccessor.reboundReferences).toBe(17);
-  expect(successor.midtaskSourceSuccessor.labelChanges).toEqual([]);
-  expect(successor.midtaskSourceSuccessor.modelBehavior).toBe("NOT_RUN");
+  expect(r06.midtaskSourceSuccessor.reboundReferences).toBe(17);
+  expect(r06.midtaskSourceSuccessor.labelChanges).toEqual([]);
+  expect(r06.midtaskSourceSuccessor.modelBehavior).toBe("NOT_RUN");
 });
 it("binds exactly the nine changed skill policy sources across global and per-case evidence", () => {
   expect(successor.bindings).toEqual(bindings);

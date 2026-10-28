@@ -75,9 +75,16 @@ describe("orchestrator resource-impact prompt propagation", () => {
     expect(impactLine).toContain("작업 범위·병렬 수·실행 위치와 종료·정리 조건");
     expect(impactLine).toContain("미확인 값은 추측하지 않는다");
     expect(impactLine).toContain("추가 승인이나 PRE로 만들지 않는다");
-    expect(impactLine).toContain("작은 읽기·편집마다 계측·보고·새 점검 도구를 만들지 않는다");
+    expect(impactLine).toContain("작은 읽기·편집마다 계측·보고·새 점검 도구를 만들지 않으며");
+    expect(impactLine).toContain("이 점검을 이미 허용된 빌드·시험·작업 브랜치 push·CI의 추가 승인이나 PRE로 만들지 않는다");
     expect(intake.indexOf(impactLine)).toBeLessThan(intake.indexOf(gateLine));
+    expect(intake).toContain("선택한 전문 스킬은 해당 전문 판단·행동을 시작하기 전에 호스트가 제공하는 방식으로 실제 호출하고 지침을 적용한다");
+    expect(resumeLine).toContain("다음 해당 판단·행동 전에 필요한 스킬을 호출·적용한다");
+    expect(resumeLine).toContain("사용자 교정으로 바뀐 행동·적용 범위와 남은 검증");
+    expect(resumeLine).toContain("전달받거나 복원한 근거가 없으면 이전 교정·실행·검증을 기억한다고 주장하지 않는다");
     expect(resumeLine).toContain("압축·새 세션·재부팅 뒤에는 해당 제약과 현재 환경을 다시 대조");
+    expect(intake).toContain("현재 도구·권한으로 할 수 있는 실행·검증은 끝내고 실제 결과를 보고한다");
+    expect(intake).toContain("사용자만 할 수 있는 승인·비밀값 입력·사용자 화면 조작이 남으면 그 부분과 이유만 요청");
     expect(gateLine).toContain("mutation-risk-preflight");
     expect(gateLine).toContain("change-scope-guardian");
     expect(gateLine).toContain("작업 브랜치 commit·push, 시험·CI 실행은 이 단계 없이 바로 한다");

@@ -243,10 +243,19 @@ const ORCHESTRATOR_RESOURCE_IMPACT_SOURCE_HASHES = Object.freeze({
   "skills/orchestrator/SKILL.md": "e5f2e1cf5bbfa49821a5aad81ad83b68cf5cae3ec75c92050a8a4cd13b56be45",
   "skills/orchestrator/classification.json": "6d33ef4bc3ae5daa8c15867f03dbdaf4c0cebf76fcfbd872ca1b8c3b6636baad",
 });
+const ORCHESTRATOR_BEHAVIOR_SOURCE_HASHES = Object.freeze({
+  "skills/orchestrator/SKILL.md": "082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b",
+  "skills/orchestrator/classification.json": "81ac5daaa54a6fc6947ba5e805bf7c1d3e4c061dd473be820f4a553a762dd577",
+});
+// D0352 makes the field guide use the existing common routing decision.
+// Preserve the optimization baseline; allow only this reviewed source delta.
+const TASK_CONTRACT_ROUTING_SOURCE_HASHES = Object.freeze({
+  "skills/task-contract/references/field-guide.md": "09083264f2f4746dcda5e9f342d0a0ec27ca21cb692965d036121dc882bc1ac7",
+});
 
 function matchesOrchestratorSourceSuccessor(path, bytes) {
   const digest = createHash("sha256").update(bytes).digest("hex");
-  return [ORCHESTRATOR_MIDTASK_SOURCE_HASHES, ORCHESTRATOR_RESOURCE_IMPACT_SOURCE_HASHES]
+  return [ORCHESTRATOR_MIDTASK_SOURCE_HASHES, ORCHESTRATOR_RESOURCE_IMPACT_SOURCE_HASHES, ORCHESTRATOR_BEHAVIOR_SOURCE_HASHES]
     .some(hashes => Object.hasOwn(hashes, path) && digest === hashes[path]);
 }
 
@@ -710,6 +719,11 @@ export function checkRegistryContextCompatibility(registry) {
 
 export function checkSkillContextOptimization() {
   const errors = [];
+  for (const [currentPath, expectedHash] of Object.entries(TASK_CONTRACT_ROUTING_SOURCE_HASHES)) {
+    if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== expectedHash) {
+      errors.push(`task-contract routing source differs: ${currentPath}`);
+    }
+  }
   for (const successorPath of Object.keys(SKILL_POLICY_WORDING_SUCCESSOR.hashes)) {
     if (!matchesSkillPolicyWordingSuccessor(successorPath, readFileSync(join(ROOT, ...successorPath.split("/"))))) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
   }
@@ -824,6 +838,7 @@ export function checkSkillContextOptimization() {
     }
     for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) if (reviewedPath.startsWith(`skills/${skillId}/`)) allowed.add(reviewedPath);
     for (const currentPath of Object.keys(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
+    for (const currentPath of Object.keys(TASK_CONTRACT_ROUTING_SOURCE_HASHES)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     if (skillId === "session-board") {
       for (const reviewedPath of ["skills/session-board/scripts/board-store.mjs", "skills/session-board/scripts/board-store.d.mts"]) {
         if (!matchesReviewedImplementationUpdate(reviewedPath, readHistorical(ROOT, reviewedPath))) {
