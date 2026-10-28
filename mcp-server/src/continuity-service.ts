@@ -172,7 +172,28 @@ export class ContinuityService implements ContinuityGateway {
   }
 
   ensureSession(rawSessionId: string): ContinuityTaskRecord {
-    return this.store.ensureTask(this.correlateSession(rawSessionId), this.now().toISOString());
+    const now = this.now().toISOString();
+    const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
+    const rootId = task.rootId;
+    const workflowStore = this.workflowStore;
+    if (!rootId || !workflowStore) return task;
+    return this.store.rotateEpoch(task.taskCorrelation, now, {
+      epoch: task.currentEpoch,
+      rootId,
+      isTerminal: () => {
+        const snapshot = workflowStore.getConvergenceSnapshot(rootId);
+        if (!snapshot || snapshot.root.rootId !== rootId) return false;
+        if (snapshot.root.state === "abandoned") return true;
+        if (snapshot.root.state !== "completed") return false;
+        // Older epochs may still have a running attempt whose outcome can reopen the root.
+        const finished = new Map(snapshot.outcomes.map(outcome => [outcome.leaseId, outcome]));
+        return snapshot.leases.every(lease => {
+          if (lease.state !== "consumed") return true;
+          const outcome = finished.get(lease.leaseId);
+          return outcome?.rootId === rootId && outcome.epoch === lease.epoch && outcome.ordinal === lease.ordinal;
+        });
+      },
+    });
   }
 
   clearSession(rawSessionId: string): ContinuityTaskRecord {

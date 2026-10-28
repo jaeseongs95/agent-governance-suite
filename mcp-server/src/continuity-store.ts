@@ -214,17 +214,24 @@ export class SqliteContinuityStore {
     return row ? taskRecord(row) : null;
   }
 
-  rotateEpoch(taskCorrelation: string, now: string): ContinuityTaskRecord {
+  rotateEpoch(taskCorrelation: string, now: string, expected?: {
+    epoch: number;
+    rootId: string;
+    isTerminal: () => boolean;
+  }): ContinuityTaskRecord {
     this.ensureTask(taskCorrelation, now);
     return this.transaction("Cannot rotate the continuity epoch.", () => {
+      const current = this.getTask(taskCorrelation)!;
+      if (expected && (current.currentEpoch !== expected.epoch || current.rootId !== expected.rootId
+        || expected.isTerminal() !== true)) return current;
       this.database.prepare(`
         UPDATE continuity_tasks
         SET current_epoch = current_epoch + 1, root_id = NULL, suppressed = 0,
             last_auto_injected_revision = NULL, pending_source = NULL,
             pending_revision = NULL, pending_digest = NULL, pending_root_id = NULL,
             pending_consumed = 0, updated_at = ?
-        WHERE task_correlation = ?
-      `).run(now, taskCorrelation);
+        WHERE task_correlation = ? AND current_epoch = ? AND root_id IS ?
+      `).run(now, taskCorrelation, current.currentEpoch, current.rootId);
       return this.getTask(taskCorrelation)!;
     }, taskCorrelation);
   }
