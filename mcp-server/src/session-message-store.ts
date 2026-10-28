@@ -373,14 +373,30 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   private retireUnobservedWakes(nowMs: number): void {
     const now = iso(nowMs);
     this.database.prepare(`UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ?
-      WHERE state IN ${ACTIVE_WAKE_STATES} AND expires_at <= ?
-        AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
-            AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)
-          OR coalesce((SELECT NOT (latest.ended_at IS NULL AND latest.lease_until > ?
-              AND latest.instance_id = wake_nonces.instance_id AND latest.started_at = wake_nonces.birth_generation)
-            FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id
-            ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 1))`)
-      .run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), now);
+      WHERE state IN ${ACTIVE_WAKE_STATES}
+        AND ((expires_at <= ?
+            AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
+                AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)
+              OR coalesce((SELECT NOT (latest.ended_at IS NULL AND latest.lease_until > ?
+                  AND latest.instance_id = wake_nonces.instance_id AND latest.started_at = wake_nonces.birth_generation)
+                FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id
+                ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 1)))
+          OR (state IN ('started', 'submitted', 'unknown')
+            AND expires_at > ?
+            AND coalesce(outcome_at, started_at) <= ?
+            AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
+                AND activity.session_id = wake_nonces.session_id
+                AND activity.active_at > coalesce(wake_nonces.outcome_at, wake_nonces.started_at))
+              OR coalesce((SELECT NOT (latest.ended_at IS NULL AND latest.lease_until > ?
+                  AND latest.instance_id = wake_nonces.instance_id AND latest.started_at = wake_nonces.birth_generation)
+                FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id
+                ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 1))
+            AND NOT EXISTS (SELECT 1 FROM messages m WHERE m.target_host = wake_nonces.host
+              AND m.target_session_id = wake_nonces.session_id
+              AND (m.claimed_at IS NULL OR m.acknowledged_at IS NULL)
+              AND m.expires_at > ?
+              AND m.created_at <= coalesce(wake_nonces.outcome_at, wake_nonces.started_at))))`)
+      .run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), now, now, iso(nowMs - WAKE_OBSERVATION_WINDOW_MS), now, now);
   }
 
   private recordActivity(target: SessionIdentity, nowMs: number): void {

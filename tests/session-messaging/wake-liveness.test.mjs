@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { afterEach, test, vi } from 'vitest';
-import { SessionMessageStore, WAKE_TTL_MS, WAKE_RETIRE_GRACE_MS } from '../../mcp-server/src/session-message-store.ts';
+import { SessionMessageStore, WAKE_OBSERVATION_WINDOW_MS, WAKE_TTL_MS, WAKE_RETIRE_GRACE_MS } from '../../mcp-server/src/session-message-store.ts';
 import { dispatchSessionMessageBrokerOperation as dispatch } from '../../mcp-server/src/session-message-broker.ts';
 import '../../mcp-server/src/builtin-hook-host-adapters.ts';
 import { adaptHostInput, registerHookHostAdapter } from '../../mcp-server/src/host-input-adapter.ts';
@@ -628,4 +628,42 @@ test('AGS-D-0304 (b): claiming and acknowledging a message after a submitted wak
   assert.equal(f.store.autoWakeOutlook(target, ackAt + 100).reason, 'wake-unobserved');
   assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), ackAt + 200).dispatch, false);
 });
+
+test('AGS-D-0305: an unobserved submitted wake whose batch is already consumed retires after the observation window so a new message can wake', () => {
+  const f = fixture();
+  body(f.store, 'batch-1-msg', f.now);
+  const first = begin(f.store, f.now);
+  const outcomeAt = f.now + 5_880;
+  assert.equal(f.store.recordManagedWakeOutcome(first, 'submitted', outcomeAt), true);
+
+  const claimAt = f.now + 38_000;
+  keepAlive(f.store, 'instance-1', 'relay-1', claimAt);
+  assert.deepEqual(f.store.claim(target, claimAt).map(m => m.messageId), ['batch-1-msg']);
+  const ackAt = f.now + 54_000;
+  keepAlive(f.store, 'instance-1', 'relay-1', ackAt);
+  assert.equal(f.store.acknowledge(target, ['batch-1-msg'], ackAt), 1);
+
+  const newMessageAt = f.now + 55_000;
+  keepAlive(f.store, 'instance-1', 'relay-1', newMessageAt);
+  body(f.store, 'batch-2-msg', newMessageAt);
+  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), outcomeAt + WAKE_OBSERVATION_WINDOW_MS - 1).dispatch, false);
+
+  const afterWindow = outcomeAt + WAKE_OBSERVATION_WINDOW_MS;
+  keepAlive(f.store, 'instance-1', 'relay-1', afterWindow);
+  f.store.prune(afterWindow);
+  assert.equal(attemptRow(f.store, first).state, 'expired-unobserved');
+  assert.equal(attemptRow(f.store, first).retired_at, iso(afterWindow));
+  assert.deepEqual(f.store.autoWakeOutlook(target, afterWindow), {
+    state: 'available',
+    reason: 'relay-live',
+    basisAt: iso(afterWindow),
+    checkedAt: iso(afterWindow),
+    authorityEffect: 'none',
+  });
+
+  const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), afterWindow + 1);
+  assert.equal(next.dispatch, true);
+  assert.notEqual(next.attempt.attemptId, first.attemptId);
+});
+
 
