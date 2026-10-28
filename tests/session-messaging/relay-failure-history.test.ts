@@ -50,12 +50,15 @@ describe("D0349 bounded relay failure history", () => {
     // Seed valid observations from newer writers without launching 65 unnecessary processes.
     for (let index = 0; index < 65; index++) {
       const writer = `${Date.now() + index}-${index + 1}-${randomUUID()}`;
-      fs.writeFileSync(path.join(history(), writer + tick.slice(-22)), JSON.stringify({
+      const target = path.join(history(), writer + tick.slice(-22));
+      fs.writeFileSync(target, JSON.stringify({
         phase: "tick", reason: "BROKER_DEADLINE_EXPIRED", detail: `writer-${index}`,
       }));
+      fs.utimesSync(target, new Date(0), new Date(0));
     }
-    persist("tick", "BROKER_DEADLINE_EXPIRED");
+    persist("tick", "BROKER_DEADLINE_EXPIRED", "current-writer-last");
     expect(records()).toContainEqual({ phase: "gemini-preflight", reason: "GEMINI_PROJECT_ID_MISSING" });
+    expect(records()).toContainEqual({ phase: "tick", reason: "BROKER_DEADLINE_EXPIRED", detail: "current-writer-last" });
     expect(records().filter(record => record.phase === "tick")).toHaveLength(4);
     expect(records()).toHaveLength(5);
   });
@@ -67,6 +70,25 @@ describe("D0349 bounded relay failure history", () => {
     for (const name of before) expect(fs.statSync(path.join(history(), name)).size).toBeLessThanOrEqual(64 * 1024 + 1);
     persistRelayFailure("x".repeat(64 * 1024 + 1), { AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: state });
     expect(fs.readdirSync(history())).toEqual(before);
+  });
+
+  it("reserves the last cause of every retained kind within the original global 64-record budget", () => {
+    for (let index = 0; index < 40; index++) persist("wake", `OWNED_CAUSE_${index}`);
+    for (const name of fs.readdirSync(history())) {
+      const diagnostic = fs.readFileSync(path.join(history(), name), "utf8");
+      for (let index = 0; index < 4; index++) {
+        const writer = `${Date.now() + index}-${index + 1}-${randomUUID()}`;
+        fs.writeFileSync(path.join(history(), writer + name.slice(-22)), diagnostic);
+      }
+    }
+    persist("tick", "BROKER_DEADLINE_EXPIRED");
+    const settled = records();
+    expect(settled).toHaveLength(64);
+    for (let index = 0; index < 40; index++) {
+      const causes = settled.filter(record => record.reason === `OWNED_CAUSE_${index}`);
+      expect(causes.length).toBeGreaterThanOrEqual(1);
+      expect(causes.length).toBeLessThanOrEqual(4);
+    }
   });
 
   it("does not follow a redirected history directory or overwrite a hard-linked history file", () => {

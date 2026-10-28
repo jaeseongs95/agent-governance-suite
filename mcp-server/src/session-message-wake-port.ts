@@ -97,7 +97,7 @@ export function resolveGeminiAgentApi(
 }
 // A writer lifetime is diagnostic provenance, not an authoritative relay lease generation.
 const failureWriter = `${Date.now().toString().padStart(13, "0")}-${process.pid}-${randomUUID()}`;
-const FAILURE_HISTORY_KIND_LIMIT = 64;
+const FAILURE_HISTORY_LIMIT = 64;
 const FAILURE_HISTORY_WRITERS_PER_KIND = 4;
 
 function writeRelayFailureSnapshot(target: string, serialized: string): void {
@@ -135,11 +135,21 @@ function persistRelayFailureHistory(directory: string, serialized: string): void
     if (!info.isDirectory() || info.isSymbolicLink() || (process.getuid && info.uid !== process.getuid())) return;
     try { chmodSync(history, 0o700); } catch { if (process.platform !== "win32") return; }
     writeRelayFailureSnapshot(path.join(history, `${failureWriter}-${kind}.json`), serialized);
-    // ponytail: bound kinds and writers separately; repeated failures of one kind cannot evict another kind.
-    // At most 64 kinds x 4 writer snapshots (~16 MiB) after successful cleanup; bursts can briefly exceed it.
+    // ponytail: reserve one observation per kind before allocating spare history slots.
+    // At most 64 settled snapshots (~4 MiB), at most 4 per kind; bursts can briefly exceed it.
     const records = readdirSync(history, { withFileTypes: true })
       .filter(entry => entry.isFile() && /^\d{13}-\d+-[a-f0-9-]{36}-[a-f0-9]{16}\.json$/u.test(entry.name))
-      .map(entry => entry.name).sort();
+      .flatMap(entry => {
+        try {
+          const current = lstatSync(path.join(history, entry.name));
+          return current.isFile() ? [{ name: entry.name, modified: current.mtimeMs }] : [];
+        } catch (cause) {
+          if (cause && typeof cause === "object" && "code" in cause && cause.code === "ENOENT") return [];
+          throw cause;
+        }
+      })
+      .sort((left, right) => left.modified - right.modified || left.name.localeCompare(right.name))
+      .map(entry => entry.name);
     const byKind = new Map<string, string[]>();
     for (const name of records) {
       const key = name.slice(-21, -5);
@@ -147,10 +157,14 @@ function persistRelayFailureHistory(directory: string, serialized: string): void
       writers.push(name);
       byKind.set(key, writers);
     }
-    const retained = new Set([...byKind.values()]
-      .sort((left, right) => left.at(-1)!.localeCompare(right.at(-1)!))
-      .slice(-FAILURE_HISTORY_KIND_LIMIT)
-      .flatMap(writers => writers.slice(-FAILURE_HISTORY_WRITERS_PER_KIND)));
+    const rank = new Map(records.map((name, index) => [name, index]));
+    const kinds = [...byKind.values()]
+      .sort((left, right) => rank.get(left.at(-1)!)! - rank.get(right.at(-1)!)!)
+      .slice(-FAILURE_HISTORY_LIMIT);
+    const latest = kinds.map(writers => writers.at(-1)!);
+    const spare = kinds.flatMap(writers => writers.slice(-FAILURE_HISTORY_WRITERS_PER_KIND, -1))
+      .sort((left, right) => rank.get(right)! - rank.get(left)!).slice(0, FAILURE_HISTORY_LIMIT - latest.length);
+    const retained = new Set([...latest, ...spare]);
     for (const name of records.filter(record => !retained.has(record))) {
       try { unlinkSync(path.join(history, name)); }
       catch (cause) { if (!(cause && typeof cause === "object" && "code" in cause && cause.code === "ENOENT")) throw cause; }
