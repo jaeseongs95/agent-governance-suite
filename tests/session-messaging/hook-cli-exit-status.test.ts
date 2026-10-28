@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
@@ -21,6 +24,7 @@ vi.mock("node:fs", async (original) => {
 });
 
 const entry = fileURLToPath(new URL("../../mcp-server/src/session-message-hook.ts", import.meta.url));
+const boardEntry = fileURLToPath(new URL("../../mcp-server/src/session-board-hook.ts", import.meta.url));
 const stop = JSON.stringify({ hook_event_name: "Stop", session_id: "cli-target" });
 const bindable = JSON.stringify({ hook_event_name: "PreToolUse", session_id: "cli-target",
   tool_name: "mcp__agent_governance_suite__prepare_session_message", tool_input: { schemaVersion: "1.0.0", marker: "cli-secret-marker" } });
@@ -130,4 +134,20 @@ it("retains the stdout failure diagnostic and fail-open exit 0", async () => {
   const lines = vi.mocked(console.error).mock.calls.map((call) => String(call[0])).join("\n");
   expect(lines).not.toContain("private-stdout-message");
   expect(lines).not.toContain("cli-secret-marker");
+});
+
+it("sets exit status 0 when session-board-hook CLI completes a normal event", async () => {
+  const directory = mkdtempSync(path.join(tmpdir(), "board-cli-exit-"));
+  vi.stubEnv("AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH", path.join(directory, "session-board.sqlite3"));
+  try {
+    f.stdin = JSON.stringify({ hook_event_name: "SessionStart", session_id: "cli-board-target", cwd: directory });
+    process.argv = [originalArgv[0]!, boardEntry, "--host=codex"];
+    vi.resetModules();
+    await import("../../mcp-server/src/session-board-hook.js");
+    await vi.waitFor(() => expect(process.exitCode).toBe(0));
+    expect(written).toEqual([]);
+    expect(vi.mocked(console.error)).not.toHaveBeenCalled();
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });

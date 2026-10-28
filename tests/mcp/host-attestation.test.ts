@@ -745,7 +745,51 @@ describe("host attestation configuration", () => {
       const updateCheck = vi.spyOn(server.updates, "check");
       const plan = vi.spyOn(server.service, "planWorkflow");
       const stage = vi.spyOn(server.service, "recordStageResult");
-      const input = tool === "plan_workflow" ? planArguments("providerless-guard") : {};
+      const digest = `sha256:${"a".repeat(64)}`;
+      const classificationInput = {
+        schemaVersion: "1.0.0",
+        requestId: "providerless-classify",
+        operationId: "providerless-operation",
+        originalPrompt: "Check the current repository conventions.",
+        confirmedContext: {
+          taskRevision: null, objective: "Check conventions.", actions: ["inspect"],
+          targets: ["README.md"], constraints: null, prohibitedActions: null, background: null,
+        },
+        contextSources: [{ field: "objective", reference: "user-prompt" }],
+        explicitSkillIds: [],
+        ruleRequiredSkillIds: [],
+        vendorContext: { vendorId: "anthropic", reference: "claude-code" },
+        publicSynthetic: false,
+      };
+      const selectionInput = {
+        schemaVersion: "1.0.0",
+        operationId: "providerless-operation",
+        decision: {
+          schemaVersion: "1.0.0",
+          classificationResponseRef: digest,
+          requestDigest: digest,
+          inventoryDigest: digest,
+          taskRevision: null,
+          configRevision: "1.0.0",
+          profileRevision: "1.0.0",
+          explicitSkillIds: [],
+          ruleRequiredSkillIds: [],
+          agentSelectedSkillIds: ["workspace-convention-profiler"],
+          selectionReasons: [{ skillId: "workspace-convention-profiler", reason: "Matches repository convention check." }],
+          applicabilityChecks: [{ skillId: "workspace-convention-profiler", applies: true, excluded: false, reasonRefs: ["user-prompt"] }],
+          unresolvedSkillReferences: [],
+          selectionStatus: "SELECTED",
+          adviceApplied: true,
+          hostReceipt: null,
+        },
+      };
+      const input = tool === "plan_workflow"
+        ? planArguments("providerless-guard")
+        : tool === "classify_skills"
+        ? classificationInput
+        : tool === "record_skill_selection"
+        ? selectionInput
+        : {};
       for (const token of ["synthetic-unverified-hook-token", null]) {
         const rejected = await server.call(tool, { ...input, [HOST_ATTESTATION_FIELD]: token });
         expect(rejected).toMatchObject({ ok: false, data: null, error: { code: "BINDING_REQUIRED" } });
@@ -758,14 +802,25 @@ describe("host attestation configuration", () => {
       expect(stage).not.toHaveBeenCalled();
       expect(classification.classify).not.toHaveBeenCalled();
       expect(classification.accept).not.toHaveBeenCalled();
-      // Without the field, malformed classification input is rejected before gateway dispatch.
-      // Workflow tools retain their existing service-level validation path.
+      // Without the field, valid classification inputs succeed while workflow tools retain their service-level validation path.
       const plain = await server.call(tool, input);
-      expect(plain).toMatchObject({ ok: false, error: { code: tool === "plan_workflow" ? "BINDING_REQUIRED" : "INVALID_INPUT" } });
-      if (tool === "plan_workflow") expect(plan).toHaveBeenCalledTimes(1);
-      if (tool === "record_stage_result") expect(stage).toHaveBeenCalledTimes(1);
-      if (tool === "classify_skills") expect(classification.classify).not.toHaveBeenCalled();
-      if (tool === "record_skill_selection") expect(classification.accept).not.toHaveBeenCalled();
+      if (tool === "plan_workflow") {
+        expect(plain).toMatchObject({ ok: false, error: { code: "BINDING_REQUIRED" } });
+        expect(plan).toHaveBeenCalledTimes(1);
+      } else if (tool === "record_stage_result") {
+        expect(plain).toMatchObject({ ok: false, error: { code: "INVALID_INPUT" } });
+        expect(stage).toHaveBeenCalledTimes(1);
+      } else if (tool === "classify_skills") {
+        expect(plain).toMatchObject({ ok: true, data: classificationInput, error: null });
+        expect(classification.classify).toHaveBeenCalledExactlyOnceWith(classificationInput, null);
+        expect(await server.call(tool, {})).toMatchObject({ ok: false, error: { code: "INVALID_INPUT" } });
+        expect(classification.classify).toHaveBeenCalledTimes(1);
+      } else if (tool === "record_skill_selection") {
+        expect(plain).toMatchObject({ ok: true, data: selectionInput, error: null });
+        expect(classification.accept).toHaveBeenCalledExactlyOnceWith(selectionInput, null);
+        expect(await server.call(tool, {})).toMatchObject({ ok: false, error: { code: "INVALID_INPUT" } });
+        expect(classification.accept).toHaveBeenCalledTimes(1);
+      }
     },
   );
 

@@ -152,6 +152,7 @@ if (isHookEntry(import.meta.url, "session-board-hook")) {
     const host = resolveHookHost(process.argv.slice(2), "codex");
     // The hook reads stdin itself so a read failure keeps its own phase and cause instead of becoming invalid input.
     void runSessionBoardHook(host, () => readFileSync(0, "utf8")).then((output) => {
+      process.exitCode = 0;
       if (!output) return;
       let reported = false;
       const outputFailed = (cause: unknown) => {
