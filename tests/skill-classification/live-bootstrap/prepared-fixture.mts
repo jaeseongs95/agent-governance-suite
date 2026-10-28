@@ -196,30 +196,40 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   const policy = JSON.parse(policyBytes.toString("utf8"));
   assert.equal(policy.revision, "ags-bootstrap-budget-skill-policy-binding-r06");
   assert.equal(policy.parentSolidDigest, hash(solidBytes));
-  if (bindRegistry) assert.equal(policy.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
-  assert.equal(policy.fixtureDigest, hash(await readFile(path.join(repo, "tests/skill-classification/fixtures.json"))));
   assert.equal(policy.rows.length, successor.rows.length);
   assert.deepEqual(policy.precisionCases.map((row: {id: string}) => row.id), solid.precisionCases.map((row: {id: string}) => row.id));
+  // r06 remains frozen. r07 binds the midtask source/inventory change to designated-server
+  // wire observations and independent rational expectations, never product preflight output.
+  const midtaskBytes = await readFile(new URL("./budget-wire-midtask-successor.json", import.meta.url));
+  assert.equal(hash(midtaskBytes), "sha256:6a94e78f76801c0b3ceade0c04dee4dfedebbc9ca0071f3c0c6c2b6d2db4e5c0");
+  const midtask = JSON.parse(midtaskBytes.toString("utf8"));
+  assert.equal(midtask.revision, "ags-bootstrap-budget-midtask-source-binding-r07");
+  assert.equal(midtask.parentSkillPolicyDigest, hash(policyBytes));
+  if (bindRegistry) assert.equal(midtask.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
+  assert.equal(midtask.fixtureDigest, hash(await readFile(path.join(repo, "tests/skill-classification/fixtures.json"))));
+  assert.deepEqual(midtask.rows.map((row: {caseId: string}) => row.caseId), policy.rows.map((row: {caseId: string}) => row.caseId));
+  assert.deepEqual(midtask.precisionCases.map((row: {id: string}) => row.id), policy.precisionCases.map((row: {id: string}) => row.id));
   const currentRows = successor.rows.map((row: {caseId: string; utf8Bytes: number}, index: number) => {
     const historical = registrySuccessor.rows[index];
     assert.equal(historical.caseId, row.caseId);
     assert.equal(historical.utf8Bytes, row.utf8Bytes);
     assert.equal(solid.rows[index].caseId, row.caseId);
-    const current = policy.rows[index];
+    const current = midtask.rows[index];
     assert.equal(current.caseId, row.caseId);
     return {...row, ...current};
   });
-  const oracle = {...predecessor, inventoryDigest: policy.inventoryDigest, fixtureDigest: policy.fixtureDigest,
-    fixtureOracleDigest: policy.fixtureOracleDigest, rows: currentRows, totals: policy.totals,
+  const oracle = {...predecessor, inventoryDigest: midtask.inventoryDigest, fixtureDigest: midtask.fixtureDigest,
+    fixtureOracleDigest: midtask.fixtureOracleDigest, rows: currentRows, totals: midtask.totals,
     syntheticOverBudgetCases: predecessor.syntheticOverBudgetCases.map((row: {id: string}, index: number) => {
       assert.equal(successor.syntheticOverBudgetCases[index].id, row.id);
       assert.equal(solid.syntheticOverBudgetCases[index].id, row.id);
       assert.equal(policy.syntheticOverBudgetCases[index].id, row.id);
-      return {...row, ...policy.syntheticOverBudgetCases[index]};
-    }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...policy.fractionalRoundingFixture}};
+      assert.equal(midtask.syntheticOverBudgetCases[index].id, row.id);
+      return {...row, ...midtask.syntheticOverBudgetCases[index]};
+    }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...midtask.fractionalRoundingFixture}};
   return {oracleBytes, boundaryBytes, oracle, precision: {...precision,
-    cases: precision.cases.map((row: {id: string}, index: number) => ({...row, ...policy.precisionCases[index]}))},
-  successorDigest: hash(policyBytes), successorRevision: policy.revision};
+    cases: precision.cases.map((row: {id: string}, index: number) => ({...row, ...midtask.precisionCases[index]}))},
+  successorDigest: hash(midtaskBytes), successorRevision: midtask.revision};
 }
 
 // Explicit authoring command captures only current public request/wire inputs. It neither runs nor qualifies a provider.
