@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -40,6 +41,24 @@ describe("D0349 bounded relay failure history", () => {
     }
     expect(records().map(record => record.detail).sort()).toEqual(["first-writer", "second-writer"]);
   }, 35_000);
+
+  it("keeps another kind's last cause across many newer relay writer generations", () => {
+    persist("gemini-preflight", "GEMINI_PROJECT_ID_MISSING");
+    persist("tick", "BROKER_DEADLINE_EXPIRED");
+    const tick = fs.readdirSync(history()).find(name =>
+      JSON.parse(fs.readFileSync(path.join(history(), name), "utf8")).phase === "tick")!;
+    // Seed valid observations from newer writers without launching 65 unnecessary processes.
+    for (let index = 0; index < 65; index++) {
+      const writer = `${Date.now() + index}-${index + 1}-${randomUUID()}`;
+      fs.writeFileSync(path.join(history(), writer + tick.slice(-22)), JSON.stringify({
+        phase: "tick", reason: "BROKER_DEADLINE_EXPIRED", detail: `writer-${index}`,
+      }));
+    }
+    persist("tick", "BROKER_DEADLINE_EXPIRED");
+    expect(records()).toContainEqual({ phase: "gemini-preflight", reason: "GEMINI_PROJECT_ID_MISSING" });
+    expect(records().filter(record => record.phase === "tick")).toHaveLength(4);
+    expect(records()).toHaveLength(5);
+  });
 
   it("bounds the settled record count and refuses oversized records", () => {
     for (let index = 0; index < 80; index++) persist("tick", `OWNED_REASON_${index}`);
