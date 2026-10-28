@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { checkSkillContextOptimization, readHistoricalSource, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
+import { fileURLToPath } from "node:url";
+import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
+import { checkSkillContextOptimization, readHistoricalSource, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, matchesSkillPolicyWordingSuccessorBytes, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
 import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin } from "../../scripts/check-skill-context-optimization.mjs";
 
 describe("skill context optimization", () => {
@@ -321,5 +323,151 @@ describe("skill context optimization", () => {
     expect(report.skills).toHaveLength(20);
     expect(report.skills.every((skill) => skill.reducedBytes > 0)).toBe(true);
     expect(report.policyBaselineUpdates).toMatchObject([{ skillId: "orchestrator", initialMaxBytes: 4585 }]);
+  });
+});
+
+describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () => {
+  const root = fileURLToPath(new URL("../../", import.meta.url));
+  const successorPaths = [
+    "skills/acceptance-evidence-validator/SKILL.md",
+    "skills/acceptance-evidence-validator/classification.json",
+    "skills/blocker-diagnostician/classification.json",
+    "skills/blocker-diagnostician/references/entry-details.md",
+    "skills/coordinate-subagents/SKILL.md",
+    "skills/coordinate-subagents/classification.json",
+    "skills/cs-engineering/SKILL.md",
+    "skills/cs-engineering/classification.json",
+    "skills/independent-audit-gate/SKILL.md",
+    "skills/independent-audit-gate/classification.json",
+    "skills/independent-audit-gate/references/audit-protocol.md",
+    "skills/independent-audit-gate/references/entry-details.md",
+    "skills/independent-deliberation-panel/SKILL.md",
+    "skills/independent-deliberation-panel/classification.json",
+    "skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md",
+    "skills/mutation-risk-preflight/SKILL.md",
+    "skills/mutation-risk-preflight/classification.json",
+    "skills/mutation-risk-preflight/references/approval-and-authority.md",
+    "skills/mutation-risk-preflight/references/risk-matrix.md",
+    "skills/orchestrator/SKILL.md",
+    "skills/orchestrator/classification.json",
+    "skills/orchestrator/references/engineering-practices/catalog.json",
+    "skills/orchestrator/references/engineering-practices/implementation.md",
+    "skills/orchestrator/references/entry-details.md",
+    "skills/orchestrator/references/mcp-execution.md",
+    "skills/ponytail/SKILL.md",
+    "skills/ponytail/classification.json",
+    "skills/task-contract/SKILL.md",
+    "skills/task-contract/classification.json",
+    "skills/task-contract/references/risk-and-authorization-rubric.md",
+  ];
+
+  it("pins all 30 policy wording successor files and rejects one-byte tampering", () => {
+    for (const relative of successorPaths) {
+      const current = readFileSync(path.join(root, relative));
+      const historical = readHistoricalSource(relative);
+      expect(matchesSkillPolicyWordingSuccessorBytes(relative, current), relative).toBe(true);
+      expect(current.equals(historical), relative).toBe(false);
+      const tampered = Buffer.from(current);
+      tampered[tampered.length - 1] ^= 1;
+      expect(matchesSkillPolicyWordingSuccessorBytes(relative, tampered), relative).toBe(false);
+    }
+    expect(matchesSkillPolicyWordingSuccessorBytes("skills/orchestrator/unlisted.md", Buffer.from("x"))).toBe(false);
+  });
+
+  it("enforces risk-proportional gates, direct approval prompts, operational ponytail rules, and vendor-neutral wording across root and claude-plugin", async () => {
+    const readBoth = (relative) => [
+      readFileSync(path.join(root, relative), "utf8"),
+      readFileSync(path.join(root, "claude-plugin", relative), "utf8"),
+    ];
+
+    for (const text of readBoth("skills/acceptance-evidence-validator/SKILL.md")) {
+      expect(text).toContain("수용 기준이 여럿인 계약 작업이나 고위험 작업을 마친 뒤 완료 선언에 필요한 근거를 점검할 때 사용한다. 작은 단일 작업은 이 스킬 없이 실제로 실행한 검사와 결과를 보고에 바로 적는다.");
+      expect(text).not.toContain("구현이나 산출물이 끝난 뒤 완료 선언에 필요한 근거를 점검할 때 사용한다.");
+    }
+
+    const coordRoot = readFileSync(path.join(root, "skills/coordinate-subagents/SKILL.md"), "utf8");
+    expect(coordRoot).toContain("Coordinate subagents on the current host by delegating only when the user requests it");
+    expect(coordRoot).not.toContain("Coordinate subagents in Codex and Claude Code");
+
+    for (const text of readBoth("skills/cs-engineering/SKILL.md")) {
+      expect(text).toContain("파일 이동·장부 반영 같은 운영 작업과 자원·성능에 영향이 없는\n  작은 수정에는 쓰지 않는다.");
+      expect(text).toContain("동시성·DB·메시징·알고리즘·자원 수명·성능이 실제 변경의 정확성이나 자원·성능 결과를 바꿀 때 적용하라.");
+      expect(text).toContain("버퍼 크기·I/O·flush 주기처럼 자원·성능을 바꾸는 설정 판단도 적용 범위다.");
+      expect(text).toContain("카드 의무는 그 카드의 적용 조건이 현재 변경에 실제로 있을 때만 붙여라.");
+    }
+
+    for (const text of readBoth("skills/independent-audit-gate/SKILL.md")) {
+      expect(text).toContain("되돌리기 어려운 영구 삭제나 실데이터 대량 수정, 개인정보, 백업·복원 또는 운영 데이터 정합성");
+      expect(text).toContain("같은 디스크 안 이동처럼 되돌릴 수 있는 운영 작업");
+      expect(text).toContain("불확실하다는 이유만으로 고위험으로 올리지 않는다.");
+    }
+    for (const text of readBoth("skills/independent-audit-gate/references/audit-protocol.md")) {
+      expect(text).toContain("파일 이동·복사·이름 변경은 삭제가 아니다.");
+    }
+    for (const text of readBoth("skills/independent-audit-gate/references/entry-details.md")) {
+      expect(text).toContain("파일 이동·복사·이름 변경은 삭제가 아니며 이 경계의 승인 대상이 아니다.");
+      expect(text).toContain("확인할 수 없으면 고위험으로 올리지 말고 그 점을 사용자에게 묻는다.");
+    }
+
+    for (const text of readBoth("skills/independent-deliberation-panel/SKILL.md")) {
+      expect(text).toContain("정책·설계 선택지가 갈리면 사용자에게 묻기 전에 이 패널로 정하고, 그래도 결론이 나지 않을 때 사용자에게 묻는다.");
+      expect(text).toContain("직접 확인할 수 있는 사실은 패널 없이 직접 확인한다. 사용자만 줄 수 있는 승인이나 답 하나로 풀리는 문제에는 패널을 열지 말고 사용자에게 바로 묻는다.");
+    }
+    for (const text of readBoth("skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md")) {
+      expect(text).toContain("구체 모델·추론 조합은 orchestration-policy의 capability 우선 규칙에 따라 현재 호스트 adapter에서 capability·격리·도구 접근을 만족하는 실제 지원 구성으로 고른다.");
+      expect(text).not.toContain("Terra");
+      expect(text).not.toContain("Sol");
+      expect(text).not.toContain("Astra");
+    }
+
+    for (const text of readBoth("skills/mutation-risk-preflight/SKILL.md")) {
+      expect(text).toContain("행동 이름이 아니라 규모, 되돌릴 수 있는지, 실데이터·공유 자원·외부 공개에 닿는지로 판단한다.");
+      expect(text).toContain("같은 디스크 안 이동·이름 변경, 원본이나 백업이 남는 복사, git이나 백업으로 되돌릴 수 있는 로컬 편집, 작업 브랜치 commit·push, 시험·CI 실행");
+      expect(text).toContain("우회 작업을 만들지 말고 대상·영향·실행할 명령·복구 방법을 담아 사용자에게 바로 묻는다.");
+    }
+    for (const text of readBoth("skills/mutation-risk-preflight/references/approval-and-authority.md")) {
+      expect(text).toContain("승인이 없으면 분석 문서·대체 구현·복제 환경 시험으로 대신하지 않는다.");
+    }
+    for (const text of readBoth("skills/mutation-risk-preflight/references/risk-matrix.md")) {
+      expect(text).toContain("영구 삭제·덮어쓰기·되돌리기 어려운 이동");
+      expect(text).toContain("같은 디스크 안 이동·이름 변경과 되돌릴 수 있는 로컬 편집은 이 표의 대상이 아니다.");
+    }
+
+    for (const text of readBoth("skills/orchestrator/SKILL.md")) {
+      expect(text).toContain("무거운 단계는 행동 이름이 아니라 실제 위험으로 붙인다.");
+      expect(text).toContain("요청받은 일을 가장 짧은 경로로 직접 한다. 하기 전에 분석 문서·시험 도구·새 API·복제 환경을 만들지 않고");
+      expect(text).toContain("사용자 요청·goal·적용 프로젝트 지침이 맡긴 역할 범위의 일은 그 근거로 진행하고 '권한 없음'으로 결론 내지 않는다.");
+    }
+    for (const text of readBoth("skills/orchestrator/references/entry-details.md")) {
+      expect(text).toContain("MCP 계획에 실제 상태 변경에 필요한 stage가 없으면 그 stage를 넣은 새 계획으로 진행하고, 승인이 없으면 대상·영향·실행할 명령을 담아 사용자에게 바로 묻는다. 요청받은 변경을 남은 작업으로 돌려 놓은 채 완료로 보고하지 않는다.");
+    }
+    for (const text of readBoth("skills/orchestrator/references/mcp-execution.md")) {
+      expect(text).toContain("사용자 입력이나 승인이 필요하면 그 stage에서 멈추고 대상·영향·실행할 명령을 담아 사용자에게 바로 한 번 묻는다. 답을 기다리는 동안 우회 구현이나 대체 산출물을 만들지 않는다.");
+    }
+    for (const text of readBoth("skills/orchestrator/references/engineering-practices/implementation.md")) {
+      expect(text).toContain("현재 변경에 실제로 해당하는 cs-engineering 필수 불변조건은 단순화 대상이 아니라 만족할 조건이다. 해당하지 않는 카드 의무나 권고는 붙이지 않는다.");
+    }
+
+    for (const text of readBoth("skills/ponytail/SKILL.md")) {
+      expect(text).toContain("## Operational work");
+      expect(text).toContain("Do not write an analysis document, a test harness, a new API, or a cloned\nenvironment before doing the asked operation.");
+    }
+
+    expect(readFileSync(path.join(root, "skills/task-contract/SKILL.md"), "utf8"))
+      .toContain("해석이 갈리거나 실패 영향이 큰 요청을 목표·범위·수용 기준·작업 단위·위험도·권한·검증 근거가 추적되는 TaskEnvelope.v1으로 정리한다.");
+    for (const text of readBoth("skills/task-contract/SKILL.md")) {
+      expect(text).toContain("계약은 해석이 갈리거나 실패 영향이 큰 작업에만 만들고, 계약이 없다는 이유로 배정받은 일을 미루지 않는다.");
+      expect(text).toContain("필요한 질문을 한 번에 모아 사용자에게 바로 묻는다.");
+    }
+    for (const text of readBoth("skills/task-contract/references/risk-and-authorization-rubric.md")) {
+      expect(text).toContain("모호하다는 이유만으로 등급을 올리지 않는다.");
+      expect(text).toContain("사용자가 맡긴 역할이나 goal, 적용을 확인한 프로젝트 지침이 맡긴 일은 그 근거로 `allowedActions`에 넣고 '권한 없음'으로 결론 내지 않는다.");
+    }
+
+    const canonicalInventory = await loadSkillInventory({ root });
+    const claudeInventory = await loadSkillInventory({ root: path.join(root, "claude-plugin") });
+    expect(canonicalInventory.issues).toEqual([]);
+    expect(claudeInventory.issues).toEqual([]);
+    expect(canonicalInventory.skills.length).toBe(claudeInventory.skills.length);
   });
 });
