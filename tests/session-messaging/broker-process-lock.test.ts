@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const ports = vi.hoisted(() => ({
   lstatSync: vi.fn(), mkdirSync: vi.fn(), mkdtempSync: vi.fn(),
   readdirSync: vi.fn(), renameSync: vi.fn(), rmdirSync: vi.fn(), delay: vi.fn(),
-  processStartToken: vi.fn(() => "synthetic-process-birth"),
+  processStartToken: vi.fn<(pid?: number) => string>(() => "synthetic-process-birth"),
 }));
 vi.mock("node:fs", () => ports);
 vi.mock("node:timers/promises", () => ({ setTimeout: ports.delay }));
