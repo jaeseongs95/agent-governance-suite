@@ -168,8 +168,8 @@ describe("signed source evidence and selection context regression", () => {
 
   it.each([
     ["orchestrator", "skills/orchestrator/SKILL.md", 18],
-    ["orchestrator", "skills/orchestrator/SKILL.md", 19],
-    ["orchestrator", "skills/orchestrator/SKILL.md", 26],
+    ["orchestrator", "skills/orchestrator/SKILL.md", 20],
+    ["orchestrator", "skills/orchestrator/SKILL.md", 21],
     ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", 5],
     ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", 6],
     ["korean-prose-editor", "skills/korean-prose-editor/references/entry-details.md", 9],
@@ -178,10 +178,23 @@ describe("signed source evidence and selection context regression", () => {
     ["session-board", "skills/session-board/SKILL.md", 21],
   ])("retains contextual subject/phase/antecedent for %s:%s:%i", async (skillId, sourcePath, lineNumber) => {
     const line = (await readFile(String(sourcePath), "utf8")).split("\n")[Number(lineNumber) - 1]!.trim();
+    expect(line.length).toBeGreaterThan(0);
     const inventory = await loadSkillInventory({ root: process.cwd() });
     const skill = inventory.skills.find(candidate => candidate.skillId === skillId)!;
     expect(skill.applicability.join("\n")).toContain(line);
     expect(skill.exclusions.some(text => line.includes(text))).toBe(false);
+  });
+
+  it("keeps the no-specialist reply clause separate from orchestration exclusions", async () => {
+    const reply = "전문 스킬이 필요 없는 설명·인사·일반 질문은 그대로 답한다.";
+    const exclusion = "단독 전문 작업이나 스킬이 필요 없는 요청에 registry 조회·계획·workflow run을 만들지 않는다. 모든 요청에 실패 영향 분류나 생략 이유를 출력하지 않는다.";
+    const inventory = await loadSkillInventory({ root: process.cwd() });
+    expect(inventory.issues).toEqual([]);
+    const skill = inventory.skills.find(candidate => candidate.skillId === "orchestrator")!;
+    expect(skill.applicability.join("\n")).toContain(reply);
+    expect(skill.applicability.join("\n")).not.toContain(exclusion);
+    expect(skill.exclusions).toContain(exclusion);
+    expect(skill.exclusions.join("\n")).not.toContain(reply);
   });
 
   it("keeps the update-session tool antecedent together with its subagent restriction", async () => {
