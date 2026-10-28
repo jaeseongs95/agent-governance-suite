@@ -479,6 +479,9 @@ const SKILL_POLICY_WORDING_SUCCESSOR = Object.freeze({
 });
 
 function matchesSkillPolicyWordingSuccessor(path, bytes) {
+  // Exact reviewed mid-task successor follows the same pinned historical projection.
+  if (Object.hasOwn(ORCHESTRATOR_MIDTASK_SOURCE_HASHES, path)
+    && createHash("sha256").update(bytes).digest("hex") === ORCHESTRATOR_MIDTASK_SOURCE_HASHES[path]) return true;
   return Object.hasOwn(SKILL_POLICY_WORDING_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === SKILL_POLICY_WORDING_SUCCESSOR.hashes[path];
 }
@@ -699,8 +702,8 @@ export function checkRegistryContextCompatibility(registry) {
 
 export function checkSkillContextOptimization() {
   const errors = [];
-  for (const [successorPath, sha256] of Object.entries(SKILL_POLICY_WORDING_SUCCESSOR.hashes)) {
-    if (createHash("sha256").update(readFileSync(join(ROOT, ...successorPath.split("/")))).digest("hex") !== sha256) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
+  for (const successorPath of Object.keys(SKILL_POLICY_WORDING_SUCCESSOR.hashes)) {
+    if (!matchesSkillPolicyWordingSuccessor(successorPath, readFileSync(join(ROOT, ...successorPath.split("/"))))) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
   }
   for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) {
     if (!matchesClassificationUpdate(reviewedPath, readHistorical(ROOT, reviewedPath))) errors.push(`classification: reviewed bytes differ: ${reviewedPath}`);
