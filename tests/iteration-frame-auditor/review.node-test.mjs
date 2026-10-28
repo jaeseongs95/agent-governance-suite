@@ -248,6 +248,27 @@ test("all skill schemas compile in strict Ajv mode", () => {
   assert.doesNotThrow(() => compileAllSchemas());
 });
 
+test("digest-request CLI distinguishes operational I/O read failures from INVALID_INPUT", () => {
+  const ioRun = spawnSync(
+    process.execPath,
+    [path.join(skillRoot, "scripts", "digest-request.mjs"), "--input", skillRoot],
+    { encoding: "utf8" },
+  );
+  assert.equal(ioRun.status, 2);
+  const ioBody = JSON.parse(ioRun.stdout);
+  assert.equal(ioBody.error.code, "EISDIR");
+  assert.deepEqual(ioBody.error.details, { causeCategory: "io", causeCode: "EISDIR" });
+
+  const invalidRun = spawnSync(
+    process.execPath,
+    [path.join(skillRoot, "scripts", "digest-request.mjs")],
+    { encoding: "utf8", input: "{not-json" },
+  );
+  assert.equal(invalidRun.status, 2);
+  const invalidBody = JSON.parse(invalidRun.stdout);
+  assert.equal(invalidBody.error.code, "INVALID_INPUT");
+});
+
 test("runtime scripts do not import the suite", async () => {
   for (const file of ["core.mjs", "digest-request.mjs", "validate-review.mjs"]) {
     const content = await readFile(path.join(skillRoot, "scripts", file), "utf8");

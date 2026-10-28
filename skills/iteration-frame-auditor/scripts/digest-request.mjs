@@ -7,11 +7,12 @@ try {
   validateRequest(request);
   writeJson({ schemaVersion: "1.0.0", requestArtifactDigest: reviewRequestDigest(request) });
 } catch (error) {
+  const ioCode = !(error instanceof SyntaxError) && !error?.details && typeof error?.code === "string" && /^[A-Z0-9_]{1,32}$/u.test(error.code) ? error.code : null;
   writeJson({
     error: {
-      code: "INVALID_INPUT",
+      code: ioCode ?? "INVALID_INPUT",
       message: error instanceof Error ? error.message : String(error),
-      details: error?.details ?? null
+      details: ioCode ? { causeCategory: "io", causeCode: ioCode } : (error?.details ?? null)
     }
   });
   process.exitCode = 2;

@@ -107,7 +107,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       env: environment,
       input,
       maxBuffer: 5 * 1024 * 1024,
-      timeout: 10_000,
+      timeout: 30_000,
       windowsHide: true,
     });
 

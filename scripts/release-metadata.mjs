@@ -68,6 +68,13 @@ export async function expectedReleaseFiles() {
       if (entries.length !== 1) throw new Error("marketplace plugin entry must occur exactly once");
       entries[0].source.ref = `v${version}`;
     }),
+    await updateJson(".claude-plugin/marketplace.json", (document) => {
+      document.version = version;
+      const entries = document.plugins?.filter((entry) => entry.name === "agent-governance-suite") ?? [];
+      if (entries.length !== 1) throw new Error("Claude marketplace plugin entry must occur exactly once");
+      entries[0].version = version;
+      entries[0].ref = `v${version}`;
+    }),
     await updateText("mcp-server/src/plugin-info.ts", (text) => replaceExactlyOnce(
       text,
       PLUGIN_INFO_VERSION,

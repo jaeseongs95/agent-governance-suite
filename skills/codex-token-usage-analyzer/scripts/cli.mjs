@@ -6,10 +6,10 @@ import process from "node:process";
 import { analyzeRequest, canonicalJson, codexPaths, digest, isPortableAbsolute, writeNewMarkdown } from "./core.mjs";
 import { contractErrors, validateProviderResult, validateReport, validateRequest } from "./schema-validation.mjs";
 
-async function readStdin() {
+async function readStdin(stream = process.stdin) {
   let input = "";
-  process.stdin.setEncoding("utf8");
-  for await (const chunk of process.stdin) input += chunk;
+  stream.setEncoding?.("utf8");
+  for await (const chunk of stream) input += chunk;
   if (!input.trim()) throw new Error("stdin에 TokenUsageReportRequest.v1 JSON이 필요합니다.");
   try {
     return JSON.parse(input);
@@ -18,13 +18,13 @@ async function readStdin() {
   }
 }
 
-function adapterError(message, details = null) {
+function adapterError(message, details = null, code = "INVALID_INPUT") {
   return {
     schemaVersion: "1.0.0",
     kind: "adapter-error",
     output: null,
     artifacts: [],
-    error: { code: "INVALID_INPUT", message, details }
+    error: { code, message, details }
   };
 }
 
@@ -75,17 +75,23 @@ export async function execute(request, options = {}) {
   return { result, exitCode: ["PASS", "PARTIAL"].includes(report.verdict) ? 0 : 1 };
 }
 
-async function main() {
+export async function main(stdinStream = process.stdin, argv = process.argv) {
   let result;
   let exitCode = 2;
   try {
-    if (process.argv.length !== 2) throw new Error("CLI 인자는 허용되지 않습니다. 요청 JSON을 stdin으로 전달하세요.");
-    ({ result, exitCode } = await execute(await readStdin()));
+    if (argv.length !== 2) throw new Error("CLI 인자는 허용되지 않습니다. 요청 JSON을 stdin으로 전달하세요.");
+    ({ result, exitCode } = await execute(await readStdin(stdinStream)));
   } catch (error) {
-    result = adapterError(error instanceof Error ? error.message : String(error));
+    const ioCode = !(error instanceof SyntaxError) && typeof error?.code === "string" && /^[A-Z0-9_]{1,32}$/u.test(error.code) ? error.code : null;
+    result = adapterError(
+      error instanceof Error ? error.message : String(error),
+      ioCode ? { causeCategory: "io", causeCode: ioCode } : null,
+      ioCode ? "MISSING_EVIDENCE" : "INVALID_INPUT"
+    );
   }
   process.stdout.write(`${canonicalJson(result)}\n`);
   process.exitCode = exitCode;
+  return { result, exitCode };
 }
 
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) await main();

@@ -1,6 +1,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -8,6 +9,50 @@ import { computeDirectoryChecksum } from "../../scripts/lib.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const temporaryDirectories = [];
+
+function resolvePnpmEntrypoint(npmExecPath = process.env.npm_execpath) {
+  if (
+    typeof npmExecPath === "string"
+    && npmExecPath.length > 0
+    && /(?:^|[\\/])pnpm(?:\.[cm]?js|\.cmd|\.exe)?$/iu.test(npmExecPath)
+    && existsSync(npmExecPath)
+  ) {
+    return npmExecPath;
+  }
+
+  let version = null;
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
+    const match = /^pnpm@([0-9A-Za-z.-]+)$/u.exec(pkg.packageManager ?? "");
+    version = match?.[1] ?? null;
+  } catch {
+    version = null;
+  }
+
+  const corepackHomes = [
+    process.env.COREPACK_HOME,
+    process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, "node", "corepack") : null,
+    process.env.XDG_CACHE_HOME ? path.join(process.env.XDG_CACHE_HOME, "node", "corepack") : null,
+    path.join(homedir(), ".cache", "node", "corepack"),
+  ].filter(Boolean);
+
+  const candidates = [
+    ...(version
+      ? corepackHomes.flatMap((home) => [
+          path.join(home, "v1", "pnpm", version, "bin", "pnpm.cjs"),
+          path.join(home, "v1", "pnpm", version, "bin", "pnpm.mjs"),
+        ])
+      : []),
+    path.join(path.dirname(process.execPath), "node_modules", "corepack", "dist", "pnpm.js"),
+    path.join(path.dirname(process.execPath), "..", "lib", "node_modules", "corepack", "dist", "pnpm.js"),
+  ];
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+
+  return process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+}
 
 async function createSuiteRoot() {
   const directory = await mkdtemp(path.join(tmpdir(), "agent-governance-tooling-"));
@@ -33,23 +78,37 @@ afterEach(async () => {
 
 describe("skill maintenance commands", () => {
   it("forwards pnpm script arguments without a standalone separator", () => {
-    const pnpmEntrypoint = process.env.npm_execpath;
-    expect(pnpmEntrypoint).toBeTruthy();
-    const pnpmArguments = [
-"validate:skill", "--name", "orchestrator"
-    ];
-    const javascriptEntrypoint = /\.(?:cjs|mjs|js)$/iu.test(pnpmEntrypoint);
-    const result = spawnSync(
-      javascriptEntrypoint ? process.execPath : pnpmEntrypoint,
-      javascriptEntrypoint ? [pnpmEntrypoint, ...pnpmArguments] : pnpmArguments,
-      {
-      cwd: root,
-      encoding: "utf8"
-    },
-    );
+    for (const candidateEnv of [process.env.npm_execpath, undefined]) {
+      const pnpmEntrypoint = resolvePnpmEntrypoint(candidateEnv);
+      expect(pnpmEntrypoint).toBeTruthy();
+      const pnpmArguments = [
+        "validate:skill", "--name", "orchestrator"
+      ];
+      const javascriptEntrypoint = /\.(?:cjs|mjs|js)$/iu.test(pnpmEntrypoint);
+      const result = spawnSync(
+        javascriptEntrypoint ? process.execPath : pnpmEntrypoint,
+        javascriptEntrypoint ? [pnpmEntrypoint, ...pnpmArguments] : pnpmArguments,
+        {
+          cwd: root,
+          encoding: "utf8",
+          env: {
+            ...process.env,
+            CI: "true",
+            COREPACK_ENABLE_DOWNLOAD_PROMPT: "0",
+            COREPACK_ENABLE_NETWORK: "0",
+            npm_config_offline: "true",
+            npm_config_package_manager_strict: "false",
+            npm_config_verify_deps_before_run: "false",
+            pnpm_config_verify_deps_before_run: "false",
+          },
+          timeout: 30_000,
+          windowsHide: true,
+        },
+      );
 
-    expect(result.status, result.stderr || result.stdout).toBe(0);
-    expect(result.stdout).toContain("orchestrator");
+      expect(result.status, result.stderr || result.stdout).toBe(0);
+      expect(result.stdout).toContain("orchestrator");
+    }
   });
 
   it("scaffolds a skill, behavior fixtures, and registry descriptor", async () => {

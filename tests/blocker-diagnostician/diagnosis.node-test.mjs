@@ -313,6 +313,30 @@ test("all JSON Schemas compile in strict Ajv mode", () => {
   assert.doesNotThrow(() => compileAllSchemas());
 });
 
+test("JSON CLI distinguishes operational I/O read failures from INVALID_INPUT", () => {
+  const ioRun = spawnSync(
+    process.execPath,
+    [path.join(skillRoot, "scripts", "cli.mjs"), "--input", path.join(testRoot, "fixtures")],
+    { encoding: "utf8" },
+  );
+  assert.equal(ioRun.status, 2);
+  const ioBody = JSON.parse(ioRun.stdout);
+  assert.equal(ioBody.ok, false);
+  assert.equal(ioBody.error.code, "EISDIR");
+  assert.deepEqual(ioBody.error.details, { causeCategory: "io", causeCode: "EISDIR" });
+
+  const syntaxRun = spawnSync(
+    process.execPath,
+    [path.join(skillRoot, "scripts", "cli.mjs")],
+    { encoding: "utf8", input: "{not-json" },
+  );
+  assert.equal(syntaxRun.status, 2);
+  const syntaxBody = JSON.parse(syntaxRun.stdout);
+  assert.equal(syntaxBody.ok, false);
+  assert.equal(syntaxBody.error.code, "INVALID_INPUT");
+  assert.equal(syntaxBody.error.details, null);
+});
+
 test("runtime scripts do not import Agent Governance Suite", async () => {
   const files = ["core.mjs", "cli.mjs", "cluster-failures.mjs", "validate-report.mjs"];
   for (const file of files) {

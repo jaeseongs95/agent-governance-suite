@@ -25,7 +25,11 @@ import {
 } from "../../mcp-server/src/session-message-client.js";
 import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
 import { acquireBrokerProcessLock, releaseBrokerProcessLock } from "../../mcp-server/src/broker-process-lock.js";
-import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
+import {
+  executeSessionMessageCliFromStdin,
+  formatSessionMessageStdinReadError,
+  runSessionMessageCli,
+} from "../../mcp-server/src/session-message-cli.js";
 import { handleSessionMessageHook, sessionMessageEnvelope, sessionMessageTransport } from "../../mcp-server/src/session-message-hook.js";
 import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
@@ -1729,6 +1733,26 @@ describe("session message MCP tools", () => {
       targetSessionId: "recipient",
       body: "가".repeat(2048),
     })).resolves.toMatchObject({ ok: false, error: { code: "INVALID_INPUT" } });
+  });
+
+  it("reports stdin read failures directly without rewriting them into JSON syntax errors", async () => {
+    const ioFailure = Object.assign(new Error("input/output error"), { code: "EIO" });
+    const response = await executeSessionMessageCliFromStdin(() => {
+      throw ioFailure;
+    });
+    expect(response).toEqual({
+      protocolVersion: "1.0.0",
+      ok: false,
+      errorCode: "EIO",
+      error: "Failed to read session message request from stdin (EIO): input/output error",
+    });
+    expect(formatSessionMessageStdinReadError(Object.assign(new Error("bad file descriptor"), { code: "EBADF" }))).toEqual({
+      protocolVersion: "1.0.0",
+      ok: false,
+      errorCode: "EBADF",
+      error: "Failed to read session message request from stdin (EBADF): bad file descriptor",
+    });
+    await expect(executeSessionMessageCliFromStdin(() => "{not-json")).rejects.toThrow(SyntaxError);
   });
 
   it("validates bound send, status, and acknowledgement calls", async () => {

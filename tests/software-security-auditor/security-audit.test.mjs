@@ -76,4 +76,35 @@ describe("security audit evidence contract", () => {
     result = spawnSync(process.execPath, args, { encoding: "utf8", env, timeout: 10000, windowsHide: true });
     expect(result.status).toBe(1); expect(JSON.parse(result.stdout).errors).toContain("STALE_TARGET");
   });
+
+  it("distinguishes operational I/O read failures from INVALID_INPUT in the CLI", () => {
+    const clean = root();
+    const cli = path.join(repo, "skills/software-security-auditor/scripts/cli.mjs");
+    const env = { ...process.env }; delete env.NODE_PATH; delete env.NODE_OPTIONS;
+
+    const ioResult = spawnSync(
+      process.execPath,
+      [cli, "snapshot", "--input", clean, "--target-root", clean],
+      { encoding: "utf8", env, timeout: 10000, windowsHide: true },
+    );
+    expect(ioResult.status).toBe(2);
+    expect(JSON.parse(ioResult.stdout)).toMatchObject({
+      valid: false,
+      code: "EISDIR",
+      details: { causeCategory: "io", causeCode: "EISDIR" },
+    });
+
+    writeFileSync(path.join(clean, "bad.json"), "{not-json");
+    const syntaxResult = spawnSync(
+      process.execPath,
+      [cli, "snapshot", "--input", path.join(clean, "bad.json"), "--target-root", clean],
+      { encoding: "utf8", env, timeout: 10000, windowsHide: true },
+    );
+    expect(syntaxResult.status).toBe(2);
+    expect(JSON.parse(syntaxResult.stdout)).toMatchObject({
+      valid: false,
+      code: "INVALID_INPUT",
+      details: null,
+    });
+  });
 });

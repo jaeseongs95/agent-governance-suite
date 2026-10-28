@@ -21,6 +21,12 @@ try {
     process.exitCode = errors.length ? 1 : 0;
   }
 } catch (error) {
-  console.log(JSON.stringify({ valid: false, code: "INVALID_INPUT", errors: [error.message] }));
+  const ioCode = !(error instanceof SyntaxError) && typeof error?.code === "string" && /^[A-Z0-9_]{1,32}$/u.test(error.code) ? error.code : null;
+  console.log(JSON.stringify({
+    valid: false,
+    code: ioCode ?? "INVALID_INPUT",
+    details: ioCode ? { causeCategory: "io", causeCode: ioCode } : null,
+    errors: [error instanceof Error ? error.message : String(error)]
+  }));
   process.exitCode = 2;
 }

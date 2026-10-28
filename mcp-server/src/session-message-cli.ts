@@ -32,11 +32,42 @@ export async function runSessionMessageCli(raw: string, stateDirectory?: string)
   return { protocolVersion: "1.0.0", ok: true, data };
 }
 
+export function formatSessionMessageStdinReadError(error: unknown): {
+  protocolVersion: "1.0.0";
+  ok: false;
+  errorCode: string;
+  error: string;
+} {
+  const rawCode = (error as { code?: unknown } | null)?.code;
+  const errorCode = typeof rawCode === "string" && /^[A-Z0-9_]{1,32}$/u.test(rawCode) ? rawCode : "STDIN_READ_ERROR";
+  const reason = error instanceof Error && error.message.length > 0 ? error.message : "stdin read failed";
+  return {
+    protocolVersion: "1.0.0",
+    ok: false,
+    errorCode,
+    error: `Failed to read session message request from stdin (${errorCode}): ${reason}`,
+  };
+}
+
+export async function executeSessionMessageCliFromStdin(
+  readStdin: () => string = () => readFileSync(0, "utf8"),
+  stateDirectory?: string,
+): Promise<Record<string, unknown>> {
+  let raw: string;
+  try {
+    raw = readStdin();
+  } catch (error: unknown) {
+    return formatSessionMessageStdinReadError(error);
+  }
+  return runSessionMessageCli(raw, stateDirectory);
+}
+
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
-  let raw = "";
-  try { raw = readFileSync(0, "utf8"); } catch { /* Reported as invalid input below. */ }
-  void runSessionMessageCli(raw).then(
-    (output) => process.stdout.write(`${JSON.stringify(output)}\n`),
+  void executeSessionMessageCliFromStdin().then(
+    (output) => {
+      process.stdout.write(`${JSON.stringify(output)}\n`);
+      if (output.ok === false) process.exitCode = 1;
+    },
     (error: unknown) => {
       process.stdout.write(`${JSON.stringify({ protocolVersion: "1.0.0", ok: false, error: error instanceof Error ? error.message : "Session message request failed." })}\n`);
       process.exitCode = 1;

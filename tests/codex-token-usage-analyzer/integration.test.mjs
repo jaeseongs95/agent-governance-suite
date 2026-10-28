@@ -2,11 +2,12 @@ import { spawnSync } from "node:child_process";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { Readable } from "node:stream";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { execute } from "../../skills/codex-token-usage-analyzer/scripts/cli.mjs";
+import { execute, main } from "../../skills/codex-token-usage-analyzer/scripts/cli.mjs";
 import { digest } from "../../skills/codex-token-usage-analyzer/scripts/core.mjs";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
@@ -160,5 +161,40 @@ describe("codex-token-usage-analyzer integration", () => {
     expect(selected.status).toBe(0);
     expect(selected.stderr).toBe("");
     expect(JSON.parse(selected.stdout).providers).toEqual([expect.objectContaining({ skillId: "codex-token-usage-analyzer", capabilities: ["local-codex-token-usage-analysis"] })]);
+  });
+
+  it("distinguishes stdin operational I/O errors from INVALID_INPUT in main()", async () => {
+    const previousExitCode = process.exitCode;
+    try {
+      const failingStream = new Readable({
+        read() {
+          this.destroy(Object.assign(new Error("input/output error"), { code: "EIO" }));
+        },
+      });
+      const ioOutcome = await main(failingStream, ["node", "cli.mjs"]);
+      expect(ioOutcome.exitCode).toBe(2);
+      expect(ioOutcome.result).toMatchObject({
+        schemaVersion: "1.0.0",
+        kind: "adapter-error",
+        error: {
+          code: "MISSING_EVIDENCE",
+          details: { causeCategory: "io", causeCode: "EIO" },
+        },
+      });
+
+      const syntaxStream = Readable.from(["{not-json"]);
+      const syntaxOutcome = await main(syntaxStream, ["node", "cli.mjs"]);
+      expect(syntaxOutcome.exitCode).toBe(2);
+      expect(syntaxOutcome.result).toMatchObject({
+        schemaVersion: "1.0.0",
+        kind: "adapter-error",
+        error: {
+          code: "INVALID_INPUT",
+          details: null,
+        },
+      });
+    } finally {
+      process.exitCode = previousExitCode;
+    }
   });
 });

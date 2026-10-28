@@ -75,12 +75,20 @@ describe("generated Claude plugin", () => {
   });
 
   it("publishes a separate marketplace that points only at the generated tree", async () => {
+    const release = await readJson(root, "release", "version.json");
     const claudeMarketplace = await readJson(root, ".claude-plugin", "marketplace.json");
     const codexMarketplace = await readJson(root, ".agents", "plugins", "marketplace.json");
     expect(claudeMarketplace.name).not.toBe(codexMarketplace.name);
+    expect(claudeMarketplace.version).toBe(release.version);
     expect(claudeMarketplace.plugins).toEqual([
-      expect.objectContaining({ name: "agent-governance-suite", source: `./${OUTPUT_DIRECTORY}` }),
+      expect.objectContaining({
+        name: "agent-governance-suite",
+        source: `./${OUTPUT_DIRECTORY}`,
+        version: release.version,
+        ref: `v${release.version}`,
+      }),
     ]);
+    expect(claudeMarketplace.plugins[0].ref).toBe(codexMarketplace.plugins[0].source.ref);
     const codexManifest = await readFile(path.join(root, ".codex-plugin", "plugin.json"), "utf8");
     expect(codexManifest).not.toContain(OUTPUT_DIRECTORY);
     const codexMcp = await readFile(path.join(root, ".mcp.json"), "utf8");

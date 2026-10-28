@@ -205,7 +205,7 @@ function defaultSpawnResponse(scriptPath, args, options) {
 function mockContinuityHook(result) {
   boundary.spawnSync.mockImplementation((_execPath, [scriptPath, ...args], options) => {
     if (path.basename(scriptPath) === "continuity-hook.mjs") {
-      expect(options.timeout).toBe(10_000);
+      expect(options.timeout).toBe(30_000);
       return result;
     }
     return defaultSpawnResponse(scriptPath, args, options);
@@ -514,7 +514,7 @@ describe("runtime smoke synthetic actor and proof fixture contracts", () => {
     for (const [executable, [script], options] of governance) {
       expect(executable).toBe(process.execPath);
       expect(script).toBe(path.join(cleanRoot, "mcp-server", "dist", "governance-hook.mjs"));
-      expect(options).toMatchObject({ cwd: cleanRoot, timeout: 10_000, windowsHide: true, env: {
+      expect(options).toMatchObject({ cwd: cleanRoot, timeout: 30_000, windowsHide: true, env: {
         AGENT_GOVERNANCE_DB_PATH: path.join(cleanRoot, "state", "workflows.sqlite3"),
         AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(cleanRoot, "state", "continuity.sqlite3"),
       } });

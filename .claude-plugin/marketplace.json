@@ -10,7 +10,10 @@
       "name": "agent-governance-suite",
       "source": "./claude-plugin",
       "description": "Governance specialists, a local MCP workflow guard, and opt-in task continuity for Claude Code.",
-      "category": "development"
+      "category": "development",
+      "version": "3.0.0-rc.1",
+      "ref": "v3.0.0-rc.1"
     }
-  ]
+  ],
+  "version": "3.0.0-rc.1"
 }
