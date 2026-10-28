@@ -34,7 +34,7 @@
       "version": "1.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:91cb1f3667f3ea35ab7f0cab6d80e108801fd7b66260086ae690fb32e7f52edc",
+      "integratedChecksum": "sha256:1b86ce8b2d89f6e5ff67dbb6f160abca956ed6059292017997b4df51c5b83f95",
       "checksumScope": "relative paths and normalized text bytes under skills/task-contract"
     },
     {

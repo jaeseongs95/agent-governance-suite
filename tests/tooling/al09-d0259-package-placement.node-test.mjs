@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 
 const collector = await fs.readFile(new URL('../../.github/scripts/ags30-official-source-r11.mjs', import.meta.url), 'utf8');
@@ -13,21 +14,24 @@ function segment(text, start, end) {
 }
 // Execute the actual composition block; only the external package command and
 // its returned manifest are replaced. This is not a full Linux artifact test.
-const compose = new AsyncFunction('record', 'process', 'shardIndex', 'command', 'path', 'source', 'output', 'fs',
+const compose = new AsyncFunction('record', 'process', 'shardIndex', 'command', 'path', 'source', 'output', 'fs', 'pathToFileURL',
   segment(collector, '    record.claudePackaging =', '    let testsPass ='));
 async function place(platform, shardIndex, phaseStatus = 'PASS', packageStatus = 'GENERATED_NOT_ACCEPTED') {
   const record = {}, calls = [];
   await compose(record, { platform, execPath: '/owned/node' }, shardIndex,
     async (...args) => { calls.push(args); return { receipt: { status: phaseStatus } }; }, path,
-    '/owned/source', '/owned/output', { readFile: async () => JSON.stringify({ status: packageStatus, archive: { member: 'claude-package.actual.tar.gz' } }) });
+    '/owned/source', '/owned/output', { readFile: async () => JSON.stringify({ status: packageStatus, archive: { member: 'claude-package.actual.tar.gz' } }) }, pathToFileURL);
   return { record, calls };
 }
 
 test('the full Claude package is exported once on Linux shard 3', async () => {
   const { record, calls } = await place('linux', 3);
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0][0], '06a-claude-package');
-  assert.deepEqual(calls[0][2], [path.join('/owned/source', '.github/scripts/ags30-claude-package-r01.mjs'), '/owned/source', '/owned/output']);
+  assert.deepEqual(calls.map(call => call[0]), ['06b-classification-wire-capture', '06c-classification-wire-independent', '06a-claude-package']);
+  const packaging = calls.filter(call => call[0] === '06a-claude-package');
+  assert.equal(packaging.length, 1);
+  assert.deepEqual(packaging[0][2], [path.join('/owned/source', '.github/scripts/ags30-claude-package-r01.mjs'), '/owned/source', '/owned/output']);
+  assert.equal(record.classificationWireCapture.status, 'CAPTURED_NOT_ACCEPTED');
+  assert.equal(record.classificationWireCapture.modelExecution, 'NOT_RUN');
   assert.equal(record.claudePackaging.archiveMember, 'claude-package.actual.tar.gz');
   assert.equal(record.claudePackaging.wholeAcceptance, 'NOT_CLAIMED');
 });
