@@ -8,6 +8,7 @@ import net from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { afterEach, test, vi } from 'vitest';
 import { canonicalJson } from '../../mcp-server/src/convergence-logic.ts';
@@ -464,18 +465,17 @@ test.each(['prestarted', 'client-ensure'])('packaged CLI binds history to explic
         watch.once('connect', resolve);
         watch.once('close', resolve);
       });
-      try { process.kill(endpoint.pid); } catch { /* Already exited. */ }
+      try { process.kill(endpoint.pid); } catch (error) { assert.equal(error?.code, 'ESRCH'); }
       await closed;
-      let alive = true;
-      while (alive) {
+      for (;;) {
         try {
           process.kill(endpoint.pid, 0);
-          await new Promise(resolve => setTimeout(resolve, 10));
-        } catch {
-          alive = false;
+          await delay(10);
+        } catch (error) {
+          assert.equal(error?.code, 'ESRCH');
+          break;
         }
       }
-      assert.equal(alive, false);
     }
   }
 }, 30_000);
