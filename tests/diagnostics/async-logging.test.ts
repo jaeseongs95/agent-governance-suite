@@ -93,8 +93,13 @@ for(let i=0;i<15;i++){for(let j=0;j<30;j++)log.event('request','INFO','request_s
 await new Promise(r=>setTimeout(r,100));await log.close();console.log(JSON.stringify(log.loss));
 `);
   expect(result.code).toBe(0);
-  const files=(await readdir(root)).filter(name=>name.startsWith('rotation-case-')&&name.endsWith('.log'));
-  expect(files.length).toBeGreaterThan(1);expect(files.length).toBeLessThanOrEqual(3);
+  const entries=await readdir(root);
+  const files=entries.filter(name=>name.startsWith('rotation-case-')&&name.endsWith('.log'));
+  // Distinguish sink/close loss, rotation and filename filtering without changing the original oracle.
+  let loss:unknown={state:'invalid-json',bytes:Buffer.byteLength(result.out)};
+  try {loss=JSON.parse(result.out);}catch{/* Diagnostic state above preserves a missing/partial child report. */}
+  const observation=JSON.stringify({elapsedMs:result.elapsed,loss,files:await Promise.all(entries.map(async name=>({name,bytes:(await stat(path.join(root,name))).size})))});
+  expect(files.length,observation).toBeGreaterThan(1);expect(files.length,observation).toBeLessThanOrEqual(3);
   const bytes=await Promise.all(files.map(file=>readFile(path.join(root,file),'utf8')));
   expect(rotationEvents(bytes).every(row=>row.event==='request_start'||row.event==='shutdown_start')).toBe(true);
 });
