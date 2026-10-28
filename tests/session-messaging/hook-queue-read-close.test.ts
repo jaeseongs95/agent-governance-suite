@@ -54,11 +54,11 @@ afterEach(() => {vi.restoreAllMocks(); vi.unstubAllEnvs();});
 
 describe("0188 actual bounded queue reader and diagnostic consumer", () => {
   it.each([
-    ["codex", "AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "codex-queue"],
-    ["gemini", "AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", "gemini-queue"],
-  ] as const)("preserves %s explicit precedence and selected boolean with fd zero", (host, key, enabled) => {
+    ["codex", "AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "codex-queue", "codex-deferred"],
+    ["gemini", "AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", "gemini-queue", "gemini-deferred"],
+  ] as const)("preserves %s explicit precedence and selected boolean with fd zero", (host, key, enabled, deferred) => {
     const observer = vi.fn();
-    for (const [value, transport] of [["1", enabled], ["0", "codex-deferred"], ["invalid", "codex-deferred"]]) {
+    for (const [value, transport] of [["1", enabled], ["0", deferred], ["invalid", deferred]]) {
       observer.mockClear();
       expect(hostDeliveryProfile(host, {...automaticEnvironment, [key]: value}, observer, true).transport).toBe(transport);
       if (value === "invalid") expect(observer).toHaveBeenCalledExactlyOnceWith("invalid-environment");
@@ -67,7 +67,7 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
     expect(f.open).not.toHaveBeenCalled(); expect(f.read).not.toHaveBeenCalled(); expect(f.close).not.toHaveBeenCalled();
     for (const value of [false, true]) {
       resetWitnesses(); observer.mockClear(); f.content = settings(value);
-      expect(hostDeliveryProfile(host, automaticEnvironment, observer, true).transport).toBe(value ? enabled : "codex-deferred");
+      expect(hostDeliveryProfile(host, automaticEnvironment, observer, true).transport).toBe(value ? enabled : deferred);
       expect(observer).not.toHaveBeenCalled(); expect(f.open).toHaveBeenCalledTimes(1);
       expect(f.close).toHaveBeenCalledExactlyOnceWith(0); expect(f.read.mock.calls.length).toBeGreaterThan(1);
     }
@@ -86,7 +86,7 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
   it.each(["EIO", "ENOENT"] as const)("disables successful true settings after close %s and reports unknown cleanup", code => {
     f.closeFailure = ioError(code);
     const sink = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(hostDeliveryProfile("gemini", automaticEnvironment, undefined, true).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile("gemini", automaticEnvironment, undefined, true).transport).toBe("gemini-deferred");
     expect(diagnosticRecord(sink)).toMatchObject({phase: "close", reason: "QUEUE_SETTINGS_CLOSE_FAILED", cleanup: "unknown",
       context: {producerReason: "QUEUE_SETTINGS_CLOSE_FAILED", producerCause: {type: "error"}}});
     expect(sink.mock.calls[0]![0]).toContain("queue settings: close-failed.");
@@ -95,7 +95,7 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
   it.each(["EIO", "ENOENT"] as const)("keeps actual read %s primary and close secondary without retry or default promotion", code => {
     f.readFailure = ioError(code); f.closeFailure = ioError("EACCES");
     const observer = vi.fn();
-    expect(hostDeliveryProfile("gemini", automaticEnvironment, observer, true).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile("gemini", automaticEnvironment, observer, true).transport).toBe("gemini-deferred");
     expect(observer).toHaveBeenCalledTimes(1); expect(observer.mock.calls[0]![0]).toBe("read-failed");
     const observation = observer.mock.calls[0]![1];
     expect(observation).toMatchObject({phase: "read", cleanup: "unknown"});
@@ -111,7 +111,7 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
   it("keeps a single read failure visible with normally completed close", () => {
     f.readFailure = ioError("EIO");
     const sink = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(hostDeliveryProfile("gemini", automaticEnvironment, undefined, true).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile("gemini", automaticEnvironment, undefined, true).transport).toBe("gemini-deferred");
     expect(diagnosticRecord(sink)).toMatchObject({phase: "read", reason: "QUEUE_SETTINGS_READ_FAILED", cleanup: "closed",
       context: {producerCause: {code: {prefixSha256: createHash("sha256").update(Buffer.from("EIO", "utf16le")).digest("hex")}}}});
     expect(f.open).toHaveBeenCalledTimes(1); expect(f.read).toHaveBeenCalledTimes(1); expect(f.close).toHaveBeenCalledExactlyOnceWith(0);
@@ -119,7 +119,7 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
   it("keeps actual read and close causes distinct through the default sink cleanup branch", () => {
     f.readFailure = ioError("EIO"); f.closeFailure = ioError("EACCES");
     const sink = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(hostDeliveryProfile("gemini", automaticEnvironment, undefined, true).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile("gemini", automaticEnvironment, undefined, true).transport).toBe("gemini-deferred");
     const record = diagnosticRecord(sink);
     const codeHash = (code: string) => createHash("sha256").update(Buffer.from(code, "utf16le")).digest("hex");
     expect(record).toMatchObject({phase: "read", reason: "QUEUE_SETTINGS_READ_FAILED", cleanup: "unknown", context: {
@@ -137,7 +137,7 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
   it("reports actual open failure without inventing read, close or acquired cleanup", () => {
     f.openFailure = ioError("EACCES");
     const sink = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(hostDeliveryProfile("gemini", automaticEnvironment, undefined, true).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile("gemini", automaticEnvironment, undefined, true).transport).toBe("gemini-deferred");
     expect(diagnosticRecord(sink)).toMatchObject({phase: "open", reason: "QUEUE_SETTINGS_OPEN_FAILED", cleanup: "not-acquired"});
     expect(f.close).not.toHaveBeenCalled(); expect(f.read).not.toHaveBeenCalled();
   });
@@ -147,7 +147,7 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
     if (issue === "invalid-file-type") f.regular = false;
     f.closeFailure = ioError("EIO");
     const observer = vi.fn();
-    expect(hostDeliveryProfile("gemini", automaticEnvironment, observer, true).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile("gemini", automaticEnvironment, observer, true).transport).toBe("gemini-deferred");
     expect(observer).toHaveBeenCalledTimes(1); expect(observer.mock.calls[0]![0]).toBe(issue);
     expect(observer.mock.calls[0]![1]).toMatchObject({phase: "close", cleanup: "unknown"});
     expect(hookFailureReason(observer.mock.calls[0]![1].failure)).toBe("QUEUE_SETTINGS_CLOSE_FAILED");
@@ -160,21 +160,21 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
     expect(hostDeliveryProfile("gemini", automaticEnvironment, observer, true).transport).toBe("gemini-queue");
     expect(observer).not.toHaveBeenCalled(); expect(f.close).toHaveBeenCalledExactlyOnceWith(0);
     resetWitnesses(); f.reportedSize = 0; f.content = Buffer.concat([f.content, Buffer.from(" ")]);
-    expect(hostDeliveryProfile("gemini", automaticEnvironment, observer, true).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile("gemini", automaticEnvironment, observer, true).transport).toBe("gemini-deferred");
     expect(observer).toHaveBeenCalledExactlyOnceWith("too-large"); expect(f.close).toHaveBeenCalledExactlyOnceWith(0);
   });
   it("keeps a Proxy close cause opaque and never retries or invokes its traps", () => {
     const trap = vi.fn(() => {throw new Error("PRIVATE_PROXY");});
     f.closeFailure = new Proxy({}, {getPrototypeOf: trap, getOwnPropertyDescriptor: trap});
     const sink = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(hostDeliveryProfile("gemini", automaticEnvironment, undefined, true).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile("gemini", automaticEnvironment, undefined, true).transport).toBe("gemini-deferred");
     expect(diagnosticRecord(sink)).toMatchObject({phase: "close", cleanup: "unknown", context: {producerCause: {opaque: "proxy"}}});
     expect(trap).not.toHaveBeenCalled(); expect(f.close).toHaveBeenCalledExactlyOnceWith(0);
   });
   it("uses actual hook entry, shared reader and existing safe sink without broker I/O", async () => {
     f.closeFailure = ioError("ENOENT");
     const sink = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(sessionMessageTransport("gemini", automaticEnvironment, true)).toBe("codex-deferred");
+    expect(sessionMessageTransport("gemini", automaticEnvironment, true)).toBe("gemini-deferred");
     resetWitnesses(); sink.mockClear();
     vi.stubEnv("PLUGIN_DATA", directory); vi.stubEnv("ANTIGRAVITY_AGENT", "1"); vi.stubEnv("AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", undefined);
     const input = JSON.stringify({hook_event_name: "PreToolUse", session_id: "PRIVATE_SYNTHETIC_SESSION", agent_id: "", tool_name: "read_file", tool_input: {}});
@@ -206,7 +206,7 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
   it("distinguishes directory stat failure from open without an acquired descriptor", () => {
     f.stat.mockImplementationOnce(() => {throw new TypeError("PRIVATE_STAT_FAILURE");});
     const sink = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(hostDeliveryProfile("gemini", automaticEnvironment, undefined, true).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile("gemini", automaticEnvironment, undefined, true).transport).toBe("gemini-deferred");
     expect(diagnosticRecord(sink)).toMatchObject({phase: "directory-stat", cleanup: "not-acquired", reason: "QUEUE_SETTINGS_DIRECTORY_STAT_FAILED"});
     expect(f.open).not.toHaveBeenCalled(); expect(f.close).not.toHaveBeenCalled();
   });

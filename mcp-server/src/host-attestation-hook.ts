@@ -488,6 +488,8 @@ export function handleHostAttestationHook(
   const maxWaitMs = options.maxWaitMs ?? 300;
   const pollIntervalMs = options.pollIntervalMs ?? 100;
   const candidates = transcriptCandidates(transcriptPath, sessionId, agentId);
+  const startedAtMs = options.now?.().getTime() ?? Date.now();
+  const elapsedMs = () => Math.max(0, (options.now?.().getTime() ?? Date.now()) - startedAtMs);
   let observation: TranscriptObservation | null = null;
   let provenance = `${adapter.host}:transcript-tool-use`;
   // Headless sessions write the issuing message before the hook runs; interactive ones do not,
@@ -498,7 +500,7 @@ export function handleHostAttestationHook(
       observation = transcript ? findToolUseObservation(transcript, toolUseId, sessionId, agentId) : null;
       if (observation) break;
     }
-    if (observation || waited >= maxWaitMs) break;
+    if (observation || waited >= maxWaitMs || elapsedMs() >= maxWaitMs) break;
     sleep(pollIntervalMs);
   }
   if (!observation) {

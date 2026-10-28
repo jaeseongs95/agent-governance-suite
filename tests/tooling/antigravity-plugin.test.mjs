@@ -1,7 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { normalizeAntigravityToolCall } from "../../antigravity-connector/hooks/antigravity-hook-runner.mjs";
+import {
+  defaultProcessInspector,
+  normalizeAntigravityToolCall,
+  windowsSingleProcessScript,
+} from "../../antigravity-connector/hooks/antigravity-hook-runner.mjs";
 import { applySkillAdaptation, renderAntigravitySkillAdaptations } from "../../scripts/build-claude-plugin.mjs";
 import { ROOT } from "../../scripts/lib.mjs";
 
@@ -264,5 +268,25 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
         "antigravity-connector/adaptations/mutation-risk-preflight.json",
       ),
     ).toThrow(/adaptation must not replace the entire skill body in skills\/mutation-risk-preflight\/SKILL\.md/u);
+  });
+
+  it("cross-checks Get-Process before/after and Win32_Process CreationDate in single-PID Windows fallback (AGS-D-0030)", () => {
+    const script = windowsSingleProcessScript(4242);
+    expect(script).toContain("$agsBefore = Get-Process -Id 4242 -ErrorAction Stop");
+    expect(script).toContain("$agsMeta = Get-CimInstance Win32_Process -Filter ('ProcessId=' + 4242) -ErrorAction Stop");
+    expect(script).toContain("$agsAfter = Get-Process -Id 4242 -ErrorAction Stop");
+    expect(script).toContain("$agsStart.Ticks -eq $agsAfter.StartTime.ToUniversalTime().Ticks");
+    expect(script).toContain("$agsPath -ieq $agsAfter.Path");
+    expect(script).toContain("$agsPath -ieq $agsMeta.ExecutablePath");
+    expect(script).toContain("$agsStart.ToString('yyyy-MM-ddTHH:mm:ss.ffffff') -ceq $agsMeta.CreationDate.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.ffffff')");
+
+    if (process.platform === "win32") {
+      const inspected = defaultProcessInspector(process.pid, "win32", 2000);
+      expect(inspected).toMatchObject({
+        pid: process.pid,
+        command: expect.stringContaining("node"),
+        startToken: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/u),
+      });
+    }
   });
 });

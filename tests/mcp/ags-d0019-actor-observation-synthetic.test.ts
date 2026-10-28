@@ -117,12 +117,12 @@ describe("AGS-D-0019 synthetic builtin adapters", () => {
   ] as const)("registers %s with its distinct unsupported reason and existing transport", (host, reasonCode) => {
     for (const event of supportedEvents) expect(actor(host, event, { agent_id: "" })).toEqual({ role: "indeterminate", basis: "unavailable", reasonCode });
     expect(hostDeliveryProfile(host, {}, () => {}, true).transport).toBe("gemini-queue");
-    expect(hostDeliveryProfile(host, {}, () => {}, false).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile(host, {}, () => {}, false).transport).toBe("gemini-deferred");
   });
 
   it("keeps the Antigravity delivery transport", () => {
     expect(hostDeliveryProfile("antigravity", {}, () => {}, true).transport).toBe("gemini-queue");
-    expect(hostDeliveryProfile("antigravity", {}, () => {}, false).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile("antigravity", {}, () => {}, false).transport).toBe("gemini-deferred");
   });
 
   it.each(["codex", "claude-code", "gemini"])("normalizes only nonblank string native call IDs for %s", host => {

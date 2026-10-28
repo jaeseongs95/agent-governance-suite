@@ -21,16 +21,16 @@ describe("L5 queue default origin and precedence", () => {
   it("uses automatic defaults only after explicit bounded file settings or absence", async () => {
     const f = await settingsFixture(); const diagnose = vi.fn();
     const environment = { PLUGIN_DATA: f.directory, ANTIGRAVITY_AGENT: "1" };
-    expect(hostInput.hostDeliveryProfile("gemini", {}, diagnose).transport).toBe("codex-deferred");
+    expect(hostInput.hostDeliveryProfile("gemini", {}, diagnose).transport).toBe("gemini-deferred");
     expect(hostInput.hostDeliveryProfile("gemini", {}, diagnose, true).transport).toBe("gemini-queue");
     expect(hostInput.hostDeliveryProfile("gemini", environment, diagnose).transport).toBe("gemini-queue");
     for (const queueWake of [false, true]) {
       await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", gemini: { queueWake } }), "utf8");
       for (const signal of [false, true]) {
         expect(hostInput.hostDeliveryProfile("gemini", { PLUGIN_DATA: f.directory }, diagnose, signal).transport)
-          .toBe(queueWake ? "gemini-queue" : "codex-deferred");
+          .toBe(queueWake ? "gemini-queue" : "gemini-deferred");
         expect(hostInput.hostDeliveryProfile("gemini", environment, diagnose, signal).transport)
-          .toBe(queueWake ? "gemini-queue" : "codex-deferred");
+          .toBe(queueWake ? "gemini-queue" : "gemini-deferred");
       }
     }
     expect(diagnose).not.toHaveBeenCalled();
@@ -42,7 +42,7 @@ describe("L5 queue default origin and precedence", () => {
     for (const content of [JSON.stringify({ schemaVersion: "1.0.0", gemini: { queueWake: false } }), "private-malformed-marker"]) {
       await writeFile(f.file, content, "utf8");
       for (const signal of [false, true]) {
-        for (const [explicit, transport] of [["0", "codex-deferred"], ["1", "gemini-queue"], ["invalid", "codex-deferred"]]) {
+        for (const [explicit, transport] of [["0", "gemini-deferred"], ["1", "gemini-queue"], ["invalid", "gemini-deferred"]]) {
           diagnose.mockClear();
           expect(hostInput.hostDeliveryProfile("gemini", { PLUGIN_DATA: f.directory, ANTIGRAVITY_AGENT: "1",
             AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE: explicit }, diagnose, signal).transport).toBe(transport);
@@ -58,20 +58,20 @@ describe("L5 queue default origin and precedence", () => {
     const environment = { PLUGIN_DATA: f.directory, ANTIGRAVITY_CONVERSATION_ID: "synthetic" };
     for (const content of ["private-malformed-marker", "null", JSON.stringify({ schemaVersion: "1.0.0", gemini: { queueWake: "false" } })]) {
       diagnose.mockClear(); await writeFile(f.file, content, "utf8");
-      expect(hostInput.hostDeliveryProfile("gemini", environment, diagnose, true).transport).toBe("codex-deferred");
+      expect(hostInput.hostDeliveryProfile("gemini", environment, diagnose, true).transport).toBe("gemini-deferred");
       expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-settings");
     }
     diagnose.mockClear();
-    expect(hostInput.hostDeliveryProfile("gemini", { ...environment, PLUGIN_DATA: "relative" }, diagnose, true).transport).toBe("codex-deferred");
+    expect(hostInput.hostDeliveryProfile("gemini", { ...environment, PLUGIN_DATA: "relative" }, diagnose, true).transport).toBe("gemini-deferred");
     expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-plugin-data");
     diagnose.mockClear();
-    expect(hostInput.hostDeliveryProfile("gemini", { ...environment, PLUGIN_DATA: f.directory + "\0" }, diagnose, true).transport).toBe("codex-deferred");
+    expect(hostInput.hostDeliveryProfile("gemini", { ...environment, PLUGIN_DATA: f.directory + "\0" }, diagnose, true).transport).toBe("gemini-deferred");
     expect(diagnose).toHaveBeenCalledTimes(1);
     expect(diagnose.mock.calls[0]![0]).toBe("read-failed");
     expect(diagnose.mock.calls[0]![1]).toMatchObject({phase: "directory-stat", cleanup: "not-acquired"});
     expect(hookFailureReason(diagnose.mock.calls[0]![1].failure)).toBe("QUEUE_SETTINGS_DIRECTORY_STAT_FAILED");
     await rm(f.file); await mkdir(f.file); diagnose.mockClear();
-    expect(hostInput.hostDeliveryProfile("gemini", environment, diagnose, true).transport).toBe("codex-deferred");
+    expect(hostInput.hostDeliveryProfile("gemini", environment, diagnose, true).transport).toBe("gemini-deferred");
     expect(diagnose).toHaveBeenCalledTimes(1);
     expect(["read-failed", "invalid-file-type"]).toContain(diagnose.mock.calls[0]![0]);
   });
@@ -100,8 +100,8 @@ describe("L5 queue default origin and precedence", () => {
     const input = { hook_event_name: "PreToolUse", session_id: "synthetic-L5-hook", agent_id: "", tool_name: "read_file", tool_input: {} };
     expect(await handleSessionMessageHook(input, "gemini", undefined, { defaultQueueWake: true })).toEqual({});
     expect(await handleSessionMessageHook(input, "gemini")).toEqual({});
-    expect(observed).toEqual([{ supplied: true, transport: "codex-deferred" },
-      { supplied: true, transport: "gemini-queue" }, { supplied: undefined, transport: "codex-deferred" }]);
+    expect(observed).toEqual([{ supplied: true, transport: "gemini-deferred" },
+      { supplied: true, transport: "gemini-queue" }, { supplied: undefined, transport: "gemini-deferred" }]);
     expect(process.env.AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE).toBeUndefined();
   });
 
@@ -123,7 +123,7 @@ describe("L5 queue default origin and precedence", () => {
         },
       });
     }
-    expect(seen).toEqual(Array.from({ length: 4 }, () => ({ host: "antigravity", supplied: true, transport: "codex-deferred" })));
+    expect(seen).toEqual(Array.from({ length: 4 }, () => ({ host: "antigravity", supplied: true, transport: "gemini-deferred" })));
     expect(process.env.AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE).toBe(before);
   });
 });
@@ -132,18 +132,18 @@ describe("L5 queue default origin and precedence", () => {
 it("reports a host-neutral settings diagnostic without inventing an adapter fallback transport", () => {
   const diagnostic = vi.spyOn(console, "error").mockImplementation(() => {});
   const transport = hostInput.hostDeliveryProfile("gemini", { AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE: "invalid" }, undefined, true).transport;
-  expect(transport).toBe("codex-deferred");
+  expect(transport).toBe("gemini-deferred");
   expect(diagnostic).toHaveBeenCalledExactlyOnceWith("[agent-governance-suite] gemini queue settings: invalid-environment.");
   expect(diagnostic.mock.calls[0]![0]).not.toContain("using codex");
 });
 
 it("queries transport under the same call-local default contract as the hook", async () => {
   const f = await settingsFixture(); const environment = { PLUGIN_DATA: f.directory };
-  expect(sessionMessageTransport("gemini", environment)).toBe("codex-deferred");
+  expect(sessionMessageTransport("gemini", environment)).toBe("gemini-deferred");
   expect(sessionMessageTransport("gemini", environment, true)).toBe("gemini-queue");
-  expect(sessionMessageTransport("gemini", environment)).toBe("codex-deferred");
+  expect(sessionMessageTransport("gemini", environment)).toBe("gemini-deferred");
   await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", gemini: { queueWake: false } }), "utf8");
-  expect(sessionMessageTransport("gemini", environment, true)).toBe("codex-deferred");
+  expect(sessionMessageTransport("gemini", environment, true)).toBe("gemini-deferred");
   expect(sessionMessageTransport("codex", {}, true)).toBe("codex-deferred");
   expect(sessionMessageTransport("claude-code", {}, true)).toBe("claude-inbox");
 });

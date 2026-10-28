@@ -9,9 +9,9 @@ import { hostDeliveryProfile } from "../../mcp-server/src/host-input-adapter.js"
 const directories: string[] = [];
 afterEach(async () => { await Promise.all(directories.splice(0).map(directory => rm(directory, { recursive: true, force: true }))); });
 
-for (const { host, key, enabled } of [
-  { host: "codex", key: "AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", enabled: "codex-queue" },
-  { host: "gemini", key: "AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", enabled: "gemini-queue" },
+for (const { host, key, enabled, deferred } of [
+  { host: "codex", key: "AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", enabled: "codex-queue", deferred: "codex-deferred" },
+  { host: "gemini", key: "AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", enabled: "gemini-queue", deferred: "gemini-deferred" },
 ]) describe("L4 bounded queue settings: " + host, () => {
   async function fixture() {
     const directory = await mkdtemp(path.join(tmpdir(), "ags-queue-reader-"));
@@ -26,9 +26,9 @@ for (const { host, key, enabled } of [
     await writeFile(f.file, "private-malformed-settings-marker", "utf8");
     const diagnose = vi.fn();
     expect(hostDeliveryProfile(host, { ...f.environment, [key]: "1" }, diagnose).transport).toBe(enabled);
-    expect(hostDeliveryProfile(host, { ...f.environment, [key]: "0" }, diagnose).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile(host, { ...f.environment, [key]: "0" }, diagnose).transport).toBe(deferred);
     expect(diagnose).not.toHaveBeenCalled();
-    expect(hostDeliveryProfile(host, { ...f.environment, [key]: "true" }, diagnose).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile(host, { ...f.environment, [key]: "true" }, diagnose).transport).toBe(deferred);
     expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-environment");
   });
 
@@ -38,7 +38,7 @@ for (const { host, key, enabled } of [
     for (const queueWake of [true, false]) {
       await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", [host]: { queueWake },
         [host === "codex" ? "gemini" : "codex"]: { queueWake: !queueWake } }), "utf8");
-      expect(hostDeliveryProfile(host, f.environment, diagnose).transport).toBe(queueWake ? enabled : "codex-deferred");
+      expect(hostDeliveryProfile(host, f.environment, diagnose).transport).toBe(queueWake ? enabled : deferred);
     }
     expect(diagnose).not.toHaveBeenCalled();
     expect(f.environment).toEqual({ PLUGIN_DATA: f.directory });
@@ -47,15 +47,15 @@ for (const { host, key, enabled } of [
   it("treats absence as deferred and malformed or non-boolean settings as bounded failures", async () => {
     const f = await fixture();
     const diagnose = vi.fn();
-    expect(hostDeliveryProfile(host, {}, diagnose).transport).toBe("codex-deferred");
-    expect(hostDeliveryProfile(host, f.environment, diagnose).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile(host, {}, diagnose).transport).toBe(deferred);
+    expect(hostDeliveryProfile(host, f.environment, diagnose).transport).toBe(deferred);
     expect(diagnose).not.toHaveBeenCalled();
     for (const content of ["{", "[]", "null", Buffer.from([0xff]),
       JSON.stringify({ schemaVersion: "2.0.0", [host]: { queueWake: true } }),
       JSON.stringify({ schemaVersion: "1.0.0", [host]: { queueWake: "true" } })]) {
       diagnose.mockClear();
       await writeFile(f.file, content);
-      expect(hostDeliveryProfile(host, f.environment, diagnose).transport).toBe("codex-deferred");
+      expect(hostDeliveryProfile(host, f.environment, diagnose).transport).toBe(deferred);
       expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-settings");
     }
   });
@@ -68,26 +68,26 @@ for (const { host, key, enabled } of [
     expect(hostDeliveryProfile(host, f.environment, diagnose).transport).toBe(enabled);
     expect(diagnose).not.toHaveBeenCalled();
     await writeFile(f.file, content.padEnd(4097), "utf8");
-    expect(hostDeliveryProfile(host, f.environment, diagnose).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile(host, f.environment, diagnose).transport).toBe(deferred);
     expect(diagnose).toHaveBeenCalledExactlyOnceWith("too-large");
     diagnose.mockClear();
     await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", [host]: { queueWake: true }, private: "가".repeat(1400) }), "utf8");
-    expect(hostDeliveryProfile(host, f.environment, diagnose).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile(host, f.environment, diagnose).transport).toBe(deferred);
     expect(diagnose).toHaveBeenCalledExactlyOnceWith("too-large");
   });
 
   it("rejects relative directories, non-file settings and read failures", async () => {
     const f = await fixture();
     const diagnose = vi.fn();
-    expect(hostDeliveryProfile(host, { PLUGIN_DATA: "relative" }, diagnose).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile(host, { PLUGIN_DATA: "relative" }, diagnose).transport).toBe(deferred);
     expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-plugin-data");
     diagnose.mockClear();
     await mkdir(f.file);
-    expect(hostDeliveryProfile(host, f.environment, diagnose).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile(host, f.environment, diagnose).transport).toBe(deferred);
     expect(diagnose).toHaveBeenCalledTimes(1);
     expect(["invalid-file-type", "read-failed"]).toContain(diagnose.mock.calls[0]![0]);
     diagnose.mockClear();
-    expect(hostDeliveryProfile(host, { PLUGIN_DATA: f.directory + "\0" }, diagnose).transport).toBe("codex-deferred");
+    expect(hostDeliveryProfile(host, { PLUGIN_DATA: f.directory + "\0" }, diagnose).transport).toBe(deferred);
     expect(diagnose).toHaveBeenCalledTimes(1);
     expect(diagnose.mock.calls[0]![0]).toBe("read-failed");
     expect(diagnose.mock.calls[0]![1]).toMatchObject({phase: "directory-stat", cleanup: "not-acquired"});

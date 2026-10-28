@@ -263,6 +263,8 @@ const ports: ReadonlyMap<string, WakeDispatchPort> = new Map<string, WakeDispatc
     dispatch: (target, message) => ringCodex(target.sessionId, message) }],
   ["codex-deferred", { capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
     dispatch: async () => "definite-failure" }],
+  ["gemini-deferred", { capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
+    dispatch: async () => "definite-failure" }],
   ["gemini-queue", { capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
     dispatch: (target, message) => ringGemini(target.sessionId, message) }],
 ]);

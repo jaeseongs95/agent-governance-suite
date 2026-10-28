@@ -545,6 +545,24 @@ describe("host attestation hook", () => {
     });
     expect(missing).toEqual({});
     expect(slept).toBe(500);
+
+    let clockMs = 1_000;
+    let slowReads = 0;
+    let slowSleeps = 0;
+    const deadlineExceeded = handleHostAttestationHook(base, store, {
+      now: () => new Date(clockMs),
+      readText: () => {
+        slowReads += 1;
+        clockMs += 300;
+        return null;
+      },
+      sleep: () => { slowSleeps += 1; },
+      maxWaitMs: 300,
+      pollIntervalMs: 100,
+    });
+    expect(deadlineExceeded).toEqual({});
+    expect(slowReads).toBe(2);
+    expect(slowSleeps).toBe(0);
   });
 
   it("retains unknown-model observations but rejects missing effort, foreign sessions or sidechain messages", () => {

@@ -244,12 +244,12 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
   }],
   ["gemini", {
     adaptInput: adaptGeminiHookInput, ownsTool: ownsGovernanceTool,
-    deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
+    deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "gemini-deferred", false),
     processPid: (pid, observation) => observation ? pid : undefined,
   }],
   ["antigravity", {
     adaptInput: adaptAntigravityHookInput, ownsTool: ownsGovernanceTool,
-    deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "codex-deferred", false),
+    deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "gemini-deferred", false),
     processPid: (pid, observation) => observation ? pid : undefined,
   }],
 ]);

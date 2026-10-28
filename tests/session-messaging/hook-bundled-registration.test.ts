@@ -22,7 +22,7 @@ it("registers a fourth host through the same deployed namespace that consumes it
     'const env = {AGENT_GOVERNANCE_CODEX_QUEUE_WAKE:"0",AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE:"0"};',
     'assert.equal(entry.sessionMessageTransport("codex", env), "codex-deferred");',
     'assert.equal(entry.sessionMessageTransport("claude-code", env), "claude-inbox");',
-    'assert.equal(entry.sessionMessageTransport("gemini", env), "codex-deferred");',
+    'assert.equal(entry.sessionMessageTransport("gemini", env), "gemini-deferred");',
     "const other = await import(" + JSON.stringify(bundleUrl + "?separate-namespace") + ");",
     'assert.throws(() => other.sessionMessageTransport(host, {}), {code:"HOST_ADAPTER_UNAVAILABLE"});',
     // No session ID, actor authority, or process observation is invented by registration.

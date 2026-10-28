@@ -273,7 +273,21 @@ function defaultWindowsProcessChain(startPid, maxDepth, timeoutMs) {
   return Array.isArray(rows) && rows.length > 0 && rows.length <= maxDepth ? rows : null;
 }
 
-function defaultProcessInspector(pid, platform, timeoutMs) {
+export function windowsSingleProcessScript(pid) {
+  return [
+    `$agsBefore = Get-Process -Id ${pid} -ErrorAction Stop`,
+    "$agsStart = $agsBefore.StartTime.ToUniversalTime()",
+    "$agsPath = $agsBefore.Path",
+    `$agsMeta = Get-CimInstance Win32_Process -Filter ('ProcessId=' + ${pid}) -ErrorAction Stop`,
+    `$agsAfter = Get-Process -Id ${pid} -ErrorAction Stop`,
+    `if ($agsMeta -and $agsPath -and $agsMeta.ProcessId -eq ${pid} -and $agsStart.Ticks -eq $agsAfter.StartTime.ToUniversalTime().Ticks -and $agsPath -ieq $agsAfter.Path -and $agsPath -ieq $agsMeta.ExecutablePath -and $agsStart.ToString('yyyy-MM-ddTHH:mm:ss.ffffff') -ceq $agsMeta.CreationDate.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.ffffff')) {`,
+    "  $st = $agsStart.ToString('o')",
+    "  Write-Output \"$($agsMeta.ProcessId)|$($agsMeta.ParentProcessId)|$($agsMeta.Name)|$($agsMeta.ExecutablePath)|$st\"",
+    "}",
+  ].join("; ");
+}
+
+export function defaultProcessInspector(pid, platform, timeoutMs) {
   // #3313 N3 & R03R09-R01 (bcbf684e): Never clamp a < 100ms remaining budget up to 100ms;
   // enforce `MIN_RESOLVER_BUDGET_MS` (100ms) consistently and clip to `PID_RESOLVER_TIMEOUT_MS`.
   const rawBudget = Number.isFinite(timeoutMs) ? Math.floor(Number(timeoutMs)) : PID_RESOLVER_TIMEOUT_MS;
@@ -281,14 +295,7 @@ function defaultProcessInspector(pid, platform, timeoutMs) {
   const totalBudget = Math.min(PID_RESOLVER_TIMEOUT_MS, rawBudget);
   const stepStart = performance.now();
   if (platform === "win32") {
-    const script = [
-      `$p = Get-CimInstance Win32_Process -Filter "ProcessId=${pid}" -ErrorAction SilentlyContinue`,
-      "if ($p) {",
-      "  $gp = Get-Process -Id $p.ProcessId -ErrorAction Stop",
-      "  $st = $gp.StartTime.ToUniversalTime().ToString('o')",
-      "  Write-Output \"$($p.ProcessId)|$($p.ParentProcessId)|$($p.Name)|$($p.ExecutablePath)|$st\"",
-      "}",
-    ].join("; ");
+    const script = windowsSingleProcessScript(pid);
     const out = execFileSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], {
       encoding: "utf8",
       windowsHide: true,
@@ -299,7 +306,7 @@ function defaultProcessInspector(pid, platform, timeoutMs) {
     const [pidStr, ppidStr, name = "", exePath = "", startToken = ""] = out.split("|");
     const parsedPid = Number.parseInt(pidStr ?? "", 10);
     const parentPid = Number.parseInt(ppidStr ?? "", 10);
-    if (!Number.isInteger(parsedPid) || parsedPid < 1 || !startToken.trim()) return null;
+    if (!Number.isInteger(parsedPid) || parsedPid < 1 || parsedPid !== pid || !exePath.trim() || !startToken.trim()) return null;
     return {
       pid: parsedPid,
       parentPid: Number.isInteger(parentPid) && parentPid > 0 ? parentPid : 0,
