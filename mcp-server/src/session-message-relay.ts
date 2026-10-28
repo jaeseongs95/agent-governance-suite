@@ -1,13 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { chmodSync, closeSync, constants, fchmodSync, fstatSync, ftruncateSync, lstatSync, mkdirSync, openSync, writeFileSync } from "node:fs";
-import path from "node:path";
-
-import { resolveSessionMessageStateDirectory } from "./runtime-config.js";
 
 import { failureContext, producerFailureReason } from "./failure-diagnostics.js";
 import { newWakeNonce, sessionMessageRequest, wakeMessage } from "./session-message-client.js";
 import { processExists, processIdentityState, type ProcessIdentityState } from "./process-identity.js";
-import { transportWakePort, transportDeliveryCapabilities, wakeBackoffDelay, type WakeDispatchPort, type WakeDispatchOutcome } from "./session-message-wake-port.js";
+import { persistRelayFailure, transportWakePort, transportDeliveryCapabilities, wakeBackoffDelay, type WakeDispatchPort, type WakeDispatchOutcome } from "./session-message-wake-port.js";
 import type { WakeReservation } from "./session-message-store.js";
 export { transportDeliveryCapabilities, wakeBackoffDelay, codexWakeOutcome, claudeWakeOutcome, geminiWakeOutcome, ringClaude,
   type WakeDispatchOutcome } from "./session-message-wake-port.js";
@@ -30,36 +26,6 @@ export function relayIdentityDecision(identity: ProcessIdentityState, previousUn
 export type SessionMessageTransport = string;
 
 export type RelayFailurePhase = "acquire" | "tick" | "release" | "run";
-
-/** A single bounded observation file outlives detached stderr without inheriting a host pipe. */
-function persistRelayFailure(serialized: string): void {
-  if (Buffer.byteLength(serialized, "utf8") > 64 * 1024) return;
-  let descriptor: number | undefined;
-  try {
-    const directory = resolveSessionMessageStateDirectory();
-    mkdirSync(directory, { recursive: true, mode: 0o700 });
-    const directoryInfo = lstatSync(directory);
-    if (!directoryInfo.isDirectory() || directoryInfo.isSymbolicLink()
-      || (process.getuid && directoryInfo.uid !== process.getuid())) return;
-    try { chmodSync(directory, 0o700); } catch { if (process.platform !== "win32") return; }
-    const target = path.join(directory, "relay-failure.latest.json");
-    // O_NOFOLLOW is not supplied on every platform; the opened descriptor is also checked before any write.
-    descriptor = openSync(target, constants.O_WRONLY | constants.O_CREAT | constants.O_NONBLOCK
-      | (constants.O_NOFOLLOW ?? 0), 0o600);
-    const opened = fstatSync(descriptor);
-    const linked = lstatSync(target);
-    if (!opened.isFile() || opened.nlink !== 1 || linked.isSymbolicLink() || !linked.isFile()
-      || opened.dev !== linked.dev || opened.ino !== linked.ino
-      || (process.getuid && opened.uid !== process.getuid())) return;
-    try { fchmodSync(descriptor, 0o600); } catch { if (process.platform !== "win32") return; }
-    // Latest observation only: concurrent readers may see a partial record; no append, lock or authority.
-    ftruncateSync(descriptor, 0);
-    writeFileSync(descriptor, serialized + "\n", { encoding: "utf8" });
-  } catch { /* Diagnostic I/O cannot change the relay failure or stop cleanup. */ }
-  finally {
-    if (descriptor !== undefined) try { closeSync(descriptor); } catch { /* No failure propagation from close. */ }
-  }
-}
 
 /** Local diagnostic only: producer reason plus bounded fingerprinted context, never messages, paths or bodies. */
 export function reportRelayFailure(phase: RelayFailurePhase, error: unknown): void {

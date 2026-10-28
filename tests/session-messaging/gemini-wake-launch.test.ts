@@ -1,4 +1,7 @@
 import { EventEmitter } from "node:events";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { execFileMock } = vi.hoisted(() => ({ execFileMock: vi.fn() }));
@@ -41,6 +44,29 @@ describe("Gemini native launch boundary", () => {
       expect(resolveGeminiAgentApi({ ANTIGRAVITY_AGENTAPI_EXE: configured }, "win32")).toBeNull();
     }
     expect(execFileMock).not.toHaveBeenCalled();
+  });
+
+  it("extracts the verified native .exe target from agentapi.bat on Windows when ANTIGRAVITY_AGENTAPI_EXE is unset", () => {
+    const tempRoot = mkdtempSync(path.join(os.tmpdir(), "ags-gemini-shim-"));
+    try {
+      const binDir = path.join(tempRoot, ".gemini", "antigravity", "bin");
+      mkdirSync(binDir, { recursive: true });
+      const existingExe = process.platform === "win32" && path.win32.extname(process.execPath).toLowerCase() === ".exe"
+        ? process.execPath
+        : null;
+      if (existingExe) {
+        writeFileSync(path.join(binDir, "agentapi.bat"), `@echo off\r\n"${existingExe}" agentapi %*\r\n`, "utf8");
+        expect(resolveGeminiAgentApi({ USERPROFILE: tempRoot }, "win32")).toEqual({
+          command: existingExe,
+          argsPrefix: ["agentapi"],
+        });
+      }
+      writeFileSync(path.join(binDir, "agentapi.bat"), `@echo off\r\n"C:\\Windows\\Temp\\language_server.exe" agentapi %*\r\n`, "utf8");
+      expect(resolveGeminiAgentApi({ USERPROFILE: tempRoot }, "win32")).toBeNull();
+      expect(execFileMock).not.toHaveBeenCalled();
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
   });
 
   it("keeps exact argv and sender environment within the same project without a shell", async () => {

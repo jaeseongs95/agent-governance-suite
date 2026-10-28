@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { setImmediate } from "node:timers";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import {
   buildCanonicalHookInput,
@@ -18,6 +18,7 @@ import {
   finalizeConnectorOutput,
   formatSecretFreeClaimDiagnosticLine,
   isRecognizedAntigravityHostProcess,
+  resolveAntigravityWakeEnvironment,
   resolveLongLivedHostProcess,
   runConnectorFromRaw,
   startAntigravitySessionPresenceAndRelay,
@@ -1428,7 +1429,72 @@ try {
     assert.equal(stderrDupCb.length, 1, "Duplicate callback must not emit duplicate diagnostics or promote state");
   }
 
-  console.log("antigravity-hook-runner tests: 13/13 passed");
+  // 14. [AGS-D-0015]: Resolve missing Antigravity wake runtime environment (ANTIGRAVITY_PROJECT_ID,
+  // ANTIGRAVITY_AGENTAPI_EXE, ANTIGRAVITY_LS_ADDRESS, ANTIGRAVITY_CSRF_TOKEN) from verified host process
+  // commandLine, local project registry, and host log before spawning the detached relay.
+  {
+    const wakeFixtureDir = mkdtempSync(path.join(tmpDir, "wake-env-"));
+    const workspaceDir = path.join(wakeFixtureDir, "workspace");
+    const projectsDir = path.join(wakeFixtureDir, ".gemini", "config", "projects");
+    const binDir = path.join(wakeFixtureDir, ".gemini", "antigravity", "bin");
+    const logPath = path.join(wakeFixtureDir, "language_server.log");
+    mkdirSync(workspaceDir, { recursive: true });
+    mkdirSync(projectsDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+
+    const fakeLsExe = path.join(binDir, process.platform === "win32" ? "language_server_windows_x64.exe" : "language_server_linux_x64");
+    writeFileSync(fakeLsExe, "binary-stub", "utf8");
+    writeFileSync(
+      path.join(projectsDir, "project-1.json"),
+      JSON.stringify({
+        id: "resolved-project-uuid",
+        projectResources: { resources: [{ folderUri: pathToFileURL(workspaceDir).href }] },
+      }),
+      "utf8",
+    );
+    writeFileSync(
+      logPath,
+      [
+        "I1027 00:00:01.000000 100 main.go:1] Starting language server process with pid 41804",
+        "I1027 00:00:01.100000 100 server.go:2] Language server listening on random port at 58034 for HTTP",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const trustedFakeLsExe = process.platform === "win32"
+      ? "C:\\Program Files\\Antigravity\\language_server_windows_x64.exe"
+      : "/opt/antigravity/bin/language_server_linux_x64";
+    const resolvedHost = resolveLongLivedHostProcess(41804, process.platform, {
+      inspectProcess: (pid) => pid === 41804
+        ? {
+            pid: 41804,
+            parentPid: 1,
+            name: path.win32.basename(trustedFakeLsExe),
+            command: trustedFakeLsExe,
+            commandLine: `"${trustedFakeLsExe}" --csrf_token=test-csrf-token-0015 --random_port`,
+            startToken: "2026-10-27T00:00:00.000Z",
+          }
+        : null,
+    });
+    assert.deepEqual(resolvedHost, { pid: 41804, startToken: "2026-10-27T00:00:00.000Z" });
+
+    const envWithoutConfiguredExe = {};
+    const resolvedEnv = resolveAntigravityWakeEnvironment(
+      { workspace_id: workspaceDir, cwd: workspaceDir },
+      resolvedHost,
+      {
+        env: envWithoutConfiguredExe,
+        homeDir: wakeFixtureDir,
+        projectsDir,
+        logFilePath: logPath,
+      },
+    );
+    assert.equal(resolvedEnv.ANTIGRAVITY_PROJECT_ID, "resolved-project-uuid");
+    assert.equal(resolvedEnv.ANTIGRAVITY_CSRF_TOKEN, "test-csrf-token-0015");
+    assert.equal(resolvedEnv.ANTIGRAVITY_LS_ADDRESS, "localhost:58034");
+  }
+
+  console.log("antigravity-hook-runner tests: 14/14 passed");
 } finally {
   rmSync(tmpDir, { recursive: true, force: true });
 }

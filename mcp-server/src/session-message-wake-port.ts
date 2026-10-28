@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { existsSync } from "node:fs";
+import { chmodSync, closeSync, constants, existsSync, fchmodSync, fstatSync, ftruncateSync, lstatSync, mkdirSync, openSync, readFileSync, writeFileSync } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import { actorAccess, type DeliveryCapabilities, type InputObservation } from "./input-observation.js";
@@ -12,7 +12,7 @@ import type { InputSourceReceiptV1 } from "../../contracts/types.js";
 export interface VerifiedInputSourceReader {
   readVerifiedInputSource(receiptId: string): InputSourceReceiptV1 | null;
 }
-import { resolveTrustDatabasePath } from "./runtime-config.js";
+import { resolveSessionMessageStateDirectory, resolveTrustDatabasePath } from "./runtime-config.js";
 
 export type WakeDispatchOutcome = "submitted" | "definite-failure" | "accepted-or-unknown";
 export interface WakeDispatchPort {
@@ -31,35 +31,93 @@ export function claudeWakeOutcome(hadError: boolean, connected: boolean, wrote: 
 export function geminiWakeOutcome(error: unknown, spawned: boolean): WakeDispatchOutcome {
   return !error ? "submitted" : spawned ? "accepted-or-unknown" : "definite-failure";
 }
+function isVerifiedWindowsNativeExecutable(candidatePath: string): boolean {
+  const root = path.win32.parse(candidatePath).root;
+  if (!path.win32.isAbsolute(candidatePath) || root === "\\" || root === "/"
+    || path.win32.extname(candidatePath).toLowerCase() !== ".exe") return false;
+  if (/(?:^|[\\/])\.\.(?:[\\/]|$)/u.test(candidatePath)
+    || /(?:^|[\\/])(?:tmp|var[\\/]tmp|dev[\\/]shm|temp|appdata[\\/]local[\\/]temp|users[\\/]public)(?:[\\/]|$)/iu.test(candidatePath)) {
+    return false;
+  }
+  return true;
+}
 export function resolveGeminiAgentApi(
   environment: NodeJS.ProcessEnv = process.env,
   platform: NodeJS.Platform = process.platform,
 ): { command: string; argsPrefix: string[] } | null {
   const configured = environment.ANTIGRAVITY_AGENTAPI_EXE;
-  if (configured) {
-    if (platform === "win32") {
-      const root = path.win32.parse(configured).root;
-      if (!path.win32.isAbsolute(configured) || root === "\\" || root === "/"
-        || path.win32.extname(configured).toLowerCase() !== ".exe") return null;
-    }
+  if (configured !== undefined) {
+    if (!configured) return platform === "win32" ? null : { command: "agentapi", argsPrefix: [] };
+    if (platform === "win32" && !isVerifiedWindowsNativeExecutable(configured)) return null;
     return { command: configured, argsPrefix: ["agentapi"] };
   }
-  // Batch shims need a verified launcher contract; never interpret peer text as shell code.
-  if (platform === "win32") return null;
   const homeDir = environment.USERPROFILE || environment.HOME || "";
+  if (platform === "win32") {
+    // ponytail: Antigravity's native hook executor does not set ANTIGRAVITY_AGENTAPI_EXE when spawning
+    // hooks or detached relays, and instead writes <HOME>/.gemini/antigravity/bin/agentapi.bat wrapping
+    // the native language_server*.exe. Never execute the .bat shim or invoke cmd.exe (D-0311); read it
+    // as inert text and extract the quoted absolute .exe target only when it exists on disk.
+    if (!homeDir) return null;
+    try {
+      const shimText = readFileSync(path.win32.join(homeDir, ".gemini", "antigravity", "bin", "agentapi.bat"), "utf8");
+      const match = /^"([A-Za-z]:[\\/][^\r\n"]+?\.exe)"\s+agentapi(?:\s|$)/imu.exec(shimText);
+      const extracted = match?.[1]?.trim() ?? "";
+      if (extracted && isVerifiedWindowsNativeExecutable(extracted) && existsSync(extracted)) {
+        return { command: extracted, argsPrefix: ["agentapi"] };
+      }
+    } catch { /* Missing or unreadable launcher shim falls back to null. */ }
+    return null;
+  }
   const command = path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
   return { command: existsSync(command) ? command : "agentapi", argsPrefix: [] };
 }
+/** A single bounded observation file outlives detached stderr without inheriting a host pipe. */
+export function persistRelayFailure(serialized: string, environment: NodeJS.ProcessEnv = process.env): void {
+  if (Buffer.byteLength(serialized, "utf8") > 64 * 1024) return;
+  let descriptor: number | undefined;
+  try {
+    const directory = resolveSessionMessageStateDirectory(environment);
+    mkdirSync(directory, { recursive: true, mode: 0o700 });
+    const directoryInfo = lstatSync(directory);
+    if (!directoryInfo.isDirectory() || directoryInfo.isSymbolicLink()
+      || (process.getuid && directoryInfo.uid !== process.getuid())) return;
+    try { chmodSync(directory, 0o700); } catch { if (process.platform !== "win32") return; }
+    const target = path.join(directory, "relay-failure.latest.json");
+    // O_NOFOLLOW is not supplied on every platform; the opened descriptor is also checked before any write.
+    descriptor = openSync(target, constants.O_WRONLY | constants.O_CREAT | constants.O_NONBLOCK
+      | (constants.O_NOFOLLOW ?? 0), 0o600);
+    const opened = fstatSync(descriptor);
+    const linked = lstatSync(target);
+    if (!opened.isFile() || opened.nlink !== 1 || linked.isSymbolicLink() || !linked.isFile()
+      || opened.dev !== linked.dev || opened.ino !== linked.ino
+      || (process.getuid && opened.uid !== process.getuid())) return;
+    try { fchmodSync(descriptor, 0o600); } catch { if (process.platform !== "win32") return; }
+    // Latest observation only: concurrent readers may see a partial record; no append, lock or authority.
+    ftruncateSync(descriptor, 0);
+    writeFileSync(descriptor, serialized + "\n", { encoding: "utf8" });
+  } catch { /* Diagnostic I/O cannot change the relay failure or stop cleanup. */ }
+  finally {
+    if (descriptor !== undefined) try { closeSync(descriptor); } catch { /* No failure propagation from close. */ }
+  }
+}
 /** Bounded diagnostic only: failureContext never emits messages, argv, stdout or paths. */
-function reportWakeFailure(phase: string, error: Error): void {
-  console.error(`agent-governance-suite wake diagnostic ${JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) })}`);
+function reportWakeFailure(phase: string, error: Error, environment: NodeJS.ProcessEnv = process.env): void {
+  const serialized = JSON.stringify({ phase, reason: producerFailureReason(error), context: failureContext(error) });
+  persistRelayFailure(serialized, environment);
+  console.error(`agent-governance-suite wake diagnostic ${serialized}`);
 }
 async function ringGemini(sessionId: string, message: string, environment: NodeJS.ProcessEnv = process.env): Promise<WakeDispatchOutcome> {
   const childEnv: NodeJS.ProcessEnv = { ...environment };
   const sourceProjectId = childEnv.ANTIGRAVITY_PROJECT_ID;
-  if (typeof sourceProjectId !== "string" || !sourceProjectId.trim()) return "definite-failure";
+  if (typeof sourceProjectId !== "string" || !sourceProjectId.trim()) {
+    reportWakeFailure("gemini-preflight", producerFailure("GEMINI_PROJECT_ID_MISSING", "Gemini source project identity is missing."), childEnv);
+    return "definite-failure";
+  }
   const launch = resolveGeminiAgentApi(childEnv);
-  if (!launch) return "definite-failure";
+  if (!launch) {
+    reportWakeFailure("gemini-preflight", producerFailure("GEMINI_AGENTAPI_UNAVAILABLE", "Gemini agentapi executable is unavailable."), childEnv);
+    return "definite-failure";
+  }
   const { command, argsPrefix } = launch;
   let targetProjectId: string;
   try {
@@ -80,20 +138,34 @@ async function ringGemini(sessionId: string, message: string, environment: NodeJ
     // Metadata failure happens before any send-message process is started. Keep the actual cause; never send.
     const error = producerFailureReason(cause) ? cause as Error
       : retainFailureCause(producerFailure("GEMINI_METADATA_FAILED", "Gemini conversation metadata lookup failed."), cause);
-    reportWakeFailure("gemini-metadata", error);
+    reportWakeFailure("gemini-metadata", error, childEnv);
     return "definite-failure";
   }
-  if (sourceProjectId !== targetProjectId) return "definite-failure";
+  if (sourceProjectId !== targetProjectId) {
+    reportWakeFailure("gemini-metadata", producerFailure("GEMINI_PROJECT_MISMATCH", "Gemini conversation project identity does not match."), childEnv);
+    return "definite-failure";
+  }
   return new Promise((resolve) => {
     let spawned = false;
+    let settled = false;
+    const finish = (error: unknown) => {
+      if (settled) return;
+      settled = true;
+      if (error) {
+        const tagged = producerFailureReason(error) ? error as Error
+          : retainFailureCause(producerFailure("GEMINI_SEND_FAILED", "Gemini send-message failed."), error);
+        reportWakeFailure("gemini-send", tagged, childEnv);
+      }
+      resolve(geminiWakeOutcome(error, spawned));
+    };
     try {
       const child = execFile(command, [...argsPrefix, "send-message", sessionId, message],
         { windowsHide: true, timeout: 10_000, env: childEnv, shell: false, windowsVerbatimArguments: false },
-        (error) => resolve(geminiWakeOutcome(error, spawned)));
+        (error) => finish(error));
       child.once("spawn", () => { spawned = true; });
-      child.once("error", (error) => resolve(geminiWakeOutcome(error, spawned)));
-    } catch {
-      resolve("definite-failure");
+      child.once("error", (error) => finish(error));
+    } catch (cause) {
+      finish(cause);
     }
   });
 }

@@ -1,5 +1,8 @@
 import { createHash } from "node:crypto";
 import { EventEmitter } from "node:events";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { execFileMock } = vi.hoisted(() => ({ execFileMock: vi.fn() }));
@@ -74,5 +77,61 @@ describe("Gemini metadata failure keeps its cause", () => {
     expect(outcome).toBe("definite-failure");
     expect(execFileMock).toHaveBeenCalledTimes(1);
     expect(diagnostic).toMatchObject({ phase: "gemini-metadata", reason: "GEMINI_METADATA_PROJECT_MISSING" });
+  });
+
+  it("persists preflight, project-mismatch, and send failures to relay-failure.latest.json without leaking markers", async () => {
+    const stateDir = mkdtempSync(path.join(os.tmpdir(), "ags-gemini-diag-"));
+    try {
+      vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", stateDir);
+
+      vi.stubEnv("ANTIGRAVITY_PROJECT_ID", "");
+      const missingProject = await diagnose();
+      expect(missingProject.outcome).toBe("definite-failure");
+      expect(missingProject.diagnostic).toMatchObject({ phase: "gemini-preflight", reason: "GEMINI_PROJECT_ID_MISSING" });
+      const persistedMissing = JSON.parse(readFileSync(path.join(stateDir, "relay-failure.latest.json"), "utf8")) as Diagnostic;
+      expect(persistedMissing).toMatchObject({ phase: "gemini-preflight", reason: "GEMINI_PROJECT_ID_MISSING" });
+
+      vi.stubEnv("ANTIGRAVITY_PROJECT_ID", "fixture-project");
+      vi.stubEnv("ANTIGRAVITY_AGENTAPI_EXE", "agentapi.bat");
+      if (process.platform === "win32") {
+        const missingExe = await diagnose();
+        expect(missingExe.outcome).toBe("definite-failure");
+        expect(missingExe.diagnostic).toMatchObject({ phase: "gemini-preflight", reason: "GEMINI_AGENTAPI_UNAVAILABLE" });
+        const persistedExe = JSON.parse(readFileSync(path.join(stateDir, "relay-failure.latest.json"), "utf8")) as Diagnostic;
+        expect(persistedExe).toMatchObject({ phase: "gemini-preflight", reason: "GEMINI_AGENTAPI_UNAVAILABLE" });
+      }
+
+      vi.stubEnv("ANTIGRAVITY_AGENTAPI_EXE", "C:/Program Files/Antigravity/language_server.exe");
+      metadataCallback(null, JSON.stringify({ response: { conversationMetadata: { metadata: { projectId: "other-project" } } } }));
+      const mismatch = await diagnose();
+      expect(mismatch.outcome).toBe("definite-failure");
+      expect(mismatch.diagnostic).toMatchObject({ phase: "gemini-metadata", reason: "GEMINI_PROJECT_MISMATCH" });
+      const persistedMismatch = JSON.parse(readFileSync(path.join(stateDir, "relay-failure.latest.json"), "utf8")) as Diagnostic;
+      expect(persistedMismatch).toMatchObject({ phase: "gemini-metadata", reason: "GEMINI_PROJECT_MISMATCH" });
+
+      metadataCallback(null, JSON.stringify({ response: { conversationMetadata: { metadata: { projectId: "fixture-project" } } } }));
+      execFileMock.mockImplementationOnce((_command: string, _args: string[], _options: unknown, callback: Callback) => {
+        const child = new EventEmitter();
+        queueMicrotask(() => {
+          const err = Object.assign(new Error("private-send-error"), { code: "ECONNREFUSED" });
+          child.emit("error", err);
+          callback(err, "", "");
+        });
+        return child;
+      });
+      const sendFailed = await diagnose();
+      expect(sendFailed.outcome).toBe("definite-failure");
+      expect(sendFailed.diagnostic).toMatchObject({
+        phase: "gemini-send",
+        reason: "GEMINI_SEND_FAILED",
+        context: { producerReason: "GEMINI_SEND_FAILED", producerCause: { type: "error", code: { prefixSha256: digest("ECONNREFUSED") } } },
+      });
+      const rawPersistedSend = readFileSync(path.join(stateDir, "relay-failure.latest.json"), "utf8");
+      for (const marker of ["private-send-error", "private-session-marker", "private-body-marker"]) {
+        expect(rawPersistedSend).not.toContain(marker);
+      }
+    } finally {
+      rmSync(stateDir, { recursive: true, force: true });
+    }
   });
 });
