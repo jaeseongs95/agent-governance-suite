@@ -409,7 +409,7 @@ const SKILL_POLICY_WORDING_SUCCESSOR = Object.freeze({
     "skills/independent-audit-gate/references/audit-protocol.md": "a34c9e5f9d82f5e0257614a119c05ac966bea04ee8fa374c88b010faea549dc4",
     "skills/independent-audit-gate/references/entry-details.md": "0c390f9b8ccb7a3ef01f77dea4f92cec25d785e28b917e7305f76fdb42f05af9",
     "skills/independent-audit-gate/references/orchestrator-integration.md": "3d14b4944f34c5e071cec027dcf483adf6fe5229e1a6ad17ea39202aa17d2fef",
-    "skills/independent-audit-gate/scripts/validate_skill.py": "489b55c0a8fc2fbca315163244d1e735dcee5dfad69b6e997c17ec5edb483bd6",
+    "skills/independent-audit-gate/scripts/validate_skill.py": "a1fc70e88edd319d95d0ebe81a8bd62f1ce643db04173efe68b4180ff8b88d15",
     "skills/independent-deliberation-panel/SKILL.md": "eb21677b0f377116250691a8cf84b44ec853c4de9c56e27ea17585016a151f54",
     "skills/independent-deliberation-panel/classification.json": "71ecafe2dc7eab91bb7ee5ebac230f2b0d3a7e58b9ff15c8cfdc3517a0aa21fd",
     "skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md": "644fe1ead2962af0968ffa06fb248b55fb68d0ba15f229e9b9218e0696653336",

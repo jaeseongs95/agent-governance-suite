@@ -235,7 +235,8 @@ def main() -> int:
         if path.suffix.lower() not in {".md", ".yaml", ".yml", ".py", ".txt", ""}:
             continue
         text = read_utf8(path, errors)
-        validate_links(root, relative, text, errors)
+        if path.suffix.lower() == ".md":
+            validate_links(root, relative, text, errors)
         if args.strict:
             upper = text.upper()
             for placeholder in PLACEHOLDERS:

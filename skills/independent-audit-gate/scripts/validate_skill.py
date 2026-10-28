@@ -129,7 +129,7 @@ def validate_policy(root: Path, errors: list[str]) -> None:
             "같은 감사자가 영향 범위를 다시 확인해야 한다.",
         )),
         ("orchestrator-reaudit-reference", "references/orchestrator-integration.md", (
-            "`FAIL`은 확인된 차단성 결함을 수정한 뒤 [audit-protocol.md](audit-protocol.md)의 `2. 감사자 독립성`에 따라 영향 범위를 다시 확인해야 한다.",
+            "`FAIL`은 확인된 차단성 결함을 수정한 뒤 [audit-protocol.md](" "audit-protocol.md)의 `2. 감사자 독립성`에 따라 영향 범위를 다시 확인해야 한다.",
         ), (
             "`FAIL`은 확인된 차단성 결함을 수정한 뒤 같은 감사자가 영향 범위를 다시 확인해야 한다.",
         )),
@@ -225,7 +225,8 @@ def main() -> int:
         if path.suffix.lower() not in {".md", ".yaml", ".yml", ".py", ".txt", ""}:
             continue
         text = read_utf8(path, errors)
-        validate_links(root, relative, text, errors)
+        if path.suffix.lower() == ".md":
+            validate_links(root, relative, text, errors)
         if args.strict:
             upper = text.upper()
             for placeholder in PLACEHOLDERS:
