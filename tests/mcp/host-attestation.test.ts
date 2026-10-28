@@ -452,12 +452,14 @@ describe("Claude Code host attestation through the MCP boundary", () => {
     expect((await call<WorkflowPlanV1>("plan_workflow", signed)).error).toBeNull();
   });
 
-  it("keeps Sol general and Luna lightweight below a deep bootstrap floor", async () => {
+  it("admits Sol general/high to bootstrap while keeping Luna below the general floor", async () => {
     const adapter = codexExecutionAdapter;
     const { store, call } = await harness(true, adapter);
-    const deep = { schemaVersion: "1.0.0", taskEnvelope: { ...task("sol-deep-floor"), riskLevel: "high" } };
-    expect((await call<WorkflowPlanV1>("plan_workflow", attest(store, "plan_workflow", deep,
-      { adapter, model: "gpt-6-sol" }))).error?.code).toBe("BINDING_INVALID");
+    const high = { schemaVersion: "1.0.0", taskEnvelope: { ...task("sol-bootstrap-floor"), riskLevel: "high" } };
+    const planned = await call<WorkflowPlanV1>("plan_workflow", attest(store, "plan_workflow", high,
+      { adapter, model: "gpt-6-sol" }));
+    expect(planned.ok).toBe(true);
+    expect(planned.data?.bootstrapExecution?.context.modelClass).toBe("general");
     expect((await call<WorkflowPlanV1>("plan_workflow", attest(store, "plan_workflow", planArguments("luna-general-floor"),
       { adapter, model: "gpt-6-luna" }))).error?.code).toBe("BINDING_INVALID");
   });

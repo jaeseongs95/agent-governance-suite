@@ -863,7 +863,7 @@ describe("WorkflowService", () => {
       requirement: {
         policyId: "semantic-execution-assurance-v1",
         kind: "semantic",
-        minimumModelClass: "deep",
+        minimumModelClass: "general",
         minimumReasoningEffort: "high",
       },
       context: TEST_EXECUTION_CONTEXT,

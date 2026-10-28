@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -35,7 +36,7 @@ const SESSION = "session-capability-contract";
 const TRANSCRIPT = "transcripts/session-capability-contract.jsonl";
 const TOOL_PREFIX = "mcp__plugin_agent-governance-suite_agent-governance-suite__";
 
-function createTask(taskId: string, riskLevel: "low" | "medium" | "high" = "low"): TaskEnvelopeV1 {
+function createTask(taskId: string, riskLevel: "low" | "medium" | "high" | "critical" = "low"): TaskEnvelopeV1 {
   return {
     schemaVersion: "1.0.0",
     taskId,
@@ -53,6 +54,86 @@ function createTask(taskId: string, riskLevel: "low" | "medium" | "high" = "low"
 }
 
 describe("AGS-08A vendor-neutral model/capability contract and single-catalog update", () => {
+  it.each(["low", "high", "critical"] as const)("accepts the current general/high caller for complex %s-risk bootstrap without changing stage floors (D0094)", (riskLevel) => {
+    const store = new InMemoryWorkflowStore();
+    const provider = new HostAttestationProvider(store, codexExecutionAdapter);
+    const validator = new ContractValidator();
+    const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
+    const input = { schemaVersion: "1.0.0", taskEnvelope: createTask(`d0094-current-${riskLevel}`, riskLevel) };
+    input.taskEnvelope.decision.complexity = "complex";
+    const token = issueHostAttestation(store, codexExecutionAdapter, {
+      tool: "plan_workflow", input, model: "gpt-6.1-sol", reasoningEffort: "high",
+      actorId: hostActorId("codex", SESSION), sessionId: SESSION, turnId: "d0094-current-turn", toolUseId: `d0094-current-${riskLevel}`,
+    });
+    expect(token).toEqual(expect.any(String));
+    const planned = provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
+      clean => service.planWorkflow(clean, true));
+    expect(planned.ok).toBe(true);
+    expect(planned.data?.bootstrapExecution).toMatchObject({
+      requirement: { minimumModelClass: "general", minimumReasoningEffort: "high" },
+      context: { model: "gpt-6.1-sol", modelClass: "general", reasoningEffort: "high" },
+    });
+    // Planning does not lower the selected independent audit's execution floor.
+    if (riskLevel !== "low") {
+      expect(planned.data?.stages.some(stage => stage.executionRequirement?.minimumModelClass === "deep")).toBe(true);
+    }
+    const replay = provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
+      clean => service.planWorkflow(clean, true));
+    expect(replay.error?.code).toBe("BINDING_INVALID");
+  });
+
+  it.each([
+    { riskLevel: "high", modelClass: "general", effort: "high", accepted: true },
+    { riskLevel: "critical", modelClass: "general", effort: "high", accepted: true },
+    { riskLevel: "critical", modelClass: "lightweight", effort: "high", accepted: false },
+    { riskLevel: "critical", modelClass: "general", effort: "low", accepted: false },
+  ] as const)("uses trusted opaque capabilities without name registration and retains floors: $riskLevel/$modelClass/$effort (D0094)", ({ riskLevel, modelClass, effort, accepted }) => {
+    let model = "";
+    const adapter: HostExecutionAdapter = {
+      host: "synthetic-authority-host", provider: "synthetic-authority", policyRevision: "d0094-authority-r1",
+      modelClassForModel: observed => observed === model ? modelClass : null,
+      resolveModel: (observed, provenance = "synthetic-authority-host:runtime") => observed === model ? {
+        provider: "synthetic-authority", host: "synthetic-authority-host", rawModel: observed, resolvedModel: observed,
+        modelClass, minimumReasoningEffort: null, supportedEfforts: ["low", "high"], aliasUsed: false,
+        policyRevision: "d0094-authority-r1", provenance,
+      } : null,
+    };
+    const store = new InMemoryWorkflowStore();
+    const provider = new HostAttestationProvider(store, adapter);
+    const validator = new ContractValidator();
+    const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
+    // Fix the trusted adapter and authority before generating either new ID.
+    // Only its current runtime observation changes; no name registry is edited.
+    for (let ordinal = 0; ordinal < 2; ordinal++) {
+      model = `opaque-${randomUUID()}`;
+      expect(resolveAdapterModelCapability(codexExecutionAdapter, model)).toBeNull();
+      expect(resolveAdapterModelCapability(adapter, "unobserved-model")).toBeNull();
+      const input = { schemaVersion: "1.0.0", taskEnvelope: createTask(`d0094-opaque-${riskLevel}-${modelClass}-${effort}-${ordinal}`, riskLevel) };
+      const token = issueHostAttestation(store, adapter, {
+        tool: "plan_workflow", input, model, reasoningEffort: effort,
+        actorId: hostActorId(adapter.host, SESSION), sessionId: SESSION, turnId: "d0094-opaque-turn", toolUseId: `d0094-opaque-call-${ordinal}`,
+      });
+      expect(token).toEqual(expect.any(String));
+      if (accepted) {
+        const wrongInput = { ...input, taskEnvelope: { ...input.taskEnvelope, objective: "forged input" }, [HOST_ATTESTATION_FIELD]: token };
+        expect(provider.run("plan_workflow", wrongInput, clean => service.planWorkflow(clean, true)).error?.code).toBe("BINDING_INVALID");
+        const foreignProvider = new HostAttestationProvider(store, codexExecutionAdapter);
+        const foreignService = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, foreignProvider);
+        expect(foreignProvider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
+          clean => foreignService.planWorkflow(clean, true)).error?.code).toBe("BINDING_INVALID");
+      }
+      const planned = provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
+        clean => service.planWorkflow(clean, true));
+      expect(planned.ok).toBe(accepted);
+      if (accepted) {
+        expect(planned.data?.bootstrapExecution?.context).toMatchObject({ model, modelClass, reasoningEffort: effort });
+        expect(provider.lastObservedCapability()).toMatchObject({ provider: "synthetic-authority", policyRevision: "d0094-authority-r1", rawModel: model });
+      } else {
+        expect(planned.error).toMatchObject({ code: "BINDING_INVALID", message: expect.stringContaining("below the planned semantic assurance floor") });
+      }
+    }
+  });
+
   it("normalizes 3-vendor raw model names, Bedrock/Vertex prefixes, aliases, and provenance at the adapter boundary while rejecting bare Claude profiles (AC1, AC2, F06)", () => {
     const codexCap = resolveAdapterModelCapability(codexExecutionAdapter, "gpt-6.1-sol", "codex:rollout-turn-context");
     expect(codexCap).toEqual({

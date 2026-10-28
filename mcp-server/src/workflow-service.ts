@@ -186,7 +186,7 @@ export class WorkflowService {
         };
         trustedBootstrapContext = this.observeTrustedExecutionContext(binding, "bootstrap orchestration");
         this.assertTrustedExecutionContext(
-          this.bootstrapExecutionRequirement(task),
+          this.bootstrapExecutionRequirement(),
           trustedBootstrapContext,
           "bootstrap orchestration",
           binding,
@@ -990,7 +990,7 @@ export class WorkflowService {
       ...(executionContext
         ? {
             bootstrapExecution: {
-              requirement: this.bootstrapExecutionRequirement(task),
+              requirement: this.bootstrapExecutionRequirement(),
               context: clone(executionContext),
             },
           }
@@ -1384,14 +1384,13 @@ export class WorkflowService {
     return stage.requiredAuditPhase;
   }
 
-  private bootstrapExecutionRequirement(task: TaskEnvelopeV1): ExecutionRequirementV1 {
-    const deepBootstrap = task.riskLevel === "high"
-      || task.riskLevel === "critical"
-      || task.decision.complexity === "complex";
+  private bootstrapExecutionRequirement(): ExecutionRequirementV1 {
+    // Entry eligibility is general/high. Stronger stage requirements belong to
+    // the selected work, not to the caller that plans it.
     return {
       policyId: "semantic-execution-assurance-v1",
       kind: "semantic",
-      minimumModelClass: deepBootstrap ? "deep" : "general",
+      minimumModelClass: "general",
       minimumReasoningEffort: "high",
       observationRequired: true,
     };
