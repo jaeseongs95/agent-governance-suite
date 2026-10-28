@@ -904,16 +904,76 @@ describe("normalized continuity semantics and one-call snapshots", () => {
     finally { database.close(); }
   });
 
-  it("keeps builtin native lifecycle translation and the existing Claude compact actor denial separate", () => {
+  it.each(["claude-code", "codex"])("recognizes %s compact actions without changing the lifecycle contract", (host) => {
     for (const source of ["startup", "clear", "resume", "compact"] as const) {
-      const mapped = adaptHostInput({ hook_event_name: "SessionStart", source, session_id: "builtin-session" }, "claude-code");
+      const mapped = adaptHostInput({ hook_event_name: "SessionStart", source, session_id: "builtin-session" }, host);
       expect(mapped.lifecycle).toBe("start"); expect(mapped.continuityAction).toEqual({ kind: source });
     }
-    const pre = adaptHostInput({ hook_event_name: "PreCompact", session_id: "builtin-session" }, "claude-code");
-    expect(pre.continuityAction).toEqual({ kind: "pre-compact" }); expect(pre.observation.actor.role).toBe("indeterminate");
+    const pre = adaptHostInput({ hook_event_name: "PreCompact", session_id: "builtin-session" }, host);
+    expect(pre.lifecycle).toBe("none");
+    expect(pre.observation.kind).toBe("unknown");
+    expect(pre.continuityAction).toEqual({ kind: "pre-compact" });
+    expect(pre.observation.actor).toMatchObject({ role: "root", basis: "inferred" });
     for (const [error, successful] of [[undefined, true], [null, true], [false, false], ["failed", false]] as const) {
-      const post = adaptHostInput({ hook_event_name: "PostCompact", session_id: "builtin-session", turn_id: "builtin-turn", error }, "claude-code");
-      expect(post.continuityAction).toEqual({ kind: "post-compact", turnId: "builtin-turn", successful }); expect(post.observation.actor.role).toBe("indeterminate");
+      const post = adaptHostInput({ hook_event_name: "PostCompact", session_id: "builtin-session", turn_id: "builtin-turn", error }, host);
+      expect(post.lifecycle).toBe("none");
+      expect(post.observation.kind).toBe("unknown");
+      expect(post.continuityAction).toEqual({ kind: "post-compact", turnId: "builtin-turn", successful });
+      expect(post.observation.actor).toMatchObject({ role: "root", basis: "inferred" });
+    }
+  });
+
+  it.each(["claude-code", "codex"])("preserves the native %s pre-compact marker and returns a metadata-only restore card", (host) => {
+    const service = createService(), session = "native-compact-root";
+    directCheckpoint(service, session);
+    expect(handleNativeContinuityHook({ hook_event_name: "SessionStart", source: "compact", session_id: session }, service, host)).toEqual({});
+    handleNativeContinuityHook({ hook_event_name: "PreCompact", session_id: session }, service, host);
+    expect(service.store.getTask(service.correlateSession(session))).toMatchObject({ pendingSource: "direct", pendingRevision: 1 });
+    const restored = handleNativeContinuityHook({ hook_event_name: "SessionStart", source: "compact", session_id: session }, service, host);
+    expect(JSON.stringify(restored)).toContain("decision=DEFER");
+    expect(JSON.stringify(restored)).not.toContain("Finish the continuity implementation");
+  });
+
+  it.each(["claude-code", "codex"])("consumes the native %s workflow compact marker exactly once", (host) => {
+    const workflow = new InMemoryWorkflowStore(), root = workflowRoot(), session = "native-workflow-compact";
+    workflow.insertConvergenceRoot(root);
+    const service = createService(":memory:", workflow);
+    const openInput = { schemaVersion: "1.0.0", taskEnvelope: root.taskEnvelope, frame: root.frame, parentRootId: null, userApprovalRefs: [] };
+    service.bindOpenedRoot(bound(service, session, "open_convergence_root", openInput), root.rootId);
+    handleNativeContinuityHook({ hook_event_name: "PreCompact", session_id: session }, service, host);
+    const compact = { hook_event_name: "SessionStart", source: "compact", session_id: session };
+    expect(JSON.stringify(handleNativeContinuityHook(compact, service, host))).toContain("decision=INJECT");
+    expect(handleNativeContinuityHook(compact, service, host)).toEqual({});
+  });
+
+  it.each(["claude-code", "codex"])("records native %s post-compact outcomes without storing raw turn IDs", async (host) => {
+    const directory = await mkdtemp(join(tmpdir(), "continuity-native-compact-"));
+    temporaryDirectories.push(directory);
+    const databasePath = join(directory, "continuity.sqlite3"), service = createService(databasePath), session = "native-post-compact";
+    for (const error of [undefined, "failed"]) {
+      expect(handleNativeContinuityHook({ hook_event_name: "PostCompact", session_id: session, turn_id: "private-native-turn", error }, service, host)).toEqual({});
+    }
+    const database = new DatabaseSync(databasePath);
+    try {
+      const rows = database.prepare("SELECT turn_hash, success FROM continuity_observations ORDER BY observation_id").all();
+      expect(rows).toEqual([
+        { turn_hash: service.hashOpaque("turn", "private-native-turn"), success: 1 },
+        { turn_hash: service.hashOpaque("turn", "private-native-turn"), success: 0 },
+      ]);
+      expect(JSON.stringify(rows)).not.toContain("private-native-turn");
+    } finally { database.close(); }
+  });
+
+  it.each(["PreCompact", "PostCompact"])("keeps native Claude child and malformed identities denied for %s", (event) => {
+    const service = createService(), session = "native-compact-denied";
+    directCheckpoint(service, session);
+    for (const identity of [{ agent_id: "child-1" }, { agent_id: "" }, { agent_type: "" }]) {
+      expect(handleNativeContinuityHook({ hook_event_name: event, session_id: session, ...identity }, service, "claude-code")).toEqual({});
+      expect(service.store.getTask(service.correlateSession(session))?.pendingRevision).toBeNull();
+    }
+    for (const host of ["claude-code", "codex"]) {
+      expect(adaptHostInput({ hook_event_name: event, session_id: "" }, host).observation.actor.role).toBe("indeterminate");
+      expect(adaptHostInput({ hook_event_name: "UnknownCompact", session_id: session, continuityAction: { kind: "pre-compact" } }, host).observation.actor.role).toBe("indeterminate");
     }
   });
 });

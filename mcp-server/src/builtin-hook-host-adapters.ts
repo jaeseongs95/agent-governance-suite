@@ -78,7 +78,7 @@ function adaptInferredRootHookInput(input: Record<string, unknown>, host: string
     role: "indeterminate", basis: "unavailable", reasonCode: `${prefix}_NATIVE_EVENT_UNRECOGNIZED`,
   };
   const adapted = adaptBuiltinHookInput(input, host, actor);
-  if (adapted.lifecycle === "none" && adapted.observation.kind === "unknown") return adapted;
+  if (adapted.lifecycle === "none" && adapted.observation.kind === "unknown" && adapted.continuityAction === undefined) return adapted;
   if (!adapted.observation.sessionId.trim()) actor.reasonCode = `${prefix}_NATIVE_SESSION_ID_INVALID`;
   else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: `${prefix}_ROOT_INFERRED_CHILD_GATE_DEFERRED` });
   return adapted;
@@ -95,7 +95,7 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
     role: "indeterminate", basis: "unavailable", reasonCode: "CLAUDE_NATIVE_EVENT_UNRECOGNIZED",
   };
   const adapted = adaptBuiltinHookInput(input, host, actor);
-  const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown";
+  const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown" || adapted.continuityAction !== undefined;
   if (!knownEvent) return adapted;
   if (!adapted.observation.sessionId.trim()) actor.reasonCode = "CLAUDE_NATIVE_SESSION_ID_INVALID";
   else if (Object.hasOwn(input, "agent_type") && (typeof input.agent_type !== "string" || !input.agent_type.trim())) {
