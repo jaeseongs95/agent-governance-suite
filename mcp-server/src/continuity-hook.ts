@@ -153,12 +153,15 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
     const continuityDatabasePath = resolveContinuityDatabasePath(environment);
     assertDistinctDatabasePaths(workflowDatabasePath, continuityDatabasePath);
     continuity = new SqliteContinuityStore(continuityDatabasePath);
-    const needsWorkflowProjection = normalized.action?.kind === "pre-compact"
-      || normalized.action?.kind === "resume" || normalized.action?.kind === "compact";
-    if (needsWorkflowProjection) {
+    const needsWorkflowState = normalized.action?.kind === "pre-compact"
+      || normalized.action?.kind === "resume" || normalized.action?.kind === "compact"
+      || normalized.action?.kind === "startup" || normalized.action?.kind === "post-compact"
+      || (normalized.observation.kind === "tool-boundary" && normalized.observation.boundaryPhase === "before"
+        && localToolName(host, normalized.observation.toolName ?? "") !== null);
+    if (needsWorkflowState) {
       try { workflow = new SqliteWorkflowStore(workflowDatabasePath); }
       catch (cause) {
-        // The projection is optional; continue without it but keep the cause visible.
+        // Missing authority keeps roots bound; context remains optional and the cause visible.
         reportContinuityFailure("workflow-store", cause);
         workflow = null;
       }
