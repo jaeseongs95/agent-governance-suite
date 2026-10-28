@@ -246,7 +246,7 @@ const ORCHESTRATOR_RESOURCE_IMPACT_SOURCE_HASHES = Object.freeze({
 const ORCHESTRATOR_BEHAVIOR_SOURCE_HASHES = Object.freeze({
   "skills/orchestrator/SKILL.md": "082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b",
   "skills/orchestrator/classification.json": "81ac5daaa54a6fc6947ba5e805bf7c1d3e4c061dd473be820f4a553a762dd577",
-  "skills/orchestrator/references/entry-details.md": "96e9f1e2e95b3372f457c96c1d07f130f4460d2fd1bf253cc37432d4867ac2df",
+  "skills/orchestrator/references/entry-details.md": "c178bbe2653e99104628b3a4dcb12a9f4d5af1453e7513d3559bfd078d83ce35",
 });
 // D0352 makes the field guide use the existing common routing decision.
 // Preserve the optimization baseline; allow only this reviewed source delta.
