@@ -62,7 +62,7 @@ function start(extraArgs: string[]=[],bootDelay=0,lateQuery=0,nativeQuery=false)
           endpoint={exists:true,parseable:true,ownPidMatch:value.pid===child.pid};
         }
       }catch(error){endpoint={exists:true,parseable:false,failure:failureContext(error)};}
-      throw new Error(`D0350 broker fixture readiness failed: ${JSON.stringify({events,phases,endpoint,
+      throw new Error(`D0350 broker fixture readiness failed: ${JSON.stringify({events,phases,endpoint,phaseRecordingFailed:stderr.includes("D0350_PHASE_RECORDING_FAILED"),
         artifacts:Object.fromEntries(["broker.lock","broker-cert.pem","broker.token","session-messages.sqlite3"].map(name=>[name,existsSync(path.join(state,name))])),
         exitCode:child.exitCode,signalCode:child.signalCode,spawnFailure,failure:failureContext(cause)})}`,{cause});
     }
@@ -97,6 +97,20 @@ it("a failed fixture preload reports bounded startup stages and retains its orig
   expect(diagnostic.phases).toEqual([{phase:"fixture-enter",atNs:expect.stringMatching(/^\d+$/u)}]);
   expect(BigInt(diagnostic.phases[0].atNs)).toBeGreaterThanOrEqual(BigInt(diagnostic.events[0].atNs));
   expect(error.message).not.toContain(root);
+  expect(error.message).not.toContain("D0350-private-preload-detail");
+});
+
+it("a phase writer failure cannot replace the original fixture failure",async()=>{
+  const {ready,stderr}=start(["--d0350-fail-phase-write","--d0350-fail-preload"]);
+  let failure:unknown;
+  try {await ready();}catch(error){failure=error;}
+  expect(failure).toBeInstanceOf(Error);
+  const error=failure as Error;
+  const diagnostic=JSON.parse(error.message.slice("D0350 broker fixture readiness failed: ".length));
+  expect(diagnostic).toMatchObject({phaseRecordingFailed:true,phases:{state:"not-observed"},exitCode:1,endpoint:{exists:false}});
+  expect(error.cause).toBeInstanceOf(Error);
+  expect(stderr()).toContain("D0350-private-preload-detail");
+  expect(stderr().split("D0350_PHASE_RECORDING_FAILED")).toHaveLength(2);
   expect(error.message).not.toContain("D0350-private-preload-detail");
 });
 

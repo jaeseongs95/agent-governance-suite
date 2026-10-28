@@ -10,9 +10,18 @@ import { setTimeout, clearTimeout, setInterval, clearInterval } from 'node:timer
 const root=process.env.AGENT_GOVERNANCE_D254_FIXTURE_DIR;
 if(!root)throw new Error('Owned fixture directory required.');
 let phaseCount=0;
+let phaseRecordingFailed=false;
 const phase=(name)=>{
+  if(phaseRecordingFailed)return;
   const index=phaseCount++;
-  if(index<=32)fs.appendFileSync(path.join(root,'startup-phases.jsonl'),JSON.stringify({phase:index===32?'trace-truncated':name,atNs:String(process.hrtime.bigint())})+'\n');
+  try {
+    if(process.argv.includes('--d0350-fail-phase-write'))throw new Error('Controlled phase writer failure.');
+    if(index<=32)fs.appendFileSync(path.join(root,'startup-phases.jsonl'),JSON.stringify({phase:index===32?'trace-truncated':name,atNs:String(process.hrtime.bigint())})+'\n');
+  }catch{
+    phaseRecordingFailed=true;
+    // Diagnostic I/O must never change the observed operation or replace its error.
+    try {fs.writeSync(2,'D0350_PHASE_RECORDING_FAILED\n');}catch{/* No functioning diagnostic sink remains. */}
+  }
 };
 phase('fixture-enter');
 if(process.argv.includes('--d0350-fail-preload'))throw new Error('D0350-private-preload-detail');
