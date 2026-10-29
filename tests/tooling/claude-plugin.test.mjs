@@ -435,6 +435,23 @@ describe("Claude overlay safeguards", () => {
     expect(await readFile(path.join(directory, installed))).toEqual(await readFile(path.join(root, file)));
   });
 
+  it("keeps change-scope-guardian and korean-prose-editor descriptions aligned with canonical SKILL.md without overbroad triggers", async () => {
+    for (const [skillId, forbiddenTriggers] of [
+      ["change-scope-guardian", ["여러 파일을 고치거나", "미커밋 변경이 있는 트리에서 작업을 시작할 때 기준 상태를 남기고", "git commit·merge 전에"]],
+      ["korean-prose-editor", ["문서 초안을 쓰거나 다듬을 때"]],
+    ]) {
+      const adaptation = await readJson(root, "claude-overlay", "adaptations", `${skillId}.json`);
+      expect(adaptation).not.toHaveProperty("description");
+      const shared = await readFile(path.join(root, "skills", skillId, "SKILL.md"), "utf8");
+      const generated = await readFile(path.join(pluginRoot, "skills", skillId, "SKILL.md"), "utf8");
+      const extractDescription = (text) => text.match(/^---\r?\n[\s\S]*?^description:\s*(.+)$/mu)?.[1]?.trim();
+      expect(extractDescription(generated)).toBe(extractDescription(shared));
+      for (const phrase of forbiddenTriggers) {
+        expect(generated).not.toContain(phrase);
+      }
+    }
+  });
+
   it("does not render Codex-only OpenAI agent metadata", async () => {
     const files = await renderClaudePlugin(root);
     expect([...files.keys()].filter((file) => /^skills\/[^/]+\/agents\/openai\.yaml$/u.test(file))).toEqual([]);
