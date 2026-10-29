@@ -12,6 +12,7 @@ if (directory) {
     if (message?.id === 2 && message.category === "request") {
       process.send?.({fixture: "rotation-input-arrived", id: message.id});
     }
+    if (message?.close === true) process.send?.({fixture: "rotation-close-arrived"});
   });
   fs.open = function (...args) {
     const file = String(args[0]);
