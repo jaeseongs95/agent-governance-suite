@@ -108,17 +108,33 @@ await new Promise(r=>setTimeout(r,100));await log.close();console.log(JSON.strin
 it("keeps each active file within the byte limit under sustained producer traffic",async()=>{
   const result=await execute(`
 import {createDiagnostics,readDiagnosticConfig} from './diagnostics.mjs';
+const started=performance.now(),timeline=[];
+const mark=event=>timeline.push({event,tMs:performance.now()-started});
+mark('create-start');
 const log=await createDiagnostics(readDiagnosticConfig(JSON.stringify({level:'INFO',destination:'file',file:'sustained-case',rotationBytes:1024,retainedFiles:100,bufferBytes:16384})),new Set(['get_skill_inventory']));
+mark('ready-start');
 await readyAtMost(log);
+mark('ready-complete');
 for(let i=0;i<120;i++){for(let j=0;j<100;j++)log.event('request','INFO','request_start',{method:'get_skill_inventory'});await new Promise(r=>setTimeout(r,10));}
-await log.close();console.log(JSON.stringify(log.loss));
+mark('producer-complete');mark('close-start');
+await log.close();mark('close-complete');console.log(JSON.stringify({loss:log.loss,timeline}));
 `);
-  expect(result.code).toBe(0);
-  const files=(await readdir(root)).filter(name=>name.startsWith('sustained-case-')&&name.endsWith('.log'));
-  const sizes=await Promise.all(files.map(file=>stat(path.join(root,file)).then(value=>value.size)));
-  const observation={fixture:root,scenario:'sustained-file-cap',sizes,loss:JSON.parse(result.out)};
+  const entries=(await readdir(root)).filter(name=>name.startsWith('sustained-case-'));
+  const listing=await Promise.all(entries.map(async name=>{
+    const metadata=await stat(path.join(root,name));
+    const raw=metadata.isFile()?await readFile(path.join(root,name)):null;
+    return {name,bytes:metadata.size,mtimeMs:metadata.mtimeMs,type:metadata.isFile()?'file':'other',
+      rawBase64:raw?.toString('base64'),lineBytes:raw?.toString('utf8').match(/[^\n]*\n|[^\n]+$/g)?.map(line=>Buffer.byteLength(line))??[]};
+  }));
+  const files=listing.filter(file=>file.name.endsWith('.log'));
+  const sizes=files.map(file=>file.bytes);
+  // 파일별 실제 바이트를 보존한다. 준비·생산·종료 시각은 내부 회전 시각의 증거가 아니다.
+  const observation={fixture:root,scenario:'sustained-file-cap',sizes,files:listing,child:result};
+  const evidence=JSON.stringify(observation);
   if(process.env.AGENT_GOVERNANCE_LOG_TEST_EVIDENCE) await writeFile(path.join(process.env.AGENT_GOVERNANCE_LOG_TEST_EVIDENCE,'sustained-result.json'),JSON.stringify(observation,null,2),'utf8');
-  expect(sizes.filter(size=>size>0).length).toBeGreaterThan(1);expect(sizes.every(size=>size<=1024)).toBe(true);expect(observation.loss.droppedRecords).toBeGreaterThan(0);
+  expect(result.code,evidence).toBe(0);
+  const observed=JSON.parse(result.out);
+  expect(sizes.filter(size=>size>0).length,evidence).toBeGreaterThan(1);expect(sizes.every(size=>size<=1024),evidence).toBe(true);expect(observed.loss.droppedRecords,evidence).toBeGreaterThan(0);
 });
 
 
