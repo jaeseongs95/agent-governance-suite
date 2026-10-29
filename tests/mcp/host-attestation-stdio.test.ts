@@ -161,8 +161,8 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       const belowFloorArgs = await signed("plan_workflow", planInput, "claude-haiku-5");
       expect(observationPayload(belowFloorArgs)).toMatchObject({ model: "claude-haiku-5", eligibility: { modelClass: "lightweight" } });
       const belowFloor = await rawCall<WorkflowPlanV1>("plan_workflow", belowFloorArgs);
-      expect(belowFloor.data).toBeNull();
-      expect(belowFloor.error).toMatchObject({ code: "BINDING_INVALID", details: { modelClass: "lightweight", minimumModelClass: "general" } });
+      expect(belowFloor.ok).toBe(true);
+      expect(belowFloor.data?.bootstrapExecution?.context.modelClass).toBe("lightweight");
 
       const forgedClassArgs = withoutSessionProof(await signed("plan_workflow", planInput));
       const forgedPayload = observationPayload(forgedClassArgs);

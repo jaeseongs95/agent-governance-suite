@@ -736,7 +736,8 @@
                   "lightweight",
                   "general",
                   "deep",
-                  "frontier"
+                  "frontier",
+                  null
                 ]
               },
               "minimumReasoningEffort": {
@@ -746,13 +747,39 @@
                   "high",
                   "xhigh",
                   "max",
-                  "ultra"
+                  "ultra",
+                  null
                 ]
               },
               "observationRequired": {
                 "const": true
               }
-            }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "minimumModelClass": {
+                      "type": "null"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "minimumReasoningEffort": {
+                      "type": "null"
+                    }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "minimumReasoningEffort": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            ]
           }
         }
       ]

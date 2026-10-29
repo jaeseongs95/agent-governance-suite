@@ -720,7 +720,8 @@ describe("WorkflowService", () => {
       })),
     );
     const planned = service.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task({ taskId: "passing-floor" }) }, true);
-    expect(planned.error?.code).toBe("BINDING_INVALID");
+    expect(planned.ok).toBe(true);
+    expect(planned.data?.bootstrapExecution?.context.reasoningEffort).toBe("low");
 
     const { service: stageService } = await createService(
       skills,
@@ -742,7 +743,7 @@ describe("WorkflowService", () => {
     const receipt = stageService.startWorkflow(stagePlan.data!).data!;
     const step = passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision);
     delete step.executionContext;
-    expect(stageService.recordStageResult(step, true).error?.code).toBe("BINDING_INVALID");
+    expect(stageService.recordStageResult(step, true).error?.code).toBe("GATE_FAILED");
   });
 
   it("persists trusted observation claims across service restart", async () => {
@@ -863,8 +864,9 @@ describe("WorkflowService", () => {
       requirement: {
         policyId: "semantic-execution-assurance-v1",
         kind: "semantic",
-        minimumModelClass: "general",
-        minimumReasoningEffort: "high",
+        minimumModelClass: null,
+        minimumReasoningEffort: null,
+        observationRequired: true,
       },
       context: TEST_EXECUTION_CONTEXT,
     });
@@ -887,7 +889,7 @@ describe("WorkflowService", () => {
       modelClass: "lightweight",
       reasoningEffort: "low",
     };
-    expect(service.recordStageResult(weak).error?.code).toBe("BINDING_INVALID");
+    expect(service.recordStageResult(weak).error?.code).toBe("GATE_FAILED");
 
     const accepted = service.recordStageResult(
       passedStage(started.runId, stage, started.revision),

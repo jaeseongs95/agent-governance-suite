@@ -190,6 +190,7 @@ export class WorkflowService {
           trustedBootstrapContext,
           "bootstrap orchestration",
           binding,
+          false,
         );
         executionContext = trustedBootstrapContext;
       }
@@ -1385,13 +1386,12 @@ export class WorkflowService {
   }
 
   private bootstrapExecutionRequirement(): ExecutionRequirementV1 {
-    // Entry eligibility is general/high. Stronger stage requirements belong to
-    // the selected work, not to the caller that plans it.
+    // 초기 접수는 신뢰할 수 있는 관측을 요구한다. 성능 하한은 실제 단계가 소유한다.
     return {
       policyId: "semantic-execution-assurance-v1",
       kind: "semantic",
-      minimumModelClass: "general",
-      minimumReasoningEffort: "high",
+      minimumModelClass: null,
+      minimumReasoningEffort: null,
       observationRequired: true,
     };
   }
@@ -1469,9 +1469,10 @@ export class WorkflowService {
     binding: ExecutionObservationBindingV1,
     enforceMinimum = true,
   ): void {
-    this.assertExecutionContext(requirement, context, subject, enforceMinimum);
+    this.assertExecutionContext(requirement, context, subject, false);
     this.assertTrustedExecutionBinding(context, subject, binding);
     this.assertTrustedExecutionFreshness(context, subject);
+    if (enforceMinimum) this.assertExecutionContext(requirement, context, subject);
   }
 
   private assertTrustedExecutionBinding(
@@ -1555,7 +1556,7 @@ export class WorkflowService {
       stageId: null,
       revision: null,
     };
-    this.assertExecutionContext(bootstrap.requirement, bootstrap.context, `${subject} bootstrap`);
+    this.assertExecutionContext(bootstrap.requirement, bootstrap.context, `${subject} bootstrap`, false);
     this.assertTrustedExecutionBinding(bootstrap.context, `${subject} bootstrap`, binding);
     for (const stage of plan.stages) {
       if (!stage.executionRequirement && !DETERMINISTIC_CAPABILITIES.has(stage.requiredCapability)) {
@@ -1585,6 +1586,8 @@ export class WorkflowService {
       context.schemaVersion !== CONTRACT_VERSION
       || typeof context.model !== "string"
       || context.model.length === 0
+      || !MODEL_CLASS.includes(context.modelClass)
+      || !REASONING_EFFORT.includes(context.reasoningEffort)
       || !["runtime", "spawn-result"].includes(context.source)
       || Number.isNaN(Date.parse(context.observedAt))
     ) {
@@ -1594,6 +1597,8 @@ export class WorkflowService {
         { context },
       );
     }
+
+    if (!enforceMinimum) return;
 
     const minimumModelClass = requirement.minimumModelClass;
     const minimumReasoningEffort = requirement.minimumReasoningEffort;
@@ -1605,20 +1610,16 @@ export class WorkflowService {
       );
     }
 
-    if (!enforceMinimum) return;
-
     const modelClassRank = MODEL_CLASS.indexOf(context.modelClass);
     const minimumModelClassRank = MODEL_CLASS.indexOf(minimumModelClass);
     const reasoningRank = REASONING_EFFORT.indexOf(context.reasoningEffort);
     const minimumReasoningRank = REASONING_EFFORT.indexOf(minimumReasoningEffort);
     if (
-      modelClassRank < 0
-      || reasoningRank < 0
-      || modelClassRank < minimumModelClassRank
+      modelClassRank < minimumModelClassRank
       || reasoningRank < minimumReasoningRank
     ) {
       throw new WorkflowContractError(
-        "BINDING_INVALID",
+        "GATE_FAILED",
         `${subject} execution profile is below the planned semantic assurance floor.`,
         {
           model: context.model,

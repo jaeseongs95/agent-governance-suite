@@ -86,6 +86,7 @@ export interface ExecutionContextV1 {
 export interface ExecutionRequirementV1 {
   policyId: "semantic-execution-assurance-v1";
   kind: "deterministic" | "semantic";
+  /** 두 하한이 null이면 초기 접수의 관측만 요구하며 단계 성능 자격을 부여하지 않는다. */
   minimumModelClass: ModelClassV1 | null;
   minimumReasoningEffort: ReasoningEffortV1 | null;
   observationRequired: boolean;

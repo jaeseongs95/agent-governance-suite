@@ -164,7 +164,9 @@ it("uses one explicit trusted producer for two opaque IDs through public hook/st
       expect((await f.rawCall("plan_workflow", issued)).error).toMatchObject({ code: "BINDING_INVALID", message: "Host observation has no matching trusted execution capability and policy revision." });
     }
     const effort = await f.hook("plan_workflow", args, model, "medium"); expect(payload(effort).eligibility).not.toBeNull();
-    expect((await f.rawCall("plan_workflow", effort)).error).toMatchObject({ code: "BINDING_INVALID", details: { reasoningEffort: "medium", minimumReasoningEffort: "high" } });
+    const admitted = await f.rawCall<WorkflowPlanV1>("plan_workflow", effort);
+    expect(admitted.ok).toBe(true);
+    expect(admitted.data?.bootstrapExecution?.context.reasoningEffort).toBe("medium");
     const absent = f.observedBy({ ...f.adapter, resolveModel: () => null }, args, model); expect(payload(absent).eligibility).toBeNull();
     expect((await f.rawCall("plan_workflow", absent)).error).toMatchObject({ code: "BINDING_INVALID", message: "Host observation has no matching trusted execution capability and policy revision." });
     await f.hook("plan_workflow", args, model, "high", "empty"); await f.hook("plan_workflow", args, model, "high", "mismatch");
@@ -175,12 +177,14 @@ it("uses one explicit trusted producer for two opaque IDs through public hook/st
   } finally { await f.close(); }
 }, 30_000);
 
-it("rejects valid same-authority low capability at the actual workflow floor", async () => {
+it("admits valid same-authority lightweight bootstrap without granting stage assurance", async () => {
   const f = await fixture("lightweight");
   try {
     const model = randomUUID(), args = { schemaVersion: "1.0.0", taskEnvelope: task("owned-f1-class-floor") };
     const signed = await f.hook("plan_workflow", args, model); expect(payload(signed)).toMatchObject({ model, eligibility: { modelClass: "lightweight", policyRevision: "owned-f1-r1" } });
-    expect((await f.rawCall("plan_workflow", signed)).error).toMatchObject({ code: "BINDING_INVALID", details: { modelClass: "lightweight", minimumModelClass: "general" } });
+    const admitted = await f.rawCall<WorkflowPlanV1>("plan_workflow", signed);
+    expect(admitted.ok).toBe(true);
+    expect(admitted.data?.bootstrapExecution?.context.modelClass).toBe("lightweight");
     await f.unchanged();
   } finally { await f.close(); }
 }, 30_000);

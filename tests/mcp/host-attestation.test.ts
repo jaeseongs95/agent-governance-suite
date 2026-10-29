@@ -429,15 +429,19 @@ describe("Claude Code host attestation through the MCP boundary", () => {
   it("does not over-report effort when the transcript message ran lower than the hook reports", async () => {
     const { store, call } = await harness(true);
     const mixed = attest(store, "plan_workflow", planArguments("mixed-effort"), { effort: "low", hookEffort: "high" });
-    expect((await call<WorkflowPlanV1>("plan_workflow", mixed)).error?.code).toBe("BINDING_INVALID");
+    const planned = await call<WorkflowPlanV1>("plan_workflow", mixed);
+    expect(planned.ok).toBe(true);
+    expect(planned.data?.bootstrapExecution?.context.reasoningEffort).toBe("low");
   });
 
-  it("enforces the planned assurance floor on the observed model and effort", async () => {
+  it("admits observed lightweight and low-effort bootstrap without granting stage assurance", async () => {
     const { store, call } = await harness(true);
     const lightweight = attest(store, "plan_workflow", planArguments("haiku"), { model: "claude-haiku-4-5-20251001" });
-    expect((await call<WorkflowPlanV1>("plan_workflow", lightweight)).error?.code).toBe("BINDING_INVALID");
+    expect((await call<WorkflowPlanV1>("plan_workflow", lightweight)).ok).toBe(true);
     const lowEffort = attest(store, "plan_workflow", planArguments("low-effort"), { effort: "low" });
-    expect((await call<WorkflowPlanV1>("plan_workflow", lowEffort)).error?.code).toBe("BINDING_INVALID");
+    const planned = await call<WorkflowPlanV1>("plan_workflow", lowEffort);
+    expect(planned.ok).toBe(true);
+    expect(planned.data?.bootstrapExecution?.context.reasoningEffort).toBe("low");
   });
 
   it.each([claudeCodeExecutionAdapter, codexExecutionAdapter])("strips caller skill observations before signing %s tool arguments", async (adapter) => {
@@ -452,16 +456,34 @@ describe("Claude Code host attestation through the MCP boundary", () => {
     expect((await call<WorkflowPlanV1>("plan_workflow", signed)).error).toBeNull();
   });
 
-  it("admits Sol general/high to bootstrap while keeping Luna below the general floor", async () => {
+  it("separates a signed low observation from forged, foreign and missing bootstrap proof (D0094)", async () => {
+    const adapter = codexExecutionAdapter;
+    const { store, call } = await harness(true, adapter);
+    const input = planArguments("signed-low-boundary");
+    const signed = attest(store, "plan_workflow", input, { adapter, model: "gpt-6.1-sol", effort: "low" });
+    const raw = JSON.parse(Buffer.from(String(signed[HOST_ATTESTATION_FIELD]).split(".")[1]!, "base64url").toString("utf8"));
+    expect(raw).toMatchObject({ model: "gpt-6.1-sol", reasoningEffort: "low", eligibility: { modelClass: "general" } });
+    const forged = { ...signed, [HOST_ATTESTATION_FIELD]: `${String(signed[HOST_ATTESTATION_FIELD])}tampered` };
+    expect((await call<WorkflowPlanV1>("plan_workflow", forged)).error?.code).toBe("BINDING_INVALID");
+    const foreign = attest(new InMemoryWorkflowStore(), "plan_workflow", input, { adapter, model: "gpt-6.1-sol", effort: "low" });
+    expect((await call<WorkflowPlanV1>("plan_workflow", foreign)).error?.code).toBe("BINDING_INVALID");
+    expect((await call<WorkflowPlanV1>("plan_workflow", input)).error?.code).toBe("BINDING_REQUIRED");
+    const admitted = await call<WorkflowPlanV1>("plan_workflow", signed);
+    expect(admitted.ok).toBe(true);
+    expect(admitted.data?.bootstrapExecution?.context.reasoningEffort).toBe("low");
+    expect((await call<WorkflowPlanV1>("plan_workflow", signed)).error?.code).toBe("BINDING_INVALID");
+  });
+
+  it("admits a current Codex low observation through the signed MCP bootstrap boundary", async () => {
     const adapter = codexExecutionAdapter;
     const { store, call } = await harness(true, adapter);
     const high = { schemaVersion: "1.0.0", taskEnvelope: { ...task("sol-bootstrap-floor"), riskLevel: "high" } };
     const planned = await call<WorkflowPlanV1>("plan_workflow", attest(store, "plan_workflow", high,
-      { adapter, model: "gpt-6-sol" }));
+      { adapter, model: "gpt-6.1-sol", effort: "low" }));
     expect(planned.ok).toBe(true);
-    expect(planned.data?.bootstrapExecution?.context.modelClass).toBe("general");
+    expect(planned.data?.bootstrapExecution?.context).toMatchObject({ modelClass: "general", reasoningEffort: "low" });
     expect((await call<WorkflowPlanV1>("plan_workflow", attest(store, "plan_workflow", planArguments("luna-general-floor"),
-      { adapter, model: "gpt-6-luna" }))).error?.code).toBe("BINDING_INVALID");
+      { adapter, model: "gpt-6-luna", effort: "low" }))).ok).toBe(true);
   });
 });
 

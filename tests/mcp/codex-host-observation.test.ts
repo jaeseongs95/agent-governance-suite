@@ -211,11 +211,8 @@ describe("host-owned hookless provider ingress", () => {
     const low = provider.runObserved("plan_workflow", input,
       () => ({ ...context, reasoningEffort: "low", toolUseId: "host-owned-low-call" }),
       (args) => service.planWorkflow(args, true));
-    expect(low.error).toMatchObject({
-      code: "BINDING_INVALID",
-      message: expect.stringContaining("below the planned semantic assurance floor"),
-      details: { model, reasoningEffort: "low", minimumModelClass: "general", minimumReasoningEffort: "high" },
-    });
+    expect(low.ok).toBe(true);
+    expect(low.data?.bootstrapExecution?.context).toMatchObject({ model, reasoningEffort: "low" });
     const freshHigh = provider.runObserved("plan_workflow", input,
       () => ({ ...context, toolUseId: "host-owned-fresh-high-call" }),
       (args) => service.planWorkflow(args, true));

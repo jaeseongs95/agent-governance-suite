@@ -269,7 +269,9 @@ it("reaches actual capability and authority rejection with a genuine fresh root 
     expect(decoded(nullArgs._hostAttestation).eligibility).toBeNull(); expect(decoded(nullArgs._sessionProof)).toMatchObject({ host: f.host, sessionId });
     expect((await f.rawCall("plan_workflow", nullArgs)).error).toMatchObject({ code: "BINDING_INVALID", message: "Host observation has no matching trusted execution capability and policy revision." });
     const effort = f.hook("plan_workflow", args, model, "medium"); expect(decoded(effort._hostAttestation).eligibility).not.toBeNull();
-    expect((await f.rawCall("plan_workflow", effort)).error).toMatchObject({ code: "BINDING_INVALID", details: { reasoningEffort: "medium", minimumReasoningEffort: "high" } });
+    const admitted = await f.rawCall<WorkflowPlanV1>("plan_workflow", effort);
+    expect(admitted.ok).toBe(true);
+    expect(admitted.data?.bootstrapExecution?.context.reasoningEffort).toBe("medium");
     const forged = withoutSessionProof(f.hook("plan_workflow", args, model)), [prefix, body, signature] = (forged._hostAttestation as string).split(".");
     const changed = decoded(forged._hostAttestation); changed.eligibility = { ...(changed.eligibility as Record<string, unknown>), modelClass: "frontier" };
     forged._hostAttestation = `${prefix}.${Buffer.from(JSON.stringify(changed)).toString("base64url")}.${signature}`;
@@ -278,8 +280,8 @@ it("reaches actual capability and authority rejection with a genuine fresh root 
     await f.unchanged();
   } finally { await f.close(); }
   const low = await fixture(`owned-${randomUUID()}`, "lightweight");
-  try { expect((await low.call("plan_workflow", { schemaVersion: "1.0.0", taskEnvelope: task("owned-host-low-capability") }, randomUUID())).error)
-    .toMatchObject({ code: "BINDING_INVALID", details: { modelClass: "lightweight", minimumModelClass: "general" } }); await low.unchanged(); }
+  try { const admitted = await low.call<WorkflowPlanV1>("plan_workflow", { schemaVersion: "1.0.0", taskEnvelope: task("owned-host-low-capability") }, randomUUID());
+    expect(admitted.ok).toBe(true); expect(admitted.data?.bootstrapExecution?.context.modelClass).toBe("lightweight"); await low.unchanged(); }
   finally { await low.close(); }
 }, 30_000);
 
