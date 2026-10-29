@@ -365,13 +365,9 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     return {};
   }
   if (adapted.lifecycle === "end") {
-    if (main) {
-      try { await request("clear-deferred", { target }); }
-      catch (error) { reportHookFailure("clear-deferred", error); }
-    }
     // The hook payload has no presence instance identifier. The relay observes the
     // host process and closes its exact instance, avoiding a late SessionEnd from
-    // ending a newer resume/compact generation.
+    // ending a newer resume/compact generation or clearing its native-input deferral.
     return {};
   }
   // The relay owns lifecycle heartbeats for its exact presence instance. Hook

@@ -131,6 +131,34 @@ it("rejects wrong-instance release even when relayId and child PID are current",
   expect(store.presence(target, now + 2)).toEqual(presence);
 });
 
+it("keeps exact relay termination and reused-session wake/claim working with a retained input observation", () => {
+  const { store, input, ensure, activate } = fixture();
+  const old = ensure().relayId!;
+  expect(activate(old)).toBe(true);
+  store.observeNativeInput(target, now + 2);
+  expect(store.releaseVerifiedRelay({ ...input, relayId: old, pid: 200 }, now + 3)).toBe(true);
+  expect(store.presence(target, now + 3)).toMatchObject({ state: "ended", instanceId: generation, endReason: "host-process-ended" });
+  expect(store.relayOwner(target, input.transport)).toBeNull();
+  expect(store.database.prepare("SELECT deferred_tool_claim FROM input_observations").get()).toMatchObject({ deferred_tool_claim: 1 });
+
+  const fresh = ensure({ instanceId: replacement }, now + 4);
+  expect(fresh.spawn).toBe(true);
+  expect(activate(fresh.relayId!, { instanceId: replacement }, now + 5)).toBe(true);
+  expect(store.releaseVerifiedRelay({ ...input, relayId: old, pid: 200 }, now + 6)).toBe(false);
+  expect(store.presence(target, now + 6)).toMatchObject({ state: "online", instanceId: replacement });
+  store.send({ messageId: "reused-input-message", sender: { host: "synthetic-peer", sessionId: "sender" }, target, body: "pending" }, now + 7);
+  expect(store.reserveManagedWake({ ...target, instanceId: replacement, transport: input.transport,
+    relayId: fresh.relayId!, nonce: "reused-input-wake-abcdefghijklmnop" }, now + 8).dispatch).toBe(true);
+  store.observeNativeInput(target, now + 9);
+  expect(store.database.prepare("SELECT * FROM input_observations").all()).toMatchObject([
+    { deferred_tool_claim: 1, observed_at: new Date(now + 9).toISOString() },
+  ]);
+  expect(store.claimDeferred(target, now + 10)).toEqual([]);
+  expect(store.claimDeferred(target, now + 11)).toMatchObject([{ messageId: "reused-input-message", deliveryAttempt: 1 }]);
+  expect(store.acknowledge(target, ["reused-input-message"], now + 12)).toBe(1);
+  expect(store.releaseVerifiedRelay({ ...input, instanceId: replacement, relayId: fresh.relayId!, pid: 200 }, now + 13)).toBe(true);
+});
+
 it("releases an old transport without ending the current transport presence", () => {
   const { store, input, ensure, activate } = fixture();
   const old = ensure().relayId!;

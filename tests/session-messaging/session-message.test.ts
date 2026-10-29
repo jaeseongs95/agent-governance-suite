@@ -1698,6 +1698,12 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     });
     expect(core.status, core.stderr).toBe(0);
     expect(core.stdout).toBe("");
+    expect(await readdir(directory)).toEqual([]);
+    const boundary = await runNodeChild([syntheticCoreHookDriver, bundledSessionMessageHook, syntheticRootHost], {
+      env, input: JSON.stringify({ hook_event_name: "PostToolUse", session_id: "synthetic-packaged-session-end", tool_name: "read_file", tool_input: {} }),
+    });
+    expect(boundary.status, boundary.stderr).toBe(0);
+    expect(boundary.stdout).toBe("");
     const relay = await runNodeChild([bundledSessionMessageRelay], { env });
     expect(relay.status, relay.stderr).toBe(2);
     expect(await readdir(directory)).toContain("broker.token");

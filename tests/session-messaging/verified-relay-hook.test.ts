@@ -12,6 +12,8 @@ vi.mock("../../mcp-server/src/process-identity.js", async (original) => ({
 }));
 import { handleSessionMessageHook, runSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import { adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
+import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 
 import type { ActorObservation } from "../../mcp-server/src/input-observation.js";
 
@@ -289,12 +291,44 @@ it("does not spawn a legacy relay after presence registration fails", async () =
   } finally { stderr.mockRestore(); }
 });
 
-it("reports turn-end cleanup failure without blocking or manufacturing a relay", async () => {
+it.each(["codex", "claude-code", "gemini", "antigravity", syntheticHost])("keeps a late %s SessionEnd from mutating current input, delivery or activity", async (host) => {
+  const store = new SessionMessageStore(":memory:");
+  const target = { host, sessionId: input.session_id };
+  const sender = { host: "synthetic-peer", sessionId: "sender" };
+  const now = Date.now() - 1000;
+  f.request.mockImplementation(async (operation, payload) => dispatchSessionMessageBrokerOperation(store, operation, payload));
+  try {
+    store.send({ messageId: "late-end-acked", sender, target, body: "acked" }, now);
+    expect(store.reserveWake(target, "late-end-wake-abcdefghijklmnop", now + 1)).toBe(true);
+    expect(store.claim(target, now + 2).map(message => message.messageId)).toEqual(["late-end-acked"]);
+    expect(store.acknowledge(target, ["late-end-acked"], now + 3)).toBe(1);
+    store.send({ messageId: "late-end-claimed", sender, target, body: "claimed" }, now + 4);
+    expect(store.claim(target, now + 5).map(message => message.messageId)).toEqual(["late-end-claimed"]);
+    store.send({ messageId: "late-end-queued", sender, target, body: "queued" }, now + 6);
+    store.observeNativeInput(target, now + 7);
+    const snapshot = () => Object.fromEntries([
+      "input_observations", "messages", "wake_nonces", "session_activity", "session_presence", "relay_leases",
+    ].map(table => [table, store.database.prepare(`SELECT * FROM ${table}`).all()]));
+    const before = snapshot();
+    expect(await handleSessionMessageHook({ ...input, hook_event_name: "SessionEnd" }, host)).toEqual({});
+    expect(snapshot()).toEqual(before);
+    expect(f.request).not.toHaveBeenCalled();
+    expect(f.spawn).not.toHaveBeenCalled();
+    expect(store.claimDeferred(target, now + 8)).toEqual([]);
+    expect(store.claimDeferred(target, now + 9).map(message => message.messageId)).toEqual(["late-end-queued"]);
+    expect(store.acknowledge(target, ["late-end-claimed", "late-end-queued"], now + 10)).toBe(2);
+  } finally { store.close(); }
+});
+
+it("reports remaining turn-end cleanup failure without blocking or manufacturing a relay", async () => {
   const stderr = vi.spyOn(console, "error").mockImplementation(() => {});
   f.request.mockRejectedValue(Object.assign(new Error("secret-canary"), { code: "ETIMEDOUT" }));
   try {
-    expect(await handleSessionMessageHook({ ...input, hook_event_name: "SessionEnd" }, syntheticHost)).toEqual({});
-    expect(stderr.mock.calls[0]![0]).toContain('"phase":"clear-deferred"');
+    expect(await runSessionMessageHook(syntheticHost, JSON.stringify({ ...input, hook_event_name: "Stop" }))).toBe("");
+    expect(f.request).toHaveBeenCalledTimes(1);
+    expect(f.request.mock.calls[0]![0]).toBe("clear-deferred");
+    expect(stderr.mock.calls[0]![0]).toContain('"phase":"handle"');
+    expect(stderr.mock.calls[0]![0]).toContain('"reason":"ETIMEDOUT"');
     expect(stderr.mock.calls[0]![0]).not.toContain("secret-canary");
     expect(f.spawn).not.toHaveBeenCalled();
   } finally { stderr.mockRestore(); }
