@@ -147,6 +147,9 @@ for (const distribution of ["skills", "claude-plugin/skills"]) {
             assert.deepEqual(normalize(await runInputCli(item.argv, bytes, first + offset)), expected);
           });
         }
+        await t.test("완전한 JSON도 EOF까지 기다린다", async () => {
+          assert.deepEqual(normalize(await runInputCli(item.argv, bytes, bytes.length)), expected);
+        });
         // 시험용 공급기이며 운영체제의 실제 한 바이트 수신을 주장하지 않는다.
         const preload = `import { Readable } from "node:stream";
           const chunks = Readable.from((async function* () { for (const byte of Buffer.from(${JSON.stringify(bytes.toString("base64"))}, "base64")) { yield Buffer.from([byte]); await new Promise(setImmediate); } })(), { objectMode: false });
