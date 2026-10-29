@@ -62,6 +62,6 @@ try {
 
 ## 실패와 검증
 
-관측이 없으면 `BINDING_REQUIRED`와 provider 연결 진단이 반환된다. 서명·입력·binding 변조, 만료, 이미 소비한 관측이나 실행 하한 위반은 `BINDING_INVALID`다. 같은 host/session/agent/turn/call은 다시 서명해도 같은 관측 ID를 사용한다. workflow 상태와 기존 SQLite claim 원장을 유지하며 운영 DB·키를 삭제하지 않는다.
+관측이 없으면 `BINDING_REQUIRED`와 provider 연결 진단이 반환된다. 서명·입력·신원 결속 변조, 만료, 이미 소비한 관측은 `BINDING_INVALID`다. 초기 접수는 검증된 현재 관측을 요구하고 작업 무관 성능 하한은 두지 않는다. 검증된 정상 관측이 실제 단계 하한에 못 미치면 `GATE_FAILED`로 구분한다. 같은 host/session/agent/turn/call은 다시 서명해도 같은 관측 ID를 사용한다. workflow 상태와 기존 SQLite claim 원장을 유지하며 운영 DB·키를 삭제하지 않는다.
 
 source adapter 검사, bundled hook·STDIO fixture, `node_modules` 없는 wrapper import, 실제 설치 Hook의 정상 실행은 서로 다른 검증이다. fixture의 synthetic metadata나 token으로 native host 완주를 입증하지 않는다. 릴리즈·설치 담당자는 최종 통합 tree에서 실제 host 관측과 guarded workflow 완료를 별도로 확인해야 한다.

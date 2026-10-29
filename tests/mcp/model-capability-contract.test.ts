@@ -670,6 +670,14 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     expect(planned.ok).toBe(true);
     expect(planned.data?.bootstrapExecution?.context.reasoningEffort).toBe("low");
     const plan = planned.data!;
+    // 접수의 관측 전용 표현과 실제 단계의 필수 하한은 서로 다른 계약이다.
+    const halfFloor = structuredClone(plan);
+    halfFloor.bootstrapExecution!.requirement.minimumReasoningEffort = "low";
+    expect(() => validator.workflowPlan(halfFloor)).toThrow();
+    const missingStageFloor = structuredClone(plan);
+    missingStageFloor.stages[0]!.executionRequirement!.minimumModelClass = null;
+    missingStageFloor.stages[0]!.executionRequirement!.minimumReasoningEffort = null;
+    expect(() => validator.workflowPlan(missingStageFloor)).toThrow();
     const frame: ConvergenceFrameV1 = {
       schemaVersion: "1.0.0",
       workspace: { workspaceId: "capability-stage-floor", locator: "tests/mcp/model-capability-contract.test.ts" },
