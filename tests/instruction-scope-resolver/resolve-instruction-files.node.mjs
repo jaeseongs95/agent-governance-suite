@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, rm, stat, symlink, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -194,4 +194,29 @@ test("common and explicit adapter CLIs select their own policy", async (t) => {
     assert.equal(reply.ok, true);
     assert.equal(path.basename(reply.output.instructionFileManifest[0].path), selected);
   }
+});
+
+test("Claude overlay keeps instruction-scope-resolver confined to authorized workspace instructionRoots and externalPolicyRefs", async () => {
+  const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+  const adaptation = JSON.parse(await readFile(path.join(repoRoot, "claude-overlay/adaptations/instruction-scope-resolver.json"), "utf8"));
+  const overlayRef = await readFile(path.join(repoRoot, "claude-overlay/skills/instruction-scope-resolver/references/claude-code-instructions.md"), "utf8");
+  const generatedSkill = await readFile(path.join(repoRoot, "claude-plugin/skills/instruction-scope-resolver/SKILL.md"), "utf8");
+  const generatedRef = await readFile(path.join(repoRoot, "claude-plugin/skills/instruction-scope-resolver/references/claude-code-instructions.md"), "utf8");
+
+  assert.equal(generatedRef, overlayRef);
+  for (const text of [adaptation.replacements[0].replace, overlayRef, generatedSkill]) {
+    assert.match(text, /instructionRoots/u);
+    assert.match(text, /externalPolicyRefs/u);
+  }
+  assert.doesNotMatch(adaptation.replacements[0].replace, /이 확인을 하지 않았으면 `PASS`로 판정하지 않고 `ANALYSIS_REQUIRED`를 유지한다/u);
+  for (const forbidden of [
+    "C:\\Program Files\\ClaudeCode\\CLAUDE.md",
+    "/Library/Application Support/ClaudeCode/CLAUDE.md",
+    "/etc/claude-code/CLAUDE.md",
+    "1. 조직 정책:",
+    "2. 사용자: `~/.claude/CLAUDE.md`",
+  ]) {
+    assert.equal(overlayRef.includes(forbidden), false, `unexpected host-global exploration mandate: ${forbidden}`);
+  }
+  assert.match(overlayRef, /허용된 `instructionRoots` 밖을 가리키는 `@path` import나 외부 symlink·junction은 따라가지 않고/u);
 });
