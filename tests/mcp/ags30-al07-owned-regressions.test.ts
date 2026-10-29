@@ -188,13 +188,23 @@ describe("AGS30 AL07 owned regressions", () => {
     const clean = snapshot(); expect(provider.importFixture({ snapshotJson: clean, sourceDigest: fixtureDigest(clean), intentId: "public-signature" }).state).toBe("COMPLETE");
   });
   it("AGS-D-0228/0236: missing records differ from actual epoch inconsistency and a valid continuity CAS reaches the branch", () => {
-    const authority = keep(new InactiveUnifiedAuthority({ directory: directory(), mode: "fixture-only", clock: () => 100 })); const provider = createProviderAdapter(authority, scopeA);
+    let now = 100;
+    const authority = keep(new InactiveUnifiedAuthority({ directory: directory(), mode: "fixture-only", clock: () => now })); const provider = createProviderAdapter(authority, scopeA);
     const absent = { ...workflowRef, key: { run_id: "absent" } };
-    expect(() => provider.commit(absent, { expectedRevision: 4, lease: { generation: 1, owner: "fixture-owner" }, row: { ...nextWorkflowRow(), run_id: "absent" }, intentId: "missing-record", receiptId: "missing-receipt" })).toThrow(expect.objectContaining({ code: "STALE_REVISION" }));
+    expect(() => provider.claim(absent, { expectedRevision: 4, owner: "fixture-owner", ttlMs: 100 })).toThrow(expect.objectContaining({ code: "RECORD_NOT_FOUND" }));
+    expect(() => provider.commit(absent, { expectedRevision: 4, lease: { generation: 1, owner: "fixture-owner" }, row: { ...nextWorkflowRow(), run_id: "absent" }, intentId: "missing-record", receiptId: "missing-receipt" })).toThrow(expect.objectContaining({ code: "RECORD_NOT_FOUND" }));
     const json = snapshot(); provider.importFixture({ snapshotJson: json, sourceDigest: fixtureDigest(json), intentId: "seed" });
-    const entry = records()[2]; const ref = reference(entry); const lease = provider.claim(ref, { expectedRevision: 7, owner: "continuity-owner", ttlMs: 1000 });
+    const entry = records()[2]; const ref = reference(entry);
     const next = { ...entry.row, revision: 8, snapshot_json: '{"source":"direct","revision":8}' };
+    expect(() => provider.commit(ref, { expectedRevision: 7, lease: { generation: 1, owner: "continuity-owner" }, row: next, intentId: "missing-lease", receiptId: "missing-lease-receipt" })).toThrow(expect.objectContaining({ code: "LEASE_REQUIRED" }));
+    const shortLease = provider.claim(ref, { expectedRevision: 7, owner: "continuity-owner", ttlMs: 50 });
+    expect(() => provider.commit(ref, { expectedRevision: 7, lease: { ...shortLease, owner: "other-owner" }, row: next, intentId: "lease-owner-mismatch", receiptId: "owner-mismatch-receipt" })).toThrow(expect.objectContaining({ code: "LEASE_CONFLICT" }));
+    now = 200;
+    expect(() => provider.commit(ref, { expectedRevision: 7, lease: shortLease, row: next, intentId: "lease-expired", receiptId: "lease-expired-receipt" })).toThrow(expect.objectContaining({ code: "LEASE_EXPIRED" }));
+    const lease = provider.claim(ref, { expectedRevision: 7, owner: "continuity-owner", ttlMs: 1000 });
+    expect(() => provider.commit(ref, { expectedRevision: 7, lease: shortLease, row: next, intentId: "lease-generation-mismatch", receiptId: "gen-mismatch-receipt" })).toThrow(expect.objectContaining({ code: "LEASE_CONFLICT" }));
     expect(provider.commit(ref, { expectedRevision: 7, lease, row: next, intentId: "continuity-cas", receiptId: "continuity-receipt" }).applied).toBe(true); expect(provider.read(ref).epoch).toBe(2);
+    expect(() => provider.commit(ref, { expectedRevision: 7, lease, row: next, intentId: "stale-revision-commit", receiptId: "stale-revision-receipt" })).toThrow(expect.objectContaining({ code: "STALE_REVISION" }));
     const raw = new DatabaseSync(authority.databasePath); try { raw.prepare("UPDATE records SET epoch=3 WHERE table_name='continuity_snapshots'").run(); } finally { raw.close(); }
     const fresh = provider.claim(ref, { expectedRevision: 8, owner: "continuity-owner", ttlMs: 1000 });
     expect(() => provider.commit(ref, { expectedRevision: 8, lease: fresh, row: { ...next, revision: 9 }, intentId: "epoch-inconsistent", receiptId: "epoch-receipt" })).toThrow(expect.objectContaining({ code: "EPOCH_CHANGE_UNSUPPORTED" }));

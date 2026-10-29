@@ -223,7 +223,8 @@ export class InactiveUnifiedAuthority {
     const identity = this.#identity(scope, ref);
     return this.#observedTimeTransaction((now) => {
       const record = this.#row(scope, ref);
-      need(record?.revision === expectedRevision, "STALE_REVISION", "Claim requires the current revision.");
+      need(record, "RECORD_NOT_FOUND", "Claim requires an existing current record.");
+      need(record.revision === expectedRevision, "STALE_REVISION", "Claim requires the current revision.");
       const lease = this.#database.prepare("SELECT * FROM leases WHERE scope_key=? AND module=? AND source_id=? AND table_name=? AND key_json=?").get(...identity);
       if (lease && lease.expires_ms > now) return lease.owner === owner ? { generation: lease.generation, owner, expiresMs: lease.expires_ms } : null;
       const generation = (lease?.generation ?? 0) + 1;
@@ -253,21 +254,26 @@ export class InactiveUnifiedAuthority {
         return { applied: false, receipt: this.#receipt(scope, intentId) };
       }
       const record = this.#row(scope, ref);
-      need(record, "STALE_REVISION", "Commit requires an existing current record.");
+      need(record, "RECORD_NOT_FOUND", "Commit requires an existing current record.");
       need(record.epoch === normalized.epoch, "EPOCH_CHANGE_UNSUPPORTED", "Epoch/correlation changes require a separate approved migration/rebind contract.");
+      need(record.revision === expectedRevision, "STALE_REVISION", "Commit requires the current revision.");
+      const currentLease = this.#database.prepare("SELECT * FROM leases WHERE scope_key=? AND module=? AND source_id=? AND table_name=? AND key_json=?").get(...identity);
+      need(currentLease, "LEASE_REQUIRED", "Commit requires an existing lease for the record.");
+      need(currentLease.generation === lease.generation && currentLease.owner === lease.owner, "LEASE_CONFLICT", "Commit requires the current lease generation and owner.");
+      need(currentLease.expires_ms > now, "LEASE_EXPIRED", "Commit requires an unexpired lease.");
       const update = this.#database.prepare(`UPDATE records SET revision=?,payload_digest=?,row_json=?
         WHERE scope_key=? AND module=? AND source_id=? AND table_name=? AND key_json=? AND revision=?
         AND EXISTS(SELECT 1 FROM leases WHERE scope_key=? AND module=? AND source_id=? AND table_name=? AND key_json=? AND generation=? AND owner=? AND expires_ms>?)`)
         .run(normalized.revision, normalized.payloadDigest, normalized.rowJson, ...identity, expectedRevision, ...identity, lease.generation, lease.owner, now);
       // A rejected write still commits the observed authority time, so a clock rollback cannot revive an expired lease.
-      if (update.changes !== 1) return { rejected: true };
+      if (update.changes !== 1) return { rejected: true, code: "LEASE_CONFLICT", message: "Current revision and unexpired lease generation must match." };
       this.#database.prepare("INSERT INTO record_history VALUES (?,?,?,?,?,?,?,?,?)").run(...identity, normalized.revision, normalized.epoch, normalized.payloadDigest, normalized.rowJson);
       const storedResult = JSON.stringify({ revision: normalized.revision, payloadDigest: normalized.payloadDigest });
       this.#database.prepare("INSERT INTO write_intents VALUES (?,?,?,?,'UNKNOWN',?)").run(scope, intentId, commandDigest, receiptId, storedResult);
       this.#fault("after-effect-before-receipt-commit");
       return { applied: true, receipt: this.#receipt(scope, intentId) };
     });
-    need(!result.rejected, "STALE_REVISION_OR_LEASE", "Current revision and unexpired lease generation must match.");
+    need(!result.rejected, result.code ?? "LEASE_CONFLICT", result.message ?? "Current revision and unexpired lease generation must match.");
     this.#fault("after-commit-before-response");
     return result;
   }

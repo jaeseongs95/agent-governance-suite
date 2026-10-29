@@ -145,16 +145,22 @@ describe("비활성 단일 SQLite authority/provider 후보", () => {
   }, 15000);
   it("B-CASE-07: stale revision/generation and expiry boundary are rejected; a backwards clock cannot revive expiry", () => {
     let now = 1000; const value = authority(directory(), { clock: () => now }); const provider = createProviderAdapter(value, scopeA); importAll(provider);
+    const absentRef = { ...workflowRef, key: { run_id: "absent-run" } };
+    assertCode(() => provider.claim(absentRef, { expectedRevision: 4, owner: "absent-owner", ttlMs: 100 }), "RECORD_NOT_FOUND");
+    assertCode(() => provider.commit(absentRef, { expectedRevision: 4, lease: { generation: 1, owner: "absent-owner" }, row: { ...nextWorkflowRow(), run_id: "absent-run" }, intentId: "absent-commit", receiptId: "absent-receipt" }), "RECORD_NOT_FOUND");
+    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease: { generation: 1, owner: "unleased-owner" }, row: nextWorkflowRow(), intentId: "missing-lease", receiptId: "missing-lease-receipt" }), "LEASE_REQUIRED");
     const first = provider.claim(workflowRef, { expectedRevision: 4, owner: "same-owner", ttlMs: 100 });
+    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease: { ...first, owner: "wrong-owner" }, row: nextWorkflowRow(), intentId: "wrong-owner", receiptId: "wrong-owner-receipt" }), "LEASE_CONFLICT");
     now = 1100;
-    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease: first, row: nextWorkflowRow(), intentId: "expired", receiptId: "expired-receipt" }), "STALE_REVISION_OR_LEASE");
+    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease: first, row: nextWorkflowRow(), intentId: "expired", receiptId: "expired-receipt" }), "LEASE_EXPIRED");
     now = 900;
-    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease: first, row: nextWorkflowRow(), intentId: "clock-back", receiptId: "clock-back-receipt" }), "STALE_REVISION_OR_LEASE");
+    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease: first, row: nextWorkflowRow(), intentId: "clock-back", receiptId: "clock-back-receipt" }), "LEASE_EXPIRED");
     now = 1200;
     const second = provider.claim(workflowRef, { expectedRevision: 4, owner: "same-owner", ttlMs: 1000 });
     expect(second.generation).toBe(2);
-    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease: first, row: nextWorkflowRow(), intentId: "stale-generation", receiptId: "stale-receipt" }), "STALE_REVISION_OR_LEASE");
+    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease: first, row: nextWorkflowRow(), intentId: "stale-generation", receiptId: "stale-receipt" }), "LEASE_CONFLICT");
     expect(provider.commit(workflowRef, { expectedRevision: 4, lease: second, row: nextWorkflowRow(), intentId: "valid", receiptId: "valid-receipt" }).applied).toBe(true);
+    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease: second, row: nextWorkflowRow(), intentId: "stale-commit-revision", receiptId: "stale-commit-receipt" }), "STALE_REVISION");
     assertCode(() => provider.claim(workflowRef, { expectedRevision: 4, owner: "stale-revision", ttlMs: 100 }), "STALE_REVISION");
     expect(provider.history(workflowRef).map((row) => row.revision)).toEqual([4, 5]);
     expect(provider.receipt("stale-generation")).toBeNull();
@@ -220,10 +226,10 @@ describe("비활성 단일 SQLite authority/provider 후보", () => {
     const rejecting = authority(dir, { clock: () => 200 }); const rejectingProvider = createProviderAdapter(rejecting, scopeA);
     assertCode(() => rejectingProvider.claim(workflowRef, { expectedRevision: reason === "stale-revision" ? 99 : 4, owner: "clock-other", ttlMs: reason === "expiry-overflow" ? Number.MAX_SAFE_INTEGER : 10 }), reason === "stale-revision" ? "STALE_REVISION" : "INVALID_INPUT");
     close(rejecting); now = 105;
-    assertCode(() => firstProvider.commit(workflowRef, { expectedRevision: 4, lease, row: nextWorkflowRow(), intentId: "rejected-clock-late", receiptId: "rejected-clock-receipt" }), "STALE_REVISION_OR_LEASE");
+    assertCode(() => firstProvider.commit(workflowRef, { expectedRevision: 4, lease, row: nextWorkflowRow(), intentId: "rejected-clock-late", receiptId: "rejected-clock-receipt" }), "LEASE_EXPIRED");
     close(first);
     const reopened = authority(dir, { clock: () => 105 }); const provider = createProviderAdapter(reopened, scopeA);
-    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease, row: nextWorkflowRow(), intentId: "restart-clock-late", receiptId: "restart-clock-receipt" }), "STALE_REVISION_OR_LEASE");
+    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease, row: nextWorkflowRow(), intentId: "restart-clock-late", receiptId: "restart-clock-receipt" }), "LEASE_EXPIRED");
     expect(provider.read(workflowRef).revision).toBe(4); expect(provider.history(workflowRef)).toHaveLength(1); expect(provider.receipt("rejected-clock-late")).toBeNull();
     expect(reopened.inspect().counts.write_intents).toBe(0);
     report(`clock-domain-rejection-${reason}`, { observedTimes: [100, 200, 105], lease, counts: reopened.inspect().counts });
@@ -234,7 +240,7 @@ describe("비활성 단일 SQLite authority/provider 후보", () => {
     const result = child("clock-rejection", dir, "unused"); expect(result.error).toBeUndefined(); expect(result.status).toBe(0);
     const actual = JSON.parse(result.stdout.trim()); expect(actual).toEqual({ rejection: "STALE_REVISION", observedTimes: [200], revision: 4 });
     const value = authority(dir, { clock: () => 105 }); const provider = createProviderAdapter(value, scopeA);
-    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease, row: nextWorkflowRow(), intentId: "cross-process-late", receiptId: "cross-process-receipt" }), "STALE_REVISION_OR_LEASE");
+    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease, row: nextWorkflowRow(), intentId: "cross-process-late", receiptId: "cross-process-receipt" }), "LEASE_EXPIRED");
     expect(provider.read(workflowRef).revision).toBe(4); expect(provider.receipt("cross-process-late")).toBeNull();
     report("clock-rejected-other-process", { childExit: result.status, actual, expiredWriteRejected: true });
   });
@@ -274,7 +280,7 @@ describe("비활성 단일 SQLite authority/provider 후보", () => {
     expect(results.map((result) => result.observedTimes[0]).sort((left, right) => left - right)).toEqual([105, 200]);
     expect(results.every((result) => result.rejection === "STALE_REVISION" && result.revision === 4)).toBe(true);
     const value = authority(dir, { clock: () => 105 }); const provider = createProviderAdapter(value, scopeA);
-    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease, row: nextWorkflowRow(), intentId: "concurrent-clock-late", receiptId: "concurrent-clock-receipt" }), "STALE_REVISION_OR_LEASE");
+    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease, row: nextWorkflowRow(), intentId: "concurrent-clock-late", receiptId: "concurrent-clock-receipt" }), "LEASE_EXPIRED");
     expect(provider.read(workflowRef).revision).toBe(4); expect(provider.receipt("concurrent-clock-late")).toBeNull();
     report("concurrent-clock-rejections", { results, expiredWriteRejected: true });
   }, 15000);
@@ -291,7 +297,7 @@ describe("비활성 단일 SQLite authority/provider 후보", () => {
     rejectDomain = false;
     expect(provider.read(longRef).revision).toBe(4); expect(provider.history(longRef)).toHaveLength(1); expect(provider.receipt("domain-rejected-write")).toBeNull();
     now = 105;
-    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease: expired, row: nextWorkflowRow(), intentId: "domain-clock-late", receiptId: "domain-clock-late-receipt" }), "STALE_REVISION_OR_LEASE");
+    assertCode(() => provider.commit(workflowRef, { expectedRevision: 4, lease: expired, row: nextWorkflowRow(), intentId: "domain-clock-late", receiptId: "domain-clock-late-receipt" }), "LEASE_EXPIRED");
     expect(value.inspect().counts.record_history).toBe(8); expect(value.inspect().counts.write_intents).toBe(0);
     report("clock-domain-write-rollback", { effectRevision: provider.read(longRef).revision, receipt: provider.receipt("domain-rejected-write"), expiredWriteRejected: true });
   });
