@@ -34,21 +34,25 @@ it.each(["ungated", "rotating"] as const)("preserves admitted request outcomes a
     child.send({config: readDiagnosticConfig(JSON.stringify({level: "TRACE", destination: "file",
       file: path.join(directory, "safe"), rotationIntervalMs: 1000, flushDeadlineMs: 1000})), instance: "fixture"});
     await received(message => message.ready === true, 3000);
-    const sendOutcome = async (id: number, outcome: string) => {
+    const sendOutcome = (id: number, outcome: string) => {
       child.send({id, category: "request", level: "INFO", fields: {event: "request_end", outcome, fixtureSequence: id}});
-      await received(message => message.ack === id);
     };
-    await sendOutcome(1, "success");
+    sendOutcome(1, "success");
+    await received(message => message.ack === 1);
     if (mode === "rotating") {
       const held = await received(message => message.fixture === "rotation-open-held", 3000);
       expect(held).toMatchObject({error: null});
     }
-    await sendOutcome(2, "rejected");
+    sendOutcome(2, "rejected");
     if (mode === "rotating") {
+      // 입력 도착은 기록 완료가 아니다. ACK가 회전 후에 와도 gate를 풀 수 있어야 한다.
+      await received(message => message.fixture === "rotation-input-arrived" && message.id === 2);
       await writeFile(path.join(directory, "release-open"), "1", "utf8");
       await received(message => message.fixture === "rotation-open-released");
     }
-    await sendOutcome(3, "thrown");
+    await received(message => message.ack === 2);
+    sendOutcome(3, "thrown");
+    await received(message => message.ack === 3);
     child.send({close: true});
     let closeTimer: ReturnType<typeof setTimeout> | undefined;
     let code: number | null;
