@@ -19,7 +19,10 @@ const UNKNOWN_EFFORT = "미확인";
 const UUID_SOURCE = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 const THREAD_ID = new RegExp(`^${UUID_SOURCE}$`);
 const THREAD_LINK = new RegExp(`^codex://threads/(${UUID_SOURCE})$`);
+const UUID_IN_TEXT = new RegExp(UUID_SOURCE, "gi");
 const UUID_LIKE = /^[0-9a-fA-F-]{32,40}$/;
+const REPORT_META = Symbol.for("codex-token-usage-analyzer.report-meta");
+const INDEX_META = Symbol.for("codex-token-usage-analyzer.index-meta");
 const PROJECT_LABEL = /^(?<name>.+?)\s+프로젝트$/iu;
 const PROJECT_USAGE_REQUEST = /^(?<name>.+?)\s+프로젝트(?:의)?\s+(?:전체\s+)?(?:(?:token|토큰)\s+)?사용량(?:을|를)?\s+집계(?:해\s*줘|해줘|해\s*주세요|해주세요|해|하라)?[.!?]?$/iu;
 const BAD_FILENAME = /[<>:"/\\|?*\u0000-\u001f]/g;
@@ -104,9 +107,31 @@ async function jsonlFiles(root) {
 
 export async function indexSessions(root) {
   const index = new Map();
+  const inaccessibleThreads = new Set();
+  let unidentifiedInaccessibleFiles = 0;
   for (const file of await jsonlFiles(root)) {
-    const item = await metadata(file);
-    if (!item) continue;
+    const fileIds = [...path.basename(file, ".jsonl").matchAll(UUID_IN_TEXT)].map((match) => match[0].toLowerCase());
+    let item = null;
+    try {
+      item = await metadata(file);
+    } catch {
+      item = null;
+    }
+    if (!item) {
+      const discoveredIds = new Set(fileIds);
+      try {
+        for await (const [, record] of records(file)) {
+          const candidate = pick(record?.payload, "id", "thread_id", "threadId", "session_id");
+          if (typeof candidate === "string" && THREAD_ID.test(candidate)) discoveredIds.add(candidate.toLowerCase());
+        }
+      } catch { /* Keep file-level inaccessibility recorded even when stream reading fails. */ }
+      if (discoveredIds.size > 0) {
+        for (const discoveredId of discoveredIds) inaccessibleThreads.add(discoveredId);
+      } else {
+        unidentifiedInaccessibleFiles += 1;
+      }
+      continue;
+    }
     const old = index.get(item.id);
     if (!old) {
       index.set(item.id, item);
@@ -118,6 +143,12 @@ export async function indexSessions(root) {
     old.title ||= item.title;
     old.cwd ||= item.cwd;
   }
+  for (const id of index.keys()) inaccessibleThreads.delete(id);
+  Object.defineProperty(index, INDEX_META, {
+    value: { inaccessibleThreads, unidentifiedInaccessibleFiles },
+    enumerable: false,
+    configurable: true
+  });
   return index;
 }
 
@@ -184,35 +215,48 @@ export function matchProject(query, roots) {
   const sessions = [...roots.values()];
   const exact = sessions.filter((session) => session.cwd && projectPathKey(session.cwd) === projectPathKey(normalized));
   const matches = exact.length ? exact : sessions.filter((session) => session.cwd && projectNameMatches(normalized, session.cwd));
-  if (!matches.length) return { roots: [], label: null, error: null };
+  if (!matches.length) return { roots: [], label: null, error: null, reason: null };
   const paths = new Map();
   for (const session of matches) {
     const cwd = trimSeparators(session.cwd);
     paths.set(projectPathKey(cwd), cwd);
   }
-  if (paths.size > 1) return { roots: [], label: null, error: "같은 마지막 폴더명을 가진 프로젝트가 여러 개입니다. 전체 경로를 입력하세요." };
-  return { roots: matches.map((session) => session.id).sort(), label: paths.values().next().value, error: null };
+  if (paths.size > 1) return { roots: [], label: null, error: "같은 마지막 폴더명을 가진 프로젝트가 여러 개입니다. 전체 경로를 입력하세요.", reason: "ambiguous_target" };
+  return { roots: matches.map((session) => session.id).sort(), label: paths.values().next().value, error: null, reason: null };
 }
 
 export function resolveDetailed(query, index) {
   const cleaned = query.trim();
   const id = directId(cleaned);
-  if (id) return index.has(id) ? { resolution: { roots: [id], kind: "thread", label: id }, error: null } : { resolution: null, error: "대상 thread의 session metadata 또는 로그에 접근할 수 없습니다." };
-  if (cleaned.startsWith("codex://threads/") || UUID_LIKE.test(cleaned)) return { resolution: null, error: "thread ID 또는 codex://threads 딥링크 형식이 올바르지 않습니다." };
+  if (id) {
+    if (index.has(id)) return { resolution: { roots: [id], kind: "thread", label: id }, error: null, reason: null, verdict: null };
+    const indexMeta = index?.[INDEX_META];
+    const inaccessible = Boolean(indexMeta && (indexMeta.inaccessibleThreads.has(id) || indexMeta.unidentifiedInaccessibleFiles > 0));
+    return inaccessible
+      ? { resolution: null, error: "대상 thread의 session metadata 또는 로그에 접근할 수 없습니다.", reason: "inaccessible_target", verdict: "BLOCKED" }
+      : { resolution: null, error: "입력한 thread ID와 일치하는 세션을 찾지 못했습니다.", reason: "not_found", verdict: "NEEDS_INPUT" };
+  }
+  if (cleaned.startsWith("codex://threads/") || UUID_LIKE.test(cleaned)) {
+    return { resolution: null, error: "thread ID 또는 codex://threads 딥링크 형식이 올바르지 않습니다.", reason: "invalid_target_format", verdict: "NEEDS_INPUT" };
+  }
 
   const roots = new Map([...index].filter(([, session]) => session.parent === null));
   const explicitProject = explicitProjectName(cleaned);
   if (explicitProject) {
     const project = matchProject(explicitProject, roots);
-    if (project.error) return { resolution: null, error: project.error };
-    return project.roots.length ? { resolution: { roots: project.roots, kind: "project", label: project.label }, error: null } : { resolution: null, error: "입력한 프로젝트명과 일치하는 최상위 thread를 찾지 못했습니다." };
+    if (project.error) return { resolution: null, error: project.error, reason: project.reason ?? "ambiguous_target", verdict: "NEEDS_INPUT" };
+    return project.roots.length
+      ? { resolution: { roots: project.roots, kind: "project", label: project.label }, error: null, reason: null, verdict: null }
+      : { resolution: null, error: "입력한 프로젝트명과 일치하는 최상위 thread를 찾지 못했습니다.", reason: "not_found", verdict: "NEEDS_INPUT" };
   }
 
   const titled = [...roots.values()].filter((session) => session.title === cleaned).map((session) => session.id).sort();
-  if (titled.length) return { resolution: { roots: titled, kind: "title", label: cleaned }, error: null };
+  if (titled.length) return { resolution: { roots: titled, kind: "title", label: cleaned }, error: null, reason: null, verdict: null };
   const project = matchProject(cleaned, roots);
-  if (project.error) return { resolution: null, error: project.error };
-  return project.roots.length ? { resolution: { roots: project.roots, kind: "project", label: project.label }, error: null } : { resolution: null, error: "입력한 세션 제목 또는 프로젝트명과 일치하는 최상위 thread를 찾지 못했습니다." };
+  if (project.error) return { resolution: null, error: project.error, reason: project.reason ?? "ambiguous_target", verdict: "NEEDS_INPUT" };
+  return project.roots.length
+    ? { resolution: { roots: project.roots, kind: "project", label: project.label }, error: null, reason: null, verdict: null }
+    : { resolution: null, error: "입력한 세션 제목 또는 프로젝트명과 일치하는 최상위 thread를 찾지 못했습니다.", reason: "not_found", verdict: "NEEDS_INPUT" };
 }
 
 export function tree(root, index) {
@@ -320,6 +364,29 @@ function reconcileResult(result) {
   if (result.values.input_tokens !== null && result.values.output_tokens !== null && result.values.total_tokens !== null && result.values.total_tokens !== result.values.input_tokens + result.values.output_tokens) result.partialReasons.add("thread total_tokens와 Input + Output 불일치");
 }
 
+function validateTotalTokenUsage(source, result) {
+  const invalid = new Set();
+  for (const name of FIELDS) {
+    if (!validCounter(source[name])) {
+      invalid.add(name);
+      result.partialReasons.add(`${name} 누락 또는 잘못된 값`);
+    }
+  }
+  if (!["input_tokens", "output_tokens", "total_tokens"].some((name) => invalid.has(name)) && source.total_tokens !== source.input_tokens + source.output_tokens) {
+    invalid.add("total_tokens");
+    result.partialReasons.add("total_tokens와 Input + Output 불일치");
+  }
+  if (!["input_tokens", "cached_input_tokens"].some((name) => invalid.has(name)) && source.cached_input_tokens > source.input_tokens) {
+    invalid.add("cached_input_tokens");
+    result.partialReasons.add("Cache input이 Input보다 큼");
+  }
+  if (!["output_tokens", "reasoning_output_tokens"].some((name) => invalid.has(name)) && source.reasoning_output_tokens > source.output_tokens) {
+    invalid.add("reasoning_output_tokens");
+    result.partialReasons.add("Reasoning output이 Output보다 큼");
+  }
+  return invalid;
+}
+
 function analyzeModern(result, events) {
   const contexts = new Map();
   for (const event of events) {
@@ -352,7 +419,7 @@ function analyzeModern(result, events) {
     if (record.type === "event_msg" && payload && typeof payload === "object" && payload.type === "token_count") {
       const total = payload.info && typeof payload.info === "object" && payload.info.total_token_usage && typeof payload.info.total_token_usage === "object" ? payload.info.total_token_usage : {};
       const last = payload.info && typeof payload.info === "object" && payload.info.last_token_usage && typeof payload.info.last_token_usage === "object" ? payload.info.last_token_usage : {};
-      if (!FIELDS.every((name) => validCounter(total[name]))) continue;
+      if (validateTotalTokenUsage(total, result).size > 0) continue;
       const current = Object.fromEntries(FIELDS.map((name) => [name, total[name]]));
       const unchanged = previousTokenCount && FIELDS.every((name) => previousTokenCount[name] === current[name]);
       previousTokenCount = current;
@@ -570,12 +637,31 @@ function reportShell(verdict, message, target = { kind: "unknown", label: "", ro
   };
 }
 
-export function needsInputReport(message, targetText = "") {
-  return reportShell("NEEDS_INPUT", message, { kind: "unknown", label: targetText, rootThreadIds: [] });
+function withReportMeta(report, meta) {
+  if (meta && typeof meta === "object") {
+    Object.defineProperty(report, REPORT_META, { value: meta, enumerable: false, configurable: true });
+  }
+  return report;
 }
 
-export function blockedReport(message, targetText = "") {
-  return reportShell("BLOCKED", message, { kind: "unknown", label: targetText, rootThreadIds: [] });
+export function getReportMeta(report) {
+  return report?.[REPORT_META] ?? null;
+}
+
+export function needsInputReport(message, targetText = "", meta = null) {
+  const reason = meta?.reason ?? (message.includes("형식이 올바르지 않습니다") ? "invalid_target_format" : message.includes("여러 개입니다") ? "ambiguous_target" : "not_found");
+  const code = meta?.code ?? (reason === "not_found" ? "RUN_NOT_FOUND" : "INVALID_INPUT");
+  return withReportMeta(
+    reportShell("NEEDS_INPUT", message, { kind: "unknown", label: targetText, rootThreadIds: [] }),
+    { ...meta, reason, code }
+  );
+}
+
+export function blockedReport(message, targetText = "", meta = null) {
+  return withReportMeta(
+    reportShell("BLOCKED", message, { kind: "unknown", label: targetText, rootThreadIds: [] }),
+    meta ? { ...meta } : null
+  );
 }
 
 export function buildReport(resolution, results) {
@@ -647,19 +733,37 @@ export function codexPaths(environment = process.env) {
 export async function analyzeRequest(request, options = {}) {
   const locations = options.locations ?? codexPaths(options.environment);
   try {
-    if (!(await stat(locations.sessionsRoot)).isDirectory()) return blockedReport("세션 로그 경로에 접근할 수 없습니다.", request.target);
-  } catch {
-    return blockedReport("세션 로그 경로에 접근할 수 없습니다.", request.target);
+    const stats = await stat(locations.sessionsRoot);
+    if (!stats.isDirectory()) {
+      return blockedReport("세션 로그 경로에 접근할 수 없습니다 (ENOTDIR): 디렉터리가 아닙니다.", request.target, { causeCode: "ENOTDIR" });
+    }
+  } catch (error) {
+    const causeCode = typeof error?.code === "string" && error.code ? error.code : null;
+    const codePart = causeCode ? ` (${causeCode})` : "";
+    return blockedReport(
+      `세션 로그 경로에 접근할 수 없습니다${codePart}: ${error instanceof Error ? error.message : String(error)}`,
+      request.target,
+      causeCode ? { causeCode } : null
+    );
   }
   let index;
   try {
     index = await indexSessions(locations.sessionsRoot);
     for (const [id, title] of await loadTitles(locations.indexFile)) if (index.has(id)) index.get(id).title = title;
   } catch (error) {
-    return blockedReport(`세션 로그를 읽을 수 없습니다: ${error instanceof Error ? error.message : String(error)}`, request.target);
+    const causeCode = typeof error?.code === "string" && error.code ? error.code : null;
+    return blockedReport(
+      `세션 로그를 읽을 수 없습니다: ${error instanceof Error ? error.message : String(error)}`,
+      request.target,
+      causeCode ? { causeCode } : null
+    );
   }
-  const { resolution, error } = resolveDetailed(request.target, index);
-  if (error) return needsInputReport(error, request.target);
+  const { resolution, error, reason, verdict } = resolveDetailed(request.target, index);
+  if (error) {
+    return verdict === "BLOCKED"
+      ? blockedReport(error, request.target, reason ? { reason } : null)
+      : needsInputReport(error, request.target, reason ? { reason } : null);
+  }
   const identifiers = [];
   const seen = new Set();
   const cycleRoots = new Set();
@@ -672,7 +776,15 @@ export async function analyzeRequest(request, options = {}) {
     }
   }
   const results = [];
-  for (const id of identifiers) results.push(await analyze(index.get(id)));
+  try {
+    for (const id of identifiers) results.push(await analyze(index.get(id)));
+  } catch (error) {
+    const causeCode = typeof error?.code === "string" && error.code ? error.code : null;
+    return blockedReport("대상 thread의 session metadata 또는 로그에 접근할 수 없습니다.", request.target, {
+      reason: "inaccessible_target",
+      ...(causeCode ? { causeCode } : {})
+    });
+  }
   const byId = new Map(results.map((result) => [result.session.id, result]));
   for (const id of cycleRoots) byId.get(id)?.partialReasons.add("parent thread 관계 순환");
   return buildReport(resolution, results);

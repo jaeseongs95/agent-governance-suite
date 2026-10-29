@@ -197,4 +197,163 @@ describe("codex-token-usage-analyzer integration", () => {
       process.exitCode = previousExitCode;
     }
   });
+
+  it("distinguishes ambiguous project targets, invalid thread formats, missing targets, and inaccessible target metadata (AGS-D-0221)", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "suite-token-d0221-"));
+    temporaryDirectories.push(directory);
+    const sessionsRoot = path.join(directory, "sessions");
+    await mkdir(sessionsRoot);
+    const secondThreadId = "22222222-2222-2222-2222-222222222222";
+    const brokenThreadId = "33333333-3333-3333-3333-333333333333";
+    const missingThreadId = "99999999-9999-9999-9999-999999999999";
+    const usage = { input_tokens: 10, cached_input_tokens: 3, cache_write_input_tokens: 0, output_tokens: 2, reasoning_output_tokens: 1, total_tokens: 12 };
+
+    await writeFile(
+      path.join(sessionsRoot, `rollout-${threadId}.jsonl`),
+      `${[
+        { type: "session_meta", payload: { id: threadId, title: "첫 세션", cwd: "D:\\work\\alpha\\app" } },
+        { timestamp: "2026-01-01T00:00:00Z", type: "turn_context", payload: { turn_id: "turn-1", model: "gpt-test", effort: "high" } },
+        { timestamp: "2026-01-01T00:00:01Z", type: "token_usage_record", payload: { thread_id: threadId, turn_id: "turn-1", response_id: "resp-1", usage, turn_token_usage: usage, thread_token_usage: usage } }
+      ].map(JSON.stringify).join("\n")}\n`,
+      "utf8"
+    );
+    await writeFile(
+      path.join(sessionsRoot, `rollout-${secondThreadId}.jsonl`),
+      `${[
+        { type: "session_meta", payload: { id: secondThreadId, title: "둘째 세션", cwd: "D:\\work\\beta\\app" } },
+        { timestamp: "2026-01-01T00:00:00Z", type: "turn_context", payload: { turn_id: "turn-2", model: "gpt-test", effort: "high" } },
+        { timestamp: "2026-01-01T00:00:01Z", type: "token_usage_record", payload: { thread_id: secondThreadId, turn_id: "turn-2", response_id: "resp-2", usage, turn_token_usage: usage, thread_token_usage: usage } }
+      ].map(JSON.stringify).join("\n")}\n`,
+      "utf8"
+    );
+    await writeFile(
+      path.join(sessionsRoot, `rollout-${brokenThreadId}.jsonl`),
+      `${JSON.stringify({ type: "response_item", payload: { content: "missing session_meta" } })}\n`,
+      "utf8"
+    );
+
+    const locations = { root: directory, sessionsRoot, indexFile: path.join(directory, "missing") };
+
+    const ambiguous = await execute({ schemaVersion: "1.0.0", target: "app" }, { locations });
+    expect(ambiguous.exitCode).toBe(1);
+    expect(ambiguous.result.output.verdict).toBe("NEEDS_INPUT");
+    expect(ambiguous.result.error).toEqual({
+      code: "INVALID_INPUT",
+      message: "같은 마지막 폴더명을 가진 프로젝트가 여러 개입니다. 전체 경로를 입력하세요.",
+      details: { target: "app", reason: "ambiguous_target" }
+    });
+
+    const invalidFormat = await execute({ schemaVersion: "1.0.0", target: "codex://threads/not-a-valid-uuid" }, { locations });
+    expect(invalidFormat.exitCode).toBe(1);
+    expect(invalidFormat.result.output.verdict).toBe("NEEDS_INPUT");
+    expect(invalidFormat.result.error).toEqual({
+      code: "INVALID_INPUT",
+      message: "thread ID 또는 codex://threads 딥링크 형식이 올바르지 않습니다.",
+      details: { target: "codex://threads/not-a-valid-uuid", reason: "invalid_target_format" }
+    });
+
+    const missingThread = await execute({ schemaVersion: "1.0.0", target: missingThreadId }, { locations });
+    expect(missingThread.exitCode).toBe(1);
+    expect(missingThread.result.output.verdict).toBe("NEEDS_INPUT");
+    expect(missingThread.result.error).toEqual({
+      code: "RUN_NOT_FOUND",
+      message: "입력한 thread ID와 일치하는 세션을 찾지 못했습니다.",
+      details: { target: missingThreadId, reason: "not_found" }
+    });
+
+    const missingTitle = await execute({ schemaVersion: "1.0.0", target: "존재하지 않는 세션" }, { locations });
+    expect(missingTitle.exitCode).toBe(1);
+    expect(missingTitle.result.output.verdict).toBe("NEEDS_INPUT");
+    expect(missingTitle.result.error).toEqual({
+      code: "RUN_NOT_FOUND",
+      message: "입력한 세션 제목 또는 프로젝트명과 일치하는 최상위 thread를 찾지 못했습니다.",
+      details: { target: "존재하지 않는 세션", reason: "not_found" }
+    });
+
+    const inaccessible = await execute({ schemaVersion: "1.0.0", target: brokenThreadId }, { locations });
+    expect(inaccessible.exitCode).toBe(1);
+    expect(inaccessible.result.output.verdict).toBe("BLOCKED");
+    expect(inaccessible.result.error).toEqual({
+      code: "MISSING_EVIDENCE",
+      message: "대상 thread의 session metadata 또는 로그에 접근할 수 없습니다.",
+      details: { target: brokenThreadId, reason: "inaccessible_target" }
+    });
+  });
+
+  it("preserves stat error code and message when sessionsRoot is missing or not a directory (AGS-D-0222)", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "suite-token-d0222-"));
+    temporaryDirectories.push(directory);
+    const missingRoot = path.join(directory, "no-such-sessions");
+    const missingOutcome = await execute(
+      { schemaVersion: "1.0.0", target: threadId },
+      { locations: { root: directory, sessionsRoot: missingRoot, indexFile: path.join(directory, "missing") } }
+    );
+    expect(missingOutcome.exitCode).toBe(1);
+    expect(missingOutcome.result.output.verdict).toBe("BLOCKED");
+    expect(missingOutcome.result.output.message).toMatch(/^세션 로그 경로에 접근할 수 없습니다 \(ENOENT\): .+/u);
+    expect(missingOutcome.result.error).toEqual({
+      code: "MISSING_EVIDENCE",
+      message: missingOutcome.result.output.message,
+      details: { target: threadId, causeCode: "ENOENT" }
+    });
+
+    const fileRoot = path.join(directory, "sessions-file");
+    await writeFile(fileRoot, "not a directory\n", "utf8");
+    const notDirOutcome = await execute(
+      { schemaVersion: "1.0.0", target: threadId },
+      { locations: { root: directory, sessionsRoot: fileRoot, indexFile: path.join(directory, "missing") } }
+    );
+    expect(notDirOutcome.exitCode).toBe(1);
+    expect(notDirOutcome.result.output.verdict).toBe("BLOCKED");
+    expect(notDirOutcome.result.output.message).toBe("세션 로그 경로에 접근할 수 없습니다 (ENOTDIR): 디렉터리가 아닙니다.");
+    expect(notDirOutcome.result.error).toEqual({
+      code: "MISSING_EVIDENCE",
+      message: "세션 로그 경로에 접근할 수 없습니다 (ENOTDIR): 디렉터리가 아닙니다.",
+      details: { target: threadId, causeCode: "ENOTDIR" }
+    });
+  });
+
+  it("records partialReasons when modern token_count events have invalid or inconsistent total_token_usage (AGS-D-0224)", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "suite-token-d0224-"));
+    temporaryDirectories.push(directory);
+    const sessionsRoot = path.join(directory, "sessions");
+    await mkdir(sessionsRoot);
+    const usage = { input_tokens: 10, cached_input_tokens: 3, cache_write_input_tokens: 0, output_tokens: 4, reasoning_output_tokens: 1, total_tokens: 14 };
+    const rows = [
+      { type: "session_meta", payload: { id: threadId, title: "Modern token_count 검증", cwd: "D:\\work\\suite" } },
+      { timestamp: "2026-01-01T00:00:00Z", type: "turn_context", payload: { turn_id: "turn-1", model: "gpt-test", effort: "high" } },
+      { timestamp: "2026-01-01T00:00:01Z", type: "token_usage_record", payload: { thread_id: threadId, turn_id: "turn-1", response_id: "response-1", usage, turn_token_usage: usage, thread_token_usage: usage } },
+      {
+        timestamp: "2026-01-01T00:00:02Z",
+        type: "event_msg",
+        payload: {
+          type: "token_count",
+          info: {
+            total_token_usage: {
+              input_tokens: 10,
+              cached_input_tokens: 12,
+              cache_write_input_tokens: -1,
+              output_tokens: 4,
+              reasoning_output_tokens: 6,
+              total_tokens: 99
+            },
+            last_token_usage: usage
+          }
+        }
+      }
+    ];
+    await writeFile(path.join(sessionsRoot, "session.jsonl"), `${rows.map(JSON.stringify).join("\n")}\n`, "utf8");
+    const { result, exitCode } = await execute(
+      { schemaVersion: "1.0.0", target: threadId },
+      { locations: { root: directory, sessionsRoot, indexFile: path.join(directory, "missing") } }
+    );
+    expect(exitCode).toBe(0);
+    expect(result.output.verdict).toBe("PARTIAL");
+    expect(result.output.partialReasons).toEqual(expect.arrayContaining([
+      "cache_write_input_tokens 누락 또는 잘못된 값",
+      "total_tokens와 Input + Output 불일치",
+      "Cache input이 Input보다 큼",
+      "Reasoning output이 Output보다 큼"
+    ]));
+  });
 });

@@ -142,7 +142,7 @@
       "version": "0.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:4acb860ce1aa2173aa9927836c195e2c21959aa2d837d89032597253aa7cc940",
+      "integratedChecksum": "sha256:efcd19a8c1e3a4d96109e80be3f6000581d6b57237b443d3e81958b99c3073e9",
       "checksumScope": "relative paths and normalized text bytes under skills/codex-token-usage-analyzer"
     },
     {

@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import process from "node:process";
 
-import { analyzeRequest, canonicalJson, codexPaths, digest, isPortableAbsolute, writeNewMarkdown } from "./core.mjs";
+import { analyzeRequest, canonicalJson, codexPaths, digest, getReportMeta, isPortableAbsolute, writeNewMarkdown } from "./core.mjs";
 import { contractErrors, validateProviderResult, validateReport, validateRequest } from "./schema-validation.mjs";
 
 async function readStdin(stream = process.stdin) {
@@ -29,8 +29,23 @@ function adapterError(message, details = null, code = "INVALID_INPUT") {
 }
 
 function errorFor(report) {
-  if (report.verdict === "NEEDS_INPUT") return { code: "RUN_NOT_FOUND", message: report.message, details: { target: report.target.label } };
-  if (report.verdict === "BLOCKED") return { code: "MISSING_EVIDENCE", message: report.message, details: { target: report.target.label } };
+  const meta = getReportMeta(report);
+  if (report.verdict === "NEEDS_INPUT") {
+    const reason = meta?.reason ?? "not_found";
+    const code = meta?.code ?? (reason === "not_found" ? "RUN_NOT_FOUND" : "INVALID_INPUT");
+    return { code, message: report.message, details: { target: report.target.label, reason } };
+  }
+  if (report.verdict === "BLOCKED") {
+    return {
+      code: "MISSING_EVIDENCE",
+      message: report.message,
+      details: {
+        target: report.target.label,
+        ...(meta?.reason ? { reason: meta.reason } : {}),
+        ...(meta?.causeCode ? { causeCode: meta.causeCode } : {})
+      }
+    };
+  }
   return null;
 }
 
