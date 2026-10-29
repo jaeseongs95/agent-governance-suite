@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import {syncBuiltinESMExports} from "node:module";
+import {setInterval, clearInterval} from "node:timers";
 
 // 시험 소유 디렉터리의 두 번째 실제 open 완료만 보류한다. 원 I/O 결과는 바꾸지 않는다.
 const directory = process.env.AGS_ROTATION_OPEN_GATE;
