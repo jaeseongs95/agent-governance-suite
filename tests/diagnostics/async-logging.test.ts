@@ -126,11 +126,22 @@ it("fails closed when the library cannot open the next rotated file",async()=>{
   const result=await execute(`
 import {createDiagnostics,readDiagnosticConfig} from './diagnostics.mjs';
 import {readdir,mkdir} from 'node:fs/promises';
+const started=performance.now();
+const observe=(event,fields={})=>console.error(JSON.stringify({event,tMs:performance.now()-started,...fields}));
 const log=await createDiagnostics(readDiagnosticConfig(JSON.stringify({level:'INFO',destination:'file',file:'rotation-failure-case',rotationIntervalMs:1000,rotationBytes:2048})),new Set(['get_skill_inventory']));
+observe('ready-start');
 await readyAtMost(log);
-const active=(await readdir('.')).find(name=>name.startsWith('rotation-failure-case-')&&name.endsWith('.log'));
+observe('ready-complete');
+const listingStartedMs=performance.now()-started;
+const entries=await readdir('.',{withFileTypes:true});
+const files=entries.filter(entry=>entry.name.startsWith('rotation-failure-case-')&&entry.name.endsWith('.log'));
+observe('listing-complete',{listingStartedMs,files:files.map(entry=>({name:entry.name,type:entry.isFile()?'file':entry.isDirectory()?'directory':'other'}))});
+const active=files[0]?.name;
 if(!active)throw new Error('ROTATION_FIXTURE_ACTIVE_FILE_MISSING');
-await mkdir(active.replace(/[.]([0-9]+)[.]log$/,(_,number)=>'.'+(Number(number)+1)+'.log'));
+const next=active.replace(/[.]([0-9]+)[.]log$/,(_,number)=>'.'+(Number(number)+1)+'.log');
+observe('mkdir-start',{active,next});
+try {await mkdir(next);observe('mkdir-complete',{next});}
+catch(error){observe('mkdir-failed',{next,code:typeof error.code==='string'&&/^E[A-Z0-9_]+$/.test(error.code)?error.code:'UNKNOWN'});throw error;}
 for(let i=0;i<150&&log.loss.sinkErrors===0;i++){log.event('request','INFO','request_start',{method:'get_skill_inventory'});await new Promise(r=>setTimeout(r,10));}
 for(let i=0;i<20;i++)log.event('request','INFO','request_start',{method:'get_skill_inventory'});
 await log.close();console.log(JSON.stringify({applicationResult:'unchanged',loss:log.loss}));

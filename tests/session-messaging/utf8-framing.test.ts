@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -58,11 +58,45 @@ async function launch(): Promise<string> {
   const state = await mkdtemp(path.join(tmpdir(), "ags-utf8-framing-"));
   cleanup.push(() => rm(state, { recursive: true, force: true, maxRetries: 10 }));
   const child = spawn(process.execPath, ["--import", "tsx", "--import", paddedClaim, sourceBroker, "--state-directory", state],
-    { windowsHide: true, stdio: "ignore" });
+    { windowsHide: true, stdio: ["ignore", "ignore", "pipe"] });
   cleanup.push(async () => {
     if (child.exitCode === null && child.signalCode === null) { const exit = once(child, "exit"); child.kill(); await exit; }
   });
-  await waitForSessionMessageBrokerReady(state, child, 5000);
+  const started = performance.now();
+  let stderrBytes = 0, pending = "", discardedLines = 0;
+  const safeLines: string[] = [];
+  child.stderr!.on("data", (chunk: Buffer) => {
+    stderrBytes += chunk.length;
+    // 누적 원문은 남기지 않고 길이가 제한된 공식 오류 코드 문장만 보존한다.
+    for (const line of `${pending}${chunk.toString("utf8")}`.split(/(?<=\n)/u)) {
+      if (!line.endsWith("\n")) { pending = line.length <= 256 ? line : ""; continue; }
+      pending = "";
+      if (/^Session message broker (?:startup|endpoint cleanup|lock release) failed \([A-Z0-9_]{1,64}\)\.\r?\n$/u.test(line) && safeLines.length < 8) safeLines.push(line.trim());
+      else discardedLines += 1;
+    }
+  });
+  try {
+    await waitForSessionMessageBrokerReady(state, child, 5000);
+  } catch (error) {
+    const failedMs = performance.now() - started;
+    const childStatus = { childPid: child.pid, childExitCode: child.exitCode, childSignal: child.signalCode };
+    const checkedFromMs = performance.now() - started;
+    let endpoint: unknown;
+    try {
+      const info = await stat(path.join(state, "endpoint.json"));
+      endpoint = { exists: true, birthtimeMs: info.birthtimeMs, mtimeMs: info.mtimeMs, type: info.isFile() ? "file" : "other" };
+    } catch (observationError) {
+      const code = (observationError as NodeJS.ErrnoException).code;
+      endpoint = { exists: code === "ENOENT" ? false : null, code: typeof code === "string" && /^E[A-Z0-9_]+$/u.test(code) ? code : "UNKNOWN" };
+    }
+    console.error(JSON.stringify({ event: "broker-readiness-failed", deadlineMs: 5000, failedMs,
+      ...childStatus,
+      stderr: { bytes: stderrBytes, safeLines, discardedLines, pendingBytes: Buffer.byteLength(pending) },
+      endpoint, checkedFromMs, checkedUntilMs: performance.now() - started,
+      // 생성 시각은 파일 메타데이터다. 대기 중 존재 여부를 연속 관측한 기록은 아니다.
+      endpointObservedDuringWait: false }));
+    throw error;
+  }
   return state;
 }
 
