@@ -46,6 +46,7 @@ export const RESERVED_TOOL_KEYS = [
   "_hostAttestation",
   "_sessionBinding",
   "_continuityBinding",
+  "_sessionProof",
 ];
 
 function findFirstReservedKey(obj) {
