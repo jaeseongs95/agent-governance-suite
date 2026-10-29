@@ -1,0 +1,218 @@
+{
+  "test": {
+    "publicSha256": "65a1de1585d0ce0b5ddab8129b531452841b57470c9a8bb850aadf6a7dc1af72",
+    "replacementSha256": "5c5f21eb66db85005cc8df488f3a4ce122f65ed0a0a695b00a87e438f643c576",
+    "removedFallback": {
+      "sha256": "0c7879509355f06f6566f98954789daf06a95a81f669644e41fe2eb80e893fae",
+      "offset": 2987,
+      "chars": 890
+    },
+    "caseBodiesSha256": "1e29b50afd233597ccf7c02a323418d24c661cb842a2c216d622fc25b259e83e",
+    "originalSha256": "c2f051ef292707c4c244161c5726aaa2ec94e6094f2fd5524768a17c530a7242",
+    "caseBodiesIdentical": true,
+    "caseCount": 9
+  },
+  "status": "NOT_RUN",
+  "originalBindingSha256": "6def9b69f2ad6ed74ff6e30c154de7dbd84d82f02ea575a297fc5c96ffaf9cf9",
+  "offsetUnit": "UTF-16 문자 위치, 시작값0",
+  "encoding": "UTF-8(BOM 없음), LF",
+  "sources": [
+    {
+      "originalFile": "AFTER-AUTHORIZATION-COMMANDS.txt",
+      "variant": "red",
+      "originalSha256": "20861df7baf4159e6e9fa92bd1cb1b0b0c9b1453a43ee12d6b4fa898075813ea",
+      "extractedSha256": "0504f69b9ee3bf4a5a51a18546b6d6d1a2753ce03cd699bb6d2d6b7734aac340",
+      "ranges": [
+        {
+          "name": "Assert-TaskBytes",
+          "sha256": "7ab1655d8b7874353e85742e6cd32c10a6e749af13c77b74856174752889fa3e",
+          "offset": 1336,
+          "chars": 276,
+          "kind": "function"
+        },
+        {
+          "name": "Assert-TaskBytes",
+          "sha256": "7ab1655d8b7874353e85742e6cd32c10a6e749af13c77b74856174752889fa3e",
+          "offset": 11827,
+          "chars": 276,
+          "kind": "restore-function"
+        },
+        {
+          "name": "Assert-TaskIndependentFile",
+          "sha256": "8c474a1e631e5174145be9b407dcfcdeb821aefdd8a04a229478fa47ddd31ddd",
+          "offset": 1613,
+          "chars": 542,
+          "kind": "function"
+        },
+        {
+          "name": "Assert-TaskIndependentFile",
+          "sha256": "8c474a1e631e5174145be9b407dcfcdeb821aefdd8a04a229478fa47ddd31ddd",
+          "offset": 12104,
+          "chars": 542,
+          "kind": "restore-function"
+        },
+        {
+          "name": "Write-TaskLedger",
+          "sha256": "2ab70d304c4c36a62ba164d987e759bfd1298f8d23fd00a6ade21048ed2be451",
+          "offset": 2669,
+          "chars": 226,
+          "kind": "function"
+        },
+        {
+          "name": "Write-TaskLedger",
+          "sha256": "2ab70d304c4c36a62ba164d987e759bfd1298f8d23fd00a6ade21048ed2be451",
+          "offset": 12647,
+          "chars": 226,
+          "kind": "restore-function"
+        },
+        {
+          "name": "Get-TaskStreamHash",
+          "sha256": "9fa5b42c70002bcd575e6c320abd16c3ae9c67340ea9efa8bde6d69dc86bee66",
+          "offset": 2896,
+          "chars": 170,
+          "kind": "function"
+        },
+        {
+          "name": "Get-TaskStreamHash",
+          "sha256": "9fa5b42c70002bcd575e6c320abd16c3ae9c67340ea9efa8bde6d69dc86bee66",
+          "offset": 12874,
+          "chars": 170,
+          "kind": "restore-function"
+        },
+        {
+          "name": "Restore-TaskChanged",
+          "sha256": "3058487dcd73f1b27f296b2511b7bdf0989e2e574419b752d9bca475671390ec",
+          "offset": 3067,
+          "chars": 1633,
+          "kind": "function"
+        },
+        {
+          "name": "Restore-TaskChanged",
+          "sha256": "3058487dcd73f1b27f296b2511b7bdf0989e2e574419b752d9bca475671390ec",
+          "offset": 13045,
+          "chars": 1633,
+          "kind": "restore-function"
+        },
+        {
+          "name": "Update-TaskWriteObservation",
+          "sha256": "9937b8f246dc628308efa3b50711631b34ebaeaaf4adc427ef636c8be44f4a03",
+          "offset": 5980,
+          "chars": 816,
+          "kind": "function"
+        },
+        {
+          "name": "Write-TaskCandidate",
+          "sha256": "d491c64cd10040c9c06b69a76a625b4e12af988bc0fc6321157ec47036efd603",
+          "offset": 4702,
+          "chars": 1276,
+          "kind": "function"
+        },
+        {
+          "sha256": "db528c45aec43e958fbede1257c6622c70b7a7db2f7a7b4fd57eabb17bc3f460",
+          "offset": 9410,
+          "chars": 710,
+          "kind": "copy-section"
+        }
+      ]
+    },
+    {
+      "originalFile": "AFTER-AUTHORIZATION-COMMANDS.txt",
+      "variant": "green",
+      "originalSha256": "d8113fceeda56d676b337b2c24e7fd185bf1228a3a75983849829efc7bf8c4dd",
+      "extractedSha256": "428f79c1525ab1b7c56de3ed3dd2aba2a5dd164154e725e6e2e340afd0110874",
+      "ranges": [
+        {
+          "name": "Assert-TaskBytes",
+          "sha256": "7ab1655d8b7874353e85742e6cd32c10a6e749af13c77b74856174752889fa3e",
+          "offset": 1336,
+          "chars": 276,
+          "kind": "function"
+        },
+        {
+          "name": "Assert-TaskBytes",
+          "sha256": "7ab1655d8b7874353e85742e6cd32c10a6e749af13c77b74856174752889fa3e",
+          "offset": 12028,
+          "chars": 276,
+          "kind": "restore-function"
+        },
+        {
+          "name": "Assert-TaskIndependentFile",
+          "sha256": "8c474a1e631e5174145be9b407dcfcdeb821aefdd8a04a229478fa47ddd31ddd",
+          "offset": 1613,
+          "chars": 542,
+          "kind": "function"
+        },
+        {
+          "name": "Assert-TaskIndependentFile",
+          "sha256": "8c474a1e631e5174145be9b407dcfcdeb821aefdd8a04a229478fa47ddd31ddd",
+          "offset": 12305,
+          "chars": 542,
+          "kind": "restore-function"
+        },
+        {
+          "name": "Write-TaskLedger",
+          "sha256": "2ab70d304c4c36a62ba164d987e759bfd1298f8d23fd00a6ade21048ed2be451",
+          "offset": 2669,
+          "chars": 226,
+          "kind": "function"
+        },
+        {
+          "name": "Write-TaskLedger",
+          "sha256": "2ab70d304c4c36a62ba164d987e759bfd1298f8d23fd00a6ade21048ed2be451",
+          "offset": 12848,
+          "chars": 226,
+          "kind": "restore-function"
+        },
+        {
+          "name": "Get-TaskStreamHash",
+          "sha256": "9fa5b42c70002bcd575e6c320abd16c3ae9c67340ea9efa8bde6d69dc86bee66",
+          "offset": 2896,
+          "chars": 170,
+          "kind": "function"
+        },
+        {
+          "name": "Get-TaskStreamHash",
+          "sha256": "9fa5b42c70002bcd575e6c320abd16c3ae9c67340ea9efa8bde6d69dc86bee66",
+          "offset": 13075,
+          "chars": 170,
+          "kind": "restore-function"
+        },
+        {
+          "name": "Restore-TaskChanged",
+          "sha256": "3058487dcd73f1b27f296b2511b7bdf0989e2e574419b752d9bca475671390ec",
+          "offset": 3067,
+          "chars": 1633,
+          "kind": "function"
+        },
+        {
+          "name": "Restore-TaskChanged",
+          "sha256": "3058487dcd73f1b27f296b2511b7bdf0989e2e574419b752d9bca475671390ec",
+          "offset": 13246,
+          "chars": 1633,
+          "kind": "restore-function"
+        },
+        {
+          "name": "Update-TaskWriteObservation",
+          "sha256": "4b233305bb3a633a5f00a11ec25199a28fbc8a17b4a58c9118241e6a83df03c8",
+          "offset": 6156,
+          "chars": 841,
+          "kind": "function"
+        },
+        {
+          "name": "Write-TaskCandidate",
+          "sha256": "d891aed24deca496d4668c50fa2c17a49bdab1b760f1c7a710e46c05c5142007",
+          "offset": 4702,
+          "chars": 1452,
+          "kind": "function"
+        },
+        {
+          "sha256": "db528c45aec43e958fbede1257c6622c70b7a7db2f7a7b4fd57eabb17bc3f460",
+          "offset": 9611,
+          "chars": 710,
+          "kind": "copy-section"
+        }
+      ]
+    }
+  ],
+  "originalPreparationSha256": "fe8abbb857e2279d9f616b2cbe758e5ba139976abd8d8cbf2fd000f66469192d"
+}

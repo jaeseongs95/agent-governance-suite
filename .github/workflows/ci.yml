@@ -210,3 +210,41 @@ jobs:
           if-no-files-found: error
           retention-days: 1
           compression-level: 9
+      - name: Verify D0360 Windows write ownership
+        if: ${{ always() && matrix.os == 'windows-2025' && matrix.shard == 1 }}
+        run: |
+          $d0360Root = Join-Path $env:RUNNER_TEMP ('d0360-r01-' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          $d0360Exit = 1
+          $PSNativeCommandUseErrorActionPreference = $false
+          try {
+            & ([Environment]::ProcessPath) -NoLogo -NoProfile -NonInteractive -File .github/ci/d0360-r01/Invoke-Comparison.ps1 -OutputRoot $d0360Root
+            $d0360Exit = $LASTEXITCODE
+          } finally {
+            [IO.Directory]::CreateDirectory($d0360Root) | Out-Null
+            $d0360Fsutil = Get-Command fsutil -CommandType Application -ErrorAction SilentlyContinue
+            $d0360Runtime = [ordered]@{
+              runId = $env:GITHUB_RUN_ID
+              runAttempt = $env:GITHUB_RUN_ATTEMPT
+              commit = $env:GITHUB_SHA
+              os = [Environment]::OSVersion.ToString()
+              framework = [Runtime.InteropServices.RuntimeInformation]::FrameworkDescription
+              powerShellPath = [Environment]::ProcessPath
+              powerShellVersion = $PSVersionTable.PSVersion.ToString()
+              powerShellSha256 = (Get-FileHash -LiteralPath ([Environment]::ProcessPath) -Algorithm SHA256).Hash.ToLowerInvariant()
+              fsutilPath = if ($d0360Fsutil) { $d0360Fsutil.Source } else { $null }
+              fsutilVersion = if ($d0360Fsutil) { (Get-Item -LiteralPath $d0360Fsutil.Source).VersionInfo.FileVersion } else { $null }
+              fsutilSha256 = if ($d0360Fsutil) { (Get-FileHash -LiteralPath $d0360Fsutil.Source -Algorithm SHA256).Hash.ToLowerInvariant() } else { $null }
+              comparisonExitCode = $d0360Exit
+            }
+            [IO.File]::WriteAllText((Join-Path $d0360Root 'actions-runtime.json'), ($d0360Runtime | ConvertTo-Json -Depth 5) + [char]10, [Text.UTF8Encoding]::new($false))
+          }
+          exit $d0360Exit
+      - name: Return D0360 Windows ownership evidence
+        if: ${{ always() && matrix.os == 'windows-2025' && matrix.shard == 1 }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: d0360-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/d0360-r01-${{ github.run_id }}-${{ github.run_attempt }}/
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 9

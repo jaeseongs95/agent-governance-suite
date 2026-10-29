@@ -1,0 +1,140 @@
+# BEGIN APPLY POWERSHELL
+function Assert-TaskBytes($taskPath, $taskBytes, $taskHash) {
+  if ((Get-Item -LiteralPath $taskPath).Length -ne [long]$taskBytes -or (Get-FileHash -Algorithm SHA256 -LiteralPath $taskPath).Hash.ToLowerInvariant() -ne $taskHash) { throw ('파일 바이트가 일치하지 않습니다: ' + $taskPath) }
+}
+function Assert-TaskIndependentFile($taskPath) {
+  $taskItem = Get-Item -LiteralPath $taskPath
+  while ($null -ne $taskItem) {
+    if (($taskItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw '대상 또는 상위 경로에 재분석 지점이 있습니다. 보존한 뒤 확인하세요.' }
+    $taskItem = if ($taskItem -is [IO.FileInfo]) { $taskItem.Directory } else { $taskItem.Parent }
+  }
+  $taskLinks = @(& fsutil hardlink list $taskPath)
+  if ($LASTEXITCODE -ne 0 -or @($taskLinks | Where-Object { $_.Trim() }).Count -ne 1) { throw '대상 파일이 독립적인 단일 링크인지 확인하지 못했습니다.' }
+}
+function Write-TaskLedger {
+  $taskJson = (ConvertTo-Json -InputObject @($taskLedger) -Depth 8).Replace([string][char]13, '')
+  [IO.File]::WriteAllText($taskLedgerPath, $taskJson + [char]10, [Text.UTF8Encoding]::new($false))
+}
+function Get-TaskStreamHash($taskStream) {
+  $taskStream.Position = 0
+  [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($taskStream)).ToLowerInvariant()
+}
+function Restore-TaskChanged($taskEntries) {
+  foreach ($taskEntry in @($taskEntries)) {
+    if (-not $taskEntry.Changed) { continue }
+    Assert-TaskIndependentFile $taskEntry.Target
+    $taskBackupStream = [IO.File]::Open($taskEntry.Backup, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+    try {
+      if ($taskBackupStream.Length -ne [long]$taskEntry.OldBytes -or (Get-TaskStreamHash $taskBackupStream) -cne $taskEntry.OldHash) { throw ('복구 백업 바이트가 일치하지 않습니다: ' + $taskEntry.Backup) }
+      $taskTargetStream = [IO.File]::Open($taskEntry.Target, [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+      try {
+        $taskNowHash = Get-TaskStreamHash $taskTargetStream
+        if ($taskNowHash -ceq $taskEntry.OldHash) { continue }
+        if ($taskEntry.LastWrittenHash -cne $taskEntry.NewHash -or $taskNowHash -cne $taskEntry.NewHash -or $taskTargetStream.Length -ne [long]$taskEntry.NewBytes) { throw ('이번 실행 이후 대상이 바뀌었거나 쓰기 소유가 불명확합니다. 보존한 뒤 확인하세요: ' + $taskEntry.Target) }
+        # 같은 배타 핸들로 검사와 복구를 끝낸다. 경합이면 기다리거나 다시 쓰지 않는다.
+        $taskBackupStream.Position = 0
+        $taskTargetStream.Position = 0
+        $taskTargetStream.SetLength(0)
+        $taskBackupStream.CopyTo($taskTargetStream)
+        $taskTargetStream.Flush($true)
+        if ($taskTargetStream.Length -ne [long]$taskEntry.OldBytes -or (Get-TaskStreamHash $taskTargetStream) -cne $taskEntry.OldHash) { throw ('복구 직후 바이트가 일치하지 않습니다: ' + $taskEntry.Target) }
+        $taskEntry.Restored = $true
+      } finally { $taskTargetStream.Dispose() }
+    } finally { $taskBackupStream.Dispose() }
+    Write-TaskLedger
+  }
+}
+function Update-TaskWriteObservation($taskEntry) {
+  $taskEntry.LastWrittenHash = $null
+  if (-not (Test-Path -LiteralPath $taskEntry.Target -PathType Leaf)) {
+    $taskEntry.Changed = $true
+    Write-TaskLedger
+    throw ('복사 이후 대상이 없어 쓰기 소유가 불명확합니다. 보존한 뒤 확인하세요: ' + $taskEntry.Target)
+  }
+  $taskObservedHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $taskEntry.Target).Hash.ToLowerInvariant()
+  $taskEntry.Changed = $taskObservedHash -cne $taskEntry.OldHash
+  if ($taskObservedHash -ceq $taskEntry.NewHash) { $taskEntry.LastWrittenHash = $taskEntry.NewHash }
+  elseif ($taskObservedHash -ceq $taskEntry.OldHash) { $taskEntry.LastWrittenHash = $taskEntry.OldHash }
+  Write-TaskLedger
+  if (-not $taskEntry.LastWrittenHash) { throw ('복사 이후 예상 밖 바이트의 소유가 불명확합니다. 사용자 변경을 보존한 뒤 확인하세요: ' + $taskEntry.Target) }
+}
+function Write-TaskCandidate($taskEntry) {
+  Assert-TaskIndependentFile $taskEntry.Target
+  $taskSourceStream = [IO.File]::Open($taskEntry.Source, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+  try {
+    if ($taskSourceStream.Length -ne [long]$taskEntry.NewBytes -or (Get-TaskStreamHash $taskSourceStream) -cne $taskEntry.NewHash) { throw ('후보 원바이트가 바뀌었습니다: ' + $taskEntry.Source) }
+    $taskTargetStream = [IO.File]::Open($taskEntry.Target, [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+    try {
+      if ($taskTargetStream.Length -ne [long]$taskEntry.OldBytes -or (Get-TaskStreamHash $taskTargetStream) -cne $taskEntry.OldHash) { throw ('잠금 획득 전에 원본이 바뀌었습니다. 사용자 변경을 보존합니다: ' + $taskEntry.Target) }
+      # 검증에 사용한 배타 핸들을 닫거나 경로를 다시 열지 않고 교체한다.
+      $taskSourceStream.Position = 0
+      $taskTargetStream.Position = 0
+      $taskTargetStream.SetLength(0)
+      $taskSourceStream.CopyTo($taskTargetStream)
+      $taskTargetStream.Flush($true)
+      if ($taskTargetStream.Length -ne [long]$taskEntry.NewBytes -or (Get-TaskStreamHash $taskTargetStream) -cne $taskEntry.NewHash) { throw ('교체 직후 후보 바이트가 일치하지 않습니다: ' + $taskEntry.Target) }
+    } finally { $taskTargetStream.Dispose() }
+  } finally { $taskSourceStream.Dispose() }
+}
+    $taskRow.Attempted = $true
+    Write-TaskLedger
+    $taskCopyFailure = $null
+    $taskObservationFailure = $null
+    try { Write-TaskCandidate $taskRow }
+    catch { $taskCopyFailure = $_ }
+    try {
+      Update-TaskWriteObservation $taskRow
+    }
+    catch { $taskObservationFailure = $_ }
+    if ($taskCopyFailure -and $taskObservationFailure) { throw [AggregateException]::new('파일 복사와 직후 관측·변경 목록 기록이 모두 실패했습니다. 두 오류를 함께 확인하세요.', [Exception[]]@($taskCopyFailure.Exception, $taskObservationFailure.Exception)) }
+    if ($taskCopyFailure) { throw $taskCopyFailure }
+    if ($taskObservationFailure) { throw $taskObservationFailure }
+    Assert-TaskBytes $taskRow.Target $taskRow.NewBytes $taskRow.NewHash
+# END APPLY POWERSHELL
+# BEGIN RESTORE POWERSHELL
+function Assert-TaskBytes($taskPath, $taskBytes, $taskHash) {
+  if ((Get-Item -LiteralPath $taskPath).Length -ne [long]$taskBytes -or (Get-FileHash -Algorithm SHA256 -LiteralPath $taskPath).Hash.ToLowerInvariant() -ne $taskHash) { throw ('파일 바이트가 일치하지 않습니다: ' + $taskPath) }
+}
+function Assert-TaskIndependentFile($taskPath) {
+  $taskItem = Get-Item -LiteralPath $taskPath
+  while ($null -ne $taskItem) {
+    if (($taskItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw '대상 또는 상위 경로에 재분석 지점이 있습니다. 보존한 뒤 확인하세요.' }
+    $taskItem = if ($taskItem -is [IO.FileInfo]) { $taskItem.Directory } else { $taskItem.Parent }
+  }
+  $taskLinks = @(& fsutil hardlink list $taskPath)
+  if ($LASTEXITCODE -ne 0 -or @($taskLinks | Where-Object { $_.Trim() }).Count -ne 1) { throw '대상 파일이 독립적인 단일 링크인지 확인하지 못했습니다.' }
+}
+function Write-TaskLedger {
+  $taskJson = (ConvertTo-Json -InputObject @($taskLedger) -Depth 8).Replace([string][char]13, '')
+  [IO.File]::WriteAllText($taskLedgerPath, $taskJson + [char]10, [Text.UTF8Encoding]::new($false))
+}
+function Get-TaskStreamHash($taskStream) {
+  $taskStream.Position = 0
+  [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($taskStream)).ToLowerInvariant()
+}
+function Restore-TaskChanged($taskEntries) {
+  foreach ($taskEntry in @($taskEntries)) {
+    if (-not $taskEntry.Changed) { continue }
+    Assert-TaskIndependentFile $taskEntry.Target
+    $taskBackupStream = [IO.File]::Open($taskEntry.Backup, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+    try {
+      if ($taskBackupStream.Length -ne [long]$taskEntry.OldBytes -or (Get-TaskStreamHash $taskBackupStream) -cne $taskEntry.OldHash) { throw ('복구 백업 바이트가 일치하지 않습니다: ' + $taskEntry.Backup) }
+      $taskTargetStream = [IO.File]::Open($taskEntry.Target, [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+      try {
+        $taskNowHash = Get-TaskStreamHash $taskTargetStream
+        if ($taskNowHash -ceq $taskEntry.OldHash) { continue }
+        if ($taskEntry.LastWrittenHash -cne $taskEntry.NewHash -or $taskNowHash -cne $taskEntry.NewHash -or $taskTargetStream.Length -ne [long]$taskEntry.NewBytes) { throw ('이번 실행 이후 대상이 바뀌었거나 쓰기 소유가 불명확합니다. 보존한 뒤 확인하세요: ' + $taskEntry.Target) }
+        # 같은 배타 핸들로 검사와 복구를 끝낸다. 경합이면 기다리거나 다시 쓰지 않는다.
+        $taskBackupStream.Position = 0
+        $taskTargetStream.Position = 0
+        $taskTargetStream.SetLength(0)
+        $taskBackupStream.CopyTo($taskTargetStream)
+        $taskTargetStream.Flush($true)
+        if ($taskTargetStream.Length -ne [long]$taskEntry.OldBytes -or (Get-TaskStreamHash $taskTargetStream) -cne $taskEntry.OldHash) { throw ('복구 직후 바이트가 일치하지 않습니다: ' + $taskEntry.Target) }
+        $taskEntry.Restored = $true
+      } finally { $taskTargetStream.Dispose() }
+    } finally { $taskBackupStream.Dispose() }
+    Write-TaskLedger
+  }
+}
+# END RESTORE POWERSHELL

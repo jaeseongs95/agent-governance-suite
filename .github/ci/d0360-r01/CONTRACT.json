@@ -1,0 +1,26 @@
+{
+  "requirements": [
+    "원8사례 본문 보존과 신규 동일후보 경쟁1",
+    "실제 Windows fsutil 독립파일가드·배타핸들·원주입",
+    "결함판 신규단언만 실패, 수리판9통과"
+  ],
+  "oracle": "쓰기 전 경쟁자 후보 바이트는 본인 소유가 아니므로 복구하지 않는다",
+  "kind": "engineering-test-plan",
+  "status": "NOT_RUN",
+  "level": "격리파일 구성요소 시험",
+  "proof": {
+    "expectedGreen": "동일9사례PASS/exit0",
+    "reason": "개발자 단일 commit/push 후 Windows Actions에서만 실행",
+    "kind": "engineering-test-proof",
+    "excluded": [
+      "실제 설치",
+      "설정쓰기",
+      "실제104복구",
+      "실제 CopyTo 중간 디스크고장"
+    ],
+    "status": "NOT_RUN",
+    "evidence": "각 원결과·표준출력·표준오류·실행명령·종료코드 및 SHA256",
+    "expectedRed": "원8PASS/신규1FAIL/exit1, 해당 단언과 실제 주입·복구 관측 필요"
+  },
+  "command": "pwsh -NoLogo -NoProfile -NonInteractive -File .github/ci/d0360-r01/Invoke-Comparison.ps1 -OutputRoot <새 출력루트>"
+}
