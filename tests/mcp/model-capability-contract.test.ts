@@ -91,7 +91,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     { riskLevel: "critical", modelClass: "general", effort: "high" },
     { riskLevel: "critical", modelClass: "lightweight", effort: "high" },
     { riskLevel: "critical", modelClass: "general", effort: "low" },
-  ] as const)("admits trusted opaque bootstrap observations without name registration: $riskLevel/$modelClass/$effort (D0094)", ({ riskLevel, modelClass, effort }) => {
+  ] as const)("이름 등록 없는 opaque 관측을 같은 guarded workflow 단계에서 소비한다: $riskLevel/$modelClass/$effort (D0094)", ({ riskLevel, modelClass, effort }) => {
     let model = "";
     const adapter: HostExecutionAdapter = {
       host: "synthetic-authority-host", provider: "synthetic-authority", policyRevision: "d0094-authority-r1",
@@ -102,17 +102,23 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
         policyRevision: "d0094-authority-r1", provenance,
       } : null,
     };
-    const store = new InMemoryWorkflowStore();
-    const provider = new HostAttestationProvider(store, adapter);
-    const validator = new ContractValidator();
-    const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
-    // Fix the trusted adapter and authority before generating either new ID.
-    // Only its current runtime observation changes; no name registry is edited.
+    // 권위 어댑터는 두 새 ID 생성 전에 고정하며 이름 등록은 바꾸지 않는다.
     for (let ordinal = 0; ordinal < 2; ordinal++) {
+      // 각 사례는 첫 단계 뒤 열린 루트를 남기므로 저장소를 격리해 범위 충돌을 막는다.
+      const store = new InMemoryWorkflowStore();
+      const provider = new HostAttestationProvider(store, adapter);
+      const validator = new ContractValidator();
+      const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
       model = `opaque-${randomUUID()}`;
       expect(resolveAdapterModelCapability(codexExecutionAdapter, model)).toBeNull();
       expect(resolveAdapterModelCapability(adapter, "unobserved-model")).toBeNull();
       const input = { schemaVersion: "1.0.0", taskEnvelope: createTask(`d0094-opaque-${riskLevel}-${modelClass}-${effort}-${ordinal}`, riskLevel) };
+      input.taskEnvelope.artifactContracts = [{
+        capability: "task-decomposition",
+        produced: ["delegation-decision", "task-graph", "assignment-briefs", "integration-report"].map(artifactId => ({
+          artifactId, schemaId: "host-attestation/v1", targetDigest: `sha256:${"e".repeat(64)}` as const,
+        })),
+      }];
       const token = issueHostAttestation(store, adapter, {
         tool: "plan_workflow", input, model, reasoningEffort: effort,
         actorId: hostActorId(adapter.host, SESSION), sessionId: SESSION, turnId: "d0094-opaque-turn", toolUseId: `d0094-opaque-call-${ordinal}`,
@@ -129,6 +135,86 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       expect(planned.ok).toBe(true);
       expect(planned.data?.bootstrapExecution?.context).toMatchObject({ model, modelClass, reasoningEffort: effort });
       expect(provider.lastObservedCapability()).toMatchObject({ provider: "synthetic-authority", policyRevision: "d0094-authority-r1", rawModel: model });
+      expect(provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
+        clean => service.planWorkflow(clean, true)).error?.code).toBe("BINDING_INVALID");
+
+      // 같은 새 모델과 권위 어댑터를 단계 소비까지 유지한다. 전체 workflow 완주를 뜻하지 않는다.
+      const plan = planned.data!;
+      const frame: ConvergenceFrameV1 = {
+        schemaVersion: "1.0.0",
+        workspace: { workspaceId: input.taskEnvelope.taskId, locator: fileURLToPath(new URL("../../", import.meta.url)) },
+        controlArtifacts: [{ artifactId: "acceptance", role: "pass-condition", locator: "fixture:acceptance", digest: `sha256:${"a".repeat(64)}` }],
+        targetArtifacts: [{ artifactId: "candidate", role: "candidate", locator: "fixture:candidate", digest: `sha256:${"b".repeat(64)}` }],
+        operationalSettings: { maxAttemptsPerEpoch: 3, maxEpochs: 2, leaseTtlSeconds: 300 },
+      };
+      const opened = service.openConvergenceRoot({ schemaVersion: "1.0.0", parentRootId: null, taskEnvelope: input.taskEnvelope, frame, userApprovalRefs: [] });
+      expect(opened.ok, JSON.stringify({ ordinal, result: opened })).toBe(true);
+      const claimed = service.claimWorkflowAttempt({
+        schemaVersion: "1.0.0", rootId: opened.data!.rootId, expectedRevision: opened.data!.revision,
+        taskEnvelope: input.taskEnvelope, frame, plan, actorId: plan.bootstrapExecution!.context.actorId,
+        outputTargets: ["fixture.md"], priorFailure: null,
+      }, true);
+      expect(claimed.ok, JSON.stringify({ ordinal, result: claimed })).toBe(true);
+      const started = service.startGuardedWorkflow({
+        schemaVersion: "1.0.0", leaseId: claimed.data!.leaseId, expectedRootRevision: claimed.data!.rootRevision, plan,
+      }, true);
+      expect(started.ok, JSON.stringify({ ordinal, result: started })).toBe(true);
+      const receipt = started.data!;
+      const stage = receipt.plan.stages[0]!;
+      expect(stage.executionRequirement).toEqual({
+        policyId: "semantic-execution-assurance-v1", kind: "semantic",
+        minimumModelClass: "general", minimumReasoningEffort: "high", observationRequired: true,
+      });
+      const stageInput: StageResultV1 = {
+        schemaVersion: "1.0.0", runId: receipt.runId, stageId: stage.stageId,
+        expectedRevision: receipt.revision, state: "passed",
+        output: {
+          schemaVersion: "1.0.0", kind: "output", output: { completed: true },
+          artifacts: stage.requiredArtifacts.map(artifactId => ({
+            artifactId, schemaId: "host-attestation/v1", locator: "fixture:" + artifactId,
+            digest: "d".repeat(64), targetDigest: "e".repeat(64), verified: true,
+          })), error: null,
+        },
+        evidence: [{ artifactId: "opaque-stage", kind: "test", locator: "model-capability-contract.test.ts", verified: true, note: "같은 opaque 관측의 인메모리 단계 소비 회귀." }],
+        findings: [], blockers: [], error: null,
+      };
+      const observation = {
+        tool: "record_stage_result", input: stageInput as unknown as Record<string, unknown>, model, reasoningEffort: effort,
+        actorId: hostActorId(adapter.host, SESSION), sessionId: SESSION,
+        turnId: "d0094-opaque-stage-turn", toolUseId: `d0094-opaque-stage-${ordinal}`,
+      };
+      expect(issueHostAttestation(store, adapter, { ...observation, actorId: hostActorId(adapter.host, "foreign-session") })).toBeNull();
+      const stageToken = issueHostAttestation(store, adapter, observation);
+      expect(stageToken).toEqual(expect.any(String));
+      const signedStage = { ...stageInput, [HOST_ATTESTATION_FIELD]: stageToken };
+      const forgedStage = { ...signedStage, evidence: [{ ...stageInput.evidence[0]!, note: "변조된 입력" }] };
+      // 다른 호출·입력·권위는 정상 서명과 같은 단계에서도 소비할 수 없다.
+      expect(provider.run("record_stage_result", forgedStage,
+        clean => service.recordStageResult(clean, true)).error?.code).toBe("BINDING_INVALID");
+      expect(provider.run("plan_workflow", signedStage,
+        clean => service.recordStageResult(clean, true)).error?.code).toBe("BINDING_INVALID");
+      expect(foreignProvider.run("record_stage_result", signedStage,
+        clean => foreignService.recordStageResult(clean, true)).error?.code).toBe("BINDING_INVALID");
+      const unqualifiedToken = issueHostAttestation(store, adapter, { ...observation, model: "unobserved-model", toolUseId: `d0094-opaque-unqualified-${ordinal}` });
+      expect(unqualifiedToken).toEqual(expect.any(String));
+      expect(JSON.parse(Buffer.from(unqualifiedToken!.split(".")[1]!, "base64url").toString("utf8")))
+        .toMatchObject({ model: "unobserved-model", eligibility: null });
+      expect(provider.run("record_stage_result", { ...stageInput, [HOST_ATTESTATION_FIELD]: unqualifiedToken },
+        clean => service.recordStageResult(clean, true)).error?.code).toBe("BINDING_INVALID");
+      expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
+      const recorded = provider.run("record_stage_result", signedStage,
+        clean => service.recordStageResult(clean, true));
+      expect(provider.lastObservedCapability()).toMatchObject({ provider: adapter.provider, policyRevision: adapter.policyRevision, rawModel: model });
+      if (modelClass === "lightweight" || effort === "low") {
+        expect(recorded.error?.code).toBe("GATE_FAILED");
+        expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
+      } else {
+        expect(recorded.ok).toBe(true);
+        expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({
+          model, modelClass, reasoningEffort: effort, actorId: observation.actorId,
+          taskId: input.taskEnvelope.taskId, runId: receipt.runId, stageId: stage.stageId, revision: receipt.revision,
+        });
+      }
     }
   });
 
