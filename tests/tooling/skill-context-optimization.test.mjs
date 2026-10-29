@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
 import { checkSkillContextOptimization, readHistoricalSource, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, matchesSkillPolicyWordingSuccessorBytes, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
-import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesContextContractPin } from "../../scripts/check-skill-context-optimization.mjs";
+import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin } from "../../scripts/check-skill-context-optimization.mjs";
 
 describe("skill context optimization", () => {
   it("pins context and contract bytes without executable fingerprints", () => {
@@ -28,10 +28,10 @@ describe("skill context optimization", () => {
     ]);
     for (const relative of Object.keys(report.contextContractPins[0].hashes)) {
       const bytes = readHistoricalSource(relative);
-      expect(matchesContextContractPin(relative, bytes), relative).toBe(true);
+      expect(matchesCurrentImplementationPin(relative, bytes), relative).toBe(true);
       const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1;
-      expect(matchesContextContractPin(relative, altered), relative).toBe(false);
-      expect(matchesContextContractPin(relative + ".unlisted", bytes)).toBe(false);
+      expect(matchesCurrentImplementationPin(relative, altered), relative).toBe(false);
+      expect(matchesCurrentImplementationPin(relative + ".unlisted", bytes)).toBe(false);
     }
     expect(report.baselineRevision).toBe("7bc7753012227938be2a46f68bf3e29d29d5ef34");
     expect(report.totals).toMatchObject({ skillCount: 20, baselineBytes: 115679, candidateBytes: 47606 });
@@ -376,7 +376,6 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
     "skills/independent-audit-gate/references/audit-protocol.md",
     "skills/independent-audit-gate/references/entry-details.md",
     "skills/independent-audit-gate/references/orchestrator-integration.md",
-    "skills/independent-audit-gate/scripts/validate_skill.py",
     "skills/independent-deliberation-panel/SKILL.md",
     "skills/independent-deliberation-panel/classification.json",
     "skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md",
@@ -398,7 +397,7 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
     "skills/task-contract/references/risk-and-authorization-rubric.md",
   ];
 
-  it("pins all 35 policy wording successor files and rejects one-byte tampering", () => {
+  it("pins all 34 context policy wording successor files and rejects one-byte tampering", () => {
     for (const relative of successorPaths) {
       const current = readFileSync(path.join(root, relative));
       const historical = readHistoricalSource(relative);

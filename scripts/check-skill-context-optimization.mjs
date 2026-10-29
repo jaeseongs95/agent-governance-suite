@@ -315,7 +315,7 @@ export function matchesPreflightAdditiveSourceSuccessor(path, bytes) {
     && createHash("sha256").update(bytes).digest("hex") === PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes[path];
 }
 
-export function matchesContextContractPin(path, bytes) {
+export function matchesCurrentImplementationPin(path, bytes) {
   if (matchesPreflightAdditiveSourceSuccessor(path, bytes)) return true;
   if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
   if (matchesTaskContractAuthorizationSuccessor(path, bytes)) return true;
@@ -729,8 +729,13 @@ export function checkSkillContextOptimization() {
     if (!matchesPonytailPolicySuccessor(currentPath, readHistorical(ROOT, currentPath))) errors.push(`policy successor bytes differ: ${currentPath}`);
   }
   for (const currentPath of Object.keys(CONTEXT_CONTRACT_PINS.hashes)) {
-    if (!matchesContextContractPin(currentPath, readHistorical(ROOT, currentPath))) {
+    if (!matchesCurrentImplementationPin(currentPath, readHistorical(ROOT, currentPath))) {
       errors.push(`current implementation bytes differ: ${currentPath}`);
+    }
+  }
+  for (const currentPath of Object.keys(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes)) {
+    if (!matchesPreflightAdditiveSourceSuccessor(currentPath, readHistorical(ROOT, currentPath))) {
+      errors.push(`preflight additive successor bytes differ: ${currentPath}`);
     }
   }
   for (const currentPath of Object.keys(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes)) {
