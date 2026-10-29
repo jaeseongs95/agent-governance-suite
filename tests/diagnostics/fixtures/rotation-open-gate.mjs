@@ -8,7 +8,7 @@ const open = fs.open;
 let openings = 0;
 if (directory) {
   // 제품 listener보다 앞에서 입력 도착만 관측한다. ACK·저장 성공을 대신하지 않는다.
-  process.on("message", message => {
+  if (process.env.AGS_ROTATION_INPUT_PROBE !== "0") process.on("message", message => {
     if (message?.id === 2 && message.category === "request") {
       process.send?.({fixture: "rotation-input-arrived", id: message.id});
     }

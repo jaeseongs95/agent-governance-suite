@@ -143,7 +143,7 @@ it("bounds pending records and accounts for shutdown loss when rotation never be
   const gate=new URL('./fixtures/rotation-open-gate.mjs',import.meta.url).href;
   const worker=pathToFileURL(path.join(root,'diagnostics-worker.mjs')).href;
   await writeFile(path.join(directory,'diagnostics-worker.mjs'),
-    `process.env.AGS_ROTATION_OPEN_GATE=${JSON.stringify(directory)};await import(${JSON.stringify(gate)});await import(${JSON.stringify(worker)});`,'utf8');
+    `process.env.AGS_ROTATION_OPEN_GATE=${JSON.stringify(directory)};process.env.AGS_ROTATION_INPUT_PROBE='0';await import(${JSON.stringify(gate)});await import(${JSON.stringify(worker)});`,'utf8');
   const result=await execute(`
 import {createDiagnostics,readDiagnosticConfig} from ${JSON.stringify(pathToFileURL(path.join(directory,'diagnostics.mjs')).href)};
 import {readFile} from 'node:fs/promises';
