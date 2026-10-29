@@ -1542,19 +1542,25 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(SESSION_MESSAGE_SERVER_INSTRUCTIONS).toContain("한 번에");
   });
 
-  it("instructs senders to report queued-until-wake delivery when autoWake.state is not available (AGS-D-0311)", () => {
+  // Prompt-engineering development checks: instruction semantics, not target-model behavior or holdout evaluation.
+  it("keeps autoWake advisory and reports only confirmed delivery facts (AGS-D-0354)", () => {
     for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions()]) {
-      expect(instructions).toContain("send 성공은 큐에 넣었다는 뜻이며 상대가 받거나 처리했다는 뜻이 아니다.");
-      expect(instructions).toContain("송신 결과의 autoWake.state가 available이 아니면 상대는 지금 깨어나지 않으므로 '보냈다'가 아니라 '큐에 넣었고 상대가 깨어날 때 전달된다'고 보고하고, 상대의 처리가 필요하면 그 사실을 사용자에게 알린다.");
+      expect(instructions).toMatch(/send 성공은 큐에 넣었다는 뜻이며 상대가 받거나 처리했다는 뜻이 아니다/u);
+      expect(instructions).toMatch(/autoWake는[^.]*참고값\(authorityEffect: none\)[^.]*메시지 전달·처리·승인 증거가 아니다/u);
+      expect(instructions).toMatch(/보고에는 확인된 큐 등록·전달 상태만/u);
+      expect(instructions).toMatch(/autoWake만으로 현재 깨어남이나 이후 전달을 단정하지 않는다/u);
+      expect(instructions).not.toMatch(/available이 아니면 상대는 지금 깨어나지|깨어날 때 전달된다|대개 상대가 작업 중|앞선 깨우기가 이미 상대에게 넘어가/u);
     }
   });
 
-  it("tells senders not to add a host wake after send, and never on latched", () => {
+  it("limits extra host wake to an unavailable path needed now and preserves empty-wake handling (AGS-D-0354)", () => {
     for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions()]) {
-      expect(instructions).toContain("send가 상대를 깨우므로 호스트 기능으로 따로 깨우지 않는다.");
-      expect(instructions).toContain("autoWake.state가 no-live-relay·unsupported면");
-      expect(instructions).toContain("latched는 앞선 깨우기가 이미 상대에게 넘어가 관측을 기다리는 상태(대개 상대가 작업 중)이므로 다시 깨우지 않는다.");
-      expect(instructions).toContain("본문 없는 깨우기 신호나 내용 없는 메시지를 받아도 진행 중인 작업을 멈추지 않으며");
+      expect(instructions).toMatch(/available·latched이면 호스트 기능으로 따로 깨우지 않는다/u);
+      expect(instructions).toMatch(/no-live-relay·unsupported이면[^.]*상대의 처리가 지금 필요할 때만 호스트 기능으로 한 번 깨운다/u);
+      expect(instructions).toMatch(/latched는[^.]*관측이 확인되지 않은 상태이므로 다시 깨우지 않는다/u);
+      expect(instructions).toMatch(/본문 없는 깨우기 신호나 내용 없는 메시지를 받아도 진행 중인 작업을 멈추지 않으며/u);
+      expect(instructions).toMatch(/본문을 받지 못한 메시지의 내용은 짐작하지 않는다/u);
+      expect(instructions).toMatch(/ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다/u);
     }
   });
 
