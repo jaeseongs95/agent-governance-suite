@@ -547,6 +547,32 @@ function matchesSkillPolicyWordingSuccessor(path, bytes) {
     && createHash("sha256").update(bytes).digest("hex") === SKILL_POLICY_WORDING_SUCCESSOR.hashes[path];
 }
 
+// D0358: 실행 파일의 과거 증거와 현재 문맥 입력을 분리한다.
+// 현재 배포 소스의 무결성은 source-lock 검사와 실제 계약 시험이 담당한다.
+const IMPLEMENTATION_EVIDENCE_REVISION = "2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8";
+const RECORDED_IMPLEMENTATION_PATHS = new Set([
+  CURRENT_IMPLEMENTATION_PINS, REVIEWED_IMPLEMENTATION_R1, REVIEWED_IMPLEMENTATION_R2,
+  CLASSIFICATION_UPDATE, PONYTAIL_POLICY_SUCCESSOR, GOVERNANCE_SOURCE_SUCCESSOR,
+  TASK_CONTRACT_AUTHORIZATION_SUCCESSOR, PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR,
+  PREFLIGHT_UTF8_SOURCE_SUCCESSOR, STDIN_UTF8_SOURCE_SUCCESSOR,
+  CS_RAW_CANDIDATE_CAP_SOURCE_SUCCESSOR, SKILL_POLICY_WORDING_SUCCESSOR,
+].flatMap(record => Object.keys(record.hashes)).filter(relative =>
+  relative.split("/")[2] === "scripts" && (relative.endsWith(".mjs") || relative.endsWith(".py"))));
+const implementationEvidence = new Map();
+
+function readSourceEvidence(relative) {
+  // 기존 명시 경로만 과거 바이트로 읽는다. 새 파일이나 문맥·계약 경로를 허용하지 않는다.
+  if (!RECORDED_IMPLEMENTATION_PATHS.has(relative)) return readFileSync(join(ROOT, relative));
+  if (!implementationEvidence.has(relative)) {
+    implementationEvidence.set(relative, git("show", `${IMPLEMENTATION_EVIDENCE_REVISION}:${relative}`));
+  }
+  return implementationEvidence.get(relative);
+}
+
+function readHistoricalEvidence(relative) {
+  return historicalBytes(relative, readSourceEvidence(relative));
+}
+
 function historicalBytes(path, bytes) {
   if (!matchesSkillPolicyWordingSuccessor(path, bytes)) return bytes;
   const original = git("show", `${SKILL_POLICY_WORDING_SUCCESSOR.baselineRevision}:${path}`);
@@ -764,56 +790,56 @@ export function checkRegistryContextCompatibility(registry) {
 export function checkSkillContextOptimization() {
   const errors = [];
   for (const [currentPath, expectedHash] of Object.entries(TASK_CONTRACT_ROUTING_SOURCE_HASHES)) {
-    if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== expectedHash) {
+    if (createHash("sha256").update(readSourceEvidence(currentPath)).digest("hex") !== expectedHash) {
       errors.push(`task-contract routing source differs: ${currentPath}`);
     }
   }
   for (const successorPath of Object.keys(SKILL_POLICY_WORDING_SUCCESSOR.hashes)) {
-    if (!matchesSkillPolicyWordingSuccessor(successorPath, readFileSync(join(ROOT, ...successorPath.split("/"))))) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
+    if (!matchesSkillPolicyWordingSuccessor(successorPath, readSourceEvidence(successorPath))) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
   }
   for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) {
-    if (!matchesClassificationUpdate(reviewedPath, readHistorical(ROOT, reviewedPath))) errors.push(`classification: reviewed bytes differ: ${reviewedPath}`);
+    if (!matchesClassificationUpdate(reviewedPath, readHistoricalEvidence(reviewedPath))) errors.push(`classification: reviewed bytes differ: ${reviewedPath}`);
   }
   for (const currentPath of Object.keys(PONYTAIL_POLICY_SUCCESSOR.hashes)) {
-    if (!matchesPonytailPolicySuccessor(currentPath, readHistorical(ROOT, currentPath))) errors.push(`policy successor bytes differ: ${currentPath}`);
+    if (!matchesPonytailPolicySuccessor(currentPath, readHistoricalEvidence(currentPath))) errors.push(`policy successor bytes differ: ${currentPath}`);
   }
   for (const currentPath of Object.keys(CURRENT_IMPLEMENTATION_PINS.hashes)) {
-    if (!matchesCurrentImplementationPin(currentPath, readHistorical(ROOT, currentPath))) {
+    if (!matchesCurrentImplementationPin(currentPath, readHistoricalEvidence(currentPath))) {
       errors.push(`current implementation bytes differ: ${currentPath}`);
     }
   }
   for (const currentPath of Object.keys(STDIN_UTF8_SOURCE_SUCCESSOR.hashes)) {
-    if (!matchesStdinUtf8SourceSuccessor(currentPath, readHistorical(ROOT, currentPath))) {
+    if (!matchesStdinUtf8SourceSuccessor(currentPath, readHistoricalEvidence(currentPath))) {
       errors.push(`stdin UTF-8 successor bytes differ: ${currentPath}`);
     }
   }
   for (const currentPath of Object.keys(PREFLIGHT_UTF8_SOURCE_SUCCESSOR.hashes)) {
-    if (!matchesPreflightUtf8SourceSuccessor(currentPath, readHistorical(ROOT, currentPath))) {
+    if (!matchesPreflightUtf8SourceSuccessor(currentPath, readHistoricalEvidence(currentPath))) {
       errors.push(`preflight UTF-8 successor bytes differ: ${currentPath}`);
     }
   }
   for (const currentPath of Object.keys(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes)) {
-    if (!matchesPreflightAdditiveSourceSuccessor(currentPath, readHistorical(ROOT, currentPath))) {
+    if (!matchesPreflightAdditiveSourceSuccessor(currentPath, readHistoricalEvidence(currentPath))) {
       errors.push(`preflight additive successor bytes differ: ${currentPath}`);
     }
   }
   for (const currentPath of Object.keys(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes)) {
-    if (!matchesTaskContractAuthorizationSuccessor(currentPath, readHistorical(ROOT, currentPath))) {
+    if (!matchesTaskContractAuthorizationSuccessor(currentPath, readHistoricalEvidence(currentPath))) {
       errors.push(`task-contract authorization successor bytes differ: ${currentPath}`);
     }
   }
   for (const currentPath of Object.keys(GOVERNANCE_SOURCE_SUCCESSOR.hashes)) {
-    if (!matchesGovernanceSourceSuccessor(currentPath, readHistorical(ROOT, currentPath))) {
+    if (!matchesGovernanceSourceSuccessor(currentPath, readHistoricalEvidence(currentPath))) {
       errors.push(`governance source successor bytes differ: ${currentPath}`);
     }
   }
   for (const [currentPath, sha256] of Object.entries(CS_RAW_CANDIDATE_CAP_SOURCE_SUCCESSOR.hashes)) {
-    if (createHash("sha256").update(readHistorical(ROOT, currentPath)).digest("hex") !== sha256) {
+    if (createHash("sha256").update(readHistoricalEvidence(currentPath)).digest("hex") !== sha256) {
       errors.push(`CS raw candidate cap source successor bytes differ: ${currentPath}`);
     }
   }
   for (const currentPath of Object.keys(HOST_CONSUMPTION_SOURCE_SUCCESSOR.hashes)) {
-    if (!matchesHostConsumptionSourceSuccessor(currentPath, readHistorical(ROOT, currentPath))) errors.push(`host consumption successor bytes differ: ${currentPath}`);
+    if (!matchesHostConsumptionSourceSuccessor(currentPath, readHistoricalEvidence(currentPath))) errors.push(`host consumption successor bytes differ: ${currentPath}`);
   }
   const detailOwners = readdirSync(join(ROOT, "skills"), { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -855,7 +881,7 @@ export function checkSkillContextOptimization() {
       if (!matchesOrchestratorIntakeUpdate("mcpExecution", reference)) errors.push("orchestrator: MCP execution policy differs from the pinned revision");
     } else if (skillId === "model-effort-advisor") {
       for (const approvedPath of [skillPath, detailPath, "skills/model-effort-advisor/scripts/support-guard.mjs"]) {
-        if (!matchesReviewedImplementationUpdate(approvedPath, readHistorical(ROOT, approvedPath))) {
+        if (!matchesReviewedImplementationUpdate(approvedPath, readHistoricalEvidence(approvedPath))) {
           errors.push(`model-effort-advisor: reviewed implementation bytes differ: ${approvedPath}`);
         }
       }
@@ -897,7 +923,7 @@ export function checkSkillContextOptimization() {
     for (const currentPath of Object.keys(TASK_CONTRACT_ROUTING_SOURCE_HASHES)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     if (skillId === "session-board") {
       for (const reviewedPath of ["skills/session-board/scripts/board-store.mjs", "skills/session-board/scripts/board-store.d.mts"]) {
-        if (!matchesReviewedImplementationUpdate(reviewedPath, readHistorical(ROOT, reviewedPath))) {
+        if (!matchesReviewedImplementationUpdate(reviewedPath, readHistoricalEvidence(reviewedPath))) {
           errors.push(`session-board: reviewed implementation bytes differ: ${reviewedPath}`);
         }
         allowed.add(reviewedPath);
@@ -959,6 +985,11 @@ export function checkSkillContextOptimization() {
     activeReviewedOutputContractUpdates: [REVIEWED_RESOLVER_N_DESC_RULE],
     reviewedClassificationUpdates: [CLASSIFICATION_UPDATE],
     currentImplementationPins: [CURRENT_IMPLEMENTATION_PINS],
+    implementationEvidence: {
+      revision: IMPLEMENTATION_EVIDENCE_REVISION, authorityEffect: "none",
+      paths: [...RECORDED_IMPLEMENTATION_PATHS].sort(),
+      currentSourceIntegrity: "source-lock", currentBehavior: "contract-tests",
+    },
     currentPolicySuccessors: [PONYTAIL_POLICY_SUCCESSOR],
     currentAuthorizationPolicySuccessors: [TASK_CONTRACT_AUTHORIZATION_SUCCESSOR],
     currentGovernanceSourceSuccessors: [GOVERNANCE_SOURCE_SUCCESSOR],

@@ -8,7 +8,7 @@ import { checkSkillContextOptimization, readHistoricalSource, matchesEngineering
 import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin } from "../../scripts/check-skill-context-optimization.mjs";
 
 describe("skill context optimization", () => {
-  it("pins exact current implementation bytes separately from historical optimization", () => {
+  it("pins recorded implementation bytes separately from current context", () => {
     const report = checkSkillContextOptimization();
     expect(report.currentImplementationPins).toHaveLength(1);
     expect(report.currentImplementationPins[0].authorityEffect).toBe("none");
@@ -64,7 +64,15 @@ describe("skill context optimization", () => {
   it.each([
     "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
     "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json",
-  ])("rejects altered current source bytes through the public checker: %s", async (relative) => {
+  ])("rejects altered recorded implementation or contract evidence: %s", async (relative) => {
+    const { execFileSync } = await import("node:child_process");
+    vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
+      const bytes = execFileSync(file, args, options);
+      if (file === "git" && args[0] === "show" && args[1] === `2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:${relative}`) {
+        const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1; return altered;
+      }
+      return bytes;
+    } }));
     vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
       const bytes = readFileSync(file, ...args);
       if (String(file).replaceAll("\\", "/").endsWith(`/${relative}`)) {
@@ -78,7 +86,48 @@ describe("skill context optimization", () => {
       const report = checker.checkSkillContextOptimization();
       expect(report.pass).toBe(false);
       expect(report.errors).toContain(`current implementation bytes differ: ${relative}`);
-    } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
+    } finally { vi.doUnmock("node:fs"); vi.doUnmock("node:child_process"); vi.resetModules(); }
+  });
+
+  it.each([
+    "skills/task-contract/scripts/validate-task-contract.mjs",
+    "skills/model-effort-advisor/scripts/support-guard.mjs",
+    "skills/cs-engineering/scripts/core.mjs",
+  ])("accepts an ordinary code-only edit while source-lock still detects it: %s", async relative => {
+    const fs = await import("node:fs");
+    const promises = await import("node:fs/promises");
+    const changed = value => typeof value === "string" ? `${value}\n// D0358: 코드 동작과 문맥을 바꾸지 않는 주석\n` : Buffer.concat([value, Buffer.from("\n// D0358: 코드 동작과 문맥을 바꾸지 않는 주석\n")]);
+    const matches = file => String(file).replaceAll("\\", "/").endsWith(`/${relative}`);
+    vi.doMock("node:fs", () => ({ ...fs, readFileSync: (file, ...args) => {
+      const value = fs.readFileSync(file, ...args); return matches(file) ? changed(value) : value;
+    } }));
+    vi.doMock("node:fs/promises", () => ({ ...promises, readFile: async (file, ...args) => {
+      const value = await promises.readFile(file, ...args); return matches(file) ? changed(value) : value;
+    } }));
+    try {
+      vi.resetModules();
+      const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      expect(report).toMatchObject({ pass: true, errors: [] });
+      expect(report.implementationEvidence).toMatchObject({ revision: "2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8", authorityEffect: "none", currentSourceIntegrity: "source-lock" });
+      const { verifySourceLockOffline } = await import("../../scripts/source-lock.mjs");
+      const owner = relative.split("/")[1];
+      expect((await verifySourceLockOffline()).some(error => error.startsWith(`integrated checksum mismatch for ${owner}:`))).toBe(true);
+    } finally {
+      vi.doUnmock("node:fs"); vi.doUnmock("node:fs/promises"); vi.resetModules();
+    }
+  }, 30_000);
+
+  it("does not substitute current bytes when recorded implementation evidence is missing", async () => {
+    const { execFileSync } = await import("node:child_process");
+    vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
+      if (file === "git" && args[0] === "show" && args[1] === "2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs") throw new Error("SYNTHETIC_ARCHIVE_MISSING");
+      return execFileSync(file, args, options);
+    } }));
+    try {
+      vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      expect(() => checker.checkSkillContextOptimization()).toThrow("SYNTHETIC_ARCHIVE_MISSING");
+    } finally { vi.doUnmock("node:child_process"); vi.resetModules(); }
   });
 
   it("accepts only reviewed integration revision paths and exact bytes", () => {
@@ -113,6 +162,14 @@ describe("skill context optimization", () => {
     }]);
   });
   it("rejects altered reviewed integration bytes through the public checker", async () => {
+    const { execFileSync } = await import("node:child_process");
+    vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
+      const bytes = execFileSync(file, args, options);
+      if (file === "git" && args[0] === "show" && args[1] === "2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:skills/model-effort-advisor/scripts/support-guard.mjs") {
+        const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1; return altered;
+      }
+      return bytes;
+    } }));
     vi.doMock("node:fs", () => ({
       readdirSync,
       readFileSync: (file, ...args) => {
@@ -133,6 +190,7 @@ describe("skill context optimization", () => {
       expect(report.errors).toContain("model-effort-advisor: reviewed implementation bytes differ: skills/model-effort-advisor/scripts/support-guard.mjs");
     } finally {
       vi.doUnmock("node:fs");
+      vi.doUnmock("node:child_process");
       vi.resetModules();
     }
   });
