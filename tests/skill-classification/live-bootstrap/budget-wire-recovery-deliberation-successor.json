@@ -1,0 +1,227 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "ags-bootstrap-budget-recovery-deliberation-source-binding-r09",
+  "scope": "OFFLINE_SYNTHETIC_ONLY_NOT_PAID_OR_QUALIFICATION",
+  "sourceCommit": "8221fffd3bb65962ecb6be796e0fa6f2b588ce45",
+  "parentGovernanceBehaviorDigest": "sha256:a4bbf0573b0d927e373608a945721a43ec9bef624f800eb202903ef88164b155",
+  "inventoryDigest": "sha256:f1c248a25524c34edc70be4e9f9210c7c4422bc11ba9713544efabf24a195930",
+  "fixtureDigest": "sha256:d3490862893ee85f13dbee39ad992498bf7a76360c898d30d8089e5e485c1b88",
+  "fixtureOracleDigest": "sha256:e48f0d37e8675f046a00648451fc3086753af97d663ca4a0aa18b8fdad386666",
+  "provenance": "D0341의 6944aa450f7e9ba39b958da4ad335a65d40b2558은 동률 복구 전략의 사용자 질문 전에 내부 숙의를 시도하도록 원본 지침과 분류 참조 지문을 의도적으로 변경했습니다. 현재822 소스의 지정 CI 실제 인코더와 독립 인코더가 21개 순서·요청 지문·전송 지문·UTF-8 바이트 수에서 일치했습니다. 예약액은 고정 단가42000 피코달러/바이트의 별도 정수 산술로 동결했으며 실제 공급자 호출·사전점검 출력·요금 관측을 사용하지 않았습니다. 원r08과 역사 예산·정밀도·상한·경계 사례는 보존합니다.",
+  "captureEvidence": {
+    "runId": "40922284068",
+    "job": "verify-release",
+    "shardIndex": 3,
+    "attempt": "1",
+    "sourceTree": "6ac247fe999513caa2aa8c5ca8fc8df3b428ccb8",
+    "sourceManifestDigest": "sha256:bb05bae3098d0bd93bd7b6e0656fde31a08ef01838e967817559a7778c2f85a3",
+    "actualArtifact": {
+      "name": "classification-wire.actual.json",
+      "digest": "sha256:e06a9ae5a46995c60c70147b5ae2db870c48beb935a72fa06a14512e2e998237"
+    },
+    "independentArtifact": {
+      "name": "classification-wire.independent.json",
+      "digest": "sha256:3b59ecf5ac6f2f118460f74ad2643a8da2c9ee127f3f38fbbff36daddb331b48"
+    },
+    "captureReceipt": {
+      "name": "06b-classification-wire-capture.receipt.json",
+      "digest": "sha256:3b6d73a59abdf7a482f7f6afd1d8cd485e7531d389954483a000ffd953658ebf"
+    },
+    "independentReceipt": {
+      "name": "06c-classification-wire-independent.receipt.json",
+      "digest": "sha256:160724c6568440bde638d67691f39324d74c2eaa11d27a9505f7a5cea7c47ce3"
+    },
+    "orderedRowCount": 21,
+    "comparedFields": [
+      "caseId",
+      "requestDigest",
+      "wireDigest",
+      "utf8Bytes"
+    ]
+  },
+  "rows": [
+    {
+      "caseId": "SS01",
+      "requestDigest": "sha256:69c7bf53de0e37a1e95d60fe7af9fd6cfb9996cc4d1ed8429ff451e6982c60d4",
+      "wireDigest": "sha256:46a67eeddbf98696d585641afe8c309ab42a76af3f93f39e03c6dd74245a7156",
+      "utf8Bytes": 124947,
+      "reservedPicoUsd": "5247774000",
+      "reservedUsdDecimal": "0.005247774000"
+    },
+    {
+      "caseId": "SS02",
+      "requestDigest": "sha256:610e68005bab4d9d0970084bda38fb6c5a0636365f23c83210be8cab4c61b50e",
+      "wireDigest": "sha256:7a3a09ab25505821041e5119e2c365aaef03aa16c1e33aa3575837e52c2016c9",
+      "utf8Bytes": 124916,
+      "reservedPicoUsd": "5246472000",
+      "reservedUsdDecimal": "0.005246472000"
+    },
+    {
+      "caseId": "SS03",
+      "requestDigest": "sha256:e7f35307638ab021ade06435982e39a75e2530861671d723f18c152a56472d17",
+      "wireDigest": "sha256:a424633c7951bb8734239c6f16658eb98ed6a2825e54998c8d7168a7931d1c82",
+      "utf8Bytes": 125019,
+      "reservedPicoUsd": "5250798000",
+      "reservedUsdDecimal": "0.005250798000"
+    },
+    {
+      "caseId": "SS04",
+      "requestDigest": "sha256:090ef47df906e3b721121133c04f1c40874fe5f5220084385d870f6a110f67ac",
+      "wireDigest": "sha256:84ccff5fe64ca24b05ca729a811722dc8ee89f20b6f06ba35eab23e2313bb367",
+      "utf8Bytes": 125016,
+      "reservedPicoUsd": "5250672000",
+      "reservedUsdDecimal": "0.005250672000"
+    },
+    {
+      "caseId": "SS05",
+      "requestDigest": "sha256:f6685ebcafaf32d8f18dc750d3d98d4455b3cd0b2e96267410bd0df03738e31d",
+      "wireDigest": "sha256:0417bc22e1769fc9e67da0642412156220fbdf6f23e22367cb3b7172b6af85e3",
+      "utf8Bytes": 124951,
+      "reservedPicoUsd": "5247942000",
+      "reservedUsdDecimal": "0.005247942000"
+    },
+    {
+      "caseId": "SS06",
+      "requestDigest": "sha256:9e9e49cc84c85dcab8508665de4e57491ccf25a77632e9960b0e5f0cc3a3c89b",
+      "wireDigest": "sha256:68a2a017f985add4bba57cf106de85d1598ca41baf3a076e6a49b39103a7acce",
+      "utf8Bytes": 124965,
+      "reservedPicoUsd": "5248530000",
+      "reservedUsdDecimal": "0.005248530000"
+    },
+    {
+      "caseId": "SS07",
+      "requestDigest": "sha256:4ac7bd67ff8cd73e1babbed10a15849192bb2a8555eced2aea7e5f9cec1e9280",
+      "wireDigest": "sha256:f3de4a226f9d1d8cee50a20788e15e547bef98f74299a88a927d4c1eb95902e9",
+      "utf8Bytes": 124981,
+      "reservedPicoUsd": "5249202000",
+      "reservedUsdDecimal": "0.005249202000"
+    },
+    {
+      "caseId": "SS08",
+      "requestDigest": "sha256:ffd41e7da33a480cd014418cb349206985e5c200293c7a9054b806f39355e170",
+      "wireDigest": "sha256:7f43b712784018f55d2a2081e7b6b1d95a3a10139b4d16e936cb08f431f6afa9",
+      "utf8Bytes": 124936,
+      "reservedPicoUsd": "5247312000",
+      "reservedUsdDecimal": "0.005247312000"
+    },
+    {
+      "caseId": "SS09",
+      "requestDigest": "sha256:0b04c3fe24ae3610feadd05d9dc596b819e7ba4ef11b6f0a36b1661263e61079",
+      "wireDigest": "sha256:c75ea8c26153b8c54b77064cba8786af3cbfe6c8427b9fd6223e87aead981aef",
+      "utf8Bytes": 124920,
+      "reservedPicoUsd": "5246640000",
+      "reservedUsdDecimal": "0.005246640000"
+    },
+    {
+      "caseId": "SS10",
+      "requestDigest": "sha256:a8577beeaeed70437ead22e3ad9be5b5ca5588289dd6c306ae685275d3bf9261",
+      "wireDigest": "sha256:009fc63c3a59735dd9292ffb66a58ce1c8b057135aaa792498fdc09c87b89be1",
+      "utf8Bytes": 124931,
+      "reservedPicoUsd": "5247102000",
+      "reservedUsdDecimal": "0.005247102000"
+    },
+    {
+      "caseId": "SS11",
+      "requestDigest": "sha256:057ea837ea7c4fe16d57ad2d6054d9471da6c69c0159662b1e810e69464a48f1",
+      "wireDigest": "sha256:ca954a833bbb2cfcb1abe655ff592a6bd13bbcb0aadc9e9bc9c07bd1a811f67d",
+      "utf8Bytes": 124983,
+      "reservedPicoUsd": "5249286000",
+      "reservedUsdDecimal": "0.005249286000"
+    },
+    {
+      "caseId": "SS12",
+      "requestDigest": "sha256:a4b6c972323fab9c25b01a0bca4f1be98fb1bd2842188a4a07ba535d87d2f4e0",
+      "wireDigest": "sha256:fc8b487e892be0a12d32810609a65531f2cf3bde2c2ecac8654f86bc6462978b",
+      "utf8Bytes": 124820,
+      "reservedPicoUsd": "5242440000",
+      "reservedUsdDecimal": "0.005242440000"
+    },
+    {
+      "caseId": "SS13",
+      "requestDigest": "sha256:7958643053a447b5eec84938e152a1746eccee122debcb93dfe0b5230ef793de",
+      "wireDigest": "sha256:24e0edf1b9b6bf5de9dc5ceb543cbe9a4a44e80596ab4764031f81cfcc95e251",
+      "utf8Bytes": 124861,
+      "reservedPicoUsd": "5244162000",
+      "reservedUsdDecimal": "0.005244162000"
+    },
+    {
+      "caseId": "SS14",
+      "requestDigest": "sha256:fe9d2c09f3b1cff9362b2722c771f0d489bec6f0832d913f0d6b96ef66cc4939",
+      "wireDigest": "sha256:50c0e088f42f87509c7d9c45f7ebb04c5043111e8f478b5f72abfa7d6e48c1b2",
+      "utf8Bytes": 124957,
+      "reservedPicoUsd": "5248194000",
+      "reservedUsdDecimal": "0.005248194000"
+    },
+    {
+      "caseId": "SS15",
+      "requestDigest": "sha256:304a77d9954123cdaf3ba2379f0c0ec4644e13274e7a873bb69d574c92e733f2",
+      "wireDigest": "sha256:99da002c02a558ad04f0bfc4c3482f61c570b4bc399165b43beea57f9b94c656",
+      "utf8Bytes": 124835,
+      "reservedPicoUsd": "5243070000",
+      "reservedUsdDecimal": "0.005243070000"
+    },
+    {
+      "caseId": "SS16",
+      "requestDigest": "sha256:77d288433830575eed475207ff4563c1b98177834129c2ddb0f5bad03faaf4d7",
+      "wireDigest": "sha256:d4036fd5a4d4bf0e18cc1bc4da539c4646320d88724fbac7228c4d3e9acadeee",
+      "utf8Bytes": 124923,
+      "reservedPicoUsd": "5246766000",
+      "reservedUsdDecimal": "0.005246766000"
+    },
+    {
+      "caseId": "SS17",
+      "requestDigest": "sha256:0d677f7ac1400bca8c7e562d6dbc21c162196bff9d8e983e7f2eba87cabe34f8",
+      "wireDigest": "sha256:def521fe6f2de3c638f02414ce65183faa1738e77fa71500714bd5515c37497e",
+      "utf8Bytes": 124983,
+      "reservedPicoUsd": "5249286000",
+      "reservedUsdDecimal": "0.005249286000"
+    },
+    {
+      "caseId": "SS18",
+      "requestDigest": "sha256:1aa186ad0945e8fbcd32bbb7142d7ffffeefea461321fd0576f6ef67b4f4a0d1",
+      "wireDigest": "sha256:95114150f7b0422efba7b313a579f3773e896903e3e03dad2648ffdd4eeddecb",
+      "utf8Bytes": 124894,
+      "reservedPicoUsd": "5245548000",
+      "reservedUsdDecimal": "0.005245548000"
+    },
+    {
+      "caseId": "SS23",
+      "requestDigest": "sha256:078a52cfba972d902bdede4e7dc3ec65aff2dec172a517d1f14381efa3efa517",
+      "wireDigest": "sha256:574971d6364d76ded99d7357a45cd3be17976b7e8e7a70c7b9a191bfaf0914e5",
+      "utf8Bytes": 124904,
+      "reservedPicoUsd": "5245968000",
+      "reservedUsdDecimal": "0.005245968000"
+    },
+    {
+      "caseId": "SS28",
+      "requestDigest": "sha256:36b006a02258a77859bb16391025f9ad6f9b4fba400c51ec7e7497206a8cda1f",
+      "wireDigest": "sha256:90d126cc037ea8d9d82507c3dafae484ce5e0aa1f1872a6a539a19958dd36ca1",
+      "utf8Bytes": 124827,
+      "reservedPicoUsd": "5242734000",
+      "reservedUsdDecimal": "0.005242734000"
+    },
+    {
+      "caseId": "SS37",
+      "requestDigest": "sha256:e903d0909897d27cbb08d8df9ec052892872d487da5cadfcd4d93b36b4b8fcf6",
+      "wireDigest": "sha256:3bd623d363864eb699b957cb018b1bd1cfed1bed3a89a43346c6bae1eebe47e3",
+      "utf8Bytes": 124857,
+      "reservedPicoUsd": "5243994000",
+      "reservedUsdDecimal": "0.005243994000"
+    }
+  ],
+  "totals": {
+    "utf8Bytes": "2623426",
+    "reservedPicoUsd": "110183892000",
+    "reservedUsdDecimal": "0.110183892000",
+    "firstTwoPicoUsd": "10494246000",
+    "firstTwoUsdDecimal": "0.010494246000",
+    "maxUtf8Bytes": "125019",
+    "maxReservedPicoUsd": "5250798000"
+  },
+  "registryDigest": "sha256:b419d075762a810421994ed5beda83ae08e59d3301a0a781fa5424183bcb5b7f",
+  "inheritedFields": [
+    "precisionCases",
+    "syntheticOverBudgetCases",
+    "fractionalRoundingFixture"
+  ]
+}

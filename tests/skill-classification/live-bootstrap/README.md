@@ -45,3 +45,5 @@ A 예산 회귀는 고정 wire oracle와 예산·UNKNOWN·오류·만료·중복
 네 검사는 모의 fetch만 사용한다. 실제 API·credential 조회는 0이며 qualification과 host-live는 NOT_RUN이다. 의미 정답 18개와 운영 입력 3개를 포함한 공개 원문 21개만 다룬다. 전체 39유형·120 host paired trials와 Linux 실호출은 NOT_RUN이다. 실행 환경과 후보를 별도로 확인한 운영자가 실제 실행을 연결한다.
 
 현재 wire 입력을 다시 수집할 때만 `node --import tsx tests/skill-classification/live-bootstrap/prepared-fixture.mts --capture-budget-wire /absolute/private/measurements.json`을 명시 실행한다. 기존 prepare/codec만 사용하며 provider 호출이나 preflight 예약 결과를 읽지 않는다. 독립 유리수 계산과 source/corpus 의미 검토 후 successor를 새 revision으로 고정하고 digest를 검토한다. 시험 중 기대값을 자동 생성하거나 stale pin을 무시하지 않는다. 같은 프로그램의 합성 fixture 준비는 불변 inventory를 재사용해 요청 ID를 재결속하지만 원 preflight/run의 최신 source 재검증은 유지한다.
+
+2026-10-30 D0341 복구 전략 내부 숙의 변경의 현재 전송 기준은 `budget-wire-recovery-deliberation-successor.json`의 r09다. 원 r08 파일과 검사는 보존한다. 공개 `8221fffd3bb65962ecb6be796e0fa6f2b588ce45`의 지정 CI40922284068에서 실제·독립 인코더가 21개 요청의 지문과 전송 바이트 수에 모두 일치했다. 각 요청은 이전보다 68바이트 늘어 합계 2,623,426바이트이며, 고정 단가의 별도 정수 산술로 동결한 합성 예약합은 USD0.110183892다. 역사 가격·상한·정밀도 사례·공급자 호출 정책은 바꾸지 않았으며 r09는 유료 실행이나 모델 동작 수용 근거가 아니다.
