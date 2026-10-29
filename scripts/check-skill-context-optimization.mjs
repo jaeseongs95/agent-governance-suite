@@ -52,7 +52,6 @@ const REVIEWED_IMPLEMENTATION_R1 = Object.freeze({
   hashes: Object.freeze({
     "skills/model-effort-advisor/SKILL.md": "55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
     "skills/model-effort-advisor/references/entry-details.md": "2ae266a21db394f6b156a2a71a38edcfa0a64270ef7ca1a494c9af2a88a2d10c",
-    "skills/model-effort-advisor/scripts/support-guard.mjs": "a688cc5ee30bd4b6b7a3b40f88dd8147ee2bebfeafe30bbcb723014e7d906c97",
     "skills/orchestrator/references/engineering-practices/cli.md": "42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69",
   }),
 });
@@ -64,8 +63,6 @@ const REVIEWED_IMPLEMENTATION_R2 = Object.freeze({
   "modelReconstructedSha256": "8b5fb5d5f9afaf4c5716fc3928495f0bf6f9e99bf2d2c31d5376686fad26917e",
   hashes: Object.freeze({
   "skills/model-effort-advisor/references/entry-details.md": "806874cf4ff417e5e5416a48df8f373ba7483591dbc916ce5edb3868280255de",
-  "skills/model-effort-advisor/scripts/support-guard.mjs": "f080508b68211eddad4a29e59ed0290dc54bd7200617dbcc4e46a2cfd319cfd2",
-  "skills/session-board/scripts/board-store.mjs": "87851a74230cc3ba03d3ff34ef3e1bb6a9c3b8aaa1566b158cd9906b35b1fb81",
   "skills/session-board/scripts/board-store.d.mts": "d4a156f0a4f3a83fdaf655daf3fe88efd14c427c79ffceb1b8012d14c38a0098"
 }),
 });
@@ -158,29 +155,19 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/blocker-diagnostician/classification.json": "76fd1350e10e6f2763b5d25bd66a0af09e59b6e77c3aec8fc24a56049eb179af",
     "skills/blocker-diagnostician/references/diagnosis-protocol.md": "4fffd3c0656ffee3caca1eb072a5f9a3f6a3c91ba7f15644c973c9050c9437c1",
     "skills/blocker-diagnostician/references/entry-details.md": "90d37e3edae634cf0a44260d8c67f8c356db3b1805666757810ae80d27a520dc",
-    "skills/blocker-diagnostician/scripts/cli.mjs": "a5f1a6347496a0a46d38f3f555307b90bbed1f2c9bad85bda43a9a33d93b0a52",
-    "skills/blocker-diagnostician/scripts/core.mjs": "7b2031fae6dceac8b82877a03ef2b6662abd8a168360ee9188ce0a3be65cc998",
     "skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json": "c8c3929dd667b971dbc3c93c092c543969895a2df12e9f78d290ea8c55dcbd98",
     "skills/change-scope-guardian/integration/skill-descriptor.json": "0383344088d90c7306cc9de937b8ba0445985529c7291a54cf36aab7fcb0d65b",
     "skills/change-scope-guardian/references/entry-details.md": "58fcf7660d9e2ab3dd775aeee528d547250af2df02537affb3a9af4c5bb66af1",
     "skills/change-scope-guardian/references/verdict-rules.md": "b656378815a59a40d37a9f7fdcd790f9880d9d59759bc1732141c49c7ea49988",
-    "skills/change-scope-guardian/scripts/lib.mjs": "ee44ea2dd431868a9a86b96fd98f74a32910ede0111ccb7f12a1e8058285a66b",
-    "skills/codex-token-usage-analyzer/scripts/cli.mjs": "453e0d1ce8103ac812d93d3a6a88cdf34fafe752943f8818c71baee6540b5ef3",
     // D0095 reviewed source: eb30ea34168b4d4c3831f2fa8b9c82d9fc06b06c; historical baselines stay frozen.
     "skills/coordinate-subagents/references/model-routing.md": "dedab0288c24a5f38437f0e8917df484647c4b0135af20b292feef01a8970b79",
-    "skills/coordinate-subagents/scripts/model-routing.mjs": "899bffe5d345b5ef064c8730ffe47f90ae185144b4ae3c27ed3cb295d25e6de9",
     "skills/evaluation-validity-auditor/classification.json": "1de15023a9e0e1175404bc5e6ee68462717bbb23b33005b12abc5de07d858b42",
     "skills/evaluation-validity-auditor/references/entry-details.md": "dc8fd042c3576fa0c890e88a13cac54c343cf4a420c3968f1ca7f5627aa17090",
-    "skills/evaluation-validity-auditor/scripts/cli.mjs": "506f00f123c2477f93c68e4e7b0dab3dbdc0619a7e70d3a3074adcbcb400559a",
-    "skills/evaluation-validity-auditor/scripts/io.mjs": "b671251499880f72c02a1a7640f0e7cc238f5c552fa95c2400c5b6c4e20b1ae5",
-    "skills/evaluation-validity-auditor/scripts/validate-report.mjs": "785b162b082a827bee7072a7a8e5469795e17a7a1e9c5f78cab9b865d8222780",
     "skills/independent-audit-gate/SKILL.md": "26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29",
     "skills/independent-audit-gate/classification.json": "80a4192630678554a8dc2c05221228abcfcaee73ec12ebf54d739fbd03883576",
     "skills/independent-audit-gate/references/audit-protocol.md": "0fc4cb86a3c68cef24c69487e9088bd8c5e07a6f2bff7a120211881d3540c30d",
     "skills/independent-audit-gate/references/entry-details.md": "830d33d1e68e125a52f324652af09096d9d1771124bd7518ec2ae2097fc17e38",
-    "skills/independent-audit-gate/scripts/validate_skill.py": "9126bda57ea5985f268eb8558a80158270f8ccac200d988e98a9176932469e35",
     "skills/independent-deliberation-panel/references/orchestration-policy.md": "ff72d35b11196ccb73e85fe73eda04caf26380f7c264fb800357c9f55c0b62c1",
-    "skills/iteration-frame-auditor/scripts/digest-request.mjs": "4694cd8768a85374692e742e477ed22d559c961015de1808a4502ebdf5785798",
     "skills/model-effort-advisor/SKILL.md": "fa84d128bf1d9a6742b74f13080db98f304803e84168b8de39a9e120a01a9a6a",
     "skills/model-effort-advisor/classification.json": "9dee08d541f2a0dae21352cbbd4d1e8c3cbf7cdaefcf7db94bf0cf8598f17518",
     "skills/orchestrator/SKILL.md": "b90c19a956f4dd3b239e4f4a527ebea319128dbae239018f8f3b0b5445cc43ac",
@@ -191,7 +178,6 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/orchestrator/references/skill-classification.md": "c9274214f8fb85ffdf5d138e9a4382b2f2906127b9d47db82dfa542ed28ed2c8",
     "skills/ponytail/SKILL.md": "907667b8b625eab0438b462a4737a056e3833f972c66e432817a12e6f643ac76",
     "skills/ponytail/classification.json": "19b81d57825cecd7a366b50efb9f220446f5208839b26faee2710af00da3d926",
-    "skills/software-security-auditor/scripts/cli.mjs": "81582c7187702f140f93a4ed648096fc8f95b0f36fa558888cf0dbd8a4cef36c"
   },
   "previousHashes": {
     "skills/blocker-diagnostician/SKILL.md": "5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
@@ -204,15 +190,6 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/orchestrator/SKILL.md": "1cfaf8503aacae72fb7e2591e708bea507848ae338e21855c15e4b1ccb635cd1",
     "skills/orchestrator/references/entry-details.md": "2c50a92c5cc59676ae6ac2bae1f9d86f337cdc7870b20ff9df12e8e3cd09670b",
     "skills/ponytail/SKILL.md": "953fd16ff07c23b9481e9bdfca12dbb0d115422ebdbd6626bae6b574838a777c"
-  }
-});
-
-const CS_RAW_CANDIDATE_CAP_SOURCE_SUCCESSOR = Object.freeze({
-  "revision": "cs-raw-candidate-cap-source-successor-r01",
-  "authorityEffect": "none",
-  "predecessorMetadataDigest": "sha256:03f1c94a531c961c86c599bea80cc98c24b075d23c51980e6a577dd352a21ae3",
-  "hashes": {
-    "skills/cs-engineering/scripts/core.mjs": "07b53170986c6c0360bcda3427995e77df081d3402a336a7af3f6364745f501d"
   }
 });
 
@@ -261,7 +238,6 @@ function matchesOrchestratorSourceSuccessor(path, bytes) {
 }
 
 export function matchesGovernanceSourceSuccessor(path, bytes) {
-  if (Object.hasOwn(GOVERNANCE_SOURCE_SUCCESSOR.hashes, path) && matchesStdinUtf8SourceSuccessor(path, bytes)) return true;
   // Current mid-task selection wording is an exact source successor, not a 2.x runtime contract.
   // Historical reconstruction below still uses the separately pinned predecessor bytes.
   if (matchesOrchestratorSourceSuccessor(path, bytes)) return true;
@@ -289,48 +265,22 @@ export function matchesPonytailPolicySuccessor(path, bytes) {
     && createHash("sha256").update(bytes).digest("hex") === PONYTAIL_POLICY_SUCCESSOR.hashes[path];
 }
 
-// Exact implementation bytes integrated after the historical optimization.
-// This validates source identity only; it grants no review or execution authority.
-const CURRENT_IMPLEMENTATION_PINS = Object.freeze({
+// 문서·계약 바이트만 문맥 검사에 남긴다. 실행 무결성은 source-lock 책임이다.
+const CONTEXT_CONTRACT_PINS = Object.freeze({
   revision: "3.0.0-source-integration-r16-repairs",
   authorityEffect: "none",
   hashes: Object.freeze({
-  "skills/acceptance-evidence-validator/scripts/check-repository.mjs": "29cde6044e0c874df4d5b7503445d22e0479b0d855227231f43b2a939838abdc",
   "skills/acceptance-evidence-validator/scripts/core.d.mts": "5ad79b91fd34d6d4f07321b1011e2b48b5311a89296d10c360ed108ed92f45cf",
-  "skills/acceptance-evidence-validator/scripts/core.mjs": "6147dfdd2b62b971b5965f6decc41544a1e77fa0f06b115ab003ef487c415393",
-  "skills/acceptance-evidence-validator/scripts/schema-validation.mjs": "bdcf2686ba65e38175f17f8c04167e5b822e22390ae2c9415084b9cd57f20eae",
-  "skills/blocker-diagnostician/scripts/check-repository.mjs": "fae24b9cc8186afdd484476e0107e796093e8369d2ec9ab9d4edbc5feb5279a8",
-  "skills/change-scope-guardian/scripts/lib.mjs": "5c7b40ebb6064e6c76d5b29074c517eca2074ea47c0c7e6519ddb02f3872e985",
-  "skills/change-scope-guardian/scripts/schema-validator.mjs": "ff48309ac4549d1fce4df6a4748331504719af6352152df7cbbc371054379dfb",
-  "skills/codex-token-usage-analyzer/scripts/core.mjs": "99873c0891969d8055efa8d765abf80405863966287da9ac147695c9c1597e7e",
-  "skills/codex-token-usage-analyzer/scripts/schema-validation.mjs": "06a35eb68b3d67e9fbcc1bbe8fe3fa57e51e792173aee3c8aeec80537616cc90",
   "skills/coordinate-subagents/references/model-routing-presets.json": "a2274bb2baa138d7a2135c9470c44385455c128a7d720d3b4e7e89ad9a660acd",
   "skills/coordinate-subagents/references/model-routing.md": "dedab0288c24a5f38437f0e8917df484647c4b0135af20b292feef01a8970b79",
   "skills/coordinate-subagents/scripts/model-catalog-adapter.d.mts": "936efbf8e7bbcef4f0c452ec4e4fe876c6f9ecb53a82df3d7d60de63bd684026",
-  "skills/coordinate-subagents/scripts/model-catalog-adapter.mjs": "c6e74b706f89882cfa94e5269c8fb77c9011b731b9ee136d5396ecaa7f828834",
   "skills/coordinate-subagents/scripts/model-routing.d.mts": "4afbbfc1167ee637d1aab74bbfe4ec55241931d33fa55442b94dcea8d8e93fbe",
-  "skills/coordinate-subagents/scripts/model-routing.mjs": "ee3e7084ca52cef9a14d8eb5d3b4f79bcb3c91098ca0d1fd6bac30ad64e29b7e",
-  "skills/evaluation-validity-auditor/scripts/check-repository.mjs": "e00e96e27843e08b8885d38c181e33cc26a2730f6dca2f524a1584786b074454",
   "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json": "9423c10246f09738712ac0bf5b5f9134795fa8a9f03bfb4d2a2f2af96af3618f",
-  "skills/independent-deliberation-panel/scripts/run_evals.py": "91b43afc879001917d0a49c4209beeea4a98ffad0b64163ebd85f778d7269f20",
-  "skills/independent-deliberation-panel/scripts/validate_decision_record.py": "fa57d3ad2a2d2a5b5c42128f126ba4ff32e1d1f6bb412587abc3006e8cdb3d87",
   "skills/instruction-scope-resolver/references/gemini-instructions.md": "fb03a623c11627f8fed8cfad07d6c492fcd4a710dd73b25963840f8524b18a56",
-  "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs": "ff696ff9c2b8e19dba88b9ad8f140966d810b6ee5086d2ccd376ae6afc20b27b",
   "skills/iteration-frame-auditor/integration/skill-descriptor.json": "44b5fa664b83708b62f664606910558e09837f3bb84a232fdfe8b5e82e4fb1f1",
-  "skills/iteration-frame-auditor/scripts/core.mjs": "efb17e2f3ab93074fd36c4464dcfd6848f4f1627757dacc47196c18bd40345f6",
   "skills/korean-prose-editor/contracts/protected-manifest.schema.json": "cb518ab89e3a6b2ad422f5015f58843291505cf6a7360a4983a18b974cec25c7",
   "skills/korean-prose-editor/contracts/receipt.schema.json": "2ad9e132c19e58c9fcdc2a15fce4715c840766ebce638722f11ee47173a688f4",
-  "skills/korean-prose-editor/scripts/finalizer-core.mjs": "44e898697c65fa8bc8e678dda878da50af9129172f054f366ea5f64191ed71ed",
-  "skills/korean-prose-editor/scripts/protected-spans.mjs": "b28573ebad7fa0f0842d6aa83b6c52ad239fa9a8ac74f9eb28feb3c4a64be232",
   "skills/mutation-risk-preflight/references/recovery-requirements.md": "41c5284d8dd1c5c9f1f7c6d8e090f8a2af36677fbb0bc8b21e18cbcf2d1754ed",
-  "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": "530bc651aa8ee506eba0a160f8e1989711b2257c16df449394f0e22b2023ed9c",
-  "skills/mutation-risk-preflight/scripts/schema-validation.mjs": "4cce85dc38941f216349a8ac89fa230f2d40ea55d05ccb17b3d030bdd7a141d2",
-  "skills/mutation-risk-preflight/scripts/validate-skill.mjs": "06da56be6a8eeb85c78fea914e437e30eb56ab1ffa5369d897255093d58c64dd",
-  "skills/recovery-strategy-selector/scripts/schema-validation.mjs": "a18cbdd934c0cc49f59ed2b33b6756ebeddaaeb1d4b58315041462b82e94151b",
-  "skills/task-contract/scripts/validate-task-contract.mjs": "18d2a516da23c58bd7e2b1317d10a42be5f25becdac2562f0ed161c724c5528b",
-  "skills/workspace-convention-profiler/scripts/profile-workspace.mjs": "392276006eb7658af3c9704de5c50ce36acce6f678e32a4f4a629562cbea5608",
-  "skills/workspace-convention-profiler/scripts/schema-validation.mjs": "d27f1dac298004831a2c1c04e0c07a24ad1c7021d3e56bf051ebaa73a71557f6",
-  "skills/workspace-convention-profiler/scripts/validate-skill.mjs": "7e6e3d72f8848a0761753ca3d1bcf0821ad0a242419420db13f3e628e6694034"
 }),
 });
 
@@ -341,14 +291,12 @@ const TASK_CONTRACT_AUTHORIZATION_SUCCESSOR = Object.freeze({
   "baselineRevision": "3a9f7b15d1ce879b5e9967bd72b19bce61cbbdf7",
   "previousEntryDetailSha256": "e587fd4a1b94415ec30ad943bb1cc9d81f1cb988b07ecab3df3cedd4f6c7efc9",
   "hashes": {
-    "skills/task-contract/scripts/validate-task-contract.mjs": "61e90f6acb355f4f031941a9dc521460cebc315f79191a63357a53c0cc7a10bf",
     "skills/task-contract/references/risk-and-authorization-rubric.md": "717e1fb27d4ebf7b6481c84e20de018b8461fd7ff277c6434f6f2d52f7cca89e",
     "skills/task-contract/references/entry-details.md": "401c494535eb2d62d0ec80810f1610c12071fcf5e3ed2c1cef23b23ba09440c2"
   }
 });
 
 export function matchesTaskContractAuthorizationSuccessor(path, bytes) {
-  if (Object.hasOwn(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes, path) && matchesStdinUtf8SourceSuccessor(path, bytes)) return true;
   return Object.hasOwn(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes[path];
 }
@@ -357,64 +305,22 @@ const PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR = Object.freeze({
   "revision": "preflight-additive-source-successor-r01",
   "authorityEffect": "none",
   "hashes": {
-    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": "fb633fdd9e49cc48dedfaed0afc49e4173f7c9d64818e615965a98fce37a8319",
     "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json": "eaf3bc82d4d18372544e54f39cfe0d6214ade77e983589de62789828207b8dc6",
     "skills/mutation-risk-preflight/references/recovery-requirements.md": "973da35b3d3080878c746bf32563764a6d7c580dc7912ab040edd68123086d19"
   }
 });
 
-// D0357: UTF-8 문자 경계를 보존하는 입력 디코더 후속판. 기존 역사 핀은 유지한다.
-const PREFLIGHT_UTF8_SOURCE_SUCCESSOR = Object.freeze({
-  revision: "d0357-preflight-utf8-source-successor-r01",
-  authorityEffect: "none",
-  baselineRevision: "70de7ea5600fe8401ab71740561fc7ffc47c6b3a",
-  hashes: Object.freeze({
-    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": "9ff002852bc34338ed94fdf0e9c5060cdb92f602961d2a959237d365ffeae40c",
-    "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs": "0cb206aff307cc5f704067db5aee4a03acec7e239072418cc09694aa59746bae",
-  }),
-});
-
-function matchesPreflightUtf8SourceSuccessor(path, bytes) {
-  return Object.hasOwn(PREFLIGHT_UTF8_SOURCE_SUCCESSOR.hashes, path)
-    && createHash("sha256").update(bytes).digest("hex") === PREFLIGHT_UTF8_SOURCE_SUCCESSOR.hashes[path];
-}
-
 export function matchesPreflightAdditiveSourceSuccessor(path, bytes) {
-  if (matchesPreflightUtf8SourceSuccessor(path, bytes)) return true;
   return Object.hasOwn(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes[path];
 }
 
-// D0357 형제 입력 경계의 후속판. 역사와 권한은 바꾸지 않고 정확한 현재 바이트만 고정한다.
-const STDIN_UTF8_SOURCE_SUCCESSOR = Object.freeze({
-  revision: "d0357-sibling-stdin-utf8-source-successor-r01",
-  authorityEffect: "none",
-  baselineRevision: "13a559d8261a1211242c2650a0542be142ff3202",
-  hashes: Object.freeze({
-    "skills/acceptance-evidence-validator/scripts/io.mjs": "458a56634b9c1dec124413c6f6266ac3d5bd28ae17254d42cd48b7c5e75eb310",
-    "skills/blocker-diagnostician/scripts/io.mjs": "458a56634b9c1dec124413c6f6266ac3d5bd28ae17254d42cd48b7c5e75eb310",
-    "skills/evaluation-validity-auditor/scripts/io.mjs": "643a437ad376c2001bc9c5f038accd87a3aa1c11d335e066af52582b9efadcd5",
-    "skills/iteration-frame-auditor/scripts/io.mjs": "ebf8cfdbd2c1f045c4fc12965ce5e83d454f77a8d5351c1ed5ce70a87db35134",
-    "skills/recovery-strategy-selector/scripts/io.mjs": "00d395a19e7201702ffc012e15d495d346876b4e84acb689b14e2233489415bc",
-    "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs": "e3be8b42de7dcfb5d4da4ef13c37ca2de06e67eab4b8bb69a2658f41784faffa",
-    "skills/task-contract/scripts/validate-task-contract.mjs": "cf079398e21a9681c38c5d9d3303de106541f629f7854d1a2198bca396b747b1",
-    "skills/workspace-convention-profiler/scripts/profile-workspace.mjs": "64b8928e54f9e6310e53ed57824381c985731fd66e5705065533d7cf4ef24682",
-    "skills/workspace-convention-profiler/scripts/validate-profile.mjs": "ac0e2b4104b22d37494e64aa07fc6e491a1dc8bcca634de5311ee516def805dd",
-  }),
-});
-
-function matchesStdinUtf8SourceSuccessor(path, bytes) {
-  return Object.hasOwn(STDIN_UTF8_SOURCE_SUCCESSOR.hashes, path)
-    && createHash("sha256").update(bytes).digest("hex") === STDIN_UTF8_SOURCE_SUCCESSOR.hashes[path];
-}
-
-export function matchesCurrentImplementationPin(path, bytes) {
-  if (matchesStdinUtf8SourceSuccessor(path, bytes)) return true;
+export function matchesContextContractPin(path, bytes) {
   if (matchesPreflightAdditiveSourceSuccessor(path, bytes)) return true;
   if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
   if (matchesTaskContractAuthorizationSuccessor(path, bytes)) return true;
-  return Object.hasOwn(CURRENT_IMPLEMENTATION_PINS.hashes, path)
-    && createHash("sha256").update(bytes).digest("hex") === CURRENT_IMPLEMENTATION_PINS.hashes[path];
+  return Object.hasOwn(CONTEXT_CONTRACT_PINS.hashes, path)
+    && createHash("sha256").update(bytes).digest("hex") === CONTEXT_CONTRACT_PINS.hashes[path];
 }
 
 const TARGETS = [
@@ -480,7 +386,6 @@ const SKILL_POLICY_WORDING_SUCCESSOR = Object.freeze({
     "skills/independent-audit-gate/references/audit-protocol.md": "a34c9e5f9d82f5e0257614a119c05ac966bea04ee8fa374c88b010faea549dc4",
     "skills/independent-audit-gate/references/entry-details.md": "0c390f9b8ccb7a3ef01f77dea4f92cec25d785e28b917e7305f76fdb42f05af9",
     "skills/independent-audit-gate/references/orchestrator-integration.md": "3d14b4944f34c5e071cec027dcf483adf6fe5229e1a6ad17ea39202aa17d2fef",
-    "skills/independent-audit-gate/scripts/validate_skill.py": "a1fc70e88edd319d95d0ebe81a8bd62f1ce643db04173efe68b4180ff8b88d15",
     "skills/independent-deliberation-panel/SKILL.md": "eb21677b0f377116250691a8cf84b44ec853c4de9c56e27ea17585016a151f54",
     "skills/independent-deliberation-panel/classification.json": "71ecafe2dc7eab91bb7ee5ebac230f2b0d3a7e58b9ff15c8cfdc3517a0aa21fd",
     "skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md": "644fe1ead2962af0968ffa06fb248b55fb68d0ba15f229e9b9218e0696653336",
@@ -517,7 +422,6 @@ const SKILL_POLICY_WORDING_SUCCESSOR = Object.freeze({
     "skills/independent-audit-gate/references/audit-protocol.md": "0fc4cb86a3c68cef24c69487e9088bd8c5e07a6f2bff7a120211881d3540c30d",
     "skills/independent-audit-gate/references/entry-details.md": "830d33d1e68e125a52f324652af09096d9d1771124bd7518ec2ae2097fc17e38",
     "skills/independent-audit-gate/references/orchestrator-integration.md": "bb2876718149c148daab12cea59a337dd62eb6b61939e69c6f39d27f04b12dda",
-    "skills/independent-audit-gate/scripts/validate_skill.py": "9126bda57ea5985f268eb8558a80158270f8ccac200d988e98a9176932469e35",
     "skills/independent-deliberation-panel/SKILL.md": "899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab",
     "skills/independent-deliberation-panel/classification.json": "936f167838041d925990c9e853062f531069d64bcbfc95658c2e5399ed6792fe",
     "skills/independent-deliberation-panel/references/evidence-and-verdict-schema.md": "3fe89dbe91f6b9cf944c3187da6c3f7b50f9e1815558a53d4522151edeab291f",
@@ -547,31 +451,52 @@ function matchesSkillPolicyWordingSuccessor(path, bytes) {
     && createHash("sha256").update(bytes).digest("hex") === SKILL_POLICY_WORDING_SUCCESSOR.hashes[path];
 }
 
-// D0358: 실행 파일의 과거 증거와 현재 문맥 입력을 분리한다.
-// 현재 배포 소스의 무결성은 source-lock 검사와 실제 계약 시험이 담당한다.
-const IMPLEMENTATION_EVIDENCE_REVISION = "2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8";
-const RECORDED_IMPLEMENTATION_PATHS = new Set([
-  CURRENT_IMPLEMENTATION_PINS, REVIEWED_IMPLEMENTATION_R1, REVIEWED_IMPLEMENTATION_R2,
-  CLASSIFICATION_UPDATE, PONYTAIL_POLICY_SUCCESSOR, GOVERNANCE_SOURCE_SUCCESSOR,
-  TASK_CONTRACT_AUTHORIZATION_SUCCESSOR, PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR,
-  PREFLIGHT_UTF8_SOURCE_SUCCESSOR, STDIN_UTF8_SOURCE_SUCCESSOR,
-  CS_RAW_CANDIDATE_CAP_SOURCE_SUCCESSOR, SKILL_POLICY_WORDING_SUCCESSOR,
-].flatMap(record => Object.keys(record.hashes)).filter(relative =>
-  relative.split("/")[2] === "scripts" && (relative.endsWith(".mjs") || relative.endsWith(".py"))));
-const implementationEvidence = new Map();
-
-function readSourceEvidence(relative) {
-  // 기존 명시 경로만 과거 바이트로 읽는다. 새 파일이나 문맥·계약 경로를 허용하지 않는다.
-  if (!RECORDED_IMPLEMENTATION_PATHS.has(relative)) return readFileSync(join(ROOT, relative));
-  if (!implementationEvidence.has(relative)) {
-    implementationEvidence.set(relative, git("show", `${IMPLEMENTATION_EVIDENCE_REVISION}:${relative}`));
-  }
-  return implementationEvidence.get(relative);
-}
-
-function readHistoricalEvidence(relative) {
-  return historicalBytes(relative, readSourceEvidence(relative));
-}
+// 문맥 검사는 실행 바이트를 판정하지 않는다. 기존 허용 경로만 보존한다.
+const IMPLEMENTATION_PATHS = new Set([
+  "skills/acceptance-evidence-validator/scripts/check-repository.mjs",
+  "skills/acceptance-evidence-validator/scripts/core.mjs",
+  "skills/acceptance-evidence-validator/scripts/io.mjs",
+  "skills/acceptance-evidence-validator/scripts/schema-validation.mjs",
+  "skills/blocker-diagnostician/scripts/check-repository.mjs",
+  "skills/blocker-diagnostician/scripts/cli.mjs",
+  "skills/blocker-diagnostician/scripts/core.mjs",
+  "skills/blocker-diagnostician/scripts/io.mjs",
+  "skills/change-scope-guardian/scripts/lib.mjs",
+  "skills/change-scope-guardian/scripts/schema-validator.mjs",
+  "skills/codex-token-usage-analyzer/scripts/cli.mjs",
+  "skills/codex-token-usage-analyzer/scripts/core.mjs",
+  "skills/codex-token-usage-analyzer/scripts/schema-validation.mjs",
+  "skills/coordinate-subagents/scripts/model-catalog-adapter.mjs",
+  "skills/coordinate-subagents/scripts/model-routing.mjs",
+  "skills/cs-engineering/scripts/core.mjs",
+  "skills/evaluation-validity-auditor/scripts/check-repository.mjs",
+  "skills/evaluation-validity-auditor/scripts/cli.mjs",
+  "skills/evaluation-validity-auditor/scripts/io.mjs",
+  "skills/evaluation-validity-auditor/scripts/validate-report.mjs",
+  "skills/independent-audit-gate/scripts/validate_skill.py",
+  "skills/independent-deliberation-panel/scripts/run_evals.py",
+  "skills/independent-deliberation-panel/scripts/validate_decision_record.py",
+  "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
+  "skills/iteration-frame-auditor/scripts/core.mjs",
+  "skills/iteration-frame-auditor/scripts/digest-request.mjs",
+  "skills/iteration-frame-auditor/scripts/io.mjs",
+  "skills/korean-prose-editor/scripts/finalizer-core.mjs",
+  "skills/korean-prose-editor/scripts/protected-spans.mjs",
+  "skills/model-effort-advisor/scripts/support-guard.mjs",
+  "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
+  "skills/mutation-risk-preflight/scripts/schema-validation.mjs",
+  "skills/mutation-risk-preflight/scripts/validate-skill.mjs",
+  "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+  "skills/recovery-strategy-selector/scripts/io.mjs",
+  "skills/recovery-strategy-selector/scripts/schema-validation.mjs",
+  "skills/session-board/scripts/board-store.mjs",
+  "skills/software-security-auditor/scripts/cli.mjs",
+  "skills/task-contract/scripts/validate-task-contract.mjs",
+  "skills/workspace-convention-profiler/scripts/profile-workspace.mjs",
+  "skills/workspace-convention-profiler/scripts/schema-validation.mjs",
+  "skills/workspace-convention-profiler/scripts/validate-profile.mjs",
+  "skills/workspace-convention-profiler/scripts/validate-skill.mjs",
+]);
 
 function historicalBytes(path, bytes) {
   if (!matchesSkillPolicyWordingSuccessor(path, bytes)) return bytes;
@@ -587,7 +512,7 @@ function readHistorical(root, ...parts) {
 
 /** Test hook: tracked bytes as the historical checks see them. */
 export function readHistoricalSource(relative) {
-  return readHistoricalEvidence(relative);
+  return readHistorical(ROOT, relative);
 }
 
 /** Test hook: whether the bytes are the reviewed skill policy wording successor. */
@@ -790,56 +715,36 @@ export function checkRegistryContextCompatibility(registry) {
 export function checkSkillContextOptimization() {
   const errors = [];
   for (const [currentPath, expectedHash] of Object.entries(TASK_CONTRACT_ROUTING_SOURCE_HASHES)) {
-    if (createHash("sha256").update(readSourceEvidence(currentPath)).digest("hex") !== expectedHash) {
+    if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== expectedHash) {
       errors.push(`task-contract routing source differs: ${currentPath}`);
     }
   }
   for (const successorPath of Object.keys(SKILL_POLICY_WORDING_SUCCESSOR.hashes)) {
-    if (!matchesSkillPolicyWordingSuccessor(successorPath, readSourceEvidence(successorPath))) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
+    if (!matchesSkillPolicyWordingSuccessor(successorPath, readFileSync(join(ROOT, successorPath)))) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
   }
   for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) {
-    if (!matchesClassificationUpdate(reviewedPath, readHistoricalEvidence(reviewedPath))) errors.push(`classification: reviewed bytes differ: ${reviewedPath}`);
+    if (!matchesClassificationUpdate(reviewedPath, readHistorical(ROOT, reviewedPath))) errors.push(`classification: reviewed bytes differ: ${reviewedPath}`);
   }
   for (const currentPath of Object.keys(PONYTAIL_POLICY_SUCCESSOR.hashes)) {
-    if (!matchesPonytailPolicySuccessor(currentPath, readHistoricalEvidence(currentPath))) errors.push(`policy successor bytes differ: ${currentPath}`);
+    if (!matchesPonytailPolicySuccessor(currentPath, readHistorical(ROOT, currentPath))) errors.push(`policy successor bytes differ: ${currentPath}`);
   }
-  for (const currentPath of Object.keys(CURRENT_IMPLEMENTATION_PINS.hashes)) {
-    if (!matchesCurrentImplementationPin(currentPath, readHistoricalEvidence(currentPath))) {
+  for (const currentPath of Object.keys(CONTEXT_CONTRACT_PINS.hashes)) {
+    if (!matchesContextContractPin(currentPath, readHistorical(ROOT, currentPath))) {
       errors.push(`current implementation bytes differ: ${currentPath}`);
     }
   }
-  for (const currentPath of Object.keys(STDIN_UTF8_SOURCE_SUCCESSOR.hashes)) {
-    if (!matchesStdinUtf8SourceSuccessor(currentPath, readHistoricalEvidence(currentPath))) {
-      errors.push(`stdin UTF-8 successor bytes differ: ${currentPath}`);
-    }
-  }
-  for (const currentPath of Object.keys(PREFLIGHT_UTF8_SOURCE_SUCCESSOR.hashes)) {
-    if (!matchesPreflightUtf8SourceSuccessor(currentPath, readHistoricalEvidence(currentPath))) {
-      errors.push(`preflight UTF-8 successor bytes differ: ${currentPath}`);
-    }
-  }
-  for (const currentPath of Object.keys(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes)) {
-    if (!matchesPreflightAdditiveSourceSuccessor(currentPath, readHistoricalEvidence(currentPath))) {
-      errors.push(`preflight additive successor bytes differ: ${currentPath}`);
-    }
-  }
   for (const currentPath of Object.keys(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes)) {
-    if (!matchesTaskContractAuthorizationSuccessor(currentPath, readHistoricalEvidence(currentPath))) {
+    if (!matchesTaskContractAuthorizationSuccessor(currentPath, readHistorical(ROOT, currentPath))) {
       errors.push(`task-contract authorization successor bytes differ: ${currentPath}`);
     }
   }
   for (const currentPath of Object.keys(GOVERNANCE_SOURCE_SUCCESSOR.hashes)) {
-    if (!matchesGovernanceSourceSuccessor(currentPath, readHistoricalEvidence(currentPath))) {
+    if (!matchesGovernanceSourceSuccessor(currentPath, readHistorical(ROOT, currentPath))) {
       errors.push(`governance source successor bytes differ: ${currentPath}`);
     }
   }
-  for (const [currentPath, sha256] of Object.entries(CS_RAW_CANDIDATE_CAP_SOURCE_SUCCESSOR.hashes)) {
-    if (createHash("sha256").update(readHistoricalEvidence(currentPath)).digest("hex") !== sha256) {
-      errors.push(`CS raw candidate cap source successor bytes differ: ${currentPath}`);
-    }
-  }
   for (const currentPath of Object.keys(HOST_CONSUMPTION_SOURCE_SUCCESSOR.hashes)) {
-    if (!matchesHostConsumptionSourceSuccessor(currentPath, readHistoricalEvidence(currentPath))) errors.push(`host consumption successor bytes differ: ${currentPath}`);
+    if (!matchesHostConsumptionSourceSuccessor(currentPath, readHistorical(ROOT, currentPath))) errors.push(`host consumption successor bytes differ: ${currentPath}`);
   }
   const detailOwners = readdirSync(join(ROOT, "skills"), { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -880,8 +785,8 @@ export function checkSkillContextOptimization() {
       const reference = readHistorical(ROOT, "skills/orchestrator/references/mcp-execution.md");
       if (!matchesOrchestratorIntakeUpdate("mcpExecution", reference)) errors.push("orchestrator: MCP execution policy differs from the pinned revision");
     } else if (skillId === "model-effort-advisor") {
-      for (const approvedPath of [skillPath, detailPath, "skills/model-effort-advisor/scripts/support-guard.mjs"]) {
-        if (!matchesReviewedImplementationUpdate(approvedPath, readHistoricalEvidence(approvedPath))) {
+      for (const approvedPath of [skillPath, detailPath]) {
+        if (!matchesReviewedImplementationUpdate(approvedPath, readHistorical(ROOT, approvedPath))) {
           errors.push(`model-effort-advisor: reviewed implementation bytes differ: ${approvedPath}`);
         }
       }
@@ -911,19 +816,18 @@ export function checkSkillContextOptimization() {
     if (!readHistorical(ROOT, ...descriptorPath.split("/")).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
 
     const allowed = new Set([skillPath, detailPath]);
+    for (const implementationPath of IMPLEMENTATION_PATHS) if (implementationPath.startsWith(`skills/${skillId}/`)) allowed.add(implementationPath);
     for (const currentPath of Object.keys(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
-    for (const currentPath of Object.keys(PREFLIGHT_UTF8_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
-    for (const currentPath of Object.keys(STDIN_UTF8_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     for (const currentPath of Object.keys(GOVERNANCE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
-    for (const currentPath of Object.keys(CURRENT_IMPLEMENTATION_PINS.hashes)) {
+    for (const currentPath of Object.keys(CONTEXT_CONTRACT_PINS.hashes)) {
       if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     }
     for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) if (reviewedPath.startsWith(`skills/${skillId}/`)) allowed.add(reviewedPath);
     for (const currentPath of Object.keys(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     for (const currentPath of Object.keys(TASK_CONTRACT_ROUTING_SOURCE_HASHES)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     if (skillId === "session-board") {
-      for (const reviewedPath of ["skills/session-board/scripts/board-store.mjs", "skills/session-board/scripts/board-store.d.mts"]) {
-        if (!matchesReviewedImplementationUpdate(reviewedPath, readHistoricalEvidence(reviewedPath))) {
+      for (const reviewedPath of ["skills/session-board/scripts/board-store.d.mts"]) {
+        if (!matchesReviewedImplementationUpdate(reviewedPath, readHistorical(ROOT, reviewedPath))) {
           errors.push(`session-board: reviewed implementation bytes differ: ${reviewedPath}`);
         }
         allowed.add(reviewedPath);
@@ -975,8 +879,6 @@ export function checkSkillContextOptimization() {
     baselineRevision: BASELINE,
     currentHostConsumptionSourceSuccessors: [HOST_CONSUMPTION_SOURCE_SUCCESSOR],
     currentPreflightAdditiveSourceSuccessors: [PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR],
-    currentPreflightUtf8SourceSuccessors: [PREFLIGHT_UTF8_SOURCE_SUCCESSOR],
-    currentStdinUtf8SourceSuccessors: [STDIN_UTF8_SOURCE_SUCCESSOR],
     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
     policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],
     reviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R1],
@@ -984,16 +886,12 @@ export function checkSkillContextOptimization() {
     reviewedOutputContractUpdates: [REVIEWED_RESOLVER_OUTPUT_CONTRACT],
     activeReviewedOutputContractUpdates: [REVIEWED_RESOLVER_N_DESC_RULE],
     reviewedClassificationUpdates: [CLASSIFICATION_UPDATE],
-    currentImplementationPins: [CURRENT_IMPLEMENTATION_PINS],
-    implementationEvidence: {
-      revision: IMPLEMENTATION_EVIDENCE_REVISION, authorityEffect: "none",
-      paths: [...RECORDED_IMPLEMENTATION_PATHS].sort(),
-      currentSourceIntegrity: "source-lock", currentBehavior: "contract-tests",
-    },
+    contextContractPins: [CONTEXT_CONTRACT_PINS],
+    scope: "skill-context-only",
+    authorityEffect: "none",
     currentPolicySuccessors: [PONYTAIL_POLICY_SUCCESSOR],
     currentAuthorizationPolicySuccessors: [TASK_CONTRACT_AUTHORIZATION_SUCCESSOR],
     currentGovernanceSourceSuccessors: [GOVERNANCE_SOURCE_SUCCESSOR],
-    currentCsRawCandidateCapSourceSuccessors: [CS_RAW_CANDIDATE_CAP_SOURCE_SUCCESSOR],
     runtimeBaselineUpdates: Object.entries(NODE24_README_MINIMUMS).map(([skillId, before]) => ({ skillId, before, after: "Node.js 24.0.0 이상" })),
     currentSkillPolicyWordingSuccessors: [SKILL_POLICY_WORDING_SUCCESSOR],
     pass: errors.length === 0,

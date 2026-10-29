@@ -5,74 +5,39 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadSkillInventory } from "../../mcp-server/src/skill-classification/inventory.js";
 import { checkSkillContextOptimization, readHistoricalSource, matchesEngineeringReferenceUpdate, matchesNode24ReadmeUpdate, matchesOrchestratorIntakeUpdate, matchesSkillPolicyWordingSuccessorBytes, reconstructOptimizedSkill } from "../../scripts/check-skill-context-optimization.mjs";
-import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesCurrentImplementationPin } from "../../scripts/check-skill-context-optimization.mjs";
+import { matchesClassificationUpdate, matchesReviewedImplementationUpdate, matchesContextContractPin } from "../../scripts/check-skill-context-optimization.mjs";
 
 describe("skill context optimization", () => {
-  it("pins recorded implementation bytes separately from current context", () => {
+  it("pins context and contract bytes without executable fingerprints", () => {
     const report = checkSkillContextOptimization();
-    expect(report.currentImplementationPins).toHaveLength(1);
-    expect(report.currentImplementationPins[0].authorityEffect).toBe("none");
-    expect(Object.keys(report.currentImplementationPins[0].hashes)).toHaveLength(36);
-    expect(Object.keys(report.currentImplementationPins[0].hashes).toSorted()).toEqual([
-      "skills/acceptance-evidence-validator/scripts/check-repository.mjs",
+    expect(report.contextContractPins).toHaveLength(1);
+    expect(report.contextContractPins[0].authorityEffect).toBe("none");
+    expect(Object.keys(report.contextContractPins[0].hashes)).toHaveLength(11);
+    expect(Object.keys(report.contextContractPins[0].hashes).toSorted()).toEqual([
       "skills/acceptance-evidence-validator/scripts/core.d.mts",
-      "skills/acceptance-evidence-validator/scripts/core.mjs",
-      "skills/acceptance-evidence-validator/scripts/schema-validation.mjs",
-      "skills/blocker-diagnostician/scripts/check-repository.mjs",
-      "skills/change-scope-guardian/scripts/lib.mjs",
-      "skills/change-scope-guardian/scripts/schema-validator.mjs",
-      "skills/codex-token-usage-analyzer/scripts/core.mjs",
-      "skills/codex-token-usage-analyzer/scripts/schema-validation.mjs",
       "skills/coordinate-subagents/references/model-routing-presets.json",
       "skills/coordinate-subagents/references/model-routing.md",
       "skills/coordinate-subagents/scripts/model-catalog-adapter.d.mts",
-      "skills/coordinate-subagents/scripts/model-catalog-adapter.mjs",
       "skills/coordinate-subagents/scripts/model-routing.d.mts",
-      "skills/coordinate-subagents/scripts/model-routing.mjs",
-      "skills/evaluation-validity-auditor/scripts/check-repository.mjs",
       "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json",
-      "skills/independent-deliberation-panel/scripts/run_evals.py",
-      "skills/independent-deliberation-panel/scripts/validate_decision_record.py",
       "skills/instruction-scope-resolver/references/gemini-instructions.md",
-      "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
       "skills/iteration-frame-auditor/integration/skill-descriptor.json",
-      "skills/iteration-frame-auditor/scripts/core.mjs",
       "skills/korean-prose-editor/contracts/protected-manifest.schema.json",
       "skills/korean-prose-editor/contracts/receipt.schema.json",
-      "skills/korean-prose-editor/scripts/finalizer-core.mjs",
-      "skills/korean-prose-editor/scripts/protected-spans.mjs",
       "skills/mutation-risk-preflight/references/recovery-requirements.md",
-      "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
-      "skills/mutation-risk-preflight/scripts/schema-validation.mjs",
-      "skills/mutation-risk-preflight/scripts/validate-skill.mjs",
-      "skills/recovery-strategy-selector/scripts/schema-validation.mjs",
-      "skills/task-contract/scripts/validate-task-contract.mjs",
-      "skills/workspace-convention-profiler/scripts/profile-workspace.mjs",
-      "skills/workspace-convention-profiler/scripts/schema-validation.mjs",
-      "skills/workspace-convention-profiler/scripts/validate-skill.mjs",
     ]);
-    for (const relative of Object.keys(report.currentImplementationPins[0].hashes)) {
+    for (const relative of Object.keys(report.contextContractPins[0].hashes)) {
       const bytes = readHistoricalSource(relative);
-      expect(matchesCurrentImplementationPin(relative, bytes), relative).toBe(true);
+      expect(matchesContextContractPin(relative, bytes), relative).toBe(true);
       const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1;
-      expect(matchesCurrentImplementationPin(relative, altered), relative).toBe(false);
-      expect(matchesCurrentImplementationPin(relative + ".unlisted", bytes)).toBe(false);
+      expect(matchesContextContractPin(relative, altered), relative).toBe(false);
+      expect(matchesContextContractPin(relative + ".unlisted", bytes)).toBe(false);
     }
     expect(report.baselineRevision).toBe("7bc7753012227938be2a46f68bf3e29d29d5ef34");
     expect(report.totals).toMatchObject({ skillCount: 20, baselineBytes: 115679, candidateBytes: 47606 });
   });
-  it.each([
-    "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
-    "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json",
-  ])("rejects altered recorded implementation or contract evidence: %s", async (relative) => {
-    const { execFileSync } = await import("node:child_process");
-    vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
-      const bytes = execFileSync(file, args, options);
-      if (file === "git" && args.at(-2) === "show" && args.at(-1) === `2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:${relative}`) {
-        const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1; return altered;
-      }
-      return bytes;
-    } }));
+  it("rejects altered contract evidence", async () => {
+    const relative = "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json";
     vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
       const bytes = readFileSync(file, ...args);
       if (String(file).replaceAll("\\", "/").endsWith(`/${relative}`)) {
@@ -86,10 +51,11 @@ describe("skill context optimization", () => {
       const report = checker.checkSkillContextOptimization();
       expect(report.pass).toBe(false);
       expect(report.errors).toContain(`current implementation bytes differ: ${relative}`);
-    } finally { vi.doUnmock("node:fs"); vi.doUnmock("node:child_process"); vi.resetModules(); }
+    } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
   });
 
   it.each([
+    "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs",
     "skills/task-contract/scripts/validate-task-contract.mjs",
     "skills/model-effort-advisor/scripts/support-guard.mjs",
     "skills/cs-engineering/scripts/core.mjs",
@@ -109,10 +75,8 @@ describe("skill context optimization", () => {
       const checker = await import("../../scripts/check-skill-context-optimization.mjs");
       const report = checker.checkSkillContextOptimization();
       expect(report).toMatchObject({ pass: true, errors: [] });
-      const { execFileSync } = await import("node:child_process");
-      const recorded = execFileSync("git", ["show", `2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:${relative}`], { cwd: fileURLToPath(new URL("../../", import.meta.url)) });
-      expect(checker.readHistoricalSource(relative)).toEqual(recorded);
-      expect(report.implementationEvidence).toMatchObject({ revision: "2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8", authorityEffect: "none", currentSourceIntegrity: "source-lock" });
+      expect(checker.readHistoricalSource(relative)).toEqual(changed(fs.readFileSync(new URL(`../../${relative}`, import.meta.url))));
+      expect(report).toMatchObject({ scope: "skill-context-only", authorityEffect: "none" });
       const { verifySourceLockOffline } = await import("../../scripts/source-lock.mjs");
       const owner = relative.split("/")[1];
       expect((await verifySourceLockOffline()).some(error => error.startsWith(`integrated checksum mismatch for ${owner}:`))).toBe(true);
@@ -121,15 +85,32 @@ describe("skill context optimization", () => {
     }
   }, 30_000);
 
-  it("does not substitute current bytes when recorded implementation evidence is missing", async () => {
+  it("does not read executable script history", async () => {
     const { execFileSync } = await import("node:child_process");
+    let executableReads = 0;
     vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
-      if (file === "git" && args.at(-2) === "show" && args.at(-1) === "2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs") throw new Error("SYNTHETIC_ARCHIVE_MISSING");
+      if (file === "git" && args.at(-2) === "show" && /:skills\/[^/]+\/scripts\/.+\.(?:mjs|py)$/u.test(args.at(-1))) {
+        executableReads += 1;
+        throw new Error("SYNTHETIC_EXECUTABLE_HISTORY_UNAVAILABLE");
+      }
       return execFileSync(file, args, options);
     } }));
     try {
       vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
-      expect(() => checker.checkSkillContextOptimization()).toThrow("SYNTHETIC_ARCHIVE_MISSING");
+      expect(checker.checkSkillContextOptimization()).toMatchObject({ pass: true, errors: [] });
+      expect(executableReads).toBe(0);
+    } finally { vi.doUnmock("node:child_process"); vi.resetModules(); }
+  });
+
+  it("does not substitute current bytes when required context history is missing", async () => {
+    const { execFileSync } = await import("node:child_process");
+    vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
+      if (file === "git" && args.at(-2) === "show" && args.at(-1) === "7bc7753012227938be2a46f68bf3e29d29d5ef34:skills/context-continuity/SKILL.md") throw new Error("SYNTHETIC_CONTEXT_HISTORY_MISSING");
+      return execFileSync(file, args, options);
+    } }));
+    try {
+      vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      expect(() => checker.checkSkillContextOptimization()).toThrow("SYNTHETIC_CONTEXT_HISTORY_MISSING");
     } finally { vi.doUnmock("node:child_process"); vi.resetModules(); }
   });
 
@@ -137,7 +118,6 @@ describe("skill context optimization", () => {
     for (const relative of [
       "skills/model-effort-advisor/SKILL.md",
       "skills/model-effort-advisor/references/entry-details.md",
-      "skills/model-effort-advisor/scripts/support-guard.mjs",
       "skills/orchestrator/references/engineering-practices/cli.md",
     ]) {
       const bytes = readHistoricalSource(relative);
@@ -164,20 +144,12 @@ describe("skill context optimization", () => {
       additions: { orchestrator: { bytes: 441 }, ponytail: { bytes: 299 } },
     }]);
   });
-  it("rejects altered reviewed integration bytes through the public checker", async () => {
-    const { execFileSync } = await import("node:child_process");
-    vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
-      const bytes = execFileSync(file, args, options);
-      if (file === "git" && args.at(-2) === "show" && args.at(-1) === "2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:skills/model-effort-advisor/scripts/support-guard.mjs") {
-        const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1; return altered;
-      }
-      return bytes;
-    } }));
+  it("rejects altered reviewed context bytes through the public checker", async () => {
     vi.doMock("node:fs", () => ({
       readdirSync,
       readFileSync: (file, ...args) => {
         const bytes = readFileSync(file, ...args);
-        if (String(file).replaceAll("\\", "/").endsWith("/skills/model-effort-advisor/scripts/support-guard.mjs")) {
+        if (String(file).replaceAll("\\", "/").endsWith("/skills/model-effort-advisor/references/entry-details.md")) {
           const altered = Buffer.from(bytes);
           altered[altered.length - 1] ^= 1;
           return altered;
@@ -190,10 +162,9 @@ describe("skill context optimization", () => {
       const checker = await import("../../scripts/check-skill-context-optimization.mjs");
       const report = checker.checkSkillContextOptimization();
       expect(report.pass).toBe(false);
-      expect(report.errors).toContain("model-effort-advisor: reviewed implementation bytes differ: skills/model-effort-advisor/scripts/support-guard.mjs");
+      expect(report.errors).toContain("model-effort-advisor: reviewed implementation bytes differ: skills/model-effort-advisor/references/entry-details.md");
     } finally {
       vi.doUnmock("node:fs");
-      vi.doUnmock("node:child_process");
       vi.resetModules();
     }
   });
