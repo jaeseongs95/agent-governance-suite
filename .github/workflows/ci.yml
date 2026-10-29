@@ -3,6 +3,12 @@ name: CI
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      ac7_guard_r09:
+        description: "설치 없이 r09 파일 가드만 격리 시험"
+        required: false
+        default: false
+        type: boolean
   push:
     branches:
       - main
@@ -12,12 +18,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref == 'refs/heads/release-3.0' && github.run_id || github.ref }}
+  group: ci-${{ github.workflow }}${{ inputs.ac7_guard_r09 && '-ac7-guard-r09' || '' }}-${{ github.ref == 'refs/heads/release-3.0' && github.run_id || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/release-3.0' }}
 
 jobs:
   verify:
-    if: github.ref != 'refs/heads/release-3.0'
+    if: github.ref != 'refs/heads/release-3.0' && !(github.event_name == 'workflow_dispatch' && inputs.ac7_guard_r09)
     name: Node ${{ matrix.node }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -210,3 +216,34 @@ jobs:
           if-no-files-found: error
           retention-days: 1
           compression-level: 9
+
+  ac7-guard-r09:
+    if: github.event_name == 'workflow_dispatch' && inputs.ac7_guard_r09 && github.ref == 'refs/heads/codex/ac7-r09-isolated-guard-20261029-r01'
+    name: r09 설치 파일 가드 격리 시험
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - name: 시험 작업 브랜치 가져오기
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: 승인용 원함수로 소유 파일만 시험
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+          & pwsh -NoLogo -NoProfile -File .github/tests/ac7-r09/test-r09-guard.ps1 1> (Join-Path $env:RUNNER_TEMP 'ac7-guard-r09.stdout.raw.txt') 2> (Join-Path $env:RUNNER_TEMP 'ac7-guard-r09.stderr.raw.txt')
+          $taskExit = $LASTEXITCODE
+          Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'ac7-guard-r09.stdout.raw.txt') -Encoding UTF8
+          Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'ac7-guard-r09.stderr.raw.txt') -Encoding UTF8
+          exit $taskExit
+      - name: 실제 시험 결과와 원출력 회수
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ac7-guard-r09-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/ac7-guard-r09-results
+            ${{ runner.temp }}/ac7-guard-r09.stdout.raw.txt
+            ${{ runner.temp }}/ac7-guard-r09.stderr.raw.txt
+          if-no-files-found: error
+          retention-days: 7
