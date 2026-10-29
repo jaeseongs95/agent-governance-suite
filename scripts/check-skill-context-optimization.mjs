@@ -20,7 +20,7 @@ const ENGINEERING_REFERENCES = Object.freeze({
   "agent-instructions.md": "a6df55ef522a75262b93381ad2f8b5fcaca4212a0afeab6cc0d1a90de2230424",
   "catalog.json": "936714985d22b8ea67b51c5d74cceef2d1321efac8dbfca58989ba124bff3d81",
   "cli.md": "be715633beccc35385f6b1ae3c0c822d1a3487afcae9398bda0d9cf74cfa9341",
-  "code-review.md": "2f0e7f9a75293084a766aa997daf39fe3d2dbbd6e45f9c7455709e9766f8b492",
+  "code-review.md": "43549ced37a9eb4545d67e66122391386da0bde763919a0fdc80f0abaab0e65c",
   "debugging.md": "86239a76c5553be28fe4fddc89fa55b355015e20361d528fcb4c4874bc7fab84",
   "dependency.md": "88c6db7f0e7f2feb90484c8519eacdb51a313f96f38d7e3f62858e3df1d3ceaa",
   "implementation.md": "4b338f1d4b7dd51726f8f007c927bcae575c120283142136f802e64590defbd1",
