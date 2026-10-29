@@ -282,6 +282,17 @@ export class WorkflowService {
         proposal.plan.bootstrapExecution?.context ?? this.defaultExecutionContext ?? undefined,
         requiredAuditPhase,
       );
+      // Older high/critical/complex plans signed a deep bootstrap floor.
+      // Preserve only that stronger field after verifying the original signature;
+      // all other task, registry, stage and assurance fields still compare exactly.
+      if (
+        (proposal.taskEnvelope.riskLevel === "high" || proposal.taskEnvelope.riskLevel === "critical"
+          || proposal.taskEnvelope.decision.complexity === "complex")
+        && proposal.plan.bootstrapExecution?.requirement.minimumModelClass === "deep"
+        && expectedPlan.bootstrapExecution?.requirement.minimumModelClass === "general"
+      ) {
+        expectedPlan.bootstrapExecution.requirement.minimumModelClass = "deep";
+      }
       expectedPlan.integrityToken = this.signPlan(expectedPlan);
       if (canonicalJson(expectedPlan, "Plan") !== canonicalJson(proposal.plan, "Plan")) {
         throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan was not produced from the proposed task envelope.", {

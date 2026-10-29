@@ -1,8 +1,9 @@
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import type { ConvergenceFrameV1, StageResultV1, TaskEnvelopeV1 } from "../../contracts/types.js";
+import { canonicalJson } from "../../mcp-server/src/convergence-logic.js";
 import { observeCodexHook } from "../../mcp-server/src/codex-host-observation.js";
 import {
   HOST_ATTESTATION_FIELD,
@@ -27,7 +28,7 @@ import {
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
-import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
+import { InMemoryWorkflowStore, PLAN_SIGNING_KEY } from "../../mcp-server/src/workflow-store.js";
 import { getPolicyRevision, resolveModelSelection } from "../../skills/coordinate-subagents/scripts/model-routing.mjs";
 import syntheticCatalogV2 from "./fixtures/synthetic-model-catalog-v2.json" with { type: "json" };
 
@@ -53,7 +54,118 @@ function createTask(taskId: string, riskLevel: "low" | "medium" | "high" | "crit
   };
 }
 
+function legacyBootstrapFixture(riskLevel: "low" | "high" | "critical", complexity: "simple" | "complex") {
+  const store = new InMemoryWorkflowStore();
+  // Test-only historical signing fixture; no operating store or plan is rewritten.
+  const key = Buffer.alloc(32, 94);
+  store.getOrCreateSecret(PLAN_SIGNING_KEY, () => key.toString("base64url"));
+  const validator = new ContractValidator();
+  const registry = new FileSkillRegistry(registryPath, validator);
+  const provider = new HostAttestationProvider(store, codexExecutionAdapter);
+  const service = new WorkflowService(registry, validator, store, null, provider);
+  const taskEnvelope = createTask(`d0094-legacy-${riskLevel}-${complexity}`, riskLevel);
+  taskEnvelope.decision.complexity = complexity;
+  const input = { schemaVersion: "1.0.0", taskEnvelope };
+  const token = issueHostAttestation(store, codexExecutionAdapter, {
+    tool: "plan_workflow", input, model: "gpt-6-astra", reasoningEffort: "high",
+    actorId: hostActorId("codex", SESSION), sessionId: SESSION,
+    turnId: "legacy-plan-turn", toolUseId: "legacy-plan-call",
+  });
+  const planned = provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
+    clean => service.planWorkflow(clean, true));
+  expect(planned.error).toBeNull();
+  const historical = structuredClone(planned.data!);
+  historical.bootstrapExecution!.requirement.minimumModelClass = "deep";
+  const signFixture = <T extends { integrityToken: string }>(value: T): T => {
+    const unsigned = Object.fromEntries(Object.entries(value).filter(([name]) => name !== "integrityToken"));
+    return { ...value, integrityToken: createHmac("sha256", key).update(canonicalJson(unsigned, "Plan"), "utf8").digest("base64url") };
+  };
+  const oldPlan = signFixture(historical);
+  const frame: ConvergenceFrameV1 = {
+    schemaVersion: "1.0.0",
+    workspace: { workspaceId: taskEnvelope.taskId, locator: "tests/mcp/model-capability-contract.test.ts" },
+    controlArtifacts: [{ artifactId: "acceptance", role: "pass-condition", locator: "fixture:acceptance", digest: `sha256:${"a".repeat(64)}` }],
+    targetArtifacts: [{ artifactId: "candidate", role: "candidate", locator: "fixture:candidate", digest: `sha256:${"b".repeat(64)}` }],
+    operationalSettings: { maxAttemptsPerEpoch: 3, maxEpochs: 2, leaseTtlSeconds: 300 },
+  };
+  const opened = service.openConvergenceRoot({ schemaVersion: "1.0.0", parentRootId: null, taskEnvelope, frame, userApprovalRefs: [] });
+  expect(opened.error).toBeNull();
+  const root = opened.data!;
+  const proposal = {
+    schemaVersion: "1.0.0", rootId: root.rootId, expectedRevision: root.revision,
+    taskEnvelope, frame, plan: oldPlan, actorId: oldPlan.bootstrapExecution!.context.actorId,
+    outputTargets: ["fixture.md"], priorFailure: null,
+  };
+  expect(oldPlan.bootstrapExecution!.context.modelClass).toBe("frontier");
+  return { store, validator, registry, provider, service, oldPlan, root, proposal, signFixture };
+}
+
 describe("AGS-08A vendor-neutral model/capability contract and single-catalog update", () => {
+  it.each([
+    { riskLevel: "high", complexity: "simple" },
+    { riskLevel: "critical", complexity: "simple" },
+    { riskLevel: "low", complexity: "complex" },
+  ] as const)("preserves legacy signed deep bootstrap through claim and start: $riskLevel/$complexity (D0094 compatibility positive)", ({ riskLevel, complexity }) => {
+    const { service, store, registry, validator, provider, oldPlan, proposal } = legacyBootstrapFixture(riskLevel, complexity);
+    const original = structuredClone(oldPlan);
+    const lease = service.claimWorkflowAttempt(proposal, true);
+    expect(lease.error).toBeNull();
+    expect(lease.data?.planIntegrityToken).toBe(original.integrityToken);
+    expect(store.getAttemptLease(lease.data!.leaseId)?.proposal.plan).toEqual(original);
+    expect(service.claimWorkflowAttempt(proposal, true).error?.code).toBe("LEASE_CONFLICT");
+    // Restart with the same store: a leased plan retains its original assurance.
+    const restarted = new WorkflowService(registry, validator, store, null, provider);
+    const started = restarted.startGuardedWorkflow({
+      schemaVersion: "1.0.0", leaseId: lease.data!.leaseId,
+      expectedRootRevision: lease.data!.rootRevision, plan: oldPlan,
+    }, true);
+    expect(started.error).toBeNull();
+    expect(started.data?.plan.bootstrapExecution).toEqual(original.bootstrapExecution);
+    expect(started.data?.plan.stages).toEqual(original.stages);
+    expect(restarted.getWorkflowStatus(started.data!.runId).data?.plan.bootstrapExecution).toEqual(original.bootstrapExecution);
+    expect(oldPlan).toEqual(original);
+  });
+
+  it("rejects signed deep bootstrap outside the historical generation conditions (D0094 compatibility negative)", () => {
+    const { service, oldPlan, root, proposal } = legacyBootstrapFixture("low", "simple");
+    const original = structuredClone(oldPlan);
+    expect(service.claimWorkflowAttempt(proposal, true).error?.code).toBe("LEASE_CONFLICT");
+    expect(service.getConvergenceStatus(root.rootId).data?.leases).toEqual([]);
+    expect(oldPlan).toEqual(original);
+  });
+
+  it.each([
+    "unsigned-class", "invalid-policy", "lower-effort", "higher-class", "higher-effort", "stage-drift",
+  ] as const)("rejects $0 at its own validation layer before creating a lease (D0094 compatibility negative)", (mutation) => {
+    const { service, oldPlan, root, proposal, signFixture } = legacyBootstrapFixture("high", "simple");
+    const original = structuredClone(oldPlan);
+    const changed = structuredClone(oldPlan);
+    let submitted: unknown;
+    let expectedCode: string;
+    if (mutation === "invalid-policy") {
+      // Intentionally malformed raw input, never a purported WorkflowPlanV1.
+      submitted = signFixture({ ...changed, bootstrapExecution: {
+        ...changed.bootstrapExecution!, requirement: { ...changed.bootstrapExecution!.requirement, policyId: "different-policy" },
+      } });
+      expectedCode = "INVALID_INPUT"; // Contract schema rejects the policy literal.
+    } else {
+      if (mutation === "unsigned-class") changed.bootstrapExecution!.requirement.minimumModelClass = "general";
+      if (mutation === "lower-effort") changed.bootstrapExecution!.requirement.minimumReasoningEffort = "medium";
+      if (mutation === "higher-class") changed.bootstrapExecution!.requirement.minimumModelClass = "frontier";
+      if (mutation === "higher-effort") changed.bootstrapExecution!.requirement.minimumReasoningEffort = "ultra";
+      if (mutation === "stage-drift") changed.stages[0]!.requiredArtifacts.push("unexpected-artifact");
+      submitted = mutation === "unsigned-class" ? changed : signFixture(changed);
+      // The fixture's frontier/high observation satisfies frontier but not ultra.
+      expectedCode = mutation === "unsigned-class" ? "INVALID_INPUT"
+        : mutation === "higher-effort" ? "BINDING_INVALID" : "LEASE_CONFLICT";
+    }
+    const submittedBefore = structuredClone(submitted);
+    expect(service.claimWorkflowAttempt({ ...proposal, plan: submitted }, true).error?.code).toBe(expectedCode);
+    expect(service.getConvergenceStatus(root.rootId).data?.leases).toEqual([]);
+    expect(submitted).toEqual(submittedBefore);
+    expect(oldPlan).toEqual(original);
+  });
+
   it.each(["low", "high", "critical"] as const)("accepts the current general/high caller for complex %s-risk bootstrap without changing stage floors (D0094)", (riskLevel) => {
     const store = new InMemoryWorkflowStore();
     const provider = new HostAttestationProvider(store, codexExecutionAdapter);
