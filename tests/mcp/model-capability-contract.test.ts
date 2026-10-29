@@ -73,9 +73,13 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       requirement: { minimumModelClass: null, minimumReasoningEffort: null, observationRequired: true },
       context: { model: "gpt-6.1-sol", modelClass: "general", reasoningEffort: "low" },
     });
-    // Planning does not lower the selected independent audit's execution floor.
-    if (riskLevel !== "low") {
-      expect(planned.data?.stages.some(stage => stage.executionRequirement?.minimumModelClass === "deep")).toBe(true);
+    // 고위험의 명시 general/high 정책은 접수와 별도로 각 단계에 결속한다.
+    for (const stage of planned.data!.stages) {
+      expect(stage.executionRequirement).toMatchObject({
+        minimumModelClass: riskLevel === "low" ? null : "general",
+        minimumReasoningEffort: riskLevel === "low" ? null : "high",
+        observationRequired: true,
+      });
     }
     const replay = provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
       clean => service.planWorkflow(clean, true));
@@ -651,7 +655,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     const validator = new ContractValidator();
     const provider = new HostAttestationProvider(store, codexExecutionAdapter);
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
-    const taskEnvelope = createTask("capability-stage-floor");
+    const taskEnvelope = createTask("capability-stage-floor", "high");
     taskEnvelope.artifactContracts = [{
       capability: "task-decomposition",
       produced: ["delegation-decision", "task-graph", "assignment-briefs", "integration-report"].map((artifactId) => ({
@@ -670,14 +674,18 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     expect(planned.ok).toBe(true);
     expect(planned.data?.bootstrapExecution?.context.reasoningEffort).toBe("low");
     const plan = planned.data!;
-    // 접수의 관측 전용 표현과 실제 단계의 필수 하한은 서로 다른 계약이다.
+    // 관측 전용 쌍은 유효하지만 서명된 명시 단계 하한을 caller가 지울 수는 없다.
     const halfFloor = structuredClone(plan);
     halfFloor.bootstrapExecution!.requirement.minimumReasoningEffort = "low";
     expect(() => validator.workflowPlan(halfFloor)).toThrow();
+    const halfStageFloor = structuredClone(plan);
+    halfStageFloor.stages[0]!.executionRequirement!.minimumReasoningEffort = null;
+    expect(() => validator.workflowPlan(halfStageFloor)).toThrow();
     const missingStageFloor = structuredClone(plan);
     missingStageFloor.stages[0]!.executionRequirement!.minimumModelClass = null;
     missingStageFloor.stages[0]!.executionRequirement!.minimumReasoningEffort = null;
-    expect(() => validator.workflowPlan(missingStageFloor)).toThrow();
+    expect(() => validator.workflowPlan(missingStageFloor)).not.toThrow();
+    expect(service.startWorkflow(missingStageFloor).error?.code).toBe("INVALID_INPUT");
     const frame: ConvergenceFrameV1 = {
       schemaVersion: "1.0.0",
       workspace: { workspaceId: "capability-stage-floor", locator: "tests/mcp/model-capability-contract.test.ts" },

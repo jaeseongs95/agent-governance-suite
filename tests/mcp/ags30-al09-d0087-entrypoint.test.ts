@@ -123,6 +123,19 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
         expect(unknownResult, JSON.stringify(unknownResult)).toMatchObject({ok: false, error: {code: "BINDING_INVALID",
           message: "Host observation has no matching trusted execution capability and policy revision."}});
         expect(issueHostAttestation(store, adapter, {...observation, actorId: hostActorId("forged-host", session)})).toBeNull();
+        if (mode === "builtin-default") {
+          const lowArgs = argumentsFor("entrypoint-valid-low");
+          const lowToken = issueHostAttestation(store, adapter, {...observation, input: lowArgs, reasoningEffort: "low", toolUseId: "valid-low-call"});
+          expect(lowToken).toEqual(expect.any(String));
+          const acceptedLow = await call({...lowArgs, [HOST_ATTESTATION_FIELD]: lowToken});
+          expect(acceptedLow.ok, JSON.stringify(acceptedLow)).toBe(true);
+          expect(acceptedLow.data!.bootstrapExecution!).toMatchObject({
+            requirement: {minimumModelClass: null, minimumReasoningEffort: null, observationRequired: true},
+            context: {model: selectedModel, modelClass: "frontier", reasoningEffort: "low", actorId: hostActorId(selectedHost, session)},
+          });
+          expect(await call({...lowArgs, [HOST_ATTESTATION_FIELD]: lowToken}))
+            .toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
+        }
         if (mode === "installed") {
           const low = issueHostAttestation(store, adapter, {...observation, reasoningEffort: "low", toolUseId: "low-call"});
           expect(low).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
@@ -131,10 +144,21 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
           const lowResult = await call({...args, [HOST_ATTESTATION_FIELD]: low});
           expect(lowResult, JSON.stringify(lowResult)).toMatchObject({ok: false, error: {code: "BINDING_INVALID",
             message: "Host observation has no matching trusted execution capability and policy revision."}});
-          const weakArgs = argumentsFor("entrypoint-insufficient-capability");
-          const weak = issueHostAttestation(store, adapter, {...observation, input: weakArgs, model: "opaque-fourth-light", toolUseId: "weak-call"});
+          // 기존 capability의 경량 관측과 앞의 eligibility:null 거부를 별도로 검증한다.
+          const reasoningEffort = "high";
+          const weakArgs = argumentsFor(`entrypoint-valid-light-${reasoningEffort}`);
+          const weak = issueHostAttestation(store, adapter, {...observation, input: weakArgs, model: "opaque-fourth-light", reasoningEffort, toolUseId: `weak-call-${reasoningEffort}`});
           expect(weak).toEqual(expect.any(String));
-          expect(await call({...weakArgs, [HOST_ATTESTATION_FIELD]: weak})).toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
+          expect(JSON.parse(Buffer.from(weak!.split(".")[1]!, "base64url").toString("utf8")))
+            .toMatchObject({model: "opaque-fourth-light", reasoningEffort, eligibility: {modelClass: "lightweight"}});
+          const accepted = await call({...weakArgs, [HOST_ATTESTATION_FIELD]: weak});
+          expect(accepted.ok, JSON.stringify(accepted)).toBe(true);
+          expect(accepted.data!.bootstrapExecution!).toMatchObject({
+            requirement: {minimumModelClass: null, minimumReasoningEffort: null, observationRequired: true},
+            context: {model: "opaque-fourth-light", modelClass: "lightweight", reasoningEffort, actorId: hostActorId(selectedHost, session)},
+          });
+          expect(await call({...weakArgs, [HOST_ATTESTATION_FIELD]: weak}))
+            .toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
         }
       }
     } finally {

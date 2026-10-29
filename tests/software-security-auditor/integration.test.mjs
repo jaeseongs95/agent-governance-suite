@@ -26,7 +26,7 @@ describe("security audit integration", () => {
   it.each(["", "claude-plugin/"])("loads schema and maps complete report with findings in %s", (tree) => {
     const { request, report } = fixture();
     const svc = service(tree); const plan = svc.planWorkflow(task(undefined, targetDigest(request))); expect(plan.ok, JSON.stringify(plan.error)).toBe(true);
-    expect(plan.data.stages[0]).toMatchObject({ phase: "security-audit", executionRequirement: { minimumModelClass: "deep", minimumReasoningEffort: "high" } });
+    expect(plan.data.stages[0]).toMatchObject({ phase: "security-audit", executionRequirement: { minimumModelClass: null, minimumReasoningEffort: null, observationRequired: true } });
     const receipt = svc.startWorkflow(plan.data).data; report.findings.push(finding());
     const recorded = svc.recordStageResult(result(receipt, report)); expect(recorded.ok, JSON.stringify(recorded.error)).toBe(true);
   });

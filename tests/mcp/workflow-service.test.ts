@@ -791,7 +791,7 @@ describe("WorkflowService", () => {
     expect(service.recordStageResult(forged, true).error?.code).toBe("BINDING_INVALID");
   });
 
-  it("applies deep/high to every alias of a provider that supplies a high-assurance capability", async () => {
+  it("does not convert provider roles or aliases into unsupported execution floors (D0094)", async () => {
     const aliases = [
       "independent-deliberation",
       "independent-review",
@@ -818,10 +818,90 @@ describe("WorkflowService", () => {
         decision: { complexity: "simple", hasConflicts: false },
       })).data!;
       expect(plan.stages[0]?.executionRequirement).toMatchObject({
-        minimumModelClass: "deep",
-        minimumReasoningEffort: "high",
+        minimumModelClass: null,
+        minimumReasoningEffort: null,
+        observationRequired: true,
       });
     }
+  });
+
+  it.each(["low", "medium", "high", "critical"] as const)("binds only the explicit high-risk floor for %s tasks, including mandatory audits (D0094)", async (riskLevel) => {
+    const { service } = await createService();
+    const plan = service.planWorkflow(task({
+      taskId: `stage-policy-${riskLevel}`,
+      riskLevel,
+      requiredCapabilities: ["draft", "independent-audit"],
+    })).data!;
+    expect(plan.stages.some(stage => stage.riskGate === "mandatory")).toBe(true);
+    const highRisk = riskLevel === "high" || riskLevel === "critical";
+    for (const stage of plan.stages) {
+      expect(stage.executionRequirement).toMatchObject({
+        kind: "semantic",
+        minimumModelClass: highRisk ? "general" : null,
+        minimumReasoningEffort: highRisk ? "high" : null,
+        observationRequired: true,
+      });
+    }
+  });
+
+  it("requires valid trusted stage observation even when no performance floor is grounded (D0094)", async () => {
+    let observation: "missing" | "invalid" | "valid" = "missing";
+    const { service } = await createService(skills, undefined, null, trustedProvider(binding => {
+      if (binding.phase === "stage" && observation === "missing") return null;
+      return trustedExecutionContext(binding, {
+        model: "fixture-lightweight",
+        modelClass: "lightweight",
+        reasoningEffort: "low",
+        source: binding.phase === "stage" && observation === "invalid"
+          ? "caller" as ExecutionContextV1["source"] : "runtime",
+      });
+    }));
+    const planned = service.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task({
+      taskId: "stage-observation-only", riskLevel: "low",
+    }) }, true);
+    expect(planned.ok, planned.error?.message).toBe(true);
+    const receipt = service.startWorkflow(planned.data!).data!;
+    const stage = receipt.plan.stages[0]!;
+    expect(stage.executionRequirement).toMatchObject({
+      kind: "semantic", minimumModelClass: null, minimumReasoningEffort: null, observationRequired: true,
+    });
+    const result = passedStage(receipt.runId, stage, receipt.revision);
+    delete result.executionContext;
+    expect(service.recordStageResult(result, true).error?.code).toBe("BINDING_REQUIRED");
+    observation = "invalid";
+    expect(service.recordStageResult(result, true).error?.code).toBe("BINDING_INVALID");
+    expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
+    observation = "valid";
+    const recorded = service.recordStageResult(result, true);
+    expect(recorded.ok, recorded.error?.message).toBe(true);
+    expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ modelClass: "lightweight", reasoningEffort: "low" });
+  });
+
+  it("preserves a previously signed explicit stage floor when new planning has no floor (D0094)", async () => {
+    const signingKey = Buffer.alloc(32, 9).toString("base64url");
+    const store = new InMemoryWorkflowStore();
+    store.getOrCreateSecret(PLAN_SIGNING_KEY, () => signingKey);
+    let stageClass: ExecutionContextV1["modelClass"] = "general";
+    const { service } = await createService(skills, store, null, trustedProvider(binding =>
+      trustedExecutionContext(binding, { modelClass: stageClass, reasoningEffort: "high" })));
+    const plan = service.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task({
+      taskId: "existing-explicit-floor", riskLevel: "low",
+    }) }, true).data!;
+    expect(plan.stages[0]!.executionRequirement!.minimumModelClass).toBeNull();
+    // 시험 소유 키로 이미 고정된 계획을 재현한다. caller의 새 하한 지정 경로가 아니다.
+    plan.stages[0]!.executionRequirement!.minimumModelClass = "deep";
+    plan.stages[0]!.executionRequirement!.minimumReasoningEffort = "high";
+    const unsignedPlan = { ...plan } as Record<string, unknown>;
+    delete unsignedPlan.integrityToken;
+    plan.integrityToken = createHmac("sha256", Buffer.from(signingKey, "base64url"))
+      .update(canonicalJson(unsignedPlan)).digest("base64url");
+    const receipt = service.startWorkflow(plan).data!;
+    const result = passedStage(receipt.runId, receipt.plan.stages[0]!, receipt.revision);
+    delete result.executionContext;
+    expect(service.recordStageResult(result, true).error?.code).toBe("GATE_FAILED");
+    expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
+    stageClass = "deep";
+    expect(service.recordStageResult(result, true).ok).toBe(true);
   });
 
   it("rejects non-canonical plan integrity token spellings", async () => {

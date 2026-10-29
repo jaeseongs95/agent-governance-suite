@@ -33,7 +33,7 @@ Codex adapter는 첫 256 KiB에서 `session_meta.id`를, 마지막 8 MiB에서 �
 
 Codex subagent Hook의 session ID는 parent일 수 있다. `agent_id`, subagent metadata 또는 session/turn 불일치를 발견하면 parent의 모델·effort를 빌려 쓰지 않는다. 현재 adapter는 독립된 child 신원을 증명하지 못하는 subagent 경로를 지원 완료로 표시하지 않는다.
 
-모델 class는 추론이 아닌 명시적 제품 정책이다. Codex adapter는 기존 preset의 `gpt-6-astra=frontier`, `gpt-5.6-sol=deep`, `gpt-5.6-terra=general`, `gpt-5.6-luna=lightweight`를 사용한다. 이번 지원 정책은 host tool metadata의 workhorse/easier-task 역할 설명을 근거로 `gpt-6-sol=general`, `gpt-6-luna=lightweight`를 보수적으로 추가한다. 이는 품질 실측이나 5.6 후계 등급의 자동 복제가 아니다. `deep` 이상을 요구하는 단계는 Sol에서 거절되며 이를 통과시키려고 관측값이나 정책 하한을 높이거나 낮추지 않는다. 정확한 ID 정책에서 해석되지 않는 모델은 기본 실행 자격을 얻지 못하지만, 확인된 raw 관측의 서명 자체를 막지는 않는다. Claude의 Haiku/Sonnet/Opus/Fable mapping은 그대로 유지한다. Gemini adapter는 `flash-lite`=lightweight, `flash`=general, `pro`=deep, `ultra`=frontier 매핑을 적용한다. `reasoningEffort`가 없거나 공통 enum 밖이면 필수 관측 누락이며 다른 모델·턴의 값으로 보충하지 않는다. 관측한 effort가 모델의 지원 목록이나 minimum을 충족하지 않으면 서버가 실행 자격을 거부한다.
+모델 class는 추론이 아닌 명시적 제품 정책이다. Codex adapter는 기존 preset의 `gpt-6-astra=frontier`, `gpt-5.6-sol=deep`, `gpt-5.6-terra=general`, `gpt-5.6-luna=lightweight`를 사용한다. 이번 지원 정책은 host tool metadata의 workhorse/easier-task 역할 설명을 근거로 `gpt-6-sol=general`, `gpt-6-luna=lightweight`를 보수적으로 추가한다. 이는 품질 실측이나 5.6 후계 등급의 자동 복제가 아니다. 이미 서명·저장된 계획이 `deep` 이상을 명시하면 그 요구를 실제 관측과 비교한다. 새 계획에서 모델 등급이나 단계 이름만으로 `deep` 요구를 만들어 내지는 않는다. 정확한 ID 정책에서 해석되지 않는 모델은 기본 실행 자격을 얻지 못하지만, 확인된 raw 관측의 서명 자체를 막지는 않는다. Claude의 Haiku/Sonnet/Opus/Fable mapping은 그대로 유지한다. Gemini adapter는 `flash-lite`=lightweight, `flash`=general, `pro`=deep, `ultra`=frontier 매핑을 적용한다. `reasoningEffort`가 없거나 공통 enum 밖이면 필수 관측 누락이며 다른 모델·턴의 값으로 보충하지 않는다. 관측한 effort가 모델의 지원 목록이나 minimum을 충족하지 않으면 서버가 실행 자격을 거부한다.
 
 ## Hook 없는 호스트
 
@@ -65,3 +65,11 @@ try {
 관측이 없으면 `BINDING_REQUIRED`와 provider 연결 진단이 반환된다. 서명·입력·신원 결속 변조, 만료, 이미 소비한 관측은 `BINDING_INVALID`다. 초기 접수는 검증된 현재 관측을 요구하고 작업 무관 성능 하한은 두지 않는다. 검증된 정상 관측이 실제 단계 하한에 못 미치면 `GATE_FAILED`로 구분한다. 같은 host/session/agent/turn/call은 다시 서명해도 같은 관측 ID를 사용한다. workflow 상태와 기존 SQLite claim 원장을 유지하며 운영 DB·키를 삭제하지 않는다.
 
 source adapter 검사, bundled hook·STDIO fixture, `node_modules` 없는 wrapper import, 실제 설치 Hook의 정상 실행은 서로 다른 검증이다. fixture의 synthetic metadata나 token으로 native host 완주를 입증하지 않는다. 릴리즈·설치 담당자는 최종 통합 tree에서 실제 host 관측과 guarded workflow 완료를 별도로 확인해야 한다.
+
+## 단계 하한의 근거와 보존 범위
+
+D0094 후속은 `AGENTS.md`의 프리셋 제품 정책 중 고위험 작업의 `general/high` 하한을 보존한다. 이는 수치 성능 평가 결과가 아니라 명시 정책이다. 사용자 지정 모델·추론 설정은 실제 호스트 지원과 이 유효한 요구 안에서 우선하며, caller가 입력한 희망값을 실제 관측으로 바꾸거나 단계 하한을 덮어쓰지는 않는다. 모델 선택기의 프리셋·사용자 지정 처리와 호스트 capability 자격은 이번 변경으로 수정하지 않는다.
+
+기본 `general/medium`과 capability·provider 별칭·mandatory gate에서의 `deep/high` 강제에는 별도 명시 요구나 수치 평가 근거를 확인하지 못했다. v1.13 릴리스 기록은 도입 당시의 구현 설명이며 현재 강제 하한의 독립 근거로 승격하지 않는다. 이 분기들을 제거하고 고위험이 아닌 의미 단계는 관측 전용으로 계획한다. 감사 의무·독립성·산출물 검사는 그대로 집행한다.
+
+현재 TaskEnvelope의 `constraints`는 문자열 배열이고 provider의 `gate`는 감사 조건이다. 별도의 명시 모델 하한 입력 계약은 없다. 새 입력이나 근거 등록 도구를 추가하지 않는다. 생성된 단계 요구는 `taskDigest`와 전체 계획 서명에 결속되고 claim 시 작업에서 다시 계산해 대조된다. 이미 시작된 실행은 저장 계획의 nonnull 하한 비교를 계속 사용하며, caller가 서명된 하한을 null로 바꾸면 무결성 검사에서 거부한다. 과거 하한의 무결성 보존은 그 선정 근거의 타당성을 새로 인증한다는 뜻이 아니다. 정책 변경 전 미시작 계획은 기존 claim 재계산에서 충돌할 수 있으므로 원 기록을 보존하고 새 관측으로 재계획한다.

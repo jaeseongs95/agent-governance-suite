@@ -18,11 +18,8 @@ import {
   type ExecutionRequirementV1,
   type GuardedWorkflowStartRequestV1,
   MODEL_CLASS,
-  type ModelClassV1,
   REASONING_EFFORT,
-  type ReasoningEffortV1,
   type RetryRejectionV1,
-  type RiskGate,
   type PlannedStageV1,
   POLICY_CAPABILITY,
   type RoutedSkillProviderV2,
@@ -84,20 +81,6 @@ const USER_GATE_RECEIPT_STATES = new Set<WorkflowState>([
   "needs-input",
   "needs-approval",
   "needs-redesign",
-]);
-
-const HIGH_ASSURANCE_CAPABILITIES = new Set<string>([
-  "software-security-audit",
-  "independent-deliberation",
-  "independent-audit",
-  "evaluation-validity-audit",
-  "blocker-diagnosis",
-  "recovery-strategy-selection",
-  "iteration-frame-audit",
-  "korean-prose-selection",
-  "korean-prose-verification",
-  "acceptance-evidence-validation",
-  "mutation-risk-preflight",
 ]);
 
 /** Schema-validator detail keys that are safe to carry on a wrapped gate failure. */
@@ -947,7 +930,7 @@ export class WorkflowService {
         selectionReason: `Selected '${skill.skillId}' because provider '${skill.providerKey}' supplies '${satisfiedCapabilities.join("', '")}' at priority ${skill.priority}.`,
         state: "ready",
         ...(executionContext
-          ? { executionRequirement: this.stageExecutionRequirement(task, capability, skill.gate.policy, skill) }
+          ? { executionRequirement: this.stageExecutionRequirement(task, capability) }
           : {}),
         ...(artifactContract ? { artifactContract } : {}),
         requiredArtifacts: stageRequiredArtifacts,
@@ -1399,8 +1382,6 @@ export class WorkflowService {
   private stageExecutionRequirement(
     task: TaskEnvelopeV1,
     capability: string,
-    riskGate: RiskGate,
-    provider: RoutedSkillProviderV2,
   ): ExecutionRequirementV1 {
     if (DETERMINISTIC_CAPABILITIES.has(capability)) {
       return {
@@ -1412,28 +1393,13 @@ export class WorkflowService {
       };
     }
 
-    let minimumModelClass: ModelClassV1 = "general";
-    let minimumReasoningEffort: ReasoningEffortV1 = "medium";
-
-    const providerRequiresHighAssurance = HIGH_ASSURANCE_CAPABILITIES.has(capability)
-      || provider.capabilities.some((providedCapability) => HIGH_ASSURANCE_CAPABILITIES.has(providedCapability));
-    if (providerRequiresHighAssurance) {
-      minimumModelClass = "deep";
-      minimumReasoningEffort = "high";
-    }
-    if (task.riskLevel === "high") {
-      minimumReasoningEffort = "high";
-    }
-    if (task.riskLevel === "critical" || riskGate === "mandatory") {
-      minimumModelClass = "deep";
-      minimumReasoningEffort = "high";
-    }
-
+    // AGENTS.md의 명시 고위험 정책만 집행한다. 역할 추천이나 감사 의무는 모델 하한이 아니다.
+    const highRisk = task.riskLevel === "high" || task.riskLevel === "critical";
     return {
       policyId: "semantic-execution-assurance-v1",
       kind: "semantic",
-      minimumModelClass,
-      minimumReasoningEffort,
+      minimumModelClass: highRisk ? "general" : null,
+      minimumReasoningEffort: highRisk ? "high" : null,
       observationRequired: true,
     };
   }
@@ -1602,6 +1568,7 @@ export class WorkflowService {
 
     const minimumModelClass = requirement.minimumModelClass;
     const minimumReasoningEffort = requirement.minimumReasoningEffort;
+    if (minimumModelClass === null && minimumReasoningEffort === null) return;
     if (!minimumModelClass || !minimumReasoningEffort) {
       throw new WorkflowContractError(
         "INVALID_INPUT",

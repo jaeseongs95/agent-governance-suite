@@ -256,18 +256,7 @@
           "$ref": "#/$defs/receiptPolicy"
         },
         "executionRequirement": {
-          "allOf": [
-            { "$ref": "#/$defs/executionRequirement" },
-            {
-              "if": { "properties": { "kind": { "const": "semantic" } } },
-              "then": {
-                "properties": {
-                  "minimumModelClass": { "type": "string" },
-                  "minimumReasoningEffort": { "type": "string" }
-                }
-              }
-            }
-          ]
+          "$ref": "#/$defs/executionRequirement"
         },
         "artifactContract": {
           "$ref": "https://skill-suite.local/contracts/task-envelope.v1.schema.json#/properties/artifactContracts/items"
