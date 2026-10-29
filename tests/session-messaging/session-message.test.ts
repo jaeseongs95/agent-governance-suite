@@ -1549,6 +1549,15 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     }
   });
 
+  it("tells senders not to add a host wake after send, and never on latched", () => {
+    for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions()]) {
+      expect(instructions).toContain("send가 상대를 깨우므로 호스트 기능으로 따로 깨우지 않는다.");
+      expect(instructions).toContain("autoWake.state가 no-live-relay·unsupported면");
+      expect(instructions).toContain("latched는 앞선 깨우기가 이미 상대에게 넘어가 관측을 기다리는 상태(대개 상대가 작업 중)이므로 다시 깨우지 않는다.");
+      expect(instructions).toContain("본문 없는 깨우기 신호나 내용 없는 메시지를 받아도 진행 중인 작업을 멈추지 않으며");
+    }
+  });
+
   it("escapes peer bodies inside one bounded JSON block", async () => {
     const directory = stateDirectory();
     await startSourceBroker(directory);
