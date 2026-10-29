@@ -877,7 +877,7 @@ describe("WorkflowService", () => {
     expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ modelClass: "lightweight", reasoningEffort: "low" });
   });
 
-  it("preserves a previously signed explicit stage floor when new planning has no floor (D0094)", async () => {
+  it("preserves a previously frozen stage floor when new planning has no floor (D0094)", async () => {
     const signingKey = Buffer.alloc(32, 9).toString("base64url");
     const store = new InMemoryWorkflowStore();
     store.getOrCreateSecret(PLAN_SIGNING_KEY, () => signingKey);
