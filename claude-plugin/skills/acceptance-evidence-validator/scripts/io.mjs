@@ -8,6 +8,7 @@ export async function readJsonArgument(argv, name = "--input") {
     return JSON.parse(await readFile(file, "utf8"));
   }
   let raw = "";
+  process.stdin.setEncoding("utf8");
   for await (const chunk of process.stdin) raw += chunk;
   if (!raw.trim()) throw new Error("Expected JSON on stdin or an input file argument.");
   return JSON.parse(raw);

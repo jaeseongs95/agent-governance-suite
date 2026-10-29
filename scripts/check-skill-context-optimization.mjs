@@ -261,6 +261,7 @@ function matchesOrchestratorSourceSuccessor(path, bytes) {
 }
 
 export function matchesGovernanceSourceSuccessor(path, bytes) {
+  if (Object.hasOwn(GOVERNANCE_SOURCE_SUCCESSOR.hashes, path) && matchesStdinUtf8SourceSuccessor(path, bytes)) return true;
   // Current mid-task selection wording is an exact source successor, not a 2.x runtime contract.
   // Historical reconstruction below still uses the separately pinned predecessor bytes.
   if (matchesOrchestratorSourceSuccessor(path, bytes)) return true;
@@ -347,6 +348,7 @@ const TASK_CONTRACT_AUTHORIZATION_SUCCESSOR = Object.freeze({
 });
 
 export function matchesTaskContractAuthorizationSuccessor(path, bytes) {
+  if (Object.hasOwn(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes, path) && matchesStdinUtf8SourceSuccessor(path, bytes)) return true;
   return Object.hasOwn(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes[path];
 }
@@ -361,12 +363,53 @@ const PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR = Object.freeze({
   }
 });
 
+// D0357: UTF-8 문자 경계를 보존하는 입력 디코더 후속판. 기존 역사 핀은 유지한다.
+const PREFLIGHT_UTF8_SOURCE_SUCCESSOR = Object.freeze({
+  revision: "d0357-preflight-utf8-source-successor-r01",
+  authorityEffect: "none",
+  baselineRevision: "70de7ea5600fe8401ab71740561fc7ffc47c6b3a",
+  hashes: Object.freeze({
+    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": "9ff002852bc34338ed94fdf0e9c5060cdb92f602961d2a959237d365ffeae40c",
+    "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs": "0cb206aff307cc5f704067db5aee4a03acec7e239072418cc09694aa59746bae",
+  }),
+});
+
+function matchesPreflightUtf8SourceSuccessor(path, bytes) {
+  return Object.hasOwn(PREFLIGHT_UTF8_SOURCE_SUCCESSOR.hashes, path)
+    && createHash("sha256").update(bytes).digest("hex") === PREFLIGHT_UTF8_SOURCE_SUCCESSOR.hashes[path];
+}
+
 export function matchesPreflightAdditiveSourceSuccessor(path, bytes) {
+  if (matchesPreflightUtf8SourceSuccessor(path, bytes)) return true;
   return Object.hasOwn(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes[path];
 }
 
+// D0357 형제 입력 경계의 후속판. 역사와 권한은 바꾸지 않고 정확한 현재 바이트만 고정한다.
+const STDIN_UTF8_SOURCE_SUCCESSOR = Object.freeze({
+  revision: "d0357-sibling-stdin-utf8-source-successor-r01",
+  authorityEffect: "none",
+  baselineRevision: "13a559d8261a1211242c2650a0542be142ff3202",
+  hashes: Object.freeze({
+    "skills/acceptance-evidence-validator/scripts/io.mjs": "458a56634b9c1dec124413c6f6266ac3d5bd28ae17254d42cd48b7c5e75eb310",
+    "skills/blocker-diagnostician/scripts/io.mjs": "458a56634b9c1dec124413c6f6266ac3d5bd28ae17254d42cd48b7c5e75eb310",
+    "skills/evaluation-validity-auditor/scripts/io.mjs": "643a437ad376c2001bc9c5f038accd87a3aa1c11d335e066af52582b9efadcd5",
+    "skills/iteration-frame-auditor/scripts/io.mjs": "ebf8cfdbd2c1f045c4fc12965ce5e83d454f77a8d5351c1ed5ce70a87db35134",
+    "skills/recovery-strategy-selector/scripts/io.mjs": "00d395a19e7201702ffc012e15d495d346876b4e84acb689b14e2233489415bc",
+    "skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs": "e3be8b42de7dcfb5d4da4ef13c37ca2de06e67eab4b8bb69a2658f41784faffa",
+    "skills/task-contract/scripts/validate-task-contract.mjs": "cf079398e21a9681c38c5d9d3303de106541f629f7854d1a2198bca396b747b1",
+    "skills/workspace-convention-profiler/scripts/profile-workspace.mjs": "64b8928e54f9e6310e53ed57824381c985731fd66e5705065533d7cf4ef24682",
+    "skills/workspace-convention-profiler/scripts/validate-profile.mjs": "ac0e2b4104b22d37494e64aa07fc6e491a1dc8bcca634de5311ee516def805dd",
+  }),
+});
+
+function matchesStdinUtf8SourceSuccessor(path, bytes) {
+  return Object.hasOwn(STDIN_UTF8_SOURCE_SUCCESSOR.hashes, path)
+    && createHash("sha256").update(bytes).digest("hex") === STDIN_UTF8_SOURCE_SUCCESSOR.hashes[path];
+}
+
 export function matchesCurrentImplementationPin(path, bytes) {
+  if (matchesStdinUtf8SourceSuccessor(path, bytes)) return true;
   if (matchesPreflightAdditiveSourceSuccessor(path, bytes)) return true;
   if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
   if (matchesTaskContractAuthorizationSuccessor(path, bytes)) return true;
@@ -739,6 +782,16 @@ export function checkSkillContextOptimization() {
       errors.push(`current implementation bytes differ: ${currentPath}`);
     }
   }
+  for (const currentPath of Object.keys(STDIN_UTF8_SOURCE_SUCCESSOR.hashes)) {
+    if (!matchesStdinUtf8SourceSuccessor(currentPath, readHistorical(ROOT, currentPath))) {
+      errors.push(`stdin UTF-8 successor bytes differ: ${currentPath}`);
+    }
+  }
+  for (const currentPath of Object.keys(PREFLIGHT_UTF8_SOURCE_SUCCESSOR.hashes)) {
+    if (!matchesPreflightUtf8SourceSuccessor(currentPath, readHistorical(ROOT, currentPath))) {
+      errors.push(`preflight UTF-8 successor bytes differ: ${currentPath}`);
+    }
+  }
   for (const currentPath of Object.keys(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes)) {
     if (!matchesPreflightAdditiveSourceSuccessor(currentPath, readHistorical(ROOT, currentPath))) {
       errors.push(`preflight additive successor bytes differ: ${currentPath}`);
@@ -833,6 +886,8 @@ export function checkSkillContextOptimization() {
 
     const allowed = new Set([skillPath, detailPath]);
     for (const currentPath of Object.keys(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
+    for (const currentPath of Object.keys(PREFLIGHT_UTF8_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
+    for (const currentPath of Object.keys(STDIN_UTF8_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     for (const currentPath of Object.keys(GOVERNANCE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     for (const currentPath of Object.keys(CURRENT_IMPLEMENTATION_PINS.hashes)) {
       if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
@@ -894,6 +949,8 @@ export function checkSkillContextOptimization() {
     baselineRevision: BASELINE,
     currentHostConsumptionSourceSuccessors: [HOST_CONSUMPTION_SOURCE_SUCCESSOR],
     currentPreflightAdditiveSourceSuccessors: [PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR],
+    currentPreflightUtf8SourceSuccessors: [PREFLIGHT_UTF8_SOURCE_SUCCESSOR],
+    currentStdinUtf8SourceSuccessors: [STDIN_UTF8_SOURCE_SUCCESSOR],
     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
     policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],
     reviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R1],

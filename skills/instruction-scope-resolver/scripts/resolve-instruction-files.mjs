@@ -235,6 +235,7 @@ async function readInput(argv) {
     return JSON.parse(await readFile(filename, "utf8"));
   }
   let body = "";
+  process.stdin.setEncoding("utf8");
   for await (const chunk of process.stdin) body += chunk;
   if (!body.trim()) throw invalid("Expected JSON on stdin or --input <file>.");
   return JSON.parse(body);

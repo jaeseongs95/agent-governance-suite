@@ -8,6 +8,7 @@ export async function readJsonArgument(args) {
   }
 
   let body = "";
+  process.stdin.setEncoding("utf8");
   for await (const chunk of process.stdin) body += chunk;
   if (body.trim().length === 0) throw new Error("JSON input is required on stdin or with --input.");
   return JSON.parse(body);
