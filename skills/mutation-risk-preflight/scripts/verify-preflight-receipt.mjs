@@ -48,6 +48,7 @@ async function readInput(argv) {
   const index = argv.indexOf("--input");
   if (index >= 0) return JSON.parse(await readFile(argv[index + 1], "utf8"));
   let raw = "";
+  process.stdin.setEncoding("utf8");
   for await (const chunk of process.stdin) raw += chunk;
   return JSON.parse(raw);
 }

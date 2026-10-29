@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { spawnSync } from "node:child_process";
-import { readFile, readdir } from "node:fs/promises";
+import { spawn, spawnSync } from "node:child_process";
+import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { tmpdir } from "node:os";
+import { setTimeout as delay } from "node:timers/promises";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
@@ -218,3 +220,213 @@ test("integration descriptor는 precondition gate이고 독립 감사로 가장�
   assert.ok(!descriptor.capabilities.includes("independent-audit"));
   assert.equal(descriptor.phaseOrder, 45);
 });
+
+// 실제 CLI에 같은 바이트를 보내며 750ms 간격으로 UTF-8 문자 내부를 나눈다.
+async function runInputCli(script, bytes, splitAt, inputPath, preload) {
+  const marker = "AGS_TEST_FIRST_STDIN_CHUNK_CONSUMED\n";
+  // 소비 루프에 원래 조각을 그대로 넘긴 뒤 재개될 때 관측한다. 디코딩은 제품 코드가 한다.
+  const observer = `const original = process.stdin[Symbol.asyncIterator].bind(process.stdin);
+    process.stdin[Symbol.asyncIterator] = async function* () {
+      let first = true;
+      for await (const chunk of original()) {
+        yield chunk;
+        if (first) { first = false; process.stderr.write(${JSON.stringify(marker)}); }
+      }
+    };`;
+  const observeArgs = splitAt === undefined ? [] : ["--import", `data:text/javascript,${encodeURIComponent(observer)}`];
+  const preloadArgs = preload ? ["--import", `data:text/javascript,${encodeURIComponent(preload)}`] : [];
+  const child = spawn(process.execPath, [...preloadArgs, ...observeArgs, script, ...(inputPath ? ["--input", inputPath] : [])], {
+    stdio: ["pipe", "pipe", "pipe"], timeout: 10_000,
+  });
+  let stdout = "", stderr = "";
+  child.stdout.setEncoding("utf8").on("data", (chunk) => { stdout += chunk; });
+  let notifyFirst;
+  const firstConsumed = new Promise((resolve) => { notifyFirst = resolve; });
+  child.stderr.setEncoding("utf8").on("data", (chunk) => {
+    stderr += chunk;
+    if (stderr.includes(marker)) notifyFirst();
+  });
+  const closed = new Promise((resolve, reject) => {
+    child.once("error", reject);
+    child.once("close", (code, signal) => resolve({ code, signal }));
+  });
+  // 조기 종료에 따른 pipe 오류도 시험 실패로 드러낸다.
+  let inputError;
+  child.stdin.on("error", (error) => { inputError = error; });
+  try {
+    if (inputPath) child.stdin.end();
+    else if (splitAt === undefined) child.stdin.end(bytes);
+    else {
+      child.stdin.write(bytes.subarray(0, splitAt));
+      await Promise.race([firstConsumed, closed]);
+      assert.ok(stderr.includes(marker), "나머지를 보내기 전에 첫 stdin 조각 소비를 관측해야 한다");
+      await delay(750);
+      assert.equal(stdout, "", "EOF 전에는 판정이 출력되면 안 된다");
+      child.stdin.end(bytes.subarray(splitAt));
+    }
+    const result = await closed;
+    assert.equal(inputError, undefined);
+    assert.equal(result.signal, null, stderr);
+    return { ...result, stdout, stderr: stderr.replaceAll(marker, "") };
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) child.kill();
+    await closed;
+  }
+}
+
+for (const distribution of ["skills", "claude-plugin/skills"]) {
+  for (const command of ["evaluate-preflight", "verify-preflight-receipt"]) {
+    test(`${distribution}/${command}: UTF-8 분할 stdin과 파일 입력이 동등하다`, { timeout: 30_000 }, async (t) => {
+      const script = path.resolve(testRoot, "../..", distribution, "mutation-risk-preflight/scripts", `${command}.mjs`);
+      const directory = await mkdtemp(path.join(tmpdir(), "ags-preflight-stdin-"));
+      try {
+        const intent = await fixture("local-delete");
+        intent.operationId = "리-한국어-입력";
+        intent.approvalEvidenceRefs[0].operationId = intent.operationId;
+        const verifying = command === "verify-preflight-receipt";
+        const input = verifying
+          ? { report: evaluatePreflight(intent, { now: evaluationTime }), intent, verificationTime: evaluationTime }
+          : intent;
+        const korean = Buffer.from(JSON.stringify(input), "utf8");
+        const ascii = Buffer.from(JSON.stringify(input).replace(/[^\x00-\x7f]/g,
+          (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`), "ascii");
+        const normalize = (result) => {
+          assert.equal(result.code, 0, result.stderr || result.stdout);
+          assert.equal(result.stderr, "");
+          const output = JSON.parse(result.stdout);
+          if (verifying) assert.equal(output.valid, true);
+          else {
+            assert.equal(output.verdict, "READY");
+            assert.equal(output.operationId, intent.operationId);
+            assert.equal(Date.parse(output.validUntil) - Date.parse(output.observedAt), 15 * 60_000);
+            delete output.observedAt;
+            delete output.validUntil;
+          }
+          return output;
+        };
+        const file = path.join(directory, "input.json");
+        await writeFile(file, korean);
+        const expected = normalize(await runInputCli(script, korean, undefined, file));
+        assert.deepEqual(normalize(await runInputCli(script, ascii)), expected, "ASCII stdin");
+        assert.deepEqual(normalize(await runInputCli(script, ascii, 1)), expected, "ASCII 분할 stdin");
+        assert.deepEqual(normalize(await runInputCli(script, korean)), expected, "한국어 stdin");
+        const first = korean.indexOf(Buffer.from("리", "utf8"));
+        assert.ok(first >= 0);
+        for (const offset of [1, 2]) {
+          await t.test(`3바이트 문자 내부 ${offset}바이트 경계`, async () => {
+            assert.deepEqual(normalize(await runInputCli(script, korean, first + offset)), expected);
+          });
+        }
+        if (verifying) {
+          const stale = structuredClone(input);
+          stale.intent.expectedBlastRadius.description += " 변경";
+          const staleBytes = Buffer.from(JSON.stringify(stale));
+          await writeFile(file, staleBytes);
+          const reference = await runInputCli(script, staleBytes, undefined, file);
+          assert.equal(reference.code, 2);
+          assert.equal(JSON.parse(reference.stdout).errorCode, "STALE_REVISION");
+          const result = await runInputCli(script, staleBytes, first + 1);
+          assert.equal(result.code, reference.code);
+          assert.deepEqual(JSON.parse(result.stdout), JSON.parse(reference.stdout));
+        }
+        const incomplete = await runInputCli(script, Buffer.concat([Buffer.from('{"operationId":"'), Buffer.from([0xed, 0x95])]));
+        if (verifying) {
+          assert.equal(incomplete.code, 1);
+          assert.match(incomplete.stderr, /SyntaxError/);
+        } else {
+          assert.equal(incomplete.code, 2);
+          assert.equal(JSON.parse(incomplete.stdout).verdict, "BLOCKED");
+        }
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+    });
+  }
+}
+
+for (const distribution of ["skills", "claude-plugin/skills"]) {
+  for (const command of ["evaluate-preflight", "verify-preflight-receipt"]) {
+    test(`${distribution}/${command}: UTF-8 추가 경계와 EOF 대기를 보존한다`, { timeout: 30_000 }, async (t) => {
+      const script = path.resolve(testRoot, "../..", distribution, "mutation-risk-preflight/scripts", `${command}.mjs`);
+      const directory = await mkdtemp(path.join(tmpdir(), "ags-preflight-extra-"));
+      try {
+        const intent = await fixture("local-delete");
+        intent.operationId = "¢-😀-�-정상문자";
+        intent.approvalEvidenceRefs[0].operationId = intent.operationId;
+        const verifying = command === "verify-preflight-receipt";
+        const input = verifying
+          ? { report: evaluatePreflight(intent, { now: evaluationTime }), intent, verificationTime: evaluationTime }
+          : intent;
+        const bytes = Buffer.from(JSON.stringify(input));
+        const file = path.join(directory, "input.json");
+        await writeFile(file, bytes);
+        const normalize = (result) => {
+          assert.equal(result.code, 0, result.stderr || result.stdout);
+          assert.equal(result.stderr, "");
+          const output = JSON.parse(result.stdout);
+          if (verifying) assert.equal(output.valid, true);
+          else {
+            assert.equal(output.verdict, "READY");
+            assert.equal(output.operationId, intent.operationId);
+            assert.equal((output.operationId.match(/�/g) ?? []).length, 1, "원래 정상 U+FFFD는 하나만 유지해야 한다");
+            assert.equal(Date.parse(output.validUntil) - Date.parse(output.observedAt), 15 * 60_000);
+            delete output.observedAt;
+            delete output.validUntil;
+          }
+          return output;
+        };
+        const expected = normalize(await runInputCli(script, bytes, undefined, file));
+        await t.test("정상 U+FFFD 포함 실제 stdin", async () => {
+          assert.deepEqual(normalize(await runInputCli(script, bytes)), expected);
+        });
+        for (const character of ["¢", "😀"]) {
+          const encoded = Buffer.from(character);
+          const at = bytes.indexOf(encoded);
+          assert.ok(at >= 0);
+          for (let offset = 1; offset < encoded.length; offset++) {
+            await t.test(`실제 파이프 ${encoded.length}바이트 문자 내부 ${offset}바이트 경계`, async () => {
+              assert.deepEqual(normalize(await runInputCli(script, bytes, at + offset)), expected);
+            });
+          }
+        }
+        await t.test("제어된 Readable의 한 바이트 조각", async () => {
+          // 단위 경계 주입: OS 파이프 수신 청크 관측으로 주장하지 않는다.
+          const preload = `import { Readable } from "node:stream";
+            const bytes = Buffer.from(${JSON.stringify(bytes.toString("base64"))}, "base64");
+            const stream = Readable.from((async function* () {
+              for (const byte of bytes) {
+                yield Buffer.from([byte]);
+                await new Promise(setImmediate);
+              }
+            })(), { objectMode: false });
+            Object.defineProperty(process, "stdin", { value: stream });`;
+          assert.deepEqual(normalize(await runInputCli(script, Buffer.alloc(0), undefined, undefined, preload)), expected);
+        });
+        await t.test("실제 파이프 ASCII JSON escape 내부", async () => {
+          const ascii = Buffer.from(JSON.stringify(input).replace(/[^\x00-\x7f]/g,
+            (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`), "ascii");
+          const at = ascii.indexOf(Buffer.from("\\u00a2"));
+          assert.ok(at >= 0);
+          assert.deepEqual(normalize(await runInputCli(script, ascii, at + 3)), expected);
+        });
+        await t.test("실제 파이프 완전 JSON의 EOF 전 판정 없음", async () => {
+          assert.deepEqual(normalize(await runInputCli(script, bytes, bytes.length)), expected);
+        });
+        if (verifying) {
+          await t.test("실제 만료된 영수증의 파일과 stdin 거부", async () => {
+            const expired = Buffer.from(JSON.stringify({ ...input, verificationTime: input.report.validUntil }));
+            await writeFile(file, expired);
+            const reference = await runInputCli(script, expired, undefined, file);
+            const result = await runInputCli(script, expired);
+            assert.equal(reference.code, 2);
+            assert.equal(result.code, reference.code);
+            assert.equal(JSON.parse(result.stdout).errorCode, "STALE_REVISION");
+            assert.deepEqual(JSON.parse(result.stdout), JSON.parse(reference.stdout));
+          });
+        }
+      } finally {
+        await rm(directory, { recursive: true, force: true });
+      }
+    });
+  }
+}
