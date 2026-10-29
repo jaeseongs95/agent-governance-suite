@@ -68,7 +68,7 @@ describe("skill context optimization", () => {
     const { execFileSync } = await import("node:child_process");
     vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
       const bytes = execFileSync(file, args, options);
-      if (file === "git" && args[0] === "show" && args[1] === `2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:${relative}`) {
+      if (file === "git" && args.at(-2) === "show" && args.at(-1) === `2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:${relative}`) {
         const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1; return altered;
       }
       return bytes;
@@ -124,7 +124,7 @@ describe("skill context optimization", () => {
   it("does not substitute current bytes when recorded implementation evidence is missing", async () => {
     const { execFileSync } = await import("node:child_process");
     vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
-      if (file === "git" && args[0] === "show" && args[1] === "2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs") throw new Error("SYNTHETIC_ARCHIVE_MISSING");
+      if (file === "git" && args.at(-2) === "show" && args.at(-1) === "2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs") throw new Error("SYNTHETIC_ARCHIVE_MISSING");
       return execFileSync(file, args, options);
     } }));
     try {
@@ -168,7 +168,7 @@ describe("skill context optimization", () => {
     const { execFileSync } = await import("node:child_process");
     vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
       const bytes = execFileSync(file, args, options);
-      if (file === "git" && args[0] === "show" && args[1] === "2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:skills/model-effort-advisor/scripts/support-guard.mjs") {
+      if (file === "git" && args.at(-2) === "show" && args.at(-1) === "2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:skills/model-effort-advisor/scripts/support-guard.mjs") {
         const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1; return altered;
       }
       return bytes;
