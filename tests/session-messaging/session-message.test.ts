@@ -1553,11 +1553,17 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     }
   });
 
+  it("notifies the user when an unavailable AGS wake path needs action now (AGS-D-0311)", () => {
+    for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions()]) {
+      expect(instructions).toMatch(/no-live-relay·unsupported이고 상대의 처리가 지금 필요하면 확인된 전달 상태와 AGS 자동 깨우기 경로를 사용할 수 없다는 사실을 사용자에게 알린다/u);
+    }
+  });
+
   it("limits extra host wake to an unavailable path needed now and preserves empty-wake handling (AGS-D-0354)", () => {
     for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions()]) {
       expect(instructions).toMatch(/available·latched이면 호스트 기능으로 따로 깨우지 않는다/u);
       expect(instructions).toMatch(/no-live-relay·unsupported이면[^.]*상대의 처리가 지금 필요할 때만 호스트 기능으로 한 번 깨운다/u);
-      expect(instructions).toMatch(/latched는[^.]*관측이 확인되지 않은 상태이므로 다시 깨우지 않는다/u);
+      expect(instructions).toMatch(/latched는[^.]*관측이 확인되지 않은 상태다/u);
       expect(instructions).toMatch(/본문 없는 깨우기 신호나 내용 없는 메시지를 받아도 진행 중인 작업을 멈추지 않으며/u);
       expect(instructions).toMatch(/본문을 받지 못한 메시지의 내용은 짐작하지 않는다/u);
       expect(instructions).toMatch(/ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다/u);
