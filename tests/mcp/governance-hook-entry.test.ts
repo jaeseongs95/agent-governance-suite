@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type { DatabaseSync } from "node:sqlite";
@@ -12,8 +12,9 @@ import { runContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import * as diagnostics from "../../mcp-server/src/hook-error-diagnostics.js";
-import { SessionActorProofs } from "../../mcp-server/src/session-actor-proof.js";
+import { SessionActorProofs, withoutSessionProof } from "../../mcp-server/src/session-actor-proof.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
+import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 
 // Engineering test plan: F1 = built CLI single owner/stdout + real persisted HMAC;
 // F2 = real SQLite resources with handle/close failpoints at the public hook boundary;
@@ -101,6 +102,79 @@ afterEach(() => {
 });
 
 describe("governance hook entry regressions (synthetic Node 24 fixtures)", () => {
+  // AGS-D-0352: 실행 순서는 배포 등록에서 읽고, 도구 입력 갱신은 호스트의 overwrite 계약으로 전달한다.
+  // 불변조건: 한 native 이벤트의 발급자는 하나이며, 재호출은 기존 예약키 거부를 그대로 통과해야 한다.
+  // 같은 테스트에서 hooks.json만 원 6944aa45로 되돌린 TEST 사본은 두 번째 handler 거부로 실패해야 한다.
+  // 실제 AGY 사건의 중간 입력·계보를 재현한 시험은 아니다. 자식/판정불가 정책은 기존 공통 시험을 함께 실행한다.
+  function registeredAntigravityCall(environment: NodeJS.ProcessEnv, wrapped: boolean,
+    args: Record<string, unknown> = { schemaVersion: "1.0.0" }, sessionId = "d0352-owned-hook-session") {
+    const hooks = JSON.parse(readFileSync(path.join(repository, "hooks.json"), "utf8")) as Record<string, {
+      enabled?: boolean; PreToolUse?: Array<{ hooks: Array<{ command: string }> }>;
+    }>;
+    const handlers = Object.values(hooks).filter(group => group.enabled !== false)
+      .flatMap(group => group.PreToolUse ?? []).flatMap(group => group.hooks);
+    let current: Record<string, unknown> = wrapped
+      ? { ServerName: "agent-governance-suite", ToolName: "inspect_context", Arguments: args } : { ...args };
+    const outputs: Array<{ decision: string; reason?: string; overwrite?: Record<string, unknown> }> = [];
+    for (const handler of handlers) {
+      const [binary, ...argv] = handler.command.split(" ");
+      expect(binary).toBe("node");
+      const child = spawnSync(process.execPath, argv, {
+        input: JSON.stringify({ conversationId: sessionId, workspacePaths: [path.dirname(environment.AGENT_GOVERNANCE_DB_PATH!)],
+          toolCall: { name: wrapped ? "call_mcp_tool" : "mcp_agent-governance-suite_inspect_context", args: current } }),
+        cwd: repository, env: environment, encoding: "utf8", timeout: 10_000, windowsHide: true,
+      });
+      expect(child.error).toBeUndefined();
+      expect(child.signal).toBeNull();
+      expect(child.status, child.stderr).toBe(0);
+      expect(child.stdout.trim().split(/\r?\n/u)).toHaveLength(1);
+      const output = JSON.parse(child.stdout);
+      outputs.push(output);
+      if (output.decision === "deny") break;
+      current = { ...current, ...output.overwrite };
+    }
+    return { outputs, args: wrapped ? current.Arguments as Record<string, unknown> : current };
+  }
+
+  it.each([true, false])("AGS-D-0352: native registration preserves one usable root and continuity binding (wrapped=%s)", wrapped => {
+    const { environment } = fixture();
+    const result = registeredAntigravityCall(environment, wrapped);
+    expect(result.outputs.at(-1)).toMatchObject({ decision: "allow" });
+    expect(result.outputs).toHaveLength(1);
+    expect(result.args).toMatchObject({ schemaVersion: "1.0.0", _sessionProof: expect.any(String), _continuityBinding: expect.any(String) });
+    const workflow = new SqliteWorkflowStore(environment.AGENT_GOVERNANCE_DB_PATH!);
+    const continuity = new SqliteContinuityStore(environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH!);
+    try {
+      const proofs = new SessionActorProofs(workflow);
+      expect(proofs.verify("inspect_context", result.args)).toMatchObject({ host: "antigravity",
+        sessionId: "d0352-owned-hook-session", actor: { role: "root", basis: "inferred" } });
+      const service = new ContinuityService(continuity, new ContractValidator(), workflow);
+      expect(service.inspectContext(withoutSessionProof(result.args)).ok).toBe(true);
+      expect(() => proofs.verify("inspect_context", result.args)).toThrow(expect.objectContaining({ code: "BINDING_INVALID" }));
+      // 정상 발급값도 새 native 호출의 호출자 입력으로 재사용하면 거부한다.
+      const replay = registeredAntigravityCall(environment, wrapped, result.args);
+      expect(replay.outputs).toHaveLength(1);
+      expect(replay.outputs[0]).toMatchObject({ decision: "deny" });
+      expect(replay.outputs[0]!.overwrite).toBeUndefined();
+    } finally { continuity.close(); workflow.close(); }
+  });
+
+  it.each(["_continuityBinding", "_sessionProof"])("AGS-D-0352: native registration rejects caller %s without issuing replacement fields", field => {
+    for (const wrapped of [true, false]) {
+      const { environment } = fixture();
+      const result = registeredAntigravityCall(environment, wrapped, { schemaVersion: "1.0.0", [field]: "forged" });
+      expect(result.outputs).toEqual([{ decision: "deny", reason: `Unverified caller ${field} rejected.` }]);
+      expect(existsSync(environment.AGENT_GOVERNANCE_DB_PATH!)).toBe(false);
+    }
+  });
+
+  it("AGS-D-0352: native registration preserves missing-session indeterminate denial without binding issuance", () => {
+    const { environment } = fixture();
+    const result = registeredAntigravityCall(environment, true, { schemaVersion: "1.0.0" }, "");
+    expect(result.outputs).toEqual([{ decision: "deny", reason: "ANTIGRAVITY_NATIVE_SESSION_ID_INVALID" }]);
+    expect(existsSync(environment.AGENT_GOVERNANCE_DB_PATH!)).toBe(false);
+  });
+
   it("F1: the built Claude CLI emits exactly one JSON object and a verifiable persisted root proof", () => {
     const { environment } = fixture();
     const payload = input();

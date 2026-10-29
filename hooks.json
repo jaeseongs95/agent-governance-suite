@@ -38,11 +38,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ./antigravity-connector/hooks/antigravity-hook-runner.mjs --hook=host-attestation --event=PreToolUse",
-            "timeout": 3
-          },
-          {
-            "type": "command",
             "command": "node ./antigravity-connector/hooks/antigravity-hook-runner.mjs --event=PreToolUse",
             "timeout": 10
           }

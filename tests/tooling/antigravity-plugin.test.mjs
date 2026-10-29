@@ -89,6 +89,19 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
     }
   });
 
+  it("registers one common PreToolUse owner across enabled native hook groups (AGS-D-0352)", () => {
+    const hooks = JSON.parse(readFileSync(path.join(ROOT, "hooks.json"), "utf8"));
+    const handlers = Object.values(hooks)
+      .filter((group) => group.enabled !== false)
+      .flatMap((group) => group.PreToolUse ?? [])
+      .flatMap((group) => group.hooks);
+    expect(handlers).toEqual([{
+      type: "command",
+      command: "node ./antigravity-connector/hooks/antigravity-hook-runner.mjs --event=PreToolUse",
+      timeout: 10,
+    }]);
+  });
+
   it("exposes mcp_config.json with short 'ags' server key so all 31 MCP tool names stay within Antigravity's 64-char limit (AGS-D-0322)", () => {
     const manifest = JSON.parse(readFileSync(path.join(ROOT, "plugin.json"), "utf8"));
     const mcpConfigPath = path.join(ROOT, "mcp_config.json");
