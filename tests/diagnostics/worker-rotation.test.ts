@@ -10,7 +10,7 @@ import {readDiagnosticConfig} from "../../mcp-server/src/diagnostics.js";
 const workerFile = fileURLToPath(new URL("../../mcp-server/dist/diagnostics-worker.mjs", import.meta.url));
 const gateFile = new URL("./fixtures/rotation-open-gate.mjs", import.meta.url).href;
 
-it.each(["steady", "rotating"] as const)("preserves admitted request outcomes across the actual worker %s boundary", async mode => {
+it.each(["ungated", "rotating"] as const)("preserves admitted request outcomes across the actual worker %s boundary", async mode => {
   const directory = await mkdtemp(path.join(tmpdir(), "ags-worker-rotation-"));
   // 실제 번들에 파일 열기 callback gate만 선행 로드한다. 제품 소스는 바꾸지 않는다.
   const child = fork(process.env.AGENT_GOVERNANCE_LOG_TEST_WORKER ?? workerFile, [], {
@@ -67,6 +67,7 @@ it.each(["steady", "rotating"] as const)("preserves admitted request outcomes ac
     if (process.env.AGENT_GOVERNANCE_LOG_TEST_EVIDENCE) await writeFile(
       path.join(process.env.AGENT_GOVERNANCE_LOG_TEST_EVIDENCE, `worker-${mode}-result.json`), evidence, "utf8");
     expect(code, evidence).toBe(0);
+    expect(messages.some(message => message.flushed === true), evidence).toBe(true);
     const events = files.flatMap(file => Buffer.from(file.rawBase64, "base64").toString("utf8").split(/\r?\n/)
       .filter(Boolean).map(line => JSON.parse(line))).sort((a, b) => a.fixtureSequence - b.fixtureSequence);
     if (mode === "rotating") {
