@@ -17,9 +17,11 @@ if (directory) {
   fs.open = function (...args) {
     const file = String(args[0]);
     const callback = args.at(-1);
-    if (file.startsWith(path.join(directory, "safe-fixture.")) && file.endsWith(".log")
+    if (file.startsWith(path.join(directory, "safe-")) && file.endsWith(".log")
       && typeof callback === "function" && ++openings === 2) {
       args[args.length - 1] = (...result) => {
+        fs.writeFileSync(path.join(directory, "open-held.tmp"), JSON.stringify({file: path.basename(file), error: result[0]?.code ?? null}), "utf8");
+        fs.renameSync(path.join(directory, "open-held.tmp"), path.join(directory, "open-held"));
         process.send?.({fixture: "rotation-open-held", file: path.basename(file), error: result[0]?.code ?? null});
         const timer = setInterval(() => {
           if (!fs.existsSync(path.join(directory, "release-open"))) return;

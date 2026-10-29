@@ -2,7 +2,7 @@ import {beforeAll, expect, it} from "vitest";
 import {mkdtemp, cp, readdir, readFile, stat, writeFile} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import path from "node:path";
-import {fileURLToPath} from "node:url";
+import {fileURLToPath, pathToFileURL} from "node:url";
 import {spawn} from "node:child_process";
 import {build} from "esbuild";
 import {readDiagnosticConfig} from "../../mcp-server/src/diagnostics.js";
@@ -135,6 +135,41 @@ await log.close();mark('close-complete');console.log(JSON.stringify({loss:log.lo
   expect(result.code,evidence).toBe(0);
   const observed=JSON.parse(result.out);
   expect(sizes.filter(size=>size>0).length,evidence).toBeGreaterThan(1);expect(sizes.every(size=>size<=1024),evidence).toBe(true);expect(observed.loss.droppedRecords,evidence).toBeGreaterThan(0);
+});
+
+it("bounds pending records and accounts for shutdown loss when rotation never becomes ready",async()=>{
+  const directory=await mkdtemp(path.join(tmpdir(),'ags-held-rotation-'));
+  await cp(path.join(root,'diagnostics.mjs'),path.join(directory,'diagnostics.mjs'));
+  const gate=new URL('./fixtures/rotation-open-gate.mjs',import.meta.url).href;
+  const worker=pathToFileURL(path.join(root,'diagnostics-worker.mjs')).href;
+  await writeFile(path.join(directory,'diagnostics-worker.mjs'),
+    `process.env.AGS_ROTATION_OPEN_GATE=${JSON.stringify(directory)};await import(${JSON.stringify(gate)});await import(${JSON.stringify(worker)});`,'utf8');
+  const result=await execute(`
+import {createDiagnostics,readDiagnosticConfig} from ${JSON.stringify(pathToFileURL(path.join(directory,'diagnostics.mjs')).href)};
+import {readFile} from 'node:fs/promises';
+const marker=${JSON.stringify(path.join(directory,'open-held'))};
+const log=await createDiagnostics(readDiagnosticConfig(JSON.stringify({level:'INFO',destination:'file',file:${JSON.stringify(path.join(directory,'safe'))},bufferBytes:1024,flushDeadlineMs:1000})),new Set(['get_skill_inventory']));
+await readyAtMost(log);
+let held;
+for(let i=0;i<150;i++){
+  try{held=JSON.parse(await readFile(marker,'utf8'));break;}
+  catch(error){if(error.code!=='ENOENT')throw error;await new Promise(resolve=>setTimeout(resolve,10));}
+}
+if(!held)throw new Error('ROTATION_FIXTURE_OPEN_NOT_HELD');
+for(let i=0;i<100;i++)log.event('request','INFO','request_start',{method:'get_skill_inventory'});
+const closeStarted=performance.now();await log.close();
+console.log(JSON.stringify({held,closeElapsedMs:performance.now()-closeStarted,loss:log.loss}));
+`);
+  const evidence=JSON.stringify({fixture:directory,child:result});
+  if(process.env.AGENT_GOVERNANCE_LOG_TEST_EVIDENCE) await writeFile(path.join(process.env.AGENT_GOVERNANCE_LOG_TEST_EVIDENCE,'held-shutdown-result.json'),evidence,'utf8');
+  expect(result.code,evidence).toBe(0);
+  const observed=JSON.parse(result.out);
+  expect(observed.held.error,evidence).toBeNull();
+  expect(observed.loss.droppedRecords,evidence).toBeGreaterThan(0);
+  expect(observed.loss.unconfirmedRecords,evidence).toBeGreaterThan(0);
+  expect(observed.loss.unconfirmedBytes,evidence).toBeGreaterThan(0);
+  expect(observed.loss.unconfirmedBytes,evidence).toBeLessThanOrEqual(1024);
+  expect(observed.loss.shutdownLossPossible,evidence).toBe(true);
 });
 
 
