@@ -10,13 +10,13 @@ const open = fs.open;
 const chained = process.env.AGS_ROTATION_REOPEN_CHAIN === "1";
 let openings = 0;
 if (directory) {
-  let observedSink;
+  let observedReopen;
   if (chained) {
     const emit = EventEmitter.prototype.emit;
     EventEmitter.prototype.emit = function (event, ...args) {
       if (event === "ready" && typeof this.file === "string"
         && this.file.startsWith(path.join(directory, "safe-"))) {
-        observedSink = this;
+        observedReopen = this.reopen.bind(this);
         EventEmitter.prototype.emit = emit;
       }
       return emit.call(this, event, ...args);
@@ -40,9 +40,9 @@ if (directory) {
         fs.renameSync(path.join(directory, "open-held.tmp"), path.join(directory, "open-held"));
         process.send?.({fixture: "rotation-open-held", opening, file: path.basename(file), error: result[0]?.code ?? null});
         if (chained && opening === 2) {
-          if (!observedSink) throw new Error("ROTATION_FIXTURE_SINK_NOT_OBSERVED");
+          if (!observedReopen) throw new Error("ROTATION_FIXTURE_SINK_NOT_OBSERVED");
           // 실제 open 중 공개 reopen을 한 번 더 요청한다. 라이브러리의 ready listener가 다음 회전을 시작한다.
-          observedSink.reopen();
+          observedReopen();
           process.send?.({fixture: "rotation-chained-reopen-returned"});
         }
         const timer = setInterval(() => {
