@@ -71,7 +71,7 @@ describe("P1-ACTOR-1026-A message-only caller boundary", () => {
 
   it.each(acceptedActors)("keeps accepted synthetic %s message operations", async name => {
     for (const [index, operation] of [
-    [0, "presence-start"], [1, "clear-deferred"], [2, "observe-native-input"], [3, "claim-deferred"], [4, "claim-turn-end"],
+    [0, "presence-start"], [2, "observe-native-input"], [3, "claim-deferred"], [4, "claim-turn-end"],
     ] as const) {
       f.request.mockClear(); f.spawn.mockClear();
       expect(await runSessionMessageHook(hostFor(name), JSON.stringify(messageInputs[index]))).toBe("");
@@ -81,6 +81,14 @@ describe("P1-ACTOR-1026-A message-only caller boundary", () => {
       expect(f.request).toHaveBeenCalledTimes(1);
       expect(f.spawn).toHaveBeenCalledTimes(index === 0 ? 1 : 0);
     }
+  });
+
+  // SessionEnd carries no execution generation. Its no-op is a lifecycle safety
+  // condition, separate from the positive actor authorization cases above.
+  it.each(acceptedActors)("keeps unfenced synthetic %s SessionEnd inert", async name => {
+    expect(await runSessionMessageHook(hostFor(name), JSON.stringify(messageInputs[1]))).toBe("");
+    expect(f.request).not.toHaveBeenCalled();
+    expect(f.spawn).not.toHaveBeenCalled();
   });
 
   it.each(rejectedActors)("keeps the existing main-tool denial for %s without issuing a parent binding", async name => {

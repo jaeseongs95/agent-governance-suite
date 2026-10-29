@@ -298,6 +298,11 @@ it.each(["codex", "claude-code", "gemini", "antigravity", syntheticHost])("keeps
   const now = Date.now() - 1000;
   f.request.mockImplementation(async (operation, payload) => dispatchSessionMessageBrokerOperation(store, operation, payload));
   try {
+    const presence = { ...target, transport: "synthetic-transport", wakeVisibility: "none" as const, canWakeSilently: false };
+    store.startPresence({ ...presence, instanceId: "old-generation" }, now - 2);
+    store.startPresence({ ...presence, instanceId: "new-generation" }, now - 1);
+    expect(store.acquireRelay({ ...target, transport: presence.transport, relayId: "new-relay", pid: 200, parentPid: 100 }, now)).toBe(true);
+    expect(store.presence(target, now).instanceId).toBe("new-generation");
     store.send({ messageId: "late-end-acked", sender, target, body: "acked" }, now);
     expect(store.reserveWake(target, "late-end-wake-abcdefghijklmnop", now + 1)).toBe(true);
     expect(store.claim(target, now + 2).map(message => message.messageId)).toEqual(["late-end-acked"]);
