@@ -109,6 +109,9 @@ describe("skill context optimization", () => {
       const checker = await import("../../scripts/check-skill-context-optimization.mjs");
       const report = checker.checkSkillContextOptimization();
       expect(report).toMatchObject({ pass: true, errors: [] });
+      const { execFileSync } = await import("node:child_process");
+      const recorded = execFileSync("git", ["show", `2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8:${relative}`], { cwd: fileURLToPath(new URL("../../", import.meta.url)) });
+      expect(checker.readHistoricalSource(relative)).toEqual(recorded);
       expect(report.implementationEvidence).toMatchObject({ revision: "2b59559cb8e2c50a1be5fb3f1473b6b9adcd1aa8", authorityEffect: "none", currentSourceIntegrity: "source-lock" });
       const { verifySourceLockOffline } = await import("../../scripts/source-lock.mjs");
       const owner = relative.split("/")[1];

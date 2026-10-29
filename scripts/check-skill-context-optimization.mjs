@@ -587,7 +587,7 @@ function readHistorical(root, ...parts) {
 
 /** Test hook: tracked bytes as the historical checks see them. */
 export function readHistoricalSource(relative) {
-  return readHistorical(ROOT, ...relative.split("/"));
+  return readHistoricalEvidence(relative);
 }
 
 /** Test hook: whether the bytes are the reviewed skill policy wording successor. */
