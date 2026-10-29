@@ -178,6 +178,9 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/orchestrator/references/skill-classification.md": "c9274214f8fb85ffdf5d138e9a4382b2f2906127b9d47db82dfa542ed28ed2c8",
     "skills/ponytail/SKILL.md": "907667b8b625eab0438b462a4737a056e3833f972c66e432817a12e6f643ac76",
     "skills/ponytail/classification.json": "19b81d57825cecd7a366b50efb9f220446f5208839b26faee2710af00da3d926",
+    "skills/recovery-strategy-selector/classification.json": "f1a123fad0c83c1af38579e2920823cf0bec3e86bbc3d27bdb122eb5c45dd622",
+    "skills/recovery-strategy-selector/references/entry-details.md": "5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a",
+    "skills/recovery-strategy-selector/references/selection-protocol.md": "80c7890acd0f765437e3f2b98f94d89847e75d7961cf3ac5e963fde3558a5d26",
   },
   "previousHashes": {
     "skills/blocker-diagnostician/SKILL.md": "5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
@@ -189,7 +192,8 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/model-effort-advisor/SKILL.md": "55d965086eab2ac7fe8acd34d32a520a91ed465e92bfe8b73629b04ab8d61106",
     "skills/orchestrator/SKILL.md": "1cfaf8503aacae72fb7e2591e708bea507848ae338e21855c15e4b1ccb635cd1",
     "skills/orchestrator/references/entry-details.md": "2c50a92c5cc59676ae6ac2bae1f9d86f337cdc7870b20ff9df12e8e3cd09670b",
-    "skills/ponytail/SKILL.md": "953fd16ff07c23b9481e9bdfca12dbb0d115422ebdbd6626bae6b574838a777c"
+    "skills/ponytail/SKILL.md": "953fd16ff07c23b9481e9bdfca12dbb0d115422ebdbd6626bae6b574838a777c",
+    "skills/recovery-strategy-selector/references/entry-details.md": "08b489c4ace78471ae6737fcea06e1885294d8d0b5f2207c74c6f740ac05375e"
   }
 });
 

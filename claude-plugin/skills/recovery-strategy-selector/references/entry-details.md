@@ -17,7 +17,7 @@ node scripts/validate-task-binding.mjs --input task-binding-input.json
 1. 기존 diagnosis validator로 report와 원본 diagnosis request·외부 동결 digest를 다시 검증한다. 실패 receipt payload의 digest, run metadata와 원본 task digest 결속을 확인하고, 확정 원인의 직접 evidence binding에 source task와 receipt digest가 모두 있는지 대조한다. 원인이 확정되지 않았거나 다른 실패의 diagnosis이거나 evidence가 변조됐으면 전략을 만들지 않는다.
 2. 서로 다른 mechanism, action과 write target을 가진 전략 2~3개를 만든다. 각 전략은 확정 `causeId`를 `addressesCauseId`로, `{ causeId, rootCondition }`의 canonical digest를 `rootConditionDigest`로 정확히 결속하고, `rootConditionChange`에 그 근본 조건을 어떻게 바꾸는지 기록한다. 각 전략에 선행 조건, 권한 요구, 검증 방법, 중단 조건과 실패 영향을 기록한다.
 3. Objective Gate에서 목표·수용 기준 약화, 금지 행동, 미충족 선행 조건, 검증 부재, 기존 실패 반복과 기존 run 변경을 제외한다. 사용자 승인으로만 해소되는 전략은 `REQUIRES_APPROVAL`로 보존한다.
-4. 생존 전략이 둘 이상이면 고정 비교축으로 각 전략의 challenge와 response를 기록한다. 가중 점수를 만들지 않으며 동률은 사용자가 결정하도록 남긴다.
+4. 생존 전략이 둘 이상이면 고정 비교축으로 각 전략의 challenge와 response를 기록한다. 가중 점수를 만들지 않으며, 비교축 동률은 먼저 `independent-deliberation-panel`(내부 독립 숙의)로 해소를 시도하고 그래도 결론이 나지 않을 때만 사용자가 결정하도록 남긴다.
 5. 선택 결과와 `nextTaskSeed`를 `RecoveryHandoff.v1`로 반환한다. seed는 요청 행동을 기술하지만 권한을 부여하지 않는다.
 6. 새 `TaskContractRequest.v1`과 `TaskContractReport.v1`을 만들었으면 `validate-task-binding.mjs`로 기존 task-contract validator를 실행하고 handoff digest, 새 task ID, scope·criteria·work unit과 실제 상위 권한 근거를 대조한다.
 
@@ -25,5 +25,5 @@ node scripts/validate-task-binding.mjs --input task-binding-input.json
 
 - 기존 run, receipt, 실패 판정이나 실행 예산을 수정하거나 되살리지 않는다.
 - `NEEDS_APPROVAL` handoff만으로 후속 mutation을 시작하지 않는다. 실제 사용자·시스템·개발자 승인 근거를 새 task contract에 결속한다.
-- 생존 전략이 없으면 `NO_VIABLE_STRATEGY`, 동률이면 `NEEDS_INPUT`, 증거 또는 결속이 유효하지 않으면 `BLOCKED`로 끝낸다.
+- 생존 전략이 없으면 `NO_VIABLE_STRATEGY`, 내부 숙의(`independent-deliberation-panel`) 뒤에도 미해결 동률이면 `NEEDS_INPUT`, 증거 또는 결속이 유효하지 않으면 `BLOCKED`로 끝낸다.
 - 새 workflow는 새 `TaskEnvelope.v1`과 새 convergence root를 사용한다. selector는 workflow를 자동 생성하거나 시작하지 않는다.

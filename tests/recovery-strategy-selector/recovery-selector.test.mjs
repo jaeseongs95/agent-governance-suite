@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -225,6 +226,21 @@ describe("recovery strategy selector", () => {
     const output = handoff(request, [strategy("a"), strategy("b")], { verdict: "NEEDS_INPUT", selected: null });
     expect(validateHandoff(request, output)).toEqual([]);
     expect(output.crossReview).toMatchObject({ status: "unresolved", unresolvedStrategyIds: ["a", "b"] });
+  });
+
+  it("policy: requires independent-deliberation-panel internal tie-breaking before escalating an unresolved tie to NEEDS_INPUT", () => {
+    const repoRoot = path.resolve(here, "..", "..");
+    for (const relPath of [
+      "skills/recovery-strategy-selector/references/entry-details.md",
+      "skills/recovery-strategy-selector/references/selection-protocol.md",
+    ]) {
+      const canonical = readFileSync(path.join(repoRoot, relPath), "utf8");
+      const claudeMirror = readFileSync(path.join(repoRoot, "claude-plugin", relPath), "utf8");
+      expect(claudeMirror).toBe(canonical);
+      expect(canonical).toContain("independent-deliberation-panel");
+      expect(canonical).not.toContain("가중 점수를 만들지 않으며 동률은 사용자가 결정하도록 남긴다.");
+      expect(canonical).not.toContain("모든 축이 같은 최상위 전략이 둘 이상이면 `NEEDS_INPUT`으로 반환한다.");
+    }
   });
 
   it("boundary: reports no viable strategy when every Objective Gate fails", () => {

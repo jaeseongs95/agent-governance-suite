@@ -115,7 +115,7 @@
       "version": "0.2.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:7d03c44e538b483d4cf2459088801032e45f846d3cb9471eefdfeede034e5613",
+      "integratedChecksum": "sha256:44a1303cf4541f2e5764d2038252bd6cc5471effec35b327aa4fcab9520e6da8",
       "checksumScope": "relative paths and normalized text bytes under skills/recovery-strategy-selector"
     },
     {
