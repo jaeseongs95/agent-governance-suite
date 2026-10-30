@@ -6,7 +6,7 @@ import path from "node:path";
 import {pathToFileURL} from "node:url";
 import type {BootstrapConfig} from "./bootstrap.mts";
 import {loadCurrentBudgetFixture, rebindPreparedFixture} from "./prepared-fixture.mts";
-import {adjacentPrices, expectedPico} from "./precision-current-oracle.mts";
+import {expectedPico} from "./precision-current-oracle.mts";
 import {independentWireRows} from "./independent-wire-oracle.mts";
 
 type RunConfig = Extract<BootstrapConfig, {schemaVersion: "2.0.0"}>;
@@ -117,19 +117,9 @@ const exists = async (file: string) => {try {await access(file); return true;} c
 try {
   for (const original of precision.cases) {
     const caseDirectory = path.join(root, `precision-${original.id}`);
-    let spec = original;
+    const spec = original;
     try {
       const value = await ready(`precision-${original.id}`); value.limits!.requests = 21;
-      if (original.kind === "reviewed-estimate") {
-        const maxBytes = Math.max(...currentMeasurements.map(row => row.utf8Bytes));
-        const [below, above] = adjacentPrices(maxBytes);
-        const price = original.id === "current-adjacent-below" ? below : original.id === "current-adjacent-above" ? above : Number(original.priceNumberText);
-        const rows = currentMeasurements.map(row => ({caseId: row.caseId, reservedPicoUsd: expectedPico(row.utf8Bytes, price).toString()}));
-        const costs = rows.map(row => BigInt(row.reservedPicoUsd));
-        spec = {...original, priceNumberText: price.toString(), expectedRows: rows,
-          expectedMaxPicoUsd: costs.reduce((a, b) => a > b ? a : b, 0n).toString(),
-          expectedSumPicoUsd: costs.reduce((a, b) => a + b, 0n).toString()};
-      }
       value.budget!.priorRunUnknownReservedUsd = Number(precision.unknownUsd);
       let config: BootstrapConfig = value;
       if (spec.kind === "legacy-fixed") {

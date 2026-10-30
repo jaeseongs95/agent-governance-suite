@@ -219,7 +219,7 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   assert.equal(governance.parentMidtaskDigest, hash(midtaskBytes));
   if (bindRegistry) assert.equal(governance.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
   const fixtureBytes = await readFile(path.join(repo, "tests/skill-classification/fixtures.json"));
-  // r08의 원 입력은 동결한다. 현재 입력은 아래 r11 원측정에 결속한다.
+  // r08의 원 입력은 동결한다. 현재 입력은 아래 r12 원측정에 결속한다.
   assert.equal(governance.fixtureDigest, "sha256:d3490862893ee85f13dbee39ad992498bf7a76360c898d30d8089e5e485c1b88");
   const currentFixture = JSON.parse(fixtureBytes.toString("utf8"));
   assert.equal(governance.fixtureOracleDigest, "sha256:e48f0d37e8675f046a00648451fc3086753af97d663ca4a0aa18b8fdad386666");
@@ -298,7 +298,7 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   assert.equal(invocation.totals.maxUtf8Bytes, "125679");
   assert.equal(invocation.totals.maxReservedPicoUsd, maxInvocationPicoUsd.toString());
   assert.equal(maxInvocationPicoUsd.toString(), "5278518000");
-  // 현재 요청 결속은 지정 TEST의 실제·독립 인코더가 일치한 r11로 잇는다.
+  // r11은 지정 TEST의 실제·독립 인코더가 일치한 역사 요청 결속으로 보존한다.
   // 전송 바이트와 금액은 r10과 같으며, 요청·인벤토리 지문만 바뀌었다.
   const unavailableBytes = await readFile(new URL("./budget-wire-classification-unavailable-successor.json", import.meta.url));
   assert.equal(hash(unavailableBytes), "sha256:3281619416f55c4e3b7d7a7b2941a65f40e2f7448a786cfc6e88a7014a9a8fe1");
@@ -316,28 +316,69 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   }
   assert.deepEqual(unavailable.totals, invocation.totals);
   assert.deepEqual(unavailable.inheritedFields, invocation.inheritedFields);
+  // r10/r11을 덮지 않고 현재 21행의 실측과 별도 정수 산술을 동결한 후속 자료를 읽는다.
+  const liveBytes = await readFile(new URL("./budget-wire-live-host-boundaries-successor.json", import.meta.url));
+  assert.equal(hash(liveBytes), "sha256:a6e768d43f1d4c3b1fb66227a031d5937385169ddb9650e78ffc07b1dcedd1d3");
+  const live = JSON.parse(liveBytes.toString("utf8"));
+  assert.equal(live.revision, "ags-bootstrap-budget-live-host-boundaries-source-binding-r12");
+  assert.equal(live.sourceCommit, "6d7eac4b4503c74141de4ff51b80de035daff05c");
+  assert.equal(live.parentClassificationUnavailableDigest, hash(unavailableBytes));
+  if (bindRegistry) assert.equal(live.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
+  assert.equal(live.fixtureDigest, hash(fixtureBytes));
+  assert.equal(live.fixtureOracleDigest, currentFixture.oracleDigest);
+  assert.equal(live.rows.length, unavailable.rows.length);
+  for (const [index, row] of live.rows.entries()) {
+    const previous = unavailable.rows[index];
+    assert.deepEqual({...row, requestDigest: previous.requestDigest}, previous);
+  }
+  assert.deepEqual(live.totals, unavailable.totals);
+  const livePrecisionBytes = await readFile(new URL("./precision-live-host-boundaries-successor.json", import.meta.url));
+  assert.equal(hash(livePrecisionBytes), "sha256:891f10021218faecf213e3329224aad5fbca7d51b0fdd5a43f697e329571b12f");
+  assert.equal(live.precisionSuccessorDigest, hash(livePrecisionBytes));
+  const livePrecision = JSON.parse(livePrecisionBytes.toString("utf8"));
+  assert.equal(livePrecision.revision, "ags-bootstrap-precision-live-host-boundaries-source-binding-r12");
+  assert.equal(livePrecision.sourceCommit, live.sourceCommit);
+  assert.equal(livePrecision.parentPrecisionDigest, hash(boundaryBytes));
+  assert.equal(livePrecision.parentMidtaskDigest, hash(midtaskBytes));
+  assert.equal(livePrecision.wireCaptureDigest, live.captureEvidence.actualArtifact.digest);
+  assert.equal(livePrecision.inventoryDigest, live.inventoryDigest);
+  assert.equal(livePrecision.fixtureDigest, live.fixtureDigest);
+  assert.equal(livePrecision.fixtureOracleDigest, live.fixtureOracleDigest);
+  assert.equal(livePrecision.unknownUsd, precision.unknownUsd);
+  assert.equal(livePrecision.safeMaxPicoUsd, precision.safeMaxPicoUsd);
+  assert.equal(livePrecision.cases.length, precision.cases.length);
+  for (const [index, row] of livePrecision.cases.entries()) {
+    const original = precision.cases[index];
+    assert.equal(row.id, midtask.precisionCases[index].id);
+    for (const key of ["kind", "expectedStatus", "expectedReason"]) assert.deepEqual(row[key], original[key]);
+    if (!["current-adjacent-below", "current-adjacent-above"].includes(row.id)) assert.equal(row.priceNumberText, original.priceNumberText);
+  }
   const currentRows = successor.rows.map((row: {caseId: string; utf8Bytes: number}, index: number) => {
     const historical = registrySuccessor.rows[index];
     assert.equal(historical.caseId, row.caseId);
     assert.equal(historical.utf8Bytes, row.utf8Bytes);
     assert.equal(solid.rows[index].caseId, row.caseId);
     assert.equal(midtask.rows[index].caseId, row.caseId);
-    const current = unavailable.rows[index];
+    const current = live.rows[index];
     assert.equal(current.caseId, row.caseId);
     return {...row, ...current};
   });
-  const oracle = {...predecessor, inventoryDigest: unavailable.inventoryDigest, fixtureDigest: unavailable.fixtureDigest,
-    fixtureOracleDigest: unavailable.fixtureOracleDigest, rows: currentRows, totals: unavailable.totals,
+  const oracle = {...predecessor, inventoryDigest: live.inventoryDigest, fixtureDigest: live.fixtureDigest,
+    fixtureOracleDigest: live.fixtureOracleDigest, rows: currentRows, totals: live.totals,
     syntheticOverBudgetCases: predecessor.syntheticOverBudgetCases.map((row: {id: string}, index: number) => {
       assert.equal(successor.syntheticOverBudgetCases[index].id, row.id);
       assert.equal(solid.syntheticOverBudgetCases[index].id, row.id);
       assert.equal(policy.syntheticOverBudgetCases[index].id, row.id);
       assert.equal(midtask.syntheticOverBudgetCases[index].id, row.id);
-      return {...row, ...midtask.syntheticOverBudgetCases[index]};
-    }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...midtask.fractionalRoundingFixture}};
+      const current = live.syntheticOverBudgetCases[index];
+      for (const key of ["id", "historicalId", "requests", "capUsd", "unchangedUnknownUsd", "historicalConfirmedUsd", "expectedStatus", "expectedReason", "expectedEnvironmentReads", "expectedCredentialReads", "expectedFetches", "authority"]) {
+        assert.deepEqual(current[key], Reflect.get(row, key));
+      }
+      return {...row, ...current};
+    }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...live.fractionalRoundingFixture}};
   return {oracleBytes, boundaryBytes, oracle, precision: {...precision,
-    cases: precision.cases.map((row: {id: string}, index: number) => ({...row, ...midtask.precisionCases[index]}))},
-  successorDigest: hash(unavailableBytes), successorRevision: unavailable.revision};
+    cases: livePrecision.cases},
+  successorDigest: hash(liveBytes), successorRevision: live.revision};
 }
 
 // Explicit authoring command captures only current public request/wire inputs. It neither runs nor qualifies a provider.

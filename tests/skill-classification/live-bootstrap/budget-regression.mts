@@ -47,21 +47,8 @@ if (process.argv[4] === "worker") {
   const capturedRows = ({caseId, requestDigest, wireDigest, utf8Bytes, reservedPicoUsd}: OracleRow) =>
     ({caseId, requestDigest, wireDigest, utf8Bytes, reservedPicoUsd});
   assert.deepEqual(independent.map(capturedRows), frozenOracle.rows.map(capturedRows), "CAPTURED_BUDGET_WIRE_AND_RESERVATIONS");
-  const costs = independent.map(row => BigInt(row.reservedPicoUsd));
-  const all = costs.reduce((a, b) => a + b, 0n), firstTwo = costs[0]! + costs[1]!;
-  const target = (cap: bigint, unknown: bigint, cost: bigint, minimum: bigint) => {
-    const need = cap + 1000n - unknown - cost; return (need > minimum ? need : minimum).toString();
-  };
-  const currentOracle = {...frozenOracle, inventoryDigest: independent[0]!.inventoryDigest,
-    rows: independent.map(({caseId,requestDigest,wireDigest,utf8Bytes,reservedPicoUsd}) => ({caseId,requestDigest,wireDigest,utf8Bytes,reservedPicoUsd})),
-    syntheticOverBudgetCases: frozenOracle.syntheticOverBudgetCases.map((row: OracleBudgetCase) => {
-      const cap = BigInt(Math.round(Number(row.capUsd) * 1e12)), unknown = BigInt(Math.round(Number(row.unchangedUnknownUsd) * 1e12));
-      const minimum = BigInt(Math.round(Number(row.historicalConfirmedUsd) * 1e12));
-      const cost = row.historicalId === "confirmed-plus-unknown" ? firstTwo : all;
-      return {...row, proposedSyntheticConfirmedUsd: (Number(BigInt(target(cap, unknown, cost, minimum))) / 1e12).toFixed(12)};
-    })};
   assert.equal(hash(oracleBytes.toString("utf8")), "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56");
-  const oracle = currentOracle as BudgetWireOracle;
+  const oracle = frozenOracle as BudgetWireOracle;
   assert.equal(oracle.schemaVersion, "1.0.0"); assert.equal(oracle.canonicalRunId, "full-21-015");
   assert.equal(oracle.rows.length, 21); assert.equal(new Set(oracle.rows.map((row: OracleRow) => row.caseId)).size, 21);
   assert.equal(typeof oracle.modelId, "string"); // ROOT r2 oracle explicit model binding; r1 has no model field.
