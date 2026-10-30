@@ -42,14 +42,24 @@ const handleContinuityHook = (payload: Record<string, unknown>, service: Continu
 const sharedOwners = new Set<ReturnType<typeof createInactiveSharedStores>["owner"]>();
 const temporaryDirectories: string[] = [];
 const stores = new Set<SqliteContinuityStore>();
+let hmacLifecycleTrace: ((stage: string) => void) | undefined;
 
 afterEach(async () => {
+  const trace = hmacLifecycleTrace;
+  hmacLifecycleTrace = undefined;
+  trace?.("cleanup.begin");
   vi.restoreAllMocks();
+  trace?.("stores.close.begin");
   for (const store of stores) store.close();
   stores.clear();
+  trace?.("stores.close.returned");
+  trace?.("shared-owners.close.begin");
   for (const owner of sharedOwners) owner.close();
   sharedOwners.clear();
+  trace?.("shared-owners.close.returned");
+  trace?.("remove.begin");
   await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
+  trace?.("remove.returned");
 });
 
 function createService(
@@ -476,10 +486,21 @@ describe("workflow projection and fail-open lifecycle", () => {
   });
 
   it("rewrites only bound MCP tool inputs and persists only HMAC lifecycle correlations", async () => {
+    // 입력·세션·HMAC·SQL을 출력하지 않고 동기 본문과 비동기 정리 경계를 나눈다.
+    const started = performance.now(), test = expect.getState().currentTestName, fixtureId = randomUUID();
+    let sequence = 0;
+    const trace = (stage: string) => process.stderr.write(`[시험단계] ${JSON.stringify({
+      fixture: "continuity-hmac", fixtureId, test, sequence: ++sequence, stage, elapsedMs: performance.now() - started })}\n`);
+    hmacLifecycleTrace = trace;
+    trace("directory.begin");
     const directory = await mkdtemp(join(tmpdir(), "continuity-hmac-"));
     temporaryDirectories.push(directory);
+    trace("directory.returned");
     const databasePath = join(directory, "continuity.sqlite3");
+    trace("service.begin");
     const service = createService(databasePath);
+    trace("service.returned");
+    trace("bound-hook.begin");
     const input = handleContinuityHook({
       hook_event_name: "PreToolUse",
       session_id: "raw-secret-session-id",
@@ -487,24 +508,36 @@ describe("workflow projection and fail-open lifecycle", () => {
       tool_name: "mcp__agent-governance-suite__inspect_context",
       tool_input: { schemaVersion: "1.0.0" },
     }, service);
+    trace("bound-hook.returned");
     expect(input).toMatchObject({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { _continuityBinding: expect.any(String) } } });
     expect(input.hookSpecificOutput).not.toHaveProperty("permissionDecision");
     expect(JSON.stringify(input)).not.toContain("raw-secret-session-id");
+    trace("unrelated-hook.begin");
     expect(handleContinuityHook({ hook_event_name: "PreToolUse", session_id: "s", tool_name: "Bash", tool_input: {} }, service)).toEqual({});
+    trace("unrelated-hook.returned");
+    trace("post-compact.begin");
     handleContinuityHook({
       hook_event_name: "PostCompact",
       session_id: "raw-secret-session-id",
       turn_id: "raw-secret-turn-id",
       trigger: "auto",
     }, service);
+    trace("post-compact.returned");
+    trace("database.open.begin");
     const database = new DatabaseSync(databasePath);
+    trace("database.open.returned");
+    trace("correlations.read.begin");
     const stored = database.prepare("SELECT task_correlation, turn_hash FROM continuity_observations").get() as {
       task_correlation: string; turn_hash: string;
     };
+    trace("correlations.read.returned");
+    trace("database.close.begin");
     database.close();
+    trace("database.close.returned");
     expect(stored.task_correlation).toMatch(/^hmac-sha256:[a-f0-9]{64}$/u);
     expect(stored.turn_hash).toMatch(/^hmac-sha256:[a-f0-9]{64}$/u);
     expect(JSON.stringify(stored)).not.toContain("raw-secret");
+    trace("body.returned");
   });
 });
 

@@ -43,9 +43,7 @@ function start(extraArgs: string[]=[],bootDelay=0,lateQuery=0,nativeQuery=false)
   child.once("exit",(code,signal)=>stamp("child-exit",code,signal));
   child.once("close",(code,signal)=>stamp("child-close",code,signal));
   let stderr="";child.stderr!.on("data",chunk=>{stderr=(stderr+String(chunk)).slice(-4096);});child.stdout!.resume();
-  const ready=async()=>{
-    try {await waitForSessionMessageBrokerReady(state,child,5000);}
-    catch(cause){
+  const observe=()=>{
       let phases:unknown={state:"not-observed"},endpoint:unknown={exists:false};
       try {
         const trace=path.join(root,"startup-phases.jsonl");
@@ -62,12 +60,17 @@ function start(extraArgs: string[]=[],bootDelay=0,lateQuery=0,nativeQuery=false)
           endpoint={exists:true,parseable:true,ownPidMatch:value.pid===child.pid};
         }
       }catch(error){endpoint={exists:true,parseable:false,failure:failureContext(error)};}
-      throw new Error(`D0350 broker fixture readiness failed: ${JSON.stringify({clockDomains:{events:"parent",phases:"child"},events,phases,endpoint,phaseRecordingFailed:stderr.includes("D0350_PHASE_RECORDING_FAILED"),
-        artifacts:Object.fromEntries(["broker.lock","broker-cert.pem","broker.token","session-messages.sqlite3"].map(name=>[name,existsSync(path.join(state,name))])),
-        exitCode:child.exitCode,signalCode:child.signalCode,spawnFailure,failure:failureContext(cause)})}`,{cause});
+    return {clockDomains:{events:"parent",phases:"child"},events:[...events],phases,endpoint,phaseRecordingFailed:stderr.includes("D0350_PHASE_RECORDING_FAILED"),
+      artifacts:Object.fromEntries(["broker.lock","broker-cert.pem","broker.token","session-messages.sqlite3"].map(name=>[name,existsSync(path.join(state,name))])),
+      exitCode:child.exitCode,signalCode:child.signalCode,spawnFailure};
+  };
+  const ready=async()=>{
+    try {await waitForSessionMessageBrokerReady(state,child,5000);}
+    catch(cause){
+      throw new Error(`D0350 broker fixture readiness failed: ${JSON.stringify({...observe(),failure:failureContext(cause)})}`,{cause});
     }
   };
-  resources.push({root,child});return {root,state,child,ready,stderr:()=>stderr};
+  resources.push({root,child});return {root,state,child,ready,observe,stderr:()=>stderr};
 }
 it("an inherited startup deadline includes child initialization and never restarts its budget",async()=>{
   const deadline=String(process.hrtime.bigint()+80_000_000n);
@@ -189,14 +192,21 @@ it.runIf(process.platform==="win32")("an actual failed OS query remains denied a
 });
 
 it.runIf(process.platform==="win32")("graceful broker cleanup cancels its own in-flight native identity child",async()=>{
-  const {root,state,child,ready}=start([],0,0,true);
+  const {root,state,child,ready,observe}=start([],0,0,true);
   await ready();
   const target={host:"portable",sessionId:"d254-native-cancel"},parentPid=424242,parentStartToken="fixture-parent-birth";
   const instanceId="host-process-v1:"+createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
-  const acquired=requestSessionMessageOnce("acquire-relay",{target,transport:"portable",relayId:"verified-relay-v1:d254-cancel",instanceId,parentPid,parentStartToken,pid:process.pid},state).catch(error=>error);
-  const pidPath=path.join(root,"native-query-pid"),startedUntil=performance.now()+2000;
+  let requestState="pending";
+  const acquired=requestSessionMessageOnce<{acquired:boolean}>("acquire-relay",{target,transport:"portable",relayId:"verified-relay-v1:d254-cancel",instanceId,parentPid,parentStartToken,pid:process.pid},state).then(value=>{requestState=value.acquired?"accepted":"denied";return value;},error=>{requestState="rejected";return error;});
+  const pidPath=path.join(root,"native-query-pid"),waitStarted=performance.now(),startedUntil=waitStarted+2000;
   while(!existsSync(pidPath)&&performance.now()<startedUntil)await delay(10);
-  expect(existsSync(pidPath)).toBe(true);
+  // 진단 I/O 중 늦게 생긴 표식이 원래 단언을 통과시키지 않도록 먼저 판정을 고정한다.
+  const pidMarkerPresent=existsSync(pidPath),waitElapsedMs=performance.now()-waitStarted;
+  process.stderr.write(`[시험단계] ${JSON.stringify({fixture:"d0254-native-cancel",stage:"native-pid-wait.returned",
+    elapsedMs:waitElapsedMs,pidMarkerPresent,requestState,
+    queryStarted:existsSync(path.join(root,"query-started")),queryFinished:existsSync(path.join(root,"query-finished")),
+    observation:pidMarkerPresent?undefined:observe()})}\n`);
+  expect(pidMarkerPresent).toBe(true);
   const nativePid=Number(readFileSync(pidPath,"utf8"));
   expect(Number.isSafeInteger(nativePid)&&nativePid>0).toBe(true);
   expect(alive(nativePid)).toBe(true);
