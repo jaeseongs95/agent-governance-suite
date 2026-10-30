@@ -65,9 +65,9 @@ const TOOL_NAME_MAP = {
 };
 
 // Note (G1 / #3272 / R04-F03 / R05-F01 / R05-F02 / R05-F03 / 0cdb9b8b / 256e030b / feaa4fb5 / 5eb3d511 / #3313 N1~N3):
-// - Handler 1 (--hook=host-attestation, pure in-memory) in hooks.json is the primary
-//   fail-closed defense line for _hostAttestation stripping/denial.
-// - Handler 2 avoids broker I/O on PreToolUse by computing _sessionBinding locally.
+// - AGS PreToolUse는 hooks.json의 일반 등록 하나가 공통 governance 경로를 소유한다.
+//   이 경로가 호출자 예약 필드 거부와 도메인 검사 뒤 세션 증명 발급을 담당한다.
+//   별도 --hook=host-attestation도 AGS 도구에서는 같은 경로로 들어가므로 중복 등록하지 않는다.
 // - Lifecycle events (SessionStart, PreInvocation, PostInvocation, Stop) have a 10s hooks.json budget.
 //   The adapter owns the 10s native budget anchored at process start `timeOrigin` (`performance.now() === 0`,
 //   so Node startup + ESM module load elapsed time is automatically deducted from `DEFAULT_HOOK_TOTAL_BUDGET_MS = 9200`
