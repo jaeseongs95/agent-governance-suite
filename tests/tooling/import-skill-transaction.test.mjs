@@ -11,7 +11,7 @@ afterEach(async () => {
 async function exists(file) {
   try { await stat(file); return true; } catch (error) { if (error.code === "ENOENT") return false; throw error; }
 }
-async function fixture(destinationExists = true) {
+async function fixture(destinationExists = true, testsExist = false) {
   const directory = await mkdtemp(path.join(tmpdir(), "ags-import-transaction-"));
   directories.push(directory);
   const transactionDirectory = path.join(directory, "transaction");
@@ -27,6 +27,10 @@ async function fixture(destinationExists = true) {
     await mkdir(destination);
     await writeFile(path.join(destination, "payload"), "old-skill");
   }
+  if (testsExist) {
+    await mkdir(testsDirectory);
+    await writeFile(path.join(testsDirectory, "existing.json"), "old-tests");
+  }
   await writeFile(path.join(stagedSkill, "payload"), "new-skill");
   await writeFile(path.join(stagedTests, "cases.json"), "{}");
   const registryPath = path.join(path.dirname(destination), "registry.json");
@@ -36,7 +40,7 @@ async function fixture(destinationExists = true) {
   await writeFile(registryPath, registryOriginal);
   await writeFile(lockPath, lockOriginal);
   return { directory, transactionDirectory, temporaryDirectory, destination, destinationExists,
-    stagedSkill, testsDirectory, testsExist: false, stagedTests, registryPath, lockPath,
+    stagedSkill, testsDirectory, testsExist, stagedTests, registryPath, lockPath,
     registryOriginal, lockOriginal, registryDocument: { skills: ["new"] }, lockDocument: { sources: ["new"] } };
 }
 async function perform(input, operations = {}) {
@@ -73,6 +77,15 @@ it.each([false, true])("cleans a successful import without leaving backup state 
   expect(await exists(f.temporaryDirectory)).toBe(false);
 });
 
+it.each([false, true])("cleans a successful import preserving existing tests when testsExist=true (replace=%s)", async (replace) => {
+  const f = await fixture(replace, true);
+  expect(await perform(f)).toBeNull();
+  expect(await readFile(path.join(f.destination, "payload"), "utf8")).toBe("new-skill");
+  expect(await readFile(path.join(f.testsDirectory, "existing.json"), "utf8")).toBe("old-tests");
+  expect(await exists(f.transactionDirectory)).toBe(false);
+  expect(await exists(f.temporaryDirectory)).toBe(false);
+});
+
 it("restores exact old bytes and cleans a completed rollback while preserving the original error", async () => {
   const f = await fixture();
   const primary = new Error("synthetic-install-failure");
@@ -84,6 +97,66 @@ it("restores exact old bytes and cleans a completed rollback while preserving th
   await expectOriginalMetadata(f);
   expect(await exists(f.transactionDirectory)).toBe(false);
   expect(await exists(f.testsDirectory)).toBe(false);
+});
+
+it("preserves existing tests untouched during rollback when testsExist=true", async () => {
+  const f = await fixture(true, true);
+  const primary = new Error("synthetic-install-failure");
+  const failure = await perform(f, failingInstall(f, primary));
+  expect(failure.cause).toBe(primary);
+  expect(failure.recovery).toMatchObject({ state: "completed", transactionState: "removed",
+    transactionDirectory: null, previousSkill: { state: "restored", path: null }, metadataOriginals: null });
+  expect(await readFile(path.join(f.destination, "payload"), "utf8")).toBe("old-skill");
+  expect(await readFile(path.join(f.testsDirectory, "existing.json"), "utf8")).toBe("old-tests");
+  await expectOriginalMetadata(f);
+  expect(await exists(f.transactionDirectory)).toBe(false);
+});
+
+it("preserves existing tests untouched even when rollback fails and backup is retained (testsExist=true)", async () => {
+  const f = await fixture(true, true);
+  const primary = new Error("synthetic-install-failure");
+  const failure = await perform(f, { ...failingInstall(f, primary), rename: async (from, to) => {
+    if (from === path.join(f.transactionDirectory, "previous-skill")) throw new Error("synthetic-restore-failure");
+    return rename(from, to);
+  } });
+  expect(failure.recovery.failedStages).toContain("restore-previous-skill");
+  expect(failure.recovery.previousSkill.state).toBe("retained");
+  await expectRetainedOldSkill(f, failure);
+  expect(await readFile(path.join(f.testsDirectory, "existing.json"), "utf8")).toBe("old-tests");
+  expect(await exists(f.destination)).toBe(false);
+});
+
+it("rolls back a new skill import completely when destination did not exist (destinationExists=false)", async () => {
+  const f = await fixture(false, false);
+  const primary = new Error("synthetic-install-failure");
+  const failure = await perform(f, failingInstall(f, primary));
+  expect(failure.cause).toBe(primary);
+  expect(failure.recovery).toMatchObject({ state: "completed", transactionState: "removed",
+    transactionDirectory: null, previousSkill: { state: "not-created", path: null }, metadataOriginals: null });
+  expect(await exists(f.destination)).toBe(false);
+  expect(await exists(f.testsDirectory)).toBe(false);
+  await expectOriginalMetadata(f);
+  expect(await exists(f.transactionDirectory)).toBe(false);
+});
+
+it("retains new skill rollback failure and preserves transaction when removing new skill fails (destinationExists=false)", async () => {
+  const f = await fixture(false, false);
+  const primary = new Error("synthetic-install-failure");
+  const failure = await perform(f, { ...failingInstall(f, primary),
+    rm: async (file, options) => {
+      if (file === f.destination) throw new Error("synthetic-new-skill-remove-failure");
+      return rm(file, options);
+    }
+  });
+  expect(failure.cause).toBe(primary);
+  expect(failure.recovery.state).toBe("incomplete");
+  expect(failure.recovery.preserveTransaction).toBe(true);
+  expect(failure.recovery.failedStages).toContain("remove-imported-skill");
+  expect(failure.recovery.previousSkill.state).toBe("not-created");
+  expect(await exists(f.destination)).toBe(true);
+  expect(await exists(f.transactionDirectory)).toBe(true);
+  expect(await readFile(failure.recovery.metadataOriginals.registry)).toEqual(f.registryOriginal);
+  expect(await readFile(failure.recovery.metadataOriginals.lock)).toEqual(f.lockOriginal);
 });
 
 it("retains previous skill bytes when removing the newly installed skill fails", async () => {
@@ -163,6 +236,60 @@ it("preserves original and recovery failures when temporary cleanup fails too", 
   await expectRetainedOldSkill(f, failure);
 });
 
+it("D0108: chains all error causes across primary install failure, recovery stage failure, and cleanup failure", async () => {
+  const f = await fixture(true, false);
+  const primary = new Error("primary-install-failure");
+  const stageFailure = new Error("secondary-recovery-failure");
+  const tempCleanupFailure = new Error("tertiary-temp-cleanup-failure");
+  const failure = await perform(f, {
+    writeFile: async (file, data, ...options) => {
+      if (file === f.lockPath && typeof data === "string") throw primary;
+      return writeFile(file, data, ...options);
+    },
+    rm: async (file, options) => {
+      if (file === f.destination) throw stageFailure;
+      if (file === f.temporaryDirectory) throw tempCleanupFailure;
+      return rm(file, options);
+    }
+  });
+  expect(failure).toBeInstanceOf(AggregateError);
+  expect(failure.message).toBe("Skill import cleanup incomplete");
+  expect(failure.cause).toBeInstanceOf(AggregateError);
+  expect(failure.cause.message).toContain("Skill import failed; recovery incomplete; backup:");
+  expect(failure.cause.cause).toBe(primary);
+  expect(failure.errors[0]).toBe(failure.cause);
+  expect(failure.errors[0].errors[0]).toBe(primary);
+  expect(failure.errors[0].errors[1].message).toBe("Skill import recovery failed: remove-imported-skill");
+  expect(failure.errors[0].errors[1].cause).toBe(stageFailure);
+  expect(failure.errors[1].message).toBe("Skill import temporary cleanup failed");
+  expect(failure.errors[1].cause).toBe(tempCleanupFailure);
+  expect(failure.recovery.preserveTransaction).toBe(true);
+  expect(failure.recovery.failedStages).toEqual(["remove-imported-skill"]);
+  await expectRetainedOldSkill(f, failure);
+});
+
+it("D0107(P1): guarantees finally block does not delete previous skill backup or original metadata when recovery fails", async () => {
+  const f = await fixture(true, false);
+  const primary = new Error("primary-metadata-failure");
+  const stageFailure = new Error("rename-restore-failure");
+  const failure = await perform(f, {
+    writeFile: async (file, data, ...options) => {
+      if (file === f.lockPath && typeof data === "string") throw primary;
+      return writeFile(file, data, ...options);
+    },
+    rename: async (from, to) => {
+      if (from === path.join(f.transactionDirectory, "previous-skill")) throw stageFailure;
+      return rename(from, to);
+    }
+  });
+  expect(failure.recovery.preserveTransaction).toBe(true);
+  expect(failure.recovery.state).toBe("incomplete");
+  expect(await exists(f.transactionDirectory)).toBe(true);
+  expect(await readFile(path.join(f.transactionDirectory, "previous-skill", "payload"), "utf8")).toBe("old-skill");
+  expect(await readFile(failure.recovery.metadataOriginals.registry)).toEqual(f.registryOriginal);
+  expect(await readFile(failure.recovery.metadataOriginals.lock)).toEqual(f.lockOriginal);
+});
+
 it("does not mutate live destinations if saving original metadata bytes fails", async () => {
   const f = await fixture();
   const primary = new Error("synthetic-snapshot-failure");
@@ -179,7 +306,6 @@ it("does not mutate live destinations if saving original metadata bytes fails", 
   expect(await readFile(path.join(f.destination, "payload"), "utf8")).toBe("old-skill");
   await expectOriginalMetadata(f);
 });
-
 
 it("cleans a pre-commit failure without inventing retained recovery metadata", async () => {
   const f = await fixture();
@@ -225,7 +351,6 @@ it("preserves exact registry original when its rollback write fails", async () =
   expect(await readFile(failure.recovery.metadataOriginals.lock)).toEqual(f.lockOriginal);
   expect(await readFile(path.join(f.destination, "payload"), "utf8")).toBe("old-skill");
 });
-
 
 it("retains recovery paths if a completed rollback transaction cannot be cleaned", async () => {
   const f = await fixture();
