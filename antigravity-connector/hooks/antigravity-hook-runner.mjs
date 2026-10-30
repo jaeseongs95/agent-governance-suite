@@ -582,7 +582,8 @@ async function inspectNativeHostProcess(startPid, platform, options, budget) {
       }, (error, stdout) => {
         signal?.removeEventListener("abort", abort);
         const cause = aborted ?? error;
-        cause ? reject(inspectionFailure("HOST_PROCESS_INSPECTION_FAILED", "spawn", cause)) : resolve(stdout);
+        if (cause) reject(inspectionFailure("HOST_PROCESS_INSPECTION_FAILED", "spawn", cause));
+        else resolve(stdout);
       });
       // 직접 소유한 조회 자식을 종료하고 execFile의 close 뒤에만 취소를 반환한다.
       signal?.addEventListener("abort", abort, { once: true });
