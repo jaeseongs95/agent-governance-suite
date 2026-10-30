@@ -252,10 +252,17 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, successor.frozenPredecessor.path) !== manifestPath || bytes.length !== successor.frozenPredecessor.bytes || hashBytes(bytes) !== successor.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const currentManifest = {...manifest, revision: successor.revision, bindings: [...manifest.bindings, ...successor.bindings]};
-  files.push(successorPath);
+  const handoffPath = resolve(repo, "tests/skill-classification/fixtures.continuity-handoff-source-successor.json");
+  const handoffBytes = readFileSync(handoffPath);
+  if (hashBytes(handoffBytes) !== "sha256:26887410dff5a98284a90898a76dd6b9cc5e6ea53bc209261180f3d609d39e57") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const handoff = JSON.parse(handoffBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, handoff.frozenPredecessor.path) !== successorPath || successorBytes.length !== handoff.frozenPredecessor.bytes || hashBytes(successorBytes) !== handoff.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const currentManifest = {...manifest, revision: handoff.revision, bindings: [...manifest.bindings, ...successor.bindings, ...handoff.bindings]};
+  files.push(successorPath, handoffPath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(successorBytes),
+    manifest: currentManifest, files, digest: hashBytes(handoffBytes),
     resolveDigest(sourcePath: string, digest: string): string {
       const binding = currentManifest.bindings.find(row => row.path === sourcePath);
       if (!binding) return digest;

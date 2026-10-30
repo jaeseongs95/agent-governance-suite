@@ -522,7 +522,9 @@ const LIVE_HOST_GUIDANCE_SUCCESSOR = Object.freeze({
     "skills/blocker-diagnostician/classification.json": ["adc6f1a1379db237f9a12dee058818a17398555aab7ab2ba0e029b72393dd2a7", "3c18e212dfa724027c245ec1692cd39addd12e762cc635f3cb9c5cf09dc73eec"],
     "skills/blocker-diagnostician/references/entry-details.md": ["440ba2e05abdebdb4cb92ffdb310824d32dc0905b1a4c03345c166ecf0f62e32", "ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"],
     "skills/blocker-diagnostician/references/diagnosis-protocol.md": ["4fffd3c0656ffee3caca1eb072a5f9a3f6a3c91ba7f15644c973c9050c9437c1", "4d7d9e47a2549d2af39565646aa8ce8e7da3c52006367cafb7fc34d243749610"],
-    "skills/context-continuity/references/entry-details.md": ["10b186ff6d32f5b2533c7af0e28d27e98d08a8131da2a5954f6ca20fe88f72fe", "cde5ef02442ecbc0966957e4a74a38cf84f9a0f7fe17ba4e574d895eec7b2576"],
+    "skills/context-continuity/references/entry-details.md": ["10b186ff6d32f5b2533c7af0e28d27e98d08a8131da2a5954f6ca20fe88f72fe", "3089f69c1a8738e63537ddfbbad0f757fd3d269248c47a42d694d77a7b62e660"],
+    "skills/context-continuity/SKILL.md": ["e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022", "99e064693b3f0003f3b391f81f5173b79a28060e7f46ec81081923e75e646f41"],
+    "skills/context-continuity/classification.json": ["d2441089650196242dba576e9c11ae791f05fb8955e40b8a2b3cf63f2e09dfc5", "86988758d42dae54f6379a1cf3a3f1e7053dc7510727e2da43a58b3c1f47ee87"],
   },
 });
 

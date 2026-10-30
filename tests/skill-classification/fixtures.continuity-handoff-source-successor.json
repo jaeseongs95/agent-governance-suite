@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "continuity-handoff-source-binding-r13",
+  "role": "source-binding-only-not-evaluation-or-install-authority",
+  "sourceBaseRevision": "7ff5d7580312871a400e3ed767de7edcc0aec0ad",
+  "frozenPredecessor": {
+    "path": "tests/skill-classification/fixtures.live-host-boundaries-source-successor.json",
+    "bytes": 5769,
+    "digest": "sha256:aa7ca549c45d5053d4c93ce849ee780f06f25affb89fb092fe8db761cd479673"
+  },
+  "bindings": [
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "previousDigest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
+      "digest": "sha256:99e064693b3f0003f3b391f81f5173b79a28060e7f46ec81081923e75e646f41",
+      "bytes": 1963
+    },
+    {
+      "path": "skills/context-continuity/classification.json",
+      "previousDigest": "sha256:d2441089650196242dba576e9c11ae791f05fb8955e40b8a2b3cf63f2e09dfc5",
+      "digest": "sha256:86988758d42dae54f6379a1cf3a3f1e7053dc7510727e2da43a58b3c1f47ee87",
+      "bytes": 1889
+    },
+    {
+      "path": "skills/context-continuity/references/entry-details.md",
+      "previousDigest": "sha256:cde5ef02442ecbc0966957e4a74a38cf84f9a0f7fe17ba4e574d895eec7b2576",
+      "digest": "sha256:3089f69c1a8738e63537ddfbbad0f757fd3d269248c47a42d694d77a7b62e660",
+      "bytes": 4369
+    }
+  ],
+  "fixtureFileRewritten": false,
+  "labelChanges": [],
+  "priceAndBudgetChanges": [],
+  "modelBehavior": "NOT_RUN"
+}

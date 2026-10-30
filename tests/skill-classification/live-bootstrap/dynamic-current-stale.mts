@@ -23,7 +23,7 @@ try {
   await cp(path.join(repo, "skills"), path.join(root, "skills"), {recursive: true});
   await cp(path.join(repo, "mcp-server/src"), path.join(root, "mcp-server/src"), {recursive: true});
   await mkdir(path.join(root, "tests/skill-classification"), {recursive: true});
-  for (const name of ["evaluation.ts", "fixtures.json", "fixtures.source-successor.json", "fixtures.unavailable-source-successor.json", "fixtures.live-host-boundaries-source-successor.json"]) await cp(path.join(repo, "tests/skill-classification", name), path.join(root, "tests/skill-classification", name));
+  for (const name of ["evaluation.ts", "fixtures.json", "fixtures.source-successor.json", "fixtures.unavailable-source-successor.json", "fixtures.live-host-boundaries-source-successor.json", "fixtures.continuity-handoff-source-successor.json"]) await cp(path.join(repo, "tests/skill-classification", name), path.join(root, "tests/skill-classification", name));
   const {config} = await readyEstimateMock(api, root, path.join(root, "out"), "current-stale-registry");
   const baseline = await api.preflight(config, await api.prepare(config));
   assert(!baseline.blocked.includes("ESTIMATE_SOURCE_OR_INPUT_UNBOUND"), "BASELINE_ESTIMATE_BOUND");

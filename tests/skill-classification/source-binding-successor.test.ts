@@ -9,6 +9,24 @@ const currentSourceBinding = loadCurrentSourceBindings(root);
 const current = JSON.parse(readFileSync(new URL("./fixtures.json", import.meta.url), "utf8"));
 const successor = JSON.parse(readFileSync(new URL("./fixtures.source-successor.json", import.meta.url), "utf8"));
 const hash = (bytes: string | Buffer) => "sha256:" + createHash("sha256").update(bytes).digest("hex");
+it("동결 판정 기준을 보존하고 인계 지침의 현재 바이트만 결속한다", () => {
+  const bytes = readFileSync(new URL("./fixtures.continuity-handoff-source-successor.json", import.meta.url));
+  expect(hash(bytes)).toBe("sha256:26887410dff5a98284a90898a76dd6b9cc5e6ea53bc209261180f3d609d39e57");
+  const manifest = JSON.parse(bytes.toString("utf8"));
+  expect(manifest.fixtureFileRewritten).toBe(false);
+  expect(manifest.labelChanges).toEqual([]);
+  expect(manifest.priceAndBudgetChanges).toEqual([]);
+  expect(manifest.modelBehavior).toBe("NOT_RUN");
+  expect(currentSourceBinding.manifest.revision).toBe("continuity-handoff-source-binding-r13");
+  expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
+  for (const source of manifest.bindings) {
+    const actual = readFileSync(path.join(root, source.path));
+    expect(actual.length).toBe(source.bytes);
+    expect(hash(actual)).toBe(source.digest);
+    expect(currentSourceBinding.resolveDigest(source.path, source.previousDigest)).toBe(source.digest);
+    expect(() => currentSourceBinding.resolveDigest(source.path, "sha256:" + "0".repeat(64))).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+});
 // Explicit authoring pins from exact predecessor Git bytes; tests never regenerate expected values.
 const predecessor = {
   path: "tests/skill-classification/fixtures.json",

@@ -41,6 +41,8 @@ describe("skill context optimization", () => {
     "skills/blocker-diagnostician/references/diagnosis-protocol.md",
     "skills/blocker-diagnostician/classification.json",
     "skills/context-continuity/references/entry-details.md",
+    "skills/context-continuity/SKILL.md",
+    "skills/context-continuity/classification.json",
   ])("역사 기준을 바꾸지 않고 현재 호스트 지침의 한 바이트 변경을 거부한다: %s", async relative => {
     vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
       const bytes = readFileSync(file, ...args);
