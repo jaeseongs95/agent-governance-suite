@@ -3,6 +3,11 @@ name: CI
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      source_sha:
+        description: "생성할 공식 저장소 커밋 SHA (생략 시 워크플로 이벤트 SHA)"
+        required: false
+        type: string
   push:
     branches:
       - main
@@ -23,6 +28,8 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+    env:
+      WORKFLOW_EXECUTION_SHA: ${{ github.workflow_sha }}
     steps:
       - name: Initialize generation evidence
         shell: bash
@@ -30,11 +37,35 @@ jobs:
           log="$RUNNER_TEMP/d0352-generation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           printf 'GENERATION_LOG_DIR=%s\n' "$log" >> "$GITHUB_ENV"
           mkdir -p "$log"
-      - name: Check out event commit
+      - name: Validate source commit selection
+        id: source
+        shell: bash
+        env:
+          SOURCE_SHA_INPUT: ${{ inputs.source_sha }}
+        run: |
+          set +e
+          (
+            set -euo pipefail
+            source_sha=${SOURCE_SHA_INPUT:-$GITHUB_SHA}
+            if [[ ! "$source_sha" =~ ^[0-9a-fA-F]{40}$ ]]; then
+              printf 'source_sha must be exactly 40 hexadecimal characters\n' >&2
+              exit 1
+            fi
+            source_sha=${source_sha,,}
+            printf 'GENERATION_SOURCE_SHA=%s\n' "$source_sha" >> "$GITHUB_ENV"
+            printf 'eventSha=%s\nworkflowSha=%s\nsourceSha=%s\nrepository=jaeseongs95/agent-governance-suite\n' "$GITHUB_SHA" "$WORKFLOW_EXECUTION_SHA" "$source_sha"
+          ) > "$GENERATION_LOG_DIR/source-selection.stdout" 2> "$GENERATION_LOG_DIR/source-selection.stderr"
+          code=$?
+          printf '%s\n' "$code" > "$GENERATION_LOG_DIR/source-selection.exit-code.txt"
+          cat "$GENERATION_LOG_DIR/source-selection.stdout"
+          cat "$GENERATION_LOG_DIR/source-selection.stderr" >&2
+          exit "$code"
+      - name: Check out selected official source commit
         id: checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: ${{ github.sha }}
+          repository: jaeseongs95/agent-governance-suite
+          ref: ${{ env.GENERATION_SOURCE_SHA }}
           persist-credentials: false
           fetch-depth: 0
       - name: Set up Node.js
@@ -69,7 +100,10 @@ jobs:
             return "$code"
           }
           run_phase head-before git rev-parse HEAD 'HEAD^{tree}'
-          test "$(head -n 1 "$log/head-before.stdout")" = "$GITHUB_SHA"
+          run_phase workflow-identity git rev-parse "$WORKFLOW_EXECUTION_SHA" "${WORKFLOW_EXECUTION_SHA}^{tree}"
+          run_phase source-object-type git cat-file -t "$GENERATION_SOURCE_SHA"
+          test "$(cat "$log/source-object-type.stdout")" = commit
+          test "$(head -n 1 "$log/head-before.stdout")" = "$GENERATION_SOURCE_SHA"
           run_phase status-before git status --porcelain=v1
           run_phase corepack corepack enable
           run_phase install pnpm install --frozen-lockfile
@@ -83,6 +117,7 @@ jobs:
         if: ${{ always() }}
         shell: bash
         env:
+          SOURCE_OUTCOME: ${{ steps.source.outcome }}
           CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
           NODE_OUTCOME: ${{ steps.node.outcome }}
           PYTHON_OUTCOME: ${{ steps.python.outcome }}
@@ -108,7 +143,7 @@ jobs:
                   problems.append({"phase": name, "exitCode": result.returncode})
               return (log / (name + ".stdout")).read_bytes()
 
-          for phase in ("head-before", "status-before", "corepack", "install", "build", "claude-build", "bundle-check", "claude-check", "context-check"):
+          for phase in ("source-object-type", "head-before", "workflow-identity", "status-before", "corepack", "install", "build", "claude-build", "bundle-check", "claude-check", "context-check"):
               status = log / (phase + ".status.txt")
               if not status.exists():
                   status.write_text("NOT_RUN\n", encoding="utf-8")
@@ -134,10 +169,15 @@ jobs:
                       digest.update(chunk)
               files.append({"path": name, "bytes": file.stat().st_size, "sha256": digest.hexdigest()})
           (log / "repository-files.sha256.json").write_text(json.dumps(files, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          workflow_identity = (log / "workflow-identity.stdout").read_text(encoding="utf-8").splitlines() if (log / "workflow-identity.stdout").exists() else []
+          source_identity = (log / "head-before.stdout").read_text(encoding="utf-8").splitlines() if (log / "head-before.stdout").exists() else []
           summary = {
               "eventSha": os.environ["GITHUB_SHA"], "ref": os.environ["GITHUB_REF"],
+              "workflowSha": os.environ["WORKFLOW_EXECUTION_SHA"], "workflowTree": workflow_identity[1] if len(workflow_identity) == 2 else None,
+              "sourceSha": os.environ.get("GENERATION_SOURCE_SHA"), "sourceHead": source_identity[0] if source_identity else None,
+              "sourceTree": source_identity[1] if len(source_identity) == 2 else None,
               "runId": os.environ["GITHUB_RUN_ID"], "runAttempt": os.environ["GITHUB_RUN_ATTEMPT"],
-              "outcomes": {name: os.environ.get(name, "") for name in ("CHECKOUT_OUTCOME", "NODE_OUTCOME", "PYTHON_OUTCOME", "GENERATION_OUTCOME")},
+              "outcomes": {name: os.environ.get(name, "") for name in ("SOURCE_OUTCOME", "CHECKOUT_OUTCOME", "NODE_OUTCOME", "PYTHON_OUTCOME", "GENERATION_OUTCOME")},
               "collectionErrors": problems,
           }
           (log / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
