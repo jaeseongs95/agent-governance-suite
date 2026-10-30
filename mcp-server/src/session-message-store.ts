@@ -175,6 +175,9 @@ export interface ClaimLimits {
 export class SessionMessageStore<Input extends string | SharedModuleContext = string> {
   readonly database: Input extends string ? DatabaseSync : SqlDatabase;
   private readonly shared: SharedModuleContext | undefined;
+  /** Cleanup scheduling only; rowid never orders host generations. */
+  private presenceCleanupRowid = 0;
+  private presenceCleanupCeiling = 0;
 
   constructor(input: Input) {
     this.shared = typeof input === "string" ? undefined : input;
@@ -305,6 +308,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         this.database.exec("ALTER TABLE session_presence ADD COLUMN idle_wake TEXT NOT NULL DEFAULT 'none';");
         this.database.exec("UPDATE session_presence SET idle_wake = wake_visibility;");
       }
+      for (const [name, definition] of [["verified_parent_pid", "INTEGER"], ["verified_parent_token", "TEXT"], ["superseded_at", "TEXT"]]) {
+        if (!presenceColumns.some(column => column.name === name)) this.database.exec(`ALTER TABLE session_presence ADD COLUMN ${name} ${definition};`);
+      }
       this.database.exec(`CREATE TABLE IF NOT EXISTS input_observations (
         host TEXT NOT NULL,
         session_id TEXT NOT NULL,
@@ -389,11 +395,11 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     // Only rows whose lease ended before the retention window go; a live row's lease is always in the future. The
     // identity's latest row also stays while another row of it is live, so a live identity's presence and retirement read
     // the same row. Without a live row, deleting the latest row can surface an earlier one or leave the identity unknown.
-    this.database.prepare(`DELETE FROM session_presence WHERE lease_until <= ?
+    this.database.prepare(`DELETE FROM session_presence WHERE lease_until <= ? AND verified_parent_token IS NULL
       AND NOT (EXISTS (SELECT 1 FROM session_presence live WHERE live.host = session_presence.host
           AND live.session_id = session_presence.session_id AND live.ended_at IS NULL AND live.lease_until > ?)
         AND session_presence.rowid = (SELECT latest.rowid FROM session_presence latest WHERE latest.host = session_presence.host
-          AND latest.session_id = session_presence.session_id ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1))`)
+          AND latest.session_id = session_presence.session_id AND latest.superseded_at IS NULL ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1))`)
       .run(iso(nowMs - PRESENCE_RETENTION_MS), now);
   }
 
@@ -414,7 +420,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
                 AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)
               OR coalesce((SELECT NOT (latest.ended_at IS NULL AND latest.lease_until > ?
                   AND latest.instance_id = wake_nonces.instance_id AND latest.started_at = wake_nonces.birth_generation)
-                FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id
+                FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id AND latest.superseded_at IS NULL
                 ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 1)))
           OR (state IN ('started', 'submitted', 'unknown')
             AND expires_at > ?
@@ -424,7 +430,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
                 AND activity.active_at > coalesce(wake_nonces.outcome_at, wake_nonces.started_at))
               OR coalesce((SELECT NOT (latest.ended_at IS NULL AND latest.lease_until > ?
                   AND latest.instance_id = wake_nonces.instance_id AND latest.started_at = wake_nonces.birth_generation)
-                FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id
+                FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id AND latest.superseded_at IS NULL
                 ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 1))
             AND NOT EXISTS (SELECT 1 FROM messages m WHERE m.target_host = wake_nonces.host
               AND m.target_session_id = wake_nonces.session_id
@@ -923,27 +929,63 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return row ? {relayId:row.relay_id,pid:row.pid,parentPid:row.parent_pid,instanceId:generation ? "host-process-v1:"+generation:null,relayStartToken:row.relay_start_token} : null;
   }
 
+  /** One protected birth per existing request, including the last/current birth; no OS query or authority here. */
+  verifiedPresenceForCleanup(): (SessionIdentity & { rowid: number; instanceId: string; parentPid: number; parentStartToken: string; startedAt: string; supersededAt: string | null }) | null {
+    const beginSweep = () => {
+      this.presenceCleanupRowid = 0;
+      this.presenceCleanupCeiling = (this.database.prepare("SELECT coalesce(max(rowid), 0) AS ceiling FROM session_presence").get() as { ceiling: number }).ceiling;
+    };
+    // Freeze this sweep's upper bound so newly appended births cannot starve an earlier live-then-dead row.
+    if (this.presenceCleanupCeiling === 0) beginSweep();
+    const select = () => this.database.prepare(`SELECT rowid, host, session_id, instance_id, verified_parent_pid, verified_parent_token, started_at, superseded_at
+      FROM session_presence WHERE rowid > ? AND rowid <= ?
+      ORDER BY rowid LIMIT 1`).get(this.presenceCleanupRowid,this.presenceCleanupCeiling) as {
+        rowid: number; host: string; session_id: string; instance_id: string; verified_parent_pid: number | null; verified_parent_token: string | null; started_at: string; superseded_at: string | null;
+      } | undefined;
+    let row = select();
+    if (!row) { beginSweep(); row = select(); }
+    if (!row) return null;
+    this.presenceCleanupRowid = row.rowid;
+    if (row.verified_parent_pid === null || row.verified_parent_token === null) return null;
+    return { host: row.host, sessionId: row.session_id, rowid: row.rowid, instanceId: row.instance_id,
+      parentPid: row.verified_parent_pid, parentStartToken: row.verified_parent_token, startedAt: row.started_at, supersededAt: row.superseded_at };
+  }
+
   /** Unknown pid=0 grants are never automatically TTL-retried. */
   prepareVerifiedRelay(input: Parameters<SessionMessageStore["startPresence"]>[0] & {
     parentPid: number; expectedOwner: ReturnType<SessionMessageStore["relayOwner"]>; confirmedDead?: {relayId: string; pid: number}; confirmedAlive?: boolean;
+    /** Broker-verified OS birth, never a model-supplied proof or a sortable timestamp. */
+    verifiedParentStartToken?: string;
+    /** Positive death evidence from the same bounded request; deletion still compares the full stored birth. */
+    confirmedDeadPresence?: NonNullable<ReturnType<SessionMessageStore["verifiedPresenceForCleanup"]>>;
     /** Recovery compares the presence observed by this hook, not a later identity-query result. */
     expectedPresenceInstanceId?: string | null;
   }, nowMs = Date.now()): {spawn: boolean; relayId: string | null; instanceId: string} {
     boundedIdentity(input);
     if (!Number.isInteger(input.parentPid) || input.parentPid < 1 || !/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId)) throw new Error("Invalid verified relay generation.");
+    if (input.verifiedParentStartToken !== undefined && (!input.verifiedParentStartToken.trim() || input.verifiedParentStartToken.length > 200
+      || input.instanceId !== "host-process-v1:" + createHash("sha256").update(JSON.stringify([input.host,input.sessionId,input.parentPid,input.verifiedParentStartToken])).digest("hex"))) {
+      throw new Error("Invalid verified host process birth.");
+    }
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.prepareVerifiedRelay(input,nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    return this.transaction(() => {
+    const prepare = () => {
       const previous = this.relayOwner(input,input.transport);
       const current = this.presence(input, nowMs);
       if (input.expectedPresenceInstanceId !== undefined && current.instanceId !== input.expectedPresenceInstanceId) {
         return {spawn:false,relayId:null,instanceId:input.instanceId};
       }
+      const ownBirth = this.database.prepare("SELECT superseded_at FROM session_presence WHERE host=? AND session_id=? AND instance_id=?")
+        .get(input.host,input.sessionId,input.instanceId) as { superseded_at: string | null } | undefined;
+      if (ownBirth?.superseded_at != null) return {spawn:false,relayId:null,instanceId:input.instanceId};
+      const protectedCurrent = this.database.prepare(`SELECT 1 FROM session_presence WHERE host=? AND session_id=? AND instance_id=?
+        AND verified_parent_token IS NOT NULL`).get(input.host,input.sessionId,current.instanceId ?? "");
+      if (current.instanceId !== input.instanceId && protectedCurrent !== undefined
+        && input.expectedPresenceInstanceId !== current.instanceId) return {spawn:false,relayId:null,instanceId:input.instanceId};
       // A process already superseded by a later registered birth is not a new resume.
       // An unseen new process can still recover a lapsed previous host normally.
       if (current.instanceId !== null && current.instanceId !== input.instanceId
-        && this.database.prepare("SELECT 1 FROM session_presence WHERE host=? AND session_id=? AND instance_id=?")
-          .get(input.host,input.sessionId,input.instanceId) !== undefined) {
+        && ownBirth !== undefined) {
         return {spawn:false,relayId:null,instanceId:input.instanceId};
       }
       const expected = input.expectedOwner;
@@ -951,6 +993,11 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         return {spawn:false,relayId:null,instanceId:input.instanceId};
       }
       if (previous?.relayId.startsWith("verified-relay-v1:") && previous.instanceId === null) return {spawn:false,relayId:null,instanceId:input.instanceId};
+      if (input.verifiedParentStartToken !== undefined && current.instanceId === input.instanceId) {
+        this.database.prepare(`UPDATE session_presence SET verified_parent_pid=?, verified_parent_token=?
+          WHERE host=? AND session_id=? AND instance_id=? AND superseded_at IS NULL`)
+          .run(input.parentPid,input.verifiedParentStartToken,input.host,input.sessionId,input.instanceId);
+      }
       // A retained grant owns its generation independently of expiring presence rows.
       if (previous && previous.instanceId === input.instanceId && previous.parentPid === input.parentPid) {
         const dead = previous.pid > 0 && input.confirmedDead?.pid === previous.pid && input.confirmedDead.relayId === previous.relayId;
@@ -972,9 +1019,24 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport) {
         return {spawn:false,relayId:null,instanceId:input.instanceId};
       }
+      if (input.verifiedParentStartToken !== undefined) {
+        this.database.prepare(`UPDATE session_presence SET verified_parent_pid=?, verified_parent_token=?
+          WHERE host=? AND session_id=? AND instance_id=? AND superseded_at IS NULL`)
+          .run(input.parentPid,input.verifiedParentStartToken,input.host,input.sessionId,input.instanceId);
+        this.database.prepare(`UPDATE session_presence SET superseded_at=? WHERE host=? AND session_id=?
+          AND instance_id<>? AND superseded_at IS NULL`).run(iso(nowMs),input.host,input.sessionId,input.instanceId);
+      }
       this.database.prepare("INSERT INTO relay_leases(host,session_id,transport,relay_id,pid,parent_pid,lease_until,updated_at) VALUES(?,?,?,?,0,?,'9999-12-31T23:59:59.999Z',?) ON CONFLICT(host,session_id,transport) DO UPDATE SET relay_id=excluded.relay_id,pid=0,parent_pid=excluded.parent_pid,relay_start_token=NULL,relay_code_digest=NULL,relay_code_id=NULL,lease_until=excluded.lease_until,updated_at=excluded.updated_at")
         .run(input.host,input.sessionId,input.transport,relayId,input.parentPid,iso(nowMs));
       return {spawn:true,relayId,instanceId:input.instanceId};
+    };
+    return this.transaction(() => {
+      const result = prepare();
+      const dead = input.confirmedDeadPresence;
+      if (dead) this.database.prepare(`DELETE FROM session_presence WHERE rowid=? AND host=? AND session_id=? AND instance_id=?
+        AND verified_parent_pid=? AND verified_parent_token=? AND started_at=? AND superseded_at IS ?`)
+        .run(dead.rowid,dead.host,dead.sessionId,dead.instanceId,dead.parentPid,dead.parentStartToken,dead.startedAt,dead.supersededAt);
+      return result;
     });
   }
 
@@ -1469,7 +1531,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         ELSE session_presence.started_at END,
       heartbeat_at = excluded.heartbeat_at, lease_until = excluded.lease_until,
       ended_at = NULL, end_reason = NULL
-      WHERE session_presence.end_reason IS NOT 'target-unavailable'`).run(
+      WHERE session_presence.end_reason IS NOT 'target-unavailable' AND session_presence.superseded_at IS NULL`).run(
       input.host, input.sessionId, input.instanceId, input.transport, input.wakeVisibility,
       input.canWakeSilently ? 1 : 0, JSON.stringify(input.deliveryCapabilities?.supportedInjection ?? []),
       input.deliveryCapabilities?.idleWake ?? input.wakeVisibility, input.collaborationId ?? null, input.workspaceId ?? null,
@@ -1484,12 +1546,12 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.heartbeatPresence(target, instanceId, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     const row = this.database.prepare(`SELECT instance_id FROM session_presence
-      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL AND lease_until > ?`).get(target.host, target.sessionId, instanceId, iso(nowMs));
+      WHERE host = ? AND session_id = ? AND instance_id = ? AND superseded_at IS NULL AND ended_at IS NULL AND lease_until > ?`).get(target.host, target.sessionId, instanceId, iso(nowMs));
     const selected = row as { instance_id: string } | undefined;
     if (!selected) return false;
     const now = iso(nowMs);
     return this.database.prepare(`UPDATE session_presence SET heartbeat_at = ?, lease_until = ?
-      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL AND lease_until > ?`)
+      WHERE host = ? AND session_id = ? AND instance_id = ? AND superseded_at IS NULL AND ended_at IS NULL AND lease_until > ?`)
       .run(now, iso(nowMs + PRESENCE_LEASE_MS), target.host, target.sessionId, selected.instance_id, now).changes === 1;
   }
 
@@ -1514,7 +1576,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.presence(target, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     const row = this.database.prepare(`SELECT * FROM session_presence
-      WHERE host = ? AND session_id = ? ORDER BY started_at DESC, rowid DESC LIMIT 1`)
+      WHERE host = ? AND session_id = ? AND superseded_at IS NULL ORDER BY started_at DESC, rowid DESC LIMIT 1`)
       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
     if (!row) return {
       ...target, instanceId: null, transport: null, wakeVisibility: "none", canWakeSilently: false,

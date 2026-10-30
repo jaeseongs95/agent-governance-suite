@@ -15,6 +15,8 @@ const expectedMutantDigest = new Map([
   // D0354·인수 영수증 수리 뒤에도 claimHostWake 본문과 네 결함 치환은 동일하다.
   ['8afc6279fca23f1a2bd475de56f64eb80044de71391f8d78523835f1b370ec0f', '007b1d11ed3a7bd39716c1c0af6fe841a9df062ed4b0750f10a44af00f8b7ef5'],
   ['e5227b3e2d229e3e429b0d4e8e0d01879777337b6fc79c531fe1ebdee2c9b3ad', '1c76a06445226d491241c42866b0b062a2c82caf8a4e14aff679ad30f24f0e1a'],
+  // D0354의 부모 세대 보존은 원 깨우기 함수와 네 결함 치환을 보존한다.
+  ['44f8668045c5faeec389045ff52d43d7ee014d593ed1b3ac300246abd7c8dcdd', '1d7deadabde34c5c34c368292e435893fcd230966ef8d4700d7a2e327759588e'],
 ]).get(sourceDigest);
 assert.ok(expectedMutantDigest, `UNKNOWN_WAKE_MIXED_RED_SOURCE:${sourceDigest}`);
 const baseline = Buffer.from(original.toString('utf8')

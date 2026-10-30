@@ -251,6 +251,20 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
       const budget = () => Math.min(deadline - performance.now(), requestBudget?.() ?? Infinity);
       const parent = yield* queryIdentity(parentPid, budget);
       if (parent.token !== parentStartToken) throw retainFailureCause(new Error("Relay host generation is unverified."), parent.cause);
+      const cleanup = store.verifiedPresenceForCleanup();
+      let confirmedDeadPresence: typeof cleanup = null;
+      if (cleanup) {
+        if (cleanup.parentPid === parentPid) {
+          // This request already verified the OS birth. A different token proves that the stored birth ended.
+          if (cleanup.parentStartToken !== parent.token) confirmedDeadPresence = cleanup;
+        } else {
+          try { process.kill(cleanup.parentPid, 0); }
+          catch (error) {
+            // Permission errors and a positive PID probe prove neither identity nor death.
+            if (error && typeof error === "object" && "code" in error && error.code === "ESRCH") confirmedDeadPresence = cleanup;
+          }
+        }
+      }
       const instanceId = "host-process-v1:" + createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
       const wakeVisibility = string(payload.wakeVisibility,"wakeVisibility");
       const idleWake = string(payload.idleWake,"idleWake");
@@ -272,6 +286,8 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
       }
       remainingIdentityBudget(budget);
       return store.prepareVerifiedRelay({...target,instanceId,transport,parentPid,expectedOwner:previous,
+        verifiedParentStartToken: parentStartToken,
+        ...(confirmedDeadPresence ? {confirmedDeadPresence}:{}),
         ...(hasExpectedPresence ? {expectedPresenceInstanceId}:{}),
         wakeVisibility:wakeVisibility as "silent" | "user-message" | "none",canWakeSilently:boolean(payload.canWakeSilently,"canWakeSilently"),
         deliveryCapabilities:{supportedInjection:supportedInjection(payload.supportedInjection),idleWake:idleWake as "silent" | "user-message" | "none"},

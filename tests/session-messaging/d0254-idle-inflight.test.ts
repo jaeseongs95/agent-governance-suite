@@ -4,11 +4,13 @@ import { once } from "node:events";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import type { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import tls from "node:tls";
 import { afterEach, expect, it } from "vitest";
 import { requestSessionMessageOnce, SESSION_MESSAGE_PROTOCOL } from "../../mcp-server/src/session-message-client.js";
+import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 
 interface BrokerEvent {
   type: string;
@@ -44,8 +46,17 @@ afterEach(async () => {
   }
 });
 
-async function start() {
+async function start(protectedBirth = false) {
   const root = mkdtempSync(path.join(tmpdir(), "ags-d254-idle-")), state = path.join(root, "state");
+  if (protectedBirth) {
+    const seed = new SessionMessageStore(path.join(state, "session-messages.sqlite3"));
+    const target = { host: "portable", sessionId: "d354-cancelled-protection" }, parentPid = 424243, parentStartToken = "protected-parent-birth";
+    try {
+      seed.prepareVerifiedRelay({ ...target, transport: "portable", parentPid, verifiedParentStartToken: parentStartToken,
+        instanceId: "host-process-v1:" + createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex"),
+        expectedOwner: null, wakeVisibility: "none", canWakeSilently: false });
+    } finally { seed.close(); }
+  }
   const child = spawn(process.execPath, ["--import", "tsx", "--import", new URL("./fixtures/d0254-idle-control.mjs", import.meta.url).href,
     fileURLToPath(new URL("../../mcp-server/src/session-message-broker.ts", import.meta.url)), "--state-directory", state, "--startup-diagnostic"], {
     windowsHide: true, stdio: ["ignore", "ignore", "pipe", "pipe", "ipc"], env: { ...process.env, AGENT_GOVERNANCE_D254_IDLE_FIXTURE: root },
@@ -197,7 +208,14 @@ test("a disconnected authenticated client cannot leave permanent idle protection
   } finally { socket.destroy(); }
 });
 test("explicit shutdown still aborts an actual held native child and removes the endpoint", async () => {
-  const b = await start();
+  const b = await start(true);
+  const protectedRows = () => {
+    const reader = new DatabaseSync(path.join(b.state, "session-messages.sqlite3"), { readOnly: true });
+    try { return reader.prepare("SELECT * FROM session_presence ORDER BY rowid").all(); }
+    finally { reader.close(); }
+  };
+  const before = protectedRows();
+  expect(before).toMatchObject([{ verified_parent_token: "protected-parent-birth" }]);
   const result = requestSessionMessageOnce("ensure-relay", payload(), b.state).catch(error => error);
   const nativePid = await b.queryStarted();
   await b.control({ signal: true });
@@ -207,4 +225,5 @@ test("explicit shutdown still aborts an actual held native child and removes the
   expect(existsSync(path.join(b.state, "endpoint.json"))).toBe(false);
   expect(existsSync(path.join(b.root, "424242", "release-query"))).toBe(false);
   await result;
+  expect(protectedRows()).toEqual(before);
 });

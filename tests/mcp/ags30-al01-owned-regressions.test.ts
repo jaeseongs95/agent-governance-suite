@@ -203,7 +203,7 @@ describe("AL02 broker/store integration: AGS-D-0007 and AGS-D-0031", () => {
   it.each(["different", "unknown", "EPERM"])("only confirms an old relay dead on positive birth evidence (%s)", mode => {
     const previous = { relayId: "old-relay", pid: 999999, relayStartToken: "old-birth" };
     const prepareVerifiedRelay = vi.fn<(input: unknown) => { spawn: boolean }>(() => ({ spawn: false }));
-    const store = { relayOwner: () => previous, prepareVerifiedRelay } as unknown as Store;
+    const store = { relayOwner: () => previous, verifiedPresenceForCleanup: () => null, prepareVerifiedRelay } as unknown as Store;
     f.startToken.mockImplementation((pid: number) => pid === parentPid ? parentStartToken : mode === "unknown" ? null : "different-birth");
     vi.spyOn(process, "kill").mockImplementation(() => {
       if (mode === "EPERM") throw Object.assign(new Error("synthetic permission denial"), { code: "EPERM" });
