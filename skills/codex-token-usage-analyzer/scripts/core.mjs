@@ -908,20 +908,32 @@ export async function writeNewMarkdown(report, directory, options = {}) {
       await handle.close();
       return { path: candidate, digest: digest(content) };
     } catch (error) {
-      try { await handle.close(); } catch { /* Best-effort close after a failed write. */ }
+      const diagnostics = Array.isArray(error?.secondaryDiagnostics) ? [...error.secondaryDiagnostics] : [];
+      const recordCleanupFailure = (step, cleanupError) => {
+        diagnostics.push({
+          step,
+          code: typeof cleanupError?.code === "string" && cleanupError.code ? cleanupError.code : "UNKNOWN"
+        });
+      };
+      try {
+        await handle.close();
+      } catch (closeError) {
+        recordCleanupFailure("cleanup-close", closeError);
+      }
       try {
         await rm(candidate, { force: true });
       } catch (cleanupError) {
-        // 최초 쓰기 실패가 주오류다. 정리 실패는 경로·메시지 없이 code만 보조 진단으로 분리한다.
-        if (error !== null && typeof error === "object") {
-          try {
-            Object.defineProperty(error, "secondaryDiagnostics", {
-              value: [{ step: "cleanup-rm", code: typeof cleanupError?.code === "string" ? cleanupError.code : "UNKNOWN" }],
-              enumerable: false,
-              configurable: true
-            });
-          } catch { /* Frozen errors keep the primary failure unchanged. */ }
-        }
+        recordCleanupFailure("cleanup-rm", cleanupError);
+      }
+      // 최초 쓰기 실패가 주오류다. 정리 실패는 경로·메시지 없이 code만 보조 진단으로 분리한다.
+      if (diagnostics.length > 0 && error !== null && typeof error === "object") {
+        try {
+          Object.defineProperty(error, "secondaryDiagnostics", {
+            value: diagnostics,
+            enumerable: false,
+            configurable: true
+          });
+        } catch { /* Frozen errors keep the primary failure unchanged. */ }
       }
       throw error;
     }
