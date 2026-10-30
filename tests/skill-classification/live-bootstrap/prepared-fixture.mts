@@ -219,7 +219,7 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   assert.equal(governance.parentMidtaskDigest, hash(midtaskBytes));
   if (bindRegistry) assert.equal(governance.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
   const fixtureBytes = await readFile(path.join(repo, "tests/skill-classification/fixtures.json"));
-  // r08의 원 입력은 동결한다. 현재 입력은 아래 r10 원측정에 결속한다.
+  // r08의 원 입력은 동결한다. 현재 입력은 아래 r11 원측정에 결속한다.
   assert.equal(governance.fixtureDigest, "sha256:d3490862893ee85f13dbee39ad992498bf7a76360c898d30d8089e5e485c1b88");
   const currentFixture = JSON.parse(fixtureBytes.toString("utf8"));
   assert.equal(governance.fixtureOracleDigest, "sha256:e48f0d37e8675f046a00648451fc3086753af97d663ca4a0aa18b8fdad386666");
@@ -270,7 +270,7 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   assert.equal(recovery.totals.maxUtf8Bytes, "125019");
   assert.equal(recovery.totals.maxReservedPicoUsd, maxRecoveryPicoUsd.toString());
   assert.equal(maxRecoveryPicoUsd.toString(), "5250798000");
-  // r09도 보존한다. 실제·독립 인코더가 일치한 지정 CI의 r10만 현재 전송 입력으로 쓴다.
+  // r09와 지정 CI의 r10 원측정도 역사 입력으로 보존한다.
   const invocationBytes = await readFile(new URL("./budget-wire-orchestrator-invocation-successor.json", import.meta.url));
   assert.equal(hash(invocationBytes), "sha256:f9bdab55ab00309ea04096d6d8665e64165d1eb897057dc5898f553cff854fc2");
   const invocation = JSON.parse(invocationBytes.toString("utf8"));
@@ -298,18 +298,36 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   assert.equal(invocation.totals.maxUtf8Bytes, "125679");
   assert.equal(invocation.totals.maxReservedPicoUsd, maxInvocationPicoUsd.toString());
   assert.equal(maxInvocationPicoUsd.toString(), "5278518000");
+  // 현재 요청 결속은 지정 TEST의 실제·독립 인코더가 일치한 r11로 잇는다.
+  // 전송 바이트와 금액은 r10과 같으며, 요청·인벤토리 지문만 바뀌었다.
+  const unavailableBytes = await readFile(new URL("./budget-wire-classification-unavailable-successor.json", import.meta.url));
+  assert.equal(hash(unavailableBytes), "sha256:3281619416f55c4e3b7d7a7b2941a65f40e2f7448a786cfc6e88a7014a9a8fe1");
+  const unavailable = JSON.parse(unavailableBytes.toString("utf8"));
+  assert.equal(unavailable.revision, "ags-bootstrap-budget-classification-unavailable-source-binding-r11");
+  assert.equal(unavailable.sourceCommit, "6f1f37d86a3e681b4ce6d092afb2fe858d02d9d9");
+  assert.equal(unavailable.parentOrchestratorInvocationDigest, hash(invocationBytes));
+  if (bindRegistry) assert.equal(unavailable.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
+  assert.equal(unavailable.fixtureDigest, hash(fixtureBytes));
+  assert.equal(unavailable.fixtureOracleDigest, currentFixture.oracleDigest);
+  assert.equal(unavailable.rows.length, invocation.rows.length);
+  for (const [index, row] of unavailable.rows.entries()) {
+    const previous = invocation.rows[index];
+    assert.deepEqual({...row, requestDigest: previous.requestDigest}, previous);
+  }
+  assert.deepEqual(unavailable.totals, invocation.totals);
+  assert.deepEqual(unavailable.inheritedFields, invocation.inheritedFields);
   const currentRows = successor.rows.map((row: {caseId: string; utf8Bytes: number}, index: number) => {
     const historical = registrySuccessor.rows[index];
     assert.equal(historical.caseId, row.caseId);
     assert.equal(historical.utf8Bytes, row.utf8Bytes);
     assert.equal(solid.rows[index].caseId, row.caseId);
     assert.equal(midtask.rows[index].caseId, row.caseId);
-    const current = invocation.rows[index];
+    const current = unavailable.rows[index];
     assert.equal(current.caseId, row.caseId);
     return {...row, ...current};
   });
-  const oracle = {...predecessor, inventoryDigest: invocation.inventoryDigest, fixtureDigest: invocation.fixtureDigest,
-    fixtureOracleDigest: invocation.fixtureOracleDigest, rows: currentRows, totals: invocation.totals,
+  const oracle = {...predecessor, inventoryDigest: unavailable.inventoryDigest, fixtureDigest: unavailable.fixtureDigest,
+    fixtureOracleDigest: unavailable.fixtureOracleDigest, rows: currentRows, totals: unavailable.totals,
     syntheticOverBudgetCases: predecessor.syntheticOverBudgetCases.map((row: {id: string}, index: number) => {
       assert.equal(successor.syntheticOverBudgetCases[index].id, row.id);
       assert.equal(solid.syntheticOverBudgetCases[index].id, row.id);
@@ -319,7 +337,7 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
     }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...midtask.fractionalRoundingFixture}};
   return {oracleBytes, boundaryBytes, oracle, precision: {...precision,
     cases: precision.cases.map((row: {id: string}, index: number) => ({...row, ...midtask.precisionCases[index]}))},
-  successorDigest: hash(invocationBytes), successorRevision: invocation.revision};
+  successorDigest: hash(unavailableBytes), successorRevision: unavailable.revision};
 }
 
 // Explicit authoring command captures only current public request/wire inputs. It neither runs nor qualifies a provider.
