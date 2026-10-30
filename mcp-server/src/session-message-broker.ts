@@ -251,12 +251,16 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
       const idleWake = string(payload.idleWake,"idleWake");
       if (!["silent","user-message","none"].includes(wakeVisibility) || !["silent","user-message","none"].includes(idleWake)) throw new Error("Invalid relay delivery capabilities.");
       let confirmedDead: {relayId: string; pid: number} | undefined;
+      let confirmedAlive = false;
       if (previous && previous.pid > 0) {
         try {
           process.kill(previous.pid,0);
           if (typeof previous.relayStartToken === "string") {
             const actual = (yield* queryIdentity(previous.pid, budget)).token;
             if (actual !== null && actual !== previous.relayStartToken) confirmedDead = {relayId:previous.relayId,pid:previous.pid};
+            else if (actual !== null && actual === previous.relayStartToken) confirmedAlive = true;
+          } else {
+            confirmedAlive = true;
           }
         }
         catch (error) {
@@ -267,6 +271,7 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
       return store.prepareVerifiedRelay({...target,instanceId,transport,parentPid,expectedOwner:previous,
         wakeVisibility:wakeVisibility as "silent" | "user-message" | "none",canWakeSilently:boolean(payload.canWakeSilently,"canWakeSilently"),
         deliveryCapabilities:{supportedInjection:supportedInjection(payload.supportedInjection),idleWake:idleWake as "silent" | "user-message" | "none"},
+        confirmedAlive,
         ...(confirmedDead ? {confirmedDead}:{}),
         ...(optionalString(payload,"collaborationId") ? {collaborationId:optionalString(payload,"collaborationId")!}:{}),
         ...(optionalString(payload,"workspaceId") ? {workspaceId:optionalString(payload,"workspaceId")!}:{}),
@@ -298,6 +303,7 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
         pid,
         codeDigest: relayCodeDigest(payload.codeDigest) ?? null,
         parentPid: integer(payload.parentPid, "parentPid"),
+        ...(optionalString(payload, "instanceId") ? { instanceId: optionalString(payload, "instanceId")! } : {}),
       });
       observePeerRelay(store, payload, acquired);
       return { acquired };

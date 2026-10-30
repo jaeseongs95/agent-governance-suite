@@ -188,3 +188,72 @@ it("does not replace an unbound historical verified-prefix row", () => {
   expect(ensure({}, now + 60_000)).toEqual({ spawn: false, relayId: null, instanceId: generation });
   expect(store.relayOwner(target, input.transport)?.relayId).toBe(legacyId);
 });
+
+it("AGS-D-0009: re-acquires expired relay and presence leases for a live active child and dispatches queued wake without ending presence", () => {
+  const { store, input, ensure, activate } = fixture();
+  const id = ensure().relayId!;
+  const initialPresence = store.presence(target, now);
+  expect(activate(id, { relayStartToken: "child-token-1" }, now + 1)).toBe(true);
+  store.send({ messageId: "queued-after-expiry-msg", sender: { host: "synthetic-peer", sessionId: "sender" }, target, body: "wake-after-expiry" }, now + 2);
+
+  // Advance past both 15s relay lease and 20s presence lease.
+  const expiredAt = now + 25_000;
+  expect(store.presence(target, expiredAt).state).toBe("unreachable");
+  expect(store.liveRelay(target, input.transport, expiredAt)).toBeNull();
+  expect(store.relayTick({ ...target, transport: input.transport, relayId: id, instanceId: generation, includePending: true }, expiredAt))
+    .toEqual({ alive: false, count: 0 });
+
+  // A wrong PID or wrong startToken still cannot re-acquire after expiry.
+  expect(activate(id, { pid: 201, relayStartToken: "child-token-1" }, expiredAt + 1)).toBe(false);
+  expect(activate(id, { relayStartToken: "wrong-token" }, expiredAt + 1)).toBe(false);
+
+  // The same active verified child re-acquires both relay and presence leases (preserving birth startedAt) and wakes queued messages.
+  expect(activate(id, { relayStartToken: "child-token-1" }, expiredAt + 2)).toBe(true);
+  expect(store.presence(target, expiredAt + 2)).toMatchObject({
+    state: "online",
+    instanceId: generation,
+    startedAt: initialPresence.startedAt,
+    endedAt: null,
+    endReason: null,
+  });
+  expect(store.relayTick({ ...target, transport: input.transport, relayId: id, instanceId: generation, includePending: true }, expiredAt + 3))
+    .toEqual({ alive: true, count: 1 });
+  const reserved = store.reserveManagedWake({
+    ...target,
+    instanceId: generation,
+    transport: input.transport,
+    relayId: id,
+    nonce: "reacquired-wake-abcdefghijklmnop",
+    resume: true,
+  }, expiredAt + 4);
+  expect(reserved.dispatch).toBe(true);
+  const started = store.startManagedWake(reserved.attempt!, expiredAt + 5);
+  expect(started.dispatch).toBe(true);
+  expect(store.recordManagedWakeOutcome(started.attempt!, "submitted", expiredAt + 6)).toBe(true);
+});
+
+it("AGS-D-0009: prepareVerifiedRelay restores expired presence and relay leases for a live active child without respawning", () => {
+  const { store, input, ensure, activate } = fixture();
+  const first = ensure();
+  const id = first.relayId!;
+  const initialStartedAt = store.presence(target, now).startedAt;
+  expect(activate(id, { relayStartToken: "child-token-1" }, now + 1)).toBe(true);
+
+  const expiredAt = now + 25_000;
+  expect(store.presence(target, expiredAt).state).toBe("unreachable");
+  expect(store.liveRelay(target, input.transport, expiredAt)).toBeNull();
+
+  const ensuredAgain = ensure({}, expiredAt + 1);
+  expect(ensuredAgain).toEqual({ spawn: false, relayId: id, instanceId: generation });
+  expect(store.presence(target, expiredAt + 1)).toMatchObject({
+    state: "online",
+    instanceId: generation,
+    startedAt: initialStartedAt,
+    endedAt: null,
+  });
+  expect(store.liveRelay(target, input.transport, expiredAt + 1)).toMatchObject({
+    relayId: id,
+    pid: 200,
+    parentPid: 100,
+  });
+});

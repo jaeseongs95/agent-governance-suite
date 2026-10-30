@@ -172,10 +172,31 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
       }
     }
     try {
-      const pending = await sessionMessageRequest<{ alive: boolean; count: number }>("relay-tick", {
+      let pending = await sessionMessageRequest<{ alive: boolean; count: number }>("relay-tick", {
         target, transport: options.transport, relayId, instanceId: options.instanceId, includePending: port.capabilities.idleWake !== "none",
       });
-      if (!pending.alive) return;
+      if (!pending.alive) {
+        const identity = checkedIdentity ?? (options.parentStartToken
+          ? processIdentityState(options.parentPid, options.parentStartToken)
+          : (processExists(options.parentPid) ? "match" : "mismatch"));
+        checkedIdentity = identity;
+        if (identity !== "match") return;
+        const reacquired = await sessionMessageRequest<{ acquired: boolean }>("acquire-relay", {
+          target,
+          transport: options.transport,
+          relayId,
+          pid: process.pid,
+          codeDigest: STARTUP_CODE_DIGEST,
+          parentPid: options.parentPid,
+          instanceId: options.instanceId,
+          ...(options.relayId ? { parentStartToken: options.parentStartToken } : {}),
+        });
+        if (!reacquired.acquired) return;
+        pending = await sessionMessageRequest<{ alive: boolean; count: number }>("relay-tick", {
+          target, transport: options.transport, relayId, instanceId: options.instanceId, includePending: port.capabilities.idleWake !== "none",
+        });
+        if (!pending.alive) return;
+      }
       if (port.capabilities.idleWake === "none") {
         await delay(LOOP_MS);
         continue;

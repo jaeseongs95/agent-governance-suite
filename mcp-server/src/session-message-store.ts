@@ -870,7 +870,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
 
   /** Unknown pid=0 grants are never automatically TTL-retried. */
   prepareVerifiedRelay(input: Parameters<SessionMessageStore["startPresence"]>[0] & {
-    parentPid: number; expectedOwner: ReturnType<SessionMessageStore["relayOwner"]>; confirmedDead?: {relayId: string; pid: number};
+    parentPid: number; expectedOwner: ReturnType<SessionMessageStore["relayOwner"]>; confirmedDead?: {relayId: string; pid: number}; confirmedAlive?: boolean;
   }, nowMs = Date.now()): {spawn: boolean; relayId: string | null; instanceId: string} {
     boundedIdentity(input);
     if (!Number.isInteger(input.parentPid) || input.parentPid < 1 || !/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId)) throw new Error("Invalid verified relay generation.");
@@ -886,7 +886,18 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       // A retained grant owns its generation independently of expiring presence rows.
       if (previous && previous.instanceId === input.instanceId && previous.parentPid === input.parentPid) {
         const dead = previous.pid > 0 && input.confirmedDead?.pid === previous.pid && input.confirmedDead.relayId === previous.relayId;
-        if (!dead) return {spawn:false,relayId:previous.relayId,instanceId:input.instanceId};
+        if (!dead) {
+          const alive = input.confirmedAlive ?? (previous.pid > 0);
+          const currentPresence = this.presence(input, nowMs);
+          if (alive && previous.pid > 0 && currentPresence.instanceId === input.instanceId && currentPresence.transport === input.transport && currentPresence.endedAt === null) {
+            const now = iso(nowMs);
+            this.database.prepare("UPDATE session_presence SET heartbeat_at=?, lease_until=? WHERE host=? AND session_id=? AND instance_id=? AND transport=? AND ended_at IS NULL")
+              .run(now, iso(nowMs + PRESENCE_LEASE_MS), input.host, input.sessionId, input.instanceId, input.transport);
+            this.database.prepare("UPDATE relay_leases SET lease_until=?, updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND pid=?")
+              .run(iso(nowMs + RELAY_LEASE_MS), now, input.host, input.sessionId, input.transport, previous.relayId, previous.pid);
+          }
+          return {spawn:false,relayId:previous.relayId,instanceId:input.instanceId};
+        }
       }
       const relayId = "verified-relay-v1:" + randomUUID() + ":" + input.instanceId.slice("host-process-v1:".length);
       const presence = this.startPresence(input,nowMs);
@@ -910,9 +921,19 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (this.shared) nowMs = this.shared.time(nowMs);
     return this.transaction(() => {
       const presence = this.presence(input,nowMs);
-      if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport) return false;
-      return this.database.prepare("UPDATE relay_leases SET relay_code_digest=CASE WHEN pid=0 THEN ? WHEN relay_code_id=relay_id || ':' || pid THEN relay_code_digest ELSE NULL END,relay_code_id=?,pid=?,relay_start_token=?,lease_until=?,updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND parent_pid=? AND (pid=0 OR (pid=? AND relay_start_token IS ?))")
-        .run(input.codeDigest ?? null,`${input.relayId}:${input.pid}`,input.pid,relayStartToken,iso(nowMs+RELAY_LEASE_MS),iso(nowMs),input.host,input.sessionId,input.transport,input.relayId,input.parentPid,input.pid,relayStartToken).changes === 1;
+      const owner = this.relayOwner(input,input.transport);
+      if (!owner || owner.relayId !== input.relayId || owner.parentPid !== input.parentPid) return false;
+      const isExistingActiveChild = owner.pid > 0 && owner.pid === input.pid && owner.relayStartToken === relayStartToken;
+      if (presence.instanceId !== input.instanceId || presence.transport !== input.transport) return false;
+      if (isExistingActiveChild ? presence.endedAt !== null : presence.state !== "online") return false;
+      const now = iso(nowMs);
+      const updated = this.database.prepare("UPDATE relay_leases SET relay_code_digest=CASE WHEN pid=0 THEN ? WHEN relay_code_id=relay_id || ':' || pid THEN relay_code_digest ELSE NULL END,relay_code_id=?,pid=?,relay_start_token=?,lease_until=?,updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND parent_pid=? AND (pid=0 OR (pid=? AND relay_start_token IS ?))")
+        .run(input.codeDigest ?? null,`${input.relayId}:${input.pid}`,input.pid,relayStartToken,iso(nowMs+RELAY_LEASE_MS),now,input.host,input.sessionId,input.transport,input.relayId,input.parentPid,input.pid,relayStartToken).changes === 1;
+      if (updated && isExistingActiveChild) {
+        this.database.prepare("UPDATE session_presence SET heartbeat_at=?, lease_until=? WHERE host=? AND session_id=? AND instance_id=? AND transport=? AND ended_at IS NULL")
+          .run(now, iso(nowMs + PRESENCE_LEASE_MS), input.host, input.sessionId, input.instanceId, input.transport);
+      }
+      return updated;
     });
   }
 
@@ -932,28 +953,40 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  acquireRelay(input: SessionIdentity & { transport: string; relayId: string; pid: number; parentPid: number; codeDigest?: string | null }, nowMs = Date.now()): boolean {
+  acquireRelay(input: SessionIdentity & { transport: string; relayId: string; pid: number; parentPid: number; instanceId?: string; codeDigest?: string | null }, nowMs = Date.now()): boolean {
     boundedIdentity(input);
     relayCodeDigest(input.codeDigest);
     if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128) throw new Error("Invalid relay identity.");
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acquireRelay(input, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    this.prune(nowMs);
-    const now = iso(nowMs);
-    const until = iso(nowMs + RELAY_LEASE_MS);
-    const result = this.database.prepare(`INSERT INTO relay_leases
-      (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at,relay_code_digest,relay_code_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT (host, session_id, transport) DO UPDATE SET
-        relay_code_digest=CASE WHEN relay_leases.relay_id=excluded.relay_id AND relay_leases.relay_code_id=relay_leases.relay_id || ':' || relay_leases.pid AND relay_leases.pid=excluded.pid THEN relay_leases.relay_code_digest ELSE excluded.relay_code_digest END,
-        relay_code_id=excluded.relay_code_id,
-        relay_id = excluded.relay_id, pid = excluded.pid, parent_pid = excluded.parent_pid,
-        lease_until = excluded.lease_until, updated_at = excluded.updated_at
-      WHERE relay_leases.relay_id NOT LIKE 'verified-relay-v1:%' AND (
-        relay_leases.lease_until <= excluded.updated_at
-        OR relay_leases.relay_id = excluded.relay_id)`)
-      .run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now, input.codeDigest ?? null,`${input.relayId}:${input.pid}`);
-    return result.changes === 1;
+    return this.transaction(() => {
+      const previous = this.relayOwner(input, input.transport);
+      this.prune(nowMs);
+      const now = iso(nowMs);
+      const until = iso(nowMs + RELAY_LEASE_MS);
+      const result = this.database.prepare(`INSERT INTO relay_leases
+        (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at,relay_code_digest,relay_code_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (host, session_id, transport) DO UPDATE SET
+          relay_code_digest=CASE WHEN relay_leases.relay_id=excluded.relay_id AND relay_leases.relay_code_id=relay_leases.relay_id || ':' || relay_leases.pid AND relay_leases.pid=excluded.pid THEN relay_leases.relay_code_digest ELSE excluded.relay_code_digest END,
+          relay_code_id=excluded.relay_code_id,
+          relay_id = excluded.relay_id, pid = excluded.pid, parent_pid = excluded.parent_pid,
+          lease_until = excluded.lease_until, updated_at = excluded.updated_at
+        WHERE relay_leases.relay_id NOT LIKE 'verified-relay-v1:%' AND (
+          relay_leases.lease_until <= excluded.updated_at
+          OR relay_leases.relay_id = excluded.relay_id)`)
+        .run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now, input.codeDigest ?? null,`${input.relayId}:${input.pid}`);
+      const acquired = result.changes === 1;
+      const sameActiveRelay = previous !== null && previous.relayId === input.relayId && previous.pid > 0 && previous.pid === input.pid;
+      if (acquired && (input.instanceId || sameActiveRelay)) {
+        const presence = this.presence(input, nowMs);
+        if (presence.transport === input.transport && presence.endedAt === null && (!input.instanceId || presence.instanceId === input.instanceId)) {
+          this.database.prepare("UPDATE session_presence SET heartbeat_at=?, lease_until=? WHERE host=? AND session_id=? AND instance_id=? AND transport=? AND ended_at IS NULL")
+            .run(now, iso(nowMs + PRESENCE_LEASE_MS), input.host, input.sessionId, presence.instanceId, input.transport);
+        }
+      }
+      return acquired;
+    });
   }
 
   heartbeatRelay(input: SessionIdentity & { transport: string; relayId: string }, nowMs = Date.now()): boolean {

@@ -83,7 +83,7 @@ const TOOL_NAME_MAP = {
 // - `#3313 N3`: When remaining budget for `resolveLongLivedHostProcess` is `< MIN_RESOLVER_BUDGET_MS` (100ms),
 //   the resolver is skipped immediately (`null`) instead of clamping up to 100ms.
 const STAGE_TIMEOUT_MS = 2000;
-const PID_RESOLVER_TIMEOUT_MS = 1500;
+const PID_RESOLVER_TIMEOUT_MS = 3000;
 export const MIN_RESOLVER_BUDGET_MS = 100;
 const MIN_PRIMARY_HOOK_BUDGET_MS = 500;
 export const NATIVE_HOOK_HARD_TIMEOUT_MS = 10000;
@@ -255,6 +255,8 @@ function windowsProcessChainScript(startPid, maxDepth, timeoutMs) {
     "    if (!$agsMeta -or !$agsPath -or $agsMeta.ProcessId -ne $agsCursor -or $agsStart.Ticks -ne $agsAfter.StartTime.ToUniversalTime().Ticks -or $agsPath -ine $agsAfter.Path -or $agsPath -ine $agsMeta.ExecutablePath) { break }",
     "    if ($agsStart.ToString('yyyy-MM-ddTHH:mm:ss.ffffff') -cne $agsMeta.CreationDate.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.ffffff')) { break }",
     "    $agsRows.Add([pscustomobject]@{pid=[int]$agsMeta.ProcessId; parentPid=[int]$agsMeta.ParentProcessId; name=[string]$agsMeta.Name; command=[string]$agsMeta.ExecutablePath; commandLine=[string]$agsMeta.CommandLine; startToken=$agsStart.ToString('o')})",
+    "    $exeName = if ($agsMeta.ExecutablePath) { [System.IO.Path]::GetFileName([string]$agsMeta.ExecutablePath).ToLowerInvariant() } else { '' }",
+    "    if ($exeName -eq 'antigravity.exe' -or $exeName -like 'language_server*.exe') { break }",
     "    $agsCursor = [int]$agsMeta.ParentProcessId",
     "  } catch { break }",
     "}",
@@ -492,8 +494,13 @@ function inspectionBudget(options) {
 function reportInspectionFailure(error, options) {
   const failure = inspectionFailures.has(error) ? error : inspectionFailure("HOST_PROCESS_INSPECTION_FAILED", "inspection", error);
   try {
-    if (typeof options?.onProcessIdentityFailure === "function") {
-      Promise.resolve(options.onProcessIdentityFailure(failure)).catch(secondary => retainFailureSecondary(failure, secondary));
+    const observer = typeof options?.onProcessIdentityFailure === "function"
+      ? options.onProcessIdentityFailure
+      : typeof options?.onInspectionFailure === "function"
+        ? options.onInspectionFailure
+        : null;
+    if (observer) {
+      Promise.resolve(observer(failure)).catch(secondary => retainFailureSecondary(failure, secondary));
     } else {
       const detail = inspectionFailures.get(failure);
       // Match the core native-code allowlist; never evaluate arbitrary error accessors or Proxy traps.
@@ -1205,8 +1212,9 @@ export async function startAntigravitySessionPresenceAndRelay(canonicalInput, op
       defaultQueueWake: true,
       ...(relayEnv && Object.keys(relayEnv).length > 0 ? { relayEnv } : {}),
     }));
-  } catch {
+  } catch (error) {
     // Presence and relay startup are advisory and fail-open.
+    reportInspectionFailure(error, options);
   }
 }
 

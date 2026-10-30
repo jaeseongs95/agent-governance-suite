@@ -1639,7 +1639,31 @@ try {
     }
   }
 
-  console.log("antigravity-hook-runner tests: 15/15 passed");
+  // 16. [AGS-D-0011]: startAntigravitySessionPresenceAndRelay reports inspection/startup failures via
+  // onInspectionFailure (and onProcessIdentityFailure) without swallowing them silently or leaking private secrets.
+  {
+    const observedFailures = [];
+    const secretError = new Error("PRIVATE_SECRET_HOOK_FAILURE_0011");
+    await startAntigravitySessionPresenceAndRelay(
+      { hook_event_name: "SessionStart", session_id: TEST_SESSION_ID, workspace_id: tmpDir },
+      {
+        now: () => 1000,
+        deadlineMonotonicMs: 10200,
+        resolveHostProcess: () => ({ pid: 41804, startToken: "2026-10-27T00:00:00.000Z" }),
+        sessionMessageHook: async () => {
+          throw secretError;
+        },
+        onInspectionFailure: (failure) => {
+          observedFailures.push(failure);
+        },
+      },
+    );
+    assert.equal(observedFailures.length, 1);
+    assert.equal(observedFailures[0].code, "HOST_PROCESS_INSPECTION_FAILED");
+    assert.equal(observedFailures[0].cause, secretError);
+  }
+
+  console.log("antigravity-hook-runner tests: 16/16 passed");
 } finally {
   rmSync(tmpDir, { recursive: true, force: true });
 }
