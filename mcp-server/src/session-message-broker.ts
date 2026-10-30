@@ -242,13 +242,15 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
       const timeout = integer(payload.identityTimeoutMs,"identityTimeoutMs");
       if (parentPid < 1 || !parentStartToken.trim() || parentStartToken.length > 200 || timeout < 1 || timeout > 8000) throw new Error("Invalid relay host observation or budget.");
       const transport = string(payload.transport,"transport");
-      const hasExpectedPresence = Object.hasOwn(payload, "expectedPresenceInstanceId");
-      const expectedPresenceInstanceId = hasExpectedPresence && payload.expectedPresenceInstanceId !== null
-        ? string(payload.expectedPresenceInstanceId, "expectedPresenceInstanceId") : null;
-      if (expectedPresenceInstanceId !== null && expectedPresenceInstanceId.length > 128) throw new Error("Invalid expected host process generation.");
-      const previous = store.relayOwner(target,transport);
       const deadline = performance.now() + timeout;
       const budget = () => Math.min(deadline - performance.now(), requestBudget?.() ?? Infinity);
+      const hasExpectedPresence = Object.hasOwn(payload, "expectedPresenceInstanceId");
+      // 초기 시작도 OS 관측 전에 현재 세대를 고정해, 관측 중 교체된 세대를 덮지 않는다.
+      const expectedPresenceInstanceId = hasExpectedPresence
+        ? payload.expectedPresenceInstanceId === null ? null : string(payload.expectedPresenceInstanceId, "expectedPresenceInstanceId")
+        : store.presence(target).instanceId;
+      if (expectedPresenceInstanceId !== null && expectedPresenceInstanceId.length > 128) throw new Error("Invalid expected host process generation.");
+      const previous = store.relayOwner(target,transport);
       const parent = yield* queryIdentity(parentPid, budget);
       if (parent.token !== parentStartToken) throw retainFailureCause(new Error("Relay host generation is unverified."), parent.cause);
       const cleanup = store.verifiedPresenceForCleanup();
@@ -293,7 +295,7 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
         checkRequestBudget,
         verifiedParentStartToken: parentStartToken,
         ...(confirmedDeadPresence ? {confirmedDeadPresence}:{}),
-        ...(hasExpectedPresence ? {expectedPresenceInstanceId}:{}),
+        expectedPresenceInstanceId,
         wakeVisibility:wakeVisibility as "silent" | "user-message" | "none",canWakeSilently:boolean(payload.canWakeSilently,"canWakeSilently"),
         deliveryCapabilities:{supportedInjection:supportedInjection(payload.supportedInjection),idleWake:idleWake as "silent" | "user-message" | "none"},
         confirmedAlive,
