@@ -135,7 +135,7 @@ it("keeps exact relay termination and reused-session wake/claim working with a r
   const { store, input, ensure, activate } = fixture();
   const old = ensure().relayId!;
   expect(activate(old)).toBe(true);
-  store.observeNativeInput(target, now + 2);
+  store.observeNativeInput(target, now + 2, generation);
   expect(store.releaseVerifiedRelay({ ...input, relayId: old, pid: 200 }, now + 3)).toBe(true);
   expect(store.presence(target, now + 3)).toMatchObject({ state: "ended", instanceId: generation, endReason: "host-process-ended" });
   expect(store.relayOwner(target, input.transport)).toBeNull();
@@ -149,12 +149,12 @@ it("keeps exact relay termination and reused-session wake/claim working with a r
   store.send({ messageId: "reused-input-message", sender: { host: "synthetic-peer", sessionId: "sender" }, target, body: "pending" }, now + 7);
   expect(store.reserveManagedWake({ ...target, instanceId: replacement, transport: input.transport,
     relayId: fresh.relayId!, nonce: "reused-input-wake-abcdefghijklmnop" }, now + 8).dispatch).toBe(true);
-  store.observeNativeInput(target, now + 9);
+  store.observeNativeInput(target, now + 9, replacement);
   expect(store.database.prepare("SELECT * FROM input_observations").all()).toMatchObject([
     { deferred_tool_claim: 1, observed_at: new Date(now + 9).toISOString() },
   ]);
-  expect(store.claimDeferred(target, now + 10)).toEqual([]);
-  expect(store.claimDeferred(target, now + 11)).toMatchObject([{ messageId: "reused-input-message", deliveryAttempt: 1 }]);
+  expect(store.claimDeferred(target, now + 10, { instanceId: replacement })).toEqual([]);
+  expect(store.claimDeferred(target, now + 11, { instanceId: replacement })).toMatchObject([{ messageId: "reused-input-message", deliveryAttempt: 1 }]);
   expect(store.acknowledge(target, ["reused-input-message"], now + 12)).toBe(1);
   expect(store.releaseVerifiedRelay({ ...input, instanceId: replacement, relayId: fresh.relayId!, pid: 200 }, now + 13)).toBe(true);
 });
@@ -352,9 +352,9 @@ it("AGS-D-0009: dispatchManagedWake after expired-lease re-acquisition wakes rec
   expect(store.consumeWake(target, parsedWake.nonces[0]!, clock + 1)).toBe(true);
 
   // Observe native input -> claim deferred message body on subsequent boundary -> acknowledge.
-  store.observeNativeInput(target, clock + 2);
-  expect(store.claimDeferred(target, clock + 3)).toEqual([]);
-  const claimed = store.claimDeferred(target, clock + 4);
+  store.observeNativeInput(target, clock + 2, generation);
+  expect(store.claimDeferred(target, clock + 3, { instanceId: generation })).toEqual([]);
+  const claimed = store.claimDeferred(target, clock + 4, { instanceId: generation });
   expect(claimed).toMatchObject([{ messageId: "e2e-expired-wake-msg", body: "payload-after-lease-recovery", deliveryAttempt: 1 }]);
   expect(store.acknowledge(target, ["e2e-expired-wake-msg"], clock + 5)).toBe(1);
 });

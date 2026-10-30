@@ -161,6 +161,8 @@ export class MessageCapacityError extends Error {
 export interface ClaimLimits {
   maxMessages?: number;
   maxBodyChars?: number;
+  /** Adapter-observed host process generation; never a model-supplied authorization. */
+  instanceId?: string;
 }
 
 export class SessionMessageStore<Input extends string | SharedModuleContext = string> {
@@ -667,11 +669,27 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  observeNativeInput(target: SessionIdentity, nowMs = Date.now()): void {
+  /** Check inside the same transaction as claim/deferral mutations, before pruning or activity writes.
+   * Legacy presences retain their existing contract; verified births never adopt an unknown hook. */
+  private assertHookInstance(target: SessionIdentity, instanceId: string | undefined, nowMs: number): void {
+    const current = this.presence(target, nowMs);
+    const verifiedBirth = current.instanceId?.startsWith("host-process-v1:")
+      || (current.instanceId === null && this.database.prepare(`SELECT 1 FROM relay_leases
+        WHERE host = ? AND session_id = ? AND relay_id LIKE 'verified-relay-v1:%' LIMIT 1`)
+        .get(target.host, target.sessionId) !== undefined);
+    if ((verifiedBirth || instanceId !== undefined)
+      && (!instanceId || current.instanceId !== instanceId || current.endedAt !== null)) {
+      throw tagProducerFailure(new Error("The hook does not belong to the current host process generation."),
+        "SESSION_MESSAGE_HOOK_INSTANCE_MISMATCH");
+    }
+  }
+
+  observeNativeInput(target: SessionIdentity, nowMs = Date.now(), instanceId?: string): void {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.observeNativeInput(target, nowMs));
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.observeNativeInput(target, nowMs, instanceId));
     if (this.shared) nowMs = this.shared.time(nowMs);
     return this.transaction(() => {
+      this.assertHookInstance(target, instanceId, nowMs);
       this.database.prepare(`INSERT INTO input_observations (host, session_id, deferred_tool_claim, observed_at)
         VALUES (?, ?, 1, ?) ON CONFLICT (host, session_id) DO UPDATE SET deferred_tool_claim = 1, observed_at = excluded.observed_at`)
         .run(target.host, target.sessionId, iso(nowMs));
@@ -685,8 +703,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     boundedIdentity(target);
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimDeferred(target, nowMs, limits));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    this.prune(nowMs);
     return this.transaction(() => {
+      this.assertHookInstance(target, limits.instanceId, nowMs);
+      this.prune(nowMs);
       const skipped = this.database.prepare(`UPDATE input_observations SET deferred_tool_claim = 0
         WHERE host = ? AND session_id = ? AND deferred_tool_claim = 1`).run(target.host, target.sessionId).changes === 1;
       const messages = skipped ? [] : this.claimLocked(target, nowMs, limits);
@@ -702,8 +721,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     boundedIdentity(target);
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimTurnEnd(target, nowMs, limits));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    this.prune(nowMs);
     return this.transaction(() => {
+      this.assertHookInstance(target, limits.instanceId, nowMs);
+      this.prune(nowMs);
       this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
       const messages = this.claimLocked(target, nowMs, limits);
       if (messages.length > 0) this.consumePendingWakes(target, nowMs);
@@ -714,11 +734,12 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  clearDeferred(target: SessionIdentity, nowMs = Date.now()): void {
+  clearDeferred(target: SessionIdentity, nowMs = Date.now(), instanceId?: string): void {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.clearDeferred(target, nowMs));
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.clearDeferred(target, nowMs, instanceId));
     if (this.shared) nowMs = this.shared.time(nowMs);
     return this.transaction(() => {
+      this.assertHookInstance(target, instanceId, nowMs);
       this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
       this.recordActivity(target, nowMs);
 

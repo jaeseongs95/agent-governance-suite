@@ -389,14 +389,15 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null, ...(result.retired ? { retired: true } : {}) };
     }
     case "observe-native-input": {
+      store.observeNativeInput(identity(payload.target), Date.now(), optionalString(payload, "instanceId"));
       peerWaitRuntime(store).policy.reset(identity(payload.target));
-      store.observeNativeInput(identity(payload.target));
       return { observed: true };
     }
     case "claim-deferred": {
       const maxMessages = optionalInteger(payload, "maxMessages");
       const maxBodyChars = optionalInteger(payload, "maxBodyChars");
       return { messages: store.claimDeferred(identity(payload.target), Date.now(), {
+        instanceId: optionalString(payload, "instanceId"),
         ...(maxMessages === undefined ? {} : { maxMessages }),
         ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
       }) };
@@ -405,12 +406,13 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       const maxMessages = optionalInteger(payload, "maxMessages");
       const maxBodyChars = optionalInteger(payload, "maxBodyChars");
       return { messages: store.claimTurnEnd(identity(payload.target), Date.now(), {
+        instanceId: optionalString(payload, "instanceId"),
         ...(maxMessages === undefined ? {} : { maxMessages }),
         ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
       }) };
     }
     case "clear-deferred": {
-      store.clearDeferred(identity(payload.target));
+      store.clearDeferred(identity(payload.target), Date.now(), optionalString(payload, "instanceId"));
       return { cleared: true };
     }
     case "acknowledge": return { acknowledged: store.acknowledge(identity(payload.target), Array.isArray(payload.messageIds) ? payload.messageIds.map((value) => string(value, "messageId")) : []) };

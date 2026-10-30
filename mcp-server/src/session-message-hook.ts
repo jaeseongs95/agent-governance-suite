@@ -42,7 +42,7 @@ export interface SessionMessageHookOptions {
   ensureRelay?: boolean;
   /** Reconnect on an observed main-session event, using the same atomic startup grant. */
   recoverExistingSession?: boolean;
-  /** Host adapter callback; called only when a targeted liveness view needs recovery. */
+  /** Host adapter callback; snapshots the claiming event's generation before asynchronous recovery. */
   resolveHostProcess?: () => Readonly<{ pid: number; startToken: string }> | null | Promise<Readonly<{ pid: number; startToken: string }> | null>;
   /** Adapter-scoped environment overrides passed only to a spawned detached relay child; never mutates process.env. */
   relayEnv?: Readonly<Record<string, string | undefined>>;
@@ -409,6 +409,27 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   }
   if (!main) return {};
 
+  // Capture the event's own process before any liveness request can see a replacement birth.
+  // Do not infer generation from the broker's latest presence or from hook payload fields.
+  const claimsAtBoundary = observation.kind === "user-input" || observation.kind === "turn-end"
+    || (observation.kind === "tool-boundary" && observation.boundaryPhase === "after");
+  let claimHostProcess: Readonly<{ pid: number; startToken: string }> | undefined;
+  let claimInstanceId: string | undefined;
+  if (claimsAtBoundary && (options.hostProcess || options.resolveHostProcess)) {
+    const observed = options.hostProcess ?? await options.resolveHostProcess?.();
+    remainingBudget(budget);
+    if (!observed) throw hookFailure("HOOK_HOST_GENERATION_UNVERIFIED", "The hook host process generation is unavailable.");
+    claimHostProcess = { pid: observed.pid, startToken: observed.startToken };
+    if (!Number.isInteger(claimHostProcess.pid) || claimHostProcess.pid < 1
+      || typeof claimHostProcess.startToken !== "string" || !claimHostProcess.startToken.trim()
+      || (explicitHostPid !== undefined && explicitHostPid !== claimHostProcess.pid)
+      || readHostStartToken(claimHostProcess.pid, budget) !== claimHostProcess.startToken) {
+      throw hookFailure("HOOK_HOST_GENERATION_UNVERIFIED", "The hook host process generation did not verify.");
+    }
+    claimInstanceId = "host-process-v1:" + createHash("sha256")
+      .update(JSON.stringify([host, sessionId, claimHostProcess.pid, claimHostProcess.startToken])).digest("hex");
+  }
+
   if (options.recoverExistingSession && actorAccess(observation.actor).allowed
     && (observation.kind === "user-input" || observation.kind === "turn-end"
       || (observation.kind === "tool-boundary" && observation.boundaryPhase === "after"))) {
@@ -419,10 +440,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         && (current.autoWake?.state === "available" || current.autoWake?.state === "latched");
       if (!relayLive) {
         remainingBudget(budget);
-        const observed = options.hostProcess ?? await options.resolveHostProcess?.();
-        const hostProcess = observed ? { pid: observed.pid, startToken: observed.startToken } : null;
-        remainingBudget(budget);
-        if (hostProcess) await ensureVerifiedRelay(hostProcess);
+        if (claimHostProcess) await ensureVerifiedRelay(claimHostProcess);
       }
     } catch (error) {
       reportHookFailure("recovery", error); // Normal claiming retains its original deadline and no-replay rules.
@@ -430,6 +448,8 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   }
 
   const limits = { target, maxMessages: HOST_CLAIM_MAX_MESSAGES, maxBodyChars: HOST_CLAIM_MAX_BODY_CHARS };
+  const hookTarget = { target, ...(claimInstanceId ? { instanceId: claimInstanceId } : {}) };
+  const fencedLimits = { ...limits, ...hookTarget };
   let messages: SessionMessage[] = [];
   if (observation.kind === "user-input") {
     if (observation.wakeOnly && observation.wakeCandidates?.length && supportsInjection(profile.capabilities, "peer-wake")) {
@@ -449,17 +469,17 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         return { decision: "block", reason: "This wake notification was already retired; no peer message is attached." };
       }
       if (result.recognized) messages = result.messages;
-      else await request("observe-native-input", { target });
+      else await request("observe-native-input", hookTarget);
     } else if (!observation.wakeOnly) {
-      await request("observe-native-input", { target });
+      await request("observe-native-input", hookTarget);
     }
   } else if (observation.kind === "tool-boundary" && observation.boundaryPhase === "after" && supportsInjection(profile.capabilities, "tool-boundary")) {
-    messages = (await request<{ messages: SessionMessage[] }>("claim-deferred", limits)).messages;
+    messages = (await request<{ messages: SessionMessage[] }>("claim-deferred", fencedLimits)).messages;
   } else if (observation.kind === "turn-end") {
     if (supportsInjection(profile.capabilities, "turn-end")) {
-      messages = (await request<{ messages: SessionMessage[] }>("claim-turn-end", limits)).messages;
+      messages = (await request<{ messages: SessionMessage[] }>("claim-turn-end", fencedLimits)).messages;
     } else {
-      await request("clear-deferred", { target });
+      await request("clear-deferred", hookTarget);
     }
   }
   remainingBudget(budget);

@@ -151,7 +151,7 @@ const recover = (resolveHostProcess: () => { pid: number; startToken: string } |
 });
 const livePresence = { host: syntheticHost, sessionId: input.session_id, state: "online", transport: "gemini-queue", autoWake: { state: "available" } };
 
-it.each(["available", "latched"])("keeps an online relay without resolving or spawning: %s", async (state) => {
+it.each(["available", "latched"])("keeps an online relay while binding the claiming event's own generation: %s", async (state) => {
   const resolver = vi.fn(() => options().hostProcess);
   f.request.mockImplementation(async (operation, _payload, _directory, requestOptions) => {
     if (operation === "list-presence") return { sessions: [{ ...livePresence, autoWake: { state } }] };
@@ -160,10 +160,47 @@ it.each(["available", "latched"])("keeps an online relay without resolving or sp
   });
   await handleSessionMessageHook(post, syntheticHost, undefined, recover(resolver));
   expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["list-presence", "claim-deferred"]);
-  expect(resolver).not.toHaveBeenCalled();
-  expect(f.token).not.toHaveBeenCalled();
+  expect(resolver).toHaveBeenCalledTimes(1);
+  expect(f.token).toHaveBeenCalledTimes(1);
+  expect(f.request.mock.calls[1]![1]).toMatchObject({ instanceId });
   expect(f.spawn).not.toHaveBeenCalled();
   expect(f.request.mock.calls[0]![1]).toEqual({ targets: [{ host: syntheticHost, sessionId: input.session_id }] });
+});
+
+it("does not adopt a replacement generation observed while checking relay liveness", async () => {
+  const store = new SessionMessageStore(":memory:");
+  const target = { host: syntheticHost, sessionId: input.session_id };
+  const hostProcess = { ...options().hostProcess };
+  const currentInstance = "host-process-v1:" + "b".repeat(64);
+  const at = Date.now();
+  store.startPresence({ ...target, instanceId: currentInstance, transport: "gemini-queue",
+    wakeVisibility: "user-message", canWakeSilently: false }, at);
+  store.send({ sender: { host: "synthetic-peer", sessionId: "sender" }, target, body: "replacement body" }, at + 1);
+  const snapshot = () => ["messages", "input_observations", "session_activity", "session_presence"]
+    .map(table => store.database.prepare(`SELECT * FROM ${table}`).all());
+  const before = snapshot();
+  f.request.mockImplementation(async (operation, payload) => {
+    if (operation === "list-presence") {
+      hostProcess.startToken = "T2";
+      return { sessions: [{ ...livePresence, instanceId: currentInstance }] };
+    }
+    return dispatchSessionMessageBrokerOperation(store, operation, payload);
+  });
+  try {
+    await expect(handleSessionMessageHook(post, syntheticHost, undefined, recover(() => hostProcess)))
+      .rejects.toThrow("current host process generation");
+    expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["list-presence", "claim-deferred"]);
+    expect(f.request.mock.calls[1]![1]).toMatchObject({ instanceId });
+    expect(snapshot()).toEqual(before);
+    expect(f.spawn).not.toHaveBeenCalled();
+  } finally { store.close(); }
+});
+
+it("does not query or claim when the adapter cannot observe the event's process generation", async () => {
+  await expect(handleSessionMessageHook(post, syntheticHost, undefined, recover(() => null)))
+    .rejects.toThrow("generation is unavailable");
+  expect(f.request).not.toHaveBeenCalled();
+  expect(f.spawn).not.toHaveBeenCalled();
 });
 
 it("recovers a missing relay through the same non-replayed verified grant, then claims once", async () => {
@@ -196,7 +233,13 @@ it.each(["unknown-result", "invalid-grant", "pid-reused"])("never falls back to 
     return { messages: [] };
   });
   if (failure === "pid-reused") f.token.mockReturnValue("T2");
-  await handleSessionMessageHook(post, syntheticHost, undefined, recover(() => options().hostProcess));
+  const handling = handleSessionMessageHook(post, syntheticHost, undefined, recover(() => options().hostProcess));
+  if (failure === "pid-reused") {
+    await expect(handling).rejects.toThrow("generation did not verify");
+    expect(f.request).not.toHaveBeenCalled();
+  } else {
+    await handling;
+  }
   expect(f.request.mock.calls.filter(([operation]) => operation === "ensure-relay")).toHaveLength(failure === "pid-reused" ? 0 : 1);
   expect(f.request.mock.calls.some(([operation]) => operation === "presence-start")).toBe(false);
   expect(f.spawn).not.toHaveBeenCalled();
@@ -219,7 +262,7 @@ it("does not recover or claim after the caller deadline expires in the lazy reso
   f.request.mockResolvedValue({ sessions: [] });
   const resolver = vi.fn(() => { f.now = 1000; return options().hostProcess; });
   await expect(handleSessionMessageHook(post, syntheticHost, undefined, recover(resolver))).rejects.toThrow("budget expired");
-  expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["list-presence"]);
+  expect(f.request).not.toHaveBeenCalled();
   expect(f.spawn).not.toHaveBeenCalled();
 });
 
