@@ -20,6 +20,8 @@ files.json은 `["src/module.mjs", "tests/module.test.mjs"]`와 같은 명시적 
 
 출력 JSON은 stdout으로 나온다. shell `>`나 기존 호스트 파일 도구로 저장한다. 출력 파일은 snapshot 대상에서 제외한다. raw JSON 파일의 hash는 SHA-256 byte digest다. planDigest/requestDigest 및 snapshot 자체 digest는 코드의 정렬된 canonical JSON 방식으로 계산한다. 두 해시 종류를 혼용하지 않는다. 예제 생성기가 올바른 참조 파일을 보여준다.
 
+artifact root와 산출물 저장 위치는 현재 허용된 쓰기 범위 안에서 정한다. 산출물의 복사·이동·정리도 같은 범위를 따르며, snapshot 제외나 CLI 검사 성공은 그 범위를 넓히지 않는다.
+
 run의 의도적인 red 테스트는 exit 1과 FAIL receipt를 반환한다. shell set -e를 사용한다면 예상 실패를 명시적으로 처리하고 출력 JSON과 종료 코드를 모두 보존한다. `|| true`로 무조건 성공 취급하지 않는다. 도구 자체 invalid input/IO 오류는 exit 2이며 JSON error는 stderr다. check-proof/check-review의 완료 미충족·차단 결과는 exit 1이다. provider-result는 포장 명령의 성공 코드만 반환하므로 내부 error와 output.verdict를 읽는다.
 
 ## 검증되는 것
