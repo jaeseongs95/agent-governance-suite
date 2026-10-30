@@ -1,4 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
+import childProcess from "node:child_process";
+import { syncBuiltinESMExports } from "node:module";
+import { cpus, freemem } from "node:os";
+import { performance } from "node:perf_hooks";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -294,7 +298,44 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
     expect(script).toContain("$agsStart.ToString('yyyy-MM-ddTHH:mm:ss.ffffff') -ceq $agsMeta.CreationDate.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.ffffff')");
 
     if (process.platform === "win32") {
-      const inspected = defaultProcessInspector(process.pid, "win32", 2000);
+      // 원 1500ms 제품 상한과 실조회는 유지하고, 시작 지연과 각 OS 조회 지연을 구분한다.
+      // 고정 단계/시각만 stderr에 기록하며 검사 결과 stdout과 원래 예외는 보존한다.
+      const originalExecFileSync = childProcess.execFileSync;
+      const resources = () => {
+        const processors = cpus();
+        return { 논리프로세서수: processors.length, 유휴밀리초: processors.reduce((sum, cpu) => sum + cpu.times.idle, 0),
+          전체밀리초: processors.reduce((sum, cpu) => sum + Object.values(cpu.times).reduce((total, value) => total + value, 0), 0),
+          가용메모리: freemem() };
+      };
+      childProcess.execFileSync = (file, args, options) => {
+        if (file !== "powershell.exe") return originalExecFileSync(file, args, options);
+        const checkpoint = stage => `[Console]::Error.WriteLine(('AGS-D0030|${stage}|' + [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()))`;
+        const observedArgs = [...args];
+        const scriptIndex = observedArgs.indexOf("-Command") + 1;
+        let observedScript = observedArgs[scriptIndex];
+        for (const [anchor, stage] of [
+          ["$agsBefore =", "get-process-before"],
+          ["$agsMeta =", "get-cim-instance"],
+          ["$agsAfter =", "get-process-after"],
+          ["if ($agsMeta", "identity-check"],
+        ]) observedScript = observedScript.replace(anchor, `${checkpoint(stage)}; ${anchor}`);
+        observedArgs[scriptIndex] = `${checkpoint("script-start")}; ${observedScript}; ${checkpoint("script-end")}`;
+        const started = performance.now();
+        console.error(JSON.stringify({ 검사: "AGS-D-0030", 단계: "조회 시작", 시각: Date.now(), 상한밀리초: options.timeout, 자원: resources() }));
+        try {
+          return originalExecFileSync(file, observedArgs, { ...options, stdio: ["ignore", "pipe", "inherit"] });
+        } finally {
+          console.error(JSON.stringify({ 검사: "AGS-D-0030", 단계: "조회 종료", 시각: Date.now(), 경과밀리초: performance.now() - started, 자원: resources() }));
+        }
+      };
+      let inspected;
+      try {
+        syncBuiltinESMExports();
+        inspected = defaultProcessInspector(process.pid, "win32", 2000);
+      } finally {
+        childProcess.execFileSync = originalExecFileSync;
+        syncBuiltinESMExports();
+      }
       expect(inspected).toMatchObject({
         pid: process.pid,
         command: expect.stringContaining("node"),
