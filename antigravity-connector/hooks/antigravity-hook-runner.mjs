@@ -83,7 +83,6 @@ const TOOL_NAME_MAP = {
 // - `#3313 N3`: When remaining budget for `resolveLongLivedHostProcess` is `< MIN_RESOLVER_BUDGET_MS` (100ms),
 //   the resolver is skipped immediately (`null`) instead of clamping up to 100ms.
 const STAGE_TIMEOUT_MS = 2000;
-const PID_RESOLVER_TIMEOUT_MS = 1500;
 export const MIN_RESOLVER_BUDGET_MS = 100;
 const MIN_PRIMARY_HOOK_BUDGET_MS = 500;
 export const NATIVE_HOOK_HARD_TIMEOUT_MS = 10000;
@@ -270,7 +269,7 @@ function defaultWindowsProcessChain(startPid, maxDepth, timeoutMs) {
   if (!Number.isInteger(startPid) || startPid < 1 || timeoutMs < MIN_RESOLVER_BUDGET_MS) return null;
   const script = windowsProcessChainScript(startPid, maxDepth, timeoutMs);
   const output = execFileSync("powershell.exe",["-NoProfile","-NonInteractive","-Command",script],{
-    encoding:"utf8",windowsHide:true,timeout:Math.min(PID_RESOLVER_TIMEOUT_MS,Math.floor(timeoutMs)),
+    encoding:"utf8",windowsHide:true,timeout:Math.floor(timeoutMs),
     maxBuffer:16384,stdio:["ignore","pipe","ignore"],
   }).trim();
   if (!output) return null;
@@ -293,11 +292,9 @@ export function windowsSingleProcessScript(pid) {
 }
 
 export function defaultProcessInspector(pid, platform, timeoutMs) {
-  // #3313 N3 & R03R09-R01 (bcbf684e): Never clamp a < 100ms remaining budget up to 100ms;
-  // enforce `MIN_RESOLVER_BUDGET_MS` (100ms) consistently and clip to `PID_RESOLVER_TIMEOUT_MS`.
-  const rawBudget = Number.isFinite(timeoutMs) ? Math.floor(Number(timeoutMs)) : PID_RESOLVER_TIMEOUT_MS;
-  if (rawBudget < MIN_RESOLVER_BUDGET_MS) return null;
-  const totalBudget = Math.min(PID_RESOLVER_TIMEOUT_MS, rawBudget);
+  // 호출자의 남은 예산을 소비하고, 미지정 시에만 기존 호스트 실행 예산을 쓴다.
+  const totalBudget = timeoutMs === undefined ? DEFAULT_HOOK_TOTAL_BUDGET_MS : Math.floor(Number(timeoutMs));
+  if (!Number.isFinite(totalBudget) || totalBudget < MIN_RESOLVER_BUDGET_MS) return null;
   const stepStart = performance.now();
   if (platform === "win32") {
     const script = windowsSingleProcessScript(pid);
@@ -323,10 +320,9 @@ export function defaultProcessInspector(pid, platform, timeoutMs) {
 
   // On Linux, only 1 `ps` call is needed because executable path and `startToken` come from `/proc/<pid>/{exe,stat}`.
   // On non-Linux Unix (`darwin`, etc.), share `totalBudget` across both `ps` calls (`R05-F02`).
-  const firstBudget = platform === "linux" ? totalBudget : Math.max(50, Math.floor(totalBudget * 0.6));
   const metaOut = execFileSync("ps", ["-p", String(pid), "-o", "ppid=,comm=,args="], {
     encoding: "utf8",
-    timeout: firstBudget,
+    timeout: totalBudget,
     stdio: ["ignore", "pipe", "ignore"],
   }).trim();
   if (!metaOut) return null;
@@ -393,19 +389,20 @@ export function resolveLongLivedHostProcess(startPid = process.ppid, platform = 
       return null;
     }
   }
-  const timeoutMs = Number.isFinite(options?.timeoutMs) && options.timeoutMs >= MIN_RESOLVER_BUDGET_MS
-    ? Math.min(PID_RESOLVER_TIMEOUT_MS, Math.floor(Number(options.timeoutMs)))
-    : PID_RESOLVER_TIMEOUT_MS;
+  const timeoutMs = options?.timeoutMs === undefined ? Infinity : Math.floor(Number(options.timeoutMs));
   const inspectProcess = typeof options?.inspectProcess === "function" ? options.inspectProcess : defaultProcessInspector;
   const nowFn = typeof options?.now === "function" ? options.now : () => performance.now();
-  const deadline = nowFn() + timeoutMs;
+  const started = nowFn();
+  const deadline = Math.min(started + timeoutMs, inspectionDeadline(options, started));
+  const remainingBudget = () => Math.floor(Math.min(deadline - nowFn(),
+    typeof options?.remainingBudgetMs === "function" ? Number(options.remainingBudgetMs()) : Infinity));
 
   try {
     let chain = null;
     let chainIndex = 0;
     if (platform === "win32" && typeof options?.inspectProcess !== "function") {
-      const remaining = Math.floor(deadline - nowFn());
-      if (remaining < MIN_RESOLVER_BUDGET_MS) return null;
+      const remaining = remainingBudget();
+      if (!Number.isFinite(remaining) || remaining < MIN_RESOLVER_BUDGET_MS || options.signal?.aborted) return null;
       const inspectChain = typeof options?.inspectProcessChain === "function" ? options.inspectProcessChain : defaultWindowsProcessChain;
       chain = inspectChain(startPid,maxDepth,remaining);
       if (!Array.isArray(chain) || chain.length < 1 || chain.length > maxDepth) return null;
@@ -415,10 +412,10 @@ export function resolveLongLivedHostProcess(startPid = process.ppid, platform = 
     for (let depth = 0; depth < maxDepth; depth++) {
       if (!Number.isInteger(curPid) || curPid < 1 || visited.has(curPid)) break;
       visited.add(curPid);
-      const remaining = Math.floor(deadline - nowFn());
+      const remaining = remainingBudget();
       // R03R09-R01 (bcbf684e): Use the same 100ms (`MIN_RESOLVER_BUDGET_MS`) floor inside the ancestor loop
       // so a 50-99ms residual budget after entry or between ancestors is never expanded back to a 100ms OS query.
-      if (remaining < MIN_RESOLVER_BUDGET_MS) return null;
+      if (!Number.isFinite(remaining) || remaining < MIN_RESOLVER_BUDGET_MS || options.signal?.aborted) return null;
 
       let info;
       try {
@@ -430,7 +427,9 @@ export function resolveLongLivedHostProcess(startPid = process.ppid, platform = 
         }
         return null;
       }
-      if (!info || !Number.isInteger(info.pid) || info.pid !== curPid) return null;
+      const afterInspection = remainingBudget();
+      if (!info || !Number.isInteger(info.pid) || info.pid !== curPid || !Number.isFinite(afterInspection)
+        || afterInspection < MIN_RESOLVER_BUDGET_MS || options.signal?.aborted) return null;
 
       const startToken = text(info.startToken).trim();
       const procName = text(info.name).trim();
@@ -470,6 +469,15 @@ function inspectionFailure(code, phase, cause) {
   return retainFailureCause(failure, cause);
 }
 
+function inspectionDeadline(options, now) {
+  const callerDeadline = buildExecutionBudgetOption(options)?.deadlineMonotonicMs ?? Infinity;
+  const totalBudget = Number.isFinite(options?.totalBudgetMs) && options.totalBudgetMs > 0
+    ? Number(options.totalBudgetMs) : Number.isFinite(callerDeadline) ? Infinity : DEFAULT_HOOK_TOTAL_BUDGET_MS;
+  // 명시한 기한과 총예산은 모두 보존한다. 둘 다 없을 때만 기존 호스트 기본값을 쓴다.
+  return Math.min(callerDeadline,
+    (Number.isFinite(options?.entryMonotonicMs) ? options.entryMonotonicMs : now) + totalBudget);
+}
+
 function inspectionBudget(options) {
   const now = typeof options?.now === "function" ? options.now : () => performance.now();
   let last = Number(now());
@@ -477,12 +485,11 @@ function inspectionBudget(options) {
     throw inspectionFailure("HOST_PROCESS_CLOCK_INVALID", "clock");
   }
   const configured = record(options?.pidResolverOptions).timeoutMs;
-  const timeout = configured === undefined ? PID_RESOLVER_TIMEOUT_MS : Math.floor(Number(configured));
-  if (!Number.isFinite(timeout) || timeout < MIN_RESOLVER_BUDGET_MS) {
+  const timeout = configured === undefined ? Infinity : Math.floor(Number(configured));
+  if (configured !== undefined && (!Number.isFinite(timeout) || timeout < MIN_RESOLVER_BUDGET_MS)) {
     throw inspectionFailure("HOST_PROCESS_BUDGET_EXHAUSTED", "budget");
   }
-  const callerDeadline = buildExecutionBudgetOption(options)?.deadlineMonotonicMs ?? Infinity;
-  const deadline = Math.min(callerDeadline, last + Math.min(PID_RESOLVER_TIMEOUT_MS, timeout));
+  const deadline = Math.min(inspectionDeadline(options, last), last + timeout);
   const checkedNow = () => {
     const current = Number(now());
     if (!Number.isFinite(current) || current < last) throw inspectionFailure("HOST_PROCESS_CLOCK_INVALID", "clock");
@@ -490,6 +497,7 @@ function inspectionBudget(options) {
     return current;
   };
   const remaining = () => {
+    if (options.signal?.aborted) throw inspectionFailure("HOST_PROCESS_INSPECTION_FAILED", "spawn", inspectionAbort(options.signal));
     const current = checkedNow();
     const callerRemaining = typeof options?.remainingBudgetMs === "function" ? Number(options.remainingBudgetMs()) : Infinity;
     const left = Math.floor(Math.min(deadline - current, callerRemaining));
@@ -499,6 +507,10 @@ function inspectionBudget(options) {
     return left;
   };
   return { now: checkedNow, remaining };
+}
+
+function inspectionAbort(signal) {
+  return Object.assign(new Error("Host process inspection aborted.", { cause: signal.reason }), { name: "AbortError", code: "ABORT_ERR" });
 }
 
 function reportInspectionFailure(error, options) {
@@ -556,9 +568,26 @@ async function inspectNativeHostProcess(startPid, platform, options, budget) {
   const query = async (command, args) => {
     const timeout = budget.remaining();
     // execFile's callback follows child close, including timeout/error cleanup.
-    const output = await new Promise((resolve, reject) => execFile(command, args, {
-      encoding: "utf8", windowsHide: true, timeout, killSignal: "SIGKILL", maxBuffer: 16384, stdio: ["ignore", "pipe", "ignore"],
-    }, (error, stdout) => error ? reject(inspectionFailure("HOST_PROCESS_INSPECTION_FAILED", "spawn", error)) : resolve(stdout)));
+    const output = await new Promise((resolve, reject) => {
+      const signal = options.signal;
+      let child;
+      let aborted;
+      const abort = () => {
+        aborted ??= inspectionAbort(signal);
+        try { child.kill("SIGKILL"); }
+        catch (error) { retainFailureSecondary(aborted, error); }
+      };
+      child = execFile(command, args, {
+        encoding: "utf8", windowsHide: true, timeout, killSignal: "SIGKILL", maxBuffer: 16384, stdio: ["ignore", "pipe", "ignore"],
+      }, (error, stdout) => {
+        signal?.removeEventListener("abort", abort);
+        const cause = aborted ?? error;
+        cause ? reject(inspectionFailure("HOST_PROCESS_INSPECTION_FAILED", "spawn", cause)) : resolve(stdout);
+      });
+      // 직접 소유한 조회 자식을 종료하고 execFile의 close 뒤에만 취소를 반환한다.
+      signal?.addEventListener("abort", abort, { once: true });
+      if (signal?.aborted) abort();
+    });
     budget.remaining();
     return String(output).trim();
   };
@@ -773,11 +802,9 @@ export function translateCanonicalOutputToAntigravity(event, canonicalOutput, to
 //     re-entrant observer can never regress `claim-result-unknown` back to `before-claim` or trigger a duplicate claim.
 export function buildExecutionBudgetOption(options = {}) {
   const explicit = record(options?.executionBudget);
-  const deadlineMonotonicMs = Number.isFinite(explicit.deadlineMonotonicMs)
-    ? Number(explicit.deadlineMonotonicMs)
-    : Number.isFinite(options?.deadlineMonotonicMs)
-      ? Number(options.deadlineMonotonicMs)
-      : NaN;
+  const deadlineMonotonicMs = Math.min(
+    Number.isFinite(explicit.deadlineMonotonicMs) ? Number(explicit.deadlineMonotonicMs) : Infinity,
+    Number.isFinite(options?.deadlineMonotonicMs) ? Number(options.deadlineMonotonicMs) : Infinity);
   if (!Number.isFinite(deadlineMonotonicMs)) return undefined;
   const postClaimReserveMs = Number.isFinite(explicit.postClaimReserveMs) && explicit.postClaimReserveMs >= 0
     ? Number(explicit.postClaimReserveMs)
@@ -903,7 +930,7 @@ export function formatSecretFreeClaimDiagnosticLine(claimTracker) {
 export function resolveVerifiedAntigravityHostProcess(options = {}) {
   try {
     const budget = inspectionBudget(options);
-    const resolverOptions = { ...record(options?.pidResolverOptions), timeoutMs: budget.remaining(), now: budget.now };
+    const resolverOptions = { ...record(options?.pidResolverOptions), timeoutMs: budget.remaining(), now: budget.now, signal: options.signal };
     const raw = typeof options?.resolveHostProcess === "function"
       ? options.resolveHostProcess(process.ppid, process.platform, resolverOptions)
       : inspectNativeHostProcess(process.ppid, process.platform, resolverOptions, budget);
@@ -1470,8 +1497,12 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
   const minSecondaryBudgetMs = Number.isFinite(options?.minSecondaryBudgetMs) && options.minSecondaryBudgetMs >= 0
     ? Number(options.minSecondaryBudgetMs)
     : MIN_SECONDARY_STAGE_BUDGET_MS;
-  const deadlineMonotonicMs = entryMonotonicMs + totalBudgetMs;
-  const remainingBudgetMs = () => deadlineMonotonicMs - nowFn();
+  const callerRemainingDeadline = typeof options?.remainingBudgetMs === "function"
+    ? nowFn() + Number(options.remainingBudgetMs()) : Infinity;
+  const deadlineMonotonicMs = Math.min(entryMonotonicMs + totalBudgetMs,
+    buildExecutionBudgetOption(options)?.deadlineMonotonicMs ?? Infinity, callerRemainingDeadline);
+  const remainingBudgetMs = () => Math.min(deadlineMonotonicMs - nowFn(),
+    typeof options?.remainingBudgetMs === "function" ? Number(options.remainingBudgetMs()) : Infinity);
   const executionBudget = Object.freeze({
     deadlineMonotonicMs,
     postClaimReserveMs,

@@ -4,14 +4,14 @@ import { setTimeout } from "node:timers";
 import { setImmediate as turn } from "node:timers/promises";
 import { afterEach, beforeEach, test, vi } from "vitest";
 
-const f = vi.hoisted(() => ({ calls: [], sync: [], pending: [], native: false, failure: null, wrongPid: false, birth: "9001", children: [], requests: [] }));
+const f = vi.hoisted(() => ({ calls: [], sync: [], pending: [], native: false, syncReply: undefined, failure: null, wrongPid: false, birth: "9001", children: [], requests: [] }));
 vi.mock("node:child_process", async original => {
   const real = await original();
   const reply = command => command === "powershell.exe"
     ? JSON.stringify([{ pid: process.ppid + (f.wrongPid ? 1 : 0), parentPid: 1, name: "Antigravity.exe", command: "C:/Program Files/Antigravity/Antigravity.exe", startToken: "9001" }])
     : "1 antigravity /opt/antigravity/antigravity";
   return { ...real,
-    execFileSync: (command, args, options) => { f.sync.push({ command, args, options }); return reply(command); },
+    execFileSync: (command, args, options) => { f.sync.push({ command, args, options }); return f.syncReply ?? reply(command); },
     execFile: (command, args, options, callback) => {
       f.calls.push({ command, args, options });
       if (f.native) {
@@ -60,7 +60,7 @@ registerSyntheticCoreAdapters((host, adapter) => registerHookHostAdapter(host, {
   },
 }), () => "gemini-queue");
 const coreInput = { session_id: "AL04_PRIVATE", hook_event_name: "PostToolUse", syntheticActor: "root" };
-import { executeAntigravityHookEvent, resolveVerifiedAntigravityHostProcess } from "./antigravity-hook-runner.mjs";
+import { DEFAULT_HOOK_TOTAL_BUDGET_MS, defaultProcessInspector, executeAntigravityHookEvent, resolveLongLivedHostProcess, resolveVerifiedAntigravityHostProcess } from "./antigravity-hook-runner.mjs";
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.ts";
 import { producerFailureReason } from "../../mcp-server/src/failure-diagnostics.ts";
 const pair = Object.freeze({ pid: process.ppid, startToken: "9001" });
@@ -69,7 +69,7 @@ const options = extra => ({ now: () => 100, entryMonotonicMs: 100, onProcessIden
 async function drain() {
   for (let step = 0; step < 12; step++) { await turn(); const next = f.pending.shift(); if (next) next(); }
 }
-beforeEach(() => { for (const key of ["calls", "sync", "pending", "children", "requests"]) f[key] = []; f.native = false; f.failure = null; f.wrongPid = false; f.birth = "9001"; });
+beforeEach(() => { for (const key of ["calls", "sync", "pending", "children", "requests"]) f[key] = []; f.native = false; f.syncReply = undefined; f.failure = null; f.wrongPid = false; f.birth = "9001"; });
 afterEach(async () => { for (const record of f.children) if (!record.closed) record.child.kill("SIGKILL"); await Promise.all(f.children.map(record => record.close)); });
 
 test("F4 actual cold caller yields during OS query, clips caller budget, and preserves native birth guards", async () => {
@@ -101,6 +101,97 @@ test("F4 asynchronous injected provider is awaited without blocking another requ
 test("F4 exhausted caller starts no query even with a larger resolver option", async () => {
   const result = await resolveVerifiedAntigravityHostProcess(options({ remainingBudgetMs: () => 99, pidResolverOptions: { timeoutMs: 1500 } }));
   assert.equal(result, null); assert.equal(f.calls.length + f.sync.length, 0);
+});
+
+test("D0354 explicit OS query budgets above 1500ms reach the single-PID inspector unchanged", () => {
+  f.syncReply = `${process.ppid}|1|Antigravity.exe|C:/Program Files/Antigravity/Antigravity.exe|9001`;
+  assert.deepEqual(defaultProcessInspector(process.ppid, "win32", 4000), {
+    pid: process.ppid, parentPid: 1, name: "Antigravity.exe", command: "C:/Program Files/Antigravity/Antigravity.exe", startToken: "9001",
+  });
+  assert.equal(f.sync[0].options.timeout, 4000);
+  defaultProcessInspector(process.ppid, "win32");
+  assert.equal(f.sync[1].options.timeout, DEFAULT_HOOK_TOTAL_BUDGET_MS);
+  for (const invalid of [0, 99, NaN, Infinity]) assert.equal(defaultProcessInspector(process.ppid, "win32", invalid), null);
+  assert.equal(f.sync.length, 2);
+});
+
+test("D0354 synchronous ancestor queries consume one caller deadline without a 1500ms cap", () => {
+  let clock = 100;
+  const timeouts = [];
+  const result = resolveLongLivedHostProcess(10, "win32", { now: () => clock, timeoutMs: 6000,
+    executionBudget: { deadlineMonotonicMs: 4100 }, inspectProcess: (pid, _platform, remaining) => {
+      timeouts.push(remaining);
+      if (pid === 10) { clock += 1700; return { pid, parentPid: 20, name: "cmd.exe", command: "C:/Windows/System32/cmd.exe", startToken: "shell" }; }
+      return { pid, parentPid: 1, name: "Antigravity.exe", command: "C:/Program Files/Antigravity/Antigravity.exe", startToken: "9001" };
+    } });
+  assert.deepEqual(result, { pid: 20, startToken: "9001" });
+  assert.deepEqual(timeouts, [4000, 2300]);
+});
+
+test("D0354 Windows chain receives the full finite caller budget", () => {
+  f.syncReply = JSON.stringify([{ pid: 10, parentPid: 1, name: "Antigravity.exe", command: "C:/Program Files/Antigravity/Antigravity.exe", startToken: "9001" }]);
+  assert.deepEqual(resolveLongLivedHostProcess(10, "win32", { now: () => 0, timeoutMs: 4000 }), { pid: 10, startToken: "9001" });
+  assert.equal(f.sync[0].options.timeout, 4000);
+  resolveLongLivedHostProcess(10, "win32", { now: () => 0, deadlineMonotonicMs: 12000 });
+  assert.equal(f.sync[1].options.timeout, 12000, "an explicit caller deadline must not be clipped by a fallback default");
+});
+
+test("D0354 native asynchronous queries can finish after 1500ms within their caller deadline", async () => {
+  let clock = 100;
+  const result = resolveVerifiedAntigravityHostProcess(options({ now: () => clock, totalBudgetMs: 6000,
+    pidResolverOptions: { timeoutMs: 4000 } }));
+  await turn();
+  assert.equal(f.calls[0].options.timeout, 4000);
+  clock += 1700;
+  await drain();
+  assert.deepEqual(await result, pair);
+});
+
+test("D0354 queries without explicit resolver budgets use the remaining host contract", async () => {
+  const result = resolveVerifiedAntigravityHostProcess(options({ now: () => 1900, entryMonotonicMs: 100 }));
+  await drain();
+  assert.deepEqual(await result, pair);
+  assert.equal(f.calls[0].options.timeout, DEFAULT_HOOK_TOTAL_BUDGET_MS - 1800);
+});
+
+test("D0354 direct inspection preserves a shorter explicit total budget alongside a longer deadline", async () => {
+  const result = resolveVerifiedAntigravityHostProcess(options({ totalBudgetMs: 600, deadlineMonotonicMs: 4100 }));
+  await drain();
+  assert.deepEqual(await result, pair);
+  assert.equal(f.calls[0].options.timeout, 600);
+});
+
+for (const [caller, expected] of [
+  [{ executionBudget: { deadlineMonotonicMs: 2100 } }, 2000],
+  [{ executionBudget: { deadlineMonotonicMs: 5100 }, deadlineMonotonicMs: 2100 }, 2000],
+  [{ remainingBudgetMs: () => 1800 }, 1800],
+]) test(`D0354 actual hook entry preserves the caller's shorter ${expected}ms budget`, async () => {
+  const hooks = [];
+  const result = executeAntigravityHookEvent(main, "SessionStart", "session-message", options({ totalBudgetMs: 6000,
+    ...caller, sessionMessageHook: async (...args) => { hooks.push(args); return {}; } }));
+  await drain(); await result;
+  assert.equal(f.calls[0].options.timeout, expected);
+  assert.equal(hooks.length, 1);
+  assert.equal(hooks[0][3].executionBudget.deadlineMonotonicMs, 100 + expected);
+});
+
+test("D0354 caller cancellation closes the owned native query before returning and preserves its reason", async () => {
+  f.native = true;
+  const controller = new globalThis.AbortController();
+  const reason = new Error("caller cancelled inspection");
+  const failures = [];
+  const result = resolveVerifiedAntigravityHostProcess({ deadlineMonotonicMs: performance.now() + 4000,
+    signal: controller.signal, onProcessIdentityFailure: failure => failures.push(failure) });
+  await turn();
+  assert.equal(f.children.length, 1);
+  controller.abort(reason);
+  assert.equal(await result, null);
+  assert.equal(f.children[0].closed, true);
+  assert.equal(failures[0].cause.code, "ABORT_ERR");
+  assert.equal(failures[0].cause.cause, reason);
+  const calls = f.calls.length;
+  assert.equal(await resolveVerifiedAntigravityHostProcess({ signal: controller.signal, onProcessIdentityFailure() {} }), null);
+  assert.equal(f.calls.length, calls, "already cancelled callers must not spawn a query");
 });
 
 for (const [name, finish] of [["late success", 701], ["clock reset", 50]]) test(`F4 ${name} cannot mint a verified host pair`, async () => {

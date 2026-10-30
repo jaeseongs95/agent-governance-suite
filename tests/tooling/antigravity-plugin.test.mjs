@@ -7,6 +7,8 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   defaultProcessInspector,
+  DEFAULT_HOOK_TOTAL_BUDGET_MS,
+  NATIVE_HOOK_HARD_TIMEOUT_MS,
   normalizeAntigravityToolCall,
   windowsSingleProcessScript,
 } from "../../antigravity-connector/hooks/antigravity-hook-runner.mjs";
@@ -298,7 +300,7 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
     expect(script).toContain("$agsStart.ToString('yyyy-MM-ddTHH:mm:ss.ffffff') -ceq $agsMeta.CreationDate.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.ffffff')");
 
     if (process.platform === "win32") {
-      // 원 1500ms 제품 상한과 실조회는 유지하고, 시작 지연과 각 OS 조회 지연을 구분한다.
+      // 기존 호스트 예산 안에서 1500ms를 넘는 실조회도 신원 검사를 마쳐야 한다.
       // 고정 단계/시각만 stderr에 기록하며 검사 결과 stdout과 원래 예외는 보존한다.
       const originalExecFileSync = childProcess.execFileSync;
       const resources = () => {
@@ -315,7 +317,8 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
         const expectedScript = windowsSingleProcessScript(process.pid);
         if (file !== "powershell.exe" || args.length !== 4 || args[0] !== "-NoProfile" || args[1] !== "-NonInteractive"
           || args[2] !== "-Command" || args[3] !== expectedScript
-          || options.windowsHide !== true || options.timeout !== 1500) return originalExecFileSync(file, args, options);
+          || options.windowsHide !== true) return originalExecFileSync(file, args, options);
+        expect(options.timeout).toBe(DEFAULT_HOOK_TOTAL_BUDGET_MS);
         const checkpoint = stage => `[Console]::Error.WriteLine(('AGS-D0030|${stage}|' + [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() + '|' + $agsProbeWatch.ElapsedTicks + '|' + [System.Diagnostics.Stopwatch]::Frequency))`;
         const observedArgs = [...args];
         let observedScript = expectedScript;
@@ -331,7 +334,7 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
         }
         observedScript = observedScript.replace("if ($agsMeta", `${checkpoint("identity-check-before")}; if ($agsMeta`)
           .replace("$st =", `${checkpoint("identity-accepted")}; $st =`);
-        observedArgs[3] = `$agsProbeWatch = [System.Diagnostics.Stopwatch]::StartNew(); ${checkpoint("script-start")}; ${observedScript}; ${checkpoint("script-end")}`;
+        observedArgs[3] = `$agsProbeWatch = [System.Diagnostics.Stopwatch]::StartNew(); ${checkpoint("script-start")}; Start-Sleep -Milliseconds 1600; ${observedScript}; ${checkpoint("script-end")}`;
         try { emit({ 단계: "조회 시작", 시각: Date.now(), 상한밀리초: options.timeout, 자원: resources() }); }
         catch { /* 자원 스냅숏 실패도 실제 조회를 막지 않는다. */ }
         const started = performance.now();
@@ -355,7 +358,7 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
       let inspected;
       try {
         syncBuiltinESMExports();
-        inspected = defaultProcessInspector(process.pid, "win32", 2000);
+        inspected = defaultProcessInspector(process.pid, "win32", DEFAULT_HOOK_TOTAL_BUDGET_MS);
       } finally {
         childProcess.execFileSync = originalExecFileSync;
         syncBuiltinESMExports();
@@ -366,5 +369,5 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
         startToken: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/u),
       });
     }
-  });
+  }, NATIVE_HOOK_HARD_TIMEOUT_MS);
 });
