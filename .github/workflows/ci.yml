@@ -23,12 +23,13 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-    env:
-      GENERATION_LOG_DIR: ${{ runner.temp }}/d0352-generation-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Initialize generation evidence
         shell: bash
-        run: mkdir -p "$GENERATION_LOG_DIR"
+        run: |
+          log="$RUNNER_TEMP/d0352-generation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          printf 'GENERATION_LOG_DIR=%s\n' "$log" >> "$GITHUB_ENV"
+          mkdir -p "$log"
       - name: Check out event commit
         id: checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
