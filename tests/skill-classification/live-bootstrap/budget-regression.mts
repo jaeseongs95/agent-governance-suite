@@ -177,7 +177,7 @@ if (process.argv[4] === "worker") {
       const preservedPilotPico = 5734722000n;
       assert.equal(aggregate.budget!.priorRunUnknownReservedUsd, Number(preservedPilotPico) / 1e12);
       assert.equal(aggregate.budget!.accountBalanceUsd, null);
-      if (preservedPilotPico + all <= 150000000000n) {
+      if (preservedPilotPico + fullValidatedPico <= 150000000000n) {
         assert.equal(aggregateChecked.status, "READY_FOR_OPERATOR_DISPATCH");
         const aggregatePico = assertFrozenReservations(aggregateChecked.requestReservations);
         assert.equal(aggregatePico, fullValidatedPico);
