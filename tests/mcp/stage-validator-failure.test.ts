@@ -73,6 +73,13 @@ describe.each(targets)("$name stage validator process failures keep their cause"
       : {step: "terminated", signal: "SIGKILL"});
   });
 
+  test("a timed-out validator is reported as a spawn timeout", () => {
+    const error = caught(() => run(fakeRoot(script, "setTimeout(() => {}, 12_000);")));
+    expect(error.code).toBe("GATE_FAILED");
+    expect(error.message).not.toContain("bounded JSON");
+    expect(error.details).toMatchObject({step: "spawn", errno: "ETIMEDOUT"});
+  }, 20_000);
+
   test("a successful exit with non-JSON output is still INVALID_INPUT", () => {
     const error = caught(() => run(fakeRoot(script, "console.log('not json');")));
     expect(error.code).toBe("INVALID_INPUT");

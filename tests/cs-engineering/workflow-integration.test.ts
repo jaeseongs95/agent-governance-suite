@@ -107,7 +107,9 @@ for (const mutation of ["missing-bundle", "stale-task", "raw-evidence", "provide
     if(mutation === "NOT_RUN-as-PASS") {const report=read(f.root,"review.json");report.verificationResults[0].executionStatus="NOT_RUN";write(f.root,"review.json",report);f.sync();Object.assign(stage,result(f));}
     if(mutation === "manifest-traversal") {const manifest=read(f.root,"stage-bundle.json");manifest.review.path="../secret";write(f.root,"stage-bundle.json",manifest);stage.output.artifacts[0]!.digest=digest(f.root,"stage-bundle.json");}
     if(mutation === "candidate-target") stage.output.artifacts[0]!.targetDigest="sha256:"+"0".repeat(64);
-    expect(f.service.recordStageResult(stage).ok).toBe(false);
+    const recorded=f.service.recordStageResult(stage);
+    expect(recorded.ok).toBe(false);
+    if(mutation === "raw-evidence") expect(recorded.error?.code).toBe("INTEGRITY_FAILED");
     expect(f.service.getWorkflowStatus(f.receipt.runId).data?.revision).toBe(0);
   });
 }
