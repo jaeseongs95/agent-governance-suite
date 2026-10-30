@@ -1,0 +1,161 @@
+{
+  "schemaVersion": "D0352IsolatedHeadlessBinding.v1",
+  "status": "PREPARED_NOT_EXECUTED_NOT_AUDITED",
+  "candidateCommit": "94f4bb42353bde3be9a653e80070c5421c6c801f",
+  "candidateTree": "73fe2528c9c967bf3d7b495f8ef6bd5b2f687265",
+  "sourceRoot": "D:\\codex\\리드\\work\\d0352-isolated-generated-r01",
+  "manifest": {
+    "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\PREPARATION.safe.json",
+    "bytes": 45507,
+    "sha256": "ad365aa0321c5c4cf1033223dd4bfb9a770c6db288c7d59ec9057cfd7feb17e6"
+  },
+  "action": {
+    "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\ACTION.safe.json",
+    "bytes": 377,
+    "sha256": "62f9aebba0d9847163174bda09f847a6df591b574c44243cf3b39c525146cee0"
+  },
+  "helper": {
+    "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\Invoke-R11Once.ps1",
+    "bytes": 23134,
+    "sha256": "1d4b0acc6153e165f72a67275ca00873adc873c4911c6bb593d3b902b4e18f2c"
+  },
+  "wrapper": {
+    "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\Start-Headless.ps1",
+    "bytes": 11599,
+    "sha256": "08a4b205e4b0f117cc6e7a0bf62cad0a468d0af3f9092838d639c3123b46e75a"
+  },
+  "launcher": {
+    "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\Launch-Headless.vbs",
+    "bytes": 1704,
+    "sha256": "99f3476f318b947900a86ff4da1a9402e2d0cbcb12de03cbf91641e4fb176222"
+  },
+  "guard": {
+    "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\Headless-Guard.ps1",
+    "bytes": 11330,
+    "sha256": "c7dd13e400024e0cd641c8c83be07183ea4849945bbff50d2fe921379f2f07b0"
+  },
+  "blockSha256": {
+    "APPLY": "56c1169901d22a80bebb8503a3b7a14d445f59ff6f5d69429e827c455efd348f",
+    "RESTORE": "becad33ad0e83f5005efe9334965794212681759d943b150e2be3d5eecd15529"
+  },
+  "files": [
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\ACTION.safe.json",
+      "bytes": 377,
+      "sha256": "62f9aebba0d9847163174bda09f847a6df591b574c44243cf3b39c525146cee0"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\AFTER-AUTHORIZATION-COMMANDS.txt",
+      "bytes": 22824,
+      "sha256": "fe2dce182edb2ddb4be0b40d78c7c4a7d39f39f256384b9ab00e6c280aaf56d4"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\AUTHORITY-COMPARISON.safe.json",
+      "bytes": 2830,
+      "sha256": "3d0db65ed501626b681ece57998166465353eaead1e13225a78a786e5cf4daf3"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\Check-R04Receipt.ps1",
+      "bytes": 1783,
+      "sha256": "60964997e46e1c1c7a9e69b0750ef3371cd86ee8f101da6d95a8867a4d79293a"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\Collect-R04Preparation-r02.ps1",
+      "bytes": 2202,
+      "sha256": "efe394a7afe026326bfb1a5754dd3bc855a6e33b651a0f0442ac080e36aebb8d"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\Collect-R04Preparation.ps1",
+      "bytes": 9753,
+      "sha256": "cc2168a9e7bcef90ddfac51155fc7b039d92e54375b3d5989c3e270723cd6106"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\consumer-baseline.safe.json",
+      "bytes": 13786,
+      "sha256": "11b5c5479df0d544432c49fa452b61b8053f72eaed8246a107d034e7ae5a0801"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\Headless-Guard.ps1",
+      "bytes": 11330,
+      "sha256": "c7dd13e400024e0cd641c8c83be07183ea4849945bbff50d2fe921379f2f07b0"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\Invoke-R11Once.ps1",
+      "bytes": 23134,
+      "sha256": "1d4b0acc6153e165f72a67275ca00873adc873c4911c6bb593d3b902b4e18f2c"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\Launch-Headless.vbs",
+      "bytes": 1704,
+      "sha256": "99f3476f318b947900a86ff4da1a9402e2d0cbcb12de03cbf91641e4fb176222"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\preflight-source\\runtime\\schema-validation.mjs",
+      "bytes": 156193,
+      "sha256": "04ff3beef504afe8afd2e90213098e72cea7943af0e1a2438f6a896e1c525d75"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\preflight-source\\skills\\mutation-risk-preflight\\contracts\\mutation-intent.v1.schema.json",
+      "bytes": 5485,
+      "sha256": "eaf3bc82d4d18372544e54f39cfe0d6214ade77e983589de62789828207b8dc6"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\preflight-source\\skills\\mutation-risk-preflight\\contracts\\mutation-preflight-report.v1.schema.json",
+      "bytes": 3504,
+      "sha256": "4e6f86d0baf672ef0bd83a4a9c592bd8ec5dcab1f342071372908f52e5217fde"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\preflight-source\\skills\\mutation-risk-preflight\\scripts\\evaluate-preflight.mjs",
+      "bytes": 17695,
+      "sha256": "9ff002852bc34338ed94fdf0e9c5060cdb92f602961d2a959237d365ffeae40c"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\preflight-source\\skills\\mutation-risk-preflight\\scripts\\schema-validation.mjs",
+      "bytes": 683,
+      "sha256": "4cce85dc38941f216349a8ac89fa230f2d40ea55d05ccb17b3d030bdd7a141d2"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\preflight-source\\skills\\mutation-risk-preflight\\scripts\\verify-preflight-receipt.mjs",
+      "bytes": 3507,
+      "sha256": "0cb206aff307cc5f704067db5aee4a03acec7e239072418cc09694aa59746bae"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\PREPARATION.safe.json",
+      "bytes": 45507,
+      "sha256": "ad365aa0321c5c4cf1033223dd4bfb9a770c6db288c7d59ec9057cfd7feb17e6"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\Prepare-R04Current-r02.mjs",
+      "bytes": 7431,
+      "sha256": "3fbf21cd88377e65d251bbe75877f7e02ea4d361914a417365a6161d21263723"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\Start-Headless.ps1",
+      "bytes": 11599,
+      "sha256": "08a4b205e4b0f117cc6e7a0bf62cad0a468d0af3f9092838d639c3123b46e75a"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\검증범위.safe.json",
+      "bytes": 1397,
+      "sha256": "aa88ddfcfa00e220ed2b49508fe5ccd369ef4d6a7e15fab79c764d751c0d1f87"
+    },
+    {
+      "path": "D:\\codex\\개발자\\work\\d0352-isolated-install-r01\\executor-r01\\안내.md",
+      "bytes": 1033,
+      "sha256": "23e3ba43420c4b12d7f5d34008fa0bf679117f75287c9d8e56312f5984b18014"
+    }
+  ],
+  "counts": {
+    "targets": 16,
+    "artifacts": 11,
+    "configuration": 7,
+    "readOnly": 23
+  },
+  "priorCodeReference": {
+    "path": "D:\\codex\\개발자\\work\\three-host-856-preparation-r01\\executor-r07\\FINAL-BINDING.safe.json",
+    "bytes": 31038,
+    "sha256": "4158a5f5d108d1a0de69037fd7ffbc0cd5f25096aac269acc88ea0dbb8a332e0"
+  },
+  "priorReceiptReused": false,
+  "remaining": "리드가 최종16경로에 결속한 별도 독립감사와 직전 실행조건을 연결한다. 실행·설치·앱종료는 하지 않았다."
+}

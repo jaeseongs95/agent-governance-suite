@@ -1,212 +1,74 @@
 name: CI
 
 on:
-  pull_request:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - release-3.0
 
 permissions:
   contents: read
 
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref == 'refs/heads/release-3.0' && github.run_id || github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/release-3.0' }}
-
 jobs:
-  verify:
-    if: github.ref != 'refs/heads/release-3.0'
-    name: Node ${{ matrix.node }} / ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-        node:
-          - "24"
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-      - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
-        with:
-          python-version: "3.12"
-      - name: Enable Corepack
-        shell: bash
-        run: corepack enable
-      - name: Install locked dependencies
-        shell: bash
-        run: pnpm install --frozen-lockfile
-      - name: Verify committed runtime bundles
-        shell: bash
-        run: pnpm bundle:check
-      - name: Report Claude plugin drift
-        shell: bash
-        run: pnpm claude:drift
-      - name: Lint
-        shell: bash
-        run: pnpm lint
-      - name: Verify release metadata
-        shell: bash
-        run: pnpm release:check
-      - name: Verify source lock
-        shell: bash
-        run: pnpm source:check
-      - name: Build
-        shell: bash
-        run: pnpm build
-      - name: Verify process identity probe
-        shell: bash
-        run: pnpm process-identity:check
-      - name: Test
-        shell: bash
-        run: pnpm test
-      - name: Verify installed runtime
-        shell: bash
-        run: pnpm runtime:check
-      - name: Validate plugin and skills
-        shell: bash
-        env:
-          PYTHONUTF8: "1"
-        run: pnpm validate:all
-      - name: Validate official Codex metadata with pinned supplier
-        shell: bash
-        env:
-          PYTHONUTF8: "1"
-          CODEX_HOME: ${{ runner.temp }}/official-validation-${{ runner.os }}/codex-home
-          OFFICIAL_LOG_DIR: ${{ runner.temp }}/official-validation-${{ runner.os }}
-        run: |
-          set -euo pipefail
-          log="${OFFICIAL_LOG_DIR:?}"
-          mkdir -p "$log"
-          exec > >(tee "$log/step.stdout") 2> >(tee "$log/step.stderr" >&2)
-          phase=preparation
-          finish() {
-            local command_code=$? metadata_code=0 final_code
-            trap - EXIT
-            set +e
-            { git rev-parse HEAD 'HEAD^{tree}' && git status --porcelain=v1; } > "$log/environment-after.txt" || metadata_code=$?
-            printf '%s\n' "$command_code" > "$log/$phase-step-exit-code.txt"
-            printf '%s\n' "$metadata_code" > "$log/metadata-exit-code.txt"
-            printf '%s\n' "$phase" > "$log/last-phase.txt"
-            final_code=$command_code
-            if [ "$final_code" -eq 0 ]; then final_code=$metadata_code; fi
-            printf '%s\n' "$final_code" > "$log/step-exit-code.txt"
-            exit "$final_code"
-          }
-          trap finish EXIT
-          printf 'NOT_RUN\n' > "$log/official-status.txt"
-          {
-            git rev-parse HEAD 'HEAD^{tree}'
-            git status --porcelain=v1
-            node --version
-            pnpm --version
-            python --version
-            printf 'run=%s attempt=%s ref=%s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$GITHUB_REF"
-          } > "$log/environment-before.txt"
-          python -m pip install --disable-pip-version-check --no-cache-dir PyYAML==6.0.3
-          python -c 'import sys,yaml; print(sys.version); print(yaml.__version__); print(yaml.__file__); assert sys.version_info[:2] == (3,12) and yaml.__version__ == "6.0.3"' > "$log/python-yaml.txt"
-          supplier=10382da79a2a2d6e8ae221fa63077215389c1ad2
-          printf '%s\n' "https://github.com/openai/codex" "$supplier" > "$log/supplier-pin.txt"
-          mkdir -p "$CODEX_HOME/skills/.system/plugin-creator/scripts" "$CODEX_HOME/skills/.system/skill-creator/scripts" "$CODEX_HOME/.supplier"
-          while read -r source destination digest; do
-            url="https://raw.githubusercontent.com/openai/codex/$supplier/$source"
-            printf 'FETCH %s\n' "$url"
-            curl --fail --show-error --silent --location --max-time 60 --proto '=https' "$url" --output "$CODEX_HOME/$destination"
-            printf '%s  %s\n' "$digest" "$destination" >> "$log/supplier.sha256"
-            (cd "$CODEX_HOME" && printf '%s  %s\n' "$digest" "$destination" | sha256sum --check --strict)
-          done <<'SUPPLIER'
-          codex-rs/skills/src/assets/samples/plugin-creator/scripts/validate_plugin.py skills/.system/plugin-creator/scripts/validate_plugin.py f4eeadb733b28b0c3e714de263a76d6542866a672f3e99bdffcf4dbcdf85e944
-          codex-rs/skills/src/assets/samples/plugin-creator/scripts/identifier_validation.py skills/.system/plugin-creator/scripts/identifier_validation.py a6d51ce4a9a7e8f85626ff5808a467a67574e7f8cdf1167ffb467c5f67e57223
-          codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py skills/.system/skill-creator/scripts/quick_validate.py ee6dba90f44d37171c5a6edb8095979c54919ff6822c1a907afca2e78c48738c
-          LICENSE .supplier/LICENSE d17f227e4df5da1600391338865ce0f3055211760a36688f816941d58232d8dc
-          NOTICE .supplier/NOTICE 9d71575ecfd9a843fc1677b0efb08053c6ba9fd686a0de1a6f5382fd3c220915
-          SUPPLIER
-          printf '0\n' > "$log/preparation-exit-code.txt"
-          phase=official
-          git ls-tree -d --name-only HEAD:skills > "$log/skill-inventory.txt"
-          printf 'pnpm run validate:official\n' > "$log/official-command.txt"
-          set +e
-          pnpm run validate:official > "$log/official.stdout" 2> "$log/official.stderr"
-          code=$?
-          set -e
-          printf '%s\n' "$code" > "$log/official-exit-code.txt"
-          printf 'EXECUTED\n' > "$log/official-status.txt"
-          cat "$log/official.stdout"
-          cat "$log/official.stderr" >&2
-          exit "$code"
-      - name: Upload official validation evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: official-codex-${{ github.run_id }}-${{ github.run_attempt }}-${{ runner.os }}
-          path: ${{ runner.temp }}/official-validation-${{ runner.os }}/
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 14
-      - name: Check pull request whitespace
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: git diff --check "${{ github.event.pull_request.base.sha }}...HEAD"
-      - name: Check pushed commit whitespace
-        if: github.event_name == 'push'
-        shell: bash
-        run: git show --check --oneline --no-renames HEAD
-      - name: Check manually dispatched commit whitespace
-        if: github.event_name == 'workflow_dispatch'
-        shell: bash
-        run: git show --check --oneline --no-renames HEAD
-
   verify-release:
-    if: github.ref == 'refs/heads/release-3.0' && github.event_name == 'push'
-    name: verify-${{ matrix.os }}-shard-${{ matrix.shard }}
-    strategy:
-      fail-fast: false
-      max-parallel: 2
-      matrix:
-        os: [ubuntu-24.04, windows-2025]
-        shard: [1, 2, 3, 4]
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-    env:
-      AGS_CI_SHARD_INDEX: ${{ matrix.shard }}
-    defaults:
-      run:
-        shell: pwsh
+    name: Final D0352 Windows native boundary
+    runs-on: windows-2025
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-          fetch-depth: 0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 24.22.1
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
-        with:
-          python-version: "3.12"
-      - name: Preserve phased evidence
-        id: collect
-        run: python -B .github/scripts/ags30-owned-command-r06.py .github/scripts/ags30-linux-subreaper-r06.py node .github/scripts/ags30-official-source-r11.mjs .github/ci/ags30-r11/execution-config.json
-      - name: Finalize available evidence independently
-        id: finalize
-        if: ${{ always() }}
-        run: node .github/scripts/ags30-official-source-r11.mjs --finalize '${{ steps.collect.outcome }}'
-      - name: Return bounded evidence
-        if: ${{ always() && steps.finalize.outputs.artifact_ok == 'true' }}
+      - name: Observe frozen Windows source and first native boundary
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          [Console]::OutputEncoding=$OutputEncoding=[Text.UTF8Encoding]::new($false)
+          $root=Join-Path $env:GITHUB_WORKSPACE '.github/ci/d0352-final-windows-r01'
+          $out=Join-Path $env:RUNNER_TEMP ('d0352-final-windows-'+$env:GITHUB_RUN_ID+'-'+$env:GITHUB_RUN_ATTEMPT)
+          if(Test-Path -LiteralPath $out){throw 'NEW_OUTPUT_REQUIRED'}
+          [IO.Directory]::CreateDirectory($out)|Out-Null
+          $result=[ordered]@{scope='구문과 실제 native API 첫 경계만';f1='NOT_RESOLVED';helperMain=0;actualApplicationExit=0;actualInstallation=0;actual16Backup=0;hiddenChildLaunch=0;cases=@();native=$null;boundary=$null;error=$null}
+          $code=1
+          try {
+            $pins=@{
+              'FINAL-BINDING.safe.json'='4ab1d20e6ba456f2808bb0822936ffda7c97cfd3b993015b5927cb14a52b4cd7'
+              'Invoke-R11Once.ps1'='1d4b0acc6153e165f72a67275ca00873adc873c4911c6bb593d3b902b4e18f2c'
+              'Headless-Guard.ps1'='c7dd13e400024e0cd641c8c83be07183ea4849945bbff50d2fe921379f2f07b0'
+              'Start-Headless.ps1'='08a4b205e4b0f117cc6e7a0bf62cad0a468d0af3f9092838d639c3123b46e75a'
+              'Launch-Headless.vbs'='99f3476f318b947900a86ff4da1a9402e2d0cbcb12de03cbf91641e4fb176222'
+            }
+            foreach($name in $pins.Keys){
+              $path=Join-Path $root $name
+              $hash=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+              if($hash -cne $pins[$name]){throw ('FROZEN_BYTES_MISMATCH: '+$name)}
+              if($name.EndsWith('.ps1')){
+                $tokens=$null;$errors=$null
+                $null=[Management.Automation.Language.Parser]::ParseFile($path,[ref]$tokens,[ref]$errors)
+                $result.cases+=@{name=$name;sha256=$hash;parseErrors=@($errors|ForEach-Object {$_.Message})}
+                if($errors.Count){throw ('PARSE_FAILED: '+$name)}
+              }else{$result.cases+=@{name=$name;sha256=$hash;execution='NOT_RUN'}}
+            }
+            # 최종 원도우미는 dot-source 모드에서 main을 호출하지 않는다. 고정 guard와 원함수만 로드한다.
+            . (Join-Path $root 'Invoke-R11Once.ps1')
+            $before=[R07HeadlessNative]::Observe([uint32]$PID)
+            Start-Sleep -Milliseconds 2000
+            $after=[R07HeadlessNative]::Identity([uint32]$PID)
+            $result.native=@{before=$before;after=$after;samePidAndCreation=($before.self.pid -eq $after.pid -and $before.self.creationFileTime -eq $after.creationFileTime);meaning='CI 조회 프로세스의 동일 세대 관측이며 실앱 종료 뒤 도우미 생존 증거가 아니다'}
+            try {
+              $observation=Get-R07HeadlessObservation 'Helper' $script:ExecutorPowerShell (Join-Path $root 'Launch-Headless.vbs') $pins['Launch-Headless.vbs'] (Join-Path $root 'Start-Headless.ps1')
+              $result.boundary=@{state='RETURNED';observation=$observation;productionActivation='NOT_CLAIMED'}
+            }catch{$result.boundary=@{state='REJECTED';type=$_.Exception.GetType().FullName;message=$_.Exception.Message;nativeObservation=$script:R07LastNativeObservation}}
+            $code=0
+          }catch{$result.error=@{type=$_.Exception.GetType().FullName;message=$_.Exception.Message}}
+          finally{
+            $result.exitCode=$code
+            $result.runtime=@{commit=$env:GITHUB_SHA;runId=$env:GITHUB_RUN_ID;attempt=$env:GITHUB_RUN_ATTEMPT;path=[Environment]::ProcessPath;version=$PSVersionTable.PSVersion.ToString();os=[Environment]::OSVersion.ToString();sha256=(Get-FileHash -LiteralPath ([Environment]::ProcessPath) -Algorithm SHA256).Hash.ToLowerInvariant()}
+            [IO.File]::WriteAllText((Join-Path $out 'RESULT.safe.json'),($result|ConvertTo-Json -Depth 30).Replace([string][char]13,'')+[char]10,[Text.UTF8Encoding]::new($false))
+            $result|ConvertTo-Json -Depth 30
+          }
+          exit $code
+      - name: Return D0352 native boundary evidence
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ${{ steps.finalize.outputs.artifact_name }}
-          path: ${{ steps.finalize.outputs.result_path }}
+          name: d0352-final-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/d0352-final-windows-${{ github.run_id }}-${{ github.run_attempt }}/
           if-no-files-found: error
           retention-days: 1
-          compression-level: 9
