@@ -241,10 +241,23 @@ export function loadCurrentSourceBindings(repo: string) {
     }
     files.push(file);
   }
+  const successorPath = resolve(repo, "tests/skill-classification/fixtures.live-host-boundaries-source-successor.json");
+  const successorBytes = readFileSync(successorPath);
+  if (hashBytes(successorBytes) !== "sha256:aa7ca549c45d5053d4c93ce849ee780f06f25affb89fb092fe8db761cd479673") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const successor = JSON.parse(successorBytes.toString("utf8")) as {
+    revision: string;
+    frozenPredecessor: {path: string; bytes: number; digest: string};
+    bindings: typeof manifest.bindings;
+  };
+  if (resolve(repo, successor.frozenPredecessor.path) !== manifestPath || bytes.length !== successor.frozenPredecessor.bytes || hashBytes(bytes) !== successor.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const currentManifest = {...manifest, revision: successor.revision, bindings: [...manifest.bindings, ...successor.bindings]};
+  files.push(successorPath);
   return {
-    manifest, files, digest: hashBytes(bytes),
+    manifest: currentManifest, files, digest: hashBytes(successorBytes),
     resolveDigest(sourcePath: string, digest: string): string {
-      const binding = manifest.bindings.find(row => row.path === sourcePath);
+      const binding = currentManifest.bindings.find(row => row.path === sourcePath);
       if (!binding) return digest;
       if (binding.previousDigest !== digest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
       return binding.digest;

@@ -1,0 +1,167 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "live-host-boundaries-source-binding-r12",
+  "role": "source-binding-only-not-evaluation-or-install-authority",
+  "sourceBaseRevision": "da970747e70da326bf153c2705bc3d60721c33ee",
+  "sourceSnapshot": "기준 커밋과 현재 작업트리의 두 원문 바이트를 대조한 묶음이며 후속 커밋 또는 실측 결과를 주장하지 않는다.",
+  "frozenPredecessor": {
+    "path": "tests/skill-classification/fixtures.unavailable-source-successor.json",
+    "bytes": 8119,
+    "digest": "sha256:bd4a64b9079fe828fc6ae45fb6c41b09e8df03767ed5b6d55331e53f09343596"
+  },
+  "bindings": [
+    {
+      "path": "skills/blocker-diagnostician/classification.json",
+      "previousDigest": "sha256:adc6f1a1379db237f9a12dee058818a17398555aab7ab2ba0e029b72393dd2a7",
+      "digest": "sha256:3c18e212dfa724027c245ec1692cd39addd12e762cc635f3cb9c5cf09dc73eec",
+      "bytes": 2685
+    },
+    {
+      "path": "skills/blocker-diagnostician/references/entry-details.md",
+      "previousDigest": "sha256:440ba2e05abdebdb4cb92ffdb310824d32dc0905b1a4c03345c166ecf0f62e32",
+      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01",
+      "bytes": 4847
+    }
+  ],
+  "classificationReferences": 11,
+  "spanPreservation": {
+    "baselineCommit": "da970747e70da326bf153c2705bc3d60721c33ee",
+    "unchangedClassificationFields": true,
+    "spans": [
+      {
+        "group": "applicability",
+        "index": 0,
+        "path": "skills/blocker-diagnostician/SKILL.md",
+        "previousStartLine": 3,
+        "previousEndLine": 3,
+        "startLine": 3,
+        "endLine": 3,
+        "bytes": 151,
+        "digest": "sha256:ea5e8578508df884ed4d94bb3a5cd29fe8480cac26b47618d5c90a64e0b72c5f",
+        "previousStartByte": 0,
+        "startByte": 0,
+        "previousEndByte": 151,
+        "endByte": 151
+      },
+      {
+        "group": "applicability",
+        "index": 1,
+        "path": "skills/blocker-diagnostician/SKILL.md",
+        "previousStartLine": 9,
+        "previousEndLine": 16,
+        "startLine": 9,
+        "endLine": 16,
+        "bytes": 861,
+        "digest": "sha256:6e8d133ee94d3bf00b6329680f43173536046166ab1b3f999d56e0cc77c193ef"
+      },
+      {
+        "group": "applicability",
+        "index": 2,
+        "path": "skills/blocker-diagnostician/references/entry-details.md",
+        "previousStartLine": 27,
+        "previousEndLine": 27,
+        "startLine": 29,
+        "endLine": 29,
+        "bytes": 9,
+        "digest": "sha256:bc2316d6660c77ec320d1b3d33da0e5b320e0940d1d0feef3d88fdb35ea10c10"
+      },
+      {
+        "group": "exclusions",
+        "index": 0,
+        "path": "skills/blocker-diagnostician/SKILL.md",
+        "previousStartLine": 3,
+        "previousEndLine": 3,
+        "startLine": 3,
+        "endLine": 3,
+        "bytes": 124,
+        "digest": "sha256:e1906afcda23c437132b325fdc7a744f17a0d51f1ab3ff3b854e25d62a8bcd9b",
+        "previousStartByte": 152,
+        "startByte": 152,
+        "previousEndByte": 276,
+        "endByte": 276
+      },
+      {
+        "group": "exclusions",
+        "index": 1,
+        "path": "skills/blocker-diagnostician/SKILL.md",
+        "previousStartLine": 17,
+        "previousEndLine": 17,
+        "startLine": 17,
+        "endLine": 17,
+        "bytes": 120,
+        "digest": "sha256:884d69e5350b0609acdfe138830d0a09a9208edb0df39f81b345f945bd7752d5"
+      },
+      {
+        "group": "exclusions",
+        "index": 2,
+        "path": "skills/blocker-diagnostician/SKILL.md",
+        "previousStartLine": 18,
+        "previousEndLine": 18,
+        "startLine": 18,
+        "endLine": 18,
+        "bytes": 121,
+        "digest": "sha256:1ebf8eda34de1ef0f4ba948027fafe3cebfd64630e364514c03ed17a439cb175"
+      },
+      {
+        "group": "exclusions",
+        "index": 3,
+        "path": "skills/blocker-diagnostician/references/entry-details.md",
+        "previousStartLine": 24,
+        "previousEndLine": 24,
+        "startLine": 26,
+        "endLine": 26,
+        "bytes": 833,
+        "digest": "sha256:d23f3f07ccaa4c84e81f82f9710d021b430ab00d3f1d20f0856fb7df9d608a38"
+      },
+      {
+        "group": "exclusions",
+        "index": 4,
+        "path": "skills/blocker-diagnostician/references/entry-details.md",
+        "previousStartLine": 29,
+        "previousEndLine": 29,
+        "startLine": 31,
+        "endLine": 31,
+        "bytes": 85,
+        "digest": "sha256:0b0c3d565e3eafc198f0749f3164ea25f0a1297a6cc29aea868a293dbd7f7ad4"
+      },
+      {
+        "group": "exclusions",
+        "index": 5,
+        "path": "skills/blocker-diagnostician/references/entry-details.md",
+        "previousStartLine": 30,
+        "previousEndLine": 30,
+        "startLine": 32,
+        "endLine": 32,
+        "bytes": 106,
+        "digest": "sha256:17e77d8f7d514ae8b5a7e6199c23f7ae7c2fe1bd9fc032f101dd581d02639276"
+      },
+      {
+        "group": "exclusions",
+        "index": 6,
+        "path": "skills/blocker-diagnostician/references/entry-details.md",
+        "previousStartLine": 31,
+        "previousEndLine": 31,
+        "startLine": 33,
+        "endLine": 33,
+        "bytes": 73,
+        "digest": "sha256:69be2202e8fa155194c09fd4f929a17fc5cd3c4927671c837c0bbbd08293c626"
+      },
+      {
+        "group": "exclusions",
+        "index": 7,
+        "path": "skills/blocker-diagnostician/references/entry-details.md",
+        "previousStartLine": 32,
+        "previousEndLine": 32,
+        "startLine": 34,
+        "endLine": 34,
+        "bytes": 405,
+        "digest": "sha256:dc804d8e16a7a1e5c253cfd5b64d3edecb26851766737a08c60f904ec32ca121"
+      }
+    ]
+  },
+  "fixtureFileRewritten": false,
+  "labelChanges": [],
+  "priceAndBudgetChanges": [],
+  "actualWireMeasurement": "NOT_RUN",
+  "modelBehavior": "NOT_RUN"
+}
