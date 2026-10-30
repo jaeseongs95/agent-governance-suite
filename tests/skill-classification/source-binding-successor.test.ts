@@ -3,8 +3,9 @@ import {readFileSync} from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
-import {oracleDigest} from "./evaluation.js";
+import {oracleDigest, loadCurrentSourceBindings} from "./evaluation.js";
 const root = fileURLToPath(new URL("../../", import.meta.url));
+const currentSourceBinding = loadCurrentSourceBindings(root);
 const current = JSON.parse(readFileSync(new URL("./fixtures.json", import.meta.url), "utf8"));
 const successor = JSON.parse(readFileSync(new URL("./fixtures.source-successor.json", import.meta.url), "utf8"));
 const hash = (bytes: string | Buffer) => "sha256:" + createHash("sha256").update(bytes).digest("hex");
@@ -112,7 +113,7 @@ it("preserves predecessor history and all frozen 39/18/21 semantics in a distinc
     expect(r09.sourceBindings.find((current: {path: string}) => current.path === binding.path)?.previousDigest).toBe(binding.digest);
   }
   for (const binding of r09.sourceBindings) {
-    expect(hash(readFileSync(path.join(root, binding.path)))).toBe(binding.digest);
+    expect(hash(readFileSync(path.join(root, binding.path)))).toBe(currentSourceBinding.resolveDigest(binding.path, binding.digest));
   }
   expect(r06.midtaskSourceSuccessor.predecessor).toEqual({
     gitRevision: "45556669124efc64151be21be9958463e1f18d40",
@@ -142,7 +143,48 @@ it("binds exactly the nine changed skill policy sources across global and per-ca
   expect(references).toBe(58);
   expect(references).toBe(successor.reboundReferences);
   for (const binding of bindings) {
-    expect(hash(readFileSync(path.join(root, binding.path)))).toBe(binding.digest);
+    expect(hash(readFileSync(path.join(root, binding.path)))).toBe(currentSourceBinding.resolveDigest(binding.path, binding.digest));
     expect(binding.digest).not.toBe(binding.previousDigest);
+  }
+});
+
+it("binds the current unavailable-classification guidance while preserving the frozen r09 corpus and all 18 spans", () => {
+  const bytes = readFileSync(new URL("./fixtures.unavailable-source-successor.json", import.meta.url));
+  expect(hash(bytes)).toBe("sha256:bd4a64b9079fe828fc6ae45fb6c41b09e8df03767ed5b6d55331e53f09343596");
+  const binding = JSON.parse(bytes.toString("utf8"));
+  expect(binding.revision).toBe("orchestrator-unavailable-source-binding-r11");
+  expect(binding.role).toBe("source-binding-only-not-evaluation-or-install-authority");
+  expect(binding.fixtureFileRewritten).toBe(false);
+  expect(binding.frozenFixture.digest).toBe("sha256:947b92701fe640dfa94c532b92f82fb251e401e9b4b7c3616afe3d5c2e263065");
+  expect(binding.frozenFixture.oracleDigest).toBe("sha256:33ca2c2edc3b20d3287eddc45d907ac6bba0b742386aa7ab7a5516a30b6cd914");
+  expect(binding.frozenSidecar.digest).toBe("sha256:181f9d83c9e2b53e40a8e8fe5767018a798c2db8ced4e9a94109ce7b9503e61a");
+  expect(binding.bindings).toEqual([{"path": "skills/orchestrator/SKILL.md", "previousDigest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4", "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d", "bytes": 10169}, {"path": "skills/orchestrator/classification.json", "previousDigest": "sha256:44d66bda8d2c80034d3f881ff3f12de6d628bd4d8ce850fd49718df656aa95d2", "digest": "sha256:c43f537d2c0fff5c8f9f569cb224d8d6925076d271fdf47b78253bc41ba5ace4", "bytes": 4577}]);
+  expect(binding.fixtureReferences).toBe(17);
+  expect(binding.classificationReferences).toBe(18);
+  expect(binding.labelChanges).toEqual([]);
+  expect(binding.priceAndBudgetChanges).toEqual([]);
+  expect(binding.modelBehavior).toBe("NOT_RUN");
+  expect(binding.semanticProjectionDigest).toBe(semanticDigest);
+  expect(hash(JSON.stringify(semantics(current)))).toBe(semanticDigest);
+  for (const source of binding.bindings) {
+    const actual = readFileSync(path.join(root, source.path));
+    expect(actual.length).toBe(source.bytes);
+    expect(hash(actual)).toBe(source.digest);
+    expect(currentSourceBinding.resolveDigest(source.path, source.previousDigest)).toBe(source.digest);
+    expect(() => currentSourceBinding.resolveDigest(source.path, "sha256:" + "0".repeat(64))).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const metadata = JSON.parse(readFileSync(path.join(root, "skills/orchestrator/classification.json"), "utf8"));
+  const sourceLines = readFileSync(path.join(root, "skills/orchestrator/SKILL.md"), "utf8").split(/\r?\n/);
+  expect(binding.spanPreservation.spans).toHaveLength(18);
+  for (const span of binding.spanPreservation.spans) {
+    const actual = metadata[span.group][span.index];
+    expect(actual.startLine).toBe(span.startLine);
+    expect(actual.endLine).toBe(span.endLine);
+    const joined = Buffer.from(sourceLines.slice(actual.startLine - 1, actual.endLine).join("\n"));
+    expect(actual.startByte ?? 0).toBe(span.startByte);
+    expect(actual.endByte ?? joined.length).toBe(span.endByte);
+    const selected = joined.subarray(span.startByte, span.endByte);
+    expect(selected.length).toBe(span.bytes);
+    expect(hash(selected)).toBe(span.digest);
   }
 });

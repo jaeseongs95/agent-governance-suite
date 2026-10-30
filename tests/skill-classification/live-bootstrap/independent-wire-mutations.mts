@@ -27,7 +27,7 @@ try {
   await cp(path.join(repo, "skills"), path.join(root, "skills"), {recursive:true});
   await cp(path.join(repo, "mcp-server/src"), path.join(root, "mcp-server/src"), {recursive:true});
   await mkdir(path.join(root, "tests/skill-classification/live-bootstrap"), {recursive:true});
-  for (const file of ["fixtures.json", "evaluation.ts"]) await cp(path.join(repo,"tests/skill-classification",file),path.join(root,"tests/skill-classification",file));
+  for (const file of ["fixtures.json", "evaluation.ts", "fixtures.source-successor.json", "fixtures.unavailable-source-successor.json"]) await cp(path.join(repo,"tests/skill-classification",file),path.join(root,"tests/skill-classification",file));
   for (const file of ["bootstrap.mts","prepared-fixture.mts","independent-wire-oracle.mts","dynamic-current-oracle.mts"]) await cp(path.join(directory,file),path.join(root,"tests/skill-classification/live-bootstrap",file));
   const checks: string[] = [];
   const runOracle = () => new Promise<{status: number | null; stderr: string}>((resolve, reject) => {

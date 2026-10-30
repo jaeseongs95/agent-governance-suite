@@ -86,6 +86,7 @@ it("accepts only exact successor bytes and rejects extra edits or unrelated path
     const current = Buffer.from(await read(relative));
     const bytes = readHistoricalSource(relative);
     if (!bytes.equals(current)) expect(matchesSkillPolicyWordingSuccessorBytes(relative, current)).toBe(true);
+    expect(matchesSkillPolicyWordingSuccessorBytes(relative, Buffer.concat([current, Buffer.from("\nextra")]))).toBe(false);
     expect(matchesPonytailPolicySuccessor(relative, bytes)).toBe(true);
     expect(matchesPonytailPolicySuccessor(relative, Buffer.concat([bytes, Buffer.from("\nextra")]))).toBe(false);
   }

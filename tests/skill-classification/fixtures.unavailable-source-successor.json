@@ -1,0 +1,262 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "orchestrator-unavailable-source-binding-r11",
+  "role": "source-binding-only-not-evaluation-or-install-authority",
+  "sourceBaseRevision": "73b0e01d87cffba5b87c407b960d8dcaed3a5d9d",
+  "frozenFixture": {
+    "path": "tests/skill-classification/fixtures.json",
+    "gitBlob": "67136c1f2ff6f06a2a7a2359a8c27d8400ce0a60",
+    "bytes": 142495,
+    "digest": "sha256:947b92701fe640dfa94c532b92f82fb251e401e9b4b7c3616afe3d5c2e263065",
+    "oracleDigest": "sha256:33ca2c2edc3b20d3287eddc45d907ac6bba0b742386aa7ab7a5516a30b6cd914"
+  },
+  "frozenSidecar": {
+    "path": "tests/skill-classification/fixtures.source-successor.json",
+    "gitBlob": "b00ad60a79413ced9ab90be00bade29b2f688d01",
+    "bytes": 43047,
+    "digest": "sha256:181f9d83c9e2b53e40a8e8fe5767018a798c2db8ced4e9a94109ce7b9503e61a"
+  },
+  "bindings": [
+    {
+      "path": "skills/orchestrator/SKILL.md",
+      "previousDigest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "bytes": 10169
+    },
+    {
+      "path": "skills/orchestrator/classification.json",
+      "previousDigest": "sha256:44d66bda8d2c80034d3f881ff3f12de6d628bd4d8ce850fd49718df656aa95d2",
+      "digest": "sha256:c43f537d2c0fff5c8f9f569cb224d8d6925076d271fdf47b78253bc41ba5ace4",
+      "bytes": 4577
+    }
+  ],
+  "fixtureReferences": 17,
+  "classificationReferences": 18,
+  "fixtureFileRewritten": false,
+  "semanticProjectionDigest": "sha256:9b9fe0389d497d4b25eac1998cb091d269e7612a92e57912a2cdc8279d8d6542",
+  "spanPreservation": {
+    "baselineCommit": "5381c32af21b4a5c8268ce16306bbb2800b78439",
+    "evidenceDigest": "sha256:0c809a9a5cb7feba9e560bb078d0d316a1992b6f06e3229d5ffc6fe585660a50",
+    "spans": [
+      {
+        "group": "applicability",
+        "index": 0,
+        "startLine": 3,
+        "endLine": 3,
+        "previousStartByte": 0,
+        "previousEndByte": 175,
+        "startByte": 0,
+        "endByte": 175,
+        "bytes": 175,
+        "digest": "sha256:f88eb817746394626cb0814490bbe3705339beabd0109762172ed965778f4fb5"
+      },
+      {
+        "group": "applicability",
+        "index": 1,
+        "startLine": 9,
+        "endLine": 11,
+        "previousStartByte": 0,
+        "previousEndByte": 246,
+        "startByte": 0,
+        "endByte": 246,
+        "bytes": 246,
+        "digest": "sha256:2d109565731ba9d2dcde265abf006d41a47ccde941b3991a8c48ef88ce6592ee"
+      },
+      {
+        "group": "applicability",
+        "index": 2,
+        "startLine": 13,
+        "endLine": 16,
+        "previousStartByte": 0,
+        "previousEndByte": 295,
+        "startByte": 0,
+        "endByte": 295,
+        "bytes": 295,
+        "digest": "sha256:7912eb9d3475d312f1cbdea7a0fc2fafacf22c7b5f2772b7dcd6559cf61b63c6"
+      },
+      {
+        "group": "applicability",
+        "index": 3,
+        "startLine": 16,
+        "endLine": 16,
+        "previousStartByte": 511,
+        "previousEndByte": 764,
+        "startByte": 511,
+        "endByte": 764,
+        "bytes": 253,
+        "digest": "sha256:0a114be40b3e31a3f018a5bbf80a8a77988b4a626372712c6ca9f8818a5f9d73"
+      },
+      {
+        "group": "applicability",
+        "index": 4,
+        "startLine": 18,
+        "endLine": 18,
+        "previousStartByte": 0,
+        "previousEndByte": 1707,
+        "startByte": 0,
+        "endByte": 1707,
+        "bytes": 1707,
+        "digest": "sha256:f264ed646eda5278c94d137230538cbcf2dccdac562488eba2ea9e9dcee19562"
+      },
+      {
+        "group": "applicability",
+        "index": 5,
+        "startLine": 20,
+        "endLine": 25,
+        "previousStartByte": 0,
+        "previousEndByte": 3717,
+        "startByte": 0,
+        "endByte": 3717,
+        "bytes": 3717,
+        "digest": "sha256:cc808c67ee85cb6dc1b54a3b520c480bd4667a57ff7b90f517cd55df4caae6b2"
+      },
+      {
+        "group": "applicability",
+        "index": 6,
+        "startLine": 26,
+        "endLine": 26,
+        "previousStartByte": 0,
+        "previousEndByte": 148,
+        "startByte": 0,
+        "endByte": 148,
+        "bytes": 148,
+        "digest": "sha256:b5729c403b1da6622d8ef6629cad51b1f2b2bd4aa7b33195652202cd6e5de1c4"
+      },
+      {
+        "group": "applicability",
+        "index": 7,
+        "startLine": 27,
+        "endLine": 27,
+        "previousStartByte": 0,
+        "previousEndByte": 86,
+        "startByte": 0,
+        "endByte": 86,
+        "bytes": 86,
+        "digest": "sha256:152a61ad72464affa284cd1247d2c28f1a02b74e20cb61b6511e2bf4826f44a9"
+      },
+      {
+        "group": "applicability",
+        "index": 8,
+        "startLine": 28,
+        "endLine": 28,
+        "previousStartByte": 0,
+        "previousEndByte": 363,
+        "startByte": 0,
+        "endByte": 363,
+        "bytes": 363,
+        "digest": "sha256:f83d658c80ba26b09d1d3fff869d6b1b82e34646f017efa79280036783c0571f"
+      },
+      {
+        "group": "applicability",
+        "index": 9,
+        "startLine": 29,
+        "endLine": 31,
+        "previousStartByte": 0,
+        "previousEndByte": 870,
+        "startByte": 0,
+        "endByte": 870,
+        "bytes": 870,
+        "digest": "sha256:fa256e8720074c99832f1dbda61990d887832b08a3ec6f06073023fcfd026980"
+      },
+      {
+        "group": "exclusions",
+        "index": 0,
+        "startLine": 3,
+        "endLine": 3,
+        "previousStartByte": 176,
+        "previousEndByte": 341,
+        "startByte": 176,
+        "endByte": 341,
+        "bytes": 165,
+        "digest": "sha256:2a9183abcb7f392a9b2bc53c8fd459a8e288679b5f4b5b6ea52df056260feea4"
+      },
+      {
+        "group": "exclusions",
+        "index": 1,
+        "startLine": 11,
+        "endLine": 11,
+        "previousStartByte": 220,
+        "previousEndByte": 313,
+        "startByte": 220,
+        "endByte": 313,
+        "bytes": 93,
+        "digest": "sha256:04b406d926af72f0a505cf6bc6edf49b53a955bb763ec2c7809c09fce776a3e8"
+      },
+      {
+        "group": "exclusions",
+        "index": 2,
+        "startLine": 16,
+        "endLine": 16,
+        "previousStartByte": 235,
+        "previousEndByte": 319,
+        "startByte": 235,
+        "endByte": 319,
+        "bytes": 84,
+        "digest": "sha256:7e9a4938e8f557cbfc35cf7fc16323ab8170e92293667e64aecd7724c262fe19"
+      },
+      {
+        "group": "exclusions",
+        "index": 3,
+        "startLine": 16,
+        "endLine": 16,
+        "previousStartByte": 320,
+        "previousEndByte": 510,
+        "startByte": 320,
+        "endByte": 510,
+        "bytes": 190,
+        "digest": "sha256:32f72efecb4ae1583dcb30875cc72f8336aba08a06331d413a1d6d60153f12bd"
+      },
+      {
+        "group": "exclusions",
+        "index": 4,
+        "startLine": 25,
+        "endLine": 25,
+        "previousStartByte": 240,
+        "previousEndByte": 317,
+        "startByte": 240,
+        "endByte": 317,
+        "bytes": 77,
+        "digest": "sha256:9b5ce14cbc847f7a32ba55c41c87eb3e8a6f6ad89cb9cfef572b4d71044e3d44"
+      },
+      {
+        "group": "exclusions",
+        "index": 5,
+        "startLine": 26,
+        "endLine": 26,
+        "previousStartByte": 149,
+        "previousEndByte": 344,
+        "startByte": 149,
+        "endByte": 344,
+        "bytes": 195,
+        "digest": "sha256:cb8e4e139874c97d0134e6d5ace2ca66742167bbc0287f2eed4e13a32cb9416e"
+      },
+      {
+        "group": "exclusions",
+        "index": 6,
+        "startLine": 27,
+        "endLine": 27,
+        "previousStartByte": 87,
+        "previousEndByte": 291,
+        "startByte": 87,
+        "endByte": 291,
+        "bytes": 204,
+        "digest": "sha256:173ac29462d5093e46bf0d25a145bf58720f5a398206001f2b9f3a10ffc647dd"
+      },
+      {
+        "group": "exclusions",
+        "index": 7,
+        "startLine": 28,
+        "endLine": 28,
+        "previousStartByte": 501,
+        "previousEndByte": 633,
+        "startByte": 725,
+        "endByte": 857,
+        "bytes": 132,
+        "digest": "sha256:ec22af1c01cb3b5b29098be6b1369e9a0475813d20200593eb2e0cc46caf3c56"
+      }
+    ]
+  },
+  "labelChanges": [],
+  "priceAndBudgetChanges": [],
+  "modelBehavior": "NOT_RUN"
+}
