@@ -38,7 +38,7 @@ export const WAKE_RETIRE_GRACE_MS = 10 * 60_000;
  * Reporting only: suppression, retirement and the injection expiry still follow WAKE_TTL_MS and the grace.
  */
 export const WAKE_OBSERVATION_WINDOW_MS = 60_000;
-const MESSAGE_SCHEMA_VERSION = 1;
+const MESSAGE_SCHEMA_VERSION = 2;
 const ACTIVE_WAKE_STATES = "('reserved', 'started', 'submitted', 'unknown')";
 const WAKE_STATE_CHECK = "CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted', 'expired-unobserved'))";
 const WAKE_COPY_COLUMNS = "nonce_digest, host, session_id, expires_at, consumed_at, state, nonce, instance_id, birth_generation, transport, relay_id, attempt_id, dispatch_epoch, retry_not_before, retry_count, started_at, outcome_at, observed_at, late_observed_at";
@@ -61,6 +61,13 @@ export interface SessionMessage {
   expiresAt: string;
   deliveryAttempt: number;
   firstDeliveredAt: string | null;
+  /** 이 인수 회차의 불투명 영수증. 이전 형식의 역사 행에는 없을 수 있다. */
+  claimReceipt?: string;
+}
+
+export interface MessageClaimReceipt {
+  messageId: string;
+  claimReceipt: string;
 }
 
 export type WakeVisibility = "silent" | "user-message" | "none";
@@ -273,6 +280,22 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       }
       if (!messageColumns.some((column) => column.name === "first_delivered_at")) {
         this.database.exec("ALTER TABLE messages ADD COLUMN first_delivered_at TEXT;");
+      }
+      if (!messageColumns.some(column => column.name === "legacy_claim_attempt")) {
+        this.database.exec("ALTER TABLE messages ADD COLUMN legacy_claim_attempt INTEGER NOT NULL DEFAULT 0;");
+        // 이전 때 이미 인수된 회차만 보존한다. 대기 행과 이후 재인수는 이 상한을 넘을 수 없다.
+        this.database.exec("UPDATE messages SET legacy_claim_attempt = delivery_attempts WHERE claimed_at IS NOT NULL;");
+      }
+      if (!messageColumns.some(column => column.name === "claim_receipt")) {
+        this.database.exec(`ALTER TABLE messages ADD COLUMN claim_receipt TEXT
+          CHECK ((claim_receipt IS NULL AND delivery_attempts <= legacy_claim_attempt) OR (claim_receipt IS NOT NULL AND delivery_attempts > 0
+            AND substr(claim_receipt, 1, instr(claim_receipt, ':') - 1) = CAST(delivery_attempts AS TEXT)));`);
+      }
+      if (!messageColumns.some(column => column.name === "acknowledgement_receipt")) {
+        // 기존 연결의 구 SQL도 새 회차를 영수증 없이 확정할 수 없게 한다.
+        this.database.exec(`ALTER TABLE messages ADD COLUMN acknowledgement_receipt TEXT
+          CHECK (acknowledged_at IS NULL OR claim_receipt IS NULL
+            OR coalesce(acknowledgement_receipt = claim_receipt, 0));`);
       }
       const presenceColumns = this.database.prepare("PRAGMA table_info(session_presence)").all() as Array<{ name: string }>;
       if (!presenceColumns.some((column) => column.name === "supported_injection")) {
@@ -550,7 +573,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       throw new Error(`maxBodyChars must be an integer from 1 to ${SESSION_MESSAGE_MAX_RESPONSE_BYTES}.`);
     }
     const now = iso(nowMs);
-    const statement = this.database.prepare(`UPDATE messages SET claimed_at = ?, claim_until = ?,
+    const statement = this.database.prepare(`UPDATE messages SET claimed_at = ?, claim_until = ?, claim_receipt = ?,
       delivery_attempts = delivery_attempts + 1,
       first_delivered_at = CASE WHEN delivery_attempts = 0 THEN COALESCE(first_delivered_at, ?) ELSE first_delivered_at END
       WHERE message_id = ? AND acknowledged_at IS NULL AND (claim_until IS NULL OR claim_until <= ?)`);
@@ -558,28 +581,29 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
           AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?)
         ORDER BY created_at ASC LIMIT ?`).all(target.host, target.sessionId, now, now, maxMessages) as Array<Record<string, unknown>>;
-    const selected: Array<Record<string, unknown>> = [];
+    const selected: Array<{ row: Record<string, unknown>; claimReceipt: string }> = [];
     const projected: SessionMessage[] = [];
     let bodyChars = 0;
     for (const row of rows) {
       const attempts = Number(row.delivery_attempts ?? 0);
       const firstDeliveredAt = row.first_delivered_at ? String(row.first_delivered_at) : attempts === 0 ? now : null;
-      const message = claimedMessage(row, attempts + 1, firstDeliveredAt);
+      const claimReceipt = `${attempts + 1}:${randomUUID()}`;
+      const message = { ...claimedMessage(row, attempts + 1, firstDeliveredAt), claimReceipt };
       const next = [...projected, message];
       if (bodyChars + message.body.length > maxBodyChars || claimResponseBytes(next) > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
         if (selected.length === 0) throw new Error("The next message exceeds the caller claim budget.");
         break;
       }
-      selected.push(row);
+      selected.push({ row, claimReceipt });
       projected.push(message);
       bodyChars += message.body.length;
     }
-    return selected.flatMap((row) => {
+    return selected.flatMap(({ row, claimReceipt }) => {
       const attempts = Number(row.delivery_attempts ?? 0);
       const leaseMs = Math.min(CLAIM_LEASE_MAX_MS, CLAIM_LEASE_BASE_MS * 2 ** Math.min(attempts, 4));
       const firstDeliveredAt = row.first_delivered_at ? String(row.first_delivered_at) : attempts === 0 ? now : null;
-      return statement.run(now, iso(nowMs + leaseMs), now, String(row.message_id), now).changes === 1
-        ? [claimedMessage(row, attempts + 1, firstDeliveredAt)]
+      return statement.run(now, iso(nowMs + leaseMs), claimReceipt, now, String(row.message_id), now).changes === 1
+        ? [{ ...claimedMessage(row, attempts + 1, firstDeliveredAt), claimReceipt }]
         : [];
     });
   }
@@ -747,29 +771,39 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  acknowledge(target: SessionIdentity, messageIds: string[], nowMs = Date.now()): number {
+  acknowledge(target: SessionIdentity, messageIds: string[], nowMs = Date.now(), claims: readonly MessageClaimReceipt[] = []): number {
     boundedIdentity(target);
     if (messageIds.length < 1 || messageIds.length > 50 || messageIds.some((id) => typeof id !== "string" || id.length > 128)) {
       throw new Error("messageIds must contain 1-50 bounded identifiers.");
     }
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acknowledge(target, messageIds, nowMs));
+    if (!Array.isArray(claims) || claims.length > 50) throw new Error("claims must contain at most 50 claim receipts.");
+    const receipts = new Map<string, string>();
+    for (const claim of claims) {
+      if (!claim || typeof claim.messageId !== "string" || !messageIds.includes(claim.messageId)
+        || typeof claim.claimReceipt !== "string" || !/^[1-9][0-9]{0,15}:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u.test(claim.claimReceipt)
+        || receipts.has(claim.messageId)) throw new Error("Each claim receipt must identify one requested message and its original claim.");
+      receipts.set(claim.messageId, claim.claimReceipt);
+    }
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acknowledge(target, messageIds, nowMs, claims));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    // A committed claim is required, including legacy claims without newer delivery metadata.
-    // Lease expiry governs redelivery, not whether a recipient may finish processing and ACK.
-    const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL
+    // 역사 행의 NULL 영수증만 이전 ACK 형식을 유지한다. 새 인수는 회차별 영수증을 요구한다.
+    // 임대 만료는 재전달 조건이며, 같은 원소유자의 늦은 ACK를 무효화하지 않는다.
+    const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL, acknowledgement_receipt = ?
       WHERE message_id = ? AND target_host = ? AND target_session_id = ?
-        AND claimed_at IS NOT NULL AND acknowledged_at IS NULL`);
+        AND claimed_at IS NOT NULL AND acknowledged_at IS NULL
+        AND ((claim_receipt IS NULL AND ? IS NULL) OR claim_receipt = ?)`);
     // Only the first ACK shortens the receipt, and min() never extends it.
     const receipt = this.database.prepare("UPDATE prepared_messages SET expires_at = min(expires_at, ?) WHERE message_id = ? AND receipt IS NOT NULL");
     let count = 0;
     return this.transaction(() => {
       for (const messageId of new Set(messageIds)) {
-        if (statement.run(iso(nowMs), messageId, target.host, target.sessionId).changes !== 1) continue;
+        const claimReceipt = receipts.get(messageId) ?? null;
+        if (statement.run(iso(nowMs), claimReceipt, messageId, target.host, target.sessionId, claimReceipt, claimReceipt).changes !== 1) continue;
         receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
         count++;
       }
       if (count > 0) this.retireClaimedReservedWakes(target, nowMs);
-      this.recordActivity(target, nowMs);
+      if (count > 0) this.recordActivity(target, nowMs);
 
       return count;
 

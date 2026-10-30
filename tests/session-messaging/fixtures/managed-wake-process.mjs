@@ -87,7 +87,7 @@ process.once('message', async (input) => {
       store.observeNativeInput(target);
       store.claimDeferred(target); // Preserve the first native-input boundary.
       const messages = store.claimDeferred(target);
-      store.acknowledge(target, messages.map(message => message.messageId));
+      store.acknowledge(target, messages.map(message => message.messageId), undefined, messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })));
       process.send({ type: 'result', claimed: messages.map(message => message.messageId) });
     } else {
       const acquired = store.acquireRelay({ ...target, transport: 'portable', relayId, pid: process.pid, parentPid: Number(parentPid) });

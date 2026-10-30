@@ -262,8 +262,9 @@ describe("session message spool", () => {
     store.close();
 
     const reopened = new SessionMessageStore(databasePath);
-    expect(reopened.claim(spark, 123_001).map((message) => message.messageId)).toEqual(["msg-0001"]);
-    expect(reopened.acknowledge(spark, ["msg-0001"], 124_000)).toBe(1);
+    const claimed = reopened.claim(spark, 123_001);
+    expect(claimed.map((message) => message.messageId)).toEqual(["msg-0001"]);
+    expect(reopened.acknowledge(spark, ["msg-0001"], 124_000, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
     expect(reopened.pendingCount(spark, 125_000)).toBe(0);
 
     expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-a", pid: 1, parentPid: 1 }, 200_000)).toBe(true);
@@ -331,9 +332,10 @@ describe("session message spool", () => {
       expect(reopened.reserveWake(target, secondNonce, 2002)).toBe(false);
       expect(reopened.consumeWake(target, firstNonce, 2003)).toBe(true);
       expect(reopened.reserveWake(target, secondNonce, 2004)).toBe(false);
-      expect(reopened.claim(target, 3000, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["wake-msg-0001"]);
+      const claimed = reopened.claim(target, 3000, { maxMessages: 1 });
+      expect(claimed.map((message) => message.messageId)).toEqual(["wake-msg-0001"]);
       expect(reopened.reserveWake(target, thirdNonce, 3001)).toBe(false);
-      expect(reopened.acknowledge(target, ["wake-msg-0001"], 4000)).toBe(1);
+      expect(reopened.acknowledge(target, ["wake-msg-0001"], 4000, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
       expect(reopened.reserveWake(target, secondNonce, 4001)).toBe(true);
       expect(reopened.releaseWake(target, secondNonce)).toBe(true);
       expect(reopened.reserveWake(target, secondNonce, 4002)).toBe(true);
@@ -531,7 +533,7 @@ describe("session message spool", () => {
     expect(first).toMatchObject({ recipient: target, deliveryAttempt: 1, firstDeliveredAt: new Date(2000).toISOString() });
     expect(second).toMatchObject({ messageId: first.messageId, deliveryAttempt: 2, firstDeliveredAt: first.firstDeliveredAt });
     expect(store.status(sender, first.messageId, 122_002)).toMatchObject({ deliveryAttempts: 2, firstDeliveredAt: first.firstDeliveredAt });
-    expect(store.acknowledge(target, [first.messageId], 122_003)).toBe(1);
+    expect(store.acknowledge(target, [first.messageId], 122_003, [{ messageId: second.messageId, claimReceipt: second.claimReceipt! }])).toBe(1);
     expect(store.claim(target, 300_000)).toEqual([]);
     store.close();
   });
@@ -587,20 +589,24 @@ describe("session message spool", () => {
     store.send({ messageId: "deferred-0002", sender, target, body: "second" }, 1001);
     store.observeNativeInput(target, 2000);
     expect(store.claimDeferred(target, 2001)).toEqual([]);
-    expect(store.claimDeferred(target, 2002, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["deferred-0001"]);
-    store.acknowledge(target, ["deferred-0001"], 2002);
-    expect(store.claimDeferred(target, 2003, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["deferred-0002"]);
-    store.acknowledge(target, ["deferred-0002"], 2003);
+    const firstClaim = store.claimDeferred(target, 2002, { maxMessages: 1 });
+    expect(firstClaim.map((message) => message.messageId)).toEqual(["deferred-0001"]);
+    store.acknowledge(target, ["deferred-0001"], 2002, firstClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })));
+    const secondClaim = store.claimDeferred(target, 2003, { maxMessages: 1 });
+    expect(secondClaim.map((message) => message.messageId)).toEqual(["deferred-0002"]);
+    store.acknowledge(target, ["deferred-0002"], 2003, secondClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })));
     expect(store.claimDeferred(target, 2004)).toEqual([]);
 
     store.send({ messageId: "deferred-late", sender, target, body: "late" }, 2005);
-    expect(store.claimDeferred(target, 2006).map((message) => message.messageId)).toEqual(["deferred-late"]);
-    store.acknowledge(target, ["deferred-late"], 2006);
+    const lateClaim = store.claimDeferred(target, 2006);
+    expect(lateClaim.map((message) => message.messageId)).toEqual(["deferred-late"]);
+    store.acknowledge(target, ["deferred-late"], 2006, lateClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })));
     store.send({ messageId: "deferred-redelivery", sender, target, body: "retry" }, 2007);
     expect(store.claimDeferred(target, 2008)).toMatchObject([{ messageId: "deferred-redelivery", deliveryAttempt: 1 }]);
     expect(store.claimDeferred(target, 2009)).toEqual([]);
-    expect(store.claimDeferred(target, 122_009)).toMatchObject([{ messageId: "deferred-redelivery", deliveryAttempt: 2 }]);
-    store.acknowledge(target, ["deferred-redelivery"], 122_009);
+    const redelivered = store.claimDeferred(target, 122_009);
+    expect(redelivered).toMatchObject([{ messageId: "deferred-redelivery", deliveryAttempt: 2 }]);
+    store.acknowledge(target, ["deferred-redelivery"], 122_009, redelivered.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })));
 
     store.send({ messageId: "deferred-after-native", sender, target, body: "after native" }, 122_010);
     store.observeNativeInput(target, 122_011);
@@ -816,7 +822,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     });
     const address = server.address();
     if (!address || typeof address === "string") throw new Error("The test TLS server did not receive a port.");
-    await writeFile(endpointPath, `${JSON.stringify({ ...endpoint, port: address.port, pid: process.pid })}\n`, "utf8");
+    await writeFile(endpointPath, `${JSON.stringify({ ...endpoint, claimReceiptVersion: 1, port: address.port, pid: process.pid })}\n`, "utf8");
     const startedAt = Date.now();
     try {
       await expect(sessionMessageRequest("ping", {}, directory, { totalTimeoutMs: 150 })).rejects.toThrow(/deadline expired/u);
@@ -1185,12 +1191,14 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     const reopened = new SessionMessageStore(databasePath);
     try {
       expect(reopened.reserveWake(target, "boundary-nonce-qrstuvwxyzabcdef", 1003)).toBe(false);
-      expect(reopened.claimDeferred(target, 1004, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["boundary-0001"]);
+      const firstClaim = reopened.claimDeferred(target, 1004, { maxMessages: 1 });
+      expect(firstClaim.map((message) => message.messageId)).toEqual(["boundary-0001"]);
       expect(reopened.claimWake(target, ["boundary-nonce-abcdefghijklmnop"], 1005)).toEqual({ recognized: false, messages: [] });
       expect(reopened.reserveWake(target, "boundary-nonce-qrstuvwxyzabcdef", 1005)).toBe(false);
-      expect(reopened.acknowledge(target, ["boundary-0001"], 1006)).toBe(1);
-      expect(reopened.claimTurnEnd(target, 1007, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["boundary-0002"]);
-      expect(reopened.acknowledge(target, ["boundary-0002"], 1008)).toBe(1);
+      expect(reopened.acknowledge(target, ["boundary-0001"], 1006, firstClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
+      const secondClaim = reopened.claimTurnEnd(target, 1007, { maxMessages: 1 });
+      expect(secondClaim.map((message) => message.messageId)).toEqual(["boundary-0002"]);
+      expect(reopened.acknowledge(target, ["boundary-0002"], 1008, secondClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
       expect(reopened.pendingCount(target, 1009)).toBe(0);
       expect(reopened.reserveWake(target, "boundary-nonce-qrstuvwxyzabcdef", 1009)).toBe(false);
       expect(reopened.claimDeferred(target, 1009)).toEqual([]);
@@ -1272,9 +1280,9 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(wrongToken).toMatchObject({ ok: false, error: "Broker authentication failed." });
 
     const wrongFingerprint = Array.from({ length: 32 }, () => "00").join(":");
-    await writeFile(endpointPath, `${JSON.stringify({ ...endpoint, protocolVersion: SESSION_MESSAGE_PROTOCOL, address: "127.0.0.1", startedAt: new Date().toISOString(), certificateFingerprint256: wrongFingerprint })}\n`, "utf8");
+    await writeFile(endpointPath, `${JSON.stringify({ ...endpoint, claimReceiptVersion: 1, protocolVersion: SESSION_MESSAGE_PROTOCOL, address: "127.0.0.1", startedAt: new Date().toISOString(), certificateFingerprint256: wrongFingerprint })}\n`, "utf8");
     await expect(requestSessionMessageOnce("ping", {}, directory)).rejects.toThrow(/certificate pin/u);
-    await writeFile(endpointPath, `${JSON.stringify({ ...endpoint, protocolVersion: SESSION_MESSAGE_PROTOCOL, address: "127.0.0.1", startedAt: new Date().toISOString() })}\n`, "utf8");
+    await writeFile(endpointPath, `${JSON.stringify({ ...endpoint, claimReceiptVersion: 1, protocolVersion: SESSION_MESSAGE_PROTOCOL, address: "127.0.0.1", startedAt: new Date().toISOString() })}\n`, "utf8");
 
     const send = await prepareAndSend(directory, { sender: { host: "grok", sessionId: "g-1" }, target: { host: "spark", sessionId: "s-1" }, body: "portable hello", ttlSeconds: 600 });
     const portableId = (send.data as { messageId: string }).messageId;
@@ -1289,7 +1297,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     const firstEscaped = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target: { host: "spark", sessionId: "escaped" } } }), directory);
     expect(firstEscaped).toMatchObject({ data: { messages: [{ messageId: "escaped-0001", body: escapedBody }] } });
     expect((firstEscaped.data as { messages: unknown[] }).messages).toHaveLength(1);
-    await runSessionMessageCli(JSON.stringify({ operation: "acknowledge", payload: { target: { host: "spark", sessionId: "escaped" }, messageIds: ["escaped-0001"] } }), directory);
+    await runSessionMessageCli(JSON.stringify({ operation: "acknowledge", payload: { target: { host: "spark", sessionId: "escaped" }, messageIds: ["escaped-0001"], receipts: (firstEscaped.data as { messages: Array<{ messageId: string; claimReceipt: string }> }).messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })) } }), directory);
     const secondEscaped = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target: { host: "spark", sessionId: "escaped" } } }), directory);
     expect(secondEscaped).toMatchObject({ data: { messages: [{ messageId: "escaped-0002", body: escapedBody }] } });
 
@@ -1344,13 +1352,13 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
         operation: "claim",
         payload: { target: metadataTarget, maxMessages: 10, maxBodyChars: 800 },
       }), directory);
-      const messages = (batch.data as { messages: Array<{ messageId: string }> }).messages;
+      const messages = (batch.data as { messages: Array<{ messageId: string; claimReceipt: string }> }).messages;
       expect(messages.length).toBeGreaterThan(0);
       expect(messages.length).toBeLessThanOrEqual(2);
       expect(Buffer.byteLength(JSON.stringify(batch), "utf8")).toBeLessThanOrEqual(32 * 1024);
       batchCount += 1;
       claimedMetadataIds.push(...messages.map((message) => message.messageId));
-      await runSessionMessageCli(JSON.stringify({ operation: "acknowledge", payload: { target: metadataTarget, messageIds: messages.map((message) => message.messageId) } }), directory);
+      await runSessionMessageCli(JSON.stringify({ operation: "acknowledge", payload: { target: metadataTarget, messageIds: messages.map((message) => message.messageId), receipts: messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })) } }), directory);
     }
     expect(batchCount).toBeGreaterThan(1);
     expect(claimedMetadataIds).toEqual(expectedMetadataIds);
@@ -1359,7 +1367,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     await ensureSessionMessageBroker(directory);
     const claim = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target: { host: "spark", sessionId: "s-1" } } }), directory);
     expect(claim).toMatchObject({ ok: true, data: { messages: [{ messageId: portableId, body: "portable hello" }] } });
-    const acknowledged = await runSessionMessageCli(JSON.stringify({ operation: "acknowledge", payload: { target: { host: "spark", sessionId: "s-1" }, messageIds: [portableId] } }), directory);
+    const acknowledged = await runSessionMessageCli(JSON.stringify({ operation: "acknowledge", payload: { target: { host: "spark", sessionId: "s-1" }, messageIds: [portableId], receipts: (claim.data as { messages: Array<{ messageId: string; claimReceipt: string }> }).messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })) } }), directory);
     expect(acknowledged).toMatchObject({ ok: true, data: { acknowledged: 1 } });
 
     const database = await readFile(path.join(directory, "session-messages.sqlite3"));
@@ -1386,13 +1394,14 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
         // A legacy nonce must remain unconsumed: claim before reservation, with its lease already expired.
         const sentAt = scenario === "legacy" ? now - 120_001 : now;
         store.send({ sender: { host: "portable", sessionId: "empty-sender" }, target, messageId: `body-${scenario}`, body: `body-${scenario}` }, sentAt);
-        if (scenario === "legacy") expect(store.claim(target, sentAt).map(message => message.messageId)).toEqual([`body-${scenario}`]);
+        const legacyClaim = scenario === "legacy" ? store.claim(target, sentAt) : [];
+        if (scenario === "legacy") expect(legacyClaim.map(message => message.messageId)).toEqual([`body-${scenario}`]);
         store.startPresence({ ...target, instanceId: "empty-instance", transport: "codex-queue", wakeVisibility: "user-message",
           canWakeSilently: false, deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" } }, now);
         store.acquireRelay({ ...target, transport: "codex-queue", relayId: "empty-relay", pid: process.pid, parentPid: process.pid }, now);
         if (scenario === "legacy") {
           expect(store.reserveWake(target, nonce, now)).toBe(true);
-          expect(store.acknowledge(target, [`body-${scenario}`], now + 1)).toBe(1);
+          expect(store.acknowledge(target, [`body-${scenario}`], now + 1, legacyClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
         } else {
           const reserved = store.reserveManagedWake({ ...target, nonce, instanceId: "empty-instance", transport: "codex-queue", relayId: "empty-relay" }, now);
           const started = store.startManagedWake(reserved.attempt!, now + 1);
@@ -1401,8 +1410,9 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
           if (!["idle", "forged", "mixed", "late"].includes(scenario)) {
             store.observeNativeInput(target, now + 3);
             expect(store.claimDeferred(target, now + 4)).toEqual([]);
-            expect(store.claimDeferred(target, now + 5).map(message => message.messageId)).toEqual([`body-${scenario}`]);
-            store.acknowledge(target, [`body-${scenario}`], now + 6);
+            const claimed = store.claimDeferred(target, now + 5);
+            expect(claimed.map(message => message.messageId)).toEqual([`body-${scenario}`]);
+            store.acknowledge(target, [`body-${scenario}`], now + 6, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })));
           }
           if (scenario === "late") store.startPresence({ ...target, instanceId: "new-instance", transport: "codex-queue",
             wakeVisibility: "user-message", canWakeSilently: false,
@@ -1846,7 +1856,7 @@ describe("session message MCP tools", () => {
 
       const claimed = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target } }), directory);
       expect(claimed).toMatchObject({ data: { messages: [{ messageId }] } });
-      expect(payload(await client.callAs(target, { name: "acknowledge_session_messages", arguments: { schemaVersion: "1.0.0", messageIds: [messageId] } }))).toMatchObject({ ok: true, data: { acknowledged: 1 } });
+      expect(payload(await client.callAs(target, { name: "acknowledge_session_messages", arguments: { schemaVersion: "1.0.0", messageIds: [messageId], receipts: (claimed.data as { messages: Array<{ messageId: string; claimReceipt: string }> }).messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })) } }))).toMatchObject({ ok: true, data: { acknowledged: 1 } });
       expect(payload(await client.callAs(sender, { name: "get_session_message_status", arguments: { schemaVersion: "1.0.0", messageId } }))).toMatchObject({ ok: true, data: { status: { state: "acknowledged" } } });
       const unknown = payload(await client.callAs(sender, { name: "send_session_message", arguments: { schemaVersion: "1.0.0", messageId: "unknown-issued-id" } }));
       expect(unknown.ok).toBe(false);
@@ -1871,9 +1881,9 @@ describe("session message MCP tools", () => {
       expect(claimed).toMatchObject({data: {messages: [{messageId: sent[0]}, {messageId: sent[1]}]}});
       const duplicateIds = payload(await client.callAs(target, {name: "acknowledge_session_messages", arguments: {schemaVersion: "1.0.0", messageIds: [sent[0], sent[0]]}}));
       expect(duplicateIds).toMatchObject({ok: false, error: {code: "INVALID_INPUT"}});
-      const result = payload(await client.callAs(target, {name: "acknowledge_session_messages", arguments: {schemaVersion: "1.0.0", messageIds: [sent[0], sent[1], sent[2], sent[3]]}}));
+      const result = payload(await client.callAs(target, {name: "acknowledge_session_messages", arguments: {schemaVersion: "1.0.0", messageIds: [sent[0], sent[1], sent[2], sent[3]], receipts: (claimed.data as { messages: Array<{ messageId: string; claimReceipt: string }> }).messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))}}));
       expect(result, result.error?.message).toMatchObject({ok: true, data: {acknowledged: 2}});
-      expect(payload(await client.callAs(target, {name: "acknowledge_session_messages", arguments: {schemaVersion: "1.0.0", messageIds: [sent[0], sent[1]]}}))).toMatchObject({ok: true, data: {acknowledged: 0}});
+      expect(payload(await client.callAs(target, {name: "acknowledge_session_messages", arguments: {schemaVersion: "1.0.0", messageIds: [sent[0], sent[1]], receipts: (claimed.data as { messages: Array<{ messageId: string; claimReceipt: string }> }).messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))}}))).toMatchObject({ok: true, data: {acknowledged: 0}});
       expect(await runSessionMessageCli(JSON.stringify({operation: "pending", payload: {target}}), directory)).toMatchObject({data: {count: 1}});
       expect(await runSessionMessageCli(JSON.stringify({operation: "pending", payload: {target: foreign}}), directory)).toMatchObject({data: {count: 1}});
       const remaining = await runSessionMessageCli(JSON.stringify({operation: "claim", payload: {target}}), directory);

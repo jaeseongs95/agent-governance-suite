@@ -11,7 +11,7 @@ import tls from "node:tls";
 import { fileURLToPath } from "node:url";
 
 import { resolveSessionMessageStateDirectory } from "./runtime-config.js";
-import { brokerStartupCode, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, sessionMessageLineReader } from "./session-message-protocol.js";
+import { brokerStartupCode, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, SESSION_MESSAGE_CLAIM_OPERATIONS, sessionMessageLineReader } from "./session-message-protocol.js";
 import { encodeIdentityDeadline } from "./broker-identity-budget.js";
 
 export { SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
@@ -19,6 +19,7 @@ export const WAKE_PREFIX = "[agent-governance-suite:wake:";
 
 export interface BrokerEndpoint {
   protocolVersion: string;
+  claimReceiptVersion?: number;
   address: "127.0.0.1";
   port: number;
   pid: number;
@@ -173,6 +174,10 @@ async function readEndpoint(stateDirectory?: string, signal?: AbortSignal): Prom
   } catch (cause) {
     throw clientFailure("BROKER_ENDPOINT_INVALID", "The session message broker endpoint is invalid.", cause);
   }
+  if (endpoint.claimReceiptVersion !== 1) {
+    throw tagProducerFailure(new Error("The running message broker does not support claim receipts; update its owned runtime before retrying."),
+      "BROKER_CLAIM_RECEIPTS_REQUIRED");
+  }
   return { endpoint, token: rawToken.trim(), certificate };
 }
 
@@ -226,6 +231,7 @@ export async function requestSessionMessageOnce<T>(
           }
           let frame: string;
           try { frame = `${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token, operation, payload,
+            ...(SESSION_MESSAGE_CLAIM_OPERATIONS.includes(operation) ? { claimReceiptVersion: 1 } : {}),
             ...(["ensure-relay", "acquire-relay"].includes(operation) ? { identityDeadlineNs: encodeIdentityDeadline(deadline) } : {}) })}\n`; }
           catch (cause) { throw clientFailure("BROKER_REQUEST_ENCODING_FAILED", "Cannot encode the broker request.", cause); }
           if (enforceDeadline) assertWithinDeadline(deadline, signal, "The session message broker timed out.");
@@ -403,7 +409,7 @@ export async function ensureSessionMessageBroker(
       signal.addEventListener("abort", retainInitialFailure, {once: true});
       try {
         throwIfAborted(signal);
-        if (error instanceof BrokerRequestRejected) throw error;
+        if (error instanceof BrokerRequestRejected || producerFailureReason(error) === "BROKER_CLAIM_RECEIPTS_REQUIRED") throw error;
         if (deadlineMetadata.get(signal)?.enforceDeadline) assertWithinDeadline(deadline, signal, BROKER_STARTUP_DEADLINE_MESSAGE);
         try {
           if (prepareStateDirectory) await prepareStateDirectory(stateDirectory);

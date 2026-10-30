@@ -348,10 +348,12 @@ it.each(["codex", "claude-code", "gemini", "antigravity", syntheticHost])("keeps
     expect(store.presence(target, now).instanceId).toBe("new-generation");
     store.send({ messageId: "late-end-acked", sender, target, body: "acked" }, now);
     expect(store.reserveWake(target, "late-end-wake-abcdefghijklmnop", now + 1)).toBe(true);
-    expect(store.claim(target, now + 2).map(message => message.messageId)).toEqual(["late-end-acked"]);
-    expect(store.acknowledge(target, ["late-end-acked"], now + 3)).toBe(1);
+    const ackedClaim = store.claim(target, now + 2);
+    expect(ackedClaim.map(message => message.messageId)).toEqual(["late-end-acked"]);
+    expect(store.acknowledge(target, ["late-end-acked"], now + 3, ackedClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
     store.send({ messageId: "late-end-claimed", sender, target, body: "claimed" }, now + 4);
-    expect(store.claim(target, now + 5).map(message => message.messageId)).toEqual(["late-end-claimed"]);
+    const priorClaim = store.claim(target, now + 5);
+    expect(priorClaim.map(message => message.messageId)).toEqual(["late-end-claimed"]);
     store.send({ messageId: "late-end-queued", sender, target, body: "queued" }, now + 6);
     store.observeNativeInput(target, now + 7);
     const snapshot = () => Object.fromEntries([
@@ -363,8 +365,9 @@ it.each(["codex", "claude-code", "gemini", "antigravity", syntheticHost])("keeps
     expect(f.request).not.toHaveBeenCalled();
     expect(f.spawn).not.toHaveBeenCalled();
     expect(store.claimDeferred(target, now + 8)).toEqual([]);
-    expect(store.claimDeferred(target, now + 9).map(message => message.messageId)).toEqual(["late-end-queued"]);
-    expect(store.acknowledge(target, ["late-end-claimed", "late-end-queued"], now + 10)).toBe(2);
+    const queuedClaim = store.claimDeferred(target, now + 9);
+    expect(queuedClaim.map(message => message.messageId)).toEqual(["late-end-queued"]);
+    expect(store.acknowledge(target, ["late-end-claimed", "late-end-queued"], now + 10, [...priorClaim, ...queuedClaim].map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(2);
   } finally { store.close(); }
 });
 

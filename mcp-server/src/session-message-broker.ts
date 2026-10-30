@@ -7,7 +7,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
 import {
-  brokerStartupCode, SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, SESSION_PRESENCE_LIST_MAX_TARGETS, sessionMessageLineReader,
+  brokerStartupCode, SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, SESSION_MESSAGE_CLAIM_OPERATIONS, SESSION_PRESENCE_LIST_MAX_TARGETS, sessionMessageLineReader,
 } from "./session-message-protocol.js";
 import { MessageCapacityError, SessionMessageStore, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
 import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type WakeHookObservationReader } from "./session-message-wake-port.js";
@@ -22,7 +22,7 @@ import { acquireBrokerProcessLockWhenReady, ownsBrokerProcessLock, releaseBroker
 import { performance } from "node:perf_hooks";
 
 const IDLE_EXIT_MS = 60_000;
-export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start"] as const;
+export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"] as const;
 
 interface BrokerRequest {
   protocolVersion: string;
@@ -30,6 +30,7 @@ interface BrokerRequest {
   operation: string;
   payload: Record<string, unknown>;
   identityDeadlineNs?: unknown;
+  claimReceiptVersion?: unknown;
 }
 
 function brokerFailureCode(error: unknown): string {
@@ -306,7 +307,7 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
         pid,
         codeDigest: relayCodeDigest(payload.codeDigest) ?? null,
         parentPid: integer(payload.parentPid, "parentPid"),
-        ...(optionalString(payload, "instanceId") ? { instanceId: optionalString(payload, "instanceId")! } : {}),
+        ...(Object.hasOwn(payload, "instanceId") ? { instanceId: string(payload.instanceId, "instanceId") } : {}),
       });
       observePeerRelay(store, payload, acquired);
       return { acquired };
@@ -420,7 +421,13 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       store.clearDeferred(identity(payload.target), Date.now(), optionalString(payload, "instanceId"));
       return { cleared: true };
     }
-    case "acknowledge": return { acknowledged: store.acknowledge(identity(payload.target), Array.isArray(payload.messageIds) ? payload.messageIds.map((value) => string(value, "messageId")) : []) };
+    case "acknowledge": {
+      if (payload.receipts !== undefined && !Array.isArray(payload.receipts)) throw new Error("receipts must be an array.");
+      const claims = (payload.receipts ?? []) as Array<Record<string, unknown>>;
+      return { acknowledged: store.acknowledge(identity(payload.target),
+        Array.isArray(payload.messageIds) ? payload.messageIds.map(value => string(value, "messageId")) : [], Date.now(),
+        claims.map(claim => ({ messageId: string(claim?.messageId, "messageId"), claimReceipt: string(claim?.claimReceipt, "claimReceipt") }))) };
+    }
     case "status": {
       const status = store.status(identity(payload.sender), string(payload.messageId, "messageId"));
       return { status, ...(status === null ? { guidance: "Delivery is unknown; compare saved receipts. Prepare only a new intent, not an automatic resend." } : {}) };
@@ -639,6 +646,9 @@ export async function startSessionMessageBroker(stateDirectory: string, budget?:
           if (request.protocolVersion !== SESSION_MESSAGE_PROTOCOL || !tokenMatches(request.token ?? "", token)) throw new Error("Broker authentication failed.");
           authenticated = true;
           activeRequests += 1;
+          if (SESSION_MESSAGE_CLAIM_OPERATIONS.includes(request.operation) && request.claimReceiptVersion !== 1) {
+            throw new Error("BROKER_CLAIM_RECEIPTS_REQUIRED: this consumer must support original claim receipts before receiving messages.");
+          }
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
           const requestBudget = decodeIdentityDeadline(request.identityDeadlineNs);
           const data = ["ensure-relay", "acquire-relay"].includes(request.operation)
@@ -670,6 +680,7 @@ export async function startSessionMessageBroker(stateDirectory: string, budget?:
     if (!address || typeof address === "string") throw new Error("The broker did not receive a TCP port.");
     const endpoint = {
       protocolVersion: SESSION_MESSAGE_PROTOCOL,
+      claimReceiptVersion: 1,
       address: "127.0.0.1",
       port: address.port,
       pid: process.pid,

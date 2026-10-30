@@ -17,7 +17,7 @@ export function headBytes(bytes: Buffer, at: number): number {
 export function claimLine(sender: Identity, recipient: Identity, bodies: string[]): Buffer {
   const stamp = new Date(0).toISOString();
   const messages = bodies.map((body) => ({ messageId: randomUUID(), sender, recipient, body, createdAt: stamp, expiresAt: stamp,
-    deliveryAttempt: 1, firstDeliveredAt: stamp }));
+    deliveryAttempt: 1, firstDeliveredAt: stamp, claimReceipt: `1:${randomUUID()}` }));
   return Buffer.from(`${JSON.stringify({ ok: true, data: { messages } })}\n`);
 }
 

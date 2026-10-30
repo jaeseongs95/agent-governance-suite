@@ -204,7 +204,7 @@ function fakeSocket() {
 }
 function stubEndpoint() {
   f.read.mockImplementation(async (name: string) => name.endsWith("endpoint.json")
-    ? JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, address: "127.0.0.1", port: 12345, certificateFingerprint256: fingerprint })
+    ? JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, claimReceiptVersion: 1, address: "127.0.0.1", port: 12345, certificateFingerprint256: fingerprint })
     : name.endsWith("broker.token") ? "a".repeat(43) : "synthetic certificate");
 }
 async function connecting() {

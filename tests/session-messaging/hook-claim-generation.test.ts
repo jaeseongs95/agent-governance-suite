@@ -81,10 +81,11 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
     expect(store.status(sender, messageId, now + 8)).toMatchObject({ deliveryAttempts: 0, acknowledgedAt: null });
 
     expect(store.claimDeferred(target, now + 9, { instanceId: generationB })).toEqual([]);
-    expect(store.claimDeferred(target, now + 10, { instanceId: generationB })).toMatchObject([
+    const claimed = store.claimDeferred(target, now + 10, { instanceId: generationB });
+    expect(claimed).toMatchObject([
       { messageId, body: "replacement body remains intact", deliveryAttempt: 1 },
     ]);
-    expect(store.acknowledge(target, [messageId], now + 11)).toBe(1);
+    expect(store.acknowledge(target, [messageId], now + 11, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
   });
 
   for (const instanceId of [undefined, "unobserved-generation"]) {
@@ -118,18 +119,20 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
     expect(store.claimDeferred(target, now + 5, { instanceId: generationB })).toEqual([]);
     store.clearDeferred(target, now + 6, generationB);
     expect(store.database.prepare("SELECT * FROM input_observations").all()).toEqual([]);
-    expect(store.claimDeferred(target, now + 7, { instanceId: generationB })).toMatchObject([
+    const firstClaim = store.claimDeferred(target, now + 7, { instanceId: generationB });
+    expect(firstClaim).toMatchObject([
       { messageId: first, body: "current body", deliveryAttempt: 1 },
     ]);
-    expect(store.acknowledge(target, [first], now + 8)).toBe(1);
+    expect(store.acknowledge(target, [first], now + 8, firstClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
 
     const second = enqueue("turn-end body", now + 9);
     store.observeNativeInput(target, now + 11, generationB);
-    expect(store.claimTurnEnd(target, now + 12, { instanceId: generationB })).toMatchObject([
+    const secondClaim = store.claimTurnEnd(target, now + 12, { instanceId: generationB });
+    expect(secondClaim).toMatchObject([
       { messageId: second, body: "turn-end body", deliveryAttempt: 1 },
     ]);
     expect(store.database.prepare("SELECT * FROM input_observations").all()).toEqual([]);
-    expect(store.acknowledge(target, [second], now + 13)).toBe(1);
+    expect(store.acknowledge(target, [second], now + 13, secondClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
   });
 
   it.each(["claimDeferred", "claimTurnEnd"] as const)("종료되지 않은 동일 세대는 relay/presence lease 만료 뒤에도 %s를 유지한다", (operation) => {
@@ -141,10 +144,11 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
     expect(store.presence(target, later)).toMatchObject({ state: "unreachable", instanceId: generationB, endedAt: null });
     store.observeNativeInput(target, later, generationB);
     if (operation === "claimDeferred") expect(store.claimDeferred(target, later + 1, { instanceId: generationB })).toEqual([]);
-    expect(invoke(store, operation, later + 2, generationB)).toMatchObject([
+    const claimed = invoke(store, operation, later + 2, generationB) as ReturnType<SessionMessageStore["claim"]>;
+    expect(claimed).toMatchObject([
       { messageId, body: "body after lease lapse", deliveryAttempt: 1 },
     ]);
-    expect(store.acknowledge(target, [messageId], later + 3)).toBe(1);
+    expect(store.acknowledge(target, [messageId], later + 3, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
   });
 
   it.each(["no-presence", "legacy-instance"] as const)("%s의 instance 없는 기존 훅 호출을 보존한다", (mode) => {
@@ -154,10 +158,11 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
     store.observeNativeInput(target, now + 4);
     expect(store.claimDeferred(target, now + 5)).toEqual([]);
     store.clearDeferred(target, now + 6);
-    expect(store.claimDeferred(target, now + 7)).toMatchObject([
+    const claimed = store.claimDeferred(target, now + 7);
+    expect(claimed).toMatchObject([
       { messageId: first, body: "legacy deferred body", deliveryAttempt: 1 },
     ]);
-    expect(store.acknowledge(target, [first], now + 8)).toBe(1);
+    expect(store.acknowledge(target, [first], now + 8, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
 
     const second = enqueue("legacy turn-end body", now + 9);
     store.observeNativeInput(target, now + 11);
@@ -225,9 +230,10 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
     expect(store.activateVerifiedRelay({ ...target, transport, instanceId: generationC,
       parentPid: 101, pid: 201, relayId: recovered.relayId!, relayStartToken: "recovered-hook-claim-child" }, later + 1)).toBe(true);
     expect(store.presence(target, later + 1)).toMatchObject({ state: "online", instanceId: generationC, endedAt: null });
-    expect(store.claimTurnEnd(target, later + 2, { instanceId: generationC })).toMatchObject([
+    const claimed = store.claimTurnEnd(target, later + 2, { instanceId: generationC });
+    expect(claimed).toMatchObject([
       { messageId, body: "body survives legitimate restart recovery", deliveryAttempt: 1 },
     ]);
-    expect(store.acknowledge(target, [messageId], later + 3)).toBe(1);
+    expect(store.acknowledge(target, [messageId], later + 3, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
   });
 });

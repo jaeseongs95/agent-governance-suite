@@ -146,9 +146,10 @@ it("D0351 exact rejection retires only its birth/relay, preserves old bodies and
   const freshAttempt = begin(f, { ...fresh, instanceId: replacementId, relayId: freshOwner.relayId,
     nonce: "d0351-fresh-nonce-abcdefghijklmnop" });
   expect(freshAttempt.attemptId).not.toBe(attempt.attemptId);
-  expect(f.claimMarker(fresh, freshAttempt.nonce)).toMatchObject({ recognized: true, managed: true,
+  const freshClaim = f.claimMarker(fresh, freshAttempt.nonce) as { messages: Array<{ messageId: string; claimReceipt: string }> };
+  expect(freshClaim).toMatchObject({ recognized: true, managed: true,
     messages: [{ messageId: "fresh-body-0001", recipient: fresh }] });
-  expect(f.call("acknowledge", { target: fresh, messageIds: ["fresh-body-0001"] })).toEqual({ acknowledged: 1 });
+  expect(f.call("acknowledge", { target: fresh, messageIds: ["fresh-body-0001"], receipts: freshClaim.messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })) })).toEqual({ acknowledged: 1 });
   expect(f.store.pendingCount(fresh)).toBe(0);
   expect(f.store.pendingCount(target)).toBe(1);
   expect(wakeRow(f, attempt)).toMatchObject({ state: "not-submitted", observed_at: null, consumed_at: null });
@@ -258,9 +259,10 @@ it.each(["before", "after"] as const)("D0351 rejection %s a relay heartbeat cann
 
 it("D0351 a previously observed hook rejects a later terminal result without changing claim or ACK", () => {
   const f = fixture(); send(f); const attempt = begin(f);
-  expect(f.claimMarker(target, attempt.nonce)).toMatchObject({ recognized: true, managed: true,
+  const claimed = f.claimMarker(target, attempt.nonce) as { messages: Array<{ messageId: string; claimReceipt: string }> };
+  expect(claimed).toMatchObject({ recognized: true, managed: true,
     messages: [{ messageId: "old-body-0001" }] });
-  expect(f.call("acknowledge", { target, messageIds: ["old-body-0001"] })).toEqual({ acknowledged: 1 });
+  expect(f.call("acknowledge", { target, messageIds: ["old-body-0001"], receipts: claimed.messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })) })).toEqual({ acknowledged: 1 });
   const before = snapshot(f);
   vi.setSystemTime(now + 2);
   expect(terminal(f, attempt)).toEqual({ recorded: false });

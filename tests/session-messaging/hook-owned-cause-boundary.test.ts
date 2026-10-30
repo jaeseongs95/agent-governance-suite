@@ -72,7 +72,7 @@ beforeEach(() => {
     if (String(file).endsWith("endpoint.json")) {
       f.endpointReads++;
       if (f.mode === "endpoint" && f.endpointReads > 1) return JSON.stringify({address: "PRIVATE_ENDPOINT"});
-      return JSON.stringify({protocolVersion: SESSION_MESSAGE_PROTOCOL, address: "127.0.0.1", port: 443, pid: 123, startedAt: "fixture", certificateFingerprint256: fingerprint});
+      return JSON.stringify({protocolVersion: SESSION_MESSAGE_PROTOCOL, claimReceiptVersion: 1, address: "127.0.0.1", port: 443, pid: 123, startedAt: "fixture", certificateFingerprint256: fingerprint});
     }
     return String(file).endsWith("broker.token") ? "A".repeat(43) : "PRIVATE_CERTIFICATE";
   });

@@ -343,6 +343,7 @@ export interface SendSessionMessageRequestV1 {
 export interface AcknowledgeSessionMessagesRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   messageIds: string[];
+  receipts?: Array<{ messageId: string; claimReceipt: string }>;
   _sessionBinding?: SessionBindingV1;
 }
 

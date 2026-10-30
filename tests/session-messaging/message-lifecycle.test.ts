@@ -107,8 +107,8 @@ it("keeps the first immutable receipt and does not enqueue or wake after ACK/pru
   expect(count(store)).toBe(1);
   const firstClaim = store.claim(target, 3001)[0]!;
   expect(firstClaim).toMatchObject({ messageId: draft.messageId, body: "Immutable synthetic message" });
-  expect(store.acknowledge(target, [draft.messageId], 3002)).toBe(1);
-  expect(store.acknowledge(target, [draft.messageId], 3003)).toBe(0);
+  expect(store.acknowledge(target, [draft.messageId], 3002, [{ messageId: firstClaim.messageId, claimReceipt: firstClaim.claimReceipt! }])).toBe(1);
+  expect(store.acknowledge(target, [draft.messageId], 3003, [{ messageId: firstClaim.messageId, claimReceipt: firstClaim.claimReceipt! }])).toBe(0);
   expect(store.status(sender, draft.messageId, 3003)?.acknowledgedAt).toBe(new Date(3002).toISOString());
   store.prune(32_000);
   expect(count(store)).toBe(1);
@@ -144,8 +144,9 @@ it("applies global draft, receipt and byte backpressure without evicting valid r
     const owner = { ...sender, sessionId: `receipt-owner-${index}` };
     const draft = store.prepare({ sender: owner, target, body: "x" }, 602_000);
     store.submitPrepared(owner, draft.messageId, 602_000);
-    expect(store.claim(target, 602_000).map(message => message.messageId)).toEqual([draft.messageId]);
-    expect(store.acknowledge(target, [draft.messageId], 602_000)).toBe(1);
+    const claimed = store.claim(target, 602_000);
+    expect(claimed.map(message => message.messageId)).toEqual([draft.messageId]);
+    expect(store.acknowledge(target, [draft.messageId], 602_000, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
   };
   for (let index = 0; index < 999; index++) fillReceipt(index);
   // Prepared while one global receipt slot remains; the slot is then taken before this draft is sent.
@@ -315,8 +316,9 @@ it("preserves old messages across additive schema initialization but refuses old
   const reopened = fixture(database);
   expect(reopened.status(sender, "legacy-unissued-id", 1001)).toMatchObject({ state: "queued" });
   expect(() => reopened.submitPrepared(sender, "legacy-unissued-id", 1001)).toThrow(/unavailable/u);
-  expect(reopened.claim(target, 1002)).toMatchObject([{ messageId: "legacy-unissued-id", body: "Legacy fixture" }]);
-  expect(reopened.acknowledge(target, ["legacy-unissued-id"], 1003)).toBe(1);
+  const claimed = reopened.claim(target, 1002);
+  expect(claimed).toMatchObject([{ messageId: "legacy-unissued-id", body: "Legacy fixture" }]);
+  expect(reopened.acknowledge(target, ["legacy-unissued-id"], 1003, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
 });
 
 it("packaged CLI discovers prepare/send and rejects old or unknown send with zero queue effect", async () => {

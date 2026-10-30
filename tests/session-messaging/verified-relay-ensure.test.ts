@@ -154,8 +154,9 @@ it("keeps exact relay termination and reused-session wake/claim working with a r
     { deferred_tool_claim: 1, observed_at: new Date(now + 9).toISOString() },
   ]);
   expect(store.claimDeferred(target, now + 10, { instanceId: replacement })).toEqual([]);
-  expect(store.claimDeferred(target, now + 11, { instanceId: replacement })).toMatchObject([{ messageId: "reused-input-message", deliveryAttempt: 1 }]);
-  expect(store.acknowledge(target, ["reused-input-message"], now + 12)).toBe(1);
+  const claimed = store.claimDeferred(target, now + 11, { instanceId: replacement });
+  expect(claimed).toMatchObject([{ messageId: "reused-input-message", deliveryAttempt: 1 }]);
+  expect(store.acknowledge(target, ["reused-input-message"], now + 12, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
   expect(store.releaseVerifiedRelay({ ...input, instanceId: replacement, relayId: fresh.relayId!, pid: 200 }, now + 13)).toBe(true);
 });
 
@@ -356,5 +357,5 @@ it("AGS-D-0009: dispatchManagedWake after expired-lease re-acquisition wakes rec
   expect(store.claimDeferred(target, clock + 3, { instanceId: generation })).toEqual([]);
   const claimed = store.claimDeferred(target, clock + 4, { instanceId: generation });
   expect(claimed).toMatchObject([{ messageId: "e2e-expired-wake-msg", body: "payload-after-lease-recovery", deliveryAttempt: 1 }]);
-  expect(store.acknowledge(target, ["e2e-expired-wake-msg"], clock + 5)).toBe(1);
+  expect(store.acknowledge(target, ["e2e-expired-wake-msg"], clock + 5, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
 });

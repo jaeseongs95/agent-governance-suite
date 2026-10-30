@@ -82,7 +82,8 @@ export class SessionMessageService {
     const target = binding(args._sessionBinding);
     if (!target) return failure("BINDING_REQUIRED", "The session message hook did not bind the receiving session.");
     try {
-      const data = await sessionMessageRequest("acknowledge", { target, messageIds: args.messageIds }, this.stateDirectory);
+      const data = await sessionMessageRequest("acknowledge", { target, messageIds: args.messageIds,
+        ...(args.receipts === undefined ? {} : { receipts: args.receipts }) }, this.stateDirectory);
       return ok(data);
     } catch (error) {
       return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "The session message broker is unavailable.");

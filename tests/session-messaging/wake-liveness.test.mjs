@@ -235,14 +235,20 @@ const activities = {
   claimDeferred: (store, at) => store.claimDeferred(target, at),
   claimTurnEnd: (store, at) => store.claimTurnEnd(target, at),
   clearDeferred: (store, at) => store.clearDeferred(target, at),
-  acknowledge: (store, at) => store.acknowledge(target, ['no-such-message'], at),
+  acknowledge: (store, at, claimed) => store.acknowledge(target, claimed.map(message => message.messageId), at, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))),
   observeNativeInput: (store, at) => store.observeNativeInput(target, at),
 };
 test.each([...Object.keys(activities), 'before-expiry'])('same-generation activity %s after expiry retires the latch after the grace', kind => {
-  const f = fixture(); const old = latched(f);
+  const f = fixture();
+  let ackClaim = [];
+  if (kind === 'acknowledge') {
+    body(f.store, 'activity-ack-body', f.now - 2);
+    ackClaim = f.store.claim(target, f.now - 1);
+  }
+  const old = latched(f);
   const expiry = Date.parse(attemptRow(f.store, old).expires_at);
   if (kind === 'before-expiry') activities.claimDeferred(f.store, expiry - 1);
-  else activities[kind](f.store, expiry + 1);
+  else activities[kind](f.store, expiry + 1, ackClaim);
   keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt - 1);
   assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt - 1).dispatch, false);
   keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt);
@@ -393,8 +399,9 @@ test('autoWake is advisory and reports each delivery path state', () => {
   assert.equal(sent.autoWake.state, 'latched');
   assert.equal(f.store.submitPrepared(sender, sent.messageId, overdue + 1).autoWake.state, 'latched');
   assert.equal(f.store.status(sender, sent.messageId, overdue + 2).autoWake.state, 'latched');
-  assert.ok(f.store.claim(target, overdue + 3).some(message => message.messageId === sent.messageId));
-  assert.equal(f.store.acknowledge(target, [sent.messageId], overdue + 3), 1);
+  const claimed = f.store.claim(target, overdue + 3);
+  assert.ok(claimed.some(message => message.messageId === sent.messageId));
+  assert.equal(f.store.acknowledge(target, [sent.messageId], overdue + 3, claimed.filter(message => message.messageId === sent.messageId).map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
   assert.equal(f.store.status(sender, sent.messageId, overdue + 4).autoWake, null);
   const retireAt = Date.parse(expiresAt) + WAKE_RETIRE_GRACE_MS;
   keepAlive(f.store, 'instance-1', 'relay-1', retireAt);
@@ -516,7 +523,7 @@ test('G: a failure inside the table rebuild rolls back columns, rows and schema 
   assert.equal(code, 0, p.stderr()); assert.match(p.first.error, /rebuild failure/);
   assert.deepEqual(snapshotV272(m.database), before);
   const store = new SessionMessageStore(m.database); m.entry.stores.push(store);
-  assert.equal(snapshotV272(m.database).version, 1);
+  assert.equal(snapshotV272(m.database).version, 2);
 });
 
 test('crash right after a committed retirement leaves a retired row and one later reservation', async () => {
@@ -588,13 +595,14 @@ test('AGS-D-0304 (a): claiming a message while its wake is reserved for retry st
   keepAlive(f.store, 'instance-1', 'relay-1', backoffPassed);
   assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), backoffPassed).dispatch, false);
 
-  f.store.acknowledge(target, ['f8b4539a'], backoffPassed + 1);
+  f.store.acknowledge(target, ['f8b4539a'], backoffPassed + 1, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })));
   body(f.store, 'message-0001', backoffPassed + 2);
   body(f.store, 'message-0002', backoffPassed + 3);
   const batchWake = begin(f.store, backoffPassed + 4, request('instance-1', 'relay-1', 'batch-wake-nonce-abcdefghijklmnop'));
   assert.equal(f.store.recordManagedWakeOutcome(batchWake, 'definite-failure', backoffPassed + 5), true);
-  assert.deepEqual(f.store.claim(target, backoffPassed + 6, { maxMessages: 1 }).map(m => m.messageId), ['message-0001']);
-  assert.equal(f.store.acknowledge(target, ['message-0001'], backoffPassed + 7), 1);
+  const batchClaim = f.store.claim(target, backoffPassed + 6, { maxMessages: 1 });
+  assert.deepEqual(batchClaim.map(m => m.messageId), ['message-0001']);
+  assert.equal(f.store.acknowledge(target, ['message-0001'], backoffPassed + 7, batchClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
   assert.equal(f.store.managedWakeStatus(target, backoffPassed + 8).state, 'reserved');
   const nextRetry = backoffPassed + 35_000;
   keepAlive(f.store, 'instance-1', 'relay-1', nextRetry);
@@ -613,7 +621,8 @@ test('AGS-D-0304 (b): claiming and acknowledging a message after a submitted wak
 
   const claimAt = f.now + 38_000;
   keepAlive(f.store, 'instance-1', 'relay-1', claimAt);
-  assert.deepEqual(f.store.claim(target, claimAt).map(m => m.messageId), ['417e2c85']);
+  const claimed = f.store.claim(target, claimAt);
+  assert.deepEqual(claimed.map(m => m.messageId), ['417e2c85']);
   const statusAfterClaim = f.store.status(sender, '417e2c85', claimAt + 100);
   assert.equal(statusAfterClaim.state, 'delivered');
   assert.equal(statusAfterClaim.wake.state, 'submitted');
@@ -623,7 +632,7 @@ test('AGS-D-0304 (b): claiming and acknowledging a message after a submitted wak
 
   const ackAt = f.now + 54_000;
   keepAlive(f.store, 'instance-1', 'relay-1', ackAt);
-  assert.equal(f.store.acknowledge(target, ['417e2c85'], ackAt), 1);
+  assert.equal(f.store.acknowledge(target, ['417e2c85'], ackAt, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
   const statusAfterAck = f.store.status(sender, '417e2c85', ackAt + 100);
   assert.equal(statusAfterAck.state, 'acknowledged');
   assert.equal(statusAfterAck.wake.observation, 'observation-overdue');
@@ -641,10 +650,11 @@ test('AGS-D-0305: an unobserved submitted wake whose batch is already consumed r
 
   const claimAt = f.now + 38_000;
   keepAlive(f.store, 'instance-1', 'relay-1', claimAt);
-  assert.deepEqual(f.store.claim(target, claimAt).map(m => m.messageId), ['batch-1-msg']);
+  const claimed = f.store.claim(target, claimAt);
+  assert.deepEqual(claimed.map(m => m.messageId), ['batch-1-msg']);
   const ackAt = f.now + 54_000;
   keepAlive(f.store, 'instance-1', 'relay-1', ackAt);
-  assert.equal(f.store.acknowledge(target, ['batch-1-msg'], ackAt), 1);
+  assert.equal(f.store.acknowledge(target, ['batch-1-msg'], ackAt, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
 
   const newMessageAt = f.now + 55_000;
   keepAlive(f.store, 'instance-1', 'relay-1', newMessageAt);

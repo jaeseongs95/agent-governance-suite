@@ -1,5 +1,10 @@
 export const SESSION_MESSAGE_PROTOCOL = "1.0.0";
 
+// 인수 전 소비자의 회차 영수증 지원을 확인한다. 조회 프레임 형식은 바꾸지 않는다.
+export const SESSION_MESSAGE_CLAIM_OPERATIONS: readonly string[] = Object.freeze([
+  "claim", "claim-wake", "claim-host-wake", "claim-deferred", "claim-turn-end",
+]);
+
 // The lock publisher and diagnostic allowlist share the same fixed retry codes.
 export const BROKER_LOCK_PUBLISH_RETRY_CODES: readonly string[] = Object.freeze(["EEXIST", "ENOTEMPTY", "EPERM", "EACCES", "ENOENT"]);
 

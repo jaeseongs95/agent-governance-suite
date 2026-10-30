@@ -234,6 +234,7 @@ export function sessionMessageEnvelope(messages: RecordedSessionMessage[]): stri
       expiresAt: message.expiresAt,
       deliveryAttempt: message.deliveryAttempt,
       firstDeliveredAt: message.firstDeliveredAt,
+      ...(message.claimReceipt ? { claimReceipt: message.claimReceipt } : {}),
     };
     const block = (body: string, messageEncoding: "plain-json" | "base64-utf8") => [
       "[agent-governance-suite peer message BEGIN]",

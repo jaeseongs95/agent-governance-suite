@@ -71,8 +71,8 @@ test('W05-r2 body claim and ACK cannot authorize another unobserved managed wake
   const { store } = fixture();
   store.send({ sender, target, messageId: 'first-body', body: 'first' });
   assert.equal(dispatch(store, 'reserve-wake', reservation()).dispatch, true);
-  store.claim(target);
-  store.acknowledge(target, ['first-body']);
+  const claimed = store.claim(target);
+  store.acknowledge(target, ['first-body'], undefined, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })));
   store.send({ sender, target, messageId: 'second-body', body: 'second-body' });
   assert.equal(dispatch(store, 'reserve-wake', reservation('another-wake-nonce-abcdefghijklmnop')).dispatch, false);
 });
@@ -90,8 +90,9 @@ test('W05-r2 board ownership check has no nonce state effect', () => {
 test.each(['claimDeferred', 'claimTurnEnd'])('W05-r2 %s and ACK leave the managed notification fenced', (method) => {
   const f = fixture(); body(f.store, 'boundary-body', f.now);
   const attempt = begin(f.store, f.now);
-  assert.equal(f.store[method](target, f.now + 2).length, 1);
-  f.store.acknowledge(target, ['boundary-body'], f.now + 3);
+  const claimed = f.store[method](target, f.now + 2);
+  assert.equal(claimed.length, 1);
+  f.store.acknowledge(target, ['boundary-body'], f.now + 3, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })));
   body(f.store, 'new-boundary-body', f.now + 4);
   assert.equal(f.store.reserveManagedWake({ ...target, ...reservation('second-nonce-abcdefghijklmnop') }, f.now + 5).dispatch, false);
   assert.equal(f.store.managedWakeStatus(target, f.now + 5).attemptId, attempt.attemptId);
@@ -121,7 +122,7 @@ function body(store, id = 'body-0001', now = Date.now(), ttlSeconds = 3600) {
 test('W05-r2 start rechecks claim/ACK and persists no-effect retirement', () => {
   const f = fixture(); body(f.store, 'before-start', f.now);
   const reserved = f.store.reserveManagedWake({ ...target, ...reservation() }, f.now);
-  f.store.claim(target, f.now + 1); f.store.acknowledge(target, ['before-start'], f.now + 2);
+  const claimed = f.store.claim(target, f.now + 1); f.store.acknowledge(target, ['before-start'], f.now + 2, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })));
   assert.equal(f.store.startManagedWake(reserved.attempt, f.now + 3).dispatch, false);
   assert.equal(f.store.managedWakeStatus(target, f.now + 3).state, 'not-submitted');
   body(f.store, 'next-body', f.now + 4);
@@ -131,11 +132,11 @@ test('W05-r2 start rechecks claim/ACK and persists no-effect retirement', () => 
 test('W05-r2 claim after start keeps one fence until the actual hook, including an empty batch', () => {
   const f = fixture(); body(f.store, 'after-start', f.now);
   const attempt = begin(f.store, f.now);
-  f.store.claim(target, f.now + 2); f.store.acknowledge(target, ['after-start'], f.now + 3);
+  const firstClaim = f.store.claim(target, f.now + 2); f.store.acknowledge(target, ['after-start'], f.now + 3, firstClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })));
   f.store.recordManagedWakeOutcome(attempt, 'submitted', f.now + 4);
   body(f.store, 'next-body', f.now + 5);
   assert.equal(f.store.reserveManagedWake({ ...target, ...reservation('next-nonce-abcdefghijklmnop') }, f.now + 6).dispatch, false);
-  f.store.claim(target, f.now + 7); f.store.acknowledge(target, ['next-body'], f.now + 8);
+  const nextClaim = f.store.claim(target, f.now + 7); f.store.acknowledge(target, ['next-body'], f.now + 8, nextClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })));
   const result = hostClaim(f, observe(f, attempt, f.now + 9), f.now + 10);
   assert.equal(result.recognized, true); assert.deepEqual(result.messages, []);
   assert.equal(f.store.managedWakeStatus(target, f.now + 10).state, 'observed');
@@ -415,7 +416,7 @@ test('verified expired/old-generation arrival retires only its attempt before a 
     const f = fixture(6); body(f.store, 'old-body', f.now);
     const attempt = begin(f.store, f.now);
     f.store.recordManagedWakeOutcome(attempt, 'submitted', f.now + 2);
-    f.store.claim(target, f.now + 3); f.store.acknowledge(target, ['old-body'], f.now + 4);
+    const claimed = f.store.claim(target, f.now + 3); f.store.acknowledge(target, ['old-body'], f.now + 4, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })));
     let at = f.now + 5;
     if (variant === 'expired') at = f.now + WAKE_TTL_MS + 1;
     else f.store.endPresence(target, 'fixture', 'instance-1', at);
@@ -487,6 +488,7 @@ test('W05-r2 batch/ACK-loss redelivery and hook rollback preserve exact nonce co
 test('W05-r2 hook-before-outcome, adapter exception and new vendor use the same core', async () => {
   const f = fixture(); body(f.store, 'body-0001', f.now);
   let calls = 0;
+  let claimed = [];
   const request = async (operation, payload) => dispatch(f.store, operation, payload);
   assert.equal(await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, 'relay-1', {
     capabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' },
@@ -494,12 +496,14 @@ test('W05-r2 hook-before-outcome, adapter exception and new vendor use the same 
       calls++;
       const row = f.store.database.prepare("SELECT * FROM wake_nonces WHERE state = 'started'").get();
       assert.ok(row); const observation = observe(f, { nonce: row.nonce }, Date.now());
-      assert.equal(hostClaim(f, observation, Date.now()).recognized, true);
+      const observed = hostClaim(f, observation, Date.now());
+      claimed = observed.messages;
+      assert.equal(observed.recognized, true);
       return 'submitted';
     },
   }, request), true);
   assert.equal(calls, 1); assert.equal(f.store.managedWakeStatus(target).state, 'observed');
-  f.store.acknowledge(target, ['body-0001']); body(f.store, 'second-body');
+  f.store.acknowledge(target, ['body-0001'], undefined, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))); body(f.store, 'second-body');
   await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, 'relay-1', {
     capabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' }, dispatch: async () => { calls++; throw new Error('lost adapter result'); },
   }, request);
@@ -599,7 +603,7 @@ test('verified old arrival in another process releases only the old attempt and 
   const f = fixture(5); body(f.store, 'old-body', f.now);
   const attempt = begin(f.store, f.now);
   f.store.recordManagedWakeOutcome(attempt, 'submitted', f.now + 2);
-  f.store.claim(target, f.now + 3); f.store.acknowledge(target, ['old-body'], f.now + 4);
+  const claimed = f.store.claim(target, f.now + 3); f.store.acknowledge(target, ['old-body'], f.now + 4, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })));
   f.store.startPresence({ ...target, instanceId: 'instance-2', transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
     deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } }, f.now + 5);
   body(f.store, 'new-body', f.now + 6);
@@ -707,8 +711,9 @@ function observedThenCurrent(f) {
   const old = begin(f.store, f.now);
   f.store.recordManagedWakeOutcome(old, 'submitted', f.now + 2);
   const oldReceipt = observe(f, old, f.now + 3);
-  assert.deepEqual(hostClaim(f, oldReceipt, f.now + 4).messages.map(message => message.messageId), ['already-observed-body']);
-  f.store.acknowledge(target, ['already-observed-body'], f.now + 5);
+  const claimed = hostClaim(f, oldReceipt, f.now + 4).messages;
+  assert.deepEqual(claimed.map(message => message.messageId), ['already-observed-body']);
+  f.store.acknowledge(target, ['already-observed-body'], f.now + 5, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })));
   const oldRow = f.store.database.prepare('SELECT * FROM wake_nonces WHERE attempt_id = ?').get(old.attemptId);
   body(f.store, 'current-body', f.now + 6);
   const current = begin(f.store, f.now + 7, reservation('current-after-observed-nonce-abcdefghijklmnop'));

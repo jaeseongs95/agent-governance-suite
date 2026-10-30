@@ -151,7 +151,7 @@ it("delivers twelve batches of Korean messages through the CLI claim path byte f
     const received = messages.map((message) => message.body);
     replacementCharacters += received.join("").split("�").length - 1;
     if (received.length !== bodies.length || received.some((body, index) => !Buffer.from(body).equals(Buffer.from(bodies[index]!)))) broken.push(round);
-    await cli("acknowledge", { target, messageIds: messages.map((message) => message.messageId) });
+    await cli("acknowledge", { target, messageIds: messages.map((message) => message.messageId), receipts: messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })) });
   }
   expect({ broken, replacementCharacters }).toEqual({ broken: [], replacementCharacters: 0 });
 }, 60_000);

@@ -595,7 +595,7 @@ export function createMcpServer(
       },
       {
         name: "acknowledge_session_messages",
-        description: "Acknowledge the distinct peer message IDs actually processed in one batch. Do not acknowledge unprocessed messages. This is processing evidence, not completion or approval. Unacknowledged messages remain eligible for redelivery after their claim lease expires.",
+        description: "실제로 처리한 서로 다른 피어 메시지를 한 번에 수신 확인한다. 각 봉투 receipt의 messageId와 claimReceipt를 receipts 배열에 그대로 넣고, 같은 식별자를 messageIds에 넣는다. 과거 회차의 영수증을 최신 회차로 바꾸거나 추측하지 않는다. 처리하지 않은 메시지는 확인하지 않는다. 이는 처리 근거이며 완료나 승인이 아니다. 영수증이 없는 옛 형식 역사 행만 messageIds 단독 확인을 지원한다. 새 전달에서 영수증이 누락되거나 회차가 다르면 확인 수는 0이다. 임대 만료 후 재인수되지 않은 같은 원회차는 늦게 확인할 수 있다.",
         inputSchema: contractSchemas.acknowledgeSessionMessagesRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },

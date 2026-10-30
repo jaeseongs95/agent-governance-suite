@@ -6,6 +6,7 @@ import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 import type { AttemptLeaseV1, AttemptProposalV1, ContinuitySnapshotV1, ConvergenceRootV1, TaskEnvelopeV1, WorkflowReceiptV1 } from "../../contracts/types.js";
 import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared-stores.js";
+import { InactiveSharedConnection } from "../../runtime/unified-state/shared-connection.mjs";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { ContinuityStoreError } from "../../mcp-server/src/continuity-store.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
@@ -62,8 +63,8 @@ describe("native legacy APIs on one inactive authority connection", () => {
     const replay = store.submitPrepared(sender, draft.messageId, now); expect(replay.messageId).toBe(first.messageId); expect(replay.createdAt).toBe(first.createdAt); expect(replay.duplicate).toBe(true); expect(value.owner.inspect().counts.messages).toBe(1);
     expect(() => store.send({ messageId: draft.messageId, sender, target, body: "changed payload", ttlSeconds: 30 }, now)).toThrow(/different message/u);
     expect(store.status({ ...sender, sessionId: "wrong" }, draft.messageId, now)).toBeNull(); expect(store.claim({ ...target, host: "wrong" }, now)).toEqual([]);
-    expect(store.claim(target, now)).toHaveLength(1); expect(store.acknowledge({ ...target, sessionId: "wrong" }, [draft.messageId], now)).toBe(0);
-    expect(store.acknowledge(target, [draft.messageId, draft.messageId], now)).toBe(1); expect(store.acknowledge(target, [draft.messageId], now)).toBe(0);
+    const claimed = store.claim(target, now); expect(claimed).toHaveLength(1); expect(store.acknowledge({ ...target, sessionId: "wrong" }, [draft.messageId], now, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(0);
+    expect(store.acknowledge(target, [draft.messageId, draft.messageId], now, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1); expect(store.acknowledge(target, [draft.messageId], now, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(0);
     expect(store.status(sender, draft.messageId, now)?.state).toBe("acknowledged");
     now = 30101; expect(store.status(sender, draft.messageId, now)).toMatchObject({ state: "acknowledged", messageId: draft.messageId }); expect(store.claim(target, now)).toEqual([]);
     console.log("B2-RAW receipt", JSON.stringify({ first, replay, afterExpiry: store.status(sender, draft.messageId, now), counts: value.owner.inspect().counts }));
@@ -105,4 +106,62 @@ describe("native legacy APIs on one inactive authority connection", () => {
     const distinct = fixture(() => 100, { ...keys, continuity: Buffer.alloc(32, 5).toString("base64url") }); const distinctService = new ContinuityService(distinct.continuity, null, distinct.workflow, () => new Date(100)); expect(distinctService.correlateSession("raw-session-fixture")).not.toBe(service.correlateSession("raw-session-fixture"));
     expect(() => value.workflow.backupTo(path.join(path.dirname(value.owner.databasePath), "no-backup.sqlite3"))).toThrow(/SHARED_BACKUP_OWNER_REQUIRED/u);
   });
+});
+
+
+it("D0354 기존 공용 messaging v1은 읽기 검증 뒤 명시적 이전을 거쳐 다시 열린다", () => {
+  const previous = fixture();
+  const filename = previous.owner.databasePath, directory = path.dirname(filename);
+  const sender = { host: "sender-host", sessionId: "migration-sender" };
+  const target = { host: "target-host", sessionId: "migration-target" };
+  const delivered = previous.messaging.prepare({ sender, target, body: "historical delivered body" }, 100);
+  previous.messaging.submitPrepared(sender, delivered.messageId, 100);
+  expect(previous.messaging.claim(target, 100)).toMatchObject([{ messageId: delivered.messageId, deliveryAttempt: 1 }]);
+  const queued = previous.messaging.prepare({ sender, target, body: "historical queued body" }, 101);
+  previous.messaging.submitPrepared(sender, queued.messageId, 101);
+  previous.workflow.insertRun(receipt("migration-retained-run"));
+  previous.owner.close();
+
+  const legacy = new DatabaseSync(filename);
+  try {
+    legacy.exec("ALTER TABLE messages DROP COLUMN acknowledgement_receipt; ALTER TABLE messages DROP COLUMN claim_receipt; ALTER TABLE messages DROP COLUMN legacy_claim_attempt;");
+    const header = legacy.prepare("SELECT schema_json FROM shared_module_schema WHERE module = 'messaging'").get() as { schema_json: string };
+    const shape = JSON.parse(header.schema_json) as Array<{ name: string; columns: unknown; sql: unknown }>;
+    const messages = shape.find(table => table.name === "messages")!;
+    messages.columns = legacy.prepare("PRAGMA table_info(messages)").all();
+    messages.sql = (legacy.prepare("SELECT sql FROM sqlite_schema WHERE name = 'messages'").get() as { sql: string }).sql;
+    legacy.prepare("UPDATE shared_module_schema SET version = 1, schema_json = ? WHERE module = 'messaging'").run(JSON.stringify(shape));
+  } finally { legacy.close(); }
+
+  const before = fs.readFileSync(filename);
+  const pending = new InactiveSharedConnection({ databasePath: filename, mode: "fixture-only", clock: () => 101 });
+  try {
+    expect(pending.borrow("messaging").getSchemaVersion()).toBe(1);
+    let called = false, failure: unknown;
+    try { pending.transaction(() => { called = true; }); } catch (error) { failure = error; }
+    expect(failure).toMatchObject({ code: "SCHEMA_NOT_READY" });
+    expect(called).toBe(false);
+  } finally { pending.close(); }
+  expect(fs.readFileSync(filename)).toEqual(before);
+
+  const migrated = createInactiveSharedStores({ directory, mode: "fixture-only", clock: () => 122_001, syntheticKeys: keys });
+  bundles.push(migrated);
+  expect(migrated.owner.inspect().modules.find(row => row.module === "messaging")?.version).toBe(2);
+  expect(migrated.workflow.getRun("migration-retained-run")).toEqual(receipt("migration-retained-run"));
+  expect(migrated.messaging.database.prepare("SELECT message_id, claim_receipt, legacy_claim_attempt, delivery_attempts FROM messages WHERE message_id = ?").get(delivered.messageId))
+    .toMatchObject({ message_id: delivered.messageId, claim_receipt: null, legacy_claim_attempt: 1, delivery_attempts: 1 });
+  expect(migrated.messaging.database.prepare("SELECT claim_receipt, legacy_claim_attempt, delivery_attempts FROM messages WHERE message_id = ?").get(queued.messageId))
+    .toMatchObject({ claim_receipt: null, legacy_claim_attempt: 0, delivery_attempts: 0 });
+  const claimed = migrated.messaging.claim(target, 122_001, { maxMessages: 1 });
+  expect(claimed).toMatchObject([{ messageId: delivered.messageId, body: "historical delivered body", deliveryAttempt: 2 }]);
+  expect(migrated.messaging.acknowledge(target, [delivered.messageId], 122_002, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
+  migrated.owner.close();
+
+  const reopened = createInactiveSharedStores({ directory, mode: "fixture-only", clock: () => 122_003, syntheticKeys: keys });
+  bundles.push(reopened);
+  expect(reopened.owner.inspect().modules.find(row => row.module === "messaging")?.version).toBe(2);
+  expect(reopened.messaging.status(sender, delivered.messageId, 122_003)).toMatchObject({ state: "acknowledged", deliveryAttempts: 2 });
+  expect(reopened.messaging.status(sender, queued.messageId, 122_003)).toMatchObject({ state: "queued", deliveryAttempts: 0 });
+  expect(reopened.messaging.database.prepare("SELECT legacy_claim_attempt FROM messages WHERE message_id = ?").get(delivered.messageId)).toMatchObject({ legacy_claim_attempt: 1 });
+  expect(reopened.workflow.getRun("migration-retained-run")).toEqual(receipt("migration-retained-run"));
 });

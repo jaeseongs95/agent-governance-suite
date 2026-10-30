@@ -50,12 +50,14 @@ function sendNew(store: SessionMessageStore, sender: typeof hot, nowMs: number, 
   const draft = store.prepare({ sender, target, body: "Synthetic retention message", ...(ttlSeconds === undefined ? {} : { ttlSeconds }) }, nowMs);
   return store.submitPrepared(sender, draft.messageId, nowMs);
 }
-function claimReceiptFixture(store: SessionMessageStore, ids: string[], nowMs: number): void {
-  const claimed: string[] = [];
+function claimReceiptFixture(store: SessionMessageStore, ids: string[], nowMs: number) {
+  const claimed: ReturnType<SessionMessageStore["claim"]> = [];
   for (let offset = 0; offset < ids.length; offset += 10) {
-    claimed.push(...store.claim(target, nowMs, { maxMessages: Math.min(10, ids.length - offset) }).map(message => message.messageId));
+    claimed.push(...store.claim(target, nowMs, { maxMessages: Math.min(10, ids.length - offset) }));
   }
-  expect([...claimed].sort()).toEqual([...ids].sort());
+  expect(claimed.map(message => message.messageId).sort()).toEqual([...ids].sort());
+  const receipts = new Map(claimed.map(message => [message.messageId, message.claimReceipt!]));
+  return ids.map(messageId => ({ messageId, claimReceipt: receipts.get(messageId)! }));
 }
 function rejection(action: () => unknown): Error & { details?: unknown } {
   try { action(); } catch (error) { return error as Error & { details?: unknown }; }
@@ -120,8 +122,8 @@ it("bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted",
   const messageExpiry = Date.parse(sent.expiresAt);
   expect(receiptExpiry(store, sent.messageId)).toBe(iso(messageExpiry + H));
   const ackAt = 2000;
-  claimReceiptFixture(store, [sent.messageId], 1500);
-  expect(store.acknowledge(target, [sent.messageId], ackAt)).toBe(1);
+  const claimedReceipts1 = claimReceiptFixture(store, [sent.messageId], 1500);
+  expect(store.acknowledge(target, [sent.messageId], ackAt, claimedReceipts1)).toBe(1);
   expect(receiptExpiry(store, sent.messageId)).toBe(iso(Math.min(messageExpiry + H, ackAt + H)));
   expect(store.submitPrepared(hot, sent.messageId, ackAt + H - 1)).toEqual({ ...sent, duplicate: true, autoWake: { ...sent.autoWake, checkedAt: new Date(ackAt + H - 1).toISOString() } });
   expect(store.status(hot, sent.messageId, ackAt + H - 1)).toMatchObject({ state: "acknowledged" });
@@ -131,16 +133,16 @@ it("bounds an acknowledged receipt to ACK+1h; the same ID is never re-inserted",
   expect(receipts(store, hot)).toBe(0);
   // An ACK of an expired but not yet pruned row never extends the receipt.
   const shortLived = sendNew(store, hot, 10_000, 30);
-  claimReceiptFixture(store, [shortLived.messageId], 10_001);
-  expect(store.acknowledge(target, [shortLived.messageId], 10_000 + 40_000)).toBe(1);
+  const claimedReceipts2 = claimReceiptFixture(store, [shortLived.messageId], 10_001);
+  expect(store.acknowledge(target, [shortLived.messageId], 10_000 + 40_000, claimedReceipts2)).toBe(1);
   expect(receiptExpiry(store, shortLived.messageId)).toBe(iso(10_000 + 30_000 + H));
 });
 
 it("drained senders regain capacity at ACK+1h instead of message expiry+1h", () => {
   const store = fixture();
   const ids = Array.from({ length: SENDER_LIMIT }, () => sendNew(store, hot, 1000, 86400).messageId);
-  claimReceiptFixture(store, ids, 1000);
-  for (let index = 0; index < ids.length; index += 50) expect(store.acknowledge(target, ids.slice(index, index + 50), 1000)).toBe(50);
+  const claimedReceipts3 = claimReceiptFixture(store, ids, 1000);
+  for (let index = 0; index < ids.length; index += 50) expect(store.acknowledge(target, ids.slice(index, index + 50), 1000, claimedReceipts3.slice(index, index + 50))).toBe(50);
   expect(() => store.prepare({ sender: hot, target, body: "still held" }, 1000 + H - 1)).toThrow(/for this sender/u);
   expect(sendNew(store, hot, 1000 + H, 86400).duplicate).toBe(false);
 });
@@ -148,17 +150,17 @@ it("drained senders regain capacity at ACK+1h instead of message expiry+1h", () 
 it("second ACK, another session's ACK and unknown-ID ACK leave receipt expiry unchanged", () => {
   const store = fixture();
   const first = sendNew(store, hot, 1000, 86400);
-  claimReceiptFixture(store, [first.messageId], 1000);
+  const claimedReceipts4 = claimReceiptFixture(store, [first.messageId], 1000);
   const second = sendNew(store, hot, 1000, 86400);
   const snapshot = () => store.database.prepare("SELECT message_id, expires_at FROM prepared_messages ORDER BY message_id").all();
   const initial = snapshot();
-  expect(store.acknowledge(other, [first.messageId, second.messageId], 2000)).toBe(0);
+  expect(store.acknowledge(other, [first.messageId, second.messageId], 2000, claimedReceipts4)).toBe(0);
   expect(store.acknowledge(target, ["unknown-retention-id"], 2000)).toBe(0);
   expect(snapshot()).toEqual(initial);
-  expect(store.acknowledge(target, [first.messageId], 3000)).toBe(1);
+  expect(store.acknowledge(target, [first.messageId], 3000, claimedReceipts4)).toBe(1);
   expect(receiptExpiry(store, first.messageId)).toBe(iso(3000 + H));
   const afterFirst = snapshot();
-  expect(store.acknowledge(target, [first.messageId], 4000)).toBe(0);
+  expect(store.acknowledge(target, [first.messageId], 4000, claimedReceipts4)).toBe(0);
   expect(snapshot()).toEqual(afterFirst);
   expect(receiptExpiry(store, second.messageId)).toBe(iso(Date.parse(second.expiresAt) + H));
   expect(store.status(hot, second.messageId, 3000 + 2 * H)).toMatchObject({ state: "queued" });
@@ -216,12 +218,12 @@ it("concurrent send and unclaimed ACK preserve one row until a valid claim and A
   const initial = String(receiptExpiry(store, draft.messageId));
   expect(acknowledged).toBe(0);
   expect(initial).toBe(iso(Date.parse(sent.expiresAt) + H));
-  claimReceiptFixture(store, [draft.messageId], 2001);
-  expect(store.acknowledge(target, [draft.messageId], 3000)).toBe(1);
+  const claimedReceipts5 = claimReceiptFixture(store, [draft.messageId], 2001);
+  expect(store.acknowledge(target, [draft.messageId], 3000, claimedReceipts5)).toBe(1);
   const later = String(receiptExpiry(store, draft.messageId));
   expect(later).toBe(iso(3000 + H));
   expect(later < initial).toBe(true);
-  expect(store.acknowledge(target, [draft.messageId], 4000)).toBe(0);
+  expect(store.acknowledge(target, [draft.messageId], 4000, claimedReceipts5)).toBe(0);
   expect(String(receiptExpiry(store, draft.messageId))).toBe(later);
 }, 20_000);
 
@@ -238,8 +240,8 @@ it("opens a v2.7.2 receipt without migration and applies ACK+1h only to new ACKs
   expect(receiptExpiry(reopened, old.messageId)).toBe(legacyExpiry);
   expect(reopened.acknowledge(target, [old.messageId], 3000)).toBe(0);
   expect(receiptExpiry(reopened, old.messageId)).toBe(legacyExpiry);
-  claimReceiptFixture(reopened, [fresh.messageId], 2001);
-  expect(reopened.acknowledge(target, [fresh.messageId], 3000)).toBe(1);
+  const claimedReceipts6 = claimReceiptFixture(reopened, [fresh.messageId], 2001);
+  expect(reopened.acknowledge(target, [fresh.messageId], 3000, claimedReceipts6)).toBe(1);
   expect(receiptExpiry(reopened, fresh.messageId)).toBe(iso(3000 + H));
   expect(reopened.status(hot, old.messageId, 2000 + H)).toMatchObject({ state: "submitted", deliveryState: "unknown", receiptExpiresAt: legacyExpiry });
   expect(reopened.status(hot, fresh.messageId, 3000 + H)).toBeNull();
@@ -357,21 +359,21 @@ it("ACK-A rollback: receipt failure rolls back the whole ACK before short-TTL re
   const store = fixture();
   const sent = sendNew(store, hot, 1000, 30);
   const before = receiptExpiry(store, sent.messageId);
-  claimReceiptFixture(store, [sent.messageId], 1500);
+  const claimedReceipts7 = claimReceiptFixture(store, [sent.messageId], 1500);
   // Fault injection through the test database only; product code has no test path.
   store.database.exec(`CREATE TRIGGER retention_fail_receipt BEFORE UPDATE OF expires_at ON prepared_messages
     BEGIN SELECT RAISE(ABORT, 'injected receipt update failure'); END;`);
-  expect(() => store.acknowledge(target, [sent.messageId], 2000)).toThrow(/injected receipt update failure/u);
+  expect(() => store.acknowledge(target, [sent.messageId], 2000, claimedReceipts7)).toThrow(/injected receipt update failure/u);
   expect(scalar(store, "SELECT acknowledged_at AS value FROM messages WHERE message_id = ?", sent.messageId)).toBeNull();
   expect(receiptExpiry(store, sent.messageId)).toBe(before);
   expect(store.status(hot, sent.messageId, 2001)).toMatchObject({ state: "delivered", acknowledgedAt: null });
   store.database.exec("DROP TRIGGER retention_fail_receipt");
-  expect(store.acknowledge(target, [sent.messageId], 3000)).toBe(1);
+  expect(store.acknowledge(target, [sent.messageId], 3000, claimedReceipts7)).toBe(1);
   expect(receiptExpiry(store, sent.messageId)).toBe(iso(3000 + H));
   store.prune(31_000);
   expect(store.status(hot, sent.messageId, 31_000)).toMatchObject({ state: "acknowledged", acknowledgedAt: iso(3000) });
   expect(store.database.prepare("SELECT body, body_bytes FROM messages WHERE message_id = ?").get(sent.messageId)).toMatchObject({ body: "", body_bytes: 0 });
-  expect(store.acknowledge(target, [sent.messageId], 31_001)).toBe(0);
+  expect(store.acknowledge(target, [sent.messageId], 31_001, claimedReceipts7)).toBe(0);
   expect(receiptExpiry(store, sent.messageId)).toBe(iso(3000 + H));
 });
 
@@ -413,8 +415,9 @@ it("ACK-A E/R: preserves receipt-backed ACK metadata after payload expiry withou
   const sent = store.submitPrepared(hot, draft.messageId, 2000);
   const E = 32_000, A = 3002, R = 3_603_002;
   expect(sent.expiresAt).toBe(iso(E));
-  expect(store.claim(target, 3001)).toHaveLength(1);
-  expect(store.acknowledge(target, [sent.messageId], A)).toBe(1);
+  const claimed = store.claim(target, 3001);
+  expect(claimed).toHaveLength(1);
+  expect(store.acknowledge(target, [sent.messageId], A, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
   const firstReceipt = scalar(store, "SELECT receipt AS value FROM prepared_messages WHERE message_id = ?", sent.messageId);
   const wakes = scalar(store, "SELECT count(*) AS value FROM wake_nonces");
   for (const now of [E - 1, E, E + 1, R - 1]) {
@@ -431,7 +434,7 @@ it("ACK-A E/R: preserves receipt-backed ACK metadata after payload expiry withou
       expect(store.submitPrepared(hot, sent.messageId, now)).toMatchObject({ messageId: sent.messageId, createdAt: sent.createdAt, expiresAt: sent.expiresAt, duplicate: true });
       expect(scalar(store, "SELECT receipt AS value FROM prepared_messages WHERE message_id = ?", sent.messageId)).toBe(firstReceipt);
       expect(scalar(store, "SELECT count(*) AS value FROM wake_nonces")).toBe(wakes);
-      expect(store.acknowledge(target, [sent.messageId], now)).toBe(0);
+      expect(store.acknowledge(target, [sent.messageId], now, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(0);
     }
     expect(receiptExpiry(store, sent.messageId)).toBe(iso(R));
   }
@@ -446,8 +449,8 @@ it.each(["absent", "null-receipt", "expired-before", "expired-at", "sender_host"
   const store = fixture();
   const sent = sendNew(store, hot, 1000, 30);
   const E = 31_000;
-  claimReceiptFixture(store, [sent.messageId], 1001);
-  expect(store.acknowledge(target, [sent.messageId], 1002)).toBe(1);
+  const claimedReceipts8 = claimReceiptFixture(store, [sent.messageId], 1001);
+  expect(store.acknowledge(target, [sent.messageId], 1002, claimedReceipts8)).toBe(1);
   if (variant === "absent") store.database.prepare("DELETE FROM prepared_messages WHERE message_id = ?").run(sent.messageId);
   else if (variant === "null-receipt") store.database.prepare("UPDATE prepared_messages SET receipt = NULL WHERE message_id = ?").run(sent.messageId);
   else if (variant === "expired-before" || variant === "expired-at") store.database.prepare("UPDATE prepared_messages SET expires_at = ? WHERE message_id = ?").run(iso(variant === "expired-before" ? E - 1 : E), sent.messageId);
@@ -463,8 +466,8 @@ it.each(["sender", "global"] as const)("ACK-A capacity: short-TTL metadata prese
   const senders = scope === "sender" ? [hot] : Array.from({ length: 4 }, (_, index) => ({ host: "test-host", sessionId: `ack-a-cap-${index}` }));
   const ids = senders.flatMap((sender) => Array.from({ length: SENDER_LIMIT }, () => sendNew(store, sender, 1000, 30).messageId));
   const bytes = scalar(store, "SELECT sum(record_bytes) AS value FROM prepared_messages");
-  claimReceiptFixture(store, ids, 1500);
-  for (let index = 0; index < ids.length; index += 50) expect(store.acknowledge(target, ids.slice(index, index + 50), 2000)).toBe(50);
+  const claimedReceipts9 = claimReceiptFixture(store, ids, 1500);
+  for (let index = 0; index < ids.length; index += 50) expect(store.acknowledge(target, ids.slice(index, index + 50), 2000, claimedReceipts9.slice(index, index + 50))).toBe(50);
   const E = 31_000, R = 3_602_000;
   store.prune(E);
   expect(rows(store)).toBe(scope === "sender" ? 250 : 1000);
@@ -487,8 +490,8 @@ it.each(["sender", "global"] as const)("ACK-A capacity: short-TTL metadata prese
 it("ACK-A active spool: retained ACK metadata does not take the next unACK's claim slot", () => {
   const store = fixture();
   const retained = sendNew(store, hot, 1000, 30);
-  claimReceiptFixture(store, [retained.messageId], 1000);
-  expect(store.acknowledge(target, [retained.messageId], 1002)).toBe(1);
+  const claimedReceipts10 = claimReceiptFixture(store, [retained.messageId], 1000);
+  expect(store.acknowledge(target, [retained.messageId], 1002, claimedReceipts10)).toBe(1);
   store.prune(31_000);
   const fresh = sendNew(store, other, 31_001, 30);
   expect(rows(store)).toBe(2);
@@ -503,14 +506,14 @@ it("ACK-A ordering/reopen: distinguishes committed ACK-first from prune-first ac
   const database = path.join(await directory(), "ack-a-order.sqlite3");
   const left = fixture(database), right = fixture(database);
   const acknowledged = sendNew(left, hot, 1000, 30);
-  claimReceiptFixture(left, [acknowledged.messageId], 1000);
+  const claimedReceipts11 = claimReceiptFixture(left, [acknowledged.messageId], 1000);
   const unacknowledged = sendNew(left, other, 1000, 30);
-  expect(left.acknowledge(target, [acknowledged.messageId], 1002)).toBe(1);
+  expect(left.acknowledge(target, [acknowledged.messageId], 1002, claimedReceipts11)).toBe(1);
   right.prune(31_000);
   expect(right.status(hot, acknowledged.messageId, 31_000)).toMatchObject({ state: "acknowledged", acknowledgedAt: iso(1002) });
   expect(left.acknowledge(target, [unacknowledged.messageId], 31_000)).toBe(0);
   expect(right.status(other, unacknowledged.messageId, 31_000)).toMatchObject({ state: "submitted", deliveryState: "unknown" });
-  expect(right.acknowledge(target, [acknowledged.messageId], 31_001)).toBe(0);
+  expect(right.acknowledge(target, [acknowledged.messageId], 31_001, claimedReceipts11)).toBe(0);
   expect(receiptExpiry(left, acknowledged.messageId)).toBe(iso(3_601_002));
   for (const store of [left, right]) { store.close(); stores.splice(stores.indexOf(store), 1); }
   const reopened = fixture(database);
@@ -523,9 +526,9 @@ it("ACK-A prune crash: standalone DELETE commits before payload UPDATE and reope
   const database = path.join(await directory(), "ack-a-crash.sqlite3");
   const store = fixture(database);
   const retained = sendNew(store, hot, 1000, 30);
-  claimReceiptFixture(store, [retained.messageId], 1000);
+  const claimedReceipts12 = claimReceiptFixture(store, [retained.messageId], 1000);
   const expired = sendNew(store, other, 1000, 30);
-  expect(store.acknowledge(target, [retained.messageId], 1002)).toBe(1);
+  expect(store.acknowledge(target, [retained.messageId], 1002, claimedReceipts12)).toBe(1);
   store.close(); stores.splice(stores.indexOf(store), 1);
   const module = new URL("../../mcp-server/src/session-message-store.ts", import.meta.url).href;
   const code = `import {SessionMessageStore} from ${JSON.stringify(module)}; const store=new SessionMessageStore(${JSON.stringify(database)}); store.database.function("ack_a_crash",()=>process.exit(71)); store.database.exec("CREATE TRIGGER ack_a_crash_payload BEFORE UPDATE OF body ON messages BEGIN SELECT ack_a_crash(); END;"); store.prune(31000); store.close();`;
