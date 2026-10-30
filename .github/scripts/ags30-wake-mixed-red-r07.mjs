@@ -12,6 +12,9 @@ const expectedMutantDigest = new Map([
   ['8a4796f9e19f977e4275999f5743f1a4598436ab4bdaf847b66f7e4f2af5075e', 'd10b11b83bd4191de245dd8a6a1b9329550d7541e93b859b92df2f18ceae6d2f'],
   ['b9856206e10b039c5f5dfc9f16ff9144bcd00fe73c460a74ce1d88e6021e82c0', '82d2be89a6960dddf21027d8c71cb69125d132be43f9fbeb07efc1ae54c1aa3a'],
   ['8720482bd3d9bee0f76ab9206de4d2ab043c69b3f8dd2caffdbca0c2b4d20a6d', '1bba2bd9eeba2ffce90f1ab09a70f705c5cb26ede16e6806b54f0cf271eaf88a'],
+  // D0354·인수 영수증 수리 뒤에도 claimHostWake 본문과 네 결함 치환은 동일하다.
+  ['8afc6279fca23f1a2bd475de56f64eb80044de71391f8d78523835f1b370ec0f', '007b1d11ed3a7bd39716c1c0af6fe841a9df062ed4b0750f10a44af00f8b7ef5'],
+  ['e5227b3e2d229e3e429b0d4e8e0d01879777337b6fc79c531fe1ebdee2c9b3ad', '1c76a06445226d491241c42866b0b062a2c82caf8a4e14aff679ad30f24f0e1a'],
 ]).get(sourceDigest);
 assert.ok(expectedMutantDigest, `UNKNOWN_WAKE_MIXED_RED_SOURCE:${sourceDigest}`);
 const baseline = Buffer.from(original.toString('utf8')
