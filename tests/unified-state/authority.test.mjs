@@ -309,4 +309,30 @@ describe("비활성 단일 SQLite authority/provider 후보", () => {
     const provider = createProviderAdapter(value, scopeA);
     expect(() => importAll(provider, snapshot(), "rollback-failure")).toThrow("fixture-primary-failure");
   });
+  it("AGS-D-0227: normalizes corrupted JSON in stored authority tables to INVALID_JSON", () => {
+    const dir = directory();
+    const initial = authority(dir, { clock: () => 100 });
+    const provider = createProviderAdapter(initial, scopeA);
+    importAll(provider);
+    const lease = provider.claim(workflowRef, { expectedRevision: 4, owner: "json-corrupt-owner", ttlMs: 100 });
+    provider.commit(workflowRef, { expectedRevision: 4, lease, row: nextWorkflowRow(), intentId: "corrupt-json-intent", receiptId: "corrupt-json-receipt" });
+    close(initial);
+
+    const dbPath = path.join(dir, "ags-state.sqlite3");
+    const db = new DatabaseSync(dbPath);
+    db.prepare("UPDATE records SET row_json = '{corrupt' WHERE module = 'workflow'").run();
+    db.prepare("UPDATE write_intents SET result_json = '{corrupt' WHERE intent_id = 'corrupt-json-intent'").run();
+    db.close();
+
+    const reopened = authority(dir, { clock: () => 105 });
+    const reopenedProvider = createProviderAdapter(reopened, scopeA);
+    assertCode(() => reopenedProvider.read(workflowRef), "INVALID_JSON");
+    assertCode(() => reopenedProvider.receipt("corrupt-json-intent"), "INVALID_JSON");
+    close(reopened);
+
+    const db2 = new DatabaseSync(dbPath);
+    db2.prepare("UPDATE module_schema SET source_versions_json = '{corrupt' WHERE module = 'workflow'").run();
+    db2.close();
+    assertCode(() => authority(dir, { clock: () => 110 }), "INVALID_JSON");
+  });
 });

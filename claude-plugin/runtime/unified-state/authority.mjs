@@ -113,7 +113,7 @@ export class InactiveUnifiedAuthority {
           need(canonicalJson(actualSchema) === canonicalJson(expectedSchema), "CANDIDATE_SCHEMA_DRIFT", "Existing candidate table and index definitions must match the declared schema.");
           need(canonicalJson(tables.map((table) => table.name).sort()) === canonicalJson(CANDIDATE_TABLES), "CANDIDATE_SCHEMA_DRIFT", "An existing candidate must retain all expected state tables.");
           const modules = this.#database.prepare("SELECT * FROM module_schema").all();
-          need(modules.length === 5 && modules.every((module) => module.candidate_version === 1 && canonicalJson(JSON.parse(module.source_versions_json)) === canonicalJson(MODULE_VERSIONS[module.module])), "CANDIDATE_SCHEMA_DRIFT", "Stored module schema metadata must match the candidate version.");
+          need(modules.length === 5 && modules.every((module) => module.candidate_version === 1 && canonicalJson(parseJson(module.source_versions_json, "source_versions_json")) === canonicalJson(MODULE_VERSIONS[module.module])), "CANDIDATE_SCHEMA_DRIFT", "Stored module schema metadata must match the candidate version.");
         }
         this.#database.exec(AUTHORITY_SCHEMA_SQL);
         for (const [module, versions] of Object.entries(MODULE_VERSIONS)) this.#database.prepare("INSERT OR IGNORE INTO module_schema VALUES (?,1,?)").run(module, JSON.stringify(versions));
@@ -146,7 +146,7 @@ export class InactiveUnifiedAuthority {
     return now;
   }
   #row(scope, ref) { return this.#database.prepare("SELECT * FROM records WHERE scope_key=? AND module=? AND source_id=? AND table_name=? AND key_json=?").get(...this.#identity(scope, ref)); }
-  #decoded(row) { return row ? { sourceId: row.source_id, module: row.module, table: row.table_name, key: JSON.parse(row.key_json), revision: row.revision, epoch: row.epoch, payloadDigest: row.payload_digest, row: JSON.parse(row.row_json), trustVerification: "NOT_VERIFIED_BY_THIS_CANDIDATE" } : null; }
+  #decoded(row) { return row ? { sourceId: row.source_id, module: row.module, table: row.table_name, key: parseJson(row.key_json, "key_json"), revision: row.revision, epoch: row.epoch, payloadDigest: row.payload_digest, row: parseJson(row.row_json, "row_json"), trustVerification: "NOT_VERIFIED_BY_THIS_CANDIDATE" } : null; }
   bindProvider(scope) {
     const bound = scopeKey(scope);
     return Object.freeze({
@@ -235,7 +235,7 @@ export class InactiveUnifiedAuthority {
   }
   #receipt(scope, intentId) {
     const row = this.#database.prepare("SELECT * FROM write_intents WHERE scope_key=? AND intent_id=?").get(scope, text(intentId, "intentId"));
-    return row ? { intentId, receiptId: row.receipt_id, effectState: "COMMITTED_LOCAL", responseState: row.response_state, result: JSON.parse(row.result_json) } : null;
+    return row ? { intentId, receiptId: row.receipt_id, effectState: "COMMITTED_LOCAL", responseState: row.response_state, result: parseJson(row.result_json, "result_json") } : null;
   }
   #commit(scope, ref, { expectedRevision, lease, row, intentId, receiptId }) {
     text(intentId, "intentId"); text(receiptId, "receiptId"); integer(expectedRevision, "expectedRevision");
