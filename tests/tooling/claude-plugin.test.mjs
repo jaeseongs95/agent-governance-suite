@@ -4,6 +4,7 @@ import { matchesGovernanceSourceSuccessor, matchesSkillPolicyWordingSuccessorByt
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -399,6 +400,122 @@ describe("Claude overlay safeguards", () => {
     await writeFile(path.join(directory, OUTPUT_DIRECTORY), "not a directory");
     const [problem] = await checkClaudePlugin(directory);
     expect(problem).toBe(`${OUTPUT_DIRECTORY}/ is unreadable (readdir ENOTDIR); fix access to it before comparing`);
+  });
+
+  it("injects EACCES and EIO at the real CLI boundary without misclassifying access failures as missing or JSON syntax errors", async () => {
+    const { directory } = await distributionFixture();
+    const installed = `${OUTPUT_DIRECTORY}/${evaluationSchema}`;
+    const hooksFile = "hooks/hooks.json";
+    const preload = path.join(directory, "cli-errno-preload.mjs");
+    const traceFile = path.join(directory, "cli-errno-trace.json");
+    const buildScript = path.join(root, "scripts", "build-claude-plugin.mjs");
+    await writeFile(preload, `
+import fs from "node:fs/promises";
+import { writeFileSync } from "node:fs";
+import { syncBuiltinESMExports } from "node:module";
+import path from "node:path";
+
+const targetPath = path.resolve(process.env.AGS_TEST_FAULT_TARGET ?? "");
+const targetOp = process.env.AGS_TEST_FAULT_OP ?? "";
+const targetCode = process.env.AGS_TEST_FAULT_CODE ?? "";
+const tracePath = process.env.AGS_TEST_FAULT_TRACE ?? "";
+const original = { readFile: fs.readFile, readdir: fs.readdir };
+const calls = [];
+const record = (entry) => {
+  calls.push(entry);
+  if (tracePath) writeFileSync(tracePath, JSON.stringify(calls));
+};
+
+fs.readdir = async function(dirPath, ...args) {
+  const resolved = path.resolve(String(dirPath));
+  if (targetOp === "readdir" && resolved === targetPath) {
+    record({ op: "readdir", path: resolved, code: targetCode });
+    throw Object.assign(new Error(\`synthetic readdir \${targetCode}\`), { code: targetCode });
+  }
+  return original.readdir.call(this, dirPath, ...args);
+};
+
+fs.readFile = async function(filePath, ...args) {
+  const resolved = path.resolve(String(filePath));
+  if (targetOp === "readFile" && resolved === targetPath) {
+    record({ op: "readFile", path: resolved, code: targetCode });
+    throw Object.assign(new Error(\`synthetic readFile \${targetCode}\`), { code: targetCode });
+  }
+  return original.readFile.call(this, filePath, ...args);
+};
+
+syncBuiltinESMExports();
+`, "utf8");
+
+    const runCli = async (flag, op, relTarget, code) => {
+      await rm(traceFile, { force: true });
+      const target = path.resolve(directory, ...relTarget.split("/"));
+      const result = spawnSync(
+        process.execPath,
+        ["--import", pathToFileURL(preload).href, buildScript, flag],
+        {
+          cwd: directory,
+          encoding: "utf8",
+          env: {
+            ...process.env,
+            NODE_OPTIONS: "",
+            AGENT_GOVERNANCE_ROOT: directory,
+            AGS_TEST_FAULT_OP: op,
+            AGS_TEST_FAULT_TARGET: target,
+            AGS_TEST_FAULT_CODE: code,
+            AGS_TEST_FAULT_TRACE: traceFile,
+          },
+        },
+      );
+      const trace = JSON.parse(await readFile(traceFile, "utf8"));
+      return { result, trace, target };
+    };
+
+    for (const code of ["EACCES", "EIO"]) {
+      const checkFile = await runCli("--check", "readFile", installed, code);
+      expect(checkFile.trace).toEqual([{ op: "readFile", path: checkFile.target, code }]);
+      expect(checkFile.result.status).toBe(1);
+      expect(checkFile.result.stdout).not.toContain("fresh");
+      expect(checkFile.result.stderr).toContain(`- unreadable file ${installed} (readFile ${code}); not compared`);
+      expect(checkFile.result.stderr).not.toContain(`missing file ${installed}`);
+      expect(checkFile.result.stderr).not.toMatch(/SyntaxError|Unexpected token|JSON/u);
+
+      const driftFile = await runCli("--drift", "readFile", installed, code);
+      expect(driftFile.trace).toEqual([{ op: "readFile", path: driftFile.target, code }]);
+      expect(driftFile.result.status).toBe(0);
+      expect(driftFile.result.stdout).not.toContain(`${OUTPUT_DIRECTORY}: fresh`);
+      expect(driftFile.result.stdout).toContain(`- unreadable file ${installed} (readFile ${code}); not compared`);
+
+      const checkDir = await runCli("--check", "readdir", OUTPUT_DIRECTORY, code);
+      expect(checkDir.trace).toEqual([{ op: "readdir", path: checkDir.target, code }]);
+      expect(checkDir.result.status).toBe(1);
+      expect(checkDir.result.stdout).not.toContain("fresh");
+      expect(checkDir.result.stderr).toContain(`- ${OUTPUT_DIRECTORY}/ is unreadable (readdir ${code}); fix access to it before comparing`);
+      expect(checkDir.result.stderr).not.toContain(`${OUTPUT_DIRECTORY}/ is missing`);
+
+      const driftDir = await runCli("--drift", "readdir", OUTPUT_DIRECTORY, code);
+      expect(driftDir.trace).toEqual([{ op: "readdir", path: driftDir.target, code }]);
+      expect(driftDir.result.status).toBe(0);
+      expect(driftDir.result.stdout).not.toContain(`${OUTPUT_DIRECTORY}: fresh`);
+      expect(driftDir.result.stdout).toContain(`- ${OUTPUT_DIRECTORY}/ is unreadable (readdir ${code}); fix access to it before comparing`);
+
+      const checkHook = await runCli("--check", "readFile", hooksFile, code);
+      expect(checkHook.trace).toEqual([{ op: "readFile", path: checkHook.target, code }]);
+      expect(checkHook.result.status).toBe(1);
+      expect(checkHook.result.stdout).not.toContain("fresh");
+      expect(checkHook.result.stderr).toContain(`synthetic readFile ${code}`);
+      expect(checkHook.result.stderr).not.toMatch(/SyntaxError|Unexpected token|JSON/u);
+    }
+
+    await writeFile(path.join(directory, hooksFile), "{ invalid json\n", "utf8");
+    const syntaxCheck = spawnSync(process.execPath, [buildScript, "--check"], {
+      cwd: directory,
+      encoding: "utf8",
+      env: { ...process.env, NODE_OPTIONS: "", AGENT_GOVERNANCE_ROOT: directory },
+    });
+    expect(syntaxCheck.status).toBe(1);
+    expect(syntaxCheck.stdout).not.toContain("fresh");
+    expect(syntaxCheck.stderr).toMatch(/Expected property name|Unexpected token|JSON/u);
   });
 
   it("ships the evaluation configuration contract and server bytes without development dependencies", async () => {
