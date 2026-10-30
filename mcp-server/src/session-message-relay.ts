@@ -6,6 +6,7 @@ import { newWakeNonce, sessionMessageRequest, wakeMessage } from "./session-mess
 import { processExists, processIdentityState, type ProcessIdentityState } from "./process-identity.js";
 import { persistRelayFailure, transportWakePort, transportDeliveryCapabilities, wakeBackoffDelay, type WakeDispatchPort, type WakeDispatchOutcome } from "./session-message-wake-port.js";
 import type { WakeReservation } from "./session-message-store.js";
+import { createRelayWakeObservation, type RelayWakeObservation } from "./relay-wake-observation.js";
 export { transportDeliveryCapabilities, wakeBackoffDelay, codexWakeOutcome, claudeWakeOutcome, geminiWakeOutcome, ringClaude,
   type WakeDispatchOutcome } from "./session-message-wake-port.js";
 
@@ -82,7 +83,8 @@ async function delay(milliseconds: number): Promise<void> {
 
 /** One dispatch cycle shared by the loop and isolated process regression fixtures. */
 export async function dispatchManagedWake(options: Pick<RelayOptions, "host" | "sessionId" | "instanceId" | "transport">,
-  relayId: string, port: WakeDispatchPort, request: typeof sessionMessageRequest = sessionMessageRequest): Promise<boolean | "target-unavailable"> {
+  relayId: string, port: WakeDispatchPort, request: typeof sessionMessageRequest = sessionMessageRequest,
+  observation?: RelayWakeObservation): Promise<boolean | "target-unavailable"> {
   if (port.capabilities.idleWake === "none" || !port.capabilities.supportedInjection.includes("peer-wake")) return false;
   const target = { host: options.host, sessionId: options.sessionId };
   let renewal: Promise<void> | null = null;
@@ -99,7 +101,10 @@ export async function dispatchManagedWake(options: Pick<RelayOptions, "host" | "
     const started = await request<WakeReservation>("start-wake", { attempt: reserved.attempt });
     if (!started.dispatch || !started.attempt) return false;
     let outcome: WakeDispatchOutcome = "accepted-or-unknown";
-    try { outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce)); }
+    try {
+      observation?.record("dispatch-attempt");
+      outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce), observation?.record);
+    }
     catch { /* A thrown adapter cannot prove that no bytes were submitted. */ }
     if (outcome === "target-unavailable") {
       clearInterval(heartbeat);
@@ -118,6 +123,9 @@ export async function dispatchManagedWake(options: Pick<RelayOptions, "host" | "
 }
 
 export async function runSessionMessageRelay(options: RelayOptions, port: WakeDispatchPort = transportWakePort(options.transport)): Promise<void> {
+  const observation = createRelayWakeObservation(options.transport, port);
+  let normalEnd = false;
+  try {
   const target = { host: options.host, sessionId: options.sessionId };
   if (options.relayId !== undefined && (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(options.relayId) || !/^host-process-v1:[0-9a-f]{64}$/u.test(options.instanceId) || !options.relayId.endsWith(":"+options.instanceId.slice("host-process-v1:".length)))) throw new Error("Invalid relay startup reservation.");
   const relayId = options.relayId ?? randomUUID();
@@ -156,7 +164,7 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
     let identityUnknowns = 0;
     let nextIdentityCheck = Date.now() + IDENTITY_RECHECK_MS;
     while (true) {
-    if (!processExists(options.parentPid)) return;
+    if (!processExists(options.parentPid)) { normalEnd = true; return; }
     const now = Date.now();
     let checkedIdentity: ProcessIdentityState | null = null;
     if (now >= nextIdentityCheck) {
@@ -198,6 +206,7 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
         if (!pending.alive) return;
       }
       if (port.capabilities.idleWake === "none") {
+        observation?.record("none-skip");
         await delay(LOOP_MS);
         continue;
       }
@@ -213,7 +222,7 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
         }
         identityUnknowns = 0;
         nextIdentityCheck = now + IDENTITY_RECHECK_MS;
-        if (await dispatchManagedWake(options, relayId, port) === "target-unavailable") {
+        if (await dispatchManagedWake(options, relayId, port, sessionMessageRequest, observation) === "target-unavailable") {
           targetUnavailable = true;
           return;
         }
@@ -234,7 +243,12 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
         await sessionMessageRequest("presence-end",{target,instanceId:options.instanceId,reason:"host-process-ended"},undefined,{totalTimeoutMs:3000});
       }
     } catch (error) {
+      normalEnd = false;
       reportRelayFailure("release", error); // Lease expiry still provides an unreachable fallback.
     }
+  }
+  } finally {
+    // Includes acquisition exits, and follows dispatch renewal plus the existing release cleanup.
+    observation?.end(normalEnd);
   }
 }

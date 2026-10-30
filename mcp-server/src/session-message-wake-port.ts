@@ -16,9 +16,12 @@ import { resolveSessionMessageStateDirectory, resolveTrustDatabasePath } from ".
 
 /** target-unavailable requires an authoritative host rejection for this exact target, never a generic transport error. */
 export type WakeDispatchOutcome = "submitted" | "definite-failure" | "accepted-or-unknown" | "target-unavailable";
+export type WakeLaunchObserver = (event: "native-launch-attempt" | "native-spawn") => void;
 export interface WakeDispatchPort {
   capabilities: DeliveryCapabilities;
-  dispatch(target: SessionIdentity, message: string): Promise<WakeDispatchOutcome>;
+  /** Only adapters instrumenting their actual launch sites may declare complete coverage. */
+  observesNativeLaunch?: boolean;
+  dispatch(target: SessionIdentity, message: string, observe?: WakeLaunchObserver): Promise<WakeDispatchOutcome>;
 }
 export function wakeBackoffDelay(attempt: number): number {
   return Math.min(10 * 60_000, 30_000 * 2 ** Math.max(0, attempt));
@@ -101,8 +104,9 @@ const failureWriter = `${Date.now().toString().padStart(13, "0")}-${process.pid}
 const FAILURE_HISTORY_LIMIT = 64;
 const FAILURE_HISTORY_WRITERS_PER_KIND = 4;
 
-function writeRelayFailureSnapshot(target: string, serialized: string): void {
+export function writeRelayDiagnosticSnapshot(target: string, serialized: string): boolean {
   let descriptor: number | undefined;
+  let written = false;
   try {
     // O_NOFOLLOW is not supplied on every platform; the opened descriptor is also checked before any write.
     descriptor = openSync(target, constants.O_WRONLY | constants.O_CREAT | constants.O_NONBLOCK
@@ -111,14 +115,16 @@ function writeRelayFailureSnapshot(target: string, serialized: string): void {
     const linked = lstatSync(target);
     if (!opened.isFile() || opened.nlink !== 1 || linked.isSymbolicLink() || !linked.isFile()
       || opened.dev !== linked.dev || opened.ino !== linked.ino
-      || (process.getuid && opened.uid !== process.getuid())) return;
-    try { fchmodSync(descriptor, 0o600); } catch { if (process.platform !== "win32") return; }
+      || (process.getuid && opened.uid !== process.getuid())) return false;
+    try { fchmodSync(descriptor, 0o600); } catch { if (process.platform !== "win32") return false; }
     // Best-effort snapshot: concurrent readers may see a partial record; never an authority source.
     ftruncateSync(descriptor, 0);
     writeFileSync(descriptor, serialized + "\n", { encoding: "utf8" });
+    written = true;
   } finally {
-    if (descriptor !== undefined) try { closeSync(descriptor); } catch { /* No failure propagation from close. */ }
+    if (descriptor !== undefined) try { closeSync(descriptor); } catch { written = false; }
   }
+  return written;
 }
 
 /** Keep failure kinds separate so repeated tick failures cannot erase a wake failure. */
@@ -135,7 +141,7 @@ function persistRelayFailureHistory(directory: string, serialized: string): void
     const info = lstatSync(history);
     if (!info.isDirectory() || info.isSymbolicLink() || (process.getuid && info.uid !== process.getuid())) return;
     try { chmodSync(history, 0o700); } catch { if (process.platform !== "win32") return; }
-    writeRelayFailureSnapshot(path.join(history, `${failureWriter}-${kind}.json`), serialized);
+    writeRelayDiagnosticSnapshot(path.join(history, `${failureWriter}-${kind}.json`), serialized);
     // ponytail: reserve one observation per kind before allocating spare history slots.
     // At most 64 settled snapshots (~4 MiB), at most 4 per kind; bursts can briefly exceed it.
     const records = readdirSync(history, { withFileTypes: true })
@@ -188,7 +194,7 @@ export function persistRelayFailure(serialized: string, environment: NodeJS.Proc
       || (process.getuid && directoryInfo.uid !== process.getuid())) return;
     try { chmodSync(directory, 0o700); } catch { if (process.platform !== "win32") return; }
     persistRelayFailureHistory(directory, serialized);
-    writeRelayFailureSnapshot(path.join(directory, "relay-failure.latest.json"), serialized);
+    writeRelayDiagnosticSnapshot(path.join(directory, "relay-failure.latest.json"), serialized);
   } catch { /* Diagnostic I/O cannot change the relay failure or stop cleanup. */ }
 }
 function sanitizeWakeEnvDiagnostic(raw: unknown): string | undefined {
@@ -286,12 +292,16 @@ async function ringGemini(sessionId: string, message: string, environment: NodeJ
     }
   });
 }
-function ringCodex(sessionId: string, message: string): Promise<WakeDispatchOutcome> {
+function ringCodex(sessionId: string, message: string, observe?: WakeLaunchObserver): Promise<WakeDispatchOutcome> {
   return new Promise((resolve) => {
     let spawned = false;
+    try { observe?.("native-launch-attempt"); } catch { /* Observation never changes submission. */ }
     const child = execFile("codex", ["queue", "--thread", sessionId, "--message", message],
       { windowsHide: true, timeout: 10_000 }, (error) => resolve(codexWakeOutcome(error, spawned)));
-    child.once("spawn", () => { spawned = true; });
+    child.once("spawn", () => {
+      spawned = true;
+      try { observe?.("native-spawn"); } catch { /* Observation never changes the outcome. */ }
+    });
   });
 }
 export async function ringClaude(message: string): Promise<WakeDispatchOutcome> {
@@ -326,11 +336,11 @@ export async function ringClaude(message: string): Promise<WakeDispatchOutcome> 
 const ports: ReadonlyMap<string, WakeDispatchPort> = new Map<string, WakeDispatchPort>([
   ["claude-inbox", { capabilities: { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "silent" },
     dispatch: (_target, message) => ringClaude(message) }],
-  ["codex-queue", { capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
-    dispatch: (target, message) => ringCodex(target.sessionId, message) }],
-  ["codex-deferred", { capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
+  ["codex-queue", { capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" }, observesNativeLaunch: true,
+    dispatch: (target, message, observe) => ringCodex(target.sessionId, message, observe) }],
+  ["codex-deferred", { capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" }, observesNativeLaunch: true,
     dispatch: async () => "definite-failure" }],
-  ["gemini-deferred", { capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
+  ["gemini-deferred", { capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" }, observesNativeLaunch: true,
     dispatch: async () => "definite-failure" }],
   ["gemini-queue", { capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
     dispatch: (target, message) => ringGemini(target.sessionId, message) }],
