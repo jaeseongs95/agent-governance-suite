@@ -255,12 +255,10 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
       if (previous && previous.pid > 0) {
         try {
           process.kill(previous.pid,0);
-          if (typeof previous.relayStartToken === "string") {
+          if (typeof previous.relayStartToken === "string" && previous.relayStartToken.length > 0) {
             const actual = (yield* queryIdentity(previous.pid, budget)).token;
             if (actual !== null && actual !== previous.relayStartToken) confirmedDead = {relayId:previous.relayId,pid:previous.pid};
             else if (actual !== null && actual === previous.relayStartToken) confirmedAlive = true;
-          } else {
-            confirmedAlive = true;
           }
         }
         catch (error) {

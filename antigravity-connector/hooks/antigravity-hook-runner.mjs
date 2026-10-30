@@ -83,7 +83,7 @@ const TOOL_NAME_MAP = {
 // - `#3313 N3`: When remaining budget for `resolveLongLivedHostProcess` is `< MIN_RESOLVER_BUDGET_MS` (100ms),
 //   the resolver is skipped immediately (`null`) instead of clamping up to 100ms.
 const STAGE_TIMEOUT_MS = 2000;
-const PID_RESOLVER_TIMEOUT_MS = 3000;
+const PID_RESOLVER_TIMEOUT_MS = 1500;
 export const MIN_RESOLVER_BUDGET_MS = 100;
 const MIN_PRIMARY_HOOK_BUDGET_MS = 500;
 export const NATIVE_HOOK_HARD_TIMEOUT_MS = 10000;
@@ -242,6 +242,8 @@ function windowsProcessChainScript(startPid, maxDepth, timeoutMs) {
     "$agsRows = [System.Collections.Generic.List[object]]::new()",
     "$agsSeen = @{}",
     "$agsWatch = [System.Diagnostics.Stopwatch]::StartNew()",
+    "$agsCimMap = @{}",
+    "try { foreach ($agsItem in (Get-CimInstance Win32_Process -Property ProcessId,ParentProcessId,Name,ExecutablePath,CommandLine,CreationDate -ErrorAction Stop)) { if ($null -ne $agsItem.ProcessId) { $agsCimMap[[int]$agsItem.ProcessId] = $agsItem } } } catch {}",
     "$agsCursor = " + startPid,
     "for ($agsDepth=0; $agsDepth -lt " + maxDepth + "; $agsDepth++) {",
     "  if ($agsCursor -lt 1 -or $agsSeen.ContainsKey($agsCursor) -or (" + timeoutMs + " - $agsWatch.ElapsedMilliseconds) -lt " + MIN_RESOLVER_BUDGET_MS + ") { break }",
@@ -250,7 +252,7 @@ function windowsProcessChainScript(startPid, maxDepth, timeoutMs) {
     "    $agsBefore = Get-Process -Id $agsCursor -ErrorAction Stop",
     "    $agsStart = $agsBefore.StartTime.ToUniversalTime()",
     "    $agsPath = $agsBefore.Path",
-    "    $agsMeta = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $agsCursor) -ErrorAction Stop",
+    "    $agsMeta = $agsCimMap[[int]$agsCursor]",
     "    $agsAfter = Get-Process -Id $agsCursor -ErrorAction Stop",
     "    if (!$agsMeta -or !$agsPath -or $agsMeta.ProcessId -ne $agsCursor -or $agsStart.Ticks -ne $agsAfter.StartTime.ToUniversalTime().Ticks -or $agsPath -ine $agsAfter.Path -or $agsPath -ine $agsMeta.ExecutablePath) { break }",
     "    if ($agsStart.ToString('yyyy-MM-ddTHH:mm:ss.ffffff') -cne $agsMeta.CreationDate.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.ffffff')) { break }",

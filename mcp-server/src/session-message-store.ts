@@ -887,9 +887,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       if (previous && previous.instanceId === input.instanceId && previous.parentPid === input.parentPid) {
         const dead = previous.pid > 0 && input.confirmedDead?.pid === previous.pid && input.confirmedDead.relayId === previous.relayId;
         if (!dead) {
-          const alive = input.confirmedAlive ?? (previous.pid > 0);
+          const alive = input.confirmedAlive === true;
           const currentPresence = this.presence(input, nowMs);
-          if (alive && previous.pid > 0 && currentPresence.instanceId === input.instanceId && currentPresence.transport === input.transport && currentPresence.endedAt === null) {
+          if (alive && previous.pid > 0 && typeof previous.relayStartToken === "string" && previous.relayStartToken.length > 0 && currentPresence.instanceId === input.instanceId && currentPresence.transport === input.transport && currentPresence.endedAt === null) {
             const now = iso(nowMs);
             this.database.prepare("UPDATE session_presence SET heartbeat_at=?, lease_until=? WHERE host=? AND session_id=? AND instance_id=? AND transport=? AND ended_at IS NULL")
               .run(now, iso(nowMs + PRESENCE_LEASE_MS), input.host, input.sessionId, input.instanceId, input.transport);

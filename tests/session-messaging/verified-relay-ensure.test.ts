@@ -232,7 +232,7 @@ it("AGS-D-0009: re-acquires expired relay and presence leases for a live active 
   expect(store.recordManagedWakeOutcome(started.attempt!, "submitted", expiredAt + 6)).toBe(true);
 });
 
-it("AGS-D-0009: prepareVerifiedRelay restores expired presence and relay leases for a live active child without respawning", () => {
+it("AGS-D-0009: prepareVerifiedRelay restores expired presence and relay leases only when confirmedAlive is true and relayStartToken is bound", () => {
   const { store, input, ensure, activate } = fixture();
   const first = ensure();
   const id = first.relayId!;
@@ -243,17 +243,118 @@ it("AGS-D-0009: prepareVerifiedRelay restores expired presence and relay leases 
   expect(store.presence(target, expiredAt).state).toBe("unreachable");
   expect(store.liveRelay(target, input.transport, expiredAt)).toBeNull();
 
-  const ensuredAgain = ensure({}, expiredAt + 1);
+  // Without explicit confirmedAlive: true, prepareVerifiedRelay must NOT restore expired leases on unverified PID state.
+  expect(ensure({}, expiredAt + 1)).toEqual({ spawn: false, relayId: id, instanceId: generation });
+  expect(store.presence(target, expiredAt + 1).state).toBe("unreachable");
+  expect(store.liveRelay(target, input.transport, expiredAt + 1)).toBeNull();
+
+  expect(store.prepareVerifiedRelay({
+    ...input,
+    expectedOwner: store.relayOwner(target, input.transport),
+    confirmedAlive: false,
+  }, expiredAt + 2)).toEqual({ spawn: false, relayId: id, instanceId: generation });
+  expect(store.presence(target, expiredAt + 2).state).toBe("unreachable");
+
+  // With positive confirmedAlive: true and bound relayStartToken, leases are restored without respawning.
+  const ensuredAgain = store.prepareVerifiedRelay({
+    ...input,
+    expectedOwner: store.relayOwner(target, input.transport),
+    confirmedAlive: true,
+  }, expiredAt + 3);
   expect(ensuredAgain).toEqual({ spawn: false, relayId: id, instanceId: generation });
-  expect(store.presence(target, expiredAt + 1)).toMatchObject({
+  expect(store.presence(target, expiredAt + 3)).toMatchObject({
     state: "online",
     instanceId: generation,
     startedAt: initialStartedAt,
     endedAt: null,
   });
-  expect(store.liveRelay(target, input.transport, expiredAt + 1)).toMatchObject({
+  expect(store.liveRelay(target, input.transport, expiredAt + 3)).toMatchObject({
     relayId: id,
     pid: 200,
     parentPid: 100,
   });
+});
+
+it("AGS-D-0009: dispatchManagedWake after expired-lease re-acquisition wakes recipient, claims deferred body, and acknowledges", async () => {
+  const { dispatchManagedWake } = await import("../../mcp-server/src/session-message-relay.js");
+  const { parseWakeMessages } = await import("../../mcp-server/src/session-message-client.js");
+  const { store, input, ensure, activate } = fixture();
+  const id = ensure().relayId!;
+  expect(activate(id, { relayStartToken: "child-token-1" }, now + 1)).toBe(true);
+  store.send({
+    messageId: "e2e-expired-wake-msg",
+    sender: { host: "codex", sessionId: "sender-session" },
+    target,
+    body: "payload-after-lease-recovery",
+  }, now + 2);
+
+  // Advance clock past relay (15s) and presence (20s) lease expiry.
+  let clock = now + 25_000;
+  expect(store.relayTick({ ...target, transport: input.transport, relayId: id, instanceId: generation, includePending: true }, clock))
+    .toEqual({ alive: false, count: 0 });
+  expect(activate(id, { relayStartToken: "child-token-1" }, clock + 1)).toBe(true);
+  clock += 2;
+  const tickAfterReacquire = store.relayTick({ ...target, transport: input.transport, relayId: id, instanceId: generation, includePending: true }, clock);
+  expect(tickAfterReacquire).toEqual({ alive: true, count: 1 });
+
+  const dispatchedPrompts: string[] = [];
+  const fakeRequest = async <T>(op: string, payload: Record<string, unknown>): Promise<T> => {
+    clock += 1;
+    if (op === "relay-tick") {
+      return store.relayTick({
+        ...(payload.target as typeof target),
+        transport: String(payload.transport),
+        relayId: String(payload.relayId),
+        instanceId: String(payload.instanceId),
+        includePending: Boolean(payload.includePending),
+      }, clock) as T;
+    }
+    if (op === "reserve-wake") {
+      return store.reserveManagedWake({
+        ...(payload.target as typeof target),
+        nonce: String(payload.nonce),
+        instanceId: String(payload.instanceId),
+        transport: String(payload.transport),
+        relayId: String(payload.relayId),
+        resume: Boolean(payload.resume),
+      }, clock) as T;
+    }
+    if (op === "start-wake") {
+      return store.startManagedWake(payload.attempt as Parameters<typeof store.startManagedWake>[0], clock) as T;
+    }
+    if (op === "record-wake-outcome") {
+      return store.recordManagedWakeOutcome(
+        payload.attempt as Parameters<typeof store.recordManagedWakeOutcome>[0],
+        payload.outcome as Parameters<typeof store.recordManagedWakeOutcome>[1],
+        clock,
+      ) as T;
+    }
+    throw new Error(`Unexpected op: ${op}`);
+  };
+
+  const wakeResult = await dispatchManagedWake(
+    { ...target, instanceId: generation, transport: input.transport },
+    id,
+    {
+      capabilities: input.deliveryCapabilities,
+      dispatch: async (_target, prompt) => {
+        dispatchedPrompts.push(prompt);
+        return "submitted";
+      },
+    },
+    fakeRequest as typeof import("../../mcp-server/src/session-message-client.js").sessionMessageRequest,
+  );
+  expect(wakeResult).toBe(true);
+  expect(dispatchedPrompts).toHaveLength(1);
+  const parsedWake = parseWakeMessages(dispatchedPrompts[0]!);
+  expect(parsedWake.wakeOnly).toBe(true);
+  expect(parsedWake.nonces).toHaveLength(1);
+  expect(store.consumeWake(target, parsedWake.nonces[0]!, clock + 1)).toBe(true);
+
+  // Observe native input -> claim deferred message body on subsequent boundary -> acknowledge.
+  store.observeNativeInput(target, clock + 2);
+  expect(store.claimDeferred(target, clock + 3)).toEqual([]);
+  const claimed = store.claimDeferred(target, clock + 4);
+  expect(claimed).toMatchObject([{ messageId: "e2e-expired-wake-msg", body: "payload-after-lease-recovery", deliveryAttempt: 1 }]);
+  expect(store.acknowledge(target, ["e2e-expired-wake-msg"], clock + 5)).toBe(1);
 });

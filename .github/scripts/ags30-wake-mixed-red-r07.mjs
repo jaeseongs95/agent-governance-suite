@@ -11,6 +11,7 @@ const sourceDigest = hash(original);
 const expectedMutantDigest = new Map([
   ['8a4796f9e19f977e4275999f5743f1a4598436ab4bdaf847b66f7e4f2af5075e', 'd10b11b83bd4191de245dd8a6a1b9329550d7541e93b859b92df2f18ceae6d2f'],
   ['b9856206e10b039c5f5dfc9f16ff9144bcd00fe73c460a74ce1d88e6021e82c0', '82d2be89a6960dddf21027d8c71cb69125d132be43f9fbeb07efc1ae54c1aa3a'],
+  ['8720482bd3d9bee0f76ab9206de4d2ab043c69b3f8dd2caffdbca0c2b4d20a6d', '1bba2bd9eeba2ffce90f1ab09a70f705c5cb26ede16e6806b54f0cf271eaf88a'],
 ]).get(sourceDigest);
 assert.ok(expectedMutantDigest, `UNKNOWN_WAKE_MIXED_RED_SOURCE:${sourceDigest}`);
 const baseline = Buffer.from(original.toString('utf8')
