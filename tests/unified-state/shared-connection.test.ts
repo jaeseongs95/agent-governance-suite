@@ -10,13 +10,128 @@ import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared
 import { WorkflowContractError } from "../../contracts/types.js";
 
 const directories: string[] = [];
+const retainedDirectories = new Set<string>();
 const owners = new Set<InactiveSharedConnection>();
 const keys = { workflow: Buffer.alloc(32, 1).toString("base64url"), continuity: Buffer.alloc(32, 2).toString("base64url"), trust: Buffer.alloc(32, 3).toString("base64url") };
 function directory() { const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ags-r2-owner-")); directories.push(dir); return dir; }
 function bundle(dir = directory(), clock = () => 100) { const value = createInactiveSharedStores({ directory: dir, mode: "fixture-only", clock, syntheticKeys: keys }); owners.add(value.owner); return value; }
+function serializeSpawnError(error: unknown): { name: string; code: string | null; message: string } | null {
+  if (!error) return null;
+  if (error instanceof Error) {
+    const code = typeof (error as NodeJS.ErrnoException).code === "string" ? (error as NodeJS.ErrnoException).code! : null;
+    return { name: error.name, code, message: error.message };
+  }
+  return { name: "Error", code: null, message: String(error) };
+}
+function spawnSharedClaimWorker(code: string, options: {
+  ownedDirectory?: string;
+  readyTimeoutMs?: number;
+  doneTimeoutMs?: number;
+  killTimeoutMs?: number;
+} = {}) {
+  const readyTimeoutMs = options.readyTimeoutMs ?? 10000;
+  const doneTimeoutMs = options.doneTimeoutMs ?? 10000;
+  const killTimeoutMs = options.killTimeoutMs ?? 2000;
+  const child = spawn(process.execPath, ["--import", "tsx", "--input-type=module", "--eval", code], { cwd: path.resolve("."), stdio: ["pipe", "pipe", "pipe"], env: {} });
+  let output = "";
+  let errors = "";
+  let lastRawStdout: string | null = null;
+  let spawnError: { name: string; code: string | null; message: string } | null = null;
+  let exit: number | null | "UNKNOWN" = "UNKNOWN";
+  let signal: NodeJS.Signals | null | "UNKNOWN" = "UNKNOWN";
+  let status: "RUNNING" | "CLOSED" | "TIMED_OUT" | "UNKNOWN" = "RUNNING";
+  let readySeen = false;
+  const snapshot = (stage: string) => ({
+    stage,
+    pid: child.pid ?? null,
+    status,
+    exit,
+    signal,
+    spawnError,
+    lastRawStdout,
+    output,
+    errors,
+  });
+  let resolveReady!: () => void;
+  let rejectReady!: (err: Error) => void;
+  const readyRaw = new Promise<void>((resolve, reject) => { resolveReady = resolve; rejectReady = reject; });
+  readyRaw.catch(() => {});
+  const readyTimer = setTimeout(() => {
+    if (!readySeen) {
+      status = "TIMED_OUT";
+      try { child.kill("SIGKILL"); } catch { /* ignore */ }
+      rejectReady(new Error(`Worker timed out before READY: ${JSON.stringify(snapshot("ready_timeout"))}`));
+    }
+  }, readyTimeoutMs);
+  child.stdout.on("data", chunk => {
+    output += String(chunk);
+    const lines = output.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    if (lines.length > 0) lastRawStdout = lines.at(-1)!;
+    if (!readySeen && output.includes("READY")) {
+      readySeen = true;
+      clearTimeout(readyTimer);
+      resolveReady();
+    }
+  });
+  child.stderr.on("data", chunk => { errors += String(chunk); });
+  child.once("error", err => {
+    spawnError = serializeSpawnError(err);
+    status = "UNKNOWN";
+    clearTimeout(readyTimer);
+    if (!readySeen) rejectReady(new Error(`Worker spawn error before READY: ${JSON.stringify(snapshot("spawn_error"))}`, { cause: err }));
+  });
+  const closeRaw = new Promise<ReturnType<typeof snapshot>>(resolve => {
+    child.once("close", (codeVal, signalVal) => {
+      clearTimeout(readyTimer);
+      const lines = output.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+      if (lines.length > 0) lastRawStdout = lines.at(-1)!;
+      exit = codeVal;
+      signal = signalVal;
+      status = "CLOSED";
+      if (!readySeen) rejectReady(new Error(`Worker exited before READY: ${JSON.stringify(snapshot("closed_before_ready"))}`));
+      resolve(snapshot("closed"));
+    });
+  });
+  const awaitDone = async (timeoutMs = doneTimeoutMs) => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const settled = await Promise.race([
+      closeRaw,
+      new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), timeoutMs); }),
+    ]);
+    if (timer) clearTimeout(timer);
+    if (settled) return settled;
+    status = "TIMED_OUT";
+    exit = "UNKNOWN";
+    signal = "UNKNOWN";
+    if (options.ownedDirectory) retainedDirectories.add(options.ownedDirectory);
+    return snapshot("done_timeout");
+  };
+  const terminateAndCollect = async (timeoutMs = killTimeoutMs) => {
+    clearTimeout(readyTimer);
+    if (status === "CLOSED") return closeRaw;
+    if (child.exitCode === null && child.signalCode === null) {
+      try { child.kill("SIGKILL"); } catch { /* ignore */ }
+    }
+    const collected = await awaitDone(timeoutMs);
+    if (collected.status !== "CLOSED" && options.ownedDirectory) {
+      retainedDirectories.add(options.ownedDirectory);
+    }
+    return collected;
+  };
+  return { child, ready: readyRaw, done: awaitDone, terminateAndCollect, snapshot };
+}
+function cleanupOwnedDirectories() {
+  for (const owner of owners) owner.close();
+  owners.clear();
+  for (const dir of directories.splice(0)) {
+    if (retainedDirectories.has(dir)) continue;
+    expect(path.dirname(path.resolve(dir))).toBe(path.resolve(os.tmpdir()));
+    expect(path.basename(dir)).toMatch(/^ags-r2-owner-/u);
+    fs.rmSync(dir, { recursive: true });
+  }
+}
 afterEach(() => {
-  for (const owner of owners) owner.close(); owners.clear();
-  for (const dir of directories.splice(0)) { expect(path.dirname(path.resolve(dir))).toBe(path.resolve(os.tmpdir())); expect(path.basename(dir)).toMatch(/^ags-r2-owner-/u); fs.rmSync(dir, { recursive: true }); }
+  cleanupOwnedDirectories();
 });
 
 describe("inactive native shared connection", () => {
@@ -87,25 +202,56 @@ describe("inactive native shared connection", () => {
     const factory = pathToFileURL(path.resolve("mcp-server/src/inactive-shared-stores.ts")).href;
     const children = Array.from({ length: 2 }, () => {
       const code = `import {createInactiveSharedStores} from ${JSON.stringify(factory)}; const b=createInactiveSharedStores({directory:${JSON.stringify(dir)},mode:'fixture-only',clock:()=>100,syntheticKeys:${JSON.stringify(keys)}}); console.log('READY'); process.stdin.once('data',()=>{try{console.log(JSON.stringify({claimed:b.messaging.claim(${JSON.stringify(target)},100).length}));}finally{b.owner.close();}});`;
-      const child = spawn(process.execPath, ["--import", "tsx", "--input-type=module", "--eval", code], { cwd: path.resolve("."), stdio: ["pipe", "pipe", "pipe"], env: {} });
-      let output = ""; let errors = "";
-      const deadline = setTimeout(() => child.kill(), 10000);
-      child.once("close", () => clearTimeout(deadline));
-      const ready = new Promise<void>((resolve, reject) => { child.stdout.on("data", chunk => { output += String(chunk); if (output.includes("READY")) resolve(); }); child.once("error", reject); child.once("close", exit => { if (!output.includes("READY")) reject(new Error(`Worker exited before READY: ${exit}: ${errors}`)); }); });
-      child.stderr.on("data", chunk => { errors += String(chunk); });
-      const done = new Promise<{ exit: number | null; output: string; errors: string }>(resolve => child.once("close", exit => resolve({ exit, output, errors })));
-      return { child, ready, done };
+      return spawnSharedClaimWorker(code, { ownedDirectory: dir });
     });
     try {
       await Promise.all(children.map(child => child.ready)); children.forEach(({ child }) => child.stdin.end("GO\n"));
-      const results = await Promise.all(children.map(child => child.done)); expect(results.every(result => result.exit === 0)).toBe(true);
-      const winners = results.map(result => JSON.parse(result.output.trim().split("\n").at(-1)!) as { claimed: number });
+      const results = await Promise.all(children.map(child => child.done()));
+      expect(results.every(result => result.status === "CLOSED" && result.exit === 0 && result.signal === null)).toBe(true);
+      const winners = results.map(result => JSON.parse(result.lastRawStdout!) as { claimed: number });
       expect(winners.reduce((sum, result) => sum + result.claimed, 0)).toBe(1);
       expect(value.messaging.database.prepare("SELECT delivery_attempts FROM messages").get()).toMatchObject({ delivery_attempts: 1 });
       console.log("B2-RAW process", JSON.stringify(results));
     } finally {
-      children.forEach(({ child }) => { if (child.exitCode === null && child.signalCode === null) child.kill(); });
-      await Promise.all(children.map(child => child.done));
+      await Promise.all(children.map(child => child.terminateAndCollect()));
+    }
+  }, 15000);
+  it("AGS-D-0162: bounds finally teardown wait, binds signal/exit/lastRawStdout diagnostics, and preserves owned directory on unclosed stdio", async () => {
+    const dir = directory();
+    const earlyExit = spawnSharedClaimWorker("console.log('BOOT_LINE'); process.stderr.write('early-crash'); process.exit(9);", { ownedDirectory: dir, readyTimeoutMs: 2000 });
+    await expect(earlyExit.ready).rejects.toThrow(/"stage":"closed_before_ready".*"exit":9.*"lastRawStdout":"BOOT_LINE"/);
+    const earlyCollected = await earlyExit.terminateAndCollect();
+    expect(earlyCollected).toMatchObject({ status: "CLOSED", exit: 9, signal: null, lastRawStdout: "BOOT_LINE" });
+
+    const delayedStdout = spawnSharedClaimWorker(
+      "console.log('READY'); process.stdin.once('data', () => { process.stdout.write('{\"claimed\":'); setTimeout(() => { process.stdout.write('1}\\n'); process.exit(0); }, 60); });",
+      { ownedDirectory: dir },
+    );
+    try {
+      await delayedStdout.ready;
+      delayedStdout.child.stdin.end("GO\n");
+      const done = await delayedStdout.done();
+      expect(done).toMatchObject({ status: "CLOSED", exit: 0, signal: null, lastRawStdout: '{"claimed":1}' });
+    } finally {
+      await delayedStdout.terminateAndCollect();
+    }
+
+    const unclosed = spawnSharedClaimWorker(
+      "console.log('READY'); setInterval(() => {}, 1000);",
+      { ownedDirectory: dir, doneTimeoutMs: 120, killTimeoutMs: 2000 },
+    );
+    try {
+      await unclosed.ready;
+      const timedOut = await unclosed.done(120);
+      expect(timedOut).toMatchObject({ stage: "done_timeout", status: "TIMED_OUT", exit: "UNKNOWN", signal: "UNKNOWN", lastRawStdout: "READY" });
+      expect(retainedDirectories.has(dir)).toBe(true);
+      cleanupOwnedDirectories();
+      expect(fs.existsSync(dir)).toBe(true);
+    } finally {
+      const terminated = await unclosed.terminateAndCollect(2000);
+      expect(terminated.status).toBe("CLOSED");
+      retainedDirectories.delete(dir);
+      directories.push(dir);
     }
   }, 15000);
 });

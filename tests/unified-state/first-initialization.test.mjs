@@ -17,6 +17,44 @@ async function sharedFactory() { return (await import("../../mcp-server/src/inac
 
 if (process.argv[2] === "--first-init-worker") {
   const [type, role, directory] = process.argv.slice(3);
+  if (role === "fault-no-ready") {
+    setTimeout(() => process.exit(0), 2000);
+  } else if (role === "fault-exit-before-paused") {
+    process.once("message", () => {
+      process.stderr.write("exit-before-paused\n");
+      process.exit(17);
+    });
+    process.send({ type: "ready" });
+  } else if (role === "fault-exit-before-result") {
+    process.once("message", () => {
+      process.send({ type: "paused", details: { boundary: "fault-paused" } }, () => {
+        process.stderr.write("exit-before-result\n");
+        process.exit(19);
+      });
+    });
+    process.send({ type: "ready" });
+  } else if (role === "fault-unclosed-handle") {
+    process.once("message", () => {
+      const result = { opened: true, fault: "unclosed-handle" };
+      process.stdout.write(JSON.stringify(result) + "\n");
+      process.send({ type: "result", result }, () => {
+        process.disconnect();
+        setTimeout(() => process.exit(0), 600);
+      });
+    });
+    process.send({ type: "ready" });
+  } else if (role === "fault-delayed-stdout") {
+    process.once("message", () => {
+      const result = { opened: true, delayedStdout: true };
+      process.send({ type: "result", result }, () => {
+        setTimeout(() => {
+          process.stdout.write(JSON.stringify(result) + "\n");
+          process.disconnect();
+        }, 60);
+      });
+    });
+    process.send({ type: "ready" });
+  } else {
   const factory = type === "shared" ? await sharedFactory() : null;
   const marker = path.join(directory, "release");
   let pendingOwner;
@@ -89,6 +127,7 @@ if (process.argv[2] === "--first-init-worker") {
     process.send({ type: "result", result }, () => process.disconnect());
   });
   process.send({ type: "ready" });
+  }
 } else {
   const { afterAll, beforeAll, expect, test } = await import("vitest");
   const supplied = process.env.AGS_FIRST_INIT_FIXTURES;
@@ -96,6 +135,12 @@ if (process.argv[2] === "--first-init-worker") {
   let seed;
   let seedSha;
   const workers = new Set();
+  const unreclaimedDirectories = new Set();
+  function serializeSpawnError(error) {
+    if (!error) return null;
+    if (error instanceof Error) return { name: error.name, code: typeof error.code === "string" ? error.code : null, message: error.message };
+    return { name: "Error", code: null, message: String(error) };
+  }
   beforeAll(() => {
     const parent = supplied ? path.resolve(supplied) : path.resolve(os.tmpdir());
     fs.mkdirSync(parent, { recursive: true });
@@ -111,7 +156,7 @@ if (process.argv[2] === "--first-init-worker") {
       worker.kill("SIGKILL");
     })));
     const errors = reaped.filter(result => result.status === "rejected").map(result => result.reason);
-    if (workers.size) throw new AggregateError(errors, "Workers still own the fixture root; cleanup stopped.");
+    if (workers.size || unreclaimedDirectories.size) throw new AggregateError(errors, "Workers still own the fixture root; cleanup stopped.");
     if (root) {
       const parent = supplied ? path.resolve(supplied) : path.resolve(os.tmpdir());
       if (path.dirname(root) !== parent || !path.basename(root).startsWith("ags-first-init-")) throw new Error("cleanup outside owned fixture root");
@@ -121,37 +166,104 @@ if (process.argv[2] === "--first-init-worker") {
   });
   function freshDirectory(label) {
     const directory = path.join(root, label);
-    if (path.dirname(directory) !== root || !/^(mixed|foreign|wal-fail)-(authority|shared)$/u.test(label)) throw new Error("fixture outside owned root");
+    if (path.dirname(directory) !== root || !/^(mixed|foreign|wal-fail|fault-[a-z-]+)-(authority|shared)$/u.test(label)) throw new Error("fixture outside owned root");
     fs.mkdirSync(directory);
     fs.copyFileSync(seed, path.join(directory, "ags-state.sqlite3"));
     return directory;
   }
-  function worker(type, role, directory) {
+  function worker(type, role, directory, options = {}) {
+    const readyMs = options.readyMs ?? 10000;
+    const pausedMs = options.pausedMs ?? 10000;
+    const doneMs = options.doneMs ?? 15000;
+    const closeAfterResultMs = options.closeAfterResultMs ?? 2000;
     const child = fork(fileURLToPath(import.meta.url), ["--first-init-worker", type, role, directory], { cwd: path.resolve("."), execArgv: ["--import", "tsx"], env: {}, stdio: ["ignore", "pipe", "pipe", "ipc"] });
     workers.add(child);
     let readyResolve, readyReject, pausedResolve, pausedReject;
-    let readySeen = false, pausedSeen = false, timedOut = false, spawnError;
+    let readySeen = false, pausedSeen = false, resultSeen = false, timedOut = false, spawnError = null;
+    let status = "RUNNING", code = "UNKNOWN", signal = "UNKNOWN", lastRawStdout = null;
     const ready = new Promise((resolve, reject) => { readyResolve = resolve; readyReject = reject; });
     const paused = new Promise((resolve, reject) => { pausedResolve = resolve; pausedReject = reject; });
     ready.catch(() => {}); paused.catch(() => {});
     let stdout = "", stderr = "", result;
-    const deadline = setTimeout(() => { timedOut = true; child.kill(); }, 15000);
+    const buildDiagnostics = stage => ({ stage, pid: child.pid ?? null, status, code, signal, timedOut, spawnError, lastRawStdout, result, stdout, stderr });
+    const readyTimer = setTimeout(() => {
+      if (!readySeen) {
+        timedOut = true; status = "TIMED_OUT";
+        try { child.kill("SIGKILL"); } catch {}
+        readyReject(new Error(`First-init worker timed out before ready: ${JSON.stringify(buildDiagnostics("ready_timeout"))}`));
+      }
+    }, readyMs);
+    let pausedTimer, closeAfterResultTimer;
+    let settleDone;
     const done = new Promise(resolve => {
-      child.stdout.on("data", bytes => { stdout += bytes; }); child.stderr.on("data", bytes => { stderr += bytes; });
-      child.on("error", error => { spawnError = error; }); child.on("message", message => {
-        if (message.type === "ready") { readySeen = true; readyResolve(); }
-        if (message.type === "paused") { pausedSeen = true; pausedResolve(message.details); }
-        if (message.type === "result") result = message.result;
+      let settled = false;
+      settleDone = value => { if (!settled) { settled = true; resolve(value); } };
+      const deadline = setTimeout(() => {
+        timedOut = true; status = "TIMED_OUT"; code = "UNKNOWN"; signal = "UNKNOWN";
+        if (directory) unreclaimedDirectories.add(directory);
+        try { child.kill("SIGKILL"); } catch {}
+        const diag = buildDiagnostics("done_timeout");
+        if (!readySeen) readyReject(new Error(`First-init worker timed out before ready: ${JSON.stringify(diag)}`));
+        if (!pausedSeen) pausedReject(new Error(`First-init worker timed out before pause: ${JSON.stringify(diag)}`));
+        settleDone(diag);
+      }, doneMs);
+      child.stdout.on("data", bytes => {
+        stdout += bytes;
+        const lines = String(stdout).split(/\r?\n/u).map(l => l.trim()).filter(Boolean);
+        if (lines.length) lastRawStdout = lines.at(-1);
       });
-      child.on("close", (code, signal) => {
-        clearTimeout(deadline); workers.delete(child);
-        const diagnostics = { code, signal, timedOut, spawnError, result, stdout, stderr };
+      child.stderr.on("data", bytes => { stderr += bytes; });
+      child.on("error", error => {
+        spawnError = serializeSpawnError(error);
+        status = "UNKNOWN";
+        const diag = buildDiagnostics("spawn_error");
+        if (!readySeen) readyReject(new Error(`First-init worker spawn error: ${JSON.stringify(diag)}`));
+        if (!pausedSeen) pausedReject(new Error(`First-init worker spawn error: ${JSON.stringify(diag)}`));
+      });
+      child.on("message", message => {
+        if (message.type === "ready") { clearTimeout(readyTimer); readySeen = true; readyResolve(); }
+        if (message.type === "paused") { if (pausedTimer) clearTimeout(pausedTimer); pausedSeen = true; pausedResolve(message.details); }
+        if (message.type === "result") {
+          resultSeen = true;
+          result = message.result;
+          closeAfterResultTimer = setTimeout(() => {
+            timedOut = true; status = "TIMED_OUT"; code = "UNKNOWN"; signal = "UNKNOWN";
+            if (directory) unreclaimedDirectories.add(directory);
+            settleDone(buildDiagnostics("close_after_result_timeout"));
+          }, closeAfterResultMs);
+        }
+      });
+      child.on("close", (exitCode, exitSignal) => {
+        clearTimeout(readyTimer); if (pausedTimer) clearTimeout(pausedTimer); if (closeAfterResultTimer) clearTimeout(closeAfterResultTimer); clearTimeout(deadline);
+        workers.delete(child);
+        const lines = String(stdout).split(/\r?\n/u).map(l => l.trim()).filter(Boolean);
+        if (lines.length) lastRawStdout = lines.at(-1);
+        code = exitCode; signal = exitSignal; status = timedOut ? "TIMED_OUT" : "CLOSED";
+        const diagnostics = buildDiagnostics("closed");
         if (!readySeen) readyReject(new Error(`First-init worker closed before ready: ${JSON.stringify(diagnostics)}`));
         if (!pausedSeen) pausedReject(new Error(`First-init worker closed before pause: ${JSON.stringify(diagnostics)}`));
-        resolve(diagnostics);
+        settleDone(diagnostics);
       });
     });
-    return { child, ready, paused, done, go: () => child.send("go") };
+    return {
+      child,
+      ready,
+      paused,
+      done,
+      waitForClose: () => new Promise(resolve => {
+        if (!workers.has(child)) { resolve(); return; }
+        child.once("close", () => resolve());
+      }),
+      go: () => {
+        pausedTimer = setTimeout(() => {
+          if (!pausedSeen && !resultSeen) {
+            timedOut = true; status = "TIMED_OUT";
+            pausedReject(new Error(`First-init worker timed out before pause: ${JSON.stringify(buildDiagnostics("paused_timeout"))}`));
+          }
+        }, pausedMs);
+        child.send("go");
+      },
+    };
   }
   function stableState(directory) {
     const filename = path.join(directory, "ags-state.sqlite3");
@@ -206,4 +318,60 @@ if (process.argv[2] === "--first-init-worker") {
       expect(sha(fs.readFileSync(seed))).toBe(seedSha);
     }, 20000);
   }
+  test("AGS-D-0162: bounds worker stage deadlines, serializes spawnError, prevents premature result before close, and preserves unclosed fixture directory", async () => {
+    expect(serializeSpawnError(Object.assign(new Error("spawn ENOENT"), { code: "ENOENT" }))).toEqual({
+      name: "Error",
+      code: "ENOENT",
+      message: "spawn ENOENT",
+    });
+
+    const dirNoReady = freshDirectory("fault-no-ready-authority");
+    const noReady = worker("authority", "fault-no-ready", dirNoReady, { readyMs: 120, doneMs: 1000 });
+    await expect(noReady.ready).rejects.toThrow(/"stage":"ready_timeout".*"status":"TIMED_OUT"/u);
+    await noReady.done;
+
+    const dirExitBeforePaused = freshDirectory("fault-exit-paused-authority");
+    const exitBeforePaused = worker("authority", "fault-exit-before-paused", dirExitBeforePaused, { pausedMs: 1000, doneMs: 2000 });
+    await exitBeforePaused.ready;
+    exitBeforePaused.go();
+    await expect(exitBeforePaused.paused).rejects.toThrow(/"stage":"closed".*"code":17.*"stderr":"exit-before-paused\\n"/u);
+    const closedBeforePaused = await exitBeforePaused.done;
+    expect(closedBeforePaused).toMatchObject({ status: "CLOSED", code: 17, signal: null });
+
+    const dirExitBeforeResult = freshDirectory("fault-exit-result-authority");
+    const exitBeforeResult = worker("authority", "fault-exit-before-result", dirExitBeforeResult, { doneMs: 2000 });
+    await exitBeforeResult.ready;
+    exitBeforeResult.go();
+    await expect(exitBeforeResult.paused).resolves.toMatchObject({ boundary: "fault-paused" });
+    const closedBeforeResult = await exitBeforeResult.done;
+    expect(closedBeforeResult).toMatchObject({ status: "CLOSED", code: 19, signal: null, result: undefined });
+
+    const dirDelayedStdout = freshDirectory("fault-delayed-stdout-authority");
+    const delayedStdout = worker("authority", "fault-delayed-stdout", dirDelayedStdout, { closeAfterResultMs: 2000 });
+    await delayedStdout.ready;
+    delayedStdout.go();
+    const closedAfterDelayedStdout = await delayedStdout.done;
+    expect(closedAfterDelayedStdout).toMatchObject({
+      status: "CLOSED",
+      code: 0,
+      lastRawStdout: '{"opened":true,"delayedStdout":true}',
+      result: { opened: true, delayedStdout: true },
+    });
+
+    const dirUnclosed = freshDirectory("fault-unclosed-authority");
+    const unclosed = worker("authority", "fault-unclosed-handle", dirUnclosed, { closeAfterResultMs: 120, doneMs: 2000 });
+    await unclosed.ready;
+    unclosed.go();
+    const timedOutClose = await unclosed.done;
+    expect(timedOutClose).toMatchObject({
+      stage: "close_after_result_timeout",
+      status: "TIMED_OUT",
+      code: "UNKNOWN",
+      signal: "UNKNOWN",
+      lastRawStdout: '{"opened":true,"fault":"unclosed-handle"}',
+    });
+    expect(unreclaimedDirectories.has(dirUnclosed)).toBe(true);
+    await unclosed.waitForClose();
+    unreclaimedDirectories.delete(dirUnclosed);
+  }, 20000);
 }
