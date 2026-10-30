@@ -496,7 +496,7 @@ describe("PluginUpdateService", () => {
             },
           };
 
-      const runWithResponse = (targetResponse: () => Response): Promise< ReturnType<PluginUpdateService["check"]> > =>
+      const runWithResponse = (targetResponse: () => Response): ReturnType<PluginUpdateService["check"]> =>
         new PluginUpdateService(new InMemoryPluginUpdateStore(), {
           fetcher: async (input) => {
             if (input.includes("matching-refs")) {
