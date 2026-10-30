@@ -43,7 +43,7 @@ try {
   await cp(path.join(repo, "tests/skill-classification/evaluation.ts"), path.join(temporary, "tests/skill-classification/evaluation.ts"));
   // All historical inventory sources, membership, corpus and oracles come from
   // the verified 521aa Git snapshot; current source changes cannot rewrite it.
-  const unpack = await runProcess("tar", ["-xzf", archive, "-C", temporary], {cwd: repo, timeout: 30000});
+  const unpack = await runProcess("tar", ["-xzf", path.basename(archive), "-C", temporary], {cwd: history, timeout: 30000});
   assert.equal(unpack.error, undefined);
   assert.equal(unpack.status, 0, `history-r04 extract: ${unpack.stderr}`);
   const copied = path.join(temporary, "tests/skill-classification/live-bootstrap");

@@ -172,7 +172,8 @@ try {
   const copiedRepo = path.join(root, "source-copy");
   await mkdir(copiedRepo);
   for (const relative of ["mcp-server/src/skill-classification", "skills", "tests/skill-classification/fixtures.json",
-    "tests/skill-classification/evaluation.ts", "package.json"]) {
+    "tests/skill-classification/evaluation.ts", "tests/skill-classification/fixtures.source-successor.json",
+    "tests/skill-classification/fixtures.unavailable-source-successor.json", "package.json"]) {
     const target = path.join(copiedRepo, relative); await mkdir(path.dirname(target), {recursive: true});
     await cp(path.join(repo, relative), target, {recursive: true});
   }
