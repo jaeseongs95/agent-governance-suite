@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { writeSync } from "node:fs";
 import { access, cp, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -6,26 +7,45 @@ import { expect, it } from "vitest";
 
 const root = path.resolve(import.meta.dirname, "../..");
 
-async function removeCleanRoom(cleanRoot, primaryFailed) {
+async function removeCleanRoom(cleanRoot, primaryFailed, observe) {
+  observe("cleanup", "enter");
   try {
     if (path.dirname(cleanRoot) !== path.resolve(tmpdir()) || !path.basename(cleanRoot).startsWith("ags-al06-acceptance-bundle-")) {
       throw new Error("Unexpected clean-room cleanup path");
     }
     await rm(cleanRoot, { recursive: true, force: true });
+    observe("cleanup", "complete");
   } catch (error) {
+    observe("cleanup", "failed", { suppressed: primaryFailed });
     if (!primaryFailed) throw error;
   }
 }
 
 it("starts the bundled MCP server without acceptance schema files beside mcp-server", async () => {
-  const cleanRoot = await mkdtemp(path.join(tmpdir(), "ags-al06-acceptance-bundle-"));
+  const started = performance.now();
+  let stage = "clean-root";
+  const observe = (current, event, result = {}) => {
+    stage = current;
+    // One bounded record goes directly to the captured stderr, including on timeout.
+    writeSync(2, JSON.stringify({ observation: "acceptance-bundle-startup", stage, event,
+      elapsedMs: Math.round(performance.now() - started), ...result }) + "\n");
+  };
+  observe("clean-root", "enter");
+  const cleanRoot = await mkdtemp(path.join(tmpdir(), "ags-al06-acceptance-bundle-")).catch(error => {
+    observe("clean-root", "failed");
+    throw error;
+  });
+  observe("clean-root", "complete");
   let primaryFailed = false;
   try {
+    observe("copy", "enter");
     await mkdir(path.join(cleanRoot, "mcp-server", "dist"), { recursive: true });
     await Promise.all([
       ...["contracts", "runtime", "skills"].map((directory) => cp(path.join(root, directory), path.join(cleanRoot, directory), { recursive: true })),
       cp(path.join(root, "mcp-server/dist/server.mjs"), path.join(cleanRoot, "mcp-server/dist/server.mjs")),
     ]);
+    observe("copy", "complete");
+    observe("prepare", "enter");
     await expect(access(path.join(cleanRoot, "node_modules"))).rejects.toMatchObject({ code: "ENOENT" });
     await expect(access(path.join(cleanRoot, "mcp-server/contracts"))).rejects.toMatchObject({ code: "ENOENT" });
     const environment = {
@@ -47,10 +67,18 @@ it("starts the bundled MCP server without acceptance schema files beside mcp-ser
       { jsonrpc: "2.0", method: "notifications/initialized", params: {} },
       { jsonrpc: "2.0", id: 2, method: "tools/list", params: {} },
     ];
+    observe("prepare", "complete");
+    observe("child", "enter");
     const child = spawnSync(process.execPath, [path.join(cleanRoot, "mcp-server/dist/server.mjs")], {
       cwd: cleanRoot, env: environment, input: messages.map((message) => JSON.stringify(message)).join("\n") + "\n",
       encoding: "utf8", timeout: 10_000, maxBuffer: 4 * 1024 * 1024, windowsHide: true,
     });
+    observe("child", "complete", {
+      status: child.status,
+      signal: child.signal,
+      errorCode: child.error ? ["ETIMEDOUT", "ENOBUFS", "ENOENT", "EACCES", "EPERM"].includes(child.error.code) ? child.error.code : "OTHER" : null,
+    });
+    observe("assertions", "enter");
     expect(child.error).toBeUndefined();
     expect(child.signal).toBeNull();
     expect(child.status, child.stderr).toBe(0);
@@ -59,10 +87,12 @@ it("starts the bundled MCP server without acceptance schema files beside mcp-ser
     const tools = responses.find((message) => message.id === 2);
     expect(tools?.error).toBeUndefined();
     expect(tools?.result?.tools).toEqual(expect.arrayContaining([expect.objectContaining({ name: "plan_workflow" })]));
+    observe("assertions", "complete");
   } catch (error) {
     primaryFailed = true;
+    observe(stage, "failed");
     throw error;
   } finally {
-    await removeCleanRoom(cleanRoot, primaryFailed);
+    await removeCleanRoom(cleanRoot, primaryFailed, observe);
   }
 }, 30_000);
