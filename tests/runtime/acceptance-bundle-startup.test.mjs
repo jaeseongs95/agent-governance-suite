@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { writeSync } from "node:fs";
 import { access, cp, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { performance } from "node:perf_hooks";
 import path from "node:path";
 import { expect, it } from "vitest";
 
