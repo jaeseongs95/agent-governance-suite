@@ -1,0 +1,818 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "ags-bootstrap-precision-continuity-handoff-source-binding-r13",
+  "scope": "OFFLINE_SYNTHETIC_ONLY_NOT_PAID_OR_QUALIFICATION",
+  "sourceCommit": "f097ec397519c78dae51e5b3f2e6fb79ed81da3d",
+  "parentPrecisionDigest": "sha256:618afb36e06a7372656e9a4139bf3f91e45f12d1487bac42e72f0994a7d2f835",
+  "parentMidtaskDigest": "sha256:6a94e78f76801c0b3ceade0c04dee4dfedebbc9ca0071f3c0c6c2b6d2db4e5c0",
+  "wireCaptureDigest": "sha256:e8d01d1b2803877a6c34319f4ef8d0e550bc6404d29a002e3262783dd1e9acd7",
+  "inventoryDigest": "sha256:ba7dacb86b2ffa390c7864117a82e21240d04001d599b4f0e72e2b7c87942306",
+  "fixtureDigest": "sha256:947b92701fe640dfa94c532b92f82fb251e401e9b4b7c3616afe3d5c2e263065",
+  "fixtureOracleDigest": "sha256:33ca2c2edc3b20d3287eddc45d907ac6bba0b742386aa7ab7a5516a30b6cd914",
+  "provenance": "현재 공개 21행의 독립 정수·유리수 산술이다. 원판정·가격정책·UNKNOWN은 보존하고 두 합성 경계가격만 현재 최대 길이에 맞춘다. 시험 중 기대값을 생성하지 않는다.",
+  "unknownUsd": "0.1204098",
+  "safeMaxPicoUsd": "9007199254740991",
+  "cases": [
+    {
+      "id": "zero",
+      "kind": "reviewed-estimate",
+      "priceNumberText": "0",
+      "expectedStatus": "READY_FOR_OPERATOR_DISPATCH",
+      "expectedReason": null,
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "0"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "0"
+        }
+      ],
+      "expectedSumPicoUsd": "0",
+      "expectedMaxPicoUsd": "0"
+    },
+    {
+      "id": "half-pico",
+      "kind": "reviewed-estimate",
+      "priceNumberText": "0.0000000005",
+      "expectedStatus": "READY_FOR_OPERATOR_DISPATCH",
+      "expectedReason": null,
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "62823"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "62807"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "62859"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "62857"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "62825"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "62832"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "62840"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "62817"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "62809"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "62815"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "62841"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "62759"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "62780"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "62828"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "62767"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "62811"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "62841"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "62796"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "62801"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "62763"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "62778"
+        }
+      ],
+      "expectedSumPicoUsd": "1319049",
+      "expectedMaxPicoUsd": "62859"
+    },
+    {
+      "id": "minimum-positive",
+      "kind": "reviewed-estimate",
+      "priceNumberText": "5e-324",
+      "expectedStatus": "READY_FOR_OPERATOR_DISPATCH",
+      "expectedReason": null,
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "1"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "1"
+        }
+      ],
+      "expectedSumPicoUsd": "21",
+      "expectedMaxPicoUsd": "1"
+    },
+    {
+      "id": "current-adjacent-below",
+      "kind": "reviewed-estimate",
+      "priceNumberText": "71.6466289741323",
+      "expectedStatus": "BLOCKED",
+      "expectedReason": "RUN_BUDGET_INSUFFICIENT",
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "9002040697454853"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "8999819651956655"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "9007199254740991"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "9006984314854068"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "9002327283970750"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "9003330336776388"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "9004476682839974"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "9001252584536138"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "9000106238472552"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "9000894351391267"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "9004619976097922"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "8992941575575139"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "8995879087363078"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "9002757163744595"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "8994016275009751"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "9000321178359474"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "9004619976097922"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "8998243426119224"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "8998959892408966"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "8993443101977957"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "8995592500847181"
+        }
+      ],
+      "expectedSumPicoUsd": "189009825550594845",
+      "expectedMaxPicoUsd": "9007199254740991"
+    },
+    {
+      "id": "current-adjacent-above",
+      "kind": "reviewed-estimate",
+      "priceNumberText": "71.64662897413231",
+      "expectedStatus": "BLOCKED",
+      "expectedReason": "ESTIMATE_SOURCE_OR_INPUT_UNBOUND",
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "9002040697454855"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "8999819651956656"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "9007199254740992"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "9006984314854070"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "9002327283970751"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "9003330336776389"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "9004476682839975"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "9001252584536139"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "9000106238472553"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "9000894351391268"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "9004619976097923"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "8992941575575140"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "8995879087363079"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "9002757163744596"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "8994016275009752"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "9000321178359475"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "9004619976097923"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "8998243426119226"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "8998959892408967"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "8993443101977959"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "8995592500847183"
+        }
+      ],
+      "expectedSumPicoUsd": "189009825550594871",
+      "expectedMaxPicoUsd": "9007199254740992"
+    },
+    {
+      "id": "exponent-overflow",
+      "kind": "reviewed-estimate",
+      "priceNumberText": "1e21",
+      "expectedStatus": "BLOCKED",
+      "expectedReason": "ESTIMATE_SOURCE_OR_INPUT_UNBOUND",
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "125645000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "125614000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "125717000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "125714000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "125649000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "125663000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "125679000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "125634000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "125618000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "125629000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "125681000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "125518000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "125559000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "125655000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "125533000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "125621000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "125681000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "125592000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "125602000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "125525000000000000000000000000000000"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "125555000000000000000000000000000000"
+        }
+      ],
+      "expectedSumPicoUsd": "2638084000000000000000000000000000000",
+      "expectedMaxPicoUsd": "125717000000000000000000000000000000"
+    },
+    {
+      "id": "negative",
+      "kind": "invalid-price",
+      "priceNumberText": "-0.000042",
+      "expectedStatus": "BLOCKED",
+      "expectedReason": "VERIFIED_PRICE_UPPER_BOUND_MISSING",
+      "expectedRows": [],
+      "expectedSumPicoUsd": null,
+      "expectedMaxPicoUsd": null
+    },
+    {
+      "id": "nan",
+      "kind": "invalid-price",
+      "priceNumberText": "NaN",
+      "expectedStatus": "BLOCKED",
+      "expectedReason": "VERIFIED_PRICE_UPPER_BOUND_MISSING",
+      "expectedRows": [],
+      "expectedSumPicoUsd": null,
+      "expectedMaxPicoUsd": null
+    },
+    {
+      "id": "positive-infinity",
+      "kind": "invalid-price",
+      "priceNumberText": "Infinity",
+      "expectedStatus": "BLOCKED",
+      "expectedReason": "VERIFIED_PRICE_UPPER_BOUND_MISSING",
+      "expectedRows": [],
+      "expectedSumPicoUsd": null,
+      "expectedMaxPicoUsd": null
+    },
+    {
+      "id": "negative-infinity",
+      "kind": "invalid-price",
+      "priceNumberText": "-Infinity",
+      "expectedStatus": "BLOCKED",
+      "expectedReason": "VERIFIED_PRICE_UPPER_BOUND_MISSING",
+      "expectedRows": [],
+      "expectedSumPicoUsd": null,
+      "expectedMaxPicoUsd": null
+    },
+    {
+      "id": "legacy-fixed-control",
+      "kind": "legacy-fixed",
+      "priceNumberText": "0",
+      "expectedStatus": "READY_FOR_OPERATOR_DISPATCH",
+      "expectedReason": null,
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "1000000000"
+        }
+      ],
+      "expectedSumPicoUsd": "21000000000",
+      "expectedMaxPicoUsd": "1000000000"
+    },
+    {
+      "id": "verified-upper-control",
+      "kind": "verified-upper-bound",
+      "priceNumberText": "0",
+      "expectedStatus": "READY_FOR_OPERATOR_DISPATCH",
+      "expectedReason": null,
+      "expectedRows": [
+        {
+          "caseId": "SS01",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS02",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS03",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS04",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS05",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS06",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS07",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS08",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS09",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS10",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS11",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS12",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS13",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS14",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS15",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS16",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS17",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS18",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS23",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS28",
+          "reservedPicoUsd": "1000000000"
+        },
+        {
+          "caseId": "SS37",
+          "reservedPicoUsd": "1000000000"
+        }
+      ],
+      "expectedSumPicoUsd": "21000000000",
+      "expectedMaxPicoUsd": "1000000000"
+    }
+  ],
+  "parentLiveHostBoundariesPrecisionDigest": "sha256:891f10021218faecf213e3329224aad5fbca7d51b0fdd5a43f697e329571b12f"
+}
