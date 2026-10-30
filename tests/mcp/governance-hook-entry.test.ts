@@ -107,14 +107,14 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
   // 같은 테스트에서 hooks.json만 원 6944aa45로 되돌린 TEST 사본은 두 번째 handler 거부로 실패해야 한다.
   // 실제 AGY 사건의 중간 입력·계보를 재현한 시험은 아니다. 자식/판정불가 정책은 기존 공통 시험을 함께 실행한다.
   function registeredAntigravityCall(environment: NodeJS.ProcessEnv, wrapped: boolean,
-    args: Record<string, unknown> = { schemaVersion: "1.0.0" }, sessionId = "d0352-owned-hook-session") {
+    args: Record<string, unknown> = { schemaVersion: "1.0.0" }, sessionId = "d0352-owned-hook-session", tool = "inspect_context") {
     const hooks = JSON.parse(readFileSync(path.join(repository, "hooks.json"), "utf8")) as Record<string, {
       enabled?: boolean; PreToolUse?: Array<{ hooks: Array<{ command: string }> }>;
     }>;
     const handlers = Object.values(hooks).filter(group => group.enabled !== false)
       .flatMap(group => group.PreToolUse ?? []).flatMap(group => group.hooks);
     let current: Record<string, unknown> = wrapped
-      ? { ServerName: "agent-governance-suite", ToolName: "inspect_context", Arguments: args } : { ...args };
+      ? { ServerName: "agent-governance-suite", ToolName: tool, Arguments: args } : { ...args };
     const outputs: Array<{ decision: string; reason?: string; overwrite?: Record<string, unknown> }> = [];
     for (const handler of handlers) {
       const [binary, ...argv] = handler.command.split(" ");
@@ -126,7 +126,7 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
       process.stderr.write(`[시험단계] ${JSON.stringify({ fixture: "native-registration", ...stage, event: "begin" })}\n`);
       const child = spawnSync(process.execPath, argv, {
         input: JSON.stringify({ conversationId: sessionId, workspacePaths: [path.dirname(environment.AGENT_GOVERNANCE_DB_PATH!)],
-          toolCall: { name: wrapped ? "call_mcp_tool" : "mcp_agent-governance-suite_inspect_context", args: current } }),
+          toolCall: { name: wrapped ? "call_mcp_tool" : `mcp_agent-governance-suite_${tool}`, args: current } }),
         cwd: repository, env: environment, encoding: "utf8", timeout: 10_000, windowsHide: true,
       });
       process.stderr.write(`[시험단계] ${JSON.stringify({ fixture: "native-registration", ...stage, event: "end",
@@ -143,6 +143,38 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     }
     return { outputs, args: wrapped ? current.Arguments as Record<string, unknown> : current };
   }
+
+  // 격리된 등록 실행기 경계: 종료 코드 0과 별도로 decision 및 서명 검증으로 판정한다.
+  // 실제 호스트·모델 실행이나 분류 실패 뒤 반복 방지 동작을 검증하는 사례는 아니다.
+  it.each([true, false])("AGS-D-0352: 격리된 등록 실행기는 분류 거부를 대체 서명으로 바꾸지 않는다 (wrapped=%s)", wrapped => {
+    const { environment } = fixture();
+    const result = registeredAntigravityCall(environment, wrapped, undefined, undefined, "classify_skills");
+    expect(result.outputs).toEqual([{ decision: "deny", reason: "GOVERNANCE_HOOK_FAILED" }]);
+    expect(result.args).toEqual({ schemaVersion: "1.0.0" });
+  });
+
+  it.each([true, false])("AGS-D-0352: 격리된 등록 실행기의 목록 허용 서명은 실제 검증을 통과한다 (wrapped=%s)", wrapped => {
+    const { environment } = fixture();
+    const result = registeredAntigravityCall(environment, wrapped, undefined, undefined, "list_skills");
+    expect(result.outputs).toHaveLength(1);
+    expect(result.outputs[0]).toMatchObject({ decision: "allow" });
+    expect(result.args).toMatchObject({ schemaVersion: "1.0.0", _sessionProof: expect.any(String) });
+    expect(result.args).not.toHaveProperty("_hostAttestation");
+    const workflow = new SqliteWorkflowStore(environment.AGENT_GOVERNANCE_DB_PATH!);
+    try {
+      expect(new SessionActorProofs(workflow).verify("list_skills", result.args)).toMatchObject({ host: "antigravity",
+        sessionId: "d0352-owned-hook-session", actor: { role: "root", basis: "inferred" } });
+    } finally { workflow.close(); }
+  });
+
+  it.each([true, false])("AGS-D-0352: 격리된 등록 실행기는 호출자의 호스트 관측값을 거부하고 서명을 발급하지 않는다 (wrapped=%s)", wrapped => {
+    const { environment } = fixture();
+    const args = { schemaVersion: "1.0.0", _hostAttestation: "forged" };
+    const result = registeredAntigravityCall(environment, wrapped, args, undefined, "classify_skills");
+    expect(result.outputs).toEqual([{ decision: "deny", reason: "Unverified caller _hostAttestation rejected." }]);
+    expect(result.args).toEqual(args);
+    expect(existsSync(environment.AGENT_GOVERNANCE_DB_PATH!)).toBe(false);
+  });
 
   it.each([true, false])("AGS-D-0352: native registration preserves one usable root and continuity binding (wrapped=%s)", wrapped => {
     const { environment } = fixture();
