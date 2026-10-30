@@ -179,17 +179,17 @@ if (process.argv[2] === "--first-init-worker") {
     const child = fork(fileURLToPath(import.meta.url), ["--first-init-worker", type, role, directory], { cwd: path.resolve("."), execArgv: ["--import", "tsx"], env: {}, stdio: ["ignore", "pipe", "pipe", "ipc"] });
     workers.add(child);
     let readyResolve, readyReject, pausedResolve, pausedReject;
-    let readySeen = false, pausedSeen = false, resultSeen = false, timedOut = false, spawnError = null;
+    let readySeen = false, pausedSeen = false, resultSeen = false, timedOut = false, spawnError = null, killError = null;
     let status = "RUNNING", code = "UNKNOWN", signal = "UNKNOWN", lastRawStdout = null;
     const ready = new Promise((resolve, reject) => { readyResolve = resolve; readyReject = reject; });
     const paused = new Promise((resolve, reject) => { pausedResolve = resolve; pausedReject = reject; });
     ready.catch(() => {}); paused.catch(() => {});
     let stdout = "", stderr = "", result;
-    const buildDiagnostics = stage => ({ stage, pid: child.pid ?? null, status, code, signal, timedOut, spawnError, lastRawStdout, result, stdout, stderr });
+    const buildDiagnostics = stage => ({ stage, pid: child.pid ?? null, status, code, signal, timedOut, spawnError, killError, lastRawStdout, result, stdout, stderr });
     const readyTimer = setTimeout(() => {
       if (!readySeen) {
         timedOut = true; status = "TIMED_OUT";
-        try { child.kill("SIGKILL"); } catch {}
+        try { child.kill("SIGKILL"); } catch (error) { killError = serializeSpawnError(error); }
         readyReject(new Error(`First-init worker timed out before ready: ${JSON.stringify(buildDiagnostics("ready_timeout"))}`));
       }
     }, readyMs);
@@ -201,7 +201,7 @@ if (process.argv[2] === "--first-init-worker") {
       const deadline = setTimeout(() => {
         timedOut = true; status = "TIMED_OUT"; code = "UNKNOWN"; signal = "UNKNOWN";
         if (directory) unreclaimedDirectories.add(directory);
-        try { child.kill("SIGKILL"); } catch {}
+        try { child.kill("SIGKILL"); } catch (error) { killError = serializeSpawnError(error); }
         const diag = buildDiagnostics("done_timeout");
         if (!readySeen) readyReject(new Error(`First-init worker timed out before ready: ${JSON.stringify(diag)}`));
         if (!pausedSeen) pausedReject(new Error(`First-init worker timed out before pause: ${JSON.stringify(diag)}`));
