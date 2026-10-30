@@ -1,0 +1,677 @@
+diff --git a/runtime/engineering-practices/CONTENT_LOCK.json b/runtime/engineering-practices/CONTENT_LOCK.json
+index a53c1308268cf89bcaf2ce58789b7b0f36bd5ef1..ab6f0eb288c8212484ff9e8396511cddbcf85add 100644
+--- a/runtime/engineering-practices/CONTENT_LOCK.json
++++ b/runtime/engineering-practices/CONTENT_LOCK.json
+@@ -127,7 +127,7 @@
+     },
+     {
+       "path": "skills/orchestrator/references/engineering-practices/cli.md",
+-      "digest": "sha256:42d409ec8fd0f39c491dfdeb18da3f3d15d9fb518c82a8d9f69ed0ae87a59f69"
++      "digest": "sha256:c23134f4ebce972f891e7b7bf93f9ac24a5c340e856e3f1192e58fb33aff3b2b"
+     },
+     {
+       "path": "skills/orchestrator/references/engineering-practices/code-review.md",
+diff --git a/scripts/check-skill-context-optimization.mjs b/scripts/check-skill-context-optimization.mjs
+index 84a7c20ec9c89570e446c94e084f35e2505852e8..d62022a80fe679aa1dba472569a2812b4005bb6e 100644
+--- a/scripts/check-skill-context-optimization.mjs
++++ b/scripts/check-skill-context-optimization.mjs
+@@ -235,7 +235,20 @@ export function matchesHostConsumptionSourceSuccessor(path, bytes) {
+     && createHash("sha256").update(bytes).digest("hex") === HOST_CONSUMPTION_SOURCE_SUCCESSOR.hashes[path];
+ }
+ 
++// D0352의 현재 원본만 허용하고 기존 역사 기준은 보존한다.
++const ORCHESTRATOR_BEHAVIOR_SOURCE_HASHES = Object.freeze({
++  "skills/orchestrator/SKILL.md": "5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
++  "skills/orchestrator/classification.json": "44d66bda8d2c80034d3f881ff3f12de6d628bd4d8ce850fd49718df656aa95d2",
++  "skills/orchestrator/references/entry-details.md": "86af016cfc8399a656181f5253189c098b53434aaa8b7d4fd1353d586248333f",
++});
++
++function matchesOrchestratorSourceSuccessor(path, bytes) {
++  return Object.hasOwn(ORCHESTRATOR_BEHAVIOR_SOURCE_HASHES, path)
++    && createHash("sha256").update(bytes).digest("hex") === ORCHESTRATOR_BEHAVIOR_SOURCE_HASHES[path];
++}
++
+ export function matchesGovernanceSourceSuccessor(path, bytes) {
++  if (matchesOrchestratorSourceSuccessor(path, bytes)) return true;
+   return Object.hasOwn(GOVERNANCE_SOURCE_SUCCESSOR.hashes, path)
+     && createHash("sha256").update(bytes).digest("hex") === GOVERNANCE_SOURCE_SUCCESSOR.hashes[path];
+ }
+@@ -470,6 +483,7 @@ const SKILL_POLICY_WORDING_SUCCESSOR = Object.freeze({
+ });
+ 
+ function matchesSkillPolicyWordingSuccessor(path, bytes) {
++  if (matchesOrchestratorSourceSuccessor(path, bytes)) return true;
+   return Object.hasOwn(SKILL_POLICY_WORDING_SUCCESSOR.hashes, path)
+     && createHash("sha256").update(bytes).digest("hex") === SKILL_POLICY_WORDING_SUCCESSOR.hashes[path];
+ }
+@@ -531,8 +545,15 @@ export function matchesOrchestratorIntakeUpdate(kind, bytes) {
+     && createHash("sha256").update(bytes).digest("hex") === ORCHESTRATOR_INTAKE.hashes[kind];
+ }
+ 
++// 현재 CLI 지문은 문구의 역사 투영에 포함하지 않는다.
++function matchesArtifactScopeCliSource(path, bytes) {
++  return path === "skills/orchestrator/references/engineering-practices/cli.md"
++    && createHash("sha256").update(bytes).digest("hex") === "c23134f4ebce972f891e7b7bf93f9ac24a5c340e856e3f1192e58fb33aff3b2b";
++}
++
+ export function matchesEngineeringReferenceUpdate(name, bytes) {
+   const reviewedPath = `skills/orchestrator/references/engineering-practices/${name}`;
++  if (matchesArtifactScopeCliSource(reviewedPath, bytes)) return true;
+   if (matchesGovernanceSourceSuccessor(reviewedPath, bytes)) return true;
+   if (Object.hasOwn(REVIEWED_IMPLEMENTATION_R1.hashes, reviewedPath)) {
+     return matchesReviewedImplementationUpdate(reviewedPath, bytes);
+@@ -542,6 +563,7 @@ export function matchesEngineeringReferenceUpdate(name, bytes) {
+ }
+ 
+ export function matchesReviewedImplementationUpdate(path, bytes) {
++  if (matchesArtifactScopeCliSource(path, bytes)) return true;
+   if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
+   const reviewed = Object.hasOwn(REVIEWED_IMPLEMENTATION_R2.hashes, path) ? REVIEWED_IMPLEMENTATION_R2 : REVIEWED_IMPLEMENTATION_R1;
+   return Object.hasOwn(reviewed.hashes, path)
+@@ -690,8 +712,8 @@ export function checkRegistryContextCompatibility(registry) {
+ 
+ export function checkSkillContextOptimization() {
+   const errors = [];
+-  for (const [successorPath, sha256] of Object.entries(SKILL_POLICY_WORDING_SUCCESSOR.hashes)) {
+-    if (createHash("sha256").update(readFileSync(join(ROOT, ...successorPath.split("/")))).digest("hex") !== sha256) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
++  for (const successorPath of Object.keys(SKILL_POLICY_WORDING_SUCCESSOR.hashes)) {
++    if (!matchesSkillPolicyWordingSuccessor(successorPath, readFileSync(join(ROOT, ...successorPath.split("/"))))) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
+   }
+   for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) {
+     if (!matchesClassificationUpdate(reviewedPath, readHistorical(ROOT, reviewedPath))) errors.push(`classification: reviewed bytes differ: ${reviewedPath}`);
+diff --git a/skills/orchestrator/SKILL.md b/skills/orchestrator/SKILL.md
+index eb0731590f7dd67be907fc794cb58a8e99a02bde..d4ad4dcb368ca6788e4b631ad76efa8d61f26be0 100644
+--- a/skills/orchestrator/SKILL.md
++++ b/skills/orchestrator/SKILL.md
+@@ -13,11 +13,14 @@ metadata:
+ <!-- skill-intake:start -->
+ ## 공통 접수·선택 기준
+ 
+-요청의 목적, 실제로 수행할 행동과 전문 스킬의 적용·제외 조건을 대조해 선택한다. 선택 결과를 출력하지 않아도 선택은 상태 확인·읽기를 포함한 첫 도구 호출 전에 끝낸다. 키워드, 파일 종류나 `complex` 표시만으로 스킬을 붙이지 않는다. 사용자가 이름으로 지정한 스킬은 우선하고 다른 스킬로 대체하지 않지만, 필수 승인·검증·독립성 gate를 생략하는 권한으로 해석하지 않는다.
++요청의 목적, 실제로 수행할 행동과 전문 스킬의 적용·제외 조건을 대조해 선택한다. 선택 결과를 출력하지 않아도 선택은 상태 확인·읽기를 포함한 첫 도구 호출 전에 끝낸다. 키워드, 파일 종류나 `complex` 표시만으로 스킬을 붙이지 않는다. 사용자가 이름으로 지정한 스킬은 우선하고 다른 스킬로 대체하지 않지만, 필수 승인·검증·독립성 gate를 생략하는 권한으로 해석하지 않는다. 선택한 전문 스킬은 해당 전문 판단·행동을 시작하기 전에 호스트가 제공하는 방식으로 실제 호출하고 지침을 적용한다. 선택·이름 언급·본문 읽기만으로 그 판단·행동을 대신하지 않는다.
++
++작업 중 목표·범위·위험이나 필요한 전문 판단이 달라지면 그 시점에 스킬 선택을 다시 판단하고 다음 해당 판단·행동 전에 필요한 스킬을 호출·적용한다. 긴 direct task에서 압축·재개로 잃으면 다음 행동이 달라질 결정·미해결 사항·근거가 생기면 `context-continuity`를 선택해 checkpoint한다. 사용자 교정으로 바뀐 행동·적용 범위와 남은 검증, 자원 문제로 정한 실행 위치·병렬 수·중단·재개 조건도 이에 포함하며, 압축·새 세션·재부팅 뒤에는 해당 제약과 현재 환경을 다시 대조해 지적된 행동을 반복하지 않는다. 전달받거나 복원한 근거가 없으면 이전 교정·실행·검증을 기억한다고 주장하지 않는다. 기존 작업을 이어받을 때는 인계된 교정·제약 근거를 영향받는 실행 전에 대조한다. 필요한 근거가 빠졌으면 현재 권한으로 접근할 수 있고 해당 작업에 결속된 정본 참조를 먼저 확인한다. 거기에도 필요한 제약이 없으면 영향받는 실행만 보류하고 누락된 제약만 확인하며, 독립적으로 가능한 일은 계속한다. 이미 제공된 정보를 다시 묻거나 임의의 타 세션 대화·로그·인증 파일을 탐색하지 않는다. 이전 작업의 재개가 아닌 새 요청에는 과거 교정이 있다고 가정해 이 절차를 추가하지 않는다. 통합 workflow는 기존 계약·실행 기록의 연속성 경로를 따르며 direct snapshot을 중복 저장하지 않는다. 조건 변화가 없는 호출이나 빈 깨우기마다 재분류·workflow·기록을 추가하지 않는다.
+ 
+ - 코드 작성·수정·설계나 라이브러리·의존성 선택 단계에는 `ponytail`이 현재 가용하고 활성화되어 있으며 사용자 지시와 충돌하지 않을 때 먼저 실제 호출한다. 명시적 disable·사용자 override는 선행 호출보다 우선한다. 후속 사용자의 명시적 사용 지시는 해당 요청 범위에서만 존중하며 전역 설정을 바꾸지 않는다. 부재·비활성인 스킬의 재활성화를 요구하거나 원 작업을 중단하지 않고 일반 engineering 원칙으로 계속한다. 이때 원 요구·수용 기준·필요한 시험은 줄이지 않는다. 코드 설명, 읽기 전용 일반 리뷰·감사·검증만 하는 요청에는 적용하지 않는다.
++- 대형 빌드·시험, 대량 파일·데이터 처리, 장시간·동시 실행을 시작하기 전에는 현재 확인한 실행 환경·동시 작업과 예상 메모리·디스크 공간·I/O·실행 시간을 대조하고, 필요한 작업 범위·병렬 수·실행 위치와 종료·정리 조건을 정한다. 기존 관측·도구를 재사용하며 미확인 값은 추측하지 않는다. 자원 영향이 크거나 불명확하면 허용된 원격 환경, 작업 분할이나 병렬 수 축소로 목적을 달성한다. 작은 읽기·편집마다 계측·보고·새 점검 도구를 만들지 않으며, 이 점검을 이미 허용된 빌드·시험·작업 브랜치 push·CI의 추가 승인이나 PRE로 만들지 않는다.
+ - 무거운 단계는 행동 이름이 아니라 실제 위험으로 붙인다. 위험은 규모, 되돌릴 수 있는지, 실데이터·공유 자원·공개 상태에 닿는지로 판단한다. 영구 삭제·덮어쓰기, 운영 데이터 변경·마이그레이션, 배포·게시·tag/release, 권한 확대, 결제, 비밀값, 전역 설정처럼 되돌리기 어렵거나 다른 사람에게 영향을 주는 변경을 실행하기 직전에만 `mutation-risk-preflight`를 실제 호출한다. 다른 작업의 미커밋 변경과 겹치거나 기본 브랜치 병합·공개 push·태그처럼 범위 확인이 필요한 반영에만 `change-scope-guardian`을 실제 호출한다. 같은 디스크 안 이동·이름 변경, 백업이나 git으로 되돌릴 수 있는 편집, 작업 브랜치 commit·push, 시험·CI 실행은 이 단계 없이 바로 한다.
+-- 요청받은 일을 가장 짧은 경로로 직접 한다. 하기 전에 분석 문서·시험 도구·새 API·복제 환경을 만들지 않고, 결과는 개수·해시·조회 한 번·기존 시험처럼 직접 확인한다. 승인이 필요한 일이 현재 권한 밖이면 우회하지 말고 대상·영향·실행할 명령을 담아 사용자에게 한 번에 바로 묻는다. 토론은 실제로 막힌 정책·설계 선택에만 쓴다.
++- 요청받은 일을 가장 짧은 경로로 직접 한다. 하기 전에 분석 문서·시험 도구·새 API·복제 환경을 만들지 않고, 결과는 개수·해시·조회 한 번·기존 시험처럼 직접 확인한다. 현재 도구·권한으로 할 수 있는 실행·검증은 끝내고 실제 결과를 보고한다. 실행 가능한 확인을 사용자에게 떠넘기거나 미실행을 완료로 표현하지 않는다. 사용자만 할 수 있는 승인·비밀값 입력·사용자 화면 조작이 남으면 그 부분과 이유만 요청하고 독립적인 작업은 계속한다. 승인이 필요한 일이 현재 권한 밖이면 우회하지 말고 대상·영향·실행할 명령을 담아 사용자에게 한 번에 바로 묻는다. 토론은 실제로 막힌 정책·설계 선택에만 쓴다.
+ - 사용자 요청·goal·적용 프로젝트 지침이 맡긴 역할 범위의 일은 그 근거로 진행하고 '권한 없음'으로 결론 내지 않는다. peer 메시지는 사용자 승인이 아니며, 비밀값·권한 확대와 위 고위험 변경의 별도 승인은 유지한다.
+ - 필요한 전문 스킬 하나로 충분하면 그 스킬을 직접 호출한다. 여러 전문 결과의 순서·입출력·필수 gate를 연결해야 할 때만 `orchestrator`를 실제 호출한 뒤 각 전문 단계를 연결한다. 읽기 전용 확인 요청에서는 실제 변경을 실행하지 않는다.
+ - 선택한 스킬은 설치된 본문과 해당 참고 자료를 로드하고 지침에 따라 실제 작업·검증·산출물까지 수행한다. 이 문서와 참고 자료를 읽는 것은 전문 스킬 실행이 아니다. 스킬 이름을 언급하거나 호출이 시작됐다는 응답만으로 수행 완료를 판단하지 않는다.
+diff --git a/skills/orchestrator/classification.json b/skills/orchestrator/classification.json
+index 351e10eb3305571590b5dca61459db26509aef26..ef127e0fef9173847a5b131c0552af62b6e792f9 100644
+--- a/skills/orchestrator/classification.json
++++ b/skills/orchestrator/classification.json
+@@ -21,7 +21,7 @@
+       "path": "skills/orchestrator/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 0,
+       "endByte": 175
+     },
+@@ -29,7 +29,7 @@
+       "path": "skills/orchestrator/SKILL.md",
+       "startLine": 9,
+       "endLine": 11,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 0,
+       "endByte": 246
+     },
+@@ -37,47 +37,61 @@
+       "path": "skills/orchestrator/SKILL.md",
+       "startLine": 13,
+       "endLine": 16,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 0,
+       "endByte": 295
+     },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 16,
++      "endLine": 16,
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
++      "startByte": 511,
++      "endByte": 764
++    },
+     {
+       "path": "skills/orchestrator/SKILL.md",
+       "startLine": 18,
+-      "endLine": 22,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "endLine": 18,
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
++    },
++    {
++      "path": "skills/orchestrator/SKILL.md",
++      "startLine": 20,
++      "endLine": 25,
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 0,
+-      "endByte": 2599
++      "endByte": 3717
+     },
+     {
+       "path": "skills/orchestrator/SKILL.md",
+-      "startLine": 23,
+-      "endLine": 23,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "startLine": 26,
++      "endLine": 26,
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 0,
+       "endByte": 148
+     },
+     {
+       "path": "skills/orchestrator/SKILL.md",
+-      "startLine": 24,
+-      "endLine": 24,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "startLine": 27,
++      "endLine": 27,
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 0,
+       "endByte": 86
+     },
+     {
+       "path": "skills/orchestrator/SKILL.md",
+-      "startLine": 25,
+-      "endLine": 25,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "startLine": 28,
++      "endLine": 28,
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 0,
+       "endByte": 363
+     },
+     {
+       "path": "skills/orchestrator/SKILL.md",
+-      "startLine": 26,
+-      "endLine": 28,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++      "startLine": 29,
++      "endLine": 31,
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+     }
+   ],
+   "exclusions": [
+@@ -85,7 +99,7 @@
+       "path": "skills/orchestrator/SKILL.md",
+       "startLine": 3,
+       "endLine": 3,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 176,
+       "endByte": 341
+     },
+@@ -93,7 +107,7 @@
+       "path": "skills/orchestrator/SKILL.md",
+       "startLine": 11,
+       "endLine": 11,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 220,
+       "endByte": 313
+     },
+@@ -101,7 +115,7 @@
+       "path": "skills/orchestrator/SKILL.md",
+       "startLine": 16,
+       "endLine": 16,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 235,
+       "endByte": 319
+     },
+@@ -109,39 +123,39 @@
+       "path": "skills/orchestrator/SKILL.md",
+       "startLine": 16,
+       "endLine": 16,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 320,
+       "endByte": 510
+     },
+     {
+       "path": "skills/orchestrator/SKILL.md",
+-      "startLine": 22,
+-      "endLine": 22,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "startLine": 25,
++      "endLine": 25,
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 240,
+       "endByte": 317
+     },
+     {
+       "path": "skills/orchestrator/SKILL.md",
+-      "startLine": 23,
+-      "endLine": 23,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "startLine": 26,
++      "endLine": 26,
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 149,
+       "endByte": 344
+     },
+     {
+       "path": "skills/orchestrator/SKILL.md",
+-      "startLine": 24,
+-      "endLine": 24,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "startLine": 27,
++      "endLine": 27,
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 87,
+       "endByte": 291
+     },
+     {
+       "path": "skills/orchestrator/SKILL.md",
+-      "startLine": 25,
+-      "endLine": 25,
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++      "startLine": 28,
++      "endLine": 28,
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+       "startByte": 501,
+       "endByte": 633
+     }
+diff --git a/skills/orchestrator/references/engineering-practices/cli.md b/skills/orchestrator/references/engineering-practices/cli.md
+index 09d742fdc632e4c042664b35f628a76e5a609432..9650608d20288f724eed5dd1935fb0a15fbe0a78 100644
+--- a/skills/orchestrator/references/engineering-practices/cli.md
++++ b/skills/orchestrator/references/engineering-practices/cli.md
+@@ -20,6 +20,8 @@ files.json은 `["src/module.mjs", "tests/module.test.mjs"]`와 같은 명시적
+ 
+ 출력 JSON은 stdout으로 나온다. shell `>`나 기존 호스트 파일 도구로 저장한다. 출력 파일은 snapshot 대상에서 제외한다. raw JSON 파일의 hash는 SHA-256 byte digest다. planDigest/requestDigest 및 snapshot 자체 digest는 코드의 정렬된 canonical JSON 방식으로 계산한다. 두 해시 종류를 혼용하지 않는다. 예제 생성기가 올바른 참조 파일을 보여준다.
+ 
++artifact root와 산출물 저장 위치는 현재 허용된 쓰기 범위 안에서 정한다. 산출물의 복사·이동·정리도 같은 범위를 따르며, snapshot 제외나 CLI 검사 성공은 그 범위를 넓히지 않는다.
++
+ run의 의도적인 red 테스트는 exit 1과 FAIL receipt를 반환한다. shell set -e를 사용한다면 예상 실패를 명시적으로 처리하고 출력 JSON과 종료 코드를 모두 보존한다. `|| true`로 무조건 성공 취급하지 않는다. 도구 자체 invalid input/IO 오류는 exit 2이며 JSON error는 stderr다. check-proof/check-review의 완료 미충족·차단 결과는 exit 1이다. provider-result는 포장 명령의 성공 코드만 반환하므로 내부 error와 output.verdict를 읽는다.
+ 
+ ## 검증되는 것
+diff --git a/skills/orchestrator/references/entry-details.md b/skills/orchestrator/references/entry-details.md
+index 053740d6bc478c83eaabf272c386bd1e69d6f87f..c4002a9222455b99ee9fa999150d60bd321c6c9d 100644
+--- a/skills/orchestrator/references/entry-details.md
++++ b/skills/orchestrator/references/entry-details.md
+@@ -18,7 +18,7 @@
+ 
+ 선택 결과에는 선택한 capability·provider·phase와 이유, 적용 조건에 가까웠지만 생략한 capability와 그 이유를 남긴다. 요청에서 capability를 고르는 판단은 이 지침의 책임이다. MCP 계획기는 `TaskEnvelope.v1.requiredCapabilities`를 provider로 결정적으로 매핑하고 계획·단계·결과의 순서와 근거만 검사하므로, 선택 의미를 계획기로 옮기거나 계획 호출을 선택 근거로 대신하지 않는다.
+ 
+-라우팅 전에 설치 시 노출된 스킬 설명으로 후보 capability를 정하고 `node scripts/query-registry.mjs --capability <capability>`를 실행해 일치하는 활성 provider만 조회한다. 여러 capability는 `--capability`를 반복한다. 후보를 특정할 수 없을 때만 `--all`로 compact 전체 목록을 조회하며, `skills/registry.json` 원문 전체를 모델 컨텍스트로 읽지 않는다. 조회 결과의 `selectionCriteria`, precondition, priority를 선택 설명에 남긴다. 같은 capability의 후보 중 priority가 가장 큰 항목을 선택하되, 동률이나 descriptor 충돌은 임의로 고르지 말고 `needs-input`으로 돌린다. `selectionCriteria`는 사람이 검토하는 근거이며 런타임 필터가 아니다. 필요한 역할이 없으면 `missingCapabilities`, 가능한 직접 스킬 호출 경로와 부족한 capability를 분리해 설명한다.
++라우팅 전에 설치 시 노출된 스킬 설명으로 후보 capability를 정한다. 조회 스크립트는 로드한 `orchestrator/SKILL.md`와 같은 디렉터리의 `scripts/query-registry.mjs`다. 작업 대상의 현재 디렉터리를 유지한 채 `node "<로드한 orchestrator 디렉터리>/scripts/query-registry.mjs" --capability <capability>`로 일치하는 활성 provider만 조회한다. 작업 저장소의 `scripts/`나 다른 설치본으로 경로를 추측하지 않는다. 여러 capability는 `--capability`를 반복한다. 후보를 특정할 수 없을 때만 `--all`로 compact 전체 목록을 조회하며, `skills/registry.json` 원문 전체를 모델 컨텍스트로 읽지 않는다. 조회 결과의 `selectionCriteria`, precondition, priority를 선택 설명에 남긴다. 같은 capability의 후보 중 priority가 가장 큰 항목을 선택하되, 동률이나 descriptor 충돌은 임의로 고르지 말고 `needs-input`으로 돌린다. `selectionCriteria`는 사람이 검토하는 근거이며 런타임 필터가 아니다. 필요한 역할이 없으면 `missingCapabilities`, 가능한 직접 스킬 호출 경로와 부족한 capability를 분리해 설명한다.
+ 
+ 초기 정책 capability는 `subagent-coordination`, `independent-deliberation`, `independent-audit`다. 일반 변경 흐름에 필요한 모델·추론 수준 적합성, 지침 범위, 작업 계약, 저장소 관례, 변경 기준선·범위 확인, mutation 사전 점검, 수용 근거 확인과 실패 진단도 capability로 찾는다. 현재 provider 이름을 라우팅 조건으로 사용하지 않는다. `task-contract-definition`, `change-scope-baseline-capture`, `change-scope-assurance`, `acceptance-evidence-validation`, `mutation-risk-preflight`, `independent-audit`는 각 descriptor의 적용 조건과 phase가 가리키는 시점에만 선택하며, 모든 요청에 기본으로 붙이지 않는다.
+ 
+@@ -61,6 +61,10 @@
+ 
+ ## 결과 통합
+ 
++전문 스킬의 분석·계획·보고서 생성 완료는 해당 단계의 결과이며 사용자 요청 전체의 완료와 구분한다. 분석·계획만 요청받았다면 후속 변경을 실행하지 않는다. 사용자 요청에 구현·실행·검증이 포함되어 있고 이미 허용됐다면 전문 결과를 기존 담당 실행자·도구의 후속 작업 입력으로 연결하고, 기존 역할 범위와 필수 gate 안에서 그 작업과 필요한 검증까지 계속 수행한다. 후보·보고서 반환만으로 전체 완료를 보고하거나 실행 가능한 후속 확인을 사용자에게 넘기지 않는다.
++
++호출·재선택 시점과 실행 가능한 일의 구분은 [공통 접수·선택 기준](../SKILL.md#공통-접수선택-기준)을 따른다. 필수 입력이나 gate 실패로 막힌 의존 단계는 실행하지 않으며, 실제 실행·검증 근거와 남은 제약으로 요청 전체의 상태를 보고한다. 이 연결을 위해 단독 전문 작업에 workflow나 새 보고서를 추가하지 않는다.
++
+ 보안 전문 분석을 요청했거나 수용 기준에서 요구하면 `software-security-audit`를 선택한다. 보안 관련 파일의 존재만으로 추가하지 않는다. phase 65의 `security-audit-request`에는 실제 파일 내용을 고정한 대상과 허용 범위를 전달한다. 보고서는 로컬 CLI로 대상·근거를 검증하고 원자료를 확인한 뒤 기록한다. 이 provider의 `passed`는 조사 산출물 생성 성공이며 안전 판정이 아니다. `partial`의 미검사 항목과 limitations를 생략하지 않는다.
+ 
+ 수용 근거 검증도 선택됐다면 `security-audit-report` artifact의 locator·digest·targetDigest와 원시 근거를 기존 `workflow:verification-evidence`에 추가하고 해당 보안 수용 기준에 연결한다. 기준 불충족과 검사 공백은 기존 수용 검증·독립 감사 게이트에서 판단한다. 취약점 심각도만으로 전역 차단 정책을 새로 만들지 않는다. 감사 후 대상 변경이 있으면 영향받은 분석과 근거 결속을 다시 확인한다.
+diff --git a/tests/skill-classification/fixtures.json b/tests/skill-classification/fixtures.json
+index 2078c29de99d2c5a2dc1693b9c68da9cac395bac..f18b17e920d3fbf6a2cef5073faff65c452ac68b 100644
+--- a/tests/skill-classification/fixtures.json
++++ b/tests/skill-classification/fixtures.json
+@@ -1,8 +1,8 @@
+ {
+   "schemaVersion": "1.0.0",
+   "targetRelease": "2.9.1",
+-  "fixtureRevision": "ags-classification-skill-policy-source-binding-r05",
+-  "oracleRevision": "pre-live-skill-policy-source-reviewed-r05",
++  "fixtureRevision": "ags-classification-d0352-isolated-source-binding-r10",
++  "oracleRevision": "pre-live-d0352-isolated-source-reviewed-r10",
+   "freezePolicy": "Never change oracle in response to model outputs; revision changes require source/spec rationale and new run",
+   "status": "NOT_RUN",
+   "sourceSpecDigest": "sha256:0b8e0e446526bc2331feb91e44f6a400cb3644c227b5caf22bc95c04d52b0969",
+@@ -90,7 +90,7 @@
+     {
+       "skillId": "orchestrator",
+       "path": "skills/orchestrator/SKILL.md",
+-      "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+     },
+     {
+       "skillId": "ponytail",
+@@ -241,7 +241,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "test-engineering",
+@@ -351,7 +351,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "test-engineering",
+@@ -455,7 +455,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "code-review",
+@@ -555,7 +555,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "code-review",
+@@ -660,7 +660,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "ponytail",
+@@ -775,7 +775,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "cs-engineering",
+@@ -895,7 +895,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "korean-prose-editor",
+@@ -987,7 +987,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "test-engineering",
+@@ -1092,7 +1092,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "software-security-auditor",
+@@ -1217,7 +1217,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "korean-prose-editor",
+@@ -1321,7 +1321,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "korean-prose-editor",
+@@ -1479,7 +1479,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "test-engineering",
+@@ -1584,7 +1584,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "ponytail",
+@@ -1781,7 +1781,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           }
+         ],
+         "boundaryDecision": "O conditional on actual phase linking"
+@@ -1888,7 +1888,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "korean-prose-editor",
+@@ -1979,7 +1979,7 @@
+           {
+             "skillId": "orchestrator",
+             "path": "skills/orchestrator/SKILL.md",
+-            "digest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234"
++            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+           },
+           {
+             "skillId": "cs-engineering",
+@@ -2906,7 +2906,7 @@
+     ],
+     "note": "Public source-known regression partitions, never claimed as independent unseen model quality evidence"
+   },
+-  "oracleDigest": "sha256:307f07d6f78cba04e1f606f680e6609b9a17f22f499b802f1b0cf46329a1bd2e",
++  "oracleDigest": "sha256:45feee54e9256ad16b66b12464c37bab73af14e6fa211d21bfce87b7300c9c43",
+   "goldenContentDigest": "sha256:f1fb423f04aeae7e3d0706322bec7e7a5198278f293b841a5acdb01cd5631fdf",
+-  "sourceBindingRevision": "pre-live-source-binding-5"
++  "sourceBindingRevision": "pre-live-source-binding-10-isolated"
+ }
+diff --git a/tests/skill-classification/fixtures.source-successor.json b/tests/skill-classification/fixtures.source-successor.json
+index b4900c047dc76c218f845a002ccc79b60fe97a6c..2466ae107b64f9faab16586898a93336e4635d5c 100644
+--- a/tests/skill-classification/fixtures.source-successor.json
++++ b/tests/skill-classification/fixtures.source-successor.json
+@@ -495,5 +495,68 @@
+     "rationale": "Skill policy wording source bindings only. Each public synthetic case was reviewed against the changed applicability and exclusion wording; no required, allowed, forbidden, not-applicable or conditional label changes. Prompts, labels, splits, matrices, thresholds and qualification frozen.",
+     "labelChanges": [],
+     "modelBehavior": "NOT_RUN"
++  },
++  "isolatedHotfixSourceSuccessor": {
++    "revision": "d0352-isolated-source-binding-r10",
++    "role": "source-binding-only-no-evaluation-authority",
++    "baseCommit": "838cae9dfb97fb1cbf8a4f3779b93e2464e3e56b",
++    "predecessor": {
++      "path": "tests/skill-classification/fixtures.json",
++      "gitBlob": "2078c29de99d2c5a2dc1693b9c68da9cac395bac",
++      "bytes": 142481,
++      "digest": "sha256:3c7c2159bbaa74521c5c5aefbae21710a7a507a6235315608ec941fb1b1294f1",
++      "fixtureRevision": "ags-classification-skill-policy-source-binding-r05",
++      "oracleRevision": "pre-live-skill-policy-source-reviewed-r05",
++      "oracleDigest": "sha256:307f07d6f78cba04e1f606f680e6609b9a17f22f499b802f1b0cf46329a1bd2e",
++      "sourceBindingRevision": "pre-live-source-binding-5"
++    },
++    "predecessorSidecar": {
++      "path": "tests/skill-classification/fixtures.source-successor.json",
++      "gitBlob": "b4900c047dc76c218f845a002ccc79b60fe97a6c",
++      "bytes": 18528,
++      "digest": "sha256:f157b2fdf68a2bb149b6db276e73141a8c75aacbdde20f602f9bf4874e6c76f0"
++    },
++    "successor": {
++      "fixtureRevision": "ags-classification-d0352-isolated-source-binding-r10",
++      "oracleRevision": "pre-live-d0352-isolated-source-reviewed-r10",
++      "oracleDigest": "sha256:45feee54e9256ad16b66b12464c37bab73af14e6fa211d21bfce87b7300c9c43",
++      "sourceBindingRevision": "pre-live-source-binding-10-isolated"
++    },
++    "bindings": [
++      {
++        "skillId": "orchestrator",
++        "path": "skills/orchestrator/SKILL.md",
++        "previousDigest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
++        "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
++      }
++    ],
++    "reboundReferences": 17,
++    "sourceFiles": [
++      {
++        "path": "skills/orchestrator/SKILL.md",
++        "bytes": 9945,
++        "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
++      },
++      {
++        "path": "skills/orchestrator/classification.json",
++        "bytes": 4577,
++        "digest": "sha256:44d66bda8d2c80034d3f881ff3f12de6d628bd4d8ce850fd49718df656aa95d2"
++      },
++      {
++        "path": "skills/orchestrator/references/entry-details.md",
++        "bytes": 22130,
++        "digest": "sha256:86af016cfc8399a656181f5253189c098b53434aaa8b7d4fd1353d586248333f"
++      },
++      {
++        "path": "skills/orchestrator/references/engineering-practices/cli.md",
++        "bytes": 9231,
++        "digest": "sha256:c23134f4ebce972f891e7b7bf93f9ac24a5c340e856e3f1192e58fb33aff3b2b"
++      }
++    ],
++    "review": {
++      "labelChanges": [],
++      "modelBehavior": "NOT_RUN",
++      "rationale": "838 기준의 입력·정답·조건·분할·행렬과 39/18/21 분모를 보존하고 D352 격리 원문의 지문만 재결속한다. 기존 역사 문서를 보존하며 이 메타데이터는 실행·평가·설치 권한을 만들지 않는다."
++    }
+   }
+ }
+diff --git a/tests/skill-classification/source-binding-successor.test.ts b/tests/skill-classification/source-binding-successor.test.ts
+index c4b669b7d070509c51b21f56a57f41996a89304f..4f2284c4a0b7aa7a406384449e742806bc21d8a3 100644
+--- a/tests/skill-classification/source-binding-successor.test.ts
++++ b/tests/skill-classification/source-binding-successor.test.ts
+@@ -31,6 +31,8 @@ const bindings = [
+   {skillId: "ponytail", path: "skills/ponytail/SKILL.md", previousDigest: "sha256:907667b8b625eab0438b462a4737a056e3833f972c66e432817a12e6f643ac76", digest: "sha256:2ce28db45c1a84e63fa2af7079e58a3803fc26b16ab7073436efd55b1e1214f9"},
+   {skillId: "task-contract", path: "skills/task-contract/SKILL.md", previousDigest: "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100", digest: "sha256:92cf19444e6c97b1d1d017f8eed481135d708095d89411668ab215123d1266aa"}
+ ];
++const isolated = successor.isolatedHotfixSourceSuccessor;
++const isolatedBinding = {"skillId": "orchestrator", "path": "skills/orchestrator/SKILL.md", "previousDigest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234", "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"};
+ function semantics(value: unknown, depth = 0): unknown {
+   if (Array.isArray(value)) return value.map(child => semantics(child, depth + 1));
+   if (value && typeof value === "object") {
+@@ -55,11 +57,11 @@ it("preserves predecessor history and all frozen 39/18/21 semantics in a distinc
+   expect(original.historicalSuccessor.digest).toBe("sha256:69ef37b636e35bfdce77103cbe84015c0e2e9482a41e46059d89ac557a8717f7");
+   expect(original.successor.fixtureRevision).toBe(predecessor.fixtureRevision);
+   expect(original.successor.oracleDigest).toBe(predecessor.oracleDigest);
+-  expect(current.fixtureRevision).toBe("ags-classification-skill-policy-source-binding-r05");
+-  expect(current.oracleRevision).toBe("pre-live-skill-policy-source-reviewed-r05");
+-  expect(current.sourceBindingRevision).toBe("pre-live-source-binding-5");
+-  expect(current.fixtureRevision).toBe(successor.successor.fixtureRevision);
+-  expect(current.oracleRevision).toBe(successor.successor.oracleRevision);
++  expect(current.fixtureRevision).toBe("ags-classification-d0352-isolated-source-binding-r10");
++  expect(current.oracleRevision).toBe("pre-live-d0352-isolated-source-reviewed-r10");
++  expect(current.sourceBindingRevision).toBe("pre-live-source-binding-10-isolated");
++  expect(current.fixtureRevision).toBe(isolated.successor.fixtureRevision);
++  expect(current.oracleRevision).toBe(isolated.successor.oracleRevision);
+   expect(successor.semanticProjection.digest).toBe(semanticDigest);
+   expect(hash(JSON.stringify(semantics(current)))).toBe(semanticDigest);
+   expect(current.cases).toHaveLength(39);
+@@ -68,7 +70,7 @@ it("preserves predecessor history and all frozen 39/18/21 semantics in a distinc
+   expect(current.status).toBe("NOT_RUN");
+   expect(successor.review.labelChanges).toEqual([]);
+   expect(oracleDigest(current)).toBe(current.oracleDigest);
+-  expect(current.oracleDigest).toBe(successor.successor.oracleDigest);
++  expect(current.oracleDigest).toBe(isolated.successor.oracleDigest);
+   expect(current.oracleDigest).not.toBe(predecessor.oracleDigest);
+ });
+ it("binds exactly the nine changed skill policy sources across global and per-case evidence", () => {
+@@ -80,14 +82,65 @@ it("binds exactly the nine changed skill policy sources across global and per-ca
+     if (!value || typeof value !== "object") return;
+     const row = value as Record<string, unknown>;
+     const binding = bindings.find(item => item.skillId === row.skillId && item.path === row.path);
+-    if (binding && "digest" in row) {expect(row.digest).toBe(binding.digest); references++;}
++    if (binding && "digest" in row) {
++      const expected = binding.skillId === "orchestrator" ? isolatedBinding : binding;
++      expect(row.digest).toBe(expected.digest); references++;
++    }
+     for (const child of Object.values(row)) walk(child);
+   };
+   walk(current);
+   expect(references).toBe(58);
+   expect(references).toBe(successor.reboundReferences);
+   for (const binding of bindings) {
+-    expect(hash(readFileSync(path.join(root, binding.path)))).toBe(binding.digest);
++    const expected = binding.skillId === "orchestrator" ? isolatedBinding : binding;
++    expect(hash(readFileSync(path.join(root, binding.path)))).toBe(expected.digest);
+     expect(binding.digest).not.toBe(binding.previousDigest);
+   }
+ });
++
++it("preserves the exact 838 predecessor and binds only the isolated D352 successor", () => {
++  expect(isolated.revision).toBe("d0352-isolated-source-binding-r10");
++  expect(isolated.role).toBe("source-binding-only-no-evaluation-authority");
++  expect(isolated.baseCommit).toBe("838cae9dfb97fb1cbf8a4f3779b93e2464e3e56b");
++  expect(isolated.predecessor).toEqual({"path": "tests/skill-classification/fixtures.json", "gitBlob": "2078c29de99d2c5a2dc1693b9c68da9cac395bac", "bytes": 142481, "digest": "sha256:3c7c2159bbaa74521c5c5aefbae21710a7a507a6235315608ec941fb1b1294f1", "fixtureRevision": "ags-classification-skill-policy-source-binding-r05", "oracleRevision": "pre-live-skill-policy-source-reviewed-r05", "oracleDigest": "sha256:307f07d6f78cba04e1f606f680e6609b9a17f22f499b802f1b0cf46329a1bd2e", "sourceBindingRevision": "pre-live-source-binding-5"});
++  expect(isolated.predecessorSidecar).toEqual({"path": "tests/skill-classification/fixtures.source-successor.json", "gitBlob": "b4900c047dc76c218f845a002ccc79b60fe97a6c", "bytes": 18528, "digest": "sha256:f157b2fdf68a2bb149b6db276e73141a8c75aacbdde20f602f9bf4874e6c76f0"});
++  expect(isolated.successor).toEqual({"fixtureRevision": "ags-classification-d0352-isolated-source-binding-r10", "oracleRevision": "pre-live-d0352-isolated-source-reviewed-r10", "oracleDigest": "sha256:45feee54e9256ad16b66b12464c37bab73af14e6fa211d21bfce87b7300c9c43", "sourceBindingRevision": "pre-live-source-binding-10-isolated"});
++  expect(isolated.bindings).toEqual([isolatedBinding]);
++  expect(isolated.reboundReferences).toBe(17);
++  expect(isolated.review.labelChanges).toEqual([]);
++  expect(isolated.review.modelBehavior).toBe("NOT_RUN");
++  expect(successor.successor).toEqual({
++    fixtureRevision: isolated.predecessor.fixtureRevision,
++    oracleRevision: isolated.predecessor.oracleRevision,
++    oracleDigest: isolated.predecessor.oracleDigest
++  });
++  const priorSidecar: Record<string, unknown> = {...successor};
++  delete priorSidecar.isolatedHotfixSourceSuccessor;
++  expect(hash(JSON.stringify(priorSidecar, null, 2) + "\n")).toBe(isolated.predecessorSidecar.digest);
++  const priorFixture = JSON.parse(JSON.stringify(current));
++  let references = 0;
++  const restore = (value: unknown) => {
++    if (!value || typeof value !== "object") return;
++    const row = value as Record<string, unknown>;
++    if (row.skillId === isolatedBinding.skillId && row.path === isolatedBinding.path && "digest" in row) {
++      expect(row.digest).toBe(isolatedBinding.digest);
++      row.digest = isolatedBinding.previousDigest;
++      references++;
++    }
++    for (const child of Object.values(row)) restore(child);
++  };
++  restore(priorFixture);
++  for (const key of ["fixtureRevision", "oracleRevision", "oracleDigest", "sourceBindingRevision"]) {
++    priorFixture[key] = isolated.predecessor[key];
++  }
++  expect(references).toBe(17);
++  expect(hash(JSON.stringify(priorFixture, null, 2) + "\n")).toBe(isolated.predecessor.digest);
++  expect(oracleDigest(priorFixture)).toBe(isolated.predecessor.oracleDigest);
++  expect(hash(JSON.stringify(semantics(priorFixture)))).toBe(semanticDigest);
++  expect(isolated.sourceFiles).toEqual([{"path": "skills/orchestrator/SKILL.md", "bytes": 9945, "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"}, {"path": "skills/orchestrator/classification.json", "bytes": 4577, "digest": "sha256:44d66bda8d2c80034d3f881ff3f12de6d628bd4d8ce850fd49718df656aa95d2"}, {"path": "skills/orchestrator/references/entry-details.md", "bytes": 22130, "digest": "sha256:86af016cfc8399a656181f5253189c098b53434aaa8b7d4fd1353d586248333f"}, {"path": "skills/orchestrator/references/engineering-practices/cli.md", "bytes": 9231, "digest": "sha256:c23134f4ebce972f891e7b7bf93f9ac24a5c340e856e3f1192e58fb33aff3b2b"}]);
++  for (const source of isolated.sourceFiles) {
++    const bytes = readFileSync(path.join(root, source.path));
++    expect(bytes.length).toBe(source.bytes);
++    expect(hash(bytes)).toBe(source.digest);
++  }
++});
