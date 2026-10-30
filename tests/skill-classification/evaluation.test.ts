@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { aggregateLegacy as aggregate, canonicalSet, checkFamilySplit, evaluateLegacyLayers as evaluateLayers, fromLegacySelection as fromSelection, oracleDigest, legacyPairedMatrix as pairedMatrix, scoreLegacyCase as scoreCase, scoreLegacyPairs as scorePairs, sameSet, type Layer, type LegacyObservation as Observation, type Oracle, type SemanticCase } from "./evaluation.js";
+import { aggregateLegacy as aggregate, canonicalSet, checkFamilySplit, evaluateLegacyLayers as evaluateLayers, fromLegacySelection as fromSelection, oracleDigest, loadCurrentSourceBindings, legacyPairedMatrix as pairedMatrix, scoreLegacyCase as scoreCase, scoreLegacyPairs as scorePairs, sameSet, type Layer, type LegacyObservation as Observation, type Oracle, type SemanticCase } from "./evaluation.js";
 import type { SkillSelectionDecisionV1 } from "../../mcp-server/src/skill-classification/types.js";
 import type { SkillClassificationRequestV1, SkillClassificationResponseV1 } from "../../mcp-server/src/skill-classification/types.js";
 import * as current from "./evaluation.js";
@@ -43,9 +43,10 @@ describe("pre-live frozen specification mapping", () => {
     expect(corpus.split.independentHoldoutClaim).toBe(false);
   });
   it("binds oracle to actual source bytes and preserves O boundaries", () => {
+    const binding = loadCurrentSourceBindings(fileURLToPath(new URL("../../", import.meta.url)));
     for (const s of corpus.sourceSkills) {
       const bytes = readFileSync(new URL(`../../${s.path}`, import.meta.url));
-      expect(`sha256:${createHash("sha256").update(bytes).digest("hex")}`).toBe(s.digest);
+      expect(`sha256:${createHash("sha256").update(bytes).digest("hex")}`).toBe(binding.resolveDigest(s.path, s.digest));
     }
     expect(fixture("SS04").oracle!.required).toEqual(["cs-engineering", "test-engineering", "orchestrator"]);
     expect(fixture("SS04").oracle!.allowed).toEqual(["ponytail"]);

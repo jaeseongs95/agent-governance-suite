@@ -262,7 +262,9 @@ export async function prepare(config: BootstrapConfig) {
   const fixtureBytes = await readFile(path.join(config.repo, "tests/skill-classification/fixtures.json"));
   const corpus = JSON.parse(fixtureBytes.toString("utf8"));
   requireCondition(api.evaluation.oracleDigest(corpus) === corpus.oracleDigest, "FROZEN_ORACLE_DIGEST_MISMATCH");
-  for (const source of corpus.sourceSkills) requireCondition(hash(await readFile(path.join(config.repo, source.path))) === source.digest, "ORACLE_SOURCE_MISMATCH");
+  const currentSourceBinding = api.evaluation.loadCurrentSourceBindings(resolvedRepo);
+  for (const source of corpus.sourceSkills) requireCondition(hash(await readFile(path.join(config.repo, source.path))) === currentSourceBinding.resolveDigest(source.path, source.digest), "ORACLE_SOURCE_MISMATCH");
+  for (const source of currentSourceBinding.manifest.bindings) requireCondition(hash(await readFile(path.join(config.repo, source.path))) === source.digest, "ORACLE_SOURCE_MISMATCH");
   const cases = corpus.cases.filter((row: {publicSynthetic: boolean; originalPrompt: unknown}) => row.publicSynthetic === true && typeof row.originalPrompt === "string" && row.originalPrompt.length > 0);
   requireCondition(cases.length === 21 && new Set(cases.map((row: {caseId: string}) => row.caseId)).size === 21, "PUBLIC_FIXTURE_SET_MISMATCH");
   const inventory = await api.inventory.loadSkillInventory({root: resolvedRepo});
@@ -297,6 +299,7 @@ export async function prepare(config: BootstrapConfig) {
   const names = ["inventory.ts", "request.ts", "providers.ts", "profiles.ts", "evaluation-config.ts", "validation.ts", "types.ts", "digest.ts"];
   const files30 = [...new Set<string>([...names.map(name => path.join(config.repo, "mcp-server/src/skill-classification", name)),
     path.join(config.repo, "tests/skill-classification/evaluation.ts"), fileURLToPath(import.meta.url), path.join(config.repo, "tests/skill-classification/fixtures.json"),
+    ...currentSourceBinding.files,
     ...inventory.skills.flatMap((skill: {sourceRefs: Reference[]}) => skill.sourceRefs.map(ref => path.resolve(config.repo, ref.path)))])];
   const sourceBindings30: Reference[] = [];
   for (const file of files30) sourceBindings30.push({path: file, digest: hash(await readFile(file))});

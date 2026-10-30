@@ -61,7 +61,8 @@ describe("bootstrap fixture binding reuse", () => {
       const copiedRepo = path.join(root, "source-copy");
       await mkdir(copiedRepo);
       for (const relative of ["mcp-server/src/skill-classification", "skills", "tests/skill-classification/fixtures.json",
-        "tests/skill-classification/evaluation.ts", "package.json"]) {
+        "tests/skill-classification/evaluation.ts", "tests/skill-classification/fixtures.source-successor.json",
+        "tests/skill-classification/fixtures.unavailable-source-successor.json", "package.json"]) {
         const target = path.join(copiedRepo, relative);
         await mkdir(path.dirname(target), {recursive: true});
         await cp(path.join(repo, relative), target, {recursive: true});
@@ -78,7 +79,9 @@ describe("bootstrap fixture binding reuse", () => {
         assert(path.relative(copiedRepo, sourceFile) && !path.relative(copiedRepo, sourceFile).startsWith(".."));
         for (const [id, file, error] of [["oracle", corpusFile, "FROZEN_ORACLE_DIGEST_MISMATCH"],
           ["source", sourceFile, "ORACLE_SOURCE_MISMATCH"],
-          ["inventory", path.join(copiedRepo, "skills/registry.json"), "INVENTORY_INCOMPLETE"]] as const) {
+          ["source-metadata", path.join(copiedRepo, "skills/orchestrator/classification.json"), "ORACLE_SOURCE_MISMATCH"],
+          ["inventory", path.join(copiedRepo, "skills/registry.json"), "INVENTORY_INCOMPLETE"],
+          ["source-binding", path.join(copiedRepo, "tests/skill-classification/fixtures.unavailable-source-successor.json"), "CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH"]] as const) {
           const config = await readyMockFromBinding(api, copiedRepo, path.join(root, id), `fresh-${id}`, binding,
             first.prepared.api.evaluationConfig.createProviderEvaluationConfiguration, {requests: 1});
           const bytes = await readFile(file);

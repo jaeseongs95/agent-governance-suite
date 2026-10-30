@@ -215,6 +215,43 @@ export function oracleDigest(value: { oracleRevision: string; sourceSpecDigest: 
     pairedMatrix: value.pairedMatrix, split: value.split })).digest("hex");
 }
 
+/** 동결 fixture는 덮지 않는다. 검토된 후속 manifest만 현재 원문 결속을 바꾼다. */
+export function loadCurrentSourceBindings(repo: string) {
+  const hashBytes = (value: string | Buffer) => "sha256:" + createHash("sha256").update(value).digest("hex");
+  const fixtureDigest = hashBytes(readFileSync(resolve(repo, "tests/skill-classification/fixtures.json")));
+  // 고정된 r04 역사 입력에는 후계 지문을 적용하지 않고 기존 실제 원문 검사를 유지한다.
+  if (fixtureDigest === "sha256:7a69d6681e02aa1ce4925e0b3b3eb421cde064dd5a578d16af190e07db24f57b") {
+    return {manifest: {bindings: []}, files: [] as string[], digest: fixtureDigest,
+      resolveDigest(_sourcePath: string, digest: string): string {return digest;}};
+  }
+  const manifestPath = resolve(repo, "tests/skill-classification/fixtures.unavailable-source-successor.json");
+  const bytes = readFileSync(manifestPath);
+  if (hashBytes(bytes) !== "sha256:bd4a64b9079fe828fc6ae45fb6c41b09e8df03767ed5b6d55331e53f09343596") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const manifest = JSON.parse(bytes.toString("utf8")) as {
+    revision: string; role: string;
+    frozenFixture: {path: string; bytes: number; digest: string; oracleDigest: string};
+    frozenSidecar: {path: string; bytes: number; digest: string};
+    bindings: {path: string; previousDigest: string; digest: string; bytes: number}[];
+  };
+  const files = [manifestPath];
+  for (const predecessor of [manifest.frozenFixture, manifest.frozenSidecar]) {
+    const file = resolve(repo, predecessor.path), original = readFileSync(file);
+    if (original.length !== predecessor.bytes || hashBytes(original) !== predecessor.digest) {
+      throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+    }
+    files.push(file);
+  }
+  return {
+    manifest, files, digest: hashBytes(bytes),
+    resolveDigest(sourcePath: string, digest: string): string {
+      const binding = manifest.bindings.find(row => row.path === sourcePath);
+      if (!binding) return digest;
+      if (binding.previousDigest !== digest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+      return binding.digest;
+    },
+  };
+}
+
 export const OBSERVATION_REVISION = "2.0.0";
 export const SCORER_PATCH_REVISION = "r15";
 type RequestBinding = Pick<SkillClassificationRequestV1, "requestId" | "operationId" | "requestDigest" | "inventoryDigest">;

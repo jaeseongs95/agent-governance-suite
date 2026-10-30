@@ -229,6 +229,15 @@ const ORCHESTRATOR_BEHAVIOR_SOURCE_HASHES = Object.freeze({
   "skills/orchestrator/classification.json": "44d66bda8d2c80034d3f881ff3f12de6d628bd4d8ce850fd49718df656aa95d2",
   "skills/orchestrator/references/entry-details.md": "86af016cfc8399a656181f5253189c098b53434aaa8b7d4fd1353d586248333f",
 });
+// D0352: 분류 지원 미확정 지침과 원문 범위를 보존한 재결속의 정확한 후속 바이트만 허용한다.
+const ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_SOURCE_HASHES = Object.freeze({
+  "skills/orchestrator/SKILL.md": "4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+  "skills/orchestrator/classification.json": "c43f537d2c0fff5c8f9f569cb224d8d6925076d271fdf47b78253bc41ba5ace4",
+});
+// 참고자료는 역사 원문으로 투영하지 않고 현재의 정확한 분류 원문으로 판정한다.
+const ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_REFERENCE_HASHES = Object.freeze({
+  "skills/orchestrator/references/skill-classification.md": "f33cce4afc3ef2480c94799f46ae78e133c1576e3b57a257c1046f6956d811c9",
+});
 // D0352 makes the field guide use the existing common routing decision.
 // Preserve the optimization baseline; allow only this reviewed source delta.
 const TASK_CONTRACT_ROUTING_SOURCE_HASHES = Object.freeze({
@@ -237,7 +246,8 @@ const TASK_CONTRACT_ROUTING_SOURCE_HASHES = Object.freeze({
 
 function matchesOrchestratorSourceSuccessor(path, bytes) {
   const digest = createHash("sha256").update(bytes).digest("hex");
-  return [ORCHESTRATOR_MIDTASK_SOURCE_HASHES, ORCHESTRATOR_RESOURCE_IMPACT_SOURCE_HASHES, ORCHESTRATOR_BEHAVIOR_SOURCE_HASHES]
+  return [ORCHESTRATOR_MIDTASK_SOURCE_HASHES, ORCHESTRATOR_RESOURCE_IMPACT_SOURCE_HASHES, ORCHESTRATOR_BEHAVIOR_SOURCE_HASHES,
+    ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_SOURCE_HASHES]
     .some(hashes => Object.hasOwn(hashes, path) && digest === hashes[path]);
 }
 
@@ -245,8 +255,9 @@ export function matchesGovernanceSourceSuccessor(path, bytes) {
   // Current mid-task selection wording is an exact source successor, not a 2.x runtime contract.
   // Historical reconstruction below still uses the separately pinned predecessor bytes.
   if (matchesOrchestratorSourceSuccessor(path, bytes)) return true;
-  return Object.hasOwn(GOVERNANCE_SOURCE_SUCCESSOR.hashes, path)
-    && createHash("sha256").update(bytes).digest("hex") === GOVERNANCE_SOURCE_SUCCESSOR.hashes[path];
+  const digest = createHash("sha256").update(bytes).digest("hex");
+  return [GOVERNANCE_SOURCE_SUCCESSOR.hashes, ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_REFERENCE_HASHES]
+    .some(hashes => Object.hasOwn(hashes, path) && digest === hashes[path]);
 }
 
 function beforeGovernanceSuccessor(path, bytes) {
