@@ -241,6 +241,10 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
       const timeout = integer(payload.identityTimeoutMs,"identityTimeoutMs");
       if (parentPid < 1 || !parentStartToken.trim() || parentStartToken.length > 200 || timeout < 1 || timeout > 8000) throw new Error("Invalid relay host observation or budget.");
       const transport = string(payload.transport,"transport");
+      const hasExpectedPresence = Object.hasOwn(payload, "expectedPresenceInstanceId");
+      const expectedPresenceInstanceId = hasExpectedPresence && payload.expectedPresenceInstanceId !== null
+        ? string(payload.expectedPresenceInstanceId, "expectedPresenceInstanceId") : null;
+      if (expectedPresenceInstanceId !== null && expectedPresenceInstanceId.length > 128) throw new Error("Invalid expected host process generation.");
       const previous = store.relayOwner(target,transport);
       const deadline = performance.now() + timeout;
       const budget = () => Math.min(deadline - performance.now(), requestBudget?.() ?? Infinity);
@@ -267,6 +271,7 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
       }
       remainingIdentityBudget(budget);
       return store.prepareVerifiedRelay({...target,instanceId,transport,parentPid,expectedOwner:previous,
+        ...(hasExpectedPresence ? {expectedPresenceInstanceId}:{}),
         wakeVisibility:wakeVisibility as "silent" | "user-message" | "none",canWakeSilently:boolean(payload.canWakeSilently,"canWakeSilently"),
         deliveryCapabilities:{supportedInjection:supportedInjection(payload.supportedInjection),idleWake:idleWake as "silent" | "user-message" | "none"},
         confirmedAlive,

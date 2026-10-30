@@ -166,4 +166,68 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
     ]);
     expect(store.database.prepare("SELECT * FROM input_observations").all()).toEqual([]);
   });
+
+  it("A 교체 뒤 B의 lease가 만료돼도 등록 이력이 있는 A를 다시 부활시키지 않는다", () => {
+    const { store, presence, start, enqueue, snapshot } = fixture();
+    start(generationA, now);
+    const relayId = start(generationB, now + 2);
+    const messageId = enqueue("body belongs to the replacement", now + 4);
+    store.observeNativeInput(target, now + 6, generationB);
+    expect(store.reserveManagedWake({ ...target, transport, instanceId: generationB, relayId,
+      nonce: "hook-generation-no-resurrection-abcdefghijklmnop" }, now + 7).dispatch).toBe(true);
+    const later = now + 25_000;
+    expect(store.presence(target, later)).toMatchObject({ state: "unreachable", instanceId: generationB, endedAt: null });
+    expect(store.liveRelay(target, transport, later)).toBeNull();
+    const before = snapshot();
+
+    expect(store.prepareVerifiedRelay({ ...presence, instanceId: generationA, parentPid: 100,
+      expectedOwner: store.relayOwner(target, transport), expectedPresenceInstanceId: generationB }, later))
+      .toMatchObject({ spawn: false, relayId: null });
+    expect(snapshot()).toEqual(before);
+    expect(store.status(sender, messageId, later)).toMatchObject({ deliveryAttempts: 0, acknowledgedAt: null });
+  });
+
+  it("C 복구가 관측한 B를 D가 교체하면 현재 relay 소유자를 알아도 C 예약을 거부한다", () => {
+    const { store, presence, start, enqueue, snapshot } = fixture();
+    start(generationA, now);
+    start(generationB, now + 2);
+    const generationC = "host-process-v1:" + "c".repeat(64);
+    const generationD = "host-process-v1:" + "d".repeat(64);
+    const recoveringC = { ...presence, instanceId: generationC, parentPid: 101,
+      expectedPresenceInstanceId: store.presence(target, now + 3).instanceId };
+    expect(recoveringC.expectedPresenceInstanceId).toBe(generationB);
+    start(generationD, now + 4);
+    enqueue("body survives a stale recovery observation", now + 6);
+    store.observeNativeInput(target, now + 8, generationD);
+    const before = snapshot();
+
+    // 현재 owner를 넣어 기존 owner 비교만으로 거부되는 시험이 되지 않게 한다.
+    expect(store.prepareVerifiedRelay({ ...recoveringC, expectedOwner: store.relayOwner(target, transport) }, now + 9))
+      .toMatchObject({ spawn: false, relayId: null });
+    expect(snapshot()).toEqual(before);
+    expect(store.presence(target, now + 9).instanceId).toBe(generationD);
+  });
+
+  it("처음 보는 C는 여전히 현재인 B를 기대한 복구에서 예약하고 활성화할 수 있다", () => {
+    const { store, presence, start, enqueue } = fixture();
+    start(generationA, now);
+    start(generationB, now + 2);
+    const messageId = enqueue("body survives legitimate restart recovery", now + 4);
+    const generationC = "host-process-v1:" + "c".repeat(64);
+    expect(store.database.prepare("SELECT instance_id FROM session_presence WHERE instance_id = ?").all(generationC)).toEqual([]);
+    const later = now + 25_000;
+    expect(store.presence(target, later)).toMatchObject({ state: "unreachable", instanceId: generationB, endedAt: null });
+
+    const recovered = store.prepareVerifiedRelay({ ...presence, instanceId: generationC, parentPid: 101,
+      expectedOwner: store.relayOwner(target, transport), expectedPresenceInstanceId: generationB }, later);
+    expect(recovered).toMatchObject({ spawn: true, instanceId: generationC });
+    expect(recovered.relayId).not.toBeNull();
+    expect(store.activateVerifiedRelay({ ...target, transport, instanceId: generationC,
+      parentPid: 101, pid: 201, relayId: recovered.relayId!, relayStartToken: "recovered-hook-claim-child" }, later + 1)).toBe(true);
+    expect(store.presence(target, later + 1)).toMatchObject({ state: "online", instanceId: generationC, endedAt: null });
+    expect(store.claimTurnEnd(target, later + 2, { instanceId: generationC })).toMatchObject([
+      { messageId, body: "body survives legitimate restart recovery", deliveryAttempt: 1 },
+    ]);
+    expect(store.acknowledge(target, [messageId], later + 3)).toBe(1);
+  });
 });

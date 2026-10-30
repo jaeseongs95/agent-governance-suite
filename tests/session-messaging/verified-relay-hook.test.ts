@@ -149,7 +149,7 @@ const post = { ...input, hook_event_name: "PostToolUse", tool_name: "read_file",
 const recover = (resolveHostProcess: () => { pid: number; startToken: string } | null) => ({
   recoverExistingSession: true, resolveHostProcess, executionBudget: options().executionBudget,
 });
-const livePresence = { host: syntheticHost, sessionId: input.session_id, state: "online", transport: "gemini-queue", autoWake: { state: "available" } };
+const livePresence = { host: syntheticHost, sessionId: input.session_id, instanceId, state: "online", transport: "gemini-queue", autoWake: { state: "available" } };
 
 it.each(["available", "latched"])("keeps an online relay while binding the claiming event's own generation: %s", async (state) => {
   const resolver = vi.fn(() => options().hostProcess);

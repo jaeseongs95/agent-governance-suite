@@ -302,7 +302,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     remainingBudget(budget);
     return result;
   }
-  async function ensureVerifiedRelay(hostProcess: Readonly<{ pid: number; startToken: string }>): Promise<void> {
+  async function ensureVerifiedRelay(hostProcess: Readonly<{ pid: number; startToken: string }>, expectedPresenceInstanceId?: string | null): Promise<void> {
     const hostPid = hostProcess.pid;
     if (!Number.isInteger(hostPid) || hostPid < 1 || typeof hostProcess.startToken !== "string" || !hostProcess.startToken.trim()
       || (explicitHostPid !== undefined && explicitHostPid !== hostPid)
@@ -312,6 +312,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     try {
       const result = await request<{ spawn: boolean; relayId: string | null; instanceId: string }>("ensure-relay", {
         target, transport, parentPid: hostPid, parentStartToken: hostProcess.startToken,
+        ...(expectedPresenceInstanceId !== undefined ? { expectedPresenceInstanceId } : {}),
         identityTimeoutMs: Math.min(HOST_MESSAGE_REQUEST_TIMEOUT_MS, Math.floor(remainingBudget(budget))),
         wakeVisibility: profile.capabilities.idleWake, canWakeSilently: profile.capabilities.idleWake === "silent",
         supportedInjection: profile.capabilities.supportedInjection, idleWake: profile.capabilities.idleWake,
@@ -434,13 +435,13 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     && (observation.kind === "user-input" || observation.kind === "turn-end"
       || (observation.kind === "tool-boundary" && observation.boundaryPhase === "after"))) {
     try {
-      const listed = await request<{ sessions: Array<{ host: string; sessionId: string; state: string; transport: string | null; autoWake?: { state: string } | null }> }>("list-presence", { targets: [target] });
+      const listed = await request<{ sessions: Array<{ host: string; sessionId: string; instanceId: string | null; state: string; transport: string | null; autoWake?: { state: string } | null }> }>("list-presence", { targets: [target] });
       const current = listed.sessions.find((session) => session.host === host && session.sessionId === sessionId);
       const relayLive = current?.state === "online" && current.transport === profile.transport
         && (current.autoWake?.state === "available" || current.autoWake?.state === "latched");
       if (!relayLive) {
         remainingBudget(budget);
-        if (claimHostProcess) await ensureVerifiedRelay(claimHostProcess);
+        if (claimHostProcess) await ensureVerifiedRelay(claimHostProcess, current?.instanceId ?? null);
       }
     } catch (error) {
       reportHookFailure("recovery", error); // Normal claiming retains its original deadline and no-replay rules.

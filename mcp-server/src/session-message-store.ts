@@ -892,6 +892,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   /** Unknown pid=0 grants are never automatically TTL-retried. */
   prepareVerifiedRelay(input: Parameters<SessionMessageStore["startPresence"]>[0] & {
     parentPid: number; expectedOwner: ReturnType<SessionMessageStore["relayOwner"]>; confirmedDead?: {relayId: string; pid: number}; confirmedAlive?: boolean;
+    /** Recovery compares the presence observed by this hook, not a later identity-query result. */
+    expectedPresenceInstanceId?: string | null;
   }, nowMs = Date.now()): {spawn: boolean; relayId: string | null; instanceId: string} {
     boundedIdentity(input);
     if (!Number.isInteger(input.parentPid) || input.parentPid < 1 || !/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId)) throw new Error("Invalid verified relay generation.");
@@ -899,6 +901,17 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (this.shared) nowMs = this.shared.time(nowMs);
     return this.transaction(() => {
       const previous = this.relayOwner(input,input.transport);
+      const current = this.presence(input, nowMs);
+      if (input.expectedPresenceInstanceId !== undefined && current.instanceId !== input.expectedPresenceInstanceId) {
+        return {spawn:false,relayId:null,instanceId:input.instanceId};
+      }
+      // A process already superseded by a later registered birth is not a new resume.
+      // An unseen new process can still recover a lapsed previous host normally.
+      if (current.instanceId !== null && current.instanceId !== input.instanceId
+        && this.database.prepare("SELECT 1 FROM session_presence WHERE host=? AND session_id=? AND instance_id=?")
+          .get(input.host,input.sessionId,input.instanceId) !== undefined) {
+        return {spawn:false,relayId:null,instanceId:input.instanceId};
+      }
       const expected = input.expectedOwner;
       if (previous === null ? expected !== null : !expected || previous.relayId !== expected.relayId || previous.pid !== expected.pid || previous.parentPid !== expected.parentPid || previous.instanceId !== expected.instanceId || previous.relayStartToken !== expected.relayStartToken) {
         return {spawn:false,relayId:null,instanceId:input.instanceId};
