@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0.0",
   "targetRelease": "2.9.1",
-  "fixtureRevision": "ags-classification-governance-behavior-source-binding-r08",
-  "oracleRevision": "pre-live-governance-behavior-source-reviewed-r08",
+  "fixtureRevision": "ags-classification-governance-behavior-source-binding-r09",
+  "oracleRevision": "pre-live-governance-behavior-source-reviewed-r09",
   "freezePolicy": "Never change oracle in response to model outputs; revision changes require source/spec rationale and new run",
   "status": "NOT_RUN",
   "sourceSpecDigest": "sha256:0b8e0e446526bc2331feb91e44f6a400cb3644c227b5caf22bc95c04d52b0969",
@@ -90,7 +90,7 @@
     {
       "skillId": "orchestrator",
       "path": "skills/orchestrator/SKILL.md",
-      "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+      "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
     },
     {
       "skillId": "ponytail",
@@ -241,7 +241,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "test-engineering",
@@ -351,7 +351,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "test-engineering",
@@ -455,7 +455,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "code-review",
@@ -555,7 +555,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "code-review",
@@ -660,7 +660,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "ponytail",
@@ -775,7 +775,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "cs-engineering",
@@ -895,7 +895,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "korean-prose-editor",
@@ -987,7 +987,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "test-engineering",
@@ -1092,7 +1092,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "software-security-auditor",
@@ -1217,7 +1217,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "korean-prose-editor",
@@ -1321,7 +1321,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "korean-prose-editor",
@@ -1479,7 +1479,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "test-engineering",
@@ -1584,7 +1584,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "ponytail",
@@ -1781,7 +1781,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           }
         ],
         "boundaryDecision": "O conditional on actual phase linking"
@@ -1888,7 +1888,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "korean-prose-editor",
@@ -1979,7 +1979,7 @@
           {
             "skillId": "orchestrator",
             "path": "skills/orchestrator/SKILL.md",
-            "digest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"
+            "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
           },
           {
             "skillId": "cs-engineering",
@@ -2906,7 +2906,7 @@
     ],
     "note": "Public source-known regression partitions, never claimed as independent unseen model quality evidence"
   },
-  "oracleDigest": "sha256:e48f0d37e8675f046a00648451fc3086753af97d663ca4a0aa18b8fdad386666",
+  "oracleDigest": "sha256:33ca2c2edc3b20d3287eddc45d907ac6bba0b742386aa7ab7a5516a30b6cd914",
   "goldenContentDigest": "sha256:f1fb423f04aeae7e3d0706322bec7e7a5198278f293b841a5acdb01cd5631fdf",
-  "sourceBindingRevision": "pre-live-source-binding-8"
+  "sourceBindingRevision": "pre-live-source-binding-9"
 }

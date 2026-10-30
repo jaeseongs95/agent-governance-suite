@@ -225,9 +225,9 @@ const ORCHESTRATOR_RESOURCE_IMPACT_SOURCE_HASHES = Object.freeze({
   "skills/orchestrator/classification.json": "6d33ef4bc3ae5daa8c15867f03dbdaf4c0cebf76fcfbd872ca1b8c3b6636baad",
 });
 const ORCHESTRATOR_BEHAVIOR_SOURCE_HASHES = Object.freeze({
-  "skills/orchestrator/SKILL.md": "082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b",
-  "skills/orchestrator/classification.json": "81ac5daaa54a6fc6947ba5e805bf7c1d3e4c061dd473be820f4a553a762dd577",
-  "skills/orchestrator/references/entry-details.md": "c178bbe2653e99104628b3a4dcb12a9f4d5af1453e7513d3559bfd078d83ce35",
+  "skills/orchestrator/SKILL.md": "5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4",
+  "skills/orchestrator/classification.json": "44d66bda8d2c80034d3f881ff3f12de6d628bd4d8ce850fd49718df656aa95d2",
+  "skills/orchestrator/references/entry-details.md": "86af016cfc8399a656181f5253189c098b53434aaa8b7d4fd1353d586248333f",
 });
 // D0352 makes the field guide use the existing common routing decision.
 // Preserve the optimization baseline; allow only this reviewed source delta.

@@ -29,7 +29,7 @@ const bindings = [
   {skillId: "independent-audit-gate", path: "skills/independent-audit-gate/SKILL.md", previousDigest: "sha256:26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29", digest: "sha256:abb5d4c1fa0607851018cd6f6a2f3ecf314cc829149ea0d15c5474ed9afd2a18"},
   {skillId: "independent-deliberation-panel", path: "skills/independent-deliberation-panel/SKILL.md", previousDigest: "sha256:899e5af89ad4621107a33ba101cc63ad7ba6ad4d585438e8cb187c3bfe76c3ab", digest: "sha256:eb21677b0f377116250691a8cf84b44ec853c4de9c56e27ea17585016a151f54"},
   {skillId: "mutation-risk-preflight", path: "skills/mutation-risk-preflight/SKILL.md", previousDigest: "sha256:eb02732691b63ca085ff8bca59854a134a8711ac7788888f9f3c6e4324474cbe", digest: "sha256:9aa4e7cb143bb0ad9ffc5f6c03ed32331e1f14562cd4322fab0e36cd29c21ce1"},
-  {skillId: "orchestrator", path: "skills/orchestrator/SKILL.md", previousDigest: "sha256:e5f2e1cf5bbfa49821a5aad81ad83b68cf5cae3ec75c92050a8a4cd13b56be45", digest: "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b"},
+  {skillId: "orchestrator", path: "skills/orchestrator/SKILL.md", previousDigest: "sha256:e5f2e1cf5bbfa49821a5aad81ad83b68cf5cae3ec75c92050a8a4cd13b56be45", digest: "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"},
   {skillId: "ponytail", path: "skills/ponytail/SKILL.md", previousDigest: "sha256:907667b8b625eab0438b462a4737a056e3833f972c66e432817a12e6f643ac76", digest: "sha256:2ce28db45c1a84e63fa2af7079e58a3803fc26b16ab7073436efd55b1e1214f9"},
   {skillId: "task-contract", path: "skills/task-contract/SKILL.md", previousDigest: "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100", digest: "sha256:92cf19444e6c97b1d1d017f8eed481135d708095d89411668ab215123d1266aa"}
 ];
@@ -74,9 +74,9 @@ it("preserves predecessor history and all frozen 39/18/21 semantics in a distinc
   expect(original.historicalSuccessor.digest).toBe("sha256:69ef37b636e35bfdce77103cbe84015c0e2e9482a41e46059d89ac557a8717f7");
   expect(original.successor.fixtureRevision).toBe(predecessor.fixtureRevision);
   expect(original.successor.oracleDigest).toBe(predecessor.oracleDigest);
-  expect(current.fixtureRevision).toBe("ags-classification-governance-behavior-source-binding-r08");
-  expect(current.oracleRevision).toBe("pre-live-governance-behavior-source-reviewed-r08");
-  expect(current.sourceBindingRevision).toBe("pre-live-source-binding-8");
+  expect(current.fixtureRevision).toBe("ags-classification-governance-behavior-source-binding-r09");
+  expect(current.oracleRevision).toBe("pre-live-governance-behavior-source-reviewed-r09");
+  expect(current.sourceBindingRevision).toBe("pre-live-source-binding-9");
   expect(current.fixtureRevision).toBe(successor.successor.fixtureRevision);
   expect(current.oracleRevision).toBe(successor.successor.oracleRevision);
   expect(successor.semanticProjection.digest).toBe(semanticDigest);
@@ -98,7 +98,20 @@ it("preserves predecessor history and all frozen 39/18/21 semantics in a distinc
   expect(successor.governanceBehaviorSourceSuccessor.reboundReferences).toBe(17);
   expect(successor.governanceBehaviorSourceSuccessor.labelChanges).toEqual([]);
   expect(successor.governanceBehaviorSourceSuccessor.modelBehavior).toBe("NOT_RUN");
+  const r09 = successor.orchestratorInvocationSourceSuccessor;
+  expect(r09.revision).toBe("orchestrator-invocation-source-binding-r09");
+  expect(r09.sourceBaseRevision).toBe("9d393393e68c6ee72894599299051e1cbff41b95");
+  expect(r09.predecessor).toEqual({"path": "tests/skill-classification/fixtures.json", "gitRevision": "9d393393e68c6ee72894599299051e1cbff41b95", "gitBlob": "87333e8e281d06d26ce88ceac2b042043eac282a", "bytes": 142495, "digest": "sha256:d3490862893ee85f13dbee39ad992498bf7a76360c898d30d8089e5e485c1b88", "fixtureRevision": "ags-classification-governance-behavior-source-binding-r08", "oracleRevision": "pre-live-governance-behavior-source-reviewed-r08", "oracleDigest": "sha256:e48f0d37e8675f046a00648451fc3086753af97d663ca4a0aa18b8fdad386666", "sourceBindingRevision": "pre-live-source-binding-8"});
+  expect(r09.predecessorSidecar).toEqual({"path": "tests/skill-classification/fixtures.source-successor.json", "gitRevision": "9d393393e68c6ee72894599299051e1cbff41b95", "gitBlob": "dd74211fc527015a9554af2c1f1af7d89f02ff68", "bytes": 40883, "digest": "sha256:2d8192e1ce5793d20bfe6fb6839e448141c40ea0d520fd9da3a1a414a13ebed1"});
+  expect(r09.sourceBindings).toEqual([{"path": "skills/orchestrator/SKILL.md", "previousDigest": "sha256:082e2fe237d22455ccbcedb3f4b26dcaa0b1a78f5f552011e3ac36515d21653b", "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4", "bytes": 9945}, {"path": "skills/orchestrator/classification.json", "previousDigest": "sha256:81ac5daaa54a6fc6947ba5e805bf7c1d3e4c061dd473be820f4a553a762dd577", "digest": "sha256:44d66bda8d2c80034d3f881ff3f12de6d628bd4d8ce850fd49718df656aa95d2", "bytes": 4577}]);
+  expect(r09.reboundReferences).toBe(17);
+  expect(r09.classificationReferences).toBe(18);
+  expect(r09.labelChanges).toEqual([]);
+  expect(r09.modelBehavior).toBe("NOT_RUN");
   for (const binding of successor.governanceBehaviorSourceSuccessor.sourceBindings) {
+    expect(r09.sourceBindings.find((current: {path: string}) => current.path === binding.path)?.previousDigest).toBe(binding.digest);
+  }
+  for (const binding of r09.sourceBindings) {
     expect(hash(readFileSync(path.join(root, binding.path)))).toBe(binding.digest);
   }
   expect(r06.midtaskSourceSuccessor.predecessor).toEqual({
