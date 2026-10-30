@@ -402,7 +402,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       const maxMessages = optionalInteger(payload, "maxMessages");
       const maxBodyChars = optionalInteger(payload, "maxBodyChars");
       return { messages: store.claimDeferred(identity(payload.target), Date.now(), {
-        instanceId: optionalString(payload, "instanceId"),
+        ...(Object.hasOwn(payload, "instanceId") ? { instanceId: string(payload.instanceId, "instanceId") } : {}),
         ...(maxMessages === undefined ? {} : { maxMessages }),
         ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
       }) };
@@ -411,7 +411,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       const maxMessages = optionalInteger(payload, "maxMessages");
       const maxBodyChars = optionalInteger(payload, "maxBodyChars");
       return { messages: store.claimTurnEnd(identity(payload.target), Date.now(), {
-        instanceId: optionalString(payload, "instanceId"),
+        ...(Object.hasOwn(payload, "instanceId") ? { instanceId: string(payload.instanceId, "instanceId") } : {}),
         ...(maxMessages === undefined ? {} : { maxMessages }),
         ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
       }) };
