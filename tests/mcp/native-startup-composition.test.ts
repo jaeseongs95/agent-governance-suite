@@ -4,14 +4,21 @@ import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {mkdtemp, rm, writeFile} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import path from "node:path";
+import {performance} from "node:perf_hooks";
 import {fileURLToPath} from "node:url";
-import {expect, it} from "vitest";
+import {expect, it, onTestFailed} from "vitest";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const customHost = "synthetic-installed-native";
 
 it.each(["registered", "snapshot", "omitted-custom", "empty-builtin", "incomplete-evidence", "builtin-default"] as const)(
   "public startup binds only trusted native composition for %s", async mode => {
+    const started = performance.now();
+    let phase = "입력 준비";
+    const observe = (next: string) => {
+      phase = next;
+      if (mode === "snapshot") console.error("시작 단계 진단 " + JSON.stringify({단계: phase, 경과밀리초: performance.now() - started}));
+    };
     const directory = await mkdtemp(path.join(tmpdir(), "ags-native-startup-"));
     expect(path.dirname(directory)).toBe(path.resolve(tmpdir()));
     const profilesPath = path.join(directory, "profiles.json"), runtimePath = path.join(directory, "runtime.json");
@@ -62,25 +69,42 @@ ${startup}
     const client = new Client({name: "native-startup-composition-fixture", version: "1.0.0"});
     let diagnostics = "";
     transport.stderr?.on("data", chunk => {diagnostics += String(chunk);});
+    if (mode === "snapshot") onTestFailed(() => {
+      console.error("시작 실패 진단 " + JSON.stringify({단계: phase, 경과밀리초: performance.now() - started, 표준오류끝: diagnostics.slice(-4096)}));
+    });
     try {
+      observe("연결 시작");
       await client.connect(transport);
+      observe("연결 완료");
       // Built CLI on owned synthetic Claude input; no native identity collection.
+    observe("훅 시작");
     const issued = execFileSync(process.execPath, [path.join(root, "mcp-server", "dist", "governance-hook.mjs"), "--host=claude-code"], {
       cwd: root, env: environment, encoding: "utf8", timeout: 10_000, windowsHide: true,
       input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "synthetic-startup-root", tool_use_id: "inventory-call",
         tool_name: "mcp__agent_governance_suite__get_skill_inventory", tool_input: {}, cwd: directory }),
     });
+    observe("훅 완료");
     const rootOutput = JSON.parse(issued) as { hookSpecificOutput: { permissionDecision?: string; updatedInput: Record<string, unknown> } };
     expect(rootOutput.hookSpecificOutput).not.toHaveProperty("permissionDecision");
     expect(rootOutput.hookSpecificOutput.updatedInput._sessionProof).toEqual(expect.any(String));
+    observe("도구 호출 시작");
     const reply = await client.callTool({name: "get_skill_inventory", arguments: rootOutput.hookSpecificOutput.updatedInput});
+    observe("도구 호출 완료");
       const text = (reply.content as Array<{type: string; text?: string}>).find(item => item.type === "text")!.text!;
       const result = JSON.parse(text) as {ok: boolean; data: {issues: Array<{code: string}>}};
       const unavailable = mode === "omitted-custom" || mode === "empty-builtin";
       expect(result.ok).toBe(true);
       expect(result.data.issues.some(issue => issue.code === "CONFIGURED_DISCOVERY_UNAVAILABLE")).toBe(unavailable);
     } finally {
-      try {await client.close();} finally {await transport.close(); await rm(directory, {recursive: true, force: true});}
+      observe("클라이언트 종료 시작");
+      try {await client.close(); observe("클라이언트 종료 완료");} finally {
+        observe("전송 종료 시작");
+        await transport.close();
+        observe("전송 종료 완료");
+        observe("임시 입력 정리 시작");
+        await rm(directory, {recursive: true, force: true});
+        observe("임시 입력 정리 완료");
+      }
     }
     expect(diagnostics.match(/NATIVE_STARTUP_TRUSTED_BEHAVIOR_BOUND/gu) ?? []).toHaveLength(mode === "registered" || mode === "snapshot" ? 1 : 0);
     if (mode === "omitted-custom" || mode === "empty-builtin") expect(diagnostics).toContain("NATIVE_ADAPTER_BEHAVIOR_UNAVAILABLE");

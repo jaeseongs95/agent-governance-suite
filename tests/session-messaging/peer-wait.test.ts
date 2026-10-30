@@ -227,8 +227,22 @@ describe("peer wait policy boundaries", () => {
 
 async function launch(brokerPath = path.join(root, "mcp-server/dist/session-message-broker.mjs")) {
   const directory = await mkdtemp(path.join(tmpdir(), "ags-peer-wait-")); directories.push(directory);
-  const child = spawn(process.execPath, ["--import", new URL("./fixtures/peer-wait-request-count.mjs", import.meta.url).href, brokerPath, "--state-directory", directory], { windowsHide: true, stdio: "ignore", env: { ...process.env, AGS_PEER_WAIT_COUNT_PATH: path.join(directory, "peer-wait-count.txt") } }); children.push(child);
-  await waitForSessionMessageBrokerReady(directory, child, 5000);
+  const started = performance.now();
+  let stderr = "";
+  const child = spawn(process.execPath, ["--import", new URL("./fixtures/presence-startup-trace.mjs", import.meta.url).href,
+    "--import", new URL("./fixtures/peer-wait-request-count.mjs", import.meta.url).href, brokerPath, "--state-directory", directory],
+  { windowsHide: true, stdio: ["ignore", "ignore", "pipe"], env: { ...process.env, AGS_PEER_WAIT_COUNT_PATH: path.join(directory, "peer-wait-count.txt") } }); children.push(child);
+  child.stderr?.setEncoding("utf8");
+  child.stderr?.on("data", chunk => {stderr = (stderr + String(chunk)).slice(-4096);});
+  child.once("spawn", () => console.error("대기 시험 중개 기동 " + JSON.stringify({단계: "프로세스 생성", 경과밀리초: performance.now() - started})));
+  try {
+    await waitForSessionMessageBrokerReady(directory, child, 5000);
+    console.error("대기 시험 중개 기동 " + JSON.stringify({단계: "준비 완료", 경과밀리초: performance.now() - started}));
+  } catch (error) {
+    console.error("대기 시험 중개 기동 " + JSON.stringify({단계: "준비 실패", 경과밀리초: performance.now() - started,
+      종료코드: child.exitCode, 종료신호: child.signalCode, 표준오류끝: stderr}));
+    throw error;
+  }
   return { directory, child };
 }
 function packaged(directory: string, entry: string, input: unknown) {

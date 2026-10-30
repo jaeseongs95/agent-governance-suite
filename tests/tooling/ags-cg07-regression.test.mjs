@@ -5,12 +5,20 @@ import { findPython } from "../../scripts/python-runner.mjs";
 
 // SOURCE ONLY: all provider invocations below are mocked; never call a model.
 const regression = String.raw`
+import sys
+import time
+case = sys.argv[2]
+started = time.perf_counter()
+def planner_stage(stage):
+    if case == "planner":
+        print(f"계획기 단계 진단 단계={stage} 경과밀리초={(time.perf_counter() - started) * 1000:.3f}", file=sys.stderr, flush=True)
+planner_stage("파이썬 진입")
+planner_stage("가져오기 시작")
 import copy
 import contextlib
 import io
 import json
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -19,6 +27,7 @@ root = Path(sys.argv[1]) / "skills" / "independent-deliberation-panel"
 sys.path.insert(0, str(root / "scripts"))
 import run_evals as subject
 from validate_decision_record import validate, validate_issues
+planner_stage("가져오기 완료")
 
 def fixture(name):
     return json.loads((root / "evals" / "fixtures" / "valid" / name).read_text(encoding="utf-8"))
@@ -54,16 +63,20 @@ def fake_evaluations(records):
     assert len(set(observed)) == 1, "candidate changed between repeats"
     return status, results
 
-case = sys.argv[2]
 if case == "planner":
-    for flags in ([], ["--dry-run"], ["--dry-run", "--execute", "--model", "fixture-model"]):
+    for index, flags in enumerate(([], ["--dry-run"], ["--dry-run", "--execute", "--model", "fixture-model"]), 1):
+        planner_stage(f"호출{index} 임시 입력 준비 시작")
         with tempfile.TemporaryDirectory(prefix="cg07-plan-") as directory:
             results = Path(directory) / "not-created"
             args = ["run_evals.py", "--case", "low-routing", "--results-dir", str(results), *flags]
             with patch.object(sys, "argv", args), patch.object(subject.subprocess, "run", side_effect=AssertionError("planner launched CLI")) as runner, contextlib.redirect_stdout(io.StringIO()):
+                planner_stage(f"호출{index} 시작")
                 assert subject.main() == 0
+                planner_stage(f"호출{index} 완료")
                 runner.assert_not_called()
             assert not results.exists()
+            planner_stage(f"호출{index} 정리 시작")
+        planner_stage(f"호출{index} 정리 완료")
 elif case == "candidate":
     low = fixture("rc01_low_no_workers.json")
     status, results = fake_evaluations([low, low])

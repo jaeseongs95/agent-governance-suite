@@ -60,9 +60,13 @@ it("generates and checks the Claude package without loading development dependen
     const observed = { stage, command, args: [...args], startedAtMs: performance.now() - started,
       completed: false, status: null, signal: null, errorCode: null };
     children.push(observed);
-    const child = spawnSync(command, args, { cwd: source, env: environment, encoding: "utf8", timeout: 10_000, windowsHide: true });
+    const child = spawnSync(command, args, { cwd: source,
+      env: stage === "git-add" ? { ...environment, GIT_TRACE2_PERF: "1" } : environment,
+      encoding: "utf8", timeout: 10_000, windowsHide: true });
     Object.assign(observed, { completed: true, status: child.status, signal: child.signal,
       errorCode: child.error?.code ?? null, elapsedMs: performance.now() - started - observed.startedAtMs });
+    if (stage === "git-add") Object.assign(observed, {표준오류바이트: Buffer.byteLength(child.stderr ?? "", "utf8"),
+      표준오류끝: (child.stderr ?? "").slice(-4096)});
     expect(child.error).toBeUndefined();
     expect(child.signal).toBeNull();
     // Preserve the real loader error in the assertion; never skip or translate it.

@@ -685,11 +685,18 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
   it("preserves crashed producer locks unless the owner is proven absent", async () => {
     const directory = stateDirectory();
     const fixture = fileURLToPath(new URL("./fixtures/d0254-lockstage-crash.mjs", import.meta.url));
+    const started = performance.now();
     const child = spawn(process.execPath, ["--import", "tsx", fixture], {
-      stdio: "ignore", windowsHide: true,
+      stdio: ["ignore", "ignore", "pipe"], windowsHide: true,
       env: { ...process.env, AGENT_GOVERNANCE_D254_LOCK_ROOT: directory, AGENT_GOVERNANCE_D254_LOCK_CRASH: "published" },
     });
+    let stderr = "";
+    child.stderr?.setEncoding("utf8");
+    child.stderr?.on("data", chunk => {stderr = (stderr + String(chunk)).slice(-4096);});
     const [code] = await once(child, "close");
+    if (code !== 44) console.error("잠금 게시 자식 진단 " + JSON.stringify({
+      경과밀리초: performance.now() - started, 종료코드: code, 표준오류끝: stderr,
+    }));
     expect(code).toBe(44);
     const pid = child.pid;
     expect(pid).toBeDefined();
