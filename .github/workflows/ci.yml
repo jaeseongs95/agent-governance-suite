@@ -12,10 +12,152 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref == 'refs/heads/release-3.0' && github.run_id || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == 'refs/heads/release-3.0' && github.run_id || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/release-3.0' }}
 
 jobs:
+  generate-release:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/release-3.0'
+    name: Generate release artifacts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Initialize generation evidence
+        shell: bash
+        run: |
+          log="$RUNNER_TEMP/d0352-generation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          printf 'GENERATION_LOG_DIR=%s\n' "$log" >> "$GITHUB_ENV"
+          mkdir -p "$log"
+      - name: Check out event commit
+        id: checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Set up Node.js
+        id: node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.22.1
+      - name: Set up Python
+        id: python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: "3.12"
+      - name: Run normal generation and freshness commands
+        id: generate
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="${GENERATION_LOG_DIR:?}"
+          run_phase() {
+            local phase=$1 code
+            shift
+            printf '%s\0' "$@" > "$log/$phase.argv.nul"
+            printf 'RUNNING\n' > "$log/$phase.status.txt"
+            set +e
+            "$@" > "$log/$phase.stdout" 2> "$log/$phase.stderr"
+            code=$?
+            set -e
+            printf '%s\n' "$code" > "$log/$phase.exit-code.txt"
+            printf 'EXECUTED\n' > "$log/$phase.status.txt"
+            cat "$log/$phase.stdout"
+            cat "$log/$phase.stderr" >&2
+            return "$code"
+          }
+          run_phase head-before git rev-parse HEAD 'HEAD^{tree}'
+          test "$(head -n 1 "$log/head-before.stdout")" = "$GITHUB_SHA"
+          run_phase status-before git status --porcelain=v1
+          run_phase corepack corepack enable
+          run_phase install pnpm install --frozen-lockfile
+          run_phase build pnpm build
+          run_phase claude-build pnpm claude:build
+          run_phase bundle-check pnpm bundle:check
+          run_phase claude-check pnpm claude:check
+          run_phase context-check pnpm skills:context-check
+      - name: Collect generation evidence on every outcome
+        id: finalize
+        if: ${{ always() }}
+        shell: bash
+        env:
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          NODE_OUTCOME: ${{ steps.node.outcome }}
+          PYTHON_OUTCOME: ${{ steps.python.outcome }}
+          GENERATION_OUTCOME: ${{ steps.generate.outcome }}
+        run: |
+          mkdir -p "$GENERATION_LOG_DIR"
+          set +e
+          python3 - <<'PY' > "$GENERATION_LOG_DIR/finalize.stdout" 2> "$GENERATION_LOG_DIR/finalize.stderr"
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+
+          log = Path(os.environ["GENERATION_LOG_DIR"])
+          problems = []
+
+          def capture(name, arguments, accepted=(0,)):
+              with (log / (name + ".stdout")).open("wb") as stdout, (log / (name + ".stderr")).open("wb") as stderr:
+                  result = subprocess.run(arguments, stdout=stdout, stderr=stderr, check=False)
+              (log / (name + ".exit-code.txt")).write_text(str(result.returncode) + "\n", encoding="utf-8")
+              if result.returncode not in accepted:
+                  problems.append({"phase": name, "exitCode": result.returncode})
+              return (log / (name + ".stdout")).read_bytes()
+
+          for phase in ("head-before", "status-before", "corepack", "install", "build", "claude-build", "bundle-check", "claude-check", "context-check"):
+              status = log / (phase + ".status.txt")
+              if not status.exists():
+                  status.write_text("NOT_RUN\n", encoding="utf-8")
+          capture("head-after", ["git", "rev-parse", "HEAD", "HEAD^{tree}"])
+          capture("status-after", ["git", "status", "--porcelain=v1"])
+          tracked_patch = capture("tracked-patch", ["git", "diff", "--binary", "--full-index", "HEAD", "--"])
+          inventory = capture("file-inventory", ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"])
+          untracked = capture("untracked-inventory", ["git", "ls-files", "-z", "--others", "--exclude-standard"])
+          with (log / "generation.patch").open("wb") as patch:
+              patch.write(tracked_patch)
+              for index, raw in enumerate(filter(None, untracked.split(b"\0"))):
+                  patch.write(capture("untracked-patch-" + str(index), ["git", "diff", "--no-index", "--binary", "--full-index", "--", "/dev/null", os.fsdecode(raw)], accepted=(1,)))
+          files = []
+          for raw in sorted(set(filter(None, inventory.split(b"\0")))):
+              name = os.fsdecode(raw)
+              file = Path(name)
+              if not file.is_file():
+                  files.append({"path": name, "sha256": None})
+                  continue
+              digest = hashlib.sha256()
+              with file.open("rb") as stream:
+                  for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                      digest.update(chunk)
+              files.append({"path": name, "bytes": file.stat().st_size, "sha256": digest.hexdigest()})
+          (log / "repository-files.sha256.json").write_text(json.dumps(files, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          summary = {
+              "eventSha": os.environ["GITHUB_SHA"], "ref": os.environ["GITHUB_REF"],
+              "runId": os.environ["GITHUB_RUN_ID"], "runAttempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "outcomes": {name: os.environ.get(name, "") for name in ("CHECKOUT_OUTCOME", "NODE_OUTCOME", "PYTHON_OUTCOME", "GENERATION_OUTCOME")},
+              "collectionErrors": problems,
+          }
+          (log / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+          raise SystemExit(1 if problems else 0)
+          PY
+          code=$?
+          printf '%s\n' "$code" > "$GENERATION_LOG_DIR/finalize.exit-code.txt"
+          cat "$GENERATION_LOG_DIR/finalize.stdout"
+          cat "$GENERATION_LOG_DIR/finalize.stderr" >&2
+          exit "$code"
+      - name: Upload generation evidence on every outcome
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: d0352-generation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.GENERATION_LOG_DIR }}/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+
   verify:
     if: github.ref != 'refs/heads/release-3.0'
     name: Node ${{ matrix.node }} / ${{ matrix.os }}
