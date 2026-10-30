@@ -61,6 +61,47 @@ function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   });
 }
 
+const MAX_RESPONSE_BYTES = 1024 * 1024;
+const MAX_TAG_REFERENCES = 10_000;
+const encoder = new TextEncoder();
+
+function streamResponse(
+  chunks: Array<Uint8Array | Error>,
+  options: { onCancel?: () => void | Promise<void>; onPull?: (index: number) => void } = {},
+): Response {
+  let index = 0;
+  const stream = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      options.onPull?.(index);
+      const item = chunks[index];
+      index += 1;
+      if (item === undefined) {
+        controller.close();
+        return;
+      }
+      if (item instanceof Error) {
+        controller.error(item);
+        return;
+      }
+      controller.enqueue(item);
+    },
+    cancel() {
+      return options.onCancel?.();
+    },
+  }, { highWaterMark: 0 });
+  return new Response(stream, {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+function paddedJsonBytes(value: unknown, totalBytes: number): Uint8Array {
+  const base = JSON.stringify(value);
+  const padLength = totalBytes - Buffer.byteLength(base, "utf8");
+  if (padLength < 0) throw new Error(`Base JSON already exceeds ${totalBytes} bytes.`);
+  return encoder.encode(`${base}${" ".repeat(padLength)}`);
+}
+
 describe("PluginUpdateService", () => {
   it("compares strict stable SemVer numerically", () => {
     expect(compareStableVersions("1.9.0", "1.10.0")).toBe(-1);
@@ -394,4 +435,229 @@ describe("PluginUpdateService", () => {
     });
     expect(await service.check()).toMatchObject({ latestVersion: NEXT_VERSION, latestCommit: commitSha });
   });
+
+  it.each(["tags", "tag-object"] as const)(
+    "distinguishes mid-stream non-abort read failures from malformed JSON on %s endpoint",
+    async (endpoint) => {
+      const tagObjectSha = "b".repeat(40);
+      const tagObjectUrl = `https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/tags/${tagObjectSha}`;
+      const annotatedRef = [{
+        ref: `refs/tags/${NEXT_TAG}`,
+        object: { sha: tagObjectSha, type: "tag", url: tagObjectUrl },
+      }];
+
+      const withEndpointResponse = (targetResponse: () => Response): PluginUpdateService =>
+        new PluginUpdateService(new InMemoryPluginUpdateStore(), {
+          fetcher: async (input) => {
+            if (input.includes("matching-refs")) {
+              return endpoint === "tags" ? targetResponse() : jsonResponse(annotatedRef);
+            }
+            return targetResponse();
+          },
+        });
+
+      const networkStatus = await withEndpointResponse(() =>
+        streamResponse([encoder.encode('[{"ref":'), new Error("socket reset")]),
+      ).check();
+      expect(networkStatus).toMatchObject({
+        comparison: "unknown",
+        stale: true,
+        lastErrorCode: "NETWORK",
+      });
+
+      const malformedStatus = await withEndpointResponse(() =>
+        streamResponse([encoder.encode('[{"ref":'), encoder.encode('"unterminated')]),
+      ).check();
+      expect(malformedStatus).toMatchObject({
+        comparison: "unknown",
+        stale: true,
+        lastErrorCode: "INVALID_RESPONSE",
+      });
+    },
+  );
+
+  it.each(["tags", "tag-object"] as const)(
+    "enforces the 1MiB response byte budget, cancels on overflow without extra pulls, and preserves INVALID_RESPONSE when cancel rejects on %s endpoint",
+    async (endpoint) => {
+      const tagObjectSha = "b".repeat(40);
+      const commitSha = "c".repeat(40);
+      const tagObjectUrl = `https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/tags/${tagObjectSha}`;
+      const annotatedRef = [{
+        ref: `refs/tags/${NEXT_TAG}`,
+        object: { sha: tagObjectSha, type: "tag", url: tagObjectUrl },
+      }];
+      const validPayload = endpoint === "tags"
+        ? [reference(NEXT_TAG, commitSha)]
+        : {
+            object: {
+              sha: commitSha,
+              type: "commit",
+              url: `https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/commits/${commitSha}`,
+            },
+          };
+
+      const runWithResponse = (targetResponse: () => Response): Promise< ReturnType<PluginUpdateService["check"]> > =>
+        new PluginUpdateService(new InMemoryPluginUpdateStore(), {
+          fetcher: async (input) => {
+            if (input.includes("matching-refs")) {
+              return endpoint === "tags" ? targetResponse() : jsonResponse(annotatedRef);
+            }
+            return targetResponse();
+          },
+        }).check();
+
+      const exactBytes = paddedJsonBytes(validPayload, MAX_RESPONSE_BYTES);
+      expect(exactBytes.byteLength).toBe(MAX_RESPONSE_BYTES);
+      const exactStatus = await runWithResponse(() =>
+        streamResponse([exactBytes.subarray(0, 512 * 1024), exactBytes.subarray(512 * 1024)]),
+      );
+      expect(exactStatus).toMatchObject({
+        latestVersion: NEXT_VERSION,
+        latestCommit: commitSha,
+        comparison: "update-available",
+        stale: false,
+        lastErrorCode: null,
+      });
+
+      const boundaryOverflow = paddedJsonBytes(validPayload, MAX_RESPONSE_BYTES + 1);
+      const trailingChunk = new Uint8Array(512 * 1024).fill(0x20);
+      const boundaryPulls: number[] = [];
+      let boundaryCancelled = false;
+      const boundaryStatus = await runWithResponse(() =>
+        streamResponse([boundaryOverflow, trailingChunk], {
+          onPull: (index) => { boundaryPulls.push(index); },
+          onCancel: () => { boundaryCancelled = true; },
+        }),
+      );
+      expect(boundaryCancelled).toBe(true);
+      expect(boundaryPulls).toEqual([0]);
+      expect(boundaryStatus).toMatchObject({
+        comparison: "unknown",
+        stale: true,
+        lastErrorCode: "INVALID_RESPONSE",
+      });
+
+      const pulls: number[] = [];
+      let multiChunkCancelled = false;
+      const halfMiB = new Uint8Array(512 * 1024).fill(0x20);
+      const overflowByte = new Uint8Array([0x20]);
+      const multiChunkStatus = await runWithResponse(() =>
+        streamResponse([halfMiB, halfMiB, overflowByte, trailingChunk], {
+          onPull: (index) => { pulls.push(index); },
+          onCancel: async () => {
+            multiChunkCancelled = true;
+            throw new Error("cancel failed");
+          },
+        }),
+      );
+      expect(multiChunkCancelled).toBe(true);
+      expect(pulls).toEqual([0, 1, 2]);
+      expect(multiChunkStatus).toMatchObject({
+        comparison: "unknown",
+        stale: true,
+        lastErrorCode: "INVALID_RESPONSE",
+      });
+    },
+  );
+
+  it("accepts 10,000 tag references and rejects 10,001 without truncating away newer tags", async () => {
+    const fillerRef = {
+      ref: "refs/tags/v0.0.1-rc.1",
+      object: { sha: "0", type: "tag", url: "" },
+    };
+    const exactRefs = [
+      ...Array.from({ length: MAX_TAG_REFERENCES - 2 }, () => fillerRef),
+      reference(`v${CURRENT_VERSION}`),
+      reference(NEXT_TAG),
+    ];
+    expect(exactRefs).toHaveLength(MAX_TAG_REFERENCES);
+    expect(Buffer.byteLength(JSON.stringify(exactRefs), "utf8")).toBeLessThan(MAX_RESPONSE_BYTES);
+
+    const exactService = new PluginUpdateService(new InMemoryPluginUpdateStore(), {
+      fetcher: async () => jsonResponse(exactRefs),
+    });
+    expect(await exactService.check()).toMatchObject({
+      latestVersion: NEXT_VERSION,
+      latestTag: NEXT_TAG,
+      comparison: "update-available",
+      stale: false,
+      lastErrorCode: null,
+    });
+
+    const overflowRefs = [
+      ...Array.from({ length: MAX_TAG_REFERENCES - 1 }, () => fillerRef),
+      reference(`v${CURRENT_VERSION}`),
+      reference(NEXT_NEXT_TAG),
+    ];
+    expect(overflowRefs).toHaveLength(MAX_TAG_REFERENCES + 1);
+    expect(Buffer.byteLength(JSON.stringify(overflowRefs), "utf8")).toBeLessThan(MAX_RESPONSE_BYTES);
+
+    const overflowService = new PluginUpdateService(new InMemoryPluginUpdateStore(), {
+      fetcher: async () => jsonResponse(overflowRefs),
+    });
+    expect(await overflowService.check()).toMatchObject({
+      latestVersion: null,
+      latestTag: null,
+      comparison: "unknown",
+      stale: true,
+      lastErrorCode: "INVALID_RESPONSE",
+    });
+  });
+
+  it.each(["tags", "tag-object"] as const)(
+    "preserves TIMEOUT when a response body stream aborts mid-read on %s endpoint",
+    async (endpoint) => {
+      const tagObjectSha = "b".repeat(40);
+      const tagObjectUrl = `https://api.github.com/repos/jaeseongs95/agent-governance-suite/git/tags/${tagObjectSha}`;
+      const annotatedRef = [{
+        ref: `refs/tags/${NEXT_TAG}`,
+        object: { sha: tagObjectSha, type: "tag", url: tagObjectUrl },
+      }];
+
+      const abortingStreamResponse = (signal?: AbortSignal | null): Response => {
+        let firstChunkSent = false;
+        const stream = new ReadableStream<Uint8Array>({
+          pull(controller) {
+            if (!firstChunkSent) {
+              firstChunkSent = true;
+              controller.enqueue(encoder.encode('[{"ref":'));
+              return;
+            }
+            return new Promise<void>((_resolve, reject) => {
+              const onAbort = (): void => {
+                reject(new DOMException("The operation was aborted.", "AbortError"));
+              };
+              if (signal?.aborted) {
+                onAbort();
+                return;
+              }
+              signal?.addEventListener("abort", onAbort, { once: true });
+            });
+          },
+        });
+        return new Response(stream, {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      };
+
+      const service = new PluginUpdateService(new InMemoryPluginUpdateStore(), {
+        requestTimeoutMs: 5,
+        fetcher: async (input, init) => {
+          if (input.includes("matching-refs")) {
+            return endpoint === "tags"
+              ? abortingStreamResponse(init?.signal)
+              : jsonResponse(annotatedRef);
+          }
+          return abortingStreamResponse(init?.signal);
+        },
+      });
+
+      expect(await service.check()).toMatchObject({
+        comparison: "unknown",
+        stale: true,
+        lastErrorCode: "TIMEOUT",
+      });
+    },
+  );
 });
