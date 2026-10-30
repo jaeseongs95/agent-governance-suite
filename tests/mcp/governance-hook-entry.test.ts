@@ -119,11 +119,19 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     for (const handler of handlers) {
       const [binary, ...argv] = handler.command.split(" ");
       expect(binary).toBe("node");
+      // 본문과 발급 토큰 없이 최초 발급/재호출 및 등록 handler별 멈춤을 구분한다.
+      const started = performance.now();
+      const stage = { test: expect.getState().currentTestName, wrapped, handler: outputs.length, hasSessionProof: Object.hasOwn(args, "_sessionProof"),
+        hasContinuityBinding: Object.hasOwn(args, "_continuityBinding") };
+      process.stderr.write(`[시험단계] ${JSON.stringify({ fixture: "native-registration", ...stage, event: "begin" })}\n`);
       const child = spawnSync(process.execPath, argv, {
         input: JSON.stringify({ conversationId: sessionId, workspacePaths: [path.dirname(environment.AGENT_GOVERNANCE_DB_PATH!)],
           toolCall: { name: wrapped ? "call_mcp_tool" : "mcp_agent-governance-suite_inspect_context", args: current } }),
         cwd: repository, env: environment, encoding: "utf8", timeout: 10_000, windowsHide: true,
       });
+      process.stderr.write(`[시험단계] ${JSON.stringify({ fixture: "native-registration", ...stage, event: "end",
+        elapsedMs: performance.now() - started, errorCode: (child.error as NodeJS.ErrnoException | undefined)?.code ?? null,
+        status: child.status, signal: child.signal, stdoutBytes: Buffer.byteLength(child.stdout ?? ""), stderrBytes: Buffer.byteLength(child.stderr ?? "") })}\n`);
       expect(child.error).toBeUndefined();
       expect(child.signal).toBeNull();
       expect(child.status, child.stderr).toBe(0);

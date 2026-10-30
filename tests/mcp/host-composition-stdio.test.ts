@@ -36,18 +36,27 @@ function task(taskId: string) {
 }
 
 async function fixture(host: string, modelClass: "deep" | "lightweight" = "deep") {
+  // 고유 fixture와 누적 시간을 남겨 전체 30초 중 마지막으로 진입한 단계를 구분한다.
+  // 호출 인자·출력·발급 토큰과 자식 표준 오류 본문은 기록하지 않는다.
+  const started = performance.now();
+  const trace = (stage: string, details: Record<string, unknown> = {}) => process.stderr.write(
+    `[시험단계] ${JSON.stringify({ fixture: host, test: expect.getState().currentTestName, modelClass, stage, elapsedMs: performance.now() - started, ...details })}\n`);
+  trace("fixture.begin");
   const directory = await mkdtemp(path.join(tmpdir(), "ags-host-composition-")), state = path.join(directory, "state"), database = path.join(state, "workflow.sqlite3");
   let client: Client | undefined, transport: StdioClientTransport | undefined;
   try {
     await mkdir(path.join(directory, "mcp-server/dist"), { recursive: true }); await mkdir(state, { recursive: true });
+    trace("copy.begin");
     await Promise.all([
       ...["contracts", "skills"].map(name => cp(path.join(repository, name), path.join(directory, name), { recursive: true })),
       ...["server.mjs", "governance-hook.mjs", "host-attestation-api.mjs"].map(name => cp(path.join(repository, "mcp-server/dist", name), path.join(directory, "mcp-server/dist", name))),
     ]);
+    trace("copy.end");
     const environment = { ...getDefaultEnvironment(), AGENT_GOVERNANCE_DB_PATH: database, AGENT_GOVERNANCE_HOST_ATTESTATION: host,
       AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(state, "continuity.sqlite3"), AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: path.join(state, "board.sqlite3"),
       AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(state, "trust.sqlite3"), AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(state, "shared"),
       AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: path.join(state, "messages") };
+    trace("installation.begin");
     const seed = new SqliteWorkflowStore(database);
     try { seed.putPluginUpdateState({ targetId: "agent-governance-suite", currentVersion: CURRENT_VERSION, latestVersion: STABLE_VERSION,
       latestTag: `v${STABLE_VERSION}`, latestCommit: "c".repeat(40), etag: "owned-host", comparison: "up-to-date",
@@ -137,12 +146,20 @@ process.stdout.write(result.output); if (!result.ok) process.exitCode = 2;
     const { installation } = await import(pathToFileURL(authority).href) as { installation(host: string): { adapter: HostExecutionAdapter } };
     const { adapter } = installation(host);
     transport = new StdioClientTransport({ command: process.execPath, args: [serverWrapper], cwd: directory, env: environment, stderr: "pipe" });
-    client = new Client({ name: "owned-host-public-entry", version: "1.0.0" }); await client.connect(transport);
+    client = new Client({ name: "owned-host-public-entry", version: "1.0.0" });
+    trace("connect.begin");
+    await client.connect(transport);
+    trace("connect.end");
     const issue = (tool: string, input: Record<string, unknown>, model: string, mode = "installed", effort = "high", extra: Record<string, unknown> = {}) => {
+      const issueStarted = performance.now();
+      trace("hook.begin", { tool, mode });
       const issued = spawnSync(process.execPath, mode === "default" ? [path.join(directory, "mcp-server/dist/governance-hook.mjs"), `--host=${host}`] : [hookWrapper, mode], {
         cwd: directory, env: environment, encoding: "utf8", timeout: 10_000, windowsHide: true,
         input: JSON.stringify({ event: { phase: "before", session: sessionId, call: randomUUID(), tool: `mcp__owned_installation__${tool}`, args: input },
           observed: { model, effort }, tool_input: { _sessionBinding: "caller-decoy-must-not-override-first-translation" }, ...extra }) });
+      trace("hook.end", { tool, mode, durationMs: performance.now() - issueStarted,
+        errorCode: (issued.error as NodeJS.ErrnoException | undefined)?.code ?? null, status: issued.status, signal: issued.signal,
+        stdoutBytes: Buffer.byteLength(issued.stdout ?? ""), stderrBytes: Buffer.byteLength(issued.stderr ?? "") });
       expect(issued.error).toBeUndefined();
       return { status: issued.status, stderr: issued.stderr, output: issued.stdout ? JSON.parse(issued.stdout) as Record<string, unknown> : {} };
     };
@@ -152,7 +169,11 @@ process.stdout.write(result.output); if (!result.ok) process.exitCode = 2;
       expect(specific.permissionDecision).toBeUndefined(); expect(decoded(specific.updatedInput._sessionProof)).toMatchObject({ host, sessionId, tool });
       return specific.updatedInput;
     };
-    const rawCall = async <T>(name: string, args: Record<string, unknown>) => envelope<T>(await client!.callTool({ name, arguments: args }));
+    const rawCall = async <T>(name: string, args: Record<string, unknown>) => {
+      trace("call.begin", { tool: name });
+      try { return envelope<T>(await client!.callTool({ name, arguments: args })); }
+      finally { trace("call.end", { tool: name }); }
+    };
     const call = async <T>(name: string, args: Record<string, unknown>, model: string) => rawCall<T>(name, hook(name, args, model));
     const rooted = (args: Record<string, unknown>): Record<string, unknown> => {
       const store = new SqliteWorkflowStore(database), clean = withoutSessionProof(args);
@@ -166,8 +187,19 @@ process.stdout.write(result.output); if (!result.ok) process.exitCode = 2;
     };
     return { host, api, adapter, directory, issue, hook, call, rawCall, rooted, observedBy, installationBytes: unchanged,
       async unchanged() { expect(await Promise.all(protectedFiles.map(file => readFile(file)))).toEqual(unchanged); },
-      async close() { try { await client?.close(); } finally { try { await transport?.close(); } finally { await rm(directory, { recursive: true, force: true }); } } } };
+      async close() {
+        trace("close.begin");
+        try { await client?.close(); } finally {
+          trace("transport-close.begin");
+          try { await transport?.close(); } finally {
+            trace("remove.begin");
+            await rm(directory, { recursive: true, force: true });
+            trace("close.end");
+          }
+        }
+      } };
   } catch (error) {
+    trace("fixture.error");
     try { await client?.close(); } finally { try { await transport?.close(); } finally { await rm(directory, { recursive: true, force: true }); } }
     throw error;
   }
