@@ -93,8 +93,9 @@ function sourceLockFixture() {
   const version = "1.0.0\n";
   f.write("skills/versioned-skill/SKILL.md", skill);
   f.write("skills/versioned-skill/VERSION", version);
-  // Known two-file checksum, using the published relative-path/normalized-byte contract.
-  const digest = createHash("sha256").update("SKILL.md").update(skill).update("VERSION").update(version).digest("hex");
+  // Known two-file checksum, with byte-length-framed paths and normalized bytes.
+  const digest = createHash("sha256").update(`8:SKILL.md${Buffer.byteLength(skill)}:`).update(skill)
+    .update("7:VERSION6:").update(version).digest("hex");
   f.write("skills/registry.json", JSON.stringify({ skills: [{ skillId: "versioned-skill", version: "1.0.0" }] }));
   f.write("skills/source-lock.json", JSON.stringify({ schemaVersion: "3.0.0", sources: [{
     skillId: "versioned-skill", path: "skills/versioned-skill", version: "1.0.0", versionSource: "version-file",

@@ -32,8 +32,8 @@ if (process.argv.includes("--source-lock-fixture")) {
   }
 
   function checksum(content) {
-    return "sha256:" + createHash("sha256").update("SKILL.md").update(content)
-      .update("VERSION").update("1.0.0\n").digest("hex");
+    return "sha256:" + createHash("sha256").update(`8:SKILL.md${Buffer.byteLength(content)}:`).update(content)
+      .update("7:VERSION6:1.0.0\n").digest("hex");
   }
 
   async function verify(id, changes = {}) {
