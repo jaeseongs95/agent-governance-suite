@@ -62,6 +62,7 @@ registerSyntheticCoreAdapters((host, adapter) => registerHookHostAdapter(host, {
 const coreInput = { session_id: "AL04_PRIVATE", hook_event_name: "PostToolUse", syntheticActor: "root" };
 import { executeAntigravityHookEvent, resolveVerifiedAntigravityHostProcess } from "./antigravity-hook-runner.mjs";
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.ts";
+import { producerFailureReason } from "../../mcp-server/src/failure-diagnostics.ts";
 const pair = Object.freeze({ pid: process.ppid, startToken: "9001" });
 const main = { conversationId: "AL04_PRIVATE", agent_id: "", hook_event_name: "SessionStart" };
 const options = extra => ({ now: () => 100, entryMonotonicMs: 100, onProcessIdentityFailure() {}, ...extra });
@@ -166,11 +167,12 @@ test("F4 late native query result cannot become a host identity", async () => {
 });
 
 test("F4 reused PID with a different native T2 token cannot ensure a relay", async () => {
-  await handleSessionMessageHook(coreInput, SYNTHETIC_CORE_HOST, undefined, { recoverExistingSession: true,
+  // 재사용된 PID는 조회·인수 전에 거부돼야 한다. 토큰은 이 시험의 모의 관측값이다.
+  await assert.rejects(handleSessionMessageHook(coreInput, SYNTHETIC_CORE_HOST, undefined, { recoverExistingSession: true,
     resolveHostProcess: () => { f.birth = "9002"; return pair; },
-    executionBudget: { deadlineMonotonicMs: performance.now() + 2000, postClaimReserveMs: 0 } });
-  assert.equal(f.requests.includes("list-presence"), true);
-  assert.equal(f.requests.includes("ensure-relay"), false);
+    executionBudget: { deadlineMonotonicMs: performance.now() + 2000, postClaimReserveMs: 0 } }),
+    error => producerFailureReason(error) === "HOOK_HOST_GENERATION_UNVERIFIED");
+  assert.deepEqual(f.requests, []);
 });
 
 

@@ -1,5 +1,6 @@
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
+import { createHash } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -13,6 +14,7 @@ import type { registerHookHostAdapter } from "../../mcp-server/src/host-input-ad
 import type { SessionMessageHookOptions } from "../../mcp-server/src/session-message-hook.js";
 import { runSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import { TrustStore } from "../../mcp-server/src/trust-store.js";
+import { processStartToken } from "../../mcp-server/src/process-identity.js";
 
 const sender = { host: "test-host", sessionId: "issued-owner" };
 const target = { host: "test-host", sessionId: "issued-recipient" };
@@ -347,6 +349,19 @@ it.each(['success', 'lost-reply'])('r11 adapter consumes actual built common fou
     drafts.push(draft);
   }
   const store = fixture(path.join(state, 'session-messages.sqlite3'));
+  // 합성 root 역할은 adapter 라우팅만 제공한다. 신원 근거는 시험 소유 PID의 실제 OS 출생 토큰이며,
+  // 공통 번들의 재검증과 store의 현재 presence 세대 일치를 모두 통과해야 원 phases까지 도달한다.
+  const startToken = processStartToken(process.pid);
+  expect(startToken).not.toBeNull();
+  const hostProcess = { pid: process.pid, startToken: startToken! };
+  const instanceId = 'host-process-v1:' + createHash('sha256')
+    .update(JSON.stringify([recipient.host, recipient.sessionId, hostProcess.pid, hostProcess.startToken])).digest('hex');
+  // 미기동 grant를 명시적으로 보유해 recovery가 별도 relay 자식을 만들지 않게 한다.
+  expect(store.prepareVerifiedRelay({ ...recipient, instanceId, transport: 'codex-deferred',
+    parentPid: hostProcess.pid, expectedOwner: null, wakeVisibility: 'none', canWakeSilently: false,
+    deliveryCapabilities: { supportedInjection: ['tool-boundary'], idleWake: 'none' },
+  })).toMatchObject({ spawn: true, instanceId });
+  expect(store.presence(recipient).instanceId).toBe(instanceId);
   drafts.forEach((draft, index) => store.database.prepare('UPDATE messages SET created_at = ? WHERE message_id = ?')
     .run(new Date(Date.now() - 2000 + index * 1000).toISOString(), draft.messageId));
   vi.stubEnv('AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR', state);
@@ -376,6 +391,7 @@ it.each(['success', 'lost-reply'])('r11 adapter consumes actual built common fou
     const tracker = createClaimStateTracker((value: { phase: string; messageIds: readonly string[] }) => { phases.push(value); });
     const output = await executeAntigravityHookEvent({ conversationId: recipient.sessionId, agent_id: '' }, 'PreInvocation', 'session-message', {
       entryMonotonicMs: performance.now(), totalBudgetMs: 7000, postClaimReserveMs: 500, claimTracker: tracker,
+      resolveHostProcess: () => hostProcess,
       sessionMessageHook: (input: Record<string, unknown>, host: string, pid: number | undefined, options: SessionMessageHookOptions) => {
         callbacks++; expect(host).toBe('antigravity');
         return built.handleSessionMessageHook({ ...input, syntheticActor: 'root' }, recipient.host, pid, options);
