@@ -1640,7 +1640,8 @@ try {
   }
 
   // 16. [AGS-D-0011]: startAntigravitySessionPresenceAndRelay reports inspection/startup failures via
-  // onInspectionFailure (and onProcessIdentityFailure) without swallowing them silently or leaking private secrets.
+  // onInspectionFailure (and onProcessIdentityFailure) AND via the default isolated child / default
+  // handleSessionMessageHook path without swallowing them silently or leaking private secrets.
   {
     const observedFailures = [];
     const secretError = new Error("PRIVATE_SECRET_HOOK_FAILURE_0011");
@@ -1661,6 +1662,116 @@ try {
     assert.equal(observedFailures.length, 1);
     assert.equal(observedFailures[0].code, "HOST_PROCESS_INSPECTION_FAILED");
     assert.equal(observedFailures[0].cause, secretError);
+
+    // (b) Default path WITHOUT injected sessionMessageHook callback:
+    // Invokes the real default `handleSessionMessageHook` with an executionBudget (`now: () => 0, deadlineMonotonicMs: 150`)
+    // that passes `inspectionBudget` (`150 >= 100ms`) but is expired against real `performance.now()` inside `handleSessionMessageHook`,
+    // and verifies that both `onInspectionFailure` and the default stderr sink recover the original failure reason
+    // (`HOOK_BUDGET_EXPIRED`) without swallowing it.
+    const defaultPathFailures = [];
+    const stderrLinesDefault = [];
+    const origConsoleError = console.error;
+    console.error = (line) => stderrLinesDefault.push(String(line));
+    try {
+      await startAntigravitySessionPresenceAndRelay(
+        { hook_event_name: "SessionStart", session_id: TEST_SESSION_ID, workspace_id: tmpDir },
+        {
+          now: () => 0,
+          deadlineMonotonicMs: 150,
+          resolveHostProcess: () => ({ pid: 41804, startToken: "2026-10-27T00:00:00.000Z" }),
+        },
+      );
+      await startAntigravitySessionPresenceAndRelay(
+        { hook_event_name: "SessionStart", session_id: TEST_SESSION_ID, workspace_id: tmpDir },
+        {
+          now: () => 0,
+          deadlineMonotonicMs: 150,
+          resolveHostProcess: () => ({ pid: 41804, startToken: "2026-10-27T00:00:00.000Z" }),
+          onInspectionFailure: (failure) => defaultPathFailures.push(failure),
+        },
+      );
+    } finally {
+      console.error = origConsoleError;
+    }
+    assert.equal(defaultPathFailures.length, 1);
+    assert.equal(defaultPathFailures[0].code, "HOST_PROCESS_INSPECTION_FAILED");
+    assert.equal(defaultPathFailures[0].cause?.code, "HOOK_BUDGET_EXPIRED");
+    assert.equal(stderrLinesDefault.length, 1);
+    const parsedDefaultDiag = JSON.parse(stderrLinesDefault[0]).agsAntigravityProcessIdentityFailure;
+    assert.equal(parsedDefaultDiag.reason, "HOST_PROCESS_INSPECTION_FAILED");
+    assert.equal(parsedDefaultDiag.phase, "inspection");
+
+    // (c) Isolated child process default path (0 injected callbacks: neither resolveHostProcess nor sessionMessageHook nor onInspectionFailure):
+    // Spawns `antigravity-hook-runner.mjs --event=SessionStart --hook=session-message` as an isolated child process with an empty PATH
+    // so the default OS inspection child (`powershell.exe` / `ps`) fails at spawn, and asserts that the parent recovers
+    // exit status, signal, and structured stderr failure diagnostics (`reason`, `phase: "spawn"`, `nativeCode`, `context.exitCode`, `context.signal`).
+    const childEmptyPathEnv = { ...isolatedEnv, PATH: "", Path: "" };
+    const isolatedChildRes = spawnSync(
+      process.execPath,
+      [runnerPath, "--event=SessionStart", "--hook=session-message"],
+      {
+        input: JSON.stringify({ conversationId: TEST_SESSION_ID, workspacePaths: [tmpDir] }),
+        encoding: "utf8",
+        timeout: 10000,
+        env: childEmptyPathEnv,
+      },
+    );
+    assert.equal(isolatedChildRes.status, 0);
+    assert.equal(isolatedChildRes.signal, null);
+    const childStderrLines = isolatedChildRes.stderr.trim().split(/\r?\n/u).filter(Boolean);
+    assert.equal(childStderrLines.length >= 1, true, `Expected isolated child stderr diagnostic, got: ${isolatedChildRes.stderr}`);
+    const childDiag = JSON.parse(childStderrLines[0]).agsAntigravityProcessIdentityFailure;
+    assert.equal(childDiag.reason, "HOST_PROCESS_INSPECTION_FAILED");
+    assert.equal(childDiag.phase, "spawn");
+    assert.equal(childDiag.nativeCode, "ENOENT");
+    assert.equal(childDiag.context.exitCode, null);
+    assert.equal(childDiag.context.signal, null);
+    assert.equal(childDiag.context.killed, false);
+    assert.equal(childDiag.context.producerCause?.type, "error");
+
+    // (d) Isolated child process default `handleSessionMessageHook` -> `ensure-relay` failure path (no `sessionMessageHook` callback):
+    // Uses a real live process (`process.pid` + `processStartToken(process.pid)`) and points `AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR`
+    // at a regular file so the default `handleSessionMessageHook` fails in `ensure-relay` and emits `[agent-governance-suite] peer-hook-failure`
+    // with phase/reason/context on the isolated child's stderr.
+    const blockedStateFile = path.join(tmpDir, "blocked-state-file");
+    writeFileSync(blockedStateFile, "not-a-directory", "utf8");
+    const defaultEnsureFailScript = [
+      `import { startAntigravitySessionPresenceAndRelay } from ${JSON.stringify(pathToFileURL(runnerPath).href)};`,
+      `import { processStartToken } from ${JSON.stringify(pathToFileURL(path.resolve("mcp-server/dist/session-message-hook.mjs")).href.replace("session-message-hook.mjs", "../src/process-identity.ts"))};`,
+      `const token = processStartToken(process.pid);`,
+      `await startAntigravitySessionPresenceAndRelay({ hook_event_name: "SessionStart", session_id: ${JSON.stringify(TEST_SESSION_ID)}, workspace_id: ${JSON.stringify(tmpDir)} }, {`,
+      `  now: () => 1000,`,
+      `  deadlineMonotonicMs: 60000,`,
+      `  resolveHostProcess: () => ({ pid: process.pid, startToken: token }),`,
+      `});`,
+    ].join("\n");
+    const ensureFailChild = spawnSync(
+      process.execPath,
+      ["--import", "tsx", "--input-type=module", "--eval", defaultEnsureFailScript],
+      {
+        cwd: path.resolve("."),
+        encoding: "utf8",
+        timeout: 10000,
+        env: {
+          ...isolatedEnv,
+          AGENT_GOVERNANCE_SHARED_STATE_DIR: blockedStateFile,
+          AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: blockedStateFile,
+        },
+      },
+    );
+    assert.equal(ensureFailChild.status, 0);
+    assert.equal(ensureFailChild.signal, null);
+    assert.match(ensureFailChild.stderr, /\[agent-governance-suite\] peer-hook-failure /u);
+    const peerFailureJson = ensureFailChild.stderr
+      .trim()
+      .split(/\r?\n/u)
+      .find((line) => line.startsWith("[agent-governance-suite] peer-hook-failure "))
+      ?.slice("[agent-governance-suite] peer-hook-failure ".length);
+    assert.ok(peerFailureJson, `Expected peer-hook-failure line in stderr, got: ${ensureFailChild.stderr}`);
+    const parsedPeerFailure = JSON.parse(peerFailureJson);
+    assert.equal(parsedPeerFailure.phase, "ensure-relay");
+    assert.equal(typeof parsedPeerFailure.reason, "string");
+    assert.equal(typeof parsedPeerFailure.context, "object");
   }
 
   console.log("antigravity-hook-runner tests: 16/16 passed");

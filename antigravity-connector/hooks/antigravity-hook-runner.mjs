@@ -507,13 +507,30 @@ function reportInspectionFailure(error, options) {
       const detail = inspectionFailures.get(failure);
       // Match the core native-code allowlist; never evaluate arbitrary error accessors or Proxy traps.
       let nativeCode;
-      try { nativeCode = detail.cause && !types.isProxy(detail.cause) ? Object.getOwnPropertyDescriptor(detail.cause, "code")?.value : undefined; }
+      let exitCode = null;
+      let signal = null;
+      let killed = null;
+      try {
+        if (detail.cause && !types.isProxy(detail.cause)) {
+          nativeCode = Object.getOwnPropertyDescriptor(detail.cause, "code")?.value;
+          const rawStatus = Object.getOwnPropertyDescriptor(detail.cause, "status")?.value ?? (typeof nativeCode === "number" ? nativeCode : undefined);
+          if (Number.isInteger(rawStatus) && rawStatus >= 0 && rawStatus <= 255) exitCode = rawStatus;
+          const rawSignal = Object.getOwnPropertyDescriptor(detail.cause, "signal")?.value;
+          if (typeof rawSignal === "string" && /^SIG[A-Z0-9]+$/u.test(rawSignal)) signal = rawSignal;
+          const rawKilled = Object.getOwnPropertyDescriptor(detail.cause, "killed")?.value;
+          if (typeof rawKilled === "boolean") killed = rawKilled;
+        }
+      }
       catch { /* Opaque native values use the fixed fallback. */ }
+      const baseContext = failureContext(failure);
+      const context = detail.phase === "spawn" || exitCode !== null || signal !== null || killed !== null
+        ? { ...baseContext, exitCode, signal, killed: Boolean(killed) }
+        : baseContext;
       const diagnostic = {
         reason: ["HOST_PROCESS_CLOCK_INVALID", "HOST_PROCESS_BUDGET_EXHAUSTED", "HOST_PROCESS_INSPECTION_FAILED"].includes(detail.code) ? detail.code : "HOST_PROCESS_INSPECTION_FAILED",
         phase: ["clock", "budget", "inspection", "spawn"].includes(detail.phase) ? detail.phase : "inspection",
         nativeCode: typeof nativeCode === "string" && ["ENOENT", "EACCES", "EPERM", "ETIMEDOUT", "ENOBUFS", "EIO", "EINVAL", "ESRCH", "ABORT_ERR"].includes(nativeCode) ? nativeCode : null,
-        context: failureContext(failure),
+        context,
       };
       console.error(JSON.stringify({ agsAntigravityProcessIdentityFailure: diagnostic }));
     }
