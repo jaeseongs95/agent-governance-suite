@@ -12,7 +12,9 @@ Hook이 추가한 `_continuityBinding`은 수정하거나 재사용하지 않는
 
 ## 복원
 
-Resume과 direct compact의 Hook 카드에는 본문이 없으며 `DEFER` metadata만 있다. 현재 사용자 요청과 task·epoch·revision·digest가 맞는지 확인한 뒤에만 카드의 값을 그대로 사용해 `load_context`를 호출한다. 반환된 snapshot도 과거 상태이므로 최신 사용자 요청이 우선한다.
+재개·인계 요청에서 이전 상태를 복원할 때는 스킬 본문을 읽는 것으로 상태 확인을 대신하지 않는다. Hook 카드가 없으면 `inspect_context`를 `schemaVersion: "1.0.0"`으로 실제 호출해 현재 작업의 후보를 확인한다. Resume과 direct compact의 Hook 카드에는 본문이 없으며 `DEFER` metadata만 있다. `DEFER` 후보의 task·epoch·revision·digest를 현재 사용자 요청과 대조한 뒤 `load_context`를 실제 호출한다. Hook 카드의 `candidateToken`·epoch·revision·digest를 그대로 사용한다. `inspect_context` 응답이면 `restoreToken`을 `candidateToken`으로, summary의 epoch·revision·snapshotDigest를 각각 epoch·revision·digest로 지정한다. 반환된 snapshot도 과거 상태이므로 최신 사용자 요청이 우선한다.
+
+`REJECT`, 후보 부재, binding 오류 또는 load 실패면 복원되지 않은 것으로 보고한다. 새 세션·fork라는 이유로 이전 세션과 같은 task라고 가정하거나 이전 revision·token을 재사용하지 않는다. 인계 파일 직접 읽기, checkpoint 저장 성공, 스킬 읽기만으로 정상 복원 성공을 대신하지 않는다.
 
 자동 후보 제공만 멈추려면 `suppress_context_restore`를 사용한다. 저장된 direct payload까지 지워야 한다는 명시적 요청이 있을 때만 `purge_direct_context`를 사용한다. `clear` 뒤 과거 epoch를 지울 때도 해당 snapshot의 epoch와 revision을 지정한다. purge는 direct payload와 본문을 담을 수 있는 idempotency 결과를 제거하지만 workflow receipt와 convergence root는 삭제하지 않는다.
 

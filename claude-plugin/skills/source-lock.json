@@ -52,7 +52,7 @@
       "version": "1.1.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:3554dd936066eb4637751e1acf43c7d69cb22b954dadb806be12be8d65ed22e5",
+      "integratedChecksum": "sha256:f51a5ec58eaacd0b7b0aa923ae5a0b8889226b00a5e960a42b9f5e4bf2409cd6",
       "checksumScope": "relative paths and normalized text bytes under skills/blocker-diagnostician"
     },
     {

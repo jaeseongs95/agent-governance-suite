@@ -42,6 +42,15 @@ it.each(["unsupported-sibling", "invalid-isolation"] as const)("actual index sta
   });
   try {
     await client.connect(transport);
+    // 모델 입력에는 증명을 요구하지 않지만, 훅을 거치지 않은 실서버 호출은 거부한다.
+    const advertised = (await client.listTools()).tools;
+    for (const name of ["get_skill_inventory", "classify_skills"]) {
+      const schema = advertised.find(tool => tool.name === name)?.inputSchema;
+      expect(schema, name).toBeDefined();
+      expect(schema!.required ?? [], name).not.toContain("_sessionProof");
+    }
+    const unsigned = await client.callTool({name: "get_skill_inventory", arguments: {}});
+    expect(JSON.parse((unsigned.content as Array<{text?: string}>).find(item => item.text)!.text!).error.code).toBe("BINDING_REQUIRED");
     // Built CLI on owned synthetic Claude input; no native identity collection.
     const issued = execFileSync(process.execPath, [path.join(root, "mcp-server", "dist", "governance-hook.mjs"), "--host=claude-code"], {
       cwd: root, env: environment, encoding: "utf8", timeout: 10_000, windowsHide: true,

@@ -80,7 +80,7 @@ function errorCode(response: unknown): string | null {
 }
 
 describe("MCP tool schema profiles", () => {
-  it("keeps default domain schemas with the common required root-proof contract when no profile is selected", async () => {
+  it("업무 필수 인자를 보존하고 호스트 주입 증명은 모델 필수 입력에서 제외한다", async () => {
     const implicit = await connect();
     const explicit = await connect("default");
     try {
@@ -92,13 +92,14 @@ describe("MCP tool schema profiles", () => {
         ...domain,
         properties: { ...domain.properties, _sessionProof: {
           type: "string", minLength: 16, maxLength: 8192,
-          description: "Issued by the current root hook; caller identity claims are not accepted.",
+          description: "호스트가 관리하는 필드이므로 생략한다. 호출자가 업무 인자를 보내면 현재 호스트 훅이 주입한다. 증명을 만들거나 찾아 넣지 않는다. 서버는 유효한 훅 발급 증명을 계속 요구한다.",
         } },
-        required: [...(domain.required ?? []).filter(name => name !== "_sessionBinding"), "_sessionProof"],
+        required: (domain.required ?? []).filter(name => name !== "_sessionBinding"),
       });
       for (const tool of implicitTools) {
         expect(tool.description?.length ?? 0, tool.name).toBeLessThanOrEqual(1024);
-        expect(tool.inputSchema.required, tool.name).toContain("_sessionProof");
+        expect(tool.inputSchema.required, tool.name).not.toContain("_sessionProof");
+        expect(tool.inputSchema.properties, tool.name).toHaveProperty("_sessionProof.description", expect.stringContaining("호스트가 관리하는 필드이므로 생략한다"));
         expect(tool.inputSchema.properties, tool.name).not.toHaveProperty("_sessionBinding");
         expect(tool.inputSchema.required, tool.name).not.toContain("_sessionBinding");
       }
@@ -118,7 +119,7 @@ describe("MCP tool schema profiles", () => {
       expect(tools.map((tool) => tool.name)).toEqual(defaults.map((tool) => tool.name));
       for (const tool of tools) {
         expect(tool.inputSchema.type, tool.name).toBe("object");
-        expect(tool.inputSchema.required, tool.name).toContain("_sessionProof");
+        expect(tool.inputSchema.required, tool.name).not.toContain("_sessionProof");
         expect(tool.inputSchema.properties, tool.name).not.toHaveProperty("_sessionBinding");
         for (const keyword of combinators) expect(tool.inputSchema, `${tool.name}.${keyword}`).not.toHaveProperty(keyword);
       }

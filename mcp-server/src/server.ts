@@ -412,9 +412,9 @@ export function createMcpServer(
   // Anthropic hosts cannot resolve $ref in tool schemas, so they receive fully inlined copies.
   const advertise = <T extends { inputSchema: Record<string, unknown> }>(tools: T[]): T[] => tools.map((tool) => {
     const inputSchema = structuredClone(tool.inputSchema) as ObjectSchema;
-    inputSchema.properties = { ...inputSchema.properties, [SESSION_PROOF_FIELD]: { type: "string", minLength: 16, maxLength: 8192, description: "Issued by the current root hook; caller identity claims are not accepted." } };
+    inputSchema.properties = { ...inputSchema.properties, [SESSION_PROOF_FIELD]: { type: "string", minLength: 16, maxLength: 8192, description: "호스트가 관리하는 필드이므로 생략한다. 호출자가 업무 인자를 보내면 현재 호스트 훅이 주입한다. 증명을 만들거나 찾아 넣지 않는다. 서버는 유효한 훅 발급 증명을 계속 요구한다." } };
     delete inputSchema.properties._sessionBinding;
-    inputSchema.required = [...new Set([...(inputSchema.required ?? []).filter(name => name !== "_sessionBinding"), SESSION_PROOF_FIELD])];
+    inputSchema.required = [...new Set((inputSchema.required ?? []).filter(name => name !== "_sessionBinding" && name !== SESSION_PROOF_FIELD))];
     if (usesInlineReferences(toolSchemaProfile) && JSON.stringify(inputSchema).includes('"$ref"')) {
       return { ...tool, inputSchema: inlineSchemaReferences(inputSchema, contractDocuments) };
     }

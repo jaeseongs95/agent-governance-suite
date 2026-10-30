@@ -36,6 +36,28 @@ describe("skill context optimization", () => {
     expect(report.baselineRevision).toBe("7bc7753012227938be2a46f68bf3e29d29d5ef34");
     expect(report.totals).toMatchObject({ skillCount: 20, baselineBytes: 115679, candidateBytes: 47606 });
   });
+  it.each([
+    "skills/blocker-diagnostician/references/entry-details.md",
+    "skills/blocker-diagnostician/references/diagnosis-protocol.md",
+    "skills/blocker-diagnostician/classification.json",
+    "skills/context-continuity/references/entry-details.md",
+  ])("역사 기준을 바꾸지 않고 현재 호스트 지침의 한 바이트 변경을 거부한다: %s", async relative => {
+    vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
+      const bytes = readFileSync(file, ...args);
+      if (String(file).replaceAll("\\", "/").endsWith(`/${relative}`)) {
+        const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1; return altered;
+      }
+      return bytes;
+    } }));
+    try {
+      vi.resetModules();
+      const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      expect(report.pass).toBe(false);
+      expect(report.errors).toContain(`live host guidance successor bytes differ: ${relative}`);
+    } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
+  });
+
   it("rejects altered contract evidence", async () => {
     const relative = "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json";
     vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {

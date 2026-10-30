@@ -460,6 +460,8 @@ const SKILL_POLICY_WORDING_SUCCESSOR = Object.freeze({
 });
 
 function matchesSkillPolicyWordingSuccessor(path, bytes) {
+  const liveGuidance = LIVE_HOST_GUIDANCE_SUCCESSOR.hashes[path];
+  if (liveGuidance && createHash("sha256").update(bytes).digest("hex") === liveGuidance[1]) return true;
   // Exact reviewed mid-task successor follows the same pinned historical projection.
   if (matchesOrchestratorSourceSuccessor(path, bytes)) return true;
   return Object.hasOwn(SKILL_POLICY_WORDING_SUCCESSOR.hashes, path)
@@ -513,7 +515,23 @@ const IMPLEMENTATION_PATHS = new Set([
   "skills/workspace-convention-profiler/scripts/validate-skill.mjs",
 ]);
 
+// D0352: 현재 인계·진단 지침만 정확히 결속하고 원 최적화·정책 기준은 보존한다.
+const LIVE_HOST_GUIDANCE_SUCCESSOR = Object.freeze({
+  baselineRevision: "da970747e70da326bf153c2705bc3d60721c33ee",
+  hashes: {
+    "skills/blocker-diagnostician/classification.json": ["adc6f1a1379db237f9a12dee058818a17398555aab7ab2ba0e029b72393dd2a7", "3c18e212dfa724027c245ec1692cd39addd12e762cc635f3cb9c5cf09dc73eec"],
+    "skills/blocker-diagnostician/references/entry-details.md": ["440ba2e05abdebdb4cb92ffdb310824d32dc0905b1a4c03345c166ecf0f62e32", "ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"],
+    "skills/blocker-diagnostician/references/diagnosis-protocol.md": ["4fffd3c0656ffee3caca1eb072a5f9a3f6a3c91ba7f15644c973c9050c9437c1", "4d7d9e47a2549d2af39565646aa8ce8e7da3c52006367cafb7fc34d243749610"],
+    "skills/context-continuity/references/entry-details.md": ["10b186ff6d32f5b2533c7af0e28d27e98d08a8131da2a5954f6ca20fe88f72fe", "cde5ef02442ecbc0966957e4a74a38cf84f9a0f7fe17ba4e574d895eec7b2576"],
+  },
+});
+
 function historicalBytes(path, bytes) {
+  const guidance = LIVE_HOST_GUIDANCE_SUCCESSOR.hashes[path];
+  if (guidance && createHash("sha256").update(bytes).digest("hex") === guidance[1]) {
+    bytes = git("show", `${LIVE_HOST_GUIDANCE_SUCCESSOR.baselineRevision}:${path}`);
+    if (createHash("sha256").update(bytes).digest("hex") !== guidance[0]) throw new Error(`Historical live host guidance differs: ${path}`);
+  }
   if (!matchesSkillPolicyWordingSuccessor(path, bytes)) return bytes;
   const original = git("show", `${SKILL_POLICY_WORDING_SUCCESSOR.baselineRevision}:${path}`);
   if (createHash("sha256").update(original).digest("hex") !== SKILL_POLICY_WORDING_SUCCESSOR.previousHashes[path]) throw new Error(`Historical skill policy wording source differs: ${path}`);
@@ -737,6 +755,11 @@ export function checkRegistryContextCompatibility(registry) {
 
 export function checkSkillContextOptimization() {
   const errors = [];
+  for (const [currentPath, hashes] of Object.entries(LIVE_HOST_GUIDANCE_SUCCESSOR.hashes)) {
+    if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== hashes[1]) {
+      errors.push(`live host guidance successor bytes differ: ${currentPath}`);
+    }
+  }
   for (const [currentPath, expectedHash] of Object.entries(TASK_CONTRACT_ROUTING_SOURCE_HASHES)) {
     if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== expectedHash) {
       errors.push(`task-contract routing source differs: ${currentPath}`);

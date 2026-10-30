@@ -13,6 +13,8 @@ node scripts/validate-report.mjs --request failures.json --request-digest "sha25
 
 보고서를 만들기 전에 `digest-request.mjs`가 반환한 digest를 외부 workflow 상태에 동결한다. `validate-report.mjs`에는 원 request와 외부에 보관한 digest를 함께 전달한다. 모든 명령은 stdin도 지원하고 JSON만 stdout으로 반환한다. 제안한 검사를 직접 실행하거나 파일·외부 상태를 바꾸지 않는다.
 
+원 요청의 변경 금지는 진단 입출력 파일, 임시 디렉터리와 외부 workflow 상태 쓰기에도 적용한다. 허용된 stdin/stdout 경로를 사용하되, 외부 digest 동결을 포함한 보고서 요건을 충족할 수 없으면 정형 보고서 생성·검증을 미실행으로 남기고 관측한 실패·확인된 원인 또는 미확정 사항·다음 행동을 사용자 요약으로 반환한다. 보고서를 만들기 위해 새 쓰기 권한을 요청하거나 금지를 우회하지 않는다.
+
 ## 절차
 
 1. episode별 operation, stable tuple과 환경 digest를 보존해 cluster를 만든다.

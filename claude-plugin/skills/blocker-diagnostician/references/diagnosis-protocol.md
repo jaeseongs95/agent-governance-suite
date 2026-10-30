@@ -12,6 +12,8 @@ caller가 제공한 stable tuple과 operation, environment digest를 canonical J
 
 진단 request 전체도 canonical JSON으로 직렬화해 SHA-256을 계산한다. 이 값은 보고서를 만들기 전에 외부 workflow 상태에 동결한다. 보고서 검증 시 원 request, 외부 동결 digest와 보고서의 `requestArtifactDigest`가 모두 일치해야 한다.
 
+실제 진단의 `artifactDigest`는 참조한 원 산출물의 바이트에서, `environmentDigest`와 `resultDigest`는 각각 실제 환경 관측과 검사 결과 원자료에서 기존 표준 SHA-256 기능(예: `node:crypto`의 `createHash`)으로 계산한다. 구조화한 원자료는 기존 `core.mjs`의 `canonicalJson`으로 직렬화하고 계산 대상과 근거 위치를 보존한다. `inputDigest`는 `checkInputDigest`, `requestArtifactDigest`는 `digest-request.mjs`의 계산값을 사용한다. 계산하지 않은 반복값·예시값을 실측 digest로 쓰지 않는다. 원자료나 계산 권한이 없으면 그 한계를 보고하며 가짜 값으로 보고서를 완성하지 않는다. 검증기의 통과는 원자료를 실제 측정했다는 증명이 아니다.
+
 ## 다음 판별 검사
 
 유효한 검사는 다음 조건을 모두 만족한다.
@@ -36,3 +38,5 @@ caller가 제공한 stable tuple과 operation, environment digest를 canonical J
 - 필수 자료나 도구에 접근할 수 없으면 `BLOCKED`
 
 새 정보 없이 같은 검사를 다시 제안하지 않는다. 진단 자체는 수정이나 저장된 workflow 상태 변경을 실행하지 않는다. 진단 뒤 실제 수정·재시도는 원 사용자 요청·goal·프로젝트 지침이 이미 허용한 범위에서 계속하고, 새 승인 대상 행위만 별도 승인을 받는다.
+
+도구의 권한 거절은 원문과 실패 단계를 보존하고 같은 행위를 다른 표현이나 도구로 재요청하지 않는다. 응답을 계속할 수 있으면 이미 얻은 실패·확인된 원인 또는 미확정 사항·기존 권한 안의 다음 행동을 요약하고, 거절된 명령·보고서 생성·검증을 미실행으로 밝힌다. 실행기가 거절 뒤 응답을 종료했다면 최종보고 부재를 별도 미충족으로 남긴다. 프로세스 종료 코드 0만으로 진단이나 보고서 생성을 성공으로 집계하지 않는다.

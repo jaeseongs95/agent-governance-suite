@@ -27,9 +27,9 @@
     },
     {
       "path": "skills/blocker-diagnostician/references/entry-details.md",
-      "startLine": 27,
-      "endLine": 27,
-      "digest": "sha256:440ba2e05abdebdb4cb92ffdb310824d32dc0905b1a4c03345c166ecf0f62e32"
+      "startLine": 29,
+      "endLine": 29,
+      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"
     }
   ],
   "exclusions": [
@@ -55,33 +55,33 @@
     },
     {
       "path": "skills/blocker-diagnostician/references/entry-details.md",
-      "startLine": 24,
-      "endLine": 24,
-      "digest": "sha256:440ba2e05abdebdb4cb92ffdb310824d32dc0905b1a4c03345c166ecf0f62e32"
-    },
-    {
-      "path": "skills/blocker-diagnostician/references/entry-details.md",
-      "startLine": 29,
-      "endLine": 29,
-      "digest": "sha256:440ba2e05abdebdb4cb92ffdb310824d32dc0905b1a4c03345c166ecf0f62e32"
-    },
-    {
-      "path": "skills/blocker-diagnostician/references/entry-details.md",
-      "startLine": 30,
-      "endLine": 30,
-      "digest": "sha256:440ba2e05abdebdb4cb92ffdb310824d32dc0905b1a4c03345c166ecf0f62e32"
+      "startLine": 26,
+      "endLine": 26,
+      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"
     },
     {
       "path": "skills/blocker-diagnostician/references/entry-details.md",
       "startLine": 31,
       "endLine": 31,
-      "digest": "sha256:440ba2e05abdebdb4cb92ffdb310824d32dc0905b1a4c03345c166ecf0f62e32"
+      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"
     },
     {
       "path": "skills/blocker-diagnostician/references/entry-details.md",
       "startLine": 32,
       "endLine": 32,
-      "digest": "sha256:440ba2e05abdebdb4cb92ffdb310824d32dc0905b1a4c03345c166ecf0f62e32"
+      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"
+    },
+    {
+      "path": "skills/blocker-diagnostician/references/entry-details.md",
+      "startLine": 33,
+      "endLine": 33,
+      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"
+    },
+    {
+      "path": "skills/blocker-diagnostician/references/entry-details.md",
+      "startLine": 34,
+      "endLine": 34,
+      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"
     }
   ]
 }
