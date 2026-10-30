@@ -159,7 +159,7 @@ if (process.argv[4] === "worker") {
     assert.throws(() => assertFrozenReservations(corruptReservations), {code: "ERR_ASSERTION"});
     const fullReservation = Number(fullValidatedPico) / 1e12;
     assert.equal(fullReservation, frozenFullUsd, "FULL_21_INDEPENDENT_CURRENT_WIRE_RESERVATION");
-    if (all <= 150000000000n) {
+    if (fullValidatedPico <= 150000000000n) {
       assert.equal(fullChecked.status, "READY_FOR_OPERATOR_DISPATCH");
       let fullCalls = 0;
       const fullResult = await api.run(full, {env, executionKind: "offline-mock", fetcher: async (_url, init) => {fullCalls++; return response(init);}});
