@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const f = vi.hoisted(() => ({ now: 100, request: vi.fn(), token: vi.fn(), spawn: vi.fn() }));
+const f = vi.hoisted(() => ({ now: 100, request: vi.fn(), token: vi.fn(), spawn: vi.fn(), observeSpawn: vi.fn() }));
 vi.mock("node:perf_hooks", () => ({ performance: { now: () => f.now } }));
 vi.mock("node:child_process", async (original) => ({ ...await original<typeof import("node:child_process")>(), spawn: f.spawn }));
 vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
@@ -10,6 +10,7 @@ vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
 vi.mock("../../mcp-server/src/process-identity.js", async (original) => ({
   ...await original<typeof import("../../mcp-server/src/process-identity.js")>(), processStartToken: f.token,
 }));
+vi.mock("../../mcp-server/src/relay-wake-observation.js", () => ({ createRelaySpawnObservation: f.observeSpawn }));
 import { handleSessionMessageHook, runSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import { adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
@@ -39,6 +40,7 @@ const options = () => ({ ensureRelay: true, hostProcess: { pid: 424242, startTok
 
 beforeEach(() => {
   f.now = 100; f.request.mockReset(); f.token.mockReset(); f.spawn.mockReset();
+  f.observeSpawn.mockReset();
   f.request.mockResolvedValue(grant()); f.token.mockReturnValue("T1");
   f.spawn.mockImplementation(() => Object.assign(new EventEmitter(), { unref: vi.fn() }));
   vi.stubEnv("AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", "1");
@@ -83,6 +85,28 @@ it("어댑터가 소유한 시작 자식의 참조와 살아 있는 훅 계보�
   expect(child.unref).not.toHaveBeenCalled();
   // 시작 요청은 예산 안에 끝나고 이후 자식 종료 대기는 어댑터가 맡는다.
   expect(f.request).toHaveBeenCalledTimes(1);
+});
+
+it.each([true, false])("진단 기록 전에 오류 처리와 자식 소유권을 확정한다: 소유자=%s", async (owned) => {
+  const relayOwner = vi.fn();
+  let state: {errorListeners: number; ownerCalls: number; unrefCalls: number} | undefined;
+  const returned = vi.fn(() => {
+    const child = f.spawn.mock.results[0]!.value;
+    state = {errorListeners: child.listenerCount("error"), ownerCalls: relayOwner.mock.calls.length,
+      unrefCalls: child.unref.mock.calls.length};
+  });
+  f.observeSpawn.mockReturnValue({ returned, spawned: vi.fn(), failed: vi.fn(), threw: vi.fn() });
+  await handleSessionMessageHook(input, syntheticHost, 424242, {
+    ...options(), ...(owned ? {relayOwner} : {}),
+  });
+  expect(returned).toHaveBeenCalledTimes(1);
+  expect(state).toEqual({errorListeners: 1, ownerCalls: owned ? 1 : 0, unrefCalls: owned ? 0 : 1});
+});
+
+it("진단 준비로 기존 예산이 소진되면 자식을 생성하지 않는다", async () => {
+  f.observeSpawn.mockImplementation(() => {f.now = 1001;});
+  await handleSessionMessageHook(input, syntheticHost, 424242, options());
+  expect(f.spawn).not.toHaveBeenCalled();
 });
 
 it("관측한 호스트 결속과 중개기 규약을 보존하며 기존 Claude 시작 relay를 소유한다", async () => {

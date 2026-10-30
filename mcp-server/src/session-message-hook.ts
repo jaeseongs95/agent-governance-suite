@@ -15,6 +15,7 @@ import type { SessionMessageTransport } from "./session-message-relay.js";
 import type { SessionMessage } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
 import { processStartToken } from "./process-identity.js";
+import { createRelaySpawnObservation } from "./relay-wake-observation.js";
 import { adaptHostInput, hostDeliveryProfile, isGovernanceHookTool, nativePeerWait, resolveHookHost, resolveHookProcessPid, type SupportedHookHost } from "./host-input-adapter.js";
 
 // Addons register and consume this exact bundled namespace; other bundles/processes have separate registries.
@@ -157,7 +158,12 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
   if (!observedStartToken || (hostProcess && (hostProcess.pid !== hostPid || (relayId && explicitHostPid !== undefined && explicitHostPid !== hostProcess.pid) || hostProcess.startToken !== observedStartToken))) return;
   const startToken = hostProcess?.startToken ?? observedStartToken;
   remainingBudget(budget);
-  const child = spawn(process.execPath, [
+  const environment = relayEnv && Object.keys(relayEnv).length > 0 ? { ...process.env, ...relayEnv } : process.env;
+  const observation = createRelaySpawnObservation(transport, environment);
+  remainingBudget(budget); // Diagnostic preparation must never permit a spawn after the existing deadline.
+  let child: ChildProcess;
+  try {
+    child = spawn(process.execPath, [
     relayPath,
     "--host", host,
     "--session-id", sessionId,
@@ -170,11 +176,17 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     detached: !relayOwner,
     windowsHide: true,
     stdio: "ignore",
-    env: relayEnv && Object.keys(relayEnv).length > 0 ? { ...process.env, ...relayEnv } : process.env,
+    env: environment,
   });
+  } catch (error) {
+    observation?.threw();
+    throw error;
+  }
+  child.once("spawn", () => { observation?.spawned(); });
   // Spawn failure is asynchronous for every startup path; without a listener it would escape the hook unreported.
   child.once("error", (error) => {
     reportHookFailure("relay-start", error); // A verified startup remains latched; no automatic respawn.
+    observation?.failed();
   });
   if (relayOwner) {
     // 프로세스 참조와 OS 계보를 유지한다. 비동기 어댑터의 종료 대기는 훅 요청 예산 밖에 둔다.
@@ -184,6 +196,8 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
       throw error;
     }
   } else child.unref();
+  // Preserve error handling and ownership before potentially slow diagnostic I/O.
+  observation?.returned(child.pid);
 }
 
 export type RecordedSessionMessage = SessionMessage & { sourceReceiptId: string; contentDigest: string };

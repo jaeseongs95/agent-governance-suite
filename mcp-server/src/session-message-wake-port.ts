@@ -106,7 +106,7 @@ const FAILURE_HISTORY_WRITERS_PER_KIND = 4;
 
 export function writeRelayDiagnosticSnapshot(target: string, serialized: string): boolean {
   let descriptor: number | undefined;
-  let written = false;
+  let written: boolean;
   try {
     // O_NOFOLLOW is not supplied on every platform; the opened descriptor is also checked before any write.
     descriptor = openSync(target, constants.O_WRONLY | constants.O_CREAT | constants.O_NONBLOCK
