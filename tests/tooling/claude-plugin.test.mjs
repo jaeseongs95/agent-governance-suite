@@ -241,10 +241,16 @@ describe("generated Claude plugin", () => {
     }
     // Messaging runs before the board; the intake has no per-prompt selector.
     expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[4], allowedScripts[3]]);
-    // Relay startup keeps exec form so its parent is the host rather than a transient shell.
+    // 공식 비동기 시작이 훅과 relay 계보를 유지하며 본문 수신 훅은 계속 동기로 실행한다.
     const messageSessionStart = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[4]));
     expect(messageSessionStart).toHaveLength(1);
-    expect(messageSessionStart[0].hooks).toEqual([expect.objectContaining({ command: "node", args: [allowedScripts[4]] })]);
+    expect(messageSessionStart[0].hooks).toEqual([expect.objectContaining({ command: "node", args: [allowedScripts[4], "--own-relay"], async: true })]);
+    for (const event of ["UserPromptSubmit", "PostToolUse", "Stop", "SessionEnd"]) {
+      for (const hook of claudeHooks.hooks[event].flatMap(group => group.hooks).filter(hook => hook.args[0] === allowedScripts[4])) {
+        expect(hook.args).toEqual([allowedScripts[4]]);
+        expect(hook.async).toBeUndefined();
+      }
+    }
 
     const governanceGroups = claudeHooks.hooks.PreToolUse.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[5]));
     expect(governanceGroups).toHaveLength(1);

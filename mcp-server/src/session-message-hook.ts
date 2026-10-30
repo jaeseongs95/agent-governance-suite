@@ -2,7 +2,7 @@ import { isHookEntry } from "./hook-entry.js";
 import { actorAccess } from "./input-observation.js";
 import { hookFailure, hookFailureContext, hookFailureReason, retainHookFailureCause, retainHookFailureSecondary, tagHookFailure, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 import "./builtin-hook-host-adapters.js";
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
@@ -44,8 +44,10 @@ export interface SessionMessageHookOptions {
   recoverExistingSession?: boolean;
   /** Host adapter callback; snapshots the claiming event's generation before asynchronous recovery. */
   resolveHostProcess?: () => Readonly<{ pid: number; startToken: string }> | null | Promise<Readonly<{ pid: number; startToken: string }> | null>;
-  /** Adapter-scoped environment overrides passed only to a spawned detached relay child; never mutates process.env. */
+  /** Adapter-scoped environment overrides passed only to a spawned relay child; never mutates process.env. */
   relayEnv?: Readonly<Record<string, string | undefined>>;
+  /** 비동기 수명 어댑터가 참조된 자식을 close까지 소유한다. 동기 복구 훅에서는 사용하지 않는다. */
+  relayOwner?: (child: ChildProcess) => void;
   /** Adapter starts this same-process monotonic deadline before imports/resolution, excluding its stdout reserve. */
   executionBudget?: Readonly<{ deadlineMonotonicMs: number; postClaimReserveMs: number }>;
   /** Synchronous observation only, IDs only. Returns are ignored; throws/rejections cannot change claim or cleanup.
@@ -119,6 +121,7 @@ function snapshotOptions(options: SessionMessageHookOptions): SessionMessageHook
   if (options.ensureRelay !== undefined && typeof options.ensureRelay !== "boolean") throw hookFailure("INVALID_RELAY_ENSURE_OPTION", "Invalid relay ensure capability.");
   if (options.recoverExistingSession !== undefined && typeof options.recoverExistingSession !== "boolean") throw hookFailure("INVALID_RELAY_RECOVERY_OPTION", "Invalid relay recovery capability.");
   if (options.resolveHostProcess !== undefined && typeof options.resolveHostProcess !== "function") throw hookFailure("INVALID_HOST_PROCESS_RESOLVER", "Invalid host process resolver.");
+  if (options.relayOwner !== undefined && typeof options.relayOwner !== "function") throw hookFailure("INVALID_RELAY_OWNER", "Invalid relay owner.");
   if (options.relayEnv !== undefined && (!options.relayEnv || typeof options.relayEnv !== "object" || Array.isArray(options.relayEnv))) {
     throw hookFailure("INVALID_RELAY_ENV", "Invalid relay environment overrides.");
   }
@@ -145,7 +148,7 @@ function readHostStartToken(pid: number, budget: HookBudget): string | null {
   return token;
 }
 
-function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>, budget?: HookBudget, relayId?: string, relayEnv?: Readonly<Record<string, string | undefined>>): void {
+function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>, budget?: HookBudget, relayId?: string, relayEnv?: Readonly<Record<string, string | undefined>>, relayOwner?: SessionMessageHookOptions["relayOwner"]): void {
   remainingBudget(budget);
   const relayPath = fileURLToPath(new URL("./session-message-relay.mjs", import.meta.url));
   const hostPid = relayId ? hostProcess?.pid : resolveHookProcessPid(host, explicitHostPid, hostProcess);
@@ -164,7 +167,7 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     "--parent-start-token", startToken,
     ...(relayId ? ["--relay-id",relayId]:[]),
   ], {
-    detached: true,
+    detached: !relayOwner,
     windowsHide: true,
     stdio: "ignore",
     env: relayEnv && Object.keys(relayEnv).length > 0 ? { ...process.env, ...relayEnv } : process.env,
@@ -173,7 +176,14 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
   child.once("error", (error) => {
     reportHookFailure("relay-start", error); // A verified startup remains latched; no automatic respawn.
   });
-  child.unref();
+  if (relayOwner) {
+    // 프로세스 참조와 OS 계보를 유지한다. 비동기 어댑터의 종료 대기는 훅 요청 예산 밖에 둔다.
+    try { relayOwner(child); }
+    catch (error) {
+      try { child.kill(); } catch (stopError) { reportHookFailure("relay-start", stopError); }
+      throw error;
+    }
+  } else child.unref();
 }
 
 export type RecordedSessionMessage = SessionMessage & { sourceReceiptId: string; contentDigest: string };
@@ -326,7 +336,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         || !/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(result.relayId)
         || !result.relayId.endsWith(":" + expectedInstance.slice("host-process-v1:".length))) throw hookFailure("INVALID_STARTUP_GRANT", "Invalid relay startup grant.");
       remainingBudget(budget);
-      startRelay(host, sessionId, result.instanceId, transport, explicitHostPid, hostProcess, budget, result.relayId, options.relayEnv);
+      startRelay(host, sessionId, result.instanceId, transport, explicitHostPid, hostProcess, budget, result.relayId, options.relayEnv, adapted.lifecycle === "start" ? options.relayOwner : undefined);
     } catch (error) {
       reportHookFailure("ensure-relay", error); // Never retry or fall back after an uncertain grant.
     }
@@ -363,7 +373,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       return {}; // No relay can start without a confirmed presence response.
     }
     remainingBudget(budget);
-    startRelay(host, sessionId, instanceId, transport, explicitHostPid, hostProcess, budget, undefined, options.relayEnv);
+    startRelay(host, sessionId, instanceId, transport, explicitHostPid, hostProcess, budget, undefined, options.relayEnv, options.relayOwner);
     return {};
   }
   if (adapted.lifecycle === "end") {

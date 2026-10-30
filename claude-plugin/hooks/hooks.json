@@ -8,7 +8,8 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs"],
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-message-hook.mjs", "--own-relay"],
+            "async": true,
             "timeout": 10,
             "statusMessage": "Checking peer messages"
           }

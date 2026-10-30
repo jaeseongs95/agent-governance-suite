@@ -1,7 +1,9 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { once } from "node:events";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { createInterface } from "node:readline";
 import { afterEach, describe, expect, it } from "vitest";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -102,6 +104,45 @@ describe("Claude launcher stage diagnostics", () => {
     expect(result.stdout).toBe("");
     expect(result.stderr).toBe("");
     expect(diagnostics(result.stderr)).toEqual([]);
+  });
+
+  it("session-message-hook: 비동기 시작이 자식 종료까지 실제 relay 조상으로 남는다", async () => {
+    // 무해한 자식으로 실행기 소유권과 OS 계보를 검사한다. CLI·중개기·수신 소켓은 실행하지 않는다.
+    const directory = await install("session-message-hook.mjs", `
+      import { spawn } from "node:child_process";
+      import { once } from "node:events";
+      export async function runSessionMessageHookOutcome(host, raw, pid, options) {
+        const child = spawn(process.execPath, ["-e", "process.send({pid:process.pid,ppid:process.ppid});process.on('disconnect',()=>process.exit(0));setInterval(()=>{},1000)"],
+          { detached: false, windowsHide: true, stdio: ["ignore", "ignore", "ignore", "ipc"] });
+        options.relayOwner(child);
+        const [identity] = await once(child, "message");
+        return { ok: true, output: JSON.stringify(identity) + "\\n" };
+      }
+    `);
+    const launcher = spawn(process.execPath, [path.join(directory, "hooks", "session-message-hook.mjs"), "--own-relay"],
+      { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+    const closed = once(launcher, "close");
+    const lines = createInterface({ input: launcher.stdout });
+    const ready = once(lines, "line", { signal: AbortSignal.timeout(5000) });
+    launcher.stdin.end(JSON.stringify({ hook_event_name: "SessionStart", session_id: "owned-relay-fixture" }));
+    let relayPid;
+    try {
+      const [line] = await ready;
+      const identity = JSON.parse(line);
+      relayPid = identity.pid;
+      expect(identity.ppid).toBe(launcher.pid);
+      expect(launcher.exitCode).toBeNull();
+      expect(process.kill(launcher.pid, 0)).toBe(true);
+      process.kill(relayPid, "SIGTERM");
+      const [status] = await closed;
+      expect(status).toBe(0);
+      expect(() => process.kill(relayPid, 0)).toThrow();
+    } finally {
+      lines.close();
+      // 실패 정리는 보관한 실행기 핸들로만 한다. 자식은 IPC 단절 때 종료하므로 PID를 재사용해 죽이지 않는다.
+      if (launcher.exitCode === null) launcher.kill("SIGKILL");
+      await closed;
+    }
   });
 
   it("session-message-hook: reports an invalid bundle outcome as the outcome stage", async () => {

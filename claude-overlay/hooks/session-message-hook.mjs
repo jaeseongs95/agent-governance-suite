@@ -7,6 +7,19 @@ import { types } from "node:util";
 
 const LAUNCHER = "session-message-hook";
 
+// 공식 비동기 SessionStart 명령만 선택한다. 입력·본문·영수증 훅은 계속 동기로 실행한다.
+let relayClosed;
+function ownRelay(child) {
+  relayClosed = new Promise((resolve) => {
+    const stop = () => child.kill();
+    process.once("exit", stop);
+    child.once("close", () => {
+      process.removeListener("exit", stop);
+      resolve();
+    });
+  });
+}
+
 function reportLauncherFailure(stage, cause) {
   try {
     let code;
@@ -27,7 +40,8 @@ try {
   const run = bundle.runSessionMessageHookOutcome;
   if (typeof run !== "function") throw Object.assign(new Error("Launcher export is missing."), { code: "LAUNCHER_EXPORT_MISSING" });
   stage = "run";
-  const outcome = await run("claude-code", raw);
+  const outcome = await run("claude-code", raw, undefined,
+    process.argv.includes("--own-relay") ? { relayOwner: ownRelay } : {});
   stage = "outcome";
   if (!outcome || typeof outcome !== "object" || typeof outcome.ok !== "boolean" || typeof outcome.output !== "string") {
     throw Object.assign(new Error("Launcher outcome is invalid."), { code: "LAUNCHER_OUTCOME_INVALID" });
@@ -41,3 +55,7 @@ try {
 } catch (cause) {
   reportLauncherFailure(stage, cause);
 }
+
+// 참조를 유지한 비분리 자식 덕분에 이 훅이 호스트의 검증된 프로세스 트리에 남는다.
+// 공식 비동기 훅 취소가 그 트리를 회수하며, 정상 child close는 이 훅의 대기도 끝낸다.
+if (relayClosed) await relayClosed;

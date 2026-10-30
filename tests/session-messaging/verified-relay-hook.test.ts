@@ -73,6 +73,46 @@ it("uses a single non-replayed ensure grant without emitting claim observations"
   });
 });
 
+it("어댑터가 소유한 시작 자식의 참조와 살아 있는 훅 계보를 유지한다", async () => {
+  const relayOwner = vi.fn();
+  await handleSessionMessageHook(input, syntheticHost, 424242, { ...options(), relayOwner });
+  const child = f.spawn.mock.results[0]!.value;
+  expect(f.spawn.mock.calls[0]![2]).toMatchObject({ detached: false, stdio: "ignore" });
+  expect(relayOwner).toHaveBeenCalledTimes(1);
+  expect(relayOwner).toHaveBeenCalledWith(child);
+  expect(child.unref).not.toHaveBeenCalled();
+  // 시작 요청은 예산 안에 끝나고 이후 자식 종료 대기는 어댑터가 맡는다.
+  expect(f.request).toHaveBeenCalledTimes(1);
+});
+
+it("관측한 호스트 결속과 중개기 규약을 보존하며 기존 Claude 시작 relay를 소유한다", async () => {
+  f.request.mockResolvedValue({});
+  const relayOwner = vi.fn();
+  await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: input.session_id }, "claude-code", undefined, { relayOwner });
+  const child = f.spawn.mock.results[0]!.value;
+  const args = f.spawn.mock.calls[0]![1] as string[];
+  expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["presence-start"]);
+  expect(args[args.indexOf("--parent-pid") + 1]).toBe(String(process.ppid));
+  expect(args[args.indexOf("--parent-start-token") + 1]).toBe("T1");
+  expect(args).not.toContain("--relay-id");
+  expect(f.spawn.mock.calls[0]![2]).toMatchObject({ detached: false });
+  expect(relayOwner).toHaveBeenCalledTimes(1);
+  expect(relayOwner).toHaveBeenCalledWith(child);
+  expect(child.unref).not.toHaveBeenCalled();
+});
+
+it("어댑터가 소유권을 받지 못하면 새 자식만 종료하고 시작을 반복하지 않는다", async () => {
+  const child = Object.assign(new EventEmitter(), { kill: vi.fn(), unref: vi.fn() });
+  f.spawn.mockReturnValue(child);
+  await handleSessionMessageHook(input, syntheticHost, 424242, {
+    ...options(), relayOwner: () => { throw new Error("synthetic owner failed"); },
+  });
+  expect(child.kill).toHaveBeenCalledTimes(1);
+  expect(child.unref).not.toHaveBeenCalled();
+  expect(f.spawn).toHaveBeenCalledTimes(1);
+  expect(f.request).toHaveBeenCalledTimes(1);
+});
+
 it.each([
   { ...grant(), spawn: false },
   { ...grant(), relayId: "invalid" },
@@ -221,6 +261,21 @@ it("recovers a missing relay through the same non-replayed verified grant, then 
   expect(f.request.mock.calls[1]![3]).toMatchObject({ noOperationReplay: true, deadlineMonotonicMs: 1000 });
   expect(f.request.mock.calls[2]![3]).toMatchObject({ noOperationReplay: true, deadlineMonotonicMs: 800 });
   expect(onClaimState.mock.calls.map(([state]) => state.phase)).toEqual(["request-attempted", "response-received"]);
+});
+
+it("동기 복구 자식을 비동기 수명 소유자에게 넘기지 않는다", async () => {
+  const relayOwner = vi.fn();
+  f.request.mockImplementation(async (operation) => {
+    if (operation === "list-presence") return { sessions: [] };
+    if (operation === "ensure-relay") return grant();
+    return { messages: [] };
+  });
+  await handleSessionMessageHook(post, syntheticHost, undefined,
+    { ...recover(() => options().hostProcess), relayOwner });
+  const child = f.spawn.mock.results[0]!.value;
+  expect(f.spawn.mock.calls[0]![2]).toMatchObject({ detached: true });
+  expect(child.unref).toHaveBeenCalledTimes(1);
+  expect(relayOwner).not.toHaveBeenCalled();
 });
 
 it.each(["unknown-result", "invalid-grant", "pid-reused"])("never falls back to legacy startup during recovery: %s", async (failure) => {
