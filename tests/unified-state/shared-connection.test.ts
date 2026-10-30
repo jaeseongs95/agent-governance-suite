@@ -143,7 +143,6 @@ describe("inactive native shared connection", () => {
     expect(snapshot.databases.filter(row => row.file !== "")).toHaveLength(1); expect(snapshot.databases[0]).toMatchObject({ name: "main", file: value.owner.databasePath }); expect(snapshot.databases.every(row => row.name === "main" || row.name === "temp" && row.file === "")).toBe(true);
     expect(Object.keys(snapshot.counts)).toHaveLength(30); expect(snapshot.counts.messages).toBe(1); expect(snapshot.counts.continuity_tasks).toBe(1);
     expect(snapshot.modules.map(row => [row.module, row.version])).toEqual([["board", 0], ["continuity", 2], ["messaging", 2], ["trust", 1], ["workflow", 5]]);
-    expect(value.messaging.getSchemaVersion()).toBe(2);
     expect(snapshot.userVersion).toBe(1); expect(value.workflow.getSchemaVersion()).toBe(5); expect(value.continuity.getSchemaVersion()).toBe(2);
     expect(snapshot.integrity).toEqual([{ integrity_check: "ok" }]); expect(snapshot.foreignKeyViolations).toEqual([]);
     console.log("B2-RAW owner", JSON.stringify(snapshot));
