@@ -3,6 +3,16 @@ name: CI
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      source_sha:
+        description: "생성할 공식 저장소 커밋 SHA (생략 시 워크플로 이벤트 SHA)"
+        required: false
+        type: string
+      d0352_isolated:
+        description: "고정된 D0352 격리 후보 패치로 생성"
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - main
@@ -23,6 +33,9 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+    env:
+      WORKFLOW_EXECUTION_SHA: ${{ github.workflow_sha }}
+      D0352_ISOLATED: ${{ inputs.d0352_isolated && 'true' || 'false' }}
     steps:
       - name: Initialize generation evidence
         shell: bash
@@ -30,11 +43,39 @@ jobs:
           log="$RUNNER_TEMP/d0352-generation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           printf 'GENERATION_LOG_DIR=%s\n' "$log" >> "$GITHUB_ENV"
           mkdir -p "$log"
-      - name: Check out event commit
+      - name: Validate source commit selection
+        id: source
+        shell: bash
+        env:
+          SOURCE_SHA_INPUT: ${{ inputs.source_sha }}
+        run: |
+          set +e
+          (
+            set -euo pipefail
+            source_sha=${SOURCE_SHA_INPUT:-$GITHUB_SHA}
+            if [[ ! "$source_sha" =~ ^[0-9a-fA-F]{40}$ ]]; then
+              printf 'source_sha must be exactly 40 hexadecimal characters\n' >&2
+              exit 1
+            fi
+            source_sha=${source_sha,,}
+            if [[ "$D0352_ISOLATED" == true && "$source_sha" != 838cae9dfb97fb1cbf8a4f3779b93e2464e3e56b ]]; then
+              printf 'd0352_isolated requires its fixed base source_sha\n' >&2
+              exit 1
+            fi
+            printf 'GENERATION_SOURCE_SHA=%s\n' "$source_sha" >> "$GITHUB_ENV"
+            printf 'eventSha=%s\nworkflowSha=%s\nsourceSha=%s\nrepository=jaeseongs95/agent-governance-suite\n' "$GITHUB_SHA" "$WORKFLOW_EXECUTION_SHA" "$source_sha"
+          ) > "$GENERATION_LOG_DIR/source-selection.stdout" 2> "$GENERATION_LOG_DIR/source-selection.stderr"
+          code=$?
+          printf '%s\n' "$code" > "$GENERATION_LOG_DIR/source-selection.exit-code.txt"
+          cat "$GENERATION_LOG_DIR/source-selection.stdout"
+          cat "$GENERATION_LOG_DIR/source-selection.stderr" >&2
+          exit "$code"
+      - name: Check out selected official source commit
         id: checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: ${{ github.sha }}
+          repository: jaeseongs95/agent-governance-suite
+          ref: ${{ env.GENERATION_SOURCE_SHA }}
           persist-credentials: false
           fetch-depth: 0
       - name: Set up Node.js
@@ -69,8 +110,84 @@ jobs:
             return "$code"
           }
           run_phase head-before git rev-parse HEAD 'HEAD^{tree}'
-          test "$(head -n 1 "$log/head-before.stdout")" = "$GITHUB_SHA"
+          run_phase workflow-identity git rev-parse "$WORKFLOW_EXECUTION_SHA" "${WORKFLOW_EXECUTION_SHA}^{tree}"
+          run_phase source-object-type git cat-file -t "$GENERATION_SOURCE_SHA"
+          test "$(cat "$log/source-object-type.stdout")" = commit
+          test "$(head -n 1 "$log/head-before.stdout")" = "$GENERATION_SOURCE_SHA"
           run_phase status-before git status --porcelain=v1
+          if [[ "$D0352_ISOLATED" == true ]]; then
+            run_phase isolated-assembly python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+
+          log = Path(os.environ["GENERATION_LOG_DIR"])
+          base = "838cae9dfb97fb1cbf8a4f3779b93e2464e3e56b"
+          expected_paths = sorted([
+              "runtime/engineering-practices/CONTENT_LOCK.json",
+              "scripts/check-skill-context-optimization.mjs",
+              "skills/orchestrator/SKILL.md",
+              "skills/orchestrator/classification.json",
+              "skills/orchestrator/references/engineering-practices/cli.md",
+              "skills/orchestrator/references/entry-details.md",
+              "tests/skill-classification/fixtures.json",
+              "tests/skill-classification/fixtures.source-successor.json",
+              "tests/skill-classification/source-binding-successor.test.ts",
+          ])
+
+          def require(condition, reason):
+              if not condition:
+                  raise ValueError(reason)
+
+          def git(name, *arguments):
+              result = subprocess.run(["git", *arguments], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+              (log / (name + ".stdout")).write_bytes(result.stdout)
+              (log / (name + ".stderr")).write_bytes(result.stderr)
+              (log / (name + ".exit-code.txt")).write_text(str(result.returncode) + "\n", encoding="utf-8")
+              require(result.returncode == 0, name + " failed")
+              return result.stdout
+
+          workflow = os.environ["WORKFLOW_EXECUTION_SHA"]
+          manifest_bytes = git("isolated-manifest-read", "show", workflow + ":.github/ci/d0352-hotfix-r01/manifest.json")
+          patch = git("isolated-patch-read", "show", workflow + ":.github/ci/d0352-hotfix-r01/candidate.patch")
+          (log / "isolated-manifest.json").write_bytes(manifest_bytes)
+          patch_path = log / "isolated-candidate.patch"
+          patch_path.write_bytes(patch)
+          manifest = json.loads(manifest_bytes)
+          require(type(manifest) is dict and {"mode", "baseSha", "sourceCommit", "expectedTree", "patchSha256", "files"} <= set(manifest), "invalid manifest schema")
+          require(manifest["mode"] == "d0352-isolated-r01" and manifest["baseSha"] == base, "invalid isolated base or mode")
+          require(manifest["sourceCommit"] == "cf5d8a55aaab766bd2d8c9c7d0009acc9d0ba1cc", "unexpected candidate source commit")
+          require(manifest["expectedTree"] == "7bca9d6a13ad77abacf12b39e46ce2df70b18cd9", "unexpected candidate tree")
+          require(manifest["patchSha256"] == hashlib.sha256(patch).hexdigest(), "patch digest mismatch")
+          files = manifest["files"]
+          require(type(files) is list and len(files) == len(expected_paths), "invalid file inventory")
+          for entry in files:
+              require(type(entry) is dict and {"path", "baseSha256", "sha256", "bytes"} <= set(entry), "invalid file entry schema")
+              require(type(entry["path"]) is str and entry["path"] in expected_paths, "unexpected file path")
+              require(all(type(entry[key]) is str and re.fullmatch(r"[0-9a-f]{64}", entry[key]) for key in ("baseSha256", "sha256")), "invalid file digest")
+              require(type(entry["bytes"]) is int and entry["bytes"] >= 0, "invalid file byte count")
+          require(sorted(entry["path"] for entry in files) == expected_paths, "file inventory mismatch")
+          require(git("isolated-head-before", "rev-parse", "HEAD").decode().strip() == base, "source HEAD differs from base")
+          require(not git("isolated-status-before", "status", "--porcelain=v1"), "source checkout is not clean")
+          for index, entry in enumerate(files):
+              original = git("isolated-base-file-" + str(index), "show", base + ":" + entry["path"])
+              require(hashlib.sha256(original).hexdigest() == entry["baseSha256"], "base file digest mismatch")
+          git("isolated-apply", "apply", "--index", "--binary", str(patch_path))
+          assembled = git("isolated-tree", "write-tree").decode().strip()
+          require(assembled == manifest["expectedTree"], "assembled tree mismatch")
+          changed = git("isolated-changed-files", "diff", "--cached", "--name-only", "-z", base, "--")
+          require(sorted(os.fsdecode(name) for name in changed.split(b"\0") if name) == expected_paths, "changed file inventory mismatch")
+          for index, entry in enumerate(files):
+              content = git("isolated-index-file-" + str(index), "show", ":" + entry["path"])
+              require(len(content) == entry["bytes"] and hashlib.sha256(content).hexdigest() == entry["sha256"], "candidate file digest or size mismatch")
+              require(Path(entry["path"]).read_bytes() == content, "worktree differs from candidate index")
+          require(git("isolated-head-after", "rev-parse", "HEAD").decode().strip() == base, "assembly changed source HEAD")
+          (log / "isolated-assembly.json").write_text(json.dumps({"mode": manifest["mode"], "baseSha": base, "sourceCommit": manifest["sourceCommit"], "assembledTree": assembled}, indent=2) + "\n", encoding="utf-8")
+          PY
+          fi
           run_phase corepack corepack enable
           run_phase install pnpm install --frozen-lockfile
           run_phase build pnpm build
@@ -78,11 +195,16 @@ jobs:
           run_phase bundle-check pnpm bundle:check
           run_phase claude-check pnpm claude:check
           run_phase context-check pnpm skills:context-check
+          if [[ "$D0352_ISOLATED" == true ]]; then
+            run_phase source-check pnpm source:check
+            run_phase isolated-tests pnpm exec vitest run tests/tooling/skill-context-optimization.test.mjs tests/skill-classification/source-binding-successor.test.ts
+          fi
       - name: Collect generation evidence on every outcome
         id: finalize
         if: ${{ always() }}
         shell: bash
         env:
+          SOURCE_OUTCOME: ${{ steps.source.outcome }}
           CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
           NODE_OUTCOME: ${{ steps.node.outcome }}
           PYTHON_OUTCOME: ${{ steps.python.outcome }}
@@ -108,7 +230,7 @@ jobs:
                   problems.append({"phase": name, "exitCode": result.returncode})
               return (log / (name + ".stdout")).read_bytes()
 
-          for phase in ("head-before", "status-before", "corepack", "install", "build", "claude-build", "bundle-check", "claude-check", "context-check"):
+          for phase in ("source-object-type", "head-before", "workflow-identity", "status-before", "isolated-assembly", "corepack", "install", "build", "claude-build", "bundle-check", "claude-check", "context-check", "source-check", "isolated-tests"):
               status = log / (phase + ".status.txt")
               if not status.exists():
                   status.write_text("NOT_RUN\n", encoding="utf-8")
@@ -134,10 +256,21 @@ jobs:
                       digest.update(chunk)
               files.append({"path": name, "bytes": file.stat().st_size, "sha256": digest.hexdigest()})
           (log / "repository-files.sha256.json").write_text(json.dumps(files, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          workflow_identity = (log / "workflow-identity.stdout").read_text(encoding="utf-8").splitlines() if (log / "workflow-identity.stdout").exists() else []
+          source_identity = (log / "head-before.stdout").read_text(encoding="utf-8").splitlines() if (log / "head-before.stdout").exists() else []
+          source_after = (log / "head-after.stdout").read_text(encoding="utf-8").splitlines() if (log / "head-after.stdout").exists() else []
+          assembly = json.loads((log / "isolated-assembly.json").read_bytes()) if (log / "isolated-assembly.json").exists() else {}
           summary = {
               "eventSha": os.environ["GITHUB_SHA"], "ref": os.environ["GITHUB_REF"],
+              "workflowSha": os.environ["WORKFLOW_EXECUTION_SHA"], "workflowTree": workflow_identity[1] if len(workflow_identity) == 2 else None,
+              "sourceSha": os.environ.get("GENERATION_SOURCE_SHA"), "sourceHead": source_identity[0] if source_identity else None,
+              "sourceTree": source_identity[1] if len(source_identity) == 2 else None,
+              "preSourceTree": source_identity[1] if len(source_identity) == 2 else None,
+              "postSourceTree": source_after[1] if len(source_after) == 2 else None,
+              "isolatedMode": os.environ["D0352_ISOLATED"] == "true",
+              "assembledTree": assembly.get("assembledTree"), "candidateSourceCommit": assembly.get("sourceCommit"),
               "runId": os.environ["GITHUB_RUN_ID"], "runAttempt": os.environ["GITHUB_RUN_ATTEMPT"],
-              "outcomes": {name: os.environ.get(name, "") for name in ("CHECKOUT_OUTCOME", "NODE_OUTCOME", "PYTHON_OUTCOME", "GENERATION_OUTCOME")},
+              "outcomes": {name: os.environ.get(name, "") for name in ("SOURCE_OUTCOME", "CHECKOUT_OUTCOME", "NODE_OUTCOME", "PYTHON_OUTCOME", "GENERATION_OUTCOME")},
               "collectionErrors": problems,
           }
           (log / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
