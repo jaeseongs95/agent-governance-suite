@@ -20,9 +20,11 @@ import {
   isRecognizedAntigravityHostProcess,
   resolveAntigravityWakeEnvironment,
   resolveLongLivedHostProcess,
+  resolveVerifiedAntigravityHostProcess,
   runConnectorFromRaw,
   startAntigravitySessionPresenceAndRelay,
   translateCanonicalOutputToAntigravity,
+  windowsProcessChainScript,
 } from "./antigravity-hook-runner.mjs";
 
 const runnerPath = fileURLToPath(new URL("./antigravity-hook-runner.mjs", import.meta.url));
@@ -1772,6 +1774,57 @@ try {
     assert.equal(parsedPeerFailure.phase, "ensure-relay");
     assert.equal(typeof parsedPeerFailure.reason, "string");
     assert.equal(typeof parsedPeerFailure.context, "object");
+
+    // (e) Windows process chain WMI query (`Get-CimInstance Win32_Process`) failure must NOT be swallowed by an empty catch:
+    // distinguishes "query failure" (`HOST_PROCESS_INSPECTION_FAILED` delivered via `reportInspectionFailure`) from
+    // "normal end of parent chain without an Antigravity host" (`null` returned with 0 inspection failures).
+    const chainScript = windowsProcessChainScript(100, 6, 1500);
+    assert.equal(chainScript.includes("catch {}"), false, "Get-CimInstance query must not swallow errors in an empty catch {}");
+    if (process.platform === "win32") {
+      const failingCimRes = spawnSync(
+        "powershell.exe",
+        [
+          "-NoProfile",
+          "-NonInteractive",
+          "-Command",
+          `function Get-CimInstance { throw [System.InvalidOperationException]::new('SIMULATED_WMI_FAILURE') }; ${windowsProcessChainScript(process.pid, 6, 1500)}`,
+        ],
+        { encoding: "utf8", windowsHide: true, timeout: 5000 },
+      );
+      assert.notEqual(failingCimRes.status, 0, "Failing Get-CimInstance must terminate with non-zero status instead of returning an empty chain");
+      assert.notEqual(failingCimRes.stdout.trim(), "[]");
+    }
+    const chainEndFailures = [];
+    const chainEndResult = await resolveVerifiedAntigravityHostProcess({
+      now: () => 1000,
+      deadlineMonotonicMs: 10200,
+      pidResolverOptions: {
+        inspectProcess: (pid) =>
+          pid === process.ppid
+            ? { pid: process.ppid, parentPid: 0, name: "cmd.exe", command: "C:\\Windows\\System32\\cmd.exe", startToken: "2026-10-27T00:00:00.000Z" }
+            : null,
+      },
+      onInspectionFailure: (failure) => chainEndFailures.push(failure),
+    });
+    assert.equal(chainEndResult, null);
+    assert.equal(chainEndFailures.length, 0, "Normal parent-chain termination must not report an inspection failure");
+
+    const wmiFailure = new Error("WMI_CIM_QUERY_FAILED");
+    const queryFailures = [];
+    const queryFailResult = await resolveVerifiedAntigravityHostProcess({
+      now: () => 1000,
+      deadlineMonotonicMs: 10200,
+      pidResolverOptions: {
+        inspectProcess: () => {
+          throw wmiFailure;
+        },
+      },
+      onInspectionFailure: (failure) => queryFailures.push(failure),
+    });
+    assert.equal(queryFailResult, null);
+    assert.equal(queryFailures.length, 1, "Process chain query failure must be reported via reportInspectionFailure");
+    assert.equal(queryFailures[0].code, "HOST_PROCESS_INSPECTION_FAILED");
+    assert.equal(queryFailures[0].cause, wmiFailure);
   }
 
   console.log("antigravity-hook-runner tests: 16/16 passed");

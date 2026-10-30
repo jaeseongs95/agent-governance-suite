@@ -237,13 +237,13 @@ export function extractLinuxProcStatStartToken(statText = "") {
   return token || null;
 }
 
-function windowsProcessChainScript(startPid, maxDepth, timeoutMs) {
+export function windowsProcessChainScript(startPid, maxDepth, timeoutMs) {
   return [
     "$agsRows = [System.Collections.Generic.List[object]]::new()",
     "$agsSeen = @{}",
     "$agsWatch = [System.Diagnostics.Stopwatch]::StartNew()",
     "$agsCimMap = @{}",
-    "try { foreach ($agsItem in (Get-CimInstance Win32_Process -Property ProcessId,ParentProcessId,Name,ExecutablePath,CommandLine,CreationDate -ErrorAction Stop)) { if ($null -ne $agsItem.ProcessId) { $agsCimMap[[int]$agsItem.ProcessId] = $agsItem } } } catch {}",
+    "foreach ($agsItem in (Get-CimInstance Win32_Process -Property ProcessId,ParentProcessId,Name,ExecutablePath,CommandLine,CreationDate -ErrorAction Stop)) { if ($null -ne $agsItem.ProcessId) { $agsCimMap[[int]$agsItem.ProcessId] = $agsItem } }",
     "$agsCursor = " + startPid,
     "for ($agsDepth=0; $agsDepth -lt " + maxDepth + "; $agsDepth++) {",
     "  if ($agsCursor -lt 1 -or $agsSeen.ContainsKey($agsCursor) -or (" + timeoutMs + " - $agsWatch.ElapsedMilliseconds) -lt " + MIN_RESOLVER_BUDGET_MS + ") { break }",
@@ -423,7 +423,11 @@ export function resolveLongLivedHostProcess(startPid = process.ppid, platform = 
       let info;
       try {
         info = chain ? chain[chainIndex++] : inspectProcess(curPid, platform, remaining);
-      } catch {
+      } catch (error) {
+        if (options?.rethrowInspectionError) throw error;
+        if (typeof options?.onInspectionFailure === "function" || typeof options?.onProcessIdentityFailure === "function") {
+          reportInspectionFailure(error, options);
+        }
         return null;
       }
       if (!info || !Number.isInteger(info.pid) || info.pid !== curPid) return null;
@@ -446,7 +450,11 @@ export function resolveLongLivedHostProcess(startPid = process.ppid, platform = 
       curPid = nextPid;
     }
     return null;
-  } catch {
+  } catch (error) {
+    if (options?.rethrowInspectionError) throw error;
+    if (typeof options?.onInspectionFailure === "function" || typeof options?.onProcessIdentityFailure === "function") {
+      reportInspectionFailure(error, options);
+    }
     return null;
   }
 }
@@ -541,7 +549,7 @@ function reportInspectionFailure(error, options) {
 async function inspectNativeHostProcess(startPid, platform, options, budget) {
   const maxDepth = Math.min(MAX_ANCESTOR_DEPTH, Number.isInteger(options.maxDepth) && options.maxDepth > 0 ? options.maxDepth : MAX_ANCESTOR_DEPTH);
   if (typeof options.inspectProcess === "function" || typeof options.inspectProcessChain === "function") {
-    const result = resolveLongLivedHostProcess(startPid, platform, { ...options, timeoutMs: budget.remaining(), now: budget.now });
+    const result = resolveLongLivedHostProcess(startPid, platform, { ...options, rethrowInspectionError: true, timeoutMs: budget.remaining(), now: budget.now });
     budget.remaining();
     return result;
   }
