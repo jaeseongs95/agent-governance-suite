@@ -55,7 +55,7 @@ async function writerLock(filename: string, holdMs: number) {
     }
   `, { eval: true, workerData: { filename, shared: cells.buffer, holdMs } });
   let failure: Error | undefined;
-  worker.on("error", error => { failure = error; });
+  worker.on("error", error => { failure = error instanceof Error ? error : new Error(String(error)); });
   const exited = new Promise<number>(resolve => worker.once("exit", resolve));
   const waitFor = (phase: number) => {
     const deadline = performance.now() + 5000;
