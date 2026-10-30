@@ -241,18 +241,21 @@ const activities = {
 test.each([...Object.keys(activities), 'before-expiry'])('same-generation activity %s after expiry retires the latch after the grace', kind => {
   const f = fixture();
   let ackClaim = [];
-  if (kind === 'acknowledge') {
-    // Leave this original claim expired before reserving the wake: an in-flight
-    // delivery deliberately prevents a second wake. The later ACK still proves activity.
-    const claimAt = f.now - 120_001;
-    body(f.store, 'activity-ack-body', claimAt - 1);
-    ackClaim = f.store.claim(target, claimAt);
-    assert.equal(ackClaim.length, 1);
-    assert.ok(f.store.database.prepare('SELECT claim_until FROM messages WHERE message_id = ?')
-      .get('activity-ack-body').claim_until < iso(f.now));
-  }
+  if (kind === 'acknowledge') body(f.store, 'activity-ack-body', f.now - 1);
   const old = latched(f);
   const expiry = Date.parse(attemptRow(f.store, old).expires_at);
+  if (kind === 'acknowledge') {
+    // Reserve before delivery starts: an active claim already suppresses a new wake.
+    // Claim before expiry, then ACK while its lease is live just after expiry.
+    // Only the ACK is post-expiry activity; pending-body remains for the next wake.
+    keepAlive(f.store, 'instance-1', 'relay-1', expiry - 1);
+    ackClaim = f.store.claim(target, expiry - 1, { maxMessages: 1 });
+    assert.deepEqual(ackClaim.map(message => message.messageId), ['activity-ack-body']);
+    assert.ok(f.store.database.prepare('SELECT claim_until FROM messages WHERE message_id = ?')
+      .get('activity-ack-body').claim_until > iso(expiry + 1));
+    assert.equal(f.store.database.prepare('SELECT active_at FROM session_activity WHERE host = ? AND session_id = ?')
+      .get(target.host, target.sessionId).active_at, iso(expiry - 1));
+  }
   if (kind === 'before-expiry') activities.claimDeferred(f.store, expiry - 1);
   else {
     const result = activities[kind](f.store, expiry + 1, ackClaim);

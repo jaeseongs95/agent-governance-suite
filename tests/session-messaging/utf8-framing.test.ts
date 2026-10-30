@@ -3,8 +3,9 @@ import { once } from "node:events";
 import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import tls from "node:tls";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
 import { BrokerRequestRejected, requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
 import {
@@ -141,6 +142,7 @@ it("delivers twelve batches of Korean messages through the CLI claim path byte f
   const state = await launch();
   const cli = async (operation: string, payload: Record<string, unknown>) => (await runSessionMessageCli(JSON.stringify({ operation, payload }), state)).data;
   const broken: number[] = [];
+  const chunkLayouts: { round: number; claim: number; bytes: number; chunks: number[]; firstChunkHead: number }[] = [];
   let replacementCharacters = 0;
   for (let round = 0; round < 12; round += 1) {
     // 원래 여덟 본문과 길이·ASCII 이동을 유지한다. 영수증을 포함한 응답 예산에 따라 최대 두 번에 나뉠 수 있다.
@@ -148,7 +150,29 @@ it("delivers twelve batches of Korean messages through the CLI claim path byte f
     queue(state, target, bodies);
     const receivedMessages: SessionMessage[] = [];
     for (let claim = 0; claim < 2 && receivedMessages.length < bodies.length; claim += 1) {
-      const data = await cli("claim", { target }) as { messages: SessionMessage[] };
+      const responses: Buffer[][] = [];
+      const connect = tls.connect;
+      // 원 TLS 연결·청크를 그대로 전달한다. 16384바이트 위치나 OS 분할 형태를 실제 관측으로 가정하지 않는다.
+      const observer = vi.spyOn(tls, "connect").mockImplementation((...args: Parameters<typeof tls.connect>) => {
+        const socket = connect(...args);
+        const chunks: Buffer[] = [];
+        responses.push(chunks);
+        socket.on("data", (chunk: Buffer) => { chunks.push(Buffer.from(chunk)); });
+        return socket;
+      });
+      let data: { messages: SessionMessage[] };
+      try { data = await cli("claim", { target }) as { messages: SessionMessage[] }; }
+      finally { observer.mockRestore(); }
+      expect(responses).toHaveLength(1);
+      const chunks = responses[0]!;
+      const wire = Buffer.concat(chunks);
+      expect(wire.equals(Buffer.from(`${JSON.stringify({ ok: true, data })}\n`))).toBe(true);
+      const firstChunkHead = chunks.length > 1 ? headBytes(wire, chunks[0]!.length) : 0;
+      if (firstChunkHead > 0) {
+        const start = chunks[0]!.length - firstChunkHead;
+        expect(wire.subarray(start, start + 3).toString("utf8")).toMatch(/^[가-힣]$/u);
+      }
+      chunkLayouts.push({ round, claim, bytes: wire.length, chunks: chunks.map(chunk => chunk.length), firstChunkHead });
       const { messages } = data;
       expect(messages.length).toBeGreaterThan(0);
       expect(Buffer.byteLength(`${JSON.stringify({ ok: true, data })}\n`)).toBeLessThanOrEqual(SESSION_MESSAGE_MAX_RESPONSE_BYTES);
@@ -165,6 +189,10 @@ it("delivers twelve batches of Korean messages through the CLI claim path byte f
     if (received.length !== bodies.length || received.some((body, index) => !Buffer.from(body).equals(Buffer.from(bodies[index]!)))) broken.push(round);
   }
   expect({ broken, replacementCharacters }).toEqual({ broken: [], replacementCharacters: 0 });
+  console.info("실제 TLS claim chunk 경계", JSON.stringify(chunkLayouts));
+  expect(chunkLayouts).toEqual(expect.arrayContaining([
+    expect.objectContaining({ firstChunkHead: 1 }), expect.objectContaining({ firstChunkHead: 2 }),
+  ]));
 }, 60_000);
 
 it("hands a Korean claim answer one byte under the limit to the CLI instead of retrying into an empty 120 s lease", async () => {
