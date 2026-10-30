@@ -219,9 +219,10 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   assert.equal(governance.parentMidtaskDigest, hash(midtaskBytes));
   if (bindRegistry) assert.equal(governance.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
   const fixtureBytes = await readFile(path.join(repo, "tests/skill-classification/fixtures.json"));
-  assert.equal(governance.fixtureDigest, hash(fixtureBytes));
+  // r08의 원 입력은 동결한다. 현재 입력은 아래 r10 원측정에 결속한다.
+  assert.equal(governance.fixtureDigest, "sha256:d3490862893ee85f13dbee39ad992498bf7a76360c898d30d8089e5e485c1b88");
   const currentFixture = JSON.parse(fixtureBytes.toString("utf8"));
-  assert.equal(governance.fixtureOracleDigest, currentFixture.oracleDigest);
+  assert.equal(governance.fixtureOracleDigest, "sha256:e48f0d37e8675f046a00648451fc3086753af97d663ca4a0aa18b8fdad386666");
   assert.deepEqual(governance.rows.map((row: {caseId: string}) => row.caseId), midtask.rows.map((row: {caseId: string}) => row.caseId));
   assert.deepEqual(governance.inheritedFields, ["precisionCases", "syntheticOverBudgetCases", "fractionalRoundingFixture"]);
   let capturedPicoUsd = 0n, maxCapturedPicoUsd = 0n, capturedUtf8Bytes = 0;
@@ -249,8 +250,8 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   assert.equal(recovery.sourceCommit, "8221fffd3bb65962ecb6be796e0fa6f2b588ce45");
   assert.equal(recovery.parentGovernanceBehaviorDigest, hash(governanceBytes));
   if (bindRegistry) assert.equal(recovery.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
-  assert.equal(recovery.fixtureDigest, hash(fixtureBytes));
-  assert.equal(recovery.fixtureOracleDigest, currentFixture.oracleDigest);
+  assert.equal(recovery.fixtureDigest, governance.fixtureDigest);
+  assert.equal(recovery.fixtureOracleDigest, governance.fixtureOracleDigest);
   assert.deepEqual(recovery.rows.map((row: {caseId: string}) => row.caseId), governance.rows.map((row: {caseId: string}) => row.caseId));
   assert.deepEqual(recovery.inheritedFields, governance.inheritedFields);
   let recoveryPicoUsd = 0n, maxRecoveryPicoUsd = 0n, recoveryUtf8Bytes = 0;
@@ -269,18 +270,46 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   assert.equal(recovery.totals.maxUtf8Bytes, "125019");
   assert.equal(recovery.totals.maxReservedPicoUsd, maxRecoveryPicoUsd.toString());
   assert.equal(maxRecoveryPicoUsd.toString(), "5250798000");
+  // r09도 보존한다. 실제·독립 인코더가 일치한 지정 CI의 r10만 현재 전송 입력으로 쓴다.
+  const invocationBytes = await readFile(new URL("./budget-wire-orchestrator-invocation-successor.json", import.meta.url));
+  assert.equal(hash(invocationBytes), "sha256:f9bdab55ab00309ea04096d6d8665e64165d1eb897057dc5898f553cff854fc2");
+  const invocation = JSON.parse(invocationBytes.toString("utf8"));
+  assert.equal(invocation.revision, "ags-bootstrap-budget-orchestrator-invocation-source-binding-r10");
+  assert.equal(invocation.sourceCommit, "9da7022d2f3bffdbea50865b841640733643e25d");
+  assert.equal(invocation.parentRecoveryDeliberationDigest, hash(recoveryBytes));
+  if (bindRegistry) assert.equal(invocation.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
+  assert.equal(invocation.fixtureDigest, hash(fixtureBytes));
+  assert.equal(invocation.fixtureOracleDigest, currentFixture.oracleDigest);
+  assert.deepEqual(invocation.rows.map((row: {caseId: string}) => row.caseId), recovery.rows.map((row: {caseId: string}) => row.caseId));
+  assert.deepEqual(invocation.inheritedFields, recovery.inheritedFields);
+  let invocationPicoUsd = 0n, maxInvocationPicoUsd = 0n, invocationUtf8Bytes = 0;
+  for (const row of invocation.rows as {utf8Bytes: number; reservedPicoUsd: string}[]) {
+    const picoUsd = BigInt(row.reservedPicoUsd);
+    assert.equal(picoUsd, BigInt(row.utf8Bytes) * 42000n);
+    invocationPicoUsd += picoUsd; invocationUtf8Bytes += row.utf8Bytes;
+    if (picoUsd > maxInvocationPicoUsd) maxInvocationPicoUsd = picoUsd;
+  }
+  assert.equal(invocation.totals.utf8Bytes, String(invocationUtf8Bytes));
+  assert.equal(invocation.totals.reservedPicoUsd, invocationPicoUsd.toString());
+  const invocationFirstTwo = invocation.rows.slice(0, 2).reduce((sum: bigint, row: {reservedPicoUsd: string}) => sum + BigInt(row.reservedPicoUsd), 0n);
+  assert.equal(invocation.totals.firstTwoPicoUsd, invocationFirstTwo.toString());
+  assert.equal(invocation.totals.firstTwoUsdDecimal, "0.010549686000");
+  assert.equal(invocation.totals.reservedUsdDecimal, "0.110766012000");
+  assert.equal(invocation.totals.maxUtf8Bytes, "125679");
+  assert.equal(invocation.totals.maxReservedPicoUsd, maxInvocationPicoUsd.toString());
+  assert.equal(maxInvocationPicoUsd.toString(), "5278518000");
   const currentRows = successor.rows.map((row: {caseId: string; utf8Bytes: number}, index: number) => {
     const historical = registrySuccessor.rows[index];
     assert.equal(historical.caseId, row.caseId);
     assert.equal(historical.utf8Bytes, row.utf8Bytes);
     assert.equal(solid.rows[index].caseId, row.caseId);
     assert.equal(midtask.rows[index].caseId, row.caseId);
-    const current = recovery.rows[index];
+    const current = invocation.rows[index];
     assert.equal(current.caseId, row.caseId);
     return {...row, ...current};
   });
-  const oracle = {...predecessor, inventoryDigest: recovery.inventoryDigest, fixtureDigest: recovery.fixtureDigest,
-    fixtureOracleDigest: recovery.fixtureOracleDigest, rows: currentRows, totals: recovery.totals,
+  const oracle = {...predecessor, inventoryDigest: invocation.inventoryDigest, fixtureDigest: invocation.fixtureDigest,
+    fixtureOracleDigest: invocation.fixtureOracleDigest, rows: currentRows, totals: invocation.totals,
     syntheticOverBudgetCases: predecessor.syntheticOverBudgetCases.map((row: {id: string}, index: number) => {
       assert.equal(successor.syntheticOverBudgetCases[index].id, row.id);
       assert.equal(solid.syntheticOverBudgetCases[index].id, row.id);
@@ -290,7 +319,7 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
     }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...midtask.fractionalRoundingFixture}};
   return {oracleBytes, boundaryBytes, oracle, precision: {...precision,
     cases: precision.cases.map((row: {id: string}, index: number) => ({...row, ...midtask.precisionCases[index]}))},
-  successorDigest: hash(recoveryBytes), successorRevision: recovery.revision};
+  successorDigest: hash(invocationBytes), successorRevision: invocation.revision};
 }
 
 // Explicit authoring command captures only current public request/wire inputs. It neither runs nor qualifies a provider.
