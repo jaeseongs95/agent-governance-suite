@@ -479,7 +479,7 @@ export async function checkClaudePlugin(root = ROOT) {
   try {
     actualPaths = await walk(outputRoot, outputRoot, root);
   } catch (error) {
-    if (error?.code === "ENOENT" && error.relativePath === OUTPUT_DIRECTORY) return [`${OUTPUT_DIRECTORY}/ is missing; run pnpm claude:build`];
+    if (error?.code === "ENOENT" && error.relativePath === OUTPUT_DIRECTORY) return [`${OUTPUT_DIRECTORY}/ is missing; run pnpm claude:build (${describeFileFailure("readdir", error)})`];
     const failedPath = error.relativePath ?? OUTPUT_DIRECTORY;
     const state = error?.code === "ENOENT" ? "missing" : "unreadable";
     return [`${failedPath}/ is ${state} (${describeFileFailure("readdir", error)}); fix access to it before comparing`];
@@ -495,7 +495,7 @@ export async function checkClaudePlugin(root = ROOT) {
     } catch (error) {
       const failedPath = diagnosticPath(root, path.join(outputRoot, relativePath));
       problems.push(error?.code === "ENOENT"
-        ? `missing file ${failedPath}`
+        ? `missing file ${failedPath} (${describeFileFailure("readFile", error)})`
         : `unreadable file ${failedPath} (${describeFileFailure("readFile", error)}); not compared`);
       continue;
     }

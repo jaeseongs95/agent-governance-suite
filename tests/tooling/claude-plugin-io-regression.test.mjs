@@ -123,6 +123,7 @@ it.each(modes)("D0112: actual absent installed file is missing via %s", async mo
   const result = await run(root, mode);
   unavailable(result, mode);
   expect(result.text).toContain(`missing file ${installed}`);
+  expect(result.text).toContain("(readFile ENOENT)");
   expect(result.text).not.toContain("unreadable");
 });
 
@@ -132,6 +133,7 @@ it.each(modes)("D0112: actual absent output directory is missing via %s", async 
   const result = await run(root, mode);
   unavailable(result, mode);
   expect(result.text).toContain("claude-plugin/ is missing");
+  expect(result.text).toContain("(readdir ENOENT)");
   expect(result.text).not.toContain("unreadable");
 });
 
