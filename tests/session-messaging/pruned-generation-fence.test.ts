@@ -106,6 +106,46 @@ describe("D0354 정리 이후에도 유지되는 검증 부모 세대 울타리"
     expect(f.store.presence(target).instanceId).toBe(birth(103, "parent-D"));
   });
 
+  it.each([0, -10_000])("B의 같은 ms 재등록 뒤 시계 이동 %ims에도 새 C를 한 번만 예약한다", clockOffset => {
+    const f = fixture();
+    const b = f.start(101);
+    expect(f.store.endPresence(target, "normal-stop", b.instanceId, now)).toBe(true);
+    f.failures.set(1101, "ESRCH");
+    const restarted = f.ensure(101, b.instanceId);
+    expect(restarted).toMatchObject({ spawn: true, instanceId: b.instanceId });
+    expect(f.probe).toHaveBeenCalledWith(1101, 0);
+    expect(f.row(b.instanceId)).toMatchObject({ started_at: new Date(now + 1).toISOString(), superseded_at: null });
+
+    vi.setSystemTime(now + clockOffset);
+    const c = f.ensure(102, b.instanceId);
+    expect(c).toMatchObject({ spawn: true, instanceId: birth(102, "parent-C"), relayId: expect.any(String) });
+    expect(f.store.presence(target)).toMatchObject({ instanceId: c.instanceId, state: "online" });
+    expect(f.row(b.instanceId)).toMatchObject({ superseded_at: new Date(now + clockOffset).toISOString() });
+    expect(f.store.relayOwner(target, transport)).toMatchObject({ instanceId: c.instanceId, relayId: c.relayId, pid: 0 });
+    expect(f.store.database.prepare("SELECT instance_id FROM session_presence ORDER BY rowid").all())
+      .toEqual([{ instance_id: b.instanceId }, { instance_id: c.instanceId }]);
+    const reserved = f.snapshot();
+    expect(f.ensure(102, c.instanceId)).toMatchObject({ spawn: false, instanceId: c.instanceId, relayId: c.relayId });
+    expect(f.snapshot()).toEqual(reserved);
+  });
+
+  it("재등록 B를 대체할 C 삽입이 실패하면 superseded 표시와 예약도 전부 되돌린다", () => {
+    const f = fixture();
+    const b = f.start(101);
+    expect(f.store.endPresence(target, "normal-stop", b.instanceId, now)).toBe(true);
+    f.failures.set(1101, "ESRCH");
+    expect(f.ensure(101, b.instanceId).spawn).toBe(true);
+    const before = f.snapshot();
+    f.store.database.exec("CREATE TEMP TRIGGER reject_new_verified_birth BEFORE INSERT ON session_presence "
+      + "WHEN NEW.instance_id <> '" + b.instanceId + "' "
+      + "BEGIN SELECT RAISE(ABORT, 'controlled C insert failure'); END");
+    expect(() => f.ensure(102, b.instanceId)).toThrow("controlled C insert failure");
+    expect(f.snapshot()).toEqual(before);
+    expect(f.row(b.instanceId)).toMatchObject({ superseded_at: null });
+    f.store.database.exec("DROP TRIGGER reject_new_verified_birth");
+    expect(f.ensure(102, b.instanceId)).toMatchObject({ spawn: true, instanceId: birth(102, "parent-C") });
+  });
+
   it("독립된 두 연결이 B를 관측하면 C만 예약하고 D의 늦은 예약은 7개 표·영수증을 바꾸지 않는다", () => {
     const filename = databaseFile(), f = fixture(filename);
     const second = new SessionMessageStore(filename);

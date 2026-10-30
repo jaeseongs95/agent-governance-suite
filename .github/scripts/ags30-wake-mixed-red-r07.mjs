@@ -17,6 +17,8 @@ const expectedMutantDigest = new Map([
   ['e5227b3e2d229e3e429b0d4e8e0d01879777337b6fc79c531fe1ebdee2c9b3ad', '1c76a06445226d491241c42866b0b062a2c82caf8a4e14aff679ad30f24f0e1a'],
   // D0354의 부모 세대 보존은 원 깨우기 함수와 네 결함 치환을 보존한다.
   ['44f8668045c5faeec389045ff52d43d7ee014d593ed1b3ac300246abd7c8dcdd', '1d7deadabde34c5c34c368292e435893fcd230966ef8d4700d7a2e327759588e'],
+  // D0354의 부모 세대 보존은 원 깨우기 함수와 네 결함 치환을 보존한다.
+  ['3d07c7ed74309e2a9e86aeae4f62190f436f67f88d6b1ff3a17e607584e29b9c', '276ef99373296bf1fa4fb7c4efc7d35ea6bc604cf9c50d47021844c16cd9f403'],
 ]).get(sourceDigest);
 assert.ok(expectedMutantDigest, `UNKNOWN_WAKE_MIXED_RED_SOURCE:${sourceDigest}`);
 const baseline = Buffer.from(original.toString('utf8')

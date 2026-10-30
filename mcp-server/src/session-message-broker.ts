@@ -233,7 +233,7 @@ async function runIdentityAsync(steps: IdentitySteps, signal: AbortSignal): Prom
 
 /** One authority path, with synchronous compatibility and an asynchronous network driver. */
 function* relayIdentityOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>,
-  requestBudget?: ProcessIdentityBudget): IdentitySteps {
+  requestBudget?: ProcessIdentityBudget, requestSignal?: AbortSignal): IdentitySteps {
   switch (operation) {
     case "ensure-relay": {
       const target = identity(payload.target);
@@ -284,8 +284,13 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
           if (error && typeof error === "object" && "code" in error && error.code === "ESRCH") confirmedDead = {relayId:previous.relayId,pid:previous.pid};
         }
       }
-      remainingIdentityBudget(budget);
+      const checkRequestBudget = () => {
+        if (requestSignal?.aborted) throw new Error("The broker identity query was cancelled.");
+        remainingIdentityBudget(budget);
+      };
+      checkRequestBudget();
       return store.prepareVerifiedRelay({...target,instanceId,transport,parentPid,expectedOwner:previous,
+        checkRequestBudget,
         verifiedParentStartToken: parentStartToken,
         ...(confirmedDeadPresence ? {confirmedDeadPresence}:{}),
         ...(hasExpectedPresence ? {expectedPresenceInstanceId}:{}),
@@ -668,7 +673,7 @@ export async function startSessionMessageBroker(stateDirectory: string, budget?:
           const payload = request.payload && typeof request.payload === "object" && !Array.isArray(request.payload) ? request.payload : {};
           const requestBudget = decodeIdentityDeadline(request.identityDeadlineNs);
           const data = ["ensure-relay", "acquire-relay"].includes(request.operation)
-            ? await runIdentityAsync(relayIdentityOperation(activeStore, request.operation, payload, requestBudget), identityQueries.signal)
+            ? await runIdentityAsync(relayIdentityOperation(activeStore, request.operation, payload, requestBudget, identityQueries.signal), identityQueries.signal)
             : dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader, historicalWakeVerifier);
           // Relay leases are maintained while the host is idle; maintenance is not user activity.
           if (!["ping", "relay-tick", "heartbeat-relay", "presence-heartbeat"].includes(request.operation)) lastActivity = Date.now();

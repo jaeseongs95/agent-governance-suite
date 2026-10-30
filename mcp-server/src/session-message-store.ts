@@ -958,6 +958,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     verifiedParentStartToken?: string;
     /** Positive death evidence from the same bounded request; deletion still compares the full stored birth. */
     confirmedDeadPresence?: NonNullable<ReturnType<SessionMessageStore["verifiedPresenceForCleanup"]>>;
+    /** Broker-owned request guard; never decoded from the public payload. */
+    checkRequestBudget?: () => void;
     /** Recovery compares the presence observed by this hook, not a later identity-query result. */
     expectedPresenceInstanceId?: string | null;
   }, nowMs = Date.now()): {spawn: boolean; relayId: string | null; instanceId: string} {
@@ -1015,6 +1017,11 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         }
       }
       const relayId = "verified-relay-v1:" + randomUUID() + ":" + input.instanceId.slice("host-process-v1:".length);
+      if (input.verifiedParentStartToken !== undefined) {
+        // CAS가 선택한 이전 세대를 먼저 제외해 같은 ms 재생성과 시계 역행에도 새 세대를 선택한다.
+        this.database.prepare(`UPDATE session_presence SET superseded_at=? WHERE host=? AND session_id=?
+          AND instance_id<>? AND superseded_at IS NULL`).run(iso(nowMs),input.host,input.sessionId,input.instanceId);
+      }
       const presence = this.startPresence(input,nowMs);
       if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport) {
         return {spawn:false,relayId:null,instanceId:input.instanceId};
@@ -1023,19 +1030,19 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         this.database.prepare(`UPDATE session_presence SET verified_parent_pid=?, verified_parent_token=?
           WHERE host=? AND session_id=? AND instance_id=? AND superseded_at IS NULL`)
           .run(input.parentPid,input.verifiedParentStartToken,input.host,input.sessionId,input.instanceId);
-        this.database.prepare(`UPDATE session_presence SET superseded_at=? WHERE host=? AND session_id=?
-          AND instance_id<>? AND superseded_at IS NULL`).run(iso(nowMs),input.host,input.sessionId,input.instanceId);
       }
       this.database.prepare("INSERT INTO relay_leases(host,session_id,transport,relay_id,pid,parent_pid,lease_until,updated_at) VALUES(?,?,?,?,0,?,'9999-12-31T23:59:59.999Z',?) ON CONFLICT(host,session_id,transport) DO UPDATE SET relay_id=excluded.relay_id,pid=0,parent_pid=excluded.parent_pid,relay_start_token=NULL,relay_code_digest=NULL,relay_code_id=NULL,lease_until=excluded.lease_until,updated_at=excluded.updated_at")
         .run(input.host,input.sessionId,input.transport,relayId,input.parentPid,iso(nowMs));
       return {spawn:true,relayId,instanceId:input.instanceId};
     };
     return this.transaction(() => {
+      input.checkRequestBudget?.();
       const result = prepare();
       const dead = input.confirmedDeadPresence;
       if (dead) this.database.prepare(`DELETE FROM session_presence WHERE rowid=? AND host=? AND session_id=? AND instance_id=?
         AND verified_parent_pid=? AND verified_parent_token=? AND started_at=? AND superseded_at IS ?`)
         .run(dead.rowid,dead.host,dead.sessionId,dead.instanceId,dead.parentPid,dead.parentStartToken,dead.startedAt,dead.supersededAt);
+      input.checkRequestBudget?.();
       return result;
     });
   }

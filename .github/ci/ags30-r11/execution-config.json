@@ -78,8 +78,8 @@
     }
   },
   "wakeMixedRed": {
-    "bytes": 4801,
-    "sha256": "c3682c59a5be02d892f894e7eb3c783686ad89c04e8dda273996a99475254031"
+    "bytes": 5038,
+    "sha256": "a6cb83fc1650e934895662a37963fbb960b4ba2509d305ff2e80588e1ca5c091"
   },
   "shardCount": 4,
   "shardEvidence": {
