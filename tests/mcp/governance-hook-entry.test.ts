@@ -131,7 +131,7 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
       });
       process.stderr.write(`[시험단계] ${JSON.stringify({ fixture: "native-registration", ...stage, event: "end",
         elapsedMs: performance.now() - started, errorCode: (child.error as NodeJS.ErrnoException | undefined)?.code ?? null,
-        status: child.status, signal: child.signal, stdoutBytes: Buffer.byteLength(child.stdout ?? ""), stderrBytes: Buffer.byteLength(child.stderr ?? "") })}\n`);
+        status: child.status, signal: child.signal, stdoutUtf8Bytes: Buffer.byteLength(child.stdout ?? ""), stderrUtf8Bytes: Buffer.byteLength(child.stderr ?? "") })}\n`);
       expect(child.error).toBeUndefined();
       expect(child.signal).toBeNull();
       expect(child.status, child.stderr).toBe(0);

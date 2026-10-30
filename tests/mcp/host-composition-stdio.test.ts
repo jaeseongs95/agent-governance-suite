@@ -38,9 +38,10 @@ function task(taskId: string) {
 async function fixture(host: string, modelClass: "deep" | "lightweight" = "deep") {
   // 고유 fixture와 누적 시간을 남겨 전체 30초 중 마지막으로 진입한 단계를 구분한다.
   // 호출 인자·출력·발급 토큰과 자식 표준 오류 본문은 기록하지 않는다.
-  const started = performance.now();
+  const started = performance.now(), test = expect.getState().currentTestName;
+  let sequence = 0;
   const trace = (stage: string, details: Record<string, unknown> = {}) => process.stderr.write(
-    `[시험단계] ${JSON.stringify({ fixture: host, test: expect.getState().currentTestName, modelClass, stage, elapsedMs: performance.now() - started, ...details })}\n`);
+    `[시험단계] ${JSON.stringify({ fixture: host, test, modelClass, sequence: ++sequence, stage, elapsedMs: performance.now() - started, ...details })}\n`);
   trace("fixture.begin");
   const directory = await mkdtemp(path.join(tmpdir(), "ags-host-composition-")), state = path.join(directory, "state"), database = path.join(state, "workflow.sqlite3");
   let client: Client | undefined, transport: StdioClientTransport | undefined;
@@ -159,7 +160,7 @@ process.stdout.write(result.output); if (!result.ok) process.exitCode = 2;
           observed: { model, effort }, tool_input: { _sessionBinding: "caller-decoy-must-not-override-first-translation" }, ...extra }) });
       trace("hook.end", { tool, mode, durationMs: performance.now() - issueStarted,
         errorCode: (issued.error as NodeJS.ErrnoException | undefined)?.code ?? null, status: issued.status, signal: issued.signal,
-        stdoutBytes: Buffer.byteLength(issued.stdout ?? ""), stderrBytes: Buffer.byteLength(issued.stderr ?? "") });
+        stdoutUtf8Bytes: Buffer.byteLength(issued.stdout ?? ""), stderrUtf8Bytes: Buffer.byteLength(issued.stderr ?? "") });
       expect(issued.error).toBeUndefined();
       return { status: issued.status, stderr: issued.stderr, output: issued.stdout ? JSON.parse(issued.stdout) as Record<string, unknown> : {} };
     };
@@ -171,8 +172,12 @@ process.stdout.write(result.output); if (!result.ok) process.exitCode = 2;
     };
     const rawCall = async <T>(name: string, args: Record<string, unknown>) => {
       trace("call.begin", { tool: name });
-      try { return envelope<T>(await client!.callTool({ name, arguments: args })); }
-      finally { trace("call.end", { tool: name }); }
+      let returned = false;
+      try {
+        const response = envelope<T>(await client!.callTool({ name, arguments: args }));
+        returned = true;
+        return response;
+      } finally { trace("call.end", { tool: name, outcome: returned ? "returned" : "threw" }); }
     };
     const call = async <T>(name: string, args: Record<string, unknown>, model: string) => rawCall<T>(name, hook(name, args, model));
     const rooted = (args: Record<string, unknown>): Record<string, unknown> => {
@@ -189,12 +194,12 @@ process.stdout.write(result.output); if (!result.ok) process.exitCode = 2;
       async unchanged() { expect(await Promise.all(protectedFiles.map(file => readFile(file)))).toEqual(unchanged); },
       async close() {
         trace("close.begin");
-        try { await client?.close(); } finally {
+        try { await client?.close(); trace("client-close.returned"); } finally {
           trace("transport-close.begin");
-          try { await transport?.close(); } finally {
+          try { await transport?.close(); trace("transport-close.returned"); } finally {
             trace("remove.begin");
             await rm(directory, { recursive: true, force: true });
-            trace("close.end");
+            trace("remove.returned");
           }
         }
       } };
