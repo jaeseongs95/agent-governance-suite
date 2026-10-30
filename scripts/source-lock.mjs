@@ -87,6 +87,7 @@ export async function verifySourceLockOffline() {
         errors.push(`auto-pr source must be pinned to a stable tag for ${label}`);
       }
     }
+    let checkedPath = typeof source.path === "string" ? source.path : "<unknown>";
     try {
       const version = await readSkillVersion(path.join(ROOT, source.path));
       if (version.version !== source.version || version.source !== source.versionSource) {
@@ -94,6 +95,7 @@ export async function verifySourceLockOffline() {
       }
       if (descriptor?.version !== source.version) errors.push(`registry/source version mismatch for ${label}`);
       const directPath = path.join(ROOT, source.path, "integration", "skill-descriptor.json");
+      checkedPath = path.relative(ROOT, directPath);
       try {
         const direct = await readJson(directPath);
         const identities = direct.skillId
@@ -105,10 +107,23 @@ export async function verifySourceLockOffline() {
       } catch (error) {
         if (error?.code !== "ENOENT") throw error;
       }
+      checkedPath = typeof source.path === "string" ? source.path : "<unknown>";
       const checksum = await computeDirectoryChecksum(path.join(ROOT, source.path));
       if (checksum !== source.integratedChecksum) errors.push(`integrated checksum mismatch for ${label}: expected ${source.integratedChecksum}, actual ${checksum}`);
     } catch (error) {
-      errors.push(`cannot verify source ${label}: ${error instanceof Error ? error.message : String(error)}`);
+      const missingVersion = error?.cause?.code === "ENOENT"
+        && error.message === `${path.relative(ROOT, path.join(ROOT, source.path))} has neither metadata.version nor VERSION`;
+      const failure = missingVersion ? error.cause : error;
+      const code = typeof failure?.code === "string" && /^[A-Z0-9_]{1,32}$/u.test(failure.code) ? failure.code : "UNKNOWN";
+      const relative = typeof failure?.path === "string" ? path.relative(ROOT, path.resolve(failure.path)) : checkedPath;
+      const inside = !path.isAbsolute(relative) && relative !== ".." && !relative.startsWith(`..${path.sep}`);
+      const failedPath = inside ? relative.split(path.sep).join("/").replace(/./gsu, character => {
+        const point = character.codePointAt(0);
+        return point < 32 || point === 127 ? "?" : character;
+      }).slice(0, 1024) : "<outside root>";
+      const reason = missingVersion ? "has neither metadata.version nor VERSION"
+        : error instanceof SyntaxError ? "invalid JSON" : code === "ENOENT" ? "missing" : "read check failed";
+      errors.push(`cannot verify source ${label}: ${failedPath} (${code}); ${reason}`);
     }
   }
   for (const descriptor of registrySkills) {

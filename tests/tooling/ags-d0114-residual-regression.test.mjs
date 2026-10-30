@@ -41,7 +41,7 @@ const operation = ${JSON.stringify(fault.operation)};
 const target = ${JSON.stringify(path.join(f.directory, fault.file))};
 const original = fs[operation];
 const cause = new Error("D0114 original I/O cause");
-const failure = Object.assign(new Error(${JSON.stringify(`${fault.code}: D0114 controlled I/O failure`)}, { cause }), {
+const failure = Object.assign(new Error(${JSON.stringify(fault.message ?? `${fault.code}: D0114 controlled I/O failure`)}, { cause }), {
   code: ${JSON.stringify(fault.code)}, path: target, syscall: operation
 });
 fs[operation] = async (file, ...rest) => {
@@ -113,12 +113,51 @@ it("D0114 source:check CLI still accepts readable VERSION and absent optional di
 
 it.each(["EACCES", "EPERM", "EIO", "ENOTDIR"])("D0114 source:check CLI exposes VERSION read failure instead of missing metadata (%s)", code => {
   const result = launch(sourceLockFixture(), "scripts/check-source-lock.mjs", {
-    operation: "readFile", file: "skills/versioned-skill/VERSION", code,
+    operation: "readFile", file: "skills/versioned-skill/VERSION", code, message: "D0114_PRIVATE_MESSAGE",
   });
   expect(result.error).toBeUndefined();
   expect(result.status).toBe(1);
-  expect(result.stderr).toContain(`cannot verify source versioned-skill: ${code}: D0114 controlled I/O failure`);
+  expect(result.stderr).toContain(`cannot verify source versioned-skill: skills/versioned-skill/VERSION (${code}); read check failed`);
   expect(result.stderr).not.toContain("has neither metadata.version nor VERSION");
+  expect(result.stderr).not.toContain("D0114_PRIVATE_MESSAGE");
+  expect(result.stderr).not.toContain("D0114 original I/O cause");
+  expect(result.stderr).not.toContain("ags-d0114-");
+});
+
+it.each(["EACCES\nD0114_PRIVATE_CODE", "A".repeat(33)])("D0114 source:check bounds an invalid VERSION error code (%s)", code => {
+  const result = launch(sourceLockFixture(), "scripts/check-source-lock.mjs", {
+    operation: "readFile", file: "skills/versioned-skill/VERSION", code, message: "D0114_PRIVATE_MESSAGE",
+  });
+  expect(result.error).toBeUndefined();
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain("skills/versioned-skill/VERSION (UNKNOWN); read check failed");
+  expect(result.stderr).not.toContain(code);
+  expect(result.stderr).not.toContain("D0114_PRIVATE_MESSAGE");
+  expect(result.stderr).not.toContain("D0114 original I/O cause");
+});
+
+it("D0114 source:check keeps actual descriptor syntax failure distinct from missing or unreadable", () => {
+  const f = sourceLockFixture();
+  f.write("skills/versioned-skill/integration/skill-descriptor.json", '{"D0114_PRIVATE_JSON":');
+  const result = launch(f, "scripts/check-source-lock.mjs");
+  expect(result.error).toBeUndefined();
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain("skills/versioned-skill/integration/skill-descriptor.json (UNKNOWN); invalid JSON");
+  expect(result.stderr).not.toContain("D0114_PRIVATE_JSON");
+  expect(result.stderr).not.toContain("ags-d0114-");
+});
+
+it("D0114 source:check keeps descriptor access failure distinct from invalid JSON", () => {
+  const result = launch(sourceLockFixture(), "scripts/check-source-lock.mjs", {
+    operation: "readFile", file: "skills/versioned-skill/integration/skill-descriptor.json",
+    code: "EACCES", message: "D0114_PRIVATE_MESSAGE",
+  });
+  expect(result.error).toBeUndefined();
+  expect(result.status).toBe(1);
+  expect(result.stderr).toContain("skills/versioned-skill/integration/skill-descriptor.json (EACCES); read check failed");
+  expect(result.stderr).not.toContain("invalid JSON");
+  expect(result.stderr).not.toContain("D0114_PRIVATE_MESSAGE");
+  expect(result.stderr).not.toContain("ags-d0114-");
 });
 
 it("D0114 source:check CLI keeps genuine VERSION ENOENT as missing metadata", () => {
@@ -128,6 +167,7 @@ it("D0114 source:check CLI keeps genuine VERSION ENOENT as missing metadata", ()
   expect(result.error).toBeUndefined();
   expect(result.status).toBe(1);
   expect(result.stderr).toContain("has neither metadata.version nor VERSION");
+  expect(result.stderr).toContain("(ENOENT)");
   expect(result.stderr).not.toContain("VERSION is unreadable");
 });
 
