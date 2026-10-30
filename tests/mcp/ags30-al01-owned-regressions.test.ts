@@ -108,7 +108,7 @@ describe("AGS-D-0231: the same publication failures drive bounded reobservation"
 
 function clientEndpoint() {
   f.read.mockImplementation(async (name: string) => name.endsWith("endpoint.json")
-    ? JSON.stringify({ protocolVersion: "1.0.0", address: "127.0.0.1", port: 12345, certificateFingerprint256: fingerprint })
+    ? JSON.stringify({ protocolVersion: "1.0.0", claimReceiptVersion: 1, address: "127.0.0.1", port: 12345, certificateFingerprint256: fingerprint })
     : name.endsWith("broker.token") ? "a".repeat(43) : "synthetic certificate");
 }
 function socket() {

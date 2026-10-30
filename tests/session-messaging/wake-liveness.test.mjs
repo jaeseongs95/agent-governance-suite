@@ -242,13 +242,22 @@ test.each([...Object.keys(activities), 'before-expiry'])('same-generation activi
   const f = fixture();
   let ackClaim = [];
   if (kind === 'acknowledge') {
-    body(f.store, 'activity-ack-body', f.now - 2);
-    ackClaim = f.store.claim(target, f.now - 1);
+    // Leave this original claim expired before reserving the wake: an in-flight
+    // delivery deliberately prevents a second wake. The later ACK still proves activity.
+    const claimAt = f.now - 120_001;
+    body(f.store, 'activity-ack-body', claimAt - 1);
+    ackClaim = f.store.claim(target, claimAt);
+    assert.equal(ackClaim.length, 1);
+    assert.ok(f.store.database.prepare('SELECT claim_until FROM messages WHERE message_id = ?')
+      .get('activity-ack-body').claim_until < iso(f.now));
   }
   const old = latched(f);
   const expiry = Date.parse(attemptRow(f.store, old).expires_at);
   if (kind === 'before-expiry') activities.claimDeferred(f.store, expiry - 1);
-  else activities[kind](f.store, expiry + 1, ackClaim);
+  else {
+    const result = activities[kind](f.store, expiry + 1, ackClaim);
+    if (kind === 'acknowledge') assert.equal(result, 1, 'the original receipt ACK actually records activity');
+  }
   keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt - 1);
   assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt - 1).dispatch, false);
   keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt);

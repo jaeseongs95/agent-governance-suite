@@ -143,15 +143,26 @@ it("delivers twelve batches of Korean messages through the CLI claim path byte f
   const broken: number[] = [];
   let replacementCharacters = 0;
   for (let round = 0; round < 12; round += 1) {
-    // Eight bodies of 3.4-3.8 KB fill one default claim (up to 10 messages, 32 KB) past the first TLS chunk; the length
-    // and leading ASCII of each round move where that chunk boundary falls, mostly inside a Korean character.
+    // 원래 여덟 본문과 길이·ASCII 이동을 유지한다. 영수증을 포함한 응답 예산에 따라 최대 두 번에 나뉠 수 있다.
     const bodies = Array.from({ length: 8 }, (_, index) => `${"a".repeat(round % 3)}${index}:${"세션 메시지 한글 본문 ".repeat(110 + round)}`);
     queue(state, target, bodies);
-    const { messages } = await cli("claim", { target }) as { messages: SessionMessage[] };
-    const received = messages.map((message) => message.body);
+    const receivedMessages: SessionMessage[] = [];
+    for (let claim = 0; claim < 2 && receivedMessages.length < bodies.length; claim += 1) {
+      const data = await cli("claim", { target }) as { messages: SessionMessage[] };
+      const { messages } = data;
+      expect(messages.length).toBeGreaterThan(0);
+      expect(Buffer.byteLength(`${JSON.stringify({ ok: true, data })}\n`)).toBeLessThanOrEqual(SESSION_MESSAGE_MAX_RESPONSE_BYTES);
+      for (const message of messages) expect(message.claimReceipt).toMatch(/^1:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u);
+      receivedMessages.push(...messages);
+      expect(await cli("acknowledge", { target, messageIds: messages.map((message) => message.messageId),
+        receipts: messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })),
+      })).toEqual({ acknowledged: messages.length });
+    }
+    expect(receivedMessages).toHaveLength(8);
+    expect(new Set(receivedMessages.map(message => message.messageId)).size).toBe(8);
+    const received = receivedMessages.map((message) => message.body);
     replacementCharacters += received.join("").split("�").length - 1;
     if (received.length !== bodies.length || received.some((body, index) => !Buffer.from(body).equals(Buffer.from(bodies[index]!)))) broken.push(round);
-    await cli("acknowledge", { target, messageIds: messages.map((message) => message.messageId), receipts: messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })) });
   }
   expect({ broken, replacementCharacters }).toEqual({ broken: [], replacementCharacters: 0 });
 }, 60_000);

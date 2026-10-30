@@ -26,8 +26,13 @@ export function claimLine(sender: Identity, recipient: Identity, bodies: string[
  * 16384. The first eight are the same, so the order of messages queued in one millisecond cannot move the split.
  */
 export function straddlingClaim(sender: Identity, recipient: Identity, total: number, head: number): string[] {
+  const emptyBodies = Array.from({ length: 9 }, () => "");
+  const envelopeBytes = claimLine(sender, recipient, emptyBodies).length;
+  // 세 가지 ASCII shift 모두가 들어갈 여유를 먼저 남긴 뒤, 3바이트 한글을 아홉 본문에 똑같이 배분한다.
+  const repeats = Math.floor((total - envelopeBytes - emptyBodies.length * 2) / (emptyBodies.length * Buffer.byteLength("한")));
+  if (repeats < 1) throw new Error("아홉 한글 본문을 담을 응답 예산이 부족합니다.");
   for (let shift = 0; shift < 3; shift += 1) {
-    const bodies = Array.from({ length: 9 }, () => `${"a".repeat(shift)}${"한".repeat(1100)}`);
+    const bodies = emptyBodies.map(() => `${"a".repeat(shift)}${"한".repeat(repeats)}`);
     bodies[8] += "z".repeat(total - claimLine(sender, recipient, bodies).length);
     if (headBytes(claimLine(sender, recipient, bodies), TLS_CHUNK) === head) return bodies;
   }
