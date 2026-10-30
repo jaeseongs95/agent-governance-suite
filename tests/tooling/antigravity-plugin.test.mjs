@@ -307,25 +307,49 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
           전체밀리초: processors.reduce((sum, cpu) => sum + Object.values(cpu.times).reduce((total, value) => total + value, 0), 0),
           가용메모리: freemem() };
       };
+      const emit = details => {
+        try { console.error(JSON.stringify({ 검사: "AGS-D-0030", ...details })); }
+        catch { /* 보조 관측 실패가 실제 조회의 원래 예외를 덮지 않게 한다. */ }
+      };
       childProcess.execFileSync = (file, args, options) => {
-        if (file !== "powershell.exe") return originalExecFileSync(file, args, options);
-        const checkpoint = stage => `[Console]::Error.WriteLine(('AGS-D0030|${stage}|' + [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()))`;
+        const expectedScript = windowsSingleProcessScript(process.pid);
+        if (file !== "powershell.exe" || args.length !== 4 || args[0] !== "-NoProfile" || args[1] !== "-NonInteractive"
+          || args[2] !== "-Command" || args[3] !== expectedScript
+          || options.windowsHide !== true || options.timeout !== 1500) return originalExecFileSync(file, args, options);
+        const checkpoint = stage => `[Console]::Error.WriteLine(('AGS-D0030|${stage}|' + [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() + '|' + $agsProbeWatch.ElapsedTicks + '|' + [System.Diagnostics.Stopwatch]::Frequency))`;
         const observedArgs = [...args];
-        const scriptIndex = observedArgs.indexOf("-Command") + 1;
-        let observedScript = observedArgs[scriptIndex];
-        for (const [anchor, stage] of [
-          ["$agsBefore =", "get-process-before"],
-          ["$agsMeta =", "get-cim-instance"],
-          ["$agsAfter =", "get-process-after"],
-          ["if ($agsMeta", "identity-check"],
-        ]) observedScript = observedScript.replace(anchor, `${checkpoint(stage)}; ${anchor}`);
-        observedArgs[scriptIndex] = `${checkpoint("script-start")}; ${observedScript}; ${checkpoint("script-end")}`;
+        let observedScript = expectedScript;
+        for (const [statement, stage] of [
+          [`$agsBefore = Get-Process -Id ${process.pid} -ErrorAction Stop`, "get-process-before"],
+          ["$agsStart = $agsBefore.StartTime.ToUniversalTime()", "start-time"],
+          ["$agsPath = $agsBefore.Path", "executable-path"],
+          [`$agsMeta = Get-CimInstance Win32_Process -Filter ('ProcessId=' + ${process.pid}) -ErrorAction Stop`, "get-cim-instance"],
+          [`$agsAfter = Get-Process -Id ${process.pid} -ErrorAction Stop`, "get-process-after"],
+        ]) {
+          expect(observedScript).toContain(statement);
+          observedScript = observedScript.replace(statement, `${checkpoint(`${stage}-before`)}; ${statement}; ${checkpoint(`${stage}-after`)}`);
+        }
+        observedScript = observedScript.replace("if ($agsMeta", `${checkpoint("identity-check-before")}; if ($agsMeta`)
+          .replace("$st =", `${checkpoint("identity-accepted")}; $st =`);
+        observedArgs[3] = `$agsProbeWatch = [System.Diagnostics.Stopwatch]::StartNew(); ${checkpoint("script-start")}; ${observedScript}; ${checkpoint("script-end")}`;
+        try { emit({ 단계: "조회 시작", 시각: Date.now(), 상한밀리초: options.timeout, 자원: resources() }); }
+        catch { /* 자원 스냅숏 실패도 실제 조회를 막지 않는다. */ }
         const started = performance.now();
-        console.error(JSON.stringify({ 검사: "AGS-D-0030", 단계: "조회 시작", 시각: Date.now(), 상한밀리초: options.timeout, 자원: resources() }));
+        let outcome = "returned";
+        let failure;
         try {
           return originalExecFileSync(file, observedArgs, { ...options, stdio: ["ignore", "pipe", "inherit"] });
+        } catch (error) {
+          outcome = "threw";
+          failure = error;
+          throw error;
         } finally {
-          console.error(JSON.stringify({ 검사: "AGS-D-0030", 단계: "조회 종료", 시각: Date.now(), 경과밀리초: performance.now() - started, 자원: resources() }));
+          const elapsed = performance.now() - started;
+          try {
+            if (failure) emit({ 단계: "조회 오류", 코드: failure.code ?? null, 종료코드: failure.status ?? null, 신호: failure.signal ?? null });
+            emit({ 단계: "조회 종료", 결과: outcome, 시각: Date.now(), 경과밀리초: elapsed, 자원: resources() });
+          }
+          catch { /* 정리 중 보조 관측 실패로 원래 반환값이나 예외를 바꾸지 않는다. */ }
         }
       };
       let inspected;
