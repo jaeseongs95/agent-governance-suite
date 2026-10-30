@@ -91,7 +91,7 @@ it("retries transient endpoint publication failures and serves the published end
   expect(JSON.parse(await readFile(path.join(directory, "endpoint.json"), "utf8"))).toMatchObject({ pid: child.pid, claimReceiptVersion: 1 });
   await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
     protocolVersion: "1.0.0",
-    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start"],
+    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"],
   });
   expect((await readdir(directory)).filter((name) => name.endsWith(".tmp"))).toEqual([]);
 });
@@ -116,7 +116,7 @@ it.each(["permanent", "ENOSPC", "credentials", "database"])("releases startup re
   await waitForSessionMessageBrokerReady(directory, recovered, 3000);
   await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
     protocolVersion: "1.0.0",
-    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start"],
+    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"],
   });
 });
 
