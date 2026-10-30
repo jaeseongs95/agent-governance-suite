@@ -138,15 +138,21 @@ function ownsGovernanceTool(toolName: string): boolean {
   return separator > 0 && GOVERNANCE_TOOL_PREFIXES.has(toolName.slice(0, separator + 2));
 }
 
+const queueSettingsFailureReasons = {
+  "directory-stat": "QUEUE_SETTINGS_DIRECTORY_STAT_FAILED",
+  open: "QUEUE_SETTINGS_OPEN_FAILED",
+  read: "QUEUE_SETTINGS_READ_FAILED",
+  close: "QUEUE_SETTINGS_CLOSE_FAILED",
+} as const;
+
 function queueEnabled(host: string, explicit: string | undefined, environment: NodeJS.ProcessEnv,
-  diagnose: (reason: string, observation?: unknown) => void, defaultEnabled = false): boolean {
+  diagnose: (reason: string, observation?: HookSettingsDiagnostic) => void, defaultEnabled = false): boolean {
   const disabled = (reason: string, observation?: HookSettingsDiagnostic) => {
     if (observation) diagnose(reason, Object.freeze(observation)); else diagnose(reason);
     return false;
   };
-  const failed = (phase: "directory-stat" | "open" | "read" | "close", cause: unknown) => retainHookFailureCause(
-    hookFailure(phase === "directory-stat" ? "QUEUE_SETTINGS_DIRECTORY_STAT_FAILED" : phase === "open" ? "QUEUE_SETTINGS_OPEN_FAILED" : phase === "read" ? "QUEUE_SETTINGS_READ_FAILED" : "QUEUE_SETTINGS_CLOSE_FAILED",
-      "Queue settings I/O failed."), cause);
+  const failed = (phase: keyof typeof queueSettingsFailureReasons, cause: unknown) =>
+    retainHookFailureCause(hookFailure(queueSettingsFailureReasons[phase], "Queue settings I/O failed."), cause);
   const absent = (error: unknown): boolean => {
     if (!error || typeof error !== "object" || utilTypes.isProxy(error)) return false;
     try { return Object.getOwnPropertyDescriptor(error, "code")?.value === "ENOENT"; }
@@ -224,11 +230,11 @@ function queueEnabled(host: string, explicit: string | undefined, environment: N
   return issue === undefined ? enabled : disabled(issue);
 }
 
-function codexQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: string, observation?: unknown) => void): boolean {
+function codexQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: string, observation?: HookSettingsDiagnostic) => void): boolean {
   return queueEnabled("codex", environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE, environment, diagnose);
 }
 
-function geminiQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: string, observation?: unknown) => void, defaultQueueWake?: boolean): boolean {
+function geminiQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: string, observation?: HookSettingsDiagnostic) => void, defaultQueueWake?: boolean): boolean {
   // Adapter-owned defaults are settings provenance, never actor, liveness or execution authority.
   const defaultEnabled = defaultQueueWake === true || Boolean(environment.ANTIGRAVITY_AGENTAPI_EXE
     || environment.ANTIGRAVITY_CONVERSATION_ID || environment.ANTIGRAVITY_AGENT);
