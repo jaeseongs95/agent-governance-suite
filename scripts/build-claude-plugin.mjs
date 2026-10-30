@@ -441,7 +441,10 @@ function describeFileFailure(operation, error) {
 function diagnosticPath(root, file) {
   const relative = toPosix(path.relative(root, path.resolve(root, file)));
   if (relative === ".." || relative.startsWith("../") || path.isAbsolute(relative)) return "<outside root>";
-  return relative.replace(/[\u0000-\u001f\u007f]/gu, "?").slice(0, 1024);
+  return relative.replace(/./gsu, (character) => {
+    const code = character.codePointAt(0);
+    return code < 32 || code === 127 ? "?" : character;
+  }).slice(0, 1024);
 }
 
 function fileFailure(root, file, operation, error) {
