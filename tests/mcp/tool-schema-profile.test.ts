@@ -228,6 +228,7 @@ describe("MCP tool schema profiles", () => {
     const client = await connect(profile);
     try {
       expect(errorCode(await client.callTool({ name: "plan_workflow", arguments: {} }))).toBe("BINDING_REQUIRED");
+      expect(errorCode(await client.callTool({ name: "plan_workflow", arguments: { _sessionProof: "" } }))).toBe("BINDING_REQUIRED");
       expect(errorCode(await client.callTool({ name: "plan_workflow", arguments: { _sessionProof: "synthetic-forged-root-proof" } }))).toBe("BINDING_INVALID");
       expect(errorCode(await client.callTool({ name: "plan_workflow", arguments: {
         _sessionBinding: { host: "forged-host", sessionId: "forged-session" },

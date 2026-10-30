@@ -252,9 +252,14 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     } finally { store.close(); }
   });
 
-  it("F1: the built Codex CLI emits a root/inferred proof while child blocking is deferred", () => {
+  // 합성 부모 사건의 빌드 훅 출력·서명만 검사하며 실제 Codex 중첩 호출의 입력 적용은 별도 검증이다.
+  it.each([
+    { kind: "생략", callerArgs: {} },
+    { kind: "빈자리", callerArgs: { _sessionProof: "" } },
+    { kind: "위조", callerArgs: { _sessionProof: "synthetic-forged-root-proof" } },
+  ])("F1: Codex 빌드 훅은 증명 $kind 입력에 현재 부모 관측으로 새 증명을 발급한다", ({ callerArgs }) => {
     const { environment } = fixture();
-    const payload = { ...input(), tool_name: "mcp__agent_governance_suite__get_trust_capabilities" };
+    const payload = { ...input("get_trust_capabilities", callerArgs), tool_name: "mcp__agent_governance_suite__get_trust_capabilities" };
     const child = spawnSync(process.execPath, [path.join(repository, "mcp-server/dist/governance-hook.mjs"), "--host=codex"], {
       input: JSON.stringify(payload), env: environment, cwd: repository, encoding: "utf8", timeout: 10_000, windowsHide: true,
     });
@@ -266,6 +271,9 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     // Codex drops updatedInput without permissionDecision "allow", so the proof never reaches the server.
     expect(specific.permissionDecision).toBe("allow");
     const args = specific.updatedInput as Record<string, unknown>;
+    expect(withoutSessionProof(args)).toEqual(withoutSessionProof(callerArgs));
+    expect(args._sessionProof).toEqual(expect.any(String));
+    expect(args._sessionProof).not.toBe(callerArgs._sessionProof);
     const store = new SqliteWorkflowStore(environment.AGENT_GOVERNANCE_DB_PATH!);
     try {
       expect(new SessionActorProofs(store).verify("get_trust_capabilities", args)).toEqual({
