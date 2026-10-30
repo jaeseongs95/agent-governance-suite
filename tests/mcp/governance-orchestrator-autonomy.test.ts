@@ -88,6 +88,26 @@ describe("GOV01/06 actual orchestrator capability and instruction consumption", 
     expect(classification).toContain("오류 가능한 분류 조언");
     expect(classification).toContain("점수나 분류 결과를 정답·실행 승인으로 취급하지 않는다");
   });
+  it("AGS-D-0352: 분류 지원 미확정과 거부 뒤 독립 작업의 지침을 전달한다", () => {
+    // 지침 전달만 검사하며 실제 호스트 행동·거부·재시도 검증을 대신하지 않는다.
+    const intake = instructions("SKILL.md");
+    const classification = instructions("references/skill-classification.md");
+    expect(intake).toContain("도구 노출만으로 지원 설정을 추정하지 않는다");
+    expect(intake).toContain("독립적으로 가능한 작업과 막힌 의존 단계를 구분한다");
+    for (const criterion of [
+      "기존 승인된 설치 설정과 호스트 호출 경로에서 지원이 확인된 경우",
+      "새 탐지 도구·호출 경로·설정 경로를 만들거나 분류를 원 작업의 필수 선행단계로 추가하지 않는다",
+      "호스트 훅·인증·판정불가 거부는 입력 스키마 오류나 분류 제공자 실패로 바꿔 해석하지 않는다",
+      "원인·입력·설정이 달라지지 않은 같은 호출이나 실패와 무관한 도구·입력 형식 탐색을 반복하지 않는다",
+      "구체적인 입력 오류는 확인된 필드만 수정한다",
+      "분류·선택 기록이 수락되지 않았으면 미수락 상태를 유지한다",
+      "설치된 전문 스킬로 독립 처리 가능한 허용 부분은 직접 수행",
+      "필수 관측·승인·통합·감사에 의존하는 단계는 보류한다",
+      "직접 수행 결과를 선택 수락이나 보호된 통합·감사 완료로 기록하지 않는다",
+      "기존 분류 제공자 전환과 서버가 허용한 실패 후 선택 기록은 유지하되, 훅 거부를 그 실패 근거로 사용하지 않는다",
+    ]) expect(classification).toContain(criterion);
+    expect(classification).toContain("[MCP 실행·실패 처리](mcp-execution.md)");
+  });
   it("does not require another PRE for ordinary branch commits, pushes or CI", () => {
     const text = instructions("references/entry-details.md");
     expect(text).not.toContain("배포·push·태그처럼 사전 점검 대상");

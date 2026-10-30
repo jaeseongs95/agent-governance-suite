@@ -266,6 +266,8 @@ describe("MCP tool schema profiles", () => {
         const response = trace.filter(row => row.direction === "server").map(row => JSON.parse(row.wire))
           .find(row => row.id === initialize.id && row.result);
         expect(response?.result.instructions).toBe(expected);
+        expect(response.result.instructions).toContain("도구 노출만으로 지원 설정을 추정하지 않는다");
+        expect(response.result.instructions).toContain("독립적으로 가능한 작업과 막힌 의존 단계를 구분한다");
         expect(Object.keys(response.result)).toEqual(expect.arrayContaining(["protocolVersion", "capabilities", "serverInfo", "instructions"]));
       }
       expect(implicit.getInstructions()).toBe(expected);
