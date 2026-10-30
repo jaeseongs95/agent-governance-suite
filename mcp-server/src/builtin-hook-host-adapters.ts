@@ -27,7 +27,9 @@ function adaptBuiltinHookInput(input: Record<string, unknown>, host: string, act
   if (event === "SessionStart") {
     lifecycle = "start";
     const source = input.source;
-    if (source === "startup" || source === "clear" || source === "resume" || source === "compact") continuityAction = { kind: source };
+    // A fork starts only its own namespace; its event conveys no parent restore authority.
+    if (source === "fork") continuityAction = { kind: "startup" };
+    else if (source === "startup" || source === "clear" || source === "resume" || source === "compact") continuityAction = { kind: source };
   }
   else if (event === "SessionEnd") {
     kind = "turn-end";

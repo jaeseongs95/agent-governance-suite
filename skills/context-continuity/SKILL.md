@@ -1,6 +1,6 @@
 ---
 name: context-continuity
-description: 긴 direct task에서 compaction·resume 뒤 잃으면 실행 판단이 달라질 핵심 상태를 선별해 로컬 continuity checkpoint로 저장하고 복원 후보를 검토한다. transcript 보관, workflow 원장 복제나 일반 메모에는 사용하지 않는다.
+description: 긴 direct task에서 compaction·resume·새 세션 인계 뒤 잃으면 실행 판단이 달라질 핵심 상태를 선별해 로컬 continuity checkpoint로 저장하고 복원 후보를 검토한다. transcript 보관, workflow 원장 복제나 일반 메모에는 사용하지 않는다.
 license: MIT
 metadata:
   version: "1.0.0"

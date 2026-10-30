@@ -18,15 +18,15 @@
       "path": "skills/context-continuity/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
+      "digest": "sha256:99e064693b3f0003f3b391f81f5173b79a28060e7f46ec81081923e75e646f41",
       "startByte": 0,
-      "endByte": 197
+      "endByte": 216
     },
     {
       "path": "skills/context-continuity/SKILL.md",
       "startLine": 9,
       "endLine": 11,
-      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
+      "digest": "sha256:99e064693b3f0003f3b391f81f5173b79a28060e7f46ec81081923e75e646f41",
       "startByte": 0,
       "endByte": 99
     },
@@ -34,7 +34,7 @@
       "path": "skills/context-continuity/SKILL.md",
       "startLine": 15,
       "endLine": 23,
-      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022"
+      "digest": "sha256:99e064693b3f0003f3b391f81f5173b79a28060e7f46ec81081923e75e646f41"
     }
   ],
   "exclusions": [
@@ -42,15 +42,15 @@
       "path": "skills/context-continuity/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
-      "startByte": 198,
-      "endByte": 286
+      "digest": "sha256:99e064693b3f0003f3b391f81f5173b79a28060e7f46ec81081923e75e646f41",
+      "startByte": 217,
+      "endByte": 305
     },
     {
       "path": "skills/context-continuity/SKILL.md",
       "startLine": 11,
       "endLine": 11,
-      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022",
+      "digest": "sha256:99e064693b3f0003f3b391f81f5173b79a28060e7f46ec81081923e75e646f41",
       "startByte": 78,
       "endByte": 256
     },
@@ -58,13 +58,13 @@
       "path": "skills/context-continuity/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022"
+      "digest": "sha256:99e064693b3f0003f3b391f81f5173b79a28060e7f46ec81081923e75e646f41"
     },
     {
       "path": "skills/context-continuity/SKILL.md",
       "startLine": 25,
       "endLine": 25,
-      "digest": "sha256:e16840e052c44ee82aaaa758eb666b8f960571cd8c36174fe37e840093bc8022"
+      "digest": "sha256:99e064693b3f0003f3b391f81f5173b79a28060e7f46ec81081923e75e646f41"
     }
   ]
 }

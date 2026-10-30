@@ -3,7 +3,7 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "^(startup|resume|clear|compact)$",
+        "matcher": "^(startup|resume|clear|compact|fork)$",
         "hooks": [
           {
             "type": "command",
@@ -16,7 +16,7 @@
         ]
       },
       {
-        "matcher": "^(startup|resume|clear|compact)$",
+        "matcher": "^(startup|resume|clear|compact|fork)$",
         "hooks": [
           {
             "type": "command",
@@ -29,7 +29,7 @@
         ]
       },
       {
-        "matcher": "^(startup|resume|clear|compact)$",
+        "matcher": "^(startup|resume|clear|compact|fork)$",
         "hooks": [
           {
             "type": "command",

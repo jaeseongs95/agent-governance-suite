@@ -16,6 +16,14 @@ Hook이 추가한 `_continuityBinding`은 수정하거나 재사용하지 않는
 
 `REJECT`, 후보 부재, binding 오류 또는 load 실패면 복원되지 않은 것으로 보고한다. 새 세션·fork라는 이유로 이전 세션과 같은 task라고 가정하거나 이전 revision·token을 재사용하지 않는다. 인계 파일 직접 읽기, checkpoint 저장 성공, 스킬 읽기만으로 정상 복원 성공을 대신하지 않는다.
 
+## 새 세션에 정상 인계된 direct task
+
+현재 사용자가 같은 과업의 재개를 요청했고, 이전에 보존한 교정·범위·남은 작업이 기존의 정상 호스트 인계로 전달됐는지 먼저 확인한다. 인계 파일의 존재나 새 세션·fork 표시만으로 전달을 가정하지 않는다. 전달 근거가 없으면 과거 상태를 복원했다고 주장하지 않고 확인된 현재 요청 범위만 수행한다.
+
+현재 세션의 `inspect_context`가 `NO_RESTORE_CANDIDATE`이고 위 인계 근거가 확인됐다면, 전문 판단이나 남은 작업을 시작하기 전에 전달된 상태·근거 참조를 현재 세션의 첫 checkpoint(`expectedRevision: 0`, 새 `requestId`)로 저장한다. 이는 같은 논리 과업의 새 세션 저장공간이며 새 task/workflow를 만들거나 이전 세션의 token·revision을 옮기는 절차가 아니다. 저장 후 현재 세션에서 다시 `inspect_context`하고 반환된 정확한 후보로 `load_context`하여 인계 근거를 대조한 뒤 작업을 계속한다. 이전 저장→정상 전달→현재 저장·복원의 근거 대응을 보존하고, 자기 저장 성공만으로 이전 자료가 정상 전달됐다고 보고하지 않는다.
+
+이 절차를 suppression, binding·무결성 오류나 다른 과업의 후보 거부를 우회하는 데 쓰지 않는다. 인계 없는 새 요청에는 과거 교정을 가정하거나 checkpoint를 만들지 않는다.
+
 자동 후보 제공만 멈추려면 `suppress_context_restore`를 사용한다. 저장된 direct payload까지 지워야 한다는 명시적 요청이 있을 때만 `purge_direct_context`를 사용한다. `clear` 뒤 과거 epoch를 지울 때도 해당 snapshot의 epoch와 revision을 지정한다. purge는 direct payload와 본문을 담을 수 있는 idempotency 결과를 제거하지만 workflow receipt와 convergence root는 삭제하지 않는다.
 
 Continuity가 unavailable이면 작업이나 Codex compaction을 막지 않는다. 저장되지 않은 direct task의 연속성을 보장했다고 보고하지 않는다.

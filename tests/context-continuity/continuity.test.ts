@@ -937,6 +937,27 @@ describe("normalized continuity semantics and one-call snapshots", () => {
     finally { database.close(); }
   });
 
+  it("initializes a native fork without inheriting another session's restore authority", () => {
+    const service = createService();
+    const original = directCheckpoint(service, "fork-origin").data!;
+    const originalCandidate = service.candidateForSession("fork-origin");
+    const forkCorrelation = service.correlateSession("fork-recipient");
+    expect(service.store.getTask(forkCorrelation)).toBeNull();
+    expect(handleNativeContinuityHook({ hook_event_name: "SessionStart", source: "fork", session_id: "fork-recipient" }, service, "claude-code")).toEqual({});
+    expect(service.store.getTask(forkCorrelation)).toMatchObject({ currentEpoch: 1, rootId: null });
+    expect(service.store.getSnapshot(forkCorrelation, 1)).toBeNull();
+    const foreignLoad = { schemaVersion: "1.0.0", candidateToken: originalCandidate.restoreToken!, epoch: original.epoch,
+      revision: original.revision, digest: original.snapshotDigest };
+    expect(service.loadContext(bound(service, "fork-recipient", "load_context", foreignLoad)).error?.code).toBe("BINDING_INVALID");
+    const own = directCheckpoint(service, "fork-recipient").data!;
+    expect(own.taskCorrelation).not.toBe(original.taskCorrelation);
+    const candidate = service.inspectContext(bound(service, "fork-recipient", "inspect_context", { schemaVersion: "1.0.0" })).data!;
+    const ownLoad = { schemaVersion: "1.0.0", candidateToken: candidate.restoreToken!, epoch: candidate.summary!.epoch,
+      revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest };
+    expect(service.loadContext(bound(service, "fork-recipient", "load_context", ownLoad)).data).toEqual(own);
+    expect(service.store.getSnapshot(original.taskCorrelation, original.epoch)).toEqual(original);
+  });
+
   it.each(["claude-code", "codex"])("recognizes %s compact actions without changing the lifecycle contract", (host) => {
     for (const source of ["startup", "clear", "resume", "compact"] as const) {
       const mapped = adaptHostInput({ hook_event_name: "SessionStart", source, session_id: "builtin-session" }, host);

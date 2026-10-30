@@ -281,6 +281,12 @@ describe("generated Claude plugin", () => {
     for (const tool of ["Read", "Grep", "Glob", ...governanceNames.map((name) => `${toolPrefix}${name}`)]) expect(boardMatcher.test(tool), tool).toBe(false);
     const intakeGroups = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[1]));
     expect(intakeGroups).toHaveLength(1);
+    for (const script of [allowedScripts[0], allowedScripts[1], allowedScripts[4]]) {
+      const groups = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === script));
+      expect(groups).toHaveLength(1);
+      expect(new RegExp(groups[0].matcher, "u").test("fork"), script).toBe(true);
+      expect(new RegExp(groups[0].matcher, "u").test("unknown-start-source"), script).toBe(false);
+    }
     // Interactive sessions still record the issuing model from these lifecycle events.
     for (const event of ["SessionStart", "PostModelSwitch"]) {
       const groups = claudeHooks.hooks[event].filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[2]));
