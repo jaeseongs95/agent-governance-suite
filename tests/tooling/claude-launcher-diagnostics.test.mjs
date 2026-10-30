@@ -123,7 +123,7 @@ describe("Claude launcher stage diagnostics", () => {
       { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
     const closed = once(launcher, "close");
     const lines = createInterface({ input: launcher.stdout });
-    const ready = once(lines, "line", { signal: AbortSignal.timeout(5000) });
+    const ready = once(lines, "line", { signal: globalThis.AbortSignal.timeout(5000) });
     launcher.stdin.end(JSON.stringify({ hook_event_name: "SessionStart", session_id: "owned-relay-fixture" }));
     let relayPid;
     try {
