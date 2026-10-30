@@ -251,6 +251,13 @@ describe("0186 trusted native strategy boundary", () => {
     expect(createNativeAdapters([{data: {}}] as unknown as Parameters<typeof createNativeAdapters>[0], runner).size).toBe(0);
     expect(createNativeAdapters(bindNativeClassificationDefinitions([{}] as NativeClassificationAdapterDefinition[]), runner).size).toBe(0);
     expect(() => createNativeAdapters([{data: f.definition}], runner)).toThrow("NATIVE_ADAPTER_BEHAVIOR_UNAVAILABLE");
+    expect(() => createNativeAdapters(bindNativeClassificationDefinitions([f.definition], new Map()), runner)).toThrow("NATIVE_ADAPTER_BEHAVIOR_UNAVAILABLE");
+    expect(() => createNativeAdapters(bindNativeClassificationDefinitions([f.definition], new Map([[f.definition.host, undefined as unknown as NativeCliBehavior]])), runner)).toThrow("NATIVE_ADAPTER_BEHAVIOR_UNAVAILABLE");
+    for (const invalidBehavior of [null, false, 0] as const) {
+      const bound = bindNativeClassificationDefinitions([f.definition], new Map([[f.definition.host, invalidBehavior as unknown as NativeCliBehavior]]));
+      expect(bound).toEqual([{data: f.definition, behavior: invalidBehavior}]);
+      expect(() => createNativeAdapters(bound, runner)).toThrow("INVALID_NATIVE_ADAPTER_DEFINITION");
+    }
     expect(prepare).not.toHaveBeenCalled(); expect(runner).not.toHaveBeenCalled();
   });
 
@@ -312,6 +319,9 @@ describe("0186 trusted native strategy boundary", () => {
       Object.defineProperty(bound, "behavior", {get: getter});
       expect(createNativeAdapters([bound, {data: f.definition, behavior}], runner).size).toBe(1);
       const map = new Map([[f.definition.host, behavior]]), lookup = vi.spyOn(map, "get");
+      expect(createNativeAdapters(bindNativeClassificationDefinitions([data as unknown as NativeClassificationAdapterDefinition, f.definition], map), runner).size).toBe(1);
+      expect(lookup).toHaveBeenCalledTimes(1);
+      lookup.mockClear();
       const definitions = JSON.parse(JSON.stringify([data, f.definition])) as NativeClassificationAdapterDefinition[];
       expect(createNativeAdapters(bindNativeClassificationDefinitions(definitions, map), runner).size).toBe(1);
       expect(getter).not.toHaveBeenCalled(); expect(lookup).toHaveBeenCalledTimes(1);

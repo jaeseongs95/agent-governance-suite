@@ -102,6 +102,6 @@ export function bindNativeClassificationDefinitions(
     if (!hasRequiredNativeAdapterEvidence(data)) return {data};
     assertEligibleNativeAdapterDefinition(data);
     const behavior = behaviors.get(data.host);
-    return behavior ? {data, behavior} : {data};
+    return behavior !== undefined ? {data, behavior} : {data};
   });
 }
