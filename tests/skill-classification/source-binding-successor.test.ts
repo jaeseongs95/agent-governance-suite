@@ -31,6 +31,8 @@ const bindings = [
   {skillId: "ponytail", path: "skills/ponytail/SKILL.md", previousDigest: "sha256:907667b8b625eab0438b462a4737a056e3833f972c66e432817a12e6f643ac76", digest: "sha256:2ce28db45c1a84e63fa2af7079e58a3803fc26b16ab7073436efd55b1e1214f9"},
   {skillId: "task-contract", path: "skills/task-contract/SKILL.md", previousDigest: "sha256:0482c8aa36c95ddd5b7d68aa5924840341a64bfb05c39c7dcb112c8df1fb4100", digest: "sha256:92cf19444e6c97b1d1d017f8eed481135d708095d89411668ab215123d1266aa"}
 ];
+const isolated = successor.isolatedHotfixSourceSuccessor;
+const isolatedBinding = {"skillId": "orchestrator", "path": "skills/orchestrator/SKILL.md", "previousDigest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234", "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"};
 function semantics(value: unknown, depth = 0): unknown {
   if (Array.isArray(value)) return value.map(child => semantics(child, depth + 1));
   if (value && typeof value === "object") {
@@ -55,11 +57,11 @@ it("preserves predecessor history and all frozen 39/18/21 semantics in a distinc
   expect(original.historicalSuccessor.digest).toBe("sha256:69ef37b636e35bfdce77103cbe84015c0e2e9482a41e46059d89ac557a8717f7");
   expect(original.successor.fixtureRevision).toBe(predecessor.fixtureRevision);
   expect(original.successor.oracleDigest).toBe(predecessor.oracleDigest);
-  expect(current.fixtureRevision).toBe("ags-classification-skill-policy-source-binding-r05");
-  expect(current.oracleRevision).toBe("pre-live-skill-policy-source-reviewed-r05");
-  expect(current.sourceBindingRevision).toBe("pre-live-source-binding-5");
-  expect(current.fixtureRevision).toBe(successor.successor.fixtureRevision);
-  expect(current.oracleRevision).toBe(successor.successor.oracleRevision);
+  expect(current.fixtureRevision).toBe("ags-classification-d0352-isolated-source-binding-r10");
+  expect(current.oracleRevision).toBe("pre-live-d0352-isolated-source-reviewed-r10");
+  expect(current.sourceBindingRevision).toBe("pre-live-source-binding-10-isolated");
+  expect(current.fixtureRevision).toBe(isolated.successor.fixtureRevision);
+  expect(current.oracleRevision).toBe(isolated.successor.oracleRevision);
   expect(successor.semanticProjection.digest).toBe(semanticDigest);
   expect(hash(JSON.stringify(semantics(current)))).toBe(semanticDigest);
   expect(current.cases).toHaveLength(39);
@@ -68,7 +70,7 @@ it("preserves predecessor history and all frozen 39/18/21 semantics in a distinc
   expect(current.status).toBe("NOT_RUN");
   expect(successor.review.labelChanges).toEqual([]);
   expect(oracleDigest(current)).toBe(current.oracleDigest);
-  expect(current.oracleDigest).toBe(successor.successor.oracleDigest);
+  expect(current.oracleDigest).toBe(isolated.successor.oracleDigest);
   expect(current.oracleDigest).not.toBe(predecessor.oracleDigest);
 });
 it("binds exactly the nine changed skill policy sources across global and per-case evidence", () => {
@@ -80,14 +82,65 @@ it("binds exactly the nine changed skill policy sources across global and per-ca
     if (!value || typeof value !== "object") return;
     const row = value as Record<string, unknown>;
     const binding = bindings.find(item => item.skillId === row.skillId && item.path === row.path);
-    if (binding && "digest" in row) {expect(row.digest).toBe(binding.digest); references++;}
+    if (binding && "digest" in row) {
+      const expected = binding.skillId === "orchestrator" ? isolatedBinding : binding;
+      expect(row.digest).toBe(expected.digest); references++;
+    }
     for (const child of Object.values(row)) walk(child);
   };
   walk(current);
   expect(references).toBe(58);
   expect(references).toBe(successor.reboundReferences);
   for (const binding of bindings) {
-    expect(hash(readFileSync(path.join(root, binding.path)))).toBe(binding.digest);
+    const expected = binding.skillId === "orchestrator" ? isolatedBinding : binding;
+    expect(hash(readFileSync(path.join(root, binding.path)))).toBe(expected.digest);
     expect(binding.digest).not.toBe(binding.previousDigest);
+  }
+});
+
+it("preserves the exact 838 predecessor and binds only the isolated D352 successor", () => {
+  expect(isolated.revision).toBe("d0352-isolated-source-binding-r10");
+  expect(isolated.role).toBe("source-binding-only-no-evaluation-authority");
+  expect(isolated.baseCommit).toBe("838cae9dfb97fb1cbf8a4f3779b93e2464e3e56b");
+  expect(isolated.predecessor).toEqual({"path": "tests/skill-classification/fixtures.json", "gitBlob": "2078c29de99d2c5a2dc1693b9c68da9cac395bac", "bytes": 142481, "digest": "sha256:3c7c2159bbaa74521c5c5aefbae21710a7a507a6235315608ec941fb1b1294f1", "fixtureRevision": "ags-classification-skill-policy-source-binding-r05", "oracleRevision": "pre-live-skill-policy-source-reviewed-r05", "oracleDigest": "sha256:307f07d6f78cba04e1f606f680e6609b9a17f22f499b802f1b0cf46329a1bd2e", "sourceBindingRevision": "pre-live-source-binding-5"});
+  expect(isolated.predecessorSidecar).toEqual({"path": "tests/skill-classification/fixtures.source-successor.json", "gitBlob": "b4900c047dc76c218f845a002ccc79b60fe97a6c", "bytes": 18528, "digest": "sha256:f157b2fdf68a2bb149b6db276e73141a8c75aacbdde20f602f9bf4874e6c76f0"});
+  expect(isolated.successor).toEqual({"fixtureRevision": "ags-classification-d0352-isolated-source-binding-r10", "oracleRevision": "pre-live-d0352-isolated-source-reviewed-r10", "oracleDigest": "sha256:45feee54e9256ad16b66b12464c37bab73af14e6fa211d21bfce87b7300c9c43", "sourceBindingRevision": "pre-live-source-binding-10-isolated"});
+  expect(isolated.bindings).toEqual([isolatedBinding]);
+  expect(isolated.reboundReferences).toBe(17);
+  expect(isolated.review.labelChanges).toEqual([]);
+  expect(isolated.review.modelBehavior).toBe("NOT_RUN");
+  expect(successor.successor).toEqual({
+    fixtureRevision: isolated.predecessor.fixtureRevision,
+    oracleRevision: isolated.predecessor.oracleRevision,
+    oracleDigest: isolated.predecessor.oracleDigest
+  });
+  const priorSidecar: Record<string, unknown> = {...successor};
+  delete priorSidecar.isolatedHotfixSourceSuccessor;
+  expect(hash(JSON.stringify(priorSidecar, null, 2) + "\n")).toBe(isolated.predecessorSidecar.digest);
+  const priorFixture = JSON.parse(JSON.stringify(current));
+  let references = 0;
+  const restore = (value: unknown) => {
+    if (!value || typeof value !== "object") return;
+    const row = value as Record<string, unknown>;
+    if (row.skillId === isolatedBinding.skillId && row.path === isolatedBinding.path && "digest" in row) {
+      expect(row.digest).toBe(isolatedBinding.digest);
+      row.digest = isolatedBinding.previousDigest;
+      references++;
+    }
+    for (const child of Object.values(row)) restore(child);
+  };
+  restore(priorFixture);
+  for (const key of ["fixtureRevision", "oracleRevision", "oracleDigest", "sourceBindingRevision"]) {
+    priorFixture[key] = isolated.predecessor[key];
+  }
+  expect(references).toBe(17);
+  expect(hash(JSON.stringify(priorFixture, null, 2) + "\n")).toBe(isolated.predecessor.digest);
+  expect(oracleDigest(priorFixture)).toBe(isolated.predecessor.oracleDigest);
+  expect(hash(JSON.stringify(semantics(priorFixture)))).toBe(semanticDigest);
+  expect(isolated.sourceFiles).toEqual([{"path": "skills/orchestrator/SKILL.md", "bytes": 9945, "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"}, {"path": "skills/orchestrator/classification.json", "bytes": 4577, "digest": "sha256:44d66bda8d2c80034d3f881ff3f12de6d628bd4d8ce850fd49718df656aa95d2"}, {"path": "skills/orchestrator/references/entry-details.md", "bytes": 22130, "digest": "sha256:86af016cfc8399a656181f5253189c098b53434aaa8b7d4fd1353d586248333f"}, {"path": "skills/orchestrator/references/engineering-practices/cli.md", "bytes": 9231, "digest": "sha256:c23134f4ebce972f891e7b7bf93f9ac24a5c340e856e3f1192e58fb33aff3b2b"}]);
+  for (const source of isolated.sourceFiles) {
+    const bytes = readFileSync(path.join(root, source.path));
+    expect(bytes.length).toBe(source.bytes);
+    expect(hash(bytes)).toBe(source.digest);
   }
 });

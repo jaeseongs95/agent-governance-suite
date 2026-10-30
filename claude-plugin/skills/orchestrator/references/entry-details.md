@@ -18,7 +18,7 @@
 
 선택 결과에는 선택한 capability·provider·phase와 이유, 적용 조건에 가까웠지만 생략한 capability와 그 이유를 남긴다. 요청에서 capability를 고르는 판단은 이 지침의 책임이다. MCP 계획기는 `TaskEnvelope.v1.requiredCapabilities`를 provider로 결정적으로 매핑하고 계획·단계·결과의 순서와 근거만 검사하므로, 선택 의미를 계획기로 옮기거나 계획 호출을 선택 근거로 대신하지 않는다.
 
-라우팅 전에 설치 시 노출된 스킬 설명으로 후보 capability를 정하고 `node scripts/query-registry.mjs --capability <capability>`를 실행해 일치하는 활성 provider만 조회한다. 여러 capability는 `--capability`를 반복한다. 후보를 특정할 수 없을 때만 `--all`로 compact 전체 목록을 조회하며, `skills/registry.json` 원문 전체를 모델 컨텍스트로 읽지 않는다. 조회 결과의 `selectionCriteria`, precondition, priority를 선택 설명에 남긴다. 같은 capability의 후보 중 priority가 가장 큰 항목을 선택하되, 동률이나 descriptor 충돌은 임의로 고르지 말고 `needs-input`으로 돌린다. `selectionCriteria`는 사람이 검토하는 근거이며 런타임 필터가 아니다. 필요한 역할이 없으면 `missingCapabilities`, 가능한 직접 스킬 호출 경로와 부족한 capability를 분리해 설명한다.
+라우팅 전에 설치 시 노출된 스킬 설명으로 후보 capability를 정한다. 조회 스크립트는 로드한 `orchestrator/SKILL.md`와 같은 디렉터리의 `scripts/query-registry.mjs`다. 작업 대상의 현재 디렉터리를 유지한 채 `node "<로드한 orchestrator 디렉터리>/scripts/query-registry.mjs" --capability <capability>`로 일치하는 활성 provider만 조회한다. 작업 저장소의 `scripts/`나 다른 설치본으로 경로를 추측하지 않는다. 여러 capability는 `--capability`를 반복한다. 후보를 특정할 수 없을 때만 `--all`로 compact 전체 목록을 조회하며, `skills/registry.json` 원문 전체를 모델 컨텍스트로 읽지 않는다. 조회 결과의 `selectionCriteria`, precondition, priority를 선택 설명에 남긴다. 같은 capability의 후보 중 priority가 가장 큰 항목을 선택하되, 동률이나 descriptor 충돌은 임의로 고르지 말고 `needs-input`으로 돌린다. `selectionCriteria`는 사람이 검토하는 근거이며 런타임 필터가 아니다. 필요한 역할이 없으면 `missingCapabilities`, 가능한 직접 스킬 호출 경로와 부족한 capability를 분리해 설명한다.
 
 초기 정책 capability는 `subagent-coordination`, `independent-deliberation`, `independent-audit`다. 일반 변경 흐름에 필요한 모델·추론 수준 적합성, 지침 범위, 작업 계약, 저장소 관례, 변경 기준선·범위 확인, mutation 사전 점검, 수용 근거 확인과 실패 진단도 capability로 찾는다. 현재 provider 이름을 라우팅 조건으로 사용하지 않는다. `task-contract-definition`, `change-scope-baseline-capture`, `change-scope-assurance`, `acceptance-evidence-validation`, `mutation-risk-preflight`, `independent-audit`는 각 descriptor의 적용 조건과 phase가 가리키는 시점에만 선택하며, 모든 요청에 기본으로 붙이지 않는다.
 
@@ -60,6 +60,10 @@
 `independent-deliberation` 또는 `independent-audit` provider를 호출하기 전에 [전문 단계 handoff 계약](specialist-handoffs.md)에서 해당 절을 읽고 입력, 결과 투영과 진행 조건을 적용한다.
 
 ## 결과 통합
+
+전문 스킬의 분석·계획·보고서 생성 완료는 해당 단계의 결과이며 사용자 요청 전체의 완료와 구분한다. 분석·계획만 요청받았다면 후속 변경을 실행하지 않는다. 사용자 요청에 구현·실행·검증이 포함되어 있고 이미 허용됐다면 전문 결과를 기존 담당 실행자·도구의 후속 작업 입력으로 연결하고, 기존 역할 범위와 필수 gate 안에서 그 작업과 필요한 검증까지 계속 수행한다. 후보·보고서 반환만으로 전체 완료를 보고하거나 실행 가능한 후속 확인을 사용자에게 넘기지 않는다.
+
+호출·재선택 시점과 실행 가능한 일의 구분은 [공통 접수·선택 기준](../SKILL.md#공통-접수선택-기준)을 따른다. 필수 입력이나 gate 실패로 막힌 의존 단계는 실행하지 않으며, 실제 실행·검증 근거와 남은 제약으로 요청 전체의 상태를 보고한다. 이 연결을 위해 단독 전문 작업에 workflow나 새 보고서를 추가하지 않는다.
 
 보안 전문 분석을 요청했거나 수용 기준에서 요구하면 `software-security-audit`를 선택한다. 보안 관련 파일의 존재만으로 추가하지 않는다. phase 65의 `security-audit-request`에는 실제 파일 내용을 고정한 대상과 허용 범위를 전달한다. 보고서는 로컬 CLI로 대상·근거를 검증하고 원자료를 확인한 뒤 기록한다. 이 provider의 `passed`는 조사 산출물 생성 성공이며 안전 판정이 아니다. `partial`의 미검사 항목과 limitations를 생략하지 않는다.
 

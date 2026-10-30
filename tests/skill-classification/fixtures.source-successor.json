@@ -495,5 +495,68 @@
     "rationale": "Skill policy wording source bindings only. Each public synthetic case was reviewed against the changed applicability and exclusion wording; no required, allowed, forbidden, not-applicable or conditional label changes. Prompts, labels, splits, matrices, thresholds and qualification frozen.",
     "labelChanges": [],
     "modelBehavior": "NOT_RUN"
+  },
+  "isolatedHotfixSourceSuccessor": {
+    "revision": "d0352-isolated-source-binding-r10",
+    "role": "source-binding-only-no-evaluation-authority",
+    "baseCommit": "838cae9dfb97fb1cbf8a4f3779b93e2464e3e56b",
+    "predecessor": {
+      "path": "tests/skill-classification/fixtures.json",
+      "gitBlob": "2078c29de99d2c5a2dc1693b9c68da9cac395bac",
+      "bytes": 142481,
+      "digest": "sha256:3c7c2159bbaa74521c5c5aefbae21710a7a507a6235315608ec941fb1b1294f1",
+      "fixtureRevision": "ags-classification-skill-policy-source-binding-r05",
+      "oracleRevision": "pre-live-skill-policy-source-reviewed-r05",
+      "oracleDigest": "sha256:307f07d6f78cba04e1f606f680e6609b9a17f22f499b802f1b0cf46329a1bd2e",
+      "sourceBindingRevision": "pre-live-source-binding-5"
+    },
+    "predecessorSidecar": {
+      "path": "tests/skill-classification/fixtures.source-successor.json",
+      "gitBlob": "b4900c047dc76c218f845a002ccc79b60fe97a6c",
+      "bytes": 18528,
+      "digest": "sha256:f157b2fdf68a2bb149b6db276e73141a8c75aacbdde20f602f9bf4874e6c76f0"
+    },
+    "successor": {
+      "fixtureRevision": "ags-classification-d0352-isolated-source-binding-r10",
+      "oracleRevision": "pre-live-d0352-isolated-source-reviewed-r10",
+      "oracleDigest": "sha256:45feee54e9256ad16b66b12464c37bab73af14e6fa211d21bfce87b7300c9c43",
+      "sourceBindingRevision": "pre-live-source-binding-10-isolated"
+    },
+    "bindings": [
+      {
+        "skillId": "orchestrator",
+        "path": "skills/orchestrator/SKILL.md",
+        "previousDigest": "sha256:b44340396bf55691bbd5e88d913f660b6aef9cedb3d9e6c27707cef904d68234",
+        "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+      }
+    ],
+    "reboundReferences": 17,
+    "sourceFiles": [
+      {
+        "path": "skills/orchestrator/SKILL.md",
+        "bytes": 9945,
+        "digest": "sha256:5f2cf07a358914cd068a90cf6eb7fe3bbf549a7fc08e47dfc6daecefeabd44f4"
+      },
+      {
+        "path": "skills/orchestrator/classification.json",
+        "bytes": 4577,
+        "digest": "sha256:44d66bda8d2c80034d3f881ff3f12de6d628bd4d8ce850fd49718df656aa95d2"
+      },
+      {
+        "path": "skills/orchestrator/references/entry-details.md",
+        "bytes": 22130,
+        "digest": "sha256:86af016cfc8399a656181f5253189c098b53434aaa8b7d4fd1353d586248333f"
+      },
+      {
+        "path": "skills/orchestrator/references/engineering-practices/cli.md",
+        "bytes": 9231,
+        "digest": "sha256:c23134f4ebce972f891e7b7bf93f9ac24a5c340e856e3f1192e58fb33aff3b2b"
+      }
+    ],
+    "review": {
+      "labelChanges": [],
+      "modelBehavior": "NOT_RUN",
+      "rationale": "838 기준의 입력·정답·조건·분할·행렬과 39/18/21 분모를 보존하고 D352 격리 원문의 지문만 재결속한다. 기존 역사 문서를 보존하며 이 메타데이터는 실행·평가·설치 권한을 만들지 않는다."
+    }
   }
 }
