@@ -250,22 +250,22 @@ export async function readClassificationSources(root, tracked) {
   const classifications = [];
   for (const skillFile of skillFiles) {
     const metadataPath = skillFile.replace(/SKILL\.md$/u, "classification.json");
-    try { classifications.push([metadataPath, await readFile(path.join(root, metadataPath))]); }
+    try { classifications.push([metadataPath, await readSource(root, metadataPath)]); }
     catch (error) { if (error.code !== "ENOENT") throw error; }
   }
   if (classifications.length === 0) return null;
   if (classifications.length !== skillFiles.length) throw new Error("Classification metadata must cover every canonical skill.");
-  const sources = new Map([["skills/registry.json", await readFile(path.join(root, "skills/registry.json"))]]);
+  const sources = new Map([["skills/registry.json", await readSource(root, "skills/registry.json")]]);
   for (const [metadataPath, bytes] of classifications) {
     sources.set(metadataPath, bytes);
     const skillFile = metadataPath.replace(/classification\.json$/u, "SKILL.md");
-    sources.set(skillFile, await readFile(path.join(root, skillFile)));
-    const metadata = JSON.parse(bytes.toString("utf8"));
+    sources.set(skillFile, await readSource(root, skillFile));
+    const metadata = parseSourceJson(root, metadataPath, bytes);
     if (metadata.schemaVersion !== "1.0.0" || !Array.isArray(metadata.applicability) || !Array.isArray(metadata.exclusions)) throw new Error(`Invalid classification source: ${metadataPath}`);
     const prefix = metadataPath.slice(0, metadataPath.lastIndexOf("/") + 1);
     for (const span of [...metadata.applicability, ...metadata.exclusions]) {
       if (typeof span.path !== "string" || !span.path.startsWith(prefix) || span.path.split("/").some((part) => !part || part === ".." || part === ".") || span.path.includes("\\")) throw new Error(`Invalid classification source path: ${metadataPath}`);
-      const content = sources.get(span.path) ?? await readFile(path.join(root, span.path));
+      const content = sources.get(span.path) ?? await readSource(root, span.path);
       if (digest(content) !== span.digest) throw new Error(`Stale classification source: ${span.path}`);
       const lines = content.toString("utf8").split(/\r?\n/u);
       if (!Number.isSafeInteger(span.startLine) || !Number.isSafeInteger(span.endLine) || span.startLine < 1 || span.endLine < span.startLine || span.endLine > lines.length) throw new Error(`Invalid classification source span: ${span.path}`);
@@ -295,14 +295,14 @@ export function projectClassificationSources(files, canonicalSources) {
 // bytes belong in its runtime lock. Codex keeps the unchanged source lock.
 export async function readEngineeringSourceLock(root, tracked) {
   if (!tracked.includes(ENGINEERING_LOCK)) return null;
-  const lock = JSON.parse(await readFile(path.join(root, ENGINEERING_LOCK), "utf8"));
+  const lock = parseSourceJson(root, ENGINEERING_LOCK, await readSource(root, ENGINEERING_LOCK));
   const expected = tracked.filter((file) => engineeringPath(file) && file !== ENGINEERING_LOCK).sort();
   if (lock.schemaVersion !== "1.0.0" || !Array.isArray(lock.files)
     || JSON.stringify(lock.files.map((file) => file.path).sort()) !== JSON.stringify(expected)) {
     throw new Error("Engineering Practices source lock must cover the exact source inventory.");
   }
   for (const file of lock.files) {
-    if (digest(await readFile(path.join(root, file.path))) !== file.digest) {
+    if (digest(await readSource(root, file.path)) !== file.digest) {
       throw new Error(`Engineering Practices source lock mismatch: ${file.path}`);
     }
   }
@@ -321,11 +321,17 @@ export function projectEngineeringContentLock(files, lock) {
   files.set(ENGINEERING_LOCK, Buffer.from(formatJson({ schemaVersion: "1.0.0", files: projected })));
 }
 
-async function walk(directory, base = directory) {
+async function walk(directory, base = directory, root = base) {
   const files = [];
-  for (const entry of await readdir(directory, { withFileTypes: true })) {
+  let entries;
+  try {
+    entries = await readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    throw fileFailure(root, directory, "readdir", error);
+  }
+  for (const entry of entries) {
     const fullPath = path.join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...await walk(fullPath, base));
+    if (entry.isDirectory()) files.push(...await walk(fullPath, base, root));
     else files.push(toPosix(path.relative(base, fullPath)));
   }
   return files;
@@ -348,31 +354,31 @@ export async function renderClaudePlugin(root = ROOT) {
   const tracked = trackedFiles(root);
   const classificationSources = await readClassificationSources(root, tracked);
   const engineeringLock = await readEngineeringSourceLock(root, tracked);
-  const version = JSON.parse(await readFile(path.join(root, "release/version.json"), "utf8")).version;
+  const version = parseSourceJson(root, "release/version.json", await readSource(root, "release/version.json")).version;
   let registry = null;
 
   for (const relativePath of tracked) {
     const shared = SHARED_FILES.includes(relativePath) || SHARED_ROOTS.some((prefix) => relativePath.startsWith(prefix));
     if (!shared || isExcludedSkillPath(relativePath) || isCodexOnlySkillPath(relativePath)) continue;
-    let content = await readFile(path.join(root, relativePath));
+    let content = await readSource(root, relativePath);
     if (relativePath === "skills/registry.json") {
-      registry = withoutExcludedSkills(JSON.parse(content.toString("utf8")), "skills");
+      registry = withoutExcludedSkills(parseSourceJson(root, relativePath, content), "skills");
       content = Buffer.from(formatJson(registry));
     } else if (relativePath === "skills/source-lock.json") {
-      content = Buffer.from(formatJson(withoutExcludedSkills(JSON.parse(content.toString("utf8")), "sources")));
+      content = Buffer.from(formatJson(withoutExcludedSkills(parseSourceJson(root, relativePath, content), "sources")));
     }
     files.set(relativePath, content);
   }
 
   const overlayRoot = path.join(root, OVERLAY_DIRECTORY);
-  const overlayFiles = await walk(overlayRoot);
+  const overlayFiles = await walk(overlayRoot, overlayRoot, root);
   const adaptationPrefix = `${ADAPTATIONS_DIRECTORY}/`;
   for (const relativePath of overlayFiles) {
     if (relativePath.startsWith(adaptationPrefix)) continue;
     if (files.has(relativePath)) throw new Error(`overlay must not replace a shared file wholesale: ${relativePath}`);
-    let content = await readFile(path.join(overlayRoot, relativePath));
+    let content = await readSource(root, `${OVERLAY_DIRECTORY}/${relativePath}`);
     if (relativePath === ".claude-plugin/plugin.json") {
-      const manifest = JSON.parse(content.toString("utf8"));
+      const manifest = parseSourceJson(root, `${OVERLAY_DIRECTORY}/${relativePath}`, content);
       manifest.version = version;
       content = Buffer.from(formatJson(manifest));
     }
@@ -382,7 +388,7 @@ export async function renderClaudePlugin(root = ROOT) {
     const source = `${OVERLAY_DIRECTORY}/${relativePath}`;
     const match = /^adaptations\/([a-z0-9]+(?:-[a-z0-9]+)*)\.json$/u.exec(relativePath);
     if (!match) throw new Error(`unexpected adaptation file: ${source}`);
-    applySkillAdaptation(files, match[1], JSON.parse(await readFile(path.join(overlayRoot, relativePath), "utf8")), source);
+    applySkillAdaptation(files, match[1], parseSourceJson(root, source, await readSource(root, source)), source);
   }
   mapSkillInvocations(files, (registry?.skills ?? []).map((entry) => entry.skillId));
   projectEngineeringContentLock(files, engineeringLock);
@@ -401,16 +407,16 @@ export async function renderAntigravitySkillAdaptations(root = ROOT) {
   const tracked = trackedFiles(root);
   for (const relativePath of tracked) {
     if (!relativePath.startsWith("skills/") || isExcludedSkillPath(relativePath) || isCodexOnlySkillPath(relativePath)) continue;
-    files.set(relativePath, await readFile(path.join(root, relativePath)));
+    files.set(relativePath, await readSource(root, relativePath));
   }
   const adaptationsRoot = path.join(root, ANTIGRAVITY_ADAPTATIONS_DIRECTORY);
   if (!existsSync(adaptationsRoot)) return files;
-  const adaptationFiles = (await walk(adaptationsRoot)).sort();
+  const adaptationFiles = (await walk(adaptationsRoot, adaptationsRoot, root)).sort();
   for (const relativePath of adaptationFiles) {
     const source = `${ANTIGRAVITY_ADAPTATIONS_DIRECTORY}/${relativePath}`;
     const match = /^([a-z0-9]+(?:-[a-z0-9]+)*)\.json$/u.exec(relativePath);
     if (!match) throw new Error(`unexpected adaptation file: ${source}`);
-    applySkillAdaptation(files, match[1], JSON.parse(await readFile(path.join(adaptationsRoot, relativePath), "utf8")), source);
+    applySkillAdaptation(files, match[1], parseSourceJson(root, source, await readSource(root, source)), source);
   }
   return files;
 }
@@ -430,16 +436,50 @@ function describeFileFailure(operation, error) {
   return `${operation} ${code}`;
 }
 
+// Diagnostics name only the repository-relative path and a bounded operation/code.
+// Native messages and JSON snippets may contain private paths or source content.
+function diagnosticPath(root, file) {
+  const relative = toPosix(path.relative(root, path.resolve(root, file)));
+  if (relative === ".." || relative.startsWith("../") || path.isAbsolute(relative)) return "<outside root>";
+  return relative.replace(/[\u0000-\u001f\u007f]/gu, "?").slice(0, 1024);
+}
+
+function fileFailure(root, file, operation, error) {
+  const relativePath = diagnosticPath(root, file);
+  return Object.assign(new Error(`${relativePath} (${describeFileFailure(operation, error)})`, { cause: error }), {
+    code: error?.code, relativePath,
+  });
+}
+
+async function readSource(root, relativePath) {
+  try {
+    return await readFile(path.join(root, relativePath));
+  } catch (error) {
+    throw fileFailure(root, relativePath, "readFile", error);
+  }
+}
+
+function parseSourceJson(root, relativePath, content) {
+  try {
+    return JSON.parse(content.toString("utf8"));
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error;
+    throw new SyntaxError(`invalid JSON ${diagnosticPath(root, relativePath)} (JSON.parse SyntaxError)`, { cause: error });
+  }
+}
+
 /** Compares the committed claude-plugin/ tree with a fresh render. */
 export async function checkClaudePlugin(root = ROOT) {
   const expected = await renderClaudePlugin(root);
   const outputRoot = path.join(root, OUTPUT_DIRECTORY);
   let actualPaths;
   try {
-    actualPaths = await walk(outputRoot);
+    actualPaths = await walk(outputRoot, outputRoot, root);
   } catch (error) {
-    if (error?.code === "ENOENT") return [`${OUTPUT_DIRECTORY}/ is missing; run pnpm claude:build`];
-    return [`${OUTPUT_DIRECTORY}/ is unreadable (${describeFileFailure("readdir", error)}); fix access to it before comparing`];
+    if (error?.code === "ENOENT" && error.relativePath === OUTPUT_DIRECTORY) return [`${OUTPUT_DIRECTORY}/ is missing; run pnpm claude:build`];
+    const failedPath = error.relativePath ?? OUTPUT_DIRECTORY;
+    const state = error?.code === "ENOENT" ? "missing" : "unreadable";
+    return [`${failedPath}/ is ${state} (${describeFileFailure("readdir", error)}); fix access to it before comparing`];
   }
   const problems = [];
   for (const relativePath of actualPaths) {
@@ -450,9 +490,10 @@ export async function checkClaudePlugin(root = ROOT) {
     try {
       actual = await readFile(path.join(outputRoot, ...relativePath.split("/")));
     } catch (error) {
+      const failedPath = diagnosticPath(root, path.join(outputRoot, relativePath));
       problems.push(error?.code === "ENOENT"
-        ? `missing file ${OUTPUT_DIRECTORY}/${relativePath}`
-        : `unreadable file ${OUTPUT_DIRECTORY}/${relativePath} (${describeFileFailure("readFile", error)}); not compared`);
+        ? `missing file ${failedPath}`
+        : `unreadable file ${failedPath} (${describeFileFailure("readFile", error)}); not compared`);
       continue;
     }
     if (!actual.equals(content)) problems.push(`stale file ${OUTPUT_DIRECTORY}/${relativePath}`);
@@ -463,7 +504,7 @@ export async function checkClaudePlugin(root = ROOT) {
 
 /** Lists Codex hook events that the committed Claude plugin does not register. */
 export async function findHookEventDrift(root = ROOT) {
-  const events = async (relativePath) => Object.keys(JSON.parse(await readFile(path.join(root, relativePath), "utf8")).hooks ?? {});
+  const events = async (relativePath) => Object.keys(parseSourceJson(root, relativePath, await readSource(root, relativePath)).hooks ?? {});
   const claudeEvents = new Set(await events(`${OUTPUT_DIRECTORY}/hooks/hooks.json`));
   return (await events("hooks/hooks.json"))
     .filter((event) => !claudeEvents.has(event))

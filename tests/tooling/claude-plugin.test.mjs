@@ -503,7 +503,9 @@ syncBuiltinESMExports();
       expect(checkHook.trace).toEqual([{ op: "readFile", path: checkHook.target, code }]);
       expect(checkHook.result.status).toBe(1);
       expect(checkHook.result.stdout).not.toContain("fresh");
-      expect(checkHook.result.stderr).toContain(`synthetic readFile ${code}`);
+      expect(checkHook.result.stderr).toContain(`${hooksFile} (readFile ${code})`);
+      expect(checkHook.result.stderr).not.toContain(`synthetic readFile ${code}`);
+      expect(checkHook.result.stderr).not.toContain(directory);
       expect(checkHook.result.stderr).not.toMatch(/SyntaxError|Unexpected token|JSON/u);
     }
 
@@ -516,6 +518,9 @@ syncBuiltinESMExports();
     expect(syntaxCheck.status).toBe(1);
     expect(syntaxCheck.stdout).not.toContain("fresh");
     expect(syntaxCheck.stderr).toMatch(/Expected property name|Unexpected token|JSON/u);
+    expect(syntaxCheck.stderr).toContain(`${hooksFile} (JSON.parse SyntaxError)`);
+    expect(syntaxCheck.stderr).not.toContain("invalid json");
+    expect(syntaxCheck.stderr).not.toContain(directory);
   });
 
   it("ships the evaluation configuration contract and server bytes without development dependencies", async () => {
