@@ -109,8 +109,11 @@ export async function computeDirectoryChecksum(directory) {
   const files = await walkFiles(directory);
   const checksum = createHash("sha256");
   for (const file of files.sort()) {
-    checksum.update(path.relative(directory, file).split(path.sep).join("/"));
-    checksum.update(normalizeChecksumContent(await readFile(file)));
+    const relative = path.relative(directory, file).split(path.sep).join("/");
+    const content = normalizeChecksumContent(await readFile(file));
+    // Byte lengths frame both fields, including arbitrary binary content.
+    checksum.update(`${Buffer.byteLength(relative)}:`).update(relative);
+    checksum.update(`${content.length}:`).update(content);
   }
   return `sha256:${checksum.digest("hex")}`;
 }

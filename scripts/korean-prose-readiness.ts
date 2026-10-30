@@ -647,7 +647,10 @@ export async function computeDirectoryChecksum(directory: string): Promise<strin
   const files = await walkFiles(directory);
   const parts: Array<string | Buffer> = [];
   for (const file of files.sort()) {
-    parts.push(path.relative(directory, file).split(path.sep).join("/"), normalizeChecksumContent(await readFile(file)));
+    const relative = path.relative(directory, file).split(path.sep).join("/");
+    const content = normalizeChecksumContent(await readFile(file));
+    // Match the byte-length framing used by scripts/lib.mjs.
+    parts.push(`${Buffer.byteLength(relative)}:`, relative, `${content.length}:`, content);
   }
   return digestRaw(Buffer.concat(parts.map((part) => typeof part === "string" ? Buffer.from(part, "utf8") : part)));
 }
