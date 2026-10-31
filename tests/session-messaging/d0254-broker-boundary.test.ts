@@ -4,38 +4,58 @@ import { once } from "node:events";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import type { Readable } from "node:stream";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
-import tls from "node:tls";
 import { afterEach, expect, it } from "vitest";
-import { requestSessionMessageOnce, waitForSessionMessageBrokerReady, SESSION_MESSAGE_PROTOCOL } from "../../mcp-server/src/session-message-client.js";
+import { requestSessionMessageOnce } from "../../mcp-server/src/session-message-client.js";
 import { processStartToken } from "../../mcp-server/src/process-identity.js";
 import { failureContext } from "../../mcp-server/src/failure-diagnostics.js";
+import { sendOwnedBrokerRequest } from "./fixtures/d0254-owned-request.js";
 const resources: Array<{root: string;child: ChildProcess}> = [];
+// A hang guard only: it ends a stalled wait and reports the observed phase. No verdict is decided by elapsed time.
+const HANG_GUARD_MS=20_000;
+const running=(child:ChildProcess)=>child.exitCode===null&&child.signalCode===null;
+const exited=(child:ChildProcess)=>running(child)?once(child,"exit").then(()=>undefined):Promise.resolve();
+const guardDeadlineNs=()=>String(process.hrtime.bigint()+BigInt(HANG_GUARD_MS)*1_000_000n);
+const hangGuardError=(phase:string,observe:()=>unknown)=>new Error(`D0350 hang guard expired in ${phase}: ${JSON.stringify(observe())}`);
+async function waitForState(condition:()=>boolean,phase:string,observe:()=>unknown) {
+  const guard=performance.now()+HANG_GUARD_MS;
+  while(!condition()) {
+    if(performance.now()>=guard)throw hangGuardError(phase,observe);
+    await delay(10);
+  }
+}
+async function settleUnderGuard<T>(work:Promise<T>,phase:string,observe:()=>unknown):Promise<T> {
+  let timer:NodeJS.Timeout|undefined;
+  try {
+    return await Promise.race([work,new Promise<never>((_resolve,reject)=>{timer=setTimeout(()=>reject(hangGuardError(phase,observe)),HANG_GUARD_MS);})]);
+  } finally {clearTimeout(timer);}
+}
 afterEach(async () => {
   for(const {root,child} of resources.splice(0)) {
     writeFileSync(path.join(root,"release-query"),"1");
-    if(child.exitCode===null&&child.signalCode===null) {const closed=once(child,"close");child.kill();await closed;}
+    if(running(child)) {const closed=once(child,"close");child.kill();await closed;}
     const nativePidPath=path.join(root,"native-query-pid");
     if(existsSync(nativePidPath)) {
-      const nativePid=Number(readFileSync(nativePidPath,"utf8")),until=performance.now()+3000;
-      while(alive(nativePid)&&performance.now()<until)await delay(10);
+      const nativePid=Number(readFileSync(nativePidPath,"utf8"));
       // Preserve this owned fixture's release flag if the child did not finish.
+      await waitForState(()=>!alive(nativePid),"cleanup.native-child-exit",()=>({nativePid}));
       expect(alive(nativePid)).toBe(false);
     }
     rmSync(root,{recursive:true,force:true});
   }
 });
 function alive(pid:number) {try {process.kill(pid,0);return true;}catch{return false;}}
-function start(extraArgs: string[]=[],bootDelay=0,lateQuery=0,nativeQuery=false) {
+function start(extraArgs: string[]=[],bootDelay=0,lateQuery=false,nativeQuery=false) {
   const root=mkdtempSync(path.join(tmpdir(),"ags-d254-broker-")),state=path.join(root,"state");
   const events: Array<{phase:string;atNs:string;code:number|null|undefined;signal:NodeJS.Signals|null|undefined}>=[];
   const stamp=(phase:string,code?:number|null,signal?:NodeJS.Signals|null)=>events.push({phase,atNs:String(process.hrtime.bigint()),code,signal});
   stamp("spawn-requested");
   const fixture=new URL("./fixtures/d0254-query-gate.mjs",import.meta.url).href;
   const broker=fileURLToPath(new URL("../../mcp-server/src/session-message-broker.ts",import.meta.url));
-  const child=spawn(process.execPath,["--import","tsx","--import",fixture,broker,"--state-directory",state,...extraArgs],{
-    windowsHide:true,stdio:["ignore","pipe","pipe"],env:{...process.env,AGENT_GOVERNANCE_D254_FIXTURE_DIR:root,AGENT_GOVERNANCE_D254_BOOT_DELAY_MS:String(bootDelay),AGENT_GOVERNANCE_D254_LATE_QUERY_MS:String(lateQuery),AGENT_GOVERNANCE_D254_NATIVE_QUERY:nativeQuery?"1":"0"},
+  const child=spawn(process.execPath,["--import","tsx","--import",fixture,broker,"--state-directory",state,"--startup-diagnostic",...extraArgs],{
+    windowsHide:true,stdio:["ignore","pipe","pipe","pipe"],env:{...process.env,AGENT_GOVERNANCE_D254_FIXTURE_DIR:root,AGENT_GOVERNANCE_D254_BOOT_DELAY_MS:String(bootDelay),AGENT_GOVERNANCE_D254_LATE_QUERY:lateQuery?"1":"0",AGENT_GOVERNANCE_D254_NATIVE_QUERY:nativeQuery?"1":"0"},
   });
   child.once("spawn",()=>stamp("child-spawned"));
   let spawnFailure: ReturnType<typeof failureContext>|undefined;
@@ -43,6 +63,16 @@ function start(extraArgs: string[]=[],bootDelay=0,lateQuery=0,nativeQuery=false)
   child.once("exit",(code,signal)=>stamp("child-exit",code,signal));
   child.once("close",(code,signal)=>stamp("child-close",code,signal));
   let stderr="";child.stderr!.on("data",chunk=>{stderr=(stderr+String(chunk)).slice(-4096);});child.stdout!.resume();
+  // The product's own readiness signal: the broker closes fd 3 once startup resolved, after writing a safe
+  // failure code when it failed (session-message-broker.ts entry point, finishDiagnostic).
+  const startupDiagnostic=child.stdio[3] as Readable;
+  let startupFrame="";
+  startupDiagnostic.on("data",chunk=>{startupFrame=(startupFrame+String(chunk)).slice(0,128);});
+  const startupSettled=new Promise<void>(resolve=>{
+    startupDiagnostic.once("error",()=>stamp("startup-diagnostic-error"));
+    startupDiagnostic.once("close",()=>{stamp("startup-diagnostic-closed");resolve();});
+    child.once("error",()=>resolve());
+  });
   const observe=()=>{
       let phases:unknown={state:"not-observed"},endpoint:unknown={exists:false};
       try {
@@ -60,12 +90,23 @@ function start(extraArgs: string[]=[],bootDelay=0,lateQuery=0,nativeQuery=false)
           endpoint={exists:true,parseable:true,ownPidMatch:value.pid===child.pid};
         }
       }catch(error){endpoint={exists:true,parseable:false,failure:failureContext(error)};}
-    return {clockDomains:{events:"parent",phases:"child"},events:[...events],phases,endpoint,phaseRecordingFailed:stderr.includes("D0350_PHASE_RECORDING_FAILED"),
+    return {clockDomains:{events:"parent",phases:"child"},events:[...events],phases,endpoint,startupFrame:startupFrame.trim(),phaseRecordingFailed:stderr.includes("D0350_PHASE_RECORDING_FAILED"),
       artifacts:Object.fromEntries(["broker.lock","broker-cert.pem","broker.token","session-messages.sqlite3"].map(name=>[name,existsSync(path.join(state,name))])),
       exitCode:child.exitCode,signalCode:child.signalCode,spawnFailure};
   };
+  const ownEndpoint=()=>{
+    try {return (JSON.parse(readFileSync(path.join(state,"endpoint.json"),"utf8")) as {pid?:unknown}).pid===child.pid;}
+    catch {return false;}
+  };
   const ready=async()=>{
-    try {await waitForSessionMessageBrokerReady(state,child,5000);}
+    try {
+      await settleUnderGuard(startupSettled,"startup-diagnostic",observe);
+      // An empty closed frame is readiness only with this child's own published endpoint, never a loser or a dying child.
+      if(startupFrame===""&&running(child)&&ownEndpoint())return;
+      // Not ready: let the child finish so the observation carries its actual exit, not a race with it.
+      await settleUnderGuard(exited(child),"startup-failure-exit",observe);
+      throw new Error(startupFrame?`The broker reported startup code ${startupFrame.trim()}.`:"The broker closed its startup diagnostic without its own endpoint.");
+    }
     catch(cause){
       throw new Error(`D0350 broker fixture readiness failed: ${JSON.stringify({...observe(),failure:failureContext(cause)})}`,{cause});
     }
@@ -122,28 +163,27 @@ it("a phase writer failure cannot replace the original fixture failure",async()=
 });
 
 it.runIf(process.platform==="win32")("a late successful query cannot authorize work after the caller deadline",async()=>{
-  const {root,state,child,ready}=start([],0,600);
+  const {root,state,child,ready,observe}=start([],0,true);
   await ready();
   const target={host:"portable",sessionId:"d254-late-query"},parentPid=424242,parentStartToken="fixture-parent-birth";
+  // The grant's own query is answered at once; only the query armed below is late.
   const grant=await requestSessionMessageOnce<{relayId:string;instanceId:string}>("ensure-relay",{
     target,transport:"portable",parentPid,parentStartToken,identityTimeoutMs:2000,
     wakeVisibility:"user-message",idleWake:"user-message",canWakeSilently:false,supportedInjection:["peer-wake"],
   },state);
   rmSync(path.join(root,"query-started"));rmSync(path.join(root,"query-finished"));
-  const endpoint=JSON.parse(readFileSync(path.join(state,"endpoint.json"),"utf8")) as {port:number};
-  // Authenticated own loopback fixture. Never log the frame, key, token, or native stderr.
-  const token=readFileSync(path.join(state,"broker.token"),"utf8").trim();
-  const identityDeadlineNs=String(process.hrtime.bigint()+300_000_000n);
-  const reply=await new Promise<Record<string,unknown>>((resolve,reject)=>{
-    const socket=tls.connect({host:"127.0.0.1",port:endpoint.port,servername:"localhost",ca:readFileSync(path.join(state,"broker-cert.pem")),rejectUnauthorized:true});
-    let data="";const done=(error?:Error,value?:Record<string,unknown>)=>{socket.destroy();if(error)reject(error);else resolve(value!);};
-    socket.setTimeout(2500,()=>done(new Error("Owned fixture response deadline expired.")));
-    socket.on("error",error=>done(error));
-    socket.once("secureConnect",()=>socket.write(JSON.stringify({protocolVersion:SESSION_MESSAGE_PROTOCOL,token,operation:"acquire-relay",identityDeadlineNs,
-      payload:{target,transport:"portable",relayId:grant.relayId,instanceId:grant.instanceId,parentPid,parentStartToken,pid:child.pid}})+"\n"));
-    socket.on("data",chunk=>{data+=String(chunk);if(data.length>8192)return done(new Error("Owned fixture response exceeded its bound."));if(data.includes("\n"))done(undefined,JSON.parse(data.split("\n")[0]!) as Record<string,unknown>);});
-  });
+  writeFileSync(path.join(root,"late-query-armed"),"1");
+  // This caller deadline only bounds a hung broker. The fixture answers successfully after advancing the broker's
+  // monotonic clock past it, so "late" holds by construction rather than by how fast the request travels.
+  const request=sendOwnedBrokerRequest(state,"acquire-relay",{target,transport:"portable",relayId:grant.relayId,instanceId:grant.instanceId,parentPid,parentStartToken,pid:child.pid},
+    {identityDeadlineNs:guardDeadlineNs()});
+  const phase=()=>({...observe(),request:request.state()});
+  await waitForState(()=>existsSync(path.join(root,"query-started"))||request.settled(),"late-query.start",phase);
   expect(existsSync(path.join(root,"query-started"))).toBe(true);
+  // An ordering oracle: the successful answer has not been produced before the release.
+  expect(existsSync(path.join(root,"query-finished"))).toBe(false);
+  writeFileSync(path.join(root,"release-query"),"1");
+  const reply=await settleUnderGuard(request.response,"late-query.reply",phase);
   expect(existsSync(path.join(root,"query-finished"))).toBe(true);
   expect(reply).toMatchObject({ok:false,error:"The broker identity budget expired."});
 });
@@ -165,20 +205,21 @@ it("a normal verified relay still requires the exact OS parent generation and ac
   await expect(requestSessionMessageOnce("acquire-relay",{...payload,parentStartToken:"synthetic-different-generation"},state)).resolves.toEqual({acquired:false});
 });
 it.runIf(process.platform==="win32")("a held OS identity query cannot block another authenticated client ping",async()=>{
-  const {root,state,ready}=start();
+  const {root,state,ready,observe}=start();
   await ready();
   const target={host:"portable",sessionId:"d254-owned-request"};
   const parentStartToken="fixture-parent-birth",parentPid=424242;
   const instanceId="host-process-v1:"+createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
-  const acquired=requestSessionMessageOnce("acquire-relay",{target,transport:"portable",relayId:"verified-relay-v1:d254-fixture",instanceId,parentPid,parentStartToken,pid:process.pid},state).catch(error=>error);
+  // The held request carries no 2.5 s client cap; the fixture holds its query until the release below.
+  const request=sendOwnedBrokerRequest(state,"acquire-relay",{target,transport:"portable",relayId:"verified-relay-v1:d254-fixture",instanceId,parentPid,parentStartToken,pid:process.pid},
+    {identityDeadlineNs:guardDeadlineNs()});
   try {
-    const until=performance.now()+2000;
-    while(!existsSync(path.join(root,"query-started"))&&performance.now()<until)await delay(10);
+    await waitForState(()=>existsSync(path.join(root,"query-started"))||request.settled(),"held-query.start",()=>({...observe(),request:request.state()}));
     expect(existsSync(path.join(root,"query-started"))).toBe(true);
     await expect(requestSessionMessageOnce("ping",{},state)).resolves.toHaveProperty("protocolVersion");
     // An ordering oracle, not a timing threshold: the query remains held until this assertion finishes.
     expect(existsSync(path.join(root,"query-finished"))).toBe(false);
-  } finally {writeFileSync(path.join(root,"release-query"),"1");await acquired;}
+  } finally {writeFileSync(path.join(root,"release-query"),"1");await request.response;}
 });
 
 it.runIf(process.platform==="win32")("an actual failed OS query remains denied and returns only bounded native diagnostics",async()=>{
@@ -193,32 +234,39 @@ it.runIf(process.platform==="win32")("an actual failed OS query remains denied a
 });
 
 it.runIf(process.platform==="win32")("graceful broker cleanup cancels its own in-flight native identity child",async()=>{
-  const {root,state,child,ready,observe}=start([],0,0,true);
+  const {root,state,child,ready,observe}=start([],0,false,true);
   await ready();
   const target={host:"portable",sessionId:"d254-native-cancel"},parentPid=424242,parentStartToken="fixture-parent-birth";
   const instanceId="host-process-v1:"+createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
-  let requestState="pending";
-  const acquired=requestSessionMessageOnce<{acquired:boolean}>("acquire-relay",{target,transport:"portable",relayId:"verified-relay-v1:d254-cancel",instanceId,parentPid,parentStartToken,pid:process.pid},state).then(value=>{requestState=value.acquired?"accepted":"denied";return value;},error=>{requestState="rejected";return error;});
-  const pidPath=path.join(root,"native-query-pid"),waitStarted=performance.now(),startedUntil=waitStarted+2000;
-  while(!existsSync(pidPath)&&performance.now()<startedUntil)await delay(10);
+  // No 2.5 s client cap and no runner-speed native timeout: the actual PowerShell child stays in flight until the
+  // broker aborts it, so its start-up cost can delay this case but cannot decide it.
+  const request=sendOwnedBrokerRequest(state,"acquire-relay",{target,transport:"portable",relayId:"verified-relay-v1:d254-cancel",instanceId,parentPid,parentStartToken,pid:process.pid},
+    {identityDeadlineNs:guardDeadlineNs()});
+  const pidPath=path.join(root,"native-query-pid"),waitStarted=performance.now();
+  const settledPath=path.join(root,"native-query-settled");
+  const phase=()=>({...observe(),request:request.state(),nativeAbortRequested:existsSync(path.join(root,"native-abort-requested")),
+    nativeQuerySettled:existsSync(settledPath)?readFileSync(settledPath,"utf8"):null});
+  // The wait ends on a state: the PID marker, the native query ending without it, or the broker ending. The request
+  // socket is not a terminal state here, because the broker keeps its query in flight after a client leaves.
+  await waitForState(()=>existsSync(pidPath)||existsSync(settledPath)||!running(child),"native-pid-wait",phase);
   // 진단 I/O 중 늦게 생긴 표식이 원래 단언을 통과시키지 않도록 먼저 판정을 고정한다.
   const pidMarkerPresent=existsSync(pidPath),waitElapsedMs=performance.now()-waitStarted;
   process.stderr.write(`[시험단계] ${JSON.stringify({fixture:"d0254-native-cancel",stage:"native-pid-wait.returned",
-    elapsedMs:waitElapsedMs,pidMarkerPresent,requestState,
-    queryStarted:existsSync(path.join(root,"query-started")),queryFinished:existsSync(path.join(root,"query-finished")),
-    observation:pidMarkerPresent?undefined:observe()})}\n`);
+    elapsedMs:waitElapsedMs,pidMarkerPresent,request:request.state(),observation:pidMarkerPresent?undefined:phase()})}\n`);
   expect(pidMarkerPresent).toBe(true);
   const nativePid=Number(readFileSync(pidPath,"utf8"));
   expect(Number.isSafeInteger(nativePid)&&nativePid>0).toBe(true);
   expect(alive(nativePid)).toBe(true);
   writeFileSync(path.join(root,"graceful-stop"),"1");
-  // The ordinary request bound stays 2500 ms. The native query remains held.
-  const stoppedUntil=performance.now()+2500;
-  while(child.exitCode===null&&child.signalCode===null&&performance.now()<stoppedUntil)await delay(10);
+  await settleUnderGuard(exited(child),"graceful-stop.broker-exit",phase);
   expect(child.exitCode).toBe(0);
-  while(alive(nativePid)&&performance.now()<stoppedUntil)await delay(10);
+  await waitForState(()=>!alive(nativePid),"graceful-stop.native-child-exit",()=>({...phase(),nativePid}));
   expect(alive(nativePid)).toBe(false);
+  // The broker's own abort reached the in-flight query, and the child did not end by release or by its orphan guard.
+  expect(existsSync(path.join(root,"native-abort-requested"))).toBe(true);
+  expect(existsSync(path.join(root,"native-guard-expired"))).toBe(false);
+  expect(existsSync(settledPath)?JSON.parse(readFileSync(settledPath,"utf8")).aborted:true).toBe(true);
   expect(existsSync(path.join(root,"release-query"))).toBe(false);
   expect(existsSync(path.join(state,"endpoint.json"))).toBe(false);
-  await acquired;
+  await request.response;
 });
