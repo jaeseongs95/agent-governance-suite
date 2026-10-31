@@ -520,9 +520,10 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
     case "presence-heartbeat": return { alive: store.heartbeatPresence(
       identity(payload.target), string(payload.instanceId, "instanceId"),
     ) };
-    case "presence-end": return { ended: store.endPresence(
-      identity(payload.target), string(payload.reason, "reason"), string(payload.instanceId, "instanceId"),
-    ) };
+    case "presence-end": return { ended: Object.hasOwn(payload, "relayId")
+      ? store.endUnverifiedRelay({ ...identity(payload.target), relayId: string(payload.relayId, "relayId"), pid: integer(payload.pid, "pid"),
+        instanceId: string(payload.instanceId, "instanceId"), reason: string(payload.reason, "reason") })
+      : store.endPresence(identity(payload.target), string(payload.reason, "reason"), string(payload.instanceId, "instanceId")) };
     case "presence": return { presence: store.presence(identity(payload.target)) };
     case "list-presence": {
       let targets: SessionIdentity[] | undefined;

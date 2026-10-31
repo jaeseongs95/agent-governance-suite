@@ -1090,6 +1090,20 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
+  /** Unverified relay exit: drop only this acquisition's lease (random relayId + pid) and end its own instance, atomically. */
+  endUnverifiedRelay(input: SessionIdentity & { relayId: string; pid: number; instanceId: string; reason: string }, nowMs = Date.now()): boolean {
+    boundedIdentity(input);
+    if (!input.relayId || input.relayId.length > 128 || input.relayId.startsWith("verified-relay-v1:") || !Number.isInteger(input.pid) || input.pid < 1) throw new Error("Invalid relay release.");
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.endUnverifiedRelay(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    return this.transaction(() => {
+      // A replacement relay holds a different relayId, so a late exit affects zero lease rows.
+      this.database.prepare("DELETE FROM relay_leases WHERE host=? AND session_id=? AND relay_id=? AND pid=?")
+        .run(input.host, input.sessionId, input.relayId, input.pid);
+      return this.endPresence(input, input.reason, input.instanceId, nowMs);
+    });
+  }
+
   acquireRelay(input: SessionIdentity & { transport: string; relayId: string; pid: number; parentPid: number; instanceId?: string; codeDigest?: string | null }, nowMs = Date.now()): boolean {
     boundedIdentity(input);
     relayCodeDigest(input.codeDigest);
@@ -1097,6 +1111,12 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acquireRelay(input, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     return this.transaction(() => {
+      // Fence superseded generations: a relay of an older presence instance must not
+      // renew (or take) the lease the current generation's relay is waiting for.
+      if (input.instanceId) {
+        const current = this.presence(input, nowMs).instanceId;
+        if (current !== null && current !== input.instanceId) return false;
+      }
       const previous = this.relayOwner(input, input.transport);
       this.prune(nowMs);
       const now = iso(nowMs);

@@ -240,7 +240,8 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
       } else if (options.relayId) {
         await sessionMessageRequest("release-verified-relay",{target,transport:options.transport,relayId,instanceId:options.instanceId,pid:process.pid},undefined,{totalTimeoutMs:3000,noOperationReplay:true});
       } else {
-        await sessionMessageRequest("presence-end",{target,instanceId:options.instanceId,reason:"host-process-ended"},undefined,{totalTimeoutMs:3000});
+        // Release only this acquisition's lease so a replacement relay need not wait for expiry.
+        await sessionMessageRequest("presence-end",{target,instanceId:options.instanceId,reason:"host-process-ended",relayId,pid:process.pid},undefined,{totalTimeoutMs:3000});
       }
     } catch (error) {
       normalEnd = false;
