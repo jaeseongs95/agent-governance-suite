@@ -73,3 +73,62 @@ test("실제 잠금은 pipe marker로 게시되고, 살아 있는 PID의 죽은 
   expect(fs.readdirSync(lock)).toEqual([next.owner]);
   releaseBrokerProcessLock(next);
 });
+
+const lockModule = new URL("../../mcp-server/src/broker-process-lock.ts", import.meta.url).href;
+const runChild = (code: string, args: string[]) => spawn(process.execPath, ["--import", "tsx", "--input-type=module", "-e", code, lockModule, ...args],
+  { stdio: ["ignore", "pipe", "inherit"], windowsHide: true });
+
+test("여러 프로세스가 반복 경합해도 동시에 두 소유자가 생기지 않는다", async () => {
+  const root = fs.mkdtempSync(path.join(tmpdir(), "ags-witness-mutex-")); owned.push(root);
+  const code = `const m = await import(process.argv[1]); const fs = await import("node:fs"); const path = await import("node:path");
+    const lock = path.join(process.argv[2], "broker.lock"), inside = path.join(process.argv[2], "inside");
+    let held = 0, overlaps = 0;
+    for (let i = 0; i < 40; i++) { let lease = null; try { lease = m.acquireBrokerProcessLock(lock); } catch {}
+      if (!lease) continue; held++;
+      try { fs.mkdirSync(inside); } catch { overlaps++; continue; }
+      fs.rmdirSync(inside); m.releaseBrokerProcessLock(lease); }
+    process.stdout.write(JSON.stringify({ held, overlaps }));`;
+  const children = Array.from({ length: 6 }, () => runChild(code, [root]));
+  const results = await Promise.all(children.map(async child => {
+    let out = ""; child.stdout!.on("data", chunk => { out += String(chunk); });
+    const [status] = await once(child, "close");
+    return { status, ...JSON.parse(out) as { held: number; overlaps: number } };
+  }));
+  expect(results.every(result => result.status === 0)).toBe(true);
+  expect(results.reduce((sum, result) => sum + result.overlaps, 0)).toBe(0);
+  expect(results.reduce((sum, result) => sum + result.held, 0)).toBeGreaterThan(0);
+}, 120_000);
+
+test("소유자가 강제 종료되면 다음 획득이 사람 개입 없이 바로 성공한다", async () => {
+  const root = fs.mkdtempSync(path.join(tmpdir(), "ags-witness-crash-")); owned.push(root);
+  const lock = path.join(root, "broker.lock");
+  const code = "const m = await import(process.argv[1]); const l = m.acquireBrokerProcessLock(process.argv[2]); process.stdout.write(l ? 'held' : 'none'); setInterval(() => {}, 1000);";
+  const child = runChild(code, [lock]);
+  const [first] = await once(child.stdout!, "data");
+  expect(String(first)).toBe("held");
+  expect(acquireBrokerProcessLock(lock)).toBeNull();
+  const exited = once(child, "exit"); child.kill("SIGKILL"); await exited;
+  const started = performance.now();
+  let lease = null;
+  while (!lease && performance.now() - started < 5000) {
+    lease = acquireBrokerProcessLock(lock);
+    if (!lease) await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  expect(lease).not.toBeNull();
+  releaseBrokerProcessLock(lease!);
+}, 60_000);
+
+test("무관한 pipe가 대량으로 생성·삭제되는 중에도 살아 있는 세대를 부재로 보지 않는다", async () => {
+  const name = generation();
+  const witness = createLockWitness(name)!;
+  try {
+    let absent = 0;
+    for (let round = 0; round < 20; round++) {
+      const churn = Array.from({ length: 50 }, () => createLockWitness(generation())).filter(Boolean);
+      for (let i = 0; i < 200; i++) if (lockWitnessState(name) === "absent") absent++;
+      for (const server of churn) server!.close();
+      await new Promise(resolve => setImmediate(resolve));
+    }
+    expect(absent).toBe(0);
+  } finally { witness.close(); }
+}, 60_000);
