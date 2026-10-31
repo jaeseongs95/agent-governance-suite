@@ -60,9 +60,9 @@ function prompt(service: ContinuityService, session: string, transcriptPath?: st
     ...(transcriptPath ? { transcript_path: transcriptPath } : {}) })).toEqual({});
 }
 
-/** A write-capable host tool boundary (before the tool runs): the final point a fork's parent is pinned. */
-function tool(service: ContinuityService, session: string, transcriptPath: string) {
-  expect(hook(service, { hook_event_name: "PreToolUse", session_id: session, tool_name: "Bash", tool_input: { command: "true" },
+/** A write-capable host tool or non-AGS MCP tool boundary (before the tool runs): the final point a fork's parent is pinned. */
+function tool(service: ContinuityService, session: string, transcriptPath: string, toolName = "Bash") {
+  expect(hook(service, { hook_event_name: "PreToolUse", session_id: session, tool_name: toolName, tool_input: { command: "true" },
     tool_use_id: "toolu_" + randomUUID().replaceAll("-", ""), transcript_path: transcriptPath })).toEqual({});
 }
 
@@ -252,6 +252,15 @@ describe("D0352 B08 fork lineage", () => {
     await appendFile(childFile, uuids.map(uuid => line("fork-of-b", uuid)).join("\n") + "\n", "utf8");
     prompt(service, "fork-of-b", childFile);
     expect(inspect(service, "fork-of-b", childFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_NOT_FOUND"]);
+  });
+
+  it("N4c: a non-AGS MCP tool that writes the fork's file is a pin boundary too (review 902e b9531242)", async () => {
+    const service = createService();
+    const { uuids } = await parent(service, "parent-a");
+    const childFile = await fork(service, "fork-mcp", [randomUUID()]);
+    tool(service, "fork-mcp", childFile, "mcp__filesystem__write_file");
+    await appendFile(childFile, uuids.map(uuid => line("fork-mcp", uuid)).join("\n") + "\n", "utf8");
+    expect(inspect(service, "fork-mcp", childFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_NOT_FOUND"]);
   });
 
   it("M1: a fork whose transcript is not written yet at its first prompt is pinned later, at inspect", async () => {

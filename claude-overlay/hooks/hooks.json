@@ -129,6 +129,17 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "^mcp__(?!plugin_agent-governance-suite_agent-governance-suite__).+$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"],
+            "timeout": 10
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [

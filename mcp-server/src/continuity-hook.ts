@@ -110,7 +110,8 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
     const toolName = localToolName(host, observation.toolName ?? "");
     if (!toolName) {
-      // Write-capable and AGS tools reach this boundary before they run: the last point the file is the host's.
+      // Write-capable host tools and every non-AGS MCP tool reach this boundary before they run: the last point the
+      // fork's file is the host's. AGS tools pin through their own binding below.
       if (readLineage) service.pinForkParent(sessionId, readLineage);
       return {};
     }
