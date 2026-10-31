@@ -64,11 +64,25 @@ export async function loadClassificationProviderRuntime(file: string, options: C
 export function classificationInitializationFailureReason(error: unknown): string {
   let reason = "CLASSIFICATION_CONFIGURATION_UNAVAILABLE";
   try {
-    const message: unknown = error && typeof error === "object" && !utilTypes.isProxy(error) ? Object.getOwnPropertyDescriptor(error, "message")?.value : null;
+    if (!error || typeof error !== "object" || utilTypes.isProxy(error)) return reason;
+    const message: unknown = Object.getOwnPropertyDescriptor(error, "message")?.value;
     if (typeof message === "string" && ["INVALID_NATIVE_ADAPTER_DEFINITION", "DUPLICATE_NATIVE_ADAPTER",
       "NATIVE_ADAPTER_BEHAVIOR_UNAVAILABLE", "INVALID_NATIVE_ISOLATION_ARGUMENT", "NATIVE_ISOLATION_VALIDATION_UNAVAILABLE",
       "NATIVE_ADAPTER_DEFINITIONS_TOO_LARGE", "DUPLICATE_CLASSIFICATION_ROUTE", "INVALID_APPROVED_ENDPOINT",
-      "CLASSIFICATION_RUNTIME_TOO_LARGE", "INVALID_JEV_CONTEXT_ROUTE"].includes(message)) reason = message;
+      "CLASSIFICATION_RUNTIME_TOO_LARGE", "INVALID_JEV_CONTEXT_ROUTE", "CLASSIFICATION_CONFIG_TOO_LARGE",
+      "PROVIDER_PROFILE_REGISTRY_TOO_LARGE", "INVALID_PROVIDER_PROFILE_REGISTRY", "CLASSIFICATION_CONFIGURATION_READ_FAILED",
+      "CLASSIFICATION_CONFIGURATION_JSON_INVALID", "CLASSIFICATION_CONFIGURATION_SCHEMA_INVALID"].includes(message)) return message;
+    if (utilTypes.isNativeError(error)) {
+      const code: unknown = Object.getOwnPropertyDescriptor(error, "code")?.value;
+      const syscall: unknown = Object.getOwnPropertyDescriptor(error, "syscall")?.value;
+      if (typeof code === "string" && ["ENOENT", "EACCES", "EPERM", "EISDIR", "ENOTDIR", "ELOOP", "EMFILE", "ENFILE", "EIO", "ENAMETOOLONG"].includes(code)
+        && (syscall === "open" || syscall === "read")) return "CLASSIFICATION_CONFIGURATION_READ_FAILED";
+      if (Object.getPrototypeOf(error) === SyntaxError.prototype) return "CLASSIFICATION_CONFIGURATION_JSON_INVALID";
+      // Zod's instanceof reads _zod; own data descriptors avoid opaque getters and proxies.
+      const internals: unknown = Object.getOwnPropertyDescriptor(error, "_zod")?.value;
+      if (internals && typeof internals === "object" && !utilTypes.isProxy(internals)
+        && Object.getOwnPropertyDescriptor(internals, "constr")?.value === z.ZodRealError) return "CLASSIFICATION_CONFIGURATION_SCHEMA_INVALID";
+    }
   } catch { /* Opaque errors remain a fixed unavailable reason. */ }
   return reason;
 }
