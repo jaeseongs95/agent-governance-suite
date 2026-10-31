@@ -808,7 +808,7 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     const childFile = await hostFork(service, "fork-f", uuids, "never-saved-x");
     expect(hostParentEvent(service, "fork-f")).toContain('"e":null');
     expect(inspect(service, "fork-f", childFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_HOST_PARENT_NOT_FOUND"]);
-    prompt(service, "unsaved-y");
+    start(service, "unsaved-y", "startup");
     const secondFile = await hostFork(service, "fork-g", uuids, "unsaved-y");
     expect(hostParentEvent(service, "fork-g")).not.toContain('"e":null');
     expect(inspect(service, "fork-g", secondFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_HOST_PARENT_NOT_FOUND"]);
