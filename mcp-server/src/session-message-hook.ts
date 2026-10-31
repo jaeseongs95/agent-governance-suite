@@ -103,7 +103,8 @@ function reportHookFailure(phase: HookFailurePhase, error: unknown, detail?: Rea
   try { writeFailureDiagnostic("[agent-governance-suite] peer-hook-failure " + JSON.stringify({ ...failure, context }), (line) => console.error(line)); }
   catch { /* A broken diagnostic sink cannot block a hook or authorize replay. */ }
   if (PERSISTED_HOOK_PHASES.has(phase)) {
-    try { persistRelayFailure(JSON.stringify({ phase: "hook-" + phase, reason: failure.reason, reasonBasis, context, ...detail })); }
+    // A hook refused before any broker contact (unverified host birth) leaves no state: it never creates the directory.
+    try { persistRelayFailure(JSON.stringify({ phase: "hook-" + phase, reason: failure.reason, reasonBasis, context, ...detail }), process.env, false); }
     catch { /* The record is diagnostic only. */ }
   }
   return failure;

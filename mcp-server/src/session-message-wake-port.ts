@@ -184,11 +184,12 @@ function persistRelayFailureHistory(directory: string, serialized: string): void
 }
 
 /** Latest-file compatibility plus bounded per-writer/failure-kind observations. */
-export function persistRelayFailure(serialized: string, environment: NodeJS.ProcessEnv = process.env): void {
+/** `create: false` writes only into an existing state directory (a refused hook must not create state). */
+export function persistRelayFailure(serialized: string, environment: NodeJS.ProcessEnv = process.env, create = true): void {
   if (Buffer.byteLength(serialized, "utf8") > 64 * 1024) return;
   try {
     const directory = resolveSessionMessageStateDirectory(environment);
-    mkdirSync(directory, { recursive: true, mode: 0o700 });
+    if (create) mkdirSync(directory, { recursive: true, mode: 0o700 });
     const directoryInfo = lstatSync(directory);
     if (!directoryInfo.isDirectory() || directoryInfo.isSymbolicLink()
       || (process.getuid && directoryInfo.uid !== process.getuid())) return;

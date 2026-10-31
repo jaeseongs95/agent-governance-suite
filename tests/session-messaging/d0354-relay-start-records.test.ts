@@ -54,6 +54,8 @@ beforeEach(() => {
   root = fs.mkdtempSync(path.join(os.tmpdir(), "ags-d0354-"));
   state = path.join(root, "state");
   vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", state);
+  // A running broker has created the state directory; hook records are written only into an existing one.
+  fs.mkdirSync(state, { recursive: true });
   vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "0");
   for (const mock of Object.values(f)) mock.mockReset();
   f.token.mockReturnValue("T1"); f.identity.mockReturnValue("match"); f.exists.mockReturnValue(true);
@@ -77,6 +79,14 @@ describe("D0354 relay start and end records", () => {
     expect(f.spawn).not.toHaveBeenCalled();
     expect(records()).toEqual([expect.objectContaining({ phase: "hook-relay-start", reason: "RELAY_HOST_START_UNREADABLE", identity: diagnostic })]);
     expect(JSON.stringify(records())).not.toContain(SECRET);
+  });
+
+  it("creates no state directory for a refused hook when none exists (antigravity R05: unverified hosts leave no state)", async () => {
+    fs.rmSync(state, { recursive: true, force: true });
+    f.token.mockReturnValue(null);
+    await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: "no-state-yet", syntheticActor: "root" }, syntheticCore.SYNTHETIC_CORE_HOST, 424242);
+    expect(f.spawn).not.toHaveBeenCalled();
+    expect(fs.existsSync(state)).toBe(false);
   });
 
   it("records a relay that lost its lease while its parent no longer matches", async () => {
