@@ -263,7 +263,10 @@ export class ContinuityService implements ContinuityGateway {
   /**
    * The parent's state at the host's fork instant. This start may come well after the fork (Codex fires it at the
    * child's first prompt), so a parent save after that instant is not the fork-time state and is never chosen
-   * (review 902e F1b); it is reported as advanced.
+   * (review 902e F1b); it is reported as advanced. The comparison reads both times on one machine: the save time was
+   * written by the server into the continuity store this hook opens, and the fork instant by the local host. A server
+   * that does not share this store leaves no parent save in it, so the pin closes as FORK_PARENT_NOT_FOUND and a remote
+   * clock never enters the comparison (review 902e, local/remote deployment).
    */
   private originForkParent(origin: { parentSessionId: string; at: number }): { p: ForkParent } | { q: string } {
     const parent = this.store.getTask(this.correlateSession(origin.parentSessionId));
