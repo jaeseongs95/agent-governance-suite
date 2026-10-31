@@ -140,6 +140,9 @@ export interface SkillClassificationProviderPort {
   /** Synchronous trusted state fence, consumed immediately before the actual side effect. */
   classify(request: SkillClassificationRequestV1, profile: ProviderProfile, signal: AbortSignal, beforeDispatch?: () => void): Promise<ProviderEvaluation>;
 }
+/** Exact public native decode reasons; arbitrary adapter messages remain private. */
+export const nativeDecodeFailureCodes = Object.freeze(["NATIVE_RESULT_FAILURE", "NATIVE_ISOLATION_VIOLATION", "NATIVE_MESSAGE_MISSING", "NATIVE_RESULT_AMBIGUOUS"] as const);
+
 export interface ClassificationAttempt {
   providerKind: "jev" | "vendor";
   profileId: string;
@@ -162,12 +165,20 @@ export interface ClassificationSnapshot {
   requestDigest: string;
   cancelled: boolean;
 }
+/** Preflight exclusion, never a provider call or a budget reservation. */
+export interface ClassificationSkipped {
+  providerKind: "jev" | "vendor";
+  profileId: string | null;
+  reasonCode: string;
+  dispatchState: "not-started";
+}
 export interface ClassificationResult {
   request: SkillClassificationRequestV1;
   response: SkillClassificationResponseV1;
   config: ClassificationConfig;
   profileRevision: string;
   attempts: ClassificationAttempt[];
+  skipped?: ClassificationSkipped[];
   snapshot: ClassificationSnapshot;
 }
 export interface HostSelectionReceipt {

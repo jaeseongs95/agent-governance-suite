@@ -61,10 +61,7 @@ export async function loadClassificationProviderRuntime(file: string, options: C
 
 /** Closed startup reasons only; this is diagnostic classification, not producer authenticity proof.
  * Raw messages, stacks, paths, argv and bodies are never reported. */
-export function reportClassificationInitializationFailure(error: unknown,
-  report: (record: Readonly<{phase: "classification-initialization"; reason: string}>) => void = record => {
-    console.error("[agent-governance-suite] classification-initialization-failed " + JSON.stringify(record));
-  }): void {
+export function classificationInitializationFailureReason(error: unknown): string {
   let reason = "CLASSIFICATION_CONFIGURATION_UNAVAILABLE";
   try {
     const message: unknown = error && typeof error === "object" && !utilTypes.isProxy(error) ? Object.getOwnPropertyDescriptor(error, "message")?.value : null;
@@ -73,6 +70,23 @@ export function reportClassificationInitializationFailure(error: unknown,
       "NATIVE_ADAPTER_DEFINITIONS_TOO_LARGE", "DUPLICATE_CLASSIFICATION_ROUTE", "INVALID_APPROVED_ENDPOINT",
       "CLASSIFICATION_RUNTIME_TOO_LARGE", "INVALID_JEV_CONTEXT_ROUTE"].includes(message)) reason = message;
   } catch { /* Opaque errors remain a fixed unavailable reason. */ }
+  return reason;
+}
+
+/** Stores only a closed diagnostic reason, never the original exception. */
+export class ClassificationInitializationError extends Error {
+  readonly phase = "classification-initialization";
+  constructor(error: unknown) {
+    super(classificationInitializationFailureReason(error));
+    this.name = "ClassificationInitializationError";
+  }
+}
+
+export function reportClassificationInitializationFailure(error: unknown,
+  report: (record: Readonly<{phase: "classification-initialization"; reason: string}>) => void = record => {
+    console.error("[agent-governance-suite] classification-initialization-failed " + JSON.stringify(record));
+  }): void {
+  const reason = classificationInitializationFailureReason(error);
   try { report(Object.freeze({phase: "classification-initialization", reason})); }
   catch { /* A broken diagnostic sink cannot enable classification or replace the startup failure. */ }
 }

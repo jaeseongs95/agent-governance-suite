@@ -1,8 +1,10 @@
 import {spawn, type ChildProcessWithoutNullStreams, type SpawnOptionsWithoutStdio} from "node:child_process";
 import path from "node:path";
+import {types as utilTypes} from "node:util";
 import {z} from "zod";
 import {buildVendorMessages, ClassificationProviderError} from "./providers.js";
 import {responseSchema, validateClassificationResponse} from "./validation.js";
+import {nativeDecodeFailureCodes} from "./types.js";
 import type {ProviderEvaluation, ProviderProfile, SkillClassificationRequestV1, SkillClassificationResponseV1} from "./types.js";
 
 export interface NativeClassificationAdapter {
@@ -205,7 +207,14 @@ export function createNativeClassificationAdapters(definitions: readonly BoundNa
         if (output.exitCode !== 0) throw new ClassificationProviderError("NATIVE_PROCESS_UNAVAILABLE", "unknown");
         let decoded: ReturnType<NativeCliBehavior["decode"]>;
         try { decoded = strategy.decode(output); }
-        catch { throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", "started", true); }
+        catch (error) {
+          let code = "INVALID_PROVIDER_RESPONSE";
+          try {
+            const message: unknown = error && typeof error === "object" && !utilTypes.isProxy(error) ? Object.getOwnPropertyDescriptor(error, "message")?.value : null;
+            code = nativeDecodeFailureCodes.find(value => value === message) ?? code;
+          } catch { /* Opaque adapter errors remain a fixed response failure. */ }
+          throw new ClassificationProviderError(code, "started", true);
+        }
         const parsed = responseSchema.safeParse(decoded.response);
         if (!parsed.success || validateClassificationResponse(fixedRequest, parsed.data as SkillClassificationResponseV1).length)
           throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", "started", true);

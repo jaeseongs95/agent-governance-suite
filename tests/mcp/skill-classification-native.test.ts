@@ -97,7 +97,8 @@ describe("approved native structured classification", () => {
     const runner = vi.fn<NativeCliRunner>(async () => ({stdout, exitCode: 0}));
     const adapter = legacyAdapters([f.definition], runner).get("native-test")!;
     const error = await adapter.invokeStructured(f.request, f.profile, new AbortController().signal).catch((error: unknown) => error);
-    expect(error).toMatchObject({code: variant === "too-large" ? "NATIVE_OUTPUT_TOO_LARGE" : "INVALID_PROVIDER_RESPONSE"});
+    const codes: Record<string, string> = {"too-large": "NATIVE_OUTPUT_TOO_LARGE", failed: "NATIVE_RESULT_FAILURE", "extra-message": "NATIVE_RESULT_AMBIGUOUS", "tool-use": "NATIVE_ISOLATION_VIOLATION"};
+    expect(error).toMatchObject({code: codes[variant] ?? "INVALID_PROVIDER_RESPONSE"});
     expect(JSON.stringify(error)).not.toContain("SECRET_SENTINEL"); expect(runner).toHaveBeenCalledTimes(1); expect(await readdir(f.cwd)).toEqual([]);
   });
   it("NATIVE05 Claude free-form result is unsupported; missing usage stays null", async () => {
