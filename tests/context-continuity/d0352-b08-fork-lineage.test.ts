@@ -576,6 +576,16 @@ describe("D0352 B08 Codex fork origin", () => {
     expect(codexInspect(service, "codex-f").reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
   });
 
+  it("C-Q1: only a new saved revision moves the parent's save time; a re-anchor after the fork instant never makes it advanced", async () => {
+    const service = createService();
+    const parentSnapshot = codexCheckpoint(service, "codex-p");
+    // Re-anchoring (compaction) adds lineage rows only; the snapshot and its save time stay those of the saved revision.
+    service.reanchorAfterCompact("codex-p", () => ({ ids: ["entry-1"], at: [Date.parse(FORK_AT)] }));
+    expect(service.store.getSnapshot(parentSnapshot.taskCorrelation, parentSnapshot.epoch)).toEqual(parentSnapshot);
+    codexFork(service, "codex-f", await rollout("codex-f", { forked_from_id: "codex-p", timestamp: parentSnapshot.updatedAt }));
+    expect(codexInspect(service, "codex-f").summary).toMatchObject({ taskCorrelation: parentSnapshot.taskCorrelation, revision: parentSnapshot.revision });
+  });
+
   it("C-N5: a parent that saves again after the pin, or is suppressed, yields no candidate", async () => {
     const service = createService();
     const parentSnapshot = codexCheckpoint(service, "codex-p");
