@@ -14,7 +14,7 @@ import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type 
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
-import { processStartToken, processStartTokenAsync, type ProcessIdentityBudget, type ProcessIdentityFailureObserver } from "./process-identity.js";
+import { processStartToken, processStartTokenAsync, processStartTokens, processStartTokensAsync, type ProcessIdentityBudget, type ProcessIdentityFailureObserver, type ProcessIdentityReading } from "./process-identity.js";
 import { readRelayCodeDigest, relayCodeDigest } from "./relay-code-identity.js";
 import { decodeIdentityDeadline, remainingIdentityBudget } from "./broker-identity-budget.js";
 import { producerFailureReason, retainFailureCause } from "./failure-diagnostics.js";
@@ -190,14 +190,25 @@ function observePeerRelay(store: SessionMessageStore, payload: Record<string, un
     ...(wakeObservedAt === undefined ? {} : { wakeObservedAt }) });
 }
 
-type IdentityObservation = { token: string | null; cause?: unknown; diagnostic?: Parameters<ProcessIdentityFailureObserver>[1] };
-type IdentityQuery = { pid: number; timeoutMs: number | undefined };
-type IdentitySteps = Generator<IdentityQuery, unknown, IdentityObservation>;
+type IdentityObservation = ProcessIdentityReading;
+type IdentityQuery = { pids: number[]; timeoutMs: number | undefined };
+type IdentitySteps = Generator<IdentityQuery, unknown, IdentityObservation[]>;
 
-function* queryIdentity(pid: number, budget?: ProcessIdentityBudget): Generator<IdentityQuery, IdentityObservation, IdentityObservation> {
-  const observation = yield { pid, timeoutMs: remainingIdentityBudget(budget) };
+// Several PIDs in one query share one native observation and the caller's single budget.
+function* queryIdentities(pids: number[], budget?: ProcessIdentityBudget): Generator<IdentityQuery, IdentityObservation[], IdentityObservation[]> {
+  const observations = yield { pids, timeoutMs: remainingIdentityBudget(budget) };
   try { remainingIdentityBudget(budget); }
-  catch (error) { throw retainFailureCause(error as Error, observation.cause); }
+  catch (error) { throw retainFailureCause(error as Error, observations.find(observation => observation.cause !== undefined)?.cause); }
+  return observations;
+}
+
+function* queryIdentity(pid: number, budget?: ProcessIdentityBudget): Generator<IdentityQuery, IdentityObservation, IdentityObservation[]> {
+  return (yield* queryIdentities([pid], budget))[0]!;
+}
+
+function singleIdentity(read: (observer: ProcessIdentityFailureObserver) => string | null): IdentityObservation {
+  const observation: IdentityObservation = { token: null };
+  observation.token = read((cause, diagnostic) => Object.assign(observation, { cause, diagnostic }));
   return observation;
 }
 
@@ -211,10 +222,9 @@ function deniedIdentity(observation: IdentityObservation) {
 function runIdentitySync(steps: IdentitySteps): unknown {
   let step = steps.next();
   while (!step.done) {
-    const observation: IdentityObservation = { token: null };
-    observation.token = processStartToken(step.value.pid, process.platform, step.value.timeoutMs,
-      (cause, diagnostic) => Object.assign(observation, { cause, diagnostic }));
-    step = steps.next(observation);
+    const { pids: [pid, ...more], timeoutMs } = step.value;
+    step = steps.next(more.length ? processStartTokens(step.value.pids, process.platform, timeoutMs)
+      : [singleIdentity(observer => processStartToken(pid!, process.platform, timeoutMs, observer))]);
   }
   return step.value;
 }
@@ -222,11 +232,17 @@ function runIdentitySync(steps: IdentitySteps): unknown {
 async function runIdentityAsync(steps: IdentitySteps, signal: AbortSignal): Promise<unknown> {
   let step = steps.next();
   while (!step.done) {
-    const observation: IdentityObservation = { token: null };
-    observation.token = await processStartTokenAsync(step.value.pid, process.platform, step.value.timeoutMs,
-      (cause, diagnostic) => Object.assign(observation, { cause, diagnostic }), signal);
-    if (signal.aborted) throw retainFailureCause(new Error("The broker identity query was cancelled."), observation.cause);
-    step = steps.next(observation);
+    const { pids: [pid, ...more], timeoutMs } = step.value;
+    let observations: IdentityObservation[];
+    if (more.length) observations = await processStartTokensAsync(step.value.pids, process.platform, timeoutMs, signal);
+    else {
+      const observation: IdentityObservation = { token: null };
+      observation.token = await processStartTokenAsync(pid!, process.platform, timeoutMs,
+        (cause, diagnostic) => Object.assign(observation, { cause, diagnostic }), signal);
+      observations = [observation];
+    }
+    if (signal.aborted) throw retainFailureCause(new Error("The broker identity query was cancelled."), observations.find(observation => observation.cause !== undefined)?.cause);
+    step = steps.next(observations);
   }
   return step.value;
 }
@@ -309,18 +325,18 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
       const relayId = string(payload.relayId,"relayId");
       const parentPid = integer(payload.parentPid,"parentPid");
       const reserved = relayId.startsWith("verified-relay-v1:");
-      let parent: IdentityObservation | undefined;
+      let relayStartToken: string | null = null;
+      const pid = integer(payload.pid,"pid");
       if (reserved) {
         const parentStartToken = string(payload.parentStartToken,"parentStartToken");
         const expected = "host-process-v1:" + createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
         if (parentPid < 1 || !parentStartToken.trim() || string(payload.instanceId,"instanceId") !== expected) return {acquired:false};
-        parent = yield* queryIdentity(parentPid, requestBudget);
-        if (parent.token !== parentStartToken) return deniedIdentity(parent);
+        // D0331: parent and relay births are one OS observation under one request budget, not two sequential native queries.
+        const [parent, relay] = yield* queryIdentities([parentPid, pid], requestBudget);
+        if (parent!.token !== parentStartToken) return deniedIdentity(parent!);
+        if (relay!.token === null) return deniedIdentity(relay!);
+        relayStartToken = relay!.token;
       }
-      const pid = integer(payload.pid,"pid");
-      const relay = reserved ? yield* queryIdentity(pid, requestBudget) : undefined;
-      const relayStartToken = relay?.token ?? null;
-      if (reserved && relayStartToken === null) return deniedIdentity(relay!);
       remainingIdentityBudget(requestBudget);
       const acquired = reserved ? store.activateVerifiedRelay({...target,transport:string(payload.transport,"transport"),relayId,
         pid,relayStartToken,parentPid,instanceId:string(payload.instanceId,"instanceId"),codeDigest:relayCodeDigest(payload.codeDigest) ?? null}) : store.acquireRelay({

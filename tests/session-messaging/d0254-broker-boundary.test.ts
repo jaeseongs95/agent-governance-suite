@@ -187,7 +187,8 @@ it.runIf(process.platform==="win32")("an actual failed OS query remains denied a
   const target={host:"portable",sessionId:"d254-native-failure"},parentPid=2147483647,parentStartToken="synthetic-not-an-OS-birth";
   const instanceId="host-process-v1:"+createHash("sha256").update(JSON.stringify([target.host,target.sessionId,parentPid,parentStartToken])).digest("hex");
   const result=await requestSessionMessageOnce("acquire-relay",{target,transport:"portable",relayId:"verified-relay-v1:d254-native",instanceId,parentPid,parentStartToken,pid:process.pid},state);
-  expect(result).toMatchObject({acquired:false,diagnostic:{stage:"windows-query",status:1,signal:null,stderrIndication:"unclassified"}});
+  // D0331: the batched query reports this absent PID as its own mapped absence, not a generic query failure.
+  expect(result).toMatchObject({acquired:false,diagnostic:{stage:"windows-query",nativeCode:"ESRCH",status:null,signal:null,stderrIndication:null}});
   expect(JSON.stringify(result)).not.toMatch(/synthetic-not-an-OS-birth|2147483647|GetProcessById|StartTime|\\\\Users\\\\|stderr"/u);
 });
 

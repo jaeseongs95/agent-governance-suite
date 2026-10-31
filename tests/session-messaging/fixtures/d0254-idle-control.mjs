@@ -36,10 +36,11 @@ const holdChildSource = `
 const { writeFileSync } = require('node:fs');
 const path = require('node:path');
 const dir = process.argv[1];
+const reply = process.argv[2];
 writeFileSync(path.join(dir, 'native-query-pid'), String(process.pid));
 process.stderr.write('READY\\n');
 process.stdin.once('data', () => {
-  process.stdout.write('fixture-parent-birth\\n');
+  process.stdout.write(reply + '\\n');
   process.exit(0);
 });
 process.stdin.resume();
@@ -51,10 +52,15 @@ childProcess.execFile = function (executable, args, options, callback) {
   if (!pid) return execFile.call(this, executable, args, options, callback);
   const directory = path.join(root, String(pid));
   mkdirSync(directory, { recursive: true });
+  // A one-call identity batch answers every PID it names on its own line; only the held PID carries the parent birth.
+  const script = String(args.at(-1));
+  const reply = script.includes("' OK '")
+    ? [...script.matchAll(/GetProcessById\((\d+)\)/gu)].map(([, value]) => `${value} OK ${Number(value) === pid ? 'fixture-parent-birth' : 'fixture-relay-birth'}`).join('\n')
+    : 'fixture-parent-birth';
   const sub = execFile.call(
     this,
     process.execPath,
-    ['-e', holdChildSource, directory],
+    ['-e', holdChildSource, directory, reply],
     { ...options, stdio: ['pipe', 'pipe', 'pipe'] },
     (error, stdout, stderr) => {
       activeQueries.delete(pid);

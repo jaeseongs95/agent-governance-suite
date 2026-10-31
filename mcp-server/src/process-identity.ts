@@ -87,6 +87,103 @@ export async function processStartTokenAsync(pid: number, platform: NodeJS.Platf
   } catch (error) { return identityFailure(error, platform, started, timeoutMs, onFailure); }
 }
 
+export type ProcessIdentityReading = { token: string | null; cause?: unknown; diagnostic?: Parameters<ProcessIdentityFailureObserver>[1] };
+
+function failedReading(error: unknown, platform: NodeJS.Platform, started: number, timeoutMs: number | undefined, stderr?: unknown): ProcessIdentityReading {
+  const reading: ProcessIdentityReading = { token: null };
+  identityFailure(error, platform, started, timeoutMs, (cause, diagnostic) => Object.assign(reading, { cause, diagnostic }), stderr);
+  return reading;
+}
+
+// One PowerShell start for several PIDs. Each PID keeps its own literal query and its own result line.
+function windowsBatchCommand(pids: readonly number[]): [string, string[]] {
+  return ["powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", pids.map(pid =>
+    `try{$t=[System.Diagnostics.Process]::GetProcessById(${pid}).StartTime.ToUniversalTime().ToString('o');'${pid} OK '+$t}` +
+    `catch{$e=$_.Exception;while($e.InnerException){$e=$e.InnerException};'${pid} ERR '+$e.GetType().Name+' '+$e.NativeErrorCode}`).join(";")]];
+}
+
+// A missing, duplicate or malformed line is that PID's own failed query, never another PID's result.
+function windowsBatchReadings(pids: readonly number[], stdout: string, started: number, timeoutMs: number | undefined): ProcessIdentityReading[] {
+  const lines = new Map<number, string[]>();
+  for (const line of stdout.split(/\r?\n/u)) {
+    const match = /^([1-9][0-9]*) (OK|ERR) (.*)$/u.exec(line.trim());
+    if (match) lines.set(Number(match[1]), lines.has(Number(match[1])) ? [] : [match[2]!, ...match[3]!.trim().split(" ")]);
+  }
+  return pids.map(pid => {
+    const [kind, value = "", code] = lines.get(pid) ?? [];
+    if (kind === "OK" && value) return { token: value };
+    // Mapped classes: GetProcessById reports an absent PID as ArgumentException; StartTime of a denied process as Win32 error 5.
+    const failure = kind === "ERR" && value === "ArgumentException" ? { code: "ESRCH" }
+      : kind === "ERR" && (value === "UnauthorizedAccessException" || (value === "Win32Exception" && code === "5")) ? { code: "EACCES", stderr: "AccessDenied" }
+      : { stderr: "unclassified" };
+    return failedReading(Object.assign(new Error("Process identity query failed."), failure), "win32", started, timeoutMs);
+  });
+}
+
+function batchPids(pids: readonly number[], timeoutMs: number | undefined): number[] | null {
+  if (timeoutMs !== undefined && (!Number.isFinite(timeoutMs) || timeoutMs < 1)) return null;
+  return [...new Set(pids.filter(pid => Number.isInteger(pid) && pid >= 1))];
+}
+
+function sequentialReadings(pids: readonly number[], platform: NodeJS.Platform, timeoutMs: number | undefined): ProcessIdentityReading[] {
+  const deadline = performance.now() + (timeoutMs ?? Infinity);
+  return pids.map(pid => {
+    const reading: ProcessIdentityReading = { token: null };
+    reading.token = processStartToken(pid, platform, timeoutMs === undefined ? undefined : deadline - performance.now(),
+      (cause, diagnostic) => Object.assign(reading, { cause, diagnostic }));
+    return reading;
+  });
+}
+
+/** Reads several start tokens under one caller budget; on Windows one native query observes all PIDs. Results follow `pids` order. */
+export function processStartTokens(pids: readonly number[], platform: NodeJS.Platform = process.platform, timeoutMs?: number): ProcessIdentityReading[] {
+  const valid = batchPids(pids, timeoutMs);
+  if (!valid?.length) return pids.map(() => ({ token: null }));
+  if (platform !== "win32") return sequentialReadings(pids, platform, timeoutMs);
+  const started = performance.now();
+  let readings: ProcessIdentityReading[];
+  try {
+    const [executable, args] = windowsBatchCommand(valid);
+    readings = windowsBatchReadings(valid, execFileSync(executable, args, tokenOptions(platform, timeoutMs)), started, timeoutMs);
+  } catch (error) {
+    const failed = failedReading(error, platform, started, timeoutMs);
+    readings = valid.map(() => failed);
+  }
+  return pids.map(pid => readings[valid.indexOf(pid)] ?? { token: null });
+}
+
+export async function processStartTokensAsync(pids: readonly number[], platform: NodeJS.Platform = process.platform, timeoutMs?: number,
+  signal?: AbortSignal): Promise<ProcessIdentityReading[]> {
+  const valid = batchPids(pids, timeoutMs);
+  if (!valid?.length) return pids.map(() => ({ token: null }));
+  if (platform !== "win32") {
+    const readings: ProcessIdentityReading[] = [];
+    const deadline = performance.now() + (timeoutMs ?? Infinity);
+    for (const pid of pids) {
+      const reading: ProcessIdentityReading = { token: null };
+      reading.token = await processStartTokenAsync(pid, platform, timeoutMs === undefined ? undefined : deadline - performance.now(),
+        (cause, diagnostic) => Object.assign(reading, { cause, diagnostic }), signal);
+      readings.push(reading);
+    }
+    return readings;
+  }
+  const started = performance.now();
+  const [executable, args] = windowsBatchCommand(valid);
+  const readings = await new Promise<ProcessIdentityReading[]>(resolve => {
+    try {
+      execFile(executable, args, { ...tokenOptions(platform, timeoutMs), signal }, (error, stdout, stderr) => {
+        if (!error) return resolve(windowsBatchReadings(valid, stdout, started, timeoutMs));
+        const failed = failedReading(error, platform, started, timeoutMs, stderr);
+        resolve(valid.map(() => failed));
+      });
+    } catch (error) {
+      const failed = failedReading(error, platform, started, timeoutMs);
+      resolve(valid.map(() => failed));
+    }
+  });
+  return pids.map(pid => readings[valid.indexOf(pid)] ?? { token: null });
+}
+
 export function processExists(pid: number): boolean {
   if (!Number.isInteger(pid) || pid < 1) return false;
   try {

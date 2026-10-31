@@ -14,7 +14,8 @@ vi.mock("node:fs/promises", async original => ({ ...(await original<typeof impor
 vi.mock("node:child_process", async original => ({ ...(await original<typeof import("node:child_process")>()), spawn: f.spawn }));
 vi.mock("node:timers/promises", () => ({ setTimeout: f.delay }));
 vi.mock("node:tls", () => ({ default: { connect: f.connect, createServer: f.createServer } }));
-vi.mock("../../mcp-server/src/process-identity.js", () => ({ processStartToken: f.startToken }));
+vi.mock("../../mcp-server/src/process-identity.js", () => ({ processStartToken: f.startToken,
+  processStartTokens: (pids: number[]) => pids.map(pid => ({ token: f.startToken(pid) as string | null })) }));
 vi.mock("../../mcp-server/src/session-message-wake-port.js", () => ({
   createWakeHookObservationReader: () => () => null, verifyHistoricalWakeObservation: () => false,
 }));
