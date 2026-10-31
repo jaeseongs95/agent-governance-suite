@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { closeSync, openSync } from "node:fs";
 import net from "node:net";
 
 /**
@@ -8,21 +8,27 @@ import net from "node:net";
  */
 export const lockWitnessSupported = (platform: NodeJS.Platform = process.platform) => platform === "win32";
 
-const witnessName = (generation: string) => "agent-governance-broker-lock-" + generation;
+const witnessPath = (generation: string) => "\\\\.\\pipe\\agent-governance-broker-lock-" + generation;
 
-/** pipe 바인드는 listen 호출 안에서 동기로 끝나므로 listening으로 바로 판정한다. 실패하면 null이다. */
+/**
+ * pipe 바인드는 listen 호출 안에서 동기로 끝나므로 listening으로 바로 판정한다. 관측자와 같은 방식으로
+ * 자기 pipe가 보여야만 증인으로 쓴다(격리 namespace 등). 아니면 null이고 호출자는 hash marker로 돌아간다.
+ */
 export function createLockWitness(generation: string): net.Server | null {
   // 증인은 이름의 존재만 쓴다. 들어온 연결은 읽지 않고 즉시 끊는다.
   const server = net.createServer(socket => { socket.destroy(); });
   server.on("error", () => { /* 바인드 실패는 아래 listening으로 판정한다. */ });
-  server.listen("\\\\.\\pipe\\" + witnessName(generation));
-  if (!server.listening) { server.close(); return null; }
+  server.listen(witnessPath(generation));
+  if (!server.listening || lockWitnessState(generation) !== "present") { server.close(); return null; }
   server.unref();
   return server;
 }
 
+/** 목록 열거 대신 정확한 이름을 연다. ENOENT만 부재이고 열림·EBUSY(인스턴스 사용 중)는 존재, 그 밖은 판정 보류다. */
 export function lockWitnessState(generation: string): "present" | "absent" | "unknown" {
-  let names: string[];
-  try { names = readdirSync("//./pipe/"); } catch { return "unknown"; }
-  return names.includes(witnessName(generation)) ? "present" : "absent";
+  try { closeSync(openSync(witnessPath(generation), "r")); return "present"; }
+  catch (error) {
+    const code = (error as NodeJS.ErrnoException | null)?.code;
+    return code === "ENOENT" ? "absent" : code === "EBUSY" ? "present" : "unknown";
+  }
 }

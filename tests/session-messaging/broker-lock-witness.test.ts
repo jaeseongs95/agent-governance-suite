@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { once } from "node:events";
 import * as fs from "node:fs";
+import net from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, it } from "vitest";
@@ -24,6 +25,20 @@ test("바인드는 listen 호출 안에서 동기로 끝나고 같은 세대 이
     expect(createLockWitness(name)).toBeNull();
   } finally { first.close(); }
   expect(lockWitnessState(name)).toBe("absent");
+});
+
+test("연결이 몰려 인스턴스가 모두 사용 중이어도 존재로 판정하고 증인을 유지한다", async () => {
+  const name = generation();
+  const witness = createLockWitness(name)!;
+  try {
+    const states = Array.from({ length: 64 }, () => lockWitnessState(name));
+    expect(states.every(state => state === "present")).toBe(true);
+    const sockets = Array.from({ length: 32 }, () => net.connect("\\\\.\\pipe\\agent-governance-broker-lock-" + name).on("error", () => undefined));
+    await new Promise(resolve => setTimeout(resolve, 50));
+    expect(lockWitnessState(name)).toBe("present");
+    expect(witness.listening).toBe(true);
+    for (const socket of sockets) socket.destroy();
+  } finally { witness.close(); }
 });
 
 test("소유 프로세스가 강제 종료되면 세대 pipe가 사라진다", async () => {
