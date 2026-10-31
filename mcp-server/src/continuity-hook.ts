@@ -146,12 +146,17 @@ function reportContinuityFailure(phase: ContinuityHookPhase, cause: unknown): vo
   try {
     const isObject = Boolean(cause) && (typeof cause === "object" || typeof cause === "function");
     const storeError = isObject && !types.isProxy(cause) && cause instanceof ContinuityStoreError ? cause : null;
+    // A workflow store failure keeps its own code and SQLite result code, distinct from a continuity store failure (D0057).
+    const workflowError = isObject && !types.isProxy(cause) && cause instanceof WorkflowContractError ? cause : null;
+    const sqliteErrcode = workflowError?.details?.sqliteErrcode;
     const reason = hookFailureReason(cause)
       ?? (storeError ? storeError.reason
-        : phase === "input" && isObject && !types.isProxy(cause) && cause instanceof SyntaxError ? "INVALID_JSON"
-          : "UNEXPECTED_FAILURE");
+        : workflowError ? `WORKFLOW_${workflowError.code}`
+          : phase === "input" && isObject && !types.isProxy(cause) && cause instanceof SyntaxError ? "INVALID_JSON"
+            : "UNEXPECTED_FAILURE");
     console.error("[agent-governance-suite] continuity-hook-failure " + JSON.stringify({
       phase, reason, context: hookFailureContext(cause),
+      ...(Number.isInteger(sqliteErrcode) ? { sqliteErrcode } : {}),
       ...(storeError && storeError.causeValue !== undefined ? { storeCause: hookFailureContext(storeError.causeValue) } : {}),
     }));
   } catch { /* A broken diagnostic sink cannot block the host. */ }

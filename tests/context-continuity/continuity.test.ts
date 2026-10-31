@@ -11,6 +11,7 @@ import type {
   ConvergenceRootV1,
   TaskEnvelopeV1,
 } from "../../contracts/types.js";
+import { WorkflowContractError } from "../../contracts/types.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { handleContinuityHook as handleNativeContinuityHook, runContinuityHook as runNativeContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { runGovernanceHook } from "../../mcp-server/src/governance-hook.js";
@@ -20,7 +21,7 @@ import { ContinuityService, UnavailableContinuityService } from "../../mcp-serve
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
-import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
+import { InMemoryWorkflowStore, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared-stores.js";
 
 // Owned fake core observation only; this adapter is not native role evidence.
@@ -64,7 +65,7 @@ afterEach(async () => {
 
 function createService(
   databasePath = ":memory:",
-  workflow = new InMemoryWorkflowStore(),
+  workflow: WorkflowStore = new InMemoryWorkflowStore(),
   now = () => new Date("2026-09-13T01:00:00.000Z"),
 ): ContinuityService {
   const store = new SqliteContinuityStore(databasePath);
@@ -441,6 +442,31 @@ describe("workflow projection and fail-open lifecycle", () => {
     expect(service.compactContext("workflow-session")).toBeNull();
   });
 
+  it("D0054: the workflow card keeps a bounded excluded scope and says how many items and evidence references it omitted", () => {
+    const workflow = new InMemoryWorkflowStore();
+    const base = workflowRoot();
+    const task = { ...base.taskEnvelope, scope: { included: ["src"], excluded: ["deploy", "release", "tags", "main", "installs", "secrets"] } };
+    const root = { ...base, taskEnvelope: task, taskDigest: convergenceDigest(task) };
+    expect(workflow.insertConvergenceRoot(root)).toBeNull();
+    const artifacts = Array.from({ length: 8 }, (_, index) => ({ artifactId: `a${index}`, locator: `tests/${index}`, digest: convergenceDigest(index), verified: true }));
+    const snapshot = workflow.getConvergenceSnapshot.bind(workflow);
+    vi.spyOn(workflow, "getConvergenceSnapshot").mockImplementation((rootId: string) => {
+      const current = snapshot(rootId);
+      return current ? { ...current, workflowRunIds: ["run-1"] } : null;
+    });
+    vi.spyOn(workflow, "getRun").mockImplementation(() => ({ state: "running", plan: { currentStageId: null, nextStageId: null }, blockers: [], unresolved: [],
+      stageResults: [{ output: { artifacts: artifacts.slice(0, 5) } }, { output: { artifacts: artifacts.slice(5) } }] }) as never);
+    const service = createService(":memory:", workflow);
+    const openInput = { schemaVersion: "1.0.0", taskEnvelope: task, frame: root.frame, parentRootId: null, userApprovalRefs: [] };
+    service.bindOpenedRoot(bound(service, "workflow-session", "open_convergence_root", openInput), root.rootId);
+    service.markPreCompact("workflow-session");
+    const injected = service.compactContext("workflow-session")!;
+    const card = JSON.parse(injected.split("\n")[2]!) as { excludedScope: string[]; evidenceRefs: Array<{ artifactId: string }>; evidenceRefsOmitted: number };
+    expect(card.excludedScope).toEqual(["deploy", "release", "tags", "main [+2 omitted]"]);
+    expect(card.evidenceRefs.map(item => item.artifactId)).toEqual(["a0", "a1", "a2", "a3", "a4", "a5"]);
+    expect(card.evidenceRefsOmitted).toBe(2);
+  });
+
   it("does not inject a workflow card after the projection changes behind its compact marker", () => {
     const workflow = new InMemoryWorkflowStore();
     const root = workflowRoot();
@@ -464,6 +490,29 @@ describe("workflow projection and fail-open lifecycle", () => {
     expect(workflow.nextRunSequence()).toBe(1);
     workflow.close();
     expect(new UnavailableContinuityService().inspectContext().error?.code).toBe("CONTINUITY_UNAVAILABLE");
+  });
+
+  it("D0057: a corrupt workflow database during the bound task's epoch check stays the workflow's failure with its SQLite code", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "continuity-d0057-"));
+    temporaryDirectories.push(directory);
+    const workflow = new SqliteWorkflowStore(join(directory, "workflows.sqlite3"));
+    const root = workflowRoot();
+    expect(workflow.insertConvergenceRoot(root)).toBeNull();
+    const service = createService(":memory:", workflow);
+    const openInput = { schemaVersion: "1.0.0", taskEnvelope: root.taskEnvelope, frame: root.frame, parentRootId: null, userApprovalRefs: [] };
+    service.bindOpenedRoot(bound(service, "workflow-session", "open_convergence_root", openInput), root.rootId);
+    const database = (workflow as unknown as { database: DatabaseSync }).database;
+    const prepare = database.prepare.bind(database);
+    vi.spyOn(database, "prepare").mockImplementation((sql: string) => {
+      if (/convergence_roots/u.test(sql)) throw Object.assign(new Error("database disk image is malformed"), { code: "ERR_SQLITE_ERROR", errcode: 11 });
+      return prepare(sql);
+    });
+    let caught: unknown;
+    try { service.issueToolBinding("workflow-session", "inspect_context", { schemaVersion: "1.0.0" }); } catch (error) { caught = error; }
+    expect(caught).toBeInstanceOf(WorkflowContractError);
+    expect(caught).toMatchObject({ code: "MCP_UNAVAILABLE", details: { sqliteErrcode: 11 } });
+    vi.restoreAllMocks();
+    workflow.close();
   });
 
   it("rejects a workflow database before creating any continuity tables", async () => {

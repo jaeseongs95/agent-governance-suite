@@ -78,6 +78,8 @@ export interface WorkflowContinuityCardV1 {
   taskId: string;
   objective: string;
   includedScope: string[];
+  /** Out-of-scope items are part of the frozen task as much as the included ones (D0054). */
+  excludedScope: string[];
   acceptanceCriteria: string[];
   constraints: string[];
   authorization: {
@@ -91,6 +93,8 @@ export interface WorkflowContinuityCardV1 {
   blockers: string[];
   unresolved: string[];
   evidenceRefs: Array<{ artifactId: string; locator: string; digest: string; verified: boolean }>;
+  /** Evidence references beyond the bounded list, so a cut list never reads as the whole evidence (D0054). */
+  evidenceRefsOmitted: number;
   updatedAt: string;
   snapshotDigest: Sha256Digest;
 }
@@ -147,6 +151,8 @@ function boundedText(value: string, maxLength: number): string {
   return value.length <= maxLength ? value : `${value.slice(0, maxLength - 1)}…`;
 }
 
+const WORKFLOW_CARD_EVIDENCE_LIMIT = 6;
+
 function boundedStrings(values: string[], maxItems: number, maxLength: number): string[] {
   return values.slice(0, maxItems).map((value, index) => {
     const omitted = values.length > maxItems && index === maxItems - 1 ? ` [+${values.length - maxItems} omitted]` : "";
@@ -202,19 +208,34 @@ export class ContinuityService implements ContinuityGateway {
     const rootId = task.rootId;
     const workflowStore = this.workflowStore;
     if (!rootId || !workflowStore) return task;
+    // A workflow store failure inside the continuity transaction stays the workflow's own failure (MCP_UNAVAILABLE with
+    // its SQLite code), never a continuity STORE_UNAVAILABLE: a corrupt workflow DB is not a missing continuity store.
+    const workflowFailure: { failed: boolean; error?: unknown } = { failed: false };
+    const fromWorkflow = <T>(read: () => T): T => {
+      try { return read(); } catch (error) { Object.assign(workflowFailure, { failed: true, error }); throw error; }
+    };
+    try {
+      return this.rotateBoundEpoch(task, now, rootId, workflowStore, fromWorkflow);
+    } catch (error) {
+      throw workflowFailure.failed ? workflowFailure.error : error;
+    }
+  }
+
+  private rotateBoundEpoch(task: ContinuityTaskRecord, now: string, rootId: string, workflowStore: WorkflowStore,
+    fromWorkflow: <T>(read: () => T) => T): ContinuityTaskRecord {
     // Keep workflow writers excluded until the separate continuity CAS commits.
     return workflowStore.withWorkflowTransaction(() => this.store.rotateEpoch(task.taskCorrelation, now, {
       epoch: task.currentEpoch,
       rootId,
       isTerminal: () => {
-        const snapshot = workflowStore.getConvergenceSnapshot(rootId);
+        const snapshot = fromWorkflow(() => workflowStore.getConvergenceSnapshot(rootId));
         if (!snapshot || snapshot.root.rootId !== rootId || !CONVERGENCE_ROOT_STATE.includes(snapshot.root.state)) return false;
         const terminalRoot = snapshot.root.state === "completed" || snapshot.root.state === "abandoned";
         if (!terminalRoot && snapshot.workflowRunIds.length === 0) return false;
         // A finished run may leave its root open or awaiting review. Every linked
         // run and every consumed lease, including older epochs, must be settled.
         if (!snapshot.workflowRunIds.every(runId => {
-          const receipt = workflowStore.getRun(runId);
+          const receipt = fromWorkflow(() => workflowStore.getRun(runId));
           return receipt !== null && ["passed", "failed", "blocked"].includes(receipt.state);
         })) return false;
         const finished = new Map(snapshot.outcomes.map(outcome => [outcome.leaseId, outcome]));
@@ -781,6 +802,7 @@ export class ContinuityService implements ContinuityGateway {
     if (!snapshot) return null;
     const latestRunId = snapshot.workflowRunIds.at(-1);
     const receipt = latestRunId ? this.workflowStore.getRun(latestRunId) : null;
+    const evidence = (receipt?.stageResults ?? []).flatMap((result) => result.output.artifacts);
     const base = {
       schemaVersion: "1.0.0" as const,
       source: "workflow" as const,
@@ -792,6 +814,7 @@ export class ContinuityService implements ContinuityGateway {
       taskId: boundedText(snapshot.root.taskEnvelope.taskId, 160),
       objective: boundedText(snapshot.root.taskEnvelope.objective, 800),
       includedScope: boundedStrings(snapshot.root.taskEnvelope.scope.included, 4, 120),
+      excludedScope: boundedStrings(snapshot.root.taskEnvelope.scope.excluded, 4, 120),
       acceptanceCriteria: boundedStrings(snapshot.root.taskEnvelope.acceptanceCriteria, 4, 240),
       constraints: boundedStrings(snapshot.root.taskEnvelope.constraints, 4, 240),
       authorization: {
@@ -804,12 +827,13 @@ export class ContinuityService implements ContinuityGateway {
       nextStageId: receipt?.plan.nextStageId ?? null,
       blockers: boundedStrings(receipt?.blockers ?? [], 4, 200),
       unresolved: boundedStrings(receipt?.unresolved ?? [], 4, 200),
-      evidenceRefs: (receipt?.stageResults ?? []).flatMap((result) => result.output.artifacts.map((item) => ({
+      evidenceRefs: evidence.slice(0, WORKFLOW_CARD_EVIDENCE_LIMIT).map((item) => ({
         artifactId: boundedText(item.artifactId, 80),
         locator: boundedText(item.locator, 160),
         digest: item.digest,
         verified: item.verified,
-      }))).slice(0, 6),
+      })),
+      evidenceRefsOmitted: Math.max(0, evidence.length - WORKFLOW_CARD_EVIDENCE_LIMIT),
       updatedAt: snapshot.root.updatedAt,
     };
     return { ...base, snapshotDigest: convergenceDigest(base) };
