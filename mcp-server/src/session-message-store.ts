@@ -884,6 +884,30 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return this.liveRelay(target, presence.transport, nowMs) ? null : presence.instanceId;
   }
 
+  /**
+   * D0354: the current generation a start event of the same host birth keeps instead of replacing (compact, or any
+   * start in a process that already runs this session). It is kept only while its own relay serves it: the presence
+   * is online and was heartbeated after its start (only that generation's relay can), a relay of the same host
+   * parent and the same entry code holds a live lease. Anything else returns null and the caller starts a new one.
+   */
+  liveRelayGeneration(input: SessionIdentity & { transport: string; parent: { pid: number; startToken: string }; codeDigest: string }, nowMs = Date.now()): string | null {
+    boundedIdentity(input);
+    relayCodeDigest(input.codeDigest);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.liveRelayGeneration(input, nowMs));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    const current = this.presence(input, nowMs);
+    if (current.state !== "online" || current.transport !== input.transport || current.instanceId === null
+      || current.startedAt === null || current.heartbeatAt === null || Date.parse(current.heartbeatAt) <= Date.parse(current.startedAt)) return null;
+    const parent = this.presenceReportedParent(input, current.instanceId);
+    if (!parent || parent.pid !== input.parent.pid || parent.startToken !== input.parent.startToken) return null;
+    const lease = this.database.prepare(`SELECT pid, parent_pid, lease_until, relay_code_digest FROM relay_leases
+      WHERE host=? AND session_id=? AND transport=?`).get(input.host, input.sessionId, input.transport) as
+      { pid: number; parent_pid: number; lease_until: string; relay_code_digest: string | null } | undefined;
+    if (!lease || lease.pid < 1 || lease.parent_pid !== input.parent.pid || Date.parse(lease.lease_until) <= nowMs
+      || lease.relay_code_digest !== input.codeDigest) return null;
+    return current.instanceId;
+  }
+
   /** The host birth this generation's own start reported; written once at insert. Null for legacy or unread rows. */
   presenceReportedParent(target: SessionIdentity, instanceId: string): { pid: number; startToken: string } | null {
     boundedIdentity(target);

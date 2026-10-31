@@ -4,7 +4,7 @@ import { hookFailure, hookFailureContext, hookFailureReason, retainHookFailureCa
 import "./builtin-hook-host-adapters.js";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 
@@ -16,6 +16,7 @@ import type { SessionMessage } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
 import { processStartToken, type ProcessIdentityFailureObserver } from "./process-identity.js";
 import { createRelaySpawnObservation } from "./relay-wake-observation.js";
+import { readRelayCodeDigest } from "./relay-code-identity.js";
 import { adaptHostInput, hostDeliveryProfile, isGovernanceHookTool, nativePeerWait, resolveHookHost, resolveHookProcessPid, type SupportedHookHost } from "./host-input-adapter.js";
 
 // Addons register and consume this exact bundled namespace; other bundles/processes have separate registries.
@@ -398,10 +399,15 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     // The generation records the host birth its own relay parents; a later recovery relay may bind only this birth.
     // startRelay still re-reads the birth after the presence await and refuses one that changed meanwhile.
     const reportedStartToken = hostProcess?.startToken ?? readHostStartToken(hostPid, budget) ?? undefined;
+    // D0354: a start event inside a host process whose relay already serves this session (compact) keeps that
+    // generation and relay; only the broker can tell, so the request carries this hook's relay entry code.
+    const relayEntry = new URL("./session-message-relay.mjs", import.meta.url);
+    const keepLiveRelayCode = reportedStartToken && existsSync(relayEntry) ? readRelayCodeDigest(relayEntry) : null;
     try {
-      await request("presence-start", {
+      const started = await request<{ kept?: unknown }>("presence-start", {
         target, instanceId, transport,
         ...(reportedStartToken ? { reportedParentPid: hostPid, reportedParentStartToken: reportedStartToken } : {}),
+        ...(keepLiveRelayCode ? { keepLiveRelayCode } : {}),
         wakeVisibility,
         canWakeSilently: wakeVisibility === "silent",
         supportedInjection: profile.capabilities.supportedInjection,
@@ -410,6 +416,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         ...(observation.workspaceId ? { workspaceId: observation.workspaceId } : {}),
         ...(observation.role ? { role: observation.role } : {}),
       });
+      if (started?.kept === true) return {};
     } catch (error) {
       reportHookFailure("presence-start", error);
       return {}; // No relay can start without a confirmed presence response.

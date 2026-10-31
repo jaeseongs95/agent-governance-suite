@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 
@@ -184,4 +184,48 @@ it("RECOVER-5: an existing store gains the report columns with its rows intact, 
   expect(second.presenceReportedParent(target, "fresh")).toEqual({ pid: 5201, startToken: "birth-fresh" });
   expect((dispatchSessionMessageBrokerOperation(second, "claim-deferred", { target }) as { relayRecovery?: unknown }).relayRecovery).toBeUndefined();
   expect(second.relayRecoveryInstance(target, now + 60_000)).toBe("fresh");
+});
+
+// D0354 (auditor 4048e5e4): a start event in the same host process (compact) replaced the generation and its working
+// relay every time; a failed new relay then left the session without one. The served generation is kept instead.
+describe("KEEP: a start event of the same host birth keeps the generation its live relay serves", () => {
+  const code = "sha256:" + "a".repeat(64);
+  const birth = { reportedParentPid: parentPid, reportedParentStartToken: "birth-1" };
+  const startEvent = (store: SessionMessageStore, instanceId: string, extra: Record<string, unknown> = {}) =>
+    dispatchSessionMessageBrokerOperation(store, "presence-start", { target, instanceId, transport, wakeVisibility: "user-message",
+      canWakeSilently: false, ...birth, keepLiveRelayCode: code, ...extra }) as { presence: { instanceId: string }; kept?: boolean };
+  const served = (relayCode = code, relayParent = parentPid) => {
+    const store = open();
+    expect(startEvent(store, "I1").kept).toBeUndefined(); // nothing serves the session yet: a new generation
+    expect(store.acquireRelay({ ...target, transport, relayId: "R1", pid: 4101, parentPid: relayParent, instanceId: "I1", codeDigest: relayCode }, Date.now() + 5)).toBe(true);
+    return store;
+  };
+
+  it("keeps it for the same birth and relay code: no new generation, the relay lease is untouched", () => {
+    const store = served();
+    const lease = owner(store);
+    expect(startEvent(store, "I2")).toMatchObject({ kept: true, presence: { instanceId: "I1" } });
+    expect(store.presence(target).instanceId).toBe("I1");
+    expect(store.presenceReportedParent(target, "I2")).toBeNull();
+    expect(owner(store)).toEqual(lease);
+  });
+
+  it.each([
+    ["another host birth", { reportedParentStartToken: "birth-2" }, code, parentPid],
+    ["an old hook that sends no relay code", { keepLiveRelayCode: undefined }, code, parentPid],
+    ["a relay running other entry code (D0348)", {}, "sha256:" + "b".repeat(64), parentPid],
+    ["a relay under another parent process", {}, code, parentPid + 1],
+  ])("starts a new generation for %s", (_name, extra, relayCode, relayParent) => {
+    const store = served(relayCode, relayParent);
+    expect(startEvent(store, "I2", extra).kept).toBeUndefined();
+    expect(store.presence(target).instanceId).toBe("I2");
+  });
+
+  it("starts a new generation when no relay has served the current one", () => {
+    const store = open();
+    startEvent(store, "I1");
+    expect(store.acquireRelay({ ...target, transport, relayId: "R0", pid: 4100, parentPid, codeDigest: code }, Date.now() - 60_000)).toBe(true);
+    expect(startEvent(store, "I2").kept).toBeUndefined();
+    expect(store.presence(target).instanceId).toBe("I2");
+  });
 });

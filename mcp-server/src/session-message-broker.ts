@@ -534,6 +534,10 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       const injection = Object.hasOwn(payload, "supportedInjection") ? supportedInjection(payload.supportedInjection) : [];
       if (wakeVisibility !== "silent" && wakeVisibility !== "user-message" && wakeVisibility !== "none") throw new Error("wakeVisibility is invalid.");
       if (idleWake !== "silent" && idleWake !== "user-message" && idleWake !== "none") throw new Error("idleWake is invalid.");
+      // D0354: the same host birth keeps its served generation; replacing it would retire a working relay.
+      const keepCode = relayCodeDigest(payload.keepLiveRelayCode);
+      if (keepCode && reported && store.liveRelayGeneration({ ...target, transport: string(payload.transport, "transport"),
+        parent: reported, codeDigest: keepCode }) !== null) return { presence: store.presence(target), kept: true };
       return { presence: store.startPresence({
         ...target,
         instanceId: string(payload.instanceId, "instanceId"),

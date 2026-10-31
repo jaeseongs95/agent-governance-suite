@@ -118,4 +118,12 @@ describe("D0354 relay start and end records", () => {
     await runSessionMessageRelay(relayOptions, port);
     expect(records()).toEqual([]);
   });
+
+  it("starts no relay and leaves no record when the broker keeps a generation its live relay serves (compact)", async () => {
+    f.request.mockImplementation(async (operation: string) => operation === "presence-start" ? { presence: {}, kept: true } : {});
+    await handleSessionMessageHook({ hook_event_name: "SessionStart", source: "compact", session_id: "kept-generation", syntheticActor: "root" }, syntheticCore.SYNTHETIC_CORE_HOST, 424242);
+    expect(f.request.mock.calls.map(([operation]) => operation)).toContain("presence-start");
+    expect(f.spawn).not.toHaveBeenCalled();
+    expect(records()).toEqual([]);
+  });
 });
