@@ -239,8 +239,8 @@ describe("generated Claude plugin", () => {
         else expect(hook.onFailure).toBeUndefined();
       }
     }
-    // Messaging runs before the board; the intake has no per-prompt selector.
-    expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[4], allowedScripts[3]]);
+    // Messaging runs before the board, then continuity pins a fork's parent (D0352); the intake has no per-prompt selector.
+    expect(claudeHooks.hooks.UserPromptSubmit.flatMap((group) => group.hooks).map((hook) => hook.args[0])).toEqual([allowedScripts[4], allowedScripts[3], allowedScripts[0]]);
     // 공식 비동기 시작이 훅과 relay 계보를 유지하며 본문 수신 훅은 계속 동기로 실행한다.
     const messageSessionStart = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[4]));
     expect(messageSessionStart).toHaveLength(1);

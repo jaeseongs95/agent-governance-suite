@@ -93,16 +93,26 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
     case "fork": service.startFork(sessionId); return {};
     case "clear": service.clearSession(sessionId); return {};
     case "resume": return sessionOutput(outputEventName, service.formatCandidate(service.candidateForSession(sessionId)));
-    case "compact": return sessionOutput(outputEventName, service.compactContext(sessionId));
+    case "compact":
+      if (readLineage) service.reanchorAfterCompact(sessionId, readLineage);
+      return sessionOutput(outputEventName, service.compactContext(sessionId));
     case "pre-compact": service.markPreCompact(sessionId); return {};
-    case "post-compact": service.recordPostCompact(sessionId, action.turnId, action.successful); return {};
+    case "post-compact":
+      service.recordPostCompact(sessionId, action.turnId, action.successful);
+      if (readLineage) service.reanchorAfterCompact(sessionId, readLineage);
+      return {};
+  }
+  // A fork's parent is pinned at its first prompt, before any model tool call; nothing is injected.
+  if (observation.kind === "user-input") {
+    if (readLineage) service.pinForkParent(sessionId, readLineage);
+    return {};
   }
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
     const toolName = localToolName(host, observation.toolName ?? "");
     if (!toolName) return {};
     const toolInput = observation.toolInput ?? {};
-    // Lineage is read only for its two consumers: a checkpoint anchor and a recorded fork's inspect.
-    const lineage = toolName === "checkpoint_context" || toolName === "inspect_context" ? readLineage : undefined;
+    // Only a checkpoint reads lineage here (its anchors); inspect uses the parent pinned at the first prompt.
+    const lineage = toolName === "checkpoint_context" ? readLineage : undefined;
     const token = lineage ? service.issueToolBinding(sessionId, toolName, toolInput, lineage) : service.issueToolBinding(sessionId, toolName, toolInput);
     return {
       hookSpecificOutput: {

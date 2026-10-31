@@ -58,6 +58,7 @@ interface CandidatePayload {
 }
 
 const FORK_START_EVENT = "fork-start";
+const FORK_PARENT_EVENT = "fork-parent:";
 const LINEAGE_ANCHOR_COUNT = 16;
 
 export interface WorkflowContinuityCardV1 {
@@ -233,7 +234,8 @@ export class ContinuityService implements ContinuityGateway {
       t: toolName,
       d: convergenceDigest(withoutBinding(input)),
       x: Math.floor(this.now().getTime() / 1000) + TOOL_TOKEN_TTL_SECONDS,
-      ...(readLineage ? this.lineageFor(task, toolName, readLineage) : {}),
+      ...(toolName === "checkpoint_context" && readLineage ? this.anchorsFor(readLineage) : {}),
+      ...(toolName === "inspect_context" ? this.pinnedForkParent(task) : {}),
     };
     return this.sign(payload);
   }
@@ -244,15 +246,27 @@ export class ContinuityService implements ContinuityGateway {
     this.store.recordObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT, null, true, this.now().toISOString());
   }
 
-  private lineageFor(task: ContinuityTaskRecord, toolName: string, readLineage: () => LineageRead): Pick<ToolBindingPayload, "a" | "p" | "q"> {
-    if (toolName === "checkpoint_context") {
-      const read = readLineage();
-      // Several anchors: the very newest entry may not be among those a fork copies.
-      return "ids" in read ? { a: read.ids.slice(-LINEAGE_ANCHOR_COUNT).map(id => this.lineageAnchor(id)) } : {};
-    }
-    // Only a recorded fork with no own state looks up a parent; startup, resume and clear never do.
-    if (toolName !== "inspect_context" || task.rootId || this.summary(task)
-      || !this.store.hasObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT)) return {};
+  /** Several anchors: the very newest entry may not be among those a fork copies. */
+  private anchorsFor(readLineage: () => LineageRead): Pick<ToolBindingPayload, "a"> {
+    const read = readLineage();
+    return "ids" in read ? { a: read.ids.slice(-LINEAGE_ANCHOR_COUNT).map(id => this.lineageAnchor(id)) } : {};
+  }
+
+  /**
+   * Decides a fork child's parent once, at its first user prompt: before the model can run any tool, so a model
+   * in the child cannot append another session's entries to its own file first (review 902e, r04). Only a recorded
+   * fork with no own state is considered; startup, resume and clear never are. The outcome, found or not, is final.
+   */
+  pinForkParent(rawSessionId: string, readLineage: () => LineageRead): void {
+    const task = this.store.getTask(this.correlateSession(rawSessionId));
+    if (!task || task.rootId || task.suppressed || this.summary(task)
+      || !this.store.hasObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT)
+      || this.store.firstObservationEvent(task.taskCorrelation, task.currentEpoch, FORK_PARENT_EVENT)) return;
+    const selection = this.selectForkParent(task, readLineage);
+    this.store.recordObservation(task.taskCorrelation, task.currentEpoch, FORK_PARENT_EVENT + JSON.stringify(selection), null, "p" in selection, this.now().toISOString());
+  }
+
+  private selectForkParent(task: ContinuityTaskRecord, readLineage: () => LineageRead): { p: ForkParent } | { q: string } {
     const read = readLineage();
     if (!("ids" in read)) return { q: read.reason };
     // D1: the match appearing last in the child's own file wins; revision numbers and clocks are not used.
@@ -262,6 +276,32 @@ export class ContinuityService implements ContinuityGateway {
       if (parent) return { p: parent };
     }
     return { q: "FORK_PARENT_NOT_FOUND" };
+  }
+
+  /** inspect uses only the pinned decision; it never reads the transcript, which the model may have changed by then. */
+  private pinnedForkParent(task: ContinuityTaskRecord): Pick<ToolBindingPayload, "p" | "q"> {
+    if (task.rootId || !this.store.hasObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT)) return {};
+    const event = this.store.firstObservationEvent(task.taskCorrelation, task.currentEpoch, FORK_PARENT_EVENT);
+    if (!event) return { q: "FORK_PARENT_NOT_PINNED" };
+    let pinned: unknown;
+    try { pinned = JSON.parse(event.slice(FORK_PARENT_EVENT.length)); } catch { return { q: "FORK_PARENT_PIN_INVALID" }; }
+    const value = pinned as { p?: Partial<ForkParent>; q?: unknown };
+    if (value && typeof value.q === "string") return { q: value.q };
+    const parent = value?.p;
+    if (parent && typeof parent.c === "string" && Number.isInteger(parent.e) && Number.isInteger(parent.r) && typeof parent.d === "string") {
+      return { p: { c: parent.c, e: parent.e!, r: parent.r!, d: parent.d } };
+    }
+    return { q: "FORK_PARENT_PIN_INVALID" };
+  }
+
+  /** After compaction a later fork copies only post-boundary entries, so the current revision gets fresh anchors. */
+  reanchorAfterCompact(rawSessionId: string, readLineage: () => LineageRead): void {
+    const task = this.store.getTask(this.correlateSession(rawSessionId));
+    if (!task || task.rootId) return;
+    const snapshot = this.store.getSnapshot(task.taskCorrelation, task.currentEpoch);
+    if (!snapshot) return;
+    const anchors = this.anchorsFor(readLineage).a;
+    if (anchors?.length) this.store.reanchorSnapshot(task.taskCorrelation, task.currentEpoch, snapshot.revision, snapshot.snapshotDigest, anchors, this.now().toISOString());
   }
 
   private lineageAnchor(entryId: string): string {
@@ -383,8 +423,10 @@ export class ContinuityService implements ContinuityGateway {
     const { snapshotDigest, ...base } = snapshot;
     if (convergenceDigest(base) !== snapshotDigest) throw new WorkflowContractError("INTEGRITY_FAILED", "The direct snapshot digest is invalid.");
     const adopted = { ...base, taskCorrelation: binding.c, epoch: binding.e, updatedAt: this.now().toISOString() };
-    // An existing child snapshot (repeat load or own save) is kept; the parent is returned unchanged either way.
-    this.store.adoptSnapshot(binding.c, binding.e, { ...adopted, snapshotDigest: convergenceDigest(adopted) });
+    // Only an empty child epoch adopts; a child that already loaded or saved keeps its own state.
+    if (!this.store.adoptSnapshot(binding.c, binding.e, { ...adopted, snapshotDigest: convergenceDigest(adopted) })) {
+      throw new WorkflowContractError("STALE_REVISION", "The fork child already has its own continuity state.");
+    }
     return snapshot;
   }
 

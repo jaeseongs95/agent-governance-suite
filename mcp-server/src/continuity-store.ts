@@ -335,16 +335,43 @@ export class SqliteContinuityStore {
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
       `).run(taskCorrelation, epoch, requestHash, commandDigest, resultJson, snapshot.updatedAt);
-      // Each anchor names exactly this stored revision; a later fork child may select it, never write it.
-      const anchor = this.database.prepare(`
-        INSERT INTO continuity_observations(task_correlation, epoch, event, turn_hash, success, observed_at)
-        VALUES (?, ?, ?, ?, 1, ?)
-      `);
-      for (const lineageAnchor of lineageAnchors) {
-        anchor.run(taskCorrelation, epoch, `${LINEAGE_ANCHOR_EVENT}${snapshot.revision}:${snapshot.snapshotDigest}`, lineageAnchor, snapshot.updatedAt);
-      }
+      this.insertLineageAnchors(taskCorrelation, epoch, snapshot.revision, snapshot.snapshotDigest, lineageAnchors, snapshot.updatedAt);
       return { kind: "stored" };
     }, taskCorrelation);
+  }
+
+  /** Each anchor names exactly one stored revision; a later fork child may select it, never write it. */
+  private insertLineageAnchors(taskCorrelation: string, epoch: number, revision: number, digest: string, anchors: readonly string[], now: string): void {
+    const event = `${LINEAGE_ANCHOR_EVENT}${revision}:${digest}`;
+    const insert = this.database.prepare(`
+      INSERT INTO continuity_observations(task_correlation, epoch, event, turn_hash, success, observed_at)
+      SELECT ?, ?, ?, ?, 1, ? WHERE NOT EXISTS (
+        SELECT 1 FROM continuity_observations WHERE task_correlation = ? AND epoch = ? AND event = ? AND turn_hash = ?
+      )
+    `);
+    for (const anchor of anchors) insert.run(taskCorrelation, epoch, event, anchor, now, taskCorrelation, epoch, event, anchor);
+  }
+
+  /** Re-anchors the current direct snapshot (after compaction) only while it is still that exact revision. */
+  reanchorSnapshot(taskCorrelation: string, epoch: number, revision: number, digest: string, anchors: readonly string[], now: string): boolean {
+    return this.transaction("Cannot record the lineage anchors.", () => {
+      const task = this.readTask(taskCorrelation);
+      if (!task || task.currentEpoch !== epoch || task.rootId !== null) return false;
+      const current = this.getSnapshot(taskCorrelation, epoch);
+      if (!current || current.revision !== revision || current.snapshotDigest !== digest) return false;
+      this.insertLineageAnchors(taskCorrelation, epoch, revision, digest, anchors, now);
+      return true;
+    }, taskCorrelation);
+  }
+
+  /** The oldest event with this prefix: a fork's pinned parent is decided once and never replaced. */
+  firstObservationEvent(taskCorrelation: string, epoch: number, prefix: string): string | null {
+    const row = this.database.prepare(`
+      SELECT event FROM continuity_observations
+      WHERE task_correlation = ? AND epoch = ? AND substr(event, 1, ?) = ?
+      ORDER BY observation_id ASC LIMIT 1
+    `).get(taskCorrelation, epoch, prefix.length, prefix) as { event: string } | undefined;
+    return row?.event ?? null;
   }
 
   hasObservation(taskCorrelation: string, epoch: number, event: string): boolean {
