@@ -115,7 +115,7 @@ function retireAbandonedStages(lockPath: string, budget?: ProcessIdentityBudget)
     try { children = readdirSync(stage, { withFileTypes: true }); }
     catch (error) { if (["ENOENT", "EPERM", "EACCES", "ENOTDIR"].includes(code(error) ?? "")) continue; throw error; }
     const marker = children.length === 1 ? children[0]! : null;
-    const owner = marker?.name ?? (children.length === 0 && namedMatch?.[3] ? namedOwner : "");
+    const owner = marker?.name ?? (children.length === 0 && namedMatch ? namedOwner : "");
     const match = OWNER.exec(owner);
     if (!match || (marker && (!marker.isDirectory() || marker.isSymbolicLink()))
       || (namedMatch && owner !== namedOwner)) continue;
@@ -143,9 +143,16 @@ function retireAbandonedStages(lockPath: string, budget?: ProcessIdentityBudget)
 export function acquireBrokerProcessLock(lockPath: string, budget?: ProcessIdentityBudget): BrokerProcessLock | null {
   remaining(budget);
   if (ownStartHash === undefined) {
+    // 조회 실패 원인은 process-identity-failure 진단 줄이 남긴다. 여기서는 강등 사실만 남긴다.
+    // 실패는 캐시하지 않는다. 짧은 남은 예산 때문에 생긴 실패로 프로세스 수명 내내 PID-only가 되지 않게 하며,
+    // 반복 조회 비용은 호출자 예산이 묶는다(acquireBrokerProcessLockWhenReady 재관측 포함).
     const token = processStartToken(process.pid, process.platform, remaining(budget));
     remaining(budget); // A late result cannot authorize a marker.
     if (token !== null) ownStartHash = startHash(token);
+    else {
+      try { process.stderr.write('[agent-governance-suite] broker-lock-owner-pid-only {"reason":"OWN_START_TOKEN_UNAVAILABLE"}\n'); }
+      catch { /* 진단 출력 실패가 잠금 획득을 막지 않는다. */ }
+    }
   }
   // 자기 출생 시각을 얻지 못해도 시작은 막지 않는다. PID만 남긴 marker는 다른 관측자가 그 PID가
   // 살아 있는 동안 회수하지 않는다(fail closed). ponytail: 비정상 종료 뒤 PID가 재사용되면 그 프로세스가

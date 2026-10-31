@@ -442,3 +442,14 @@ it("AGS-D-0298: ignores transient EPERM/EACCES/EBUSY/ENOTDIR during abandoned st
   expect(lease).not.toBeNull();
   expect(ownsBrokerProcessLock(lease!)).toBe(true);
 });
+
+it("marker 전에 죽은 PID-only stage는 회수하고 살아 있는 PID-only stage는 보존한다", () => {
+  const dead = `${lockPath}.stage-${deadOwner}-ABC123`;
+  const liveOwner = "owner-" + process.pid + "-" + "e".repeat(32);
+  const live = `${lockPath}.stage-${liveOwner}-DEF456`;
+  fs.nodes.set(dead, "directory"); fs.nodes.set(live, "directory");
+  const lease = acquireBrokerProcessLock(lockPath)!;
+  expect(lease).not.toBeNull();
+  expect(fs.nodes.has(dead)).toBe(false);
+  expect(fs.nodes.has(live)).toBe(true);
+});
