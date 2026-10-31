@@ -1,4 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { types } from "node:util";
 
 import {
   CONVERGENCE_ROOT_STATE,
@@ -321,6 +322,10 @@ export class ContinuityService implements ContinuityGateway {
     if (task.rootId || task.suppressed || this.summary(task) || this.store.firstObservationEvent(c, e, FORK_HOST_PARENT_EVENT)
       || this.store.firstObservationEvent(c, e, FORK_PARENT_EVENT)) return;
     const host = read();
+    // Two first boundaries of one fork can run at once (parallel tool calls), each with its own read. Every reader
+    // takes the first record by id and never replaces it, so a second row cannot change the parent; checking again
+    // after the read keeps the usual case to one row (auditor 5970 F2).
+    if (this.store.firstObservationEvent(c, e, FORK_HOST_PARENT_EVENT) || this.store.firstObservationEvent(c, e, FORK_PARENT_EVENT)) return;
     const at = this.now().toISOString();
     if ("deferred" in host) {
       if (!this.store.hasObservation(c, e, FORK_HOST_DEFERRED_EVENT)) this.store.recordObservation(c, e, FORK_HOST_DEFERRED_EVENT, null, false, at);
@@ -866,8 +871,10 @@ export class ContinuityService implements ContinuityGateway {
       return action();
     } catch (error) {
       if (error instanceof WorkflowContractError) return failure(error.code, error.message, error.details);
-      if (error instanceof ContinuityStoreError) return failure("CONTINUITY_UNAVAILABLE", error.message, { reason: error.reason });
-      return failure("CONTINUITY_UNAVAILABLE", "Continuity operation failed.", { reason: continuityUnavailableReason(error) });
+      // The public code stays CONTINUITY_UNAVAILABLE; the detail keeps the store's stable reason (D0057).
+      const reason = continuityUnavailableReason(error);
+      if (error instanceof ContinuityStoreError && !types.isProxy(error)) return failure("CONTINUITY_UNAVAILABLE", error.message, { reason });
+      return failure("CONTINUITY_UNAVAILABLE", "Continuity operation failed.", { reason });
     }
   }
 }

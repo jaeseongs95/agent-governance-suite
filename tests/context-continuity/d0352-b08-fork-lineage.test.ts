@@ -967,6 +967,10 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
       [{ status: "Valid", subject: 'CN="Anthropic, PBC", O="Anthropic, PBC Labs", C=US' }, "FORK_HOST_SIGNER_UNRECOGNIZED"],
       [{ status: "Valid", subject: 'CN="Anthropic, PBC", C=US' }, "FORK_HOST_SIGNER_UNRECOGNIZED"],
     ] as const) expect(read(rows(launcherRow, { exe: CLAUDE, cmd: forkLine, sig })), reason).toEqual({ reason });
+    // Auditor 5970 F1: a subject without exactly one CN records no signer, never the organization in its place.
+    for (const subject of ['O="Anthropic, PBC", C=US', 'CN=a, CN=b, O="Anthropic, PBC"']) {
+      expect(read(rows(launcherRow, { exe: CLAUDE, cmd: forkLine, sig: { status: "Valid", subject } })), subject).toEqual({ parentSessionId: A });
+    }
     // Another program, a claude.exe in a temporary directory, an ancestor created after its child (reused pid), a chain
     // that ends before the host, and a launcher that is not this hook's: no parent.
     expect(read(rows(launcherRow, { exe: "C:\\x\\other.exe", cmd: forkLine, sig: VALID }))).toEqual({ reason: "FORK_HOST_UNRECOGNIZED" });
@@ -1039,6 +1043,29 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     service.readDeferredForkHostParent("plain-s", read);
     expect(reads).toBe(1);
     expect(hostParentEvent(service, "fork-l")).toBe("fork-host-parent:" + JSON.stringify({ u: "FORK_HOST_UNRECOGNIZED" }));
+  });
+
+  it("H-W8: two first boundaries of one fork reading at once keep the first record; a later row never changes the parent", async () => {
+    // Auditor 5970 F2: parallel tool calls run two continuity hooks; the second finishes its read while the first reads.
+    const service = createService();
+    const { snapshot, uuids } = await parent(service);
+    await parent(service, "other-b");
+    const childFile = await transcript([...uuids.map(uuid => ["fork-f", uuid] as [string, string]), ["fork-f", randomUUID(), OWN]]);
+    service.startFork("fork-f", undefined, () => ({ deferred: true }));
+    service.readDeferredForkHostParent("fork-f", () => {
+      service.readDeferredForkHostParent("fork-f", () => ({ parentSessionId: "parent-a" }));
+      return { reason: "FORK_HOST_QUERY_TIMEOUT" };
+    });
+    const correlation = service.correlateSession("fork-f");
+    const epoch = service.store.getTask(correlation)!.currentEpoch;
+    const database = (service.store as unknown as { database: DatabaseSync }).database;
+    const rows = () => database.prepare("SELECT event FROM continuity_observations WHERE task_correlation = ? AND epoch = ? AND event LIKE 'fork-host-parent:%' ORDER BY observation_id")
+      .all(correlation, epoch) as Array<{ event: string }>;
+    expect(rows()).toEqual([{ event: "fork-host-parent:" + JSON.stringify({ c: snapshot.taskCorrelation, e: snapshot.epoch }) }]);
+    // Even a second row that slipped in between the re-check and the insert is never read.
+    service.store.recordObservation(correlation, epoch, "fork-host-parent:" + JSON.stringify({ c: service.correlateSession("other-b"), e: 1 }), null, true, OWN);
+    expect(rows()).toHaveLength(2);
+    expect(inspect(service, "fork-f", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
   });
 
   it("H-W5: a deferred fork reaching a final boundary without a read records why and lineage decides; a read reason is kept", async () => {

@@ -315,7 +315,9 @@ export function readClaudeForkHostParent(sessionId: string, platform: NodeJS.Pla
     if (unrecognized) return { reason: unrecognized };
     const parent = forkParentFromArgv(view.argv, sessionId);
     if (platform !== "win32" || !("parentSessionId" in parent)) return parent;
-    return { ...parent, signer: distinguishedNameValue(view.signature!.subject, "CN") ?? CLAUDE_SIGNER_ORGANIZATION };
+    // The CN is recorded only when the subject holds exactly one, so a record without `s` shows it had none (5970 F1).
+    const commonName = distinguishedNameValue(view.signature!.subject, "CN");
+    return commonName === null ? parent : { ...parent, signer: commonName };
   }
 }
 

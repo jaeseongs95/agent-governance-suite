@@ -1,6 +1,7 @@
 import { chmodSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { types } from "node:util";
 import type { SharedModuleContext, SqlDatabase } from "../../runtime/unified-state/shared-connection.mjs";
 
 import type { ContinuitySnapshotV1, StateCleanupPlanV1 } from "../../contracts/types.js";
@@ -114,11 +115,27 @@ export class ContinuityStoreError extends Error {
   }
 }
 
-/** Only stable reason codes cross the optional-store boundary; never raw SQL, keys or checkpoint data. */
+/** A store error raised by this module; a proxy or another object is never trusted by its prototype (D0057). */
+function ownStoreError(error: unknown): ContinuityStoreError | null {
+  try {
+    return error !== null && typeof error === "object" && !types.isProxy(error) && error instanceof ContinuityStoreError ? error : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Only stable reason codes cross the optional-store boundary; never raw SQL, keys or checkpoint data. A SQLite
+ * CORRUPT (11, with its extended codes) or NOTADB (26) result is CORRUPT_DATABASE wherever it was wrapped (D0057).
+ */
 export function continuityUnavailableReason(error: unknown): ContinuityUnavailableReason {
-  if (error instanceof ContinuityStoreError) return error.reason;
-  const code = error && typeof error === "object" && "errcode" in error ? error.errcode : null;
-  return code === 11 || code === 26 ? "CORRUPT_DATABASE" : "STORE_UNAVAILABLE";
+  const storeError = ownStoreError(error);
+  if (storeError) return storeError.reason;
+  let code: unknown = null;
+  try {
+    if (error !== null && typeof error === "object" && !types.isProxy(error)) code = Object.getOwnPropertyDescriptor(error, "errcode")?.value;
+  } catch { /* An opaque failure stays STORE_UNAVAILABLE. */ }
+  return Number.isInteger(code) && ((code as number) & 0xff) === 11 || code === 26 ? "CORRUPT_DATABASE" : "STORE_UNAVAILABLE";
 }
 
 function purgedRequestJson(epoch: number, revision: number, tombstoneDigest: string, purgedAt: string): string {
@@ -619,7 +636,7 @@ export class SqliteContinuityStore {
         backup.close();
       }
     } catch (cause) {
-      throw new ContinuityStoreError("Cannot create a verified continuity cleanup backup.", cause);
+      throw new ContinuityStoreError("Cannot create a verified continuity cleanup backup.", cause, continuityUnavailableReason(cause));
     }
   }
 
@@ -728,8 +745,7 @@ export class SqliteContinuityStore {
           return operation();
         });
       } catch (cause) {
-        if (cause instanceof ContinuityStoreError) throw cause;
-        throw new ContinuityStoreError(message, cause);
+        throw ownStoreError(cause) ?? new ContinuityStoreError(message, cause, continuityUnavailableReason(cause));
       }
     }
     this.database.exec("BEGIN IMMEDIATE;");
@@ -740,8 +756,8 @@ export class SqliteContinuityStore {
       return result;
     } catch (cause) {
       try { this.database.exec("ROLLBACK;"); } catch { /* Preserve the primary failure. */ }
-      if (cause instanceof ContinuityStoreError) throw cause;
-      throw new ContinuityStoreError(message, cause);
+      // The wrapped failure keeps its stable reason (CORRUPT_DATABASE), not only the default (D0057).
+      throw ownStoreError(cause) ?? new ContinuityStoreError(message, cause, continuityUnavailableReason(cause));
     }
   }
 
