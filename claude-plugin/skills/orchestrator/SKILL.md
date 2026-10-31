@@ -36,7 +36,7 @@ metadata:
 
 - 전문 스킬은 Skill 도구나 `/agent-governance-suite:<skill-name>` 명령으로 실제 호출한다. 사용자가 slash 명령이나 스킬 이름으로 지정한 스킬을 "이름으로 지정한 스킬"로 본다.
 - 공통 계약이 요구하는 독립 감사자를 Claude Code에서 호출할 때는 `agent-governance-suite:independent-auditor` 서브에이전트 유형을 사용한다.
-- SessionStart 훅은 공통 접수 원문을 안내 context로 전달한다. 훅 자체가 스킬을 선택하거나 실행했다고 간주하지 않는다.
+- SessionStart 훅은 공통 접수 기준을 다시 싣지 않고, MCP 서버 instructions를 따르라는 한 줄 호출 안내만 context로 전달한다. 훅 자체가 스킬을 선택하거나 실행했다고 간주하지 않는다.
 
 ### 실행 관측
 

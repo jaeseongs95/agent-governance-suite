@@ -357,7 +357,7 @@
     },
     {
       "path": "skills/acceptance-evidence-validator/SKILL.md",
-      "digest": "sha256:99570dca78f18cda79b1961c7f594fa1b24686d0d1faac3d4bfc89cfd3c2a956"
+      "digest": "sha256:d95a6bbfaef3c524f33454897d709f97855450396feed828cdf8e75fbac4d8c6"
     },
     {
       "path": "skills/blocker-diagnostician/classification.json",
@@ -501,7 +501,7 @@
     },
     {
       "path": "skills/orchestrator/SKILL.md",
-      "digest": "sha256:9a3855313a7138d7f2dbc6d9889382316776b690865ba9c544500fdcf1250c1b"
+      "digest": "sha256:954323f3b6c5f316923e8d1f806a85ab19882fe2ac4f08953b0bf41ae8526096"
     },
     {
       "path": "skills/ponytail/classification.json",

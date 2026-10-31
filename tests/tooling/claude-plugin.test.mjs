@@ -595,6 +595,25 @@ syncBuiltinESMExports();
     }
   });
 
+  it("keeps the Claude acceptance-evidence-validator description scoped to the skill body and away from every completion claim", async () => {
+    // AGS-D-0310: the old trigger ("before reporting completion", "when asked whether it is done") made Claude auto-invoke the skill.
+    const extractDescription = (text) => text.match(/^---\r?\n[\s\S]*?^description:\s*(.+)$/mu)?.[1]?.trim();
+    const adaptation = await readJson(root, "claude-overlay", "adaptations", "acceptance-evidence-validator.json");
+    const generated = await readFile(path.join(pluginRoot, "skills", "acceptance-evidence-validator", "SKILL.md"), "utf8");
+    const shared = await readFile(path.join(root, "skills", "acceptance-evidence-validator", "SKILL.md"), "utf8");
+    const description = extractDescription(generated);
+    expect(description).toBe(adaptation.description);
+    expect(description).not.toBe(extractDescription(shared));
+    for (const phrase of ["구현을 마치고 완료를 보고하기 전", "'다 됐는지'", "다 됐는지"]) {
+      expect(description).not.toContain(phrase);
+    }
+    // The body limits the skill to per-requirement judgments and multi-criteria contract or high-risk work.
+    expect(description).toContain("요구사항별 구현·테스트 근거 판정");
+    expect(description).toContain("수용 기준이 여럿인 계약 작업이나 고위험 작업");
+    expect(description).toContain("작은 단일 작업의 완료 보고");
+    expect(shared).toContain("작은 단일 작업은 이 스킬 없이");
+  });
+
   it("does not render Codex-only OpenAI agent metadata", async () => {
     const files = await renderClaudePlugin(root);
     expect([...files.keys()].filter((file) => /^skills\/[^/]+\/agents\/openai\.yaml$/u.test(file))).toEqual([]);
