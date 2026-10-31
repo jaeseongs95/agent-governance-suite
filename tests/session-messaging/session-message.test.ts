@@ -36,6 +36,7 @@ import { claudeWakeOutcome, codexWakeOutcome, geminiWakeOutcome, relayIdentityDe
 import { resolveGeminiAgentApi } from "../../mcp-server/src/session-message-wake-port.js";
 import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
 import { processIdentityState, processStartTokenAsync } from "../../mcp-server/src/process-identity.js";
+import { lockWitnessState } from "../../mcp-server/src/broker-lock-witness.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "../../mcp-server/src/session-message-protocol.js";
 import { adaptHostInput, hostDeliveryProfile, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { supportsInjection, type DeliveryCapabilities } from "../../mcp-server/src/input-observation.js";
@@ -129,7 +130,7 @@ async function brokerLockPid(
     if (info.isDirectory()) {
       const entries = await readdir(target, { withFileTypes: true });
       const match = entries.length === 1 && entries[0]!.isDirectory()
-        && !entries[0]!.isSymbolicLink() ? /^owner-([1-9][0-9]*)-[a-f0-9]{32}-([a-f0-9]{64})$/u.exec(entries[0]!.name) : null;
+        && !entries[0]!.isSymbolicLink() ? /^owner-([1-9][0-9]*)-([a-f0-9]{32})-([a-f0-9]{64}|pipe)$/u.exec(entries[0]!.name) : null;
       if (!match) throw new Error("The test broker lock owner is invalid.");
       const pid = Number(match[1]);
       if (!Number.isSafeInteger(pid)) throw new Error("The test broker PID is invalid.");
@@ -138,11 +139,16 @@ async function brokerLockPid(
         if ((error as NodeJS.ErrnoException).code === "ESRCH") return null;
         throw new Error("The test broker lock owner cannot be verified.", { cause: error });
       }
+      if (match[3] === "pipe") {
+        const state = lockWitnessState(match[2]!);
+        if (state === "unknown") throw new Error("The test broker lock owner cannot be verified.");
+        return state === "present" ? pid : null;
+      }
       const token = await readStartToken(pid);
       if (token === null) {
         throw new Error("The test broker lock owner cannot be verified.");
       }
-      if (createHash("sha256").update(token).digest("hex") !== match[2]) {
+      if (createHash("sha256").update(token).digest("hex") !== match[3]) {
         throw new Error("The test broker lock owner cannot be verified.");
       }
       return pid;
@@ -703,9 +709,10 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     const lockPath = path.join(directory, "broker.lock");
     const markers = await readdir(lockPath);
     expect(markers).toHaveLength(1);
-    expect(markers[0]).toMatch(new RegExp(`^owner-${pid}-[a-f0-9]{32}-[a-f0-9]{64}$`, "u"));
-    // fixture가 자기 조회를 격리했는지 확인한다. Linux는 /proc 읽기라 격리 대상이 아니다.
-    if (process.platform !== "linux") {
+    // Windows는 세대 pipe marker, 그 밖은 출생 시각 hash marker다.
+    expect(markers[0]).toMatch(new RegExp(`^owner-${pid}-[a-f0-9]{32}-${process.platform === "win32" ? "pipe" : "[a-f0-9]{64}"}$`, "u"));
+    // darwin은 fixture가 자기 조회를 격리했는지 확인한다. Linux는 /proc 읽기라 격리 대상이 아니다.
+    if (process.platform === "darwin") {
       expect(markers[0]!.slice(-64)).toBe(createHash("sha256").update("d0254-fixture-owner-birth").digest("hex"));
     }
 

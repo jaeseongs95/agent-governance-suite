@@ -2,6 +2,8 @@ import { createHash, randomBytes } from "node:crypto";
 import { lstatSync, mkdirSync, mkdtempSync, readdirSync, renameSync, rmdirSync } from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
+import type { Server } from "node:net";
+import { createLockWitness, lockWitnessState, lockWitnessSupported } from "./broker-lock-witness.js";
 import { processStartToken, type ProcessIdentityBudget } from "./process-identity.js";
 import { BROKER_LOCK_PUBLISH_RETRY_CODES, BROKER_LOCK_REASONS } from "./session-message-protocol.js";
 
@@ -9,7 +11,8 @@ export interface BrokerProcessLock {
   readonly path: string;
   readonly owner: string;
 }
-const OWNER = /^owner-([1-9][0-9]*)-([a-f0-9]{32})(?:-([a-f0-9]{64}))?$/u;
+// 4번째 칸: 출생 시각 hash(기존), "pipe"(Windows 세대 증인), 없음(옛 PID-only, fail closed).
+const OWNER = /^owner-([1-9][0-9]*)-([a-f0-9]{32})(?:-([a-f0-9]{64}|pipe))?$/u;
 const PUBLISH_RETRY_CODES = BROKER_LOCK_PUBLISH_RETRY_CODES;
 const REOBSERVE_CODES = ["BROKER_LOCK_" + BROKER_LOCK_REASONS.EMPTY_DIRECTORY, "BROKER_LOCK_" + BROKER_LOCK_REASONS.CHANGED,
   ...PUBLISH_RETRY_CODES.map(value => "BROKER_LOCK_PUBLISH_" + value)];
@@ -17,6 +20,7 @@ const code = (error: unknown) => (error as NodeJS.ErrnoException | null)?.code;
 const startHash = (token: string) => createHash("sha256").update(token).digest("hex");
 let ownStartHash: string | undefined;
 const verifiedStartHashes = new Map<number, string>();
+const heldWitnesses = new Map<string, Server>();
 
 type BrokerLockReason = typeof BROKER_LOCK_REASONS[keyof typeof BROKER_LOCK_REASONS] | `PUBLISH_${string}`;
 function unavailable(reason: BrokerLockReason, cause?: unknown): never {
@@ -40,13 +44,19 @@ function startToken(pid: number, budget?: ProcessIdentityBudget): string {
   return token;
 }
 
-function definitelyGone(pid: number, expectedStartHash?: string, budget?: ProcessIdentityBudget): boolean {
+function definitelyGone(pid: number, expectedStartHash?: string, budget?: ProcessIdentityBudget, generation?: string): boolean {
   remaining(budget);
   try { process.kill(pid, 0); }
   catch (error) {
     if (code(error) === "ESRCH") { verifiedStartHashes.delete(pid); return true; }
-    if (code(error) === "EPERM") return false;
-    return unavailable(BROKER_LOCK_REASONS.OWNER_UNVERIFIED, error);
+    if (code(error) !== "EPERM") return unavailable(BROKER_LOCK_REASONS.OWNER_UNVERIFIED, error);
+    if (expectedStartHash !== "pipe") return false;
+  }
+  if (expectedStartHash === "pipe") {
+    // PID가 살아 있어도 그 세대의 pipe가 없으면 소유 세대는 끝났다. 목록을 못 읽으면 보존한다.
+    const state = generation && lockWitnessSupported() ? lockWitnessState(generation) : "unknown";
+    if (state === "unknown") return unavailable(BROKER_LOCK_REASONS.OWNER_UNVERIFIED);
+    return state === "absent";
   }
   if (expectedStartHash === undefined) return false; // Legacy PID-only markers fail closed.
   if (verifiedStartHashes.get(pid) === expectedStartHash) return false;
@@ -76,7 +86,7 @@ function retireObservedDeadOwner(lockPath: string, budget?: ProcessIdentityBudge
   if (!match || !entry.isDirectory() || entry.isSymbolicLink()) return unavailable(BROKER_LOCK_REASONS.UNRECOGNIZED_OWNER);
   const pid = Number(match[1]);
   if (!Number.isSafeInteger(pid) || pid < 1) return unavailable(BROKER_LOCK_REASONS.UNRECOGNIZED_OWNER);
-  if (!definitelyGone(pid, match[3], budget)) return false;
+  if (!definitelyGone(pid, match[3], budget, match[2])) return false;
   const marker = path.join(lockPath, entry.name);
   // Exact, never-reused generation name is the removal witness. Losing observers
   // must not remove the parent after ENOENT or an unexpected/nonempty child.
@@ -107,7 +117,7 @@ function retireAbandonedStages(lockPath: string, budget?: ProcessIdentityBudget)
     if (namedMatch?.[3]) {
       const namedPid = Number(namedMatch[1]);
       if (!Number.isSafeInteger(namedPid) || namedPid < 1) continue;
-      try { if (!definitelyGone(namedPid, namedMatch[3], budget)) continue; }
+      try { if (!definitelyGone(namedPid, namedMatch[3], budget, namedMatch[2])) continue; }
       catch (error) { if (code(error) === "BROKER_LOCK_" + BROKER_LOCK_REASONS.OWNER_UNVERIFIED) continue; throw error; }
       namedVerifiedDead = true;
     }
@@ -115,14 +125,14 @@ function retireAbandonedStages(lockPath: string, budget?: ProcessIdentityBudget)
     try { children = readdirSync(stage, { withFileTypes: true }); }
     catch (error) { if (["ENOENT", "EPERM", "EACCES", "ENOTDIR"].includes(code(error) ?? "")) continue; throw error; }
     const marker = children.length === 1 ? children[0]! : null;
-    const owner = marker?.name ?? (children.length === 0 && namedMatch ? namedOwner : "");
+    const owner = marker?.name ?? (children.length === 0 && namedMatch?.[3] ? namedOwner : "");
     const match = OWNER.exec(owner);
     if (!match || (marker && (!marker.isDirectory() || marker.isSymbolicLink()))
       || (namedMatch && owner !== namedOwner)) continue;
     const pid = Number(match[1]);
     if (!Number.isSafeInteger(pid) || pid < 1) continue;
     if (!namedVerifiedDead) {
-      try { if (!definitelyGone(pid, match[3], budget)) continue; }
+      try { if (!definitelyGone(pid, match[3], budget, match[2])) continue; }
       catch (error) { if (code(error) === "BROKER_LOCK_" + BROKER_LOCK_REASONS.OWNER_UNVERIFIED) continue; throw error; }
     }
     try {
@@ -142,22 +152,21 @@ function retireAbandonedStages(lockPath: string, budget?: ProcessIdentityBudget)
  */
 export function acquireBrokerProcessLock(lockPath: string, budget?: ProcessIdentityBudget): BrokerProcessLock | null {
   remaining(budget);
-  if (ownStartHash === undefined) {
-    // 조회 실패 원인은 process-identity-failure 진단 줄이 남긴다. 여기서는 강등 사실만 남긴다.
-    // 실패는 캐시하지 않는다. 짧은 남은 예산 때문에 생긴 실패로 프로세스 수명 내내 PID-only가 되지 않게 하며,
-    // 반복 조회 비용은 호출자 예산이 묶는다(acquireBrokerProcessLockWhenReady 재관측 포함).
-    const token = processStartToken(process.pid, process.platform, remaining(budget));
-    remaining(budget); // A late result cannot authorize a marker.
-    if (token !== null) ownStartHash = startHash(token);
-    else {
-      try { process.stderr.write('[agent-governance-suite] broker-lock-owner-pid-only {"reason":"OWN_START_TOKEN_UNAVAILABLE"}\n'); }
-      catch { /* 진단 출력 실패가 잠금 획득을 막지 않는다. */ }
-    }
+  const generation = randomBytes(16).toString("hex");
+  // Windows는 자기 출생 시각을 조회하지 않는다(PowerShell 기동 속도 의존 제거). 세대 pipe를 marker보다 먼저
+  // 만들어, 게시된 marker에는 소유자가 살아 있는 동안 항상 증인이 있게 한다.
+  // pipe를 만들 수 없는 환경(제한 토큰 등)은 기존 출생 시각 marker로 돌아간다.
+  const witness = lockWitnessSupported() ? createLockWitness(generation) ?? undefined : undefined;
+  if (!witness && ownStartHash === undefined) {
+    const token = startToken(process.pid, budget);
+    ownStartHash = startHash(token);
   }
-  // 자기 출생 시각을 얻지 못해도 시작은 막지 않는다. PID만 남긴 marker는 다른 관측자가 그 PID가
-  // 살아 있는 동안 회수하지 않는다(fail closed). ponytail: 비정상 종료 뒤 PID가 재사용되면 그 프로세스가
-  // 끝날 때까지 잠금이 남는다. 출생 시각 조회 방식이 바뀌면 그때 hash marker로 올린다.
-  const owner = "owner-" + process.pid + "-" + randomBytes(16).toString("hex") + (ownStartHash ? "-" + ownStartHash : "");
+  const owner = "owner-" + process.pid + "-" + generation + "-" + (witness ? "pipe" : ownStartHash);
+  try { return publishOwner(lockPath, owner, witness, budget); }
+  catch (error) { witness?.close(); throw error; }
+}
+
+function publishOwner(lockPath: string, owner: string, witness: Server | undefined, budget?: ProcessIdentityBudget): BrokerProcessLock | null {
   retireAbandonedStages(lockPath, budget);
   remaining(budget);
   const stage = mkdtempSync(path.toNamespacedPath(lockPath + ".stage-" + owner + "-"));
@@ -202,6 +211,8 @@ export function acquireBrokerProcessLock(lockPath: string, budget?: ProcessIdent
     }
   }
   if (failure) throw failure.error;
+  if (result && witness) heldWitnesses.set(owner, witness);
+  else witness?.close();
   return result;
 }
 
@@ -229,7 +240,10 @@ export function ownsBrokerProcessLock(lock: BrokerProcessLock): boolean {
 
 export function releaseBrokerProcessLock(lock: BrokerProcessLock): void {
   try { rmdirSync(path.join(lock.path, lock.owner)); }
-  catch (error) { if (code(error) === "ENOENT") return; throw error; }
+  catch (error) { if (code(error) !== "ENOENT") throw error; }
+  // marker를 지운 뒤에 증인을 닫는다. 지우지 못하면 증인을 유지해 살아 있는 소유자로 남는다.
+  heldWitnesses.get(lock.owner)?.close();
+  heldWitnesses.delete(lock.owner);
   // A new nonempty owner can already have replaced the empty parent. Never recurse.
   try { rmdirSync(lock.path); }
   catch (error) { if (!["ENOENT", "ENOTEMPTY", "EEXIST"].includes(code(error) ?? "")) throw error; }

@@ -17,17 +17,18 @@ afterEach(() => {
 function state() {
   const root = fs.mkdtempSync(path.join(tmpdir(), "ags-d254-stage-")); owned.push(root);
   // Keep this long parent in both counterfactuals; shortening TEMP would hide the defect.
-  const directory = path.join(root, "p".repeat(100), "q".repeat(20));
+  // Windows owner는 64자 hash 대신 "pipe"이므로 부모를 60자 늘려 같은 260자 초과 경계를 유지한다.
+  const directory = path.join(root, "p".repeat(160), "q".repeat(20));
   fs.mkdirSync(directory, { recursive: true });
   const lock = path.join(directory, "broker.lock");
-  expect((lock + ".stage-owner-" + process.pid + "-" + "a".repeat(32) + "-" + "b".repeat(64) + "-").length).toBeGreaterThan(260);
+  expect((lock + ".stage-owner-" + process.pid + "-" + "a".repeat(32) + "-pipe-").length).toBeGreaterThan(260);
   return { directory, lock };
 }
 const test = it.runIf(process.platform === "win32");
 test("a real long-path stage publishes a complete owner, preserves live contention and releases exactly its generation", () => {
   const { directory, lock } = state();
   const lease = acquireBrokerProcessLock(lock)!;
-  expect(lease.owner).toMatch(/^owner-[1-9][0-9]*-[a-f0-9]{32}-[a-f0-9]{64}$/u);
+  expect(lease.owner).toMatch(/^owner-[1-9][0-9]*-[a-f0-9]{32}-pipe$/u);
   expect(ownsBrokerProcessLock(lease)).toBe(true);
   expect(fs.readdirSync(lock)).toEqual([lease.owner]);
   expect(acquireBrokerProcessLock(lock)).toBeNull();
@@ -49,7 +50,7 @@ test.each(["before-marker", "after-marker", "published"])("long-path %s crash le
   expect(names).toHaveLength(1);
   if (mode === "published") expect(names).toEqual(["broker.lock"]);
   else {
-    expect(names[0]).toMatch(new RegExp("^broker\\.lock\\.stage-owner-" + child.pid + "-[a-f0-9]{32}-[a-f0-9]{64}-[A-Za-z0-9]{6}$", "u"));
+    expect(names[0]).toMatch(new RegExp("^broker\\.lock\\.stage-owner-" + child.pid + "-[a-f0-9]{32}-pipe-[A-Za-z0-9]{6}$", "u"));
     const stage = path.join(directory, names[0]!);
     expect(fs.readdirSync(stage)).toHaveLength(mode === "before-marker" ? 0 : 1);
   }

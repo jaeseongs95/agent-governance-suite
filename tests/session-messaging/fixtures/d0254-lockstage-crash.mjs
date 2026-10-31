@@ -20,8 +20,8 @@ fs.renameSync = function (source, target) {
   if (mode === 'published' && path.basename(String(target)) === 'broker.lock') process.exit(44);
   return result;
 };
-// 대상은 잠금 게시 경계다. 자기 시작 시각 조회가 runner의 PowerShell 기동 시간(5000ms 상한)에 묶이지 않게
-// 이 프로세스 조회만 고정 토큰으로 격리한다. 다른 PID 조회는 실제 OS 조회 그대로다.
+// 대상은 잠금 게시 경계다. 자기 시작 시각 조회가 runner의 프로세스 기동 시간에 묶이지 않게 이 프로세스
+// 조회만 고정 토큰으로 격리한다(Windows는 세대 pipe를 써서 자기 조회 자체가 없다). 다른 PID 조회는 실제 OS 조회다.
 const D254_OWNER_TOKEN = 'd0254-fixture-owner-birth';
 const execFileSync = childProcess.execFileSync;
 // 조회 대상 인자 위치만 본다. 명령 형식이 바뀌면 격리가 빠지고 부모 시험의 marker hash 단언이 실패한다.

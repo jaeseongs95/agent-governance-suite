@@ -1,15 +1,18 @@
 import { createHash } from "node:crypto";
 import path from "node:path";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const ports = vi.hoisted(() => ({
   lstatSync: vi.fn(), mkdirSync: vi.fn(), mkdtempSync: vi.fn(),
   readdirSync: vi.fn(), renameSync: vi.fn(), rmdirSync: vi.fn(), delay: vi.fn(),
   processStartToken: vi.fn<(pid?: number) => string>(() => "synthetic-process-birth"),
+  witnessSupported: vi.fn(() => false), createWitness: vi.fn(), witnessState: vi.fn(),
 }));
 vi.mock("node:fs", () => ports);
 vi.mock("node:timers/promises", () => ({ setTimeout: ports.delay }));
 vi.mock("../../mcp-server/src/process-identity.js", () => ({ processStartToken: ports.processStartToken }));
+vi.mock("../../mcp-server/src/broker-lock-witness.js", () => ({ lockWitnessSupported: ports.witnessSupported,
+  createLockWitness: ports.createWitness, lockWitnessState: ports.witnessState }));
 import { acquireBrokerProcessLock, acquireBrokerProcessLockWhenReady, ownsBrokerProcessLock, releaseBrokerProcessLock } from "../../mcp-server/src/broker-process-lock.js";
 
 type Kind = "directory" | "file" | "link";
@@ -86,6 +89,7 @@ beforeEach(() => {
   ports.rmdirSync.mockImplementation(target => fs.rmdir(target));
   ports.delay.mockResolvedValue(undefined);
   ports.processStartToken.mockReturnValue("synthetic-process-birth");
+  ports.witnessSupported.mockReturnValue(false);
   vi.spyOn(process, "kill").mockImplementation(pid => {
     if (pid === deadPid) throw error("ESRCH");
     return true;
@@ -443,13 +447,53 @@ it("AGS-D-0298: ignores transient EPERM/EACCES/EBUSY/ENOTDIR during abandoned st
   expect(ownsBrokerProcessLock(lease!)).toBe(true);
 });
 
-it("marker 전에 죽은 PID-only stage는 회수하고 살아 있는 PID-only stage는 보존한다", () => {
-  const dead = `${lockPath}.stage-${deadOwner}-ABC123`;
-  const liveOwner = "owner-" + process.pid + "-" + "e".repeat(32);
-  const live = `${lockPath}.stage-${liveOwner}-DEF456`;
-  fs.nodes.set(dead, "directory"); fs.nodes.set(live, "directory");
-  const lease = acquireBrokerProcessLock(lockPath)!;
-  expect(lease).not.toBeNull();
-  expect(fs.nodes.has(dead)).toBe(false);
-  expect(fs.nodes.has(live)).toBe(true);
+describe("세대 pipe 증인(모델)", () => {
+  const witness = () => ({ close: vi.fn() });
+  const liveGeneration = "c".repeat(32);
+  const pipeOwner = (pid: number, generation = liveGeneration) => "owner-" + pid + "-" + generation + "-pipe";
+  beforeEach(() => {
+    ports.witnessSupported.mockReturnValue(true);
+    ports.createWitness.mockImplementation(() => witness());
+    ports.witnessState.mockImplementation((generation: string) => generation === liveGeneration ? "present" : "absent");
+  });
+
+  it("자기 출생 시각을 조회하지 않고 pipe marker로 게시하며 해제 때 marker 뒤에 증인을 닫는다", () => {
+    const lease = acquireBrokerProcessLock(lockPath)!;
+    expect(lease.owner).toMatch(new RegExp(`^owner-${process.pid}-[a-f0-9]{32}-pipe$`, "u"));
+    expect(ports.processStartToken).not.toHaveBeenCalled();
+    const held = ports.createWitness.mock.results[0]!.value as {close: ReturnType<typeof vi.fn>};
+    expect(ports.createWitness.mock.calls[0]![0]).toBe(lease.owner.split("-")[2]);
+    fs.before = (op, target) => { if (op === "rmdir" && target === path.join(lockPath, lease.owner)) expect(held.close).not.toHaveBeenCalled(); };
+    releaseBrokerProcessLock(lease);
+    expect(held.close).toHaveBeenCalledTimes(1);
+    expect([...fs.nodes]).toEqual([[root, "directory"]]);
+  });
+
+  it("PID가 살아 있어도 세대 pipe가 없으면 회수하고(PID 재사용), 있으면 보존한다", () => {
+    fs.owner(pipeOwner(process.pid, "d".repeat(32)));
+    const lease = acquireBrokerProcessLock(lockPath)!;
+    expect(lease).not.toBeNull();
+    releaseBrokerProcessLock(lease);
+    fs.owner(pipeOwner(process.pid));
+    expect(acquireBrokerProcessLock(lockPath)).toBeNull();
+    expect(fs.children(lockPath)).toEqual([path.join(lockPath, pipeOwner(process.pid))]);
+  });
+
+  it("EPERM이어도 세대 pipe가 없으면 회수하고, pipe 목록을 읽지 못하면 보존한다", () => {
+    vi.mocked(process.kill).mockImplementation(() => { throw error("EPERM"); });
+    fs.owner(pipeOwner(4242, "d".repeat(32)));
+    ports.witnessState.mockReturnValueOnce("unknown");
+    expect(() => acquireBrokerProcessLock(lockPath)).toThrow("OWNER_UNVERIFIED");
+    expect(fs.children(lockPath)).toEqual([path.join(lockPath, pipeOwner(4242, "d".repeat(32)))]);
+    expect(acquireBrokerProcessLock(lockPath)).not.toBeNull();
+  });
+
+  it("pipe를 만들 수 없는 환경은 기존 출생 시각 marker로 돌아가고, 게시하지 못한 증인은 닫는다", () => {
+    ports.createWitness.mockReturnValueOnce(null);
+    const lease = acquireBrokerProcessLock(lockPath)!;
+    expect(lease.owner).toMatch(/^owner-[1-9][0-9]*-[a-f0-9]{32}-[a-f0-9]{64}$/u);
+    const lost = witness(); ports.createWitness.mockReturnValueOnce(lost);
+    expect(acquireBrokerProcessLock(lockPath)).toBeNull();
+    expect(lost.close).toHaveBeenCalledTimes(1);
+  });
 });
