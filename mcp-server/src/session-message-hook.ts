@@ -77,9 +77,11 @@ export type SessionMessageHookOutcome =
 // Hook stderr may be discarded by the host; relay-path outcomes are also kept in the local relay failure record.
 const PERSISTED_HOOK_PHASES: ReadonlySet<HookFailurePhase> = new Set(["presence-start", "ensure-relay", "relay-start", "recovery"]);
 type IdentityDiagnostic = Parameters<ProcessIdentityFailureObserver>[1];
+/** Bounded metadata only: an OS exit status or signal name, never child output, argv or environment. */
+type HookFailureDetail = Readonly<{ identity?: IdentityDiagnostic; grantReason?: string; exitCode?: number | null; signal?: string | null }>;
 
 /** Fixed producer/OS reasons plus bounded metadata; never error messages, SQL, paths or peer bodies. */
-function reportHookFailure(phase: HookFailurePhase, error: unknown, detail?: Readonly<{ identity?: IdentityDiagnostic; grantReason?: string }>): SessionMessageHookFailure {
+function reportHookFailure(phase: HookFailurePhase, error: unknown, detail?: HookFailureDetail): SessionMessageHookFailure {
   const context = hookFailureContext(error);
   let reason = "UNEXPECTED_FAILURE";
   try {
@@ -111,7 +113,7 @@ function reportHookFailure(phase: HookFailurePhase, error: unknown, detail?: Rea
 }
 
 /** A relay that is not started is a recorded outcome with a fixed reason, never a silent return. */
-function relayNotStarted(reason: string, detail?: Readonly<{ identity?: IdentityDiagnostic; grantReason?: string }>): void {
+function relayNotStarted(reason: string, detail?: HookFailureDetail): void {
   reportHookFailure("relay-start", hookFailure(reason, "The session relay was not started."), detail);
 }
 
@@ -207,7 +209,15 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     stdio: "ignore",
     env: environment,
   });
-  child.once("spawn", () => { observation?.spawned(); });
+  let spawned = false;
+  child.once("spawn", () => { spawned = true; observation?.spawned(); });
+  // stdio stays ignored so a healthy detached relay never depends on this short-lived hook. A relay that dies
+  // while this process still runs (module load failure, rejected arguments, early crash) leaves a record with
+  // its exit status; a normal relay end exits 0. The listener does not ref the child or delay this hook.
+  child.once("exit", (exitCode, signal) => {
+    if (!spawned || (exitCode === 0 && !signal)) return;
+    reportHookFailure("relay-start", hookFailure("RELAY_CHILD_EXITED", "The session relay exited abnormally."), { exitCode, signal });
+  });
   // spawn 실패는 모든 시작 경로에서 비동기로 온다. 수신자가 없으면 보고 없이 훅 밖으로 빠진다.
   child.once("error", (error) => {
     reportHookFailure("relay-start", error); // 확인된 시작은 잠긴 채 남고 자동으로 다시 띄우지 않는다.

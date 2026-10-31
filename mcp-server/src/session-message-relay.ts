@@ -29,7 +29,7 @@ export function relayIdentityDecision(identity: ProcessIdentityState, previousUn
 
 export type SessionMessageTransport = string;
 
-export type RelayFailurePhase = "acquire" | "tick" | "release" | "run";
+export type RelayFailurePhase = "arguments" | "acquire" | "tick" | "release" | "run";
 
 /** Local diagnostic only: producer reason plus bounded fingerprinted context, never messages, paths or bodies. */
 export function reportRelayFailure(phase: RelayFailurePhase, error: unknown): void {
