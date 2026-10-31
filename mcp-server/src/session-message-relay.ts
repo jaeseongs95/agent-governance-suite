@@ -186,16 +186,18 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
 
     let identityUnknowns = 0;
     let nextIdentityCheck = Date.now() + IDENTITY_RECHECK_MS;
+    // Every end other than the parent's exit leaves a fixed reason in the local record.
+    const ended = (reason: string): void => { reportRelayFailure("run", producerFailure(reason, "The relay ended before its parent.")); };
     while (true) {
     if (!processExists(options.parentPid)) { normalEnd = true; return; }
     const now = Date.now();
     let checkedIdentity: ProcessIdentityState | null = null;
     if (now >= nextIdentityCheck) {
       checkedIdentity = processIdentityState(options.parentPid, options.parentStartToken);
-      if (checkedIdentity === "mismatch") return;
+      if (checkedIdentity === "mismatch") { ended("RELAY_PARENT_IDENTITY_MISMATCH"); return; }
       if (checkedIdentity === "unknown") {
         identityUnknowns += 1;
-        if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) return;
+        if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) { ended("RELAY_PARENT_IDENTITY_UNKNOWN_LIMIT"); return; }
         nextIdentityCheck = now + IDENTITY_RETRY_MS;
       } else {
         identityUnknowns = 0;
@@ -211,7 +213,7 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
           ? processIdentityState(options.parentPid, options.parentStartToken)
           : (processExists(options.parentPid) ? "match" : "mismatch"));
         checkedIdentity = identity;
-        if (identity !== "match") return;
+        if (identity !== "match") { ended(identity === "unknown" ? "RELAY_LEASE_LOST_PARENT_UNKNOWN" : "RELAY_LEASE_LOST_PARENT_MISMATCH"); return; }
         const reacquired = await sessionMessageRequest<{ acquired: boolean }>("acquire-relay", {
           target,
           transport: options.transport,
@@ -222,11 +224,11 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
           instanceId: options.instanceId,
           ...(options.relayId ? { parentStartToken: options.parentStartToken } : {}),
         });
-        if (!reacquired.acquired) return;
+        if (!reacquired.acquired) { ended("RELAY_LEASE_LOST_REACQUIRE_REFUSED"); return; }
         pending = await sessionMessageRequest<{ alive: boolean; count: number }>("relay-tick", {
           target, transport: options.transport, relayId, instanceId: options.instanceId, includePending: port.capabilities.idleWake !== "none",
         });
-        if (!pending.alive) return;
+        if (!pending.alive) { ended("RELAY_LEASE_LOST_AFTER_REACQUIRE"); return; }
       }
       if (port.capabilities.idleWake === "none") {
         observation?.record("none-skip");
@@ -235,10 +237,10 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
       }
       if (pending.count > 0) {
         const identity = checkedIdentity ?? processIdentityState(options.parentPid, options.parentStartToken);
-        if (identity === "mismatch") return;
+        if (identity === "mismatch") { ended("RELAY_PARENT_IDENTITY_MISMATCH"); return; }
         if (identity === "unknown") {
           if (checkedIdentity === null) identityUnknowns += 1;
-          if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) return;
+          if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) { ended("RELAY_PARENT_IDENTITY_UNKNOWN_LIMIT"); return; }
           nextIdentityCheck = Math.min(nextIdentityCheck, now + IDENTITY_RETRY_MS);
           await delay(LOOP_MS);
           continue;

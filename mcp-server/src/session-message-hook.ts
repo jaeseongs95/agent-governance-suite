@@ -8,13 +8,13 @@ import { readFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 
-import { recordWakeHookObservation } from "./session-message-wake-port.js";
+import { persistRelayFailure, recordWakeHookObservation } from "./session-message-wake-port.js";
 import { sessionMessageRequest } from "./session-message-client.js";
 import { resolveTrustDatabasePath } from "./runtime-config.js";
 import type { SessionMessageTransport } from "./session-message-relay.js";
 import type { SessionMessage } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
-import { processStartToken } from "./process-identity.js";
+import { processStartToken, type ProcessIdentityFailureObserver } from "./process-identity.js";
 import { createRelaySpawnObservation } from "./relay-wake-observation.js";
 import { adaptHostInput, hostDeliveryProfile, isGovernanceHookTool, nativePeerWait, resolveHookHost, resolveHookProcessPid, type SupportedHookHost } from "./host-input-adapter.js";
 
@@ -73,8 +73,12 @@ export type SessionMessageHookOutcome =
   | Readonly<{ ok: true; output: string }>
   | Readonly<{ ok: false; output: ""; failure: SessionMessageHookFailure }>;
 
+// Hook stderr may be discarded by the host; relay-path outcomes are also kept in the local relay failure record.
+const PERSISTED_HOOK_PHASES: ReadonlySet<HookFailurePhase> = new Set(["presence-start", "ensure-relay", "relay-start", "recovery"]);
+type IdentityDiagnostic = Parameters<ProcessIdentityFailureObserver>[1];
+
 /** Fixed producer/OS reasons plus bounded metadata; never error messages, SQL, paths or peer bodies. */
-function reportHookFailure(phase: HookFailurePhase, error: unknown): SessionMessageHookFailure {
+function reportHookFailure(phase: HookFailurePhase, error: unknown, identity?: IdentityDiagnostic): SessionMessageHookFailure {
   const context = hookFailureContext(error);
   let reason = "UNEXPECTED_FAILURE";
   try {
@@ -97,7 +101,16 @@ function reportHookFailure(phase: HookFailurePhase, error: unknown): SessionMess
     ...(ownedReason ? {producerReason: ownedReason} : {}) });
   try { writeFailureDiagnostic("[agent-governance-suite] peer-hook-failure " + JSON.stringify({ ...failure, context }), (line) => console.error(line)); }
   catch { /* A broken diagnostic sink cannot block a hook or authorize replay. */ }
+  if (PERSISTED_HOOK_PHASES.has(phase)) {
+    try { persistRelayFailure(JSON.stringify({ phase: "hook-" + phase, reason: failure.reason, reasonBasis, context, ...(identity ? { identity } : {}) })); }
+    catch { /* The record is diagnostic only. */ }
+  }
   return failure;
+}
+
+/** A relay that is not started is a recorded outcome with a fixed reason, never a silent return. */
+function relayNotStarted(reason: string, identity?: IdentityDiagnostic): void {
+  reportHookFailure("relay-start", hookFailure(reason, "The session relay was not started."), identity);
 }
 
 type HookBudget = SessionMessageHookOptions["executionBudget"];
@@ -144,8 +157,8 @@ function observeClaim(options: SessionMessageHookOptions, phase: "request-attemp
   finally { observingClaimState = false; }
 }
 
-function readHostStartToken(pid: number, budget: HookBudget): string | null {
-  const token = budget ? processStartToken(pid, process.platform, remainingBudget(budget)) : processStartToken(pid);
+function readHostStartToken(pid: number, budget: HookBudget, onFailure?: ProcessIdentityFailureObserver): string | null {
+  const token = budget ? processStartToken(pid, process.platform, remainingBudget(budget), onFailure) : processStartToken(pid, process.platform, undefined, onFailure);
   remainingBudget(budget);
   return token;
 }
@@ -157,10 +170,14 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
   remainingBudget(budget);
   const relayPath = fileURLToPath(new URL("./session-message-relay.mjs", import.meta.url));
   const hostPid = relayId ? hostProcess?.pid : resolveHookProcessPid(host, explicitHostPid, hostProcess);
-  if (!hostPid || !Number.isInteger(hostPid) || hostPid < 1) return;
+  if (!hostPid || !Number.isInteger(hostPid) || hostPid < 1) { relayNotStarted("RELAY_HOST_PID_UNRESOLVED"); return; }
   // Only a caller that read this birth in the same synchronous step passes it; others re-read after their awaits.
-  const observedStartToken = extra.observedStartToken ?? readHostStartToken(hostPid, budget);
-  if (!observedStartToken || (hostProcess && (hostProcess.pid !== hostPid || (relayId && explicitHostPid !== undefined && explicitHostPid !== hostProcess.pid) || hostProcess.startToken !== observedStartToken))) return;
+  let identity: IdentityDiagnostic | undefined;
+  const observedStartToken = extra.observedStartToken ?? readHostStartToken(hostPid, budget, (_cause, diagnostic) => { identity = diagnostic; });
+  if (!observedStartToken) { relayNotStarted("RELAY_HOST_START_UNREADABLE", identity); return; }
+  if (hostProcess && (hostProcess.pid !== hostPid || (relayId && explicitHostPid !== undefined && explicitHostPid !== hostProcess.pid) || hostProcess.startToken !== observedStartToken)) {
+    relayNotStarted("RELAY_HOST_START_MISMATCH"); return;
+  }
   const startToken = hostProcess?.startToken ?? observedStartToken;
   remainingBudget(budget);
   const environment = relayEnv && Object.keys(relayEnv).length > 0 ? { ...process.env, ...relayEnv } : process.env;
@@ -333,7 +350,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     const hostPid = hostProcess.pid;
     if (!Number.isInteger(hostPid) || hostPid < 1 || typeof hostProcess.startToken !== "string" || !hostProcess.startToken.trim()
       || (explicitHostPid !== undefined && explicitHostPid !== hostPid)
-      || readHostStartToken(hostPid, budget) !== hostProcess.startToken) return;
+      || readHostStartToken(hostPid, budget) !== hostProcess.startToken) { relayNotStarted("RELAY_HOST_START_MISMATCH"); return; }
     const transport = profile.transport;
     const expectedInstance = "host-process-v1:" + createHash("sha256").update(JSON.stringify([host, sessionId, hostPid, hostProcess.startToken])).digest("hex");
     try {
@@ -366,10 +383,10 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       return {};
     }
     const hostPid = resolveHookProcessPid(host, explicitHostPid, hostProcess);
-    if (hostPid === undefined) return {};
+    if (hostPid === undefined) { relayNotStarted("RELAY_HOST_PID_UNRESOLVED"); return {}; }
     if (hostProcess && (!Number.isInteger(hostProcess.pid) || hostProcess.pid < 1
       || hostProcess.pid !== hostPid || (options.ensureRelay && explicitHostPid !== undefined && explicitHostPid !== hostProcess.pid) || typeof hostProcess.startToken !== "string" || !hostProcess.startToken.trim()
-      || readHostStartToken(hostProcess.pid, budget) !== hostProcess.startToken)) return {};
+      || readHostStartToken(hostProcess.pid, budget) !== hostProcess.startToken)) { relayNotStarted("RELAY_HOST_START_MISMATCH"); return {}; }
     const instanceId = randomUUID();
     const transport = profile.transport;
     const wakeVisibility = profile.capabilities.idleWake;
