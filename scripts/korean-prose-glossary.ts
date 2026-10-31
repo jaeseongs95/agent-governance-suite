@@ -47,8 +47,11 @@ try {
   try {
     writeSync(2, JSON.stringify({
       component: "korean-prose-glossary", phase,
+      // Untagged build failures (lock EEXIST, mkdtemp, publish rename/lstat, opening the temporary DB)
+      // must not read as an unavailable glossary: the build phase has its own fallback.
       reason: producerFailureReason(first) ?? (phase === "input" ? "GLOSSARY_INPUT_INVALID"
-        : phase === "output" ? "GLOSSARY_OUTPUT_FAILED" : "GLOSSARY_UNAVAILABLE"),
+        : phase === "output" ? "GLOSSARY_OUTPUT_FAILED"
+        : phase === "build" ? "GLOSSARY_BUILD_FAILED" : "GLOSSARY_UNAVAILABLE"),
       context: failureContext(first),
       ...(recovery ? {
         recoveryReason: (recovery as AggregateError & { code: string }).code,

@@ -147,6 +147,62 @@ it("actual build CLI consumes a real failed restore and lock cleanup as separate
   expect(ports.rmdir).toHaveBeenCalledTimes(1);
 });
 
+// AGS-D-0207: untagged build-phase failures must report a build reason, not GLOSSARY_UNAVAILABLE.
+// Every case injects an I/O port fault only; the real CLI entry, recovery wrapper and library run.
+it("actual build CLI reports GLOSSARY_BUILD_FAILED when the build lock already exists", async () => {
+  ports.mkdir.mockResolvedValueOnce(undefined)
+    .mockRejectedValueOnce(Object.assign(new Error("PRIVATE_LOCK_EXISTS"), { code: "EEXIST" }));
+  await expect(cli("build")).resolves.toBeUndefined();
+  const record = diagnostic();
+  expect(record).toMatchObject({ component: "korean-prose-glossary", phase: "build", reason: "GLOSSARY_BUILD_FAILED" });
+  expect(record.reason).not.toBe("GLOSSARY_UNAVAILABLE");
+  // The lock belongs to another invocation: it is neither released nor is a transaction started.
+  expect(ports.mkdtemp).not.toHaveBeenCalled();
+  expect(ports.rmdir).not.toHaveBeenCalled();
+});
+
+it("actual build CLI reports GLOSSARY_BUILD_FAILED when the temporary directory cannot be created", async () => {
+  ports.mkdtemp.mockRejectedValueOnce(Object.assign(new Error("PRIVATE_MKDTEMP"), { code: "EACCES" }));
+  await expect(cli("build")).resolves.toBeUndefined();
+  expect(diagnostic()).toMatchObject({
+    phase: "build", reason: "GLOSSARY_BUILD_FAILED", recoveryReason: "GLOSSARY_BUILD_FAILED",
+  });
+  expect(ports.rmdir).toHaveBeenCalledTimes(1); // own lock is released
+});
+
+it("actual build CLI reports GLOSSARY_BUILD_FAILED when the temporary database cannot be opened", async () => {
+  ports.open.mockImplementationOnce(() => { throw privateError("PRIVATE_OPEN", 14); });
+  await expect(cli("build")).resolves.toBeUndefined();
+  expect(diagnostic()).toMatchObject({
+    phase: "build", reason: "GLOSSARY_BUILD_FAILED", recoveryReason: "GLOSSARY_BUILD_FAILED",
+    context: { sqlite: { errcode: 14 } },
+  });
+  expect(ports.exec).not.toHaveBeenCalled();
+});
+
+it("actual build CLI reports GLOSSARY_BUILD_FAILED when the destination type check fails before publish", async () => {
+  ports.lstat.mockRejectedValueOnce(Object.assign(new Error("PRIVATE_LSTAT"), { code: "EIO" }));
+  await expect(cli("build")).resolves.toBeUndefined();
+  expect(diagnostic()).toMatchObject({
+    phase: "build", reason: "GLOSSARY_BUILD_FAILED", recoveryReason: "GLOSSARY_BUILD_FAILED",
+  });
+  expect(ports.rename).not.toHaveBeenCalled();
+});
+
+it("actual build CLI reports GLOSSARY_BUILD_FAILED when the publish rename fails", async () => {
+  ports.rename.mockResolvedValueOnce(undefined).mockRejectedValueOnce(Object.assign(new Error("PRIVATE_PUBLISH"), { code: "EXDEV" }));
+  await expect(cli("build")).resolves.toBeUndefined();
+  expect(diagnostic()).toMatchObject({
+    phase: "build", reason: "GLOSSARY_BUILD_FAILED", recoveryReason: "GLOSSARY_BUILD_FAILED",
+  });
+});
+
+it("actual check CLI keeps GLOSSARY_UNAVAILABLE for an untagged database open failure", async () => {
+  ports.open.mockImplementationOnce(() => { throw privateError("PRIVATE_OPEN", 14); });
+  await expect(cli()).resolves.toBeUndefined();
+  expect(diagnostic()).toMatchObject({ phase: "check", reason: "GLOSSARY_UNAVAILABLE", context: { sqlite: { errcode: 14 } } });
+});
+
 it("a failed final stderr sink leaves the real command failed and does not rethrow", async () => {
   ports.exec.mockImplementationOnce(() => { throw privateError("PRIVATE_PRIMARY", 11); });
   ports.write.mockImplementationOnce(() => { throw new Error("PRIVATE_SINK"); });
