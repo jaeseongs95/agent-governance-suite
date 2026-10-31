@@ -9,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const repository = fileURLToPath(new URL('../../', import.meta.url));
 const planPath = '.github/ci/ags30-r11/os-test-plan.json';
-const dependencies = ['mcp-server/src/process-identity.ts', 'mcp-server/src/failure-diagnostics.ts', 'runtime/failure-diagnostics.mjs', 'mcp-server/src/session-message-protocol.ts'];
+const dependencies = ['mcp-server/src/process-identity.ts', 'mcp-server/src/broker-lock-witness.ts', 'mcp-server/src/failure-diagnostics.ts', 'runtime/failure-diagnostics.mjs', 'mcp-server/src/session-message-protocol.ts'];
 async function fixture(t) {
   const temporary = await fs.mkdtemp(path.join(tmpdir(), 'ags-os-closure-'));
   t.after(async () => {
