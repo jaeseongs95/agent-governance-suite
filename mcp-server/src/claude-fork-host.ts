@@ -1,4 +1,4 @@
-import { readFileSync, readlinkSync } from "node:fs";
+import { readFileSync, readlinkSync, realpathSync } from "node:fs";
 import path from "node:path";
 import type { ForkHostParentRead } from "./host-input-adapter.js";
 
@@ -88,15 +88,44 @@ export function forkParentFromArgv(argv: readonly string[], sessionId: string): 
   return { parentSessionId: ids[0]! };
 }
 
-/** The nearest host process above this hook: past at most MAX_SHELLS shells, it must be the native claude. */
+/**
+ * This hook's own Claude launcher: claude-plugin/hooks/<name>.mjs runs mcp-server/dist/<name>.mjs with the same node
+ * (claude-overlay/hooks/*.mjs spawnSync(process.execPath, [hookPath])), so the bundled hook's parent is that launcher,
+ * not the host (tester c613 k2argv1-r01 7b551a88: every fork-host-parent record was a reason). Null when this process is
+ * not a bundled hook entry.
+ */
+export interface HookLauncher { exe: string; script: string }
+export function ownHookLauncher(entry: string | undefined = process.argv[1], execPath: string = process.execPath): HookLauncher | null {
+  if (!entry) return null;
+  const dist = path.dirname(entry);
+  if (path.basename(dist) !== "dist" || path.basename(path.dirname(dist)) !== "mcp-server") return null;
+  return { exe: execPath, script: path.join(path.dirname(path.dirname(dist)), "hooks", path.basename(entry)) };
+}
+
+function sameFile(candidate: string | undefined, expected: string): boolean {
+  if (!candidate) return false;
+  if (path.resolve(candidate) === expected) return true;
+  try { return realpathSync(candidate) === realpathSync(expected); } catch { return false; }
+}
+
+/**
+ * The nearest host process above this hook: past this hook's own launcher (once, only when it is exactly that launcher
+ * script under the same node) and at most MAX_SHELLS shells, it must be the native claude.
+ */
 export function readClaudeForkHostParent(sessionId: string, platform: NodeJS.Platform = process.platform,
-  firstPid: number = process.ppid, read: HostProcessReader = linuxHostProcess): ForkHostParentRead {
+  firstPid: number = process.ppid, read: HostProcessReader = linuxHostProcess,
+  launcher: HookLauncher | null = ownHookLauncher()): ForkHostParentRead {
   if (platform !== "linux") return { reason: "FORK_HOST_PLATFORM_UNSUPPORTED" };
   let pid = firstPid;
+  let launcherSkipped = launcher === null;
   for (let shells = 0; ; shells += 1) {
     const view = read(pid);
     if (view === "unreadable") return { reason: "FORK_HOST_PROCESS_UNREADABLE" };
     if (view === "changed") return { reason: "FORK_HOST_PROCESS_CHANGED" };
+    if (!launcherSkipped) {
+      launcherSkipped = true;
+      if (view.exe === launcher!.exe && sameFile(view.argv[1], launcher!.script)) { pid = view.ppid; shells -= 1; continue; }
+    }
     if (SHELL_EXECUTABLES.has(path.posix.basename(view.exe)) && shells < MAX_SHELLS) { pid = view.ppid; continue; }
     if (!CLAUDE_NATIVE_EXECUTABLE_PATTERN.test(view.exe) || TEMPORARY_PATH_PATTERN.test(view.exe)) return { reason: "FORK_HOST_UNRECOGNIZED" };
     return forkParentFromArgv(view.argv, sessionId);
