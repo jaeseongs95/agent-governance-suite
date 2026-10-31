@@ -159,11 +159,8 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
   const startToken = hostProcess?.startToken ?? observedStartToken;
   remainingBudget(budget);
   const environment = relayEnv && Object.keys(relayEnv).length > 0 ? { ...process.env, ...relayEnv } : process.env;
-  const observation = createRelaySpawnObservation(transport, environment);
-  remainingBudget(budget); // Diagnostic preparation must never permit a spawn after the existing deadline.
-  let child: ChildProcess;
-  try {
-    child = spawn(process.execPath, [
+  let observation: ReturnType<typeof createRelaySpawnObservation>;
+  const child = spawn(process.execPath, [
     relayPath,
     "--host", host,
     "--session-id", sessionId,
@@ -178,10 +175,6 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     stdio: "ignore",
     env: environment,
   });
-  } catch (error) {
-    observation?.threw();
-    throw error;
-  }
   child.once("spawn", () => { observation?.spawned(); });
   // Spawn failure is asynchronous for every startup path; without a listener it would escape the hook unreported.
   child.once("error", (error) => {
@@ -196,8 +189,12 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
       throw error;
     }
   } else child.unref();
-  // Preserve error handling and ownership before potentially slow diagnostic I/O.
-  observation?.returned(child.pid);
+  // 동기 진단은 후속 수신·직렬화의 마감도 소진할 수 있다. 예산 경로의 부모 관측은 UNKNOWN으로 남긴다.
+  if (budget) return;
+  try {
+    observation = createRelaySpawnObservation(transport, environment);
+    observation?.returned(child.pid);
+  } catch { /* Missing diagnostics remain unknown; successful startup stays intact. */ }
 }
 
 export type RecordedSessionMessage = SessionMessage & { sourceReceiptId: string; contentDigest: string };

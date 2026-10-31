@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const f = vi.hoisted(() => ({ now: 100, request: vi.fn(), token: vi.fn(), spawn: vi.fn(), observeSpawn: vi.fn() }));
+const f = vi.hoisted(() => ({ now: 100, turnEnd: false, request: vi.fn(), token: vi.fn(), spawn: vi.fn(), observeSpawn: vi.fn() }));
 vi.mock("node:perf_hooks", () => ({ performance: { now: () => f.now } }));
 vi.mock("node:child_process", async (original) => ({ ...await original<typeof import("node:child_process")>(), spawn: f.spawn }));
 vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
@@ -11,7 +11,7 @@ vi.mock("../../mcp-server/src/process-identity.js", async (original) => ({
   ...await original<typeof import("../../mcp-server/src/process-identity.js")>(), processStartToken: f.token,
 }));
 vi.mock("../../mcp-server/src/relay-wake-observation.js", () => ({ createRelaySpawnObservation: f.observeSpawn }));
-import { handleSessionMessageHook, runSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
+import { handleSessionMessageHook, runSessionMessageHook, runSessionMessageHookOutcome } from "../../mcp-server/src/session-message-hook.js";
 import { adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
@@ -26,7 +26,7 @@ registerHookHostAdapter(syntheticHost, {
     const mapped = adaptHostInput(payload, "codex");
     return {...mapped, observation: {...mapped.observation, host, callId: "synthetic-relay-call", actor: payload.syntheticActor as ActorObservation}};
   },
-  deliveryProfile: () => ({transport: "gemini-queue", capabilities: {supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message"}, blocksEmptyWakePrompt: false}),
+  deliveryProfile: () => ({transport: "gemini-queue", capabilities: {supportedInjection: ["peer-wake", "tool-boundary", ...(f.turnEnd ? ["turn-end" as const] : [])], idleWake: "user-message"}, blocksEmptyWakePrompt: false}),
   processPid: (pid, observation) => observation ? pid : undefined,
 });
 const input = { hook_event_name: "SessionStart", session_id: "verified-hook-fixture", syntheticActor: syntheticRoot };
@@ -39,7 +39,7 @@ const options = () => ({ ensureRelay: true, hostProcess: { pid: 424242, startTok
   executionBudget: { deadlineMonotonicMs: 1000, postClaimReserveMs: 200 } });
 
 beforeEach(() => {
-  f.now = 100; f.request.mockReset(); f.token.mockReset(); f.spawn.mockReset();
+  f.now = 100; f.turnEnd = false; f.request.mockReset(); f.token.mockReset(); f.spawn.mockReset();
   f.observeSpawn.mockReset();
   f.request.mockResolvedValue(grant()); f.token.mockReturnValue("T1");
   f.spawn.mockImplementation(() => Object.assign(new EventEmitter(), { unref: vi.fn() }));
@@ -97,16 +97,10 @@ it.each([true, false])("진단 기록 전에 오류 처리와 자식 소유권�
   });
   f.observeSpawn.mockReturnValue({ returned, spawned: vi.fn(), failed: vi.fn(), threw: vi.fn() });
   await handleSessionMessageHook(input, syntheticHost, 424242, {
-    ...options(), ...(owned ? {relayOwner} : {}),
+    hostProcess: options().hostProcess, ...(owned ? {relayOwner} : {}),
   });
   expect(returned).toHaveBeenCalledTimes(1);
   expect(state).toEqual({errorListeners: 1, ownerCalls: owned ? 1 : 0, unrefCalls: owned ? 0 : 1});
-});
-
-it("진단 준비로 기존 예산이 소진되면 자식을 생성하지 않는다", async () => {
-  f.observeSpawn.mockImplementation(() => {f.now = 1001;});
-  await handleSessionMessageHook(input, syntheticHost, 424242, options());
-  expect(f.spawn).not.toHaveBeenCalled();
 });
 
 it("관측한 호스트 결속과 중개기 규약을 보존하며 기존 Claude 시작 relay를 소유한다", async () => {
@@ -214,6 +208,49 @@ const recover = (resolveHostProcess: () => { pid: number; startToken: string } |
   recoverExistingSession: true, resolveHostProcess, executionBudget: options().executionBudget,
 });
 const livePresence = { host: syntheticHost, sessionId: input.session_id, instanceId, state: "online", transport: "gemini-queue", autoWake: { state: "available" } };
+
+it.each([
+  { event: "SessionStart", operation: undefined },
+  { event: "PostToolUse", operation: "claim-deferred" },
+  { event: "Stop", operation: "claim-turn-end" },
+  { event: "UserPromptSubmit", operation: "observe-native-input" },
+].flatMap((boundary) => ["disabled", "slow", "failure"].map((mode) => ({...boundary, mode}))))(
+  "진단이 실제 훅 결과와 재연결 뒤 수신 예산을 침해하지 않는다: $event/$mode", async ({event, operation, mode}) => {
+    f.turnEnd = operation === "claim-turn-end";
+    f.observeSpawn.mockImplementation(() => {
+      if (mode === "slow") f.now = 1001;
+      if (mode === "failure") throw new Error("synthetic diagnostic failure");
+    });
+    f.request.mockImplementation(async (name, _payload, _directory, requestOptions) => {
+      if (name === "list-presence") return {sessions: []};
+      if (name === "ensure-relay") return grant();
+      requestOptions?.onOperationWrite?.();
+      return {messages: []};
+    });
+    const relayOwner = vi.fn(), onClaimState = vi.fn();
+    const outcome = await runSessionMessageHookOutcome(syntheticHost,
+      JSON.stringify({...post, hook_event_name: event}), 424242,
+      {...options(), recoverExistingSession: !!operation, relayOwner, onClaimState});
+    expect(outcome).toEqual({ok: true, output: ""});
+    expect(f.request.mock.calls.map(([name]) => name)).toEqual(operation
+      ? ["list-presence", "ensure-relay", operation] : ["ensure-relay"]);
+    const ensure = f.request.mock.calls.find(([name]) => name === "ensure-relay")!;
+    expect(ensure[3]).toMatchObject({noOperationReplay: true, deadlineMonotonicMs: 1000});
+    if (operation?.startsWith("claim-")) {
+      expect(f.request.mock.calls[2]![3]).toMatchObject({noOperationReplay: true, deadlineMonotonicMs: 800});
+      expect(onClaimState.mock.calls.map(([state]) => state.phase)).toEqual(["request-attempted", "response-received"]);
+    } else expect(onClaimState).not.toHaveBeenCalled();
+    expect(f.spawn).toHaveBeenCalledTimes(1);
+    const child = f.spawn.mock.results[0]!.value;
+    expect(child.listenerCount("error")).toBe(1);
+    if (operation) {
+      expect(relayOwner).not.toHaveBeenCalled();
+      expect(child.unref).toHaveBeenCalledTimes(1);
+    } else {
+      expect(relayOwner).toHaveBeenCalledWith(child);
+      expect(child.unref).not.toHaveBeenCalled();
+    }
+  });
 
 it.each(["available", "latched"])("keeps an online relay while binding the claiming event's own generation: %s", async (state) => {
   const resolver = vi.fn(() => options().hostProcess);
