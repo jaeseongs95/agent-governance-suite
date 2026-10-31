@@ -160,14 +160,11 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
   const startToken = hostProcess?.startToken ?? observedStartToken;
   remainingBudget(budget);
   const environment = relayEnv && Object.keys(relayEnv).length > 0 ? { ...process.env, ...relayEnv } : process.env;
-  // 부모 관측은 spawn 호출 직전에 시작한다. 예산 경로는 신원 조회·파일 쓰기 없이 메모리에만 쌓고
-  // 프로세스 종료 때 한 번 게시해 훅 예산을 쓰지 않는다.
-  let observation: ReturnType<typeof createRelaySpawnObservation> = undefined;
-  try {
-    observation = createRelaySpawnObservation(transport, environment, Boolean(budget));
-    const deferred = budget ? observation : undefined;
-    if (deferred) process.once("exit", () => deferred.flush());
-  } catch (error) { reportHookFailure("relay-observation", error); }
+  // 부모 관측은 spawn 호출 직전에 시작한다. 예산 경로는 신원 조회·파일 접근 없이 메모리에만 쌓고
+  // 프로세스 종료 때 한 번 게시한다. 게시는 훅 결과·claim 마감 뒤이며 프로세스 수명 안이다.
+  const observation = createRelaySpawnObservation(transport, environment, Boolean(budget),
+    error => { reportHookFailure("relay-observation", error); });
+  if (budget && observation) process.once("exit", () => observation.flush());
   const child = spawn(process.execPath, [
     relayPath,
     "--host", host,

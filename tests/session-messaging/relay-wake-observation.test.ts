@@ -167,15 +167,35 @@ it("예산 경로 관측은 flush 전까지 파일을 쓰지 않고 신원 조�
   const receipt = JSON.parse(readFileSync(path.join(root, file), "utf8"));
   expect(receipt).toMatchObject({writerPid: process.pid, writerProcessStart: "UNKNOWN", childPid: 4242,
     childProcessStart: "UNKNOWN", sinkErrors: 0, droppedEvents: 0});
+  // 부모·자식 대조는 childPid와 [startedAt, publishedAt] 시간창으로 한다.
+  expect(Date.parse(receipt.publishedAt)).toBeGreaterThanOrEqual(Date.parse(receipt.startedAt));
   expect(receipt.events.map((value: {event: string}) => value.event)).toEqual(["begin", "returned", "spawn", "error"]);
 });
 
-it("예산 경로 관측은 소유 디렉터리를 확인하지 못하면 게시하지 않고 던지지 않는다", () => {
+it.each([true, false])("소유 디렉터리를 확인하지 못한 관측은 게시하지 않고 실패를 한 번 보고한다: 지연=%s", deferred => {
   const {root} = setup();
   const environment = {AGENT_GOVERNANCE_LOG_CONFIG: JSON.stringify({level: "OFF", destination: "file",
     file: path.join(root, "missing", "owned"), categories: {transport: "DEBUG"}})};
-  const observation = createRelaySpawnObservation("codex-deferred", environment, true)!;
-  observation.returned(4242);
-  expect(() => observation.flush()).not.toThrow();
+  const failures: unknown[] = [];
+  const observation = createRelaySpawnObservation("codex-deferred", environment, deferred, error => failures.push(error));
+  if (deferred) {
+    observation!.returned(4242);
+    expect(failures).toHaveLength(0);
+    expect(() => observation!.flush()).not.toThrow();
+  } else expect(observation).toBeUndefined();
+  expect(failures).toEqual([expect.objectContaining({code: "ENOENT"})]);
   expect(readdirSync(root).some(value => value.includes("-relay-spawn-"))).toBe(false);
+});
+
+it("관측 꺼짐(설정 없음·미설치 transport)은 실패로 보고하지 않고 잘못된 설정은 보고한다", () => {
+  const {environment} = setup();
+  const failures: unknown[] = [];
+  for (const deferred of [false, true]) {
+    expect(createRelaySpawnObservation("codex-deferred", {}, deferred, error => failures.push(error))).toBeUndefined();
+    expect(createRelaySpawnObservation("unregistered", environment, deferred, error => failures.push(error))).toBeUndefined();
+  }
+  expect(failures).toHaveLength(0);
+  expect(createRelaySpawnObservation("codex-deferred", {AGENT_GOVERNANCE_LOG_CONFIG: "{"}, true,
+    error => failures.push(error))).toBeUndefined();
+  expect(failures).toHaveLength(1);
 });
