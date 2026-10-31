@@ -31,7 +31,7 @@ it("marks a live reused old relay outdated without respawning or renewing its pr
   const f = fixture(); const grant = f.ensure(A); expect(f.activate(grant.relayId!, A)).toBe(true);
   expect(f.view().relayCode).toEqual({status: "current", runningDigest: A, expectedDigest: A});
   const presence = f.store.presence(f.input, now + 4), owner = f.store.relayOwner(f.input, f.input.transport);
-  expect(f.ensure(B)).toEqual({...grant, spawn: false});
+  expect(f.ensure(B)).toEqual({...grant, spawn: false, reason: expect.any(String)});
   expect(f.view().relayCode).toEqual({status: "outdated", runningDigest: A, expectedDigest: B});
   expect(f.store.presence(f.input, now + 4)).toEqual(presence);
   expect(f.store.relayOwner(f.input, f.input.transport)).toEqual(owner);

@@ -167,7 +167,7 @@ it("D0351 a terminal tombstone blocks delayed same-instance start and ensure eve
     instanceId, startedAt: attempt.generation });
   expect(snapshot(f)).toEqual(before);
   for (const expectedOwner of [null, oldOwner]) {
-    expect(f.store.prepareVerifiedRelay({ ...f.input, expectedOwner })).toEqual({ spawn: false, relayId: null, instanceId });
+    expect(f.store.prepareVerifiedRelay({ ...f.input, expectedOwner })).toEqual({ spawn: false, relayId: null, instanceId, reason: expect.any(String) });
     expect(snapshot(f)).toEqual(before);
   }
   // A separately observed process generation can still acquire the same session.

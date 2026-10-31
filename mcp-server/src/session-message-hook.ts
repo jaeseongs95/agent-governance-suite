@@ -78,7 +78,7 @@ const PERSISTED_HOOK_PHASES: ReadonlySet<HookFailurePhase> = new Set(["presence-
 type IdentityDiagnostic = Parameters<ProcessIdentityFailureObserver>[1];
 
 /** Fixed producer/OS reasons plus bounded metadata; never error messages, SQL, paths or peer bodies. */
-function reportHookFailure(phase: HookFailurePhase, error: unknown, identity?: IdentityDiagnostic): SessionMessageHookFailure {
+function reportHookFailure(phase: HookFailurePhase, error: unknown, detail?: Readonly<{ identity?: IdentityDiagnostic; grantReason?: string }>): SessionMessageHookFailure {
   const context = hookFailureContext(error);
   let reason = "UNEXPECTED_FAILURE";
   try {
@@ -102,15 +102,15 @@ function reportHookFailure(phase: HookFailurePhase, error: unknown, identity?: I
   try { writeFailureDiagnostic("[agent-governance-suite] peer-hook-failure " + JSON.stringify({ ...failure, context }), (line) => console.error(line)); }
   catch { /* A broken diagnostic sink cannot block a hook or authorize replay. */ }
   if (PERSISTED_HOOK_PHASES.has(phase)) {
-    try { persistRelayFailure(JSON.stringify({ phase: "hook-" + phase, reason: failure.reason, reasonBasis, context, ...(identity ? { identity } : {}) })); }
+    try { persistRelayFailure(JSON.stringify({ phase: "hook-" + phase, reason: failure.reason, reasonBasis, context, ...detail })); }
     catch { /* The record is diagnostic only. */ }
   }
   return failure;
 }
 
 /** A relay that is not started is a recorded outcome with a fixed reason, never a silent return. */
-function relayNotStarted(reason: string, identity?: IdentityDiagnostic): void {
-  reportHookFailure("relay-start", hookFailure(reason, "The session relay was not started."), identity);
+function relayNotStarted(reason: string, detail?: Readonly<{ identity?: IdentityDiagnostic; grantReason?: string }>): void {
+  reportHookFailure("relay-start", hookFailure(reason, "The session relay was not started."), detail);
 }
 
 type HookBudget = SessionMessageHookOptions["executionBudget"];
@@ -174,7 +174,7 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
   // Only a caller that read this birth in the same synchronous step passes it; others re-read after their awaits.
   let identity: IdentityDiagnostic | undefined;
   const observedStartToken = extra.observedStartToken ?? readHostStartToken(hostPid, budget, (_cause, diagnostic) => { identity = diagnostic; });
-  if (!observedStartToken) { relayNotStarted("RELAY_HOST_START_UNREADABLE", identity); return; }
+  if (!observedStartToken) { relayNotStarted("RELAY_HOST_START_UNREADABLE", identity ? { identity } : undefined); return; }
   if (hostProcess && (hostProcess.pid !== hostPid || (relayId && explicitHostPid !== undefined && explicitHostPid !== hostProcess.pid) || hostProcess.startToken !== observedStartToken)) {
     relayNotStarted("RELAY_HOST_START_MISMATCH"); return;
   }
@@ -354,7 +354,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     const transport = profile.transport;
     const expectedInstance = "host-process-v1:" + createHash("sha256").update(JSON.stringify([host, sessionId, hostPid, hostProcess.startToken])).digest("hex");
     try {
-      const result = await request<{ spawn: boolean; relayId: string | null; instanceId: string }>("ensure-relay", {
+      const result = await request<{ spawn: boolean; relayId: string | null; instanceId: string; reason?: unknown }>("ensure-relay", {
         target, transport, parentPid: hostPid, parentStartToken: hostProcess.startToken,
         ...(expectedPresenceInstanceId !== undefined ? { expectedPresenceInstanceId } : {}),
         identityTimeoutMs: Math.min(HOST_MESSAGE_REQUEST_TIMEOUT_MS, Math.floor(remainingBudget(budget))),
@@ -364,7 +364,12 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         ...(observation.workspaceId ? { workspaceId: observation.workspaceId } : {}),
         ...(observation.role ? { role: observation.role } : {}),
       });
-      if (!result.spawn) return;
+      if (!result.spawn) {
+        // A live relay is the normal refusal; every other one is recorded with the broker's fixed reason.
+        const grantReason = typeof result.reason === "string" && /^[A-Z_]{1,64}$/u.test(result.reason) ? result.reason : "UNREPORTED";
+        if (grantReason !== "RELAY_ALIVE") relayNotStarted("RELAY_SPAWN_NOT_GRANTED", { grantReason });
+        return;
+      }
       if (result.instanceId !== expectedInstance || !result.relayId
         || !/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(result.relayId)
         || !result.relayId.endsWith(":" + expectedInstance.slice("host-process-v1:".length))) throw hookFailure("INVALID_STARTUP_GRANT", "Invalid relay startup grant.");

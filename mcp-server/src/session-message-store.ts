@@ -172,6 +172,10 @@ export interface ClaimLimits {
   instanceId?: string;
 }
 
+/** Why a verified relay grant was refused; diagnostic only, never an authority input. */
+export type VerifiedRelayGrantRefusal = "GENERATION_CHANGED" | "GENERATION_SUPERSEDED" | "CURRENT_GENERATION_PROTECTED"
+  | "RELAY_OWNER_CHANGED" | "RELAY_GRANT_UNBOUND" | "RELAY_GRANT_UNCONFIRMED" | "RELAY_ALIVE" | "RELAY_LIVENESS_UNCONFIRMED" | "PRESENCE_NOT_ONLINE";
+
 export class SessionMessageStore<Input extends string | SharedModuleContext = string> {
   readonly database: Input extends string ? DatabaseSync : SqlDatabase;
   private readonly shared: SharedModuleContext | undefined;
@@ -982,7 +986,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     checkRequestBudget?: () => void;
     /** Recovery compares the presence observed by this hook, not a later identity-query result. */
     expectedPresenceInstanceId?: string | null;
-  }, nowMs = Date.now()): {spawn: boolean; relayId: string | null; instanceId: string} {
+  }, nowMs = Date.now()): {spawn: boolean; relayId: string | null; instanceId: string; reason?: VerifiedRelayGrantRefusal} {
     boundedIdentity(input);
     if (!Number.isInteger(input.parentPid) || input.parentPid < 1 || !/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId)) throw new Error("Invalid verified relay generation.");
     if (input.verifiedParentStartToken !== undefined && (!input.verifiedParentStartToken.trim() || input.verifiedParentStartToken.length > 200
@@ -991,30 +995,30 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     }
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.prepareVerifiedRelay(input,nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
-    const prepare = () => {
+    const prepare = (): {spawn: boolean; relayId: string | null; instanceId: string; reason?: VerifiedRelayGrantRefusal} => {
       const previous = this.relayOwner(input,input.transport);
       const current = this.presence(input, nowMs);
       if (input.expectedPresenceInstanceId !== undefined && current.instanceId !== input.expectedPresenceInstanceId) {
-        return {spawn:false,relayId:null,instanceId:input.instanceId};
+        return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"GENERATION_CHANGED"};
       }
       const ownBirth = this.database.prepare("SELECT superseded_at FROM session_presence WHERE host=? AND session_id=? AND instance_id=?")
         .get(input.host,input.sessionId,input.instanceId) as { superseded_at: string | null } | undefined;
-      if (ownBirth?.superseded_at != null) return {spawn:false,relayId:null,instanceId:input.instanceId};
+      if (ownBirth?.superseded_at != null) return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"GENERATION_SUPERSEDED"};
       const protectedCurrent = this.database.prepare(`SELECT 1 FROM session_presence WHERE host=? AND session_id=? AND instance_id=?
         AND verified_parent_token IS NOT NULL`).get(input.host,input.sessionId,current.instanceId ?? "");
       if (current.instanceId !== input.instanceId && protectedCurrent !== undefined
-        && input.expectedPresenceInstanceId !== current.instanceId) return {spawn:false,relayId:null,instanceId:input.instanceId};
+        && input.expectedPresenceInstanceId !== current.instanceId) return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"CURRENT_GENERATION_PROTECTED"};
       // A process already superseded by a later registered birth is not a new resume.
       // An unseen new process can still recover a lapsed previous host normally.
       if (current.instanceId !== null && current.instanceId !== input.instanceId
         && ownBirth !== undefined) {
-        return {spawn:false,relayId:null,instanceId:input.instanceId};
+        return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"GENERATION_SUPERSEDED"};
       }
       const expected = input.expectedOwner;
       if (previous === null ? expected !== null : !expected || previous.relayId !== expected.relayId || previous.pid !== expected.pid || previous.parentPid !== expected.parentPid || previous.instanceId !== expected.instanceId || previous.relayStartToken !== expected.relayStartToken) {
-        return {spawn:false,relayId:null,instanceId:input.instanceId};
+        return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"RELAY_OWNER_CHANGED"};
       }
-      if (previous?.relayId.startsWith("verified-relay-v1:") && previous.instanceId === null) return {spawn:false,relayId:null,instanceId:input.instanceId};
+      if (previous?.relayId.startsWith("verified-relay-v1:") && previous.instanceId === null) return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"RELAY_GRANT_UNBOUND"};
       if (input.verifiedParentStartToken !== undefined && current.instanceId === input.instanceId) {
         this.database.prepare(`UPDATE session_presence SET verified_parent_pid=?, verified_parent_token=?
           WHERE host=? AND session_id=? AND instance_id=? AND superseded_at IS NULL`)
@@ -1033,7 +1037,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
             this.database.prepare("UPDATE relay_leases SET lease_until=?, updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND pid=?")
               .run(iso(nowMs + RELAY_LEASE_MS), now, input.host, input.sessionId, input.transport, previous.relayId, previous.pid);
           }
-          return {spawn:false,relayId:previous.relayId,instanceId:input.instanceId};
+          // An unconfirmed pid=0 grant is never retried here (its relay may still be starting); the reason makes it visible.
+          return {spawn:false,relayId:previous.relayId,instanceId:input.instanceId,
+            reason: previous.pid === 0 ? "RELAY_GRANT_UNCONFIRMED" : alive ? "RELAY_ALIVE" : "RELAY_LIVENESS_UNCONFIRMED"};
         }
       }
       const relayId = "verified-relay-v1:" + randomUUID() + ":" + input.instanceId.slice("host-process-v1:".length);
@@ -1044,7 +1050,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       }
       const presence = this.startPresence(input,nowMs);
       if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport) {
-        return {spawn:false,relayId:null,instanceId:input.instanceId};
+        return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"PRESENCE_NOT_ONLINE"};
       }
       if (input.verifiedParentStartToken !== undefined) {
         this.database.prepare(`UPDATE session_presence SET verified_parent_pid=?, verified_parent_token=?

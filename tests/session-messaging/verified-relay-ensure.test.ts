@@ -28,7 +28,8 @@ it("caches a grant without changing its owner or presence birth/heartbeat/lease"
   expect(first.spawn).toBe(true);
   const before = store.presence(target, now);
   const owner = store.relayOwner(target, "gemini-queue");
-  expect(ensure({}, now + 100)).toEqual({ ...first, spawn: false });
+  // D0354: an unactivated pid=0 grant is never re-granted here, and says so.
+  expect(ensure({}, now + 100)).toEqual({ ...first, spawn: false, reason: "RELAY_GRANT_UNCONFIRMED" });
   expect(store.presence(target, now + 100)).toEqual(before);
   expect(store.relayOwner(target, "gemini-queue")).toEqual(owner);
 });
@@ -42,7 +43,7 @@ it("retains a pending unknown after presence retention without TTL respawn", () 
   expect(store.relayOwner(target, "gemini-queue")).toMatchObject({ relayId: first.relayId, pid: 0, instanceId: generation });
   expect(store.liveRelay(target, "gemini-queue", later)).toBeNull();
   expect(store.heartbeatRelay({ ...target, transport: "gemini-queue", relayId: first.relayId! }, later)).toBe(false);
-  expect(ensure({}, later)).toEqual({ ...first, spawn: false });
+  expect(ensure({}, later)).toEqual({ ...first, spawn: false, reason: expect.any(String) });
   expect(store.presence(target, later).instanceId).toBeNull();
 });
 
@@ -59,7 +60,7 @@ it("keeps a late first child fail closed instead of reviving an expired birth", 
   const { store, ensure, activate } = fixture();
   const first = ensure();
   expect(activate(first.relayId!, {}, now + 60_000)).toBe(false);
-  expect(ensure({}, now + 60_001)).toEqual({ ...first, spawn: false });
+  expect(ensure({}, now + 60_001)).toEqual({ ...first, spawn: false, reason: expect.any(String) });
   expect(store.relayOwner(target, "gemini-queue")?.pid).toBe(0);
   expect(store.presence(target, now + 60_001).state).toBe("unreachable");
 });
@@ -105,7 +106,7 @@ it("rejects a stale pre-observation owner snapshot without changing a newer gene
   expect(next.spawn).toBe(true);
   const before = store.presence(target, now + 1);
   expect(store.prepareVerifiedRelay({ ...input, expectedOwner: snapshot }, now + 2))
-    .toEqual({ spawn: false, relayId: null, instanceId: generation });
+    .toEqual({ spawn: false, relayId: null, instanceId: generation, reason: "RELAY_OWNER_CHANGED" });
   expect(store.relayOwner(target, input.transport)?.relayId).toBe(next.relayId);
   expect(next.relayId).not.toBe(first.relayId);
   expect(store.presence(target, now + 2)).toEqual(before);
@@ -186,7 +187,7 @@ it("does not replace an unbound historical verified-prefix row", () => {
   const { store, input, ensure } = fixture();
   const legacyId = "verified-relay-v1:11111111-1111-4111-8111-111111111111";
   expect(store.acquireRelay({ ...target, transport: input.transport, relayId: legacyId, pid: 200, parentPid: 100 }, now)).toBe(true);
-  expect(ensure({}, now + 60_000)).toEqual({ spawn: false, relayId: null, instanceId: generation });
+  expect(ensure({}, now + 60_000)).toEqual({ spawn: false, relayId: null, instanceId: generation, reason: "RELAY_GRANT_UNBOUND" });
   expect(store.relayOwner(target, input.transport)?.relayId).toBe(legacyId);
 });
 
@@ -245,7 +246,7 @@ it("AGS-D-0009: prepareVerifiedRelay restores expired presence and relay leases 
   expect(store.liveRelay(target, input.transport, expiredAt)).toBeNull();
 
   // Without explicit confirmedAlive: true, prepareVerifiedRelay must NOT restore expired leases on unverified PID state.
-  expect(ensure({}, expiredAt + 1)).toEqual({ spawn: false, relayId: id, instanceId: generation });
+  expect(ensure({}, expiredAt + 1)).toEqual({ spawn: false, relayId: id, instanceId: generation, reason: "RELAY_LIVENESS_UNCONFIRMED" });
   expect(store.presence(target, expiredAt + 1).state).toBe("unreachable");
   expect(store.liveRelay(target, input.transport, expiredAt + 1)).toBeNull();
 
@@ -253,7 +254,7 @@ it("AGS-D-0009: prepareVerifiedRelay restores expired presence and relay leases 
     ...input,
     expectedOwner: store.relayOwner(target, input.transport),
     confirmedAlive: false,
-  }, expiredAt + 2)).toEqual({ spawn: false, relayId: id, instanceId: generation });
+  }, expiredAt + 2)).toEqual({ spawn: false, relayId: id, instanceId: generation, reason: "RELAY_LIVENESS_UNCONFIRMED" });
   expect(store.presence(target, expiredAt + 2).state).toBe("unreachable");
 
   // With positive confirmedAlive: true and bound relayStartToken, leases are restored without respawning.
@@ -262,7 +263,7 @@ it("AGS-D-0009: prepareVerifiedRelay restores expired presence and relay leases 
     expectedOwner: store.relayOwner(target, input.transport),
     confirmedAlive: true,
   }, expiredAt + 3);
-  expect(ensuredAgain).toEqual({ spawn: false, relayId: id, instanceId: generation });
+  expect(ensuredAgain).toEqual({ spawn: false, relayId: id, instanceId: generation, reason: "RELAY_ALIVE" });
   expect(store.presence(target, expiredAt + 3)).toMatchObject({
     state: "online",
     instanceId: generation,

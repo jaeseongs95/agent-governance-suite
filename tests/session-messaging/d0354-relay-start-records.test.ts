@@ -14,7 +14,9 @@ vi.mock("../../mcp-server/src/process-identity.js", async (original) => ({
   processStartToken: f.token, processExists: f.exists, processIdentityState: f.identity,
 }));
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
-import { registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+import { adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+import type { ActorObservation } from "../../mcp-server/src/input-observation.js";
+import { performance } from "node:perf_hooks";
 import { runSessionMessageRelay } from "../../mcp-server/src/session-message-relay.js";
 import type { WakeDispatchPort } from "../../mcp-server/src/session-message-wake-port.js";
 const syntheticCore = await import(new URL("./fixtures/synthetic-core-hook-driver.mjs", import.meta.url).href) as {
@@ -22,6 +24,16 @@ const syntheticCore = await import(new URL("./fixtures/synthetic-core-hook-drive
   registerSyntheticCoreAdapters: (register: typeof registerHookHostAdapter, selectTransport: () => "codex-deferred") => void;
 };
 syntheticCore.registerSyntheticCoreAdapters(registerHookHostAdapter, () => "codex-deferred");
+const verifiedHost = "synthetic-d0354-verified";
+registerHookHostAdapter(verifiedHost, {
+  adaptInput: (payload, host) => {
+    const mapped = adaptHostInput(payload, "codex");
+    return { ...mapped, observation: { ...mapped.observation, host, callId: "d0354-call", actor: payload.syntheticActor as ActorObservation } };
+  },
+  deliveryProfile: () => ({ transport: "gemini-queue", capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" }, blocksEmptyWakePrompt: false }),
+  processPid: (pid, observation) => observation ? pid : undefined,
+});
+const verifiedRoot: ActorObservation = { role: "root", basis: "observed", reasonCode: "SYNTHETIC_D0354_ROOT" };
 
 // D0354: a generation whose relay never started or ended early must leave a local record with a fixed reason.
 // Hosts may discard hook stderr, so the stderr line alone left "registered, no heartbeat" sessions unexplained.
@@ -87,6 +99,18 @@ describe("D0354 relay start and end records", () => {
     await runSessionMessageRelay(relayOptions, port);
     expect(records()).toEqual([{ phase: "run", reason: "RELAY_LEASE_LOST_REACQUIRE_REFUSED", context: expect.any(Object) }]);
   });
+
+  it.each([["RELAY_GRANT_UNCONFIRMED", 1], ["RELAY_ALIVE", 0], [undefined, 1]] as const)(
+    "records a refused verified relay grant (%s) unless its relay is alive", async (grantReason, recorded) => {
+      f.request.mockResolvedValue({ spawn: false, relayId: null, instanceId: "host-process-v1:" + "c".repeat(64), ...(grantReason ? { reason: grantReason } : {}) });
+      await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: "verified-refused", syntheticActor: verifiedRoot }, verifiedHost, 424242, {
+        ensureRelay: true, hostProcess: { pid: 424242, startToken: "T1" },
+        executionBudget: { deadlineMonotonicMs: performance.now() + 30_000, postClaimReserveMs: 200 } });
+      expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["ensure-relay"]);
+      expect(f.spawn).not.toHaveBeenCalled();
+      expect(records()).toEqual(recorded ? [expect.objectContaining({ phase: "hook-relay-start", reason: "RELAY_SPAWN_NOT_GRANTED",
+        grantReason: grantReason ?? "UNREPORTED" })] : []);
+    });
 
   it("leaves no record when the relay ends because its parent exited", async () => {
     f.exists.mockReturnValue(false);
