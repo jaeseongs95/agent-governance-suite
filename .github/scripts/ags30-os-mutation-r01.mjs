@@ -24,8 +24,8 @@ export function mutateLock(text, id) {
     '    if (["ENOENT", "ENOTEMPTY", "EEXIST", "ENOTDIR"].includes(code(error) ?? "")) return unavailable(BROKER_LOCK_REASONS.CHANGED, error);');
   assert.equal(id, 'OS-003', 'Unknown mutation case');
   return once(imported,
-    '  catch (error) { if (code(error) === "ENOENT") return; throw error; }',
-    '  catch (error) { if (code(error) === "ENOENT") { rmSync(lock.path, { recursive: true, force: true }); return; } throw error; }');
+    '  catch (error) { if (code(error) === "ENOENT") { closeWitness(); return; } throw error; }',
+    '  catch (error) { if (code(error) === "ENOENT") { closeWitness(); rmSync(lock.path, { recursive: true, force: true }); return; } throw error; }');
 }
 
 export function assertionWitness(id, report, receipt) {
