@@ -22,7 +22,7 @@ import {
   SqliteContinuityStore,
 } from "./continuity-store.js";
 import type { WorkflowStore } from "./workflow-store.js";
-import type { LineageRead } from "./host-input-adapter.js";
+import type { ForkOriginRead, LineageRead } from "./host-input-adapter.js";
 
 const TOOL_TOKEN_TTL_SECONDS = 300;
 const CANDIDATE_TOKEN_TTL_SECONDS = 3600;
@@ -246,10 +246,33 @@ export class ContinuityService implements ContinuityGateway {
     return this.sign(payload);
   }
 
-  /** The host's SessionStart source=fork is the only relation authority; lineage later picks which parent. */
-  startFork(rawSessionId: string): void {
+  /**
+   * The host's SessionStart source=fork is the only relation authority; lineage later picks which parent. A host that
+   * records the parent itself (`readForkOrigin`) names it directly, so the parent is pinned here and lineage is unused.
+   */
+  startFork(rawSessionId: string, readForkOrigin?: () => ForkOriginRead): void {
     const task = this.ensureSession(rawSessionId);
     this.store.recordObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT, null, true, this.now().toISOString());
+    if (!readForkOrigin || task.rootId || task.suppressed || this.summary(task)
+      || this.store.firstObservationEvent(task.taskCorrelation, task.currentEpoch, FORK_PARENT_EVENT)) return;
+    const origin = readForkOrigin();
+    const selection = "reason" in origin ? { q: origin.reason } : this.originForkParent(origin);
+    this.store.recordObservation(task.taskCorrelation, task.currentEpoch, FORK_PARENT_EVENT + JSON.stringify(selection), null, "p" in selection, this.now().toISOString());
+  }
+
+  /**
+   * The parent's state at the host's fork instant. This start may come well after the fork (Codex fires it at the
+   * child's first prompt), so a parent save after that instant is not the fork-time state and is never chosen
+   * (review 902e F1b); it is reported as advanced.
+   */
+  private originForkParent(origin: { parentSessionId: string; at: number }): { p: ForkParent } | { q: string } {
+    const parent = this.store.getTask(this.correlateSession(origin.parentSessionId));
+    if (!parent) return { q: "FORK_PARENT_NOT_FOUND" };
+    if (parent.suppressed) return { q: "FORK_PARENT_SUPPRESSED" };
+    const summary = this.summary(parent);
+    if (!summary || summary.source !== "direct") return { q: "FORK_PARENT_NOT_FOUND" };
+    if (!(Date.parse(summary.updatedAt) <= origin.at)) return { q: "FORK_PARENT_ADVANCED" };
+    return { p: { c: parent.taskCorrelation, e: parent.currentEpoch, r: summary.revision, d: summary.snapshotDigest } };
   }
 
   /**

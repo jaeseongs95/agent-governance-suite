@@ -349,10 +349,12 @@ describe("D0352 B08 fork lineage", () => {
     expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
   });
 
-  // Scope (review 902e N1z): inside a recorded lineage a non-fork parent's model can copy a descendant's own entries into
-  // the parent's file with a write tool; the parent is no fork, so no pin boundary stops it, and the copies carry the
-  // descendant's timestamps. A later fork of that parent then resolves to the descendant. This fixes that outcome.
-  it("N1z: a parent that wrote its fork's own entries into its file makes a later fork of it resolve to that fork (accepted scope)", async () => {
+  // OPEN DEFECT REPRODUCTION, not the accepted outcome (review 902e N1z; chief 700fa72c judgement: risk not accepted,
+  // "file or token possession alone never grants a relation" holds). Inside a recorded lineage a non-fork parent's model
+  // can copy a descendant's own entries into the parent's file with a write tool; a later fork of that parent then
+  // resolves to the descendant. The correct result is the parent's own state (or no candidate); this test records the
+  // current vulnerable behaviour until a host-authoritative relation source repairs it, and must flip with that repair.
+  it("N1z (open defect reproduction): a parent that wrote its fork's own entries into its file currently makes a later fork of it resolve to that fork", async () => {
     const service = createService();
     const { snapshot, uuids, file } = await parent(service, "parent-a");
     const own = randomUUID();
@@ -461,16 +463,16 @@ describe("D0352 B08 fork lineage", () => {
     }
   });
 
-  // Codex and Gemini (agy) fork inheritance is an open implementation gap until their host relation evidence is observed;
-  // this guards only that no lookup runs without such evidence, not that those hosts are excluded.
-  it("N7: without a host fork record the lookup never runs (Codex and Gemini/agy: relation evidence not yet implemented)", async () => {
+  // Gemini (agy) fork inheritance is an open implementation gap until its host relation evidence is observed; this
+  // guards only that no lookup runs without such evidence, not that the host is excluded. Codex: see the block below.
+  it("N7: without a host fork record the lookup never runs (Gemini/agy: relation evidence not yet implemented)", async () => {
     const service = createService();
     const { uuids } = await parent(service);
     const file = await transcript(uuids.map(uuid => ["never-forked", uuid] as [string, string]));
     prompt(service, "never-forked", file);
     expect(inspect(service, "never-forked", file).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE"]);
     expect(service.store.hasObservation(service.correlateSession("never-forked"), 1, "fork-start")).toBe(false);
-    for (const host of ["codex", "gemini", "antigravity"]) {
+    for (const host of ["gemini", "antigravity"]) {
       const session = `${host}-fork`;
       expect(start(service, session, "fork", file, host)).toEqual({});
       expect(hook(service, { hook_event_name: "UserPromptSubmit", session_id: session, prompt: "continue", transcript_path: file }, host)).toBeDefined();
@@ -506,5 +508,147 @@ describe("D0352 B08 fork lineage", () => {
       expect(anchors.length).toBeGreaterThan(0);
       for (const { turn_hash } of anchors) expect(turn_hash).toMatch(/^hmac-sha256:[0-9a-f]{64}$/u);
     } finally { database.close(); }
+  });
+});
+
+// D0352 B08 Codex: the host names the parent itself. A Codex fork's rollout starts with a host-written session_meta line
+// whose payload carries the child's id, forked_from_id (the parent) and the fork instant (tester TEST, Codex 0.166).
+// SessionStart source=fork fires only at the child's first prompt, so the parent's state is fixed at that fork instant.
+describe("D0352 B08 Codex fork origin", () => {
+  const CODEX = "codex";
+  // The service clock (and so every save) is 01:00:00; a fork instant after it sees that save, one before it does not.
+  const FORK_AT = "2026-11-01T01:00:05.000Z";
+  const BEFORE_SAVE = "2026-11-01T00:59:00.000Z";
+
+  async function rollout(id: string, payload: Record<string, unknown> = {}, firstLine?: string): Promise<string> {
+    const file = join(await directory(), "rollout.jsonl");
+    const meta = firstLine ?? JSON.stringify({ timestamp: "2026-11-01T01:00:06.000Z", type: "session_meta", ordinal: 0,
+      payload: { id, session_id: id, timestamp: FORK_AT, instructions: BODY_MARKER, ...payload } });
+    await writeFile(file, meta + "\n" + JSON.stringify({ type: "response_item", payload: { content: BODY_MARKER } }) + "\n", "utf8");
+    return file;
+  }
+
+  function codexBound<T extends Record<string, unknown>>(service: ContinuityService, session: string, tool: string, input: T): T & { _continuityBinding: string } {
+    const output = hook(service, { hook_event_name: "PreToolUse", session_id: session, tool_name: TOOL + tool, tool_input: input,
+      tool_use_id: "call_" + randomUUID().replaceAll("-", "") }, CODEX) as { hookSpecificOutput: { updatedInput: T & { _continuityBinding: string } } };
+    return output.hookSpecificOutput.updatedInput;
+  }
+
+  function codexCheckpoint(service: ContinuityService, session: string, overrides: Partial<CheckpointContextRequestV1> = {}): ContinuitySnapshotV1 {
+    const result = service.checkpointContext(codexBound(service, session, "checkpoint_context", checkpointInput(overrides)));
+    expect(result.error).toBeNull();
+    return result.data!;
+  }
+
+  function codexInspect(service: ContinuityService, session: string) {
+    const result = service.inspectContext(codexBound(service, session, "inspect_context", { schemaVersion: "1.0.0" }));
+    expect(result.error).toBeNull();
+    return result.data!;
+  }
+
+  function codexLoad(service: ContinuityService, session: string, candidate: ReturnType<typeof codexInspect>) {
+    return service.loadContext(codexBound(service, session, "load_context", loadInput(candidate)));
+  }
+
+  /** The child's SessionStart(source=fork) at its first prompt, then that prompt. */
+  function codexFork(service: ContinuityService, child: string, file?: string, extra: Record<string, unknown> = {}) {
+    expect(hook(service, { hook_event_name: "SessionStart", source: "fork", session_id: child, ...(file ? { transcript_path: file } : {}), ...extra }, CODEX)).toEqual({});
+    expect(hook(service, { hook_event_name: "UserPromptSubmit", session_id: child, prompt: "continue", ...(file ? { transcript_path: file } : {}) }, CODEX)).toEqual({});
+  }
+
+  it("C-P1: a Codex fork inspects and loads its host-named parent's checkpoint, then continues without STALE_REVISION", async () => {
+    const service = createService();
+    const parentSnapshot = codexCheckpoint(service, "codex-p");
+    codexFork(service, "codex-f", await rollout("codex-f", { forked_from_id: "codex-p", forked_from_ordinal_exclusive: 4 }));
+    const candidate = codexInspect(service, "codex-f");
+    expect(candidate).toMatchObject({ decision: "DEFER", reasonCodes: CANDIDATE });
+    expect(candidate.summary).toMatchObject({ taskCorrelation: parentSnapshot.taskCorrelation, revision: parentSnapshot.revision, snapshotDigest: parentSnapshot.snapshotDigest });
+    expect(codexLoad(service, "codex-f", candidate).data).toEqual(parentSnapshot);
+    const next = codexCheckpoint(service, "codex-f", { requestId: "child-1", expectedRevision: parentSnapshot.revision });
+    expect(next).toMatchObject({ revision: parentSnapshot.revision + 1, taskCorrelation: service.correlateSession("codex-f") });
+    expect(service.store.getSnapshot(parentSnapshot.taskCorrelation, parentSnapshot.epoch)).toEqual(parentSnapshot);
+  });
+
+  it("C-F1b: a parent save after the host's fork instant (before the child's first prompt) is never the fork's state", async () => {
+    const service = createService();
+    codexCheckpoint(service, "codex-p");
+    codexFork(service, "codex-f", await rollout("codex-f", { forked_from_id: "codex-p", timestamp: BEFORE_SAVE }));
+    expect(codexInspect(service, "codex-f").reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
+  });
+
+  it("C-N5: a parent that saves again after the pin, or is suppressed, yields no candidate", async () => {
+    const service = createService();
+    const parentSnapshot = codexCheckpoint(service, "codex-p");
+    codexFork(service, "codex-f", await rollout("codex-f", { forked_from_id: "codex-p" }));
+    codexCheckpoint(service, "codex-p", { requestId: "again", expectedRevision: parentSnapshot.revision });
+    expect(codexInspect(service, "codex-f").reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
+    codexCheckpoint(service, "codex-q");
+    service.store.setSuppressed(service.correlateSession("codex-q"), 1, "2026-11-01T01:00:00.000Z");
+    codexFork(service, "codex-g", await rollout("codex-g", { forked_from_id: "codex-q" }));
+    expect(codexInspect(service, "codex-g").reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_SUPPRESSED"]);
+  });
+
+  it("C-D1: a Codex grandchild takes the fork it was forked from, never the original parent", async () => {
+    const service = createService();
+    const parentSnapshot = codexCheckpoint(service, "codex-p");
+    codexFork(service, "codex-f", await rollout("codex-f", { forked_from_id: "codex-p" }));
+    expect(codexLoad(service, "codex-f", codexInspect(service, "codex-f")).error).toBeNull();
+    const childSnapshot = codexCheckpoint(service, "codex-f", { requestId: "f-1", expectedRevision: parentSnapshot.revision });
+    codexFork(service, "codex-g", await rollout("codex-g", { forked_from_id: "codex-f" }));
+    expect(codexInspect(service, "codex-g").summary).toMatchObject({ taskCorrelation: childSnapshot.taskCorrelation, revision: childSnapshot.revision });
+  });
+
+  it("C-N1: no fork, a non-root actor, a wrong or malformed origin, or an unknown parent never yields a parent", async () => {
+    const service = createService();
+    codexCheckpoint(service, "codex-p");
+    // A startup session whose rollout names a parent is no fork: the relation fact comes only from SessionStart source.
+    const startup = await rollout("codex-s", { forked_from_id: "codex-p" });
+    expect(hook(service, { hook_event_name: "SessionStart", source: "startup", session_id: "codex-s", transcript_path: startup }, CODEX)).toEqual({});
+    expect(codexInspect(service, "codex-s").reasonCodes).toEqual(["NO_RESTORE_CANDIDATE"]);
+    expect(service.store.hasObservation(service.correlateSession("codex-s"), 1, "fork-start")).toBe(false);
+    // A native subagent hook context (agent_id) never inherits through fork either.
+    codexFork(service, "codex-sub", await rollout("codex-sub", { forked_from_id: "codex-p" }), { agent_id: "agent-1" });
+    expect(service.store.hasObservation(service.correlateSession("codex-sub"), 1, "fork-start")).toBe(false);
+    const cases: Array<[string, (child: string) => Promise<string | undefined>, string]> = [
+      ["codex-mismatch", () => rollout("someone-else", { forked_from_id: "codex-p" }), "FORK_ORIGIN_SESSION_MISMATCH"],
+      ["codex-no-origin", child => rollout(child), "FORK_ORIGIN_ABSENT"],
+      ["codex-self", child => rollout(child, { forked_from_id: child }), "FORK_ORIGIN_FORMAT_INVALID"],
+      ["codex-empty", child => rollout(child, { forked_from_id: "" }), "FORK_ORIGIN_FORMAT_INVALID"],
+      ["codex-no-time", child => rollout(child, { forked_from_id: "codex-p", timestamp: "not a time" }), "FORK_ORIGIN_FORMAT_INVALID"],
+      ["codex-not-meta", child => rollout(child, {}, JSON.stringify({ type: "response_item", payload: { id: child, forked_from_id: "codex-p", timestamp: FORK_AT } })), "FORK_ORIGIN_FORMAT_INVALID"],
+      ["codex-not-json", child => rollout(child, {}, "{not json"), "FORK_ORIGIN_FORMAT_INVALID"],
+      ["codex-absent", async () => join(tmpdir(), `absent-${randomUUID()}.jsonl`), "FORK_ORIGIN_TRANSCRIPT_ABSENT"],
+      ["codex-unknown-parent", child => rollout(child, { forked_from_id: "never-seen" }), "FORK_PARENT_NOT_FOUND"],
+      ["codex-no-path", async () => undefined, "FORK_PARENT_NOT_PINNED"],
+    ];
+    for (const [child, file, reason] of cases) {
+      codexFork(service, child, await file(child));
+      expect(codexInspect(service, child).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", reason]);
+    }
+  });
+
+  it("C-N4: the pin is fixed at the fork start; a later edit of the child's rollout never changes the parent", async () => {
+    const service = createService();
+    const parentSnapshot = codexCheckpoint(service, "codex-p");
+    codexCheckpoint(service, "codex-q");
+    const file = await rollout("codex-f", { forked_from_id: "codex-p" });
+    codexFork(service, "codex-f", file);
+    await writeFile(file, JSON.stringify({ timestamp: FORK_AT, type: "session_meta", payload: { id: "codex-f", forked_from_id: "codex-q", timestamp: FORK_AT } }) + "\n", "utf8");
+    expect(hook(service, { hook_event_name: "PreToolUse", session_id: "codex-f", tool_name: "shell", tool_input: { command: "true" }, tool_use_id: "call_x", transcript_path: file }, CODEX)).toEqual({});
+    expect(codexInspect(service, "codex-f").summary).toMatchObject({ taskCorrelation: parentSnapshot.taskCorrelation, revision: parentSnapshot.revision });
+    // A second fork start of the same session never re-pins either.
+    codexFork(service, "codex-f", file);
+    expect(codexInspect(service, "codex-f").summary).toMatchObject({ taskCorrelation: parentSnapshot.taskCorrelation });
+  });
+
+  it("C-R: resume and a child with its own state keep their own continuity", async () => {
+    const service = createService();
+    codexCheckpoint(service, "codex-p");
+    const own = codexCheckpoint(service, "codex-f0");
+    codexFork(service, "codex-f0", await rollout("codex-f0", { forked_from_id: "codex-p" }));
+    expect(codexInspect(service, "codex-f0").summary).toMatchObject({ taskCorrelation: own.taskCorrelation, revision: own.revision });
+    expect(service.store.firstObservationEvent(service.correlateSession("codex-f0"), 1, "fork-parent:")).toBeNull();
+    const resumed = hook(service, { hook_event_name: "SessionStart", source: "resume", session_id: "codex-p" }, CODEX) as { hookSpecificOutput?: { additionalContext?: string } };
+    expect(resumed.hookSpecificOutput?.additionalContext ?? "").toContain("source=direct");
   });
 });

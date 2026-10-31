@@ -3,7 +3,7 @@ import { types as utilTypes } from "node:util";
 import { hookFailure, retainHookFailureCause, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
 import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
 import path from "node:path";
-import { registerHookHostAdapter, type HookHostAdapter, type HostDeliveryProfile, type NativePeerWaitObservation, type HookSettingsDiagnostic, type AdaptedHostInput, type HostLifecycle, type ContinuityAction, type LineageRead } from "./host-input-adapter.js";
+import { registerHookHostAdapter, type HookHostAdapter, type HostDeliveryProfile, type NativePeerWaitObservation, type HookSettingsDiagnostic, type AdaptedHostInput, type HostLifecycle, type ContinuityAction, type LineageRead, type ForkOriginRead } from "./host-input-adapter.js";
 import { parseWakeMessages } from "./session-message-client.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { normalizePeerWaitTargets } from "./peer-wait-policy.js";
@@ -88,13 +88,64 @@ function adaptInferredRootHookInput(input: Record<string, unknown>, host: string
 
 function adaptCodexHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
   const adapted = adaptInferredRootHookInput(input, host, "CODEX");
-  if (adapted.observation.actor.role !== "root" || !Object.hasOwn(input, "agent_id")) return adapted;
-  // Codex's native subagent hook context serializes agent_id even though session_id names the parent.
-  // Missing markers retain the 3.0 stopgap; a positive or malformed marker must never inherit it.
-  adapted.observation.actor = typeof input.agent_id === "string" && input.agent_id.trim()
-    ? { role: "child", basis: "observed", reasonCode: "CODEX_NATIVE_CHILD_AGENT_ID" }
-    : { role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_AGENT_ID_INVALID" };
+  if (adapted.observation.actor.role !== "root") return adapted;
+  if (Object.hasOwn(input, "agent_id")) {
+    // Codex's native subagent hook context serializes agent_id even though session_id names the parent.
+    // Missing markers retain the 3.0 stopgap; a positive or malformed marker must never inherit it.
+    adapted.observation.actor = typeof input.agent_id === "string" && input.agent_id.trim()
+      ? { role: "child", basis: "observed", reasonCode: "CODEX_NATIVE_CHILD_AGENT_ID" }
+      : { role: "indeterminate", basis: "unavailable", reasonCode: "CODEX_NATIVE_AGENT_ID_INVALID" };
+    return adapted;
+  }
+  // The fork fact comes only from the host's SessionStart source; the parent comes from the rollout's first line.
+  if (adapted.continuityAction?.kind === "startup" && input.source === "fork") {
+    adapted.continuityAction = { kind: "fork" };
+    const transcriptPath = text(input.transcript_path);
+    const sessionId = adapted.observation.sessionId;
+    if (transcriptPath && sessionId) adapted.readForkOrigin = () => readCodexForkOrigin(transcriptPath, sessionId);
+  }
   return adapted;
+}
+
+// session_meta carries the session's base instructions, so its line can be long; same bound as the Claude window.
+const CODEX_FORK_ORIGIN_MAX_BYTES = 2 * 1024 * 1024;
+
+/**
+ * Parent session of a Codex fork from the `session_meta` first line of the host-given rollout JSONL.
+ * Format source: tester TEST observation on Codex 0.166 (hook stdin has no parent key; the first line's
+ * payload carries id, forked_from_id and timestamp). The host writes the child's own first line when it
+ * creates the fork, before the model runs. Only the first line of that path is read; no body text is returned.
+ */
+function readCodexForkOrigin(transcriptPath: string, sessionId: string): ForkOriginRead {
+  let descriptor: number | null = null;
+  let firstLine: string;
+  try {
+    descriptor = openSync(transcriptPath, constants.O_RDONLY | constants.O_NONBLOCK);
+    const stats = fstatSync(descriptor);
+    if (!stats.isFile()) return { reason: "FORK_ORIGIN_TRANSCRIPT_UNREADABLE" };
+    const buffer = Buffer.alloc(Math.min(stats.size, CODEX_FORK_ORIGIN_MAX_BYTES));
+    const bytes = readSync(descriptor, buffer, 0, buffer.length, 0);
+    const newline = buffer.subarray(0, bytes).indexOf(0x0a);
+    if (newline < 0) return { reason: "FORK_ORIGIN_FORMAT_INVALID" };
+    firstLine = buffer.subarray(0, newline).toString("utf8");
+  } catch (cause) {
+    return { reason: (cause as NodeJS.ErrnoException).code === "ENOENT" ? "FORK_ORIGIN_TRANSCRIPT_ABSENT" : "FORK_ORIGIN_TRANSCRIPT_UNREADABLE" };
+  } finally {
+    if (descriptor !== null) try { closeSync(descriptor); } catch { /* read already finished or failed above */ }
+  }
+  let entry: unknown;
+  try { entry = JSON.parse(firstLine); } catch { return { reason: "FORK_ORIGIN_FORMAT_INVALID" }; }
+  const meta = record(entry);
+  const payload = meta.payload;
+  if (meta !== entry || meta.type !== "session_meta" || record(payload) !== payload) return { reason: "FORK_ORIGIN_FORMAT_INVALID" };
+  const fields = payload as Record<string, unknown>;
+  if (fields.id !== sessionId) return { reason: "FORK_ORIGIN_SESSION_MISMATCH" };
+  if (!Object.hasOwn(fields, "forked_from_id")) return { reason: "FORK_ORIGIN_ABSENT" };
+  const parentSessionId = fields.forked_from_id;
+  if (typeof parentSessionId !== "string" || !parentSessionId || parentSessionId === sessionId) return { reason: "FORK_ORIGIN_FORMAT_INVALID" };
+  const at = typeof fields.timestamp === "string" ? Date.parse(fields.timestamp) : Number.NaN;
+  if (!Number.isFinite(at)) return { reason: "FORK_ORIGIN_FORMAT_INVALID" };
+  return { parentSessionId, at };
 }
 
 /** Claude's supported native hook schema omits agent_id for root calls.
