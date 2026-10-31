@@ -239,11 +239,11 @@ export function ownsBrokerProcessLock(lock: BrokerProcessLock): boolean {
 }
 
 export function releaseBrokerProcessLock(lock: BrokerProcessLock): void {
+  const closeWitness = () => { heldWitnesses.get(lock.owner)?.close(); heldWitnesses.delete(lock.owner); };
   try { rmdirSync(path.join(lock.path, lock.owner)); }
-  catch (error) { if (code(error) !== "ENOENT") throw error; }
-  // marker를 지운 뒤에 증인을 닫는다. 지우지 못하면 증인을 유지해 살아 있는 소유자로 남는다.
-  heldWitnesses.get(lock.owner)?.close();
-  heldWitnesses.delete(lock.owner);
+  catch (error) { if (code(error) === "ENOENT") { closeWitness(); return; } throw error; }
+  // marker를 지운 뒤에 증인을 닫는다. 지우지 못하면(위 throw) 증인을 유지해 살아 있는 소유자로 남는다.
+  closeWitness();
   // A new nonempty owner can already have replaced the empty parent. Never recurse.
   try { rmdirSync(lock.path); }
   catch (error) { if (!["ENOENT", "ENOTEMPTY", "EEXIST"].includes(code(error) ?? "")) throw error; }
