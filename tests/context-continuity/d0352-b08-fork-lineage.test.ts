@@ -349,6 +349,24 @@ describe("D0352 B08 fork lineage", () => {
     expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
   });
 
+  // Scope (review 902e N1z): inside a recorded lineage a non-fork parent's model can copy a descendant's own entries into
+  // the parent's file with a write tool; the parent is no fork, so no pin boundary stops it, and the copies carry the
+  // descendant's timestamps. A later fork of that parent then resolves to the descendant. This fixes that outcome.
+  it("N1z: a parent that wrote its fork's own entries into its file makes a later fork of it resolve to that fork (accepted scope)", async () => {
+    const service = createService();
+    const { snapshot, uuids, file } = await parent(service, "parent-a");
+    const own = randomUUID();
+    const childFile = await transcript([...uuids.map(uuid => ["fork-f", uuid] as [string, string]), ["fork-f", own, OWN]]);
+    expect(start(service, "fork-f", "fork", childFile)).toEqual({});
+    prompt(service, "fork-f", childFile);
+    expect(load(service, "fork-f", inspect(service, "fork-f", childFile)).error).toBeNull();
+    const childSnapshot = checkpoint(service, "fork-f", childFile, { requestId: "f-own", expectedRevision: snapshot.revision });
+    await appendFile(file, line("parent-a", own) + "\n", "utf8");
+    checkpoint(service, "parent-a", file, { requestId: "a-copied-f", expectedRevision: snapshot.revision });
+    const laterFile = await fork(service, "fork-g", [...uuids, own]);
+    expect(inspect(service, "fork-g", laterFile).summary).toMatchObject({ taskCorrelation: childSnapshot.taskCorrelation, revision: childSnapshot.revision });
+  });
+
   it("T1b: a fork entry without a host write time is treated as copied, never as the fork's own anchor", async () => {
     const service = createService();
     const { snapshot, uuids } = await parent(service);
