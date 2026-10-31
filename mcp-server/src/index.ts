@@ -33,7 +33,7 @@ import { pathToFileURL } from "node:url";
 import type { ClassificationWireAdapter } from "./skill-classification/providers.js";
 import { RuntimeSkillClassificationGateway, readClassificationRuntime } from "./skill-classification/gateway.js";
 import { InMemoryClassificationBudget, SkillClassificationService } from "./skill-classification/service.js";
-import { loadClassificationProviderRuntime, reportClassificationInitializationFailure } from "./skill-classification/runtime.js";
+import { ClassificationInitializationError, loadClassificationProviderRuntime, reportClassificationInitializationFailure } from "./skill-classification/runtime.js";
 import { readFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { digestClassificationValue } from "./skill-classification/request.js";
@@ -117,7 +117,7 @@ export async function startMcpServer(
   const glossary = new SqliteKoreanProseGlossary(resolveKoreanProseGlossaryPath());
   const classificationRoot = path.dirname(path.dirname(registryPath));
   const classificationConfig = process.env.AGENT_GOVERNANCE_CLASSIFICATION_CONFIG;
-  let initializationFailed = false;
+  let initializationFailure: ClassificationInitializationError | null = null;
   let providerRuntimeRef: string | null | undefined;
   let providerBytesDigest: string | null = null;
   let nativeDefinitionsRef: string | null | undefined;
@@ -136,8 +136,8 @@ export async function startMcpServer(
     const nativeAdapters = createNativeClassificationAdapters(bindNativeClassificationDefinitions(nativeDefinitions, installedNativeBehaviors));
     if (providerRuntimeRef) providerRuntime = await loadClassificationProviderRuntime(providerRuntimeRef, {nativeAdapters, wireAdapters: installedWireAdapters});
   } catch (error) {
-    initializationFailed = true;
-    reportClassificationInitializationFailure(error);
+    initializationFailure = new ClassificationInitializationError(error);
+    reportClassificationInitializationFailure(initializationFailure);
   }
   const classification = new RuntimeSkillClassificationGateway({root: classificationRoot,
     observeRuntime: () => {
@@ -161,7 +161,7 @@ export async function startMcpServer(
       } finally {board.close();}
     },
     readRuntime: async () => {
-      if (initializationFailed) throw new Error("CLASSIFICATION_CONFIGURATION_UNAVAILABLE");
+      if (initializationFailure) throw initializationFailure;
       const runtime = await readClassificationRuntime(classificationConfig, classificationRoot);
       if (runtime.providerRuntimeRef !== providerRuntimeRef || (providerRuntimeRef && digestClassificationValue((await readFile(providerRuntimeRef)).toString("utf8")) !== providerBytesDigest)) throw new Error("APPROVED_PROVIDER_RUNTIME_CHANGED");
       if (runtime.nativeAdapterDefinitionsRef !== nativeDefinitionsRef || (nativeDefinitionsRef && digestClassificationValue((await readFile(nativeDefinitionsRef)).toString("utf8")) !== nativeDefinitionDigest)) throw new Error("APPROVED_NATIVE_ADAPTERS_CHANGED");

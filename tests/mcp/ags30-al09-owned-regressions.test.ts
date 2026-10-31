@@ -15,6 +15,7 @@ import { resolveToolSchemaProfile } from "../../mcp-server/src/runtime-config.js
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer, planWorkflowToolInputSchema } from "../../mcp-server/src/server.js";
 import type { SkillClassificationGateway } from "../../mcp-server/src/skill-classification/gateway.js";
+import { ClassificationInitializationError } from "../../mcp-server/src/skill-classification/runtime.js";
 import { inlineSchemaReferences } from "../../mcp-server/src/tool-schema-inline.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
@@ -94,6 +95,46 @@ describe("AL09 server boundary regressions", () => {
       expect(payload(reply).error?.code).toBe("INVALID_INPUT");
       expect(payload(reply).error?.details).toMatchObject({ category: "request-state", reasonCode: "OPERATION_DIGEST_CONFLICT" });
     }, { classification: { inventory: async () => { throw new Error("OPERATION_DIGEST_CONFLICT"); }, classify: async () => null, accept: async () => null } });
+  });
+
+  it("D0068 reports a typed initialization failure with its closed reason and nothing else", async () => {
+    // Known reason survives; an arbitrary cause collapses to the fixed reason. Neither leaks the original message.
+    for (const [cause, reasonCode] of [
+      [new Error("INVALID_NATIVE_ISOLATION_ARGUMENT"), "INVALID_NATIVE_ISOLATION_ARGUMENT"],
+      [new Error("PRIVATE_CONFIGURATION_PATH /home/u/secret.json"), "CLASSIFICATION_CONFIGURATION_UNAVAILABLE"],
+    ] as const) {
+      const failure = new ClassificationInitializationError(cause);
+      await withServer(async (_client, call) => {
+        const reply = await call("classify_skills", {
+        schemaVersion: "1.0.0", requestId: "fixture", operationId: "fixture", originalPrompt: "fixture",
+        confirmedContext: { taskRevision: null, objective: null, actions: null, targets: null, constraints: null, prohibitedActions: null, background: null },
+        contextSources: [], explicitSkillIds: [], ruleRequiredSkillIds: [], vendorContext: { vendorId: "fixture", reference: "fixture" },
+        publicSynthetic: true,
+      });
+        expect(payload(reply).error?.code).toBe("MCP_UNAVAILABLE");
+        expect(payload(reply).error?.details).toEqual({ category: "configuration", phase: "classification-initialization", reasonCode });
+        expect(JSON.stringify(reply)).not.toContain("PRIVATE_CONFIGURATION_PATH");
+        expect(JSON.stringify(reply)).not.toContain("/home/u");
+      }, { classification: { inventory: async () => null, classify: async () => { throw failure; }, accept: async () => null } });
+    }
+  });
+
+  it("D0068 keeps arbitrary and look-alike errors generic", async () => {
+    // Only the runtime's own class is identified; a matching message, name or phase field is not.
+    const lookAlike = Object.assign(new Error("INVALID_NATIVE_ISOLATION_ARGUMENT"), { name: "ClassificationInitializationError", phase: "classification-initialization" });
+    for (const thrown of [new Error("INVALID_NATIVE_ISOLATION_ARGUMENT"), lookAlike, new Error("PRIVATE_CONFIGURATION_PATH")]) {
+      await withServer(async (_client, call) => {
+        const reply = await call("classify_skills", {
+        schemaVersion: "1.0.0", requestId: "fixture", operationId: "fixture", originalPrompt: "fixture",
+        confirmedContext: { taskRevision: null, objective: null, actions: null, targets: null, constraints: null, prohibitedActions: null, background: null },
+        contextSources: [], explicitSkillIds: [], ruleRequiredSkillIds: [], vendorContext: { vendorId: "fixture", reference: "fixture" },
+        publicSynthetic: true,
+      });
+        expect(payload(reply).error?.code).toBe("MCP_UNAVAILABLE");
+        expect(payload(reply).error?.details ?? null).toBeNull();
+        expect(JSON.stringify(reply)).not.toContain("PRIVATE_CONFIGURATION_PATH");
+      }, { classification: { inventory: async () => null, classify: async () => { throw thrown; }, accept: async () => null } });
+    }
   });
 
   it("D0077 keeps closed-world calls offline and still serves cached advisory notices", async () => {

@@ -77,6 +77,26 @@ it.each(["unsupported-sibling", "invalid-isolation"] as const)("actual index sta
       expect(records).toHaveLength(1);
       expect(JSON.parse(records[0]!.slice(records[0]!.indexOf("{")))).toEqual({phase: "classification-initialization", reason: "INVALID_NATIVE_ISOLATION_ARGUMENT"});
     } else expect(records).toHaveLength(0);
+    if (mode === "invalid-isolation") {
+      // D0068: a valid follow-up classify call reports the typed initialization reason, and the server keeps serving.
+      const classifyInput = {schemaVersion: "1.0.0", requestId: "startup-fixture", operationId: "startup-fixture", originalPrompt: "fixture",
+        confirmedContext: {taskRevision: null, objective: null, actions: null, targets: null, constraints: null, prohibitedActions: null, background: null},
+        contextSources: [], explicitSkillIds: [], ruleRequiredSkillIds: [], vendorContext: {vendorId: "fixture", reference: "fixture"}, publicSynthetic: true};
+      const signed = JSON.parse(execFileSync(process.execPath, [path.join(root, "mcp-server", "dist", "governance-hook.mjs"), "--host=claude-code"], {
+        cwd: root, env: environment, encoding: "utf8", timeout: 10_000, windowsHide: true,
+        input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "synthetic-startup-root", tool_use_id: "classify-call",
+          tool_name: "mcp__agent_governance_suite__classify_skills", tool_input: classifyInput, cwd: directory }),
+      })) as { hookSpecificOutput: { permissionDecision?: string; updatedInput: Record<string, unknown> } };
+      expect(signed.hookSpecificOutput).not.toHaveProperty("permissionDecision");
+      const classified = await client.callTool({name: "classify_skills", arguments: signed.hookSpecificOutput.updatedInput});
+      const classifiedText = (classified.content as Array<{type: string; text?: string}>).find(item => item.type === "text")!.text!;
+      const classifiedResult = JSON.parse(classifiedText) as {ok: boolean; error: {code: string; details: unknown} | null};
+      expect(classifiedResult.ok).toBe(false);
+      expect(classifiedResult.error?.code).toBe("MCP_UNAVAILABLE");
+      expect(classifiedResult.error?.details).toEqual({category: "configuration", phase: "classification-initialization", reasonCode: "INVALID_NATIVE_ISOLATION_ARGUMENT"});
+      expect(classifiedText).not.toContain("PRIVATE_NATIVE_ARGUMENT"); expect(classifiedText).not.toContain(definitionsPath); expect(classifiedText).not.toContain(directory);
+      expect((await client.listTools()).tools.some(tool => tool.name === "classify_skills")).toBe(true);
+    }
     expect(diagnostic).not.toContain("PRIVATE_NATIVE_ARGUMENT"); expect(diagnostic).not.toContain(definitionsPath);
   } finally {
     try {await client.close();} finally {await transport.close(); await rm(directory, {recursive: true, force: true});}

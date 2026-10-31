@@ -1,3 +1,4 @@
+import { ClassificationInitializationError } from "./skill-classification/runtime.js";
 import type { Diagnostics, DiagnosticOutcome } from "./diagnostics.js";
 import { SESSION_PROOF_FIELD, withoutSessionProof, type SessionActorProofVerifier } from "./session-actor-proof.js";
 import { existsSync, readFileSync } from "node:fs";
@@ -686,6 +687,10 @@ export function createMcpServer(
           } else if (error instanceof Error && CLASSIFICATION_REQUEST_REJECTIONS.has(error.message)) {
             result = apiError("INVALID_INPUT", "Skill classification request was rejected; no selection was accepted.", {
               category: "request-state", reasonCode: error.message,
+            });
+          } else if (error instanceof ClassificationInitializationError) {
+            result = apiError("MCP_UNAVAILABLE", "Skill classification initialization is unavailable; no selection was accepted.", {
+              category: "configuration", phase: error.phase, reasonCode: error.message,
             });
           } else {
             result = apiError("MCP_UNAVAILABLE", "Skill classification configuration or runtime is unavailable; no selection was accepted.");
