@@ -59,6 +59,8 @@ interface CandidatePayload {
 
 const FORK_START_EVENT = "fork-start";
 const FORK_PARENT_EVENT = "fork-parent:";
+/** Pinned fork parents followed upward when deciding whether one candidate descends from another. */
+const FORK_ANCESTRY_LIMIT = 32;
 const LINEAGE_ANCHOR_COUNT = 16;
 
 export interface WorkflowContinuityCardV1 {
@@ -227,6 +229,10 @@ export class ContinuityService implements ContinuityGateway {
 
   issueToolBinding(rawSessionId: string, toolName: string, input: Record<string, unknown>, readLineage?: () => LineageRead): string {
     const task = this.ensureSession(rawSessionId);
+    let read: LineageRead | undefined;
+    const lineage = readLineage && (() => read ??= readLineage()); // one transcript read per binding
+    // A fork's first save is a final pin boundary too, so its own anchors carry a recorded descent (D1 grandchild).
+    if (toolName === "checkpoint_context" && lineage) this.pinTaskForkParent(task, lineage, true);
     const payload: ToolBindingPayload = {
       v: 1,
       c: task.taskCorrelation,
@@ -234,8 +240,8 @@ export class ContinuityService implements ContinuityGateway {
       t: toolName,
       d: convergenceDigest(withoutBinding(input)),
       x: Math.floor(this.now().getTime() / 1000) + TOOL_TOKEN_TTL_SECONDS,
-      ...(toolName === "checkpoint_context" && readLineage ? this.anchorsFor(task, readLineage) : {}),
-      ...(toolName === "inspect_context" ? this.pinnedForkParent(task, readLineage) : {}),
+      ...(toolName === "checkpoint_context" && lineage ? this.anchorsFor(task, lineage) : {}),
+      ...(toolName === "inspect_context" ? this.pinnedForkParent(task, lineage) : {}),
     };
     return this.sign(payload);
   }
@@ -285,8 +291,11 @@ export class ContinuityService implements ContinuityGateway {
    * Only anchors saved before the child's fork record count, so a parent (or sibling) save after the fork cannot be
    * chosen. An entry belongs to the first session that anchored it: a fork's own save repeats the entries it copied,
    * and those copies never count for it (review 902e: a sibling holding 15 copied anchors outscored the parent's 14).
-   * D1: the (parent, revision) whose own anchor appears last in the child's file wins, then the most and the fewest
-   * absent of its anchors, then the later revision of the same parent. A tie between different parents is ambiguous.
+   * The (parent, revision) with the most and then the fewest absent of its anchors is chosen, then the later revision
+   * of the same parent; a tie between different parents is ambiguous. D1 (grandchild): a candidate whose recorded fork
+   * pins descend from the chosen one and whose own anchor appears later in the child's file is the nearer parent.
+   * Without that recorded descent a later anchor never wins (review 902e N1x: an unrelated session that wrote another
+   * session's entries into its own file and saved them would otherwise take the fork).
    */
   private selectForkParent(task: ContinuityTaskRecord, readLineage: () => LineageRead): { p: ForkParent } | { q: string } {
     const read = readLineage();
@@ -308,16 +317,41 @@ export class ContinuityService implements ContinuityGateway {
       else { score.matched += 1; score.last = Math.max(score.last, position); }
       scores.set(key, score);
     }
-    const ranked = [...scores.values()].filter(score => score.matched > 0).sort((left, right) => right.last - left.last
-      || right.matched - left.matched || left.absent - right.absent
+    const ranked = [...scores.values()].filter(score => score.matched > 0).sort((left, right) => right.matched - left.matched
+      || left.absent - right.absent
       || (left.parent.c === right.parent.c && left.parent.e === right.parent.e ? right.parent.r - left.parent.r : 0));
     const [best, next] = ranked;
     if (!best) return { q: "FORK_PARENT_NOT_FOUND" };
-    if (next && next.matched === best.matched && next.absent === best.absent && next.last === best.last
+    if (next && next.matched === best.matched && next.absent === best.absent
       && (next.parent.c !== best.parent.c || next.parent.e !== best.parent.e)) {
       return { q: "FORK_PARENT_AMBIGUOUS" };
     }
-    return { p: best.parent };
+    let chosen = best;
+    for (;;) {
+      const above = JSON.stringify([chosen.parent.c, chosen.parent.e]);
+      const nearer = ranked.filter(score => score.last > chosen.last && this.pinnedAncestors(score.parent.c, score.parent.e).has(above))
+        .sort((left, right) => right.last - left.last)[0];
+      if (!nearer) return { p: chosen.parent };
+      chosen = nearer;
+    }
+  }
+
+  /** The (c, e) of every recorded fork pin above this task epoch, following each pinned parent upward. */
+  private pinnedAncestors(c: string, e: number): Set<string> {
+    const seen = new Set<string>();
+    for (let depth = 0; depth < FORK_ANCESTRY_LIMIT; depth += 1) {
+      const event = this.store.firstObservationEvent(c, e, FORK_PARENT_EVENT);
+      if (!event) break;
+      let parent: Partial<ForkParent> | undefined;
+      try { parent = (JSON.parse(event.slice(FORK_PARENT_EVENT.length)) as { p?: Partial<ForkParent> }).p; } catch { break; }
+      if (!parent || typeof parent.c !== "string" || !Number.isInteger(parent.e)) break;
+      const key = JSON.stringify([parent.c, parent.e]);
+      if (seen.has(key)) break;
+      seen.add(key);
+      c = parent.c;
+      e = parent.e!;
+    }
+    return seen;
   }
 
   /**

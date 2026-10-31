@@ -334,6 +334,21 @@ describe("D0352 B08 fork lineage", () => {
     expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
   });
 
+  it("N1x: an unrelated session that wrote the parent's unanchored entries into its own file and saved never becomes the parent (review 902e)", async () => {
+    const service = createService();
+    const rows: Array<[string, string]> = Array.from({ length: 20 }, () => ["parent-a", randomUUID()]);
+    const file = await transcript(rows);
+    const snapshot = checkpoint(service, "parent-a", file);
+    const tail = [randomUUID(), randomUUID()];
+    await appendFile(file, tail.map(uuid => line("parent-a", uuid)).join("\n") + "\n", "utf8");
+    // C is no fork: its model read A's file and appended A's tail uuids as its own entries, then saved.
+    const forged = await transcript([["unrelated-c", randomUUID(), OWN], ...tail.map(uuid => ["unrelated-c", uuid, OWN] as [string, string, string])]);
+    expect(start(service, "unrelated-c", "startup", forged)).toEqual({});
+    checkpoint(service, "unrelated-c", forged, { requestId: "forged-tail" });
+    const laterFile = await fork(service, "fork-late", [...rows.map(([, uuid]) => uuid), ...tail]);
+    expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+  });
+
   it("T1b: a fork entry without a host write time is treated as copied, never as the fork's own anchor", async () => {
     const service = createService();
     const { snapshot, uuids } = await parent(service);
