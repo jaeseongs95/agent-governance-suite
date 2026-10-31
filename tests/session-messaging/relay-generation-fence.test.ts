@@ -84,3 +84,29 @@ it("FENCE-4: the current generation still reconnects after its own lease expires
   expect(store.relayTick({ ...target, transport, relayId: "R1", instanceId: "I1", includePending: false }, t0 + 61_000).alive).toBe(true);
   expect(store.presence(target, t0 + 61_000).state).toBe("online");
 });
+
+it("FENCE-5: a reused OS pid with a new relayId keeps its lease when the old relay's late exit arrives", () => {
+  const store = open(), t0 = Date.now();
+  start(store, "I1", t0);
+  expect(acquire(store, "R1", 4501, "I1", t0)).toBe(true);
+  start(store, "I2", t0 + 1000);
+  expect(acquire(store, "R1", 4501, "I1", t0 + 2000)).toBe(false);
+  expect(acquire(store, "R2", 4501, "I2", t0 + 15_001)).toBe(true);
+  expect(end(store, "I1", "R1", 4501)).toBe(true); // ends I1 only
+  expect(owner(store)).toMatchObject({ relayId: "R2", pid: 4501 });
+  expect(store.presence(target).instanceId).toBe("I2");
+  // The current relay re-acquiring its own expired lease is still one token; its own exit then frees it once.
+  expect(acquire(store, "R2", 4501, "I2", t0 + 40_000)).toBe(true);
+  expect(end(store, "I2", "R2", 4501)).toBe(true);
+  expect(owner(store)).toBeNull();
+  expect(end(store, "I2", "R2", 4501)).toBe(false);
+});
+
+it("FENCE-6: a new generation started in the same millisecond is current, so only its relay acquires", () => {
+  const store = open(), t0 = Date.now();
+  start(store, "I1", t0);
+  start(store, "I2", t0);
+  expect(store.presence(target, t0).instanceId).toBe("I2");
+  expect(acquire(store, "R1", 4601, "I1", t0)).toBe(false);
+  expect(acquire(store, "R2", 4602, "I2", t0)).toBe(true);
+});
