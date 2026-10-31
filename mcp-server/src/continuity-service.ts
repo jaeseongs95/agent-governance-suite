@@ -37,8 +37,8 @@ interface ToolBindingPayload {
   t: string;
   d: Sha256Digest;
   x: number;
-  /** checkpoint_context: anchor of this session's newest host-written entry. */
-  a?: string;
+  /** checkpoint_context: anchors of this session's newest host-written entries (at most 16, design r03). */
+  a?: string[];
   /** inspect_context of a recorded fork: parent selected from the child's own lineage, or why none. */
   p?: ForkParent;
   q?: string;
@@ -58,6 +58,7 @@ interface CandidatePayload {
 }
 
 const FORK_START_EVENT = "fork-start";
+const LINEAGE_ANCHOR_COUNT = 16;
 
 export interface WorkflowContinuityCardV1 {
   schemaVersion: "1.0.0";
@@ -246,7 +247,8 @@ export class ContinuityService implements ContinuityGateway {
   private lineageFor(task: ContinuityTaskRecord, toolName: string, readLineage: () => LineageRead): Pick<ToolBindingPayload, "a" | "p" | "q"> {
     if (toolName === "checkpoint_context") {
       const read = readLineage();
-      return "ids" in read ? { a: this.lineageAnchor(read.ids.at(-1)!) } : {};
+      // Several anchors: the very newest entry may not be among those a fork copies.
+      return "ids" in read ? { a: read.ids.slice(-LINEAGE_ANCHOR_COUNT).map(id => this.lineageAnchor(id)) } : {};
     }
     // Only a recorded fork with no own state looks up a parent; startup, resume and clear never do.
     if (toolName !== "inspect_context" || task.rootId || this.summary(task)
@@ -290,7 +292,7 @@ export class ContinuityService implements ContinuityGateway {
       const snapshot: ContinuitySnapshotV1 = { ...base, snapshotDigest: convergenceDigest(base) };
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request as unknown as Record<string, unknown>));
-      const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot, binding.a);
+      const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot, Array.isArray(binding.a) ? binding.a : []);
       if (stored.kind === "epoch-mismatch") return failure("BINDING_INVALID", "Continuity task binding is stale.");
       if (stored.kind === "source-conflict") return failure("SNAPSHOT_CONFLICT", "Direct checkpoints are disabled after a workflow root is bound.");
       if (stored.kind === "replay") {

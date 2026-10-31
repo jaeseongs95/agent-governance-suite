@@ -122,6 +122,28 @@ describe("D0352 B08 fork lineage", () => {
     expect(inspect(service, "fork-g", grandchild).summary).toMatchObject({ taskCorrelation: bSnapshot.taskCorrelation, revision: bSnapshot.revision });
   });
 
+  it("A16: the parent is found when its newest entries were not copied into the fork", async () => {
+    const service = createService();
+    const rows: Array<[string, string]> = Array.from({ length: 20 }, () => ["parent-a", randomUUID()]);
+    const snapshot = checkpoint(service, "parent-a", await transcript(rows));
+    // The fork copied all but the parent's last three entries: anchors 17-19 of the newest 16 still match.
+    const childFile = await fork(service, "fork-short", rows.slice(0, -3).map(([, uuid]) => uuid));
+    expect(inspect(service, "fork-short", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: 1 });
+    // Entries older than the newest 16 at checkpoint time are not anchors.
+    const oldOnly = await fork(service, "fork-old", rows.slice(0, 4).map(([, uuid]) => uuid));
+    expect(inspect(service, "fork-old", oldOnly).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_NOT_FOUND"]);
+  });
+
+  it("W1: a parent anchor older than the newest 4000 lines of the child's file is not lineage evidence", async () => {
+    const service = createService();
+    const { uuids } = await parent(service);
+    const rows: Array<[string, string]> = [...uuids.map(uuid => ["fork-long", uuid] as [string, string]),
+      ...Array.from({ length: 4000 }, () => ["fork-long", randomUUID()] as [string, string])];
+    const file = await transcript(rows);
+    expect(start(service, "fork-long", "fork", file)).toEqual({});
+    expect(inspect(service, "fork-long", file).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_NOT_FOUND"]);
+  });
+
   it("N1: an unrelated startup session holding the parent's uuids in its own file or a copy gets nothing", async () => {
     const service = createService();
     const { uuids } = await parent(service);
@@ -180,9 +202,17 @@ describe("D0352 B08 fork lineage", () => {
     expect(start(service, "child-missing", "fork", missing)).toEqual({});
     expect(inspect(service, "child-missing", missing).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "LINEAGE_TRANSCRIPT_ABSENT"]);
     // Parent rows whose sessionId was not rewritten are not the child's own entries.
-    const foreign = await transcript(uuids.map(uuid => ["parent-a", uuid] as [string, string]), "{not json child-garbled\n");
-    expect(start(service, "child-garbled", "fork", foreign)).toEqual({});
-    expect(inspect(service, "child-garbled", foreign).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "LINEAGE_IDS_ABSENT"]);
+    const foreign = await transcript(uuids.map(uuid => ["parent-a", uuid] as [string, string]));
+    expect(start(service, "child-foreign", "fork", foreign)).toEqual({});
+    expect(inspect(service, "child-foreign", foreign).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "LINEAGE_IDS_ABSENT"]);
+    // A complete line that is not JSON is a host format change: no candidate even though valid rows remain (D2).
+    const garbled = await transcript(uuids.map(uuid => ["child-garbled", uuid] as [string, string]), "{not json\n");
+    expect(start(service, "child-garbled", "fork", garbled)).toEqual({});
+    expect(inspect(service, "child-garbled", garbled).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "LINEAGE_FORMAT_INVALID"]);
+    // An unterminated last line is one the host is still writing; it is skipped, not a format error.
+    const writing = await transcript(uuids.map(uuid => ["child-writing", uuid] as [string, string]), "{\"type\":\"assistant\",\"sessionId\":\"child-wr");
+    expect(start(service, "child-writing", "fork", writing)).toEqual({});
+    expect(inspect(service, "child-writing", writing).reasonCodes).toEqual(["EXPLICIT_LOAD_REQUIRED", "FORK_PARENT_CANDIDATE"]);
     // A fork whose host supplied no transcript path performs no lookup.
     expect(start(service, "child-no-path", "fork")).toEqual({});
     expect(inspect(service, "child-no-path").reasonCodes).toEqual(["NO_RESTORE_CANDIDATE"]);

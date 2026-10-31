@@ -305,7 +305,7 @@ export class SqliteContinuityStore {
     requestHash: string,
     commandDigest: string,
     snapshot: ContinuitySnapshotV1,
-    lineageAnchor?: string,
+    lineageAnchors: readonly string[] = [],
   ): { kind: "stored" } | { kind: "stale"; actualRevision: number } | { kind: "replay"; request: StoredRequest } | { kind: "conflict" } | { kind: "epoch-mismatch" } | { kind: "source-conflict" } {
     return this.transaction("Cannot store the continuity checkpoint.", () => {
       const task = this.readTask(taskCorrelation);
@@ -335,11 +335,14 @@ export class SqliteContinuityStore {
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
       `).run(taskCorrelation, epoch, requestHash, commandDigest, resultJson, snapshot.updatedAt);
-      // The anchor names exactly this stored revision; a later fork child may select it, never write it.
-      if (lineageAnchor) this.database.prepare(`
+      // Each anchor names exactly this stored revision; a later fork child may select it, never write it.
+      const anchor = this.database.prepare(`
         INSERT INTO continuity_observations(task_correlation, epoch, event, turn_hash, success, observed_at)
         VALUES (?, ?, ?, ?, 1, ?)
-      `).run(taskCorrelation, epoch, `${LINEAGE_ANCHOR_EVENT}${snapshot.revision}:${snapshot.snapshotDigest}`, lineageAnchor, snapshot.updatedAt);
+      `);
+      for (const lineageAnchor of lineageAnchors) {
+        anchor.run(taskCorrelation, epoch, `${LINEAGE_ANCHOR_EVENT}${snapshot.revision}:${snapshot.snapshotDigest}`, lineageAnchor, snapshot.updatedAt);
+      }
       return { kind: "stored" };
     }, taskCorrelation);
   }

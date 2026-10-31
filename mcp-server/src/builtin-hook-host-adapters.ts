@@ -121,7 +121,9 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
   return adapted;
 }
 
-const CLAUDE_LINEAGE_MAX_BYTES = 4 * 1024 * 1024;
+// Design r03 D2: the lineage window is the newest 2 MiB and at most 4000 complete lines.
+const CLAUDE_LINEAGE_MAX_BYTES = 2 * 1024 * 1024;
+const CLAUDE_LINEAGE_MAX_LINES = 4000;
 
 /**
  * Structural `uuid` fields of this session's own entries in the host-given transcript, oldest first.
@@ -129,7 +131,8 @@ const CLAUDE_LINEAGE_MAX_BYTES = 4 * 1024 * 1024;
  * Message bodies are never returned. Only the path the host passed is read, never a copy elsewhere.
  * Out of scope: a same-account process that edits this host-written file can also read the continuity
  * database and its secret directly, so lineage cannot protect against it (design r03 section 2).
- * ponytail: only the newest 4 MiB is read; entries older than that window are not lineage evidence.
+ * Entries outside the window are not lineage evidence: a parent anchor there yields FORK_PARENT_NOT_FOUND.
+ * A complete line that is not JSON means the host format changed, so no IDs are returned at all (D2).
  */
 function readClaudeLineage(transcriptPath: string, sessionId: string): LineageRead {
   let descriptor: number | null = null;
@@ -149,11 +152,13 @@ function readClaudeLineage(transcriptPath: string, sessionId: string): LineageRe
   } finally {
     if (descriptor !== null) try { closeSync(descriptor); } catch { /* read already finished or failed above */ }
   }
+  // The text after the last newline is a line the host may still be writing; it is not read.
+  const lines = content.split("\n").slice(0, -1).slice(-CLAUDE_LINEAGE_MAX_LINES);
   const ids: string[] = [];
-  for (const line of content.split("\n")) {
-    if (!line.includes(sessionId)) continue;
+  for (const line of lines) {
+    if (!line.trim()) continue;
     let entry: Record<string, unknown>;
-    try { entry = record(JSON.parse(line)); } catch { continue; } // a line still being written
+    try { entry = record(JSON.parse(line)); } catch { return { reason: "LINEAGE_FORMAT_INVALID" }; }
     if (entry.sessionId === sessionId && typeof entry.uuid === "string" && entry.uuid) ids.push(entry.uuid);
   }
   return ids.length > 0 ? { ids } : { reason: "LINEAGE_IDS_ABSENT" };
