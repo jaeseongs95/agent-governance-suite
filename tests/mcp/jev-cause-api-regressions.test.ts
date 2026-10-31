@@ -137,7 +137,7 @@ describe("JEV 원인과 권한의 실제 MCP 응답", () => {
     const h = await harness(), advice = (await h.call<Advice>("classify_skills", input())).data!;
     h.readRuntime.mockImplementationOnce(async () => {
       expect(h.observed.last?.expiresAt).toEqual(expect.any(String));
-      h.clock.now = new Date(h.observed.last!.expiresAt!);
+      h.clock.now = new Date(Date.parse(h.observed.last!.expiresAt!) + 60_000);
       return h.runtime;
     });
     const reply = await h.call<Accepted>("record_skill_selection", {schemaVersion: "1.0.0", operationId: input().operationId, decision: decision(advice)});
