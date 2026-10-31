@@ -222,9 +222,12 @@ afterEach(async (context) => {
   } : undefined;
   observe?.("hook-enter");
   vi.unstubAllEnvs();
-  for (const directory of directories.splice(0)) {
-    await cleanupStateDirectory(directory, observe);
-  }
+  const owned = directories.splice(0);
+  // Same module instance as the static import; kept here so only this cleanup block changes.
+  const { cleanupIfClaimWorkersFinished } = await import("../helpers/concurrent-claim-process.js");
+  await cleanupIfClaimWorkersFinished(async () => {
+    for (const directory of owned) await cleanupStateDirectory(directory, observe);
+  });
   observe?.("hook-returned");
 });
 

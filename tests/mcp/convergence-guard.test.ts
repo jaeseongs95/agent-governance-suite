@@ -26,7 +26,7 @@ import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 
-import { concurrentClaims } from "../helpers/concurrent-claim-process.js";
+import { cleanupIfClaimWorkersFinished, concurrentClaims } from "../helpers/concurrent-claim-process.js";
 
 const temporaryDirectories: string[] = [];
 const sqliteStores = new Set<SqliteWorkflowStore>();
@@ -383,7 +383,8 @@ async function consumeThreeFailedAttempts(
 afterEach(async () => {
   for (const store of sqliteStores) store.close();
   sqliteStores.clear();
-  await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
+  const owned = temporaryDirectories.splice(0);
+  await cleanupIfClaimWorkersFinished(() => Promise.all(owned.map((directory) => rm(directory, { recursive: true, force: true }))));
 });
 
 describe("local MCP convergence guard", () => {

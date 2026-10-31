@@ -26,7 +26,7 @@ import { TrustStore } from "../../mcp-server/src/trust-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
-import { concurrentClaims } from "../helpers/concurrent-claim-process.js";
+import { cleanupIfClaimWorkersFinished, concurrentClaims } from "../helpers/concurrent-claim-process.js";
 
 // IO spies start with real implementations; the denial test makes them fail fast.
 // The verifier is always the real SessionActorProofs implementation.
@@ -52,7 +52,8 @@ const directories: string[] = [];
 afterEach(() => {
   vi.restoreAllMocks();
   vi.resetAllMocks();
-  for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true });
+  const owned = directories.splice(0);
+  cleanupIfClaimWorkersFinished(() => { for (const directory of owned) rmSync(directory, { recursive: true, force: true }); });
 });
 
 function ownedDirectory(): string {
