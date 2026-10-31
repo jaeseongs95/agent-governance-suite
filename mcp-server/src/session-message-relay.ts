@@ -1,7 +1,7 @@
 import { readRelayCodeDigest } from "./relay-code-identity.js";
 import { randomUUID } from "node:crypto";
 
-import { failureContext, producerFailureReason } from "./failure-diagnostics.js";
+import { failureContext, producerFailure, producerFailureReason } from "./failure-diagnostics.js";
 import { newWakeNonce, sessionMessageRequest, wakeMessage } from "./session-message-client.js";
 import { processExists, processIdentityState, type ProcessIdentityState } from "./process-identity.js";
 import { persistRelayFailure, transportWakePort, transportDeliveryCapabilities, wakeBackoffDelay, type WakeDispatchPort, type WakeDispatchOutcome } from "./session-message-wake-port.js";
@@ -50,7 +50,13 @@ export interface RelayOptions {
   parentStartToken: string;
   /** Optional verified startup reservation; absence retains legacy acquisition. */
   relayId?: string;
+  /** Boundary-hook re-serve of a generation that lost its relay: one acquisition attempt, no wait loop. */
+  recovery?: boolean;
 }
+
+// Startup outlasts one stale lease (RELAY_LEASE_MS 15s) left by a superseded or killed relay.
+const STARTUP_ACQUIRE_ATTEMPTS = 8;
+const ACQUIRE_RETRY_MS = 3000;
 
 export function transportWakeCapabilities(transport: SessionMessageTransport): {
   wakeVisibility: "silent" | "user-message" | "none";
@@ -132,11 +138,18 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
   let acquired = false;
   let targetUnavailable = false;
   let acquisitionUnknowns = 0;
-  for (let attempt = 0; attempt < 6; attempt += 1) {
+  // Acquisition failures are not exceptions; keep the last blocking cause so a missing relay is diagnosable.
+  let blocked = "RELAY_LEASE_HELD";
+  const attempts = options.recovery ? 1 : options.relayId ? 6 : STARTUP_ACQUIRE_ATTEMPTS;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
     const identity = processIdentityState(options.parentPid, options.parentStartToken);
     const decision = relayIdentityDecision(identity, acquisitionUnknowns);
     acquisitionUnknowns = decision.unknowns;
-    if (decision.stop) return;
+    if (decision.stop) {
+      reportRelayFailure("acquire", producerFailure("RELAY_PARENT_IDENTITY_STOPPED", "The relay parent identity did not verify."));
+      return;
+    }
+    blocked = decision.proceed ? "RELAY_LEASE_HELD" : "RELAY_PARENT_IDENTITY_UNKNOWN";
     try {
       if (decision.proceed) {
         const result = await sessionMessageRequest<{ acquired: boolean }>("acquire-relay", {
@@ -153,11 +166,21 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
         if (acquired) break;
       }
     } catch (error) {
+      blocked = "RELAY_ACQUIRE_REQUEST_FAILED";
       reportRelayFailure("acquire", error); // Retry while a stale lease expires.
     }
-    await delay(3000);
+    if (attempt + 1 < attempts) await delay(ACQUIRE_RETRY_MS);
   }
-  if (!acquired) return;
+  if (!acquired) {
+    if (blocked === "RELAY_LEASE_HELD") {
+      try {
+        const current = await sessionMessageRequest<{ presence: { instanceId: string | null } }>("presence", { target });
+        if (current.presence.instanceId !== options.instanceId) blocked = "RELAY_GENERATION_SUPERSEDED";
+      } catch { /* Keep the lease cause; the request failure is not the acquisition cause. */ }
+    }
+    reportRelayFailure("acquire", producerFailure(blocked, "Relay acquisition ended without a lease."));
+    return;
+  }
 
   try {
 

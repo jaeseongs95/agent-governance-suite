@@ -110,3 +110,37 @@ it("FENCE-6: a new generation started in the same millisecond is current, so onl
   expect(acquire(store, "R1", 4601, "I1", t0)).toBe(false);
   expect(acquire(store, "R2", 4602, "I2", t0)).toBe(true);
 });
+
+const claimDeferred = (store: SessionMessageStore, extra: Record<string, unknown> = {}) =>
+  dispatchSessionMessageBrokerOperation(store, "claim-deferred", { target, ...extra }) as { messages: unknown[]; relayRecovery?: { instanceId: string } };
+
+it("RECOVER-1: a boundary claim reports the current generation that has no relay, and only that case", () => {
+  const store = open(), now = Date.now();
+  start(store, "I1", now - 90_000);
+  start(store, "I2", now - 60_000); // never acquired: presence lapsed to unreachable
+  expect(claimDeferred(store).relayRecovery).toEqual({ instanceId: "I2" });
+  expect(acquire(store, "R3", 4703, "I2", Date.now())).toBe(true);
+  expect(claimDeferred(store).relayRecovery).toBeUndefined(); // live relay: nothing to recover
+});
+
+it("RECOVER-2: a killed old relay's stale lease suppresses recovery until it expires, then the new relay acquires", () => {
+  const store = open(), now = Date.now();
+  start(store, "I1", now - 60_000);
+  start(store, "I2", now - 30_000);
+  // Killed relay: its lease row stays (no exit cleanup). Legacy instance-less acquire stands in for the old row.
+  expect(store.acquireRelay({ ...target, transport, relayId: "R1", pid: 4801, parentPid }, now - 5000)).toBe(true);
+  expect(claimDeferred(store).relayRecovery).toBeUndefined();
+  expect(store.relayRecoveryInstance(target, now + 10_001)).toBe("I2");
+  expect(acquire(store, "R2", 4802, "I2", now + 10_001)).toBe(true);
+  expect(store.relayRecoveryInstance(target, now + 10_002)).toBeNull();
+});
+
+it("RECOVER-3: ended, online or verified generations are never offered for unverified recovery", () => {
+  const store = open(), now = Date.now();
+  start(store, "I1", now);
+  expect(claimDeferred(store).relayRecovery).toBeUndefined(); // online (fresh presence lease)
+  expect(store.endPresence(target, "host-process-ended", "I1", now)).toBe(true);
+  expect(store.relayRecoveryInstance(target, now + 60_000)).toBeNull();
+  start(store, "host-process-v1:" + "c".repeat(64), now + 1);
+  expect(store.relayRecoveryInstance(target, now + 60_000)).toBeNull();
+});

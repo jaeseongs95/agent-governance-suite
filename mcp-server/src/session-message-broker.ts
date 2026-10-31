@@ -339,6 +339,13 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
   }
 }
 
+// A boundary hook of an unverified (instance-less) session learns here that its current generation has no relay.
+function withRelayRecovery(store: SessionMessageStore, payload: Record<string, unknown>, result: { messages: unknown[] }): object {
+  if (Object.hasOwn(payload, "instanceId")) return result;
+  const instanceId = store.relayRecoveryInstance(identity(payload.target));
+  return instanceId ? { ...result, relayRecovery: { instanceId } } : result;
+}
+
 export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>,
   wakeObserver?: WakeHookObservationReader, historicalWakeVerifier = verifyHistoricalWakeObservation): unknown {
   switch (operation) {
@@ -425,20 +432,20 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
     case "claim-deferred": {
       const maxMessages = optionalInteger(payload, "maxMessages");
       const maxBodyChars = optionalInteger(payload, "maxBodyChars");
-      return { messages: store.claimDeferred(identity(payload.target), Date.now(), {
+      return withRelayRecovery(store, payload, { messages: store.claimDeferred(identity(payload.target), Date.now(), {
         ...(Object.hasOwn(payload, "instanceId") ? { instanceId: string(payload.instanceId, "instanceId") } : {}),
         ...(maxMessages === undefined ? {} : { maxMessages }),
         ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
-      }) };
+      }) });
     }
     case "claim-turn-end": {
       const maxMessages = optionalInteger(payload, "maxMessages");
       const maxBodyChars = optionalInteger(payload, "maxBodyChars");
-      return { messages: store.claimTurnEnd(identity(payload.target), Date.now(), {
+      return withRelayRecovery(store, payload, { messages: store.claimTurnEnd(identity(payload.target), Date.now(), {
         ...(Object.hasOwn(payload, "instanceId") ? { instanceId: string(payload.instanceId, "instanceId") } : {}),
         ...(maxMessages === undefined ? {} : { maxMessages }),
         ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
-      }) };
+      }) });
     }
     case "clear-deferred": {
       store.clearDeferred(identity(payload.target), Date.now(), optionalString(payload, "instanceId"));

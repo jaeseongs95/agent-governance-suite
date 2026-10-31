@@ -871,6 +871,14 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return row ? { relayId: row.relay_id, pid: row.pid, parentPid: row.parent_pid, updatedAt: row.updated_at } : null;
   }
 
+  /** Current unverified generation that lost its relay (never acquired or died); null while any relay lease is live. */
+  relayRecoveryInstance(target: SessionIdentity, nowMs = Date.now()): string | null {
+    const presence = this.presence(target, nowMs);
+    if (presence.state !== "unreachable" || !presence.instanceId || !presence.transport
+      || presence.instanceId.startsWith("host-process-v1:")) return null;
+    return this.liveRelay(target, presence.transport, nowMs) ? null : presence.instanceId;
+  }
+
   /**
    * Advisory view of the recipient's idle auto-wake path, read from stored presence, relay lease and wake rows.
    * Callers prune first so due retirements are visible. It grants nothing and proves no delivery.

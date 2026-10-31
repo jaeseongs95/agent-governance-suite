@@ -150,7 +150,9 @@ function readHostStartToken(pid: number, budget: HookBudget): string | null {
   return token;
 }
 
-function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>, budget?: HookBudget, relayId?: string, relayEnv?: Readonly<Record<string, string | undefined>>, relayOwner?: SessionMessageHookOptions["relayOwner"]): void {
+type ClaimWithRecovery = { messages: SessionMessage[]; relayRecovery?: { instanceId?: string } };
+
+function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>, budget?: HookBudget, relayId?: string, relayEnv?: Readonly<Record<string, string | undefined>>, relayOwner?: SessionMessageHookOptions["relayOwner"], recovery = false): void {
   remainingBudget(budget);
   const relayPath = fileURLToPath(new URL("./session-message-relay.mjs", import.meta.url));
   const hostPid = relayId ? hostProcess?.pid : resolveHookProcessPid(host, explicitHostPid, hostProcess);
@@ -174,6 +176,7 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     "--parent-pid", String(hostPid),
     "--parent-start-token", startToken,
     ...(relayId ? ["--relay-id",relayId]:[]),
+    ...(recovery ? ["--recovery"] : []),
   ], {
     detached: !relayOwner,
     windowsHide: true,
@@ -470,6 +473,17 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     }
   }
 
+  // Unverified relays start only at SessionStart. When the broker reports that the current generation has no
+  // relay (it never acquired or died), this boundary starts one single-attempt relay for it; the lease keeps one
+  // owner and acquire-relay fences superseded generations. Next trigger: the next boundary event.
+  // ponytail: hook events carry no instanceId, so a second live process of the same session could parent this
+  // relay; bind the parent on presence if that case appears.
+  const recoverUnverifiedRelay = (claimed: ClaimWithRecovery): void => {
+    const instanceId = claimed.relayRecovery?.instanceId;
+    if (!instanceId || options.recoverExistingSession || !actorAccess(observation.actor).allowed) return;
+    try { startRelay(host, sessionId, instanceId, profile.transport, explicitHostPid, undefined, budget, undefined, options.relayEnv, undefined, true); }
+    catch (error) { reportHookFailure("recovery", error); }
+  };
   const limits = { target, maxMessages: HOST_CLAIM_MAX_MESSAGES, maxBodyChars: HOST_CLAIM_MAX_BODY_CHARS };
   const hookTarget = { target, ...(claimInstanceId ? { instanceId: claimInstanceId } : {}) };
   const fencedLimits = { ...limits, ...hookTarget };
@@ -497,10 +511,14 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       await request("observe-native-input", hookTarget);
     }
   } else if (observation.kind === "tool-boundary" && observation.boundaryPhase === "after" && supportsInjection(profile.capabilities, "tool-boundary")) {
-    messages = (await request<{ messages: SessionMessage[] }>("claim-deferred", fencedLimits)).messages;
+    const claimed = await request<ClaimWithRecovery>("claim-deferred", fencedLimits);
+    messages = claimed.messages;
+    recoverUnverifiedRelay(claimed);
   } else if (observation.kind === "turn-end") {
     if (supportsInjection(profile.capabilities, "turn-end")) {
-      messages = (await request<{ messages: SessionMessage[] }>("claim-turn-end", fencedLimits)).messages;
+      const claimed = await request<ClaimWithRecovery>("claim-turn-end", fencedLimits);
+      messages = claimed.messages;
+      recoverUnverifiedRelay(claimed);
     } else {
       await request("clear-deferred", hookTarget);
     }
