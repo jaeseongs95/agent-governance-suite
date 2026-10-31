@@ -22,7 +22,7 @@ export type HostLifecycle = "start" | "end" | "none";
 
 /** Adapter-owned continuity semantics; common hooks never decode native lifecycle labels. */
 export type ContinuityAction =
-  | Readonly<{ kind: "startup" | "clear" | "resume" | "compact" | "pre-compact" }>
+  | Readonly<{ kind: "startup" | "fork" | "clear" | "resume" | "compact" | "pre-compact" }>
   | Readonly<{ kind: "post-compact"; turnId: string | null; successful: boolean }>;
 
 /** Explicit CLI host selection; payloads and environment cannot change an entry point default. */
@@ -47,7 +47,12 @@ export interface AdaptedHostInput {
   lifecycle: HostLifecycle;
   outputEventName: string;
   continuityAction?: ContinuityAction;
+  /** Host-written structural message IDs of this session's own transcript, oldest first. Never body text. */
+  readLineage?: () => LineageRead;
 }
+
+/** A host that cannot supply lineage omits readLineage; a failed read is closed with a stable reason. */
+export type LineageRead = { ids: readonly string[] } | { reason: string };
 
 /** No host payload schema or actor convention is assumed by the common hook layer. */
 export function adaptHostInput(input: Record<string, unknown>, host: string): AdaptedHostInput {

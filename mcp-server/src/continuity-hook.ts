@@ -8,7 +8,7 @@ import { types } from "node:util";
 import { ContinuityService } from "./continuity-service.js";
 import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
 import { hookFailureContext, hookFailureReason, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
-import { adaptHostInput, isGovernanceHookTool, resolveHookHost, type AdaptedHostInput, type ContinuityAction } from "./host-input-adapter.js";
+import { adaptHostInput, isGovernanceHookTool, resolveHookHost, type AdaptedHostInput, type ContinuityAction, type LineageRead } from "./host-input-adapter.js";
 import {
   assertDistinctDatabasePaths,
   resolveContinuityDatabasePath,
@@ -37,6 +37,7 @@ interface NormalizedContinuityInput {
   observation: InputObservation;
   outputEventName: string;
   action: ContinuityAction | undefined;
+  readLineage: (() => LineageRead) | undefined;
 }
 
 function continuityConflict(): never {
@@ -47,7 +48,7 @@ function continuityConflict(): never {
 
 /** Snapshot and validate once, before opening stores or dispatching any state transition. */
 function normalizedContinuityInput(adapted: AdaptedHostInput): NormalizedContinuityInput {
-  const { observation: sourceObservation, lifecycle, outputEventName, continuityAction: sourceAction } = adapted;
+  const { observation: sourceObservation, lifecycle, outputEventName, continuityAction: sourceAction, readLineage } = adapted;
   const observation = { ...sourceObservation };
   let action: ContinuityAction | undefined;
   if (observation.kind === "tool-boundary") {
@@ -56,7 +57,7 @@ function normalizedContinuityInput(adapted: AdaptedHostInput): NormalizedContinu
     if (!sourceAction || typeof sourceAction !== "object" || Array.isArray(sourceAction)) continuityConflict();
     const kind = sourceAction.kind;
     switch (kind) {
-      case "startup": case "clear": case "resume": case "compact":
+      case "startup": case "fork": case "clear": case "resume": case "compact":
         if (lifecycle !== "start") continuityConflict();
         action = Object.freeze({ kind });
         break;
@@ -74,7 +75,7 @@ function normalizedContinuityInput(adapted: AdaptedHostInput): NormalizedContinu
     }
     if (observation.boundaryPhase !== undefined) continuityConflict();
   }
-  return { observation, outputEventName, action };
+  return { observation, outputEventName, action, readLineage: typeof readLineage === "function" ? readLineage : undefined };
 }
 
 function sessionOutput(eventName: string, additionalContext: string | null): Record<string, unknown> {
@@ -84,11 +85,12 @@ function sessionOutput(eventName: string, additionalContext: string | null): Rec
 }
 
 function handleNormalizedContinuityHook(input: NormalizedContinuityInput, service: ContinuityService, host: string): Record<string, unknown> {
-  const { observation, action, outputEventName } = input;
+  const { observation, action, outputEventName, readLineage } = input;
   const sessionId = observation.sessionId;
   if (!sessionId || !actorAccess(observation.actor).allowed) return {};
   switch (action?.kind) {
     case "startup": service.ensureSession(sessionId); return {};
+    case "fork": service.startFork(sessionId); return {};
     case "clear": service.clearSession(sessionId); return {};
     case "resume": return sessionOutput(outputEventName, service.formatCandidate(service.candidateForSession(sessionId)));
     case "compact": return sessionOutput(outputEventName, service.compactContext(sessionId));
@@ -99,7 +101,9 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
     const toolName = localToolName(host, observation.toolName ?? "");
     if (!toolName) return {};
     const toolInput = observation.toolInput ?? {};
-    const token = service.issueToolBinding(sessionId, toolName, toolInput);
+    // Lineage is read only for its two consumers: a checkpoint anchor and a recorded fork's inspect.
+    const lineage = toolName === "checkpoint_context" || toolName === "inspect_context" ? readLineage : undefined;
+    const token = service.issueToolBinding(sessionId, toolName, toolInput, lineage);
     return {
       hookSpecificOutput: {
         hookEventName: outputEventName,
@@ -155,7 +159,7 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
     continuity = new SqliteContinuityStore(continuityDatabasePath);
     const needsWorkflowState = normalized.action?.kind === "pre-compact"
       || normalized.action?.kind === "resume" || normalized.action?.kind === "compact"
-      || normalized.action?.kind === "startup" || normalized.action?.kind === "post-compact"
+      || normalized.action?.kind === "startup" || normalized.action?.kind === "fork" || normalized.action?.kind === "post-compact"
       || (normalized.observation.kind === "tool-boundary" && normalized.observation.boundaryPhase === "before"
         && localToolName(host, normalized.observation.toolName ?? "") !== null);
     if (needsWorkflowState) {

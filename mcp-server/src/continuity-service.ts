@@ -22,9 +22,13 @@ import {
   SqliteContinuityStore,
 } from "./continuity-store.js";
 import type { WorkflowStore } from "./workflow-store.js";
+import type { LineageRead } from "./host-input-adapter.js";
 
 const TOOL_TOKEN_TTL_SECONDS = 300;
 const CANDIDATE_TOKEN_TTL_SECONDS = 3600;
+
+/** A fork child's selected parent: the exact anchored revision, never "latest". */
+interface ForkParent { c: string; e: number; r: number; d: string }
 
 interface ToolBindingPayload {
   v: 1;
@@ -33,6 +37,11 @@ interface ToolBindingPayload {
   t: string;
   d: Sha256Digest;
   x: number;
+  /** checkpoint_context: anchor of this session's newest host-written entry. */
+  a?: string;
+  /** inspect_context of a recorded fork: parent selected from the child's own lineage, or why none. */
+  p?: ForkParent;
+  q?: string;
 }
 
 interface CandidatePayload {
@@ -43,7 +52,12 @@ interface CandidatePayload {
   r: number;
   d: Sha256Digest;
   x: number;
+  /** Fork candidate: the child task and epoch that alone may load parent state c/e. */
+  f?: string;
+  g?: number;
 }
+
+const FORK_START_EVENT = "fork-start";
 
 export interface WorkflowContinuityCardV1 {
   schemaVersion: "1.0.0";
@@ -209,7 +223,7 @@ export class ContinuityService implements ContinuityGateway {
     return this.store.rotateEpoch(this.correlateSession(rawSessionId), this.now().toISOString());
   }
 
-  issueToolBinding(rawSessionId: string, toolName: string, input: Record<string, unknown>): string {
+  issueToolBinding(rawSessionId: string, toolName: string, input: Record<string, unknown>, readLineage?: () => LineageRead): string {
     const task = this.ensureSession(rawSessionId);
     const payload: ToolBindingPayload = {
       v: 1,
@@ -218,8 +232,38 @@ export class ContinuityService implements ContinuityGateway {
       t: toolName,
       d: convergenceDigest(withoutBinding(input)),
       x: Math.floor(this.now().getTime() / 1000) + TOOL_TOKEN_TTL_SECONDS,
+      ...(readLineage ? this.lineageFor(task, toolName, readLineage) : {}),
     };
     return this.sign(payload);
+  }
+
+  /** The host's SessionStart source=fork is the only relation authority; lineage later picks which parent. */
+  startFork(rawSessionId: string): void {
+    const task = this.ensureSession(rawSessionId);
+    this.store.recordObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT, null, true, this.now().toISOString());
+  }
+
+  private lineageFor(task: ContinuityTaskRecord, toolName: string, readLineage: () => LineageRead): Pick<ToolBindingPayload, "a" | "p" | "q"> {
+    if (toolName === "checkpoint_context") {
+      const read = readLineage();
+      return "ids" in read ? { a: this.lineageAnchor(read.ids.at(-1)!) } : {};
+    }
+    // Only a recorded fork with no own state looks up a parent; startup, resume and clear never do.
+    if (toolName !== "inspect_context" || task.rootId || this.summary(task)
+      || !this.store.hasObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT)) return {};
+    const read = readLineage();
+    if (!("ids" in read)) return { q: read.reason };
+    // D1: the match appearing last in the child's own file wins; revision numbers and clocks are not used.
+    const anchors = this.store.lineageAnchors(task.taskCorrelation);
+    for (let index = read.ids.length - 1; index >= 0; index -= 1) {
+      const parent = anchors.get(this.lineageAnchor(read.ids[index]!));
+      if (parent) return { p: parent };
+    }
+    return { q: "FORK_PARENT_NOT_FOUND" };
+  }
+
+  private lineageAnchor(entryId: string): string {
+    return `hmac-sha256:${this.hmac(`lineage\0${entryId}`)}`;
   }
 
   checkpointContext(value: unknown): ApiResultV1<ContinuitySnapshotV1> {
@@ -246,7 +290,7 @@ export class ContinuityService implements ContinuityGateway {
       const snapshot: ContinuitySnapshotV1 = { ...base, snapshotDigest: convergenceDigest(base) };
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(withoutBinding(request as unknown as Record<string, unknown>));
-      const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot);
+      const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot, binding.a);
       if (stored.kind === "epoch-mismatch") return failure("BINDING_INVALID", "Continuity task binding is stale.");
       if (stored.kind === "source-conflict") return failure("SNAPSHOT_CONFLICT", "Direct checkpoints are disabled after a workflow root is bound.");
       if (stored.kind === "replay") {
@@ -273,8 +317,26 @@ export class ContinuityService implements ContinuityGateway {
       const request = this.validator!.inspectContextRequest(value);
       const binding = this.verifyToolBinding("inspect_context", request, request._continuityBinding);
       this.currentTask(binding);
-      return ok(this.candidateFor(binding.c, binding.e));
+      const own = this.candidateFor(binding.c, binding.e);
+      if (own.reasonCodes[0] !== "NO_RESTORE_CANDIDATE") return ok(own);
+      if (binding.p) return ok(this.forkCandidate(binding, binding.p));
+      return ok(binding.q ? { ...own, reasonCodes: [...own.reasonCodes, binding.q] } : own);
     });
+  }
+
+  private forkCandidate(binding: ToolBindingPayload, parent: ForkParent): ContinuityCandidateV1 {
+    const reject = (reason: string): ContinuityCandidateV1 => ({ schemaVersion: "1.0.0", decision: "REJECT", reasonCodes: ["NO_RESTORE_CANDIDATE", reason], summary: null, restoreToken: null });
+    const task = this.store.getTask(parent.c);
+    if (!task || task.currentEpoch !== parent.e || task.rootId) return reject("FORK_PARENT_EPOCH_CHANGED");
+    if (task.suppressed) return reject("FORK_PARENT_SUPPRESSED");
+    const summary = this.summary(task);
+    // A parent that saved again after the fork, purged or cleared no longer holds the fork-time state.
+    if (!summary || summary.source !== "direct" || summary.revision !== parent.r || summary.snapshotDigest !== parent.d) return reject("FORK_PARENT_ADVANCED");
+    const payload: CandidatePayload = {
+      v: 1, c: parent.c, e: parent.e, s: "direct", r: parent.r, d: summary.snapshotDigest,
+      x: Math.floor(this.now().getTime() / 1000) + CANDIDATE_TOKEN_TTL_SECONDS, f: binding.c, g: binding.e,
+    };
+    return { schemaVersion: "1.0.0", decision: "DEFER", reasonCodes: ["EXPLICIT_LOAD_REQUIRED", "FORK_PARENT_CANDIDATE"], summary, restoreToken: this.sign(payload) };
   }
 
   loadContext(value: unknown): ApiResultV1<ContinuitySnapshotV1 | WorkflowContinuityCardV1> {
@@ -282,12 +344,14 @@ export class ContinuityService implements ContinuityGateway {
       const request = this.validator!.loadContextRequest(value);
       const binding = this.verifyToolBinding("load_context", request, request._continuityBinding);
       const candidate = this.verifyCandidate(request.candidateToken);
+      const fork = candidate.f !== undefined;
       if (
-        candidate.c !== binding.c || candidate.e !== binding.e ||
+        (fork ? candidate.f !== binding.c || candidate.g !== binding.e : candidate.c !== binding.c || candidate.e !== binding.e) ||
         candidate.e !== request.epoch || candidate.r !== request.revision || candidate.d !== request.digest
       ) throw new WorkflowContractError("BINDING_INVALID", "Restore candidate does not match the current task and requested state.");
       const task = this.currentTask(binding);
       if (task.suppressed) throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", "Restore is suppressed for the current epoch.");
+      if (fork) return ok<ContinuitySnapshotV1 | WorkflowContinuityCardV1>(this.loadForkParent(candidate, binding));
       if (candidate.s === "direct") {
         const snapshot = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
           () => this.store.getSnapshot(binding.c, binding.e)));
@@ -305,6 +369,21 @@ export class ContinuityService implements ContinuityGateway {
       }
       return ok<ContinuitySnapshotV1 | WorkflowContinuityCardV1>(card);
     });
+  }
+
+  /** Rechecks the parent's exact state, then adopts it into the empty child epoch so the child continues from it. */
+  private loadForkParent(candidate: CandidatePayload, binding: ToolBindingPayload): ContinuitySnapshotV1 {
+    const snapshot = this.currentReadValue(this.store.readCurrentState(candidate.c, candidate.e, "direct",
+      () => this.store.getSnapshot(candidate.c, candidate.e)));
+    if (!snapshot || snapshot.revision !== candidate.r || snapshot.snapshotDigest !== candidate.d) {
+      throw new WorkflowContractError("STALE_REVISION", "The fork parent restore candidate is stale.");
+    }
+    const { snapshotDigest, ...base } = snapshot;
+    if (convergenceDigest(base) !== snapshotDigest) throw new WorkflowContractError("INTEGRITY_FAILED", "The direct snapshot digest is invalid.");
+    const adopted = { ...base, taskCorrelation: binding.c, epoch: binding.e, updatedAt: this.now().toISOString() };
+    // An existing child snapshot (repeat load or own save) is kept; the parent is returned unchanged either way.
+    this.store.adoptSnapshot(binding.c, binding.e, { ...adopted, snapshotDigest: convergenceDigest(adopted) });
+    return snapshot;
   }
 
   suppressContextRestore(value: unknown): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }> {

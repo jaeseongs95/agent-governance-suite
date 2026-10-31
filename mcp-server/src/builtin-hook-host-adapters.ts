@@ -3,7 +3,7 @@ import { types as utilTypes } from "node:util";
 import { hookFailure, retainHookFailureCause, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
 import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
 import path from "node:path";
-import { registerHookHostAdapter, type HookHostAdapter, type HostDeliveryProfile, type NativePeerWaitObservation, type HookSettingsDiagnostic, type AdaptedHostInput, type HostLifecycle, type ContinuityAction } from "./host-input-adapter.js";
+import { registerHookHostAdapter, type HookHostAdapter, type HostDeliveryProfile, type NativePeerWaitObservation, type HookSettingsDiagnostic, type AdaptedHostInput, type HostLifecycle, type ContinuityAction, type LineageRead } from "./host-input-adapter.js";
 import { parseWakeMessages } from "./session-message-client.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { normalizePeerWaitTargets } from "./peer-wait-policy.js";
@@ -113,7 +113,50 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
     if (typeof input.agent_id !== "string" || !input.agent_id.trim()) actor.reasonCode = "CLAUDE_NATIVE_AGENT_ID_INVALID";
     else Object.assign(actor, { role: "child", basis: "observed", reasonCode: "CLAUDE_NATIVE_CHILD_AGENT_ID" });
   } else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: "CLAUDE_NATIVE_ROOT_AGENT_ID_ABSENT" });
+  // The fork fact comes only from the host's SessionStart source; which parent is chosen later from lineage.
+  if (adapted.continuityAction?.kind === "startup" && input.source === "fork") adapted.continuityAction = { kind: "fork" };
+  const transcriptPath = text(input.transcript_path);
+  const sessionId = adapted.observation.sessionId;
+  if (transcriptPath && sessionId) adapted.readLineage = () => readClaudeLineage(transcriptPath, sessionId);
   return adapted;
+}
+
+const CLAUDE_LINEAGE_MAX_BYTES = 4 * 1024 * 1024;
+
+/**
+ * Structural `uuid` fields of this session's own entries in the host-given transcript, oldest first.
+ * A fork copies the parent's entries with their uuids and rewrites sessionId to the child (B08 r01/r04).
+ * Message bodies are never returned. Only the path the host passed is read, never a copy elsewhere.
+ * Out of scope: a same-account process that edits this host-written file can also read the continuity
+ * database and its secret directly, so lineage cannot protect against it (design r03 section 2).
+ * ponytail: only the newest 4 MiB is read; entries older than that window are not lineage evidence.
+ */
+function readClaudeLineage(transcriptPath: string, sessionId: string): LineageRead {
+  let descriptor: number | null = null;
+  let content: string;
+  try {
+    descriptor = openSync(transcriptPath, constants.O_RDONLY | constants.O_NONBLOCK);
+    const stats = fstatSync(descriptor);
+    if (!stats.isFile()) return { reason: "LINEAGE_TRANSCRIPT_UNREADABLE" };
+    const length = Math.min(stats.size, CLAUDE_LINEAGE_MAX_BYTES);
+    const buffer = Buffer.alloc(length);
+    const bytes = readSync(descriptor, buffer, 0, length, stats.size - length);
+    content = buffer.subarray(0, bytes).toString("utf8");
+    // A cut first line is partial; drop it rather than parse a fragment.
+    if (stats.size > length) content = content.slice(content.indexOf("\n") + 1);
+  } catch (cause) {
+    return { reason: (cause as NodeJS.ErrnoException).code === "ENOENT" ? "LINEAGE_TRANSCRIPT_ABSENT" : "LINEAGE_TRANSCRIPT_UNREADABLE" };
+  } finally {
+    if (descriptor !== null) try { closeSync(descriptor); } catch { /* read already finished or failed above */ }
+  }
+  const ids: string[] = [];
+  for (const line of content.split("\n")) {
+    if (!line.includes(sessionId)) continue;
+    let entry: Record<string, unknown>;
+    try { entry = record(JSON.parse(line)); } catch { continue; } // a line still being written
+    if (entry.sessionId === sessionId && typeof entry.uuid === "string" && entry.uuid) ids.push(entry.uuid);
+  }
+  return ids.length > 0 ? { ids } : { reason: "LINEAGE_IDS_ABSENT" };
 }
 
 function adaptGeminiHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {

@@ -63,6 +63,7 @@ export interface ContinuityCleanupPreview {
 }
 
 const SCHEMA_VERSION = 2;
+const LINEAGE_ANCHOR_EVENT = "lineage-anchor:";
 const MAX_COMPATIBLE_SCHEMA_VERSION = 3;
 const SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
 
@@ -304,6 +305,7 @@ export class SqliteContinuityStore {
     requestHash: string,
     commandDigest: string,
     snapshot: ContinuitySnapshotV1,
+    lineageAnchor?: string,
   ): { kind: "stored" } | { kind: "stale"; actualRevision: number } | { kind: "replay"; request: StoredRequest } | { kind: "conflict" } | { kind: "epoch-mismatch" } | { kind: "source-conflict" } {
     return this.transaction("Cannot store the continuity checkpoint.", () => {
       const task = this.readTask(taskCorrelation);
@@ -333,7 +335,48 @@ export class SqliteContinuityStore {
         INSERT INTO continuity_requests(task_correlation, epoch, request_hash, command_digest, result_json, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
       `).run(taskCorrelation, epoch, requestHash, commandDigest, resultJson, snapshot.updatedAt);
+      // The anchor names exactly this stored revision; a later fork child may select it, never write it.
+      if (lineageAnchor) this.database.prepare(`
+        INSERT INTO continuity_observations(task_correlation, epoch, event, turn_hash, success, observed_at)
+        VALUES (?, ?, ?, ?, 1, ?)
+      `).run(taskCorrelation, epoch, `${LINEAGE_ANCHOR_EVENT}${snapshot.revision}:${snapshot.snapshotDigest}`, lineageAnchor, snapshot.updatedAt);
       return { kind: "stored" };
+    }, taskCorrelation);
+  }
+
+  hasObservation(taskCorrelation: string, epoch: number, event: string): boolean {
+    return Boolean(this.database.prepare(`
+      SELECT 1 FROM continuity_observations WHERE task_correlation = ? AND epoch = ? AND event = ? LIMIT 1
+    `).get(taskCorrelation, epoch, event));
+  }
+
+  /** Every other task's anchors in one read, newest kept per anchor. ponytail: full scan bounded by observation cleanup. */
+  lineageAnchors(excludeTaskCorrelation: string): Map<string, { c: string; e: number; r: number; d: string }> {
+    const rows = this.database.prepare(`
+      SELECT task_correlation, epoch, event, turn_hash FROM continuity_observations
+      WHERE task_correlation <> ? AND turn_hash IS NOT NULL AND substr(event, 1, ?) = ?
+      ORDER BY observation_id ASC
+    `).all(excludeTaskCorrelation, LINEAGE_ANCHOR_EVENT.length, LINEAGE_ANCHOR_EVENT) as
+      Array<{ task_correlation: string; epoch: number; event: string; turn_hash: string }>;
+    const anchors = new Map<string, { c: string; e: number; r: number; d: string }>();
+    for (const row of rows) {
+      const match = /^(\d+):(sha256:[0-9a-f]{64})$/u.exec(row.event.slice(LINEAGE_ANCHOR_EVENT.length));
+      if (match) anchors.set(row.turn_hash, { c: row.task_correlation, e: row.epoch, r: Number(match[1]), d: match[2]! });
+    }
+    return anchors;
+  }
+
+  /** Copies a selected parent snapshot into an empty child epoch only; existing child state is never replaced. */
+  adoptSnapshot(taskCorrelation: string, epoch: number, snapshot: ContinuitySnapshotV1): boolean {
+    return this.transaction("Cannot adopt the continuity snapshot.", () => {
+      const task = this.readTask(taskCorrelation);
+      if (!task || task.currentEpoch !== epoch || task.rootId !== null || task.suppressed) return false;
+      if (this.getSnapshot(taskCorrelation, epoch) || this.getTombstone(taskCorrelation, epoch)) return false;
+      this.database.prepare(`
+        INSERT INTO continuity_snapshots(task_correlation, epoch, revision, snapshot_digest, snapshot_json, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(taskCorrelation, epoch, snapshot.revision, snapshot.snapshotDigest, JSON.stringify(snapshot), snapshot.updatedAt);
+      return true;
     }, taskCorrelation);
   }
 
