@@ -96,7 +96,7 @@ it("keeps an abnormal end distinct and admits no arbitrary event contents", () =
   expect(JSON.stringify(snapshot())).not.toContain("secret-canary");
 });
 
-it("links two actual child creations to separate parent expectations without sharing a generation", async () => {
+it("spawn 호출 직전에 관측을 시작하고 두 자식의 부모 관측을 구분한다", async () => {
   const {root, environment} = setup();
   const receipts = [];
   for (let index = 0; index < 2; index++) {
@@ -137,4 +137,45 @@ it("keeps a late error together with the successful spawn observation", () => {
   const receipt = JSON.parse(readFileSync(path.join(root, file), "utf8"));
   expect(receipt.events.map((value: {event: string}) => value.event)).toEqual(["begin", "spawn", "error"]);
   expect(receipt.childPid).toBe("UNKNOWN");
+});
+
+it("부모 진단 게시 실패가 호출자를 막지 않으며 복구 뒤에도 손실을 보존한다", () => {
+  const {root, environment} = setup();
+  expect(createRelaySpawnObservation("codex-deferred", {})).toBeUndefined();
+  expect(createRelaySpawnObservation("unregistered", environment)).toBeUndefined();
+  fault.close = true;
+  const observation = createRelaySpawnObservation("codex-deferred", environment)!;
+  expect(() => observation.returned()).not.toThrow();
+  expect(() => observation.failed()).not.toThrow();
+  fault.close = false;
+  observation.spawned();
+  const file = readdirSync(root).find(value => value.includes("-relay-spawn-") && value.endsWith(".json"))!;
+  const receipt = JSON.parse(readFileSync(path.join(root, file), "utf8"));
+  expect(receipt).toMatchObject({childPid: "UNKNOWN", childProcessStart: "UNKNOWN", sinkErrors: 3});
+  expect(receipt.events.map((value: {event: string}) => value.event)).toEqual(["begin", "returned", "error", "spawn"]);
+});
+
+it("예산 경로 관측은 flush 전까지 파일을 쓰지 않고 신원 조회 없이 한 번 게시한다", () => {
+  const {root, environment} = setup();
+  const before = readdirSync(root).length;
+  expect(createRelaySpawnObservation("codex-deferred", {}, true)).toBeUndefined();
+  const observation = createRelaySpawnObservation("codex-deferred", environment, true)!;
+  observation.returned(4242); observation.spawned(); observation.failed();
+  expect(readdirSync(root)).toHaveLength(before);
+  observation.flush();
+  const file = readdirSync(root).find(value => value.includes("-relay-spawn-") && value.endsWith(".json"))!;
+  const receipt = JSON.parse(readFileSync(path.join(root, file), "utf8"));
+  expect(receipt).toMatchObject({writerPid: process.pid, writerProcessStart: "UNKNOWN", childPid: 4242,
+    childProcessStart: "UNKNOWN", sinkErrors: 0, droppedEvents: 0});
+  expect(receipt.events.map((value: {event: string}) => value.event)).toEqual(["begin", "returned", "spawn", "error"]);
+});
+
+it("예산 경로 관측은 소유 디렉터리를 확인하지 못하면 게시하지 않고 던지지 않는다", () => {
+  const {root} = setup();
+  const environment = {AGENT_GOVERNANCE_LOG_CONFIG: JSON.stringify({level: "OFF", destination: "file",
+    file: path.join(root, "missing", "owned"), categories: {transport: "DEBUG"}})};
+  const observation = createRelaySpawnObservation("codex-deferred", environment, true)!;
+  observation.returned(4242);
+  expect(() => observation.flush()).not.toThrow();
+  expect(readdirSync(root).some(value => value.includes("-relay-spawn-"))).toBe(false);
 });

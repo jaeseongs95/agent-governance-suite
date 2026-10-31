@@ -57,7 +57,8 @@ export interface SessionMessageHookOptions {
 }
 
 export type HookFailurePhase = "options" | "input" | "handle" | "serialize" | "stdin" | "host-entry" | "stdout"
-  | "presence-start" | "clear-deferred" | "ensure-relay" | "relay-start" | "recovery" | "peer-wait" | "observer-sync" | "observer-async";
+  | "presence-start" | "clear-deferred" | "ensure-relay" | "relay-start" | "recovery" | "peer-wait" | "observer-sync" | "observer-async"
+  | "relay-observation";
 
 /** The same bounded classification that the diagnostic line carries; never messages, paths or peer bodies. */
 export type SessionMessageHookFailure = Readonly<{
@@ -159,7 +160,14 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
   const startToken = hostProcess?.startToken ?? observedStartToken;
   remainingBudget(budget);
   const environment = relayEnv && Object.keys(relayEnv).length > 0 ? { ...process.env, ...relayEnv } : process.env;
-  let observation: ReturnType<typeof createRelaySpawnObservation>;
+  // 부모 관측은 spawn 호출 직전에 시작한다. 예산 경로는 신원 조회·파일 쓰기 없이 메모리에만 쌓고
+  // 프로세스 종료 때 한 번 게시해 훅 예산을 쓰지 않는다.
+  let observation: ReturnType<typeof createRelaySpawnObservation> = undefined;
+  try {
+    observation = createRelaySpawnObservation(transport, environment, Boolean(budget));
+    const deferred = budget ? observation : undefined;
+    if (deferred) process.once("exit", () => deferred.flush());
+  } catch (error) { reportHookFailure("relay-observation", error); }
   const child = spawn(process.execPath, [
     relayPath,
     "--host", host,
@@ -176,9 +184,9 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     env: environment,
   });
   child.once("spawn", () => { observation?.spawned(); });
-  // Spawn failure is asynchronous for every startup path; without a listener it would escape the hook unreported.
+  // spawn 실패는 모든 시작 경로에서 비동기로 온다. 수신자가 없으면 보고 없이 훅 밖으로 빠진다.
   child.once("error", (error) => {
-    reportHookFailure("relay-start", error); // A verified startup remains latched; no automatic respawn.
+    reportHookFailure("relay-start", error); // 확인된 시작은 잠긴 채 남고 자동으로 다시 띄우지 않는다.
     observation?.failed();
   });
   if (relayOwner) {
@@ -189,12 +197,7 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
       throw error;
     }
   } else child.unref();
-  // 동기 진단은 후속 수신·직렬화의 마감도 소진할 수 있다. 예산 경로의 부모 관측은 UNKNOWN으로 남긴다.
-  if (budget) return;
-  try {
-    observation = createRelaySpawnObservation(transport, environment);
-    observation?.returned(child.pid);
-  } catch { /* Missing diagnostics remain unknown; successful startup stays intact. */ }
+  observation?.returned(child.pid);
 }
 
 export type RecordedSessionMessage = SessionMessage & { sourceReceiptId: string; contentDigest: string };

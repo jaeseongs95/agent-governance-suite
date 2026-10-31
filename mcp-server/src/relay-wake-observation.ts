@@ -7,14 +7,23 @@ import {transportWakePort, writeRelayDiagnosticSnapshot, type WakeDispatchPort} 
 
 type WakeEvent = "begin" | "none-skip" | "dispatch-attempt" | "native-launch-attempt" | "native-spawn" | "end";
 
-function observationPrefix(transport: string, environment: NodeJS.ProcessEnv): string | undefined {
+/** Environment-only opt-in check; no filesystem access. */
+function observationFile(transport: string, environment: NodeJS.ProcessEnv): string | undefined {
   const config = readDiagnosticConfig(environment.AGENT_GOVERNANCE_LOG_CONFIG);
   if (config.destination !== "file" || !config.file || !path.isAbsolute(config.file)
     || !["TRACE", "DEBUG"].includes(config.categories?.transport ?? config.level)) return undefined;
   transportWakePort(transport); // Only installed transport identifiers may leave this boundary.
-  const directory = lstatSync(path.dirname(config.file));
-  return directory.isDirectory() && !directory.isSymbolicLink()
-    && (!process.getuid || directory.uid === process.getuid()) ? config.file : undefined;
+  return config.file;
+}
+
+function ownedDirectory(file: string): boolean {
+  const directory = lstatSync(path.dirname(file));
+  return directory.isDirectory() && !directory.isSymbolicLink() && (!process.getuid || directory.uid === process.getuid());
+}
+
+function observationPrefix(transport: string, environment: NodeJS.ProcessEnv): string | undefined {
+  const file = observationFile(transport, environment);
+  return file && ownedDirectory(file) ? file : undefined;
 }
 
 function publishSnapshot(file: string, value: object): boolean {
@@ -78,32 +87,43 @@ export function createRelayWakeObservation(transport: string, port: WakeDispatch
 }
 export type RelayWakeObservation = ReturnType<typeof createRelayWakeObservation>;
 
-/** Parent-side expectation only; its own coverage must be matched to the native hook/process census. */
-export function createRelaySpawnObservation(transport: string, environment = process.env) {
+/**
+ * 부모가 spawn 호출 직전부터 본 사건만 남긴다. 전체 생성 집합이나 자식 실행 성공을 증명하지 않는다.
+ * deferred는 훅 예산 경로용이다. 신원 조회와 파일 접근 없이 메모리에만 쌓고 flush()에서 한 번 게시한다.
+ */
+export function createRelaySpawnObservation(transport: string, environment = process.env, deferred = false) {
   try {
-    const prefix = observationPrefix(transport, environment);
+    const prefix = deferred ? observationFile(transport, environment) : observationPrefix(transport, environment);
     if (!prefix) return undefined;
-    const generation = randomUUID(), writerPid = process.pid;
-    const writerProcessStart = processStartToken(writerPid, process.platform, 500) ?? "UNKNOWN";
+    const identity = (pid: number) => deferred ? "UNKNOWN" : processStartToken(pid, process.platform, 500) ?? "UNKNOWN";
+    const generation = randomUUID(), writerPid = process.pid, writerProcessStart = identity(writerPid);
     const file = `${prefix}-relay-spawn-${generation}.json`, startedAt = new Date().toISOString();
-    const events: {seq: number; event: "begin" | "returned" | "spawn" | "error" | "throw"}[] = [];
+    const events: {seq: number; event: "begin" | "returned" | "spawn" | "error"}[] = [];
     let childPid: number | "UNKNOWN" = "UNKNOWN", childProcessStart = "UNKNOWN";
     let sinkErrors = 0, droppedEvents = 0;
-    const record = (event: typeof events[number]["event"], pid?: number) => {
+    const publish = () => {
       try {
-        if (event === "returned" && typeof pid === "number" && Number.isSafeInteger(pid) && pid > 0) childPid = pid;
-        if ((event === "returned" || event === "spawn") && typeof childPid === "number" && childProcessStart === "UNKNOWN") {
-          childProcessStart = processStartToken(childPid, process.platform, 500) ?? "UNKNOWN";
-        }
-        if (events.length >= 8) {droppedEvents++; return;}
-        events.push({seq: events.length + 1, event});
         if (!publishSnapshot(file, {schemaVersion: "1.0.0", kind: "relay-spawn-observation", generation,
           writerPid, writerProcessStart, startedAt, selectedTransport: transport, childPid, childProcessStart,
           events, sinkErrors, droppedEvents})) throw new Error("DIAGNOSTIC_WRITE_FAILED");
       } catch { sinkErrors++; }
     };
+    const record = (event: typeof events[number]["event"], pid?: number) => {
+      try {
+        if (event === "returned" && typeof pid === "number" && Number.isSafeInteger(pid) && pid > 0) childPid = pid;
+        if ((event === "returned" || event === "spawn") && typeof childPid === "number" && childProcessStart === "UNKNOWN") {
+          childProcessStart = identity(childPid);
+        }
+        if (events.length >= 8) {droppedEvents++; return;}
+        events.push({seq: events.length + 1, event});
+        if (!deferred) publish();
+      } catch { sinkErrors++; }
+    };
     record("begin");
-    return {returned(pid?: number) {record("returned", pid);}, spawned() {record("spawn");},
-      failed() {record("error");}, threw() {record("throw");}};
-  } catch { return undefined; }
+    return {returned(pid?: number) {record("returned", pid);}, spawned() {record("spawn");}, failed() {record("error");},
+      flush() {
+        try { if (deferred && ownedDirectory(prefix)) publish(); }
+        catch { /* 소유 디렉터리를 확인하지 못하면 게시하지 않는다. 관측 없음은 UNKNOWN이다. */ }
+      }};
+  } catch { return undefined; } // 초기화 실패는 관측 없음(UNKNOWN)이다. 호출자가 던짐을 따로 보고한다.
 }

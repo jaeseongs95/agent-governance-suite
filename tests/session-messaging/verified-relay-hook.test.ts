@@ -95,10 +95,14 @@ it.each([true, false])("진단 기록 전에 오류 처리와 자식 소유권�
     state = {errorListeners: child.listenerCount("error"), ownerCalls: relayOwner.mock.calls.length,
       unrefCalls: child.unref.mock.calls.length};
   });
-  f.observeSpawn.mockReturnValue({ returned, spawned: vi.fn(), failed: vi.fn(), threw: vi.fn() });
+  f.observeSpawn.mockImplementation(() => {
+    expect(f.spawn).not.toHaveBeenCalled(); // begin은 spawn 호출 전이다.
+    return {returned, spawned: vi.fn(), failed: vi.fn(), flush: vi.fn()};
+  });
   await handleSessionMessageHook(input, syntheticHost, 424242, {
     hostProcess: options().hostProcess, ...(owned ? {relayOwner} : {}),
   });
+  expect(f.observeSpawn).toHaveBeenCalledWith("gemini-queue", expect.anything(), false);
   expect(returned).toHaveBeenCalledTimes(1);
   expect(state).toEqual({errorListeners: 1, ownerCalls: owned ? 1 : 0, unrefCalls: owned ? 0 : 1});
 });
@@ -217,10 +221,14 @@ it.each([
 ].flatMap((boundary) => ["disabled", "slow", "failure"].map((mode) => ({...boundary, mode}))))(
   "진단이 실제 훅 결과와 재연결 뒤 수신 예산을 침해하지 않는다: $event/$mode", async ({event, operation, mode}) => {
     f.turnEnd = operation === "claim-turn-end";
+    // 예산 경로의 생성·기록은 메모리 전용이다. 느린 게시와 생성 실패가 훅 결과·마감에 닿지 않아야 한다.
+    const recorder = {returned: vi.fn(), spawned: vi.fn(), failed: vi.fn(), flush: vi.fn(() => { f.now = 5000; })};
     f.observeSpawn.mockImplementation(() => {
-      if (mode === "slow") f.now = 1001;
       if (mode === "failure") throw new Error("synthetic diagnostic failure");
+      return mode === "disabled" ? undefined : recorder;
     });
+    const exitListeners = new Set(process.listeners("exit"));
+    const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
     f.request.mockImplementation(async (name, _payload, _directory, requestOptions) => {
       if (name === "list-presence") return {sessions: []};
       if (name === "ensure-relay") return grant();
@@ -243,6 +251,19 @@ it.each([
     expect(f.spawn).toHaveBeenCalledTimes(1);
     const child = f.spawn.mock.results[0]!.value;
     expect(child.listenerCount("error")).toBe(1);
+    // 예산 경로도 부모 관측을 남긴다. 게시는 훅이 끝난 뒤 프로세스 종료 때 한 번이다.
+    expect(f.observeSpawn).toHaveBeenCalledWith("gemini-queue", expect.anything(), true);
+    const observationFailures = errors.mock.calls.filter(([line]) => String(line).includes('"phase":"relay-observation"'));
+    errors.mockRestore();
+    expect(observationFailures).toHaveLength(mode === "failure" ? 1 : 0);
+    const added = process.listeners("exit").filter(listener => !exitListeners.has(listener));
+    expect(added).toHaveLength(mode === "slow" ? 1 : 0);
+    if (mode === "slow") {
+      expect(recorder.returned).toHaveBeenCalledTimes(1);
+      expect(recorder.flush).not.toHaveBeenCalled();
+      for (const listener of added) { process.removeListener("exit", listener); (listener as () => void)(); }
+      expect(recorder.flush).toHaveBeenCalledTimes(1);
+    }
     if (operation) {
       expect(relayOwner).not.toHaveBeenCalled();
       expect(child.unref).toHaveBeenCalledTimes(1);
