@@ -200,7 +200,7 @@ D0353은 세대 교체와 무관한 일반 활동에 따른 해제를 함께 차
 | `no-live-relay` | `presence-unknown`, `presence-not-online`, `relay-lease-missing` | 없음, presence lease 종료, 마지막 presence heartbeat |
 | `unsupported` | `no-idle-wake`: transport에 idle wake가 없다 | presence birth |
 
-presence lease가 끝나고 live relay가 없으면 presence `state`는 `unreachable`이나 `ended`이고 `autoWake`는 `no-live-relay`다. 현황판은 오래된 online을 보여 주지 않는다. relay는 여전히 SessionStart hook에서만 뜨므로, 재부팅 뒤 아직 turn이 없는 Codex 세션은 `no-live-relay`로 보이며 메시지는 큐에 남는다. 이전 broker가 `autoWake`를 주지 않으면 서비스는 `null`로 둔다.
+presence lease가 끝나고 live relay가 없으면 presence `state`는 `unreachable`이나 `ended`이고 `autoWake`는 `no-live-relay`다. 현황판은 오래된 online을 보여 주지 않는다. relay는 SessionStart hook에서 뜬다. 그 뒤에는 주 세션의 입력, 도구 실행 뒤 경계와 턴 종료 hook이 현재 세대에 live relay가 없다는 broker 응답을 받았을 때만 그 세대의 relay를 다시 띄운다. 어댑터가 검증된 복구를 켰으면 `list-presence`로 확인한 뒤 시작 grant(`ensure-relay`)를 받고, 아니면 입력 관측·claim·`clear-deferred` 응답의 복구 정보로 한 번만 시도하며, 그 hook의 host process가 해당 세대가 보고한 host birth와 다르면 사유를 기록하고 띄우지 않는다. 이런 hook이 아직 실행되지 않은 세션, 예를 들어 재부팅 뒤 아직 turn이 없는 Codex 세션은 `no-live-relay`로 보이며 메시지는 큐에 남는다. 이전 broker가 `autoWake`를 주지 않으면 서비스는 `null`로 둔다.
 
 #### 세대 식별(C2)
 
