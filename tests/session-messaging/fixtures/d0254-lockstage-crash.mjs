@@ -24,9 +24,11 @@ fs.renameSync = function (source, target) {
 // 이 프로세스 조회만 고정 토큰으로 격리한다. 다른 PID 조회는 실제 OS 조회 그대로다.
 const D254_OWNER_TOKEN = 'd0254-fixture-owner-birth';
 const execFileSync = childProcess.execFileSync;
-const ownPid = new RegExp(`(^|[^0-9])${process.pid}([^0-9]|$)`, 'u');
+// 조회 대상 인자 위치만 본다. 명령 형식이 바뀌면 격리가 빠지고 부모 시험의 marker hash 단언이 실패한다.
+const queriesSelf = (file, args) => Array.isArray(args) && (file === 'ps' ? args[1] === String(process.pid)
+  : String(args.at(-1)).includes(`GetProcessById(${process.pid})`));
 childProcess.execFileSync = function (file, args, options) {
-  if (Array.isArray(args) && args.some(value => ownPid.test(String(value)))) return D254_OWNER_TOKEN;
+  if (queriesSelf(file, args)) return D254_OWNER_TOKEN;
   return execFileSync.call(this, file, args, options);
 };
 syncBuiltinESMExports();

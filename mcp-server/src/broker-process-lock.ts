@@ -143,10 +143,14 @@ function retireAbandonedStages(lockPath: string, budget?: ProcessIdentityBudget)
 export function acquireBrokerProcessLock(lockPath: string, budget?: ProcessIdentityBudget): BrokerProcessLock | null {
   remaining(budget);
   if (ownStartHash === undefined) {
-    const token = startToken(process.pid, budget);
-    ownStartHash = startHash(token);
+    const token = processStartToken(process.pid, process.platform, remaining(budget));
+    remaining(budget); // A late result cannot authorize a marker.
+    if (token !== null) ownStartHash = startHash(token);
   }
-  const owner = "owner-" + process.pid + "-" + randomBytes(16).toString("hex") + "-" + ownStartHash;
+  // 자기 출생 시각을 얻지 못해도 시작은 막지 않는다. PID만 남긴 marker는 다른 관측자가 그 PID가
+  // 살아 있는 동안 회수하지 않는다(fail closed). ponytail: 비정상 종료 뒤 PID가 재사용되면 그 프로세스가
+  // 끝날 때까지 잠금이 남는다. 출생 시각 조회 방식이 바뀌면 그때 hash marker로 올린다.
+  const owner = "owner-" + process.pid + "-" + randomBytes(16).toString("hex") + (ownStartHash ? "-" + ownStartHash : "");
   retireAbandonedStages(lockPath, budget);
   remaining(budget);
   const stage = mkdtempSync(path.toNamespacedPath(lockPath + ".stage-" + owner + "-"));

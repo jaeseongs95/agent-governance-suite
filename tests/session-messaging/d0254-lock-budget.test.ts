@@ -42,3 +42,25 @@ it("an already exhausted startup budget starts no OS identity query and creates 
   expect(ports.read).not.toHaveBeenCalled();
   expect(readdirSync(root)).toEqual([]);
 });
+
+it("자기 출생 시각을 얻지 못해도 PID-only owner로 시작하고 살아 있는 동안 회수되지 않는다", async () => {
+  const root = state(), lock = path.join(root, "broker.lock");
+  ports.read.mockReturnValue(null);
+  const { acquireBrokerProcessLock, ownsBrokerProcessLock, releaseBrokerProcessLock } = await import("../../mcp-server/src/broker-process-lock.js");
+  const lease = acquireBrokerProcessLock(lock, () => 100 - now)!;
+  expect(lease.owner).toMatch(new RegExp(`^owner-${process.pid}-[a-f0-9]{32}$`, "u"));
+  expect(ownsBrokerProcessLock(lease)).toBe(true);
+  // 같은 PID가 살아 있으면 출생 시각을 확인할 수 없는 다른 관측자도 회수하지 않는다.
+  expect(acquireBrokerProcessLock(lock, () => 100 - now)).toBeNull();
+  expect(readdirSync(lock)).toEqual([lease.owner]);
+  releaseBrokerProcessLock(lease);
+  expect(readdirSync(root)).toEqual([]);
+});
+
+it("자기 출생 시각 조회가 시작 예산을 넘기면 PID-only로도 게시하지 않는다", async () => {
+  const root = state(), lock = path.join(root, "broker.lock");
+  ports.read.mockImplementation(() => { now = 101; return null; });
+  const { acquireBrokerProcessLock } = await import("../../mcp-server/src/broker-process-lock.js");
+  expect(() => acquireBrokerProcessLock(lock, () => 100 - now)).toThrow("BUDGET_EXPIRED");
+  expect(readdirSync(root)).toEqual([]);
+});
