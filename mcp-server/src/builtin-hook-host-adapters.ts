@@ -126,8 +126,9 @@ const CLAUDE_LINEAGE_MAX_BYTES = 2 * 1024 * 1024;
 const CLAUDE_LINEAGE_MAX_LINES = 4000;
 
 /**
- * Structural `uuid` fields of this session's own entries in the host-given transcript, oldest first.
- * A fork copies the parent's entries with their uuids and rewrites sessionId to the child (B08 r01/r04).
+ * Structural `uuid` fields of this session's own entries in the host-given transcript, oldest first, with each
+ * entry's `timestamp`. A fork copies the parent's entries with their uuids and rewrites sessionId to the child
+ * (B08 r01/r04); the copied entries keep the time the parent wrote them (review 902e T1, real-host check pending).
  * Message bodies are never returned. Only the path the host passed is read, never a copy elsewhere.
  * Out of scope: a same-account process that edits this host-written file can also read the continuity
  * database and its secret directly, so lineage cannot protect against it (design r03 section 2).
@@ -155,13 +156,17 @@ function readClaudeLineage(transcriptPath: string, sessionId: string): LineageRe
   // The text after the last newline is a line the host may still be writing; it is not read.
   const lines = content.split("\n").slice(0, -1).slice(-CLAUDE_LINEAGE_MAX_LINES);
   const ids: string[] = [];
+  const at: number[] = [];
   for (const line of lines) {
     if (!line.trim()) continue;
     let entry: Record<string, unknown>;
     try { entry = record(JSON.parse(line)); } catch { return { reason: "LINEAGE_FORMAT_INVALID" }; }
-    if (entry.sessionId === sessionId && typeof entry.uuid === "string" && entry.uuid) ids.push(entry.uuid);
+    if (entry.sessionId === sessionId && typeof entry.uuid === "string" && entry.uuid) {
+      ids.push(entry.uuid);
+      at.push(typeof entry.timestamp === "string" ? Date.parse(entry.timestamp) : Number.NaN);
+    }
   }
-  return ids.length > 0 ? { ids } : { reason: "LINEAGE_IDS_ABSENT" };
+  return ids.length > 0 ? { ids, at } : { reason: "LINEAGE_IDS_ABSENT" };
 }
 
 function adaptGeminiHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {

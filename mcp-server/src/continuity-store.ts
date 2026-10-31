@@ -398,13 +398,13 @@ export class SqliteContinuityStore {
     });
   }
 
-  /** The store position of the first observation of this exact event, or null. */
-  firstObservationId(taskCorrelation: string, epoch: number, event: string): number | null {
+  /** The store position and time of the first observation of this exact event, or null. */
+  firstObservation(taskCorrelation: string, epoch: number, event: string): { id: number; at: string } | null {
     const row = this.database.prepare(`
-      SELECT observation_id FROM continuity_observations WHERE task_correlation = ? AND epoch = ? AND event = ?
+      SELECT observation_id, observed_at FROM continuity_observations WHERE task_correlation = ? AND epoch = ? AND event = ?
       ORDER BY observation_id ASC LIMIT 1
-    `).get(taskCorrelation, epoch, event) as { observation_id: number } | undefined;
-    return row?.observation_id ?? null;
+    `).get(taskCorrelation, epoch, event) as { observation_id: number; observed_at: string } | undefined;
+    return row ? { id: row.observation_id, at: row.observed_at } : null;
   }
 
   /** Copies a selected parent snapshot into an empty child epoch only; existing child state is never replaced. */

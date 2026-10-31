@@ -234,7 +234,7 @@ export class ContinuityService implements ContinuityGateway {
       t: toolName,
       d: convergenceDigest(withoutBinding(input)),
       x: Math.floor(this.now().getTime() / 1000) + TOOL_TOKEN_TTL_SECONDS,
-      ...(toolName === "checkpoint_context" && readLineage ? this.anchorsFor(readLineage) : {}),
+      ...(toolName === "checkpoint_context" && readLineage ? this.anchorsFor(task, readLineage) : {}),
       ...(toolName === "inspect_context" ? this.pinnedForkParent(task, readLineage) : {}),
     };
     return this.sign(payload);
@@ -246,10 +246,19 @@ export class ContinuityService implements ContinuityGateway {
     this.store.recordObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT, null, true, this.now().toISOString());
   }
 
-  /** Several anchors: the very newest entry may not be among those a fork copies. */
-  private anchorsFor(readLineage: () => LineageRead): Pick<ToolBindingPayload, "a"> {
+  /**
+   * Several anchors: the very newest entry may not be among those a fork copies. A fork anchors only entries the host
+   * wrote at or after its own fork record; everything older was copied, including the parent's entries written after
+   * the parent's last save, which no parent anchor covers (review 902e T1). An entry without a time counts as copied.
+   * This does not depend on when the fork's file first becomes readable (M1), only on the entries' own write times.
+   */
+  private anchorsFor(task: ContinuityTaskRecord, readLineage: () => LineageRead): Pick<ToolBindingPayload, "a"> {
     const read = readLineage();
-    return "ids" in read ? { a: read.ids.slice(-LINEAGE_ANCHOR_COUNT).map(id => this.lineageAnchor(id)) } : {};
+    if (!("ids" in read)) return {};
+    const forkAt = this.store.firstObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT)?.at;
+    const since = forkAt === undefined ? null : Date.parse(forkAt);
+    const own = since === null ? read.ids : read.ids.filter((_id, index) => read.at[index]! >= since);
+    return { a: own.slice(-LINEAGE_ANCHOR_COUNT).map(id => this.lineageAnchor(id)) };
   }
 
   /**
@@ -282,8 +291,8 @@ export class ContinuityService implements ContinuityGateway {
   private selectForkParent(task: ContinuityTaskRecord, readLineage: () => LineageRead): { p: ForkParent } | { q: string } {
     const read = readLineage();
     if (!("ids" in read)) return { q: read.reason };
-    const forkAt = this.store.firstObservationId(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT);
-    if (forkAt === null) return { q: "FORK_PARENT_NOT_FOUND" };
+    const forkAt = this.store.firstObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT)?.id;
+    if (forkAt === undefined) return { q: "FORK_PARENT_NOT_FOUND" };
     const positions = new Map<string, number>();
     read.ids.forEach((id, index) => positions.set(this.lineageAnchor(id), index));
     const scores = new Map<string, { parent: ForkParent; matched: number; absent: number; last: number }>();
@@ -337,7 +346,7 @@ export class ContinuityService implements ContinuityGateway {
     if (!task || task.rootId) return;
     const snapshot = this.store.getSnapshot(task.taskCorrelation, task.currentEpoch);
     if (!snapshot) return;
-    const anchors = this.anchorsFor(readLineage).a;
+    const anchors = this.anchorsFor(task, readLineage).a;
     if (anchors?.length) this.store.reanchorSnapshot(task.taskCorrelation, task.currentEpoch, snapshot.revision, snapshot.snapshotDigest, anchors, this.now().toISOString());
   }
 

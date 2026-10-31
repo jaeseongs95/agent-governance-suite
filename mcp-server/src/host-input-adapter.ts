@@ -52,7 +52,8 @@ export interface AdaptedHostInput {
 }
 
 /** A host that cannot supply lineage omits readLineage; a failed read is closed with a stable reason. */
-export type LineageRead = { ids: readonly string[] } | { reason: string };
+/** `at[i]` is the host write time of `ids[i]` in epoch ms, NaN when the entry carries none. */
+export type LineageRead = { ids: readonly string[]; at: readonly number[] } | { reason: string };
 
 /** No host payload schema or actor convention is assumed by the common hook layer. */
 export function adaptHostInput(input: Record<string, unknown>, host: string): AdaptedHostInput {

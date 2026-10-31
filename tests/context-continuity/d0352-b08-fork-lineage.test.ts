@@ -36,13 +36,18 @@ async function directory(): Promise<string> {
   return created;
 }
 
-function line(sessionId: string, uuid: string): string {
-  return JSON.stringify({ type: "user", sessionId, uuid, message: { role: "user", content: BODY_MARKER } });
+// Host write times: entries a fork copies keep the parent's earlier time; a fork's own entries are written at or after
+// its fork record, which this service's fixed clock stamps at OWN.
+const EARLIER = "2026-11-01T00:30:00.000Z";
+const OWN = "2026-11-01T01:00:00.000Z";
+
+function line(sessionId: string, uuid: string, timestamp = EARLIER): string {
+  return JSON.stringify({ type: "user", sessionId, uuid, timestamp, message: { role: "user", content: BODY_MARKER } });
 }
 
-async function transcript(rows: Array<[sessionId: string, uuid: string]>, extra = ""): Promise<string> {
+async function transcript(rows: Array<[sessionId: string, uuid: string, timestamp?: string]>, extra = ""): Promise<string> {
   const file = join(await directory(), "session.jsonl");
-  await writeFile(file, rows.map(([sessionId, uuid]) => line(sessionId, uuid)).join("\n") + "\n" + extra, "utf8");
+  await writeFile(file, rows.map(([sessionId, uuid, timestamp]) => line(sessionId, uuid, timestamp)).join("\n") + "\n" + extra, "utf8");
   return file;
 }
 
@@ -117,7 +122,7 @@ async function parent(service: ContinuityService, session = "parent-a") {
 
 /** A host fork: copied uuids rewritten to the child session id, the child's own entry, then its first prompt. */
 async function fork(service: ContinuityService, child: string, copied: string[]) {
-  const file = await transcript([...copied.map(uuid => [child, uuid] as [string, string]), [child, randomUUID()]]);
+  const file = await transcript([...copied.map(uuid => [child, uuid] as [string, string]), [child, randomUUID(), OWN]]);
   expect(start(service, child, "fork", file)).toEqual({});
   prompt(service, child, file);
   return file;
@@ -148,7 +153,7 @@ describe("D0352 B08 fork lineage", () => {
   it("D1: the parent whose anchor appears last in the child's own file is chosen (grandchild fork)", async () => {
     const service = createService();
     const { uuids: aUuids } = await parent(service, "parent-a");
-    const bRows: Array<[string, string]> = [...aUuids.map(uuid => ["fork-b", uuid] as [string, string]), ["fork-b", randomUUID()]];
+    const bRows: Array<[string, string, string?]> = [...aUuids.map(uuid => ["fork-b", uuid] as [string, string]), ["fork-b", randomUUID(), OWN]];
     const bFile = await transcript(bRows);
     expect(start(service, "fork-b", "fork", bFile)).toEqual({});
     const bSnapshot = checkpoint(service, "fork-b", bFile, { requestId: "b-1" });
@@ -309,6 +314,35 @@ describe("D0352 B08 fork lineage", () => {
     // The sibling saves with one own entry: 15 of its 16 anchors are copies of the parent's entries.
     checkpoint(service, "fork-s", siblingFile, { requestId: "sibling-15", expectedRevision: snapshot.revision });
     const laterFile = await fork(service, "fork-late", copied);
+    expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+  });
+
+  it("T1: a sibling that copied the parent's entries written after its save never becomes the parent (review 902e)", async () => {
+    const service = createService();
+    const rows: Array<[string, string]> = Array.from({ length: 20 }, () => ["parent-a", randomUUID()]);
+    const file = await transcript(rows);
+    const snapshot = checkpoint(service, "parent-a", file);
+    // The parent's file grows after its save (at least that tool's result): these two entries are no parent anchors.
+    const tail = [randomUUID(), randomUUID()];
+    await appendFile(file, tail.map(uuid => line("parent-a", uuid)).join("\n") + "\n", "utf8");
+    const copied = [...rows.map(([, uuid]) => uuid), ...tail];
+    const siblingFile = await fork(service, "fork-s", copied);
+    expect(load(service, "fork-s", inspect(service, "fork-s", siblingFile)).error).toBeNull();
+    // The sibling saves: the tail it copied existed before its fork, so it owns only its own entry.
+    checkpoint(service, "fork-s", siblingFile, { requestId: "sibling-tail", expectedRevision: snapshot.revision });
+    const laterFile = await fork(service, "fork-late", copied);
+    expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+  });
+
+  it("T1b: a fork entry without a host write time is treated as copied, never as the fork's own anchor", async () => {
+    const service = createService();
+    const { snapshot, uuids } = await parent(service);
+    const untimed = randomUUID();
+    const siblingFile = await transcript([...uuids.map(uuid => ["fork-u", uuid] as [string, string])], JSON.stringify({ type: "user", sessionId: "fork-u", uuid: untimed }) + "\n");
+    expect(start(service, "fork-u", "fork", siblingFile)).toEqual({});
+    expect(load(service, "fork-u", inspect(service, "fork-u", siblingFile)).error).toBeNull();
+    checkpoint(service, "fork-u", siblingFile, { requestId: "untimed", expectedRevision: snapshot.revision });
+    const laterFile = await fork(service, "fork-late", [...uuids, untimed]);
     expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
   });
 
