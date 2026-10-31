@@ -180,7 +180,9 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/ponytail/classification.json": "19b81d57825cecd7a366b50efb9f220446f5208839b26faee2710af00da3d926",
     "skills/recovery-strategy-selector/classification.json": "f1a123fad0c83c1af38579e2920823cf0bec3e86bbc3d27bdb122eb5c45dd622",
     "skills/recovery-strategy-selector/references/entry-details.md": "5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a",
-    "skills/recovery-strategy-selector/references/selection-protocol.md": "80c7890acd0f765437e3f2b98f94d89847e75d7961cf3ac5e963fde3558a5d26",
+    "skills/recovery-strategy-selector/contracts/recovery-handoff.v1.schema.json": "ef19894512527f8dfac6b4acff6d6cb347b6a2183b140260ae8426e0183ae241",
+    "skills/recovery-strategy-selector/references/selection-protocol.md": "8a9aa767678188f4f3cdbb7d610a0190be1bd43d7b2e2854265c1ba56037291c",
+    "skills/recovery-strategy-selector/scripts/core.mjs": "5f70961f367d594de171b7181a8b2f2c833aa34c874fdf9a09c5d34279729d88",
   },
   "previousHashes": {
     "skills/blocker-diagnostician/SKILL.md": "5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
