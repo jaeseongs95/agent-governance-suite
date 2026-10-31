@@ -157,6 +157,14 @@ function handoff(request, strategies, { verdict = "SELECTED", selected = strateg
   };
 }
 
+/** A request whose evidenceIndex also holds the panel's verified DecisionRecord (D0341, review 902e). */
+function panelRequest() {
+  const request = selectionRequest();
+  request.evidenceIndex.push({ evidenceRef: "panel-record", locator: "artifact:decision-record", digest: digest({ panel: "tie" }), verified: true,
+    kind: "independent-deliberation-panel/decision-record.v1" });
+  return request;
+}
+
 function tieReview(survivorIds, unresolvedStrategyIds, deliberation) {
   return {
     status: unresolvedStrategyIds.length ? "unresolved" : "completed",
@@ -238,8 +246,8 @@ describe("recovery strategy selector", () => {
   });
 
   it("boundary: selects the tied leader chosen by a resolved deliberation record bound to verified evidence", () => {
-    const request = selectionRequest();
-    const output = handoff(request, [strategy("a"), strategy("b")], { selected: "b", crossReview: tieReview(["a", "b"], [], { selectedStrategyId: "b", evidenceRefs: ["cause-evidence"] }) });
+    const request = panelRequest();
+    const output = handoff(request, [strategy("a"), strategy("b")], { selected: "b", crossReview: tieReview(["a", "b"], [], { selectedStrategyId: "b", evidenceRefs: ["cause-evidence", "panel-record"] }) });
     expect(validateHandoff(request, output)).toEqual([]);
 
     const approval = (id) => strategy(id, {
@@ -248,27 +256,43 @@ describe("recovery strategy selector", () => {
       requiredAuthorization: ["schema-migration"],
       objectiveGate: { verdict: "REQUIRES_APPROVAL", reasons: [] },
     });
-    const gated = handoff(request, [approval("m1"), approval("m2")], { verdict: "NEEDS_APPROVAL", selected: "m2", crossReview: tieReview(["m1", "m2"], [], { selectedStrategyId: "m2", evidenceRefs: ["cause-evidence"] }) });
+    const gated = handoff(request, [approval("m1"), approval("m2")], { verdict: "NEEDS_APPROVAL", selected: "m2", crossReview: tieReview(["m1", "m2"], [], { selectedStrategyId: "m2", evidenceRefs: ["panel-record"] }) });
     expect(validateHandoff(request, gated)).toEqual([]);
     expect(gated.approvalRequired).toEqual(["schema-migration"]);
   });
 
   it("boundary: keeps NEEDS_INPUT when a tie has no deliberation record or an unresolved one", () => {
-    const request = selectionRequest();
+    const request = panelRequest();
     const strategies = [strategy("a"), strategy("b")];
-    const unresolved = handoff(request, strategies, { verdict: "NEEDS_INPUT", selected: null, crossReview: tieReview(["a", "b"], ["a", "b"], { selectedStrategyId: null, evidenceRefs: ["cause-evidence"] }) });
+    const unresolved = handoff(request, strategies, { verdict: "NEEDS_INPUT", selected: null, crossReview: tieReview(["a", "b"], ["a", "b"], { selectedStrategyId: null, evidenceRefs: ["panel-record"] }) });
     expect(validateHandoff(request, unresolved)).toEqual([]);
-    for (const deliberation of [undefined, { selectedStrategyId: null, evidenceRefs: ["cause-evidence"] }]) {
+    for (const deliberation of [undefined, { selectedStrategyId: null, evidenceRefs: ["panel-record"] }]) {
       const claimed = handoff(request, strategies, { selected: "a", crossReview: tieReview(["a", "b"], [], deliberation) });
       expect(validateHandoff(request, claimed)).toContain("handoff verdict는 NEEDS_INPUT여야 합니다.");
     }
   });
 
+  it("negative: a tie-breaking deliberation record citing only cause evidence, without the panel's DecisionRecord, keeps NEEDS_INPUT", () => {
+    const panelKind = "deliberation은 kind independent-deliberation-panel/decision-record.v1인 검증된 evidence를 하나 이상 참조해야 합니다.";
+    const strategies = [strategy("a"), strategy("b")];
+    for (const request of [selectionRequest(), panelRequest()]) {
+      const causeOnly = validateHandoff(request, handoff(request, strategies, { selected: "a", crossReview: tieReview(["a", "b"], [], { selectedStrategyId: "a", evidenceRefs: ["cause-evidence"] }) }));
+      expect(causeOnly).toContain("handoff verdict는 NEEDS_INPUT여야 합니다.");
+      expect(causeOnly).toContain(panelKind);
+    }
+    // The panel record kind is bound only to verified evidence.
+    const unverifiedPanel = selectionRequest();
+    unverifiedPanel.evidenceIndex.push({ evidenceRef: "panel-record", locator: "artifact:decision-record", digest: digest({ panel: "tie" }), verified: false,
+      kind: "independent-deliberation-panel/decision-record.v1" });
+    const fallback = handoff(unverifiedPanel, strategies, { verdict: "NEEDS_INPUT", selected: null, crossReview: tieReview(["a", "b"], ["a", "b"], { selectedStrategyId: "a", evidenceRefs: ["panel-record"] }) });
+    expect(validateHandoff(unverifiedPanel, fallback)).toEqual(["deliberation이 검증되지 않은 evidence를 참조합니다.", panelKind]);
+  });
+
   it("negative: rejects a tie-breaking deliberation record that names a non-leader or cites unverified evidence", () => {
-    const request = selectionRequest();
+    const request = panelRequest();
     const strategies = [strategy("a"), strategy("b"), strategy("c", { causeFit: "containment" })];
     const survivors = ["a", "b", "c"];
-    const nonLeader = validateHandoff(request, handoff(request, strategies, { selected: "c", crossReview: tieReview(survivors, [], { selectedStrategyId: "c", evidenceRefs: ["cause-evidence"] }) }));
+    const nonLeader = validateHandoff(request, handoff(request, strategies, { selected: "c", crossReview: tieReview(survivors, [], { selectedStrategyId: "c", evidenceRefs: ["panel-record"] }) }));
     expect(nonLeader).toContain("handoff verdict는 NEEDS_INPUT여야 합니다.");
     expect(nonLeader).toContain("deliberation selectedStrategyId는 동률 최상위 전략 중 하나여야 합니다.");
 
@@ -277,7 +301,8 @@ describe("recovery strategy selector", () => {
     expect(unverified).toContain("handoff verdict는 NEEDS_INPUT여야 합니다.");
     expect(unverified).toContain("deliberation이 검증되지 않은 evidence를 참조합니다.");
     const fallback = handoff(request, strategies, { verdict: "NEEDS_INPUT", selected: null, crossReview: tieReview(survivors, ["a", "b"], unverifiedRecord) });
-    expect(validateHandoff(request, fallback)).toEqual(["deliberation이 검증되지 않은 evidence를 참조합니다."]);
+    expect(validateHandoff(request, fallback)).toEqual(["deliberation이 검증되지 않은 evidence를 참조합니다.",
+      "deliberation은 kind independent-deliberation-panel/decision-record.v1인 검증된 evidence를 하나 이상 참조해야 합니다."]);
   });
 
   it("policy: requires independent-deliberation-panel internal tie-breaking before escalating an unresolved tie to NEEDS_INPUT", () => {

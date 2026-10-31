@@ -181,8 +181,9 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/recovery-strategy-selector/classification.json": "f1a123fad0c83c1af38579e2920823cf0bec3e86bbc3d27bdb122eb5c45dd622",
     "skills/recovery-strategy-selector/references/entry-details.md": "5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a",
     "skills/recovery-strategy-selector/contracts/recovery-handoff.v1.schema.json": "ef19894512527f8dfac6b4acff6d6cb347b6a2183b140260ae8426e0183ae241",
-    "skills/recovery-strategy-selector/references/selection-protocol.md": "8a9aa767678188f4f3cdbb7d610a0190be1bd43d7b2e2854265c1ba56037291c",
-    "skills/recovery-strategy-selector/scripts/core.mjs": "5f70961f367d594de171b7181a8b2f2c833aa34c874fdf9a09c5d34279729d88",
+    "skills/recovery-strategy-selector/contracts/recovery-strategy-selection-request.v1.schema.json": "684d92828e97be4763d7c8ace6250288b8df0b450f23b89f5b65842da7278d8e",
+    "skills/recovery-strategy-selector/references/selection-protocol.md": "5d9d8070948ef8ec4ce0c1cf16de179586ce96dc660e1ce3b6a214ae4dbe8f7c",
+    "skills/recovery-strategy-selector/scripts/core.mjs": "b378eca94a05a5008e27f60d582e3d167c243dfb4602c663a0eef22e75254625",
   },
   "previousHashes": {
     "skills/blocker-diagnostician/SKILL.md": "5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",

@@ -64,6 +64,13 @@ function verifiedRefs(request) {
   return new Set(request.evidenceIndex.filter((item) => item.verified).map((item) => item.evidenceRef));
 }
 
+/** The evidence kind an independent-deliberation-panel DecisionRecord carries in the request evidenceIndex. */
+export const PANEL_DECISION_RECORD_KIND = "independent-deliberation-panel/decision-record.v1";
+
+function panelRecordRefs(request) {
+  return new Set(request.evidenceIndex.filter((item) => item.verified && item.kind === PANEL_DECISION_RECORD_KIND).map((item) => item.evidenceRef));
+}
+
 function authorizationMap(request) {
   const output = new Map();
   for (const item of request.authorizationEvidence) {
@@ -184,13 +191,15 @@ function compareStrategies(left, right) {
   return 0;
 }
 
-function expectedOutcome(strategies, deliberation, evidence) {
+function expectedOutcome(strategies, deliberation, evidence, panelRecords) {
   const survivors = strategies.filter((item) => item.objectiveGate.verdict !== "FAIL");
   if (survivors.length === 0) return { survivors, leaders: [], selected: null, verdict: "NO_VIABLE_STRATEGY" };
   const ordered = [...survivors].sort(compareStrategies);
   const leaders = ordered.filter((item) => compareStrategies(item, ordered[0]) === 0);
-  // An exact tie is broken only by a deliberation record that picks a tied leader on verified evidence.
+  // An exact tie is broken only by a deliberation record that picks a tied leader on verified evidence, at least one of
+  // which is the panel's own DecisionRecord: cause evidence alone is not a deliberation (review 902e).
   const resolved = leaders.length > 1 && deliberation?.evidenceRefs.every((ref) => evidence.has(ref))
+    && deliberation.evidenceRefs.some((ref) => panelRecords.has(ref))
     ? leaders.find((item) => item.strategyId === deliberation.selectedStrategyId)
     : null;
   if (leaders.length > 1 && !resolved) return { survivors, leaders, selected: null, verdict: "NEEDS_INPUT" };
@@ -269,7 +278,8 @@ export function validateHandoff(request, handoff, frozenRequestDigest = null) {
   }
 
   const deliberation = handoff.crossReview.deliberation;
-  const outcome = expectedOutcome(handoff.strategies, deliberation, evidence);
+  const panelRecords = panelRecordRefs(request);
+  const outcome = expectedOutcome(handoff.strategies, deliberation, evidence, panelRecords);
   const survivorIds = outcome.survivors.map((item) => item.strategyId);
   if (!equalValues(sorted(handoff.survivingStrategyIds), sorted(survivorIds))) errors.push("survivingStrategyIds가 Objective Gate 결과와 일치하지 않습니다.");
   if (handoff.verdict !== outcome.verdict) errors.push(`handoff verdict는 ${outcome.verdict}여야 합니다.`);
@@ -289,6 +299,7 @@ export function validateHandoff(request, handoff, frozenRequestDigest = null) {
   if (deliberation) {
     if (outcome.leaders.length < 2) errors.push("deliberation은 비교축 동률이 있을 때만 기록합니다.");
     if (deliberation.evidenceRefs.some((ref) => !evidence.has(ref))) errors.push("deliberation이 검증되지 않은 evidence를 참조합니다.");
+    if (!deliberation.evidenceRefs.some((ref) => panelRecords.has(ref))) errors.push(`deliberation은 kind ${PANEL_DECISION_RECORD_KIND}인 검증된 evidence를 하나 이상 참조해야 합니다.`);
     if (deliberation.selectedStrategyId !== null && !outcome.leaders.some((item) => item.strategyId === deliberation.selectedStrategyId)) errors.push("deliberation selectedStrategyId는 동률 최상위 전략 중 하나여야 합니다.");
   }
 

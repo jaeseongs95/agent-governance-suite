@@ -113,7 +113,8 @@
         "evidenceRef": { "type": "string", "minLength": 1 },
         "locator": { "type": "string", "minLength": 1 },
         "digest": { "$ref": "#/$defs/digest" },
-        "verified": { "type": "boolean" }
+        "verified": { "type": "boolean" },
+        "kind": { "enum": ["independent-deliberation-panel/decision-record.v1"] }
       }
     }
   }

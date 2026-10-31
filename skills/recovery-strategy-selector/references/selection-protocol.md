@@ -31,7 +31,7 @@ Gate는 점수가 아니라 필수 조건이다. 다음 전략은 `FAIL`이다.
 5. `changeBreadth`: 작은 값 우선
 6. Gate: `PASS`, `REQUIRES_APPROVAL`
 
-가중 점수나 숨은 보정치를 사용하지 않는다. 최상위 전략이 하나면 선택하고, 모든 축이 같은 최상위 전략이 둘 이상이면 즉시 사용자에게 넘기지 않고 먼저 `independent-deliberation-panel`(내부 독립 숙의)로 해소를 시도한 뒤 그래도 결론이 나지 않는 미해결 동률일 때만 `NEEDS_INPUT`으로 반환한다. 숙의가 동률 최상위 전략 하나로 결론을 내면 `crossReview.deliberation`에 그 `selectedStrategyId`와 요청 `evidenceIndex`에서 검증된 `evidenceRefs`를 기록하고, 그 전략을 `SELECTED`(gate가 `REQUIRES_APPROVAL`이면 `NEEDS_APPROVAL`)로 반환한다. 기록이 없거나 `selectedStrategyId`가 `null`(미해결)이거나 동률 밖 전략을 고르거나 검증되지 않은 evidence를 참조하면 `NEEDS_INPUT`이다. 숙의 기록은 정확한 동률만 깨며 비교 순서를 바꾸지 않는다. selector 자체의 단순 비교는 독립 감사나 다중 에이전트 검토라고 표현하지 않는다.
+가중 점수나 숨은 보정치를 사용하지 않는다. 최상위 전략이 하나면 선택하고, 모든 축이 같은 최상위 전략이 둘 이상이면 즉시 사용자에게 넘기지 않고 먼저 `independent-deliberation-panel`(내부 독립 숙의)로 해소를 시도한 뒤 그래도 결론이 나지 않는 미해결 동률일 때만 `NEEDS_INPUT`으로 반환한다. 숙의가 동률 최상위 전략 하나로 결론을 내면 `crossReview.deliberation`에 그 `selectedStrategyId`와 요청 `evidenceIndex`에서 검증된 `evidenceRefs`를 기록하고(그중 하나 이상은 패널 DecisionRecord로 `kind: "independent-deliberation-panel/decision-record.v1"`인 evidence), 그 전략을 `SELECTED`(gate가 `REQUIRES_APPROVAL`이면 `NEEDS_APPROVAL`)로 반환한다. 기록이 없거나 `selectedStrategyId`가 `null`(미해결)이거나 동률 밖 전략을 고르거나 검증되지 않은 evidence를 참조하거나 패널 DecisionRecord evidence가 없으면(원인 evidence만 인용) `NEEDS_INPUT`이다. 숙의 기록은 정확한 동률만 깨며 비교 순서를 바꾸지 않는다. selector 자체의 단순 비교는 독립 감사나 다중 에이전트 검토라고 표현하지 않는다.
 
 ## 새 작업 인계
 
