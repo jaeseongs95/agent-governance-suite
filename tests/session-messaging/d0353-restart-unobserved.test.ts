@@ -88,7 +88,7 @@ function latch(f: Fixture, outcome: UncertainOutcome = "submitted") {
 function row(f: Fixture, attempt: WakeAttempt) {
   const result = f.store.database.prepare("SELECT * FROM wake_nonces WHERE attempt_id = ?").get(attempt.attemptId);
   assert.ok(result);
-  return result;
+  return {...result};
 }
 function activity(f: Fixture) {
   return f.store.database.prepare("SELECT active_at FROM session_activity WHERE host = ? AND session_id = ?").get(target.host, target.sessionId);
