@@ -484,14 +484,14 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   // relay (it never acquired or died), this boundary starts one single-attempt relay for it; the lease keeps one
   // owner and acquire-relay fences superseded generations. Until such a hook runs, an idle session has no relay.
   // The relay parent must be the exact host birth that generation's SessionStart reported. This hook's own host
-  // process is compared with it; a legacy generation without a report, another process of the same session or a
-  // reused PID is refused with a recorded reason and starts nothing.
+  // process is compared with it; a hook without its host's identity, a legacy generation without a report, another
+  // process of the same session or a reused PID is refused with a recorded reason and starts nothing.
   const recoverUnverifiedRelay = (claimed: RelayRecoveryHint | undefined): void => {
     const recovery = claimed?.relayRecovery;
     if (!recovery?.instanceId || options.recoverExistingSession || !actorAccess(observation.actor).allowed) return;
     try {
       const hostPid = resolveHookProcessPid(host, explicitHostPid, undefined);
-      if (!hostPid) return;
+      if (!hostPid) throw hookFailure("RELAY_RECOVERY_HOST_UNIDENTIFIED", "This hook did not receive its host process identity.");
       if (!Number.isInteger(recovery.parentPid) || typeof recovery.parentStartToken !== "string" || !recovery.parentStartToken) {
         throw hookFailure("RELAY_RECOVERY_PARENT_UNREPORTED", "The relay-less generation has no reported host birth to bind.");
       }

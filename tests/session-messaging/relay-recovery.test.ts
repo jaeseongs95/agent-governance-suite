@@ -1,7 +1,8 @@
 import { EventEmitter } from "node:events";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const f = vi.hoisted(() => ({ request: vi.fn(), token: vi.fn(), exists: vi.fn(), identity: vi.fn(), spawn: vi.fn() }));
@@ -73,14 +74,46 @@ it("HOOK-3: user input and a claim-less turn end also carry the recovery trigger
   for (const call of f.spawn.mock.calls) expect(call[1]).toEqual(expect.arrayContaining(["--recovery", "I2"]));
 });
 
-it("HOOK-2: no recovery signal, no host pid, or a child actor starts no relay", async () => {
+it("HOOK-2: no recovery signal, no host pid, or a child actor starts no relay; a missing host pid is recorded, not silent", async () => {
+  const stderr = vi.spyOn(console, "error").mockImplementation(() => {});
   f.request.mockResolvedValue({ messages: [] });
   await handleSessionMessageHook(post, host, 424242);
   f.request.mockImplementation(async (operation: string) =>
-    operation === "claim-deferred" ? { messages: [], relayRecovery: { instanceId: "I2" } } : {});
+    operation === "claim-deferred" || operation === "observe-native-input" ? { messages: [], relayRecovery: hint } : {});
   await handleSessionMessageHook(post, host, undefined);
+  await handleSessionMessageHook({ hook_event_name: "UserPromptSubmit", session_id: "relay-recovery", syntheticActor: "root" }, host, undefined);
   await handleSessionMessageHook({ ...post, syntheticActor: "child" }, host, 424242);
+  expect(hookFailures(stderr)).toHaveLength(2);
+  for (const failure of hookFailures(stderr)) expect(failure).toMatchObject({ phase: "recovery", reason: "RELAY_RECOVERY_HOST_UNIDENTIFIED" });
+  expect(f.token).not.toHaveBeenCalled();
   expect(f.spawn).not.toHaveBeenCalled();
+});
+
+it("HOOK-6: every packaged hook that can receive a recovery hint passes the host identity SessionStart reported", () => {
+  type Hook = { command: string; commandWindows?: string; args?: string[] };
+  const root = fileURLToPath(new URL("../../", import.meta.url));
+  const read = (file: string) => (JSON.parse(readFileSync(path.join(root, file), "utf8")) as { hooks: Record<string, Array<{ hooks: Hook[] }>> }).hooks;
+  const messageHooks = (hooks: ReturnType<typeof read>, event: string) => (hooks[event] ?? []).flatMap((group) => group.hooks)
+    .filter((hook) => [hook.command, ...(hook.args ?? [])].some((part) => part.includes("session-message-hook.mjs")));
+  const hostPid = (command: string | undefined) => / --host-pid .+$/u.exec(command ?? "")?.[0];
+  // User input, the after-tool boundary and turn end are the hook events whose broker replies carry relayRecovery.
+  const consumers = ["UserPromptSubmit", "PostToolUse", "Stop"];
+  // Codex passes its host explicitly; each consumer must pass the same host expression as SessionStart.
+  const codex = read("hooks/hooks.json");
+  const [start] = messageHooks(codex, "SessionStart");
+  expect(hostPid(start?.command)).toBeTruthy();
+  expect(hostPid(start?.commandWindows)).toBeTruthy();
+  expect(messageHooks(codex, "UserPromptSubmit")).toHaveLength(1);
+  for (const event of consumers) for (const hook of messageHooks(codex, event)) {
+    expect(hostPid(hook.command), event).toBe(hostPid(start!.command));
+    expect(hostPid(hook.commandWindows), event).toBe(hostPid(start!.commandWindows));
+  }
+  // Claude Code reads its host as the hook's direct parent, so its hooks start node with no shell in between.
+  const claude = read("claude-overlay/hooks/hooks.json");
+  for (const event of ["SessionStart", ...consumers]) {
+    expect(messageHooks(claude, event).length, event).toBeGreaterThan(0);
+    for (const hook of messageHooks(claude, event)) expect(hook.command, event).toBe("node");
+  }
 });
 
 it("HOOK-4: a recovery relay is refused, with a recorded reason, unless this hook's host is the generation's reported birth", async () => {
