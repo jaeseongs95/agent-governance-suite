@@ -184,13 +184,17 @@ function compareStrategies(left, right) {
   return 0;
 }
 
-function expectedOutcome(strategies) {
+function expectedOutcome(strategies, deliberation, evidence) {
   const survivors = strategies.filter((item) => item.objectiveGate.verdict !== "FAIL");
   if (survivors.length === 0) return { survivors, leaders: [], selected: null, verdict: "NO_VIABLE_STRATEGY" };
   const ordered = [...survivors].sort(compareStrategies);
   const leaders = ordered.filter((item) => compareStrategies(item, ordered[0]) === 0);
-  if (leaders.length > 1) return { survivors, leaders, selected: null, verdict: "NEEDS_INPUT" };
-  const selected = leaders[0];
+  // An exact tie is broken only by a deliberation record that picks a tied leader on verified evidence.
+  const resolved = leaders.length > 1 && deliberation?.evidenceRefs.every((ref) => evidence.has(ref))
+    ? leaders.find((item) => item.strategyId === deliberation.selectedStrategyId)
+    : null;
+  if (leaders.length > 1 && !resolved) return { survivors, leaders, selected: null, verdict: "NEEDS_INPUT" };
+  const selected = resolved ?? leaders[0];
   return { survivors, leaders, selected, verdict: selected.objectiveGate.verdict === "REQUIRES_APPROVAL" ? "NEEDS_APPROVAL" : "SELECTED" };
 }
 
@@ -264,7 +268,8 @@ export function validateHandoff(request, handoff, frozenRequestDigest = null) {
     if (refs.some((ref) => !evidence.has(ref))) errors.push(`strategy ${strategy.strategyId}가 검증되지 않은 evidence를 참조합니다.`);
   }
 
-  const outcome = expectedOutcome(handoff.strategies);
+  const deliberation = handoff.crossReview.deliberation;
+  const outcome = expectedOutcome(handoff.strategies, deliberation, evidence);
   const survivorIds = outcome.survivors.map((item) => item.strategyId);
   if (!equalValues(sorted(handoff.survivingStrategyIds), sorted(survivorIds))) errors.push("survivingStrategyIds가 Objective Gate 결과와 일치하지 않습니다.");
   if (handoff.verdict !== outcome.verdict) errors.push(`handoff verdict는 ${outcome.verdict}여야 합니다.`);
@@ -280,6 +285,11 @@ export function validateHandoff(request, handoff, frozenRequestDigest = null) {
     if (handoff.crossReview.status !== expectedStatus) errors.push(`cross review status는 ${expectedStatus}여야 합니다.`);
     const unresolved = outcome.selected ? [] : outcome.leaders.map((item) => item.strategyId);
     if (!equalValues(sorted(handoff.crossReview.unresolvedStrategyIds), sorted(unresolved))) errors.push("cross review unresolvedStrategyIds가 동률 결과와 일치하지 않습니다.");
+  }
+  if (deliberation) {
+    if (outcome.leaders.length < 2) errors.push("deliberation은 비교축 동률이 있을 때만 기록합니다.");
+    if (deliberation.evidenceRefs.some((ref) => !evidence.has(ref))) errors.push("deliberation이 검증되지 않은 evidence를 참조합니다.");
+    if (deliberation.selectedStrategyId !== null && !outcome.leaders.some((item) => item.strategyId === deliberation.selectedStrategyId)) errors.push("deliberation selectedStrategyId는 동률 최상위 전략 중 하나여야 합니다.");
   }
 
   if (outcome.selected) {

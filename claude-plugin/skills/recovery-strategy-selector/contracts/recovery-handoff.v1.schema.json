@@ -133,7 +133,17 @@
       "properties": {
         "status": { "enum": ["not-required", "completed", "unresolved"] },
         "reviews": { "type": "array", "items": { "$ref": "#/$defs/review" } },
-        "unresolvedStrategyIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+        "unresolvedStrategyIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "deliberation": { "$ref": "#/$defs/deliberation" }
+      }
+    },
+    "deliberation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selectedStrategyId", "evidenceRefs"],
+      "properties": {
+        "selectedStrategyId": { "type": ["string", "null"], "minLength": 1 },
+        "evidenceRefs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
       }
     },
     "review": {
