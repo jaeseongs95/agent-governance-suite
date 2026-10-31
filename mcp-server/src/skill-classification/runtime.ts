@@ -62,7 +62,7 @@ export async function loadClassificationProviderRuntime(file: string, options: C
 /** Closed startup reasons only; this is diagnostic classification, not producer authenticity proof.
  * Raw messages, stacks, paths, argv and bodies are never reported. */
 export function classificationInitializationFailureReason(error: unknown): string {
-  let reason = "CLASSIFICATION_CONFIGURATION_UNAVAILABLE";
+  const reason = "CLASSIFICATION_CONFIGURATION_UNAVAILABLE";
   try {
     if (!error || typeof error !== "object" || utilTypes.isProxy(error)) return reason;
     const message: unknown = Object.getOwnPropertyDescriptor(error, "message")?.value;
