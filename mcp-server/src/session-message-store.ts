@@ -409,11 +409,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   /**
-   * Retires an unobserved managed wake only after its injection expiry plus grace, and only with evidence that the
-   * host moved past it: session activity after the expiry, or the session's latest presence row is no longer the wake's
-   * own live birth (a newer birth, an ended or lapsed birth, or no row at all). D0353: a changed birth fences claims,
-   * but cannot prove an external queue discarded a dispatched marker. Keep that latch until real session activity
-   * after dispatch or verified late observation; elapsed time and terminal retention must not permit another effect.
+   * Retires reservations under their existing expiry rules. D0353: activity, body claims and a changed birth cannot
+   * prove an external queue consumed a dispatched marker. Uncertain effects stay latched until that marker's verified
+   * observation or the existing definite non-submission path; elapsed time and terminal retention cannot reopen them.
    * A reserved attempt has no uncertain effect and keeps its existing expiry/retry rules. The row keeps its original
    * binding, epoch and times; expired-unobserved is neither observation nor delivery. One UPDATE commits it atomically.
    */
@@ -421,10 +419,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     const now = iso(nowMs);
     this.database.prepare(`UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ?
       WHERE state IN ${ACTIVE_WAKE_STATES}
-        AND (state = 'reserved' OR late_observed_at IS NOT NULL
-          OR EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
-            AND activity.session_id = wake_nonces.session_id
-            AND activity.active_at > coalesce(wake_nonces.outcome_at, wake_nonces.started_at)))
+        AND (state = 'reserved' OR late_observed_at IS NOT NULL)
         AND ((expires_at <= ?
             AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
                 AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)

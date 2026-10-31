@@ -1499,8 +1499,9 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
         const reserved = store.reserveManagedWake({ ...target, nonce, instanceId: "old-instance", transport: "codex-queue", relayId: "old-instance-relay" }, base);
         const started = store.startManagedWake(reserved.attempt!, base + 1);
         store.recordManagedWakeOutcome(started.attempt!, "submitted", base + 2);
-        // D0353 / AC08: this case exercises a retired marker after real activity, not birth-only retirement.
-        store.observeNativeInput(target, Date.now() - 1);
+        // 이전 버전에서 이미 퇴역된 행의 소비자를 검사한다. 일반 활동으로 퇴역을 유도하지 않는다.
+        store.database.prepare("UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ? WHERE nonce = ?")
+          .run(new Date(Date.now() - 1).toISOString(), nonce);
         presence("new-instance", Date.now());
         expect(store.database.prepare("SELECT state FROM wake_nonces WHERE nonce = ?").get(nonce)).toEqual({ state: "expired-unobserved" });
       } finally { store.close(); }

@@ -80,6 +80,11 @@ function latched(f, outcome = 'submitted') {
 }
 function attemptRow(store, attempt) { return store.database.prepare('SELECT * FROM wake_nonces WHERE attempt_id = ?').get(attempt.attemptId); }
 function without(row, keys) { return Object.fromEntries(Object.entries(row).filter(([key]) => !keys.includes(key))); }
+// 이전 버전에서 이미 퇴역된 행을 읽는 소비자 전용 자료다. 일반 활동은 퇴역 근거로 사용하지 않는다.
+function seedRetired(f, attempt, at) {
+  f.store.database.prepare("UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ? WHERE attempt_id = ?")
+    .run(iso(at), attempt.attemptId);
+}
 function observe(f, attempt, at) {
   vi.stubEnv('AGENT_GOVERNANCE_TRUST_DB_PATH', join(f.directory, 'trust.sqlite3'));
   const observation = adaptHostInput({ hook_event_name: 'UserPromptSubmit', session_id: target.sessionId,
@@ -90,31 +95,34 @@ function hostClaim(f, observed, at) {
   return f.store.claimHostWake(target, observed.observation, observed.sourceReceiptId, wakeHookObservationReader, at);
 }
 
-test.each(['submitted', 'accepted-or-unknown', 'started'])('D0353: an expired %s latch needs activity beyond a newer birth before a new wake is reserved', outcome => {
+test.each(['submitted', 'accepted-or-unknown', 'started'])('D0353: %s는 새 세대·일반 활동 뒤에도 보류되고 검증된 구 표식 관측 뒤에만 해제된다', outcome => {
   const f = fixture(); const old = latched(f, outcome);
   live(f.store, 'instance-2', 'relay-2', f.retireAt - 1);
   assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt - 1).dispatch, false);
   const before = attemptRow(f.store, old);
   assert.ok(['started', 'submitted', 'unknown'].includes(before.state));
   keepAlive(f.store, 'instance-2', 'relay-2', f.retireAt);
-  // AC08: a new birth fences claims, but does not cancel the host queue. D0305 still releases after actual activity.
+  // 새 세대와 일반 활동은 외부 대기열의 특정 표식을 소비하지 않는다.
   assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt).dispatch, false);
   assert.deepEqual(attemptRow(f.store, old), before);
   f.store.observeNativeInput(target, f.retireAt);
-  const next = f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt);
+  assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt).dispatch, false);
+  assert.deepEqual(attemptRow(f.store, old), before);
+  assert.deepEqual(hostClaim(f, observe(f, old, f.retireAt + 1), f.retireAt + 2), { recognized: false, messages: [], binding: null });
+  const next = f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt + 3);
   assert.equal(next.dispatch, true);
   assert.notEqual(next.attempt.nonce, old.nonce); assert.notEqual(next.attempt.attemptId, old.attemptId);
-  const retired = attemptRow(f.store, old);
-  assert.equal(retired.state, 'expired-unobserved');
-  assert.equal(retired.retired_at, iso(f.retireAt));
-  assert.equal(retired.observed_at, null); assert.equal(retired.consumed_at, null);
-  assert.deepEqual(without(retired, ['state', 'retired_at']), without(before, ['state', 'retired_at']));
-  assert.equal(f.store.recordManagedWakeOutcome(old, 'definite-failure', f.retireAt + 1), false);
-  assert.equal(f.store.recordManagedWakeOutcome(old, 'submitted', f.retireAt + 1), false);
-  assert.equal(f.store.startManagedWake(old, f.retireAt + 1).dispatch, false);
-  assert.deepEqual(attemptRow(f.store, old), retired);
-  assert.equal(f.store.startManagedWake(next.attempt, f.retireAt + 2).dispatch, true);
-  const status = f.store.managedWakeStatus(target, f.retireAt + 2);
+  const observed = attemptRow(f.store, old);
+  assert.equal(observed.state, 'observed');
+  assert.equal(observed.retired_at, null);
+  assert.equal(observed.observed_at, iso(f.retireAt + 2)); assert.equal(observed.consumed_at, iso(f.retireAt + 2));
+  assert.deepEqual(without(observed, ['state', 'observed_at', 'consumed_at', 'late_observed_at']), without(before, ['state', 'observed_at', 'consumed_at', 'late_observed_at']));
+  assert.equal(f.store.recordManagedWakeOutcome(old, 'definite-failure', f.retireAt + 4), false);
+  assert.equal(f.store.recordManagedWakeOutcome(old, 'submitted', f.retireAt + 4), false);
+  assert.equal(f.store.startManagedWake(old, f.retireAt + 4).dispatch, false);
+  assert.deepEqual(attemptRow(f.store, old), observed);
+  assert.equal(f.store.startManagedWake(next.attempt, f.retireAt + 5).dispatch, true);
+  const status = f.store.managedWakeStatus(target, f.retireAt + 5);
   assert.equal(status.attemptId, next.attempt.attemptId); assert.equal(status.state, 'started');
 });
 
@@ -241,7 +249,7 @@ const activities = {
   acknowledge: (store, at, claimed) => store.acknowledge(target, claimed.map(message => message.messageId), at, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))),
   observeNativeInput: (store, at) => store.observeNativeInput(target, at),
 };
-test.each([...Object.keys(activities), 'before-expiry'])('same-generation activity %s after expiry retires the latch after the grace', kind => {
+test.each([...Object.keys(activities), 'before-expiry'])('AC08: 같은 세대의 일반 활동 %s는 만료·유예 뒤에도 미관측 표식을 해제하지 않는다', kind => {
   const f = fixture();
   let ackClaim = [];
   if (kind === 'acknowledge') body(f.store, 'activity-ack-body', f.now - 1);
@@ -265,23 +273,29 @@ test.each([...Object.keys(activities), 'before-expiry'])('same-generation activi
     if (kind === 'acknowledge') assert.equal(result, 1, 'the original receipt ACK actually records activity');
   }
   keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt - 1);
+  body(f.store, 'body-after-unrelated-activity', f.retireAt - 1);
   assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt - 1).dispatch, false);
   keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt);
   const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt);
-  assert.equal(next.dispatch, kind !== 'before-expiry');
-  assert.equal(attemptRow(f.store, old).state, kind === 'before-expiry' ? 'submitted' : 'expired-unobserved');
+  assert.equal(next.dispatch, false);
+  assert.equal(attemptRow(f.store, old).state, 'submitted');
+  assert.equal(attemptRow(f.store, old).observed_at, null);
+  assert.equal(attemptRow(f.store, old).consumed_at, null);
 });
 
-test('retirement and re-reservation are idempotent across prunes and reopened connections', () => {
-  const f = fixture(); const old = latched(f);
-  f.store.observeNativeInput(target, f.retireAt - 1);
-  live(f.store, 'instance-2', 'relay-2', f.retireAt);
+test('외부 전송 전 예약의 퇴역과 재예약은 정리·재개방된 두 연결에서도 멱등이다', () => {
+  const f = fixture();
+  body(f.store, 'pending-body', f.now);
+  const old = f.store.reserveManagedWake(request('instance-1', 'relay-1', 'liveness-first-nonce-abcdefghijklmnop'), f.now).attempt;
+  assert.ok(old);
+  assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-1', f.now + 10), true);
   f.store.prune(f.retireAt);
   const retired = attemptRow(f.store, old);
   assert.equal(retired.state, 'expired-unobserved');
   const peer = new SessionMessageStore(f.database); resources.at(-1).stores.push(peer);
   peer.prune(f.retireAt + 5);
   assert.deepEqual(attemptRow(peer, old), retired);
+  live(f.store, 'instance-2', 'relay-2', f.retireAt + 5);
   const first = peer.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt + 6);
   assert.equal(first.dispatch, true);
   const again = f.store.reserveManagedWake(request('instance-2', 'relay-2', 'another-nonce-abcdefghijklmnopqrst'), f.retireAt + 7);
@@ -292,7 +306,7 @@ test('retirement and re-reservation are idempotent across prunes and reopened co
 
 test('a verified late arrival of a retired nonce is recorded without claiming the current generation body', () => {
   const f = fixture(); const old = latched(f);
-  f.store.observeNativeInput(target, f.retireAt - 1);
+  seedRetired(f, old, f.retireAt - 1);
   live(f.store, 'instance-2', 'relay-2', f.retireAt);
   const next = f.store.startManagedWake(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt).attempt, f.retireAt + 1).attempt;
   const retired = attemptRow(f.store, old); const current = attemptRow(f.store, next);
@@ -313,7 +327,7 @@ test('a verified late arrival of a retired nonce is recorded without claiming th
 
 test('F1: a retired nonce mixed with the current nonce records late only and lets the current attempt claim its body', () => {
   const f = fixture(); const old = latched(f);
-  f.store.observeNativeInput(target, f.retireAt - 1);
+  seedRetired(f, old, f.retireAt - 1);
   live(f.store, 'instance-2', 'relay-2', f.retireAt);
   const next = f.store.startManagedWake(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt).attempt, f.retireAt + 1).attempt;
   assert.equal(f.store.recordManagedWakeOutcome(next, 'submitted', f.retireAt + 2), true);
@@ -338,7 +352,7 @@ test('F1: a retired nonce mixed with the current nonce records late only and let
 
 test('a retired nonce cannot be laundered by forged provenance or a mixed unknown nonce', () => {
   const f = fixture(); const old = latched(f);
-  f.store.observeNativeInput(target, f.retireAt - 1);
+  seedRetired(f, old, f.retireAt - 1);
   live(f.store, 'instance-2', 'relay-2', f.retireAt); f.store.prune(f.retireAt);
   const retired = attemptRow(f.store, old);
   const observed = observe(f, old, f.retireAt + 1);
@@ -350,7 +364,7 @@ test('a retired nonce cannot be laundered by forged provenance or a mixed unknow
   assert.deepEqual(attemptRow(f.store, old), retired);
 });
 
-test('K: an arrival whose hook receipt expired during a broker outage stays latched until retirement evidence, then a new wake delivers', () => {
+test('K: 만료된 관측 영수증과 일반 활동은 보류를 유지하고 새로 검증된 같은 표식 관측만 해제한다', () => {
   const f = fixture(); const old = latched(f);
   const observed = observe(f, old, f.now + 5);
   // The broker was down past the 30 second receipt TTL, so the same receipt is rejected on retry (e9 (b) FAIL shape).
@@ -362,12 +376,15 @@ test('K: an arrival whose hook receipt expired during a broker outage stays latc
   f.store.observeNativeInput(target, f.retireAt + 1);
   assert.ok(f.retireAt + 1 > expiry);
   keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt + 2);
-  const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt + 2);
+  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt + 2).dispatch, false);
+  assert.equal(attemptRow(f.store, old).state, 'submitted');
+  assert.deepEqual(hostClaim(f, observe(f, old, f.retireAt + 3), f.retireAt + 4), { recognized: false, messages: [], binding: null });
+  const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt + 5);
   assert.equal(next.dispatch, true);
-  assert.equal(attemptRow(f.store, old).state, 'expired-unobserved');
-  const started = f.store.startManagedWake(next.attempt, f.retireAt + 3).attempt;
-  f.store.recordManagedWakeOutcome(started, 'submitted', f.retireAt + 4);
-  const delivered = hostClaim(f, observe(f, started, f.retireAt + 5), f.retireAt + 6);
+  assert.equal(attemptRow(f.store, old).state, 'observed');
+  const started = f.store.startManagedWake(next.attempt, f.retireAt + 6).attempt;
+  f.store.recordManagedWakeOutcome(started, 'submitted', f.retireAt + 7);
+  const delivered = hostClaim(f, observe(f, started, f.retireAt + 8), f.retireAt + 9);
   assert.equal(delivered.recognized, true);
   assert.deepEqual(delivered.messages.map(message => message.messageId), ['pending-body']);
 });
@@ -425,7 +442,7 @@ test('autoWake is advisory and reports each delivery path state', () => {
   const retireAt = Date.parse(expiresAt) + WAKE_RETIRE_GRACE_MS;
   keepAlive(f.store, 'instance-1', 'relay-1', retireAt);
   f.store.prune(retireAt);
-  check(f.store, retireAt, 'available', 'relay-live', iso(retireAt));
+  check(f.store, retireAt, 'latched', 'wake-unobserved', expiresAt);
   const brokerStatus = dispatch(f.store, 'status', { sender, messageId: sent.messageId });
   assert.equal(brokerStatus.status.autoWake, null);
 });
@@ -545,10 +562,13 @@ test('G: a failure inside the table rebuild rolls back columns, rows and schema 
   assert.equal(snapshotV272(m.database).version, 2);
 });
 
-test('crash right after a committed retirement leaves a retired row and one later reservation', async () => {
-  const f = fixture(); const old = latched(f);
-  f.store.observeNativeInput(target, f.retireAt - 1);
-  live(f.store, 'instance-2', 'relay-2', f.retireAt);
+test('전송 전 예약의 퇴역 직후 충돌은 종료 행과 다음 예약 하나를 보존한다', async () => {
+  const f = fixture();
+  body(f.store, 'pending-body', f.now);
+  const reservation = f.store.reserveManagedWake(request('instance-1', 'relay-1', 'liveness-first-nonce-abcdefghijklmnop'), f.now);
+  assert.equal(reservation.dispatch, true);
+  const old = reservation.attempt;
+  assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-1', f.now + 10), true);
   const before = attemptRow(f.store, old);
   const p = await child(f.database, 'retire-then-exit', 'relay-retire', f.directory);
   assert.equal(p.first.type, 'ready', p.stderr());
@@ -558,7 +578,7 @@ test('crash right after a committed retirement leaves a retired row and one late
   assert.equal(retired.state, 'expired-unobserved'); assert.equal(retired.retired_at, iso(f.retireAt));
   assert.deepEqual(without(retired, ['state', 'retired_at']), without(before, ['state', 'retired_at']));
   f.store.prune(f.retireAt + 1); assert.deepEqual(attemptRow(f.store, old), retired);
-  keepAlive(f.store, 'instance-2', 'relay-2', f.retireAt + 2);
+  live(f.store, 'instance-2', 'relay-2', f.retireAt + 2);
   assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt + 2).dispatch, true);
 });
 
@@ -657,7 +677,8 @@ test('AGS-D-0304 (b): claiming and acknowledging a message after a submitted wak
   assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), ackAt + 200).dispatch, false);
 });
 
-test('AGS-D-0305: an unobserved submitted wake whose batch is already consumed retires after the observation window so a new message can wake', () => {
+// 미관측 표식이 호스트에서 소멸한 경우의 생존성은 잔여 공백이다. 본문 ACK로 해결됐다고 표현하지 않는다.
+test('D0353 / D0305 잔여 공백: 본문 수신 확인과 관측창 경과만으로 미관측 표식을 해제하지 않는다', () => {
   const f = fixture();
   body(f.store, 'batch-1-msg', f.now);
   const first = begin(f.store, f.now);
@@ -680,19 +701,29 @@ test('AGS-D-0305: an unobserved submitted wake whose batch is already consumed r
   const afterWindow = outcomeAt + WAKE_OBSERVATION_WINDOW_MS;
   keepAlive(f.store, 'instance-1', 'relay-1', afterWindow);
   f.store.prune(afterWindow);
-  assert.equal(attemptRow(f.store, first).state, 'expired-unobserved');
-  assert.equal(attemptRow(f.store, first).retired_at, iso(afterWindow));
+  const before = attemptRow(f.store, first);
+  assert.equal(before.state, 'submitted');
+  assert.equal(before.retired_at, null);
   assert.deepEqual(f.store.autoWakeOutlook(target, afterWindow), {
-    state: 'available',
-    reason: 'relay-live',
-    basisAt: iso(afterWindow),
+    state: 'latched',
+    reason: 'wake-unobserved',
+    basisAt: before.expires_at,
     checkedAt: iso(afterWindow),
     authorityEffect: 'none',
   });
 
   const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), afterWindow + 1);
-  assert.equal(next.dispatch, true);
-  assert.notEqual(next.attempt.attemptId, first.attemptId);
+  assert.equal(next.dispatch, false);
+  keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt);
+  f.store.prune(f.retireAt);
+  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt).dispatch, false);
+  assert.deepEqual(attemptRow(f.store, first), before);
+  // 검증된 동일 표식이 늦게 도착하면 후속 본문을 인수하지 않고 기존 잠금을 해제한다.
+  assert.deepEqual(hostClaim(f, observe(f, first, f.retireAt + 1), f.retireAt + 2), { recognized: false, messages: [], binding: null });
+  assert.equal(attemptRow(f.store, first).state, 'observed');
+  const afterMarker = f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt + 3);
+  assert.equal(afterMarker.dispatch, true);
+  assert.notEqual(afterMarker.attempt.attemptId, first.attemptId);
 });
 
 

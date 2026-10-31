@@ -320,7 +320,15 @@ it("keeps retirement, presence and autoWake identical to a run that deletes no p
   expect(a.database.prepare("SELECT count(*) AS n FROM session_presence").get()).not.toEqual(b.database.prepare("SELECT count(*) AS n FROM session_presence").get());
   expect(a.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid").all()).toEqual(b.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid").all());
   expect(a.database.prepare("SELECT * FROM messages ORDER BY rowid").all()).toEqual(b.database.prepare("SELECT * FROM messages ORDER BY rowid").all());
-  // D0353 / AC08: pruning presence or starting a new birth cannot prove the old queue effect disappeared.
+  // D0353 / AC08: 세대·보관 기간·일반 활동은 특정 입력 표식의 소비 증거가 아니다.
+  for (const current of [a, b]) {
+    current.send({ sender: { host: "portable", sessionId: "sender" }, target: target("reborn"),
+      messageId: "reborn-after-activity-body", body: "new pending body", ttlSeconds: 600 }, now + 1);
+    current.observeNativeInput(target("reborn"), now + 1);
+    current.prune(now + 2);
+    expect(current.reserveManagedWake({ ...target("reborn"), nonce: "reborn-after-activity-abcdefghijklmnop", instanceId: "same",
+      transport: "portable", relayId: "relay-reborn", resume: true }, now + 2).dispatch).toBe(false);
+  }
   expect(a.database.prepare("SELECT state FROM wake_nonces WHERE session_id = 'reborn'").get()).toEqual({ state: "submitted" });
   for (const sessionId of ["reborn", "split", "recent", "live"]) {
     expect(withoutCheckedAt(a.listPresence(now, [target(sessionId)])[0]!)).toEqual(withoutCheckedAt(b.listPresence(now, [target(sessionId)])[0]!));
@@ -357,6 +365,14 @@ it("gives a purged instance's rebirth a later generation, so an old-generation m
   const result = store.claimHostWake(target, observation, recordWakeHookObservation(observation, now + 1), wakeHookObservationReader, now + 2);
   expect(result).toMatchObject({ recognized: false, messages: [] });
   expect(store.pendingCount(target, now + 3)).toBe(1);
+  // 정확한 구 표식의 검증된 도착은 새 본문을 인수하지 않고 잠금을 해제한다.
+  expect(store.database.prepare("SELECT state, observed_at, consumed_at FROM wake_nonces WHERE attempt_id = ?").get(attempt.attemptId))
+    .toEqual({ state: "observed", observed_at: new Date(now + 2).toISOString(), consumed_at: new Date(now + 2).toISOString() });
+  relay(store, "rebirth", now + 3);
+  const next = store.reserveManagedWake({ ...target, nonce: "rebirth-new-nonce-abcdefghijklmnopqr", instanceId: "same", transport: "portable",
+    relayId: "relay-rebirth", resume: true }, now + 4);
+  expect(next.dispatch).toBe(true);
+  expect(next.attempt!.attemptId).not.toBe(attempt.attemptId);
 });
 
 it("prunes presence idempotently when two processes race on one database", async () => {

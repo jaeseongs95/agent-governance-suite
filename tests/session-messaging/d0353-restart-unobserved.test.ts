@@ -187,9 +187,24 @@ test("AC08: 25시간과 종료 행 보관 상한 정리 후 새 본문·두 연�
   assert.deepEqual(row(f, attempt), original);
 });
 
-test.each(["claim-and-ack", "native-input"] as const)("D0305: 재시작 후 실제 활동 %s는 기존 만료 조건에서 다음 깨우기를 허용한다", kind => {
+// 외부 대기열을 소비하지 않는 활동을 모델링한다. 실제 호스트 재현 결과는 아니다.
+test("AC08: 무관한 일반 활동만으로 이전 미관측 표식의 자리를 풀지 않는다", () => {
+  const f = fixture();
+  const {attempt} = latch(f);
+  const hostQueue = new Set([attempt.nonce]);
+  live(f, "instance-2", "relay-2", f.retireAt - 2);
+  f.store.observeNativeInput(target, f.retireAt - 1);
+  const next = f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.retireAt);
+  if (next.dispatch && next.attempt) hostQueue.add(next.attempt.nonce);
+  assert.equal(hostQueue.size, 1);
+  assert.equal(next.dispatch, false);
+  assert.equal(row(f, attempt).state, "submitted");
+});
+
+test.each(["claim-and-ack", "native-input", "empty-claim"] as const)("AC08: 재시작 후 %s는 미관측 잠금을 유지하고 검증된 구 표식 관측 뒤에만 다음 깨우기를 허용한다", kind => {
   const f = fixture();
   const {attempt, message} = latch(f);
+  const original = row(f, attempt);
   reopen(f);
   live(f, "instance-2", "relay-2", f.retireAt - 1);
   assert.equal(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.retireAt).dispatch, false);
@@ -202,14 +217,24 @@ test.each(["claim-and-ack", "native-input"] as const)("D0305: 재시작 후 실�
         return {messageId: value.messageId, claimReceipt: value.claimReceipt};
       })), 1);
     submit(f, "next-body-after-ack", f.retireAt + 3);
-  } else f.store.observeNativeInput(target, f.retireAt + 1);
+  } else if (kind === "native-input") f.store.observeNativeInput(target, f.retireAt + 1);
+  else {
+    // 기존 본문은 만료시켜 빈 claim 자체의 활동 기록만 남긴다. 운영 대기열은 다루지 않는다.
+    f.store.database.prepare("UPDATE messages SET expires_at = ? WHERE message_id = ?").run(iso(f.retireAt), message.messageId);
+    assert.deepEqual(f.store.claim(target, f.retireAt + 1), []);
+    submit(f, "next-body-after-empty-claim", f.retireAt + 3);
+  }
   assert.ok(activity(f));
-  const next = dispatched(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.retireAt + 4));
+  assert.equal(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.retireAt + 4).dispatch, false);
+  assert.deepEqual(row(f, attempt), original);
+  assert.equal(f.store.autoWakeOutlook(target, f.retireAt + 4).reason, "wake-unobserved");
+  assert.deepEqual(observe(f, attempt, f.retireAt + 5), {recognized: false, messages: [], binding: null});
+  const next = dispatched(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.retireAt + 7));
   assert.notEqual(next.attemptId, attempt.attemptId);
   assert.notEqual(next.nonce, attempt.nonce);
-  assert.equal(row(f, attempt).state, "expired-unobserved");
-  assert.equal(row(f, attempt).observed_at, null);
-  assert.equal(row(f, attempt).consumed_at, null);
+  assert.equal(row(f, attempt).state, "observed");
+  assert.equal(row(f, attempt).observed_at, iso(f.retireAt + 6));
+  assert.equal(row(f, attempt).consumed_at, iso(f.retireAt + 6));
 });
 
 test("AC08: 검증된 구 표식 도착은 새 세대 본문 없이 구 잠금만 풀고 중복 도착은 현재 시도를 보존한다", () => {
