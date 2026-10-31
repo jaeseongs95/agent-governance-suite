@@ -360,7 +360,8 @@ export class ContinuityService implements ContinuityGateway {
       || left.absent - right.absent
       || (left.parent.c === right.parent.c && left.parent.e === right.parent.e ? right.parent.r - left.parent.r : 0));
     const [best, next] = ranked;
-    if (!best) return { q: "FORK_PARENT_NOT_FOUND" };
+    // A named parent with no pre-fork save in this lineage (including one that had no task at the fork, e = null).
+    if (!best) return { q: named ? "FORK_HOST_PARENT_NOT_FOUND" : "FORK_PARENT_NOT_FOUND" };
     if (named) return { p: best.parent };
     if (next && next.matched === best.matched && next.absent === best.absent
       && (next.parent.c !== best.parent.c || next.parent.e !== best.parent.e)) {

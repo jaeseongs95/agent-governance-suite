@@ -700,6 +700,13 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
       [["claude", "--resume", "parent-a", "--fork-session"], { reason: "FORK_HOST_ARGV_PARENT_INVALID" }],
       [["claude", "--resume", SELF, "--fork-session"], { reason: "FORK_HOST_ARGV_SELF" }],
       [["claude", "-p", "--", "--resume", A, "--fork-session"], { reason: "FORK_HOST_ARGV_NOT_FORK" }],
+      // Auditor 5970 F2: the short alias is read; other short forms naming r are never read and never let an id win.
+      [["claude", "-r", A, "--fork-session"], { parentSessionId: A }],
+      [["claude", "-p", "run the tests", "-r", A, "--fork-session"], { parentSessionId: A }],
+      [["claude", `-r${A}`, "--fork-session"], { reason: "FORK_HOST_ARGV_NO_PARENT" }],
+      [["claude", `-r=${A}`, "--fork-session"], { reason: "FORK_HOST_ARGV_NO_PARENT" }],
+      [["claude", "-cr", "--resume", A, "--fork-session"], { reason: "FORK_HOST_ARGV_AMBIGUOUS" }],
+      [["claude", "-r", SELF, "--resume", A, "--fork-session"], { reason: "FORK_HOST_ARGV_AMBIGUOUS" }],
     ] as const) expect(forkParentFromArgv(argv, SELF), argv.join(" ")).toEqual(expected);
   });
 
@@ -727,7 +734,9 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ reason: "FORK_HOST_UNRECOGNIZED" });
     // Same basename elsewhere, a relative or replaced (deleted) binary, and the not-yet-observed standalone install.
     for (const exe of ["/opt/x/bin/claude.exe", "node_modules/@anthropic-ai/claude-code/bin/claude.exe", NATIVE + " (deleted)",
-      "/home/u/.local/share/claude/versions/2.1.314"]) {
+      "/home/u/.local/share/claude/versions/2.1.314", "/tmp/x/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+      "/var/tmp/x/node_modules/@anthropic-ai/claude-code/bin/claude.exe", "/dev/shm/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+      "/home/u/Temp/node_modules/@anthropic-ai/claude-code/bin/claude.exe"]) {
       walk = chain(view(exe, fork, 101));
       expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader), exe).toEqual({ reason: "FORK_HOST_UNRECOGNIZED" });
     }
@@ -792,10 +801,17 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
   });
 
   it("H-N4: a named parent without a pre-fork save gives no candidate, even when the child's file holds another session's entries", async () => {
+    // Auditor 5970 F3: a named parent with no task at the fork (e = null) and one with a task but no save both give the
+    // host-named reason, distinct from lineage's own FORK_PARENT_NOT_FOUND.
     const service = createService();
     const { uuids } = await parent(service, "parent-a");
     const childFile = await hostFork(service, "fork-f", uuids, "never-saved-x");
-    expect(inspect(service, "fork-f", childFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_NOT_FOUND"]);
+    expect(hostParentEvent(service, "fork-f")).toContain('"e":null');
+    expect(inspect(service, "fork-f", childFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_HOST_PARENT_NOT_FOUND"]);
+    prompt(service, "unsaved-y");
+    const secondFile = await hostFork(service, "fork-g", uuids, "unsaved-y");
+    expect(hostParentEvent(service, "fork-g")).not.toContain('"e":null');
+    expect(inspect(service, "fork-g", secondFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_HOST_PARENT_NOT_FOUND"]);
   });
 
   it("H-F1: a named parent's save after the fork is never the fork's state", async () => {

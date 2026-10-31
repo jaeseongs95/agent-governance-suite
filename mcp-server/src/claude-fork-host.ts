@@ -33,6 +33,8 @@ const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-
 // ponytail: only the observed install shape; the standalone installer's path is not observed yet and reads as
 // FORK_HOST_UNRECOGNIZED (lineage decides), add it once its /proc exe is observed.
 export const CLAUDE_NATIVE_EXECUTABLE_PATTERN = /^\/(?:[^/]+\/)+node_modules\/@anthropic-ai\/claude-code\/bin\/claude\.exe$/u;
+// Shared temporary directories are never a recognized install, as for the agy runner (UNTRUSTED_WRITABLE_PATH_PATTERN).
+const TEMPORARY_PATH_PATTERN = /(?:^|\/)(?:tmp|var\/tmp|dev\/shm|temp)(?:\/|$)/iu;
 
 function statFields(pid: number): string[] {
   const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
@@ -58,7 +60,11 @@ export function linuxHostProcess(pid: number): HostProcessView | "unreadable" | 
   }
 }
 
-/** `--resume <id>` (or `--resume=<id>`) together with `--fork-session`, each exactly once, before any `--`. */
+/**
+ * `--resume <id>` (or `--resume=<id>`, or the CLI's short alias `-r <id>`) together with `--fork-session`, each exactly
+ * once, before any `--`. Any other short form naming `r` (`-r<id>`, `-r=<id>`, a cluster such as `-cr`) is not parsed:
+ * it counts as a resume without a readable id, so it never yields a parent and never lets another id win.
+ */
 export function forkParentFromArgv(argv: readonly string[], sessionId: string): ForkHostParentRead {
   let forks = 0;
   const ids: string[] = [];
@@ -66,10 +72,11 @@ export function forkParentFromArgv(argv: readonly string[], sessionId: string): 
     const argument = argv[index]!;
     if (argument === "--") break;
     if (argument === "--fork-session") forks += 1;
-    else if (argument === "--resume") {
+    else if (argument === "--resume" || argument === "-r") {
       const value = argv[index + 1];
       if (value !== undefined && !value.startsWith("-")) { ids.push(value); index += 1; } else ids.push("");
     } else if (argument.startsWith("--resume=")) ids.push(argument.slice("--resume=".length));
+    else if (/^-[^-]/u.test(argument) && argument.slice(1).includes("r")) ids.push("");
   }
   if (forks === 0) return { reason: "FORK_HOST_ARGV_NOT_FORK" };
   if (ids.length === 0) return { reason: "FORK_HOST_ARGV_NO_PARENT" };
@@ -91,7 +98,7 @@ export function readClaudeForkHostParent(sessionId: string, platform: NodeJS.Pla
     if (view === "unreadable") return { reason: "FORK_HOST_PROCESS_UNREADABLE" };
     if (view === "changed") return { reason: "FORK_HOST_PROCESS_CHANGED" };
     if (SHELL_EXECUTABLES.has(path.posix.basename(view.exe)) && shells < MAX_SHELLS) { pid = view.ppid; continue; }
-    if (!CLAUDE_NATIVE_EXECUTABLE_PATTERN.test(view.exe)) return { reason: "FORK_HOST_UNRECOGNIZED" };
+    if (!CLAUDE_NATIVE_EXECUTABLE_PATTERN.test(view.exe) || TEMPORARY_PATH_PATTERN.test(view.exe)) return { reason: "FORK_HOST_UNRECOGNIZED" };
     return forkParentFromArgv(view.argv, sessionId);
   }
 }
