@@ -103,7 +103,7 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
     const toolInput = observation.toolInput ?? {};
     // Lineage is read only for its two consumers: a checkpoint anchor and a recorded fork's inspect.
     const lineage = toolName === "checkpoint_context" || toolName === "inspect_context" ? readLineage : undefined;
-    const token = service.issueToolBinding(sessionId, toolName, toolInput, lineage);
+    const token = lineage ? service.issueToolBinding(sessionId, toolName, toolInput, lineage) : service.issueToolBinding(sessionId, toolName, toolInput);
     return {
       hookSpecificOutput: {
         hookEventName: outputEventName,
