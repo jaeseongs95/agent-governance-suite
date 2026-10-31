@@ -704,6 +704,10 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     const markers = await readdir(lockPath);
     expect(markers).toHaveLength(1);
     expect(markers[0]).toMatch(new RegExp(`^owner-${pid}-[a-f0-9]{32}-[a-f0-9]{64}$`, "u"));
+    // fixture가 자기 조회를 격리했는지 확인한다. Linux는 /proc 읽기라 격리 대상이 아니다.
+    if (process.platform !== "linux") {
+      expect(markers[0]!.slice(-64)).toBe(createHash("sha256").update("d0254-fixture-owner-birth").digest("hex"));
+    }
 
     let probeError = "EPERM";
     const kill = vi.spyOn(process, "kill").mockImplementation((observedPid, signal) => {

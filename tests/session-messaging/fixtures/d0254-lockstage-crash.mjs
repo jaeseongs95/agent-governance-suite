@@ -1,3 +1,4 @@
+import childProcess from 'node:child_process';
 import fs from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 import path from 'node:path';
@@ -18,6 +19,15 @@ fs.renameSync = function (source, target) {
   const result = rename.call(this, source, target);
   if (mode === 'published' && path.basename(String(target)) === 'broker.lock') process.exit(44);
   return result;
+};
+// 대상은 잠금 게시 경계다. 자기 시작 시각 조회가 runner의 PowerShell 기동 시간(5000ms 상한)에 묶이지 않게
+// 이 프로세스 조회만 고정 토큰으로 격리한다. 다른 PID 조회는 실제 OS 조회 그대로다.
+const D254_OWNER_TOKEN = 'd0254-fixture-owner-birth';
+const execFileSync = childProcess.execFileSync;
+const ownPid = new RegExp(`(^|[^0-9])${process.pid}([^0-9]|$)`, 'u');
+childProcess.execFileSync = function (file, args, options) {
+  if (Array.isArray(args) && args.some(value => ownPid.test(String(value)))) return D254_OWNER_TOKEN;
+  return execFileSync.call(this, file, args, options);
 };
 syncBuiltinESMExports();
 const { acquireBrokerProcessLock } = await import('../../../mcp-server/src/broker-process-lock.ts');
