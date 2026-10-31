@@ -3,12 +3,22 @@ import { once } from 'node:events';
 import { syncBuiltinESMExports } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { performance } from 'node:perf_hooks';
 
 const root = process.env.AGENT_GOVERNANCE_D254_IDLE_FIXTURE;
 if (!root) throw new Error('Owned idle fixture directory required.');
 const realNow = Date.now;
 let offset = 0;
 Date.now = () => realNow() + offset;
+
+// An ensure-relay identity budget runs on performance.now(). A held query lasts exactly as long as the test
+// schedules it, so that span is not charged to the budget; outside held queries the broker clock runs normally.
+const realPerformanceNow = performance.now.bind(performance);
+let pausedMs = 0, heldQueries = 0, pauseStartedAt = 0;
+Object.defineProperty(performance, 'now', { configurable: true, writable: true,
+  value: () => realPerformanceNow() - pausedMs - (heldQueries > 0 ? realPerformanceNow() - pauseStartedAt : 0) });
+const holdClock = () => { if (heldQueries++ === 0) pauseStartedAt = realPerformanceNow(); };
+const resumeClock = () => { if (--heldQueries === 0) pausedMs += realPerformanceNow() - pauseStartedAt; };
 
 const sendEvent = (message) => {
   if (typeof process.send === 'function' && process.connected) {
@@ -57,13 +67,20 @@ childProcess.execFile = function (executable, args, options, callback) {
   const reply = script.includes("' OK '")
     ? [...script.matchAll(/GetProcessById\((\d+)\)/gu)].map(([, value]) => `${value} OK ${Number(value) === pid ? 'fixture-parent-birth' : 'fixture-relay-birth'}`).join('\n')
     : 'fixture-parent-birth';
+  // The broker's native timeout is reported, then applied on the test's `expire` command, so an idle tick is
+  // ordered before it by the test rather than raced against it by the runner.
+  const held = { ...options, stdio: ['pipe', 'pipe', 'pipe'] };
+  const nativeTimeoutMs = typeof held.timeout === 'number' ? held.timeout : null;
+  delete held.timeout;
+  holdClock();
   const sub = execFile.call(
     this,
     process.execPath,
     ['-e', holdChildSource, directory, reply],
-    { ...options, stdio: ['pipe', 'pipe', 'pipe'] },
+    held,
     (error, stdout, stderr) => {
       activeQueries.delete(pid);
+      resumeClock();
       const status = error ? 'error' : 'success';
       writeFileSync(path.join(directory, 'finished'), status);
       sendEvent({ type: 'query-finished', pid, status });
@@ -74,7 +91,7 @@ childProcess.execFile = function (executable, args, options, callback) {
   const closed = once(sub, 'close').catch(() => {}).finally(() => activeChildCloses.delete(closed));
   activeChildCloses.add(closed);
   sub.stderr?.once('data', () => {
-    sendEvent({ type: 'query-started', pid, nativePid: sub.pid });
+    sendEvent({ type: 'query-started', pid, nativePid: sub.pid, nativeTimeoutMs });
   });
   return sub;
 };
@@ -95,6 +112,11 @@ process.on('message', (command) => {
     writeFileSync(path.join(directory, 'release-query'), '1');
     const sub = activeQueries.get(pid);
     try { sub?.stdin?.end('1\n'); } catch { /* Child already closed. */ }
+    return;
+  }
+  if (command.type === 'expire') {
+    // Node's execFile timeout kills its child with SIGTERM and reports it as killed; this is that action, test-ordered.
+    try { activeQueries.get(command.pid)?.kill('SIGTERM'); } catch { /* Child already closed. */ }
     return;
   }
   if (command.type === 'control') {

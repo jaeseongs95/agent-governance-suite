@@ -6,11 +6,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import type { Readable } from "node:stream";
+import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
-import tls from "node:tls";
 import { afterEach, expect, it } from "vitest";
-import { requestSessionMessageOnce, SESSION_MESSAGE_PROTOCOL } from "../../mcp-server/src/session-message-client.js";
+import { requestSessionMessageOnce } from "../../mcp-server/src/session-message-client.js";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
+import { brokerData, sendOwnedBrokerRequest } from "./fixtures/d0254-owned-request.js";
 
 interface BrokerEvent {
   type: string;
@@ -18,11 +19,17 @@ interface BrokerEvent {
   pid?: number;
   nativePid?: number;
   status?: string;
+  nativeTimeoutMs?: number | null;
 }
 
 const resources: Array<{ root: string; child: ChildProcess }> = [];
 const running = (child: ChildProcess) => child.exitCode === null && child.signalCode === null;
 const alive = (pid: number) => { try { process.kill(pid, 0); return true; } catch (error) { if ((error as NodeJS.ErrnoException).code === "ESRCH") return false; throw error; } };
+
+// Held requests use an owned authenticated connection without the product client's 2.5 s cap or a caller
+// deadline: the test's events, not the runner's speed, decide when a held query ends.
+const heldRequest = (state: string, operation: string, value: Record<string, unknown>) =>
+  brokerData(sendOwnedBrokerRequest(state, operation, value).response);
 
 async function waitForExit(child: ChildProcess, label: string) {
   if (running(child)) await once(child, "close");
@@ -40,7 +47,12 @@ afterEach(async () => {
     if (running(child)) { const closed = once(child, "close"); child.kill(); await closed; }
     for (const pid of [424242, 424243]) {
       const marker = path.join(root, String(pid), "native-query-pid");
-      if (existsSync(marker)) expect(alive(Number(readFileSync(marker, "utf8"))), "Owned native child drained").toBe(false);
+      if (!existsSync(marker)) continue;
+      const nativePid = Number(readFileSync(marker, "utf8"));
+      // A hang guard only: a killed broker leaves its released child to finish on its own, so wait for that state.
+      const guard = performance.now() + 20_000;
+      while (alive(nativePid) && performance.now() < guard) await delay(10);
+      expect(alive(nativePid), "Owned native child drained").toBe(false);
     }
     rmSync(root, { recursive: true, force: true });
   }
@@ -115,6 +127,12 @@ async function start(protectedBirth = false) {
       await waitEvent(event => event.type === "query-finished" && event.pid === pid);
       expect(existsSync(path.join(root, String(pid), "finished")), label).toBe(true);
     },
+    nativeTimeoutMs(pid = 424242) {
+      return events.find(event => event.type === "query-started" && event.pid === pid)?.nativeTimeoutMs;
+    },
+    expire(pid = 424242) {
+      if (child.connected) child.send({ type: "expire", pid });
+    },
     release(pid = 424242) {
       writeFileSync(path.join(root, String(pid), "release-query"), "1");
       if (child.connected) child.send({ type: "release", pid });
@@ -130,7 +148,7 @@ function payload(pid = 424242) {
 const test = it.runIf(process.platform === "win32");
 test.each(["ensure-relay", "acquire-relay"])("%s survives an idle tick while its actual native query is held, then activity and drain remain bounded", async operation => {
   const b = await start();
-  const result = requestSessionMessageOnce(operation, payload(), b.state).catch(error => error);
+  const result = heldRequest(b.state, operation, payload());
   await b.queryStarted();
   await b.control({ advanceMs: 60_001, tick: true });
   expect(running(b.child), b.stderr()).toBe(true);
@@ -149,8 +167,8 @@ test.each(["ensure-relay", "acquire-relay"])("%s survives an idle tick while its
 });
 test("two concurrent requests retain idle protection until the final query drains", async () => {
   const b = await start();
-  const first = requestSessionMessageOnce("ensure-relay", payload(), b.state).catch(error => error);
-  const second = requestSessionMessageOnce("ensure-relay", payload(424243), b.state).catch(error => error);
+  const first = heldRequest(b.state, "ensure-relay", payload());
+  const second = heldRequest(b.state, "ensure-relay", payload(424243));
   await Promise.all([b.queryStarted(), b.queryStarted(424243)]);
   b.release(); expect(await first).not.toBeInstanceOf(Error);
   await b.control({ advanceMs: 60_001, tick: true });
@@ -180,10 +198,15 @@ test("authenticated validation errors do not leak an in-flight count or renew id
 });
 test("a native query timeout releases idle protection without fabricating user activity", async () => {
   const b = await start();
-  const result = requestSessionMessageOnce("ensure-relay", { ...payload(), identityTimeoutMs: 800 }, b.state).catch(error => error);
+  const result = heldRequest(b.state, "ensure-relay", { ...payload(), identityTimeoutMs: 800 });
   await b.queryStarted();
+  // The broker bounded its native query by this request's identity budget.
+  expect(b.nativeTimeoutMs()).toBeGreaterThan(0);
+  expect(b.nativeTimeoutMs()).toBeLessThanOrEqual(800);
   await b.control({ advanceMs: 60_001, tick: true });
   expect(running(b.child)).toBe(true);
+  // The timeout is applied after the tick it must survive, by the test rather than by the runner's speed.
+  b.expire();
   expect(await result).toBeInstanceOf(Error);
   await b.queryFinished(424242, "Native query timed out");
   expect(readFileSync(path.join(b.root, "424242", "finished"), "utf8")).toBe("error");
@@ -192,20 +215,18 @@ test("a native query timeout releases idle protection without fabricating user a
   expect(b.child.exitCode).toBe(0);
 });
 test("a disconnected authenticated client cannot leave permanent idle protection", async () => {
-  const b = await start(), endpoint = JSON.parse(readFileSync(path.join(b.state, "endpoint.json"), "utf8")) as { port: number };
-  const socket = tls.connect({ host: "127.0.0.1", port: endpoint.port, servername: "localhost", ca: readFileSync(path.join(b.state, "broker-cert.pem")), rejectUnauthorized: true });
-  socket.on("error", () => {});
+  const b = await start();
+  const request = sendOwnedBrokerRequest(b.state, "ensure-relay", { ...payload(), identityTimeoutMs: 800 });
   try {
-    await once(socket, "secureConnect");
-    socket.write(JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token: readFileSync(path.join(b.state, "broker.token"), "utf8").trim(), operation: "ensure-relay", payload: { ...payload(), identityTimeoutMs: 800 } }) + "\n");
-    await b.queryStarted(); socket.destroy();
+    await b.queryStarted(); request.destroy();
     await b.control({ advanceMs: 60_001, tick: true });
     expect(running(b.child)).toBe(true);
+    b.expire();
     await b.queryFinished(424242, "Disconnected query reaches native timeout");
     await b.control({ tick: true });
     await waitForExit(b.child, "Disconnected request drained");
     expect(b.child.exitCode).toBe(0);
-  } finally { socket.destroy(); }
+  } finally { request.destroy(); }
 });
 test("explicit shutdown still aborts an actual held native child and removes the endpoint", async () => {
   const b = await start(true);
@@ -216,7 +237,7 @@ test("explicit shutdown still aborts an actual held native child and removes the
   };
   const before = protectedRows();
   expect(before).toMatchObject([{ verified_parent_token: "protected-parent-birth" }]);
-  const result = requestSessionMessageOnce("ensure-relay", payload(), b.state).catch(error => error);
+  const result = heldRequest(b.state, "ensure-relay", payload());
   const nativePid = await b.queryStarted();
   await b.control({ signal: true });
   await waitForExit(b.child, "Graceful shutdown completes");
