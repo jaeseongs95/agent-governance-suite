@@ -152,18 +152,24 @@ start 이후 본문 claim과 외부 enqueue 사이 경합에서는 알림 하나
 
 ### 미관측 알림 퇴역과 자동 깨우기 신호
 
-2.7.2는 도착 증거가 없는 submitted·unknown을 자동 해제하지 않았다. 그래서 Codex queue의 follow-up이 한 번 사라지면(재부팅, 앱 재시작, 사용자의 대기 항목 삭제) 대상당 하나인 활성 알림 자리가 영구히 찼다. 새 presence 세대가 떠도, 세션이 도구를 쓰고 ACK를 보내도 새 wake가 예약되지 않았다. 실제 PC에서 13개 세션이 이 상태였다. 다음 개발 후보는 이 계약을 아래 조건으로 개정한다.
+2.7.2는 도착 증거가 없는 submitted·unknown을 자동 해제하지 않아 실제 수신 활동 뒤에도 새 wake가 막힐 수 있었다. 이후에는 새 presence 세대만으로도 퇴역을 허용했지만, D0353에서 재부팅 뒤에도 호스트 입력 대기열에 이전 wake가 남아 누적되는 문제가 확인됐다. 세대 교체는 본문 인수 권한을 끊는 근거이며 대기열 항목의 소멸 근거는 아니다. D0353은 실제 수신 활동에 따른 회복을 유지하면서 세대 교체만으로 외부 효과가 가능한 알림을 해제하지 않는다.
 
 퇴역 조건은 두 가지를 모두 요구한다.
+
+`started`·`submitted`·`unknown`에는 먼저 해당 시도의 `outcome_at`(없으면 `started_at`)보다 늦은 실제 세션 활동 또는 검증된 `late_observed_at`이 필요하다. 이 근거가 없으면 새 세대·종료·임대 만료·presence 행 삭제와 무관하게 활성 잠금을 유지한다. 활성 행은 terminal의 시간·개수 정리 대상이 아니므로, 정리 뒤 새 wake가 다시 쌓이지 않는다. 아직 외부 효과가 없는 `reserved`와 확정 실패의 기존 재시도·대기 시간은 유지한다.
 
 1. 알림의 주입 만료(`expires_at`, 예약 뒤 1시간)에 유예 10분을 더한 시각이 지났다. 유예는 hook 8초 timeout, broker 재시작, hook receipt 30초 TTL을 덮고, 가장 긴 재시도 backoff와 같다.
 2. 다음 근거 가운데 하나가 저장되어 있다.
    - 같은 대상의 최신 presence 행(birth 기준)이 더 이상 알림을 받은 birth의 살아 있는 행이 아니다. 새 birth가 최신이거나, 알림의 birth가 끝났거나(`ended_at`) lease가 끊겼거나, 행이 모두 지워진 경우다. 판정은 instance와 birth generation으로 하고 transport는 보지 않는다. 살아 있는 birth는 같은 세대로 transport를 바꿨다가 되돌릴 수 있기 때문이다.
-   - 만료 뒤 같은 세션의 활동이 있었다: 본문 claim, 도구 경계 claim, turn-end claim과 정리, SessionEnd 정리, hook 없는 CLI의 claim·ACK 호출, ACK, 일반 사용자 입력 관측, 검증된 wake hook 도착.
+   - 만료 뒤 같은 세션의 활동이 있었다: 본문 claim, 도구 경계 claim, turn-end claim과 정리, hook 없는 CLI의 claim, 성공한 ACK, 일반 사용자 입력 관측, 검증된 wake hook 도착. D0305의 별도 경로는 인계 뒤 관측창이 지났고 해당 시도 이전의 미처리 본문이 없으며 실제 활동이 있으면 주입 만료 전에도 퇴역한다.
 
 활동 근거는 권위가 아니며 신뢰 수준은 같은 OS 사용자다. 같은 OS 사용자의 프로세스는 CLI로 다른 세션의 활동 근거도 만들 수 있다.
 
-끝났거나 lease가 끊긴 birth는 다시 살아나지 않는다. heartbeat는 살아 있는 행만 갱신하고, 같은 instance의 재등록은 더 늦은 새 birth를 받는다. presence 조회, relay tick, 현재 세대 claim과 `autoWake`는 모두 최신 행을 읽으므로, 최신 행이 알림의 살아 있는 birth가 아니면 그 알림은 현재 세대로 claim될 수 없고 새 wake도 예약되지 않는다. 그래서 이 근거로 퇴역해도 누적 억제 범위는 줄지 않는다. 2.7.4까지는 이 경우 가운데 새 birth가 살아 있는 경우만 퇴역했으므로, 끝나거나 lease가 끊긴 뒤 활동도 재등록도 없는 세션의 알림이 영구히 활성으로 남았다. 활성으로 남는 것은 만료와 유예 전의 행, 그리고 알림의 birth가 최신 행으로 살아 있고 만료 뒤 활동이 없는 행(살아 있지만 조용한 세션)뿐이다. 퇴역은 `prune`의 UPDATE 한 문장으로 원자 commit하며, reserve·send·status 같은 기존 prune 지점에서 일어난다. 조회 도구인 `list_session_status`와 `get_session_message_status`도 prune을 부르므로 만료 기록 삭제와 퇴역을 일으킬 수 있다. 이 정리는 멱등이며 조회 결과의 의미를 바꾸지 않는다.
+끝났거나 lease가 끊긴 birth는 다시 살아나지 않는다. heartbeat는 살아 있는 행만 갱신하고, 같은 instance의 재등록은 더 늦은 새 birth를 받는다. 그러나 호스트의 대기열은 그 세대를 넘어 남을 수 있으므로 세대 교체만으로는 외부 효과가 가능한 알림을 퇴역하지 않는다. 퇴역은 `prune`의 UPDATE 한 문장으로 원자 commit하며, reserve·send·status 같은 기존 prune 지점에서 일어난다. 조회 도구인 `list_session_status`와 `get_session_message_status`도 prune을 부르므로 만료 기록 삭제와 퇴역을 일으킬 수 있다.
+
+활동 기록의 실제 진입점은 `claim`, `observeNativeInput`, `claimDeferred`, `claimTurnEnd`, `clearDeferred`, 성공 수가 양수인 `acknowledge`, 출처와 행 검증을 통과한 `claimHostWake`다. 빈 claim이나 도구 경계도 세션의 실제 실행 활동으로 기록하지만 ACK 실패는 기록하지 않는다. `SessionStart`, relay 기동·획득·tick, presence 시작·heartbeat는 활동이 아니다. Codex와 Claude의 입력·도구 경계, Claude의 턴 종료가 해당 진입점으로 연결된다. agy는 `PreInvocation`·`PostInvocation`과 정상 종료를 도구 경계로 바꾸며, 취소·오류 종료는 제외한다. 검증된 옛 marker의 관측은 현재 세대 본문 인수나 권한을 부여하지 않는다.
+
+전송 경로의 재시작 후 대기열 소멸을 입증한 실측이 없는 동안에는 보수적으로 잠금을 유지한다. Codex는 재부팅 후 잔류 관측이 있으며, Claude와 agy는 이 후보 작성 시 소멸 실측을 확보하지 못했다. 호스트 이름만으로 예외를 만들지 않는다. 대기열이 실제로 소멸한 경우에도 실제 사용자 입력·도구 경계·검증된 관측이 오기 전까지 자동 깨우기가 보류되는 제약이 있다. 세대 변경만으로 소멸을 추론하거나 이 제약을 전달 성공으로 보고하지 않는다. 소멸을 입증하는 전송 경로가 생기면 기존 전송 어댑터 경계에서 별도로 검토한다.
 
 누적 상한: 대상당 활성 알림은 하나이고 퇴역은 주입 만료와 유예 뒤에만 일어난다. 따라서 세션이 활동하는 동안 host queue에는 (주입 TTL + 유예), 곧 약 70분마다 marker가 최대 1개 쌓일 수 있다. 한 turn이 오래 바쁘고 그동안 도구 경계 claim이나 ACK가 이어지면 이 상한까지 쌓일 수 있다. 살아 있지만 조용한 세션에는 쌓이지 않고, 끝난 세션에는 live relay가 없어 새 알림을 보내지 않는다.
 
@@ -179,7 +185,7 @@ start 이후 본문 claim과 외부 enqueue 사이 경합에서는 알림 하나
 - 같은 세대에서 활동 없이 relay만 살아 있어도 해제: idle host의 queue에 marker가 남아 있을 가능성을 배제하지 못한다.
 - 알림을 받은 instance의 행만 보고 판정: 그 행이 살아 있어도 더 늦은 birth가 최신이면 relay tick과 claim이 모두 거절되므로, 그 birth가 끝날 때까지 풀리지 않는 활성 행이 남는다. 최신 행 하나로 판정하면 presence·claim과 같은 행을 보고, 따로 규칙을 둘 필요도 없다.
 
-퇴역은 broker가 하는 prune에서만 일어난다. 2.7.4 이하 broker는 끝나거나 lease가 끊긴 birth의 알림을 퇴역하지 않으므로, 같은 DB를 이전 broker가 쓰는 동안 그 알림은 활성으로 남고 새 broker의 첫 prune에서 퇴역한다. 새 broker가 퇴역한 행은 2.7.3 이상 broker에서 terminal로 보인다.
+퇴역은 broker가 하는 prune에서만 일어난다. D0353 수리 전 writer가 같은 DB를 쓰면 세대 변경만으로 퇴역시킬 수 있으므로 혼합 writer의 누적 방지는 보장하지 않는다. 적용 전 생산자 종료는 별도 운영 절차다. 이미 퇴역·삭제된 행이나 호스트에 제출된 대기열 항목은 이 변경으로 복원·삭제하지 않는다. 새 broker가 실제 활동 근거로 퇴역한 행은 기존처럼 terminal로 보인다.
 
 `send_session_message`의 결과와 `get_session_message_status`의 미ACK 큐 행, 세션 현황판의 presence에는 조언용 `autoWake`가 붙는다. 계약은 `contracts/session-auto-wake-outlook.v1.schema.json`이며 `authorityEffect: "none"`이다. 발신 성공은 broker가 큐에 넣었다는 뜻이고, `autoWake`는 수신자가 지금 idle 상태에서 자동으로 깨워질 수 있는지에 대한 조언일 뿐이다. 전달, 처리, 완료, 승인이나 권한의 증거가 아니고, 큐의 메시지를 지우거나 다시 보내지 않는다.
 

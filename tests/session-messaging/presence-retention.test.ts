@@ -320,7 +320,8 @@ it("keeps retirement, presence and autoWake identical to a run that deletes no p
   expect(a.database.prepare("SELECT count(*) AS n FROM session_presence").get()).not.toEqual(b.database.prepare("SELECT count(*) AS n FROM session_presence").get());
   expect(a.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid").all()).toEqual(b.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid").all());
   expect(a.database.prepare("SELECT * FROM messages ORDER BY rowid").all()).toEqual(b.database.prepare("SELECT * FROM messages ORDER BY rowid").all());
-  expect(a.database.prepare("SELECT state FROM wake_nonces WHERE session_id = 'reborn'").get()).toEqual({ state: "expired-unobserved" });
+  // D0353 / AC08: pruning presence or starting a new birth cannot prove the old queue effect disappeared.
+  expect(a.database.prepare("SELECT state FROM wake_nonces WHERE session_id = 'reborn'").get()).toEqual({ state: "submitted" });
   for (const sessionId of ["reborn", "split", "recent", "live"]) {
     expect(withoutCheckedAt(a.listPresence(now, [target(sessionId)])[0]!)).toEqual(withoutCheckedAt(b.listPresence(now, [target(sessionId)])[0]!));
   }
