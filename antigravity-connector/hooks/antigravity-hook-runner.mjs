@@ -109,6 +109,10 @@ const EXACT_ANTIGRAVITY_BINARY_PATTERN = /^(?:antigravity(?:\.exe)?|language_ser
 //   on non-Linux Unix (e.g. macOS) where `/proc/<pid>/exe` is unavailable, `ps -o args=` uses `argv[0]`, which a process
 //   can spoof via `exec -a` and therefore is not a kernel-verified executable path guarantee.
 const DOT_DOT_SEGMENT_PATTERN = /(?:^|[\\/])\.\.(?:[\\/]|$)/u;
+// D0354 (review 902e, tester 06e6e9a8): the agy CLI's Linux/macOS installer writes one native binary to ~/.local/bin/agy.
+// Like the per-user roots above it is writable by the same OS user. Only that exact file under a home directory is
+// recognized, never the directory or another name in it.
+const AGY_CLI_EXECUTABLE_PATTERN = /^\/(?:home\/[^/]+|Users\/[^/]+|root)\/\.local\/bin\/agy$/u;
 const UNTRUSTED_WRITABLE_PATH_PATTERN = /(?:^|[\\/])(?:tmp|var[\\/]tmp|dev[\\/]shm|temp|appdata[\\/]local[\\/]temp|users[\\/]public)(?:[\\/]|$)/iu;
 const TRUSTED_ANTIGRAVITY_INSTALL_ROOT_PATTERN = /^(?:[A-Za-z]:[\\/](?:Program Files(?: \(x86\))?[\\/]Antigravity|Users[\\/][^\\/]+[\\/](?:AppData[\\/]Local[\\/]Programs[\\/]Antigravity|\.gemini[\\/]antigravity))|\/(?:opt\/antigravity|usr\/(?:local\/)?(?:lib|share)\/antigravity|Applications\/Antigravity\.app|home\/[^/]+\/\.gemini\/antigravity|Users\/[^/]+\/\.gemini\/antigravity))(?:[\\/]|$)/iu;
 
@@ -197,6 +201,10 @@ export function isRecognizedAntigravityHostProcess(name = "", commandOrPath = ""
   if (!baseName && !execBase) return false;
   if (baseName && TRANSIENT_SHELL_OR_NODE_PATTERN.test(baseName)) return false;
   if (execBase && TRANSIENT_SHELL_OR_NODE_PATTERN.test(execBase)) return false;
+
+  if (execBase === "agy" && (!baseName || baseName === "agy")) {
+    return AGY_CLI_EXECUTABLE_PATTERN.test(normalizedPath) && !UNTRUSTED_WRITABLE_PATH_PATTERN.test(normalizedPath);
+  }
 
   // If both process name and normalized executable basename are present, neither may be a foreign binary.
   if (baseName && !EXACT_ANTIGRAVITY_BINARY_PATTERN.test(baseName)) return false;

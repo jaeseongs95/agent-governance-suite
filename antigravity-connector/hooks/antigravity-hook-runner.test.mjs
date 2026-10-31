@@ -293,6 +293,20 @@ try {
       true,
     );
 
+    // D0354: the agy CLI's own installed binary (~/.local/bin/agy, TEST /home/mcpops/.local/bin/agy) is the host.
+    assert.equal(isRecognizedAntigravityHostProcess("agy", "/home/mcpops/.local/bin/agy"), true, "D0354: agy CLI at ~/.local/bin/agy");
+    assert.equal(isRecognizedAntigravityHostProcess("agy", "/Users/me/.local/bin/agy"), true, "D0354: macOS agy CLI at ~/.local/bin/agy");
+    for (const [name, command, why] of [
+      ["agy", "/home/u/.local/bin/sub/agy", "a nested directory"],
+      ["agy", "/home/u/.local/bin/../bin/agy", "dot-dot traversal"],
+      ["agy", "/tmp/home/u/.local/bin/agy", "a temp root"],
+      ["agy", "/opt/tools/agy", "a path outside the installer's location"],
+      ["agy", "/home/u/.local/bin/agy (deleted)", "a replaced binary"],
+      ["agy", "", "a bare name"],
+      ["node", "/home/u/.local/bin/agy", "a foreign process name"],
+      ["agy2", "/home/u/.local/bin/agy2", "another name in the directory"],
+    ]) assert.equal(isRecognizedAntigravityHostProcess(name, command), false, `D0354 counterexample: agy from ${why} must be rejected`);
+
     // Negative unit assertions (R05-F01, N1 #3299 & R07-N1/R07-N2 #3300 counterexamples)
     assert.equal(
       isRecognizedAntigravityHostProcess(
