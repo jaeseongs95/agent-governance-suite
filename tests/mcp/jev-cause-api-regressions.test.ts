@@ -227,4 +227,48 @@ describe("JEV 원인과 권한의 실제 MCP 응답", () => {
     expect(repeated.data).toMatchObject({agentSelectedSkillIds: null, selectionStatus: "PROPOSED", adviceApplied: false});
     expect(h.vendor.invoke).toHaveBeenCalledTimes(1); expect(h.reserve).toHaveBeenCalledTimes(1);
   });
+  it("API71-CONTINUE 독립선택: 격리 위반 조언을 폐기해도 본 에이전트의 깨끗한 선택은 계속 기록한다", async () => {
+    const h = await harness();
+    const request = {...input(), originalPrompt: "code-review 스킬로 코드를 읽고 검토해. 수정하지 마.", explicitSkillIds: ["code-review"]};
+    // 실제 native 해석기 실행이 아니라 전송 경계를 통과한 합성 공급자 오류다.
+    h.vendor.invoke.mockImplementationOnce(async (_request, _profile, _signal, fence) => {
+      fence?.();
+      throw Object.assign(new ClassificationProviderError("NATIVE_ISOLATION_VIOLATION", "started", true), {
+        poisonedHelperResult: {judgments: [{skillId: "PRIVATE_POISONED_JUDGMENT", judgment: "needed"}], diagnostics: "PRIVATE_POISONED_DIAGNOSTICS"},
+      });
+    });
+    const classified = await h.call<Advice>("classify_skills", request);
+    expect(classified.error).toBeNull();
+    const advice = classified.data!, review = advice.result.request.skills.find(skill => skill.skillId === "code-review")!;
+    expect(review).toMatchObject({enabled: true, installed: true, hostSupported: true, dependencies: []});
+    expect(review.sourceRefs.some(source => source.path === "skills/code-review/SKILL.md")).toBe(true);
+    expect(advice.result.response).toMatchObject({status: "INVALID", judgments: [], error: {code: "NATIVE_ISOLATION_VIOLATION", dispatchState: "started"}});
+    expect(advice.result.attempts).toHaveLength(1);
+    expect(advice.result.attempts[0]).toMatchObject({errorCode: "NATIVE_ISOLATION_VIOLATION", dispatchState: "started", diagnostics: null,
+      usage: {inputTokens: null, outputTokens: null, cachedInputTokens: null, actualCostUsd: null}});
+    const accounting = h.budget.snapshot();
+    expect(accounting.reservations).toHaveLength(1);
+    expect(accounting.reservations[0]).toMatchObject({profileId: "vendor", nativeProfileId: "vendor", maximumUsd: 0});
+    const independent: SkillSelectionDecisionV1 = {...decision(advice), explicitSkillIds: ["code-review"], agentSelectedSkillIds: ["code-review"], adviceApplied: false,
+      selectionReasons: [{skillId: "code-review", reason: "본 요청은 code-review를 명시한 읽기 전용 검토이며 수정은 금지된다. 실패한 공급자 조언을 쓰지 않고 요청과 스킬 원문으로 선택한다."}],
+      applicabilityChecks: [{skillId: "code-review", applies: true, excluded: false, reasonRefs: ["skills/code-review/SKILL.md:3", "fixture:explicit-read-only-review"]}]};
+    const selectionSource = "independent-agent-after-helper-failure";
+    type Receipt = {source: string; operationId: string; helperFailureCode: string; helperResponseRef: string};
+    const recorded = await h.call<Accepted & {selectionSource: string; independentSelection: Receipt; admissionStatus: string; readStatus: string; appliedStatus: string; verifiedStatus: string}>(
+      "record_skill_selection", {schemaVersion: "1.0.0", operationId: request.operationId, decision: independent, selectionSource});
+    expect(recorded.error).toBeNull();
+    expect(recorded.data).toMatchObject({valid: true, errors: [], agentSelectedSkillIds: ["code-review"], selectionSource,
+      decision: {agentSelectedSkillIds: ["code-review"], explicitSkillIds: ["code-review"], adviceApplied: false},
+      independentSelection: {source: selectionSource, operationId: request.operationId, helperFailureCode: "NATIVE_ISOLATION_VIOLATION", helperResponseRef: advice.classificationResponseRef},
+      admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN"});
+    const repeated = await h.call<Advice & {selectionSource: string; independentSelection: Receipt}>("classify_skills", request);
+    expect(repeated.error).toBeNull();
+    expect(repeated.data).toMatchObject({agentSelectedSkillIds: ["code-review"], selectionStatus: "SELECTED", adviceApplied: false, selectionSource});
+    expect(repeated.data!.independentSelection).toEqual(recorded.data!.independentSelection);
+    expect(repeated.data!.result).toEqual(advice.result);
+    expect(h.budget.snapshot()).toEqual(accounting);
+    expect(h.vendor.invoke).toHaveBeenCalledTimes(1); expect(h.reserve).toHaveBeenCalledTimes(1); expect(h.vendor.effect).not.toHaveBeenCalled();
+    for (const reply of [classified, recorded, repeated]) expect(JSON.stringify(reply)).not.toContain("PRIVATE_POISONED");
+  });
+
 });
