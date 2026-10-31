@@ -1,10 +1,12 @@
 import { spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { once } from "node:events";
 import * as fs from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, it } from "vitest";
+import { createLockWitness } from "../../mcp-server/src/broker-lock-witness.js";
 import { acquireBrokerProcessLock, ownsBrokerProcessLock, releaseBrokerProcessLock } from "../../mcp-server/src/broker-process-lock.js";
 
 const owned: string[] = [];
@@ -74,13 +76,22 @@ test("long-path publication failure retains its original error and removes only 
 test("unknown abandoned stages, unverified public state and live stage witnesses remain untouched on long paths", () => {
   const { directory, lock } = state();
   const lease = acquireBrokerProcessLock(lock)!;
+  expect(lease.owner).toMatch(/-pipe$/u);
   const unknown = path.join(directory, "broker.lock.stage-opaque"); fs.mkdirSync(unknown);
-  const live = path.join(directory, "broker.lock.stage-" + lease.owner + "-ABC123"); fs.mkdirSync(live);
-  expect(acquireBrokerProcessLock(lock)).toBeNull();
-  expect(fs.readdirSync(live)).toEqual([]);
-  releaseBrokerProcessLock(lease);
-  fs.mkdirSync(lock); fs.mkdirSync(path.join(lock, "opaque-owner"));
-  expect(() => acquireBrokerProcessLock(lock)).toThrow("UNRECOGNIZED_OWNER");
-  expect(fs.readdirSync(lock)).toEqual(["opaque-owner"]);
-  expect(fs.readdirSync(directory).sort()).toEqual(["broker.lock", path.basename(unknown), path.basename(live)].sort());
+  // A pipe generation is live exactly while its witness is held: the lease's own stage name is live until release,
+  // and a second, still-held generation stays live to the end of the case.
+  const held = path.join(directory, "broker.lock.stage-" + lease.owner + "-ABC123"); fs.mkdirSync(held);
+  const otherGeneration = randomBytes(16).toString("hex");
+  const otherWitness = createLockWitness(otherGeneration)!;
+  try {
+    const live = path.join(directory, "broker.lock.stage-owner-" + process.pid + "-" + otherGeneration + "-pipe-DEF456"); fs.mkdirSync(live);
+    expect(acquireBrokerProcessLock(lock)).toBeNull();
+    expect(fs.readdirSync(held)).toEqual([]);
+    releaseBrokerProcessLock(lease);
+    fs.mkdirSync(lock); fs.mkdirSync(path.join(lock, "opaque-owner"));
+    expect(() => acquireBrokerProcessLock(lock)).toThrow("UNRECOGNIZED_OWNER");
+    expect(fs.readdirSync(lock)).toEqual(["opaque-owner"]);
+    // The released generation's never-reused stage is reclaimed; the unknown stage and the live generation's stay.
+    expect(fs.readdirSync(directory).sort()).toEqual(["broker.lock", path.basename(unknown), path.basename(live)].sort());
+  } finally { otherWitness.close(); }
 });
