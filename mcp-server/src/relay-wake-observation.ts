@@ -97,8 +97,11 @@ export function createRelaySpawnObservation(transport: string, environment = pro
   // 초기화·게시 실패는 호출자에게 보고하고 relay 시작은 막지 않는다. 관측 꺼짐(설정 없음)은 실패가 아니다.
   const fail = (error: unknown) => { try { onFailure?.(error); } catch { /* 보고 실패가 relay 시작을 막지 않는다. */ } };
   try {
-    const prefix = deferred ? observationFile(transport, environment) : observationPrefix(transport, environment);
+    const prefix = observationFile(transport, environment);
     if (!prefix) return undefined;
+    // 설정은 켜졌는데 소유 디렉터리가 아니면 꺼짐이 아니라 실패다. 예산 경로는 flush에서 확인한다.
+    const requireOwnedDirectory = () => { if (!ownedDirectory(prefix)) throw new Error("DIAGNOSTIC_DIRECTORY_NOT_OWNED"); };
+    if (!deferred) requireOwnedDirectory();
     const identity = (pid: number) => deferred ? "UNKNOWN" : processStartToken(pid, process.platform, 500) ?? "UNKNOWN";
     const generation = randomUUID(), writerPid = process.pid, writerProcessStart = identity(writerPid);
     const file = `${prefix}-relay-spawn-${generation}.json`, startedAt = new Date().toISOString();
@@ -110,7 +113,7 @@ export function createRelaySpawnObservation(transport: string, environment = pro
         if (!publishSnapshot(file, {schemaVersion: "1.0.0", kind: "relay-spawn-observation", generation,
           writerPid, writerProcessStart, startedAt, publishedAt: new Date().toISOString(), selectedTransport: transport,
           childPid, childProcessStart, events, sinkErrors, droppedEvents})) throw new Error("DIAGNOSTIC_WRITE_FAILED");
-      } catch { sinkErrors++; }
+      } catch (error) { sinkErrors++; fail(error); } // 게시 실패는 파일에 남지 못할 수 있으므로 호출자에게도 보고한다.
     };
     const record = (event: typeof events[number]["event"], pid?: number) => {
       try {
@@ -126,8 +129,9 @@ export function createRelaySpawnObservation(transport: string, environment = pro
     record("begin");
     return {returned(pid?: number) {record("returned", pid);}, spawned() {record("spawn");}, failed() {record("error");},
       flush() {
-        try { if (deferred && ownedDirectory(prefix)) publish(); }
-        catch (error) { fail(error); } // 소유 디렉터리를 확인하지 못하면 게시하지 않는다.
+        if (!deferred) return;
+        try { requireOwnedDirectory(); } catch (error) { fail(error); return; } // 확인하지 못하면 게시하지 않는다.
+        publish();
       }};
   } catch (error) { fail(error); return undefined; } // 초기화 실패는 관측 없음(UNKNOWN)으로 남기고 보고한다.
 }

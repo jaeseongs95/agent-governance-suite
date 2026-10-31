@@ -1,4 +1,4 @@
-import {mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync} from "node:fs";
+import {mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import path from "node:path";
 import {spawn} from "node:child_process";
@@ -198,4 +198,22 @@ it("관측 꺼짐(설정 없음·미설치 transport)은 실패로 보고하지 
   expect(createRelaySpawnObservation("codex-deferred", {AGENT_GOVERNANCE_LOG_CONFIG: "{"}, true,
     error => failures.push(error))).toBeUndefined();
   expect(failures).toHaveLength(1);
+});
+
+it.each([true, false])("소유 디렉터리가 아니거나 게시가 실패하면 침묵하지 않고 보고한다: 지연=%s", deferred => {
+  const {root, environment} = setup();
+  writeFileSync(path.join(root, "plain"), "");
+  const notOwned = {AGENT_GOVERNANCE_LOG_CONFIG: JSON.stringify({level: "OFF", destination: "file",
+    file: path.join(root, "plain", "owned"), categories: {transport: "DEBUG"}})};
+  const failures: unknown[] = [];
+  const rejected = createRelaySpawnObservation("codex-deferred", notOwned, deferred, error => failures.push(error));
+  rejected?.flush();
+  expect(failures).toEqual([expect.objectContaining({message: "DIAGNOSTIC_DIRECTORY_NOT_OWNED"})]);
+  failures.length = 0;
+  const observation = createRelaySpawnObservation("codex-deferred", environment, deferred, error => failures.push(error))!;
+  fault.close = true;
+  observation.returned(4242);
+  observation.flush();
+  expect(failures).toHaveLength(1);
+  expect(readdirSync(root).some(value => value.includes("-relay-spawn-") && value.endsWith(".json"))).toBe(!deferred);
 });
