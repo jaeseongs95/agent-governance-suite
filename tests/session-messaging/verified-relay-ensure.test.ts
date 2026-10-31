@@ -106,7 +106,7 @@ it("rejects a stale pre-observation owner snapshot without changing a newer gene
   expect(next.spawn).toBe(true);
   const before = store.presence(target, now + 1);
   expect(store.prepareVerifiedRelay({ ...input, expectedOwner: snapshot }, now + 2))
-    .toEqual({ spawn: false, relayId: null, instanceId: generation, reason: "RELAY_OWNER_CHANGED" });
+    .toEqual({ spawn: false, relayId: null, instanceId: generation, reason: "GENERATION_SUPERSEDED" });
   expect(store.relayOwner(target, input.transport)?.relayId).toBe(next.relayId);
   expect(next.relayId).not.toBe(first.relayId);
   expect(store.presence(target, now + 2)).toEqual(before);
