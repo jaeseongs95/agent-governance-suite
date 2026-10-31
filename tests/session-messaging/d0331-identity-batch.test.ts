@@ -49,6 +49,21 @@ it("BATCH-2: a failed or timed-out native call fails every PID it covered withou
   expect(f.sync).toHaveBeenCalledTimes(1);
 });
 
+it("BATCH-4: a repeated or foreign result line never lends a birth to another PID; the repeated PID fails closed", () => {
+  quiet();
+  // Out of order, PID 41 answered twice with different births, an unrequested PID 99, and PID 43 echoing 42's line shape.
+  f.sync.mockReturnValue("42 OK birth-42\n41 OK birth-a\n99 OK birth-99\n41 OK birth-b\n43 OK\n");
+  const readings = processStartTokens([41, 42, 43], "win32", 1000);
+  expect(f.sync).toHaveBeenCalledTimes(1);
+  expect(readings.map(reading => reading.token)).toEqual([null, "birth-42", null]);
+  expect(readings[0]!.diagnostic).toMatchObject({ stderrIndication: "unclassified" });
+  expect(readings[2]!.diagnostic).toMatchObject({ stderrIndication: "unclassified" });
+  // The same PID as parent and relay is one query, and both positions carry that one PID's own result.
+  f.sync.mockReturnValue("51 OK birth-51\n");
+  expect(processStartTokens([51, 51], "win32", 1000).map(reading => reading.token)).toEqual(["birth-51", "birth-51"]);
+  expect(f.sync.mock.calls[1]![1].at(-1).match(/GetProcessById\(51\)/gu)).toHaveLength(1);
+});
+
 it("BATCH-3: the broker's asynchronous batch uses one cancellable native call with the same per-PID mapping", async () => {
   quiet();
   const signal = new AbortController().signal;
