@@ -100,19 +100,27 @@ const EXACT_ANTIGRAVITY_BINARY_PATTERN = /^(?:antigravity(?:\.exe)?|language_ser
 // 2. Reject world/public/temp writable directories (`UNTRUSTED_WRITABLE_PATH_PATTERN`).
 // 3. Require an anchored standard Antigravity installation root prefix (`TRUSTED_ANTIGRAVITY_INSTALL_ROOT_PATTERN`,
 //    excluding `C:\Antigravity` because standard Windows ACLs allow authenticated users to create folders under `C:\`),
-//    or an exact `ANTIGRAVITY_AGENTAPI_EXE` match.
+//    or an exact `ANTIGRAVITY_AGENTAPI_EXE` match. Exception (D0354): the agy CLI's own binary is accepted only as one
+//    exact installer-default file (`AGY_CLI_*_EXECUTABLE_PATTERN`), with no installation root prefix.
 // Limitations (N1-b, R07-N1, R07-N2):
 // - Syntactic normalized path-prefix + writable-directory exclusion filter; does NOT inspect OS filesystem ACLs or code signatures.
 // - Per-user installation roots under a user's home directory (`AppData\Local\Programs\Antigravity`, `.gemini/antigravity`)
 //   are writable by processes running as that same OS user and do not defend against same-user tampering.
+// - The agy CLI files (`~/.local/bin/agy`, `%LOCALAPPDATA%\agy\bin\agy.exe`) are also same-user writable; `~/.local/bin`
+//   is moreover a general PATH directory that pip --user, pipx and other tools write into, so any same-user tool can
+//   place a binary there. An installer `--dir` other than the default is not recognized (fails closed).
 // - On Linux, `defaultProcessInspector` resolves `/proc/<pid>/exe` via `readlinkSync` (failing closed if unreadable);
 //   on non-Linux Unix (e.g. macOS) where `/proc/<pid>/exe` is unavailable, `ps -o args=` uses `argv[0]`, which a process
 //   can spoof via `exec -a` and therefore is not a kernel-verified executable path guarantee.
 const DOT_DOT_SEGMENT_PATTERN = /(?:^|[\\/])\.\.(?:[\\/]|$)/u;
-// D0354 (review 902e, tester 06e6e9a8): the agy CLI's Linux/macOS installer writes one native binary to ~/.local/bin/agy.
-// Like the per-user roots above it is writable by the same OS user. Only that exact file under a home directory is
-// recognized, never the directory or another name in it.
-const AGY_CLI_EXECUTABLE_PATTERN = /^\/(?:home\/[^/]+|Users\/[^/]+|root)\/\.local\/bin\/agy$/u;
+// D0354 (review 902e, tester 06e6e9a8): the official agy CLI installers write one binary to a fixed per-user default:
+// https://antigravity.google/cli/install.sh `TARGET_DIR="$HOME/.local/bin"`, `BINARY_PATH="$TARGET_DIR/agy"`
+// (fetched 2026-11-01, sha256 62966c07365423bd4dc209355060744058fb30d60f5323e2d360e39de64e5042) and install.ps1
+// `$TARGET_DIR = Join-Path $env:LOCALAPPDATA "agy\bin"`, `agy.exe` (sha256 51c2cb4fada22ce0228da71b9506370383d6544bfebcec85fe7616a52b805344).
+// Only that exact file under a home directory is recognized, never the directory or another name in it.
+// POSIX paths are case-sensitive (`AGY` would be another file); Windows paths are not.
+const AGY_CLI_POSIX_EXECUTABLE_PATTERN = /^\/(?:home\/[^/]+|Users\/[^/]+|root)\/\.local\/bin\/agy$/u;
+const AGY_CLI_WINDOWS_EXECUTABLE_PATTERN = /^[A-Za-z]:\\Users\\[^\\]+\\AppData\\Local\\agy\\bin\\agy\.exe$/iu;
 const UNTRUSTED_WRITABLE_PATH_PATTERN = /(?:^|[\\/])(?:tmp|var[\\/]tmp|dev[\\/]shm|temp|appdata[\\/]local[\\/]temp|users[\\/]public)(?:[\\/]|$)/iu;
 const TRUSTED_ANTIGRAVITY_INSTALL_ROOT_PATTERN = /^(?:[A-Za-z]:[\\/](?:Program Files(?: \(x86\))?[\\/]Antigravity|Users[\\/][^\\/]+[\\/](?:AppData[\\/]Local[\\/]Programs[\\/]Antigravity|\.gemini[\\/]antigravity))|\/(?:opt\/antigravity|usr\/(?:local\/)?(?:lib|share)\/antigravity|Applications\/Antigravity\.app|home\/[^/]+\/\.gemini\/antigravity|Users\/[^/]+\/\.gemini\/antigravity))(?:[\\/]|$)/iu;
 
@@ -174,9 +182,12 @@ function normalizeCandidateExecutablePath(rawPath) {
  *    or public writable directories (`UNTRUSTED_WRITABLE_PATH_PATTERN`).
  * 4. Requires both an exact supported Antigravity binary name (`EXACT_ANTIGRAVITY_BINARY_PATTERN`) AND an anchored
  *    standard Antigravity installation root prefix (`TRUSTED_ANTIGRAVITY_INSTALL_ROOT_PATTERN`, excluding `C:\Antigravity`,
- *    or exact `ANTIGRAVITY_AGENTAPI_EXE` match) on the normalized path.
- * 5. Limitations: Does not inspect OS filesystem ACLs; per-user roots (`AppData\Local\Programs\Antigravity`, `.gemini/antigravity`)
- *    are writable by the same OS user; on non-Linux Unix without `/proc/<pid>/exe`, `ps` `argv[0]` can be spoofed via `exec -a`.
+ *    or exact `ANTIGRAVITY_AGENTAPI_EXE` match) on the normalized path. Exception (D0354): a process named `agy`/`agy.exe`
+ *    is accepted only when its normalized path is exactly the agy CLI installer default (`AGY_CLI_*_EXECUTABLE_PATTERN`).
+ * 5. Limitations: Does not inspect OS filesystem ACLs; per-user roots (`AppData\Local\Programs\Antigravity`, `.gemini/antigravity`,
+ *    the agy CLI files in `~/.local/bin` and `%LOCALAPPDATA%\agy\bin`) are writable by the same OS user, and `~/.local/bin` is
+ *    a shared PATH directory; on non-Linux Unix without `/proc/<pid>/exe` (macOS, including agy), `ps` `argv[0]` can be
+ *    spoofed via `exec -a`.
  */
 export function isRecognizedAntigravityHostProcess(name = "", commandOrPath = "", env = process.env) {
   const rawName = String(name).trim();
@@ -203,7 +214,10 @@ export function isRecognizedAntigravityHostProcess(name = "", commandOrPath = ""
   if (execBase && TRANSIENT_SHELL_OR_NODE_PATTERN.test(execBase)) return false;
 
   if (execBase === "agy" && (!baseName || baseName === "agy")) {
-    return AGY_CLI_EXECUTABLE_PATTERN.test(normalizedPath) && !UNTRUSTED_WRITABLE_PATH_PATTERN.test(normalizedPath);
+    return AGY_CLI_POSIX_EXECUTABLE_PATTERN.test(normalizedPath) && !UNTRUSTED_WRITABLE_PATH_PATTERN.test(normalizedPath);
+  }
+  if (/^agy\.exe$/iu.test(execBase) && (!baseName || baseName.toLowerCase() === "agy.exe")) {
+    return AGY_CLI_WINDOWS_EXECUTABLE_PATTERN.test(normalizedPath) && !UNTRUSTED_WRITABLE_PATH_PATTERN.test(normalizedPath);
   }
 
   // If both process name and normalized executable basename are present, neither may be a foreign binary.

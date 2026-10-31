@@ -296,6 +296,11 @@ try {
     // D0354: the agy CLI's own installed binary (~/.local/bin/agy, TEST /home/mcpops/.local/bin/agy) is the host.
     assert.equal(isRecognizedAntigravityHostProcess("agy", "/home/mcpops/.local/bin/agy"), true, "D0354: agy CLI at ~/.local/bin/agy");
     assert.equal(isRecognizedAntigravityHostProcess("agy", "/Users/me/.local/bin/agy"), true, "D0354: macOS agy CLI at ~/.local/bin/agy");
+    assert.equal(isRecognizedAntigravityHostProcess("agy", "/root/.local/bin/agy"), true, "D0354: root's agy CLI at ~/.local/bin/agy");
+    // Normalization collapses `.` segments, so the same file named through `./` is the same installer default.
+    assert.equal(isRecognizedAntigravityHostProcess("agy", "/home/u/.local/bin/./agy"), true, "D0354: ./ normalizes to the default file");
+    assert.equal(isRecognizedAntigravityHostProcess("agy.exe", "C:\\Users\\Lenovo\\AppData\\Local\\agy\\bin\\agy.exe"), true,
+      "D0354: Windows agy CLI at %LOCALAPPDATA%\\agy\\bin\\agy.exe (install.ps1 default)");
     for (const [name, command, why] of [
       ["agy", "/home/u/.local/bin/sub/agy", "a nested directory"],
       ["agy", "/home/u/.local/bin/../bin/agy", "dot-dot traversal"],
@@ -305,6 +310,13 @@ try {
       ["agy", "", "a bare name"],
       ["node", "/home/u/.local/bin/agy", "a foreign process name"],
       ["agy2", "/home/u/.local/bin/agy2", "another name in the directory"],
+      ["agy", "/home/u/.local/agy", "the parent directory"],
+      ["AGY", "/home/u/.local/bin/AGY", "a different POSIX file differing only in case"],
+      ["agy.exe", "/home/u/.local/bin/agy.exe", "a POSIX path with the Windows name"],
+      ["agy.exe", "C:\\Users\\Lenovo\\AppData\\Local\\agy\\agy.exe", "a Windows path outside bin"],
+      ["agy.exe", "C:\\Users\\Public\\AppData\\Local\\agy\\bin\\agy.exe", "the public profile"],
+      ["agy.exe", "C:\\Users\\Lenovo\\AppData\\Local\\Temp\\agy\\bin\\agy.exe", "a Windows temp path"],
+      ["cmd.exe", "C:\\Users\\Lenovo\\AppData\\Local\\agy\\bin\\agy.exe", "a foreign Windows process name"],
     ]) assert.equal(isRecognizedAntigravityHostProcess(name, command), false, `D0354 counterexample: agy from ${why} must be rejected`);
 
     // Negative unit assertions (R05-F01, N1 #3299 & R07-N1/R07-N2 #3300 counterexamples)
