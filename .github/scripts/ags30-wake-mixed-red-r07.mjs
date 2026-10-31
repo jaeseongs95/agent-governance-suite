@@ -19,6 +19,8 @@ const expectedMutantDigest = new Map([
   ['44f8668045c5faeec389045ff52d43d7ee014d593ed1b3ac300246abd7c8dcdd', '1d7deadabde34c5c34c368292e435893fcd230966ef8d4700d7a2e327759588e'],
   // D0354의 부모 세대 보존은 원 깨우기 함수와 네 결함 치환을 보존한다.
   ['3d07c7ed74309e2a9e86aeae4f62190f436f67f88d6b1ff3a17e607584e29b9c', '276ef99373296bf1fa4fb7c4efc7d35ea6bc604cf9c50d47021844c16cd9f403'],
+  // D0354 relay 세대 울타리·복구(acquireRelay·endUnverifiedRelay·relayRecoveryInstance)는 claimHostWake와 네 치환을 바꾸지 않는다.
+  ['e4fc4adebb8ee708b4d397fa466058288d8066d1c4e41341326631d1545dd67f', 'f2ddfaa3628da849f7bef52e4cfc5773ee05fc6446742f9691e195796d5c7ecb'],
 ]).get(sourceDigest);
 assert.ok(expectedMutantDigest, `UNKNOWN_WAKE_MIXED_RED_SOURCE:${sourceDigest}`);
 const baseline = Buffer.from(original.toString('utf8')
