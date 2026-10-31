@@ -102,17 +102,21 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
       if (readLineage) service.reanchorAfterCompact(sessionId, readLineage);
       return {};
   }
-  // A fork's parent is pinned at its first prompt, before any model tool call; nothing is injected.
+  // A fork's parent is pinned before the model can change its own file; nothing is injected.
   if (observation.kind === "user-input") {
-    if (readLineage) service.pinForkParent(sessionId, readLineage);
+    if (readLineage) service.pinForkParent(sessionId, readLineage, false);
     return {};
   }
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
     const toolName = localToolName(host, observation.toolName ?? "");
-    if (!toolName) return {};
+    if (!toolName) {
+      // Write-capable and AGS tools reach this boundary before they run: the last point the file is the host's.
+      if (readLineage) service.pinForkParent(sessionId, readLineage);
+      return {};
+    }
     const toolInput = observation.toolInput ?? {};
-    // Only a checkpoint reads lineage here (its anchors); inspect uses the parent pinned at the first prompt.
-    const lineage = toolName === "checkpoint_context" ? readLineage : undefined;
+    // A checkpoint reads lineage for its anchors; inspect only when no parent was pinned before.
+    const lineage = toolName === "checkpoint_context" || toolName === "inspect_context" ? readLineage : undefined;
     const token = lineage ? service.issueToolBinding(sessionId, toolName, toolInput, lineage) : service.issueToolBinding(sessionId, toolName, toolInput);
     return {
       hookSpecificOutput: {

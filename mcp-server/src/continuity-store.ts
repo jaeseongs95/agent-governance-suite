@@ -381,19 +381,30 @@ export class SqliteContinuityStore {
   }
 
   /** Every other task's anchors in one read, newest kept per anchor. ponytail: full scan bounded by observation cleanup. */
-  lineageAnchors(excludeTaskCorrelation: string): Map<string, { c: string; e: number; r: number; d: string }> {
+  /**
+   * Every anchor row of other tasks recorded before `beforeObservationId` (the child's own fork record), in store order.
+   * The store's insertion order, not a clock, separates revisions saved before the fork from later ones.
+   */
+  lineageAnchorRows(excludeTaskCorrelation: string, beforeObservationId: number): Array<{ anchor: string; parent: { c: string; e: number; r: number; d: string } }> {
     const rows = this.database.prepare(`
       SELECT task_correlation, epoch, event, turn_hash FROM continuity_observations
-      WHERE task_correlation <> ? AND turn_hash IS NOT NULL AND substr(event, 1, ?) = ?
+      WHERE task_correlation <> ? AND observation_id < ? AND turn_hash IS NOT NULL AND substr(event, 1, ?) = ?
       ORDER BY observation_id ASC
-    `).all(excludeTaskCorrelation, LINEAGE_ANCHOR_EVENT.length, LINEAGE_ANCHOR_EVENT) as
+    `).all(excludeTaskCorrelation, beforeObservationId, LINEAGE_ANCHOR_EVENT.length, LINEAGE_ANCHOR_EVENT) as
       Array<{ task_correlation: string; epoch: number; event: string; turn_hash: string }>;
-    const anchors = new Map<string, { c: string; e: number; r: number; d: string }>();
-    for (const row of rows) {
+    return rows.flatMap(row => {
       const match = /^(\d+):(sha256:[0-9a-f]{64})$/u.exec(row.event.slice(LINEAGE_ANCHOR_EVENT.length));
-      if (match) anchors.set(row.turn_hash, { c: row.task_correlation, e: row.epoch, r: Number(match[1]), d: match[2]! });
-    }
-    return anchors;
+      return match ? [{ anchor: row.turn_hash, parent: { c: row.task_correlation, e: row.epoch, r: Number(match[1]), d: match[2]! } }] : [];
+    });
+  }
+
+  /** The store position of the first observation of this exact event, or null. */
+  firstObservationId(taskCorrelation: string, epoch: number, event: string): number | null {
+    const row = this.database.prepare(`
+      SELECT observation_id FROM continuity_observations WHERE task_correlation = ? AND epoch = ? AND event = ?
+      ORDER BY observation_id ASC LIMIT 1
+    `).get(taskCorrelation, epoch, event) as { observation_id: number } | undefined;
+    return row?.observation_id ?? null;
   }
 
   /** Copies a selected parent snapshot into an empty child epoch only; existing child state is never replaced. */

@@ -54,10 +54,16 @@ function start(service: ContinuityService, session: string, source: string, tran
   return hook(service, { hook_event_name: "SessionStart", source, session_id: session, ...(transcriptPath ? { transcript_path: transcriptPath } : {}) }, host);
 }
 
-/** The child's first user prompt: the only point where its parent is read and pinned. */
+/** The child's first user prompt: its parent is pinned here only when already found. */
 function prompt(service: ContinuityService, session: string, transcriptPath?: string) {
   expect(hook(service, { hook_event_name: "UserPromptSubmit", session_id: session, prompt: "continue",
     ...(transcriptPath ? { transcript_path: transcriptPath } : {}) })).toEqual({});
+}
+
+/** A write-capable host tool boundary (before the tool runs): the final point a fork's parent is pinned. */
+function tool(service: ContinuityService, session: string, transcriptPath: string) {
+  expect(hook(service, { hook_event_name: "PreToolUse", session_id: session, tool_name: "Bash", tool_input: { command: "true" },
+    tool_use_id: "toolu_" + randomUUID().replaceAll("-", ""), transcript_path: transcriptPath })).toEqual({});
 }
 
 function hookBound<T extends Record<string, unknown>>(service: ContinuityService, session: string, tool: string, input: T, transcriptPath?: string): T & { _continuityBinding: string } {
@@ -198,6 +204,9 @@ describe("D0352 B08 fork lineage", () => {
       const child = `fork-of-${session}`;
       const childFile = await fork(service, child, after);
       expect(inspect(service, child, childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+      // A save after the re-anchor advances the parent: the fork's pinned revision is no longer current.
+      checkpoint(service, session, file, { requestId: "after-compact", expectedRevision: snapshot.revision });
+      expect(inspect(service, child, childFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
     }
   });
 
@@ -233,18 +242,51 @@ describe("D0352 B08 fork lineage", () => {
     expect(inspect(service, "fork-of-b", childFile)).toMatchObject({ decision: "REJECT", reasonCodes: ["NO_RESTORE_CANDIDATE", "FORK_PARENT_NOT_FOUND"] });
   });
 
-  it("N4b: lines appended to a fork's own file after its first prompt never change the pinned parent", async () => {
+  it("N4b: lines a fork writes into its own file after its parent is pinned never change that parent", async () => {
     const service = createService();
     const { uuids } = await parent(service, "parent-a");
     const childFile = await fork(service, "fork-of-b", [randomUUID()]);
-    // The model in the fork copies A's entries into its own transcript with a tool, then prompts again.
+    // The model in the fork copies A's entries into its own transcript with a write-capable tool. That tool's
+    // boundary runs before the tool does and pins the parent from the host-written file.
+    tool(service, "fork-of-b", childFile);
     await appendFile(childFile, uuids.map(uuid => line("fork-of-b", uuid)).join("\n") + "\n", "utf8");
     prompt(service, "fork-of-b", childFile);
     expect(inspect(service, "fork-of-b", childFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_NOT_FOUND"]);
-    // Without a prompt before inspect there is no pin, and inspect itself never reads the file.
-    const unpinned = await transcript(uuids.map(uuid => ["fork-unpinned", uuid] as [string, string]));
-    expect(start(service, "fork-unpinned", "fork", unpinned)).toEqual({});
-    expect(inspect(service, "fork-unpinned", unpinned).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_NOT_PINNED"]);
+  });
+
+  it("M1: a fork whose transcript is not written yet at its first prompt is pinned later, at inspect", async () => {
+    const service = createService();
+    const { snapshot, uuids } = await parent(service);
+    const childFile = join(await directory(), "fork.jsonl");
+    expect(start(service, "fork-late-file", "fork", childFile)).toEqual({});
+    prompt(service, "fork-late-file", childFile);
+    expect(service.store.firstObservationEvent(service.correlateSession("fork-late-file"), 1, "fork-parent:")).toBeNull();
+    await writeFile(childFile, [...uuids, randomUUID()].map(uuid => line("fork-late-file", uuid)).join("\n") + "\n", "utf8");
+    const candidate = inspect(service, "fork-late-file", childFile);
+    expect(candidate).toMatchObject({ decision: "DEFER", reasonCodes: CANDIDATE, summary: { revision: snapshot.revision } });
+    expect(load(service, "fork-late-file", candidate).data).toEqual(snapshot);
+  });
+
+  it("F1: a parent save after the fork is never chosen, even when its anchors include entries the fork copied", async () => {
+    const service = createService();
+    const { snapshot, uuids, file } = await parent(service);
+    const childFile = await transcript([...uuids.map(uuid => ["fork-f", uuid] as [string, string]), ["fork-f", randomUUID()]]);
+    expect(start(service, "fork-f", "fork", childFile)).toEqual({});
+    // The parent continues (or resumes) in the same file and saves again: its newest anchors still hold pre-fork entries.
+    await appendFile(file, [randomUUID(), randomUUID()].map(uuid => line("parent-a", uuid)).join("\n") + "\n", "utf8");
+    checkpoint(service, "parent-a", file, { requestId: "after-fork", expectedRevision: snapshot.revision });
+    expect(inspect(service, "fork-f", childFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
+  });
+
+  it("F2: a sibling fork that adopted and saved never becomes the parent of a later fork of the same parent", async () => {
+    const service = createService();
+    const { snapshot, uuids } = await parent(service);
+    const firstFile = await fork(service, "fork-1", uuids);
+    expect(load(service, "fork-1", inspect(service, "fork-1", firstFile)).error).toBeNull();
+    checkpoint(service, "fork-1", firstFile, { requestId: "sibling-own", expectedRevision: snapshot.revision });
+    const secondFile = await transcript([...uuids.map(uuid => ["fork-2", uuid] as [string, string]), ["fork-2", randomUUID()]]);
+    expect(start(service, "fork-2", "fork", secondFile)).toEqual({});
+    expect(inspect(service, "fork-2", secondFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
   });
 
   it("N5/N8: a parent that saved again, was suppressed or purged after the fork yields no candidate", async () => {
@@ -329,7 +371,9 @@ describe("D0352 B08 fork lineage", () => {
     }
   });
 
-  it("N7: without a host fork record the lookup never runs, and other hosts keep fork as startup", async () => {
+  // Codex and Gemini (agy) fork inheritance is an open implementation gap until their host relation evidence is observed;
+  // this guards only that no lookup runs without such evidence, not that those hosts are excluded.
+  it("N7: without a host fork record the lookup never runs (Codex and Gemini/agy: relation evidence not yet implemented)", async () => {
     const service = createService();
     const { uuids } = await parent(service);
     const file = await transcript(uuids.map(uuid => ["never-forked", uuid] as [string, string]));

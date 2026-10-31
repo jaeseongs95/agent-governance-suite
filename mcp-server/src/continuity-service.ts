@@ -235,7 +235,7 @@ export class ContinuityService implements ContinuityGateway {
       d: convergenceDigest(withoutBinding(input)),
       x: Math.floor(this.now().getTime() / 1000) + TOOL_TOKEN_TTL_SECONDS,
       ...(toolName === "checkpoint_context" && readLineage ? this.anchorsFor(readLineage) : {}),
-      ...(toolName === "inspect_context" ? this.pinnedForkParent(task) : {}),
+      ...(toolName === "inspect_context" ? this.pinnedForkParent(task, readLineage) : {}),
     };
     return this.sign(payload);
   }
@@ -253,34 +253,67 @@ export class ContinuityService implements ContinuityGateway {
   }
 
   /**
-   * Decides a fork child's parent once, at its first user prompt: before the model can run any tool, so a model
-   * in the child cannot append another session's entries to its own file first (review 902e, r04). Only a recorded
-   * fork with no own state is considered; startup, resume and clear never are. The outcome, found or not, is final.
+   * Decides a fork child's parent once, before the model can change its own file: at the first user prompt when the
+   * parent is already found there, otherwise (`final`) at the first write-capable or AGS tool boundary, before that
+   * tool runs (review 902e r04; the host may not have written the child's transcript yet at the first prompt).
+   * Only a recorded fork with no own state is considered; startup, resume and clear never are. A pin is never replaced.
    */
-  pinForkParent(rawSessionId: string, readLineage: () => LineageRead): void {
+  pinForkParent(rawSessionId: string, readLineage: () => LineageRead, final = true): void {
     const task = this.store.getTask(this.correlateSession(rawSessionId));
-    if (!task || task.rootId || task.suppressed || this.summary(task)
+    if (task) this.pinTaskForkParent(task, readLineage, final);
+  }
+
+  private pinTaskForkParent(task: ContinuityTaskRecord, readLineage: () => LineageRead, final: boolean): void {
+    if (task.rootId || task.suppressed || this.summary(task)
       || !this.store.hasObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT)
       || this.store.firstObservationEvent(task.taskCorrelation, task.currentEpoch, FORK_PARENT_EVENT)) return;
     const selection = this.selectForkParent(task, readLineage);
+    if (!final && !("p" in selection)) return;
     this.store.recordObservation(task.taskCorrelation, task.currentEpoch, FORK_PARENT_EVENT + JSON.stringify(selection), null, "p" in selection, this.now().toISOString());
   }
 
+  /**
+   * Only anchors saved before the child's fork record count, so a parent (or sibling) save after the fork cannot be
+   * chosen. Each (parent, revision) scores the number of its distinct anchors present in the child's own file; the
+   * highest wins, then the fewest of its anchors absent from the file (a sibling's own later entries), then D1 (the
+   * match appearing last in the child's file), then the later revision of the same parent.
+   * A remaining tie between different parents is ambiguous and yields no candidate.
+   */
   private selectForkParent(task: ContinuityTaskRecord, readLineage: () => LineageRead): { p: ForkParent } | { q: string } {
     const read = readLineage();
     if (!("ids" in read)) return { q: read.reason };
-    // D1: the match appearing last in the child's own file wins; revision numbers and clocks are not used.
-    const anchors = this.store.lineageAnchors(task.taskCorrelation);
-    for (let index = read.ids.length - 1; index >= 0; index -= 1) {
-      const parent = anchors.get(this.lineageAnchor(read.ids[index]!));
-      if (parent) return { p: parent };
+    const forkAt = this.store.firstObservationId(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT);
+    if (forkAt === null) return { q: "FORK_PARENT_NOT_FOUND" };
+    const positions = new Map<string, number>();
+    read.ids.forEach((id, index) => positions.set(this.lineageAnchor(id), index));
+    const scores = new Map<string, { parent: ForkParent; matched: number; absent: number; last: number }>();
+    for (const { anchor, parent } of this.store.lineageAnchorRows(task.taskCorrelation, forkAt)) {
+      const key = JSON.stringify([parent.c, parent.e, parent.r, parent.d]);
+      const score = scores.get(key) ?? { parent, matched: 0, absent: 0, last: -1 };
+      const position = positions.get(anchor);
+      if (position === undefined) score.absent += 1;
+      else { score.matched += 1; score.last = Math.max(score.last, position); }
+      scores.set(key, score);
     }
-    return { q: "FORK_PARENT_NOT_FOUND" };
+    const ranked = [...scores.values()].filter(score => score.matched > 0).sort((left, right) => right.matched - left.matched
+      || left.absent - right.absent || right.last - left.last
+      || (left.parent.c === right.parent.c && left.parent.e === right.parent.e ? right.parent.r - left.parent.r : 0));
+    const [best, next] = ranked;
+    if (!best) return { q: "FORK_PARENT_NOT_FOUND" };
+    if (next && next.matched === best.matched && next.absent === best.absent && next.last === best.last
+      && (next.parent.c !== best.parent.c || next.parent.e !== best.parent.e)) {
+      return { q: "FORK_PARENT_AMBIGUOUS" };
+    }
+    return { p: best.parent };
   }
 
-  /** inspect uses only the pinned decision; it never reads the transcript, which the model may have changed by then. */
-  private pinnedForkParent(task: ContinuityTaskRecord): Pick<ToolBindingPayload, "p" | "q"> {
+  /**
+   * inspect uses the pinned decision. Without one, no write-capable tool has run in this fork yet, so the child's own
+   * file is still the host's and inspect pins it now.
+   */
+  private pinnedForkParent(task: ContinuityTaskRecord, readLineage?: () => LineageRead): Pick<ToolBindingPayload, "p" | "q"> {
     if (task.rootId || !this.store.hasObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT)) return {};
+    if (readLineage) this.pinTaskForkParent(task, readLineage, true);
     const event = this.store.firstObservationEvent(task.taskCorrelation, task.currentEpoch, FORK_PARENT_EVENT);
     if (!event) return { q: "FORK_PARENT_NOT_PINNED" };
     let pinned: unknown;

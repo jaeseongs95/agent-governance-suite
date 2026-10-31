@@ -271,11 +271,13 @@ describe("generated Claude plugin", () => {
       expect(matcher.test(`mcp__agent-governance-suite__${tool}`), tool).toBe(false);
     }
     for (const tool of [toolPrefix, "Bash", "Edit", "Agent", "mcp__unrelated__get_trust_capabilities"]) expect(matcher.test(tool), tool).toBe(false);
-    // The only remaining direct domain hook is the advisory board for non-AGS tools.
+    // The only remaining direct domain hooks run for write-capable non-AGS tools: the advisory board, and continuity
+    // pinning a fork's parent before such a tool can change the fork's own transcript (D0352).
     expect(claudeHooks.hooks.PreToolUse).toHaveLength(2);
     const boardGroups = claudeHooks.hooks.PreToolUse.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[3]));
     expect(boardGroups).toHaveLength(1);
-    expect(boardGroups[0].hooks).toEqual([{ type: "command", command: "node", args: [allowedScripts[3]], timeout: 5 }]);
+    expect(boardGroups[0].hooks).toEqual([{ type: "command", command: "node", args: [allowedScripts[3]], timeout: 5 },
+      { type: "command", command: "node", args: [allowedScripts[0]], timeout: 10 }]);
     const boardMatcher = new RegExp(boardGroups[0].matcher, "u");
     for (const tool of ["Edit", "Write", "MultiEdit", "NotebookEdit", "Bash", "PowerShell", "Agent", "Task"]) expect(boardMatcher.test(tool), tool).toBe(true);
     for (const tool of ["Read", "Grep", "Glob", ...governanceNames.map((name) => `${toolPrefix}${name}`)]) expect(boardMatcher.test(tool), tool).toBe(false);
