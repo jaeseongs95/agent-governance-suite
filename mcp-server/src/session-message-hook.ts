@@ -159,7 +159,10 @@ function observeClaim(options: SessionMessageHookOptions, phase: "request-attemp
 }
 
 function readHostStartToken(pid: number, budget: HookBudget, onFailure?: ProcessIdentityFailureObserver): string | null {
-  const token = budget ? processStartToken(pid, process.platform, remainingBudget(budget), onFailure) : processStartToken(pid, process.platform, undefined, onFailure);
+  // Without an observer the call keeps its pre-D0354 shape; only a diagnosing caller passes one.
+  const token = onFailure
+    ? processStartToken(pid, process.platform, budget ? remainingBudget(budget) : undefined, onFailure)
+    : budget ? processStartToken(pid, process.platform, remainingBudget(budget)) : processStartToken(pid);
   remainingBudget(budget);
   return token;
 }
