@@ -144,3 +144,44 @@ it("RECOVER-3: ended, online or verified generations are never offered for unver
   start(store, "host-process-v1:" + "c".repeat(64), now + 1);
   expect(store.relayRecoveryInstance(target, now + 60_000)).toBeNull();
 });
+
+it("RECOVER-4: the recovery hint carries only the host birth the generation itself reported, and a legacy row none", () => {
+  const store = open(), now = Date.now();
+  store.startPresence({ ...target, instanceId: "I1", transport, wakeVisibility: "user-message", canWakeSilently: false,
+    reportedParent: { pid: 5101, startToken: "birth-I1" } }, now - 90_000);
+  dispatchSessionMessageBrokerOperation(store, "presence-start", { target, instanceId: "I2", transport, wakeVisibility: "user-message",
+    canWakeSilently: false, reportedParentPid: 5102, reportedParentStartToken: "birth-I2" });
+  expect(store.relayRecoveryInstance(target, Date.now() + 60_000)).toBe("I2");
+  expect(store.presenceReportedParent(target, "I1")).toEqual({ pid: 5101, startToken: "birth-I1" });
+  // A half report or an invalid birth is rejected rather than stored as a partial binding.
+  expect(() => dispatchSessionMessageBrokerOperation(store, "presence-start", { target, instanceId: "I3", transport,
+    wakeVisibility: "user-message", canWakeSilently: false, reportedParentPid: 5103 })).toThrow();
+  expect(() => store.startPresence({ ...target, instanceId: "I4", transport, wakeVisibility: "user-message",
+    canWakeSilently: false, reportedParent: { pid: 0, startToken: "x" } })).toThrow("Invalid reported host process.");
+  expect(store.presenceReportedParent(target, "I3")).toBeNull();
+  expect(store.presenceReportedParent(target, "I4")).toBeNull();
+  start(store, "I5", now - 60_000);
+  expect(store.presenceReportedParent(target, "I5")).toBeNull();
+});
+
+it("RECOVER-5: an existing store gains the report columns with its rows intact, and two connections agree on the binding", async () => {
+  const { DatabaseSync } = await import("node:sqlite");
+  const directory = mkdtempSync(path.join(tmpdir(), "ags-relay-fence-legacy-"));
+  directories.push(directory);
+  const file = path.join(directory, "session-messages.sqlite3"), now = Date.now();
+  const seed = new SessionMessageStore(file);
+  start(seed, "legacy", now - 60_000);
+  seed.close();
+  const raw = new DatabaseSync(file);
+  raw.exec("ALTER TABLE session_presence DROP COLUMN reported_parent_token; ALTER TABLE session_presence DROP COLUMN reported_parent_pid;");
+  raw.close();
+  const first = new SessionMessageStore(file), second = new SessionMessageStore(file);
+  stores.push(first, second);
+  expect(first.relayRecoveryInstance(target, now)).toBe("legacy"); // the row survived the additive migration
+  expect(second.presenceReportedParent(target, "legacy")).toBeNull(); // legacy: no binding is invented
+  first.startPresence({ ...target, instanceId: "fresh", transport, wakeVisibility: "user-message", canWakeSilently: false,
+    reportedParent: { pid: 5201, startToken: "birth-fresh" } }, now + 1);
+  expect(second.presenceReportedParent(target, "fresh")).toEqual({ pid: 5201, startToken: "birth-fresh" });
+  expect((dispatchSessionMessageBrokerOperation(second, "claim-deferred", { target }) as { relayRecovery?: unknown }).relayRecovery).toBeUndefined();
+  expect(second.relayRecoveryInstance(target, now + 60_000)).toBe("fresh");
+});

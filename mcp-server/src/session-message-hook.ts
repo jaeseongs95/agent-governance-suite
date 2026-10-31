@@ -150,15 +150,16 @@ function readHostStartToken(pid: number, budget: HookBudget): string | null {
   return token;
 }
 
-type RelayRecoveryHint = { relayRecovery?: { instanceId?: string } };
+type RelayRecoveryHint = { relayRecovery?: { instanceId?: string; parentPid?: number; parentStartToken?: string } };
 type ClaimWithRecovery = { messages: SessionMessage[] } & RelayRecoveryHint;
 
-function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>, budget?: HookBudget, relayId?: string, relayEnv?: Readonly<Record<string, string | undefined>>, relayOwner?: SessionMessageHookOptions["relayOwner"], recovery = false): void {
+function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>, budget?: HookBudget, relayId?: string, relayEnv?: Readonly<Record<string, string | undefined>>, relayOwner?: SessionMessageHookOptions["relayOwner"], extra: Readonly<{ recovery?: boolean; observedStartToken?: string }> = {}): void {
   remainingBudget(budget);
   const relayPath = fileURLToPath(new URL("./session-message-relay.mjs", import.meta.url));
   const hostPid = relayId ? hostProcess?.pid : resolveHookProcessPid(host, explicitHostPid, hostProcess);
   if (!hostPid || !Number.isInteger(hostPid) || hostPid < 1) return;
-  const observedStartToken = readHostStartToken(hostPid, budget);
+  // Only a caller that read this birth in the same synchronous step passes it; others re-read after their awaits.
+  const observedStartToken = extra.observedStartToken ?? readHostStartToken(hostPid, budget);
   if (!observedStartToken || (hostProcess && (hostProcess.pid !== hostPid || (relayId && explicitHostPid !== undefined && explicitHostPid !== hostProcess.pid) || hostProcess.startToken !== observedStartToken))) return;
   const startToken = hostProcess?.startToken ?? observedStartToken;
   remainingBudget(budget);
@@ -177,7 +178,7 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     "--parent-pid", String(hostPid),
     "--parent-start-token", startToken,
     ...(relayId ? ["--relay-id",relayId]:[]),
-    ...(recovery ? ["--recovery"] : []),
+    ...(extra.recovery ? ["--recovery"] : []),
   ], {
     detached: !relayOwner,
     windowsHide: true,
@@ -372,9 +373,13 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     const instanceId = randomUUID();
     const transport = profile.transport;
     const wakeVisibility = profile.capabilities.idleWake;
+    // The generation records the host birth its own relay parents; a later recovery relay may bind only this birth.
+    // startRelay still re-reads the birth after the presence await and refuses one that changed meanwhile.
+    const reportedStartToken = hostProcess?.startToken ?? readHostStartToken(hostPid, budget) ?? undefined;
     try {
       await request("presence-start", {
         target, instanceId, transport,
+        ...(reportedStartToken ? { reportedParentPid: hostPid, reportedParentStartToken: reportedStartToken } : {}),
         wakeVisibility,
         canWakeSilently: wakeVisibility === "silent",
         supportedInjection: profile.capabilities.supportedInjection,
@@ -388,7 +393,8 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       return {}; // No relay can start without a confirmed presence response.
     }
     remainingBudget(budget);
-    startRelay(host, sessionId, instanceId, transport, explicitHostPid, hostProcess, budget, undefined, options.relayEnv, options.relayOwner);
+    startRelay(host, sessionId, instanceId, transport, explicitHostPid,
+      hostProcess ?? (reportedStartToken ? { pid: hostPid, startToken: reportedStartToken } : undefined), budget, undefined, options.relayEnv, options.relayOwner);
     return {};
   }
   if (adapted.lifecycle === "end") {
@@ -476,14 +482,28 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
 
   // Unverified relays start only at SessionStart. When the broker reports that the current generation has no
   // relay (it never acquired or died), this boundary starts one single-attempt relay for it; the lease keeps one
-  // owner and acquire-relay fences superseded generations. Next trigger: the next user-input, tool-after or turn-end hook.
-  // ponytail: hook events carry no instanceId, so a second live process of the same session could parent this
-  // relay; bind the parent on presence if that case appears.
+  // owner and acquire-relay fences superseded generations. Until such a hook runs, an idle session has no relay.
+  // The relay parent must be the exact host birth that generation's SessionStart reported. This hook's own host
+  // process is compared with it; a legacy generation without a report, another process of the same session or a
+  // reused PID is refused with a recorded reason and starts nothing.
   const recoverUnverifiedRelay = (claimed: RelayRecoveryHint | undefined): void => {
-    const instanceId = claimed?.relayRecovery?.instanceId;
-    if (!instanceId || options.recoverExistingSession || !actorAccess(observation.actor).allowed) return;
-    try { startRelay(host, sessionId, instanceId, profile.transport, explicitHostPid, undefined, budget, undefined, options.relayEnv, undefined, true); }
-    catch (error) { reportHookFailure("recovery", error); }
+    const recovery = claimed?.relayRecovery;
+    if (!recovery?.instanceId || options.recoverExistingSession || !actorAccess(observation.actor).allowed) return;
+    try {
+      const hostPid = resolveHookProcessPid(host, explicitHostPid, undefined);
+      if (!hostPid) return;
+      if (!Number.isInteger(recovery.parentPid) || typeof recovery.parentStartToken !== "string" || !recovery.parentStartToken) {
+        throw hookFailure("RELAY_RECOVERY_PARENT_UNREPORTED", "The relay-less generation has no reported host birth to bind.");
+      }
+      if (recovery.parentPid !== hostPid) throw hookFailure("RELAY_RECOVERY_PARENT_MISMATCH", "This hook's host process is not the generation's reported host.");
+      const observedStartToken = readHostStartToken(hostPid, budget);
+      if (observedStartToken !== recovery.parentStartToken) {
+        throw hookFailure(observedStartToken === null ? "RELAY_RECOVERY_PARENT_UNVERIFIED" : "RELAY_RECOVERY_PARENT_MISMATCH",
+          "This hook's host birth does not match the generation's reported host.");
+      }
+      startRelay(host, sessionId, recovery.instanceId, profile.transport, explicitHostPid, undefined, budget, undefined, options.relayEnv, undefined,
+        { recovery: true, observedStartToken });
+    } catch (error) { reportHookFailure("recovery", error); }
   };
   const limits = { target, maxMessages: HOST_CLAIM_MAX_MESSAGES, maxBodyChars: HOST_CLAIM_MAX_BODY_CHARS };
   const hookTarget = { target, ...(claimInstanceId ? { instanceId: claimInstanceId } : {}) };

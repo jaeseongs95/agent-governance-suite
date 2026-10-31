@@ -308,7 +308,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         this.database.exec("ALTER TABLE session_presence ADD COLUMN idle_wake TEXT NOT NULL DEFAULT 'none';");
         this.database.exec("UPDATE session_presence SET idle_wake = wake_visibility;");
       }
-      for (const [name, definition] of [["verified_parent_pid", "INTEGER"], ["verified_parent_token", "TEXT"], ["superseded_at", "TEXT"]]) {
+      for (const [name, definition] of [["verified_parent_pid", "INTEGER"], ["verified_parent_token", "TEXT"], ["superseded_at", "TEXT"],
+        ["reported_parent_pid", "INTEGER"], ["reported_parent_token", "TEXT"]]) {
         if (!presenceColumns.some(column => column.name === name)) this.database.exec(`ALTER TABLE session_presence ADD COLUMN ${name} ${definition};`);
       }
       this.database.exec(`CREATE TABLE IF NOT EXISTS input_observations (
@@ -877,6 +878,17 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (presence.state !== "unreachable" || !presence.instanceId || !presence.transport
       || presence.instanceId.startsWith("host-process-v1:")) return null;
     return this.liveRelay(target, presence.transport, nowMs) ? null : presence.instanceId;
+  }
+
+  /** The host birth this generation's own start reported; written once at insert. Null for legacy or unread rows. */
+  presenceReportedParent(target: SessionIdentity, instanceId: string): { pid: number; startToken: string } | null {
+    boundedIdentity(target);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.presenceReportedParent(target, instanceId));
+    const row = this.database.prepare(`SELECT reported_parent_pid, reported_parent_token FROM session_presence
+      WHERE host = ? AND session_id = ? AND instance_id = ?`).get(target.host, target.sessionId, instanceId) as
+      { reported_parent_pid: number | null; reported_parent_token: string | null } | undefined;
+    return row && row.reported_parent_pid !== null && row.reported_parent_token !== null
+      ? { pid: row.reported_parent_pid, startToken: row.reported_parent_token } : null;
   }
 
   /**
@@ -1537,9 +1549,13 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     collaborationId?: string;
     workspaceId?: string;
     role?: string;
+    reportedParent?: { pid: number; startToken: string };
   }, nowMs = Date.now()): SessionPresence {
     boundedIdentity(input);
     if (!input.instanceId || input.instanceId.length > 128 || !input.transport || input.transport.length > 64) throw new Error("Invalid presence identity.");
+    const parent = input.reportedParent;
+    if (parent && (!Number.isInteger(parent.pid) || parent.pid < 1 || typeof parent.startToken !== "string"
+      || !parent.startToken.trim() || parent.startToken.length > 200)) throw new Error("Invalid reported host process.");
     for (const [name, value, maximum] of [
       ["collaborationId", input.collaborationId, 200],
       ["workspaceId", input.workspaceId, 500],
@@ -1552,8 +1568,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     const now = iso(nowMs);
     this.database.prepare(`INSERT INTO session_presence (
       host, session_id, instance_id, transport, wake_visibility, can_wake_silently, supported_injection, idle_wake,
-      collaboration_id, workspace_id, role, started_at, heartbeat_at, lease_until
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      collaboration_id, workspace_id, role, started_at, heartbeat_at, lease_until, reported_parent_pid, reported_parent_token
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT (host, session_id, instance_id) DO UPDATE SET
       transport = excluded.transport, wake_visibility = excluded.wake_visibility,
       can_wake_silently = excluded.can_wake_silently, supported_injection = excluded.supported_injection,
@@ -1570,7 +1586,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       input.host, input.sessionId, input.instanceId, input.transport, input.wakeVisibility,
       input.canWakeSilently ? 1 : 0, JSON.stringify(input.deliveryCapabilities?.supportedInjection ?? []),
       input.deliveryCapabilities?.idleWake ?? input.wakeVisibility, input.collaborationId ?? null, input.workspaceId ?? null,
-      input.role ?? null, now, now, iso(nowMs + PRESENCE_LEASE_MS),
+      input.role ?? null, now, now, iso(nowMs + PRESENCE_LEASE_MS), parent?.pid ?? null, parent?.startToken ?? null,
     );
     return this.presence(input, nowMs);
   }

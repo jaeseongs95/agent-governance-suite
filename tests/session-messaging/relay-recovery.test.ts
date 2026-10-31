@@ -29,6 +29,10 @@ const port: WakeDispatchPort = { capabilities: { supportedInjection: ["tool-boun
 const relayOptions = { host: "synthetic-host", sessionId: "relay-recovery", instanceId: "I2",
   transport: "codex-deferred", parentPid: 424242, parentStartToken: "T1" };
 const post = { hook_event_name: "PostToolUse", session_id: "relay-recovery", tool_name: "shell", tool_input: {}, syntheticActor: "root" };
+const hint = { instanceId: "I2", parentPid: 424242, parentStartToken: "T1" };
+const hookFailures = (spy: { mock: { calls: unknown[][] } }) => spy.mock.calls.map((call) => String(call[0]))
+  .filter((line) => line.startsWith("[agent-governance-suite] peer-hook-failure"))
+  .map((line) => JSON.parse(line.slice(line.indexOf("{"))) as { phase: string; reason: string });
 const failures = (spy: { mock: { calls: unknown[][] } }) => spy.mock.calls.map((call) => String(call[0]))
   .filter((line) => line.startsWith("[agent-governance-suite] relay-failure"))
   .map((line) => JSON.parse(line.slice(line.indexOf("{"))) as { phase: string; reason: string });
@@ -46,9 +50,10 @@ afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.restoreAllMocks(); 
 
 it("HOOK-1: a boundary claim reporting a relay-less generation starts one detached single-attempt relay for it", async () => {
   f.request.mockImplementation(async (operation: string) =>
-    operation === "claim-deferred" ? { messages: [], relayRecovery: { instanceId: "I2" } } : {});
+    operation === "claim-deferred" ? { messages: [], relayRecovery: hint } : {});
   await handleSessionMessageHook(post, host, 424242);
   expect(f.spawn).toHaveBeenCalledTimes(1);
+  expect(f.token).toHaveBeenCalledTimes(1); // the parent check's birth read is reused for the spawn
   const args = f.spawn.mock.calls[0]![1] as string[];
   for (const [flag, value] of [["--instance-id", "I2"], ["--parent-pid", "424242"], ["--parent-start-token", "T1"]] as const) {
     expect(args[args.indexOf(flag) + 1]).toBe(value);
@@ -60,7 +65,7 @@ it("HOOK-1: a boundary claim reporting a relay-less generation starts one detach
 
 it("HOOK-3: user input and a claim-less turn end also carry the recovery trigger, one relay per signaled hook", async () => {
   f.request.mockImplementation(async (operation: string) =>
-    operation === "observe-native-input" || operation === "clear-deferred" ? { relayRecovery: { instanceId: "I2" } } : {});
+    operation === "observe-native-input" || operation === "clear-deferred" ? { relayRecovery: hint } : {});
   await handleSessionMessageHook({ hook_event_name: "UserPromptSubmit", session_id: "relay-recovery", syntheticActor: "root" }, host, 424242);
   await handleSessionMessageHook({ hook_event_name: "Stop", session_id: "relay-recovery", syntheticActor: "root" }, host, 424242);
   expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(expect.arrayContaining(["observe-native-input", "clear-deferred"]));
@@ -75,6 +80,42 @@ it("HOOK-2: no recovery signal, no host pid, or a child actor starts no relay", 
     operation === "claim-deferred" ? { messages: [], relayRecovery: { instanceId: "I2" } } : {});
   await handleSessionMessageHook(post, host, undefined);
   await handleSessionMessageHook({ ...post, syntheticActor: "child" }, host, 424242);
+  expect(f.spawn).not.toHaveBeenCalled();
+});
+
+it("HOOK-4: a recovery relay is refused, with a recorded reason, unless this hook's host is the generation's reported birth", async () => {
+  const stderr = vi.spyOn(console, "error").mockImplementation(() => {});
+  const cases = [
+    [{ instanceId: "I2" }, "T1", "RELAY_RECOVERY_PARENT_UNREPORTED"], // legacy generation: nothing to bind
+    [{ ...hint, parentPid: 515151 }, "T1", "RELAY_RECOVERY_PARENT_MISMATCH"], // another process of the same session
+    [hint, "T-reused-pid", "RELAY_RECOVERY_PARENT_MISMATCH"], // same PID, different birth
+    [hint, null, "RELAY_RECOVERY_PARENT_UNVERIFIED"], // birth unreadable: unknown is not a match
+  ] as const;
+  for (const [recovery, token, reason] of cases) {
+    f.token.mockReturnValue(token);
+    f.request.mockImplementation(async (operation: string) =>
+      operation === "claim-deferred" ? { messages: [], relayRecovery: recovery } : {});
+    await handleSessionMessageHook(post, host, 424242);
+    expect(hookFailures(stderr).at(-1)).toMatchObject({ phase: "recovery", reason });
+  }
+  expect(hookFailures(stderr)).toHaveLength(cases.length);
+  expect(f.spawn).not.toHaveBeenCalled();
+});
+
+it("HOOK-5: SessionStart reports the host birth it parents its relay with, and re-checks it after the presence await", async () => {
+  const sessionStart = { hook_event_name: "SessionStart", session_id: "relay-recovery", syntheticActor: "root" };
+  f.request.mockResolvedValue({});
+  await handleSessionMessageHook(sessionStart, host, 424242);
+  const start = f.request.mock.calls.find(([operation]) => operation === "presence-start")!;
+  expect(start[1]).toMatchObject({ reportedParentPid: 424242, reportedParentStartToken: "T1" });
+  expect(f.token).toHaveBeenCalledTimes(2); // reported before presence, re-observed before the spawn
+  const args = f.spawn.mock.calls[0]![1] as string[];
+  expect(args[args.indexOf("--instance-id") + 1]).toBe((start[1] as { instanceId: string }).instanceId);
+  expect(args[args.indexOf("--parent-start-token") + 1]).toBe("T1");
+  expect(args).not.toContain("--recovery");
+  // A birth that changes across the presence await is neither adopted nor parented.
+  f.spawn.mockClear(); f.token.mockReset(); f.token.mockReturnValueOnce("T1").mockReturnValue("T2");
+  await handleSessionMessageHook(sessionStart, host, 424242);
   expect(f.spawn).not.toHaveBeenCalled();
 });
 

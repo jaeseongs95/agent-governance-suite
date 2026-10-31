@@ -358,8 +358,12 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
 // A boundary hook of an unverified (instance-less) session learns here that its current generation has no relay.
 function withRelayRecovery(store: SessionMessageStore, payload: Record<string, unknown>, result: object): object {
   if (Object.hasOwn(payload, "instanceId")) return result;
-  const instanceId = store.relayRecoveryInstance(identity(payload.target));
-  return instanceId ? { ...result, relayRecovery: { instanceId } } : result;
+  const target = identity(payload.target);
+  const instanceId = store.relayRecoveryInstance(target);
+  if (!instanceId) return result;
+  // The hook binds a recovery relay only to the host birth this generation reported; absent for legacy rows.
+  const parent = store.presenceReportedParent(target, instanceId);
+  return { ...result, relayRecovery: { instanceId, ...(parent ? { parentPid: parent.pid, parentStartToken: parent.startToken } : {}) } };
 }
 
 export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>,
@@ -524,6 +528,8 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       const collaborationId = optionalString(payload, "collaborationId");
       const workspaceId = optionalString(payload, "workspaceId");
       const role = optionalString(payload, "role");
+      const reported = Object.hasOwn(payload, "reportedParentPid") || Object.hasOwn(payload, "reportedParentStartToken")
+        ? { pid: integer(payload.reportedParentPid, "reportedParentPid"), startToken: string(payload.reportedParentStartToken, "reportedParentStartToken") } : undefined;
       const idleWake = optionalString(payload, "idleWake") ?? wakeVisibility;
       const injection = Object.hasOwn(payload, "supportedInjection") ? supportedInjection(payload.supportedInjection) : [];
       if (wakeVisibility !== "silent" && wakeVisibility !== "user-message" && wakeVisibility !== "none") throw new Error("wakeVisibility is invalid.");
@@ -538,6 +544,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         ...(collaborationId === undefined ? {} : { collaborationId }),
         ...(workspaceId === undefined ? {} : { workspaceId }),
         ...(role === undefined ? {} : { role }),
+        ...(reported ? { reportedParent: reported } : {}),
       }) };
     }
     case "presence-heartbeat": return { alive: store.heartbeatPresence(
