@@ -18,12 +18,13 @@ async function fixture(t) {
   });
   const sourceRoot = path.join(temporary, 'source'), outputRoot = path.join(temporary, 'proof');
   const seedBytes = await fs.readFile(path.join(repository, planPath)), seed = JSON.parse(seedBytes);
-  for (const relative of [...seed.scopeFiles, ...dependencies, planPath, 'package.json', 'vitest.config.mjs', 'runtime/schema-validation.mjs']) {
+  for (const relative of [...seed.scopeFiles, planPath, 'package.json', 'vitest.config.mjs']) {
     const destination = path.join(sourceRoot, relative);
     await fs.mkdir(path.dirname(destination), { recursive: true });
     await fs.copyFile(path.join(repository, relative), destination);
   }
-  for (const relative of ['runtime/engineering-practices', 'contracts']) {
+  // Copy whole source trees so a new import needs no fixture edit; the collector itself must pick only the reachable closure.
+  for (const relative of ['mcp-server/src', 'runtime', 'contracts']) {
     await fs.cp(path.join(repository, relative), path.join(sourceRoot, relative), { recursive: true });
   }
   await fs.symlink(path.join(repository, 'node_modules'), path.join(sourceRoot, 'node_modules'), 'junction');
