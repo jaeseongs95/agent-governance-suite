@@ -6,6 +6,7 @@ import {tmpdir} from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
+import "../../mcp-server/src/builtin-hook-host-adapters.js";
 import {adaptHostInput} from "../../mcp-server/src/host-input-adapter.js";
 import {SessionActorProofs, SESSION_PROOF_FIELD} from "../../mcp-server/src/session-actor-proof.js";
 import {SqliteWorkflowStore} from "../../mcp-server/src/sqlite-workflow-store.js";
