@@ -340,7 +340,7 @@ function* relayIdentityOperation(store: SessionMessageStore, operation: string, 
 }
 
 // A boundary hook of an unverified (instance-less) session learns here that its current generation has no relay.
-function withRelayRecovery(store: SessionMessageStore, payload: Record<string, unknown>, result: { messages: unknown[] }): object {
+function withRelayRecovery(store: SessionMessageStore, payload: Record<string, unknown>, result: object): object {
   if (Object.hasOwn(payload, "instanceId")) return result;
   const instanceId = store.relayRecoveryInstance(identity(payload.target));
   return instanceId ? { ...result, relayRecovery: { instanceId } } : result;
@@ -427,7 +427,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
     case "observe-native-input": {
       store.observeNativeInput(identity(payload.target), Date.now(), optionalString(payload, "instanceId"));
       peerWaitRuntime(store).policy.reset(identity(payload.target));
-      return { observed: true };
+      return withRelayRecovery(store, payload, { observed: true });
     }
     case "claim-deferred": {
       const maxMessages = optionalInteger(payload, "maxMessages");
@@ -449,7 +449,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
     }
     case "clear-deferred": {
       store.clearDeferred(identity(payload.target), Date.now(), optionalString(payload, "instanceId"));
-      return { cleared: true };
+      return withRelayRecovery(store, payload, { cleared: true });
     }
     case "acknowledge": {
       if (payload.receipts !== undefined && !Array.isArray(payload.receipts)) throw new Error("receipts must be an array.");

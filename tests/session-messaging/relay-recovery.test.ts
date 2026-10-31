@@ -58,6 +58,16 @@ it("HOOK-1: a boundary claim reporting a relay-less generation starts one detach
   expect(f.spawn.mock.calls[0]![2]).toMatchObject({ detached: true, windowsHide: true, stdio: "ignore" });
 });
 
+it("HOOK-3: user input and a claim-less turn end also carry the recovery trigger, one relay per signaled hook", async () => {
+  f.request.mockImplementation(async (operation: string) =>
+    operation === "observe-native-input" || operation === "clear-deferred" ? { relayRecovery: { instanceId: "I2" } } : {});
+  await handleSessionMessageHook({ hook_event_name: "UserPromptSubmit", session_id: "relay-recovery", syntheticActor: "root" }, host, 424242);
+  await handleSessionMessageHook({ hook_event_name: "Stop", session_id: "relay-recovery", syntheticActor: "root" }, host, 424242);
+  expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(expect.arrayContaining(["observe-native-input", "clear-deferred"]));
+  expect(f.spawn).toHaveBeenCalledTimes(2);
+  for (const call of f.spawn.mock.calls) expect(call[1]).toEqual(expect.arrayContaining(["--recovery", "I2"]));
+});
+
 it("HOOK-2: no recovery signal, no host pid, or a child actor starts no relay", async () => {
   f.request.mockResolvedValue({ messages: [] });
   await handleSessionMessageHook(post, host, 424242);

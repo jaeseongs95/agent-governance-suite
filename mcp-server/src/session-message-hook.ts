@@ -150,7 +150,8 @@ function readHostStartToken(pid: number, budget: HookBudget): string | null {
   return token;
 }
 
-type ClaimWithRecovery = { messages: SessionMessage[]; relayRecovery?: { instanceId?: string } };
+type RelayRecoveryHint = { relayRecovery?: { instanceId?: string } };
+type ClaimWithRecovery = { messages: SessionMessage[] } & RelayRecoveryHint;
 
 function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>, budget?: HookBudget, relayId?: string, relayEnv?: Readonly<Record<string, string | undefined>>, relayOwner?: SessionMessageHookOptions["relayOwner"], recovery = false): void {
   remainingBudget(budget);
@@ -475,11 +476,11 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
 
   // Unverified relays start only at SessionStart. When the broker reports that the current generation has no
   // relay (it never acquired or died), this boundary starts one single-attempt relay for it; the lease keeps one
-  // owner and acquire-relay fences superseded generations. Next trigger: the next boundary event.
+  // owner and acquire-relay fences superseded generations. Next trigger: the next user-input, tool-after or turn-end hook.
   // ponytail: hook events carry no instanceId, so a second live process of the same session could parent this
   // relay; bind the parent on presence if that case appears.
-  const recoverUnverifiedRelay = (claimed: ClaimWithRecovery): void => {
-    const instanceId = claimed.relayRecovery?.instanceId;
+  const recoverUnverifiedRelay = (claimed: RelayRecoveryHint | undefined): void => {
+    const instanceId = claimed?.relayRecovery?.instanceId;
     if (!instanceId || options.recoverExistingSession || !actorAccess(observation.actor).allowed) return;
     try { startRelay(host, sessionId, instanceId, profile.transport, explicitHostPid, undefined, budget, undefined, options.relayEnv, undefined, true); }
     catch (error) { reportHookFailure("recovery", error); }
@@ -506,9 +507,9 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         return { decision: "block", reason: "This wake notification was already retired; no peer message is attached." };
       }
       if (result.recognized) messages = result.messages;
-      else await request("observe-native-input", hookTarget);
+      else recoverUnverifiedRelay(await request<RelayRecoveryHint>("observe-native-input", hookTarget));
     } else if (!observation.wakeOnly) {
-      await request("observe-native-input", hookTarget);
+      recoverUnverifiedRelay(await request<RelayRecoveryHint>("observe-native-input", hookTarget));
     }
   } else if (observation.kind === "tool-boundary" && observation.boundaryPhase === "after" && supportsInjection(profile.capabilities, "tool-boundary")) {
     const claimed = await request<ClaimWithRecovery>("claim-deferred", fencedLimits);
@@ -520,7 +521,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       messages = claimed.messages;
       recoverUnverifiedRelay(claimed);
     } else {
-      await request("clear-deferred", hookTarget);
+      recoverUnverifiedRelay(await request<RelayRecoveryHint>("clear-deferred", hookTarget));
     }
   }
   remainingBudget(budget);
