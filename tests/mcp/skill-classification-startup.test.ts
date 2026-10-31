@@ -6,6 +6,9 @@ import {tmpdir} from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
+import {adaptHostInput} from "../../mcp-server/src/host-input-adapter.js";
+import {SessionActorProofs, SESSION_PROOF_FIELD} from "../../mcp-server/src/session-actor-proof.js";
+import {SqliteWorkflowStore} from "../../mcp-server/src/sqlite-workflow-store.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
@@ -82,13 +85,17 @@ it.each(["unsupported-sibling", "invalid-isolation"] as const)("actual index sta
       const classifyInput = {schemaVersion: "1.0.0", requestId: "startup-fixture", operationId: "startup-fixture", originalPrompt: "fixture",
         confirmedContext: {taskRevision: null, objective: null, actions: null, targets: null, constraints: null, prohibitedActions: null, background: null},
         contextSources: [], explicitSkillIds: [], ruleRequiredSkillIds: [], vendorContext: {vendorId: "fixture", reference: "fixture"}, publicSynthetic: true};
-      const signed = JSON.parse(execFileSync(process.execPath, [path.join(root, "mcp-server", "dist", "governance-hook.mjs"), "--host=claude-code"], {
-        cwd: root, env: environment, encoding: "utf8", timeout: 10_000, windowsHide: true,
-        input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "synthetic-startup-root", tool_use_id: "classify-call",
-          tool_name: "mcp__agent_governance_suite__classify_skills", tool_input: classifyInput, cwd: directory }),
-      })) as { hookSpecificOutput: { permissionDecision?: string; updatedInput: Record<string, unknown> } };
-      expect(signed.hookSpecificOutput).not.toHaveProperty("permissionDecision");
-      const classified = await client.callTool({name: "classify_skills", arguments: signed.hookSpecificOutput.updatedInput});
+      // classify_skills is a host-attestation tool and this server has no execution adapter, so the hook refuses to
+      // sign it (BINDING_REQUIRED). The root proof is issued directly from the server's own workflow store, as in
+      // ags30-al09-d0087-entrypoint.test.ts; the server still verifies it and has no attestation to require.
+      const proofStore = new SqliteWorkflowStore(path.join(directory, "workflow.sqlite3"));
+      let proof: string;
+      try {
+        const observation = adaptHostInput({hook_event_name: "PreToolUse", session_id: "synthetic-startup-root", tool_use_id: "classify-call",
+          tool_name: "mcp__agent_governance_suite__classify_skills", tool_input: classifyInput, cwd: directory}, "claude-code").observation;
+        proof = new SessionActorProofs(proofStore).issue(observation, "classify_skills", classifyInput);
+      } finally {proofStore.close();}
+      const classified = await client.callTool({name: "classify_skills", arguments: {...classifyInput, [SESSION_PROOF_FIELD]: proof}});
       const classifiedText = (classified.content as Array<{type: string; text?: string}>).find(item => item.type === "text")!.text!;
       const classifiedResult = JSON.parse(classifiedText) as {ok: boolean; error: {code: string; details: unknown} | null};
       expect(classifiedResult.ok).toBe(false);
