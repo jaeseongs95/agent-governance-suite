@@ -4,6 +4,7 @@ import { hookFailure, retainHookFailureCause, retainHookFailureSecondary } from 
 import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
 import path from "node:path";
 import { registerHookHostAdapter, type HookHostAdapter, type HostDeliveryProfile, type NativePeerWaitObservation, type HookSettingsDiagnostic, type AdaptedHostInput, type HostLifecycle, type ContinuityAction, type LineageRead, type ForkOriginRead } from "./host-input-adapter.js";
+import { readClaudeForkHostParent } from "./claude-fork-host.js";
 import { parseWakeMessages } from "./session-message-client.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { normalizePeerWaitTargets } from "./peer-wait-policy.js";
@@ -164,10 +165,14 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
     if (typeof input.agent_id !== "string" || !input.agent_id.trim()) actor.reasonCode = "CLAUDE_NATIVE_AGENT_ID_INVALID";
     else Object.assign(actor, { role: "child", basis: "observed", reasonCode: "CLAUDE_NATIVE_CHILD_AGENT_ID" });
   } else Object.assign(actor, { role: "root", basis: "inferred", reasonCode: "CLAUDE_NATIVE_ROOT_AGENT_ID_ABSENT" });
-  // The fork fact comes only from the host's SessionStart source; which parent is chosen later from lineage.
-  if (adapted.continuityAction?.kind === "startup" && input.source === "fork") adapted.continuityAction = { kind: "fork" };
   const transcriptPath = text(input.transcript_path);
   const sessionId = adapted.observation.sessionId;
+  // The fork fact comes only from the host's SessionStart source. The parent is the one the host process was started
+  // from when its argv names it (D0352 N1z); otherwise it is chosen later from lineage.
+  if (adapted.continuityAction?.kind === "startup" && input.source === "fork") {
+    adapted.continuityAction = { kind: "fork" };
+    if (sessionId) adapted.readForkHostParent = () => readClaudeForkHostParent(sessionId);
+  }
   if (transcriptPath && sessionId) adapted.readLineage = () => readClaudeLineage(transcriptPath, sessionId);
   return adapted;
 }

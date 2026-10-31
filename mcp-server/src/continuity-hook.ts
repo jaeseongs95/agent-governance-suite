@@ -8,7 +8,7 @@ import { types } from "node:util";
 import { ContinuityService } from "./continuity-service.js";
 import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
 import { hookFailureContext, hookFailureReason, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
-import { adaptHostInput, isGovernanceHookTool, resolveHookHost, type AdaptedHostInput, type ContinuityAction, type ForkOriginRead, type LineageRead } from "./host-input-adapter.js";
+import { adaptHostInput, isGovernanceHookTool, resolveHookHost, type AdaptedHostInput, type ContinuityAction, type ForkHostParentRead, type ForkOriginRead, type LineageRead } from "./host-input-adapter.js";
 import {
   assertDistinctDatabasePaths,
   resolveContinuityDatabasePath,
@@ -39,6 +39,7 @@ interface NormalizedContinuityInput {
   action: ContinuityAction | undefined;
   readLineage: (() => LineageRead) | undefined;
   readForkOrigin: (() => ForkOriginRead) | undefined;
+  readForkHostParent: (() => ForkHostParentRead) | undefined;
 }
 
 function continuityConflict(): never {
@@ -49,7 +50,7 @@ function continuityConflict(): never {
 
 /** Snapshot and validate once, before opening stores or dispatching any state transition. */
 function normalizedContinuityInput(adapted: AdaptedHostInput): NormalizedContinuityInput {
-  const { observation: sourceObservation, lifecycle, outputEventName, continuityAction: sourceAction, readLineage, readForkOrigin } = adapted;
+  const { observation: sourceObservation, lifecycle, outputEventName, continuityAction: sourceAction, readLineage, readForkOrigin, readForkHostParent } = adapted;
   const observation = { ...sourceObservation };
   let action: ContinuityAction | undefined;
   if (observation.kind === "tool-boundary") {
@@ -77,7 +78,8 @@ function normalizedContinuityInput(adapted: AdaptedHostInput): NormalizedContinu
     if (observation.boundaryPhase !== undefined) continuityConflict();
   }
   return { observation, outputEventName, action, readLineage: typeof readLineage === "function" ? readLineage : undefined,
-    readForkOrigin: typeof readForkOrigin === "function" ? readForkOrigin : undefined };
+    readForkOrigin: typeof readForkOrigin === "function" ? readForkOrigin : undefined,
+    readForkHostParent: typeof readForkHostParent === "function" ? readForkHostParent : undefined };
 }
 
 function sessionOutput(eventName: string, additionalContext: string | null): Record<string, unknown> {
@@ -87,12 +89,12 @@ function sessionOutput(eventName: string, additionalContext: string | null): Rec
 }
 
 function handleNormalizedContinuityHook(input: NormalizedContinuityInput, service: ContinuityService, host: string): Record<string, unknown> {
-  const { observation, action, outputEventName, readLineage, readForkOrigin } = input;
+  const { observation, action, outputEventName, readLineage, readForkOrigin, readForkHostParent } = input;
   const sessionId = observation.sessionId;
   if (!sessionId || !actorAccess(observation.actor).allowed) return {};
   switch (action?.kind) {
     case "startup": service.ensureSession(sessionId); return {};
-    case "fork": service.startFork(sessionId, readForkOrigin); return {};
+    case "fork": service.startFork(sessionId, readForkOrigin, readForkHostParent); return {};
     case "clear": service.clearSession(sessionId); return {};
     case "resume": return sessionOutput(outputEventName, service.formatCandidate(service.candidateForSession(sessionId)));
     case "compact":

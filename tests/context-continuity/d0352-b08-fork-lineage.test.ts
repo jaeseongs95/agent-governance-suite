@@ -5,7 +5,9 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 import type { CheckpointContextRequestV1, ContinuitySnapshotV1 } from "../../contracts/types.js";
+import { CLAUDE_NATIVE_EXECUTABLE_PATTERN, forkParentFromArgv, readClaudeForkHostParent, type HostProcessView } from "../../mcp-server/src/claude-fork-host.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
+import { adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
 import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
@@ -352,8 +354,9 @@ describe("D0352 B08 fork lineage", () => {
   // OPEN DEFECT REPRODUCTION, not the accepted outcome (review 902e N1z; chief 700fa72c judgement: risk not accepted,
   // "file or token possession alone never grants a relation" holds). Inside a recorded lineage a non-fork parent's model
   // can copy a descendant's own entries into the parent's file with a write tool; a later fork of that parent then
-  // resolves to the descendant. The correct result is the parent's own state (or no candidate); this test records the
-  // current vulnerable behaviour until a host-authoritative relation source repairs it, and must flip with that repair.
+  // resolves to the descendant. The correct result is the parent's own state (or no candidate). The repair applies
+  // when the host process names the parent (H-N1z below, Linux argv); this test keeps the behaviour of a fork whose host
+  // process names none (macOS, Windows, TUI /branch: not observed), which is still open (auditor 5970 b8136ae1).
   it("N1z (open defect reproduction): a parent that wrote its fork's own entries into its file currently makes a later fork of it resolve to that fork", async () => {
     const service = createService();
     const { snapshot, uuids, file } = await parent(service, "parent-a");
@@ -660,5 +663,159 @@ describe("D0352 B08 Codex fork origin", () => {
     expect(service.store.firstObservationEvent(service.correlateSession("codex-f0"), 1, "fork-parent:")).toBeNull();
     const resumed = hook(service, { hook_event_name: "SessionStart", source: "resume", session_id: "codex-p" }, CODEX) as { hookSpecificOutput?: { additionalContext?: string } };
     expect(resumed.hookSpecificOutput?.additionalContext ?? "").toContain("source=direct");
+  });
+});
+
+describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
+  // Shape observed by tester c613 (k2exe-r01 a9e7656f): the hook runs under sh (exe /usr/bin/dash) under this binary.
+  const NATIVE = "/home/u/.local/share/ssh-approval-cli/claude/versions/2.1.314-599225981133da60/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe";
+  const A = "0b6f2b8e-1c1d-4a57-9f0c-6f9a3b2d1e01";
+  const SELF = "7d0c5a8e-2f44-4b61-8e3a-0c9b1d2e3f02";
+
+  /** A host fork whose host process named its parent at the fork start (what the Claude adapter records on Linux). */
+  async function hostFork(service: ContinuityService, child: string, copied: string[], named: string) {
+    const file = await transcript([...copied.map(uuid => [child, uuid] as [string, string]), [child, randomUUID(), OWN]]);
+    service.startFork(child, undefined, () => ({ parentSessionId: named }));
+    prompt(service, child, file);
+    return file;
+  }
+
+  function hostParentEvent(service: ContinuityService, session: string): string | undefined {
+    const correlation = service.correlateSession(session);
+    return service.store.firstObservationEvent(correlation, service.store.getTask(correlation)!.currentEpoch, "fork-host-parent:") ?? undefined;
+  }
+
+  it("H-A1: only one --resume <id> with one --fork-session names a parent; everything else is a distinct reason", () => {
+    for (const [argv, expected] of [
+      [["claude", "-p", "--resume", A, "--fork-session"], { parentSessionId: A }],
+      [["claude", "--resume", A, "--fork-session"], { parentSessionId: A }],
+      [["claude", "--fork-session", `--resume=${A}`], { parentSessionId: A }],
+      [["claude", "--resume", A], { reason: "FORK_HOST_ARGV_NOT_FORK" }],
+      [["claude"], { reason: "FORK_HOST_ARGV_NOT_FORK" }],
+      [["claude", "--fork-session"], { reason: "FORK_HOST_ARGV_NO_PARENT" }],
+      [["claude", "--continue", "--fork-session"], { reason: "FORK_HOST_ARGV_NO_PARENT" }],
+      [["claude", "--resume", "--fork-session"], { reason: "FORK_HOST_ARGV_NO_PARENT" }],
+      [["claude", "--resume", "--fork-session", "--fork-session"], { reason: "FORK_HOST_ARGV_AMBIGUOUS" }],
+      [["claude", "--resume", A, "--resume", SELF, "--fork-session"], { reason: "FORK_HOST_ARGV_AMBIGUOUS" }],
+      [["claude", "--resume", "parent-a", "--fork-session"], { reason: "FORK_HOST_ARGV_PARENT_INVALID" }],
+      [["claude", "--resume", SELF, "--fork-session"], { reason: "FORK_HOST_ARGV_SELF" }],
+      [["claude", "-p", "--", "--resume", A, "--fork-session"], { reason: "FORK_HOST_ARGV_NOT_FORK" }],
+    ] as const) expect(forkParentFromArgv(argv, SELF), argv.join(" ")).toEqual(expected);
+  });
+
+  it("H-A2: the nearest host process past at most two shells must be the native claude; nothing above it is read", () => {
+    const chain = (...views: Array<HostProcessView | "unreadable" | "changed">) => {
+      const read: number[] = [];
+      return { read, reader: (pid: number) => { read.push(pid); return views[pid - 100] ?? "unreadable"; } };
+    };
+    const view = (exe: string, argv: string[], next: number): HostProcessView => ({ exe, argv, ppid: next, startToken: "t" + next });
+    const fork = ["claude", "--resume", A, "--fork-session"];
+    expect(CLAUDE_NATIVE_EXECUTABLE_PATTERN.test(NATIVE)).toBe(true);
+    let walk = chain(view("/usr/bin/dash", ["sh", "-c", "hook"], 101), view(NATIVE, fork, 102));
+    expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ parentSessionId: A });
+    walk = chain(view("/usr/bin/dash", ["sh"], 101), view("/usr/bin/bash", ["bash"], 102), view(NATIVE, fork, 103));
+    expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ parentSessionId: A });
+    // A third shell is not skipped.
+    walk = chain(view("/usr/bin/dash", ["sh"], 101), view("/usr/bin/dash", ["sh"], 102), view("/usr/bin/dash", ["sh"], 103), view(NATIVE, fork, 104));
+    expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ reason: "FORK_HOST_UNRECOGNIZED" });
+    // Nested: a claude -p run inside a forked session's Bash is the nearest host; the outer fork's argv is never used.
+    walk = chain(view("/usr/bin/dash", ["sh"], 101), view(NATIVE, ["claude", "-p", "x"], 102), view("/usr/bin/bash", ["bash"], 103), view(NATIVE, fork, 104));
+    expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ reason: "FORK_HOST_ARGV_NOT_FORK" });
+    expect(walk.read).toEqual([100, 101]);
+    // A node + cli.js installation, another program, an unreadable or a replaced process: no parent, distinct reasons.
+    walk = chain(view("/usr/bin/dash", ["sh"], 101), view("/usr/bin/node", ["node", "/opt/claude/cli.js", ...fork.slice(1)], 102));
+    expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ reason: "FORK_HOST_UNRECOGNIZED" });
+    // Same basename elsewhere, a relative or replaced (deleted) binary, and the not-yet-observed standalone install.
+    for (const exe of ["/opt/x/bin/claude.exe", "node_modules/@anthropic-ai/claude-code/bin/claude.exe", NATIVE + " (deleted)",
+      "/home/u/.local/share/claude/versions/2.1.314"]) {
+      walk = chain(view(exe, fork, 101));
+      expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader), exe).toEqual({ reason: "FORK_HOST_UNRECOGNIZED" });
+    }
+    walk = chain(view("/usr/bin/dash", ["sh"], 101), "unreadable");
+    expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ reason: "FORK_HOST_PROCESS_UNREADABLE" });
+    walk = chain("changed");
+    expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ reason: "FORK_HOST_PROCESS_CHANGED" });
+    // No other platform is queried (auditor 5970 Q3: no PowerShell or ps in SessionStart).
+    for (const platform of ["win32", "darwin"] as const) {
+      walk = chain(view(NATIVE, fork, 101));
+      expect(readClaudeForkHostParent(SELF, platform, 100, walk.reader)).toEqual({ reason: "FORK_HOST_PLATFORM_UNSUPPORTED" });
+      expect(walk.read).toEqual([]);
+    }
+  });
+
+  it("H-A3: the adapter offers the host-process read only with a host SessionStart source=fork (auditor 5970 Q1)", () => {
+    const at = (payload: Record<string, unknown>) => adaptHostInput({ session_id: SELF, ...payload }, "claude-code").readForkHostParent;
+    expect(at({ hook_event_name: "SessionStart", source: "fork" })).toEqual(expect.any(Function));
+    for (const source of ["startup", "resume", "clear", "compact"]) expect(at({ hook_event_name: "SessionStart", source }), source).toBeUndefined();
+    expect(at({ hook_event_name: "UserPromptSubmit", prompt: "x" })).toBeUndefined();
+    expect(at({ hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: {}, tool_use_id: "toolu_1" })).toBeUndefined();
+    expect(adaptHostInput({ session_id: SELF, hook_event_name: "SessionStart", source: "fork" }, "codex").readForkHostParent).toBeUndefined();
+  });
+
+  it("H-P1: a fork whose host process names its parent inspects and loads that parent's exact checkpoint", async () => {
+    const service = createService();
+    const { snapshot, uuids } = await parent(service);
+    const childFile = await hostFork(service, "fork-f", uuids, "parent-a");
+    expect(hostParentEvent(service, "fork-f")).toBe("fork-host-parent:" + JSON.stringify({ c: snapshot.taskCorrelation, e: snapshot.epoch }));
+    const candidate = inspect(service, "fork-f", childFile);
+    expect(candidate).toMatchObject({ decision: "DEFER", reasonCodes: CANDIDATE });
+    expect(candidate.summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision, snapshotDigest: snapshot.snapshotDigest });
+    expect(load(service, "fork-f", candidate).data).toEqual(snapshot);
+  });
+
+  it("H-N1z: a parent that wrote its fork's own entries into its file keeps its later fork (repair of N1z)", async () => {
+    const service = createService();
+    const { snapshot, uuids, file } = await parent(service, "parent-a");
+    const own = randomUUID();
+    const childFile = await transcript([...uuids.map(uuid => ["fork-f", uuid] as [string, string]), ["fork-f", own, OWN]]);
+    expect(start(service, "fork-f", "fork", childFile)).toEqual({});
+    prompt(service, "fork-f", childFile);
+    expect(load(service, "fork-f", inspect(service, "fork-f", childFile)).error).toBeNull();
+    const childSnapshot = checkpoint(service, "fork-f", childFile, { requestId: "f-own", expectedRevision: snapshot.revision });
+    await appendFile(file, line("parent-a", own) + "\n", "utf8");
+    const parentAgain = checkpoint(service, "parent-a", file, { requestId: "a-copied-f", expectedRevision: snapshot.revision });
+    const laterFile = await hostFork(service, "fork-g", [...uuids, own], "parent-a");
+    const summary = inspect(service, "fork-g", laterFile).summary;
+    expect(summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: parentAgain.revision });
+    expect(summary?.taskCorrelation).not.toBe(childSnapshot.taskCorrelation);
+  });
+
+  it("H-D1: a grandchild named by its host process takes the fork it was forked from", async () => {
+    const service = createService();
+    const { uuids: aUuids } = await parent(service, "parent-a");
+    const bRows: Array<[string, string, string?]> = [...aUuids.map(uuid => ["fork-b", uuid] as [string, string]), ["fork-b", randomUUID(), OWN]];
+    const bFile = await transcript(bRows);
+    service.startFork("fork-b", undefined, () => ({ parentSessionId: "parent-a" }));
+    const bSnapshot = checkpoint(service, "fork-b", bFile, { requestId: "b-1" });
+    const grandchild = await hostFork(service, "fork-g", bRows.map(([, uuid]) => uuid), "fork-b");
+    expect(inspect(service, "fork-g", grandchild).summary).toMatchObject({ taskCorrelation: bSnapshot.taskCorrelation, revision: bSnapshot.revision });
+  });
+
+  it("H-N4: a named parent without a pre-fork save gives no candidate, even when the child's file holds another session's entries", async () => {
+    const service = createService();
+    const { uuids } = await parent(service, "parent-a");
+    const childFile = await hostFork(service, "fork-f", uuids, "never-saved-x");
+    expect(inspect(service, "fork-f", childFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_NOT_FOUND"]);
+  });
+
+  it("H-F1: a named parent's save after the fork is never the fork's state", async () => {
+    const service = createService();
+    const { snapshot, uuids, file } = await parent(service);
+    const childFile = await transcript([...uuids.map(uuid => ["fork-f", uuid] as [string, string]), ["fork-f", randomUUID(), OWN]]);
+    service.startFork("fork-f", undefined, () => ({ parentSessionId: "parent-a" }));
+    await appendFile(file, [randomUUID(), randomUUID()].map(uuid => line("parent-a", uuid)).join("\n") + "\n", "utf8");
+    checkpoint(service, "parent-a", file, { requestId: "after-fork", expectedRevision: snapshot.revision });
+    expect(inspect(service, "fork-f", childFile).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
+  });
+
+  it("H-U: a host-process reason is recorded as the diagnostic and lineage still decides; the record is never replaced", async () => {
+    const service = createService();
+    const { snapshot, uuids } = await parent(service);
+    const childFile = await transcript([...uuids.map(uuid => ["fork-f", uuid] as [string, string]), ["fork-f", randomUUID(), OWN]]);
+    service.startFork("fork-f", undefined, () => ({ reason: "FORK_HOST_UNRECOGNIZED" }));
+    service.startFork("fork-f", undefined, () => ({ parentSessionId: "never-saved-x" }));
+    expect(hostParentEvent(service, "fork-f")).toBe("fork-host-parent:" + JSON.stringify({ u: "FORK_HOST_UNRECOGNIZED" }));
+    prompt(service, "fork-f", childFile);
+    expect(inspect(service, "fork-f", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
   });
 });

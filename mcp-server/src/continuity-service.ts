@@ -22,7 +22,7 @@ import {
   SqliteContinuityStore,
 } from "./continuity-store.js";
 import type { WorkflowStore } from "./workflow-store.js";
-import type { ForkOriginRead, LineageRead } from "./host-input-adapter.js";
+import type { ForkHostParentRead, ForkOriginRead, LineageRead } from "./host-input-adapter.js";
 
 const TOOL_TOKEN_TTL_SECONDS = 300;
 const CANDIDATE_TOKEN_TTL_SECONDS = 3600;
@@ -59,6 +59,7 @@ interface CandidatePayload {
 
 const FORK_START_EVENT = "fork-start";
 const FORK_PARENT_EVENT = "fork-parent:";
+const FORK_HOST_PARENT_EVENT = "fork-host-parent:";
 /** Pinned fork parents followed upward when deciding whether one candidate descends from another. */
 const FORK_ANCESTRY_LIMIT = 32;
 const LINEAGE_ANCHOR_COUNT = 16;
@@ -250,9 +251,17 @@ export class ContinuityService implements ContinuityGateway {
    * The host's SessionStart source=fork is the only relation authority; lineage later picks which parent. A host that
    * records the parent itself (`readForkOrigin`) names it directly, so the parent is pinned here and lineage is unused.
    */
-  startFork(rawSessionId: string, readForkOrigin?: () => ForkOriginRead): void {
+  startFork(rawSessionId: string, readForkOrigin?: () => ForkOriginRead, readForkHostParent?: () => ForkHostParentRead): void {
     const task = this.ensureSession(rawSessionId);
     this.store.recordObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT, null, true, this.now().toISOString());
+    if (readForkHostParent && !task.rootId && !task.suppressed && !this.summary(task)
+      && !this.store.firstObservationEvent(task.taskCorrelation, task.currentEpoch, FORK_HOST_PARENT_EVENT)) {
+      // Recorded with the fork start, before the model runs. A reason is kept as the diagnostic and lineage decides.
+      const host = readForkHostParent();
+      const value = "reason" in host ? { u: host.reason } : { c: this.correlateSession(host.parentSessionId),
+        e: this.store.getTask(this.correlateSession(host.parentSessionId))?.currentEpoch ?? null };
+      this.store.recordObservation(task.taskCorrelation, task.currentEpoch, FORK_HOST_PARENT_EVENT + JSON.stringify(value), null, "c" in value, this.now().toISOString());
+    }
     if (!readForkOrigin || task.rootId || task.suppressed || this.summary(task)
       || this.store.firstObservationEvent(task.taskCorrelation, task.currentEpoch, FORK_PARENT_EVENT)) return;
     const origin = readForkOrigin();
@@ -322,19 +331,23 @@ export class ContinuityService implements ContinuityGateway {
    * pins descend from the chosen one and whose own anchor appears later in the child's file is the nearer parent.
    * Without that recorded descent a later anchor never wins (review 902e N1x: an unrelated session that wrote another
    * session's entries into its own file and saved them would otherwise take the fork).
+   * When the host process named the parent at the fork start (D0352 N1z), only that parent's saves are candidates and
+   * lineage picks only which of its pre-fork revisions the child holds; no other session's anchors count, so entries
+   * any session wrote into any file can no longer move the fork elsewhere (review 902e 617f9c95).
    */
   private selectForkParent(task: ContinuityTaskRecord, readLineage: () => LineageRead): { p: ForkParent } | { q: string } {
     const read = readLineage();
     if (!("ids" in read)) return { q: read.reason };
     const forkAt = this.store.firstObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT)?.id;
     if (forkAt === undefined) return { q: "FORK_PARENT_NOT_FOUND" };
+    const named = this.forkHostParent(task);
     const positions = new Map<string, number>();
     read.ids.forEach((id, index) => positions.set(this.lineageAnchor(id), index));
     const scores = new Map<string, { parent: ForkParent; matched: number; absent: number; last: number }>();
     const owners = new Map<string, string>();
     for (const { anchor, parent } of this.store.lineageAnchorRows(task.taskCorrelation, forkAt)) {
       const owner = JSON.stringify([parent.c, parent.e]);
-      if ((owners.get(anchor) ?? owner) !== owner) continue;
+      if (named ? parent.c !== named.c || parent.e !== named.e : (owners.get(anchor) ?? owner) !== owner) continue;
       owners.set(anchor, owner);
       const key = JSON.stringify([parent.c, parent.e, parent.r, parent.d]);
       const score = scores.get(key) ?? { parent, matched: 0, absent: 0, last: -1 };
@@ -348,6 +361,7 @@ export class ContinuityService implements ContinuityGateway {
       || (left.parent.c === right.parent.c && left.parent.e === right.parent.e ? right.parent.r - left.parent.r : 0));
     const [best, next] = ranked;
     if (!best) return { q: "FORK_PARENT_NOT_FOUND" };
+    if (named) return { p: best.parent };
     if (next && next.matched === best.matched && next.absent === best.absent
       && (next.parent.c !== best.parent.c || next.parent.e !== best.parent.e)) {
       return { q: "FORK_PARENT_AMBIGUOUS" };
@@ -360,6 +374,16 @@ export class ContinuityService implements ContinuityGateway {
       if (!nearer) return { p: chosen.parent };
       chosen = nearer;
     }
+  }
+
+  /** The parent the host process named at this fork's start, or null when it named none (lineage alone decides). */
+  private forkHostParent(task: ContinuityTaskRecord): { c: string; e: number | null } | null {
+    const event = this.store.firstObservationEvent(task.taskCorrelation, task.currentEpoch, FORK_HOST_PARENT_EVENT);
+    if (!event) return null;
+    let value: { c?: unknown; e?: unknown };
+    try { value = JSON.parse(event.slice(FORK_HOST_PARENT_EVENT.length)) as typeof value; } catch { return null; }
+    if (typeof value?.c !== "string") return null;
+    return { c: value.c, e: Number.isInteger(value.e) ? value.e as number : null };
   }
 
   /** The (c, e) of every recorded fork pin above this task epoch, following each pinned parent upward. */
