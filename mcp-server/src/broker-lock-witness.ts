@@ -5,6 +5,11 @@ import net from "node:net";
  * Windows 잠금 세대의 생존 증인. 소유자는 세대 이름의 named pipe를 listen한 채 잠금을 보유한다.
  * pipe는 소유 프로세스가 끝나면 OS가 즉시 없애므로 PID 재사용·시계·출생 시각 조회와 무관하다.
  * 다른 플랫폼은 기존 출생 시각 marker를 쓴다.
+ *
+ * 신뢰 경계: 같은 사용자 프로세스는 신뢰한다(그 프로세스는 잠금 디렉터리 자체도 지울 수 있다).
+ * 그런 프로세스나, libuv가 PIPE_REJECT_REMOTE_CLIENTS를 켜지 않아 인증된 SMB 원격 클라이언트가
+ * 이름을 선점·유지하면 죽은 세대가 "존재"로 남을 수 있다. 결과는 회수 지연(가용성)뿐이고
+ * 두 소유자가 동시에 생기지는 않는다. 노출되는 정보는 세대 이름의 존재 여부뿐이다.
  */
 export const lockWitnessSupported = (platform: NodeJS.Platform = process.platform) => platform === "win32";
 
