@@ -274,10 +274,10 @@ export class ContinuityService implements ContinuityGateway {
 
   /**
    * Only anchors saved before the child's fork record count, so a parent (or sibling) save after the fork cannot be
-   * chosen. Each (parent, revision) scores the number of its distinct anchors present in the child's own file; the
-   * highest wins, then the fewest of its anchors absent from the file (a sibling's own later entries), then D1 (the
-   * match appearing last in the child's file), then the later revision of the same parent.
-   * A remaining tie between different parents is ambiguous and yields no candidate.
+   * chosen. An entry belongs to the first session that anchored it: a fork's own save repeats the entries it copied,
+   * and those copies never count for it (review 902e: a sibling holding 15 copied anchors outscored the parent's 14).
+   * D1: the (parent, revision) whose own anchor appears last in the child's file wins, then the most and the fewest
+   * absent of its anchors, then the later revision of the same parent. A tie between different parents is ambiguous.
    */
   private selectForkParent(task: ContinuityTaskRecord, readLineage: () => LineageRead): { p: ForkParent } | { q: string } {
     const read = readLineage();
@@ -287,7 +287,11 @@ export class ContinuityService implements ContinuityGateway {
     const positions = new Map<string, number>();
     read.ids.forEach((id, index) => positions.set(this.lineageAnchor(id), index));
     const scores = new Map<string, { parent: ForkParent; matched: number; absent: number; last: number }>();
+    const owners = new Map<string, string>();
     for (const { anchor, parent } of this.store.lineageAnchorRows(task.taskCorrelation, forkAt)) {
+      const owner = JSON.stringify([parent.c, parent.e]);
+      if ((owners.get(anchor) ?? owner) !== owner) continue;
+      owners.set(anchor, owner);
       const key = JSON.stringify([parent.c, parent.e, parent.r, parent.d]);
       const score = scores.get(key) ?? { parent, matched: 0, absent: 0, last: -1 };
       const position = positions.get(anchor);
@@ -295,8 +299,8 @@ export class ContinuityService implements ContinuityGateway {
       else { score.matched += 1; score.last = Math.max(score.last, position); }
       scores.set(key, score);
     }
-    const ranked = [...scores.values()].filter(score => score.matched > 0).sort((left, right) => right.matched - left.matched
-      || left.absent - right.absent || right.last - left.last
+    const ranked = [...scores.values()].filter(score => score.matched > 0).sort((left, right) => right.last - left.last
+      || right.matched - left.matched || left.absent - right.absent
       || (left.parent.c === right.parent.c && left.parent.e === right.parent.e ? right.parent.r - left.parent.r : 0));
     const [best, next] = ranked;
     if (!best) return { q: "FORK_PARENT_NOT_FOUND" };

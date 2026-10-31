@@ -289,6 +289,20 @@ describe("D0352 B08 fork lineage", () => {
     expect(inspect(service, "fork-2", secondFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
   });
 
+  it("F3: a sibling's save repeating copied entries never outscores the parent for a later fork (review 902e)", async () => {
+    const service = createService();
+    const rows: Array<[string, string]> = Array.from({ length: 20 }, () => ["parent-a", randomUUID()]);
+    const snapshot = checkpoint(service, "parent-a", await transcript(rows));
+    // Forks miss the parent's newest two entries: 14 of the parent's 16 anchors are in each fork.
+    const copied = rows.slice(0, -2).map(([, uuid]) => uuid);
+    const siblingFile = await fork(service, "fork-s", copied);
+    expect(load(service, "fork-s", inspect(service, "fork-s", siblingFile)).error).toBeNull();
+    // The sibling saves with one own entry: 15 of its 16 anchors are copies of the parent's entries.
+    checkpoint(service, "fork-s", siblingFile, { requestId: "sibling-15", expectedRevision: snapshot.revision });
+    const laterFile = await fork(service, "fork-late", copied);
+    expect(inspect(service, "fork-late", laterFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+  });
+
   it("N5/N8: a parent that saved again, was suppressed or purged after the fork yields no candidate", async () => {
     const service = createService();
     const advanced = await parent(service, "parent-adv");
