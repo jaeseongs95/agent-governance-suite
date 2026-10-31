@@ -112,6 +112,8 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
     return {};
   }
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
+    // A host that deferred its host-process read at the fork start reads it here, before any pin below.
+    if (readForkHostParent) service.readDeferredForkHostParent(sessionId, readForkHostParent);
     const toolName = localToolName(host, observation.toolName ?? "");
     if (!toolName) {
       // Write-capable host tools and every non-AGS MCP tool reach this boundary before they run: the last point the

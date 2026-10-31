@@ -60,6 +60,8 @@ interface CandidatePayload {
 const FORK_START_EVENT = "fork-start";
 const FORK_PARENT_EVENT = "fork-parent:";
 const FORK_HOST_PARENT_EVENT = "fork-host-parent:";
+/** The host defers its host-process read from the fork start to the fork's first tool boundary (Windows). */
+const FORK_HOST_DEFERRED_EVENT = "fork-host-deferred";
 /** Pinned fork parents followed upward when deciding whether one candidate descends from another. */
 const FORK_ANCESTRY_LIMIT = 32;
 const LINEAGE_ANCHOR_COUNT = 16;
@@ -254,14 +256,8 @@ export class ContinuityService implements ContinuityGateway {
   startFork(rawSessionId: string, readForkOrigin?: () => ForkOriginRead, readForkHostParent?: () => ForkHostParentRead): void {
     const task = this.ensureSession(rawSessionId);
     this.store.recordObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT, null, true, this.now().toISOString());
-    if (readForkHostParent && !task.rootId && !task.suppressed && !this.summary(task)
-      && !this.store.firstObservationEvent(task.taskCorrelation, task.currentEpoch, FORK_HOST_PARENT_EVENT)) {
-      // Recorded with the fork start, before the model runs. A reason is kept as the diagnostic and lineage decides.
-      const host = readForkHostParent();
-      const value = "reason" in host ? { u: host.reason } : { c: this.correlateSession(host.parentSessionId),
-        e: this.store.getTask(this.correlateSession(host.parentSessionId))?.currentEpoch ?? null };
-      this.store.recordObservation(task.taskCorrelation, task.currentEpoch, FORK_HOST_PARENT_EVENT + JSON.stringify(value), null, "c" in value, this.now().toISOString());
-    }
+    // Recorded with the fork start, before the model runs, or deferred to the first tool boundary.
+    if (readForkHostParent) this.recordForkHostParent(task, readForkHostParent);
     if (!readForkOrigin || task.rootId || task.suppressed || this.summary(task)
       || this.store.firstObservationEvent(task.taskCorrelation, task.currentEpoch, FORK_PARENT_EVENT)) return;
     const origin = readForkOrigin();
@@ -308,6 +304,33 @@ export class ContinuityService implements ContinuityGateway {
    * tool runs (review 902e r04; the host may not have written the child's transcript yet at the first prompt).
    * Only a recorded fork with no own state is considered; startup, resume and clear never are. A pin is never replaced.
    */
+  /**
+   * The deferred host-process read of a fork (Windows: no PowerShell at SessionStart, auditor 5970 W-2), made at the
+   * fork's first write-capable or AGS tool boundary before that tool runs and before the parent is pinned. The fork
+   * fact stays the SessionStart source=fork record; only the read moves. The parent epoch is the one at this read, so
+   * a parent cleared in between has no pre-fork save in it and closes as FORK_HOST_PARENT_NOT_FOUND.
+   */
+  readDeferredForkHostParent(rawSessionId: string, read: () => ForkHostParentRead): void {
+    const task = this.store.getTask(this.correlateSession(rawSessionId));
+    if (task && this.store.hasObservation(task.taskCorrelation, task.currentEpoch, FORK_HOST_DEFERRED_EVENT)) this.recordForkHostParent(task, read);
+  }
+
+  /** Once per fork epoch with no own state and no pin: a parent as (c, e), a reason (lineage decides), or a deferral. */
+  private recordForkHostParent(task: ContinuityTaskRecord, read: () => ForkHostParentRead): void {
+    const { taskCorrelation: c, currentEpoch: e } = task;
+    if (task.rootId || task.suppressed || this.summary(task) || this.store.firstObservationEvent(c, e, FORK_HOST_PARENT_EVENT)
+      || this.store.firstObservationEvent(c, e, FORK_PARENT_EVENT)) return;
+    const host = read();
+    const at = this.now().toISOString();
+    if ("deferred" in host) {
+      if (!this.store.hasObservation(c, e, FORK_HOST_DEFERRED_EVENT)) this.store.recordObservation(c, e, FORK_HOST_DEFERRED_EVENT, null, false, at);
+      return;
+    }
+    const value = "reason" in host ? { u: host.reason } : { c: this.correlateSession(host.parentSessionId),
+      e: this.store.getTask(this.correlateSession(host.parentSessionId))?.currentEpoch ?? null, ...(host.signer ? { s: host.signer } : {}) };
+    this.store.recordObservation(c, e, FORK_HOST_PARENT_EVENT + JSON.stringify(value), null, "c" in value, at);
+  }
+
   pinForkParent(rawSessionId: string, readLineage: () => LineageRead, final = true): void {
     const task = this.store.getTask(this.correlateSession(rawSessionId));
     if (task) this.pinTaskForkParent(task, readLineage, final);
@@ -317,6 +340,14 @@ export class ContinuityService implements ContinuityGateway {
     if (task.rootId || task.suppressed || this.summary(task)
       || !this.store.hasObservation(task.taskCorrelation, task.currentEpoch, FORK_START_EVENT)
       || this.store.firstObservationEvent(task.taskCorrelation, task.currentEpoch, FORK_PARENT_EVENT)) return;
+    if (this.store.hasObservation(task.taskCorrelation, task.currentEpoch, FORK_HOST_DEFERRED_EVENT)
+      && !this.store.firstObservationEvent(task.taskCorrelation, task.currentEpoch, FORK_HOST_PARENT_EVENT)) {
+      // A deferred host read not made yet: lineage alone must not pin before it. At a final boundary that offered no
+      // read the reason is recorded and lineage decides, as for any other host-read reason.
+      if (!final) return;
+      this.store.recordObservation(task.taskCorrelation, task.currentEpoch,
+        FORK_HOST_PARENT_EVENT + JSON.stringify({ u: "FORK_HOST_PARENT_NOT_READ" }), null, false, this.now().toISOString());
+    }
     const selection = this.selectForkParent(task, readLineage);
     if (!final && !("p" in selection)) return;
     this.store.recordObservation(task.taskCorrelation, task.currentEpoch, FORK_PARENT_EVENT + JSON.stringify(selection), null, "p" in selection, this.now().toISOString());
@@ -333,7 +364,10 @@ export class ContinuityService implements ContinuityGateway {
    * session's entries into its own file and saved them would otherwise take the fork).
    * When the host process named the parent at the fork start (D0352 N1z), only that parent's saves are candidates and
    * lineage picks only which of its pre-fork revisions the child holds; no other session's anchors count, so entries
-   * any session wrote into any file can no longer move the fork elsewhere (review 902e 617f9c95).
+   * any session wrote into any file can no longer move the fork elsewhere (review 902e 617f9c95). That revision is the
+   * one whose anchor appears latest in the child's file, then the later revision: a parent revision may anchor entries
+   * another session wrote into the parent's file, which the child never copied, so absent anchors do not rank it
+   * (tester c613 k2argv1-r04: rank by matched count chose rev 1 and inspect then saw the parent advanced).
    */
   private selectForkParent(task: ContinuityTaskRecord, readLineage: () => LineageRead): { p: ForkParent } | { q: string } {
     const read = readLineage();
@@ -356,9 +390,11 @@ export class ContinuityService implements ContinuityGateway {
       else { score.matched += 1; score.last = Math.max(score.last, position); }
       scores.set(key, score);
     }
-    const ranked = [...scores.values()].filter(score => score.matched > 0).sort((left, right) => right.matched - left.matched
-      || left.absent - right.absent
-      || (left.parent.c === right.parent.c && left.parent.e === right.parent.e ? right.parent.r - left.parent.r : 0));
+    const ranked = [...scores.values()].filter(score => score.matched > 0).sort(named
+      ? (left, right) => right.last - left.last || right.parent.r - left.parent.r
+      : (left, right) => right.matched - left.matched
+        || left.absent - right.absent
+        || (left.parent.c === right.parent.c && left.parent.e === right.parent.e ? right.parent.r - left.parent.r : 0));
     const [best, next] = ranked;
     // A named parent with no pre-fork save in this lineage (including one that had no task at the fork, e = null).
     if (!best) return { q: named ? "FORK_HOST_PARENT_NOT_FOUND" : "FORK_PARENT_NOT_FOUND" };

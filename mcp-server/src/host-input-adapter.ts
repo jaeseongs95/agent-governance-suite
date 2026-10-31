@@ -51,13 +51,17 @@ export interface AdaptedHostInput {
   readLineage?: () => LineageRead;
   /** A fork's host-recorded origin: the parent's host session id and the fork instant. Only fork starts supply it. */
   readForkOrigin?: () => ForkOriginRead;
-  /** Set only at a host fork start: the parent the host process itself was started from, never a file or token. */
+  /**
+   * The parent the host process itself was started from, never a file or token: offered at a host fork start, and on
+   * a host that defers that read (`{ deferred: true }` at the start) at the tool boundary before a tool runs.
+   */
   readForkHostParent?: () => ForkHostParentRead;
 }
 
 /** `at` is the host's fork instant in epoch ms; a failed or absent read is closed with a stable reason. */
 export type ForkOriginRead = { parentSessionId: string; at: number } | { reason: string };
-export type ForkHostParentRead = { parentSessionId: string } | { reason: string };
+/** `signer` names the verified signer of the host executable where the platform checks one (Windows Authenticode CN). */
+export type ForkHostParentRead = { parentSessionId: string; signer?: string } | { reason: string } | { deferred: true };
 
 /** A host that cannot supply lineage omits readLineage; a failed read is closed with a stable reason. */
 /** `at[i]` is the host write time of `ids[i]` in epoch ms, NaN when the entry carries none. */

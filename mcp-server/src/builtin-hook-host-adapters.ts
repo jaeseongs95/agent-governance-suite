@@ -4,7 +4,7 @@ import { hookFailure, retainHookFailureCause, retainHookFailureSecondary } from 
 import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
 import path from "node:path";
 import { registerHookHostAdapter, type HookHostAdapter, type HostDeliveryProfile, type NativePeerWaitObservation, type HookSettingsDiagnostic, type AdaptedHostInput, type HostLifecycle, type ContinuityAction, type LineageRead, type ForkOriginRead } from "./host-input-adapter.js";
-import { readClaudeForkHostParent } from "./claude-fork-host.js";
+import { claudeForkHostRead } from "./claude-fork-host.js";
 import { parseWakeMessages } from "./session-message-client.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { normalizePeerWaitTargets } from "./peer-wait-policy.js";
@@ -171,7 +171,12 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
   // from when its argv names it (D0352 N1z); otherwise it is chosen later from lineage.
   if (adapted.continuityAction?.kind === "startup" && input.source === "fork") {
     adapted.continuityAction = { kind: "fork" };
-    if (sessionId) adapted.readForkHostParent = () => readClaudeForkHostParent(sessionId);
+    const startRead = sessionId ? claudeForkHostRead(sessionId, "start") : undefined;
+    if (startRead) adapted.readForkHostParent = startRead;
+  } else if (sessionId && adapted.observation.kind === "tool-boundary" && adapted.observation.boundaryPhase === "before") {
+    // Windows reads the host process here instead of at SessionStart; the service reads it only for a deferred fork.
+    const boundaryRead = claudeForkHostRead(sessionId, "boundary");
+    if (boundaryRead) adapted.readForkHostParent = boundaryRead;
   }
   if (transcriptPath && sessionId) adapted.readLineage = () => readClaudeLineage(transcriptPath, sessionId);
   return adapted;

@@ -1,4 +1,5 @@
-import { readFileSync, readlinkSync, realpathSync } from "node:fs";
+import { spawnSync, type SpawnSyncReturns } from "node:child_process";
+import { readFileSync, readlinkSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 import type { ForkHostParentRead } from "./host-input-adapter.js";
 
@@ -15,26 +16,53 @@ import type { ForkHostParentRead } from "./host-input-adapter.js";
  * The caller uses it only together with the host's SessionStart source=fork record.
  * Every failure is a distinct reason; none of them yields a parent.
  *
- * Limits (out of scope, same OS user): a process can rewrite its own /proc cmdline memory, can be ptraced, can be
- * started with `exec -a`, and its executable file can be replaced. Only Linux /proc is read; macOS and Windows return
- * FORK_HOST_PLATFORM_UNSUPPORTED (no PowerShell or ps query is added to SessionStart; real-host Windows argv is not
- * observed yet). TUI `/branch` is not observed.
+ * Linux reads /proc at the fork start. Windows reads one process snapshot with one PowerShell start, never at
+ * SessionStart (auditor 5970 W-2: the session-message hook already runs PowerShell there), but at the fork's first
+ * write-capable or AGS tool boundary, before that tool runs and before the parent is pinned (see claudeForkHostRead).
+ * macOS and other platforms return FORK_HOST_PLATFORM_UNSUPPORTED.
+ *
+ * Limits (out of scope, same OS user, auditor 5970 W-1/L): a process can rewrite its own /proc cmdline memory, can be
+ * ptraced, can be started with `exec -a`; its executable file can be replaced between the check and its use; on
+ * Windows a certificate the same user adds to the CurrentUser root store makes a forged signature Valid.
+ * TUI `/branch` is not observed.
  */
-export interface HostProcessView { exe: string; argv: readonly string[]; ppid: number; startToken: string }
+export interface HostProcessView {
+  exe: string;
+  argv: readonly string[];
+  ppid: number;
+  startToken: string;
+  /** Linux: owner and mode of the running executable file (stat of /proc/<pid>/exe). */
+  file?: { uid: number; mode: number };
+  /** Windows: the Authenticode result of the executable, read only for claude.exe. */
+  signature?: { status: string; subject: string };
+}
 export type HostProcessReader = (pid: number) => HostProcessView | "unreadable" | "changed";
 
-/** The hook command runs through at most this many shells before the host process. */
-const MAX_SHELLS = 2;
-const SHELL_EXECUTABLES = new Set(["sh", "bash", "dash", "zsh"]);
+// Linux: the hook command runs through at most two shells (sh, then possibly bash). Windows: Git Bash starts through
+// bin\bash.exe -> usr\bin\bash.exe -> usr\bin\bash.exe (observed for this host's own Bash tool, 2026-10-31); the hook
+// chain itself is not observed yet, so a deeper chain is a distinct reason (auditor 5970 W-3), not a silent pass.
+const MAX_SHELLS: Partial<Record<NodeJS.Platform, number>> = { linux: 2, win32: 3 };
+const SHELL_EXECUTABLES: Partial<Record<NodeJS.Platform, ReadonlySet<string>>> = {
+  linux: new Set(["sh", "bash", "dash", "zsh"]),
+  win32: new Set(["bash.exe", "sh.exe", "cmd.exe"]),
+};
 const SESSION_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
 // The native binary shipped in the CLI package, as /proc/<pid>/exe reads it on the real host (tester c613 k2exe-r01
 // a9e7656f, CLI 2.1.314): an absolute path ending in node_modules/@anthropic-ai/claude-code/bin/claude.exe.
 // A node + cli.js installation runs as `node` and is deliberately not recognized (auditor 5970 Q2(b)).
-// ponytail: only the observed install shape; the standalone installer's path is not observed yet and reads as
-// FORK_HOST_UNRECOGNIZED (lineage decides), add it once its /proc exe is observed.
-export const CLAUDE_NATIVE_EXECUTABLE_PATTERN = /^\/(?:[^/]+\/)+node_modules\/@anthropic-ai\/claude-code\/bin\/claude\.exe$/u;
+// The official native installer runs the versioned file itself: <home>/.local/share/claude/versions/<x.y.z> (tester c613
+// k2argv1-r06 1749c788, 2.1.316, uid = the user, mode 0755).
+// ponytail: only observed install shapes; apt, dnf and brew paths are not observed and read as FORK_HOST_UNRECOGNIZED
+// (lineage decides), add each once its /proc exe is observed.
+export const CLAUDE_NATIVE_EXECUTABLE_PATTERN = /^\/(?:[^/]+\/)+(?:node_modules\/@anthropic-ai\/claude-code\/bin\/claude\.exe|\.local\/share\/claude\/versions\/\d+\.\d+\.\d+)$/u;
 // Shared temporary directories are never a recognized install, as for the agy runner (UNTRUSTED_WRITABLE_PATH_PATTERN).
 const TEMPORARY_PATH_PATTERN = /(?:^|\/)(?:tmp|var\/tmp|dev\/shm|temp)(?:\/|$)/iu;
+// Windows: the signer of the running claude.exe on the real host (this PC, 2026-10-31): Status Valid,
+// O="Anthropic, PBC", issued by DigiCert Trusted G4 Code Signing RSA4096 SHA384 2021 CA1. The organization is matched
+// exactly (auditor 5970 W-1); the thumbprint is not pinned so a certificate renewal keeps working.
+const CLAUDE_SIGNER_ORGANIZATION = "Anthropic, PBC";
+/** Below the 10 s hook timeouts and the 9 s launcher limit, so a slow query ends as a recorded reason (W-2(b)). */
+export const WINDOWS_QUERY_TIMEOUT_MS = 6000;
 
 function statFields(pid: number): string[] {
   const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
@@ -46,6 +74,7 @@ export function linuxHostProcess(pid: number): HostProcessView | "unreadable" | 
   try {
     const before = statFields(pid);
     const exe = readlinkSync(`/proc/${pid}/exe`);
+    const executable = statSync(`/proc/${pid}/exe`);
     const raw = readFileSync(`/proc/${pid}/cmdline`).toString("utf8");
     const after = statFields(pid);
     const ppid = Number(before[1]);
@@ -54,10 +83,126 @@ export function linuxHostProcess(pid: number): HostProcessView | "unreadable" | 
     if (after[19] !== startToken) return "changed";
     const argv = raw.split("\0");
     if (argv.at(-1) === "") argv.pop();
-    return { exe, argv, ppid, startToken };
+    return { exe, argv, ppid, startToken, file: { uid: executable.uid, mode: executable.mode } };
   } catch {
     return "unreadable";
   }
+}
+
+/** Windows command-line splitting as CommandLineToArgvW does it (program name first, then the MSVC rules). */
+export function windowsCommandLineArgv(commandLine: string): string[] {
+  const argv: string[] = [];
+  const length = commandLine.length;
+  let index = 0;
+  // Program name: up to the first unquoted space or tab; quotes only toggle, backslashes are literal.
+  let program = "";
+  let quoted = false;
+  for (; index < length; index += 1) {
+    const character = commandLine[index]!;
+    if (character === "\"") quoted = !quoted;
+    else if (!quoted && (character === " " || character === "\t")) break;
+    else program += character;
+  }
+  argv.push(program);
+  for (;;) {
+    while (index < length && (commandLine[index] === " " || commandLine[index] === "\t")) index += 1;
+    if (index >= length) break;
+    let argument = "";
+    quoted = false;
+    while (index < length) {
+      const character = commandLine[index]!;
+      if (character === "\\") {
+        let slashes = 0;
+        while (commandLine[index] === "\\") { slashes += 1; index += 1; }
+        if (commandLine[index] === "\"") {
+          argument += "\\".repeat(slashes >> 1);
+          if (slashes % 2 === 1) { argument += "\""; index += 1; }
+        } else argument += "\\".repeat(slashes);
+        continue;
+      }
+      if (character === "\"") {
+        if (quoted && commandLine[index + 1] === "\"") { argument += "\""; index += 2; continue; }
+        quoted = !quoted;
+        index += 1;
+        continue;
+      }
+      if (!quoted && (character === " " || character === "\t")) break;
+      argument += character;
+      index += 1;
+    }
+    argv.push(argument);
+  }
+  return argv;
+}
+
+/** The single value of one attribute in a certificate subject; null when it is absent or repeated. */
+export function distinguishedNameValue(subject: string, key: string): string | null {
+  const values: string[] = [];
+  for (const match of subject.matchAll(/(?:^|,)\s*([A-Za-z][A-Za-z0-9.]*)=("(?:[^"]|"")*"|[^,]*)/gu)) {
+    if (match[1]!.toUpperCase() !== key.toUpperCase()) continue;
+    const raw = match[2]!.trim();
+    values.push(raw.startsWith("\"") ? raw.slice(1, -1).replaceAll("\"\"", "\"") : raw);
+  }
+  return values.length === 1 ? values[0]! : null;
+}
+
+export interface WindowsProcessRow {
+  pid: number; ppid: number; exe: string; cmd: string; created: string;
+  sig?: { status: string; subject: string } | null;
+}
+export type CommandRunner = (file: string, args: readonly string[]) => Pick<SpawnSyncReturns<string>, "status" | "stdout" | "error">;
+
+function windowsSnapshotScript(pid: number): string {
+  return "[Console]::OutputEncoding=[Text.Encoding]::UTF8;$ErrorActionPreference='Stop';$all=@{};"
+    + "foreach($p in Get-CimInstance Win32_Process -Property ProcessId,ParentProcessId,Name,ExecutablePath,CommandLine,CreationDate){$all[[int]$p.ProcessId]=$p};"
+    + `$id=${pid};$out=@();for($i=0;$i -lt 8 -and $all.ContainsKey($id);$i++){$p=$all[$id];$sig=$null;`
+    + "if($p.Name -ieq 'claude.exe' -and $p.ExecutablePath){$s=Get-AuthenticodeSignature -LiteralPath $p.ExecutablePath;"
+    + "$sig=@{status=[string]$s.Status;subject=[string]$s.SignerCertificate.Subject}};"
+    + "$out+=@{pid=[int]$p.ProcessId;ppid=[int]$p.ParentProcessId;exe=[string]$p.ExecutablePath;cmd=[string]$p.CommandLine;"
+    + "created=[string]$p.CreationDate.ToFileTimeUtc();sig=$sig};$id=[int]$p.ParentProcessId};"
+    + "ConvertTo-Json -Compress -Depth 4 -InputObject @($out)";
+}
+
+const runHidden: CommandRunner = (file, args) => spawnSync(file, args, {
+  encoding: "utf8", windowsHide: true, timeout: WINDOWS_QUERY_TIMEOUT_MS, maxBuffer: 1 << 20, stdio: ["ignore", "pipe", "ignore"],
+});
+
+function validRow(row: unknown): row is WindowsProcessRow {
+  if (!row || typeof row !== "object") return false;
+  const value = row as Record<string, unknown>;
+  const sig = value.sig as Record<string, unknown> | null | undefined;
+  return Number.isInteger(value.pid) && Number.isInteger(value.ppid) && typeof value.exe === "string"
+    && typeof value.cmd === "string" && typeof value.created === "string" && /^\d+$/u.test(value.created)
+    && (sig === undefined || sig === null || (typeof sig.status === "string" && typeof sig.subject === "string"));
+}
+
+/**
+ * This process and its ancestors from one Win32_Process snapshot, with the Authenticode result of each claude.exe,
+ * from one hidden PowerShell start (System32 path, no profile). Over WINDOWS_QUERY_TIMEOUT_MS it is a reason.
+ */
+export function windowsHostSnapshot(pid: number = process.pid, run: CommandRunner = runHidden): WindowsProcessRow[] | { reason: string } {
+  const shell = path.win32.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+  const result = run(shell, ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", windowsSnapshotScript(pid)]);
+  if ((result.error as NodeJS.ErrnoException | undefined)?.code === "ETIMEDOUT") return { reason: "FORK_HOST_QUERY_TIMEOUT" };
+  if (result.error || result.status !== 0) return { reason: "FORK_HOST_PROCESS_UNREADABLE" };
+  let rows: unknown;
+  try { rows = JSON.parse(result.stdout); } catch { return { reason: "FORK_HOST_PROCESS_UNREADABLE" }; }
+  if (!Array.isArray(rows) || rows.length === 0 || !rows.every(validRow) || rows[0]!.pid !== pid) return { reason: "FORK_HOST_PROCESS_UNREADABLE" };
+  return rows;
+}
+
+/** Reader over a snapshot chain: an ancestor created after its child holds a reused pid (changed, auditor 5970 W-3). */
+export function windowsHostReader(rows: readonly WindowsProcessRow[]): HostProcessReader {
+  const views = new Map<number, HostProcessView | "changed">();
+  rows.forEach((row, index) => {
+    const child = rows[index - 1];
+    const reused = child !== undefined && (child.ppid !== row.pid || BigInt(row.created) > BigInt(child.created));
+    views.set(row.pid, reused ? "changed" : {
+      exe: row.exe, argv: windowsCommandLineArgv(row.cmd), ppid: row.ppid, startToken: row.created,
+      ...(row.sig ? { signature: { status: row.sig.status, subject: row.sig.subject } } : {}),
+    });
+  });
+  return pid => views.get(pid) ?? "unreadable";
 }
 
 /**
@@ -102,10 +247,33 @@ export function ownHookLauncher(entry: string | undefined = process.argv[1], exe
   return { exe: execPath, script: path.join(path.dirname(path.dirname(dist)), "hooks", path.basename(entry)) };
 }
 
-function sameFile(candidate: string | undefined, expected: string): boolean {
+function samePath(left: string, right: string, platform: NodeJS.Platform): boolean {
+  return platform === "win32" ? left.toLowerCase() === right.toLowerCase() : left === right;
+}
+
+function sameFile(candidate: string | undefined, expected: string, platform: NodeJS.Platform): boolean {
   if (!candidate) return false;
-  if (path.resolve(candidate) === expected) return true;
-  try { return realpathSync(candidate) === realpathSync(expected); } catch { return false; }
+  if (samePath(path.resolve(candidate), expected, platform)) return true;
+  try { return samePath(realpathSync(candidate), realpathSync(expected), platform); } catch { return false; }
+}
+
+/** Null when the nearest non-shell process is the native claude of a recognized install, otherwise the reason. */
+function unrecognizedHost(view: HostProcessView, platform: NodeJS.Platform, uid: number): string | null {
+  if (platform === "win32") {
+    if (path.win32.basename(view.exe).toLowerCase() !== "claude.exe" || TEMPORARY_PATH_PATTERN.test(view.exe.replaceAll("\\", "/"))) {
+      return "FORK_HOST_UNRECOGNIZED";
+    }
+    const signature = view.signature;
+    if (!signature || signature.status === "NotSigned") return "FORK_HOST_SIGNATURE_MISSING";
+    if (signature.status === "HashMismatch") return "FORK_HOST_SIGNATURE_INVALID";
+    if (signature.status !== "Valid") return "FORK_HOST_SIGNATURE_UNTRUSTED";
+    return distinguishedNameValue(signature.subject, "O") === CLAUDE_SIGNER_ORGANIZATION ? null : "FORK_HOST_SIGNER_UNRECOGNIZED";
+  }
+  if (!CLAUDE_NATIVE_EXECUTABLE_PATTERN.test(view.exe) || TEMPORARY_PATH_PATTERN.test(view.exe)) return "FORK_HOST_UNRECOGNIZED";
+  // Auditor 5970 L: owned by this user or root, and not writable by group or others.
+  const file = view.file;
+  if (!file || (file.uid !== uid && file.uid !== 0) || (file.mode & 0o022) !== 0) return "FORK_HOST_EXECUTABLE_UNSAFE";
+  return null;
 }
 
 /**
@@ -113,21 +281,50 @@ function sameFile(candidate: string | undefined, expected: string): boolean {
  * script under the same node) and at most MAX_SHELLS shells, it must be the native claude.
  */
 export function readClaudeForkHostParent(sessionId: string, platform: NodeJS.Platform = process.platform,
-  firstPid: number = process.ppid, read: HostProcessReader = linuxHostProcess,
-  launcher: HookLauncher | null = ownHookLauncher()): ForkHostParentRead {
-  if (platform !== "linux") return { reason: "FORK_HOST_PLATFORM_UNSUPPORTED" };
+  firstPid: number = process.ppid, read?: HostProcessReader, launcher: HookLauncher | null = ownHookLauncher(),
+  uid: number = process.getuid?.() ?? -1): ForkHostParentRead {
+  const maxShells = MAX_SHELLS[platform];
+  const shellNames = SHELL_EXECUTABLES[platform];
+  if (maxShells === undefined || shellNames === undefined) return { reason: "FORK_HOST_PLATFORM_UNSUPPORTED" };
+  let reader = read;
+  if (!reader) {
+    if (platform === "linux") reader = linuxHostProcess;
+    else {
+      const snapshot = windowsHostSnapshot();
+      if ("reason" in snapshot) return snapshot;
+      reader = windowsHostReader(snapshot);
+    }
+  }
+  const base = platform === "win32" ? path.win32.basename : path.posix.basename;
   let pid = firstPid;
   let launcherSkipped = launcher === null;
   for (let shells = 0; ; shells += 1) {
-    const view = read(pid);
+    const view = reader(pid);
     if (view === "unreadable") return { reason: "FORK_HOST_PROCESS_UNREADABLE" };
     if (view === "changed") return { reason: "FORK_HOST_PROCESS_CHANGED" };
     if (!launcherSkipped) {
       launcherSkipped = true;
-      if (view.exe === launcher!.exe && sameFile(view.argv[1], launcher!.script)) { pid = view.ppid; shells -= 1; continue; }
+      if (samePath(view.exe, launcher!.exe, platform) && sameFile(view.argv[1], launcher!.script, platform)) { pid = view.ppid; shells -= 1; continue; }
     }
-    if (SHELL_EXECUTABLES.has(path.posix.basename(view.exe)) && shells < MAX_SHELLS) { pid = view.ppid; continue; }
-    if (!CLAUDE_NATIVE_EXECUTABLE_PATTERN.test(view.exe) || TEMPORARY_PATH_PATTERN.test(view.exe)) return { reason: "FORK_HOST_UNRECOGNIZED" };
-    return forkParentFromArgv(view.argv, sessionId);
+    if (shellNames.has(base(view.exe).toLowerCase())) {
+      if (shells >= maxShells) return { reason: "FORK_HOST_SHELL_DEPTH_EXCEEDED" };
+      pid = view.ppid;
+      continue;
+    }
+    const unrecognized = unrecognizedHost(view, platform, uid);
+    if (unrecognized) return { reason: unrecognized };
+    const parent = forkParentFromArgv(view.argv, sessionId);
+    if (platform !== "win32" || !("parentSessionId" in parent)) return parent;
+    return { ...parent, signer: distinguishedNameValue(view.signature!.subject, "CN") ?? CLAUDE_SIGNER_ORGANIZATION };
   }
+}
+
+/**
+ * The host-process read a Claude hook offers at this boundary. Linux reads at the fork start. Windows defers the
+ * start (no PowerShell at SessionStart) and reads at a tool boundary; other platforms record their reason at the start.
+ */
+export function claudeForkHostRead(sessionId: string, phase: "start" | "boundary",
+  platform: NodeJS.Platform = process.platform): (() => ForkHostParentRead) | undefined {
+  if (phase === "boundary") return platform === "win32" ? () => readClaudeForkHostParent(sessionId, platform) : undefined;
+  return platform === "win32" ? () => ({ deferred: true }) : () => readClaudeForkHostParent(sessionId, platform);
 }

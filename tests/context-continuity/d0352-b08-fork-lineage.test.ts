@@ -5,7 +5,10 @@ import { join, resolve, sep } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it } from "vitest";
 import type { CheckpointContextRequestV1, ContinuitySnapshotV1 } from "../../contracts/types.js";
-import { CLAUDE_NATIVE_EXECUTABLE_PATTERN, forkParentFromArgv, ownHookLauncher, readClaudeForkHostParent, type HostProcessView } from "../../mcp-server/src/claude-fork-host.js";
+import {
+  CLAUDE_NATIVE_EXECUTABLE_PATTERN, claudeForkHostRead, distinguishedNameValue, forkParentFromArgv, ownHookLauncher, readClaudeForkHostParent,
+  windowsCommandLineArgv, windowsHostReader, windowsHostSnapshot, WINDOWS_QUERY_TIMEOUT_MS, type HostProcessView, type WindowsProcessRow,
+} from "../../mcp-server/src/claude-fork-host.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
 import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
@@ -53,8 +56,16 @@ async function transcript(rows: Array<[sessionId: string, uuid: string, timestam
   return file;
 }
 
+const PLATFORM = Object.getOwnPropertyDescriptor(process, "platform")!;
+/** The Claude adapter picks its host-process read by platform; hook-driven cases pin it so every CI OS runs one path. */
+function withPlatform<T>(platform: NodeJS.Platform, run: () => T): T {
+  Object.defineProperty(process, "platform", { ...PLATFORM, value: platform });
+  try { return run(); } finally { Object.defineProperty(process, "platform", PLATFORM); }
+}
+let hookPlatform: NodeJS.Platform = "linux";
+
 function hook(service: ContinuityService, payload: Record<string, unknown>, host = "claude-code") {
-  return handleContinuityHook(payload, service, host);
+  return withPlatform(hookPlatform, () => handleContinuityHook(payload, service, host));
 }
 
 function start(service: ContinuityService, session: string, source: string, transcriptPath?: string, host = "claude-code") {
@@ -671,6 +682,9 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
   const NATIVE = "/home/u/.local/share/ssh-approval-cli/claude/versions/2.1.314-599225981133da60/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe";
   const A = "0b6f2b8e-1c1d-4a57-9f0c-6f9a3b2d1e01";
   const SELF = "7d0c5a8e-2f44-4b61-8e3a-0c9b1d2e3f02";
+  // Root-owned, not group/other writable (auditor 5970 L); the official native installer's versioned file (c613 r06).
+  const SAFE = { uid: 0, mode: 0o100755 };
+  const STANDALONE = "/home/u/.local/share/claude/versions/2.1.316";
 
   /** A host fork whose host process named its parent at the fork start (what the Claude adapter records on Linux). */
   async function hostFork(service: ContinuityService, child: string, copied: string[], named: string) {
@@ -710,21 +724,38 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     ] as const) expect(forkParentFromArgv(argv, SELF), argv.join(" ")).toEqual(expected);
   });
 
-  it("H-A2: the nearest host process past at most two shells must be the native claude; nothing above it is read", () => {
+  it("H-A2: the nearest host process past at most two shells must be the native claude of a safe install; nothing above it is read", () => {
     const chain = (...views: Array<HostProcessView | "unreadable" | "changed">) => {
       const read: number[] = [];
       return { read, reader: (pid: number) => { read.push(pid); return views[pid - 100] ?? "unreadable"; } };
     };
-    const view = (exe: string, argv: string[], next: number): HostProcessView => ({ exe, argv, ppid: next, startToken: "t" + next });
+    const view = (exe: string, argv: string[], next: number): HostProcessView => ({ exe, argv, ppid: next, startToken: "t" + next, file: SAFE });
     const fork = ["claude", "--resume", A, "--fork-session"];
     expect(CLAUDE_NATIVE_EXECUTABLE_PATTERN.test(NATIVE)).toBe(true);
     let walk = chain(view("/usr/bin/dash", ["sh", "-c", "hook"], 101), view(NATIVE, fork, 102));
     expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ parentSessionId: A });
     walk = chain(view("/usr/bin/dash", ["sh"], 101), view("/usr/bin/bash", ["bash"], 102), view(NATIVE, fork, 103));
     expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ parentSessionId: A });
-    // A third shell is not skipped.
+    // A third shell is not skipped and is its own reason (auditor 5970 W-3).
     walk = chain(view("/usr/bin/dash", ["sh"], 101), view("/usr/bin/dash", ["sh"], 102), view("/usr/bin/dash", ["sh"], 103), view(NATIVE, fork, 104));
-    expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ reason: "FORK_HOST_UNRECOGNIZED" });
+    expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ reason: "FORK_HOST_SHELL_DEPTH_EXCEEDED" });
+    expect(walk.read).toEqual([100, 101, 102]);
+    // The official native installer's versioned file is a recognized install too.
+    expect(CLAUDE_NATIVE_EXECUTABLE_PATTERN.test(STANDALONE)).toBe(true);
+    walk = chain(view("/usr/bin/dash", ["sh"], 101), view(STANDALONE, fork, 102));
+    expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader, null, 1001)).toEqual({ parentSessionId: A });
+    // Owner and mode (auditor 5970 L): this user or root, never group/other writable, and a file must have been read.
+    for (const [file, uid, expected] of [
+      [{ uid: 1001, mode: 0o100755 }, 1001, { parentSessionId: A }],
+      [{ uid: 1001, mode: 0o100700 }, 1001, { parentSessionId: A }],
+      [{ uid: 1002, mode: 0o100755 }, 1001, { reason: "FORK_HOST_EXECUTABLE_UNSAFE" }],
+      [{ uid: 0, mode: 0o100775 }, 1001, { reason: "FORK_HOST_EXECUTABLE_UNSAFE" }],
+      [{ uid: 1001, mode: 0o100757 }, 1001, { reason: "FORK_HOST_EXECUTABLE_UNSAFE" }],
+      [undefined, 1001, { reason: "FORK_HOST_EXECUTABLE_UNSAFE" }],
+    ] as const) {
+      const host: HostProcessView = { exe: STANDALONE, argv: fork, ppid: 1, startToken: "t", ...(file ? { file } : {}) };
+      expect(readClaudeForkHostParent(SELF, "linux", 100, () => host, null, uid), JSON.stringify(file)).toEqual(expected);
+    }
     // Nested: a claude -p run inside a forked session's Bash is the nearest host; the outer fork's argv is never used.
     walk = chain(view("/usr/bin/dash", ["sh"], 101), view(NATIVE, ["claude", "-p", "x"], 102), view("/usr/bin/bash", ["bash"], 103), view(NATIVE, fork, 104));
     expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ reason: "FORK_HOST_ARGV_NOT_FORK" });
@@ -732,9 +763,11 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     // A node + cli.js installation, another program, an unreadable or a replaced process: no parent, distinct reasons.
     walk = chain(view("/usr/bin/dash", ["sh"], 101), view("/usr/bin/node", ["node", "/opt/claude/cli.js", ...fork.slice(1)], 102));
     expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ reason: "FORK_HOST_UNRECOGNIZED" });
-    // Same basename elsewhere, a relative or replaced (deleted) binary, and the not-yet-observed standalone install.
+    // Same basename elsewhere, a relative or replaced (deleted) binary, a versioned file outside the installer's layout
+    // or not a version, and shared temporary directories.
     for (const exe of ["/opt/x/bin/claude.exe", "node_modules/@anthropic-ai/claude-code/bin/claude.exe", NATIVE + " (deleted)",
-      "/home/u/.local/share/claude/versions/2.1.314", "/tmp/x/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
+      STANDALONE + " (deleted)", "/home/u/.local/share/claude/versions/latest", "/home/u/claude/versions/2.1.316",
+      "/tmp/u/.local/share/claude/versions/2.1.316", "/tmp/x/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
       "/var/tmp/x/node_modules/@anthropic-ai/claude-code/bin/claude.exe", "/dev/shm/node_modules/@anthropic-ai/claude-code/bin/claude.exe",
       "/home/u/Temp/node_modules/@anthropic-ai/claude-code/bin/claude.exe"]) {
       walk = chain(view(exe, fork, 101));
@@ -744,8 +777,8 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ reason: "FORK_HOST_PROCESS_UNREADABLE" });
     walk = chain("changed");
     expect(readClaudeForkHostParent(SELF, "linux", 100, walk.reader)).toEqual({ reason: "FORK_HOST_PROCESS_CHANGED" });
-    // No other platform is queried (auditor 5970 Q3: no PowerShell or ps in SessionStart).
-    for (const platform of ["win32", "darwin"] as const) {
+    // macOS and other platforms are never queried.
+    for (const platform of ["darwin", "freebsd"] as const) {
       walk = chain(view(NATIVE, fork, 101));
       expect(readClaudeForkHostParent(SELF, platform, 100, walk.reader)).toEqual({ reason: "FORK_HOST_PLATFORM_UNSUPPORTED" });
       expect(walk.read).toEqual([]);
@@ -754,7 +787,7 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
 
   it("H-A4: the bundled hook passes its own Claude launcher once, and only that exact launcher (c613 k2argv1-r01)", () => {
     const chain = (...views: HostProcessView[]) => (pid: number) => views[pid - 100] ?? "unreadable";
-    const view = (exe: string, argv: string[], next: number): HostProcessView => ({ exe, argv, ppid: next, startToken: "t" + next });
+    const view = (exe: string, argv: string[], next: number): HostProcessView => ({ exe, argv, ppid: next, startToken: "t" + next, file: SAFE });
     const fork = ["claude", "--resume", A, "--fork-session"];
     const node = "/usr/bin/node";
     // OS-native paths, as process.argv[1] and the launcher's argv hold them on the host that runs the test.
@@ -786,6 +819,12 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     for (const source of ["startup", "resume", "clear", "compact"]) expect(at({ hook_event_name: "SessionStart", source }), source).toBeUndefined();
     expect(at({ hook_event_name: "UserPromptSubmit", prompt: "x" })).toBeUndefined();
     expect(at({ hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: {}, tool_use_id: "toolu_1" })).toBeUndefined();
+    // Windows reads at the tool boundary before a tool runs instead of at the start (auditor 5970 W-2).
+    const boundary = { hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: {}, tool_use_id: "toolu_1" };
+    expect(withPlatform("win32", () => at(boundary))).toEqual(expect.any(Function));
+    expect(withPlatform("win32", () => at({ ...boundary, hook_event_name: "PostToolUse", tool_response: {} }))).toBeUndefined();
+    expect(withPlatform("win32", () => at({ hook_event_name: "UserPromptSubmit", prompt: "x" }))).toBeUndefined();
+    expect(withPlatform("win32", () => at({ hook_event_name: "SessionStart", source: "fork" })!())).toEqual({ deferred: true });
     expect(adaptHostInput({ session_id: SELF, hook_event_name: "SessionStart", source: "fork" }, "codex").readForkHostParent).toBeUndefined();
   });
 
@@ -861,5 +900,193 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     expect(hostParentEvent(service, "fork-f")).toBe("fork-host-parent:" + JSON.stringify({ u: "FORK_HOST_UNRECOGNIZED" }));
     prompt(service, "fork-f", childFile);
     expect(inspect(service, "fork-f", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+  });
+  it("H-R04: a named parent's latest pre-fork save is chosen even when it anchors entries another session wrote into its file", async () => {
+    // Tester c613 k2argv1-r04 (rwown): fork F's own entries were written into P's file under P's id, P saved again, then
+    // F2 forked P. F2 never copied F's entries, so P rev 2 matches 1 of its 16 anchors; ranking by matched count chose
+    // rev 1 and inspect then rejected it as advanced.
+    const service = createService();
+    const rows = Array.from({ length: 16 }, () => ["parent-a", randomUUID()] as [string, string]);
+    const parentFile = await transcript(rows);
+    const first = checkpoint(service, "parent-a", parentFile);
+    const fOwn = Array.from({ length: 16 }, () => randomUUID());
+    await hostFork(service, "fork-f", rows.map(([, uuid]) => uuid), "parent-a");
+    const pNew = randomUUID();
+    await appendFile(parentFile, [...fOwn, pNew].map(uuid => line("parent-a", uuid)).join("\n") + "\n", "utf8");
+    const second = checkpoint(service, "parent-a", parentFile, { requestId: "p-2", expectedRevision: first.revision });
+    const laterFile = await hostFork(service, "fork-f2", [...rows.map(([, uuid]) => uuid), pNew], "parent-a");
+    const candidate = inspect(service, "fork-f2", laterFile);
+    expect(candidate).toMatchObject({ decision: "DEFER", reasonCodes: CANDIDATE });
+    expect(candidate.summary).toMatchObject({ taskCorrelation: first.taskCorrelation, revision: second.revision, snapshotDigest: second.snapshotDigest });
+    expect(load(service, "fork-f2", candidate).data).toEqual(second);
+  });
+
+  it("H-W1: Windows command lines split as CommandLineToArgvW does", () => {
+    for (const [line, expected] of [
+      [`"C:\\Users\\u\\.local\\bin\\claude.exe" --resume ${A} --fork-session`, ["C:\\Users\\u\\.local\\bin\\claude.exe", "--resume", A, "--fork-session"]],
+      [`claude.exe --effort high --resume ${A}`, ["claude.exe", "--effort", "high", "--resume", A]],
+      [`C:\\a\\b.exe  "x y"\t z`, ["C:\\a\\b.exe", "x y", "z"]],
+      [`p "a\\"b" c\\\\"d e" f\\g`, ["p", "a\"b", "c\\d e", "f\\g"]],
+      [`p "a""b" ""`, ["p", "a\"b", ""]],
+      [`"C:\\Program Files\\nodejs\\node.exe" "C:\\p\\hooks\\continuity-hook.mjs"`, ["C:\\Program Files\\nodejs\\node.exe", "C:\\p\\hooks\\continuity-hook.mjs"]],
+    ] as const) expect(windowsCommandLineArgv(line), line).toEqual(expected);
+    expect(distinguishedNameValue('CN="Anthropic, PBC", O="Anthropic, PBC", L=San Francisco, S=California, C=US', "O")).toBe("Anthropic, PBC");
+    expect(distinguishedNameValue('CN="Anthropic, PBC", O="Anthropic, PBC", C=US', "CN")).toBe("Anthropic, PBC");
+    expect(distinguishedNameValue('CN=x, O="Anthropic, PBC Labs", C=US', "O")).toBe("Anthropic, PBC Labs");
+    expect(distinguishedNameValue("CN=x, OU=Anthropic, PBC, C=US", "O")).toBeNull();
+    expect(distinguishedNameValue('O="Anthropic, PBC", O=Other', "O")).toBeNull();
+  });
+
+  it("H-W2: Windows walks one snapshot past its launcher and shells to a signed claude.exe; every failure is a distinct reason", () => {
+    const CLAUDE = "C:\\Users\\u\\.local\\bin\\claude.exe";
+    const NODE = "C:\\Program Files\\nodejs\\node.exe";
+    const SCRIPT = "C:\\Users\\u\\.claude\\plugins\\cache\\ags\\agent-governance-suite\\3.0.0\\hooks\\continuity-hook.mjs";
+    const SUBJECT = 'CN="Anthropic, PBC", O="Anthropic, PBC", L=San Francisco, S=California, C=US';
+    const VALID = { status: "Valid", subject: SUBJECT };
+    const forkLine = `"${CLAUDE}" --resume ${A} --fork-session`;
+    // Snapshot rows from this hook (pid 10) up: dist hook, launcher node, shells, claude.exe; creation times descend.
+    const rows = (...above: Array<Partial<WindowsProcessRow> & { exe: string; cmd: string }>): WindowsProcessRow[] => {
+      const chain = [{ exe: NODE, cmd: `"${NODE}" dist-hook` }, ...above];
+      return chain.map((row, index) => ({ pid: 10 + index, ppid: 11 + index, created: String(9000 - index), sig: null, ...row }));
+    };
+    const launcher = { exe: NODE, script: SCRIPT };
+    const read = (snapshot: WindowsProcessRow[]) => readClaudeForkHostParent(SELF, "win32", 11, windowsHostReader(snapshot), launcher);
+    const launcherRow = { exe: NODE, cmd: `"${NODE}" "${SCRIPT.replace("continuity-hook.mjs", "CONTINUITY-HOOK.mjs")}"` };
+    expect(read(rows(launcherRow, { exe: CLAUDE, cmd: forkLine, sig: VALID }))).toEqual({ parentSessionId: A, signer: "Anthropic, PBC" });
+    const bash = (exe: string) => ({ exe, cmd: `"${exe}" -c hook` });
+    expect(read(rows(launcherRow, bash("C:\\Program Files\\Git\\bin\\bash.exe"), bash("C:\\Program Files\\Git\\usr\\bin\\bash.exe"),
+      bash("C:\\Program Files\\Git\\usr\\bin\\bash.exe"), { exe: CLAUDE, cmd: forkLine, sig: VALID }))).toEqual({ parentSessionId: A, signer: "Anthropic, PBC" });
+    expect(read(rows(launcherRow, bash("C:\\g\\bash.exe"), bash("C:\\g\\sh.exe"), bash("C:\\g\\bash.exe"), bash("C:\\Windows\\System32\\cmd.exe"),
+      { exe: CLAUDE, cmd: forkLine, sig: VALID }))).toEqual({ reason: "FORK_HOST_SHELL_DEPTH_EXCEEDED" });
+    for (const [sig, reason] of [
+      [null, "FORK_HOST_SIGNATURE_MISSING"],
+      [{ status: "NotSigned", subject: "" }, "FORK_HOST_SIGNATURE_MISSING"],
+      [{ status: "HashMismatch", subject: SUBJECT }, "FORK_HOST_SIGNATURE_INVALID"],
+      [{ status: "NotTrusted", subject: SUBJECT }, "FORK_HOST_SIGNATURE_UNTRUSTED"],
+      [{ status: "UnknownError", subject: SUBJECT }, "FORK_HOST_SIGNATURE_UNTRUSTED"],
+      [{ status: "Valid", subject: 'CN="Anthropic, PBC", O="Anthropic, PBC Labs", C=US' }, "FORK_HOST_SIGNER_UNRECOGNIZED"],
+      [{ status: "Valid", subject: 'CN="Anthropic, PBC", C=US' }, "FORK_HOST_SIGNER_UNRECOGNIZED"],
+    ] as const) expect(read(rows(launcherRow, { exe: CLAUDE, cmd: forkLine, sig })), reason).toEqual({ reason });
+    // Another program, a claude.exe in a temporary directory, an ancestor created after its child (reused pid), a chain
+    // that ends before the host, and a launcher that is not this hook's: no parent.
+    expect(read(rows(launcherRow, { exe: "C:\\x\\other.exe", cmd: forkLine, sig: VALID }))).toEqual({ reason: "FORK_HOST_UNRECOGNIZED" });
+    expect(read(rows(launcherRow, { exe: "C:\\Users\\u\\AppData\\Local\\Temp\\claude.exe", cmd: forkLine, sig: VALID }))).toEqual({ reason: "FORK_HOST_UNRECOGNIZED" });
+    const reused = rows(launcherRow, { exe: CLAUDE, cmd: forkLine, sig: VALID });
+    reused[2]!.created = "9500";
+    expect(read(reused)).toEqual({ reason: "FORK_HOST_PROCESS_CHANGED" });
+    expect(read(rows(launcherRow))).toEqual({ reason: "FORK_HOST_PROCESS_UNREADABLE" });
+    expect(read(rows({ exe: NODE, cmd: `"${NODE}" C:\\other\\hooks\\continuity-hook.mjs` }, { exe: CLAUDE, cmd: forkLine, sig: VALID })))
+      .toEqual({ reason: "FORK_HOST_UNRECOGNIZED" });
+    // A plain resume or a nested non-fork claude is the nearest host: no parent.
+    expect(read(rows(launcherRow, { exe: CLAUDE, cmd: `"${CLAUDE}" --resume ${A}`, sig: VALID }))).toEqual({ reason: "FORK_HOST_ARGV_NOT_FORK" });
+  });
+
+  it("H-W3: the Windows snapshot is one hidden PowerShell start with a bounded wait; its failures are reasons", () => {
+    const calls: Array<{ file: string; args: readonly string[] }> = [];
+    const runner = (result: { status: number | null; stdout: string; error?: Error }) => (file: string, args: readonly string[]) => {
+      calls.push({ file, args });
+      return result;
+    };
+    const good = JSON.stringify([{ pid: 10, ppid: 11, exe: "C:\\n\\node.exe", cmd: "node", created: "2", sig: null },
+      { pid: 11, ppid: 1, exe: "C:\\c\\claude.exe", cmd: "claude", created: "1", sig: { status: "Valid", subject: "O=x" } }]);
+    expect(windowsHostSnapshot(10, runner({ status: 0, stdout: good }))).toEqual(JSON.parse(good));
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.file.toLowerCase()).toMatch(/system32\\windowspowershell\\v1\.0\\powershell\.exe$/u);
+    expect(calls[0]!.args.slice(0, 2)).toEqual(["-NoProfile", "-NonInteractive"]);
+    expect(calls[0]!.args.at(-1)).toContain("$id=10;");
+    expect(calls[0]!.args.at(-1)).toContain("Get-AuthenticodeSignature");
+    expect(WINDOWS_QUERY_TIMEOUT_MS).toBeLessThan(9000);
+    const timedOut = Object.assign(new Error("spawnSync powershell.exe ETIMEDOUT"), { code: "ETIMEDOUT" });
+    expect(windowsHostSnapshot(10, runner({ status: null, stdout: "", error: timedOut }))).toEqual({ reason: "FORK_HOST_QUERY_TIMEOUT" });
+    for (const result of [{ status: 1, stdout: good }, { status: 0, stdout: "not json" }, { status: 0, stdout: "[]" },
+      { status: 0, stdout: JSON.stringify([{ pid: 12, ppid: 1, exe: "x", cmd: "x", created: "1" }]) },
+      { status: 0, stdout: JSON.stringify([{ pid: 10, ppid: 1, exe: "x", cmd: "x", created: "2026-11-01" }]) },
+      { status: null, stdout: "", error: new Error("spawn ENOENT") }]) {
+      expect(windowsHostSnapshot(10, runner(result)), JSON.stringify(result)).toEqual({ reason: "FORK_HOST_PROCESS_UNREADABLE" });
+    }
+    // SessionStart on Windows starts no process (auditor 5970 W-2); the boundary read exists only on Windows.
+    expect(claudeForkHostRead(SELF, "start", "win32")!()).toEqual({ deferred: true });
+    expect(claudeForkHostRead(SELF, "boundary", "linux")).toBeUndefined();
+    expect(claudeForkHostRead(SELF, "boundary", "darwin")).toBeUndefined();
+    expect(claudeForkHostRead(SELF, "boundary", "win32")).toEqual(expect.any(Function));
+    expect(claudeForkHostRead(SELF, "start", "darwin")!()).toEqual({ reason: "FORK_HOST_PLATFORM_UNSUPPORTED" });
+  });
+
+  it("H-W4: a deferred fork reads its host parent at the first tool boundary, never pins before it, and records it once", async () => {
+    const service = createService();
+    const { snapshot, uuids } = await parent(service);
+    const childFile = await transcript([...uuids.map(uuid => ["fork-f", uuid] as [string, string]), ["fork-f", randomUUID(), OWN]]);
+    service.startFork("fork-f", undefined, () => ({ deferred: true }));
+    expect(hostParentEvent(service, "fork-f")).toBeUndefined();
+    // The first prompt would pin from lineage alone; with the read deferred it waits.
+    prompt(service, "fork-f", childFile);
+    const correlation = service.correlateSession("fork-f");
+    const epoch = service.store.getTask(correlation)!.currentEpoch;
+    expect(service.store.firstObservationEvent(correlation, epoch, "fork-parent:") ?? null).toBeNull();
+    let reads = 0;
+    const read = () => { reads += 1; return { parentSessionId: "parent-a", signer: "Anthropic, PBC" }; };
+    service.readDeferredForkHostParent("fork-f", read);
+    service.readDeferredForkHostParent("fork-f", read);
+    expect(reads).toBe(1);
+    expect(hostParentEvent(service, "fork-f")).toBe("fork-host-parent:" + JSON.stringify({ c: snapshot.taskCorrelation, e: snapshot.epoch, s: "Anthropic, PBC" }));
+    const candidate = inspect(service, "fork-f", childFile);
+    expect(candidate.summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+    expect(load(service, "fork-f", candidate).data).toEqual(snapshot);
+    // A fork whose start read the host (Linux) or that was never deferred is never read again at a boundary.
+    service.startFork("fork-l", undefined, () => ({ reason: "FORK_HOST_UNRECOGNIZED" }));
+    service.readDeferredForkHostParent("fork-l", read);
+    start(service, "plain-s", "startup");
+    service.readDeferredForkHostParent("plain-s", read);
+    expect(reads).toBe(1);
+    expect(hostParentEvent(service, "fork-l")).toBe("fork-host-parent:" + JSON.stringify({ u: "FORK_HOST_UNRECOGNIZED" }));
+  });
+
+  it("H-W5: a deferred fork reaching a final boundary without a read records why and lineage decides; a read reason is kept", async () => {
+    const service = createService();
+    const { snapshot, uuids } = await parent(service);
+    const childFile = await transcript([...uuids.map(uuid => ["fork-f", uuid] as [string, string]), ["fork-f", randomUUID(), OWN]]);
+    service.startFork("fork-f", undefined, () => ({ deferred: true }));
+    expect(inspect(service, "fork-f", childFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+    expect(hostParentEvent(service, "fork-f")).toBe("fork-host-parent:" + JSON.stringify({ u: "FORK_HOST_PARENT_NOT_READ" }));
+    // After the pin a late read changes nothing.
+    service.readDeferredForkHostParent("fork-f", () => ({ parentSessionId: "never-saved-x" }));
+    expect(hostParentEvent(service, "fork-f")).toBe("fork-host-parent:" + JSON.stringify({ u: "FORK_HOST_PARENT_NOT_READ" }));
+    const secondFile = await transcript([...uuids.map(uuid => ["fork-g", uuid] as [string, string]), ["fork-g", randomUUID(), OWN]]);
+    service.startFork("fork-g", undefined, () => ({ deferred: true }));
+    service.readDeferredForkHostParent("fork-g", () => ({ reason: "FORK_HOST_QUERY_TIMEOUT" }));
+    expect(hostParentEvent(service, "fork-g")).toBe("fork-host-parent:" + JSON.stringify({ u: "FORK_HOST_QUERY_TIMEOUT" }));
+    expect(inspect(service, "fork-g", secondFile).summary).toMatchObject({ taskCorrelation: snapshot.taskCorrelation, revision: snapshot.revision });
+  });
+
+  it("H-W7: through the Claude hook on Windows the fork start defers, the prompt waits and the first tool reads once", async () => {
+    const service = createService();
+    const { snapshot, uuids } = await parent(service);
+    const childFile = await transcript([...uuids.map(uuid => ["fork-f", uuid] as [string, string]), ["fork-f", randomUUID(), OWN]]);
+    hookPlatform = "win32";
+    try {
+      expect(start(service, "fork-f", "fork", childFile)).toEqual({});
+      const correlation = service.correlateSession("fork-f");
+      const epoch = service.store.getTask(correlation)!.currentEpoch;
+      expect(service.store.hasObservation(correlation, epoch, "fork-host-deferred")).toBe(true);
+      prompt(service, "fork-f", childFile);
+      expect(hostParentEvent(service, "fork-f")).toBeUndefined();
+      expect(service.store.firstObservationEvent(correlation, epoch, "fork-parent:") ?? null).toBeNull();
+      // The real query: this test process is not under a Claude fork, so it records a reason and lineage decides.
+      tool(service, "fork-f", childFile);
+      expect(hostParentEvent(service, "fork-f")).toMatch(/^fork-host-parent:\{"u":"FORK_HOST_[A-Z_]+"\}$/u);
+      expect(service.store.firstObservationEvent(correlation, epoch, "fork-parent:")).toContain(snapshot.taskCorrelation);
+    } finally {
+      hookPlatform = "linux";
+    }
+  });
+
+  it.runIf(process.platform === "win32")("H-W6: on Windows the real snapshot reads this process and its own ancestors", () => {
+    const snapshot = windowsHostSnapshot();
+    if ("reason" in snapshot) throw new Error(snapshot.reason);
+    expect(snapshot[0]!.pid).toBe(process.pid);
+    expect(snapshot[0]!.exe.toLowerCase()).toBe(process.execPath.toLowerCase());
+    expect(snapshot[1]?.pid).toBe(process.ppid);
+    const reader = windowsHostReader(snapshot);
+    expect(reader(process.pid)).toMatchObject({ ppid: process.ppid });
   });
 });
