@@ -112,24 +112,21 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
           artifactId, schemaId: "host-attestation/v1", targetDigest: `sha256:${"e".repeat(64)}` as const,
         })),
       }];
-      const token = issueHostAttestation(store, adapter, {
-        tool: "plan_workflow", input, model, reasoningEffort: effort,
-        actorId: hostActorId(adapter.host, SESSION), sessionId: SESSION, turnId: "d0094-opaque-turn", toolUseId: `d0094-opaque-call-${ordinal}`,
+      const caller = rootCaller(adapter.host, SESSION, {
+        callId: `d0094-opaque-call-${ordinal}`,
+        execution: { model, effort, turnId: "d0094-opaque-turn", provenance: "synthetic-authority-host:runtime" },
       });
-      expect(token).toEqual(expect.any(String));
-      const wrongInput = { ...input, taskEnvelope: { ...input.taskEnvelope, objective: "forged input" }, [HOST_ATTESTATION_FIELD]: token };
-      expect(provider.run("plan_workflow", wrongInput, clean => service.planWorkflow(clean, true)).error?.code).toBe("BINDING_INVALID");
-      const foreignProvider = new HostAttestationProvider(store, codexExecutionAdapter);
+      const foreignProvider = new HostAttestationProvider(codexExecutionAdapter);
       const foreignService = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, foreignProvider);
-      expect(foreignProvider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
-        clean => foreignService.planWorkflow(clean, true)).error?.code).toBe("BINDING_INVALID");
-      const planned = provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
-        clean => service.planWorkflow(clean, true));
+      expect(foreignProvider.run("plan_workflow", caller,
+        () => foreignService.planWorkflow(input, true))).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "HOST_ADAPTER_MISMATCH" } } });
+      const planned = provider.run("plan_workflow", caller,
+        () => service.planWorkflow(input, true));
       expect(planned.ok).toBe(true);
       expect(planned.data?.bootstrapExecution?.context).toMatchObject({ model, modelClass, reasoningEffort: effort });
       expect(provider.lastObservedCapability()).toMatchObject({ provider: "synthetic-authority", policyRevision: "d0094-authority-r1", rawModel: model });
-      expect(provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
-        clean => service.planWorkflow(clean, true)).error?.code).toBe("BINDING_INVALID");
+      expect(provider.run("plan_workflow", caller,
+        () => service.planWorkflow(input, true)).error?.code).toBe("BINDING_INVALID");
 
       // 같은 새 모델과 권위 어댑터를 단계 소비까지 유지한다. 전체 workflow 완주를 뜻하지 않는다.
       const plan = planned.data!;
@@ -171,32 +168,22 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
         evidence: [{ artifactId: "opaque-stage", kind: "test", locator: "model-capability-contract.test.ts", verified: true, note: "같은 opaque 관측의 인메모리 단계 소비 회귀." }],
         findings: [], blockers: [], error: null,
       };
-      const observation = {
-        tool: "record_stage_result", input: stageInput as unknown as Record<string, unknown>, model, reasoningEffort: effort,
-        actorId: hostActorId(adapter.host, SESSION), sessionId: SESSION,
-        turnId: "d0094-opaque-stage-turn", toolUseId: `d0094-opaque-stage-${ordinal}`,
-      };
-      expect(issueHostAttestation(store, adapter, { ...observation, actorId: hostActorId(adapter.host, "foreign-session") })).toBeNull();
-      const stageToken = issueHostAttestation(store, adapter, observation);
-      expect(stageToken).toEqual(expect.any(String));
-      const signedStage = { ...stageInput, [HOST_ATTESTATION_FIELD]: stageToken };
-      const forgedStage = { ...signedStage, evidence: [{ ...stageInput.evidence[0]!, note: "변조된 입력" }] };
-      // 다른 호출·입력·권위는 정상 서명과 같은 단계에서도 소비할 수 없다.
-      expect(provider.run("record_stage_result", forgedStage,
-        clean => service.recordStageResult(clean, true)).error?.code).toBe("BINDING_INVALID");
-      expect(provider.run("plan_workflow", signedStage,
-        clean => service.recordStageResult(clean, true)).error?.code).toBe("BINDING_INVALID");
-      expect(foreignProvider.run("record_stage_result", signedStage,
-        clean => foreignService.recordStageResult(clean, true)).error?.code).toBe("BINDING_INVALID");
-      const unqualifiedToken = issueHostAttestation(store, adapter, { ...observation, model: "unobserved-model", toolUseId: `d0094-opaque-unqualified-${ordinal}` });
-      expect(unqualifiedToken).toEqual(expect.any(String));
-      expect(JSON.parse(Buffer.from(unqualifiedToken!.split(".")[1]!, "base64url").toString("utf8")))
-        .toMatchObject({ model: "unobserved-model", eligibility: null });
-      expect(provider.run("record_stage_result", { ...stageInput, [HOST_ATTESTATION_FIELD]: unqualifiedToken },
-        clean => service.recordStageResult(clean, true)).error?.code).toBe("BINDING_INVALID");
+      const stageCaller = rootCaller(adapter.host, SESSION, {
+        callId: `d0094-opaque-stage-${ordinal}`,
+        execution: { model, effort, turnId: "d0094-opaque-stage-turn", provenance: "synthetic-authority-host:runtime" },
+      });
+      // 다른 권위의 어댑터와 자격 없는 모델 관측은 같은 단계에서도 소비할 수 없다.
+      expect(foreignProvider.run("record_stage_result", stageCaller,
+        () => foreignService.recordStageResult(stageInput, true))).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "HOST_ADAPTER_MISMATCH" } } });
+      const unqualifiedCaller = rootCaller(adapter.host, SESSION, {
+        callId: `d0094-opaque-unqualified-${ordinal}`,
+        execution: { model: "unobserved-model", effort, turnId: "d0094-opaque-stage-turn", provenance: "synthetic-authority-host:runtime" },
+      });
+      expect(provider.run("record_stage_result", unqualifiedCaller,
+        () => service.recordStageResult(stageInput, true)).error?.code).toBe("BINDING_INVALID");
       expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
-      const recorded = provider.run("record_stage_result", signedStage,
-        clean => service.recordStageResult(clean, true));
+      const recorded = provider.run("record_stage_result", stageCaller,
+        () => service.recordStageResult(stageInput, true));
       expect(provider.lastObservedCapability()).toMatchObject({ provider: adapter.provider, policyRevision: adapter.policyRevision, rawModel: model });
       if (modelClass === "lightweight" || effort === "low") {
         expect(recorded.error?.code).toBe("GATE_FAILED");
