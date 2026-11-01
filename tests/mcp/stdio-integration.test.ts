@@ -6,9 +6,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { describe, expect, it } from "vitest";
+import { getDefaultEnvironment } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { describe, expect } from "vitest";
 
 import type {
   ApiResultV1,
@@ -19,6 +18,7 @@ import type {
 } from "../../contracts/types.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { codexCallMeta } from "../helpers/caller.js";
+import { connectStdioServer, stdioServerTests } from "../helpers/stdio-server.js";
 import { CURRENT_VERSION, NEXT_TAG, NEXT_VERSION } from "./version-fixtures.js";
 
 const rootDirectory = fileURLToPath(new URL("../../", import.meta.url));
@@ -113,35 +113,29 @@ function rootCall(name: string, args: Record<string, unknown>, sessionId = "stdi
 }
 
 describe("bundled STDIO MCP server", () => {
-  it("starts from an isolated plugin tree without node_modules", async () => {
+  // Each server starts before its test's time limit starts (stdioServerTests); the limits measure only the calls below.
+  const serverTest = stdioServerTests();
+  serverTest("starts from an isolated plugin tree without node_modules", async (defer) => {
     const isolatedRoot = await mkdtemp(join(tmpdir(), "skill-suite-clean-room-"));
+    defer(() => rm(isolatedRoot, { recursive: true, force: true }));
     const isolatedServer = join(isolatedRoot, "mcp-server", "dist", "server.mjs");
     const environment = isolatedEnvironment(isolatedRoot);
     delete environment.SKILL_REGISTRY_PATH;
     environment.AGENT_GOVERNANCE_DB_PATH = join(isolatedRoot, "state", "workflow-state.sqlite3");
     const unavailableContinuityPath = join(isolatedRoot, "state", "continuity.sqlite3");
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = unavailableContinuityPath;
-    let transport: StdioClientTransport | undefined;
-
-    try {
-      await mkdir(join(isolatedRoot, "mcp-server", "dist"), { recursive: true });
-      await Promise.all([
-        cp(bundledServer, isolatedServer),
-        cp(join(rootDirectory, "contracts"), join(isolatedRoot, "contracts"), { recursive: true }),
-        cp(join(rootDirectory, "skills"), join(isolatedRoot, "skills"), { recursive: true }),
-      ]);
-      await mkdir(unavailableContinuityPath, { recursive: true });
-
-      transport = new StdioClientTransport({
-        command: process.execPath,
-        args: [isolatedServer],
-        cwd: isolatedRoot,
-        env: environment,
-        stderr: "pipe",
-      });
-      const client = new Client({ name: "clean-room-install-test", version: "1.0.0" });
-      await client.connect(transport);
-
+    await mkdir(join(isolatedRoot, "mcp-server", "dist"), { recursive: true });
+    await Promise.all([
+      cp(bundledServer, isolatedServer),
+      cp(join(rootDirectory, "contracts"), join(isolatedRoot, "contracts"), { recursive: true }),
+      cp(join(rootDirectory, "skills"), join(isolatedRoot, "skills"), { recursive: true }),
+    ]);
+    await mkdir(unavailableContinuityPath, { recursive: true });
+    const server = await connectStdioServer("clean-room-install-test", { command: process.execPath, args: [isolatedServer], cwd: isolatedRoot, env: environment });
+    defer(() => server.close());
+    return { client: server.client, environment };
+  }, async ({ client, environment }) => {
+    {
       const listed = await client.listTools();
       expect(listed.tools.map((tool) => tool.name)).toEqual([
         "get_skill_inventory",
@@ -187,71 +181,57 @@ describe("bundled STDIO MCP server", () => {
       workflowDatabase.close();
       const unavailable = toolData(await client.callTool(rootCall("inspect_context", { schemaVersion: "1.0.0" })));
       expect(unavailable.error?.code).toBe("CONTINUITY_UNAVAILABLE");
-    } finally {
-      try {
-        await transport?.close();
-      } finally {
-        await rm(isolatedRoot, { recursive: true, force: true });
-      }
     }
-  }, 60_000); // Copies a plugin tree and starts the server; Windows CI runners have taken over 15 s.
+  });
 
-  it("keeps workflow startup clean when both database settings resolve to one file", async () => {
+  serverTest("keeps workflow startup clean when both database settings resolve to one file", async (defer) => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-shared-db-"));
+    defer(() => rm(stateDirectory, { recursive: true, force: true }));
     const environment = isolatedEnvironment(stateDirectory);
     const sharedDatabasePath = join(stateDirectory, "shared.sqlite3");
     environment.AGENT_GOVERNANCE_DB_PATH = sharedDatabasePath;
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = sharedDatabasePath;
-    expect(runContinuityHook(environment, {
+    // Observed before the server starts, asserted in the test.
+    const hookOutput = runContinuityHook(environment, {
       hook_event_name: "SessionStart",
       session_id: "shared-db-session",
       source: "startup",
-    })).toEqual({});
-    expect(existsSync(sharedDatabasePath)).toBe(false);
-    const transport = new StdioClientTransport({
-      command: process.execPath,
-      args: [bundledServer],
-      cwd: rootDirectory,
-      env: environment,
-      stderr: "pipe",
     });
-    const client = new Client({ name: "shared-db-boundary-test", version: "1.0.0" });
-
+    const existedBeforeStart = existsSync(sharedDatabasePath);
+    const server = await connectStdioServer("shared-db-boundary-test", { command: process.execPath, args: [bundledServer], cwd: rootDirectory, env: environment });
+    defer(() => server.close());
+    return { server, hookOutput, existedBeforeStart, sharedDatabasePath };
+  }, async ({ server, hookOutput, existedBeforeStart, sharedDatabasePath }) => {
+    const { client } = server;
+    expect(hookOutput).toEqual({});
+    expect(existedBeforeStart).toBe(false);
     try {
-      await client.connect(transport);
       expect((await client.listTools()).tools.some((tool) => tool.name === "plan_workflow")).toBe(true);
       const unavailable = toolData(await client.callTool(rootCall("inspect_context", { schemaVersion: "1.0.0" })));
       expect(unavailable.error?.code).toBe("CONTINUITY_UNAVAILABLE");
     } finally {
-      try { await transport.close(); } finally {
-        const database = new DatabaseSync(sharedDatabasePath);
-        const tables = database.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all();
-        database.close();
-        expect(JSON.stringify(tables)).not.toContain("continuity_");
-        await rm(stateDirectory, { recursive: true, force: true });
-      }
+      await server.close();
+      const database = new DatabaseSync(sharedDatabasePath);
+      const tables = database.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all();
+      database.close();
+      expect(JSON.stringify(tables)).not.toContain("continuity_");
     }
-  }, 15_000);
+  });
 
-  it("starts with the packaged registry and fails semantic planning closed without a trusted provider", async () => {
+  serverTest("starts with the packaged registry and fails semantic planning closed without a trusted provider", async (defer) => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-stdio-"));
+    defer(() => rm(stateDirectory, { recursive: true, force: true }));
     const environment = isolatedEnvironment(stateDirectory);
     delete environment.SKILL_REGISTRY_PATH;
     const databasePath = join(stateDirectory, "workflow-state.sqlite3");
     environment.AGENT_GOVERNANCE_DB_PATH = databasePath;
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = join(stateDirectory, "continuity.sqlite3");
     seedAvailableUpdate(databasePath);
-    const transport = new StdioClientTransport({
-      command: process.execPath,
-      args: [bundledServer],
-      cwd: rootDirectory,
-      env: environment,
-      stderr: "pipe",
-    });
-    const client = new Client({ name: "stdio-integration-test", version: "1.0.0" });
-
-    try {
-      await client.connect(transport);
+    const server = await connectStdioServer("stdio-integration-test", { command: process.execPath, args: [bundledServer], cwd: rootDirectory, env: environment });
+    defer(() => server.close());
+    return { client: server.client, databasePath };
+  }, async ({ client, databasePath }) => {
+    {
       const listed = await client.listTools();
       expect(listed.tools.map((tool) => tool.name)).toEqual([
         "get_skill_inventory",
@@ -363,33 +343,22 @@ describe("bundled STDIO MCP server", () => {
       } finally {
         database.close();
       }
-    } finally {
-      try {
-        await transport.close();
-      } finally {
-        await rm(stateDirectory, { recursive: true, force: true });
-      }
     }
-  }, 15_000);
+  });
 
-  it("shares continuity state between the packaged hook and the MCP server's verified caller", async () => {
+  serverTest("shares continuity state between the packaged hook and the MCP server's verified caller", async (defer) => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-continuity-stdio-"));
+    defer(() => rm(stateDirectory, { recursive: true, force: true }));
     const environment = isolatedEnvironment(stateDirectory);
     const workflowPath = join(stateDirectory, "workflows.sqlite3");
     environment.AGENT_GOVERNANCE_DB_PATH = workflowPath;
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = join(stateDirectory, "continuity.sqlite3");
     seedAvailableUpdate(workflowPath);
-    const transport = new StdioClientTransport({
-      command: process.execPath,
-      args: [bundledServer],
-      cwd: rootDirectory,
-      env: environment,
-      stderr: "pipe",
-    });
-    const client = new Client({ name: "continuity-hook-test", version: "1.0.0" });
-
-    try {
-      await client.connect(transport);
+    const server = await connectStdioServer("continuity-hook-test", { command: process.execPath, args: [bundledServer], cwd: rootDirectory, env: environment });
+    defer(() => server.close());
+    return { client: server.client, environment };
+  }, async ({ client, environment }) => {
+    {
       const checkpoint = {
         schemaVersion: "1.0.0",
         requestId: "stdio-checkpoint-1",
@@ -430,8 +399,6 @@ describe("bundled STDIO MCP server", () => {
       });
       expect(JSON.stringify(resume)).toContain("decision=DEFER");
       expect(JSON.stringify(resume)).not.toContain("Resume this private direct task.");
-    } finally {
-      try { await transport.close(); } finally { await rm(stateDirectory, { recursive: true, force: true }); }
     }
-  }, 15_000);
+  });
 });

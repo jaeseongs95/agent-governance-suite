@@ -3,8 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { getDefaultEnvironment } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { spawnSync } from "node:child_process";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ApiResultV1, CheckpointContextRequestV1 } from "../../contracts/types.js";
@@ -16,6 +15,7 @@ import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "../mcp/version-fixtures.js";
 import { codexCallMeta, rootCaller } from "../helpers/caller.js";
+import { connectStdioServer, stdioServerTests } from "../helpers/stdio-server.js";
 
 // Owned fake core observation only; this adapter is not native role evidence.
 const syntheticHost = "synthetic-schema-compat";
@@ -298,7 +298,9 @@ describe("2.7.x continuity schema compatibility", () => {
 });
 
 describe("source STDIO continuity startup diagnostics", () => {
-  it.each(["healthy", "receiver", "future", "incompatible", "corrupt"])("keeps normal MCP usable when continuity is %s", async (kind) => {
+  // Each source server (tsx) starts before its test's time limit starts (stdioServerTests); the limit measures only the calls.
+  const serverTest = stdioServerTests();
+  for (const kind of ["healthy", "receiver", "future", "incompatible", "corrupt"]) serverTest(`keeps normal MCP usable when continuity is ${kind}`, async (defer) => {
     const { directory, databasePath } = fixture(kind === "future" ? 4 : 3);
     if (kind === "corrupt") writeFileSync(databasePath, "private body: not a database", "utf8");
     if (kind === "incompatible") {
@@ -324,14 +326,14 @@ describe("source STDIO continuity startup diagnostics", () => {
       nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null });
     workflow.close();
     // The caller comes from tools/call _meta, so calls reach storage diagnostics even when the continuity DB cannot open.
-    const transport = new StdioClientTransport({ command: process.execPath,
+    const server = await connectStdioServer("compatibility-fixture", { command: process.execPath,
       args: ["--import", "tsx", fileURLToPath(new URL("../../mcp-server/src/index.ts", import.meta.url))],
-      env: environment, cwd: fileURLToPath(new URL("../../", import.meta.url)), stderr: "pipe" });
-    let stderr = "";
-    transport.stderr?.on("data", (chunk) => { stderr += String(chunk); });
-    const client = new Client({ name: "compatibility-fixture", version: "1.0.0" });
-    try {
-      await client.connect(transport);
+      env: environment, cwd: fileURLToPath(new URL("../../", import.meta.url)) });
+    defer(() => server.close());
+    return { server, databasePath, issuer, saved, beforeReceiver, meta };
+  }, async ({ server, databasePath, issuer, saved, beforeReceiver, meta }) => {
+    const { client } = server;
+    {
       expect((await client.listTools()).tools.some((tool) => tool.name === "inspect_context")).toBe(true);
       const info = await client.callTool({ name: "get_trust_capabilities", arguments: {}, _meta: meta() });
       const infoText = (info.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")!.text;
@@ -352,9 +354,9 @@ describe("source STDIO continuity startup diagnostics", () => {
       const failure = JSON.parse(text) as ApiResultV1<unknown>;
       expect(failure, JSON.stringify(failure)).toMatchObject({ ok: false, data: null, error: { code: "CONTINUITY_UNAVAILABLE",
         details: { reason: { receiver: "RECEIVER_STATE_UNSUPPORTED", future: "UNSUPPORTED_SCHEMA", incompatible: "INCOMPATIBLE_SCHEMA", corrupt: "CORRUPT_DATABASE" }[kind] } } });
-      expect(text + stderr).not.toContain("private body");
-      expect(text + stderr).not.toContain("signing-secret");
+      expect(text + server.stderr()).not.toContain("private body");
+      expect(text + server.stderr()).not.toContain("signing-secret");
       if (beforeReceiver) expect(state(databasePath)).toEqual(beforeReceiver);
-    } finally { await client.close(); }
-  }, 15_000);
+    }
+  });
 });
