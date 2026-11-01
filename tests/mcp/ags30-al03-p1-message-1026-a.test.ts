@@ -87,11 +87,12 @@ describe("P1-ACTOR-1026-A message-only caller boundary", () => {
     }
   });
 
-  // SessionEnd carries no execution generation. Its no-op is a lifecycle safety
-  // condition, separate from the positive actor authorization cases above.
-  it.each(acceptedActors)("keeps unfenced synthetic %s SessionEnd inert", async name => {
+  // SessionEnd carries no execution generation. It may only ask the store to end the birth its own host process
+  // serves (presence-end-host decides with the reported host and bound birth); it never claims, defers or spawns.
+  it.each(acceptedActors)("limits synthetic %s SessionEnd to its own host's birth end", async name => {
     expect(await runSessionMessageHook(hostFor(name), JSON.stringify(messageInputs[1]))).toBe("");
-    expect(f.request).not.toHaveBeenCalled();
+    expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["presence-end-host"]);
+    expect(f.request.mock.calls[0]![1]).toMatchObject({ target: { host: hostFor(name), sessionId: "p1-parent-session" }, hostPid: 4242 });
     expect(f.spawn).not.toHaveBeenCalled();
   });
 

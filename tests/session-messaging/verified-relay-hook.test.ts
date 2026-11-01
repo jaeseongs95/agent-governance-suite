@@ -3,7 +3,7 @@ import { EventEmitter } from "node:events";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const f = vi.hoisted(() => ({ now: 100, turnEnd: false, request: vi.fn(), spawn: vi.fn(), observeSpawn: vi.fn() }));
-vi.mock("node:perf_hooks", () => ({ performance: { now: () => f.now } }));
+vi.mock("node:perf_hooks", () => ({ performance: { now: () => f.now, timeOrigin: Date.now() } }));
 vi.mock("node:child_process", async (original) => ({ ...await original<typeof import("node:child_process")>(), spawn: f.spawn }));
 vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
   ...await original<typeof import("../../mcp-server/src/session-message-client.js")>(), sessionMessageRequest: f.request,
@@ -521,7 +521,8 @@ it.each(["codex", "claude-code", "gemini", "antigravity", syntheticHost])("keeps
     const before = snapshot();
     expect(await handleSessionMessageHook({ ...input, hook_event_name: "SessionEnd" }, host)).toEqual({});
     expect(snapshot()).toEqual(before);
-    expect(f.request).not.toHaveBeenCalled();
+    // The only request a SessionEnd may make is its own host's birth end, which this newer, unbound generation refuses.
+    expect(f.request.mock.calls.every(([operation]) => operation === "presence-end-host")).toBe(true);
     expect(f.spawn).not.toHaveBeenCalled();
     expect(store.claimDeferred(target, now + 8)).toEqual([]);
     const queuedClaim = store.claimDeferred(target, now + 9);
