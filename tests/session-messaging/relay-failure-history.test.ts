@@ -98,7 +98,9 @@ describe("D0349 bounded relay failure history", () => {
     fs.symlinkSync(victimDirectory, history(), process.platform === "win32" ? "junction" : "dir");
     persist("tick", "OWNED_HISTORY_FAILURE");
     expect(fs.readdirSync(victimDirectory)).toEqual([]);
-    fs.rmSync(history());
+    // Remove only the link itself: rmSync of a directory link fails on the native rm of current Node 24 (EISDIR).
+    if (process.platform === "win32") fs.rmdirSync(history()); else fs.unlinkSync(history());
+    expect(fs.existsSync(victimDirectory)).toBe(true);
     persist("tick", "OWNED_HISTORY_FAILURE");
     const target = path.join(history(), fs.readdirSync(history())[0]!);
     const victim = path.join(root, "victim");

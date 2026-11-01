@@ -1,154 +1,145 @@
+import { createHash } from "node:crypto";
 import { afterEach, expect, it } from "vitest";
+import { dispatchManagedWake } from "../../mcp-server/src/session-message-relay.js";
+import { parseWakeMessages, type sessionMessageRequest } from "../../mcp-server/src/session-message-client.js";
+import { dispatchSessionMessageOperation } from "../../mcp-server/src/session-message-operations.js";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 
+// A verified host birth (adapter-observed pid and start token) ensures its own generation and relay in one transaction
+// (ensureVerifiedGeneration). The relay_id of each grant is the fence; no PID or child start token is stored.
 const target = { host: "gemini", sessionId: "verified-relay-fixture" };
-const generation = "host-process-v1:" + "a".repeat(64);
-const replacement = "host-process-v1:" + "b".repeat(64);
+const transport = "antigravity-queue";
 const now = Date.UTC(2026, 0, 1);
+const code = "sha256:" + "a".repeat(64);
+const birth = (pid: number, start: string) => "host-process-v1:" + createHash("sha256")
+  .update(JSON.stringify([target.host, target.sessionId, pid, start])).digest("hex");
+const generation = birth(100, "T1");
+const replacement = birth(101, "T2");
 const stores: SessionMessageStore[] = [];
-const fixture = () => {
-  const store = new SessionMessageStore(":memory:");
-  stores.push(store);
-  const input = { ...target, instanceId: generation, parentPid: 100, transport: "antigravity-queue",
-    wakeVisibility: "user-message" as const, canWakeSilently: false,
-    deliveryCapabilities: { supportedInjection: ["peer-wake" as const], idleWake: "user-message" as const } };
-  const ensure = (overrides: Partial<typeof input> = {}, at = now) => {
-    const next = { ...input, ...overrides };
-    return store.prepareVerifiedRelay({ ...next, expectedOwner: store.relayOwner(target, next.transport) }, at);
-  };
-  const activate = (relayId: string, overrides = {}, at = now + 1) =>
-    store.activateVerifiedRelay({ ...input, relayId, pid: 200, ...overrides }, at);
-  return { store, input, ensure, activate };
-};
 afterEach(() => { for (const store of stores.splice(0)) store.close(); });
 
-it("caches a grant without changing its owner or presence birth/heartbeat/lease", () => {
+const fixture = () => {
+  let clock = now;
+  const store = new SessionMessageStore(":memory:", { clock: () => clock });
+  stores.push(store);
+  const input = { ...target, instanceId: generation, hostPid: 100, hostStart: "T1", codeDigest: code, transport,
+    wakeVisibility: "user-message" as const, canWakeSilently: false,
+    deliveryCapabilities: { supportedInjection: ["peer-wake" as const], idleWake: "user-message" as const } };
+  type Input = Parameters<SessionMessageStore["ensureVerifiedGeneration"]>[0];
+  const ensure = (overrides: Partial<Input> = {}, at = now) => store.ensureVerifiedGeneration({ ...input, ...overrides }, at);
+  const next = (pid: number, start: string, overrides: Partial<Input> = {}, at = now) =>
+    ensure({ instanceId: birth(pid, start), hostPid: pid, hostStart: start, ...overrides }, at);
+  const tick = (relayId: string, at: number, instanceId = generation, includePending = false, tickTransport = transport) =>
+    store.relayTick({ ...target, transport: tickTransport, relayId, instanceId, includePending }, at);
+  const release = (relayId: string, at: number, instanceId = generation, releaseTransport = transport) =>
+    store.releaseRelay({ ...target, transport: releaseTransport, relayId, instanceId, reason: "host-process-ended" }, at);
+  return { store, input, ensure, next, tick, release, setClock: (value: number) => { clock = value; } };
+};
+
+it("grants once and refuses a second ensure of the live birth without changing its presence or lease", () => {
   const { store, ensure } = fixture();
   const first = ensure();
-  expect(first.spawn).toBe(true);
-  const before = store.presence(target, now);
-  const owner = store.relayOwner(target, "antigravity-queue");
-  // D0354: an unactivated pid=0 grant is never re-granted here, and says so.
-  expect(ensure({}, now + 100)).toEqual({ ...first, spawn: false, reason: "RELAY_GRANT_UNCONFIRMED" });
+  expect(first).toEqual({ spawn: true, relayId: expect.stringMatching(/^[0-9a-f-]{36}$/u), instanceId: generation });
+  const before = store.presence(target, now + 100);
+  const lease = store.liveRelay(target, transport, now + 100);
+  expect(ensure({}, now + 100)).toEqual({ spawn: false, relayId: null, instanceId: generation, reason: "RELAY_ALIVE" });
   expect(store.presence(target, now + 100)).toEqual(before);
-  expect(store.relayOwner(target, "antigravity-queue")).toEqual(owner);
+  expect(store.liveRelay(target, transport, now + 100)).toEqual(lease);
+  // The adapter-observed birth is the generation's host; the relay's watcher must later bind exactly it.
+  expect(store.presenceHost(target, generation)).toEqual({ pid: 100, start: "T1" });
 });
 
-it("retains a pending unknown after presence retention without TTL respawn", () => {
+it("allows only one grant from competing ensures of the same birth", () => {
   const { store, ensure } = fixture();
-  const first = ensure();
-  const later = now + 48 * 3600_000;
-  store.prune(later);
-  expect(store.presence(target, later).instanceId).toBeNull();
-  expect(store.relayOwner(target, "antigravity-queue")).toMatchObject({ relayId: first.relayId, pid: 0, instanceId: generation });
-  expect(store.liveRelay(target, "antigravity-queue", later)).toBeNull();
-  expect(store.heartbeatRelay({ ...target, transport: "antigravity-queue", relayId: first.relayId! }, later)).toBe(false);
-  expect(ensure({}, later)).toEqual({ ...first, spawn: false, reason: expect.any(String) });
-  expect(store.presence(target, later).instanceId).toBeNull();
-});
-
-it("activates only the reserved parent and first child, allowing that exact child again", () => {
-  const { ensure, activate } = fixture();
-  const id = ensure().relayId!;
-  expect(activate(id, { parentPid: 101 })).toBe(false);
-  expect(activate(id)).toBe(true);
-  expect(activate(id)).toBe(true);
-  expect(activate(id, { pid: 201 })).toBe(false);
-});
-
-it("keeps a late first child fail closed instead of reviving an expired birth", () => {
-  const { store, ensure, activate } = fixture();
-  const first = ensure();
-  expect(activate(first.relayId!, {}, now + 60_000)).toBe(false);
-  expect(ensure({}, now + 60_001)).toEqual({ ...first, spawn: false, reason: expect.any(String) });
-  expect(store.relayOwner(target, "antigravity-queue")?.pid).toBe(0);
-  expect(store.presence(target, now + 60_001).state).toBe("unreachable");
-});
-
-it("does not let a legacy acquire replace pending or expired verified ownership", () => {
-  const { store, ensure, activate } = fixture();
-  const id = ensure().relayId!;
-  const legacy = { ...target, transport: "antigravity-queue", relayId: "legacy-child", pid: 300, parentPid: 100 };
-  expect(store.acquireRelay(legacy, now + 1)).toBe(false);
-  expect(activate(id)).toBe(true);
-  expect(store.acquireRelay(legacy, now + 60_000)).toBe(false);
-  expect(store.relayOwner(target, "antigravity-queue")?.relayId).toBe(id);
-});
-
-it.each(["codex-deferred", "claude-inbox"])("rejects legacy same-parent live owner replacement for %s", (transport) => {
-  const { store } = fixture();
-  expect(store.acquireRelay({ ...target, transport, relayId: "legacy-first", pid: 200, parentPid: 100 }, now)).toBe(true);
-  expect(store.acquireRelay({ ...target, transport, relayId: "legacy-next", pid: 201, parentPid: 100 }, now + 1)).toBe(false);
-  expect(store.liveRelay(target, transport, now + 2)?.relayId).toBe("legacy-first");
-  expect(store.acquireRelay({ ...target, transport, relayId: "legacy-next", pid: 201, parentPid: 100 }, now + 15_000)).toBe(true);
-  expect(store.liveRelay(target, transport, now + 15_001)?.relayId).toBe("legacy-next");
-});
-
-it("replaces a positively dead exact child and fences stale activation/heartbeat/cleanup", () => {
-  const { store, input, ensure, activate } = fixture();
-  const old = ensure().relayId!;
-  expect(activate(old)).toBe(true);
-  const fresh = store.prepareVerifiedRelay({ ...input, expectedOwner: store.relayOwner(target, input.transport),
-    confirmedDead: { relayId: old, pid: 200 } }, now + 2);
-  expect(fresh.spawn).toBe(true);
-  expect(fresh.relayId).not.toBe(old);
-  expect(activate(old, {}, now + 3)).toBe(false);
-  expect(store.heartbeatRelay({ ...target, transport: input.transport, relayId: old }, now + 3)).toBe(false);
-  expect(store.releaseVerifiedRelay({ ...input, relayId: old, pid: 200 }, now + 3)).toBe(false);
-  expect(store.relayOwner(target, input.transport)?.relayId).toBe(fresh.relayId);
-});
-
-it("rejects a stale pre-observation owner snapshot without changing a newer generation", () => {
-  const { store, input, ensure } = fixture();
-  const first = ensure();
-  const snapshot = store.relayOwner(target, input.transport);
-  const next = ensure({ instanceId: replacement }, now + 1);
-  expect(next.spawn).toBe(true);
-  const before = store.presence(target, now + 1);
-  expect(store.prepareVerifiedRelay({ ...input, expectedOwner: snapshot }, now + 2))
-    .toEqual({ spawn: false, relayId: null, instanceId: generation, reason: "GENERATION_SUPERSEDED" });
-  expect(store.relayOwner(target, input.transport)?.relayId).toBe(next.relayId);
-  expect(next.relayId).not.toBe(first.relayId);
-  expect(store.presence(target, now + 2)).toEqual(before);
-});
-
-it("allows only one reservation from competing empty snapshots", () => {
-  const { store, input } = fixture();
-  const first = store.prepareVerifiedRelay({ ...input, expectedOwner: null }, now);
-  const second = store.prepareVerifiedRelay({ ...input, expectedOwner: null }, now + 1);
+  const first = ensure({}, now);
+  const second = ensure({}, now + 1);
   expect(first.spawn).toBe(true);
-  expect(second.spawn).toBe(false);
-  expect(store.relayOwner(target, input.transport)?.relayId).toBe(first.relayId);
+  expect(second).toMatchObject({ spawn: false, relayId: null, reason: "RELAY_ALIVE" });
+  expect(store.liveRelay(target, transport, now + 1)?.relayId).toBe(first.relayId);
 });
 
-it("rejects wrong-instance release even when relayId and child PID are current", () => {
-  const { store, input, ensure, activate } = fixture();
+it("re-grants an expired birth with a new relay_id once and fences the old relay's tick and release", () => {
+  const { store, ensure, tick, release } = fixture();
+  const old = ensure().relayId!;
+  expect(tick(old, now + 5000).alive).toBe(true);
+  const expired = now + 60_000;
+  expect(store.presence(target, expired).state).toBe("unreachable");
+  expect(tick(old, expired).alive).toBe(false);
+  const fresh = ensure({}, expired);
+  expect(fresh).toMatchObject({ spawn: true, instanceId: generation });
+  expect(fresh.relayId).not.toBe(old);
+  expect(store.presence(target, expired)).toMatchObject({ state: "online", instanceId: generation });
+  expect(ensure({}, expired + 1)).toMatchObject({ spawn: false, reason: "RELAY_ALIVE" });
+  expect(tick(old, expired + 2).alive).toBe(false);
+  expect(release(old, expired + 2)).toBe(false);
+  expect(store.liveRelay(target, transport, expired + 2)?.relayId).toBe(fresh.relayId);
+  expect(tick(fresh.relayId!, expired + 3).alive).toBe(true);
+});
+
+it("refuses a superseded birth and a stale expected observation without changing the newer generation", () => {
+  const { store, ensure, next } = fixture();
+  const first = ensure();
+  const second = next(101, "T2", { expectedPresenceInstanceId: generation }, now + 1);
+  expect(second).toMatchObject({ spawn: true, instanceId: replacement });
+  const before = store.presence(target, now + 2);
+  const lease = store.liveRelay(target, transport, now + 2);
+  expect(ensure({}, now + 2)).toEqual({ spawn: false, relayId: null, instanceId: generation, reason: "GENERATION_SUPERSEDED" });
+  expect(next(102, "T3", { expectedPresenceInstanceId: generation }, now + 2))
+    .toEqual({ spawn: false, relayId: null, instanceId: birth(102, "T3"), reason: "GENERATION_CHANGED" });
+  expect(store.presence(target, now + 2)).toEqual(before);
+  expect(store.liveRelay(target, transport, now + 2)).toEqual(lease);
+  expect(second.relayId).not.toBe(first.relayId);
+});
+
+it("protects an online verified current birth from an unexpected replacement, and allows the expected one", () => {
+  const { store, ensure, next } = fixture();
+  ensure();
+  expect(next(101, "T2", {}, now + 1)).toEqual({ spawn: false, relayId: null, instanceId: replacement, reason: "CURRENT_GENERATION_PROTECTED" });
+  expect(store.presence(target, now + 1).instanceId).toBe(generation);
+  // Once the current birth is not online its protection ends.
+  expect(next(101, "T2", {}, now + 60_000)).toMatchObject({ spawn: true, instanceId: replacement });
+  expect(store.presence(target, now + 60_000).instanceId).toBe(replacement);
+});
+
+it("refuses a grant whose reported host pid differs from the generation's host (HOST_MISMATCH)", () => {
+  const { store, ensure } = fixture();
+  ensure();
+  expect(store.grantRelay({ ...target, transport, instanceId: generation, codeDigest: code, hostPid: 999 }, now + 1))
+    .toEqual({ relayId: null, reason: "HOST_MISMATCH" });
+});
+
+it("rejects a birth whose instance id does not hash its pid and start token", () => {
+  const { ensure } = fixture();
+  expect(() => ensure({ instanceId: "host-process-v1:" + "b".repeat(64) })).toThrow("Invalid verified host process birth.");
+  expect(() => ensure({ hostStart: "  " })).toThrow("Invalid verified host process birth.");
+});
+
+it("a release naming another instance never ends the current presence", () => {
+  const { store, ensure, release } = fixture();
   const id = ensure().relayId!;
-  expect(activate(id)).toBe(true);
-  const owner = store.relayOwner(target, input.transport);
   const presence = store.presence(target, now + 1);
-  expect(store.releaseVerifiedRelay({ ...input, instanceId: replacement, relayId: id, pid: 200 }, now + 2)).toBe(false);
-  expect(store.relayOwner(target, input.transport)).toEqual(owner);
-  expect(store.presence(target, now + 2)).toEqual(presence);
+  release(id, now + 2, replacement);
+  expect(store.presence(target, now + 2)).toMatchObject({ instanceId: presence.instanceId, startedAt: presence.startedAt,
+    state: "online", endedAt: null, endReason: null });
 });
 
 it("keeps exact relay termination and reused-session wake/claim working with a retained input observation", () => {
-  const { store, input, ensure, activate } = fixture();
+  const { store, ensure, next, tick, release } = fixture();
   const old = ensure().relayId!;
-  expect(activate(old)).toBe(true);
+  expect(tick(old, now + 1).alive).toBe(true);
   store.observeNativeInput(target, now + 2, generation);
-  expect(store.releaseVerifiedRelay({ ...input, relayId: old, pid: 200 }, now + 3)).toBe(true);
+  expect(release(old, now + 3)).toBe(true);
   expect(store.presence(target, now + 3)).toMatchObject({ state: "ended", instanceId: generation, endReason: "host-process-ended" });
-  expect(store.relayOwner(target, input.transport)).toBeNull();
+  expect(store.liveRelay(target, transport, now + 3)).toBeNull();
   expect(store.database.prepare("SELECT deferred_tool_claim FROM input_observations").get()).toMatchObject({ deferred_tool_claim: 1 });
 
-  const fresh = ensure({ instanceId: replacement }, now + 4);
+  const fresh = next(101, "T2", {}, now + 4);
   expect(fresh.spawn).toBe(true);
-  expect(activate(fresh.relayId!, { instanceId: replacement }, now + 5)).toBe(true);
-  expect(store.releaseVerifiedRelay({ ...input, relayId: old, pid: 200 }, now + 6)).toBe(false);
+  expect(tick(fresh.relayId!, now + 5, replacement).alive).toBe(true);
+  expect(release(old, now + 6)).toBe(false);
   expect(store.presence(target, now + 6)).toMatchObject({ state: "online", instanceId: replacement });
   store.send({ messageId: "reused-input-message", sender: { host: "synthetic-peer", sessionId: "sender" }, target, body: "pending" }, now + 7);
-  expect(store.reserveManagedWake({ ...target, instanceId: replacement, transport: input.transport,
+  expect(store.reserveManagedWake({ ...target, instanceId: replacement, transport,
     relayId: fresh.relayId!, nonce: "reused-input-wake-abcdefghijklmnop" }, now + 8).dispatch).toBe(true);
   store.observeNativeInput(target, now + 9, replacement);
   expect(store.database.prepare("SELECT * FROM input_observations").all()).toMatchObject([
@@ -158,204 +149,64 @@ it("keeps exact relay termination and reused-session wake/claim working with a r
   const claimed = store.claimDeferred(target, now + 11, { instanceId: replacement });
   expect(claimed).toMatchObject([{ messageId: "reused-input-message", deliveryAttempt: 1 }]);
   expect(store.acknowledge(target, ["reused-input-message"], now + 12, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
-  expect(store.releaseVerifiedRelay({ ...input, instanceId: replacement, relayId: fresh.relayId!, pid: 200 }, now + 13)).toBe(true);
+  expect(release(fresh.relayId!, now + 13, replacement)).toBe(true);
 });
 
-it("releases an old transport without ending the current transport presence", () => {
-  const { store, input, ensure, activate } = fixture();
+it("releases an old transport's lease without ending the current transport presence", () => {
+  const { store, ensure, release } = fixture();
   const old = ensure().relayId!;
-  expect(activate(old)).toBe(true);
   const fresh = ensure({ transport: "codex-queue" }, now + 2);
   expect(fresh.spawn).toBe(true);
   const presence = store.presence(target, now + 2);
   expect(presence.transport).toBe("codex-queue");
-  expect(store.releaseVerifiedRelay({ ...input, relayId: old, pid: 200 }, now + 3)).toBe(true);
+  expect(release(old, now + 3)).toBe(true);
   expect(store.presence(target, now + 3)).toEqual(presence);
-  expect(store.relayOwner(target, "codex-queue")?.relayId).toBe(fresh.relayId);
+  expect(store.liveRelay(target, "codex-queue", now + 3)?.relayId).toBe(fresh.relayId);
 });
 
-it("rejects an old reservation even if a newer same-transport presence matches the caller", () => {
-  const { store, input, ensure, activate } = fixture();
+it("fences an old relay whose generation a newer presence of the same transport replaced", () => {
+  const { store, input, ensure, tick } = fixture();
   const old = ensure().relayId!;
-  store.startPresence({ ...input, instanceId: replacement }, now + 1);
-  expect(activate(old, { instanceId: replacement }, now + 2)).toBe(false);
-  expect(store.relayOwner(target, input.transport)?.pid).toBe(0);
+  store.startPresence({ ...input, instanceId: replacement, hostPid: 101, hostStart: "T2" }, now + 1);
+  expect(tick(old, now + 2, replacement).alive).toBe(false);
+  expect(tick(old, now + 2).alive).toBe(false);
   expect(store.presence(target, now + 2).instanceId).toBe(replacement);
 });
 
-it("does not replace an unbound historical verified-prefix row", () => {
-  const { store, input, ensure } = fixture();
-  const legacyId = "verified-relay-v1:11111111-1111-4111-8111-111111111111";
-  expect(store.acquireRelay({ ...target, transport: input.transport, relayId: legacyId, pid: 200, parentPid: 100 }, now)).toBe(true);
-  expect(ensure({}, now + 60_000)).toEqual({ spawn: false, relayId: null, instanceId: generation, reason: "RELAY_GRANT_UNBOUND" });
-  expect(store.relayOwner(target, input.transport)?.relayId).toBe(legacyId);
-});
-
-it("AGS-D-0009: re-acquires expired relay and presence leases for a live active child and dispatches queued wake without ending presence", () => {
-  const { store, input, ensure, activate } = fixture();
-  const id = ensure().relayId!;
-  const initialPresence = store.presence(target, now);
-  expect(activate(id, { relayStartToken: "child-token-1" }, now + 1)).toBe(true);
-  store.send({ messageId: "queued-after-expiry-msg", sender: { host: "synthetic-peer", sessionId: "sender" }, target, body: "wake-after-expiry" }, now + 2);
-
-  // Advance past both 15s relay lease and 20s presence lease.
-  const expiredAt = now + 25_000;
-  expect(store.presence(target, expiredAt).state).toBe("unreachable");
-  expect(store.liveRelay(target, input.transport, expiredAt)).toBeNull();
-  expect(store.relayTick({ ...target, transport: input.transport, relayId: id, instanceId: generation, includePending: true }, expiredAt))
-    .toEqual({ alive: false, count: 0 });
-
-  // A wrong PID or wrong startToken still cannot re-acquire after expiry.
-  expect(activate(id, { pid: 201, relayStartToken: "child-token-1" }, expiredAt + 1)).toBe(false);
-  expect(activate(id, { relayStartToken: "wrong-token" }, expiredAt + 1)).toBe(false);
-
-  // The same active verified child re-acquires both relay and presence leases (preserving birth startedAt) and wakes queued messages.
-  expect(activate(id, { relayStartToken: "child-token-1" }, expiredAt + 2)).toBe(true);
-  expect(store.presence(target, expiredAt + 2)).toMatchObject({
-    state: "online",
-    instanceId: generation,
-    startedAt: initialPresence.startedAt,
-    endedAt: null,
-    endReason: null,
-  });
-  expect(store.relayTick({ ...target, transport: input.transport, relayId: id, instanceId: generation, includePending: true }, expiredAt + 3))
-    .toEqual({ alive: true, count: 1 });
-  const reserved = store.reserveManagedWake({
-    ...target,
-    instanceId: generation,
-    transport: input.transport,
-    relayId: id,
-    nonce: "reacquired-wake-abcdefghijklmnop",
-    resume: true,
-  }, expiredAt + 4);
-  expect(reserved.dispatch).toBe(true);
-  const started = store.startManagedWake(reserved.attempt!, 600_000, expiredAt + 5);
-  expect(started.dispatch).toBe(true);
-  expect(store.recordManagedWakeOutcome(started.attempt!, { result: "handed-off" }, 600_000, expiredAt + 6)).toBe(true);
-});
-
-it("AGS-D-0009: prepareVerifiedRelay restores expired presence and relay leases only when confirmedAlive is true and relayStartToken is bound", () => {
-  const { store, input, ensure, activate } = fixture();
-  const first = ensure();
-  const id = first.relayId!;
-  const initialStartedAt = store.presence(target, now).startedAt;
-  expect(activate(id, { relayStartToken: "child-token-1" }, now + 1)).toBe(true);
-
-  const expiredAt = now + 25_000;
-  expect(store.presence(target, expiredAt).state).toBe("unreachable");
-  expect(store.liveRelay(target, input.transport, expiredAt)).toBeNull();
-
-  // Without explicit confirmedAlive: true, prepareVerifiedRelay must NOT restore expired leases on unverified PID state.
-  expect(ensure({}, expiredAt + 1)).toEqual({ spawn: false, relayId: id, instanceId: generation, reason: "RELAY_LIVENESS_UNCONFIRMED" });
-  expect(store.presence(target, expiredAt + 1).state).toBe("unreachable");
-  expect(store.liveRelay(target, input.transport, expiredAt + 1)).toBeNull();
-
-  expect(store.prepareVerifiedRelay({
-    ...input,
-    expectedOwner: store.relayOwner(target, input.transport),
-    confirmedAlive: false,
-  }, expiredAt + 2)).toEqual({ spawn: false, relayId: id, instanceId: generation, reason: "RELAY_LIVENESS_UNCONFIRMED" });
-  expect(store.presence(target, expiredAt + 2).state).toBe("unreachable");
-
-  // With positive confirmedAlive: true and bound relayStartToken, leases are restored without respawning.
-  const ensuredAgain = store.prepareVerifiedRelay({
-    ...input,
-    expectedOwner: store.relayOwner(target, input.transport),
-    confirmedAlive: true,
-  }, expiredAt + 3);
-  expect(ensuredAgain).toEqual({ spawn: false, relayId: id, instanceId: generation, reason: "RELAY_ALIVE" });
-  expect(store.presence(target, expiredAt + 3)).toMatchObject({
-    state: "online",
-    instanceId: generation,
-    startedAt: initialStartedAt,
-    endedAt: null,
-  });
-  expect(store.liveRelay(target, input.transport, expiredAt + 3)).toMatchObject({
-    relayId: id,
-    pid: 200,
-    parentPid: 100,
-  });
-});
-
-it("AGS-D-0009: dispatchManagedWake after expired-lease re-acquisition wakes recipient, claims deferred body, and acknowledges", async () => {
-  const { dispatchManagedWake } = await import("../../mcp-server/src/session-message-relay.js");
-  const { parseWakeMessages } = await import("../../mcp-server/src/session-message-client.js");
-  const { store, input, ensure, activate } = fixture();
-  const id = ensure().relayId!;
-  expect(activate(id, { relayStartToken: "child-token-1" }, now + 1)).toBe(true);
-  store.send({
-    messageId: "e2e-expired-wake-msg",
-    sender: { host: "codex", sessionId: "sender-session" },
-    target,
-    body: "payload-after-lease-recovery",
-  }, now + 2);
-
-  // Advance clock past relay (15s) and presence (20s) lease expiry.
-  let clock = now + 25_000;
-  expect(store.relayTick({ ...target, transport: input.transport, relayId: id, instanceId: generation, includePending: true }, clock))
-    .toEqual({ alive: false, count: 0 });
-  expect(activate(id, { relayStartToken: "child-token-1" }, clock + 1)).toBe(true);
+it("AGS-D-0009: a re-granted expired birth dispatches its queued wake, then the recipient claims and acknowledges", async () => {
+  const { store, ensure, tick, setClock } = fixture();
+  const old = ensure().relayId!;
+  store.send({ messageId: "e2e-expired-wake-msg", sender: { host: "codex", sessionId: "sender-session" }, target,
+    body: "payload-after-lease-recovery" }, now + 2);
+  // Past the relay (15s) and presence (20s) leases: the old relay is dead and the birth is unreachable.
+  let clock = now + 60_000;
+  setClock(clock);
+  expect(tick(old, clock, generation, true)).toEqual({ alive: false, count: 0, hostBound: false });
+  const fresh = ensure({}, clock);
+  expect(fresh.spawn).toBe(true);
+  expect(tick(fresh.relayId!, clock + 1, generation, true)).toEqual({ alive: true, count: 1, hostBound: true });
   clock += 2;
-  const tickAfterReacquire = store.relayTick({ ...target, transport: input.transport, relayId: id, instanceId: generation, includePending: true }, clock);
-  expect(tickAfterReacquire).toEqual({ alive: true, count: 1 });
+  setClock(clock);
 
   const dispatchedPrompts: string[] = [];
-  const fakeRequest = async <T>(op: string, payload: Record<string, unknown>): Promise<T> => {
+  const request = (async <T>(op: string, payload: Record<string, unknown>): Promise<T> => {
     clock += 1;
-    if (op === "relay-tick") {
-      return store.relayTick({
-        ...(payload.target as typeof target),
-        transport: String(payload.transport),
-        relayId: String(payload.relayId),
-        instanceId: String(payload.instanceId),
-        includePending: Boolean(payload.includePending),
-      }, clock) as T;
-    }
-    if (op === "reserve-wake") {
-      return store.reserveManagedWake({
-        ...(payload.target as typeof target),
-        nonce: String(payload.nonce),
-        instanceId: String(payload.instanceId),
-        transport: String(payload.transport),
-        relayId: String(payload.relayId),
-        resume: Boolean(payload.resume),
-      }, clock) as T;
-    }
-    if (op === "start-wake") {
-      return store.startManagedWake(payload.attempt as Parameters<typeof store.startManagedWake>[0], Number(payload.resendBaseMs), clock) as T;
-    }
-    if (op === "record-wake-outcome") {
-      return store.recordManagedWakeOutcome(
-        payload.attempt as Parameters<typeof store.recordManagedWakeOutcome>[0],
-        payload.outcome as Parameters<typeof store.recordManagedWakeOutcome>[1],
-        Number(payload.resendBaseMs),
-        clock,
-      ) as T;
-    }
-    throw new Error(`Unexpected op: ${op}`);
-  };
-
-  const wakeResult = await dispatchManagedWake(
-    { ...target, instanceId: generation, transport: input.transport },
-    id,
-    {
-      capabilities: input.deliveryCapabilities,
-      resendBaseMs: 600_000,
-      dispatch: async (_target, prompt) => {
-        dispatchedPrompts.push(prompt);
-        return { result: "handed-off" };
-      },
-    },
-    fakeRequest as typeof import("../../mcp-server/src/session-message-client.js").sessionMessageRequest,
-  );
-  expect(wakeResult).toBe(true);
+    setClock(clock);
+    return dispatchSessionMessageOperation(store, op, payload) as T;
+  }) as typeof sessionMessageRequest;
+  const woke = await dispatchManagedWake({ ...target, instanceId: generation, transport }, fresh.relayId!, {
+    capabilities: { supportedInjection: ["peer-wake"], idleWake: "user-message" }, resendBaseMs: 600_000,
+    dispatch: async (_target, prompt) => { dispatchedPrompts.push(prompt); return { result: "handed-off" }; },
+  }, request);
+  expect(woke).toBe(true);
   expect(dispatchedPrompts).toHaveLength(1);
   const parsedWake = parseWakeMessages(dispatchedPrompts[0]!);
-  expect(parsedWake.wakeOnly).toBe(true);
-  expect(parsedWake.nonces).toHaveLength(1);
+  expect(parsedWake).toMatchObject({ wakeOnly: true, nonces: [expect.any(String)] });
   expect(store.consumeWake(target, parsedWake.nonces[0]!)).toBe(true);
+  // The old relay_id cannot reserve a second wake for the same birth.
+  expect(store.reserveManagedWake({ ...target, instanceId: generation, transport, relayId: old,
+    nonce: "fenced-old-relay-wake-abcdefghijklmnop" }, clock + 1).dispatch).toBe(false);
 
-  // Observe native input -> claim deferred message body on subsequent boundary -> acknowledge.
   store.observeNativeInput(target, clock + 2, generation);
   expect(store.claimDeferred(target, clock + 3, { instanceId: generation })).toEqual([]);
   const claimed = store.claimDeferred(target, clock + 4, { instanceId: generation });

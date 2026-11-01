@@ -186,7 +186,7 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
     expect(diagnosticRecord(sink)).toMatchObject({phase: "close", cleanup: "unknown", context: {producerCause: {opaque: "proxy"}}});
     expect(trap).not.toHaveBeenCalled(); expect(f.close).toHaveBeenCalledExactlyOnceWith(0);
   });
-  it("uses actual hook entry, shared reader and existing safe sink without broker I/O", async () => {
+  it("uses actual hook entry, shared reader and existing safe sink without messaging I/O", async () => {
     f.closeFailure = ioError("ENOENT");
     const sink = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(sessionMessageTransport("antigravity", automaticEnvironment, true)).toBe("gemini-deferred");

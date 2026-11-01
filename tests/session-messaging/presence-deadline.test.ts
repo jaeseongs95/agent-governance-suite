@@ -5,13 +5,16 @@ vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
   sessionMessageRequest: vi.fn(),
 }));
 
-const { sessionMessageRequest } = await import("../../mcp-server/src/session-message-client.js");
+const { SESSION_MESSAGE_REQUEST_TIMEOUT_MS, sessionMessageRequest } = await import("../../mcp-server/src/session-message-client.js");
 const { SessionMessageService } = await import("../../mcp-server/src/session-message-service.js");
 const request = vi.mocked(sessionMessageRequest);
 type Target = { host: string; sessionId: string };
 const targets = (count: number): Target[] => Array.from({ length: count }, (_, index) => ({ host: "portable", sessionId: `session-${index}` }));
 // The client's default per-call deadline, which a board lookup also uses as its overall bound.
-const CLIENT_DEADLINE_MS = 20_000;
+const CLIENT_DEADLINE_MS = SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
+// A slow answer inside every per-request limit; the lookup answers this many batches before its overall deadline.
+const SLOW_ANSWER_MS = 1900;
+const ANSWERED_BATCHES = Math.floor(CLIENT_DEADLINE_MS / SLOW_ANSWER_MS);
 let arrivals: Target[][] = [];
 
 /**
@@ -49,20 +52,22 @@ afterEach(() => { vi.useRealTimers(); });
 it("ends a lookup against a slow but answering broker at one overall deadline, keeping answers and leaving the rest unanswered", async () => {
   // 300 board sessions are 100 batches. Each answer takes 1.9 s, inside every per-request limit, so without an overall
   // bound the lookup would take 190 s.
+  expect(CLIENT_DEADLINE_MS % SLOW_ANSWER_MS).not.toBe(0);
   const board = targets(300);
-  broker(() => 1900);
+  broker(() => SLOW_ANSWER_MS);
   const { pending, settledAt } = await lookup(board);
   await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS);
   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
   const result = await pending;
   expect(result.ok).toBe(true);
-  // Ten batches answered by 19 s; the eleventh had 1 s left and gave up at the deadline.
-  expect(result.data!.sessions.map((session) => session.sessionId)).toEqual(board.slice(0, 30).map((item) => item.sessionId));
-  expect(result.data!.unanswered).toEqual(board.slice(30));
-  expect(request).toHaveBeenCalledTimes(11);
+  // ANSWERED_BATCHES batches answered before the deadline; the next one had only the remainder and gave up at the deadline.
+  const answered = ANSWERED_BATCHES * 3;
+  expect(result.data!.sessions.map((session) => session.sessionId)).toEqual(board.slice(0, answered).map((item) => item.sessionId));
+  expect(result.data!.unanswered).toEqual(board.slice(answered));
+  expect(request).toHaveBeenCalledTimes(ANSWERED_BATCHES + 1);
   const budgets = request.mock.calls.map(([, , , options]) => (options as { totalTimeoutMs: number }).totalTimeoutMs);
   expect(budgets[0]).toBe(CLIENT_DEADLINE_MS);
-  expect(budgets.at(-1)).toBe(CLIENT_DEADLINE_MS - 10 * 1900);
+  expect(budgets.at(-1)).toBe(CLIENT_DEADLINE_MS - ANSWERED_BATCHES * SLOW_ANSWER_MS);
 });
 
 it("does not let an answer that arrives after the deadline change the result", async () => {
@@ -107,17 +112,18 @@ it("returns every identity exactly once, in order, from a normal broker", async 
 });
 
 it("keeps the overall deadline when the wall clock steps back during a lookup", async () => {
-  // Five seconds into a slow lookup the wall clock is set back 60 s (a time sync or manual correction). The deadline is
-  // measured on the monotonic clock, so the lookup still ends 20 s after it began, with the same answers.
+  // Partway into a slow lookup the wall clock is set back 60 s (a time sync or manual correction). The deadline is
+  // measured on the monotonic clock, so the lookup still ends one deadline after it began, with the same answers.
   const board = targets(300);
-  broker(() => 1900);
+  broker(() => SLOW_ANSWER_MS);
   const { pending, settledAt } = await lookup(board);
-  await vi.advanceTimersByTimeAsync(5000);
+  const stepAt = Math.floor(CLIENT_DEADLINE_MS / 2);
+  await vi.advanceTimersByTimeAsync(stepAt);
   vi.setSystemTime(Date.now() - 60_000);
-  await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS - 5000);
+  await vi.advanceTimersByTimeAsync(CLIENT_DEADLINE_MS - stepAt);
   expect(settledAt()).toBe(CLIENT_DEADLINE_MS);
   const result = await pending;
-  expect(request).toHaveBeenCalledTimes(11);
-  expect(result.data!.sessions.map((session) => session.sessionId)).toEqual(board.slice(0, 30).map((item) => item.sessionId));
-  expect(result.data!.unanswered).toEqual(board.slice(30));
+  expect(request).toHaveBeenCalledTimes(ANSWERED_BATCHES + 1);
+  expect(result.data!.sessions.map((session) => session.sessionId)).toEqual(board.slice(0, ANSWERED_BATCHES * 3).map((item) => item.sessionId));
+  expect(result.data!.unanswered).toEqual(board.slice(ANSWERED_BATCHES * 3));
 });

@@ -1,24 +1,24 @@
+import { createHash } from "node:crypto";
 import { EventEmitter } from "node:events";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const f = vi.hoisted(() => ({ now: 100, turnEnd: false, request: vi.fn(), token: vi.fn(), spawn: vi.fn(), observeSpawn: vi.fn() }));
+const f = vi.hoisted(() => ({ now: 100, turnEnd: false, request: vi.fn(), spawn: vi.fn(), observeSpawn: vi.fn() }));
 vi.mock("node:perf_hooks", () => ({ performance: { now: () => f.now } }));
 vi.mock("node:child_process", async (original) => ({ ...await original<typeof import("node:child_process")>(), spawn: f.spawn }));
 vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
   ...await original<typeof import("../../mcp-server/src/session-message-client.js")>(), sessionMessageRequest: f.request,
 }));
-vi.mock("../../mcp-server/src/process-identity.js", async (original) => ({
-  ...await original<typeof import("../../mcp-server/src/process-identity.js")>(), processStartToken: f.token,
-}));
 vi.mock("../../mcp-server/src/relay-wake-observation.js", () => ({ createRelaySpawnObservation: f.observeSpawn }));
 import { handleSessionMessageHook, runSessionMessageHook, runSessionMessageHookOutcome } from "../../mcp-server/src/session-message-hook.js";
 import { adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
-import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
+import { dispatchSessionMessageOperation } from "../../mcp-server/src/session-message-operations.js";
+import { hostAliveAtBound } from "../../mcp-server/src/host-process-watch.js";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 
 import type { ActorObservation } from "../../mcp-server/src/input-observation.js";
 
-// Mocked broker/process core regression fixture only, not native capture or R7 evidence.
+// Mocked messaging/process core regression fixture only, not native capture or R7 evidence. The hook queries no process
+// identity (docs/ags30-broker-redesign.md 3.4): it passes the adapter observation and its own start bound to the relay.
 const syntheticHost = "synthetic-verified-relay";
 const syntheticRoot: ActorObservation = {role: "root", basis: "observed", reasonCode: "SYNTHETIC_VERIFIED_RELAY_ROOT"};
 registerHookHostAdapter(syntheticHost, {
@@ -42,18 +42,19 @@ registerHookHostAdapter(envProfileHost, {
   processPid: (pid, observation) => observation ? pid : undefined,
 });
 const input = { hook_event_name: "SessionStart", session_id: "verified-hook-fixture", syntheticActor: syntheticRoot };
-// Fixed SHA-256 fixture for [syntheticHost, session_id, 424242, "T1"].
-const digest = "e4280a4d84e594985e4a4e596d9149ed3159a0459f4ee328f0ddd9962486a353";
-const instanceId = "host-process-v1:" + digest;
-const relayId = "verified-relay-v1:11111111-1111-4111-8111-111111111111:" + digest;
+const birth = (host: string, pid = 424242, token = "T1") =>
+  "host-process-v1:" + createHash("sha256").update(JSON.stringify([host, input.session_id, pid, token])).digest("hex");
+const instanceId = birth(syntheticHost);
+// A grant's holder id is a fresh random UUID (3.3); the hook spawns only for that exact form.
+const relayId = "11111111-1111-4111-8111-111111111111";
 const grant = () => ({ spawn: true, relayId, instanceId });
 const options = () => ({ ensureRelay: true, hostProcess: { pid: 424242, startToken: "T1" },
   executionBudget: { deadlineMonotonicMs: 1000, postClaimReserveMs: 200 } });
 
 beforeEach(() => {
-  f.now = 100; f.turnEnd = false; f.request.mockReset(); f.token.mockReset(); f.spawn.mockReset();
+  f.now = 100; f.turnEnd = false; f.request.mockReset(); f.spawn.mockReset();
   f.observeSpawn.mockReset();
-  f.request.mockResolvedValue(grant()); f.token.mockReturnValue("T1");
+  f.request.mockResolvedValue(grant());
   f.spawn.mockImplementation(() => Object.assign(new EventEmitter(), { unref: vi.fn() }));
   vi.stubEnv("AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE", "1");
   vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "0");
@@ -76,7 +77,9 @@ it("uses a single non-replayed ensure grant without emitting claim observations"
   expect(onClaimState).not.toHaveBeenCalled();
   expect(f.spawn).toHaveBeenCalledTimes(1);
   const args = f.spawn.mock.calls[0]![1] as string[];
-  for (const [flag, value] of [["--parent-pid", "424242"], ["--parent-start-token", "T1"], ["--instance-id", instanceId], ["--relay-id", relayId]] as const) {
+  // The relay's watcher binds the host birth, bounded by this hook's own start; the hook itself queried nothing.
+  for (const [flag, value] of [["--parent-pid", "424242"], ["--parent-start-token", "T1"], ["--instance-id", instanceId],
+    ["--relay-id", relayId], ["--host-alive-at", hostAliveAtBound()]] as const) {
     expect(args[args.indexOf(flag) + 1]).toBe(value);
   }
   expect(f.spawn.mock.calls[0]![2]).toMatchObject({
@@ -119,16 +122,19 @@ it.each([true, false])("진단 기록 전에 오류 처리와 자식 소유권�
   expect(state).toEqual({errorListeners: 1, ownerCalls: owned ? 1 : 0, unrefCalls: owned ? 0 : 1});
 });
 
-it("관측한 호스트 결속과 중개기 규약을 보존하며 기존 Claude 시작 relay를 소유한다", async () => {
-  f.request.mockResolvedValue({});
+it("SessionStart grant의 relayId로 Claude 시작 relay를 띄우고 소유한다", async () => {
+  f.request.mockResolvedValue({ presence: {}, relayId });
   const relayOwner = vi.fn();
   await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: input.session_id }, "claude-code", undefined, { relayOwner });
   const child = f.spawn.mock.results[0]!.value;
   const args = f.spawn.mock.calls[0]![1] as string[];
   expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["presence-start"]);
+  expect(f.request.mock.calls[0]![1]).toMatchObject({ hostPid: process.ppid });
+  expect(f.request.mock.calls[0]![1]).not.toHaveProperty("hostStart");
   expect(args[args.indexOf("--parent-pid") + 1]).toBe(String(process.ppid));
-  expect(args[args.indexOf("--parent-start-token") + 1]).toBe("T1");
-  expect(args).not.toContain("--relay-id");
+  expect(args[args.indexOf("--relay-id") + 1]).toBe(relayId);
+  // No adapter observation: the hook reads no birth, the relay's watcher binds it.
+  expect(args).not.toContain("--parent-start-token");
   expect(f.spawn.mock.calls[0]![2]).toMatchObject({ detached: false });
   expect(relayOwner).toHaveBeenCalledTimes(1);
   expect(relayOwner).toHaveBeenCalledWith(child);
@@ -150,7 +156,8 @@ it("어댑터가 소유권을 받지 못하면 새 자식만 종료하고 시작
 it.each([
   { ...grant(), spawn: false },
   { ...grant(), relayId: "invalid" },
-  { ...grant(), relayId: relayId.slice(0, -64) + "a".repeat(64) },
+  { ...grant(), relayId: null },
+  { ...grant(), relayId: "verified-relay-v1:" + relayId + ":" + "a".repeat(64) },
   { ...grant(), instanceId: "host-process-v1:" + "b".repeat(64) },
 ])("does not spawn or fall back after a cached or invalid grant: %j", async (result) => {
   f.request.mockResolvedValue(result);
@@ -160,17 +167,10 @@ it.each([
   expect(f.request.mock.calls[0]![0]).toBe("ensure-relay");
 });
 
-it("keeps an unknown broker result fail closed with no legacy startup fallback", async () => {
-  f.request.mockRejectedValue(new Error("synthetic broker response unknown"));
+it("keeps an uncertain ensure result fail closed with no legacy startup fallback", async () => {
+  f.request.mockRejectedValue(new Error("synthetic ensure result unknown"));
   await handleSessionMessageHook(input, syntheticHost, 424242, options());
   expect(f.request).toHaveBeenCalledTimes(1);
-  expect(f.spawn).not.toHaveBeenCalled();
-});
-
-it.each(["T2", null])("revalidates T1 after the ensure await: %s", async (token) => {
-  f.request.mockImplementation(async () => { f.token.mockReturnValue(token); return grant(); });
-  await handleSessionMessageHook(input, syntheticHost, 424242, options());
-  expect(f.token).toHaveBeenCalledTimes(2);
   expect(f.spawn).not.toHaveBeenCalled();
 });
 
@@ -208,15 +208,32 @@ it.each(["codex", "claude-code"] as const)("preserves %s observed-PID mismatch r
 });
 
 it.each(["codex", "claude-code"] as const)("uses only an admitted %s startup observation without ensure options", async (host) => {
-  f.request.mockResolvedValue({});
+  f.request.mockResolvedValue({ presence: {}, relayId });
   await handleSessionMessageHook(host === "claude-code" ? { hook_event_name: "SessionStart", session_id: input.session_id } : input, host, 424242);
   expect(f.request).toHaveBeenCalledTimes(1);
   expect(f.request.mock.calls[0]![0]).toBe("presence-start");
+  // Codex passes the observed host PID through; Claude uses the hook parent. The grant names the relay.
+  const hostPid = host === "codex" ? 424242 : process.ppid;
+  expect(f.request.mock.calls[0]![1]).toMatchObject({ hostPid });
   expect(f.spawn).toHaveBeenCalledTimes(1);
   const args = f.spawn.mock.calls[0]![1] as string[];
-  expect(args).not.toContain("--relay-id");
-  // Codex passes the observed host PID through; Claude uses the hook parent.
-  expect(args[args.indexOf("--parent-pid") + 1]).toBe(host === "codex" ? "424242" : String(process.ppid));
+  expect(args[args.indexOf("--relay-id") + 1]).toBe(relayId);
+  expect(args[args.indexOf("--parent-pid") + 1]).toBe(String(hostPid));
+});
+
+it.each([{ relayId: null, reason: "HOST_UNREPORTED" }, { relayId: null, reason: "RELAY_ALIVE" }, { relayId: "not-a-grant" }, {}])(
+  "starts no relay when presence-start grants none: %j", async (result) => {
+    f.request.mockResolvedValue({ presence: {}, ...result });
+    await handleSessionMessageHook(input, "codex", 424242);
+    expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["presence-start"]);
+    expect(f.spawn).not.toHaveBeenCalled();
+  });
+
+it("keeps a served generation on a compact start without spawning another relay (D0354)", async () => {
+  f.request.mockResolvedValue({ presence: {}, kept: true, relayId: null });
+  await handleSessionMessageHook(input, "codex", 424242);
+  expect(f.request).toHaveBeenCalledTimes(1);
+  expect(f.spawn).not.toHaveBeenCalled();
 });
 
 const post = { ...input, hook_event_name: "PostToolUse", tool_name: "read_file", tool_input: {} };
@@ -296,7 +313,6 @@ it.each(["available", "degraded", "no-live-relay"])("keeps an online live relay 
   await handleSessionMessageHook(post, syntheticHost, undefined, recover(resolver));
   expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["list-presence", "claim-deferred"]);
   expect(resolver).toHaveBeenCalledTimes(1);
-  expect(f.token).toHaveBeenCalledTimes(1);
   expect(f.request.mock.calls[1]![1]).toMatchObject({ instanceId });
   expect(f.spawn).not.toHaveBeenCalled();
   expect(f.request.mock.calls[0]![1]).toEqual({ targets: [{ host: syntheticHost, sessionId: input.session_id }] });
@@ -319,7 +335,7 @@ it("does not adopt a replacement generation observed while checking relay livene
       hostProcess.startToken = "T2";
       return { sessions: [{ ...livePresence, instanceId: currentInstance }] };
     }
-    return dispatchSessionMessageBrokerOperation(store, operation, payload);
+    return dispatchSessionMessageOperation(store, operation, payload);
   });
   try {
     await expect(handleSessionMessageHook(post, syntheticHost, undefined, recover(() => hostProcess)))
@@ -342,7 +358,8 @@ it("recovers a missing relay through the same non-replayed verified grant, then 
   const resolver = vi.fn(() => options().hostProcess);
   const onClaimState = vi.fn();
   f.request.mockImplementation(async (operation, _payload, _directory, requestOptions) => {
-    if (operation === "list-presence") return { sessions: [{ ...livePresence, autoWake: { state: "no-live-relay" } }] };
+    // The lease fact, not the advisory outlook, says the relay is missing.
+    if (operation === "list-presence") return { sessions: [{ ...livePresence, relayLive: false, autoWake: { state: "no-live-relay" } }] };
     if (operation === "ensure-relay") return grant();
     requestOptions?.onOperationWrite?.();
     return { messages: [] };
@@ -373,7 +390,7 @@ it("동기 복구 자식을 비동기 수명 소유자에게 넘기지 않는다
   expect(relayOwner).not.toHaveBeenCalled();
 });
 
-it.each(["unknown-result", "invalid-grant", "pid-reused"])("never falls back to legacy startup during recovery: %s", async (failure) => {
+it.each(["unknown-result", "invalid-grant"])("never falls back to legacy startup during recovery: %s", async (failure) => {
   f.request.mockImplementation(async (operation) => {
     if (operation === "list-presence") return { sessions: [] };
     if (operation === "ensure-relay") {
@@ -382,15 +399,8 @@ it.each(["unknown-result", "invalid-grant", "pid-reused"])("never falls back to 
     }
     return { messages: [] };
   });
-  if (failure === "pid-reused") f.token.mockReturnValue("T2");
-  const handling = handleSessionMessageHook(post, syntheticHost, undefined, recover(() => options().hostProcess));
-  if (failure === "pid-reused") {
-    await expect(handling).rejects.toThrow("generation did not verify");
-    expect(f.request).not.toHaveBeenCalled();
-  } else {
-    await handling;
-  }
-  expect(f.request.mock.calls.filter(([operation]) => operation === "ensure-relay")).toHaveLength(failure === "pid-reused" ? 0 : 1);
+  await handleSessionMessageHook(post, syntheticHost, undefined, recover(() => options().hostProcess));
+  expect(f.request.mock.calls.filter(([operation]) => operation === "ensure-relay")).toHaveLength(1);
   expect(f.request.mock.calls.some(([operation]) => operation === "presence-start")).toBe(false);
   expect(f.spawn).not.toHaveBeenCalled();
 });
@@ -417,9 +427,8 @@ it("does not recover or claim after the caller deadline expires in the lazy reso
 });
 
 it("accepts an opaque new host with an adapter delivery contract using unchanged verified startup", async () => {
-  const syntheticDigest = "da4b99aac7c154200f7b737c408680a7f16017f59de7fd08608952901f88fe6d";
-  const syntheticInstance = "host-process-v1:" + syntheticDigest;
-  const syntheticRelay = "verified-relay-v1:11111111-1111-4111-8111-111111111111:" + syntheticDigest;
+  const syntheticInstance = birth("synthetic-host");
+  const syntheticRelay = "22222222-2222-4222-8222-222222222222";
   registerHookHostAdapter("synthetic-host", {
     adaptInput: (input, selectedHost) => {
       const adapted = adaptHostInput(input, "codex");
@@ -489,12 +498,13 @@ it.each(["codex", "claude-code", "gemini", "antigravity", syntheticHost])("keeps
   const target = { host, sessionId: input.session_id };
   const sender = { host: "synthetic-peer", sessionId: "sender" };
   const now = Date.now() - 1000;
-  f.request.mockImplementation(async (operation, payload) => dispatchSessionMessageBrokerOperation(store, operation, payload));
+  f.request.mockImplementation(async (operation, payload) => dispatchSessionMessageOperation(store, operation, payload));
   try {
     const presence = { ...target, transport: "synthetic-transport", wakeVisibility: "none" as const, canWakeSilently: false };
     store.startPresence({ ...presence, instanceId: "old-generation" }, now - 2);
     store.startPresence({ ...presence, instanceId: "new-generation" }, now - 1);
-    expect(store.acquireRelay({ ...target, transport: presence.transport, relayId: "new-relay", pid: 200, parentPid: 100 }, now)).toBe(true);
+    expect(store.grantRelay({ ...target, transport: presence.transport, instanceId: "new-generation", codeDigest: null, hostPid: 100 }, now).relayId)
+      .toEqual(expect.any(String));
     expect(store.presence(target, now).instanceId).toBe("new-generation");
     store.send({ messageId: "late-end-acked", sender, target, body: "acked" }, now);
     const ackedClaim = store.claim(target, now + 2);

@@ -6,13 +6,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const f = vi.hoisted(() => ({ request: vi.fn(), token: vi.fn(), spawn: vi.fn() }));
+const f = vi.hoisted(() => ({ request: vi.fn(), spawn: vi.fn() }));
 vi.mock("node:child_process", async (original) => ({ ...await original<typeof import("node:child_process")>(), spawn: f.spawn }));
 vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
   ...await original<typeof import("../../mcp-server/src/session-message-client.js")>(), sessionMessageRequest: f.request,
-}));
-vi.mock("../../mcp-server/src/process-identity.js", async (original) => ({
-  ...await original<typeof import("../../mcp-server/src/process-identity.js")>(), processStartToken: f.token,
 }));
 import { handleSessionMessageHook, runSessionMessageHookOutcome } from "../../mcp-server/src/session-message-hook.js";
 import { registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
@@ -24,7 +21,7 @@ syntheticCore.registerSyntheticCoreAdapters(registerHookHostAdapter, () => "code
 const host = syntheticCore.SYNTHETIC_CORE_HOST;
 
 // D0011: the detached relay child runs with ignored stdio, so a relay that dies early must leave a local record.
-// The hook cases use a mocked broker and an EventEmitter child; the guard cases run real node processes.
+// The hook cases use a mocked messaging request and an EventEmitter child; the guard cases run real node processes.
 const SECRET = "secret-canary-d0011";
 let root: string;
 let state: string;
@@ -50,7 +47,7 @@ function relayChild(): EventEmitter & { pid: number; unref: ReturnType<typeof vi
 async function startSession(sessionId: string): Promise<EventEmitter & { pid: number; unref: ReturnType<typeof vi.fn> }> {
   const child = relayChild();
   f.spawn.mockReturnValue(child);
-  f.request.mockResolvedValue({});
+  f.request.mockResolvedValue({ relayId: "22222222-2222-4222-8222-222222222222" });
   expect(await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: sessionId, syntheticActor: "root" }, host, 424242)).toEqual({});
   expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["presence-start"]);
   expect(f.spawn).toHaveBeenCalledTimes(1);
@@ -64,12 +61,11 @@ beforeEach(() => {
   root = fs.mkdtempSync(path.join(os.tmpdir(), "ags-d0011-"));
   state = path.join(root, "state");
   vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", state);
-  // A running broker has created the state directory; hook records are written only into an existing one.
+  // Messaging has created the state directory; hook records are written only into an existing one.
   fs.mkdirSync(state, { recursive: true });
   vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "0");
   vi.stubEnv("AGS_D0011_ENVIRONMENT_CANARY", SECRET);
   for (const mock of Object.values(f)) mock.mockReset();
-  f.token.mockReturnValue("T1");
   stderr = vi.spyOn(console, "error").mockImplementation(() => {});
 });
 afterEach(() => {
@@ -83,6 +79,7 @@ describe("D0011 relay child diagnostics", () => {
     const args = f.spawn.mock.calls[0]![1] as string[];
     expect(args.slice(0, 2)).toEqual(["--import", expect.stringMatching(/^file:\/\/.*\/session-message-relay-guard\.mjs$/u)]);
     expect(args[2]).toMatch(/[\\/]session-message-relay\.mjs$/u);
+    expect(args[args.indexOf("--relay-id") + 1]).toBe("22222222-2222-4222-8222-222222222222");
     // The hook may exit before its relay (CI 5d210919, TEST codex-d0011-r02: relay ppid 1), so it records nothing itself.
     child.emit("spawn");
     child.emit("exit", 3, null);

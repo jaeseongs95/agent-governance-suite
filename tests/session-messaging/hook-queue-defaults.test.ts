@@ -102,7 +102,7 @@ describe("L5 queue default origin and precedence", () => {
     expect(() => hostInput.hostDeliveryProfile("unregistered-L5-host", {}, vi.fn(), true)).toThrow();
   });
 
-  it("passes the call-local default through the real hook to the shared reader without ENV mutation or broker I/O", async () => {
+  it("passes the call-local default through the real hook to the shared reader without ENV mutation or messaging I/O", async () => {
     const f = await settingsFixture();
     vi.stubEnv("PLUGIN_DATA", f.directory);
     vi.stubEnv("ANTIGRAVITY_PROJECT_ID", "synthetic-project");
@@ -114,7 +114,7 @@ describe("L5 queue default origin and precedence", () => {
     vi.spyOn(hostInput, "hostDeliveryProfile").mockImplementation((host, environment, diagnose, supplied) => {
       const profile = actual(host, environment, diagnose, supplied); observed.push({ supplied, transport: profile.transport }); return profile;
     });
-    // A non-AGS tool boundary computes its profile but returns before any broker request.
+    // A non-AGS tool boundary computes its profile but returns before any messaging request.
     expect(await handleSessionMessageHook({ hook_event_name: "PreToolUse", session_id: "synthetic-L5-hook", agent_id: "",
       tool_name: "read_file", tool_input: {} }, "antigravity", undefined, { defaultQueueWake: true })).toEqual({});
     await rm(f.file);

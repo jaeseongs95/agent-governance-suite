@@ -2,8 +2,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
+import { afterEach, describe, expect, it } from "vitest";
+import { dispatchSessionMessageOperation } from "../../mcp-server/src/session-message-operations.js";
 import { type SessionMessage, SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 
 const CLAIM_LEASE_BASE_MS = 120_000;
@@ -45,8 +45,10 @@ function claimLeaseMs(deliveryAttempt: number): number {
   return Math.min(CLAIM_LEASE_MAX_MS, CLAIM_LEASE_BASE_MS * 2 ** Math.min(deliveryAttempt - 1, 4));
 }
 
+// The store's injected clock: operation-table calls without a fixture time decide at this authority time.
+let fixtureNow = 0;
 function setSystemNow(nowMs: number): void {
-  vi.spyOn(Date, "now").mockReturnValue(nowMs);
+  fixtureNow = nowMs;
 }
 
 function createTempStore(): {
@@ -57,7 +59,7 @@ function createTempStore(): {
 } {
   const dir = mkdtempSync(join(tmpdir(), "ags-d0354-ack-r01-"));
   const dbPath = join(dir, "session-messages.sqlite");
-  const store = new SessionMessageStore(dbPath);
+  const store = new SessionMessageStore(dbPath, { clock: () => fixtureNow });
   const auxDbs: Array<{ db: DatabaseSync; closed: boolean }> = [];
   resources.push({ dir, dbPath, store, auxDbs, storeClosed: false });
   return {
@@ -84,7 +86,7 @@ function acknowledgeStore(
 }
 
 afterEach(() => {
-  vi.restoreAllMocks();
+  fixtureNow = 0;
   const cleanupErrors: unknown[] = [];
   while (resources.length > 0) {
     const resource = resources.pop()!;
@@ -215,7 +217,7 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
     // 3.0 (design 2.6): a claim is a doorbell boundary only for a live birth; this target has none, so no wake path exists.
     expect(activityBeforeLateAck).toBeUndefined();
 
-    // B 재인수 뒤 A의 원회차 영수증(receiptA) 및 id-only, broker receipts 호출 모두 0 반환
+    // B 재인수 뒤 A의 원회차 영수증(receiptA) 및 id-only, operation receipts 호출 모두 0 반환
     const tLateAckA = tReclaimB + 5_000;
     setSystemNow(tLateAckA);
     expect(acknowledgeStore(store, target, [prepared.messageId], tLateAckA)).toBe(0);
@@ -225,12 +227,12 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
       ]),
     ).toBe(0);
 
-    const brokerLateAckA = dispatchSessionMessageBrokerOperation(store, "acknowledge", {
+    const operationLateAckA = dispatchSessionMessageOperation(store, "acknowledge", {
       target,
       messageIds: [prepared.messageId],
       receipts: [{ messageId: prepared.messageId, claimReceipt: receiptA! }],
     }) as { acknowledged: number };
-    expect(brokerLateAckA.acknowledged).toBe(0);
+    expect(operationLateAckA.acknowledged).toBe(0);
 
     // 거부 후 본문(body), 영수증(claim_receipt), 임대(claim_until), acknowledged_at, wake path(claim_boundary_at) 불변 검증
     const afterLateAckRow = db
@@ -382,7 +384,7 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
     ).toBe(1);
     expect(store.status(sender, prepared.messageId, tValidLateAck)?.state).toBe("acknowledged");
 
-    // 동일 영수증 중복 ACK는 store 및 broker 모두 에러 없이 멱등 0
+    // 동일 영수증 중복 ACK는 store 및 operation 경로 모두 에러 없이 멱등 0
     const tDuplicateAck = tValidLateAck + 10;
     setSystemNow(tDuplicateAck);
     expect(
@@ -390,12 +392,12 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
         { messageId: prepared.messageId, claimReceipt: receipt },
       ]),
     ).toBe(0);
-    const brokerDuplicate = dispatchSessionMessageBrokerOperation(store, "acknowledge", {
+    const operationDuplicate = dispatchSessionMessageOperation(store, "acknowledge", {
       target,
       messageIds: [prepared.messageId],
       receipts: [{ messageId: prepared.messageId, claimReceipt: receipt }],
     }) as { acknowledged: number };
-    expect(brokerDuplicate.acknowledged).toBe(0);
+    expect(operationDuplicate.acknowledged).toBe(0);
   });
 
   it("post-repair receipt contract: rejects ACK from a mismatched target even when presenting the valid current claimReceipt", () => {
@@ -435,12 +437,12 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
       ]),
     ).toBe(0);
     setSystemNow(t0 + 120);
-    const brokerMismatched = dispatchSessionMessageBrokerOperation(store, "acknowledge", {
+    const operationMismatched = dispatchSessionMessageOperation(store, "acknowledge", {
       target: otherSessionTarget,
       messageIds: [prepared.messageId],
       receipts: [{ messageId: prepared.messageId, claimReceipt: receipt }],
     }) as { acknowledged: number };
-    expect(brokerMismatched.acknowledged).toBe(0);
+    expect(operationMismatched.acknowledged).toBe(0);
 
     const row = db
       .prepare("SELECT body, claim_receipt, acknowledged_at FROM messages WHERE message_id = ?")
@@ -499,11 +501,11 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
     // 1) 새 claim 행들로만 구성된 복수 배치에서 id-only(receipts 없음) 호출 시 0
     setSystemNow(tClaim1 + 10);
     expect(acknowledgeStore(store, target, [newMsg1.messageId, newMsg2.messageId], tClaim1 + 10, [])).toBe(0);
-    const brokerNewBatchIdOnly = dispatchSessionMessageBrokerOperation(store, "acknowledge", {
+    const operationNewBatchIdOnly = dispatchSessionMessageOperation(store, "acknowledge", {
       target,
       messageIds: [newMsg1.messageId, newMsg2.messageId],
     }) as { acknowledged: number };
-    expect(brokerNewBatchIdOnly.acknowledged).toBe(0);
+    expect(operationNewBatchIdOnly.acknowledged).toBe(0);
 
     // 2) 새 claim 행 2개 중 newMsg1만 영수증을 제공하고 newMsg2는 id-only로 혼합 호출하면 newMsg1만 1건 ACK되고 newMsg2(id-only)는 0(미승인)
     setSystemNow(tClaim1 + 20);
@@ -539,7 +541,7 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
 
     // 재인수 영수증을 제시해야만 정상 ACK
     setSystemNow(tReclaim + 20);
-    const brokerFinalAck = dispatchSessionMessageBrokerOperation(store, "acknowledge", {
+    const operationFinalAck = dispatchSessionMessageOperation(store, "acknowledge", {
       target,
       messageIds: [legacyReclaim.messageId, newMsg2.messageId],
       receipts: [
@@ -547,7 +549,7 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
         { messageId: newMsg2.messageId, claimReceipt: reclaimedNew2.claimReceipt! },
       ],
     }) as { acknowledged: number };
-    expect(brokerFinalAck.acknowledged).toBe(2);
+    expect(operationFinalAck.acknowledged).toBe(2);
     expect(store.status(sender, legacyReclaim.messageId, tReclaim + 20)?.state).toBe("acknowledged");
     expect(store.status(sender, newMsg2.messageId, tReclaim + 20)?.state).toBe("acknowledged");
   });

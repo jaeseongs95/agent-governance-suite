@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, test, vi } from 'vitest';
 import { SessionMessageStore, WAKE_QUIET_MS, WAKE_RESEND_MAX_MS, WAKE_START_TIMEOUT_MS } from '../../mcp-server/src/session-message-store.ts';
-import { dispatchSessionMessageBrokerOperation as brokerDispatch } from '../../mcp-server/src/session-message-broker.ts';
+import { dispatchSessionMessageOperation } from '../../mcp-server/src/session-message-operations.ts';
 import { dispatchManagedWake } from '../../mcp-server/src/session-message-relay.ts';
 import '../../mcp-server/src/builtin-hook-host-adapters.ts';
 import { adaptHostInput, registerHookHostAdapter } from '../../mcp-server/src/host-input-adapter.ts';
@@ -16,7 +16,7 @@ import { recordWakeHookObservation, wakeHookObservationReader } from '../../mcp-
 import { transportDeliveryCapabilities } from '../../mcp-server/src/wake-transports.ts';
 import { TrustStore } from '../../mcp-server/src/trust-store.ts';
 
-const dispatch = (store, operation, payload, _model, _task, _activity, reader) => brokerDispatch(store, operation, payload, reader);
+const dispatch = (store, operation, payload, reader) => dispatchSessionMessageOperation(store, operation, payload, reader);
 // AGS 3.0 doorbell (docs/ags30-wake-doorbell-design.md r3.2): outcomes are objects, every start/outcome carries the
 // port's resend base, and a retry is always a new row. These cases keep I1-I6 and I11.
 const BASE = 10 * 60_000;
@@ -26,10 +26,22 @@ const TRANSIENT = { result: 'not-delivered', kind: 'transient', reasonCode: 'SYN
 const iso = at => new Date(at).toISOString();
 const ACTIVE = "('reserved','started','handed-off','unknown')";
 const portOf = (fields) => ({ capabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' }, resendBaseMs: BASE, ...fields });
-/** Keeps the fixture birth and its relay live without a new birth and without a claim boundary. */
-function keepAlive(store, at, relayId = 'relay-1', instanceId = 'instance-1') {
-  store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ? AND ended_at IS NULL').run(iso(at + 20_000), instanceId);
-  assert.equal(store.acquireRelay({ ...target, transport: 'portable', relayId, pid: process.pid, parentPid: process.pid }, at), true);
+// The synthetic host process the hook reported (the parent of the fixture processes) and the birth its relay's watcher bound.
+const HOST_PID = process.pid;
+const HOST_START = 'synthetic-host-start';
+/** The hook grants the birth a lease under a fresh relay_id; the relay's first tick binds the host birth so it may ring. */
+function grantRelay(store, instanceId, at, transport = 'portable') {
+  const grant = store.grantRelay({ ...target, transport, instanceId, codeDigest: null, hostPid: HOST_PID }, at);
+  assert.ok(grant.relayId, grant.reason);
+  assert.deepEqual(store.relayTick({ ...target, transport, relayId: grant.relayId, instanceId, includePending: false, hostStart: HOST_START }, at),
+    { alive: true, count: 0, hostBound: true });
+  return grant.relayId;
+}
+/** Keeps the fixture birth and its relay live without a new birth and without a claim boundary (one extension models the relay's ticks). */
+function keepAlive(f, at, instanceId = 'instance-1') {
+  f.store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ? AND ended_at IS NULL').run(iso(at + 20_000), instanceId);
+  assert.equal(f.store.database.prepare("UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE transport = 'portable' AND relay_id = ?")
+    .run(iso(at + 15_000), iso(at), f.relayId).changes, 1);
 }
 const resources = [];
 afterEach(() => {
@@ -59,13 +71,13 @@ function fixture(relayRemainingMs = 15_000) {
   const store = new SessionMessageStore(database);
   resources.push({ directory, stores: [store] });
   const now = Date.now();
-  // Aged owners expire naturally at now + relayRemainingMs, before a replacement fixture acquires them.
-  const startedAt = now - (15_000 - relayRemainingMs);
-  assert.equal(store.acquireRelay({ ...target, transport: 'portable', relayId: 'relay-1', pid: process.pid, parentPid: process.pid }, startedAt), true);
   store.startPresence({ ...target, instanceId: 'instance-1', transport: 'portable',
     wakeVisibility: 'silent', canWakeSilently: true,
-    deliveryCapabilities: { supportedInjection: ['peer-wake', 'tool-boundary'], idleWake: 'silent' } }, now);
-  return { directory, database, store, now };
+    deliveryCapabilities: { supportedInjection: ['peer-wake', 'tool-boundary'], idleWake: 'silent' }, hostPid: HOST_PID }, now);
+  const relayId = grantRelay(store, 'instance-1', now);
+  // An aged lease expires naturally at now + relayRemainingMs, before a replacement relay is granted it.
+  store.database.prepare('UPDATE relay_leases SET lease_until = ? WHERE relay_id = ?').run(iso(now + relayRemainingMs), relayId);
+  return { directory, database, store, now, relayId };
 }
 // Bulk rows go through a separate filling connection. Autocommit INSERTs fsync every commit under the default
 // synchronous=FULL (about 1,000 per test), which exceeds the timeout on slow CI disks. NORMAL is per connection,
@@ -78,13 +90,13 @@ function fillRows(f, sql, count, values) {
     for (let i = 0; i < count; i++) insert.run(...values(i));
   } finally { filler.close(); }
 }
-function reservation(nonce = 'managed-wake-nonce-abcdefghijklmnop') {
-  return { target, nonce, instanceId: 'instance-1', transport: 'portable', relayId: 'relay-1' };
+function reservation(f, nonce = 'managed-wake-nonce-abcdefghijklmnop') {
+  return { target, nonce, instanceId: 'instance-1', transport: 'portable', relayId: f.relayId };
 }
-function begin(store, now, input = reservation()) {
-  const reserved = store.reserveManagedWake({ ...input.target, ...input }, now);
+function begin(f, now, input = reservation(f)) {
+  const reserved = f.store.reserveManagedWake({ ...input.target, ...input }, now);
   assert.equal(reserved.dispatch, true);
-  const started = store.startManagedWake(reserved.attempt, BASE, now + 1);
+  const started = f.store.startManagedWake(reserved.attempt, BASE, now + 1);
   assert.equal(started.dispatch, true);
   return started.attempt;
 }
@@ -106,19 +118,19 @@ function without(row, keys) { return Object.fromEntries(Object.entries(row).filt
 const receipts = messages => messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }));
 
 test('W05-r2 a reservation ended by a claim and ACK cannot authorize another wake while the session is not quiet', () => {
-  const { store } = fixture();
+  const f = fixture(); const { store } = f;
   store.send({ sender, target, messageId: 'first-body', body: 'first' });
-  assert.equal(dispatch(store, 'reserve-wake', reservation()).dispatch, true);
+  assert.equal(dispatch(store, 'reserve-wake', reservation(f)).dispatch, true);
   const claimed = store.claim(target);
   store.acknowledge(target, ['first-body'], undefined, receipts(claimed));
   store.send({ sender, target, messageId: 'second-body', body: 'second-body' });
-  assert.equal(dispatch(store, 'reserve-wake', reservation('another-wake-nonce-abcdefghijklmnop')).dispatch, false);
+  assert.equal(dispatch(store, 'reserve-wake', reservation(f, 'another-wake-nonce-abcdefghijklmnop')).dispatch, false);
 });
 
 test('W05-r2 board ownership check has no nonce state effect', () => {
-  const { store } = fixture();
+  const f = fixture(); const { store } = f;
   store.send({ sender, target, messageId: 'owned-body', body: 'body-0001' });
-  const input = reservation();
+  const input = reservation(f);
   assert.equal(dispatch(store, 'reserve-wake', input).dispatch, true);
   store.claim(target);
   const before = store.database.prepare('SELECT * FROM wake_nonces').get();
@@ -128,36 +140,36 @@ test('W05-r2 board ownership check has no nonce state effect', () => {
 
 test.each(['claimDeferred', 'claimTurnEnd'])('I5: %s and ACK during a started attempt leave its slot until the start timeout', (method) => {
   const f = fixture(); body(f.store, 'boundary-body', f.now);
-  const attempt = begin(f.store, f.now);
+  const attempt = begin(f, f.now);
   const claimed = f.store[method](target, f.now + 2);
   assert.equal(claimed.length, 1);
   f.store.acknowledge(target, ['boundary-body'], f.now + 3, receipts(claimed));
   body(f.store, 'new-boundary-body', f.now + 4);
-  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation('second-nonce-abcdefghijklmnop') }, f.now + 5).dispatch, false);
+  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation(f, 'second-nonce-abcdefghijklmnop') }, f.now + 5).dispatch, false);
   assert.equal(f.store.managedWakeStatus(target, f.now + 5).attemptId, attempt.attemptId);
   assert.equal(attemptRow(f.store, attempt).state, 'started');
 });
 
 test('W05-r2 start rechecks claim/ACK and persists a no-effect end; the next body is rung once quiet', () => {
   const f = fixture(); body(f.store, 'before-start', f.now);
-  const reserved = f.store.reserveManagedWake({ ...target, ...reservation() }, f.now);
+  const reserved = f.store.reserveManagedWake({ ...target, ...reservation(f) }, f.now);
   const claimed = f.store.claim(target, f.now + 1); f.store.acknowledge(target, ['before-start'], f.now + 2, receipts(claimed));
   assert.equal(f.store.startManagedWake(reserved.attempt, BASE, f.now + 3).dispatch, false);
   assert.equal(f.store.managedWakeStatus(target, f.now + 3).state, 'not-delivered');
   body(f.store, 'next-body', f.now + 4);
-  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation('next-nonce-abcdefghijklmnop') }, f.now + 5).dispatch, false, 'the claim was a boundary');
+  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation(f, 'next-nonce-abcdefghijklmnop') }, f.now + 5).dispatch, false, 'the claim was a boundary');
   const quiet = f.now + 1 + WAKE_QUIET_MS + 1;
-  keepAlive(f.store, quiet);
-  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation('next-nonce-abcdefghijklmnop') }, quiet).dispatch, true);
+  keepAlive(f, quiet);
+  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation(f, 'next-nonce-abcdefghijklmnop') }, quiet).dispatch, true);
 });
 
 test('W05-r2 a claim before the outcome keeps one slot until the actual hook', () => {
   const f = fixture(); body(f.store, 'after-start', f.now);
-  const attempt = begin(f.store, f.now);
+  const attempt = begin(f, f.now);
   const firstClaim = f.store.claim(target, f.now + 2); f.store.acknowledge(target, ['after-start'], f.now + 3, receipts(firstClaim));
   assert.equal(f.store.recordManagedWakeOutcome(attempt, HANDED, BASE, f.now + 4), true);
   body(f.store, 'next-body', f.now + 5);
-  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation('next-nonce-abcdefghijklmnop') }, f.now + 6).dispatch, false);
+  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation(f, 'next-nonce-abcdefghijklmnop') }, f.now + 6).dispatch, false);
   assert.equal(attemptRow(f.store, attempt).state, 'handed-off', 'a boundary before the hand-off does not release it');
   const result = hostClaim(f, observe(f, attempt, f.now + 7), f.now + 8);
   assert.equal(result.recognized, true); assert.deepEqual(result.messages.map(message => message.messageId), ['next-body']);
@@ -165,15 +177,16 @@ test('W05-r2 a claim before the outcome keeps one slot until the actual hook', (
   assert.equal(f.store.recordManagedWakeOutcome(attempt, UNKNOWN, BASE, f.now + 9), false);
 });
 
-test('W05-r2 reserved crash recovery keeps the nonce/attempt and rejects replaced lease CAS', () => {
+test('W05-r2 reserved crash recovery keeps the nonce/attempt and fences the replaced relay_id at start', () => {
   const f = fixture(1); body(f.store, 'body-0001', f.now);
-  const reserved = f.store.reserveManagedWake({ ...target, ...reservation() }, f.now);
+  const reserved = f.store.reserveManagedWake({ ...target, ...reservation(f) }, f.now);
   assert.equal(reserved.dispatch, true);
   const first = reserved.attempt;
   const peer = new SessionMessageStore(f.database); resources.at(-1).stores.push(peer);
   assert.equal(peer.liveRelay(target, 'portable', f.now + 1), null);
-  assert.equal(peer.acquireRelay({ ...target, transport: 'portable', relayId: 'relay-2', pid: process.pid, parentPid: process.pid }, f.now + 1), true);
-  const recovery = peer.reserveManagedWake({ ...target, ...reservation(), relayId: 'relay-2', resume: true }, f.now + 2);
+  const replacement = grantRelay(peer, 'instance-1', f.now + 1);
+  assert.notEqual(replacement, f.relayId);
+  const recovery = peer.reserveManagedWake({ ...target, ...reservation(f), relayId: replacement, resume: true }, f.now + 2);
   assert.equal(recovery.dispatch, true);
   const recovered = recovery.attempt;
   assert.equal(recovered.nonce, first.nonce); assert.equal(recovered.attemptId, first.attemptId);
@@ -184,14 +197,14 @@ test('W05-r2 reserved crash recovery keeps the nonce/attempt and rejects replace
 
 test('W05-r2 transport remains part of the exact stored attempt binding', () => {
   const f = fixture(); body(f.store, 'exact-binding-body', f.now);
-  const reserved = f.store.reserveManagedWake({ ...target, ...reservation() }, f.now).attempt;
+  const reserved = f.store.reserveManagedWake({ ...target, ...reservation(f) }, f.now).attempt;
   f.store.startPresence({ ...target, instanceId: 'instance-1', transport: 'other-port', wakeVisibility: 'silent',
     canWakeSilently: true, deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } }, f.now + 1);
-  f.store.acquireRelay({ ...target, transport: 'other-port', relayId: 'relay-1', pid: process.pid, parentPid: process.pid }, f.now + 1);
+  grantRelay(f.store, 'instance-1', f.now + 1, 'other-port');
   assert.equal(f.store.startManagedWake({ ...reserved, transport: 'other-port' }, BASE, f.now + 2).dispatch, false);
   f.store.startPresence({ ...target, instanceId: 'instance-1', transport: 'portable', wakeVisibility: 'silent',
     canWakeSilently: true, deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } }, f.now + 3);
-  const reopened = f.store.reserveManagedWake({ ...target, ...reservation('exact-binding-retry-nonce-abcdef'), resume: true }, f.now + 3);
+  const reopened = f.store.reserveManagedWake({ ...target, ...reservation(f, 'exact-binding-retry-nonce-abcdef'), resume: true }, f.now + 3);
   const started = f.store.startManagedWake(reopened.attempt ?? reserved, BASE, f.now + 4).attempt;
   assert.ok(started);
   assert.equal(f.store.recordManagedWakeOutcome({ ...started, transport: 'other-port' }, TRANSIENT, BASE, f.now + 5), false);
@@ -200,14 +213,14 @@ test('W05-r2 transport remains part of the exact stored attempt binding', () => 
 
 test('W05-r2 a transient failure ends its row; the retry is a new row after durable backoff and late results need the exact epoch', () => {
   const f = fixture(); body(f.store, 'body-0001', f.now, 86_400);
-  const first = begin(f.store, f.now);
+  const first = begin(f, f.now);
   assert.equal(f.store.recordManagedWakeOutcome(first, TRANSIENT, BASE, f.now + 2), true);
   assert.equal(attemptRow(f.store, first).state, 'not-delivered');
   const deadline = Date.parse(f.store.database.prepare('SELECT retry_not_before FROM wake_paths WHERE instance_id = ?').get('instance-1').retry_not_before);
-  keepAlive(f.store, deadline - 1);
-  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation('retry-nonce-abcdefghijklmnopqr'), resume: true }, deadline - 1).dispatch, false);
-  keepAlive(f.store, deadline);
-  const retried = f.store.reserveManagedWake({ ...target, ...reservation('retry-nonce-abcdefghijklmnopqr'), resume: true }, deadline).attempt;
+  keepAlive(f, deadline - 1);
+  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation(f, 'retry-nonce-abcdefghijklmnopqr'), resume: true }, deadline - 1).dispatch, false);
+  keepAlive(f, deadline);
+  const retried = f.store.reserveManagedWake({ ...target, ...reservation(f, 'retry-nonce-abcdefghijklmnopqr'), resume: true }, deadline).attempt;
   assert.ok(retried);
   assert.notEqual(retried.attemptId, first.attemptId); assert.notEqual(retried.nonce, first.nonce);
   const second = f.store.startManagedWake(retried, BASE, deadline + 1).attempt;
@@ -220,19 +233,24 @@ test('W05-r2 a transient failure ends its row; the retry is a new row after dura
 
 function currentGeneration(f, kind, at) {
   const current = { ...target, instanceId: kind === 'instance' ? 'instance-2' : 'instance-1',
-    transport: kind === 'transport' ? 'other-port' : 'portable', relayId: 'current-relay',
+    transport: kind === 'transport' ? 'other-port' : 'portable', relayId: null,
     wakeVisibility: 'silent', canWakeSilently: true,
-    deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } };
+    deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' }, hostPid: HOST_PID };
   if (kind === 'rebirth') f.store.endPresence(target, 'fixture-rebirth', 'instance-1', at);
-  if (f.store.relayOwner(target, current.transport)?.relayId !== current.relayId) {
-    assert.equal(f.store.liveRelay(target, current.transport, at), null);
-  }
+  // The fixture lease lapsed at f.now + 2, so the current generation is granted a new relay.
+  assert.equal(f.store.liveRelay(target, current.transport, at), null);
   renewCurrent(f.store, current, at);
   return current;
 }
+/** First call: the current birth and its granted relay. Later calls: its relay kept both live up to `at` (no new birth). */
 function renewCurrent(store, current, at) {
+  if (current.relayId !== null) {
+    store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ? AND ended_at IS NULL').run(iso(at + 20_000), current.instanceId);
+    assert.equal(store.database.prepare('UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE relay_id = ?')
+      .run(iso(at + 15_000), iso(at), current.relayId).changes, 1);
+  }
   store.startPresence(current, at);
-  assert.equal(store.acquireRelay({ ...current, pid: process.pid, parentPid: process.pid }, at), true);
+  current.relayId ??= grantRelay(store, current.instanceId, at, current.transport);
   assert.equal(store.presence(target, at).state, 'online');
   assert.equal(store.liveRelay(target, current.transport, at).relayId, current.relayId);
   assert.equal(store.pendingCount(target, at), 1);
@@ -241,7 +259,7 @@ function renewCurrent(store, current, at) {
 const staleCases = ['H1', 'H2', 'H3'].flatMap(order => ['instance', 'rebirth', 'transport'].map(kind => [order, kind]));
 test.each(staleCases)('a no-effect old attempt %s/%s ends as not-delivered and a separate attempt follows (new birth from zero, same birth after backoff)', (order, kind) => {
   const f = fixture(2); body(f.store, 'old-pending', f.now, 86_400);
-  const old = order === 'H1' ? f.store.reserveManagedWake({ ...target, ...reservation() }, f.now).attempt : begin(f.store, f.now);
+  const old = order === 'H1' ? f.store.reserveManagedWake({ ...target, ...reservation(f) }, f.now).attempt : begin(f, f.now);
   if (order === 'H2') assert.equal(f.store.recordManagedWakeOutcome(old, TRANSIENT, BASE, f.now + 2), true);
   const current = currentGeneration(f, kind, f.now + 3);
   const request = { ...current, nonce: 'new-generation-nonce-abcdefghijklmnop', resume: true };
@@ -285,7 +303,7 @@ test.each(staleCases)('a no-effect old attempt %s/%s ends as not-delivered and a
 });
 
 test.each(['handed-off', 'unknown'])('a new birth ends the old %s hand-off as birth-ended and rings the pending body', outcome => {
-  const f = fixture(2); body(f.store, 'uncertain-pending', f.now); const old = begin(f.store, f.now);
+  const f = fixture(2); body(f.store, 'uncertain-pending', f.now); const old = begin(f, f.now);
   f.store.recordManagedWakeOutcome(old, outcome === 'handed-off' ? HANDED : UNKNOWN, BASE, f.now + 2);
   const current = currentGeneration(f, 'instance', f.now + 3);
   const next = f.store.reserveManagedWake({ ...current, nonce: 'new-fenced-nonce-abcdefghijklmnop', resume: true }, f.now + 4);
@@ -295,7 +313,7 @@ test.each(['handed-off', 'unknown'])('a new birth ends the old %s hand-off as bi
 });
 
 test('I4/I5: a started attempt is not replaced by a new birth before its start timeout', () => {
-  const f = fixture(2); body(f.store, 'started-pending', f.now); const old = begin(f.store, f.now);
+  const f = fixture(2); body(f.store, 'started-pending', f.now); const old = begin(f, f.now);
   const current = currentGeneration(f, 'instance', f.now + 3);
   assert.equal(f.store.reserveManagedWake({ ...current, nonce: 'new-fenced-nonce-abcdefghijklmnop', resume: true }, f.now + 4).dispatch, false);
   assert.equal(attemptRow(f.store, old).state, 'started');
@@ -307,7 +325,7 @@ test('I4/I5: a started attempt is not replaced by a new birth before its start t
 });
 
 test('an old-birth late failure requires every original binding field and epoch', () => {
-  const f = fixture(2); body(f.store, 'exact-pending', f.now); const old = begin(f.store, f.now);
+  const f = fixture(2); body(f.store, 'exact-pending', f.now); const old = begin(f, f.now);
   const current = currentGeneration(f, 'instance', f.now + 2);
   assert.equal(f.store.reserveManagedWake({ ...current, nonce: 'new-exact-nonce-abcdefghijklmnop' }, f.now + 3).dispatch, false);
   const before = attemptRow(f.store, old);
@@ -320,30 +338,30 @@ test('an old-birth late failure requires every original binding field and epoch'
 });
 
 test('terminal row pruning cannot erase the birth backoff', () => {
-  const f = fixture(); body(f.store, 'cooldown-pending', f.now, 86_400); const old = begin(f.store, f.now);
+  const f = fixture(); body(f.store, 'cooldown-pending', f.now, 86_400); const old = begin(f, f.now);
   assert.equal(f.store.recordManagedWakeOutcome(old, TRANSIENT, BASE, f.now + 3), true);
   const deadline = Date.parse(f.store.database.prepare('SELECT retry_not_before FROM wake_paths WHERE instance_id = ?').get('instance-1').retry_not_before);
   fillRows(f, "INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, observed_at) VALUES (?, 'portable', ?, ?, 'observed', ?)",
     1005, i => [`new-terminal-${i}`, `other-${i}`, iso(deadline + 60_000), iso(f.now + 4 + i)]);
-  keepAlive(f.store, f.now + 5);
+  keepAlive(f, f.now + 5);
   f.store.prune(f.now + 5);
   assert.equal(attemptRow(f.store, old), undefined, 'the oldest ended rows went to the 1000-row cap');
-  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation('prune-retry-nonce-abcdefghijklmnop') }, f.now + 5).dispatch, false);
-  keepAlive(f.store, deadline);
-  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation('prune-retry-nonce-abcdefghijklmnop') }, deadline).dispatch, true);
+  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation(f, 'prune-retry-nonce-abcdefghijklmnop') }, f.now + 5).dispatch, false);
+  keepAlive(f, deadline);
+  assert.equal(f.store.reserveManagedWake({ ...target, ...reservation(f, 'prune-retry-nonce-abcdefghijklmnop') }, deadline).dispatch, true);
 });
 
 test('W05-r2 active budget overflow is an explicit rejection and does not remove active attempts', () => {
   const f = fixture(); body(f.store, 'body-0001', f.now);
   fillRows(f, "INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, started_at, dispatch_epoch, resend_base_ms) VALUES (?, 'portable', ?, ?, 'started', ?, 1, 600000)",
     1000, i => [`digest-${i}`, `target-${i}`, iso(f.now + 3600_000), iso(f.now)]);
-  assert.throws(() => f.store.reserveManagedWake({ ...target, ...reservation() }, f.now + 1), /active wake store is full/);
+  assert.throws(() => f.store.reserveManagedWake({ ...target, ...reservation(f) }, f.now + 1), /active wake store is full/);
   assert.equal(f.store.database.prepare("SELECT count(*) AS n FROM wake_nonces WHERE state = 'started'").get().n, 1000);
 });
 
 test('W05-r2 ordinary peer provenance, expired hook receipts and changed observation digests cannot observe', () => {
   const f = fixture(); body(f.store, 'body-0001', f.now);
-  const attempt = begin(f.store, f.now); const observed = observe(f, attempt, f.now + 2);
+  const attempt = begin(f, f.now); const observed = observe(f, attempt, f.now + 2);
   const trust = new TrustStore(join(f.directory, 'trust.sqlite3'));
   let ordinary;
   try {
@@ -360,7 +378,7 @@ test('W05-r2 ordinary peer provenance, expired hook receipts and changed observa
 
 test('W05-r2 observation holds the SQLite generation lock and notices a generation change during verification', () => {
   const f = fixture(); body(f.store, 'body-0001', f.now);
-  const attempt = begin(f.store, f.now); const observed = observe(f, attempt);
+  const attempt = begin(f, f.now); const observed = observe(f, attempt);
   const peer = new SessionMessageStore(f.database); resources.at(-1).stores.push(peer); peer.database.exec('PRAGMA busy_timeout = 1');
   let blocked = false;
   const reader = { verifyObservation: (...args) => {
@@ -387,22 +405,22 @@ test('I4: a lost committed outcome response never dispatches again', async () =>
     return result;
   };
   const port = portOf({ dispatch: async () => { calls++; return HANDED; } });
-  await assert.rejects(dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, 'relay-1', port, request), /response lost/);
+  await assert.rejects(dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, f.relayId, port, request), /response lost/);
   assert.equal(f.store.managedWakeStatus(target).state, 'handed-off');
-  assert.equal(await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, 'relay-1', port,
+  assert.equal(await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, f.relayId, port,
     async (operation, payload) => dispatch(f.store, operation, payload)), false);
   assert.equal(calls, 1);
 });
 
 test('I1: a forged nonce, a caller approval or a normalized observation cannot observe without the hook receipt', () => {
   const f = fixture(); body(f.store, 'body-0001', f.now);
-  const attempt = begin(f.store, f.now);
+  const attempt = begin(f, f.now);
   const observed = observe(f, attempt, f.now + 2);
   assert.equal(f.store.consumeWake(target, attempt.nonce), true);
   assert.equal(f.store.claimHostWake(target, observed.observation, '', wakeHookObservationReader, f.now + 3).recognized, false);
   assert.equal(f.store.claimHostWake(target, observed.observation, observed.sourceReceiptId, undefined, f.now + 3).recognized, false);
-  assert.throws(() => dispatch(f.store, 'claim-host-wake', { target, ...observed, approved: true }, undefined, undefined, undefined, wakeHookObservationReader), /source receipt/);
-  assert.throws(() => dispatch(f.store, 'claim-wake', { target, nonces: [attempt.nonce] }), /Unknown broker operation/);
+  assert.throws(() => dispatch(f.store, 'claim-host-wake', { target, ...observed, approved: true }, wakeHookObservationReader), /source receipt/);
+  assert.throws(() => dispatch(f.store, 'claim-wake', { target, nonces: [attempt.nonce] }), /Unknown session message operation/);
   assert.equal(attemptRow(f.store, attempt).state, 'started');
   assert.equal(f.store.claimHostWake(target, { ...observed.observation, wakeCandidates: ['forged-nonce-abcdefghijklmnop'] },
     observed.sourceReceiptId, wakeHookObservationReader, f.now + 3).recognized, false);
@@ -412,17 +430,19 @@ test('I1: a forged nonce, a caller approval or a normalized observation cannot o
 
 test.each(['new-instance', 'same-instance-new-birth'])('I2: a verified %s arrival of an old marker claims nothing and a separate current wake delivers', variant => {
   const f = fixture(6); body(f.store, 'old-body', f.now);
-  const attempt = begin(f.store, f.now);
+  const attempt = begin(f, f.now);
   f.store.recordManagedWakeOutcome(attempt, HANDED, BASE, f.now + 2);
   const claimed = f.store.claim(target, f.now + 3); f.store.acknowledge(target, ['old-body'], f.now + 4, receipts(claimed));
   const at = f.now + 5;
   f.store.endPresence(target, 'fixture', 'instance-1', at);
-  f.store.startPresence({ ...target, instanceId: variant === 'new-instance' ? 'instance-2' : 'instance-1', transport: 'portable',
-    wakeVisibility: 'silent', canWakeSilently: true, deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } }, at + 1);
-  assert.equal(f.store.acquireRelay({ ...target, transport: 'portable', relayId: 'relay-2', pid: process.pid, parentPid: process.pid }, at + 1), true);
+  const instanceId = variant === 'new-instance' ? 'instance-2' : 'instance-1';
+  f.store.startPresence({ ...target, instanceId, transport: 'portable',
+    wakeVisibility: 'silent', canWakeSilently: true, deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' }, hostPid: HOST_PID }, at + 1);
+  // The fixture lease lapsed at f.now + 6: the new birth's relay is a new grant.
+  const relayId = grantRelay(f.store, instanceId, at + 1);
+  assert.notEqual(relayId, f.relayId);
   body(f.store, 'new-body', at + 2);
-  const current = { ...target, ...reservation('current-wake-nonce-abcdefghijklmnop'),
-    instanceId: variant === 'new-instance' ? 'instance-2' : 'instance-1', relayId: 'relay-2' };
+  const current = { ...target, ...reservation(f, 'current-wake-nonce-abcdefghijklmnop'), instanceId, relayId };
   const observed = observe(f, attempt, at + 3);
   const late = hostClaim(f, observed, at + 4);
   assert.equal(late.recognized, false); assert.deepEqual(late.messages, []);
@@ -444,7 +464,7 @@ test.each(['new-instance', 'same-instance-new-birth'])('I2: a verified %s arriva
 
 test('I1/I2: old-birth arrival still rejects wrong target, unknown or mixed nonces and stale provenance', () => {
   const f = fixture(); body(f.store, 'old-body', f.now);
-  const attempt = begin(f.store, f.now);
+  const attempt = begin(f, f.now);
   f.store.recordManagedWakeOutcome(attempt, UNKNOWN, BASE, f.now + 2);
   f.store.startPresence({ ...target, instanceId: 'instance-2', transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
     deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } }, f.now + 3);
@@ -468,7 +488,7 @@ test('I1/I2: old-birth arrival still rejects wrong target, unknown or mixed nonc
 
 test('I6: batch redelivery and hook rollback claim each body once per claim lease', () => {
   const f = fixture(); body(f.store, 'body-one', f.now); body(f.store, 'body-two', f.now);
-  const attempt = begin(f.store, f.now); const observed = observe(f, attempt);
+  const attempt = begin(f, f.now); const observed = observe(f, attempt);
   assert.throws(() => hostClaim(f, observed, f.now + 4, { maxBodyChars: 1 }), /claim budget/);
   assert.equal(attemptRow(f.store, attempt).state, 'started', 'the failed claim rolled back');
   const first = hostClaim(f, observed, f.now + 5, { maxMessages: 1 });
@@ -485,7 +505,7 @@ test('W05-r2 hook-before-outcome, adapter exception and new vendor use the same 
   let calls = 0;
   let claimed = [];
   const request = async (operation, payload) => dispatch(f.store, operation, payload);
-  assert.equal(await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, 'relay-1', portOf({
+  assert.equal(await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, f.relayId, portOf({
     dispatch: async () => {
       calls++;
       const row = f.store.database.prepare("SELECT * FROM wake_nonces WHERE state = 'started'").get();
@@ -499,7 +519,7 @@ test('W05-r2 hook-before-outcome, adapter exception and new vendor use the same 
   assert.equal(calls, 1); assert.equal(f.store.managedWakeStatus(target).state, 'observed', 'a late outcome never revives an observed row (I11)');
   f.store.acknowledge(target, ['body-0001'], undefined, receipts(claimed)); body(f.store, 'second-body');
   const later = Date.now() + WAKE_QUIET_MS + 1;
-  keepAlive(f.store, later);
+  keepAlive(f, later);
   const timed = async (operation, payload) => {
     if (operation === 'reserve-wake') return f.store.reserveManagedWake({ ...payload.target, nonce: payload.nonce, instanceId: payload.instanceId,
       relayId: payload.relayId, transport: payload.transport, resume: payload.resume }, later);
@@ -507,10 +527,10 @@ test('W05-r2 hook-before-outcome, adapter exception and new vendor use the same 
     if (operation === 'record-wake-outcome') return { recorded: f.store.recordManagedWakeOutcome(payload.attempt, payload.outcome, payload.resendBaseMs, later) };
     return dispatch(f.store, operation, payload);
   };
-  await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, 'relay-1',
+  await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, f.relayId,
     portOf({ dispatch: async () => { calls++; throw new Error('lost adapter result'); } }), timed);
   assert.equal(f.store.managedWakeStatus(target, later).state, 'unknown'); assert.equal(calls, 2);
-  assert.equal(await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, 'relay-1',
+  assert.equal(await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, f.relayId,
     portOf({ dispatch: async () => { calls++; return HANDED; } }), timed), false);
   assert.equal(calls, 2);
   const relaySource = readFileSync(new URL('../../mcp-server/src/session-message-relay.ts', import.meta.url), 'utf8');
@@ -526,7 +546,7 @@ test('W05-r2 host capabilities keep submission/observation distinct and deferred
   assert.throws(() => transportDeliveryCapabilities('gemini-queue'), /unavailable/, '3.0 takes no 2.x transport name');
   assert.throws(() => transportDeliveryCapabilities('missing-adapter'), /unavailable/);
   let calls = 0;
-  assert.equal(await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, 'relay-1', {
+  assert.equal(await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, 'unused-relay-id', {
     capabilities: { supportedInjection: ['tool-boundary'], idleWake: 'none' }, resendBaseMs: BASE, dispatch: async () => { calls++; return HANDED; },
   }, async () => { throw new Error('deferred must not request a reservation'); }), false);
   assert.equal(calls, 0);
@@ -571,7 +591,7 @@ async function runProcess(f, mode, relayId, input = 'go') {
 
 test.each(['outcome-first-race', 'start-first-race'])('I3: independent generation/%s workers permit exactly one separate new effect', async mode => {
   const f = fixture(); body(f.store, 'process-pending', f.now);
-  const old = mode === 'start-first-race' ? f.store.reserveManagedWake({ ...target, ...reservation() }, f.now).attempt : begin(f.store, f.now);
+  const old = mode === 'start-first-race' ? f.store.reserveManagedWake({ ...target, ...reservation(f) }, f.now).attempt : begin(f, f.now);
   const raced = await Promise.all(['old-operation', 'new-generation'].map(id => processFixture(f, 'wake-transition', id)));
   const results = raced.map(p => once(p.child, 'message'));
   raced[0].child.send({ kind: mode === 'start-first-race' ? 'start' : 'outcome', attempt: old, now: f.now + 5 });
@@ -600,11 +620,11 @@ test.each(['outcome-first-race', 'start-first-race'])('I3: independent generatio
 
 test('I2: a verified old arrival in another process claims nothing and one new effect follows', async () => {
   const f = fixture(5); body(f.store, 'old-body', f.now);
-  const attempt = begin(f.store, f.now);
+  const attempt = begin(f, f.now);
   f.store.recordManagedWakeOutcome(attempt, HANDED, BASE, f.now + 2);
   const claimed = f.store.claim(target, f.now + 3); f.store.acknowledge(target, ['old-body'], f.now + 4, receipts(claimed));
   f.store.startPresence({ ...target, instanceId: 'instance-2', transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
-    deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } }, f.now + 5);
+    deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' }, hostPid: HOST_PID }, f.now + 5);
   body(f.store, 'new-body', f.now + 6);
   vi.stubEnv('AGENT_GOVERNANCE_TRUST_DB_PATH', join(f.directory, 'trust.sqlite3'));
   const observed = await processFixture(f, 'observe-wake');
@@ -627,7 +647,7 @@ test('I2: a verified old arrival in another process claims nothing and one new e
 test('Codex running body claim in another process prevents the external queue call before start', async () => {
   const f = fixture(); body(f.store, 'running-body', f.now);
   let calls = 0;
-  const called = await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, 'relay-1',
+  const called = await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, f.relayId,
     { capabilities: { supportedInjection: ['peer-wake'], idleWake: 'user-message' }, resendBaseMs: 20 * 60_000,
       dispatch: async () => { calls++; return HANDED; } },
     async (operation, payload) => {
@@ -641,7 +661,7 @@ test('Codex running body claim in another process prevents the external queue ca
 test('Codex post-start claim in another process leaves one marker and a verified empty discard', async () => {
   const f = fixture(); body(f.store, 'racing-body', f.now);
   let calls = 0;
-  await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, 'relay-1',
+  await dispatchManagedWake({ ...target, instanceId: 'instance-1', transport: 'portable' }, f.relayId,
     { capabilities: { supportedInjection: ['peer-wake'], idleWake: 'user-message' }, resendBaseMs: 20 * 60_000,
       dispatch: async () => { await runProcess(f, 'claim-and-ack'); calls++; return HANDED; } },
     async (operation, payload) => dispatch(f.store, operation, payload));
@@ -708,7 +728,7 @@ test('public wake binding requires a fresh presence birth after lease expiry', (
 
 function observedThenCurrent(f) {
   body(f.store, 'already-observed-body', f.now);
-  const old = begin(f.store, f.now);
+  const old = begin(f, f.now);
   f.store.recordManagedWakeOutcome(old, HANDED, BASE, f.now + 2);
   const oldReceipt = observe(f, old, f.now + 3);
   const claimed = hostClaim(f, oldReceipt, f.now + 4).messages;
@@ -719,8 +739,8 @@ function observedThenCurrent(f) {
   body(f.store, 'current-body', f.now + 6);
   // The hook arrival at +4 was a claim boundary; the next ring waits for quiet.
   const quiet = f.now + 4 + WAKE_QUIET_MS + 1;
-  keepAlive(f.store, quiet);
-  const current = begin(f.store, quiet, reservation('current-after-observed-nonce-abcdefghijklmnop'));
+  keepAlive(f, quiet);
+  const current = begin(f, quiet, reservation(f, 'current-after-observed-nonce-abcdefghijklmnop'));
   f.store.recordManagedWakeOutcome(current, HANDED, BASE, quiet + 2);
   return { old, current, oldRow, oldReceipt, at: quiet + 3 };
 }

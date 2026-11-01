@@ -11,19 +11,17 @@ const request = vi.mocked(sessionMessageRequest);
 type Target = { host: string; sessionId: string };
 const target = (sessionId: string, host = "portable"): Target => ({ host, sessionId });
 const view = ({ host, sessionId }: Target) => ({ host, sessionId, state: "online" });
-const DEADLINE_MS = 400;
+// The client's failure for an operation that did not answer (an expired deadline or a busy writer lock); not a refusal.
+const unanswered = () => Object.assign(new Error("The session message request deadline expired."), { code: "BROKER_DEADLINE_EXPIRED" });
 
 beforeEach(() => {
   request.mockReset();
-  // A stub broker: answers every batch except the one holding "fail", which it explicitly refuses, and the one holding
-  // "hang", which it never answers: the client gives up after its deadline (shortened here) with a transport error.
+  // A stub client: answers every batch except the one holding "fail", which it explicitly refuses, and the one holding
+  // "hang", which does not answer: the client reports that as a failure that is not a domain refusal.
   request.mockImplementation(async (_operation: string, payload: Record<string, unknown>) => {
     const targets = payload.targets as Target[];
     if (targets.some((item) => item.sessionId === "fail")) throw new BrokerRequestRejected("Broker request refused.");
-    if (targets.some((item) => item.sessionId === "hang")) {
-      await new Promise((resolve) => setTimeout(resolve, DEADLINE_MS));
-      throw new Error("The session message broker did not answer before its deadline.");
-    }
+    if (targets.some((item) => item.sessionId === "hang")) throw unanswered();
     return { sessions: targets.map(view) } as never;
   });
 });
@@ -48,24 +46,18 @@ it("never asks the broker for identities outside its identifier pattern", async 
   expect(result.data!.unanswered).toEqual([target("has space"), target("c", "bad host"), target(`x${"y".repeat(200)}`)]);
 });
 
-it("stops after a transport failure, so an unresponsive broker costs one batch deadline, not one per batch", async () => {
-  // Every batch hangs, as a broker that is alive but never answers would.
+it("stops after an unanswered batch, so an unanswering store costs one batch deadline, not one per batch", async () => {
+  // Every batch is unanswered; one call proves the lookup waits at most one deadline (presence-deadline.test.ts times it).
   const targets = Array.from({ length: 9 }, (_, index) => target(`session-${index}`));
-  request.mockImplementation(async () => {
-    await new Promise((resolve) => setTimeout(resolve, DEADLINE_MS));
-    throw new Error("The session message broker did not answer before its deadline.");
-  });
-  const started = Date.now();
+  request.mockImplementation(async () => { throw unanswered(); });
   const result = await new SessionMessageService().listPresence(targets);
-  const elapsed = Date.now() - started;
   expect(request).toHaveBeenCalledTimes(1);
-  expect(elapsed).toBeLessThan(2 * DEADLINE_MS);
   expect(result.ok).toBe(true);
   expect(result.data!.sessions).toEqual([]);
   expect(result.data!.unanswered).toEqual(targets);
 });
 
-it("keeps earlier answers and marks the failed and remaining batches unanswered after a transport failure", async () => {
+it("keeps earlier answers and marks the failed and remaining batches unanswered after an unanswered batch", async () => {
   const targets = ["a", "b", "c", "hang", "e", "f", "fail", "h", "i"].map((sessionId) => target(sessionId));
   const result = await new SessionMessageService().listPresence(targets);
   expect(result.data!.sessions.map((session) => session.sessionId)).toEqual(["a", "b", "c"]);

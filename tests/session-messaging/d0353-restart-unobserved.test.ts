@@ -37,6 +37,9 @@ const capabilities: NonNullable<Parameters<SessionMessageStore["startPresence"]>
   supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "silent",
 };
 const iso = (at: number) => new Date(at).toISOString();
+// The synthetic host process the hook reported and the birth its relay's watcher bound (docs/ags30-broker-redesign.md 3.3).
+const HOST_PID = process.pid;
+const HOST_START = "synthetic-host-start";
 const resources: {directory: string; stores: Set<SessionMessageStore>}[] = [];
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -53,7 +56,8 @@ function fixture(transport = "d0353-synthetic") {
   const stores = new Set([store]);
   resources.push({directory, stores});
   const now = Date.now();
-  const f = {directory, database, store, stores, now, transport};
+  // Each relay grant gets a fresh random relay_id; the fixture names them so a case can address one (relay-1, relay-2).
+  const f = {directory, database, store, stores, now, transport, relays: new Map<string, string>()};
   live(f, "instance-1", "relay-1", now);
   return f;
 }
@@ -64,19 +68,31 @@ function reopen(f: Fixture) {
   f.store = new SessionMessageStore(f.database);
   f.stores.add(f.store);
 }
-function live(f: Fixture, instanceId: string, relayId: string, at: number) {
-  f.store.startPresence({...target, instanceId, transport: f.transport, wakeVisibility: "silent", canWakeSilently: true,
-    deliveryCapabilities: capabilities}, at);
-  assert.equal(f.store.acquireRelay({...target, instanceId, transport: f.transport, relayId,
-    pid: process.pid, parentPid: process.pid}, at), true);
+/** The hook grants the birth a lease under a new relay_id; the relay's first tick binds the host birth so it may ring. */
+function grant(f: Fixture, instanceId: string, relay: string, at: number) {
+  const granted = f.store.grantRelay({...target, instanceId, transport: f.transport, codeDigest: null, hostPid: HOST_PID}, at);
+  assert.ok(granted.relayId, `grant refused: ${granted.reason}`);
+  assert.deepEqual(f.store.relayTick({...target, instanceId, relayId: granted.relayId, transport: f.transport, includePending: false,
+    hostStart: HOST_START}, at), {alive: true, count: 0, hostBound: true});
+  f.relays.set(relay, granted.relayId);
 }
-function request(f: Fixture, instanceId = "instance-1", relayId = "relay-1", nonce = `d0353-${Math.random().toString(36).slice(2, 10)}-nonce-abcdefghijklmnop`) {
-  return {...target, instanceId, relayId, nonce, transport: f.transport, resume: true};
+function live(f: Fixture, instanceId: string, relay: string, at: number) {
+  f.store.startPresence({...target, instanceId, transport: f.transport, wakeVisibility: "silent", canWakeSilently: true,
+    deliveryCapabilities: capabilities, hostPid: HOST_PID}, at);
+  grant(f, instanceId, relay, at);
+}
+function relayId(f: Fixture, relay: string) {
+  const value = f.relays.get(relay);
+  assert.ok(value, relay);
+  return value;
+}
+function request(f: Fixture, instanceId = "instance-1", relay = "relay-1", nonce = `d0353-${Math.random().toString(36).slice(2, 10)}-nonce-abcdefghijklmnop`) {
+  return {...target, instanceId, relayId: relayId(f, relay), nonce, transport: f.transport, resume: true};
 }
 // A live relay renews its lease and presence every few seconds; model that up to `to` without any claim boundary.
-function keep(f: Fixture, from: number, to: number, instanceId = "instance-1", relayId = "relay-1") {
+function keep(f: Fixture, from: number, to: number, instanceId = "instance-1", relay = "relay-1") {
   for (let at = from; ; at = Math.min(at + 10_000, to)) {
-    assert.equal(f.store.relayTick({...target, instanceId, relayId, transport: f.transport, includePending: false}, at).alive, true);
+    assert.equal(f.store.relayTick({...target, instanceId, relayId: relayId(f, relay), transport: f.transport, includePending: false}, at).alive, true);
     if (at === to) return;
   }
 }
@@ -91,8 +107,8 @@ function submit(f: Fixture, body: string, at: number, ttlSeconds = 86400) {
 }
 type Uncertain = "handed-off" | "unknown" | "started";
 /** Hands one marker to the host for one pending body: started at now+1, outcome at now+2. */
-function handOff(f: Fixture, outcome: Uncertain = "handed-off", at = f.now, instanceId = "instance-1", relayId = "relay-1") {
-  const attempt = dispatched(f.store.startManagedWake(dispatched(f.store.reserveManagedWake(request(f, instanceId, relayId), at)), BASE, at + 1));
+function handOff(f: Fixture, outcome: Uncertain = "handed-off", at = f.now, instanceId = "instance-1", relay = "relay-1") {
+  const attempt = dispatched(f.store.startManagedWake(dispatched(f.store.reserveManagedWake(request(f, instanceId, relay), at)), BASE, at + 1));
   if (outcome !== "started") assert.equal(f.store.recordManagedWakeOutcome(attempt, outcome === "handed-off" ? HANDED : UNKNOWN, BASE, at + 2), true);
   return attempt;
 }
@@ -155,7 +171,7 @@ test("2.6: a lease expiry and rebirth of the same instance end the old hand-off 
   assert.equal(path(f)!.streak, 0, "the new birth starts from zero (r3 F2)");
 });
 
-test("2.3: presence renewal, relay leases and relay ticks of the same birth are no claim boundary and leave the hand-off", () => {
+test("2.3: presence renewal, a refused repeated grant and relay ticks of the same birth are no claim boundary and leave the hand-off", () => {
   const f = fixture();
   submit(f, "renewal-body", f.now);
   const attempt = handOff(f);
@@ -164,11 +180,13 @@ test("2.3: presence renewal, relay leases and relay ticks of the same birth are 
   f.store.startPresence({...target, instanceId: "instance-1", transport: f.transport, wakeVisibility: "silent",
     canWakeSilently: true, deliveryCapabilities: capabilities}, at);
   assert.equal(f.store.presence(target, at).startedAt, attempt.generation, "a live renewal keeps its birth");
-  assert.equal(f.store.acquireRelay({...target, instanceId: "instance-1", relayId: "relay-1", transport: f.transport,
-    pid: process.pid, parentPid: process.pid}, at), true);
+  // The live lease of this birth runs the same code: a second grant is refused and the holder keeps its relay_id.
+  assert.deepEqual(f.store.grantRelay({...target, instanceId: "instance-1", transport: f.transport, codeDigest: null, hostPid: HOST_PID}, at),
+    {relayId: null, reason: "RELAY_ALIVE"});
+  assert.equal(f.store.liveRelay(target, f.transport, at)?.relayId, relayId(f, "relay-1"));
   assert.equal(f.store.heartbeatPresence(target, "instance-1", at + 1), true);
-  assert.deepEqual(f.store.relayTick({...target, instanceId: "instance-1", relayId: "relay-1", transport: f.transport,
-    includePending: true}, at + 2), {alive: true, count: 1});
+  assert.deepEqual(f.store.relayTick({...target, instanceId: "instance-1", relayId: relayId(f, "relay-1"), transport: f.transport,
+    includePending: true}, at + 2), {alive: true, count: 1, hostBound: true});
   assert.equal(f.store.reserveManagedWake(request(f), at + 3).dispatch, false);
   assert.deepEqual(row(f, attempt), original);
   assert.equal(path(f)!.claim_boundary_at, null);
@@ -181,9 +199,10 @@ test("I7: a quiet live session hours after an unobserved hand-off gets exactly o
   const attempt = handOff(f);
   reopen(f);
   const at = f.now + 25 * 3600_000;
-  // The relay kept the birth live the whole time (one long gap modelled by a lease extension, no boundary).
+  // The birth stayed live the whole time (one long gap modelled by a lease extension, no boundary); its lapsed relay lease
+  // is granted again to the same birth under a new relay_id.
   f.store.database.prepare("UPDATE session_presence SET lease_until = ? WHERE instance_id = 'instance-1'").run(iso(at + 20_000));
-  assert.equal(f.store.acquireRelay({...target, instanceId: "instance-1", relayId: "relay-1", transport: f.transport, pid: process.pid, parentPid: process.pid}, at - 2), true);
+  grant(f, "instance-1", "relay-1", at - 2);
   const fresh = submit(f, "fresh-body-after-hours", at - 1);
   assert.equal(fresh.autoWake.state, "available");
   const peer = new SessionMessageStore(f.database);
@@ -315,7 +334,7 @@ test("I7: a default-TTL message is delivered after the first unobserved marker i
 // Bounds markers parked in a host queue (Codex keeps queued items while a thread is interrupted or running).
 test("I8: consecutive unanswered hand-offs of one birth double the resend interval; an observation resets it", () => {
   const f = fixture();
-  submit(f, "parked-body", f.now);
+  const parked = submit(f, "parked-body", f.now);
   const first = handOff(f);
   assert.equal(row(f, first).resend_due_at, iso(f.now + 2 + BASE));
   const secondAt = f.now + 2 + BASE;
@@ -331,8 +350,12 @@ test("I8: consecutive unanswered hand-offs of one birth double the resend interv
   const third = handOff(f, "handed-off", thirdAt);
   assert.equal(path(f)!.streak, 2);
   assert.equal(row(f, third).resend_due_at, iso(thirdAt + 2 + 4 * BASE));
-  assert.equal(observe(f, third, thirdAt + 3).recognized, true);
+  const observed = observe(f, third, thirdAt + 3);
+  assert.equal(observed.recognized, true);
+  assert.deepEqual(observed.messages.map(value => value.messageId), [parked.messageId]);
   assert.equal(path(f)!.streak, 0);
+  // The woken session acknowledges the parked body, so no live claim lease keeps a body in delivery (2.5 gate 2).
+  assert.equal(f.store.acknowledge(target, [parked.messageId], thirdAt + 4, observed.messages.map(value => ({messageId: value.messageId, claimReceipt: value.claimReceipt!}))), 1);
   const fourthAt = thirdAt + 4 + WAKE_QUIET_MS + 1;
   keep(f, thirdAt + 3, fourthAt);
   submit(f, "after-observed-body", fourthAt);

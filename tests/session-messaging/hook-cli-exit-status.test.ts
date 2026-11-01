@@ -8,7 +8,7 @@ import type * as Diagnostics from "../../mcp-server/src/hook-error-diagnostics.j
 import type * as Fs from "node:fs";
 
 // Drives the production CLI entry block of the source module (the code the bundled hook CLI runs), with only stdin
-// and the broker request replaced by fixtures.
+// and the in-process messaging request replaced by fixtures.
 const f = vi.hoisted(() => ({ request: vi.fn(), stdin: "" as string | Error }));
 vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
   ...await original<typeof import("../../mcp-server/src/session-message-client.js")>(), sessionMessageRequest: f.request,
@@ -73,11 +73,13 @@ function failures(): Array<Record<string, unknown>> {
     .map((line) => JSON.parse(line.slice(line.indexOf("{"))) as Record<string, unknown>);
 }
 
+// The mocked request resolves without I/O, so the hook's remaining continuation is microtasks only; one macrotask turn
+// runs after the microtask queue is empty and therefore after the CLI block finished (no wall-clock wait).
 async function settled(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 50));
+  await new Promise((resolve) => setImmediate(resolve));
 }
 
-it("keeps the broker failure diagnostic distinct while retaining fail-open exit 0", async () => {
+it("keeps the messaging failure diagnostic distinct while retaining fail-open exit 0", async () => {
   await runCli(stop, ["--host=claude-code"], ({ hookFailure }) => {
     f.request.mockRejectedValueOnce(hookFailure("BROKER_DEADLINE_EXPIRED", "The session message request deadline expired."));
   });

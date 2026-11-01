@@ -1,20 +1,18 @@
 import { EventEmitter } from "node:events";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const f = vi.hoisted(() => ({
-  now: 100, request: vi.fn(), token: vi.fn(), spawn: vi.fn(), exec: vi.fn(), connect: vi.fn(),
-  open: vi.fn(), record: vi.fn(), verify: vi.fn(), close: vi.fn(), wake: vi.fn(), read: vi.fn(), mkdir: vi.fn(), chmod: vi.fn(), exists: vi.fn(),
+  now: 100, request: vi.fn(), spawn: vi.fn(),
+  open: vi.fn(), record: vi.fn(), verify: vi.fn(), close: vi.fn(), wake: vi.fn(),
 }));
 vi.mock("node:perf_hooks", () => ({ performance: { now: () => f.now } }));
-vi.mock("node:child_process", async (original) => ({ ...await original<typeof import("node:child_process")>(), spawn: f.spawn, execFileSync: f.exec }));
-vi.mock("node:tls", () => ({ default: { connect: f.connect } }));
-vi.mock("node:fs", async (original) => ({ ...await original<typeof import("node:fs")>(), existsSync: f.exists }));
-vi.mock("node:fs/promises", async (original) => ({ ...await original<typeof import("node:fs/promises")>(), readFile: f.read, mkdir: f.mkdir, chmod: f.chmod }));
+vi.mock("node:child_process", async (original) => ({ ...await original<typeof import("node:child_process")>(), spawn: f.spawn }));
 vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
   ...await original<typeof import("../../mcp-server/src/session-message-client.js")>(), sessionMessageRequest: f.request,
-}));
-vi.mock("../../mcp-server/src/process-identity.js", async (original) => ({
-  ...await original<typeof import("../../mcp-server/src/process-identity.js")>(), processStartToken: f.token,
 }));
 vi.mock("../../mcp-server/src/trust-store.js", () => ({ TrustStore: class {
   constructor(...args: unknown[]) { f.open(...args); }
@@ -28,15 +26,17 @@ vi.mock("../../mcp-server/src/session-message-wake-port.js", async (original) =>
 
 import { handleSessionMessageHook, runSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import { registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+import { producerFailureReason } from "../../mcp-server/src/failure-diagnostics.js";
 const syntheticCore = await import(new URL("./fixtures/synthetic-core-hook-driver.mjs", import.meta.url).href) as {
   SYNTHETIC_CORE_HOST: string;
   registerSyntheticCoreAdapters: (register: typeof registerHookHostAdapter, selectTransport: () => "codex-deferred") => void;
 };
 syntheticCore.registerSyntheticCoreAdapters(registerHookHostAdapter, () => "codex-deferred");
 const syntheticRootHost = syntheticCore.SYNTHETIC_CORE_HOST;
-import { requestSessionMessageOnce, sessionMessageRequest as mockedRequest } from "../../mcp-server/src/session-message-client.js";
-import { SESSION_MESSAGE_PROTOCOL } from "../../mcp-server/src/session-message-protocol.js";
+import { sessionMessageRequest as mockedRequest } from "../../mcp-server/src/session-message-client.js";
 
+// The hook budget is a same-process performance.now() deadline (mocked here). Messaging runs in this process
+// (docs/ags30-broker-redesign.md 3.1): no socket, endpoint or broker spawn exists to bound.
 const budget = () => ({ deadlineMonotonicMs: 1000, postClaimReserveMs: 200 });
 const input = { hook_event_name: "Stop", session_id: "budget-target" };
 const start = { ...input, agent_id: "", hook_event_name: "SessionStart" };
@@ -46,12 +46,11 @@ const message = {
   createdAt: "2026-10-22T00:00:00.000Z", expiresAt: "2026-10-22T01:00:00.000Z",
   deliveryAttempt: 1, firstDeliveredAt: "2026-10-22T00:00:01.000Z",
 };
+const directories: string[] = [];
 beforeEach(() => {
-  for (const mock of [f.request, f.token, f.spawn, f.exec, f.connect, f.open, f.record, f.verify, f.close, f.wake, f.read, f.mkdir, f.chmod, f.exists]) mock.mockReset();
-  f.mkdir.mockResolvedValue(undefined); f.chmod.mockResolvedValue(undefined);
-  f.exists.mockReturnValue(true);
+  for (const mock of [f.request, f.spawn, f.open, f.record, f.verify, f.close, f.wake]) mock.mockReset();
   f.now = 100;
-  f.token.mockReturnValue("T1"); f.spawn.mockReturnValue({ unref: vi.fn() });
+  f.spawn.mockImplementation(() => Object.assign(new EventEmitter(), { unref: vi.fn() }));
   f.record.mockReturnValue({ receiptId: "source-synthetic" }); f.verify.mockReturnValue(true);
   f.request.mockImplementation(async (_operation, _payload, _directory, options) => {
     options?.onOperationWrite?.(); return { messages: [message] };
@@ -59,7 +58,11 @@ beforeEach(() => {
   vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "0");
   vi.stubEnv("AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE", "0");
 });
-afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); });
+afterEach(async () => {
+  vi.restoreAllMocks(); vi.unstubAllEnvs();
+  const actual = await vi.importActual<typeof import("../../mcp-server/src/session-message-client.js")>("../../mcp-server/src/session-message-client.js");
+  for (const directory of directories.splice(0)) { actual.closeSessionMessaging(directory); rmSync(directory, { recursive: true, force: true }); }
+});
 
 it.each([
   { deadlineMonotonicMs: NaN, postClaimReserveMs: 0 },
@@ -136,14 +139,18 @@ it.each(["throw", "reject"])("observer %s cannot cause replay or lose cleanup", 
   await Promise.resolve();
 });
 
-it("snapshots the budget and T1 before an await, then refuses relay spawn after expiry", async () => {
+it("snapshots the budget and host observation before an await, then refuses relay spawn after expiry", async () => {
   const executionBudget = budget();
   const hostProcess = { pid: 424242, startToken: "T1" };
   f.request.mockImplementationOnce(async () => {
-    executionBudget.deadlineMonotonicMs = 9000; hostProcess.startToken = "T2"; f.now = 1000; return {};
+    executionBudget.deadlineMonotonicMs = 9000; hostProcess.startToken = "T2"; f.now = 1000;
+    return { presence: {}, relayId: "11111111-1111-4111-8111-111111111111" };
   });
   expect(await runSessionMessageHook(syntheticRootHost, JSON.stringify({ ...start, syntheticActor: "root" }), 424242, { executionBudget, hostProcess })).toBe("");
-  expect(f.token).toHaveBeenCalledWith(424242, process.platform, 900); expect(f.spawn).not.toHaveBeenCalled();
+  expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["presence-start"]);
+  expect(f.request.mock.calls[0]![1]).toMatchObject({ hostPid: 424242, hostStart: "T1" });
+  expect(f.request.mock.calls[0]![3]).toMatchObject({ deadlineMonotonicMs: 1000 });
+  expect(f.spawn).not.toHaveBeenCalled();
 });
 
 it("synchronous observer reentry cannot start another hook claim", async () => {
@@ -186,132 +193,94 @@ it("keeps no-options request and standalone receipt defaults unchanged", async (
   expect(f.open.mock.calls[0]).toHaveLength(1);
 });
 
-it.each(["win32", "darwin"] as const)("clips the actual %s token subprocess leaf and preserves the old cap", async (platform) => {
-  const actual = await vi.importActual<typeof import("../../mcp-server/src/process-identity.js")>("../../mcp-server/src/process-identity.js");
-  f.exec.mockReturnValue("T1\n");
-  expect(actual.processStartToken(424242, platform, 17.9)).toBe("T1");
-  expect(f.exec.mock.calls[0]![2]).toMatchObject({ timeout: 17 });
-  f.exec.mockClear(); actual.processStartToken(424242, platform);
-  expect(f.exec.mock.calls[0]![2]).toMatchObject({ timeout: platform === "win32" ? 5000 : 3000 });
-  f.exec.mockClear(); expect(actual.processStartToken(424242, platform, 0)).toBeNull(); expect(f.exec).not.toHaveBeenCalled();
+
+// The in-process client's own deadline (session-message-client.ts sessionMessageRequest): an expired deadline runs
+// nothing and the remaining time bounds the writer-lock wait; nothing is retried.
+async function actualClient() {
+  return await vi.importActual<typeof import("../../mcp-server/src/session-message-client.js")>("../../mcp-server/src/session-message-client.js");
+}
+function stateDirectory(): string {
+  const directory = mkdtempSync(path.join(tmpdir(), "ags-hook-budget-"));
+  directories.push(directory);
+  return directory;
+}
+const sender = { host: "claude-code", sessionId: "budget-sender" };
+const recipient = { host: "claude-code", sessionId: "budget-target" };
+async function expiredRejection(pending: Promise<unknown>): Promise<unknown> {
+  const failure = await pending.then(() => undefined, (error: unknown) => error);
+  expect(failure).toBeInstanceOf(Error);
+  return failure;
+}
+
+it("an expired deadline starts no state-directory preparation and no operation", async () => {
+  const actual = await actualClient();
+  const directory = stateDirectory();
+  const prepareStateDirectory = vi.fn(async () => {}); const onOperationWrite = vi.fn();
+  const failure = await expiredRejection(actual.sessionMessageRequest("claim", { target: recipient }, directory, {
+    totalTimeoutMs: 500, deadlineMonotonicMs: 100, noOperationReplay: true, prepareStateDirectory, onOperationWrite,
+  }));
+  expect(producerFailureReason(failure)).toBe("BROKER_DEADLINE_EXPIRED");
+  expect(onOperationWrite).not.toHaveBeenCalled();
+  expect(existsSync(path.join(directory, "session-messages.sqlite3"))).toBe(false);
+  expect(prepareStateDirectory).not.toHaveBeenCalled();
 });
 
-const fingerprint = Array(32).fill("AA").join(":");
-function fakeSocket() {
-  return Object.assign(new EventEmitter(), {
-    getPeerCertificate: vi.fn(() => ({ fingerprint256: fingerprint })), write: vi.fn((frame: string) => { void frame; return true; }), destroy: vi.fn(),
-  });
-}
-function stubEndpoint() {
-  f.read.mockImplementation(async (name: string) => name.endsWith("endpoint.json")
-    ? JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, claimReceiptVersion: 1, address: "127.0.0.1", port: 12345, certificateFingerprint256: fingerprint })
-    : name.endsWith("broker.token") ? "a".repeat(43) : "synthetic certificate");
-}
-async function connecting() {
-  const socket = fakeSocket(); f.connect.mockReturnValue(socket);
-  stubEndpoint();
-  const onOperationWrite = vi.fn();
-  const pending = requestSessionMessageOnce("claim", {}, "synthetic-state", 500, undefined, { enforceDeadline: true, onOperationWrite });
-  // Attach a rejection handler before deliberately emitting a failing event.
-  const settled = pending.then((value) => ({ value, error: undefined }), (error: Error) => ({ value: undefined, error }));
-  await vi.waitFor(() => expect(f.connect).toHaveBeenCalledTimes(1));
-  return { socket, onOperationWrite, settled };
-}
-
-it("a delayed secureConnect cannot write even before the expiry timer gets its event-loop turn", async () => {
-  const { socket, onOperationWrite, settled } = await connecting();
-  f.now = 600; socket.emit("secureConnect");
-  expect((await settled).error).toBeInstanceOf(Error);
-  expect(socket.write).not.toHaveBeenCalled(); expect(onOperationWrite).not.toHaveBeenCalled(); expect(socket.destroy).toHaveBeenCalledTimes(1);
-});
-
-it("expired prepare ping cannot start state-directory effects or the target operation", async () => {
-  const actual = await vi.importActual<typeof import("../../mcp-server/src/session-message-client.js")>("../../mcp-server/src/session-message-client.js");
-  stubEndpoint();
-  const socket = fakeSocket(); f.connect.mockReturnValue(socket);
-  const prepareStateDirectory = vi.fn(); const onOperationWrite = vi.fn();
-  const pending = actual.sessionMessageRequest("claim", {}, "synthetic-state", {
+it("state-directory preparation that consumes the deadline prevents the operation", async () => {
+  const actual = await actualClient();
+  const directory = stateDirectory();
+  const prepareStateDirectory = vi.fn(async () => { f.now = 600; }); const onOperationWrite = vi.fn();
+  const failure = await expiredRejection(actual.sessionMessageRequest("claim", { target: recipient }, directory, {
     totalTimeoutMs: 500, deadlineMonotonicMs: 600, noOperationReplay: true, prepareStateDirectory, onOperationWrite,
-  });
-  const settled = pending.then(() => undefined, (error: Error) => error);
-  await vi.waitFor(() => expect(f.connect).toHaveBeenCalledTimes(1));
-  socket.emit("secureConnect"); f.now = 600; socket.emit("data", Buffer.from("invalid-json\n"));
-  expect(await settled).toBeInstanceOf(Error);
-  expect(prepareStateDirectory).not.toHaveBeenCalled(); expect(onOperationWrite).not.toHaveBeenCalled();
-  expect(socket.write).toHaveBeenCalledTimes(1);
-  expect(JSON.parse(socket.write.mock.calls[0]![0]).operation).toBe("ping");
+  }));
+  expect(producerFailureReason(failure)).toBe("BROKER_DEADLINE_EXPIRED");
+  expect(prepareStateDirectory).toHaveBeenCalledTimes(1);
+  expect(onOperationWrite).not.toHaveBeenCalled();
+  expect(existsSync(path.join(directory, "session-messages.sqlite3"))).toBe(false);
 });
 
-it("the socket still caps a larger caller timeout at 2500ms", async () => {
-  stubEndpoint(); const socket = fakeSocket(); f.connect.mockReturnValue(socket);
-  const pending = requestSessionMessageOnce("claim", {}, "synthetic-state", 7000, undefined, { enforceDeadline: true });
-  const settled = pending.then(() => undefined, (error: Error) => error);
-  await vi.waitFor(() => expect(f.connect).toHaveBeenCalledTimes(1));
-  f.now = 2600; socket.emit("secureConnect");
-  expect(await settled).toBeInstanceOf(Error); expect(socket.write).not.toHaveBeenCalled();
+it("a live deadline runs the operation once, and the caller timeout caps the absolute deadline", async () => {
+  const actual = await actualClient();
+  const directory = stateDirectory();
+  const onOperationWrite = vi.fn();
+  expect(await actual.sessionMessageRequest("claim", { target: recipient }, directory, {
+    totalTimeoutMs: 500, deadlineMonotonicMs: 9000, noOperationReplay: true, onOperationWrite,
+  })).toEqual({ messages: [] });
+  expect(onOperationWrite).toHaveBeenCalledTimes(1);
+  // A zero caller timeout caps the later absolute deadline: nothing runs.
+  f.now = 600;
+  const failure = await expiredRejection(actual.sessionMessageRequest("claim", { target: recipient }, directory, {
+    totalTimeoutMs: 0, deadlineMonotonicMs: 9000, onOperationWrite,
+  }));
+  expect(producerFailureReason(failure)).toBe("BROKER_DEADLINE_EXPIRED");
+  expect(onOperationWrite).toHaveBeenCalledTimes(1);
 });
 
-it("default preparation cannot start chmod or spawn after mkdir consumes the deadline", async () => {
-  const actual = await vi.importActual<typeof import("../../mcp-server/src/session-message-client.js")>("../../mcp-server/src/session-message-client.js");
-  f.read.mockRejectedValue(new Error("endpoint unavailable"));
-  f.mkdir.mockImplementationOnce(async () => { f.now = 600; });
-  await expect(actual.sessionMessageRequest("claim", {}, "synthetic-state", {
-    totalTimeoutMs: 500, deadlineMonotonicMs: 600, noOperationReplay: true,
-  })).rejects.toThrow();
-  expect(f.mkdir).toHaveBeenCalledTimes(1); expect(f.chmod).not.toHaveBeenCalled(); expect(f.spawn).not.toHaveBeenCalled();
+it("another process's writer lock within the remaining budget is MESSAGING_BUSY with nothing written, not a retry", async () => {
+  const actual = await actualClient();
+  const directory = stateDirectory();
+  actual.runSessionMessageOperation("pending", { target: recipient }, directory);
+  // A second connection holds the writer lock; the remaining 2 ms is the whole lock wait (busy_timeout), no retry.
+  const holder = new DatabaseSync(path.join(directory, "session-messages.sqlite3"));
+  const drafts = () => (holder.prepare("SELECT count(*) AS n FROM prepared_messages").get() as { n: number }).n;
+  try {
+    holder.exec("PRAGMA busy_timeout = 0; BEGIN IMMEDIATE;");
+    const onOperationWrite = vi.fn();
+    const failure = await expiredRejection(actual.sessionMessageRequest("prepare", { sender, target: recipient, body: "busy body" }, directory, {
+      deadlineMonotonicMs: 102, onOperationWrite,
+    }));
+    expect(producerFailureReason(failure)).toBe("MESSAGING_BUSY");
+    expect(onOperationWrite).toHaveBeenCalledTimes(1);
+    holder.exec("COMMIT;");
+    expect(drafts()).toBe(0);
+    expect(await actual.sessionMessageRequest("prepare", { sender, target: recipient, body: "busy body" }, directory, {
+      deadlineMonotonicMs: 102 })).toMatchObject({ messageId: expect.any(String) });
+    expect(drafts()).toBe(1);
+  } finally { if (holder.isTransaction) holder.exec("ROLLBACK;"); holder.close(); }
 });
 
-it("broker-path filesystem work cannot enable a spawn after the deadline", async () => {
-  const actual = await vi.importActual<typeof import("../../mcp-server/src/session-message-client.js")>("../../mcp-server/src/session-message-client.js");
-  f.read.mockRejectedValue(new Error("endpoint unavailable"));
-  f.exists.mockImplementationOnce(() => { f.now = 600; return true; });
-  await expect(actual.sessionMessageRequest("claim", {}, "synthetic-state", {
-    totalTimeoutMs: 500, deadlineMonotonicMs: 600, noOperationReplay: true,
-  })).rejects.toThrow();
-  expect(f.exists).toHaveBeenCalledTimes(1); expect(f.spawn).not.toHaveBeenCalled();
-});
-
-it.each(["backpressure", "throw"])("write %s is still one attempted operation, and observer errors cannot replace it", async (mode) => {
-  const { socket, onOperationWrite, settled } = await connecting();
-  const failure = new Error("original write error");
-  onOperationWrite.mockImplementation(() => { throw new Error("observer error"); });
-  socket.write.mockImplementation(() => { if (mode === "throw") throw failure; return false; });
-  socket.emit("secureConnect");
-  if (mode !== "throw") socket.emit("end");
-  const result = await settled;
-  if (mode === "throw") expect(result.error).toBe(failure);
-  else expect(result.error?.message).toMatch(/closed/u);
-  expect(onOperationWrite).toHaveBeenCalledTimes(1); expect(socket.destroy).toHaveBeenCalledTimes(1);
-});
-
-it("serialization consuming the remaining socket deadline prevents a late write", async () => {
-  const { socket, onOperationWrite, settled } = await connecting();
-  const stringify = JSON.stringify;
-  vi.spyOn(JSON, "stringify").mockImplementation((value, replacer, space) => {
-    const output = stringify(value, replacer, space);
-    if (value && typeof value === "object" && "operation" in value) f.now = 600;
-    return output;
-  });
-  socket.emit("secureConnect");
-  expect((await settled).error).toBeInstanceOf(Error);
-  expect(socket.write).not.toHaveBeenCalled(); expect(onOperationWrite).not.toHaveBeenCalled();
-});
-
-it.each(["late-response", "partial-close", "success"])("actual response settling enforces the deadline and EOF: %s", async (mode) => {
-  const { socket, onOperationWrite, settled } = await connecting();
-  socket.emit("secureConnect");
-  if (mode === "late-response") f.now = 600;
-  socket.emit("data", Buffer.from(mode === "partial-close" ? '{"ok":true' : '{"ok":true,"data":{"messages":[]}}\n'));
-  if (mode === "partial-close") socket.emit("close");
-  const result = await settled;
-  if (mode === "success") expect(result.value).toEqual({ messages: [] });
-  else expect(result.error).toBeInstanceOf(Error);
-  expect(onOperationWrite).toHaveBeenCalledTimes(1); expect(socket.destroy).toHaveBeenCalledTimes(1);
-});
-
-it.each(["gemini"])("does not spend a native %s lifecycle budget on identity or presence", async (host) => {
+it.each(["gemini"])("does not spend a native %s lifecycle budget on presence", async (host) => {
   expect(await runSessionMessageHook(host, JSON.stringify(start), 424242,
     { executionBudget: budget(), hostProcess: { pid: 424242, startToken: "T1" } })).toBe("");
-  expect(f.request).not.toHaveBeenCalled(); expect(f.token).not.toHaveBeenCalled();
+  expect(f.request).not.toHaveBeenCalled();
   expect(f.spawn).not.toHaveBeenCalled(); expect(f.open).not.toHaveBeenCalled();
 });

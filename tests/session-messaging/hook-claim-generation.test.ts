@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { afterEach, describe, expect, it } from "vitest";
 import { producerFailureReason } from "../../mcp-server/src/failure-diagnostics.js";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
@@ -7,8 +8,13 @@ import { SessionMessageStore } from "../../mcp-server/src/session-message-store.
 // 공식 호스트 busy/idle, 외부 제출, 모델 소비와 정상 ACK의 전체 수용은 이 시험 범위가 아니다.
 const target = { host: "codex", sessionId: "hook-claim-generation-recipient" };
 const sender = { host: "claude-code", sessionId: "hook-claim-generation-sender" };
-const generationA = "host-process-v1:" + "a".repeat(64);
-const generationB = "host-process-v1:" + "b".repeat(64);
+// A verified generation is named by its adapter-observed host birth (ensure-relay); the relay's first tick serves it.
+type Birth = { instanceId: string; hostPid: number; hostStart: string };
+const birth = (hostPid: number, hostStart: string): Birth => ({ hostPid, hostStart,
+  instanceId: "host-process-v1:" + createHash("sha256").update(JSON.stringify([target.host, target.sessionId, hostPid, hostStart])).digest("hex") });
+const birthA = birth(100, "birth-A"), birthB = birth(100, "birth-B");
+const generationA = birthA.instanceId;
+const generationB = birthB.instanceId;
 const now = Date.UTC(2026, 9, 30, 0, 0, 0);
 const transport = "codex-queue";
 const stores: SessionMessageStore[] = [];
@@ -25,13 +31,15 @@ function fixture() {
       idleWake: "user-message" as const,
     },
   };
-  const start = (instanceId: string, at: number) => {
-    const input = { ...presence, instanceId, parentPid: 100 };
-    const grant = store.prepareVerifiedRelay({ ...input, expectedOwner: store.relayOwner(target, transport) }, at);
-    expect(grant.spawn).toBe(true);
+  const ensure = (born: Birth, at: number, expectedPresenceInstanceId: string | null) =>
+    store.ensureVerifiedGeneration({ ...presence, ...born, codeDigest: null, expectedPresenceInstanceId }, at);
+  // The recovering hook expects the generation it observed as current, exactly as the hook's ensure-relay does.
+  const start = (born: Birth, at: number) => {
+    const grant = ensure(born, at, store.presence(target, at).instanceId);
+    expect(grant).toMatchObject({ spawn: true, instanceId: born.instanceId });
     expect(grant.relayId).not.toBeNull();
-    expect(store.activateVerifiedRelay({ ...input, relayId: grant.relayId!, pid: 200,
-      relayStartToken: "hook-claim-child-start" }, at + 1)).toBe(true);
+    expect(store.relayTick({ ...target, transport, relayId: grant.relayId!, instanceId: born.instanceId,
+      includePending: false, hostStart: born.hostStart }, at + 1).alive).toBe(true);
     return grant.relayId!;
   };
   const enqueue = (body: string, at: number) => {
@@ -43,7 +51,7 @@ function fixture() {
     "messages", "prepared_messages", "input_observations", "wake_paths",
     "wake_nonces", "session_presence", "relay_leases",
   ].map(table => [table, store.database.prepare(`SELECT * FROM ${table}`).all()]));
-  return { store, presence, start, enqueue, snapshot };
+  return { store, presence, ensure, start, enqueue, snapshot };
 }
 
 function invoke(store: SessionMessageStore, operation: HookOperation, at: number, instanceId?: string) {
@@ -68,8 +76,8 @@ afterEach(() => { for (const store of stores.splice(0)) store.close(); });
 describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
   it.each(operations)("B 교체 뒤 A의 %s를 거부하고 본문·claim·지연·활동·wake를 보존한다", (operation) => {
     const { store, start, enqueue, snapshot } = fixture();
-    start(generationA, now);
-    const relayId = start(generationB, now + 2);
+    start(birthA, now);
+    const relayId = start(birthB, now + 2);
     const messageId = enqueue("replacement body remains intact", now + 4);
     store.observeNativeInput(target, now + 6, generationB);
     expect(store.reserveManagedWake({ ...target, transport, instanceId: generationB, relayId,
@@ -91,7 +99,7 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
   for (const instanceId of [undefined, "unobserved-generation"]) {
     it.each(operations)(`검증된 현재 세대에서 ${instanceId === undefined ? "누락" : "불명"} instance의 %s는 상태 변경 없이 거부한다`, (operation) => {
       const { store, start, enqueue, snapshot } = fixture();
-      start(generationB, now);
+      start(birthB, now);
       enqueue("unclaimed body", now + 2);
       store.observeNativeInput(target, now + 4, generationB);
       const before = snapshot();
@@ -102,7 +110,7 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
 
   it.each(operations)("종료된 현재 instance의 %s도 상태 변경 없이 거부한다", (operation) => {
     const { store, start, enqueue, snapshot } = fixture();
-    start(generationA, now);
+    start(birthA, now);
     enqueue("body survives ended generation", now + 2);
     store.observeNativeInput(target, now + 4, generationA);
     expect(store.endPresence(target, "host-process-ended", generationA, now + 5)).toBe(true);
@@ -113,7 +121,7 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
 
   it("정확한 현재 세대는 첫 경계 지연·clearDeferred·turn-end와 수신 ACK를 유지한다", () => {
     const { store, start, enqueue } = fixture();
-    start(generationB, now);
+    start(birthB, now);
     const first = enqueue("current body", now + 2);
     store.observeNativeInput(target, now + 4, generationB);
     expect(store.claimDeferred(target, now + 5, { instanceId: generationB })).toEqual([]);
@@ -137,7 +145,7 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
 
   it.each(["claimDeferred", "claimTurnEnd"] as const)("종료되지 않은 동일 세대는 relay/presence lease 만료 뒤에도 %s를 유지한다", (operation) => {
     const { store, start, enqueue } = fixture();
-    start(generationB, now);
+    start(birthB, now);
     const messageId = enqueue("body after lease lapse", now + 2);
     const later = now + 25_000;
     expect(store.liveRelay(target, transport, later)).toBeNull();
@@ -173,9 +181,9 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
   });
 
   it("A 교체 뒤 B의 lease가 만료돼도 등록 이력이 있는 A를 다시 부활시키지 않는다", () => {
-    const { store, presence, start, enqueue, snapshot } = fixture();
-    start(generationA, now);
-    const relayId = start(generationB, now + 2);
+    const { store, ensure, start, enqueue, snapshot } = fixture();
+    start(birthA, now);
+    const relayId = start(birthB, now + 2);
     const messageId = enqueue("body belongs to the replacement", now + 4);
     store.observeNativeInput(target, now + 6, generationB);
     expect(store.reserveManagedWake({ ...target, transport, instanceId: generationB, relayId,
@@ -185,50 +193,45 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
     expect(store.liveRelay(target, transport, later)).toBeNull();
     const before = snapshot();
 
-    expect(store.prepareVerifiedRelay({ ...presence, instanceId: generationA, parentPid: 100,
-      expectedOwner: store.relayOwner(target, transport), expectedPresenceInstanceId: generationB }, later))
-      .toMatchObject({ spawn: false, relayId: null });
+    expect(ensure(birthA, later, generationB)).toMatchObject({ spawn: false, relayId: null, reason: "GENERATION_SUPERSEDED" });
     expect(snapshot()).toEqual(before);
     expect(store.status(sender, messageId, later)).toMatchObject({ deliveryAttempts: 0, acknowledgedAt: null });
   });
 
-  it("C 복구가 관측한 B를 D가 교체하면 현재 relay 소유자를 알아도 C 예약을 거부한다", () => {
-    const { store, presence, start, enqueue, snapshot } = fixture();
-    start(generationA, now);
-    start(generationB, now + 2);
-    const generationC = "host-process-v1:" + "c".repeat(64);
-    const generationD = "host-process-v1:" + "d".repeat(64);
-    const recoveringC = { ...presence, instanceId: generationC, parentPid: 101,
-      expectedPresenceInstanceId: store.presence(target, now + 3).instanceId };
-    expect(recoveringC.expectedPresenceInstanceId).toBe(generationB);
-    start(generationD, now + 4);
+  it("C 복구가 관측한 B를 D가 교체하면 C 예약을 거부한다", () => {
+    const { store, ensure, start, enqueue, snapshot } = fixture();
+    start(birthA, now);
+    start(birthB, now + 2);
+    const birthC = birth(101, "birth-C"), birthD = birth(102, "birth-D");
+    const generationD = birthD.instanceId;
+    const observedByC = store.presence(target, now + 3).instanceId;
+    expect(observedByC).toBe(generationB);
+    start(birthD, now + 4);
     enqueue("body survives a stale recovery observation", now + 6);
     store.observeNativeInput(target, now + 8, generationD);
     const before = snapshot();
 
-    // 현재 owner를 넣어 기존 owner 비교만으로 거부되는 시험이 되지 않게 한다.
-    expect(store.prepareVerifiedRelay({ ...recoveringC, expectedOwner: store.relayOwner(target, transport) }, now + 9))
-      .toMatchObject({ spawn: false, relayId: null });
+    expect(ensure(birthC, now + 9, observedByC)).toMatchObject({ spawn: false, relayId: null, reason: "GENERATION_CHANGED" });
     expect(snapshot()).toEqual(before);
     expect(store.presence(target, now + 9).instanceId).toBe(generationD);
   });
 
-  it("처음 보는 C는 여전히 현재인 B를 기대한 복구에서 예약하고 활성화할 수 있다", () => {
-    const { store, presence, start, enqueue } = fixture();
-    start(generationA, now);
-    start(generationB, now + 2);
+  it("처음 보는 C는 여전히 현재인 B를 기대한 복구에서 예약하고 첫 tick으로 활성화할 수 있다", () => {
+    const { store, ensure, start, enqueue } = fixture();
+    start(birthA, now);
+    start(birthB, now + 2);
     const messageId = enqueue("body survives legitimate restart recovery", now + 4);
-    const generationC = "host-process-v1:" + "c".repeat(64);
+    const birthC = birth(101, "birth-C");
+    const generationC = birthC.instanceId;
     expect(store.database.prepare("SELECT instance_id FROM session_presence WHERE instance_id = ?").all(generationC)).toEqual([]);
     const later = now + 25_000;
     expect(store.presence(target, later)).toMatchObject({ state: "unreachable", instanceId: generationB, endedAt: null });
 
-    const recovered = store.prepareVerifiedRelay({ ...presence, instanceId: generationC, parentPid: 101,
-      expectedOwner: store.relayOwner(target, transport), expectedPresenceInstanceId: generationB }, later);
+    const recovered = ensure(birthC, later, generationB);
     expect(recovered).toMatchObject({ spawn: true, instanceId: generationC });
     expect(recovered.relayId).not.toBeNull();
-    expect(store.activateVerifiedRelay({ ...target, transport, instanceId: generationC,
-      parentPid: 101, pid: 201, relayId: recovered.relayId!, relayStartToken: "recovered-hook-claim-child" }, later + 1)).toBe(true);
+    expect(store.relayTick({ ...target, transport, instanceId: generationC, relayId: recovered.relayId!,
+      includePending: false, hostStart: birthC.hostStart }, later + 1).alive).toBe(true);
     expect(store.presence(target, later + 1)).toMatchObject({ state: "online", instanceId: generationC, endedAt: null });
     const claimed = store.claimTurnEnd(target, later + 2, { instanceId: generationC });
     expect(claimed).toMatchObject([
