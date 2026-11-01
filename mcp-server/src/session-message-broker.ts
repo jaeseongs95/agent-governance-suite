@@ -415,7 +415,7 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         });
       const runtime = peerWaitRuntime(store);
       const binding = runtime.relays.get(JSON.stringify(target));
-      if (result.recognized && result.binding && binding?.instanceId === result.binding.instanceId
+      if (result.observedNow && result.binding && binding?.instanceId === result.binding.instanceId
         && binding.relayId === result.binding.relayId) binding.wakeObservedAt = Date.now();
       // retired marks a verified arrival of an attempt the liveness rule already retired; it authorizes no claim.
       return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null, ...(result.retired ? { retired: true } : {}) };

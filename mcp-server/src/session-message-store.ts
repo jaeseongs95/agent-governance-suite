@@ -1378,7 +1378,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
    * An unknown or pruned marker authorizes nothing (I1).
    */
   claimHostWake(target: SessionIdentity, observation: InputObservation, receiptId: string, reader: WakeHookObservationReader | undefined, nowMs = Date.now(), limits: ClaimLimits = {}): {
-    recognized: boolean; messages: SessionMessage[]; binding: WakeAttempt | null; retired?: true;
+    recognized: boolean; messages: SessionMessage[]; binding: WakeAttempt | null; retired?: true; observedNow?: true;
   } {
     boundedIdentity(target);
     const rejected = { recognized: false, messages: [], binding: null };
@@ -1406,13 +1406,16 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       const live = rows.filter(current);
       if (live.length === 0) return allEnded ? { ...rejected, retired: true } : rejected;
       const messages = this.claimLocked(target, nowMs, limits);
+      // Only an attempt that was still in flight is a new observation; a repeated marker claims bodies but refreshes nothing.
+      const observedNow = live.some((row) => !ended(row));
       for (const row of live) {
         this.database.prepare(`UPDATE wake_nonces SET state = 'observed', consumed_at = ?, observed_at = ?
           WHERE nonce_digest = ? AND state IN ${ACTIVE_WAKE_STATES}`).run(now, now, String(row.nonce_digest));
       }
       this.markClaimBoundary(target, nowMs);
       this.updateWakePath(this.wakeAttempt(live[0]!), "streak = 0", [], nowMs);
-      return { recognized: true, messages, binding: this.wakeAttempt(live[0]!), ...(messages.length === 0 && allEnded ? { retired: true as const } : {}) };
+      return { recognized: true, messages, binding: this.wakeAttempt(live[0]!), ...(messages.length === 0 && allEnded ? { retired: true as const } : {}),
+        ...(observedNow ? { observedNow: true as const } : {}) };
     });
   }
 
