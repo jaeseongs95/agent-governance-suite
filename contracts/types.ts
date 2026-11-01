@@ -654,6 +654,8 @@ export interface ReceiptPolicyV1 {
 export interface SkillProviderV2 {
   capabilities: string[];
   executionClass: ExecutionClass;
+  /** 실행 위험도는 이 provider가 수행하는 모든 작업에 적용한다. */
+  executionRiskLevel?: RiskLevel;
   phase: string;
   phaseOrder: number;
   requiredInputArtifacts: string[];

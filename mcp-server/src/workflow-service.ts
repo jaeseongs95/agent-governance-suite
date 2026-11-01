@@ -19,6 +19,8 @@ import {
   type GuardedWorkflowStartRequestV1,
   MODEL_CLASS,
   REASONING_EFFORT,
+  RISK_LEVEL,
+  type RiskLevel,
   type RetryRejectionV1,
   type PlannedStageV1,
   POLICY_CAPABILITY,
@@ -75,6 +77,10 @@ function stageId(order: number, capability: string): string {
 const DETERMINISTIC_CAPABILITIES = new Set<string>([
   "korean-prose-finalization",
 ]);
+
+function isDeterministicStage(capabilities: string[]): boolean {
+  return capabilities.length > 0 && capabilities.every((capability) => DETERMINISTIC_CAPABILITIES.has(capability));
+}
 
 /** Receipt states that end a full attempt with a user decision, not a retryable failure. */
 const USER_GATE_RECEIPT_STATES = new Set<WorkflowState>([
@@ -672,7 +678,7 @@ export class WorkflowService {
           requireTrustedExecutionContext
           && result.state === "passed"
           && !target.executionRequirement
-          && !DETERMINISTIC_CAPABILITIES.has(target.requiredCapability)
+          && !isDeterministicStage(target.satisfiedCapabilities)
         ) {
           throw new WorkflowContractError(
             "BINDING_REQUIRED",
@@ -930,7 +936,7 @@ export class WorkflowService {
         selectionReason: `Selected '${skill.skillId}' because provider '${skill.providerKey}' supplies '${satisfiedCapabilities.join("', '")}' at priority ${skill.priority}.`,
         state: "ready",
         ...(executionContext
-          ? { executionRequirement: this.stageExecutionRequirement(task, capability) }
+          ? { executionRequirement: this.stageExecutionRequirement(task, satisfiedCapabilities, skill.executionRiskLevel) }
           : {}),
         ...(artifactContract ? { artifactContract } : {}),
         requiredArtifacts: stageRequiredArtifacts,
@@ -1375,9 +1381,10 @@ export class WorkflowService {
 
   private stageExecutionRequirement(
     task: TaskEnvelopeV1,
-    capability: string,
+    capabilities: string[],
+    providerRiskLevel?: RiskLevel,
   ): ExecutionRequirementV1 {
-    if (DETERMINISTIC_CAPABILITIES.has(capability)) {
+    if (isDeterministicStage(capabilities)) {
       return {
         policyId: "semantic-execution-assurance-v1",
         kind: "deterministic",
@@ -1388,7 +1395,9 @@ export class WorkflowService {
     }
 
     // AGENTS.md의 명시 고위험 정책만 집행한다. 역할 추천이나 감사 의무는 모델 하한이 아니다.
-    const highRisk = task.riskLevel === "high" || task.riskLevel === "critical";
+    const riskLevel = providerRiskLevel !== undefined && RISK_LEVEL.indexOf(providerRiskLevel) > RISK_LEVEL.indexOf(task.riskLevel)
+      ? providerRiskLevel : task.riskLevel;
+    const highRisk = riskLevel === "high" || riskLevel === "critical";
     return {
       policyId: "semantic-execution-assurance-v1",
       kind: "semantic",
@@ -1519,7 +1528,7 @@ export class WorkflowService {
     this.assertExecutionContext(bootstrap.requirement, bootstrap.context, `${subject} bootstrap`, false);
     this.assertTrustedExecutionBinding(bootstrap.context, `${subject} bootstrap`, binding);
     for (const stage of plan.stages) {
-      if (!stage.executionRequirement && !DETERMINISTIC_CAPABILITIES.has(stage.requiredCapability)) {
+      if (!stage.executionRequirement && !isDeterministicStage(stage.satisfiedCapabilities)) {
         throw new WorkflowContractError(
           "BINDING_REQUIRED",
           `${subject} stage '${stage.stageId}' has no execution assurance requirement.`,
