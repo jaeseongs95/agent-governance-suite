@@ -391,6 +391,23 @@ export class SqliteContinuityStore {
     return row?.event ?? null;
   }
 
+  /**
+   * Whether the task's current epoch holds `event` and no row starting with a closing prefix. Observation rows only, so a
+   * per-tool-boundary probe does not reach receiver state; a caller that acts on true reads the task through getTask.
+   */
+  hasOpenCurrentEpochEvent(taskCorrelation: string, event: string, closingPrefixes: readonly string[]): boolean {
+    this.assertSupportedSchema();
+    const closed = closingPrefixes.map(() => "substr(closing.event, 1, ?) = ?").join(" OR ") || "0";
+    return Boolean(this.database.prepare(`
+      SELECT 1 FROM continuity_tasks task
+      JOIN continuity_observations pending ON pending.task_correlation = task.task_correlation AND pending.epoch = task.current_epoch AND pending.event = ?
+      WHERE task.task_correlation = ? AND NOT EXISTS (
+        SELECT 1 FROM continuity_observations closing
+        WHERE closing.task_correlation = task.task_correlation AND closing.epoch = task.current_epoch AND (${closed}))
+      LIMIT 1
+    `).get(event, taskCorrelation, ...closingPrefixes.flatMap(prefix => [prefix.length, prefix])));
+  }
+
   hasObservation(taskCorrelation: string, epoch: number, event: string): boolean {
     return Boolean(this.database.prepare(`
       SELECT 1 FROM continuity_observations WHERE task_correlation = ? AND epoch = ? AND event = ? LIMIT 1

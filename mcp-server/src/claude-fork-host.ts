@@ -253,7 +253,7 @@ function samePath(left: string, right: string, platform: NodeJS.Platform): boole
 
 function sameFile(candidate: string | undefined, expected: string, platform: NodeJS.Platform): boolean {
   if (!candidate) return false;
-  if (samePath(path.resolve(candidate), expected, platform)) return true;
+  if (samePath((platform === "win32" ? path.win32 : path.posix).resolve(candidate), expected, platform)) return true;
   try { return samePath(realpathSync(candidate), realpathSync(expected), platform); } catch { return false; }
 }
 

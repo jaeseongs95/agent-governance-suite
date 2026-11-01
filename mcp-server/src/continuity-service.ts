@@ -333,8 +333,11 @@ export class ContinuityService implements ContinuityGateway {
    * a parent cleared in between has no pre-fork save in it and closes as FORK_HOST_PARENT_NOT_FOUND.
    */
   readDeferredForkHostParent(rawSessionId: string, read: () => ForkHostParentRead): void {
-    const task = this.store.getTask(this.correlateSession(rawSessionId));
-    if (task && this.store.hasObservation(task.taskCorrelation, task.currentEpoch, FORK_HOST_DEFERRED_EVENT)) this.recordForkHostParent(task, read);
+    // Every tool boundary of the host passes here; only an open deferral reads the task (and so its receiver state).
+    const correlation = this.correlateSession(rawSessionId);
+    if (!this.store.hasOpenCurrentEpochEvent(correlation, FORK_HOST_DEFERRED_EVENT, [FORK_HOST_PARENT_EVENT, FORK_PARENT_EVENT])) return;
+    const task = this.store.getTask(correlation);
+    if (task) this.recordForkHostParent(task, read);
   }
 
   /** Once per fork epoch with no own state and no pin: a parent as (c, e), a reason (lineage decides), or a deferral. */

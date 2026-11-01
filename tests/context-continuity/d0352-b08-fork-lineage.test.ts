@@ -3,7 +3,7 @@ import { appendFile, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CheckpointContextRequestV1, ContinuitySnapshotV1 } from "../../contracts/types.js";
 import {
   CLAUDE_NATIVE_EXECUTABLE_PATTERN, claudeForkHostRead, distinguishedNameValue, forkParentFromArgv, ownHookLauncher, readClaudeForkHostParent,
@@ -815,10 +815,12 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
 
   it("H-A3: the adapter offers the host-process read only with a host SessionStart source=fork (auditor 5970 Q1)", () => {
     const at = (payload: Record<string, unknown>) => adaptHostInput({ session_id: SELF, ...payload }, "claude-code").readForkHostParent;
-    expect(at({ hook_event_name: "SessionStart", source: "fork" })).toEqual(expect.any(Function));
-    for (const source of ["startup", "resume", "clear", "compact"]) expect(at({ hook_event_name: "SessionStart", source }), source).toBeUndefined();
-    expect(at({ hook_event_name: "UserPromptSubmit", prompt: "x" })).toBeUndefined();
-    expect(at({ hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: {}, tool_use_id: "toolu_1" })).toBeUndefined();
+    withPlatform("linux", () => {
+      expect(at({ hook_event_name: "SessionStart", source: "fork" })).toEqual(expect.any(Function));
+      for (const source of ["startup", "resume", "clear", "compact"]) expect(at({ hook_event_name: "SessionStart", source }), source).toBeUndefined();
+      expect(at({ hook_event_name: "UserPromptSubmit", prompt: "x" })).toBeUndefined();
+      expect(at({ hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: {}, tool_use_id: "toolu_1" })).toBeUndefined();
+    });
     // Windows reads at the tool boundary before a tool runs instead of at the start (auditor 5970 W-2).
     const boundary = { hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: {}, tool_use_id: "toolu_1" };
     expect(withPlatform("win32", () => at(boundary))).toEqual(expect.any(Function));
@@ -1040,7 +1042,11 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     service.startFork("fork-l", undefined, () => ({ reason: "FORK_HOST_UNRECOGNIZED" }));
     service.readDeferredForkHostParent("fork-l", read);
     start(service, "plain-s", "startup");
-    service.readDeferredForkHostParent("plain-s", read);
+    // Without an open deferral the boundary never reads a task, so a task's receiver state is not touched (CI d388 Windows).
+    const getTask = vi.spyOn(service.store, "getTask");
+    for (const session of ["fork-f", "fork-l", "plain-s", "unknown-s"]) service.readDeferredForkHostParent(session, read);
+    expect(getTask).not.toHaveBeenCalled();
+    getTask.mockRestore();
     expect(reads).toBe(1);
     expect(hostParentEvent(service, "fork-l")).toBe("fork-host-parent:" + JSON.stringify({ u: "FORK_HOST_UNRECOGNIZED" }));
   });
