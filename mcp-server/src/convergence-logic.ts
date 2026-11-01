@@ -398,3 +398,20 @@ export function normalizeWorkspaceLocator(locator: string): string {
   const resolved = path.resolve(locator);
   return process.platform === "win32" ? resolved.toLowerCase() : resolved;
 }
+
+/** Fingerprint of a non-passing workflow receipt; a retry must bind the latest one. */
+export function failureFingerprint(receipt: {
+  state: string;
+  stageResults: Array<{ stageId: string }>;
+  error: { code: string } | null;
+  blockers: string[];
+  unresolved: string[];
+}): Sha256Digest {
+  return convergenceDigest({
+    state: receipt.state,
+    stage: receipt.stageResults.at(-1)?.stageId ?? null,
+    error: receipt.error?.code ?? null,
+    blockers: receipt.blockers,
+    unresolved: receipt.unresolved,
+  });
+}

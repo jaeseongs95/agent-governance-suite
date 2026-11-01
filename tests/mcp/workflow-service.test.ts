@@ -257,8 +257,7 @@ function passedStage(runId: string, stage: PlannedStageV1, expectedRevision: num
           gateVerdict: "PASS",
           auditorId: "independent-auditor",
           implementationActorIds: ["implementation-agent"],
-          auditTarget: "commit:fixture-target",
-          currentTarget: "commit:fixture-target",
+          auditTarget: FIXTURE_ARTIFACT_TARGET,
           phase: "post-execution",
           freshContext: true,
           delegationAllowed: false,
@@ -1520,7 +1519,7 @@ describe("WorkflowService", () => {
     expect(service.recordStageResult(stale).error?.code).toBe("GATE_FAILED");
 
     const wrongTarget = passedStage(receipt.runId, auditStage, receipt.revision);
-    wrongTarget.output = { ...wrongTarget.output, output: { ...wrongTarget.output.output, currentTarget: "commit:changed-after-audit" } };
+    wrongTarget.output = { ...wrongTarget.output, output: { ...wrongTarget.output.output, auditTarget: "c".repeat(64) } };
     expect(service.recordStageResult(wrongTarget).error?.code).toBe("GATE_FAILED");
   });
 

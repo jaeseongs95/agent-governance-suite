@@ -16,7 +16,7 @@ describe("CG08 iteration and acceptance contract regressions", () => {
     ].map((key) => [key, template[key]]));
     const review = {
       schemaVersion: "1.0.0", reviewId: "cg08-review", rootId: "root-1", rootRevision: 0, epoch: 1,
-      reviewerActorId: "auditor-1", implementationActorIds: [],
+      reviewerActorId: "auditor-1",
       freshContext: { confirmed: true, evidenceRef: "evidence-reviewer" },
       classification: "ambiguous", comparability: { comparable: false, rationale: "Invalid request." },
       route: "panel", proposedFrame: null, evidenceRefs: ["evidence-reviewer"], userApprovalRefs: [],
@@ -45,7 +45,7 @@ describe("CG08 iteration and acceptance contract regressions", () => {
     ].map((key) => [key, template[key]]));
     const review = {
       schemaVersion: "1.0.0", reviewId: "cg08-review", rootId: "root-1", rootRevision: 0, epoch: 1,
-      reviewerActorId: "auditor-1", implementationActorIds: [],
+      reviewerActorId: "auditor-1",
       freshContext: { confirmed: true, evidenceRef: "evidence-reviewer" },
       classification: "ambiguous", comparability: { comparable: false, rationale: "Invalid request." },
       route: "panel", proposedFrame: null, evidenceRefs: ["evidence-reviewer"], userApprovalRefs: [],

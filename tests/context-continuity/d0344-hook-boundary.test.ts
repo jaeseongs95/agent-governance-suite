@@ -1,3 +1,4 @@
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { copyFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -114,7 +115,7 @@ function claim(fixture: Awaited<ReturnType<typeof harness>>) {
   expect(plan.stages).toHaveLength(1);
   const claimed = fixture.service.claimWorkflowAttempt({ schemaVersion: "1.0.0", rootId: fixture.root.rootId,
     expectedRevision: fixture.root.revision, taskEnvelope: fixture.task, frame: fixture.root.frame,
-    plan, actorId: "fixture-implementer", outputTargets: ["candidate.txt"], priorFailure: null });
+    plan, outputTargets: ["candidate.txt"], priorFailure: null });
   expect(claimed.error).toBeNull();
   const lease = claimed.data!;
   return { lease, plan };
@@ -128,6 +129,13 @@ function start(fixture: Awaited<ReturnType<typeof harness>>) {
   return { lease, receipt: started.data! };
 }
 
+/** A retry must cite a readable local file whose bytes are new to the root. */
+function retryEvidence(label: string): string {
+  const file = join(mkdtempSync(join(tmpdir(), "ags-d0344-retry-")), "evidence.txt");
+  writeFileSync(file, label);
+  return file;
+}
+
 function retry(fixture: Awaited<ReturnType<typeof harness>>, service = fixture.service, suppliedPlan?: WorkflowPlanV1) {
   const snapshot = fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)!;
   const planned = suppliedPlan ? null : service.planWorkflow(fixture.task);
@@ -137,10 +145,10 @@ function retry(fixture: Awaited<ReturnType<typeof harness>>, service = fixture.s
   expect(latest.failureFingerprint).not.toBeNull();
   const claimed = service.claimWorkflowAttempt({ schemaVersion: "1.0.0", rootId: snapshot.root.rootId,
     expectedRevision: snapshot.root.revision, taskEnvelope: fixture.task, frame: snapshot.root.frame, plan,
-    actorId: plan.bootstrapExecution?.context.actorId ?? "fixture-implementer", outputTargets: ["candidate.txt"],
+    outputTargets: ["candidate.txt"],
     priorFailure: { fingerprint: latest.failureFingerprint, hypothesis: "The previous attempt was intentionally stopped.",
       changeSummary: "Start a new guarded fixture attempt.", discriminator: "Check the new run lifecycle.",
-      evidenceRefs: [`fixture:retry-${snapshot.root.revision}`] } });
+      evidenceRefs: [retryEvidence(`fixture:retry-${snapshot.root.revision}`)] } });
   expect(claimed.error).toBeNull();
   return { schemaVersion: "1.0.0", leaseId: claimed.data!.leaseId, expectedRootRevision: claimed.data!.rootRevision, plan };
 }
@@ -196,7 +204,7 @@ function finalizeWithGatedRoot(fixture: Awaited<ReturnType<typeof harness>>, rec
   const rejected = fixture.service.claimWorkflowAttempt({ schemaVersion: "1.0.0", rootId: current.rootId,
     expectedRevision: current.revision, taskEnvelope: fixture.task,
     frame: { ...current.frame, controlArtifacts: current.frame.controlArtifacts.map(artifact => ({ ...artifact, digest: convergenceDigest("changed-control") })) },
-    plan: plan.data!, actorId: "fixture-implementer", outputTargets: ["candidate.txt"], priorFailure: null });
+    plan: plan.data!, outputTargets: ["candidate.txt"], priorFailure: null });
   expect(rejected.error?.code).toBe("FRAME_REVIEW_REQUIRED");
   expect(fixture.workflow.getConvergenceSnapshot(current.rootId)?.root.state).toBe("needs-review");
   const finalized = finalize(fixture, receipt);
@@ -204,7 +212,7 @@ function finalizeWithGatedRoot(fixture: Awaited<ReturnType<typeof harness>>, rec
   if (state === "open") {
     const review = { schemaVersion: "1.0.0", reviewId: "d0344-fresh-frame-review", rootId: current.rootId,
       rootRevision: finalized.root.revision, epoch: finalized.root.currentEpoch, reviewerActorId: "fixture-reviewer",
-      implementationActorIds: ["fixture-implementer"], freshContext: { confirmed: true, evidenceRef: "fixture:fresh-review" },
+      freshContext: { confirmed: true, evidenceRef: "fixture:fresh-review" },
       classification: "semantics-preserving", comparability: { comparable: true, rationale: "The task and fixed control remain comparable." },
       route: "resume-new-epoch", proposedFrame: { ...finalized.root.frame,
         targetArtifacts: finalized.root.frame.targetArtifacts.map(artifact => ({ ...artifact, digest: convergenceDigest("corrected-target") })) },

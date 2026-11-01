@@ -822,7 +822,6 @@ export interface AttemptProposalV1 {
   taskEnvelope: TaskEnvelopeV1;
   frame: ConvergenceFrameV1;
   plan: WorkflowPlanV1;
-  actorId: string;
   outputTargets: string[];
   priorFailure: PriorFailureV1 | null;
 }
@@ -843,7 +842,10 @@ export interface AttemptLeaseV1 {
   operationalDigest: Sha256Digest;
   outputTargetsDigest: Sha256Digest;
   planIntegrityToken: string;
-  actorId: string;
+  /** Server-observed caller of claim_workflow_attempt; null when the embedding supplied no verified caller. */
+  actorId: string | null;
+  /** sha256 digests of the prior-failure evidence files the server read when it issued this lease. */
+  priorEvidenceDigests?: Sha256Digest[];
   outputTargets: string[];
   issuedAt: string;
   expiresAt: string;
@@ -889,9 +891,12 @@ export interface ConvergenceReviewV1 {
   rootId: string;
   rootRevision: number;
   epoch: number;
+  /** Declared by the recording root; AGS does not observe reviewer identity. */
   reviewerActorId: string;
-  implementationActorIds: string[];
+  /** Declared by the recording root; AGS does not observe reviewer context. */
   freshContext: ConvergenceFreshContextV1;
+  /** Server-owned: the observed caller that recorded this review and the independence AGS could check. */
+  observedReviewer?: ObservedReviewerV1;
   classification: ConvergenceClassification;
   comparability: ConvergenceComparabilityV1;
   route: ConvergenceRoute;
@@ -922,6 +927,7 @@ export interface ConvergenceStatusV1 {
   reviews: ConvergenceReviewV1[];
   workflowRunIds: string[];
   gateError: ContractErrorBody | null;
+  unverifiedClaims: UnverifiedClaimV1[];
 }
 
 export interface ConvergenceRootHandleV1 {
@@ -956,14 +962,67 @@ export interface ConvergenceStatusSummaryV1 {
   outcomeCount: number;
   reviewCount: number;
   gateErrorCode: ErrorCode | null;
+  unverifiedClaimCount: number;
 }
 
 export interface EvidenceReferenceV1 {
   artifactId: string;
   kind: "user-input" | "file" | "test" | "document" | "tool";
   locator: string;
+  /** Caller declaration only; gate decisions use the server's artifactChecks. */
   verified: boolean;
+  /** sha256 of the file at locator; lets the server check a local file. */
+  digest?: Sha256Digest;
   note: string;
+}
+
+export const ARTIFACT_CHECK = ["sha256-matched", "not-checked"] as const;
+export type ArtifactCheck = (typeof ARTIFACT_CHECK)[number];
+
+export interface ArtifactCheckV1 {
+  source: "artifact" | "evidence";
+  artifactId: string;
+  locator: string;
+  check: ArtifactCheck;
+}
+
+export const CALLER_PROVENANCE = ["host-observed", "unavailable"] as const;
+export type CallerProvenance = (typeof CALLER_PROVENANCE)[number];
+
+/**
+ * The caller of one AGS tool call as the server knows it. host-observed: the host supplied an identity and
+ * parent chain the caller cannot forge. unavailable: AGS only knows the bound session, not which agent in it called.
+ */
+export interface ObservedCallerV1 {
+  actor: string;
+  parentChain: string[];
+  provenance: CallerProvenance;
+}
+
+export interface ObservedReviewerV1 extends ObservedCallerV1 {
+  independence: "verified" | "unobserved";
+}
+
+export const UNVERIFIED_CLAIM = [
+  "actor-independence",
+  "fresh-context",
+  "no-redelegation",
+  "post-execution-state",
+  "panel-independence",
+  "conditions-verified",
+  "worker-execution-profile",
+  "execution-profile",
+  "evidence-content",
+  "evidence-relevance",
+  "user-approval",
+  "reviewer-independence",
+] as const;
+export type UnverifiedClaim = (typeof UNVERIFIED_CLAIM)[number];
+
+export interface UnverifiedClaimV1 {
+  stageId: string | null;
+  claim: UnverifiedClaim;
+  artifactId?: string;
 }
 
 export interface ProviderArtifactV1 {
@@ -999,6 +1058,10 @@ export interface StageResultV1 {
   outputFile?: StageOutputFileV1;
   output: ProviderResultV1;
   evidence: EvidenceReferenceV1[];
+  /** Server-owned: what the server itself checked when it recorded this result. Absent means nothing was checked. */
+  artifactChecks?: ArtifactCheckV1[];
+  /** Server-owned: the observed caller that recorded this result. */
+  recordedBy?: ObservedCallerV1;
   findings: string[];
   blockers: string[];
   error: ContractErrorBody | null;
@@ -1014,6 +1077,8 @@ export interface WorkflowReceiptV1 {
   blockers: string[];
   unresolved: string[];
   error: ContractErrorBody | null;
+  /** Server-computed: properties a passed stage relies on that AGS did not observe. */
+  unverifiedClaims: UnverifiedClaimV1[];
 }
 
 export interface WorkflowStatusSummaryV1 {
@@ -1028,6 +1093,7 @@ export interface WorkflowStatusSummaryV1 {
   totalStageCount: number;
   blockerCount: number;
   unresolvedCount: number;
+  unverifiedClaimCount: number;
   errorCode: ErrorCode | null;
   receiptDigest: Sha256Digest;
 }

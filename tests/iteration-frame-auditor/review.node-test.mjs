@@ -75,7 +75,6 @@ function materializeOutputs(template, request) {
     rootRevision: request.root.revision,
     epoch: request.root.epoch,
     reviewerActorId: template.reviewer.actorId,
-    implementationActorIds: [...request.reviewer.implementationActorIds],
     freshContext: { confirmed: true, evidenceRef: "evidence-reviewer" },
     classification: template.classification,
     comparability: {

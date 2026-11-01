@@ -97,7 +97,7 @@ function running(workflow: WorkflowService, taskId: string, capabilities?: strin
   const root = workflow.openConvergenceRoot({ schemaVersion: "1.0.0", parentRootId: null, taskEnvelope: envelope, frame: frame(taskId), userApprovalRefs: [] }).data!;
   const lease = workflow.claimWorkflowAttempt({
     schemaVersion: "1.0.0", rootId: root.rootId, expectedRevision: root.revision, taskEnvelope: envelope, frame: frame(taskId),
-    plan, actorId: "fixture-actor", outputTargets: ["fixture.md"], priorFailure: null,
+    plan, outputTargets: ["fixture.md"], priorFailure: null,
   }, true).data!;
   return workflow.startGuardedWorkflow({ schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan }, true).data!;
 }

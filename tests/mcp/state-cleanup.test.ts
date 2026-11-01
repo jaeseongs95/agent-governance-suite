@@ -28,7 +28,7 @@ function receipt(runId: string, state: WorkflowReceiptV1["state"] = "passed"): W
       schemaVersion: "1.0.0", taskId: `task-${runId}`, integrityToken: "token", executionMode: "orchestrated",
       state, selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [],
     },
-    stageResults: [], blockers: [], unresolved: [], error: null,
+    stageResults: [], blockers: [], unresolved: [], error: null, unverifiedClaims: [],
   };
 }
 

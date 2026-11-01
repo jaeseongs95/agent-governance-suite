@@ -1,6 +1,7 @@
 import { ClassificationInitializationError } from "./skill-classification/runtime.js";
 import type { Diagnostics, DiagnosticOutcome } from "./diagnostics.js";
 import { SESSION_PROOF_FIELD, withoutSessionProof, type SessionActorProofVerifier } from "./session-actor-proof.js";
+import { observedCaller, type VerifiedCallerRef } from "./caller-actor.js";
 import { existsSync, readFileSync } from "node:fs";
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -405,6 +406,20 @@ export function createMcpServer(
   sessionActorProof: SessionActorProofVerifier | null = null,
   diagnostics?: Diagnostics,
 ): Server {
+  // ponytail: bridge until the session-binding redesign passes caller; remembers the verified root of each call's arguments.
+  const verifiedCallers = new WeakMap<object, VerifiedCallerRef>();
+  if (sessionActorProof) {
+    const proofs = sessionActorProof;
+    sessionActorProof = {
+      verify(tool, input) {
+        const verified = proofs.verify(tool, input);
+        verifiedCallers.set(input, { host: verified.host, sessionId: verified.sessionId });
+        return verified;
+      },
+    };
+  }
+  const callerOf = (input: unknown) =>
+    observedCaller(input && typeof input === "object" ? verifiedCallers.get(input) : null);
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
     { capabilities: { tools: {} }, instructions: serverInstructions() },
@@ -475,13 +490,13 @@ export function createMcpServer(
       },
       {
         name: "open_convergence_root",
-        description: "Create one durable immutable task lineage; use responseMode=compact to avoid echoing task and frame inputs.",
+        description: "Create one durable immutable task lineage. userApprovalRefs of a replacement are recorded as declared; AGS does not observe user approval. Use responseMode=compact to avoid echoing task and frame inputs.",
         inputSchema: openConvergenceRootInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "claim_workflow_attempt",
-        description: "Issue a one-use lease after validating stability and attempt budget; taskEnvelope and frame may be omitted to reuse the bound root.",
+        description: "Issue a one-use lease after validating stability and attempt budget; a retry names prior-failure evidence as local files the server hashes. taskEnvelope and frame may be omitted to reuse the bound root.",
         inputSchema: attemptProposalInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
@@ -499,7 +514,7 @@ export function createMcpServer(
       },
       {
         name: "resolve_convergence_gate",
-        description: "Record a fresh independent frame review; use responseMode=compact to return handles and counts only.",
+        description: "Record a frame review declared by the root. AGS does not observe reviewer identity, independence or context; see unverifiedClaims. Use responseMode=compact to return handles and counts only.",
         inputSchema: resolveConvergenceGateInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
@@ -511,7 +526,7 @@ export function createMcpServer(
       },
       {
         name: "record_stage_result",
-        description: "Record one ordered stage result; use responseMode=compact to avoid echoing the accumulated receipt.",
+        description: "Record one ordered stage result. The server hashes local files named with a digest and records artifactChecks; verified flags are declarations. Use responseMode=compact to avoid echoing the accumulated receipt.",
         inputSchema: recordStageResultInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
@@ -523,7 +538,7 @@ export function createMcpServer(
       },
       {
         name: "finalize_workflow",
-        description: "Finalize a fully passed workflow; use responseMode=compact to avoid returning the full terminal receipt.",
+        description: "Finalize a fully passed workflow. passed means every planned stage recorded PASS and the bindings AGS can check hold; unverifiedClaims lists what AGS did not observe. Use responseMode=compact to avoid returning the full terminal receipt.",
         inputSchema: revisionInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
@@ -755,7 +770,7 @@ export function createMcpServer(
           }, convergenceRootHandle);
           break;
         case "claim_workflow_attempt":
-          result = service.claimWorkflowAttempt(args, true);
+          result = service.claimWorkflowAttempt(args, true, callerOf(request.params.arguments));
           break;
         case "start_guarded_workflow":
           result = withMode("responseMode", () => service.startGuardedWorkflow(domainArguments(args, "responseMode"), true,
@@ -765,7 +780,7 @@ export function createMcpServer(
           result = withMode("detail", () => service.getConvergenceStatus(String(args.rootId ?? "")), convergenceStatusSummary);
           break;
         case "resolve_convergence_gate":
-          result = withMode("responseMode", () => service.resolveConvergenceGate(domainArguments(args, "responseMode")), convergenceStatusSummary);
+          result = withMode("responseMode", () => service.resolveConvergenceGate(domainArguments(args, "responseMode"), callerOf(request.params.arguments)), convergenceStatusSummary);
           break;
         case "start_workflow":
           result = service.rejectUnguardedWorkflow(args);
@@ -773,7 +788,7 @@ export function createMcpServer(
         case "record_stage_result":
           result = withMode(
             "responseMode",
-            () => attested("record_stage_result", (input) => service.recordStageResult(domainArguments(input, "responseMode"), true)),
+            () => attested("record_stage_result", (input) => service.recordStageResult(domainArguments(input, "responseMode"), true, callerOf(request.params.arguments))),
             workflowStatusSummary,
           );
           break;

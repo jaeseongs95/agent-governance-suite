@@ -135,9 +135,9 @@ function startSqliteAttempt(workflow: SqliteWorkflowStore, value: ConvergenceRoo
   const receipt: WorkflowReceiptV1 = { schemaVersion: "1.0.0", runId: `${leaseId}-run`, revision: 1, state: "running",
     plan: { schemaVersion: "1.0.0", taskId: value.taskEnvelope.taskId, integrityToken: "synthetic-plan", executionMode: "orchestrated",
       state: "running", selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [] },
-    stageResults: [], blockers: [], unresolved: [], error: null };
+    stageResults: [], blockers: [], unresolved: [], error: null, unverifiedClaims: [] };
   const proposal: AttemptProposalV1 = { schemaVersion: "1.0.0", rootId: value.rootId, expectedRevision: value.revision,
-    taskEnvelope: value.taskEnvelope, frame: value.frame, plan: receipt.plan, actorId: "synthetic-actor", outputTargets: [], priorFailure: null };
+    taskEnvelope: value.taskEnvelope, frame: value.frame, plan: receipt.plan, outputTargets: [], priorFailure: null };
   const claimed = { ...value, revision: value.revision + 1 };
   const lease: AttemptLeaseV1 = { ...consumedLease(value), leaseId, state: "issued", epoch: value.currentEpoch,
     rootRevision: claimed.revision, proposalDigest: convergenceDigest(proposal), expiresAt: "9999-01-01T00:00:00.000Z" };
@@ -276,7 +276,7 @@ function transactionReceipt(runId: string): WorkflowReceiptV1 {
   return { schemaVersion: "1.0.0", runId, revision: 1, state: "running",
     plan: { schemaVersion: "1.0.0", taskId: "transaction-fixture", integrityToken: "synthetic-plan", executionMode: "orchestrated",
       state: "running", selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [] },
-    stageResults: [], blockers: [], unresolved: [], error: null };
+    stageResults: [], blockers: [], unresolved: [], error: null, unverifiedClaims: [] };
 }
 
 describe("D0344 completed root must be quiescent across all workflow epochs", () => {
@@ -291,7 +291,7 @@ describe("D0344 completed root must be quiescent across all workflow epochs", ()
     workflow.insertRun({ schemaVersion: "1.0.0", runId: finished.workflowRunId, revision: 1, state: "passed",
       plan: { schemaVersion: "1.0.0", taskId: value.taskEnvelope.taskId, integrityToken: "synthetic-plan", executionMode: "orchestrated",
         state: "passed", selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [] },
-      stageResults: [], blockers: [], unresolved: [], error: null });
+      stageResults: [], blockers: [], unresolved: [], error: null, unverifiedClaims: [] });
     snapshot.workflowRunIds = [finished.workflowRunId];
     if (mismatch === "root") finished.rootId = "different-root";
     if (mismatch === "lease") finished.leaseId = "different-lease";
@@ -657,7 +657,7 @@ describe("D0344 workflow transaction fence", () => {
     const settled = settleSqliteAttempt(workflow, previous, previous.root, "open");
     const receipt = transactionReceipt("fence-new-run"), claimed = { ...settled.root, revision: settled.root.revision + 1 };
     const proposal: AttemptProposalV1 = { schemaVersion: "1.0.0", rootId: value.rootId, expectedRevision: settled.root.revision,
-      taskEnvelope: value.taskEnvelope, frame: value.frame, plan: receipt.plan, actorId: "synthetic-actor", outputTargets: [], priorFailure: null };
+      taskEnvelope: value.taskEnvelope, frame: value.frame, plan: receipt.plan, outputTargets: [], priorFailure: null };
     const lease: AttemptLeaseV1 = { ...consumedLease(value), leaseId: "fence-issued", state: "issued", ordinal: 2,
       rootRevision: claimed.revision, proposalDigest: convergenceDigest(proposal), expiresAt: "9999-01-01T00:00:00.000Z" };
     expect(workflow.insertAttemptLease(claimed, settled.root.revision, proposal, lease)).toBe(true);

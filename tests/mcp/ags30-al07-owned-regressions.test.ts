@@ -38,7 +38,7 @@ afterEach(() => {
   if (errors.length) throw new AggregateError(errors, "AL07 fixture cleanup failed.");
 });
 function receipt(runId: string): WorkflowReceiptV1 {
-  return { schemaVersion: "1.0.0", runId, revision: 1, state: "running", plan: { schemaVersion: "1.0.0", taskId: "fixture-task", integrityToken: "fixture-token", executionMode: "orchestrated", state: "running", selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [] }, stageResults: [], blockers: [], unresolved: [], error: null };
+  return { schemaVersion: "1.0.0", runId, revision: 1, state: "running", plan: { schemaVersion: "1.0.0", taskId: "fixture-task", integrityToken: "fixture-token", executionMode: "orchestrated", state: "running", selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [] }, stageResults: [], blockers: [], unresolved: [], error: null, unverifiedClaims: [] };
 }
 function taskEnvelope(): TaskEnvelopeV1 {
   return {
@@ -157,7 +157,7 @@ describe("AGS30 AL07 owned regressions", () => {
     const workflow = keep(new SqliteWorkflowStore(":memory:")); const root = workflowRoot(); workflow.insertConvergenceRoot(root);
     const claimed = { ...root, revision: 2 };
     const plan = { ...receipt("guarded-run").plan, state: "ready" as const };
-    const proposal: AttemptProposalV1 = { schemaVersion: "1.0.0", rootId: root.rootId, expectedRevision: 1, taskEnvelope: root.taskEnvelope, frame: root.frame, plan, actorId: "fixture-actor", outputTargets: [], priorFailure: null };
+    const proposal: AttemptProposalV1 = { schemaVersion: "1.0.0", rootId: root.rootId, expectedRevision: 1, taskEnvelope: root.taskEnvelope, frame: root.frame, plan, outputTargets: [], priorFailure: null };
     const digest = convergenceDigest("fixture");
     const lease: AttemptLeaseV1 = { schemaVersion: "1.0.0", leaseId: "expiry-lease", rootId: root.rootId, rootRevision: 2, epoch: 1, ordinal: 1, proposalDigest: digest, taskDigest: root.taskDigest, frameDigest: root.frameDigest, workspaceDigest: root.workspaceDigest, controlDigest: root.controlDigest, targetDigest: root.targetDigest, operationalDigest: root.operationalDigest, outputTargetsDigest: digest, planIntegrityToken: plan.integrityToken, actorId: "fixture-actor", outputTargets: [], issuedAt: new Date(100).toISOString(), expiresAt: new Date(200).toISOString(), state: "issued" };
     expect(workflow.insertAttemptLease(claimed, 1, proposal, lease)).toBe(true);

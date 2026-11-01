@@ -7,7 +7,7 @@ import { retainFailureSecondary, tagProducerFailure } from "../failure-diagnosti
 const APPLICATION_ID = 0x4147534e; // AGSN: inactive native format, distinct from R1 opaque fixtures.
 const FORMAT_VERSION = 1;
 const MODULES = Object.freeze({
-  workflow: { version: 5, tables: ["workflow_metadata", "workflow_runs", "plugin_update_state", "convergence_roots", "convergence_root_identities", "convergence_epochs", "convergence_leases", "convergence_attempts", "convergence_reviews", "workflow_attempt_links", "state_cleanup_claims", "execution_observation_claims"] },
+  workflow: { version: 6, tables: ["workflow_metadata", "workflow_runs", "plugin_update_state", "convergence_roots", "convergence_root_identities", "convergence_epochs", "convergence_leases", "convergence_attempts", "convergence_reviews", "workflow_attempt_links", "state_cleanup_claims", "execution_observation_claims"] },
   continuity: { version: 2, tables: ["continuity_metadata", "continuity_tasks", "continuity_snapshots", "continuity_requests", "continuity_tombstones", "continuity_observations"] },
   messaging: { version: 3, tables: ["messages", "relay_leases", "wake_nonces", "session_presence", "prepared_messages", "input_observations", "wake_paths"] },
   trust: { version: 1, tables: ["trust_metadata", "input_source_receipts"] },

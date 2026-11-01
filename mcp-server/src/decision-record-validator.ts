@@ -371,9 +371,16 @@ export function validateDecisionRecordSemantics(record: JsonObject): string[] {
       if (!duplicateFree(reviewerIdsForItem) || !reviewerIdsForItem.some((id) => id !== triggerOrigins.get(itemId)) || reviewerIdsForItem.some((id) => !eligibleReviewer(workerById.get(id)))) {
         errors.push("cross coverage requires eligible non-origin reviewers");
       }
-      if (!followups.some((followup) => reviewerIdsForItem.includes(String(followup.reviewer_id)) && stringArray(followup.item_ids).includes(itemId))) {
+      // Every (reviewer, item) pair in coverage needs that reviewer's own follow-up for the item (D-0141).
+      if (!reviewerIdsForItem.every((reviewerId) => followups.some((followup) =>
+        String(followup.reviewer_id) === reviewerId && stringArray(followup.item_ids).includes(itemId)))) {
         errors.push("cross coverage must have a matching follow-up");
       }
+    }
+    const coverageByItem = new Map(coverage.map((entry) => [String(entry.item_id), stringArray(entry.reviewer_ids)]));
+    if (followups.some((followup) => stringArray(followup.item_ids)
+      .some((itemId) => !(coverageByItem.get(itemId) ?? []).includes(String(followup.reviewer_id))))) {
+      errors.push("cross follow-up must match its reviewer coverage");
     }
   }
   const followupCounts = new Map<string, number>();

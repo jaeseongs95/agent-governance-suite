@@ -73,7 +73,7 @@ function running(f: ReturnType<typeof fixture>, phase: AuditPhase): WorkflowRece
 
 function auditOutput(phase: AuditPhase, verified: boolean): Record<string, unknown> {
   return { gateVerdict: "PASS", auditorId: "independent-auditor", implementationActorIds: ["implementation-actor"],
-    auditTarget: "fixture:final-target", currentTarget: "fixture:final-target", phase, freshContext: true,
+    auditTarget: subject, phase, freshContext: true,
     delegationAllowed: false, blockingFindings: [], stale: false, postExecutionVerified: verified };
 }
 
@@ -163,7 +163,7 @@ it("D0040 keeps an explicit pre phase through the guarded claim/store/start reco
   const opened = f.service.openConvergenceRoot({ schemaVersion: "1.0.0", parentRootId: null, taskEnvelope: f.task, frame, userApprovalRefs: [] });
   expect(opened.error).toBeNull();
   const lease = f.service.claimWorkflowAttempt({ schemaVersion: "1.0.0", rootId: opened.data!.rootId, expectedRevision: opened.data!.revision,
-    taskEnvelope: f.task, frame, plan, actorId: "fixture-actor", outputTargets: ["candidate.txt"], priorFailure: null });
+    taskEnvelope: f.task, frame, plan, outputTargets: ["candidate.txt"], priorFailure: null });
   expect(lease.error).toBeNull();
   const started = f.service.startGuardedWorkflow({ schemaVersion: "1.0.0", leaseId: lease.data!.leaseId, expectedRootRevision: lease.data!.rootRevision, plan });
   expect(started.error).toBeNull();

@@ -827,7 +827,12 @@ export class ContinuityService implements ContinuityGateway {
     if (!snapshot) return null;
     const latestRunId = snapshot.workflowRunIds.at(-1);
     const receipt = latestRunId ? this.workflowStore.getRun(latestRunId) : null;
-    const evidence = (receipt?.stageResults ?? []).flatMap((result) => result.output.artifacts);
+    // The card's verified flag is what the server itself hashed, never the provider's declaration.
+    const evidence = (receipt?.stageResults ?? []).flatMap((result) => result.output.artifacts.map((artifact) => ({
+      ...artifact,
+      verified: (result.artifactChecks ?? []).some((check) => check.source === "artifact" && check.check === "sha256-matched"
+        && check.artifactId === artifact.artifactId && check.locator === artifact.locator),
+    })));
     const base = {
       schemaVersion: "1.0.0" as const,
       source: "workflow" as const,

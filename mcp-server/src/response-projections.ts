@@ -38,6 +38,7 @@ export function workflowStatusSummary(receipt: WorkflowReceiptV1): WorkflowStatu
     totalStageCount: receipt.plan.stages.length,
     blockerCount: receipt.blockers.length,
     unresolvedCount: receipt.unresolved.length,
+    unverifiedClaimCount: receipt.unverifiedClaims.length,
     errorCode: receipt.error?.code ?? null,
     receiptDigest: convergenceDigest(receipt),
   };
@@ -64,5 +65,6 @@ export function convergenceStatusSummary(status: ConvergenceStatusV1): Convergen
     outcomeCount: status.outcomes.length,
     reviewCount: status.reviews.length,
     gateErrorCode: status.gateError?.code ?? null,
+    unverifiedClaimCount: status.unverifiedClaims.length,
   };
 }

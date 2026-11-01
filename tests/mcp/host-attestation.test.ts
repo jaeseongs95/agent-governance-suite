@@ -312,7 +312,6 @@ describe("Claude Code host attestation through the MCP boundary", () => {
       taskEnvelope,
       frame: taskFrame,
       plan,
-      actorId: plan.bootstrapExecution!.context.actorId,
       outputTargets: ["fixture.md"],
       priorFailure: null,
     })).data!;
