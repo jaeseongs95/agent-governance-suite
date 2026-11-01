@@ -1,4 +1,4 @@
-export const SESSION_MESSAGE_PROTOCOL = "2.0.0";
+export const SESSION_MESSAGE_PROTOCOL = "2.1.0";
 
 // 인수 전 소비자의 회차 영수증 지원을 확인한다. 조회 프레임 형식은 바꾸지 않는다.
 export const SESSION_MESSAGE_CLAIM_OPERATIONS: readonly string[] = Object.freeze([

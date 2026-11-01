@@ -107,7 +107,7 @@ it("retries transient endpoint publication failures and serves the published end
   await ready(3000);
   expect(JSON.parse(await readFile(path.join(directory, "endpoint.json"), "utf8"))).toMatchObject({ pid: child.pid, claimReceiptVersion: 1 });
   await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
-    protocolVersion: "2.0.0",
+    protocolVersion: "2.1.0",
     capabilities: ["deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"],
   });
   expect((await readdir(directory)).filter((name) => name.endsWith(".tmp"))).toEqual([]);
@@ -132,7 +132,7 @@ it.each(["permanent", "ENOSPC", "credentials", "database"])("releases startup re
   children.push(recovered);
   await waitForSessionMessageBrokerReady(directory, recovered, 3000);
   await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
-    protocolVersion: "2.0.0",
+    protocolVersion: "2.1.0",
     capabilities: ["deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"],
   });
 });
@@ -184,7 +184,7 @@ it("isolates socket resets and a lost send response while preserving the broker 
   const target = { host: "fixture", sessionId: "reset-target" };
   const draft = await requestSessionMessageOnce<{ messageId: string }>("prepare", { sender, target, body: "One immutable message" }, directory);
   await expect(requestSessionMessageOnce("send", { sender, messageId: draft.messageId }, directory, 500)).rejects.toThrow();
-  await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toHaveProperty("protocolVersion", "2.0.0");
+  await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toHaveProperty("protocolVersion", "2.1.0");
   expect(child.exitCode, stderr).toBeNull();
   expect(JSON.parse(await readFile(path.join(directory, "endpoint.json"), "utf8")).pid).toBe(endpoint.pid);
   await expect(requestSessionMessageOnce("unknown-operation", {}, directory)).rejects.toThrow(/Unknown broker operation/u);
@@ -250,7 +250,7 @@ it("지원 표시가 없는 기존 endpoint는 명확히 거부하고 자동 새
   const directory = await mkdtemp(path.join(tmpdir(), "broker-old-receipts-"));
   directories.push(directory);
   const files = {
-    "endpoint.json": JSON.stringify({ protocolVersion: "2.0.0", address: "127.0.0.1", port: 1,
+    "endpoint.json": JSON.stringify({ protocolVersion: "2.1.0", address: "127.0.0.1", port: 1,
       pid: process.pid, startedAt: new Date(0).toISOString(), certificateFingerprint256: Array(32).fill("AA").join(":") }),
     "broker.token": "a".repeat(43),
     "broker-cert.pem": "synthetic certificate: endpoint support is checked before TLS",
