@@ -29,7 +29,7 @@ function receipt(runId: string): WorkflowReceiptV1 {
       schemaVersion: "1.0.0", taskId: "storage-fault", integrityToken: "token", executionMode: "orchestrated",
       state: "running", selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [],
     },
-    stageResults: [], blockers: [], unresolved: [], error: null,
+    stageResults: [], blockers: [], unresolved: [], error: null, unverifiedClaims: [],
   };
 }
 

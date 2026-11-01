@@ -158,7 +158,7 @@ describe("D0043: 등록된 제공자의 실행 위험", () => {
     const root = service.openConvergenceRoot({ schemaVersion: "1.0.0", parentRootId: null, taskEnvelope: input, frame, userApprovalRefs: [] }).data!;
     const proposal = {
       schemaVersion: "1.0.0", rootId: root.rootId, expectedRevision: root.revision,
-      taskEnvelope: input, frame, plan: oldPlan, actorId: "fixture-actor", outputTargets: ["fixture.md"], priorFailure: null,
+      taskEnvelope: input, frame, plan: oldPlan, outputTargets: ["fixture.md"], priorFailure: null,
     };
     candidate.providers[0]!.executionRiskLevel = "low";
     await writeRegistry();
@@ -207,7 +207,7 @@ describe("D0043: 등록된 제공자의 실행 위험", () => {
     expect(opened.ok, opened.error?.message).toBe(true);
     const claim = service.claimWorkflowAttempt({
       schemaVersion: "1.0.0", rootId: opened.data!.rootId, expectedRevision: opened.data!.revision,
-      taskEnvelope: input, frame, plan, actorId: "fixture-actor", outputTargets: ["fixture.md"], priorFailure: null,
+      taskEnvelope: input, frame, plan, outputTargets: ["fixture.md"], priorFailure: null,
     }, true);
     expect(claim.error?.code).toBe("BINDING_REQUIRED");
     expect(claim.error?.message).toContain("Workflow attempt stage");

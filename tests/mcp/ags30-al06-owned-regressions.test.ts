@@ -24,6 +24,13 @@ afterEach(() => {
   for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true });
 });
 
+/** A retry must cite a readable local file whose bytes are new to the root. */
+function evidenceFile(label: string): string {
+  const file = path.join(scratch(), "evidence.txt");
+  writeFileSync(file, label);
+  return file;
+}
+
 function scratch(): string {
   const directory = mkdtempSync(path.join(tmpdir(), "ags30-al06-"));
   directories.push(directory);
@@ -136,7 +143,7 @@ describe("AL06 workflow regressions", () => {
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       const status = service.getConvergenceStatus(rootId).data!;
       const proposal = { schemaVersion: "1.0.0", rootId, expectedRevision: status.root.revision, taskEnvelope: task,
-        frame: frozen, plan, actorId: "fixture-actor", outputTargets: ["candidate.txt"], priorFailure };
+        frame: frozen, plan, outputTargets: ["candidate.txt"], priorFailure };
       const leased = service.claimWorkflowAttempt(proposal);
       expect(leased.error).toBeNull();
       const started = service.startGuardedWorkflow({ schemaVersion: "1.0.0", leaseId: leased.data!.leaseId,
@@ -147,7 +154,7 @@ describe("AL06 workflow regressions", () => {
         expect(service.abortWorkflow(receipt.runId, receipt.revision).error).toBeNull();
         const failed = service.getConvergenceStatus(rootId).data!;
         priorFailure = { fingerprint: failed.outcomes.at(-1)!.failureFingerprint, hypothesis: "A different fixture observation distinguishes this retry.",
-          changeSummary: "Add a fresh observation.", discriminator: "Compare the observed fixture.", evidenceRefs: [`fixture:new-${attempt}`] };
+          changeSummary: "Add a fresh observation.", discriminator: "Compare the observed fixture.", evidenceRefs: [evidenceFile(`fixture:new-${attempt}`)] };
       } else {
         const before = service.getConvergenceStatus(rootId).data!;
         expect(service.claimWorkflowAttempt({ ...proposal, expectedRevision: before.root.revision }).error?.code).toBe("LEASE_CONFLICT");
@@ -236,7 +243,7 @@ describe("D0163 compact values", () => {
     receipt.error = { code: "MISSING_EVIDENCE", message: "Fixture evidence is missing.", details: null };
     expect(workflowStatusSummary(receipt)).toEqual({ schemaVersion: "1.0.0", runId: receipt.runId, revision: 7, state: "blocked",
       currentStageId: "current-fixture", nextStageId: "next-fixture", lastRecordedStageId: null, completedStageCount: 0,
-      totalStageCount: 1, blockerCount: 2, unresolvedCount: 1, errorCode: "MISSING_EVIDENCE", receiptDigest: convergenceDigest(receipt) });
+      totalStageCount: 1, blockerCount: 2, unresolvedCount: 1, errorCode: "MISSING_EVIDENCE", unverifiedClaimCount: 0, receiptDigest: convergenceDigest(receipt) });
     receipt.stageResults = [result(receipt)];
     expect(workflowStatusSummary(receipt)).toMatchObject({ lastRecordedStageId: receipt.plan.stages[0]!.stageId, completedStageCount: 1 });
   });

@@ -145,7 +145,7 @@ describe("recorded artifact digests", () => {
     const root = workflow.openConvergenceRoot({ schemaVersion: "1.0.0", parentRootId: null, taskEnvelope, frame, userApprovalRefs: [] }).data!;
     const lease = workflow.claimWorkflowAttempt({
       schemaVersion: "1.0.0", rootId: root.rootId, expectedRevision: root.revision, taskEnvelope, frame,
-      plan, actorId: "fixture-actor", outputTargets: ["fixture.md"], priorFailure: null,
+      plan, outputTargets: ["fixture.md"], priorFailure: null,
     }, true).data!;
     const receipt = workflow.startGuardedWorkflow({ schemaVersion: "1.0.0", leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan }, true).data!;
     const stage = receipt.plan.stages[0]!;

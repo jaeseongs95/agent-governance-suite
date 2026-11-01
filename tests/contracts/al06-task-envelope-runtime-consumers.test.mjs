@@ -45,7 +45,7 @@ function receipt(withArtifactContract = true) {
       executionMode: "orchestrated", state: "ready", selectedSkills: ["fixture"], stages: [stage],
       currentStageId: null, nextStageId: stage.stageId, errors: [],
     },
-    stageResults: [], blockers: [], unresolved: [], error: null,
+    stageResults: [], blockers: [], unresolved: [], error: null, unverifiedClaims: [],
   };
 }
 

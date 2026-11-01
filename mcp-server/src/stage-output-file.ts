@@ -77,3 +77,13 @@ export function loadStageOutputFile(
   }
   return parsed as Record<string, unknown>;
 }
+
+/** sha256 of a readable local regular file of at most 16 MiB, or null when the locator is not one. */
+export function localFileDigest(locator: string): `sha256:${string}` | null {
+  try {
+    return `sha256:${createHash("sha256").update(readLocalStageOutputFile(locator)).digest("hex")}`;
+  } catch (error) {
+    if (error instanceof WorkflowContractError) return null;
+    throw error;
+  }
+}

@@ -141,7 +141,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       expect(opened.ok, JSON.stringify({ ordinal, result: opened })).toBe(true);
       const claimed = service.claimWorkflowAttempt({
         schemaVersion: "1.0.0", rootId: opened.data!.rootId, expectedRevision: opened.data!.revision,
-        taskEnvelope: input.taskEnvelope, frame, plan, actorId: plan.bootstrapExecution!.context.actorId,
+        taskEnvelope: input.taskEnvelope, frame, plan,
         outputTargets: ["fixture.md"], priorFailure: null,
       }, true);
       expect(claimed.ok, JSON.stringify({ ordinal, result: claimed })).toBe(true);
@@ -633,7 +633,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     const root = opened.data!;
     const claimed = service.claimWorkflowAttempt({
       schemaVersion: "1.0.0", rootId: root.rootId, expectedRevision: root.revision,
-      taskEnvelope, frame, plan, actorId: plan.bootstrapExecution!.context.actorId,
+      taskEnvelope, frame, plan,
       outputTargets: ["fixture.md"], priorFailure: null,
     }, true);
     expect(claimed.ok).toBe(true);

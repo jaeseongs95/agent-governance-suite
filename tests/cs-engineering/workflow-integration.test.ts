@@ -133,7 +133,7 @@ test("guarded lease/start and SQLite restart retain recorded bundle pins; finali
     operationalSettings:{maxAttemptsPerEpoch:3,maxEpochs:2,leaseTtlSeconds:300}};
   const root=service.openConvergenceRoot({schemaVersion:"1.0.0",parentRootId:null,taskEnvelope:f.task,frame,userApprovalRefs:[]}).data!;
   const plan=service.planWorkflow(f.task).data!;
-  const lease=service.claimWorkflowAttempt({schemaVersion:"1.0.0",rootId:root.rootId,expectedRevision:root.revision,taskEnvelope:f.task,frame,plan,actorId:"cs-fixture-actor",outputTargets:["candidate/queue.py"],priorFailure:null});
+  const lease=service.claimWorkflowAttempt({schemaVersion:"1.0.0",rootId:root.rootId,expectedRevision:root.revision,taskEnvelope:f.task,frame,plan,outputTargets:["candidate/queue.py"],priorFailure:null});
   expect(lease.error).toBeNull();
   const started=service.startGuardedWorkflow({schemaVersion:"1.0.0",leaseId:lease.data!.leaseId,expectedRootRevision:lease.data!.rootRevision,plan});
   expect(started.error).toBeNull();
@@ -181,7 +181,7 @@ test("actual MCP tools validate a selected CS stage with synthetic server observ
       targetArtifacts:[{artifactId:"candidate",role:"candidate",locator:path.join(f.root,"candidate.json"),digest:digest(f.root,"candidate.json")}],
       operationalSettings:{maxAttemptsPerEpoch:3,maxEpochs:2,leaseTtlSeconds:300}};
     const opened=await call("open_convergence_root",{schemaVersion:"1.0.0",parentRootId:null,taskEnvelope:f.task,frame,userApprovalRefs:[]});expect(opened.ok).toBe(true);
-    const claimed=await call("claim_workflow_attempt",{schemaVersion:"1.0.0",rootId:opened.data.rootId,expectedRevision:opened.data.revision,taskEnvelope:f.task,frame,plan:planned.data,actorId:"cs-synthetic-actor",outputTargets:["candidate/queue.py"],priorFailure:null});expect(claimed.ok).toBe(true);
+    const claimed=await call("claim_workflow_attempt",{schemaVersion:"1.0.0",rootId:opened.data.rootId,expectedRevision:opened.data.revision,taskEnvelope:f.task,frame,plan:planned.data,outputTargets:["candidate/queue.py"],priorFailure:null});expect(claimed.ok).toBe(true);
     const started=await call("start_guarded_workflow",{schemaVersion:"1.0.0",leaseId:claimed.data.leaseId,expectedRootRevision:claimed.data.rootRevision,plan:planned.data});expect(started.ok).toBe(true);
     const stage=result(f,started.data);const args=JSON.parse(JSON.stringify(stage));delete args.executionContext;
     const recorded=await call("record_stage_result",args);expect(recorded.ok,JSON.stringify(recorded.error)).toBe(true);

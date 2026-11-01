@@ -142,7 +142,7 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
       expect(opened.error).toBeNull();
       const convergence = opened.data!;
       const claimed = await call<AttemptLeaseV1>("claim_workflow_attempt", { schemaVersion: "1.0.0", rootId: convergence.rootId,
-        expectedRevision: convergence.revision, taskEnvelope: task, frame, plan, actorId: hostActorId(host, "fixture-session"),
+        expectedRevision: convergence.revision, taskEnvelope: task, frame, plan,
         outputTargets: ["fixture.md"], priorFailure: null });
       expect(claimed.error).toBeNull();
       const lease = claimed.data!;

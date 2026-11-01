@@ -1,9 +1,11 @@
+import { randomUUID } from "node:crypto";
 import { chmodSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import type { SharedModuleContext, SqlDatabase } from "../../runtime/unified-state/shared-connection.mjs";
 
 import {
+  CONTRACT_VERSION,
   type AttemptLeaseV1,
   type AttemptOutcomeV1,
   type AttemptProposalV1,
@@ -19,8 +21,11 @@ import {
   type StoredPluginUpdateState,
 } from "./plugin-update-store.js";
 import { compareStableVersionNumbers } from "./plugin-version.js";
+import { externalInputs, stageUnverifiedClaims, unique } from "./unverified-claims.js";
 import {
   activeRootIdentity,
+  convergenceDigest,
+  failureFingerprint,
   normalizeWorkspaceLocator,
   planRootInsertion,
   type ReplacementMatch,
@@ -99,7 +104,9 @@ interface PluginUpdateRow {
   last_error_code: StoredPluginUpdateState["lastErrorCode"];
 }
 
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
+/** Marks runs that v6 closed because they started under pre-3.0 gate rules. */
+export const PRE_V6_BLOCKER = "pre-3.0-gate-contract";
 
 export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   private readonly database: SqlDatabase;
@@ -903,9 +910,105 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         ) STRICT;
 
       `);
+      if (row.user_version > 0 && row.user_version < 6) this.migrateToV6();
       if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
       else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
     });
+  }
+
+  /**
+   * v6 (AGS 3.0 gates): caller declarations stop counting as verification. Rewrites stored JSON in place and
+   * deletes nothing. Runs that were still open under declared-equals-verified rules close as blocked, and their
+   * guarded attempts close as aborted so the convergence root can continue.
+   */
+  private migrateToV6(): void {
+    const now = new Date().toISOString();
+    for (const row of this.database.prepare(`SELECT lease_id, lease_json, proposal_json FROM convergence_leases`).all() as unknown as Array<ConvergenceLeaseRow & { lease_id: string }>) {
+      const proposal = JSON.parse(row.proposal_json) as AttemptProposalV1 & { actorId?: unknown };
+      const lease = JSON.parse(row.lease_json) as AttemptLeaseV1;
+      delete proposal.actorId;
+      // Pre-v6 actor IDs and evidence were declared by the caller, never observed.
+      lease.actorId = null;
+      lease.priorEvidenceDigests = [];
+      lease.proposalDigest = convergenceDigest(proposal);
+      this.database.prepare(`UPDATE convergence_leases SET lease_json = ?, proposal_json = ? WHERE lease_id = ?`)
+        .run(JSON.stringify(lease), JSON.stringify(proposal), row.lease_id);
+    }
+    for (const row of this.database.prepare(`SELECT review_id, review_json FROM convergence_reviews`).all() as unknown as Array<ConvergenceReviewRow & { review_id: string }>) {
+      const review = JSON.parse(row.review_json) as ConvergenceReviewV1 & { implementationActorIds?: unknown };
+      delete review.implementationActorIds;
+      this.database.prepare(`UPDATE convergence_reviews SET review_json = ? WHERE review_id = ?`).run(JSON.stringify(review), row.review_id);
+    }
+    for (const row of this.database.prepare(`SELECT root_id, root_json FROM convergence_roots`).all() as unknown as Array<{ root_id: string; root_json: string }>) {
+      const root = JSON.parse(row.root_json) as ConvergenceRootV1;
+      if (!root.retryRejections?.some((item) => item.actorId !== undefined)) continue;
+      for (const item of root.retryRejections) delete item.actorId;
+      this.database.prepare(`UPDATE convergence_roots SET root_json = ? WHERE root_id = ?`).run(JSON.stringify(root), row.root_id);
+    }
+    for (const row of this.database.prepare(`SELECT run_id, receipt_json FROM workflow_runs`).all() as unknown as Array<{ run_id: string; receipt_json: string }>) {
+      const receipt = JSON.parse(row.receipt_json) as WorkflowReceiptV1;
+      // A row too old to carry a receipt shape is left as stored; reading it reports its own contract error.
+      if (!receipt.plan || !Array.isArray(receipt.stageResults)) continue;
+      receipt.unverifiedClaims = unique(receipt.stageResults.flatMap((result) => {
+        const stage = receipt.plan.stages.find((item) => item.stageId === result.stageId);
+        return stage ? stageUnverifiedClaims(stage, result, false, externalInputs(receipt.plan, stage)) : [];
+      }));
+      const open = !["passed", "failed", "blocked"].includes(receipt.state);
+      if (open) {
+        receipt.state = "blocked";
+        receipt.plan.state = "blocked";
+        receipt.plan.currentStageId = null;
+        receipt.plan.nextStageId = null;
+        for (const list of [receipt.blockers, receipt.unresolved]) {
+          if (!list.includes(PRE_V6_BLOCKER)) list.push(PRE_V6_BLOCKER);
+        }
+        receipt.error = null;
+        receipt.revision += 1;
+      }
+      this.database.prepare(`UPDATE workflow_runs SET revision = ?, state = ?, receipt_json = ?, updated_at = ? WHERE run_id = ?`)
+        .run(receipt.revision, receipt.state, JSON.stringify(receipt), open ? now : this.runUpdatedAt(row.run_id), row.run_id);
+      if (open) this.closePreV6Attempt(receipt, now);
+    }
+  }
+
+  private runUpdatedAt(runId: string): string {
+    return (this.database.prepare(`SELECT updated_at FROM workflow_runs WHERE run_id = ?`).get(runId) as { updated_at: string }).updated_at;
+  }
+
+  /** Closes the guarded attempt of a run v6 blocked, the way abort_workflow would. */
+  private closePreV6Attempt(receipt: WorkflowReceiptV1, recordedAt: string): void {
+    const attempt = this.database.prepare(`
+      SELECT root_id, lease_id, epoch, ordinal FROM convergence_attempts WHERE run_id = ? AND outcome_json IS NULL
+    `).get(receipt.runId) as { root_id: string; lease_id: string; epoch: number; ordinal: number } | undefined;
+    if (!attempt) return;
+    const rootRow = this.rootRow(attempt.root_id);
+    if (!rootRow) return;
+    const root = JSON.parse(rootRow.root_json) as ConvergenceRootV1;
+    root.revision += 1;
+    root.updatedAt = recordedAt;
+    const used = Number((this.database.prepare(`
+      SELECT COUNT(*) AS used FROM convergence_leases WHERE root_id = ? AND epoch = ? AND state = 'consumed'
+    `).get(root.rootId, root.currentEpoch) as { used: number }).used);
+    if (root.state === "open" && used >= root.frame.operationalSettings.maxAttemptsPerEpoch) root.state = "needs-review";
+    const outcome: AttemptOutcomeV1 = {
+      schemaVersion: CONTRACT_VERSION,
+      outcomeId: `outcome-${randomUUID()}`,
+      rootId: root.rootId,
+      rootRevision: root.revision,
+      leaseId: attempt.lease_id,
+      epoch: attempt.epoch,
+      ordinal: attempt.ordinal,
+      workflowRunId: receipt.runId,
+      state: "aborted",
+      receiptDigest: convergenceDigest(receipt),
+      failureFingerprint: failureFingerprint(receipt),
+      evidenceRefs: [],
+      recordedAt,
+    };
+    this.database.prepare(`UPDATE convergence_roots SET revision = ?, state = ?, root_json = ?, updated_at = ? WHERE root_id = ?`)
+      .run(root.revision, root.state, JSON.stringify(root), recordedAt, root.rootId);
+    this.database.prepare(`UPDATE convergence_attempts SET state = 'aborted', outcome_json = ?, updated_at = ? WHERE run_id = ?`)
+      .run(JSON.stringify(outcome), recordedAt, receipt.runId);
   }
 
   private rootRow(rootId: string): ConvergenceRootRow | undefined {

@@ -186,6 +186,15 @@ describe("AL09 server boundary regressions", () => {
     }, { ingress: () => ({ provenance: "unavailable", reason: "FIXTURE_CALL_META_MISSING" }) });
   });
 
+  it("D0165 does not advertise a frame review as fresh and independent", async () => {
+    await withServer(async (client) => {
+      const tools = (await client.listTools()).tools;
+      const description = tools.find(tool => tool.name === "resolve_convergence_gate")?.description;
+      expect(description).not.toContain("fresh independent");
+      expect(description).toContain("unverifiedClaims");
+    });
+  });
+
   it("D0080 advertises the actual unguarded-start rejection", async () => {
     await withServer(async (client, call) => {
       const tools = (await client.listTools()).tools;

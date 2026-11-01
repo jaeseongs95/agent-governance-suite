@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import { copyFile, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -5,7 +6,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { Worker } from "node:worker_threads";
 import { spawnSync } from "node:child_process";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   type AttemptLeaseV1,
@@ -30,6 +31,15 @@ import { cleanupIfClaimWorkersFinished, concurrentClaims } from "../helpers/conc
 
 const temporaryDirectories: string[] = [];
 const sqliteStores = new Set<SqliteWorkflowStore>();
+const evidenceDirectory = fs.mkdtempSync(join(tmpdir(), "convergence-evidence-"));
+
+/** A local file whose bytes are the label, so the same label is the same observed evidence (D-0039). */
+function evidenceFile(label: string): { locator: string; digest: `sha256:${string}` } {
+  const digest = `sha256:${createHash("sha256").update(label).digest("hex")}` as const;
+  const locator = join(evidenceDirectory, `${digest.slice(7, 23)}.txt`);
+  fs.writeFileSync(locator, label);
+  return { locator, digest };
+}
 
 const descriptor: SkillDescriptorV2 = {
   schemaVersion: "2.0.0",
@@ -216,7 +226,6 @@ function proposal(
     taskEnvelope: envelope,
     frame: options.frame ?? root.frame,
     plan: plan(service, envelope),
-    actorId: options.actorId ?? "implementation-agent",
     outputTargets: ["src/candidate.ts"],
     priorFailure: options.priorFailure ?? null,
   };
@@ -260,7 +269,7 @@ function failedStage(receipt: WorkflowReceiptV1): StageResultV1 {
     evidence: [{
       artifactId: "failure-log",
       kind: "test",
-      locator: "tests/results/failure.json",
+      ...evidenceFile("tests/results/failure.json"),
       verified: true,
       note: "Observed fixture failure.",
     }],
@@ -306,7 +315,7 @@ function latestFailure(current: ConvergenceStatusV1, evidenceRef: string): Attem
     hypothesis: "The candidate content still contains the rejected construction.",
     changeSummary: "Revise only the candidate artifact.",
     discriminator: "Run the frozen validator and compare its finding.",
-    evidenceRefs: [evidenceRef],
+    evidenceRefs: [evidenceFile(evidenceRef).locator],
   };
 }
 
@@ -344,7 +353,6 @@ function review(
     rootRevision: current.root.revision,
     epoch: current.currentEpoch,
     reviewerActorId: "fresh-frame-auditor",
-    implementationActorIds: ["implementation-agent"],
     freshContext: { confirmed: true, evidenceRef: `review-evidence:${reviewId}` },
     classification: options.classification,
     comparability: {
@@ -379,6 +387,8 @@ async function consumeThreeFailedAttempts(
   }
   return current;
 }
+
+afterAll(() => fs.rmSync(evidenceDirectory, { recursive: true, force: true }));
 
 afterEach(async () => {
   for (const store of sqliteStores) store.close();
@@ -458,7 +468,6 @@ describe("local MCP convergence guard", () => {
       expectedRevision: root.revision,
       taskEnvelope: root.taskEnvelope,
       plan: workflowPlan,
-      actorId: "implementation-agent",
       outputTargets: ["src/candidate.ts"],
       priorFailure: null,
     });
@@ -469,7 +478,6 @@ describe("local MCP convergence guard", () => {
       rootId: root.rootId,
       expectedRevision: root.revision,
       plan: workflowPlan,
-      actorId: "implementation-agent",
       outputTargets: ["src/candidate.ts"],
       priorFailure: null,
     });
@@ -520,7 +528,6 @@ describe("local MCP convergence guard", () => {
         rootId: root.rootId,
         expectedRevision: root.revision,
         plan: workflowPlan,
-        actorId: "implementation-agent",
         outputTargets: ["src/candidate.ts"],
         priorFailure: null,
       });
@@ -663,7 +670,6 @@ describe("local MCP convergence guard", () => {
       route: "needs-user",
       proposedFrame: changedFrame,
     }, "review-before-first-attempt");
-    gateReview.implementationActorIds = [];
 
     const resolved = service.resolveConvergenceGate({
       schemaVersion: "1.0.0",
@@ -673,7 +679,7 @@ describe("local MCP convergence guard", () => {
     });
     expect(resolved.error).toBeNull();
     expect(resolved.data?.root.state).toBe("needs-user");
-    expect(resolved.data?.reviews[0]?.implementationActorIds).toEqual([]);
+    expect(resolved.data?.reviews[0]).not.toHaveProperty("implementationActorIds");
   });
 
   it("rejects a repeated target and repeated evidence as NEW_EVIDENCE_REQUIRED", async () => {
@@ -703,7 +709,7 @@ describe("local MCP convergence guard", () => {
     const root = openRoot(service);
     const attempt = claimAndStart(service, root);
     let current = recordFailureAndStatus(service, root.rootId, attempt.receipt);
-    expect(current.outcomes.at(-1)?.evidenceRefs).toContain("tests/results/failure.json");
+    expect(current.outcomes.at(-1)?.evidenceRefs).toContain(evidenceFile("tests/results/failure.json").digest);
 
     const rejected = service.claimWorkflowAttempt(proposal(service, current.root, {
       priorFailure: latestFailure(current, "tests/results/failure.json"),
@@ -725,22 +731,23 @@ describe("local MCP convergence guard", () => {
     const { service } = await createHarness();
     const root = openRoot(service);
     const attempt = claimAndStart(service, root);
-    const digest = "d".repeat(64);
+    const candidate = evidenceFile("tests/results/candidate.json");
+    const digest = candidate.digest.slice(7);
     const failure = failedStage(attempt.receipt);
     failure.output.artifacts = [{
       artifactId: "candidate",
       schemaId: "fixture/v1",
-      locator: "tests/results/candidate.json",
+      locator: candidate.locator,
       digest,
       targetDigest: "e".repeat(64),
       verified: true,
     }];
     expect(service.recordStageResult(failure).error).toBeNull();
     let current = status(service, root.rootId);
-    expect(current.outcomes.at(-1)?.evidenceRefs).toContain(digest);
+    expect(current.outcomes.at(-1)?.evidenceRefs).toContain(`sha256:${digest}`);
 
     const recycled = service.claimWorkflowAttempt(proposal(service, current.root, {
-      priorFailure: latestFailure(current, `sha256:${digest}`),
+      priorFailure: latestFailure(current, "tests/results/candidate.json"),
     }));
     expect(recycled.error?.code).toBe("NEW_EVIDENCE_REQUIRED");
     expect(recycled.error?.details).toMatchObject({ route: "diagnose" });
@@ -760,18 +767,18 @@ describe("local MCP convergence guard", () => {
     const root = openRoot(harness.service);
     let attempt = claimAndStart(harness.service, root);
     const firstFailure = failedStage(attempt.receipt);
-    firstFailure.evidence[0]!.locator = "test:outcome-e1";
+    Object.assign(firstFailure.evidence[0]!, evidenceFile("test:outcome-e1"));
     expect(harness.service.recordStageResult(firstFailure).error).toBeNull();
     let current = status(harness.service, root.rootId);
     attempt = claimAndStart(harness.service, current.root, {
       priorFailure: latestFailure(current, "test:diagnostic-e2"),
     });
     const secondFailure = failedStage(attempt.receipt);
-    secondFailure.evidence[0]!.locator = "test:outcome-e2";
+    Object.assign(secondFailure.evidence[0]!, evidenceFile("test:outcome-e2"));
     expect(harness.service.recordStageResult(secondFailure).error).toBeNull();
     current = status(harness.service, root.rootId);
     expect(current.outcomes.map((item) => item.evidenceRefs)).toEqual([
-      ["test:outcome-e1"], ["test:outcome-e2"],
+      [evidenceFile("test:outcome-e1").digest], [evidenceFile("test:outcome-e2").digest],
     ]);
 
     closeStore(harness.store);
@@ -892,8 +899,7 @@ describe("local MCP convergence guard", () => {
     expect(current.root.retryRejections?.[0]).toMatchObject({
       epoch: 1,
       reason: "stale-evidence",
-      actorId: "implementation-agent",
-      evidenceRefs: ["test:shared-evidence"],
+      evidenceRefs: [evidenceFile("test:shared-evidence").digest],
     });
 
     // The record has to survive a restart: it is what burns the evidence later.
@@ -932,7 +938,7 @@ describe("local MCP convergence guard", () => {
       "stale-fingerprint",
     ]);
     expect(current.root.retryRejections?.[0]?.evidenceRefs).toEqual([]);
-    expect(current.root.retryRejections?.[1]?.evidenceRefs).toEqual(["test:wrong-fingerprint-evidence"]);
+    expect(current.root.retryRejections?.[1]?.evidenceRefs).toEqual([evidenceFile("test:wrong-fingerprint-evidence").locator]);
 
     closeStore(harness.store);
     const restarted = serviceFor(harness.registryPath, trackStore(harness.databasePath));
@@ -1882,7 +1888,7 @@ describe("server-derived workspace identity", () => {
     const schemaVersion = (verify.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
     verify.close();
     expect(after).toEqual(before);
-    expect(schemaVersion).toBe(5);
+    expect(schemaVersion).toBe(6);
   });
 
   it("admits only one of two connections that open the same target at once", async () => {

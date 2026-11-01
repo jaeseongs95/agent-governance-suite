@@ -156,8 +156,6 @@ export function validateReview(review, comparison = null, request = null, frozen
   if (review.freshContext.confirmed !== true) errors.push("reviewer must attest freshContext.confirmed true");
   if (review.freshContext.evidenceRef !== request.reviewer.freshContextEvidenceRef) errors.push("review fresh-context evidence does not match the reviewer assignment");
   if (request.reviewer.implementationActorIds.includes(review.reviewerActorId)) errors.push("reviewer must be distinct from implementation actors");
-  const expectedActors = [...request.reviewer.implementationActorIds].sort();
-  if (canonicalJson([...review.implementationActorIds].sort()) !== canonicalJson(expectedActors)) errors.push("review.implementationActorIds must match the frozen implementation actor inventory");
   if (review.proposedFrame === null || artifactDigest(review.proposedFrame) !== request.proposal.frameDigest) errors.push("review.proposedFrame does not match the proposed frame artifact");
 
   if (comparison.rootId !== request.root.rootId) errors.push("comparison.rootId does not match request.root.rootId");

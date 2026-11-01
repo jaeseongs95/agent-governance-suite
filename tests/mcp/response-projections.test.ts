@@ -95,6 +95,7 @@ function receipt(completed: number): WorkflowReceiptV1 {
     blockers: [],
     unresolved: [],
     error: null,
+    unverifiedClaims: [],
   };
 }
 
@@ -123,6 +124,7 @@ describe("compact MCP response projections", () => {
         totalStageCount: 6,
         blockerCount: 0,
         unresolvedCount: 0,
+        unverifiedClaimCount: 0,
         errorCode: null,
         receiptDigest: convergenceDigest(full),
       });
@@ -158,6 +160,7 @@ describe("compact MCP response projections", () => {
       totalStageCount: 6,
       blockerCount: 2,
       unresolvedCount: 1,
+      unverifiedClaimCount: 0,
       errorCode: "GATE_FAILED",
       receiptDigest: convergenceDigest(blockedFull),
     });
@@ -218,7 +221,6 @@ describe("compact MCP response projections", () => {
         taskEnvelope: root.taskEnvelope,
         frame: root.frame,
         plan: samplePlan,
-        actorId: "actor-impl",
         outputTargets: ["src/index.ts"],
         priorFailure: null,
       }],
@@ -307,7 +309,6 @@ describe("compact MCP response projections", () => {
         rootRevision: 4,
         epoch: 1,
         reviewerActorId: "actor-auditor",
-        implementationActorIds: ["actor-impl"],
         freshContext: { confirmed: true, evidenceRef: "fresh-1" },
         classification: "semantics-preserving",
         comparability: { comparable: true, rationale: "same frame" },
@@ -319,6 +320,7 @@ describe("compact MCP response projections", () => {
       }],
       workflowRunIds: ["run-01", "run-02"],
       gateError: { code: "GATE_FAILED", message: "convergence gate blocked", details: null },
+      unverifiedClaims: [],
     };
 
     const handle = convergenceRootHandle(root);
@@ -362,6 +364,7 @@ describe("compact MCP response projections", () => {
       outcomeCount: 2,
       reviewCount: 1,
       gateErrorCode: "GATE_FAILED",
+      unverifiedClaimCount: 0,
     });
     expect(convergenceDigest(root.taskEnvelope)).not.toBe("");
 

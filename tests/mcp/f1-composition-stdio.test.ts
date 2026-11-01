@@ -9,7 +9,6 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { expect, it } from "vitest";
 import type { ApiResultV1, AttemptLeaseV1, ConvergenceRootV1, WorkflowPlanV1, WorkflowReceiptV1 } from "../../contracts/types.js";
-import { hostActorId } from "../../mcp-server/src/host-attestation.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
 
@@ -106,7 +105,7 @@ it("uses one explicit trusted producer for two opaque IDs through public hook/st
         operationalSettings: { maxAttemptsPerEpoch: 3, maxEpochs: 2, leaseTtlSeconds: 300 } };
       const root = await f.call<ConvergenceRootV1>("open_convergence_root", { schemaVersion: "1.0.0", parentRootId: null, taskEnvelope: request, frame, userApprovalRefs: [] }, model); expect(root.error).toBeNull();
       const lease = await f.call<AttemptLeaseV1>("claim_workflow_attempt", { schemaVersion: "1.0.0", rootId: root.data!.rootId, expectedRevision: root.data!.revision,
-        taskEnvelope: request, frame, plan, actorId: hostActorId(host, sessionId), outputTargets: ["fixture.md"], priorFailure: null }, model); expect(lease.error).toBeNull();
+        taskEnvelope: request, frame, plan, outputTargets: ["fixture.md"], priorFailure: null }, model); expect(lease.error).toBeNull();
       const started = await f.call<WorkflowReceiptV1>("start_guarded_workflow", { schemaVersion: "1.0.0", leaseId: lease.data!.leaseId, expectedRootRevision: lease.data!.rootRevision, plan }, model); expect(started.error).toBeNull();
       const receipt = started.data!, stage = receipt.plan.stages[0]!;
       const recorded = await f.call<WorkflowReceiptV1>("record_stage_result", { schemaVersion: "1.0.0", runId: receipt.runId, stageId: stage.stageId, expectedRevision: receipt.revision, state: "passed", responseMode: "full",

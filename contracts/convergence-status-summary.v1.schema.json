@@ -4,7 +4,7 @@
   "title": "ConvergenceStatusSummary.v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "root", "currentEpoch", "maxAttemptsPerEpoch", "maxEpochs", "attemptsUsedInEpoch", "attemptsRemainingInEpoch", "issuedLeaseId", "latestWorkflowRunId", "latestOutcomeId", "latestOutcomeState", "latestOutcomeReceiptDigest", "proposalCount", "leaseCount", "outcomeCount", "reviewCount", "gateErrorCode"],
+  "required": ["schemaVersion", "root", "currentEpoch", "maxAttemptsPerEpoch", "maxEpochs", "attemptsUsedInEpoch", "attemptsRemainingInEpoch", "issuedLeaseId", "latestWorkflowRunId", "latestOutcomeId", "latestOutcomeState", "latestOutcomeReceiptDigest", "proposalCount", "leaseCount", "outcomeCount", "reviewCount", "gateErrorCode", "unverifiedClaimCount"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "root": { "$ref": "https://skill-suite.local/contracts/convergence-root-handle.v1.schema.json" },
@@ -27,6 +27,7 @@
     "leaseCount": { "type": "integer", "minimum": 0 },
     "outcomeCount": { "type": "integer", "minimum": 0 },
     "reviewCount": { "type": "integer", "minimum": 0 },
+    "unverifiedClaimCount": { "type": "integer", "minimum": 0 },
     "gateErrorCode": {
       "oneOf": [
         { "type": "null" },

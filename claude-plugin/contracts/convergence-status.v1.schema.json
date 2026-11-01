@@ -4,7 +4,7 @@
   "title": "ConvergenceStatus.v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "root", "currentEpoch", "maxAttemptsPerEpoch", "maxEpochs", "attemptsUsedInEpoch", "attemptsRemainingInEpoch", "proposals", "leases", "outcomes", "reviews", "workflowRunIds", "gateError"],
+  "required": ["schemaVersion", "root", "currentEpoch", "maxAttemptsPerEpoch", "maxEpochs", "attemptsUsedInEpoch", "attemptsRemainingInEpoch", "proposals", "leases", "outcomes", "reviews", "workflowRunIds", "gateError", "unverifiedClaims"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "root": { "$ref": "https://skill-suite.local/contracts/convergence-root.v1.schema.json" },
@@ -23,6 +23,11 @@
         { "type": "null" },
         { "$ref": "#/$defs/error" }
       ]
+    },
+    "unverifiedClaims": {
+      "description": "Server-computed. Root and review properties AGS did not observe, such as user approval of a replacement or reviewer independence.",
+      "type": "array",
+      "items": { "$ref": "https://skill-suite.local/contracts/workflow-receipt.v1.schema.json#/$defs/unverifiedClaim" }
     }
   },
   "$defs": {

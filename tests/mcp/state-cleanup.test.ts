@@ -28,7 +28,7 @@ function receipt(runId: string, state: WorkflowReceiptV1["state"] = "passed"): W
       schemaVersion: "1.0.0", taskId: `task-${runId}`, integrityToken: "token", executionMode: "orchestrated",
       state, selectedSkills: [], stages: [], currentStageId: null, nextStageId: null, errors: [],
     },
-    stageResults: [], blockers: [], unresolved: [], error: null,
+    stageResults: [], blockers: [], unresolved: [], error: null, unverifiedClaims: [],
   };
 }
 
@@ -172,7 +172,7 @@ describe("state cleanup", () => {
     legacyWorkflow.prepare("INSERT INTO workflow_runs VALUES (?, 1, ?, ?)").run("legacy", JSON.stringify(receipt("legacy")), OLD);
     legacyWorkflow.close();
     const workflow = new SqliteWorkflowStore(workflowPath);
-    expect(workflow.getSchemaVersion()).toBe(5);
+    expect(workflow.getSchemaVersion()).toBe(6);
     expect(workflow.getRun("legacy")?.state).toBe("passed");
     workflow.close();
 

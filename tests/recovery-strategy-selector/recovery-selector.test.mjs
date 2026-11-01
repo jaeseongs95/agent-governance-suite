@@ -50,6 +50,7 @@ function selectionRequest() {
     blockers: ["cache-write-failed"],
     unresolved: ["cache-write-failed"],
     error: null,
+    unverifiedClaims: [],
   };
   const diagnosisRequest = {
     schemaVersion: "1.0.0",

@@ -2,6 +2,8 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 import {
   type ApiResultV1,
+  type ArtifactCheckV1,
+  type ObservedCallerV1,
   type StageArtifactContractV1,
   type AttemptLeaseV1,
   type AttemptOutcomeV1,
@@ -25,6 +27,7 @@ import {
   type PlannedStageV1,
   POLICY_CAPABILITY,
   type RoutedSkillProviderV2,
+  type Sha256Digest,
   type StateMappingRuleV2,
   type StageResultV1,
   type TaskEnvelopeV1,
@@ -37,6 +40,7 @@ import {
   canonicalJson,
   conflictDetails,
   convergenceDigest,
+  failureFingerprint,
   frameDigests,
 } from "./convergence-logic.js";
 import { FileSkillRegistry, selectSkillByCapability } from "./registry.js";
@@ -44,7 +48,9 @@ import { validateDecisionRecordSemantics } from "./decision-record-validator.js"
 import { assertProviderSemantics } from "./provider-semantics.js";
 import { ContractValidator } from "./schema-validator.js";
 import { assertReceiptPolicy, jsonPointer } from "./receipt-policy.js";
-import { loadStageOutputFile } from "./stage-output-file.js";
+import { loadStageOutputFile, localFileDigest } from "./stage-output-file.js";
+import { convergenceUnverifiedClaims, externalInputs, stageUnverifiedClaims, unique } from "./unverified-claims.js";
+import { independence } from "./caller-actor.js";
 import { assertCsStageBundle } from "./cs-engineering-validator.js";
 import { assertEngineeringStageBundle } from "./engineering-practices-validator.js";
 import {
@@ -110,6 +116,20 @@ export interface TrustedExecutionContextProvider {
 }
 
 /** Copy of a root at the next revision, stamped with updatedAt. */
+/** Stages whose PASS relies on a checker independent of the implementation: audits and frame reviews. */
+function isIndependentCheck(stage: PlannedStageV1): boolean {
+  return (stage.riskGate === "mandatory" && stage.requiredArtifacts.includes("gate-verdict"))
+    || stage.satisfiedCapabilities.includes("iteration-frame-audit");
+}
+
+/** Observed recorders of a run's passed implementation stages; null where no caller was observed. */
+function implementationRecorders(receipt: WorkflowReceiptV1): Array<ObservedCallerV1 | null> {
+  return receipt.stageResults.flatMap((result) => {
+    const stage = receipt.plan.stages.find((item) => item.stageId === result.stageId);
+    return result.state === "passed" && stage && !isIndependentCheck(stage) ? [result.recordedBy ?? null] : [];
+  });
+}
+
 function bumpedRoot(root: ConvergenceRootV1, updatedAt: string): ConvergenceRootV1 {
   const next = clone(root);
   next.revision += 1;
@@ -241,9 +261,11 @@ export class WorkflowService {
     });
   }
 
-  claimWorkflowAttempt(rawProposal: unknown, requireTrustedExecutionContext = false): ApiResultV1<AttemptLeaseV1> {
+  claimWorkflowAttempt(rawProposal: unknown, requireTrustedExecutionContext = false,
+    caller: ObservedCallerV1 | null = null): ApiResultV1<AttemptLeaseV1> {
     return this.attempt(() => {
       const proposal = clone(this.normalizeAttemptProposal(rawProposal));
+      const actorId = caller?.actor ?? null;
       this.assertPlanIntegrity(proposal.plan);
       if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(proposal.plan, "Workflow attempt");
       this.assertConvergenceFrame(proposal.frame);
@@ -334,6 +356,7 @@ export class WorkflowService {
         });
       }
 
+      let priorEvidenceDigests: Sha256Digest[] = [];
       if (attempts.length === 0) {
         if (proposal.priorFailure !== null) {
           throw new WorkflowContractError("INVALID_INPUT", "The first attempt in an epoch must not claim a prior failure.");
@@ -350,7 +373,7 @@ export class WorkflowService {
             {
               epoch: root.currentEpoch,
               reason: "stale-fingerprint",
-              actorId: proposal.actorId,
+              ...(actorId ? { actorId } : {}),
               expectedFingerprint: latestOutcome.failureFingerprint,
               targetDigest: proposedDigests.targetDigest,
               evidenceRefs: proposal.priorFailure?.evidenceRefs ?? [],
@@ -367,27 +390,33 @@ export class WorkflowService {
         const burned = (root.retryRejections ?? [])
           .filter((item) => item.reason === "stale-evidence")
           .flatMap((item) => item.evidenceRefs);
-        const usedProposals = new Set(snapshot.leases
-          .filter((lease) => lease.state === "consumed")
-          .map((lease) => lease.proposalDigest));
+        // New evidence means new bytes the server read itself, never a new string (D-0039).
+        priorEvidenceDigests = [...new Set(proposal.priorFailure.evidenceRefs.map((locator) => {
+          const digest = localFileDigest(locator);
+          if (!digest) {
+            throw new WorkflowContractError("MISSING_EVIDENCE", "Prior-failure evidence must be readable local files.", {
+              rootId: root.rootId, locator, reason: "EVIDENCE_FILE_UNREADABLE",
+            });
+          }
+          return digest;
+        }))];
         const oldEvidence = new Set([
-          ...snapshot.proposals
-            .filter((item) => usedProposals.has(convergenceDigest(item)))
-            .flatMap((item) => item.priorFailure?.evidenceRefs ?? []),
+          // An expired, never-started lease did not spend its evidence.
+          ...snapshot.leases.filter((lease) => lease.state === "consumed").flatMap((lease) => lease.priorEvidenceDigests ?? []),
           ...snapshot.outcomes.flatMap((outcome) => outcome.evidenceRefs),
           ...burned,
         ].map(evidenceKey));
-        const hasNewEvidence = proposal.priorFailure.evidenceRefs.some((reference) => !oldEvidence.has(evidenceKey(reference)));
+        const hasNewEvidence = priorEvidenceDigests.some((digest) => !oldEvidence.has(digest));
         if (sameTarget && !hasNewEvidence) {
           this.rejectRetry(
             root,
             {
               epoch: root.currentEpoch,
               reason: "stale-evidence",
-              actorId: proposal.actorId,
+              ...(actorId ? { actorId } : {}),
               expectedFingerprint: latestOutcome.failureFingerprint,
               targetDigest: proposedDigests.targetDigest,
-              evidenceRefs: proposal.priorFailure.evidenceRefs,
+              evidenceRefs: priorEvidenceDigests,
               rejectedAt: new Date().toISOString(),
             },
             "The proposed retry changes neither the target nor the observed evidence.",
@@ -409,7 +438,8 @@ export class WorkflowService {
         ...proposedDigests,
         outputTargetsDigest: convergenceDigest(proposal.outputTargets),
         planIntegrityToken: proposal.plan.integrityToken,
-        actorId: proposal.actorId,
+        actorId,
+        priorEvidenceDigests,
         outputTargets: [...proposal.outputTargets],
         issuedAt: now.toISOString(),
         expiresAt: new Date(now.getTime() + proposal.frame.operationalSettings.leaseTtlSeconds * 1000).toISOString(),
@@ -523,10 +553,15 @@ export class WorkflowService {
     });
   }
 
-  resolveConvergenceGate(rawRequest: unknown): ApiResultV1<ConvergenceStatusV1> {
+  resolveConvergenceGate(rawRequest: unknown, caller: ObservedCallerV1 | null = null): ApiResultV1<ConvergenceStatusV1> {
     return this.attempt(() => {
       const request = this.validator.resolveConvergenceGateRequest(rawRequest);
       const review = clone(request.review);
+      if (Object.hasOwn(review, "observedReviewer")) {
+        throw new WorkflowContractError("INVALID_INPUT", "observedReviewer is server-owned; callers must not send it.", {
+          reason: "SERVER_OWNED_FIELD",
+        });
+      }
       const snapshot = this.requireConvergenceSnapshot(request.rootId);
       const root = snapshot.root;
       if (request.expectedRevision !== root.revision || review.rootRevision !== root.revision) {
@@ -542,17 +577,30 @@ export class WorkflowService {
       if (root.state !== "needs-review") {
         throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root can be resolved.", { state: root.state });
       }
-      const actualActors = [...new Set(snapshot.leases.filter((lease) => lease.state === "consumed").map((lease) => lease.actorId))].sort();
-      const reviewedActors = [...new Set(review.implementationActorIds)].sort();
-      if (!review.freshContext.confirmed || !review.freshContext.evidenceRef || actualActors.join("\0") !== reviewedActors.join("\0")) {
-        throw new WorkflowContractError("GATE_FAILED", "Independent frame review must be fresh and cover every implementation actor.", {
-          actualActors,
-          reviewedActors,
+      // Fresh context stays the root's declaration. A declared reviewer that names an actor AGS observed as
+      // a lease claimer or as a recorder without host-observed identity contradicts itself.
+      if (!review.freshContext.confirmed || !review.freshContext.evidenceRef) {
+        throw new WorkflowContractError("GATE_FAILED", "The frame review declares that it was not made in a fresh context.");
+      }
+      const observedActors = new Set([
+        ...snapshot.leases.filter((lease) => lease.state === "consumed").map((lease) => lease.actorId),
+        caller?.provenance === "host-observed" ? null : caller?.actor,
+      ].filter((actorId): actorId is string => typeof actorId === "string"));
+      if (observedActors.has(review.reviewerActorId)) {
+        throw new WorkflowContractError("GATE_FAILED", "The declared frame reviewer is an actor AGS observed in this lineage.", {
+          reason: "REVIEWER_IS_OBSERVED_ROOT",
         });
       }
-      if (actualActors.includes(review.reviewerActorId)) {
-        throw new WorkflowContractError("GATE_FAILED", "The frame reviewer must be independent from implementation actors.");
+      const reviewerIndependence = independence(caller, snapshot.workflowRunIds.flatMap((runId) => {
+        const run = this.store.getRun(runId);
+        return run ? implementationRecorders(run) : [];
+      }));
+      if (reviewerIndependence === "violated") {
+        throw new WorkflowContractError("GATE_FAILED", "The observed reviewer implemented or delegated work in this lineage.", {
+          reason: "REVIEWER_NOT_INDEPENDENT",
+        });
       }
+      if (caller) review.observedReviewer = { ...clone(caller), independence: reviewerIndependence };
       this.assertReviewRoute(review);
 
       const updatedRoot = bumpedRoot(root, review.reviewedAt);
@@ -624,16 +672,26 @@ export class WorkflowService {
     });
   }
 
-  recordStageResult(rawResult: unknown, requireTrustedExecutionContext = false): ApiResultV1<WorkflowReceiptV1> {
+  recordStageResult(rawResult: unknown, requireTrustedExecutionContext = false,
+    caller: ObservedCallerV1 | null = null): ApiResultV1<WorkflowReceiptV1> {
     try {
       const callerResult = asRecord(rawResult);
+      for (const field of ["artifactChecks", "recordedBy"]) {
+        if (Object.hasOwn(callerResult, field)) {
+          throw new WorkflowContractError("INVALID_INPUT", `${field} is server-owned; callers must not send it.`, {
+            reason: "SERVER_OWNED_FIELD",
+            field,
+          });
+        }
+      }
       if (requireTrustedExecutionContext && Object.prototype.hasOwnProperty.call(callerResult, "executionContext")) {
         throw new WorkflowContractError(
           "BINDING_INVALID",
           "Strict MCP stage execution rejects caller-supplied executionContext.",
         );
       }
-      const result = this.validator.stageResult(rawResult);
+      // A copy: the server adds its own fields, and the caller's object must stay reusable.
+      const result = clone(this.validator.stageResult(rawResult));
       if (result.outputFile && result.output.output !== null) {
         throw new WorkflowContractError("INVALID_INPUT", "output.output must be null when outputFile carries the provider output.");
       }
@@ -716,6 +774,8 @@ export class WorkflowService {
           }
         }
 
+        result.artifactChecks = this.checkArtifacts(target, result);
+        if (caller) result.recordedBy = clone(caller);
         // A file-backed output is checked exactly like inline output; the receipt keeps only its reference.
         const checked: StageResultV1 = loadedOutput === undefined
           ? result
@@ -727,15 +787,33 @@ export class WorkflowService {
         }
         assertEngineeringStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, target.requiredCapability, checked, this.validator);
         this.assertDeclaredReceiptPolicy(receipt, target, checked);
+        const checkerIndependence = result.state === "passed" && isIndependentCheck(target)
+          ? independence(caller, implementationRecorders(receipt))
+          : "unobserved";
+        if (checkerIndependence === "violated") {
+          throw new WorkflowContractError("GATE_FAILED", "The observed auditor implemented this run or was delegated by its implementer.", {
+            stageId: target.stageId,
+            reason: "AUDITOR_NOT_INDEPENDENT",
+          });
+        }
         if (result.state === "passed") {
           this.assertRequiredArtifacts(target, checked);
           this.assertDeliberationGate(target, checked);
-          this.assertMandatoryAuditGate(target, checked);
+          this.assertMandatoryAuditGate(target, checked, [
+            caller?.provenance === "host-observed" ? null : caller?.actor ?? null,
+            this.store.getGuardedRunBinding(receipt.runId)?.lease.actorId ?? null,
+          ]);
           this.assertEvaluationValidityGate(target, checked);
+          this.assertBaselineLineage(receipt, target, checked);
         }
         target.state = result.state;
         if (trustedStageContext) this.consumeTrustedExecutionObservation(trustedStageContext, `Stage '${target.stageId}'`);
         receipt.stageResults.push(clone(result));
+        receipt.unverifiedClaims = unique([
+          ...receipt.unverifiedClaims,
+          ...stageUnverifiedClaims(target, checked, trustedStageContext !== null, externalInputs(receipt.plan, target),
+            checkerIndependence === "verified"),
+        ]);
         this.addUnique(receipt.blockers, result.blockers);
         this.addUnique(receipt.unresolved, result.blockers);
         if (result.state !== "passed") {
@@ -797,6 +875,7 @@ export class WorkflowService {
           }
           assertEngineeringStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, stage.requiredCapability, checked, this.validator);
           this.assertMandatoryAuditGate(stage, checked);
+          this.assertAuditedFilesUnchanged(stage, result);
         }
         this.assertExecutionAssurance(stage, result);
         this.assertDeclaredReceiptPolicy(receipt, stage, result);
@@ -1098,8 +1177,8 @@ export class WorkflowService {
     }
     if (result.state === "passed") {
       this.assertExecutionAssurance(stage, result);
-      if (result.evidence.length === 0 || result.evidence.some((evidence) => !evidence.verified || !evidence.locator)) {
-        throw new WorkflowContractError("MISSING_EVIDENCE", "A passed stage requires verified evidence.", {
+      if (result.evidence.length === 0) {
+        throw new WorkflowContractError("MISSING_EVIDENCE", "A passed stage requires evidence.", {
           stageId: result.stageId,
         });
       }
@@ -1181,8 +1260,8 @@ export class WorkflowService {
     for (const artifactId of stage.requiredArtifacts) {
       const expected = stage.artifactContract?.produced.find((item) => item.artifactId === artifactId);
       const actual = result.output.artifacts.filter((item) => item.artifactId === artifactId);
-      if (!expected || actual.length !== 1 || !actual[0]!.verified || !actual[0]!.locator || !actual[0]!.digest) {
-        throw new WorkflowContractError("MISSING_EVIDENCE", "Required artifact lacks a declared target or unique verified evidence.", {
+      if (!expected || actual.length !== 1 || !actual[0]!.locator || !actual[0]!.digest) {
+        throw new WorkflowContractError("MISSING_EVIDENCE", "Required artifact lacks a declared target or a unique recorded digest.", {
           stageId: stage.stageId, artifactId,
         });
       }
@@ -1203,6 +1282,7 @@ export class WorkflowService {
       const producer = receipt.plan.stages.find(
         (candidate) => candidate.stageId !== stage.stageId && candidate.producedArtifacts.includes(artifactId),
       );
+      // An input from outside the run is not checked here; unverifiedClaims records it as evidence-content (D-0048).
       if (!producer) continue;
       const producerResult = receipt.stageResults.find((candidate) => candidate.stageId === producer.stageId);
       if (requireDeclaredTarget && producerResult?.state === "passed") {
@@ -1210,7 +1290,6 @@ export class WorkflowService {
       }
       const verified = producerResult?.state === "passed" && producerResult.output.artifacts.some(
         (artifact) => artifact.artifactId === artifactId
-          && artifact.verified
           && Boolean(artifact.locator)
           && Boolean(artifact.digest)
           && Boolean(artifact.targetDigest),
@@ -1218,7 +1297,7 @@ export class WorkflowService {
       if (!verified) missing.push({ artifactId, producerStageId: producer.stageId });
     }
     if (missing.length > 0) {
-      throw new WorkflowContractError("MISSING_EVIDENCE", "Planned input artifacts are not backed by verified producer results.", {
+      throw new WorkflowContractError("MISSING_EVIDENCE", "Planned input artifacts are not backed by producer results.", {
         stageId: stage.stageId,
         missingInputs: missing,
       });
@@ -1310,14 +1389,18 @@ export class WorkflowService {
     );
   }
 
-  private assertMandatoryAuditGate(stage: PlannedStageV1, result: StageResultV1): void {
+  /**
+   * AGS checks what it can see: the frozen phase, the audited target against the signed plan and the observed
+   * actors. Independence, fresh context, no re-delegation and post-execution state stay the root's declaration:
+   * a contradicting declaration fails here, a consistent one is recorded in unverifiedClaims (D-0097).
+   */
+  private assertMandatoryAuditGate(stage: PlannedStageV1, result: StageResultV1, observedActors: Array<string | null> = []): void {
     if (stage.riskGate !== "mandatory" || !stage.requiredArtifacts.includes("gate-verdict")) return;
     const requiredPhase = this.requireAuditPhase(stage);
     const output = result.output.output;
     const auditorId = output?.auditorId;
     const implementationActorIds = output?.implementationActorIds;
     const auditTarget = output?.auditTarget;
-    const currentTarget = output?.currentTarget;
     const blockingFindings = output?.blockingFindings;
     const phase = output?.phase;
     if (
@@ -1329,8 +1412,6 @@ export class WorkflowService {
       || implementationActorIds.some((actorId) => typeof actorId !== "string" || actorId.length === 0)
       || typeof auditTarget !== "string"
       || auditTarget.length === 0
-      || typeof currentTarget !== "string"
-      || currentTarget !== auditTarget
       || output?.freshContext !== true
       || output?.delegationAllowed !== false
       || !Array.isArray(blockingFindings)
@@ -1339,24 +1420,123 @@ export class WorkflowService {
       || phase !== requiredPhase
       || typeof output?.postExecutionVerified !== "boolean"
     ) {
-      throw new WorkflowContractError("GATE_FAILED", "Mandatory audit requires a current, fresh, non-delegated PASS with no blocking findings.", {
+      throw new WorkflowContractError("GATE_FAILED", "Mandatory audit requires a declared current, fresh, non-delegated PASS with no blocking findings.", {
         stageId: stage.stageId,
         requiredPhase,
       });
     }
     if ((requiredPhase === "post-execution" || requiredPhase === "post-deploy") && output.postExecutionVerified !== true) {
-      throw new WorkflowContractError("GATE_FAILED", "Post-execution and post-deploy audits require verified resulting state.", {
+      throw new WorkflowContractError("GATE_FAILED", "Post-execution and post-deploy audits must declare verified resulting state.", {
         stageId: stage.stageId,
         phase: requiredPhase,
       });
     }
+    const verdictTarget = result.output.artifacts.find((artifact) => artifact.artifactId === "gate-verdict")?.targetDigest;
+    if (!verdictTarget || evidenceKey(auditTarget) !== evidenceKey(verdictTarget)) {
+      throw new WorkflowContractError("GATE_FAILED", "The audit target must be the signed plan target of the gate verdict.", {
+        stageId: stage.stageId,
+        reason: "AUDIT_TARGET_NOT_PLANNED",
+      });
+    }
     if (implementationActorIds.includes(auditorId)) {
-      throw new WorkflowContractError("GATE_FAILED", "Mandatory audit auditor must be independent from implementation actors.", {
+      throw new WorkflowContractError("GATE_FAILED", "The declared auditor is also declared as an implementation actor.", {
         stageId: stage.stageId,
         auditorId,
         implementationActorIds,
       });
     }
+    if (observedActors.includes(auditorId)) {
+      throw new WorkflowContractError("GATE_FAILED", "The declared auditor is an actor AGS observed recording or claiming this run.", {
+        stageId: stage.stageId,
+        reason: "AUDITOR_IS_OBSERVED_ROOT",
+      });
+    }
+  }
+
+  /** Server-side stale check: a file the audit stage recorded and the server hashed must still have those bytes. */
+  private assertAuditedFilesUnchanged(stage: PlannedStageV1, result: StageResultV1): void {
+    if (stage.riskGate !== "mandatory" || !stage.requiredArtifacts.includes("gate-verdict")) return;
+    for (const check of result.artifactChecks ?? []) {
+      if (check.check !== "sha256-matched") continue;
+      const recorded = check.source === "artifact"
+        ? result.output.artifacts.find((item) => item.artifactId === check.artifactId && item.locator === check.locator)?.digest
+        : result.evidence.find((item) => item.artifactId === check.artifactId && item.locator === check.locator)?.digest;
+      if (!recorded || localFileDigest(check.locator) !== evidenceKey(recorded)) {
+        throw new WorkflowContractError("GATE_FAILED", "A file the audit recorded changed after the audit.", {
+          stageId: stage.stageId,
+          artifactId: check.artifactId,
+          reason: "AUDIT_TARGET_CHANGED",
+        });
+      }
+    }
+  }
+
+  /** Hashes local files named by artifacts and evidence. A passing stage cannot record a digest the bytes contradict. */
+  private checkArtifacts(stage: PlannedStageV1, result: StageResultV1): ArtifactCheckV1[] {
+    const entries = [
+      ...result.output.artifacts.map((item) => ({ source: "artifact" as const, artifactId: item.artifactId, locator: item.locator, digest: item.digest as string | undefined })),
+      ...result.evidence.map((item) => ({ source: "evidence" as const, artifactId: item.artifactId, locator: item.locator, digest: item.digest as string | undefined })),
+    ];
+    return entries.map(({ source, artifactId, locator, digest }) => {
+      const actual = digest ? localFileDigest(locator) : null;
+      if (actual && actual !== evidenceKey(digest!)) {
+        if (result.state === "passed") {
+          throw new WorkflowContractError("BINDING_INVALID", "A recorded digest does not match the local file it names.", {
+            stageId: stage.stageId,
+            artifactId,
+            reason: "ARTIFACT_DIGEST_MISMATCH",
+          });
+        }
+        return { source, artifactId, locator, check: "not-checked" as const };
+      }
+      return { source, artifactId, locator, check: actual ? "sha256-matched" as const : "not-checked" as const };
+    });
+  }
+
+  /**
+   * The first passed workspace baseline in a convergence lineage (root and parentRootId chain) is the baseline
+   * for the whole lineage, so a re-captured baseline cannot absorb the task's own changes (D-0339).
+   */
+  private assertBaselineLineage(receipt: WorkflowReceiptV1, stage: PlannedStageV1, result: StageResultV1): void {
+    const capture = stage.satisfiedCapabilities.includes("change-scope-baseline-capture");
+    const assurance = stage.satisfiedCapabilities.includes("change-scope-assurance");
+    if (!capture && !assurance) return;
+    const recorded = capture ? result.output.output?.manifestSha256 : result.output.output?.baselineDigest;
+    const pinned = this.lineageBaseline(receipt.runId) ?? (assurance ? this.runBaseline(receipt) : null);
+    if (pinned !== null && recorded !== pinned) {
+      throw new WorkflowContractError("BINDING_INVALID", "The workspace baseline differs from the first baseline of this lineage.", {
+        stageId: stage.stageId,
+        reason: "BASELINE_REBOUND",
+      });
+    }
+  }
+
+  private runBaseline(receipt: WorkflowReceiptV1): unknown {
+    for (const result of receipt.stageResults) {
+      const stage = receipt.plan.stages.find((item) => item.stageId === result.stageId);
+      if (result.state === "passed" && stage?.satisfiedCapabilities.includes("change-scope-baseline-capture")) {
+        return result.output.output?.manifestSha256 ?? null;
+      }
+    }
+    return null;
+  }
+
+  private lineageBaseline(runId: string): unknown {
+    const binding = this.store.getGuardedRunBinding(runId);
+    const chain: string[] = [];
+    for (let rootId: string | null = binding?.root.rootId ?? null; rootId && !chain.includes(rootId);) {
+      chain.unshift(rootId);
+      rootId = this.store.getConvergenceSnapshot(rootId)?.root.parentRootId ?? null;
+    }
+    for (const rootId of chain) {
+      for (const otherRunId of this.store.getConvergenceSnapshot(rootId)?.workflowRunIds ?? []) {
+        if (otherRunId === runId) continue;
+        const other = this.store.getRun(otherRunId);
+        const baseline = other ? this.runBaseline(other) : null;
+        if (baseline !== null) return baseline;
+      }
+    }
+    return null;
   }
 
   private requireAuditPhase(stage: PlannedStageV1): AuditPhaseV1 {
@@ -1746,6 +1926,7 @@ export class WorkflowService {
       blockers: [],
       unresolved: [],
       error: null,
+      unverifiedClaims: [],
     };
     this.assertReceipt(receipt);
     return receipt;
@@ -1835,6 +2016,7 @@ export class WorkflowService {
       reviews: clone(snapshot.reviews),
       workflowRunIds: [...snapshot.workflowRunIds],
       gateError,
+      unverifiedClaims: convergenceUnverifiedClaims(snapshot),
     };
   }
 
@@ -1880,17 +2062,15 @@ export class WorkflowService {
         else root.state = "open";
       }
     }
-    const failureFingerprint = passed ? null : convergenceDigest({
-      state: receipt.state,
-      stage: receipt.stageResults.at(-1)?.stageId ?? null,
-      error: receipt.error?.code ?? null,
-      blockers: receipt.blockers,
-      unresolved: receipt.unresolved,
-    });
-    const evidenceRefs = [...new Set(receipt.stageResults.flatMap((result) => [
-      ...result.evidence.map((evidence) => evidence.locator),
-      ...result.output.artifacts.map((artifact) => artifact.digest),
-    ]))];
+    const fingerprint = passed ? null : failureFingerprint(receipt);
+    // Only bytes the server hashed count as evidence a later retry must move past.
+    const evidenceRefs = [...new Set(receipt.stageResults.flatMap((result) => (result.artifactChecks ?? [])
+      .filter((check) => check.check === "sha256-matched")
+      .map((check) => check.source === "artifact"
+        ? result.output.artifacts.find((item) => item.artifactId === check.artifactId && item.locator === check.locator)?.digest
+        : result.evidence.find((item) => item.artifactId === check.artifactId && item.locator === check.locator)?.digest)
+      .filter((digest): digest is string => typeof digest === "string")
+      .map(evidenceKey)))];
     const outcome: AttemptOutcomeV1 = {
       schemaVersion: CONTRACT_VERSION,
       outcomeId: `outcome-${randomUUID()}`,
@@ -1902,7 +2082,7 @@ export class WorkflowService {
       workflowRunId: receipt.runId,
       state,
       receiptDigest: convergenceDigest(receipt),
-      failureFingerprint,
+      failureFingerprint: fingerprint,
       evidenceRefs,
       recordedAt,
     };
