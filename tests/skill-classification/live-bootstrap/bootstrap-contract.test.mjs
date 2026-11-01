@@ -3,7 +3,7 @@ import {existsSync, writeSync} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {clearTimeout, setTimeout} from "node:timers";
-import {describe, expect, it} from "vitest";
+import {describe, expect, it, vi} from "vitest";
 import {createSourceScratch, removeSourceScratch} from "./source-scratch.mjs";
 
 const repo = path.resolve(import.meta.dirname, "../../..");
@@ -26,20 +26,11 @@ const sourcePrograms = new Set(["dynamic-current-stale.mts", "independent-wire-m
   "history-r04-boundary.mjs", "history-r04-budget.mjs"]);
 
 const maxConcurrentChildren = Math.min(4, Math.max(2, os.availableParallelism()));
+// Vitest's own limiter queues the concurrent cases. It arms a test's timeout only when it starts the test body, so
+// waiting for a free child slot is never charged to a case's limit; each limit measures that case's own work.
+// A queue inside the test body would be charged to it (a 66 s wait failed final-fetch-body on Windows).
+vi.setConfig({maxConcurrency: maxConcurrentChildren});
 let activeChildren = 0;
-const pendingQueue = [];
-function acquireSlot() {
-  if (activeChildren < maxConcurrentChildren) {
-    activeChildren++;
-    return Promise.resolve();
-  }
-  return new Promise(resolve => pendingQueue.push(resolve));
-}
-function releaseSlot() {
-  const next = pendingQueue.shift();
-  if (next) next();
-  else activeChildren--;
-}
 
 async function runCli(args, {cwd, timeout, maxBuffer = 8 * 1024 * 1024, observation = false}) {
   let observationError, sequence = 0;
@@ -55,9 +46,12 @@ async function runCli(args, {cwd, timeout, maxBuffer = 8 * 1024 * 1024, observat
     if (observation) writeObservation(JSON.stringify({observation: "bootstrap-child-r01", case: observation, sequence: ++sequence,
       monoMs: Number(process.hrtime.bigint() / 1_000_000n), event, ...details}));
   };
-  observe("slot-request");
-  await acquireSlot();
-  observe("slot-acquired");
+  // The limiter is the only queue: a case that starts while every slot is busy means it no longer bounds the children.
+  if (++activeChildren > maxConcurrentChildren) {
+    activeChildren--;
+    throw new Error(`BOOTSTRAP_CHILD_LIMIT_EXCEEDED:${maxConcurrentChildren}`);
+  }
+  observe("start", {activeChildren});
   try {
     return await new Promise(resolve => {
       observe("spawn-request");
@@ -127,7 +121,7 @@ async function runCli(args, {cwd, timeout, maxBuffer = 8 * 1024 * 1024, observat
       });
     });
   } finally {
-    releaseSlot();
+    activeChildren--;
   }
 }
 
