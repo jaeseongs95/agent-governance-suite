@@ -1,13 +1,7 @@
 import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
-import { BrokerRequestRejected, SESSION_MESSAGE_REQUEST_TIMEOUT_MS, sessionMessageRequest } from "./session-message-client.js";
-import type { SessionPresenceView } from "./session-message-store.js";
-import { isBoundedIdentity, SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_PRESENCE_LIST_MAX_TARGETS } from "./session-message-protocol.js";
-
-export interface SessionPresenceList {
-  sessions: SessionPresenceView[];
-  /** Identities the broker was never asked about or did not answer: a failed batch or an identifier it would refuse. */
-  unanswered?: Array<{ host: string; sessionId: string }>;
-}
+import { BrokerRequestRejected, sessionMessageRequest } from "./session-message-client.js";
+import type { CurrentPresence } from "./session-message-store.js";
+import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
 
 function ok<T>(data: T): ApiResultV1<T> {
   return { schemaVersion: "1.0.0", ok: true, data, error: null };
@@ -101,37 +95,8 @@ export class SessionMessageService {
     }
   }
 
-  /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. A refused
-   * batch or an identity outside the broker's pattern is reported as unanswered; the other batches still count. The
-   * whole lookup shares one client deadline, so a slow broker ends it once, not once per batch. */
-  async listPresence(targets: Array<{ host: string; sessionId: string }>): Promise<ApiResultV1<SessionPresenceList>> {
-    const sessions: SessionPresenceView[] = [];
-    const unanswered: Array<{ host: string; sessionId: string }> = [];
-    const asked: Array<{ host: string; sessionId: string }> = [];
-    for (const { host, sessionId } of targets) (isBoundedIdentity({ host, sessionId }) ? asked : unanswered).push({ host, sessionId });
-    // Monotonic, like the client: a wall-clock step during the lookup must not stretch or cut its deadline.
-    const deadline = performance.now() + SESSION_MESSAGE_REQUEST_TIMEOUT_MS;
-    for (let index = 0; index < asked.length; index += SESSION_PRESENCE_LIST_MAX_TARGETS) {
-      const batch = asked.slice(index, index + SESSION_PRESENCE_LIST_MAX_TARGETS);
-      const remaining = deadline - performance.now();
-      try {
-        // Each batch may use only what is left; past the deadline the client gives up like any unanswered request.
-        if (remaining <= 0) throw new Error("The board presence lookup reached its deadline.");
-        const data = await sessionMessageRequest<SessionPresenceList>("list-presence", { targets: batch }, this.stateDirectory,
-          { totalTimeoutMs: remaining });
-        sessions.push(...data.sessions.map((session) => ({
-          ...session,
-          deliveryCapabilities: session.deliveryCapabilities ?? { supportedInjection: [], idleWake: "none" },
-          autoWake: session.autoWake ?? null,
-          relayCode: session.relayCode ?? {status: "unknown", runningDigest: null, expectedDigest: null},
-        })));
-      } catch (error) {
-        // A refusal answers this batch only. Any other failure means the broker is not answering: asking the rest would
-        // wait one client deadline per batch, so stop and leave this and every later batch unanswered.
-        if (!(error instanceof BrokerRequestRejected)) { unanswered.push(...asked.slice(index)); break; }
-        unanswered.push(...batch);
-      }
-    }
-    return ok({ sessions, unanswered });
+  /** The session board's liveness view: one broker request whose reply the store keeps inside the response limit. */
+  async listCurrentPresence(self: SessionBindingV1): Promise<{ sessions: CurrentPresence[]; truncated: number }> {
+    return sessionMessageRequest("list-current-presence", { self }, this.stateDirectory);
   }
 }

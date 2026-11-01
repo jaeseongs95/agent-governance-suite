@@ -712,7 +712,7 @@ export function normalizeAntigravityToolCall(input) {
   };
 }
 
-export function buildCanonicalHookInput(rawInput, explicitEvent, hookTarget) {
+export function buildCanonicalHookInput(rawInput, explicitEvent) {
   const event = validateExplicitEvent(explicitEvent, rawInput);
   if (!event) return { event: "", canonicalEvent: "", toolBoundary: null, canonicalInput: {} };
 
@@ -727,7 +727,7 @@ export function buildCanonicalHookInput(rawInput, explicitEvent, hookTarget) {
 
   let canonicalEvent = event;
   if (event === "PreInvocation" || event === "PostInvocation") {
-    canonicalEvent = hookTarget === "session-board" ? "SessionStart" : "PostToolUse";
+    canonicalEvent = "PostToolUse";
   }
 
   const toolBoundary = (event === "PreToolUse" || event === "PostToolUse")
@@ -1310,7 +1310,7 @@ export async function startAntigravitySessionPresenceAndRelay(canonicalInput, op
 }
 
 async function runSingleHookStage(hookName, event, rawInput, currentToolInput, options = {}) {
-  const { canonicalInput, toolBoundary } = buildCanonicalHookInput(rawInput, event, hookName);
+  const { canonicalInput, toolBoundary } = buildCanonicalHookInput(rawInput, event);
   if (!canonicalInput.session_id) return { output: {}, updatedToolInput: currentToolInput, mutated: false };
 
   const inputWithCurrentArgs = toolBoundary
@@ -1373,8 +1373,7 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
       : inputWithCurrentArgs;
     const executionBudget = buildExecutionBudgetOption(options);
     const claimTracker = options?.claimTracker ?? createClaimStateTracker(options?.onClaimState);
-    // ponytail: Antigravity fires SessionStart only once for a brand-new conversation and maps
-    // PreInvocation/PostInvocation to SessionStart only for session-board (:630), so existing or
+    // ponytail: Antigravity fires SessionStart only once for a brand-new conversation, so existing or
     // reloaded sessions must recover presence/relay via recoverExistingSession here. Because 3.0
     // infers root for Antigravity (AGS-D-0317), child sessions sharing the parent sessionId also
     // pass actorAccess until native actor capture and the child gate return after 3.0.
@@ -1464,21 +1463,6 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
     return { output: {}, updatedToolInput: cleanArgs, mutated };
   }
 
-  if (hookName === "session-board") {
-    const { runSessionBoardHook } = await import("../../mcp-server/dist/session-board-hook.mjs");
-    const outStr = await runSessionBoardHook("antigravity", JSON.stringify({ ...inputWithCurrentArgs, ...(toolBoundary ? { tool_input: currentToolInput } : {}) }));
-    if (!outStr) return { output: {}, updatedToolInput: currentToolInput, mutated: false };
-    const parsed = record(JSON.parse(outStr));
-    const specific = record(parsed.hookSpecificOutput);
-    let nextArgs = currentToolInput;
-    let mutated = false;
-    if (Object.hasOwn(specific, "updatedInput")) {
-      nextArgs = record(specific.updatedInput);
-      mutated = true;
-    }
-    return { output: parsed, updatedToolInput: nextArgs, mutated };
-  }
-
   return { output: {}, updatedToolInput: currentToolInput, mutated: false };
 }
 
@@ -1486,7 +1470,7 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
   const event = validateExplicitEvent(explicitEvent, rawInput);
   if (!event) return {};
 
-  const { canonicalInput, toolBoundary } = buildCanonicalHookInput(rawInput, event, explicitHook || "session-message");
+  const { canonicalInput, toolBoundary } = buildCanonicalHookInput(rawInput, event);
   if (event === "PreToolUse" && toolBoundary?.canonicalName.startsWith("mcp__agent-governance-suite__")) {
     // ponytail: 3.0 infers root for every Antigravity call, so caller binding keys are refused here
     // instead of by the actor denial. Drop once the child gate returns after 3.0.
@@ -1578,7 +1562,7 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
 
     const stages = explicitHook
       ? [explicitHook]
-      : ["host-attestation", "session-message", "continuity", "session-board"];
+      : ["host-attestation", "session-message", "continuity"];
 
     for (const stage of stages) {
       try {
@@ -1614,8 +1598,8 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
     const stages = explicitHook
       ? [explicitHook]
       : event === "SessionStart"
-        ? ["session-message", "continuity", "session-board"]
-        : ["session-message", "session-board"];
+        ? ["session-message", "continuity"]
+        : ["session-message"];
     const injected = [];
     const seenTexts = new Set();
 
@@ -1623,7 +1607,7 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
       const stage = stages[idx];
       // R04-F03: Never skip the primary stage (idx === 0, typically session-message),
       // but if an earlier stage consumed most of the 10s native hook budget, skip secondary
-      // advisory stages (continuity, session-board) so any claimed peer message envelope is
+      // advisory stages (continuity) so any claimed peer message envelope is
       // flushed to stdout before the host kills the hook process.
       if (idx > 0 && remainingBudgetMs() < minSecondaryBudgetMs) {
         break;
@@ -1734,7 +1718,7 @@ export function finalizeConnectorOutput(out, claimTracker, options = {}) {
     //   emits the default secret-free stderr diagnostic line once.
     // - Even when `!writeErr`, calling `emitStrandedClaimDiagnosticIfNeeded` unconditionally inside the
     //   write callback (#3317 M1) ensures that if `SessionStart` produced non-empty `out` from
-    //   `continuity`/`session-board` while a `session-message` claim remained `claim-result-unknown`,
+    //   `continuity` while a `session-message` claim remained `claim-result-unknown`,
     //   the default stderr diagnostic still fires without requiring `AGS_ANTIGRAVITY_DIAGNOSTIC_STDERR === "1"`.
     let settled = false;
     let onStreamError = null;

@@ -275,8 +275,8 @@ it("preserves two fresh opaque hosts with identical installation bytes through p
         evidence: [{ artifactId: "fixture", kind: "test", locator: "host-composition-stdio.test.ts", verified: true, note: "Owned synthetic source fixture, not native capture" }], findings: [], blockers: [], error: null }, model);
       expect(recorded.error).toBeNull(); expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ model, actorId: f.api.hostActorId(host, sessionId) });
       const final = await f.call<WorkflowReceiptV1>("finalize_workflow", { runId: receipt.runId, expectedRevision: recorded.data!.revision }, model); expect(final.error).toBeNull(); expect(final.data?.state).toBe("passed");
-      const board = await f.call<{ host: string; sessionId: string }>("update_session_status", { schemaVersion: "1.0.0", summary: "Owned synthetic host fixture" }, model);
-      expect(board.error).toBeNull(); expect(board.data).toMatchObject({ host, sessionId });
+      const board = await f.call<{ summary: string; summaryAt: string }>("update_session_status", { schemaVersion: "1.0.0", summary: "Owned synthetic host fixture" }, model);
+      expect(board.error).toBeNull(); expect(board.data).toMatchObject({ summary: "Owned synthetic host fixture" });
       const message = f.hook("validate_collaboration_decision", { decision: {} }, model);
       expect(decoded(message._sessionProof)).toMatchObject({ host, sessionId, tool: "validate_collaboration_decision" }); expect(message).not.toHaveProperty("_sessionBinding");
       expect((await f.rawCall("plan_workflow", signed)).error).toMatchObject({ code: "BINDING_INVALID", details: { reasonCode: "ROOT_PROOF_ALREADY_CONSUMED" } });

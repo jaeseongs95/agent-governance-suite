@@ -364,6 +364,37 @@ export interface SessionAutoWakeOutlookV2 {
   authorityEffect: "none";
 }
 
+/** One session on the local session board; liveness is the messaging presence state of its current birth. */
+export interface SessionBoardEntryV2 {
+  host: string;
+  sessionId: string;
+  current: boolean;
+  /** `ended` and `unknown` appear only on the caller's own (current) row. */
+  presence: "online" | "unreachable" | "ended" | "unknown";
+  startedAt: string | null;
+  lastSeenAt: string | null;
+  cwd: string | null;
+  repo: { root: string; repoId: string; branch: string | null } | null;
+  summary: string | null;
+  summaryAt: string | null;
+  /** Null when no user prompt was ever observed for the session. */
+  summaryStale: boolean | null;
+  lastPromptAt: string | null;
+  wake: { state: SessionAutoWakeOutlookV2["state"]; reason: SessionAutoWakeOutlookV2["reason"] } | null;
+}
+
+export interface SessionBoardListV2 {
+  sessions: SessionBoardEntryV2[];
+  /** Live sessions left out to keep the reply inside the broker response limit. */
+  truncated: number;
+  board: { status: "ok" } | { status: "unavailable"; step: "open" | "read" | "close"; cause: unknown };
+}
+
+export interface SessionBoardUpdateV2 {
+  summary: string;
+  summaryAt: string;
+}
+
 export interface StateCleanupPolicyV1 {
   workflowRetentionDays: 180;
   continuityPayloadRetentionDays: 30;

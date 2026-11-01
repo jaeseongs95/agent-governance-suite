@@ -50,7 +50,7 @@ it("does not settle an unstarted owned launcher just because another broker answ
   children.push(held);
   await expect(waitForSessionMessageBrokerReady(directory, held, 1000)).rejects.toThrow(/startup deadline/u);
   expect(held.exitCode).toBeNull();
-  await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toHaveProperty("protocolVersion", "2.0.0");
+  await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toHaveProperty("protocolVersion", "2.1.0");
 });
 
 it.each(["exit", "signal"])("rejects an owned launcher %s that occurs during another broker's readiness probe", async (failure) => {
@@ -98,7 +98,7 @@ it("requires a positive safe endpoint PID only when deciding ownership of a runn
     for (const pid of [undefined, null, 0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, String(child.pid)]) {
       await writeFile(endpointPath, JSON.stringify({ ...endpoint, pid }), "utf8");
       // Endpoint PID is not newly made an authentication condition for ordinary requests.
-      await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toHaveProperty("protocolVersion", "2.0.0");
+      await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toHaveProperty("protocolVersion", "2.1.0");
       await expect(waitForSessionMessageBrokerReady(directory, child, 200)).rejects.toThrow(/startup deadline/u);
     }
   } finally { await writeFile(endpointPath, original, "utf8"); }

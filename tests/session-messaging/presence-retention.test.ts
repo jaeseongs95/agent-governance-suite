@@ -5,9 +5,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { DatabaseSync } from "node:sqlite";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { afterEach, expect, it, vi } from "vitest";
-import { SESSION_MESSAGE_REQUEST_TIMEOUT_MS, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
+import { waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
 import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import * as protocol from "../../mcp-server/src/session-message-protocol.js";
@@ -180,68 +180,22 @@ function largeFixture(database: string, now: number) {
   } finally { store.close(); }
 }
 
-it("serves board presence from a 342-identity, 1302-row database through a real broker", async () => {
+it("serves board liveness from a 342-identity, 1302-row database through a real broker in one request", async () => {
   const state = directory();
   const now = Date.now();
   expect(largeFixture(path.join(state, "session-messages.sqlite3"), now)).toEqual({ rows: 1302, identities: 342 });
   await observedBroker("large-board", state);
-  // The board shows sessions updated in the last 24 hours: the recent and live ones, plus a few long-gone identities.
-  const board = [...Array.from({ length: 40 }, (_, index) => `recent-${index}`), "live-0", "live-1", "old-0", "old-299"]
-    .map((sessionId) => ({ host: "portable", sessionId }));
-  const result = await new SessionMessageService(state).listPresence(board);
-  expect(result.error).toBeNull();
-  const bySession = new Map(result.data!.sessions.map((session) => [session.sessionId, session]));
-  for (let index = 0; index < 40; index += 1) expect(bySession.get(`recent-${index}`)).toMatchObject({ state: "ended", endReason: "session-end" });
-  for (const sessionId of ["live-0", "live-1"]) {
-    expect(bySession.get(sessionId)).toMatchObject({ state: "online", autoWake: { state: "available", reason: "relay-live" } });
-  }
-  // Presence rows ended days ago were pruned; the identity reads as never registered.
-  expect(bySession.get("old-0")).toMatchObject({ state: "unknown", autoWake: { state: "no-live-relay", reason: "presence-unknown" } });
+  const self = { host: "portable", sessionId: "live-0" };
+  const result = await new SessionMessageService(state).listCurrentPresence(self);
+  // Only the two live sessions: the 40 ended an hour ago and the 300 gone for days are not listed.
+  expect(result.truncated).toBe(0);
+  expect(result.sessions.map((session) => [session.sessionId, session.state])).toEqual([["live-0", "online"], ["live-1", "online"]]);
+  expect(result.sessions[1]).toMatchObject({ autoWake: { state: "available", reason: "relay-live" } });
   const database = new DatabaseSync(path.join(state, "session-messages.sqlite3"));
   try {
     expect(database.prepare("SELECT count(*) AS rows FROM session_presence").get()).toEqual({ rows: 42 });
   } finally { database.close(); }
 }, 60_000);
-
-it("ends a board lookup against a slow real broker at one overall client deadline", async () => {
-  const state = directory();
-  const slow = pathToFileURL(fileURLToPath(new URL("./fixtures/slow-list-presence.mjs", import.meta.url))).href;
-  await observedBroker("slow-board", state, [slow], { ...process.env, AGS_TEST_LIST_PRESENCE_DELAY_MS: "1000" });
-  // 90 board sessions are 30 batches; at 1 s each (inside the 2.5 s per-request limit) the lookup would take 30 s.
-  const board = Array.from({ length: 90 }, (_, index) => ({ host: "portable", sessionId: `slow-${index}` }));
-  const started = Date.now();
-  const result = await new SessionMessageService(state).listPresence(board);
-  const elapsed = Date.now() - started;
-  // The overall client deadline plus scheduling slack.
-  expect(elapsed).toBeLessThan(SESSION_MESSAGE_REQUEST_TIMEOUT_MS + 2_000);
-  const answered = result.data!.sessions.map((session) => session.sessionId);
-  expect(answered.length).toBeGreaterThan(0);
-  expect(answered).toEqual(board.slice(0, answered.length).map((item) => item.sessionId));
-  expect(result.data!.unanswered).toEqual(board.slice(answered.length));
-}, 60_000);
-
-it("B1: an identity outside the broker pattern stays unknown alone while the other board sessions resolve", async () => {
-  const state = directory();
-  const now = Date.now();
-  const store = new SessionMessageStore(path.join(state, "session-messages.sqlite3"));
-  try {
-    for (let index = 0; index < 6; index += 1) born(store, `valid-${index}`, `valid-${index}`, now - 1000);
-    keepLive(store, Array.from({ length: 6 }, (_, index) => `valid-${index}`));
-  } finally { store.close(); }
-  const child = spawn(process.execPath, ["--import", "tsx", sourceBroker, "--state-directory", state], { windowsHide: true, stdio: "ignore" });
-  cleanup.push(async () => {
-    if (child.exitCode === null && child.signalCode === null) { const exit = once(child, "exit"); child.kill(); await exit; }
-  });
-  await waitForSessionMessageBrokerReady(state, child, 5000);
-  const board = [...Array.from({ length: 6 }, (_, index) => ({ host: "portable", sessionId: `valid-${index}` })),
-    { host: "portable", sessionId: "has space" }];
-  const result = await new SessionMessageService(state).listPresence(board);
-  expect(result.ok).toBe(true);
-  for (let index = 0; index < 6; index += 1) {
-    expect(result.data!.sessions.find((session) => session.sessionId === `valid-${index}`)).toMatchObject({ state: "online" });
-  }
-  expect(result.data!.unanswered).toEqual([{ host: "portable", sessionId: "has space" }]);
-}, 30_000);
 
 it("keeps an ended or lapsed row until exactly the retention period after its lease end", () => {
   const store = open(":memory:");
@@ -417,15 +371,16 @@ it("bounds list-presence: batches fit the response limit and oversized or overlo
   expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", { targets: [...worst, { host: "portable", sessionId: "extra" }] }))
     .toThrow(/targets must list/);
   expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", { targets: [] })).toThrow(/targets must list/);
-  // The untargeted pre-2.7.4 request is refused explicitly once the stored identities no longer fit.
-  for (let index = 0; index < 60; index += 1) born(store, `many-${index}`, `many-${index}`, now);
-  expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", {})).toThrow(/exceeds the broker response limit/);
+  // 3.0: the untargeted request is gone; listing every session is list-current-presence.
+  expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", {})).toThrow(/targets must list/);
 });
 
-it("still lists every identity for an untargeted request that fits", () => {
+it("lists every current session through list-current-presence, never through an untargeted list-presence", () => {
   const store = open(":memory:");
   born(store, "one", "one", Date.now());
-  expect(dispatchSessionMessageBrokerOperation(store, "list-presence", {})).toMatchObject({ sessions: [{ sessionId: "one", state: "online" }] });
+  expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", {})).toThrow(/targets must list/);
+  expect(dispatchSessionMessageBrokerOperation(store, "list-current-presence", { self: { host: "portable", sessionId: "one" } }))
+    .toMatchObject({ sessions: [{ sessionId: "one", state: "online" }], truncated: 0 });
   // A retained row outlives any reservation that could still refer to its birth; a later attempt of a purged birth
   // reads presence-unknown and is released as birth-ended, so no 3.0 grace window depends on retention.
   expect(WAKE_TTL_MS).toBeLessThan(RETENTION);

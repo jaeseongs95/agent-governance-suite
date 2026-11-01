@@ -1,11 +1,11 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 
 const f = vi.hoisted(() => ({
-  open: vi.fn(), close: vi.fn(), prune: vi.fn(), prompt: vi.fn(), summary: vi.fn(), touch: vi.fn(), gate: vi.fn(), request: vi.fn(),
+  open: vi.fn(), close: vi.fn(), prune: vi.fn(), input: vi.fn(), summary: vi.fn(), request: vi.fn(),
 }));
 vi.mock("../../skills/session-board/scripts/board-store.mjs", async original => ({
   ...await original<typeof import("../../skills/session-board/scripts/board-store.mjs")>(),
-  openBoard: f.open, pruneSessions: f.prune, recordPrompt: f.prompt, setSummary: f.summary, touchSession: f.touch, gateDecision: f.gate,
+  openBoard: f.open, pruneBoard: f.prune, recordInput: f.input, setSummary: f.summary,
 }));
 vi.mock("../../mcp-server/src/session-message-client.js", async original => ({
   ...await original<typeof import("../../mcp-server/src/session-message-client.js")>(), sessionMessageRequest: f.request,
@@ -32,26 +32,22 @@ const tool = (name: string, actor: Record<string, unknown> = {syntheticActor: sy
   hook_event_name: "PreToolUse", session_id: "AL04_PRIVATE_PARENT", ...actor,
   tool_name: name, tool_input: {summary: "AL04 회귀", _sessionBinding: {host: "forged", sessionId: "forged"}},
 });
+const prompt = (actor: Record<string, unknown> = {syntheticActor: syntheticRoot}) => ({
+  hook_event_name: "UserPromptSubmit", session_id: "AL04_PRIVATE_PARENT", cwd: "/al04/work", prompt: "AL04 비밀 요청", ...actor,
+});
 const prefix = "mcp__agent_governance_suite__";
 function noWrites() {
-  for (const mock of [f.prune, f.prompt, f.summary, f.touch, f.gate]) expect(mock).not.toHaveBeenCalled();
+  for (const mock of [f.prune, f.input, f.summary]) expect(mock).not.toHaveBeenCalled();
 }
 beforeEach(() => {
   for (const mock of Object.values(f)) mock.mockReset();
-  f.open.mockReturnValue(board); f.gate.mockReturnValue("allow");
+  f.open.mockReturnValue(board);
 });
 afterEach(() => {vi.restoreAllMocks();});
 
 describe("AL04 board actor, namespace and host permission boundaries", () => {
-  it.each(["list_session_status", "update_session_status"])("D0018 denies a subagent %s before issuing its parent binding", name => {
-    const output = handleSessionBoardHook(tool(prefix + name, {syntheticActor: {role: "child", basis: "observed", reasonCode: "SYNTHETIC_BOARD_CHILD"}}), board, syntheticHost, now);
-    expect(output).toMatchObject({hookSpecificOutput: {permissionDecision: "deny"}});
-    expect((output.hookSpecificOutput as Record<string, unknown>).updatedInput).toBeUndefined();
-    noWrites();
-  });
-  it.each([{}, {agent_id: null}, {agent_id: 42}])("D0019 keeps unknown actor %j from binding, writing or consuming parent wakes", async actor => {
-    const output = await runSessionBoardHook("gemini", JSON.stringify(tool(prefix + "list_session_status", actor)));
-    expect(JSON.parse(output)).toMatchObject({hookSpecificOutput: {permissionDecision: "deny"}});
+  it.each([{}, {agent_id: null}, {agent_id: 42}])("D0019 keeps unknown actor %j from writing or consuming parent wakes", async actor => {
+    expect(await runSessionBoardHook("gemini", JSON.stringify(tool(prefix + "list_session_status", actor)))).toBe("");
     for (const event of ["SessionStart", "UserPromptSubmit"]) {
       expect(await runSessionBoardHook("gemini", JSON.stringify({hook_event_name: event, session_id: "AL04_PRIVATE_PARENT", ...actor,
         ...(event === "SessionStart" && Object.keys(actor).length === 0 ? {agent_type: "unproven"} : {}),
@@ -59,29 +55,22 @@ describe("AL04 board actor, namespace and host permission boundaries", () => {
     }
     expect(f.open).not.toHaveBeenCalled(); expect(f.request).not.toHaveBeenCalled(); noWrites();
   });
-  it.each([
-    "mcp__agent_governance_suite__", "mcp__agent-governance-suite__",
-    "mcp__plugin_agent-governance-suite_agent-governance-suite__",
-  ])("D0020 preserves host permission checks when attaching an owned binding through %s", namespace => {
-    const output = handleSessionBoardHook(tool(namespace + "update_session_status"), board, syntheticHost, now);
-    expect(output).toEqual({hookSpecificOutput: {hookEventName: "PreToolUse", updatedInput: {
-      summary: "AL04 회귀", _sessionBinding: {host: syntheticHost, sessionId: "AL04_PRIVATE_PARENT"},
-    }}});
-    expect(f.summary).toHaveBeenCalledTimes(1);
+  it("D0018 never writes the parent row from a subagent prompt", () => {
+    expect(handleSessionBoardHook(prompt({syntheticActor: {role: "child", basis: "observed", reasonCode: "SYNTHETIC_BOARD_CHILD"}}), board, syntheticHost, now)).toEqual({});
+    noWrites();
   });
   it.each([
-    "mcp__foreign__update_session_status", "mcp__agent_governance_suite_other__list_session_status",
-    "mcp__foreign__mcp__agent_governance_suite__list_session_status", "list_session_status",
-  ])("D0021 does not bind or allow a foreign tool %s", name => {
+    "mcp__agent_governance_suite__update_session_status", "mcp__agent-governance-suite__list_session_status",
+    "mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status",
+    "mcp__foreign__update_session_status", "list_session_status", "apply_patch",
+  ])("D0020/D0021 the board hook neither binds, decides nor writes for tool %s (the governance hook owns binding)", name => {
     expect(handleSessionBoardHook(tool(name), board, syntheticHost, now)).toEqual({}); noWrites();
   });
-  it("preserves malformed-summary denial without turning coordination into an ordinary-tool gate", () => {
-    const input = tool(prefix + "update_session_status"); input.tool_input.summary = "둘\n줄";
-    expect(handleSessionBoardHook(input, board, syntheticHost, now)).toMatchObject({hookSpecificOutput: {permissionDecision: "deny"}});
+  it("records only the prompt time and working directory of a root prompt", () => {
+    expect(handleSessionBoardHook(prompt(), board, syntheticHost, now)).toEqual({});
+    expect(f.input).toHaveBeenCalledWith(board, {host: syntheticHost, sessionId: "AL04_PRIVATE_PARENT", cwd: "/al04/work", now}, {prompt: true});
+    expect(JSON.stringify(f.input.mock.calls)).not.toContain("AL04 비밀 요청");
     expect(f.summary).not.toHaveBeenCalled();
-    f.gate.mockReturnValue("deny");
-    expect(handleSessionBoardHook(tool("apply_patch"), board, syntheticHost, now)).toEqual({});
-    expect(f.gate).not.toHaveBeenCalled();
   });
 });
 

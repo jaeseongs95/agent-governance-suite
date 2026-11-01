@@ -37,7 +37,7 @@ import { ClassificationInitializationError, loadClassificationProviderRuntime, r
 import { readFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { digestClassificationValue } from "./skill-classification/request.js";
-import { listSessions, openBoard } from "../../skills/session-board/scripts/board-store.mjs";
+import { listPromptMarkers, openBoard } from "../../skills/session-board/scripts/board-store.mjs";
 import { hostActorId } from "./host-attestation.js";
 import { createNativeClassificationAdapters, type NativeClassificationAdapterDefinition, type NativeCliBehavior } from "./skill-classification/native-adapters.js";
 import { bindNativeClassificationDefinitions } from "./skill-classification/native-cli-strategies.js";
@@ -156,8 +156,8 @@ export async function startMcpServer(
       if (!observation) return null;
       const board = openBoard(resolveSessionBoardDatabasePath(), {busyTimeoutMs: 500});
       try {
-        const session = listSessions(board, new Date().toISOString()).find(candidate => observation.actorId === hostActorId(candidate.host, candidate.sessionId));
-        return session?.lastPromptAt ? {taskRevision: request.confirmedContext.taskRevision, requestDigest: request.requestDigest, cancelled: false, sourceRef: `host-prompt:${observation.actorId}:${session.lastPromptAt}`} : null;
+        const session = listPromptMarkers(board).find(candidate => observation.actorId === hostActorId(candidate.host, candidate.sessionId));
+        return session ? {taskRevision: request.confirmedContext.taskRevision, requestDigest: request.requestDigest, cancelled: false, sourceRef: `host-prompt:${observation.actorId}:${session.lastPromptAt}`} : null;
       } finally {board.close();}
     },
     readRuntime: async () => {

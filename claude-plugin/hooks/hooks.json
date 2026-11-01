@@ -119,12 +119,6 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/session-board-hook.mjs"],
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "node",
             "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/continuity-hook.mjs"],
             "timeout": 10
           }

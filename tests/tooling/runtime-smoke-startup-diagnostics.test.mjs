@@ -128,28 +128,16 @@ function defaultSpawnResponse(scriptPath, args, options) {
   }
   if (base === "session-board-hook.mjs") {
     const input = JSON.parse(options.input);
-    const boardTool = input.tool_name?.endsWith("__update_session_status");
-    // Synthetic CLI responses model the explicit host contract, never native evidence.
-    if (args.includes("--host=gemini")) {
-      return { status: 0, signal: null, stdout: boardTool ? JSON.stringify({
-        hookSpecificOutput: { permissionDecision: "deny" },
-      }) : "", stderr: "" };
+    // Synthetic CLI responses model the explicit host contract, never native evidence: no output, prompt-only writes.
+    if (!args.includes("--host=gemini")) {
+      expect(args).toEqual(["--host=claude-code"]);
+      if (input.hook_event_name === "UserPromptSubmit" && !Object.hasOwn(input, "agent_id")) defaultSpawnResponse.boardPromptAt = "2026-10-26T00:00:00.000Z";
+      defaultSpawnResponse.boardCwd = input.cwd;
     }
-    expect(args).toEqual(["--host=claude-code"]);
-    if (input.hook_event_name === "UserPromptSubmit") defaultSpawnResponse.boardPromptAt = "2026-10-26T00:00:00.000Z";
-    const denied = boardTool && (Object.hasOwn(input, "agent_id") || input.tool_input.summary.includes("\n"));
-    if (boardTool && !denied) defaultSpawnResponse.boardSummary = input.tool_input.summary;
-    return {
-      status: 0,
-      signal: null,
-      stdout: boardTool ? JSON.stringify({ hookSpecificOutput: denied ? { permissionDecision: "deny" } : {
-        updatedInput: { ...input.tool_input, _sessionBinding: { host: "claude-code", sessionId: input.session_id } },
-      } }) : "",
-      stderr: "",
-    };
+    return { status: 0, signal: null, stdout: "", stderr: "" };
   }
   if (base === "read-board.mjs") {
-    return { status: 0, signal: null, stdout: JSON.stringify({ summary: defaultSpawnResponse.boardSummary, last_prompt_at: defaultSpawnResponse.boardPromptAt }), stderr: "" };
+    return { status: 0, signal: null, stdout: JSON.stringify({ summary: null, last_prompt_at: defaultSpawnResponse.boardPromptAt, cwd: defaultSpawnResponse.boardCwd }), stderr: "" };
   }
   if (base === "governance-hook.mjs") {
     const input = JSON.parse(options.input);
@@ -215,7 +203,7 @@ function mockContinuityHook(result) {
 beforeEach(() => {
   vi.resetAllMocks();
   defaultSpawnResponse.boardPromptAt = null;
-  defaultSpawnResponse.boardSummary = null;
+  defaultSpawnResponse.boardCwd = null;
   boundary.mkdtemp.mockResolvedValue(cleanRoot);
   boundary.mkdir.mockResolvedValue(undefined);
   boundary.cp.mockResolvedValue(undefined);
@@ -585,7 +573,7 @@ describe("runtime smoke synthetic actor and proof fixture contracts", () => {
     expect(boundary.rm).toHaveBeenCalledExactlyOnceWith(cleanRoot, { recursive: true, force: true });
   });
 
-  it("does not replace the unsupported Gemini denial with a successful caller binding", async () => {
+  it("does not accept a caller binding from the unsupported Gemini board hook", async () => {
     boundary.spawnSync.mockImplementation((_executable, [script, ...args], options) => {
       if (path.basename(script) === "session-board-hook.mjs" && args.includes("--host=gemini")
         && JSON.parse(options.input).hook_event_name === "PreToolUse") {

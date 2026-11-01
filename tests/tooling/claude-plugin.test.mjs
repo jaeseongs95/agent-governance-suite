@@ -271,9 +271,9 @@ describe("generated Claude plugin", () => {
       expect(matcher.test(`mcp__agent-governance-suite__${tool}`), tool).toBe(false);
     }
     for (const tool of [toolPrefix, "Bash", "Edit", "Agent", "mcp__unrelated__get_trust_capabilities"]) expect(matcher.test(tool), tool).toBe(false);
-    // The only remaining direct domain hooks run for write-capable non-AGS tools: the advisory board, and continuity
-    // pinning a fork's parent before such a tool can change the fork's own transcript (D0352). Any non-AGS MCP tool
-    // may write files, so each one reaches the continuity pin boundary as well.
+    // The only remaining direct domain hook runs for write-capable non-AGS tools: continuity pinning a fork's parent
+    // before such a tool can change the fork's own transcript (D0352). Any non-AGS MCP tool may write files, so each one
+    // reaches the continuity pin boundary as well. The session board observes prompts only (3.0), never tool calls.
     expect(claudeHooks.hooks.PreToolUse).toHaveLength(3);
     const mcpGroups = claudeHooks.hooks.PreToolUse.filter((group) => group.matcher?.startsWith("^mcp__(?!"));
     expect(mcpGroups).toHaveLength(1);
@@ -281,13 +281,13 @@ describe("generated Claude plugin", () => {
     const mcpMatcher = new RegExp(mcpGroups[0].matcher, "u");
     for (const tool of ["mcp__filesystem__write_file", "mcp__unrelated__get_trust_capabilities", "mcp__plugin_other_server__edit"]) expect(mcpMatcher.test(tool), tool).toBe(true);
     for (const tool of ["Bash", "Read", toolPrefix, ...governanceNames.map((name) => `${toolPrefix}${name}`)]) expect(mcpMatcher.test(tool), tool).toBe(false);
-    const boardGroups = claudeHooks.hooks.PreToolUse.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[3]));
-    expect(boardGroups).toHaveLength(1);
-    expect(boardGroups[0].hooks).toEqual([{ type: "command", command: "node", args: [allowedScripts[3]], timeout: 5 },
-      { type: "command", command: "node", args: [allowedScripts[0]], timeout: 10 }]);
-    const boardMatcher = new RegExp(boardGroups[0].matcher, "u");
-    for (const tool of ["Edit", "Write", "MultiEdit", "NotebookEdit", "Bash", "PowerShell", "Agent", "Task"]) expect(boardMatcher.test(tool), tool).toBe(true);
-    for (const tool of ["Read", "Grep", "Glob", ...governanceNames.map((name) => `${toolPrefix}${name}`)]) expect(boardMatcher.test(tool), tool).toBe(false);
+    expect(claudeHooks.hooks.PreToolUse.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[3]))).toEqual([]);
+    const writeGroups = claudeHooks.hooks.PreToolUse.filter((group) => new RegExp(group.matcher, "u").test("Edit"));
+    expect(writeGroups).toHaveLength(1);
+    expect(writeGroups[0].hooks).toEqual([{ type: "command", command: "node", args: [allowedScripts[0]], timeout: 10 }]);
+    const writeMatcher = new RegExp(writeGroups[0].matcher, "u");
+    for (const tool of ["Edit", "Write", "MultiEdit", "NotebookEdit", "Bash", "PowerShell", "Agent", "Task"]) expect(writeMatcher.test(tool), tool).toBe(true);
+    for (const tool of ["Read", "Grep", "Glob", ...governanceNames.map((name) => `${toolPrefix}${name}`)]) expect(writeMatcher.test(tool), tool).toBe(false);
     const intakeGroups = claudeHooks.hooks.SessionStart.filter((group) => group.hooks.some((hook) => hook.args[0] === allowedScripts[1]));
     expect(intakeGroups).toHaveLength(1);
     for (const script of [allowedScripts[0], allowedScripts[1], allowedScripts[4]]) {

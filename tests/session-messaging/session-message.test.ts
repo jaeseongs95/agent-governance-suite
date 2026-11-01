@@ -346,7 +346,7 @@ describe("session message spool", () => {
     }, 6000)).toMatchObject({ state: "online", instanceId: "presence-instance-2" });
     expect(store.endPresence(target, "session-end", "presence-instance-2", 7000)).toBe(true);
     expect(store.presence(target, 7001)).toMatchObject({ state: "ended", instanceId: "presence-instance-2", endReason: "session-end" });
-    expect(store.listPresence(7001)).toHaveLength(1);
+    expect(store.listPresence(7001, [target])).toHaveLength(1);
     store.close();
   });
 
@@ -388,7 +388,7 @@ describe("session message spool", () => {
     } });
     expect(dispatchSessionMessageBrokerOperation(store, "presence-heartbeat", { target, instanceId: "generic-instance" }))
       .toEqual({ alive: true });
-    expect(dispatchSessionMessageBrokerOperation(store, "list-presence", {}))
+    expect(dispatchSessionMessageBrokerOperation(store, "list-presence", { targets: [target] }))
       .toMatchObject({ sessions: [{ host: target.host, sessionId: target.sessionId, state: "online" }] });
     expect(dispatchSessionMessageBrokerOperation(store, "presence-end", { target, instanceId: "generic-instance", reason: "session-end" }))
       .toEqual({ ended: true });
@@ -792,12 +792,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       ...extra,
     });
     try {
-      await runSessionBoardHook("claude-code", hook("SessionStart"));
       await runSessionBoardHook("claude-code", hook("UserPromptSubmit", { prompt: "initial request" }));
-      await runSessionBoardHook("claude-code", hook("PreToolUse", {
-        tool_name: "mcp__agent_governance_suite__update_session_status",
-        tool_input: { schemaVersion: "1.0.0", summary: "initial request recorded" },
-      }));
       const issued = "a".repeat(32);
       const unissued = "b".repeat(32);
       const target = { host: "claude-code", sessionId };
@@ -819,9 +814,9 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       try {
         // Fix the prior request marker without sleeping or changing the broker's clock.
         const initialPromptAt = new Date(Date.now() - 60_000).toISOString();
-        board.prepare("UPDATE sessions SET last_prompt_at = ? WHERE host = ? AND session_id = ?")
+        board.prepare("UPDATE board_sessions SET last_prompt_at = ? WHERE host = ? AND session_id = ?")
           .run(initialPromptAt, target.host, target.sessionId);
-        const lastPromptAt = () => (board.prepare("SELECT last_prompt_at FROM sessions WHERE host = ? AND session_id = ?")
+        const lastPromptAt = () => (board.prepare("SELECT last_prompt_at FROM board_sessions WHERE host = ? AND session_id = ?")
           .get(target.host, target.sessionId) as { last_prompt_at: string }).last_prompt_at;
 
         // A repeated issued bell is recognized, but recognition of one bell must not bless an unissued one.

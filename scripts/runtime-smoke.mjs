@@ -242,25 +242,22 @@ try {
       throw new Error(`host-owned wrapper API failed its dependency-free fixture check.\n${wrapper.stderr ?? ""}`);
     }
 
-    // Lifecycle events record activity; a missing summary must not gate ordinary tools.
+    // The board hook records only a main prompt's time and directory; it never binds, gates or denies a tool.
     // Synthetic Claude hook input exercises storage; it is not native capture evidence.
     const boardInput = { session_id: "clean-room-board", cwd: cleanRoot };
     const runBoardHook = (input, host = "claude-code") => runNode("mcp-server/dist/session-board-hook.mjs", `${JSON.stringify({ ...boardInput, ...input })}\n`, [`--host=${host}`]);
     const boardTool = { hook_event_name: "PreToolUse", tool_name: "mcp__agent_governance_suite__update_session_status" };
-    const unsupportedStart = runBoardHook({ hook_event_name: "SessionStart", session_id: "clean-room-gemini-board", agent_id: "" }, "gemini");
-    const unsupportedWrite = runBoardHook({ ...boardTool, session_id: "clean-room-gemini-board", agent_id: "", tool_input: { summary: "forbidden Gemini write" } }, "gemini");
-    const unsupportedOutput = unsupportedWrite.status === 0 && unsupportedWrite.stdout ? JSON.parse(unsupportedWrite.stdout).hookSpecificOutput : null;
-    if (unsupportedStart.error || unsupportedStart.status !== 0 || unsupportedStart.stdout !== ""
-      || unsupportedWrite.error || unsupportedWrite.status !== 0 || unsupportedOutput?.permissionDecision !== "deny"
-      || Object.hasOwn(unsupportedOutput, "updatedInput")) {
-      throw new Error("session board hook accepted unsupported Gemini actor input.");
+    const unsupportedPrompt = runBoardHook({ hook_event_name: "UserPromptSubmit", session_id: "clean-room-gemini-board", agent_id: "", prompt: "forbidden Gemini prompt" }, "gemini");
+    const unsupportedTool = runBoardHook({ ...boardTool, session_id: "clean-room-gemini-board", agent_id: "", tool_input: { summary: "forbidden Gemini write" } }, "gemini");
+    for (const result of [unsupportedPrompt, unsupportedTool]) {
+      if (result.error || result.status !== 0 || result.stdout !== "") throw new Error("session board hook accepted unsupported Gemini actor input.");
     }
     await assertMissing(environment.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH);
     await writeFile(path.join(cleanRoot, "state", "read-board.mjs"), `
 import { DatabaseSync } from "node:sqlite";
 const board = new DatabaseSync(process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH, { readOnly: true });
 try {
-  process.stdout.write(JSON.stringify(board.prepare("SELECT summary, last_prompt_at FROM sessions WHERE host = ? AND session_id = ?").get("claude-code", "clean-room-board") ?? null));
+  process.stdout.write(JSON.stringify(board.prepare("SELECT summary, last_prompt_at, cwd FROM board_sessions WHERE host = ? AND session_id = ?").get("claude-code", "clean-room-board") ?? null));
 } finally { board.close(); }
 `, "utf8");
     const readBoard = () => {
@@ -268,41 +265,22 @@ try {
       if (result.error || result.status !== 0) throw new Error(`session board clean-room read failed.\n${result.stderr ?? ""}`);
       return JSON.parse(result.stdout);
     };
-    const boardStart = runBoardHook({ hook_event_name: "SessionStart" });
-    const startedBoard = readBoard();
-    if (boardStart.error || boardStart.status !== 0 || boardStart.stdout !== ""
-      || startedBoard?.summary !== null || startedBoard?.last_prompt_at !== null) {
-      throw new Error(`session board hook failed its node_modules-free lifecycle smoke check.\n${boardStart.stderr ?? ""}`);
-    }
     const boardPrompt = runBoardHook({ hook_event_name: "UserPromptSubmit", prompt: "clean-room request" });
     const promptedBoard = readBoard();
-    if (boardPrompt.error || boardPrompt.status !== 0 || boardPrompt.stdout !== ""
+    if (boardPrompt.error || boardPrompt.status !== 0 || boardPrompt.stdout !== "" || promptedBoard?.summary !== null || promptedBoard?.cwd !== cleanRoot
       || typeof promptedBoard?.last_prompt_at !== "string" || !Number.isFinite(Date.parse(promptedBoard.last_prompt_at))) {
-      throw new Error(`session board hook failed its node_modules-free activity smoke check.\n${boardPrompt.stderr ?? ""}`);
+      throw new Error(`session board hook failed its node_modules-free prompt smoke check.\n${boardPrompt.stderr ?? ""}`);
     }
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const edit = runBoardHook({ hook_event_name: "PreToolUse", tool_name: "Edit", tool_input: {} });
-      if (edit.error || edit.status !== 0 || edit.stdout !== "") {
-        throw new Error(`session board hook gated an ordinary clean-room edit.\n${edit.stderr ?? ""}`);
-      }
-    }
-    const boardUpdate = runBoardHook({ ...boardTool, tool_input: { summary: "clean-room work" } });
-    const boardOutput = boardUpdate.status === 0 && boardUpdate.stdout ? JSON.parse(boardUpdate.stdout).hookSpecificOutput : null;
-    if (boardUpdate.error || !boardOutput || Object.hasOwn(boardOutput, "permissionDecision")
-      || boardOutput.updatedInput?._sessionBinding?.host !== "claude-code"
-      || boardOutput.updatedInput?._sessionBinding?.sessionId !== boardInput.session_id) {
-      throw new Error(`session board hook failed its clean-room binding smoke check.\n${boardUpdate.stderr ?? ""}`);
-    }
-    for (const extra of [{ agent_id: "subagent" }, { agent_id: "" }, { agent_id: " " }, { agent_id: null }, { agent_id: 42 }, { tool_input: { summary: "two\nlines" } }]) {
-      const denied = runBoardHook({ ...boardTool, tool_input: { summary: "forbidden write" }, ...extra });
-      const output = denied.status === 0 && denied.stdout ? JSON.parse(denied.stdout).hookSpecificOutput : null;
-      if (denied.error || output?.permissionDecision !== "deny" || Object.hasOwn(output, "updatedInput")) {
-        throw new Error(`session board hook failed its clean-room authorization smoke check.\n${denied.stderr ?? ""}`);
+    for (const input of [{ hook_event_name: "SessionStart" }, { hook_event_name: "PreToolUse", tool_name: "Edit", tool_input: {} },
+      { ...boardTool, tool_input: { summary: "clean-room work" } }, { hook_event_name: "UserPromptSubmit", agent_id: "subagent", prompt: "child request" }]) {
+      const result = runBoardHook(input);
+      if (result.error || result.status !== 0 || result.stdout !== "") {
+        throw new Error(`session board hook bound, gated or wrote outside a main prompt in the clean room.\n${result.stderr ?? ""}`);
       }
     }
     const finalBoard = readBoard();
-    if (finalBoard?.summary !== "clean-room work" || finalBoard?.last_prompt_at !== promptedBoard.last_prompt_at) {
-      throw new Error("session board hook changed clean-room activity or summary across rejected writes.");
+    if (JSON.stringify(finalBoard) !== JSON.stringify(promptedBoard)) {
+      throw new Error("session board hook changed clean-room board state outside a main prompt.");
     }
 
     let proofCall = 0;

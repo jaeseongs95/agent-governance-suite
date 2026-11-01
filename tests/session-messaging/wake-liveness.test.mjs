@@ -347,7 +347,7 @@ test('2.8: autoWake v2 is advisory and reports each delivery path fact', () => {
   f.store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ?').run(iso(f.now + 19_000), 'instance-1');
   check(f.store, f.now + 16_000, 'no-live-relay', 'relay-lease-missing', iso(f.now));
   check(f.store, f.now + 21_000, 'no-live-relay', 'presence-not-online', iso(f.now + 19_000));
-  const board = f.store.listPresence(f.now + 21_000).find(item => item.sessionId === target.sessionId);
+  const board = f.store.listPresence(f.now + 21_000, [target])[0];
   assert.equal(board.state, 'unreachable'); assert.equal(board.autoWake.state, 'no-live-relay'); assert.equal(board.relayLive, false);
   keepAlive(f.store, 'instance-1', 'relay-1', f.now + 22_000);
   const handedAt = f.now + 22_000;
