@@ -451,7 +451,10 @@ function main(): void {
     phase = "input";
     const input = record(JSON.parse(raw));
     if (!input) throw new HookObservationFailure("INVALID_HOOK_INPUT");
-    resolveHookHost(process.argv.slice(2), "claude-code");
+    phase = "host-entry";
+    // Only Claude Code reports a session model here; other hosts' fields are never read as one.
+    if (resolveHookHost(process.argv.slice(2), "claude-code") !== "claude-code") return;
+    phase = "input";
     const update = sessionModelUpdate(input);
     phase = "storage";
     if (update) writeSessionModel(sessionModelDirectory(), update.sessionId, update.record);
