@@ -427,6 +427,10 @@ export function createMcpServer(
         name: "get_skill_inventory",
         description: "Read the full installed skill inventory from SKILL.md and registry source metadata, including infrastructure skills and source conflicts. No semantic selection or execution.",
         inputSchema: {type: "object", additionalProperties: false, properties: {}},
+        // D0347: the inventory itself only reads local skill, registry and discovery sources, so the call neither
+        // destroys data nor reaches an external system. readOnlyHint stays unset: the shared call boundary still
+        // consumes the session proof and may write diagnostics.
+        annotations: { destructiveHint: false, openWorldHint: false },
       },
       {
         name: "classify_skills",

@@ -341,6 +341,8 @@ describe("bundled STDIO MCP server", () => {
         destructiveHint: false,
       });
       expect(listed.tools.find((tool) => tool.name === "execute_state_cleanup")?.annotations?.destructiveHint).toBe(true);
+      // D0347: a host approval policy reads these hints; the local inventory read declares exactly what it does not do.
+      expect(listed.tools.find((tool) => tool.name === "get_skill_inventory")?.annotations).toEqual({ destructiveHint: false, openWorldHint: false });
 
       const task: TaskEnvelopeV1 = {
         schemaVersion: "1.0.0",
