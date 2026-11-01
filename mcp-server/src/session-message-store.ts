@@ -383,7 +383,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       // this transaction. Legacy rows are dropped, states are renamed and every migrated hand-off gets a resend deadline,
       // so no migrated row stays active forever. Columns an older shape lacks read as NULL (state as legacy).
       if (version < 3) {
-        const migratedAt = iso(this.time(AUTHORITY_NOW));
+        // Only rows to migrate need a time: a fresh file observes (and needs) no clock while it initializes.
+        const migrating = this.database.prepare("SELECT 1 FROM wake_nonces LIMIT 1").get() !== undefined;
+        const migratedAt = migrating ? iso(this.time(AUTHORITY_NOW)) : null;
         const existing = new Set((this.database.prepare("PRAGMA table_info(wake_nonces)").all() as Array<{ name: string }>).map((column) => column.name));
         const source = WAKE_COPY_COLUMNS.map((name) => existing.has(name) ? name
           : `${name === "state" ? "'legacy'" : name === "dispatch_epoch" ? "0" : "NULL"} AS ${name}`).join(", ");

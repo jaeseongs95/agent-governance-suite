@@ -81,9 +81,11 @@ describe("agy CLI agentapi location", () => {
   });
 });
 
+// Windows launches only a native absolute .exe (D-0311), so the configured agy path follows the test host platform.
+const AGY_EXE = process.platform === "win32" ? "C:\\Users\\fixture\\AppData\\Local\\agy\\bin\\agy.exe" : "/home/fixture/.local/bin/agy";
 describe("agy CLI agentapi without a language-server connection", () => {
   beforeEach(() => {
-    vi.stubEnv("ANTIGRAVITY_AGENTAPI_EXE", "/home/fixture/.local/bin/agy");
+    vi.stubEnv("ANTIGRAVITY_AGENTAPI_EXE", AGY_EXE);
     vi.stubEnv("ANTIGRAVITY_PROJECT_ID", "default-cli-project");
   });
 
@@ -95,7 +97,7 @@ describe("agy CLI agentapi without a language-server connection", () => {
     metadataReply(error, stdout);
     expect(await quietly(dispatch)).toEqual({ result: "not-delivered", kind: "prerequisite-missing", reasonCode: "GEMINI_LS_CONNECTION_MISSING" });
     expect(execFileMock).toHaveBeenCalledTimes(1);
-    expect(execFileMock.mock.calls[0]!.slice(0, 2)).toEqual(["/home/fixture/.local/bin/agy", ["agentapi", "get-conversation-metadata", "agy-conversation"]]);
+    expect(execFileMock.mock.calls[0]!.slice(0, 2)).toEqual([AGY_EXE, ["agentapi", "get-conversation-metadata", "agy-conversation"]]);
   });
 
   it("keeps an unreachable language server a recoverable lookup failure", async () => {

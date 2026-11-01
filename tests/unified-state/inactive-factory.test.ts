@@ -48,7 +48,10 @@ describe("explicit inactive factory boundary", () => {
     const input = options(); const value = createInactiveSharedStores({ ...input, clock: () => Number.NaN }); owners.add(value.owner);
     let rejected; try { value.workflow.nextRunSequence(); } catch (error) { rejected = error; }
     expect(rejected).toBeInstanceOf(WorkflowContractError);
-    expect(rejected).toMatchObject({ code: "MCP_UNAVAILABLE", details: { cause: "A nonnegative safe integer clock is required." } }); expect(value.owner.inspect().time).toBe(0); expect(value.owner.inspect().counts.workflow_metadata).toBe(1);
+    // AGS 3.0 error model R5 (4-4): a fixed reason and a redacted cause (code INVALID_CLOCK only as a hash); no message.
+    expect(rejected).toMatchObject({ code: "MCP_UNAVAILABLE", details: { reason: "WORKFLOW_STORAGE_FAILED", cause: { type: "error",
+      code: expect.objectContaining({ length: 13, prefixSha256: "72717908febb2551e6151a2151ac22444b225f90d88e09ad688ff4c5590a99f8" }) } } });
+    expect(JSON.stringify((rejected as WorkflowContractError).details)).not.toContain("nonnegative safe integer clock"); expect(value.owner.inspect().time).toBe(0); expect(value.owner.inspect().counts.workflow_metadata).toBe(1);
   });
   it("B2-FACTORY-06: original standalone path APIs remain available using separate explicit synthetic temp files", () => {
     const input = options(); const workflow = new SqliteWorkflowStore(path.join(input.directory, "standalone-workflow.sqlite3")); const continuity = new SqliteContinuityStore(path.join(input.directory, "standalone-continuity.sqlite3")); const messaging = new SessionMessageStore(path.join(input.directory, "standalone-message.sqlite3")); const trust = new TrustStore(path.join(input.directory, "standalone-trust.sqlite3"), keys.trust); const board = openBoard(path.join(input.directory, "standalone-board.sqlite3"));
