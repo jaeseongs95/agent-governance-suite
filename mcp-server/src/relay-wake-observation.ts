@@ -2,7 +2,6 @@ import {randomUUID} from "node:crypto";
 import {lstatSync, renameSync} from "node:fs";
 import path from "node:path";
 import {readDiagnosticConfig} from "./diagnostics.js";
-import {processStartToken} from "./process-identity.js";
 import {writeRelayDiagnosticSnapshot, type WakeDispatchPort} from "./session-message-wake-port.js";
 import {transportWakePort} from "./wake-transports.js";
 
@@ -42,7 +41,8 @@ export function createRelayWakeObservation(transport: string, port: WakeDispatch
 
     const generation = randomUUID();
     // OS creation metadata of this writer, never the parent's identity or any authority token.
-    const processStart = processStartToken(process.pid, process.platform, 500);
+    // The writer's own start (process time origin); no OS query runs in a relay or hook path.
+    const processStart = String(Math.floor(performance.timeOrigin));
     const file = `${prefix}-relay-${generation}.json`;
     const events: {seq: number; event: WakeEvent}[] = [];
     const counters = {noneSkips: 0, dispatchAttempts: 0, nativeLaunchAttempts: 0, nativeSpawns: 0};
@@ -103,7 +103,7 @@ export function createRelaySpawnObservation(transport: string, environment = pro
     // 설정은 켜졌는데 소유 디렉터리가 아니면 꺼짐이 아니라 실패다. 예산 경로는 flush에서 확인한다.
     const requireOwnedDirectory = () => { if (!ownedDirectory(prefix)) throw new Error("DIAGNOSTIC_DIRECTORY_NOT_OWNED"); };
     if (!deferred) requireOwnedDirectory();
-    const identity = (pid: number) => deferred ? "UNKNOWN" : processStartToken(pid, process.platform, 500) ?? "UNKNOWN";
+    const identity = (pid: number) => !deferred && pid === process.pid ? String(Math.floor(performance.timeOrigin)) : "UNKNOWN";
     const generation = randomUUID(), writerPid = process.pid, writerProcessStart = identity(writerPid);
     const file = `${prefix}-relay-spawn-${generation}.json`, startedAt = new Date().toISOString();
     const events: {seq: number; event: "begin" | "returned" | "spawn" | "error"}[] = [];

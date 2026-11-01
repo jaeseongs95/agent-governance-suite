@@ -1,4 +1,4 @@
-import type { SessionIdentity } from "./session-message-store.js";
+import type { PeerWaitSnapshotStore, SessionIdentity } from "./session-message-store.js";
 
 export interface PeerWaitDecision {
   action: "deny" | "snapshot" | "bounded";
@@ -21,20 +21,32 @@ export function normalizePeerWaitTargets(targets: SessionIdentity[]): SessionIde
   return [...unique.keys()].sort().map((key) => unique.get(key)!);
 }
 
-/** Advisory state only: expiry, new input and broker restart restore a first query. */
+/** In-process records for a single caller (unit fixtures); the operation table passes the store's durable records. */
+function memorySnapshots(): PeerWaitSnapshotStore {
+  const records = new Map<string, { owner: string; fingerprint: string; expiresAt: number }>();
+  return {
+    now: () => Date.now(),
+    get: (key) => records.get(key),
+    set: (key, record) => {
+      if (!records.has(key) && records.size >= RECORD_LIMIT) records.delete(records.keys().next().value!);
+      records.set(key, record);
+    },
+    resetOwner: (owner) => { for (const [key, record] of records) if (record.owner === owner) records.delete(key); },
+  };
+}
+
+/** Advisory state only: expiry and new input restore a first query. Records are shared by every process of a state directory. */
 export class PeerWaitPolicy {
-  private readonly snapshots = new Map<string, { owner: string; fingerprint: string; expiresAt: number }>();
+  constructor(private readonly snapshots: PeerWaitSnapshotStore = memorySnapshots()) {}
 
   reset(sender: SessionIdentity): void {
-    const owner = identityKey(sender);
-    for (const [key, record] of this.snapshots) if (record.owner === owner) this.snapshots.delete(key);
+    this.snapshots.resetOwner(identityKey(sender));
   }
 
   decide(input: {
     sender: SessionIdentity; targets: SessionIdentity[]; timeoutMs: number;
     peersObserved: boolean; resumeObserved: boolean; fingerprint: string;
-  }, nowMs = Date.now()): PeerWaitDecision {
-    for (const [key, record] of this.snapshots) if (record.expiresAt <= nowMs) this.snapshots.delete(key);
+  }, nowMs = this.snapshots.now()): PeerWaitDecision {
     const transmission = input.peersObserved ? "observed" : "unknown";
     const resume = input.resumeObserved ? "observed" : "unknown";
     const guidance = input.resumeObserved && input.peersObserved
@@ -47,8 +59,7 @@ export class PeerWaitPolicy {
     const owner = identityKey(input.sender);
     const key = JSON.stringify([owner, normalizePeerWaitTargets(input.targets).map(identityKey)]);
     const previous = this.snapshots.get(key);
-    if (previous?.fingerprint === input.fingerprint) return { action: "deny", reason: "unchanged-peer-state", transmission, resume, guidance };
-    if (this.snapshots.size >= RECORD_LIMIT) this.snapshots.delete(this.snapshots.keys().next().value!);
+    if (previous && previous.expiresAt > nowMs && previous.fingerprint === input.fingerprint) return { action: "deny", reason: "unchanged-peer-state", transmission, resume, guidance };
     this.snapshots.set(key, { owner, fingerprint: input.fingerprint, expiresAt: nowMs + RECORD_TTL_MS });
     return { action: "snapshot", reason: "async-resume", transmission, resume, guidance };
   }

@@ -8,7 +8,6 @@ import { failureContext, retainFailureCause, retainFailureSecondary } from "../r
 import { SKILL_RUNTIME_ENTRYPOINTS } from "./runtime-entrypoints.mjs";
 
 const MESSAGING_RUNTIME_PROBES = [
-  { bundle: "session-message-broker.mjs", expectedExitCode: 2, stdout: "" },
   { bundle: "session-message-relay.mjs", expectedExitCode: 2, stdout: "" },
   { bundle: "session-message-cli.mjs", expectedExitCode: 1 },
   { bundle: "session-message-hook.mjs", expectedExitCode: 0, stdout: "", input: "{\n", stderrDiagnostic: { phase: "input", reason: "INVALID_JSON" } },
