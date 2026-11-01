@@ -276,8 +276,14 @@ function recordPeerMessages(host: SupportedHookHost, sessionId: string, messages
   return recorded;
 }
 
+/**
+ * The acknowledgement contract travels with the messages: a host may show the model neither MCP server instructions
+ * nor a deferred tool's description (Codex, measured), so without this line a received message is never acknowledged.
+ */
+export const PEER_ENVELOPE_ACK_GUIDANCE = "[agent-governance-suite] After you process the peer messages below, acknowledge the processed messageIds with their claimReceipts in one acknowledge_session_messages call (AGS MCP tool; its description has the rules; find it with tool search if it is deferred).";
+
 export function sessionMessageEnvelope(messages: RecordedSessionMessage[]): string {
-  const lines: string[] = [];
+  const lines: string[] = [PEER_ENVELOPE_ACK_GUIDANCE];
   for (const message of messages) {
     const receipt = {
       messageId: message.messageId,
