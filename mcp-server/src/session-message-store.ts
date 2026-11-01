@@ -62,8 +62,12 @@ function assertResendBase(resendBaseMs: number): void {
   if (!Number.isSafeInteger(resendBaseMs) || resendBaseMs < 1 || resendBaseMs > WAKE_RESEND_MAX_MS) throw new Error("Invalid wake resend base.");
 }
 export const PRESENCE_LEASE_MS = 20_000;
-/** Ended or lapsed presence rows stay this long after their lease end; matches the session board's 24-hour window. */
+/** Ended or lapsed presence rows stay this long after their lease end (message-broker housekeeping). */
 export const PRESENCE_RETENTION_MS = 24 * 3600_000;
+/** The session board lists a lapsed, not ended birth this long after its lease ended (its relay may have died alone). */
+export const PRESENCE_UNREACHABLE_VISIBLE_MS = 10 * 60_000;
+/** Byte budget of the board's presence list, below the broker response limit. */
+export const CURRENT_PRESENCE_MAX_BYTES = SESSION_MESSAGE_MAX_RESPONSE_BYTES - 4096;
 const CLAIM_MAX_MESSAGES = 10;
 
 export interface SessionIdentity {
@@ -111,6 +115,19 @@ export interface SessionPresence {
   state: SessionPresenceState;
   /** The current birth is online and its transport's relay lease is live. */
   relayLive: boolean;
+}
+
+/** Compact presence row of the session board: the current birth of one session. */
+export interface CurrentPresence {
+  host: string;
+  sessionId: string;
+  state: SessionPresenceState;
+  startedAt: string | null;
+  heartbeatAt: string | null;
+  leaseUntil: string | null;
+  workspaceId: string | null;
+  transport: string | null;
+  autoWake: SessionAutoWakeOutlookV2;
 }
 
 /** Board and service view; autoWake is absent or null only when a previous broker did not report it. */
@@ -1532,16 +1549,48 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     };
   }
 
-  /** Without targets every stored identity is listed (the pre-2.7.4 request); callers bound the batch themselves. */
-  listPresence(nowMs = Date.now(), targets?: SessionIdentity[], expectedCodeDigest: string | null = null): SessionPresenceView[] {
+  /**
+   * The session board's liveness view: the current birth of every session that is online, or lapsed (not ended) for at
+   * most PRESENCE_UNREACHABLE_VISIBLE_MS, newest heartbeat first. `self` comes first whatever its state. Rows that do
+   * not fit the byte budget are only counted.
+   */
+  listCurrentPresence(nowMs: number, self: SessionIdentity, maxBytes = CURRENT_PRESENCE_MAX_BYTES): { sessions: CurrentPresence[]; truncated: number } {
+    boundedIdentity(self);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.listCurrentPresence(nowMs, self, maxBytes));
+    if (this.shared) nowMs = this.shared.time(nowMs);
+    this.prune(nowMs);
+    const visibleSince = iso(nowMs - PRESENCE_UNREACHABLE_VISIBLE_MS);
+    const others = (this.database.prepare(`SELECT DISTINCT host, session_id FROM session_presence
+      WHERE superseded_at IS NULL AND ended_at IS NULL AND lease_until > ?`).all(visibleSince) as Array<{ host: string; session_id: string }>)
+      .filter((row) => row.host !== self.host || row.session_id !== self.sessionId)
+      .map((row) => this.presence({ host: row.host, sessionId: row.session_id }, nowMs))
+      // Only the latest birth counts: an older live birth of a session that has since ended or lapsed is not shown.
+      .filter((presence) => presence.state === "online" || (presence.state === "unreachable" && presence.leaseUntil! > visibleSince))
+      .sort((left, right) => (right.heartbeatAt ?? "").localeCompare(left.heartbeatAt ?? ""));
+    const compact = (presence: SessionPresence): CurrentPresence => ({
+      host: presence.host, sessionId: presence.sessionId, state: presence.state, startedAt: presence.startedAt,
+      heartbeatAt: presence.heartbeatAt, leaseUntil: presence.leaseUntil, workspaceId: presence.workspaceId,
+      transport: presence.transport, autoWake: this.autoWakeOutlook(presence, nowMs),
+    });
+    const sessions = [compact(this.presence(self, nowMs))];
+    let bytes = Buffer.byteLength(JSON.stringify(sessions[0]), "utf8");
+    let truncated = 0;
+    for (const presence of others) {
+      const row = compact(presence);
+      const size = Buffer.byteLength(JSON.stringify(row), "utf8") + 1;
+      if (truncated > 0 || bytes + size > maxBytes) { truncated++; continue; }
+      sessions.push(row);
+      bytes += size;
+    }
+    return { sessions, truncated };
+  }
+
+  listPresence(nowMs: number, targets: SessionIdentity[], expectedCodeDigest: string | null = null): SessionPresenceView[] {
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.listPresence(nowMs, targets, expectedCodeDigest));
     if (this.shared) nowMs = this.shared.time(nowMs);
     this.prune(nowMs);
-    const identities = targets ?? (this.database.prepare(`SELECT host, session_id FROM session_presence
-      GROUP BY host, session_id ORDER BY host, session_id`).all() as Array<{ host: string; session_id: string }>)
-      .map((row) => ({ host: row.host, sessionId: row.session_id }));
     relayCodeDigest(expectedCodeDigest);
-    return identities.map((target) => {
+    return targets.map((target) => {
       const presence = this.presence(target, nowMs);
       const row = this.database.prepare("SELECT relay_id,pid,relay_code_id,relay_code_digest FROM relay_leases WHERE host=? AND session_id=? AND transport=?")
         .get(target.host,target.sessionId,presence.transport ?? "") as {relay_id: string; pid: number; relay_code_id: string | null; relay_code_digest: string | null} | undefined;

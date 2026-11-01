@@ -1,6 +1,6 @@
 import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
 import { BrokerRequestRejected, SESSION_MESSAGE_REQUEST_TIMEOUT_MS, sessionMessageRequest } from "./session-message-client.js";
-import type { SessionPresenceView } from "./session-message-store.js";
+import type { CurrentPresence, SessionPresenceView } from "./session-message-store.js";
 import { isBoundedIdentity, SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_PRESENCE_LIST_MAX_TARGETS } from "./session-message-protocol.js";
 
 export interface SessionPresenceList {
@@ -99,6 +99,11 @@ export class SessionMessageService {
     } catch (error) {
       return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "The session message broker is unavailable.");
     }
+  }
+
+  /** The session board's liveness view: one broker request whose reply the store keeps inside the response limit. */
+  async listCurrentPresence(self: SessionBindingV1): Promise<{ sessions: CurrentPresence[]; truncated: number }> {
+    return sessionMessageRequest("list-current-presence", { self }, this.stateDirectory);
   }
 
   /** Asks only for the given identities, in batches that fit the broker response limit whatever the DB size. A refused

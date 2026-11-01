@@ -346,7 +346,7 @@ describe("session message spool", () => {
     }, 6000)).toMatchObject({ state: "online", instanceId: "presence-instance-2" });
     expect(store.endPresence(target, "session-end", "presence-instance-2", 7000)).toBe(true);
     expect(store.presence(target, 7001)).toMatchObject({ state: "ended", instanceId: "presence-instance-2", endReason: "session-end" });
-    expect(store.listPresence(7001)).toHaveLength(1);
+    expect(store.listPresence(7001, [target])).toHaveLength(1);
     store.close();
   });
 

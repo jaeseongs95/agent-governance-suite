@@ -536,20 +536,19 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       : store.endPresence(identity(payload.target), string(payload.reason, "reason"), string(payload.instanceId, "instanceId")) };
     case "presence": return { presence: store.presence(identity(payload.target)) };
     case "list-presence": {
-      let targets: SessionIdentity[] | undefined;
-      if (payload.targets !== undefined) {
-        if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > SESSION_PRESENCE_LIST_MAX_TARGETS) {
-          throw new Error(`targets must list 1 to ${SESSION_PRESENCE_LIST_MAX_TARGETS} session identities.`);
-        }
-        targets = payload.targets.map(identity);
+      if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > SESSION_PRESENCE_LIST_MAX_TARGETS) {
+        throw new Error(`targets must list 1 to ${SESSION_PRESENCE_LIST_MAX_TARGETS} session identities.`);
       }
+      const targets: SessionIdentity[] = payload.targets.map(identity);
       const result = { sessions: store.listPresence(Date.now(), targets, readRelayCodeDigest(new URL("./session-message-relay.mjs", import.meta.url))) };
-      // Refuse explicitly rather than send a reply the client would drop; the untargeted request can grow with the DB.
+      // Refuse explicitly rather than send a reply the client would drop.
       if (Buffer.byteLength(`${JSON.stringify({ ok: true, data: result })}\n`, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
         throw new Error("The presence list exceeds the broker response limit; request fewer targets.");
       }
       return result;
     }
+    // Session board liveness: the store keeps the reply inside its byte budget and counts the rest.
+    case "list-current-presence": return store.listCurrentPresence(Date.now(), identity(payload.self));
     case "reserve-wake": return store.reserveManagedWake({ ...identity(payload.target), nonce: string(payload.nonce, "nonce"),
       instanceId: string(payload.instanceId, "instanceId"), relayId: string(payload.relayId, "relayId"), transport: string(payload.transport, "transport"),
       ...(payload.resume === undefined ? {} : { resume: boolean(payload.resume, "resume") }) });
