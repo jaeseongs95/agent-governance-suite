@@ -9,12 +9,12 @@ const FORMAT_VERSION = 1;
 const MODULES = Object.freeze({
   workflow: { version: 5, tables: ["workflow_metadata", "workflow_runs", "plugin_update_state", "convergence_roots", "convergence_root_identities", "convergence_epochs", "convergence_leases", "convergence_attempts", "convergence_reviews", "workflow_attempt_links", "state_cleanup_claims", "execution_observation_claims"] },
   continuity: { version: 2, tables: ["continuity_metadata", "continuity_tasks", "continuity_snapshots", "continuity_requests", "continuity_tombstones", "continuity_observations"] },
-  messaging: { version: 3, tables: ["messages", "relay_leases", "wake_nonces", "session_presence", "prepared_messages", "input_observations", "wake_paths"] },
+  messaging: { version: 4, tables: ["messages", "relay_leases", "wake_nonces", "session_presence", "prepared_messages", "input_observations", "wake_paths", "peer_wait_snapshots"] },
   trust: { version: 1, tables: ["trust_metadata", "input_source_receipts"] },
   board: { version: 0, tables: ["sessions"] },
 });
-// 직전 메시징 형식(v2). 명시적 initialize에서만 v3로 이전한다.
-const PREVIOUS_MESSAGING = Object.freeze({ version: 2, tables: ["messages", "relay_leases", "wake_nonces", "session_presence", "prepared_messages", "input_observations", "session_activity"] });
+// 직전 메시징 형식(v3). 명시적 initialize에서만 v4로 이전한다.
+const PREVIOUS_MESSAGING = Object.freeze({ version: 3, tables: ["messages", "relay_leases", "wake_nonces", "session_presence", "prepared_messages", "input_observations", "wake_paths"] });
 export class SharedStateError extends Error {
   constructor(code, message) { super(message); this.name = "SharedStateError"; this.code = code; }
 }
