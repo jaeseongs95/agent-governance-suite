@@ -125,9 +125,11 @@ it("C-32 dispatch 전 pending을 가진 프로세스를 닫아도 새 프로세�
     await f.configure("1", [profile], {providerRuntimeRef: runtime, nativeAdapterDefinitionsRef: definitions});
     // 기존 공개 startMcpServer의 call-local behavior 주입이다. 새 실행기/API나 실제 CLI를 만들지 않는다.
     const code = `import {startMcpServer} from ${JSON.stringify(pathToFileURL(path.join(repository, "mcp-server/src/index.ts")).href)};
-      import {writeFile} from 'node:fs/promises';
+      import {rename, writeFile} from 'node:fs/promises';
       const behavior = {validateIsolationArgs: args => args.length === 0, canEncodeProfile: () => true,
-        prepare: async () => {await writeFile(${JSON.stringify(marker)}, 'pending-before-dispatch', 'utf8'); await new Promise(() => {});},
+        // Published by rename: the waiting test sees either no marker or the whole marker, never a created but empty file.
+        prepare: async () => {await writeFile(${JSON.stringify(marker + ".tmp")}, 'pending-before-dispatch', 'utf8');
+          await rename(${JSON.stringify(marker + ".tmp")}, ${JSON.stringify(marker)}); await new Promise(() => {});},
         decode: () => {throw new Error('UNREACHABLE_SYNTHETIC_DECODE');}};
       await startMcpServer(new Map(), undefined, new Map([['fixture-c32-host', behavior]]));`;
     server = await f.start(code);
