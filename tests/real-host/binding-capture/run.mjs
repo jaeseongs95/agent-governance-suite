@@ -37,6 +37,8 @@ const home = process.env.USERPROFILE || process.env.HOME;
 const CMD = {
   codex: process.env.CODEX_CMD ? JSON.parse(process.env.CODEX_CMD) : win
     ? ["node", path.join(process.env.APPDATA ?? "", "npm/node_modules/@openai/codex/bin/codex.js")] : [path.join(home, ".local/share/ssh-approval-cli/codex")],
+  agy: process.env.AGY_CMD ? JSON.parse(process.env.AGY_CMD) : win
+    ? [path.join(process.env.LOCALAPPDATA ?? "", "agy/bin/agy.exe")] : ["agy"],
   claude: process.env.CLAUDE_CMD ? JSON.parse(process.env.CLAUDE_CMD) : win
     ? [path.join(home, ".local/bin/claude.exe")] : [path.join(home, ".local/share/ssh-approval-cli/claude")],
 };
@@ -55,6 +57,14 @@ else if (kase === "claude-main") {
   argv = [...CMD.claude, "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose",
     "--mcp-config", mcp, "--strict-mcp-config", "--settings", settings, "--dangerously-skip-permissions"];
   stdinText = JSON.stringify({ type: "user", message: { role: "user", content: P_MAIN.replace("start exactly one subagent", "use the Agent tool to start exactly one general-purpose subagent") } }) + "\n";
+} else if (kase === "agy-main" || kase === "agy-resume") {
+  // agy 1.4.12 reads MCP servers from its global config (`agy mcp add`, done by the operator) and
+  // PreToolUse hooks from <workspace>/.agents/hooks.json; the hook must answer {"decision":"allow"}.
+  mkdirSync(path.join(work, ".agents"), { recursive: true });
+  writeFileSync(path.join(work, ".agents", "hooks.json"), JSON.stringify({ capture: { PreToolUse: [{ matcher: ".*",
+    hooks: [{ type: "command", command: `node ${hook} --agy --dir=${fwd(out)}` }] }] } }));
+  argv = [...CMD.agy, "-p", kase === "agy-main" ? P_MAIN : P_ONE("resume-1"), "--output-format", "stream-json",
+    "--dangerously-skip-permissions", "--print-timeout", "420s", ...(kase === "agy-resume" ? ["--continue"] : [])];
 } else throw new Error(`unknown case ${kase}`);
 
 status({ phase: "start", argc: argv.length });
