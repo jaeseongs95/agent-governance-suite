@@ -430,6 +430,31 @@ it("AGS-D-0298: skips opening live contender stages and caches verified owner bi
   expect(ports.processStartToken.mock.calls.filter(call => call[0] === livePid)).toHaveLength(1);
 });
 
+it("AGS-D-0004: a live PID with another birth than its marker records is a reused PID and is reclaimed", () => {
+  const reusedPid = 434343;
+  const recordedHash = createHash("sha256").update("previous-owner-birth").digest("hex");
+  const staleOwner = `owner-${reusedPid}-${"b".repeat(32)}-${recordedHash}`;
+  fs.owner(staleOwner);
+  // The PID answers signal 0 (an unrelated process after a reboot) but its birth is not the recorded one.
+  ports.processStartToken.mockImplementation((pid?: number) => pid === reusedPid ? "unrelated-process-birth" : "synthetic-process-birth");
+  const lease = acquireBrokerProcessLock(lockPath)!;
+  expect(vi.mocked(process.kill)).toHaveBeenCalledWith(reusedPid, 0);
+  expect(ports.processStartToken.mock.calls.filter(call => call[0] === reusedPid)).toHaveLength(1);
+  expect(lease.owner).not.toBe(staleOwner);
+  expect(fs.children(lockPath)).toEqual([path.join(lockPath, lease.owner)]);
+  expect(fs.calls.some(call => call.op === "rmdir" && call.target === path.join(lockPath, staleOwner))).toBe(true);
+});
+
+it("AGS-D-0004: a live PID whose birth cannot be read keeps its marker as unverified", () => {
+  const livePid = 454545;
+  const owner = `owner-${livePid}-${"c".repeat(32)}-${createHash("sha256").update("recorded-birth").digest("hex")}`;
+  fs.owner(owner);
+  ports.processStartToken.mockImplementation(((pid?: number) => pid === livePid ? null : "synthetic-process-birth") as (pid?: number) => string);
+  expect(() => acquireBrokerProcessLock(lockPath)).toThrow("OWNER_UNVERIFIED");
+  expect(fs.children(lockPath)).toEqual([path.join(lockPath, owner)]);
+  expect(fs.calls.some(call => call.op === "rmdir" && call.target === path.join(lockPath, owner))).toBe(false);
+});
+
 it("AGS-D-0298: ignores transient EPERM/EACCES/EBUSY/ENOTDIR during abandoned stage retirement", () => {
   const staleOwnerA = `owner-${deadPid}-${"a".repeat(32)}-${"0".repeat(64)}`;
   const staleOwnerB = `owner-${deadPid}-${"b".repeat(32)}-${"0".repeat(64)}`;
