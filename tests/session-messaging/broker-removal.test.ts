@@ -464,3 +464,52 @@ describe("a relay whose host PID names no process (synthetic hosts, R5)", () => 
     expect(store.presence(target)).toMatchObject({ state: "ended", endReason: "host-process-ended" });
   }, 30_000);
 });
+
+// Claude Code ends an async SessionStart hook by sending SIGTERM to the hook's process group, which holds the relay
+// (measured on Claude Code 2.1.314, Linux). The relay must release its lease and end its birth before it exits.
+describe.skipIf(process.platform === "win32")("a relay stopped with SIGTERM while its host still runs (R5)", () => {
+  it("releases its lease and ends its birth, then exits with code 0", async () => {
+    const state = directory();
+    const file = path.join(state, "session-messages.sqlite3");
+    const host = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore" });
+    try {
+      const store = open(file, Date.now);
+      store.startPresence({ ...target, instanceId: "birth-term", transport, wakeVisibility: "none", canWakeSilently: false,
+        deliveryCapabilities: { supportedInjection: [], idleWake: "none" }, hostPid: host.pid! });
+      const relayId = store.grantRelay({ ...target, transport, instanceId: "birth-term", codeDigest: null, hostPid: host.pid! }).relayId!;
+      store.close();
+      const script = path.join(state, "relay-child.mjs");
+      const relay = new URL("../../mcp-server/src/session-message-relay.ts", import.meta.url).href;
+      const client = new URL("../../mcp-server/src/session-message-client.ts", import.meta.url).href;
+      writeFileSync(script, [
+        `const { runSessionMessageRelay } = await import(${JSON.stringify(relay)});`,
+        `const { sessionMessageRequest } = await import(${JSON.stringify(client)});`,
+        "const [hostPid, relayId] = process.argv.slice(2);",
+        "let ticked = false;",
+        "const request = async (operation, payload) => {",
+        "  const result = await sessionMessageRequest(operation, payload);",
+        "  if (operation === 'relay-tick' && !ticked) { ticked = true; process.send({ alive: result.alive }); }",
+        "  return result;",
+        "};",
+        "const port = { capabilities: { supportedInjection: [], idleWake: 'none' }, resendBaseMs: 600000, dispatch: async () => ({ result: 'unknown' }) };",
+        `await runSessionMessageRelay({ ...${JSON.stringify(target)}, instanceId: 'birth-term', transport: ${JSON.stringify(transport)},`,
+        "  parentPid: Number(hostPid), relayId }, port, { request });",
+        "process.disconnect();",
+      ].join("\n"), "utf8");
+      const child = fork(script, [String(host.pid), relayId], { execArgv: ["--import", "tsx"], silent: true,
+        env: { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: state } });
+      let stderr = "";
+      child.stderr!.on("data", (chunk: Buffer) => { stderr += chunk.toString("utf8"); });
+      const exited = once(child, "exit");
+      const [first] = await once(child, "message") as [{ alive: boolean }];
+      expect(first, stderr).toEqual({ alive: true });
+      child.kill("SIGTERM");
+      expect(await exited, stderr).toEqual([0, null]);
+      const after = open(file, Date.now);
+      expect(after.liveRelay(target, transport)).toBeNull();
+      expect(after.presence(target)).toMatchObject({ state: "ended", endReason: "relay-stop-requested" });
+    } finally {
+      host.kill();
+    }
+  }, 30_000);
+});
