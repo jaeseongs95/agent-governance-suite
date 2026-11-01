@@ -16,7 +16,7 @@ import {
 } from "../../contracts/types.js";
 import { listSessions, normalizeSummary, openBoard, readSession } from "../../skills/session-board/scripts/board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
-import { failureContext, retainFailureSecondary } from "./failure-diagnostics.js";
+import { contractFailure, failureContext, failureReason, retainFailureSecondary } from "./failure-diagnostics.js";
 import { inlineSchemaReferences } from "./tool-schema-inline.js";
 import { PLUGIN_INFO } from "./plugin-info.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
@@ -221,11 +221,15 @@ function apiError(code: ErrorCode, message: string, details: Record<string, unkn
   return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
 }
 
-/** Contract errors keep their own code and sanitized details; only other failures are reported as invalid input. */
-function failureResult(error: unknown, fallback: string, suffix = ""): ApiResultV1<never> {
-  return error instanceof WorkflowContractError
-    ? apiError(error.code, `${error.message}${suffix}`, error.details)
-    : invalidInput(`${error instanceof Error ? error.message : fallback}${suffix}`);
+/**
+ * Contract errors keep their own code and sanitized details. Any other failure is a server failure
+ * (contractFailure: MCP_UNAVAILABLE, fixed message, reason and redacted cause), never invalid input.
+ * `_fallback` is retained only so existing call sites stay unchanged; no caller text is derived from the error.
+ */
+function failureResult(error: unknown, _fallback: string, suffix = ""): ApiResultV1<never> {
+  if (error instanceof WorkflowContractError) return apiError(error.code, `${error.message}${suffix}`, error.details);
+  const failure = contractFailure(error);
+  return apiError(failure.code, failure.message, failure.details);
 }
 
 const CLASSIFICATION_REQUEST_REJECTIONS = new Set([
@@ -685,10 +689,13 @@ export function createMcpServer(
           }
         } catch (error) {
           if (error instanceof WorkflowContractError) {
-            // Preserve legacy rejection codes and expose only the typed cause, never raw observation data. A closed
-            // verifier reason (e.g. MISSING_MODEL_CAPABILITY for a class-only adapter, D0089) stays visible to the caller.
+            // The observation error keeps its own public code (BINDING_INVALID, MCP_UNAVAILABLE, ...; D0069/D0070) and
+            // exposes only the typed cause, never raw observation data. A closed verifier reason (e.g.
+            // MISSING_MODEL_CAPABILITY for a class-only adapter, D0089) stays visible to the caller.
             const observationReasonCode = error.details?.reasonCode;
-            result = apiError("INVALID_INPUT", "Skill classification host observation is invalid; no selection was accepted.", {
+            result = apiError(error.code, error.code === "MCP_UNAVAILABLE"
+              ? "Skill classification host observation is unavailable; no selection was accepted."
+              : "Skill classification host observation is invalid; no selection was accepted.", {
               category: "host-observation", reasonCode: error.code,
               ...(typeof observationReasonCode === "string" ? { observationReasonCode } : {}),
             });
@@ -701,7 +708,9 @@ export function createMcpServer(
               category: "configuration", phase: error.phase, reasonCode: error.message,
             });
           } else {
-            result = apiError("MCP_UNAVAILABLE", "Skill classification configuration or runtime is unavailable; no selection was accepted.");
+            result = apiError("MCP_UNAVAILABLE", "Skill classification configuration or runtime is unavailable; no selection was accepted.", {
+              reason: failureReason(error).reason ?? "INTERNAL_FAILURE", cause: failureContext(error),
+            });
           }
         }
       }
@@ -804,7 +813,7 @@ export function createMcpServer(
         case "prepare_state_cleanup":
           result = cleanup
             ? cleanup.prepare(args)
-            : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
+            : apiError("MCP_UNAVAILABLE", "State cleanup is unavailable because its local stores did not initialize.", { reason: "STATE_CLEANUP_UNAVAILABLE" });
           break;
         case "update_session_status":
         case "list_session_status":
@@ -845,7 +854,7 @@ export function createMcpServer(
         case "execute_state_cleanup":
           result = cleanup
             ? cleanup.execute(args)
-            : invalidInput("State cleanup is unavailable because its local stores did not initialize.");
+            : apiError("MCP_UNAVAILABLE", "State cleanup is unavailable because its local stores did not initialize.", { reason: "STATE_CLEANUP_UNAVAILABLE" });
           break;
         default:
           result = {

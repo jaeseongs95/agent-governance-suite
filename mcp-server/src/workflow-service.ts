@@ -47,6 +47,7 @@ import { assertReceiptPolicy, jsonPointer } from "./receipt-policy.js";
 import { loadStageOutputFile } from "./stage-output-file.js";
 import { assertCsStageBundle } from "./cs-engineering-validator.js";
 import { assertEngineeringStageBundle } from "./engineering-practices-validator.js";
+import { contractFailure } from "./failure-diagnostics.js";
 import {
   clone,
   createPlanSigningKey,
@@ -1963,12 +1964,8 @@ export class WorkflowService {
     }
   }
 
+  /** A non-contract failure is a server failure, never the caller's invalid input (contractFailure). */
   private toErrorBody(error: unknown): ContractErrorBody {
-    if (error instanceof WorkflowContractError) return error.toBody();
-    return {
-      code: "INVALID_INPUT",
-      message: "Workflow request could not be processed.",
-      details: { cause: error instanceof Error ? error.message : String(error) },
-    };
+    return contractFailure(error).toBody();
   }
 }

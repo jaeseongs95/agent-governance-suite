@@ -3,7 +3,7 @@ import { DatabaseSync } from "node:sqlite";
 import { writeSync } from "node:fs";
 import { failureContext, producerFailureReason, retainFailureSecondary, tagProducerFailure } from "./failure-diagnostics.js";
 
-import type { KoreanProseGlossaryLookupRequestV1, KoreanProseGlossaryLookupResultV1 } from "../../contracts/types.js";
+import { WorkflowContractError, type KoreanProseGlossaryLookupRequestV1, type KoreanProseGlossaryLookupResultV1 } from "../../contracts/types.js";
 
 export const KOREAN_PROSE_GLOSSARY_MAX_SOURCE_LENGTH = 200_000;
 export const KOREAN_PROSE_GLOSSARY_MAX_MATCHES = 256;
@@ -61,7 +61,7 @@ export class SqliteKoreanProseGlossary implements KoreanProseGlossaryGateway {
   lookup(request: KoreanProseGlossaryLookupRequestV1): KoreanProseGlossaryLookupResultV1 {
     const sourceDigest = sha256(request.sourceText);
     if (request.schemaVersion !== "1.0.0" || !DIGEST.test(request.sourceDigest) || request.sourceDigest !== sourceDigest) {
-      throw new Error("The caller sourceDigest does not match sourceText.");
+      throw new WorkflowContractError("INVALID_INPUT", "The caller sourceDigest does not match sourceText.");
     }
     if (request.sourceText.length > KOREAN_PROSE_GLOSSARY_MAX_SOURCE_LENGTH) {
       return emptyResult("limit-exceeded", sourceDigest, null, "GLOSSARY_MATCH_LIMIT_EXCEEDED");

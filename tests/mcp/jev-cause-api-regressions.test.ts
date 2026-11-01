@@ -156,7 +156,7 @@ describe("JEV 원인과 권한의 실제 MCP 응답", () => {
   it("API69 결속: 무효 관측의 정확한 원인만 반환하고 토큰 원문은 숨긴다", async () => {
     const h = await harness();
     const reply = await h.call<Advice>("classify_skills", {...input(), [HOST_ATTESTATION_FIELD]: "PRIVATE_HOST_TOKEN_SENTINEL"}, false);
-    expect(reply).toMatchObject({ok: false, data: null, error: {code: "INVALID_INPUT", details: {category: "host-observation", reasonCode: "BINDING_INVALID"}}});
+    expect(reply).toMatchObject({ok: false, data: null, error: {code: "BINDING_INVALID", details: {category: "host-observation", reasonCode: "BINDING_INVALID"}}});
     expect(JSON.stringify(reply)).not.toContain("PRIVATE_HOST_TOKEN_SENTINEL");
     expect(h.vendor.availability).not.toHaveBeenCalled(); expect(h.reserve).not.toHaveBeenCalled(); expect(h.vendor.invoke).not.toHaveBeenCalled();
   });

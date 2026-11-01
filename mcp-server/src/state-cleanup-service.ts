@@ -10,6 +10,7 @@ import type {
   StateCleanupReceiptV1,
 } from "../../contracts/types.js";
 import { WorkflowContractError } from "../../contracts/types.js";
+import { contractFailure } from "./failure-diagnostics.js";
 import type { SqliteContinuityStore, ContinuityCleanupPreview } from "./continuity-store.js";
 import type { ContractValidator } from "./schema-validator.js";
 import type { SqliteWorkflowStore, WorkflowCleanupPreview } from "./sqlite-workflow-store.js";
@@ -53,10 +54,8 @@ function databaseIdentity(databasePath: string): string {
 }
 
 function apiError(error: unknown): ApiResultV1<never> {
-  const normalized = error instanceof WorkflowContractError
-    ? error
-    : new WorkflowContractError("INVALID_INPUT", error instanceof Error ? error.message : String(error));
-  return { schemaVersion: "1.0.0", ok: false, data: null, error: normalized.toBody() };
+  // A non-contract failure is a server failure, never the caller's invalid input.
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: contractFailure(error).toBody() };
 }
 
 export class StateCleanupService {

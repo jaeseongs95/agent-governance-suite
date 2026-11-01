@@ -83,7 +83,8 @@ describe("AL09 server boundary regressions", () => {
         contextSources: [], explicitSkillIds: [], ruleRequiredSkillIds: [], vendorContext: { vendorId: "fixture", reference: "fixture" },
         publicSynthetic: true, _hostAttestation: "malformed",
       });
-      expect(payload(reply).error?.code).toBe("INVALID_INPUT");
+      // D0070: the observation error keeps its own public code instead of INVALID_INPUT.
+      expect(payload(reply).error?.code).toBe("BINDING_INVALID");
       expect(payload(reply).error?.details).toMatchObject({ category: "host-observation", reasonCode: "BINDING_INVALID" });
       expect(calls).toBe(0);
     }, { classification, hostAttestation });
