@@ -10,6 +10,7 @@ import { producerFailureReason } from "../../mcp-server/src/failure-diagnostics.
 import type { HostWatch } from "../../mcp-server/src/host-process-watch.js";
 import { closeSessionMessaging, runSessionMessageOperation, type sessionMessageRequest } from "../../mcp-server/src/session-message-client.js";
 import { dispatchSessionMessageOperation } from "../../mcp-server/src/session-message-operations.js";
+import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import { runSessionMessageRelay } from "../../mcp-server/src/session-message-relay.js";
 import { RELAY_START_GRACE_MS, SessionMessageStore, type WakeAttempt, type WakeReservation } from "../../mcp-server/src/session-message-store.js";
 import type { WakeDispatchOutcome, WakeDispatchPort } from "../../mcp-server/src/session-message-wake-port.js";
@@ -463,4 +464,159 @@ describe("a relay whose host PID names no process (synthetic hosts, R5)", () => 
     expect(store.liveRelay(target, transport)).toBeNull();
     expect(store.presence(target)).toMatchObject({ state: "ended", endReason: "host-process-ended" });
   }, 30_000);
+});
+
+// Claude Code ends an async SessionStart hook by sending SIGTERM to the hook's process group, which holds the relay
+// (measured on Claude Code 2.1.314, Linux). The relay must release its lease and end its birth before it exits.
+describe.skipIf(process.platform === "win32")("a relay stopped with SIGTERM while its host still runs (R5)", () => {
+  it("releases its lease and ends its birth, then exits with code 0", async () => {
+    const state = directory();
+    const file = path.join(state, "session-messages.sqlite3");
+    const host = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore" });
+    try {
+      const store = open(file, Date.now);
+      store.startPresence({ ...target, instanceId: "birth-term", transport, wakeVisibility: "none", canWakeSilently: false,
+        deliveryCapabilities: { supportedInjection: [], idleWake: "none" }, hostPid: host.pid! });
+      const relayId = store.grantRelay({ ...target, transport, instanceId: "birth-term", codeDigest: null, hostPid: host.pid! }).relayId!;
+      store.close();
+      const script = path.join(state, "relay-child.mjs");
+      const relay = new URL("../../mcp-server/src/session-message-relay.ts", import.meta.url).href;
+      const client = new URL("../../mcp-server/src/session-message-client.ts", import.meta.url).href;
+      writeFileSync(script, [
+        `const { runSessionMessageRelay } = await import(${JSON.stringify(relay)});`,
+        `const { sessionMessageRequest } = await import(${JSON.stringify(client)});`,
+        "const [hostPid, relayId] = process.argv.slice(2);",
+        "let ticked = false;",
+        "const request = async (operation, payload) => {",
+        "  const result = await sessionMessageRequest(operation, payload);",
+        "  if (operation === 'relay-tick' && !ticked) { ticked = true; process.send({ alive: result.alive }); }",
+        "  return result;",
+        "};",
+        "const port = { capabilities: { supportedInjection: [], idleWake: 'none' }, resendBaseMs: 600000, dispatch: async () => ({ result: 'unknown' }) };",
+        `await runSessionMessageRelay({ ...${JSON.stringify(target)}, instanceId: 'birth-term', transport: ${JSON.stringify(transport)},`,
+        "  parentPid: Number(hostPid), relayId }, port, { request });",
+        "process.disconnect();",
+      ].join("\n"), "utf8");
+      const child = fork(script, [String(host.pid), relayId], { execArgv: ["--import", "tsx"], silent: true,
+        env: { ...process.env, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: state } });
+      let stderr = "";
+      child.stderr!.on("data", (chunk: Buffer) => { stderr += chunk.toString("utf8"); });
+      const exited = once(child, "exit");
+      const [first] = await once(child, "message") as [{ alive: boolean }];
+      expect(first, stderr).toEqual({ alive: true });
+      child.kill("SIGTERM");
+      expect(await exited, stderr).toEqual([0, null]);
+      const after = open(file, Date.now);
+      expect(after.liveRelay(target, transport)).toBeNull();
+      expect(after.presence(target)).toMatchObject({ state: "ended", endReason: "relay-stop-requested" });
+    } finally {
+      host.kill();
+    }
+  }, 30_000);
+});
+
+// SessionEnd ends the birth it belongs to (R5 on Windows: the async hook tree is terminated with no signal, so the relay
+// never releases; R10: `/clear` keeps the host process, so the old session's relay keeps serving it). The hook runs in
+// this process: its host is process.ppid and its start bound is this process's own start.
+describe("the host's SessionEnd ends exactly its own birth (R5 Windows, R10 /clear)", () => {
+  const EARLIER = process.platform === "linux" ? "1" : "2000-01-01T00:00:00.000Z";
+  const LATER = process.platform === "linux" ? "99999999999999" : "2999-01-01T00:00:00.000Z";
+  const none = { supportedInjection: [], idleWake: "none" as const };
+  const hookStart = Math.floor(performance.timeOrigin);
+  function setup() {
+    const state = directory();
+    vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", state);
+    return open(path.join(state, "session-messages.sqlite3"), Date.now);
+  }
+  /** A served birth of `sessionId`: started at `startedAt`, granted and (when `hostStart` is given) bound by its relay's tick. */
+  function birth(store: SessionMessageStore, sessionId: string, instanceId: string, options: { hostPid?: number; hostStart?: string | null; startedAt?: number } = {}) {
+    const session = { host: "claude-code", sessionId };
+    store.startPresence({ ...session, instanceId, transport, wakeVisibility: "none", canWakeSilently: false, deliveryCapabilities: none,
+      hostPid: options.hostPid ?? process.ppid }, options.startedAt ?? hookStart - SECOND);
+    const relayId = store.grantRelay({ ...session, transport, instanceId, codeDigest: null, hostPid: options.hostPid ?? process.ppid }).relayId!;
+    const hostStart = options.hostStart === undefined ? EARLIER : options.hostStart;
+    expect(store.relayTick({ ...session, transport, instanceId, relayId, includePending: false, ...(hostStart === null ? {} : { hostStart }) }))
+      .toMatchObject({ alive: true });
+    return { session, relayId };
+  }
+  const sessionEnd = (sessionId: string, reason: string) =>
+    handleSessionMessageHook({ hook_event_name: "SessionEnd", session_id: sessionId, reason }, "claude-code");
+
+  it("a relay that vanished without a release (Windows tree termination): SessionEnd ends the birth and drops its lease", async () => {
+    const store = setup();
+    const { session } = birth(store, "session-end-killed", "birth-killed");
+    await expect(sessionEnd(session.sessionId, "prompt_input_exit")).resolves.toEqual({});
+    expect(store.presence(session)).toMatchObject({ state: "ended", endReason: "host-session-ended" });
+    expect(store.liveRelay(session, transport)).toBeNull();
+    expect(store.database.prepare("SELECT count(*) AS count FROM relay_leases").get()).toEqual({ count: 0 });
+  });
+
+  it("/clear in the same host process: the old session ends and its still-running relay ends normally on its next tick", async () => {
+    const store = setup();
+    const { session, relayId } = birth(store, "session-end-cleared", "birth-cleared");
+    const failures = vi.spyOn(console, "error");
+    const operations: string[] = [];
+    const request = (async (operation: string, payload: Record<string, unknown>) => {
+      operations.push(operation);
+      return dispatchSessionMessageOperation(store, operation, payload);
+    }) as typeof sessionMessageRequest;
+    const delays: Array<() => void> = [];
+    const delay = (_milliseconds: number, stop: Promise<void>) => Promise.race([new Promise<void>(resolve => { delays.push(resolve); }), stop]);
+    let exit!: (reason: string) => void;
+    const watch = (): HostWatch => ({ bound: Promise.resolve(EARLIER), exited: new Promise<string>(resolve => { exit = resolve; }), close: () => {} });
+    const port: WakeDispatchPort = { capabilities: none, resendBaseMs: 600_000, dispatch: vi.fn() };
+    const relay = runSessionMessageRelay({ ...session, instanceId: "birth-cleared", transport, parentPid: process.ppid, relayId }, port, { request, watch, delay });
+    try {
+      await new Promise<void>(resolve => setImmediate(resolve));
+      expect(operations).toEqual(["relay-tick"]);
+      await expect(sessionEnd(session.sessionId, "clear")).resolves.toEqual({});
+      expect(store.presence(session)).toMatchObject({ state: "ended", endReason: "host-session-ended" });
+      delays.shift()?.();
+      await new Promise<void>(resolve => setImmediate(resolve));
+      expect(operations).toEqual(["relay-tick", "relay-tick", "release-relay"]);
+    } finally {
+      exit?.("HOST_PROCESS_ENDED");
+      await relay;
+    }
+    // The first end stays; the relay records no failure for a birth its host ended.
+    expect(store.presence(session)).toMatchObject({ state: "ended", endReason: "host-session-ended" });
+    expect(failures.mock.calls.flat().join(" ")).not.toContain("relay-failure");
+  });
+
+  it("a late SessionEnd ends no birth that is not this hook's host's: another process, a later birth, a later generation, an unbound birth", async () => {
+    const store = setup();
+    const cases = [
+      birth(store, "late-other-process", "birth-other", { hostPid: process.ppid + 1 }), // resumed in another process
+      birth(store, "late-reused-pid", "birth-reused", { hostStart: LATER }), // the PID now names a process born after the hook
+      birth(store, "late-newer-generation", "birth-newer", { startedAt: hookStart + 60 * SECOND }), // started after the hook
+      birth(store, "late-unbound", "birth-unbound", { hostStart: null }), // the relay never bound the host birth
+    ];
+    for (const { session } of cases) {
+      await expect(sessionEnd(session.sessionId, "other")).resolves.toEqual({});
+      expect(store.presence(session), session.sessionId).toMatchObject({ state: "online", endedAt: null });
+      expect(store.liveRelay(session, transport), session.sessionId).not.toBeNull();
+    }
+  });
+
+  // Binding's caller model: a hook payload with agent_id is a child of the root session (builtin-hook-host-adapters).
+  // A child's SessionEnd shares the root's session_id and host process, so only the actor check keeps it from ending
+  // the root's birth; the root's own SessionEnd then ends that same birth.
+  it("a child's SessionEnd does not end its root session's birth", async () => {
+    const store = setup();
+    const { session } = birth(store, "session-end-child", "birth-root");
+    await expect(handleSessionMessageHook({ hook_event_name: "SessionEnd", session_id: session.sessionId, agent_id: "child-agent", reason: "other" },
+      "claude-code")).resolves.toEqual({});
+    expect(store.presence(session)).toMatchObject({ state: "online", endedAt: null });
+    expect(store.liveRelay(session, transport)).not.toBeNull();
+    await expect(sessionEnd(session.sessionId, "other")).resolves.toEqual({});
+    expect(store.presence(session)).toMatchObject({ state: "ended", endReason: "host-session-ended" });
+  });
+
+  it("after the relay's own release, SessionEnd changes nothing", async () => {
+    const store = setup();
+    const { session, relayId } = birth(store, "session-end-released", "birth-released");
+    expect(store.releaseRelay({ ...session, transport, relayId, instanceId: "birth-released", reason: "relay-stop-requested" })).toBe(true);
+    await expect(sessionEnd(session.sessionId, "other")).resolves.toEqual({});
+    expect(store.presence(session)).toMatchObject({ state: "ended", endReason: "relay-stop-requested" });
+  });
 });

@@ -111,8 +111,9 @@ CREATE TABLE relay_leases (
 | 연산 | 호출자 | 한 transaction 안의 규칙 |
 |---|---|---|
 | `grant-relay` | hook (SessionStart, 경계 복구) | presence가 online이어야 한다. `presence.host_pid`가 있는데 hook이 찾은 호스트 PID와 다르면 거절한다(`HOST_MISMATCH`). 기존 lease가 같은 instance이고 아직 live이며, 코드 digest가 같거나 grant한 지 `RELAY_START_GRACE_MS`(30초)가 안 됐으면 거절한다(`RELAY_ALIVE`). 그 밖에는 새 `relay_id`로 upsert하고 `lease_until = now + 30s`로 둔다. |
-| `relay-tick` | relay, 5초마다 | `relay_id`·instance가 현재 행과 같고 presence가 online일 때만 lease(15초)와 presence(20초)를 갱신한다. 처음 보낸 `hostStart`는 `presence.host_start`가 비어 있으면 기록한다. 이미 있는데 값이 다르면 `alive:false`를 돌려준다. 반환은 `{alive, count, hostBound}`다. |
+| `relay-tick` | relay, 5초마다 | `relay_id`·instance가 현재 행과 같고 presence가 online일 때만 lease(15초)와 presence(20초)를 갱신한다. 처음 보낸 `hostStart`는 `presence.host_start`가 비어 있으면 기록한다. 이미 있는데 값이 다르면 `alive:false`를 돌려준다. 자기 instance presence가 이미 끝났으면 `ended:true`를 더해 돌려주고, relay는 이를 실패가 아닌 정상 종료로 처리한다. 반환은 `{alive, count, hostBound, ended?}`다. |
 | `release-relay` | relay 종료, 호스트 사망 | 자기 `relay_id` 행만 지우고 자기 instance presence를 끝낸다. |
+| `presence-end-host` | hook (SessionEnd) | 현재 presence 세대가 이 hook의 호스트 세대일 때만 끝내고 그 세대의 lease를 지운다. 조건은 셋이다. `presence.host_pid`가 hook의 호스트 PID와 같다. relay가 묶은 `presence.host_start`가 있고 hook 자신의 시작(`hostAliveAtBound`, 감시자와 같은 경계)보다 늦지 않다. 세대의 `started_at`이 hook 시작보다 늦지 않다. 먼저 끝낸 쪽만 남는다(`endPresence`는 이미 끝난 세대를 바꾸지 않는다). |
 | `reserve-wake`·`start-wake` | relay | 기존 `wakeBindingCurrent`(S:1226-1233)에 조건 `presence.host_start IS NOT NULL`을 더한다. 호스트를 확인하지 않은 relay는 울리지 않는다. |
 
 - **두 relay가 함께 울리지 못한다.** 새 grant가 나오면 옛 relay의 `relay_id`는 다음 tick에서 맞지 않는다. 그러면 옛 relay는 끝난다. 그 사이에 옛 relay가 `start-wake`를 불러도 `wakeBindingCurrent`의 relayId 비교에서 실패한다. 이미 start CAS를 통과한 시도는 행 상태가 `started`라 활성 슬롯을 차지한다(I5). 그래서 새 relay는 그 시도가 끝날 때까지 새로 예약하지 못한다(I3 유지).
@@ -244,3 +245,10 @@ Windows 시험 서버(Windows Server 2022, node 24.22.2, PowerShell 5.1)에서 �
 | D. `csc.exe`로 만든 OpenProcess/WaitForSingleObject 도우미 | 된다. | Private 약 9.5 MB. 그러나 실행 파일을 빌드·배포해야 한다. |
 
 Node 24 공식 문서에는 임의 PID의 handle을 잡거나 종료를 기다리는 API가 없다(`node:ffi` 없음). 그래서 node만으로는 불가능하다. 결정: 내장 도구만 쓰는 A를 쓴다. 비용은 relay당 약 52 MB다. 이 비용이 문제가 되면 D로 바꾼다(`host-process-watch.ts`의 `ponytail:` 주석). 감시자는 5초마다 relay PID를 확인하고 relay가 없으면 끝난다. 그래서 relay가 비정상 종료해도 감시자가 남지 않는다.
+
+### 11.4 SessionEnd가 자기 세대를 끝낸다 (R5 Windows·R10, 2026-11-02)
+- 실측: Linux(Claude Code 2.1.314)는 세션 종료 때 비동기 SessionStart hook의 프로세스 그룹에 SIGTERM을 보낸다. relay는 SIGTERM을 받아 release한다(a9f09a51). Windows는 신호 없이 hook 트리를 끝낸다. 그래서 relay가 release하지 못하고 presence가 lease 만료까지 online으로 남다가 unreachable이 된다. `/clear`는 호스트 프로세스를 유지한다. 그래서 이전 세션 ID의 relay가 계속 tick하고 그 세션이 online으로 남는다(D-0351).
+- 결정: SessionEnd hook이 `presence-end-host`로 현재 세대를 끝낸다. hook payload에는 instance가 없다. 그래서 세대가 이 hook의 호스트 출생인지를 PID와 출생 경계로 확인한다. 두 살아 있는 프로세스는 PID를 나눠 갖지 않는다. 그래서 같은 PID이고 출생이 hook 시작보다 늦지 않으면 같은 호스트다. 다른 프로세스에서 resume한 새 세대는 PID나 출생이 다르므로 끝내지 않는다. hook보다 나중에 시작한 세대도 끝내지 않는다. 같은 프로세스의 `/clear`는 이전 세션 ID의 세대와 일치하므로 끝낸다.
+- hook은 OS 신원을 조회하지 않는다. SessionEnd 예산이 1.5초이고(Claude Code hooks 문서, 플러그인 hook의 timeout은 예산을 늘리지 않는다), Windows의 출생 조회는 PowerShell이 필요하기 때문이다. 대신 relay가 이미 묶은 `host_start`를 hook 자신의 시작 경계와 비교한다(`startNotAfter`). 묶이지 않은 세대는 끝내지 않고 lease 만료에 맡긴다.
+- compact: Claude Code 문서의 SessionEnd `reason`은 `clear`·`resume`·`logout`·`prompt_input_exit`·`other`이며 compact는 SessionStart(`compact`)만 보낸다. 그래서 reason으로 거르지 않는다. 실호스트 확인 결과는 구현 보고에 적는다.
+- relay의 release 경로는 그대로다. 둘 중 먼저 끝낸 쪽의 `end_reason`이 남는다. SessionEnd가 먼저면 relay는 다음 tick에서 `ended:true`를 받고 실패 기록 없이 끝난다.

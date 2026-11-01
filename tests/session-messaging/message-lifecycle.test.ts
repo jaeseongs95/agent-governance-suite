@@ -87,7 +87,8 @@ it("stale generation, ended presence, transport, relay, host birth and expired l
       nowMs = 21_000;
     }
     const before = leases(store);
-    expect(store.relayTick(input, nowMs), failure).toEqual({ alive: false, count: 0, hostBound: false });
+    // An ended birth tells its relay so; the relay then ends without a failure record.
+    expect(store.relayTick(input, nowMs), failure).toEqual({ alive: false, count: 0, hostBound: false, ...(failure === "ended" ? { ended: true } : {}) });
     expect(leases(store), failure).toBe(before);
   }
 });

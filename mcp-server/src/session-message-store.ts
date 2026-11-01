@@ -5,6 +5,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { types as utilTypes } from "node:util";
 import { retainFailureSecondary, tagProducerFailure } from "./failure-diagnostics.js";
+import { startNotAfter } from "./host-process-watch.js";
 import type { SharedModuleContext, SqlDatabase } from "../../runtime/unified-state/shared-connection.mjs";
 
 import { isBoundedIdentity, SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
@@ -1096,10 +1097,35 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   /**
+   * The host's own SessionEnd ends the current birth it serves (R5 Windows forced end, R10 `/clear`). The hook payload
+   * carries no instance, so the birth must be this hook's host: the reported host PID matches, the relay bound a host
+   * start no later than the hook's own start (the watcher's bound; two live processes never share a PID), and the
+   * birth started before the hook. A late SessionEnd therefore cannot end a newer resume generation of another process
+   * or a generation started after it. Ends and drops that birth's lease together; the first of this and the relay's
+   * release wins (endPresence keeps an existing end).
+   */
+  endHostSession(input: SessionIdentity & { hostPid: number; hostAliveAt: string; hookStartedAt: number; reason: string }, nowMs = AUTHORITY_NOW): boolean {
+    boundedIdentity(input);
+    if (!Number.isSafeInteger(input.hostPid) || input.hostPid < 1 || typeof input.hostAliveAt !== "string" || input.hostAliveAt.length > 64
+      || !Number.isSafeInteger(input.hookStartedAt) || input.hookStartedAt < 0 || !input.reason || input.reason.length > 100) {
+      throw new Error("Invalid host session end.");
+    }
+    if (!this.inTransaction) return this.transaction(() => this.endHostSession(input, nowMs));
+    nowMs = this.time(nowMs);
+    const current = this.presence(input, nowMs);
+    if (current.instanceId === null || current.state === "ended" || Date.parse(current.startedAt!) > input.hookStartedAt) return false;
+    const host = this.presenceHost(input, current.instanceId);
+    if (!host || host.pid !== input.hostPid || host.start === null || !startNotAfter(host.start, input.hostAliveAt)) return false;
+    this.database.prepare("DELETE FROM relay_leases WHERE host = ? AND session_id = ? AND instance_id = ?")
+      .run(input.host, input.sessionId, current.instanceId);
+    return this.endPresence(input, input.reason, current.instanceId, nowMs);
+  }
+
+  /**
    * One relay cycle (3.3). Only the lease holder of the current online birth renews the lease and the birth. The first
    * tick that carries the watcher's hostStart binds the birth; a different stored birth fences the relay.
    */
-  relayTick(input: SessionIdentity & { transport: string; relayId: string; instanceId: string; includePending: boolean; hostStart?: string }, nowMs = AUTHORITY_NOW): { alive: boolean; count: number; hostBound: boolean } {
+  relayTick(input: SessionIdentity & { transport: string; relayId: string; instanceId: string; includePending: boolean; hostStart?: string }, nowMs = AUTHORITY_NOW): { alive: boolean; count: number; hostBound: boolean; ended?: true } {
     boundedIdentity(input);
     if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128 || !input.instanceId || input.instanceId.length > 128
       || typeof input.includePending !== "boolean" || (input.hostStart !== undefined && (!input.hostStart.trim() || input.hostStart.length > 200))) {
@@ -1109,6 +1135,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     nowMs = this.time(nowMs);
     const dead = { alive: false, count: 0, hostBound: false };
     const presence = this.presence(input, nowMs);
+    // Its birth was ended (the host's SessionEnd): a normal end for the relay, not a lost lease.
+    if (presence.state === "ended" && presence.instanceId === input.instanceId) return { ...dead, ended: true };
     const lease = this.database.prepare("SELECT relay_id, instance_id, lease_until FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ?")
       .get(input.host, input.sessionId, input.transport) as { relay_id: string; instance_id: string; lease_until: string } | undefined;
     // An expired lease is dead whether or not prune already removed it; the relay ends and a new grant takes over.

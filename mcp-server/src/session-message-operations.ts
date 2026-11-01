@@ -13,8 +13,8 @@ import { readRelayCodeDigest, relayCodeDigest } from "./relay-code-identity.js";
  */
 export const SESSION_MESSAGE_OPERATIONS = ["prepare", "send", "claim", "claim-host-wake", "observe-native-input", "claim-deferred",
   "claim-turn-end", "clear-deferred", "acknowledge", "status", "peer-wait", "pending", "ensure-relay", "grant-relay", "release-relay",
-  "relay-tick", "presence-start", "presence-heartbeat", "presence-end", "presence", "list-presence", "list-current-presence", "reserve-wake",
-  "start-wake", "record-wake-outcome", "wake-status", "consume-wake"] as const;
+  "relay-tick", "presence-start", "presence-heartbeat", "presence-end", "presence-end-host", "presence", "list-presence", "list-current-presence",
+  "reserve-wake", "start-wake", "record-wake-outcome", "wake-status", "consume-wake"] as const;
 
 function identity(value: unknown): SessionIdentity {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Session identity is required.");
@@ -264,6 +264,8 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
     case "presence-start": return presenceStart(store, payload);
     case "presence-heartbeat": return { alive: store.heartbeatPresence(identity(payload.target), string(payload.instanceId, "instanceId")) };
     case "presence-end": return { ended: store.endPresence(identity(payload.target), string(payload.reason, "reason"), string(payload.instanceId, "instanceId")) };
+    case "presence-end-host": return { ended: store.endHostSession({ ...identity(payload.target), hostPid: integer(payload.hostPid, "hostPid"),
+      hostAliveAt: string(payload.hostAliveAt, "hostAliveAt"), hookStartedAt: integer(payload.hookStartedAt, "hookStartedAt"), reason: string(payload.reason, "reason") }) };
     case "presence": return { presence: store.presence(identity(payload.target)) };
     case "list-presence": {
       if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > SESSION_PRESENCE_LIST_MAX_TARGETS) {
@@ -272,8 +274,7 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
       const targets: SessionIdentity[] = payload.targets.map(identity);
       const result = { sessions: store.listPresence(undefined, targets, installedRelayCode()) };
       // Refuse explicitly rather than send a reply a bounded consumer would drop.
-      if (Buffer.byteLength(`${JSON.stringify({ ok: true, data: result })}
-`, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
+      if (Buffer.byteLength(`${JSON.stringify({ ok: true, data: result })}\n`, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
         throw new Error("The presence list exceeds the response limit; request fewer targets.");
       }
       return result;

@@ -80,6 +80,15 @@ export async function dispatchManagedWake(options: Pick<RelayOptions, "host" | "
 }
 
 const HOST_ENDED = new Set(["HOST_PROCESS_ENDED", "HOST_PROCESS_GONE"]);
+/**
+ * The owner's stop request. Claude Code ends an async SessionStart hook by sending SIGTERM to the hook's process group,
+ * which holds this relay, and SIGKILL about 2 s later (measured, Claude Code 2.1.314 Linux). Node's default SIGTERM
+ * action skips `finally`, so without this the birth stays online until its lease expires and reads as unreachable.
+ */
+const STOP_SIGNAL = "SIGTERM";
+const STOPPED = "RELAY_STOP_REQUESTED";
+/** Its birth was ended by the host's SessionEnd (store.endHostSession); the relay's end is then normal. */
+const BIRTH_ENDED = "RELAY_BIRTH_ENDED";
 
 /**
  * Serves one granted lease until the host ends or the lease is fenced. Renewal ticks every LOOP_MS and is never queued
@@ -99,6 +108,9 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
   let hostSent = false;
   let dispatching: Promise<void> | null = null;
   let watcher: HostWatch | undefined;
+  const stopRequested = () => stop(STOPPED);
+  // `on`, not `once`: a repeated SIGTERM during the release must not fall back to the default action.
+  process.on(STOP_SIGNAL, stopRequested);
   try {
     try { watcher = (dependencies.watch ?? watchHostProcess)(options.parentPid, options.hostAliveAt); }
     catch (error) { stop(producerFailureReason(error) ?? "HOST_WATCH_FAILED"); }
@@ -110,11 +122,11 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
     while (ended === null) {
       try {
         const binding = hostStart !== undefined && !hostSent ? hostStart : undefined;
-        const tick = await request<{ alive: boolean; count: number; hostBound: boolean }>("relay-tick", {
+        const tick = await request<{ alive: boolean; count: number; hostBound: boolean; ended?: boolean }>("relay-tick", {
           target, transport: options.transport, relayId: options.relayId, instanceId: options.instanceId,
           includePending: port.capabilities.idleWake !== "none", ...(binding !== undefined ? { hostStart: binding } : {}),
         });
-        if (!tick.alive) { stop(binding !== undefined ? "RELAY_HOST_BIRTH_MISMATCH" : "RELAY_LEASE_LOST"); break; }
+        if (!tick.alive) { stop(tick.ended === true ? BIRTH_ENDED : binding !== undefined ? "RELAY_HOST_BIRTH_MISMATCH" : "RELAY_LEASE_LOST"); break; }
         if (binding !== undefined) hostSent = true;
         if (port.capabilities.idleWake === "none") observation?.record("none-skip");
         else if (tick.count > 0 && tick.hostBound && dispatching === null) {
@@ -130,15 +142,18 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
   } finally {
     if (dispatching) await dispatching;
     watcher?.close();
-    const reason = ended ?? "RELAY_ENDED";
-    let normalEnd = HOST_ENDED.has(reason);
+    const reason: string = ended ?? "RELAY_ENDED";
+    const hostEnded = HOST_ENDED.has(reason);
+    let normalEnd = hostEnded || reason === STOPPED || reason === BIRTH_ENDED;
     if (!normalEnd) reportRelayFailure("run", producerFailure(reason, "The relay ended before its host."));
     try {
       await request("release-relay", { target, transport: options.transport, relayId: options.relayId, instanceId: options.instanceId,
-        reason: normalEnd ? "host-process-ended" : "relay-ended" });
+        reason: hostEnded ? "host-process-ended" : reason === STOPPED ? "relay-stop-requested" : reason === BIRTH_ENDED ? "birth-ended" : "relay-ended" });
     } catch (error) {
       normalEnd = false;
       reportRelayFailure("release", error); // Lease expiry still provides an unreachable fallback.
+    } finally {
+      process.removeListener(STOP_SIGNAL, stopRequested);
     }
     observation?.end(normalEnd);
   }
