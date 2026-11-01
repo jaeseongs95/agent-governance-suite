@@ -229,7 +229,8 @@ describe("D-0048 artifacts and evidence are checked by the server", () => {
   });
 
   it("requires evidence for a required input no planned stage produces", () => {
-    const h = harness([provider({ requiredInputArtifacts: ["external-input"] })]);
+    const h = harness([provider({ requiredInputArtifacts: ["external-input"],
+      inputBindings: [{ targetArtifact: "external-input", sources: ["task:request"], operation: "require-external" }] })]);
     const receipt = running(h);
     const missing = h.service.recordStageResult(result(receipt, "fixture-work"));
     expect(missing.error?.code).toBe("MISSING_EVIDENCE");

@@ -690,7 +690,8 @@ export class WorkflowService {
           "Strict MCP stage execution rejects caller-supplied executionContext.",
         );
       }
-      const result = this.validator.stageResult(rawResult);
+      // A copy: the server adds its own fields, and the caller's object must stay reusable.
+      const result = clone(this.validator.stageResult(rawResult));
       if (result.outputFile && result.output.output !== null) {
         throw new WorkflowContractError("INVALID_INPUT", "output.output must be null when outputFile carries the provider output.");
       }

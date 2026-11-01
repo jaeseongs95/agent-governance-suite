@@ -358,7 +358,7 @@ describe("SqliteWorkflowStore", () => {
 
     const migrated = new DatabaseSync(databasePath);
     try {
-      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(5);
+      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(6);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM plugin_update_state").get() as { count: number }).count).toBe(1);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name = 'execution_observation_claims'").get() as { count: number }).count).toBe(1);
     } finally {
@@ -366,7 +366,7 @@ describe("SqliteWorkflowStore", () => {
     }
   });
 
-  it("migrates an active v2 workflow to v5 and preserves receipt updates", async () => {
+  it("migrates an active v2 workflow to v6, closing it as blocked under the pre-3.0 gate contract", async () => {
     const databaseDirectory = await mkdtemp(join(tmpdir(), "skill-suite-v2-migration-"));
     temporaryDirectories.push(databaseDirectory);
     const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
@@ -427,14 +427,15 @@ describe("SqliteWorkflowStore", () => {
 
     const store = openSqliteStore(databasePath);
     const { service } = await createService(skills, store);
-    expect(service.getWorkflowStatus(activeReceipt.runId).data).toMatchObject({ state: "running", revision: 0 });
-    expect(service.abortWorkflow(activeReceipt.runId, 0).data).toMatchObject({ state: "blocked", revision: 1 });
-    expect(service.getWorkflowStatus(activeReceipt.runId).data).toMatchObject({ state: "blocked", revision: 1 });
+    const migratedRun = service.getWorkflowStatus(activeReceipt.runId).data!;
+    expect(migratedRun).toMatchObject({ state: "blocked", revision: 1 });
+    expect(migratedRun.blockers).toContain("pre-3.0-gate-contract");
+    expect(service.abortWorkflow(activeReceipt.runId, 1).error?.code).toBe("INVALID_TRANSITION");
     closeSqliteStore(store);
 
     const migrated = new DatabaseSync(databasePath);
     try {
-      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(5);
+      expect((migrated.prepare("PRAGMA user_version").get() as { user_version: number }).user_version).toBe(6);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM convergence_roots").get() as { count: number }).count).toBe(0);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM workflow_attempt_links").get() as { count: number }).count).toBe(0);
       expect((migrated.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name = 'execution_observation_claims'").get() as { count: number }).count).toBe(1);
@@ -449,7 +450,7 @@ describe("SqliteWorkflowStore", () => {
     const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
     const fixture = new DatabaseSync(databasePath);
     try {
-      fixture.exec("PRAGMA user_version = 6;");
+      fixture.exec("PRAGMA user_version = 7;");
     } finally {
       fixture.close();
     }
