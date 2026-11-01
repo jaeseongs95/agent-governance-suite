@@ -1102,13 +1102,17 @@ describe("AGS-D-0179 correlated issuing observations", () => {
     const f = fixture179();
     const model = "synthetic-opaque-0179";
     const trusted: HostExecutionAdapter = { host: "claude-code", provider: "synthetic", policyRevision: "fixture-0179",
-      modelClassForModel: (value) => value === model ? "deep" : null };
+      modelClassForModel: (value) => value === model ? "deep" : null,
+      resolveModel: (value, provenance = "synthetic:fixture-0179") => value === model ? {
+        host: "claude-code", provider: "synthetic", rawModel: value, resolvedModel: value, modelClass: "deep",
+        minimumReasoningEffort: null, supportedEfforts: ["high"], aliasUsed: false, policyRevision: "fixture-0179", provenance,
+      } : null };
     const old = JSON.stringify({ ...JSON.parse(transcriptLine("toolu_previous", { model })),
       timestamp: new Date(f.options.now().getTime() - 1000).toISOString() });
     const output = handleHostAttestationHook(f.input, new InMemoryWorkflowStore(), { ...f.options, adapter: trusted,
       readText: () => old, readSessionModel: () => null });
     expect(payload179(output)).toMatchObject({ model, eligibility: { modelClass: "deep", provider: "synthetic" } });
-    const unqualified = { ...trusted, modelClassForModel: () => null };
+    const unqualified = { ...trusted, modelClassForModel: () => null, resolveModel: () => null };
     const unqualifiedStore = new InMemoryWorkflowStore();
     const raw = handleHostAttestationHook(f.input, unqualifiedStore, { ...f.options, adapter: unqualified,
       readText: () => old, readSessionModel: () => null });

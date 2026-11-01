@@ -46,9 +46,10 @@ export type UndeterminedModelReasonV1 =
   | "MODEL_NOT_IN_CATALOG"
   | "AMBIGUOUS_PROVIDER_MATCH"
   | "MISSING_PROVIDER_IDENTITY"
+  | "MISSING_MODEL_CAPABILITY"
   | "INVALID_MODEL_IDENTIFIER";
 
-/** Explicit undetermined result when a model ID is absent from or ambiguous across vendor catalogs. */
+/** Explicit undetermined result when trusted model capability cannot be established. */
 export interface UndeterminedModelCapabilityV1 {
   readonly status: "undetermined";
   readonly reason: UndeterminedModelReasonV1;
@@ -143,8 +144,8 @@ export function isReasoningEffort(value: unknown): value is ReasoningEffortV1 {
 }
 
 /**
- * Judges a model identifier against the host adapter's vendor catalogs and returns an explicit
- * resolved capability or an explicit undetermined judgment without inferring vendor from host name.
+ * Uses the trusted adapter capability contract without inferring capability from an identifier
+ * or a legacy class mapping. Observation signing remains independent of qualification.
  */
 export function judgeAdapterModelCapability(
   adapter: HostExecutionAdapter,
@@ -223,30 +224,15 @@ export function judgeAdapterModelCapability(
       provenance,
     };
   }
-  const modelClass = adapter.modelClassForModel(model);
-  if (!modelClass || !MODEL_CLASS.includes(modelClass)) {
-    return {
-      status: "undetermined",
-      reason: "MODEL_NOT_IN_CATALOG",
-      host: adapter.host,
-      rawModel: model,
-      provider: null,
-      modelClass: null,
-      policyRevision: adapter.policyRevision ?? "1.0.0",
-      provenance,
-    };
-  }
+  // 등급 매핑만으로 전체 지원 능력과 정책 버전을 합성하지 않는다.
   return {
-    status: "resolved",
-    provider,
+    status: "undetermined",
+    reason: "MISSING_MODEL_CAPABILITY",
     host: adapter.host,
     rawModel: model,
-    resolvedModel: model,
-    modelClass,
-    minimumReasoningEffort: null,
-    supportedEfforts: REASONING_EFFORT,
-    aliasUsed: false,
-    policyRevision: adapter.policyRevision ?? "1.0.0",
+    provider: null,
+    modelClass: null,
+    policyRevision: adapter.policyRevision ?? null,
     provenance,
   };
 }
