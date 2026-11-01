@@ -7,7 +7,9 @@ const { mode } = JSON.parse(process.argv[2]!) as { mode: "normal" | "no-result" 
 
 if (mode !== "normal") setInterval(() => {}, 1000);
 if (mode === "hold-stdout") {
-  const holder = spawn(process.execPath, ["-e", "setTimeout(() => {}, 60_000)"], { stdio: ["ignore", "inherit", "ignore"], windowsHide: true });
+  // detached: on Windows a non-detached child joins this worker's kill-on-close job and would die with the
+  // worker, closing the pipe the test needs held (CI 41264309723 Windows shard 1).
+  const holder = spawn(process.execPath, ["-e", "setTimeout(() => {}, 60_000)"], { stdio: ["ignore", "inherit", "ignore"], detached: true, windowsHide: true });
   await new Promise(resolve => holder.once("spawn", resolve));
   process.stdout.write(`${JSON.stringify({ holderPid: holder.pid })}\n`);
 }

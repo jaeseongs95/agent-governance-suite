@@ -100,9 +100,12 @@ describe("concurrentClaims stage deadlines", () => {
     } finally {
       if (holderPid !== null) {
         const pid = holderPid;
-        process.kill(pid, "SIGKILL");
+        // An already ended holder (ESRCH) must not replace a failure reported above; the wait below confirms it is gone.
+        try { process.kill(pid, "SIGKILL"); } catch { /* already ended */ }
         await vi.waitFor(() => { expect(() => process.kill(pid, 0)).toThrow(); }, { timeout: SLOW });
       }
+      // Never leave this test's timed-out worker registered for the next test, even when an assertion above failed.
+      try { cleanupIfClaimWorkersFinished(() => undefined); } catch { /* the registration is cleared before this throws */ }
     }
     // Without an earlier failure nothing is kept beside the result.
     expect(claimReapFailure(new Error("unrelated"))).toBeNull();
