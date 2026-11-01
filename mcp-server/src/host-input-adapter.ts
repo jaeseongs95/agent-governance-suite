@@ -200,7 +200,8 @@ export function hookRewriteDecision(host: string): HookHostAdapter["rewriteDecis
 
 export function resolveHookProcessPid(host: string, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>): number | undefined {
   const pid = selectedHookHostAdapter(host)?.processPid(explicitHostPid, hostProcess);
-  if (hostProcess && hostProcess.pid !== pid) return undefined;
+  // A non-positive PID (`--host-pid 0`) names no host process; every caller treats undefined as unresolved.
+  if (pid === undefined || !Number.isInteger(pid) || pid < 1 || (hostProcess && hostProcess.pid !== pid)) return undefined;
   return pid;
 }
 

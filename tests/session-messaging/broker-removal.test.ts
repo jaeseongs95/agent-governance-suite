@@ -124,6 +124,26 @@ describe("CS-1 fencing: a later grant retires the previous relay", () => {
     expect(tick(store, a.instanceId, a.relayId).alive).toBe(false);
     expect(tick(store, a.instanceId, b.relayId!).alive).toBe(true);
   });
+
+  it("an expired lease is dead without any newer grant: the late tick neither renews nor revives it", () => {
+    const clock = { now: T0 };
+    const store = open(path.join(directory(), "session-messages.sqlite3"), () => clock.now);
+    const a = servedBirth(store, "birth-1", digestA);
+    clock.now = T0 + 16 * SECOND; // past RELAY_LEASE_MS (15 s) since the last renewal; the birth itself is still online.
+    expect(store.presence(target).state).toBe("online");
+    expect(tick(store, a.instanceId, a.relayId)).toEqual({ alive: false, count: 0, hostBound: false });
+    expect(store.database.prepare("SELECT relay_id, lease_until FROM relay_leases").all().filter(row => Date.parse(String(row.lease_until)) > clock.now)).toEqual([]);
+  });
+
+  it("a lease whose birth reported no host process binds no host birth on its tick", () => {
+    const store = open(path.join(directory(), "session-messages.sqlite3"), () => T0);
+    store.startPresence({ ...target, instanceId: "birth-unhosted", transport, wakeVisibility: "silent", canWakeSilently: true, deliveryCapabilities: capabilities });
+    const grant = store.grantRelay({ ...target, transport, instanceId: "birth-unhosted", codeDigest: null });
+    expect(grant.relayId).toEqual(expect.any(String));
+    expect(tick(store, "birth-unhosted", grant.relayId!)).toEqual({ alive: true, count: 0, hostBound: false });
+    expect(store.database.prepare("SELECT host_pid, host_start FROM session_presence WHERE instance_id = ?").get("birth-unhosted"))
+      .toEqual({ host_pid: null, host_start: null });
+  });
 });
 
 describe("CS-2 single dispatch: the start CAS admits one dispatch per attempt across connections", () => {
@@ -220,6 +240,23 @@ describe("CS-3 authority time is sampled after the writer lock", () => {
     now += SECOND; store.presence(target);
     expect(begins).toBe(8);
     expect(samples).toEqual(Array.from({ length: begins }, (_, index) => ({ inTransaction: true, transaction: index + 1 })));
+  });
+
+  it("a multi-step operation (presence-start with its grant, peer-wait with its snapshot) is one writer transaction with one clock read", () => {
+    let now = T0;
+    let reads = 0;
+    const store = open(path.join(directory(), "session-messages.sqlite3"), () => { reads++; return now; });
+    let begins = 0;
+    const execute = store.database.exec.bind(store.database);
+    vi.spyOn(store.database, "exec").mockImplementation(sql => { if (sql === "BEGIN IMMEDIATE") begins++; return execute(sql); });
+    reads = 0;
+    const started = dispatchSessionMessageOperation(store, "presence-start", { target, instanceId: "cs3-birth", transport,
+      wakeVisibility: "silent", canWakeSilently: true, supportedInjection: ["peer-wake"], idleWake: "silent", hostPid: HOST_PID }) as { relayId: unknown };
+    expect(started.relayId).toEqual(expect.any(String));
+    expect([begins, reads]).toEqual([1, 1]);
+    now += SECOND;
+    dispatchSessionMessageOperation(store, "peer-wait", { sender, targets: [target], timeoutMs: 60_000 });
+    expect([begins, reads]).toEqual([2, 2]);
   });
 
   it("a clock that goes backwards never lowers the authority time, also for a later store instance", () => {

@@ -83,8 +83,9 @@ describe("D0354 relay start and end records", () => {
     expect(records()).toEqual([expect.objectContaining({ phase: "hook-relay-start", reason: "RELAY_SPAWN_NOT_GRANTED", grantReason: reason ?? "UNREPORTED" })]);
   });
 
-  it("records a SessionStart whose host process is unresolved, without contacting the store", async () => {
-    await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: "no-host", syntheticActor: "root" }, syntheticCore.SYNTHETIC_CORE_HOST, undefined);
+  // `--host-pid 0` (or a negative PID) is no host process either; it must not reach the store as a rejected request.
+  it.each([undefined, 0, -1])("records a SessionStart whose host process is unresolved (%s), without contacting the store", async (hostPid) => {
+    await handleSessionMessageHook({ hook_event_name: "SessionStart", session_id: "no-host", syntheticActor: "root" }, syntheticCore.SYNTHETIC_CORE_HOST, hostPid);
     expect(f.request).not.toHaveBeenCalled();
     expect(f.spawn).not.toHaveBeenCalled();
     expect(records()).toEqual([expect.objectContaining({ phase: "hook-relay-start", reason: "RELAY_HOST_PID_UNRESOLVED" })]);
