@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import type { CallerIngress } from "../../mcp-server/src/caller-identity.js";
 import { HostAttestationProvider } from "../../mcp-server/src/host-attestation.js";
 import { PLUGIN_INFO } from "../../mcp-server/src/plugin-info.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
@@ -24,7 +25,7 @@ import {
   evaluateKoreanProseReadiness, REQUIRED_KOREAN_PROSE_THRESHOLDS,
 } from "../../scripts/korean-prose-readiness.js";
 import { NEXT_TAG, NEXT_VERSION } from "./version-fixtures.js";
-import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
+import { fixedIngress, rootCaller } from "../helpers/caller.js";
 
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 const tagObjectUrl = `${PLUGIN_INFO.tagsApi.split("/git/matching-refs/")[0]}/git/tags/${"b".repeat(40)}`;
@@ -38,18 +39,17 @@ function payload(reply: unknown): { ok: boolean; error: { code: string; message:
 
 async function withServer(
   run: (client: Client, call: (name: string, args: Record<string, unknown>) => ReturnType<Client["callTool"]>) => Promise<void>,
-  options: { updates?: PluginUpdateService; classification?: SkillClassificationGateway; hostAttestation?: HostAttestationProvider } = {},
+  options: { updates?: PluginUpdateService; classification?: SkillClassificationGateway; hostAttestation?: HostAttestationProvider; ingress?: CallerIngress } = {},
 ): Promise<void> {
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(path.join(repositoryRoot, "skills", "registry.json"), validator), validator, new InMemoryWorkflowStore());
   const updates = options.updates ?? new PluginUpdateService(new InMemoryPluginUpdateStore(), { fetcher: async () => { throw new Error("Unexpected network request."); } });
-  const root = createSyntheticRootProofFixture();
-  const server = createMcpServer(service, updates, undefined, undefined, undefined, validator, "default", options.hostAttestation, null, undefined, null, options.classification, root.proofs);
+  const server = createMcpServer(service, updates, undefined, undefined, undefined, validator, "default", options.hostAttestation, null, undefined, null, options.classification, options.ingress ?? fixedIngress());
   const client = new Client({ name: "al09-owned-regressions", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
-  // Explicit signed calls reach domain validation; raw client calls remain available for ingress negatives.
-  const call = (name: string, args: Record<string, unknown>) => client.callTool({ name, arguments: root.argumentsFor(name, args) });
+  // Every call is observed as a host root caller and reaches domain validation.
+  const call = (name: string, args: Record<string, unknown>) => client.callTool({ name, arguments: args });
   try { await client.connect(clientTransport); await run(client, call); }
   finally { await client.close(); await server.close(); }
 }
@@ -75,18 +75,20 @@ describe("AL09 server boundary regressions", () => {
       inventory: async () => null,
       classify: async () => { calls += 1; return null; }, accept: async () => null,
     };
-    const hostAttestation = new HostAttestationProvider(new InMemoryWorkflowStore(), { host: "fixture", provider: "fixture-provider", modelClassForModel: () => "general" });
+    // The caller's observed execution belongs to another host than the configured adapter.
+    const hostAttestation = new HostAttestationProvider({ host: "fixture", provider: "fixture-provider", modelClassForModel: () => "general" });
+    const ingress = fixedIngress(rootCaller("codex", "fixture-session", { execution: { model: "fixture-model", effort: "high", turnId: null, provenance: "codex:mcp-meta" } }));
     await withServer(async (_client, call) => {
       const reply = await call("classify_skills", {
         schemaVersion: "1.0.0", requestId: "fixture", operationId: "fixture", originalPrompt: "fixture",
         confirmedContext: { taskRevision: null, objective: null, actions: null, targets: null, constraints: null, prohibitedActions: null, background: null },
         contextSources: [], explicitSkillIds: [], ruleRequiredSkillIds: [], vendorContext: { vendorId: "fixture", reference: "fixture" },
-        publicSynthetic: true, _hostAttestation: "malformed",
+        publicSynthetic: true,
       });
       expect(payload(reply).error?.code).toBe("INVALID_INPUT");
-      expect(payload(reply).error?.details).toMatchObject({ category: "host-observation", reasonCode: "BINDING_INVALID" });
+      expect(payload(reply).error?.details).toMatchObject({ category: "host-observation", reasonCode: "BINDING_INVALID", observationReasonCode: "HOST_ADAPTER_MISMATCH" });
       expect(calls).toBe(0);
-    }, { classification, hostAttestation });
+    }, { classification, hostAttestation, ingress });
   });
 
   it("D0069 keeps existing request-state rejection codes and supplies a safe reason", async () => {
@@ -178,10 +180,10 @@ describe("AL09 server boundary regressions", () => {
     await withServer(async client => {
       const result = payload(await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "fixture" } }));
       expect(result.error?.code).toBe("BINDING_REQUIRED");
-      expect(result.error?.details).toMatchObject({ reasonCode: "ROOT_HOOK_PROOF_REQUIRED" });
-      expect(result.error?.message).toContain("current root hook proof");
+      expect(result.error?.details).toMatchObject({ reasonCode: "CALLER_PROVENANCE_UNAVAILABLE", ingressReason: "FIXTURE_CALL_META_MISSING" });
+      expect(result.error?.message).toContain("did not observe this caller");
       expect(result.error?.message).not.toContain("did not run");
-    });
+    }, { ingress: () => ({ provenance: "unavailable", reason: "FIXTURE_CALL_META_MISSING" }) });
   });
 
   it("D0080 advertises the actual unguarded-start rejection", async () => {

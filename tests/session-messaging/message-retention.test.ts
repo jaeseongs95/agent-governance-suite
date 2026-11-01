@@ -9,6 +9,7 @@ import * as storeModule from "../../mcp-server/src/session-message-store.js";
 import { SessionMessageStore, MESSAGE_ID_RECORD_BYTES_LIMIT, MESSAGE_RECEIPT_LIMIT } from "../../mcp-server/src/session-message-store.js";
 import { waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
+import { rootCaller } from "../helpers/caller.js";
 
 // Receipt retention limits: sender quota (F1), ACK-bounded receipt expiry (F2), prepare admission (F3)
 // and capacity rejection details (D1). The sender quota is fairness between cooperating sessions, not authentication.
@@ -18,6 +19,7 @@ const H = 3600_000;
 const target = { host: "test-host", sessionId: "retention-target" };
 const hot = { host: "test-host", sessionId: "retention-hot" };
 const other = { host: "test-host", sessionId: "retention-other" };
+const caller = (identity: typeof hot) => rootCaller(identity.host, identity.sessionId);
 const root = process.env.PEER_WAIT_TEST_PLUGIN_ROOT ?? fileURLToPath(new URL("../../", import.meta.url));
 const directories: string[] = [];
 const children: ChildProcess[] = [];
@@ -263,11 +265,11 @@ it("service reports capacity rejections as definite no-effect with scope and ear
   const now = Date.now();
   const firstSent = sendNew(store, hot, now);
   for (let index = 1; index < SENDER_LIMIT - 1; index++) sendNew(store, hot, now);
-  const prepared = await service.prepare({ ...call, body: "prepared before the limit", _sessionBinding: hot });
+  const prepared = await service.prepare({ ...call, body: "prepared before the limit" }, caller(hot));
   expect(prepared.ok).toBe(true);
   sendNew(store, hot, now);
   const release = earliest(store, hot);
-  const sendRejected = await service.send({ messageId: (prepared.data as { messageId: string }).messageId, _sessionBinding: hot });
+  const sendRejected = await service.send({ messageId: (prepared.data as { messageId: string }).messageId }, caller(hot));
   expect(sendRejected).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { scope: "sender", earliestReleaseAt: release } } });
   expect(sendRejected.error?.message).toMatch(/receipt store is full for this sender/u);
   expect(sendRejected.error?.message).toContain("not queued");
@@ -275,20 +277,20 @@ it("service reports capacity rejections as definite no-effect with scope and ear
   expect(sendRejected.error?.message).not.toMatch(/do not prepare again/u);
   // The rejected draft remains usable only until its prepare expiresAt: one of same-ID retry or new prepare, never both.
   expect(sendRejected.error?.message).toContain(RETRY_GUIDANCE);
-  const prepareRejected = await service.prepare({ ...call, body: "no draft", _sessionBinding: hot });
+  const prepareRejected = await service.prepare({ ...call, body: "no draft" }, caller(hot));
   expect(prepareRejected).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { scope: "sender", earliestReleaseAt: release } } });
   expect(prepareRejected.error?.message).toContain("no draft was created");
   expect(prepareRejected.error?.message).toContain(String(release));
   // Uncertain outcomes keep the same-ID retry guidance and carry no capacity details.
-  const unknown = await service.send({ messageId: "unknown-retention-id", _sessionBinding: hot });
+  const unknown = await service.send({ messageId: "unknown-retention-id" }, caller(hot));
   expect(unknown).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: null } });
   expect(unknown.error?.message).toMatch(/Retry only the known prepared ID/u);
   for (let index = SENDER_LIMIT; index < MESSAGE_RECEIPT_LIMIT; index++) sendNew(store, { host: "test-host", sessionId: `retention-global-${index % 3}` }, now);
-  const globalRejected = await service.prepare({ ...call, body: "global", _sessionBinding: other });
+  const globalRejected = await service.prepare({ ...call, body: "global" }, caller(other));
   expect(globalRejected).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { scope: "global", earliestReleaseAt: earliest(store) } } });
   // A resend of an already queued ID stays an idempotent duplicate while both limits are full.
   const rowsBefore = rows(store);
-  const resent = await service.send({ messageId: firstSent.messageId, _sessionBinding: hot });
+  const resent = await service.send({ messageId: firstSent.messageId }, caller(hot));
   expect(resent).toMatchObject({ ok: true, error: null, data: { ...firstSent, duplicate: true, autoWake: { ...firstSent.autoWake, checkedAt: expect.any(String) } } });
   expect(rows(store)).toBe(rowsBefore);
 }, 30_000);
@@ -383,10 +385,10 @@ it("when earliestReleaseAt is after the draft expiry, the guidance leads to a ne
   const service = new SessionMessageService(state);
   const now = Date.now();
   for (let index = 0; index < SENDER_LIMIT - 1; index++) sendNew(store, hot, now);
-  const prepared = await service.prepare({ targetHost: target.host, targetSessionId: target.sessionId, body: "the intent", _sessionBinding: hot });
+  const prepared = await service.prepare({ targetHost: target.host, targetSessionId: target.sessionId, body: "the intent" }, caller(hot));
   const { messageId, expiresAt: draftExpiresAt } = prepared.data as { messageId: string; expiresAt: string };
   sendNew(store, hot, now);
-  const rejected = await service.send({ messageId, _sessionBinding: hot });
+  const rejected = await service.send({ messageId }, caller(hot));
   const release = (rejected.error?.details as { earliestReleaseAt: string }).earliestReleaseAt;
   // Condition of the "otherwise" branch: capacity frees only after the draft has expired.
   expect(Date.parse(release)).toBeGreaterThan(Date.parse(draftExpiresAt));
@@ -397,13 +399,13 @@ it("when earliestReleaseAt is after the draft expiry, the guidance leads to a ne
   store.database.prepare("UPDATE prepared_messages SET expires_at = ? WHERE message_id = ?").run(past, messageId);
   store.database.prepare("UPDATE prepared_messages SET expires_at = ? WHERE message_id = (SELECT message_id FROM prepared_messages WHERE receipt IS NOT NULL ORDER BY expires_at LIMIT 1)").run(past);
   // The expired same ID now reads as unknown; it was never queued because the earlier rejection was definite.
-  const stale = await service.send({ messageId, _sessionBinding: hot });
+  const stale = await service.send({ messageId }, caller(hot));
   expect(stale).toMatchObject({ ok: false, error: { details: null } });
   expect(stale.error?.message).toMatch(/Issued message ID is unavailable/u);
   expect(Number(scalar(store, "SELECT count(*) AS value FROM messages WHERE message_id = ?", messageId))).toBe(0);
   // Following the "prepare again" branch delivers the intent exactly once.
-  const again = await service.prepare({ targetHost: target.host, targetSessionId: target.sessionId, body: "the intent", _sessionBinding: hot });
-  const sent = await service.send({ messageId: (again.data as { messageId: string }).messageId, _sessionBinding: hot });
+  const again = await service.prepare({ targetHost: target.host, targetSessionId: target.sessionId, body: "the intent" }, caller(hot));
+  const sent = await service.send({ messageId: (again.data as { messageId: string }).messageId }, caller(hot));
   expect(sent).toMatchObject({ ok: true, data: { duplicate: false } });
   expect(Number(scalar(store, "SELECT count(*) AS value FROM messages WHERE body = 'the intent'"))).toBe(1);
 }, 30_000);

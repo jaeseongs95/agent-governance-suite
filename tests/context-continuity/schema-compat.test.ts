@@ -117,26 +117,26 @@ describe("2.7.x continuity schema compatibility", () => {
   it.each([2, 3])("preserves schema %i state across reopen, restore, CAS, purge and epoch rotation", (version) => {
     const { databasePath } = fixture(version);
     const first = open(databasePath);
-    const checkpoint = first.service.checkpointContext(bound(first.service, "checkpoint_context", input())).data!;
+    const checkpoint = first.service.checkpointContext(input(), asRoot()).data!;
     first.service.markPreCompact("compat-session");
     first.store.recordObservation(checkpoint.taskCorrelation, 1, "post-compact", "opaque-turn", true, NOW);
     first.store.close();
     const before = state(databasePath);
     const second = open(databasePath);
     expect(state(databasePath)).toEqual(before);
-    const candidate = second.service.inspectContext(bound(second.service, "inspect_context", { schemaVersion: "1.0.0" })).data!;
+    const candidate = second.service.inspectContext({ schemaVersion: "1.0.0" }, asRoot()).data!;
     expect(candidate.summary?.revision).toBe(1);
     const load = { schemaVersion: "1.0.0", candidateToken: candidate.restoreToken!, epoch: 1,
       revision: 1, digest: checkpoint.snapshotDigest };
-    expect(second.service.loadContext(bound(second.service, "load_context", load)).data).toEqual(checkpoint);
-    expect(second.service.checkpointContext(bound(second.service, "checkpoint_context", input())).data).toEqual(checkpoint);
-    const replacement = second.service.checkpointContext(bound(second.service, "checkpoint_context", input("replace", 1))).data!;
+    expect(second.service.loadContext(load, asRoot()).data).toEqual(checkpoint);
+    expect(second.service.checkpointContext(input(), asRoot()).data).toEqual(checkpoint);
+    const replacement = second.service.checkpointContext(input("replace", 1), asRoot()).data!;
     expect(replacement.revision).toBe(2);
-    expect(second.service.checkpointContext(bound(second.service, "checkpoint_context", input("loser", 1))).error?.code).toBe("STALE_REVISION");
+    expect(second.service.checkpointContext(input("loser", 1), asRoot()).error?.code).toBe("STALE_REVISION");
     const purge = { schemaVersion: "1.0.0", requestId: "purge", expectedEpoch: 1, expectedRevision: 2 };
-    expect(second.service.purgeDirectContext(bound(second.service, "purge_direct_context", purge)).data?.purged).toBe(true);
+    expect(second.service.purgeDirectContext(purge, asRoot()).data?.purged).toBe(true);
     expect(second.store.getTombstone(checkpoint.taskCorrelation, 1)?.revision).toBe(2);
-    expect(second.service.checkpointContext(bound(second.service, "checkpoint_context", input("after-purge", 2))).data?.revision).toBe(3);
+    expect(second.service.checkpointContext(input("after-purge", 2), asRoot()).data?.revision).toBe(3);
     expect(second.service.clearSession("compat-session").currentEpoch).toBe(2);
     expect(second.store.getSchemaVersion()).toBe(version);
     if (version === 3) expect(state(databasePath).tables.continuity_delta_state).toEqual([]);
@@ -150,7 +150,7 @@ describe("2.7.x continuity schema compatibility", () => {
   it("preserves receiver-owned tasks, refuses stale origins and keeps unrelated tasks usable", () => {
     const { databasePath } = fixture(3);
     const { store, service } = open(databasePath);
-    const snapshot = service.checkpointContext(bound(service, "checkpoint_context", input())).data!;
+    const snapshot = service.checkpointContext(input(), asRoot()).data!;
     service.markPreCompact("compat-session");
     const inspect = bound(service, "inspect_context", { schemaVersion: "1.0.0" });
     const checkpoint = bound(service, "checkpoint_context", input("replace", 1));
@@ -178,14 +178,14 @@ describe("2.7.x continuity schema compatibility", () => {
     const restarted = open(databasePath);
     expect(restarted.service.inspectContext(inspect).error?.code).toBe("CONTINUITY_UNAVAILABLE");
     expect(state(databasePath)).toEqual(before);
-    expect(service.checkpointContext(bound(service, "checkpoint_context", input(), "unrelated-session")).ok).toBe(true);
+    expect(service.checkpointContext(input(), asRoot("unrelated-session")).ok).toBe(true);
     expect(state(databasePath).tables.continuity_delta_state).toEqual(before.tables.continuity_delta_state);
   });
 
   it("checks receiver state inside the checkpoint transaction after service preflight", () => {
     const { databasePath } = fixture(3);
     const { store, service } = open(databasePath);
-    const checkpoint = service.checkpointContext(bound(service, "checkpoint_context", input())).data!;
+    const checkpoint = service.checkpointContext(input(), asRoot()).data!;
     const request = bound(service, "checkpoint_context", input("replace", 1));
     const commit = store.checkpoint.bind(store);
     let before: ReturnType<typeof state> | undefined;
@@ -212,7 +212,7 @@ describe("2.7.x continuity schema compatibility", () => {
   it("detects a schema 3 receiver added by another connection after opening schema 2", () => {
     const { databasePath } = fixture();
     const { service } = open(databasePath);
-    const checkpoint = service.checkpointContext(bound(service, "checkpoint_context", input())).data!;
+    const checkpoint = service.checkpointContext(input(), asRoot()).data!;
     const request = bound(service, "checkpoint_context", input("replace", 1));
     const raw = new DatabaseSync(databasePath);
     raw.exec(DELTA_SCHEMA); raw.close();
@@ -225,7 +225,7 @@ describe("2.7.x continuity schema compatibility", () => {
   it.each(["snapshot", "task"])("protects receiver state added after %s cleanup preview", (scope) => {
     const { databasePath } = fixture(3);
     const { store, service } = open(databasePath);
-    const checkpoint = service.checkpointContext(bound(service, "checkpoint_context", input())).data!;
+    const checkpoint = service.checkpointContext(input(), asRoot()).data!;
     const raw = new DatabaseSync(databasePath);
     raw.prepare("UPDATE continuity_snapshots SET updated_at = ?").run(OLD);
     raw.prepare("UPDATE continuity_tasks SET updated_at = ?").run(scope === "snapshot" ? NOW : OLD);
@@ -306,7 +306,7 @@ describe("source STDIO continuity startup diagnostics", () => {
       const raw = new DatabaseSync(databasePath); raw.exec("DROP TABLE continuity_delta_state;"); raw.close();
     }
     const issuer = kind === "healthy" || kind === "receiver" ? new ContinuityService(open(databasePath).store, new ContractValidator()) : null;
-    const saved = issuer?.checkpointContext(bound(issuer, "checkpoint_context", input())).data;
+    const saved = issuer?.checkpointContext(input(), asRoot()).data;
     if (kind === "receiver") attachReceiver(databasePath, saved!.taskCorrelation);
     const beforeReceiver = kind === "receiver" ? state(databasePath) : null;
     const environment = getDefaultEnvironment();

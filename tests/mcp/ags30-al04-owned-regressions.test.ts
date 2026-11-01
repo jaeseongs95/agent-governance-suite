@@ -11,7 +11,7 @@ vi.mock("../../mcp-server/src/session-message-client.js", async original => ({
   ...await original<typeof import("../../mcp-server/src/session-message-client.js")>(), sessionMessageRequest: f.request,
 }));
 import "../../mcp-server/src/builtin-hook-host-adapters.js";
-import {adaptHostInput, hookAttestationKind, hostDeliveryProfile, isGovernanceHookTool, registerHookHostAdapter, type HookHostAdapter} from "../../mcp-server/src/host-input-adapter.js";
+import {adaptHostInput, hostDeliveryProfile, isGovernanceHookTool, registerHookHostAdapter, type HookHostAdapter} from "../../mcp-server/src/host-input-adapter.js";
 import {handleSessionBoardHook, runSessionBoardHook} from "../../mcp-server/src/session-board-hook.js";
 
 import type {ActorObservation} from "../../mcp-server/src/input-observation.js";
@@ -42,16 +42,16 @@ beforeEach(() => {
 });
 afterEach(() => {vi.restoreAllMocks();});
 
+// The board hook no longer handles AGS tools: the server writes the summary after verifying the caller.
 describe("AL04 board actor, namespace and host permission boundaries", () => {
-  it.each(["list_session_status", "update_session_status"])("D0018 denies a subagent %s before issuing its parent binding", name => {
+  it.each(["list_session_status", "update_session_status"])("D0018 passes a subagent %s through without writing its parent row", name => {
     const output = handleSessionBoardHook(tool(prefix + name, {syntheticActor: {role: "child", basis: "observed", reasonCode: "SYNTHETIC_BOARD_CHILD"}}), board, syntheticHost, now);
-    expect(output).toMatchObject({hookSpecificOutput: {permissionDecision: "deny"}});
-    expect((output.hookSpecificOutput as Record<string, unknown>).updatedInput).toBeUndefined();
+    expect(output).toEqual({});
     noWrites();
   });
   it.each([{}, {agent_id: null}, {agent_id: 42}])("D0019 keeps unknown actor %j from binding, writing or consuming parent wakes", async actor => {
     const output = await runSessionBoardHook("gemini", JSON.stringify(tool(prefix + "list_session_status", actor)));
-    expect(JSON.parse(output)).toMatchObject({hookSpecificOutput: {permissionDecision: "deny"}});
+    expect(output).toBe("");
     for (const event of ["SessionStart", "UserPromptSubmit"]) {
       expect(await runSessionBoardHook("gemini", JSON.stringify({hook_event_name: event, session_id: "AL04_PRIVATE_PARENT", ...actor,
         ...(event === "SessionStart" && Object.keys(actor).length === 0 ? {agent_type: "unproven"} : {}),
@@ -60,25 +60,12 @@ describe("AL04 board actor, namespace and host permission boundaries", () => {
     expect(f.open).not.toHaveBeenCalled(); expect(f.request).not.toHaveBeenCalled(); noWrites();
   });
   it.each([
-    "mcp__agent_governance_suite__", "mcp__agent-governance-suite__",
-    "mcp__plugin_agent-governance-suite_agent-governance-suite__",
-  ])("D0020 preserves host permission checks when attaching an owned binding through %s", namespace => {
-    const output = handleSessionBoardHook(tool(namespace + "update_session_status"), board, syntheticHost, now);
-    expect(output).toEqual({hookSpecificOutput: {hookEventName: "PreToolUse", updatedInput: {
-      summary: "AL04 회귀", _sessionBinding: {host: syntheticHost, sessionId: "AL04_PRIVATE_PARENT"},
-    }}});
-    expect(f.summary).toHaveBeenCalledTimes(1);
-  });
-  it.each([
     "mcp__foreign__update_session_status", "mcp__agent_governance_suite_other__list_session_status",
     "mcp__foreign__mcp__agent_governance_suite__list_session_status", "list_session_status",
   ])("D0021 does not bind or allow a foreign tool %s", name => {
     expect(handleSessionBoardHook(tool(name), board, syntheticHost, now)).toEqual({}); noWrites();
   });
-  it("preserves malformed-summary denial without turning coordination into an ordinary-tool gate", () => {
-    const input = tool(prefix + "update_session_status"); input.tool_input.summary = "둘\n줄";
-    expect(handleSessionBoardHook(input, board, syntheticHost, now)).toMatchObject({hookSpecificOutput: {permissionDecision: "deny"}});
-    expect(f.summary).not.toHaveBeenCalled();
+  it("does not turn coordination into an ordinary-tool gate", () => {
     f.gate.mockReturnValue("deny");
     expect(handleSessionBoardHook(tool("apply_patch"), board, syntheticHost, now)).toEqual({});
     expect(f.gate).not.toHaveBeenCalled();
@@ -111,15 +98,5 @@ describe("AL04 explicit host adapter contracts", () => {
     });
     expect(isGovernanceHookTool(host, "owned:board")).toBe(true);
     expect(isGovernanceHookTool(host, prefix + "list_session_status")).toBe(false);
-  });
-  it("D0022 carries a bounded opaque strategy ID without choosing a builtin strategy", () => {
-    registerHookHostAdapter("al04-opaque-attestation", {deliveryProfile: delivery, processPid: () => undefined, attestationKind: "other.strategy:v1"});
-    expect(hookAttestationKind("al04-opaque-attestation")).toBe("other.strategy:v1");
-    expect(hookAttestationKind("al04-unregistered")).toBeUndefined();
-  });
-  it.each(["", "../strategy", "x".repeat(201)])("D0022 rejects a malformed strategy ID %s", kind => {
-    expect(() => registerHookHostAdapter("al04-invalid-strategy", {
-      deliveryProfile: delivery, processPid: () => undefined, attestationKind: kind,
-    })).toThrowError("Invalid hook host adapter.");
   });
 });

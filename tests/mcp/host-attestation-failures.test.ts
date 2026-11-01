@@ -4,10 +4,8 @@ import { mkdirSync, mkdtempSync, readdirSync, rmSync, unlinkSync, writeFileSync 
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterEach, expect, it, vi } from "vitest";
-import { HOST_ATTESTATION_FIELD } from "../../mcp-server/src/host-attestation.js";
-import { handleHostAttestationHook, readSessionModel, writeSessionModel } from "../../mcp-server/src/host-attestation-hook.js";
-import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
+import { afterEach, expect, it } from "vitest";
+import { observeClaudeExecution, readSessionModel, writeSessionModel } from "../../mcp-server/src/host-attestation-hook.js";
 
 const sessionId = "synthetic-observation-failure";
 const toolUseId = "synthetic-current-call";
@@ -15,14 +13,13 @@ const caller = {
   hook_event_name: "PreToolUse", session_id: sessionId, tool_use_id: toolUseId,
   transcript_path: "synthetic/transcript.jsonl",
   tool_name: "mcp__agent_governance_suite__plan_workflow",
-  tool_input: { taskId: "synthetic-task", [HOST_ATTESTATION_FIELD]: "caller-forged" },
+  tool_input: { taskId: "synthetic-task" },
   effort: { level: "high" },
 };
 const session = { model: "claude-opus-5", source: "session-start" as const, observedAt: "2026-09-19T00:10:00.000Z" };
 const oldLine = JSON.stringify({ type: "assistant", sessionId, timestamp: "2026-09-19T00:10:10.000Z",
   message: { model: "claude-opus-5", content: [] } });
 const now = () => new Date("2026-09-19T00:11:00.000Z");
-const store = new InMemoryWorkflowStore();
 const directories: string[] = [];
 afterEach(() => { for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true }); });
 function temp() {
@@ -41,7 +38,7 @@ function fixedCodeContext(reason: string) {
 
 it("propagates an unreadable transcript without consulting a fallback model", () => {
   let sessionReads = 0;
-  expect(() => handleHostAttestationHook({ ...caller, transcript_path: temp() }, store, {
+  expect(() => observeClaudeExecution({ ...caller, transcript_path: temp() }, {
     now, maxWaitMs: 0, readSessionModel: () => { sessionReads++; return session; },
   })).toThrow("TRANSCRIPT_READ_FAILED");
   expect(sessionReads).toBe(0);
@@ -54,14 +51,10 @@ it.each(["{not-json", "null", "[]", '{"model":"claude-opus-5"}'])(
     const file = path.join(directory, readdirSync(directory)[0]!);
     writeFileSync(file, damaged, "utf8");
     expect(readSessionModel(directory, "missing")).toBeNull();
-    const key = vi.spyOn(store, "getOrCreateSecret");
-    try {
-      expect(() => handleHostAttestationHook(caller, store, {
-        now, maxWaitMs: 0, readText: () => oldLine,
-        readSessionModel: () => readSessionModel(directory, sessionId),
-      })).toThrow("SESSION_MODEL_INVALID");
-      expect(key).not.toHaveBeenCalled();
-    } finally { key.mockRestore(); }
+    expect(() => observeClaudeExecution(caller, {
+      now, maxWaitMs: 0, readText: () => oldLine,
+      readSessionModel: () => readSessionModel(directory, sessionId),
+    })).toThrow("SESSION_MODEL_INVALID");
   },
 );
 
@@ -86,10 +79,10 @@ it.each(["null", "[]", "42", '"primitive"', '{"synthetic-secret":'])(
 );
 
 it("preserves default-reader ENOENT as normal absence with a valid interactive session record", () => {
-  const output = handleHostAttestationHook({ ...caller, transcript_path: path.join(temp(), "missing.jsonl") }, store, {
+  const execution = observeClaudeExecution({ ...caller, transcript_path: path.join(temp(), "missing.jsonl") }, {
     now, maxWaitMs: 0, readSessionModel: () => session,
   });
-  expect((output.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput[HOST_ATTESTATION_FIELD]).toBeTruthy();
+  expect(execution).toMatchObject({ model: "claude-opus-5", effort: "high", provenance: "claude-code:session-start" });
 });
 
 it("does not sign from older history when the actual session cache file is unreadable", () => {
@@ -98,31 +91,30 @@ it("does not sign from older history when the actual session cache file is unrea
   const file = path.join(directory, readdirSync(directory)[0]!);
   unlinkSync(file);
   mkdirSync(file);
-  expect(() => handleHostAttestationHook(caller, store, {
+  expect(() => observeClaudeExecution(caller, {
     now, maxWaitMs: 0, readText: () => oldLine,
     readSessionModel: () => readSessionModel(directory, sessionId),
   })).toThrow("SESSION_MODEL_READ_FAILED");
 });
 
-it("strips the caller token and diagnoses a real observation read failure through the packaged CLI", () => {
+it("denies the call and diagnoses a real observation read failure through the packaged governance hook", () => {
   const directory = temp();
   const databasePath = path.join(directory, "state", "workflow.sqlite3");
   writeSessionModel(path.join(path.dirname(databasePath), "host-models"), sessionId, session);
-  const bundle = fileURLToPath(new URL("../../mcp-server/dist/host-attestation-hook.mjs", import.meta.url));
+  const bundle = fileURLToPath(new URL("../../mcp-server/dist/governance-hook.mjs", import.meta.url));
   const result = spawnSync(process.execPath, [bundle, "--host=claude-code"], {
     input: JSON.stringify({ ...caller, transcript_path: directory }), cwd: directory,
     encoding: "utf8", windowsHide: true, timeout: 10_000,
     env: { ...process.env, NODE_NO_WARNINGS: "1", AGENT_GOVERNANCE_DB_PATH: databasePath },
   });
   expect(result.error).toBeUndefined();
-  expect(result.status).toBe(0);
-  expect(JSON.parse(result.stdout)).toEqual({
-    hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { taskId: "synthetic-task" } },
-  });
+  expect(result.status).toBe(2);
+  expect(JSON.parse(result.stdout)).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse",
+    permissionDecision: "deny", permissionDecisionReason: "GOVERNANCE_HOOK_FAILED" } });
   expect(JSON.parse(result.stderr.trim())).toEqual({
-    component: "host-attestation-hook", phase: "observation", reason: "TRANSCRIPT_READ_FAILED",
+    component: "governance-hook", reasonCode: "GOVERNANCE_HOOK_FAILED",
     context: { ...fixedCodeContext("TRANSCRIPT_READ_FAILED"), cause: expect.objectContaining({ type: "error" }) },
   });
   expect(result.stderr).not.toContain(directory);
-  expect(result.stderr).not.toContain("caller-forged");
+  expect(result.stderr).not.toContain("synthetic-task");
 });

@@ -19,14 +19,13 @@ const payload = (tool: string, tool_input: Record<string, unknown>, actor: Recor
 });
 
 // Synthetic payloads exercise the agreed Claude inference rule, not native capture or R7 evidence.
-it.each([{}, {agent_type: "synthetic-custom-agent"}])("binds synthetic Claude root-inferred message and board inputs %j", async actor => {
+// The server identifies AGS callers from host call metadata, so both hooks pass AGS tool inputs through unchanged.
+it.each([{}, {agent_type: "synthetic-custom-agent"}])("infers synthetic Claude root input and passes message and board tools through %j", async actor => {
   const board = fixture(), message = payload("prepare_session_message", {body: "synthetic"}, actor);
   expect(adaptHostInput(message, "claude-code").observation.actor).toMatchObject({role: "root", basis: "inferred", reasonCode: "CLAUDE_NATIVE_ROOT_AGENT_ID_ABSENT"});
-  const output = await handleSessionMessageHook(message, "claude-code");
-  expect(output).toMatchObject({hookSpecificOutput: {updatedInput: {body: "synthetic", _sessionBinding: {host: "claude-code", sessionId: message.session_id}}}});
-  const updated = handleSessionBoardHook(payload("update_session_status", {summary: "synthetic native main"}, actor), board, "claude-code");
-  expect(updated).toMatchObject({hookSpecificOutput: {updatedInput: {_sessionBinding: {host: "claude-code", sessionId: message.session_id}}}});
-  expect(listSessions(board, new Date().toISOString()).map(row => row.summary)).toEqual(["synthetic native main"]);
+  expect(await handleSessionMessageHook(message, "claude-code")).toEqual({});
+  expect(handleSessionBoardHook(payload("update_session_status", {summary: "synthetic native main"}, actor), board, "claude-code")).toEqual({});
+  expect(listSessions(board, new Date().toISOString())).toEqual([]);
 });
 
 it.each([

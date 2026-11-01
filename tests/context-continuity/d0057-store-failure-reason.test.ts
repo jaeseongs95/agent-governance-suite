@@ -49,7 +49,7 @@ describe("D0057 continuity store failure reasons", () => {
     [5, "STORE_UNAVAILABLE"], [10, "STORE_UNAVAILABLE"], [27, "STORE_UNAVAILABLE"],
   ] as const)("a write transaction failing with errcode %i keeps the reason %s", (errcode, reason) => {
     const { service, fail, bound, checkpointInput } = setup();
-    expect(service.checkpointContext(bound("checkpoint_context", checkpointInput(0))).error).toBeNull();
+    expect(service.checkpointContext(checkpointInput(0), caller).error).toBeNull();
     const request = bound("checkpoint_context", checkpointInput(1));
     fail(sqliteError(errcode), "transaction");
     const result = service.checkpointContext(request);
@@ -61,8 +61,8 @@ describe("D0057 continuity store failure reasons", () => {
     for (const [error, reason] of [[sqliteError(11), "CORRUPT_DATABASE"], [sqliteError(26), "CORRUPT_DATABASE"],
       [sqliteError(5), "STORE_UNAVAILABLE"], [new Error("not a driver error"), "STORE_UNAVAILABLE"]] as const) {
       const { service, fail, bound, checkpointInput } = setup();
-      const saved = service.checkpointContext(bound("checkpoint_context", checkpointInput(0))).data!;
-      const candidate = service.inspectContext(bound("inspect_context", { schemaVersion: "1.0.0" })).data!;
+      const saved = service.checkpointContext(checkpointInput(0), caller).data!;
+      const candidate = service.inspectContext({ schemaVersion: "1.0.0" }, caller).data!;
       expect(candidate.restoreToken).toEqual(expect.any(String));
       const inspectRequest = bound("inspect_context", { schemaVersion: "1.0.0" });
       const loadRequest = bound("load_context", { schemaVersion: "1.0.0", candidateToken: candidate.restoreToken!, epoch: saved.epoch,

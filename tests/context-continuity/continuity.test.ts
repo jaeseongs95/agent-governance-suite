@@ -11,18 +11,20 @@ import type {
   ConvergenceRootV1,
   TaskEnvelopeV1,
 } from "../../contracts/types.js";
-import { WorkflowContractError } from "../../contracts/types.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { handleContinuityHook as handleNativeContinuityHook, runContinuityHook as runNativeContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { runGovernanceHook } from "../../mcp-server/src/governance-hook.js";
-import { SessionActorProofs, withoutSessionProof } from "../../mcp-server/src/session-actor-proof.js";
-import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter, withHookHostAdapter, type AdaptedHostInput, type ContinuityAction, type HookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
+import { claudeAdmissionIngress } from "../../mcp-server/src/builtin-caller-ingress.js";
+import { admitCaller } from "../../mcp-server/src/caller-identity.js";
+import { hostActorId } from "../../mcp-server/src/host-attestation.js";
+import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter, type AdaptedHostInput, type ContinuityAction, type HookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { ContinuityService, UnavailableContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { InMemoryWorkflowStore, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared-stores.js";
+import { rootCaller } from "../helpers/caller.js";
 
 // Owned fake core observation only; this adapter is not native role evidence.
 const syntheticHost = "synthetic-continuity-lifecycle";
@@ -73,7 +75,7 @@ function createService(
   return new ContinuityService(store, new ContractValidator(), workflow, now);
 }
 
-function checkpointInput(overrides: Partial<CheckpointContextRequestV1> = {}): Omit<CheckpointContextRequestV1, "_continuityBinding"> {
+function checkpointInput(overrides: Partial<CheckpointContextRequestV1> = {}): CheckpointContextRequestV1 {
   return {
     schemaVersion: "1.0.0",
     requestId: "checkpoint-1",
@@ -93,9 +95,8 @@ function checkpointInput(overrides: Partial<CheckpointContextRequestV1> = {}): O
   };
 }
 
-function bound<T extends Record<string, unknown>>(service: ContinuityService, session: string, tool: string, input: T): T & { _continuityBinding: string } {
-  return { ...input, _continuityBinding: service.issueToolBinding(session, tool, input) };
-}
+/** The host-observed root caller of a raw session; the gateway computes the continuity scope from it at call time. */
+const asRoot = (session: string) => rootCaller("codex", session);
 
 function nonCanonicalSignatureAlias(token: string): string {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -107,7 +108,7 @@ function nonCanonicalSignatureAlias(token: string): string {
 
 function directCheckpoint(service: ContinuityService, session = "raw-session") {
   const input = checkpointInput();
-  return service.checkpointContext(bound(service, session, "checkpoint_context", input));
+  return service.checkpointContext(input, asRoot(session));
 }
 
 function taskEnvelope(): TaskEnvelopeV1 {
@@ -164,14 +165,14 @@ describe("direct task continuity", () => {
     expect(first.data?.revision).toBe(1);
 
     const replayInput = checkpointInput();
-    const replay = service.checkpointContext(bound(service, "raw-session", "checkpoint_context", replayInput));
+    const replay = service.checkpointContext(replayInput, asRoot("raw-session"));
     expect(replay).toEqual(first);
 
     const conflictInput = checkpointInput({ core: { ...checkpointInput().core, objective: "Different content." } });
-    expect(service.checkpointContext(bound(service, "raw-session", "checkpoint_context", conflictInput)).error?.code).toBe("REQUEST_CONFLICT");
+    expect(service.checkpointContext(conflictInput, asRoot("raw-session")).error?.code).toBe("REQUEST_CONFLICT");
 
     const staleInput = checkpointInput({ requestId: "checkpoint-2" });
-    expect(service.checkpointContext(bound(service, "raw-session", "checkpoint_context", staleInput)).error).toMatchObject({
+    expect(service.checkpointContext(staleInput, asRoot("raw-session")).error).toMatchObject({
       code: "STALE_REVISION",
       details: { actualRevision: 1 },
     });
@@ -181,7 +182,7 @@ describe("direct task continuity", () => {
       expectedRevision: 1,
       core: { ...checkpointInput().core, progress: ["Replacement contains only current progress."] },
     });
-    const replacement = service.checkpointContext(bound(service, "raw-session", "checkpoint_context", replacementInput));
+    const replacement = service.checkpointContext(replacementInput, asRoot("raw-session"));
     expect(replacement.data).toMatchObject({ revision: 2, core: { progress: ["Replacement contains only current progress."] } });
   });
 
@@ -189,7 +190,7 @@ describe("direct task continuity", () => {
     const service = createService();
     const snapshot = directCheckpoint(service).data!;
     const inspectInput = { schemaVersion: "1.0.0" as const };
-    const inspected = service.inspectContext(bound(service, "raw-session", "inspect_context", inspectInput));
+    const inspected = service.inspectContext(inspectInput, asRoot("raw-session"));
     expect(JSON.stringify(inspected)).not.toContain(snapshot.core.objective);
     expect(inspected.data?.decision).toBe("DEFER");
 
@@ -201,13 +202,13 @@ describe("direct task continuity", () => {
       revision: candidate.summary!.revision,
       digest: candidate.summary!.snapshotDigest,
     };
-    expect(service.loadContext(bound(service, "raw-session", "load_context", loadInput)).data).toEqual(snapshot);
+    expect(service.loadContext(loadInput, asRoot("raw-session")).data).toEqual(snapshot);
 
     const tamperedToken = nonCanonicalSignatureAlias(candidate.restoreToken!);
     expect(Buffer.from(tamperedToken.split(".")[1]!, "base64url")).toEqual(Buffer.from(candidate.restoreToken!.split(".")[1]!, "base64url"));
     const tampered = { ...loadInput, candidateToken: tamperedToken };
-    expect(service.loadContext(bound(service, "raw-session", "load_context", tampered)).error?.code).toBe("BINDING_INVALID");
-    expect(service.loadContext(bound(service, "other-session", "load_context", loadInput)).error?.code).toBe("BINDING_INVALID");
+    expect(service.loadContext(tampered, asRoot("raw-session")).error?.code).toBe("BINDING_INVALID");
+    expect(service.loadContext(loadInput, asRoot("other-session")).error?.code).toBe("BINDING_INVALID");
   });
 
   it.each(["SessionStart", "PreCompact", "PostCompact", "PreToolUse"])("unsupported native Gemini %s cannot mutate lifecycle state or receive context", (event) => {
@@ -240,7 +241,7 @@ describe("direct task continuity", () => {
     const checkpoint = checkpointInput({
       core: { ...checkpointInput().core, objective: marker },
     });
-    const snapshot = service.checkpointContext(bound(service, "raw-session", "checkpoint_context", checkpoint)).data!;
+    const snapshot = service.checkpointContext(checkpoint, asRoot("raw-session")).data!;
     const beforePurge = new DatabaseSync(databasePath);
     const requestJson = beforePurge.prepare("SELECT result_json FROM continuity_requests").get() as { result_json: string };
     expect(requestJson.result_json).not.toContain(marker);
@@ -248,16 +249,16 @@ describe("direct task continuity", () => {
     beforePurge.close();
 
     const suppress = { schemaVersion: "1.0.0" as const, expectedEpoch: 1 };
-    expect(service.suppressContextRestore(bound(service, "raw-session", "suppress_context_restore", suppress)).data?.suppressed).toBe(true);
+    expect(service.suppressContextRestore(suppress, asRoot("raw-session")).data?.suppressed).toBe(true);
     expect(service.candidateForSession("raw-session").decision).toBe("REJECT");
 
     service.clearSession("raw-session");
     expect(service.candidateForSession("raw-session")).toMatchObject({ decision: "REJECT", reasonCodes: ["NO_RESTORE_CANDIDATE"] });
 
     const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-1", expectedEpoch: 1, expectedRevision: snapshot.revision };
-    const purged = service.purgeDirectContext(bound(service, "raw-session", "purge_direct_context", purge));
+    const purged = service.purgeDirectContext(purge, asRoot("raw-session"));
     expect(purged.data).toMatchObject({ purged: true, epoch: 1, revision: snapshot.revision });
-    expect(service.purgeDirectContext(bound(service, "raw-session", "purge_direct_context", purge))).toEqual(purged);
+    expect(service.purgeDirectContext(purge, asRoot("raw-session"))).toEqual(purged);
 
     const afterPurge = new DatabaseSync(databasePath);
     const snapshotCount = afterPurge.prepare("SELECT COUNT(*) AS count FROM continuity_snapshots").get() as { count: number };
@@ -276,11 +277,11 @@ describe("direct task continuity", () => {
       expectedEpoch: 1,
       expectedRevision: firstSnapshot.revision,
     };
-    const firstPurge = service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", firstPurgeInput));
+    const firstPurge = service.purgeDirectContext(firstPurgeInput, asRoot("repeated-purge-session"));
     expect(firstPurge.data?.purged).toBe(true);
 
     const secondCheckpoint = checkpointInput({ requestId: "checkpoint-second", expectedRevision: firstSnapshot.revision });
-    const secondSnapshot = service.checkpointContext(bound(service, "repeated-purge-session", "checkpoint_context", secondCheckpoint)).data!;
+    const secondSnapshot = service.checkpointContext(secondCheckpoint, asRoot("repeated-purge-session")).data!;
     expect(secondSnapshot.revision).toBe(firstSnapshot.revision + 1);
     expect(secondSnapshot.snapshotDigest).not.toBe(firstSnapshot.snapshotDigest);
     const secondPurgeInput = {
@@ -289,12 +290,12 @@ describe("direct task continuity", () => {
       expectedEpoch: 1,
       expectedRevision: secondSnapshot.revision,
     };
-    const secondPurge = service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", secondPurgeInput));
+    const secondPurge = service.purgeDirectContext(secondPurgeInput, asRoot("repeated-purge-session"));
     expect(secondPurge.data?.purged).toBe(true);
     expect(secondPurge.data?.purgedAt).toBe(firstPurge.data?.purgedAt);
     expect(secondPurge.data?.tombstoneDigest).not.toBe(firstPurge.data?.tombstoneDigest);
 
-    const replayedFirst = service.purgeDirectContext(bound(service, "repeated-purge-session", "purge_direct_context", firstPurgeInput));
+    const replayedFirst = service.purgeDirectContext(firstPurgeInput, asRoot("repeated-purge-session"));
     expect(replayedFirst.error?.code).toBe("STALE_REVISION");
     expect(replayedFirst.data).toBeNull();
   });
@@ -309,16 +310,16 @@ describe("direct task continuity", () => {
       expectedEpoch: 1,
       expectedRevision: firstSnapshot.revision,
     };
-    expect(service.purgeDirectContext(bound(service, session, "purge_direct_context", purgeInput)).data?.purged).toBe(true);
+    expect(service.purgeDirectContext(purgeInput, asRoot(session)).data?.purged).toBe(true);
 
     const secondCheckpoint = checkpointInput({ requestId: "checkpoint-next-generation", expectedRevision: firstSnapshot.revision });
-    const secondSnapshot = service.checkpointContext(bound(service, session, "checkpoint_context", secondCheckpoint)).data!;
-    const staleReplay = service.purgeDirectContext(bound(service, session, "purge_direct_context", purgeInput));
+    const secondSnapshot = service.checkpointContext(secondCheckpoint, asRoot(session)).data!;
+    const staleReplay = service.purgeDirectContext(purgeInput, asRoot(session));
     expect(staleReplay.error).toMatchObject({ code: "STALE_REVISION", details: { actualRevision: secondSnapshot.revision } });
     expect(service.store.getSnapshot(service.correlateSession(session), 1)).toEqual(secondSnapshot);
 
     const reusedForCurrent = { ...purgeInput, expectedRevision: secondSnapshot.revision };
-    expect(service.purgeDirectContext(bound(service, session, "purge_direct_context", reusedForCurrent)).error?.code).toBe("REQUEST_CONFLICT");
+    expect(service.purgeDirectContext(reusedForCurrent, asRoot(session)).error?.code).toBe("REQUEST_CONFLICT");
     expect(service.store.getSnapshot(service.correlateSession(session), 1)).toEqual(secondSnapshot);
   });
 
@@ -335,7 +336,7 @@ describe("direct task continuity", () => {
       expectedEpoch: 1,
       expectedRevision: firstSnapshot.revision,
     };
-    const firstPurge = service.purgeDirectContext(bound(service, session, "purge_direct_context", firstPurgeInput)).data!;
+    const firstPurge = service.purgeDirectContext(firstPurgeInput, asRoot(session)).data!;
     const marker = "MALFORMED-PURGE-BODY-MUST-NOT-SURVIVE";
     const database = new DatabaseSync(databasePath);
     database.prepare("UPDATE continuity_requests SET result_json = ? WHERE result_json LIKE ?").run(JSON.stringify({
@@ -345,19 +346,19 @@ describe("direct task continuity", () => {
     }), "%\"purged\":true%");
     database.close();
 
-    const rejected = service.purgeDirectContext(bound(service, session, "purge_direct_context", firstPurgeInput));
+    const rejected = service.purgeDirectContext(firstPurgeInput, asRoot(session));
     expect(rejected.error?.code).toBe("STALE_REVISION");
     expect(JSON.stringify(rejected)).not.toContain(marker);
 
     const secondCheckpoint = checkpointInput({ requestId: "checkpoint-after-malformed-purge", expectedRevision: firstSnapshot.revision });
-    const secondSnapshot = service.checkpointContext(bound(service, session, "checkpoint_context", secondCheckpoint)).data!;
+    const secondSnapshot = service.checkpointContext(secondCheckpoint, asRoot(session)).data!;
     const secondPurgeInput = {
       schemaVersion: "1.0.0" as const,
       requestId: "purge-after-malformed-purge",
       expectedEpoch: 1,
       expectedRevision: secondSnapshot.revision,
     };
-    expect(service.purgeDirectContext(bound(service, session, "purge_direct_context", secondPurgeInput)).data?.purged).toBe(true);
+    expect(service.purgeDirectContext(secondPurgeInput, asRoot(session)).data?.purged).toBe(true);
 
     const after = new DatabaseSync(databasePath);
     const requests = after.prepare("SELECT result_json FROM continuity_requests").all();
@@ -371,11 +372,10 @@ describe("direct task continuity", () => {
     workflow.insertConvergenceRoot(root);
     const service = createService(":memory:", workflow);
     const snapshot = directCheckpoint(service, "mixed-session").data!;
-    const openInput = { schemaVersion: "1.0.0", taskEnvelope: root.taskEnvelope, frame: root.frame, parentRootId: null, userApprovalRefs: [] };
-    service.bindOpenedRoot(bound(service, "mixed-session", "open_convergence_root", openInput), root.rootId);
+    service.bindOpenedRoot(asRoot("mixed-session"), root.rootId);
 
     const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-mixed", expectedEpoch: 1, expectedRevision: snapshot.revision };
-    expect(service.purgeDirectContext(bound(service, "mixed-session", "purge_direct_context", purge)).data?.purged).toBe(true);
+    expect(service.purgeDirectContext(purge, asRoot("mixed-session")).data?.purged).toBe(true);
     expect(service.store.getSnapshot(service.correlateSession("mixed-session"), 1)).toBeNull();
     expect(workflow.getConvergenceSnapshot(root.rootId)?.root).toEqual(root);
   });
@@ -389,8 +389,8 @@ describe("direct task continuity", () => {
     const left = checkpointInput({ requestId: "left" });
     const right = checkpointInput({ requestId: "right", core: { ...checkpointInput().core, progress: ["Competing update."] } });
     const results = await Promise.all([
-      Promise.resolve().then(() => first.checkpointContext(bound(first, "same-session", "checkpoint_context", left))),
-      Promise.resolve().then(() => second.checkpointContext(bound(second, "same-session", "checkpoint_context", right))),
+      Promise.resolve().then(() => first.checkpointContext(left, asRoot("same-session"))),
+      Promise.resolve().then(() => second.checkpointContext(right, asRoot("same-session"))),
     ]);
     expect(results.filter((result) => result.ok)).toHaveLength(1);
     expect(results.filter((result) => result.error?.code === "STALE_REVISION")).toHaveLength(1);
@@ -402,7 +402,7 @@ describe("direct task continuity", () => {
     const databasePath = join(directory, "continuity.sqlite3");
     const service = createService(databasePath);
     directCheckpoint(service);
-    const inspected = service.inspectContext(bound(service, "raw-session", "inspect_context", { schemaVersion: "1.0.0" })).data!;
+    const inspected = service.inspectContext({ schemaVersion: "1.0.0" }, asRoot("raw-session")).data!;
 
     const database = new DatabaseSync(databasePath);
     const row = database.prepare("SELECT task_correlation, epoch, snapshot_json FROM continuity_snapshots").get() as {
@@ -421,7 +421,7 @@ describe("direct task continuity", () => {
       revision: inspected.summary!.revision,
       digest: inspected.summary!.snapshotDigest,
     };
-    expect(service.loadContext(bound(service, "raw-session", "load_context", load)).error?.code).toBe("INTEGRITY_FAILED");
+    expect(service.loadContext(load, asRoot("raw-session")).error?.code).toBe("INTEGRITY_FAILED");
   }, 15_000);
 });
 
@@ -431,8 +431,7 @@ describe("workflow projection and fail-open lifecycle", () => {
     const root = workflowRoot();
     expect(workflow.insertConvergenceRoot(root)).toBeNull();
     const service = createService(":memory:", workflow);
-    const openInput = { schemaVersion: "1.0.0", taskEnvelope: root.taskEnvelope, frame: root.frame, parentRootId: null, userApprovalRefs: [] };
-    service.bindOpenedRoot(bound(service, "workflow-session", "open_convergence_root", openInput), root.rootId);
+    service.bindOpenedRoot(asRoot("workflow-session"), root.rootId);
 
     service.markPreCompact("workflow-session");
     const injected = service.compactContext("workflow-session");
@@ -457,8 +456,7 @@ describe("workflow projection and fail-open lifecycle", () => {
     vi.spyOn(workflow, "getRun").mockImplementation(() => ({ state: "running", plan: { currentStageId: null, nextStageId: null }, blockers: [], unresolved: [],
       stageResults: [{ output: { artifacts: artifacts.slice(0, 5) } }, { output: { artifacts: artifacts.slice(5) } }] }) as never);
     const service = createService(":memory:", workflow);
-    const openInput = { schemaVersion: "1.0.0", taskEnvelope: task, frame: root.frame, parentRootId: null, userApprovalRefs: [] };
-    service.bindOpenedRoot(bound(service, "workflow-session", "open_convergence_root", openInput), root.rootId);
+    service.bindOpenedRoot(asRoot("workflow-session"), root.rootId);
     service.markPreCompact("workflow-session");
     const injected = service.compactContext("workflow-session")!;
     const card = JSON.parse(injected.split("\n")[2]!) as { excludedScope: string[]; evidenceRefs: Array<{ artifactId: string }>; evidenceRefsOmitted: number };
@@ -472,8 +470,7 @@ describe("workflow projection and fail-open lifecycle", () => {
     const root = workflowRoot();
     workflow.insertConvergenceRoot(root);
     const service = createService(":memory:", workflow);
-    const openInput = { schemaVersion: "1.0.0", taskEnvelope: root.taskEnvelope, frame: root.frame, parentRootId: null, userApprovalRefs: [] };
-    service.bindOpenedRoot(bound(service, "workflow-session", "open_convergence_root", openInput), root.rootId);
+    service.bindOpenedRoot(asRoot("workflow-session"), root.rootId);
     service.markPreCompact("workflow-session");
     const changed = { ...root, revision: 2, updatedAt: "2026-09-13T00:01:00.000Z" };
     expect(workflow.updateConvergenceRoot(changed, 1)).toBe(true);
@@ -499,18 +496,16 @@ describe("workflow projection and fail-open lifecycle", () => {
     const root = workflowRoot();
     expect(workflow.insertConvergenceRoot(root)).toBeNull();
     const service = createService(":memory:", workflow);
-    const openInput = { schemaVersion: "1.0.0", taskEnvelope: root.taskEnvelope, frame: root.frame, parentRootId: null, userApprovalRefs: [] };
-    service.bindOpenedRoot(bound(service, "workflow-session", "open_convergence_root", openInput), root.rootId);
+    service.bindOpenedRoot(asRoot("workflow-session"), root.rootId);
     const database = (workflow as unknown as { database: DatabaseSync }).database;
     const prepare = database.prepare.bind(database);
     vi.spyOn(database, "prepare").mockImplementation((sql: string) => {
       if (/convergence_roots/u.test(sql)) throw Object.assign(new Error("database disk image is malformed"), { code: "ERR_SQLITE_ERROR", errcode: 11 });
       return prepare(sql);
     });
-    let caught: unknown;
-    try { service.issueToolBinding("workflow-session", "inspect_context", { schemaVersion: "1.0.0" }); } catch (error) { caught = error; }
-    expect(caught).toBeInstanceOf(WorkflowContractError);
-    expect(caught).toMatchObject({ code: "MCP_UNAVAILABLE", details: { sqliteErrcode: 11 } });
+    // The server computes the bound task's scope inside the tool call, so the workflow failure is the call's result.
+    expect(service.inspectContext({ schemaVersion: "1.0.0" }, asRoot("workflow-session"))).toMatchObject({
+      ok: false, data: null, error: { code: "MCP_UNAVAILABLE", details: { sqliteErrcode: 11 } } });
     vi.restoreAllMocks();
     workflow.close();
   });
@@ -534,7 +529,7 @@ describe("workflow projection and fail-open lifecycle", () => {
     expect(JSON.stringify(after)).not.toContain("continuity_");
   });
 
-  it("rewrites only bound MCP tool inputs and persists only HMAC lifecycle correlations", async () => {
+  it("passes bound MCP tool inputs through unchanged and persists only HMAC lifecycle correlations", async () => {
     // 입력·세션·HMAC·SQL을 출력하지 않고 동기 본문과 비동기 정리 경계를 나눈다.
     const started = performance.now(), test = expect.getState().currentTestName, fixtureId = randomUUID();
     let sequence = 0;
@@ -558,8 +553,8 @@ describe("workflow projection and fail-open lifecycle", () => {
       tool_input: { schemaVersion: "1.0.0" },
     }, service);
     trace("bound-hook.returned");
-    expect(input).toMatchObject({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { _continuityBinding: expect.any(String) } } });
-    expect(input.hookSpecificOutput).not.toHaveProperty("permissionDecision");
+    // No rewritten input, binding or permission decision: the server binds the call from its verified caller.
+    expect(input).toEqual({});
     expect(JSON.stringify(input)).not.toContain("raw-secret-session-id");
     trace("unrelated-hook.begin");
     expect(handleContinuityHook({ hook_event_name: "PreToolUse", session_id: "s", tool_name: "Bash", tool_input: {} }, service)).toEqual({});
@@ -621,14 +616,10 @@ describe("current continuity authority versus historical payload", () => {
       const snapshot = directCheckpoint(first, session).data!;
       const loadInput = directLoadInput(first, session);
       const checkpoint = operation === "replay" ? checkpointInput() : checkpointInput({ requestId: "after-read", expectedRevision: 1 });
-      const checkpointRequest = bound(first, session, "checkpoint_context", checkpoint);
-      const loadRequest = bound(first, session, "load_context", loadInput);
-      const purgeRequest = bound(first, session, "purge_direct_context", {
-        schemaVersion: "1.0.0" as const, requestId: "purge-after-read", expectedEpoch: 1, expectedRevision: 1,
-      });
+      const purgeRequest = { schemaVersion: "1.0.0" as const, requestId: "purge-after-read", expectedEpoch: 1, expectedRevision: 1 };
       clearAfterMetadataRead(first, second, session);
-      const result = operation === "load" ? first.loadContext(loadRequest)
-        : operation === "purge" ? first.purgeDirectContext(purgeRequest) : first.checkpointContext(checkpointRequest);
+      const result = operation === "load" ? first.loadContext(loadInput, asRoot(session))
+        : operation === "purge" ? first.purgeDirectContext(purgeRequest, asRoot(session)) : first.checkpointContext(checkpoint, asRoot(session));
       expect(result.ok).toBe(false);
       expect(result.error?.code).toBe("BINDING_INVALID");
       expect(result.data).toBeNull();
@@ -646,9 +637,8 @@ describe("current continuity authority versus historical payload", () => {
   it("inspect rechecks its binding epoch after stale metadata without publishing an old candidate", async () => {
     const { first, second } = await twoContinuityConnections();
     directCheckpoint(first, "inspect-race");
-    const request = bound(first, "inspect-race", "inspect_context", { schemaVersion: "1.0.0" as const });
     clearAfterMetadataRead(first, second, "inspect-race");
-    const result = first.inspectContext(request);
+    const result = first.inspectContext({ schemaVersion: "1.0.0" as const }, asRoot("inspect-race"));
     expect(result.data?.decision).toBe("REJECT");
     expect(result.data?.restoreToken).toBeNull();
     expect(result.data?.summary).toBeNull();
@@ -662,14 +652,13 @@ describe("current continuity authority versus historical payload", () => {
         const snapshot = directCheckpoint(first, session).data!;
         const correlation = first.correlateSession(session);
         const input = replay ? checkpointInput() : checkpointInput({ requestId: "new-receipt", expectedRevision: 1 });
-        const request = bound(first, session, "checkpoint_context", input);
         const original = first.store.checkpoint.bind(first.store);
         vi.spyOn(first.store, "checkpoint").mockImplementationOnce((...args) => {
           if (change === "clear") second.clearSession(session);
           else expect(second.store.bindRoot(correlation, 1, "root-after-read", "2026-09-13T01:00:00.000Z")).toBe(true);
           return original(...args);
         });
-        const result = first.checkpointContext(request);
+        const result = first.checkpointContext(input, asRoot(session));
         expect(result.error?.code).toBe(change === "clear" ? "BINDING_INVALID" : "SNAPSHOT_CONFLICT");
         expect(result.data).toBeNull();
         expect(second.store.getSnapshot(correlation, 1)).toEqual(snapshot);
@@ -681,7 +670,6 @@ describe("current continuity authority versus historical payload", () => {
   it("clear after idempotent receipt lookup cannot return the historical payload", async () => {
     const { first, second } = await twoContinuityConnections();
     const snapshot = directCheckpoint(first, "replay-body").data!;
-    const request = bound(first, "replay-body", "checkpoint_context", checkpointInput());
     const original = first.store.checkpoint.bind(first.store);
     vi.spyOn(first.store, "checkpoint").mockImplementationOnce((...args) => {
       const replay = original(...args);
@@ -689,7 +677,7 @@ describe("current continuity authority versus historical payload", () => {
       second.clearSession("replay-body");
       return replay;
     });
-    const result = first.checkpointContext(request);
+    const result = first.checkpointContext(checkpointInput(), asRoot("replay-body"));
     expect(result.error?.code).toBe("BINDING_INVALID");
     expect(result.data).toBeNull();
     expect(second.store.getSnapshot(first.correlateSession("replay-body"), 1)).toEqual(snapshot);
@@ -699,17 +687,17 @@ describe("current continuity authority versus historical payload", () => {
     const { first, second } = await twoContinuityConnections();
     const session = "missing-root";
     const snapshot = directCheckpoint(first, session).data!;
-    const load = bound(first, session, "load_context", directLoadInput(first, session));
+    const load = directLoadInput(first, session);
     const correlation = first.correlateSession(session);
     expect(second.store.bindRoot(correlation, 1, "root-without-projection", "2026-09-13T01:00:00.000Z")).toBe(true);
-    expect(first.loadContext(load).error?.code).toBe("SNAPSHOT_CONFLICT");
+    expect(first.loadContext(load, asRoot(session)).error?.code).toBe("SNAPSHOT_CONFLICT");
     expect(first.candidateForSession(session)).toMatchObject({ decision: "REJECT", summary: null, restoreToken: null });
     first.markPreCompact(session);
     expect(first.compactContext(session)).toBeNull();
     expect(first.store.getTask(correlation)?.pendingSource).toBeNull();
     expect(first.store.getSnapshot(correlation, 1)).toEqual(snapshot);
     const purge = { schemaVersion: "1.0.0" as const, requestId: "root-purge", expectedEpoch: 1, expectedRevision: 1 };
-    expect(first.purgeDirectContext(bound(first, session, "purge_direct_context", purge)).data?.purged).toBe(true);
+    expect(first.purgeDirectContext(purge, asRoot(session)).data?.purged).toBe(true);
     expect(first.store.getTask(correlation)?.rootId).toBe("root-without-projection");
   });
 
@@ -718,15 +706,14 @@ describe("current continuity authority versus historical payload", () => {
     directCheckpoint(first, "purge-authority");
     const correlation = first.correlateSession("purge-authority");
     const input = { schemaVersion: "1.0.0" as const, requestId: "purge-guard", expectedEpoch: 1, expectedRevision: 1 };
-    const request = bound(first, "purge-authority", "purge_direct_context", input);
     const original = first.store.purge.bind(first.store);
     vi.spyOn(first.store, "purge").mockImplementationOnce((...args) => {
       second.clearSession("purge-authority");
       return original(...args);
     });
-    expect(first.purgeDirectContext(request).error?.code).toBe("BINDING_INVALID");
+    expect(first.purgeDirectContext(input, asRoot("purge-authority")).error?.code).toBe("BINDING_INVALID");
     expect(first.store.getSnapshot(correlation, 1)).not.toBeNull();
-    expect(first.purgeDirectContext(bound(first, "purge-authority", "purge_direct_context", input)).data?.purged).toBe(true);
+    expect(first.purgeDirectContext(input, asRoot("purge-authority")).data?.purged).toBe(true);
     expect(first.store.getSnapshot(correlation, 1)).toBeNull();
     expect(first.store.getTask(correlation)?.currentEpoch).toBe(2);
   });
@@ -810,7 +797,7 @@ describe("current continuity authority versus historical payload", () => {
     const candidate = service.candidateForSession("shared-workflow");
     const input = { schemaVersion: "1.0.0" as const, candidateToken: candidate.restoreToken!,
       epoch: candidate.summary!.epoch, revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest };
-    expect(service.loadContext(bound(service, "shared-workflow", "load_context", input)).ok).toBe(true);
+    expect(service.loadContext(input, asRoot("shared-workflow")).ok).toBe(true);
     service.markPreCompact("shared-workflow");
     expect(service.compactContext("shared-workflow")).toContain("decision=INJECT");
     const beforeRollback = bundle.continuity.getTask(c);
@@ -833,9 +820,24 @@ describe("current continuity authority versus historical payload", () => {
 
 // Owned synthetic lifecycle/identity fixtures; these are not native capture evidence.
 function normalizedAdapter(observation: () => AdaptedHostInput): HookHostAdapter {
-  return { processPid: () => undefined, attestationKind: "owned-continuity",
+  return { processPid: () => undefined,
     deliveryProfile: () => ({ transport: "owned-continuity", capabilities: { supportedInjection: [], idleWake: "none" }, blocksEmptyWakePrompt: false }),
     ownsTool: tool => tool.startsWith("owned__"), adaptInput: observation };
+}
+
+// The registry accepts a host once, so each owned host registers one adapter that runs the current translation.
+const ownedTranslations = new Map<string, () => AdaptedHostInput>();
+function withOwnedAdapter<T>(host: string, translate: () => AdaptedHostInput, run: () => T): T {
+  if (!ownedTranslations.has(host)) registerHookHostAdapter(host, normalizedAdapter(() => ownedTranslations.get(host)!()));
+  ownedTranslations.set(host, translate);
+  return run();
+}
+
+/** The root caller the server admits for a recorded hook call, as its Claude-style admission ingress claims it. */
+function admittedCaller(databasePath: string, host: string, tool: string, callId: string) {
+  const workflow = new SqliteWorkflowStore(databasePath);
+  try { return admitCaller(claudeAdmissionIngress(workflow, host)(tool, { "claudecode/toolUseId": callId }), hostActorId); }
+  finally { workflow.close(); }
 }
 
 function normalizedLifecycle(host: string, sessionId: string, action: ContinuityAction): AdaptedHostInput {
@@ -863,41 +865,37 @@ function seedCompactMarker(service: ContinuityService, session: string) {
 }
 
 describe("normalized continuity semantics and one-call snapshots", () => {
-  it("ignores raw clear/action decoys while issuing valid root and continuity proofs without changing the epoch or compact marker", async () => {
+  it("ignores raw clear/action decoys while admitting the root caller without changing the epoch or compact marker", async () => {
     const { env } = await normalizedEnvironment(), host = `owned-${randomUUID()}`, session = "normalized-inspect-session";
     const service = createService(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH, new InMemoryWorkflowStore(), () => new Date());
     const before = seedCompactMarker(service, session);
     let translations = 0;
-    const adapter = normalizedAdapter(() => {
-      expect(++translations).toBe(1);
-      return { lifecycle: "none", outputEventName: "BeforeOperation", observation: { host, sessionId: session, callId: randomUUID(),
+    const callId = randomUUID();
+    const result = await withOwnedAdapter(host, () => {
+      translations++;
+      return { lifecycle: "none", outputEventName: "BeforeOperation", observation: { host, sessionId: session, callId,
         kind: "tool-boundary", boundaryPhase: "before", toolName: "owned__inspect_context", toolInput: { schemaVersion: "1.0.0" },
         actor: { role: "root", basis: "observed", reasonCode: "OWNED_NORMALIZED_ROOT" } } };
-    });
-    const result = await runGovernanceHook(host, JSON.stringify({ hook_event_name: "SessionStart", source: "clear",
-      continuityAction: { kind: "clear" }, turn_id: "raw-decoy-turn", error: null }), env,
-    new Map([[host, { host, provider: "owned-provider", modelClassForModel: () => null }]]), {
-      inputAdapter: adapter, attestation: { kind: "owned-continuity", strategy: { observe() { throw new Error("A continuity read must not request model attestation."); } } },
-    });
-    expect(result.ok).toBe(true);
-    const output = JSON.parse(result.output);
-    expect(output.hookSpecificOutput).toMatchObject({ hookEventName: "PreToolUse", updatedInput: {
-      _sessionProof: expect.any(String), _continuityBinding: expect.any(String),
-    } });
-    expect(output.hookSpecificOutput).not.toHaveProperty("permissionDecision");
-    const args = output.hookSpecificOutput.updatedInput as Record<string, unknown>, workflow = new SqliteWorkflowStore(env.AGENT_GOVERNANCE_DB_PATH);
-    try { expect(new SessionActorProofs(workflow).verify("inspect_context", args)).toMatchObject({ host, sessionId: session, actor: { role: "root", basis: "observed" } }); }
-    finally { workflow.close(); }
-    const inspected = service.inspectContext(withoutSessionProof(args));
+    }, () => runGovernanceHook(host, JSON.stringify({ hook_event_name: "SessionStart", source: "clear",
+      continuityAction: { kind: "clear" }, turn_id: "raw-decoy-turn", error: null }), env));
+    // No rewritten input, proof, binding or permission decision; one translation each for the admission and the
+    // continuity hook's before-tool read.
+    expect(result).toEqual({ ok: true, output: "" });
+    expect(translations).toBe(2);
+    const caller = admittedCaller(env.AGENT_GOVERNANCE_DB_PATH, host, "inspect_context", callId);
+    // A continuity read records no model observation.
+    expect(caller).toMatchObject({ host, sessionId: session, callId, actor: { id: hostActorId(host, session), role: "root" },
+      parentChain: [], execution: { unavailable: "EXECUTION_NOT_REQUIRED" } });
+    const inspected = service.inspectContext({ schemaVersion: "1.0.0" }, caller);
     expect(inspected.error).toBeNull(); expect(inspected.data?.summary?.snapshotDigest).toBe(before.pendingDigest);
-    expect(translations).toBe(1);
+    expect(translations).toBe(2);
     expect(service.store.getTask(service.correlateSession(session))).toEqual(before);
   });
 
   it("preserves startup, clear, resume, compact and pre/post state transitions without native event fields", async () => {
     const { env } = await normalizedEnvironment(), host = `owned-${randomUUID()}`, session = "normalized-lifecycle-session";
     const service = createService(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
-    const event = (action: ContinuityAction) => withHookHostAdapter(host, normalizedAdapter(() => normalizedLifecycle(host, session, action)),
+    const event = (action: ContinuityAction) => withOwnedAdapter(host, () => normalizedLifecycle(host, session, action),
       async () => handleNativeContinuityHook({}, service, host));
     const correlation = service.correlateSession(session);
     expect(service.store.getTask(correlation)).toBeNull();
@@ -926,8 +924,8 @@ describe("normalized continuity semantics and one-call snapshots", () => {
     const close = vi.spyOn(SqliteWorkflowStore.prototype, "close");
     for (const action of [{ kind: "pre-compact" }, { kind: "resume" }, { kind: "compact" }] satisfies ContinuityAction[]) {
       let translations = 0;
-      const adapter = normalizedAdapter(() => { expect(++translations).toBe(1); return normalizedLifecycle(host, session, action); });
-      const output = await withHookHostAdapter(host, adapter, async () => runNativeContinuityHook("{}", env, host, true));
+      const translate = () => { expect(++translations).toBe(1); return normalizedLifecycle(host, session, action); };
+      const output = await withOwnedAdapter(host, translate, async () => runNativeContinuityHook("{}", env, host, true));
       expect(translations).toBe(1);
       if (action.kind !== "pre-compact") expect(JSON.parse(output)).toMatchObject({ hookSpecificOutput: { hookEventName: "LifecycleNotice", additionalContext: expect.any(String) } });
     }
@@ -944,31 +942,35 @@ describe("normalized continuity semantics and one-call snapshots", () => {
     for (const adapted of [{ ...base, continuityAction: { kind: "clear" } }, { ...base, lifecycle: "start" },
       { ...base, lifecycle: "end", observation: { host, sessionId: session, kind: "unknown", actor: base.observation.actor }, continuityAction: { kind: "clear" } },
     ] satisfies AdaptedHostInput[]) {
-      await expect(withHookHostAdapter(host, normalizedAdapter(() => adapted), async () => handleNativeContinuityHook({ hook_event_name: "SessionStart", source: "clear" }, service, host)))
+      await expect(withOwnedAdapter(host, () => adapted, async () => handleNativeContinuityHook({ hook_event_name: "SessionStart", source: "clear" }, service, host)))
         .rejects.toMatchObject({ code: "BINDING_INVALID", details: { reasonCode: "CONTINUITY_HOOK_OBSERVATION_CONFLICT" } });
       expect(service.store.getTask(service.correlateSession(session))).toEqual(before);
     }
     const { env } = await normalizedEnvironment();
-    const bad = normalizedAdapter(() => ({ ...base, continuityAction: { kind: "clear" } }));
-    await expect(withHookHostAdapter(host, bad, async () => runNativeContinuityHook("{}", env, host, true)))
+    const bad = (): AdaptedHostInput => ({ ...base, continuityAction: { kind: "clear" } });
+    await expect(withOwnedAdapter(host, bad, async () => runNativeContinuityHook("{}", env, host, true)))
       .rejects.toMatchObject({ details: { reasonCode: "CONTINUITY_HOOK_OBSERVATION_CONFLICT" } });
     expect(existsSync(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH)).toBe(false); expect(existsSync(env.AGENT_GOVERNANCE_DB_PATH)).toBe(false);
   });
 
-  it("pins selected host identity before checking a getter-backed observation and issuing its actual root proof", async () => {
+  it("pins the selected host identity for a getter-backed observation and admits its actual root caller", async () => {
     const { env } = await normalizedEnvironment(), host = `owned-${randomUUID()}`, session = "snapshot-host-session";
     let outerReads = 0, hostReads = 0;
-    const observation = { get host() { return ++hostReads === 1 ? host : "other-owned-host"; }, sessionId: session, callId: randomUUID(),
+    const callId = randomUUID();
+    const observation = { get host() { return ++hostReads === 1 ? host : "other-owned-host"; }, sessionId: session, callId,
       kind: "tool-boundary" as const, boundaryPhase: "before" as const, toolName: "owned__get_trust_capabilities", toolInput: {},
       actor: { role: "root" as const, basis: "observed" as const, reasonCode: "OWNED_NORMALIZED_ROOT" } };
-    const adapter = normalizedAdapter(() => ({ lifecycle: "none", outputEventName: "BeforeOperation", get observation() { outerReads++; return observation; } }));
-    const result = await runGovernanceHook(host, "{}", env, new Map([[host, { host, provider: "owned-provider", modelClassForModel: () => null }]]), {
-      inputAdapter: adapter, attestation: { kind: "owned-continuity", strategy: { observe: () => ({}) } },
-    });
-    expect(result.ok).toBe(true); expect(outerReads).toBe(1); expect(hostReads).toBe(1);
-    const args = JSON.parse(result.output).hookSpecificOutput.updatedInput as Record<string, unknown>, workflow = new SqliteWorkflowStore(env.AGENT_GOVERNANCE_DB_PATH);
-    try { expect(new SessionActorProofs(workflow).verify("get_trust_capabilities", args)).toMatchObject({ host, sessionId: session, actor: { role: "root", basis: "observed" } }); }
-    finally { workflow.close(); }
+    const result = await withOwnedAdapter(host, () => ({ lifecycle: "none", outputEventName: "BeforeOperation", get observation() { outerReads++; return observation; } }),
+      () => runGovernanceHook(host, "{}", env));
+    // The admission row takes the selected host; the observation's own host field is never read.
+    expect(result).toEqual({ ok: true, output: "" }); expect(outerReads).toBe(1); expect(hostReads).toBe(0);
+    const workflow = new SqliteWorkflowStore(env.AGENT_GOVERNANCE_DB_PATH);
+    try {
+      expect(claudeAdmissionIngress(workflow, "other-owned-host")("get_trust_capabilities", { "claudecode/toolUseId": callId }))
+        .toEqual({ provenance: "unavailable", reason: "CALL_ADMISSION_MISSING" });
+    } finally { workflow.close(); }
+    expect(admittedCaller(env.AGENT_GOVERNANCE_DB_PATH, host, "get_trust_capabilities", callId)).toMatchObject({
+      host, sessionId: session, callId, actor: { id: hostActorId(host, session), role: "root" }, parentChain: [] });
   });
 
   it("uses one lifecycle/action scalar snapshot for post-compact validation and storage", async () => {
@@ -977,9 +979,9 @@ describe("normalized continuity semantics and one-call snapshots", () => {
     let kindReads = 0, turnReads = 0, successReads = 0, lifecycleReads = 0;
     const action: ContinuityAction = { get kind(): "post-compact" { kindReads++; return "post-compact"; },
       get turnId() { return ++turnReads === 1 ? "normalized-first-turn" : "changed-turn"; }, get successful() { return ++successReads !== 1; } };
-    const adapter = normalizedAdapter(() => ({ ...normalizedLifecycle(host, session, { kind: "post-compact", turnId: null, successful: true }),
-      get lifecycle() { return ++lifecycleReads === 1 ? "none" : "start"; }, continuityAction: action }));
-    await withHookHostAdapter(host, adapter, async () => handleNativeContinuityHook({ hook_event_name: "PostCompact", turn_id: "raw-decoy", error: null }, service, host));
+    const translate = (): AdaptedHostInput => ({ ...normalizedLifecycle(host, session, { kind: "post-compact", turnId: null, successful: true }),
+      get lifecycle() { return ++lifecycleReads === 1 ? "none" : "start"; }, continuityAction: action });
+    await withOwnedAdapter(host, translate, async () => handleNativeContinuityHook({ hook_event_name: "PostCompact", turn_id: "raw-decoy", error: null }, service, host));
     expect([kindReads, turnReads, successReads, lifecycleReads]).toEqual([1, 1, 1, 1]);
     const database = new DatabaseSync(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
     try { expect(database.prepare("SELECT turn_hash, success FROM continuity_observations").get()).toMatchObject({ turn_hash: service.hashOpaque("turn", "normalized-first-turn"), success: 0 }); }
@@ -997,13 +999,13 @@ describe("normalized continuity semantics and one-call snapshots", () => {
     expect(service.store.getSnapshot(forkCorrelation, 1)).toBeNull();
     const foreignLoad = { schemaVersion: "1.0.0", candidateToken: originalCandidate.restoreToken!, epoch: original.epoch,
       revision: original.revision, digest: original.snapshotDigest };
-    expect(service.loadContext(bound(service, "fork-recipient", "load_context", foreignLoad)).error?.code).toBe("BINDING_INVALID");
+    expect(service.loadContext(foreignLoad, asRoot("fork-recipient")).error?.code).toBe("BINDING_INVALID");
     const own = directCheckpoint(service, "fork-recipient").data!;
     expect(own.taskCorrelation).not.toBe(original.taskCorrelation);
-    const candidate = service.inspectContext(bound(service, "fork-recipient", "inspect_context", { schemaVersion: "1.0.0" })).data!;
+    const candidate = service.inspectContext({ schemaVersion: "1.0.0" }, asRoot("fork-recipient")).data!;
     const ownLoad = { schemaVersion: "1.0.0", candidateToken: candidate.restoreToken!, epoch: candidate.summary!.epoch,
       revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest };
-    expect(service.loadContext(bound(service, "fork-recipient", "load_context", ownLoad)).data).toEqual(own);
+    expect(service.loadContext(ownLoad, asRoot("fork-recipient")).data).toEqual(own);
     expect(service.store.getSnapshot(original.taskCorrelation, original.epoch)).toEqual(original);
   });
 
@@ -1041,8 +1043,7 @@ describe("normalized continuity semantics and one-call snapshots", () => {
     const workflow = new InMemoryWorkflowStore(), root = workflowRoot(), session = "native-workflow-compact";
     workflow.insertConvergenceRoot(root);
     const service = createService(":memory:", workflow);
-    const openInput = { schemaVersion: "1.0.0", taskEnvelope: root.taskEnvelope, frame: root.frame, parentRootId: null, userApprovalRefs: [] };
-    service.bindOpenedRoot(bound(service, session, "open_convergence_root", openInput), root.rootId);
+    service.bindOpenedRoot(asRoot(session), root.rootId);
     handleNativeContinuityHook({ hook_event_name: "PreCompact", session_id: session }, service, host);
     const compact = { hook_event_name: "SessionStart", source: "compact", session_id: session };
     expect(JSON.stringify(handleNativeContinuityHook(compact, service, host))).toContain("decision=INJECT");

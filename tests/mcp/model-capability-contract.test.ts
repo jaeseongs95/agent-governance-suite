@@ -3,13 +3,10 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import type { ConvergenceFrameV1, StageResultV1, TaskEnvelopeV1 } from "../../contracts/types.js";
-import { observeCodexHook } from "../../mcp-server/src/codex-host-observation.js";
 import {
-  HOST_ATTESTATION_FIELD,
   type HostExecutionAdapter,
   hostActorId,
   HostAttestationProvider,
-  issueHostAttestation,
   resolveAdapterModelCapability,
 } from "../../mcp-server/src/host-attestation.js";
 import {
@@ -19,17 +16,14 @@ import {
   geminiExecutionAdapter,
   type ModelRoutingPresetsV1,
 } from "../../mcp-server/src/host-execution-adapters.js";
-import {
-  findLatestAssistantObservation,
-  handleCodexHostAttestationHook,
-  handleHostAttestationHook,
-} from "../../mcp-server/src/host-attestation-hook.js";
+import { observeClaudeExecution } from "../../mcp-server/src/host-attestation-hook.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { getPolicyRevision, resolveModelSelection } from "../../skills/coordinate-subagents/scripts/model-routing.mjs";
 import syntheticCatalogV2 from "./fixtures/synthetic-model-catalog-v2.json" with { type: "json" };
+import { rootCaller } from "../helpers/caller.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const SESSION = "session-capability-contract";
@@ -54,20 +48,19 @@ function createTask(taskId: string, riskLevel: "low" | "medium" | "high" | "crit
 }
 
 describe("AGS-08A vendor-neutral model/capability contract and single-catalog update", () => {
-  it.each(["low", "high", "critical"] as const)("accepts a signed low-effort caller for complex %s-risk bootstrap without changing stage floors (D0094)", (riskLevel) => {
+  it.each(["low", "high", "critical"] as const)("accepts a host-observed low-effort caller for complex %s-risk bootstrap without changing stage floors (D0094)", (riskLevel) => {
     const store = new InMemoryWorkflowStore();
-    const provider = new HostAttestationProvider(store, codexExecutionAdapter);
+    const provider = new HostAttestationProvider(codexExecutionAdapter);
     const validator = new ContractValidator();
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
     const input = { schemaVersion: "1.0.0", taskEnvelope: createTask(`d0094-current-${riskLevel}`, riskLevel) };
     input.taskEnvelope.decision.complexity = "complex";
-    const token = issueHostAttestation(store, codexExecutionAdapter, {
-      tool: "plan_workflow", input, model: "gpt-6.1-sol", reasoningEffort: "low",
-      actorId: hostActorId("codex", SESSION), sessionId: SESSION, turnId: "d0094-current-turn", toolUseId: `d0094-current-${riskLevel}`,
+    const caller = rootCaller("codex", SESSION, {
+      callId: `d0094-current-${riskLevel}`,
+      execution: { model: "gpt-6.1-sol", effort: "low", turnId: "d0094-current-turn", provenance: "codex:mcp-meta" },
     });
-    expect(token).toEqual(expect.any(String));
-    const planned = provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
-      clean => service.planWorkflow(clean, true));
+    const planned = provider.run("plan_workflow", caller,
+      () => service.planWorkflow(input, true));
     expect(planned.ok).toBe(true);
     expect(planned.data?.bootstrapExecution).toMatchObject({
       requirement: { minimumModelClass: null, minimumReasoningEffort: null, observationRequired: true },
@@ -81,8 +74,8 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
         observationRequired: true,
       });
     }
-    const replay = provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
-      clean => service.planWorkflow(clean, true));
+    const replay = provider.run("plan_workflow", caller,
+      () => service.planWorkflow(input, true));
     expect(replay.error?.code).toBe("BINDING_INVALID");
   });
 
@@ -106,7 +99,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     for (let ordinal = 0; ordinal < 2; ordinal++) {
       // 각 사례는 첫 단계 뒤 열린 루트를 남기므로 저장소를 격리해 범위 충돌을 막는다.
       const store = new InMemoryWorkflowStore();
-      const provider = new HostAttestationProvider(store, adapter);
+      const provider = new HostAttestationProvider(adapter);
       const validator = new ContractValidator();
       const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
       model = `opaque-${randomUUID()}`;

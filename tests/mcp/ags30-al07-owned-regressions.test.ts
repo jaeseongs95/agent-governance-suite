@@ -16,6 +16,7 @@ import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared
 import { InactiveUnifiedAuthority, createProviderAdapter, fixtureDigest } from "../../runtime/unified-state/authority.mjs";
 // @ts-expect-error Existing JavaScript fixtures have no declaration file.
 import { scopeA, workflowRef, workflowRow, nextWorkflowRow, records, reference, snapshot } from "../unified-state/fixtures.mjs";
+import { rootCaller } from "../helpers/caller.js";
 
 const directories: string[] = [];
 const stores = new Set<{ close(): void }>();
@@ -121,8 +122,7 @@ describe("AGS30 AL07 owned regressions", () => {
     root.taskDigest = convergenceDigest(root.taskEnvelope);
     workflow.insertConvergenceRoot(root);
     const service = new ContinuityService(keep(new SqliteContinuityStore(":memory:")), null, workflow, () => new Date(NOW));
-    const input = { schemaVersion: "1.0.0" };
-    service.bindOpenedRoot({ ...input, _continuityBinding: service.issueToolBinding("array-session", "open_convergence_root", input) }, root.rootId);
+    service.bindOpenedRoot(rootCaller("codex", "array-session"), root.rootId);
     service.markPreCompact("array-session");
     const output = service.compactContext("array-session");
     expect(output).toContain("criterion-3 [+2 omitted]"); expect(output).not.toContain("criterion-4");
@@ -130,12 +130,13 @@ describe("AGS30 AL07 owned regressions", () => {
     expect(card.acceptanceCriteria).toHaveLength(4); expect(card.acceptanceCriteria.every(value => value.length <= 240)).toBe(true);
   });
   it("AGS-D-0056: root correlation returns an observable success or rejection", () => {
-    const service = new ContinuityService(keep(new SqliteContinuityStore(":memory:")), null, null, () => new Date(NOW));
-    const input = { schemaVersion: "1.0.0" };
-    expect(service.bindOpenedRoot(input, "root-fixture")).toBe(false);
-    const bound = { ...input, _continuityBinding: service.issueToolBinding("bind-session", "open_convergence_root", input) };
-    expect(service.bindOpenedRoot(bound, "root-fixture")).toBe(true);
-    service.clearSession("bind-session"); expect(service.bindOpenedRoot(bound, "root-fixture")).toBe(false);
+    const store = keep(new SqliteContinuityStore(":memory:"));
+    const service = new ContinuityService(store, null, null, () => new Date(NOW));
+    // The server computes the scope from the verified caller, so a stale or absent binding cannot be presented.
+    const caller = rootCaller("codex", "bind-session");
+    expect(service.bindOpenedRoot(caller, "root-fixture")).toBe(true);
+    vi.spyOn(store, "bindRoot").mockImplementation(() => { throw new Error("fixture storage failure"); });
+    expect(service.bindOpenedRoot(caller, "root-fixture")).toBe(false);
   });
   it("AGS-D-0059: a second connection can finish migration before the first writer acquires its lock", () => {
     const filename = path.join(directory(), "legacy.sqlite3");
