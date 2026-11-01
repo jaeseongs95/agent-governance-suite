@@ -5,6 +5,7 @@ import path from "node:path";
 import process from "node:process";
 import { pathToFileURL } from "node:url";
 
+import { failureCode } from "../../../runtime/failure-diagnostics.mjs";
 import { contractErrors, validateMutationIntent } from "./schema-validation.mjs";
 
 const VERSION = "1.0.0";
@@ -253,7 +254,9 @@ async function main() {
   } catch (error) {
     if (phase === "input-read" && error instanceof SyntaxError) output = blockedReport({}, [error.message], new Date());
     else {
-      process.stderr.write(`${JSON.stringify({ component: "mutation-risk-preflight", phase, errorCode: "PREFLIGHT_RUNTIME_ERROR" })}\n`);
+      // The bounded OS/producer code (ENOENT, EACCES, ...) is kept; never the message or path.
+      const code = failureCode(error);
+      process.stderr.write(`${JSON.stringify({ component: "mutation-risk-preflight", phase, errorCode: "PREFLIGHT_RUNTIME_ERROR", ...(code ? { code } : {}) })}\n`);
       process.exitCode = 2;
       return;
     }
