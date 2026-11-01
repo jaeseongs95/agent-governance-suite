@@ -15,7 +15,7 @@ import { SessionMessageStore } from "../../mcp-server/src/session-message-store.
 
 const target = { host: "portable", sessionId: "verified-relay-transaction-budget" };
 const transport = "portable-queue";
-const tables = ["messages", "prepared_messages", "input_observations", "session_activity", "wake_nonces", "session_presence", "relay_leases"];
+const tables = ["messages", "prepared_messages", "input_observations", "wake_paths", "wake_nonces", "session_presence", "relay_leases"];
 const stores: SessionMessageStore[] = [];
 const directories: string[] = [];
 const birth = (pid: number, token: string) => "host-process-v1:" + createHash("sha256")

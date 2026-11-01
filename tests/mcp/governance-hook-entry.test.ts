@@ -38,7 +38,7 @@ function fixture() {
     AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: path.join(directory, "messages"),
     AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(directory, "shared"),
     AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "0",
-    AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE: "0",
+    AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE: "0",
     CLAUDE_PLUGIN_DATA: path.join(directory, "claude-data"),
     PLUGIN_DATA: path.join(directory, "plugin-data"),
   };

@@ -21,16 +21,16 @@ describe("L5 queue default origin and precedence", () => {
   it("uses automatic defaults only after explicit bounded file settings or absence", async () => {
     const f = await settingsFixture(); const diagnose = vi.fn();
     const environment = { PLUGIN_DATA: f.directory, ANTIGRAVITY_AGENT: "1", ANTIGRAVITY_PROJECT_ID: "synthetic-project" };
-    expect(hostInput.hostDeliveryProfile("gemini", {}, diagnose).transport).toBe("gemini-deferred");
-    expect(hostInput.hostDeliveryProfile("gemini", { ANTIGRAVITY_PROJECT_ID: "synthetic-project" }, diagnose, true).transport).toBe("gemini-queue");
-    expect(hostInput.hostDeliveryProfile("gemini", environment, diagnose).transport).toBe("gemini-queue");
+    expect(hostInput.hostDeliveryProfile("antigravity", {}, diagnose).transport).toBe("gemini-deferred");
+    expect(hostInput.hostDeliveryProfile("antigravity", { ANTIGRAVITY_PROJECT_ID: "synthetic-project" }, diagnose, true).transport).toBe("antigravity-queue");
+    expect(hostInput.hostDeliveryProfile("antigravity", environment, diagnose).transport).toBe("antigravity-queue");
     for (const queueWake of [false, true]) {
-      await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", gemini: { queueWake } }), "utf8");
+      await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", antigravity: { queueWake } }), "utf8");
       for (const signal of [false, true]) {
-        expect(hostInput.hostDeliveryProfile("gemini", { PLUGIN_DATA: f.directory }, diagnose, signal).transport)
-          .toBe(queueWake ? "gemini-queue" : "gemini-deferred");
-        expect(hostInput.hostDeliveryProfile("gemini", environment, diagnose, signal).transport)
-          .toBe(queueWake ? "gemini-queue" : "gemini-deferred");
+        expect(hostInput.hostDeliveryProfile("antigravity", { PLUGIN_DATA: f.directory }, diagnose, signal).transport)
+          .toBe(queueWake ? "antigravity-queue" : "gemini-deferred");
+        expect(hostInput.hostDeliveryProfile("antigravity", environment, diagnose, signal).transport)
+          .toBe(queueWake ? "antigravity-queue" : "gemini-deferred");
       }
     }
     expect(diagnose).not.toHaveBeenCalled();
@@ -40,29 +40,29 @@ describe("L5 queue default origin and precedence", () => {
   it("does not infer a queue whose idle wake cannot start without the source project identity (D0364)", () => {
     const diagnose = vi.fn();
     // The TEST agy CLI hook environment: the host injects only the conversation ID and no project identity.
-    for (const host of ["gemini", "antigravity"]) {
+    for (const host of ["antigravity"]) {
       for (const environment of [{}, { ANTIGRAVITY_CONVERSATION_ID: "synthetic" }, { ANTIGRAVITY_AGENT: "1", ANTIGRAVITY_PROJECT_ID: " " }]) {
         for (const supplied of [undefined, true]) {
           expect(hostInput.hostDeliveryProfile(host, environment, diagnose, supplied).transport).toBe("gemini-deferred");
         }
       }
       expect(hostInput.hostDeliveryProfile(host, { ANTIGRAVITY_CONVERSATION_ID: "synthetic", ANTIGRAVITY_PROJECT_ID: "synthetic-project" }, diagnose).transport)
-        .toBe("gemini-queue");
+        .toBe("antigravity-queue");
       // An explicit opt-in stays the user's decision.
-      expect(hostInput.hostDeliveryProfile(host, { AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE: "1" }, diagnose).transport).toBe("gemini-queue");
+      expect(hostInput.hostDeliveryProfile(host, { AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE: "1" }, diagnose).transport).toBe("antigravity-queue");
     }
     expect(diagnose).not.toHaveBeenCalled();
   });
 
   it("keeps explicit zero, one and invalid overrides ahead of file and automatic defaults", async () => {
     const f = await settingsFixture(); const diagnose = vi.fn();
-    for (const content of [JSON.stringify({ schemaVersion: "1.0.0", gemini: { queueWake: false } }), "private-malformed-marker"]) {
+    for (const content of [JSON.stringify({ schemaVersion: "1.0.0", antigravity: { queueWake: false } }), "private-malformed-marker"]) {
       await writeFile(f.file, content, "utf8");
       for (const signal of [false, true]) {
-        for (const [explicit, transport] of [["0", "gemini-deferred"], ["1", "gemini-queue"], ["invalid", "gemini-deferred"]]) {
+        for (const [explicit, transport] of [["0", "gemini-deferred"], ["1", "antigravity-queue"], ["invalid", "gemini-deferred"]]) {
           diagnose.mockClear();
-          expect(hostInput.hostDeliveryProfile("gemini", { PLUGIN_DATA: f.directory, ANTIGRAVITY_AGENT: "1",
-            AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE: explicit }, diagnose, signal).transport).toBe(transport);
+          expect(hostInput.hostDeliveryProfile("antigravity", { PLUGIN_DATA: f.directory, ANTIGRAVITY_AGENT: "1",
+            AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE: explicit }, diagnose, signal).transport).toBe(transport);
           if (explicit === "invalid") expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-environment");
           else expect(diagnose).not.toHaveBeenCalled();
         }
@@ -73,27 +73,30 @@ describe("L5 queue default origin and precedence", () => {
   it("never falls through malformed settings, read errors or invalid paths to an automatic true", async () => {
     const f = await settingsFixture(); const diagnose = vi.fn();
     const environment = { PLUGIN_DATA: f.directory, ANTIGRAVITY_CONVERSATION_ID: "synthetic", ANTIGRAVITY_PROJECT_ID: "synthetic-project" };
-    for (const content of ["private-malformed-marker", "null", JSON.stringify({ schemaVersion: "1.0.0", gemini: { queueWake: "false" } })]) {
+    for (const content of ["private-malformed-marker", "null", JSON.stringify({ schemaVersion: "1.0.0", antigravity: { queueWake: "false" } })]) {
       diagnose.mockClear(); await writeFile(f.file, content, "utf8");
-      expect(hostInput.hostDeliveryProfile("gemini", environment, diagnose, true).transport).toBe("gemini-deferred");
+      expect(hostInput.hostDeliveryProfile("antigravity", environment, diagnose, true).transport).toBe("gemini-deferred");
       expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-settings");
     }
     diagnose.mockClear();
-    expect(hostInput.hostDeliveryProfile("gemini", { ...environment, PLUGIN_DATA: "relative" }, diagnose, true).transport).toBe("gemini-deferred");
+    expect(hostInput.hostDeliveryProfile("antigravity", { ...environment, PLUGIN_DATA: "relative" }, diagnose, true).transport).toBe("gemini-deferred");
     expect(diagnose).toHaveBeenCalledExactlyOnceWith("invalid-plugin-data");
     diagnose.mockClear();
-    expect(hostInput.hostDeliveryProfile("gemini", { ...environment, PLUGIN_DATA: f.directory + "\0" }, diagnose, true).transport).toBe("gemini-deferred");
+    expect(hostInput.hostDeliveryProfile("antigravity", { ...environment, PLUGIN_DATA: f.directory + "\0" }, diagnose, true).transport).toBe("gemini-deferred");
     expect(diagnose).toHaveBeenCalledTimes(1);
     expect(diagnose.mock.calls[0]![0]).toBe("read-failed");
     expect(diagnose.mock.calls[0]![1]).toMatchObject({phase: "directory-stat", cleanup: "not-acquired"});
     expect(hookFailureReason(diagnose.mock.calls[0]![1].failure)).toBe("QUEUE_SETTINGS_DIRECTORY_STAT_FAILED");
     await rm(f.file); await mkdir(f.file); diagnose.mockClear();
-    expect(hostInput.hostDeliveryProfile("gemini", environment, diagnose, true).transport).toBe("gemini-deferred");
+    expect(hostInput.hostDeliveryProfile("antigravity", environment, diagnose, true).transport).toBe("gemini-deferred");
     expect(diagnose).toHaveBeenCalledTimes(1);
     expect(["read-failed", "invalid-file-type"]).toContain(diagnose.mock.calls[0]![0]);
   });
 
-  it("does not make another host inherit the Gemini adapter default", () => {
+  it("does not make another host inherit the Antigravity adapter default", () => {
+    // 3.0: Gemini CLI has no idle wake of its own; no ENV, file or call-local default gives it the agentapi queue.
+    for (const environment of [{}, { AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE: "1", ANTIGRAVITY_PROJECT_ID: "synthetic-project", ANTIGRAVITY_AGENT: "1" }])
+      for (const supplied of [undefined, true]) expect(hostInput.hostDeliveryProfile("gemini", environment, vi.fn(), supplied).transport).toBe("gemini-deferred");
     expect(hostInput.hostDeliveryProfile("codex", {}, vi.fn(), true).transport).toBe("codex-deferred");
     expect(hostInput.hostDeliveryProfile("claude-code", {}, vi.fn(), true).transport).toBe("claude-inbox");
     expect(() => hostInput.hostDeliveryProfile("unregistered-L5-host", {}, vi.fn(), true)).toThrow();
@@ -103,9 +106,9 @@ describe("L5 queue default origin and precedence", () => {
     const f = await settingsFixture();
     vi.stubEnv("PLUGIN_DATA", f.directory);
     vi.stubEnv("ANTIGRAVITY_PROJECT_ID", "synthetic-project");
-    for (const key of ["AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", "ANTIGRAVITY_AGENT", "ANTIGRAVITY_CONVERSATION_ID", "ANTIGRAVITY_AGENTAPI_EXE"])
+    for (const key of ["AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE", "ANTIGRAVITY_AGENT", "ANTIGRAVITY_CONVERSATION_ID", "ANTIGRAVITY_AGENTAPI_EXE"])
       vi.stubEnv(key, undefined);
-    await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", gemini: { queueWake: false } }), "utf8");
+    await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", antigravity: { queueWake: false } }), "utf8");
     const actual = hostInput.hostDeliveryProfile;
     const observed: Array<{ supplied: boolean | undefined; transport: string }> = [];
     vi.spyOn(hostInput, "hostDeliveryProfile").mockImplementation((host, environment, diagnose, supplied) => {
@@ -113,23 +116,23 @@ describe("L5 queue default origin and precedence", () => {
     });
     // A non-AGS tool boundary computes its profile but returns before any broker request.
     expect(await handleSessionMessageHook({ hook_event_name: "PreToolUse", session_id: "synthetic-L5-hook", agent_id: "",
-      tool_name: "read_file", tool_input: {} }, "gemini", undefined, { defaultQueueWake: true })).toEqual({});
+      tool_name: "read_file", tool_input: {} }, "antigravity", undefined, { defaultQueueWake: true })).toEqual({});
     await rm(f.file);
     const input = { hook_event_name: "PreToolUse", session_id: "synthetic-L5-hook", agent_id: "", tool_name: "read_file", tool_input: {} };
-    expect(await handleSessionMessageHook(input, "gemini", undefined, { defaultQueueWake: true })).toEqual({});
-    expect(await handleSessionMessageHook(input, "gemini")).toEqual({});
+    expect(await handleSessionMessageHook(input, "antigravity", undefined, { defaultQueueWake: true })).toEqual({});
+    expect(await handleSessionMessageHook(input, "antigravity")).toEqual({});
     expect(observed).toEqual([{ supplied: true, transport: "gemini-deferred" },
-      { supplied: true, transport: "gemini-queue" }, { supplied: undefined, transport: "gemini-deferred" }]);
-    expect(process.env.AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE).toBeUndefined();
+      { supplied: true, transport: "antigravity-queue" }, { supplied: undefined, transport: "gemini-deferred" }]);
+    expect(process.env.AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE).toBeUndefined();
   });
 
   it("threads runner-owned defaults into the same-process adapter callback while import leaves ENV unchanged", async () => {
-    const before = process.env.AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE;
+    const before = process.env.AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE;
     // Nonliteral import keeps this cross-runner JS fixture independent of TypeScript declaration generation.
     const runner = await import(new URL("../../antigravity-connector/hooks/antigravity-hook-runner.mjs", import.meta.url).href);
-    expect(process.env.AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE).toBe(before);
+    expect(process.env.AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE).toBe(before);
     const f = await settingsFixture();
-    await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", gemini: { queueWake: false } }), "utf8");
+    await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", antigravity: { queueWake: false } }), "utf8");
     const seen: Array<{ host: string; supplied: boolean; transport: string }> = [];
     for (const event of ["SessionStart", "PreInvocation", "PostInvocation", "Stop"]) {
       await runner.executeAntigravityHookEvent({ conversationId: "synthetic-L5-runner", agent_id: "" }, event, "session-message", {
@@ -142,26 +145,26 @@ describe("L5 queue default origin and precedence", () => {
       });
     }
     expect(seen).toEqual(Array.from({ length: 4 }, () => ({ host: "antigravity", supplied: true, transport: "gemini-deferred" })));
-    expect(process.env.AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE).toBe(before);
+    expect(process.env.AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE).toBe(before);
   });
 });
 
 
 it("reports a host-neutral settings diagnostic without inventing an adapter fallback transport", () => {
   const diagnostic = vi.spyOn(console, "error").mockImplementation(() => {});
-  const transport = hostInput.hostDeliveryProfile("gemini", { AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE: "invalid" }, undefined, true).transport;
+  const transport = hostInput.hostDeliveryProfile("antigravity", { AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE: "invalid" }, undefined, true).transport;
   expect(transport).toBe("gemini-deferred");
-  expect(diagnostic).toHaveBeenCalledExactlyOnceWith("[agent-governance-suite] gemini queue settings: invalid-environment.");
+  expect(diagnostic).toHaveBeenCalledExactlyOnceWith("[agent-governance-suite] antigravity queue settings: invalid-environment.");
   expect(diagnostic.mock.calls[0]![0]).not.toContain("using codex");
 });
 
 it("queries transport under the same call-local default contract as the hook", async () => {
   const f = await settingsFixture(); const environment = { PLUGIN_DATA: f.directory, ANTIGRAVITY_PROJECT_ID: "synthetic-project" };
-  expect(sessionMessageTransport("gemini", environment)).toBe("gemini-deferred");
-  expect(sessionMessageTransport("gemini", environment, true)).toBe("gemini-queue");
-  expect(sessionMessageTransport("gemini", environment)).toBe("gemini-deferred");
-  await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", gemini: { queueWake: false } }), "utf8");
-  expect(sessionMessageTransport("gemini", environment, true)).toBe("gemini-deferred");
+  expect(sessionMessageTransport("antigravity", environment)).toBe("gemini-deferred");
+  expect(sessionMessageTransport("antigravity", environment, true)).toBe("antigravity-queue");
+  expect(sessionMessageTransport("antigravity", environment)).toBe("gemini-deferred");
+  await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", antigravity: { queueWake: false } }), "utf8");
+  expect(sessionMessageTransport("antigravity", environment, true)).toBe("gemini-deferred");
   expect(sessionMessageTransport("codex", {}, true)).toBe("codex-deferred");
   expect(sessionMessageTransport("claude-code", {}, true)).toBe("claude-inbox");
 });

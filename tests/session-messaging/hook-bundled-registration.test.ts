@@ -19,7 +19,7 @@ it("registers a fourth host through the same deployed namespace that consumes it
     'assert.throws(() => entry.registerHookHostAdapter(host, adapter), {code:"HOOK_HOST_ADAPTER_DUPLICATE"});',
     'assert.throws(() => entry.registerHookHostAdapter("codex", adapter), {code:"HOOK_HOST_ADAPTER_DUPLICATE"});',
     'assert.throws(() => entry.registerHookHostAdapter("../bad-host", adapter), {code:"INVALID_HOOK_HOST_ADAPTER"});',
-    'const env = {AGENT_GOVERNANCE_CODEX_QUEUE_WAKE:"0",AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE:"0"};',
+    'const env = {AGENT_GOVERNANCE_CODEX_QUEUE_WAKE:"0",AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE:"0"};',
     'assert.equal(entry.sessionMessageTransport("codex", env), "codex-deferred");',
     'assert.equal(entry.sessionMessageTransport("claude-code", env), "claude-inbox");',
     'assert.equal(entry.sessionMessageTransport("gemini", env), "gemini-deferred");',

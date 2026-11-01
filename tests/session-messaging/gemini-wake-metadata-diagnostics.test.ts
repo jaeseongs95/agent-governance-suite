@@ -11,13 +11,17 @@ vi.mock("node:child_process", async (importOriginal) => ({
   execFile: execFileMock,
 }));
 
-import { transportWakePort } from "../../mcp-server/src/session-message-wake-port.js";
+import { transportWakePort } from "../../mcp-server/src/wake-transports.js";
+import type { WakeDispatchOutcome } from "../../mcp-server/src/session-message-wake-port.js";
+
+const prerequisite = { result: "not-delivered", kind: "prerequisite-missing" };
+const transient = { result: "not-delivered", kind: "transient" };
 
 type Callback = (error: Error | null, stdout: string, stderr: string) => void;
 type Diagnostic = { phase: string; reason: string; context: Record<string, unknown> };
 const digest = (value: string): string => createHash("sha256").update(Buffer.from(value, "utf16le")).digest("hex");
 const target = { host: "gemini", sessionId: "private-session-marker" };
-const dispatch = () => transportWakePort("gemini-queue").dispatch(target, "private-body-marker");
+const dispatch = () => transportWakePort("antigravity-queue").dispatch(target, "private-body-marker");
 
 function metadataCallback(error: Error | null, stdout: string): void {
   execFileMock.mockImplementationOnce((_command: string, _args: string[], _options: unknown, callback: Callback) => {
@@ -26,7 +30,7 @@ function metadataCallback(error: Error | null, stdout: string): void {
   });
 }
 
-async function diagnose(): Promise<{ outcome: string; diagnostic: Diagnostic; line: string }> {
+async function diagnose(): Promise<{ outcome: WakeDispatchOutcome; diagnostic: Diagnostic; line: string }> {
   const spy = vi.spyOn(console, "error").mockImplementation(() => {});
   try {
     const outcome = await dispatch();
@@ -48,7 +52,7 @@ describe("Gemini metadata failure keeps its cause", () => {
   it("records an execution error code fingerprint without sending or leaking text", async () => {
     metadataCallback(Object.assign(new Error("private-exec-message"), { code: "ENOENT" }), "");
     const { outcome, diagnostic, line } = await diagnose();
-    expect(outcome).toBe("definite-failure");
+    expect(outcome).toMatchObject(prerequisite);
     expect(execFileMock).toHaveBeenCalledTimes(1);
     expect(diagnostic).toMatchObject({ phase: "gemini-metadata", reason: "GEMINI_METADATA_FAILED",
       context: { producerReason: "GEMINI_METADATA_FAILED", producerCause: { type: "error", code: { prefixSha256: digest("ENOENT") } } } });
@@ -58,7 +62,7 @@ describe("Gemini metadata failure keeps its cause", () => {
   it("records a JSON parse failure as a syntax error cause", async () => {
     metadataCallback(null, "{");
     const { outcome, diagnostic } = await diagnose();
-    expect(outcome).toBe("definite-failure");
+    expect(outcome).toMatchObject(transient);
     expect(execFileMock).toHaveBeenCalledTimes(1);
     expect(diagnostic).toMatchObject({ reason: "GEMINI_METADATA_FAILED", context: { producerCause: { type: "syntax-error" } } });
   });
@@ -66,7 +70,7 @@ describe("Gemini metadata failure keeps its cause", () => {
   it("records a synchronous launch failure", async () => {
     execFileMock.mockImplementationOnce(() => { throw new Error("private-spawn-message"); });
     const { outcome, diagnostic, line } = await diagnose();
-    expect(outcome).toBe("definite-failure");
+    expect(outcome).toMatchObject(transient);
     expect(diagnostic).toMatchObject({ reason: "GEMINI_METADATA_FAILED", context: { producerCause: { type: "error" } } });
     expect(line).not.toContain("private-spawn-message");
   });
@@ -74,7 +78,7 @@ describe("Gemini metadata failure keeps its cause", () => {
   it("distinguishes metadata without a project identity", async () => {
     metadataCallback(null, "{}");
     const { outcome, diagnostic } = await diagnose();
-    expect(outcome).toBe("definite-failure");
+    expect(outcome).toMatchObject(prerequisite);
     expect(execFileMock).toHaveBeenCalledTimes(1);
     expect(diagnostic).toMatchObject({ phase: "gemini-metadata", reason: "GEMINI_METADATA_PROJECT_MISSING" });
   });
@@ -87,7 +91,7 @@ describe("Gemini metadata failure keeps its cause", () => {
       vi.stubEnv("ANTIGRAVITY_PROJECT_ID", "");
       vi.stubEnv("ANTIGRAVITY_WAKE_ENV_DIAGNOSTIC", "PROJECT_ID_NOT_MATCHED,CSRF_TOKEN_NOT_FOUND");
       const missingProject = await diagnose();
-      expect(missingProject.outcome).toBe("definite-failure");
+      expect(missingProject.outcome).toMatchObject(prerequisite);
       expect(missingProject.diagnostic).toMatchObject({
         phase: "gemini-preflight",
         reason: "GEMINI_PROJECT_ID_MISSING",
@@ -104,7 +108,7 @@ describe("Gemini metadata failure keeps its cause", () => {
       vi.stubEnv("ANTIGRAVITY_AGENTAPI_EXE", "agentapi.bat");
       if (process.platform === "win32") {
         const missingExe = await diagnose();
-        expect(missingExe.outcome).toBe("definite-failure");
+        expect(missingExe.outcome).toMatchObject(prerequisite);
         expect(missingExe.diagnostic).toMatchObject({
           phase: "gemini-preflight",
           reason: "GEMINI_AGENTAPI_UNAVAILABLE",
@@ -121,7 +125,7 @@ describe("Gemini metadata failure keeps its cause", () => {
       vi.stubEnv("ANTIGRAVITY_AGENTAPI_EXE", "C:/Program Files/Antigravity/language_server.exe");
       metadataCallback(null, JSON.stringify({ response: { conversationMetadata: { metadata: { projectId: "other-project" } } } }));
       const mismatch = await diagnose();
-      expect(mismatch.outcome).toBe("definite-failure");
+      expect(mismatch.outcome).toMatchObject(prerequisite);
       expect(mismatch.diagnostic).toMatchObject({ phase: "gemini-metadata", reason: "GEMINI_PROJECT_MISMATCH" });
       const persistedMismatch = JSON.parse(readFileSync(path.join(stateDir, "relay-failure.latest.json"), "utf8")) as Diagnostic;
       expect(persistedMismatch).toMatchObject({ phase: "gemini-metadata", reason: "GEMINI_PROJECT_MISMATCH" });
@@ -137,7 +141,7 @@ describe("Gemini metadata failure keeps its cause", () => {
         return child;
       });
       const sendFailed = await diagnose();
-      expect(sendFailed.outcome).toBe("definite-failure");
+      expect(sendFailed.outcome).toMatchObject(transient);
       expect(sendFailed.diagnostic).toMatchObject({
         phase: "gemini-send",
         reason: "GEMINI_SEND_FAILED",

@@ -22,7 +22,7 @@ const stores: SessionMessageStore[] = [];
 const directories: string[] = [];
 const birth = (pid: number, token: string, recipient = target) => "host-process-v1:" + createHash("sha256")
   .update(JSON.stringify([recipient.host, recipient.sessionId, pid, token])).digest("hex");
-const tables = ["messages", "prepared_messages", "input_observations", "session_activity", "wake_nonces", "session_presence", "relay_leases"];
+const tables = ["messages", "prepared_messages", "input_observations", "wake_paths", "wake_nonces", "session_presence", "relay_leases"];
 
 beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(now); native.token.mockReset(); });
 afterEach(() => {

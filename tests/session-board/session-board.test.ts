@@ -193,11 +193,15 @@ describe("session board hook", () => {
     const target = { host: "claude-code", sessionId: "parent" };
     const nonce = "subagent-wake-nonce-abcdefghijklmnop";
     store.send({ messageId: "subagent-wake-0001", sender: { host: "peer", sessionId: "sender" }, target, body: "pending" }, 1000);
-    expect(store.reserveWake(target, nonce, 2000)).toBe(true);
+    store.startPresence({ ...target, instanceId: "parent-instance", transport: "claude-inbox", wakeVisibility: "silent", canWakeSilently: true,
+      deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "silent" } }, 2000);
+    expect(store.acquireRelay({ ...target, transport: "claude-inbox", relayId: "parent-relay", pid: process.pid, parentPid: process.pid }, 2000)).toBe(true);
+    expect(store.reserveManagedWake({ ...target, nonce, instanceId: "parent-instance", transport: "claude-inbox", relayId: "parent-relay" }, 2000).dispatch).toBe(true);
+    const before = store.database.prepare("SELECT * FROM wake_nonces").all();
     let requests = 0;
     const request = (async <T>() => {
       requests += 1;
-      return { consumed: store.consumeWake(target, nonce, 2001) } as T;
+      return { consumed: store.consumeWake(target, nonce) } as T;
     }) as typeof import("../../mcp-server/src/session-message-client.js").sessionMessageRequest;
     const previous = process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
     process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = boardPath();
@@ -209,7 +213,9 @@ describe("session board hook", () => {
         prompt: `[agent-governance-suite:wake:${nonce}]`,
       }), request);
       expect(requests).toBe(0);
-      expect(store.claimWake(target, [nonce], 2002)).toMatchObject({ recognized: true, messages: [{ messageId: "subagent-wake-0001" }] });
+      // The parent's marker and body are untouched by the subagent prompt.
+      expect(store.database.prepare("SELECT * FROM wake_nonces").all()).toEqual(before);
+      expect(store.pendingCount(target, 2002)).toBe(1);
     } finally {
       if (previous === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
       else process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = previous;
@@ -376,7 +382,7 @@ describe("session board MCP tools", () => {
       ok: true,
       data: {
         sessions: [{
-          host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", wakeVisibility: "silent",
+          host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", relayLive: true, wakeVisibility: "silent",
           canWakeSilently: true, deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "silent" },
           collaborationId: "collaboration-1", workspaceId: "workspace-1", role: "worker",
           startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",
@@ -390,7 +396,7 @@ describe("session board MCP tools", () => {
     const listed = payload(await client.callTool({ name: "list_session_status", arguments: proofArgs(client, "list_session_status", { schemaVersion: "1.0.0" }) }));
     const sessions = (listed.data as { sessions: Array<{ sessionId: string; presence: unknown }> }).sessions;
     expect(sessions.find((row) => row.sessionId === "online")?.presence).toEqual({
-      host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", wakeVisibility: "silent",
+      host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", relayLive: true, wakeVisibility: "silent",
       canWakeSilently: true, deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "silent" },
       collaborationId: "collaboration-1", workspaceId: "workspace-1", role: "worker",
       startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",
@@ -411,7 +417,7 @@ describe("session board MCP tools", () => {
     setSummary(board, session(now, "worker"), "작업 중");
     for (const sessionId of ["child", "online", "caller"]) recordPrompt(board, session(now, sessionId));
     const client = await connect(databasePath, sessionMessages({ schemaVersion: "1.0.0", ok: true, data: { sessions: [{
-      host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", wakeVisibility: "silent",
+      host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", relayLive: true, wakeVisibility: "silent",
       canWakeSilently: true, deliveryCapabilities: { supportedInjection: ["peer-wake"], idleWake: "silent" },
       collaborationId: null, workspaceId: null, role: null,
       startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",

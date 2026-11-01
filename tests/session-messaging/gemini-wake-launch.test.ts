@@ -10,7 +10,12 @@ vi.mock("node:child_process", async (importOriginal) => ({
   execFile: execFileMock,
 }));
 
-import { resolveGeminiAgentApi, resolveWindowsAgentApiFromShim, transportWakePort } from "../../mcp-server/src/session-message-wake-port.js";
+import { resolveGeminiAgentApi, resolveWindowsAgentApiFromShim } from "../../mcp-server/src/wake-transport-antigravity.js";
+import { transportWakePort } from "../../mcp-server/src/wake-transports.js";
+
+// 3.0 outcome classes (design 2.4, B mapping): missing project / agentapi or a project mismatch is fixed for the birth.
+const prerequisite = { result: "not-delivered", kind: "prerequisite-missing" };
+const transient = { result: "not-delivered", kind: "transient" };
 
 type Callback = (error: Error | null, stdout: string, stderr: string) => void;
 type ExecOptions = { env: NodeJS.ProcessEnv; shell: boolean; windowsVerbatimArguments: boolean };
@@ -18,7 +23,7 @@ const command = "C:/Program Files/Antigravity/language_server.exe";
 const target = { host: "gemini", sessionId: 'session "quoted" & %SESSION%' };
 const message = '한글 "quoted" & %PATH% !X!\n끝\\';
 const metadata = JSON.stringify({ response: { conversationMetadata: { metadata: { projectId: "fixture-project" } } } });
-const dispatch = () => transportWakePort("gemini-queue").dispatch(target, message);
+const dispatch = () => transportWakePort("antigravity-queue").dispatch(target, message);
 
 function metadataReply(value = metadata) {
   execFileMock.mockImplementationOnce((_command: string, _args: string[], _options: ExecOptions, callback: Callback) => {
@@ -89,7 +94,7 @@ describe("Gemini native launch boundary", () => {
       queueMicrotask(() => { child.emit("spawn"); callback(null, "", ""); });
       return child;
     });
-    expect(await dispatch()).toBe("submitted");
+    expect(await dispatch()).toEqual({ result: "handed-off" });
     expect(execFileMock.mock.calls[0]!.slice(0, 2)).toEqual([command, ["agentapi", "get-conversation-metadata", target.sessionId]]);
     expect(execFileMock.mock.calls[1]!.slice(0, 2)).toEqual([command, ["agentapi", "send-message", target.sessionId, message]]);
     for (const call of execFileMock.mock.calls) {
@@ -105,14 +110,14 @@ describe("Gemini native launch boundary", () => {
 
   it.each([undefined, "", "  "])("does not start metadata or send without source project (%s)", async (sourceProject) => {
     vi.stubEnv("ANTIGRAVITY_PROJECT_ID", sourceProject);
-    expect(await dispatch()).toBe("definite-failure");
+    expect(await dispatch()).toMatchObject({ ...prerequisite, reasonCode: "GEMINI_PROJECT_ID_MISSING" });
     expect(execFileMock).not.toHaveBeenCalled();
   });
 
   it.each(["other-project", " fixture-project", "fixture-project "])("does not send across distinct project identities (%s)", async (sourceProject) => {
     vi.stubEnv("ANTIGRAVITY_PROJECT_ID", sourceProject);
     metadataReply();
-    expect(await dispatch()).toBe("definite-failure");
+    expect(await dispatch()).toMatchObject({ ...prerequisite, reasonCode: "GEMINI_PROJECT_MISMATCH" });
     expect(execFileMock).toHaveBeenCalledTimes(1);
     expect(process.env.ANTIGRAVITY_PROJECT_ID).toBe(sourceProject);
     expect(process.env.ANTIGRAVITY_SOURCE_METADATA).toBe("source-fixture");
@@ -128,15 +133,16 @@ describe("Gemini native launch boundary", () => {
         });
       } else metadataReply(failure === "invalid-json" ? "{" : failure === "missing-project" ? "{}"
         : JSON.stringify({ response: { conversationMetadata: { metadata: { projectId: "  " } } } }));
-      expect(await dispatch()).toBe("definite-failure");
+      // A failed lookup may recover (transient); a conversation that names no project is fixed for the birth.
+      expect(await dispatch()).toMatchObject(failure === "missing-project" || failure === "empty-project" ? prerequisite : transient);
       expect(execFileMock).toHaveBeenCalledTimes(1);
     },
   );
 
-  it("classifies a synchronous send launch failure as definite", async () => {
+  it("classifies a synchronous send launch failure as definitely not delivered", async () => {
     metadataReply();
     execFileMock.mockImplementationOnce(() => { throw new Error("spawn failed"); });
-    expect(await dispatch()).toBe("definite-failure");
+    expect(await dispatch()).toMatchObject(transient);
     expect(execFileMock).toHaveBeenCalledTimes(2);
   });
 
@@ -152,6 +158,6 @@ describe("Gemini native launch boundary", () => {
       });
       return child;
     });
-    expect(await dispatch()).toBe(spawned ? "accepted-or-unknown" : "definite-failure");
+    expect(await dispatch()).toMatchObject(spawned ? { result: "unknown" } : transient);
   });
 });

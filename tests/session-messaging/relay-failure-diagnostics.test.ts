@@ -23,8 +23,8 @@ import { tagProducerFailure } from "../../mcp-server/src/failure-diagnostics.js"
 import type { WakeDispatchPort } from "../../mcp-server/src/session-message-wake-port.js";
 
 const port: WakeDispatchPort = {
-  capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
-  dispatch: async () => "definite-failure",
+  capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" }, resendBaseMs: 600_000,
+  dispatch: async () => ({ result: "not-delivered", kind: "transient", reasonCode: "SYNTHETIC_TRANSIENT" }),
 };
 const relayOptions = { host: "synthetic-host", sessionId: "relay-diagnostic", instanceId: "instance-1",
   transport: "codex-deferred", parentPid: 424242, parentStartToken: "T1" };

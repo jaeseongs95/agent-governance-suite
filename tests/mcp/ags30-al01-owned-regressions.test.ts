@@ -17,10 +17,10 @@ vi.mock("node:tls", () => ({ default: { connect: f.connect, createServer: f.crea
 vi.mock("../../mcp-server/src/process-identity.js", () => ({ processStartToken: f.startToken,
   processStartTokens: (pids: number[]) => pids.map(pid => ({ token: f.startToken(pid) as string | null })) }));
 vi.mock("../../mcp-server/src/session-message-wake-port.js", () => ({
-  createWakeHookObservationReader: () => () => null, verifyHistoricalWakeObservation: () => false,
+  createWakeHookObservationReader: () => () => null, isWakeDispatchOutcome: () => true,
 }));
 vi.mock("../../mcp-server/src/session-message-store.js", () => ({
-  MessageCapacityError: class extends Error {},
+  MessageCapacityError: class extends Error {}, WAKE_RESEND_MAX_MS: 86_400_000,
   SessionMessageStore: class {
     close = f.storeClose;
     relayTick() { return { alive: false, count: 0 }; }
@@ -109,7 +109,7 @@ describe("AGS-D-0231: the same publication failures drive bounded reobservation"
 
 function clientEndpoint() {
   f.read.mockImplementation(async (name: string) => name.endsWith("endpoint.json")
-    ? JSON.stringify({ protocolVersion: "1.0.0", claimReceiptVersion: 1, address: "127.0.0.1", port: 12345, certificateFingerprint256: fingerprint })
+    ? JSON.stringify({ protocolVersion: "2.0.0", claimReceiptVersion: 1, address: "127.0.0.1", port: 12345, certificateFingerprint256: fingerprint })
     : name.endsWith("broker.token") ? "a".repeat(43) : "synthetic certificate");
 }
 function socket() {
@@ -181,7 +181,7 @@ describe("AGS-D-0008: relay maintenance cannot keep an idle broker alive", () =>
     const token = fs.readFileSync(path.join(directory, "broker.token"), "utf8").trim();
     const request = (operation: string, payload: Record<string, unknown>) => {
       const connection = socket(); server.emit("connection", connection); accept(connection);
-      connection.emit("data", Buffer.from(JSON.stringify({ protocolVersion: "1.0.0", token, operation, payload }) + "\n"));
+      connection.emit("data", Buffer.from(JSON.stringify({ protocolVersion: "2.0.0", token, operation, payload }) + "\n"));
     };
     const tick = { target: { host: "portable", sessionId: "synthetic" }, transport: "portable", relayId: "relay", instanceId: "instance", includePending: false };
     vi.setSystemTime(40_000); request("relay-tick", tick);
@@ -237,8 +237,10 @@ describe("AL02 broker/store integration: AGS-D-0007 and AGS-D-0031", () => {
     const binding = { ...target, instanceId, relayId: "relay", transport: "portable", nonce: "synthetic-nonce" };
     dispatchSessionMessageBrokerOperation(store, "reserve-wake", { target, ...binding });
     const attempt = { ...binding, generation: "generation", attemptId: "attempt", dispatchEpoch: 0 };
-    dispatchSessionMessageBrokerOperation(store, "start-wake", { attempt });
+    dispatchSessionMessageBrokerOperation(store, "start-wake", { attempt, resendBaseMs: 600_000 });
     expect(reserveManagedWake.mock.calls[0]).toHaveLength(1);
-    expect(startManagedWake.mock.calls[0]).toHaveLength(1);
+    // The broker passes the validated resend base and no clock; the store samples time under its lock.
+    expect(startManagedWake.mock.calls[0]).toHaveLength(2);
+    expect(startManagedWake.mock.calls[0]![1]).toBe(600_000);
   });
 });

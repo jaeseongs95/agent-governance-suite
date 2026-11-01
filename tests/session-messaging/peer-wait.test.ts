@@ -1,5 +1,6 @@
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
+import { mkdtempSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -11,7 +12,9 @@ import { nativePeerWait, adaptHostInput, registerHookHostAdapter } from "../../m
 import { PeerWaitPolicy } from "../../mcp-server/src/peer-wait-policy.js";
 import { dispatchSessionMessageBrokerOperation as dispatch } from "../../mcp-server/src/session-message-broker.js";
 import { requestSessionMessageOnce, waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
-import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
+import { SessionMessageStore, WAKE_QUIET_MS } from "../../mcp-server/src/session-message-store.js";
+import { recordWakeHookObservation, wakeHookObservationReader } from "../../mcp-server/src/session-message-wake-port.js";
+import { DatabaseSync } from "node:sqlite";
 
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import type { ActorObservation } from "../../mcp-server/src/input-observation.js";
@@ -52,7 +55,34 @@ function observedWait(overrides: Record<string, unknown> = {}) {
   return adaptHostInput({ hook_event_name: "PreToolUse", session_id: sender.sessionId, syntheticActor: syntheticRoot,
     tool_name: "mcp__codex_app__wait_threads", tool_input: { targets: [{ threadId: target.sessionId }], timeoutMs: 60_000 }, ...overrides }, syntheticHost).observation;
 }
+// 3.0: a wake is reserved for one birth and relay, and its arrival is a verified host-wake observation (no claim-wake).
+const binding = { instanceId: "generation-1", relayId: "live-relay", transport: "codex-queue" };
+const packagedBinding = { instanceId: "packaged-instance", relayId: "packaged-relay", transport: "codex-queue" };
+type HostWake = { recognized: boolean; messages: Array<{ messageId: string; claimReceipt: string }> };
+function wakeObservation(nonces: string[]) {
+  return adaptHostInput({ hook_event_name: "UserPromptSubmit", session_id: sender.sessionId, agent_id: "", syntheticActor: syntheticRoot,
+    prompt: nonces.map(nonce => `[agent-governance-suite:wake:${nonce}]`).join("\n") }, syntheticHost).observation;
+}
+function hostWake(store: SessionMessageStore, nonces: string[]): HostWake {
+  const observation = wakeObservation(nonces);
+  return dispatch(store, "claim-host-wake", { target: sender, observation, sourceReceiptId: recordWakeHookObservation(observation) },
+    wakeHookObservationReader) as HostWake;
+}
+async function packagedHostWake(directory: string, nonces: string[]): Promise<HostWake> {
+  const observation = wakeObservation(nonces);
+  return requestSessionMessageOnce<HostWake>("claim-host-wake", { target: sender, observation, sourceReceiptId: recordWakeHookObservation(observation) }, directory);
+}
+/** Stands in for a quiet minute without a claim boundary (design 2.5); the packaged broker keeps its own wall clock. */
+function quietSince(directory: string) {
+  const db = new DatabaseSync(path.join(directory, "session-messages.sqlite3"));
+  try {
+    db.prepare("UPDATE wake_paths SET claim_boundary_at = ? WHERE host = ? AND session_id = ?")
+      .run(new Date(Date.now() - WAKE_QUIET_MS - 1000).toISOString(), sender.host, sender.sessionId);
+  } finally { db.close(); }
+}
 function storeFixture() {
+  const trust = mkdtempSync(path.join(tmpdir(), "ags-peer-wait-trust-")); directories.push(trust);
+  vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", path.join(trust, "trust.sqlite3"));
   const store = new SessionMessageStore(":memory:"); stores.push(store);
   store.send({ sender, target, messageId: "outgoing-peer", body: "Synthetic request" });
   dispatch(store, "presence-start", { target: sender, instanceId: "generation-1", transport: "codex-queue", wakeVisibility: "user-message",
@@ -62,8 +92,8 @@ function storeFixture() {
 }
 function proveWake(store: SessionMessageStore) {
   store.send({ sender: target, target: sender, messageId: "incoming-peer", body: "Synthetic reply" });
-  dispatch(store, "reserve-wake", { target: sender, nonce: "nonce-peer-wait-fixture" });
-  const claimed = dispatch(store, "claim-wake", { target: sender, nonces: ["nonce-peer-wait-fixture"] }) as { messages: Array<{ messageId: string; claimReceipt: string }> };
+  expect(dispatch(store, "reserve-wake", { target: sender, nonce: "nonce-peer-wait-fixture", ...binding })).toMatchObject({ dispatch: true });
+  const claimed = hostWake(store, ["nonce-peer-wait-fixture"]);
   expect(claimed).toMatchObject({ recognized: true });
   return claimed.messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }));
 }
@@ -180,16 +210,17 @@ describe("peer wait policy boundaries", () => {
   it("does not attach an old generation nonce to a replacement instance", () => {
     const store = storeFixture();
     store.send({ sender: target, target: sender, messageId: "old-generation-reply", body: "Synthetic reply" });
-    dispatch(store, "reserve-wake", { target: sender, nonce: "nonce-before-generation-change" });
+    expect(dispatch(store, "reserve-wake", { target: sender, nonce: "nonce-before-generation-change", ...binding })).toMatchObject({ dispatch: true });
     dispatch(store, "presence-start", { target: sender, instanceId: "generation-2", transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false, supportedInjection: ["peer-wake"], idleWake: "user-message" });
     dispatch(store, "acquire-relay", { target: sender, instanceId: "generation-2", transport: "codex-queue", relayId: "new-relay", pid: process.pid, parentPid: process.pid });
-    expect(dispatch(store, "claim-wake", { target: sender, nonces: ["nonce-before-generation-change"] })).toMatchObject({ recognized: true });
+    // I2: a marker of the replaced birth claims nothing and proves no resume of the new one.
+    expect(hostWake(store, ["nonce-before-generation-change"])).toMatchObject({ recognized: false, messages: [] });
     expect(decision(store)).toMatchObject({ action: "bounded", resume: "unknown" });
   });
 
   it("requires valid nonces and does not infer resume from ordinary peer delivery", () => {
     const store = storeFixture();
-    expect(dispatch(store, "claim-wake", { target: sender, nonces: ["invalid-nonce-peer-wait"] })).toMatchObject({ recognized: false });
+    expect(hostWake(store, ["invalid-nonce-peer-wait"])).toMatchObject({ recognized: false });
     dispatch(store, "claim", { target });
     expect(decision(store)).toMatchObject({ action: "bounded", resume: "unknown" });
   });
@@ -214,13 +245,21 @@ describe("peer wait policy boundaries", () => {
     for (const offset of [10_000, 20_000, 30_000]) {
       clock.mockReturnValue(now + offset);
       expect(dispatch(store, "relay-tick", { target: sender, instanceId: "generation-1", transport: "codex-queue", relayId: "live-relay", includePending: true })).toMatchObject({ alive: true });
-      expect(dispatch(store, "claim-wake", { target: sender, nonces: ["nonce-peer-wait-fixture", "nonce-peer-wait-fixture"] })).toMatchObject({ recognized: false, messages: [] });
+      // A repeated marker of the observed attempt brings no body and must not refresh the consumed wake.
+      expect(hostWake(store, ["nonce-peer-wait-fixture", "nonce-peer-wait-fixture"])).toMatchObject({ messages: [] });
     }
     expect(decision(store)).toMatchObject({ action: "bounded", resume: "unknown" });
     store.acknowledge(sender, ["incoming-peer"], undefined, incomingClaim);
     store.send({ sender: target, target: sender, messageId: "fresh-reply", body: "Fresh synthetic reply" });
-    expect(dispatch(store, "reserve-wake", { target: sender, nonce: "nonce-peer-wait-fresh" })).toMatchObject({ dispatch: true });
-    expect(dispatch(store, "claim-wake", { target: sender, nonces: ["nonce-peer-wait-fresh", "nonce-peer-wait-fresh"] })).toMatchObject({ recognized: true });
+    // The fresh wake rings only once the session is quiet again (design 2.5); the relay stays live meanwhile.
+    const quietAt = now + 30_000 + WAKE_QUIET_MS + 1_000;
+    for (let at = now + 40_000; ; at = Math.min(at + 10_000, quietAt)) {
+      clock.mockReturnValue(at);
+      expect(dispatch(store, "relay-tick", { target: sender, ...binding, includePending: false })).toMatchObject({ alive: true });
+      if (at === quietAt) break;
+    }
+    expect(dispatch(store, "reserve-wake", { target: sender, nonce: "nonce-peer-wait-fresh", ...binding })).toMatchObject({ dispatch: true });
+    expect(hostWake(store, ["nonce-peer-wait-fresh", "nonce-peer-wait-fresh"])).toMatchObject({ recognized: true });
     expect(decision(store)).toMatchObject({ action: "deny", resume: "observed" });
   });
 });
@@ -229,6 +268,8 @@ async function launch(brokerPath = path.join(root, "mcp-server/dist/session-mess
   const directory = await mkdtemp(path.join(tmpdir(), "ags-peer-wait-")); directories.push(directory);
   const started = performance.now();
   let stderr = "";
+  // The test process records hook wake observations into the same trust file the broker verifies.
+  vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", path.join(directory, "trust.sqlite3"));
   const child = spawn(process.execPath, ["--import", new URL("./fixtures/presence-startup-trace.mjs", import.meta.url).href,
     "--import", new URL("./fixtures/peer-wait-request-count.mjs", import.meta.url).href, brokerPath, "--state-directory", directory],
   { windowsHide: true, stdio: ["ignore", "ignore", "pipe"], env: { ...process.env, AGS_PEER_WAIT_COUNT_PATH: path.join(directory, "peer-wait-count.txt") } }); children.push(child);
@@ -258,9 +299,9 @@ async function preparePackaged(directory: string) {
   await requestSessionMessageOnce("presence-start", { target: sender, instanceId: "packaged-instance", transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false, supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" }, directory);
   await requestSessionMessageOnce("acquire-relay", { target: sender, instanceId: "packaged-instance", transport: "codex-queue", relayId: "packaged-relay", pid: process.pid, parentPid: process.pid }, directory);
   const replyId = await sendSynthetic(directory, { sender: target, target: sender, body: "Synthetic reply" });
-  await requestSessionMessageOnce("reserve-wake", { target: sender, nonce: "nonce-packaged-peer-wait" }, directory);
-  // Broker core fixture supplies consumed-wake evidence directly; no native hook actor is fabricated.
-  const claimed = await requestSessionMessageOnce<{ messages: Array<{ messageId: string; claimReceipt: string }> }>("claim-wake", {target: sender, nonces: ["nonce-packaged-peer-wait"]}, directory);
+  expect(await requestSessionMessageOnce("reserve-wake", { target: sender, nonce: "nonce-packaged-peer-wait", ...packagedBinding }, directory)).toMatchObject({ dispatch: true });
+  // The synthetic root adapter supplies the verified wake observation; no native hook actor is fabricated.
+  const claimed = await packagedHostWake(directory, ["nonce-packaged-peer-wait"]);
   expect(claimed).toMatchObject({recognized: true});
   return { requestId, replyId, replyClaims: claimed.messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })) };
 }
@@ -355,14 +396,16 @@ it("broker restart preserves messages but drops resume and repeat-suppression ev
   expect(before).toMatchObject({ action: "bounded", resume: "unknown" });
   expect(await requestSessionMessageOnce("send", { sender, messageId: requestId }, directory)).toMatchObject({ duplicate: true });
   expect(await requestSessionMessageOnce("peer-wait", wait, directory)).toEqual(before);
-  expect(await requestSessionMessageOnce("claim-wake", { target: sender, nonces: ["nonce-packaged-peer-wait"] }, directory)).toMatchObject({ recognized: false });
+  // The replayed marker brings no body, and without the restarted broker's relay binding it proves no resume.
+  expect(await packagedHostWake(directory, ["nonce-packaged-peer-wait"])).toMatchObject({ messages: [] });
   expect(await requestSessionMessageOnce("peer-wait", wait, directory)).toEqual(before);
   await requestSessionMessageOnce("acquire-relay", { target: sender, instanceId: "packaged-instance", transport: "codex-queue", relayId: "packaged-relay", pid: process.pid, parentPid: process.pid }, directory);
   packaged(directory, "session-message-hook.mjs", { hook_event_name: "UserPromptSubmit", session_id: sender.sessionId, prompt: "[agent-governance-suite:wake:nonce-packaged-peer-wait]" });
   expect(await requestSessionMessageOnce("peer-wait", wait, directory)).toMatchObject({ action: "bounded", resume: "unknown" });
   await requestSessionMessageOnce("acknowledge", { target: sender, messageIds: [replyId], receipts: replyClaims }, directory);
   await sendSynthetic(directory, { sender: target, target: sender, body: "Fresh reply" });
-  expect(await requestSessionMessageOnce("reserve-wake", { target: sender, nonce: "nonce-post-restart-peer" }, directory)).toMatchObject({ dispatch: true });
-  expect(await requestSessionMessageOnce("claim-wake", { target: sender, nonces: ["nonce-post-restart-peer"] }, directory)).toMatchObject({ recognized: true });
+  quietSince(directory);
+  expect(await requestSessionMessageOnce("reserve-wake", { target: sender, nonce: "nonce-post-restart-peer", ...packagedBinding }, directory)).toMatchObject({ dispatch: true });
+  expect(await packagedHostWake(directory, ["nonce-post-restart-peer"])).toMatchObject({ recognized: true });
   expect(await requestSessionMessageOnce("peer-wait", wait, directory)).toMatchObject({ action: "snapshot", resume: "observed" });
 }, 15_000);

@@ -38,7 +38,7 @@ beforeEach(() => {
   f.request.mockReset();
   f.request.mockResolvedValue({ messages: [] });
   vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "0");
-  vi.stubEnv("AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", "0");
+  vi.stubEnv("AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE", "0");
   written = [];
   stdoutError = null;
   vi.spyOn(process.stdout, "write").mockImplementation(((chunk: unknown, callback?: unknown) => {

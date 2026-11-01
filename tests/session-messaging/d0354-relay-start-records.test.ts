@@ -30,14 +30,15 @@ registerHookHostAdapter(verifiedHost, {
     const mapped = adaptHostInput(payload, "codex");
     return { ...mapped, observation: { ...mapped.observation, host, callId: "d0354-call", actor: payload.syntheticActor as ActorObservation } };
   },
-  deliveryProfile: () => ({ transport: "gemini-queue", capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" }, blocksEmptyWakePrompt: false }),
+  deliveryProfile: () => ({ transport: "antigravity-queue", capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" }, blocksEmptyWakePrompt: false }),
   processPid: (pid, observation) => observation ? pid : undefined,
 });
 const verifiedRoot: ActorObservation = { role: "root", basis: "observed", reasonCode: "SYNTHETIC_D0354_ROOT" };
 
 // D0354: a generation whose relay never started or ended early must leave a local record with a fixed reason.
 // Hosts may discard hook stderr, so the stderr line alone left "registered, no heartbeat" sessions unexplained.
-const port: WakeDispatchPort = { capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" }, dispatch: async () => "definite-failure" };
+const port: WakeDispatchPort = { capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" }, resendBaseMs: 600_000,
+  dispatch: async () => ({ result: "not-delivered", kind: "transient", reasonCode: "SYNTHETIC_TRANSIENT" }) };
 const relayOptions = { host: "synthetic-host", sessionId: "relay-d0354", instanceId: "instance-1",
   transport: "codex-deferred", parentPid: 424242, parentStartToken: "T1" };
 const SECRET = "secret-canary-d0354";

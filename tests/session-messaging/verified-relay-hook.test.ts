@@ -26,7 +26,7 @@ registerHookHostAdapter(syntheticHost, {
     const mapped = adaptHostInput(payload, "codex");
     return {...mapped, observation: {...mapped.observation, host, callId: "synthetic-relay-call", actor: payload.syntheticActor as ActorObservation}};
   },
-  deliveryProfile: () => ({transport: "gemini-queue", capabilities: {supportedInjection: ["peer-wake", "tool-boundary", ...(f.turnEnd ? ["turn-end" as const] : [])], idleWake: "user-message"}, blocksEmptyWakePrompt: false}),
+  deliveryProfile: () => ({transport: "antigravity-queue", capabilities: {supportedInjection: ["peer-wake", "tool-boundary", ...(f.turnEnd ? ["turn-end" as const] : [])], idleWake: "user-message"}, blocksEmptyWakePrompt: false}),
   processPid: (pid, observation) => observation ? pid : undefined,
 });
 // D0364: selects the queue only when the environment the relay receives is wake-ready, like the Gemini adapter.
@@ -37,7 +37,7 @@ registerHookHostAdapter(envProfileHost, {
     return {...mapped, observation: {...mapped.observation, host, callId: "synthetic-relay-call", actor: payload.syntheticActor as ActorObservation}};
   },
   deliveryProfile: (environment) => environment.SYNTHETIC_WAKE_READY === "1"
-    ? {transport: "gemini-queue", capabilities: {supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message"}, blocksEmptyWakePrompt: false}
+    ? {transport: "antigravity-queue", capabilities: {supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message"}, blocksEmptyWakePrompt: false}
     : {transport: "gemini-deferred", capabilities: {supportedInjection: ["tool-boundary"], idleWake: "none"}, blocksEmptyWakePrompt: false},
   processPid: (pid, observation) => observation ? pid : undefined,
 });
@@ -55,7 +55,7 @@ beforeEach(() => {
   f.observeSpawn.mockReset();
   f.request.mockResolvedValue(grant()); f.token.mockReturnValue("T1");
   f.spawn.mockImplementation(() => Object.assign(new EventEmitter(), { unref: vi.fn() }));
-  vi.stubEnv("AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", "1");
+  vi.stubEnv("AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE", "1");
   vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "0");
 });
 afterEach(() => vi.unstubAllEnvs());
@@ -71,7 +71,7 @@ it("uses a single non-replayed ensure grant without emitting claim observations"
   expect(process.env.ANTIGRAVITY_CSRF_TOKEN).toBe(prevCsrf);
   expect(f.request).toHaveBeenCalledTimes(1);
   expect(f.request.mock.calls[0]![0]).toBe("ensure-relay");
-  expect(f.request.mock.calls[0]![1]).toMatchObject({ parentPid: 424242, parentStartToken: "T1", transport: "gemini-queue" });
+  expect(f.request.mock.calls[0]![1]).toMatchObject({ parentPid: 424242, parentStartToken: "T1", transport: "antigravity-queue" });
   expect(f.request.mock.calls[0]![3]).toMatchObject({ noOperationReplay: true, deadlineMonotonicMs: 1000 });
   expect(onClaimState).not.toHaveBeenCalled();
   expect(f.spawn).toHaveBeenCalledTimes(1);
@@ -114,7 +114,7 @@ it.each([true, false])("진단 기록 전에 오류 처리와 자식 소유권�
   await handleSessionMessageHook(input, syntheticHost, 424242, {
     hostProcess: options().hostProcess, ...(owned ? {relayOwner} : {}),
   });
-  expect(f.observeSpawn).toHaveBeenCalledWith("gemini-queue", expect.anything(), false, expect.any(Function));
+  expect(f.observeSpawn).toHaveBeenCalledWith("antigravity-queue", expect.anything(), false, expect.any(Function));
   expect(returned).toHaveBeenCalledTimes(1);
   expect(state).toEqual({errorListeners: 1, ownerCalls: owned ? 1 : 0, unrefCalls: owned ? 0 : 1});
 });
@@ -223,7 +223,7 @@ const post = { ...input, hook_event_name: "PostToolUse", tool_name: "read_file",
 const recover = (resolveHostProcess: () => { pid: number; startToken: string } | null) => ({
   recoverExistingSession: true, resolveHostProcess, executionBudget: options().executionBudget,
 });
-const livePresence = { host: syntheticHost, sessionId: input.session_id, instanceId, state: "online", transport: "gemini-queue", autoWake: { state: "available" } };
+const livePresence = { host: syntheticHost, sessionId: input.session_id, instanceId, state: "online", transport: "antigravity-queue", relayLive: true, autoWake: { state: "available" } };
 
 it.each([
   { event: "SessionStart", operation: undefined },
@@ -264,7 +264,7 @@ it.each([
     const child = f.spawn.mock.results[0]!.value;
     expect(child.listenerCount("error")).toBe(1);
     // 예산 경로도 부모 관측을 남긴다. 게시는 훅이 끝난 뒤 프로세스 종료 때 한 번이다.
-    expect(f.observeSpawn).toHaveBeenCalledWith("gemini-queue", expect.anything(), true, expect.any(Function));
+    expect(f.observeSpawn).toHaveBeenCalledWith("antigravity-queue", expect.anything(), true, expect.any(Function));
     const observationFailures = errors.mock.calls.filter(([line]) => String(line).includes('"phase":"relay-observation"'));
     errors.mockRestore();
     expect(observationFailures).toHaveLength(mode === "failure" ? 1 : 0);
@@ -285,7 +285,8 @@ it.each([
     }
   });
 
-it.each(["available", "latched"])("keeps an online relay while binding the claiming event's own generation: %s", async (state) => {
+// SOLID 8 / H:532: the recovery skip reads the explicit relayLive, never a guess from the advisory autoWake outlook.
+it.each(["available", "degraded", "no-live-relay"])("keeps an online live relay while binding the claiming event's own generation, whatever autoWake says: %s", async (state) => {
   const resolver = vi.fn(() => options().hostProcess);
   f.request.mockImplementation(async (operation, _payload, _directory, requestOptions) => {
     if (operation === "list-presence") return { sessions: [{ ...livePresence, autoWake: { state } }] };
@@ -307,10 +308,10 @@ it("does not adopt a replacement generation observed while checking relay livene
   const hostProcess = { ...options().hostProcess };
   const currentInstance = "host-process-v1:" + "b".repeat(64);
   const at = Date.now();
-  store.startPresence({ ...target, instanceId: currentInstance, transport: "gemini-queue",
+  store.startPresence({ ...target, instanceId: currentInstance, transport: "antigravity-queue",
     wakeVisibility: "user-message", canWakeSilently: false }, at);
   store.send({ sender: { host: "synthetic-peer", sessionId: "sender" }, target, body: "replacement body" }, at + 1);
-  const snapshot = () => ["messages", "input_observations", "session_activity", "session_presence"]
+  const snapshot = () => ["messages", "input_observations", "wake_paths", "session_presence"]
     .map(table => store.database.prepare(`SELECT * FROM ${table}`).all());
   const before = snapshot();
   f.request.mockImplementation(async (operation, payload) => {
@@ -425,7 +426,7 @@ it("accepts an opaque new host with an adapter delivery contract using unchanged
       return {...adapted, observation: {...adapted.observation, host: selectedHost,
         actor: {role: "root", basis: "observed", reasonCode: "SYNTHETIC_OPAQUE_RELAY_ROOT"}}};
     },
-    deliveryProfile: () => ({ transport: "gemini-queue", capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" }, blocksEmptyWakePrompt: false }),
+    deliveryProfile: () => ({ transport: "antigravity-queue", capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" }, blocksEmptyWakePrompt: false }),
     processPid: (pid) => pid,
   });
   f.request.mockResolvedValue({ spawn: true, instanceId: syntheticInstance, relayId: syntheticRelay });
@@ -496,7 +497,6 @@ it.each(["codex", "claude-code", "gemini", "antigravity", syntheticHost])("keeps
     expect(store.acquireRelay({ ...target, transport: presence.transport, relayId: "new-relay", pid: 200, parentPid: 100 }, now)).toBe(true);
     expect(store.presence(target, now).instanceId).toBe("new-generation");
     store.send({ messageId: "late-end-acked", sender, target, body: "acked" }, now);
-    expect(store.reserveWake(target, "late-end-wake-abcdefghijklmnop", now + 1)).toBe(true);
     const ackedClaim = store.claim(target, now + 2);
     expect(ackedClaim.map(message => message.messageId)).toEqual(["late-end-acked"]);
     expect(store.acknowledge(target, ["late-end-acked"], now + 3, ackedClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
@@ -506,7 +506,7 @@ it.each(["codex", "claude-code", "gemini", "antigravity", syntheticHost])("keeps
     store.send({ messageId: "late-end-queued", sender, target, body: "queued" }, now + 6);
     store.observeNativeInput(target, now + 7);
     const snapshot = () => Object.fromEntries([
-      "input_observations", "messages", "wake_nonces", "session_activity", "session_presence", "relay_leases",
+      "input_observations", "messages", "wake_nonces", "wake_paths", "session_presence", "relay_leases",
     ].map(table => [table, store.database.prepare(`SELECT * FROM ${table}`).all()]));
     const before = snapshot();
     expect(await handleSessionMessageHook({ ...input, hook_event_name: "SessionEnd" }, host)).toEqual({});
@@ -562,7 +562,7 @@ it("does not trust arbitrary diagnostic codes or throw when stderr itself fails"
 it("selects the transport from the environment the relay receives, including one a host resolver completes (D0364)", async () => {
   const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
   f.request.mockImplementation(async () => ({ spawn: false, relayId: null, instanceId, reason: "RELAY_ALIVE" }));
-  for (const [relayEnv, transport] of [[undefined, "gemini-deferred"], [{ SYNTHETIC_WAKE_READY: "1" }, "gemini-queue"]] as const) {
+  for (const [relayEnv, transport] of [[undefined, "gemini-deferred"], [{ SYNTHETIC_WAKE_READY: "1" }, "antigravity-queue"]] as const) {
     f.request.mockClear();
     await handleSessionMessageHook(input, envProfileHost, 424242, { ...options(), ...(relayEnv ? { relayEnv } : {}) });
     expect(f.request.mock.calls.map(([name, payload]) => [name, payload.transport])).toEqual([["ensure-relay", transport]]);

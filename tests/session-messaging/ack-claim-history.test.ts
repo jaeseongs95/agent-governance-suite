@@ -109,7 +109,7 @@ describe("AGS-D-0001 ACK requires recipient claim history", () => {
 // 구 연결의 SQL에도 적용되는 DB 불변조건을 실제 SQLite 경계에서 검사한다.
 function allRows(store: SessionMessageStore) {
   return Object.fromEntries([
-    "messages", "prepared_messages", "input_observations", "session_activity",
+    "messages", "prepared_messages", "input_observations", "wake_paths",
     "wake_nonces", "session_presence", "relay_leases",
   ].map(table => [table, store.database.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all()]));
 }

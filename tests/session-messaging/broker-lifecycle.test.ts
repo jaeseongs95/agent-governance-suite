@@ -107,8 +107,8 @@ it("retries transient endpoint publication failures and serves the published end
   await ready(3000);
   expect(JSON.parse(await readFile(path.join(directory, "endpoint.json"), "utf8"))).toMatchObject({ pid: child.pid, claimReceiptVersion: 1 });
   await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
-    protocolVersion: "1.0.0",
-    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"],
+    protocolVersion: "2.0.0",
+    capabilities: ["deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"],
   });
   expect((await readdir(directory)).filter((name) => name.endsWith(".tmp"))).toEqual([]);
 });
@@ -132,8 +132,8 @@ it.each(["permanent", "ENOSPC", "credentials", "database"])("releases startup re
   children.push(recovered);
   await waitForSessionMessageBrokerReady(directory, recovered, 3000);
   await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
-    protocolVersion: "1.0.0",
-    capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"],
+    protocolVersion: "2.0.0",
+    capabilities: ["deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"],
   });
 });
 
@@ -184,7 +184,7 @@ it("isolates socket resets and a lost send response while preserving the broker 
   const target = { host: "fixture", sessionId: "reset-target" };
   const draft = await requestSessionMessageOnce<{ messageId: string }>("prepare", { sender, target, body: "One immutable message" }, directory);
   await expect(requestSessionMessageOnce("send", { sender, messageId: draft.messageId }, directory, 500)).rejects.toThrow();
-  await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toHaveProperty("protocolVersion", "1.0.0");
+  await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toHaveProperty("protocolVersion", "2.0.0");
   expect(child.exitCode, stderr).toBeNull();
   expect(JSON.parse(await readFile(path.join(directory, "endpoint.json"), "utf8")).pid).toBe(endpoint.pid);
   await expect(requestSessionMessageOnce("unknown-operation", {}, directory)).rejects.toThrow(/Unknown broker operation/u);
@@ -250,7 +250,7 @@ it("지원 표시가 없는 기존 endpoint는 명확히 거부하고 자동 새
   const directory = await mkdtemp(path.join(tmpdir(), "broker-old-receipts-"));
   directories.push(directory);
   const files = {
-    "endpoint.json": JSON.stringify({ protocolVersion: "1.0.0", address: "127.0.0.1", port: 1,
+    "endpoint.json": JSON.stringify({ protocolVersion: "2.0.0", address: "127.0.0.1", port: 1,
       pid: process.pid, startedAt: new Date(0).toISOString(), certificateFingerprint256: Array(32).fill("AA").join(":") }),
     "broker.token": "a".repeat(43),
     "broker-cert.pem": "synthetic certificate: endpoint support is checked before TLS",
@@ -300,7 +300,7 @@ it("실제 TLS 입구는 구형 인수 frame을 상태 변경과 영수증 노�
   const inspector = new DatabaseSync(path.join(directory, "session-messages.sqlite3"), { readOnly: true });
   try {
     const snapshot = () => Object.fromEntries([
-      "messages", "prepared_messages", "input_observations", "session_activity", "wake_nonces", "session_presence", "relay_leases",
+      "messages", "prepared_messages", "input_observations", "wake_paths", "wake_nonces", "session_presence", "relay_leases",
     ].map(table => [table, inspector.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all()]));
     const before = snapshot();
     const rawFrame = async (operation: string, version: unknown): Promise<string> => {
@@ -334,7 +334,7 @@ it("실제 TLS 입구는 구형 인수 frame을 상태 변경과 영수증 노�
       });
     };
     // 독립 목록을 써 제품의 연산 목록 누락도 검출한다. 누락·다른 버전·문자열 표지를 각각 보낸다.
-    for (const operation of ["claim", "claim-wake", "claim-host-wake", "claim-deferred", "claim-turn-end"]) {
+    for (const operation of ["claim", "claim-host-wake", "claim-deferred", "claim-turn-end"]) {
       for (const version of [undefined, 2, "1"]) {
         const line = await rawFrame(operation, version);
         const rejected = JSON.parse(line);

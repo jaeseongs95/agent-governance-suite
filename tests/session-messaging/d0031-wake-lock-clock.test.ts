@@ -9,6 +9,7 @@ import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/sess
 import type { sessionMessageRequest } from "../../mcp-server/src/session-message-client.js";
 import { dispatchManagedWake } from "../../mcp-server/src/session-message-relay.js";
 import { SessionMessageStore, type WakeAttempt } from "../../mcp-server/src/session-message-store.js";
+import type { WakeDispatchOutcome } from "../../mcp-server/src/session-message-wake-port.js";
 
 const target = { host: "portable", sessionId: "d0031-recipient" };
 const sender = { host: "portable", sessionId: "d0031-sender" };
@@ -100,7 +101,7 @@ it.each(["all", "nonce", "message", "presence", "relay", "live"] as const)(
   "D0031: start writer 대기 중 %s 만료는 외부 전달·거짓 started를 막고 만료 전에는 한 번 전달한다", async mode => {
     const f = fixture();
     const lock = await writer(f.filename, f.barrier);
-    const dispatch = vi.fn(async () => "submitted" as const);
+    const dispatch = vi.fn(async (): Promise<WakeDispatchOutcome> => ({ result: "handed-off" }));
     let attempt: WakeAttempt | undefined;
     let expiresAt = 0;
     let enteredAt = 0;
@@ -139,7 +140,7 @@ it.each(["all", "nonce", "message", "presence", "relay", "live"] as const)(
       return dispatchSessionMessageBrokerOperation(f.store, operation, payload);
     };
     const result = await dispatchManagedWake(relay, relay.relayId, {
-      capabilities: { supportedInjection: ["peer-wake"], idleWake: "silent" }, dispatch,
+      capabilities: { supportedInjection: ["peer-wake"], idleWake: "silent" }, resendBaseMs: 600_000, dispatch,
     }, request as typeof sessionMessageRequest);
     const release = await released;
     console.log(JSON.stringify({ defect: "D0031", mode, brokerPid: process.pid, writerPid: lock.child.pid,
@@ -160,8 +161,9 @@ it.each(["all", "nonce", "message", "presence", "relay", "live"] as const)(
       expect(dispatch.mock.calls[0]).toEqual([target, `[agent-governance-suite:wake:${attempt!.nonce}]`, undefined]);
     }
     const row = f.store.database.prepare("SELECT state,dispatch_epoch,started_at FROM wake_nonces WHERE attempt_id=?").get(attempt!.attemptId);
-    expect(row).toMatchObject(mode === "live" ? { state: "submitted", dispatch_epoch: 1, started_at: expect.any(String) }
-      : { state: mode === "nonce" || mode === "message" ? "not-submitted" : "reserved", dispatch_epoch: 0, started_at: null });
+    // 3.0 (2.6): an expired reservation is released (expired); one without a claimable body ends as not-delivered.
+    expect(row).toMatchObject(mode === "live" ? { state: "handed-off", dispatch_epoch: 1, started_at: expect.any(String) }
+      : { state: mode === "nonce" || mode === "all" ? "released" : mode === "message" ? "not-delivered" : "reserved", dispatch_epoch: 0, started_at: null });
     expect(f.store.database.prepare("SELECT body,claimed_at,delivery_attempts,acknowledged_at FROM messages WHERE message_id='d0031-body'").get())
       .toEqual(expect.objectContaining({ body, claimed_at: null, delivery_attempts: 0, acknowledged_at: null }));
   });

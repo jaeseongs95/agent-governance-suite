@@ -11,7 +11,7 @@ afterEach(async () => { await Promise.all(directories.splice(0).map(directory =>
 
 for (const { host, key, enabled, deferred } of [
   { host: "codex", key: "AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", enabled: "codex-queue", deferred: "codex-deferred" },
-  { host: "gemini", key: "AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", enabled: "gemini-queue", deferred: "gemini-deferred" },
+  { host: "antigravity", key: "AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE", enabled: "antigravity-queue", deferred: "gemini-deferred" },
 ]) describe("L4 bounded queue settings: " + host, () => {
   async function fixture() {
     const directory = await mkdtemp(path.join(tmpdir(), "ags-queue-reader-"));

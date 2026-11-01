@@ -9,7 +9,7 @@ const stores: SessionMessageStore[] = [];
 const fixture = () => {
   const store = new SessionMessageStore(":memory:");
   stores.push(store);
-  const input = { ...target, instanceId: generation, parentPid: 100, transport: "gemini-queue",
+  const input = { ...target, instanceId: generation, parentPid: 100, transport: "antigravity-queue",
     wakeVisibility: "user-message" as const, canWakeSilently: false,
     deliveryCapabilities: { supportedInjection: ["peer-wake" as const], idleWake: "user-message" as const } };
   const ensure = (overrides: Partial<typeof input> = {}, at = now) => {
@@ -27,11 +27,11 @@ it("caches a grant without changing its owner or presence birth/heartbeat/lease"
   const first = ensure();
   expect(first.spawn).toBe(true);
   const before = store.presence(target, now);
-  const owner = store.relayOwner(target, "gemini-queue");
+  const owner = store.relayOwner(target, "antigravity-queue");
   // D0354: an unactivated pid=0 grant is never re-granted here, and says so.
   expect(ensure({}, now + 100)).toEqual({ ...first, spawn: false, reason: "RELAY_GRANT_UNCONFIRMED" });
   expect(store.presence(target, now + 100)).toEqual(before);
-  expect(store.relayOwner(target, "gemini-queue")).toEqual(owner);
+  expect(store.relayOwner(target, "antigravity-queue")).toEqual(owner);
 });
 
 it("retains a pending unknown after presence retention without TTL respawn", () => {
@@ -40,9 +40,9 @@ it("retains a pending unknown after presence retention without TTL respawn", () 
   const later = now + 48 * 3600_000;
   store.prune(later);
   expect(store.presence(target, later).instanceId).toBeNull();
-  expect(store.relayOwner(target, "gemini-queue")).toMatchObject({ relayId: first.relayId, pid: 0, instanceId: generation });
-  expect(store.liveRelay(target, "gemini-queue", later)).toBeNull();
-  expect(store.heartbeatRelay({ ...target, transport: "gemini-queue", relayId: first.relayId! }, later)).toBe(false);
+  expect(store.relayOwner(target, "antigravity-queue")).toMatchObject({ relayId: first.relayId, pid: 0, instanceId: generation });
+  expect(store.liveRelay(target, "antigravity-queue", later)).toBeNull();
+  expect(store.heartbeatRelay({ ...target, transport: "antigravity-queue", relayId: first.relayId! }, later)).toBe(false);
   expect(ensure({}, later)).toEqual({ ...first, spawn: false, reason: expect.any(String) });
   expect(store.presence(target, later).instanceId).toBeNull();
 });
@@ -61,18 +61,18 @@ it("keeps a late first child fail closed instead of reviving an expired birth", 
   const first = ensure();
   expect(activate(first.relayId!, {}, now + 60_000)).toBe(false);
   expect(ensure({}, now + 60_001)).toEqual({ ...first, spawn: false, reason: expect.any(String) });
-  expect(store.relayOwner(target, "gemini-queue")?.pid).toBe(0);
+  expect(store.relayOwner(target, "antigravity-queue")?.pid).toBe(0);
   expect(store.presence(target, now + 60_001).state).toBe("unreachable");
 });
 
 it("does not let a legacy acquire replace pending or expired verified ownership", () => {
   const { store, ensure, activate } = fixture();
   const id = ensure().relayId!;
-  const legacy = { ...target, transport: "gemini-queue", relayId: "legacy-child", pid: 300, parentPid: 100 };
+  const legacy = { ...target, transport: "antigravity-queue", relayId: "legacy-child", pid: 300, parentPid: 100 };
   expect(store.acquireRelay(legacy, now + 1)).toBe(false);
   expect(activate(id)).toBe(true);
   expect(store.acquireRelay(legacy, now + 60_000)).toBe(false);
-  expect(store.relayOwner(target, "gemini-queue")?.relayId).toBe(id);
+  expect(store.relayOwner(target, "antigravity-queue")?.relayId).toBe(id);
 });
 
 it.each(["codex-deferred", "claude-inbox"])("rejects legacy same-parent live owner replacement for %s", (transport) => {
@@ -229,9 +229,9 @@ it("AGS-D-0009: re-acquires expired relay and presence leases for a live active 
     resume: true,
   }, expiredAt + 4);
   expect(reserved.dispatch).toBe(true);
-  const started = store.startManagedWake(reserved.attempt!, expiredAt + 5);
+  const started = store.startManagedWake(reserved.attempt!, 600_000, expiredAt + 5);
   expect(started.dispatch).toBe(true);
-  expect(store.recordManagedWakeOutcome(started.attempt!, "submitted", expiredAt + 6)).toBe(true);
+  expect(store.recordManagedWakeOutcome(started.attempt!, { result: "handed-off" }, 600_000, expiredAt + 6)).toBe(true);
 });
 
 it("AGS-D-0009: prepareVerifiedRelay restores expired presence and relay leases only when confirmedAlive is true and relayStartToken is bound", () => {
@@ -322,12 +322,13 @@ it("AGS-D-0009: dispatchManagedWake after expired-lease re-acquisition wakes rec
       }, clock) as T;
     }
     if (op === "start-wake") {
-      return store.startManagedWake(payload.attempt as Parameters<typeof store.startManagedWake>[0], clock) as T;
+      return store.startManagedWake(payload.attempt as Parameters<typeof store.startManagedWake>[0], Number(payload.resendBaseMs), clock) as T;
     }
     if (op === "record-wake-outcome") {
       return store.recordManagedWakeOutcome(
         payload.attempt as Parameters<typeof store.recordManagedWakeOutcome>[0],
         payload.outcome as Parameters<typeof store.recordManagedWakeOutcome>[1],
+        Number(payload.resendBaseMs),
         clock,
       ) as T;
     }
@@ -339,9 +340,10 @@ it("AGS-D-0009: dispatchManagedWake after expired-lease re-acquisition wakes rec
     id,
     {
       capabilities: input.deliveryCapabilities,
+      resendBaseMs: 600_000,
       dispatch: async (_target, prompt) => {
         dispatchedPrompts.push(prompt);
-        return "submitted";
+        return { result: "handed-off" };
       },
     },
     fakeRequest as typeof import("../../mcp-server/src/session-message-client.js").sessionMessageRequest,
@@ -351,7 +353,7 @@ it("AGS-D-0009: dispatchManagedWake after expired-lease re-acquisition wakes rec
   const parsedWake = parseWakeMessages(dispatchedPrompts[0]!);
   expect(parsedWake.wakeOnly).toBe(true);
   expect(parsedWake.nonces).toHaveLength(1);
-  expect(store.consumeWake(target, parsedWake.nonces[0]!, clock + 1)).toBe(true);
+  expect(store.consumeWake(target, parsedWake.nonces[0]!)).toBe(true);
 
   // Observe native input -> claim deferred message body on subsequent boundary -> acknowledge.
   store.observeNativeInput(target, clock + 2, generation);

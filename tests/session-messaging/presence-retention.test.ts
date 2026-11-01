@@ -28,7 +28,7 @@ registerHookHostAdapter("portable", {
   processPid: () => undefined,
 });
 
-const { SessionMessageStore, WAKE_TTL_MS, WAKE_RETIRE_GRACE_MS } = storeModule;
+const { SessionMessageStore, WAKE_TTL_MS } = storeModule;
 type Store = InstanceType<typeof SessionMessageStore>;
 // Read through the namespace so this file still loads (and fails on behavior) against 2.7.3, which lacks them.
 const RETENTION = (storeModule as Record<string, unknown>).PRESENCE_RETENTION_MS as number;
@@ -290,16 +290,16 @@ it("keeps retirement, presence and autoWake identical to a run that deletes no p
     const reserved = store.reserveManagedWake({ ...target(sessionId), nonce: `${sessionId}-nonce-abcdefghijklmnopqrstu`, instanceId,
       transport: "portable", relayId: `relay-${sessionId}`, resume: true }, at);
     expect(reserved.dispatch).toBe(true);
-    const started = store.startManagedWake(reserved.attempt!, at + 1);
-    expect(store.recordManagedWakeOutcome(started.attempt!, "submitted", at + 2)).toBe(true);
+    const started = store.startManagedWake(reserved.attempt!, 600_000, at + 1);
+    expect(store.recordManagedWakeOutcome(started.attempt!, { result: "handed-off" }, 600_000, at + 2)).toBe(true);
   };
-  // A: a latched wake of an old ended birth; a newer birth of the same instance is live now.
+  // A: a handed-off wake of an old ended birth; a newer birth of the same instance is live now.
   born(store, "reborn", "same", t0); relay(store, "reborn", t0); wake("reborn", "same", t0);
   store.endPresence(target("reborn"), "session-end", "same", t0 + 5000);
   // B: an older birth still live while a newer instance of the same identity ended long ago (latest row is not live).
   born(store, "split", "live-old", t0); born(store, "split", "ended-new", t0 + 1000);
   store.endPresence(target("split"), "session-end", "ended-new", t0 + 2000);
-  // C: a latched wake of an identity whose only birth ended long ago and never came back.
+  // C: a handed-off wake of an identity whose only birth ended long ago and never came back.
   born(store, "gone", "gone", t0); relay(store, "gone", t0); wake("gone", "gone", t0);
   store.endPresence(target("gone"), "session-end", "gone", t0 + 5000);
   // D: recently ended, E: live with relay.
@@ -320,16 +320,18 @@ it("keeps retirement, presence and autoWake identical to a run that deletes no p
   expect(a.database.prepare("SELECT count(*) AS n FROM session_presence").get()).not.toEqual(b.database.prepare("SELECT count(*) AS n FROM session_presence").get());
   expect(a.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid").all()).toEqual(b.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid").all());
   expect(a.database.prepare("SELECT * FROM messages ORDER BY rowid").all()).toEqual(b.database.prepare("SELECT * FROM messages ORDER BY rowid").all());
-  // D0353 / AC08: 세대·보관 기간·일반 활동은 특정 입력 표식의 소비 증거가 아니다.
+  // D0353 / AC08: 세대·보관 기간·일반 활동은 특정 입력 표식의 소비 증거가 아니다. 3.0 (I2, 2.6): the old birth's
+  // hand-off is released as birth-ended, never observed, and the live birth is rung for its own body in both runs.
   for (const current of [a, b]) {
     current.send({ sender: { host: "portable", sessionId: "sender" }, target: target("reborn"),
       messageId: "reborn-after-activity-body", body: "new pending body", ttlSeconds: 600 }, now + 1);
     current.observeNativeInput(target("reborn"), now + 1);
     current.prune(now + 2);
     expect(current.reserveManagedWake({ ...target("reborn"), nonce: "reborn-after-activity-abcdefghijklmnop", instanceId: "same",
-      transport: "portable", relayId: "relay-reborn", resume: true }, now + 2).dispatch).toBe(false);
+      transport: "portable", relayId: "relay-reborn", resume: true }, now + 2).dispatch).toBe(true);
+    expect({ ...current.database.prepare("SELECT state, release_reason, observed_at FROM wake_nonces WHERE session_id = 'reborn' ORDER BY rowid LIMIT 1").get() })
+      .toEqual({ state: "released", release_reason: "birth-ended", observed_at: null });
   }
-  expect(a.database.prepare("SELECT state FROM wake_nonces WHERE session_id = 'reborn'").get()).toEqual({ state: "submitted" });
   for (const sessionId of ["reborn", "split", "recent", "live"]) {
     expect(withoutCheckedAt(a.listPresence(now, [target(sessionId)])[0]!)).toEqual(withoutCheckedAt(b.listPresence(now, [target(sessionId)])[0]!));
   }
@@ -349,8 +351,8 @@ it("gives a purged instance's rebirth a later generation, so an old-generation m
   store.send({ sender: { host: "portable", sessionId: "sender" }, target, messageId: "rebirth-old-body", body: "b", ttlSeconds: 86400 }, t0);
   const reserved = store.reserveManagedWake({ ...target, nonce: "rebirth-old-nonce-abcdefghijklmnopqr", instanceId: "same", transport: "portable",
     relayId: "relay-rebirth", resume: true }, t0);
-  const attempt = store.startManagedWake(reserved.attempt!, t0 + 1).attempt!;
-  store.recordManagedWakeOutcome(attempt, "submitted", t0 + 2);
+  const attempt = store.startManagedWake(reserved.attempt!, 600_000, t0 + 1).attempt!;
+  expect(store.recordManagedWakeOutcome(attempt, { result: "handed-off" }, 600_000, t0 + 2)).toBe(true);
   store.endPresence(target, "session-end", "same", t0 + 3);
   const now = Date.now();
   store.prune(now);
@@ -365,9 +367,10 @@ it("gives a purged instance's rebirth a later generation, so an old-generation m
   const result = store.claimHostWake(target, observation, recordWakeHookObservation(observation, now + 1), wakeHookObservationReader, now + 2);
   expect(result).toMatchObject({ recognized: false, messages: [] });
   expect(store.pendingCount(target, now + 3)).toBe(1);
-  // 정확한 구 표식의 검증된 도착은 새 본문을 인수하지 않고 잠금을 해제한다.
-  expect(store.database.prepare("SELECT state, observed_at, consumed_at FROM wake_nonces WHERE attempt_id = ?").get(attempt.attemptId))
-    .toEqual({ state: "observed", observed_at: new Date(now + 2).toISOString(), consumed_at: new Date(now + 2).toISOString() });
+  // 정확한 구 표식의 검증된 도착은 새 본문을 인수하지 않는다. 3.0 (I2): the ended birth's row was already released
+  // (birth-ended) and only records the late arrival; it never becomes observed.
+  expect({ ...store.database.prepare("SELECT state, release_reason, observed_at, consumed_at, late_observed_at FROM wake_nonces WHERE attempt_id = ?").get(attempt.attemptId) })
+    .toEqual({ state: "released", release_reason: "birth-ended", observed_at: null, consumed_at: null, late_observed_at: new Date(now + 2).toISOString() });
   relay(store, "rebirth", now + 3);
   const next = store.reserveManagedWake({ ...target, nonce: "rebirth-new-nonce-abcdefghijklmnopqr", instanceId: "same", transport: "portable",
     relayId: "relay-rebirth", resume: true }, now + 4);
@@ -423,6 +426,7 @@ it("still lists every identity for an untargeted request that fits", () => {
   const store = open(":memory:");
   born(store, "one", "one", Date.now());
   expect(dispatchSessionMessageBrokerOperation(store, "list-presence", {})).toMatchObject({ sessions: [{ sessionId: "one", state: "online" }] });
-  // A retained row outlives any wake injection plus grace that could still refer to its birth.
-  expect(WAKE_TTL_MS + WAKE_RETIRE_GRACE_MS).toBeLessThan(RETENTION);
+  // A retained row outlives any reservation that could still refer to its birth; a later attempt of a purged birth
+  // reads presence-unknown and is released as birth-ended, so no 3.0 grace window depends on retention.
+  expect(WAKE_TTL_MS).toBeLessThan(RETENTION);
 });

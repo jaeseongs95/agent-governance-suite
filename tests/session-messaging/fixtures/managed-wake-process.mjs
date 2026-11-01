@@ -24,7 +24,7 @@ const target = { host: 'portable', sessionId: 'wake-target' };
 if (mode === 'migration-failure') {
   const original = DatabaseSync.prototype.exec;
   DatabaseSync.prototype.exec = function (sql) {
-    if (sql.includes('ALTER TABLE wake_nonces ADD COLUMN nonce TEXT')) throw new Error('fixture migration failure');
+    if (sql.includes('DROP TABLE wake_nonces;')) throw new Error('fixture migration failure');
     return original.call(this, sql);
   };
   try { new SessionMessageStore(database); process.exit(2); }
@@ -40,8 +40,32 @@ if (mode === 'rebuild-failure') {
   catch (error) { process.send({ type: 'result', error: error.message }); process.exit(0); }
 }
 const store = new SessionMessageStore(database);
+const HANDED = { result: 'handed-off' };
+const TRANSIENT = { result: 'not-delivered', kind: 'transient', reasonCode: 'SYNTHETIC_TRANSIENT' };
+const BASE = 10 * 60_000;
 process.send({ type: 'ready' });
-process.once('message', async (input) => {
+if (mode === 'ring-race') {
+  // Two phases on one real connection: reserve, then start; the external effect follows only a committed start (I3).
+  process.on('message', (input) => {
+    try {
+      if (input.phase === 'reserve') {
+        const result = store.reserveManagedWake({ ...input.binding, nonce: `race-${relayId}-${process.pid}-nonce-abcdefghij`, resume: true }, input.now);
+        process.send({ type: 'result', result });
+        return;
+      }
+      let result = { dispatch: false, attempt: null };
+      if (input.attempt) {
+        result = store.startManagedWake(input.attempt, input.resendBaseMs, input.now);
+        if (result.dispatch) {
+          appendFileSync(effects, `${result.attempt.nonce}
+`, 'utf8');
+          store.recordManagedWakeOutcome(result.attempt, HANDED, input.resendBaseMs, input.now + 1);
+        }
+      }
+      process.send({ type: 'result', result }, () => { store.close(); process.exit(0); });
+    } catch (error) { process.send({ type: 'result', result: null, error: error.message }, () => { store.close(); process.exit(1); }); }
+  });
+} else process.once('message', async (input) => {
   try {
     // Explicit command clocks keep lease-expiry scenarios deterministic across independent fixture processes.
     if (input && typeof input === 'object' && Number.isSafeInteger(input.now) && input.now >= 0) {
@@ -56,18 +80,18 @@ process.once('message', async (input) => {
       const current = { ...target, instanceId: input.instanceId ?? 'instance-2', transport: 'portable', relayId,
         wakeVisibility: 'silent', canWakeSilently: true, deliveryCapabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' } };
       let result;
-      if (input.kind === 'outcome') result = store.recordManagedWakeOutcome(input.attempt, 'definite-failure', input.now);
-      else if (input.kind === 'start') result = store.startManagedWake(input.attempt, input.now);
+      if (input.kind === 'outcome') result = store.recordManagedWakeOutcome(input.attempt, TRANSIENT, BASE, input.now);
+      else if (input.kind === 'start') result = store.startManagedWake(input.attempt, BASE, input.now);
       else {
         if (input.kind === 'generation') store.startPresence(current, input.now);
         const acquired = store.acquireRelay({ ...current, pid: process.pid, parentPid: Number(parentPid) }, input.now);
         if (input.kind === 'generation' && !acquired) throw new Error('Fixture generation did not acquire the expired relay lease.');
         result = store.reserveManagedWake({ ...current, nonce: `fixture-${relayId}-nonce-abcdefghijklmnop`, resume: true }, input.now);
         if (input.kind === 'effect' && result.dispatch) {
-          result = store.startManagedWake(result.attempt, input.now + 1);
+          result = store.startManagedWake(result.attempt, BASE, input.now + 1);
           if (result.dispatch) {
             appendFileSync(effects, `${result.attempt.nonce}\n`, 'utf8');
-            store.recordManagedWakeOutcome(result.attempt, 'submitted', input.now + 2);
+            store.recordManagedWakeOutcome(result.attempt, HANDED, BASE, input.now + 2);
           }
         }
       }
@@ -75,8 +99,6 @@ process.once('message', async (input) => {
     } else if (mode === 'sender') {
       store.send({ sender: { host: 'portable', sessionId: relayId }, target, messageId: relayId, body: relayId });
       process.send({ type: 'result', sent: true });
-    } else if (mode === 'reconcile-wake') {
-      process.send({ type: 'result', result: dispatch(store, 'reconcile-wake-observation', input) });
     } else if (mode === 'observe-wake') {
       const observation = adaptHostInput({ hook_event_name: 'UserPromptSubmit', session_id: target.sessionId,
         agent_id: '', prompt: `[agent-governance-suite:wake:${input.nonce}]` }, target.host).observation;
@@ -100,12 +122,12 @@ process.once('message', async (input) => {
         return result;
       };
       const called = await dispatchManagedWake({ ...target, instanceId: input?.instanceId ?? 'instance-1', transport: 'portable' }, relayId,
-        { capabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' },
+        { capabilities: { supportedInjection: ['peer-wake'], idleWake: 'silent' }, resendBaseMs: BASE,
           dispatch: async (_target, marker) => {
             const row = store.database.prepare("SELECT state FROM wake_nonces WHERE state = 'started'").get();
             if (!row) throw new Error('effect started without a persisted intent');
             appendFileSync(effects, `${marker}\n`, 'utf8');
-            return 'submitted';
+            return HANDED;
           } }, request);
       process.send({ type: 'result', called });
     }

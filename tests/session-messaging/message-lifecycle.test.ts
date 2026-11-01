@@ -86,7 +86,7 @@ it("issues opaque IDs without queue, peer relationship, claim or wake effect", (
   expect(store.pendingCount(target, 1001)).toBe(0);
   expect(store.claim(target, 1001)).toEqual([]);
   expect(store.peerWaitState(sender, target, 1001).related).toBe(false);
-  expect(store.reserveWake(target, "nonce-prepare-no-delivery", 1001)).toBe(false);
+  expect(count(store, "wake_nonces")).toBe(0);
   expect(store.status(sender, draft.messageId, 1001)).toMatchObject({ state: "prepared" });
 });
 
@@ -366,7 +366,7 @@ it.each(['success', 'lost-reply'])('r11 adapter consumes actual built common fou
     .run(new Date(Date.now() - 2000 + index * 1000).toISOString(), draft.messageId));
   vi.stubEnv('AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR', state);
   vi.stubEnv('AGENT_GOVERNANCE_TRUST_DB_PATH', path.join(state, 'r11-trust.sqlite3'));
-  vi.stubEnv('AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE', '0');
+  vi.stubEnv('AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE', '0');
   try {
     const { executeAntigravityHookEvent, createClaimStateTracker, finalizeConnectorOutput } = await import(
       pathToFileURL(path.join(root, 'antigravity-connector/hooks/antigravity-hook-runner.mjs')).href);

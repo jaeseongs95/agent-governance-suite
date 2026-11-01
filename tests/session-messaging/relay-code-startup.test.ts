@@ -10,7 +10,7 @@ it("reports the startup snapshot even when installed code changes before acquire
   f.digest = "sha256:" + "b".repeat(64);
   f.request.mockResolvedValue({acquired: true});
   const options = {host: "portable", sessionId: "startup", instanceId: "fixture", transport: "portable-queue", parentPid: 100, parentStartToken: "T1"};
-  const port = {capabilities: {supportedInjection: [], idleWake: "none" as const}, dispatch: vi.fn()};
+  const port = {capabilities: {supportedInjection: [], idleWake: "none" as const}, resendBaseMs: 600_000, dispatch: vi.fn()};
   await runSessionMessageRelay(options, port);
   await runSessionMessageRelay(options, port);
   const acquisitions = f.request.mock.calls.filter(([operation]) => operation === "acquire-relay");

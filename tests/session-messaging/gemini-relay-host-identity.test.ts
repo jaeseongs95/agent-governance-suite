@@ -28,7 +28,7 @@ beforeEach(() => {
   requestMock.mockResolvedValue({}); startTokenMock.mockReturnValue("synthetic-start-token");
   spawnMock.mockImplementation(() => Object.assign(new EventEmitter(), { unref: vi.fn() }));
   vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "0");
-  vi.stubEnv("AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", "0");
+  vi.stubEnv("AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE", "0");
 });
 afterEach(() => vi.unstubAllEnvs());
 const input = { hook_event_name: "SessionStart", session_id: "synthetic-relay-host", syntheticActor: "root" };

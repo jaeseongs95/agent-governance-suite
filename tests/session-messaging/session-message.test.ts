@@ -32,9 +32,13 @@ import {
 import { handleSessionMessageHook, sessionMessageEnvelope, sessionMessageTransport } from "../../mcp-server/src/session-message-hook.js";
 import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
-import { claudeWakeOutcome, codexWakeOutcome, geminiWakeOutcome, relayIdentityDecision, ringClaude, shouldReleaseWake, transportWakeCapabilities, wakeBackoffDelay, wakeRetryState } from "../../mcp-server/src/session-message-relay.js";
-import { resolveGeminiAgentApi } from "../../mcp-server/src/session-message-wake-port.js";
-import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS } from "../../mcp-server/src/session-message-store.js";
+import { relayIdentityDecision, transportWakeCapabilities } from "../../mcp-server/src/session-message-relay.js";
+import { wakeBackoffDelay, type WakeDispatchOutcome } from "../../mcp-server/src/session-message-wake-port.js";
+import { codexWakeOutcome } from "../../mcp-server/src/wake-transport-codex.js";
+import { claudeWakeOutcome, ringClaude } from "../../mcp-server/src/wake-transport-claude.js";
+import { antigravityWakeOutcome, resolveGeminiAgentApi } from "../../mcp-server/src/wake-transport-antigravity.js";
+import { transportDeliveryCapabilities } from "../../mcp-server/src/wake-transports.js";
+import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 import { processIdentityState, processStartTokenAsync } from "../../mcp-server/src/process-identity.js";
 import { lockWitnessState } from "../../mcp-server/src/broker-lock-witness.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "../../mcp-server/src/session-message-protocol.js";
@@ -50,7 +54,6 @@ import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "../mcp/version-fixtures.js";
 import { createSyntheticRootProofFixture } from "../mcp/synthetic-root-proof-client.js";
 
-import { concurrentClaims } from "../helpers/concurrent-claim-process.js";
 
 const directories: string[] = [];
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
@@ -283,11 +286,6 @@ describe("session message spool", () => {
     expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-b", pid: 2, parentPid: 2 }, 201_000)).toBe(false);
     expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-b", pid: 2, parentPid: 2 }, 216_000)).toBe(true);
     expect(reopened.heartbeatRelay({ ...spark, transport: "generic", relayId: "relay-a" }, 216_001)).toBe(false);
-    reopened.send({ messageId: "wake-validation", sender: grok, target: spark, body: "wake" }, 219_000);
-    expect(reopened.reserveWake(spark, "nonce-abcdefghijklmnop", 220_000)).toBe(true);
-    expect(reopened.consumeWake(spark, "nonce-abcdefghijklmnop", 221_000)).toBe(true);
-    expect(reopened.consumeWake(spark, "nonce-abcdefghijklmnop", 222_000)).toBe(true);
-    expect(reopened.consumeWake(spark, "nonce-abcdefghijklmnop", 220_000 + 86_400_000)).toBe(false);
     reopened.close();
   });
 
@@ -319,59 +317,6 @@ describe("session message spool", () => {
       expect(() => store.send({ sender: safe, target: invalid, body: "invalid identity" }, 1000))
         .toThrow(/bounded identifier characters/u);
     }
-    store.close();
-  });
-
-  it("allows only one unconsumed wake and suppresses wakes during a live claim", () => {
-    const directory = stateDirectory();
-    const databasePath = path.join(directory, "messages.sqlite3");
-    const sender = { host: "grok", sessionId: "wake-sender" };
-    const target = { host: "codex", sessionId: "wake-target" };
-    const firstNonce = "wake-nonce-abcdefghijklmnop";
-    const secondNonce = "wake-nonce-qrstuvwxyzabcdef";
-    const thirdNonce = "wake-nonce-ghijklmnopqrstuv";
-    const store = new SessionMessageStore(databasePath);
-    store.send({ messageId: "wake-msg-0001", sender, target, body: "first" }, 1000);
-    store.send({ messageId: "wake-msg-0002", sender, target, body: "second" }, 1001);
-    expect(store.reserveWake(target, firstNonce, 2000)).toBe(true);
-    expect(store.reserveWake(target, secondNonce, 2001)).toBe(false);
-    store.close();
-
-    const reopened = new SessionMessageStore(databasePath);
-    try {
-      expect(reopened.reserveWake(target, secondNonce, 2002)).toBe(false);
-      expect(reopened.consumeWake(target, firstNonce, 2003)).toBe(true);
-      expect(reopened.reserveWake(target, secondNonce, 2004)).toBe(false);
-      const claimed = reopened.claim(target, 3000, { maxMessages: 1 });
-      expect(claimed.map((message) => message.messageId)).toEqual(["wake-msg-0001"]);
-      expect(reopened.reserveWake(target, thirdNonce, 3001)).toBe(false);
-      expect(reopened.acknowledge(target, ["wake-msg-0001"], 4000, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
-      expect(reopened.reserveWake(target, secondNonce, 4001)).toBe(true);
-      expect(reopened.releaseWake(target, secondNonce)).toBe(true);
-      expect(reopened.reserveWake(target, secondNonce, 4002)).toBe(true);
-      expect(reopened.claim(target, 5000, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["wake-msg-0002"]);
-      expect(reopened.reserveWake(target, thirdNonce, 5001)).toBe(false);
-      expect(reopened.reserveWake(target, thirdNonce, 125_001)).toBe(true);
-    } finally {
-      reopened.close();
-    }
-  });
-
-  it("expires an unconsumed wake after one hour independently of message TTL", () => {
-    const store = new SessionMessageStore(":memory:");
-    const target = { host: "codex", sessionId: "wake-hour" };
-    store.send({
-      messageId: "wake-hour-message",
-      sender: { host: "claude-code", sessionId: "wake-hour-sender" },
-      target,
-      body: "still pending",
-      ttlSeconds: 7200,
-    }, 1000);
-    expect(WAKE_TTL_MS).toBe(60 * 60_000);
-    expect(store.reserveWake(target, "wake-hour-nonce-abcdefghijklmnop", 1000)).toBe(true);
-    expect(store.consumeWake(target, "wake-hour-nonce-abcdefghijklmnop", 1000 + 59 * 60_000)).toBe(true);
-    expect(store.reserveWake(target, "wake-hour-nonce-qrstuvwxyzabcdef", 1000 + 59 * 60_000)).toBe(false);
-    expect(store.reserveWake(target, "wake-hour-nonce-qrstuvwxyzabcdef", 1001 + WAKE_TTL_MS)).toBe(true);
     store.close();
   });
 
@@ -461,66 +406,6 @@ describe("session message spool", () => {
     store.close();
   });
 
-  it("locks claim selection before a competing connection can reserve a wake", () => {
-    const directory = stateDirectory();
-    const databasePath = path.join(directory, "messages.sqlite3");
-    const sender = { host: "grok", sessionId: "claim-race-sender" };
-    const target = { host: "codex", sessionId: "claim-race-target" };
-    const claimant = new SessionMessageStore(databasePath);
-    const contender = new SessionMessageStore(databasePath);
-    contender.database.exec("PRAGMA busy_timeout = 0");
-    claimant.send({ messageId: "claim-race-0001", sender, target, body: "claim first" }, 1000);
-
-    let competingReservation: boolean | "locked" | null = null;
-    const originalPrepare = claimant.database.prepare.bind(claimant.database);
-    claimant.database.prepare = ((sql: string) => {
-      const statement = originalPrepare(sql);
-      if (!sql.includes("SELECT * FROM messages")) return statement;
-      return new Proxy(statement, {
-        get(targetStatement, property, receiver) {
-          if (property !== "all") return Reflect.get(targetStatement, property, receiver) as unknown;
-          return (...args: Parameters<typeof targetStatement.all>) => {
-            const rows = targetStatement.all(...args);
-            try {
-              competingReservation = contender.reserveWake(target, "claim-race-nonce-abcdefghijklmnop", 2000);
-            } catch (error) {
-              if (!/locked|SQLITE_BUSY/u.test(String(error))) throw error;
-              competingReservation = "locked";
-            }
-            return rows;
-          };
-        },
-      });
-    }) as typeof claimant.database.prepare;
-
-    expect(claimant.claim(target, 2000, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["claim-race-0001"]);
-    expect(competingReservation).toBe("locked");
-    expect(contender.reserveWake(target, "claim-race-nonce-qrstuvwxyzabcdef", 2001)).toBe(false);
-    claimant.close();
-    contender.close();
-  });
-
-  it("keeps a recognized wake latched until claim consumes it atomically", () => {
-    const store = new SessionMessageStore(":memory:");
-    const target = { host: "codex", sessionId: "parallel-hook-target" };
-    store.send({
-      messageId: "parallel-hook-0001",
-      sender: { host: "claude-code", sessionId: "parallel-hook-sender" },
-      target,
-      body: "parallel hooks",
-    }, 1000);
-    const nonce = "parallel-hook-nonce-abcdefghijklmnop";
-    expect(store.reserveWake(target, nonce, 2000)).toBe(true);
-    expect(store.consumeWake(target, nonce, 2001)).toBe(true);
-    expect(store.database.prepare("SELECT consumed_at FROM wake_nonces").get()).toEqual({ consumed_at: null });
-    expect(store.reserveWake(target, "parallel-hook-nonce-qrstuvwxyzabcdef", 2002)).toBe(false);
-
-    expect(store.claim(target, 2003, { maxMessages: 1 }).map((message) => message.messageId)).toEqual(["parallel-hook-0001"]);
-    expect(store.database.prepare("SELECT consumed_at FROM wake_nonces").get()).toEqual({ consumed_at: new Date(2003).toISOString() });
-    expect(store.reserveWake(target, "parallel-hook-nonce-ghijklmnopqrstuv", 2004)).toBe(false);
-    store.close();
-  });
-
   it("caps the unacknowledged spool and expires messages", () => {
     const store = new SessionMessageStore(":memory:");
     const sender = { host: "generic-a", sessionId: "a" };
@@ -546,49 +431,6 @@ describe("session message spool", () => {
     expect(store.acknowledge(target, [first.messageId], 122_003, [{ messageId: second.messageId, claimReceipt: second.claimReceipt! }])).toBe(1);
     expect(store.claim(target, 300_000)).toEqual([]);
     store.close();
-  });
-
-  it("atomically verifies a session-bound wake before claiming and rejects reuse or mismatch", () => {
-    const directory = stateDirectory();
-    const databasePath = path.join(directory, "wake-claim.sqlite3");
-    const sender = { host: "fake-host-a", sessionId: "sender" };
-    const target = { host: "fake-host-b", sessionId: "recipient" };
-    const other = { host: "fake-host-b", sessionId: "other" };
-    const first = new SessionMessageStore(databasePath);
-    const second = new SessionMessageStore(databasePath);
-    first.send({ messageId: "wake-claim-0001", sender, target, body: "hello" }, 1000);
-    const nonce = "wake-claim-nonce-abcdefghijklmnop";
-    expect(first.reserveWake(target, nonce, 2000)).toBe(true);
-    expect(second.claimWake(other, [nonce], 2001)).toEqual({ recognized: false, messages: [] });
-    const claimed = first.claimWake(target, [nonce], 2002);
-    expect(claimed).toMatchObject({ recognized: true, messages: [{ messageId: "wake-claim-0001", deliveryAttempt: 1 }] });
-    expect(second.claimWake(target, [nonce], 2003)).toEqual({ recognized: false, messages: [] });
-    expect(first.consumeWake(target, nonce, 2004)).toBe(true);
-    const staleTarget = { host: "fake-host-b", sessionId: "stale" };
-    const staleNonce = "wake-stale-nonce-abcdefghijklmnop";
-    first.send({ messageId: "wake-stale-0001", sender, target: staleTarget, body: "stale", ttlSeconds: 7200 }, 3000);
-    expect(first.reserveWake(staleTarget, staleNonce, 3000)).toBe(true);
-    expect(first.claimWake(staleTarget, [staleNonce], 3001 + WAKE_TTL_MS)).toEqual({ recognized: false, messages: [] });
-    first.close();
-    second.close();
-  });
-
-  it("allows one wake claim across two concurrent SQLite connections", async () => {
-    const directory = stateDirectory();
-    const databasePath = path.join(directory, "wake-race.sqlite3");
-    const target = { host: "fake-host", sessionId: "wake-race" };
-    const nonce = "wake-race-nonce-abcdefghijklmnop";
-    const setup = new SessionMessageStore(databasePath);
-    setup.send({ messageId: "wake-race-0001", sender: { host: "peer", sessionId: "sender" }, target, body: "race" }, 1000);
-    expect(setup.reserveWake(target, nonce, 2000)).toBe(true);
-    setup.close();
-
-    const claims = await concurrentClaims<{ recognized: boolean; messages: unknown[] }>(
-      new URL("./fixtures/wake-claim-worker.ts", import.meta.url),
-      [0, 1].map(() => ({ databasePath, ...target, nonce, nowMs: 2001 })),
-    );
-    expect(claims.filter((claim) => claim.recognized)).toHaveLength(1);
-    expect(claims.flatMap((claim) => claim.messages)).toHaveLength(1);
   });
 
   it("defers one boundary, then keeps claiming new and redelivered messages until a new native input", () => {
@@ -749,7 +591,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     ]);
     await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
       protocolVersion: SESSION_MESSAGE_PROTOCOL,
-      capabilities: ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"],
+      capabilities: ["deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"],
     });
   });
 
@@ -964,7 +806,15 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
         target,
         body: "wake",
       });
-      await expect(sessionMessageRequest("reserve-wake", { target, nonce: issued }, directory)).resolves.toEqual({ dispatch: true });
+      // Issue the bell through a managed reservation of a live birth on the broker's own file (3.0 has no unbound reserve).
+      const issuer = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
+      try {
+        const binding = { ...target, instanceId: "merged-wake-instance", relayId: "merged-wake-relay", transport: "claude-inbox" };
+        issuer.startPresence({ ...target, instanceId: binding.instanceId, transport: binding.transport, wakeVisibility: "silent", canWakeSilently: true,
+          deliveryCapabilities: transportDeliveryCapabilities(binding.transport) });
+        expect(issuer.acquireRelay({ ...binding, pid: process.pid, parentPid: process.pid })).toBe(true);
+        expect(issuer.reserveManagedWake({ ...binding, nonce: issued }).dispatch).toBe(true);
+      } finally { issuer.close(); }
       const board = new DatabaseSync(path.join(directory, "session-board.sqlite3"));
       try {
         // Fix the prior request marker without sleeping or changing the broker's clock.
@@ -1002,17 +852,20 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(sessionMessageTransport("codex", { AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" })).toBe("codex-queue");
     expect(sessionMessageTransport("claude-code", { AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" })).toBe("claude-inbox");
     expect(sessionMessageTransport("gemini", {})).toBe("gemini-deferred");
-    expect(sessionMessageTransport("gemini", { AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE: "1" })).toBe("gemini-queue");
-    expect(sessionMessageTransport("gemini", { ANTIGRAVITY_AGENT: "1", ANTIGRAVITY_PROJECT_ID: "synthetic-project" })).toBe("gemini-queue");
-    expect(sessionMessageTransport("gemini", { ANTIGRAVITY_AGENT: "1", AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE: "0" })).toBe("gemini-deferred");
+    // 3.0: Gemini CLI has no idle wake; only Antigravity may use the agentapi queue.
+    expect(sessionMessageTransport("gemini", { AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE: "1", ANTIGRAVITY_AGENT: "1", ANTIGRAVITY_PROJECT_ID: "synthetic-project" })).toBe("gemini-deferred");
+    expect(sessionMessageTransport("antigravity", { AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE: "1" })).toBe("antigravity-queue");
+    expect(sessionMessageTransport("antigravity", { ANTIGRAVITY_AGENT: "1", ANTIGRAVITY_PROJECT_ID: "synthetic-project" })).toBe("antigravity-queue");
+    expect(sessionMessageTransport("antigravity", { ANTIGRAVITY_AGENT: "1", AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE: "0" })).toBe("gemini-deferred");
     expect(transportWakeCapabilities("codex-deferred")).toEqual({ wakeVisibility: "none", canWakeSilently: false });
     expect(transportWakeCapabilities("gemini-deferred")).toEqual({ wakeVisibility: "none", canWakeSilently: false });
     expect(transportWakeCapabilities("codex-queue")).toEqual({ wakeVisibility: "user-message", canWakeSilently: false });
     expect(transportWakeCapabilities("claude-inbox")).toEqual({ wakeVisibility: "silent", canWakeSilently: true });
-    expect(transportWakeCapabilities("gemini-queue")).toEqual({ wakeVisibility: "user-message", canWakeSilently: false });
-    expect(geminiWakeOutcome(null, true)).toBe("submitted");
-    expect(geminiWakeOutcome(new Error("fail"), true)).toBe("accepted-or-unknown");
-    expect(geminiWakeOutcome(new Error("fail"), false)).toBe("definite-failure");
+    expect(transportWakeCapabilities("antigravity-queue")).toEqual({ wakeVisibility: "user-message", canWakeSilently: false });
+    expect(antigravityWakeOutcome(null, true)).toEqual({ result: "handed-off" });
+    expect(antigravityWakeOutcome(new Error("fail"), true)).toMatchObject({ result: "unknown" });
+    expect(antigravityWakeOutcome(Object.assign(new Error("fail"), { code: "ENOENT" }), false)).toMatchObject({ result: "not-delivered", kind: "prerequisite-missing" });
+    expect(antigravityWakeOutcome(Object.assign(new Error("fail"), { code: "EMFILE" }), false)).toMatchObject({ result: "not-delivered", kind: "transient" });
     expect(resolveGeminiAgentApi({ ANTIGRAVITY_AGENTAPI_EXE: "C:/bin/ls.exe" })).toEqual({
       command: "C:/bin/ls.exe",
       argsPrefix: ["agentapi"],
@@ -1121,7 +974,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       expect(native.status, native.stderr).toBe(0);
       expect(native.stdout).toBe("");
       expect(store.presence({ host: "gemini", sessionId: target.sessionId }).state).not.toBe("online");
-      expect(store.liveRelay({ host: "gemini", sessionId: target.sessionId }, "gemini-queue")).toBeNull();
+      expect(store.liveRelay({ host: "gemini", sessionId: target.sessionId }, "gemini-deferred")).toBeNull();
       const first = await start(process.pid);
       expect(first.status, first.stderr).toBe(0);
       expect(first.stdout).toBe("");
@@ -1154,20 +1007,21 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     }
   }, 45_000);
 
-  it("releases Codex wake reservations only for definite submission failures", () => {
-    expect(codexWakeOutcome(new Error("not started"), false)).toBe("definite-failure");
-    expect(codexWakeOutcome(new Error("unknown delivery"), true)).toBe("accepted-or-unknown");
-    expect(codexWakeOutcome(null, true)).toBe("submitted");
-    expect(shouldReleaseWake("definite-failure")).toBe(true);
-    expect(shouldReleaseWake("accepted-or-unknown")).toBe(false);
-    expect(shouldReleaseWake("submitted")).toBe(false);
+  // Design 3.3: only a definite spawn failure or Codex's "No active session found" is not-delivered; a spawned failure may have queued.
+  it("maps Codex queue results to handed-off, unknown or a definite not-delivered kind", () => {
+    expect(codexWakeOutcome(null, true)).toEqual({ result: "handed-off" });
+    expect(codexWakeOutcome(new Error("unknown delivery"), true)).toMatchObject({ result: "unknown" });
+    expect(codexWakeOutcome(Object.assign(new Error("timeout"), { killed: true }), true)).toMatchObject({ result: "unknown" });
+    expect(codexWakeOutcome(new Error("exit 1"), true, "Error: No active session found for thread")).toMatchObject({ result: "not-delivered", kind: "transient" });
+    expect(codexWakeOutcome(Object.assign(new Error("missing"), { code: "ENOENT" }), false)).toMatchObject({ result: "not-delivered", kind: "prerequisite-missing" });
+    expect(codexWakeOutcome(Object.assign(new Error("busy"), { code: "EAGAIN" }), false)).toMatchObject({ result: "not-delivered", kind: "transient" });
   });
 
-  it("retains Claude wake reservations whenever the inbox may have accepted bytes", () => {
-    expect(claudeWakeOutcome(true, false, false)).toBe("definite-failure");
-    expect(claudeWakeOutcome(true, true, false)).toBe("accepted-or-unknown");
-    expect(claudeWakeOutcome(true, true, true)).toBe("accepted-or-unknown");
-    expect(claudeWakeOutcome(false, true, true)).toBe("submitted");
+  it("keeps a Claude wake unknown whenever the inbox may have accepted bytes", () => {
+    expect(claudeWakeOutcome(true, false, false)).toMatchObject({ result: "not-delivered", kind: "transient" });
+    expect(claudeWakeOutcome(true, true, false)).toMatchObject({ result: "unknown" });
+    expect(claudeWakeOutcome(true, true, true)).toMatchObject({ result: "unknown" });
+    expect(claudeWakeOutcome(false, true, true)).toEqual({ result: "handed-off" });
   });
 
   it("serializes a Claude wake with next priority through an isolated inbox socket", async () => {
@@ -1186,7 +1040,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     vi.stubEnv("CLAUDE_CODE_MESSAGING_TOKEN", "isolated-fixture-token");
     const bell = `[agent-governance-suite:wake:${"a".repeat(32)}]`;
     try {
-      await expect(ringClaude(bell)).resolves.toBe("submitted");
+      await expect(ringClaude(bell)).resolves.toEqual({ result: "handed-off" });
       // IPC submission is not host consumption, peer ACK, or proof of non-interruption.
       expect(received.trim().split("\n").map((line) => JSON.parse(line))).toEqual([
         { type: "auth", token: "isolated-fixture-token" },
@@ -1200,49 +1054,43 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
   it.each(["socket", "token", "both"])("does not dispatch a Claude wake when %s is missing", async (missing) => {
     vi.stubEnv("CLAUDE_CODE_MESSAGING_SOCKET", missing === "token" ? "unused-fixture-socket" : "");
     vi.stubEnv("CLAUDE_CODE_MESSAGING_TOKEN", missing === "socket" ? "isolated-fixture-token" : "");
-    await expect(ringClaude("fixture-wake")).resolves.toBe("definite-failure");
+    await expect(ringClaude("fixture-wake")).resolves.toMatchObject({ result: "not-delivered", kind: "prerequisite-missing" });
   });
 
   it("consumes queued peers at safe boundaries after restart without waking again after ACK", () => {
     const databasePath = path.join(stateDirectory(), "boundary-restart.sqlite3");
     const target = { host: "claude-code", sessionId: "queued-boundary" };
+    const binding = { ...target, instanceId: "boundary-instance", relayId: "boundary-relay", transport: "claude-inbox" };
     const store = new SessionMessageStore(databasePath);
     store.send({ messageId: "boundary-0001", sender: { host: "codex", sessionId: "sender" }, target, body: "first" }, 1000);
     store.send({ messageId: "boundary-0002", sender: { host: "codex", sessionId: "sender" }, target, body: "second" }, 1001);
-    expect(store.reserveWake(target, "boundary-nonce-abcdefghijklmnop", 1002)).toBe(true);
+    store.startPresence({ ...target, instanceId: binding.instanceId, transport: binding.transport, wakeVisibility: "silent", canWakeSilently: true,
+      deliveryCapabilities: transportDeliveryCapabilities(binding.transport) }, 1001);
+    expect(store.acquireRelay({ ...binding, pid: process.pid, parentPid: process.pid }, 1001)).toBe(true);
+    expect(store.reserveManagedWake({ ...binding, nonce: "boundary-nonce-abcdefghijklmnop" }, 1002).dispatch).toBe(true);
     store.close();
     const reopened = new SessionMessageStore(databasePath);
     try {
-      expect(reopened.reserveWake(target, "boundary-nonce-qrstuvwxyzabcdef", 1003)).toBe(false);
+      // One active attempt per target survives the restart (I3).
+      expect(reopened.reserveManagedWake({ ...binding, nonce: "boundary-nonce-qrstuvwxyzabcdef" }, 1003).dispatch).toBe(false);
       const firstClaim = reopened.claimDeferred(target, 1004, { maxMessages: 1 });
       expect(firstClaim.map((message) => message.messageId)).toEqual(["boundary-0001"]);
-      expect(reopened.claimWake(target, ["boundary-nonce-abcdefghijklmnop"], 1005)).toEqual({ recognized: false, messages: [] });
-      expect(reopened.reserveWake(target, "boundary-nonce-qrstuvwxyzabcdef", 1005)).toBe(false);
+      expect(reopened.reserveManagedWake({ ...binding, nonce: "boundary-nonce-qrstuvwxyzabcdef" }, 1005).dispatch).toBe(false);
       expect(reopened.acknowledge(target, ["boundary-0001"], 1006, firstClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
       const secondClaim = reopened.claimTurnEnd(target, 1007, { maxMessages: 1 });
       expect(secondClaim.map((message) => message.messageId)).toEqual(["boundary-0002"]);
       expect(reopened.acknowledge(target, ["boundary-0002"], 1008, secondClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
       expect(reopened.pendingCount(target, 1009)).toBe(0);
-      expect(reopened.reserveWake(target, "boundary-nonce-qrstuvwxyzabcdef", 1009)).toBe(false);
+      // No claimable body is left: the old reservation ends without an external call and no new one is made.
+      expect(reopened.reserveManagedWake({ ...binding, nonce: "boundary-nonce-ghijklmnopqrstuv" }, 1009).dispatch).toBe(false);
+      expect(reopened.database.prepare("SELECT state FROM wake_nonces").all().map(row => ({ ...row }))).toEqual([{ state: "not-delivered" }]);
       expect(reopened.claimDeferred(target, 1009)).toEqual([]);
     } finally {
       reopened.close();
     }
   });
 
-  it("retries only a definitely failed wake whose reservation was released", () => {
-    for (const outcome of ["submitted", "accepted-or-unknown", "definite-failure"] as const) {
-      for (const released of [false, true]) {
-        const state = wakeRetryState(outcome, released, 2, 10_000);
-        const expectedRetry = outcome === "definite-failure" && released;
-        expect(state).toEqual(expectedRetry
-          ? { retry: true, nextRingAt: 130_000, ringAttempts: 3 }
-          : { retry: false, nextRingAt: 0, ringAttempts: 0 });
-      }
-    }
-  });
-
-  it("serializes wake reservation and release through the TLS broker", async () => {
+  it("refuses the removed 2.x wake operations through the TLS broker without touching the queue", async () => {
     const directory = stateDirectory();
     const target = { host: "codex", sessionId: "broker-wake-target" };
     await prepareAndSend(directory, {
@@ -1251,13 +1099,13 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       body: "wake once",
       ttlSeconds: 600,
     });
-    const first = "broker-wake-nonce-abcdefghijklmnop";
-    const second = "broker-wake-nonce-qrstuvwxyzabcdef";
-    await expect(sessionMessageRequest("reserve-wake", { target, nonce: first }, directory)).resolves.toEqual({ dispatch: true });
-    await expect(sessionMessageRequest("reserve-wake", { target, nonce: second }, directory)).resolves.toEqual({ dispatch: false });
-    await expect(sessionMessageRequest("release-wake", { target, nonce: first }, directory)).resolves.toEqual({ released: true });
-    await expect(sessionMessageRequest("reserve-wake", { target, nonce: second }, directory)).resolves.toEqual({ dispatch: true });
-    await expect(sessionMessageRequest("issue-wake", { target, nonce: second }, directory)).rejects.toThrow(/Unknown broker operation/u);
+    const nonce = "broker-wake-nonce-abcdefghijklmnop";
+    // 3.0 has no unbound reservation: reserve-wake names the birth and relay it rings.
+    await expect(sessionMessageRequest("reserve-wake", { target, nonce }, directory)).rejects.toThrow(/instanceId/u);
+    for (const operation of ["release-wake", "claim-wake", "reconcile-wake-observation", "issue-wake"]) {
+      await expect(sessionMessageRequest(operation, { target, nonce }, directory)).rejects.toThrow(/Unknown broker operation/u);
+    }
+    await expect(sessionMessageRequest("pending", { target }, directory)).resolves.toEqual({ count: 1 });
   });
 
   it("stops relay acquisition after three consecutive unknown identity checks", () => {
@@ -1408,28 +1256,23 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "1");
     // The broker captures its trust DB at startup; inherit the same fixture path as the hook.
     await startSourceBroker(directory);
-    for (const scenario of ["submitted", "unknown", "duplicate", "late", "idle", "forged", "mixed", "claude", "codex", "legacy"]) {
+    // 3.0: the 2.x "legacy" unbound nonce no longer exists (migration drops it); "forged" keeps the unissued-marker case.
+    for (const scenario of ["submitted", "unknown", "duplicate", "late", "idle", "forged", "mixed", "claude", "codex"]) {
       const target = { host: scenario === "claude" ? "claude-code" : scenario === "codex" ? "codex" : syntheticRootHost, sessionId: `empty-hook-${scenario}` };
       const nonce = `empty-hook-${scenario}-nonce-abcdefghijklmnop`;
       const store = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
       const now = Date.now();
       try {
-        // A legacy nonce must remain unconsumed: claim before reservation, with its lease already expired.
-        const sentAt = scenario === "legacy" ? now - 120_001 : now;
-        store.send({ sender: { host: "portable", sessionId: "empty-sender" }, target, messageId: `body-${scenario}`, body: `body-${scenario}` }, sentAt);
-        const legacyClaim = scenario === "legacy" ? store.claim(target, sentAt) : [];
-        if (scenario === "legacy") expect(legacyClaim.map(message => message.messageId)).toEqual([`body-${scenario}`]);
+        store.send({ sender: { host: "portable", sessionId: "empty-sender" }, target, messageId: `body-${scenario}`, body: `body-${scenario}` }, now);
         store.startPresence({ ...target, instanceId: "empty-instance", transport: "codex-queue", wakeVisibility: "user-message",
           canWakeSilently: false, deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" } }, now);
         store.acquireRelay({ ...target, transport: "codex-queue", relayId: "empty-relay", pid: process.pid, parentPid: process.pid }, now);
-        if (scenario === "legacy") {
-          expect(store.reserveWake(target, nonce, now)).toBe(true);
-          expect(store.acknowledge(target, [`body-${scenario}`], now + 1, legacyClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
-        } else {
+        {
           const reserved = store.reserveManagedWake({ ...target, nonce, instanceId: "empty-instance", transport: "codex-queue", relayId: "empty-relay" }, now);
-          const started = store.startManagedWake(reserved.attempt!, now + 1);
+          const started = store.startManagedWake(reserved.attempt!, 600_000, now + 1);
           expect(started.dispatch).toBe(true);
-          store.recordManagedWakeOutcome(started.attempt!, scenario === "unknown" ? "accepted-or-unknown" : "submitted", now + 2);
+          const outcome: WakeDispatchOutcome = scenario === "unknown" ? { result: "unknown", reasonCode: "SYNTHETIC_TIMEOUT" } : { result: "handed-off" };
+          expect(store.recordManagedWakeOutcome(started.attempt!, outcome, 600_000, now + 2)).toBe(true);
           if (!["idle", "forged", "mixed", "late"].includes(scenario)) {
             store.observeNativeInput(target, now + 3);
             expect(store.claimDeferred(target, now + 4)).toEqual([]);
@@ -1440,6 +1283,8 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
           if (scenario === "late") store.startPresence({ ...target, instanceId: "new-instance", transport: "codex-queue",
             wakeVisibility: "user-message", canWakeSilently: false,
             deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" } }, now + 7);
+          // Settle now (design 2.6): the claim boundary releases the hand-off, the new birth ends the late one.
+          store.prune(now + 8);
         }
         // The broker reads the wall clock when the hook runs; keep this scenario's births and relay live past the 20-second lease.
         const until = new Date(Date.now() + 10 * 60_000).toISOString();
@@ -1459,9 +1304,10 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
         return child.stdout ? JSON.parse(child.stdout) as Record<string, unknown> : {};
       };
       const output = await invoke();
-      if (["submitted", "unknown", "duplicate"].includes(scenario)) {
+      if (["submitted", "unknown", "duplicate", "late"].includes(scenario)) {
+        // A verified marker that brings no body stops the empty model turn, also when repeated or from an ended birth.
         expect(output).toMatchObject({ decision: "block" });
-        if (scenario === "duplicate") expect(await invoke()).toEqual({});
+        if (scenario === "duplicate") expect(await invoke()).toMatchObject({ decision: "block" });
       } else if (scenario === "idle") {
         expect(output).not.toHaveProperty("decision");
         expect(JSON.stringify(output)).toContain("body-idle");
@@ -1469,13 +1315,14 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       const verification = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
       try {
         if (scenario === "late") {
+          // I2: an old-birth marker claims nothing; it records only its late arrival.
           expect(verification.pendingCount(target)).toBe(1);
-          expect(verification.managedWakeStatus(target)).toMatchObject({ state: "observed", observation: "observed" });
+          expect(verification.managedWakeStatus(target)).toMatchObject({ state: "released", releaseReason: "birth-ended", observation: "late-observed" });
         } else if (["forged", "mixed"].includes(scenario)) {
           expect(verification.pendingCount(target)).toBe(1);
-          expect(verification.managedWakeStatus(target)).toMatchObject({ state: "submitted" });
-        } else if (scenario === "legacy") expect(verification.managedWakeStatus(target)).toBeNull();
-        else expect(verification.managedWakeStatus(target)).toMatchObject({ state: "observed" });
+          expect(verification.managedWakeStatus(target)).toMatchObject({ state: "handed-off" });
+        } else if (scenario === "idle") expect(verification.managedWakeStatus(target)).toMatchObject({ state: "observed" });
+        else expect(verification.managedWakeStatus(target)).toMatchObject({ state: "released", releaseReason: "claimed-after-handoff", observation: "late-observed" });
       } finally { verification.close(); }
     }
   }, 30_000);
@@ -1491,7 +1338,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     for (const host of [syntheticRootHost, "claude-code", "codex"]) {
       const target = { host, sessionId: `retired-hook-${host}` };
       const nonce = `retired-hook-${host}-nonce-abcdefghijklmnop`;
-      const base = Date.now() - WAKE_TTL_MS - WAKE_RETIRE_GRACE_MS - 60_000;
+      const base = Date.now() - 60_000;
       const store = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
       try {
         const presence = (instanceId: string, at: number) => {
@@ -1502,13 +1349,14 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
         presence("old-instance", base);
         store.send({ sender: { host: "portable", sessionId: "retired-sender" }, target, messageId: `retired-body-${host}`, body: "current body", ttlSeconds: 86400 }, base);
         const reserved = store.reserveManagedWake({ ...target, nonce, instanceId: "old-instance", transport: "codex-queue", relayId: "old-instance-relay" }, base);
-        const started = store.startManagedWake(reserved.attempt!, base + 1);
-        store.recordManagedWakeOutcome(started.attempt!, "submitted", base + 2);
-        // 이전 버전에서 이미 퇴역된 행의 소비자를 검사한다. 일반 활동으로 퇴역을 유도하지 않는다.
-        store.database.prepare("UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ? WHERE nonce = ?")
-          .run(new Date(Date.now() - 1).toISOString(), nonce);
-        presence("new-instance", Date.now());
-        expect(store.database.prepare("SELECT state FROM wake_nonces WHERE nonce = ?").get(nonce)).toEqual({ state: "expired-unobserved" });
+        const started = store.startManagedWake(reserved.attempt!, 600_000, base + 1);
+        expect(store.recordManagedWakeOutcome(started.attempt!, { result: "handed-off" }, 600_000, base + 2)).toBe(true);
+        // A new birth ends the old hand-off (design 2.6, birth-ended); the old marker then arrives.
+        const reborn = Date.now();
+        presence("new-instance", reborn);
+        store.prune(reborn);
+        expect({ ...store.database.prepare("SELECT state, release_reason FROM wake_nonces WHERE nonce = ?").get(nonce) })
+          .toEqual({ state: "released", release_reason: "birth-ended" });
       } finally { store.close(); }
       const prompt = `[agent-governance-suite:wake:${nonce}]`;
       const input = { hook_event_name: "UserPromptSubmit", session_id: target.sessionId, prompt, syntheticWake: parseWakeMessages(prompt) };
@@ -1527,7 +1375,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       try {
         expect(verification.pendingCount(target)).toBe(1);
         const row = verification.database.prepare("SELECT state, late_observed_at, observed_at FROM wake_nonces WHERE nonce = ?").get(nonce) as Record<string, unknown>;
-        expect(row).toMatchObject({ state: "expired-unobserved", observed_at: null });
+        expect(row).toMatchObject({ state: "released", observed_at: null });
         expect(row.late_observed_at).toEqual(expect.any(String));
       } finally { verification.close(); }
     }
@@ -1597,9 +1445,12 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
 
   it("limits extra host wake to an unavailable path needed now and preserves empty-wake handling (AGS-D-0354)", () => {
     for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions()]) {
-      expect(instructions).toMatch(/available·latched이면 호스트 기능으로 따로 깨우지 않는다/u);
+      expect(instructions).toMatch(/autoWake.state가 available이면 호스트 기능으로 따로 깨우지 않는다/u);
       expect(instructions).toMatch(/no-live-relay·unsupported이면[^.]*상대의 처리가 지금 필요할 때만 호스트 기능으로 한 번 깨운다/u);
-      expect(instructions).toMatch(/latched는[^.]*관측이 확인되지 않은 상태다/u);
+      // 3.0 (design 2.8): latched is gone; wake-unanswered and degraded are reported as facts.
+      expect(instructions).not.toMatch(/latched/u);
+      expect(instructions).toMatch(/available의 wake-unanswered는[^.]*응답 근거가 아직 없다는 사실/u);
+      expect(instructions).toMatch(/degraded는[^.]*연속 실패했거나 전제조건이 없다/u);
       expect(instructions).toMatch(/본문 없는 깨우기 신호나 내용 없는 메시지를 받아도 진행 중인 작업을 멈추지 않으며/u);
       expect(instructions).toMatch(/본문을 받지 못한 메시지의 내용은 짐작하지 않는다/u);
       expect(instructions).toMatch(/ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다/u);

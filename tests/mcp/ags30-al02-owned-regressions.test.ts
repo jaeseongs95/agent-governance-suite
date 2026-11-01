@@ -53,22 +53,23 @@ it("AGS-D-0003: a slow wake keeps relay/presence leases without recording work a
   const dispatch = vi.fn(() => new Promise<WakeDispatchOutcome>((resolve) => { finish = resolve; }));
   const request = vi.fn(async (operation: string, payload: Record<string, unknown>) => {
     if (operation === "reserve-wake") return store.reserveManagedWake({ ...relay, nonce: String(payload.nonce), resume: true });
-    if (operation === "start-wake") return store.startManagedWake(payload.attempt as Parameters<SessionMessageStore["startManagedWake"]>[0]);
+    if (operation === "start-wake") return store.startManagedWake(payload.attempt as Parameters<SessionMessageStore["startManagedWake"]>[0], Number(payload.resendBaseMs));
     if (operation === "relay-tick") return store.relayTick({ ...relay, includePending: false });
     if (operation === "record-wake-outcome") return { recorded: store.recordManagedWakeOutcome(
-      payload.attempt as Parameters<SessionMessageStore["recordManagedWakeOutcome"]>[0], payload.outcome as WakeDispatchOutcome) };
+      payload.attempt as Parameters<SessionMessageStore["recordManagedWakeOutcome"]>[0], payload.outcome as WakeDispatchOutcome, Number(payload.resendBaseMs)) };
     throw new Error(`Unexpected operation: ${operation}`);
   });
   const pending = dispatchManagedWake(relay, relay.relayId, {
-    capabilities: { supportedInjection: ["peer-wake"], idleWake: "silent" }, dispatch,
+    capabilities: { supportedInjection: ["peer-wake"], idleWake: "silent" }, resendBaseMs: 600_000, dispatch,
   }, request as typeof sessionMessageRequest);
   await vi.advanceTimersByTimeAsync(20_000);
   expect(dispatch).toHaveBeenCalledTimes(1);
   expect(store.liveRelay(target, relay.transport)?.relayId).toBe(relay.relayId);
   expect(store.presence(target).state).toBe("online");
   expect(request.mock.calls.filter(([operation]) => operation === "relay-tick")).toHaveLength(4);
-  expect(store.database.prepare("SELECT count(*) AS count FROM session_activity").get()).toMatchObject({ count: 0 });
-  finish("accepted-or-unknown");
+  // Relay renewals are no claim boundary (2.3).
+  expect(store.database.prepare("SELECT count(*) AS count FROM wake_paths WHERE claim_boundary_at IS NOT NULL").get()).toMatchObject({ count: 0 });
+  finish({ result: "unknown", reasonCode: "SYNTHETIC_UNKNOWN" });
   await expect(pending).resolves.toBe(true);
   expect(vi.getTimerCount()).toBe(0);
   expect(store.managedWakeStatus(target)?.state).toBe("unknown");
@@ -145,7 +146,7 @@ it.each(["reserve", "start"])("AGS-D-0031: %s reads expiry after an independent 
   workers.push(worker);
   const [expires] = await once(worker, "message") as [number];
   expect(Date.now()).toBeLessThan(expires);
-  const result = operation === "start" ? store.startManagedWake(reserved!) : store.reserveManagedWake(input);
+  const result = operation === "start" ? store.startManagedWake(reserved!, 600_000) : store.reserveManagedWake(input);
   expect(result.dispatch).toBe(false);
   await once(worker, "exit");
 });

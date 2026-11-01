@@ -14,7 +14,7 @@ vi.mock("node:fs", async original => {
   }};
 });
 import {createRelaySpawnObservation, createRelayWakeObservation} from "../../mcp-server/src/relay-wake-observation.js";
-import {transportWakePort} from "../../mcp-server/src/session-message-wake-port.js";
+import {transportWakePort} from "../../mcp-server/src/wake-transports.js";
 
 const roots: string[] = [];
 function setup(transport = "codex-deferred") {

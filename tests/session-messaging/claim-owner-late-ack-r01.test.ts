@@ -165,7 +165,7 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
     expect(store.status(sender, prepared.messageId, tLateAckA)?.state).toBe("delivered");
   });
 
-  it("post-repair receipt contract: rejects stale claim owner receipt after B reclaims while preserving message body, claim_receipt, and session_activity until B ACKs with B's receipt", () => {
+  it("post-repair receipt contract: rejects stale claim owner receipt after B reclaims while preserving message body, claim_receipt, and the wake path until B ACKs with B's receipt", () => {
     const { store, openInspectorDb } = createTempStore();
     const sender = { host: "codex", sessionId: "sender-d0354-main" };
     const target = { host: "antigravity", sessionId: "target-d0354-shared-session" };
@@ -210,9 +210,10 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
       acknowledged_at: string | null;
     };
     const activityBeforeLateAck = db
-      .prepare("SELECT active_at FROM session_activity WHERE host = ? AND session_id = ?")
+      .prepare("SELECT claim_boundary_at AS active_at FROM wake_paths WHERE host = ? AND session_id = ?")
       .get(target.host, target.sessionId) as { active_at: string } | undefined;
-    expect(activityBeforeLateAck?.active_at).toBe(new Date(tReclaimB).toISOString());
+    // 3.0 (design 2.6): a claim is a doorbell boundary only for a live birth; this target has none, so no wake path exists.
+    expect(activityBeforeLateAck).toBeUndefined();
 
     // B 재인수 뒤 A의 원회차 영수증(receiptA) 및 id-only, broker receipts 호출 모두 0 반환
     const tLateAckA = tReclaimB + 5_000;
@@ -231,7 +232,7 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
     }) as { acknowledged: number };
     expect(brokerLateAckA.acknowledged).toBe(0);
 
-    // 거부 후 본문(body), 영수증(claim_receipt), 임대(claim_until), acknowledged_at, 활동(session_activity.active_at) 불변 검증
+    // 거부 후 본문(body), 영수증(claim_receipt), 임대(claim_until), acknowledged_at, wake path(claim_boundary_at) 불변 검증
     const afterLateAckRow = db
       .prepare("SELECT body, claim_receipt, claim_until, acknowledged_at FROM messages WHERE message_id = ?")
       .get(prepared.messageId) as {
@@ -241,7 +242,7 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
       acknowledged_at: string | null;
     };
     const activityAfterLateAck = db
-      .prepare("SELECT active_at FROM session_activity WHERE host = ? AND session_id = ?")
+      .prepare("SELECT claim_boundary_at AS active_at FROM wake_paths WHERE host = ? AND session_id = ?")
       .get(target.host, target.sessionId) as { active_at: string } | undefined;
 
     expect(afterLateAckRow).toEqual(beforeLateAckRow);
@@ -251,7 +252,7 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
     expect(activityAfterLateAck?.active_at).toBe(activityBeforeLateAck?.active_at);
     expect(store.status(sender, prepared.messageId, tLateAckA)?.state).toBe("delivered");
 
-    // B의 원회차 영수증(receiptB)으로 정상 ACK 시 1 반환 및 상태·활동 갱신
+    // B의 원회차 영수증(receiptB)으로 정상 ACK 시 1 반환 및 상태 갱신
     const tAckB = tLateAckA + 1_000;
     setSystemNow(tAckB);
     expect(
@@ -261,9 +262,10 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
     ).toBe(1);
     expect(store.status(sender, prepared.messageId, tAckB)?.state).toBe("acknowledged");
     const activityAfterAckB = db
-      .prepare("SELECT active_at FROM session_activity WHERE host = ? AND session_id = ?")
+      .prepare("SELECT claim_boundary_at AS active_at FROM wake_paths WHERE host = ? AND session_id = ?")
       .get(target.host, target.sessionId) as { active_at: string } | undefined;
-    expect(activityAfterAckB?.active_at).toBe(new Date(tAckB).toISOString());
+    // ACK is not a doorbell boundary (design 2.6), so the wake path is untouched.
+    expect(activityAfterAckB).toEqual(activityAfterLateAck);
   });
 
   it("post-repair receipt contract: rejects cross-epoch receipts within the same process (respecting 120000ms and 240000ms backoff leases) and rejects foreign message receipts", () => {
@@ -416,7 +418,7 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
 
     const db = openInspectorDb();
     const activityBefore = db
-      .prepare("SELECT active_at FROM session_activity WHERE host = ? AND session_id = ?")
+      .prepare("SELECT claim_boundary_at AS active_at FROM wake_paths WHERE host = ? AND session_id = ?")
       .get(target.host, target.sessionId) as { active_at: string } | undefined;
 
     // 이종 target(다른 sessionId 또는 다른 host)이 유효한 claimReceipt를 제시해도 거부(0)
@@ -444,7 +446,7 @@ describe("AGS-D-0354 claim-owner-late-ack-r01 regression suite", () => {
       .prepare("SELECT body, claim_receipt, acknowledged_at FROM messages WHERE message_id = ?")
       .get(prepared.messageId) as { body: string; claim_receipt: string | null; acknowledged_at: string | null };
     const activityAfter = db
-      .prepare("SELECT active_at FROM session_activity WHERE host = ? AND session_id = ?")
+      .prepare("SELECT claim_boundary_at AS active_at FROM wake_paths WHERE host = ? AND session_id = ?")
       .get(target.host, target.sessionId) as { active_at: string } | undefined;
     expect(row.body).toBe("target-isolation-check");
     expect(row.claim_receipt).toBe(receipt);

@@ -40,7 +40,7 @@ function fixture() {
     return prepared.messageId;
   };
   const snapshot = () => Object.fromEntries([
-    "messages", "prepared_messages", "input_observations", "session_activity",
+    "messages", "prepared_messages", "input_observations", "wake_paths",
     "wake_nonces", "session_presence", "relay_leases",
   ].map(table => [table, store.database.prepare(`SELECT * FROM ${table}`).all()]));
   return { store, presence, start, enqueue, snapshot };

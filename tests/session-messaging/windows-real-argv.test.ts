@@ -31,7 +31,8 @@ vi.mock('node:child_process', async (importOriginal) => {
   } };
 });
 
-import { transportWakePort } from '../../mcp-server/src/session-message-wake-port.js';
+import { transportWakePort } from '../../mcp-server/src/wake-transports.js';
+import type { WakeDispatchOutcome } from '../../mcp-server/src/session-message-wake-port.js';
 
 type Witness = { pid: number; argv: string[]; entry: string; executable: string; project: string | null; sourceMetadataPresent: boolean };
 const helper = fileURLToPath(new URL('./fixtures/windows-agentapi.cjs', import.meta.url));
@@ -75,7 +76,7 @@ async function fixture(mode: string, sessionId: string, message: string) {
     children: [] as typeof owned, rmStarted: null as number | null, rmEnded: null as number | null,
     rmResult: 'not-attempted' as 'not-attempted' | 'returned' | 'threw',
   };
-  let outcome: string;
+  let outcome: WakeDispatchOutcome;
   let elapsed: number;
   let witness: Witness[];
   let spawned: boolean[];
@@ -101,7 +102,7 @@ async function fixture(mode: string, sessionId: string, message: string) {
     delete process.env.NODE_V8_COVERAGE;
     delete process.env.NODE_COMPILE_CACHE;
     const started = performance.now();
-    outcome = await bounded(transportWakePort('gemini-queue').dispatch({ host: 'gemini', sessionId }, message), 16_000);
+    outcome = await bounded(transportWakePort('antigravity-queue').dispatch({ host: 'gemini', sessionId }, message), 16_000);
     elapsed = performance.now() - started;
     await bounded(Promise.all(owned.slice(first).map(record => record.closed)), 2_000);
     witness = readFileSync(witnessPath, 'utf8').split('\n').filter(Boolean).map(line => JSON.parse(line) as Witness);
@@ -196,7 +197,7 @@ async function fixture(mode: string, sessionId: string, message: string) {
 // Independently written literal corpus, not values computed by the product/parser.
 it('WARGV-001 ascii', async () => {
   const result = await fixture('ok', 'session-123', 'hello');
-  expect(result.outcome).toBe('submitted');
+  expect(result.outcome).toEqual({ result: 'handed-off' });
   expect(result.witness.map(row => row.argv)).toEqual([
     ['get-conversation-metadata', 'session-123'], ['send-message', 'session-123', 'hello'],
   ]);
@@ -208,7 +209,7 @@ it('WARGV-001 ascii', async () => {
 
 it('WARGV-002 whitespace unicode', async () => {
   const result = await fixture('ok', '세션 이름', '한글 😀\t둘\r\n끝');
-  expect(result.outcome).toBe('submitted');
+  expect(result.outcome).toEqual({ result: 'handed-off' });
   expect(result.witness.map(row => row.argv)).toEqual([
     ['get-conversation-metadata', '세션 이름'], ['send-message', '세션 이름', '한글 😀\t둘\r\n끝'],
   ]);
@@ -216,7 +217,7 @@ it('WARGV-002 whitespace unicode', async () => {
 
 it('WARGV-003 quotes trailing backslash', async () => {
   const result = await fixture('ok', 'session "quoted"', 'a\\"b "double" tail\\');
-  expect(result.outcome).toBe('submitted');
+  expect(result.outcome).toEqual({ result: 'handed-off' });
   expect(result.witness.map(row => row.argv)).toEqual([
     ['get-conversation-metadata', 'session "quoted"'], ['send-message', 'session "quoted"', 'a\\"b "double" tail\\'],
   ]);
@@ -224,7 +225,7 @@ it('WARGV-003 quotes trailing backslash', async () => {
 
 it('WARGV-004 empty arguments', async () => {
   const result = await fixture('ok', '', '');
-  expect(result.outcome).toBe('submitted');
+  expect(result.outcome).toEqual({ result: 'handed-off' });
   expect(result.witness.map(row => row.argv)).toEqual([
     ['get-conversation-metadata', ''], ['send-message', '', ''],
   ]);
@@ -232,7 +233,7 @@ it('WARGV-004 empty arguments', async () => {
 
 it('WARGV-005 shell separators remain literal', async () => {
   const result = await fixture('ok', 'sid&|<>^', '& | < > ^ %AGS_ARGV_TOKEN% !AGS_ARGV_TOKEN! ; $(whoami) `echo`');
-  expect(result.outcome).toBe('submitted');
+  expect(result.outcome).toEqual({ result: 'handed-off' });
   expect(result.witness.map(row => row.argv)).toEqual([
     ['get-conversation-metadata', 'sid&|<>^'],
     ['send-message', 'sid&|<>^', '& | < > ^ %AGS_ARGV_TOKEN% !AGS_ARGV_TOKEN! ; $(whoami) `echo`'],
@@ -241,28 +242,28 @@ it('WARGV-005 shell separators remain literal', async () => {
 
 it('WARGV-006 invalid metadata does not send', async () => {
   const result = await fixture('invalid-json', 'synthetic-session', 'not sent');
-  expect(result.outcome).toBe('definite-failure');
+  expect(result.outcome).toMatchObject({ result: 'not-delivered', kind: 'transient' });
   expect(result.witness.map(row => row.argv)).toEqual([['get-conversation-metadata', 'synthetic-session']]);
   expect(result.spawned).toEqual([true]);
 });
 
 it('WARGV-007 metadata nonzero does not send', async () => {
   const result = await fixture('metadata-error', 'synthetic-session', 'not sent');
-  expect(result.outcome).toBe('definite-failure');
+  expect(result.outcome).toMatchObject({ result: 'not-delivered', kind: 'transient' });
   expect(result.witness.map(row => row.argv)).toEqual([['get-conversation-metadata', 'synthetic-session']]);
   expect(result.spawned).toEqual([true]);
 });
 
-it('WARGV-008 missing executable is definite before spawn', async () => {
+it('WARGV-008 missing executable is a missing prerequisite before spawn', async () => {
   const result = await fixture('missing-exe', 'synthetic-session', 'not sent');
-  expect(result.outcome).toBe('definite-failure');
+  expect(result.outcome).toMatchObject({ result: 'not-delivered', kind: 'prerequisite-missing' });
   expect(result.witness).toEqual([]);
   expect(result.spawned).toEqual([false]);
 });
 
 it('WARGV-009 send nonzero after spawn is unknown', async () => {
   const result = await fixture('send-error', 'synthetic-session', 'synthetic-message');
-  expect(result.outcome).toBe('accepted-or-unknown');
+  expect(result.outcome).toMatchObject({ result: 'unknown' });
   expect(result.witness.map(row => row.argv)).toEqual([
     ['get-conversation-metadata', 'synthetic-session'], ['send-message', 'synthetic-session', 'synthetic-message'],
   ]);
@@ -272,7 +273,7 @@ it('WARGV-009 send nonzero after spawn is unknown', async () => {
 
 it('WARGV-010 send timeout after spawn is unknown and reaped', async () => {
   const result = await fixture('send-timeout', 'synthetic-session', 'synthetic-message');
-  expect(result.outcome).toBe('accepted-or-unknown');
+  expect(result.outcome).toMatchObject({ result: 'unknown' });
   expect(result.witness.map(row => row.argv)).toEqual([
     ['get-conversation-metadata', 'synthetic-session'], ['send-message', 'synthetic-session', 'synthetic-message'],
   ]);
@@ -285,7 +286,7 @@ it('WARGV-010 send timeout after spawn is unknown and reaped', async () => {
 
 it('WARGV-011 NUL rejected before send spawn', async () => {
   const result = await fixture('ok', 'synthetic-session', 'invalid\0message');
-  expect(result.outcome).toBe('definite-failure');
+  expect(result.outcome).toMatchObject({ result: 'not-delivered', kind: 'transient' });
   expect(result.witness.map(row => row.argv)).toEqual([['get-conversation-metadata', 'synthetic-session']]);
   expect(result.spawned).toEqual([true]);
 });

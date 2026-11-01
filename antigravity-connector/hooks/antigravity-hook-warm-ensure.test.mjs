@@ -176,7 +176,7 @@ vi.restoreAllMocks();
 
 // D0364: the queue is inferred only with the source project identity its idle wake needs; the cases cover both.
 for (const [projectId, transport, supportedInjection, idleWake] of [
-  ["synthetic-project", "gemini-queue", ["peer-wake", "tool-boundary"], "user-message"],
+  ["synthetic-project", "antigravity-queue", ["peer-wake", "tool-boundary"], "user-message"],
   [undefined, "gemini-deferred", ["tool-boundary"], "none"],
 ]) test(`Antigravity PreInvocation recovers missing session presence and ${transport} relay via handleSessionMessageHook`, async () => {
   vi.stubEnv("ANTIGRAVITY_PROJECT_ID", projectId);

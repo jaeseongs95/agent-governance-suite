@@ -12,6 +12,7 @@ import { ContinuityStoreError } from "../../mcp-server/src/continuity-store.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { gateDecision, readSession, recordPrompt, setSummary } from "../../skills/session-board/scripts/board-store.mjs";
 import type { InputObservation } from "../../mcp-server/src/input-observation.js";
+import { insertV2WakeRows, V2_MESSAGING_TABLES, V2_SCHEMA_SQL } from "../session-messaging/fixtures/session-message-v2-schema.mjs";
 
 const directories: string[] = [];
 const bundles: ReturnType<typeof createInactiveSharedStores>[] = [];
@@ -91,7 +92,7 @@ describe("native legacy APIs on one inactive authority connection", () => {
     value.messaging.acquireRelay({ ...target, transport: "codex-queue", relayId: "relay-1", pid: process.pid, parentPid: process.pid }, now);
     value.messaging.send({ messageId: "wake-body-original", sender, target, body: "synthetic body" }, now);
     const reserved = value.messaging.reserveManagedWake({ ...target, instanceId: "instance-1", transport: "codex-queue", relayId: "relay-1", nonce }, now); expect(reserved.attempt).not.toBeNull();
-    const started = value.messaging.startManagedWake(reserved.attempt!, now); expect(started.dispatch).toBe(true); expect(value.messaging.startManagedWake(reserved.attempt!, now).dispatch).toBe(false); expect(value.messaging.recordManagedWakeOutcome(started.attempt!, "accepted-or-unknown", now)).toBe(true);
+    const started = value.messaging.startManagedWake(reserved.attempt!, 600_000, now); expect(started.dispatch).toBe(true); expect(value.messaging.startManagedWake(reserved.attempt!, 600_000, now).dispatch).toBe(false); expect(value.messaging.recordManagedWakeOutcome(started.attempt!, { result: "unknown" }, 600_000, now)).toBe(true);
     const observation: InputObservation = { ...target, kind: "user-input", wakeOnly: true, wakeCandidates: [nonce], actor: { role: "root", basis: "observed", reasonCode: "SYNTHETIC_LEGACY_WAKE_ROOT" } };
     const contentDigest = `sha256:${createHash("sha256").update(JSON.stringify([target.host, target.sessionId, "user-input", true, "root", "observed", [nonce]])).digest("hex")}` as const;
     const source = value.trust.recordInputSource({ originKind: "peer", ...target, eventId: "synthetic-wake-source", contentDigest, observedAt: iso(now), expiresAt: iso(1000), authorityEffect: "none", attestation: { kind: "broker-peer-envelope", adapter: "session-message-wake-hook", capabilityVersion: "3.0.0" } });
@@ -109,7 +110,15 @@ describe("native legacy APIs on one inactive authority connection", () => {
 });
 
 
-it("D0354 기존 공용 messaging v1은 읽기 검증 뒤 명시적 이전을 거쳐 다시 열린다", () => {
+// The owner's committed header shape (#shape in runtime/unified-state/shared-connection.mjs), recomputed for a downgraded file.
+function moduleShape(db: DatabaseSync, tables: readonly string[]): string {
+  return JSON.stringify(tables.map(name => ({ name, columns: db.prepare(`PRAGMA table_info(${name})`).all(),
+    sql: (db.prepare("SELECT sql FROM sqlite_schema WHERE type='table' AND name=?").get(name) as { sql?: string } | undefined)?.sql,
+    indexes: (db.prepare("SELECT name,sql FROM sqlite_schema WHERE type='index' AND tbl_name=? ORDER BY name").all(name) as Array<{ name: string }>)
+      .map(index => ({ ...index, columns: db.prepare("SELECT * FROM pragma_index_xinfo(?)").all(index.name) })) })));
+}
+
+it("AGS 3.0: 공용 messaging v2는 읽기 검증 뒤 명시적 이전으로 v3가 되고, v1은 거부되며, 다시 열어도 같다", () => {
   const previous = fixture();
   const filename = previous.owner.databasePath, directory = path.dirname(filename);
   const sender = { host: "sender-host", sessionId: "migration-sender" };
@@ -122,21 +131,39 @@ it("D0354 기존 공용 messaging v1은 읽기 검증 뒤 명시적 이전을 �
   previous.workflow.insertRun(receipt("migration-retained-run"));
   previous.owner.close();
 
+  // Downgrade the messaging module to the 2.x shared layout (c5343231): v2 wake_nonces, session_activity, no wake_paths.
   const legacy = new DatabaseSync(filename);
   try {
-    legacy.exec("ALTER TABLE messages DROP COLUMN acknowledgement_receipt; ALTER TABLE messages DROP COLUMN claim_receipt; ALTER TABLE messages DROP COLUMN legacy_claim_attempt;");
-    const header = legacy.prepare("SELECT schema_json FROM shared_module_schema WHERE module = 'messaging'").get() as { schema_json: string };
-    const shape = JSON.parse(header.schema_json) as Array<{ name: string; columns: unknown; sql: unknown }>;
-    const messages = shape.find(table => table.name === "messages")!;
-    messages.columns = legacy.prepare("PRAGMA table_info(messages)").all();
-    messages.sql = (legacy.prepare("SELECT sql FROM sqlite_schema WHERE name = 'messages'").get() as { sql: string }).sql;
-    legacy.prepare("UPDATE shared_module_schema SET version = 1, schema_json = ? WHERE module = 'messaging'").run(JSON.stringify(shape));
+    legacy.exec("DROP INDEX IF EXISTS wake_active_target; DROP TABLE wake_nonces; DROP TABLE wake_paths;");
+    for (const sql of V2_SCHEMA_SQL.filter(sql => /wake_nonces|session_activity/u.test(sql))) legacy.exec(sql);
+    insertV2WakeRows(legacy, [
+      { nonce_digest: "digest-handed", host: target.host, session_id: target.sessionId, expires_at: iso(3_600_090), state: "submitted",
+        nonce: "migration-handed-nonce-abcdefghij", instance_id: "migration-instance", birth_generation: iso(80), transport: "gemini-queue",
+        relay_id: "migration-relay", attempt_id: "migration-handed", dispatch_epoch: 1, started_at: iso(89), outcome_at: iso(90), prior_unobserved: 1 },
+      { nonce_digest: "digest-retired", host: target.host, session_id: "retired-target", expires_at: iso(3_600_000), state: "expired-unobserved",
+        nonce: "migration-retired-nonce-abcdefghi", instance_id: "retired-instance", birth_generation: iso(10), transport: "codex-queue",
+        relay_id: "retired-relay", attempt_id: "migration-retired", dispatch_epoch: 1, started_at: iso(11), outcome_at: iso(12), retired_at: iso(95) },
+      { nonce_digest: "digest-legacy", host: target.host, session_id: "legacy-target", expires_at: iso(3_600_000), state: "legacy" },
+    ]);
+    legacy.prepare("INSERT INTO session_activity (host, session_id, active_at) VALUES (?, ?, ?)").run(target.host, target.sessionId, iso(99));
+    legacy.prepare("UPDATE shared_module_schema SET version = 2, schema_json = ? WHERE module = 'messaging'").run(moduleShape(legacy, V2_MESSAGING_TABLES));
   } finally { legacy.close(); }
+
+  // A v1 messaging header is no longer an accepted previous format (3.0 migrates only from v2).
+  const setMessagingVersion = (version: number) => { const db = new DatabaseSync(filename); try { db.prepare("UPDATE shared_module_schema SET version = ? WHERE module = 'messaging'").run(version); } finally { db.close(); } };
+  setMessagingVersion(1);
+  let v1Failure: unknown;
+  try {
+    const connection = new InactiveSharedConnection({ databasePath: filename, mode: "fixture-only", clock: () => 101 });
+    try { connection.borrow("messaging").getSchemaVersion(); connection.transaction(() => {}); } finally { connection.close(); }
+  } catch (error) { v1Failure = error; }
+  expect(v1Failure).toMatchObject({ code: "SHARED_SCHEMA_DRIFT" });
+  setMessagingVersion(2);
 
   const before = fs.readFileSync(filename);
   const pending = new InactiveSharedConnection({ databasePath: filename, mode: "fixture-only", clock: () => 101 });
   try {
-    expect(pending.borrow("messaging").getSchemaVersion()).toBe(1);
+    expect(pending.borrow("messaging").getSchemaVersion()).toBe(2);
     let called = false, failure: unknown;
     try { pending.transaction(() => { called = true; }); } catch (error) { failure = error; }
     expect(failure).toMatchObject({ code: "SCHEMA_NOT_READY" });
@@ -146,22 +173,32 @@ it("D0354 기존 공용 messaging v1은 읽기 검증 뒤 명시적 이전을 �
 
   const migrated = createInactiveSharedStores({ directory, mode: "fixture-only", clock: () => 122_001, syntheticKeys: keys });
   bundles.push(migrated);
-  expect(migrated.owner.inspect().modules.find(row => row.module === "messaging")?.version).toBe(2);
+  const inspected = migrated.owner.inspect();
+  expect(inspected.modules.find(row => row.module === "messaging")?.version).toBe(3);
+  expect(Object.keys(inspected.counts)).toContain("wake_paths");
+  expect(Object.keys(inspected.counts)).not.toContain("session_activity");
+  const wakeRows = () => (migrated.messaging.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid").all() as Array<Record<string, unknown>>).map(row => ({ ...row }));
+  const migratedRows = wakeRows();
+  expect(migratedRows.map(row => [row.attempt_id, row.state, row.release_reason, row.released_at, row.transport, row.resend_base_ms, row.resend_due_at])).toEqual([
+    ["migration-handed", "handed-off", null, null, "antigravity-queue", 600_000, iso(90 + 600_000)],
+    ["migration-retired", "released", "migrated", iso(95), "codex-queue", null, null],
+  ]);
+  expect(migrated.messaging.database.prepare("SELECT session_id, instance_id, birth_generation, streak, failures FROM wake_paths").all().map(row => ({ ...row })))
+    .toEqual([{ session_id: target.sessionId, instance_id: "migration-instance", birth_generation: iso(80), streak: 0, failures: 0 }]);
   expect(migrated.workflow.getRun("migration-retained-run")).toEqual(receipt("migration-retained-run"));
-  expect(migrated.messaging.database.prepare("SELECT message_id, claim_receipt, legacy_claim_attempt, delivery_attempts FROM messages WHERE message_id = ?").get(delivered.messageId))
-    .toMatchObject({ message_id: delivered.messageId, claim_receipt: null, legacy_claim_attempt: 1, delivery_attempts: 1 });
-  expect(migrated.messaging.database.prepare("SELECT claim_receipt, legacy_claim_attempt, delivery_attempts FROM messages WHERE message_id = ?").get(queued.messageId))
-    .toMatchObject({ claim_receipt: null, legacy_claim_attempt: 0, delivery_attempts: 0 });
-  const claimed = migrated.messaging.claim(target, 122_001, { maxMessages: 1 });
-  expect(claimed).toMatchObject([{ messageId: delivered.messageId, body: "historical delivered body", deliveryAttempt: 2 }]);
-  expect(migrated.messaging.acknowledge(target, [delivered.messageId], 122_002, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
+  expect(migrated.messaging.status(sender, delivered.messageId, 122_001)).toMatchObject({ deliveryAttempts: 1 });
+  expect(migrated.messaging.status(sender, queued.messageId, 122_001)).toMatchObject({ state: "queued", deliveryAttempts: 0 });
+  const closingRows = wakeRows();
   migrated.owner.close();
 
+  // Reopening runs no second rebuild: the same rows, version and inventory.
   const reopened = createInactiveSharedStores({ directory, mode: "fixture-only", clock: () => 122_003, syntheticKeys: keys });
   bundles.push(reopened);
-  expect(reopened.owner.inspect().modules.find(row => row.module === "messaging")?.version).toBe(2);
-  expect(reopened.messaging.status(sender, delivered.messageId, 122_003)).toMatchObject({ state: "acknowledged", deliveryAttempts: 2 });
-  expect(reopened.messaging.status(sender, queued.messageId, 122_003)).toMatchObject({ state: "queued", deliveryAttempts: 0 });
-  expect(reopened.messaging.database.prepare("SELECT legacy_claim_attempt FROM messages WHERE message_id = ?").get(delivered.messageId)).toMatchObject({ legacy_claim_attempt: 1 });
+  expect(reopened.owner.inspect().modules.find(row => row.module === "messaging")?.version).toBe(3);
+  expect((reopened.messaging.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid").all() as Array<Record<string, unknown>>).map(row => ({ ...row }))).toEqual(closingRows);
+  const claimed = reopened.messaging.claim(target, 122_003, { maxMessages: 1 });
+  expect(claimed).toMatchObject([{ messageId: delivered.messageId, body: "historical delivered body", deliveryAttempt: 2 }]);
+  expect(reopened.messaging.acknowledge(target, [delivered.messageId], 122_004, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
+  expect(reopened.messaging.status(sender, delivered.messageId, 122_005)).toMatchObject({ state: "acknowledged", deliveryAttempts: 2 });
   expect(reopened.workflow.getRun("migration-retained-run")).toEqual(receipt("migration-retained-run"));
 });

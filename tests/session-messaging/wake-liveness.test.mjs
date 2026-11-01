@@ -4,19 +4,20 @@ import { once } from 'node:events';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { afterEach, test, vi } from 'vitest';
-import { SessionMessageStore, WAKE_OBSERVATION_WINDOW_MS, WAKE_TTL_MS, WAKE_RETIRE_GRACE_MS } from '../../mcp-server/src/session-message-store.ts';
+import { SessionMessageStore, WAKE_OBSERVATION_WINDOW_MS, WAKE_QUIET_MS } from '../../mcp-server/src/session-message-store.ts';
 import { dispatchSessionMessageBrokerOperation as dispatch } from '../../mcp-server/src/session-message-broker.ts';
 import '../../mcp-server/src/builtin-hook-host-adapters.ts';
 import { adaptHostInput, registerHookHostAdapter } from '../../mcp-server/src/host-input-adapter.ts';
-import { recordWakeHookObservation, wakeHookObservationReader } from '../../mcp-server/src/session-message-wake-port.ts';
+import { recordWakeHookObservation, wakeBackoffDelay, wakeHookObservationReader } from '../../mcp-server/src/session-message-wake-port.ts';
 import { ContractValidator } from '../../mcp-server/src/schema-validator.ts';
 
+// AGS 3.0 doorbell (docs/ags30-wake-doorbell-design.md r3.2). These cases were rewritten from the 2.x "permanent latch"
+// rules: a hand-off now ends by a later claim boundary, the end of its birth or its resend deadline (2.6), and the
+// invariants I1, I2, I5, I6 and I11 are kept. Clocks are explicit arguments.
 // The process fixture binds the same target identity.
 // Explicit synthetic root adapter for core regression cases; not native capture or R7 evidence.
-// The builtin decoder supplies event shape only; actor authority is this fake fixture contract.
 registerHookHostAdapter("portable", {
     adaptInput: (input, selectedHost) => {
       const adapted = adaptHostInput(input, "codex");
@@ -27,6 +28,10 @@ registerHookHostAdapter("portable", {
   processPid: () => undefined,
 });
 
+const BASE = 10 * 60_000;
+const HANDED = { result: 'handed-off' };
+const UNKNOWN = { result: 'unknown', reasonCode: 'SYNTHETIC_TIMEOUT' };
+const TRANSIENT = { result: 'not-delivered', kind: 'transient', reasonCode: 'SYNTHETIC_TRANSIENT' };
 const target = { host: 'portable', sessionId: 'wake-target' };
 const sender = { host: 'portable', sessionId: 'liveness-sender' };
 const capabilities = { supportedInjection: ['peer-wake', 'tool-boundary'], idleWake: 'silent' };
@@ -48,7 +53,7 @@ function fixture() {
   resources.push({ directory, stores: [store] });
   const now = Date.now();
   live(store, 'instance-1', 'relay-1', now);
-  return { directory, database, store, now, retireAt: now + WAKE_TTL_MS + WAKE_RETIRE_GRACE_MS };
+  return { directory, database, store, now };
 }
 function live(store, instanceId, relayId, at) {
   store.startPresence({ ...target, instanceId, transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
@@ -57,7 +62,7 @@ function live(store, instanceId, relayId, at) {
 }
 /** Keeps one presence birth alive across a long fixture gap without a new generation. */
 function keepAlive(store, instanceId, relayId, at) {
-  store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ?').run(iso(at + 60_000), instanceId);
+  store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ? AND ended_at IS NULL').run(iso(at + 60_000), instanceId);
   store.acquireRelay({ ...target, transport: 'portable', relayId, pid: process.pid, parentPid: process.pid }, at);
   assert.equal(store.presence(target, at).state, 'online');
 }
@@ -68,87 +73,60 @@ function request(instanceId, relayId, nonce = `${instanceId}-next-nonce-abcdefgh
 function begin(store, at, input = request('instance-1', 'relay-1', 'liveness-first-nonce-abcdefghijklmnop')) {
   const reserved = store.reserveManagedWake(input, at);
   assert.equal(reserved.dispatch, true);
-  const started = store.startManagedWake(reserved.attempt, at + 1);
+  const started = store.startManagedWake(reserved.attempt, BASE, at + 1);
   assert.equal(started.dispatch, true);
   return started.attempt;
 }
-function latched(f, outcome = 'submitted') {
+/** Hands a marker to the host (outcome at f.now + 2) with one pending body. */
+function handOff(f, outcome = HANDED) {
   body(f.store, 'pending-body', f.now);
   const attempt = begin(f.store, f.now);
-  if (outcome !== 'started') assert.equal(f.store.recordManagedWakeOutcome(attempt, outcome, f.now + 2), true);
+  if (outcome !== 'started') assert.equal(f.store.recordManagedWakeOutcome(attempt, outcome, BASE, f.now + 2), true);
   return attempt;
 }
 function attemptRow(store, attempt) { return store.database.prepare('SELECT * FROM wake_nonces WHERE attempt_id = ?').get(attempt.attemptId); }
 function without(row, keys) { return Object.fromEntries(Object.entries(row).filter(([key]) => !keys.includes(key))); }
-// 이전 버전에서 이미 퇴역된 행을 읽는 소비자 전용 자료다. 일반 활동은 퇴역 근거로 사용하지 않는다.
-function seedRetired(f, attempt, at) {
-  f.store.database.prepare("UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ? WHERE attempt_id = ?")
-    .run(iso(at), attempt.attemptId);
-}
-function observe(f, attempt, at) {
+function observe(f, attempt, at, nonces = [attempt.nonce]) {
   vi.stubEnv('AGENT_GOVERNANCE_TRUST_DB_PATH', join(f.directory, 'trust.sqlite3'));
   const observation = adaptHostInput({ hook_event_name: 'UserPromptSubmit', session_id: target.sessionId,
-    agent_id: '', prompt: `[agent-governance-suite:wake:${attempt.nonce}]` }, target.host).observation;
+    agent_id: '', prompt: nonces.map(nonce => `[agent-governance-suite:wake:${nonce}]`).join('\n') }, target.host).observation;
   return { observation, sourceReceiptId: recordWakeHookObservation(observation, at) };
 }
 function hostClaim(f, observed, at) {
   return f.store.claimHostWake(target, observed.observation, observed.sourceReceiptId, wakeHookObservationReader, at);
 }
+const ACTIVE = "('reserved', 'started', 'handed-off', 'unknown')";
 
-test.each(['submitted', 'accepted-or-unknown', 'started'])('D0353: %s는 새 세대·일반 활동 뒤에도 보류되고 검증된 구 표식 관측 뒤에만 해제된다', outcome => {
-  const f = fixture(); const old = latched(f, outcome);
-  live(f.store, 'instance-2', 'relay-2', f.retireAt - 1);
-  assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt - 1).dispatch, false);
-  const before = attemptRow(f.store, old);
-  assert.ok(['started', 'submitted', 'unknown'].includes(before.state));
-  keepAlive(f.store, 'instance-2', 'relay-2', f.retireAt);
-  // 새 세대와 일반 활동은 외부 대기열의 특정 표식을 소비하지 않는다.
-  assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt).dispatch, false);
-  assert.deepEqual(attemptRow(f.store, old), before);
-  f.store.observeNativeInput(target, f.retireAt);
-  assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt).dispatch, false);
-  assert.deepEqual(attemptRow(f.store, old), before);
-  assert.deepEqual(hostClaim(f, observe(f, old, f.retireAt + 1), f.retireAt + 2), { recognized: false, messages: [], binding: null });
-  const next = f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt + 3);
+test.each(['handed-off', 'unknown', 'started'])('I2/I11: a %s attempt of an old birth ends as birth-ended; its verified marker claims no current-birth body', outcome => {
+  const f = fixture();
+  const old = handOff(f, outcome === 'handed-off' ? HANDED : outcome === 'unknown' ? UNKNOWN : 'started');
+  live(f.store, 'instance-2', 'relay-2', f.now + 10);
+  const next = f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.now + 11);
+  const ended = attemptRow(f.store, old);
+  if (outcome === 'started') {
+    // A started attempt changes only by the start timeout (2.6); it keeps the slot until then (I4, I5).
+    assert.equal(next.dispatch, false);
+    assert.equal(ended.state, 'started');
+    return;
+  }
+  assert.deepEqual([ended.state, ended.release_reason, ended.released_at], ['released', 'birth-ended', iso(f.now + 11)]);
   assert.equal(next.dispatch, true);
   assert.notEqual(next.attempt.nonce, old.nonce); assert.notEqual(next.attempt.attemptId, old.attemptId);
-  const observed = attemptRow(f.store, old);
-  assert.equal(observed.state, 'observed');
-  assert.equal(observed.retired_at, null);
-  assert.equal(observed.observed_at, iso(f.retireAt + 2)); assert.equal(observed.consumed_at, iso(f.retireAt + 2));
-  assert.deepEqual(without(observed, ['state', 'observed_at', 'consumed_at', 'late_observed_at']), without(before, ['state', 'observed_at', 'consumed_at', 'late_observed_at']));
-  assert.equal(f.store.recordManagedWakeOutcome(old, 'definite-failure', f.retireAt + 4), false);
-  assert.equal(f.store.recordManagedWakeOutcome(old, 'submitted', f.retireAt + 4), false);
-  assert.equal(f.store.startManagedWake(old, f.retireAt + 4).dispatch, false);
-  assert.deepEqual(attemptRow(f.store, old), observed);
-  assert.equal(f.store.startManagedWake(next.attempt, f.retireAt + 5).dispatch, true);
-  const status = f.store.managedWakeStatus(target, f.retireAt + 5);
-  assert.equal(status.attemptId, next.attempt.attemptId); assert.equal(status.state, 'started');
+  const messages = f.store.database.prepare('SELECT * FROM messages').all();
+  const late = hostClaim(f, observe(f, old, f.now + 12), f.now + 13);
+  assert.equal(late.recognized, false); assert.deepEqual(late.messages, []); assert.equal(late.binding, null);
+  assert.deepEqual(f.store.database.prepare('SELECT * FROM messages').all(), messages);
+  const recorded = attemptRow(f.store, old);
+  assert.equal(recorded.late_observed_at, iso(f.now + 13));
+  assert.deepEqual(without(recorded, ['late_observed_at']), without(ended, ['late_observed_at']));
+  for (const value of [HANDED, UNKNOWN, TRANSIENT]) assert.equal(f.store.recordManagedWakeOutcome(old, value, BASE, f.now + 14), false);
+  assert.equal(f.store.startManagedWake(old, BASE, f.now + 14).dispatch, false);
+  assert.deepEqual(attemptRow(f.store, old), recorded);
+  assert.equal(f.store.startManagedWake(next.attempt, BASE, f.now + 15).dispatch, true);
+  assert.equal(f.store.managedWakeStatus(target, f.now + 15).attemptId, next.attempt.attemptId);
 });
 
-test.each(['same-generation', 'other-transport'])('an expired latch of a live, quiet birth without activity stays latched: %s', kind => {
-  const f = fixture(); const old = latched(f);
-  const later = f.retireAt + 24 * 3600_000;
-  // A live birth may switch transport and back without a new generation, so a transport change alone is no death.
-  if (kind === 'other-transport') f.store.startPresence({ ...target, instanceId: 'instance-1', transport: 'portable-other', wakeVisibility: 'silent',
-    canWakeSilently: true, deliveryCapabilities: capabilities }, f.now + 10);
-  const before = attemptRow(f.store, old);
-  for (const at of [f.retireAt, later]) {
-    keepAlive(f.store, 'instance-1', 'relay-1', at);
-    f.store.prune(at);
-    if (kind === 'same-generation') assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), at).dispatch, false);
-    assert.deepEqual(attemptRow(f.store, old), before);
-  }
-  assert.equal(f.store.presence(target, later).startedAt, old.generation);
-  if (kind === 'same-generation') {
-    const outlook = f.store.autoWakeOutlook(target, later);
-    assert.equal(outlook.state, 'latched'); assert.equal(outlook.reason, 'wake-unobserved');
-    assert.equal(outlook.basisAt, before.expires_at);
-    assert.deepEqual(validator.sessionAutoWakeOutlook(outlook), outlook);
-  }
-});
-
-/** Each case leaves the wake's own birth no longer the live latest presence row, with no activity and no newer live birth. */
+/** Each case leaves the wake's own birth no longer the live latest presence row. */
 const deaths = {
   // The lease lapsed (process exit, reboot); a lapsed birth never renews.
   unreachable: () => null,
@@ -158,239 +136,187 @@ const deaths = {
     assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-2', f.now + 30), true);
     return null;
   },
-  // A 2.7.4 broker already deleted every presence row of the identity.
   purged: f => { f.store.database.prepare('DELETE FROM session_presence WHERE session_id = ?').run(target.sessionId); return null; },
-  // An older instance of the same session stays live; only the wake's own birth counts.
   'older-instance-live': f => {
     f.store.startPresence({ ...target, instanceId: 'instance-0', transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
       deliveryCapabilities: capabilities }, f.now - 1000);
     assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-1', f.now + 10), true);
     return 'instance-0';
   },
-  // The same instance is live, but its birth is not the wake's (no row carries that generation any more).
   'generation-missing': f => {
     f.store.database.prepare('UPDATE wake_nonces SET birth_generation = ? WHERE instance_id = ?').run(iso(f.now + 5), 'instance-1');
     return 'instance-1';
   },
-  // The wake's own birth stays live, but a later birth of another instance ended and is the latest row: its relay
-  // tick and claims are refused, so the instance row alone would keep this latch until the wake's birth ends.
+  // The wake's birth stays live, but a later birth of another instance ended and is the latest row.
   'live-birth-behind-ended': f => {
     live(f.store, 'instance-2', 'relay-2', f.now + 20);
     assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-2', f.now + 30), true);
     return 'instance-1';
   },
-  // Another instance born in the same millisecond is the latest row (by rowid) and live: it is not the wake's binding.
   'same-ms-other-instance': f => {
     f.store.startPresence({ ...target, instanceId: 'instance-2', transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
       deliveryCapabilities: capabilities }, f.now);
     assert.equal(f.store.presence(target, f.now).instanceId, 'instance-2');
     return 'instance-2';
   },
-  // The lease ends exactly at the retirement time: a lease that is not after now is not live.
-  'lease-ends-at-retirement': f => {
-    f.store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ?').run(iso(f.retireAt), 'instance-1');
-    return null;
-  },
 };
-function death(f, kind) {
-  const old = latched(f);
+test.each(Object.keys(deaths))('2.6: the end of the hand-off birth releases its slot as birth-ended and keeps the streak: %s', kind => {
+  const f = fixture(); const old = handOff(f);
   const alive = deaths[kind](f);
-  // Keep the surviving birth live without a new generation; it need not be the latest row.
-  return { old, keep: at => { if (alive) f.store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ?').run(iso(at + 60_000), alive); } };
-}
-
-test.each(Object.keys(deaths))('D0353: a birth loss without activity keeps the uncertain effect latched: %s', kind => {
-  const f = fixture(); const { old, keep } = death(f, kind);
-  const before = attemptRow(f.store, old);
-  keep(f.retireAt - 1); f.store.prune(f.retireAt - 1);
-  assert.deepEqual(attemptRow(f.store, old), before, 'not before the expiry plus grace');
-  keep(f.retireAt); f.store.prune(f.retireAt);
-  // AC08 forbids another possible queue effect merely because the old birth can no longer claim.
-  const retained = attemptRow(f.store, old);
-  assert.deepEqual(retained, before);
-  assert.equal(f.store.database.prepare('SELECT count(*) AS n FROM session_activity WHERE session_id = ?').get(target.sessionId).n, 0);
-  if (kind === 'live-birth-behind-ended') {
-    // The wake's birth is live yet cannot receive a new wake while the ended later birth is the latest row.
-    assert.equal(f.store.presence(target, f.retireAt).state, 'ended');
-    assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt).dispatch, false);
-    assert.equal(f.store.autoWakeOutlook(target, f.retireAt).reason, 'presence-not-online');
-  }
-  f.store.prune(f.retireAt + 5); assert.deepEqual(attemptRow(f.store, old), retained);
-  // An uncertain effect is active, so terminal retention cannot silently reopen dispatch.
-  f.store.prune(f.retireAt + 3600_000); assert.deepEqual(attemptRow(f.store, old), retained);
+  const at = f.now + 60_000;
+  if (alive) f.store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ?').run(iso(at + 60_000), alive);
+  f.store.prune(at);
+  const ended = attemptRow(f.store, old);
+  assert.deepEqual([ended.state, ended.release_reason, ended.released_at], ['released', 'birth-ended', iso(at)]);
+  assert.equal(f.store.database.prepare(`SELECT count(*) AS n FROM wake_nonces WHERE state IN ${ACTIVE}`).get().n, 0);
+  // Idempotent: later prunes never touch the ended row again (I11).
+  f.store.prune(at + 3600_000); assert.deepEqual(attemptRow(f.store, old), ended);
 });
 
-test('D0353: an ended birth stays latched until its verified late arrival, then a rebirth delivers', () => {
-  const f = fixture(); const { old } = death(f, 'ended');
-  f.store.prune(f.retireAt);
-  assert.equal(attemptRow(f.store, old).state, 'submitted');
+test('an ended birth ends its hand-off; the verified late arrival claims nothing; a rebirth is rung and delivers', () => {
+  const f = fixture(); const old = handOff(f);
+  assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-1', f.now + 10), true);
+  f.store.prune(f.now + 11);
+  assert.equal(attemptRow(f.store, old).release_reason, 'birth-ended');
   const messages = f.store.database.prepare('SELECT * FROM messages').all();
-  assert.deepEqual(hostClaim(f, observe(f, old, f.retireAt + 1), f.retireAt + 2), { recognized: false, messages: [], binding: null });
-  const late = attemptRow(f.store, old);
-  assert.equal(late.late_observed_at, iso(f.retireAt + 2));
-  assert.equal(late.state, 'observed');
-  assert.equal(late.observed_at, iso(f.retireAt + 2));
-  assert.equal(late.consumed_at, iso(f.retireAt + 2));
+  assert.equal(hostClaim(f, observe(f, old, f.now + 12), f.now + 13).recognized, false);
+  assert.equal(attemptRow(f.store, old).late_observed_at, iso(f.now + 13));
+  assert.equal(attemptRow(f.store, old).state, 'released');
   assert.deepEqual(f.store.database.prepare('SELECT * FROM messages').all(), messages);
-  live(f.store, 'instance-1', 'relay-1', f.retireAt + 3);
-  const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt + 3);
-  assert.equal(next.dispatch, true);
-  const started = f.store.startManagedWake(next.attempt, f.retireAt + 4).attempt;
-  f.store.recordManagedWakeOutcome(started, 'submitted', f.retireAt + 5);
-  const delivered = hostClaim(f, observe(f, started, f.retireAt + 6), f.retireAt + 7);
+  live(f.store, 'instance-1', 'relay-1', f.now + 14);
+  const started = begin(f.store, f.now + 14, request('instance-1', 'relay-1'));
+  assert.equal(f.store.recordManagedWakeOutcome(started, HANDED, BASE, f.now + 16), true);
+  const delivered = hostClaim(f, observe(f, started, f.now + 17), f.now + 18);
   assert.equal(delivered.recognized, true); assert.deepEqual(delivered.messages.map(message => message.messageId), ['pending-body']);
 });
 
-const activities = {
+const boundaries = {
   claim: (store, at) => store.claim(target, at),
   claimDeferred: (store, at) => store.claimDeferred(target, at),
   claimTurnEnd: (store, at) => store.claimTurnEnd(target, at),
-  clearDeferred: (store, at) => store.clearDeferred(target, at),
-  acknowledge: (store, at, claimed) => store.acknowledge(target, claimed.map(message => message.messageId), at, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))),
-  observeNativeInput: (store, at) => store.observeNativeInput(target, at),
 };
-test.each([...Object.keys(activities), 'before-expiry'])('AC08: 같은 세대의 일반 활동 %s는 만료·유예 뒤에도 미관측 표식을 해제하지 않는다', kind => {
-  const f = fixture();
-  let ackClaim = [];
-  if (kind === 'acknowledge') body(f.store, 'activity-ack-body', f.now - 1);
-  const old = latched(f);
-  const expiry = Date.parse(attemptRow(f.store, old).expires_at);
-  if (kind === 'acknowledge') {
-    // Reserve before delivery starts: an active claim already suppresses a new wake.
-    // Claim before expiry, then ACK while its lease is live just after expiry.
-    // Only the ACK is post-expiry activity; pending-body remains for the next wake.
-    keepAlive(f.store, 'instance-1', 'relay-1', expiry - 1);
-    ackClaim = f.store.claim(target, expiry - 1, { maxMessages: 1 });
-    assert.deepEqual(ackClaim.map(message => message.messageId), ['activity-ack-body']);
-    assert.ok(f.store.database.prepare('SELECT claim_until FROM messages WHERE message_id = ?')
-      .get('activity-ack-body').claim_until > iso(expiry + 1));
-    assert.equal(f.store.database.prepare('SELECT active_at FROM session_activity WHERE host = ? AND session_id = ?')
-      .get(target.host, target.sessionId).active_at, iso(expiry - 1));
-  }
-  if (kind === 'before-expiry') activities.claimDeferred(f.store, expiry - 1);
-  else {
-    const result = activities[kind](f.store, expiry + 1, ackClaim);
-    if (kind === 'acknowledge') assert.equal(result, 1, 'the original receipt ACK actually records activity');
-  }
-  keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt - 1);
-  body(f.store, 'body-after-unrelated-activity', f.retireAt - 1);
-  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt - 1).dispatch, false);
-  keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt);
-  const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt);
-  assert.equal(next.dispatch, false);
-  assert.equal(attemptRow(f.store, old).state, 'submitted');
-  assert.equal(attemptRow(f.store, old).observed_at, null);
-  assert.equal(attemptRow(f.store, old).consumed_at, null);
+const activities = {
+  observeNativeInput: (store, at) => store.observeNativeInput(target, at),
+  clearDeferred: (store, at) => store.clearDeferred(target, at),
+  // A deferred claim skipped after native input records activity only (S:755-757).
+  skippedClaimDeferred: (store, at) => { store.observeNativeInput(target, at - 1); assert.deepEqual(store.claimDeferred(target, at), []); },
+};
+test.each(Object.keys(boundaries))('2.3/2.6: the claim boundary %s after the hand-off releases it as claimed-after-handoff and resets the streak', kind => {
+  const f = fixture(); const old = handOff(f);
+  const at = f.now + 30_000;
+  keepAlive(f.store, 'instance-1', 'relay-1', at);
+  boundaries[kind](f.store, at);
+  f.store.prune(at + 1);
+  const ended = attemptRow(f.store, old);
+  assert.deepEqual([ended.state, ended.release_reason], ['released', 'claimed-after-handoff']);
+  assert.equal(ended.observed_at, null, 'a boundary is no evidence the marker was consumed');
+  assert.equal(f.store.database.prepare('SELECT streak, claim_boundary_at FROM wake_paths WHERE instance_id = ?').get('instance-1').claim_boundary_at, iso(at));
+});
+test.each(Object.keys(activities))('2.3: the activity-only path %s is no claim boundary and leaves the hand-off in place', kind => {
+  const f = fixture(); const old = handOff(f);
+  const before = attemptRow(f.store, old);
+  const at = f.now + 30_000;
+  keepAlive(f.store, 'instance-1', 'relay-1', at);
+  activities[kind](f.store, at);
+  f.store.prune(at + 1);
+  assert.deepEqual(attemptRow(f.store, old), before);
+  const path = f.store.database.prepare('SELECT claim_boundary_at FROM wake_paths WHERE instance_id = ?').get('instance-1');
+  assert.equal(path?.claim_boundary_at ?? null, null);
 });
 
-test('외부 전송 전 예약의 퇴역과 재예약은 정리·재개방된 두 연결에서도 멱등이다', () => {
+test('a reservation of an ended birth is replaced idempotently across two reopened connections, one active attempt only', () => {
   const f = fixture();
   body(f.store, 'pending-body', f.now);
   const old = f.store.reserveManagedWake(request('instance-1', 'relay-1', 'liveness-first-nonce-abcdefghijklmnop'), f.now).attempt;
   assert.ok(old);
   assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-1', f.now + 10), true);
-  f.store.prune(f.retireAt);
-  const retired = attemptRow(f.store, old);
-  assert.equal(retired.state, 'expired-unobserved');
+  live(f.store, 'instance-2', 'relay-2', f.now + 20);
+  f.store.prune(f.now + 21);
+  const replaced = attemptRow(f.store, old);
+  assert.equal(replaced.state, 'not-delivered', 'a reservation has no external effect, so a replaced birth ends it as not-delivered');
   const peer = new SessionMessageStore(f.database); resources.at(-1).stores.push(peer);
-  peer.prune(f.retireAt + 5);
-  assert.deepEqual(attemptRow(peer, old), retired);
-  live(f.store, 'instance-2', 'relay-2', f.retireAt + 5);
-  const first = peer.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt + 6);
+  peer.prune(f.now + 25);
+  assert.deepEqual(attemptRow(peer, old), replaced);
+  const first = peer.reserveManagedWake(request('instance-2', 'relay-2'), f.now + 26);
   assert.equal(first.dispatch, true);
-  const again = f.store.reserveManagedWake(request('instance-2', 'relay-2', 'another-nonce-abcdefghijklmnopqrst'), f.retireAt + 7);
+  const again = f.store.reserveManagedWake(request('instance-2', 'relay-2', 'another-nonce-abcdefghijklmnopqrst'), f.now + 27);
   assert.equal(again.attempt.attemptId, first.attempt.attemptId);
-  assert.equal(f.store.database.prepare("SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')").get().n, 1);
-  assert.deepEqual(attemptRow(f.store, old), retired);
+  assert.equal(f.store.database.prepare(`SELECT count(*) AS n FROM wake_nonces WHERE state IN ${ACTIVE}`).get().n, 1);
+  assert.deepEqual(attemptRow(f.store, old), replaced);
 });
 
-test('a verified late arrival of a retired nonce is recorded without claiming the current generation body', () => {
-  const f = fixture(); const old = latched(f);
-  seedRetired(f, old, f.retireAt - 1);
-  live(f.store, 'instance-2', 'relay-2', f.retireAt);
-  const next = f.store.startManagedWake(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt).attempt, f.retireAt + 1).attempt;
-  const retired = attemptRow(f.store, old); const current = attemptRow(f.store, next);
+/** Ends the first hand-off by a new birth and hands off a current attempt of that birth. */
+function endedAndCurrent(f) {
+  const old = handOff(f);
+  live(f.store, 'instance-2', 'relay-2', f.now + 10);
+  const next = begin(f.store, f.now + 11, request('instance-2', 'relay-2'));
+  assert.equal(attemptRow(f.store, old).release_reason, 'birth-ended');
+  return { old, next };
+}
+
+test('I2: a verified late arrival of an ended old-birth marker is recorded without claiming the current birth body', () => {
+  const f = fixture(); const { old, next } = endedAndCurrent(f);
+  const ended = attemptRow(f.store, old); const current = attemptRow(f.store, next);
   const messages = f.store.database.prepare('SELECT * FROM messages').all();
-  const result = hostClaim(f, observe(f, old, f.retireAt + 2), f.retireAt + 3);
+  const result = hostClaim(f, observe(f, old, f.now + 13), f.now + 14);
   assert.deepEqual(result, { recognized: false, messages: [], binding: null, retired: true });
   const late = attemptRow(f.store, old);
-  assert.equal(late.state, 'expired-unobserved'); assert.equal(late.late_observed_at, iso(f.retireAt + 3));
-  assert.deepEqual(without(late, ['late_observed_at']), without(retired, ['late_observed_at']));
+  assert.equal(late.late_observed_at, iso(f.now + 14));
+  assert.deepEqual(without(late, ['late_observed_at']), without(ended, ['late_observed_at']));
   assert.deepEqual(attemptRow(f.store, next), current);
   assert.deepEqual(f.store.database.prepare('SELECT * FROM messages').all(), messages);
-  assert.deepEqual(hostClaim(f, observe(f, old, f.retireAt + 4), f.retireAt + 5), { recognized: false, messages: [], binding: null, retired: true });
-  assert.equal(attemptRow(f.store, old).late_observed_at, iso(f.retireAt + 3));
-  // The current attempt still delivers its own body exactly once.
-  const delivered = hostClaim(f, observe(f, next, f.retireAt + 6), f.retireAt + 7);
+  hostClaim(f, observe(f, old, f.now + 15), f.now + 16);
+  assert.equal(attemptRow(f.store, old).late_observed_at, iso(f.now + 14), 'only the first late arrival is recorded');
+  const delivered = hostClaim(f, observe(f, next, f.now + 17), f.now + 18);
   assert.equal(delivered.recognized, true); assert.deepEqual(delivered.messages.map(message => message.messageId), ['pending-body']);
 });
 
-test('F1: a retired nonce mixed with the current nonce records late only and lets the current attempt claim its body', () => {
-  const f = fixture(); const old = latched(f);
-  seedRetired(f, old, f.retireAt - 1);
-  live(f.store, 'instance-2', 'relay-2', f.retireAt);
-  const next = f.store.startManagedWake(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt).attempt, f.retireAt + 1).attempt;
-  assert.equal(f.store.recordManagedWakeOutcome(next, 'submitted', f.retireAt + 2), true);
-  const retired = attemptRow(f.store, old);
-  vi.stubEnv('AGENT_GOVERNANCE_TRUST_DB_PATH', join(f.directory, 'trust.sqlite3'));
-  const prompt = [old, next].map(attempt => `[agent-governance-suite:wake:${attempt.nonce}]`).join('\n');
-  const observation = adaptHostInput({ hook_event_name: 'UserPromptSubmit', session_id: target.sessionId, agent_id: '', prompt }, target.host).observation;
-  const mixed = { observation, sourceReceiptId: recordWakeHookObservation(observation, f.retireAt + 3) };
-  const result = hostClaim(f, mixed, f.retireAt + 4);
+test('F1: an ended old-birth marker mixed with the current marker records late only and lets the current attempt claim its body', () => {
+  const f = fixture(); const { old, next } = endedAndCurrent(f);
+  assert.equal(f.store.recordManagedWakeOutcome(next, HANDED, BASE, f.now + 12), true);
+  const ended = attemptRow(f.store, old);
+  const mixed = observe(f, next, f.now + 13, [old.nonce, next.nonce]);
+  const result = hostClaim(f, mixed, f.now + 14);
   assert.equal(result.recognized, true); assert.equal(result.retired, undefined);
   assert.deepEqual(result.messages.map(message => message.messageId), ['pending-body']);
   assert.equal(result.binding.attemptId, next.attemptId);
   const current = attemptRow(f.store, next);
-  assert.equal(current.state, 'observed'); assert.equal(current.observed_at, iso(f.retireAt + 4)); assert.equal(current.late_observed_at, null);
+  assert.equal(current.state, 'observed'); assert.equal(current.observed_at, iso(f.now + 14)); assert.equal(current.late_observed_at, null);
   const late = attemptRow(f.store, old);
-  assert.equal(late.late_observed_at, iso(f.retireAt + 4));
-  assert.deepEqual(without(late, ['late_observed_at']), without(retired, ['late_observed_at']));
-  // Replaying the same prompt is no longer a fully retired marker, so it neither claims nor asks the host to block.
-  assert.deepEqual(hostClaim(f, { observation, sourceReceiptId: recordWakeHookObservation(observation, f.retireAt + 5) }, f.retireAt + 6),
-    { recognized: false, messages: [], binding: null });
+  assert.equal(late.late_observed_at, iso(f.now + 14));
+  assert.deepEqual(without(late, ['late_observed_at']), without(ended, ['late_observed_at']));
+  // Replaying the same prompt: the current marker now names only ended rows; the leased body is not claimed again (I6).
+  const replay = hostClaim(f, observe(f, next, f.now + 15, [old.nonce, next.nonce]), f.now + 16);
+  assert.deepEqual(replay.messages, []);
+  assert.equal(f.store.database.prepare("SELECT delivery_attempts FROM messages WHERE message_id = 'pending-body'").get().delivery_attempts, 1);
 });
 
-test('a retired nonce cannot be laundered by forged provenance or a mixed unknown nonce', () => {
-  const f = fixture(); const old = latched(f);
-  seedRetired(f, old, f.retireAt - 1);
-  live(f.store, 'instance-2', 'relay-2', f.retireAt); f.store.prune(f.retireAt);
-  const retired = attemptRow(f.store, old);
-  const observed = observe(f, old, f.retireAt + 1);
-  assert.equal(hostClaim(f, { ...observed, sourceReceiptId: 'source-forged' }, f.retireAt + 2).recognized, false);
-  const mixed = adaptHostInput({ hook_event_name: 'UserPromptSubmit', session_id: target.sessionId, agent_id: '',
-    prompt: `[agent-governance-suite:wake:${old.nonce}]\n[agent-governance-suite:wake:unregistered-nonce-abcdefghijklmnop]` }, target.host).observation;
-  const mixedResult = hostClaim(f, { observation: mixed, sourceReceiptId: recordWakeHookObservation(mixed, f.retireAt + 3) }, f.retireAt + 4);
-  assert.deepEqual(mixedResult, { recognized: false, messages: [], binding: null });
-  assert.deepEqual(attemptRow(f.store, old), retired);
+test('I1: an ended marker cannot be laundered by forged provenance or a mixed unknown nonce', () => {
+  const f = fixture(); const { old } = endedAndCurrent(f);
+  const ended = attemptRow(f.store, old);
+  const observed = observe(f, old, f.now + 13);
+  assert.equal(hostClaim(f, { ...observed, sourceReceiptId: 'source-forged' }, f.now + 14).recognized, false);
+  const mixed = observe(f, old, f.now + 15, [old.nonce, 'unregistered-nonce-abcdefghijklmnop']);
+  assert.deepEqual(hostClaim(f, mixed, f.now + 16), { recognized: false, messages: [], binding: null });
+  assert.deepEqual(attemptRow(f.store, old), ended);
+  assert.equal(f.store.pendingCount(target, f.now + 17), 1);
 });
 
-test('K: 만료된 관측 영수증과 일반 활동은 보류를 유지하고 새로 검증된 같은 표식 관측만 해제한다', () => {
-  const f = fixture(); const old = latched(f);
+test('I1: an expired hook receipt is refused; a fresh verified receipt of the same marker claims the body once', () => {
+  const f = fixture(); const old = handOff(f);
   const observed = observe(f, old, f.now + 5);
-  // The broker was down past the 30 second receipt TTL, so the same receipt is rejected on retry (e9 (b) FAIL shape).
+  // The broker was down past the 30 second receipt TTL, so the same receipt is rejected on retry.
   assert.equal(hostClaim(f, observed, f.now + 35_005).recognized, false);
-  assert.equal(attemptRow(f.store, old).state, 'submitted');
-  keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt);
-  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt).dispatch, false);
-  const expiry = Date.parse(attemptRow(f.store, old).expires_at);
-  f.store.observeNativeInput(target, f.retireAt + 1);
-  assert.ok(f.retireAt + 1 > expiry);
-  keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt + 2);
-  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt + 2).dispatch, false);
-  assert.equal(attemptRow(f.store, old).state, 'submitted');
-  assert.deepEqual(hostClaim(f, observe(f, old, f.retireAt + 3), f.retireAt + 4), { recognized: false, messages: [], binding: null });
-  const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt + 5);
-  assert.equal(next.dispatch, true);
+  assert.equal(attemptRow(f.store, old).state, 'handed-off');
+  keepAlive(f.store, 'instance-1', 'relay-1', f.now + 40_000);
+  const fresh = hostClaim(f, observe(f, old, f.now + 40_001), f.now + 40_002);
+  assert.equal(fresh.recognized, true);
+  assert.deepEqual(fresh.messages.map(message => message.messageId), ['pending-body']);
   assert.equal(attemptRow(f.store, old).state, 'observed');
-  const started = f.store.startManagedWake(next.attempt, f.retireAt + 6).attempt;
-  f.store.recordManagedWakeOutcome(started, 'submitted', f.retireAt + 7);
-  const delivered = hostClaim(f, observe(f, started, f.retireAt + 8), f.retireAt + 9);
-  assert.equal(delivered.recognized, true);
-  assert.deepEqual(delivered.messages.map(message => message.messageId), ['pending-body']);
 });
 
 test('C2: a same-millisecond rebirth gets a distinct generation, so the previous birth cannot claim', () => {
-  const f = fixture(); const old = latched(f);
+  const f = fixture(); const old = handOff(f);
   assert.equal(f.store.endPresence(target, 'fixture-rebirth', 'instance-1', f.now), true);
   const reborn = f.store.startPresence({ ...target, instanceId: 'instance-1', transport: 'portable', wakeVisibility: 'silent',
     canWakeSilently: true, deliveryCapabilities: capabilities }, f.now);
@@ -404,7 +330,7 @@ test('C2: a same-millisecond rebirth gets a distinct generation, so the previous
   assert.equal(again.startedAt, reborn.startedAt, 'a live renewal keeps its birth');
 });
 
-test('autoWake is advisory and reports each delivery path state', () => {
+test('2.8: autoWake v2 is advisory and reports each delivery path fact', () => {
   const f = fixture();
   const check = (store, at, state, reason, basisAt, who = target) => {
     const outlook = store.autoWakeOutlook(who, at);
@@ -421,119 +347,58 @@ test('autoWake is advisory and reports each delivery path state', () => {
   f.store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ?').run(iso(f.now + 19_000), 'instance-1');
   check(f.store, f.now + 16_000, 'no-live-relay', 'relay-lease-missing', iso(f.now));
   check(f.store, f.now + 21_000, 'no-live-relay', 'presence-not-online', iso(f.now + 19_000));
-  assert.equal(f.store.presence(target, f.now + 21_000).state, 'unreachable');
   const board = f.store.listPresence(f.now + 21_000).find(item => item.sessionId === target.sessionId);
-  assert.equal(board.state, 'unreachable'); assert.equal(board.autoWake.state, 'no-live-relay');
+  assert.equal(board.state, 'unreachable'); assert.equal(board.autoWake.state, 'no-live-relay'); assert.equal(board.relayLive, false);
   keepAlive(f.store, 'instance-1', 'relay-1', f.now + 22_000);
-  const old = latched({ ...f, now: f.now + 22_000 });
-  const expiresAt = attemptRow(f.store, old).expires_at;
-  check(f.store, f.now + 22_010, 'available', 'wake-in-flight', expiresAt);
-  const overdue = Date.parse(expiresAt) + 1;
-  keepAlive(f.store, 'instance-1', 'relay-1', overdue);
-  check(f.store, overdue, 'latched', 'wake-unobserved', expiresAt);
-  const sent = f.store.submitPrepared(sender, f.store.prepare({ sender, target, body: 'advisory send', ttlSeconds: 600 }, overdue).messageId, overdue);
-  assert.equal(sent.autoWake.state, 'latched');
-  assert.equal(f.store.submitPrepared(sender, sent.messageId, overdue + 1).autoWake.state, 'latched');
-  assert.equal(f.store.status(sender, sent.messageId, overdue + 2).autoWake.state, 'latched');
-  const claimed = f.store.claim(target, overdue + 3);
+  const handedAt = f.now + 22_000;
+  const attempt = handOff({ ...f, now: handedAt });
+  const outcomeAt = attemptRow(f.store, attempt).outcome_at;
+  assert.equal(outcomeAt, iso(handedAt + 2));
+  check(f.store, handedAt + 10, 'available', 'wake-in-flight', outcomeAt);
+  const unanswered = handedAt + 2 + WAKE_OBSERVATION_WINDOW_MS + 1_000;
+  keepAlive(f.store, 'instance-1', 'relay-1', unanswered);
+  check(f.store, unanswered, 'available', 'wake-unanswered', attemptRow(f.store, attempt).resend_due_at);
+  const sent = f.store.submitPrepared(sender, f.store.prepare({ sender, target, body: 'advisory send', ttlSeconds: 600 }, unanswered).messageId, unanswered);
+  assert.equal(sent.autoWake.reason, 'wake-unanswered');
+  assert.equal(f.store.status(sender, sent.messageId, unanswered + 2).autoWake.reason, 'wake-unanswered');
+  // A claim boundary releases the hand-off and is reported as the fact it is.
+  const claimed = f.store.claim(target, unanswered + 3);
   assert.ok(claimed.some(message => message.messageId === sent.messageId));
-  assert.equal(f.store.acknowledge(target, [sent.messageId], overdue + 3, claimed.filter(message => message.messageId === sent.messageId).map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
-  assert.equal(f.store.status(sender, sent.messageId, overdue + 4).autoWake, null);
-  const retireAt = Date.parse(expiresAt) + WAKE_RETIRE_GRACE_MS;
-  keepAlive(f.store, 'instance-1', 'relay-1', retireAt);
-  f.store.prune(retireAt);
-  check(f.store, retireAt, 'latched', 'wake-unobserved', expiresAt);
-  const brokerStatus = dispatch(f.store, 'status', { sender, messageId: sent.messageId });
-  assert.equal(brokerStatus.status.autoWake, null);
+  f.store.prune(unanswered + 4);
+  assert.equal(attemptRow(f.store, attempt).release_reason, 'claimed-after-handoff');
+  check(f.store, unanswered + 4, 'available', 'recipient-active', iso(unanswered + 3));
+  assert.equal(f.store.acknowledge(target, [sent.messageId], unanswered + 5, claimed.filter(message => message.messageId === sent.messageId)
+    .map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
+  assert.equal(f.store.status(sender, sent.messageId, unanswered + 6).autoWake, null);
+  const quietAt = unanswered + 3 + WAKE_QUIET_MS + 1;
+  keepAlive(f.store, 'instance-1', 'relay-1', quietAt);
+  check(f.store, quietAt, 'available', 'relay-live', iso(quietAt));
+  assert.equal(dispatch(f.store, 'status', { sender, messageId: sent.messageId }).status.autoWake, null);
 });
 
 // 2026-10-27 local incident: Codex markers handed to `codex queue` stayed unobserved for 70 minutes while send
-// results kept reporting available/wake-in-flight and status kept reporting pending.
-test('an unobserved hand-off stops being reported as in flight after the observation window', () => {
-  const OBSERVATION_WINDOW_MS = 60_000; // docs/session-message-lifecycle.md, observation window
-  for (const outcome of ['submitted', 'accepted-or-unknown', 'started']) {
+// results kept reporting available/wake-in-flight. The fact after the window is now wake-unanswered (I10).
+test('I10: an unobserved hand-off is reported as unanswered after the observation window, with no state change', () => {
+  for (const outcome of [HANDED, UNKNOWN]) {
     const f = fixture();
-    const attempt = latched(f, outcome);
+    const attempt = handOff(f, outcome);
     const row = attemptRow(f.store, attempt);
-    const handedOff = Date.parse(row.outcome_at ?? row.started_at);
+    const handedOff = Date.parse(row.outcome_at);
     const at = ms => { keepAlive(f.store, 'instance-1', 'relay-1', ms); return ms; };
-    const inFlight = at(handedOff + OBSERVATION_WINDOW_MS - 1);
+    const inFlight = at(handedOff + WAKE_OBSERVATION_WINDOW_MS - 1);
     assert.deepEqual(f.store.autoWakeOutlook(target, inFlight),
-      { state: 'available', reason: 'wake-in-flight', basisAt: row.expires_at, checkedAt: iso(inFlight), authorityEffect: 'none' }, outcome);
-    assert.equal(f.store.managedWakeStatus(target, inFlight).observation, 'pending', outcome);
-    const overdue = at(handedOff + OBSERVATION_WINDOW_MS);
+      { state: 'available', reason: 'wake-in-flight', basisAt: row.outcome_at, checkedAt: iso(inFlight), authorityEffect: 'none' }, outcome.result);
+    assert.equal(f.store.managedWakeStatus(target, inFlight).observation, 'pending', outcome.result);
+    assert.notEqual(f.store.managedWakeStatus(target, inFlight).deliveryState, 'delivered', 'handed-off is not delivery');
+    const overdue = at(handedOff + WAKE_OBSERVATION_WINDOW_MS);
     assert.deepEqual(f.store.autoWakeOutlook(target, overdue),
-      { state: 'latched', reason: 'wake-unobserved', basisAt: row.expires_at, checkedAt: iso(overdue), authorityEffect: 'none' }, outcome);
-    const status = f.store.managedWakeStatus(target, overdue);
-    assert.equal(status.observation, 'observation-overdue', outcome);
-    assert.equal(status.state, row.state, outcome);
-    // The hand-off time behind the overdue state is visible, so a reader can tell it predates a later message.
-    assert.deepEqual([status.startedAt, status.outcomeAt], [row.started_at, row.outcome_at], outcome);
-    const sent = f.store.submitPrepared(sender, f.store.prepare({ sender, target, body: `after ${outcome}`, ttlSeconds: 600 }, overdue).messageId, overdue);
-    assert.equal(sent.autoWake.state, 'latched', outcome);
-    assert.equal(f.store.status(sender, sent.messageId, overdue).wake.observation, 'observation-overdue', outcome);
-    // Reporting only: suppression, retirement and the stored attempt are unchanged.
-    assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), overdue).dispatch, false, outcome);
-    assert.deepEqual(attemptRow(f.store, attempt), row, outcome);
+      { state: 'available', reason: 'wake-unanswered', basisAt: row.resend_due_at, checkedAt: iso(overdue), authorityEffect: 'none' }, outcome.result);
+    const sent = f.store.submitPrepared(sender, f.store.prepare({ sender, target, body: `after ${outcome.result}`, ttlSeconds: 600 }, overdue).messageId, overdue);
+    assert.equal(sent.autoWake.reason, 'wake-unanswered', outcome.result);
+    // Reporting only: suppression and the stored attempt are unchanged before the resend deadline (I4, I5).
+    assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), overdue).dispatch, false, outcome.result);
+    assert.deepEqual(attemptRow(f.store, attempt), row, outcome.result);
   }
-});
-
-function v272Database(path, rows) {
-  const db = new DatabaseSync(path);
-  db.exec(`CREATE TABLE wake_nonces (nonce_digest TEXT PRIMARY KEY, host TEXT NOT NULL, session_id TEXT NOT NULL,
-    expires_at TEXT NOT NULL, consumed_at TEXT) STRICT;`);
-  for (const [name, definition] of [
-    ['state', "TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted'))"],
-    ['nonce', 'TEXT'], ['instance_id', 'TEXT'], ['birth_generation', 'TEXT'], ['transport', 'TEXT'],
-    ['relay_id', 'TEXT'], ['attempt_id', 'TEXT'], ['dispatch_epoch', 'INTEGER NOT NULL DEFAULT 0'],
-    ['retry_not_before', 'TEXT'], ['retry_count', 'INTEGER NOT NULL DEFAULT 0'],
-    ['started_at', 'TEXT'], ['outcome_at', 'TEXT'], ['observed_at', 'TEXT'], ['late_observed_at', 'TEXT'],
-  ]) db.exec(`ALTER TABLE wake_nonces ADD COLUMN ${name} ${definition};`);
-  db.exec(`CREATE UNIQUE INDEX wake_active_target ON wake_nonces (host, session_id)
-    WHERE state IN ('reserved', 'started', 'submitted', 'unknown');`);
-  const insert = db.prepare(`INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, consumed_at, state, nonce, instance_id,
-    birth_generation, transport, relay_id, attempt_id, dispatch_epoch, started_at, outcome_at, late_observed_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-  for (const row of rows) insert.run(...row);
-  db.close();
-}
-const V272_COLUMNS = ['nonce_digest', 'host', 'session_id', 'expires_at', 'consumed_at', 'state', 'nonce', 'instance_id', 'birth_generation',
-  'transport', 'relay_id', 'attempt_id', 'dispatch_epoch', 'retry_not_before', 'retry_count', 'started_at', 'outcome_at', 'observed_at', 'late_observed_at'];
-function oldRows(now) {
-  const old = iso(now - 5 * 3600_000);
-  return [
-    ['digest-latched', target.host, target.sessionId, iso(now - 4 * 3600_000), null, 'submitted', 'latched-nonce-abcdefghijklmnopqrst', 'old-instance',
-      old, 'portable', 'old-relay', 'old-attempt', 1, old, old, null],
-    ['digest-late', target.host, 'late-target', iso(now - 4 * 3600_000), null, 'unknown', 'late-nonce-abcdefghijklmnopqrstuv', 'old-instance',
-      old, 'portable', 'old-relay', 'late-attempt', 1, old, old, old],
-    ['digest-legacy', target.host, 'legacy-target', iso(now + 3600_000), null, 'legacy', null, null, null, null, null, null, 0, null, null, null],
-    ['digest-observed', target.host, 'observed-target', iso(now + 3600_000), iso(now), 'observed', 'observed-nonce-abcdefghijklmnopq', 'i',
-      old, 'portable', 'r', 'observed-attempt', 1, old, old, null],
-  ];
-}
-function snapshotV272(path) {
-  const db = new DatabaseSync(path, { readOnly: true });
-  try {
-    return { rows: db.prepare(`SELECT rowid, ${V272_COLUMNS.join(', ')} FROM wake_nonces ORDER BY rowid`).all(),
-      version: db.prepare('PRAGMA user_version').get().user_version,
-      columns: db.prepare('PRAGMA table_info(wake_nonces)').all().map(row => row.name),
-      sql: db.prepare("SELECT sql FROM sqlite_master WHERE name = 'wake_nonces'").get().sql };
-  } finally { db.close(); }
-}
-function migrationFixture() {
-  const directory = mkdtempSync(join(tmpdir(), 'ags-wake-liveness-migrate-'));
-  const database = join(directory, 'session-messages.sqlite3'); const now = Date.now();
-  v272Database(database, oldRows(now));
-  const entry = { directory, stores: [] }; resources.push(entry);
-  return { directory, database, now, entry };
-}
-
-test('G: a newer message schema version is rejected without mutation', () => {
-  const m = migrationFixture();
-  const db = new DatabaseSync(m.database); db.exec('PRAGMA user_version = 7;'); db.close();
-  const before = snapshotV272(m.database);
-  assert.throws(() => new SessionMessageStore(m.database), /newer/);
-  assert.deepEqual(snapshotV272(m.database), before);
 });
 
 const worker = fileURLToPath(new URL('./fixtures/managed-wake-process.mjs', import.meta.url));
@@ -552,178 +417,131 @@ async function result(p, input) {
   return message;
 }
 
-test('G: a failure inside the table rebuild rolls back columns, rows and schema version', async () => {
-  const m = migrationFixture(); const before = snapshotV272(m.database);
-  const p = await child(m.database, 'rebuild-failure', 'relay-rebuild', m.directory);
-  const [code] = await p.exit;
-  assert.equal(code, 0, p.stderr()); assert.match(p.first.error, /rebuild failure/);
-  assert.deepEqual(snapshotV272(m.database), before);
-  const store = new SessionMessageStore(m.database); m.entry.stores.push(store);
-  assert.equal(snapshotV272(m.database).version, 2);
-});
-
-test('전송 전 예약의 퇴역 직후 충돌은 종료 행과 다음 예약 하나를 보존한다', async () => {
+test('a reservation expiry committed by another process just before it exits leaves one ended row and one next reservation', async () => {
   const f = fixture();
   body(f.store, 'pending-body', f.now);
   const reservation = f.store.reserveManagedWake(request('instance-1', 'relay-1', 'liveness-first-nonce-abcdefghijklmnop'), f.now);
   assert.equal(reservation.dispatch, true);
   const old = reservation.attempt;
-  assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-1', f.now + 10), true);
   const before = attemptRow(f.store, old);
+  const expiry = Date.parse(before.expires_at);
   const p = await child(f.database, 'retire-then-exit', 'relay-retire', f.directory);
   assert.equal(p.first.type, 'ready', p.stderr());
-  p.process.send({ now: f.retireAt });
+  p.process.send({ now: expiry });
   const [code] = await p.exit; assert.equal(code, 21, p.stderr());
-  const retired = attemptRow(f.store, old);
-  assert.equal(retired.state, 'expired-unobserved'); assert.equal(retired.retired_at, iso(f.retireAt));
-  assert.deepEqual(without(retired, ['state', 'retired_at']), without(before, ['state', 'retired_at']));
-  f.store.prune(f.retireAt + 1); assert.deepEqual(attemptRow(f.store, old), retired);
-  live(f.store, 'instance-2', 'relay-2', f.retireAt + 2);
-  assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.retireAt + 2).dispatch, true);
+  const released = attemptRow(f.store, old);
+  assert.deepEqual([released.state, released.release_reason, released.released_at], ['released', 'expired', iso(expiry)]);
+  assert.deepEqual(without(released, ['state', 'release_reason', 'released_at']), without(before, ['state', 'release_reason', 'released_at']));
+  f.store.prune(expiry + 1); assert.deepEqual(attemptRow(f.store, old), released);
+  live(f.store, 'instance-2', 'relay-2', expiry + 2);
+  assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), expiry + 2).dispatch, true);
 });
 
-test('D0353: two independent processes cannot retire an ended birth without activity', async () => {
-  const f = fixture(); const { old } = death(f, 'ended');
-  const before = attemptRow(f.store, old);
+test('two independent processes settling an ended birth agree on one birth-ended row', async () => {
+  const f = fixture(); const old = handOff(f);
+  assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-1', f.now + 10), true);
   const raced = await Promise.all(['retire-a', 'retire-b'].map(id => child(f.database, 'retire-then-exit', id, f.directory)));
   for (const p of raced) assert.equal(p.first.type, 'ready', p.stderr());
-  raced.forEach((p, index) => p.process.send({ now: f.retireAt + index * 5 }));
+  raced.forEach((p, index) => p.process.send({ now: f.now + 20 + index * 5 }));
   for (const p of raced) { const [code] = await p.exit; assert.equal(code, 21, p.stderr()); }
-  assert.deepEqual(attemptRow(f.store, old), before);
-  f.store.prune(f.retireAt + 10); assert.deepEqual(attemptRow(f.store, old), before);
+  const ended = attemptRow(f.store, old);
+  assert.deepEqual([ended.state, ended.release_reason], ['released', 'birth-ended']);
+  assert.ok([iso(f.now + 20), iso(f.now + 25)].includes(ended.released_at));
+  f.store.prune(f.now + 3600_000); assert.deepEqual(attemptRow(f.store, old), ended);
   assert.equal(f.store.database.prepare('SELECT count(*) AS n FROM wake_nonces').get().n, 1);
 });
 
-test('D0353: two independent relay processes cannot add an effect after birth-only retirement evidence', async () => {
-  const f = fixture(); const old = latched(f);
-  live(f.store, 'instance-2', 'relay-a', f.retireAt);
+test('I5: two independent relay processes after a birth-ended release reserve exactly one new attempt', async () => {
+  const f = fixture(); const old = handOff(f);
+  live(f.store, 'instance-2', 'relay-a', f.now + 20_000);
   const raced = await Promise.all(['relay-a', 'relay-b'].map(id => child(f.database, 'wake-transition', id, f.directory)));
   for (const p of raced) assert.equal(p.first.type, 'ready', p.stderr());
-  const results = await Promise.all(raced.map(p => result(p, { kind: 'relay', now: f.retireAt + 1, attempt: old })));
-  const dispatched = results.map(item => item.result).filter(item => item.dispatch);
-  assert.equal(dispatched.length, 0);
-  assert.equal(attemptRow(f.store, old).state, 'submitted');
-  assert.equal(f.store.database.prepare("SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')").get().n, 1);
+  const results = await Promise.all(raced.map(p => result(p, { kind: 'relay', now: f.now + 20_001 })));
+  assert.equal(results.map(item => item.result).filter(item => item?.dispatch).length, 1);
+  assert.equal(attemptRow(f.store, old).release_reason, 'birth-ended');
+  assert.equal(f.store.database.prepare(`SELECT count(*) AS n FROM wake_nonces WHERE state IN ${ACTIVE}`).get().n, 1);
 });
 
-test('AGS-D-0304 (a): claiming a message while its wake is reserved for retry stops retries and clears wake-in-flight without blocking remaining unclaimed messages', () => {
+test('AGS-D-0304 (a): a transient failure retries with a new row after backoff, and a claim of every body stops the retry', () => {
   const f = fixture();
   body(f.store, 'f8b4539a', f.now);
   const first = begin(f.store, f.now);
-  assert.equal(f.store.recordManagedWakeOutcome(first, 'definite-failure', f.now + 2), true);
-  const retrying = f.store.managedWakeStatus(target, f.now + 3);
-  assert.equal(retrying.state, 'reserved');
+  assert.equal(f.store.recordManagedWakeOutcome(first, TRANSIENT, BASE, f.now + 2), true);
+  assert.equal(attemptRow(f.store, first).state, 'not-delivered');
+  const retryNotBefore = f.store.database.prepare('SELECT retry_not_before FROM wake_paths WHERE instance_id = ?').get('instance-1').retry_not_before;
+  assert.ok([iso(f.now + 2 + wakeBackoffDelay(0)), iso(f.now + 2 + wakeBackoffDelay(1))].includes(retryNotBefore));
   const retryOutlook = f.store.autoWakeOutlook(target, f.now + 3);
-  assert.equal(retryOutlook.reason, 'retry-backoff');
-  assert.equal(retryOutlook.basisAt, retrying.retryNotBefore);
-
+  assert.deepEqual([retryOutlook.reason, retryOutlook.basisAt], ['retry-backoff', retryNotBefore]);
   const claimed = f.store.claim(target, f.now + 10);
   assert.equal(claimed.length, 1);
   const afterClaim = f.store.status(sender, 'f8b4539a', f.now + 11);
   assert.equal(afterClaim.state, 'delivered');
-  assert.equal(afterClaim.wake.state, 'not-submitted');
-  assert.equal(afterClaim.wake.observation, 'not-submitted');
-  assert.equal(afterClaim.wake.retryNotBefore, null);
-  assert.equal(afterClaim.autoWake.state, 'available');
-  assert.equal(afterClaim.autoWake.reason, 'relay-live');
-
-  const backoffPassed = f.now + 35_000;
+  assert.equal(afterClaim.wake.state, 'not-delivered');
+  const backoffPassed = Date.parse(retryNotBefore) + WAKE_QUIET_MS;
   keepAlive(f.store, 'instance-1', 'relay-1', backoffPassed);
-  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), backoffPassed).dispatch, false);
-
+  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), backoffPassed).dispatch, false, 'nothing left to deliver');
   f.store.acknowledge(target, ['f8b4539a'], backoffPassed + 1, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })));
   body(f.store, 'message-0001', backoffPassed + 2);
   body(f.store, 'message-0002', backoffPassed + 3);
   const batchWake = begin(f.store, backoffPassed + 4, request('instance-1', 'relay-1', 'batch-wake-nonce-abcdefghijklmnop'));
-  assert.equal(f.store.recordManagedWakeOutcome(batchWake, 'definite-failure', backoffPassed + 5), true);
+  assert.equal(f.store.recordManagedWakeOutcome(batchWake, TRANSIENT, BASE, backoffPassed + 5), true);
   const batchClaim = f.store.claim(target, backoffPassed + 6, { maxMessages: 1 });
   assert.deepEqual(batchClaim.map(m => m.messageId), ['message-0001']);
   assert.equal(f.store.acknowledge(target, ['message-0001'], backoffPassed + 7, batchClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
-  assert.equal(f.store.managedWakeStatus(target, backoffPassed + 8).state, 'reserved');
-  const nextRetry = backoffPassed + 35_000;
+  const nextRetry = backoffPassed + 7 + 10 * 60_000;
   keepAlive(f.store, 'instance-1', 'relay-1', nextRetry);
-  const resumedForRemaining = f.store.reserveManagedWake(request('instance-1', 'relay-1', 'batch-wake-nonce-abcdefghijklmnop'), nextRetry);
-  assert.equal(resumedForRemaining.dispatch, true);
-  assert.equal(resumedForRemaining.attempt.attemptId, batchWake.attemptId);
+  const resumedForRemaining = f.store.reserveManagedWake(request('instance-1', 'relay-1', 'batch-retry-nonce-abcdefghijklmnop'), nextRetry);
+  assert.equal(resumedForRemaining.dispatch, true, 'the remaining body is still rung');
+  assert.notEqual(resumedForRemaining.attempt.attemptId, batchWake.attemptId, 'a retry is always a new row (2.2)');
+  assert.notEqual(resumedForRemaining.attempt.nonce, batchWake.nonce);
 });
 
-test('AGS-D-0304 (b): claiming and acknowledging a message after a submitted wake immediately stops reporting wake-in-flight while keeping the duplicate fence', () => {
+test('AGS-D-0304 (b): a claim after the hand-off stops reporting wake-in-flight; the boundary keeps the session from being rung at once', () => {
   const f = fixture();
   body(f.store, '417e2c85', f.now);
   const attempt = begin(f.store, f.now);
   const outcomeAt = f.now + 5_880;
-  assert.equal(f.store.recordManagedWakeOutcome(attempt, 'submitted', outcomeAt), true);
+  assert.equal(f.store.recordManagedWakeOutcome(attempt, HANDED, BASE, outcomeAt), true);
   assert.equal(f.store.autoWakeOutlook(target, outcomeAt + 100).reason, 'wake-in-flight');
-
   const claimAt = f.now + 38_000;
   keepAlive(f.store, 'instance-1', 'relay-1', claimAt);
   const claimed = f.store.claim(target, claimAt);
   assert.deepEqual(claimed.map(m => m.messageId), ['417e2c85']);
+  f.store.prune(claimAt + 50);
   const statusAfterClaim = f.store.status(sender, '417e2c85', claimAt + 100);
   assert.equal(statusAfterClaim.state, 'delivered');
-  assert.equal(statusAfterClaim.wake.state, 'submitted');
-  assert.equal(statusAfterClaim.wake.observation, 'observation-overdue');
-  assert.equal(statusAfterClaim.autoWake.state, 'latched');
-  assert.equal(statusAfterClaim.autoWake.reason, 'wake-unobserved');
-
+  assert.equal(statusAfterClaim.wake.state, 'released');
+  assert.equal(statusAfterClaim.wake.releaseReason, 'claimed-after-handoff');
+  assert.equal(statusAfterClaim.autoWake.reason, 'recipient-active');
   const ackAt = f.now + 54_000;
   keepAlive(f.store, 'instance-1', 'relay-1', ackAt);
   assert.equal(f.store.acknowledge(target, ['417e2c85'], ackAt, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
-  const statusAfterAck = f.store.status(sender, '417e2c85', ackAt + 100);
-  assert.equal(statusAfterAck.state, 'acknowledged');
-  assert.equal(statusAfterAck.wake.observation, 'observation-overdue');
-  assert.equal(f.store.autoWakeOutlook(target, ackAt + 100).state, 'latched');
-  assert.equal(f.store.autoWakeOutlook(target, ackAt + 100).reason, 'wake-unobserved');
-  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), ackAt + 200).dispatch, false);
+  assert.equal(f.store.status(sender, '417e2c85', ackAt + 100).state, 'acknowledged');
+  body(f.store, 'after-ack', ackAt + 150);
+  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), ackAt + 200).dispatch, false, 'not quiet yet');
 });
 
-// 미관측 표식이 호스트에서 소멸한 경우의 생존성은 잔여 공백이다. 본문 ACK로 해결됐다고 표현하지 않는다.
-test('D0353 / D0305 잔여 공백: 본문 수신 확인과 관측창 경과만으로 미관측 표식을 해제하지 않는다', () => {
+test('D0353 / D0305: a claim and ACK after the hand-off free the slot; the next message is rung once the session is quiet', () => {
   const f = fixture();
   body(f.store, 'batch-1-msg', f.now);
   const first = begin(f.store, f.now);
   const outcomeAt = f.now + 5_880;
-  assert.equal(f.store.recordManagedWakeOutcome(first, 'submitted', outcomeAt), true);
-
+  assert.equal(f.store.recordManagedWakeOutcome(first, HANDED, BASE, outcomeAt), true);
   const claimAt = f.now + 38_000;
   keepAlive(f.store, 'instance-1', 'relay-1', claimAt);
   const claimed = f.store.claim(target, claimAt);
   assert.deepEqual(claimed.map(m => m.messageId), ['batch-1-msg']);
-  const ackAt = f.now + 54_000;
-  keepAlive(f.store, 'instance-1', 'relay-1', ackAt);
-  assert.equal(f.store.acknowledge(target, ['batch-1-msg'], ackAt, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
-
-  const newMessageAt = f.now + 55_000;
-  keepAlive(f.store, 'instance-1', 'relay-1', newMessageAt);
-  body(f.store, 'batch-2-msg', newMessageAt);
-  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), outcomeAt + WAKE_OBSERVATION_WINDOW_MS - 1).dispatch, false);
-
-  const afterWindow = outcomeAt + WAKE_OBSERVATION_WINDOW_MS;
-  keepAlive(f.store, 'instance-1', 'relay-1', afterWindow);
-  f.store.prune(afterWindow);
-  const before = attemptRow(f.store, first);
-  assert.equal(before.state, 'submitted');
-  assert.equal(before.retired_at, null);
-  assert.deepEqual(f.store.autoWakeOutlook(target, afterWindow), {
-    state: 'latched',
-    reason: 'wake-unobserved',
-    basisAt: before.expires_at,
-    checkedAt: iso(afterWindow),
-    authorityEffect: 'none',
-  });
-
-  const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), afterWindow + 1);
-  assert.equal(next.dispatch, false);
-  keepAlive(f.store, 'instance-1', 'relay-1', f.retireAt);
-  f.store.prune(f.retireAt);
-  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt).dispatch, false);
-  assert.deepEqual(attemptRow(f.store, first), before);
-  // 검증된 동일 표식이 늦게 도착하면 후속 본문을 인수하지 않고 기존 잠금을 해제한다.
-  assert.deepEqual(hostClaim(f, observe(f, first, f.retireAt + 1), f.retireAt + 2), { recognized: false, messages: [], binding: null });
-  assert.equal(attemptRow(f.store, first).state, 'observed');
-  const afterMarker = f.store.reserveManagedWake(request('instance-1', 'relay-1'), f.retireAt + 3);
-  assert.equal(afterMarker.dispatch, true);
-  assert.notEqual(afterMarker.attempt.attemptId, first.attemptId);
+  assert.equal(f.store.acknowledge(target, ['batch-1-msg'], f.now + 54_000, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
+  body(f.store, 'batch-2-msg', f.now + 55_000);
+  keepAlive(f.store, 'instance-1', 'relay-1', claimAt + WAKE_QUIET_MS - 1);
+  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), claimAt + WAKE_QUIET_MS - 1).dispatch, false);
+  assert.deepEqual([attemptRow(f.store, first).state, attemptRow(f.store, first).release_reason], ['released', 'claimed-after-handoff']);
+  keepAlive(f.store, 'instance-1', 'relay-1', claimAt + WAKE_QUIET_MS + 1);
+  const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), claimAt + WAKE_QUIET_MS + 1);
+  assert.equal(next.dispatch, true);
+  assert.notEqual(next.attempt.attemptId, first.attemptId);
+  // The late marker of the released attempt claims the current body of the same birth; the next attempt is not disturbed.
+  const late = hostClaim(f, observe(f, first, claimAt + WAKE_QUIET_MS + 2), claimAt + WAKE_QUIET_MS + 3);
+  assert.deepEqual(late.messages.map(m => m.messageId), ['batch-2-msg']);
+  assert.equal(attemptRow(f.store, first).state, 'released');
 });
-
-

@@ -26,7 +26,8 @@ syntheticCore.registerSyntheticCoreAdapters(registerHookHostAdapter, () => "code
 const host = syntheticCore.SYNTHETIC_CORE_HOST;
 
 // Mocked broker/process regression fixture only, not native capture.
-const port: WakeDispatchPort = { capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" }, dispatch: async () => "definite-failure" };
+const port: WakeDispatchPort = { capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" }, resendBaseMs: 600_000,
+  dispatch: async () => ({ result: "not-delivered", kind: "transient", reasonCode: "SYNTHETIC_TRANSIENT" }) };
 const relayOptions = { host: "synthetic-host", sessionId: "relay-recovery", instanceId: "I2",
   transport: "codex-deferred", parentPid: 424242, parentStartToken: "T1" };
 const post = { hook_event_name: "PostToolUse", session_id: "relay-recovery", tool_name: "shell", tool_input: {}, syntheticActor: "root" };

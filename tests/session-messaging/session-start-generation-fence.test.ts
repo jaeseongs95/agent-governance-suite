@@ -24,8 +24,8 @@ const host = "synthetic-session-start-generation-fence";
 const actor: ActorObservation = { role: "root", basis: "observed", reasonCode: "SYNTHETIC_SESSION_START_ROOT" };
 const input = { hook_event_name: "SessionStart", session_id: "session-start-generation-fence", syntheticActor: actor };
 const target = { host, sessionId: input.session_id };
-const transport = "gemini-queue";
-const tables = ["messages", "prepared_messages", "input_observations", "session_activity", "wake_nonces", "session_presence", "relay_leases"];
+const transport = "antigravity-queue";
+const tables = ["messages", "prepared_messages", "input_observations", "wake_paths", "wake_nonces", "session_presence", "relay_leases"];
 const stores: SessionMessageStore[] = [];
 const now = Date.UTC(2026, 9, 30);
 type Grant = { spawn: boolean; relayId: string | null; instanceId: string };
@@ -59,7 +59,7 @@ function fixture() {
   vi.spyOn(process, "kill").mockImplementation(() => true);
   vi.spyOn(Date, "now").mockReturnValue(now);
   vi.spyOn(console, "error").mockImplementation(() => {});
-  vi.stubEnv("AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", "1");
+  vi.stubEnv("AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE", "1");
   const birth = (pid: number) => "host-process-v1:" + createHash("sha256")
     .update(JSON.stringify([target.host, target.sessionId, pid, tokens.get(pid)])).digest("hex");
   const payload = (pid: number) => ({ target, transport, parentPid: pid, parentStartToken: tokens.get(pid)!,

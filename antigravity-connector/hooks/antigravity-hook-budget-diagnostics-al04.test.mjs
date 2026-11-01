@@ -58,7 +58,7 @@ registerSyntheticCoreAdapters((host, adapter) => registerHookHostAdapter(host, {
     };
     return adapted;
   },
-}), () => "gemini-queue");
+}), () => "antigravity-queue");
 const coreInput = { session_id: "AL04_PRIVATE", hook_event_name: "PostToolUse", syntheticActor: "root" };
 import { DEFAULT_HOOK_TOTAL_BUDGET_MS, defaultProcessInspector, executeAntigravityHookEvent, resolveLongLivedHostProcess, resolveVerifiedAntigravityHostProcess } from "./antigravity-hook-runner.mjs";
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.ts";

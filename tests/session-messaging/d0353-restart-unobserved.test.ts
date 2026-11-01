@@ -4,17 +4,18 @@ import {tmpdir} from "node:os";
 import {join} from "node:path";
 import {afterEach, test, vi} from "vitest";
 import {
-  SessionMessageStore, WAKE_RETIRE_GRACE_MS, WAKE_TTL_MS,
+  SessionMessageStore, WAKE_QUIET_MS, WAKE_START_TIMEOUT_MS,
   type WakeAttempt, type WakeReservation,
 } from "../../mcp-server/src/session-message-store.js";
 import "../../mcp-server/src/builtin-hook-host-adapters.js";
 import {adaptHostInput, registerHookHostAdapter} from "../../mcp-server/src/host-input-adapter.js";
-import {recordWakeHookObservation, wakeHookObservationReader} from "../../mcp-server/src/session-message-wake-port.js";
+import {recordWakeHookObservation, wakeHookObservationReader, type WakeDispatchOutcome} from "../../mcp-server/src/session-message-wake-port.js";
 
-// AC08: 세대 교체는 외부 큐의 소멸 증거가 아니다. 실제 호스트 실행·큐 소멸을 측정하지 않는 합성 시험이다.
-// 공개 저장소와 실제 임시 SQLite 연결을 사용한다. 시계는 인자로 고정하며 네트워크·하위 프로세스는 사용하지 않는다.
-// 결함 판별: birth-only 회수 코드는 재시작/재탄생/장기 보관 사례에서 새 dispatch 또는 기존 행 소실로 실패해야 한다.
-// 실행과 원본/수정 비교는 별도 시험 담당 소유이며, 이 파일 작성 단계의 결과는 NOT_RUN이다.
+// D0353 under the AGS 3.0 doorbell (docs/ags30-wake-doorbell-design.md r3.2). The 2.x cases here asserted that a restart,
+// a new birth or time never releases an unobserved hand-off (permanent latch). They are rewritten to the 2.6 rule: a hand-off
+// ends by a later claim boundary, the end of its birth or its resend deadline, while I2 (an old birth claims nothing),
+// I4/I5 (no second effect before that) and I11 (no revival) still hold.
+// Synthetic store cases with real temporary SQLite connections; every clock is an explicit argument.
 const host = "d0353-restart-synthetic";
 registerHookHostAdapter(host, {
   adaptInput(input, selectedHost) {
@@ -26,6 +27,10 @@ registerHookHostAdapter(host, {
   processPid: () => undefined,
 });
 
+const BASE = 10 * 60_000;
+const HANDED: WakeDispatchOutcome = {result: "handed-off"};
+const UNKNOWN: WakeDispatchOutcome = {result: "unknown", reasonCode: "SYNTHETIC_TIMEOUT"};
+const TRANSIENT: WakeDispatchOutcome = {result: "not-delivered", kind: "transient", reasonCode: "SYNTHETIC_TRANSIENT"};
 const target = {host, sessionId: "d0353-restart-target"};
 const sender = {host, sessionId: "d0353-restart-sender"};
 const capabilities: NonNullable<Parameters<SessionMessageStore["startPresence"]>[0]["deliveryCapabilities"]> = {
@@ -48,9 +53,7 @@ function fixture(transport = "d0353-synthetic") {
   const stores = new Set([store]);
   resources.push({directory, stores});
   const now = Date.now();
-  // latch() hands off at now+1 (started) or now+2 (outcome); the first unobserved hand-off is released grace after it.
-  const f = {directory, database, store, stores, now, transport, retireAt: now + 2 + WAKE_RETIRE_GRACE_MS,
-    holdAt: now + WAKE_RETIRE_GRACE_MS - 100};
+  const f = {directory, database, store, stores, now, transport};
   live(f, "instance-1", "relay-1", now);
   return f;
 }
@@ -67,33 +70,40 @@ function live(f: Fixture, instanceId: string, relayId: string, at: number) {
   assert.equal(f.store.acquireRelay({...target, instanceId, transport: f.transport, relayId,
     pid: process.pid, parentPid: process.pid}, at), true);
 }
-function request(f: Fixture, instanceId = "instance-1", relayId = "relay-1", nonce = "d0353-next-nonce-abcdefghijklmnop") {
+function request(f: Fixture, instanceId = "instance-1", relayId = "relay-1", nonce = `d0353-${Math.random().toString(36).slice(2, 10)}-nonce-abcdefghijklmnop`) {
   return {...target, instanceId, relayId, nonce, transport: f.transport, resume: true};
+}
+// A live relay renews its lease and presence every few seconds; model that up to `to` without any claim boundary.
+function keep(f: Fixture, from: number, to: number, instanceId = "instance-1", relayId = "relay-1") {
+  for (let at = from; ; at = Math.min(at + 10_000, to)) {
+    assert.equal(f.store.relayTick({...target, instanceId, relayId, transport: f.transport, includePending: false}, at).alive, true);
+    if (at === to) return;
+  }
 }
 function dispatched(reservation: WakeReservation): WakeAttempt {
   assert.equal(reservation.dispatch, true);
   assert.ok(reservation.attempt);
   return reservation.attempt;
 }
-function submit(f: Fixture, body: string, at: number) {
-  const prepared = f.store.prepare({sender, target, body, ttlSeconds: 86400}, at);
+function submit(f: Fixture, body: string, at: number, ttlSeconds = 86400) {
+  const prepared = f.store.prepare({sender, target, body, ttlSeconds}, at);
   return f.store.submitPrepared(sender, prepared.messageId, at);
 }
-type UncertainOutcome = "submitted" | "accepted-or-unknown" | "started";
-function latch(f: Fixture, outcome: UncertainOutcome = "submitted") {
-  const message = submit(f, "old-generation-body", f.now);
-  const reserved = dispatched(f.store.reserveManagedWake(request(f, "instance-1", "relay-1", "d0353-first-nonce-abcdefghijklmnop"), f.now));
-  const attempt = dispatched(f.store.startManagedWake(reserved, f.now + 1));
-  if (outcome !== "started") assert.equal(f.store.recordManagedWakeOutcome(attempt, outcome, f.now + 2), true);
-  return {attempt, message};
+type Uncertain = "handed-off" | "unknown" | "started";
+/** Hands one marker to the host for one pending body: started at now+1, outcome at now+2. */
+function handOff(f: Fixture, outcome: Uncertain = "handed-off", at = f.now, instanceId = "instance-1", relayId = "relay-1") {
+  const attempt = dispatched(f.store.startManagedWake(dispatched(f.store.reserveManagedWake(request(f, instanceId, relayId), at)), BASE, at + 1));
+  if (outcome !== "started") assert.equal(f.store.recordManagedWakeOutcome(attempt, outcome === "handed-off" ? HANDED : UNKNOWN, BASE, at + 2), true);
+  return attempt;
 }
 function row(f: Fixture, attempt: WakeAttempt) {
   const result = f.store.database.prepare("SELECT * FROM wake_nonces WHERE attempt_id = ?").get(attempt.attemptId);
   assert.ok(result);
-  return {...result};
+  return {...result} as Record<string, unknown>;
 }
-function activity(f: Fixture) {
-  return f.store.database.prepare("SELECT active_at FROM session_activity WHERE host = ? AND session_id = ?").get(target.host, target.sessionId);
+function path(f: Fixture, instanceId = "instance-1") {
+  return f.store.database.prepare("SELECT * FROM wake_paths WHERE host = ? AND session_id = ? AND instance_id = ? ORDER BY birth_generation DESC LIMIT 1")
+    .get(target.host, target.sessionId, instanceId) as Record<string, unknown> | undefined;
 }
 function observe(f: Fixture, attempt: WakeAttempt, at: number) {
   vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", join(f.directory, "trust.sqlite3"));
@@ -102,301 +112,246 @@ function observe(f: Fixture, attempt: WakeAttempt, at: number) {
   const receipt = recordWakeHookObservation(observation, at);
   return f.store.claimHostWake(target, observation, receipt, wakeHookObservationReader, at + 1);
 }
+const activeCount = (f: Fixture) => Number((f.store.database.prepare(`SELECT count(*) AS n FROM wake_nonces
+  WHERE state IN ('reserved', 'started', 'handed-off', 'unknown')`).get() as {n: number}).n);
 
-const transports = ["codex-queue", "claude-inbox", "gemini-queue", "d0353-unregistered-queue"];
-const restartCases = transports.flatMap(transport => (["submitted", "accepted-or-unknown", "started"] as const)
-  .map(outcome => ({transport, outcome})));
-test.each(restartCases)("AC08: $transport/$outcome 제출 후 연결 재시작과 새 세대만으로 미관측 잠금을 풀지 않는다", ({transport, outcome}) => {
+const transports = ["codex-queue", "claude-inbox", "antigravity-queue", "d0353-unregistered-queue"];
+const restartCases = transports.flatMap(transport => (["handed-off", "unknown", "started"] as const).map(outcome => ({transport, outcome})));
+test.each(restartCases)("2.6: $transport/$outcome after a restart and a new birth ends once, the old marker claims nothing and one new wake follows", ({transport, outcome}) => {
   const f = fixture(transport);
-  const {attempt} = latch(f, outcome);
+  submit(f, "old-generation-body", f.now);
+  const attempt = handOff(f, outcome);
   const original = row(f, attempt);
   reopen(f);
-  assert.deepEqual(row(f, attempt), original);
-  live(f, "instance-2", "relay-2", f.holdAt - 1);
-  assert.equal(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.holdAt - 1).dispatch, false);
-  // 시작 직후 충돌은 기존 CAS 규약에 따라 unknown이 되며, 원래 결합·시각·시도는 보존한다.
-  const retained = {...original, state: outcome === "started" ? "unknown" : original.state};
-  assert.deepEqual(row(f, attempt), retained);
-  f.store.prune(f.holdAt);
-  assert.equal(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.holdAt).dispatch, false);
-  assert.deepEqual(row(f, attempt), retained);
-  assert.equal(activity(f), undefined);
-  assert.equal(f.store.pendingCount(target, f.holdAt), 1);
-  // Liveness: past the hand-off plus grace a quiet live session gets exactly one new wake.
-  const next = dispatched(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.retireAt));
+  assert.deepEqual(row(f, attempt), original, "a restart alone changes nothing");
+  live(f, "instance-2", "relay-2", f.now + 10);
+  const at = outcome === "started" ? f.now + 1 + WAKE_START_TIMEOUT_MS : f.now + 11;
+  if (outcome === "started") {
+    // Before its start timeout a started attempt keeps the slot: its effect may still be in progress (I4).
+    assert.equal(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.now + 11).dispatch, false);
+    assert.equal(row(f, attempt).state, "started");
+    keep(f, f.now + 11, at, "instance-2", "relay-2");
+  }
+  const next = dispatched(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), at));
   assert.notEqual(next.attemptId, attempt.attemptId);
-  assert.deepEqual(row(f, attempt), {...retained, state: "expired-unobserved", retired_at: iso(f.retireAt)});
+  const ended = row(f, attempt);
+  assert.deepEqual([ended.state, ended.release_reason, ended.released_at], ["released", "birth-ended", iso(at)]);
+  assert.equal(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), at + 1).attempt?.attemptId, next.attemptId, "one active attempt (I5)");
+  assert.equal(observe(f, attempt, at + 2).recognized, false, "an old birth marker claims no current body (I2)");
+  assert.equal(f.store.pendingCount(target, at + 4), 1);
 });
 
-test("AC08: 같은 인스턴스의 임대 만료와 재탄생도 기존 외부 효과를 취소하지 않는다", () => {
+test("2.6: a lease expiry and rebirth of the same instance end the old hand-off as birth-ended", () => {
   const f = fixture();
-  const {attempt} = latch(f);
-  const original = row(f, attempt);
+  submit(f, "rebirth-body", f.now);
+  const attempt = handOff(f);
   reopen(f);
-  assert.equal(f.store.presence(target, f.holdAt - 1).state, "unreachable");
-  live(f, "instance-1", "relay-1", f.holdAt - 1);
-  assert.notEqual(f.store.presence(target, f.holdAt - 1).startedAt, attempt.generation);
-  assert.equal(f.store.reserveManagedWake(request(f), f.holdAt).dispatch, false);
-  assert.deepEqual(row(f, attempt), original);
-  assert.equal(activity(f), undefined);
+  const at = f.now + 25_000;
+  assert.equal(f.store.presence(target, at).state, "unreachable");
+  live(f, "instance-1", "relay-1", at);
+  assert.notEqual(f.store.presence(target, at).startedAt, attempt.generation);
+  dispatched(f.store.reserveManagedWake(request(f), at + 1));
+  assert.deepEqual([row(f, attempt).state, row(f, attempt).release_reason], ["released", "birth-ended"]);
+  assert.equal(path(f)!.streak, 0, "the new birth starts from zero (r3 F2)");
 });
 
-test("AC08: 세션 시작·중계 임대·생존 신호는 실제 활동이나 미관측 해제 증거가 아니다", () => {
+test("2.3: presence renewal, relay leases and relay ticks of the same birth are no claim boundary and leave the hand-off", () => {
   const f = fixture();
-  const {attempt} = latch(f);
+  submit(f, "renewal-body", f.now);
+  const attempt = handOff(f);
   const original = row(f, attempt);
-  const at = f.holdAt - 1;
-  f.store.startPresence({...target, instanceId: "instance-2", transport: f.transport, wakeVisibility: "silent",
+  const at = f.now + 5_000;
+  f.store.startPresence({...target, instanceId: "instance-1", transport: f.transport, wakeVisibility: "silent",
     canWakeSilently: true, deliveryCapabilities: capabilities}, at);
-  assert.equal(activity(f), undefined);
-  assert.deepEqual(row(f, attempt), original);
-  assert.equal(f.store.acquireRelay({...target, instanceId: "instance-2", relayId: "relay-2", transport: f.transport,
+  assert.equal(f.store.presence(target, at).startedAt, attempt.generation, "a live renewal keeps its birth");
+  assert.equal(f.store.acquireRelay({...target, instanceId: "instance-1", relayId: "relay-1", transport: f.transport,
     pid: process.pid, parentPid: process.pid}, at), true);
-  assert.equal(activity(f), undefined);
-  assert.deepEqual(row(f, attempt), original);
-  assert.equal(f.store.heartbeatPresence(target, "instance-2", at + 1), true);
-  assert.equal(activity(f), undefined);
-  assert.deepEqual(f.store.relayTick({...target, instanceId: "instance-2", relayId: "relay-2", transport: f.transport,
+  assert.equal(f.store.heartbeatPresence(target, "instance-1", at + 1), true);
+  assert.deepEqual(f.store.relayTick({...target, instanceId: "instance-1", relayId: "relay-1", transport: f.transport,
     includePending: true}, at + 2), {alive: true, count: 1});
-  assert.equal(activity(f), undefined);
-  assert.equal(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), at + 3).dispatch, false);
+  assert.equal(f.store.reserveManagedWake(request(f), at + 3).dispatch, false);
   assert.deepEqual(row(f, attempt), original);
+  assert.equal(path(f)!.claim_boundary_at, null);
 });
 
 // The 2026-11-01 field case: an idle live Codex session latched for hours after one dropped marker.
-test("AC08: 조용한 세션의 미관측 시도는 넘긴 뒤 유예가 지나면 회수되고 새 깨우기는 두 연결에서도 하나뿐이다", () => {
+test("I7: a quiet live session hours after an unobserved hand-off gets exactly one new wake across two connections", () => {
   const f = fixture();
-  const {attempt} = latch(f);
-  const original = row(f, attempt);
+  const {messageId} = submit(f, "old-body", f.now);
+  const attempt = handOff(f);
   reopen(f);
   const at = f.now + 25 * 3600_000;
+  // The relay kept the birth live the whole time (one long gap modelled by a lease extension, no boundary).
+  f.store.database.prepare("UPDATE session_presence SET lease_until = ? WHERE instance_id = 'instance-1'").run(iso(at + 20_000));
+  assert.equal(f.store.acquireRelay({...target, instanceId: "instance-1", relayId: "relay-1", transport: f.transport, pid: process.pid, parentPid: process.pid}, at - 2), true);
   const fresh = submit(f, "fresh-body-after-hours", at - 1);
   assert.equal(fresh.autoWake.state, "available");
-  assert.deepEqual(row(f, attempt), {...original, state: "expired-unobserved", retired_at: iso(at - 1)});
   const peer = new SessionMessageStore(f.database);
   f.stores.add(peer);
   const next = dispatched(peer.reserveManagedWake(request(f), at));
-  assert.equal(f.store.reserveManagedWake(request(f, "instance-1", "relay-1", "d0353-other-nonce-abcdefghijklmnop"), at + 1).dispatch, false);
-  assert.equal(f.store.database.prepare("SELECT count(*) AS n FROM wake_nonces WHERE state IN ('reserved', 'started', 'submitted', 'unknown')").get()?.n, 1);
+  assert.equal(f.store.reserveManagedWake(request(f), at + 1).attempt?.attemptId, next.attemptId);
+  assert.equal(activeCount(f), 1);
   assert.notEqual(next.nonce, attempt.nonce);
+  assert.deepEqual([row(f, attempt).state, row(f, attempt).release_reason], ["released", "resend-due"]);
+  assert.ok(messageId);
 });
 
-test("AC08: 회수한 표식이 늦게 도착해도 증거로만 남고 현재 시도와 다음 자리를 바꾸지 않는다", () => {
+test("2.7: a released marker of the current birth arriving late claims the pending body once and leaves the current attempt", () => {
   const f = fixture();
-  const {attempt} = latch(f);
-  f.store.prune(f.retireAt);
-  assert.equal(row(f, attempt).state, "expired-unobserved");
-  const next = dispatched(f.store.reserveManagedWake(request(f), f.retireAt + 1));
-  const started = dispatched(f.store.startManagedWake(next, f.retireAt + 2));
-  assert.equal(f.store.recordManagedWakeOutcome(started, "submitted", f.retireAt + 3), true);
+  const {messageId} = submit(f, "late-body", f.now);
+  const attempt = handOff(f);
+  const due = f.now + 2 + BASE;
+  keep(f, f.now + 3, due);
+  const started = handOff(f, "handed-off", due);
+  assert.deepEqual([row(f, attempt).state, row(f, attempt).release_reason], ["released", "resend-due"]);
   const current = row(f, started);
-  const late = observe(f, attempt, f.retireAt + 4);
-  assert.equal(late.recognized, false);
-  assert.deepEqual(late.messages, []);
-  assert.equal(row(f, attempt).state, "expired-unobserved");
+  const late = observe(f, attempt, due + 4);
+  assert.equal(late.recognized, true);
+  assert.deepEqual(late.messages.map(value => value.messageId), [messageId]);
+  assert.equal(row(f, attempt).state, "released", "an ended row is never revived (I11)");
+  assert.equal(row(f, attempt).late_observed_at, iso(due + 5));
   assert.deepEqual(row(f, started), current);
-  assert.equal(f.store.reserveManagedWake(request(f, "instance-1", "relay-1", "d0353-third-nonce-abcdefghijklmnop"), f.retireAt + 6).dispatch, false);
+  assert.equal(f.store.reserveManagedWake(request(f), due + 6).dispatch, false);
 });
 
-// 외부 대기열을 소비하지 않는 활동을 모델링한다. 실제 호스트 재현 결과는 아니다.
-test("AC08: 무관한 일반 활동만으로 이전 미관측 표식의 자리를 풀지 않는다", () => {
+test.each(["claim-and-ack", "empty-claim", "native-input"] as const)("2.3/2.6: after a restart, %s of the same birth decides the slot by the boundary rule only", kind => {
   const f = fixture();
-  const {attempt} = latch(f);
-  const hostQueue = new Set([attempt.nonce]);
-  live(f, "instance-2", "relay-2", f.holdAt - 2);
-  f.store.observeNativeInput(target, f.holdAt - 1);
-  const next = f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.holdAt);
-  if (next.dispatch && next.attempt) hostQueue.add(next.attempt.nonce);
-  assert.equal(hostQueue.size, 1);
-  assert.equal(next.dispatch, false);
-  assert.equal(row(f, attempt).state, "submitted");
-});
-
-test.each(["claim-and-ack", "native-input", "empty-claim"] as const)("AC08: 재시작 후 %s는 미관측 잠금을 유지하고 검증된 구 표식 관측 뒤에만 다음 깨우기를 허용한다", kind => {
-  const f = fixture();
-  const {attempt, message} = latch(f);
+  const {messageId} = submit(f, "restart-body", f.now);
+  const attempt = handOff(f);
   const original = row(f, attempt);
   reopen(f);
-  live(f, "instance-2", "relay-2", f.holdAt - 1);
-  assert.equal(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.holdAt).dispatch, false);
+  const at = f.now + 10_000;
+  keep(f, f.now + 3, at);
   if (kind === "claim-and-ack") {
-    const claimed = f.store.claim(target, f.holdAt + 1);
-    assert.deepEqual(claimed.map(value => value.messageId), [message.messageId]);
-    assert.equal(f.store.acknowledge(target, [message.messageId], f.holdAt + 2,
-      claimed.map(value => {
-        assert.ok(value.claimReceipt);
-        return {messageId: value.messageId, claimReceipt: value.claimReceipt};
-      })), 1);
-    submit(f, "next-body-after-ack", f.holdAt + 3);
-  } else if (kind === "native-input") f.store.observeNativeInput(target, f.holdAt + 1);
-  else {
-    // 기존 본문은 만료시켜 빈 claim 자체의 활동 기록만 남긴다. 운영 대기열은 다루지 않는다.
-    f.store.database.prepare("UPDATE messages SET expires_at = ? WHERE message_id = ?").run(iso(f.holdAt), message.messageId);
-    assert.deepEqual(f.store.claim(target, f.holdAt + 1), []);
-    submit(f, "next-body-after-empty-claim", f.holdAt + 3);
+    const claimed = f.store.claim(target, at);
+    assert.deepEqual(claimed.map(value => value.messageId), [messageId]);
+    assert.equal(f.store.acknowledge(target, [messageId], at + 1, claimed.map(value => ({messageId: value.messageId, claimReceipt: value.claimReceipt!}))), 1);
+  } else if (kind === "empty-claim") {
+    // The body is expired so the claim takes nothing, but it is still a claim boundary of the live birth.
+    f.store.database.prepare("UPDATE messages SET expires_at = ? WHERE message_id = ?").run(iso(at - 1), messageId);
+    assert.deepEqual(f.store.claim(target, at), []);
+  } else f.store.observeNativeInput(target, at);
+  submit(f, "next-body", at + 2);
+  f.store.prune(at + 3);
+  if (kind === "native-input") {
+    assert.deepEqual(row(f, attempt), original, "native input is activity, not a boundary");
+    assert.equal(f.store.reserveManagedWake(request(f), at + 4).dispatch, false);
+    return;
   }
-  assert.ok(activity(f));
-  assert.equal(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.holdAt + 4).dispatch, false);
-  assert.deepEqual(row(f, attempt), original);
-  assert.equal(f.store.autoWakeOutlook(target, f.holdAt + 4).reason, "wake-unobserved");
-  assert.deepEqual(observe(f, attempt, f.holdAt + 5), {recognized: false, messages: [], binding: null});
-  const next = dispatched(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.holdAt + 7));
-  assert.notEqual(next.attemptId, attempt.attemptId);
-  assert.notEqual(next.nonce, attempt.nonce);
-  assert.equal(row(f, attempt).state, "observed");
-  assert.equal(row(f, attempt).observed_at, iso(f.holdAt + 6));
-  assert.equal(row(f, attempt).consumed_at, iso(f.holdAt + 6));
+  assert.deepEqual([row(f, attempt).state, row(f, attempt).release_reason], ["released", "claimed-after-handoff"]);
+  assert.equal(row(f, attempt).observed_at, null, "a boundary is no evidence the marker was consumed");
+  assert.equal(f.store.reserveManagedWake(request(f), at + 4).dispatch, false, "not quiet yet");
+  keep(f, at, at + WAKE_QUIET_MS + 1);
+  dispatched(f.store.reserveManagedWake(request(f), at + WAKE_QUIET_MS + 1));
 });
 
-test("AC08: 검증된 구 표식 도착은 새 세대 본문 없이 구 잠금만 풀고 중복 도착은 현재 시도를 보존한다", () => {
+test("2.2: a transient failure retries with a new row after backoff; a new birth does not inherit the backoff", () => {
   const f = fixture();
-  const {attempt} = latch(f);
-  reopen(f);
-  live(f, "instance-2", "relay-2", f.holdAt - 1);
-  const fresh = submit(f, "current-generation-body", f.holdAt);
-  assert.equal(fresh.autoWake.state, "latched");
-  const messages = f.store.database.prepare("SELECT * FROM messages ORDER BY message_id").all();
-  assert.deepEqual(observe(f, attempt, f.holdAt + 1), {recognized: false, messages: [], binding: null});
-  const observed = row(f, attempt);
-  assert.equal(observed.state, "observed");
-  assert.equal(observed.late_observed_at, iso(f.holdAt + 2));
-  assert.equal(observed.observed_at, iso(f.holdAt + 2));
-  assert.equal(observed.consumed_at, iso(f.holdAt + 2));
-  assert.deepEqual(f.store.database.prepare("SELECT * FROM messages ORDER BY message_id").all(), messages);
-  const next = dispatched(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.holdAt + 3));
-  const started = dispatched(f.store.startManagedWake(next, f.holdAt + 4));
-  assert.equal(f.store.recordManagedWakeOutcome(started, "submitted", f.holdAt + 5), true);
-  const current = row(f, started);
-  const activityBeforeDuplicate = activity(f);
-  assert.deepEqual(observe(f, attempt, f.holdAt + 6), {recognized: false, messages: [], binding: null});
-  assert.deepEqual(row(f, attempt), observed);
-  assert.deepEqual(row(f, started), current);
-  assert.deepEqual(activity(f), activityBeforeDuplicate);
-  assert.deepEqual(f.store.database.prepare("SELECT * FROM messages ORDER BY message_id").all(), messages);
-  assert.equal(f.store.reserveManagedWake(request(f, "instance-2", "relay-2", "d0353-third-nonce-abcdefghijklmnop"), f.holdAt + 8).dispatch, false);
-  const delivered = observe(f, started, f.holdAt + 9);
-  assert.equal(delivered.recognized, true);
-  assert.ok(delivered.messages.some(value => value.messageId === fresh.messageId));
-});
-
-test("확정 실패는 같은 nonce로 지연 후 재시도하고 새 세대도 기존 대기 기한을 지킨다", () => {
-  const f = fixture();
-  const {attempt} = latch(f, "started");
-  assert.equal(f.store.recordManagedWakeOutcome(attempt, "definite-failure", f.now + 2), true);
-  const failed = row(f, attempt);
-  assert.equal(failed.state, "reserved");
-  const retryAt = Date.parse(String(failed.retry_not_before));
+  submit(f, "transient-body", f.now);
+  const attempt = handOff(f, "started");
+  assert.equal(f.store.recordManagedWakeOutcome(attempt, TRANSIENT, BASE, f.now + 2), true);
+  assert.equal(row(f, attempt).state, "not-delivered");
+  const retryAt = Date.parse(String(path(f)!.retry_not_before));
   assert.ok(retryAt > f.now + 2);
   reopen(f);
-  // 첫 재시도 대기는 임대보다 길다. 실제 활동 없이 같은 출생 세대의 임대만 유지한다.
-  for (const at of [f.now + 10_000, f.now + 20_000]) {
-    assert.equal(f.store.relayTick({...target, instanceId: "instance-1", relayId: "relay-1", transport: f.transport,
-      includePending: true}, at).alive, true);
-  }
+  keep(f, f.now + 10_000, retryAt - 1);
   assert.equal(f.store.reserveManagedWake(request(f), retryAt - 1).dispatch, false);
+  keep(f, retryAt - 1, retryAt);
   const retry = dispatched(f.store.reserveManagedWake(request(f), retryAt));
-  assert.equal(retry.nonce, attempt.nonce);
-  assert.equal(retry.attemptId, attempt.attemptId);
-  const restarted = dispatched(f.store.startManagedWake(retry, retryAt));
-  assert.equal(restarted.dispatchEpoch, attempt.dispatchEpoch + 1);
-  assert.equal(f.store.recordManagedWakeOutcome(restarted, "definite-failure", retryAt + 1), true);
-  const secondFailure = row(f, restarted);
-  const nextRetryAt = Date.parse(String(secondFailure.retry_not_before));
+  assert.notEqual(retry.nonce, attempt.nonce);
+  assert.notEqual(retry.attemptId, attempt.attemptId);
+  const restarted = dispatched(f.store.startManagedWake(retry, BASE, retryAt));
+  assert.equal(restarted.dispatchEpoch, 1);
+  assert.equal(f.store.recordManagedWakeOutcome(restarted, TRANSIENT, BASE, retryAt + 1), true);
   assert.equal(f.store.endPresence(target, "synthetic-restart", "instance-1", retryAt + 2), true);
   live(f, "instance-2", "relay-1", retryAt + 3);
-  assert.equal(f.store.reserveManagedWake(request(f, "instance-2", "relay-1"), retryAt + 3).dispatch, false);
-  assert.equal(row(f, restarted).state, "not-submitted");
-  assert.equal(row(f, restarted).retry_not_before, secondFailure.retry_not_before);
-  live(f, "instance-2", "relay-1", nextRetryAt - 1);
-  assert.equal(f.store.autoWakeOutlook(target, nextRetryAt - 1).reason, "retry-backoff");
-  assert.equal(f.store.reserveManagedWake(request(f, "instance-2", "relay-1"), nextRetryAt - 1).dispatch, false);
-  live(f, "instance-2", "relay-1", nextRetryAt);
-  const replacement = dispatched(f.store.reserveManagedWake(request(f, "instance-2", "relay-1"), nextRetryAt));
-  assert.notEqual(replacement.attemptId, attempt.attemptId);
-  assert.notEqual(replacement.nonce, attempt.nonce);
+  const replacement = dispatched(f.store.reserveManagedWake(request(f, "instance-2", "relay-1"), retryAt + 3));
+  assert.notEqual(replacement.attemptId, restarted.attemptId);
+  assert.equal(path(f, "instance-2")!.failures, 0);
 });
 
-test("시작 전 예약은 새 세대로 교체할 수 있고 미관측 제출 보류는 공개 전송 응답에 남는다", () => {
+test("2.8: a reservation replaced by a new birth ends as not-delivered and the public send reports facts, never latched", () => {
   const f = fixture();
   submit(f, "reserved-before-restart", f.now);
-  const reserved = dispatched(f.store.reserveManagedWake(request(f, "instance-1", "relay-1", "d0353-prestart-nonce-abcdefghijklmnop"), f.now));
+  const reserved = dispatched(f.store.reserveManagedWake(request(f), f.now));
   assert.equal(f.store.endPresence(target, "synthetic-restart", "instance-1", f.now + 1), true);
   live(f, "instance-2", "relay-1", f.now + 2);
   const replacement = dispatched(f.store.reserveManagedWake(request(f, "instance-2", "relay-1"), f.now + 2));
-  assert.equal(row(f, reserved).state, "not-submitted");
+  assert.equal(row(f, reserved).state, "not-delivered");
   assert.notEqual(replacement.attemptId, reserved.attemptId);
-  const started = dispatched(f.store.startManagedWake(replacement, f.now + 3));
-  assert.equal(f.store.recordManagedWakeOutcome(started, "submitted", f.now + 4), true);
+  const started = dispatched(f.store.startManagedWake(replacement, BASE, f.now + 3));
+  assert.equal(f.store.recordManagedWakeOutcome(started, HANDED, BASE, f.now + 4), true);
   reopen(f);
-  live(f, "instance-3", "relay-3", f.holdAt + 5);
-  const outlook = f.store.autoWakeOutlook(target, f.holdAt + 6);
-  assert.equal(outlook.state, "latched");
-  assert.equal(outlook.reason, "wake-unobserved");
-  const draft = f.store.prepare({sender, target, body: "prepared-while-latched"}, f.holdAt + 6);
-  const receipt = f.store.submitPrepared(sender, draft.messageId, f.holdAt + 7);
+  const at = f.now + 4 + WAKE_QUIET_MS + 1;
+  keep(f, f.now + 10_000, at, "instance-2", "relay-1");
+  const draft = f.store.prepare({sender, target, body: "prepared-after-hand-off"}, at);
+  const receipt = f.store.submitPrepared(sender, draft.messageId, at + 1);
   assert.equal(receipt.duplicate, false);
-  assert.equal(receipt.autoWake.state, "latched");
-  assert.equal(receipt.autoWake.reason, "wake-unobserved");
-  const duplicate = f.store.submitPrepared(sender, draft.messageId, f.holdAt + 8);
+  assert.deepEqual([receipt.autoWake.state, receipt.autoWake.reason, receipt.autoWake.basisAt], ["available", "wake-unanswered", row(f, started).resend_due_at]);
+  const duplicate = f.store.submitPrepared(sender, draft.messageId, at + 2);
   assert.equal(duplicate.duplicate, true);
-  assert.equal(duplicate.autoWake.state, "latched");
-  assert.equal(duplicate.autoWake.reason, "wake-unobserved");
-  assert.equal(f.store.reserveManagedWake(request(f, "instance-3", "relay-3", "d0353-third-nonce-abcdefghijklmnop"), f.holdAt + 8).dispatch, false);
+  assert.equal(duplicate.autoWake.reason, "wake-unanswered");
+  assert.equal(f.store.reserveManagedWake(request(f, "instance-2", "relay-1"), at + 2).dispatch, false);
 });
 
-function handOff(f: Fixture, nonce: string, at: number) {
-  const started = dispatched(f.store.startManagedWake(dispatched(f.store.reserveManagedWake(request(f, "instance-1", "relay-1", nonce), at)), at + 1));
-  assert.equal(f.store.recordManagedWakeOutcome(started, "submitted", at + 2), true);
-  return started;
-}
-
-// V4: under B (expiry+grace) the message that caused a lost wake expired before the release and was never delivered.
-test("D0353: 기본 TTL 메시지는 첫 미관측 표식이 회수된 뒤 만료 전에 전달된다", () => {
+// V4: under the 2.x expiry+grace rule the message that caused a lost wake expired before the release.
+test("I7: a default-TTL message is delivered after the first unobserved marker is released at its resend deadline", () => {
   const f = fixture();
   const prepared = f.store.prepare({sender, target, body: "default-ttl-body"}, f.now);
   const message = f.store.submitPrepared(sender, prepared.messageId, f.now);
-  const lost = handOff(f, "d0353-lost-nonce-abcdefghijklmnop", f.now);
-  const releaseAt = f.now + 2 + WAKE_RETIRE_GRACE_MS;
+  const lost = handOff(f);
+  const releaseAt = f.now + 2 + BASE;
+  keep(f, f.now + 3, releaseAt - 1);
   assert.equal(f.store.reserveManagedWake(request(f), releaseAt - 1).dispatch, false);
-  assert.equal(row(f, lost).state, "submitted");
-  const next = handOff(f, "d0353-retry-nonce-abcdefghijklmnop", releaseAt);
-  assert.deepEqual({state: row(f, lost).state, retired_at: row(f, lost).retired_at}, {state: "expired-unobserved", retired_at: iso(releaseAt)});
+  assert.equal(row(f, lost).state, "handed-off");
+  keep(f, releaseAt - 1, releaseAt);
+  const next = handOff(f, "handed-off", releaseAt);
+  assert.deepEqual([row(f, lost).state, row(f, lost).release_reason, row(f, lost).released_at], ["released", "resend-due", iso(releaseAt)]);
   const delivered = observe(f, next, releaseAt + 3);
   assert.equal(delivered.recognized, true);
   assert.deepEqual(delivered.messages.map(value => value.messageId), [message.messageId]);
 });
 
 // Bounds markers parked in a host queue (Codex keeps queued items while a thread is interrupted or running).
-test("D0353: 같은 탄생에서 연속 미관측 회수는 주입 만료와 유예까지 늦추고 관측되면 첫 간격으로 돌아간다", () => {
+test("I8: consecutive unanswered hand-offs of one birth double the resend interval; an observation resets it", () => {
   const f = fixture();
   submit(f, "parked-body", f.now);
-  const first = handOff(f, "d0353-park1-nonce-abcdefghijklmnop", f.now);
-  const secondAt = f.now + 2 + WAKE_RETIRE_GRACE_MS;
-  const second = handOff(f, "d0353-park2-nonce-abcdefghijklmnop", secondAt);
-  assert.equal(row(f, first).state, "expired-unobserved");
-  assert.equal(row(f, second).prior_unobserved, 1);
-  const streakAt = secondAt + WAKE_TTL_MS + WAKE_RETIRE_GRACE_MS;
-  f.store.prune(secondAt + 2 + WAKE_RETIRE_GRACE_MS);
-  assert.equal(row(f, second).state, "submitted");
-  assert.equal(f.store.reserveManagedWake(request(f, "instance-1", "relay-1", "d0353-park3-nonce-abcdefghijklmnop"), streakAt - 1).dispatch, false);
-  const third = handOff(f, "d0353-park3-nonce-abcdefghijklmnop", streakAt);
-  assert.equal(row(f, second).state, "expired-unobserved");
-  assert.equal(row(f, third).prior_unobserved, 1);
-  assert.equal(observe(f, third, streakAt + 3).recognized, true);
-  submit(f, "after-observed-body", streakAt + 10);
-  const fourth = handOff(f, "d0353-park4-nonce-abcdefghijklmnop", streakAt + 10);
-  assert.equal(row(f, fourth).prior_unobserved, 0);
+  const first = handOff(f);
+  assert.equal(row(f, first).resend_due_at, iso(f.now + 2 + BASE));
+  const secondAt = f.now + 2 + BASE;
+  keep(f, f.now + 3, secondAt);
+  const second = handOff(f, "handed-off", secondAt);
+  assert.equal(row(f, first).release_reason, "resend-due");
+  assert.equal(path(f)!.streak, 1);
+  assert.equal(row(f, second).resend_due_at, iso(secondAt + 2 + 2 * BASE));
+  keep(f, secondAt, secondAt + 2 + 2 * BASE - 1);
+  assert.equal(f.store.reserveManagedWake(request(f), secondAt + 2 + 2 * BASE - 1).dispatch, false);
+  const thirdAt = secondAt + 2 + 2 * BASE;
+  keep(f, thirdAt - 1, thirdAt);
+  const third = handOff(f, "handed-off", thirdAt);
+  assert.equal(path(f)!.streak, 2);
+  assert.equal(row(f, third).resend_due_at, iso(thirdAt + 2 + 4 * BASE));
+  assert.equal(observe(f, third, thirdAt + 3).recognized, true);
+  assert.equal(path(f)!.streak, 0);
+  const fourthAt = thirdAt + 4 + WAKE_QUIET_MS + 1;
+  keep(f, thirdAt + 3, fourthAt);
+  submit(f, "after-observed-body", fourthAt);
+  const fourth = handOff(f, "handed-off", fourthAt);
+  assert.equal(row(f, fourth).resend_due_at, iso(fourthAt + 2 + BASE));
 });
 
-test("D0353: 새 탄생의 첫 미관측 시도는 이전 탄생의 연속 회수를 물려받지 않는다", () => {
+test("I8/r3 F2: the first hand-off of a new birth does not inherit the previous birth's streak", () => {
   const f = fixture();
   submit(f, "rebirth-body", f.now);
-  const first = handOff(f, "d0353-birth1-nonce-abcdefghijklmnop", f.now);
-  const at = f.now + 2 + WAKE_RETIRE_GRACE_MS;
-  f.store.prune(at);
-  assert.equal(row(f, first).state, "expired-unobserved");
-  assert.equal(f.store.endPresence(target, "synthetic-restart", "instance-1", at + 1), true);
-  live(f, "instance-2", "relay-2", at + 2);
-  const next = dispatched(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), at + 2));
-  assert.equal(row(f, next).prior_unobserved, 0);
+  const first = handOff(f);
+  const at = f.now + 2 + BASE;
+  keep(f, f.now + 3, at);
+  handOff(f, "handed-off", at);
+  assert.equal(row(f, first).release_reason, "resend-due");
+  assert.equal(path(f)!.streak, 1);
+  assert.equal(f.store.endPresence(target, "synthetic-restart", "instance-1", at + 3), true);
+  live(f, "instance-2", "relay-2", at + 4);
+  const next = handOff(f, "handed-off", at + 4, "instance-2", "relay-2");
+  assert.equal(row(f, next).resend_due_at, iso(at + 6 + BASE));
+  assert.equal(path(f, "instance-2")!.streak, 0);
 });
