@@ -191,7 +191,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       } else {
         expect(recorded.ok).toBe(true);
         expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({
-          model, modelClass, reasoningEffort: effort, actorId: observation.actorId,
+          model, modelClass, reasoningEffort: effort, actorId: hostActorId(adapter.host, SESSION),
           taskId: input.taskEnvelope.taskId, runId: receipt.runId, stageId: stage.stageId, revision: receipt.revision,
         });
       }
