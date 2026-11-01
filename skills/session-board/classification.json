@@ -40,13 +40,13 @@
       "path": "skills/session-board/references/entry-details.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:48bb9fef93a96f4166ad820321573ee5ec27343fec147494b24ece0814a98100"
+      "digest": "sha256:1db28dc5c1ea4319e3c61f24270e3a5d52fe7e4acd00b7b5ad025a9131ffe778"
     },
     {
       "path": "skills/session-board/references/entry-details.md",
       "startLine": 7,
       "endLine": 9,
-      "digest": "sha256:48bb9fef93a96f4166ad820321573ee5ec27343fec147494b24ece0814a98100"
+      "digest": "sha256:1db28dc5c1ea4319e3c61f24270e3a5d52fe7e4acd00b7b5ad025a9131ffe778"
     }
   ],
   "exclusions": [
@@ -70,19 +70,19 @@
       "path": "skills/session-board/references/entry-details.md",
       "startLine": 10,
       "endLine": 10,
-      "digest": "sha256:48bb9fef93a96f4166ad820321573ee5ec27343fec147494b24ece0814a98100"
+      "digest": "sha256:1db28dc5c1ea4319e3c61f24270e3a5d52fe7e4acd00b7b5ad025a9131ffe778"
     },
     {
       "path": "skills/session-board/references/entry-details.md",
       "startLine": 11,
       "endLine": 11,
-      "digest": "sha256:48bb9fef93a96f4166ad820321573ee5ec27343fec147494b24ece0814a98100"
+      "digest": "sha256:1db28dc5c1ea4319e3c61f24270e3a5d52fe7e4acd00b7b5ad025a9131ffe778"
     },
     {
       "path": "skills/session-board/references/entry-details.md",
       "startLine": 12,
       "endLine": 12,
-      "digest": "sha256:48bb9fef93a96f4166ad820321573ee5ec27343fec147494b24ece0814a98100"
+      "digest": "sha256:1db28dc5c1ea4319e3c61f24270e3a5d52fe7e4acd00b7b5ad025a9131ffe778"
     }
   ]
 }

@@ -8,8 +8,9 @@
 
 - 현황판은 모든 호스트가 함께 쓰며 각 행의 `host`로 구분한다. 다른 호스트의 줄도 같은 방식으로 읽는다.
 - 같은 OS 사용자로 실행되는 로컬 프로세스는 현황판 파일을 읽을 수 있으므로, 한 줄에 비밀이나 개인정보를 적지 않는다.
-- 세션 ID는 훅이 관측해 서버가 검증한 결속(`_sessionBinding`)으로만 정해지고 호출자가 넣은 값은 거절한다. 작업 디렉터리와 사용자 입력 시각은 훅이 넣는다. 결속이 없으면 두 도구는 `BINDING_REQUIRED`다.
-- 현황판을 쓸 수 없으면(`update_session_status`가 `MCP_UNAVAILABLE`) 작업을 멈추지 않고 그 사실만 알린다.
+- 행은 훅만 쓰며 세션 ID와 작업 디렉터리도 훅이 넣는다. 훅은 `_sessionBinding`을 채우고 호출자가 넣은 값을 덮어쓴다. 훅이 돌지 않은 호출로는 행이 기록되지 않으며, 결속이 없으면 `update_session_status`는 `BINDING_REQUIRED`다.
+- 현황판을 쓸 수 없으면 작업을 멈추지 않고 그 사실만 알린다.
+- 한 줄 요약은 훅이 만든 결속으로 `update_session_status`가 기록하고, 사용자 입력 시각과 작업 디렉터리는 입력 훅이 기록한다. 호출자가 직접 넣은 `_sessionBinding`은 거절된다. 현황판에 쓰지 못하면 `update_session_status`가 `MCP_UNAVAILABLE`을 돌려준다.
 
 ## peer 메시지 전달
 

@@ -188,7 +188,7 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/recovery-strategy-selector/references/selection-protocol.md": "5d9d8070948ef8ec4ce0c1cf16de179586ce96dc660e1ce3b6a214ae4dbe8f7c",
     "skills/recovery-strategy-selector/scripts/core.mjs": "b378eca94a05a5008e27f60d582e3d167c243dfb4602c663a0eef22e75254625",
     // AGS 3.0 session board redesign (docs/ags30-session-board-design.md); historical baselines stay frozen.
-    "skills/session-board/references/entry-details.md": "48bb9fef93a96f4166ad820321573ee5ec27343fec147494b24ece0814a98100",
+    "skills/session-board/references/entry-details.md": "1db28dc5c1ea4319e3c61f24270e3a5d52fe7e4acd00b7b5ad025a9131ffe778",
     "skills/session-board/scripts/board-store.d.mts": "df77f6a8d0ce1e576782c394ad6b78261003de23f32a03e9b6a4ef05de762bc0",
   },
   "previousHashes": {
@@ -214,7 +214,7 @@ const HOST_CONSUMPTION_SOURCE_SUCCESSOR = Object.freeze({
   "baselineRevision": "b0b455b3ef737cc67e0a350cc1477f4ce6162828",
   "hashes": {
     "skills/session-board/SKILL.md": "c23a8cebd2a794d9f281ba171f7dac073a5a91a68ceb9a26b748dd843a733bd2",
-    "skills/session-board/classification.json": "c3f4ac0ab7f42e7ee9b40d586eeb1920b4e5e5d7ec6904905f58da1589dbfb22"
+    "skills/session-board/classification.json": "b859ff49fbeeee79efef9e61101aa9a9ffb04ddc9d4e330bec918960f26e4e38"
   },
   "previousHashes": {
     "skills/session-board/SKILL.md": "b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",
