@@ -3,6 +3,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { types } from "node:util";
 import type { SharedModuleContext, SqlDatabase } from "../../runtime/unified-state/shared-connection.mjs";
+import { retainCleanupFailure } from "./failure-diagnostics.js";
 
 import type { ContinuitySnapshotV1, StateCleanupPlanV1 } from "../../contracts/types.js";
 
@@ -772,9 +773,11 @@ export class SqliteContinuityStore {
       this.database.exec("COMMIT;");
       return result;
     } catch (cause) {
-      try { this.database.exec("ROLLBACK;"); } catch { /* Preserve the primary failure. */ }
       // The wrapped failure keeps its stable reason (CORRUPT_DATABASE), not only the default (D0057).
-      throw ownStoreError(cause) ?? new ContinuityStoreError(message, cause, continuityUnavailableReason(cause));
+      const failure = ownStoreError(cause) ?? new ContinuityStoreError(message, cause, continuityUnavailableReason(cause));
+      // The primary failure wins; a failed ROLLBACK is kept only as a tagged secondary diagnostic.
+      retainCleanupFailure(failure, "CONTINUITY_ROLLBACK_FAILED", () => this.database.exec("ROLLBACK;"));
+      throw failure;
     }
   }
 

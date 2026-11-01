@@ -93,13 +93,11 @@ export async function runTests(arguments_, command = [process.execPath, path.joi
     if (failure) {
       // A real dual failure changes only this exceptional path to a standard, public container.
       throw new AggregateError([failure.error, cleanup], "Test execution and temporary cleanup both failed.", { cause: failure.error });
-    } else if (childExitCode !== null && childExitCode !== 0) {
-      // Keep the existing failed numeric outcome; cleanup remains a separate failure.
-      console.error(JSON.stringify({ component: "test-runner", phase: "cleanup",
-        reason: "RUNNER_CLEANUP_FAILED", childExitCode }));
-      console.error(cleanup);
-    } else throw Object.assign(new Error("Test temporary cleanup failed.", { cause: cleanup }),
-      { code: "RUNNER_CLEANUP_FAILED" });
+    }
+    // Cleanup-only failure: one public shape for every caller. A failed numeric child outcome rides on the error
+    // (childExitCode) instead of being printed here and returned as if cleanup had succeeded (D-0210).
+    throw Object.assign(new Error("Test temporary cleanup failed.", { cause: cleanup }),
+      { code: "RUNNER_CLEANUP_FAILED", ...(childExitCode !== null && childExitCode !== 0 ? { childExitCode } : {}) });
   }
   if (failure) throw failure.error;
   return childExitCode;
@@ -124,14 +122,16 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   } catch (cause) {
     const dual = cause instanceof AggregateError && cause.errors.length === 2 && cause.cause === cause.errors[0];
     const primary = dual ? cause.errors[0] : cause;
+    const childExitCode = primary?.code === "RUNNER_CLEANUP_FAILED" && Number.isInteger(primary.childExitCode) ? primary.childExitCode : null;
     if (primary?.code === "RUNNER_CLEANUP_FAILED") { phase = "cleanup"; reason = "RUNNER_CLEANUP_FAILED"; }
-    console.error(JSON.stringify({ component: "test-runner", phase, reason }));
+    console.error(JSON.stringify({ component: "test-runner", phase, reason, ...(childExitCode !== null ? { childExitCode } : {}) }));
     // Native Error diagnostics keep the original public code, syscall and actionable message.
     console.error(primary);
     if (dual) {
       console.error(JSON.stringify({ component: "test-runner", phase: "cleanup", reason: "RUNNER_CLEANUP_FAILED" }));
       console.error(cause.errors[1]);
     }
-    process.exitCode = 1;
+    // A failed child outcome stays the exit status; a cleanup failure after child success is still a failure.
+    process.exitCode = childExitCode ?? 1;
   }
 }

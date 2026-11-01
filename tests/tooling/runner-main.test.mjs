@@ -199,3 +199,23 @@ it("the public runTests cleanup-only failure exposes its own code and the exact 
     code: "RUNNER_CLEANUP_FAILED", causeSame: true, sameAsNative: false, nativeCode: "EPERM",
   });
 });
+
+it("the public runTests reports a cleanup failure after a failed child instead of printing it (D-0210)", () => {
+  const f = dualFailureFixture();
+  const preload = readFileSync(f.preload, "utf8").replace(
+    'child.emit("error",primary);child.emit("close",null,null)', 'child.emit("close",23,null)');
+  writeFileSync(f.preload, preload, "utf8");
+  const moduleUrl = pathToFileURL(path.join(f.directory, "scripts", "run-tests.mjs")).href;
+  const body = 'import{runTests}from' + JSON.stringify(moduleUrl) +
+    ';let caught,returned;try{returned=await runTests([])}catch(error){caught=error}' +
+    'console.log(JSON.stringify({returned:returned??null,code:caught?.code,childExitCode:caught?.childExitCode,' +
+    'causeSame:caught?.cause===globalThis.__runnerTestCleanup}));';
+  const result = spawnSync(process.execPath,
+    ["--import", pathToFileURL(f.preload).href, "--input-type=module", "-e", body],
+    { encoding: "utf8", timeout: 20_000, windowsHide: true });
+  reclaimFailedCleanup(f);
+  expect(result.error).toBeUndefined();
+  expect(result.status).toBe(0);
+  expect(result.stderr).toBe("");
+  expect(JSON.parse(result.stdout.trim())).toEqual({ returned: null, code: "RUNNER_CLEANUP_FAILED", childExitCode: 23, causeSame: true });
+});

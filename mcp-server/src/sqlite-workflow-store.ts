@@ -18,7 +18,7 @@ import {
   type PluginUpdateStore,
   type StoredPluginUpdateState,
 } from "./plugin-update-store.js";
-import { failureContext, failureReason, retainFailureCause } from "./failure-diagnostics.js";
+import { failureContext, failureReason, retainCleanupFailure, retainFailureCause } from "./failure-diagnostics.js";
 import { compareStableVersionNumbers } from "./plugin-version.js";
 import {
   activeRootIdentity,
@@ -976,11 +976,9 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       this.database.exec(savepoint ? `RELEASE ${savepoint};` : "COMMIT;");
       return result;
     } catch (cause) {
-      try {
-        this.database.exec(savepoint ? `ROLLBACK TO ${savepoint}; RELEASE ${savepoint};` : "ROLLBACK;");
-      } catch {
-        // Preserve the original failure.
-      }
+      // The original failure wins; a failed ROLLBACK is kept only as a tagged secondary diagnostic.
+      retainCleanupFailure(cause, "WORKFLOW_ROLLBACK_FAILED",
+        () => this.database.exec(savepoint ? `ROLLBACK TO ${savepoint}; RELEASE ${savepoint};` : "ROLLBACK;"));
       throw cause;
     } finally {
       this.transactionDepth -= 1;
