@@ -2,7 +2,7 @@ import { isHookEntry } from "./hook-entry.js";
 import { actorAccess } from "./input-observation.js";
 import { hookFailure, hookFailureContext, hookFailureReason, retainHookFailureCause, retainHookFailureSecondary, tagHookFailure, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 import "./builtin-hook-host-adapters.js";
-import { spawn, type ChildProcess } from "node:child_process";
+import { execFile, spawn, type ChildProcess } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
@@ -49,6 +49,11 @@ export interface SessionMessageHookOptions {
   relayEnv?: Readonly<Record<string, string | undefined>>;
   /** 비동기 수명 어댑터가 참조된 자식을 close까지 소유한다. 동기 복구 훅에서는 사용하지 않는다. */
   relayOwner?: (child: ChildProcess) => void;
+  /** Windows only. Set by a hook entry whose host shell hands this process the host's own pipes as inheritable handles
+   * (Codex runs hook commands through PowerShell and waits for pipe EOF). A detached relay spawned by node would inherit
+   * them, so the host would wait until its hook timeout and then terminate the hook's job with the relay in it.
+   * The relay is then started through ShellExecute, which inherits no handles (launchWithoutInheritedHandles). */
+  isolateDetachedHandles?: boolean;
   /** Adapter starts this same-process monotonic deadline before imports/resolution, excluding its stdout reserve. */
   executionBudget?: Readonly<{ deadlineMonotonicMs: number; postClaimReserveMs: number }>;
   /** Synchronous observation only, IDs only. Returns are ignored; throws/rejections cannot change claim or cleanup.
@@ -139,6 +144,9 @@ function snapshotOptions(options: SessionMessageHookOptions): SessionMessageHook
   if (options.recoverExistingSession !== undefined && typeof options.recoverExistingSession !== "boolean") throw hookFailure("INVALID_RELAY_RECOVERY_OPTION", "Invalid relay recovery capability.");
   if (options.resolveHostProcess !== undefined && typeof options.resolveHostProcess !== "function") throw hookFailure("INVALID_HOST_PROCESS_RESOLVER", "Invalid host process resolver.");
   if (options.relayOwner !== undefined && typeof options.relayOwner !== "function") throw hookFailure("INVALID_RELAY_OWNER", "Invalid relay owner.");
+  if (options.isolateDetachedHandles !== undefined && typeof options.isolateDetachedHandles !== "boolean") {
+    throw hookFailure("INVALID_HANDLE_ISOLATION_OPTION", "Invalid handle isolation option.");
+  }
   if (options.relayEnv !== undefined && (!options.relayEnv || typeof options.relayEnv !== "object" || Array.isArray(options.relayEnv))) {
     throw hookFailure("INVALID_RELAY_ENV", "Invalid relay environment overrides.");
   }
@@ -175,7 +183,56 @@ function installedRelayCode(): string | null {
   return existsSync(entry) ? readRelayCodeDigest(entry) : null;
 }
 
-function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid: number | undefined, hostProcess: Readonly<{ pid: number; startToken: string }> | undefined, budget: HookBudget, relayId: string, relayEnv?: Readonly<Record<string, string | undefined>>, relayOwner?: SessionMessageHookOptions["relayOwner"]): void {
+/** One argument in CommandLineToArgvW form, the quoting libuv applies to spawn arguments. */
+function windowsArgument(value: string): string {
+  if (value && !/[\s"]/u.test(value)) return value;
+  return `"${value.replace(/(\\*)"/gu, "$1$1\\\"").replace(/(\\+)$/u, "$1$1")}"`;
+}
+
+/** Windows: starts node with these arguments through Start-Process without -NoNewWindow, i.e. ShellExecuteEx, so the
+ * process gets this process's environment and job but none of its handles. */
+function launchWithoutInheritedHandles(args: readonly string[], environment: NodeJS.ProcessEnv, timeoutMs: number,
+  done: (error: Error | null, pid?: number) => void): void {
+  // PowerShell also closes a single-quoted string at U+2018-U+201B.
+  const literal = (value: string) => `'${value.replace(/['\u2018\u2019\u201a\u201b]/gu, "$&$&")}'`;
+  const script = `$p = Start-Process -FilePath ${literal(process.execPath)} -ArgumentList ${literal(args.map(windowsArgument).join(" "))}`
+    + " -WindowStyle Hidden -PassThru; [Console]::Out.Write($p.Id)";
+  const powershell = `${process.env.SystemRoot ?? "C:\\Windows"}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`;
+  try {
+    // execFile accepts only an unsigned integer timeout, and 0 would mean no timeout.
+    execFile(powershell, ["-NoLogo", "-NoProfile", "-NonInteractive", "-EncodedCommand", Buffer.from(script, "utf16le").toString("base64")],
+      { env: environment, windowsHide: true, timeout: Math.max(1, Math.floor(timeoutMs)) }, (error, stdout) => {
+        const pid = Number(String(stdout).trim());
+        if (error) done(error);
+        else if (!Number.isSafeInteger(pid) || pid < 1) done(hookFailure("LAUNCHER_PID_MISSING", "The launcher reported no process."));
+        else done(null, pid);
+      });
+  } catch (error) {
+    done(error instanceof Error ? error : new Error(String(error)));
+  }
+}
+
+const RELAY_LAUNCHER_TIMEOUT_MS = 5_000;
+
+/** The launcher exits before this hook does, so the host sees its hook pipes close when the hook exits. */
+function launchRelayWithoutInheritedHandles(args: readonly string[], environment: NodeJS.ProcessEnv,
+  observation: ReturnType<typeof createRelaySpawnObservation>): void {
+  launchWithoutInheritedHandles(args, environment, RELAY_LAUNCHER_TIMEOUT_MS, (error, pid) => {
+    if (error) {
+      // An OS start code or a launcher reason stays as observed; a launcher exit or timeout gets a fixed reason.
+      const { code, signal } = error as { code?: unknown; signal?: unknown };
+      reportHookFailure("relay-start", typeof code === "string" || hookFailureReason(error) ? error
+        : retainHookFailureCause(hookFailure("RELAY_LAUNCHER_FAILED", "The relay launcher reported no relay process."), error),
+        { exitCode: typeof code === "number" ? code : null, signal: typeof signal === "string" ? signal : null });
+      observation?.failed();
+      return;
+    }
+    observation?.returned(pid);
+    observation?.spawned();
+  });
+}
+
+function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid: number | undefined, hostProcess: Readonly<{ pid: number; startToken: string }> | undefined, budget: HookBudget, relayId: string, relayEnv?: Readonly<Record<string, string | undefined>>, relayOwner?: SessionMessageHookOptions["relayOwner"], isolateHandles = false): void {
   remainingBudget(budget);
   const relayPath = fileURLToPath(new URL("./session-message-relay.mjs", import.meta.url));
   // D0011: the relay process records its own abnormal end; this hook may exit before the relay does.
@@ -192,7 +249,7 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
   const observation = createRelaySpawnObservation(transport, environment, Boolean(budget),
     error => { reportHookFailure("relay-observation", error); });
   if (budget && observation) process.once("exit", () => observation.flush());
-  const child = spawn(process.execPath, [
+  const relayArgs = [
     "--import", relayGuard,
     relayPath,
     "--host", host,
@@ -203,7 +260,12 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     "--relay-id", relayId,
     ...(hostAliveAt ? ["--host-alive-at", hostAliveAt] : []),
     ...(startToken ? ["--parent-start-token", startToken] : []),
-  ], {
+  ];
+  if (isolateHandles && !relayOwner && process.platform === "win32") {
+    launchRelayWithoutInheritedHandles(relayArgs, environment, observation);
+    return;
+  }
+  const child = spawn(process.execPath, relayArgs, {
     detached: !relayOwner,
     windowsHide: true,
     stdio: "ignore",
@@ -393,7 +455,8 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       }
       if (result.instanceId !== expectedInstance || !result.relayId || !RELAY_ID.test(result.relayId)) throw hookFailure("INVALID_STARTUP_GRANT", "Invalid relay startup grant.");
       remainingBudget(budget);
-      startRelay(host, sessionId, result.instanceId, transport, explicitHostPid, hostProcess, budget, result.relayId, options.relayEnv, adapted.lifecycle === "start" ? options.relayOwner : undefined);
+      startRelay(host, sessionId, result.instanceId, transport, explicitHostPid, hostProcess, budget, result.relayId, options.relayEnv, adapted.lifecycle === "start" ? options.relayOwner : undefined,
+        options.isolateDetachedHandles === true);
     } catch (error) {
       reportHookFailure("ensure-relay", error); // Never retry or fall back after an uncertain grant.
     }
@@ -441,7 +504,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       return {}; // No relay can start without a confirmed presence response.
     }
     remainingBudget(budget);
-    startRelay(host, sessionId, instanceId, transport, explicitHostPid, hostProcess, budget, relayId, options.relayEnv, options.relayOwner);
+    startRelay(host, sessionId, instanceId, transport, explicitHostPid, hostProcess, budget, relayId, options.relayEnv, options.relayOwner, options.isolateDetachedHandles === true);
     return {};
   }
   if (adapted.lifecycle === "end") {
@@ -548,7 +611,8 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         if (grant.reason !== "RELAY_ALIVE") relayNotStarted("RELAY_SPAWN_NOT_GRANTED", { grantReason: typeof grant.reason === "string" && /^[A-Z_]{1,64}$/u.test(grant.reason) ? grant.reason : "UNREPORTED" });
         return;
       }
-      startRelay(host, sessionId, recovery.instanceId, profile.transport, explicitHostPid, undefined, budget, grant.relayId, options.relayEnv);
+      startRelay(host, sessionId, recovery.instanceId, profile.transport, explicitHostPid, undefined, budget, grant.relayId, options.relayEnv, undefined,
+        options.isolateDetachedHandles === true);
     } catch (error) { reportHookFailure("recovery", error); }
   };
   const limits = { target, maxMessages: HOST_CLAIM_MAX_MESSAGES, maxBodyChars: HOST_CLAIM_MAX_BODY_CHARS };
@@ -640,7 +704,8 @@ if (isHookEntry(import.meta.url, "session-message-hook")) {
     const hostPid = Number.parseInt(hostPidIndex >= 0 ? process.argv[hostPidIndex + 1] ?? "" : "", 10);
     try {
       const host = resolveHookHost(process.argv.slice(2), "codex");
-      void runSessionMessageHookOutcome(host, raw, Number.isInteger(hostPid) ? hostPid : undefined)
+      // This entry is the Codex hook command; Codex runs it through PowerShell on Windows (see isolateDetachedHandles).
+      void runSessionMessageHookOutcome(host, raw, Number.isInteger(hostPid) ? hostPid : undefined, { isolateDetachedHandles: true })
         .then((outcome) => {
           // The typed outcome already reported its failed phase and reason; public exit remains fail-open.
           if (!outcome.ok) return;
