@@ -21,6 +21,9 @@ const status = (row) => appendFileSync(path.join(out, "status.jsonl"), JSON.stri
 const P_MAIN = "This is an automated metadata capture test; follow exactly. 1) Call the MCP tool probe (server capture) with label main-1. "
   + "2) Then, in ONE assistant message, issue two probe calls in parallel with labels par-a and par-b. "
   + "3) Then start exactly one subagent and tell it to call the probe tool with label sub-1; wait for it to finish. 4) Reply DONE.";
+const P_NESTED = "Automated metadata capture test; follow exactly. 1) Call the MCP tool probe (server capture) with label nest-0. "
+  + "2) Start exactly one subagent A. Tell A: call the probe tool with label nest-1, then start exactly one subagent B of your own and tell B "
+  + "to call the probe tool with label nest-2; wait for B. 3) Wait for A to finish. 4) Reply DONE.";
 const P_ONE = (label) => `Automated capture test. Call the MCP tool probe (server capture) once with label ${label}, then reply DONE.`;
 
 function codexArgs(label, tail) {
@@ -46,24 +49,25 @@ const threadFile = path.join(out, "thread-id");
 
 let argv; let stdinText = null;
 if (kase === "codex-main") argv = codexArgs("codex-main", [P_MAIN]);
+else if (kase === "codex-nested") argv = codexArgs("codex-nested", [P_NESTED]);
 else if (kase === "codex-resume") argv = codexArgs("codex-resume", ["resume", readFileSync(threadFile, "utf8").trim(), P_ONE("resume-1")]);
 else if (kase === "codex-fork") argv = codexArgs("codex-fork", ["fork", readFileSync(threadFile, "utf8").trim(), P_ONE("fork-1")]);
 else if (kase === "codex-features") argv = [...CMD.codex, "features", "list"];
-else if (kase === "claude-main") {
+else if (kase === "claude-main" || kase === "claude-nested") {
   const mcp = path.join(out, "mcp.json");
-  writeFileSync(mcp, JSON.stringify({ mcpServers: { capture: { command: "node", args: [recorder], env: { CAPTURE_DIR: fwd(out), CAPTURE_LABEL: "claude-main" } } } }));
+  writeFileSync(mcp, JSON.stringify({ mcpServers: { capture: { command: "node", args: [recorder], env: { CAPTURE_DIR: fwd(out), CAPTURE_LABEL: kase } } } }));
   const settings = path.join(out, "settings.json");
   writeFileSync(settings, JSON.stringify({ hooks: { PreToolUse: [{ matcher: "^mcp__capture__.*$", hooks: [{ type: "command", command: "node", args: [hook, `--dir=${fwd(out)}`] }] }] } }));
   argv = [...CMD.claude, "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose",
     "--mcp-config", mcp, "--strict-mcp-config", "--settings", settings, "--dangerously-skip-permissions"];
-  stdinText = JSON.stringify({ type: "user", message: { role: "user", content: P_MAIN.replace("start exactly one subagent", "use the Agent tool to start exactly one general-purpose subagent") } }) + "\n";
-} else if (kase === "agy-main" || kase === "agy-resume") {
+  stdinText = JSON.stringify({ type: "user", message: { role: "user", content: (kase === "claude-main" ? P_MAIN : P_NESTED).replaceAll("start exactly one subagent", "use the Agent tool to start exactly one general-purpose subagent") } }) + "\n";
+} else if (kase === "agy-main" || kase === "agy-resume" || kase === "agy-nested") {
   // agy 1.4.12 reads MCP servers from its global config (`agy mcp add`, done by the operator) and
   // PreToolUse hooks from <workspace>/.agents/hooks.json; the hook must answer {"decision":"allow"}.
   mkdirSync(path.join(work, ".agents"), { recursive: true });
   writeFileSync(path.join(work, ".agents", "hooks.json"), JSON.stringify({ capture: { PreToolUse: [{ matcher: ".*",
     hooks: [{ type: "command", command: `node ${hook} --agy --dir=${fwd(out)}` }] }] } }));
-  argv = [...CMD.agy, "-p", kase === "agy-main" ? P_MAIN : P_ONE("resume-1"), "--output-format", "stream-json",
+  argv = [...CMD.agy, "-p", kase === "agy-main" ? P_MAIN : kase === "agy-nested" ? P_NESTED : P_ONE("resume-1"), "--output-format", "stream-json",
     "--dangerously-skip-permissions", "--print-timeout", "420s", ...(kase === "agy-resume" ? ["--continue"] : [])];
 } else throw new Error(`unknown case ${kase}`);
 
