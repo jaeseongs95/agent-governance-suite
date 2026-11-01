@@ -410,6 +410,35 @@ function invalid(message: string, details?: Record<string, unknown>): WorkflowCo
   return new WorkflowContractError("BINDING_INVALID", message, details);
 }
 
+/** 기존 거절 뒤 현재 정책의 사실만 진단하며, 발급 당시 원인은 추정하지 않는다. */
+function qualificationRejectionReason(
+  adapter: HostExecutionAdapter,
+  value: Record<string, unknown>,
+  capability: ResolvedModelCapabilityV1,
+  eligibility: Record<string, unknown> | null,
+): string {
+  const effort = value.reasoningEffort as ReasoningEffortV1;
+  if (capability.host === adapter.host && capability.rawModel === value.model
+    && MODEL_CLASS.includes(capability.modelClass) && nonEmpty(capability.provider)
+    && nonEmpty(capability.resolvedModel) && nonEmpty(capability.policyRevision)
+    && (adapter.policyRevision === undefined || adapter.policyRevision === capability.policyRevision)
+    && Array.isArray(capability.supportedEfforts) && capability.supportedEfforts.every(isReasoningEffort)
+    && (capability.minimumReasoningEffort === null || isReasoningEffort(capability.minimumReasoningEffort))) {
+    if (!capability.supportedEfforts.includes(effort)) return "CURRENT_POLICY_EFFORT_UNSUPPORTED";
+    if (capability.minimumReasoningEffort
+      && REASONING_EFFORT.indexOf(effort) < REASONING_EFFORT.indexOf(capability.minimumReasoningEffort)) {
+      return "CURRENT_POLICY_EFFORT_BELOW_MINIMUM";
+    }
+  }
+  if (!eligibility) return "SIGNED_QUALIFICATION_SNAPSHOT_MISSING";
+  if (eligibility.policyRevision !== capability.policyRevision
+    || !nonEmpty(value.policyRevision) || value.policyRevision !== capability.policyRevision
+    || (adapter.policyRevision !== undefined && adapter.policyRevision !== capability.policyRevision)) {
+    return "QUALIFICATION_POLICY_REVISION_MISMATCH";
+  }
+  return "SIGNED_QUALIFICATION_MISMATCH";
+}
+
 function verifyToken(store: WorkflowStore, adapter: HostExecutionAdapter, token: string): {
   payload: HostAttestationPayloadV2;
   capability: ResolvedModelCapabilityV1;
@@ -468,10 +497,14 @@ function verifyToken(store: WorkflowStore, adapter: HostExecutionAdapter, token:
     || !nonEmpty(capability.resolvedModel) || !nonEmpty(capability.policyRevision)
     || !Array.isArray(capability.supportedEfforts) || !capability.supportedEfforts.every(isReasoningEffort)
     || (capability.minimumReasoningEffort !== null && !isReasoningEffort(capability.minimumReasoningEffort))) {
-    throw invalid("Host observation has no matching trusted execution capability and policy revision.");
+    throw invalid("Host observation has no matching trusted execution capability and policy revision.", {
+      reasonCode: qualificationRejectionReason(adapter, value, capability, eligibility),
+    });
   }
   if (!satisfiesModelEffortPolicy(capability, value.reasoningEffort as ReasoningEffortV1)) {
-    throw invalid("Host attestation token payload is not a supported observation for the configured adapter.");
+    throw invalid("Host attestation token payload is not a supported observation for the configured adapter.", {
+      reasonCode: qualificationRejectionReason(adapter, value, capability, eligibility),
+    });
   }
   return { payload: value as unknown as HostAttestationPayloadV2, capability };
 }

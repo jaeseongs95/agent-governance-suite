@@ -137,6 +137,78 @@ it("AGS-D-0091 describes only the observed missing signed call without claiming 
   expect(String(provider.diagnose().connection)).not.toContain("Enable");
 });
 
+describe("AGS-D-0091 서명 관측의 현재 정책 거절 원인", () => {
+  function fixture(overrides: Partial<ResolvedModelCapabilityV1> = {}, effort: "medium" | "high" = "high") {
+    let capability: ResolvedModelCapabilityV1 = {
+      host: adapter.host, provider: "d0091-provider", rawModel: model, resolvedModel: model,
+      modelClass: "deep", minimumReasoningEffort: "high", supportedEfforts: ["medium", "high"],
+      aliasUsed: false, policyRevision: "d0091-r1", provenance: "d0091-host-owned", ...overrides,
+    };
+    const resolve = vi.fn(() => capability);
+    const selected: HostExecutionAdapter = { ...adapter, resolveModel: resolve };
+    const store = new InMemoryWorkflowStore();
+    const token = issueHostAttestation(store, selected, { tool: "plan_workflow", input: clean, model,
+      reasoningEffort: effort, actorId: hostActorId(adapter.host, sessionId), sessionId,
+      turnId: "d0091-turn", toolUseId: "d0091-call" });
+    expect(token).toEqual(expect.any(String));
+    const provider = new HostAttestationProvider(store, selected);
+    resolve.mockClear();
+    return { token: token!, provider, resolve,
+      update: (patch: Partial<ResolvedModelCapabilityV1>) => { capability = { ...capability, ...patch }; } };
+  }
+
+  function refuse(f: ReturnType<typeof fixture>, token = f.token): unknown {
+    let failure: unknown;
+    try {
+      f.provider.run("plan_workflow", { ...clean, [HOST_ATTESTATION_FIELD]: token }, () =>
+        f.provider.observe({ phase: "bootstrap", taskId: clean.taskId, runId: null, stageId: null, revision: null }));
+    } catch (error) { failure = error; }
+    expect(f.provider.lastObservedCapability()).toBeNull();
+    return failure;
+  }
+
+  it.each([
+    { label: "미지원 effort", supportedEfforts: ["high"] as const, reasonCode: "CURRENT_POLICY_EFFORT_UNSUPPORTED" },
+    { label: "최소값 미달", supportedEfforts: ["medium", "high"] as const, reasonCode: "CURRENT_POLICY_EFFORT_BELOW_MINIMUM" },
+  ])("$label 원인을 현재 정책으로 구분하고 자격을 부여하지 않는다", ({ supportedEfforts, reasonCode }) => {
+    const f = fixture({ supportedEfforts }, "medium");
+    expect(JSON.parse(Buffer.from(f.token.split(".")[1]!, "base64url").toString("utf8")))
+      .toMatchObject({ eligibility: null });
+    expect(refuse(f)).toMatchObject({ code: "BINDING_INVALID",
+      message: "Host observation has no matching trusted execution capability and policy revision.", details: { reasonCode } });
+    expect(f.resolve).toHaveBeenCalledTimes(1);
+  });
+
+  it("현재 정책이 적합해져도 발급 시 null 자격을 승격하거나 과거 원인을 추정하지 않는다", () => {
+    const f = fixture({ supportedEfforts: [] });
+    expect(JSON.parse(Buffer.from(f.token.split(".")[1]!, "base64url").toString("utf8")))
+      .toMatchObject({ eligibility: null });
+    f.update({ supportedEfforts: ["high"] });
+    expect(refuse(f)).toMatchObject({ code: "BINDING_INVALID",
+      details: { reasonCode: "SIGNED_QUALIFICATION_SNAPSHOT_MISSING" } });
+    expect(f.resolve).toHaveBeenCalledTimes(1);
+  });
+
+  it("revision과 기타 자격 불일치를 거절하며 위조 서명에는 정책 원인을 노출하지 않는다", () => {
+    const f = fixture();
+    f.update({ policyRevision: "d0091-r2" });
+    expect(refuse(f)).toMatchObject({ code: "BINDING_INVALID",
+      details: { reasonCode: "QUALIFICATION_POLICY_REVISION_MISMATCH" } });
+    expect(f.resolve).toHaveBeenCalledTimes(1);
+    f.update({ policyRevision: "d0091-r1", provider: "d0091-other-provider" });
+    expect(refuse(f)).toMatchObject({ code: "BINDING_INVALID",
+      details: { reasonCode: "SIGNED_QUALIFICATION_MISMATCH" } });
+    f.update({ host: "d0091-other-host", supportedEfforts: [] });
+    expect(refuse(f)).toMatchObject({ code: "BINDING_INVALID",
+      details: { reasonCode: "SIGNED_QUALIFICATION_MISMATCH" } });
+    f.resolve.mockClear();
+    const forged = refuse(f, `${f.token}tampered`);
+    expect(forged).toMatchObject({ code: "BINDING_INVALID", message: "Host attestation token signature is invalid." });
+    expect(forged).not.toHaveProperty("details.reasonCode");
+    expect(f.resolve).not.toHaveBeenCalled();
+  });
+});
+
 it("AGS-D-0185 reuses the capability that was verified instead of resolving it again for diagnostics", () => {
   const capability: ResolvedModelCapabilityV1 = {
     host: adapter.host, provider: "al05-provider", rawModel: model, resolvedModel: model,
