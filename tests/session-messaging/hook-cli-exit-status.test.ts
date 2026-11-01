@@ -26,8 +26,10 @@ vi.mock("node:fs", async (original) => {
 const entry = fileURLToPath(new URL("../../mcp-server/src/session-message-hook.ts", import.meta.url));
 const boardEntry = fileURLToPath(new URL("../../mcp-server/src/session-board-hook.ts", import.meta.url));
 const stop = JSON.stringify({ hook_event_name: "Stop", session_id: "cli-target" });
-const bindable = JSON.stringify({ hook_event_name: "PreToolUse", session_id: "cli-target",
-  tool_name: "mcp__agent_governance_suite__prepare_session_message", tool_input: { schemaVersion: "1.0.0", marker: "cli-secret-marker" } });
+// AGS tools pass through this hook unchanged; the Codex native wait is a before-tool event that still has output.
+const peerWait = JSON.stringify({ hook_event_name: "PreToolUse", session_id: "cli-target",
+  tool_name: "mcp__codex_app__wait_threads", tool_input: { targets: [{ threadId: "cli-peer" }], marker: "cli-secret-marker" } });
+const peerWaitDecision = { action: "bounded", reason: "peer-unconfirmed", transmission: "unknown", resume: "unknown", guidance: "cli-peer-wait-guidance" };
 
 const originalArgv = process.argv;
 const originalExitCode = process.exitCode;
@@ -116,20 +118,23 @@ it.each([
 });
 
 it("writes a successful hook output once and leaves the exit status unset", async () => {
-  await runCli(bindable);
+  f.request.mockResolvedValueOnce(peerWaitDecision);
+  await runCli(peerWait, ["--host=codex"]);
   await vi.waitFor(() => expect(written).toHaveLength(1));
   await settled();
   const output = JSON.parse(written[0]!);
-  expect(output).toMatchObject({ hookSpecificOutput: {
-    updatedInput: { _sessionBinding: { host: "claude-code", sessionId: "cli-target" } } } });
+  expect(f.request).toHaveBeenCalledWith("peer-wait", expect.objectContaining({ sender: { host: "codex", sessionId: "cli-target" } }), undefined, expect.anything());
+  expect(output).toMatchObject({ hookSpecificOutput: { additionalContext: "cli-peer-wait-guidance" } });
   expect(output.hookSpecificOutput).not.toHaveProperty("permissionDecision");
+  expect(output.hookSpecificOutput).not.toHaveProperty("updatedInput");
   expect(process.exitCode).toBeUndefined();
   expect(failures()).toEqual([]);
 });
 
 it("retains the stdout failure diagnostic and fail-open exit 0", async () => {
   stdoutError = Object.assign(new Error("private-stdout-message"), { code: "EPIPE" });
-  await runCli(bindable);
+  f.request.mockResolvedValueOnce(peerWaitDecision);
+  await runCli(peerWait, ["--host=codex"]);
   await vi.waitFor(() => expect(failures()).toHaveLength(1));
   expect(process.exitCode).toBeUndefined();
   expect(failures()).toEqual([expect.objectContaining({ phase: "stdout", reason: "EPIPE" })]);

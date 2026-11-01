@@ -9,20 +9,7 @@ vi.mock("../../mcp-server/src/session-message-client.js", async (original) => ({
 }));
 
 import { runSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
-import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
-
-// Explicit fake core adapter, not native Codex identity evidence.
-const syntheticHost = "synthetic-al03-owned-root";
-registerHookHostAdapter(syntheticHost, {
-  deliveryProfile: () => ({ transport: "claude-inbox", capabilities: { supportedInjection: [], idleWake: "none" }, blocksEmptyWakePrompt: false }),
-  processPid: () => undefined,
-  ownsTool: name => isGovernanceHookTool("codex", name),
-  adaptInput: (payload, host) => {
-    const mapped = adaptHostInput(payload, "codex");
-    return { ...mapped, observation: { ...mapped.observation, host,
-      actor: { role: "root", basis: "observed", reasonCode: "SYNTHETIC_AL03_ROOT" } } };
-  },
-});
+import { registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 
 registerHookHostAdapter("al03-delivery-only", {
   deliveryProfile: () => ({ transport: "claude-inbox", capabilities: { supportedInjection: [], idleWake: "none" }, blocksEmptyWakePrompt: false }),
@@ -42,24 +29,10 @@ describe("AGS-D-0019/0020/0021 adapter-owned message tool boundary", () => {
     expect(await runSessionMessageHook("codex", JSON.stringify({...pre, tool_name, agent_id: ""}))).toBe("");
     expect(f.request).not.toHaveBeenCalled();
   });
-  it.each([undefined, "child"])("denies a main-session operation for an unknown or subagent actor: %s", async (agentId) => {
-    const payload = {...pre, tool_name: "mcp__agent_governance_suite__send_session_message", ...(agentId === undefined ? {} : {agent_id: agentId})};
-    const output = JSON.parse(await runSessionMessageHook("gemini", JSON.stringify(payload)));
-    expect(output.hookSpecificOutput.permissionDecision).toBe("deny");
-    expect(output.hookSpecificOutput.updatedInput).toBeUndefined(); expect(f.request).not.toHaveBeenCalled();
-  });
-  it("binds an explicit synthetic root without skipping the host permission decision", async () => {
-    const output = JSON.parse(await runSessionMessageHook(syntheticHost, JSON.stringify({...pre,
-      tool_name: "mcp__agent_governance_suite__send_session_message"})));
-    expect(output.hookSpecificOutput.permissionDecision).toBeUndefined();
-    expect(output.hookSpecificOutput.updatedInput).toEqual({...toolInput, _sessionBinding: {host: syntheticHost, sessionId: "al03-tool-session"}});
-    expect(f.request).not.toHaveBeenCalled();
-  });
-  it("binds marker-free native Codex as inferred root while child blocking is deferred", async () => {
-    const output = JSON.parse(await runSessionMessageHook("codex", JSON.stringify({...pre,
-      tool_name: "mcp__agent_governance_suite__send_session_message"})));
-    expect(output.hookSpecificOutput.permissionDecision).toBeUndefined();
-    expect(output.hookSpecificOutput.updatedInput).toEqual({...toolInput, _sessionBinding: {host: "codex", sessionId: "al03-tool-session"}});
+  // The server identifies the caller from host call metadata, so the hook neither rewrites nor decides AGS tool calls.
+  it("passes a marker-free native Codex AGS tool call through unchanged without a broker request", async () => {
+    expect(await runSessionMessageHook("codex", JSON.stringify({...pre,
+      tool_name: "mcp__agent_governance_suite__send_session_message"}))).toBe("");
     expect(f.request).not.toHaveBeenCalled();
   });
   it("requires an explicit input adapter before a delivery-only host can issue a binding", async () => {

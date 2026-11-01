@@ -1,23 +1,19 @@
-import { createHash, createHmac } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ReasoningEffortV1, TaskEnvelopeV1 } from "../../contracts/types.js";
-import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
+import type { TaskEnvelopeV1 } from "../../contracts/types.js";
 import {
-  HOST_ATTESTATION_FIELD, HostAttestationProvider, hostActorId, issueHostAttestation,
-  resolveAdapterModelCapability, type HostExecutionAdapter, type ResolvedModelCapabilityV1,
+  HostAttestationProvider, resolveAdapterModelCapability, type HostExecutionAdapter, type ResolvedModelCapabilityV1,
 } from "../../mcp-server/src/host-attestation.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
+import { rootCaller } from "../helpers/caller.js";
 
-// Proposal only: copy into the integrated candidate before QA. Actual issuer,
-// verifier, workflow gates and in-memory claim store; fake trusted adapter input.
+// Actual provider, workflow gates and in-memory claim store; fake trusted adapter input and a host-observed caller.
 // This is not native/default registered producer new-name positive evidence.
 const NOW = Date.parse("2026-10-27T00:00:00.000Z");
 const HOST = "owned-observation-host", SESSION = "owned-session", MODEL = "opaque-approved-model";
-const KEY = Buffer.alloc(32, 47);
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(NOW); });
 afterEach(() => vi.useRealTimers());
@@ -47,46 +43,34 @@ function modern(declaredRevision = true) {
 }
 function fixture(adapter: HostExecutionAdapter) {
   const store = new InMemoryWorkflowStore();
-  // Owned, deterministic real signing key. No operational DB/key/native state is read.
-  store.getOrCreateSecret("host_attestation_key_v1", () => KEY.toString("base64url"));
-  const provider = new HostAttestationProvider(store, adapter), validator = new ContractValidator();
+  const provider = new HostAttestationProvider(adapter), validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
   const args = { schemaVersion: "1.0.0", taskEnvelope: task() };
-  const observation = { tool: "plan_workflow", input: args, model: MODEL, reasoningEffort: "high" as ReasoningEffortV1,
-    actorId: hostActorId(HOST, SESSION), sessionId: SESSION, turnId: "owned-turn", toolUseId: "owned-call", now: new Date(NOW) };
-  return { provider, args, observation,
-    issue(model = MODEL) { return issueHostAttestation(store, adapter, { ...observation, model })!; },
-    run(token: string) { return provider.run("plan_workflow", { ...args, [HOST_ATTESTATION_FIELD]: token }, clean => service.planWorkflow(clean, true)); },
+  let sequence = 0;
+  return { provider, args,
+    /** One host call (a fresh call ID unless given) whose observed execution is `model` at high effort. */
+    run(model = MODEL, callId = `owned-call-${++sequence}`) {
+      const caller = rootCaller(HOST, SESSION, { callId, execution: { model, effort: "high", turnId: "owned-turn", provenance: "owned-observation" } });
+      return provider.run("plan_workflow", caller, () => service.planWorkflow(args, true));
+    },
   };
 }
-function decoded(token: string): Record<string, unknown> {
-  expect(token).toMatch(/^aghs2\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/u);
-  return JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8")) as Record<string, unknown>;
-}
-function v1Fixture(args: ReturnType<typeof fixture>["args"], capability: ResolvedModelCapabilityV1,
-  patch: Record<string, unknown> = {}): string {
-  // Frozen v1 wire contract from the before source; not the new issuer or a fake verifier.
-  const identity = (value: string) => createHash("sha256").update(value).digest("hex").slice(0, 24);
-  const scope = { host: HOST, session: identity(SESSION), agent: null, turn: identity("owned-turn"), call: identity("owned-call") };
-  const payload = { v: 1, ...scope, provider: capability.provider, tool: "plan_workflow", inputDigest: convergenceDigest(args),
-    phase: "bootstrap", taskId: args.taskEnvelope.taskId, runId: null, stageId: null, revision: null,
-    model: MODEL, resolvedModel: capability.resolvedModel, modelClass: capability.modelClass, reasoningEffort: "high",
-    policyRevision: capability.policyRevision, provenance: capability.provenance, actorId: hostActorId(HOST, SESSION),
-    observationId: createHash("sha256").update(JSON.stringify(scope)).digest("base64url"), observedAt: new Date(NOW).toISOString(),
-    expiresAt: new Date(NOW + 300_000).toISOString(), ...patch };
-  const body = `aghs1.${Buffer.from(JSON.stringify(payload)).toString("base64url")}`;
-  return `${body}.${createHmac("sha256", KEY).update(body).digest("base64url")}`;
+
+/** The modern adapter with its descriptor patched; the declared revision is fixed when given. */
+function patched(adapter: HostExecutionAdapter, patch: Partial<ResolvedModelCapabilityV1>, declaredRevision?: string): HostExecutionAdapter {
+  const resolveModel = adapter.resolveModel!;
+  return { host: adapter.host, modelClassForModel: adapter.modelClassForModel, ...(declaredRevision === undefined ? {} : { policyRevision: declaredRevision }),
+    resolveModel: (model: string) => { const resolved = resolveModel(model); return resolved && { ...resolved, ...patch }; } };
 }
 
-describe("C observation token eligibility controls", () => {
-  it("D0089: a legacy class callback signs the observation without eligibility; an explicit descriptor keeps the workflow positive (C-F1)", () => {
+describe("C call-time execution eligibility controls", () => {
+  it("D0089: a legacy class callback observes without eligibility; an explicit descriptor keeps the workflow positive (C-F1)", () => {
     // Before D0089 this adapter got all efforts and policy revision "1.0.0" synthesized from its class answer.
     const classify = vi.fn((model: string) => model === MODEL ? "deep" as const : null);
     const legacy: HostExecutionAdapter = { host: HOST, provider: "owned-provider", modelClassForModel: classify };
     expect(resolveAdapterModelCapability(legacy, MODEL)).toBeNull();
-    const f = fixture(legacy), token = f.issue();
-    expect(decoded(token)).toMatchObject({ model: MODEL, policyRevision: null, eligibility: null });
-    expect(f.run(token)).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "MISSING_MODEL_CAPABILITY" } } });
+    const f = fixture(legacy);
+    expect(f.run()).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "MISSING_MODEL_CAPABILITY" } } });
     expect(f.provider.lastObservedCapability()).toBeNull();
     expect(classify).not.toHaveBeenCalled();
     // The same opaque model name passes once the adapter states a trusted descriptor: the name itself is never the reason.
@@ -94,73 +78,52 @@ describe("C observation token eligibility controls", () => {
       resolveModel: (rawModel, provenance = `${HOST}:runtime`) => rawModel === MODEL ? { host: HOST, provider: "owned-provider", rawModel,
         resolvedModel: rawModel, modelClass: "deep", minimumReasoningEffort: null, supportedEfforts: ["high"], aliasUsed: false,
         policyRevision: "owned-r1", provenance } : null };
-    const g = fixture(described), accepted = g.issue();
-    expect(decoded(accepted)).toMatchObject({ policyRevision: "owned-r1", eligibility: { modelClass: "deep", policyRevision: "owned-r1" } });
-    expect(g.run(accepted)).toMatchObject({ ok: true });
+    const g = fixture(described);
+    expect(g.run()).toMatchObject({ ok: true });
     expect(g.provider.lastObservedCapability()).toMatchObject({ modelClass: "deep", supportedEfforts: ["high"], policyRevision: "owned-r1" });
   });
-  it("signs unsupported legacy observations without inventing eligibility or a revision", () => {
-    const f = fixture({ host: HOST, provider: "owned-provider", modelClassForModel: () => null }), token = f.issue("opaque-unsupported");
-    expect(decoded(token)).toMatchObject({ model: "opaque-unsupported", policyRevision: null, eligibility: null });
-    expect(f.run(token)).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
+  it("rejects unsupported legacy observations without inventing eligibility or a revision", () => {
+    const f = fixture({ host: HOST, provider: "owned-provider", modelClassForModel: () => null });
+    expect(f.run("opaque-unsupported")).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
     expect(f.provider.lastObservedCapability()).toBeNull();
   });
   it("does not invent a revision for a modern descriptor that supplies none", () => {
     const { adapter, state } = modern(false);
     state.value = { ...state.value, policyRevision: "" };
-    const f = fixture(adapter), token = f.issue();
-    expect(decoded(token).policyRevision).toBeNull();
-    expect(f.run(token)).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
-  });
-  it("rejects a valid signed v1 and permits the current v2 call", () => {
-    const { adapter, state } = modern(), f = fixture(adapter);
-    const v1 = v1Fixture(f.args, state.value);
-    expect(f.run(v1)).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
+    const f = fixture(adapter);
+    expect(f.run()).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "QUALIFICATION_POLICY_REVISION_MISMATCH" } } });
     expect(f.provider.lastObservedCapability()).toBeNull();
-    expect(f.run(f.issue())).toMatchObject({ ok: true });
   });
-  it("rejects forged v2 signatures and consumes a valid v2 observation only once", () => {
-    const { adapter } = modern(), f = fixture(adapter), token = f.issue();
-    const [prefix, body, signature] = token.split(".");
-    const changedSignature = (signature![0] === "A" ? "B" : "A") + signature!.slice(1);
-    expect(f.run(`${prefix}.${body}.${changedSignature}`)).toMatchObject({
-      ok: false, error: { code: "BINDING_INVALID", message: "Host attestation token signature is invalid." },
-    });
-    expect(f.run(token)).toMatchObject({ ok: true });
-    const replay = f.run(f.issue());
+  it.each([
+    { name: "a declared adapter revision that differs from the descriptor", patch: {}, declared: "owned-r0", reasonCode: "QUALIFICATION_POLICY_REVISION_MISMATCH" },
+    { name: "a descriptor for another host", patch: { host: "other-host" }, declared: undefined, reasonCode: "QUALIFICATION_CAPABILITY_MISMATCH" },
+    { name: "a descriptor for another raw model", patch: { rawModel: "other-model" }, declared: undefined, reasonCode: "QUALIFICATION_CAPABILITY_MISMATCH" },
+  ])("rejects $name", ({ patch, declared, reasonCode }) => {
+    const { adapter } = modern(false);
+    expect(fixture(patched(adapter, patch, declared)).run()).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode } } });
+    expect(fixture(patched(adapter, {})).run()).toMatchObject({ ok: true });
+  });
+  it("consumes the observation of one host call only once", () => {
+    const { adapter } = modern(), f = fixture(adapter);
+    expect(f.run(MODEL, "owned-call")).toMatchObject({ ok: true });
+    const replay = f.run(MODEL, "owned-call");
     expect(replay).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
     expect(replay.error?.message).toContain("already consumed");
+    expect(f.run(MODEL, "owned-next-call")).toMatchObject({ ok: true });
   });
-  it.each(["modelClass", "provider", "resolvedModel"] as const)("rejects same-revision signed snapshot drift: %s", field => {
-    const { adapter, state } = modern(), f = fixture(adapter), token = f.issue();
-    state.value = field === "modelClass" ? { ...state.value, modelClass: "frontier" }
-      : { ...state.value, [field]: "different-policy-value" };
-    const result = f.run(token);
-    expect(result).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
-    expect(result.error?.message).toContain("matching trusted execution capability");
-  });
-  it.each(["support", "minimum"] as const)("keeps issuer-time %s denial after current policy is relaxed", mode => {
-    const { adapter, state } = modern();
+  it.each(["support", "minimum"] as const)("enforces the call-time %s policy", mode => {
+    const { adapter, state } = modern(), f = fixture(adapter);
+    expect(f.run()).toMatchObject({ ok: true });
     state.value = { ...state.value, supportedEfforts: mode === "support" ? ["xhigh"] : ["high", "xhigh"],
       minimumReasoningEffort: mode === "minimum" ? "xhigh" : "high" };
-    const f = fixture(adapter), token = f.issue();
-    expect(decoded(token).eligibility).toBeNull();
-    state.value = { ...state.value, supportedEfforts: ["high", "xhigh"], minimumReasoningEffort: "high" };
-    expect(f.run(token)).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
+    expect(f.run()).toMatchObject({ ok: false, error: { code: "BINDING_INVALID",
+      details: { reasonCode: mode === "support" ? "CURRENT_POLICY_EFFORT_UNSUPPORTED" : "CURRENT_POLICY_EFFORT_BELOW_MINIMUM" } } });
   });
-  it.each(["support", "minimum"] as const)("enforces verifier-time %s after valid issuance", mode => {
-    const { adapter, state } = modern(), f = fixture(adapter), token = f.issue();
-    expect(decoded(token).eligibility).not.toBeNull();
-    state.value = { ...state.value, supportedEfforts: mode === "support" ? ["xhigh"] : ["high", "xhigh"],
-      minimumReasoningEffort: mode === "minimum" ? "xhigh" : "high" };
-    expect(f.run(token)).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
-  });
-  it.each([true, false])("preserves rotation for declared/descriptor-only revisions: declared=%s", declared => {
-    const { adapter, state } = modern(declared), f = fixture(adapter), stale = f.issue();
+  it.each([true, false])("qualifies under the rotated revision for declared/descriptor-only revisions: declared=%s", declared => {
+    const { adapter, state } = modern(declared), f = fixture(adapter);
+    expect(f.run()).toMatchObject({ ok: true });
     state.value = { ...state.value, policyRevision: "owned-r2" };
-    expect(f.run(stale)).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
-    const fresh = f.issue();
-    expect(decoded(fresh).policyRevision).toBe("owned-r2");
-    expect(f.run(fresh)).toMatchObject({ ok: true });
+    expect(f.run()).toMatchObject({ ok: true });
+    expect(f.provider.lastObservedCapability()?.policyRevision).toBe("owned-r2");
   });
 });

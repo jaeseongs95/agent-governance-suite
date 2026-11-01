@@ -1,16 +1,14 @@
 #!/usr/bin/env node
-// Claude Code launcher for the shared host attestation hook bundle.
-// The token is signed with a key in the Claude plugin's workflow database under
-// CLAUDE_PLUGIN_DATA, the same database the MCP server opens. Whenever no token
-// is issued, a token the caller put in the arguments is removed, so strict
-// orchestration fails closed with BINDING_REQUIRED instead of trusting it.
+// Claude Code launcher for the shared execution-observation hook bundle.
+// SessionStart and PostModelSwitch record the session model next to the Claude plugin's
+// workflow database under CLAUDE_PLUGIN_DATA. It never rewrites tool arguments: caller
+// identity and execution claims in arguments are refused by the MCP server itself.
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { types } from "node:util";
 
-const FIELD = "_hostAttestation";
 const LAUNCHER = "host-attestation-hook";
 
 /** Names the failed launcher stage with a bounded code; never messages, paths or input. */
@@ -33,34 +31,20 @@ try {
   process.exit(0);
 }
 
-function withoutCallerToken() {
-  try {
-    const input = JSON.parse(raw);
-    const toolInput = input?.tool_input;
-    if (!toolInput || typeof toolInput !== "object" || Array.isArray(toolInput)) return "";
-    if (!Object.prototype.hasOwnProperty.call(toolInput, FIELD)) return "";
-    const updatedInput = { ...toolInput };
-    delete updatedInput[FIELD];
-    return JSON.stringify({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput } });
-  } catch {
-    return "";
-  }
-}
-
 function finish(output) {
   if (output) process.stdout.write(output);
-  // Attestation is fail-closed on the server: never block the tool call on launcher failures.
+  // A missing session model leaves execution unobserved, which the server refuses: never block the host here.
   process.exit(0);
 }
 
 const dataDirectory = process.env.CLAUDE_PLUGIN_DATA?.trim();
-if (!dataDirectory) finish(withoutCallerToken());
+if (!dataDirectory) finish("");
 
 try {
   mkdirSync(dataDirectory, { recursive: true });
 } catch (cause) {
   reportLauncherFailure("data-directory", cause);
-  finish(withoutCallerToken());
+  finish("");
 }
 
 const hookPath = fileURLToPath(new URL("../mcp-server/dist/host-attestation-hook.mjs", import.meta.url));
@@ -78,4 +62,4 @@ const signal = typeof result.signal === "string" && /^[A-Z][A-Z0-9_]{0,63}$/u.te
 if (result.error) reportLauncherFailure("spawn", result.error, signal);
 else if (result.status !== 0) reportLauncherFailure("hook-exit", null, { status: Number.isInteger(result.status) ? result.status : null, ...signal });
 const output = result.status === 0 && !result.error && typeof result.stdout === "string" ? result.stdout : "";
-finish(output || withoutCallerToken());
+finish(output);

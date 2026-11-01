@@ -6,15 +6,6 @@
   "additionalProperties": false,
   "required": ["schemaVersion"],
   "properties": {
-    "schemaVersion": { "const": "1.0.0" },
-    "_sessionBinding": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["host", "sessionId"],
-      "properties": {
-        "host": { "type": "string", "minLength": 1 },
-        "sessionId": { "type": "string", "minLength": 1 }
-      }
-    }
+    "schemaVersion": { "const": "1.0.0" }
   }
 }

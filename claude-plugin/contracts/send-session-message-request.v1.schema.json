@@ -7,15 +7,6 @@
   "required": ["schemaVersion", "messageId"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
-    "messageId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" },
-    "_sessionBinding": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["host", "sessionId"],
-      "properties": {
-        "host": { "type": "string", "minLength": 1, "maxLength": 64 },
-        "sessionId": { "type": "string", "minLength": 1, "maxLength": 200 }
-      }
-    }
+    "messageId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" }
   }
 }

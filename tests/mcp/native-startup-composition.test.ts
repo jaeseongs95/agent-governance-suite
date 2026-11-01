@@ -57,7 +57,7 @@ const behaviors = new Map([[${JSON.stringify(customHost)}, behavior]]);
 ${startup}
 `, "utf8");
     const environment = Object.fromEntries(Object.entries({...process.env,
-      AGENT_GOVERNANCE_CLASSIFICATION_CONFIG: configPath, AGENT_GOVERNANCE_HOST_ATTESTATION: "",
+      AGENT_GOVERNANCE_CLASSIFICATION_CONFIG: configPath, AGENT_GOVERNANCE_HOST_ATTESTATION: "claude-code",
       SKILL_REGISTRY_PATH: path.join(root, "skills", "registry.json"), AGENT_GOVERNANCE_SHARED_STATE_DIR: directory,
       AGENT_GOVERNANCE_DB_PATH: path.join(directory, "workflow.sqlite3"),
       AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(directory, "continuity.sqlite3"),
@@ -84,11 +84,10 @@ ${startup}
         tool_name: "mcp__agent_governance_suite__get_skill_inventory", tool_input: {}, cwd: directory }),
     });
     observe("훅 완료");
-    const rootOutput = JSON.parse(issued) as { hookSpecificOutput: { permissionDecision?: string; updatedInput: Record<string, unknown> } };
-    expect(rootOutput.hookSpecificOutput).not.toHaveProperty("permissionDecision");
-    expect(rootOutput.hookSpecificOutput.updatedInput._sessionProof).toEqual(expect.any(String));
+    // The hook records the admission under the tool-use ID and prints nothing; the server claims it from _meta.
+    expect(issued).toBe("");
     observe("도구 호출 시작");
-    const reply = await client.callTool({name: "get_skill_inventory", arguments: rootOutput.hookSpecificOutput.updatedInput});
+    const reply = await client.callTool({name: "get_skill_inventory", arguments: {}, _meta: {"claudecode/toolUseId": "inventory-call"}});
     observe("도구 호출 완료");
       const text = (reply.content as Array<{type: string; text?: string}>).find(item => item.type === "text")!.text!;
       const result = JSON.parse(text) as {ok: boolean; data: {issues: Array<{code: string}>}};

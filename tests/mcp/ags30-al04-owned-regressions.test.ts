@@ -11,7 +11,7 @@ vi.mock("../../mcp-server/src/session-message-client.js", async original => ({
   ...await original<typeof import("../../mcp-server/src/session-message-client.js")>(), sessionMessageRequest: f.request,
 }));
 import "../../mcp-server/src/builtin-hook-host-adapters.js";
-import {adaptHostInput, hookAttestationKind, hostDeliveryProfile, isGovernanceHookTool, registerHookHostAdapter, type HookHostAdapter} from "../../mcp-server/src/host-input-adapter.js";
+import {adaptHostInput, hostDeliveryProfile, isGovernanceHookTool, registerHookHostAdapter, type HookHostAdapter} from "../../mcp-server/src/host-input-adapter.js";
 import {handleSessionBoardHook, runSessionBoardHook} from "../../mcp-server/src/session-board-hook.js";
 
 import type {ActorObservation} from "../../mcp-server/src/input-observation.js";
@@ -45,6 +45,7 @@ beforeEach(() => {
 });
 afterEach(() => {vi.restoreAllMocks();});
 
+// The board hook no longer handles AGS tools: the server writes the summary after verifying the caller.
 describe("AL04 board actor, namespace and host permission boundaries", () => {
   it.each([{}, {agent_id: null}, {agent_id: 42}])("D0019 keeps unknown actor %j from writing or consuming parent wakes", async actor => {
     expect(await runSessionBoardHook("gemini", JSON.stringify(tool(prefix + "list_session_status", actor)))).toBe("");
@@ -100,15 +101,5 @@ describe("AL04 explicit host adapter contracts", () => {
     });
     expect(isGovernanceHookTool(host, "owned:board")).toBe(true);
     expect(isGovernanceHookTool(host, prefix + "list_session_status")).toBe(false);
-  });
-  it("D0022 carries a bounded opaque strategy ID without choosing a builtin strategy", () => {
-    registerHookHostAdapter("al04-opaque-attestation", {deliveryProfile: delivery, processPid: () => undefined, attestationKind: "other.strategy:v1"});
-    expect(hookAttestationKind("al04-opaque-attestation")).toBe("other.strategy:v1");
-    expect(hookAttestationKind("al04-unregistered")).toBeUndefined();
-  });
-  it.each(["", "../strategy", "x".repeat(201)])("D0022 rejects a malformed strategy ID %s", kind => {
-    expect(() => registerHookHostAdapter("al04-invalid-strategy", {
-      deliveryProfile: delivery, processPid: () => undefined, attestationKind: kind,
-    })).toThrowError("Invalid hook host adapter.");
   });
 });

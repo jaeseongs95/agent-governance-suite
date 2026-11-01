@@ -10,6 +10,7 @@ import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { wakeMessage } from "../../mcp-server/src/session-message-client.js";
+import { rootCaller } from "../helpers/caller.js";
 
 const stores = new Set<SqliteContinuityStore>();
 const directories: string[] = [];
@@ -30,13 +31,12 @@ function createService(databasePath = ":memory:") {
   return new ContinuityService(store, new ContractValidator(), null, now);
 }
 
-function bound<T extends Record<string, unknown>>(service: ContinuityService, taskSession: string, tool: string, input: T) {
-  return { ...input, _continuityBinding: service.issueToolBinding(taskSession, tool, input) };
-}
+/** The host-observed root caller of a session; the service computes its continuity scope at call time. */
+const asRoot = (taskSession: string) => rootCaller("codex", taskSession);
 
 // 수동 시험 자료이며 모델의 자동 저장 동작에 대한 증거가 아니다.
 function checkpoint(service: ContinuityService, taskSession = session): ContinuitySnapshotV1 {
-  const input: Omit<CheckpointContextRequestV1, "_continuityBinding"> = {
+  const input: CheckpointContextRequestV1 = {
     schemaVersion: "1.0.0", requestId: `d0347-checkpoint-${taskSession}`, expectedRevision: 0, status: "active",
     core: {
       objective: `기존 목표 표식 ${taskSession}`,
@@ -45,7 +45,7 @@ function checkpoint(service: ContinuityService, taskSession = session): Continui
     },
     evidenceRefs: [],
   };
-  const result = service.checkpointContext(bound(service, taskSession, "checkpoint_context", input));
+  const result = service.checkpointContext(input, asRoot(taskSession));
   expect(result.ok).toBe(true);
   return result.data!;
 }
@@ -72,15 +72,15 @@ function expectCheckpointCue(text: string) {
 }
 
 function suppress(service: ContinuityService) {
-  expect(service.suppressContextRestore(bound(service, session, "suppress_context_restore", {
+  expect(service.suppressContextRestore({
     schemaVersion: "1.0.0", expectedEpoch: 1,
-  })).data?.suppressed).toBe(true);
+  }, asRoot(session)).data?.suppressed).toBe(true);
 }
 
 function purge(service: ContinuityService, snapshot: ContinuitySnapshotV1) {
-  expect(service.purgeDirectContext(bound(service, session, "purge_direct_context", {
+  expect(service.purgeDirectContext({
     schemaVersion: "1.0.0", requestId: "d0347-owned-purge", expectedEpoch: snapshot.epoch, expectedRevision: snapshot.revision,
-  })).data?.purged).toBe(true);
+  }, asRoot(session)).data?.purged).toBe(true);
 }
 
 describe("D0347 문맥을 보유한 입력 경계의 저장 유도", () => {
@@ -217,13 +217,13 @@ describe("D0347 저장 유도의 현재 세대 재검증", () => {
     const saved = checkpoint(first);
     first.store.close();
     const reopened = createService(databasePath);
-    const candidate = reopened.inspectContext(bound(reopened, session, "inspect_context", { schemaVersion: "1.0.0" })).data!;
+    const candidate = reopened.inspectContext({ schemaVersion: "1.0.0" }, asRoot(session)).data!;
     expect(candidate).toMatchObject({ decision: "DEFER", summary: { epoch: saved.epoch, revision: saved.revision, snapshotDigest: saved.snapshotDigest } });
     expect(JSON.stringify(candidate)).not.toContain(saved.core.objective);
-    const loaded = reopened.loadContext(bound(reopened, session, "load_context", {
+    const loaded = reopened.loadContext({
       schemaVersion: "1.0.0", candidateToken: candidate.restoreToken!,
       epoch: candidate.summary!.epoch, revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest,
-    }));
+    }, asRoot(session));
     expect(loaded.data).toEqual(saved);
   });
 });

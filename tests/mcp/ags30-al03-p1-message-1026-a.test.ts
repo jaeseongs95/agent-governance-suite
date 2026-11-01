@@ -44,8 +44,6 @@ const input = (event: string, extra: Record<string, unknown> = {}) => ({
   hook_event_name: event, agent_id: "payload-must-not-override-adapter", session_id: "forged-payload-session",
   kind: "unknown", ...extra,
 });
-const tool = (name: string) => input("PreToolUse", { kind: "tool-boundary", boundaryPhase: "before",
-  tool_name: "owned__" + name, tool_input: { _sessionBinding: { host: "forged", sessionId: "forged" } } });
 const messageInputs = [
   input("SessionStart", { lifecycle: "start" }), input("SessionEnd", { lifecycle: "end" }),
   input("UserPromptSubmit", { kind: "user-input" }),
@@ -93,29 +91,5 @@ describe("P1-ACTOR-1026-A message-only caller boundary", () => {
     expect(await runSessionMessageHook(hostFor(name), JSON.stringify(messageInputs[1]))).toBe("");
     expect(f.request).not.toHaveBeenCalled();
     expect(f.spawn).not.toHaveBeenCalled();
-  });
-
-  it.each(rejectedActors)("keeps the existing main-tool denial for %s without issuing a parent binding", async name => {
-    for (const operation of ["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status"]) {
-      const output = JSON.parse(await runSessionMessageHook(hostFor(name), JSON.stringify(tool(operation))));
-      expect(output.hookSpecificOutput).toMatchObject({ permissionDecision: "deny" });
-      expect(output.hookSpecificOutput).not.toHaveProperty("updatedInput");
-    }
-    expect(f.request).not.toHaveBeenCalled();
-  });
-
-  it.each(acceptedActors)("binds accepted synthetic %s identity while leaving host approval undecided", async name => {
-    const host = hostFor(name);
-    const output = JSON.parse(await runSessionMessageHook(host, JSON.stringify(tool("send_session_message"))));
-    expect(output.hookSpecificOutput).not.toHaveProperty("permissionDecision");
-    expect(output.hookSpecificOutput.updatedInput._sessionBinding).toMatchObject({ host, sessionId: "p1-parent-session" });
-    expect(f.request).not.toHaveBeenCalled();
-  });
-
-  it.each(rejectedActors)("denies collaboration validation for synthetic %s before issuing a binding", async name => {
-    const output = JSON.parse(await runSessionMessageHook(hostFor(name), JSON.stringify(tool("validate_collaboration_decision"))));
-    expect(output.hookSpecificOutput).toMatchObject({ permissionDecision: "deny" });
-    expect(output.hookSpecificOutput).not.toHaveProperty("updatedInput");
-    expect(f.request).not.toHaveBeenCalled();
   });
 });

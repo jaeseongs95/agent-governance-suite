@@ -4,15 +4,14 @@
   "title": "CheckpointContextRequest.v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "requestId", "expectedRevision", "status", "core", "evidenceRefs", "_continuityBinding"],
+  "required": ["schemaVersion", "requestId", "expectedRevision", "status", "core", "evidenceRefs"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "requestId": { "type": "string", "minLength": 1, "maxLength": 256 },
     "expectedRevision": { "type": "integer", "minimum": 0 },
     "status": { "enum": ["active", "paused", "completed"] },
     "core": { "$ref": "#/$defs/core" },
-    "evidenceRefs": { "type": "array", "items": { "$ref": "#/$defs/evidenceRef" }, "maxItems": 128 },
-    "_continuityBinding": { "type": "string", "minLength": 16 }
+    "evidenceRefs": { "type": "array", "items": { "$ref": "#/$defs/evidenceRef" }, "maxItems": 128 }
   },
   "$defs": {
     "boundedStrings": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 2000 }, "maxItems": 64 },

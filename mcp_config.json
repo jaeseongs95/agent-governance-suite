@@ -7,7 +7,7 @@
       ],
       "cwd": ".",
       "env": {
-        "AGENT_GOVERNANCE_HOST_ATTESTATION": "gemini"
+        "AGENT_GOVERNANCE_HOST_ATTESTATION": "antigravity"
       }
     }
   }

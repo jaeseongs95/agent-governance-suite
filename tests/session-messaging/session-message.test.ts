@@ -40,7 +40,7 @@ import { createMcpServer, serverInstructions, SESSION_MESSAGE_SERVER_INSTRUCTION
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "../mcp/version-fixtures.js";
-import { createSyntheticRootProofFixture } from "../mcp/synthetic-root-proof-client.js";
+import { callerMeta, metaIngress, rootCaller } from "../helpers/caller.js";
 
 
 const directories: string[] = [];
@@ -455,15 +455,16 @@ describe("in-process messaging and vendor-neutral adapter", () => {
     expect(deferred.idleWake).toBe("none");
   });
 
-  it("denies observed children before every session-bound message or collaboration call", async () => {
-    const denied = await handleSessionMessageHook({
+  // The server identifies the caller from host call metadata; a child acts for its root session (design 2.1).
+  it("leaves observed children's message and collaboration calls to the server without deciding or rewriting them", async () => {
+    const childSend = await handleSessionMessageHook({
       hook_event_name: "PreToolUse",
       session_id: "parent-session",
       agent_id: "subagent-1",
       tool_name: "mcp__agent_governance_suite__send_session_message",
-      tool_input: { body: "do not send" },
+      tool_input: { body: "child send" },
     }, "claude-code");
-    expect(denied).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny" } });
+    expect(childSend).toEqual({});
 
     const validation = await handleSessionMessageHook({
       hook_event_name: "PreToolUse",
@@ -472,8 +473,7 @@ describe("in-process messaging and vendor-neutral adapter", () => {
       tool_name: "mcp__agent_governance_suite__validate_collaboration_decision",
       tool_input: { _sessionBinding: { host: "forged", sessionId: "forged" } },
     }, "claude-code");
-    expect(validation).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
-    expect(validation).not.toHaveProperty("hookSpecificOutput.updatedInput");
+    expect(validation).toEqual({});
   });
 
   it("treats merged wake bells as internal only when every nonce is store-recognized", async () => {
@@ -1257,28 +1257,26 @@ describe("in-process messaging and vendor-neutral adapter", () => {
     }
   }, 30_000);
 
-  it("binds message tools to explicit synthetic root identity and denies unsupported native identity", async () => {
+  it("injects no binding into message tools for a synthetic root, a child or an unsupported native host", async () => {
     const output = await handleSessionMessageHook({
       hook_event_name: "PreToolUse",
       session_id: "third-party-session",
       tool_name: "mcp__agent_governance_suite__send_session_message",
       tool_input: { targetHost: "spark", targetSessionId: "s-1", body: "hello", _sessionBinding: { host: "forged", sessionId: "forged" } },
     }, syntheticRootHost);
-    expect(output).toMatchObject({ hookSpecificOutput: { updatedInput: { _sessionBinding: { host: syntheticRootHost, sessionId: "third-party-session" } } } });
-    expect((output.hookSpecificOutput as Record<string, unknown>).permissionDecision).toBeUndefined();
-    const denied = await handleSessionMessageHook({ hook_event_name: "PreToolUse", session_id: "third-party-session", agent_id: "",
+    // A self-supplied binding is left for the server to refuse as a reserved caller field.
+    expect(output).toEqual({});
+    const unsupported = await handleSessionMessageHook({ hook_event_name: "PreToolUse", session_id: "third-party-session", agent_id: "",
       tool_name: "mcp__agent_governance_suite__send_session_message", tool_input: {} }, "gemini");
-    expect(denied).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
-    expect(denied).not.toHaveProperty("hookSpecificOutput.updatedInput");
+    expect(unsupported).toEqual({});
     const child = await handleSessionMessageHook({ hook_event_name: "PreToolUse", session_id: "third-party-session", syntheticActor: "child",
       tool_name: "mcp__agent_governance_suite__send_session_message", tool_input: {} }, syntheticRootHost);
-    expect(child).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
+    expect(child).toEqual({});
   });
 });
 
 describe("session message MCP tools", () => {
   async function connect(directory: string) {
-    const rootProof = createSyntheticRootProofFixture();
     const validator = new ContractValidator();
     const updateStore = new InMemoryPluginUpdateStore();
     updateStore.putPluginUpdateState({
@@ -1288,28 +1286,27 @@ describe("session message MCP tools", () => {
       lastNotifiedAt: null, lastErrorCode: null,
     });
     const workflow = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-    const server = createMcpServer(workflow, new PluginUpdateService(updateStore), undefined, undefined, undefined, validator, "default", null, null, new SessionMessageService(directory), null, null, rootProof.proofs);
+    const server = createMcpServer(workflow, new PluginUpdateService(updateStore), undefined, undefined, undefined, validator, "default", null, null, new SessionMessageService(directory), null, null, metaIngress());
     const client = new Client({ name: "session-messages", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
     await client.connect(clientTransport);
     return Object.assign(client, {
       callAs(identity: { host: string; sessionId: string }, request: { name: string; arguments: Record<string, unknown> }) {
-        return client.callTool({ ...request, arguments: rootProof.argumentsFor(request.name, request.arguments, identity) });
+        return client.callTool({ ...request, _meta: callerMeta(identity) });
       },
     });
   }
 
-  const payload = (response: unknown) => JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: Record<string, unknown>; error: { code: string; message: string } | null };
+  const payload = (response: unknown) => JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: Record<string, unknown>; error: { code: string; message: string; details?: Record<string, unknown> | null } | null };
 
   it("reports an overlong Unicode body as INVALID_INPUT before storage access", async () => {
     const service = new SessionMessageService(stateDirectory());
     await expect(service.prepare({
-      _sessionBinding: { host: "fake-host", sessionId: "sender" },
       targetHost: "fake-host",
       targetSessionId: "recipient",
       body: "가".repeat(2048),
-    })).resolves.toMatchObject({ ok: false, error: { code: "INVALID_INPUT" } });
+    }, rootCaller("fake-host", "sender"))).resolves.toMatchObject({ ok: false, error: { code: "INVALID_INPUT" } });
   });
 
   it("reports stdin read failures directly without rewriting them into JSON syntax errors", async () => {
@@ -1339,12 +1336,13 @@ describe("session message MCP tools", () => {
       const sender = { host: "grok", sessionId: "grok-mcp" };
       const target = { host: "spark", sessionId: "spark-mcp" };
       const unbound = payload(await client.callTool({ name: "prepare_session_message", arguments: { schemaVersion: "1.0.0", targetHost: target.host, targetSessionId: target.sessionId, body: "hello" } }));
-      expect(unbound.error?.code).toBe("BINDING_REQUIRED");
+      expect(unbound.error).toMatchObject({ code: "BINDING_REQUIRED", details: { reasonCode: "CALLER_PROVENANCE_UNAVAILABLE" } });
 
-      const callerBinding = payload(await client.callTool({ name: "send_session_message", arguments: {
+      // Identity is host-owned: a binding in the arguments is refused even from an observed caller.
+      const callerBinding = payload(await client.callAs(target, { name: "send_session_message", arguments: {
         schemaVersion: "1.0.0", messageId: "caller-made-id", _sessionBinding: sender,
       } }));
-      expect(callerBinding).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
+      expect(callerBinding).toMatchObject({ ok: false, error: { code: "INVALID_INPUT", details: { reasonCode: "RESERVED_CALLER_FIELD", field: "_sessionBinding" } } });
       const legacy = payload(await client.callAs(sender, { name: "send_session_message", arguments: { schemaVersion: "1.0.0", targetHost: target.host, targetSessionId: target.sessionId, body: "hello", messageId: "caller-made-id" } }));
       expect(legacy).toMatchObject({ ok: false, error: { code: "INVALID_INPUT" } });
       expect(legacy.error?.message).toContain("prepare_session_message");

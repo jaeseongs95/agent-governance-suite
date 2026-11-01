@@ -197,7 +197,7 @@ const CLAUDE_LINEAGE_MAX_LINES = 4000;
  * Entries outside the window are not lineage evidence: a parent anchor there yields FORK_PARENT_NOT_FOUND.
  * A complete line that is not JSON means the host format changed, so no IDs are returned at all (D2).
  */
-function readClaudeLineage(transcriptPath: string, sessionId: string): LineageRead {
+export function readClaudeLineage(transcriptPath: string, sessionId: string): LineageRead {
   let descriptor: number | null = null;
   let content: string;
   try {
@@ -368,14 +368,12 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
   ["codex", {
     adaptInput: adaptCodexHookInput, ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", false),
-    processPid: (pid) => pid, attestationKind: "codex-rollout", peerWait: codexNativePeerWait,
-    // Codex ignores updatedInput unless permissionDecision is "allow" (hooks output_parser, 0.164.0).
-    rewriteDecision: "allow",
+    processPid: (pid) => pid, peerWait: codexNativePeerWait,
   }],
   ["claude-code", {
     adaptInput: adaptClaudeHookInput, ownsTool: ownsGovernanceTool,
     deliveryProfile: () => deliveryProfile("claude-inbox", false),
-    processPid: () => process.ppid, attestationKind: "claude-hook",
+    processPid: () => process.ppid,
   }],
   ["gemini", {
     adaptInput: adaptGeminiHookInput, ownsTool: ownsGovernanceTool,

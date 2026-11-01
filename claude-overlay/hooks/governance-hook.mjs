@@ -34,12 +34,14 @@ try {
   stage = "run";
   const outcome = await bundle.runGovernanceHook("claude-code", raw, environment);
   stage = "outcome";
-  if (!outcome || typeof outcome !== "object" || typeof outcome.ok !== "boolean" || typeof outcome.output !== "string" || !outcome.output.trim()) {
+  // An admitted call prints nothing; a refusal must carry its deny output.
+  if (!outcome || typeof outcome !== "object" || typeof outcome.ok !== "boolean" || typeof outcome.output !== "string"
+    || (!outcome.ok && !outcome.output.trim())) {
     throw Object.assign(new Error("Launcher outcome is invalid."), { code: "LAUNCHER_OUTCOME_INVALID" });
   }
   if (!outcome.ok) process.exitCode = 2;
   stage = "stdout";
-  writeSync(1, outcome.output);
+  if (outcome.output) writeSync(1, outcome.output);
 } catch (cause) {
   process.exitCode = 2;
   reportLauncherFailure(stage, cause);

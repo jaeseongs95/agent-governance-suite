@@ -3,19 +3,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const diagnostics = vi.hoisted(() => ({ write: vi.fn((fd: number, data: unknown) => { void fd; void data; return 0; }) }));
 vi.mock("node:fs", async (original) => ({ ...await original<typeof import("node:fs")>(), writeSync: diagnostics.write }));
 
+import type { CallerExecution } from "../../mcp-server/src/caller-identity.js";
 import {
-  HOST_ATTESTATION_FIELD,
   hostActorId,
-  hostIdentityDigest,
+  HostAttestationProvider,
   type HostExecutionAdapter,
 } from "../../mcp-server/src/host-attestation.js";
 import {
-  handleHostAttestationHook,
+  observeClaudeExecution,
   probeIssuingMessage,
   type SessionModelRecord,
 } from "../../mcp-server/src/host-attestation-hook.js";
-import { HOST_SKILL_OBSERVATION_FIELD } from "../../mcp-server/src/skill-classification/host-discovery-adapter.js";
-import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
+import { rootCaller } from "../helpers/caller.js";
 
 const SESSION = "d0179-partial-session";
 const CALL = "toolu_current_179";
@@ -72,27 +71,21 @@ const valueCompletions = [
 ] as const;
 
 function fixture() {
-  const store = new InMemoryWorkflowStore();
-  const key = vi.spyOn(store, "getOrCreateSecret");
   const cache = vi.fn((): SessionModelRecord | null => ({ model: MODEL, source: "session-start",
     observedAt: new Date(NOW.getTime() - 500).toISOString() }));
-  const clean = { taskId: "d0179-partial", marker: "private-argument-marker" };
   const input = { hook_event_name: "PreToolUse", session_id: SESSION, tool_use_id: CALL,
     transcript_path: "synthetic-only/d0179-partial.jsonl",
     tool_name: "mcp__agent_governance_suite__plan_workflow", effort: { level: "high" },
-    tool_input: { ...clean, [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged",
-      [HOST_SKILL_OBSERVATION_FIELD]: { forged: true } } };
-  return { store, key, cache, clean, input,
-    options: { adapter, maxWaitMs: 0, sleep: () => {}, now: () => NOW, readSessionModel: cache } };
+    tool_input: { taskId: "d0179-partial", marker: "private-argument-marker" } };
+  return { cache, input, options: { maxWaitMs: 0, sleep: () => {}, now: () => NOW, readSessionModel: cache } };
 }
 
-function updated(output: Record<string, unknown>): Record<string, unknown> {
-  return (output.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput;
-}
-function payload(output: Record<string, unknown>): Record<string, unknown> {
-  const token = updated(output)[HOST_ATTESTATION_FIELD];
-  expect(token).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
-  return JSON.parse(Buffer.from(String(token).split(".")[1]!, "base64url").toString("utf8")) as Record<string, unknown>;
+const incomplete = { unavailable: "CURRENT_CALL_INCOMPLETE" };
+/** The server's qualification of the observed execution, with the fixture's explicit capability. */
+function qualify(execution: CallerExecution) {
+  const provider = new HostAttestationProvider(adapter, () => NOW);
+  return provider.run("plan_workflow", rootCaller(adapter.host, SESSION, { callId: CALL, execution }), () =>
+    provider.observe({ phase: "bootstrap", taskId: "d0179-partial", runId: null, stageId: null, revision: null }));
 }
 
 beforeEach(() => { diagnostics.write.mockReset(); });
@@ -103,47 +96,39 @@ describe("AGS-D-0179 unfinished issuer identity", () => {
     issuer + '"type":"tool_use"},{"type":"tool_result","tool_use_id":"other"},{"type":"tool_use","id":"other"},{"type":"text","text":"\\q',
   ])("does not let later unrelated blocks erase an earlier unidentified issuer: %s", damaged => {
     const f = fixture();
-    try {
-      expect(probeIssuingMessage(damaged, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options,
-        readText: () => row("toolu_previous_179") + "\n" + damaged });
-      expect(output).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: f.clean } });
-      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).not.toHaveBeenCalled();
-    } finally { f.key.mockRestore(); }
+    expect(probeIssuingMessage(damaged, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
+    const output = observeClaudeExecution(f.input, { ...f.options,
+      readText: () => row("toolu_previous_179") + "\n" + damaged });
+    expect(output).toEqual(incomplete);
+    expect(f.cache).not.toHaveBeenCalled();
   });
 
   it("retains an unidentified issuer after text, tool-result and a complete other ID", () => {
     const f = fixture();
     const damaged = issuer + '"type":"text","text":"earlier"},{"type":"tool_result","tool_use_id":"other"},{"type":"tool_use","id":"other"},{"type":"tool_use","name":"\\q';
-    try {
-      expect(probeIssuingMessage(damaged, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, readText: () => damaged });
-      expect(updated(output)).toEqual(f.clean);
-      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).not.toHaveBeenCalled();
-    } finally { f.key.mockRestore(); }
+    expect(probeIssuingMessage(damaged, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
+    const output = observeClaudeExecution(f.input, { ...f.options, readText: () => damaged });
+    expect(output).toEqual(incomplete);
+    expect(f.cache).not.toHaveBeenCalled();
   });
 
   it("keeps absence when every preceding block is clearly unrelated to the current issuer", () => {
     const f = fixture();
     const unrelated = issuer + '"type":"tool_use","id":"other"},{"type":"tool_result","tool_use_id":"other"},{"type":"text","text":"\\q';
-    try {
-      expect(probeIssuingMessage(unrelated, CALL)).toEqual({ state: "absent" });
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options,
-        readText: () => row("toolu_previous_179") + "\n" + unrelated });
-      expect(payload(output)).toMatchObject({ model: MODEL, provenance: "claude-code:session-start" });
-      expect(f.cache).toHaveBeenCalledTimes(1); expect(f.key).toHaveBeenCalledTimes(1);
-    } finally { f.key.mockRestore(); }
+    expect(probeIssuingMessage(unrelated, CALL)).toEqual({ state: "absent" });
+    const output = observeClaudeExecution(f.input, { ...f.options,
+      readText: () => row("toolu_previous_179") + "\n" + unrelated });
+    expect(output).toMatchObject({ model: MODEL, provenance: "claude-code:session-start" });
+    expect(f.cache).toHaveBeenCalledTimes(1);
   });
 
   it.each([false, true])("keeps valid exact precedence over an unidentified earlier content block: %s", damagedFirst => {
     const f = fixture();
     const rows = [row(), issuer + '"type":"tool_use"},{"type":"text","text":"\\q'];
     if (damagedFirst) rows.reverse();
-    try {
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, readText: () => rows.join("\n") });
-      expect(payload(output)).toMatchObject({ model: MODEL, call: hostIdentityDigest(CALL), provenance: "claude-code:transcript-tool-use" });
-      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).toHaveBeenCalledTimes(1);
-    } finally { f.key.mockRestore(); }
+    const output = observeClaudeExecution(f.input, { ...f.options, readText: () => rows.join("\n") });
+    expect(output).toMatchObject({ model: MODEL, provenance: "claude-code:transcript-tool-use" });
+    expect(f.cache).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -157,13 +142,11 @@ describe("AGS-D-0179 unfinished issuer identity", () => {
     JSON.stringify({ type: "assistant", message: { content: [{ input: {}, type: "tool_use" }] } }),
   ])("keeps a possible issuer unknown independently of damaged field name or key order: %s", damaged => {
     const f = fixture();
-    try {
-      expect(probeIssuingMessage(damaged, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options,
-        readText: () => row("toolu_previous_179") + "\n" + damaged });
-      expect(output).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: f.clean } });
-      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).not.toHaveBeenCalled();
-    } finally { f.key.mockRestore(); }
+    expect(probeIssuingMessage(damaged, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
+    const output = observeClaudeExecution(f.input, { ...f.options,
+      readText: () => row("toolu_previous_179") + "\n" + damaged });
+    expect(output).toEqual(incomplete);
+    expect(f.cache).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -175,13 +158,11 @@ describe("AGS-D-0179 unfinished issuer identity", () => {
     '{"type":"assistant","extra":{"content":[{"name":"\\q',
   ])("retains proved non-issuers and unrelated structure without input-specific assumptions: %s", unrelated => {
     const f = fixture();
-    try {
-      expect(probeIssuingMessage(unrelated, CALL)).toEqual({ state: "absent" });
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options,
-        readText: () => row("toolu_previous_179") + "\n" + unrelated });
-      expect(payload(output)).toMatchObject({ model: MODEL, provenance: "claude-code:session-start" });
-      expect(f.cache).toHaveBeenCalledTimes(1); expect(f.key).toHaveBeenCalledTimes(1);
-    } finally { f.key.mockRestore(); }
+    expect(probeIssuingMessage(unrelated, CALL)).toEqual({ state: "absent" });
+    const output = observeClaudeExecution(f.input, { ...f.options,
+      readText: () => row("toolu_previous_179") + "\n" + unrelated });
+    expect(output).toMatchObject({ model: MODEL, provenance: "claude-code:session-start" });
+    expect(f.cache).toHaveBeenCalledTimes(1);
   });
 
   it.each([
@@ -194,13 +175,11 @@ describe("AGS-D-0179 unfinished issuer identity", () => {
   ])("does not turn unrecoverable issuer input into absent and sign from fallback: %s", damaged => {
     const f = fixture();
     let reads = 0;
-    try {
-      expect(probeIssuingMessage(damaged, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, maxWaitMs: 20, pollIntervalMs: 10,
-        readText: () => { reads++; return row("toolu_previous_179") + "\n" + damaged; } });
-      expect(output).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: f.clean } });
-      expect(reads).toBe(4); expect(f.cache).not.toHaveBeenCalled(); expect(f.key).not.toHaveBeenCalled();
-    } finally { f.key.mockRestore(); }
+    expect(probeIssuingMessage(damaged, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
+    const output = observeClaudeExecution(f.input, { ...f.options, maxWaitMs: 20, pollIntervalMs: 10,
+      readText: () => { reads++; return row("toolu_previous_179") + "\n" + damaged; } });
+    expect(output).toEqual(incomplete);
+    expect(reads).toBe(4); expect(f.cache).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -212,69 +191,53 @@ describe("AGS-D-0179 unfinished issuer identity", () => {
     issuer + '"type":"tool_use","id":"toolu_previous_179","input":{"flag":"\\q',
   ])("keeps proved non-current or unrelated damage eligible for fallback: %s", unrelated => {
     const f = fixture();
-    try {
-      expect(probeIssuingMessage(unrelated, CALL)).toEqual({ state: "absent" });
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options,
-        readText: () => row("toolu_previous_179") + "\n" + unrelated });
-      expect(payload(output)).toMatchObject({ model: MODEL, provenance: "claude-code:session-start" });
-      expect(f.cache).toHaveBeenCalledTimes(1); expect(f.key).toHaveBeenCalledTimes(1);
-    } finally { f.key.mockRestore(); }
+    expect(probeIssuingMessage(unrelated, CALL)).toEqual({ state: "absent" });
+    const output = observeClaudeExecution(f.input, { ...f.options,
+      readText: () => row("toolu_previous_179") + "\n" + unrelated });
+    expect(output).toMatchObject({ model: MODEL, provenance: "claude-code:session-start" });
+    expect(f.cache).toHaveBeenCalledTimes(1);
   });
 
   it.each([false, true])("keeps actual valid exact precedence over unrecoverable issuer input: %s", damagedFirst => {
     const f = fixture();
     const rows = [row(), issuer + '"type":"tool_use","input":{"flag":truX'];
     if (damagedFirst) rows.reverse();
-    try {
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, readText: () => rows.join("\n") });
-      expect(payload(output)).toMatchObject({ model: MODEL, call: hostIdentityDigest(CALL), provenance: "claude-code:transcript-tool-use" });
-      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).toHaveBeenCalledTimes(1);
-    } finally { f.key.mockRestore(); }
+    const output = observeClaudeExecution(f.input, { ...f.options, readText: () => rows.join("\n") });
+    expect(output).toMatchObject({ model: MODEL, provenance: "claude-code:transcript-tool-use" });
+    expect(f.cache).not.toHaveBeenCalled();
   });
 
   it.each(partials)("does not sign from older/session evidence while issuer identity is incomplete: %s", partial => {
     const f = fixture();
-    try {
-      expect(probeIssuingMessage(partial, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, readText: () => row("toolu_previous_179") + "\n" + partial });
-      expect(output).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: f.clean } });
-      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).not.toHaveBeenCalled();
-      const diagnostic = String(diagnostics.write.mock.calls[0]?.[1]);
-      expect(JSON.parse(diagnostic)).toMatchObject({ component: "host-attestation-hook", phase: "fallback", reason: "CURRENT_CALL_INCOMPLETE" });
-      for (const privateValue of [SESSION, CALL, MODEL, partial, "private-argument-marker", "aghs1.caller.forged", "synthetic-only"])
-        expect(diagnostic).not.toContain(privateValue);
-    } finally { f.key.mockRestore(); }
+    expect(probeIssuingMessage(partial, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
+    const output = observeClaudeExecution(f.input, { ...f.options, readText: () => row("toolu_previous_179") + "\n" + partial });
+    expect(output).toEqual(incomplete);
+    expect(f.cache).not.toHaveBeenCalled();
   });
 
   it.each(valuePartials)("does not confuse an unfinished input value before the ID with issuer absence: %s", partial => {
     const f = fixture();
     let reads = 0;
-    try {
-      expect(probeIssuingMessage(partial, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, maxWaitMs: 20, pollIntervalMs: 10,
-        readText: () => { reads++; return row("toolu_previous_179") + "\n" + partial; } });
-      expect(output).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: f.clean } });
-      expect(reads).toBe(4);
-      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).not.toHaveBeenCalled();
-    } finally { f.key.mockRestore(); }
+    expect(probeIssuingMessage(partial, CALL)).toEqual({ state: "indeterminate", reason: "CURRENT_CALL_INCOMPLETE" });
+    const output = observeClaudeExecution(f.input, { ...f.options, maxWaitMs: 20, pollIntervalMs: 10,
+      readText: () => { reads++; return row("toolu_previous_179") + "\n" + partial; } });
+    expect(output).toEqual(incomplete);
+    expect(reads).toBe(4);
+    expect(f.cache).not.toHaveBeenCalled();
   });
 
   it.each(valueCompletions)("accepts an actual exact completion after a partial nested input value: %s", (partial, suffix) => {
     const f = fixture();
     const sleep = vi.fn();
     let reads = 0;
-    try {
-      const complete = partial + suffix;
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, maxWaitMs: 20, pollIntervalMs: 10, sleep,
-        readText: () => ++reads === 1 ? partial : complete });
-      expect(payload(output)).toMatchObject({ model: MODEL, tool: "plan_workflow", call: hostIdentityDigest(CALL),
-        actorId: hostActorId(adapter.host, SESSION), provenance: "claude-code:transcript-tool-use" });
-      expect(reads).toBe(2); expect(sleep.mock.calls).toEqual([[10]]);
-      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).toHaveBeenCalledTimes(1);
-      expect(updated(output)[HOST_SKILL_OBSERVATION_FIELD]).toBeUndefined();
-      expect((output.hookSpecificOutput as Record<string, unknown>).permissionDecision).toBeUndefined();
-      expect(diagnostics.write).not.toHaveBeenCalled();
-    } finally { f.key.mockRestore(); }
+    const complete = partial + suffix;
+    const output = observeClaudeExecution(f.input, { ...f.options, maxWaitMs: 20, pollIntervalMs: 10, sleep,
+      readText: () => ++reads === 1 ? partial : complete });
+    expect(output).toMatchObject({ model: MODEL, provenance: "claude-code:transcript-tool-use" });
+    expect(qualify(output)).toMatchObject({ model: MODEL, modelClass: "deep", actorId: hostActorId(adapter.host, SESSION) });
+    expect(reads).toBe(2); expect(sleep.mock.calls).toEqual([[10]]);
+    expect(f.cache).not.toHaveBeenCalled();
+    expect(diagnostics.write).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -287,54 +250,44 @@ describe("AGS-D-0179 unfinished issuer identity", () => {
     '{"type":"assistant","unrelated":01e',
   ])("keeps unrelated partial values or arbitrary unrelated damage eligible for fallback: %s", unrelated => {
     const f = fixture();
-    try {
-      expect(probeIssuingMessage(unrelated, CALL)).toEqual({ state: "absent" });
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options,
-        readText: () => row("toolu_previous_179") + "\n" + unrelated });
-      expect(payload(output)).toMatchObject({ model: MODEL, provenance: "claude-code:session-start" });
-      expect(f.cache).toHaveBeenCalledTimes(1); expect(f.key).toHaveBeenCalledTimes(1);
-    } finally { f.key.mockRestore(); }
+    expect(probeIssuingMessage(unrelated, CALL)).toEqual({ state: "absent" });
+    const output = observeClaudeExecution(f.input, { ...f.options,
+      readText: () => row("toolu_previous_179") + "\n" + unrelated });
+    expect(output).toMatchObject({ model: MODEL, provenance: "claude-code:session-start" });
+    expect(f.cache).toHaveBeenCalledTimes(1);
   });
 
   it("keeps the bounded wait, then refuses a persistent partial ID without cache or signing-key access", () => {
     const f = fixture();
     const sleep = vi.fn();
     let reads = 0;
-    try {
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, maxWaitMs: 20, pollIntervalMs: 10, sleep,
-        readText: () => { reads++; return row("toolu_previous_179") + "\n" + partials[6]!; } });
-      expect(updated(output)).toEqual(f.clean);
-      expect(reads).toBe(4); expect(sleep.mock.calls).toEqual([[10], [10]]);
-      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).not.toHaveBeenCalled();
-    } finally { f.key.mockRestore(); }
+    const output = observeClaudeExecution(f.input, { ...f.options, maxWaitMs: 20, pollIntervalMs: 10, sleep,
+      readText: () => { reads++; return row("toolu_previous_179") + "\n" + partials[6]!; } });
+    expect(output).toEqual(incomplete);
+    expect(reads).toBe(4); expect(sleep.mock.calls).toEqual([[10], [10]]);
+    expect(f.cache).not.toHaveBeenCalled();
   });
 
   it.each([partials[6]!, partials[13]!])("uses only the actual completed exact row after polling: %s", partial => {
     const f = fixture();
     const sleep = vi.fn();
     let reads = 0;
-    try {
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, maxWaitMs: 20, pollIntervalMs: 10, sleep,
-        readText: () => ++reads === 1 ? partial : row() });
-      expect(payload(output)).toMatchObject({ host: adapter.host, model: MODEL, reasoningEffort: "high", tool: "plan_workflow",
-        call: hostIdentityDigest(CALL), actorId: hostActorId(adapter.host, SESSION), provenance: "claude-code:transcript-tool-use" });
-      expect((output.hookSpecificOutput as Record<string, unknown>).permissionDecision).toBeUndefined();
-      expect(updated(output)[HOST_SKILL_OBSERVATION_FIELD]).toBeUndefined();
-      expect(reads).toBe(2); expect(sleep.mock.calls).toEqual([[10]]);
-      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).toHaveBeenCalledTimes(1);
-      expect(diagnostics.write).not.toHaveBeenCalled();
-    } finally { f.key.mockRestore(); }
+    const output = observeClaudeExecution(f.input, { ...f.options, maxWaitMs: 20, pollIntervalMs: 10, sleep,
+      readText: () => ++reads === 1 ? partial : row() });
+    expect(output).toMatchObject({ model: MODEL, effort: "high", provenance: "claude-code:transcript-tool-use" });
+    expect(qualify(output)).toMatchObject({ model: MODEL, modelClass: "deep", reasoningEffort: "high", actorId: hostActorId(adapter.host, SESSION) });
+    expect(reads).toBe(2); expect(sleep.mock.calls).toEqual([[10]]);
+    expect(f.cache).not.toHaveBeenCalled();
+    expect(diagnostics.write).not.toHaveBeenCalled();
   });
 
   it.each([false, true])("keeps valid exact precedence over an incomplete duplicate in either order: %s", partialFirst => {
     const f = fixture();
     const rows = [row(), partials[6]!];
     if (partialFirst) rows.reverse();
-    try {
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, readText: () => rows.join("\n") });
-      expect(payload(output)).toMatchObject({ model: MODEL, provenance: "claude-code:transcript-tool-use" });
-      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).toHaveBeenCalledTimes(1);
-    } finally { f.key.mockRestore(); }
+    const output = observeClaudeExecution(f.input, { ...f.options, readText: () => rows.join("\n") });
+    expect(output).toMatchObject({ model: MODEL, provenance: "claude-code:transcript-tool-use" });
+    expect(f.cache).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -347,42 +300,19 @@ describe("AGS-D-0179 unfinished issuer identity", () => {
     JSON.stringify({ type: "user", message: { text: "toolu_\\u0063urrent_179" } }).slice(0, -1),
   ])("preserves fallback for distinguishable unrelated damaged rows: %s", unrelated => {
     const f = fixture();
-    try {
-      expect(probeIssuingMessage(unrelated, CALL)).toEqual({ state: "absent" });
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options,
-        readText: () => row("toolu_previous_179") + "\n" + unrelated });
-      expect(payload(output)).toMatchObject({ model: MODEL, reasoningEffort: "high", provenance: "claude-code:session-start" });
-      expect(f.cache).toHaveBeenCalledTimes(1); expect(f.key).toHaveBeenCalledTimes(1);
-    } finally { f.key.mockRestore(); }
+    expect(probeIssuingMessage(unrelated, CALL)).toEqual({ state: "absent" });
+    const output = observeClaudeExecution(f.input, { ...f.options,
+      readText: () => row("toolu_previous_179") + "\n" + unrelated });
+    expect(output).toMatchObject({ model: MODEL, effort: "high", provenance: "claude-code:session-start" });
+    expect(f.cache).toHaveBeenCalledTimes(1);
   });
 
   it("keeps a truly absent/ENOENT reader result eligible for interactive session fallback", () => {
     const f = fixture();
-    try {
-      expect(probeIssuingMessage("", CALL)).toEqual({ state: "absent" });
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, readText: () => null });
-      expect(payload(output)).toMatchObject({ model: MODEL, reasoningEffort: "high", provenance: "claude-code:session-start" });
-      expect(f.cache).toHaveBeenCalledTimes(1); expect(f.key).toHaveBeenCalledTimes(1);
-    } finally { f.key.mockRestore(); }
+    expect(probeIssuingMessage("", CALL)).toEqual({ state: "absent" });
+    const output = observeClaudeExecution(f.input, { ...f.options, readText: () => null });
+    expect(output).toMatchObject({ model: MODEL, effort: "high", provenance: "claude-code:session-start" });
+    expect(f.cache).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps latest-transcript fallback on true absence without a session model", () => {
-    const f = fixture();
-    f.cache.mockReturnValue(null);
-    try {
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, readText: () => row("toolu_previous_179") });
-      expect(payload(output)).toMatchObject({ model: MODEL, reasoningEffort: "high", provenance: "claude-code:transcript-latest" });
-      expect(f.cache).toHaveBeenCalledTimes(1); expect(f.key).toHaveBeenCalledTimes(1);
-    } finally { f.key.mockRestore(); }
-  });
-
-  it("does not resume signing if the incomplete-issuer diagnostic sink throws", () => {
-    const f = fixture();
-    diagnostics.write.mockImplementationOnce(() => { throw new Error("synthetic sink failure"); });
-    try {
-      const output = handleHostAttestationHook(f.input, f.store, { ...f.options, readText: () => partials[6]! });
-      expect(updated(output)).toEqual(f.clean);
-      expect(f.cache).not.toHaveBeenCalled(); expect(f.key).not.toHaveBeenCalled();
-    } finally { f.key.mockRestore(); }
-  });
 });

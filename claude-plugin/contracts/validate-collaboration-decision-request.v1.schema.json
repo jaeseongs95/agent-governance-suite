@@ -6,18 +6,6 @@
   "additionalProperties": false,
   "required": ["decision"],
   "properties": {
-    "decision": { "type": "object" },
-    "_sessionBinding": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["host", "sessionId"],
-      "properties": {
-        "host": { "type": "string", "minLength": 1, "maxLength": 64 },
-        "sessionId": { "type": "string", "minLength": 1, "maxLength": 200 },
-        "actorKind": { "enum": ["main", "subagent", "unknown"] },
-        "observedBy": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "assurance": { "type": "string", "minLength": 1, "maxLength": 128 }
-      }
-    }
+    "decision": { "type": "object" }
   }
 }

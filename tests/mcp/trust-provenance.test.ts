@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { CollaborationDecisionV1 } from "../../contracts/types.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
+import { codexMetaIngress } from "../../mcp-server/src/builtin-caller-ingress.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
 import { TrustService } from "../../mcp-server/src/trust-service.js";
 import { TrustStore } from "../../mcp-server/src/trust-store.js";
@@ -19,11 +20,16 @@ import { closeSessionMessaging } from "../../mcp-server/src/session-message-clie
 import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
-import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
+import { childCaller, codexCallMeta, rootCaller } from "../helpers/caller.js";
 
 const directories: string[] = [];
 const stores = new Set<TrustStore>();
 const binding = { host: "codex", sessionId: "session-1" };
+const rootOf = (identity: { host: string; sessionId: string }) => rootCaller(identity.host, identity.sessionId);
+// The service records the verified caller as observed by the host; nothing in the request names it.
+const observation = (identity: { host: string; sessionId: string }, actorKind: "main" | "subagent") => ({
+  ...identity, actorKind, observedBy: "host-observed", assurance: "observed",
+});
 
 function decision(overrides: Partial<CollaborationDecisionV1> = {}): CollaborationDecisionV1 {
   return {
@@ -209,8 +215,8 @@ describe("trust provenance", () => {
   it("keeps missing and nullable receipts explicitly unverified", async () => {
     const { store } = await openStore();
     const service = new TrustService(store);
-    const caller = { ...binding, actorKind: "subagent" as const, observedBy: "generic-host-adapter", assurance: "observational" };
-    expect(service.validateCollaborationDecision({ decision: decision({ sourceOriginKind: "artifact" }), _sessionBinding: caller }).data)
+    const caller = childCaller(binding.host, binding.sessionId);
+    expect(service.validateCollaborationDecision({ decision: decision({ sourceOriginKind: "artifact" }) }, caller).data)
       .toMatchObject({
         structuralValidity: "valid",
         receiptFound: false,
@@ -218,14 +224,13 @@ describe("trust provenance", () => {
         receiptBoundToCaller: null,
         receiptFreshness: null,
         sourceClaimMatch: null,
-        callerObservation: caller,
+        callerObservation: observation(binding, "subagent"),
         callerBindingAssurance: "observational",
         authorityCapabilities: { directUserInputAttestation: false, authorityIssuance: false, scopedDelegation: false },
       });
     expect(service.validateCollaborationDecision({
       decision: decision({ sourceReceiptId: "source-abcdefghijklmnop" }),
-      _sessionBinding: caller,
-    }).data).toMatchObject({ receiptFound: false, receiptIntegrity: null, sourceClaimMatch: null });
+    }, caller).data).toMatchObject({ receiptFound: false, receiptIntegrity: null, sourceClaimMatch: null });
   });
 
   it("reports stale, differently bound, and conflicting receipt provenance independently", async () => {
@@ -237,8 +242,9 @@ describe("trust provenance", () => {
       observedAt: "2026-01-01T00:00:00.000Z",
       expiresAt: "2026-01-01T00:01:00.000Z",
     });
-    const input = { decision: decision({ sourceReceiptId: stale.receiptId }), _sessionBinding: { host: "other-host", sessionId: "other-session" } };
-    expect(service.validateCollaborationDecision(input, new Date("2026-01-02T00:00:00.000Z")).data).toMatchObject({
+    const input = { decision: decision({ sourceReceiptId: stale.receiptId }) };
+    const other = rootOf({ host: "other-host", sessionId: "other-session" });
+    expect(service.validateCollaborationDecision(input, other, new Date("2026-01-02T00:00:00.000Z")).data).toMatchObject({
       structuralValidity: "valid",
       receiptFound: true,
       receiptIntegrity: "valid",
@@ -249,7 +255,7 @@ describe("trust provenance", () => {
     expect(service.validateCollaborationDecision({
       ...input,
       decision: decision({ sourceOriginKind: "user-turn", sourceReceiptId: stale.receiptId }),
-    }).data).toMatchObject({ structuralValidity: "valid", sourceClaimMatch: false });
+    }, other).data).toMatchObject({ structuralValidity: "valid", sourceClaimMatch: false });
   });
 
   it("reports a stored receipt with a forged integrity token without trusting its other claims", async () => {
@@ -261,8 +267,7 @@ describe("trust provenance", () => {
     database.close();
     expect(new TrustService(store).validateCollaborationDecision({
       decision: decision({ sourceReceiptId: receipt.receiptId }),
-      _sessionBinding: binding,
-    }).data).toMatchObject({
+    }, rootOf(binding)).data).toMatchObject({
       receiptFound: true,
       receiptIntegrity: "invalid",
       receiptBoundToCaller: null,
@@ -271,15 +276,14 @@ describe("trust provenance", () => {
     });
   });
 
-  it("does not turn an arbitrary caller binding or unknown source claim into authority", async () => {
+  it("does not turn an observed caller or unknown source claim into authority", async () => {
     const { store } = await openStore();
     const result = new TrustService(store).validateCollaborationDecision({
       decision: decision({ sourceOriginKind: "unknown" }),
-      _sessionBinding: { host: "made-up-host", sessionId: "made-up-session", actorKind: "main", observedBy: "caller" },
-    });
+    }, rootOf({ host: "made-up-host", sessionId: "made-up-session" }));
     expect(result.data).toMatchObject({
       structuralValidity: "valid",
-      callerObservation: { host: "made-up-host", observedBy: "caller" },
+      callerObservation: { host: "made-up-host", actorKind: "main", observedBy: "host-observed" },
       authorityCapabilities: { directUserInputAttestation: false, authorityIssuance: false, scopedDelegation: false },
     });
   });
@@ -288,8 +292,7 @@ describe("trust provenance", () => {
     const { store } = await openStore();
     const result = new TrustService(store).validateCollaborationDecision({
       decision: decision({ sourceOriginKind: "user-turn" }),
-      _sessionBinding: { host: "generic", sessionId: "child", actorKind: "subagent", observedBy: "generic-host-adapter" },
-    });
+    }, childCaller("generic", "child"));
     expect(result.data).toMatchObject({
       structuralValidity: "valid",
       receiptFound: false,
@@ -308,22 +311,21 @@ describe("trust provenance", () => {
     database.close();
     const service = new TrustService(store);
     const claim = decision({ sourceOriginKind: "user-turn", sourceReceiptId: receipt.receiptId });
-    const child = { ...binding, actorKind: "subagent" as const, observedBy: "owned-fake-adapter" };
-    const rejected = service.validateCollaborationDecision({ decision: claim, _sessionBinding: child });
+    const child = childCaller(binding.host, binding.sessionId);
+    const rejected = service.validateCollaborationDecision({ decision: claim }, child);
     expect(rejected.data).toMatchObject({
       receiptFound: true, receiptIntegrity: "invalid", receiptBoundToCaller: null,
       receiptFreshness: null, sourceClaimMatch: false,
     });
     // An invalid signature still supplies no provenance for any other caller.
-    expect(service.validateCollaborationDecision({ decision: claim, _sessionBinding: binding }).data)
+    expect(service.validateCollaborationDecision({ decision: claim }, rootOf(binding)).data)
       .toMatchObject({ receiptIntegrity: "invalid", sourceClaimMatch: null });
   });
 
-  it("exposes read-only MCP validation while rejecting missing proof and arbitrary caller identity", async () => {
+  it("exposes read-only MCP validation while rejecting missing host metadata and arbitrary caller identity", async () => {
     const { store } = await openStore();
     const validator = new ContractValidator();
-    const root = createSyntheticRootProofFixture();
-    const server = createMcpServer({} as WorkflowService, updateService(), undefined, undefined, undefined, validator, "default", null, null, undefined, new TrustService(store), null, root.proofs);
+    const server = createMcpServer({} as WorkflowService, updateService(), undefined, undefined, undefined, validator, "default", null, null, undefined, new TrustService(store), null, codexMetaIngress());
     const client = new Client({ name: "trust-provenance", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
@@ -339,27 +341,27 @@ describe("trust provenance", () => {
       expect(JSON.parse(missingText)).toMatchObject({
         ok: false,
         data: null,
-        error: { code: "BINDING_REQUIRED", details: { reasonCode: "ROOT_HOOK_PROOF_REQUIRED" } },
+        error: { code: "BINDING_REQUIRED", details: { reasonCode: "CALLER_PROVENANCE_UNAVAILABLE", ingressReason: "CODEX_CALL_META_MISSING" } },
       });
-      // Caller-supplied identity remains a negative boundary case, never proof authority.
+      // Caller-supplied identity remains a negative boundary case, never caller evidence, even beside host metadata.
       const arbitrary = await client.callTool({
         name: "validate_collaboration_decision",
         arguments: {
           decision: decision({ sourceOriginKind: "unknown" }),
           _sessionBinding: { host: "arbitrary-name", sessionId: "caller-supplied", actorKind: "main", observedBy: "caller" },
         },
+        _meta: codexCallMeta("trust-session"),
       });
       const arbitraryText = (arbitrary.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")?.text ?? "{}";
       expect(JSON.parse(arbitraryText)).toMatchObject({
         ok: false,
         data: null,
-        error: { code: "BINDING_INVALID", details: { reasonCode: "CALLER_SESSION_BINDING_REJECTED" } },
+        error: { code: "INVALID_INPUT", details: { reasonCode: "RESERVED_CALLER_FIELD", field: "_sessionBinding" } },
       });
       const response = await client.callTool({
         name: "validate_collaboration_decision",
-        arguments: root.argumentsFor("validate_collaboration_decision", {
-          decision: decision({ sourceOriginKind: "unknown" }),
-        }),
+        arguments: { decision: decision({ sourceOriginKind: "unknown" }) },
+        _meta: codexCallMeta("trust-session"),
       });
       const text = (response.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")?.text ?? "{}";
       expect(JSON.parse(text)).toMatchObject({
@@ -367,10 +369,7 @@ describe("trust provenance", () => {
         data: {
           structuralValidity: "valid",
           receiptFound: false,
-          callerObservation: {
-            host: "synthetic-root-host", sessionId: "synthetic-root-session",
-            actorKind: "main", observedBy: "SYNTHETIC_TEST_ROOT_OBSERVATION", assurance: "observed",
-          },
+          callerObservation: observation({ host: "codex", sessionId: "trust-session" }, "main"),
           callerBindingAssurance: "observational",
           authorityCapabilities: { directUserInputAttestation: false, authorityIssuance: false, scopedDelegation: false },
         },

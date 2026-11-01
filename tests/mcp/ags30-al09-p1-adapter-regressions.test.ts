@@ -34,7 +34,7 @@ const wire = {
 await startMcpServer(new Map([[${JSON.stringify(mode === "registered" ? "al09-installed-protocol" : "al09-unrelated-protocol")}, wire]]));
 `, "utf8");
   const environment = Object.fromEntries(Object.entries({...process.env,
-    AGENT_GOVERNANCE_CLASSIFICATION_CONFIG: configPath, AGENT_GOVERNANCE_HOST_ATTESTATION: "", SKILL_REGISTRY_PATH: path.join(root, "skills", "registry.json"),
+    AGENT_GOVERNANCE_CLASSIFICATION_CONFIG: configPath, AGENT_GOVERNANCE_HOST_ATTESTATION: "claude-code", SKILL_REGISTRY_PATH: path.join(root, "skills", "registry.json"),
     AGENT_GOVERNANCE_SHARED_STATE_DIR: directory, AGENT_GOVERNANCE_DB_PATH: path.join(directory, "workflow.sqlite3"),
     AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(directory, "continuity.sqlite3"), AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
     AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: path.join(directory, "board.sqlite3"), AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: path.join(directory, "messages"),
@@ -47,16 +47,15 @@ await startMcpServer(new Map([[${JSON.stringify(mode === "registered" ? "al09-in
   transport.stderr?.on("data", chunk => { diagnostics += String(chunk); if (diagnostics.includes("AL09_INSTALLED_WIRE_BOUND")) received(); });
   try {
     await client.connect(transport);
-    // Built CLI on owned synthetic Claude input; no native identity collection.
-    const issued = execFileSync(process.execPath, [path.join(root, "mcp-server", "dist", "governance-hook.mjs"), "--host=claude-code"], {
+    // Built CLI on owned synthetic Claude input; no native identity collection. It admits the call under its
+    // tool-use ID (one row in the shared workflow DB) and prints nothing; the server claims the row from _meta.
+    const admitted = execFileSync(process.execPath, [path.join(root, "mcp-server", "dist", "governance-hook.mjs"), "--host=claude-code"], {
       cwd: root, env: environment, encoding: "utf8", timeout: 10_000, windowsHide: true,
       input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "synthetic-startup-root", tool_use_id: "inventory-call",
         tool_name: "mcp__agent_governance_suite__get_skill_inventory", tool_input: {}, cwd: directory }),
     });
-    const rootOutput = JSON.parse(issued) as { hookSpecificOutput: { permissionDecision?: string; updatedInput: Record<string, unknown> } };
-    expect(rootOutput.hookSpecificOutput).not.toHaveProperty("permissionDecision");
-    expect(rootOutput.hookSpecificOutput.updatedInput._sessionProof).toEqual(expect.any(String));
-    const reply = await client.callTool({name: "get_skill_inventory", arguments: rootOutput.hookSpecificOutput.updatedInput});
+    expect(admitted).toBe("");
+    const reply = await client.callTool({name: "get_skill_inventory", arguments: {}, _meta: {"claudecode/toolUseId": "inventory-call"}});
     const text = (reply.content as Array<{type: string; text?: string}>).find(item => item.type === "text")!.text!;
     const result = JSON.parse(text) as {ok: boolean; data: {issues: Array<{code: string}>}};
     expect(result.ok).toBe(true);

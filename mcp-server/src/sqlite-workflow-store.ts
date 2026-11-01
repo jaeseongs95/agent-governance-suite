@@ -29,6 +29,7 @@ import {
 } from "./convergence-logic.js";
 import { type RootIdentityV1 } from "./workspace-identity.js";
 import {
+  type CallAdmission,
   type ConvergenceSnapshot,
   type GuardedRunBinding,
   type WorkflowStore,
@@ -177,6 +178,26 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         VALUES (?, ?, ?)
       `).run(observationId, expiresAt, consumedAt);
       return Number(result.changes) === 1;
+    }));
+  }
+
+  recordCallAdmission(admission: CallAdmission): void {
+    this.guard("Cannot record the host call admission.", {}, () => this.transaction(() => {
+      const now = new Date(this.currentTimeMilliseconds());
+      // ponytail: day-old unclaimed rows are pruned on the next write; no background sweeper.
+      this.database.prepare("DELETE FROM call_admissions WHERE created_at < ?").run(new Date(now.getTime() - 86_400_000).toISOString());
+      this.database.prepare(`
+        INSERT OR REPLACE INTO call_admissions(host, call_id, admission_json, created_at) VALUES (?, ?, ?, ?)
+      `).run(admission.host, admission.callId, JSON.stringify(admission), now.toISOString());
+    }));
+  }
+
+  claimCallAdmission(host: string, callId: string): CallAdmission | null {
+    return this.guard("Cannot claim the host call admission.", {}, () => this.transaction(() => {
+      const row = this.database.prepare(`
+        DELETE FROM call_admissions WHERE host = ? AND call_id = ? RETURNING admission_json
+      `).get(host, callId) as { admission_json: string } | undefined;
+      return row ? JSON.parse(row.admission_json) as CallAdmission : null;
     }));
   }
 
@@ -872,6 +893,13 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
           observation_id TEXT PRIMARY KEY,
           expires_at TEXT NOT NULL,
           consumed_at TEXT NOT NULL
+        ) STRICT;
+        CREATE TABLE IF NOT EXISTS call_admissions (
+          host TEXT NOT NULL,
+          call_id TEXT NOT NULL,
+          admission_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          PRIMARY KEY (host, call_id)
         ) STRICT;
 
       `);

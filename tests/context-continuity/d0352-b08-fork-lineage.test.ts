@@ -11,11 +11,15 @@ import {
 } from "../../mcp-server/src/claude-fork-host.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
+import { claudeAdmissionIngress, codexMetaIngress } from "../../mcp-server/src/builtin-caller-ingress.js";
+import { admitCaller, type VerifiedCaller } from "../../mcp-server/src/caller-identity.js";
+import { hostActorId } from "../../mcp-server/src/host-attestation.js";
 import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
+import { codexCallMeta } from "../helpers/caller.js";
 
 // D0352 B08 r04: a real Claude fork child (host SessionStart source=fork) has its parent pinned at its first prompt
 // from its own transcript lineage, and may then take that parent's exact direct checkpoint through inspect/load.
@@ -94,15 +98,25 @@ function tool(service: ContinuityService, session: string, transcriptPath: strin
     tool_use_id: "toolu_" + randomUUID().replaceAll("-", ""), transcript_path: transcriptPath })).toEqual({});
 }
 
-function hookBound<T extends Record<string, unknown>>(service: ContinuityService, session: string, tool: string, input: T, transcriptPath?: string): T & { _continuityBinding: string } {
-  const output = hook(service, {
+const admissions = new InMemoryWorkflowStore();
+/**
+ * One Claude AGS call: the real PreToolUse continuity hook (which leaves the call unchanged), the admission row the
+ * governance hook records for it, and the caller the server's Claude ingress admits from that row. The caller reads
+ * the child's own lineage from the recorded transcript_path; the service pins and anchors from it.
+ */
+function admitted(service: ContinuityService, session: string, tool: string, input: Record<string, unknown>, transcriptPath?: string): VerifiedCaller {
+  const callId = "toolu_" + randomUUID().replaceAll("-", "");
+  expect(hook(service, {
     hook_event_name: "PreToolUse", session_id: session, tool_name: TOOL + tool, tool_input: input,
-    tool_use_id: "toolu_" + randomUUID().replaceAll("-", ""), ...(transcriptPath ? { transcript_path: transcriptPath } : {}),
-  }) as { hookSpecificOutput: { updatedInput: T & { _continuityBinding: string } } };
-  return output.hookSpecificOutput.updatedInput;
+    tool_use_id: callId, ...(transcriptPath ? { transcript_path: transcriptPath } : {}),
+  })).toEqual({});
+  admissions.recordCallAdmission({ host: "claude-code", callId, tool, sessionId: session, agentId: null,
+    execution: { unavailable: "EXECUTION_NOT_REQUIRED" }, transcriptPath: transcriptPath ?? null });
+  return admitCaller(claudeAdmissionIngress(admissions)(tool, { "claudecode/toolUseId": callId }), hostActorId);
 }
 
-function checkpointInput(overrides: Partial<CheckpointContextRequestV1> = {}): Omit<CheckpointContextRequestV1, "_continuityBinding"> {
+// Also a plain tools/call argument record.
+function checkpointInput(overrides: Partial<CheckpointContextRequestV1> = {}): CheckpointContextRequestV1 & Record<string, unknown> {
   return {
     schemaVersion: "1.0.0", requestId: "checkpoint-1", expectedRevision: 0, status: "active",
     core: {
@@ -115,13 +129,15 @@ function checkpointInput(overrides: Partial<CheckpointContextRequestV1> = {}): O
 }
 
 function checkpoint(service: ContinuityService, session: string, transcriptPath: string, overrides: Partial<CheckpointContextRequestV1> = {}): ContinuitySnapshotV1 {
-  const result = service.checkpointContext(hookBound(service, session, "checkpoint_context", checkpointInput(overrides), transcriptPath));
+  const input = checkpointInput(overrides);
+  const result = service.checkpointContext(input, admitted(service, session, "checkpoint_context", input, transcriptPath));
   expect(result.error).toBeNull();
   return result.data!;
 }
 
 function inspect(service: ContinuityService, session: string, transcriptPath?: string) {
-  const result = service.inspectContext(hookBound(service, session, "inspect_context", { schemaVersion: "1.0.0" }, transcriptPath));
+  const input = { schemaVersion: "1.0.0" };
+  const result = service.inspectContext(input, admitted(service, session, "inspect_context", input, transcriptPath));
   expect(result.error).toBeNull();
   return result.data!;
 }
@@ -132,7 +148,8 @@ function loadInput(candidate: ReturnType<typeof inspect>) {
 }
 
 function load(service: ContinuityService, session: string, candidate: ReturnType<typeof inspect>) {
-  return service.loadContext(hookBound(service, session, "load_context", loadInput(candidate)));
+  const input = loadInput(candidate);
+  return service.loadContext(input, admitted(service, session, "load_context", input));
 }
 
 /** Parent A checkpoints over its own transcript; returns A's snapshot and the rows a fork would copy. */
@@ -415,13 +432,13 @@ describe("D0352 B08 fork lineage", () => {
     const suppressed = await parent(service, "parent-sup");
     const suppressedChild = await fork(service, "child-sup", suppressed.uuids);
     const suppress = { schemaVersion: "1.0.0" as const, expectedEpoch: 1 };
-    expect(service.suppressContextRestore(hookBound(service, "parent-sup", "suppress_context_restore", suppress)).data?.suppressed).toBe(true);
+    expect(service.suppressContextRestore(suppress, admitted(service, "parent-sup", "suppress_context_restore", suppress)).data?.suppressed).toBe(true);
     expect(inspect(service, "child-sup", suppressedChild).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_SUPPRESSED"]);
 
     const purgedParent = await parent(service, "parent-pur");
     const purgedChild = await fork(service, "child-pur", purgedParent.uuids);
     const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-1", expectedEpoch: 1, expectedRevision: purgedParent.snapshot.revision };
-    expect(service.purgeDirectContext(hookBound(service, "parent-pur", "purge_direct_context", purge)).data).toMatchObject({ purged: true });
+    expect(service.purgeDirectContext(purge, admitted(service, "parent-pur", "purge_direct_context", purge)).data).toMatchObject({ purged: true });
     expect(inspect(service, "child-pur", purgedChild).reasonCodes).toEqual(["NO_RESTORE_CANDIDATE", "FORK_PARENT_ADVANCED"]);
   });
 
@@ -431,11 +448,12 @@ describe("D0352 B08 fork lineage", () => {
       ["saved", (session, snapshot) => { checkpoint(service, session, join(tmpdir(), "absent-b08.jsonl"), { requestId: "again", expectedRevision: snapshot.revision }); }, "STALE_REVISION"],
       ["purged", (session, snapshot) => {
         const purge = { schemaVersion: "1.0.0" as const, requestId: "purge-1", expectedEpoch: 1, expectedRevision: snapshot.revision };
-        expect(service.purgeDirectContext(hookBound(service, session, "purge_direct_context", purge)).data).toMatchObject({ purged: true });
+        expect(service.purgeDirectContext(purge, admitted(service, session, "purge_direct_context", purge)).data).toMatchObject({ purged: true });
       }, "STALE_REVISION"],
       ["cleared", (session, _snapshot, file) => { start(service, session, "clear", file); }, "BINDING_INVALID"],
       ["suppressed", session => {
-        expect(service.suppressContextRestore(hookBound(service, session, "suppress_context_restore", { schemaVersion: "1.0.0" as const, expectedEpoch: 1 })).error).toBeNull();
+        const suppress = { schemaVersion: "1.0.0" as const, expectedEpoch: 1 };
+        expect(service.suppressContextRestore(suppress, admitted(service, session, "suppress_context_restore", suppress)).error).toBeNull();
       }, "SNAPSHOT_NOT_FOUND"],
     ];
     for (const [name, change, code] of cases) {
@@ -552,26 +570,30 @@ describe("D0352 B08 Codex fork origin", () => {
     return file;
   }
 
-  function codexBound<T extends Record<string, unknown>>(service: ContinuityService, session: string, tool: string, input: T): T & { _continuityBinding: string } {
-    const output = hook(service, { hook_event_name: "PreToolUse", session_id: session, tool_name: TOOL + tool, tool_input: input,
-      tool_use_id: "call_" + randomUUID().replaceAll("-", "") }, CODEX) as { hookSpecificOutput: { updatedInput: T & { _continuityBinding: string } } };
-    return output.hookSpecificOutput.updatedInput;
+  /** One Codex AGS call: the hook leaves it unchanged; the server's Codex ingress admits the caller from the call _meta. */
+  function codexAdmitted(service: ContinuityService, session: string, tool: string, input: Record<string, unknown>): VerifiedCaller {
+    expect(hook(service, { hook_event_name: "PreToolUse", session_id: session, tool_name: TOOL + tool, tool_input: input,
+      tool_use_id: "call_" + randomUUID().replaceAll("-", "") }, CODEX)).toEqual({});
+    return admitCaller(codexMetaIngress()(tool, codexCallMeta(session)), hostActorId);
   }
 
   function codexCheckpoint(service: ContinuityService, session: string, overrides: Partial<CheckpointContextRequestV1> = {}): ContinuitySnapshotV1 {
-    const result = service.checkpointContext(codexBound(service, session, "checkpoint_context", checkpointInput(overrides)));
+    const input = checkpointInput(overrides);
+    const result = service.checkpointContext(input, codexAdmitted(service, session, "checkpoint_context", input));
     expect(result.error).toBeNull();
     return result.data!;
   }
 
   function codexInspect(service: ContinuityService, session: string) {
-    const result = service.inspectContext(codexBound(service, session, "inspect_context", { schemaVersion: "1.0.0" }));
+    const input = { schemaVersion: "1.0.0" };
+    const result = service.inspectContext(input, codexAdmitted(service, session, "inspect_context", input));
     expect(result.error).toBeNull();
     return result.data!;
   }
 
   function codexLoad(service: ContinuityService, session: string, candidate: ReturnType<typeof codexInspect>) {
-    return service.loadContext(codexBound(service, session, "load_context", loadInput(candidate)));
+    const input = loadInput(candidate);
+    return service.loadContext(input, codexAdmitted(service, session, "load_context", input));
   }
 
   /** The child's SessionStart(source=fork) at its first prompt, then that prompt. */

@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -67,7 +68,7 @@ describe("continuity hook failure reporting (AGS-D-0055)", () => {
     for (const marker of ["private-session-marker", "private-input-marker", directory]) expect(line).not.toContain(marker);
   });
 
-  it("does not issue a binding for an unsupported native Gemini actor", async () => {
+  it("takes no continuity action and reports nothing for an unsupported native Gemini actor", async () => {
     const { env } = await environment();
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(runNativeContinuityHook(toolInput(), env, "gemini")).toBe("");
@@ -83,13 +84,14 @@ describe("continuity hook failure reporting (AGS-D-0055)", () => {
     expect(JSON.parse(lines[0]!.slice(lines[0]!.indexOf("{")))).toMatchObject({ phase: "input", reason: "INVALID_JSON" });
   });
 
-  it("issues a binding without diagnostics for an explicit synthetic root when the store is healthy", async () => {
+  it("opens healthy stores and leaves an AGS call unchanged without diagnostics for an explicit synthetic root", async () => {
     const { env } = await environment();
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const output = runContinuityHook(toolInput(), env);
-    expect(JSON.parse(output)).toMatchObject({ hookSpecificOutput: { hookEventName: "PreToolUse",
-      updatedInput: { _continuityBinding: expect.any(String) } } });
-    expect(JSON.parse(output).hookSpecificOutput).not.toHaveProperty("permissionDecision");
+    // No rewritten input, binding or permission decision: the server binds the call from its verified caller.
+    expect(runContinuityHook(toolInput(), env)).toBe("");
+    // The empty output is the handled result, not a fail-open: both stores were opened and nothing was reported.
+    expect(existsSync(env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH!)).toBe(true);
+    expect(existsSync(env.AGENT_GOVERNANCE_DB_PATH!)).toBe(true);
     expect(failureLines(spy)).toHaveLength(0);
   });
 });

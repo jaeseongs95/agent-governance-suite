@@ -121,16 +121,8 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
       if (readLineage) service.pinForkParent(sessionId, readLineage);
       return {};
     }
-    const toolInput = observation.toolInput ?? {};
-    // A checkpoint reads lineage for its anchors; inspect only when no parent was pinned before.
-    const lineage = toolName === "checkpoint_context" || toolName === "inspect_context" ? readLineage : undefined;
-    const token = lineage ? service.issueToolBinding(sessionId, toolName, toolInput, lineage) : service.issueToolBinding(sessionId, toolName, toolInput);
-    return {
-      hookSpecificOutput: {
-        hookEventName: outputEventName,
-        updatedInput: { ...toolInput, _continuityBinding: token },
-      },
-    };
+    // AGS tools pin and bind on the server from the verified caller; the hook only did the host-process read above.
+    return {};
   }
   return {};
 }

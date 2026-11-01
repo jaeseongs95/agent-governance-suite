@@ -35,7 +35,7 @@ import { PRESENCE_LEASE_MS, PRESENCE_UNREACHABLE_VISIBLE_MS, SessionMessageStore
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "../mcp/version-fixtures.js";
-import { createSyntheticRootProofFixture } from "../mcp/synthetic-root-proof-client.js";
+import { callerMeta, metaIngress } from "../helpers/caller.js";
 import "../../mcp-server/src/builtin-hook-host-adapters.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
@@ -248,10 +248,9 @@ describe("U6 listCurrentPresence", () => {
 });
 
 describe("U7/U8 MCP board tools", () => {
-  const roots = new WeakMap<Client, ReturnType<typeof createSyntheticRootProofFixture>>();
-  const call = async (client: Client, tool: string, args: Record<string, unknown>, identity = self) => {
-    const root = roots.get(client)!;
-    const response = await client.callTool({ name: tool, arguments: root.argumentsFor(tool, args, identity) });
+  // The caller comes only from tools/call `_meta` (docs/ags30-session-binding-design.md 2.1); a child names its agent key.
+  const call = async (client: Client, tool: string, args: Record<string, unknown>, identity = self, agentKey?: string) => {
+    const response = await client.callTool({ name: tool, arguments: args, _meta: callerMeta(identity, agentKey) });
     return JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: unknown; error: { code: string; details: Record<string, unknown> | null } | null };
   };
   async function connect(databasePath: string | null, store: SessionMessageStore | null) {
@@ -269,13 +268,11 @@ describe("U7/U8 MCP board tools", () => {
       return store.listCurrentPresence(T, identity);
     };
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-    const root = createSyntheticRootProofFixture();
-    const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined, undefined, validator, "default", null, databasePath, messages, undefined, undefined, root.proofs);
+    const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined, undefined, validator, "default", null, databasePath, messages, undefined, undefined, metaIngress());
     const client = new Client({ name: "session-board", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
     await client.connect(clientTransport);
-    roots.set(client, root);
     return { client, validator };
   }
 
@@ -339,9 +336,18 @@ describe("U7/U8 MCP board tools", () => {
     expect(written).toMatchObject({ ok: true, data: { summary: "현황판 구현", summaryAt: expect.any(String) } });
     const board = open(databasePath);
     expect(readEntry(board, self.host, self.sessionId)).toMatchObject({ summary: "현황판 구현" });
-    expect((await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "x" } }) as { content: Array<{ text: string }> }).content[0]!.text).toContain("BINDING_REQUIRED");
-    const forged = await client.callTool({ name: "update_session_status", arguments: { ...roots.get(client)!.argumentsFor("update_session_status", { schemaVersion: "1.0.0", summary: "x" }, self), _sessionBinding: { host: "x", sessionId: "y" } } });
-    expect((forged as { content: Array<{ text: string }> }).content[0]!.text).toContain("BINDING_INVALID");
+    // A child acts in its root session's name (session binding 2.1): it writes the root's line, never one of its own.
+    expect(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "하위 갱신" }, self, "sub-1"))
+      .toMatchObject({ ok: true, data: { summary: "하위 갱신" } });
+    expect(readEntry(board, self.host, self.sessionId)).toMatchObject({ summary: "하위 갱신" });
+    // A call whose caller the host did not observe is refused; nothing is written.
+    const unobserved = await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "x" } });
+    expect(JSON.parse((unobserved as { content: Array<{ text: string }> }).content[0]!.text))
+      .toMatchObject({ ok: false, error: { code: "BINDING_REQUIRED", details: { reasonCode: "CALLER_PROVENANCE_UNAVAILABLE" } } });
+    // Identity is host-owned: a caller-supplied binding is a reserved argument (session binding 2.1).
+    expect(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "x", _sessionBinding: { host: "x", sessionId: "y" } }))
+      .toMatchObject({ ok: false, error: { code: "INVALID_INPUT", details: { reasonCode: "RESERVED_CALLER_FIELD", field: "_sessionBinding" } } });
+    expect(readEntry(board, self.host, self.sessionId)).toMatchObject({ summary: "하위 갱신" });
 
     const blocker = path.join(temp(), "file");
     writeFileSync(blocker, "");

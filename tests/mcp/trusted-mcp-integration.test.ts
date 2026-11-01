@@ -24,7 +24,7 @@ import {
 } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
-import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
+import { callerMeta, metaIngress } from "../helpers/caller.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 
@@ -128,11 +128,10 @@ describe("trusted MCP server boundary", () => {
       lastNotifiedAt: null,
       lastErrorCode: null,
     });
-    const rootProof = createSyntheticRootProofFixture();
-    const server = createMcpServer(service, new PluginUpdateService(updateStore), undefined, undefined, undefined, validator, "default", null, null, undefined, null, null, rootProof.proofs);
+    const server = createMcpServer(service, new PluginUpdateService(updateStore), undefined, undefined, undefined, validator, "default", null, null, undefined, null, null, metaIngress());
     const client = new Client({ name: "trusted-mcp-integration", version: "1.0.0" });
     const callTool = (params: Parameters<Client["callTool"]>[0]) => client.callTool({
-      ...params, arguments: rootProof.argumentsFor(params.name, params.arguments ?? {}),
+      ...params, _meta: callerMeta(),
     });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 

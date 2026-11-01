@@ -3,7 +3,6 @@ import {fileURLToPath} from "node:url";
 import {randomUUID} from "node:crypto";
 import {performance} from "node:perf_hooks";
 import {ERROR_CODE} from "../../contracts/types.js";
-import {SESSION_PROOF_FIELD} from "./session-actor-proof.js";
 
 export const LOG_LEVELS = ["TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF"] as const;
 type Level = typeof LOG_LEVELS[number];
@@ -126,8 +125,6 @@ export async function createDiagnostics(config: DiagnosticConfig, registeredMeth
     async observe<T>(method: string, args: unknown, call: (correlation?: string) => Promise<T>, outcome?: () => DiagnosticOutcome | undefined): Promise<T> {
       const correlation = randomUUID(), started = performance.now();
       event("request", "DEBUG", "request_start", {method, correlation});
-      const input = record(args);
-      event("binding", "DEBUG", "binding_check", {method, correlation, bindingPresent: Object.hasOwn(input, "_sessionBinding"), proofPresent: Object.hasOwn(input, SESSION_PROOF_FIELD)});
       try {
         const response = await call(correlation);
         const result = outcome?.();

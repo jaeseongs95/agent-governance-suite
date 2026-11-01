@@ -3,13 +3,10 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import type { ConvergenceFrameV1, StageResultV1, TaskEnvelopeV1 } from "../../contracts/types.js";
-import { observeCodexHook } from "../../mcp-server/src/codex-host-observation.js";
 import {
-  HOST_ATTESTATION_FIELD,
   type HostExecutionAdapter,
   hostActorId,
   HostAttestationProvider,
-  issueHostAttestation,
   resolveAdapterModelCapability,
 } from "../../mcp-server/src/host-attestation.js";
 import {
@@ -19,17 +16,14 @@ import {
   geminiExecutionAdapter,
   type ModelRoutingPresetsV1,
 } from "../../mcp-server/src/host-execution-adapters.js";
-import {
-  findLatestAssistantObservation,
-  handleCodexHostAttestationHook,
-  handleHostAttestationHook,
-} from "../../mcp-server/src/host-attestation-hook.js";
+import { observeClaudeExecution } from "../../mcp-server/src/host-attestation-hook.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { getPolicyRevision, resolveModelSelection } from "../../skills/coordinate-subagents/scripts/model-routing.mjs";
 import syntheticCatalogV2 from "./fixtures/synthetic-model-catalog-v2.json" with { type: "json" };
+import { rootCaller } from "../helpers/caller.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const SESSION = "session-capability-contract";
@@ -54,20 +48,19 @@ function createTask(taskId: string, riskLevel: "low" | "medium" | "high" | "crit
 }
 
 describe("AGS-08A vendor-neutral model/capability contract and single-catalog update", () => {
-  it.each(["low", "high", "critical"] as const)("accepts a signed low-effort caller for complex %s-risk bootstrap without changing stage floors (D0094)", (riskLevel) => {
+  it.each(["low", "high", "critical"] as const)("accepts a host-observed low-effort caller for complex %s-risk bootstrap without changing stage floors (D0094)", (riskLevel) => {
     const store = new InMemoryWorkflowStore();
-    const provider = new HostAttestationProvider(store, codexExecutionAdapter);
+    const provider = new HostAttestationProvider(codexExecutionAdapter);
     const validator = new ContractValidator();
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
     const input = { schemaVersion: "1.0.0", taskEnvelope: createTask(`d0094-current-${riskLevel}`, riskLevel) };
     input.taskEnvelope.decision.complexity = "complex";
-    const token = issueHostAttestation(store, codexExecutionAdapter, {
-      tool: "plan_workflow", input, model: "gpt-6.1-sol", reasoningEffort: "low",
-      actorId: hostActorId("codex", SESSION), sessionId: SESSION, turnId: "d0094-current-turn", toolUseId: `d0094-current-${riskLevel}`,
+    const caller = rootCaller("codex", SESSION, {
+      callId: `d0094-current-${riskLevel}`,
+      execution: { model: "gpt-6.1-sol", effort: "low", turnId: "d0094-current-turn", provenance: "codex:mcp-meta" },
     });
-    expect(token).toEqual(expect.any(String));
-    const planned = provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
-      clean => service.planWorkflow(clean, true));
+    const planned = provider.run("plan_workflow", caller,
+      () => service.planWorkflow(input, true));
     expect(planned.ok).toBe(true);
     expect(planned.data?.bootstrapExecution).toMatchObject({
       requirement: { minimumModelClass: null, minimumReasoningEffort: null, observationRequired: true },
@@ -81,8 +74,8 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
         observationRequired: true,
       });
     }
-    const replay = provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
-      clean => service.planWorkflow(clean, true));
+    const replay = provider.run("plan_workflow", caller,
+      () => service.planWorkflow(input, true));
     expect(replay.error?.code).toBe("BINDING_INVALID");
   });
 
@@ -106,7 +99,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     for (let ordinal = 0; ordinal < 2; ordinal++) {
       // 각 사례는 첫 단계 뒤 열린 루트를 남기므로 저장소를 격리해 범위 충돌을 막는다.
       const store = new InMemoryWorkflowStore();
-      const provider = new HostAttestationProvider(store, adapter);
+      const provider = new HostAttestationProvider(adapter);
       const validator = new ContractValidator();
       const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
       model = `opaque-${randomUUID()}`;
@@ -119,24 +112,21 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
           artifactId, schemaId: "host-attestation/v1", targetDigest: `sha256:${"e".repeat(64)}` as const,
         })),
       }];
-      const token = issueHostAttestation(store, adapter, {
-        tool: "plan_workflow", input, model, reasoningEffort: effort,
-        actorId: hostActorId(adapter.host, SESSION), sessionId: SESSION, turnId: "d0094-opaque-turn", toolUseId: `d0094-opaque-call-${ordinal}`,
+      const caller = rootCaller(adapter.host, SESSION, {
+        callId: `d0094-opaque-call-${ordinal}`,
+        execution: { model, effort, turnId: "d0094-opaque-turn", provenance: "synthetic-authority-host:runtime" },
       });
-      expect(token).toEqual(expect.any(String));
-      const wrongInput = { ...input, taskEnvelope: { ...input.taskEnvelope, objective: "forged input" }, [HOST_ATTESTATION_FIELD]: token };
-      expect(provider.run("plan_workflow", wrongInput, clean => service.planWorkflow(clean, true)).error?.code).toBe("BINDING_INVALID");
-      const foreignProvider = new HostAttestationProvider(store, codexExecutionAdapter);
+      const foreignProvider = new HostAttestationProvider(codexExecutionAdapter);
       const foreignService = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, foreignProvider);
-      expect(foreignProvider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
-        clean => foreignService.planWorkflow(clean, true)).error?.code).toBe("BINDING_INVALID");
-      const planned = provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
-        clean => service.planWorkflow(clean, true));
+      expect(foreignProvider.run("plan_workflow", caller,
+        () => foreignService.planWorkflow(input, true))).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "HOST_ADAPTER_MISMATCH" } } });
+      const planned = provider.run("plan_workflow", caller,
+        () => service.planWorkflow(input, true));
       expect(planned.ok).toBe(true);
       expect(planned.data?.bootstrapExecution?.context).toMatchObject({ model, modelClass, reasoningEffort: effort });
       expect(provider.lastObservedCapability()).toMatchObject({ provider: "synthetic-authority", policyRevision: "d0094-authority-r1", rawModel: model });
-      expect(provider.run("plan_workflow", { ...input, [HOST_ATTESTATION_FIELD]: token },
-        clean => service.planWorkflow(clean, true)).error?.code).toBe("BINDING_INVALID");
+      expect(provider.run("plan_workflow", caller,
+        () => service.planWorkflow(input, true)).error?.code).toBe("BINDING_INVALID");
 
       // 같은 새 모델과 권위 어댑터를 단계 소비까지 유지한다. 전체 workflow 완주를 뜻하지 않는다.
       const plan = planned.data!;
@@ -178,32 +168,22 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
         evidence: [{ artifactId: "opaque-stage", kind: "test", locator: "model-capability-contract.test.ts", verified: true, note: "같은 opaque 관측의 인메모리 단계 소비 회귀." }],
         findings: [], blockers: [], error: null,
       };
-      const observation = {
-        tool: "record_stage_result", input: stageInput as unknown as Record<string, unknown>, model, reasoningEffort: effort,
-        actorId: hostActorId(adapter.host, SESSION), sessionId: SESSION,
-        turnId: "d0094-opaque-stage-turn", toolUseId: `d0094-opaque-stage-${ordinal}`,
-      };
-      expect(issueHostAttestation(store, adapter, { ...observation, actorId: hostActorId(adapter.host, "foreign-session") })).toBeNull();
-      const stageToken = issueHostAttestation(store, adapter, observation);
-      expect(stageToken).toEqual(expect.any(String));
-      const signedStage = { ...stageInput, [HOST_ATTESTATION_FIELD]: stageToken };
-      const forgedStage = { ...signedStage, evidence: [{ ...stageInput.evidence[0]!, note: "변조된 입력" }] };
-      // 다른 호출·입력·권위는 정상 서명과 같은 단계에서도 소비할 수 없다.
-      expect(provider.run("record_stage_result", forgedStage,
-        clean => service.recordStageResult(clean, true)).error?.code).toBe("BINDING_INVALID");
-      expect(provider.run("plan_workflow", signedStage,
-        clean => service.recordStageResult(clean, true)).error?.code).toBe("BINDING_INVALID");
-      expect(foreignProvider.run("record_stage_result", signedStage,
-        clean => foreignService.recordStageResult(clean, true)).error?.code).toBe("BINDING_INVALID");
-      const unqualifiedToken = issueHostAttestation(store, adapter, { ...observation, model: "unobserved-model", toolUseId: `d0094-opaque-unqualified-${ordinal}` });
-      expect(unqualifiedToken).toEqual(expect.any(String));
-      expect(JSON.parse(Buffer.from(unqualifiedToken!.split(".")[1]!, "base64url").toString("utf8")))
-        .toMatchObject({ model: "unobserved-model", eligibility: null });
-      expect(provider.run("record_stage_result", { ...stageInput, [HOST_ATTESTATION_FIELD]: unqualifiedToken },
-        clean => service.recordStageResult(clean, true)).error?.code).toBe("BINDING_INVALID");
+      const stageCaller = rootCaller(adapter.host, SESSION, {
+        callId: `d0094-opaque-stage-${ordinal}`,
+        execution: { model, effort, turnId: "d0094-opaque-stage-turn", provenance: "synthetic-authority-host:runtime" },
+      });
+      // 다른 권위의 어댑터와 자격 없는 모델 관측은 같은 단계에서도 소비할 수 없다.
+      expect(foreignProvider.run("record_stage_result", stageCaller,
+        () => foreignService.recordStageResult(stageInput, true))).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "HOST_ADAPTER_MISMATCH" } } });
+      const unqualifiedCaller = rootCaller(adapter.host, SESSION, {
+        callId: `d0094-opaque-unqualified-${ordinal}`,
+        execution: { model: "unobserved-model", effort, turnId: "d0094-opaque-stage-turn", provenance: "synthetic-authority-host:runtime" },
+      });
+      expect(provider.run("record_stage_result", unqualifiedCaller,
+        () => service.recordStageResult(stageInput, true)).error?.code).toBe("BINDING_INVALID");
       expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
-      const recorded = provider.run("record_stage_result", signedStage,
-        clean => service.recordStageResult(clean, true));
+      const recorded = provider.run("record_stage_result", stageCaller,
+        () => service.recordStageResult(stageInput, true));
       expect(provider.lastObservedCapability()).toMatchObject({ provider: adapter.provider, policyRevision: adapter.policyRevision, rawModel: model });
       if (modelClass === "lightweight" || effort === "low") {
         expect(recorded.error?.code).toBe("GATE_FAILED");
@@ -211,7 +191,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       } else {
         expect(recorded.ok).toBe(true);
         expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({
-          model, modelClass, reasoningEffort: effort, actorId: observation.actorId,
+          model, modelClass, reasoningEffort: effort, actorId: hostActorId(adapter.host, SESSION),
           taskId: input.taskEnvelope.taskId, runId: receipt.runId, stageId: stage.stageId, revision: receipt.revision,
         });
       }
@@ -320,66 +300,32 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     );
     expect(blockedByModelMinimum.delivery).toBe("blocked");
 
-    // 2. Codex hook and server attestation accept synthetic "gpt-6.5-nova-canonical" alias at "xhigh"
-    //    and retain its raw observation at "high" while rejecting execution below minimum_effort.
+    // 2. Codex call observation and server qualification accept synthetic "gpt-6.5-nova-canonical" alias at "xhigh"
+    //    while rejecting its observation at "high", below minimum_effort.
     const store = new InMemoryWorkflowStore();
     const validator = new ContractValidator();
-    const provider = new HostAttestationProvider(store, syntheticSuite.adapters.get("codex")!);
+    const provider = new HostAttestationProvider(syntheticSuite.adapters.get("codex")!);
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
 
-    const lowEffortHook = observeCodexHook(
-      {
-        hook_event_name: "PreToolUse",
-        session_id: SESSION,
-        turn_id: "turn-1",
-        tool_use_id: "call-low",
-        model: "gpt-6.5-nova-canonical",
-        transcript_path: TRANSCRIPT,
-      },
-      {
-        adapter: syntheticSuite.adapters.get("codex")!,
-        readMetadata: () => ({
-          head: `${JSON.stringify({ type: "session_meta", payload: { id: SESSION, source: "cli" } })}\n`,
-          tail: `${JSON.stringify({ type: "turn_context", payload: { turn_id: "turn-1", model: "gpt-6.5-nova-canonical", effort: "high" } })}\n`,
-        }),
-      },
-    );
-    expect(lowEffortHook).toMatchObject({ reason: null,
-      observation: { model: "gpt-6.5-nova-canonical", reasoningEffort: "high" } });
+    // Codex reports model and effort in tools/call _meta; the ingress hands them over as caller.execution.
     const lowArgs = { schemaVersion: "1.0.0", taskEnvelope: createTask("synthetic-codex-low", "high") };
-    const lowToken = issueHostAttestation(store, syntheticSuite.adapters.get("codex")!, {
-      ...lowEffortHook.observation!, tool: "plan_workflow", input: lowArgs,
+    const lowCaller = rootCaller("codex", SESSION, {
+      callId: "call-low",
+      execution: { model: "gpt-6.5-nova-canonical", effort: "high", turnId: "turn-1", provenance: "codex:mcp-meta" },
     });
-    expect(lowToken).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
-    expect(JSON.parse(Buffer.from(lowToken!.split(".")[1]!, "base64url").toString("utf8"))).toMatchObject({ eligibility: null });
-    const belowMinimum = provider.run("plan_workflow", { ...lowArgs, [HOST_ATTESTATION_FIELD]: lowToken },
-      clean => service.planWorkflow(clean, true));
+    const belowMinimum = provider.run("plan_workflow", lowCaller,
+      () => service.planWorkflow(lowArgs, true));
     expect(belowMinimum).toMatchObject({ ok: false, error: { code: "BINDING_INVALID",
-      message: "Host observation has no matching trusted execution capability and policy revision." } });
+      message: "Host observation does not satisfy the trusted model and effort policy.",
+      details: { reasonCode: "CURRENT_POLICY_EFFORT_BELOW_MINIMUM" } } });
     expect(provider.lastObservedCapability()).toBeNull();
 
-    const validCodexOutput = handleCodexHostAttestationHook(
-      {
-        hook_event_name: "PreToolUse",
-        session_id: SESSION,
-        turn_id: "turn-2",
-        tool_use_id: "call-valid",
-        model: "gpt-6.5-nova-canonical",
-        transcript_path: TRANSCRIPT,
-        tool_name: `${TOOL_PREFIX}plan_workflow`,
-        tool_input: { schemaVersion: "1.0.0", taskEnvelope: createTask("synthetic-codex-task", "high") },
-      },
-      store,
-      {
-        adapter: syntheticSuite.adapters.get("codex")!,
-        readMetadata: () => ({
-          head: `${JSON.stringify({ type: "session_meta", payload: { id: SESSION, source: "cli" } })}\n`,
-          tail: `${JSON.stringify({ type: "turn_context", payload: { turn_id: "turn-2", model: "gpt-6.5-nova-canonical", effort: "xhigh" } })}\n`,
-        }),
-      },
-    );
-    const signedArgs = (validCodexOutput.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput;
-    const planned = provider.run("plan_workflow", signedArgs, (clean) => service.planWorkflow(clean, true));
+    const validCaller = rootCaller("codex", SESSION, {
+      callId: "call-valid",
+      execution: { model: "gpt-6.5-nova-canonical", effort: "xhigh", turnId: "turn-2", provenance: "codex:mcp-meta" },
+    });
+    const validArgs = { schemaVersion: "1.0.0", taskEnvelope: createTask("synthetic-codex-task", "high") };
+    const planned = provider.run("plan_workflow", validCaller, () => service.planWorkflow(validArgs, true));
     expect(planned.ok).toBe(true);
     expect(planned.data?.bootstrapExecution?.context).toMatchObject({
       model: "gpt-6.5-nova-canonical",
@@ -396,7 +342,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       supportedEfforts: ["high", "xhigh", "max", "ultra"],
       aliasUsed: true,
       policyRevision: "synthetic-2026-10-24.v2",
-      provenance: "codex:rollout-turn-context",
+      provenance: "codex:mcp-meta",
     });
 
     // 3. Claude hook and interactive fallback accept synthetic "claude-mythos-6" / "claude-mythos-preview" via injected adapter.
@@ -411,40 +357,29 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
         content: [{ type: "tool_use", id: "toolu_mythos", name: "plan_workflow", input: {} }],
       },
     });
-    expect(
-      findLatestAssistantObservation(
-        claudeLine,
-        SESSION,
-        null,
-        Date.parse("2026-10-24T05:01:00.000Z"),
-        syntheticSuite.adapters.get("claude-code")!,
-      ),
-    ).toEqual({
-      model: "us.anthropic.claude-mythos-preview-v1:0",
-      at: Date.parse("2026-10-24T05:00:00.000Z"),
-    });
-
-    const claudeHookOut = handleHostAttestationHook(
+    const claudeInput = { schemaVersion: "1.0.0", taskEnvelope: createTask("synthetic-claude-task", "high") };
+    const claudeExecution = observeClaudeExecution(
       {
         hook_event_name: "PreToolUse",
         session_id: SESSION,
         transcript_path: TRANSCRIPT,
         tool_name: `${TOOL_PREFIX}plan_workflow`,
         tool_use_id: "toolu_mythos",
-        tool_input: { schemaVersion: "1.0.0", taskEnvelope: createTask("synthetic-claude-task", "high") },
+        tool_input: claudeInput,
         effort: { level: "xhigh" },
       },
-      store,
       {
-        adapter: syntheticSuite.adapters.get("claude-code")!,
         readText: () => claudeLine,
         sleep: () => {},
       },
     );
-    const claudeSigned = (claudeHookOut.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput;
-    const claudeProvider = new HostAttestationProvider(store, syntheticSuite.adapters.get("claude-code")!);
+    expect(claudeExecution).toEqual({
+      model: "us.anthropic.claude-mythos-preview-v1:0", effort: "xhigh", turnId: null, provenance: "claude-code:transcript-tool-use",
+    });
+    const claudeProvider = new HostAttestationProvider(syntheticSuite.adapters.get("claude-code")!);
     const claudeService = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, claudeProvider);
-    const claudePlanned = claudeProvider.run("plan_workflow", claudeSigned, (clean) => claudeService.planWorkflow(clean, true));
+    const claudeCaller = rootCaller("claude-code", SESSION, { callId: "toolu_mythos", execution: claudeExecution });
+    const claudePlanned = claudeProvider.run("plan_workflow", claudeCaller, () => claudeService.planWorkflow(claudeInput, true));
     expect(claudePlanned.ok).toBe(true);
     expect(claudeProvider.lastObservedCapability()).toMatchObject({
       provider: "anthropic-claude-code",
@@ -457,22 +392,16 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     });
 
     // 4. Gemini wrapper attestation resolves synthetic "gemini-4.0-argon_pro" -> "argon" ("deep").
-    const geminiProvider = new HostAttestationProvider(store, syntheticSuite.adapters.get("gemini")!);
+    const geminiProvider = new HostAttestationProvider(syntheticSuite.adapters.get("gemini")!);
     const geminiService = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, geminiProvider);
     const geminiInput = { schemaVersion: "1.0.0", taskEnvelope: createTask("synthetic-gemini-task", "high") };
-    const geminiPlanned = geminiProvider.runObserved(
+    const geminiPlanned = geminiProvider.run(
       "plan_workflow",
-      geminiInput,
-      () => ({
-        model: "models/gemini-4.0-argon_pro",
-        reasoningEffort: "high",
-        actorId: hostActorId("gemini", SESSION),
-        sessionId: SESSION,
-        turnId: "gemini-turn-1",
-        toolUseId: "gemini-call-1",
-        provenance: "gemini:wrapper-runtime",
+      rootCaller("gemini", SESSION, {
+        callId: "gemini-call-1",
+        execution: { model: "models/gemini-4.0-argon_pro", effort: "high", turnId: "gemini-turn-1", provenance: "gemini:wrapper-runtime" },
       }),
-      (clean) => geminiService.planWorkflow(clean, true),
+      () => geminiService.planWorkflow(geminiInput, true),
     );
     expect(geminiPlanned.ok).toBe(true);
     expect(geminiProvider.lastObservedCapability()).toMatchObject({
@@ -569,151 +498,73 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     const store = new InMemoryWorkflowStore();
     const narrowedSuite = createCatalogExecutionAdapters(narrowedCatalog as unknown as ModelRoutingPresetsV1);
     const narrowedArgs = { schemaVersion: "1.0.0", taskEnvelope: createTask("narrowed-effort-task", "high") };
-    const rejectedToken = issueHostAttestation(store, narrowedSuite.adapters.get("codex")!, {
-      tool: "plan_workflow",
-      input: narrowedArgs,
-      model: "gpt-6.5-nova",
-      reasoningEffort: "ultra",
-      actorId: hostActorId("codex", SESSION),
-      sessionId: SESSION,
-      turnId: "turn-narrow",
-      toolUseId: "call-narrow-1",
+    const narrowedCaller = rootCaller("codex", SESSION, {
+      callId: "call-narrow-1",
+      execution: { model: "gpt-6.5-nova", effort: "ultra", turnId: "turn-narrow", provenance: "codex:mcp-meta" },
     });
-    expect(rejectedToken).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
-    expect(JSON.parse(Buffer.from(rejectedToken!.split(".")[1]!, "base64url").toString("utf8"))).toMatchObject({ eligibility: null });
-    const narrowedProvider = new HostAttestationProvider(store, narrowedSuite.adapters.get("codex")!);
+    const narrowedProvider = new HostAttestationProvider(narrowedSuite.adapters.get("codex")!);
     const narrowedValidator = new ContractValidator();
     const narrowedService = new WorkflowService(new FileSkillRegistry(registryPath, narrowedValidator), narrowedValidator, store, null, narrowedProvider);
-    const unsupported = narrowedProvider.run("plan_workflow", { ...narrowedArgs, [HOST_ATTESTATION_FIELD]: rejectedToken },
-      clean => narrowedService.planWorkflow(clean, true));
+    const unsupported = narrowedProvider.run("plan_workflow", narrowedCaller,
+      () => narrowedService.planWorkflow(narrowedArgs, true));
     expect(unsupported).toMatchObject({ ok: false, error: { code: "BINDING_INVALID",
-      message: "Host observation has no matching trusted execution capability and policy revision." } });
+      message: "Host observation does not satisfy the trusted model and effort policy.",
+      details: { reasonCode: "CURRENT_POLICY_EFFORT_UNSUPPORTED" } } });
     expect(narrowedProvider.lastObservedCapability()).toBeNull();
   });
 
-  it("preserves policyRevision, provenance, unknown-model rejection, tampering, expiry, replay, and assurance floors (AC4)", () => {
+  it("preserves below-minimum rejection, replay, missing-observation handling, and assurance floors (AC4)", () => {
     const store = new InMemoryWorkflowStore();
     const validator = new ContractValidator();
-    const defaultProvider = new HostAttestationProvider(store, codexExecutionAdapter);
-    const syntheticSuite = createCatalogExecutionAdapters(syntheticCatalogV2 as unknown as ModelRoutingPresetsV1);
-    const v2Provider = new HostAttestationProvider(store, syntheticSuite.adapters.get("codex")!);
-    const v2Service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, v2Provider);
+    const defaultProvider = new HostAttestationProvider(codexExecutionAdapter);
 
     const planArgs = { schemaVersion: "1.0.0", taskEnvelope: createTask("revision-mismatch-task", "high") };
-
-    // This wire-v2 token uses the default catalog policy ("2026-10-24.r02"); the server uses the synthetic v2 catalog policy ("synthetic-2026-10-24.v2").
-    const defaultPolicyToken = issueHostAttestation(store, codexExecutionAdapter, {
-      tool: "plan_workflow",
-      input: planArgs,
-      model: "gpt-6-astra",
-      reasoningEffort: "high",
-      actorId: hostActorId("codex", SESSION),
-      sessionId: SESSION,
-      turnId: "turn-rev",
-      toolUseId: "call-rev-1",
-      provenance: "codex:rollout-turn-context",
+    const codexCaller = (callId: string, model: string, effort: string, turnId: string) => rootCaller("codex", SESSION, {
+      callId, execution: { model, effort, turnId, provenance: "codex:mcp-meta" },
     });
-    expect(defaultPolicyToken).toBeTruthy();
-    const crossRevision = v2Provider.run(
-      "plan_workflow",
-      { ...planArgs, [HOST_ATTESTATION_FIELD]: defaultPolicyToken },
-      (clean) => v2Service.planWorkflow(clean, true),
-    );
-    expect(crossRevision.error?.code).toBe("BINDING_INVALID");
-    expect(v2Provider.lastObservedCapability()).toBeNull();
-
-    // Tampered token signature is rejected fail-closed.
-    const tamperedToken = `${defaultPolicyToken}tampered`;
+    const defaultPolicyCaller = codexCaller("call-rev-1", "gpt-6-astra", "high", "turn-rev");
     const defaultService = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, defaultProvider);
-    const tampered = defaultProvider.run(
-      "plan_workflow",
-      { ...planArgs, [HOST_ATTESTATION_FIELD]: tamperedToken },
-      (clean) => defaultService.planWorkflow(clean, true),
-    );
-    expect(tampered.error?.code).toBe("BINDING_INVALID");
 
-    // Expired token (> 5m old) is rejected fail-closed by WorkflowService validity window check.
-    const expiredToken = issueHostAttestation(store, codexExecutionAdapter, {
-      tool: "plan_workflow",
-      input: planArgs,
-      model: "gpt-6-astra",
-      reasoningEffort: "high",
-      actorId: hostActorId("codex", SESSION),
-      sessionId: SESSION,
-      turnId: "turn-exp",
-      toolUseId: "call-exp-1",
-      now: new Date(Date.now() - 10 * 60 * 1000),
-    });
-    expect(expiredToken).toBeTruthy();
-    const expiredResult = defaultProvider.run(
-      "plan_workflow",
-      { ...planArgs, [HOST_ATTESTATION_FIELD]: expiredToken },
-      (clean) => defaultService.planWorkflow(clean, true),
-    );
-    expect(expiredResult.error?.code).toBe("BINDING_INVALID");
-
-    // Raw Luna/medium is signed; below-model-minimum eligibility still cannot produce an ExecutionContext.
-    const lunaBelowFloor = issueHostAttestation(store, codexExecutionAdapter, {
-      tool: "plan_workflow",
-      input: planArgs,
-      model: "gpt-5.6-luna",
-      reasoningEffort: "medium",
-      actorId: hostActorId("codex", SESSION),
-      sessionId: SESSION,
-      turnId: "turn-luna",
-      toolUseId: "call-luna-1",
-    });
-    expect(lunaBelowFloor).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
-    expect(JSON.parse(Buffer.from(lunaBelowFloor!.split(".")[1]!, "base64url").toString("utf8"))).toMatchObject({ eligibility: null });
-    const belowModelFloor = defaultProvider.run("plan_workflow", { ...planArgs, [HOST_ATTESTATION_FIELD]: lunaBelowFloor },
-      clean => defaultService.planWorkflow(clean, true));
+    // Raw Luna/medium is observed; below-model-minimum effort still cannot produce an ExecutionContext.
+    const belowModelFloor = defaultProvider.run("plan_workflow", codexCaller("call-luna-1", "gpt-5.6-luna", "medium", "turn-luna"),
+      () => defaultService.planWorkflow(planArgs, true));
     expect(belowModelFloor).toMatchObject({ ok: false, error: { code: "BINDING_INVALID",
-      message: "Host observation has no matching trusted execution capability and policy revision." } });
+      message: "Host observation does not satisfy the trusted model and effort policy.",
+      details: { reasonCode: "CURRENT_POLICY_EFFORT_BELOW_MINIMUM" } } });
     expect(defaultProvider.lastObservedCapability()).toBeNull();
 
     // 유효한 lightweight 관측도 접수할 수 있으며 실제 단계 자격은 별도로 검사한다.
-    const lunaHighToken = issueHostAttestation(store, codexExecutionAdapter, {
-      tool: "plan_workflow",
-      input: planArgs,
-      model: "gpt-5.6-luna",
-      reasoningEffort: "high",
-      actorId: hostActorId("codex", SESSION),
-      sessionId: SESSION,
-      turnId: "turn-luna-high",
-      toolUseId: "call-luna-high-1",
-    });
-    expect(lunaHighToken).toBeTruthy();
     const belowBootstrapFloor = defaultProvider.run(
       "plan_workflow",
-      { ...planArgs, [HOST_ATTESTATION_FIELD]: lunaHighToken },
-      (clean) => defaultService.planWorkflow(clean, true),
+      codexCaller("call-luna-high-1", "gpt-5.6-luna", "high", "turn-luna-high"),
+      () => defaultService.planWorkflow(planArgs, true),
     );
     expect(belowBootstrapFloor.ok).toBe(true);
     expect(belowBootstrapFloor.data?.bootstrapExecution?.context.modelClass).toBe("lightweight");
 
-    // Under defaultProvider, the valid default-policy wire-v2 token works once and fails closed on replay.
+    // Under defaultProvider, one host call observation works once and fails closed on replay.
     const first = defaultProvider.run(
       "plan_workflow",
-      { ...planArgs, [HOST_ATTESTATION_FIELD]: defaultPolicyToken },
-      (clean) => defaultService.planWorkflow(clean, true),
+      defaultPolicyCaller,
+      () => defaultService.planWorkflow(planArgs, true),
     );
     expect(first.ok).toBe(true);
     expect(defaultProvider.lastObservedCapability()?.resolvedModel).toBe("gpt-6-astra");
 
     const replay = defaultProvider.run(
       "plan_workflow",
-      { ...planArgs, [HOST_ATTESTATION_FIELD]: defaultPolicyToken },
-      (clean) => defaultService.planWorkflow(clean, true),
+      defaultPolicyCaller,
+      () => defaultService.planWorkflow(planArgs, true),
     );
     expect(replay.error?.code).toBe("BINDING_INVALID");
 
-    // Missing token on subsequent observe() clears lastObservedCapability so stale call metadata cannot leak.
-    const missingTokenCall = defaultProvider.run(
+    // A missing host observation on a subsequent observe() clears lastObservedCapability so stale call metadata cannot leak.
+    const missingObservationCall = defaultProvider.run(
       "plan_workflow",
-      planArgs,
-      (clean) => defaultService.planWorkflow(clean, true),
+      rootCaller("codex", SESSION, { callId: "call-missing-1" }),
+      () => defaultService.planWorkflow(planArgs, true),
     );
-    expect(missingTokenCall.error?.code).toBe("BINDING_REQUIRED");
+    expect(missingObservationCall.error?.code).toBe("BINDING_REQUIRED");
     expect(defaultProvider.lastObservedCapability()).toBeNull();
   });
 
@@ -739,7 +590,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
   it("rejects below-class and below-effort stage observations before recording a valid stage (AC4, AC5)", () => {
     const store = new InMemoryWorkflowStore();
     const validator = new ContractValidator();
-    const provider = new HostAttestationProvider(store, codexExecutionAdapter);
+    const provider = new HostAttestationProvider(codexExecutionAdapter);
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
     const taskEnvelope = createTask("capability-stage-floor", "high");
     taskEnvelope.artifactContracts = [{
@@ -749,14 +600,12 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       })),
     }];
     const planArgs = { schemaVersion: "1.0.0", taskEnvelope };
-    const bootstrapToken = issueHostAttestation(store, codexExecutionAdapter, {
-      tool: "plan_workflow", input: planArgs, model: "gpt-6.1-sol", reasoningEffort: "low",
-      actorId: hostActorId("codex", SESSION), sessionId: SESSION,
-      turnId: "stage-bootstrap", toolUseId: "stage-bootstrap-call",
+    const bootstrapCaller = rootCaller("codex", SESSION, {
+      callId: "stage-bootstrap-call",
+      execution: { model: "gpt-6.1-sol", effort: "low", turnId: "stage-bootstrap", provenance: "codex:mcp-meta" },
     });
-    expect(bootstrapToken).toBeTruthy();
-    const planned = provider.run("plan_workflow", { ...planArgs, [HOST_ATTESTATION_FIELD]: bootstrapToken },
-      (clean) => service.planWorkflow(clean, true));
+    const planned = provider.run("plan_workflow", bootstrapCaller,
+      () => service.planWorkflow(planArgs, true));
     expect(planned.ok).toBe(true);
     expect(planned.data?.bootstrapExecution?.context.reasoningEffort).toBe("low");
     const plan = planned.data!;
@@ -813,23 +662,19 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       ["gpt-5.6-luna", "high", "stage-low-class"],
       ["gpt-6-astra", "low", "stage-low-effort"],
     ] as const) {
-      const token = issueHostAttestation(store, codexExecutionAdapter, {
-        tool: "record_stage_result", input: stageArgs as unknown as Record<string, unknown>, model, reasoningEffort,
-        actorId: hostActorId("codex", SESSION), sessionId: SESSION, turnId: "stage-turn", toolUseId,
+      const caller = rootCaller("codex", SESSION, {
+        callId: toolUseId, execution: { model, effort: reasoningEffort, turnId: "stage-turn", provenance: "codex:mcp-meta" },
       });
-      expect(token).toBeTruthy();
-      const rejected = provider.run("record_stage_result", { ...stageArgs, [HOST_ATTESTATION_FIELD]: token },
-        (clean) => service.recordStageResult(clean, true));
+      const rejected = provider.run("record_stage_result", caller,
+        () => service.recordStageResult(stageArgs, true));
       expect(rejected.error?.code).toBe("GATE_FAILED");
       expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
     }
-    const strongToken = issueHostAttestation(store, codexExecutionAdapter, {
-      tool: "record_stage_result", input: stageArgs as unknown as Record<string, unknown>, model: "gpt-6-astra", reasoningEffort: "xhigh",
-      actorId: hostActorId("codex", SESSION), sessionId: SESSION, turnId: "stage-turn", toolUseId: "stage-strong",
+    const strongCaller = rootCaller("codex", SESSION, {
+      callId: "stage-strong", execution: { model: "gpt-6-astra", effort: "xhigh", turnId: "stage-turn", provenance: "codex:mcp-meta" },
     });
-    expect(strongToken).toBeTruthy();
-    const recorded = provider.run("record_stage_result", { ...stageArgs, [HOST_ATTESTATION_FIELD]: strongToken },
-      (clean) => service.recordStageResult(clean, true));
+    const recorded = provider.run("record_stage_result", strongCaller,
+      () => service.recordStageResult(stageArgs, true));
     expect(recorded.ok).toBe(true);
     expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ model: "gpt-6-astra", modelClass: "frontier", reasoningEffort: "xhigh" });
   });
@@ -901,7 +746,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     }, syntheticCatalogV2).delivery).toBe("explicit");
   });
 
-  it("rejects a stale descriptor-only revision while preserving the fresh control and failing a legacy class-only adapter closed (AC4, AC5, D0089)", () => {
+  it("qualifies with the current descriptor-only revision and fails a legacy class-only adapter closed (AC4, AC5, D0089)", () => {
     const store = new InMemoryWorkflowStore();
     const validator = new ContractValidator();
     let revision = "descriptor-r1";
@@ -914,25 +759,14 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       },
     };
     expect(adapter.policyRevision).toBeUndefined();
-    const provider = new HostAttestationProvider(store, adapter);
+    const provider = new HostAttestationProvider(adapter);
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
     const args = { schemaVersion: "1.0.0", taskEnvelope: createTask("descriptor-revision", "high") };
-    const observation = {
-      tool: "plan_workflow", input: args, model: "gpt-6-astra", reasoningEffort: "high" as const,
-      actorId: hostActorId("codex", SESSION), sessionId: SESSION,
-      turnId: "descriptor-turn", toolUseId: "descriptor-call",
-    };
-    const staleToken = issueHostAttestation(store, adapter, observation);
-    expect(staleToken).toBeTruthy();
+    const execution = { model: "gpt-6-astra", effort: "high", turnId: "descriptor-turn", provenance: "codex:mcp-meta" };
+    // The current descriptor revision at observation time is the one that qualifies the call.
     revision = "descriptor-r2";
-    const stale = provider.run("plan_workflow", { ...args, [HOST_ATTESTATION_FIELD]: staleToken },
-      (clean) => service.planWorkflow(clean, true));
-    expect(stale.error?.code).toBe("BINDING_INVALID");
-    expect(provider.lastObservedCapability()).toBeNull();
-    const freshToken = issueHostAttestation(store, adapter, observation);
-    expect(freshToken).toBeTruthy();
-    const fresh = provider.run("plan_workflow", { ...args, [HOST_ATTESTATION_FIELD]: freshToken },
-      (clean) => service.planWorkflow(clean, true));
+    const fresh = provider.run("plan_workflow", rootCaller("codex", SESSION, { callId: "descriptor-call", execution }),
+      () => service.planWorkflow(args, true));
     expect(fresh.ok).toBe(true);
     expect(provider.lastObservedCapability()?.policyRevision).toBe("descriptor-r2");
 
@@ -947,15 +781,11 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     };
     // D0089: a class answer is no capability; nothing (efforts, revision "1.0.0") is synthesized from it.
     expect(resolveAdapterModelCapability(legacy, "gpt-6-astra")).toBeNull();
-    const legacyProvider = new HostAttestationProvider(store, legacy);
+    const legacyProvider = new HostAttestationProvider(legacy);
     const legacyService = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, legacyProvider);
     const legacyArgs = { schemaVersion: "1.0.0", taskEnvelope: createTask("legacy-revision-control", "high") };
-    const legacyToken = issueHostAttestation(store, legacy, {
-      ...observation, input: legacyArgs, toolUseId: "legacy-control-call",
-    });
-    expect(legacyToken).toBeTruthy();
-    const legacyResult = legacyProvider.run("plan_workflow", { ...legacyArgs, [HOST_ATTESTATION_FIELD]: legacyToken },
-      (clean) => legacyService.planWorkflow(clean, true));
+    const legacyResult = legacyProvider.run("plan_workflow", rootCaller("codex", SESSION, { callId: "legacy-control-call", execution }),
+      () => legacyService.planWorkflow(legacyArgs, true));
     expect(legacyResult).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "MISSING_MODEL_CAPABILITY" } } });
     expect(legacyProvider.lastObservedCapability()).toBeNull();
   });

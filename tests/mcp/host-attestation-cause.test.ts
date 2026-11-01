@@ -3,9 +3,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, it } from "vitest";
 import { hookFailureContext } from "../../mcp-server/src/hook-error-diagnostics.js";
-import { HOST_ATTESTATION_FIELD, hostIdentityDigest } from "../../mcp-server/src/host-attestation.js";
-import { handleHostAttestationHook, readSessionModel, writeSessionModel } from "../../mcp-server/src/host-attestation-hook.js";
-import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
+import { hostIdentityDigest } from "../../mcp-server/src/host-attestation.js";
+import { observeClaudeExecution, readSessionModel, writeSessionModel } from "../../mcp-server/src/host-attestation-hook.js";
 
 const sessionId = "synthetic-cause-session";
 const modelFile = `${hostIdentityDigest(sessionId)}.json`;
@@ -24,11 +23,11 @@ function thrown(action: () => unknown): Error {
 
 it("keeps the actual transcript read error as the cause of TRANSCRIPT_READ_FAILED", () => {
   let sessionReads = 0;
-  const error = thrown(() => handleHostAttestationHook({
+  const error = thrown(() => observeClaudeExecution({
     hook_event_name: "PreToolUse", session_id: sessionId, tool_use_id: "synthetic-call", transcript_path: temp(),
     tool_name: "mcp__agent_governance_suite__plan_workflow",
-    tool_input: { taskId: "synthetic-task", [HOST_ATTESTATION_FIELD]: "caller-forged" }, effort: { level: "high" },
-  }, new InMemoryWorkflowStore(), { maxWaitMs: 0, readSessionModel: () => { sessionReads++; return stored; } }));
+    tool_input: { taskId: "synthetic-task" }, effort: { level: "high" },
+  }, { maxWaitMs: 0, readSessionModel: () => { sessionReads++; return stored; } }));
   expect(error.message).toBe("TRANSCRIPT_READ_FAILED");
   expect(sessionReads).toBe(0);
   expect(hookFailureContext(error)).toMatchObject({ type: "error", code: { type: "string" },

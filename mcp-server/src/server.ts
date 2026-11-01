@@ -1,6 +1,6 @@
 import { ClassificationInitializationError } from "./skill-classification/runtime.js";
 import type { Diagnostics, DiagnosticOutcome } from "./diagnostics.js";
-import { SESSION_PROOF_FIELD, withoutSessionProof, type SessionActorProofVerifier } from "./session-actor-proof.js";
+import { admitCaller, RESERVED_CALLER_KEYS, type CallerIngress, type VerifiedCaller } from "./caller-identity.js";
 import { existsSync, readFileSync } from "node:fs";
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -30,7 +30,7 @@ import {
   workflowStatusSummary,
 } from "./response-projections.js";
 import { WorkflowService } from "./workflow-service.js";
-import { HOST_ATTESTATION_FIELD, HOST_ATTESTATION_TOOLS, type HostAttestationProvider } from "./host-attestation.js";
+import { hostActorId, type HostAttestationProvider } from "./host-attestation.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from "./korean-prose-glossary.js";
 import { ContractValidator } from "./schema-validator.js";
@@ -101,7 +101,6 @@ const planWorkflowInputSchema = {
 const openConvergenceRootInputSchema = toolSchema(contractSchemas.openConvergenceRootRequest, {
   add: {
     responseMode: responseModeProperty,
-    _continuityBinding: { type: "string", minLength: 16 },
   },
 });
 const attemptProposalInputSchema = toolSchema(contractSchemas.attemptProposal, {
@@ -188,7 +187,6 @@ function responseMode(args: Record<string, unknown>, field: "responseMode" | "de
 function domainArguments(args: Record<string, unknown>, field: "responseMode" | "detail"): Record<string, unknown> {
   const result = { ...args };
   delete result[field];
-  delete result._continuityBinding;
   return result;
 }
 
@@ -237,7 +235,7 @@ const CLASSIFICATION_REQUEST_REJECTIONS = new Set([
 ]);
 
 /**
- * Session board tools. The server writes the summary under the binding it verified from the root hook proof, and
+ * Session board tools. The server writes the summary under the root session of the caller it verified, and
  * lists the sessions whose messaging presence says they are running (or recently unreachable). The board file only
  * adds the one-line summary, prompt time and working directory; it never decides liveness.
  */
@@ -254,22 +252,19 @@ async function sessionBoardResult(
   databasePath: string | null,
   validator: ContractValidator,
   sessionMessages: SessionMessageService,
+  caller: VerifiedCaller,
 ): Promise<ApiResultV1<unknown>> {
   let summary: string | null = null;
-  let binding: { host: string; sessionId: string } | null;
+  const binding = { host: caller.host, sessionId: caller.sessionId };
   try {
     if (tool === "update_session_status") {
       const request = validator.updateSessionStatusRequest(args);
       summary = normalizeSummary(request.summary);
-      binding = request._sessionBinding ?? null;
     } else {
-      binding = validator.listSessionStatusRequest(args)._sessionBinding ?? null;
+      validator.listSessionStatusRequest(args);
     }
   } catch (error) {
     return failureResult(error, "Session board input is invalid.");
-  }
-  if (!binding) {
-    return apiError("BINDING_REQUIRED", "The session binding is missing; hook execution or binding delivery was not observed for this call.");
   }
   if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
   const self = binding;
@@ -404,7 +399,7 @@ export function createMcpServer(
   sessionMessages: SessionMessageService = new SessionMessageService(),
   trust: TrustService | null = null,
   classification: SkillClassificationGateway | null = null,
-  sessionActorProof: SessionActorProofVerifier | null = null,
+  callerIngress: CallerIngress | null = null,
   diagnostics?: Diagnostics,
 ): Server {
   const server = new Server(
@@ -416,9 +411,6 @@ export function createMcpServer(
   // Anthropic hosts cannot resolve $ref in tool schemas, so they receive fully inlined copies.
   const advertise = <T extends { inputSchema: Record<string, unknown> }>(tools: T[]): T[] => tools.map((tool) => {
     const inputSchema = structuredClone(tool.inputSchema) as ObjectSchema;
-    inputSchema.properties = { ...inputSchema.properties, [SESSION_PROOF_FIELD]: { type: "string", minLength: 16, maxLength: 8192, description: "호스트가 관리하는 필드이므로 생략한다. 호출자가 업무 인자를 보내면 현재 호스트 훅이 주입한다. 증명을 만들거나 찾아 넣지 않는다. 서버는 유효한 훅 발급 증명을 계속 요구한다." } };
-    delete inputSchema.properties._sessionBinding;
-    inputSchema.required = [...new Set((inputSchema.required ?? []).filter(name => name !== "_sessionBinding" && name !== SESSION_PROOF_FIELD))];
     if (usesInlineReferences(toolSchemaProfile) && JSON.stringify(inputSchema).includes('"$ref"')) {
       return { ...tool, inputSchema: inlineSchemaReferences(inputSchema, contractDocuments) };
     }
@@ -625,28 +617,26 @@ export function createMcpServer(
       return toolResult(result);
     };
     const handle = async (correlation?: string) => {
-    let args = asRecord(request.params.arguments);
-    if (Object.hasOwn(args, "_sessionBinding")) return respond(apiError("BINDING_INVALID", "Caller session bindings are not accepted.", {reasonCode: "CALLER_SESSION_BINDING_REJECTED"}));
-    if (!sessionActorProof) return respond(apiError("BINDING_REQUIRED", "The root hook proof verifier is not configured.", {reasonCode: "ROOT_HOOK_PROOF_REQUIRED"}));
-    let verifiedSessionId: string;
+    const args = asRecord(request.params.arguments);
+    const reserved = RESERVED_CALLER_KEYS.find(key => Object.hasOwn(args, key));
+    if (reserved) return respond(apiError("INVALID_INPUT", "Caller identity is host-owned and is not accepted in tool arguments.", {reasonCode: "RESERVED_CALLER_FIELD", field: reserved}));
+    if (!callerIngress) return respond(apiError("BINDING_REQUIRED", "No host caller ingress is configured for this server.", {reasonCode: "HOST_INGRESS_UNAVAILABLE"}));
+    let caller: VerifiedCaller;
     try {
-      const verified = sessionActorProof.verify(request.params.name, args);
-      verifiedSessionId = verified.sessionId;
-      diagnostics?.event("binding", "DEBUG", "binding_check", {method: request.params.name, correlation, verified: true});
-      args = withoutSessionProof(args);
-      if (["update_session_status", "list_session_status", "prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"].includes(request.params.name)) {
-        args._sessionBinding = request.params.name === "validate_collaboration_decision"
-          ? {host: verified.host, sessionId: verified.sessionId, actorKind: "main", observedBy: verified.actor.reasonCode, assurance: verified.actor.basis}
-          : {host: verified.host, sessionId: verified.sessionId};
-      }
+      const meta = request.params._meta;
+      caller = admitCaller(callerIngress(request.params.name, meta && typeof meta === "object" ? meta as Record<string, unknown> : undefined), hostActorId);
+      diagnostics?.event("binding", "DEBUG", "binding_check", {method: request.params.name, correlation, verified: true,
+        actorRole: caller.actor.role, parentChainLength: caller.parentChain.length, parentChainComplete: caller.parentChainComplete});
     } catch (error) {
-      return respond(error instanceof WorkflowContractError
-        ? apiError(error.code, error.message, error.details)
-        : apiError("MCP_UNAVAILABLE", "Root hook proof verification is unavailable.", {reasonCode: "ROOT_PROOF_VERIFICATION_FAILED"}));
+      if (error instanceof WorkflowContractError) {
+        diagnostics?.event("binding", "DEBUG", "binding_check", {method: request.params.name, correlation, verified: false, reasonCode: error.details?.reasonCode});
+        return respond(apiError(error.code, error.message, error.details));
+      }
+      return respond(apiError("MCP_UNAVAILABLE", "Host caller verification is unavailable.", {reasonCode: "CALLER_VERIFICATION_FAILED"}));
     }
-    // Only a host with an attestation adapter strips and verifies the hook token.
+    // Only a host with an execution adapter qualifies the caller's observed model and effort.
     const attested = <T>(tool: string, call: (input: Record<string, unknown>) => T): T =>
-      hostAttestation ? hostAttestation.run(tool, args, call) : call(args);
+      hostAttestation ? hostAttestation.run(tool, caller, () => call(args)) : call(args);
     // Rejects an unknown mode before the call runs; compact mode projects successful results only.
     const withMode = <T, U>(field: "responseMode" | "detail", call: () => ApiResultV1<T>, project: (value: T) => U): ApiResultV1<T | U> => {
       const mode = responseMode(args, field);
@@ -655,16 +645,12 @@ export function createMcpServer(
     let updateStatus: PluginUpdateStatusV1 | null = null;
     let result: ApiResultV1<unknown>;
 
-    if (!hostAttestation && HOST_ATTESTATION_TOOLS.has(request.params.name) && Object.hasOwn(args, HOST_ATTESTATION_FIELD)) {
-      result = apiError("BINDING_REQUIRED", "Host attestation is not configured for this server; a hook token cannot be verified.");
-    } else if (["get_skill_inventory", "classify_skills", "record_skill_selection"].includes(request.params.name)) {
+    if (["get_skill_inventory", "classify_skills", "record_skill_selection"].includes(request.params.name)) {
       if (!classification) result = apiError("MCP_UNAVAILABLE", "Skill classification is not configured for this server.");
       else {
         try {
           if (request.params.name !== "get_skill_inventory") {
-            const callerInput = { ...args };
-            delete callerInput[HOST_ATTESTATION_FIELD];
-            const checked = (request.params.name === "classify_skills" ? classificationInputSchema : selectionInputSchema).safeParse(callerInput);
+            const checked = (request.params.name === "classify_skills" ? classificationInputSchema : selectionInputSchema).safeParse(args);
             if (!checked.success) return respond(invalidInput("Skill classification input does not match its contract."));
           }
           if (request.params.name === "get_skill_inventory") {
@@ -738,7 +724,7 @@ export function createMcpServer(
             break;
           }
           try {
-            result = trust.validateCollaborationDecision(validator.validateCollaborationDecisionRequest(args));
+            result = trust.validateCollaborationDecision(validator.validateCollaborationDecisionRequest(args), caller);
           } catch (error) {
             // Contract errors keep their own code and sanitized details (including storage diagnostics).
             result = failureResult(error, "Collaboration decision validation input is invalid.");
@@ -750,7 +736,7 @@ export function createMcpServer(
         case "open_convergence_root":
           result = withMode("responseMode", () => {
             const opened = service.openConvergenceRoot(domainArguments(args, "responseMode"));
-            if (opened.ok && opened.data && !continuity.bindOpenedRoot(args, opened.data.rootId)) {
+            if (opened.ok && opened.data && !continuity.bindOpenedRoot(caller, opened.data.rootId)) {
               process.stderr.write(JSON.stringify({ event: "continuity-root-binding-unavailable" }) + "\n");
             }
             return opened;
@@ -761,7 +747,7 @@ export function createMcpServer(
           break;
         case "start_guarded_workflow":
           result = withMode("responseMode", () => service.startGuardedWorkflow(domainArguments(args, "responseMode"), true,
-            rootId => continuity.prepareWorkflowStart(verifiedSessionId, rootId)), workflowStatusSummary);
+            rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId)), workflowStatusSummary);
           break;
         case "get_convergence_status":
           result = withMode("detail", () => service.getConvergenceStatus(String(args.rootId ?? "")), convergenceStatusSummary);
@@ -789,19 +775,19 @@ export function createMcpServer(
           result = withMode("responseMode", () => service.abortWorkflow(String(args.runId ?? ""), integer(args.expectedRevision)), workflowStatusSummary);
           break;
         case "checkpoint_context":
-          result = continuity.checkpointContext(args);
+          result = continuity.checkpointContext(args, caller);
           break;
         case "inspect_context":
-          result = continuity.inspectContext(args);
+          result = continuity.inspectContext(args, caller);
           break;
         case "load_context":
-          result = continuity.loadContext(args);
+          result = continuity.loadContext(args, caller);
           break;
         case "suppress_context_restore":
-          result = continuity.suppressContextRestore(args);
+          result = continuity.suppressContextRestore(args, caller);
           break;
         case "purge_direct_context":
-          result = continuity.purgeDirectContext(args);
+          result = continuity.purgeDirectContext(args, caller);
           break;
         case "prepare_state_cleanup":
           result = cleanup
@@ -810,12 +796,12 @@ export function createMcpServer(
           break;
         case "update_session_status":
         case "list_session_status":
-          result = await sessionBoardResult(request.params.name, args, sessionBoardPath, validator, sessionMessages);
+          result = await sessionBoardResult(request.params.name, args, sessionBoardPath, validator, sessionMessages, caller);
           break;
         case "prepare_session_message":
           try {
             validator.prepareSessionMessageRequest(args);
-            result = await sessionMessages.prepare(args);
+            result = await sessionMessages.prepare(args, caller);
           } catch (error) {
             result = failureResult(error, "Session message preparation is invalid.");
           }
@@ -823,7 +809,7 @@ export function createMcpServer(
         case "send_session_message":
           try {
             validator.sendSessionMessageRequest(args);
-            result = await sessionMessages.send(args);
+            result = await sessionMessages.send(args, caller);
           } catch (error) {
             result = failureResult(error, "Session message input is invalid.", " Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status.");
           }
@@ -831,7 +817,7 @@ export function createMcpServer(
         case "acknowledge_session_messages":
           try {
             validator.acknowledgeSessionMessagesRequest(args);
-            result = await sessionMessages.acknowledge(args);
+            result = await sessionMessages.acknowledge(args, caller);
           } catch (error) {
             result = failureResult(error, "Session message acknowledgement is invalid.");
           }
@@ -839,7 +825,7 @@ export function createMcpServer(
         case "get_session_message_status":
           try {
             validator.getSessionMessageStatusRequest(args);
-            result = await sessionMessages.status(args);
+            result = await sessionMessages.status(args, caller);
           } catch (error) {
             result = failureResult(error, "Session message status input is invalid.");
           }

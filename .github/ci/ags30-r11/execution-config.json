@@ -12,7 +12,6 @@
     "runtime/schema-validation.mjs",
     "mcp-server/dist/continuity-hook.mjs",
     "mcp-server/dist/host-attestation-hook.mjs",
-    "mcp-server/dist/host-attestation-api.mjs",
     "mcp-server/dist/session-board-hook.mjs",
     "mcp-server/dist/session-message-relay.mjs",
     "mcp-server/dist/session-message-relay-guard.mjs",
@@ -22,7 +21,6 @@
   ],
   "selectors": [
     "tests/mcp/model-capability-contract.test.ts",
-    "tests/mcp/codex-host-observation.test.ts",
     "tests/mcp/host-attestation.test.ts",
     "tests/mcp/host-attestation-failures.test.ts",
     "tests/mcp/workflow-service.test.ts",

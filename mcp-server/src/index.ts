@@ -1,7 +1,7 @@
 import {createDiagnostics, readDiagnosticConfig, type Diagnostics} from "./diagnostics.js";
 import {createHash} from "node:crypto";
 import { PLUGIN_INFO } from "./plugin-info.js";
-import { SessionActorProofs } from "./session-actor-proof.js";
+import { builtinCallerIngress } from "./builtin-caller-ingress.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { FileSkillRegistry } from "./registry.js";
@@ -90,7 +90,7 @@ export async function startMcpServer(
   });
 
   const validator = new ContractValidator();
-  const hostAttestation = executionAdapter ? new HostAttestationProvider(store, executionAdapter) : null;
+  const hostAttestation = executionAdapter ? new HostAttestationProvider(executionAdapter) : null;
   // Neither bundled host currently exposes a cryptographically distinct direct-human approval event.
   const trust = new TrustService(trustStore);
   const service = new WorkflowService(
@@ -156,7 +156,11 @@ export async function startMcpServer(
       if (!observation) return null;
       const board = openBoard(resolveSessionBoardDatabasePath(), {busyTimeoutMs: 500});
       try {
-        const session = listPromptMarkers(board).find(candidate => observation.actorId === hostActorId(candidate.host, candidate.sessionId));
+        // A child caller's actor ID extends its root session's actor ID; both read the root session's prompt.
+        const session = listPromptMarkers(board).find(candidate => {
+          const root = hostActorId(candidate.host, candidate.sessionId);
+          return observation.actorId === root || (observation.actorId ?? "").startsWith(`${root}:`);
+        });
         return session ? {taskRevision: request.confirmedContext.taskRevision, requestDigest: request.requestDigest, cancelled: false, sourceRef: `host-prompt:${observation.actorId}:${session.lastPromptAt}`} : null;
       } finally {board.close();}
     },
@@ -169,7 +173,7 @@ export async function startMcpServer(
     },
     service: new SkillClassificationService(providerRuntime),
   });
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, classification, new SessionActorProofs(store), diagnostics);
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, classification, builtinCallerIngress(process.env.AGENT_GOVERNANCE_HOST_ATTESTATION, store), diagnostics);
   await server.connect(new StdioServerTransport());
   diagnostics.event("lifecycle", "INFO", "connected");
   const previousClose = server.onclose;

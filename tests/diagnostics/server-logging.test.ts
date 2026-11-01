@@ -9,9 +9,10 @@ import {createMcpServer} from "../../mcp-server/src/server.js";
 import {createDiagnostics, readDiagnosticConfig} from "../../mcp-server/src/diagnostics.js";
 import type {WorkflowService} from "../../mcp-server/src/workflow-service.js";
 import type {PluginUpdateService} from "../../mcp-server/src/plugin-update-service.js";
-import type {SessionActorProofVerifier} from "../../mcp-server/src/session-actor-proof.js";
+import type {CallerIngress} from "../../mcp-server/src/caller-identity.js";
+import {rootCaller} from "../helpers/caller.js";
 
-it("records actual MCP success, early proof rejection and thrown failure without changing responses", async () => {
+it("records actual MCP success, early caller rejection and thrown failure without changing responses", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "ags-server-logging-"));
   const diagnostics = await createDiagnostics(readDiagnosticConfig(JSON.stringify({
     level: "TRACE", destination: "file", file: path.join(root, "safe"), flushDeadlineMs: 1000,
@@ -28,15 +29,17 @@ it("records actual MCP success, early proof rejection and thrown failure without
     mark("ready-complete");
     expect(ready).toBe(true);
   } finally {clearTimeout(setupTimer);}
-  // Synthetic proof verifier tests instrumentation only; genuine proof semantics have their own suite.
-  const proof: SessionActorProofVerifier = {verify(_tool, args) {
-    if (args._sessionProof === "REJECT_SECRET_PROOF") {
+  // Synthetic caller ingress tests instrumentation only; genuine ingress semantics have their own suite.
+  const ingress: CallerIngress = (_tool, meta) => {
+    if (meta?.fixture === "REJECT_SECRET_META") {
       throw new WorkflowContractError("BINDING_INVALID", "SECRET_REASON", {
         reasonCode: "ROOT_PROOF_SCOPE_OR_TIME_INVALID", failedChecks: ["expired"], token: "SECRET_TOKEN",
       });
     }
-    return {host: "fixture", sessionId: "fixture", actor: {role: "root", basis: "observed", reasonCode: "OWNED_TEST"}};
-  }};
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the rest sibling drops this field
+    const {provenance: _provenance, ...caller} = rootCaller("fixture", "fixture");
+    return {provenance: "host-observed", caller};
+  };
   const updates = {
     cachedStatus: () => null, takeNotice: () => null,
     check: async () => {throw new Error("SECRET_THROW");},
@@ -47,22 +50,22 @@ it("records actual MCP success, early proof rejection and thrown failure without
     accept: async () => {throw new Error("Unexpected fixture invocation");},
   } as unknown as NonNullable<Parameters<typeof createMcpServer>[11]>;
   const server = createMcpServer({} as WorkflowService, updates, undefined, undefined, undefined,
-    undefined, "default", null, null, undefined, null, classification, proof, diagnostics);
+    undefined, "default", null, null, undefined, null, classification, ingress, diagnostics);
   const client = new Client({name: "logging-integration", version: "1.0.0"});
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   try {
     await server.connect(serverTransport);
     await client.connect(clientTransport);
     mark("success-start");
-    const response = await client.callTool({name: "get_skill_inventory", arguments: {_sessionProof: "ACCEPT_SECRET_PROOF"}});
+    const response = await client.callTool({name: "get_skill_inventory", arguments: {}, _meta: {fixture: "ACCEPT_SECRET_META"}});
     expect(JSON.parse((response.content as Array<{text: string}>)[0]!.text)).toMatchObject({ok: true, data: {fixture: "SECRET_RESPONSE_BODY"}});
     mark("success-end");
     mark("rejected-start");
-    const rejected = await client.callTool({name: "get_skill_inventory", arguments: {_sessionProof: "REJECT_SECRET_PROOF"}});
+    const rejected = await client.callTool({name: "get_skill_inventory", arguments: {}, _meta: {fixture: "REJECT_SECRET_META"}});
     expect(JSON.parse((rejected.content as Array<{text: string}>)[0]!.text)).toMatchObject({ok: false, error: {code: "BINDING_INVALID", message: "SECRET_REASON"}});
     mark("rejected-end");
     mark("thrown-start");
-    await expect(client.callTool({name: "check_for_updates", arguments: {_sessionProof: "ACCEPT_SECRET_PROOF"}})).rejects.toThrow("SECRET_THROW");
+    await expect(client.callTool({name: "check_for_updates", arguments: {}, _meta: {fixture: "ACCEPT_SECRET_META"}})).rejects.toThrow("SECRET_THROW");
     mark("thrown-end");
   } finally {
     mark("close-start");
@@ -96,5 +99,5 @@ it("records actual MCP success, early proof rejection and thrown failure without
     expect(events.some(start => start.event === "request_start" && start.correlation === event.correlation)).toBe(true);
     expect(event.elapsedMs).toBeGreaterThanOrEqual(0);
   }
-  expect(events.filter(event => event.event === "binding_check" && event.proofPresent === true)).toHaveLength(3);
+  expect(events.filter(event => event.event === "binding_check").map(event => event.verified)).toEqual([true, false, true]);
 });

@@ -115,7 +115,7 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
     const mcpConfig = JSON.parse(readFileSync(mcpConfigPath, "utf8"));
     expect(Object.keys(mcpConfig.mcpServers ?? {})).toEqual(["ags"]);
     expect(mcpConfig.mcpServers?.ags?.command).toBe("node");
-    expect(mcpConfig.mcpServers?.ags?.env?.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("gemini");
+    expect(mcpConfig.mcpServers?.ags?.env?.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("antigravity");
     expect(existsSync(path.join(ROOT, "skills"))).toBe(true);
 
     // Codex and Claude manifests keep their own server key and hook matchers unchanged.

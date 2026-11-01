@@ -77,7 +77,7 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     await mkdir(path.join(cleanRoot, "mcp-server", "dist"), { recursive: true });
     const copies = await Promise.allSettled([
       ...["contracts", "runtime", "skills"].map((directory) => cp(path.join(sourceRoot, directory), path.join(cleanRoot, directory), { recursive: true })),
-      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "host-attestation-api.mjs", "session-board-hook.mjs", "governance-hook.mjs", ...MESSAGING_RUNTIME_PROBES.map(({ bundle }) => bundle)].map((bundle) => (
+      ...["server.mjs", "continuity-hook.mjs", "host-attestation-hook.mjs", "session-board-hook.mjs", "governance-hook.mjs", ...MESSAGING_RUNTIME_PROBES.map(({ bundle }) => bundle)].map((bundle) => (
         cp(path.join(sourceRoot, "mcp-server", "dist", bundle), path.join(cleanRoot, "mcp-server", "dist", bundle))
       )),
     ]);
@@ -100,10 +100,10 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     environment.AGENT_GOVERNANCE_TRUST_DB_PATH = path.join(cleanRoot, "state", "trust.sqlite3");
     environment.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = path.join(cleanRoot, "state", "messaging");
     // Runs a clean-room script (a path relative to the clean root) with the given stdin text.
-    const runNode = (script, input, args = []) => spawnSync(process.execPath, [path.join(cleanRoot, ...script.split("/")), ...args], {
+    const runNode = (script, input, args = [], env = environment) => spawnSync(process.execPath, [path.join(cleanRoot, ...script.split("/")), ...args], {
       cwd: cleanRoot,
       encoding: "utf8",
-      env: environment,
+      env,
       input,
       maxBuffer: 5 * 1024 * 1024,
       timeout: 30_000,
@@ -185,60 +185,18 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       tool_input: { taskId: "clean-room-task" },
       effort: { level: "high" },
     };
-    const runAttestationHook = (input) => runNode("mcp-server/dist/host-attestation-hook.mjs", `${JSON.stringify(input)}\n`);
-    const attestationResult = runAttestationHook(attestationInput);
-    const attestationOutput = attestationResult.status === 0 && attestationResult.stdout ? JSON.parse(attestationResult.stdout) : null;
-    if (
-      attestationResult.error
-      || !String(attestationOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs2.")
-      || attestationOutput.hookSpecificOutput.updatedInput.taskId !== "clean-room-task"
-    ) {
-      throw new Error(`host attestation hook failed its node_modules-free smoke check.\n${attestationResult.stderr ?? ""}`);
+    // The Claude governance hook records the call under its tool-use ID and prints nothing; it never rewrites arguments.
+    const runGovernanceHook = (input) => runNode("mcp-server/dist/governance-hook.mjs", `${JSON.stringify(input)}\n`, ["--host=claude-code"]);
+    const admitted = runGovernanceHook(attestationInput);
+    if (admitted.error || admitted.status !== 0 || admitted.stdout !== "") {
+      throw new Error(`governance hook failed its node_modules-free admission smoke check.\n${admitted.stderr ?? ""}`);
     }
-
-    // Interactive sessions: the issuing message is not in the transcript yet, so the model
-    // recorded by the SessionStart hook must be used.
-    const sessionStart = runAttestationHook({ hook_event_name: "SessionStart", session_id: "clean-room-interactive", source: "startup", model: "claude-opus-5" });
-    const interactive = runAttestationHook({ ...attestationInput, session_id: "clean-room-interactive", tool_use_id: "toolu_not_written_yet" });
-    const interactiveOutput = interactive.status === 0 && interactive.stdout ? JSON.parse(interactive.stdout) : null;
-    if (
-      sessionStart.error || sessionStart.status !== 0 || sessionStart.stdout !== ""
-      || interactive.error
-      || !String(interactiveOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs2.")
-    ) {
-      throw new Error(`host attestation hook failed its interactive-session smoke check.\n${sessionStart.stderr ?? ""}${interactive.stderr ?? ""}`);
-    }
-
-    const codexTranscriptPath = path.join(cleanRoot, "state", "codex-rollout.jsonl");
-    await writeFile(codexTranscriptPath, [
-      { type: "session_meta", payload: { id: "clean-room-codex", source: "cli" } },
-      { type: "turn_context", payload: { turn_id: "clean-room-turn", model: "gpt-6-astra", effort: "high" } },
-    ].map((entry) => JSON.stringify(entry)).join("\n") + "\n", "utf8");
-    const codexHook = runNode("mcp-server/dist/host-attestation-hook.mjs", JSON.stringify({
-      ...attestationInput, session_id: "clean-room-codex", turn_id: "clean-room-turn", model: "gpt-6-astra",
-      transcript_path: codexTranscriptPath,
-    }), ["--host=codex"]);
-    const codexOutput = codexHook.status === 0 && codexHook.stdout ? JSON.parse(codexHook.stdout) : null;
-    if (codexHook.error || Object.hasOwn(codexOutput?.hookSpecificOutput ?? {}, "permissionDecision")
-      || !String(codexOutput?.hookSpecificOutput?.updatedInput?._hostAttestation ?? "").startsWith("aghs2.")) {
-      throw new Error(`host attestation hook failed its Codex fixture smoke check.\n${codexHook.stderr ?? ""}`);
-    }
-
-    await writeFile(path.join(cleanRoot, "state", "host-wrapper.mjs"), `
-import { openHostAttestation, codexExecutionAdapter, hostActorId } from "../mcp-server/dist/host-attestation-api.mjs";
-const attestation = openHostAttestation(process.env.AGENT_GOVERNANCE_DB_PATH, codexExecutionAdapter);
-try {
-  const signed = attestation.runObserved("plan_workflow", { taskId: "wrapper-fixture" },
-    () => ({ model: "gpt-6-astra", reasoningEffort: "high", actorId: hostActorId("codex", "wrapper-session"),
-      sessionId: "wrapper-session", turnId: "wrapper-turn", toolUseId: "wrapper-call" }),
-    (input) => input);
-  if (!signed._hostAttestation?.startsWith("aghs2.")) throw new Error("Host wrapper observation missing");
-  process.stdout.write("host-wrapper-fixture: ready");
-} finally { attestation.close(); }
-`, "utf8");
-    const wrapper = runNode("state/host-wrapper.mjs", "");
-    if (wrapper.error || wrapper.status !== 0 || wrapper.stdout !== "host-wrapper-fixture: ready") {
-      throw new Error(`host-owned wrapper API failed its dependency-free fixture check.\n${wrapper.stderr ?? ""}`);
+    // Interactive sessions: the issuing message is not in the transcript yet, so the SessionStart model is used.
+    const sessionStart = runNode("mcp-server/dist/host-attestation-hook.mjs", `${JSON.stringify({ hook_event_name: "SessionStart", session_id: "clean-room-interactive", source: "startup", model: "claude-opus-5" })}\n`);
+    const interactive = runGovernanceHook({ ...attestationInput, session_id: "clean-room-interactive", tool_use_id: "toolu_not_written_yet" });
+    if (sessionStart.error || sessionStart.status !== 0 || sessionStart.stdout !== ""
+      || interactive.error || interactive.status !== 0 || interactive.stdout !== "") {
+      throw new Error(`governance hook failed its interactive-session smoke check.\n${sessionStart.stderr ?? ""}${interactive.stderr ?? ""}`);
     }
 
     // The board hook records only a main prompt's time and directory; it never binds, gates or denies a tool.
@@ -282,32 +240,16 @@ try {
       throw new Error("session board hook changed clean-room board state outside a main prompt.");
     }
 
-    let proofCall = 0;
-    const withRootProof = (name, args) => {
+    let admissionCall = 0;
+    const admitCall = (name, args) => {
       // Owned synthetic hook events use the built CLI and the server's clean-room workflow DB.
-      const issued = runNode("mcp-server/dist/governance-hook.mjs", `${JSON.stringify({
-        hook_event_name: "PreToolUse", session_id: "clean-room-mcp-root", cwd: cleanRoot,
-        tool_use_id: `clean-room-mcp-call-${++proofCall}`,
-        tool_name: `mcp__agent_governance_suite__${name}`, tool_input: args,
-      })}\n`, ["--host=claude-code"]);
-      if (issued.error || issued.status !== 0 || typeof issued.stdout !== "string" || !issued.stdout.trim()) {
-        throw new Error(`governance hook failed its clean-room root proof issuance.\n${formatContinuityHookFailure(issued)}`);
+      const toolUseId = `toolu_clean_room_mcp_${++admissionCall}`;
+      const result = runGovernanceHook({ hook_event_name: "PreToolUse", session_id: "clean-room-mcp-root", cwd: cleanRoot,
+        transcript_path: transcriptPath, tool_use_id: toolUseId, tool_name: `mcp__agent_governance_suite__${name}`, tool_input: args });
+      if (result.error || result.status !== 0 || result.stdout !== "") {
+        throw new Error(`governance hook failed its clean-room admission.\n${formatContinuityHookFailure(result)}`);
       }
-      let output;
-      try { output = JSON.parse(issued.stdout); }
-      catch (cause) { throw new Error("governance hook returned malformed clean-room JSON.", { cause }); }
-      const specific = output?.hookSpecificOutput;
-      const updated = specific?.updatedInput;
-      if (specific?.hookEventName !== "PreToolUse" || Object.hasOwn(specific, "permissionDecision")
-        || !updated || typeof updated !== "object" || Array.isArray(updated)
-        || Object.hasOwn(updated, "_sessionBinding")
-        || typeof updated._sessionProof !== "string" || !/^ags-root-v3\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/u.test(updated._sessionProof)) {
-        throw new Error("governance hook did not issue a clean-room root proof.");
-      }
-      const exactInput = { ...updated };
-      delete exactInput._sessionProof;
-      if (JSON.stringify(exactInput) !== JSON.stringify(args)) throw new Error("governance hook changed clean-room tool arguments.");
-      return updated;
+      return { "claudecode/toolUseId": toolUseId };
     };
 
     const sourceText = "MCP와 SQLite";
@@ -323,10 +265,10 @@ try {
       } } } },
       { jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "get_trust_capabilities", arguments: {} } },
     ].map((message) => {
-      if (message.method === "tools/call") message.params.arguments = withRootProof(message.params.name, message.params.arguments);
+      if (message.method === "tools/call") message.params._meta = admitCall(message.params.name, message.params.arguments);
       return JSON.stringify(message);
     }).join("\n");
-    const serverResult = runNode("mcp-server/dist/server.mjs", `${lookupInput}\n`);
+    const serverResult = runNode("mcp-server/dist/server.mjs", `${lookupInput}\n`, [], { ...environment, AGENT_GOVERNANCE_HOST_ATTESTATION: "claude-code" });
     if (serverResult.error || serverResult.status !== 0) {
       throw new Error(`MCP server failed its node_modules-free glossary lookup.\n${serverResult.stderr ?? ""}`);
     }

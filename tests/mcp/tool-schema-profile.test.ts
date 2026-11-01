@@ -18,7 +18,9 @@ import { SESSION_MESSAGE_SERVER_INSTRUCTIONS, SKILL_INTAKE_SERVER_INSTRUCTIONS, 
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
-import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
+import { RESERVED_CALLER_KEYS, type CallerIngress } from "../../mcp-server/src/caller-identity.js";
+import { codexMetaIngress } from "../../mcp-server/src/builtin-caller-ingress.js";
+import { fixedIngress, rootCaller } from "../helpers/caller.js";
 
 const rootDirectory = fileURLToPath(new URL("../../", import.meta.url));
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
@@ -26,7 +28,6 @@ const bundledServer = fileURLToPath(new URL("../../mcp-server/dist/server.mjs", 
 const combinators = ["oneOf", "anyOf", "allOf", "not", "if", "then", "else"];
 
 type ListedTool = { name: string; inputSchema: Record<string, unknown> };
-const proofFixtures = new WeakMap<Client, ReturnType<typeof createSyntheticRootProofFixture>>();
 type ProtocolTrace = Array<{direction: "client" | "server"; wire: string}>;
 
 function updateService(): PluginUpdateService {
@@ -49,13 +50,11 @@ function updateService(): PluginUpdateService {
   return new PluginUpdateService(store);
 }
 
-async function connect(profile?: ToolSchemaProfile, trace?: ProtocolTrace): Promise<Client> {
+async function connect(profile?: ToolSchemaProfile, trace?: ProtocolTrace, ingress: CallerIngress | null = fixedIngress(rootCaller())): Promise<Client> {
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-  const root = createSyntheticRootProofFixture();
-  const server = createMcpServer(service, updateService(), undefined, undefined, undefined, validator, profile, null, null, undefined, null, null, root.proofs);
+  const server = createMcpServer(service, updateService(), undefined, undefined, undefined, validator, profile, null, null, undefined, null, null, ingress);
   const client = new Client({ name: "tool-schema-profile", version: "1.0.0" });
-  proofFixtures.set(client, root);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   if (trace) {
     for (const [direction, transport] of [["client", clientTransport], ["server", serverTransport]] as const) {
@@ -79,8 +78,19 @@ function errorCode(response: unknown): string | null {
   return (JSON.parse(text) as { error?: { code?: string } | null }).error?.code ?? null;
 }
 
+function errorReason(response: unknown): [string | null, string | null] {
+  const content = (response as { content?: Array<{ type?: string; text?: string }> }).content ?? [];
+  const error = (JSON.parse(content.find((item) => item.type === "text")?.text ?? "{}") as {
+    error?: { code?: string; details?: { reasonCode?: string } } | null;
+  }).error;
+  return [error?.code ?? null, error?.details?.reasonCode ?? null];
+}
+
+// Every host-owned caller key, including _hostAttestation; none is a tool argument.
+const CALLER_FIELDS = RESERVED_CALLER_KEYS;
+
 describe("MCP tool schema profiles", () => {
-  it("업무 필수 인자를 보존하고 호스트 주입 증명은 모델 필수 입력에서 제외한다", async () => {
+  it("업무 필수 인자를 보존하고 호출자 신원 필드는 도구 입력으로 광고하지 않는다", async () => {
     const implicit = await connect();
     const explicit = await connect("default");
     try {
@@ -88,20 +98,14 @@ describe("MCP tool schema profiles", () => {
       expect((await explicit.listTools()).tools).toEqual(implicitTools);
       const planning = implicitTools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
       const domain = planWorkflowToolInputSchema("default") as Record<string, unknown> & { properties?: Record<string, unknown>; required?: string[] };
-      expect(planning).toEqual({
-        ...domain,
-        properties: { ...domain.properties, _sessionProof: {
-          type: "string", minLength: 16, maxLength: 8192,
-          description: "호스트가 관리하는 필드이므로 생략한다. 호출자가 업무 인자를 보내면 현재 호스트 훅이 주입한다. 증명을 만들거나 찾아 넣지 않는다. 서버는 유효한 훅 발급 증명을 계속 요구한다.",
-        } },
-        required: (domain.required ?? []).filter(name => name !== "_sessionBinding"),
-      });
+      expect(planning).toEqual(domain);
       for (const tool of implicitTools) {
         expect(tool.description?.length ?? 0, tool.name).toBeLessThanOrEqual(1024);
-        expect(tool.inputSchema.required, tool.name).not.toContain("_sessionProof");
-        expect(tool.inputSchema.properties, tool.name).toHaveProperty("_sessionProof.description", expect.stringContaining("호스트가 관리하는 필드이므로 생략한다"));
-        expect(tool.inputSchema.properties, tool.name).not.toHaveProperty("_sessionBinding");
-        expect(tool.inputSchema.required, tool.name).not.toContain("_sessionBinding");
+        for (const field of CALLER_FIELDS) {
+          expect(tool.inputSchema.properties ?? {}, `${tool.name}.${field}`).not.toHaveProperty(field);
+          expect(tool.inputSchema.required ?? [], `${tool.name}.${field}`).not.toContain(field);
+          expect(JSON.stringify(tool.inputSchema), `${tool.name}.${field}`).not.toContain(field);
+        }
       }
       expect(planning).toMatchObject({ type: "object", oneOf: expect.any(Array) });
     } finally {
@@ -119,8 +123,7 @@ describe("MCP tool schema profiles", () => {
       expect(tools.map((tool) => tool.name)).toEqual(defaults.map((tool) => tool.name));
       for (const tool of tools) {
         expect(tool.inputSchema.type, tool.name).toBe("object");
-        expect(tool.inputSchema.required, tool.name).not.toContain("_sessionProof");
-        expect(tool.inputSchema.properties, tool.name).not.toHaveProperty("_sessionBinding");
+        for (const field of CALLER_FIELDS) expect(JSON.stringify(tool.inputSchema), `${tool.name}.${field}`).not.toContain(field);
         for (const keyword of combinators) expect(tool.inputSchema, `${tool.name}.${keyword}`).not.toHaveProperty(keyword);
       }
       const planning = tools.find((tool) => tool.name === "plan_workflow")!.inputSchema;
@@ -183,11 +186,9 @@ describe("MCP tool schema profiles", () => {
       for (const [name, input] of cases) {
         const inline = inlineAjv.compile(inlined.find((tool) => tool.name === name)!.inputSchema);
         const reference = compileReferenced(referenced.find((tool) => tool.name === name)!.inputSchema);
-        // Schema-only fixture, not a cryptographic proof. Avoid masking domain checks with a missing field.
-        const provedInput = { ...input, _sessionProof: "ags-root-v3.schema-fixture.signature" };
-        expect(inline(provedInput), `${name} ${JSON.stringify(input).slice(0, 80)}`).toBe(reference(provedInput));
+        expect(inline(input), `${name} ${JSON.stringify(input).slice(0, 80)}`).toBe(reference(input));
       }
-      expect(inlineAjv.compile(inlined.find((tool) => tool.name === "open_convergence_root")!.inputSchema)({ ...open, _sessionProof: "ags-root-v3.schema-fixture.signature" })).toBe(true);
+      expect(inlineAjv.compile(inlined.find((tool) => tool.name === "open_convergence_root")!.inputSchema)(open)).toBe(true);
     } finally {
       await anthropic.close();
       await fallback.close();
@@ -206,8 +207,8 @@ describe("MCP tool schema profiles", () => {
     ];
     try {
       for (const input of inputs) {
-        const fromAnthropic = errorCode(await anthropic.callTool({ name: "plan_workflow", arguments: proofFixtures.get(anthropic)!.argumentsFor("plan_workflow", input) }));
-        const fromDefault = errorCode(await fallback.callTool({ name: "plan_workflow", arguments: proofFixtures.get(fallback)!.argumentsFor("plan_workflow", input) }));
+        const fromAnthropic = errorCode(await anthropic.callTool({ name: "plan_workflow", arguments: input }));
+        const fromDefault = errorCode(await fallback.callTool({ name: "plan_workflow", arguments: input }));
         expect(fromAnthropic, JSON.stringify(input)).toBe(fromDefault);
         expect(fromAnthropic, JSON.stringify(input)).toBe("INVALID_INPUT");
       }
@@ -224,16 +225,20 @@ describe("MCP tool schema profiles", () => {
     expect(resolveToolSchemaProfile({ AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE: "anthropic" })).toBe("anthropic");
   });
 
-  it.each(["default", "anthropic"] as const)("keeps raw missing/forged proof and caller-binding requests negative in %s", async profile => {
-    const client = await connect(profile);
+  it.each(["default", "anthropic"] as const)("keeps unobserved callers and caller fields in arguments negative in %s", async profile => {
+    const unconfigured = await connect(profile, undefined, null);
+    const client = await connect(profile, undefined, codexMetaIngress());
     try {
-      expect(errorCode(await client.callTool({ name: "plan_workflow", arguments: {} }))).toBe("BINDING_REQUIRED");
-      expect(errorCode(await client.callTool({ name: "plan_workflow", arguments: { _sessionProof: "" } }))).toBe("BINDING_REQUIRED");
-      expect(errorCode(await client.callTool({ name: "plan_workflow", arguments: { _sessionProof: "synthetic-forged-root-proof" } }))).toBe("BINDING_INVALID");
-      expect(errorCode(await client.callTool({ name: "plan_workflow", arguments: {
+      expect(errorReason(await unconfigured.callTool({ name: "plan_workflow", arguments: {} }))).toEqual(["BINDING_REQUIRED", "HOST_INGRESS_UNAVAILABLE"]);
+      expect(errorReason(await client.callTool({ name: "plan_workflow", arguments: {} }))).toEqual(["BINDING_REQUIRED", "CALLER_PROVENANCE_UNAVAILABLE"]);
+      for (const field of RESERVED_CALLER_KEYS) {
+        expect(errorReason(await client.callTool({ name: "plan_workflow", arguments: { [field]: "synthetic-forged-caller" } })), field)
+          .toEqual(["INVALID_INPUT", "RESERVED_CALLER_FIELD"]);
+      }
+      expect(errorReason(await client.callTool({ name: "plan_workflow", arguments: {
         _sessionBinding: { host: "forged-host", sessionId: "forged-session" },
-      } }))).toBe("BINDING_INVALID");
-    } finally { await client.close(); }
+      } }))).toEqual(["INVALID_INPUT", "RESERVED_CALLER_FIELD"]);
+    } finally { await client.close(); await unconfigured.close(); }
   });
 
   it("advertises the same host-neutral intake instructions to every schema profile", async () => {

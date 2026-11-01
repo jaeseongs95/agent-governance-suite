@@ -7,28 +7,14 @@ import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
 
 import type {ApiResultV1, TaskEnvelopeV1, WorkflowPlanV1} from "../../contracts/types.js";
-import {HOST_ATTESTATION_FIELD, hostActorId, issueHostAttestation} from "../../mcp-server/src/host-attestation.js";
-import {codexExecutionAdapter, createCatalogExecutionAdapters, type ModelRoutingPresetsV1} from "../../mcp-server/src/host-execution-adapters.js";
-import {SqliteWorkflowStore} from "../../mcp-server/src/sqlite-workflow-store.js";
-import {adaptHostInput, registerHookHostAdapter} from "../../mcp-server/src/host-input-adapter.js";
-import {SessionActorProofs, SESSION_PROOF_FIELD} from "../../mcp-server/src/session-actor-proof.js";
+import {hostActorId} from "../../mcp-server/src/host-attestation.js";
+import type {ModelRoutingPresetsV1} from "../../mcp-server/src/host-execution-adapters.js";
+import {codexCallMeta} from "../helpers/caller.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
-const host = "synthetic-fourth-host", model = "opaque-fourth-model", session = "al09-entrypoint-session";
-// Explicit fake actor adapter; separate from the execution-adapter composition under test.
-// This is not a native Codex root observation or evidence of live host qualification.
-const proofHost = "synthetic-entrypoint-root-actor";
-registerHookHostAdapter(proofHost, {
-  processPid: () => undefined,
-  deliveryProfile: () => ({transport: "claude-inbox", capabilities: {supportedInjection: [], idleWake: "none"}, blocksEmptyWakePrompt: false}),
-  ownsTool: name => name === "synthetic__plan_workflow",
-  adaptInput: (input, selectedHost) => ({lifecycle: "none", outputEventName: "PreToolUse", observation: {
-    host: selectedHost, sessionId: session, callId: String(input.tool_use_id), kind: "tool-boundary", boundaryPhase: "before",
-    actor: {role: "root", basis: "observed", reasonCode: "SYNTHETIC_ENTRYPOINT_ROOT"},
-    toolName: "synthetic__plan_workflow", toolInput: input.tool_input as Record<string, unknown>,
-  }}),
-});
-// Reuses the fourth-host authority contract in host-attestation.test.ts; no live host is qualified.
+// The installation supplies its own execution catalog for the Codex host, whose caller ingress is built in.
+// Synthetic catalog authority only; no live host is qualified.
+const host = "codex", model = "opaque-fourth-model", session = "al09-entrypoint-session";
 const presets: ModelRoutingPresetsV1 = {schema_version: 1, policy_revision: "synthetic-fourth-r1",
   model_class_order: ["lightweight", "general", "deep", "frontier"], effort_order: ["low", "high"],
   providers: {"synthetic-fourth-provider": {host, catalog: {matching: "exact-only", models: {
@@ -52,27 +38,22 @@ it.each(["installed", "snapshot", "name-only", "mismatched", "builtin-default"] 
     const directory = await mkdtemp(path.join(tmpdir(), "ags-al09-entrypoint-"));
     expect(path.dirname(directory)).toBe(path.resolve(tmpdir()));
     const databasePath = path.join(directory, "workflow.sqlite3");
-    const store = new SqliteWorkflowStore(databasePath);
-    const rootProofs = new SessionActorProofs(store);
-    let rootCall = 0;
-    const selectedHost = mode === "builtin-default" ? "codex" : host;
-    const adapter = mode === "builtin-default" ? codexExecutionAdapter : createCatalogExecutionAdapters(presets).adapters.get(host)!;
     const selectedModel = mode === "builtin-default" ? "gpt-6-astra" : model;
     const wrapperPath = path.join(directory, "installation.mts");
     const entry = new URL("../../mcp-server/src/index.ts", import.meta.url).href;
     const adapterEntry = new URL("../../mcp-server/src/host-execution-adapters.ts", import.meta.url).href;
     await writeFile(wrapperPath, `
 import {startMcpServer} from ${JSON.stringify(entry)};
-import {createCatalogExecutionAdapters, codexExecutionAdapter} from ${JSON.stringify(adapterEntry)};
+import {createCatalogExecutionAdapters, claudeCodeExecutionAdapter} from ${JSON.stringify(adapterEntry)};
 globalThis.fetch = async () => { process.stderr.write("AL09_UNEXPECTED_FETCH\\n"); throw new Error("AL09_UNEXPECTED_FETCH"); };
 const suite = createCatalogExecutionAdapters(${JSON.stringify(presets)});
 ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
       : mode === "snapshot" ? "const installed = new Map(suite.adapters); const started = startMcpServer(new Map(), installed); installed.clear(); await started;"
-      : mode === "mismatched" ? `await startMcpServer(new Map(), new Map([[${JSON.stringify(host)}, codexExecutionAdapter]]));`
+      : mode === "mismatched" ? `await startMcpServer(new Map(), new Map([[${JSON.stringify(host)}, claudeCodeExecutionAdapter]]));`
       : mode === "builtin-default" ? "await startMcpServer();" : "await startMcpServer(new Map());"}
 `, "utf8");
     const environment = Object.fromEntries(Object.entries({...process.env,
-      AGENT_GOVERNANCE_CLASSIFICATION_CONFIG: "", AGENT_GOVERNANCE_HOST_ATTESTATION: selectedHost,
+      AGENT_GOVERNANCE_CLASSIFICATION_CONFIG: "", AGENT_GOVERNANCE_HOST_ATTESTATION: host,
       AGENT_GOVERNANCE_LOG_CONFIG: "",
       SKILL_REGISTRY_PATH: path.join(root, "skills", "registry.json"), AGENT_GOVERNANCE_SHARED_STATE_DIR: directory,
       AGENT_GOVERNANCE_DB_PATH: databasePath, AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(directory, "continuity.sqlite3"),
@@ -83,86 +64,68 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
     const client = new Client({name: "al09-entrypoint-fixture", version: "1.0.0"});
     let diagnostics = "";
     transport.stderr?.on("data", chunk => {diagnostics += String(chunk);});
-    async function call(input: Record<string, unknown>, proveRoot = true): Promise<ApiResultV1<WorkflowPlanV1>> {
-      const observation = proveRoot ? adaptHostInput({tool_use_id: `synthetic-root-call-${++rootCall}`, tool_input: input}, proofHost).observation : null;
-      const args = observation ? {...input, [SESSION_PROOF_FIELD]: rootProofs.issue(observation, "plan_workflow", input)} : input;
-      const reply = await client.callTool({name: "plan_workflow", arguments: args});
+    async function call(input: Record<string, unknown>, meta?: Record<string, unknown>): Promise<ApiResultV1<WorkflowPlanV1>> {
+      const reply = await client.callTool({name: "plan_workflow", arguments: input, ...(meta ? {_meta: meta} : {})});
       const text = (reply.content as Array<{type: string; text?: string}>).find(item => item.type === "text")!.text!;
       return JSON.parse(text) as ApiResultV1<WorkflowPlanV1>;
     }
+    const observed = (options: {model?: string; effort?: string; callId?: string} = {}) =>
+      codexCallMeta(session, {model: options.model ?? selectedModel, effort: options.effort ?? "high", ...(options.callId ? {callId: options.callId} : {})});
     try {
       await client.connect(transport);
       const args = argumentsFor(`entrypoint-${mode}`);
-      // Root ingress negatives stay raw, before the separate host-execution proof tests.
-      expect(await call(args, false)).toMatchObject({ok: false, error: {code: "BINDING_REQUIRED"}});
-      expect(await call({...args, [SESSION_PROOF_FIELD]: "synthetic-forged-root-proof"}, false))
-        .toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
-      const observation = {tool: "plan_workflow", input: args, model: selectedModel, reasoningEffort: "high",
-        actorId: hostActorId(selectedHost, session), sessionId: session, turnId: "fixture-turn", toolUseId: "fixture-call"};
-      const token = issueHostAttestation(store, adapter, observation);
-      expect(token).toEqual(expect.any(String));
-      if (mode === "name-only" || mode === "mismatched") {
-        const unconfiguredToken = await call({...args, [HOST_ATTESTATION_FIELD]: token});
-        expect(unconfiguredToken, JSON.stringify(unconfiguredToken)).toMatchObject({ok: false, error: {code: "BINDING_REQUIRED"}});
-        expect(await call(args)).toMatchObject({ok: false, error: {code: "BINDING_REQUIRED"}});
+      // Caller ingress negatives stay raw, before the separate execution qualification checks.
+      expect(await call(args)).toMatchObject({ok: false, error: {code: "BINDING_REQUIRED", details: {reasonCode: "CALLER_PROVENANCE_UNAVAILABLE"}}});
+      expect(await call({...args, _sessionProof: "synthetic-forged-root-proof"}, observed()))
+        .toMatchObject({ok: false, error: {code: "INVALID_INPUT", details: {reasonCode: "RESERVED_CALLER_FIELD"}}});
+      if (mode === "mismatched") {
+        // The caller is observed, but the installed adapter belongs to another host, so none is trusted.
+        expect(await call(args, observed())).toMatchObject({ok: false, error: {code: "BINDING_REQUIRED",
+          details: {observation: {status: "provider-not-configured"}}}});
+      } else if (mode === "name-only") {
+        // No execution adapters were passed: the built-in Codex catalog applies and does not know the installation's model.
+        expect(await call(args, observed())).toMatchObject({ok: false, error: {code: "BINDING_INVALID",
+          details: {reasonCode: "MODEL_NOT_IN_CATALOG"}}});
       } else {
-        expect(await call({...args, taskEnvelope: {...args.taskEnvelope, objective: "tampered signed input"}, [HOST_ATTESTATION_FIELD]: token}))
-          .toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
-        expect(await call({...args, [HOST_ATTESTATION_FIELD]: "synthetic-forged-token"}))
-          .toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
-        const planned = await call({...args, [HOST_ATTESTATION_FIELD]: token});
+        const once = observed({callId: `fixture-call-${mode}`});
+        const planned = await call(args, once);
         expect(planned.ok, JSON.stringify(planned)).toBe(true);
         expect(planned.data!.bootstrapExecution!.context).toMatchObject({model: selectedModel, modelClass: mode === "builtin-default" ? "frontier" : "deep",
-          reasoningEffort: "high", actorId: hostActorId(selectedHost, session)});
-        expect(await call({...args, [HOST_ATTESTATION_FIELD]: token})).toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
-        const unknown = issueHostAttestation(store, adapter, {...observation, model: "unobserved-model", toolUseId: "unknown-call"});
-        expect(unknown).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
-        expect(JSON.parse(Buffer.from(unknown!.split(".")[1]!, "base64url").toString("utf8")))
-          .toMatchObject({v: 2, model: "unobserved-model", reasoningEffort: "high", eligibility: null});
-        const unknownResult = await call({...args, [HOST_ATTESTATION_FIELD]: unknown});
+          reasoningEffort: "high", actorId: hostActorId(host, session)});
+        expect(await call(args, once)).toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
+        const unknownResult = await call(args, observed({model: "unobserved-model"}));
         expect(unknownResult, JSON.stringify(unknownResult)).toMatchObject({ok: false, error: {code: "BINDING_INVALID",
           message: "Host observation has no matching trusted execution capability and policy revision."}});
-        expect(issueHostAttestation(store, adapter, {...observation, actorId: hostActorId("forged-host", session)})).toBeNull();
         if (mode === "builtin-default") {
           const lowArgs = argumentsFor("entrypoint-valid-low");
-          const lowToken = issueHostAttestation(store, adapter, {...observation, input: lowArgs, reasoningEffort: "low", toolUseId: "valid-low-call"});
-          expect(lowToken).toEqual(expect.any(String));
-          const acceptedLow = await call({...lowArgs, [HOST_ATTESTATION_FIELD]: lowToken});
+          const lowCall = observed({effort: "low"});
+          const acceptedLow = await call(lowArgs, lowCall);
           expect(acceptedLow.ok, JSON.stringify(acceptedLow)).toBe(true);
           expect(acceptedLow.data!.bootstrapExecution!).toMatchObject({
             requirement: {minimumModelClass: null, minimumReasoningEffort: null, observationRequired: true},
-            context: {model: selectedModel, modelClass: "frontier", reasoningEffort: "low", actorId: hostActorId(selectedHost, session)},
+            context: {model: selectedModel, modelClass: "frontier", reasoningEffort: "low", actorId: hostActorId(host, session)},
           });
-          expect(await call({...lowArgs, [HOST_ATTESTATION_FIELD]: lowToken}))
-            .toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
+          expect(await call(lowArgs, lowCall)).toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
         }
         if (mode === "installed") {
-          const low = issueHostAttestation(store, adapter, {...observation, reasoningEffort: "low", toolUseId: "low-call"});
-          expect(low).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
-          expect(JSON.parse(Buffer.from(low!.split(".")[1]!, "base64url").toString("utf8")))
-            .toMatchObject({v: 2, model: selectedModel, reasoningEffort: "low", eligibility: null});
-          const lowResult = await call({...args, [HOST_ATTESTATION_FIELD]: low});
+          const lowResult = await call(args, observed({effort: "low"}));
           expect(lowResult, JSON.stringify(lowResult)).toMatchObject({ok: false, error: {code: "BINDING_INVALID",
-            message: "Host observation has no matching trusted execution capability and policy revision."}});
-          // 기존 capability의 경량 관측과 앞의 eligibility:null 거부를 별도로 검증한다.
+            details: {reasonCode: "CURRENT_POLICY_EFFORT_UNSUPPORTED"}}});
+          // 기존 capability의 경량 관측과 앞의 거부를 별도로 검증한다.
           const reasoningEffort = "high";
           const weakArgs = argumentsFor(`entrypoint-valid-light-${reasoningEffort}`);
-          const weak = issueHostAttestation(store, adapter, {...observation, input: weakArgs, model: "opaque-fourth-light", reasoningEffort, toolUseId: `weak-call-${reasoningEffort}`});
-          expect(weak).toEqual(expect.any(String));
-          expect(JSON.parse(Buffer.from(weak!.split(".")[1]!, "base64url").toString("utf8")))
-            .toMatchObject({model: "opaque-fourth-light", reasoningEffort, eligibility: {modelClass: "lightweight"}});
-          const accepted = await call({...weakArgs, [HOST_ATTESTATION_FIELD]: weak});
+          const weak = observed({model: "opaque-fourth-light", effort: reasoningEffort});
+          const accepted = await call(weakArgs, weak);
           expect(accepted.ok, JSON.stringify(accepted)).toBe(true);
           expect(accepted.data!.bootstrapExecution!).toMatchObject({
             requirement: {minimumModelClass: null, minimumReasoningEffort: null, observationRequired: true},
-            context: {model: "opaque-fourth-light", modelClass: "lightweight", reasoningEffort, actorId: hostActorId(selectedHost, session)},
+            context: {model: "opaque-fourth-light", modelClass: "lightweight", reasoningEffort, actorId: hostActorId(host, session)},
           });
-          expect(await call({...weakArgs, [HOST_ATTESTATION_FIELD]: weak}))
-            .toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
+          expect(await call(weakArgs, weak)).toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
         }
       }
     } finally {
-      try {await client.close();} finally {await transport.close(); store.close(); await rm(directory, {recursive: true, force: true});}
+      try {await client.close();} finally {await transport.close(); await rm(directory, {recursive: true, force: true});}
     }
     expect(diagnostics).not.toContain("AL09_UNEXPECTED_FETCH");
   }, 30_000,

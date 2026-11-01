@@ -18,7 +18,7 @@ import { createMcpServer } from "../../mcp-server/src/server.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
-import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
+import { callerMeta, metaIngress } from "../helpers/caller.js";
 
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 const NOW = "2026-10-30T00:00:00.000Z";
@@ -54,7 +54,6 @@ async function withTestServer(
   const updates = options.updates ?? new PluginUpdateService(new InMemoryPluginUpdateStore(), {
     fetcher: async () => jsonResponse([{ ref: "refs/tags/v3.0.1", object: { sha: "a".repeat(40), type: "commit", url: "https://example.test" } }])
   });
-  const root = createSyntheticRootProofFixture();
   const server = createMcpServer(
     service,
     updates,
@@ -68,13 +67,13 @@ async function withTestServer(
     undefined,
     null,
     null,
-    root.proofs,
+    metaIngress(),
   );
   const client = new Client({ name: "deep-audit-client", version: "1.0.0" }, { capabilities: {} });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
   const call = (name: string, args: Record<string, unknown>) =>
-    client.callTool({ name, arguments: root.argumentsFor(name, args) });
+    client.callTool({ name, arguments: args, _meta: callerMeta() });
   try {
     await client.connect(clientTransport);
     await run(client, call);

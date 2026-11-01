@@ -11,20 +11,21 @@ import { runContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { runGovernanceHook } from "../../mcp-server/src/governance-hook.js";
-import { HostAttestationProvider, hostActorId, issueHostAttestation, type HostExecutionAdapter } from "../../mcp-server/src/host-attestation.js";
+import { claudeAdmissionIngress } from "../../mcp-server/src/builtin-caller-ingress.js";
+import { HostAttestationProvider, hostActorId, type HostExecutionAdapter } from "../../mcp-server/src/host-attestation.js";
 import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
-import { SessionActorProofs } from "../../mcp-server/src/session-actor-proof.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
+import { rootCaller } from "../helpers/caller.js";
 
-// D0344 production-wiring regression: the hook opens its own stores from env, then
-// its exact updatedInput reaches a separately constructed MCP-equivalent service.
+// D0344 production-wiring regression: the hook opens its own stores from env and leaves AGS calls unchanged; a
+// separately constructed MCP-equivalent service computes the continuity scope from the verified caller at call time.
 // Only host actor observations are synthetic. Planning, attempts, stage recording,
 // finalization/abort, SQLite and runContinuityHook composition remain real.
 // Product/DB execution is delegated to the designated tester; local status NOT_RUN.
@@ -42,6 +43,8 @@ for (const [host, role] of [[rootHost, "root"], [childHost, "child"]] as const) 
   });
 }
 const session = "d0344-real-hook-session";
+/** The host-observed root caller the server admits for this session. */
+const asRoot = () => rootCaller(rootHost, session);
 const directories: string[] = [];
 const stores = new Set<SqliteContinuityStore | SqliteWorkflowStore>();
 afterEach(async () => {
@@ -61,7 +64,8 @@ const descriptor: SkillDescriptorV2 = { schemaVersion: "2.0.0", skillId: "d0344-
     gate: { kind: "none", policy: "none", validator: null },
   }] };
 
-function checkpoint(objective = "New task after the completed workflow."): Omit<CheckpointContextRequestV1, "_continuityBinding"> {
+// Also a plain tools/call argument record.
+function checkpoint(objective = "New task after the completed workflow."): CheckpointContextRequestV1 & Record<string, unknown> {
   return { schemaVersion: "1.0.0", requestId: "d0344-next-task", expectedRevision: 0, status: "active",
     core: { objective, completionCriteria: ["Checkpoint succeeds."], constraints: [], decisions: [], progress: [], blockers: [], nextActions: [] },
     evidenceRefs: [] };
@@ -85,9 +89,7 @@ async function harness() {
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, workflow);
   const initialContinuity = new ContinuityService(continuity, validator, workflow);
-  const old = checkpoint("Historical direct payload must remain historical.");
-  const historical = initialContinuity.checkpointContext({ ...old,
-    _continuityBinding: initialContinuity.issueToolBinding(session, "checkpoint_context", old) }).data!;
+  const historical = initialContinuity.checkpointContext(checkpoint("Historical direct payload must remain historical."), asRoot()).data!;
   expect(historical).toMatchObject({ epoch: 1, revision: 1 });
   const task: TaskEnvelopeV1 = { schemaVersion: "1.0.0", taskId: "d0344-hook-workflow", objective: "Complete a real guarded fixture workflow.",
     scope: { included: ["candidate.txt"], excluded: [] }, acceptanceCriteria: ["The fixture stage passes."], riskLevel: "low",
@@ -102,8 +104,7 @@ async function harness() {
   const opened = service.openConvergenceRoot(openInput);
   expect(opened.error).toBeNull();
   const root = opened.data!;
-  expect(initialContinuity.bindOpenedRoot({ ...openInput,
-    _continuityBinding: initialContinuity.issueToolBinding(session, "open_convergence_root", openInput) }, root.rootId)).toBe(true);
+  expect(initialContinuity.bindOpenedRoot(asRoot(), root.rootId)).toBe(true);
   return { directory, registryPath, env, workflow, continuity, service, initialContinuity, historical, root, task };
 }
 
@@ -163,13 +164,13 @@ function trustedPlan(fixture: Awaited<ReturnType<typeof harness>>) {
     resolveModel: (rawModel, provenance = `${rootHost}:runtime`) => rawModel === model ? { host: rootHost, provider: "owned-fixture-provider", rawModel,
       resolvedModel: rawModel, modelClass: "general", minimumReasoningEffort: null, supportedEfforts: ["high"], aliasUsed: false,
       policyRevision: "owned-fixture-r1", provenance } : null };
-  const provider = new HostAttestationProvider(fixture.workflow, adapter), validator = new ContractValidator();
+  const provider = new HostAttestationProvider(adapter), validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(fixture.registryPath, validator), validator, fixture.workflow, null, provider);
   const input = { schemaVersion: "1.0.0", taskEnvelope: fixture.task };
-  const token = issueHostAttestation(fixture.workflow, adapter, { tool: "plan_workflow", input, model,
-    reasoningEffort: "high", actorId: hostActorId(rootHost, session), sessionId: session, turnId: "owned-start-turn", toolUseId: "owned-start-plan" });
-  expect(token).toEqual(expect.any(String));
-  const planned = provider.run("plan_workflow", { ...input, _hostAttestation: token }, clean => service.planWorkflow(clean, true));
+  // The verified caller of one host call, with the execution the host observed for it.
+  const caller = rootCaller(rootHost, session, { callId: "owned-start-plan",
+    execution: { model, effort: "high", turnId: "owned-start-turn", provenance: `${rootHost}:runtime` } });
+  const planned = provider.run("plan_workflow", caller, () => service.planWorkflow(input, true));
   expect(planned.error).toBeNull();
   expect(planned.data?.bootstrapExecution?.context).toMatchObject({ actorId: hostActorId(rootHost, session), source: "runtime" });
   return { service, plan: planned.data! };
@@ -222,33 +223,40 @@ function beforeTool(fixture: Awaited<ReturnType<typeof harness>>, host = rootHos
     tool_name: "mcp__agent-governance-suite__checkpoint_context", tool_input: checkpoint(), ...extra }), fixture.env, host);
 }
 
-function updatedInput(output: string) {
-  expect(output).not.toBe("");
-  const parsed = JSON.parse(output) as { hookSpecificOutput: { hookEventName: string; updatedInput: Record<string, unknown> } };
-  expect(parsed.hookSpecificOutput).toMatchObject({ hookEventName: "PreToolUse", updatedInput: { _continuityBinding: expect.any(String) } });
-  expect(parsed.hookSpecificOutput).not.toHaveProperty("permissionDecision");
-  return parsed.hookSpecificOutput.updatedInput;
+/** The before-tool hook neither rewrites an AGS call nor changes its task: no output, task row unchanged. */
+function hookLeavesCall(fixture: Awaited<ReturnType<typeof harness>>, host = rootHost) {
+  const correlation = fixture.initialContinuity.correlateSession(session);
+  const before = fixture.continuity.getTask(correlation);
+  expect(beforeTool(fixture, host)).toBe("");
+  expect(fixture.continuity.getTask(correlation)).toEqual(before);
 }
 
-function consumeInFreshService(fixture: Awaited<ReturnType<typeof harness>>, input: Record<string, unknown>) {
+function consumeInFreshService(fixture: Awaited<ReturnType<typeof harness>>, input: CheckpointContextRequestV1 = checkpoint()) {
   const workflow = new SqliteWorkflowStore(fixture.env.AGENT_GOVERNANCE_DB_PATH);
   const continuity = new SqliteContinuityStore(fixture.env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
   stores.add(workflow); stores.add(continuity);
-  // Deliberately do not issue another binding or call ensureSession here: the hook must have done it.
-  return new ContinuityService(continuity, new ContractValidator(), workflow).checkpointContext(input);
+  // A fresh service with no prior ensureSession: the server computes the scope from the verified caller alone.
+  return new ContinuityService(continuity, new ContractValidator(), workflow).checkpointContext(input, asRoot());
+}
+
+/** The real before-tool hook runs first and changes nothing; then the fresh service handles the call. */
+function checkpointAfterHook(fixture: Awaited<ReturnType<typeof harness>>) {
+  hookLeavesCall(fixture);
+  return consumeInFreshService(fixture);
 }
 
 describe("D0344 runContinuityHook to checkpointContext production boundary", () => {
-  it("a real finalized workflow permits a fresh direct checkpoint from the before-tool hook alone", async () => {
+  it("a real finalized workflow permits a fresh direct checkpoint the server binds from the caller, not the hook", async () => {
     const fixture = await harness(), attempt = start(fixture);
     const completed = finalize(fixture, attempt.receipt);
     expect(completed).toMatchObject({ root: { state: "completed" }, leases: [{ leaseId: attempt.lease.leaseId, state: "consumed" }],
       outcomes: [{ leaseId: attempt.lease.leaseId, state: "passed" }] });
     const correlation = fixture.initialContinuity.correlateSession(session);
     expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: fixture.root.rootId });
-    const input = updatedInput(beforeTool(fixture));
+    hookLeavesCall(fixture);
+    expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: fixture.root.rootId });
+    const saved = consumeInFreshService(fixture);
     expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null });
-    const saved = consumeInFreshService(fixture, input);
     expect(saved.error).toBeNull();
     expect(saved.data).toMatchObject({ source: "direct", epoch: 2, revision: 1, core: { objective: checkpoint().core.objective } });
     expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
@@ -262,7 +270,7 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
       : { hook_event_name: "PostCompact", turn_id: "fixture-turn", error: null };
     expect(runContinuityHook(JSON.stringify({ ...event, session_id: session }), fixture.env, rootHost)).toBe("");
     expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null });
-    expect(consumeInFreshService(fixture, updatedInput(beforeTool(fixture))).data).toMatchObject({ epoch: 2, revision: 1 });
+    expect(checkpointAfterHook(fixture).data).toMatchObject({ epoch: 2, revision: 1 });
     expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
     expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(completed);
   });
@@ -274,7 +282,7 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
     expect(aborted.data?.state).toBe("blocked");
     const active = fixture.workflow.getConvergenceSnapshot(fixture.root.rootId);
     expect(active).toMatchObject({ root: { state: "open" }, outcomes: [{ leaseId: attempt.lease.leaseId, state: "aborted" }] });
-    const saved = consumeInFreshService(fixture, updatedInput(beforeTool(fixture)));
+    const saved = checkpointAfterHook(fixture);
     expect(saved.error).toBeNull();
     expect(saved.data).toMatchObject({ source: "direct", epoch: 2, revision: 1 });
     const correlation = fixture.initialContinuity.correlateSession(session);
@@ -288,7 +296,7 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
     const fixture = await harness(), attempt = start(fixture);
     const settled = finalizeWithGatedRoot(fixture, attempt.receipt, state);
     expect(settled).toMatchObject({ root: { state }, outcomes: [{ state: "passed", leaseId: attempt.lease.leaseId }] });
-    const saved = consumeInFreshService(fixture, updatedInput(beforeTool(fixture)));
+    const saved = checkpointAfterHook(fixture);
     expect(saved.error).toBeNull();
     expect(saved.data).toMatchObject({ source: "direct", epoch: 2, revision: 1 });
     const correlation = fixture.initialContinuity.correlateSession(session);
@@ -302,7 +310,7 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
     const active = fixture.workflow.getConvergenceSnapshot(fixture.root.rootId);
     expect(fixture.workflow.getRun(attempt.receipt.runId)?.state).toBe("running");
     expect(active).toMatchObject({ outcomes: [], leases: [{ state: "consumed", leaseId: attempt.lease.leaseId }] });
-    expect(consumeInFreshService(fixture, updatedInput(beforeTool(fixture))).error?.code).toBe("SNAPSHOT_CONFLICT");
+    expect(checkpointAfterHook(fixture).error?.code).toBe("SNAPSHOT_CONFLICT");
     const correlation = fixture.initialContinuity.correlateSession(session);
     expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: fixture.root.rootId });
     expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
@@ -322,14 +330,14 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
       } finally { database.close(); }
     }
     const before = fixture.workflow.getConvergenceSnapshot(fixture.root.rootId);
-    expect(consumeInFreshService(fixture, updatedInput(beforeTool(fixture))).error?.code).toBe("SNAPSHOT_CONFLICT");
+    expect(checkpointAfterHook(fixture).error?.code).toBe("SNAPSHOT_CONFLICT");
     expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: expectedRoot });
     expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
     expect(fixture.continuity.getSnapshot(correlation, 2)).toBeNull();
     expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(before);
   });
 
-  it("payload claims cannot turn an adapter-observed child into a root or receive a binding", async () => {
+  it("payload claims in a child's hook input cannot clear, rebind or rewrite its task", async () => {
     const fixture = await harness(), attempt = start(fixture);
     const completed = finalize(fixture, attempt.receipt), correlation = fixture.initialContinuity.correlateSession(session);
     const before = fixture.continuity.getTask(correlation);
@@ -341,15 +349,27 @@ describe("D0344 runContinuityHook to checkpointContext production boundary", () 
   });
 });
 
-describe("D0344 governance proof through the actual MCP checkpoint handler", () => {
-  it.each(["completed", "aborted", "finalized-open", "finalized-needs-review", "running"] as const)("%s workflow reaches checkpoint domain validation with the exact hook-issued proofs", async state => {
+/** Claude-style PreToolUse admission for one AGS call; the hook records the caller and prints nothing. */
+async function admit(fixture: Awaited<ReturnType<typeof harness>>, toolUseId: string, tool: string, input: Record<string, unknown>) {
+  const hook = await runGovernanceHook(rootHost, JSON.stringify({ hook_event_name: "PreToolUse", session_id: session,
+    tool_use_id: toolUseId, tool_name: `mcp__agent-governance-suite__${tool}`, tool_input: input }), fixture.env);
+  expect(hook).toEqual({ ok: true, output: "" });
+  return { "claudecode/toolUseId": toolUseId };
+}
+
+function replyResult<T>(reply: Awaited<ReturnType<Client["callTool"]>>): ApiResultV1<T> {
+  const content = reply.content as Array<{ type: string; text?: string }>;
+  const first = content.find(item => item.type === "text");
+  expect(first?.text).toBeTypeOf("string");
+  return JSON.parse(first!.text!) as ApiResultV1<T>;
+}
+
+describe("D0344 hook admission through the actual MCP checkpoint handler", () => {
+  it.each(["completed", "aborted", "finalized-open", "finalized-needs-review", "running"] as const)("%s workflow: the server scopes a call admitted before the change by the state at claim time, once", async state => {
     const fixture = await harness(), attempt = start(fixture);
-    const oldHook = await runGovernanceHook(rootHost, JSON.stringify({ hook_event_name: "PreToolUse", session_id: session,
-      tool_use_id: `d0344-old-mcp-checkpoint-${state}`, tool_name: "mcp__agent-governance-suite__checkpoint_context",
-      tool_input: checkpoint() }), fixture.env);
-    expect(oldHook.ok).toBe(true);
-    const oldArgs = updatedInput(oldHook.output);
-    expect(oldArgs).toMatchObject({ _sessionProof: expect.any(String), _continuityBinding: expect.any(String) });
+    const correlation = fixture.initialContinuity.correlateSession(session);
+    // Admitted while the guarded run is active; the admission carries no continuity scope that could go stale.
+    const early = await admit(fixture, `d0344-early-mcp-checkpoint-${state}`, "checkpoint_context", checkpoint());
     if (state === "completed") finalize(fixture, attempt.receipt);
     else if (state === "aborted") {
       const aborted = fixture.service.abortWorkflow(attempt.receipt.runId, attempt.receipt.revision);
@@ -361,15 +381,9 @@ describe("D0344 governance proof through the actual MCP checkpoint handler", () 
     const expectedRootState = state === "completed" ? "completed" : state === "finalized-needs-review" ? "needs-review" : "open";
     expect(beforeWorkflow).toMatchObject({ root: { state: expectedRootState }, outcomes: state === "running" ? []
       : [{ leaseId: attempt.lease.leaseId, state: state === "aborted" ? "aborted" : "passed" }] });
-    const hook = await runGovernanceHook(rootHost, JSON.stringify({ hook_event_name: "PreToolUse", session_id: session,
-      tool_use_id: `d0344-mcp-checkpoint-${state}`, tool_name: "mcp__agent-governance-suite__checkpoint_context",
-      tool_input: checkpoint() }), fixture.env);
-    expect(hook.ok).toBe(true);
-    const args = updatedInput(hook.output);
-    expect(args).toMatchObject({ _sessionProof: expect.any(String), _continuityBinding: expect.any(String) });
-    const correlation = fixture.initialContinuity.correlateSession(session);
-    expect(fixture.continuity.getTask(correlation)).toMatchObject(state === "running"
-      ? { currentEpoch: 1, rootId: fixture.root.rootId } : { currentEpoch: 2, rootId: null });
+    // A later admission hook still neither rewrites the call nor detaches the task: the server does that at call time.
+    await admit(fixture, `d0344-late-mcp-checkpoint-${state}`, "checkpoint_context", checkpoint());
+    expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: fixture.root.rootId });
 
     const workflow = new SqliteWorkflowStore(fixture.env.AGENT_GOVERNANCE_DB_PATH);
     const continuity = new SqliteContinuityStore(fixture.env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
@@ -378,35 +392,33 @@ describe("D0344 governance proof through the actual MCP checkpoint handler", () 
     const updates = new PluginUpdateService(new InMemoryPluginUpdateStore(), {
       fetcher: async () => { throw new Error("Unexpected network request in the checkpoint transport test."); },
     });
-    // Neither proof is reminted, and the new continuity service is never ensured or rebound manually.
+    // The new continuity service is never ensured or rebound manually; the caller comes only from the claimed row.
     const server = createMcpServer(fixture.service, updates, new ContinuityService(continuity, validator, workflow), undefined,
       undefined, validator, "default", null, null, new SessionMessageService(join(fixture.directory, "unused-messaging")),
-      null, null, new SessionActorProofs(fixture.workflow));
+      null, null, claudeAdmissionIngress(workflow, rootHost));
     const client = new Client({ name: "d0344-hook-mcp-boundary", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     try {
       await server.connect(serverTransport);
       await client.connect(clientTransport);
-      if (state !== "running") {
-        const oldReply = await client.callTool({ name: "checkpoint_context", arguments: oldArgs });
-        const oldContent = oldReply.content as Array<{ type: string; text?: string }>;
-        const stale = JSON.parse(oldContent.find(item => item.type === "text")!.text!) as ApiResultV1<ContinuitySnapshotV1>;
-        expect(stale).toMatchObject({ ok: false, data: null, error: { code: "BINDING_INVALID", details: null } });
-        expect(continuity.getSnapshot(correlation, 2)).toBeNull();
-      }
-      const reply = await client.callTool({ name: "checkpoint_context", arguments: args });
-      const content = reply.content as Array<{ type: string; text?: string }>;
-      const first = content.find(item => item.type === "text");
-      expect(first?.text).toBeTypeOf("string");
-      const result = JSON.parse(first!.text!) as ApiResultV1<ContinuitySnapshotV1>;
+      const result = replyResult<ContinuitySnapshotV1>(await client.callTool({ name: "checkpoint_context", arguments: checkpoint(), _meta: early }));
       if (state === "running") {
         expect(result).toMatchObject({ ok: false, data: null, error: { code: "SNAPSHOT_CONFLICT" } });
+        expect(continuity.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: fixture.root.rootId });
         expect(continuity.getSnapshot(correlation, 2)).toBeNull();
       } else {
         expect(result.error).toBeNull();
         expect(result.data).toMatchObject({ source: "direct", epoch: 2, revision: 1, core: { objective: checkpoint().core.objective } });
+        expect(continuity.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null });
         expect(continuity.getSnapshot(correlation, 2)).toEqual(result.data);
       }
+      const afterFirst = continuity.getTask(correlation);
+      // One claim per admission row: a replay of the same host call is unobserved and is not presumed to be a root.
+      const replay = replyResult<ContinuitySnapshotV1>(await client.callTool({ name: "checkpoint_context", arguments: checkpoint(), _meta: early }));
+      expect(replay).toMatchObject({ ok: false, data: null, error: { code: "BINDING_REQUIRED",
+        details: { reasonCode: "CALLER_PROVENANCE_UNAVAILABLE", ingressReason: "CALL_ADMISSION_MISSING" } } });
+      expect(continuity.getTask(correlation)).toEqual(afterFirst);
+      expect(continuity.getSnapshot(correlation, 3)).toBeNull();
       expect(continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
       expect(workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(beforeWorkflow);
     } finally {
@@ -420,7 +432,7 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
     const fixture = await harness(), active = start(fixture);
     const before = fixture.workflow.getConvergenceSnapshot(fixture.root.rootId);
     expect(fixture.initialContinuity.clearSession(session)).toMatchObject({ currentEpoch: 2, rootId: null });
-    const saved = consumeInFreshService(fixture, updatedInput(beforeTool(fixture)));
+    const saved = checkpointAfterHook(fixture);
     expect(saved.error).toBeNull();
     expect(saved.data).toMatchObject({ epoch: 2, revision: 1 });
     const correlation = fixture.initialContinuity.correlateSession(session);
@@ -429,7 +441,7 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
     expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(before);
   });
 
-  it("real proof and MCP start rebind after abort/detach, then a second abort permits E3", async () => {
+  it("real hook admission and MCP start rebind after abort/detach, then a second abort permits E3", async () => {
     const fixture = await harness(), first = start(fixture);
     expect(fixture.service.abortWorkflow(first.receipt.runId, first.receipt.revision).error).toBeNull();
     const trusted = trustedPlan(fixture), validator = new ContractValidator();
@@ -439,20 +451,14 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
     const server = createMcpServer(trusted.service, new PluginUpdateService(new InMemoryPluginUpdateStore(), {
       fetcher: async () => { throw new Error("Unexpected start lifecycle network request."); },
     }), new ContinuityService(continuity, validator, workflow), undefined, undefined, validator, "default", null, null,
-    new SessionMessageService(join(fixture.directory, "unused-start-messaging")), null, null, new SessionActorProofs(fixture.workflow));
+    new SessionMessageService(join(fixture.directory, "unused-start-messaging")), null, null, claudeAdmissionIngress(workflow, rootHost));
     const client = new Client({ name: "d0344-start-rebind", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     let call = 0;
     const invoke = async <T,>(name: string, input: Record<string, unknown>): Promise<ApiResultV1<T>> => {
-      const hook = await runGovernanceHook(rootHost, JSON.stringify({ hook_event_name: "PreToolUse", session_id: session,
-        tool_use_id: `d0344-start-lifecycle-${++call}`, tool_name: `mcp__agent-governance-suite__${name}`, tool_input: input }), fixture.env);
-      expect(hook.ok).toBe(true);
-      const args = (JSON.parse(hook.output) as { hookSpecificOutput: { updatedInput: Record<string, unknown> } }).hookSpecificOutput.updatedInput;
-      expect(args._sessionProof).toEqual(expect.any(String));
-      if (name === "checkpoint_context") expect(args._continuityBinding).toEqual(expect.any(String));
-      const reply = await client.callTool({ name, arguments: args });
-      const content = reply.content as Array<{ type: string; text?: string }>;
-      return JSON.parse(content.find(item => item.type === "text")!.text!) as ApiResultV1<T>;
+      // The hook records the caller and leaves the arguments as the model wrote them.
+      const meta = await admit(fixture, `d0344-start-lifecycle-${++call}`, name, input);
+      return replyResult<T>(await client.callTool({ name, arguments: input, _meta: meta }));
     };
     try {
       await server.connect(serverTransport); await client.connect(clientTransport);
@@ -486,7 +492,7 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
     expect(started.error).toBeNull();
     const epoch = order === "detach-first" ? 2 : 1;
     expect(fixture.initialContinuity.ensureSession(session)).toMatchObject({ currentEpoch: epoch, rootId: fixture.root.rootId });
-    expect(consumeInFreshService(fixture, updatedInput(beforeTool(fixture))).error?.code).toBe("SNAPSHOT_CONFLICT");
+    expect(checkpointAfterHook(fixture).error?.code).toBe("SNAPSHOT_CONFLICT");
     expect(fixture.workflow.getRun(started.data!.runId)?.state).toBe("running");
     expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
   });
@@ -557,7 +563,7 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
       expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(beforeWorkflow);
       expect(workflowRows(fixture)).toEqual(beforeRows);
       expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: fixture.root.rootId });
-      expect(consumeInFreshService(fixture, updatedInput(beforeTool(fixture))).error?.code).toBe("SNAPSHOT_CONFLICT");
+      expect(checkpointAfterHook(fixture).error?.code).toBe("SNAPSHOT_CONFLICT");
       expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
       expect(fixture.continuity.getSnapshot(correlation, 2)).toBeNull();
       database.exec("DROP TRIGGER d0344_fail_workflow_commit");
@@ -568,7 +574,7 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
       expect(retried.data?.runId).toBe(`run-${fixture.task.taskId}-1`);
       expect(fixture.workflow.getGuardedRunBinding(retried.data!.runId)?.lease.leaseId).toBe(pending.lease.leaseId);
       expect(fixture.service.abortWorkflow(retried.data!.runId, retried.data!.revision).error).toBeNull();
-      const recovered = consumeInFreshService(fixture, updatedInput(beforeTool(fixture)));
+      const recovered = checkpointAfterHook(fixture);
       expect(recovered.error).toBeNull();
       expect(recovered.data).toMatchObject({ epoch: 3, revision: 1 });
       expect(fixture.continuity.getSnapshot(correlation, 3)).toEqual(recovered.data);
