@@ -124,6 +124,17 @@ export function captureBaseline(request, now = new Date()) {
   const repository = resolveRepository(request.repositoryRoot);
   const comparisonTarget = request.comparisonTarget ?? "working-tree";
   if (!new Set(["working-tree", "index", "commit"]).has(comparisonTarget)) throw new Error("comparisonTarget is invalid");
+  if (request.baseline !== undefined) {
+    // Scope update: re-bind the original pre-task state to the new task envelope.
+    // A fresh capture here would absorb this task's own edits as preexisting changes.
+    const original = request.baseline;
+    if (original.repository.identity !== repository.identity) throw new Error("baseline repository identity does not match");
+    if (original.comparisonTarget !== comparisonTarget) throw new Error("baseline comparisonTarget does not match");
+    const { head, targetRef, entries, capturedAt } = original;
+    const taskEnvelopeDigest = sha256(canonicalJson(request.taskEnvelope));
+    const manifestSha256 = sha256(canonicalJson({ repositoryIdentity: original.repository.identity, head, comparisonTarget, targetRef, taskEnvelopeDigest, entries, capturedAt }));
+    return { schemaVersion: "1.0.0", repository: original.repository, head, comparisonTarget, targetRef, taskEnvelopeDigest, entries, manifestSha256, capturedAt };
+  }
   const maxFiles = request.maxFiles ?? 50000;
   let targetCommit = null;
   if (comparisonTarget === "commit") targetCommit = runGit(repository.root, ["rev-parse", "--verify", `${request.commit}^{commit}`]).trim();
@@ -194,8 +205,8 @@ function changedFromBaseline(before, current) {
 
 export function compareScope(request, now = new Date()) {
   validateRequest(request, "verify");
-  const current = captureBaseline({ ...request, mode: "capture" }, now);
-  const baseline = request.baseline;
+  const { baseline, baselineArtifactDigest: _frozenDigest, ...snapshotRequest } = request;
+  const current = captureBaseline({ ...snapshotRequest, mode: "capture" }, now);
   if (!baseline) {
     const changes = current.entries.filter((entry) => entry.status !== "clean").map((entry) => ({
       path: entry.path,
@@ -345,7 +356,7 @@ export function validateRequest(value, expectedMode) {
   if (value.comparisonTarget === "commit" && (typeof value.commit !== "string" || !value.commit)) throw new Error("commit is required for commit comparison");
   if (value.maxFiles !== undefined && (!Number.isInteger(value.maxFiles) || value.maxFiles < 1 || value.maxFiles > 200000)) throw new Error("maxFiles is invalid");
   validateTaskEnvelope(value.taskEnvelope);
-  if (expectedMode === "verify" && value.baseline !== undefined) {
+  if (value.baseline !== undefined) {
     validateBaseline(value.baseline);
     if (value.baselineArtifactDigest !== value.baseline.manifestSha256) throw new Error("baseline artifact digest does not match the frozen digest");
   }

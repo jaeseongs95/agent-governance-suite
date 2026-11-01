@@ -158,9 +158,9 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json": "c8c3929dd667b971dbc3c93c092c543969895a2df12e9f78d290ea8c55dcbd98",
     "skills/change-scope-guardian/integration/skill-descriptor.json": "0383344088d90c7306cc9de937b8ba0445985529c7291a54cf36aab7fcb0d65b",
     "skills/change-scope-guardian/references/entry-details.md": "58fcf7660d9e2ab3dd775aeee528d547250af2df02537affb3a9af4c5bb66af1",
-    "skills/change-scope-guardian/references/verdict-rules.md": "b656378815a59a40d37a9f7fdcd790f9880d9d59759bc1732141c49c7ea49988",
+    "skills/change-scope-guardian/references/verdict-rules.md": "7fd12a4242437c1ce40953e49cb116cffac688e361b3033f802f5c70c37db865",
     // D0095 reviewed source: eb30ea34168b4d4c3831f2fa8b9c82d9fc06b06c; historical baselines stay frozen.
-    "skills/coordinate-subagents/references/model-routing.md": "dedab0288c24a5f38437f0e8917df484647c4b0135af20b292feef01a8970b79",
+    "skills/coordinate-subagents/references/model-routing.md": "49b0e564b80a52475670e850c8272f0c348626ef5d32e4746fd484a262023fe5",
     "skills/evaluation-validity-auditor/classification.json": "1de15023a9e0e1175404bc5e6ee68462717bbb23b33005b12abc5de07d858b42",
     "skills/evaluation-validity-auditor/references/entry-details.md": "dc8fd042c3576fa0c890e88a13cac54c343cf4a420c3968f1ca7f5627aa17090",
     "skills/independent-audit-gate/SKILL.md": "26086ee54f0d49b1bc861ec27200d26150737d9772773e07139ae59f56404e29",
@@ -290,7 +290,7 @@ const CONTEXT_CONTRACT_PINS = Object.freeze({
   hashes: Object.freeze({
   "skills/acceptance-evidence-validator/scripts/core.d.mts": "5ad79b91fd34d6d4f07321b1011e2b48b5311a89296d10c360ed108ed92f45cf",
   "skills/coordinate-subagents/references/model-routing-presets.json": "a2274bb2baa138d7a2135c9470c44385455c128a7d720d3b4e7e89ad9a660acd",
-  "skills/coordinate-subagents/references/model-routing.md": "dedab0288c24a5f38437f0e8917df484647c4b0135af20b292feef01a8970b79",
+  "skills/coordinate-subagents/references/model-routing.md": "49b0e564b80a52475670e850c8272f0c348626ef5d32e4746fd484a262023fe5",
   "skills/coordinate-subagents/scripts/model-catalog-adapter.d.mts": "936efbf8e7bbcef4f0c452ec4e4fe876c6f9ecb53a82df3d7d60de63bd684026",
   "skills/coordinate-subagents/scripts/model-routing.d.mts": "4afbbfc1167ee637d1aab74bbfe4ec55241931d33fa55442b94dcea8d8e93fbe",
   "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json": "9423c10246f09738712ac0bf5b5f9134795fa8a9f03bfb4d2a2f2af96af3618f",

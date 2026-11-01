@@ -273,6 +273,32 @@ test("rejects a baseline captured for a different frozen task envelope", () => {
   assert.throws(() => compareScope(verificationFor(root, baseline, changedTask)), /taskEnvelope digest/);
 });
 
+test("keeps the original baseline when the task scope is updated after the task's own edits", () => {
+  const root = repository();
+  writeFileSync(join(root, "src", "app.js"), "export const value = 2;\n");
+  const original = baselineFor(root);
+  writeFileSync(join(root, "src", "app.js"), "export const value = 3;\n");
+  mkdirSync(join(root, "lib"));
+  writeFileSync(join(root, "lib", "extra.js"), "export const extra = true;\n");
+  const expanded = { ...envelope(["src/**", "lib/**"]), objective: "Update source and library" };
+  const rebound = baselineFor(root, "working-tree", { taskEnvelope: expanded, baseline: original, baselineArtifactDigest: original.manifestSha256 });
+  assert.deepEqual(rebound.entries, original.entries);
+  assert.equal(rebound.capturedAt, original.capturedAt);
+  assert.notEqual(rebound.taskEnvelopeDigest, original.taskEnvelopeDigest);
+  assert.equal(validateBaseline(rebound), rebound);
+
+  const report = compareScope(verificationFor(root, rebound, expanded));
+  assert.deepEqual(report.changes.map(({ path, classification }) => ({ path, classification })), [
+    { path: "lib/extra.js", classification: "in-scope" },
+    { path: "src/app.js", classification: "preexisting-overlap" }
+  ]);
+  assert.equal(report.verdict, behaviorCase("scope-update-self-overlap").expectedVerdict);
+  assert.ok(report.findings.includes("preexisting-overlap:src/app.js"));
+
+  assert.throws(() => baselineFor(root, "working-tree", { taskEnvelope: expanded, baseline: original, baselineArtifactDigest: "0".repeat(64) }), /frozen digest/);
+  assert.throws(() => baselineFor(repository(), "working-tree", { taskEnvelope: expanded, baseline: original, baselineArtifactDigest: original.manifestSha256 }), /identity does not match/);
+});
+
 test("rejects unsafe scope rules instead of silently ignoring them", () => {
   const root = repository();
   for (const rule of ["../docs/**", "C:docs/**", "~/docs/**", "~user/docs/**", "docs/./**", "."]) {
