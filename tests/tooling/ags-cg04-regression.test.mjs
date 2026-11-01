@@ -107,6 +107,18 @@ for (const skill of ["acceptance-evidence-validator", "blocker-diagnostician", "
   });
 }
 
+// AGS 3.0 error model P2: a readable-by-access JSON file that cannot be read is not "invalid JSON".
+for (const skill of ["acceptance-evidence-validator", "blocker-diagnostician"]) {
+  it.each(["EIO", "EISDIR"])(`AGS-D-0120: ${skill} reports a %s JSON read failure as unreadable, not invalid JSON`, code => {
+    const file = "integration/skill-descriptor.json";
+    const result = launch(repositoryFixture(skill), "scripts/check-repository.mjs", { file, operation: "readFile", code });
+    expect(result.error).toBeUndefined();
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain(`cannot read ${file} (${code})`);
+    expect(result.stderr).not.toContain(`invalid JSON ${file}`);
+  });
+}
+
 it.each(["EACCES", "EPERM", "EIO", "ENOENT"])("AGS-D-0121: recursive coupling scan fails on an unreadable file (%s)", code => {
   const result = launch(repositoryFixture("evaluation-validity-auditor"), "scripts/check-repository.mjs", {
     file: "README.md", operation: "readFile", code

@@ -85,7 +85,8 @@ describe("AL09 server boundary regressions", () => {
         contextSources: [], explicitSkillIds: [], ruleRequiredSkillIds: [], vendorContext: { vendorId: "fixture", reference: "fixture" },
         publicSynthetic: true,
       });
-      expect(payload(reply).error?.code).toBe("INVALID_INPUT");
+      // D0070 (error model 4-2): the observation error keeps its own public code instead of INVALID_INPUT.
+      expect(payload(reply).error?.code).toBe("BINDING_INVALID");
       expect(payload(reply).error?.details).toMatchObject({ category: "host-observation", reasonCode: "BINDING_INVALID", observationReasonCode: "HOST_ADAPTER_MISMATCH" });
       expect(calls).toBe(0);
     }, { classification, hostAttestation, ingress });
@@ -133,8 +134,11 @@ describe("AL09 server boundary regressions", () => {
         publicSynthetic: true,
       });
         expect(payload(reply).error?.code).toBe("MCP_UNAVAILABLE");
-        expect(payload(reply).error?.details ?? null).toBeNull();
+        // AGS 3.0 error model R2/R5: only a fixed reason and a redacted cause (no name, message or phase) are exposed.
+        expect(payload(reply).error?.details).toEqual({ reason: "INTERNAL_FAILURE", cause: { type: "error" } });
         expect(JSON.stringify(reply)).not.toContain("PRIVATE_CONFIGURATION_PATH");
+        expect(JSON.stringify(reply)).not.toContain("ClassificationInitializationError");
+        expect(JSON.stringify(reply)).not.toContain("classification-initialization");
       }, { classification: { inventory: async () => null, classify: async () => { throw thrown; }, accept: async () => null } });
     }
   });

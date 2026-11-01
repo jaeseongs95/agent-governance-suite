@@ -14,13 +14,19 @@ const required = [
   "integration/skill-descriptor.json", "integration/provider-result.v1.schema.json"
 ];
 const errors = [];
+const unavailable = new Set();
 for (const relative of required) {
   try { await access(path.join(root, relative)); } catch (error) {
+    unavailable.add(relative);
     errors.push(error.code === "ENOENT" ? `missing ${relative}` : `cannot access ${relative}: ${error.code ?? "UNKNOWN"}: ${error.message}`);
   }
 }
-for (const relative of required.filter((item) => item.endsWith(".json"))) {
-  try { JSON.parse(await readFile(path.join(root, relative), "utf8")); } catch (error) { errors.push(`invalid JSON ${relative}: ${error.message}`); }
+// Reading and parsing are separate steps: only a JSON SyntaxError is invalid JSON, a read failure keeps its code.
+for (const relative of required.filter((item) => item.endsWith(".json") && !unavailable.has(item))) {
+  let text;
+  try { text = await readFile(path.join(root, relative), "utf8"); }
+  catch (error) { errors.push(`cannot read ${relative} (${error.code ?? "UNKNOWN"})`); continue; }
+  try { JSON.parse(text); } catch (error) { errors.push(`invalid JSON ${relative}: ${error.message}`); }
 }
 try {
   compileAllSchemas();

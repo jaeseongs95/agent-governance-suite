@@ -141,7 +141,9 @@ export function validateReview(review, comparison = null, request = null, frozen
   try {
     validateRequest(request);
   } catch (error) {
-    errors.push(`request cannot substantiate review: ${error instanceof Error ? error.message : String(error)}`);
+    // Only an input rejection becomes a review error; an internal failure propagates instead of posing as one.
+    if (!(error instanceof InputError)) throw error;
+    errors.push(`request cannot substantiate review: ${error.message}`);
     if (error instanceof InputError && error.details) errors.push(`request validation details: ${JSON.stringify(error.details)}`);
     return errors;
   }

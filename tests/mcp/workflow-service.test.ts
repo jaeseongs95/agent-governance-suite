@@ -461,12 +461,11 @@ describe("SqliteWorkflowStore", () => {
     } catch (error) {
       initializationError = error;
     }
+    // A newer stored schema is an unavailable store, not the caller's invalid input (AGS 3.0 error model P1).
     expect(initializationError).toMatchObject({
-      code: "INVALID_INPUT",
+      code: "MCP_UNAVAILABLE",
       message: "Cannot initialize the workflow database.",
-      details: {
-        cause: expect.stringMatching(/schema is newer than this server supports/i),
-      },
+      details: { reason: "SCHEMA_NEWER" },
     });
   });
 

@@ -350,7 +350,7 @@ describe("offline classification through actual MCP Client/Server transport", ()
     const classOnly = vi.fn((model: string) => model === "synthetic-host-model" ? "general" as const : null);
     const h = await harness({ adapter: { host: "codex", provider: "openai-codex", modelClassForModel: classOnly } });
     const refused = await h.call<Advice>("classify_skills", input("d0089-class-only"));
-    expect(refused).toMatchObject({ ok: false, data: null, error: { code: "INVALID_INPUT",
+    expect(refused).toMatchObject({ ok: false, data: null, error: { code: "BINDING_INVALID",
       details: { category: "host-observation", reasonCode: "BINDING_INVALID", observationReasonCode: "MISSING_MODEL_CAPABILITY" } } });
     expect(h.classify).not.toHaveBeenCalled();
     expect(classOnly).not.toHaveBeenCalled();

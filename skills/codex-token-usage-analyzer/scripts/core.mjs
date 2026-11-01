@@ -940,8 +940,10 @@ export async function writeNewMarkdown(report, directory, options = {}) {
   }
 }
 
+// Only an absent path may fall back (to its real existing ancestor). Any other realpath failure (EACCES, ELOOP, ...)
+// propagates, so the storage-isolation check never compares an unresolved path (D-0223).
 export async function canonicalExistingPath(value) {
-  try { return await realpath(value); } catch { return path.resolve(value); }
+  return prospectiveRealPath(value);
 }
 
 async function prospectiveRealPath(value) {

@@ -540,7 +540,9 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
         causeValue: { message: expect.stringContaining("d0344-owned-start-binding-failure") },
       });
       if (failure === "async") expect(started.error).toMatchObject({ code: "INVALID_INPUT", message: "Workflow correlation callbacks must be synchronous." });
-      if (failure === "throw") expect(started.error?.details).toMatchObject({ cause: "d0344-original-callback-cause" });
+      // AGS 3.0 error model R2/R5: the callback failure is a server failure with a redacted cause, never its message.
+      if (failure === "throw") expect(started.error).toMatchObject({ code: "MCP_UNAVAILABLE", details: { reason: "INTERNAL_FAILURE", cause: { type: "error" } } });
+      if (failure === "throw") expect(JSON.stringify(started.error)).not.toContain("d0344-original-callback-cause");
       if (failure === "epoch-cas" || failure === "root-cas") expect(started.error?.code).toBe("BINDING_INVALID");
       expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(beforeWorkflow);
       expect(workflowRows(fixture)).toEqual(beforeRows);
@@ -567,7 +569,9 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
       });
       expect(callbackCommitted).toBe(true);
       expect(started).toMatchObject({ ok: false, data: null, error: { code: "MCP_UNAVAILABLE" } });
-      expect(started.error?.details?.cause).toMatch(/FOREIGN KEY/iu);
+      // AGS 3.0 error model P4: the deferred FOREIGN KEY failure is classified, not copied as SQLite message text.
+      expect(started.error?.details).toMatchObject({ reason: "STORE_CONSTRAINT", cause: { sqlite: { primaryCode: 19 } } });
+      expect(JSON.stringify(started.error)).not.toMatch(/FOREIGN KEY/iu);
       expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(beforeWorkflow);
       expect(workflowRows(fixture)).toEqual(beforeRows);
       expect(fixture.continuity.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: fixture.root.rootId });

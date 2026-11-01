@@ -8,6 +8,7 @@ import { types } from "node:util";
 import { ContinuityService } from "./continuity-service.js";
 import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
 import { hookFailureContext, hookFailureReason, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
+import { failureReason } from "./failure-diagnostics.js";
 import { adaptHostInput, isGovernanceHookTool, resolveHookHost, type AdaptedHostInput, type ContinuityAction, type ForkHostParentRead, type ForkOriginRead, type LineageRead } from "./host-input-adapter.js";
 import {
   assertDistinctDatabasePaths,
@@ -144,8 +145,8 @@ function reportContinuityFailure(phase: ContinuityHookPhase, cause: unknown): vo
     const reason = hookFailureReason(cause)
       ?? (storeError ? storeError.reason
         : workflowError ? `WORKFLOW_${workflowError.code}`
-          : phase === "input" && isObject && !types.isProxy(cause) && cause instanceof SyntaxError ? "INVALID_JSON"
-            : "UNEXPECTED_FAILURE");
+          // The shared classification keeps an OS, SQLite or JSON cause distinct instead of UNEXPECTED_FAILURE.
+          : failureReason(cause).reason ?? "UNEXPECTED_FAILURE");
     console.error("[agent-governance-suite] continuity-hook-failure " + JSON.stringify({
       phase, reason, context: hookFailureContext(cause),
       ...(Number.isInteger(sqliteErrcode) ? { sqliteErrcode } : {}),

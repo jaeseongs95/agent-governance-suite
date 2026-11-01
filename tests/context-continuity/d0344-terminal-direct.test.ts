@@ -756,7 +756,10 @@ describe("D0344 workflow transaction fence", () => {
     workflow.close();
     let failure: unknown;
     try { target.ensureSession(session); } catch (error) { failure = error; }
-    expect(failure).toMatchObject({ code: "MCP_UNAVAILABLE", message: "Cannot execute the workflow transaction.", details: { cause: expect.any(String) } });
+    // AGS 3.0 error model R5: a fixed reason and a redacted cause, not the SQLite message.
+    expect(failure).toMatchObject({ code: "MCP_UNAVAILABLE", message: "Cannot execute the workflow transaction.",
+      details: { reason: "WORKFLOW_STORAGE_FAILED", cause: expect.objectContaining({ type: "error" }) } });
+    expect(JSON.stringify((failure as { details: unknown }).details)).not.toMatch(/database is not open/iu);
     expect(target.store.getTask(target.correlateSession(session))).toEqual(before);
   });
 });

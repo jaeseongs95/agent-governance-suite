@@ -68,6 +68,19 @@ describe("continuity hook failure reporting (AGS-D-0055)", () => {
     for (const marker of ["private-session-marker", "private-input-marker", directory]) expect(line).not.toContain(marker);
   });
 
+  it("reports an observed OS cause instead of UNEXPECTED_FAILURE (AGS 3.0 error model P4)", async () => {
+    const { directory, env } = await environment();
+    // A regular file where a parent directory is expected: mkdir fails with ENOTDIR before any store wraps it.
+    await writeFile(join(directory, "not-a-directory"), "x", "utf8");
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(runContinuityHook(toolInput(), { ...env,
+      AGENT_GOVERNANCE_CONTINUITY_DB_PATH: join(directory, "not-a-directory", "nested", "continuity.sqlite3") })).toBe("");
+    const lines = failureLines(spy);
+    expect(lines).toHaveLength(1);
+    expect(JSON.parse(lines[0]!.slice(lines[0]!.indexOf("{")))).toMatchObject({ phase: "storage", reason: "ENOTDIR" });
+    expect(lines[0]).not.toContain(directory);
+  });
+
   it("takes no continuity action and reports nothing for an unsupported native Gemini actor", async () => {
     const { env } = await environment();
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});

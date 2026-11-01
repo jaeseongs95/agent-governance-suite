@@ -163,9 +163,10 @@ describe("JEV 원인과 권한의 실제 MCP 응답", () => {
 
   it("API69 결속: 무효 관측의 정확한 원인만 반환하고 관측·호출자 원문은 숨긴다", async () => {
     const h = await harness();
-    // The host reported an effort outside the closed set: the typed cause is returned, the raw value is not.
+    // The host reported an effort outside the closed set: the typed cause is returned with its own public code
+    // (error model 4-2, D0070), the raw value is not.
     const reply = await h.call<Advice>("classify_skills", input(), {model: "fixture-host-model", effort: "PRIVATE_EFFORT_SENTINEL", turnId: "fixture-turn", provenance: "fixture:host-owned"});
-    expect(reply).toMatchObject({ok: false, data: null, error: {code: "INVALID_INPUT", details: {category: "host-observation", reasonCode: "BINDING_INVALID", observationReasonCode: "REASONING_EFFORT_INVALID"}}});
+    expect(reply).toMatchObject({ok: false, data: null, error: {code: "BINDING_INVALID", details: {category: "host-observation", reasonCode: "BINDING_INVALID", observationReasonCode: "REASONING_EFFORT_INVALID"}}});
     expect(JSON.stringify(reply)).not.toContain("PRIVATE_EFFORT_SENTINEL");
     // A caller-supplied observation field is refused at the server entry before classification, without echoing it.
     const forged = await h.call<Advice>("classify_skills", {...input(), _hostAttestation: "PRIVATE_HOST_TOKEN_SENTINEL"});

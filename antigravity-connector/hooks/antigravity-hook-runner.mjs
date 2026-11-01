@@ -9,7 +9,7 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 import { types } from "node:util";
-import { failureContext, retainFailureCause, retainFailureSecondary } from "../../runtime/failure-diagnostics.mjs";
+import { failureCode, failureContext, retainFailureCause, retainFailureSecondary } from "../../runtime/failure-diagnostics.mjs";
 
 // Queue wake defaults are passed per invocation; importing this module never changes user ENV.
 
@@ -1563,7 +1563,8 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
           currentToolInput = res.updatedToolInput;
           anyMutated = true;
         }
-      } catch {
+      } catch (cause) {
+        reportStageFailure(stage, cause, options?.writeStderr);
         // F1 fail-closed: if the host-attestation stage throws, deny the tool call immediately.
         if (stage === "host-attestation") {
           return { decision: "deny", reason: "Host attestation boundary check failed closed." };
@@ -1605,8 +1606,9 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
           seenTexts.add(ctx);
           injected.push({ systemMessage: { systemMessage: ctx } });
         }
-      } catch {
-        // Fail open per stage.
+      } catch (cause) {
+        // Fail open per stage, with the failed stage and its code recorded.
+        reportStageFailure(stage, cause, options?.writeStderr);
       }
     }
     return injected.length > 0 ? { injectSteps: injected } : {};
@@ -1619,12 +1621,24 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
     try {
       const res = await runStage(explicitHook || "session-message", "Stop", rawInput, {}, stageOptions);
       return translateCanonicalOutputToAntigravity("Stop", res.output, null);
-    } catch {
+    } catch (cause) {
+      reportStageFailure(explicitHook || "session-message", cause, options?.writeStderr);
       return {};
     }
   }
 
   return {};
+}
+
+/**
+ * AGS 3.0 error model R6: a failed stage keeps its fail-open/deny result but leaves one bounded stderr line with
+ * the stage and the error's own bounded code. Never a message, path, input or body. A broken sink changes nothing.
+ */
+export function reportStageFailure(stage, cause, writeStderr = (line) => process.stderr.write(line)) {
+  try {
+    const code = failureCode(cause);
+    writeStderr(`[agent-governance-suite] antigravity-stage-failure ${JSON.stringify({ stage, ...(code ? { code } : {}) })}\n`);
+  } catch { /* Diagnostics never change the hook decision. */ }
 }
 
 export function failClosedPreToolUseFallback(raw, eventArg, hookArg) {
@@ -1664,7 +1678,8 @@ export async function runConnectorFromRaw(raw, argv = process.argv, options = {}
       entryMonotonicMs,
     });
     return Object.keys(agyOutput).length > 0 ? JSON.stringify(agyOutput) : "";
-  } catch {
+  } catch (cause) {
+    reportStageFailure("connector", cause, options?.writeStderr);
     const fb = failClosedPreToolUseFallback(raw, eventArg, hookArg);
     return fb ? JSON.stringify(fb) : "";
   }
@@ -1758,7 +1773,8 @@ async function runConnector() {
   let raw;
   try {
     raw = readFileSync(0, "utf8");
-  } catch {
+  } catch (cause) {
+    reportStageFailure("stdin", cause);
     const hookArg = process.argv.find((a) => a.startsWith("--hook="))?.slice(7) ?? "";
     if (hookArg === "host-attestation") {
       process.stdout.write(JSON.stringify({ decision: "deny", reason: "Fail-closed: unable to read stdin for host-attestation." }));
@@ -1770,7 +1786,8 @@ async function runConnector() {
 }
 
 if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
-  runConnector().catch(() => {
+  runConnector().catch((cause) => {
+    reportStageFailure("host-entry", cause);
     const hookArg = process.argv.find((a) => a.startsWith("--hook="))?.slice(7) ?? "";
     const eventArg = process.argv.find((a) => a.startsWith("--event="))?.slice(8) ?? "";
     if (hookArg === "host-attestation" || eventArg === "PreToolUse") {

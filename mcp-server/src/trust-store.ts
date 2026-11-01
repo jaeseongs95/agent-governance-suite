@@ -221,7 +221,8 @@ export class TrustStore {
   private initializeSchema(): void {
     const version = this.shared?.getSchemaVersion() ?? (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
     if (version > SCHEMA_VERSION) {
-      throw tagProducerFailure(new WorkflowContractError("INVALID_INPUT", "Trust database schema is newer than this server supports.", {
+      throw tagProducerFailure(new WorkflowContractError("MCP_UNAVAILABLE", "Trust database schema is newer than this server supports.", {
+        reason: "SCHEMA_NEWER",
         supportedVersion: SCHEMA_VERSION,
         actualVersion: version,
       }), "TRUST_SCHEMA_UNSUPPORTED");

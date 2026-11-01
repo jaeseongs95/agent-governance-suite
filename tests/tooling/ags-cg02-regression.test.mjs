@@ -18,10 +18,10 @@ function evaluate(input) { return evaluatePreflight(input, {now}); }
 function run(argv, input = "") {
   return spawnSync(process.execPath, argv, {input, encoding: "utf8", timeout: 10_000});
 }
-function expectRuntimeFailure(result, phase) {
+function expectRuntimeFailure(result, phase, code) {
   expect(result.error).toBeUndefined(); expect(result.status).toBe(2);
   expect(result.stdout).toBe("");
-  expect(JSON.parse(result.stderr)).toEqual({component: "mutation-risk-preflight", phase, errorCode: "PREFLIGHT_RUNTIME_ERROR"});
+  expect(JSON.parse(result.stderr)).toEqual({component: "mutation-risk-preflight", phase, errorCode: "PREFLIGHT_RUNTIME_ERROR", ...(code ? {code} : {})});
 }
 function acceptedIrreversible() {
   const input = intent();
@@ -45,7 +45,8 @@ describe("CG02 / AGS-D-0104 preflight CLI failure identity", () => {
   });
   it("does not turn an OS read failure into a completed input validation", () => {
     const directory = mkdtempSync(path.join(tmpdir(), "ags-cg02-")); temporary.push(directory);
-    expectRuntimeFailure(run([cli, "--input", path.join(directory, "missing-intent.json")]), "input-read");
+    // AGS 3.0 error model P4: the OS code stays in the diagnostic (D-0104 residual).
+    expectRuntimeFailure(run([cli, "--input", path.join(directory, "missing-intent.json")]), "input-read", "ENOENT");
   });
   it("does not relabel an internal evaluation SyntaxError as malformed input", () => {
     const input = intent(); input.plannedCommandOrTool.tool = "cg02-evaluation-fault";

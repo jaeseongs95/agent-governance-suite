@@ -61,10 +61,14 @@ describe("SqliteWorkflowStore storage failures", () => {
         message: "Cannot persist the workflow run.",
         details: {
           runId: "faulted-run",
-          databasePath,
-          cause: expect.stringContaining("synthetic-storage-fault"),
+          reason: "STORE_CONSTRAINT",
+          cause: expect.objectContaining({ code: expect.objectContaining({ type: "string" }) }),
         },
       });
+      // The public details never carry the database path or the driver message (AGS 3.0 error model R5).
+      const serialized = JSON.stringify((error as { details: unknown }).details);
+      expect(serialized).not.toContain(directory);
+      expect(serialized).not.toContain("synthetic-storage-fault");
       expect(store.getRun("faulted-run")).toBeNull();
     } finally {
       store.close();
@@ -79,8 +83,9 @@ describe("SqliteWorkflowStore storage failures", () => {
     expect(error).toMatchObject({
       code: "MCP_UNAVAILABLE",
       message: "Cannot initialize the workflow database.",
-      details: { databasePath, cause: expect.any(String) },
+      details: { reason: "STORE_CORRUPT", cause: expect.any(Object) },
     });
+    expect(JSON.stringify((error as { details: unknown }).details)).not.toContain(directory);
   });
 
   it("keeps the original contract code when initialization rejects a newer schema", async () => {
@@ -94,9 +99,9 @@ describe("SqliteWorkflowStore storage failures", () => {
     }
     const error = capture(() => new SqliteWorkflowStore(databasePath));
     expect(error).toMatchObject({
-      code: "INVALID_INPUT",
+      code: "MCP_UNAVAILABLE",
       message: "Cannot initialize the workflow database.",
-      details: { cause: expect.stringMatching(/schema is newer than this server supports/i) },
+      details: { reason: "SCHEMA_NEWER" },
     });
   });
 });

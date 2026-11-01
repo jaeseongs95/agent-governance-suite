@@ -1,5 +1,6 @@
-import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
+import { WorkflowContractError, type ApiResultV1, type ErrorCode, type SessionBindingV1 } from "../../contracts/types.js";
 import type { VerifiedCaller } from "./caller-identity.js";
+import { failureContext, failureReason } from "./failure-diagnostics.js";
 import { BrokerRequestRejected, sessionMessageRequest } from "./session-message-client.js";
 import type { CurrentPresence } from "./session-message-store.js";
 import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
@@ -10,6 +11,18 @@ function ok<T>(data: T): ApiResultV1<T> {
 
 function failure(code: ErrorCode, message: string, details: Record<string, unknown> | null = null): ApiResultV1<never> {
   return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
+}
+
+/**
+ * Error model R2/R5: a messaging rejection (BrokerRequestRejected) keeps its own domain message; a contract error keeps
+ * its code; any other failure (busy writer, storage, deadline, state directory) is reported by its reason and redacted
+ * cause under a fixed message, never its raw text.
+ */
+function unavailable(error: unknown, suffix = ""): ApiResultV1<never> {
+  if (error instanceof WorkflowContractError) return failure(error.code, `${error.message}${suffix}`, error.details);
+  if (error instanceof BrokerRequestRejected) return failure("MCP_UNAVAILABLE", `${error.message}${suffix}`);
+  return failure("MCP_UNAVAILABLE", `Session messaging could not complete the request.${suffix}`,
+    { reason: failureReason(error).reason ?? "INTERNAL_FAILURE", cause: failureContext(error) });
 }
 
 /** A broker capacity rejection is definite: its transaction rolled back, so nothing was queued or drafted. */
@@ -52,7 +65,7 @@ export class SessionMessageService {
     } catch (error) {
       const details = capacityDetails(error);
       if (details) return failure("MCP_UNAVAILABLE", `${(error as Error).message} ${capacityRelease(details)}`, { ...details });
-      return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "The session message broker is unavailable.");
+      return unavailable(error);
     }
   }
 
@@ -64,7 +77,7 @@ export class SessionMessageService {
     } catch (error) {
       const details = capacityDetails(error);
       if (details) return failure("MCP_UNAVAILABLE", `${(error as Error).message} This definite rejection had no effect: the message was not queued and no receipt was issued. The rejected messageId stays prepared until the expiresAt returned by prepare_session_message. If earliestReleaseAt is before that expiresAt, retry that same messageId after earliestReleaseAt; otherwise the draft expires first, so prepare again. Never do both. ${capacityRelease(details)}`, { ...details });
-      return failure("MCP_UNAVAILABLE", `${error instanceof Error ? error.message : "The session message broker is unavailable."} Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.`);
+      return unavailable(error, " Retry only the known prepared ID or compare saved receipts/status; do not prepare again for the same uncertain delivery.");
     }
   }
 
@@ -75,7 +88,7 @@ export class SessionMessageService {
         ...(args.receipts === undefined ? {} : { receipts: args.receipts }) }, this.stateDirectory);
       return ok(data);
     } catch (error) {
-      return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "The session message broker is unavailable.");
+      return unavailable(error);
     }
   }
 
@@ -85,7 +98,7 @@ export class SessionMessageService {
       const data = await sessionMessageRequest("status", { sender, messageId: args.messageId }, this.stateDirectory);
       return ok(data);
     } catch (error) {
-      return failure("MCP_UNAVAILABLE", error instanceof Error ? error.message : "The session message broker is unavailable.");
+      return unavailable(error);
     }
   }
 

@@ -53,6 +53,7 @@ import { convergenceUnverifiedClaims, externalInputs, stageUnverifiedClaims, uni
 import { independence } from "./caller-actor.js";
 import { assertCsStageBundle } from "./cs-engineering-validator.js";
 import { assertEngineeringStageBundle } from "./engineering-practices-validator.js";
+import { contractFailure } from "./failure-diagnostics.js";
 import {
   clone,
   createPlanSigningKey,
@@ -166,7 +167,7 @@ export class WorkflowService {
     const encodedKey = this.store.getOrCreateSecret(PLAN_SIGNING_KEY, createPlanSigningKey);
     this.planSigningKey = Buffer.from(encodedKey, "base64url");
     if (this.planSigningKey.length !== 32) {
-      throw new WorkflowContractError("INVALID_INPUT", "Stored plan signing key is invalid.");
+      throw new WorkflowContractError("INTEGRITY_FAILED", "Stored plan signing key is invalid.", { reason: "PLAN_SIGNING_KEY_INVALID" });
     }
   }
 
@@ -2143,12 +2144,8 @@ export class WorkflowService {
     }
   }
 
+  /** A non-contract failure is a server failure, never the caller's invalid input (contractFailure). */
   private toErrorBody(error: unknown): ContractErrorBody {
-    if (error instanceof WorkflowContractError) return error.toBody();
-    return {
-      code: "INVALID_INPUT",
-      message: "Workflow request could not be processed.",
-      details: { cause: error instanceof Error ? error.message : String(error) },
-    };
+    return contractFailure(error).toBody();
   }
 }
