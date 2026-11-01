@@ -1488,24 +1488,9 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
 
   const { canonicalInput, toolBoundary } = buildCanonicalHookInput(rawInput, event, explicitHook || "session-message");
   if (event === "PreToolUse" && toolBoundary?.canonicalName.startsWith("mcp__agent-governance-suite__")) {
-    // ponytail: 3.0 infers root for every Antigravity call, so caller binding keys are refused here
-    // instead of by the actor denial. Drop once the child gate returns after 3.0.
-    const forgedKey = findFirstReservedKey(toolBoundary.toolInput);
-    if (forgedKey) return { decision: "deny", reason: `Unverified caller ${forgedKey} rejected.` };
-    try {
-      const { runGovernanceHook } = await import("../../mcp-server/dist/governance-hook.mjs");
-      const outcome = await runGovernanceHook("antigravity", JSON.stringify(canonicalInput));
-      if (!outcome || typeof outcome.ok !== "boolean" || typeof outcome.output !== "string" || !outcome.output.trim()) {
-        throw new Error("Invalid governance hook outcome.");
-      }
-      const output = translateCanonicalOutputToAntigravity("PreToolUse", JSON.parse(outcome.output), toolBoundary);
-      if ((!outcome.ok && output.decision !== "deny") || !["allow", "deny"].includes(output.decision)) {
-        throw new Error("Invalid governance hook decision.");
-      }
-      return output;
-    } catch {
-      return { decision: "deny", reason: "GOVERNANCE_HOOK_FAILED" };
-    }
+    // The AGS server identifies the caller from the host-written tools/call _meta (conversation, root and parent
+    // conversation IDs) and refuses caller identity fields itself; the hook neither rewrites nor signs anything.
+    return { decision: "allow" };
   }
 
   if (!canonicalInput.session_id) {

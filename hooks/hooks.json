@@ -113,18 +113,6 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "^mcp__agent[-_]governance[-_]suite__.+$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/governance-hook.mjs\" --host=codex",
-            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\governance-hook.mjs\" --host=codex",
-            "timeout": 10,
-            "statusMessage": "Checking governance call identity"
-          }
-        ]
-      },
-      {
         "matcher": "^mcp__codex_app__wait_threads$",
         "hooks": [
           {

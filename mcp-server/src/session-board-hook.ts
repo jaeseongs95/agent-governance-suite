@@ -5,17 +5,14 @@ import { hookFailureContext, hookFailureReason, retainHookFailureSecondary } fro
 import { readFileSync } from "node:fs";
 
 import {
-  SUMMARY_MAX_LENGTH,
-  normalizeSummary,
   openBoard,
   pruneSessions,
   recordPrompt,
-  setSummary,
   touchSession,
 } from "../../skills/session-board/scripts/board-store.mjs";
 import { resolveSessionBoardDatabasePath } from "./runtime-config.js";
 import { sessionMessageRequest } from "./session-message-client.js";
-import { adaptHostInput, isGovernanceHookTool, resolveHookHost } from "./host-input-adapter.js";
+import { adaptHostInput, resolveHookHost } from "./host-input-adapter.js";
 
 type BoardFailurePhase = "host-entry" | "stdin" | "stdout" | "input" | "consume-wake" | "open" | "handle" | "close";
 
@@ -28,10 +25,6 @@ function reportBoardFailure(phase: BoardFailurePhase, cause: unknown): void {
 type HookInput = Record<string, unknown>;
 type Board = ReturnType<typeof openBoard>;
 
-const BOARD_TOOLS = new Set(["update_session_status", "list_session_status"]);
-function preToolUse(permissionDecision: "deny" | undefined, extra: Record<string, unknown>): Record<string, unknown> {
-  return { hookSpecificOutput: { hookEventName: "PreToolUse", ...(permissionDecision ? { permissionDecision } : {}), ...extra } };
-}
 
 /** Maps one host hook event onto the board; identity always comes from the hook input, never from the model. */
 export function handleSessionBoardHook(input: HookInput, board: Board | null, host: string, now: string = new Date().toISOString(), verifiedInternalWake = false): Record<string, unknown> {
@@ -40,14 +33,6 @@ export function handleSessionBoardHook(input: HookInput, board: Board | null, ho
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
   const main = actorAccess(observation.actor).allowed;
-  const toolName = observation.toolName ?? "";
-  const toolInput = observation.toolInput ?? {};
-  const localTool = toolName.split("__").at(-1) ?? "";
-  const boardTool = observation.kind === "tool-boundary" && observation.boundaryPhase === "before"
-    && isGovernanceHookTool(host, toolName) && BOARD_TOOLS.has(localTool);
-  if (boardTool && !main) return preToolUse("deny", {
-    permissionDecisionReason: "세션 현황판 조회와 갱신은 관측된 메인 세션만 수행합니다.",
-  });
   // Unknown actors cannot write a parent row or receive its binding.
   if (!main || !board) return {};
   const session = { host, sessionId, cwd: observation.workspaceId || process.cwd(), now };
@@ -64,16 +49,6 @@ export function handleSessionBoardHook(input: HookInput, board: Board | null, ho
     return {};
   }
   if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "before") return {};
-
-  if (boardTool) {
-    if (localTool === "update_session_status") {
-      if (!normalizeSummary(toolInput.summary)) {
-        return preToolUse("deny", { permissionDecisionReason: `summary는 ${SUMMARY_MAX_LENGTH}자 이하의 한 줄이어야 합니다.` });
-      }
-      setSummary(board, session, toolInput.summary);
-    }
-    return preToolUse(undefined, { updatedInput: { ...toolInput, _sessionBinding: { host, sessionId } } });
-  }
 
   // Lifecycle events already record observed activity; the board is coordination, not tool authorization.
   return {};

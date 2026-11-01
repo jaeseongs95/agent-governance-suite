@@ -7,6 +7,7 @@ import {
 } from "../../contracts/types.js";
 import { validateCollaborationDecision as validateStructure } from "../../skills/orchestrator/scripts/collaboration-decision.mjs";
 import { TrustStore } from "./trust-store.js";
+import type { VerifiedCaller } from "./caller-identity.js";
 
 export interface TrustCapabilitiesV1 {
   schemaVersion: typeof CONTRACT_VERSION;
@@ -40,10 +41,15 @@ export class TrustService {
 
   validateCollaborationDecision(
     input: ValidateCollaborationDecisionRequestV1,
+    caller: VerifiedCaller,
     now: Date = new Date(),
   ): ApiResultV1<CollaborationDecisionValidationV1> {
     const structuralErrors = validateStructure(input.decision) as string[];
-    const binding = input._sessionBinding ? structuredClone(input._sessionBinding) : null;
+    const binding = {
+      host: caller.host, sessionId: caller.sessionId,
+      actorKind: caller.actor.role === "root" ? "main" as const : "subagent" as const,
+      observedBy: "host-observed", assurance: "observed",
+    };
     const base = {
       structuralValidity: structuralErrors.length === 0 ? "valid" as const : "invalid" as const,
       structuralErrors,

@@ -1,4 +1,5 @@
 import type { ApiResultV1, ErrorCode, SessionBindingV1 } from "../../contracts/types.js";
+import type { VerifiedCaller } from "./caller-identity.js";
 import { BrokerRequestRejected, SESSION_MESSAGE_REQUEST_TIMEOUT_MS, sessionMessageRequest } from "./session-message-client.js";
 import type { SessionPresenceView } from "./session-message-store.js";
 import { isBoundedIdentity, SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_PRESENCE_LIST_MAX_TARGETS } from "./session-message-protocol.js";
@@ -28,12 +29,9 @@ function capacityRelease(details: { earliestReleaseAt: string | null }): string 
     : `The earliest retained record in this scope expires at ${details.earliestReleaseAt}; after that a new prepare_session_message may succeed.`;
 }
 
-function binding(value: unknown): SessionBindingV1 | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const record = value as Record<string, unknown>;
-  return typeof record.host === "string" && record.host && typeof record.sessionId === "string" && record.sessionId
-    ? { host: record.host, sessionId: record.sessionId }
-    : null;
+/** Messages are addressed to the root session; a child caller acts for its root session. */
+function address(caller: VerifiedCaller): SessionBindingV1 {
+  return { host: caller.host, sessionId: caller.sessionId };
 }
 
 export class SessionMessageService {
@@ -43,10 +41,9 @@ export class SessionMessageService {
     this.stateDirectory = stateDirectory;
   }
 
-  async prepare(args: Record<string, unknown>): Promise<ApiResultV1<unknown>> {
-    const sender = binding(args._sessionBinding);
-    if (!sender) return failure("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
-    if (Object.keys(args).some((key) => !["schemaVersion", "targetHost", "targetSessionId", "body", "ttlSeconds", "_sessionBinding"].includes(key))) return failure("INVALID_INPUT", "Preparation accepts immutable content only; message IDs are system-issued.");
+  async prepare(args: Record<string, unknown>, caller: VerifiedCaller): Promise<ApiResultV1<unknown>> {
+    const sender = address(caller);
+    if (Object.keys(args).some((key) => !["schemaVersion", "targetHost", "targetSessionId", "body", "ttlSeconds"].includes(key))) return failure("INVALID_INPUT", "Preparation accepts immutable content only; message IDs are system-issued.");
     if (typeof args.body !== "string" || !args.body.trim() || args.body.includes("\0") || Buffer.byteLength(args.body, "utf8") > SESSION_MESSAGE_BODY_MAX_BYTES) {
       return failure("INVALID_INPUT", `body must contain 1-${SESSION_MESSAGE_BODY_MAX_BYTES} UTF-8 bytes and no NUL characters.`);
     }
@@ -65,10 +62,9 @@ export class SessionMessageService {
     }
   }
 
-  async send(args: Record<string, unknown>): Promise<ApiResultV1<unknown>> {
-    const sender = binding(args._sessionBinding);
-    if (!sender) return failure("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
-    if (typeof args.messageId !== "string" || Object.keys(args).some((key) => !["schemaVersion", "messageId", "_sessionBinding"].includes(key))) return failure("INVALID_INPUT", "Call prepare_session_message for a new intent, then send_session_message with only the returned messageId. Retry an uncertain send using that same ID or compare saved receipts/status.");
+  async send(args: Record<string, unknown>, caller: VerifiedCaller): Promise<ApiResultV1<unknown>> {
+    const sender = address(caller);
+    if (typeof args.messageId !== "string" || Object.keys(args).some((key) => !["schemaVersion", "messageId"].includes(key))) return failure("INVALID_INPUT", "Call prepare_session_message for a new intent, then send_session_message with only the returned messageId. Retry an uncertain send using that same ID or compare saved receipts/status.");
     try {
       return ok(await sessionMessageRequest("send", { sender, messageId: args.messageId }, this.stateDirectory));
     } catch (error) {
@@ -78,9 +74,8 @@ export class SessionMessageService {
     }
   }
 
-  async acknowledge(args: Record<string, unknown>): Promise<ApiResultV1<unknown>> {
-    const target = binding(args._sessionBinding);
-    if (!target) return failure("BINDING_REQUIRED", "The session message hook did not bind the receiving session.");
+  async acknowledge(args: Record<string, unknown>, caller: VerifiedCaller): Promise<ApiResultV1<unknown>> {
+    const target = address(caller);
     try {
       const data = await sessionMessageRequest("acknowledge", { target, messageIds: args.messageIds,
         ...(args.receipts === undefined ? {} : { receipts: args.receipts }) }, this.stateDirectory);
@@ -90,9 +85,8 @@ export class SessionMessageService {
     }
   }
 
-  async status(args: Record<string, unknown>): Promise<ApiResultV1<unknown>> {
-    const sender = binding(args._sessionBinding);
-    if (!sender) return failure("BINDING_REQUIRED", "The session message hook did not bind the sending session.");
+  async status(args: Record<string, unknown>, caller: VerifiedCaller): Promise<ApiResultV1<unknown>> {
+    const sender = address(caller);
     try {
       const data = await sessionMessageRequest("status", { sender, messageId: args.messageId }, this.stateDirectory);
       return ok(data);

@@ -24,20 +24,17 @@ import {
 } from "./continuity-store.js";
 import type { WorkflowStore } from "./workflow-store.js";
 import type { ForkHostParentRead, ForkOriginRead, LineageRead } from "./host-input-adapter.js";
+import type { VerifiedCaller } from "./caller-identity.js";
 
-const TOOL_TOKEN_TTL_SECONDS = 300;
 const CANDIDATE_TOKEN_TTL_SECONDS = 3600;
 
 /** A fork child's selected parent: the exact anchored revision, never "latest". */
 interface ForkParent { c: string; e: number; r: number; d: string }
 
+/** The continuity scope of one verified tool call, computed by the server from the caller. */
 interface ToolBindingPayload {
-  v: 1;
   c: string;
   e: number;
-  t: string;
-  d: Sha256Digest;
-  x: number;
   /** checkpoint_context: anchors of this session's newest host-written entries (at most 16, design r03). */
   a?: string[];
   /** inspect_context of a recorded fork: parent selected from the child's own lineage, or why none. */
@@ -117,12 +114,12 @@ interface CheckpointReplayReceiptV1 {
 }
 
 export interface ContinuityGateway {
-  checkpointContext(value: unknown): ApiResultV1<ContinuitySnapshotV1>;
-  inspectContext(value: unknown): ApiResultV1<ContinuityCandidateV1>;
-  loadContext(value: unknown): ApiResultV1<ContinuitySnapshotV1 | WorkflowContinuityCardV1>;
-  suppressContextRestore(value: unknown): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }>;
-  purgeDirectContext(value: unknown): ApiResultV1<ContinuityPurgeResultV1>;
-  bindOpenedRoot(value: unknown, rootId: string): boolean;
+  checkpointContext(value: unknown, caller: VerifiedCaller): ApiResultV1<ContinuitySnapshotV1>;
+  inspectContext(value: unknown, caller: VerifiedCaller): ApiResultV1<ContinuityCandidateV1>;
+  loadContext(value: unknown, caller: VerifiedCaller): ApiResultV1<ContinuitySnapshotV1 | WorkflowContinuityCardV1>;
+  suppressContextRestore(value: unknown, caller: VerifiedCaller): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }>;
+  purgeDirectContext(value: unknown, caller: VerifiedCaller): ApiResultV1<ContinuityPurgeResultV1>;
+  bindOpenedRoot(caller: VerifiedCaller, rootId: string): boolean;
   /** Called only with the session identity verified by the MCP ingress. */
   prepareWorkflowStart(rawSessionId: string, rootId: string): void;
 }
@@ -133,12 +130,6 @@ function ok<T>(data: T): ApiResultV1<T> {
 
 function failure(code: ErrorCode, message: string, details: Record<string, unknown> | null = null): ApiResultV1<never> {
   return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
-}
-
-function withoutBinding(value: Record<string, unknown>): Record<string, unknown> {
-  const result = { ...value };
-  delete result._continuityBinding;
-  return result;
 }
 
 /** A stored purge result: the body-free "purged" receipt shape, never a checkpoint or scrubbed request. */
@@ -252,23 +243,20 @@ export class ContinuityService implements ContinuityGateway {
     return this.store.rotateEpoch(this.correlateSession(rawSessionId), this.now().toISOString());
   }
 
-  issueToolBinding(rawSessionId: string, toolName: string, input: Record<string, unknown>, readLineage?: () => LineageRead): string {
-    const task = this.ensureSession(rawSessionId);
+  /** Continuity scope of a verified call; a child caller works in its root session's task. */
+  private toolBinding(caller: VerifiedCaller, toolName: string): ToolBindingPayload {
+    const task = this.ensureSession(caller.sessionId);
+    const readLineage = toolName === "checkpoint_context" || toolName === "inspect_context" ? caller.readLineage : undefined;
     let read: LineageRead | undefined;
-    const lineage = readLineage && (() => read ??= readLineage()); // one transcript read per binding
+    const lineage = readLineage && (() => read ??= readLineage()); // one transcript read per call
     // A fork's first save is a final pin boundary too, so its own anchors carry a recorded descent (D1 grandchild).
     if (toolName === "checkpoint_context" && lineage) this.pinTaskForkParent(task, lineage, true);
-    const payload: ToolBindingPayload = {
-      v: 1,
+    return {
       c: task.taskCorrelation,
       e: task.currentEpoch,
-      t: toolName,
-      d: convergenceDigest(withoutBinding(input)),
-      x: Math.floor(this.now().getTime() / 1000) + TOOL_TOKEN_TTL_SECONDS,
       ...(toolName === "checkpoint_context" && lineage ? this.anchorsFor(task, lineage) : {}),
       ...(toolName === "inspect_context" ? this.pinnedForkParent(task, lineage) : {}),
     };
-    return this.sign(payload);
   }
 
   /**
@@ -504,10 +492,10 @@ export class ContinuityService implements ContinuityGateway {
     return `hmac-sha256:${this.hmac(`lineage\0${entryId}`)}`;
   }
 
-  checkpointContext(value: unknown): ApiResultV1<ContinuitySnapshotV1> {
+  checkpointContext(value: unknown, caller: VerifiedCaller): ApiResultV1<ContinuitySnapshotV1> {
     return this.guard(() => {
       const request = this.validator!.checkpointContextRequest(value);
-      const binding = this.verifyToolBinding("checkpoint_context", request, request._continuityBinding);
+      const binding = this.toolBinding(caller, "checkpoint_context");
       const task = this.currentTask(binding);
       if (task.rootId) throw new WorkflowContractError("SNAPSHOT_CONFLICT", "Direct checkpoints are disabled after a workflow root is bound.", { rootId: task.rootId });
       const now = this.now().toISOString();
@@ -527,7 +515,7 @@ export class ContinuityService implements ContinuityGateway {
       };
       const snapshot: ContinuitySnapshotV1 = { ...base, snapshotDigest: convergenceDigest(base) };
       const requestHash = this.hashOpaque("request", request.requestId);
-      const commandDigest = convergenceDigest(withoutBinding(request as unknown as Record<string, unknown>));
+      const commandDigest = convergenceDigest(request as unknown as Record<string, unknown>);
       const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot, Array.isArray(binding.a) ? binding.a : []);
       if (stored.kind === "epoch-mismatch") return failure("BINDING_INVALID", "Continuity task binding is stale.");
       if (stored.kind === "source-conflict") return failure("SNAPSHOT_CONFLICT", "Direct checkpoints are disabled after a workflow root is bound.");
@@ -550,10 +538,10 @@ export class ContinuityService implements ContinuityGateway {
     });
   }
 
-  inspectContext(value: unknown): ApiResultV1<ContinuityCandidateV1> {
+  inspectContext(value: unknown, caller: VerifiedCaller): ApiResultV1<ContinuityCandidateV1> {
     return this.guard(() => {
-      const request = this.validator!.inspectContextRequest(value);
-      const binding = this.verifyToolBinding("inspect_context", request, request._continuityBinding);
+      this.validator!.inspectContextRequest(value);
+      const binding = this.toolBinding(caller, "inspect_context");
       this.currentTask(binding);
       const own = this.candidateFor(binding.c, binding.e);
       if (own.reasonCodes[0] !== "NO_RESTORE_CANDIDATE") return ok(own);
@@ -577,10 +565,10 @@ export class ContinuityService implements ContinuityGateway {
     return { schemaVersion: "1.0.0", decision: "DEFER", reasonCodes: ["EXPLICIT_LOAD_REQUIRED", "FORK_PARENT_CANDIDATE"], summary, restoreToken: this.sign(payload) };
   }
 
-  loadContext(value: unknown): ApiResultV1<ContinuitySnapshotV1 | WorkflowContinuityCardV1> {
+  loadContext(value: unknown, caller: VerifiedCaller): ApiResultV1<ContinuitySnapshotV1 | WorkflowContinuityCardV1> {
     return this.guard<ContinuitySnapshotV1 | WorkflowContinuityCardV1>(() => {
       const request = this.validator!.loadContextRequest(value);
-      const binding = this.verifyToolBinding("load_context", request, request._continuityBinding);
+      const binding = this.toolBinding(caller, "load_context");
       const candidate = this.verifyCandidate(request.candidateToken);
       const fork = candidate.f !== undefined;
       if (
@@ -626,20 +614,20 @@ export class ContinuityService implements ContinuityGateway {
     return snapshot;
   }
 
-  suppressContextRestore(value: unknown): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }> {
+  suppressContextRestore(value: unknown, caller: VerifiedCaller): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }> {
     return this.guard(() => {
       const request = this.validator!.suppressContextRestoreRequest(value);
-      const binding = this.verifyToolBinding("suppress_context_restore", request, request._continuityBinding);
+      const binding = this.toolBinding(caller, "suppress_context_restore");
       if (request.expectedEpoch !== binding.e) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.", { actualEpoch: binding.e });
       if (!this.store.setSuppressed(binding.c, binding.e, this.now().toISOString())) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.");
       return ok({ schemaVersion: "1.0.0", suppressed: true, epoch: binding.e });
     });
   }
 
-  purgeDirectContext(value: unknown): ApiResultV1<ContinuityPurgeResultV1> {
+  purgeDirectContext(value: unknown, caller: VerifiedCaller): ApiResultV1<ContinuityPurgeResultV1> {
     return this.guard(() => {
       const request = this.validator!.purgeDirectContextRequest(value);
-      const binding = this.verifyToolBinding("purge_direct_context", request, request._continuityBinding);
+      const binding = this.toolBinding(caller, "purge_direct_context");
       this.currentTask(binding);
       const current = this.store.getSnapshot(binding.c, request.expectedEpoch);
       if (current && current.revision !== request.expectedRevision) {
@@ -649,7 +637,7 @@ export class ContinuityService implements ContinuityGateway {
         });
       }
       const requestHash = this.hashOpaque("request", request.requestId);
-      const commandDigest = convergenceDigest(withoutBinding(request as unknown as Record<string, unknown>));
+      const commandDigest = convergenceDigest(request as unknown as Record<string, unknown>);
       const tombstoneDigest = convergenceDigest({
         taskCorrelation: binding.c,
         epoch: request.expectedEpoch,
@@ -686,11 +674,9 @@ export class ContinuityService implements ContinuityGateway {
     });
   }
 
-  bindOpenedRoot(value: unknown, rootId: string): boolean {
+  bindOpenedRoot(caller: VerifiedCaller, rootId: string): boolean {
     try {
-      const args = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
-      const token = typeof args._continuityBinding === "string" ? args._continuityBinding : "";
-      const binding = this.verifyToolBinding("open_convergence_root", args, token);
+      const binding = this.toolBinding(caller, "open_convergence_root");
       return this.store.bindRoot(binding.c, binding.e, rootId, this.now().toISOString());
     } catch {
       // The committed workflow result is independent; callers must observe missing correlation.
@@ -875,16 +861,6 @@ export class ContinuityService implements ContinuityGateway {
     const task = this.store.getTask(binding.c);
     if (!task || task.currentEpoch !== binding.e) throw new WorkflowContractError("BINDING_INVALID", "Continuity task binding is stale.");
     return task;
-  }
-
-  private verifyToolBinding(toolName: string, value: object, token: string): ToolBindingPayload {
-    if (!token) throw new WorkflowContractError("BINDING_REQUIRED", "A current continuity binding token is required.");
-    const payload = this.verifySigned<ToolBindingPayload>(token);
-    const now = Math.floor(this.now().getTime() / 1000);
-    if (payload.v !== 1 || payload.t !== toolName || payload.x < now || payload.d !== convergenceDigest(withoutBinding(value as Record<string, unknown>))) {
-      throw new WorkflowContractError("BINDING_INVALID", "Continuity binding token is invalid, expired, or bound to different input.");
-    }
-    return payload;
   }
 
   private verifyCandidate(token: string): CandidatePayload {

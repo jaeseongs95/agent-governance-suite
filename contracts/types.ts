@@ -169,7 +169,6 @@ export interface CheckpointContextRequestV1 {
   status: "active" | "paused" | "completed";
   core: ContinuityCoreV1;
   evidenceRefs: ContinuityEvidenceRefV1[];
-  _continuityBinding: string;
 }
 
 export interface ContinuitySnapshotV1 {
@@ -207,7 +206,6 @@ export interface ContinuityCandidateV1 {
 
 export interface InspectContextRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
-  _continuityBinding: string;
 }
 
 export interface LoadContextRequestV1 {
@@ -216,13 +214,11 @@ export interface LoadContextRequestV1 {
   epoch: number;
   revision: number;
   digest: Sha256Digest;
-  _continuityBinding: string;
 }
 
 export interface SuppressContextRestoreRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   expectedEpoch: number;
-  _continuityBinding: string;
 }
 
 export interface PurgeDirectContextRequestV1 {
@@ -230,10 +226,9 @@ export interface PurgeDirectContextRequestV1 {
   requestId: string;
   expectedEpoch: number;
   expectedRevision: number;
-  _continuityBinding: string;
 }
 
-/** Added by the session board hook from host hook input; callers never supply it. */
+/** Root session address derived from the server-verified caller; callers never supply it. */
 export interface SessionBindingV1 {
   host: string;
   sessionId: string;
@@ -267,7 +262,6 @@ export interface CollaborationDecisionV1 {
 
 export interface ValidateCollaborationDecisionRequestV1 {
   decision: CollaborationDecisionV1;
-  _sessionBinding?: CollaborationSessionBindingV1;
 }
 
 export interface CollaborationDecisionValidationV1 {
@@ -317,12 +311,10 @@ export interface InputSourceReceiptV1 {
 export interface UpdateSessionStatusRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   summary: string;
-  _sessionBinding?: SessionBindingV1;
 }
 
 export interface ListSessionStatusRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
-  _sessionBinding?: SessionBindingV1;
 }
 
 export interface PrepareSessionMessageRequestV1 {
@@ -331,26 +323,22 @@ export interface PrepareSessionMessageRequestV1 {
   targetSessionId: string;
   body: string;
   ttlSeconds?: number;
-  _sessionBinding?: SessionBindingV1;
 }
 
 export interface SendSessionMessageRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   messageId: string;
-  _sessionBinding?: SessionBindingV1;
 }
 
 export interface AcknowledgeSessionMessagesRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   messageIds: string[];
   receipts?: Array<{ messageId: string; claimReceipt: string }>;
-  _sessionBinding?: SessionBindingV1;
 }
 
 export interface GetSessionMessageStatusRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   messageId: string;
-  _sessionBinding?: SessionBindingV1;
 }
 
 /** Advisory recipient auto-wake snapshot; never delivery, completion or permission evidence. */

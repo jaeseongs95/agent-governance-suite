@@ -17,7 +17,7 @@ import { TrustStore } from "./trust-store.js";
 import { processStartToken, type ProcessIdentityFailureObserver } from "./process-identity.js";
 import { createRelaySpawnObservation } from "./relay-wake-observation.js";
 import { readRelayCodeDigest } from "./relay-code-identity.js";
-import { adaptHostInput, hostDeliveryProfile, isGovernanceHookTool, nativePeerWait, resolveHookHost, resolveHookProcessPid, type SupportedHookHost } from "./host-input-adapter.js";
+import { adaptHostInput, hostDeliveryProfile, nativePeerWait, resolveHookHost, resolveHookProcessPid, type SupportedHookHost } from "./host-input-adapter.js";
 
 // Addons register and consume this exact bundled namespace; other bundles/processes have separate registries.
 export { registerHookHostAdapter } from "./host-input-adapter.js";
@@ -25,7 +25,6 @@ import { supportsInjection } from "./input-observation.js";
 import type { PeerWaitDecision } from "./peer-wait-policy.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "./session-message-protocol.js";
 
-const SESSION_BOUND_TOOLS = new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
 const HOST_CLAIM_MAX_MESSAGES = 1;
 const HOST_CLAIM_MAX_BODY_CHARS = 4096;
 const HOST_MESSAGE_REQUEST_TIMEOUT_MS = 8_000;
@@ -459,7 +458,6 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   // events do not carry instanceId, so mutating "latest" here would let a late
   // event from an older generation extend a newer one.
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
-    const toolName = observation.toolName ?? "";
     const wait = nativePeerWait(observation);
     if (wait && actorAccess(observation.actor).allowed) {
       try {
@@ -473,24 +471,8 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         return additionalContext(adapted.outputEventName, "Peer wait policy is unavailable. Use a bounded query; async resume has not been confirmed.");
       }
     }
-    if (!isGovernanceHookTool(host, toolName)) return {};
-    const localTool = toolName.split("__").at(-1) ?? "";
-    if (!SESSION_BOUND_TOOLS.has(localTool)) return {};
-    if (!actorAccess(observation.actor).allowed) {
-      return { hookSpecificOutput: { hookEventName: adapted.outputEventName, permissionDecision: "deny" } };
-    }
-    return {
-      hookSpecificOutput: {
-        hookEventName: adapted.outputEventName,
-        updatedInput: { ...observation.toolInput, _sessionBinding: localTool === "validate_collaboration_decision" ? {
-          host,
-          sessionId,
-          actorKind: "main",
-          observedBy: observation.actor.reasonCode,
-          assurance: observation.actor.basis,
-        } : { host, sessionId } },
-      },
-    };
+    // AGS tools need no hook binding: the server identifies the caller from host-owned call metadata.
+    return {};
   }
   if (!main) return {};
 

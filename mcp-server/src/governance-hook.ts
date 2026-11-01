@@ -1,21 +1,15 @@
 import { isHookEntry } from "./hook-entry.js";
 import "./builtin-hook-host-adapters.js";
 import { readFileSync } from "node:fs";
-import { adaptHostInput, hookAttestationKind, hookRewriteDecision, isGovernanceHookTool, resolveHookHost, withHookHostAdapter, type HookHostAdapter } from "./host-input-adapter.js";
-import { actorAccess } from "./input-observation.js";
-import { SessionActorProofs, SESSION_PROOF_FIELD, withoutSessionProof } from "./session-actor-proof.js";
+import { adaptHostInput, isGovernanceHookTool, resolveHookHost } from "./host-input-adapter.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
-import { resolveHostAttestation, resolveWorkflowDatabasePath } from "./runtime-config.js";
-import { runSessionBoardHook } from "./session-board-hook.js";
-import { handleSessionMessageHook } from "./session-message-hook.js";
+import { resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { runContinuityHook } from "./continuity-hook.js";
-import { HOST_ATTESTATION_FIELD, HOST_ATTESTATION_TOOLS, withoutHostAttestation, type HostExecutionAdapter, type HostExecutionAdapterBase } from "./host-attestation.js";
-import { handleRegisteredHostAttestationHook, snapshotHookAttestationStrategy, type HookAttestationStrategy } from "./host-attestation-hook.js";
+import { HOST_ATTESTATION_TOOLS } from "./host-attestation.js";
+import { observeClaudeExecution, readSessionModel, sessionModelDirectory } from "./host-attestation-hook.js";
 import { WorkflowContractError } from "../../contracts/types.js";
 import { hookFailureContext, retainHookFailureSecondary, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 
-const BOARD_TOOLS = new Set(["update_session_status", "list_session_status"]);
-const MESSAGE_TOOLS = new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
 const CONTINUITY_TOOLS = new Set(["open_convergence_root", "checkpoint_context", "inspect_context", "load_context", "suppress_context_restore", "purge_direct_context"]);
 type RecordValue = Record<string, unknown>;
 function record(value: unknown): RecordValue {
@@ -24,143 +18,45 @@ function record(value: unknown): RecordValue {
 function denied(reasonCode: string): RecordValue {
   return { hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: reasonCode } };
 }
-
-/** One trusted installation dependency tuple, never deserialized from hook JSON. */
-export interface GovernanceHookComposition {
-  inputAdapter: Readonly<HookHostAdapter>;
-  attestation: Readonly<{ kind: string; strategy: Readonly<HookAttestationStrategy> }>;
+function missing(reasonCode: string): never {
+  throw new WorkflowContractError("BINDING_REQUIRED", "The host hook input does not identify this call.", { reasonCode });
 }
 
-/** One authorization entry per governance call. Domain hooks run before signing;
- * missing/failed domain output cannot turn into a valid root proof. */
+/**
+ * Claude Code PreToolUse for AGS tools. Claude's tools/call `_meta` carries only the tool-use ID, so this hook
+ * records the caller (session, agent) and the observed execution under that ID; the server claims the row once.
+ * It never rewrites arguments and never decides permission, so the host's own approval flow runs unchanged.
+ * Codex and agy need no hook: their `_meta` names the caller (docs/ags30-session-binding-design.md 2.2).
+ */
 export async function runGovernanceHook(
   host: string, raw: string, environment: NodeJS.ProcessEnv = process.env,
-  executionAdapters?: ReadonlyMap<string, HostExecutionAdapter>,
-  composition?: GovernanceHookComposition,
 ): Promise<{ ok: boolean; output: string }> {
   let store: SqliteWorkflowStore | undefined;
-  let output: RecordValue = {};
   let failure: unknown;
   let failed = false;
   try {
-    const execute = async (inputAdapter?: Readonly<HookHostAdapter>) => {
-      let selectedStrategy: Readonly<HookAttestationStrategy> | undefined;
-      let selectedExecution: HostExecutionAdapter | undefined;
-      if (composition !== undefined) {
-        // Snapshot all trusted dependencies before adaptation, callbacks or the first await.
-        const attestation = composition.attestation;
-        if (!inputAdapter?.adaptInput || !inputAdapter.ownsTool || !inputAdapter.attestationKind
-          || !attestation || inputAdapter.attestationKind !== attestation.kind) {
-          throw new WorkflowContractError("BINDING_REQUIRED", "Host hook composition unavailable.", { reasonCode: "HOST_HOOK_COMPOSITION_UNAVAILABLE" });
-        }
-        selectedStrategy = snapshotHookAttestationStrategy(attestation.kind, attestation.strategy);
-        const adapter = executionAdapters === undefined ? null
-          : resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: host }, executionAdapters);
-        if (!adapter) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.", {
-          reasonCode: "HOST_EXECUTION_ADAPTER_UNAVAILABLE",
-        });
-        const { host: adapterHost, provider, providers, policyRevision, modelClassForModel, resolveModel, judgeModel } = adapter;
-        if (adapterHost !== host || typeof modelClassForModel !== "function"
-          || (resolveModel !== undefined && typeof resolveModel !== "function")
-          || (judgeModel !== undefined && typeof judgeModel !== "function")
-          || (!resolveModel && (typeof provider !== "string" || provider.length === 0))) {
-          throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.", { reasonCode: "HOST_EXECUTION_ADAPTER_UNAVAILABLE" });
-        }
-        const boundBase: HostExecutionAdapterBase = {
-          host: adapterHost,
-          modelClassForModel: modelClassForModel.bind(adapter),
-          ...(Array.isArray(providers) ? { providers: Object.freeze([...providers]) } : {}),
-          ...(policyRevision === undefined ? {} : { policyRevision }),
-          ...(judgeModel ? { judgeModel: judgeModel.bind(adapter) } : {}),
-        };
-        selectedExecution = Object.freeze(
-          resolveModel
-            ? {
-                ...boundBase,
-                ...(provider === undefined ? {} : { provider }),
-                resolveModel: resolveModel.bind(adapter),
-              }
-            : {
-                ...boundBase,
-                provider: provider!,
-              },
-        );
-      }
-      const input = record(JSON.parse(raw));
-      const { observation } = adaptHostInput(input, host);
-      const toolName = observation.toolName ?? "";
-      if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "before" || !isGovernanceHookTool(host, toolName)) {
-        return { ok: true, output: "" };
-      }
-      const access = actorAccess(observation.actor);
-      if (!access.allowed) return { ok: true, output: JSON.stringify(denied(access.reasonCode)) };
-      const tool = toolName.split("__").at(-1)!;
-      let args = withoutSessionProof(observation.toolInput ?? {});
-      if (composition !== undefined && HOST_ATTESTATION_TOOLS.has(tool)) args = withoutHostAttestation(args);
-      if (Object.hasOwn(args, "_sessionBinding")) return { ok: true, output: JSON.stringify(denied("CALLER_SESSION_BINDING_REJECTED")) };
-      const currentInput = { ...input, tool_input: args };
-      let domainOutput: RecordValue | null = null;
-      const databasePath = resolveWorkflowDatabasePath(environment);
-      store = new SqliteWorkflowStore(databasePath);
-      if (BOARD_TOOLS.has(tool)) {
-        const encoded = await runSessionBoardHook(host, JSON.stringify(currentInput), undefined, true);
-        domainOutput = encoded ? record(JSON.parse(encoded)) : {};
-      } else if (MESSAGE_TOOLS.has(tool)) {
-        domainOutput = await handleSessionMessageHook(currentInput, host);
-      } else if (CONTINUITY_TOOLS.has(tool)) {
-        const encoded = runContinuityHook(JSON.stringify(currentInput), environment, host, true);
-        domainOutput = encoded ? record(JSON.parse(encoded)) : {};
-      } else if (HOST_ATTESTATION_TOOLS.has(tool)) {
-        const kind = hookAttestationKind(host);
-        if (!kind) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.");
-        // Only trusted installation composition supplies adapters; hook JSON cannot register authority.
-        const adapter = composition === undefined
-          ? executionAdapters === undefined ? undefined : resolveHostAttestation({ AGENT_GOVERNANCE_HOST_ATTESTATION: host }, executionAdapters)
-          : selectedExecution;
-        if (adapter === null) throw new WorkflowContractError("BINDING_REQUIRED", "Host execution adapter unavailable.", {
-          reasonCode: "HOST_EXECUTION_ADAPTER_UNAVAILABLE",
-        });
-        domainOutput = handleRegisteredHostAttestationHook(kind, currentInput, { host, databasePath, ...(adapter ? { adapter } : {}),
-          ...(composition === undefined ? {} : { observation: { ...observation, toolInput: args }, toolInput: args }), openStore: () => store! }, selectedStrategy);
-        if (composition !== undefined) {
-          const specific = record(record(domainOutput).hookSpecificOutput);
-          if (!domainOutput || typeof domainOutput !== "object" || Array.isArray(domainOutput)
-            || (specific.permissionDecision !== "deny" && (!specific.updatedInput || typeof specific.updatedInput !== "object" || Array.isArray(specific.updatedInput)))) {
-            throw new WorkflowContractError("BINDING_REQUIRED", "The required host observation did not complete.", {
-              reasonCode: "HOST_ATTESTATION_STRATEGY_UNAVAILABLE",
-            });
-          }
-        }
-      }
-      if (domainOutput) {
-        const specific = record(domainOutput.hookSpecificOutput);
-        if (specific.permissionDecision === "deny") output = domainOutput;
-        else {
-          if (!specific.updatedInput || typeof specific.updatedInput !== "object" || Array.isArray(specific.updatedInput)) {
-            throw new WorkflowContractError("BINDING_REQUIRED", "The required domain hook did not complete.");
-          }
-          args = { ...record(specific.updatedInput) };
-          if (composition !== undefined && HOST_ATTESTATION_TOOLS.has(tool)
-            && (typeof args[HOST_ATTESTATION_FIELD] !== "string" || args[HOST_ATTESTATION_FIELD] === "")) {
-            throw new WorkflowContractError("BINDING_REQUIRED", "The required host observation did not complete.", {
-              reasonCode: "HOST_ATTESTATION_STRATEGY_UNAVAILABLE",
-            });
-          }
-          // Internal domain hook metadata is replaced by server-verified identity.
-          delete args._sessionBinding;
-          output = { ...domainOutput, hookSpecificOutput: { ...specific, updatedInput: args } };
-        }
-      }
-      if (record(output.hookSpecificOutput).permissionDecision !== "deny") {
-        const proof = new SessionActorProofs(store).issue(observation, tool, args);
-        const decision = hookRewriteDecision(host);
-        output = { ...output, hookSpecificOutput: { ...record(output.hookSpecificOutput), hookEventName: "PreToolUse",
-          ...(decision ? { permissionDecision: decision } : {}), updatedInput: { ...args, [SESSION_PROOF_FIELD]: proof } } };
-      }
-    };
-    const early = composition === undefined ? await execute()
-      : await withHookHostAdapter(host, composition.inputAdapter, execute);
-    if (early) return early;
+    const input = record(JSON.parse(raw));
+    const { observation } = adaptHostInput(input, host);
+    const toolName = observation.toolName ?? "";
+    if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "before" || !isGovernanceHookTool(host, toolName)) {
+      return { ok: true, output: "" };
+    }
+    const tool = toolName.split("__").at(-1)!;
+    const callId = observation.callId?.trim();
+    const sessionId = observation.sessionId.trim();
+    if (!callId || !sessionId) missing("HOOK_CALL_FIELDS_MISSING");
+    // A present but malformed agent marker must not record a root row.
+    const agentId = Object.hasOwn(input, "agent_id") ? input.agent_id : null;
+    if (agentId !== null && (typeof agentId !== "string" || !agentId.trim())) missing("HOOK_AGENT_ID_INVALID");
+    // The continuity hook reads the host process for a deferred fork here, before the server pins from lineage.
+    if (CONTINUITY_TOOLS.has(tool)) runContinuityHook(raw, environment, host, true);
+    const databasePath = resolveWorkflowDatabasePath(environment);
+    const execution = HOST_ATTESTATION_TOOLS.has(tool)
+      ? observeClaudeExecution(input, { host, readSessionModel: (id) => readSessionModel(sessionModelDirectory(databasePath), id) })
+      : { unavailable: "EXECUTION_NOT_REQUIRED" };
+    store = new SqliteWorkflowStore(databasePath);
+    const transcriptPath = typeof input.transcript_path === "string" && input.transcript_path ? input.transcript_path : null;
+    store.recordCallAdmission({ host, callId, tool, sessionId, agentId: agentId as string | null, execution, transcriptPath });
   } catch (cause) { failure = cause; failed = true; }
   finally {
     try { store?.close(); } catch (cause) {
@@ -175,7 +71,7 @@ export async function runGovernanceHook(
     catch { /* The nonzero failure and denial do not depend on diagnostic output. */ }
     return { ok: false, output: JSON.stringify(denied(reasonCode)) };
   }
-  return { ok: true, output: JSON.stringify(output) };
+  return { ok: true, output: "" };
 }
 
 if (isHookEntry(import.meta.url, "governance-hook")) {

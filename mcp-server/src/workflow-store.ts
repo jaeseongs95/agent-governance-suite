@@ -17,6 +17,8 @@ import {
   type StoredIdentity,
 } from "./convergence-logic.js";
 
+import type { CallerExecution } from "./caller-identity.js";
+
 export const PLAN_SIGNING_KEY = "plan-signing-key";
 
 /** JSON round-trip copy; unlike structuredClone it drops undefined-valued keys, which stored payloads rely on. */
@@ -40,11 +42,26 @@ export interface GuardedRunBinding {
   outcome: AttemptOutcomeV1 | null;
 }
 
+/** A host hook's record of one tool call, claimed once by the server under the same host call ID. */
+export interface CallAdmission {
+  host: string;
+  callId: string;
+  tool: string;
+  sessionId: string;
+  agentId: string | null;
+  execution: CallerExecution;
+  transcriptPath: string | null;
+}
+
 export interface WorkflowStore {
   /** UTC milliseconds from this store's clock provider; failures must not fall back to another clock. */
   currentTimeMilliseconds(): number;
   getOrCreateSecret(name: string, create: () => string): string;
   claimExecutionObservation(observationId: string, expiresAt: string, consumedAt: string): boolean;
+  /** Replaces an unclaimed row with the same key; rows older than a day are pruned on write. */
+  recordCallAdmission(admission: CallAdmission): void;
+  /** Deletes and returns the row, so a second claim of the same call finds nothing. */
+  claimCallAdmission(host: string, callId: string): CallAdmission | null;
   nextRunSequence(): number;
   insertRun(receipt: WorkflowReceiptV1): void;
   getRun(runId: string): WorkflowReceiptV1 | null;
@@ -103,6 +120,19 @@ export class InMemoryWorkflowStore implements WorkflowStore {
     if (this.executionObservations.has(observationId)) return false;
     this.executionObservations.set(observationId, expiresAt);
     return true;
+  }
+
+  private readonly admissions = new Map<string, CallAdmission>();
+
+  recordCallAdmission(admission: CallAdmission): void {
+    this.admissions.set(JSON.stringify([admission.host, admission.callId]), structuredClone(admission));
+  }
+
+  claimCallAdmission(host: string, callId: string): CallAdmission | null {
+    const key = JSON.stringify([host, callId]);
+    const row = this.admissions.get(key) ?? null;
+    this.admissions.delete(key);
+    return row;
   }
 
   nextRunSequence(): number {

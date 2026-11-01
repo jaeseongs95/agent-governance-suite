@@ -10,15 +10,6 @@
     "targetHost": { "type": "string", "minLength": 1, "maxLength": 64 },
     "targetSessionId": { "type": "string", "minLength": 1, "maxLength": 200 },
     "body": { "type": "string", "minLength": 1, "maxLength": 4096 },
-    "ttlSeconds": { "type": "integer", "minimum": 30, "maximum": 86400, "default": 3600 },
-    "_sessionBinding": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["host", "sessionId"],
-      "properties": {
-        "host": { "type": "string", "minLength": 1, "maxLength": 64 },
-        "sessionId": { "type": "string", "minLength": 1, "maxLength": 200 }
-      }
-    }
+    "ttlSeconds": { "type": "integer", "minimum": 30, "maximum": 86400, "default": 3600 }
   }
 }
