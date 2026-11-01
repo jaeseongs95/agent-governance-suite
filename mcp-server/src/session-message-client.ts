@@ -43,7 +43,7 @@ function databasePath(stateDirectory: string): string {
   return path.join(stateDirectory, "session-messages.sqlite3");
 }
 
-function open(stateDirectory: string, clock?: () => number): OpenMessaging {
+function open(stateDirectory: string, busyTimeoutMs: number, clock?: () => number): OpenMessaging {
   const key = path.resolve(stateDirectory);
   const existing = opened.get(key);
   if (existing) return existing;
@@ -55,7 +55,7 @@ function open(stateDirectory: string, clock?: () => number): OpenMessaging {
   }
   const trustDatabasePath = process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim()
     ? path.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path.join(key, "trust.sqlite3");
-  const entry = { store: new SessionMessageStore(databasePath(key), clock ? { clock } : {}), reader: createWakeHookObservationReader(trustDatabasePath) };
+  const entry = { store: new SessionMessageStore(databasePath(key), { busyTimeoutMs, ...(clock ? { clock } : {}) }), reader: createWakeHookObservationReader(trustDatabasePath) };
   opened.set(key, entry);
   return entry;
 }
@@ -77,8 +77,17 @@ function isBusy(error: unknown): boolean {
  */
 export function runSessionMessageOperation<T>(operation: string, payload: Record<string, unknown>,
   stateDirectory = resolveSessionMessageStateDirectory(), options: { busyTimeoutMs?: number; clock?: () => number } = {}): T {
-  const { store, reader } = open(stateDirectory, options.clock);
   const busy = Math.max(0, Math.min(BUSY_TIMEOUT_MAX_MS, Math.floor(options.busyTimeoutMs ?? BUSY_TIMEOUT_MAX_MS)));
+  let messaging: OpenMessaging;
+  try {
+    // The first open may run the schema transaction, so it waits no longer than this call's budget.
+    messaging = open(stateDirectory, busy, options.clock);
+  } catch (error) {
+    if (isBusy(error)) throw retainFailureCause(tagProducerFailure(new Error("Another process holds the session message writer lock."), "MESSAGING_BUSY"), error);
+    if (isStorageFailure(error)) throw tagProducerFailure(error as Error, "MESSAGING_STORAGE_FAILED");
+    throw error;
+  }
+  const { store, reader } = messaging;
   try {
     store.database.exec(`PRAGMA busy_timeout = ${busy};`);
     return dispatchSessionMessageOperation(store, operation, payload, reader) as T;
@@ -118,12 +127,14 @@ export async function sessionMessageRequest<T>(
   } = {},
 ): Promise<T> {
   const deadline = Math.min(options.deadlineMonotonicMs ?? Infinity, performance.now() + (options.totalTimeoutMs ?? SESSION_MESSAGE_REQUEST_TIMEOUT_MS));
+  const expired = () => tagProducerFailure(new Error("The session message request deadline expired."), "BROKER_DEADLINE_EXPIRED");
+  if (!(deadline - performance.now() >= 1)) throw expired();
   if (options.prepareStateDirectory) {
     try { await options.prepareStateDirectory(stateDirectory); }
     catch (cause) { throw retainFailureCause(tagProducerFailure(new Error("Cannot prepare the session message state directory."), "MESSAGING_STATE_DIRECTORY_FAILED"), cause); }
   }
   const remaining = deadline - performance.now();
-  if (!(remaining >= 1)) throw tagProducerFailure(new Error("The session message request deadline expired."), "BROKER_DEADLINE_EXPIRED");
+  if (!(remaining >= 1)) throw expired();
   try { options.onOperationWrite?.(); } catch { /* Observation cannot prevent or replay the operation. */ }
   return runSessionMessageOperation<T>(operation, payload, stateDirectory, { busyTimeoutMs: remaining });
 }

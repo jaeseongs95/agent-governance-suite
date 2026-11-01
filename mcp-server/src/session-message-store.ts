@@ -229,7 +229,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   private savepoints = 0;
 
   /** clock is a fixture input; production reads Date.now() only under the writer lock. */
-  constructor(input: Input, options: { clock?: () => number } = {}) {
+  constructor(input: Input, options: { clock?: () => number; busyTimeoutMs?: number } = {}) {
     this.shared = typeof input === "string" ? undefined : input;
     this.clock = options.clock ?? Date.now;
     const databasePath = typeof input === "string" ? input : input.databasePath;
@@ -238,7 +238,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (!this.shared) {
       try {
         // receipts and ACKs must survive power loss; a per-call busy wait is set by the in-process client.
-        this.database.exec("PRAGMA busy_timeout = 5000; PRAGMA synchronous = FULL;");
+        this.database.exec(`PRAGMA busy_timeout = ${Math.max(0, Math.floor(options.busyTimeoutMs ?? 5000))}; PRAGMA synchronous = FULL;`);
         const storedVersion = (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
         if (storedVersion > MESSAGE_SCHEMA_VERSION) throw new Error(`The session message database schema ${storedVersion} is newer than this runtime supports.`);
         if (databasePath !== ":memory:") {
@@ -734,7 +734,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     const current = this.presence(target, nowMs);
     const verifiedBirth = current.instanceId?.startsWith("host-process-v1:")
       || (current.instanceId === null && this.database.prepare(`SELECT 1 FROM relay_leases
-        WHERE host = ? AND session_id = ? AND relay_id LIKE 'verified-relay-v1:%' LIMIT 1`)
+        WHERE host = ? AND session_id = ? LIMIT 1`)
         .get(target.host, target.sessionId) !== undefined);
     if ((verifiedBirth || instanceId !== undefined)
       && (!instanceId || current.instanceId !== instanceId || current.endedAt !== null)) {
