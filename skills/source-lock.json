@@ -79,7 +79,7 @@
       "version": "1.0.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:64c2c12e6285fa15dc48e36bc7b06d4dc7c8e9e2597356112ebca27812b37375",
+      "integratedChecksum": "sha256:8587a6f8c3cea7b1479bbbbee86058072d16890c55aaafade6d3e1ccfa231b7c",
       "checksumScope": "relative paths and normalized text bytes under skills/instruction-scope-resolver"
     },
     {

@@ -33,8 +33,9 @@ async function exists(target) {
   try {
     await access(target);
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    if (error.code === "ENOENT" || error.code === "ENOTDIR") return false;
+    throw error;
   }
 }
 
