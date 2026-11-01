@@ -1,60 +1,94 @@
-// Session board core: one row per host session with its working directory and a mandatory one-line
-// summary of the current work. Hooks, MCP tools and any CLI are interfaces; every board rule lives here.
-import { mkdirSync } from "node:fs";
+// Session board core: per host session, the main session's one-line summary of its current work and the time of
+// its last user prompt. Liveness is not stored here: it comes from the session messaging presence.
+import { mkdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 export const SUMMARY_MAX_LENGTH = 200;
-const RETAIN_MS = 24 * 3600_000;
-const READ_ONLY_COMMANDS = new Set(["ls", "cat", "pwd", "rg", "grep"]);
-const READ_ONLY_GIT = new Set(["status", "log", "diff", "show"]);
+export const BOARD_FORMAT_VERSION = 1;
+const RETAIN_MS = 7 * 24 * 3600_000;
+const TABLE = "board_sessions";
+// 2.x board table. 3.0 does not carry it over: the new board starts empty.
+const LEGACY_TABLE = "sessions";
+const CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE} (
+  host TEXT NOT NULL,
+  session_id TEXT NOT NULL,
+  cwd TEXT,
+  summary TEXT,
+  summary_at TEXT,
+  last_prompt_at TEXT,
+  seen_at TEXT NOT NULL,
+  PRIMARY KEY (host, session_id)
+) STRICT;`;
 
+export class BoardFormatError extends Error {
+  constructor(code, message) { super(message); this.name = "BoardFormatError"; this.code = code; }
+}
+
+function tables(db) {
+  return db.prepare("SELECT name FROM sqlite_schema WHERE type IN ('table', 'index', 'view', 'trigger') AND name NOT LIKE 'sqlite_%' ORDER BY name")
+    .all().map((row) => row.name);
+}
+
+/**
+ * Opens the board. A 2.x board file (user_version 0 holding only the old table) is reset to the empty 3.0 format in
+ * one transaction; any other content is refused untouched, so a misconfigured path can never drop foreign data.
+ */
 export function openBoard(input, { busyTimeoutMs = 5000 } = {}) {
-  const shared = typeof input === "string" ? null : input;
-  const databasePath = shared ? shared.databasePath : input;
-  if (!shared && databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true });
-  const db = shared ? shared.database : new DatabaseSync(databasePath);
-  const initialize = () => {
+  if (typeof input !== "string") {
+    const shared = input;
+    shared.initialize(() => {
+      shared.database.exec(`DROP TABLE IF EXISTS ${LEGACY_TABLE};`);
+      shared.database.exec(CREATE_TABLE);
+      shared.setSchemaVersion(BOARD_FORMAT_VERSION);
+    });
+    return shared.database;
+  }
+  if (input !== ":memory:") mkdirSync(path.dirname(path.resolve(input)), { recursive: true });
+  const db = new DatabaseSync(input);
   try {
-    if (!shared) db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
-    if (!shared && databasePath !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
-    db.exec(`CREATE TABLE IF NOT EXISTS sessions (
-      host TEXT NOT NULL,
-      session_id TEXT NOT NULL,
-      cwd TEXT NOT NULL,
-      summary TEXT,
-      summary_at TEXT,
-      last_prompt_at TEXT,
-      denied_for TEXT,
-      started_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      PRIMARY KEY (host, session_id)
-    ) STRICT;`);
+    db.exec(`PRAGMA busy_timeout = ${Math.trunc(busyTimeoutMs)};`);
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      const version = db.prepare("PRAGMA user_version").get().user_version;
+      const present = tables(db);
+      if (version === BOARD_FORMAT_VERSION && present.length === 1 && present[0] === TABLE) {
+        // Current format.
+      } else if (version === 0 && present.every((name) => name === LEGACY_TABLE)) {
+        db.exec(`DROP TABLE IF EXISTS ${LEGACY_TABLE};`);
+        db.exec(CREATE_TABLE);
+        db.exec(`PRAGMA user_version = ${BOARD_FORMAT_VERSION};`);
+      } else {
+        throw new BoardFormatError("BOARD_FOREIGN_DATABASE", "The session board file holds content this board does not own.");
+      }
+      db.exec("COMMIT");
+    } catch (error) {
+      if (db.isTransaction) db.exec("ROLLBACK");
+      throw error;
+    }
+    if (input !== ":memory:") db.exec("PRAGMA journal_mode = WAL;");
   } catch (error) {
     db.close();
     throw error;
   }
-  if (shared) shared.setSchemaVersion(0);
-  };
-  if (shared) shared.initialize(initialize);
-  else initialize();
   return db;
 }
 
-/** Creates the session row or refreshes its working directory and activity time. */
-export function touchSession(db, { host, sessionId, cwd, now }) {
-  if (db.transaction && !db.inTransaction) return db.transaction(() => touchSession(db, { host, sessionId, cwd, now }));
-  db.prepare(`INSERT INTO sessions (host, session_id, cwd, started_at, updated_at) VALUES (?, ?, ?, ?, ?)
-    ON CONFLICT (host, session_id) DO UPDATE SET cwd = excluded.cwd, updated_at = excluded.updated_at`)
-    .run(host, sessionId, cwd, now, now);
+function inTransaction(db, operation) {
+  return db.transaction && !db.inTransaction ? db.transaction(operation) : operation();
 }
 
-/** Marks a new user request; the summary written before it becomes stale. Only the time is stored, never the text. */
-export function recordPrompt(db, session) {
-  if (db.transaction && !db.inTransaction) return db.transaction(() => recordPrompt(db, session));
-  touchSession(db, session);
-  db.prepare("UPDATE sessions SET last_prompt_at = ? WHERE host = ? AND session_id = ?")
-    .run(session.now, session.host, session.sessionId);
+/**
+ * Records one main-session input observed by the hook: the working directory always, the prompt time only for a
+ * user prompt (a broker-verified wake bell is not a new request). The prompt text is never stored.
+ */
+export function recordInput(db, { host, sessionId, cwd, now }, { prompt }) {
+  return inTransaction(db, () => {
+    db.prepare(`INSERT INTO ${TABLE} (host, session_id, cwd, last_prompt_at, seen_at) VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT (host, session_id) DO UPDATE SET cwd = coalesce(excluded.cwd, cwd),
+        last_prompt_at = coalesce(excluded.last_prompt_at, last_prompt_at), seen_at = excluded.seen_at`)
+      .run(host, sessionId, cwd || null, prompt ? now : null, now);
+  });
 }
 
 export function normalizeSummary(value) {
@@ -63,79 +97,86 @@ export function normalizeSummary(value) {
   return line && !/[\r\n]/u.test(line) && line.length <= SUMMARY_MAX_LENGTH ? line : null;
 }
 
-export function setSummary(db, session, summary) {
-  if (db.transaction && !db.inTransaction) return db.transaction(() => setSummary(db, session, summary));
+export function setSummary(db, { host, sessionId, now }, summary) {
   const line = normalizeSummary(summary);
   if (!line) throw new Error(`summary must be one non-empty line of at most ${SUMMARY_MAX_LENGTH} characters`);
-  touchSession(db, session);
-  db.prepare("UPDATE sessions SET summary = ?, summary_at = ? WHERE host = ? AND session_id = ?")
-    .run(line, session.now, session.host, session.sessionId);
-  return line;
+  return inTransaction(db, () => {
+    db.prepare(`INSERT INTO ${TABLE} (host, session_id, summary, summary_at, seen_at) VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT (host, session_id) DO UPDATE SET summary = excluded.summary, summary_at = excluded.summary_at,
+        seen_at = excluded.seen_at`).run(host, sessionId, line, now, now);
+    return { summary: line, summaryAt: now };
+  });
 }
 
-/**
- * Decides one gated tool call. The first gated call of a request is denied when the summary is missing or
- * older than that request; every later call of the same request is allowed, so the gate can never deadlock.
- * Hosts without a request event use the session start as the request marker.
- */
-export function gateDecision(db, session) {
-  if (db.transaction && !db.inTransaction) return db.transaction(() => gateDecision(db, session));
-  touchSession(db, session);
-  const row = db.prepare("SELECT summary_at, last_prompt_at, started_at FROM sessions WHERE host = ? AND session_id = ?")
-    .get(session.host, session.sessionId);
-  const marker = row.last_prompt_at ?? row.started_at;
-  if (row.summary_at && row.summary_at >= marker) return "allow";
-  const claimed = db.prepare(`UPDATE sessions SET denied_for = ?
-    WHERE host = ? AND session_id = ? AND (denied_for IS NULL OR denied_for <> ?)`)
-    .run(marker, session.host, session.sessionId, marker);
-  return claimed.changes > 0 ? "deny" : "allow";
+/** Removes rows not seen for seven days; display never depends on these rows existing. */
+export function pruneBoard(db, now) {
+  inTransaction(db, () => {
+    db.prepare(`DELETE FROM ${TABLE} WHERE seen_at < ?`).run(new Date(Date.parse(now) - RETAIN_MS).toISOString());
+  });
 }
 
-export function pruneSessions(db, now) {
-  if (db.transaction && !db.inTransaction) return db.transaction(() => pruneSessions(db, now));
-  db.prepare("DELETE FROM sessions WHERE updated_at < ?").run(new Date(Date.parse(now) - RETAIN_MS).toISOString());
-}
-
-function view(row, current) {
+function view(row) {
   return {
-    host: row.host,
-    sessionId: row.session_id,
-    cwd: row.cwd,
+    cwd: row.cwd ?? null,
     summary: row.summary ?? null,
     summaryAt: row.summary_at ?? null,
     lastPromptAt: row.last_prompt_at ?? null,
-    startedAt: row.started_at,
-    updatedAt: row.updated_at,
-    stale: !row.summary_at || row.summary_at < (row.last_prompt_at ?? row.started_at),
-    current: Boolean(current && row.host === current.host && row.session_id === current.sessionId),
+    // Unknown (null) when no prompt was ever observed, e.g. a host without a prompt hook.
+    summaryStale: row.last_prompt_at == null ? null : row.summary_at == null || row.summary_at < row.last_prompt_at,
   };
 }
 
-export function readSession(db, host, sessionId) {
-  const row = db.prepare("SELECT * FROM sessions WHERE host = ? AND session_id = ?").get(host, sessionId);
-  return row ? view(row, { host, sessionId }) : null;
+export function readEntry(db, host, sessionId) {
+  const row = db.prepare(`SELECT * FROM ${TABLE} WHERE host = ? AND session_id = ?`).get(host, sessionId);
+  return row ? view(row) : null;
 }
 
-/** Lists the sessions active in the last 24 hours, newest activity first. */
-export function listSessions(db, now, current = null) {
-  const since = new Date(Date.parse(now) - RETAIN_MS).toISOString();
-  return db.prepare("SELECT * FROM sessions WHERE updated_at >= ? ORDER BY updated_at DESC").all(since)
-    .map((row) => view(row, current));
+/** Prompt markers of every row that has one; the classification gateway matches them by actor. */
+export function listPromptMarkers(db) {
+  return db.prepare(`SELECT host, session_id, last_prompt_at FROM ${TABLE} WHERE last_prompt_at IS NOT NULL`).all()
+    .map((row) => ({ host: row.host, sessionId: row.session_id, lastPromptAt: row.last_prompt_at }));
+}
+
+const GIT_FILE_MAX_BYTES = 4096;
+const GIT_SEARCH_DEPTH = 64;
+
+function readSmallFile(file) {
+  const stat = statSync(file, { throwIfNoEntry: false });
+  return stat?.isFile() && stat.size <= GIT_FILE_MAX_BYTES ? readFileSync(file, "utf8") : null;
 }
 
 /**
- * True for a single read-only shell command. Operators, redirection, variables, substitution, grouping
- * (including PowerShell `(...)`, `@(...)` and script blocks), quotes and backslashes, and options that write
- * files or run programs (`--output`, `--ext-diff`, `--pre`) make the command gated.
+ * Where a working directory sits in git, read from files only (no process): the top-level directory, a repository id
+ * shared by every worktree of one repository (its common git directory), and the checked-out branch (null when
+ * detached). Null when the directory is not inside a readable repository.
  */
-export function isReadOnlyCommand(command) {
-  if (typeof command !== "string") return false;
-  const text = command.trim();
-  if (!text || /[;&|<>`$@(){}'"\\\r\n]/u.test(text)) return false;
-  const [first, second, ...rest] = text.split(/\s+/u);
-  if ([second, ...rest].some((argument) => /^--(?:output|ext-diff|pre)(?:=|$|-)/u.test(argument ?? ""))) return false;
-  if (READ_ONLY_COMMANDS.has(first)) return true;
-  if (first !== "git") return false;
-  if (READ_ONLY_GIT.has(second)) return true;
-  return second === "branch" && (rest.length === 0 || (rest.length === 1 && rest[0] === "--list"));
+export function locateRepository(cwd) {
+  if (typeof cwd !== "string" || !path.isAbsolute(cwd)) return null;
+  try {
+    let directory = path.resolve(cwd);
+    for (let depth = 0; depth < GIT_SEARCH_DEPTH; depth++) {
+      const dotGit = path.join(directory, ".git");
+      const stat = statSync(dotGit, { throwIfNoEntry: false });
+      if (stat) {
+        let gitDirectory = dotGit;
+        if (stat.isFile()) {
+          const target = readSmallFile(dotGit)?.match(/^gitdir:\s*(.+?)\s*$/mu)?.[1];
+          if (!target) return null;
+          gitDirectory = path.resolve(directory, target);
+        } else if (!stat.isDirectory()) return null;
+        const head = readSmallFile(path.join(gitDirectory, "HEAD"));
+        if (head === null) return null;
+        const branch = head.match(/^ref: refs\/heads\/(.+?)\s*$/u)?.[1] ?? null;
+        const common = readSmallFile(path.join(gitDirectory, "commondir"))?.trim();
+        return { root: directory, repoId: realpathSync(common ? path.resolve(gitDirectory, common) : gitDirectory), branch };
+      }
+      const parent = path.dirname(directory);
+      if (parent === directory) return null;
+      directory = parent;
+    }
+  } catch {
+    // Advisory location only: an unreadable repository is reported as no location, never as a board failure.
+    return null;
+  }
+  return null;
 }
