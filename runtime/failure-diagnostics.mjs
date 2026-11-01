@@ -26,6 +26,56 @@ export function retainFailureSecondary(error, secondary) {
   return error;
 }
 
+/** Cleanup after a primary failure: a cleanup failure never replaces the primary, it is kept only as a tagged secondary diagnostic. */
+export function retainCleanupFailure(primary, reason, cleanup) {
+  try { cleanup(); return true; }
+  catch (secondary) {
+    retainFailureSecondary(primary, types.isNativeError(secondary) ? tagProducerFailure(secondary, reason) : secondary);
+    return false;
+  }
+}
+
+/** A bounded own `code` data property (ENOENT, ERR_SQLITE_ERROR, a producer code), else null. Local diagnostics only. */
+export function failureCode(error) {
+  try {
+    if (!error || (typeof error !== "object" && typeof error !== "function") || types.isProxy(error)) return null;
+    const descriptor = Object.getOwnPropertyDescriptor(error, "code");
+    return descriptor && "value" in descriptor && typeof descriptor.value === "string"
+      && /^[A-Z][A-Z0-9_]{0,63}$/u.test(descriptor.value) ? descriptor.value : null;
+  } catch { return null; }
+}
+
+// Fixed public vocabulary: these OS codes and SQLite classes may appear in public details and stderr diagnostics.
+const OBSERVED_OS_CODES = new Set(["EACCES", "EPERM", "EIO", "ENOENT", "ENOTDIR", "EISDIR", "ELOOP", "ENOSPC", "EROFS",
+  "EMFILE", "ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "EPIPE"]);
+const SQLITE_REASONS = Object.freeze({ 3: "STORE_PERMISSION", 5: "STORE_BUSY", 6: "STORE_BUSY", 8: "STORE_READONLY",
+  10: "STORE_IO", 11: "STORE_CORRUPT", 13: "STORE_FULL", 14: "STORE_CANTOPEN", 19: "STORE_CONSTRAINT", 26: "STORE_CORRUPT" });
+
+/**
+ * One classification for every producer: an observed OS/SQLite/JSON class first, then the producer's own reason.
+ * The result is a fixed vocabulary; null means the cause carries nothing classifiable.
+ */
+export function failureReason(error) {
+  let observed = null;
+  try {
+    if (error && typeof error === "object" && !types.isProxy(error)) {
+      if (Object.getPrototypeOf(error) === SyntaxError.prototype) observed = "INVALID_JSON";
+      else {
+        const code = failureCode(error);
+        if (code && OBSERVED_OS_CODES.has(code)) observed = code;
+        else if (code === "ERR_SQLITE_ERROR") {
+          const detail = Object.getOwnPropertyDescriptor(error, "errcode");
+          const primary = detail && "value" in detail && Number.isInteger(detail.value) ? detail.value & 255 : null;
+          if (primary !== null && primary >= 1 && primary <= 28) observed = SQLITE_REASONS[primary] ?? "STORE_ERROR";
+        }
+      }
+    }
+  } catch { /* Unreadable error properties are not trusted diagnostics. */ }
+  if (observed) return { reason: observed, basis: "unverified-observation" };
+  const owned = producerFailureReason(error);
+  return owned ? { reason: owned, basis: "producer" } : { reason: null, basis: "unknown" };
+}
+
 /** Same-module diagnostic provenance only; never identity, capability or execution authority. */
 export function producerFailure(reason, message) {
   if (!/^[A-Z][A-Z0-9_]{0,63}$/u.test(reason)) throw new TypeError("Invalid diagnostic reason.");

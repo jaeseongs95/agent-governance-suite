@@ -1,8 +1,7 @@
 import { existsSync, lstatSync, mkdirSync, realpathSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { types } from "node:util";
-import { retainFailureSecondary, tagProducerFailure } from "../failure-diagnostics.mjs";
+import { retainCleanupFailure } from "../failure-diagnostics.mjs";
 
 const APPLICATION_ID = 0x4147534e; // AGSN: inactive native format, distinct from R1 opaque fixtures.
 const FORMAT_VERSION = 1;
@@ -22,14 +21,8 @@ function need(condition, code, message) { if (!condition) throw new SharedStateE
 function milliseconds(value) { need(Number.isSafeInteger(value) && value >= 0, "INVALID_CLOCK", "A nonnegative safe integer clock is required."); return value; }
 function synchronous(value) { need(!value || typeof value.then !== "function", "ASYNC_TRANSACTION_UNSUPPORTED", "SQLite transaction callbacks must be synchronous."); return value; }
 
-/** Cleanup after a primary failure: a cleanup failure never replaces the primary, it is kept only as a tagged secondary diagnostic. */
-export function retainCleanupFailure(primary, reason, cleanup) {
-  try { cleanup(); return true; }
-  catch (secondary) {
-    retainFailureSecondary(primary, types.isNativeError(secondary) ? tagProducerFailure(secondary, reason) : secondary);
-    return false;
-  }
-}
+// Moved to the shared failure contract; re-exported so existing imports keep working.
+export { retainCleanupFailure } from "../failure-diagnostics.mjs";
 
 export function resolveInactiveSharedDatabasePath(directory) {
   need(path.isAbsolute(directory) && !directory.startsWith("\\\\"), "INVALID_PATH", "An explicit local, caller-owned inactive directory is required.");
