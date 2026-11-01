@@ -104,7 +104,7 @@ export function windowsWatchScript(pid: number, aliveAtMs: number | null, ownerP
     `$ErrorActionPreference='Stop'`,
     `try{$p=[System.Diagnostics.Process]::GetProcessById(${pid});$null=$p.Handle}catch [System.ArgumentException]{[Console]::Out.WriteLine('GONE');exit 0}catch{[Console]::Out.WriteLine('DENIED');exit 0}`,
     `$s=$p.StartTime.ToUniversalTime()`,
-    ...(aliveAtMs === null ? [] : [`if((($s-[DateTime]'1970-01-01T00:00:00Z').TotalMilliseconds) -gt ${aliveAtMs}){[Console]::Out.WriteLine('LATE');exit 0}`]),
+    ...(aliveAtMs === null ? [] : [`if(([DateTimeOffset]$s).ToUnixTimeMilliseconds() -gt ${aliveAtMs}){[Console]::Out.WriteLine('LATE');exit 0}`]),
     `[Console]::Out.WriteLine('OK '+$s.ToString('o'));[Console]::Out.Flush()`,
     `while(-not $p.WaitForExit(${HOST_WATCH_POLL_MS})){if(-not (Get-Process -Id ${ownerPid} -ErrorAction SilentlyContinue)){exit 3}}`,
     `[Console]::Out.WriteLine('EXIT');exit 0`,
