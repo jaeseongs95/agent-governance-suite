@@ -128,6 +128,51 @@ describe("packaged model routing", () => {
     expect(recordModelApplication({ ...full, observation: { ...full.options.inherited, source: "host-task-view", reference: "host:2" } }).actual.status).toBe("inherited");
   });
 
+  describe("independent audit context isolation", () => {
+    const audit = () => ({
+      ...record(), assignmentId: "audit-1", selectionReason: "Fresh high-risk audit",
+      options: { ...options(), role: "independent-audit", highRisk: true },
+      spawnArguments: { model: "gpt-6-astra", reasoning_effort: "high", fork_turns: "none" },
+    });
+    const inheritedAudit = () => ({
+      ...audit(), contextMode: "full-history", contextReason: "Auditor needs prior discussion",
+      options: { ...audit().options, inheritOnly: true, inherited: { model: "gpt-5.6-sol", effort: "high" } },
+    });
+
+    it("accepts an independent audit started with no parent turns", () => {
+      const fresh = recordModelApplication(audit());
+      expect(fresh.contextMode).toBe("limited");
+      expect(fresh.spawnArguments.fork_turns).toBe("none");
+    });
+
+    it("rejects an independent audit that inherits a positive parent turn count", () => {
+      expect(() => recordModelApplication({ ...audit(), spawnArguments: { ...audit().spawnArguments, fork_turns: "2" } }))
+        .toThrow(/independent-audit-inherited-context/);
+    });
+
+    it("rejects an independent audit with full history even when a context reason is given", () => {
+      expect(() => recordModelApplication({ ...inheritedAudit(), spawnArguments: { fork_turns: "all" } }))
+        .toThrow(/independent-audit-inherited-context/);
+      expect(() => recordModelApplication({ ...inheritedAudit(), spawnArguments: {} }))
+        .toThrow(/independent-audit-inherited-context/);
+      expect(() => recordModelApplication({
+        assignmentId: "audit-2", selectionReason: "Fresh high-risk audit", contextMode: "full-history", contextReason: "Prior context",
+        options: { provider: "anthropic-claude-code", profile: "economy", role: "independent-audit", highRisk: true,
+          supported: [{ model: "opus", modelClass: "deep", efforts: ["high"] }] },
+        spawnArguments: { model: "opus", effort: "high" }, observation: null,
+      })).toThrow(/independent-audit-inherited-context/);
+    });
+
+    it("keeps positive parent turn counts available to non-audit roles", () => {
+      for (const role of ["discovery", "general-implementation", "complex-reasoning"]) {
+        const plan = resolveModelSelection({ ...options(), role });
+        const result = recordModelApplication({ ...record(), options: { ...options(), role },
+          spawnArguments: { model: plan.selection.model, reasoning_effort: plan.selection.effort, fork_turns: "3" } });
+        expect(result.contextMode).toBe("limited");
+      }
+    });
+  });
+
   it("runs the public resolve and record CLI without node_modules", () => {
     const clean = mkdtempSync(path.join(tmpdir(), "routing-runtime-"));
     try {

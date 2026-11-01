@@ -158,13 +158,18 @@ export function recordModelApplication(input, customPresets = presets) {
   const args = input.spawnArguments;
   check(args && typeof args === "object" && !Array.isArray(args), "spawnArguments must contain actual host settings arguments");
   let contextMode = input.contextMode;
+  let context;
   if (application.context_field) {
-    const context = args[application.context_field] ?? application.default_context;
+    context = args[application.context_field] ?? application.default_context;
     check(typeof context === "string" && (context === application.full_history_value || context === application.limited_context_value || /^[1-9][0-9]*$/u.test(context)), "Invalid host context argument");
     contextMode = context === application.full_history_value ? "full-history" : "limited";
     check(input.contextMode === undefined || input.contextMode === contextMode, "contextMode contradicts actual host arguments");
   }
   check(["limited", "full-history"].includes(contextMode), "invalid contextMode");
+  // An independent audit must start fresh; a context reason never justifies inherited parent turns.
+  check(input.options.role !== "independent-audit" || (contextMode === "limited"
+    && (!application.context_field || context === application.limited_context_value)),
+  "independent-audit-inherited-context: independent-audit must start in a fresh context without inherited parent turns or full history");
   if (contextMode === "full-history") {
     check(typeof input.contextReason === "string" && input.contextReason.length > 0, "full-history requires contextReason");
   }
