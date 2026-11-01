@@ -1,7 +1,8 @@
 # AGS 3.0 관문 재설계: 호출자 자기 신고를 검증으로 내세우지 않기
 
 대상 작업 사본: `D:/codex/build/ags-5970-gates`, branch `feat/ags30-gates`, 기준 commit `4b2dc571`.
-이 문서는 분석과 설계만 담는다. 구현·시험 실행은 아직 하지 않았다(NOT_RUN).
+이 문서는 분석과 설계만 담는다. 구현·시험 결과는 이 문서에 적지 않는다.
+개정 1(2026-11-01): 사용자 정책 변경(신원이 관측되는 호스트에서는 child 호출 허용)을 §1.2·§3.3·§3.5·§3.8에 반영했다.
 줄 번호는 모두 기준 commit `4b2dc571` 기준이다.
 
 ## 1. 구조 판정
@@ -19,14 +20,16 @@ AGS 서버가 호출자 문자열 없이 스스로 확인할 수 있는 것은 �
 | F5 | 서버가 직접 읽은 로컬 파일 바이트와 sha256 | `stage-output-file.ts:21-60`, `cs-engineering-validator.ts:15-38`, `engineering-practices-validator.ts:13-35` |
 | F6 | registry·schema 파일 digest | `registry.ts:38-60` |
 
-### 1.2 결정적인 제약: 3.0에서 AGS가 보는 actor는 root 하나다
+### 1.2 결정적인 제약: 기준 commit에서 AGS가 보는 actor는 root 하나다
 
 - `actorAccess`는 `role === "root"`만 허용한다(`input-observation.ts:49`). 3.0 계약상 AGS 도구는 root만 호출할 수 있다(`docs/ags30-d0019-root-only-design.md:3-5`).
 - 그래서 감사자·검토자·평가 실행자 같은 하위 에이전트는 `record_stage_result`·`resolve_convergence_gate`를 직접 부를 수 없다. 모든 단계 결과는 root가 기록하고, F3·F4로 관측되는 actor도 항상 root다.
 - Codex·Antigravity에서는 표식 없는 child가 root로 추정되어 통과할 수 있다(`ags30-d0019-root-only-design.md:21-35`). 관측된 "root"가 실제로 child일 수도 있다는 뜻이다.
 - 사용자 승인은 관측하지 못한다. trust store는 `user-turn`과 `host-direct-user-event` 기록을 거부한다(`trust-store.ts:101-103`). `directUserInputAttestation: false`는 `trust-service.ts:31`에 있다.
 
-따라서 감사자≠구현자, 검토자 독립성, fresh context, 재위임 금지, 패널 검토자 수, 사용자 승인, 실행 후 상태 확인 같은 주장은 **3.0의 AGS가 어떤 방식으로도 검증할 수 없다**. 지금 관문들은 root가 써 넣은 문자열끼리 비교한 뒤, 오류 문구와 `passed` 상태로 검증된 것처럼 내보낸다. 예를 들어 오류 문구 "Mandatory audit auditor must be independent from implementation actors"(`workflow-service.ts:1353-1359`)와 `passed` 상태(`:813`)가 그렇다. 문서는 일부 정직하다. 예: `skills/orchestrator/references/specialist-handoffs.md:23` 「MCP의 구조적 필드 검사는 감사 사실이나 신원을 인증하지 않으므로」. 그러나 기계가 읽는 결과(receipt·status·도구 설명)에는 이 한계가 없다.
+따라서 기준 commit에서는 감사자≠구현자, 검토자 독립성, fresh context, 재위임 금지, 패널 검토자 수, 사용자 승인, 실행 후 상태 확인 같은 주장을 **AGS가 어떤 방식으로도 검증할 수 없다**. 지금 관문들은 root가 써 넣은 문자열끼리 비교한 뒤, 오류 문구와 `passed` 상태로 검증된 것처럼 내보낸다. 예를 들어 오류 문구 "Mandatory audit auditor must be independent from implementation actors"(`workflow-service.ts:1353-1359`)와 `passed` 상태(`:813`)가 그렇다. 문서는 일부 정직하다. 예: `skills/orchestrator/references/specialist-handoffs.md:23` 「MCP의 구조적 필드 검사는 감사 사실이나 신원을 인증하지 않으므로」. 그러나 기계가 읽는 결과(receipt·status·도구 설명)에는 이 한계가 없다.
+
+개정 1: 사용자 정책이 바뀌어, 호스트가 위조할 수 없는 child 신원을 주면 child가 AGS 도구를 직접 부를 수 있다. 결속 브랜치(`ags-5970-binding`)가 `caller = {actor, parentChain[], provenance: "host-observed" | "unavailable", execution}`을 정의한다. 그때부터 감사자≠구현자, 검토자≠구현자, 재위임 금지는 provenance가 `host-observed`인 기록끼리 서버가 직접 비교할 수 있다(§3.8). fresh context와 사용자 승인은 호스트가 관측값을 주지 않으므로 계속 검증할 수 없다.
 
 ### 1.3 결과를 실제로 소비하는 곳
 
@@ -101,6 +104,7 @@ CI(`.github/workflows/ci.yml:46-215`)와 release 스크립트는 workflow receip
   - `finalize_workflow`는 감사 단계의 `sha256-matched` 산출물 파일을 다시 hash한다. 바뀌었으면 `GATE_FAILED`(cause `AUDIT_TARGET_CHANGED`)다. `stale:false` 선언 대신 서버가 실제로 확인하는 stale 검사다.
 - **기록(U1 일관성 유지, U2 표기)**: `freshContext===true`, `delegationAllowed===false`, `blockingFindings` 비어 있음, `stale===false`, post 계열의 `postExecutionVerified===true`, `auditorId ∉ implementationActorIds`는 모순 검사로 남긴다. 통과하면 `unverifiedClaims`에 `actor-independence`, `fresh-context`, `no-redelegation`, `worker-execution-profile`, post 계열이면 `post-execution-state`를 적는다.
 - Codex·Antigravity의 추정 root, 하위 에이전트 미관측은 이 표기로 드러난다. D-0097의 기대 「한계가 계약에 명시」를 충족한다.
+- 개정 1: 감사 단계 기록자와 구현 단계 기록자가 모두 `host-observed`이면 §3.8의 비교 결과가 판정이 된다. 위반이면 `GATE_FAILED`(reason `AUDITOR_NOT_INDEPENDENT`), 통과면 `actor-independence`·`no-redelegation`을 `unverifiedClaims`에 적지 않는다. `fresh-context`·`worker-execution-profile`·`post-execution-state`는 그대로 적는다.
 
 ### 3.4 숙의(D-0049, D-0141)
 
@@ -116,6 +120,7 @@ CI(`.github/workflows/ci.yml:46-215`)와 release 스크립트는 workflow receip
 - `ConvergenceStatusV1`에 서버 계산 `unverifiedClaims`를 추가한다. `parentRootId`가 있으면 `user-approval`, 검토마다 `reviewer-independence`, `fresh-context`를 적는다.
 - 도구 설명을 바꾼다(`server.ts:484, 502, 526`과 `open_convergence_root`). 예: `resolve_convergence_gate` → "Record a frame review declared by the root. AGS does not observe reviewer identity, independence or context; see unverifiedClaims." `finalize_workflow`에는 "passed means every planned stage recorded PASS and AGS-checkable bindings hold; unverifiedClaims lists what AGS did not observe."를 쓴다.
 - 실제 승인 검증은 직접 사용자 입력 관측(`directUserInputAttestation`)이 필요하다. 3.0 범위가 아니다.
+- 개정 1: `resolve_convergence_gate` 호출자와 그 root의 구현 단계 기록자가 모두 `host-observed`이면 §3.8로 판정한다. 위반이면 `GATE_FAILED`(reason `REVIEWER_NOT_INDEPENDENT`), 통과면 그 검토에 대해 `reviewer-independence`를 적지 않는다. `fresh-context`는 계속 적는다.
 
 ### 3.6 변경 범위 baseline 고정(D-0339)
 
@@ -130,6 +135,17 @@ CI(`.github/workflows/ci.yml:46-215`)와 release 스크립트는 workflow receip
 - 저장 시(`change()`)와 읽기 시(`requireRun`)에 다시 계산한다. 저장값은 표시용이고 정본은 계산 함수다.
 - 요약 projection에 `unverifiedClaimCount`를 추가한다. readiness 스크립트는 이 목록을 보고서에 그대로 옮기고, 비어 있지 않으면 "선언 기반"으로 표시한다.
 
+### 3.8 관측된 호출자와 독립성 비교(개정 1)
+
+- 서비스는 호출자를 `ObservedCallerV1 = {actor, parentChain: string[], provenance: "host-observed" | "unavailable"}` 하나로 받는다. lease actor·단계 기록자·검토자 모두 이 값에서만 나온다. 현재 출처는 server.ts가 검증한 세션 증명이고 `{actor: hostActorId(host, sessionId), parentChain: [], provenance: "unavailable"}`로 채운다. 결속 브랜치를 합치면 출처만 `caller`로 바뀐다.
+- 서버가 저장본에 붙이는 필드: `StageResultV1.recordedBy`(단계 기록자), `ConvergenceReviewV1.observedReviewer`(검토 호출자와 판정). 호출자가 이 필드를 보내면 `INVALID_INPUT`(reason `SERVER_OWNED_FIELD`)이다.
+- 비교 대상(구현자)은 같은 run(감사) 또는 같은 root의 run들(검토)에서 통과한 단계 중 필수 감사·iteration-frame-audit가 아닌 단계의 `recordedBy`다. lease를 claim한 actor는 구현자로 보지 않는다. root가 claim하고 child가 구현하는 구성을 막지 않기 위해서다.
+- 판정 함수 `independence(checked, implementers)`는 provenance 값만 본다. 벤더 이름으로 분기하지 않으므로 새 호스트가 생겨도 이 코드는 바뀌지 않는다.
+  - 위반: `checked`가 `host-observed`이고, `host-observed`인 구현자 중 하나가 `checked.actor`와 같거나 `checked.parentChain`에 있다(구현자가 감사·검토를 재위임함).
+  - 검증: `checked`와 모든 구현자가 `host-observed`이고(구현자 1명 이상) 위반이 없다.
+  - 미관측: 그 밖의 경우. 지금처럼 `unverifiedClaims`로 남긴다. root가 대신 기록한 경우(`unavailable`)가 여기에 든다.
+- 숙의 패널 검토자, receipt policy의 단계 actor는 한 호출자가 문서로 기록하므로 계속 미검증이다.
+
 ## 4. 계약·파일 변경
 
 | 파일 | 변경 |
@@ -143,6 +159,8 @@ CI(`.github/workflows/ci.yml:46-215`)와 release 스크립트는 workflow receip
 | `contracts/types.ts` | 위 형식 반영 |
 | `mcp-server/src/workflow-service.ts` | §3.1-3.6. 삭제: `currentTarget` 비교, review actor 비교, `verified` 조건 |
 | `mcp-server/src/unverified-claims.ts` | 신규(순수 함수) |
+| `mcp-server/src/caller-actor.ts` | 신규(개정 1): 검증된 세션 → `ObservedCallerV1` 변환 하나, `independence()` 판정 하나 |
+| `contracts/stage-result.v1.schema.json`, `contracts/convergence-review.v1.schema.json` | 개정 1: 서버 필드 `recordedBy`, `observedReviewer` |
 | `mcp-server/src/stage-output-file.ts` | `localFileDigest(locator)` export(기존 reader 재사용) |
 | `mcp-server/src/server.ts` | claim·resolve에 검증된 세션 actor 전달, 도구 설명 4개 |
 | `mcp-server/src/sqlite-workflow-store.ts` | schema v6 migration(§5) |
@@ -181,6 +199,8 @@ migration 실패는 트랜잭션 rollback으로 v5를 보존하고 원래 오류
 | D-0048 | 생산자 없는 required input에 evidence 없음 | passed | `MISSING_EVIDENCE` |
 | D-0048 | 입력에 `verified:true` | 수용 | `INVALID_INPUT` |
 | D-0097 | strict 감사 PASS, `auditorId` = 관측 root actor, `implementationActorIds:["x"]` | passed | `GATE_FAILED`/`AUDITOR_IS_OBSERVED_ROOT` |
+| D-0097(개정 1) | `host-observed` 구현자 I, 감사자 A의 `parentChain`에 I | passed | `GATE_FAILED`/`AUDITOR_NOT_INDEPENDENT`. 사슬에 I가 없으면 `actor-independence`·`no-redelegation` 없음, `unavailable`이면 있음 |
+| D-0165(개정 1) | `host-observed` 구현자 I가 직접 검토 | 수용 | `GATE_FAILED`/`REVIEWER_NOT_INDEPENDENT`. 다른 관측 actor면 `reviewer-independence` 없음 |
 | D-0097·D-0040 | 정상 post-execution 감사 PASS 후 finalize | `unverifiedClaims` 없음 | `actor-independence`, `fresh-context`, `no-redelegation`, `post-execution-state` 포함 |
 | 감사 stale | 감사 산출물 파일을 기록 후 수정하고 finalize | passed | `GATE_FAILED`/`AUDIT_TARGET_CHANGED` |
 | 감사 대상 | `auditTarget` ≠ 계획의 `audit-target` targetDigest | passed(currentTarget만 같으면) | `GATE_FAILED` |
