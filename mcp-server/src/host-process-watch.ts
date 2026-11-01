@@ -29,9 +29,14 @@ export const HOST_WATCH_POLL_MS = 5000;
 
 const reason = (code: string, message: string, cause?: unknown) => tagProducerFailure(new Error(message, { cause }), code);
 
-/** Linux /proc starttime (field 22, clock ticks since boot): monotonic and never a wall clock. */
+/**
+ * Linux /proc starttime (field 22, clock ticks since boot) of a process that has not ended: monotonic and never a wall
+ * clock. A zombie (state Z) or dead (X, x) entry still has its stat file until it is reaped, but the process has ended,
+ * so it has no live start (proc(5), field 3 state).
+ */
 export function linuxStartTicks(stat: string): string | null {
   const fields = stat.slice(stat.lastIndexOf(")") + 2).trim().split(/\s+/u);
+  if (fields[0] === "Z" || fields[0] === "X" || fields[0] === "x") return null;
   return fields[19] ?? null;
 }
 

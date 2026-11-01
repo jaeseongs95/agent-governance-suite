@@ -51,6 +51,12 @@ describe("linuxStartTicks", () => {
     expect(linuxStartTicks(`4242 (we) ird name) ${rest.join(" ")}\n`)).toBe("987654");
     expect(linuxStartTicks("4242 (short) S 1 2")).toBeNull();
   });
+  // proc(5): field 3 is the state. A zombie or dead entry keeps its stat file and starttime until it is reaped, but the
+  // process has ended; the watch must see it as gone, not as the same live host.
+  it.each(["Z", "X", "x"])("reads an ended process in state %s as having no live start", (state) => {
+    const rest = [state, ...Array.from({ length: 18 }, (_, index) => String(index + 4)), "987654", "0"];
+    expect(linuxStartTicks(`4242 (host) ${rest.join(" ")}\n`)).toBeNull();
+  });
 });
 
 describe("watchHostProcess input", () => {
