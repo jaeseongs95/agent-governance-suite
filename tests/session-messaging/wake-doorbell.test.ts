@@ -20,9 +20,13 @@ import {
 } from "../../mcp-server/src/session-message-wake-port.js";
 import { transportWakePort } from "../../mcp-server/src/wake-transports.js";
 import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared-stores.js";
+import { TrustStore } from "../../mcp-server/src/trust-store.js";
 
 // AGS 3.0 wake doorbell (docs/ags30-wake-doorbell-design.md r3.2, 7.1). Synthetic store-level cases with real temporary
 // SQLite connections. Every time is an explicit argument; no case waits on wall time, raises a limit or retries.
+// Long synchronous sweeps run each simulated step, or the whole sweep, as one writer transaction (store.atomically): the
+// cases assert state transitions at explicit times, never durability between steps, so they need one commit, not one per
+// call (on Windows every commit is a synchronous flush). The stores' own durability settings are unchanged.
 // Expected values come from the design formulas (2.2, 2.4-2.8), never from the implementation under test.
 const host = "doorbell-synthetic";
 registerHookHostAdapter(host, {
@@ -74,8 +78,12 @@ function fixture(transport = TRANSPORT): Fixture {
   const directory = mkdtempSync(join(tmpdir(), "ags-wake-doorbell-"));
   const database = join(directory, "messages.sqlite3");
   const store = new SessionMessageStore(database);
-  resources.push({ directory, close: [() => store.close()] });
   vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", join(directory, "trust.sqlite3"));
+  // Held open for the fixture's life, as the running server holds its trust connection. Each hook observation still opens
+  // and closes its own connection (recordWakeHookObservation and the reader are unchanged); with this one open, a close
+  // no longer checkpoints and deletes the WAL that the next open creates again.
+  const trust = new TrustStore(join(directory, "trust.sqlite3"));
+  resources.push({ directory, close: [() => store.close(), () => trust.close()] });
   const f: Fixture = { directory, database, store, t0: Date.now(), instanceId: "instance-1", relayId: "", transport };
   live(f, "instance-1", f.t0);
   return f;
@@ -95,19 +103,24 @@ function live(f: Fixture, instanceId: string, at: number, caps = capabilities) {
 }
 /** Keeps the current birth and its relay live across a gap without a new birth and without any claim boundary. */
 function jump(f: Fixture, at: number) {
-  f.store.database.prepare("UPDATE session_presence SET lease_until = ? WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL")
-    .run(iso(at + 20_000), target.host, target.sessionId, f.instanceId);
-  // The relay kept renewing its lease over the gap (one extension models its ticks); a pruned lease is granted again.
-  const renewed = f.store.database.prepare("UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?")
-    .run(iso(at + 15_000), iso(at), target.host, target.sessionId, f.transport, f.relayId).changes;
-  if (renewed === 0) bindRelay(f, f.instanceId, at);
+  f.store.atomically(() => {
+    f.store.database.prepare("UPDATE session_presence SET lease_until = ? WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL")
+      .run(iso(at + 20_000), target.host, target.sessionId, f.instanceId);
+    // The relay kept renewing its lease over the gap (one extension models its ticks); a pruned lease is granted again.
+    const renewed = f.store.database.prepare("UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?")
+      .run(iso(at + 15_000), iso(at), target.host, target.sessionId, f.transport, f.relayId).changes;
+    if (renewed === 0) bindRelay(f, f.instanceId, at);
+  });
 }
 /** A live relay renews its lease every few seconds (relay-tick only; not a claim boundary). */
 function keep(f: Fixture, from: number, to: number) {
-  for (let at = from; ; at = Math.min(at + 10_000, to)) {
-    assert.equal(f.store.relayTick({ ...target, instanceId: f.instanceId, relayId: f.relayId, transport: f.transport, includePending: false }, at).alive, true);
-    if (at === to) return;
-  }
+  // Every tick still runs, at the same times; the ticks of one gap share one commit.
+  f.store.atomically(() => {
+    for (let at = from; ; at = Math.min(at + 10_000, to)) {
+      assert.equal(f.store.relayTick({ ...target, instanceId: f.instanceId, relayId: f.relayId, transport: f.transport, includePending: false }, at).alive, true);
+      if (at === to) return;
+    }
+  });
 }
 function send(f: Fixture, id: string, at: number, ttlSeconds = 86_400) {
   f.store.send({ sender, target, messageId: id, body: id, ttlSeconds }, at);
@@ -331,26 +344,30 @@ test("3 (I7, I8): alternating not-delivered and resend-due over 24 hours follows
   const step = 5 * MINUTE;
   const handed: number[] = [];
   let transientNext = false;
-  for (let offset = 0; offset < 24 * HOUR - step; offset += step) {
-    const at = f.t0 + offset;
-    jump(f, at);
-    const reservation = reserve(f, at);
-    if (reservation.dispatch) {
-      const attempt = dispatched(f.store.startManagedWake(reservation.attempt!, BASE, at));
-      const outcome: WakeDispatchOutcome = transientNext ? TRANSIENT : HANDED;
-      assert.equal(f.store.recordManagedWakeOutcome(attempt, outcome, BASE, at), true);
-      if (!transientNext) handed.push(offset);
-      transientNext = !transientNext;
+  // Contract (I7, I8): over 24 hours probed every 5 minutes, hand-offs follow the doubling resend schedule, also after
+  // terminal rows are deleted. The sweep is one writer transaction; every probe still runs at its own explicit time.
+  f.store.atomically(() => {
+    for (let offset = 0; offset < 24 * HOUR - step; offset += step) {
+      const at = f.t0 + offset;
+      jump(f, at);
+      const reservation = reserve(f, at);
+      if (reservation.dispatch) {
+        const attempt = dispatched(f.store.startManagedWake(reservation.attempt!, BASE, at));
+        const outcome: WakeDispatchOutcome = transientNext ? TRANSIENT : HANDED;
+        assert.equal(f.store.recordManagedWakeOutcome(attempt, outcome, BASE, at), true);
+        if (!transientNext) handed.push(offset);
+        transientNext = !transientNext;
+      }
+      // Terminal rows may be deleted (retention cap); the birth state keeps the streak (2.6).
+      if (offset % HOUR === 0) f.store.database.prepare(`DELETE FROM wake_nonces WHERE host = ? AND session_id = ?
+        AND state IN ('released', 'not-delivered', 'observed')`).run(target.host, target.sessionId);
+      if (handed.length > 0) {
+        // Design bound: k hand-offs need at least (2^(k-1) - 1) * base elapsed since the first (resend_due = outcome + base*2^streak).
+        const elapsed = offset - handed[0]!;
+        assert.ok(2 ** (handed.length - 1) - 1 <= elapsed / BASE, `I8 at +${offset / MINUTE}m: ${handed.length} hand-offs`);
+      }
     }
-    // Terminal rows may be deleted (retention cap); the birth state keeps the streak (2.6).
-    if (offset % HOUR === 0) f.store.database.prepare(`DELETE FROM wake_nonces WHERE host = ? AND session_id = ?
-      AND state IN ('released', 'not-delivered', 'observed')`).run(target.host, target.sessionId);
-    if (handed.length > 0) {
-      // Design bound: k hand-offs need at least (2^(k-1) - 1) * base elapsed since the first (resend_due = outcome + base*2^streak).
-      const elapsed = offset - handed[0]!;
-      assert.ok(2 ** (handed.length - 1) - 1 <= elapsed / BASE, `I8 at +${offset / MINUTE}m: ${handed.length} hand-offs`);
-    }
-  }
+  });
   // Oracle: the n-th hand-off is released at its outcome + min(base * 2^n, 24h); the not-delivered ring takes that probe,
   // the hand-off follows at the next 5-minute probe (the transient backoff is at most 60 seconds).
   const expected = [0];
@@ -368,27 +385,30 @@ test("4: codex-queue native input and deferred clears every 30 seconds for an ho
   const base = 20 * MINUTE;
   const bodyAt = f.t0 + 5 * MINUTE;
   let rungAt: number | null = null;
-  for (let at = f.t0; at <= f.t0 + HOUR; at += 30_000) {
-    if (at > f.t0) keep(f, at - 30_000, at);
-    f.store.observeNativeInput(target, at);
-    f.store.clearDeferred(target, at);
-    if (at === bodyAt) send(f, "busy-body", at);
-    const view = outlook(f, at);
-    if (rungAt === null) {
-      if (at < bodyAt) assert.deepEqual([view.state, view.reason], ["available", "relay-live"]);
-      const reservation = reserve(f, at);
-      if (at < bodyAt) assert.equal(reservation.dispatch, false, "nothing to deliver yet");
-      else if (reservation.dispatch) {
-        const attempt = dispatched(f.store.startManagedWake(reservation.attempt!, base, at));
-        assert.equal(f.store.recordManagedWakeOutcome(attempt, HANDED, base, at), true);
-        rungAt = at;
+  // One writer transaction for the hour; every 30-second step and relay tick still runs at its own explicit time.
+  f.store.atomically(() => {
+    for (let at = f.t0; at <= f.t0 + HOUR; at += 30_000) {
+      if (at > f.t0) keep(f, at - 30_000, at);
+      f.store.observeNativeInput(target, at);
+      f.store.clearDeferred(target, at);
+      if (at === bodyAt) send(f, "busy-body", at);
+      const view = outlook(f, at);
+      if (rungAt === null) {
+        if (at < bodyAt) assert.deepEqual([view.state, view.reason], ["available", "relay-live"]);
+        const reservation = reserve(f, at);
+        if (at < bodyAt) assert.equal(reservation.dispatch, false, "nothing to deliver yet");
+        else if (reservation.dispatch) {
+          const attempt = dispatched(f.store.startManagedWake(reservation.attempt!, base, at));
+          assert.equal(f.store.recordManagedWakeOutcome(attempt, HANDED, base, at), true);
+          rungAt = at;
+        }
+      } else if (at - rungAt < WAKE_QUIET_MS) {
+        assert.deepEqual([view.state, view.reason, view.basisAt], ["available", "wake-in-flight", iso(rungAt)]);
+      } else if (at - rungAt > WAKE_QUIET_MS && at < rungAt + base) {
+        assert.deepEqual([view.state, view.reason, view.basisAt], ["available", "wake-unanswered", iso(rungAt + base)]);
       }
-    } else if (at - rungAt < WAKE_QUIET_MS) {
-      assert.deepEqual([view.state, view.reason, view.basisAt], ["available", "wake-in-flight", iso(rungAt)]);
-    } else if (at - rungAt > WAKE_QUIET_MS && at < rungAt + base) {
-      assert.deepEqual([view.state, view.reason, view.basisAt], ["available", "wake-unanswered", iso(rungAt + base)]);
     }
-  }
+  });
   assert.ok(rungAt !== null && rungAt - bodyAt <= WAKE_QUIET_MAX_MS, `rung ${rungAt === null ? "never" : (rungAt - bodyAt) / 1000 + "s"} after the body`);
   assert.equal(birthPath(f)!.claim_boundary_at, null, "observeNativeInput and clearDeferred record no claim boundary");
 });
@@ -489,10 +509,16 @@ test("9: a late marker after the claim lease expired re-claims, but only as ofte
   const attempt = handOff(f, f.t0);
   let claims = 0;
   const window = 2 * HOUR;
-  for (let offset = 0; offset <= window; offset += MINUTE) {
-    jump(f, f.t0 + offset + 1);
-    claims += observe(f, [attempt.nonce], f.t0 + offset + 1).messages.length;
-  }
+  // Contract (I6): a late marker for the same handed-off attempt, observed every minute for two hours (121 observations,
+  // each with its own hook receipt), re-claims the body only as often as the claim lease law allows, and the attempt ends
+  // observed. Durability between observations is not part of it, so the sweep is one writer transaction of the message
+  // store; each observation still records and verifies its receipt in the trust store.
+  f.store.atomically(() => {
+    for (let offset = 0; offset <= window; offset += MINUTE) {
+      jump(f, f.t0 + offset + 1);
+      claims += observe(f, [attempt.nonce], f.t0 + offset + 1).messages.length;
+    }
+  });
   // Oracle: CLAIM_LEASE_BASE 2 min doubling per attempt up to 30 min gives claims at 0, 2, 6, 14, 30, 60, 90, 120 minutes.
   assert.ok(claims >= 1 && claims <= 8, `re-claims bounded by the lease law: ${claims}`);
   assert.equal(row(f, attempt).state, "observed");

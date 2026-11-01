@@ -1,6 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { cp, mkdtemp, readFile, rm } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { writeFileSync } from "node:fs";
 import path from "node:path";
@@ -341,13 +341,25 @@ describe("Agent continuation after a server-owned helper failure", () => {
   });
   it("AO10 rechecks source bytes after the last awaited inventory read", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "agent-continuation-source-"));
-    cleanup.push(() => rm(root, {recursive: true, force: true}));
-    await cp(path.join(repository, "skills"), path.join(root, "skills"), {recursive: true});
-    const h = await harness({root}); failHelper(h); const advice = await failed(h), original = h.observeTask.getMockImplementation()!, file = path.join(root, "skills/code-review/SKILL.md"), bytes = await readFile(file);
-    let reads = 0;
-    h.observeTask.mockImplementation((...args) => { const task = original(...args); if (++reads === 2) writeFileSync(file, Buffer.concat([bytes, Buffer.from("\nfixture source changed\n")])); return task; });
-    const accepted = await h.call<Accepted>("record_skill_selection", h.sign(recordInput(advice)));
-    expect(accepted.data?.valid).toBe(false); expect(accepted.data?.errors).toContain("CLASSIFICATION_SOURCE_CHANGED");
+    // The copy is removed only after the body settled: a body still reading or writing it would make the removal fail.
+    let body: Promise<void> = Promise.resolve();
+    cleanup.push(async () => { await body.catch(() => undefined); await rm(root, {recursive: true, force: true}); });
+    body = (async () => {
+      // Only the sources the inventory reads (the registry and every skill's sourceRefs), not the whole skills tree.
+      const source = await loadSkillInventory({root: repository});
+      for (const file of new Set(["skills/registry.json", ...source.skills.flatMap(skill => skill.sourceRefs.map(ref => ref.path))])) {
+        await mkdir(path.dirname(path.join(root, file)), {recursive: true});
+        await copyFile(path.join(repository, file), path.join(root, file));
+      }
+      // Complete copy: it yields the repository's inventory, so no source the test reads is missing.
+      expect((await loadSkillInventory({root})).inventoryDigest).toBe(source.inventoryDigest);
+      const h = await harness({root}); failHelper(h); const advice = await failed(h), original = h.observeTask.getMockImplementation()!, file = path.join(root, "skills/code-review/SKILL.md"), bytes = await readFile(file);
+      let reads = 0;
+      h.observeTask.mockImplementation((...args) => { const task = original(...args); if (++reads === 2) writeFileSync(file, Buffer.concat([bytes, Buffer.from("\nfixture source changed\n")])); return task; });
+      const accepted = await h.call<Accepted>("record_skill_selection", h.sign(recordInput(advice)));
+      expect(accepted.data?.valid).toBe(false); expect(accepted.data?.errors).toContain("CLASSIFICATION_SOURCE_CHANGED");
+    })();
+    await body;
   });
   it.each(["late-success", "late-failure"])("AO07/AO13 preserves timeout failure, reservations and selection after %s", async late => {
     const h = await harness({providerTimeoutMs: 25}), request = input("late"), entered = barrier(), drained = barrier();
