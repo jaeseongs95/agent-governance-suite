@@ -117,7 +117,7 @@ function defaultSpawnResponse(scriptPath, args, options) {
     if (args.includes("--host=gemini")) return { status: 0, signal: null, stdout: "", stderr: "" };
     expect(args).toEqual(["--host=claude-code"]);
     if (input.hook_event_name === "UserPromptSubmit") defaultSpawnResponse.boardPromptAt = "2026-10-26T00:00:00.000Z";
-    expect(boardTool && Object.hasOwn(input, "agent_id")).toBe(false);
+    expect(Boolean(boardTool) && Object.hasOwn(input, "agent_id")).toBe(false);
     return { status: 0, signal: null, stdout: "", stderr: "" };
   }
   if (base === "read-board.mjs") {
@@ -547,7 +547,9 @@ describe("runtime smoke synthetic actor and proof fixture contracts", () => {
       return defaultSpawnResponse(script, args, options);
     });
     await expect(runRuntimeSmokeCheck(sourceRoot)).rejects.toThrow("session board hook accepted unsupported Gemini actor input.");
-    expect(boundary.spawnSync.mock.calls.filter(([, [script]]) => path.basename(script) === "governance-hook.mjs")).toHaveLength(0);
+    // Only the two earlier Claude admission smoke checks ran; no MCP call follows the Gemini failure.
+    expect(boundary.spawnSync.mock.calls.filter(([, [script]]) => path.basename(script) === "governance-hook.mjs")).toHaveLength(2);
+    expect(boundary.spawnSync.mock.calls.filter(([, [script]]) => path.basename(script) === "server.mjs")).toHaveLength(0);
     expect(boundary.rm).toHaveBeenCalledExactlyOnceWith(cleanRoot, { recursive: true, force: true });
   });
 

@@ -11,7 +11,9 @@ import { expect, it } from "vitest";
 import type { ApiResultV1, AttemptLeaseV1, ConvergenceRootV1, WorkflowPlanV1, WorkflowReceiptV1 } from "../../contracts/types.js";
 import { RESERVED_CALLER_KEYS } from "../../mcp-server/src/caller-identity.js";
 import { hostActorId } from "../../mcp-server/src/host-attestation.js";
+import { handleSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
+import { openBoard } from "../../skills/session-board/scripts/board-store.mjs";
 import { codexCallMeta } from "../helpers/caller.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
 
@@ -189,6 +191,10 @@ it("preserves identical installation bytes through public startup and guarded fi
         evidence: [{ artifactId: "fixture", kind: "test", locator: "host-composition-stdio.test.ts", verified: true, note: "Owned synthetic source fixture, not native capture" }], findings: [], blockers: [], error: null }, model);
       expect(recorded.error).toBeNull(); expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({ model, actorId: hostActorId(host, sessionId) });
       const final = await f.call<WorkflowReceiptV1>("finalize_workflow", { runId: receipt.runId, expectedRevision: recorded.data!.revision }, model); expect(final.error).toBeNull(); expect(final.data?.state).toBe("passed");
+      // The session's lifecycle hook creates its board row; the tool only writes the summary of an existing row.
+      const seeded = openBoard(path.join(f.directory, "state", "board.sqlite3"));
+      try { handleSessionBoardHook({ hook_event_name: "SessionStart", session_id: sessionId, cwd: f.directory }, seeded, host); }
+      finally { seeded.close(); }
       const board = await f.call<{ host: string; sessionId: string }>("update_session_status", { schemaVersion: "1.0.0", summary: "Owned synthetic host fixture" }, model);
       expect(board.error).toBeNull(); expect(board.data).toMatchObject({ host, sessionId });
       // One host call yields one consumable observation: the same call ID again is a replay.

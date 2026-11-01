@@ -78,10 +78,14 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
       expect(await call(args)).toMatchObject({ok: false, error: {code: "BINDING_REQUIRED", details: {reasonCode: "CALLER_PROVENANCE_UNAVAILABLE"}}});
       expect(await call({...args, _sessionProof: "synthetic-forged-root-proof"}, observed()))
         .toMatchObject({ok: false, error: {code: "INVALID_INPUT", details: {reasonCode: "RESERVED_CALLER_FIELD"}}});
-      if (mode === "name-only" || mode === "mismatched") {
-        // The caller is observed, but no trusted execution adapter was installed for the host.
+      if (mode === "mismatched") {
+        // The caller is observed, but the installed adapter belongs to another host, so none is trusted.
         expect(await call(args, observed())).toMatchObject({ok: false, error: {code: "BINDING_REQUIRED",
           details: {observation: {status: "provider-not-configured"}}}});
+      } else if (mode === "name-only") {
+        // No execution adapters were passed: the built-in Codex catalog applies and does not know the installation's model.
+        expect(await call(args, observed())).toMatchObject({ok: false, error: {code: "BINDING_INVALID",
+          details: {reasonCode: "MODEL_NOT_IN_CATALOG"}}});
       } else {
         const once = observed({callId: `fixture-call-${mode}`});
         const planned = await call(args, once);
