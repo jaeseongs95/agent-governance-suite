@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import type { Stream } from "node:stream";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -33,6 +34,33 @@ function task(taskId: string) {
       artifactId, schemaId: "fixture/v1", targetDigest: `sha256:${"b".repeat(64)}` as const,
     })) }], authorization: { allowedActions: ["test"], prohibitedActions: ["deploy"], approvalRequired: [] },
     decision: { complexity: "simple", hasConflicts: false }, orchestration: { requested: true, mcpAvailable: true } };
+}
+
+const startupTrace = new URL("../session-messaging/fixtures/presence-startup-trace.mjs", import.meta.url).href;
+const STARTUP_EVENTS = new Set(["preload", "powershell-start", "powershell-end", "keygen-start", "keygen-end", "tls-create", "tls-created", "tls-listening"]);
+/** Drains the server's stderr (an unread pipe could block its writes) and forwards at most 20 shaped startup records. */
+function traceServerStartup(stderr: Stream | null, trace: (stage: string, details?: Record<string, unknown>) => void) {
+  if (!stderr) return;
+  let tail = "", forwarded = 0, discarded = 0, firstByte = true;
+  stderr.on("data", (chunk: Buffer) => {
+    if (firstByte) { firstByte = false; trace("server.stderr-first"); }
+    const lines = (tail + chunk.toString("utf8")).split("\n");
+    tail = lines.pop()!;
+    if (tail.length > 1024) { tail = ""; discarded++; }
+    for (const line of lines) {
+      if (forwarded >= 20 || line.length > 512 || !line.startsWith("AGS_PRESENCE_STARTUP ")) { discarded++; continue; }
+      try {
+        const value = JSON.parse(line.slice("AGS_PRESENCE_STARTUP ".length)) as Record<string, unknown>;
+        if (!STARTUP_EVENTS.has(value.event as string) || typeof value.atMs !== "number" || !Number.isFinite(value.atMs)) { discarded++; continue; }
+        const details: Record<string, unknown> = { childMs: value.atMs };
+        for (const key of ["call", "durationMs", "outcome"] as const) if (typeof value[key] === "number" || typeof value[key] === "string") details[key] = value[key];
+        for (const key of ["caller", "kind"] as const) if (typeof value[key] === "string" && /^[a-z-]{1,24}$/u.test(value[key] as string)) details[key] = value[key];
+        forwarded++;
+        trace(`server.${value.event as string}`, details);
+      } catch { discarded++; }
+    }
+  });
+  stderr.once("end", () => trace("server.stderr-end", { forwarded, discarded }));
 }
 
 async function fixture(host: string, modelClass: "deep" | "lightweight" = "deep") {
@@ -146,7 +174,10 @@ process.stdout.write(result.output); if (!result.ok) process.exitCode = 2;
     const api = await import(pathToFileURL(path.join(directory, "mcp-server/dist/host-attestation-api.mjs")).href) as typeof import("../../mcp-server/src/host-attestation-api.js");
     const { installation } = await import(pathToFileURL(authority).href) as { installation(host: string): { adapter: HostExecutionAdapter } };
     const { adapter } = installation(host);
-    transport = new StdioClientTransport({ command: process.execPath, args: [serverWrapper], cwd: directory, env: environment, stderr: "pipe" });
+    // D0363: connect spans the server's whole start. The disposable preload reports only shaped, path-free startup
+    // stages (Windows keygen/TLS/PowerShell calls) as they arrive, so a stalled connect still shows its last stage.
+    transport = new StdioClientTransport({ command: process.execPath, args: ["--import", startupTrace, serverWrapper], cwd: directory, env: environment, stderr: "pipe" });
+    traceServerStartup(transport.stderr, trace);
     client = new Client({ name: "owned-host-public-entry", version: "1.0.0" });
     trace("connect.begin");
     await client.connect(transport);
