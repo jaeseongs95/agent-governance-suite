@@ -1495,6 +1495,21 @@ describe("WorkflowService", () => {
     expect(accepted.data?.stageResults.at(-1)?.state).toBe("passed");
   });
 
+  it("records unobserved panel independence for a HIGH deliberation PASS (D-0049)", async () => {
+    const { service } = await createService();
+    const receipt = service.startWorkflow(service.planWorkflow(task({
+      taskId: "d0049-panel-claims",
+      requiredCapabilities: ["independent-deliberation", "draft"],
+    })).data!).data!;
+    const deliberation = receipt.plan.stages.find((stage) => stage.requiredArtifacts.includes("decision-record"))!;
+    const recorded = service.recordStageResult(passedStage(receipt.runId, deliberation, receipt.revision));
+    expect(recorded.error).toBeNull();
+    expect(recorded.data!.unverifiedClaims).toEqual(expect.arrayContaining([
+      { stageId: deliberation.stageId, claim: "panel-independence" },
+      { stageId: deliberation.stageId, claim: "worker-execution-profile" },
+    ]));
+  });
+
   it("rejects incomplete or stale mandatory audit handoffs", async () => {
     const { service } = await createService();
     let receipt = service.startWorkflow(service.planWorkflow(task()).data!).data!;
