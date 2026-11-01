@@ -177,7 +177,13 @@ function presenceStart(store: SessionMessageStore, payload: Record<string, unkno
   return { presence, relayId: grant.relayId, ...(grant.relayId === null ? { reason: grant.reason } : {}) };
 }
 
+/** One operation is one writer transaction: a multi-step operation (peer-wait snapshot read and write, relay recovery) is atomic. */
 export function dispatchSessionMessageOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>,
+  wakeObserver?: WakeHookObservationReader): unknown {
+  return store.atomically(() => dispatchOperation(store, operation, payload, wakeObserver));
+}
+
+function dispatchOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>,
   wakeObserver?: WakeHookObservationReader): unknown {
   switch (operation) {
     case "prepare": {

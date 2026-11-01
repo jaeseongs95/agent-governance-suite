@@ -1092,12 +1092,15 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     nowMs = this.time(nowMs);
     const dead = { alive: false, count: 0, hostBound: false };
     const presence = this.presence(input, nowMs);
-    const lease = this.database.prepare("SELECT relay_id, instance_id FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ?")
-      .get(input.host, input.sessionId, input.transport) as { relay_id: string; instance_id: string } | undefined;
+    const lease = this.database.prepare("SELECT relay_id, instance_id, lease_until FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ?")
+      .get(input.host, input.sessionId, input.transport) as { relay_id: string; instance_id: string; lease_until: string } | undefined;
+    // An expired lease is dead whether or not prune already removed it; the relay ends and a new grant takes over.
     if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport
-      || lease?.relay_id !== input.relayId || lease.instance_id !== input.instanceId) return dead;
-    let start = this.presenceHost(input, input.instanceId)?.start ?? null;
-    if (input.hostStart !== undefined) {
+      || lease?.relay_id !== input.relayId || lease.instance_id !== input.instanceId || Date.parse(lease.lease_until) <= nowMs) return dead;
+    const host = this.presenceHost(input, input.instanceId);
+    let start = host?.start ?? null;
+    // A birth bound without a reported host process could never be woken (wakeBindingCurrent needs both), so nothing is bound.
+    if (input.hostStart !== undefined && host !== null) {
       if (start === null) {
         this.database.prepare("UPDATE session_presence SET host_start = ? WHERE host = ? AND session_id = ? AND instance_id = ? AND host_start IS NULL")
           .run(input.hostStart, input.host, input.sessionId, input.instanceId);
@@ -1513,6 +1516,11 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       this.database.prepare("UPDATE authority_time SET last_ms = ? WHERE singleton = 1").run(this.transactionNow);
     }
     return this.transactionNow;
+  }
+
+  /** Runs several store calls as one writer transaction with one authority time. */
+  atomically<T>(operation: () => T): T {
+    return this.transaction(operation);
   }
 
   /** Outermost: BEGIN IMMEDIATE. Nested: a savepoint, so an inner domain rejection rolls back only its own writes. */
