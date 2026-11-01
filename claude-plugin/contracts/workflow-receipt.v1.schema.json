@@ -4,7 +4,7 @@
   "title": "WorkflowReceipt.v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "runId", "revision", "state", "plan", "stageResults", "blockers", "unresolved", "error"],
+  "required": ["schemaVersion", "runId", "revision", "state", "plan", "stageResults", "blockers", "unresolved", "error", "unverifiedClaims"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "runId": { "type": "string", "minLength": 1 },
@@ -14,9 +14,24 @@
     "stageResults": { "type": "array", "items": { "$ref": "https://skill-suite.local/contracts/stage-result.v1.schema.json" } },
     "blockers": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
     "unresolved": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
-    "error": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/error" }] }
+    "error": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/error" }] },
+    "unverifiedClaims": {
+      "description": "Server-computed. Properties the recorded passes rely on that AGS did not observe; a passed receipt with entries is a record of declarations, not verification.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/unverifiedClaim" }
+    }
   },
   "$defs": {
+    "unverifiedClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stageId", "claim"],
+      "properties": {
+        "stageId": { "type": ["string", "null"], "minLength": 1 },
+        "claim": { "enum": ["actor-independence", "fresh-context", "no-redelegation", "post-execution-state", "panel-independence", "conditions-verified", "worker-execution-profile", "execution-profile", "evidence-content", "evidence-relevance", "user-approval", "reviewer-independence"] },
+        "artifactId": { "type": "string", "minLength": 1 }
+      }
+    },
     "error": {
       "type": "object",
       "additionalProperties": false,

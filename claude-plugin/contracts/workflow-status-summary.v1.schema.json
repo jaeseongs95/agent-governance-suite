@@ -4,7 +4,7 @@
   "title": "WorkflowStatusSummary.v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "runId", "revision", "state", "currentStageId", "nextStageId", "lastRecordedStageId", "completedStageCount", "totalStageCount", "blockerCount", "unresolvedCount", "errorCode", "receiptDigest"],
+  "required": ["schemaVersion", "runId", "revision", "state", "currentStageId", "nextStageId", "lastRecordedStageId", "completedStageCount", "totalStageCount", "blockerCount", "unresolvedCount", "unverifiedClaimCount", "errorCode", "receiptDigest"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "runId": { "type": "string", "minLength": 1 },
@@ -17,6 +17,7 @@
     "totalStageCount": { "type": "integer", "minimum": 0 },
     "blockerCount": { "type": "integer", "minimum": 0 },
     "unresolvedCount": { "type": "integer", "minimum": 0 },
+    "unverifiedClaimCount": { "type": "integer", "minimum": 0 },
     "errorCode": {
       "oneOf": [
         { "type": "null" },

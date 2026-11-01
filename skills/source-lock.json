@@ -106,7 +106,7 @@
       "version": "1.0.0",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:d7bed1a8c118c44b4e343269ee94cbb118c0d30c6ec95e6f077a051d793b429c",
+      "integratedChecksum": "sha256:74cd5c742ba2465a53604b86305c53b799b818da132e1fee80734f5b5ce2ba64",
       "checksumScope": "relative paths and normalized text bytes under skills/iteration-frame-auditor"
     },
     {
