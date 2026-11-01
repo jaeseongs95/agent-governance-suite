@@ -337,7 +337,7 @@ describe("generated Claude plugin", () => {
     expect(await readdir(home)).toEqual([]);
   });
 
-  it("removes a caller-supplied token when it cannot attest", async () => {
+  it("never rewrites tool input, including a caller-supplied execution claim", async () => {
     const home = await mkdtemp(path.join(tmpdir(), "claude-plugin-attest-strip-"));
     temporaryDirectories.push(home);
     const input = JSON.stringify({ hook_event_name: "PreToolUse", session_id: "test-session", tool_name: `${toolPrefix}plan_workflow`, tool_use_id: "toolu_x", transcript_path: path.join(home, "missing.jsonl"), tool_input: { taskId: "t", _hostAttestation: "aghs1.caller.forged" } });
@@ -346,25 +346,21 @@ describe("generated Claude plugin", () => {
     for (const env of [withoutData, { ...process.env, CLAUDE_PLUGIN_DATA: path.join(home, "data") }]) {
       const result = spawnSync(process.execPath, [path.join(pluginRoot, "hooks", "host-attestation-hook.mjs")], { encoding: "utf8", env, input });
       expect(result.status).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { taskId: "t" } } });
+      expect(result.stdout).toBe("");
     }
   }, 30_000);
 
-  it("signs host attestation with a key in the plugin data directory", async () => {
+  it("records the SessionStart model next to the plugin's workflow database", async () => {
     const data = await mkdtemp(path.join(tmpdir(), "claude-plugin-attest-data-"));
     temporaryDirectories.push(data);
-    const transcript = path.join(data, "session.jsonl");
-    await writeFile(transcript, `${JSON.stringify({ type: "assistant", sessionId: "test-session", isSidechain: false, effort: "high", message: { model: "claude-opus-5", content: [{ type: "tool_use", id: "toolu_x", name: "plan_workflow", input: {} }] } })}\n`, "utf8");
     const result = spawnSync(process.execPath, [path.join(pluginRoot, "hooks", "host-attestation-hook.mjs")], {
       encoding: "utf8",
       env: { ...process.env, CLAUDE_PLUGIN_DATA: data },
-      input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "test-session", tool_name: `${toolPrefix}plan_workflow`, tool_use_id: "toolu_x", transcript_path: transcript, tool_input: { taskId: "t" }, effort: { level: "high" } }),
+      input: JSON.stringify({ hook_event_name: "SessionStart", source: "startup", session_id: "test-session", model: "claude-opus-5" }),
     });
     expect(result.status).toBe(0);
-    const output = JSON.parse(result.stdout);
-    expect(output.hookSpecificOutput.permissionDecision).toBeUndefined();
-    expect(output.hookSpecificOutput.updatedInput).toMatchObject({ taskId: "t", _hostAttestation: expect.stringMatching(/^aghs2\./u) });
-    expect(await readdir(data)).toContain("workflows.sqlite3");
+    expect(result.stdout).toBe("");
+    expect(await readdir(path.join(data, "host-models"))).toEqual([expect.stringMatching(/^[0-9a-f]{24}\.json$/u)]);
   });
 
   it("stores continuity state under the plugin data directory", async () => {

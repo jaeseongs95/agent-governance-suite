@@ -304,6 +304,13 @@ export class HostAttestationProvider implements TrustedExecutionContextProvider 
         reasonCode: judgment.status === "undetermined" ? judgment.reason : "MODEL_CAPABILITY_UNRESOLVED",
       });
     }
+    // A descriptor qualifies only for this host and model under one stated policy revision; none is invented.
+    const mismatch = capability.host !== this.adapter.host || capability.rawModel !== execution.model || !nonEmpty(capability.resolvedModel)
+      ? "QUALIFICATION_CAPABILITY_MISMATCH"
+      : !nonEmpty(capability.policyRevision)
+        || (this.adapter.policyRevision !== undefined && this.adapter.policyRevision !== capability.policyRevision)
+        ? "QUALIFICATION_POLICY_REVISION_MISMATCH" : null;
+    if (mismatch) throw invalid("Host observation has no matching trusted execution capability and policy revision.", { reasonCode: mismatch });
     if (!MODEL_CLASS.includes(capability.modelClass) || !satisfiesModelEffortPolicy(capability, effort)) {
       throw invalid("Host observation does not satisfy the trusted model and effort policy.", {
         reasonCode: qualificationRejectionReason(capability, effort),
