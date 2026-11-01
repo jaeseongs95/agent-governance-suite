@@ -1125,12 +1125,15 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
 
   /**
    * One relay cycle (3.3). Only the lease holder of the current online birth renews the lease and the birth. The first
-   * tick that carries the watcher's hostStart binds the birth; a different stored birth fences the relay.
+   * tick that carries the watcher's hostStart binds the birth; a different stored birth fences the relay. A tick that
+   * carries prerequisiteMissing (a reason code the relay's port knew before any wake) records it on the birth's path,
+   * exactly as a prerequisite-missing outcome would (2.4): the outlook is degraded and the birth is not rung.
    */
-  relayTick(input: SessionIdentity & { transport: string; relayId: string; instanceId: string; includePending: boolean; hostStart?: string }, nowMs = AUTHORITY_NOW): { alive: boolean; count: number; hostBound: boolean; ended?: true } {
+  relayTick(input: SessionIdentity & { transport: string; relayId: string; instanceId: string; includePending: boolean; hostStart?: string; prerequisiteMissing?: string }, nowMs = AUTHORITY_NOW): { alive: boolean; count: number; hostBound: boolean; ended?: true } {
     boundedIdentity(input);
     if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128 || !input.instanceId || input.instanceId.length > 128
-      || typeof input.includePending !== "boolean" || (input.hostStart !== undefined && (!input.hostStart.trim() || input.hostStart.length > 200))) {
+      || typeof input.includePending !== "boolean" || (input.hostStart !== undefined && (!input.hostStart.trim() || input.hostStart.length > 200))
+      || (input.prerequisiteMissing !== undefined && !/^[A-Z][A-Z0-9_]{0,63}$/u.test(input.prerequisiteMissing))) {
       throw new Error("Invalid relay tick identity or includePending.");
     }
     if (!this.inTransaction) return this.transaction(() => this.relayTick(input, nowMs));
@@ -1155,6 +1158,12 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       } else if (start !== input.hostStart) return dead;
     }
     const now = iso(nowMs);
+    if (input.prerequisiteMissing !== undefined) {
+      // The first loss stays the basis; SET reads the old prerequisite_missing for both assignments.
+      this.updateWakePath({ host: input.host, sessionId: input.sessionId, instanceId: input.instanceId, generation: presence.startedAt! },
+        "last_failure_at = CASE WHEN prerequisite_missing IS NULL THEN ? ELSE last_failure_at END, prerequisite_missing = coalesce(prerequisite_missing, ?)",
+        [now, input.prerequisiteMissing], nowMs);
+    }
     this.database.prepare("UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?")
       .run(iso(nowMs + RELAY_LEASE_MS), now, input.host, input.sessionId, input.transport, input.relayId);
     this.heartbeatPresence(input, input.instanceId, nowMs);

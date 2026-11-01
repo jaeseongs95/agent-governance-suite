@@ -260,7 +260,8 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
     case "relay-tick": return store.relayTick({ ...identity(payload.target), transport: string(payload.transport, "transport"),
       relayId: string(payload.relayId, "relayId"), instanceId: string(payload.instanceId, "instanceId"),
       includePending: boolean(payload.includePending, "includePending"),
-      ...(Object.hasOwn(payload, "hostStart") ? { hostStart: string(payload.hostStart, "hostStart") } : {}) });
+      ...(Object.hasOwn(payload, "hostStart") ? { hostStart: string(payload.hostStart, "hostStart") } : {}),
+      ...(Object.hasOwn(payload, "prerequisiteMissing") ? { prerequisiteMissing: string(payload.prerequisiteMissing, "prerequisiteMissing") } : {}) });
     case "presence-start": return presenceStart(store, payload);
     case "presence-heartbeat": return { alive: store.heartbeatPresence(identity(payload.target), string(payload.instanceId, "instanceId")) };
     case "presence-end": return { ended: store.endPresence(identity(payload.target), string(payload.reason, "reason"), string(payload.instanceId, "instanceId")) };

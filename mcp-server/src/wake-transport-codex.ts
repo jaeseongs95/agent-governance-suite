@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { existsSync } from "node:fs";
+import { accessSync, constants, existsSync, statSync } from "node:fs";
 import path from "node:path";
 import { errorCode, type WakeDispatchOutcome, type WakeDispatchPort, type WakeLaunchObserver } from "./session-message-wake-port.js";
 
@@ -36,6 +36,35 @@ export function codexLaunch(environment: NodeJS.ProcessEnv = process.env, platfo
     : { missing: "CODEX_NPM_LAUNCHER_MISSING" };
 }
 
+/**
+ * Whether `codex` resolves on PATH as the wake's execFile resolves it: libuv searches each PATH entry for the name
+ * itself on POSIX (an executable file), and for name.com and name.exe on Windows, never a .cmd shim. Null when the
+ * environment has no PATH: the system default search is not decided here.
+ */
+function codexOnPath(environment: NodeJS.ProcessEnv, platform: NodeJS.Platform): boolean | null {
+  const value = platform === "win32" ? environment.PATH ?? environment.Path : environment.PATH;
+  if (value === undefined) return null;
+  const names = platform === "win32" ? ["codex.com", "codex.exe"] : ["codex"];
+  for (const directory of value.split(platform === "win32" ? ";" : ":")) {
+    for (const name of names) {
+      const candidate = path.resolve(directory || ".", name);
+      try {
+        accessSync(candidate, platform === "win32" ? constants.F_OK : constants.X_OK);
+        if (statSync(candidate).isFile()) return true;
+      } catch { /* Not this entry. */ }
+    }
+  }
+  return false;
+}
+
+/** The launch prerequisite a Codex wake would report as prerequisite-missing, known before any wake; else null. */
+export function codexLaunchPrerequisite(environment: NodeJS.ProcessEnv = process.env, platform: NodeJS.Platform = process.platform): string | null {
+  const launch = codexLaunch(environment, platform);
+  if ("missing" in launch) return launch.missing;
+  // The npm launcher runs with this node and was found by codexLaunch; only the bare `codex` is searched on PATH.
+  return launch.command === "codex" && codexOnPath(environment, platform) === false ? "CODEX_EXECUTABLE_MISSING" : null;
+}
+
 function ringCodex(sessionId: string, message: string, observe?: WakeLaunchObserver): Promise<WakeDispatchOutcome> {
   return new Promise((resolve) => {
     let spawned = false;
@@ -60,4 +89,5 @@ export const codexQueueWakePort: WakeDispatchPort = {
   observesNativeLaunch: true,
   resendBaseMs: 20 * 60_000,
   dispatch: (target, message, observe) => ringCodex(target.sessionId, message, observe),
+  prerequisite: (environment) => codexLaunchPrerequisite(environment),
 };

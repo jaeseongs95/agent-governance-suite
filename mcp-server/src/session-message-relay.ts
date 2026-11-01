@@ -106,6 +106,10 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
   const stop = (reason: string) => { ended ??= reason; wakeStop(); };
   let hostStart: string | undefined;
   let hostSent = false;
+  // Known before any wake (for example no codex on PATH): the first tick records it on the birth, so a sender sees a
+  // degraded wake instead of one that is available until the first dispatch fails.
+  const prerequisiteMissing = port.prerequisite?.() ?? null;
+  let prerequisiteSent = prerequisiteMissing === null;
   let dispatching: Promise<void> | null = null;
   let watcher: HostWatch | undefined;
   const stopRequested = () => stop(STOPPED);
@@ -125,9 +129,11 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
         const tick = await request<{ alive: boolean; count: number; hostBound: boolean; ended?: boolean }>("relay-tick", {
           target, transport: options.transport, relayId: options.relayId, instanceId: options.instanceId,
           includePending: port.capabilities.idleWake !== "none", ...(binding !== undefined ? { hostStart: binding } : {}),
+          ...(!prerequisiteSent ? { prerequisiteMissing } : {}),
         });
         if (!tick.alive) { stop(tick.ended === true ? BIRTH_ENDED : binding !== undefined ? "RELAY_HOST_BIRTH_MISMATCH" : "RELAY_LEASE_LOST"); break; }
         if (binding !== undefined) hostSent = true;
+        prerequisiteSent = true;
         if (port.capabilities.idleWake === "none") observation?.record("none-skip");
         else if (tick.count > 0 && tick.hostBound && dispatching === null) {
           dispatching = dispatchManagedWake(options, options.relayId, port, request, observation).then(() => {},

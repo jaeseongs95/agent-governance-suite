@@ -43,6 +43,12 @@ export interface WakeDispatchPort {
   /** Time after which an unobserved hand-off may be rung again (doubled per unanswered streak). Not stored in presence. */
   resendBaseMs: number;
   dispatch(target: SessionIdentity, message: string, observe?: WakeLaunchObserver): Promise<WakeDispatchOutcome>;
+  /**
+   * A prerequisite this port can tell is missing before any wake, without an external effect: the reason code its
+   * dispatch would report as prerequisite-missing, or null. Never throws. The relay reports it on its first tick, so the
+   * birth is degraded before a sender is told the wake is available.
+   */
+  prerequisite?(environment?: NodeJS.ProcessEnv): string | null;
 }
 export function wakeBackoffDelay(attempt: number): number {
   return Math.min(10 * 60_000, 30_000 * 2 ** Math.max(0, attempt));
