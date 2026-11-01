@@ -1,6 +1,6 @@
 # AGS 3.0 호출자 신원·세션 결속 재설계
 
-상태: 설계(구현 전). 기준 소스는 `feat/ags30-session-binding`의 `4b2dc571`이다. 이 문서의 `file:line`은 별도 표시가 없으면 이 commit 기준이다.
+상태: 설계, 실호스트 채집 반영(2026-11-01, 1.5절). 기준 소스는 `feat/ags30-session-binding`의 `4b2dc571`이다. 이 문서의 `file:line`은 별도 표시가 없으면 이 commit 기준이다.
 
 ## 0. 범위
 
@@ -40,7 +40,7 @@ MCP 도구 호출을 호출한 세션과 행위자(root/child)에 묶는 방식 
 | hook의 child 표식 | `agent_id`. **ThreadSpawn subagent에만** 붙는다. Review·Compact·MemoryConsolidation·Other는 표식이 없다 (hook_runtime.rs:1083-1093) | `agent_id`·`agent_type` (공식 hooks 문서) | 없음 |
 | 인자 재작성 조건 | `updatedInput`은 `permissionDecision:"allow"`와 함께만 적용된다. 여러 hook이 재작성하면 **마지막에 끝난 hook**이 이긴다 (pre_tool_use.rs:133-137,157-170) | `updatedInput` (allow/ask와 조합) | `overwrite`. 얕은 병합이라 키를 지울 수 없다. 바뀐 키 이름이 결과 앞에 붙는다 |
 | hook 실패 시 | 시간 초과·exit 0/2 외 코드·잘못된 JSON은 Failed로 끝나고 **fail-open**이다. exit 2는 stderr에 사유가 있을 때만 차단한다 (pre_tool_use.rs:211-296) | 기본 fail-open. `onFailure:"block"`이면 차단한다 (2.1.295+, 현재 설정 `claude-overlay/hooks/hooks.json:112`) | 문서에 없다. 커넥터 자체는 fail-closed다 |
-| **MCP `tools/call`의 `_meta`** (호스트가 쓰고 모델은 못 씀) | `callId`, `threadId`, `sessionId`, `x-codex-turn-metadata{session_id, thread_id, turn_id, parent_thread_id, subagent_kind, thread_source, model, reasoning_effort, codex_version…}` (mcp_tool_call.rs:543-555,1331-1355,1431-1463; turn_metadata.rs:275-313; responses_metadata.rs:420-470,557-597). 0.164·0.165에도 같은 상수와 필드가 있다 | `claudecode/toolUseId` (모든 MCP 서버). `claudecode/agentId`는 내부 서버 하나에만 보낸다 (설치 바이너리 sha256 `e896a9d8…2d52`의 문자열 확인) | **미확인**. 실호스트 채집이 필요하다 |
+| **MCP `tools/call`의 `_meta`** (호스트가 쓰고 모델은 못 씀) | `callId`, `threadId`, `sessionId`, `x-codex-turn-metadata{session_id, thread_id, turn_id, parent_thread_id, subagent_kind, thread_source, model, reasoning_effort, codex_version…}` (mcp_tool_call.rs:543-555,1331-1355,1431-1463; turn_metadata.rs:275-313; responses_metadata.rs:420-470,557-597). 0.164·0.165에도 같은 상수와 필드가 있다 | `claudecode/toolUseId` (모든 MCP 서버). `claudecode/agentId`는 내부 서버 하나에만 보낸다 (설치 바이너리 sha256 `e896a9d8…2d52`의 문자열 확인) | `antigravity.google/conversation_id`, `antigravity.google/root_conversation_id`, subagent에는 `antigravity.google/parent_conversation_id`. 호출 ID와 model은 없다 (1.5 채집) |
 | MCP 서버 기동 환경 | 세션 정보 없음 | `CLAUDE_CODE_SESSION_ID`는 기동 시점 값이다. `/clear`에 바뀌는데 서버는 그대로 남는다. subagent는 같은 서버 프로세스를 쓴다. plugin 서버 전달은 2.1.152 실측에서 없었다 (anthropics/claude-code#61752) | 미확인 |
 
 Codex 소스는 `rust-v0.166.0` raw 파일로 확인했다. sha256: `mcp_tool_call.rs` 0bc2f419…, `turn_metadata.rs` 2fac79a2…, `responses_metadata.rs` 44c343d4…, `hook_runtime.rs` d89eec06…, `hooks/src/events/pre_tool_use.rs` 98fe5567….
@@ -72,7 +72,28 @@ Codex 소스는 `rust-v0.166.0` raw 파일로 확인했다. sha256: `mcp_tool_ca
 | B. MCP 서버 기동 환경의 신원(세션별 프로세스) | 기각 | Claude: `/clear`에서 세션 ID가 바뀌어도 서버가 남고, subagent가 프로세스를 공유하며, plugin 서버 전달이 확인되지 않았다. Codex·agy: 기동 환경에 세션이 없다. |
 | C. 호스트가 쓰는 `_meta`에서 직접 신원 확인 | **Codex 채택** | 호스트가 매 호출마다 쓰고 모델은 쓸 수 없다. stdio pipe라 같은 사용자 프로세스도 끼어들기 어렵다. 지금의 디스크 HMAC 키보다 강하다. hook·SQLite·시간 초과가 경로에서 빠진다. |
 | D. hook이 호출 ID를 키로 별도 저장소에 기록(admission), 서버가 `_meta`의 같은 ID로 회수 | **Claude 채택** | Claude `_meta`에는 `toolUseId`만 있고 세션·agent가 없다. hook은 이 셋을 모두 본다. 인자는 건드리지 않는다. hook이 돌지 않으면 행이 없으므로 거부된다(fail-closed). |
-| E. 인자로 나르는 서명 proof(현행 v3) | **agy에만 유지** | agy hook에는 호출 ID가 없다. `_meta`는 확인되지 않았다. 호출 ID 없이 D를 쓰면 hook이 빠진 호출이 남의 admission을 가져갈 수 있다(오귀속). E는 hook이 빠지면 거부된다. |
+| E. 인자로 나르는 서명 proof(현행 v3) | **삭제** (채집 뒤 변경) | 설계 당시에는 agy에만 남기려 했다. 채집에서 agy `_meta`에 호스트가 쓰는 대화 ID와 부모 대화 ID가 확인되어(1.5) agy도 C로 옮긴다 |
+
+### 1.5 실호스트 채집 결과 (2026-11-01)
+
+장치: `tests/real-host/binding-capture/`(commit `083a5aba`, `64b82666`). 기록 전용 stdio MCP 서버와 PreToolUse hook이 키 이름과 salt hash의 동치만 남긴다. 값·본문은 남기지 않는다. Linux 테스트 서버(`/home/mcpops/binding-5970-r01`)와 Windows 시험 서버(`C:\Users\Administrator\binding-5970-r01`)에서 돌렸다. agy Windows를 뺀 모든 실행의 종료 코드는 0이다.
+
+| 호스트(버전, OS) | 호출 | `_meta` 키 | 판정에 쓰는 동치 | hook 대조 |
+| --- | --- | --- | --- | --- |
+| Codex 0.166.0 (Linux·Windows) | 메인 1, 병렬 2 | `callId, itemId, progressToken, sessionId, threadId, windowId, x-codex-turn-metadata`(객체) | turn `session_id`=`sessionId`, turn `thread_id`=`threadId`, `threadId`=`sessionId`. `parent_thread_id`·`subagent_kind` 없음. `thread_source`=`user`. model·effort·turn_id 있음 | `tool_use_id`=`callId`, `session_id`=`sessionId`, `turn_id` 같음, `agent_id` 없음 |
+| 〃 | ThreadSpawn subagent 1 | 같음 | `threadId`≠`sessionId`. `parent_thread_id`·`forked_from_thread_id` 있음. `subagent_kind`=`thread_spawn`, `thread_source`=`subagent` | `tool_use_id`=`callId`, `session_id`=부모 `sessionId`, `agent_id` 있음(`agent_type` `default`) |
+| 〃 | `exec resume` 뒤 1 | 같음 | 메인과 같은 `sessionId`. root 조건 모두 성립 | 같음 |
+| 〃 | `exec fork` 뒤 1 | 같음 | **새** `sessionId`(=`threadId`). `forked_from_thread_id` 있음, `parent_thread_id` 없음 → root | 같음 |
+| Claude Code 2.1.314 (Linux), 2.1.316 (Windows), `-p` stream-json | 메인 1, 병렬 2, Agent subagent 1 | `claudecode/toolUseId, progressToken` | 해당 없음 | 4건 모두 `tool_use_id`=`claudecode/toolUseId`. subagent hook에만 `agent_id`(`agent_type` `general-purpose`). hook `session_id`=서버 기동 env `CLAUDE_CODE_SESSION_ID`(`--mcp-config` 서버). hook 키에 `model`은 없고 `effort`는 있다 |
+| agy 1.4.12 (Linux) | 메인 1, 병렬 2 | `antigravity.google/artifacts_dir, antigravity.google/conversation_id, antigravity.google/root_conversation_id, progressToken` | `conversation_id`=`root_conversation_id`, 부모 키 없음 | hook `conversationId`=`conversation_id`. hook에 호출 ID 없음(`toolCall`은 `name`·`args`). 도구 이름은 `call_mcp_tool` |
+| 〃 | subagent(`invoke_subagent`) 1 | 위 키에 `antigravity.google/parent_conversation_id` 추가 | `conversation_id`는 새 값, `root_conversation_id`=부모 | hook `conversationId`=subagent 대화. child 표식 없음 |
+| agy 1.4.12 (Windows) | 미실행 | | | 시험 서버의 agy가 Google 로그인 전이다(`Authentication required`). 사용자 로그인이 필요하다 |
+
+채집으로 바뀐 결정:
+
+1. Codex: 2.2 판정 규칙을 그대로 쓴다. fork는 새 root 세션이고 resume은 같은 세션이다. `thread_id === session_id` 가정은 두 경우 모두 성립했다.
+2. Claude: admission(D)을 그대로 쓴다. `toolUseId`가 없거나 다를 때 `updatedInput`을 유지한다는 조건은 해당하지 않는다. hook 입력에 model이 없으므로 model은 2.2대로 transcript 발신 항목이나 세션 model 기록에서 온다.
+3. agy: arg proof(E)를 지우고 `_meta` ingress(`antigravity-meta`)로 옮긴다. 호출 ID가 없으므로 one-use 회수가 없고, 실행 관측은 `unavailable`이다. 현행에도 agy에는 실행 관측 token 발급 경로가 없다.
 
 ## 2. 설계
 
@@ -93,7 +114,7 @@ export interface CallerIngress {           // 호스트 adapter 하나가 구현
 
 - 서버는 기동 환경 `AGENT_GOVERNANCE_HOST_ATTESTATION`(설치 manifest가 정함)으로 ingress를 **하나** 고른다. 고르는 곳은 `index.ts`의 composition 한 곳이다. core에는 제품 분기가 없다.
 - `actorAccess`(`input-observation.ts:39-50`)가 유일한 root 정책으로 남는다. 모든 도구에서 ingress 다음에 이것을 적용한다.
-- 서비스는 `caller`를 **별도 매개변수**로 받는다. 인자 객체에 신원을 넣지 않는다. 호출자가 예약 키(`_sessionBinding`·`_continuityBinding`·`_hostAttestation`, agy 외 `_sessionProof`)를 보내면 `INVALID_INPUT`으로 거부한다. schema에서 빠지므로 `additionalProperties:false`가 거부한다.
+- 서비스는 `caller`를 **별도 매개변수**로 받는다. 인자 객체에 신원을 넣지 않는다. 호출자가 예약 키(`_sessionBinding`·`_continuityBinding`·`_hostAttestation`·`_sessionProof`)를 보내면 `INVALID_INPUT`으로 거부한다. schema에서 빠지므로 `additionalProperties:false`가 거부한다.
 
 ### 2.2 호스트 ingress
 
@@ -128,12 +149,15 @@ export interface CallerIngress {           // 호스트 adapter 하나가 구현
   - 둘 다 없으면 `unavailable`
   - transcript-latest 추정(`host-attestation-hook.ts:517-528`)은 지운다. root 전용이므로 subagent 후보(`agentId`) 경로도 죽은 코드라 지운다.
 
-**Antigravity (`antigravity-arg-proof`).**
+**Antigravity (`antigravity-meta`, 채집 뒤 변경).** hook이 없다.
 
-- 현행 `SessionActorProofs` v3를 adapter 전용 전달 수단으로 유지한다. `_sessionProof`는 이 ingress를 쓰는 서버만 schema에 노출한다.
-- 커넥터의 governance 경로와 random callId(`builtin-hook-host-adapters.ts:243-246`)는 그대로 둔다.
-- `mcp_config.json`의 `AGENT_GOVERNANCE_HOST_ATTESTATION`을 `gemini`에서 `antigravity`로 바꾼다. 지금은 서버가 이 값으로 ingress를 고르지 않아 불일치가 드러나지 않을 뿐이다.
-- 채집에서 agy `tools/call`에 호스트가 쓰는 대화 ID나 호출 ID가 확인되면 Codex처럼 `_meta`로 옮기고 E를 지운다.
+- `meta["antigravity.google/conversation_id"]`가 세션 ID다. hook의 `conversationId`와 같은 값이다(1.5).
+- root(`observed`): `root_conversation_id`가 `conversation_id`와 같고 `parent_conversation_id`가 없다.
+- child(`observed`): `parent_conversation_id`가 있다.
+- 그 밖은 indeterminate다. 사유는 `ANTIGRAVITY_CALL_META_MISSING`·`ANTIGRAVITY_CALL_META_INVALID`·`ANTIGRAVITY_ROOT_CONVERSATION_MISMATCH`다.
+- 호출 ID가 없으므로 `callId`는 null이고 `execution`은 `{unavailable:"ANTIGRAVITY_EXECUTION_UNOBSERVED"}`다.
+- `SessionActorProofs` v3, `_sessionProof`, 커넥터의 AGS 도구 proof 발급 경로를 지운다. 커넥터의 예약 키 거부는 schema가 대신한다.
+- `mcp_config.json`의 `AGENT_GOVERNANCE_HOST_ATTESTATION`을 `gemini`에서 `antigravity`로 바꾼다.
 
 **Gemini CLI.** 3.0 미지원 그대로다. ingress가 없으면 모든 도구가 `HOST_INGRESS_UNAVAILABLE`로 거부된다.
 
@@ -146,7 +170,7 @@ export interface CallerIngress {           // 호스트 adapter 하나가 구현
 | collaboration | `validateCollaborationDecision(input, caller)`. `actorKind`는 root 전용이므로 항상 `main`이다. `subagent` 분기(`trust-service.ts:54`)는 지운다 |
 | continuity | `_continuityBinding`(hook 발급 `continuity-hook.ts:121-133`, 검증 `continuity-service.ts:880-888`)을 지운다. 서버가 `continuity.bindCall(caller, tool, lineageReader?)`로 같은 payload(c·e·anchors·fork parent)를 계산한다. Claude의 lineage는 admission의 `transcript_path`로 서버가 `readClaudeLineage`를 부른다. 경계 시점의 host-process fork pin(`readDeferredForkHostParent`·`pinForkParent`)은 기록 부작용이므로 Claude hook에 남긴다. `open_convergence_root`의 root 결속은 `prepareWorkflowStart`와 같은 caller 경로를 쓴다. 실패 보고 형식은 오류 모형 설계를 따른다(D-0056) |
 | 실행 관측 | `_hostAttestation` token(`aghs2`), Codex rollout 해석(`codex-host-observation.ts`), Codex attestation strategy, hook attestation strategy registry(`host-attestation-hook.ts:583-660`)를 지운다. `HostAttestationProvider`는 `caller.execution`과 `callId`로 기존 one-use claim과 실행 하한 검사를 한다 |
-| governance hook | Codex 등록을 삭제한다. Claude는 「행위자 판정 → admission 기록 → continuity 경계 pin」만 하는 짧은 함수가 된다. agy는 현행 proof 발급을 유지한다 |
+| governance hook | Codex 등록을 삭제한다. Claude는 「행위자 판정 → admission 기록 → continuity 경계 pin」만 하는 짧은 함수가 된다. agy 커넥터의 AGS 도구 proof 발급을 지운다 |
 
 ### 2.4 오류 코드
 
@@ -169,14 +193,14 @@ OS 격리가 아니라는 기존 문구(`docs/ags30-d0019-root-only-design.md:87
 ## 3. 계약 변경 (2.x 호환 없음)
 
 - `contracts/*-request.v1.schema.json` 7개에서 `_sessionBinding`을 지운다: acknowledge, get-status, list-status, prepare, send, update-status, validate-collaboration. 5개에서 `_continuityBinding`을 지운다: checkpoint, inspect, load, purge, suppress. `contracts/types.ts:270,320-353`의 해당 필드도 지운다. `SessionBindingV1`·`CollaborationSessionBindingV1`은 서버 내부 `VerifiedCaller`로 바꾼다.
-- 공개 도구 schema에서 `_sessionProof` 광고(`server.ts:417-419`)를 지운다. agy ingress 서버만 유지한다.
+- 공개 도구 schema에서 `_sessionProof` 광고(`server.ts:417-419`)를 지운다.
 - 새 SQLite 표 `call_admissions`를 workflow DB에 추가한다. 기존 행은 이관하지 않는다.
-- 폐기: HMAC 키 이름 `governance-root-call-key-v3`(agy만 계속 사용), continuity tool-binding payload v1, `aghs2`.
+- 폐기: HMAC 키 이름 `governance-root-call-key-v3`, continuity tool-binding payload v1, `aghs2`.
 
 ## 4. 파일
 
 - **삭제:** `codex-host-observation.ts`, Codex attestation strategy와 strategy registry(`host-attestation-hook.ts` 해당 부분), `hooks/hooks.json`의 Codex governance PreToolUse 항목(`:115-125`), `session-message-hook.ts`·`session-board-hook.ts`·`continuity-hook.ts`의 AGS 도구 `updatedInput` 분기, `HookHostAdapter.rewriteDecision`·`hookRewriteDecision`, `withHookHostAdapter`의 domain 중첩용 canonical 재사용(`host-input-adapter.ts:74-82`, 단일 진입만 남기면 필요 없음).
-- **새 파일:** `caller-identity.ts`(공통 계약과 `actorAccess` 적용), adapter 3개. Codex·Claude는 `builtin-hook-host-adapters.ts` 옆의 `builtin-caller-ingress.ts` 하나에 두고, agy는 기존 `session-actor-proof.ts`를 adapter로 감싼다.
+- **새 파일:** `caller-identity.ts`(공통 계약과 `actorAccess` 적용), adapter 3개(Codex·agy `_meta`, Claude admission)는 `builtin-hook-host-adapters.ts` 옆의 `builtin-caller-ingress.ts` 하나에 둔다. `session-actor-proof.ts`는 삭제한다.
 - **변경:** `server.ts`(진입부 627-640 교체, 서비스 호출부), `index.ts`(ingress 선택), `governance-hook.ts`(Claude 축소, agy 유지), `session-message-service.ts`, `trust-service.ts`, `continuity-service.ts`, `host-attestation.ts`, `sqlite-workflow-store.ts`(admission 표·회수), `claude-overlay/hooks/governance-hook.mjs`(빈 출력 허용), `mcp_config.json`, `diagnostics.ts:130`, `scripts/runtime-smoke.mjs`, `docs/ags30-d0019-root-only-design.md`(호출 증명 절을 이 문서로 대체), `docs/host-execution-attestation.md`, `docs/session-message-lifecycle.md`, `skills/session-board/references/entry-details.md`, dist·`claude-plugin` 재생성.
 
 ## 5. 이행 순서
@@ -208,7 +232,7 @@ OS 격리가 아니라는 기존 문구(`docs/ags30-d0019-root-only-design.md:87
   - Codex 판정에서 `parent_thread_id` 검사를 지우면 child 시험이 실패해야 한다.
   - admission 회수에서 DELETE를 SELECT로 바꾸면 재회수 시험이 실패해야 한다.
 
-### 6.2 실호스트(Linux 테스트 서버, Windows 서버는 사용자 알림 뒤)
+### 6.2 실호스트(Linux 테스트 서버, Windows 시험 서버)
 
 공통 채집 장치는 서버의 `binding_check` 진단 이벤트에 `_meta`의 **키 이름과 판정 결과만** 남긴다. 값과 본문은 남기지 않는다.
 
@@ -216,7 +240,7 @@ OS 격리가 아니라는 기존 문구(`docs/ags30-d0019-root-only-design.md:87
 | --- | --- | --- |
 | Codex 0.166(및 설치 버전) | 메인 직접 호출, `functions.exec` 중첩 호출, ThreadSpawn·review subagent 호출, fork·resume 뒤 호출, 병렬 호출 10개, 승인 대기 6분 | 메인은 전부 성공한다(BINDING_REQUIRED 0건). subagent는 `ACTOR_NOT_ROOT`다. Codex 승인 프롬프트가 정책대로 뜬다(D-0180) |
 | Claude Code 2.1.316 | 메인 호출, Agent subagent 호출, `/clear` 뒤 호출, 병렬 호출, 다른 plugin의 PreToolUse가 있는 상태 | 메인은 성공하고 subagent는 deny된다. `/clear` 뒤에는 새 세션 ID로 기록된다. admission 행이 남지 않는다 |
-| agy 1.4.12 | 메인 호출. 서버에서 `tools/call`의 `_meta` 키 목록과 기동 env 키 목록(값 제외)을 채집 | 현행 proof로 성공한다. 채집 결과로 2.2 agy 전환 여부를 정한다 |
+| agy 1.4.12 | 메인 호출, subagent 호출 | 메인은 `_meta` 대화 ID로 성공하고 subagent는 `ACTOR_NOT_ROOT`다 |
 
 각 실행은 대상 commit, 명령, 종료 코드, 진단 줄 수를 남긴다. 실패하면 같은 시험을 되풀이하지 않고 채집한 키 목록과 판정 사유로 원인을 좁힌다.
 
@@ -224,7 +248,7 @@ OS 격리가 아니라는 기존 문구(`docs/ags30-d0019-root-only-design.md:87
 
 | 결함 | 처분 | 근거 |
 | --- | --- | --- |
-| D-0019 | Codex·Claude 해소. agy 잔여 | Codex는 관측된 child 판정(2.2). Claude는 기존 `agent_id` 규칙. agy는 표식이 없어 추론 root가 그대로다 |
+| D-0019 | 해소 | Codex·agy는 `_meta`의 부모 표식으로 관측된 child 판정(2.2, 1.5). Claude는 기존 `agent_id` 규칙 |
 | D-0020 | 해소 | 어떤 호스트에도 allow 출력이 없다 |
 | D-0021 | 해소 | 인자 주입이 없다. admission은 AGS 서버만 회수한다 |
 | D-0033 | 해소(삭제) | transcript-latest 경로 삭제 |
@@ -236,7 +260,7 @@ OS 격리가 아니라는 기존 문구(`docs/ags30-d0019-root-only-design.md:87
 | D-0180 | Codex 해소 | Codex hook 삭제. 실호스트 승인 프롬프트 확인이 종결 조건이다 |
 | D-0302 | 기전 제거. 종결은 실호스트 근거로 | 6.2 Codex 행 |
 | D-0315 | 해소 | Codex root가 observed다 |
-| D-0317 | 거부 부분은 현행 stopgap으로 해소. 호출 ID 부재는 잔여 | agy `_meta` 채집 결과에 따른다 |
+| D-0317 | 해소 | agy 신원이 hook을 거치지 않는다. 호출 ID는 여전히 없지만 결속에 쓰지 않는다 |
 | D-0296 | 실행 관측 token 부분은 삭제로 해소 | 메시지 영수증의 옛 형식 경로는 broker 설계 범위다 |
 | D-0352 | 무관 | 접수·스킬 지침 결함이며 결속과 원인이 다르다 |
 
@@ -251,4 +275,4 @@ OS 격리가 아니라는 기존 문구(`docs/ags30-d0019-root-only-design.md:87
 
 - Codex 판정은 0.164–0.166 소스에 근거한다. 실호스트 채집 전에는 「채집 확인」으로 보고하지 않는다. 다른 버전에서 `_meta` 형식이 바뀌면 거부되고 사유가 남는다. 감시 작업은 두지 않는다.
 - Claude `claudecode/toolUseId`는 공식 문서가 아니라 설치 바이너리 문자열로 확인했다. 바뀌면 `CALL_ADMISSION_MISSING`으로 거부된다.
-- agy는 child 판정과 호출 ID 결속이 없다. 사용자 결정(2026-10-28)의 stopgap 범위 그대로다.
+- agy는 호출 ID가 없어 실행 관측이 없다. agy Windows 채집은 시험 서버 로그인 전이라 하지 못했다(Linux 1.4.12만 확인).
