@@ -81,126 +81,152 @@ ACK 전 lease 재전달은 정상이며 같은 ID·본문을 유지한다. 중�
 문제가 생기면 운영 DB와 키를 지우지 않고 데이터를 보존해 조사한다. 구버전 재설치는 새 발급 ID·재시도 계약을 지킨다는 증거가 아니다. 새 테이블을 삭제하거나 DB를 덮어써서 복구하지 않는다. 실제 설치·실행 process의 후보 확인은 소스 검증과 별도로 수행한다.
 
 
-## wake 알림 수명과 누적 억제
+## wake 알림: 초인종(doorbell) 모델
 
-새 relay는 메시지 본문과 별도로 기존 `wake_nonces`에 managed 알림을 저장한다. 대상당 미관측 알림은 하나이며 뒤따르는 본문은 기존 `messages`에 남는다. 본문 claim, ACK, tool-boundary, turn-end는 managed 알림을 관측하거나 직접 해제하지 않는다. 주입 만료 뒤의 이 활동은 아래 퇴역 규칙의 근거로만 쓴다. board의 `consume-wake`는 nonce 소유 여부만 확인한다.
+3.0의 wake는 "받은함을 보라"는 초인종이다. 본문 전달은 기존 claim/ACK가 맡고, wake는 본문 권한의 경계가 아니다. 본문은 nonce 없이도 턴 종료·도구 경계에서 인수된다. 설계와 근거는 [ags30-wake-doorbell-design.md](ags30-wake-doorbell-design.md)에 있다.
+
+host에 넘긴 표식에는 수신 확인과 취소가 없다. Codex는 대기열을 영속 저장하고 Running·Interrupted·Shutdown 상태에서는 꺼내지 않는다. Claude는 보류한 메시지를 `dialogExpiry`(기본 5분) 뒤에 버린다. agy에는 표식 관측 hook 경로가 없다. 그래서 store는 표식의 소비를 기다리며 슬롯을 영구히 잠그지 않고, 시간과 본문 인수 경계로 슬롯을 비운 뒤 다시 울린다.
+
+시도 하나가 `wake_nonces` 행 하나다. 대상당 활성 시도는 최대 하나이며(UNIQUE `wake_active_target`) 이것은 잠금이 아니라 슬롯이다. 재시도는 항상 새 행과 새 nonce로 하고, 끝난 행은 되살아나지 않는다. board의 `consume-wake`는 상태와 만료를 따지지 않고 이 대상의 표식으로 인식되는지만 확인한다.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> reserved: 현재 presence·relay / target UNIQUE
-    reserved --> started: 현재 세대·lease·claimable 재검사 / CAS commit
-    reserved --> not_submitted: start 전 본문 소진·주입 만료 / 옛 세대의 무효과 예약 종료
-    started --> submitted: adapter 제출 응답
-    started --> unknown: 응답 유실·timeout·crash·불명확 결과
-    started --> reserved: 현재 세대의 확실한 무제출 / 영속 backoff
-    started --> not_submitted: 옛 세대의 exact 무제출 결과 / backoff 보존
-    unknown --> not_submitted: 옛 attempt·epoch의 exact 무제출 결과 / late 없음
-    submitted --> observed: 검증된 실제 hook 도착 / 현재 세대만 원자 claim
-    unknown --> observed: 검증된 실제 hook 도착 / 현재 세대만 원자 claim
-    observed --> observed: 늦은 결과·재소비 거절
-    reserved --> expired_unobserved: 주입 만료+유예 뒤 더 새 live 세대 또는 만료 뒤 활동
-    started --> expired_unobserved: 같은 퇴역 조건
-    submitted --> expired_unobserved: 같은 퇴역 조건
-    unknown --> expired_unobserved: 같은 퇴역 조건
-    expired_unobserved --> expired_unobserved: 검증된 늦은 도착 / late 기록만, claim 없음
+    [*] --> reserved: 울리기 조건 통과 / target UNIQUE
+    reserved --> started: start CAS(조건 재확인)
+    reserved --> released: expires_at 경과(expired)
+    reserved --> not_delivered: 넘기기 전 출생 교체·본문 소진
+    started --> handed_off: 어댑터 handed-off
+    started --> unknown: 어댑터 unknown, 또는 60초 시간 초과
+    started --> not_delivered: 어댑터 not-delivered
+    unknown --> not_delivered: 같은 attempt·epoch의 not-delivered
+    handed_off --> observed: 현재 출생 hook의 표식 도착
+    unknown --> observed: 현재 출생 hook의 표식 도착
+    handed_off --> released: claimed-after-handoff·birth-ended·resend-due
+    unknown --> released: 같은 해제 조건
 ```
 
-`not_submitted`는 저장값 `not-submitted`다. 시작 전 본문 소진·주입 만료 또는 확실한 무제출을 기록하는 종료 상태이며 host 관측으로 계산하지 않는다. reserved에서만 현재 lease 소유자가 기존 nonce와 attempt를 회수할 수 있다. 같은 세대의 relay 교체는 기존 resume과 backoff를 유지하고 옛 소유자의 start를 거절한다. 현재 세대의 definite failure 재시도는 같은 attempt와 영속 backoff를 사용하며 새 dispatch epoch가 늦은 결과를 차단한다. started를 먼저 commit한 뒤에만 adapter를 호출한다. 시작 응답이 유실되었어도 재호출은 새 발송 권한을 만들지 않는다.
+`not_delivered`·`handed_off`는 저장값 `not-delivered`·`handed-off`다. `observed`·`released`·`not-delivered`는 끝난 상태다.
 
-실제 presence의 instance·birth·transport가 교체되면, 시작하지 않은 epoch 0 예약 또는 같은 attempt·epoch의 definite failure로 무효과가 확인된 reserved 행만 종료할 수 있다. 현재 세대의 유효 presence·relay·pending을 확인하는 reserve transaction에서 옛 행을 `not-submitted`로 보존하고 새 nonce·attempt를 따로 만든다. 교체 뒤 들어온 exact definite failure도 옛 binding을 재개방하지 않고 `not-submitted`로 종료한다. 옛 nonce·binding·epoch·started·late·observed·consumed는 바꾸지 않는다. H1에는 retry를 만들지 않으며, H2·H3의 기존 `retry_not_before`는 새 reserve가 deadline 전까지 거절하도록 연결한다. terminal 보관 개수·시간에 따른 prune도 아직 유효한 backoff 행을 제거하지 않는다. deadline 뒤에는 기존 terminal 보관 규칙을 따른다.
+### 시도 상태
 
-Codex의 definite failure는 process spawn 전 오류, Claude의 definite failure는 연결·쓰기 전 실패에 한정한다. spawn·연결·쓰기 뒤 오류나 timeout, adapter 예외는 무효과 근거가 아니다. 단순 lease 소실·TTL·ACK는 세대 교체나 무효과 증명을 대신하지 않으며, submitted·근거 없는 unknown·late·종료 행을 재개방하지 않는다.
+| 상태 | 의미 |
+| --- | --- |
+| `reserved` | 울리기로 정했고 아직 넘기지 않았다. 외부 효과가 없다. |
+| `started` | start CAS를 통과했고 어댑터를 호출하는 중이다. |
+| `handed-off` | host가 받았다고 응답했다. 소비 여부는 모른다. 전달이 아니다. |
+| `unknown` | 넘긴 결과를 알 수 없다. |
+| `observed` | 현재 출생의 hook이 이 표식을 봤다. |
+| `released` | 관측 없이 끝났다. `release_reason`이 붙는다. |
+| `not-delivered` | 확정적으로 넘기지 못했다. 외부 효과가 없다. |
 
-submitted는 host의 처리 ACK가 아니다. started 이후 불확실한 효과는 unknown으로 보존하고, relay나 broker 재시작, 본문 ACK, 메시지 만료, nonce 만료 하나만으로 새 발송을 허용하지 않는다. 아래 [퇴역 규칙](#미관측-알림-퇴역과-자동-깨우기-신호)의 만료·유예·근거가 모두 갖춰질 때만 새 attempt를 예약한다. nonce에는 대상, instance, presence의 birth generation, relay, attempt, dispatch epoch를 저장한다. 메모리 Map은 이 알림 수명의 원장이 아니다.
+- relay는 start CAS 때 transport 포트가 선언한 `resendBaseMs`를 `start-wake`에 넘기고, 결과를 `record-wake-outcome`에 넘길 때도 같은 값을 보낸다. broker는 양의 정수이고 24시간(`WAKE_RESEND_MAX_MS`) 이하가 아니면 요청을 거부한다. hook이 보낸 값은 쓰지 않는다.
+- `started`가 60초(`WAKE_START_TIMEOUT_MS`) 안에 결과를 받지 못하면 `unknown`이 되고, 이때 `outcome_at`과 `resend_due_at`을 함께 쓴다. 이 값은 어댑터 호출 timeout(5~10초)보다 길다.
+- 결과 기록은 `started`나 `unknown`이고 attempt와 dispatch epoch가 같은 행에만 적용한다. 끝난 행에 늦게 온 결과나 start는 행을 바꾸지 않는다. 출생 상태(아래)는 attempt와 epoch가 맞으면 갱신하므로 늦게 온 실패도 재시도 대기와 실패 집계에 들어간다.
+
+### 넘긴 결과 분류
+
+어댑터는 `handed-off`, `unknown`, `not-delivered{kind, reasonCode}` 셋 중 하나만 돌려준다. `handed-off`나 `unknown`을 기록하면 출생 상태의 연속 실패 수를 0으로 되돌린다.
+
+- `not-delivered`·`transient`: 연속 실패 수를 1 늘리고 backoff(상한 10분) 뒤에 다시 시도한다. 연속 5회(`WAKE_FAILURE_LIMIT`)에 닿으면 보고는 `degraded`/`wake-failing`이고, 생존성을 위해 backoff 상한으로 계속 시도한다. 예: 시작 직후 Codex의 `No active session found`.
+- `not-delivered`·`prerequisite-missing`: 이 출생의 실행 환경에 필수 조건이 없다(실행 파일 ENOENT, messaging socket·token env 없음, project id·agentapi 없음, 메타데이터 불일치). 이 출생 동안 다시 울리지 않고 보고는 `degraded`/`wake-prerequisite-missing`이다. 출생이 바뀌면 다시 시도한다.
+
+`unsupported`는 결과 값이 아니라 능력 선언(`idleWake: none`이거나 `peer-wake` 미지원)에서만 나온다.
+
+### 출생별 깨우기 경로 상태
+
+`wake_paths` 표는 (host, session, instance, birth generation)마다 연속 무응답 수(`streak`), 연속 실패 수(`failures`), backoff 끝 시각(`retry_not_before`), 전제조건 결손 사유(`prerequisite_missing`), 마지막 본문 인수 경계 시각(`claim_boundary_at`)을 둔다. 새 출생은 0에서 시작한다. prune은 최신 live 출생이 아니면서 활성 시도도 없는 행을 지운다.
+
+`claim_boundary_at`은 `claimTurnEnd`, `claimHostWake`, 건너뛰지 않은 `claimDeferred`가 쓴다. MCP `claim`은 현재 live 출생이 있을 때만 그 출생에 쓴다. `observeNativeInput`, `clearDeferred`, 건너뛴 `claimDeferred`는 활동만 기록하는 경로라서 경계가 아니다.
+
+### 울리기 조건
+
+reserve할 때 보고 start CAS 안에서 다시 확인한다.
+
+1. 현재 출생의 presence가 online이고, relay lease가 live이고, `peer-wake`를 지원한다.
+2. 인수할 수 있는 본문이 있다.
+3. 활성 시도가 없다.
+4. 출생 상태에 `prerequisite_missing`이 없고 `retry_not_before`가 지났다.
+5. 조용함: `claim_boundary_at`이 60초(`WAKE_QUIET_MS`)보다 이전이다. 인수 가능한 본문 중 가장 오래된 것이 10분(`WAKE_QUIET_MAX_MS`)보다 오래 기다렸으면 이 조건을 무시한다. 이것은 바쁜 세션에 표식을 덜 쌓는 최적화이고 정확성 조건이 아니다. hook이 없는 긴 작업(Codex의 긴 단일 도구 호출)은 이 조건으로 알 수 없다.
+
+### 넘긴 시도의 해제와 재울림
+
+`handed-off`·`unknown` 행은 다음 가운데 하나가 참이면 `released`가 된다.
+
+| `release_reason` | 조건 |
+| --- | --- |
+| `claimed-after-handoff` | 출생 상태의 `claim_boundary_at`이 넘긴 시각(`outcome_at`) 이후다. 그 경계에서 대기 본문은 인수됐다. 표식 소비의 증거는 아니다. agy처럼 표식을 관측하지 못하는 host는 이 조건으로 슬롯을 비운다. |
+| `birth-ended` | 시도의 출생이 더 이상 최신 live 출생이 아니다. |
+| `resend-due` | `resend_due_at`이 지났다. |
+
+`resend_due_at`은 `outcome_at + min(resendBaseMs × 2^streak, 24시간)`이다. `resend-due`로 끝나면 `streak`가 1 늘고, `observed`, `claimed-after-handoff`, 넘긴 시각 이후의 표식 도착 인수에서 0으로 돌아간다. `birth-ended`와 `not-delivered`는 streak를 바꾸지 않는다. 그래서 응답 없는 출생에 넘긴 시도 수는 `⌈log2(경과 시간/base)⌉ + 1` 이하이고, 24시간 상한에 닿은 뒤로는 하루 1개다. 조용한 live 세션은 무한정 막히지 않는다.
+
+| transport | 넘기기 | `resendBaseMs` |
+| --- | --- | --- |
+| `codex-queue` | `codex queue --thread` | 20분 |
+| `claude-inbox` | messaging socket(`priority:"next"`) | 10분 |
+| `antigravity-queue` | `agentapi send-message` | 10분 |
+| `codex-deferred`, `gemini-deferred` | 없음(`idleWake: none`) | — |
+
+`reserved`는 `expires_at`이 지나면 무조건 `released`(이유 `expired`)가 된다. 넘기기 전에 다른 출생으로 바뀌었거나 본문이 모두 인수됐으면 `not-delivered`로 끝난다. 해제는 reserve·send·status 같은 기존 prune 지점에서 일어난다. 조회 도구인 `list_session_status`와 `get_session_message_status`도 prune을 부르므로 만료 기록 삭제와 해제를 일으킬 수 있다. 이 정리는 멱등이다.
+
+공통 relay는 outcome·capability·dispatch 포트만 쓴다. transport 등록과 vendor 연결은 `wake-transport-*` 모듈과 조립 모듈 `wake-transports.ts`에 두고, 공통 상태에는 vendor 분기가 없다. 이 경로는 host 대기열의 목록·취소·삭제를 호출하지 않는다.
 
 ### hook 관측 경계
 
-관측은 실제 `UserPromptSubmit` hook에서 adapter가 해석한 marker-only 입력과 기존 TrustStore의 비권위 source receipt를 함께 보낸다. broker는 저장된 서명·대상·정규화한 관측 digest·receipt TTL을 검증한 뒤 `BEGIN IMMEDIATE` 안에서 nonce, 현재 presence instance/birth generation과 claim 가능 본문을 확인한다. 일반 caller의 `approved`, normalized 입력 자칭, nonce 문자열만으로 managed observed를 만들 수 없다. 일반 peer 본문 receipt도 wake hook receipt로 사용할 수 없다. receipt 발급은 hook 코드에 있으며 공개 MCP 발급 도구는 없다.
+관측은 실제 `UserPromptSubmit` hook에서 adapter가 해석한 marker-only 입력과 기존 TrustStore의 비권위 source receipt를 함께 보낸다. broker는 저장된 서명·대상·정규화한 관측 digest·receipt TTL을 검증한 뒤 `BEGIN IMMEDIATE` 안에서 nonce, 현재 presence instance/birth generation과 claim 가능 본문을 확인한다. 일반 caller의 `approved`, normalized 입력 자칭, nonce 문자열만으로 관측을 만들 수 없다. 일반 peer 본문 receipt도 wake hook receipt로 사용할 수 없다. receipt 발급은 hook 코드에 있으며 공개 MCP 발급 도구는 없다.
 
-receipt는 `authorityEffect: none`이다. 이 검사는 협력하는 로컬 hook 경로의 liveness provenance를 결속한다. 같은 OS 사용자가 코드를 실행하거나 source key를 변조할 수 없다는 보장, 사용자 승인·신원·업무 완료·W06 권위 채널 자격을 만들지 않는다. host payload에 instanceId가 없다는 한계를 숨기지 않고 nonce의 영속 결속과 현재 presence를 대조한다.
+receipt는 `authorityEffect: none`이다. 이 검사는 협력하는 로컬 hook 경로의 liveness provenance를 결속한다. 같은 OS 사용자가 코드를 실행하거나 source key를 변조할 수 없다는 보장, 사용자 승인·신원·업무 완료·W06 권위 채널 자격을 만들지 않는다.
 
-현재 세대의 관측과 본문 claim은 하나의 transaction이며 batch/response budget 오류가 나면 둘 다 rollback한다. nonce는 한 번만 관측되고, 현재 세대의 알림이 해당 시점의 claimable batch를 전달한다. 빈 wake prompt를 막을 수 있는 host(delivery profile의 `blocksEmptyWakePrompt`, 현재 Codex)에서 현재 세대 managed wake가 검증되어 `recognized: true`이고 원자 claim 결과가 비어 있으면, hook은 `UserPromptSubmit`의 `decision: block`으로 해당 marker prompt를 모델 요청 전에 중단한다. 내부 응답의 `managed` 값은 검증된 `WakeAttempt` binding의 존재만 나타내며 새 권한이나 host queue 제거 영수증이 아니다. 본문이 있으면 기존 peer envelope를 전달한다. legacy, 이미 관측한 중복, 옛 세대·만료 marker, 미등록 nonce, 잘못된 receipt, 일반 입력과 marker가 섞인 prompt, broker 오류는 이 차단 조건에 들어가지 않는다. 차단하지 않은 입력은 기존 fail-open 처리를 따르며, 검증된 옛 도착의 종료는 다음 문단의 별도 규칙을 적용한다. 지원 의미는 [공식 Codex Hooks 문서](https://learn.chatgpt.com/docs/hooks#userpromptsubmit)를 따른다. `Stop`의 같은 decision은 continuation을 뜻하므로 이 처리에 사용하지 않는다. batch 밖 본문과 ACK가 유실된 본문은 기존 claim lease 규칙에 따라 안전한 boundary에서 전달할 수 있다. 메시지 전달 자체를 exactly-once 업무 실행으로 확대하지 않는다.
+- 현재 출생의 표식: 검증된 표식의 행이 현재 presence와 결합(instance·birth·transport·online·peer-wake)이 같으면 대기 본문을 인수한다. 행의 상태와 nonce 만료는 따지지 않는다. 활성 행이면 `observed`로 바꾸고, 이미 끝난 행이면 `late_observed_at`만 기록한다. 출생 상태의 `claim_boundary_at`도 갱신한다. 관측과 본문 claim은 한 transaction이며 batch/response budget 오류가 나면 둘 다 rollback한다.
+- 다른 출생의 표식: 본문을 인수하지 않고 도착 증거만 남긴다.
+- 끝난 행은 24시간(`WAKE_RESEND_MAX_MS`) 동안, 최대 1000행까지 보관한다. 보관 기간이 지난 뒤 도착한 표식은 미등록 nonce로 인식되지 않고 본문도 인수하지 않는다.
+- 인수한 본문이 없고 행이 모두 끝난 상태면 응답에 `retired: true`가 붙는다. claim lease가 만료된 뒤 늦게 온 표식은 기존 재전달 규칙(lease 만료 → 재인수)처럼 본문을 다시 받을 수 있다. 중복 처리는 receipt·ACK와 수신자의 messageId 기준 중복 제거로 막는다.
 
-만료 또는 옛 generation marker도 서명·대상·관측 digest·receipt TTL과 전체 nonce 검증을 통과한 실제 hook 도착이면 해당 managed attempt를 `observed`로 종료한다. `observedAt`, `consumed_at`과 `lateObservedAt`을 저장하지만 `recognized: false`, 빈 messages와 binding을 반환하므로 새 본문 claim, 현재 세대의 resume 관측이나 Codex prompt 차단을 허용하지 않는다. 이후 새 pending의 wake는 현재 presence·relay·claimable 검사를 거쳐 별도로 reserve/start한다. 옛 marker의 재소비나 늦은 outcome은 새 attempt를 바꾸지 못한다. 미등록 nonce가 섞인 batch, 잘못된 receipt·대상, 일반 입력이 섞인 prompt는 종료 근거가 아니며, 실제 도착이 없는 unknown은 ACK·세대 교체·lease·TTL 가운데 하나만으로 해제하지 않는다. 해제는 아래 퇴역 규칙으로만 하며 `observed`로 바꾸지 않는다. 관측 기한이 지난 미확정 상태는 `observation-overdue`로 표시한다. 관측 기한은 주입 만료, 또는 host에 넘긴 시각(`outcome_at`, 응답이 없으면 `started_at`)부터 관측 창 60초 가운데 먼저 오는 쪽이다. idle host가 알림을 처리하면 hook timeout, hook receipt TTL과 host queue polling 안에 hook에 도착한다. 관측 창이 지나도 도착하지 않은 알림은 broker가 볼 수 없는 host 상태(실행 중, 중단, 미적재 세션)를 기다리는 것이므로 진행 중으로 보고하지 않는다. 관측 창은 표시에만 쓴다. 누적 억제, 퇴역과 주입 만료는 바꾸지 않는다. `wake-status`와 메시지 status의 `wake` diagnostic에 상태·generation·attempt·시작 시각(`startedAt`)·제출 결과 시각(`outcomeAt`)·주입 만료·재시도 시각·관측 시각을 표시하며 본문이나 nonce는 포함하지 않는다. 메시지 status의 `wake`는 그 메시지의 알림이 아니라 대상의 최신 알림이다. `startedAt`이 메시지 생성보다 이르면 앞선 알림이 자리를 차지해 이 메시지로는 새 알림이 나가지 않았다는 뜻이다.
+delivery profile의 `blocksEmptyWakePrompt`가 켜진 host의 hook은 현재 managed wake가 검증됐는데 인수한 본문이 없거나(`recognized: true`, 빈 messages), 끝난 시도의 marker만 왔을 때(`retired: true`) `UserPromptSubmit`의 `decision: block`으로 그 marker prompt를 모델 요청 전에 막는다. host 화면에 marker가 한 번 보이는 것은 막지 않는다. 현재 내장 어댑터(Claude·Codex·Gemini·Antigravity)는 모두 이 값을 끈다. 따라서 지금은 빈 wake prompt를 막지 않고 기존 fail-open 처리를 따른다. `Stop`의 같은 decision은 continuation을 뜻하므로 이 처리에 쓰지 않는다. 메시지 전달 자체를 exactly-once 업무 실행으로 확대하지 않는다.
 
-### capability와 이관
+`wake-status`와 메시지 status의 `wake` diagnostic은 대상의 최신 시도의 상태·해제 이유·시각을 보여 주며 본문이나 nonce는 포함하지 않는다. 메시지 status의 `wake`는 그 메시지의 알림이 아니라 대상의 최신 알림이다.
 
-| adapter | 주입과 idle 깨우기 | 제출 후 의미 |
+### capability
+
+| adapter | 주입과 idle 깨우기 | 넘긴 뒤 의미 |
 | --- | --- | --- |
-| claude-inbox | peer-wake·tool-boundary·turn-end, silent next | 실제 peer-wake hook 관측 필요 |
-| codex-queue | peer-wake·tool-boundary, user-message | 실제 peer-wake hook 관측 필요 |
-| codex-deferred | tool-boundary만, idle wake 없음 | idle 알림 발송 0 |
-| gemini-queue | peer-wake·tool-boundary, user-message | 실제 peer-wake hook 관측 필요 |
+| claude-inbox | peer-wake·tool-boundary·turn-end, silent next | `handed-off`는 전달이 아니다 |
+| codex-queue | peer-wake·tool-boundary, user-message | `handed-off`는 전달이 아니다 |
+| codex-deferred | tool-boundary만, idle wake 없음 | idle 알림 발송 0, `unsupported` |
+| antigravity-queue | peer-wake·tool-boundary, user-message | 관측 hook이 없어 `claimed-after-handoff`·`resend-due`로 해제 |
+| gemini-deferred | idle wake 없음 | idle 알림 발송 0, `unsupported` |
 
-공통 relay는 outcome/capability/dispatch port만 사용한다. transport 등록과 vendor SDK·protocol은 adapter 모듈에 둔다. 다른 vendor도 같은 port를 주입할 수 있으며 공통 알림 상태에 vendor 분기를 추가하지 않는다. 이 경로는 host queue 목록·취소·삭제를 호출하지 않는다.
-
-이관은 기존 DB에 컬럼과 active target UNIQUE를 transaction으로 추가한다. 기존 nonce는 `legacy`이며 옛 consumed_at을 observed로 가져오지 않는다. 기존 queued marker는 자연 소진한다. legacy 종료에는 새 누적 억제 보장을 소급하지 않는다. 활성 managed 행과 아직 backoff가 끝나지 않은 무제출 종료 행은 함께 기존 1000개 budget을 사용하며 초과는 명시적으로 거절한다. 미확정 행과 유효한 backoff 행은 TTL prune에서 제외한다. 나머지 종료 기록은 최대 1000개, 종료 후 1시간까지 보관한다. 관측 종료 기록의 보관 기산점은 `consumed_at`이며 과거 도착 시각과 복구 적용 시각을 혼동하지 않는다. 이관 실패는 추가 컬럼과 index를 rollback하며 기존 본문·nonce를 보존한다. 운영 DB 삭제·덮어쓰기나 구버전과 혼용한 자동 rollback은 제공하지 않는다.
-
-### 과거 late 관측의 수동 복구
-
-구버전이 실제 hook 도착을 `late_observed_at`에 기록하고도 `unknown`으로 남긴 이전 generation은 기존 CLI의 `reconcile-wake-observation`으로 종료할 수 있다. stdin payload는 `target: {host, sessionId}`, `attemptId`, 원본 `sourceReceiptId` 세 필드만 받는다. 시각·nonce·관측 객체·raw receipt·승인 boolean은 받지 않는다. CLI는 같은 인증된 broker에 요청만 전달하고, 공통 store와 provenance 검증이 판단한다. 자동 startup 복구, 벤더 분기와 MCP 복구 도구는 없다.
-
-서버가 저장한 원본 binding·nonce·epoch·`unknown` 상태·late 기록을 읽는다. 기존 trust DB를 `readOnly`와 `query_only`로 열어 한 read transaction의 기존 키·영수증을 같은 서명 검증으로 확인한다. DB·키·영수증이 없거나 검증되지 않으면 종료하지 않으며 schema·키·영수증을 생성하거나 재발급하지 않는다. 이 불변 조건은 권위 데이터에 적용한다. SQLite가 read-only WAL 연결에도 생성할 수 있는 WAL/SHM 조정 파일은 별도로 관측하며, 그것을 새 receipt·key·schema 쓰기로 계산하거나 모든 WAL 변화를 무시하지 않는다. checkpoint·journal mode 변경·live DB의 immutable 우회는 사용하지 않는다. 별도 trust snapshot과 메시지 DB transaction을 두 DB의 원자적 변경이라고 설명하지 않는다.
-
-`started ≤ 원본 observed ≤ 서버 late < receipt expiry ≤ 복구 적용 시각`과 exact target·adapter·authority `none`을 요구한다. 원본 nonce 하나로 기존 정규화를 재구성하고, 서명된 digest와 정확히 일치하는 actor 후보가 하나일 때만 인정한다. actor 기본값이나 nonce 부분집합을 추정하지 않으며 복원할 수 없는 다중 nonce 관측은 거절한다. 현재 hook의 receipt TTL 검사는 그대로 유지한다. 이 검사는 현재 키 snapshot으로 과거의 비권한 관측을 확인하며 승인·신원 증거를 만들지 않는다.
-
-메시지 DB transaction 안에서 대상이 여전히 이전 instance/birth generation인지와 원본 binding·epoch·상태·late 값을 다시 검사해 해당 행만 `observed`로 CAS한다. `observed_at`은 원본 관측 시각, `consumed_at`은 복구 적용 시각이며 기존 late·outcome은 보존한다. 결과의 `evidence`에는 원본 source ID·digest·old binding과 세 시각이 남고 nonce·서명 키는 없다. 중복 호출은 `reconciled: false`를 반환한다. 복구는 본문 claim·현재 binding 관측·peer-wait resume·enqueue를 수행하지 않는다. 다음 pending은 현재 presence·relay·claimable 검사를 통과하는 기존 reserve/start로만 처리하며, 옛 attempt의 늦은 outcome은 재개방 근거가 아니다.
+antigravity의 queue wake 설정 env는 `AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE`다. 3.0은 옛 transport 이름 `gemini-queue`와 옛 env 이름을 받지 않는다.
 
 ### 보장과 남은 조건
 
-`started`·`submitted`·`unknown`은 호스트 입력 대기열에 표식이 남았을 수 있는 상태다. 세대 교체, 주입 만료, 일반 사용자 입력, 도구 경계, 본문 claim이나 ACK는 해당 표식의 소비·삭제 증거가 아니다. 이 사건들만으로는 아래 시간 경계 전에 기존 잠금을 풀어 새 표식을 제출하지 않는다. 현재 세대의 검증된 표식은 기존 관측 경로로 처리하고, 이전 세대의 검증된 늦은 도착은 옛 시도를 닫되 현재 세대의 본문 인수 권한을 부여하지 않는다.
+- 위조한 nonce나 출처를 세탁한 표식으로 본문을 인수할 수 없고, 이전 출생의 표식은 현재 출생의 본문을 인수할 수 없다.
+- 독립된 두 연결이 동시에 울려도 외부 호출은 한 번이다(start CAS). 결과를 기록한 뒤 응답을 잃어도 바로 다시 울리지 않는다.
+- 미확인을 성공으로 보고하지 않는다. `handed-off`·`unknown`·`released`는 전달·소비의 증거가 아니고, status의 `deliveryState`를 바꾸지 않는다.
+- Esc로 중단된 Codex 세션은 사용자가 재개할 때까지 어떤 설계로도 깨울 수 없다. 상태는 `wake-unanswered`로 보인다.
+- Codex의 긴 단일 도구 호출 중에는 hook이 없어 조용함 조건이 동작하지 않는다. 그동안 붙잡힌 표식 1개가 턴이 끝날 때 나갈 수 있다.
+- Claude 소켓의 `priority:"next"`와 agy의 `agentapi send-message`는 공개 계약이 아니다. 독립 모드는 시계가 단조가 아니어서, 시계가 뒤로 가면 그 폭만큼 상한이 늘어난다.
+- 이 저장소 불변조건은 실제 host 대기열 항목 수의 실측을 대신하지 않는다. 적용 전 잔류 항목과 혼합 writer는 별도 검증 대상이다.
 
-이 보수 규칙은 호스트 대기열 항목을 조회·삭제·병합하지 않는다. 호스트가 표식을 실제로 버렸거나 대기열에 붙잡아 두었는데(예: Codex는 중단·실행 중인 스레드의 대기열을 비우지 않는다) 그 사실을 확인할 수 없으면, 새 자동 깨우기는 넘긴 시각(`outcome_at`, 없으면 `started_at`)에서 유예 10분이 지날 때까지 보류된다. 그 뒤에는 시간만으로 잠금을 풀어 새 깨우기를 하나 허용한다. 조용한 세션은 깨우기 없이는 활동을 만들 수 없으므로, 이 상한이 없으면 표식 하나를 잃은 세션이 영구히 깨어나지 않는다(2026-11-01 이 PC의 유휴 Codex 세션 5개에서 관측). 10분은 기본 메시지 TTL(1시간) 안이라서 잠금을 일으킨 메시지도 만료 전에 다시 깨울 수 있다. 같은 출생 세대에서 바로 앞 시도가 관측 없이 퇴역한 뒤 예약된 시도(`prior_unobserved`)는 주입 만료와 유예(예약 뒤 약 70분)까지 보류한다. 그래서 호스트 대기열에 붙잡힌 표식은 기본 TTL 메시지당 약 2개, 최대 TTL에서도 하루 약 22개로 제한된다. 표식은 대기 메시지가 있을 때만 나가며, 퇴역한 표식이 늦게 도착하면 증거로만 기록하고 본문을 인수하지 않는다. 정확한 항목의 소비·회수 확인, 늦은 제출까지 차단하는 취소, 원자적 교체·멱등 제출 등 전송 경로의 보증이 추가로 필요하다. 공식 호스트에 조회·삭제 기능이 있어도 현재 어댑터가 그 결과를 결속하지 않으면 사용한 보증이 아니다. 목록 부재나 삭제 성공만으로 응답이 불명확한 옛 요청의 늦은 제출까지 차단됐다고 추론하지 않는다.
+### 자동 깨우기 신호(autoWake)
 
-### 미관측 알림 퇴역과 자동 깨우기 신호
-
-D0353은 세대 교체와 무관한 일반 활동에 따른 해제를 함께 차단한다. 외부 효과가 가능한 시도는 정확한 표식의 검증된 관측이나 기존 확정 무제출 경로가 처리할 때까지 활성 행으로 남는다. 활성 행은 종료 행의 시간·개수 정리 대상이 아니므로 정리만으로 새 제출 자리가 생기지 않는다. 본문이 모두 처리되거나 만료되어도 그 사실은 남아 있는 표식의 소비를 뜻하지 않는다.
-
-외부 제출 전인 `reserved`는 기존 만료·재시도 규칙을 유지한다. 퇴역 조건은 두 가지를 모두 요구한다.
-
-`started`·`submitted`·`unknown`은 넘긴 시각에서 유예가 지나면(연속 미관측 시도는 주입 만료와 유예가 지나면) 시간만으로 퇴역한다. 그 전에는 검증된 표식의 도착 근거가 필요하며, 일반 활동, 새 세대·종료·임대 만료·presence 행 삭제와 무관하게 미관측 잠금을 유지한다. 확정 실패의 기존 재시도·대기 시간은 유지한다.
-
-1. 알림의 주입 만료(`expires_at`, 예약 뒤 1시간)에 유예 10분을 더한 시각이 지났다. 유예는 hook 8초 timeout, broker 재시작, hook receipt 30초 TTL을 덮고, 가장 긴 재시도 backoff와 같다.
-2. 다음 근거 가운데 하나가 저장되어 있다.
-   - 같은 대상의 최신 presence 행(birth 기준)이 더 이상 알림을 받은 birth의 살아 있는 행이 아니다. 새 birth가 최신이거나, 알림의 birth가 끝났거나(`ended_at`) lease가 끊겼거나, 행이 모두 지워진 경우다. 판정은 instance와 birth generation으로 하고 transport는 보지 않는다. 살아 있는 birth는 같은 세대로 transport를 바꿨다가 되돌릴 수 있기 때문이다.
-   - 만료 뒤 같은 세션의 활동이 있었다. 이 조건은 외부 효과가 가능한 시도의 표식별 소비 증거를 대신하지 않는다. 인계 뒤 관측창 경과와 이전 본문의 처리 여부만으로도 미관측 시도를 퇴역하지 않는다.
-
-활동 근거는 권위가 아니며 신뢰 수준은 같은 OS 사용자다. 같은 OS 사용자의 프로세스는 CLI로 다른 세션의 활동 근거도 만들 수 있다.
-
-끝났거나 lease가 끊긴 birth는 다시 살아나지 않는다. heartbeat는 살아 있는 행만 갱신하고, 같은 instance의 재등록은 더 늦은 새 birth를 받는다. 그러나 호스트의 대기열은 그 세대를 넘어 남을 수 있으므로 세대 교체만으로는 외부 효과가 가능한 알림을 퇴역하지 않는다. 퇴역은 `prune`의 UPDATE 한 문장으로 원자 commit하며, reserve·send·status 같은 기존 prune 지점에서 일어난다. 조회 도구인 `list_session_status`와 `get_session_message_status`도 prune을 부르므로 만료 기록 삭제와 퇴역을 일으킬 수 있다.
-
-활동 기록의 실제 진입점은 `claim`, `observeNativeInput`, `claimDeferred`, `claimTurnEnd`, `clearDeferred`, 성공 수가 양수인 `acknowledge`, 출처와 행 검증을 통과한 `claimHostWake`다. 빈 claim이나 도구 경계도 세션의 실제 실행 활동으로 기록하지만 ACK 실패는 기록하지 않는다. `SessionStart`, relay 기동·획득·tick, presence 시작·heartbeat는 활동이 아니다. Codex와 Claude의 입력·도구 경계, Claude의 턴 종료가 해당 진입점으로 연결된다. agy는 `PreInvocation`·`PostInvocation`과 정상 종료를 도구 경계로 바꾸며, 취소·오류 종료는 제외한다. 검증된 옛 marker의 관측은 현재 세대 본문 인수나 권한을 부여하지 않는다.
-
-전송 경로의 재시작 후 대기열 소멸을 입증한 근거가 없으면 보수적으로 잠금을 유지한다. 호스트 이름만으로 예외를 만들지 않는다. 대기열이 실제로 소멸한 경우에도 정확한 표식의 관측이나 확정 무효과 근거가 없으면 위 시간 경계까지 자동 깨우기가 보류된다. 세대 변경이나 일반 활동으로 소멸을 추론하거나 이 제약을 전달 성공으로 보고하지 않는다. 소멸을 입증하는 전송 경로가 생기면 기존 전송 어댑터 경계에서 별도로 검토한다.
-
-대상당 활성 알림은 하나이며 미관측 외부 효과가 남은 동안 위 시간 경계 전에는 일반 활동으로 새 자리를 만들지 않는다. 따라서 대기 메시지가 있는 동안 세션마다 첫 10분에 1개, 그 뒤 약 70분마다 1개의 표식이 더 쌓일 수 있다. 이 저장소 불변조건은 실제 호스트 대기열 항목 수의 실측을 대신하지 않는다. 적용 전 잔류 항목, 혼합 writer, 전송 경로의 중복 제출 가능성은 별도 검증 대상이다.
-
-퇴역한 행은 새 terminal 상태 `expired-unobserved`가 된다. `observed`나 성공으로 바꾸지 않고, status의 `deliveryState`는 계속 `unknown`이다. nonce, instance, birth generation, transport, relay, attempt, dispatch epoch, started·outcome·late 시각은 그대로 두고 `retired_at`만 더한다. 옛 attempt의 늦은 outcome이나 start는 이 행을 다시 열지 못한다. terminal 보관 규칙(최대 1000개, 퇴역 후 1시간)을 따르며, 보관 기산점은 `retired_at`이다. 이미 `late_observed_at`이 있는 v2.7.1 모양의 unknown도 같은 규칙으로 퇴역하며, 그 뒤 `reconcile-wake-observation`은 `reconciled: false`를 돌려준다. late 기록은 행에 그대로 남는다.
-
-퇴역한 nonce가 늦게 도착하면 hook receipt·대상·digest·nonce 검증을 모두 통과한 경우에만 `late_observed_at`을 한 번 기록한다. 상태는 `expired-unobserved`로 두고, prompt의 marker가 모두 퇴역한 경우 응답은 `recognized: false`, 빈 messages, binding 없음과 `retired: true`다. 퇴역 marker와 현재 marker가 한 prompt에 섞이면 퇴역 행은 late만 기록하고 판정에서 빠지며, 나머지 marker가 현재 세대로 유효하면 평소처럼 관측과 본문 claim을 한다. 나머지가 유효하지 않으면 옛 세대·만료 marker의 늦은 도착 규칙을 따르고 `retired`를 붙이지 않는다. 이 도착은 현재 세대 본문을 대신 claim하거나 현재 세대의 도착을 증명하는 근거가 아니다. 모든 marker가 퇴역한 경우에만, 빈 wake prompt를 막을 수 있는 host(delivery profile의 `blocksEmptyWakePrompt`, 현재 Codex)의 hook이 이 검증된 marker-only 입력을 2.7.2의 빈 wake와 같은 `decision: block`으로 모델 요청 전에 막는다. host 화면에 marker가 한 번 보이는 것은 막지 않는다. 따라서 중복 wake의 비용은 보이는 알림 한 번이다. 현재 본문은 퇴역과 함께 예약된 현재 세대 wake나 다음 안전한 boundary에서 전달된다. Claude는 차단하지 않고 기존 fail-open 처리를 따른다. 퇴역 행이 보관 기간 뒤 삭제된 다음에 도착한 marker는 미등록 nonce로 거절되어 2.7.2처럼 차단하지 않는다.
-
-거절한 대안은 다음과 같다.
-
-- 만료·세대 변경·일반 활동만으로 해제: 이전 표식이 남은 대기열에 새 표식을 더할 수 있다.
-- `observed`나 `not-submitted`로 해제: 도착이나 무효과의 증거가 없는데 그렇게 기록하게 된다.
-- broker가 relay 없이 직접 깨우기: host 생존과 알림 발송을 묶은 설계를 깨므로 만들지 않는다.
-- 같은 세대에서 활동 없이 relay만 살아 있어도 해제: idle host의 queue에 marker가 남아 있을 가능성을 배제하지 못한다.
-- 알림을 받은 instance의 행만 보고 판정: 그 행이 살아 있어도 더 늦은 birth가 최신이면 relay tick과 claim이 모두 거절되므로, 그 birth가 끝날 때까지 풀리지 않는 활성 행이 남는다. 최신 행 하나로 판정하면 presence·claim과 같은 행을 보고, 따로 규칙을 둘 필요도 없다.
-
-퇴역은 broker가 하는 prune에서만 일어난다. 이전 writer가 같은 DB를 쓰면 일반 활동이나 세대 변경만으로 퇴역시킬 수 있으므로 혼합 writer의 누적 방지는 보장하지 않는다. 적용 전 생산자 종료는 별도 운영 절차다. 이미 퇴역·삭제된 행이나 호스트에 제출된 대기열 항목은 이 변경으로 복원·삭제하지 않는다. 안전성 부분수리와 미관측 소멸 경로의 생존성 공백을 구분하며, 소스 변경이나 합성 시험만으로 실제 대기열 누적 문제의 해결을 선언하지 않는다.
-
-`send_session_message`의 결과와 `get_session_message_status`의 미ACK 큐 행, 세션 현황판의 presence에는 조언용 `autoWake`가 붙는다. 계약은 `contracts/session-auto-wake-outlook.v1.schema.json`이며 `authorityEffect: "none"`이다. 발신 성공은 broker가 큐에 넣었다는 뜻이고, `autoWake`는 수신자가 지금 idle 상태에서 자동으로 깨워질 수 있는지에 대한 조언일 뿐이다. 전달, 처리, 완료, 승인이나 권한의 증거가 아니고, 큐의 메시지를 지우거나 다시 보내지 않는다.
+`send_session_message`의 결과와 `get_session_message_status`의 미ACK 큐 행, 세션 현황판의 presence에는 조언용 `autoWake`가 붙는다. 계약은 `contracts/session-auto-wake-outlook.v2.schema.json`이며 `authorityEffect: "none"`이다. 발신 성공은 broker가 큐에 넣었다는 뜻이고, `autoWake`는 수신자의 idle 깨우기 경로를 지금 쓸 수 있는지에 대한 사실만 보고한다. 예측하지 않는다. 전달, 처리, 완료, 승인이나 권한의 증거가 아니고, 큐의 메시지를 지우거나 다시 보내지 않는다.
 
 | state | reason | basisAt |
 | --- | --- | --- |
-| `available` | `relay-live`: live relay가 새 wake를 예약할 수 있다 | relay lease 갱신 시각 |
-| `available` | `wake-in-flight`: 현재 세대 알림이 관측 기한 안에 있다 | 그 알림의 주입 만료 |
-| `available` | `retry-backoff`: 확실한 무제출 뒤 대기 중이다 | 재시도 가능 시각 |
-| `latched` | `wake-unobserved`: 현재 세대가 아니거나 관측 기한이 지난 이전 알림이 새 wake를 막고 있다. 수신자는 스스로 다음 turn이나 도구 경계에 이를 때까지 새 알림을 받지 않는다 | 그 알림의 주입 만료 |
+| `available` | `relay-live`: 울릴 수 있다 | relay lease 갱신 시각 |
+| `available` | `wake-in-flight`: 넘긴 뒤 관측창(60초) 안이다 | 넘긴 시각 |
+| `available` | `wake-unanswered`: 관측창이 지났고 응답 근거가 없다. host가 붙잡았거나 버렸을 수 있다 | `resend_due_at` |
+| `available` | `recipient-active`: 최근에 본문 인수 경계를 지났다 | `claim_boundary_at` |
+| `available` | `retry-backoff`: 일시 실패 뒤 대기 중이다 | `retry_not_before` |
+| `degraded` | `wake-failing`: 연속 일시 실패가 상한에 닿았다 | 마지막 실패 시각 |
+| `degraded` | `wake-prerequisite-missing`: 이 출생에서 깨우기 전제조건이 없다. 경계 인수만 남는다 | 판정 시각 |
+| `unsupported` | `no-idle-wake`: 능력 선언상 깨울 수 없다 | presence birth |
 | `no-live-relay` | `presence-unknown`, `presence-not-online`, `relay-lease-missing` | 없음, presence lease 종료, 마지막 presence heartbeat |
-| `unsupported` | `no-idle-wake`: transport에 idle wake가 없다 | presence birth |
 
-presence lease가 끝나고 live relay가 없으면 presence `state`는 `unreachable`이나 `ended`이고 `autoWake`는 `no-live-relay`다. 현황판은 오래된 online을 보여 주지 않는다. relay는 SessionStart hook에서 뜬다. 그 뒤에는 주 세션의 입력, 도구 실행 뒤 경계와 턴 종료 hook이 현재 세대에 live relay가 없다는 broker 응답을 받았을 때만 그 세대의 relay를 다시 띄운다. 어댑터가 검증된 복구를 켰으면 `list-presence`로 확인한 뒤 시작 grant(`ensure-relay`)를 받고, 아니면 입력 관측·claim·`clear-deferred` 응답의 복구 정보로 한 번만 시도하며, 그 hook의 host process가 해당 세대가 보고한 host birth와 다르면 사유를 기록하고 띄우지 않는다. 이런 hook이 아직 실행되지 않은 세션, 예를 들어 재부팅 뒤 아직 turn이 없는 Codex 세션은 `no-live-relay`로 보이며 메시지는 큐에 남는다. 이전 broker가 `autoWake`를 주지 않으면 서비스는 `null`로 둔다.
+`degraded`이면 메시지는 큐에 남고, 상대가 자기 턴 종료·도구 경계·입력에서 인수할 때까지 늦을 수 있다. 송신자는 상대의 처리가 지금 필요할 때만 확인된 전달 상태와 이 지연 가능성을 사용자에게 알린다.
+
+presence lease가 끝나고 live relay가 없으면 presence `state`는 `unreachable`이나 `ended`이고 `autoWake`는 `no-live-relay`다. 현황판은 오래된 online을 보여 주지 않는다. relay는 SessionStart hook에서 뜬다. 그 뒤에는 주 세션의 입력, 도구 실행 뒤 경계와 턴 종료 hook이 현재 세대에 live relay가 없다는 broker 응답을 받았을 때만 그 세대의 relay를 다시 띄운다. 어댑터가 검증된 복구를 켰으면 `list-presence`가 내보내는 명시적 `relayLive`로 확인한 뒤(autoWake에서 추정하지 않는다) 시작 grant(`ensure-relay`)를 받고, 아니면 입력 관측·claim·`clear-deferred` 응답의 복구 정보로 한 번만 시도하며, 그 hook의 host process가 해당 세대가 보고한 host birth와 다르면 사유를 기록하고 띄우지 않는다. 이런 hook이 아직 실행되지 않은 세션, 예를 들어 재부팅 뒤 아직 turn이 없는 Codex 세션은 `no-live-relay`로 보이며 메시지는 큐에 남는다. broker가 답하지 않은 identity의 `autoWake`는 `null`이다.
 
 #### 세대 식별(C2)
 
@@ -210,7 +236,7 @@ presence birth는 ms 해상도 ISO 문자열이다. 같은 instance가 이전 bi
 
 2.7.3까지는 `session_presence` 행을 지우는 코드가 없어 끝난 세션의 행이 계속 쌓였다(2.7.2부터 잠재). 현황판 조회는 broker의 `list-presence`가 저장된 모든 identity를 한 응답으로 돌려주었고, 응답이 한도(32 KiB)를 넘으면 client가 거절해 현황판의 모든 presence가 `unknown`, `autoWake`는 `null`이 되었다. store의 판정은 맞았고 전송 한도에서 막혔다.
 
-보존: `prune`은 lease 끝(`lease_until`, 종료한 행은 종료 시각과 같다)이 24시간보다 오래된 presence 행을 지운다. 24시간은 현황판이 세션을 보여 주는 창(board의 24시간 보존)과 같아서, 현황판에 보이는 동안 끝난 세션은 `ended`나 `unreachable`로 보인다. 살아 있는 행(`ended_at` 없음, lease 유효)은 lease 끝이 미래이므로 지워지지 않는다. 같은 identity에 살아 있는 행이 있는 동안에는 그 identity의 가장 최근 행(birth 기준)도 남긴다. presence 조회, 퇴역 규칙과 `autoWake`는 모두 이 가장 최근 행만 읽으므로, live identity의 presence, 퇴역 판정과 `autoWake` 상태는 정리 전후에 같다. live 행이 없는 identity는 다르다. 가장 최근 행이 지워지면 더 이른 행이 최신이 되어 표시되는 instance, 상태(`ended`/`unreachable`)와 기준 시각이 바뀔 수 있고, 행이 모두 지워지면 등록된 적 없는 identity처럼 `unknown`이며 `autoWake`는 `no-live-relay`/`presence-unknown`이다. 수동 `reconcile-wake-observation`의 옛 세대 판정도 가장 최근 presence 행을 쓰므로, live 행이 없는 identity에서는 정리 전후로 드물게 달라질 수 있다(행이 모두 지워지면 거절된다). 메시지, 영수증, wake 행과 relay lease 규칙은 바뀌지 않는다. 정리는 DELETE 한 문장이라 멱등이며, 보존 24시간은 주입 만료와 유예(70분)보다 길다.
+보존: `prune`은 lease 끝(`lease_until`, 종료한 행은 종료 시각과 같다)이 24시간보다 오래된 presence 행을 지운다. 24시간은 현황판이 세션을 보여 주는 창(board의 24시간 보존)과 같아서, 현황판에 보이는 동안 끝난 세션은 `ended`나 `unreachable`로 보인다. 살아 있는 행(`ended_at` 없음, lease 유효)은 lease 끝이 미래이므로 지워지지 않는다. 같은 identity에 살아 있는 행이 있는 동안에는 그 identity의 가장 최근 행(birth 기준)도 남긴다. presence 조회, `birth-ended` 판정과 `autoWake`는 모두 이 가장 최근 행만 읽으므로, live identity의 presence, 해제 판정과 `autoWake` 상태는 정리 전후에 같다. live 행이 없는 identity는 다르다. 가장 최근 행이 지워지면 더 이른 행이 최신이 되어 표시되는 instance, 상태(`ended`/`unreachable`)와 기준 시각이 바뀔 수 있고, 행이 모두 지워지면 등록된 적 없는 identity처럼 `unknown`이며 `autoWake`는 `no-live-relay`/`presence-unknown`이다. 메시지, 영수증, wake 행과 relay lease 규칙은 바뀌지 않는다. 정리는 DELETE 한 문장이라 멱등이다.
 
 검증된 부모 세대 기록이 없는 일반 presence에서 행이 지워진 instance가 다시 등록되면 새 행으로 들어가 birth가 등록 시각이 된다. 지워진 행은 lease 끝이 24시간 전보다 이르고 birth는 그보다 이르므로, 시계가 되돌아가지 않는 한 새 birth는 이전 wake의 birth generation보다 크다. 이는 부모 프로세스의 실제 생성 순서를 증명하지 않으며, 이미 정리된 역사 세대의 재등록을 구별하는 근거가 아니다.
 
@@ -236,8 +262,8 @@ AGS-D-0354 수리 뒤 broker가 실제 확인한 부모 PID와 출생토큰은 �
 
 broker는 relay가 주기적으로 요청하는 동안 종료되지 않으므로, 업데이트 뒤에도 이전 broker가 계속 돌 수 있다. 앞의 안내대로 기존 AGS MCP·relay·broker를 종료한 뒤 재연결한다.
 
-#### 이관(schema 1)
+#### 이관(3.0, user_version 3)
 
-메시지 DB는 `PRAGMA user_version` 0에서 1로 한 번 올라간다. SQLite는 기존 CHECK를 넓힐 수 없으므로 같은 `BEGIN IMMEDIATE` transaction 안에서 `wake_nonces`를 다시 만들고 모든 행, rowid, 열 값을 복사한 뒤 `retired_at` 열, active target UNIQUE와 `session_activity` 표를 추가한다. 도중 실패는 전체를 rollback해 2.7.2 모양과 version 0을 남긴다. 두 연결이 동시에 열면 한쪽만 이관하고 다른 쪽은 version 1을 본다. 이관 자체는 행 상태를 바꾸지 않는다. 옛 세대의 latch 행은 이후 첫 prune에서 위 퇴역 규칙을 만족할 때만 `expired-unobserved`가 된다. 더 높은 version의 DB는 변경 없이 거절한다. 2.7.2 broker는 version 1 DB를 열어 기존 메시지 계약대로 동작하며, 퇴역 행을 활성으로 보지 않는다. 다만 퇴역 규칙과 `autoWake`는 적용하지 않는다.
+CHECK와 DEFAULT `'legacy'`는 제자리에서 바꿀 수 없으므로 `wake_nonces`를 한 transaction 안에서 다시 만든다. 기존 상태는 `submitted`→`handed-off`, `not-submitted`→`not-delivered`, `expired-unobserved`→`released`(이유 `migrated`), `started`→`unknown`으로 옮기고, `legacy` 행은 지운다. `late_observed_at`이 있는 옛 `unknown`도 `released`(이유 `migrated`)가 된다. 옮긴 활성 행(`handed-off`·`unknown`)에는 `outcome_at`(없으면 `started_at`), `resend_base_ms` 10분과 `resend_due_at = outcome_at + 10분`을 채워 영구히 잠기지 않게 한다. `wake_active_target`은 새 활성 상태 목록으로 다시 만들고, `wake_paths`는 기존 활성 행의 출생마다 streak 0으로 채운다. 옛 transport 값 `gemini-queue`는 presence·relay lease·wake 행에서 `antigravity-queue`로 바꾼다. 도중 실패는 전체를 rollback한다. 2.x broker는 version 3 DB를 열지 못한다(더 높은 version 거절). broker 프로토콜 버전도 2.0.0으로 올라가므로 2.x client·relay와 섞이지 않는다. 기존 AGS MCP·relay·broker를 종료한 뒤 업데이트한다.
 
 독립 process fixture와 번들 검사는 실제 host 설치·wake 관측을 대신하지 않는다. 실제 설치·양 host 실측은 별도 W07/출하 검증이며 로컬 PASS로 승격하지 않는다.

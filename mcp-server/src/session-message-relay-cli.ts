@@ -1,5 +1,6 @@
 import { producerFailure } from "./failure-diagnostics.js";
 import { reportRelayFailure, runSessionMessageRelay } from "./session-message-relay.js";
+import { WAKE_TRANSPORTS } from "./wake-transports.js";
 
 function argument(name: string): string | null {
   const index = process.argv.indexOf(name);
@@ -16,7 +17,7 @@ const relayIdArguments = process.argv.filter(value => value === "--relay-id").le
 const relayId = argument("--relay-id");
 const invalidRelayId = relayIdArguments > 1 || (relayIdArguments === 1 && (!relayId || !/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(relayId)));
 
-if (invalidRelayId || !host || !sessionId || !instanceId || (transport !== "codex-deferred" && transport !== "gemini-deferred" && transport !== "codex-queue" && transport !== "claude-inbox" && transport !== "gemini-queue") || !Number.isInteger(parentPid) || !parentStartToken) {
+if (invalidRelayId || !host || !sessionId || !instanceId || !transport || !WAKE_TRANSPORTS.includes(transport) || !Number.isInteger(parentPid) || !parentStartToken) {
   // The spawning hook may already have exited and its stdio is ignored: keep a fixed-reason local record.
   reportRelayFailure("arguments", producerFailure("RELAY_ARGUMENTS_REJECTED", "The relay arguments were rejected."));
   process.exitCode = 2;

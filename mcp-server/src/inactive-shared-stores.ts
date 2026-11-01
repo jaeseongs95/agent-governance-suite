@@ -4,7 +4,7 @@ import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { SqliteContinuityStore } from "./continuity-store.js";
 import { SessionMessageStore } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
-import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type VerifiedInputSourceReader } from "./session-message-wake-port.js";
+import { createWakeHookObservationReader, type VerifiedInputSourceReader } from "./session-message-wake-port.js";
 import { PLAN_SIGNING_KEY } from "./workflow-store.js";
 
 export interface InactiveSharedStoresOptions {
@@ -44,9 +44,7 @@ export function createInactiveSharedStores(options: InactiveSharedStoresOptions)
       readVerifiedInputSource(receiptId) { const receipt = trust.getInputSource(receiptId); return receipt && trust.verify(receipt) ? receipt : null; },
     };
     const wakeReader = createWakeHookObservationReader(verifiedSourceReader);
-    const historicalWakeVerifier: typeof verifyHistoricalWakeObservation = (target, nonce, receiptId, started, late, now) =>
-      verifyHistoricalWakeObservation(target, nonce, receiptId, started, late, now, verifiedSourceReader);
-    return { owner, workflow, continuity, messaging, trust, board, wakeReader, historicalWakeVerifier };
+    return { owner, workflow, continuity, messaging, trust, board, wakeReader };
   } catch (error) {
     // The primary module/key/schema failure wins; a cleanup failure is retained only as a secondary diagnostic.
     retainCleanupFailure(error, "SHARED_OWNER_CLOSE_FAILED", () => owner.close());

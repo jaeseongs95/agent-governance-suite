@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/session-auto-wake-outlook.v2.schema.json",
+  "title": "SessionAutoWakeOutlook.v2",
+  "description": "Advisory broker snapshot of the recipient's idle wake (doorbell) path at checkedAt. A wake only asks the recipient to look at its inbox; delivery is the claim/ACK path. It is not delivery, processing, completion, approval or permission evidence, and it never removes or re-sends a queued message.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["state", "reason", "basisAt", "checkedAt", "authorityEffect"],
+  "properties": {
+    "state": {
+      "enum": ["available", "degraded", "unsupported", "no-live-relay"],
+      "description": "available: a live relay can ring, or a rung wake is waiting for its resend time. degraded: this birth's wake keeps failing or lacks a prerequisite; queued messages are taken only at the recipient's own next claim boundary (turn end, tool boundary or prompt). unsupported: the recipient's declared capabilities have no idle wake. no-live-relay: no online presence or relay lease can ring."
+    },
+    "reason": {
+      "enum": ["relay-live", "wake-in-flight", "wake-unanswered", "recipient-active", "retry-backoff", "wake-failing", "wake-prerequisite-missing", "no-idle-wake", "presence-unknown", "presence-not-online", "relay-lease-missing"],
+      "description": "relay-live: a wake can be rung. wake-in-flight: handed to the host inside the 60-second observation window. wake-unanswered: the window passed with no answer; the host may hold or have dropped it, and the slot frees at the resend time. recipient-active: the recipient recently passed a claim boundary. retry-backoff: waiting after a transient failure. wake-failing: consecutive transient failures reached the limit. wake-prerequisite-missing: this birth lacks a wake prerequisite. no-idle-wake: declared without idle wake. presence-unknown, presence-not-online, relay-lease-missing: why no relay can ring."
+    },
+    "basisAt": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Time of the stored fact behind reason: relay lease renewal, hand-off time, resend time, last claim boundary, retry deadline, last failure, decision time, birth, presence lease end, or presence heartbeat when a relay lease is missing. Null when no presence was ever recorded."
+    },
+    "checkedAt": { "type": "string", "format": "date-time" },
+    "authorityEffect": { "const": "none" }
+  }
+}

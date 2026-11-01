@@ -8,9 +8,9 @@ import { retainFailureSecondary, tagProducerFailure } from "./failure-diagnostic
 import type { SharedModuleContext, SqlDatabase } from "../../runtime/unified-state/shared-connection.mjs";
 
 import { isBoundedIdentity, SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
-import { isWakeHookObservation, verifyHistoricalWakeObservation, wakeBackoffDelay, type HistoricalWakeEvidence, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
+import { isWakeDispatchOutcome, isWakeHookObservation, wakeBackoffDelay, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
 import type { DeliveryCapabilities, InputObservation, InputObservationKind } from "./input-observation.js";
-import type { SessionAutoWakeOutlookV1 } from "../../contracts/types.js";
+import type { SessionAutoWakeOutlookV2 } from "../../contracts/types.js";
 
 export const MESSAGE_BODY_MAX_BYTES = SESSION_MESSAGE_BODY_MAX_BYTES;
 export const MESSAGE_TTL_DEFAULT_SECONDS = 3600;
@@ -28,20 +28,39 @@ const MESSAGE_RECEIPT_EXTRA_MS = 3600_000;
 const CLAIM_LEASE_BASE_MS = 120_000;
 const CLAIM_LEASE_MAX_MS = 30 * 60_000;
 const RELAY_LEASE_MS = 15_000;
+/** Injection expiry of a reserved attempt; an arrival of the current birth still claims after it (2.7). */
 export const WAKE_TTL_MS = 60 * 60_000;
-/** Covers hook timeout, broker restart and receipt TTL after the injection expiry, and equals the longest retry backoff. */
-export const WAKE_RETIRE_GRACE_MS = 10 * 60_000;
-/**
- * An idle host that processes a handed-off notification reaches the observation hook within the hook timeout,
- * the hook receipt TTL and host queue polling. Past this window an unobserved hand-off waits on host state the
- * broker cannot see (a busy, interrupted or unloaded session), so it is reported as overdue instead of in flight.
- * Reporting only: suppression, retirement and the injection expiry still follow WAKE_TTL_MS and the grace.
- */
+/** Reporting only: a hand-off younger than this is in flight, older is unanswered. */
 export const WAKE_OBSERVATION_WINDOW_MS = 60_000;
-const MESSAGE_SCHEMA_VERSION = 2;
-const ACTIVE_WAKE_STATES = "('reserved', 'started', 'submitted', 'unknown')";
-const WAKE_STATE_CHECK = "CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted', 'expired-unobserved'))";
-const WAKE_COPY_COLUMNS = "nonce_digest, host, session_id, expires_at, consumed_at, state, nonce, instance_id, birth_generation, transport, relay_id, attempt_id, dispatch_epoch, retry_not_before, retry_count, started_at, outcome_at, observed_at, late_observed_at";
+/** Optimization, not correctness: a birth that passed a claim boundary this recently is not rung. */
+export const WAKE_QUIET_MS = 60_000;
+/** The quiet gate yields once the oldest claimable body has waited this long. */
+export const WAKE_QUIET_MAX_MS = 600_000;
+/** A started attempt without an outcome becomes unknown after this; longer than any adapter call timeout. */
+export const WAKE_START_TIMEOUT_MS = 60_000;
+/** Upper bound of the resend delay and the retention of ended attempt rows. */
+export const WAKE_RESEND_MAX_MS = 86_400_000;
+/** Consecutive transient failures of one birth after which the path is reported degraded. */
+export const WAKE_FAILURE_LIMIT = 5;
+const WAKE_ENDED_ROW_LIMIT = 1000;
+const MESSAGE_SCHEMA_VERSION = 3;
+const ACTIVE_WAKE_STATE_LIST: readonly string[] = ["reserved", "started", "handed-off", "unknown"];
+const ACTIVE_WAKE_STATES = `(${ACTIVE_WAKE_STATE_LIST.map((state) => `'${state}'`).join(", ")})`;
+const WAKE_NONCES_TABLE = `(
+  nonce_digest TEXT PRIMARY KEY, host TEXT NOT NULL, session_id TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT,
+  state TEXT NOT NULL CHECK (state IN ('reserved', 'started', 'handed-off', 'unknown', 'observed', 'released', 'not-delivered')),
+  release_reason TEXT CHECK (release_reason IN ('expired', 'claimed-after-handoff', 'birth-ended', 'resend-due', 'migrated')),
+  nonce TEXT, instance_id TEXT, birth_generation TEXT, transport TEXT, relay_id TEXT, attempt_id TEXT,
+  dispatch_epoch INTEGER NOT NULL DEFAULT 0, started_at TEXT, outcome_at TEXT, observed_at TEXT, late_observed_at TEXT,
+  released_at TEXT, resend_base_ms INTEGER, resend_due_at TEXT
+) STRICT`;
+const WAKE_COPY_COLUMNS = ["nonce_digest", "host", "session_id", "expires_at", "consumed_at", "state", "nonce", "instance_id",
+  "birth_generation", "transport", "relay_id", "attempt_id", "dispatch_epoch", "started_at", "outcome_at", "observed_at",
+  "late_observed_at", "retired_at"] as const;
+const resendDelay = (baseMs: number, streak: number): number => Math.min(baseMs * 2 ** streak, WAKE_RESEND_MAX_MS);
+function assertResendBase(resendBaseMs: number): void {
+  if (!Number.isSafeInteger(resendBaseMs) || resendBaseMs < 1 || resendBaseMs > WAKE_RESEND_MAX_MS) throw new Error("Invalid wake resend base.");
+}
 export const PRESENCE_LEASE_MS = 20_000;
 /** Ended or lapsed presence rows stay this long after their lease end; matches the session board's 24-hour window. */
 export const PRESENCE_RETENTION_MS = 24 * 3600_000;
@@ -90,11 +109,13 @@ export interface SessionPresence {
   endedAt: string | null;
   endReason: string | null;
   state: SessionPresenceState;
+  /** The current birth is online and its transport's relay lease is live. */
+  relayLive: boolean;
 }
 
 /** Board and service view; autoWake is absent or null only when a previous broker did not report it. */
 export type SessionPresenceView = SessionPresence & {
-  autoWake?: SessionAutoWakeOutlookV1 | null;
+  autoWake?: SessionAutoWakeOutlookV2 | null;
   /** Advisory entry-file identity; absent on older brokers, never proof of runtime replacement. */
   relayCode?: { status: "current" | "outdated" | "unknown"; runningDigest: string | null; expectedDigest: string | null };
 };
@@ -147,7 +168,8 @@ export interface WakeReservation {
   dispatch: boolean;
   attempt: WakeAttempt | null;
 }
-export type ManagedWakeState = "reserved" | "started" | "submitted" | "unknown" | "observed" | "not-submitted" | "expired-unobserved";
+type WakePathKey = SessionIdentity & { instanceId: string; generation: string };
+export type ManagedWakeState = "reserved" | "started" | "handed-off" | "unknown" | "observed" | "released" | "not-delivered";
 
 export interface MessageCapacityDetails {
   scope: "sender" | "global";
@@ -228,13 +250,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       updated_at TEXT NOT NULL,
       PRIMARY KEY (host, session_id, transport)
     ) STRICT;
-    CREATE TABLE IF NOT EXISTS wake_nonces (
-      nonce_digest TEXT PRIMARY KEY,
-      host TEXT NOT NULL,
-      session_id TEXT NOT NULL,
-      expires_at TEXT NOT NULL,
-      consumed_at TEXT
-    ) STRICT;
+    CREATE TABLE IF NOT EXISTS wake_nonces ${WAKE_NONCES_TABLE};
     CREATE TABLE IF NOT EXISTS session_presence (
       host TEXT NOT NULL,
       session_id TEXT NOT NULL,
@@ -323,43 +339,48 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         observed_at TEXT NOT NULL,
         PRIMARY KEY (host, session_id)
       ) STRICT;`);
-      // Additive, transactional migration: historical consumed_at is never an observation.
-      const wakeColumns = this.database.prepare("PRAGMA table_info(wake_nonces)").all() as Array<{ name: string }>;
-      for (const [name, definition] of [
-        ["state", "TEXT NOT NULL DEFAULT 'legacy' CHECK (state IN ('legacy', 'reserved', 'started', 'submitted', 'unknown', 'observed', 'not-submitted'))"],
-        ["nonce", "TEXT"], ["instance_id", "TEXT"], ["birth_generation", "TEXT"], ["transport", "TEXT"],
-        ["relay_id", "TEXT"], ["attempt_id", "TEXT"], ["dispatch_epoch", "INTEGER NOT NULL DEFAULT 0"],
-        ["retry_not_before", "TEXT"], ["retry_count", "INTEGER NOT NULL DEFAULT 0"],
-        ["started_at", "TEXT"], ["outcome_at", "TEXT"], ["observed_at", "TEXT"], ["late_observed_at", "TEXT"],
-      ]) {
-        if (!wakeColumns.some((column) => column.name === name)) this.database.exec(`ALTER TABLE wake_nonces ADD COLUMN ${name} ${definition};`);
-      }
-      // Schema 1 admits the terminal expired-unobserved state. SQLite cannot widen a CHECK in place, so the
-      // table is rebuilt once in this transaction, keeping every row, rowid and column value.
-      if (version < 1) {
-        this.database.exec(`CREATE TABLE wake_nonces_next (
-          nonce_digest TEXT PRIMARY KEY, host TEXT NOT NULL, session_id TEXT NOT NULL, expires_at TEXT NOT NULL, consumed_at TEXT,
-          state TEXT NOT NULL DEFAULT 'legacy' ${WAKE_STATE_CHECK},
-          nonce TEXT, instance_id TEXT, birth_generation TEXT, transport TEXT, relay_id TEXT, attempt_id TEXT,
-          dispatch_epoch INTEGER NOT NULL DEFAULT 0, retry_not_before TEXT, retry_count INTEGER NOT NULL DEFAULT 0,
-          started_at TEXT, outcome_at TEXT, observed_at TEXT, late_observed_at TEXT, retired_at TEXT
-        ) STRICT;
-        INSERT INTO wake_nonces_next (rowid, ${WAKE_COPY_COLUMNS}) SELECT rowid, ${WAKE_COPY_COLUMNS} FROM wake_nonces;
-        DROP TABLE wake_nonces;`);
+      // One wake path state per host birth (2.3): the same key as the arrival binding check.
+      this.database.exec(`CREATE TABLE IF NOT EXISTS wake_paths (
+        host TEXT NOT NULL, session_id TEXT NOT NULL, instance_id TEXT NOT NULL, birth_generation TEXT NOT NULL,
+        streak INTEGER NOT NULL DEFAULT 0, failures INTEGER NOT NULL DEFAULT 0, last_failure_at TEXT, retry_not_before TEXT,
+        prerequisite_missing TEXT, claim_boundary_at TEXT, updated_at TEXT NOT NULL,
+        PRIMARY KEY (host, session_id, instance_id, birth_generation)
+      ) STRICT;`);
+      // Schema 3 (AGS 3.0 doorbell): SQLite cannot rewrite a CHECK or DEFAULT in place, so wake_nonces is rebuilt once in
+      // this transaction. Legacy rows are dropped, states are renamed and every migrated hand-off gets a resend deadline,
+      // so no migrated row stays active forever. Columns an older shape lacks read as NULL (state as legacy).
+      if (version < 3) {
+        const migratedAt = iso(this.shared ? this.shared.time(Date.now()) : Date.now());
+        const existing = new Set((this.database.prepare("PRAGMA table_info(wake_nonces)").all() as Array<{ name: string }>).map((column) => column.name));
+        const source = WAKE_COPY_COLUMNS.map((name) => existing.has(name) ? name
+          : `${name === "state" ? "'legacy'" : name === "dispatch_epoch" ? "0" : "NULL"} AS ${name}`).join(", ");
+        const handed = "next_state IN ('handed-off', 'unknown')";
+        this.database.exec(`DROP INDEX IF EXISTS wake_active_target; CREATE TABLE wake_nonces_next ${WAKE_NONCES_TABLE};`);
+        this.database.prepare(`INSERT INTO wake_nonces_next (rowid, nonce_digest, host, session_id, expires_at, consumed_at, state,
+            release_reason, nonce, instance_id, birth_generation, transport, relay_id, attempt_id, dispatch_epoch, started_at, outcome_at,
+            observed_at, late_observed_at, released_at, resend_base_ms, resend_due_at)
+          SELECT old_rowid, nonce_digest, host, session_id, expires_at, consumed_at, next_state,
+            CASE WHEN next_state = 'released' THEN 'migrated' END, nonce, instance_id, birth_generation,
+            CASE WHEN transport = 'gemini-queue' THEN 'antigravity-queue' ELSE transport END, relay_id, attempt_id, dispatch_epoch, started_at,
+            CASE WHEN ${handed} THEN coalesce(outcome_at, started_at, ?1) ELSE outcome_at END, observed_at, late_observed_at,
+            CASE WHEN next_state = 'released' THEN coalesce(retired_at, ?1) ELSE retired_at END,
+            CASE WHEN ${handed} THEN 600000 END,
+            CASE WHEN ${handed} THEN strftime('%Y-%m-%dT%H:%M:%fZ', coalesce(outcome_at, started_at, ?1), '+600 seconds') END
+          FROM (SELECT *, CASE state WHEN 'submitted' THEN 'handed-off' WHEN 'not-submitted' THEN 'not-delivered'
+              WHEN 'expired-unobserved' THEN 'released' WHEN 'started' THEN 'unknown'
+              WHEN 'unknown' THEN CASE WHEN late_observed_at IS NULL THEN 'unknown' ELSE 'released' END ELSE state END AS next_state
+            FROM (SELECT rowid AS old_rowid, ${source} FROM wake_nonces)) WHERE next_state <> 'legacy'`).run(migratedAt);
+        this.database.exec("DROP TABLE wake_nonces;");
         this.database.exec("ALTER TABLE wake_nonces_next RENAME TO wake_nonces;");
-      }
-      if (!(this.database.prepare("PRAGMA table_info(wake_nonces)").all() as Array<{ name: string }>).some((column) => column.name === "prior_unobserved")) {
-        this.database.exec("ALTER TABLE wake_nonces ADD COLUMN prior_unobserved INTEGER NOT NULL DEFAULT 0 CHECK (prior_unobserved IN (0, 1));");
+        this.database.exec("UPDATE session_presence SET transport = 'antigravity-queue' WHERE transport = 'gemini-queue';");
+        this.database.exec("UPDATE relay_leases SET transport = 'antigravity-queue' WHERE transport = 'gemini-queue';");
+        this.database.exec("DROP TABLE IF EXISTS session_activity;");
+        this.database.prepare(`INSERT OR IGNORE INTO wake_paths (host, session_id, instance_id, birth_generation, updated_at)
+          SELECT DISTINCT host, session_id, instance_id, birth_generation, ? FROM wake_nonces
+          WHERE state IN ${ACTIVE_WAKE_STATES} AND instance_id IS NOT NULL AND birth_generation IS NOT NULL`).run(migratedAt);
       }
       this.database.exec(`CREATE UNIQUE INDEX IF NOT EXISTS wake_active_target ON wake_nonces (host, session_id)
         WHERE state IN ${ACTIVE_WAKE_STATES};`);
-      // Last session-scoped hook or tool activity; retirement evidence only, never delivery evidence.
-      this.database.exec(`CREATE TABLE IF NOT EXISTS session_activity (
-        host TEXT NOT NULL,
-        session_id TEXT NOT NULL,
-        active_at TEXT NOT NULL,
-        PRIMARY KEY (host, session_id)
-      ) STRICT;`);
       if (this.shared) this.shared.setSchemaVersion(MESSAGE_SCHEMA_VERSION);
       else if (version < MESSAGE_SCHEMA_VERSION) this.database.exec(`PRAGMA user_version = ${MESSAGE_SCHEMA_VERSION};`);
 
@@ -390,15 +411,22 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     this.database.prepare("UPDATE messages SET body = '', body_bytes = 0 WHERE acknowledged_at IS NOT NULL AND expires_at <= ?")
       .run(now);
     this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ? AND relay_id NOT LIKE 'verified-relay-v1:%'").run(now);
-    this.database.prepare("DELETE FROM wake_nonces WHERE state = 'legacy' AND expires_at <= ?").run(now);
-    this.retireUnobservedWakes(nowMs);
-    this.database.prepare(`DELETE FROM wake_nonces WHERE state IN ('observed', 'not-submitted', 'expired-unobserved')
-      AND coalesce(consumed_at, observed_at, retired_at, outcome_at) <= ?
-      AND (retry_not_before IS NULL OR retry_not_before <= ?)`).run(acknowledgedBefore, now);
+    this.settleWakes(nowMs);
+    // Ended rows stay recognizable for WAKE_RESEND_MAX_MS, at most WAKE_ENDED_ROW_LIMIT rows (2.7).
+    const endedAt = "coalesce(released_at, observed_at, outcome_at, started_at, expires_at)";
+    this.database.prepare(`DELETE FROM wake_nonces WHERE state NOT IN ${ACTIVE_WAKE_STATES} AND ${endedAt} <= ?`)
+      .run(iso(nowMs - WAKE_RESEND_MAX_MS));
     this.database.prepare(`DELETE FROM wake_nonces WHERE nonce_digest IN (SELECT nonce_digest FROM wake_nonces
-      WHERE state IN ('observed', 'not-submitted', 'expired-unobserved') AND (retry_not_before IS NULL OR retry_not_before <= ?)
-      ORDER BY coalesce(consumed_at, observed_at, retired_at, outcome_at) DESC LIMIT -1 OFFSET ?)`)
-      .run(now, MESSAGE_LIMIT);
+      WHERE state NOT IN ${ACTIVE_WAKE_STATES} ORDER BY ${endedAt} DESC LIMIT -1 OFFSET ?)`).run(WAKE_ENDED_ROW_LIMIT);
+    // A path outlives its attempts while its birth is the latest unended presence row, so a lapsed relay lease
+    // does not reset the streak (I8); a replaced or ended birth without an active attempt is dropped.
+    this.database.prepare(`DELETE FROM wake_paths WHERE NOT EXISTS (SELECT 1 FROM wake_nonces w WHERE w.host = wake_paths.host
+        AND w.session_id = wake_paths.session_id AND w.instance_id = wake_paths.instance_id
+        AND w.birth_generation = wake_paths.birth_generation AND w.state IN ${ACTIVE_WAKE_STATES})
+      AND NOT coalesce((SELECT latest.ended_at IS NULL AND latest.instance_id = wake_paths.instance_id
+          AND latest.started_at = wake_paths.birth_generation FROM session_presence latest
+        WHERE latest.host = wake_paths.host AND latest.session_id = wake_paths.session_id AND latest.superseded_at IS NULL
+        ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 0)`).run();
     this.database.prepare("DELETE FROM prepared_messages WHERE expires_at <= ?").run(now);
     // Only rows whose lease ended before the retention window go; a live row's lease is always in the future. The
     // identity's latest row also stays while another row of it is live, so a live identity's presence and retirement read
@@ -412,54 +440,87 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   /**
-   * Retires reservations under their existing expiry rules. D0353: activity, body claims and a changed birth cannot
-   * prove an external queue consumed a dispatched marker, so they never release a hand-off. Time does: a quiet live
-   * session has no other way to produce evidence, and a marker the host dropped or parked (interrupt, unload) would
-   * otherwise block every later wake of that session forever (observed 2026-11-01 on five idle Codex sessions).
-   * The first unobserved hand-off is released WAKE_RETIRE_GRACE_MS after the hand-off, inside the default message TTL,
-   * so the message that caused it can still be delivered. A wake reserved right after such a release in the same birth
-   * (prior_unobserved) is released only after its injection expiry plus grace, which bounds markers parked in a host
-   * queue to about two per default-TTL message. A late arrival of a retired marker is evidence only and claims no body.
-   * A reserved attempt keeps its existing expiry/retry rules. The row keeps its original binding, epoch and times;
-   * expired-unobserved is neither observation nor delivery. One UPDATE commits it atomically.
+   * Ends active attempts (2.2, 2.6). reserved: expired -> released(expired); a replaced birth or no claimable body left ->
+   * not-delivered (no external effect). started: only the start timeout makes it unknown, with outcome_at and
+   * resend_due_at. handed-off/unknown: released by a later claim boundary, the end of its birth, or its resend deadline.
+   * Every UPDATE re-checks the state, so an ended row never reopens (I11).
    */
-  private retireUnobservedWakes(nowMs: number): void {
+  private settleWakes(nowMs: number): void {
     const now = iso(nowMs);
-    this.database.prepare(`UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ?
-      WHERE state IN ${ACTIVE_WAKE_STATES}
-        AND ((state IN ('started', 'submitted', 'unknown') AND CASE WHEN prior_unobserved = 1 THEN expires_at <= ?
-            ELSE coalesce(outcome_at, started_at, expires_at) <= ? END)
-        OR ((state = 'reserved' OR late_observed_at IS NOT NULL)
-        AND ((expires_at <= ?
-            AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
-                AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)
-              OR coalesce((SELECT NOT (latest.ended_at IS NULL AND latest.lease_until > ?
-                  AND latest.instance_id = wake_nonces.instance_id AND latest.started_at = wake_nonces.birth_generation)
-                FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id AND latest.superseded_at IS NULL
-                ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 1)))
-          OR (state IN ('started', 'submitted', 'unknown')
-            AND expires_at > ?
-            AND coalesce(outcome_at, started_at) <= ?
-            AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
-                AND activity.session_id = wake_nonces.session_id
-                AND activity.active_at > coalesce(wake_nonces.outcome_at, wake_nonces.started_at))
-              OR coalesce((SELECT NOT (latest.ended_at IS NULL AND latest.lease_until > ?
-                  AND latest.instance_id = wake_nonces.instance_id AND latest.started_at = wake_nonces.birth_generation)
-                FROM session_presence latest WHERE latest.host = wake_nonces.host AND latest.session_id = wake_nonces.session_id AND latest.superseded_at IS NULL
-                ORDER BY latest.started_at DESC, latest.rowid DESC LIMIT 1), 1))
-            AND NOT EXISTS (SELECT 1 FROM messages m WHERE m.target_host = wake_nonces.host
-              AND m.target_session_id = wake_nonces.session_id
-              AND (m.claimed_at IS NULL OR m.acknowledged_at IS NULL)
-              AND m.expires_at > ?
-              AND m.created_at <= coalesce(wake_nonces.outcome_at, wake_nonces.started_at))))))`)
-      .run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), iso(nowMs - WAKE_RETIRE_GRACE_MS), iso(nowMs - WAKE_RETIRE_GRACE_MS), now, now,
-        iso(nowMs - WAKE_OBSERVATION_WINDOW_MS), now, now);
+    const rows = this.database.prepare(`SELECT * FROM wake_nonces WHERE state IN ${ACTIVE_WAKE_STATES}`).all() as Array<Record<string, unknown>>;
+    for (const row of rows) {
+      const digest = String(row.nonce_digest);
+      const target = { host: String(row.host), sessionId: String(row.session_id) };
+      const attempt = this.wakeAttempt(row);
+      if (row.state === "reserved") {
+        if (String(row.expires_at) <= now) {
+          this.database.prepare(`UPDATE wake_nonces SET state = 'released', release_reason = 'expired', released_at = ?
+            WHERE nonce_digest = ? AND state = 'reserved'`).run(now, digest);
+        } else if (this.wakeGenerationReplaced(attempt, nowMs) || !this.wakeClaimable(target, nowMs)) {
+          this.database.prepare("UPDATE wake_nonces SET state = 'not-delivered', outcome_at = ? WHERE nonce_digest = ? AND state = 'reserved'")
+            .run(now, digest);
+        }
+        continue;
+      }
+      const path = this.wakePath(attempt);
+      if (row.state === "started") {
+        if (String(row.started_at) > iso(nowMs - WAKE_START_TIMEOUT_MS)) continue;
+        row.outcome_at = now;
+        row.resend_due_at = iso(nowMs + resendDelay(Number(row.resend_base_ms), Number(path?.streak ?? 0)));
+        this.database.prepare("UPDATE wake_nonces SET state = 'unknown', outcome_at = ?, resend_due_at = ? WHERE nonce_digest = ? AND state = 'started'")
+          .run(now, String(row.resend_due_at), digest);
+      }
+      const presence = this.presence(target, nowMs);
+      const liveBirth = presence.state === "online" && presence.instanceId === row.instance_id && presence.startedAt === row.birth_generation;
+      const reason = typeof path?.claim_boundary_at === "string" && path.claim_boundary_at > String(row.outcome_at) ? "claimed-after-handoff"
+        : !liveBirth ? "birth-ended" : String(row.resend_due_at) <= now ? "resend-due" : null;
+      if (!reason) continue;
+      const released = this.database.prepare(`UPDATE wake_nonces SET state = 'released', release_reason = ?, released_at = ?
+        WHERE nonce_digest = ? AND state IN ('handed-off', 'unknown')`).run(reason, now, digest).changes === 1;
+      // birth-ended keeps the streak; the path outlives row deletion, so only these two change it (2.6).
+      if (released && reason !== "birth-ended") {
+        this.updateWakePath(attempt, reason === "resend-due" ? "streak = streak + 1" : "streak = 0", [], nowMs);
+      }
+    }
   }
 
-  private recordActivity(target: SessionIdentity, nowMs: number): void {
-    this.database.prepare(`INSERT INTO session_activity (host, session_id, active_at) VALUES (?, ?, ?)
-      ON CONFLICT (host, session_id) DO UPDATE SET active_at = max(active_at, excluded.active_at)`)
-      .run(target.host, target.sessionId, iso(nowMs));
+  private wakePath(key: WakePathKey): Record<string, unknown> | undefined {
+    return this.database.prepare("SELECT * FROM wake_paths WHERE host = ? AND session_id = ? AND instance_id = ? AND birth_generation = ?")
+      .get(key.host, key.sessionId, key.instanceId, key.generation) as Record<string, unknown> | undefined;
+  }
+
+  /** Upserts the birth's path (a new birth starts at zero) and applies one assignment list. */
+  private updateWakePath(key: WakePathKey, assignments: string, values: Array<string | number | null>, nowMs: number): void {
+    this.database.prepare(`INSERT INTO wake_paths (host, session_id, instance_id, birth_generation, updated_at) VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT (host, session_id, instance_id, birth_generation) DO UPDATE SET updated_at = excluded.updated_at`)
+      .run(key.host, key.sessionId, key.instanceId, key.generation, iso(nowMs));
+    if (assignments) this.database.prepare(`UPDATE wake_paths SET ${assignments}
+      WHERE host = ? AND session_id = ? AND instance_id = ? AND birth_generation = ?`)
+      .run(...values, key.host, key.sessionId, key.instanceId, key.generation);
+  }
+
+  /**
+   * A real claim boundary of the current live birth (2.3): claimTurnEnd, claimHostWake, claim and an unskipped
+   * claimDeferred. The MCP claim tool has no hook instance check, so without a live birth nothing is written.
+   */
+  private markClaimBoundary(target: SessionIdentity, nowMs: number): void {
+    const presence = this.presence(target, nowMs);
+    if (presence.state !== "online" || presence.instanceId === null || presence.startedAt === null) return;
+    this.updateWakePath({ ...target, instanceId: presence.instanceId, generation: presence.startedAt },
+      "claim_boundary_at = max(coalesce(claim_boundary_at, ''), ?)", [iso(nowMs)], nowMs);
+  }
+
+  /** Reserve/start gates 4 and 5 (2.5): no prerequisite loss, backoff over, and quiet unless a body waited too long. */
+  private wakePathOpen(key: WakePathKey, nowMs: number): boolean {
+    const path = this.wakePath(key);
+    if (!path) return true;
+    if (path.prerequisite_missing !== null || (path.retry_not_before !== null && String(path.retry_not_before) > iso(nowMs))) return false;
+    if (path.claim_boundary_at === null || String(path.claim_boundary_at) < iso(nowMs - WAKE_QUIET_MS)) return true;
+    const now = iso(nowMs);
+    const oldest = this.database.prepare(`SELECT min(created_at) AS oldest FROM messages WHERE target_host = ? AND target_session_id = ?
+      AND acknowledged_at IS NULL AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?)`)
+      .get(key.host, key.sessionId, now, now) as { oldest: string | null };
+    return oldest.oldest !== null && oldest.oldest <= iso(nowMs - WAKE_QUIET_MAX_MS);
   }
 
   /** Sender quota first, then the global pool; call inside the caller's transaction after prune. */
@@ -505,7 +566,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
 
   /** ID ownership, capacity, queue insert and first receipt share one transaction. */
   submitPrepared(sender: SessionIdentity, messageId: string, nowMs = Date.now()): {
-    messageId: string; createdAt: string; expiresAt: string; duplicate: boolean; autoWake: SessionAutoWakeOutlookV1;
+    messageId: string; createdAt: string; expiresAt: string; duplicate: boolean; autoWake: SessionAutoWakeOutlookV2;
   } {
     boundedIdentity(sender);
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.submitPrepared(sender, messageId, nowMs));
@@ -630,49 +691,6 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  private hasUnclaimedMessages(target: SessionIdentity, nowMs: number, createdAtOrBefore?: string | null): boolean {
-    const now = iso(nowMs);
-    if (createdAtOrBefore) {
-      return Boolean(this.database.prepare(`SELECT 1 FROM messages
-        WHERE target_host = ? AND target_session_id = ? AND claimed_at IS NULL AND acknowledged_at IS NULL
-          AND expires_at > ? AND created_at <= ? LIMIT 1`)
-        .get(target.host, target.sessionId, now, createdAtOrBefore));
-    }
-    return Boolean(this.database.prepare(`SELECT 1 FROM messages
-      WHERE target_host = ? AND target_session_id = ? AND claimed_at IS NULL AND acknowledged_at IS NULL
-        AND expires_at > ? LIMIT 1`)
-      .get(target.host, target.sessionId, now));
-  }
-
-  private retireClaimedReservedWakes(target: SessionIdentity, nowMs: number): void {
-    if (this.hasUnclaimedMessages(target, nowMs)) return;
-    this.database.prepare(`UPDATE wake_nonces
-      SET state = 'not-submitted', outcome_at = coalesce(outcome_at, ?), retry_not_before = NULL
-      WHERE host = ? AND session_id = ? AND state = 'reserved'
-        AND late_observed_at IS NULL AND observed_at IS NULL AND consumed_at IS NULL
-        AND (retry_count > 0 OR outcome_at IS NOT NULL OR retry_not_before IS NOT NULL)`)
-      .run(iso(nowMs), target.host, target.sessionId);
-  }
-
-  /** One rule for every advisory view: past the injection expiry, all target messages claimed, or handed to the host and unobserved past the window. */
-  private wakeObservationOverdue(target: SessionIdentity, row: Record<string, unknown>, nowMs: number): boolean {
-    if (String(row.expires_at) <= iso(nowMs)) return true;
-    if (row.state === "reserved") return !this.hasUnclaimedMessages(target, nowMs);
-    if (row.state !== "started" && row.state !== "submitted" && row.state !== "unknown") return false;
-    const handedOffIso = String(row.outcome_at ?? row.started_at ?? "");
-    if (!this.hasUnclaimedMessages(target, nowMs, handedOffIso || null)) return true;
-    const handedOff = Date.parse(handedOffIso);
-    return Number.isFinite(handedOff) && handedOff + WAKE_OBSERVATION_WINDOW_MS <= nowMs;
-  }
-
-  private consumePendingWakes(target: SessionIdentity, nowMs: number): void {
-    const now = iso(nowMs);
-    this.database.prepare(`UPDATE wake_nonces SET consumed_at = ?
-      WHERE host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?`)
-      .run(now, target.host, target.sessionId, now);
-    this.retireClaimedReservedWakes(target, nowMs);
-  }
-
   claim(target: SessionIdentity, nowMs = Date.now(), limits: ClaimLimits = {}): SessionMessage[] {
     boundedIdentity(target);
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claim(target, nowMs, limits));
@@ -680,38 +698,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     this.prune(nowMs);
     return this.transaction(() => {
       const claimed = this.claimLocked(target, nowMs, limits);
-      if (claimed.length > 0) this.consumePendingWakes(target, nowMs);
-      this.recordActivity(target, nowMs);
-
+      this.markClaimBoundary(target, nowMs);
       return claimed;
-
-    });
-  }
-
-  claimWake(target: SessionIdentity, nonces: string[], nowMs = Date.now(), limits: ClaimLimits = {}): { recognized: boolean; messages: SessionMessage[] } {
-    boundedIdentity(target);
-    if (nonces.length < 1 || nonces.length > 10 || nonces.some((nonce) => nonce.length < 16 || nonce.length > 200)) {
-      throw new Error("wake nonces are invalid.");
-    }
-    const digests = [...new Set(nonces.map(nonceDigest))];
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimWake(target, nonces, nowMs, limits));
-    if (this.shared) nowMs = this.shared.time(nowMs);
-    this.prune(nowMs);
-    const now = iso(nowMs);
-    return this.transaction(() => {
-      const recognized = digests.every((digest) => Boolean(this.database.prepare(`SELECT 1 FROM wake_nonces
-        WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?`)
-        .get(digest, target.host, target.sessionId, now)));
-      if (!recognized) {
-
-        return { recognized: false, messages: [] };
-      }
-      const messages = this.claimLocked(target, nowMs, limits);
-      const consume = this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ? AND consumed_at IS NULL");
-      for (const digest of digests) consume.run(now, digest);
-
-      return { recognized: true, messages };
-
     });
   }
 
@@ -739,9 +727,6 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       this.database.prepare(`INSERT INTO input_observations (host, session_id, deferred_tool_claim, observed_at)
         VALUES (?, ?, 1, ?) ON CONFLICT (host, session_id) DO UPDATE SET deferred_tool_claim = 1, observed_at = excluded.observed_at`)
         .run(target.host, target.sessionId, iso(nowMs));
-      this.recordActivity(target, nowMs);
-
-
     });
   }
 
@@ -754,10 +739,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       this.prune(nowMs);
       const skipped = this.database.prepare(`UPDATE input_observations SET deferred_tool_claim = 0
         WHERE host = ? AND session_id = ? AND deferred_tool_claim = 1`).run(target.host, target.sessionId).changes === 1;
-      const messages = skipped ? [] : this.claimLocked(target, nowMs, limits);
-      if (messages.length > 0) this.consumePendingWakes(target, nowMs);
-      this.recordActivity(target, nowMs);
-
+      if (skipped) return [];
+      const messages = this.claimLocked(target, nowMs, limits);
+      this.markClaimBoundary(target, nowMs);
       return messages;
 
     });
@@ -772,9 +756,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       this.prune(nowMs);
       this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
       const messages = this.claimLocked(target, nowMs, limits);
-      if (messages.length > 0) this.consumePendingWakes(target, nowMs);
-      this.recordActivity(target, nowMs);
-
+      this.markClaimBoundary(target, nowMs);
       return messages;
 
     });
@@ -787,9 +769,6 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return this.transaction(() => {
       this.assertHookInstance(target, instanceId, nowMs);
       this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
-      this.recordActivity(target, nowMs);
-
-
     });
   }
 
@@ -824,9 +803,6 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         receipt.run(iso(nowMs + MESSAGE_RECEIPT_EXTRA_MS), messageId);
         count++;
       }
-      if (count > 0) this.retireClaimedReservedWakes(target, nowMs);
-      if (count > 0) this.recordActivity(target, nowMs);
-
       return count;
 
     });
@@ -931,15 +907,16 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   /**
-   * Advisory view of the recipient's idle auto-wake path, read from stored presence, relay lease and wake rows.
-   * Callers prune first so due retirements are visible. It grants nothing and proves no delivery.
+   * Advisory view of the recipient's idle auto-wake path (2.8): facts from presence, relay lease, the birth's path and
+   * its active attempt, never a prediction. Callers prune first so due releases are visible. It grants nothing and
+   * proves no delivery; handed-off is not delivery (I10).
    */
-  autoWakeOutlook(target: SessionIdentity, nowMs = Date.now()): SessionAutoWakeOutlookV1 {
+  autoWakeOutlook(target: SessionIdentity, nowMs = Date.now()): SessionAutoWakeOutlookV2 {
     boundedIdentity(target);
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.autoWakeOutlook(target, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     const now = iso(nowMs);
-    const outlook = (state: SessionAutoWakeOutlookV1["state"], reason: SessionAutoWakeOutlookV1["reason"], basisAt: unknown): SessionAutoWakeOutlookV1 =>
+    const outlook = (state: SessionAutoWakeOutlookV2["state"], reason: SessionAutoWakeOutlookV2["reason"], basisAt: unknown): SessionAutoWakeOutlookV2 =>
       ({ state, reason, basisAt: basisAt === null || basisAt === undefined ? null : String(basisAt), checkedAt: now, authorityEffect: "none" });
     const presence = this.presence(target, nowMs);
     if (presence.state === "unknown") return outlook("no-live-relay", "presence-unknown", null);
@@ -948,21 +925,21 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (presence.state !== "online") return outlook("no-live-relay", "presence-not-online", presence.endedAt ?? presence.leaseUntil);
     const relay = this.liveRelay(target, presence.transport!, nowMs);
     if (!relay) return outlook("no-live-relay", "relay-lease-missing", presence.heartbeatAt);
-    const active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state IN ${ACTIVE_WAKE_STATES}`)
-      .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
-    if (active) {
-      const current = active.instance_id === presence.instanceId && active.birth_generation === presence.startedAt && active.transport === presence.transport;
-      if (!current || this.wakeObservationOverdue(target, active, nowMs)) return outlook("latched", "wake-unobserved", active.expires_at);
-      // A definite failure re-reserves the row with a retry deadline: nothing is in flight until that deadline.
-      return active.state === "reserved" && active.retry_not_before !== null && String(active.retry_not_before) > now
-        ? outlook("available", "retry-backoff", active.retry_not_before) : outlook("available", "wake-in-flight", active.expires_at);
+    const birth = { ...target, instanceId: presence.instanceId!, generation: presence.startedAt! };
+    const path = this.wakePath(birth);
+    if (path?.prerequisite_missing != null) return outlook("degraded", "wake-prerequisite-missing", path.last_failure_at ?? now);
+    if (Number(path?.failures ?? 0) >= WAKE_FAILURE_LIMIT) return outlook("degraded", "wake-failing", path!.last_failure_at);
+    const active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND instance_id = ?
+      AND birth_generation = ? AND state IN ${ACTIVE_WAKE_STATES}`).get(target.host, target.sessionId, birth.instanceId, birth.generation) as Record<string, unknown> | undefined;
+    if (active?.state === "handed-off" || active?.state === "unknown") {
+      return Date.parse(String(active.outcome_at)) + WAKE_OBSERVATION_WINDOW_MS > nowMs
+        ? outlook("available", "wake-in-flight", active.outcome_at) : outlook("available", "wake-unanswered", active.resend_due_at);
     }
-    const legacy = this.database.prepare(`SELECT expires_at FROM wake_nonces WHERE host = ? AND session_id = ?
-      AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ? ORDER BY expires_at DESC LIMIT 1`).get(target.host, target.sessionId, now) as { expires_at: string } | undefined;
-    if (legacy) return outlook("available", "wake-in-flight", legacy.expires_at);
-    const cooldown = this.database.prepare(`SELECT max(retry_not_before) AS until FROM wake_nonces WHERE host = ? AND session_id = ?
-      AND state = 'not-submitted' AND retry_not_before > ?`).get(target.host, target.sessionId, now) as { until: string | null };
-    if (cooldown.until !== null) return outlook("available", "retry-backoff", cooldown.until);
+    if (active) return outlook("available", "wake-in-flight", active.started_at);
+    if (path?.retry_not_before != null && String(path.retry_not_before) > now) return outlook("available", "retry-backoff", path.retry_not_before);
+    if (path?.claim_boundary_at != null && String(path.claim_boundary_at) > iso(nowMs - WAKE_QUIET_MS)) {
+      return outlook("available", "recipient-active", path.claim_boundary_at);
+    }
     return outlook("available", "relay-live", relay.updatedAt);
   }
 
@@ -1238,54 +1215,12 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  reserveWake(target: SessionIdentity, nonce: string, nowMs = Date.now()): boolean {
+  /** Board classification (2.2): the marker names an attempt row of this target, whatever its state or expiry. */
+  consumeWake(target: SessionIdentity, nonce: string): boolean {
     boundedIdentity(target);
-    if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.reserveWake(target, nonce, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
-    this.prune(nowMs);
-    const now = iso(nowMs);
-    return this.transaction(() => {
-      const outstanding = this.database.prepare(`SELECT 1 FROM wake_nonces
-        WHERE host = ? AND session_id = ? AND (state IN ('reserved', 'started', 'submitted', 'unknown')
-          OR (state = 'legacy' AND consumed_at IS NULL AND expires_at > ?)) LIMIT 1`)
-        .get(target.host, target.sessionId, now);
-      const delivering = this.database.prepare(`SELECT 1 FROM messages
-        WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
-          AND expires_at > ? AND claim_until > ? LIMIT 1`)
-        .get(target.host, target.sessionId, now, now);
-      const claimable = this.database.prepare(`SELECT 1 FROM messages
-        WHERE target_host = ? AND target_session_id = ? AND acknowledged_at IS NULL
-          AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?) LIMIT 1`)
-        .get(target.host, target.sessionId, now, now);
-      if (outstanding || delivering || !claimable) {
-
-        return false;
-      }
-      this.database.prepare("INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at) VALUES (?, ?, ?, ?)")
-        .run(nonceDigest(nonce), target.host, target.sessionId, iso(nowMs + WAKE_TTL_MS));
-
-      return true;
-
-    });
-  }
-
-  releaseWake(target: SessionIdentity, nonce: string): boolean {
-    boundedIdentity(target);
-    if (nonce.length < 16 || nonce.length > 200) throw new Error("Invalid wake nonce.");
-    return this.database.prepare(`DELETE FROM wake_nonces
-      WHERE nonce_digest = ? AND host = ? AND session_id = ? AND state = 'legacy' AND consumed_at IS NULL`)
-      .run(nonceDigest(nonce), target.host, target.sessionId).changes === 1;
-  }
-
-  /** Board classification checks ownership; only the host hook can record observation. */
-  consumeWake(target: SessionIdentity, nonce: string, nowMs = Date.now()): boolean {
-    boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.consumeWake(target, nonce, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
-    return Boolean(this.database.prepare(`SELECT 1 FROM wake_nonces
-      WHERE nonce_digest = ? AND host = ? AND session_id = ? AND expires_at > ?`)
-      .get(nonceDigest(nonce), target.host, target.sessionId, iso(nowMs)));
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.consumeWake(target, nonce));
+    return Boolean(this.database.prepare("SELECT 1 FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?")
+      .get(nonceDigest(nonce), target.host, target.sessionId));
   }
 
   private wakeBindingCurrent(input: WakeRelayBinding, generation: string | null, nowMs: number): boolean {
@@ -1319,6 +1254,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       generation: String(row.birth_generation), attemptId: String(row.attempt_id), dispatchEpoch: Number(row.dispatch_epoch) };
   }
 
+  /** Gates 1-5 of 2.5. Retries always reserve a new row and nonce; only an unstarted row of the same birth resumes. */
   reserveManagedWake(input: WakeRelayBinding & { nonce: string; resume?: boolean }, atMs?: number): WakeReservation {
     boundedIdentity(input);
     if (!/^[A-Za-z0-9_-]{22,128}$/u.test(input.nonce)) throw new Error("Invalid wake nonce.");
@@ -1330,202 +1266,117 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       // Production time is sampled after the writer lock; fixtures may supply an explicit clock.
       const nowMs = this.shared ? this.shared.time(atMs ?? Date.now()) : atMs ?? Date.now();
       this.prune(nowMs);
-      let attempt: WakeAttempt | null = null;
-      let active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
-        AND state IN ('reserved', 'started', 'submitted', 'unknown')`).get(input.host, input.sessionId) as Record<string, unknown> | undefined;
-      const currentPending = this.wakeBindingCurrent(input, null, nowMs) && this.wakeClaimable(input, nowMs);
-      if (active?.state === "reserved" && active.late_observed_at === null
-        && active.observed_at === null && active.consumed_at === null
-        && (Number(active.retry_count) > 0 || active.retry_not_before !== null || active.outcome_at !== null)
-        && !this.hasUnclaimedMessages(input, nowMs)
-        && !this.wakeGenerationReplaced(this.wakeAttempt(active), nowMs)) {
-        this.database.prepare(`UPDATE wake_nonces SET state = 'not-submitted', outcome_at = coalesce(outcome_at, ?), retry_not_before = NULL
-          WHERE nonce_digest = ? AND state = 'reserved'`).run(iso(nowMs), String(active.nonce_digest));
-        active = undefined;
-      }
-      if (active?.state === "reserved" && currentPending && active.late_observed_at === null
-        && active.observed_at === null && active.consumed_at === null
-        && ((active.dispatch_epoch === 0 && active.started_at === null)
-          || (Number(active.retry_count) > 0 && active.retry_not_before !== null && active.outcome_at !== null))
-        && this.wakeGenerationReplaced(this.wakeAttempt(active), nowMs)) {
-        // Pre-start or exact definite-failure rows prove no effect; retain the old binding and cooldown.
-        this.database.prepare(`UPDATE wake_nonces SET state = 'not-submitted', outcome_at = coalesce(outcome_at, ?)
-          WHERE nonce_digest = ? AND state = 'reserved'`).run(iso(nowMs), String(active.nonce_digest));
-        active = undefined;
-      }
+      const none: WakeReservation = { dispatch: false, attempt: null };
+      const generation = this.presence(input, nowMs).startedAt;
+      const open = generation !== null && this.wakeBindingCurrent(input, generation, nowMs) && this.wakeClaimable(input, nowMs)
+        && this.wakePathOpen({ ...input, generation }, nowMs);
+      const active = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state IN ${ACTIVE_WAKE_STATES}`)
+        .get(input.host, input.sessionId) as Record<string, unknown> | undefined;
       if (active) {
-        // Lease replacement fences a crashed dispatcher; uncertain external effects remain latched.
-        if (active.state === "started" && !this.wakeBindingCurrent(this.wakeAttempt(active), String(active.birth_generation), nowMs)) {
-          this.database.prepare("UPDATE wake_nonces SET state = 'unknown' WHERE nonce_digest = ? AND state = 'started'").run(String(active.nonce_digest));
-        }
-        if (active.state === "reserved" && input.resume === true && currentPending
-          && input.instanceId === active.instance_id && input.transport === active.transport
-          && this.wakeBindingCurrent(input, String(active.birth_generation), nowMs)
-          && (active.retry_not_before === null || String(active.retry_not_before) <= iso(nowMs))) {
-          // Before started there is no external effect. Transfer ownership only to the current lease.
-          this.database.prepare("UPDATE wake_nonces SET relay_id = ? WHERE nonce_digest = ? AND state = 'reserved'")
-            .run(input.relayId, String(active.nonce_digest));
-          attempt = { ...this.wakeAttempt(active), relayId: input.relayId };
-        }
-      } else if (currentPending) {
-        const legacy = this.database.prepare(`SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ?
-          AND state = 'legacy' AND consumed_at IS NULL AND expires_at > ?`).get(input.host, input.sessionId, iso(nowMs));
-        const cooldown = this.database.prepare(`SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ?
-          AND state = 'not-submitted' AND retry_not_before > ? LIMIT 1`).get(input.host, input.sessionId, iso(nowMs));
-        if (!legacy && !cooldown) {
-          const count = this.database.prepare(`SELECT count(*) AS n FROM wake_nonces
-            WHERE state IN ('reserved', 'started', 'submitted', 'unknown')
-              OR (state = 'not-submitted' AND retry_not_before > ?)`).get(iso(nowMs)) as { n: number };
-          if (count.n >= MESSAGE_LIMIT) throw new Error("The bounded active wake store is full.");
-          const generation = this.presence(input, nowMs).startedAt!;
-          const attemptId = randomUUID();
-          // The target's latest attempt was a hand-off of this birth retired without any observation.
-          const priorUnobserved = this.database.prepare(`SELECT 1 FROM wake_nonces WHERE rowid = (SELECT max(rowid)
-            FROM wake_nonces WHERE host = ? AND session_id = ?) AND state = 'expired-unobserved' AND started_at IS NOT NULL
-            AND late_observed_at IS NULL AND birth_generation = ?`).get(input.host, input.sessionId, generation) ? 1 : 0;
-          this.database.prepare(`INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce,
-            instance_id, birth_generation, transport, relay_id, attempt_id, prior_unobserved) VALUES (?, ?, ?, ?, 'reserved', ?, ?, ?, ?, ?, ?, ?)`)
-            .run(nonceDigest(input.nonce), input.host, input.sessionId, iso(nowMs + WAKE_TTL_MS), input.nonce,
-              input.instanceId, generation, input.transport, input.relayId, attemptId, priorUnobserved);
-          attempt = { ...input, generation, attemptId, dispatchEpoch: 0 };
-        }
+        // Before started there is no external effect. Transfer ownership only to the current lease of the same birth.
+        if (active.state !== "reserved" || input.resume !== true || !open || active.instance_id !== input.instanceId
+          || active.transport !== input.transport || active.birth_generation !== generation) return none;
+        this.database.prepare("UPDATE wake_nonces SET relay_id = ? WHERE nonce_digest = ? AND state = 'reserved'")
+          .run(input.relayId, String(active.nonce_digest));
+        return { dispatch: true, attempt: { ...this.wakeAttempt(active), relayId: input.relayId } };
       }
-
-      return { dispatch: attempt !== null, attempt };
-
+      if (!open) return none;
+      const count = this.database.prepare(`SELECT count(*) AS n FROM wake_nonces WHERE state IN ${ACTIVE_WAKE_STATES}`).get() as { n: number };
+      if (count.n >= MESSAGE_LIMIT) throw new Error("The bounded active wake store is full.");
+      const attemptId = randomUUID();
+      this.database.prepare(`INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce,
+        instance_id, birth_generation, transport, relay_id, attempt_id) VALUES (?, ?, ?, ?, 'reserved', ?, ?, ?, ?, ?, ?)`)
+        .run(nonceDigest(input.nonce), input.host, input.sessionId, iso(nowMs + WAKE_TTL_MS), input.nonce,
+          input.instanceId, generation, input.transport, input.relayId, attemptId);
+      this.updateWakePath({ ...input, generation }, "", [], nowMs);
+      return { dispatch: true, attempt: { host: input.host, sessionId: input.sessionId, instanceId: input.instanceId,
+        transport: input.transport, relayId: input.relayId, nonce: input.nonce, generation, attemptId, dispatchEpoch: 0 } };
     });
   }
 
-  /** CAS succeeds once. The caller must not call a host adapter without this committed start. */
-  startManagedWake(attempt: WakeAttempt, atMs?: number): WakeReservation {
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startManagedWake(attempt, atMs));
+  /** CAS succeeds once (I3) and re-checks gates 1, 2, 4 and 5. The caller must not call a host adapter without this committed start. */
+  startManagedWake(attempt: WakeAttempt, resendBaseMs: number, atMs?: number): WakeReservation {
+    assertResendBase(resendBaseMs);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startManagedWake(attempt, resendBaseMs, atMs));
     return this.transaction(() => {
       const nowMs = this.shared ? this.shared.time(atMs ?? Date.now()) : atMs ?? Date.now();
-      const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
+      // Ends an expired or no-longer-claimable reservation first; the reserved row below is then still due.
+      this.prune(nowMs);
+      const none: WakeReservation = { dispatch: false, attempt: null };
+      const row = this.database.prepare(`SELECT 1 FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
         AND state = 'reserved' AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?`)
         .get(nonceDigest(attempt.nonce), attempt.host, attempt.sessionId, attempt.instanceId, attempt.generation,
-          attempt.transport, attempt.relayId, attempt.attemptId, attempt.dispatchEpoch) as Record<string, unknown> | undefined;
-      if (!row || !this.wakeBindingCurrent(attempt, attempt.generation, nowMs)
-        || (row.retry_not_before !== null && String(row.retry_not_before) > iso(nowMs))) {
-         return { dispatch: false, attempt: null };
-      }
-      if (String(row.expires_at) <= iso(nowMs) || !this.wakeClaimable(attempt, nowMs)) {
-        this.database.prepare("UPDATE wake_nonces SET state = 'not-submitted', outcome_at = ?, retry_not_before = NULL WHERE nonce_digest = ? AND state = 'reserved'")
-          .run(iso(nowMs), nonceDigest(attempt.nonce));
-         return { dispatch: false, attempt: null };
-      }
-      this.database.prepare("UPDATE wake_nonces SET state = 'started', started_at = ?, dispatch_epoch = dispatch_epoch + 1 WHERE nonce_digest = ?")
-        .run(iso(nowMs), nonceDigest(attempt.nonce));
-
-      return { dispatch: true, attempt: { ...attempt, dispatchEpoch: attempt.dispatchEpoch + 1 } };
-
+          attempt.transport, attempt.relayId, attempt.attemptId, attempt.dispatchEpoch);
+      if (!row || !this.wakeBindingCurrent(attempt, attempt.generation, nowMs) || !this.wakeClaimable(attempt, nowMs)
+        || !this.wakePathOpen(attempt, nowMs)) return none;
+      const started = this.database.prepare(`UPDATE wake_nonces SET state = 'started', started_at = ?, dispatch_epoch = dispatch_epoch + 1,
+        resend_base_ms = ? WHERE nonce_digest = ? AND state = 'reserved' AND dispatch_epoch = ?`)
+        .run(iso(nowMs), resendBaseMs, nonceDigest(attempt.nonce), attempt.dispatchEpoch).changes === 1;
+      return started ? { dispatch: true, attempt: { ...attempt, dispatchEpoch: attempt.dispatchEpoch + 1 } } : none;
     });
   }
 
-  recordManagedWakeOutcome(attempt: WakeAttempt, outcome: WakeDispatchOutcome, nowMs = Date.now()): boolean {
-    if (!["submitted", "definite-failure", "accepted-or-unknown", "target-unavailable"].includes(outcome)) throw new Error("Invalid wake dispatch outcome.");
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.recordManagedWakeOutcome(attempt, outcome, nowMs));
+  /**
+   * 2.2/2.4: the row changes only from started or unknown with the same attempt and epoch; an ended row never reopens
+   * (I11). The birth's path takes the outcome of this exact attempt even when it arrives after the row ended.
+   */
+  recordManagedWakeOutcome(attempt: WakeAttempt, outcome: WakeDispatchOutcome, resendBaseMs: number, nowMs = Date.now()): boolean {
+    if (!isWakeDispatchOutcome(outcome)) throw new Error("Invalid wake dispatch outcome.");
+    assertResendBase(resendBaseMs);
+    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.recordManagedWakeOutcome(attempt, outcome, resendBaseMs, nowMs));
     if (this.shared) nowMs = this.shared.time(nowMs);
     return this.transaction(() => {
-      const row = this.database.prepare(`SELECT retry_count FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
-        AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?
-        AND late_observed_at IS NULL AND observed_at IS NULL AND consumed_at IS NULL
-        AND state IN ('started', 'unknown')`).get(nonceDigest(attempt.nonce), attempt.host, attempt.sessionId,
-          attempt.instanceId, attempt.generation, attempt.transport, attempt.relayId, attempt.attemptId, attempt.dispatchEpoch) as { retry_count: number } | undefined;
-      if (!row) {  return false; }
-      if (outcome === "target-unavailable") {
-        // The attempt's birth and current relay must still own this target. A late
-        // host rejection must not retire a replacement, even with the same instanceId.
-        if (!this.wakeBindingCurrent(attempt, attempt.generation, nowMs)) return false;
-        this.database.prepare(`UPDATE wake_nonces SET state = 'not-submitted', outcome_at = ?, retry_not_before = NULL
-          WHERE nonce_digest = ?`).run(iso(nowMs), nonceDigest(attempt.nonce));
-        this.database.prepare("DELETE FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?")
-          .run(attempt.host, attempt.sessionId, attempt.transport, attempt.relayId);
-        this.endPresence(attempt, "target-unavailable", attempt.instanceId, nowMs);
-        return true;
+      const now = iso(nowMs);
+      const digest = nonceDigest(attempt.nonce);
+      const row = this.database.prepare(`SELECT state FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?
+        AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND attempt_id = ? AND dispatch_epoch = ?`)
+        .get(digest, attempt.host, attempt.sessionId, attempt.instanceId, attempt.generation, attempt.transport,
+          attempt.relayId, attempt.attemptId, attempt.dispatchEpoch) as { state: string } | undefined;
+      if (!row || attempt.dispatchEpoch < 1) return false;
+      const path = this.wakePath(attempt);
+      // ponytail: a replayed record of the same attempt counts its transient failure twice (one extra backoff step);
+      // add a per-attempt recorded flag if replays become common.
+      if (outcome.result !== "not-delivered") this.updateWakePath(attempt, "failures = 0", [], nowMs);
+      else if (outcome.kind === "transient") {
+        this.updateWakePath(attempt, "failures = failures + 1, last_failure_at = ?, retry_not_before = ?",
+          [now, iso(nowMs + wakeBackoffDelay(Number(path?.failures ?? 0)))], nowMs);
+      } else this.updateWakePath(attempt, "prerequisite_missing = ?, last_failure_at = ?", [outcome.reasonCode, now], nowMs);
+      if (row.state !== "started" && row.state !== "unknown") return false;
+      if (outcome.result === "not-delivered") {
+        this.database.prepare("UPDATE wake_nonces SET state = 'not-delivered', outcome_at = ? WHERE nonce_digest = ? AND state IN ('started', 'unknown')")
+          .run(now, digest);
+      } else {
+        this.database.prepare(`UPDATE wake_nonces SET state = ?, outcome_at = ?, resend_base_ms = ?, resend_due_at = ?
+          WHERE nonce_digest = ? AND state IN ('started', 'unknown')`)
+          .run(outcome.result, now, resendBaseMs, iso(nowMs + resendDelay(resendBaseMs, Number(path?.streak ?? 0))), digest);
       }
-      const retry = outcome === "definite-failure";
-      const generationReplaced = retry && this.wakeGenerationReplaced(attempt, nowMs);
-      const claimedWithNoneLeft = retry && !generationReplaced && !this.hasUnclaimedMessages(attempt, nowMs);
-      const nextState = retry ? (generationReplaced || claimedWithNoneLeft ? "not-submitted" : "reserved")
-        : outcome === "submitted" ? "submitted" : "unknown";
-      this.database.prepare(`UPDATE wake_nonces SET state = ?, outcome_at = ?, retry_not_before = ?, retry_count = ?
-        WHERE nonce_digest = ?`).run(nextState, iso(nowMs),
-          retry && !claimedWithNoneLeft ? iso(nowMs + wakeBackoffDelay(row.retry_count)) : null,
-          row.retry_count + (retry ? 1 : 0), nonceDigest(attempt.nonce));
-       return true;
-
+      return true;
     });
   }
 
   managedWakeStatus(target: SessionIdentity, nowMs = Date.now()): Record<string, unknown> | null {
     boundedIdentity(target);
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.managedWakeStatus(target, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
-    const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND state <> 'legacy'
-      ORDER BY CASE WHEN state IN ('reserved', 'started', 'submitted', 'unknown') THEN 0 ELSE 1 END, rowid DESC LIMIT 1`)
+    const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
+      ORDER BY CASE WHEN state IN ${ACTIVE_WAKE_STATES} THEN 0 ELSE 1 END, rowid DESC LIMIT 1`)
       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
     if (!row) return null;
-    const active = ["reserved", "started", "submitted", "unknown"].includes(String(row.state));
-    const retired = row.state === "expired-unobserved";
-    return { state: row.state, observation: row.state === "observed" ? "observed" : retired ? "expired-unobserved"
-      : row.late_observed_at !== null ? "unknown" : active && this.wakeObservationOverdue(target, row, nowMs) ? "observation-overdue"
-      : active ? "pending" : "not-submitted",
-      deliveryState: row.state === "started" || row.state === "unknown" || retired ? "unknown" : row.state,
-      retiredAt: row.retired_at,
+    const active = ACTIVE_WAKE_STATE_LIST.includes(String(row.state));
+    return { state: row.state, releaseReason: row.release_reason,
+      observation: row.state === "observed" ? "observed" : row.late_observed_at !== null ? "late-observed" : active ? "pending" : "unobserved",
+      // handed-off is not delivery (I10).
+      deliveryState: row.state === "observed" || row.state === "not-delivered" ? row.state : "unknown",
       instanceId: row.instance_id, generation: row.birth_generation, attemptId: row.attempt_id,
-      startedAt: row.started_at, outcomeAt: row.outcome_at,
-      dispatchEpoch: row.dispatch_epoch, retryNotBefore: row.retry_not_before, expiresAt: row.expires_at,
-      observedAt: row.observed_at, lateObservedAt: row.late_observed_at };
+      startedAt: row.started_at, outcomeAt: row.outcome_at, resendDueAt: row.resend_due_at, releasedAt: row.released_at,
+      dispatchEpoch: row.dispatch_epoch, expiresAt: row.expires_at, observedAt: row.observed_at, lateObservedAt: row.late_observed_at };
   }
 
-  /** Terminal-only maintenance. Historical evidence cannot claim bodies or observe a current relay. */
-  reconcileHistoricalWake(target: SessionIdentity, attemptId: string, sourceReceiptId: string, nowMs = Date.now(),
-    verify: typeof verifyHistoricalWakeObservation = this.shared ? () => null : verifyHistoricalWakeObservation): {
-      reconciled: boolean;
-      evidence: (HistoricalWakeEvidence & { oldBinding: Omit<WakeAttempt, "nonce">; lateObservedAt: string; reconciledAt: string }) | null;
-    } {
-    boundedIdentity(target);
-    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(attemptId)
-      || !/^source-[A-Za-z0-9-]{1,128}$/u.test(sourceReceiptId)) throw new Error("Invalid historical wake identity.");
-    const rejected = { reconciled: false, evidence: null };
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.reconcileHistoricalWake(target, attemptId, sourceReceiptId, nowMs, verify));
-    if (this.shared) nowMs = this.shared.time(nowMs);
-    const isOldGeneration = (row: Record<string, unknown>) => {
-      const presence = this.presence(target, nowMs);
-      return presence.instanceId !== null && presence.startedAt !== null
-        && (row.instance_id !== presence.instanceId || row.birth_generation !== presence.startedAt);
-    };
-    return this.transaction(() => {
-      const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND attempt_id = ?
-        AND state = 'unknown' AND late_observed_at IS NOT NULL AND consumed_at IS NULL AND observed_at IS NULL`)
-        .get(target.host, target.sessionId, attemptId) as Record<string, unknown> | undefined;
-      if (!row || ![row.nonce, row.instance_id, row.birth_generation, row.transport, row.relay_id, row.started_at].every((value) => typeof value === "string")
-        || row.nonce_digest !== nonceDigest(String(row.nonce)) || Number(row.dispatch_epoch) < 1 || !isOldGeneration(row)) {
-         return rejected;
-      }
-      const proof = verify(target, String(row.nonce), sourceReceiptId, String(row.started_at), String(row.late_observed_at), nowMs);
-      if (!proof || !isOldGeneration(row)) {  return rejected; }
-      // Recheck every original binding and observation field after the separate read-only trust snapshot.
-      const changed = this.database.prepare(`UPDATE wake_nonces SET state = 'observed', observed_at = ?, consumed_at = ?
-        WHERE nonce_digest = ? AND nonce = ? AND host = ? AND session_id = ? AND attempt_id = ?
-        AND instance_id = ? AND birth_generation = ? AND transport = ? AND relay_id = ? AND dispatch_epoch = ?
-        AND state = 'unknown' AND started_at = ? AND late_observed_at = ? AND consumed_at IS NULL AND observed_at IS NULL`)
-        .run(proof.observedAt, iso(nowMs), String(row.nonce_digest), String(row.nonce), target.host, target.sessionId, attemptId,
-          String(row.instance_id), String(row.birth_generation), String(row.transport), String(row.relay_id), Number(row.dispatch_epoch),
-          String(row.started_at), String(row.late_observed_at)).changes;
-
-      if (changed !== 1) return rejected;
-      const attempt = this.wakeAttempt(row);
-      const oldBinding = { host: attempt.host, sessionId: attempt.sessionId, instanceId: attempt.instanceId,
-        generation: attempt.generation, transport: attempt.transport, relayId: attempt.relayId,
-        attemptId: attempt.attemptId, dispatchEpoch: attempt.dispatchEpoch };
-      return { reconciled: true, evidence: { ...proof, oldBinding, lateObservedAt: String(row.late_observed_at), reconciledAt: iso(nowMs) } };
-
-    });
-  }
-
-  /** Verified arrival retires its attempt; only current bindings may claim bodies in the same transaction. */
+  /**
+   * Verified arrival (2.7). A marker of the current birth (instance, birth, transport, online, peer-wake) claims the
+   * pending bodies whatever its row state or nonce expiry, ends its active row as observed and passes a claim boundary.
+   * A marker of another birth claims nothing (I2) and, like an ended row, only records its first late arrival.
+   * An unknown or pruned marker authorizes nothing (I1).
+   */
   claimHostWake(target: SessionIdentity, observation: InputObservation, receiptId: string, reader: WakeHookObservationReader | undefined, nowMs = Date.now(), limits: ClaimLimits = {}): {
     recognized: boolean; messages: SessionMessage[]; binding: WakeAttempt | null; retired?: true;
   } {
@@ -1536,52 +1387,32 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimHostWake(target, observation, receiptId, reader, nowMs, limits));
     if (this.shared) nowMs = this.shared.time(nowMs);
     return this.transaction(() => {
-      if (!reader.verifyObservation(target, observation, receiptId, nowMs)) {  return rejected; }
-      const rows = digests.map((digest) => this.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?")
+      if (!reader.verifyObservation(target, observation, receiptId, nowMs)) return rejected;
+      const found = digests.map((digest) => this.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?")
         .get(digest, target.host, target.sessionId) as Record<string, unknown> | undefined);
-      // A proven, already consumed arrival may recur beside a new marker in a
-      // fresh receipt. It is inert history, never authority for another body.
-      const alreadyObserved = (row: Record<string, unknown>) => row.state === "observed"
-        && typeof row.observed_at === "string" && typeof row.consumed_at === "string"
-        && typeof row.nonce === "string" && row.nonce_digest === nonceDigest(row.nonce);
-      if (rows.some((row) => !row || (!alreadyObserved(row)
-        && !["legacy", "started", "submitted", "unknown", "expired-unobserved"].includes(String(row.state))))) {
-         return rejected;
-      }
-      if (rows.every((row) => alreadyObserved(row!))) return rejected;
-      this.recordActivity(target, nowMs);
+      if (found.some((row) => !row)) return rejected;
+      const rows = found as Array<Record<string, unknown>>;
+      const now = iso(nowMs);
       const presence = this.presence(target, nowMs);
-      // A retired attempt stays retired; its verified late arrival is recorded as evidence only and it takes no part
-      // in the decision, so a current marker in the same prompt still claims. Only an all-retired prompt reports retired.
-      this.database.prepare(`UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?)
-        WHERE host = ? AND session_id = ? AND state = 'expired-unobserved' AND nonce_digest IN (SELECT value FROM json_each(?))`)
-        .run(iso(nowMs), target.host, target.sessionId, JSON.stringify(digests));
-      const live = rows.filter((row) => row!.state !== "expired-unobserved" && !alreadyObserved(row!));
-      if (live.length === 0) return rows.every((row) => row!.state === "expired-unobserved") ? { ...rejected, retired: true } : rejected;
-      const valid = live.every((row) => row!.state === "legacy" ? row!.consumed_at === null && String(row!.expires_at) > iso(nowMs)
-        : row!.instance_id === presence.instanceId && row!.birth_generation === presence.startedAt
-          && row!.transport === presence.transport && presence.state === "online"
-          && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && String(row!.expires_at) > iso(nowMs));
-      if (!valid) {
-        // Arrival is proven, but it cannot authorize this generation's body claim or resume evidence.
-        for (const row of live) if (row!.state !== "legacy") this.database.prepare(`UPDATE wake_nonces
-          SET late_observed_at = coalesce(late_observed_at, ?), state = 'observed', consumed_at = ?, observed_at = ?
-          WHERE nonce_digest = ? AND state IN ('started', 'submitted', 'unknown')`)
-          .run(iso(nowMs), iso(nowMs), iso(nowMs), String(row!.nonce_digest));
-         return rejected;
+      const current = (row: Record<string, unknown>) => presence.state === "online" && row.instance_id === presence.instanceId
+        && row.birth_generation === presence.startedAt && row.transport === presence.transport
+        && presence.deliveryCapabilities.supportedInjection.includes("peer-wake");
+      const ended = (row: Record<string, unknown>) => !ACTIVE_WAKE_STATE_LIST.includes(String(row.state));
+      const allEnded = rows.every(ended);
+      for (const row of rows) {
+        if (ended(row) || !current(row)) this.database.prepare("UPDATE wake_nonces SET late_observed_at = coalesce(late_observed_at, ?) WHERE nonce_digest = ?")
+          .run(now, String(row.nonce_digest));
       }
+      const live = rows.filter(current);
+      if (live.length === 0) return allEnded ? { ...rejected, retired: true } : rejected;
       const messages = this.claimLocked(target, nowMs, limits);
-      let binding: WakeAttempt | null = null;
       for (const row of live) {
-        if (row!.state === "legacy") this.database.prepare("UPDATE wake_nonces SET consumed_at = ? WHERE nonce_digest = ?").run(iso(nowMs), String(row!.nonce_digest));
-        else {
-          this.database.prepare("UPDATE wake_nonces SET state = 'observed', consumed_at = ?, observed_at = ? WHERE nonce_digest = ?")
-            .run(iso(nowMs), iso(nowMs), String(row!.nonce_digest));
-          binding = this.wakeAttempt(row!);
-        }
+        this.database.prepare(`UPDATE wake_nonces SET state = 'observed', consumed_at = ?, observed_at = ?
+          WHERE nonce_digest = ? AND state IN ${ACTIVE_WAKE_STATES}`).run(now, now, String(row.nonce_digest));
       }
-       return { recognized: true, messages, binding };
-
+      this.markClaimBoundary(target, nowMs);
+      this.updateWakePath(this.wakeAttempt(live[0]!), "streak = 0", [], nowMs);
+      return { recognized: true, messages, binding: this.wakeAttempt(live[0]!), ...(messages.length === 0 && allEnded ? { retired: true as const } : {}) };
     });
   }
 
@@ -1627,7 +1458,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         ELSE session_presence.started_at END,
       heartbeat_at = excluded.heartbeat_at, lease_until = excluded.lease_until,
       ended_at = NULL, end_reason = NULL
-      WHERE session_presence.end_reason IS NOT 'target-unavailable' AND session_presence.superseded_at IS NULL`).run(
+      WHERE session_presence.superseded_at IS NULL`).run(
       input.host, input.sessionId, input.instanceId, input.transport, input.wakeVisibility,
       input.canWakeSilently ? 1 : 0, JSON.stringify(input.deliveryCapabilities?.supportedInjection ?? []),
       input.deliveryCapabilities?.idleWake ?? input.wakeVisibility, input.collaborationId ?? null, input.workspaceId ?? null,
@@ -1678,10 +1509,11 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       ...target, instanceId: null, transport: null, wakeVisibility: "none", canWakeSilently: false,
       deliveryCapabilities: { supportedInjection: [], idleWake: "none" },
       collaborationId: null, workspaceId: null, role: null, startedAt: null, heartbeatAt: null,
-      leaseUntil: null, endedAt: null, endReason: null, state: "unknown",
+      leaseUntil: null, endedAt: null, endReason: null, state: "unknown", relayLive: false,
     };
     const endedAt = row.ended_at === null ? null : String(row.ended_at);
     const leaseUntil = String(row.lease_until);
+    const state: SessionPresenceState = endedAt ? "ended" : Date.parse(leaseUntil) > nowMs ? "online" : "unreachable";
     return {
       host: String(row.host), sessionId: String(row.session_id), instanceId: String(row.instance_id),
       transport: String(row.transport), wakeVisibility: row.wake_visibility as WakeVisibility,
@@ -1693,7 +1525,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       workspaceId: row.workspace_id === null ? null : String(row.workspace_id), role: row.role === null ? null : String(row.role),
       startedAt: String(row.started_at), heartbeatAt: String(row.heartbeat_at), leaseUntil,
       endedAt, endReason: row.end_reason === null ? null : String(row.end_reason),
-      state: endedAt ? "ended" : Date.parse(leaseUntil) > nowMs ? "online" : "unreachable",
+      state, relayLive: state === "online" && this.liveRelay(target, String(row.transport), nowMs) !== null,
     };
   }
 

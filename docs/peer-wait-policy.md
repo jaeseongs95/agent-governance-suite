@@ -15,7 +15,7 @@
 1. 모든 대상에 현재 hook 결속 sender와 주고받은 만료 전 peer 메시지 메타데이터가 있다. 서로 다른 채팅이나 관계가 미확인인 대상이 섞이면 제한하지 않는다.
 2. sender presence가 online이며 최신 instance의 lease가 유효하다.
 3. 브로커가 기존 relay acquire/heartbeat에서 같은 instance를 결속했고 relay lease·relay ID와 현재 relay/parent 프로세스 생존이 일치한다. 구 relay가 instance를 제공하지 않으면 미확인이다.
-4. 같은 instance와 relay에서 예약된 nonce가 실제 host wake hook의 `claim-wake`에서 유효하게 소비되었으며 그 관측이 30초 이내이다. 기능 선언·브랜드·ACK·caller JSON만으로 이 증거를 만들지 않는다.
+4. 같은 instance와 relay에서 예약된 nonce가 실제 host wake hook의 `claim-host-wake`에서 유효하게 소비되었으며 그 관측이 30초 이내이다. 기능 선언·브랜드·ACK·caller JSON만으로 이 증거를 만들지 않는다.
 5. presence에 `peer-wake` 주입과 `idleWake`가 선언되어 있으며 wake visibility와 일치한다. `none`은 복귀 가능한 상태로 취급하지 않는다.
 
 복귀가 확인된 peer 대기의 positive timeout은 거절한다. `timeoutMs: 0`은 첫 조회를 허용한다. 같은 대상·peer 상태·관측 cursor의 반복 조회만 30초 동안 억제하며, 거절된 반복은 만료 시각을 연장하지 않는다. peer 메타데이터나 cursor 변화, 새 사용자 입력 또는 기록 만료는 첫 조회를 다시 허용한다. `get_session_message_status`, 일반 sleep·셀 대기·프로세스·테스트 대기는 이 native 제한 대상이 아니다. 명시적인 사용자 대기 의도를 임의 regex나 `approved` 필드로 추정하지 않는다.

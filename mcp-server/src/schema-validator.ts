@@ -31,7 +31,7 @@ import {
   type PrepareSessionMessageRequestV1,
   type AcknowledgeSessionMessagesRequestV1,
   type GetSessionMessageStatusRequestV1,
-  type SessionAutoWakeOutlookV1,
+  type SessionAutoWakeOutlookV2,
   type PrepareStateCleanupRequestV1,
   type SuppressContextRestoreRequestV1,
   type PluginUpdateNoticeV1,
@@ -98,7 +98,7 @@ export const contractSchemas = {
   prepareSessionMessageRequest: loadSchema("prepare-session-message-request.v1.schema.json"),
   acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
   getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
-  sessionAutoWakeOutlook: loadSchema("session-auto-wake-outlook.v1.schema.json"),
+  sessionAutoWakeOutlook: loadSchema("session-auto-wake-outlook.v2.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
   executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
   stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
@@ -287,8 +287,8 @@ export class ContractValidator {
     return this.assert<GetSessionMessageStatusRequestV1>("getSessionMessageStatusRequest", value);
   }
 
-  sessionAutoWakeOutlook(value: unknown): SessionAutoWakeOutlookV1 {
-    return this.assert<SessionAutoWakeOutlookV1>("sessionAutoWakeOutlook", value);
+  sessionAutoWakeOutlook(value: unknown): SessionAutoWakeOutlookV2 {
+    return this.assert<SessionAutoWakeOutlookV2>("sessionAutoWakeOutlook", value);
   }
 
   prepareStateCleanupRequest(value: unknown): PrepareStateCleanupRequestV1 {

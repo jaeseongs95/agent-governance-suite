@@ -526,10 +526,10 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     && (observation.kind === "user-input" || observation.kind === "turn-end"
       || (observation.kind === "tool-boundary" && observation.boundaryPhase === "after"))) {
     try {
-      const listed = await request<{ sessions: Array<{ host: string; sessionId: string; instanceId: string | null; state: string; transport: string | null; autoWake?: { state: string } | null }> }>("list-presence", { targets: [target] });
+      const listed = await request<{ sessions: Array<{ host: string; sessionId: string; instanceId: string | null; state: string; transport: string | null; relayLive: boolean }> }>("list-presence", { targets: [target] });
       const current = listed.sessions.find((session) => session.host === host && session.sessionId === sessionId);
-      const relayLive = current?.state === "online" && current.transport === profile.transport
-        && (current.autoWake?.state === "available" || current.autoWake?.state === "latched");
+      // The broker's explicit relay-lease fact, never inferred from the advisory autoWake outlook.
+      const relayLive = current?.state === "online" && current.transport === profile.transport && current.relayLive === true;
       if (!relayLive) {
         remainingBudget(budget);
         if (claimHostProcess) await ensureVerifiedRelay(claimHostProcess, current?.instanceId ?? null);
@@ -580,8 +580,8 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       if (profile.blocksEmptyWakePrompt && result.recognized && result.managed === true && result.messages.length === 0) {
         return { decision: "block", reason: "No peer message is available for this verified wake notification." };
       }
-      // A verified marker of an attempt already retired by the liveness rule is a stale duplicate: it claims no
-      // body, and current bodies have their own wake. Stop the empty model turn; the host still shows the marker.
+      // A verified marker whose attempts have all ended (observed, released or not delivered) and that claimed no
+      // body is a stale duplicate; current bodies have their own wake. Stop the empty model turn; the host still shows the marker.
       if (profile.blocksEmptyWakePrompt && !result.recognized && result.retired === true && result.messages.length === 0) {
         return { decision: "block", reason: "This wake notification was already retired; no peer message is attached." };
       }

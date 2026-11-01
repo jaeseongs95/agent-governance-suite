@@ -4,11 +4,10 @@ import { randomUUID } from "node:crypto";
 import { failureContext, producerFailure, producerFailureReason } from "./failure-diagnostics.js";
 import { newWakeNonce, sessionMessageRequest, wakeMessage } from "./session-message-client.js";
 import { processExists, processIdentityState, type ProcessIdentityState } from "./process-identity.js";
-import { persistRelayFailure, transportWakePort, transportDeliveryCapabilities, wakeBackoffDelay, type WakeDispatchPort, type WakeDispatchOutcome } from "./session-message-wake-port.js";
+import { persistRelayFailure, type WakeDispatchPort, type WakeDispatchOutcome } from "./session-message-wake-port.js";
+import { transportDeliveryCapabilities, transportWakePort } from "./wake-transports.js";
 import type { WakeReservation } from "./session-message-store.js";
 import { createRelayWakeObservation, type RelayWakeObservation } from "./relay-wake-observation.js";
-export { transportDeliveryCapabilities, wakeBackoffDelay, codexWakeOutcome, claudeWakeOutcome, geminiWakeOutcome, ringClaude,
-  type WakeDispatchOutcome } from "./session-message-wake-port.js";
 
 // Capture once: later file replacement must not make this running relay report new code.
 const STARTUP_CODE_DIGEST = readRelayCodeDigest(new URL(import.meta.url));
@@ -66,23 +65,6 @@ export function transportWakeCapabilities(transport: SessionMessageTransport): {
   return { wakeVisibility: idleWake, canWakeSilently: idleWake === "silent" };
 }
 
-export function shouldReleaseWake(outcome: WakeDispatchOutcome): boolean {
-  return outcome === "definite-failure";
-}
-
-export function wakeRetryState(outcome: WakeDispatchOutcome, released: boolean, attempt: number, now: number): {
-  retry: boolean;
-  nextRingAt: number;
-  ringAttempts: number;
-} {
-  const retry = outcome === "definite-failure" && released;
-  return {
-    retry,
-    nextRingAt: retry ? now + wakeBackoffDelay(attempt) : 0,
-    ringAttempts: retry ? attempt + 1 : 0,
-  };
-}
-
 async function delay(milliseconds: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
@@ -90,7 +72,7 @@ async function delay(milliseconds: number): Promise<void> {
 /** One dispatch cycle shared by the loop and isolated process regression fixtures. */
 export async function dispatchManagedWake(options: Pick<RelayOptions, "host" | "sessionId" | "instanceId" | "transport">,
   relayId: string, port: WakeDispatchPort, request: typeof sessionMessageRequest = sessionMessageRequest,
-  observation?: RelayWakeObservation): Promise<boolean | "target-unavailable"> {
+  observation?: RelayWakeObservation): Promise<boolean> {
   if (port.capabilities.idleWake === "none" || !port.capabilities.supportedInjection.includes("peer-wake")) return false;
   const target = { host: options.host, sessionId: options.sessionId };
   let renewal: Promise<void> | null = null;
@@ -104,23 +86,17 @@ export async function dispatchManagedWake(options: Pick<RelayOptions, "host" | "
     const reserved = await request<WakeReservation>("reserve-wake", { target, nonce: newWakeNonce(),
       instanceId: options.instanceId, transport: options.transport, relayId, resume: true });
     if (!reserved.dispatch || !reserved.attempt) return false;
-    const started = await request<WakeReservation>("start-wake", { attempt: reserved.attempt });
+    // The resend base comes from this port's declaration, never from a client hook (3.1).
+    const started = await request<WakeReservation>("start-wake", { attempt: reserved.attempt, resendBaseMs: port.resendBaseMs });
     if (!started.dispatch || !started.attempt) return false;
-    let outcome: WakeDispatchOutcome = "accepted-or-unknown";
+    let outcome: WakeDispatchOutcome = { result: "unknown", reasonCode: "ADAPTER_THREW" };
     try {
       observation?.record("dispatch-attempt");
       outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce), observation?.record);
     }
     catch { /* A thrown adapter cannot prove that no bytes were submitted. */ }
-    if (outcome === "target-unavailable") {
-      clearInterval(heartbeat);
-      try { await request("record-wake-outcome", { attempt: started.attempt, outcome }); }
-      catch (error) { reportRelayFailure("tick", error); }
-      // Stop renewing even if persistence failed. Only the exact-birth transaction
-      // above may clean up; generic exit cleanup could end a replacement birth.
-      return "target-unavailable";
-    }
-    await request("record-wake-outcome", { attempt: started.attempt, outcome });
+    // A lost response leaves the row started; the store's start timeout turns it unknown with a resend deadline.
+    await request("record-wake-outcome", { attempt: started.attempt, outcome, resendBaseMs: port.resendBaseMs });
     return true;
   } finally {
     clearInterval(heartbeat);
@@ -136,7 +112,6 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
   if (options.relayId !== undefined && (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(options.relayId) || !/^host-process-v1:[0-9a-f]{64}$/u.test(options.instanceId) || !options.relayId.endsWith(":"+options.instanceId.slice("host-process-v1:".length)))) throw new Error("Invalid relay startup reservation.");
   const relayId = options.relayId ?? randomUUID();
   let acquired = false;
-  let targetUnavailable = false;
   let acquisitionUnknowns = 0;
   // Acquisition failures are not exceptions; keep the last blocking cause so a missing relay is diagnosable.
   let blocked = "RELAY_LEASE_HELD";
@@ -247,10 +222,7 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
         }
         identityUnknowns = 0;
         nextIdentityCheck = now + IDENTITY_RECHECK_MS;
-        if (await dispatchManagedWake(options, relayId, port, sessionMessageRequest, observation) === "target-unavailable") {
-          targetUnavailable = true;
-          return;
-        }
+        await dispatchManagedWake(options, relayId, port, sessionMessageRequest, observation);
       }
     } catch (error) {
       // Messages remain durable. A committed start is never retried on an uncertain response.
@@ -260,9 +232,7 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
     }
   } finally {
     try {
-      if (targetUnavailable) {
-        // Exact-birth cleanup already ran, or lease expiry is the safe fallback.
-      } else if (options.relayId) {
+      if (options.relayId) {
         await sessionMessageRequest("release-verified-relay",{target,transport:options.transport,relayId,instanceId:options.instanceId,pid:process.pid},undefined,{totalTimeoutMs:3000,noOperationReplay:true});
       } else {
         // Release only this acquisition's lease so a replacement relay need not wait for expiry.

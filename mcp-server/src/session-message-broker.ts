@@ -9,8 +9,8 @@ import { fileURLToPath } from "node:url";
 import {
   brokerStartupCode, SESSION_MESSAGE_MAX_REQUEST_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_MESSAGE_PROTOCOL, SESSION_MESSAGE_CLAIM_OPERATIONS, SESSION_PRESENCE_LIST_MAX_TARGETS, sessionMessageLineReader,
 } from "./session-message-protocol.js";
-import { MessageCapacityError, SessionMessageStore, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
-import { createWakeHookObservationReader, verifyHistoricalWakeObservation, type WakeHookObservationReader } from "./session-message-wake-port.js";
+import { MessageCapacityError, SessionMessageStore, WAKE_RESEND_MAX_MS, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
+import { createWakeHookObservationReader, isWakeDispatchOutcome, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import { createSelfSignedCertificate } from "./self-signed-certificate.js";
@@ -22,7 +22,7 @@ import { acquireBrokerProcessLockWhenReady, ownsBrokerProcessLock, releaseBroker
 import { performance } from "node:perf_hooks";
 
 const IDLE_EXIT_MS = 60_000;
-export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["atomic-wake-claim", "deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"] as const;
+export const SESSION_MESSAGE_BROKER_CAPABILITIES = ["deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"] as const;
 
 interface BrokerRequest {
   protocolVersion: string;
@@ -64,6 +64,18 @@ function wakeAttempt(value: unknown): WakeAttempt {
   if (result.nonce.length > 128 || result.generation.length > 100 || result.attemptId.length > 128
     || result.instanceId.length > 128 || result.transport.length > 64 || result.relayId.length > 128 || result.dispatchEpoch < 0) throw new Error("Invalid wake attempt.");
   return result;
+}
+
+/** The relay reads this from its transport's port declaration; an out-of-range value is refused, never clamped. */
+function resendBaseMs(value: unknown): number {
+  const result = integer(value, "resendBaseMs");
+  if (result < 1 || result > WAKE_RESEND_MAX_MS) throw new Error(`resendBaseMs must be 1 to ${WAKE_RESEND_MAX_MS}.`);
+  return result;
+}
+
+function wakeOutcome(value: unknown): WakeDispatchOutcome {
+  if (!isWakeDispatchOutcome(value)) throw new Error("Invalid wake dispatch outcome.");
+  return value;
 }
 
 function integer(value: unknown, name: string): number {
@@ -161,18 +173,16 @@ async function credentials(stateDirectory: string): Promise<{ key: string; certi
 
 interface PeerWaitRuntime {
   policy: PeerWaitPolicy;
-  wakes: Map<string, { owner: string; instanceId: string; relayId: string; expiresAt: number }>;
   relays: Map<string, { instanceId: string; relayId: string; expiresAt: number; wakeObservedAt?: number }>;
 }
 const peerWaitRuntimes = new WeakMap<SessionMessageStore, PeerWaitRuntime>();
 function peerWaitRuntime(store: SessionMessageStore): PeerWaitRuntime {
   let runtime = peerWaitRuntimes.get(store);
   if (!runtime) {
-    runtime = { policy: new PeerWaitPolicy(), relays: new Map(), wakes: new Map() };
+    runtime = { policy: new PeerWaitPolicy(), relays: new Map() };
     peerWaitRuntimes.set(store, runtime);
   }
   for (const [key, value] of runtime.relays) if (value.expiresAt <= Date.now()) runtime.relays.delete(key);
-  for (const [key, value] of runtime.wakes) if (value.expiresAt <= Date.now()) runtime.wakes.delete(key);
   return runtime;
 }
 function observePeerRelay(store: SessionMessageStore, payload: Record<string, unknown>, accepted: boolean): void {
@@ -367,7 +377,7 @@ function withRelayRecovery(store: SessionMessageStore, payload: Record<string, u
 }
 
 export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore, operation: string, payload: Record<string, unknown>,
-  wakeObserver?: WakeHookObservationReader, historicalWakeVerifier = verifyHistoricalWakeObservation): unknown {
+  wakeObserver?: WakeHookObservationReader): unknown {
   switch (operation) {
     case "ping": return { protocolVersion: SESSION_MESSAGE_PROTOCOL, capabilities: SESSION_MESSAGE_BROKER_CAPABILITIES };
     case "prepare": {
@@ -392,28 +402,6 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
         ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
       }) };
     }
-    case "claim-wake": {
-      const maxMessages = optionalInteger(payload, "maxMessages");
-      const maxBodyChars = optionalInteger(payload, "maxBodyChars");
-      const nonces = Array.isArray(payload.nonces) ? payload.nonces.map((value) => string(value, "nonce")) : [];
-      const target = identity(payload.target);
-      const result = store.claimWake(target, nonces, Date.now(), {
-        ...(maxMessages === undefined ? {} : { maxMessages }),
-        ...(maxBodyChars === undefined ? {} : { maxBodyChars }),
-      });
-      const runtime = peerWaitRuntime(store);
-      const owner = JSON.stringify(target);
-      const binding = runtime.relays.get(owner);
-      const presence = store.presence(target);
-      const wakeKeys = nonces.map((nonce) => createHash("sha256").update(nonce).digest("hex"));
-      const sameGeneration = wakeKeys.length > 0 && wakeKeys.every((key) => {
-        const wake = runtime.wakes.get(key);
-        return wake?.owner === owner && wake.instanceId === binding?.instanceId && wake.relayId === binding?.relayId;
-      });
-      if (result.recognized && sameGeneration && binding?.instanceId === presence.instanceId && presence.state === "online") binding.wakeObservedAt = Date.now();
-      for (const key of wakeKeys) runtime.wakes.delete(key);
-      return result;
-    }
     case "claim-host-wake": {
       if (Object.keys(payload).some((key) => !["target", "observation", "sourceReceiptId", "maxMessages", "maxBodyChars"].includes(key))) {
         throw new Error("Host wake claim requires a non-authorizing hook source receipt.");
@@ -429,18 +417,6 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       const binding = runtime.relays.get(JSON.stringify(target));
       if (result.recognized && result.binding && binding?.instanceId === result.binding.instanceId
         && binding.relayId === result.binding.relayId) binding.wakeObservedAt = Date.now();
-      // Legacy markers drain naturally, but only the actual hook supplies this receipt.
-      if (result.recognized && !result.binding && binding) {
-        const nonces = (payload.observation as InputObservation).wakeCandidates ?? [];
-        const owner = JSON.stringify(target);
-        const presence = store.presence(target);
-        const keys = nonces.map((nonce) => createHash("sha256").update(nonce).digest("hex"));
-        if (keys.length > 0 && keys.every((key) => {
-          const wake = runtime.wakes.get(key);
-          return wake?.owner === owner && wake.instanceId === binding.instanceId && wake.relayId === binding.relayId;
-        }) && presence.state === "online" && presence.instanceId === binding.instanceId) binding.wakeObservedAt = Date.now();
-        for (const key of keys) runtime.wakes.delete(key);
-      }
       // retired marks a verified arrival of an attempt the liveness rule already retired; it authorizes no claim.
       return { recognized: result.recognized, messages: result.messages, managed: result.binding !== null, ...(result.retired ? { retired: true } : {}) };
     }
@@ -574,41 +550,13 @@ export function dispatchSessionMessageBrokerOperation(store: SessionMessageStore
       }
       return result;
     }
-    case "reserve-wake": {
-      const target = identity(payload.target);
-      const nonce = string(payload.nonce, "nonce");
-      if (["instanceId", "relayId", "transport", "resume"].some((key) => Object.hasOwn(payload, key))) {
-        return store.reserveManagedWake({ ...target, nonce, instanceId: string(payload.instanceId, "instanceId"),
-          relayId: string(payload.relayId, "relayId"), transport: string(payload.transport, "transport"),
-          ...(payload.resume === undefined ? {} : { resume: boolean(payload.resume, "resume") }) });
-      }
-      const shouldDispatch = store.reserveWake(target, nonce);
-      const runtime = peerWaitRuntime(store);
-      const owner = JSON.stringify(target);
-      const binding = runtime.relays.get(owner);
-      if (shouldDispatch && binding && binding.instanceId === store.presence(target).instanceId) {
-        if (runtime.wakes.size >= 1000) runtime.wakes.delete(runtime.wakes.keys().next().value!);
-        runtime.wakes.set(createHash("sha256").update(nonce).digest("hex"), { owner, instanceId: binding.instanceId, relayId: binding.relayId, expiresAt: Date.now() + 3_600_000 });
-      }
-      return { dispatch: shouldDispatch };
-    }
-    case "start-wake": return store.startManagedWake(wakeAttempt(payload.attempt));
-    case "record-wake-outcome": {
-      const outcome = string(payload.outcome, "outcome");
-      if (outcome !== "submitted" && outcome !== "definite-failure" && outcome !== "accepted-or-unknown" && outcome !== "target-unavailable") throw new Error("Invalid wake dispatch outcome.");
-      return { recorded: store.recordManagedWakeOutcome(wakeAttempt(payload.attempt), outcome) };
-    }
-    case "reconcile-wake-observation": {
-      if (Object.keys(payload).some((key) => !["target", "attemptId", "sourceReceiptId"].includes(key))
-        || !payload.target || typeof payload.target !== "object" || Array.isArray(payload.target)
-        || Object.keys(payload.target).some((key) => !["host", "sessionId"].includes(key))) {
-        throw new Error("Historical wake reconciliation contains unsupported fields.");
-      }
-      return store.reconcileHistoricalWake(identity(payload.target), string(payload.attemptId, "attemptId"),
-        string(payload.sourceReceiptId, "sourceReceiptId"), Date.now(), historicalWakeVerifier);
-    }
+    case "reserve-wake": return store.reserveManagedWake({ ...identity(payload.target), nonce: string(payload.nonce, "nonce"),
+      instanceId: string(payload.instanceId, "instanceId"), relayId: string(payload.relayId, "relayId"), transport: string(payload.transport, "transport"),
+      ...(payload.resume === undefined ? {} : { resume: boolean(payload.resume, "resume") }) });
+    case "start-wake": return store.startManagedWake(wakeAttempt(payload.attempt), resendBaseMs(payload.resendBaseMs));
+    case "record-wake-outcome": return { recorded: store.recordManagedWakeOutcome(wakeAttempt(payload.attempt), wakeOutcome(payload.outcome),
+      resendBaseMs(payload.resendBaseMs)) };
     case "wake-status": return { wake: store.managedWakeStatus(identity(payload.target)) };
-    case "release-wake": return { released: store.releaseWake(identity(payload.target), string(payload.nonce, "nonce")) };
     case "consume-wake": return { consumed: store.consumeWake(identity(payload.target), string(payload.nonce, "nonce")) };
     default: throw new Error("Unknown broker operation.");
   }
@@ -682,8 +630,6 @@ export async function startSessionMessageBroker(stateDirectory: string, budget?:
     const trustDatabasePath = process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim()
       ? path.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path.join(stateDirectory, "trust.sqlite3");
     const wakeHookObservationReader = createWakeHookObservationReader(trustDatabasePath);
-    const historicalWakeVerifier: typeof verifyHistoricalWakeObservation = (target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs) =>
-      verifyHistoricalWakeObservation(target, nonce, sourceReceiptId, startedAt, lateObservedAt, nowMs, trustDatabasePath);
     let lastActivity = Date.now();
     let activeRequests = 0;
     const activeServer = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
@@ -711,7 +657,7 @@ export async function startSessionMessageBroker(stateDirectory: string, budget?:
           const requestBudget = decodeIdentityDeadline(request.identityDeadlineNs);
           const data = ["ensure-relay", "acquire-relay"].includes(request.operation)
             ? await runIdentityAsync(relayIdentityOperation(activeStore, request.operation, payload, requestBudget, identityQueries.signal), identityQueries.signal)
-            : dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader, historicalWakeVerifier);
+            : dispatchSessionMessageBrokerOperation(activeStore, request.operation, payload, wakeHookObservationReader);
           // Relay leases are maintained while the host is idle; maintenance is not user activity.
           if (!["ping", "relay-tick", "heartbeat-relay", "presence-heartbeat"].includes(request.operation)) lastActivity = Date.now();
           socket.end(`${JSON.stringify({ ok: true, data })}\n`);

@@ -3,7 +3,8 @@ import {lstatSync, renameSync} from "node:fs";
 import path from "node:path";
 import {readDiagnosticConfig} from "./diagnostics.js";
 import {processStartToken} from "./process-identity.js";
-import {transportWakePort, writeRelayDiagnosticSnapshot, type WakeDispatchPort} from "./session-message-wake-port.js";
+import {writeRelayDiagnosticSnapshot, type WakeDispatchPort} from "./session-message-wake-port.js";
+import {transportWakePort} from "./wake-transports.js";
 
 type WakeEvent = "begin" | "none-skip" | "dispatch-attempt" | "native-launch-attempt" | "native-spawn" | "end";
 

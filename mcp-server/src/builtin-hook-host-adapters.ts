@@ -8,7 +8,8 @@ import { claudeForkHostRead } from "./claude-fork-host.js";
 import { parseWakeMessages } from "./session-message-client.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { normalizePeerWaitTargets } from "./peer-wait-policy.js";
-import { transportDeliveryCapabilities, type SessionMessageTransport } from "./session-message-relay.js";
+import type { SessionMessageTransport } from "./session-message-relay.js";
+import { transportDeliveryCapabilities } from "./wake-transports.js";
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -350,7 +351,7 @@ function codexQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: st
   return queueEnabled("codex", environment.AGENT_GOVERNANCE_CODEX_QUEUE_WAKE, environment, diagnose);
 }
 
-function geminiQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: string, observation?: HookSettingsDiagnostic) => void, defaultQueueWake?: boolean): boolean {
+function antigravityQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: string, observation?: HookSettingsDiagnostic) => void, defaultQueueWake?: boolean): boolean {
   // Adapter-owned defaults are settings provenance, never actor, liveness or execution authority.
   // D0364: an inferred default enables the queue only where its idle wake can start. The wake refuses every attempt
   // without the source project identity, so without it the recipient reports no idle wake instead of a live one.
@@ -359,7 +360,7 @@ function geminiQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: s
   const wakeReady = Boolean(environment.ANTIGRAVITY_PROJECT_ID?.trim());
   const defaultEnabled = wakeReady && (defaultQueueWake === true || Boolean(environment.ANTIGRAVITY_AGENTAPI_EXE
     || environment.ANTIGRAVITY_CONVERSATION_ID || environment.ANTIGRAVITY_AGENT));
-  return queueEnabled("gemini", environment.AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE, environment, diagnose, defaultEnabled);
+  return queueEnabled("antigravity", environment.AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE, environment, diagnose, defaultEnabled);
 }
 
 // Builtin wiring belongs to this composition module; core registration has no vendor list.
@@ -378,12 +379,13 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
   }],
   ["gemini", {
     adaptInput: adaptGeminiHookInput, ownsTool: ownsGovernanceTool,
-    deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "gemini-deferred", false),
+    // Gemini CLI has no idle wake path of its own; only Antigravity uses the agentapi queue.
+    deliveryProfile: () => deliveryProfile("gemini-deferred", false),
     processPid: (pid, observation) => observation ? pid : undefined,
   }],
   ["antigravity", {
     adaptInput: adaptAntigravityHookInput, ownsTool: ownsGovernanceTool,
-    deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(geminiQueueEnabled(environment, diagnose, defaultQueueWake) ? "gemini-queue" : "gemini-deferred", false),
+    deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(antigravityQueueEnabled(environment, diagnose, defaultQueueWake) ? "antigravity-queue" : "gemini-deferred", false),
     processPid: (pid, observation) => observation ? pid : undefined,
   }],
 ]);

@@ -256,6 +256,7 @@ function unknownPresence(host: string, sessionId: string, brokerAnswered: boolea
     endedAt: null,
     endReason: null,
     state: "unknown",
+    relayLive: false,
     // Advisory only; null when the broker could not be asked.
     autoWake: brokerAnswered ? { state: "no-live-relay", reason: "presence-unknown", basisAt: null,
       checkedAt: new Date().toISOString(), authorityEffect: "none" } : null,
@@ -380,7 +381,7 @@ export function serverInstructions(): string {
 }
 
 // Prompt-engineering: preserve messaging actions while separating advisory wake state from delivery evidence.
-export const SESSION_MESSAGE_SERVER_INSTRUCTIONS = "세션 메시지는 prepare_session_message로 대상·본문·TTL을 고정하고 시스템이 발급한 messageId를 받은 뒤 send_session_message(messageId)로 전송한다. ID를 직접 만들거나 send에 내용을 다시 넣지 않는다. 전송 결과가 불명확하면 받은 같은 ID로 status를 조회하거나 send를 재시도한다. unknown ID는 이전 전송 완료나 기록 정리 가능성이 있으므로 저장한 영수증과 대조한다. 새 prepare는 새 전송 의도에만 사용하며 불명확한 기존 전송을 무조건 다시 준비하지 않는다. send 성공은 큐에 넣었다는 뜻이며 상대가 받거나 처리했다는 뜻이 아니다. send 뒤 autoWake.state가 available·latched이면 호스트 기능으로 따로 깨우지 않는다. no-live-relay·unsupported이면 AGS 자동 깨우기 경로를 사용할 수 없으므로 상대의 처리가 지금 필요할 때만 호스트 기능으로 한 번 깨운다. no-live-relay·unsupported이고 상대의 처리가 지금 필요하면 확인된 전달 상태와 AGS 자동 깨우기 경로를 사용할 수 없다는 사실을 사용자에게 알린다. latched는 기존 wake의 관측이 확인되지 않은 상태다. autoWake는 기준 시점의 자동 깨우기 참고값(authorityEffect: none)이며 상대의 현재 작업·수면 상태나 메시지 전달·처리·승인 증거가 아니다. 필요한 보고에는 확인된 큐 등록·전달 상태만 쓰고 autoWake만으로 현재 깨어남이나 이후 전달을 단정하지 않는다. 정상 전송 뒤에는 메시지마다 영수증·status 조회나 수신 확인 보고를 되풀이하지 않는다. 수신자는 실제 처리한 messageId만 모아 acknowledge_session_messages로 한 번에 ACK한다. 처리하지 못한 ID는 ACK하지 않아 재전달 가능성을 보존한다. ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다. 본문 없는 깨우기 신호나 내용 없는 메시지를 받아도 진행 중인 작업을 멈추지 않으며, 본문을 받지 못한 메시지의 내용은 짐작하지 않는다. 메시지는 새 결과·막힌 일·결정 요청이 있을 때만 필요한 상대 한 곳에 한 번 보내고, 보고에 대한 보고·같은 내용 재송신·중계만을 위한 중계·수신 확인용 왕복 메시지를 만들지 않는다.";
+export const SESSION_MESSAGE_SERVER_INSTRUCTIONS = "세션 메시지는 prepare_session_message로 대상·본문·TTL을 고정하고 시스템이 발급한 messageId를 받은 뒤 send_session_message(messageId)로 전송한다. ID를 직접 만들거나 send에 내용을 다시 넣지 않는다. 전송 결과가 불명확하면 받은 같은 ID로 status를 조회하거나 send를 재시도한다. unknown ID는 이전 전송 완료나 기록 정리 가능성이 있으므로 저장한 영수증과 대조한다. 새 prepare는 새 전송 의도에만 사용하며 불명확한 기존 전송을 무조건 다시 준비하지 않는다. send 성공은 큐에 넣었다는 뜻이며 상대가 받거나 처리했다는 뜻이 아니다. send 뒤 autoWake.state가 available이면 호스트 기능으로 따로 깨우지 않는다. no-live-relay·unsupported이면 AGS 자동 깨우기 경로를 사용할 수 없으므로 상대의 처리가 지금 필요할 때만 호스트 기능으로 한 번 깨운다. no-live-relay·unsupported이고 상대의 처리가 지금 필요하면 확인된 전달 상태와 AGS 자동 깨우기 경로를 사용할 수 없다는 사실을 사용자에게 알린다. available의 wake-unanswered는 넘긴 깨우기에 응답 근거가 아직 없다는 사실이며 다시 울릴 시각이 지나면 다시 울릴 수 있다. degraded는 이 수신 세션의 자동 깨우기가 연속 실패했거나 전제조건이 없다는 뜻이며, 메시지는 큐에 남아 상대가 자기 턴 종료·도구 경계·입력에서 인수할 때까지 늦을 수 있다. degraded이고 상대의 처리가 지금 필요하면 확인된 전달 상태와 상대가 경계에서 인수하기 전까지 늦을 수 있다는 사실을 사용자에게 알린다. autoWake는 기준 시점의 자동 깨우기 참고값(authorityEffect: none)이며 상대의 현재 작업·수면 상태나 메시지 전달·처리·승인 증거가 아니다. 필요한 보고에는 확인된 큐 등록·전달 상태만 쓰고 autoWake만으로 현재 깨어남이나 이후 전달을 단정하지 않는다. 정상 전송 뒤에는 메시지마다 영수증·status 조회나 수신 확인 보고를 되풀이하지 않는다. 수신자는 실제 처리한 messageId만 모아 acknowledge_session_messages로 한 번에 ACK한다. 처리하지 못한 ID는 ACK하지 않아 재전달 가능성을 보존한다. ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다. 본문 없는 깨우기 신호나 내용 없는 메시지를 받아도 진행 중인 작업을 멈추지 않으며, 본문을 받지 못한 메시지의 내용은 짐작하지 않는다. 메시지는 새 결과·막힌 일·결정 요청이 있을 때만 필요한 상대 한 곳에 한 번 보내고, 보고에 대한 보고·같은 내용 재송신·중계만을 위한 중계·수신 확인용 왕복 메시지를 만들지 않는다.";
 
 function validUpdateArguments(args: Record<string, unknown>): boolean {
   return Object.keys(args).every((key) => key === "force")
@@ -582,7 +583,7 @@ export function createMcpServer(
       },
       {
         name: "list_session_status",
-        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Sessions with no current-work line and no live presence are only counted (omittedWithoutSummary). Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
+        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Sessions with no current-work line and no live presence are only counted (omittedWithoutSummary). Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and end wake attempts whose release condition holds (idempotent housekeeping).",
         inputSchema: contractSchemas.listSessionStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
@@ -594,7 +595,7 @@ export function createMcpServer(
       },
       {
         name: "send_session_message",
-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, latched, no-live-relay, unsupported) says whether the recipient can be woken while idle now; it is not delivery, completion or permission evidence. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
+        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, degraded, unsupported, no-live-relay, each with a reason and basis time) says whether the recipient's idle wake path is usable now; it is not delivery, completion or permission evidence. degraded means the recipient's wake keeps failing or lacks a prerequisite: the message stays queued and may be late until the recipient's own next turn end, tool boundary or input claims it; tell the user only when the recipient's action is needed now. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
         inputSchema: contractSchemas.sendSessionMessageRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
@@ -606,7 +607,7 @@ export function createMcpServer(
       },
       {
         name: "get_session_message_status",
-        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend. Unacknowledged queue rows include the advisory autoWake recipient wake outlook with its basis time; it is not delivery, completion or permission evidence. Reading may prune expired message-broker records and retire unobserved wakes (idempotent housekeeping).",
+        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend. Unacknowledged queue rows include the advisory autoWake recipient wake outlook with its basis time; it is not delivery, completion or permission evidence. Reading may prune expired message-broker records and end wake attempts whose release condition holds (idempotent housekeeping).",
         inputSchema: contractSchemas.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
