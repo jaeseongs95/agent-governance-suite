@@ -79,7 +79,9 @@ describe("classification inventory source authority (SS26/SS37)", () => {
   });
   it("C-17 separates required metadata omissions from fields the schema lets be absent", async () => {
     const root = await fixture(); await addSkill(root, "complete"); await addSkill(root);
-    expect((await loadSkillInventory({ root })).issues).toEqual([]);
+    const omitted = await loadSkillInventory({ root });
+    expect(omitted.issues).toEqual([]);
+    expect(omitted.skills.map((skill) => skill.skillId).sort()).toEqual(["complete", "skill-z17"]);
     // Optional: a source span's byte range may be given as well as omitted.
     await metadata(root, (value) => { Object.assign((value.applicability as Record<string, unknown>[])[0]!, { startByte: 0, endByte: Buffer.byteLength("큐의") }); });
     const ranged = await loadSkillInventory({ root });

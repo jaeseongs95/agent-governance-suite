@@ -71,7 +71,10 @@ async function fileNames(root, prefix = '') {
 
 const config = await json(path.join(source, '.github/ci/ags30-r11/execution-config.json'));
 assert.equal(config.artifactMaximumBytesPerJob, cap);
-assert.equal(config.generated.length, 11);
+// Twelve generated runtime files since f5e65174 added mcp-server/dist/session-message-relay-guard.mjs (D0011).
+// The exact set is still bound below: generated-runtime rows must equal config.generated path for path.
+assert.equal(config.generated.length, 12);
+assert.equal(new Set(config.generated).size, config.generated.length, 'Duplicate generated runtime path');
 const sourceManifest = await json(path.join(output, 'source-manifest.json'));
 assert.equal(sourceManifest.runId, process.env.GITHUB_RUN_ID);
 assert.equal(sourceManifest.attempt, process.env.GITHUB_RUN_ATTEMPT);
