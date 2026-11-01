@@ -530,7 +530,7 @@ describe("the host's SessionEnd ends exactly its own birth (R5 Windows, R10 /cle
   }
   /** A served birth of `sessionId`: started at `startedAt`, granted and (when `hostStart` is given) bound by its relay's tick. */
   function birth(store: SessionMessageStore, sessionId: string, instanceId: string, options: { hostPid?: number; hostStart?: string | null; startedAt?: number } = {}) {
-    const session = { host: "claude", sessionId };
+    const session = { host: "claude-code", sessionId };
     store.startPresence({ ...session, instanceId, transport, wakeVisibility: "none", canWakeSilently: false, deliveryCapabilities: none,
       hostPid: options.hostPid ?? process.ppid }, options.startedAt ?? hookStart - SECOND);
     const relayId = store.grantRelay({ ...session, transport, instanceId, codeDigest: null, hostPid: options.hostPid ?? process.ppid }).relayId!;
@@ -540,7 +540,7 @@ describe("the host's SessionEnd ends exactly its own birth (R5 Windows, R10 /cle
     return { session, relayId };
   }
   const sessionEnd = (sessionId: string, reason: string) =>
-    handleSessionMessageHook({ hook_event_name: "SessionEnd", session_id: sessionId, reason }, "claude");
+    handleSessionMessageHook({ hook_event_name: "SessionEnd", session_id: sessionId, reason }, "claude-code");
 
   it("a relay that vanished without a release (Windows tree termination): SessionEnd ends the birth and drops its lease", async () => {
     const store = setup();
