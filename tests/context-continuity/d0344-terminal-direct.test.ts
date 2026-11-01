@@ -16,6 +16,7 @@ import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { InMemoryWorkflowStore, type ConvergenceSnapshot, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
+import { rootCaller } from "../helpers/caller.js";
 
 // D0344 test plan: service/lifecycle + real SQLite conditional-rotation boundaries.
 // AC B: settled linked runs permit E -> E+1 even while a root remains open/needs-review.
@@ -26,6 +27,8 @@ import { InMemoryWorkflowStore, type ConvergenceSnapshot, type WorkflowStore } f
 // Execution proof is collected remotely; local test/typecheck/build/DB execution is NOT_RUN.
 const now = "2026-10-28T00:00:00.000Z";
 const session = "d0344-same-session";
+/** The host-observed root caller of the session; each service call computes its continuity scope from it. */
+const caller = rootCaller("codex", session);
 const stores = new Set<SqliteContinuityStore | SqliteWorkflowStore>();
 const owners = new Set<ReturnType<typeof createInactiveSharedStores>["owner"]>();
 const directories: string[] = [];
@@ -56,17 +59,13 @@ function service(workflow: WorkflowStore | null = new InMemoryWorkflowStore(), p
   return new ContinuityService(store, new ContractValidator(), workflow, () => new Date(now));
 }
 
-function checkpoint(overrides: Partial<CheckpointContextRequestV1> = {}): Omit<CheckpointContextRequestV1, "_continuityBinding"> {
+function checkpoint(overrides: Partial<CheckpointContextRequestV1> = {}): CheckpointContextRequestV1 {
   return {
     schemaVersion: "1.0.0", requestId: "same-request-id", expectedRevision: 0, status: "active",
     core: { objective: "HISTORICAL-D0344-PAYLOAD", completionCriteria: ["Tests pass."], constraints: [],
       decisions: [], progress: ["Previous task."], blockers: [], nextActions: ["Historical action."] },
     evidenceRefs: [], ...overrides,
   };
-}
-
-function bound<T extends Record<string, unknown>>(target: ContinuityService, tool: string, input: T) {
-  return { ...input, _continuityBinding: target.issueToolBinding(session, tool, input) };
 }
 
 function root(): ConvergenceRootV1 {
@@ -89,7 +88,6 @@ function root(): ConvergenceRootV1 {
 }
 
 function bindRoot(target: ContinuityService, value: ConvergenceRootV1) {
-  const input = { schemaVersion: "1.0.0", taskEnvelope: value.taskEnvelope, frame: value.frame, parentRootId: null, userApprovalRefs: [] };
   expect(target.bindOpenedRoot(caller, value.rootId)).toBe(true);
 }
 
@@ -159,14 +157,12 @@ function settleSqliteAttempt(workflow: SqliteWorkflowStore, attempt: ReturnType<
 
 describe("D0344 terminal workflow to fresh direct task", () => {
   for (const state of ["completed", "abandoned"] as const) {
-    it.each(["lifecycle", "tool-binding"] as const)(`${state}: %s starts E+1 without restoring or deleting history`, entry => {
+    it.each(["lifecycle", "tool-call"] as const)(`${state}: %s starts E+1 without restoring or deleting history`, entry => {
       const workflow = new InMemoryWorkflowStore(), value = root();
       expect(workflow.insertConvergenceRoot(value)).toBeNull();
       const target = service(workflow);
-      const oldRequest = bound(target, "checkpoint_context", checkpoint());
-      const historical = target.checkpointContext(oldRequest).data!;
+      const historical = target.checkpointContext(checkpoint(), caller).data!;
       const oldDirectLoad = loadInput(target.candidateForSession(session));
-      const oldLoadRequest = bound(target, "load_context", oldDirectLoad);
       bindRoot(target, value);
       const oldWorkflowLoad = loadInput(target.candidateForSession(session));
       target.markPreCompact(session);
@@ -181,7 +177,11 @@ describe("D0344 terminal workflow to fresh direct task", () => {
         expect(handleContinuityHook({ hook_event_name: "SessionStart", session_id: session, source: "startup" }, target, host)).toEqual({});
         expect(target.store.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null });
       }
-      const freshRequest = bound(target, "checkpoint_context", fresh);
+      if (entry === "tool-call") {
+        // The first AGS call after the terminal state: the server scopes it from the caller and detaches before reading.
+        expect(target.store.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
+        expect(target.inspectContext({ schemaVersion: "1.0.0" }, caller).data).toMatchObject({ decision: "REJECT", summary: null, restoreToken: null });
+      }
       expect(target.store.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null, suppressed: false,
         lastAutoInjectedRevision: null, pendingSource: null, pendingRevision: null, pendingDigest: null,
         pendingRootId: null, pendingConsumed: false });
@@ -195,8 +195,6 @@ describe("D0344 terminal workflow to fresh direct task", () => {
       expect(target.store.getTask(correlation)).toEqual(beforeCompact);
       expect(target.store.getSnapshot(correlation, 2)).toBeNull();
       expect(target.store.getTombstone(correlation, 2)).toBeNull();
-      expect(target.checkpointContext(oldRequest).error?.code).toBe("BINDING_INVALID");
-      expect(target.loadContext(oldLoadRequest).error?.code).toBe("BINDING_INVALID");
       for (const oldCandidate of [oldDirectLoad, oldWorkflowLoad]) {
         const rejected = target.loadContext(oldCandidate, caller);
         expect(rejected.error?.code).toBe("BINDING_INVALID");
@@ -207,7 +205,7 @@ describe("D0344 terminal workflow to fresh direct task", () => {
       expect(target.store.getRequest(correlation, 1, target.hashOpaque("request", "same-request-id"))).toEqual(receipt);
       expect(target.store.getTombstone(correlation, 1)).toBeNull();
       expect(workflow.getConvergenceSnapshot(value.rootId)?.root).toEqual(terminal);
-      const saved = target.checkpointContext(freshRequest);
+      const saved = target.checkpointContext(fresh, caller);
       expect(saved.data).toMatchObject({ source: "direct", epoch: 2, revision: 1, core: { objective: "CURRENT-D0344-TASK" } });
       expect(target.checkpointContext(fresh, caller)).toEqual(saved);
       expect(target.ensureSession(session).currentEpoch).toBe(2);
@@ -221,8 +219,7 @@ describe("D0344 terminal workflow to fresh direct task", () => {
     expect(workflow.insertConvergenceRoot(value)).toBeNull();
     const target = service(workflow);
     bindRoot(target, value);
-    const request = bound(target, "checkpoint_context", checkpoint());
-    expect(target.checkpointContext(request).error?.code).toBe("SNAPSHOT_CONFLICT");
+    expect(target.checkpointContext(checkpoint(), caller).error?.code).toBe("SNAPSHOT_CONFLICT");
     expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
     expect(target.store.getSnapshot(target.correlateSession(session), 1)).toBeNull();
   });
@@ -246,13 +243,15 @@ describe("D0344 terminal workflow to fresh direct task", () => {
     if (authority !== "wrong-root") expect(candidate).toMatchObject({ decision: "REJECT", summary: null, restoreToken: null });
   });
 
-  it("a failing authority read leaves the binding and historical data untouched", () => {
+  it("a failing authority read fails the tool call and leaves the binding and historical data untouched", () => {
     const workflow = new InMemoryWorkflowStore(), target = service(workflow), value = root();
     const historical = target.checkpointContext(checkpoint(), caller).data!;
     bindRoot(target, value);
     const before = target.store.getTask(target.correlateSession(session));
     vi.spyOn(workflow, "getConvergenceSnapshot").mockImplementation(() => { throw new Error("synthetic-authority-unavailable"); });
-    expect(() => target.issueToolBinding(session, "checkpoint_context", checkpoint())).toThrow();
+    expect(target.checkpointContext(checkpoint({ requestId: "after-authority-failure" }), caller))
+      .toMatchObject({ ok: false, data: null, error: { code: "CONTINUITY_UNAVAILABLE" } });
+    expect(target.store.getSnapshot(target.correlateSession(session), 2)).toBeNull();
     expect(target.store.getTask(target.correlateSession(session))).toEqual(before);
     expect(target.store.getSnapshot(target.correlateSession(session), 1)).toEqual(historical);
   });
@@ -397,7 +396,7 @@ describe("D0344 conditional epoch rotation races", () => {
 
 describe("D0344 SQLite service composition and transactional rollback", () => {
   for (const state of ["completed", "abandoned"] as const) {
-    it.each(["ensure-session", "tool-binding"] as const)(`${state}: separate SQLite stores allow fresh direct work through %s`, async entry => {
+    it.each(["ensure-session", "tool-call"] as const)(`${state}: separate SQLite stores allow fresh direct work through %s`, async entry => {
       const directory = await mkdtemp(join(tmpdir(), "d0344-separate-stores-"));
       directories.push(directory);
       const workflow = new SqliteWorkflowStore(join(directory, "workflow.sqlite3"));
@@ -411,10 +410,14 @@ describe("D0344 SQLite service composition and transactional rollback", () => {
       const receipt = target.store.getRequest(correlation, 1, target.hashOpaque("request", "same-request-id"));
       expect(receipt).not.toBeNull();
       if (entry === "ensure-session") expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 2, rootId: null });
-      const request = bound(target, "checkpoint_context", checkpoint({ core: { ...checkpoint().core, objective: "New SQLite-backed task." } }));
+      if (entry === "tool-call") {
+        expect(target.store.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: value.rootId });
+        expect(target.inspectContext({ schemaVersion: "1.0.0" }, caller).data).toMatchObject({ decision: "REJECT", summary: null, restoreToken: null });
+      }
+      const request = checkpoint({ core: { ...checkpoint().core, objective: "New SQLite-backed task." } });
       expect(target.store.getTask(correlation)).toMatchObject({ currentEpoch: 2, rootId: null });
       expect(target.candidateForSession(session)).toMatchObject({ decision: "REJECT", summary: null, restoreToken: null });
-      expect(target.checkpointContext(request).data).toMatchObject({ epoch: 2, revision: 1, core: { objective: "New SQLite-backed task." } });
+      expect(target.checkpointContext(request, caller).data).toMatchObject({ epoch: 2, revision: 1, core: { objective: "New SQLite-backed task." } });
       expect(target.store.getSnapshot(correlation, 1)).toEqual(historical);
       expect(target.store.getRequest(correlation, 1, target.hashOpaque("request", "same-request-id"))).toEqual(receipt);
       expect(target.store.getTombstone(correlation, 1)).toBeNull();

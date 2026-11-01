@@ -10,6 +10,7 @@ import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { wakeMessage } from "../../mcp-server/src/session-message-client.js";
+import { rootCaller } from "../helpers/caller.js";
 
 const stores = new Set<SqliteContinuityStore>();
 const directories: string[] = [];
@@ -30,13 +31,12 @@ function createService(databasePath = ":memory:") {
   return new ContinuityService(store, new ContractValidator(), null, now);
 }
 
-function bound<T extends Record<string, unknown>>(service: ContinuityService, taskSession: string, tool: string, input: T) {
-  return { ...input, _continuityBinding: service.issueToolBinding(taskSession, tool, input) };
-}
+/** The host-observed root caller of a session; the service computes its continuity scope at call time. */
+const asRoot = (taskSession: string) => rootCaller("codex", taskSession);
 
 // 수동 시험 자료이며 모델의 자동 저장 동작에 대한 증거가 아니다.
 function checkpoint(service: ContinuityService, taskSession = session): ContinuitySnapshotV1 {
-  const input: Omit<CheckpointContextRequestV1, "_continuityBinding"> = {
+  const input: CheckpointContextRequestV1 = {
     schemaVersion: "1.0.0", requestId: `d0347-checkpoint-${taskSession}`, expectedRevision: 0, status: "active",
     core: {
       objective: `기존 목표 표식 ${taskSession}`,
