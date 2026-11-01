@@ -719,8 +719,7 @@ try {
     const { handleSessionMessageHook } = await import("../../mcp-server/dist/session-message-hook.mjs");
     assert.deepEqual(await handleSessionMessageHook(hookCalls[0].input, hookCalls[0].host,
       hookCalls[0].explicitPid, hookCalls[0].hookOptions), {});
-    for (const file of ["session-board.sqlite3", "trust.sqlite3", "session-messaging"])
-      assert.equal(existsSync(path.join(tmpDir, file)), false);
+    assert.deepEqual(["session-board.sqlite3", "trust.sqlite3", "session-messaging"].filter(file => existsSync(path.join(tmpDir, file))), []);
     hookCalls.length = 0; pidResolvedCount = 0;
 
     // (b) Full entrypoint (`executeAntigravityHookEvent`) with observed main (`agent_id: ""`) + mutable observer counterexample

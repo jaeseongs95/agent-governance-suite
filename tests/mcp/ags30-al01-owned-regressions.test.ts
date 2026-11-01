@@ -73,10 +73,12 @@ describe("AL02 operations/store integration: AGS-D-0007 and AGS-D-0031", () => {
   const hostStart = "synthetic-host-birth";
   const instanceId = "host-process-v1:" + hash(JSON.stringify([target.host, target.sessionId, parentPid, hostStart]));
   type Store = Parameters<typeof dispatchSessionMessageOperation>[0];
+  // A store stub runs the operation's single writer transaction inline.
+  const atomic = { atomically: <T>(work: () => T): T => work() };
 
   it("ensure-relay forwards the adapter's observation to the store without any OS query", () => {
     const ensureVerifiedGeneration = vi.fn<(input: unknown) => unknown>(() => ({ spawn: false, relayId: null, instanceId, reason: "RELAY_ALIVE" }));
-    const store = { ensureVerifiedGeneration } as unknown as Store;
+    const store = { ...atomic, ensureVerifiedGeneration } as unknown as Store;
     const killed = vi.spyOn(process, "kill");
     dispatchSessionMessageOperation(store, "ensure-relay", { target, parentPid, parentStartToken: hostStart, expectedPresenceInstanceId: null, codeDigest,
       transport: "portable", wakeVisibility: "none", idleWake: "none", canWakeSilently: false, supportedInjection: [] });
@@ -88,7 +90,7 @@ describe("AL02 operations/store integration: AGS-D-0007 and AGS-D-0031", () => {
 
   it("ensure-relay refuses a host observation without a start token", () => {
     const ensureVerifiedGeneration = vi.fn();
-    const store = { ensureVerifiedGeneration } as unknown as Store;
+    const store = { ...atomic, ensureVerifiedGeneration } as unknown as Store;
     expect(() => dispatchSessionMessageOperation(store, "ensure-relay", { target, parentPid, parentStartToken: "  ", codeDigest,
       transport: "portable", wakeVisibility: "none", idleWake: "none", canWakeSilently: false, supportedInjection: [] })).toThrow("Invalid relay host observation.");
     expect(ensureVerifiedGeneration).not.toHaveBeenCalled();
@@ -99,7 +101,7 @@ describe("AL02 operations/store integration: AGS-D-0007 and AGS-D-0031", () => {
     ["refused", { relayId: null, reason: "RELAY_ALIVE" }, { relayId: null, reason: "RELAY_ALIVE" }]] as const)(
     "grant-relay returns the store's %s result and forwards the reported host PID", (_name, grant, expected) => {
       const grantRelay = vi.fn(() => grant);
-      const store = { grantRelay } as unknown as Store;
+      const store = { ...atomic, grantRelay } as unknown as Store;
       expect(dispatchSessionMessageOperation(store, "grant-relay", { target, transport: "portable", instanceId, hostPid: parentPid, codeDigest })).toEqual(expected);
       expect(grantRelay).toHaveBeenCalledWith(expect.objectContaining({ ...target, transport: "portable", instanceId, hostPid: parentPid }));
     });
@@ -107,7 +109,7 @@ describe("AL02 operations/store integration: AGS-D-0007 and AGS-D-0031", () => {
   it("presence-start grants nothing for a generation that reports no host process", () => {
     const grantRelay = vi.fn();
     const presence = { instanceId: "generation" };
-    const store = { grantRelay, startPresence: vi.fn(() => presence), liveRelayGeneration: vi.fn(() => null) } as unknown as Store;
+    const store = { ...atomic, grantRelay, startPresence: vi.fn(() => presence), liveRelayGeneration: vi.fn(() => null) } as unknown as Store;
     expect(dispatchSessionMessageOperation(store, "presence-start", { target, instanceId: "generation", transport: "portable",
       wakeVisibility: "none", canWakeSilently: false })).toEqual({ presence, relayId: null, reason: "HOST_UNREPORTED" });
     expect(grantRelay).not.toHaveBeenCalled();
@@ -115,7 +117,7 @@ describe("AL02 operations/store integration: AGS-D-0007 and AGS-D-0031", () => {
 
   it("lets the store sample reserve/start time after acquiring its transaction lock", () => {
     const reserveManagedWake = vi.fn(), startManagedWake = vi.fn();
-    const store = { reserveManagedWake, startManagedWake } as unknown as Store;
+    const store = { ...atomic, reserveManagedWake, startManagedWake } as unknown as Store;
     const binding = { ...target, instanceId, relayId: "relay", transport: "portable", nonce: "synthetic-nonce" };
     dispatchSessionMessageOperation(store, "reserve-wake", { target, ...binding });
     const attempt = { ...binding, generation: "generation", attemptId: "attempt", dispatchEpoch: 0 };

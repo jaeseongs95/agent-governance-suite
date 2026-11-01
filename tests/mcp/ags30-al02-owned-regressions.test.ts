@@ -52,7 +52,8 @@ it("AGS-D-0002: the lease holder is a random relay id, so a second grant cannot 
   // Another entry code inside the start grace is still refused; once the grace has passed the new code replaces the holder.
   const code = "sha256:" + "b".repeat(64);
   expect(store.grantRelay({ ...request, codeDigest: code }, base + 10_000).reason).toBe("RELAY_ALIVE");
-  expect(store.relayTick({ ...relay, includePending: false }, base + 20_000)).toMatchObject({ alive: true });
+  // The holder renews inside its 15 s lease (an expired lease is dead), so the replacement below is by code, not by expiry.
+  for (const at of [12_000, 20_000]) expect(store.relayTick({ ...relay, includePending: false }, base + at)).toMatchObject({ alive: true });
   const replacement = store.grantRelay({ ...request, codeDigest: code }, base + 31_000);
   expect(replacement.relayId).toEqual(expect.any(String));
   expect(replacement.relayId).not.toBe(relay.relayId);
