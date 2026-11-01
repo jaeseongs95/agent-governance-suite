@@ -87,6 +87,8 @@ const HOST_ENDED = new Set(["HOST_PROCESS_ENDED", "HOST_PROCESS_GONE"]);
  */
 const STOP_SIGNAL = "SIGTERM";
 const STOPPED = "RELAY_STOP_REQUESTED";
+/** Its birth was ended by the host's SessionEnd (store.endHostSession); the relay's end is then normal. */
+const BIRTH_ENDED = "RELAY_BIRTH_ENDED";
 
 /**
  * Serves one granted lease until the host ends or the lease is fenced. Renewal ticks every LOOP_MS and is never queued
@@ -120,11 +122,11 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
     while (ended === null) {
       try {
         const binding = hostStart !== undefined && !hostSent ? hostStart : undefined;
-        const tick = await request<{ alive: boolean; count: number; hostBound: boolean }>("relay-tick", {
+        const tick = await request<{ alive: boolean; count: number; hostBound: boolean; ended?: boolean }>("relay-tick", {
           target, transport: options.transport, relayId: options.relayId, instanceId: options.instanceId,
           includePending: port.capabilities.idleWake !== "none", ...(binding !== undefined ? { hostStart: binding } : {}),
         });
-        if (!tick.alive) { stop(binding !== undefined ? "RELAY_HOST_BIRTH_MISMATCH" : "RELAY_LEASE_LOST"); break; }
+        if (!tick.alive) { stop(tick.ended === true ? BIRTH_ENDED : binding !== undefined ? "RELAY_HOST_BIRTH_MISMATCH" : "RELAY_LEASE_LOST"); break; }
         if (binding !== undefined) hostSent = true;
         if (port.capabilities.idleWake === "none") observation?.record("none-skip");
         else if (tick.count > 0 && tick.hostBound && dispatching === null) {
@@ -142,11 +144,11 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
     watcher?.close();
     const reason: string = ended ?? "RELAY_ENDED";
     const hostEnded = HOST_ENDED.has(reason);
-    let normalEnd = hostEnded || reason === STOPPED;
+    let normalEnd = hostEnded || reason === STOPPED || reason === BIRTH_ENDED;
     if (!normalEnd) reportRelayFailure("run", producerFailure(reason, "The relay ended before its host."));
     try {
       await request("release-relay", { target, transport: options.transport, relayId: options.relayId, instanceId: options.instanceId,
-        reason: hostEnded ? "host-process-ended" : reason === STOPPED ? "relay-stop-requested" : "relay-ended" });
+        reason: hostEnded ? "host-process-ended" : reason === STOPPED ? "relay-stop-requested" : reason === BIRTH_ENDED ? "birth-ended" : "relay-ended" });
     } catch (error) {
       normalEnd = false;
       reportRelayFailure("release", error); // Lease expiry still provides an unreachable fallback.

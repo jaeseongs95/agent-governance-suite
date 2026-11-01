@@ -59,7 +59,7 @@ export interface SessionMessageHookOptions {
 
 export type HookFailurePhase = "options" | "input" | "handle" | "serialize" | "stdin" | "host-entry" | "stdout"
   | "presence-start" | "clear-deferred" | "ensure-relay" | "relay-start" | "recovery" | "peer-wait" | "observer-sync" | "observer-async"
-  | "relay-observation";
+  | "relay-observation" | "presence-end";
 
 /** The same bounded classification that the diagnostic line carries; never messages, paths or peer bodies. */
 export type SessionMessageHookFailure = Readonly<{
@@ -440,9 +440,20 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     return {};
   }
   if (adapted.lifecycle === "end") {
-    // The hook payload has no presence instance identifier. The relay observes the
-    // host process and closes its exact instance, avoiding a late SessionEnd from
-    // ending a newer resume/compact generation or clearing its native-input deferral.
+    // The relay's own release cannot cover every end: Windows ends the async hook tree with the relay unsignalled
+    // (R5), and `/clear` keeps the host process, so the old session's relay keeps serving it (R10). The hook payload
+    // has no presence instance, so this ends only the current birth whose reported host is this hook's host
+    // (same PID, bound start no later than this hook's start) and that started before this hook. A late SessionEnd
+    // thus cannot end a newer resume generation of another process; compact sends no SessionEnd (Claude Code hooks
+    // reference). No OS identity query runs here: SessionEnd has a 1.5 s budget. The relay's release stays; the
+    // first end wins.
+    if (!main) return {};
+    const hostPid = resolveHookProcessPid(host, explicitHostPid, options.hostProcess);
+    if (hostPid === undefined) return {};
+    try {
+      await request("presence-end-host", { target, hostPid, hostAliveAt: hostAliveAtBound(),
+        hookStartedAt: Math.floor(performance.timeOrigin), reason: "host-session-ended" });
+    } catch (error) { reportHookFailure("presence-end", error); }
     return {};
   }
   // The relay owns lifecycle heartbeats for its exact presence instance. Hook

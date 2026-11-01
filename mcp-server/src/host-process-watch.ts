@@ -43,6 +43,17 @@ export function hostAliveAtBound(platform: NodeJS.Platform = process.platform): 
   return String(Math.floor(performance.timeOrigin));
 }
 
+/**
+ * The watcher's bound check outside the watcher: was a bound start token born no later than a hook's `hostAliveAtBound`?
+ * Linux compares boot ticks; Windows ISO and other POSIX lstart compare as wall time with the hook's start in ms.
+ * An unreadable pair proves nothing and answers false.
+ */
+export function startNotAfter(token: string, aliveAt: string): boolean {
+  if (/^[0-9]{1,20}$/u.test(token) && /^[0-9]{1,20}$/u.test(aliveAt)) return BigInt(token) <= BigInt(aliveAt);
+  const at = Date.parse(token);
+  return /^[0-9]{1,16}$/u.test(aliveAt) && Number.isFinite(at) && at <= Number(aliveAt);
+}
+
 export function watchHostProcess(pid: number, aliveAt: string | undefined, options: {
   platform?: NodeJS.Platform; pollMs?: number; ownerPid?: number;
 } = {}): HostWatch {

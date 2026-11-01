@@ -13,7 +13,7 @@ import { readRelayCodeDigest, relayCodeDigest } from "./relay-code-identity.js";
  */
 export const SESSION_MESSAGE_OPERATIONS = ["prepare", "send", "claim", "claim-host-wake", "observe-native-input", "claim-deferred",
   "claim-turn-end", "clear-deferred", "acknowledge", "status", "peer-wait", "pending", "ensure-relay", "grant-relay", "release-relay",
-  "relay-tick", "presence-start", "presence-heartbeat", "presence-end", "presence", "list-presence", "reserve-wake", "start-wake",
+  "relay-tick", "presence-start", "presence-heartbeat", "presence-end", "presence-end-host", "presence", "list-presence", "reserve-wake", "start-wake",
   "record-wake-outcome", "wake-status", "consume-wake"] as const;
 
 function identity(value: unknown): SessionIdentity {
@@ -264,6 +264,8 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
     case "presence-start": return presenceStart(store, payload);
     case "presence-heartbeat": return { alive: store.heartbeatPresence(identity(payload.target), string(payload.instanceId, "instanceId")) };
     case "presence-end": return { ended: store.endPresence(identity(payload.target), string(payload.reason, "reason"), string(payload.instanceId, "instanceId")) };
+    case "presence-end-host": return { ended: store.endHostSession({ ...identity(payload.target), hostPid: integer(payload.hostPid, "hostPid"),
+      hostAliveAt: string(payload.hostAliveAt, "hostAliveAt"), hookStartedAt: integer(payload.hookStartedAt, "hookStartedAt"), reason: string(payload.reason, "reason") }) };
     case "presence": return { presence: store.presence(identity(payload.target)) };
     case "list-presence": {
       let targets: SessionIdentity[] | undefined;
