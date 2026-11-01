@@ -47,7 +47,7 @@ export async function runGovernanceHook(
     if (!callId || !sessionId) missing("HOOK_CALL_FIELDS_MISSING");
     // A present but malformed agent marker must not record a root row.
     const agentId = Object.hasOwn(input, "agent_id") ? input.agent_id : null;
-    if (agentId !== null && (typeof agentId !== "string" || !agentId.trim())) missing("HOOK_AGENT_ID_INVALID");
+    if (Object.hasOwn(input, "agent_id") && (typeof agentId !== "string" || !agentId.trim())) missing("HOOK_AGENT_ID_INVALID");
     // The continuity hook reads the host process for a deferred fork here, before the server pins from lineage.
     if (CONTINUITY_TOOLS.has(tool)) runContinuityHook(raw, environment, host, true);
     const databasePath = resolveWorkflowDatabasePath(environment);

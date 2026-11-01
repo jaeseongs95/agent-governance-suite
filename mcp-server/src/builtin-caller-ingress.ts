@@ -87,7 +87,6 @@ export function claudeAdmissionIngress(store: WorkflowStore, host = "claude-code
     if (row.tool !== tool) invalid("CALL_ADMISSION_TOOL_MISMATCH");
     // The hook names the calling agent but not its parent agent, so a child's chain stops at the root.
     const result = observed(host, row.sessionId, row.agentId, null, callId, row.execution);
-    if (result.provenance === "host-observed" && row.agentId !== null) result.caller.parentChainComplete = false;
     const transcriptPath = row.transcriptPath;
     if (result.provenance === "host-observed" && transcriptPath) result.caller.readLineage = () => readClaudeLineage(transcriptPath, row.sessionId);
     return result;
