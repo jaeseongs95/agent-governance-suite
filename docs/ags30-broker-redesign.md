@@ -213,3 +213,33 @@ export function watchHostProcess(pid: number, bound: HostAliveBound): { bound: P
 ## 10. 사용자에게 물을 것
 
 없다. 2.x 상태 파일은 지우지 않고 남겨 두기로 했다(5장). Windows 실호스트 확인은 이미 정해진 서버 알림을 기다린다.
+
+## 11. 구현 기록 (r1.1, 2026-11-01)
+
+### 11.1 설계와 달라진 점
+- `session-message-client.ts`는 지우지 않고 내용을 같은 프로세스 실행으로 바꿨다. 현황판 담당이 바꾸는 `session-message-service.ts`·`session-board-hook.ts`를 다시 건드리지 않기 위해서다. `sessionMessageRequest`는 같은 이름의 비동기 껍데기로 남고, 동기 `runSessionMessageOperation`이 실제 실행이다.
+- 공개 메서드의 시각 인자는 지우지 않았다. 기본값 `AUTHORITY_NOW`(NaN)이면 잠금 뒤 시각을 읽는다. 숫자를 주면 시험용 고정 시각으로 그대로 쓴다. 제품 호출처(연산 표)는 숫자를 넘기지 않는다.
+- `presence-start`가 같은 transaction에서 relay grant까지 한다. hook이 보고한 호스트 PID가 없으면 relay를 주지 않는다(`HOST_UNREPORTED`).
+
+### 11.2 불변조건과 검증 의무 (cs-engineering, CONC-FENCE-002·CONC-CLAIM-001·DB-BOUNDARY-001·DB-MIGRATION-004)
+| ID | 불변조건 | 실패 관측 | 검증 |
+|---|---|---|---|
+| CS-1 | lease를 갱신하거나 깨우기를 시작하는 것은 현재 `relay_id` 주인뿐이다. | 교체된 relay의 tick·start가 성공한다. | `broker-removal.test.ts` fencing 사례 |
+| CS-2 | 시도 하나의 외부 호출은 한 번이다(I3). | 두 연결·여러 프로세스의 start가 둘 이상 `dispatch:true`다. | 같은 파일 두 연결 + N개 자식 프로세스, 결과 집합으로 판정 |
+| CS-3 | 시각은 잠금 뒤에만 읽고 transaction당 한 번이며 줄지 않는다. | 잠금 밖에서 clock이 불리거나 거꾸로 간 시각으로 판정한다. | 주입 clock이 `isTransaction`을 기록 |
+| CS-4 | 잠금 경합은 쓰기 0으로 `MESSAGING_BUSY`가 된다. | 일부만 쓰이거나 재시도로 숨는다. | 다른 연결이 `BEGIN IMMEDIATE`를 잡은 채 `busyTimeoutMs:0` |
+| CS-5 | v3 → v4 이전은 한 번이고 다시 열 때 쓰기 잠금을 잡지 않는다. 새 버전은 거절한다. | 같은 버전으로 중복 이전하거나 현재 파일을 열 때 잠금을 기다린다. | v3 모양 파일 이전, 잠금을 잡은 상태에서 현재 파일 열기 |
+| CS-6 | lease 갱신은 dispatch를 기다리지 않는다(D-0003). | dispatch가 끝나지 않으면 tick도 멈춘다. | 끝나지 않는 port와 주입 delay |
+각 사례는 격리 사본에서 해당 변이를 넣으면 실패하고 원본에서 통과해야 한다(red/green).
+
+### 11.3 Windows 호스트 감시 방식 결정
+Windows 시험 서버(Windows Server 2022, node 24.22.2, PowerShell 5.1)에서 실측했다.
+
+| 방식 | 재사용 판별 | 비용 |
+|---|---|---|
+| A. 상주 PowerShell, handle 보유 + `WaitForExit` | 된다. handle이 열려 있으면 프로세스 객체가 남고 PID가 재사용되지 않는다(Microsoft `PROCESS_INFORMATION`, "Terminating a Process"). | 첫 줄까지 약 0.31초, Private 약 51.8 MB + conhost 약 2.8 MB, 종료 감지 약 29 ms |
+| B. node `process.kill(pid,0)` | 안 된다. 재사용된 PID도 살아 있다고 답한다. | 1회 약 2.2 µs |
+| C. `wmic`·CIM 출생 시각 조회 반복 | 조회 사이의 재사용을 놓친다. | 75 ms(wmic), 508 ms(CIM) |
+| D. `csc.exe`로 만든 OpenProcess/WaitForSingleObject 도우미 | 된다. | Private 약 9.5 MB. 그러나 실행 파일을 빌드·배포해야 한다. |
+
+Node 24 공식 문서에는 임의 PID의 handle을 잡거나 종료를 기다리는 API가 없다(`node:ffi` 없음). 그래서 node만으로는 불가능하다. 결정: 내장 도구만 쓰는 A를 쓴다. 비용은 relay당 약 52 MB다. 이 비용이 문제가 되면 D로 바꾼다(`host-process-watch.ts`의 `ponytail:` 주석). 감시자는 5초마다 relay PID를 확인하고 relay가 없으면 끝난다. 그래서 relay가 비정상 종료해도 감시자가 남지 않는다.

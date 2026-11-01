@@ -38,7 +38,7 @@
 
 ## 2. 공통 계약 (벤더를 바꿔도 같은 의미)
 
-모든 시각은 store의 기준 시각(authority time)이다. 공유 모드는 `shared.time`, 독립 모드는 broker 단일 프로세스의 `Date.now()`를 쓴다. 상한도 이 시간으로 잰다.
+모든 시각은 store의 기준 시각(authority time)이다. 공유 모드는 `shared.time`, 독립 모드는 writer 잠금(`BEGIN IMMEDIATE`) 뒤에 읽고 DB에 저장한 최댓값으로 올린 `Date.now()`를 쓴다(`ags30-broker-redesign.md` 3.2). 상한도 이 시간으로 잰다.
 
 ### 2.1 의미
 - 깨우기는 "받은함을 보라"는 초인종이다. 전달 보장은 기존 claim/ACK가 맡는다.
