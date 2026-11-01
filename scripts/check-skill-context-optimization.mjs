@@ -157,7 +157,7 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/blocker-diagnostician/references/entry-details.md": "90d37e3edae634cf0a44260d8c67f8c356db3b1805666757810ae80d27a520dc",
     "skills/change-scope-guardian/contracts/change-scope-report.v1.schema.json": "c8c3929dd667b971dbc3c93c092c543969895a2df12e9f78d290ea8c55dcbd98",
     "skills/change-scope-guardian/integration/skill-descriptor.json": "0383344088d90c7306cc9de937b8ba0445985529c7291a54cf36aab7fcb0d65b",
-    "skills/change-scope-guardian/references/entry-details.md": "58fcf7660d9e2ab3dd775aeee528d547250af2df02537affb3a9af4c5bb66af1",
+    "skills/change-scope-guardian/references/entry-details.md": "7074715cc45a34b73ca2fa12a1c967742676a622d24e438c44a3d3c601a5e788",
     "skills/change-scope-guardian/references/verdict-rules.md": "7fd12a4242437c1ce40953e49cb116cffac688e361b3033f802f5c70c37db865",
     // D0095 reviewed source: eb30ea34168b4d4c3831f2fa8b9c82d9fc06b06c; historical baselines stay frozen.
     "skills/coordinate-subagents/references/model-routing.md": "49b0e564b80a52475670e850c8272f0c348626ef5d32e4746fd484a262023fe5",
