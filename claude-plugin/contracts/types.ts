@@ -354,10 +354,11 @@ export interface GetSessionMessageStatusRequestV1 {
 }
 
 /** Advisory recipient auto-wake snapshot; never delivery, completion or permission evidence. */
-export interface SessionAutoWakeOutlookV1 {
-  state: "available" | "latched" | "no-live-relay" | "unsupported";
-  reason: "relay-live" | "wake-in-flight" | "retry-backoff" | "wake-unobserved"
-    | "presence-unknown" | "presence-not-online" | "relay-lease-missing" | "no-idle-wake";
+export interface SessionAutoWakeOutlookV2 {
+  state: "available" | "degraded" | "unsupported" | "no-live-relay";
+  reason: "relay-live" | "wake-in-flight" | "wake-unanswered" | "recipient-active" | "retry-backoff"
+    | "wake-failing" | "wake-prerequisite-missing" | "no-idle-wake"
+    | "presence-unknown" | "presence-not-online" | "relay-lease-missing";
   basisAt: string | null;
   checkedAt: string;
   authorityEffect: "none";

@@ -9,10 +9,12 @@ const FORMAT_VERSION = 1;
 const MODULES = Object.freeze({
   workflow: { version: 5, tables: ["workflow_metadata", "workflow_runs", "plugin_update_state", "convergence_roots", "convergence_root_identities", "convergence_epochs", "convergence_leases", "convergence_attempts", "convergence_reviews", "workflow_attempt_links", "state_cleanup_claims", "execution_observation_claims"] },
   continuity: { version: 2, tables: ["continuity_metadata", "continuity_tasks", "continuity_snapshots", "continuity_requests", "continuity_tombstones", "continuity_observations"] },
-  messaging: { version: 2, tables: ["messages", "relay_leases", "wake_nonces", "session_presence", "prepared_messages", "input_observations", "session_activity"] },
+  messaging: { version: 3, tables: ["messages", "relay_leases", "wake_nonces", "session_presence", "prepared_messages", "input_observations", "wake_paths"] },
   trust: { version: 1, tables: ["trust_metadata", "input_source_receipts"] },
   board: { version: 0, tables: ["sessions"] },
 });
+// 직전 메시징 형식(v2). 명시적 initialize에서만 v3로 이전한다.
+const PREVIOUS_MESSAGING = Object.freeze({ version: 2, tables: ["messages", "relay_leases", "wake_nonces", "session_presence", "prepared_messages", "input_observations", "session_activity"] });
 export class SharedStateError extends Error {
   constructor(code, message) { super(message); this.name = "SharedStateError"; this.code = code; }
 }
@@ -99,16 +101,18 @@ export class InactiveSharedConnection {
     // 이전 대기 상태에서는 domain transaction을 열지 않는다.
     return !empty && this.#validate(true);
   }
-  #shape(module) {
-    return JSON.stringify(MODULES[module].tables.map(name => ({ name, columns: this.#database.prepare(`PRAGMA table_info(${name})`).all(), sql: this.#database.prepare("SELECT sql FROM sqlite_schema WHERE type='table' AND name=?").get(name)?.sql, indexes: this.#database.prepare("SELECT name,sql FROM sqlite_schema WHERE type='index' AND tbl_name=? ORDER BY name").all(name).map(index => ({ ...index, columns: this.#database.prepare("SELECT * FROM pragma_index_xinfo(?)").all(index.name) })) })));
+  #shape(module, tables = MODULES[module].tables) {
+    return JSON.stringify(tables.map(name => ({ name, columns: this.#database.prepare(`PRAGMA table_info(${name})`).all(), sql: this.#database.prepare("SELECT sql FROM sqlite_schema WHERE type='table' AND name=?").get(name)?.sql, indexes: this.#database.prepare("SELECT name,sql FROM sqlite_schema WHERE type='index' AND tbl_name=? ORDER BY name").all(name).map(index => ({ ...index, columns: this.#database.prepare("SELECT * FROM pragma_index_xinfo(?)").all(index.name) })) })));
   }
   #validate(allowPreviousMessaging = false) {
-    const expected = ["authority_time", "shared_module_schema", ...Object.values(MODULES).flatMap(module => module.tables)].sort();
-    need(JSON.stringify(this.#tables()) === JSON.stringify(expected), "SHARED_SCHEMA_DRIFT", "The native-format table inventory is incomplete or changed.");
     const rows = this.#database.prepare("SELECT * FROM shared_module_schema ORDER BY module").all();
-    need(rows.length === 5 && rows.every(row => (MODULES[row.module]?.version === row.version
-      || allowPreviousMessaging && row.module === "messaging" && row.version === 1 && MODULES.messaging.version === 2)
-      && row.schema_json === this.#shape(row.module)), "SHARED_SCHEMA_DRIFT", "Module versions and native schemas must match their committed headers.");
+    const previous = allowPreviousMessaging && rows.some(row => row.module === "messaging" && row.version === PREVIOUS_MESSAGING.version);
+    const tablesOf = module => previous && module === "messaging" ? PREVIOUS_MESSAGING.tables : MODULES[module].tables;
+    const expected = ["authority_time", "shared_module_schema", ...Object.keys(MODULES).flatMap(tablesOf)].sort();
+    need(JSON.stringify(this.#tables()) === JSON.stringify(expected), "SHARED_SCHEMA_DRIFT", "The native-format table inventory is incomplete or changed.");
+    need(rows.length === 5 && rows.every(row => Object.hasOwn(MODULES, row.module)
+      && (MODULES[row.module].version === row.version || previous && row.module === "messaging")
+      && row.schema_json === this.#shape(row.module, tablesOf(row.module))), "SHARED_SCHEMA_DRIFT", "Module versions and native schemas must match their committed headers.");
     const times = this.#database.prepare("SELECT * FROM authority_time").all();
     need(times.length === 1 && times[0].singleton === 1 && Number.isSafeInteger(times[0].last_ms) && times[0].last_ms >= 0, "SHARED_SCHEMA_DRIFT", "Authority clock metadata is invalid.");
     return rows.every(row => MODULES[row.module]?.version === row.version);
