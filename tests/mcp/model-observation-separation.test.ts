@@ -79,12 +79,25 @@ function v1Fixture(args: ReturnType<typeof fixture>["args"], capability: Resolve
 }
 
 describe("C observation token eligibility controls", () => {
-  it("preserves the existing legacy effective revision and actual workflow positive (C-F1)", () => {
-    const legacy: HostExecutionAdapter = { host: HOST, provider: "owned-provider", modelClassForModel: model => model === MODEL ? "deep" : null };
-    expect(resolveAdapterModelCapability(legacy, MODEL)?.policyRevision).toBe("1.0.0");
+  it("D0089: a legacy class callback signs the observation without eligibility; an explicit descriptor keeps the workflow positive (C-F1)", () => {
+    // Before D0089 this adapter got all efforts and policy revision "1.0.0" synthesized from its class answer.
+    const classify = vi.fn((model: string) => model === MODEL ? "deep" as const : null);
+    const legacy: HostExecutionAdapter = { host: HOST, provider: "owned-provider", modelClassForModel: classify };
+    expect(resolveAdapterModelCapability(legacy, MODEL)).toBeNull();
     const f = fixture(legacy), token = f.issue();
-    expect(decoded(token)).toMatchObject({ policyRevision: "1.0.0", eligibility: { modelClass: "deep", policyRevision: "1.0.0" } });
-    expect(f.run(token)).toMatchObject({ ok: true });
+    expect(decoded(token)).toMatchObject({ model: MODEL, policyRevision: null, eligibility: null });
+    expect(f.run(token)).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "MISSING_MODEL_CAPABILITY" } } });
+    expect(f.provider.lastObservedCapability()).toBeNull();
+    expect(classify).not.toHaveBeenCalled();
+    // The same opaque model name passes once the adapter states a trusted descriptor: the name itself is never the reason.
+    const described: HostExecutionAdapter = { ...legacy, policyRevision: "owned-r1",
+      resolveModel: (rawModel, provenance = `${HOST}:runtime`) => rawModel === MODEL ? { host: HOST, provider: "owned-provider", rawModel,
+        resolvedModel: rawModel, modelClass: "deep", minimumReasoningEffort: null, supportedEfforts: ["high"], aliasUsed: false,
+        policyRevision: "owned-r1", provenance } : null };
+    const g = fixture(described), accepted = g.issue();
+    expect(decoded(accepted)).toMatchObject({ policyRevision: "owned-r1", eligibility: { modelClass: "deep", policyRevision: "owned-r1" } });
+    expect(g.run(accepted)).toMatchObject({ ok: true });
+    expect(g.provider.lastObservedCapability()).toMatchObject({ modelClass: "deep", supportedEfforts: ["high"], policyRevision: "owned-r1" });
   });
   it("signs unsupported legacy observations without inventing eligibility or a revision", () => {
     const f = fixture({ host: HOST, provider: "owned-provider", modelClassForModel: () => null }), token = f.issue("opaque-unsupported");

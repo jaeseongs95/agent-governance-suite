@@ -158,7 +158,11 @@ function workflowRows(fixture: Awaited<ReturnType<typeof harness>>) {
 function trustedPlan(fixture: Awaited<ReturnType<typeof harness>>) {
   const model = "owned-fixture-model";
   const adapter: HostExecutionAdapter = { host: rootHost, provider: "owned-fixture-provider",
-    modelClassForModel: candidate => candidate === model ? "general" : null };
+    modelClassForModel: candidate => candidate === model ? "general" : null, policyRevision: "owned-fixture-r1",
+    // D0089: a class callback alone is not a capability source, so this fixture states its trusted descriptor.
+    resolveModel: (rawModel, provenance = `${rootHost}:runtime`) => rawModel === model ? { host: rootHost, provider: "owned-fixture-provider", rawModel,
+      resolvedModel: rawModel, modelClass: "general", minimumReasoningEffort: null, supportedEfforts: ["high"], aliasUsed: false,
+      policyRevision: "owned-fixture-r1", provenance } : null };
   const provider = new HostAttestationProvider(fixture.workflow, adapter), validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(fixture.registryPath, validator), validator, fixture.workflow, null, provider);
   const input = { schemaVersion: "1.0.0", taskEnvelope: fixture.task };

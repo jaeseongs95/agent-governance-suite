@@ -15,6 +15,12 @@ const adapter: HostExecutionAdapter = {
   host: "al05-approval-neutral-model-policy",
   provider: "al05-approval-neutral-provider",
   modelClassForModel: (value) => value === model ? "deep" : null,
+  policyRevision: "al05-approval-neutral-r1",
+  // D0089: a class callback alone is not a capability source, so this fixture states its trusted descriptor.
+  resolveModel: (rawModel, provenance = "al05-approval-neutral-model-policy:runtime") => rawModel === model ? {
+    host: "al05-approval-neutral-model-policy", provider: "al05-approval-neutral-provider", rawModel, resolvedModel: rawModel,
+    modelClass: "deep", minimumReasoningEffort: null, supportedEfforts: ["high"], aliasUsed: false,
+    policyRevision: "al05-approval-neutral-r1", provenance } : null,
 };
 const clean = { taskId: "al05-approval-neutral-task" };
 const hook = {

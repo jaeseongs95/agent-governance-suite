@@ -901,7 +901,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     }, syntheticCatalogV2).delivery).toBe("explicit");
   });
 
-  it("rejects a stale descriptor-only revision while preserving fresh and legacy adapter controls (AC4, AC5)", () => {
+  it("rejects a stale descriptor-only revision while preserving the fresh control and failing a legacy class-only adapter closed (AC4, AC5, D0089)", () => {
     const store = new InMemoryWorkflowStore();
     const validator = new ContractValidator();
     let revision = "descriptor-r1";
@@ -945,7 +945,8 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     const legacy: HostExecutionAdapter = {
       host: "codex", provider: "openai-codex", modelClassForModel: (model) => codexExecutionAdapter.modelClassForModel(model),
     };
-    expect(resolveAdapterModelCapability(legacy, "gpt-6-astra")?.policyRevision).toBe("1.0.0");
+    // D0089: a class answer is no capability; nothing (efforts, revision "1.0.0") is synthesized from it.
+    expect(resolveAdapterModelCapability(legacy, "gpt-6-astra")).toBeNull();
     const legacyProvider = new HostAttestationProvider(store, legacy);
     const legacyService = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, legacyProvider);
     const legacyArgs = { schemaVersion: "1.0.0", taskEnvelope: createTask("legacy-revision-control", "high") };
@@ -955,6 +956,7 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     expect(legacyToken).toBeTruthy();
     const legacyResult = legacyProvider.run("plan_workflow", { ...legacyArgs, [HOST_ATTESTATION_FIELD]: legacyToken },
       (clean) => legacyService.planWorkflow(clean, true));
-    expect(legacyResult.ok).toBe(true);
+    expect(legacyResult).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "MISSING_MODEL_CAPABILITY" } } });
+    expect(legacyProvider.lastObservedCapability()).toBeNull();
   });
 });

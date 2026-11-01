@@ -27,7 +27,12 @@ import type { ClassificationResult, ProviderEvaluation, ProviderProfile, SkillCl
 
 const repository = fileURLToPath(new URL("../../", import.meta.url));
 const cleanup: (() => Promise<void>)[] = [];
-const adapter: HostExecutionAdapter = { host: "codex", provider: "openai-codex", modelClassForModel: model => model === "synthetic-host-model" ? "general" : null };
+const adapter: HostExecutionAdapter = { host: "codex", provider: "openai-codex", modelClassForModel: model => model === "synthetic-host-model" ? "general" : null,
+  policyRevision: "synthetic-host-r1",
+  // D0089: a class callback alone is not a capability source, so this fixture states its trusted descriptor.
+  resolveModel: (rawModel, provenance = "codex:runtime") => rawModel === "synthetic-host-model" ? { host: "codex", provider: "openai-codex", rawModel,
+    resolvedModel: rawModel, modelClass: "general", minimumReasoningEffort: null, supportedEfforts: ["high"], aliasUsed: false,
+    policyRevision: "synthetic-host-r1", provenance } : null };
 afterEach(async () => { vi.useRealTimers(); while (cleanup.length) await cleanup.pop()!(); });
 function input(operationId = "operation-mcp") {
   return { schemaVersion: "1.0.0", requestId: `request-${operationId}`, operationId,
