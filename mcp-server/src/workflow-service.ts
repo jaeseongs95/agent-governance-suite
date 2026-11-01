@@ -780,7 +780,7 @@ export class WorkflowService {
         const checked: StageResultV1 = loadedOutput === undefined
           ? result
           : { ...result, output: { ...result.output, output: loadedOutput } };
-        this.assertPlannedInputsAvailable(receipt, target, result.state === "passed", checked);
+        this.assertPlannedInputsAvailable(receipt, target, result.state === "passed");
         this.assertResultSemantics(target, checked, receipt.plan.taskId, receipt.plan.taskDigest);
         if (target.requiredCapability === "cs-implementation-review") {
           assertCsStageBundle(this.registry.rootDirectory, receipt.plan.taskDigest, checked, this.validator);
@@ -862,7 +862,7 @@ export class WorkflowService {
             stageState: result?.state ?? "ready",
           });
         }
-        this.assertPlannedInputsAvailable(receipt, stage, true, result);
+        this.assertPlannedInputsAvailable(receipt, stage, true);
         this.assertRequiredArtifacts(stage, result);
         if (["cs-implementation-review", "test-sensitivity-review", "change-code-review"].includes(stage.requiredCapability)
           || (stage.riskGate === "mandatory" && stage.requiredArtifacts.includes("gate-verdict"))) {
@@ -1276,24 +1276,14 @@ export class WorkflowService {
     }
   }
 
-  private assertPlannedInputsAvailable(
-    receipt: WorkflowReceiptV1,
-    stage: PlannedStageV1,
-    requireDeclaredTarget: boolean,
-    result: StageResultV1,
-  ): void {
-    const missing: Array<{ artifactId: string; producerStageId: string | null }> = [];
+  private assertPlannedInputsAvailable(receipt: WorkflowReceiptV1, stage: PlannedStageV1, requireDeclaredTarget: boolean): void {
+    const missing: Array<{ artifactId: string; producerStageId: string }> = [];
     for (const artifactId of stage.requiredInputArtifacts) {
       const producer = receipt.plan.stages.find(
         (candidate) => candidate.stageId !== stage.stageId && candidate.producedArtifacts.includes(artifactId),
       );
-      if (!producer) {
-        // An input from outside the run must at least be named by the passing stage's evidence (D-0048).
-        if (requireDeclaredTarget && result.state === "passed" && !result.evidence.some((item) => item.artifactId === artifactId)) {
-          missing.push({ artifactId, producerStageId: null });
-        }
-        continue;
-      }
+      // An input from outside the run is not checked here; unverifiedClaims records it as evidence-content (D-0048).
+      if (!producer) continue;
       const producerResult = receipt.stageResults.find((candidate) => candidate.stageId === producer.stageId);
       if (requireDeclaredTarget && producerResult?.state === "passed") {
         this.assertRequiredArtifacts(producer, producerResult);
@@ -1307,7 +1297,7 @@ export class WorkflowService {
       if (!verified) missing.push({ artifactId, producerStageId: producer.stageId });
     }
     if (missing.length > 0) {
-      throw new WorkflowContractError("MISSING_EVIDENCE", "Planned input artifacts are not backed by producer results or stage evidence.", {
+      throw new WorkflowContractError("MISSING_EVIDENCE", "Planned input artifacts are not backed by producer results.", {
         stageId: stage.stageId,
         missingInputs: missing,
       });

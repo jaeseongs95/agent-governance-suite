@@ -243,7 +243,7 @@ describe("D0163 compact values", () => {
     receipt.error = { code: "MISSING_EVIDENCE", message: "Fixture evidence is missing.", details: null };
     expect(workflowStatusSummary(receipt)).toEqual({ schemaVersion: "1.0.0", runId: receipt.runId, revision: 7, state: "blocked",
       currentStageId: "current-fixture", nextStageId: "next-fixture", lastRecordedStageId: null, completedStageCount: 0,
-      totalStageCount: 1, blockerCount: 2, unresolvedCount: 1, errorCode: "MISSING_EVIDENCE", receiptDigest: convergenceDigest(receipt) });
+      totalStageCount: 1, blockerCount: 2, unresolvedCount: 1, errorCode: "MISSING_EVIDENCE", unverifiedClaimCount: 0, receiptDigest: convergenceDigest(receipt) });
     receipt.stageResults = [result(receipt)];
     expect(workflowStatusSummary(receipt)).toMatchObject({ lastRecordedStageId: receipt.plan.stages[0]!.stageId, completedStageCount: 1 });
   });

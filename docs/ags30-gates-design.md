@@ -3,6 +3,7 @@
 대상 작업 사본: `D:/codex/build/ags-5970-gates`, branch `feat/ags30-gates`, 기준 commit `4b2dc571`.
 이 문서는 분석과 설계만 담는다. 구현·시험 결과는 이 문서에 적지 않는다.
 개정 1(2026-11-01): 사용자 정책 변경(신원이 관측되는 호스트에서는 child 호출 허용)을 §1.2·§3.3·§3.5·§3.8에 반영했다.
+개정 2(2026-11-01, 구현 중): 외부 입력은 막지 않고 기록한다(§3.2). `verified` 필드는 선언으로 남긴다(§3.2).
 줄 번호는 모두 기준 commit `4b2dc571` 기준이다.
 
 ## 1. 구조 판정
@@ -89,7 +90,8 @@ CI(`.github/workflows/ci.yml:46-215`)와 release 스크립트는 workflow receip
   - locator가 절대 로컬 일반 파일이고 digest가 있으면 읽어서 비교한다. 일치하면 `sha256-matched`, 불일치면 `BINDING_INVALID`로 거부한다.
   - 그 밖의 경우(commit·URL·식별자·디렉터리)는 `not-checked`다.
 - 통과 조건: 증거가 1개 이상 있고 required artifact가 유일하며 digest와 계획 결속(`:1184-1197`, 현행 유지)을 만족해야 한다. `verified` 조건은 삭제한다.
-- 생산자 없는 required input(`:1206`의 `continue`)은 통과 단계에서 같은 `artifactId`의 evidence가 있어야 한다. 없으면 `MISSING_EVIDENCE`다. `receipt-policy.ts:169-181`의 외부 입력 검사와 같은 규칙을 모든 단계에 적용한다.
+- 생산자 없는 required input(`:1206`의 `continue`)은 통과를 막지 않는다. `unverifiedClaims`에 `evidence-content`로 적는다(개정 2). 실제 registry에는 `require-external` 입력이 수십 개 있고, cs·engineering bundle 입력은 bundle 검증기가 이미 바이트를 확인한다. evidence 항목 이름만 요구하면 검증 없이 호출자 작업만 늘고 모든 orchestrated workflow의 첫 단계가 막힌다.
+- 개정 2: `verified` 입력 필드는 삭제하지 않고 선언으로 남긴다. 13개 스킬 provider-result schema와 fixture를 바꾸지 않기 위해서다. 판정은 서버 `artifactChecks`만 쓴다.
 - `not-checked` 필수 산출물·외부 입력은 `unverifiedClaims`에 `{stageId, claim:"evidence-content", artifactId}`로 남긴다.
 - 소비처 교체: `workflow-service.ts:1101,1184,1213`, `receipt-policy.ts:174`, `provider-semantics.ts:45`, `cs-engineering-validator.ts:18,38`, `engineering-practices-validator.ts:16,35`, `continuity-service.ts:859`, `scripts/korean-prose-readiness.ts:524,538`, `scripts/verify-korean-prose-receipt.ts:137,144`. 모두 `verified` 대신 `check === "sha256-matched"`를 쓴다. cs·engineering bundle은 원래 파일 digest를 확인하는 경로라 동작은 같다.
 
@@ -196,8 +198,8 @@ migration 실패는 트랜잭션 rollback으로 v5를 보존하고 원래 오류
 | D-0039 | 2회차 claim, 같은 target, `evidenceRefs:["evidence-2"]`(파일 아님) | lease 발급 | `MISSING_EVIDENCE` |
 | D-0039 | 1회차 근거 파일과 같은 바이트를 다른 경로로 제출 | lease 발급 | `NEW_EVIDENCE_REQUIRED` |
 | D-0048 | 통과 단계, 실제 임시 파일과 다른 digest | passed | `BINDING_INVALID` |
-| D-0048 | 생산자 없는 required input에 evidence 없음 | passed | `MISSING_EVIDENCE` |
-| D-0048 | 입력에 `verified:true` | 수용 | `INVALID_INPUT` |
+| D-0048 | 생산자 없는 required input에 evidence 없음 | passed, 표기 없음 | passed, `unverifiedClaims`에 `evidence-content`(개정 2) |
+| D-0048 | 입력에 서버 필드 `artifactChecks`·`recordedBy` | 수용 또는 schema 거부 | `INVALID_INPUT`/`SERVER_OWNED_FIELD`(개정 2) |
 | D-0097 | strict 감사 PASS, `auditorId` = 관측 root actor, `implementationActorIds:["x"]` | passed | `GATE_FAILED`/`AUDITOR_IS_OBSERVED_ROOT` |
 | D-0097(개정 1) | `host-observed` 구현자 I, 감사자 A의 `parentChain`에 I | passed | `GATE_FAILED`/`AUDITOR_NOT_INDEPENDENT`. 사슬에 I가 없으면 `actor-independence`·`no-redelegation` 없음, `unavailable`이면 있음 |
 | D-0165(개정 1) | `host-observed` 구현자 I가 직접 검토 | 수용 | `GATE_FAILED`/`REVIEWER_NOT_INDEPENDENT`. 다른 관측 actor면 `reviewer-independence` 없음 |

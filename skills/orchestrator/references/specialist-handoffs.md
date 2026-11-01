@@ -21,4 +21,4 @@ MCP에 기록할 때는 전체 record를 `StageResult.v1.output.decisionRecord`�
 
 서명된 계획의 대상과 `auditTarget`이 다르거나, fresh context가 아니거나, 재위임이 허용됐거나, 열린 blocking finding이 있거나, 판정이 stale하면 `passed`로 기록하지 않는다. 실제 상태 변경 뒤에는 `post-execution` 또는 `post-deploy` 확인이 끝난 경우에만 완료할 수 있다. MCP의 구조적 필드 검사는 감사 사실이나 신원을 인증하지 않으므로 오케스트레이터가 원자료를 직접 대조한다. MCP는 독립성·fresh context·재위임 금지·실행 후 확인을 receipt의 `unverifiedClaims`에 미검증으로 남긴다. 호스트가 감사자·구현자 신원을 관측한 경우(`host-observed`)에는 서버가 독립성과 재위임을 직접 비교한다.
 
-계획에서 생산 단계가 없는 필수 입력 artifact는 통과 단계의 `evidence`에 같은 `artifactId`로 적는다. 로컬 파일 근거에 `digest`를 적으면 서버가 그 파일을 hash해 `artifactChecks`에 기록한다.
+계획에서 생산 단계가 없는 필수 입력 artifact와 서버가 hash하지 못한 필수 산출물은 `unverifiedClaims`에 `evidence-content`로 남는다. 로컬 파일 산출물·근거에 `digest`를 적으면 서버가 그 파일을 hash해 `artifactChecks`에 기록한다.

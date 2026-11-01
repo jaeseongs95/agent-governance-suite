@@ -1888,7 +1888,7 @@ describe("server-derived workspace identity", () => {
     const schemaVersion = (verify.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
     verify.close();
     expect(after).toEqual(before);
-    expect(schemaVersion).toBe(5);
+    expect(schemaVersion).toBe(6);
   });
 
   it("admits only one of two connections that open the same target at once", async () => {

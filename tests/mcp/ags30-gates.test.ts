@@ -228,17 +228,14 @@ describe("D-0048 artifacts and evidence are checked by the server", () => {
     ]);
   });
 
-  it("requires evidence for a required input no planned stage produces", () => {
+  it("records a required input no planned stage produces as unverified evidence", () => {
     const h = harness([provider({ requiredInputArtifacts: ["external-input"],
       inputBindings: [{ targetArtifact: "external-input", sources: ["task:request"], operation: "require-external" }] })]);
     const receipt = running(h);
-    const missing = h.service.recordStageResult(result(receipt, "fixture-work"));
-    expect(missing.error?.code).toBe("MISSING_EVIDENCE");
-    const named = result(receipt, "fixture-work");
-    named.evidence.push({ artifactId: "external-input", kind: "file", locator: "fixture:external", verified: true, note: "Named input." });
-    const passed = h.service.recordStageResult(named);
+    const recorded = result(receipt, "fixture-work");
+    const passed = h.service.recordStageResult(recorded);
     expect(passed.error).toBeNull();
-    expect(passed.data!.unverifiedClaims).toContainEqual({ stageId: named.stageId, claim: "evidence-content", artifactId: "external-input" });
+    expect(passed.data!.unverifiedClaims).toContainEqual({ stageId: recorded.stageId, claim: "evidence-content", artifactId: "external-input" });
   });
 
   it.each(["artifactChecks", "recordedBy"])("rejects a caller-supplied server field %s", (field) => {

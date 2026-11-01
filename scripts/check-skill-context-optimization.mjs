@@ -163,7 +163,7 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/coordinate-subagents/references/model-routing.md": "49b0e564b80a52475670e850c8272f0c348626ef5d32e4746fd484a262023fe5",
     "skills/evaluation-validity-auditor/classification.json": "46b94a039e643a333f021f4792f92edb3b19263e47206c1f1b75e1afcbbbb9df",
     // AGS 3.0 gates (docs/ags30-gates-design.md): audit target binds the signed plan; unobserved claims are recorded.
-    "skills/orchestrator/references/specialist-handoffs.md": "6eb0b07060f84600b2e159ab83538706523410e77e3296aacd5a0c881679fc7c",
+    "skills/orchestrator/references/specialist-handoffs.md": "9767d9d899acdd3fabf57d094c16bf64788dddf324a1bf001d6b970d285fecd9",
     // D0336 reviewed source: worker independence that v1 cannot observe is BLOCKED, not PASS.
     "skills/evaluation-validity-auditor/references/audit-protocol.md": "cb31b803db1debadc5292edc7906b5c0654b95ffcdc5e511545687fa74080f37",
     "skills/evaluation-validity-auditor/references/entry-details.md": "3788c88d6522139cdbd18c34a2386b0706d0ecf3fe47f51824708c01e289b184",
