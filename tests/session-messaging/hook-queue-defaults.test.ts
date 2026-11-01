@@ -20,9 +20,9 @@ async function settingsFixture() {
 describe("L5 queue default origin and precedence", () => {
   it("uses automatic defaults only after explicit bounded file settings or absence", async () => {
     const f = await settingsFixture(); const diagnose = vi.fn();
-    const environment = { PLUGIN_DATA: f.directory, ANTIGRAVITY_AGENT: "1" };
+    const environment = { PLUGIN_DATA: f.directory, ANTIGRAVITY_AGENT: "1", ANTIGRAVITY_PROJECT_ID: "synthetic-project" };
     expect(hostInput.hostDeliveryProfile("gemini", {}, diagnose).transport).toBe("gemini-deferred");
-    expect(hostInput.hostDeliveryProfile("gemini", {}, diagnose, true).transport).toBe("gemini-queue");
+    expect(hostInput.hostDeliveryProfile("gemini", { ANTIGRAVITY_PROJECT_ID: "synthetic-project" }, diagnose, true).transport).toBe("gemini-queue");
     expect(hostInput.hostDeliveryProfile("gemini", environment, diagnose).transport).toBe("gemini-queue");
     for (const queueWake of [false, true]) {
       await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", gemini: { queueWake } }), "utf8");
@@ -34,7 +34,24 @@ describe("L5 queue default origin and precedence", () => {
       }
     }
     expect(diagnose).not.toHaveBeenCalled();
-    expect(environment).toEqual({ PLUGIN_DATA: f.directory, ANTIGRAVITY_AGENT: "1" });
+    expect(environment).toEqual({ PLUGIN_DATA: f.directory, ANTIGRAVITY_AGENT: "1", ANTIGRAVITY_PROJECT_ID: "synthetic-project" });
+  });
+
+  it("does not infer a queue whose idle wake cannot start without the source project identity (D0364)", () => {
+    const diagnose = vi.fn();
+    // The TEST agy CLI hook environment: the host injects only the conversation ID and no project identity.
+    for (const host of ["gemini", "antigravity"]) {
+      for (const environment of [{}, { ANTIGRAVITY_CONVERSATION_ID: "synthetic" }, { ANTIGRAVITY_AGENT: "1", ANTIGRAVITY_PROJECT_ID: " " }]) {
+        for (const supplied of [undefined, true]) {
+          expect(hostInput.hostDeliveryProfile(host, environment, diagnose, supplied).transport).toBe("gemini-deferred");
+        }
+      }
+      expect(hostInput.hostDeliveryProfile(host, { ANTIGRAVITY_CONVERSATION_ID: "synthetic", ANTIGRAVITY_PROJECT_ID: "synthetic-project" }, diagnose).transport)
+        .toBe("gemini-queue");
+      // An explicit opt-in stays the user's decision.
+      expect(hostInput.hostDeliveryProfile(host, { AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE: "1" }, diagnose).transport).toBe("gemini-queue");
+    }
+    expect(diagnose).not.toHaveBeenCalled();
   });
 
   it("keeps explicit zero, one and invalid overrides ahead of file and automatic defaults", async () => {
@@ -55,7 +72,7 @@ describe("L5 queue default origin and precedence", () => {
 
   it("never falls through malformed settings, read errors or invalid paths to an automatic true", async () => {
     const f = await settingsFixture(); const diagnose = vi.fn();
-    const environment = { PLUGIN_DATA: f.directory, ANTIGRAVITY_CONVERSATION_ID: "synthetic" };
+    const environment = { PLUGIN_DATA: f.directory, ANTIGRAVITY_CONVERSATION_ID: "synthetic", ANTIGRAVITY_PROJECT_ID: "synthetic-project" };
     for (const content of ["private-malformed-marker", "null", JSON.stringify({ schemaVersion: "1.0.0", gemini: { queueWake: "false" } })]) {
       diagnose.mockClear(); await writeFile(f.file, content, "utf8");
       expect(hostInput.hostDeliveryProfile("gemini", environment, diagnose, true).transport).toBe("gemini-deferred");
@@ -85,6 +102,7 @@ describe("L5 queue default origin and precedence", () => {
   it("passes the call-local default through the real hook to the shared reader without ENV mutation or broker I/O", async () => {
     const f = await settingsFixture();
     vi.stubEnv("PLUGIN_DATA", f.directory);
+    vi.stubEnv("ANTIGRAVITY_PROJECT_ID", "synthetic-project");
     for (const key of ["AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", "ANTIGRAVITY_AGENT", "ANTIGRAVITY_CONVERSATION_ID", "ANTIGRAVITY_AGENTAPI_EXE"])
       vi.stubEnv(key, undefined);
     await writeFile(f.file, JSON.stringify({ schemaVersion: "1.0.0", gemini: { queueWake: false } }), "utf8");
@@ -138,7 +156,7 @@ it("reports a host-neutral settings diagnostic without inventing an adapter fall
 });
 
 it("queries transport under the same call-local default contract as the hook", async () => {
-  const f = await settingsFixture(); const environment = { PLUGIN_DATA: f.directory };
+  const f = await settingsFixture(); const environment = { PLUGIN_DATA: f.directory, ANTIGRAVITY_PROJECT_ID: "synthetic-project" };
   expect(sessionMessageTransport("gemini", environment)).toBe("gemini-deferred");
   expect(sessionMessageTransport("gemini", environment, true)).toBe("gemini-queue");
   expect(sessionMessageTransport("gemini", environment)).toBe("gemini-deferred");

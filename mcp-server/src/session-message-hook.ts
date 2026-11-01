@@ -171,6 +171,11 @@ function readHostStartToken(pid: number, budget: HookBudget, onFailure?: Process
 }
 
 type RelayRecoveryHint = { relayRecovery?: { instanceId?: string; parentPid?: number; parentStartToken?: string } };
+
+/** The environment a relay of this hook receives: the host's own, overlaid with adapter-derived relay values. */
+function relayEnvironment(relayEnv?: Readonly<Record<string, string | undefined>>): NodeJS.ProcessEnv {
+  return relayEnv && Object.keys(relayEnv).length > 0 ? { ...process.env, ...relayEnv } : process.env;
+}
 type ClaimWithRecovery = { messages: SessionMessage[] } & RelayRecoveryHint;
 
 function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>, budget?: HookBudget, relayId?: string, relayEnv?: Readonly<Record<string, string | undefined>>, relayOwner?: SessionMessageHookOptions["relayOwner"], extra: Readonly<{ recovery?: boolean; observedStartToken?: string }> = {}): void {
@@ -189,7 +194,7 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
   }
   const startToken = hostProcess?.startToken ?? observedStartToken;
   remainingBudget(budget);
-  const environment = relayEnv && Object.keys(relayEnv).length > 0 ? { ...process.env, ...relayEnv } : process.env;
+  const environment = relayEnvironment(relayEnv);
   // 부모 관측은 spawn 호출 직전에 시작한다. 예산 경로는 신원 조회·파일 접근 없이 메모리에만 쌓고
   // 프로세스 종료 때 한 번 게시한다. 게시는 훅 결과·claim 마감 뒤이며 프로세스 수명 안이다.
   const observation = createRelaySpawnObservation(transport, environment, Boolean(budget),
@@ -329,13 +334,20 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
   const main = actorAccess(observation.actor).allowed;
-  const profile = hostDeliveryProfile(host, process.env, undefined, options.defaultQueueWake);
+  // D0364: a wake transport's prerequisites may exist only in the adapter-derived relay environment, so the profile
+  // is read from the environment this hook's relay receives. A host resolver may complete that environment later.
+  const readProfile = () => hostDeliveryProfile(host, relayEnvironment(options.relayEnv), undefined, options.defaultQueueWake);
+  let profile = readProfile();
+  const profileRelayEnv = JSON.stringify(Object.entries(options.relayEnv ?? {}));
   const target = { host, sessionId };
   // This path opens a second provenance store before claiming; it is not budget-enabled yet.
-  if (budget && observation.kind === "user-input" && observation.wakeOnly && observation.wakeCandidates?.length
-    && supportsInjection(profile.capabilities, "peer-wake")) {
-    throw hookFailure("BUDGETED_PEER_WAKE_UNSUPPORTED", "Budgeted peer-wake receipt recording is not supported.");
-  }
+  const refuseBudgetedPeerWake = () => {
+    if (budget && observation.kind === "user-input" && observation.wakeOnly && observation.wakeCandidates?.length
+      && supportsInjection(profile.capabilities, "peer-wake")) {
+      throw hookFailure("BUDGETED_PEER_WAKE_UNSUPPORTED", "Budgeted peer-wake receipt recording is not supported.");
+    }
+  };
+  refuseBudgetedPeerWake();
   async function request<T>(operation: string, payload: Record<string, unknown>): Promise<T> {
     remainingBudget(budget);
     const claim = operation === "claim-deferred" || operation === "claim-turn-end";
@@ -501,6 +513,13 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     }
     claimInstanceId = "host-process-v1:" + createHash("sha256")
       .update(JSON.stringify([host, sessionId, claimHostProcess.pid, claimHostProcess.startToken])).digest("hex");
+    // D0364: the resolver may have completed the relay environment; re-read the profile only when it changed, so
+    // recovery compares and starts relays under the transport that environment selects.
+    const resolvedRelayEnv = JSON.stringify(Object.entries(options.relayEnv ?? {}));
+    if (resolvedRelayEnv !== profileRelayEnv) {
+      profile = readProfile();
+      refuseBudgetedPeerWake();
+    }
   }
 
   if (options.recoverExistingSession && actorAccess(observation.actor).allowed

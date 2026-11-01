@@ -21,7 +21,7 @@ import {producerFailure} from "../../mcp-server/src/failure-diagnostics.js";
 
 const directory = path.resolve("PRIVATE_QUEUE_DIRECTORY");
 const fileEnvironment = {PLUGIN_DATA: directory};
-const automaticEnvironment = {...fileEnvironment, ANTIGRAVITY_AGENT: "1"};
+const automaticEnvironment = {...fileEnvironment, ANTIGRAVITY_AGENT: "1", ANTIGRAVITY_PROJECT_ID: "synthetic-project"};
 const settings = (codex: boolean, gemini = codex) => Buffer.from(JSON.stringify({schemaVersion: "1.0.0", codex: {queueWake: codex}, gemini: {queueWake: gemini}}));
 const ioError = (code: string) => Object.assign(new Error("PRIVATE_IO_MESSAGE"), {code});
 function diagnosticRecord(spy: ReturnType<typeof vi.spyOn>) {
@@ -71,11 +71,11 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
       expect(observer).not.toHaveBeenCalled(); expect(f.open).toHaveBeenCalledTimes(1);
       expect(f.close).toHaveBeenCalledExactlyOnceWith(0); expect(f.read.mock.calls.length).toBeGreaterThan(1);
     }
-    expect(automaticEnvironment).toEqual({PLUGIN_DATA: directory, ANTIGRAVITY_AGENT: "1"});
+    expect(automaticEnvironment).toEqual({PLUGIN_DATA: directory, ANTIGRAVITY_AGENT: "1", ANTIGRAVITY_PROJECT_ID: "synthetic-project"});
   });
   it("keeps absence/default and Claude decisions without closing an unacquired descriptor", () => {
     const observer = vi.fn();
-    expect(hostDeliveryProfile("gemini", {}, observer, true).transport).toBe("gemini-queue");
+    expect(hostDeliveryProfile("gemini", {ANTIGRAVITY_PROJECT_ID: "synthetic-project"}, observer, true).transport).toBe("gemini-queue");
     expect(hostDeliveryProfile("codex", {}, observer, true).transport).toBe("codex-deferred");
     expect(hostDeliveryProfile("claude-code", automaticEnvironment, observer, true).transport).toBe("claude-inbox");
     expect(f.open).not.toHaveBeenCalled(); expect(f.close).not.toHaveBeenCalled();
@@ -192,6 +192,7 @@ describe("0188 actual bounded queue reader and diagnostic consumer", () => {
     expect(sessionMessageTransport("gemini", automaticEnvironment, true)).toBe("gemini-deferred");
     resetWitnesses(); sink.mockClear();
     vi.stubEnv("PLUGIN_DATA", directory); vi.stubEnv("ANTIGRAVITY_AGENT", "1"); vi.stubEnv("AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE", undefined);
+    vi.stubEnv("ANTIGRAVITY_PROJECT_ID", "synthetic-project");
     const input = JSON.stringify({hook_event_name: "PreToolUse", session_id: "PRIVATE_SYNTHETIC_SESSION", agent_id: "", tool_name: "read_file", tool_input: {}});
     expect(await runSessionMessageHook("gemini", input, undefined, {defaultQueueWake: true})).toBe("");
     expect(diagnosticRecord(sink)).toMatchObject({phase: "close", reason: "QUEUE_SETTINGS_CLOSE_FAILED", cleanup: "unknown"});

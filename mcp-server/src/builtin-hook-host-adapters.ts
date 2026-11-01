@@ -352,8 +352,13 @@ function codexQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: st
 
 function geminiQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reason: string, observation?: HookSettingsDiagnostic) => void, defaultQueueWake?: boolean): boolean {
   // Adapter-owned defaults are settings provenance, never actor, liveness or execution authority.
-  const defaultEnabled = defaultQueueWake === true || Boolean(environment.ANTIGRAVITY_AGENTAPI_EXE
-    || environment.ANTIGRAVITY_CONVERSATION_ID || environment.ANTIGRAVITY_AGENT);
+  // D0364: an inferred default enables the queue only where its idle wake can start. The wake refuses every attempt
+  // without the source project identity, so without it the recipient reports no idle wake instead of a live one.
+  // ponytail: gates on the project identity only; agentapi is resolved when the wake runs (PATH fallback off Windows)
+  // and a missing one still surfaces as a relay failure. Gate on the wake's agentapi resolution if that case appears.
+  const wakeReady = Boolean(environment.ANTIGRAVITY_PROJECT_ID?.trim());
+  const defaultEnabled = wakeReady && (defaultQueueWake === true || Boolean(environment.ANTIGRAVITY_AGENTAPI_EXE
+    || environment.ANTIGRAVITY_CONVERSATION_ID || environment.ANTIGRAVITY_AGENT));
   return queueEnabled("gemini", environment.AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE, environment, diagnose, defaultEnabled);
 }
 

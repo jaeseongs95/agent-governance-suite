@@ -1003,7 +1003,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(sessionMessageTransport("claude-code", { AGENT_GOVERNANCE_CODEX_QUEUE_WAKE: "1" })).toBe("claude-inbox");
     expect(sessionMessageTransport("gemini", {})).toBe("gemini-deferred");
     expect(sessionMessageTransport("gemini", { AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE: "1" })).toBe("gemini-queue");
-    expect(sessionMessageTransport("gemini", { ANTIGRAVITY_AGENT: "1" })).toBe("gemini-queue");
+    expect(sessionMessageTransport("gemini", { ANTIGRAVITY_AGENT: "1", ANTIGRAVITY_PROJECT_ID: "synthetic-project" })).toBe("gemini-queue");
     expect(sessionMessageTransport("gemini", { ANTIGRAVITY_AGENT: "1", AGENT_GOVERNANCE_GEMINI_QUEUE_WAKE: "0" })).toBe("gemini-deferred");
     expect(transportWakeCapabilities("codex-deferred")).toEqual({ wakeVisibility: "none", canWakeSilently: false });
     expect(transportWakeCapabilities("gemini-deferred")).toEqual({ wakeVisibility: "none", canWakeSilently: false });

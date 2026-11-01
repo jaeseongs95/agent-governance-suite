@@ -29,6 +29,18 @@ registerHookHostAdapter(syntheticHost, {
   deliveryProfile: () => ({transport: "gemini-queue", capabilities: {supportedInjection: ["peer-wake", "tool-boundary", ...(f.turnEnd ? ["turn-end" as const] : [])], idleWake: "user-message"}, blocksEmptyWakePrompt: false}),
   processPid: (pid, observation) => observation ? pid : undefined,
 });
+// D0364: selects the queue only when the environment the relay receives is wake-ready, like the Gemini adapter.
+const envProfileHost = "synthetic-relay-env-profile";
+registerHookHostAdapter(envProfileHost, {
+  adaptInput: (payload, host) => {
+    const mapped = adaptHostInput(payload, "codex");
+    return {...mapped, observation: {...mapped.observation, host, callId: "synthetic-relay-call", actor: payload.syntheticActor as ActorObservation}};
+  },
+  deliveryProfile: (environment) => environment.SYNTHETIC_WAKE_READY === "1"
+    ? {transport: "gemini-queue", capabilities: {supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message"}, blocksEmptyWakePrompt: false}
+    : {transport: "gemini-deferred", capabilities: {supportedInjection: ["tool-boundary"], idleWake: "none"}, blocksEmptyWakePrompt: false},
+  processPid: (pid, observation) => observation ? pid : undefined,
+});
 const input = { hook_event_name: "SessionStart", session_id: "verified-hook-fixture", syntheticActor: syntheticRoot };
 // Fixed SHA-256 fixture for [syntheticHost, session_id, 424242, "T1"].
 const digest = "e4280a4d84e594985e4a4e596d9149ed3159a0459f4ee328f0ddd9962486a353";
@@ -545,4 +557,26 @@ it("does not trust arbitrary diagnostic codes or throw when stderr itself fails"
     stderr.mockImplementation(() => { throw new Error("secret-canary sink"); });
     expect(await runSessionMessageHook(syntheticHost, "{")).toBe("");
   } finally { stderr.mockRestore(); }
+});
+
+it("selects the transport from the environment the relay receives, including one a host resolver completes (D0364)", async () => {
+  const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  f.request.mockImplementation(async () => ({ spawn: false, relayId: null, instanceId, reason: "RELAY_ALIVE" }));
+  for (const [relayEnv, transport] of [[undefined, "gemini-deferred"], [{ SYNTHETIC_WAKE_READY: "1" }, "gemini-queue"]] as const) {
+    f.request.mockClear();
+    await handleSessionMessageHook(input, envProfileHost, 424242, { ...options(), ...(relayEnv ? { relayEnv } : {}) });
+    expect(f.request.mock.calls.map(([name, payload]) => [name, payload.transport])).toEqual([["ensure-relay", transport]]);
+  }
+  // Recovery: the runner fills the relay environment only when the host process resolves. The live queue relay that
+  // SessionStart registered must stay live instead of being replaced under the transport of the unresolved environment.
+  const relayEnv: Record<string, string> = {};
+  f.request.mockReset();
+  f.request.mockImplementation(async (name: string) => name === "list-presence"
+    ? { sessions: [{ ...livePresence, host: envProfileHost }] } : { messages: [] });
+  await handleSessionMessageHook(post, envProfileHost, 424242, { ...recover(() => {
+    relayEnv.SYNTHETIC_WAKE_READY = "1";
+    return { pid: 424242, startToken: "T1" };
+  }), relayEnv });
+  expect(f.request.mock.calls.map(([name]) => name)).toEqual(["list-presence", "claim-deferred"]);
+  errors.mockRestore();
 });
