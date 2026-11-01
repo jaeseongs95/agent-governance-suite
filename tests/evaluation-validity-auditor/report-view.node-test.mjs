@@ -43,7 +43,7 @@ test("GOV07 human CLI explains the same report without changing identity, denomi
   assert.equal(json.stdout, `${JSON.stringify(expected, null, 2)}\n`);
   const human = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"]);
   assert.equal(human.status, 0, human.stderr);
-  assert.match(human.stdout, /결론: 통과 \(PASS\), 실행 후 평가 유효성/);
+  assert.match(human.stdout, /결론: 판정 보류 \(BLOCKED\), 실행 후 평가 유효성/);
   for (const label of ["이유:", "검증 범위:", "한계:", "실제 신원을 인증하지 않았습니다", "대상 소스를 별도로 검증하지 않았습니다"]) assert.ok(human.stdout.includes(label), label);
   assert.match(human.stdout, /결과 레코드 관측 4 \/ 예정 8/);
   assert.match(human.stdout, /분자 1, 분모 4, 값 0\.25/);
@@ -57,11 +57,11 @@ test("GOV07 human CLI explains the same report without changing identity, denomi
   assert.ok(validation.stdout.endsWith(human.stdout));
 });
 
-test("GOV07 pre-execution PASS cannot claim checked results or quality evidence", async t => {
+test("GOV07 실행 전 신원 미관측은 결과 검사나 품질 근거를 주장하지 않는다", async t => {
   const f = await prepare(t, false);
   const result = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"]);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /결론: 통과 \(PASS\), 실행 전 설계 준비/);
+  assert.match(result.stdout, /결론: 판정 보류 \(BLOCKED\), 실행 전 설계 준비/);
   assert.match(result.stdout, /실행 결과와 집계는 이 단계에서 검사하지 않았습니다/);
   assert.match(result.stdout, /품질·릴리스 판단의 결과 근거로 사용할 수 없습니다/);
   assert.doesNotMatch(result.stdout, /공개 집계와 재계산 결과의 일치: 통과/);
@@ -149,7 +149,7 @@ test("GOV07 human report CLI works in an installation tree without node_modules"
   await cp(path.join(suiteRoot, "runtime/schema-validation.mjs"), path.join(installed, "runtime/schema-validation.mjs"));
   const result = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"], installed);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /결론: 통과 \(PASS\)/);
+  assert.match(result.stdout, /결론: 판정 보류 \(BLOCKED\)/);
   assert.match(result.stdout, /분자 1, 분모 4, 값 0\.25/);
   const json = execute("cli.mjs", auditArgs(f), installed);
   const validation = execute("validate-report.mjs", [...await validationArgs(f, JSON.parse(json.stdout)), "--format", "human-ko"], installed);

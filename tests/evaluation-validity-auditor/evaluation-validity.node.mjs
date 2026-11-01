@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -12,19 +13,23 @@ import {
 } from "../../skills/evaluation-validity-auditor/scripts/core.mjs";
 import { makeFixture, makePostFixture, rawDigest } from "./fixture.mjs";
 
-test("pre-execution PASS certifies design readiness only", async () => {
+test("실행 전 정적 검사가 통과해도 작업자 신원 관찰 불가는 보류한다 (D0336)", async () => {
   const { root, base } = await makeFixture();
   const report = await analyzeEvaluation(base, { artifactRoot: root });
-  assert.equal(report.verdict, "PASS");
+  assert.equal(report.verdict, "BLOCKED");
   assert.equal(report.qualifiesAsQualityOrReleaseEvidence, false);
+  assert.deepEqual(report.checks.find(item => item.checkId === "ROLE_INDEPENDENCE"), { checkId: "ROLE_INDEPENDENCE", status: "BLOCKED", code: "PROVENANCE_MISSING", evidenceRefs: [] });
+  assert.ok(report.checks.filter(item => item.checkId !== "ROLE_INDEPENDENCE").every(item => item.status === "PASS"));
   assert.deepEqual(report.recomputedMetrics, []);
 });
 
-test("post-execution PASS recomputes complete denominators", async () => {
+test("신원 관찰이 없어도 실행 후 유효 집계와 원래 분모를 보존한다 (D0336)", async () => {
   const { root, post, ids } = await makePostFixture();
   const report = await analyzeEvaluation(post, { artifactRoot: root });
-  assert.equal(report.verdict, "PASS");
-  assert.equal(report.qualifiesAsQualityOrReleaseEvidence, true);
+  assert.equal(report.verdict, "BLOCKED");
+  assert.equal(report.qualifiesAsQualityOrReleaseEvidence, false);
+  assert.equal(report.checks.find(item => item.checkId === "ROLE_INDEPENDENCE").status, "BLOCKED");
+  assert.ok(report.checks.filter(item => item.checkId !== "ROLE_INDEPENDENCE").every(item => item.status === "PASS"));
   assert.deepEqual(report.recomputedMetrics.map(({ metricId, numerator, denominator, value }) => ({ metricId, numerator, denominator, value })), [
     { metricId: ids.semanticMetric, numerator: 1, denominator: 4, value: 0.25 },
     { metricId: ids.exactMetric, numerator: 2, denominator: 4, value: 0.5 },
@@ -123,4 +128,39 @@ test("artifact traversal and absolute paths are INVALID_INPUT", async () => {
   await assert.rejects(() => analyzeEvaluation(base, { artifactRoot: root }), InputError);
   base.artifacts[0].locator = path.join(root, "fixture-manifest.jsonl");
   await assert.rejects(() => analyzeEvaluation(base, { artifactRoot: root }), InputError);
+});
+
+test("서로 다른 새 UUID도 작업자 독립성을 증명하지 못한다 (D0336)", async () => {
+  const { root, base } = await makeFixture();
+  base.actors = { authorIds: [randomUUID()], executorIds: [randomUUID()], judgeIds: [randomUUID()], auditorId: randomUUID() };
+  const report = await analyzeEvaluation(base, { artifactRoot: root });
+  assert.equal(report.verdict, "BLOCKED");
+  assert.equal(report.qualifiesAsQualityOrReleaseEvidence, false);
+  assert.ok(report.blockingCodes.includes("PROVENANCE_MISSING"));
+});
+
+test("직접 확인한 역할 충돌은 신원 미관측보다 실패를 우선한다 (D0336)", async () => {
+  for (const role of ["authorIds", "executorIds", "judgeIds"]) {
+    const { root, base } = await makeFixture();
+    base.actors.auditorId = base.actors[role][0];
+    const report = await analyzeEvaluation(base, { artifactRoot: root });
+    assert.equal(report.verdict, "FAIL");
+    assert.equal(report.qualifiesAsQualityOrReleaseEvidence, false);
+    assert.equal(report.checks.find(item => item.checkId === "ROLE_INDEPENDENCE").code, "ROLE_CONFLICT");
+  }
+});
+
+test("출처 한계와 역할 보류를 지우고 digest를 재계산한 PASS도 재검증에서 거부한다 (D0336)", async () => {
+  const { root, post } = await makePostFixture();
+  const report = await analyzeEvaluation(post, { artifactRoot: root });
+  report.verdict = "PASS";
+  report.qualifiesAsQualityOrReleaseEvidence = true;
+  report.limitations = report.limitations.filter(item => item !== "COOPERATIVE_PROVENANCE_ASSERTIONS");
+  report.blockingCodes = [];
+  Object.assign(report.checks.find(item => item.checkId === "ROLE_INDEPENDENCE"), { status: "PASS", code: "CHECK_PASSED" });
+  const payload = { ...report };
+  delete payload.reportDigest;
+  report.reportDigest = sha256Canonical(payload);
+  const errors = await validateReport({ schemaVersion: "1.0.0", request: post, requestArtifact: { artifactId: "evaluation-validity-request", locator: "artifact://request/evaluation-validity", digest: sha256Canonical(post) }, report }, { artifactRoot: root });
+  assert.ok(errors.length > 0);
 });
