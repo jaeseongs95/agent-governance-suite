@@ -26,7 +26,13 @@ import {createSyntheticRootProofFixture} from "./synthetic-root-proof-client.js"
 // 외부 공급자와 native 실행만 대체한다. 실해석기·모델 품질·설치후 소비 증거는 아니다.
 const repository = fileURLToPath(new URL("../../", import.meta.url));
 const cleanup: Array<() => Promise<void>> = [];
-const adapter: HostExecutionAdapter = {host: "fixture-host", provider: "fixture-provider", modelClassForModel: () => "general"};
+// 정상 API 경로의 합성 능력을 명시한다. 실제 호스트 능력 관측의 증거는 아니다.
+const adapter: HostExecutionAdapter = {host: "fixture-host", provider: "fixture-provider", policyRevision: "fixture-host-policy-r1",
+  modelClassForModel: model => model === "fixture-host-model" ? "general" : null,
+  resolveModel: (model, provenance = "fixture:host-owned") => model === "fixture-host-model" ? {
+    host: "fixture-host", provider: "fixture-provider", rawModel: model, resolvedModel: model, modelClass: "general",
+    minimumReasoningEffort: "high", supportedEfforts: ["high"], aliasUsed: false, policyRevision: "fixture-host-policy-r1", provenance,
+  } : null};
 afterEach(async () => {while (cleanup.length) await cleanup.pop()!();});
 function input() {
   return {schemaVersion: "1.0.0", requestId: "api-request", operationId: "api-operation", originalPrompt: "비공개 합성 자료를 읽기만 하고 수정하지 마라.",
@@ -34,7 +40,8 @@ function input() {
     contextSources: [], explicitSkillIds: [], ruleRequiredSkillIds: [], vendorContext: {vendorId: "fixture-vendor", reference: "fixture:approved-route"}, publicSynthetic: false};
 }
 interface Advice {result: ClassificationResult; classificationResponseRef: string; agentSelectedSkillIds: string[] | null; selectionStatus: string; adviceApplied: boolean}
-interface Accepted {valid: boolean; errors: string[]; agentSelectedSkillIds: string[] | null; decision?: SkillSelectionDecisionV1}
+type Accepted = {valid: false; errors: string[]; agentSelectedSkillIds: null}
+  | {valid: true; errors: string[]; decision: SkillSelectionDecisionV1};
 interface NeedsInput {status: string; errors: string[]; response: null; agentSelectedSkillIds: null}
 function decision(advice: Advice): SkillSelectionDecisionV1 {
   const snapshot = advice.result.snapshot;
@@ -257,8 +264,10 @@ describe("JEV 원인과 권한의 실제 MCP 응답", () => {
     const recorded = await h.call<Accepted & {selectionSource: string; independentSelection: Receipt; admissionStatus: string; readStatus: string; appliedStatus: string; verifiedStatus: string}>(
       "record_skill_selection", {schemaVersion: "1.0.0", operationId: request.operationId, decision: independent, selectionSource});
     expect(recorded.error).toBeNull();
-    expect(recorded.data).toMatchObject({valid: true, errors: [], agentSelectedSkillIds: ["code-review"], selectionSource,
-      decision: {agentSelectedSkillIds: ["code-review"], explicitSkillIds: ["code-review"], adviceApplied: false},
+    // gateway.accept는 성공한 선택을 decision과 hostReceipt로 반환한다(gateway.ts:220).
+    expect(recorded.data).toMatchObject({valid: true, errors: [], selectionSource,
+      decision: {agentSelectedSkillIds: ["code-review"], explicitSkillIds: ["code-review"], adviceApplied: false,
+        hostReceipt: {host: "fixture-host", requestDigest: independent.requestDigest, inventoryDigest: independent.inventoryDigest, agentSelectedSkillIds: ["code-review"]}},
       independentSelection: {source: selectionSource, operationId: request.operationId, helperFailureCode: "NATIVE_ISOLATION_VIOLATION", helperResponseRef: advice.classificationResponseRef},
       admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN"});
     const repeated = await h.call<Advice & {selectionSource: string; independentSelection: Receipt}>("classify_skills", request);
