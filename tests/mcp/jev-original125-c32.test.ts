@@ -1,5 +1,6 @@
 import {Client} from "@modelcontextprotocol/sdk/client/index.js";
 import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
+import {randomUUID} from "node:crypto";
 import {access, mkdir, mkdtemp, readFile, rm, writeFile} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import path from "node:path";
@@ -57,7 +58,7 @@ async function fixture() {
       const store = new SqliteWorkflowStore(path.join(directory, "workflow.sqlite3"));
       let proof: string;
       try {
-        const observation = adaptHostInput({hook_event_name: "PreToolUse", session_id: "fixture-c32-session", tool_use_id: "fixture-c32-call",
+        const observation = adaptHostInput({hook_event_name: "PreToolUse", session_id: "fixture-c32-session", tool_use_id: `fixture-c32-call-${randomUUID()}`,
           tool_name: `mcp__agent_governance_suite__${name}`, tool_input: data, cwd: directory}, "claude-code").observation;
         proof = new SessionActorProofs(store).issue(observation, name, data);
       } finally {store.close();}
