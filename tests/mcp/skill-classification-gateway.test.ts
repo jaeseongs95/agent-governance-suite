@@ -66,7 +66,8 @@ function decision(advice: Advice, selected: string[] | null, request = input()):
     unresolvedSkillReferences: [], selectionStatus: selected === null ? "NEEDS_INPUT" : "SELECTED", adviceApplied: selected !== null, hostReceipt: null };
 }
 
-async function harness(options: { root?: string; needed?: string[]; uncertain?: string[]; mode?: "shadow" | "select"; attest?: boolean; taskObserved?: boolean; withJev?: boolean; providerTimeoutMs?: number; requestTimeoutMs?: number } = {}) {
+async function harness(options: { root?: string; needed?: string[]; uncertain?: string[]; mode?: "shadow" | "select"; attest?: boolean; taskObserved?: boolean; withJev?: boolean; providerTimeoutMs?: number; requestTimeoutMs?: number; adapter?: HostExecutionAdapter } = {}) {
+  const hostAdapter = options.adapter ?? adapter;
   const root = options.root ?? repository;
   const localInventory = await loadSkillInventory({ root });
   const observedAt = new Date();
@@ -113,7 +114,7 @@ async function harness(options: { root?: string; needed?: string[]; uncertain?: 
     observeRuntime: () => digestClassificationValue({ runtime, additionalSource: runtimeBytes.additionalSource }), observeTask, observeHostSkills });
   const validator = new ContractValidator(), store = new InMemoryWorkflowStore();
   const sessionProofs = new SessionActorProofs(store);
-  const attestation = options.attest === false ? null : new HostAttestationProvider(store, adapter);
+  const attestation = options.attest === false ? null : new HostAttestationProvider(store, hostAdapter);
   const workflow = new WorkflowService(new FileSkillRegistry(path.join(repository, "skills/registry.json"), validator), validator, store, null, attestation);
   const updateFetcher = vi.fn(async () => { throw new Error("NETWORK_FORBIDDEN_IN_MOCK_TEST"); });
   const updates = new PluginUpdateService(new InMemoryPluginUpdateStore(), { fetcher: updateFetcher });
@@ -124,7 +125,7 @@ async function harness(options: { root?: string; needed?: string[]; uncertain?: 
   cleanup.push(async () => { await client.close(); await server.close(); expect(updateFetcher).not.toHaveBeenCalled(); });
   let sequence = 0;
   const sign = (args: Record<string, unknown>, now?: Date, tool = "record_skill_selection", sessionId = "synthetic-session") => {
-    const token = issueHostAttestation(store, adapter, { tool, input: args, model: "synthetic-host-model", reasoningEffort: "high",
+    const token = issueHostAttestation(store, hostAdapter, { tool, input: args, model: "synthetic-host-model", reasoningEffort: "high",
       actorId: hostActorId("codex", sessionId), sessionId, turnId: "synthetic-turn", toolUseId: `fixture-call-${++sequence}`, ...(now ? { now } : {}) });
     expect(token).not.toBeNull(); return { ...args, [HOST_ATTESTATION_FIELD]: token };
   };
@@ -245,6 +246,24 @@ describe("offline classification through actual MCP Client/Server transport", ()
     expect((await h.call<Accepted>("record_skill_selection", { ...signed, decision: decision(advice, []) })).error?.code).toBe("INVALID_INPUT");
     expect((await h.call<Accepted>("record_skill_selection", h.sign(args, new Date("2000-01-01T00:00:00Z")))).error?.code).toBe("INVALID_INPUT");
     expect((await h.call<Accepted>("record_skill_selection", { ...signed, [HOST_ATTESTATION_FIELD]: `${signed[HOST_ATTESTATION_FIELD]}tampered` })).error?.code).toBe("INVALID_INPUT");
+  });
+  it("D0089: a class-only adapter's observation is refused with its capability cause visible to the caller", async () => {
+    const classOnly = vi.fn((model: string) => model === "synthetic-host-model" ? "general" as const : null);
+    const h = await harness({ adapter: { host: "codex", provider: "openai-codex", modelClassForModel: classOnly } });
+    const refused = await h.call<Advice>("classify_skills", input("d0089-class-only"));
+    expect(refused).toMatchObject({ ok: false, data: null, error: { code: "INVALID_INPUT",
+      details: { category: "host-observation", reasonCode: "BINDING_INVALID", observationReasonCode: "MISSING_MODEL_CAPABILITY" } } });
+    expect(h.classify).not.toHaveBeenCalled();
+    expect(classOnly).not.toHaveBeenCalled();
+    // The same model name with a trusted descriptor is classified, and a forged signature still fails before any cause.
+    const described = await harness();
+    const advised = await described.call<Advice>("classify_skills", input("d0089-described"));
+    expect(advised.error).toBeNull();
+    const args = { schemaVersion: "1.0.0", operationId: input("d0089-described").operationId, decision: decision(advised.data!, ["code-review"], input("d0089-described")) };
+    const signed = described.sign(args);
+    const forged = await described.call<Accepted>("record_skill_selection", { ...signed, [HOST_ATTESTATION_FIELD]: `${signed[HOST_ATTESTATION_FIELD]}tampered` });
+    expect(forged.error?.details).toMatchObject({ category: "host-observation", reasonCode: "BINDING_INVALID" });
+    expect(forged.error?.details).not.toHaveProperty("observationReasonCode");
   });
   it("does not create selected status when host attestation is unavailable", async () => {
     const h = await harness({ attest: false }), advice = (await h.call<Advice>("classify_skills", input())).data!;

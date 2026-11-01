@@ -680,9 +680,12 @@ export function createMcpServer(
           }
         } catch (error) {
           if (error instanceof WorkflowContractError) {
-            // Preserve legacy rejection codes and expose only the typed cause, never raw observation data.
+            // Preserve legacy rejection codes and expose only the typed cause, never raw observation data. A closed
+            // verifier reason (e.g. MISSING_MODEL_CAPABILITY for a class-only adapter, D0089) stays visible to the caller.
+            const observationReasonCode = error.details?.reasonCode;
             result = apiError("INVALID_INPUT", "Skill classification host observation is invalid; no selection was accepted.", {
               category: "host-observation", reasonCode: error.code,
+              ...(typeof observationReasonCode === "string" ? { observationReasonCode } : {}),
             });
           } else if (error instanceof Error && CLASSIFICATION_REQUEST_REJECTIONS.has(error.message)) {
             result = apiError("INVALID_INPUT", "Skill classification request was rejected; no selection was accepted.", {
