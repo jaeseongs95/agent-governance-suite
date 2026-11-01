@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import {writeSync} from "node:fs";
 import {cp, mkdir, readFile, writeFile} from "node:fs/promises";
 import {spawn} from "node:child_process";
 import path from "node:path";
@@ -20,6 +21,17 @@ assert(scenario === undefined || cases.some(([id]) => id === scenario), `UNKNOWN
 const {createSourceScratch, prepareSourceScratch, removeSourceScratch} = await import(new URL("./source-scratch.mjs", import.meta.url).href);
 const parentOwnsRoot = process.argv[4] !== undefined;
 const root = parentOwnsRoot ? path.resolve(process.argv[4]!) : createSourceScratch(repo);
+let observationError: unknown, originalError: unknown, originalFailed = false, sequence = 0;
+const observe = (event: string) => {
+  if (scenario !== "final-fetch-body") return;
+  try {
+    const bytes = Buffer.from(`${JSON.stringify({observation: "bootstrap-mutation-r01", sequence: ++sequence,
+      monoMs: Number(process.hrtime.bigint() / 1_000_000n), event})}\n`);
+    if (bytes.length > 384) throw new Error("MUTATION_OBSERVATION_LIMIT");
+    if (writeSync(2, bytes) !== bytes.length) throw new Error("MUTATION_OBSERVATION_SHORT_WRITE");
+  }
+  catch (error) { observationError ??= error; }
+};
 try {
   prepareSourceScratch(repo, root);
   const childTemp = path.join(root, "children");
@@ -47,18 +59,28 @@ try {
     assert.equal(result.status,0,`${id}:exit=${result.status} stderr=${result.stderr}`);
     checks.push(`${id}: GREEN`);
   };
+  observe("baseline-enter");
   await green("baseline");
+  observe("baseline-complete");
   for (const [id, file, before, after, marker] of cases) {
     if (scenario !== undefined && id !== scenario) continue;
     const target = path.join(root,file), original = await readFile(target,"utf8"); assert.equal(original.split(before).length,2,`MUTATION_ANCHOR:${id}`);
     await writeFile(target,original.replace(before,after),"utf8");
     try {
+      observe("mutation-enter");
       const result = await runOracle();
       assert.equal(result.status,1,`${id}:exit=${result.status} stderr=${result.stderr}`);
       assert(result.stderr.includes(marker),`${id}:expected ${marker}: ${result.stderr}`);
       checks.push(`${id}: RED ${marker}`);
-    } finally { await writeFile(target,original,"utf8"); }
+      observe("mutation-complete");
+    } finally { observe("restore-enter"); await writeFile(target,original,"utf8"); }
     await green(`${id}:restored`);
+    observe("restore-complete");
   }
   console.log(JSON.stringify({status:"INDEPENDENT_MUTATIONS_PASS",checks,actualApiCalls:0,actualCredentialLookups:0}));
-} finally {if (!parentOwnsRoot) removeSourceScratch(root);}
+} catch (error) { originalFailed = true; originalError = error; }
+finally {
+  if (!parentOwnsRoot) removeSourceScratch(root);
+}
+if (observationError) throw new AggregateError([...(originalFailed ? [originalError] : []), observationError], "MUTATION_OBSERVATION_FAILED");
+if (originalFailed) throw originalError;

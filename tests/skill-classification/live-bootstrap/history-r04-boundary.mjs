@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {createHash} from "node:crypto";
+import {writeSync} from "node:fs";
 import {cp, mkdir, readFile} from "node:fs/promises";
 import {spawn} from "node:child_process";
 import path from "node:path";
@@ -9,22 +10,40 @@ import {createSourceScratch, prepareSourceScratch, removeSourceScratch} from "./
 
 function runProcess(command, args, options) {
   return new Promise((resolve) => {
+    let observationError, sequence = 0;
+    const observe = (event, details = {}) => {
+      if (!options.observation) return;
+      try {
+        const bytes = Buffer.from(`${JSON.stringify({observation: "history-tar-r01", sequence: ++sequence,
+          monoMs: Number(process.hrtime.bigint() / 1_000_000n), event, ...details})}\n`);
+        if (bytes.length > 384) throw new Error("HISTORY_OBSERVATION_LIMIT");
+        if (writeSync(2, bytes) !== bytes.length) throw new Error("HISTORY_OBSERVATION_SHORT_WRITE");
+      }
+      catch (error) { observationError ??= error; }
+    };
+    const finish = result => resolve({...result, error: observationError
+      ? new AggregateError([result.error, observationError].filter(Boolean), "HISTORY_OBSERVATION_FAILED") : result.error});
+    observe("spawn-request");
     const child = spawn(command, args, {
       cwd: options.cwd, env: options.env, stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"], windowsHide: true,
     });
     let stdout = "", stderr = "", error;
     if (options.input !== undefined) {
-      child.stdin.on("error", err => {error ??= err;});
+      child.stdin.on("error", err => {observe("stdin-error", {code: String(err.code ?? "UNKNOWN").slice(0, 32)}); error ??= err;});
+      child.stdin.once("finish", () => observe("stdin-finish"));
       child.stdin.end(options.input);
     }
     child.stdout.on("data", chunk => {stdout += String(chunk);});
     child.stderr.on("data", chunk => {stderr += String(chunk);});
     const timer = setTimeout(() => {
+      observe("timeout");
       error = new Error(`SPAWN_TIMEOUT:${options.timeout}`);
       child.kill();
     }, options.timeout);
-    child.once("error", err => {clearTimeout(timer); resolve({status: null, stdout, stderr, error: err});});
-    child.once("close", status => {clearTimeout(timer); resolve({status, stdout, stderr, error});});
+    child.once("spawn", () => observe("spawn", {childPid: child.pid}));
+    child.once("exit", (status, signal) => observe("exit", {status, signal}));
+    child.once("error", err => {observe("error", {code: String(err.code ?? "UNKNOWN").slice(0, 32)}); clearTimeout(timer); finish({status: null, stdout, stderr, error: err});});
+    child.once("close", (status, signal) => {observe("close", {status, signal}); clearTimeout(timer); finish({status, stdout, stderr, error});});
   });
 }
 
@@ -47,7 +66,7 @@ try {
   await cp(path.join(repo, "tests/skill-classification/evaluation.ts"), path.join(temporary, "tests/skill-classification/evaluation.ts"));
   // All historical inventory sources, membership, corpus and oracles come from
   // the verified 521aa Git snapshot; current source changes cannot rewrite it.
-  const unpack = await runProcess("tar", ["-xzf", "-"], {cwd: temporary, input: archiveBytes, timeout: 30000});
+  const unpack = await runProcess("tar", ["-xzf", "-"], {cwd: temporary, input: archiveBytes, timeout: 30000, observation: !budgetMode});
   assert.equal(unpack.error, undefined);
   assert.equal(unpack.status, 0, `history-r04 extract: ${unpack.stderr}`);
   const copied = path.join(temporary, "tests/skill-classification/live-bootstrap");

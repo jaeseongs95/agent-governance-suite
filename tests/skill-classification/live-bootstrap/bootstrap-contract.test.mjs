@@ -1,5 +1,5 @@
 import {spawn} from "node:child_process";
-import {existsSync} from "node:fs";
+import {existsSync, writeSync} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {clearTimeout, setTimeout} from "node:timers";
@@ -41,15 +41,32 @@ function releaseSlot() {
   else activeChildren--;
 }
 
-async function runCli(args, {cwd, timeout, maxBuffer = 8 * 1024 * 1024}) {
+async function runCli(args, {cwd, timeout, maxBuffer = 8 * 1024 * 1024, observation = false}) {
+  let observationError, sequence = 0;
+  const writeObservation = line => {
+    try {
+      const bytes = Buffer.from(`${line}\n`);
+      if (bytes.length > 384) throw new Error("BOOTSTRAP_OBSERVATION_LIMIT");
+      if (writeSync(2, bytes) !== bytes.length) throw new Error("BOOTSTRAP_OBSERVATION_SHORT_WRITE");
+    }
+    catch (error) { observationError ??= error; }
+  };
+  const observe = (event, details = {}) => {
+    if (observation) writeObservation(JSON.stringify({observation: "bootstrap-child-r01", case: observation, sequence: ++sequence,
+      monoMs: Number(process.hrtime.bigint() / 1_000_000n), event, ...details}));
+  };
+  observe("slot-request");
   await acquireSlot();
+  observe("slot-acquired");
   try {
     return await new Promise(resolve => {
+      observe("spawn-request");
       const child = spawn(process.execPath, args, {
         cwd, stdio: ["ignore", "pipe", "pipe"], windowsHide: true,
       });
       const stdoutChunks = [], stderrChunks = [];
       let stdoutBytes = 0, stderrBytes = 0;
+      let observationTail = "", forwardedObservations = 0;
       let error, settled = false;
       const finish = (status, signal) => {
         if (settled) return;
@@ -58,12 +75,13 @@ async function runCli(args, {cwd, timeout, maxBuffer = 8 * 1024 * 1024}) {
         resolve({
           status,
           signal,
-          error,
+          error: observationError ? new AggregateError([error, observationError].filter(Boolean), "BOOTSTRAP_OBSERVATION_FAILED") : error,
           stdout: Buffer.concat(stdoutChunks, stdoutBytes).toString("utf8"),
           stderr: Buffer.concat(stderrChunks, stderrBytes).toString("utf8"),
         });
       };
       const timer = setTimeout(() => {
+        observe("timeout");
         error = Object.assign(new Error(`spawn ${process.execPath} ETIMEDOUT`), {code: "ETIMEDOUT"});
         child.kill();
       }, timeout);
@@ -84,12 +102,29 @@ async function runCli(args, {cwd, timeout, maxBuffer = 8 * 1024 * 1024}) {
         }
         stderrChunks.push(chunk);
         stderrBytes += chunk.length;
+        if (observation) {
+          const lines = (observationTail + chunk.toString("utf8")).split("\n");
+          observationTail = lines.pop().slice(-384);
+          for (const line of lines) {
+            const marker = observation === "final-fetch-body" ? "bootstrap-mutation-r01" : "history-tar-r01";
+            if (!line.startsWith(`{"observation":"${marker}",`)) continue;
+            if (line.length > 384 || ++forwardedObservations > (observation === "final-fetch-body" ? 6 : 10)) {
+              observationError ??= new Error("BOOTSTRAP_OBSERVATION_LIMIT");
+            } else writeObservation(line);
+          }
+        }
       });
+      child.once("spawn", () => observe("spawn", {childPid: child.pid}));
+      child.once("exit", (status, signal) => observe("exit", {status, signal}));
       child.once("error", err => {
+        observe("error", {code: String(err.code ?? "UNKNOWN").slice(0, 32)});
         error ??= err;
         finish(null, null);
       });
-      child.once("close", (status, signal) => finish(status, signal));
+      child.once("close", (status, signal) => {
+        observe("close", {status, signal});
+        finish(status, signal);
+      });
     });
   } finally {
     releaseSlot();
@@ -106,7 +141,8 @@ describe("live bootstrap offline CLI contracts", () => {
         if (program !== "contract-selfcheck.mts") args.push(path.join(directory, "bootstrap.mts"));
         if (root) args.push(root);
         if (scenario) args.push(scenario);
-        const result = await runCli(args, {cwd: repo, timeout, maxBuffer: 8 * 1024 * 1024});
+        const result = await runCli(args, {cwd: repo, timeout, maxBuffer: 8 * 1024 * 1024,
+          observation: scenario === "final-fetch-body" ? scenario : program === "history-r04-boundary.mjs" ? "history-r04-boundary" : false});
         const diagnostic = JSON.stringify({args, status: result.status, signal: result.signal,
           error: result.error?.message, stdout: result.stdout, stderr: result.stderr});
         expect(result.error, diagnostic).toBeUndefined();

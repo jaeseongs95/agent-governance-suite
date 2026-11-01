@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { isAbsolute, join } from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
@@ -26,9 +26,27 @@ const actors = [
   "30000000-0000-4000-8000-000000000003",
 ] as const;
 const qualityAdjudicator = "40000000-0000-4000-8000-000000000001";
+let labelCaseObservation: {
+  afterCleanup: boolean;
+  errors: unknown[];
+  record(stage: string, details?: { status: number | null; durationMs: number }): void;
+} | undefined;
 
 afterEach(async () => {
-  await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
+  const observation = labelCaseObservation;
+  labelCaseObservation = undefined;
+  observation?.record("afterEach.started");
+  try {
+    await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
+    observation?.record("afterEach.completed");
+  } catch (error) {
+    observation?.record("afterEach.failed");
+    if (observation?.errors.length) throw new AggregateError([error, ...observation.errors], "임시 입력 정리와 단계 기록이 실패했습니다", { cause: error });
+    throw error;
+  } finally {
+    if (observation) observation.afterCleanup = true;
+  }
+  if (observation?.errors.length) throw new AggregateError(observation.errors, "시험 단계 기록이 실패했습니다");
 });
 
 describe("range-aware Korean prose cycle receipts", { timeout: 15_000 }, () => {
@@ -225,21 +243,56 @@ describe("range-aware Korean prose cycle receipts", { timeout: 15_000 }, () => {
   });
 
   it("rejects a label leaked into the independent adjudicator input", async () => {
+    const started = performance.now();
+    let sequence = 0;
+    const observation: NonNullable<typeof labelCaseObservation> = {
+      afterCleanup: false,
+      errors: [],
+      record(stage, details) {
+        try {
+          writeSync(2, `[시험단계] ${JSON.stringify({
+            fixture: "korean-prose-label-leak", sequence: ++sequence, stage,
+            elapsedMs: performance.now() - started, afterCleanup: observation.afterCleanup, ...details,
+          })}\n`);
+        } catch (error) {
+          if (observation.afterCleanup) throw new AggregateError([error], "정리 후 시험 단계 기록이 실패했습니다", { cause: error });
+          observation.errors.push(error);
+        }
+      },
+    };
+    labelCaseObservation = observation;
+    observation.record("fixture.started");
     const evaluationRoot = await createCycleFixture();
+    observation.record("fixture.completed");
     const cycleDirectory = join(evaluationRoot, "evals", "cycles", "0.1.0-rc2");
-    expect(runScript(recorderPath, ["1", evaluationRoot, "--cycle-dir", cycleDirectory]).status).toBe(0);
+    observation.record("recorder.started");
+    const recorderStarted = performance.now();
+    const recorded = runScript(recorderPath, ["1", evaluationRoot, "--cycle-dir", cycleDirectory]);
+    observation.record("recorder.completed", { status: recorded.status, durationMs: performance.now() - recorderStarted });
+    expect(recorded.status).toBe(0);
+    observation.record("quality.started");
     await writeQualityReport(cycleDirectory, { leakAdjudicationLabel: true });
+    observation.record("quality.completed");
     const frame = JSON.parse(await readFile(join(cycleDirectory, "evaluation-frame.json"), "utf8")) as { frameDigest: string };
     const validity = JSON.parse(await readFile(join(cycleDirectory, "evaluation-validity-report.json"), "utf8")) as { reportDigest: string };
     const quality = JSON.parse(await readFile(join(cycleDirectory, "quality-report.json"), "utf8")) as { reportDigest: string };
 
+    observation.record("readiness.started");
     await expect(evaluateKoreanProseReadiness(cycleDirectory, {
       requireQuality: true,
       expectedFrameDigest: frame.frameDigest,
       expectedValidityReportDigest: validity.reportDigest,
       expectedQualityReportDigest: quality.reportDigest,
       evaluationRoot,
+    }).catch((error: unknown) => {
+      try {
+        observation.record("readiness.rejected");
+      } catch (recordError) {
+        throw new AggregateError([error, recordError], "준비 검사 거절과 단계 기록이 실패했습니다", { cause: recordError });
+      }
+      throw error;
     })).rejects.toThrow("quality adjudication input record does not satisfy its contract");
+    observation.record("readiness.asserted");
   });
 
   it("does not count an unsafe independently adjudicated edit as an improvement", async () => {

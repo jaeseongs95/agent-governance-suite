@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { fork, spawn } from 'node:child_process';
 import { createHmac, randomBytes } from 'node:crypto';
 import { once } from 'node:events';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import net from 'node:net';
 import { tmpdir } from 'node:os';
@@ -35,7 +35,7 @@ const target = { host: 'portable', sessionId: 'wake-target' };
 const resources = [];
 afterEach(async () => {
   vi.unstubAllEnvs();
-  for (const f of resources.splice(0)) { f.store.close(); await rm(f.directory, { recursive: true, force: true, maxRetries: 10 }); }
+  for (const f of resources.splice(0)) { f.store.close(); await rm(f.directory, { recursive: true, force: true, maxRetries: 10 }); f.d0333Trace?.('afterEach-end'); }
 });
 function fixture() {
   const directory = mkdtempSync(join(tmpdir(), 'ags-wake-history-'));
@@ -398,7 +398,7 @@ test('bundled public CLI forwards only IDs to the private broker and cannot repe
 }, 20_000);
 
 test.each(['prestarted', 'client-ensure'])('packaged CLI binds history to explicit broker state directory: %s', async mode => {
-  const f = fixture();
+  const trace = mode === 'client-ensure' ? d0333Trace : () => {}; trace('test-start'); const f = fixture(); if (process.env.AGS_D0333_TRACE_PATH && mode === 'client-ensure') f.d0333Trace = trace;
   const install = join(f.directory, 'isolated-install'); mkdirSync(install);
   for (const name of ['session-message-broker.mjs', 'session-message-cli.mjs']) {
     copyFileSync(fileURLToPath(new URL(`../../mcp-server/dist/${name}`, import.meta.url)), join(install, name));
@@ -415,7 +415,7 @@ test.each(['prestarted', 'client-ensure'])('packaged CLI binds history to explic
     ({ broker, exited } = await startBrokerUntilReady(join(install, 'session-message-broker.mjs'), f.directory, { env, cwd: install }));
   }
   try {
-    const run = async input => {
+    const run = async (input, phase) => { trace(`${phase}-begin`);
       const code = `import { readFileSync } from 'node:fs';
         import { runSessionMessageCli } from './session-message-cli.mjs';
         try { console.log(JSON.stringify(await runSessionMessageCli(readFileSync(0, 'utf8'), process.argv[1]))); }
@@ -423,51 +423,51 @@ test.each(['prestarted', 'client-ensure'])('packaged CLI binds history to explic
       const output = await runNodeAsync(['--input-type=module', '-e', code, f.directory], {
         env, cwd: install,
         input: JSON.stringify({ operation: 'reconcile-wake-observation', payload: input }) });
-      assert.equal(output.error, undefined); return { code: output.status, json: JSON.parse(output.stdout) };
+      assert.equal(output.error, undefined); trace(`${phase}-end`); return { code: output.status, json: JSON.parse(output.stdout) };
     };
     const before = snapshot(f);
-    const wrong = await run({ ...payload(f), sourceReceiptId: 'source-missing' });
+    const wrong = await run({ ...payload(f), sourceReceiptId: 'source-missing' }, 'missing-receipt');
     assert.equal(wrong.code, 0); assert.deepEqual(wrong.json.data, { reconciled: false, evidence: null });
     assert.deepEqual(snapshot(f), before);
-    assert.equal((await run({ ...payload(f), approved: true })).code, 1); assert.deepEqual(snapshot(f), before);
+    assert.equal((await run({ ...payload(f), approved: true }, 'unsupported-field')).code, 1); assert.deepEqual(snapshot(f), before);
     // Valid proof in the unrelated default DB must not replace the broker's selected DB.
     copyFileSync(f.trustPath, decoyPath); writeFileSync(f.trustPath, decoyBytes);
-    const unrelatedProof = await run(payload(f)); assert.equal(unrelatedProof.code, 0);
+    const unrelatedProof = await run(payload(f), 'unrelated-store'); assert.equal(unrelatedProof.code, 0);
     assert.deepEqual(unrelatedProof.json.data, { reconciled: false, evidence: null });
     assert.deepEqual(snapshot(f), before); assert.deepEqual(readFileSync(f.trustPath), decoyBytes);
     assert.deepEqual(readFileSync(decoyPath), trustBytes); assert.deepEqual(readdirSync(unrelated), ['trust.sqlite3']);
     rmSync(f.trustPath);
-    const missing = await run(payload(f)); assert.equal(missing.code, 0);
+    const missing = await run(payload(f), 'missing-store'); assert.equal(missing.code, 0);
     assert.deepEqual(missing.json.data, { reconciled: false, evidence: null });
     assert.equal(existsSync(f.trustPath), false); assert.deepEqual(snapshot(f), before);
     assert.deepEqual(readFileSync(decoyPath), trustBytes); assert.deepEqual(readdirSync(unrelated), ['trust.sqlite3']);
     writeFileSync(f.trustPath, trustBytes); writeFileSync(decoyPath, decoyBytes);
-    const result = await run(payload(f)); assert.equal(result.code, 0);
+    const result = await run(payload(f), 'valid-receipt'); assert.equal(result.code, 0);
     assert.equal(result.json.data.reconciled, true, JSON.stringify(result.json));
     assert.equal(result.json.data.evidence.sourceReceiptId, f.sourceReceiptId);
     assert.equal(result.json.data.evidence.oldBinding.attemptId, f.attempt.attemptId);
     assert.deepEqual(snapshot(f).messages, before.messages);
     assert.deepEqual(snapshot(f).presence, before.presence);
     assert.deepEqual(snapshot(f).observations, before.observations);
-    assert.deepEqual((await run(payload(f))).json.data, { reconciled: false, evidence: null });
+    assert.deepEqual((await run(payload(f), 'repeat')).json.data, { reconciled: false, evidence: null });
     assert.deepEqual(readFileSync(f.trustPath), trustBytes);
     assert.deepEqual(readFileSync(decoyPath), decoyBytes);
     assert.deepEqual(readdirSync(unrelated), ['trust.sqlite3']);
     assert.equal(existsSync(join(install, 'node_modules')), false);
-  } finally {
+  } finally { trace('cleanup-start');
     if (broker) { broker.kill(); await exited; }
     else if (existsSync(join(f.directory, 'endpoint.json'))) {
       const endpoint = JSON.parse(readFileSync(join(f.directory, 'endpoint.json'), 'utf8'));
       const watch = net.connect({ host: '127.0.0.1', port: endpoint.port });
       watch.on('error', () => {});
-      const closed = new Promise(resolve => watch.once('close', resolve));
+      const closed = new Promise(resolve => watch.once('close', () => { trace('socket-closed'); resolve(); }));
       await new Promise(resolve => {
         watch.once('connect', resolve);
         watch.once('close', resolve);
-      });
-      try { process.kill(endpoint.pid); } catch (error) { assert.equal(error?.code, 'ESRCH'); }
+      }); trace('socket-connect-settled');
+      trace('broker-stop-requested'); try { process.kill(endpoint.pid); } catch (error) { assert.equal(error?.code, 'ESRCH'); }
       await closed;
-      for (;;) {
+      trace('reap-begin'); for (;;) {
         try {
           process.kill(endpoint.pid, 0);
           await delay(10);
@@ -479,6 +479,15 @@ test.each(['prestarted', 'client-ensure'])('packaged CLI binds history to explic
     }
   }
 }, 30_000);
+
+// 실행기 2회·주입기 1회와 합쳐 최대 27회다. :475의 기존 실패 위치도 보존한다.
+let d0333TraceCount = 0;
+function d0333Trace(event) {
+  if (!process.env.AGS_D0333_TRACE_PATH || d0333TraceCount >= 24) return;
+  d0333TraceCount++;
+  try { appendFileSync(process.env.AGS_D0333_TRACE_PATH, JSON.stringify({ event, at: Date.now() }) + '\n'); }
+  catch { try { process.stderr.write('D0333_TRACE_CAPTURE_FAILED\n'); } catch { /* 계측 실패가 원래 시험 결과를 바꾸지 않는다. */ } }
+}
 
 const schemaCliCases = ['root', 'claude'].flatMap(distribution => [0, 1, 2, 99, 'missing-table', 'wrong-column'].map(version => [distribution, version]));
 test.each(schemaCliCases)('packaged %s CLI rejects unsupported trust schema without mutation: %s', async (distribution, version) => {
