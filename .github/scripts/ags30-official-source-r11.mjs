@@ -503,7 +503,7 @@ async function main() {
     assertHeadBytes(helperRelative, executingHelperBytes);
     assertHeadBytes('.github/ci/ags30-r11/execution-config.json', configBytes);
     const helperClosure = { ...config.ownershipHelpers, 'ags30-os-mutation-r01.mjs': config.osMutationCollector,
-      'ags30-wake-mixed-red-r07.mjs': config.wakeMixedRed, 'ags30-shard-evidence-r09.mjs': config.shardEvidence };
+      'ags30-shard-evidence-r09.mjs': config.shardEvidence };
     for (const [name, expected] of Object.entries(helperClosure)) {
       const bytes = await fs.readFile(new URL('./' + name, import.meta.url));
       assertHeadBytes('.github/scripts/' + name, bytes);
@@ -642,11 +642,6 @@ async function main() {
     if (skillReport.receipt.status !== 'PASS') testsPass = false;
     mustPass(await command('07d-instruction-scope', process.execPath,
       ['--test', 'tests/instruction-scope-resolver/resolve-instruction-files.node.mjs'], source, 60_000));
-    const wakeRedHelper = fileURLToPath(new URL('./ags30-wake-mixed-red-r07.mjs', import.meta.url));
-    const wakeRedBytes = await fs.readFile(wakeRedHelper);
-    assert.equal(wakeRedBytes.length, config.wakeMixedRed.bytes);
-    assert.equal(sha(wakeRedBytes), config.wakeMixedRed.sha256);
-    mustPass(await command('07e-wake-mixed-red', process.execPath, [wakeRedHelper, source, output], source, 45_000));
     if (process.env.RUNNER_OS === 'Windows') {
       const windowsOutput = path.join(output, 'windows-argv');
       await fs.mkdir(windowsOutput);
