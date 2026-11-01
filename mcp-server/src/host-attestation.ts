@@ -315,7 +315,7 @@ function signingKey(store: WorkflowStore): Buffer {
     store.getOrCreateSecret(HOST_ATTESTATION_KEY, () => randomBytes(32).toString("base64url")),
     "base64url",
   );
-  if (key.length !== 32) throw new WorkflowContractError("INVALID_INPUT", "Stored host attestation key is invalid.");
+  if (key.length !== 32) throw new WorkflowContractError("INTEGRITY_FAILED", "Stored host attestation key is invalid.", { reason: "HOST_ATTESTATION_KEY_INVALID" });
   return key;
 }
 

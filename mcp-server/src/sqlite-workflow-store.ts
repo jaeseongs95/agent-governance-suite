@@ -18,6 +18,7 @@ import {
   type PluginUpdateStore,
   type StoredPluginUpdateState,
 } from "./plugin-update-store.js";
+import { failureContext, failureReason, retainFailureCause } from "./failure-diagnostics.js";
 import { compareStableVersionNumbers } from "./plugin-version.js";
 import {
   activeRootIdentity,
@@ -186,11 +187,11 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       const valid = !row || /^(0|[1-9][0-9]*)$/.test(row.value);
       const current = row && valid ? Number.parseInt(row.value, 10) : 0;
       if (!valid || !Number.isSafeInteger(current) || current < 0) {
-        throw new WorkflowContractError("INVALID_INPUT", "Workflow run sequence is invalid.", { value: row?.value ?? null });
+        throw new WorkflowContractError("INTEGRITY_FAILED", "Workflow run sequence is invalid.", { reason: "RUN_SEQUENCE_INVALID" });
       }
       const next = current + 1;
       if (!Number.isSafeInteger(next)) {
-        throw new WorkflowContractError("INVALID_INPUT", "Workflow run sequence is exhausted.", { value: row?.value ?? null });
+        throw new WorkflowContractError("MCP_UNAVAILABLE", "Workflow run sequence is exhausted.", { reason: "RUN_SEQUENCE_EXHAUSTED" });
       }
       this.database.prepare(`
         INSERT INTO workflow_metadata (key, value, updated_at)
@@ -216,7 +217,8 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       if (!row) return null;
       const receipt = JSON.parse(row.receipt_json) as WorkflowReceiptV1;
       if (receipt.runId !== runId || receipt.revision !== row.revision) {
-        throw new WorkflowContractError("INVALID_INPUT", "Stored workflow receipt metadata does not match its payload.", {
+        throw new WorkflowContractError("INTEGRITY_FAILED", "Stored workflow receipt metadata does not match its payload.", {
+          reason: "RECEIPT_METADATA_MISMATCH",
           runId,
           storedRevision: row.revision,
           receiptRunId: receipt.runId,
@@ -745,8 +747,8 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       // Read the migration version only after the writer lock is acquired.
       const row = { user_version: this.getSchemaVersion() };
       if (row.user_version > SCHEMA_VERSION) {
-        throw new WorkflowContractError("INVALID_INPUT", "Workflow database schema is newer than this server supports.", {
-          databasePath: this.databasePath,
+        throw new WorkflowContractError("MCP_UNAVAILABLE", "Workflow database schema is newer than this server supports.", {
+          reason: "SCHEMA_NEWER",
           supportedVersion: SCHEMA_VERSION,
           actualVersion: row.user_version,
         });
@@ -1009,16 +1011,18 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
 
   /**
    * A storage or driver failure means the workflow persistence layer is unavailable, never that the
-   * caller's input was invalid. A contract error raised inside the failed step keeps its own code;
-   * the original cause text and SQLite result code stay in details.
+   * caller's input was invalid. A contract error raised inside the failed step keeps its own code and
+   * reason. Details carry a fixed-vocabulary reason, a redacted cause and the SQLite result code, never
+   * the database path or the driver message; the actual error stays a private cause link.
    */
   private storageError(message: string, cause: unknown, details: Record<string, unknown> = {}): WorkflowContractError {
     const errcode = typeof cause === "object" && cause !== null ? (cause as { errcode?: unknown }).errcode : undefined;
-    return new WorkflowContractError(cause instanceof WorkflowContractError ? cause.code : "MCP_UNAVAILABLE", message, {
+    const ownReason = cause instanceof WorkflowContractError ? cause.details?.reason : undefined;
+    return retainFailureCause(new WorkflowContractError(cause instanceof WorkflowContractError ? cause.code : "MCP_UNAVAILABLE", message, {
       ...details,
-      databasePath: this.databasePath,
-      cause: cause instanceof Error ? cause.message : String(cause),
+      reason: typeof ownReason === "string" ? ownReason : failureReason(cause).reason ?? "WORKFLOW_STORAGE_FAILED",
+      cause: failureContext(cause),
       ...(typeof errcode === "number" ? { sqliteErrcode: errcode } : {}),
-    });
+    }), cause);
   }
 }

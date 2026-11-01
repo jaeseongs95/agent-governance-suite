@@ -147,7 +147,7 @@ export class WorkflowService {
     const encodedKey = this.store.getOrCreateSecret(PLAN_SIGNING_KEY, createPlanSigningKey);
     this.planSigningKey = Buffer.from(encodedKey, "base64url");
     if (this.planSigningKey.length !== 32) {
-      throw new WorkflowContractError("INVALID_INPUT", "Stored plan signing key is invalid.");
+      throw new WorkflowContractError("INTEGRITY_FAILED", "Stored plan signing key is invalid.", { reason: "PLAN_SIGNING_KEY_INVALID" });
     }
   }
 

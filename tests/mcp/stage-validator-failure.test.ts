@@ -38,9 +38,13 @@ function caught(run: () => void): WorkflowContractError {
 
 describe.each(targets)("$name stage validator process failures keep their cause", ({script, run, emptyReportExitStatus}) => {
   test("missing CLI script reports the exit failure, not bad JSON", () => {
-    const error = caught(() => run(fakeRoot("unused.mjs", "")));
+    const root = fakeRoot("unused.mjs", "");
+    const error = caught(() => run(root));
     expect(error.code).toBe("GATE_FAILED");
     expect(error.details).toMatchObject({step: "exit"});
+    // Child stderr (here a module-not-found trace naming the path) is never copied into public details.
+    expect(error.details).not.toHaveProperty("stderr");
+    expect(JSON.stringify(error.details)).not.toContain(root);
   });
 
   test("non-zero exit with empty stdout is not INVALID_INPUT", () => {
@@ -67,22 +71,23 @@ describe.each(targets)("$name stage validator process failures keep their cause"
 
   test("a signal-terminated validator is reported as terminated", () => {
     const error = caught(() => run(fakeRoot(script, "process.kill(process.pid, 'SIGKILL');")));
-    expect(error.code).toBe("GATE_FAILED");
+    // A killed validator never judged the files: the server is unavailable (AGS 3.0 error model P1).
+    expect(error.code).toBe(process.platform === "win32" ? "GATE_FAILED" : "MCP_UNAVAILABLE");
     expect(error.details).toMatchObject(process.platform === "win32"
       ? {step: "exit", status: 1}
-      : {step: "terminated", signal: "SIGKILL"});
+      : {step: "terminated", reason: "VALIDATOR_TERMINATED", signal: "SIGKILL"});
   });
 
   test("a timed-out validator is reported as a spawn timeout", () => {
     const error = caught(() => run(fakeRoot(script, "setTimeout(() => {}, 12_000);")));
-    expect(error.code).toBe("GATE_FAILED");
+    expect(error.code).toBe("MCP_UNAVAILABLE");
     expect(error.message).not.toContain("bounded JSON");
-    expect(error.details).toMatchObject({step: "spawn", errno: "ETIMEDOUT"});
+    expect(error.details).toMatchObject({step: "spawn", reason: "VALIDATOR_SPAWN_FAILED", errno: "ETIMEDOUT"});
   }, 20_000);
 
-  test("a successful exit with non-JSON output is still INVALID_INPUT", () => {
+  test("a successful exit with non-JSON output is a validator failure, not INVALID_INPUT", () => {
     const error = caught(() => run(fakeRoot(script, "console.log('not json');")));
-    expect(error.code).toBe("INVALID_INPUT");
-    expect(error.details).toMatchObject({step: "parse"});
+    expect(error.code).toBe("MCP_UNAVAILABLE");
+    expect(error.details).toMatchObject({step: "parse", reason: "VALIDATOR_OUTPUT_INVALID"});
   });
 });

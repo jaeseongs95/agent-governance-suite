@@ -24,12 +24,13 @@ export function runStageValidator(label: string, script: string, args: string[],
   const stderr = checked.stderr ?? "";
   if (checked.error) {
     const errno = (checked.error as NodeJS.ErrnoException).code ?? null;
-    throw new WorkflowContractError("GATE_FAILED", `${label} validator could not run (${errno ?? checked.error.name}).`,
-      {step: "spawn", errno, signal: checked.signal});
+    // The validator never ran to completion: the server is unavailable, the supplied files were not judged.
+    throw new WorkflowContractError("MCP_UNAVAILABLE", `${label} validator could not run (${errno ?? checked.error.name}).`,
+      {step: "spawn", reason: "VALIDATOR_SPAWN_FAILED", errno, signal: checked.signal});
   }
   if (checked.signal) {
-    throw new WorkflowContractError("GATE_FAILED", `${label} validator was terminated by ${checked.signal}.`,
-      {step: "terminated", signal: checked.signal, status: checked.status});
+    throw new WorkflowContractError("MCP_UNAVAILABLE", `${label} validator was terminated by ${checked.signal}.`,
+      {step: "terminated", reason: "VALIDATOR_TERMINATED", signal: checked.signal, status: checked.status});
   }
   let parsed: Record<string, unknown> | null = null;
   try { parsed = JSON.parse(stdout) as Record<string, unknown>; } catch { /* judged below */ }
@@ -38,8 +39,10 @@ export function runStageValidator(label: string, script: string, args: string[],
     const cause = childError(stdout, stderr);
     const code = cause && (ERROR_CODE as readonly string[]).includes(cause.code) ? cause.code as ErrorCode : "GATE_FAILED";
     throw new WorkflowContractError(code, cause?.message || `${label} validator exited with status ${checked.status}.`,
-      {step: "exit", status: checked.status, childCode: cause?.code ?? null, stderr: stderr.slice(0, 500) || null});
+      {step: "exit", status: checked.status, childCode: cause?.code ?? null});
   }
-  if (!parsed) throw new WorkflowContractError("INVALID_INPUT", `${label} validator did not return bounded JSON.`, {step: "parse", status: checked.status});
+  // A successful validator exit without a JSON report is a validator failure, never the caller's invalid input.
+  if (!parsed) throw new WorkflowContractError("MCP_UNAVAILABLE", `${label} validator did not return bounded JSON.`,
+    {step: "parse", reason: "VALIDATOR_OUTPUT_INVALID", status: checked.status});
   return parsed;
 }
