@@ -12,7 +12,6 @@ import { ContinuityStoreError } from "../../mcp-server/src/continuity-store.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { readEntry, recordInput, setSummary } from "../../skills/session-board/scripts/board-store.mjs";
 import type { InputObservation } from "../../mcp-server/src/input-observation.js";
-import { insertV2WakeRows, V2_MESSAGING_TABLES, V2_SCHEMA_SQL } from "../session-messaging/fixtures/session-message-v2-schema.mjs";
 
 const directories: string[] = [];
 const bundles: ReturnType<typeof createInactiveSharedStores>[] = [];
@@ -88,10 +87,11 @@ describe("native legacy APIs on one inactive authority connection", () => {
   });
   it("B2-LEGACY-06: a real signed wake observation is checked on the same connection with negative predicate coverage", () => {
     const now = 100; const value = fixture(() => now); const target = { host: "fake-host", sessionId: "fake-session" }; const sender = { host: "fake-sender", sessionId: "s" }; const nonce = "abcdefghijklmnopqrstuvwx";
-    value.messaging.startPresence({ ...target, instanceId: "instance-1", transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false, deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" } }, now);
-    value.messaging.acquireRelay({ ...target, transport: "codex-queue", relayId: "relay-1", pid: process.pid, parentPid: process.pid }, now);
+    value.messaging.startPresence({ ...target, instanceId: "instance-1", transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false, deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" }, hostPid: 4242 }, now);
+    const relayId = value.messaging.grantRelay({ ...target, transport: "codex-queue", instanceId: "instance-1", codeDigest: null, hostPid: 4242 }, now).relayId!;
+    expect(value.messaging.relayTick({ ...target, transport: "codex-queue", relayId, instanceId: "instance-1", includePending: false, hostStart: "synthetic-host-start" }, now)).toEqual({ alive: true, count: 0, hostBound: true });
     value.messaging.send({ messageId: "wake-body-original", sender, target, body: "synthetic body" }, now);
-    const reserved = value.messaging.reserveManagedWake({ ...target, instanceId: "instance-1", transport: "codex-queue", relayId: "relay-1", nonce }, now); expect(reserved.attempt).not.toBeNull();
+    const reserved = value.messaging.reserveManagedWake({ ...target, instanceId: "instance-1", transport: "codex-queue", relayId, nonce }, now); expect(reserved.attempt).not.toBeNull();
     const started = value.messaging.startManagedWake(reserved.attempt!, 600_000, now); expect(started.dispatch).toBe(true); expect(value.messaging.startManagedWake(reserved.attempt!, 600_000, now).dispatch).toBe(false); expect(value.messaging.recordManagedWakeOutcome(started.attempt!, { result: "unknown" }, 600_000, now)).toBe(true);
     const observation: InputObservation = { ...target, kind: "user-input", wakeOnly: true, wakeCandidates: [nonce], actor: { role: "root", basis: "observed", reasonCode: "SYNTHETIC_LEGACY_WAKE_ROOT" } };
     const contentDigest = `sha256:${createHash("sha256").update(JSON.stringify([target.host, target.sessionId, "user-input", true, "root", "observed", [nonce]])).digest("hex")}` as const;
@@ -118,7 +118,13 @@ function moduleShape(db: DatabaseSync, tables: readonly string[]): string {
       .map(index => ({ ...index, columns: db.prepare("SELECT * FROM pragma_index_xinfo(?)").all(index.name) })) })));
 }
 
-it("AGS 3.0: 공용 messaging v2는 읽기 검증 뒤 명시적 이전으로 v3가 되고, v1은 거부되며, 다시 열어도 같다", () => {
+// The previous shared messaging layout (module v3): PID-bound relay leases and parent-identity presence columns, no peer_wait_snapshots.
+const V3_MESSAGING_TABLES = ["messages", "relay_leases", "wake_nonces", "session_presence", "prepared_messages", "input_observations", "wake_paths"] as const;
+const V3_RELAY_LEASES = `CREATE TABLE relay_leases (host TEXT NOT NULL, session_id TEXT NOT NULL, transport TEXT NOT NULL, relay_id TEXT NOT NULL,
+  pid INTEGER NOT NULL, parent_pid INTEGER NOT NULL, relay_start_token TEXT, relay_code_digest TEXT, relay_code_id TEXT,
+  lease_until TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (host, session_id, transport)) STRICT;`;
+
+it("AGS 3.0: 공용 messaging v3는 읽기 검증 뒤 명시적 이전으로 v4가 되고(lease는 비고 PID 열은 사라진다), v2는 거부되며, 다시 열어도 같다", () => {
   const previous = fixture();
   const filename = previous.owner.databasePath, directory = path.dirname(filename);
   const sender = { host: "sender-host", sessionId: "migration-sender" };
@@ -128,42 +134,39 @@ it("AGS 3.0: 공용 messaging v2는 읽기 검증 뒤 명시적 이전으로 v3�
   expect(previous.messaging.claim(target, 100)).toMatchObject([{ messageId: delivered.messageId, deliveryAttempt: 1 }]);
   const queued = previous.messaging.prepare({ sender, target, body: "historical queued body" }, 101);
   previous.messaging.submitPrepared(sender, queued.messageId, 101);
+  previous.messaging.startPresence({ ...target, instanceId: "migration-instance", transport: "codex-queue", wakeVisibility: "user-message",
+    canWakeSilently: false, deliveryCapabilities: { supportedInjection: ["peer-wake"], idleWake: "user-message" } }, 101);
   previous.workflow.insertRun(receipt("migration-retained-run"));
   previous.owner.close();
 
-  // Downgrade the messaging module to the 2.x shared layout (c5343231): v2 wake_nonces, session_activity, no wake_paths.
+  // Downgrade the messaging module to the v3 shared layout: old relay_leases with PID ownership, presence identity columns.
   const legacy = new DatabaseSync(filename);
   try {
-    legacy.exec("DROP INDEX IF EXISTS wake_active_target; DROP TABLE wake_nonces; DROP TABLE wake_paths;");
-    for (const sql of V2_SCHEMA_SQL.filter(sql => /wake_nonces|session_activity/u.test(sql))) legacy.exec(sql);
-    insertV2WakeRows(legacy, [
-      { nonce_digest: "digest-handed", host: target.host, session_id: target.sessionId, expires_at: iso(3_600_090), state: "submitted",
-        nonce: "migration-handed-nonce-abcdefghij", instance_id: "migration-instance", birth_generation: iso(80), transport: "gemini-queue",
-        relay_id: "migration-relay", attempt_id: "migration-handed", dispatch_epoch: 1, started_at: iso(89), outcome_at: iso(90), prior_unobserved: 1 },
-      { nonce_digest: "digest-retired", host: target.host, session_id: "retired-target", expires_at: iso(3_600_000), state: "expired-unobserved",
-        nonce: "migration-retired-nonce-abcdefghi", instance_id: "retired-instance", birth_generation: iso(10), transport: "codex-queue",
-        relay_id: "retired-relay", attempt_id: "migration-retired", dispatch_epoch: 1, started_at: iso(11), outcome_at: iso(12), retired_at: iso(95) },
-      { nonce_digest: "digest-legacy", host: target.host, session_id: "legacy-target", expires_at: iso(3_600_000), state: "legacy" },
-    ]);
-    legacy.prepare("INSERT INTO session_activity (host, session_id, active_at) VALUES (?, ?, ?)").run(target.host, target.sessionId, iso(99));
-    legacy.prepare("UPDATE shared_module_schema SET version = 2, schema_json = ? WHERE module = 'messaging'").run(moduleShape(legacy, V2_MESSAGING_TABLES));
+    legacy.exec(`DROP TABLE peer_wait_snapshots; DROP TABLE relay_leases; ${V3_RELAY_LEASES}`);
+    legacy.exec(`ALTER TABLE session_presence DROP COLUMN host_pid; ALTER TABLE session_presence DROP COLUMN host_start;
+      ALTER TABLE session_presence ADD COLUMN verified_parent_pid INTEGER; ALTER TABLE session_presence ADD COLUMN verified_parent_token TEXT;
+      ALTER TABLE session_presence ADD COLUMN reported_parent_pid INTEGER; ALTER TABLE session_presence ADD COLUMN reported_parent_token TEXT;`);
+    legacy.prepare("UPDATE session_presence SET verified_parent_pid = 77, verified_parent_token = 'old-token', reported_parent_pid = 77, reported_parent_token = 'old-token'").run();
+    legacy.prepare(`INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, relay_start_token, lease_until, updated_at)
+      VALUES (?, ?, 'codex-queue', 'old-relay', 88, 77, 'old-relay-token', ?, ?)`).run(target.host, target.sessionId, iso(3_600_000), iso(100));
+    legacy.prepare("UPDATE shared_module_schema SET version = 3, schema_json = ? WHERE module = 'messaging'").run(moduleShape(legacy, V3_MESSAGING_TABLES));
   } finally { legacy.close(); }
 
-  // A v1 messaging header is no longer an accepted previous format (3.0 migrates only from v2).
+  // A v2 messaging header is no longer an accepted previous format (the broker removal migrates only from v3).
   const setMessagingVersion = (version: number) => { const db = new DatabaseSync(filename); try { db.prepare("UPDATE shared_module_schema SET version = ? WHERE module = 'messaging'").run(version); } finally { db.close(); } };
-  setMessagingVersion(1);
-  let v1Failure: unknown;
+  setMessagingVersion(2);
+  let v2Failure: unknown;
   try {
     const connection = new InactiveSharedConnection({ databasePath: filename, mode: "fixture-only", clock: () => 101 });
     try { connection.borrow("messaging").getSchemaVersion(); connection.transaction(() => {}); } finally { connection.close(); }
-  } catch (error) { v1Failure = error; }
-  expect(v1Failure).toMatchObject({ code: "SHARED_SCHEMA_DRIFT" });
-  setMessagingVersion(2);
+  } catch (error) { v2Failure = error; }
+  expect(v2Failure).toMatchObject({ code: "SHARED_SCHEMA_DRIFT" });
+  setMessagingVersion(3);
 
   const before = fs.readFileSync(filename);
   const pending = new InactiveSharedConnection({ databasePath: filename, mode: "fixture-only", clock: () => 101 });
   try {
-    expect(pending.borrow("messaging").getSchemaVersion()).toBe(2);
+    expect(pending.borrow("messaging").getSchemaVersion()).toBe(3);
     let called = false, failure: unknown;
     try { pending.transaction(() => { called = true; }); } catch (error) { failure = error; }
     expect(failure).toMatchObject({ code: "SCHEMA_NOT_READY" });
@@ -174,28 +177,28 @@ it("AGS 3.0: 공용 messaging v2는 읽기 검증 뒤 명시적 이전으로 v3�
   const migrated = createInactiveSharedStores({ directory, mode: "fixture-only", clock: () => 122_001, syntheticKeys: keys });
   bundles.push(migrated);
   const inspected = migrated.owner.inspect();
-  expect(inspected.modules.find(row => row.module === "messaging")?.version).toBe(3);
-  expect(Object.keys(inspected.counts)).toContain("wake_paths");
-  expect(Object.keys(inspected.counts)).not.toContain("session_activity");
-  const wakeRows = () => (migrated.messaging.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid").all() as Array<Record<string, unknown>>).map(row => ({ ...row }));
-  const migratedRows = wakeRows();
-  expect(migratedRows.map(row => [row.attempt_id, row.state, row.release_reason, row.released_at, row.transport, row.resend_base_ms, row.resend_due_at])).toEqual([
-    ["migration-handed", "handed-off", null, null, "antigravity-queue", 600_000, iso(90 + 600_000)],
-    ["migration-retired", "released", "migrated", iso(95), "codex-queue", null, null],
-  ]);
-  expect(migrated.messaging.database.prepare("SELECT session_id, instance_id, birth_generation, streak, failures FROM wake_paths").all().map(row => ({ ...row })))
-    .toEqual([{ session_id: target.sessionId, instance_id: "migration-instance", birth_generation: iso(80), streak: 0, failures: 0 }]);
+  expect(inspected.modules.find(row => row.module === "messaging")?.version).toBe(4);
+  expect(Object.keys(inspected.counts)).toContain("peer_wait_snapshots");
+  expect(inspected.counts.relay_leases).toBe(0);
+  const columns = (table: string) => (migrated.messaging.database.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>).map(row => row.name);
+  expect(columns("relay_leases")).toEqual(["host", "session_id", "transport", "instance_id", "relay_id", "code_digest", "granted_at", "lease_until", "updated_at"]);
+  expect(columns("session_presence")).toEqual(expect.arrayContaining(["host_pid", "host_start"]));
+  for (const gone of ["verified_parent_pid", "verified_parent_token", "reported_parent_pid", "reported_parent_token"]) expect(columns("session_presence")).not.toContain(gone);
+  // The old generation stays but reports no host: it gets no relay until its next start.
+  expect(migrated.messaging.presenceHost(target, "migration-instance")).toBeNull();
   expect(migrated.workflow.getRun("migration-retained-run")).toEqual(receipt("migration-retained-run"));
   expect(migrated.messaging.status(sender, delivered.messageId, 122_001)).toMatchObject({ deliveryAttempts: 1 });
   expect(migrated.messaging.status(sender, queued.messageId, 122_001)).toMatchObject({ state: "queued", deliveryAttempts: 0 });
-  const closingRows = wakeRows();
+  const rowsOf = (store: typeof migrated.messaging) => ["messages", "session_presence", "wake_nonces", "prepared_messages", "relay_leases"]
+    .map(table => (store.database.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all() as Array<Record<string, unknown>>).map(row => ({ ...row })));
+  const closing = rowsOf(migrated.messaging);
   migrated.owner.close();
 
-  // Reopening runs no second rebuild: the same rows, version and inventory.
+  // Reopening runs no second migration: the same rows, version and inventory.
   const reopened = createInactiveSharedStores({ directory, mode: "fixture-only", clock: () => 122_003, syntheticKeys: keys });
   bundles.push(reopened);
-  expect(reopened.owner.inspect().modules.find(row => row.module === "messaging")?.version).toBe(3);
-  expect((reopened.messaging.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid").all() as Array<Record<string, unknown>>).map(row => ({ ...row }))).toEqual(closingRows);
+  expect(reopened.owner.inspect().modules.find(row => row.module === "messaging")?.version).toBe(4);
+  expect(rowsOf(reopened.messaging)).toEqual(closing);
   const claimed = reopened.messaging.claim(target, 122_003, { maxMessages: 1 });
   expect(claimed).toMatchObject([{ messageId: delivered.messageId, body: "historical delivered body", deliveryAttempt: 2 }]);
   expect(reopened.messaging.acknowledge(target, [delivered.messageId], 122_004, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);

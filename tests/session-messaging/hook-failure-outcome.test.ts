@@ -26,14 +26,14 @@ it("reports a normal empty claim as a successful outcome with no diagnostic", as
   expect(diagnostic).not.toHaveBeenCalled();
 });
 
-it("reports a broker claim failure with its failed step and producer reason instead of an empty success", async () => {
+it.each(["BROKER_DEADLINE_EXPIRED", "MESSAGING_BUSY"])("reports a messaging claim failure %s with its failed step and producer reason instead of an empty success", async (reason) => {
   const diagnostic = vi.spyOn(console, "error").mockImplementation(() => {});
-  f.request.mockRejectedValueOnce(hookFailure("BROKER_DEADLINE_EXPIRED", "The session message request deadline expired."));
+  f.request.mockRejectedValueOnce(hookFailure(reason, "The session message operation did not run."));
   expect(await runSessionMessageHookOutcome("claude-code", stop)).toEqual({ ok: false, output: "",
-    failure: { phase: "handle", reason: "BROKER_DEADLINE_EXPIRED", reasonBasis: "producer", producerReason: "BROKER_DEADLINE_EXPIRED" } });
+    failure: { phase: "handle", reason, reasonBasis: "producer", producerReason: reason } });
   expect(f.request).toHaveBeenCalledTimes(1);
   expect(diagnostic).toHaveBeenCalledTimes(1);
-  expect(diagnostic.mock.calls[0]![0]).toContain('"phase":"handle","reason":"BROKER_DEADLINE_EXPIRED"');
+  expect(diagnostic.mock.calls[0]![0]).toContain('"phase":"handle","reason":"' + reason + '"');
 });
 
 it("reports an input parse failure with its failed step", async () => {

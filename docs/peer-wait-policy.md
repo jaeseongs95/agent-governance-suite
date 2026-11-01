@@ -14,7 +14,7 @@
 
 1. 모든 대상에 현재 hook 결속 sender와 주고받은 만료 전 peer 메시지 메타데이터가 있다. 서로 다른 채팅이나 관계가 미확인인 대상이 섞이면 제한하지 않는다.
 2. sender presence가 online이며 최신 instance의 lease가 유효하다.
-3. 브로커가 기존 relay acquire/heartbeat에서 같은 instance를 결속했고 relay lease·relay ID와 현재 relay/parent 프로세스 생존이 일치한다. 구 relay가 instance를 제공하지 않으면 미확인이다.
+3. 현재 instance의 relay lease가 live이고 그 relay가 host 출생을 결속했다(`host_start`). PID 생존은 확인 근거로 쓰지 않는다. relay가 죽으면 lease가 15초 안에 끝난다.
 4. 같은 instance와 relay에서 예약된 nonce가 실제 host wake hook의 `claim-host-wake`에서 유효하게 소비되었으며 그 관측이 30초 이내이다. 기능 선언·브랜드·ACK·caller JSON만으로 이 증거를 만들지 않는다.
 5. presence에 `peer-wake` 주입과 `idleWake`가 선언되어 있으며 wake visibility와 일치한다. `none`은 복귀 가능한 상태로 취급하지 않는다.
 
@@ -34,7 +34,7 @@ native 요청은 JSON 키 순서, `hostId` 생략과 `local`, target 배열 순�
 
 ## 상태와 실패
 
-새 DB schema나 daemon은 없다. 브로커의 메모리에는 relay 결속·nonce generation 결속·최근 wake 관측과 snapshot 억제만 둔다. 각 map은 최대 1000개이며 요청 시 만료 항목을 제거한다. 자체 idle 타이머는 없다. presence/relay의 기존 20초/15초 lease와 wake 관측 30초를 모두 검사한다. 브로커 재시작은 메모리 증거를 버리고 기존 메시지를 보존한다.
+3.0부터 판정 근거는 모두 SQLite 행이다. 복귀 관측은 `wake_nonces.observed_at`(같은 instance·relay, 30초 이내)에서 읽고, 반복 억제는 `peer_wait_snapshots` 표(최대 1000행, 만료 행은 조회 때 제거)에 둔다. hook과 CLI처럼 수명이 짧은 프로세스도 같은 판정을 본다. daemon은 없다.
 
 구 브로커나 오류에서 hook은 강제 제한을 만들지 않고 미확인 안내를 제공한다. CLI는 해당 작업을 지원하지 못하면 명시적인 오류로 종료한다. 본문·token·nonce 원문을 새 로그에 기록하지 않는다. nonce 결속은 digest로 보관한다. 기존 동일 사용자 협업 모델의 신뢰 경계는 그대로이며, 공격적인 동일 사용자 process의 broker 호출이나 파일 조작을 보안 격리로 막는 기능은 아니다.
 

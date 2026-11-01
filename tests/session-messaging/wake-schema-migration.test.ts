@@ -78,7 +78,7 @@ function snapshot(database: string) {
   } finally { db.close(); }
 }
 
-test("7: every 2.x state is renamed, legacy rows go, retired_at is kept as released_at and the file becomes schema 3", () => {
+test("7: every 2.x state is renamed, legacy rows go, retired_at is kept as released_at and the file becomes schema 4", () => {
   const { database, m, birth } = v2Fixture();
   const store = open(database);
   const rows = bySession(store);
@@ -100,9 +100,13 @@ test("7: every 2.x state is renamed, legacy rows go, retired_at is kept as relea
   assert.deepEqual([rows.get("observed")!.observed_at, rows.get("observed")!.consumed_at], [iso(m - 5 * MINUTE), iso(m - 5 * MINUTE)]);
   assert.equal(rows.get("late")!.late_observed_at, iso(m - 20 * MINUTE));
   const after = snapshot(database);
-  assert.equal(after.version, 3);
+  assert.equal(after.version, 4);
   assert.equal((after.presence[0] as Row).transport, "antigravity-queue");
-  assert.equal((after.relays[0] as Row).transport, "antigravity-queue");
+  // Schema 4 rebuilds the PID-bound lease table empty: every relay restarts and is granted again after the install.
+  assert.deepEqual(after.relays, []);
+  const presenceColumns = Object.keys(after.presence[0] as Row);
+  for (const column of ["host_pid", "host_start"]) assert.ok(presenceColumns.includes(column), column);
+  assert.equal((after.presence[0] as Row).host_pid, null, "a migrated birth reports no host and gets no relay grant");
   const columns = (store.database.prepare("PRAGMA table_info(wake_nonces)").all() as Row[]).map(row => String(row.name));
   for (const column of ["release_reason", "resend_base_ms", "resend_due_at", "released_at"]) assert.ok(columns.includes(column), column);
   for (const column of ["retired_at", "prior_unobserved"]) assert.equal(columns.includes(column), false, column);
@@ -170,5 +174,5 @@ test("G: a failure inside the wake table rebuild rolls back rows, columns and sc
   assert.deepEqual(snapshot(database), before);
   assert.equal(before.version, 2);
   open(database);
-  assert.equal(snapshot(database).version, 3);
+  assert.equal(snapshot(database).version, 4);
 });

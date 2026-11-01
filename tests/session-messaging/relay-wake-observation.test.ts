@@ -112,7 +112,9 @@ it("spawn 호출 직전에 관측을 시작하고 두 자식의 부모 관측을
       expect(receipt).toMatchObject({kind: "relay-spawn-observation", writerPid: process.pid,
         childPid: child.pid, sinkErrors: 0, droppedEvents: 0});
       expect(receipt.events.map((value: {event: string}) => value.event)).toEqual(["begin", "returned", "spawn"]);
-      if (process.platform === "linux") expect(receipt.childProcessStart).toMatch(/^\d+$/);
+      // No OS identity query runs in the hook (D0331): another process's start stays unknown.
+      expect(receipt.childProcessStart).toBe("UNKNOWN");
+      expect(receipt.writerProcessStart).toBe(String(Math.floor(performance.timeOrigin)));
       receipts.push(receipt);
     } finally {child.stdin.end(); await closed;}
   }

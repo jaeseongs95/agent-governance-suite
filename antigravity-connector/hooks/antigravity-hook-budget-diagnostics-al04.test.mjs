@@ -4,7 +4,7 @@ import { setTimeout } from "node:timers";
 import { setImmediate as turn } from "node:timers/promises";
 import { afterEach, beforeEach, test, vi } from "vitest";
 
-const f = vi.hoisted(() => ({ calls: [], sync: [], pending: [], native: false, syncReply: undefined, failure: null, wrongPid: false, birth: "9001", children: [], requests: [] }));
+const f = vi.hoisted(() => ({ calls: [], sync: [], pending: [], native: false, syncReply: undefined, failure: null, wrongPid: false, children: [], requests: [], payloads: [] }));
 vi.mock("node:child_process", async original => {
   const real = await original();
   const reply = command => command === "powershell.exe"
@@ -39,14 +39,13 @@ vi.mock("node:fs", async original => {
 });
 vi.mock("../../mcp-server/src/builtin-hook-host-adapters.js", () => ({}));
 vi.mock("../../mcp-server/src/runtime-config.js", () => ({ resolveTrustDatabasePath: () => { throw new Error("DB forbidden"); } }));
-vi.mock("../../mcp-server/src/session-message-client.js", () => ({ sessionMessageRequest: async operation => {
-  f.requests.push(operation);
+vi.mock("../../mcp-server/src/session-message-client.js", () => ({ sessionMessageRequest: async (operation, payload) => {
+  f.requests.push(operation); f.payloads.push(payload);
   if (operation === "list-presence") return { sessions: [] };
   if (operation === "ensure-relay") return { spawn: false, instanceId: "no-spawn", relayId: null };
   return { messages: [] };
 } }));
 vi.mock("../../mcp-server/src/trust-store.js", () => ({ TrustStore: class { constructor() { throw new Error("DB forbidden in AL04 fixture"); } } }));
-vi.mock("../../mcp-server/src/process-identity.js", () => ({ processStartToken: () => f.birth }));
 vi.mock("../../mcp-server/src/session-message-wake-port.js", () => ({ recordWakeHookObservation: () => { throw new Error("receipt forbidden"); } }));
 import { registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { registerSyntheticCoreAdapters, SYNTHETIC_CORE_HOST } from "../../tests/session-messaging/fixtures/synthetic-core-hook-driver.mjs";
@@ -62,14 +61,13 @@ registerSyntheticCoreAdapters((host, adapter) => registerHookHostAdapter(host, {
 const coreInput = { session_id: "AL04_PRIVATE", hook_event_name: "PostToolUse", syntheticActor: "root" };
 import { DEFAULT_HOOK_TOTAL_BUDGET_MS, defaultProcessInspector, executeAntigravityHookEvent, resolveLongLivedHostProcess, resolveVerifiedAntigravityHostProcess } from "./antigravity-hook-runner.mjs";
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.ts";
-import { producerFailureReason } from "../../mcp-server/src/failure-diagnostics.ts";
 const pair = Object.freeze({ pid: process.ppid, startToken: "9001" });
 const main = { conversationId: "AL04_PRIVATE", agent_id: "", hook_event_name: "SessionStart" };
 const options = extra => ({ now: () => 100, entryMonotonicMs: 100, onProcessIdentityFailure() {}, ...extra });
 async function drain() {
   for (let step = 0; step < 12; step++) { await turn(); const next = f.pending.shift(); if (next) next(); }
 }
-beforeEach(() => { for (const key of ["calls", "sync", "pending", "children", "requests"]) f[key] = []; f.native = false; f.syncReply = undefined; f.failure = null; f.wrongPid = false; f.birth = "9001"; });
+beforeEach(() => { for (const key of ["calls", "sync", "pending", "children", "requests", "payloads"]) f[key] = []; f.native = false; f.syncReply = undefined; f.failure = null; f.wrongPid = false; });
 afterEach(async () => { for (const record of f.children) if (!record.closed) record.child.kill("SIGKILL"); await Promise.all(f.children.map(record => record.close)); });
 
 test("F4 actual cold caller yields during OS query, clips caller budget, and preserves native birth guards", async () => {
@@ -257,13 +255,16 @@ test("F4 late native query result cannot become a host identity", async () => {
   assert.equal(await result, null); assert.equal(failures[0].code, "HOST_PROCESS_BUDGET_EXHAUSTED");
 });
 
-test("F4 reused PID with a different native T2 token cannot ensure a relay", async () => {
-  // 재사용된 PID는 조회·인수 전에 거부돼야 한다. 토큰은 이 시험의 모의 관측값이다.
-  await assert.rejects(handleSessionMessageHook(coreInput, SYNTHETIC_CORE_HOST, undefined, { recoverExistingSession: true,
-    resolveHostProcess: () => { f.birth = "9002"; return pair; },
-    executionBudget: { deadlineMonotonicMs: performance.now() + 2000, postClaimReserveMs: 0 } }),
-    error => producerFailureReason(error) === "HOOK_HOST_GENERATION_UNVERIFIED");
-  assert.deepEqual(f.requests, []);
+test("F4 the hook forwards the adapter's host observation to ensure-relay without any OS query", async () => {
+  // 재사용된 PID의 판정은 hook의 OS 조회가 아니라 relay의 감시가 한다. hook은 어댑터가 준 쌍을 그대로 보낸다.
+  const result = await handleSessionMessageHook(coreInput, SYNTHETIC_CORE_HOST, undefined, { recoverExistingSession: true,
+    resolveHostProcess: () => pair, executionBudget: { deadlineMonotonicMs: performance.now() + 2000, postClaimReserveMs: 0 } });
+  assert.deepEqual(result, {});
+  assert.equal(f.sync.length + f.calls.length, 0, "the hook must not execute an OS identity query");
+  const index = f.requests.indexOf("ensure-relay");
+  assert.notEqual(index, -1);
+  assert.equal(f.payloads[index].parentPid, pair.pid); assert.equal(f.payloads[index].parentStartToken, pair.startToken);
+  assert.equal(Object.hasOwn(f.payloads[index], "identityTimeoutMs"), false);
 });
 
 

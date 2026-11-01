@@ -43,7 +43,20 @@ export const WAKE_RESEND_MAX_MS = 86_400_000;
 /** Consecutive transient failures of one birth after which the path is reported degraded. */
 export const WAKE_FAILURE_LIMIT = 5;
 const WAKE_ENDED_ROW_LIMIT = 1000;
-const MESSAGE_SCHEMA_VERSION = 3;
+const MESSAGE_SCHEMA_VERSION = 4;
+/** Default time argument: the store samples its clock after BEGIN IMMEDIATE. An explicit number is a fixture time. */
+export const AUTHORITY_NOW = Number.NaN;
+/** A granted relay must heartbeat within this window; until then the grant holds the lease and keeps the birth online. */
+export const RELAY_START_GRACE_MS = 30_000;
+/** Peer-wait repeat suppression (2.6.0 policy) records, shared by every process of this state directory. */
+const PEER_WAIT_SNAPSHOT_LIMIT = 1000;
+const PEER_WAIT_RESUME_WINDOW_MS = 30_000;
+/** Schema 4: the holder is a random relay_id issued per grant, never reused, so it fences a replaced relay. No PID. */
+const RELAY_LEASES_TABLE = `(
+  host TEXT NOT NULL, session_id TEXT NOT NULL, transport TEXT NOT NULL, instance_id TEXT NOT NULL, relay_id TEXT NOT NULL,
+  code_digest TEXT, granted_at TEXT NOT NULL, lease_until TEXT NOT NULL, updated_at TEXT NOT NULL,
+  PRIMARY KEY (host, session_id, transport)
+) STRICT`;
 const ACTIVE_WAKE_STATE_LIST: readonly string[] = ["reserved", "started", "handed-off", "unknown"];
 const ACTIVE_WAKE_STATES = `(${ACTIVE_WAKE_STATE_LIST.map((state) => `'${state}'`).join(", ")})`;
 const WAKE_NONCES_TABLE = `(
@@ -211,87 +224,97 @@ export interface ClaimLimits {
   instanceId?: string;
 }
 
-/** Why a verified relay grant was refused; diagnostic only, never an authority input. */
-export type VerifiedRelayGrantRefusal = "GENERATION_CHANGED" | "GENERATION_SUPERSEDED" | "CURRENT_GENERATION_PROTECTED"
-  | "RELAY_OWNER_CHANGED" | "RELAY_GRANT_UNBOUND" | "RELAY_GRANT_UNCONFIRMED" | "RELAY_ALIVE" | "RELAY_LIVENESS_UNCONFIRMED" | "PRESENCE_NOT_ONLINE";
+/** Why a relay grant was refused; diagnostic only, never an authority input. */
+export type RelayGrantRefusal = "GENERATION_CHANGED" | "GENERATION_SUPERSEDED" | "CURRENT_GENERATION_PROTECTED" | "HOST_MISMATCH"
+  | "RELAY_ALIVE" | "PRESENCE_NOT_ONLINE";
+export type RelayGrant = { relayId: string; reason?: undefined } | { relayId: null; reason: RelayGrantRefusal };
+export interface PeerWaitSnapshotRecord { owner: string; fingerprint: string; expiresAt: number }
+/** Storage port of PeerWaitPolicy: the store keeps records durable across short-lived hook and CLI processes. */
+export interface PeerWaitSnapshotStore {
+  now(): number;
+  get(key: string): PeerWaitSnapshotRecord | undefined;
+  set(key: string, record: PeerWaitSnapshotRecord): void;
+  resetOwner(owner: string): void;
+}
 
 export class SessionMessageStore<Input extends string | SharedModuleContext = string> {
   readonly database: Input extends string ? DatabaseSync : SqlDatabase;
   private readonly shared: SharedModuleContext | undefined;
-  /** Cleanup scheduling only; rowid never orders host generations. */
-  private presenceCleanupRowid = 0;
-  private presenceCleanupCeiling = 0;
+  private readonly clock: () => number;
+  /** Standalone authority time, sampled once per outermost transaction after BEGIN IMMEDIATE (D0031/D0060). */
+  private transactionNow: number | undefined;
+  private savepoints = 0;
 
-  constructor(input: Input) {
+  /** clock is a fixture input; production reads Date.now() only under the writer lock. */
+  constructor(input: Input, options: { clock?: () => number; busyTimeoutMs?: number } = {}) {
     this.shared = typeof input === "string" ? undefined : input;
+    this.clock = options.clock ?? Date.now;
     const databasePath = typeof input === "string" ? input : input.databasePath;
     if (!this.shared && databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 0o700 });
     this.database = (this.shared?.database ?? new DatabaseSync(databasePath)) as Input extends string ? DatabaseSync : SqlDatabase;
-    const initialize = () => {
-    if (!this.shared) this.database.exec("PRAGMA busy_timeout = 5000;");
-    const storedVersion = (this.shared?.getSchemaVersion() ?? (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version);
-    if (storedVersion > MESSAGE_SCHEMA_VERSION) {
-      this.database.close();
-      throw new Error(`The session message database schema ${storedVersion} is newer than this broker supports.`);
+    if (!this.shared) {
+      try {
+        // receipts and ACKs must survive power loss; a per-call busy wait is set by the in-process client.
+        this.database.exec(`PRAGMA busy_timeout = ${Math.max(0, Math.floor(options.busyTimeoutMs ?? 5000))}; PRAGMA synchronous = FULL;`);
+        const storedVersion = (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
+        if (storedVersion > MESSAGE_SCHEMA_VERSION) throw new Error(`The session message database schema ${storedVersion} is newer than this runtime supports.`);
+        if (databasePath !== ":memory:") {
+          // Several processes share this file. A file system without WAL shared memory is refused, never silently downgraded.
+          const mode = (this.database.prepare("PRAGMA journal_mode = WAL").get() as { journal_mode: string }).journal_mode;
+          if (mode !== "wal") throw tagProducerFailure(new Error("The session message state directory does not support SQLite WAL."), "MESSAGING_STATE_UNSUPPORTED");
+        }
+        // D0059: a current file opens without a write lock; otherwise the version is read again under the lock below.
+        if (storedVersion === MESSAGE_SCHEMA_VERSION) return;
+      } catch (error) {
+        this.database.close();
+        throw error;
+      }
     }
-    if (!this.shared && databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
-    this.database.exec(`CREATE TABLE IF NOT EXISTS messages (
-      message_id TEXT PRIMARY KEY,
-      sender_host TEXT NOT NULL,
-      sender_session_id TEXT NOT NULL,
-      target_host TEXT NOT NULL,
-      target_session_id TEXT NOT NULL,
-      body TEXT NOT NULL,
-      body_bytes INTEGER NOT NULL,
-      created_at TEXT NOT NULL,
-      expires_at TEXT NOT NULL,
-      claimed_at TEXT,
-      claim_until TEXT,
-      delivery_attempts INTEGER NOT NULL DEFAULT 0,
-      first_delivered_at TEXT,
-      acknowledged_at TEXT
-    ) STRICT;
-    CREATE INDEX IF NOT EXISTS messages_target_pending
-      ON messages (target_host, target_session_id, acknowledged_at, expires_at, claim_until);
-    CREATE TABLE IF NOT EXISTS relay_leases (
-      host TEXT NOT NULL,
-      session_id TEXT NOT NULL,
-      transport TEXT NOT NULL,
-      relay_id TEXT NOT NULL,
-      pid INTEGER NOT NULL,
-      parent_pid INTEGER NOT NULL,
-      relay_start_token TEXT,
-      relay_code_digest TEXT,
-      relay_code_id TEXT,
-      lease_until TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      PRIMARY KEY (host, session_id, transport)
-    ) STRICT;
-    CREATE TABLE IF NOT EXISTS wake_nonces ${WAKE_NONCES_TABLE};
-    CREATE TABLE IF NOT EXISTS session_presence (
-      host TEXT NOT NULL,
-      session_id TEXT NOT NULL,
-      instance_id TEXT NOT NULL,
-      transport TEXT NOT NULL,
-      wake_visibility TEXT NOT NULL CHECK (wake_visibility IN ('silent', 'user-message', 'none')),
-      can_wake_silently INTEGER NOT NULL CHECK (can_wake_silently IN (0, 1)),
-      supported_injection TEXT NOT NULL DEFAULT '[]',
-      idle_wake TEXT NOT NULL DEFAULT 'none' CHECK (idle_wake IN ('silent', 'user-message', 'none')),
-      collaboration_id TEXT,
-      workspace_id TEXT,
-      role TEXT,
-      started_at TEXT NOT NULL,
-      heartbeat_at TEXT NOT NULL,
-      lease_until TEXT NOT NULL,
-      ended_at TEXT,
-      end_reason TEXT,
-      PRIMARY KEY (host, session_id, instance_id)
-    ) STRICT;
-    CREATE INDEX IF NOT EXISTS session_presence_latest
-      ON session_presence (host, session_id, started_at DESC);`);
-    return this.transaction(() => {
+    const initialize = () => this.transaction(() => {
       const version = (this.shared?.getSchemaVersion() ?? (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version);
-      if (version > MESSAGE_SCHEMA_VERSION) throw new Error(`The session message database schema ${version} is newer than this broker supports.`);
+      if (version > MESSAGE_SCHEMA_VERSION) throw new Error(`The session message database schema ${version} is newer than this runtime supports.`);
+      if (!this.shared) this.database.exec("CREATE TABLE IF NOT EXISTS authority_time (singleton INTEGER PRIMARY KEY CHECK (singleton = 1), last_ms INTEGER NOT NULL) STRICT; INSERT OR IGNORE INTO authority_time VALUES (1, 0);");
+      this.database.exec(`CREATE TABLE IF NOT EXISTS messages (
+        message_id TEXT PRIMARY KEY,
+        sender_host TEXT NOT NULL,
+        sender_session_id TEXT NOT NULL,
+        target_host TEXT NOT NULL,
+        target_session_id TEXT NOT NULL,
+        body TEXT NOT NULL,
+        body_bytes INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        claimed_at TEXT,
+        claim_until TEXT,
+        delivery_attempts INTEGER NOT NULL DEFAULT 0,
+        first_delivered_at TEXT,
+        acknowledged_at TEXT
+      ) STRICT;
+      CREATE INDEX IF NOT EXISTS messages_target_pending
+        ON messages (target_host, target_session_id, acknowledged_at, expires_at, claim_until);
+      CREATE TABLE IF NOT EXISTS relay_leases ${RELAY_LEASES_TABLE};
+      CREATE TABLE IF NOT EXISTS wake_nonces ${WAKE_NONCES_TABLE};
+      CREATE TABLE IF NOT EXISTS session_presence (
+        host TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        instance_id TEXT NOT NULL,
+        transport TEXT NOT NULL,
+        wake_visibility TEXT NOT NULL CHECK (wake_visibility IN ('silent', 'user-message', 'none')),
+        can_wake_silently INTEGER NOT NULL CHECK (can_wake_silently IN (0, 1)),
+        supported_injection TEXT NOT NULL DEFAULT '[]',
+        idle_wake TEXT NOT NULL DEFAULT 'none' CHECK (idle_wake IN ('silent', 'user-message', 'none')),
+        collaboration_id TEXT,
+        workspace_id TEXT,
+        role TEXT,
+        started_at TEXT NOT NULL,
+        heartbeat_at TEXT NOT NULL,
+        lease_until TEXT NOT NULL,
+        ended_at TEXT,
+        end_reason TEXT,
+        PRIMARY KEY (host, session_id, instance_id)
+      ) STRICT;
+      CREATE INDEX IF NOT EXISTS session_presence_latest
+        ON session_presence (host, session_id, started_at DESC);`);
       this.database.exec(`CREATE TABLE IF NOT EXISTS prepared_messages (
         message_id TEXT PRIMARY KEY,
         sender_host TEXT NOT NULL,
@@ -308,13 +331,6 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       CREATE INDEX IF NOT EXISTS prepared_messages_expiry ON prepared_messages (expires_at);
       CREATE INDEX IF NOT EXISTS prepared_messages_owner ON prepared_messages (sender_host, sender_session_id, receipt);`);
       const messageColumns = this.database.prepare("PRAGMA table_info(messages)").all() as Array<{ name: string }>;
-      const relayColumns = this.database.prepare("PRAGMA table_info(relay_leases)").all() as Array<{ name: string }>;
-      if (!relayColumns.some((column) => column.name === "relay_start_token")) {
-        this.database.exec("ALTER TABLE relay_leases ADD COLUMN relay_start_token TEXT;");
-      }
-      for (const column of ["relay_code_digest", "relay_code_id"]) {
-        if (!relayColumns.some((entry) => entry.name === column)) this.database.exec(`ALTER TABLE relay_leases ADD COLUMN ${column} TEXT;`);
-      }
       if (!messageColumns.some((column) => column.name === "delivery_attempts")) {
         this.database.exec("ALTER TABLE messages ADD COLUMN delivery_attempts INTEGER NOT NULL DEFAULT 0;");
       }
@@ -345,8 +361,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         this.database.exec("ALTER TABLE session_presence ADD COLUMN idle_wake TEXT NOT NULL DEFAULT 'none';");
         this.database.exec("UPDATE session_presence SET idle_wake = wake_visibility;");
       }
-      for (const [name, definition] of [["verified_parent_pid", "INTEGER"], ["verified_parent_token", "TEXT"], ["superseded_at", "TEXT"],
-        ["reported_parent_pid", "INTEGER"], ["reported_parent_token", "TEXT"]]) {
+      for (const [name, definition] of [["superseded_at", "TEXT"], ["host_pid", "INTEGER"], ["host_start", "TEXT"]]) {
         if (!presenceColumns.some(column => column.name === name)) this.database.exec(`ALTER TABLE session_presence ADD COLUMN ${name} ${definition};`);
       }
       this.database.exec(`CREATE TABLE IF NOT EXISTS input_observations (
@@ -367,7 +382,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       // this transaction. Legacy rows are dropped, states are renamed and every migrated hand-off gets a resend deadline,
       // so no migrated row stays active forever. Columns an older shape lacks read as NULL (state as legacy).
       if (version < 3) {
-        const migratedAt = iso(this.shared ? this.shared.time(Date.now()) : Date.now());
+        const migratedAt = iso(this.time(AUTHORITY_NOW));
         const existing = new Set((this.database.prepare("PRAGMA table_info(wake_nonces)").all() as Array<{ name: string }>).map((column) => column.name));
         const source = WAKE_COPY_COLUMNS.map((name) => existing.has(name) ? name
           : `${name === "state" ? "'legacy'" : name === "dispatch_epoch" ? "0" : "NULL"} AS ${name}`).join(", ");
@@ -398,23 +413,33 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       }
       this.database.exec(`CREATE UNIQUE INDEX IF NOT EXISTS wake_active_target ON wake_nonces (host, session_id)
         WHERE state IN ${ACTIVE_WAKE_STATES};`);
+      // Schema 4 (AGS 3.0 broker removal): leases are transient and every relay restarts after the 3.0 install, so the
+      // PID-bound lease table is rebuilt empty. Presence loses its PID/start-token proof columns.
+      const leaseColumns = new Set((this.database.prepare("PRAGMA table_info(relay_leases)").all() as Array<{ name: string }>).map((column) => column.name));
+      if (leaseColumns.has("pid") || !leaseColumns.has("instance_id")) {
+        this.database.exec(`DROP TABLE relay_leases; CREATE TABLE relay_leases ${RELAY_LEASES_TABLE};`);
+      }
+      const presenceNow = new Set((this.database.prepare("PRAGMA table_info(session_presence)").all() as Array<{ name: string }>).map((column) => column.name));
+      for (const column of ["verified_parent_pid", "verified_parent_token", "reported_parent_pid", "reported_parent_token"]) {
+        if (presenceNow.has(column)) this.database.exec(`ALTER TABLE session_presence DROP COLUMN ${column};`);
+      }
+      this.database.exec(`CREATE TABLE IF NOT EXISTS peer_wait_snapshots (
+        query_key TEXT PRIMARY KEY, owner_key TEXT NOT NULL, fingerprint TEXT NOT NULL, expires_at TEXT NOT NULL
+      ) STRICT;`);
       if (this.shared) this.shared.setSchemaVersion(MESSAGE_SCHEMA_VERSION);
       else if (version < MESSAGE_SCHEMA_VERSION) this.database.exec(`PRAGMA user_version = ${MESSAGE_SCHEMA_VERSION};`);
-
-
     });
-    };
-    if (this.shared) this.shared.initialize(initialize);
-    else initialize();
+    if (this.shared) { this.shared.initialize(initialize); return; }
+    try { initialize(); } catch (error) { this.database.close(); throw error; }
   }
 
   close(): void {
     this.database.close();
   }
 
-  prune(nowMs = Date.now()): void {
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.prune(nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+  prune(nowMs = AUTHORITY_NOW): void {
+    if (!this.inTransaction) return this.transaction(() => this.prune(nowMs));
+    nowMs = this.time(nowMs);
     const now = iso(nowMs);
     const acknowledgedBefore = iso(nowMs - 3600_000);
     // Reuse the already-admitted message row as the ACK slot. Only receipt-backed public
@@ -427,7 +452,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       .run(acknowledgedBefore, now, now);
     this.database.prepare("UPDATE messages SET body = '', body_bytes = 0 WHERE acknowledged_at IS NOT NULL AND expires_at <= ?")
       .run(now);
-    this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ? AND relay_id NOT LIKE 'verified-relay-v1:%'").run(now);
+    this.database.prepare("DELETE FROM relay_leases WHERE lease_until <= ?").run(now);
     this.settleWakes(nowMs);
     // Ended rows stay recognizable for WAKE_RESEND_MAX_MS, at most WAKE_ENDED_ROW_LIMIT rows (2.7).
     const endedAt = "coalesce(released_at, observed_at, outcome_at, started_at, expires_at)";
@@ -448,7 +473,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     // Only rows whose lease ended before the retention window go; a live row's lease is always in the future. The
     // identity's latest row also stays while another row of it is live, so a live identity's presence and retirement read
     // the same row. Without a live row, deleting the latest row can surface an earlier one or leave the identity unknown.
-    this.database.prepare(`DELETE FROM session_presence WHERE lease_until <= ? AND verified_parent_token IS NULL
+    this.database.prepare(`DELETE FROM session_presence WHERE lease_until <= ?
       AND NOT (EXISTS (SELECT 1 FROM session_presence live WHERE live.host = session_presence.host
           AND live.session_id = session_presence.session_id AND live.ended_at IS NULL AND live.lease_until > ?)
         AND session_presence.rowid = (SELECT latest.rowid FROM session_presence latest WHERE latest.host = session_presence.host
@@ -553,15 +578,15 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   /** Preparation is durable but has no queue, peer-relation or wake effect. */
-  prepare(input: { sender: SessionIdentity; target: SessionIdentity; body: string; ttlSeconds?: number }, nowMs = Date.now()): { messageId: string; preparedAt: string; expiresAt: string } {
+  prepare(input: { sender: SessionIdentity; target: SessionIdentity; body: string; ttlSeconds?: number }, nowMs = AUTHORITY_NOW): { messageId: string; preparedAt: string; expiresAt: string } {
     boundedIdentity(input.sender);
     boundedIdentity(input.target);
     const ttlSeconds = input.ttlSeconds ?? MESSAGE_TTL_DEFAULT_SECONDS;
     if (typeof input.body !== "string" || !input.body.trim() || Buffer.byteLength(input.body, "utf8") > MESSAGE_BODY_MAX_BYTES) throw new Error("body must contain 1-4096 UTF-8 bytes.");
     if (input.body.includes("\0")) throw new Error("body must not contain NUL characters.");
     if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) throw new Error("ttlSeconds must be an integer from 30 to 86400.");
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.prepare(input, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.prepare(input, nowMs));
+    nowMs = this.time(nowMs);
     const result = { messageId: randomUUID(), preparedAt: iso(nowMs), expiresAt: iso(nowMs + MESSAGE_DRAFT_TTL_MS) };
     const recordBytes = Buffer.byteLength(JSON.stringify({ ...input, ttlSeconds, ...result }), "utf8");
     return this.transaction(() => {
@@ -582,12 +607,12 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   /** ID ownership, capacity, queue insert and first receipt share one transaction. */
-  submitPrepared(sender: SessionIdentity, messageId: string, nowMs = Date.now()): {
+  submitPrepared(sender: SessionIdentity, messageId: string, nowMs = AUTHORITY_NOW): {
     messageId: string; createdAt: string; expiresAt: string; duplicate: boolean; autoWake: SessionAutoWakeOutlookV2;
   } {
     boundedIdentity(sender);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.submitPrepared(sender, messageId, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.submitPrepared(sender, messageId, nowMs));
+    nowMs = this.time(nowMs);
     return this.transaction(() => {
       this.prune(nowMs);
       const row = this.database.prepare("SELECT * FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?")
@@ -623,7 +648,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     target: SessionIdentity;
     body: string;
     ttlSeconds?: number;
-  }, nowMs = Date.now()): { messageId: string; createdAt: string; expiresAt: string; duplicate: boolean } {
+  }, nowMs = AUTHORITY_NOW): { messageId: string; createdAt: string; expiresAt: string; duplicate: boolean } {
     boundedIdentity(input.sender);
     boundedIdentity(input.target);
     const bodyBytes = Buffer.byteLength(input.body, "utf8");
@@ -635,8 +660,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     }
     const messageId = input.messageId ?? randomUUID();
     if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new Error("messageId must be 8-128 safe identifier characters.");
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.send(input, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.send(input, nowMs));
+    nowMs = this.time(nowMs);
     this.prune(nowMs);
     const existing = this.database.prepare("SELECT * FROM messages WHERE message_id = ?").get(messageId) as Record<string, unknown> | undefined;
     if (existing) {
@@ -708,10 +733,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  claim(target: SessionIdentity, nowMs = Date.now(), limits: ClaimLimits = {}): SessionMessage[] {
+  claim(target: SessionIdentity, nowMs = AUTHORITY_NOW, limits: ClaimLimits = {}): SessionMessage[] {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claim(target, nowMs, limits));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.claim(target, nowMs, limits));
+    nowMs = this.time(nowMs);
     this.prune(nowMs);
     return this.transaction(() => {
       const claimed = this.claimLocked(target, nowMs, limits);
@@ -726,7 +751,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     const current = this.presence(target, nowMs);
     const verifiedBirth = current.instanceId?.startsWith("host-process-v1:")
       || (current.instanceId === null && this.database.prepare(`SELECT 1 FROM relay_leases
-        WHERE host = ? AND session_id = ? AND relay_id LIKE 'verified-relay-v1:%' LIMIT 1`)
+        WHERE host = ? AND session_id = ? LIMIT 1`)
         .get(target.host, target.sessionId) !== undefined);
     if ((verifiedBirth || instanceId !== undefined)
       && (!instanceId || current.instanceId !== instanceId || current.endedAt !== null)) {
@@ -735,10 +760,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     }
   }
 
-  observeNativeInput(target: SessionIdentity, nowMs = Date.now(), instanceId?: string): void {
+  observeNativeInput(target: SessionIdentity, nowMs = AUTHORITY_NOW, instanceId?: string): void {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.observeNativeInput(target, nowMs, instanceId));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.observeNativeInput(target, nowMs, instanceId));
+    nowMs = this.time(nowMs);
     return this.transaction(() => {
       this.assertHookInstance(target, instanceId, nowMs);
       this.database.prepare(`INSERT INTO input_observations (host, session_id, deferred_tool_claim, observed_at)
@@ -747,10 +772,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  claimDeferred(target: SessionIdentity, nowMs = Date.now(), limits: ClaimLimits = {}): SessionMessage[] {
+  claimDeferred(target: SessionIdentity, nowMs = AUTHORITY_NOW, limits: ClaimLimits = {}): SessionMessage[] {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimDeferred(target, nowMs, limits));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.claimDeferred(target, nowMs, limits));
+    nowMs = this.time(nowMs);
     return this.transaction(() => {
       this.assertHookInstance(target, limits.instanceId, nowMs);
       this.prune(nowMs);
@@ -764,10 +789,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  claimTurnEnd(target: SessionIdentity, nowMs = Date.now(), limits: ClaimLimits = {}): SessionMessage[] {
+  claimTurnEnd(target: SessionIdentity, nowMs = AUTHORITY_NOW, limits: ClaimLimits = {}): SessionMessage[] {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimTurnEnd(target, nowMs, limits));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.claimTurnEnd(target, nowMs, limits));
+    nowMs = this.time(nowMs);
     return this.transaction(() => {
       this.assertHookInstance(target, limits.instanceId, nowMs);
       this.prune(nowMs);
@@ -779,17 +804,17 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  clearDeferred(target: SessionIdentity, nowMs = Date.now(), instanceId?: string): void {
+  clearDeferred(target: SessionIdentity, nowMs = AUTHORITY_NOW, instanceId?: string): void {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.clearDeferred(target, nowMs, instanceId));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.clearDeferred(target, nowMs, instanceId));
+    nowMs = this.time(nowMs);
     return this.transaction(() => {
       this.assertHookInstance(target, instanceId, nowMs);
       this.database.prepare("DELETE FROM input_observations WHERE host = ? AND session_id = ?").run(target.host, target.sessionId);
     });
   }
 
-  acknowledge(target: SessionIdentity, messageIds: string[], nowMs = Date.now(), claims: readonly MessageClaimReceipt[] = []): number {
+  acknowledge(target: SessionIdentity, messageIds: string[], nowMs = AUTHORITY_NOW, claims: readonly MessageClaimReceipt[] = []): number {
     boundedIdentity(target);
     if (messageIds.length < 1 || messageIds.length > 50 || messageIds.some((id) => typeof id !== "string" || id.length > 128)) {
       throw new Error("messageIds must contain 1-50 bounded identifiers.");
@@ -802,8 +827,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         || receipts.has(claim.messageId)) throw new Error("Each claim receipt must identify one requested message and its original claim.");
       receipts.set(claim.messageId, claim.claimReceipt);
     }
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acknowledge(target, messageIds, nowMs, claims));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.acknowledge(target, messageIds, nowMs, claims));
+    nowMs = this.time(nowMs);
     // 역사 행의 NULL 영수증만 이전 ACK 형식을 유지한다. 새 인수는 회차별 영수증을 요구한다.
     // 임대 만료는 재전달 조건이며, 같은 원소유자의 늦은 ACK를 무효화하지 않는다.
     const statement = this.database.prepare(`UPDATE messages SET acknowledged_at = ?, claim_until = NULL, acknowledgement_receipt = ?
@@ -825,10 +850,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  status(sender: SessionIdentity, messageId: string, nowMs = Date.now()): Record<string, unknown> | null {
+  status(sender: SessionIdentity, messageId: string, nowMs = AUTHORITY_NOW): Record<string, unknown> | null {
     boundedIdentity(sender);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.status(sender, messageId, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.status(sender, messageId, nowMs));
+    nowMs = this.time(nowMs);
     this.prune(nowMs);
     const row = this.database.prepare(`SELECT message_id, target_host, target_session_id, created_at, expires_at,
       claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ?`)
@@ -857,11 +882,11 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   /** Metadata only; peer relation is not work completion or permission. */
-  peerWaitState(sender: SessionIdentity, target: SessionIdentity, nowMs = Date.now()): { related: boolean; fingerprint: string } {
+  peerWaitState(sender: SessionIdentity, target: SessionIdentity, nowMs = AUTHORITY_NOW): { related: boolean; fingerprint: string } {
     boundedIdentity(sender);
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.peerWaitState(sender, target, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.peerWaitState(sender, target, nowMs));
+    nowMs = this.time(nowMs);
     const rows = this.database.prepare(`SELECT message_id, sender_host, sender_session_id, target_host, target_session_id,
       created_at, claimed_at, acknowledged_at, delivery_attempts, first_delivered_at FROM messages
       WHERE expires_at > ? AND ((sender_host = ? AND sender_session_id = ? AND target_host = ? AND target_session_id = ?)
@@ -871,17 +896,19 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return { related: rows.length > 0, fingerprint: createHash("sha256").update(JSON.stringify(rows)).digest("hex") };
   }
 
-  liveRelay(target: SessionIdentity, transport: string, nowMs = Date.now()): { relayId: string; pid: number; parentPid: number; updatedAt: string } | null {
+  /** The live lease of a transport. Its holder is the only relay that may renew it or dispatch for this birth. */
+  liveRelay(target: SessionIdentity, transport: string, nowMs = AUTHORITY_NOW): { relayId: string; instanceId: string; codeDigest: string | null; updatedAt: string } | null {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.liveRelay(target, transport, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
-    const row = this.database.prepare("SELECT relay_id, pid, parent_pid, updated_at FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lease_until > ? AND pid > 0")
-      .get(target.host, target.sessionId, transport, iso(nowMs)) as { relay_id: string; pid: number; parent_pid: number; updated_at: string } | undefined;
-    return row ? { relayId: row.relay_id, pid: row.pid, parentPid: row.parent_pid, updatedAt: row.updated_at } : null;
+    if (!this.inTransaction) return this.transaction(() => this.liveRelay(target, transport, nowMs));
+    nowMs = this.time(nowMs);
+    const row = this.database.prepare("SELECT relay_id, instance_id, code_digest, updated_at FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ? AND lease_until > ?")
+      .get(target.host, target.sessionId, transport, iso(nowMs)) as { relay_id: string; instance_id: string; code_digest: string | null; updated_at: string } | undefined;
+    return row ? { relayId: row.relay_id, instanceId: row.instance_id, codeDigest: row.code_digest, updatedAt: row.updated_at } : null;
   }
 
   /** Current unverified generation that lost its relay (never acquired or died); null while any relay lease is live. */
-  relayRecoveryInstance(target: SessionIdentity, nowMs = Date.now()): string | null {
+  relayRecoveryInstance(target: SessionIdentity, nowMs = AUTHORITY_NOW): string | null {
+    if (!this.inTransaction) return this.transaction(() => this.relayRecoveryInstance(target, nowMs));
     const presence = this.presence(target, nowMs);
     if (presence.state !== "unreachable" || !presence.instanceId || !presence.transport
       || presence.instanceId.startsWith("host-process-v1:")) return null;
@@ -889,38 +916,35 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   /**
-   * D0354: the current generation a start event of the same host birth keeps instead of replacing (compact, or any
+   * D0354: the current generation a start event of the same host process keeps instead of replacing (compact, or any
    * start in a process that already runs this session). It is kept only while its own relay serves it: the presence
-   * is online and was heartbeated after its start (only that generation's relay can), a relay of the same host
-   * parent and the same entry code holds a live lease. Anything else returns null and the caller starts a new one.
+   * is online and was heartbeated after its start (only that generation's relay can), the reported host PID matches,
+   * the relay bound that host's birth, and the relay runs the caller's entry code. Windows keeps the PID from reuse while
+   * the relay's host watcher holds its handle; a caller that read the birth (Linux /proc) must match it exactly.
    */
-  liveRelayGeneration(input: SessionIdentity & { transport: string; parent: { pid: number; startToken: string }; codeDigest: string }, nowMs = Date.now()): string | null {
+  liveRelayGeneration(input: SessionIdentity & { transport: string; hostPid: number; hostStart?: string; codeDigest: string }, nowMs = AUTHORITY_NOW): string | null {
     boundedIdentity(input);
     relayCodeDigest(input.codeDigest);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.liveRelayGeneration(input, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.liveRelayGeneration(input, nowMs));
+    nowMs = this.time(nowMs);
     const current = this.presence(input, nowMs);
     if (current.state !== "online" || current.transport !== input.transport || current.instanceId === null
       || current.startedAt === null || current.heartbeatAt === null || Date.parse(current.heartbeatAt) <= Date.parse(current.startedAt)) return null;
-    const parent = this.presenceReportedParent(input, current.instanceId);
-    if (!parent || parent.pid !== input.parent.pid || parent.startToken !== input.parent.startToken) return null;
-    const lease = this.database.prepare(`SELECT pid, parent_pid, lease_until, relay_code_digest FROM relay_leases
-      WHERE host=? AND session_id=? AND transport=?`).get(input.host, input.sessionId, input.transport) as
-      { pid: number; parent_pid: number; lease_until: string; relay_code_digest: string | null } | undefined;
-    if (!lease || lease.pid < 1 || lease.parent_pid !== input.parent.pid || Date.parse(lease.lease_until) <= nowMs
-      || lease.relay_code_digest !== input.codeDigest) return null;
+    const host = this.presenceHost(input, current.instanceId);
+    if (!host || host.pid !== input.hostPid || host.start === null || (input.hostStart !== undefined && host.start !== input.hostStart)) return null;
+    const lease = this.liveRelay(input, input.transport, nowMs);
+    if (!lease || lease.instanceId !== current.instanceId || lease.codeDigest !== input.codeDigest) return null;
     return current.instanceId;
   }
 
-  /** The host birth this generation's own start reported; written once at insert. Null for legacy or unread rows. */
-  presenceReportedParent(target: SessionIdentity, instanceId: string): { pid: number; startToken: string } | null {
+  /** The host process this generation reported (pid) and the birth its relay bound (start, null until bound). */
+  presenceHost(target: SessionIdentity, instanceId: string): { pid: number; start: string | null } | null {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.presenceReportedParent(target, instanceId));
-    const row = this.database.prepare(`SELECT reported_parent_pid, reported_parent_token FROM session_presence
+    if (!this.inTransaction) return this.transaction(() => this.presenceHost(target, instanceId));
+    const row = this.database.prepare(`SELECT host_pid, host_start FROM session_presence
       WHERE host = ? AND session_id = ? AND instance_id = ?`).get(target.host, target.sessionId, instanceId) as
-      { reported_parent_pid: number | null; reported_parent_token: string | null } | undefined;
-    return row && row.reported_parent_pid !== null && row.reported_parent_token !== null
-      ? { pid: row.reported_parent_pid, startToken: row.reported_parent_token } : null;
+      { host_pid: number | null; host_start: string | null } | undefined;
+    return row && row.host_pid !== null ? { pid: row.host_pid, start: row.host_start } : null;
   }
 
   /**
@@ -928,10 +952,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
    * its active attempt, never a prediction. Callers prune first so due releases are visible. It grants nothing and
    * proves no delivery; handed-off is not delivery (I10).
    */
-  autoWakeOutlook(target: SessionIdentity, nowMs = Date.now()): SessionAutoWakeOutlookV2 {
+  autoWakeOutlook(target: SessionIdentity, nowMs = AUTHORITY_NOW): SessionAutoWakeOutlookV2 {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.autoWakeOutlook(target, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.autoWakeOutlook(target, nowMs));
+    nowMs = this.time(nowMs);
     const now = iso(nowMs);
     const outlook = (state: SessionAutoWakeOutlookV2["state"], reason: SessionAutoWakeOutlookV2["reason"], basisAt: unknown): SessionAutoWakeOutlookV2 =>
       ({ state, reason, basisAt: basisAt === null || basisAt === undefined ? null : String(basisAt), checkedAt: now, authorityEffect: "none" });
@@ -960,10 +984,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return outlook("available", "relay-live", relay.updatedAt);
   }
 
-  pendingCount(target: SessionIdentity, nowMs = Date.now()): number {
+  pendingCount(target: SessionIdentity, nowMs = AUTHORITY_NOW): number {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.pendingCount(target, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.pendingCount(target, nowMs));
+    nowMs = this.time(nowMs);
     this.prune(nowMs);
     const now = iso(nowMs);
     const row = this.database.prepare(`SELECT count(*) AS count FROM messages
@@ -973,269 +997,184 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return row.count;
   }
 
-  /** Retained startup reservation metadata; not a relay liveness view. */
-  relayOwner(target: SessionIdentity, transport: string): {relayId: string; pid: number; parentPid: number; instanceId: string | null; relayStartToken: string | null} | null {
-    boundedIdentity(target);
-    const row = this.database.prepare("SELECT relay_id, pid, parent_pid, relay_start_token FROM relay_leases WHERE host=? AND session_id=? AND transport=?")
-      .get(target.host,target.sessionId,transport) as {relay_id: string; pid: number; parent_pid: number; relay_start_token: string | null} | undefined;
-    const generation = row?.relay_id.match(/^verified-relay-v1:[0-9a-f-]{36}:([0-9a-f]{64})$/u)?.[1];
-    return row ? {relayId:row.relay_id,pid:row.pid,parentPid:row.parent_pid,instanceId:generation ? "host-process-v1:"+generation:null,relayStartToken:row.relay_start_token} : null;
-  }
-
-  /** One protected birth per existing request, including the last/current birth; no OS query or authority here. */
-  verifiedPresenceForCleanup(): (SessionIdentity & { rowid: number; instanceId: string; parentPid: number; parentStartToken: string; startedAt: string; supersededAt: string | null }) | null {
-    const beginSweep = () => {
-      this.presenceCleanupRowid = 0;
-      this.presenceCleanupCeiling = (this.database.prepare("SELECT coalesce(max(rowid), 0) AS ceiling FROM session_presence").get() as { ceiling: number }).ceiling;
-    };
-    // Freeze this sweep's upper bound so newly appended births cannot starve an earlier live-then-dead row.
-    if (this.presenceCleanupCeiling === 0) beginSweep();
-    const select = () => this.database.prepare(`SELECT rowid, host, session_id, instance_id, verified_parent_pid, verified_parent_token, started_at, superseded_at
-      FROM session_presence WHERE rowid > ? AND rowid <= ?
-      ORDER BY rowid LIMIT 1`).get(this.presenceCleanupRowid,this.presenceCleanupCeiling) as {
-        rowid: number; host: string; session_id: string; instance_id: string; verified_parent_pid: number | null; verified_parent_token: string | null; started_at: string; superseded_at: string | null;
-      } | undefined;
-    let row = select();
-    if (!row) { beginSweep(); row = select(); }
-    if (!row) return null;
-    this.presenceCleanupRowid = row.rowid;
-    if (row.verified_parent_pid === null || row.verified_parent_token === null) return null;
-    return { host: row.host, sessionId: row.session_id, rowid: row.rowid, instanceId: row.instance_id,
-      parentPid: row.verified_parent_pid, parentStartToken: row.verified_parent_token, startedAt: row.started_at, supersededAt: row.superseded_at };
-  }
-
-  /** Unknown pid=0 grants are never automatically TTL-retried. */
-  prepareVerifiedRelay(input: Parameters<SessionMessageStore["startPresence"]>[0] & {
-    parentPid: number; expectedOwner: ReturnType<SessionMessageStore["relayOwner"]>; confirmedDead?: {relayId: string; pid: number}; confirmedAlive?: boolean;
-    /** Broker-verified OS birth, never a model-supplied proof or a sortable timestamp. */
-    verifiedParentStartToken?: string;
-    /** Positive death evidence from the same bounded request; deletion still compares the full stored birth. */
-    confirmedDeadPresence?: NonNullable<ReturnType<SessionMessageStore["verifiedPresenceForCleanup"]>>;
-    /** Broker-owned request guard; never decoded from the public payload. */
-    checkRequestBudget?: () => void;
-    /** Recovery compares the presence observed by this hook, not a later identity-query result. */
-    expectedPresenceInstanceId?: string | null;
-  }, nowMs = Date.now()): {spawn: boolean; relayId: string | null; instanceId: string; reason?: VerifiedRelayGrantRefusal} {
+  /**
+   * Issues a fresh, never reused relay_id for the current birth (3.3). Refused while that birth's lease is live and
+   * either runs the same entry code or is still inside its start grace; a different installed code replaces it once
+   * per grace (D0348). The previous holder is fenced: its next tick, reservation or start no longer matches.
+   */
+  grantRelay(input: SessionIdentity & { transport: string; instanceId: string; codeDigest: string | null; hostPid?: number }, nowMs = AUTHORITY_NOW): RelayGrant {
     boundedIdentity(input);
-    if (!Number.isInteger(input.parentPid) || input.parentPid < 1 || !/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId)) throw new Error("Invalid verified relay generation.");
-    if (input.verifiedParentStartToken !== undefined && (!input.verifiedParentStartToken.trim() || input.verifiedParentStartToken.length > 200
-      || input.instanceId !== "host-process-v1:" + createHash("sha256").update(JSON.stringify([input.host,input.sessionId,input.parentPid,input.verifiedParentStartToken])).digest("hex"))) {
+    relayCodeDigest(input.codeDigest);
+    if (!input.instanceId || input.instanceId.length > 128 || !input.transport || input.transport.length > 64) throw new Error("Invalid relay grant identity.");
+    if (input.hostPid !== undefined && (!Number.isSafeInteger(input.hostPid) || input.hostPid < 1)) throw new Error("Invalid relay host process.");
+    if (!this.inTransaction) return this.transaction(() => this.grantRelay(input, nowMs));
+    nowMs = this.time(nowMs);
+    const presence = this.presence(input, nowMs);
+    if (presence.instanceId !== input.instanceId || presence.transport !== input.transport || presence.endedAt !== null) return { relayId: null, reason: "GENERATION_CHANGED" };
+    const host = this.presenceHost(input, input.instanceId);
+    if (input.hostPid !== undefined && host !== null && host.pid !== input.hostPid) return { relayId: null, reason: "HOST_MISMATCH" };
+    const lease = this.database.prepare("SELECT * FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ?")
+      .get(input.host, input.sessionId, input.transport) as Record<string, unknown> | undefined;
+    if (lease && lease.instance_id === input.instanceId && Date.parse(String(lease.lease_until)) > nowMs
+      && (lease.code_digest === input.codeDigest || Date.parse(String(lease.granted_at)) + RELAY_START_GRACE_MS > nowMs)) {
+      return { relayId: null, reason: "RELAY_ALIVE" };
+    }
+    const relayId = randomUUID();
+    const now = iso(nowMs);
+    const until = iso(nowMs + RELAY_START_GRACE_MS);
+    this.database.prepare(`INSERT INTO relay_leases (host, session_id, transport, instance_id, relay_id, code_digest, granted_at, lease_until, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (host, session_id, transport) DO UPDATE SET instance_id = excluded.instance_id,
+      relay_id = excluded.relay_id, code_digest = excluded.code_digest, granted_at = excluded.granted_at,
+      lease_until = excluded.lease_until, updated_at = excluded.updated_at`)
+      .run(input.host, input.sessionId, input.transport, input.instanceId, relayId, input.codeDigest, now, until, now);
+    // The birth stays online until its relay's first tick; heartbeat_at is not touched so D0354 still sees "never served".
+    this.database.prepare(`UPDATE session_presence SET lease_until = max(lease_until, ?)
+      WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL AND superseded_at IS NULL`)
+      .run(until, input.host, input.sessionId, input.instanceId);
+    if (input.hostPid !== undefined && host === null) {
+      this.database.prepare("UPDATE session_presence SET host_pid = ? WHERE host = ? AND session_id = ? AND instance_id = ? AND host_pid IS NULL")
+        .run(input.hostPid, input.host, input.sessionId, input.instanceId);
+    }
+    return { relayId };
+  }
+
+  /**
+   * A verified host birth (adapter-observed pid and start token, e.g. Antigravity) ensures its own generation and relay.
+   * Generation rules: an expected-presence mismatch, a superseded own row, or an own row behind another current birth is
+   * refused; a live (online) verified current birth is protected from an unexpected replacement. No OS query happens
+   * here: the relay's host watcher binds the birth and is fenced if it differs from hostStart.
+   */
+  ensureVerifiedGeneration(input: Parameters<SessionMessageStore["startPresence"]>[0] & {
+    hostPid: number; hostStart: string; codeDigest: string | null; expectedPresenceInstanceId?: string | null;
+  }, nowMs = AUTHORITY_NOW): { spawn: boolean; relayId: string | null; instanceId: string; reason?: RelayGrantRefusal } {
+    boundedIdentity(input);
+    if (!Number.isInteger(input.hostPid) || input.hostPid < 1 || !/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId)
+      || !input.hostStart.trim() || input.hostStart.length > 200
+      || input.instanceId !== "host-process-v1:" + createHash("sha256").update(JSON.stringify([input.host, input.sessionId, input.hostPid, input.hostStart])).digest("hex")) {
       throw new Error("Invalid verified host process birth.");
     }
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.prepareVerifiedRelay(input,nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
-    const prepare = (): {spawn: boolean; relayId: string | null; instanceId: string; reason?: VerifiedRelayGrantRefusal} => {
-      const previous = this.relayOwner(input,input.transport);
-      const current = this.presence(input, nowMs);
-      if (input.expectedPresenceInstanceId !== undefined && current.instanceId !== input.expectedPresenceInstanceId) {
-        return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"GENERATION_CHANGED"};
-      }
-      const ownBirth = this.database.prepare("SELECT superseded_at FROM session_presence WHERE host=? AND session_id=? AND instance_id=?")
-        .get(input.host,input.sessionId,input.instanceId) as { superseded_at: string | null } | undefined;
-      if (ownBirth?.superseded_at != null) return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"GENERATION_SUPERSEDED"};
-      const protectedCurrent = this.database.prepare(`SELECT 1 FROM session_presence WHERE host=? AND session_id=? AND instance_id=?
-        AND verified_parent_token IS NOT NULL`).get(input.host,input.sessionId,current.instanceId ?? "");
-      if (current.instanceId !== input.instanceId && protectedCurrent !== undefined
-        && input.expectedPresenceInstanceId !== current.instanceId) return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"CURRENT_GENERATION_PROTECTED"};
+    if (!this.inTransaction) return this.transaction(() => this.ensureVerifiedGeneration(input, nowMs));
+    nowMs = this.time(nowMs);
+    const refuse = (reason: RelayGrantRefusal) => ({ spawn: false, relayId: null, instanceId: input.instanceId, reason });
+    const current = this.presence(input, nowMs);
+    if (input.expectedPresenceInstanceId !== undefined && current.instanceId !== input.expectedPresenceInstanceId) return refuse("GENERATION_CHANGED");
+    const ownBirth = this.database.prepare("SELECT superseded_at FROM session_presence WHERE host=? AND session_id=? AND instance_id=?")
+      .get(input.host, input.sessionId, input.instanceId) as { superseded_at: string | null } | undefined;
+    if (ownBirth?.superseded_at != null) return refuse("GENERATION_SUPERSEDED");
+    if (current.instanceId !== null && current.instanceId !== input.instanceId) {
       // A process already superseded by a later registered birth is not a new resume.
-      // An unseen new process can still recover a lapsed previous host normally.
-      if (current.instanceId !== null && current.instanceId !== input.instanceId
-        && ownBirth !== undefined) {
-        return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"GENERATION_SUPERSEDED"};
-      }
-      const expected = input.expectedOwner;
-      if (previous === null ? expected !== null : !expected || previous.relayId !== expected.relayId || previous.pid !== expected.pid || previous.parentPid !== expected.parentPid || previous.instanceId !== expected.instanceId || previous.relayStartToken !== expected.relayStartToken) {
-        return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"RELAY_OWNER_CHANGED"};
-      }
-      if (previous?.relayId.startsWith("verified-relay-v1:") && previous.instanceId === null) return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"RELAY_GRANT_UNBOUND"};
-      if (input.verifiedParentStartToken !== undefined && current.instanceId === input.instanceId) {
-        this.database.prepare(`UPDATE session_presence SET verified_parent_pid=?, verified_parent_token=?
-          WHERE host=? AND session_id=? AND instance_id=? AND superseded_at IS NULL`)
-          .run(input.parentPid,input.verifiedParentStartToken,input.host,input.sessionId,input.instanceId);
-      }
-      // A retained grant owns its generation independently of expiring presence rows.
-      if (previous && previous.instanceId === input.instanceId && previous.parentPid === input.parentPid) {
-        const dead = previous.pid > 0 && input.confirmedDead?.pid === previous.pid && input.confirmedDead.relayId === previous.relayId;
-        if (!dead) {
-          const alive = input.confirmedAlive === true;
-          const currentPresence = this.presence(input, nowMs);
-          if (alive && previous.pid > 0 && typeof previous.relayStartToken === "string" && previous.relayStartToken.length > 0 && currentPresence.instanceId === input.instanceId && currentPresence.transport === input.transport && currentPresence.endedAt === null) {
-            const now = iso(nowMs);
-            this.database.prepare("UPDATE session_presence SET heartbeat_at=?, lease_until=? WHERE host=? AND session_id=? AND instance_id=? AND transport=? AND ended_at IS NULL")
-              .run(now, iso(nowMs + PRESENCE_LEASE_MS), input.host, input.sessionId, input.instanceId, input.transport);
-            this.database.prepare("UPDATE relay_leases SET lease_until=?, updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND pid=?")
-              .run(iso(nowMs + RELAY_LEASE_MS), now, input.host, input.sessionId, input.transport, previous.relayId, previous.pid);
-          }
-          // An unconfirmed pid=0 grant is never retried here (its relay may still be starting); the reason makes it visible.
-          return {spawn:false,relayId:previous.relayId,instanceId:input.instanceId,
-            reason: previous.pid === 0 ? "RELAY_GRANT_UNCONFIRMED" : alive ? "RELAY_ALIVE" : "RELAY_LIVENESS_UNCONFIRMED"};
-        }
-      }
-      const relayId = "verified-relay-v1:" + randomUUID() + ":" + input.instanceId.slice("host-process-v1:".length);
-      if (input.verifiedParentStartToken !== undefined) {
-        // CAS가 선택한 이전 세대를 먼저 제외해 같은 ms 재생성과 시계 역행에도 새 세대를 선택한다.
-        this.database.prepare(`UPDATE session_presence SET superseded_at=? WHERE host=? AND session_id=?
-          AND instance_id<>? AND superseded_at IS NULL`).run(iso(nowMs),input.host,input.sessionId,input.instanceId);
-      }
-      const presence = this.startPresence(input,nowMs);
-      if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport) {
-        return {spawn:false,relayId:null,instanceId:input.instanceId,reason:"PRESENCE_NOT_ONLINE"};
-      }
-      if (input.verifiedParentStartToken !== undefined) {
-        this.database.prepare(`UPDATE session_presence SET verified_parent_pid=?, verified_parent_token=?
-          WHERE host=? AND session_id=? AND instance_id=? AND superseded_at IS NULL`)
-          .run(input.parentPid,input.verifiedParentStartToken,input.host,input.sessionId,input.instanceId);
-      }
-      this.database.prepare("INSERT INTO relay_leases(host,session_id,transport,relay_id,pid,parent_pid,lease_until,updated_at) VALUES(?,?,?,?,0,?,'9999-12-31T23:59:59.999Z',?) ON CONFLICT(host,session_id,transport) DO UPDATE SET relay_id=excluded.relay_id,pid=0,parent_pid=excluded.parent_pid,relay_start_token=NULL,relay_code_digest=NULL,relay_code_id=NULL,lease_until=excluded.lease_until,updated_at=excluded.updated_at")
-        .run(input.host,input.sessionId,input.transport,relayId,input.parentPid,iso(nowMs));
-      return {spawn:true,relayId,instanceId:input.instanceId};
+      if (ownBirth !== undefined) return refuse("GENERATION_SUPERSEDED");
+      const currentHost = this.presenceHost(input, current.instanceId);
+      if (current.state === "online" && current.instanceId.startsWith("host-process-v1:") && currentHost?.start != null
+        && input.expectedPresenceInstanceId !== current.instanceId) return refuse("CURRENT_GENERATION_PROTECTED");
+    }
+    if (current.instanceId !== input.instanceId) {
+      this.database.prepare("UPDATE session_presence SET superseded_at=? WHERE host=? AND session_id=? AND instance_id<>? AND superseded_at IS NULL")
+        .run(iso(nowMs), input.host, input.sessionId, input.instanceId);
+    }
+    const lease = this.liveRelay(input, input.transport, nowMs);
+    if (!(current.instanceId === input.instanceId && current.state === "online" && lease?.instanceId === input.instanceId)) {
+      const presence = this.startPresence(input, nowMs);
+      if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport) return refuse("PRESENCE_NOT_ONLINE");
+    }
+    const grant = this.grantRelay({ host: input.host, sessionId: input.sessionId, transport: input.transport, instanceId: input.instanceId,
+      codeDigest: input.codeDigest, hostPid: input.hostPid }, nowMs);
+    return grant.relayId !== null ? { spawn: true, relayId: grant.relayId, instanceId: input.instanceId } : refuse(grant.reason);
+  }
+
+  /** The relay's own end: drop only its lease (its relay_id) and end its own birth, atomically. */
+  releaseRelay(input: SessionIdentity & { transport: string; relayId: string; instanceId: string; reason: string }, nowMs = AUTHORITY_NOW): boolean {
+    boundedIdentity(input);
+    if (!input.relayId || input.relayId.length > 128 || !input.reason || input.reason.length > 100) throw new Error("Invalid relay release.");
+    if (!this.inTransaction) return this.transaction(() => this.releaseRelay(input, nowMs));
+    nowMs = this.time(nowMs);
+    const removed = this.database.prepare("DELETE FROM relay_leases WHERE host=? AND session_id=? AND transport=? AND relay_id=?")
+      .run(input.host, input.sessionId, input.transport, input.relayId).changes === 1;
+    const presence = this.presence(input, nowMs);
+    if (removed && presence.instanceId === input.instanceId && presence.transport === input.transport) this.endPresence(input, input.reason, input.instanceId, nowMs);
+    return removed;
+  }
+
+  /**
+   * One relay cycle (3.3). Only the lease holder of the current online birth renews the lease and the birth. The first
+   * tick that carries the watcher's hostStart binds the birth; a different stored birth fences the relay.
+   */
+  relayTick(input: SessionIdentity & { transport: string; relayId: string; instanceId: string; includePending: boolean; hostStart?: string }, nowMs = AUTHORITY_NOW): { alive: boolean; count: number; hostBound: boolean } {
+    boundedIdentity(input);
+    if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128 || !input.instanceId || input.instanceId.length > 128
+      || typeof input.includePending !== "boolean" || (input.hostStart !== undefined && (!input.hostStart.trim() || input.hostStart.length > 200))) {
+      throw new Error("Invalid relay tick identity or includePending.");
+    }
+    if (!this.inTransaction) return this.transaction(() => this.relayTick(input, nowMs));
+    nowMs = this.time(nowMs);
+    const dead = { alive: false, count: 0, hostBound: false };
+    const presence = this.presence(input, nowMs);
+    const lease = this.database.prepare("SELECT relay_id, instance_id, lease_until FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ?")
+      .get(input.host, input.sessionId, input.transport) as { relay_id: string; instance_id: string; lease_until: string } | undefined;
+    // An expired lease is dead whether or not prune already removed it; the relay ends and a new grant takes over.
+    if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport
+      || lease?.relay_id !== input.relayId || lease.instance_id !== input.instanceId || Date.parse(lease.lease_until) <= nowMs) return dead;
+    const host = this.presenceHost(input, input.instanceId);
+    let start = host?.start ?? null;
+    // A birth bound without a reported host process could never be woken (wakeBindingCurrent needs both), so nothing is bound.
+    if (input.hostStart !== undefined && host !== null) {
+      if (start === null) {
+        this.database.prepare("UPDATE session_presence SET host_start = ? WHERE host = ? AND session_id = ? AND instance_id = ? AND host_start IS NULL")
+          .run(input.hostStart, input.host, input.sessionId, input.instanceId);
+        start = input.hostStart;
+      } else if (start !== input.hostStart) return dead;
+    }
+    const now = iso(nowMs);
+    this.database.prepare("UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?")
+      .run(iso(nowMs + RELAY_LEASE_MS), now, input.host, input.sessionId, input.transport, input.relayId);
+    this.heartbeatPresence(input, input.instanceId, nowMs);
+    return { alive: true, count: input.includePending ? this.pendingCount(input, nowMs) : 0, hostBound: start !== null };
+  }
+
+  /**
+   * Peer-wait resume evidence (docs/peer-wait-policy.md 3-4) from durable rows only: the sender's current online birth,
+   * its live lease bound to a host birth, and an attempt of that birth and relay observed by a verified host hook within
+   * 30 seconds. No PID is consulted; a relay that died loses the lease within RELAY_LEASE_MS.
+   */
+  peerWaitResumeObserved(sender: SessionIdentity, nowMs = AUTHORITY_NOW): boolean {
+    boundedIdentity(sender);
+    if (!this.inTransaction) return this.transaction(() => this.peerWaitResumeObserved(sender, nowMs));
+    nowMs = this.time(nowMs);
+    const presence = this.presence(sender, nowMs);
+    if (presence.state !== "online" || presence.instanceId === null || presence.transport === null) return false;
+    const relay = this.liveRelay(sender, presence.transport, nowMs);
+    if (!relay || relay.instanceId !== presence.instanceId || this.presenceHost(sender, presence.instanceId)?.start == null) return false;
+    return this.database.prepare(`SELECT 1 FROM wake_nonces WHERE host = ? AND session_id = ? AND instance_id = ? AND relay_id = ?
+      AND state = 'observed' AND observed_at > ? LIMIT 1`)
+      .get(sender.host, sender.sessionId, presence.instanceId, relay.relayId, iso(nowMs - PEER_WAIT_RESUME_WINDOW_MS)) !== undefined;
+  }
+
+  /** Durable repeat-suppression records for PeerWaitPolicy, shared by every process; bounded, expired rows pruned on access. */
+  peerWaitSnapshots(nowMs = AUTHORITY_NOW): PeerWaitSnapshotStore {
+    const run = <T>(work: (now: number) => T): T => this.inTransaction ? work(this.time(nowMs)) : this.transaction(() => work(this.time(nowMs)));
+    return {
+      now: () => run((now) => now),
+      get: (key) => run((now) => {
+        this.database.prepare("DELETE FROM peer_wait_snapshots WHERE expires_at <= ?").run(iso(now));
+        const row = this.database.prepare("SELECT owner_key, fingerprint, expires_at FROM peer_wait_snapshots WHERE query_key = ?").get(key) as
+          { owner_key: string; fingerprint: string; expires_at: string } | undefined;
+        return row ? { owner: row.owner_key, fingerprint: row.fingerprint, expiresAt: Date.parse(row.expires_at) } : undefined;
+      }),
+      set: (key, record) => run(() => {
+        this.database.prepare(`INSERT INTO peer_wait_snapshots (query_key, owner_key, fingerprint, expires_at) VALUES (?, ?, ?, ?)
+          ON CONFLICT (query_key) DO UPDATE SET owner_key = excluded.owner_key, fingerprint = excluded.fingerprint, expires_at = excluded.expires_at`)
+          .run(key, record.owner, record.fingerprint, iso(record.expiresAt));
+        this.database.prepare(`DELETE FROM peer_wait_snapshots WHERE query_key IN (SELECT query_key FROM peer_wait_snapshots
+          ORDER BY expires_at DESC LIMIT -1 OFFSET ?)`).run(PEER_WAIT_SNAPSHOT_LIMIT);
+      }),
+      resetOwner: (owner) => run(() => { this.database.prepare("DELETE FROM peer_wait_snapshots WHERE owner_key = ?").run(owner); }),
     };
-    return this.transaction(() => {
-      input.checkRequestBudget?.();
-      const result = prepare();
-      const dead = input.confirmedDeadPresence;
-      if (dead) this.database.prepare(`DELETE FROM session_presence WHERE rowid=? AND host=? AND session_id=? AND instance_id=?
-        AND verified_parent_pid=? AND verified_parent_token=? AND started_at=? AND superseded_at IS ?`)
-        .run(dead.rowid,dead.host,dead.sessionId,dead.instanceId,dead.parentPid,dead.parentStartToken,dead.startedAt,dead.supersededAt);
-      input.checkRequestBudget?.();
-      return result;
-    });
-  }
-
-  activateVerifiedRelay(input: SessionIdentity & {transport: string; relayId: string; instanceId: string; pid: number; parentPid: number; relayStartToken?: string | null; codeDigest?: string | null}, nowMs = Date.now()): boolean {
-    boundedIdentity(input);
-    if (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(input.relayId) || !Number.isInteger(input.pid) || input.pid < 1 || !Number.isInteger(input.parentPid) || input.parentPid < 1) throw new Error("Invalid verified relay activation.");
-    if (!/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId) || !input.relayId.endsWith(":"+input.instanceId.slice("host-process-v1:".length))) return false;
-    relayCodeDigest(input.codeDigest);
-    const relayStartToken = input.relayStartToken ?? null;
-    if (relayStartToken !== null && (typeof relayStartToken !== "string" || !relayStartToken.trim() || relayStartToken.length > 200 || relayStartToken.includes("\0"))) throw new Error("Invalid relay process token.");
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.activateVerifiedRelay(input,nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
-    return this.transaction(() => {
-      const presence = this.presence(input,nowMs);
-      const owner = this.relayOwner(input,input.transport);
-      if (!owner || owner.relayId !== input.relayId || owner.parentPid !== input.parentPid) return false;
-      const isExistingActiveChild = owner.pid > 0 && owner.pid === input.pid && owner.relayStartToken === relayStartToken;
-      if (presence.instanceId !== input.instanceId || presence.transport !== input.transport) return false;
-      if (isExistingActiveChild ? presence.endedAt !== null : presence.state !== "online") return false;
-      const now = iso(nowMs);
-      const updated = this.database.prepare("UPDATE relay_leases SET relay_code_digest=CASE WHEN pid=0 THEN ? WHEN relay_code_id=relay_id || ':' || pid THEN relay_code_digest ELSE NULL END,relay_code_id=?,pid=?,relay_start_token=?,lease_until=?,updated_at=? WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND parent_pid=? AND (pid=0 OR (pid=? AND relay_start_token IS ?))")
-        .run(input.codeDigest ?? null,`${input.relayId}:${input.pid}`,input.pid,relayStartToken,iso(nowMs+RELAY_LEASE_MS),now,input.host,input.sessionId,input.transport,input.relayId,input.parentPid,input.pid,relayStartToken).changes === 1;
-      if (updated && isExistingActiveChild) {
-        this.database.prepare("UPDATE session_presence SET heartbeat_at=?, lease_until=? WHERE host=? AND session_id=? AND instance_id=? AND transport=? AND ended_at IS NULL")
-          .run(now, iso(nowMs + PRESENCE_LEASE_MS), input.host, input.sessionId, input.instanceId, input.transport);
-      }
-      return updated;
-    });
-  }
-
-  releaseVerifiedRelay(input: SessionIdentity & {transport: string; relayId: string; instanceId: string; pid: number}, nowMs = Date.now()): boolean {
-    boundedIdentity(input);
-    if (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(input.relayId) || !Number.isInteger(input.pid) || input.pid < 1 || !/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId)) throw new Error("Invalid verified relay release.");
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.releaseVerifiedRelay(input,nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
-    return this.transaction(() => {
-      const owner = this.relayOwner(input,input.transport);
-      if (!owner || owner.instanceId !== input.instanceId) return false;
-      const removed = this.database.prepare("DELETE FROM relay_leases WHERE host=? AND session_id=? AND transport=? AND relay_id=? AND pid=?")
-        .run(input.host,input.sessionId,input.transport,input.relayId,input.pid).changes === 1;
-      const presence = this.presence(input,nowMs);
-      if (removed && presence.instanceId === input.instanceId && presence.transport === input.transport) this.endPresence(input,"host-process-ended",input.instanceId,nowMs);
-      return removed;
-    });
-  }
-
-  /** Unverified relay exit: drop only this acquisition's lease (random relayId + pid) and end its own instance, atomically. */
-  endUnverifiedRelay(input: SessionIdentity & { relayId: string; pid: number; instanceId: string; reason: string }, nowMs = Date.now()): boolean {
-    boundedIdentity(input);
-    if (!input.relayId || input.relayId.length > 128 || input.relayId.startsWith("verified-relay-v1:") || !Number.isInteger(input.pid) || input.pid < 1) throw new Error("Invalid relay release.");
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.endUnverifiedRelay(input, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
-    return this.transaction(() => {
-      // A replacement relay holds a different relayId, so a late exit affects zero lease rows.
-      this.database.prepare("DELETE FROM relay_leases WHERE host=? AND session_id=? AND relay_id=? AND pid=?")
-        .run(input.host, input.sessionId, input.relayId, input.pid);
-      return this.endPresence(input, input.reason, input.instanceId, nowMs);
-    });
-  }
-
-  acquireRelay(input: SessionIdentity & { transport: string; relayId: string; pid: number; parentPid: number; instanceId?: string; codeDigest?: string | null }, nowMs = Date.now()): boolean {
-    boundedIdentity(input);
-    relayCodeDigest(input.codeDigest);
-    if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128) throw new Error("Invalid relay identity.");
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.acquireRelay(input, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
-    return this.transaction(() => {
-      // Fence superseded generations: a relay of an older presence instance must not
-      // renew (or take) the lease the current generation's relay is waiting for.
-      if (input.instanceId) {
-        const current = this.presence(input, nowMs).instanceId;
-        if (current !== null && current !== input.instanceId) return false;
-      }
-      const previous = this.relayOwner(input, input.transport);
-      this.prune(nowMs);
-      const now = iso(nowMs);
-      const until = iso(nowMs + RELAY_LEASE_MS);
-      const result = this.database.prepare(`INSERT INTO relay_leases
-        (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at,relay_code_digest,relay_code_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT (host, session_id, transport) DO UPDATE SET
-          relay_code_digest=CASE WHEN relay_leases.relay_id=excluded.relay_id AND relay_leases.relay_code_id=relay_leases.relay_id || ':' || relay_leases.pid AND relay_leases.pid=excluded.pid THEN relay_leases.relay_code_digest ELSE excluded.relay_code_digest END,
-          relay_code_id=excluded.relay_code_id,
-          relay_id = excluded.relay_id, pid = excluded.pid, parent_pid = excluded.parent_pid,
-          lease_until = excluded.lease_until, updated_at = excluded.updated_at
-        WHERE relay_leases.relay_id NOT LIKE 'verified-relay-v1:%' AND (
-          relay_leases.lease_until <= excluded.updated_at
-          OR relay_leases.relay_id = excluded.relay_id)`)
-        .run(input.host, input.sessionId, input.transport, input.relayId, input.pid, input.parentPid, until, now, input.codeDigest ?? null,`${input.relayId}:${input.pid}`);
-      const acquired = result.changes === 1;
-      const sameActiveRelay = previous !== null && previous.relayId === input.relayId && previous.pid > 0 && previous.pid === input.pid;
-      if (acquired && (input.instanceId || sameActiveRelay)) {
-        const presence = this.presence(input, nowMs);
-        if (presence.transport === input.transport && presence.endedAt === null && (!input.instanceId || presence.instanceId === input.instanceId)) {
-          this.database.prepare("UPDATE session_presence SET heartbeat_at=?, lease_until=? WHERE host=? AND session_id=? AND instance_id=? AND transport=? AND ended_at IS NULL")
-            .run(now, iso(nowMs + PRESENCE_LEASE_MS), input.host, input.sessionId, presence.instanceId, input.transport);
-        }
-      }
-      return acquired;
-    });
-  }
-
-  heartbeatRelay(input: SessionIdentity & { transport: string; relayId: string }, nowMs = Date.now()): boolean {
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.heartbeatRelay(input, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
-    const result = this.database.prepare(`UPDATE relay_leases SET lease_until = ?, updated_at = ?
-      WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ? AND pid > 0`)
-      .run(iso(nowMs + RELAY_LEASE_MS), iso(nowMs), input.host, input.sessionId, input.transport, input.relayId);
-    return result.changes === 1;
-  }
-
-  /** One relay cycle; an old generation cannot renew either lease. */
-  relayTick(input: SessionIdentity & { transport: string; relayId: string; instanceId: string; includePending: boolean }, nowMs = Date.now()): { alive: boolean; count: number } {
-    boundedIdentity(input);
-    if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128 || !input.instanceId || input.instanceId.length > 128 || typeof input.includePending !== "boolean") throw new Error("Invalid relay tick identity or includePending.");
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.relayTick(input, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
-    return this.transaction(() => {
-      const presence = this.presence(input, nowMs);
-      const relay = this.liveRelay(input, input.transport, nowMs);
-      if (presence.state !== "online" || presence.instanceId !== input.instanceId || presence.transport !== input.transport || relay?.relayId !== input.relayId) {
-
-        return { alive: false, count: 0 };
-      }
-      this.heartbeatRelay(input, nowMs);
-      this.heartbeatPresence(input, input.instanceId, nowMs);
-      const count = input.includePending ? this.pendingCount(input, nowMs) : 0;
-
-      return { alive: true, count };
-
-    });
   }
 
   /** Board classification (2.2): the marker names an attempt row of this target, whatever its state or expiry. */
   consumeWake(target: SessionIdentity, nonce: string): boolean {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.consumeWake(target, nonce));
+    if (!this.inTransaction) return this.transaction(() => this.consumeWake(target, nonce));
     return Boolean(this.database.prepare("SELECT 1 FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?")
       .get(nonceDigest(nonce), target.host, target.sessionId));
   }
@@ -1245,7 +1184,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     const presence = this.presence(input, nowMs);
     const relay = this.liveRelay(input, input.transport, nowMs);
     return presence.state === "online" && presence.instanceId === input.instanceId && presence.transport === input.transport
-      && (generation === null || presence.startedAt === generation) && relay?.relayId === input.relayId
+      && (generation === null || presence.startedAt === generation) && relay?.relayId === input.relayId && relay.instanceId === input.instanceId
+      // Only a relay whose watcher bound the host birth may ring it (3.3).
+      && this.presenceHost(input, input.instanceId)?.start != null
       && presence.deliveryCapabilities.idleWake !== "none" && presence.deliveryCapabilities.supportedInjection.includes("peer-wake");
   }
 
@@ -1278,10 +1219,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     for (const value of [input.instanceId, input.relayId, input.transport]) {
       if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(value)) throw new Error("Invalid wake relay binding.");
     }
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.reserveManagedWake(input, atMs));
+    if (!this.inTransaction) return this.transaction(() => this.reserveManagedWake(input, atMs));
     return this.transaction(() => {
       // Production time is sampled after the writer lock; fixtures may supply an explicit clock.
-      const nowMs = this.shared ? this.shared.time(atMs ?? Date.now()) : atMs ?? Date.now();
+      const nowMs = this.time(atMs ?? AUTHORITY_NOW);
       this.prune(nowMs);
       const none: WakeReservation = { dispatch: false, attempt: null };
       const generation = this.presence(input, nowMs).startedAt;
@@ -1314,9 +1255,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   /** CAS succeeds once (I3) and re-checks gates 1, 2, 4 and 5. The caller must not call a host adapter without this committed start. */
   startManagedWake(attempt: WakeAttempt, resendBaseMs: number, atMs?: number): WakeReservation {
     assertResendBase(resendBaseMs);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startManagedWake(attempt, resendBaseMs, atMs));
+    if (!this.inTransaction) return this.transaction(() => this.startManagedWake(attempt, resendBaseMs, atMs));
     return this.transaction(() => {
-      const nowMs = this.shared ? this.shared.time(atMs ?? Date.now()) : atMs ?? Date.now();
+      const nowMs = this.time(atMs ?? AUTHORITY_NOW);
       // Ends an expired or no-longer-claimable reservation first; the reserved row below is then still due.
       this.prune(nowMs);
       const none: WakeReservation = { dispatch: false, attempt: null };
@@ -1337,11 +1278,11 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
    * 2.2/2.4: the row changes only from started or unknown with the same attempt and epoch; an ended row never reopens
    * (I11). The birth's path takes the outcome of this exact attempt even when it arrives after the row ended.
    */
-  recordManagedWakeOutcome(attempt: WakeAttempt, outcome: WakeDispatchOutcome, resendBaseMs: number, nowMs = Date.now()): boolean {
+  recordManagedWakeOutcome(attempt: WakeAttempt, outcome: WakeDispatchOutcome, resendBaseMs: number, nowMs = AUTHORITY_NOW): boolean {
     if (!isWakeDispatchOutcome(outcome)) throw new Error("Invalid wake dispatch outcome.");
     assertResendBase(resendBaseMs);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.recordManagedWakeOutcome(attempt, outcome, resendBaseMs, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.recordManagedWakeOutcome(attempt, outcome, resendBaseMs, nowMs));
+    nowMs = this.time(nowMs);
     return this.transaction(() => {
       const now = iso(nowMs);
       const digest = nonceDigest(attempt.nonce);
@@ -1371,9 +1312,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  managedWakeStatus(target: SessionIdentity, nowMs = Date.now()): Record<string, unknown> | null {
+  managedWakeStatus(target: SessionIdentity, nowMs = AUTHORITY_NOW): Record<string, unknown> | null {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.managedWakeStatus(target, nowMs));
+    if (!this.inTransaction) return this.transaction(() => this.managedWakeStatus(target, nowMs));
     const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
       ORDER BY CASE WHEN state IN ${ACTIVE_WAKE_STATES} THEN 0 ELSE 1 END, rowid DESC LIMIT 1`)
       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
@@ -1394,15 +1335,15 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
    * A marker of another birth claims nothing (I2) and, like an ended row, only records its first late arrival.
    * An unknown or pruned marker authorizes nothing (I1).
    */
-  claimHostWake(target: SessionIdentity, observation: InputObservation, receiptId: string, reader: WakeHookObservationReader | undefined, nowMs = Date.now(), limits: ClaimLimits = {}): {
+  claimHostWake(target: SessionIdentity, observation: InputObservation, receiptId: string, reader: WakeHookObservationReader | undefined, nowMs = AUTHORITY_NOW, limits: ClaimLimits = {}): {
     recognized: boolean; messages: SessionMessage[]; binding: WakeAttempt | null; retired?: true; observedNow?: true;
   } {
     boundedIdentity(target);
     const rejected = { recognized: false, messages: [], binding: null };
     if (!isWakeHookObservation(observation, target) || !reader) return rejected;
     const digests = [...new Set(observation.wakeCandidates!.map(nonceDigest))];
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.claimHostWake(target, observation, receiptId, reader, nowMs, limits));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.claimHostWake(target, observation, receiptId, reader, nowMs, limits));
+    nowMs = this.time(nowMs);
     return this.transaction(() => {
       if (!reader.verifyObservation(target, observation, receiptId, nowMs)) return rejected;
       const found = digests.map((digest) => this.database.prepare("SELECT * FROM wake_nonces WHERE nonce_digest = ? AND host = ? AND session_id = ?")
@@ -1445,13 +1386,16 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     collaborationId?: string;
     workspaceId?: string;
     role?: string;
-    reportedParent?: { pid: number; startToken: string };
-  }, nowMs = Date.now()): SessionPresence {
+    /** The host process the hook resolved; hostStart only when the caller already read its birth. */
+    hostPid?: number;
+    hostStart?: string;
+  }, nowMs = AUTHORITY_NOW): SessionPresence {
     boundedIdentity(input);
     if (!input.instanceId || input.instanceId.length > 128 || !input.transport || input.transport.length > 64) throw new Error("Invalid presence identity.");
-    const parent = input.reportedParent;
-    if (parent && (!Number.isInteger(parent.pid) || parent.pid < 1 || typeof parent.startToken !== "string"
-      || !parent.startToken.trim() || parent.startToken.length > 200)) throw new Error("Invalid reported host process.");
+    if ((input.hostPid !== undefined && (!Number.isSafeInteger(input.hostPid) || input.hostPid < 1))
+      || (input.hostStart !== undefined && (input.hostPid === undefined || typeof input.hostStart !== "string" || !input.hostStart.trim() || input.hostStart.length > 200))) {
+      throw new Error("Invalid reported host process.");
+    }
     for (const [name, value, maximum] of [
       ["collaborationId", input.collaborationId, 200],
       ["workspaceId", input.workspaceId, 500],
@@ -1459,12 +1403,12 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     ] as const) {
       if (value !== undefined && (!value || value.length > maximum)) throw new Error(`${name} is invalid.`);
     }
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.startPresence(input, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.startPresence(input, nowMs));
+    nowMs = this.time(nowMs);
     const now = iso(nowMs);
     this.database.prepare(`INSERT INTO session_presence (
       host, session_id, instance_id, transport, wake_visibility, can_wake_silently, supported_injection, idle_wake,
-      collaboration_id, workspace_id, role, started_at, heartbeat_at, lease_until, reported_parent_pid, reported_parent_token
+      collaboration_id, workspace_id, role, started_at, heartbeat_at, lease_until, host_pid, host_start
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT (host, session_id, instance_id) DO UPDATE SET
       transport = excluded.transport, wake_visibility = excluded.wake_visibility,
@@ -1477,21 +1421,22 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
           ELSE strftime('%Y-%m-%dT%H:%M:%fZ', session_presence.started_at, '+0.001 seconds') END
         ELSE session_presence.started_at END,
       heartbeat_at = excluded.heartbeat_at, lease_until = excluded.lease_until,
+      host_pid = coalesce(session_presence.host_pid, excluded.host_pid), host_start = coalesce(session_presence.host_start, excluded.host_start),
       ended_at = NULL, end_reason = NULL
       WHERE session_presence.superseded_at IS NULL`).run(
       input.host, input.sessionId, input.instanceId, input.transport, input.wakeVisibility,
       input.canWakeSilently ? 1 : 0, JSON.stringify(input.deliveryCapabilities?.supportedInjection ?? []),
       input.deliveryCapabilities?.idleWake ?? input.wakeVisibility, input.collaborationId ?? null, input.workspaceId ?? null,
-      input.role ?? null, now, now, iso(nowMs + PRESENCE_LEASE_MS), parent?.pid ?? null, parent?.startToken ?? null,
+      input.role ?? null, now, now, iso(nowMs + PRESENCE_LEASE_MS), input.hostPid ?? null, input.hostStart ?? null,
     );
     return this.presence(input, nowMs);
   }
 
-  heartbeatPresence(target: SessionIdentity, instanceId: string, nowMs = Date.now()): boolean {
+  heartbeatPresence(target: SessionIdentity, instanceId: string, nowMs = AUTHORITY_NOW): boolean {
     boundedIdentity(target);
     if (!instanceId) throw new Error("presence instanceId is required.");
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.heartbeatPresence(target, instanceId, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.heartbeatPresence(target, instanceId, nowMs));
+    nowMs = this.time(nowMs);
     const row = this.database.prepare(`SELECT instance_id FROM session_presence
       WHERE host = ? AND session_id = ? AND instance_id = ? AND superseded_at IS NULL AND ended_at IS NULL AND lease_until > ?`).get(target.host, target.sessionId, instanceId, iso(nowMs));
     const selected = row as { instance_id: string } | undefined;
@@ -1502,12 +1447,12 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       .run(now, iso(nowMs + PRESENCE_LEASE_MS), target.host, target.sessionId, selected.instance_id, now).changes === 1;
   }
 
-  endPresence(target: SessionIdentity, reason: string, instanceId: string, nowMs = Date.now()): boolean {
+  endPresence(target: SessionIdentity, reason: string, instanceId: string, nowMs = AUTHORITY_NOW): boolean {
     boundedIdentity(target);
     if (!reason || reason.length > 100) throw new Error("endReason is invalid.");
     if (!instanceId) throw new Error("presence instanceId is required.");
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.endPresence(target, reason, instanceId, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.endPresence(target, reason, instanceId, nowMs));
+    nowMs = this.time(nowMs);
     const row = this.database.prepare(`SELECT instance_id FROM session_presence
       WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL`).get(target.host, target.sessionId, instanceId);
     const selected = row as { instance_id: string } | undefined;
@@ -1518,10 +1463,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       .run(now, now, now, reason, target.host, target.sessionId, selected.instance_id).changes === 1;
   }
 
-  presence(target: SessionIdentity, nowMs = Date.now()): SessionPresence {
+  presence(target: SessionIdentity, nowMs = AUTHORITY_NOW): SessionPresence {
     boundedIdentity(target);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.presence(target, nowMs));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.presence(target, nowMs));
+    nowMs = this.time(nowMs);
     const row = this.database.prepare(`SELECT * FROM session_presence
       WHERE host = ? AND session_id = ? AND superseded_at IS NULL ORDER BY started_at DESC, rowid DESC LIMIT 1`)
       .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
@@ -1554,10 +1499,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
    * most PRESENCE_UNREACHABLE_VISIBLE_MS, newest heartbeat first. `self` comes first whatever its state. Rows that do
    * not fit the byte budget are only counted.
    */
-  listCurrentPresence(nowMs: number, self: SessionIdentity, maxBytes = CURRENT_PRESENCE_MAX_BYTES): { sessions: CurrentPresence[]; truncated: number } {
+  listCurrentPresence(nowMs = AUTHORITY_NOW, self: SessionIdentity, maxBytes = CURRENT_PRESENCE_MAX_BYTES): { sessions: CurrentPresence[]; truncated: number } {
     boundedIdentity(self);
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.listCurrentPresence(nowMs, self, maxBytes));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+    if (!this.inTransaction) return this.transaction(() => this.listCurrentPresence(nowMs, self, maxBytes));
+    nowMs = this.time(nowMs);
     this.prune(nowMs);
     const visibleSince = iso(nowMs - PRESENCE_UNREACHABLE_VISIBLE_MS);
     const others = (this.database.prepare(`SELECT DISTINCT host, session_id FROM session_presence
@@ -1585,25 +1530,65 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return { sessions, truncated };
   }
 
-  listPresence(nowMs: number, targets: SessionIdentity[], expectedCodeDigest: string | null = null): SessionPresenceView[] {
-    if (this.shared && !this.shared.inTransaction) return this.shared.transaction(() => this.listPresence(nowMs, targets, expectedCodeDigest));
-    if (this.shared) nowMs = this.shared.time(nowMs);
+  listPresence(nowMs = AUTHORITY_NOW, targets: SessionIdentity[], expectedCodeDigest: string | null = null): SessionPresenceView[] {
+    if (!this.inTransaction) return this.transaction(() => this.listPresence(nowMs, targets, expectedCodeDigest));
+    nowMs = this.time(nowMs);
     this.prune(nowMs);
     relayCodeDigest(expectedCodeDigest);
     return targets.map((target) => {
       const presence = this.presence(target, nowMs);
-      const row = this.database.prepare("SELECT relay_id,pid,relay_code_id,relay_code_digest FROM relay_leases WHERE host=? AND session_id=? AND transport=?")
-        .get(target.host,target.sessionId,presence.transport ?? "") as {relay_id: string; pid: number; relay_code_id: string | null; relay_code_digest: string | null} | undefined;
-      // Old brokers may replace a lease without clearing new columns. Never adopt another owner's digest.
-      const bound = row && `${row.relay_id}:${row.pid}` === row.relay_code_id;
-      const runningDigest = bound ? row.relay_code_digest : null;
+      const lease = presence.transport ? this.liveRelay(target, presence.transport, nowMs) : null;
+      // The digest belongs to the grant of the current holder; a replaced grant carries its own.
+      const runningDigest = lease && lease.instanceId === presence.instanceId ? lease.codeDigest : null;
       const status = !runningDigest || !expectedCodeDigest ? "unknown" : runningDigest === expectedCodeDigest ? "current" : "outdated";
       return { ...presence, autoWake: this.autoWakeOutlook(target, nowMs), relayCode: {status,runningDigest,expectedDigest:expectedCodeDigest} };
     });
   }
+  private get inTransaction(): boolean {
+    return this.shared ? this.shared.inTransaction : (this.database as DatabaseSync).isTransaction;
+  }
+
+  /**
+   * Every time and expiry decision reads this inside the writer transaction (D0031/D0060). Standalone production time is
+   * Date.now() sampled once after BEGIN IMMEDIATE and raised to the persisted high-water mark, so a clock step back or a
+   * process with an older sample cannot decide with an earlier time. An explicit number is a fixture time and is used as is.
+   */
+  private time(nowMs: number): number {
+    if (this.shared) return this.shared.time(Number.isNaN(nowMs) ? 0 : nowMs);
+    if (!this.inTransaction) throw new Error("Time and expiry decisions require the writer transaction.");
+    if (!Number.isNaN(nowMs)) return nowMs;
+    if (this.transactionNow === undefined) {
+      const stored = (this.database.prepare("SELECT last_ms FROM authority_time WHERE singleton = 1").get() as { last_ms: number } | undefined)?.last_ms ?? 0;
+      const sampled = this.clock();
+      if (!Number.isSafeInteger(sampled) || sampled < 0) throw new Error("The session message clock is invalid.");
+      this.transactionNow = Math.max(stored, sampled);
+      this.database.prepare("UPDATE authority_time SET last_ms = ? WHERE singleton = 1").run(this.transactionNow);
+    }
+    return this.transactionNow;
+  }
+
+  /** Runs several store calls as one writer transaction with one authority time. */
+  atomically<T>(operation: () => T): T {
+    return this.transaction(operation);
+  }
+
+  /** Outermost: BEGIN IMMEDIATE. Nested: a savepoint, so an inner domain rejection rolls back only its own writes. */
   private transaction<T>(operation: () => T): T {
     if (this.shared) return this.shared.transaction(operation);
+    if (this.inTransaction) {
+      const savepoint = `messaging_${++this.savepoints}`;
+      this.database.exec(`SAVEPOINT ${savepoint}`);
+      try { const result = operation(); this.database.exec(`RELEASE ${savepoint}`); return result; }
+      catch (error) {
+        try { this.database.exec(`ROLLBACK TO ${savepoint}; RELEASE ${savepoint};`); } catch (rollbackError) {
+          retainFailureSecondary(error, utilTypes.isNativeError(rollbackError)
+            ? tagProducerFailure(rollbackError, "SESSION_MESSAGE_ROLLBACK_FAILED") : rollbackError);
+        }
+        throw error;
+      }
+    }
     this.database.exec("BEGIN IMMEDIATE");
+    this.transactionNow = undefined;
     try { const result = operation(); this.database.exec("COMMIT"); return result; }
     catch (error) {
       // The domain or COMMIT failure stays primary; a failed ROLLBACK is retained only as a secondary diagnostic.
@@ -1612,7 +1597,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
           ? tagProducerFailure(rollbackError, "SESSION_MESSAGE_ROLLBACK_FAILED") : rollbackError);
       }
       throw error;
-    }
+    } finally { this.transactionNow = undefined; }
   }
+
 
 }

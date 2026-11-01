@@ -260,7 +260,7 @@ Work records and checkpoints can retain submitted content locally. Avoid submitt
 
 ### Updates
 
-`check_for_updates` reports new public stable releases without installing them automatically. To update, stop existing AGS MCP, relay, and broker processes, update the plugin, and reconnect so the new processes start.
+`check_for_updates` reports new public stable releases without installing them automatically. To update, stop existing AGS MCP and relay processes, update the plugin, and reconnect so the new processes start.
 
 [Update checks](docs/operations.md#플러그인-업데이트-확인) · [Update and recovery procedure](docs/session-message-lifecycle.md#업데이트와-복구)
 
@@ -274,7 +274,7 @@ Work records and checkpoints can retain submitted content locally. Avoid submitt
 | A message was sent but the recipient does not respond | Query status with the same `messageId`; check the receiver's running state, hooks, delivery mode, and wake configuration. |
 | An ACK arrived but the review result did not | ACK confirms processing. Ask the responsible session separately for its work result or blocker. |
 | Execution-observation errors prevent workflow progress | Check host configuration and error details in the [execution-observation contract](docs/host-execution-attestation.md). |
-| Old behavior remains after an update | Check for old AGS MCP, relay, and broker processes, then reconnect using the [update procedure](docs/session-message-lifecycle.md#업데이트와-복구). |
+| Old behavior remains after an update | Check for old AGS MCP and relay processes, then reconnect using the [update procedure](docs/session-message-lifecycle.md#업데이트와-복구). |
 
 ## Documentation and contributing
 

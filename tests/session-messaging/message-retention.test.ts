@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, expect, it } from "vitest";
 import * as storeModule from "../../mcp-server/src/session-message-store.js";
 import { SessionMessageStore, MESSAGE_ID_RECORD_BYTES_LIMIT, MESSAGE_RECEIPT_LIMIT } from "../../mcp-server/src/session-message-store.js";
-import { waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
+import { closeSessionMessaging } from "../../mcp-server/src/session-message-client.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 
 // Receipt retention limits: sender quota (F1), ACK-bounded receipt expiry (F2), prepare admission (F3)
@@ -18,8 +18,9 @@ const H = 3600_000;
 const target = { host: "test-host", sessionId: "retention-target" };
 const hot = { host: "test-host", sessionId: "retention-hot" };
 const other = { host: "test-host", sessionId: "retention-other" };
-const root = process.env.PEER_WAIT_TEST_PLUGIN_ROOT ?? fileURLToPath(new URL("../../", import.meta.url));
 const directories: string[] = [];
+/** State directories the in-process client opened; their connection closes before the directory goes. */
+const stateDirectories: string[] = [];
 const children: ChildProcess[] = [];
 const stores: SessionMessageStore[] = [];
 afterEach(async () => {
@@ -27,12 +28,13 @@ afterEach(async () => {
   for (const child of children.splice(0)) {
     if (child.exitCode === null && child.signalCode === null) { const exit = once(child, "exit"); child.kill(); await exit; }
   }
+  for (const directory of stateDirectories.splice(0)) closeSessionMessaging(directory);
   for (const directory of directories.splice(0)) await rm(directory, { recursive: true, force: true, maxRetries: 10 });
 });
 const fixture = (database = ":memory:") => { const store = new SessionMessageStore(database); stores.push(store); return store; };
 // Bulk-filling file DBs from this test connection commits ~2 transactions per message. With WAL the default
 // synchronous=FULL fsyncs every commit (about 2,000 for the global fill), which exceeds the timeout on slow CI
-// disks. NORMAL is per connection, so the broker and worker connections under test keep their own setting.
+// disks. NORMAL is per connection, so the client and worker connections under test keep their own setting.
 const fillFixture = (database: string) => { const store = fixture(database); store.database.exec("PRAGMA synchronous = NORMAL;"); return store; };
 async function directory() { const value = await mkdtemp(path.join(tmpdir(), "ags-retention-")); directories.push(value); return value; }
 const iso = (ms: number) => new Date(ms).toISOString();
@@ -247,16 +249,15 @@ it("opens a v2.7.2 receipt without migration and applies ACK+1h only to new ACKs
   expect(reopened.status(hot, fresh.messageId, 3000 + H)).toBeNull();
 });
 
-async function launchBroker() {
+/** A state directory the service reaches through this process's in-process client. */
+async function serviceState() {
   const state = await directory();
-  const child = spawn(process.execPath, [path.join(root, "mcp-server/dist/session-message-broker.mjs"), "--state-directory", state], { windowsHide: true, stdio: "ignore" });
-  children.push(child);
-  await waitForSessionMessageBrokerReady(state, child, 5000);
+  stateDirectories.push(state);
   return state;
 }
 
 it("service reports capacity rejections as definite no-effect with scope and earliest release details", async () => {
-  const state = await launchBroker();
+  const state = await serviceState();
   const store = fillFixture(path.join(state, "session-messages.sqlite3"));
   const service = new SessionMessageService(state);
   const call = { targetHost: target.host, targetSessionId: target.sessionId };
@@ -378,7 +379,7 @@ it("ACK-A rollback: receipt failure rolls back the whole ACK before short-TTL re
 });
 
 it("when earliestReleaseAt is after the draft expiry, the guidance leads to a new prepare that succeeds", async () => {
-  const state = await launchBroker();
+  const state = await serviceState();
   const store = fillFixture(path.join(state, "session-messages.sqlite3"));
   const service = new SessionMessageService(state);
   const now = Date.now();
@@ -522,7 +523,7 @@ it("ACK-A ordering/reopen: distinguishes committed ACK-first from prune-first ac
   expect(reopened.database.prepare("SELECT body, body_bytes FROM messages WHERE message_id = ?").get(acknowledged.messageId)).toMatchObject({ body: "", body_bytes: 0 });
 });
 
-it("ACK-A prune crash: standalone DELETE commits before payload UPDATE and reopen safely reprunes", async () => {
+it("ACK-A prune crash: prune is one transaction, so a crash before COMMIT changes nothing and reopen reprunes", async () => {
   const database = path.join(await directory(), "ack-a-crash.sqlite3");
   const store = fixture(database);
   const retained = sendNew(store, hot, 1000, 30);
@@ -538,9 +539,11 @@ it("ACK-A prune crash: standalone DELETE commits before payload UPDATE and reope
   expect(interrupted.status, interrupted.stderr).toBe(71);
   const reopened = fixture(database);
   expect(reopened.database.prepare("SELECT body, body_bytes, acknowledged_at FROM messages WHERE message_id = ?").get(retained.messageId)).toMatchObject({ body: "Synthetic retention message", body_bytes: Buffer.byteLength("Synthetic retention message"), acknowledged_at: iso(1002) });
-  expect(scalar(reopened, "SELECT count(*) AS value FROM messages WHERE message_id = ?", expired.messageId)).toBe(0);
+  // The DELETE of the expired row ran before the crash in the same transaction, so it rolled back with it.
+  expect(scalar(reopened, "SELECT count(*) AS value FROM messages WHERE message_id = ?", expired.messageId)).toBe(1);
   reopened.database.exec("DROP TRIGGER ack_a_crash_payload");
   reopened.prune(31_001);
+  expect(scalar(reopened, "SELECT count(*) AS value FROM messages WHERE message_id = ?", expired.messageId)).toBe(0);
   reopened.prune(31_002);
   expect(rows(reopened)).toBe(1);
   expect(reopened.database.prepare("SELECT body, body_bytes FROM messages WHERE message_id = ?").get(retained.messageId)).toMatchObject({ body: "", body_bytes: 0 });

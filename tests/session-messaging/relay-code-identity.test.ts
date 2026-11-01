@@ -2,7 +2,6 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { DatabaseSync } from "node:sqlite";
 import { afterEach, expect, it } from "vitest";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 import { readRelayCodeDigest } from "../../mcp-server/src/relay-code-identity.js";
@@ -14,72 +13,71 @@ const directories: string[] = [];
 const directory = () => { const dir = mkdtempSync(path.join(os.tmpdir(), "ags-relay-code-")); directories.push(dir); return dir; };
 afterEach(() => { for (const store of stores.splice(0)) store.close(); for (const dir of directories.splice(0)) rmSync(dir, {recursive: true, force: true}); });
 
+// Code identity belongs to the grant (docs/ags30-broker-redesign.md 3.6): the board compares the current holder's
+// grant digest with the installed relay entry. Times are explicit fixture times.
 function fixture(database = ":memory:") {
   const store = new SessionMessageStore(database); stores.push(store);
-  const input = { host: "portable", sessionId: "code-fixture", instanceId: "host-process-v1:" + "c".repeat(64),
-    parentPid: 100, transport: "portable-queue", wakeVisibility: "user-message" as const, canWakeSilently: false,
-    deliveryCapabilities: { supportedInjection: ["peer-wake" as const], idleWake: "user-message" as const } };
-  let expectedDigest: string | null = null;
-  const ensure = (installed?: string | null) => { expectedDigest = installed ?? null; return store.prepareVerifiedRelay({...input,
-    expectedOwner: store.relayOwner(input, input.transport)}, now + 2); };
-  const activate = (relayId: string, codeDigest?: string | null, pid = 200) => store.activateVerifiedRelay({...input, relayId, pid, codeDigest: codeDigest ?? null}, now + 3);
-  const view = () => store.listPresence(now + 4, [input], expectedDigest)[0]!;
-  return {store, input, ensure, activate, view};
+  const input = { host: "portable", sessionId: "code-fixture", instanceId: "I1", transport: "portable-queue",
+    wakeVisibility: "user-message" as const, canWakeSilently: false,
+    deliveryCapabilities: { supportedInjection: ["peer-wake" as const], idleWake: "user-message" as const }, hostPid: 100 };
+  store.startPresence(input, now);
+  const grant = (codeDigest: string | null, at = now + 1, instanceId = input.instanceId) =>
+    store.grantRelay({ host: input.host, sessionId: input.sessionId, transport: input.transport, instanceId, codeDigest, hostPid: 100 }, at);
+  const tick = (relayId: string, at: number, instanceId = input.instanceId) =>
+    store.relayTick({ host: input.host, sessionId: input.sessionId, transport: input.transport, relayId, instanceId, includePending: false }, at);
+  const view = (expected: string | null, at = now + 4) => store.listPresence(at, [input], expected)[0]!;
+  return {store, input, grant, tick, view};
 }
 
-it("marks a live reused old relay outdated without respawning or renewing its presence", () => {
-  const f = fixture(); const grant = f.ensure(A); expect(f.activate(grant.relayId!, A)).toBe(true);
-  expect(f.view().relayCode).toEqual({status: "current", runningDigest: A, expectedDigest: A});
-  const presence = f.store.presence(f.input, now + 4), owner = f.store.relayOwner(f.input, f.input.transport);
-  expect(f.ensure(B)).toEqual({...grant, spawn: false, reason: expect.any(String)});
-  expect(f.view().relayCode).toEqual({status: "outdated", runningDigest: A, expectedDigest: B});
+it("marks a live old relay outdated without replacing or renewing it inside its start grace", () => {
+  const f = fixture(); const granted = f.grant(A); expect(granted.relayId).toEqual(expect.any(String));
+  expect(f.tick(granted.relayId!, now + 2).alive).toBe(true);
+  expect(f.view(A).relayCode).toEqual({status: "current", runningDigest: A, expectedDigest: A});
+  const presence = f.store.presence(f.input, now + 4), lease = f.store.liveRelay(f.input, f.input.transport, now + 4);
+  expect(f.view(B).relayCode).toEqual({status: "outdated", runningDigest: A, expectedDigest: B});
+  // A grant for other code inside the start grace is refused and changes nothing.
+  expect(f.grant(B, now + 5)).toEqual({relayId: null, reason: "RELAY_ALIVE"});
   expect(f.store.presence(f.input, now + 4)).toEqual(presence);
-  expect(f.store.relayOwner(f.input, f.input.transport)).toEqual(owner);
-  expect(f.activate(grant.relayId!, B)).toBe(true);
-  expect(f.view().relayCode?.runningDigest).toBe(A);
+  expect(f.store.liveRelay(f.input, f.input.transport, now + 4)).toEqual(lease);
+  // Same code never replaces a live lease, even after the grace.
+  expect(f.tick(granted.relayId!, now + 12_000).alive).toBe(true);
+  expect(f.tick(granted.relayId!, now + 24_000).alive).toBe(true);
+  expect(f.tick(granted.relayId!, now + 31_000).alive).toBe(true);
+  expect(f.grant(A, now + 31_001)).toEqual({relayId: null, reason: "RELAY_ALIVE"});
+  // Other code after the grace replaces it once; the old holder is fenced.
+  const replaced = f.grant(B, now + 31_002);
+  expect(replaced.relayId).toEqual(expect.any(String));
+  expect(replaced.relayId).not.toBe(granted.relayId);
+  expect(f.tick(granted.relayId!, now + 31_003).alive).toBe(false);
+  expect(f.view(B, now + 31_004).relayCode).toEqual({status: "current", runningDigest: B, expectedDigest: B});
+  expect(f.grant(B, now + 31_005)).toEqual({relayId: null, reason: "RELAY_ALIVE"});
 });
 
-it("stores the exact child-owner text independently of SQLite numeric parameter rendering", () => {
-  const f = fixture(); const grant = f.ensure(A);
-  expect(f.activate(grant.relayId!, A)).toBe(true);
-  const row = f.store.database.prepare("SELECT relay_code_id,pid FROM relay_leases").get();
-  expect(row).toEqual({relay_code_id: grant.relayId + ":200", pid: 200});
-  expect(f.view().relayCode).toEqual({status: "current", runningDigest: A, expectedDigest: A});
+it("does not infer current code from a grant without a digest or without an expected digest", () => {
+  const f = fixture(); const granted = f.grant(null);
+  expect(f.tick(granted.relayId!, now + 2).alive).toBe(true);
+  expect(f.view(B).relayCode).toEqual({status: "unknown", runningDigest: null, expectedDigest: B});
+  const coded = fixture(); coded.grant(A);
+  expect(coded.view(null).relayCode).toEqual({status: "unknown", runningDigest: A, expectedDigest: null});
 });
 
-it("does not infer current code from a legacy relay or an unactivated grant", () => {
-  const f = fixture(); const grant = f.ensure(B);
-  expect(f.view().relayCode).toEqual({status: "unknown", runningDigest: null, expectedDigest: B});
-  expect(f.activate(grant.relayId!)).toBe(true);
-  expect(f.ensure(B).spawn).toBe(false);
-  expect(f.view().relayCode?.status).toBe("unknown");
+it("does not attribute the old generation's lease code to a new generation", () => {
+  const f = fixture(); const old = f.grant(A); f.tick(old.relayId!, now + 2);
+  f.store.startPresence({...f.input, instanceId: "I2"}, now + 5);
+  // The live lease still names I1: the board reports no running code for I2, and I1's relay is fenced.
+  expect(f.store.listPresence(now + 6, [f.input], A)[0]!.relayCode).toEqual({status: "unknown", runningDigest: null, expectedDigest: A});
+  expect(f.tick(old.relayId!, now + 6).alive).toBe(false);
+  const newer = f.grant(B, now + 7, "I2");
+  expect(newer.relayId).toEqual(expect.any(String));
+  expect(f.store.listPresence(now + 8, [f.input], B)[0]!.relayCode).toEqual({status: "current", runningDigest: B, expectedDigest: B});
 });
 
-it("fences stale activation and clears code identity on a new reservation", () => {
-  const f = fixture(); const old = f.ensure(A); f.activate(old.relayId!, A);
-  const newer = f.store.prepareVerifiedRelay({...f.input, instanceId: "host-process-v1:" + "d".repeat(64),
-    expectedOwner: f.store.relayOwner(f.input, f.input.transport)}, now + 5);
-  expect(newer.spawn).toBe(true);
-  expect(f.activate(old.relayId!, A)).toBe(false);
-  expect(f.store.listPresence(now + 6, [f.input], B)[0]!.relayCode).toEqual({status: "unknown", runningDigest: null, expectedDigest: B});
-});
-
-it.each(["relay_id='legacy-replacement',pid=300", "pid=300"])("rejects inherited metadata after a pre-upgrade broker changes owner: %s", update => {
-  const f = fixture(); const grant = f.ensure(A); f.activate(grant.relayId!, A);
-  // Exact old-broker behavior: new lease owner without knowledge of additive code columns.
-  f.store.database.prepare(`UPDATE relay_leases SET ${update}`).run();
-  expect(f.view().relayCode).toEqual({status: "unknown", runningDigest: null, expectedDigest: A});
-});
-
-it("migrates legacy rows additively without losing ownership or assigning a code identity", () => {
-  const dbPath = path.join(directory(), "old.sqlite3");
-  const db = new DatabaseSync(dbPath);
-  db.exec("CREATE TABLE relay_leases(host TEXT,session_id TEXT,transport TEXT,relay_id TEXT,pid INTEGER,parent_pid INTEGER,relay_start_token TEXT,lease_until TEXT,updated_at TEXT,PRIMARY KEY(host,session_id,transport)) STRICT;");
-  db.prepare("INSERT INTO relay_leases VALUES(?,?,?,?,?,?,?,?,?)").run("portable", "code-fixture", "portable-queue", "legacy", 200, 100, null, "9999-12-31T23:59:59.999Z", new Date(now).toISOString());
-  db.close();
-  const f = fixture(dbPath); f.store.startPresence(f.input, now);
-  expect(f.store.relayOwner(f.input, f.input.transport)?.relayId).toBe("legacy");
-  expect(f.view().relayCode).toEqual({status: "unknown", runningDigest: null, expectedDigest: null});
+it("keeps the grant's digest when another connection lists the same file", () => {
+  const dbPath = path.join(directory(), "code.sqlite3");
+  const f = fixture(dbPath); f.grant(A);
+  const second = new SessionMessageStore(dbPath); stores.push(second);
+  expect(second.listPresence(now + 4, [f.input], A)[0]!.relayCode).toEqual({status: "current", runningDigest: A, expectedDigest: A});
+  expect(second.liveRelay(f.input, f.input.transport, now + 4)?.codeDigest).toBe(A);
 });
 
 it("observes entry bytes rather than a version label and preserves an earlier snapshot after overwrite", () => {

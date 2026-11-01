@@ -1,29 +1,19 @@
 import { mkdtempSync } from "node:fs";
-import { copyFile, lstat, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { createHash } from "node:crypto";
 import net from "node:net";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import tls from "node:tls";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  type BrokerEndpoint,
-  ensureSessionMessageBroker,
-  parseWakeMessages,
-  requestSessionMessageOnce,
-  sessionMessageBrokerEnvironment,
-  sessionMessageRequest,
-  SESSION_MESSAGE_PROTOCOL,
-  waitForSessionMessageBrokerReady,
-} from "../../mcp-server/src/session-message-client.js";
-import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
+import { closeSessionMessaging, parseWakeMessages, sessionMessageRequest } from "../../mcp-server/src/session-message-client.js";
+import { dispatchSessionMessageOperation } from "../../mcp-server/src/session-message-operations.js";
 import {
   executeSessionMessageCliFromStdin,
   formatSessionMessageStdinReadError,
@@ -32,15 +22,13 @@ import {
 import { handleSessionMessageHook, sessionMessageEnvelope, sessionMessageTransport } from "../../mcp-server/src/session-message-hook.js";
 import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
-import { relayIdentityDecision, transportWakeCapabilities } from "../../mcp-server/src/session-message-relay.js";
+import { transportWakeCapabilities } from "../../mcp-server/src/session-message-relay.js";
 import { wakeBackoffDelay, type WakeDispatchOutcome } from "../../mcp-server/src/session-message-wake-port.js";
 import { codexWakeOutcome } from "../../mcp-server/src/wake-transport-codex.js";
 import { claudeWakeOutcome, ringClaude } from "../../mcp-server/src/wake-transport-claude.js";
 import { antigravityWakeOutcome, resolveGeminiAgentApi } from "../../mcp-server/src/wake-transport-antigravity.js";
 import { transportDeliveryCapabilities } from "../../mcp-server/src/wake-transports.js";
 import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
-import { processIdentityState, processStartTokenAsync } from "../../mcp-server/src/process-identity.js";
-import { lockWitnessState } from "../../mcp-server/src/broker-lock-witness.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "../../mcp-server/src/session-message-protocol.js";
 import { adaptHostInput, hostDeliveryProfile, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { supportsInjection, type DeliveryCapabilities } from "../../mcp-server/src/input-observation.js";
@@ -60,7 +48,6 @@ const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.
 const bundledSessionMessageHook = fileURLToPath(new URL("../../mcp-server/dist/session-message-hook.mjs", import.meta.url));
 const bundledSessionMessageRelay = fileURLToPath(new URL("../../mcp-server/dist/session-message-relay.mjs", import.meta.url));
 const bundledSessionMessageRelayGuard = fileURLToPath(new URL("../../mcp-server/dist/session-message-relay-guard.mjs", import.meta.url));
-const sourceSessionMessageBroker = fileURLToPath(new URL("../../mcp-server/src/session-message-broker.ts", import.meta.url));
 const syntheticCoreHookDriver = fileURLToPath(new URL("./fixtures/synthetic-core-hook-driver.mjs", import.meta.url));
 // Explicit fake core root/child schema. Native Codex remains unsupported and is asserted separately.
 const syntheticCore = await import(pathToFileURL(syntheticCoreHookDriver).href) as {
@@ -71,6 +58,7 @@ const syntheticCore = await import(pathToFileURL(syntheticCoreHookDriver).href) 
 syntheticCore.registerSyntheticCoreAdapters(registerHookHostAdapter, environment => sessionMessageTransport("codex", environment));
 const syntheticRootHost = syntheticCore.SYNTHETIC_CORE_HOST;
 
+/** Event wait for real child processes (hook-spawned relays); the timeout only guards against a hang. */
 async function waitUntil(predicate: () => Promise<boolean>, timeoutMs = 5000): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -87,16 +75,6 @@ async function optionalFile(target: string): Promise<string | null> {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
     throw error;
   }
-}
-
-let currentProcessStartTokenPromise: Promise<string | null> | null = null;
-
-function readCachedProcessStartToken(pid: number): Promise<string | null> {
-  if (pid === process.pid) {
-    currentProcessStartTokenPromise ??= processStartTokenAsync(pid);
-    return currentProcessStartTokenPromise;
-  }
-  return processStartTokenAsync(pid);
 }
 
 async function runNodeChild(
@@ -124,115 +102,28 @@ async function runNodeChild(
   });
 }
 
-async function brokerLockPid(
-  target: string,
-  readStartToken: (pid: number) => Promise<string | null> | string | null = readCachedProcessStartToken,
-): Promise<number | null> {
-  try {
-    const info = await lstat(target);
-    if (info.isSymbolicLink()) throw new Error("The test broker lock must not be a link.");
-    if (info.isDirectory()) {
-      const entries = await readdir(target, { withFileTypes: true });
-      const match = entries.length === 1 && entries[0]!.isDirectory()
-        && !entries[0]!.isSymbolicLink() ? /^owner-([1-9][0-9]*)-([a-f0-9]{32})-([a-f0-9]{64}|pipe)$/u.exec(entries[0]!.name) : null;
-      if (!match) throw new Error("The test broker lock owner is invalid.");
-      const pid = Number(match[1]);
-      if (!Number.isSafeInteger(pid)) throw new Error("The test broker PID is invalid.");
-      try { process.kill(pid, 0); }
-      catch (error) {
-        if ((error as NodeJS.ErrnoException).code === "ESRCH") return null;
-        throw new Error("The test broker lock owner cannot be verified.", { cause: error });
-      }
-      if (match[3] === "pipe") {
-        const state = lockWitnessState(match[2]!);
-        if (state === "unknown") throw new Error("The test broker lock owner cannot be verified.");
-        return state === "present" ? pid : null;
-      }
-      const token = await readStartToken(pid);
-      if (token === null) {
-        throw new Error("The test broker lock owner cannot be verified.");
-      }
-      if (createHash("sha256").update(token).digest("hex") !== match[3]) {
-        throw new Error("The test broker lock owner cannot be verified.");
-      }
-      return pid;
-    }
-    // The deliberately silent legacy fixture below still publishes its own known PID file.
-    const value = (await readFile(target, "utf8")).trim();
-    if (!/^[1-9][0-9]*$/u.test(value)) throw new Error("The legacy test broker PID is invalid.");
-    return Number(value);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
-    throw error;
-  }
+/**
+ * A live, host-bound relay lease of a fixture birth (docs/ags30-broker-redesign.md 3.3): presence with a reported host,
+ * a granted relay_id, and the first tick that binds the host birth. Returns the granted fence.
+ */
+function bindFixtureRelay(store: SessionMessageStore, input: { host: string; sessionId: string; instanceId: string; transport: string;
+  wakeVisibility: "silent" | "user-message" | "none"; canWakeSilently: boolean; deliveryCapabilities: DeliveryCapabilities }, nowMs?: number): string {
+  const target = { host: input.host, sessionId: input.sessionId };
+  store.startPresence({ ...input, hostPid: 4242 }, nowMs);
+  const { relayId } = store.grantRelay({ ...target, transport: input.transport, instanceId: input.instanceId, codeDigest: null, hostPid: 4242 }, nowMs);
+  if (relayId === null) throw new Error("The fixture relay was not granted.");
+  expect(store.relayTick({ ...target, transport: input.transport, relayId, instanceId: input.instanceId, includePending: false,
+    hostStart: "fixture-host-start" }, nowMs)).toMatchObject({ alive: true, hostBound: true });
+  return relayId;
 }
 
-async function terminateBroker(stateDirectory: string, observe?: (event: string) => void): Promise<void> {
-  observe?.("endpoint-read-enter");
-  const endpointPath = path.join(stateDirectory, "endpoint.json");
-  const lockPath = path.join(stateDirectory, "broker.lock");
-  const rawEndpoint = await optionalFile(endpointPath);
-  observe?.("endpoint-read-returned");
-  const lockPid = rawEndpoint === null ? await brokerLockPid(lockPath) : null;
-  if (rawEndpoint === null && lockPid === null) return;
-  const pid = rawEndpoint === null
-    ? (lockPid ?? 0)
-    : (JSON.parse(rawEndpoint) as { pid: number }).pid;
-  if (!Number.isInteger(pid) || pid < 1) throw new Error("The test broker PID is invalid.");
-  observe?.("signal-enter");
-  try { process.kill(pid, "SIGTERM"); }
-  catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ESRCH") return;
-    throw error;
-  }
-  observe?.("signal-returned");
-  observe?.("liveness-enter");
-  await waitUntil(async () => {
-    try { process.kill(pid, 0); return false; }
-    catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ESRCH") return true;
-      throw error;
-    }
-  }, 10_000);
-  observe?.("liveness-returned");
-}
-
-async function cleanupStateDirectory(directory: string, observe?: (event: string) => void): Promise<void> {
-  observe?.("terminate-enter");
-  await terminateBroker(directory, observe);
-  observe?.("terminate-returned");
-  observe?.("rm-enter");
-  await rm(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
-  observe?.("rm-returned");
-}
-
-async function startSourceBroker(stateDirectory: string): Promise<void> {
-  const child = spawn(process.execPath, ["--import", "tsx", sourceSessionMessageBroker, "--state-directory", stateDirectory], {
-    windowsHide: true,
-    stdio: "ignore",
-  });
-  await waitForSessionMessageBrokerReady(stateDirectory, child, 5000);
-}
-
-afterEach(async (context) => {
-  const traced = context.task.name === "converges simultaneous startup requests on one broker";
-  const startedAt = performance.now();
-  let records = 0;
-  const observe = traced ? (event: string) => {
-    if (records++ >= 16) return;
-    try {
-      process.stderr.write(`AGS_CONVERGENCE_CLEANUP ${JSON.stringify({ event, atMs: performance.now() - startedAt })}\n`);
-    } catch { /* Observation must not replace the original cleanup result or error. */ }
-  } : undefined;
-  observe?.("hook-enter");
+afterEach(async () => {
   vi.unstubAllEnvs();
-  const owned = directories.splice(0);
-  // Same module instance as the static import; kept here so only this cleanup block changes.
-  const { cleanupIfClaimWorkersFinished } = await import("../helpers/concurrent-claim-process.js");
-  await cleanupIfClaimWorkersFinished(async () => {
-    for (const directory of owned) await cleanupStateDirectory(directory, observe);
-  });
-  observe?.("hook-returned");
+  for (const directory of directories.splice(0)) {
+    // The in-process client keeps one connection per state directory; close it before the directory goes away.
+    closeSessionMessaging(directory);
+    await rm(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+  }
 });
 
 function stateDirectory(): string {
@@ -280,12 +171,19 @@ describe("session message spool", () => {
     expect(reopened.acknowledge(spark, ["msg-0001"], 124_000, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
     expect(reopened.pendingCount(spark, 125_000)).toBe(0);
 
-    expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-a", pid: 1, parentPid: 1 }, 200_000)).toBe(true);
-    expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-c", pid: 3, parentPid: 1 }, 200_500)).toBe(false);
-    expect(reopened.heartbeatRelay({ ...spark, transport: "generic", relayId: "relay-a" }, 200_600)).toBe(true);
-    expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-b", pid: 2, parentPid: 2 }, 201_000)).toBe(false);
-    expect(reopened.acquireRelay({ ...spark, transport: "generic", relayId: "relay-b", pid: 2, parentPid: 2 }, 216_000)).toBe(true);
-    expect(reopened.heartbeatRelay({ ...spark, transport: "generic", relayId: "relay-a" }, 216_001)).toBe(false);
+    // Relay lease (3.3): a live grant refuses a second one; only lease expiry frees the slot, and the new relay_id fences the old holder.
+    const lease = { ...spark, transport: "generic", instanceId: "relay-instance" };
+    reopened.startPresence({ ...lease, wakeVisibility: "none", canWakeSilently: false, hostPid: 4242 }, 200_000);
+    const firstGrant = reopened.grantRelay({ ...lease, codeDigest: null, hostPid: 4242 }, 200_000);
+    expect(firstGrant.relayId).toEqual(expect.any(String));
+    expect(reopened.grantRelay({ ...lease, codeDigest: null, hostPid: 4242 }, 200_500)).toEqual({ relayId: null, reason: "RELAY_ALIVE" });
+    expect(reopened.relayTick({ ...lease, relayId: firstGrant.relayId!, includePending: false }, 200_600)).toMatchObject({ alive: true });
+    expect(reopened.grantRelay({ ...lease, codeDigest: null, hostPid: 4242 }, 201_000)).toEqual({ relayId: null, reason: "RELAY_ALIVE" });
+    const secondGrant = reopened.grantRelay({ ...lease, codeDigest: null, hostPid: 4242 }, 216_000);
+    expect(secondGrant.relayId).toEqual(expect.any(String));
+    expect(secondGrant.relayId).not.toBe(firstGrant.relayId);
+    expect(reopened.relayTick({ ...lease, relayId: firstGrant.relayId!, includePending: false }, 216_001)).toEqual({ alive: false, count: 0, hostBound: false });
+    expect(reopened.relayTick({ ...lease, relayId: secondGrant.relayId!, includePending: false }, 216_002)).toMatchObject({ alive: true });
     reopened.close();
   });
 
@@ -369,10 +267,10 @@ describe("session message spool", () => {
     store.close();
   });
 
-  it("exposes presence lifecycle through vendor-neutral broker operations", () => {
+  it("exposes presence lifecycle through vendor-neutral store operations", () => {
     const store = new SessionMessageStore(":memory:");
     const target = { host: "generic-host", sessionId: "generic-session" };
-    expect(dispatchSessionMessageBrokerOperation(store, "presence-start", {
+    expect(dispatchSessionMessageOperation(store, "presence-start", {
       target,
       instanceId: "generic-instance",
       transport: "generic",
@@ -385,23 +283,25 @@ describe("session message spool", () => {
       state: "online",
       workspaceId: "/portable/workspace",
       deliveryCapabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
-    } });
-    expect(dispatchSessionMessageBrokerOperation(store, "presence-heartbeat", { target, instanceId: "generic-instance" }))
+    }, relayId: null, reason: "HOST_UNREPORTED" });
+    expect(dispatchSessionMessageOperation(store, "presence-heartbeat", { target, instanceId: "generic-instance" }))
       .toEqual({ alive: true });
-    expect(dispatchSessionMessageBrokerOperation(store, "list-presence", { targets: [target] }))
+    expect(dispatchSessionMessageOperation(store, "list-presence", { targets: [target] }))
       .toMatchObject({ sessions: [{ host: target.host, sessionId: target.sessionId, state: "online" }] });
-    expect(dispatchSessionMessageBrokerOperation(store, "presence-end", { target, instanceId: "generic-instance", reason: "session-end" }))
+    expect(dispatchSessionMessageOperation(store, "presence-end", { target, instanceId: "generic-instance", reason: "session-end" }))
       .toEqual({ ended: true });
-    expect(dispatchSessionMessageBrokerOperation(store, "presence", { target }))
+    expect(dispatchSessionMessageOperation(store, "presence", { target }))
       .toMatchObject({ presence: { state: "ended", endReason: "session-end" } });
     store.close();
   });
 
-  it("leaves queued messages intact when an older broker rejects a new operation", () => {
+  it("leaves queued messages intact when the operation table rejects an unknown or removed operation", () => {
     const store = new SessionMessageStore(":memory:");
     const target = { host: "fake-host", sessionId: "recipient" };
     store.send({ messageId: "compat-0001", sender: { host: "peer", sessionId: "sender" }, target, body: "pending" }, 1000);
-    expect(() => dispatchSessionMessageBrokerOperation(store, "future-input-boundary", { target })).toThrow(/Unknown broker operation/u);
+    for (const operation of ["future-input-boundary", "ping", "acquire-relay", "heartbeat-relay", "release-verified-relay"]) {
+      expect(() => dispatchSessionMessageOperation(store, operation, { target })).toThrow(/Unknown session message operation/u);
+    }
     expect(store.pendingCount(target, 1001)).toBe(1);
     store.close();
   });
@@ -479,7 +379,8 @@ describe("session message spool", () => {
     initial.claim(target, 2000);
     initial.close();
     const legacy = new DatabaseSync(databasePath);
-    legacy.exec("ALTER TABLE messages DROP COLUMN first_delivered_at;");
+    // A file without first_delivered_at predates the current schema; a current-version file is never migrated again (D0059).
+    legacy.exec("ALTER TABLE messages DROP COLUMN first_delivered_at; PRAGMA user_version = 3;");
     legacy.close();
     const migrated = new SessionMessageStore(databasePath);
     expect(migrated.status(sender, "legacy-msg-0001", 2001)).toMatchObject({
@@ -490,162 +391,11 @@ describe("session message spool", () => {
   });
 });
 
-describe("TLS 1.3 broker and vendor-neutral adapter", () => {
-  it("fails fast on broker exit and leaves deadline cleanup to the state-directory owner", async () => {
-    const fixture = fileURLToPath(new URL("./fixtures/broker-startup-child.mjs", import.meta.url));
-    const exitedDirectory = stateDirectory();
-    const exited = spawn(process.execPath, [fixture, "exit"], { stdio: "ignore" });
-    await expect(waitForSessionMessageBrokerReady(exitedDirectory, exited, 2_000)).rejects.toThrow(/exited before it was ready/u);
-
-    const zeroDirectory = stateDirectory();
-    const zero = spawn(process.execPath, [fixture, "exit-zero"], { stdio: "ignore" });
-    const zeroStartedAt = Date.now();
-    await expect(waitForSessionMessageBrokerReady(zeroDirectory, zero, 100)).rejects.toThrow(/startup deadline/u);
-    expect(Date.now() - zeroStartedAt).toBeLessThan(1_000);
-
-    const silentDirectory = stateDirectory();
-    const silent = spawn(process.execPath, [fixture, "silent"], { stdio: "ignore" });
-    const silentExit = once(silent, "exit");
-    const silentStartedAt = Date.now();
-    await expect(waitForSessionMessageBrokerReady(silentDirectory, silent, 100)).rejects.toThrow(/startup deadline/u);
-    expect(Date.now() - silentStartedAt).toBeLessThan(1_000);
-    await writeFile(path.join(silentDirectory, "broker.lock"), `${String(silent.pid)}\n`, "utf8");
-    await terminateBroker(silentDirectory);
-    await silentExit;
-  });
-
-  it("verifies the current broker lock owner before cleanup", async () => {
-    const lockPath = path.join(stateDirectory(), "broker.lock");
-    const syntheticToken = "verified-current-owner-birth";
-    const expectedHash = createHash("sha256").update(syntheticToken).digest("hex");
-    await mkdir(path.join(lockPath, `owner-${process.pid}-${"a".repeat(32)}-${expectedHash}`), { recursive: true });
-    try {
-      expect(await brokerLockPid(lockPath, () => syntheticToken)).toBe(process.pid);
-    } finally {
-      await rm(lockPath, { recursive: true, force: true });
-    }
-
-    await mkdir(path.join(lockPath, `owner-${process.pid}-${"0".repeat(32)}-${"0".repeat(64)}`), { recursive: true });
-    try {
-      await expect(brokerLockPid(lockPath, () => syntheticToken)).rejects.toThrow("The test broker lock owner cannot be verified.");
-      await expect(brokerLockPid(lockPath, () => null)).rejects.toThrow("The test broker lock owner cannot be verified.");
-    } finally {
-      await rm(lockPath, { recursive: true, force: true });
-    }
-  });
-
-  it("preserves crashed producer locks unless the owner is proven absent", async () => {
-    const directory = stateDirectory();
-    const fixture = fileURLToPath(new URL("./fixtures/d0254-lockstage-crash.mjs", import.meta.url));
-    const started = performance.now();
-    const child = spawn(process.execPath, ["--import", "tsx", fixture], {
-      stdio: ["ignore", "ignore", "pipe"], windowsHide: true,
-      env: { ...process.env, AGENT_GOVERNANCE_D254_LOCK_ROOT: directory, AGENT_GOVERNANCE_D254_LOCK_CRASH: "published" },
-    });
-    let stderr = "";
-    child.stderr?.setEncoding("utf8");
-    child.stderr?.on("data", chunk => {stderr = (stderr + String(chunk)).slice(-4096);});
-    const [code] = await once(child, "close");
-    if (code !== 44) console.error("잠금 게시 자식 진단 " + JSON.stringify({
-      경과밀리초: performance.now() - started, 종료코드: code, 표준오류끝: stderr,
-    }));
-    expect(code).toBe(44);
-    const pid = child.pid;
-    expect(pid).toBeDefined();
-    const lockPath = path.join(directory, "broker.lock");
-    const markers = await readdir(lockPath);
-    expect(markers).toHaveLength(1);
-    // Windows는 세대 pipe marker, 그 밖은 출생 시각 hash marker다.
-    expect(markers[0]).toMatch(new RegExp(`^owner-${pid}-[a-f0-9]{32}-${process.platform === "win32" ? "pipe" : "[a-f0-9]{64}"}$`, "u"));
-    // darwin은 fixture가 자기 조회를 격리했는지 확인한다. Linux는 /proc 읽기라 격리 대상이 아니다.
-    if (process.platform === "darwin") {
-      expect(markers[0]!.slice(-64)).toBe(createHash("sha256").update("d0254-fixture-owner-birth").digest("hex"));
-    }
-
-    let probeError = "EPERM";
-    const kill = vi.spyOn(process, "kill").mockImplementation((observedPid, signal) => {
-      if (observedPid !== pid || signal !== 0) throw new Error("Unexpected signal in owned cleanup test.");
-      throw Object.assign(new Error("Controlled process probe failure."), { code: probeError });
-    });
-    try {
-      await expect(brokerLockPid(lockPath)).rejects.toMatchObject({ cause: { code: "EPERM" } });
-      await expect(cleanupStateDirectory(directory)).rejects.toMatchObject({ cause: { code: "EPERM" } });
-      expect((await lstat(lockPath)).isDirectory()).toBe(true);
-      probeError = "ESRCH";
-      await expect(brokerLockPid(lockPath)).resolves.toBeNull();
-      await expect(cleanupStateDirectory(directory)).resolves.toBeUndefined();
-      await expect(lstat(directory)).rejects.toMatchObject({ code: "ENOENT" });
-      expect(kill).toHaveBeenCalledTimes(4);
-      expect(kill.mock.calls.every(([observedPid, signal]) => observedPid === pid && signal === 0)).toBe(true);
-    } finally {
-      kill.mockRestore();
-      await rm(lockPath, { recursive: true, force: true });
-    }
-  });
-
-  it("converges simultaneous startup requests on one broker", async () => {
-    const directory = stateDirectory();
-    await Promise.all([
-      ensureSessionMessageBroker(directory),
-      ensureSessionMessageBroker(directory),
-    ]);
-    await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
-      protocolVersion: SESSION_MESSAGE_PROTOCOL,
-      capabilities: ["deferred-boundary", "delivery-capabilities", "peer-wait-policy", "verified-relay-start", "claim-receipts-v1"],
-    });
-  });
-
-  it("returns at the startup deadline while state preparation is still blocked and never spawns afterward", async () => {
-    const directory = stateDirectory();
-    let releasePreparation = () => {};
-    let markPreparationStarted = () => {};
-    const preparationStarted = new Promise<void>((resolve) => { markPreparationStarted = resolve; });
-    const blockedPreparation = new Promise<void>((resolve) => { releasePreparation = resolve; });
-    const startedAt = Date.now();
-    const startup = ensureSessionMessageBroker(directory, 500, undefined, async () => {
-      markPreparationStarted();
-      await blockedPreparation;
-    });
-
-    await preparationStarted;
-    await expect(startup).rejects.toThrow(/startup deadline/u);
-    expect(Date.now() - startedAt).toBeLessThan(1_500);
-
-    releasePreparation();
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    await expect(optionalFile(path.join(directory, "broker.lock"))).resolves.toBeNull();
-    await expect(optionalFile(path.join(directory, "endpoint.json"))).resolves.toBeNull();
-  });
-
-  it("handles a state-preparation rejection that arrives after the startup deadline", async () => {
-    const directory = stateDirectory();
-    const unhandled: unknown[] = [];
-    const onUnhandled = (reason: unknown) => { unhandled.push(reason); };
-    let rejectPreparation = (() => {}) as (error: Error) => void;
-    let markPreparationStarted = () => {};
-    const preparationStarted = new Promise<void>((resolve) => { markPreparationStarted = resolve; });
-    const blockedPreparation = new Promise<void>((_resolve, reject) => { rejectPreparation = reject; });
-    process.on("unhandledRejection", onUnhandled);
-    try {
-      const startup = ensureSessionMessageBroker(directory, 100, undefined, async () => {
-        markPreparationStarted();
-        await blockedPreparation;
-      });
-      await preparationStarted;
-      await expect(startup).rejects.toThrow(/startup deadline/u);
-
-      rejectPreparation(new Error("late state preparation failure"));
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      expect(unhandled).toEqual([]);
-    } finally {
-      process.off("unhandledRejection", onUnhandled);
-    }
-  });
-
+describe("in-process messaging and vendor-neutral adapter", () => {
   it("preserves the top-level deadline reason when the event loop resumes after expiry", async () => {
     const directory = stateDirectory();
     const sleeper = new Int32Array(new SharedArrayBuffer(4));
-    const request = sessionMessageRequest("ping", {}, directory, {
+    const request = sessionMessageRequest("pending", { target: { host: "deadline-host", sessionId: "deadline-session" } }, directory, {
       totalTimeoutMs: 100,
       prepareStateDirectory: async () => {
         Atomics.wait(sleeper, 0, 0, 150);
@@ -653,60 +403,8 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     });
 
     await expect(request).rejects.toThrow(/request deadline expired/u);
-    await expect(optionalFile(path.join(directory, "broker.lock"))).resolves.toBeNull();
-    await expect(optionalFile(path.join(directory, "endpoint.json"))).resolves.toBeNull();
-  });
-
-  it("enforces an absolute request deadline while a TLS peer keeps sending partial data", async () => {
-    const directory = stateDirectory();
-    await ensureSessionMessageBroker(directory);
-    const endpointPath = path.join(directory, "endpoint.json");
-    const endpoint = JSON.parse(await readFile(endpointPath, "utf8")) as BrokerEndpoint;
-    const [key, certificate] = await Promise.all([
-      readFile(path.join(directory, "broker-key.pem"), "utf8"),
-      readFile(path.join(directory, "broker-cert.pem"), "utf8"),
-    ]);
-    await terminateBroker(directory);
-    // Windows SIGTERM may terminate before cleanup. Reclaim only a proven-dead owner.
-    expect(await brokerLockPid(path.join(directory, "broker.lock"))).toBeNull();
-    await rm(path.join(directory, "broker.lock"), { recursive: true, force: true });
-
-    const sockets = new Set<tls.TLSSocket>();
-    const timers = new Set<NodeJS.Timeout>();
-    const server = tls.createServer({ key, cert: certificate, minVersion: "TLSv1.3", maxVersion: "TLSv1.3" }, (socket) => {
-      sockets.add(socket);
-      socket.once("close", () => sockets.delete(socket));
-      const timer = setInterval(() => socket.write(" "), 20);
-      timers.add(timer);
-      socket.once("close", () => { clearInterval(timer); timers.delete(timer); });
-    });
-    await new Promise<void>((resolve, reject) => {
-      server.once("error", reject);
-      server.listen(0, "127.0.0.1", resolve);
-    });
-    const address = server.address();
-    if (!address || typeof address === "string") throw new Error("The test TLS server did not receive a port.");
-    await writeFile(endpointPath, `${JSON.stringify({ ...endpoint, claimReceiptVersion: 1, port: address.port, pid: process.pid })}\n`, "utf8");
-    const startedAt = Date.now();
-    try {
-      await expect(sessionMessageRequest("ping", {}, directory, { totalTimeoutMs: 150 })).rejects.toThrow(/deadline expired/u);
-      expect(Date.now() - startedAt).toBeLessThan(1_000);
-      await expect(optionalFile(path.join(directory, "broker.lock"))).resolves.toBeNull();
-    } finally {
-      await rm(endpointPath, { force: true });
-      for (const timer of timers) clearInterval(timer);
-      for (const socket of sockets) socket.destroy();
-      await new Promise<void>((resolve) => server.close(() => resolve()));
-    }
-  });
-
-  it("rejects a reused PID when its process-start token changes", () => {
-    const token = "process-start-token";
-    expect(processIdentityState(process.pid, token, () => token)).toBe("match");
-    expect(processIdentityState(process.pid, token, () => `${token}-different`)).toBe("mismatch");
-    expect(processIdentityState(process.pid, "", () => token)).toBe("mismatch");
-    expect(processIdentityState(process.pid, token, () => null)).toBe("unknown");
-    expect(processIdentityState(2_147_483_647, token, () => token)).toBe("mismatch");
+    // An expired deadline runs nothing: the operation never opened the store.
+    await expect(readdir(directory)).resolves.toEqual([]);
   });
 
   it("parses merged wake bells without hiding mixed user text", () => {
@@ -778,7 +476,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(validation).not.toHaveProperty("hookSpecificOutput.updatedInput");
   });
 
-  it("treats merged wake bells as internal only when every nonce is broker-recognized", async () => {
+  it("treats merged wake bells as internal only when every nonce is store-recognized", async () => {
     const directory = stateDirectory();
     const previousMessageState = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
     const previousBoardPath = process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
@@ -801,14 +499,13 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
         target,
         body: "wake",
       });
-      // Issue the bell through a managed reservation of a live birth on the broker's own file (3.0 has no unbound reserve).
+      // Issue the bell through a managed reservation of a live, host-bound birth on the shared file (3.0 has no unbound reserve).
       const issuer = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
       try {
-        const binding = { ...target, instanceId: "merged-wake-instance", relayId: "merged-wake-relay", transport: "claude-inbox" };
-        issuer.startPresence({ ...target, instanceId: binding.instanceId, transport: binding.transport, wakeVisibility: "silent", canWakeSilently: true,
-          deliveryCapabilities: transportDeliveryCapabilities(binding.transport) });
-        expect(issuer.acquireRelay({ ...binding, pid: process.pid, parentPid: process.pid })).toBe(true);
-        expect(issuer.reserveManagedWake({ ...binding, nonce: issued }).dispatch).toBe(true);
+        const birth = { ...target, instanceId: "merged-wake-instance", transport: "claude-inbox" };
+        const relayId = bindFixtureRelay(issuer, { ...birth, wakeVisibility: "silent", canWakeSilently: true,
+          deliveryCapabilities: transportDeliveryCapabilities(birth.transport) });
+        expect(issuer.reserveManagedWake({ ...birth, relayId, nonce: issued }).dispatch).toBe(true);
       } finally { issuer.close(); }
       const board = new DatabaseSync(path.join(directory, "session-board.sqlite3"));
       try {
@@ -947,7 +644,6 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     await copyFile(bundledSessionMessageRelay, path.join(installDirectory, "session-message-relay.mjs"));
     await copyFile(bundledSessionMessageRelayGuard, path.join(installDirectory, "session-message-relay-guard.mjs"));
     expect(await optionalFile(path.join(directory, "node_modules"))).toBeNull();
-    await startSourceBroker(directory);
     const file = path.join(directory, "session-messaging.json");
     await writeFile(file, '{"schemaVersion":"1.0.0","codex":{"queueWake":true}}');
     const environment: NodeJS.ProcessEnv = { ...process.env, PLUGIN_DATA: directory, AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: directory };
@@ -960,7 +656,11 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       env: environment, cwd: directory,
     });
     const store = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
-    let relayPid: number | undefined;
+    // The relay's own release deletes exactly its lease row; an expired lease would leave the row in place.
+    const leaseRow = (transport: string) => store.database.prepare("SELECT relay_id FROM relay_leases WHERE host = ? AND session_id = ? AND transport = ?")
+      .get(target.host, target.sessionId, transport) as { relay_id: string } | undefined;
+    let current: string | null = null;
+    let completed = false;
     try {
       const native = await runNodeChild([installedHook, "--host=gemini", "--host-pid", String(process.pid)], {
         input: JSON.stringify({ hook_event_name: "SessionStart", session_id: target.sessionId, agent_id: "" }),
@@ -974,31 +674,37 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       expect(first.status, first.stderr).toBe(0);
       expect(first.stdout).toBe("");
       const presence = store.presence(target);
+      current = presence.instanceId;
       expect(presence).toMatchObject({ transport: "codex-queue", state: "online", wakeVisibility: "user-message", canWakeSilently: false });
-      await waitUntil(async () => {
-        relayPid = store.liveRelay(target, "codex-queue")?.pid;
-        return relayPid !== undefined;
-      }, 15_000);
+      const relay = store.liveRelay(target, "codex-queue");
+      expect(relay).toMatchObject({ instanceId: presence.instanceId });
+      // The real packaged relay runs: its host watcher bound this host's birth through its own tick.
+      await waitUntil(async () => store.presenceHost(target, presence.instanceId!)?.start != null, 15_000);
+      expect(store.presenceHost(target, presence.instanceId!)?.pid).toBe(process.pid);
       await writeFile(file, '{"schemaVersion":"1.0.0","codex":{"queueWake":false}}');
       expect(store.presence(target)).toMatchObject({ instanceId: presence.instanceId, transport: "codex-queue" });
-      expect(store.liveRelay(target, "codex-queue")?.pid).toBe(relayPid);
-      const resumed = await start(0);
+      expect(store.liveRelay(target, "codex-queue")?.relayId).toBe(relay!.relayId);
+      const resumed = await start(process.pid);
       expect(resumed.status, resumed.stderr).toBe(0);
       const next = store.presence(target);
+      current = next.instanceId;
       expect(next).toMatchObject({ transport: "codex-deferred", state: "online", wakeVisibility: "none" });
       expect(next.instanceId).not.toBe(presence.instanceId);
-      await waitUntil(async () => {
-        try { process.kill(relayPid!, 0); return false; }
-        catch (error) { if ((error as NodeJS.ErrnoException).code === "ESRCH") return true; throw error; }
-      }, 15_000);
+      expect(store.liveRelay(target, "codex-deferred")).toMatchObject({ instanceId: next.instanceId });
+      // The old relay is fenced by the new birth and releases its own lease.
+      await waitUntil(async () => leaseRow("codex-queue") === undefined, 15_000);
       expect(store.presence(target)).toMatchObject({ instanceId: next.instanceId, state: "online" });
       // No pending message or real host wake is submitted by this installation fixture.
+      completed = true;
     } finally {
-      store.close();
-      if (relayPid !== undefined) {
-        try { process.kill(relayPid, "SIGTERM"); }
-        catch (error) { expect((error as NodeJS.ErrnoException).code).toBe("ESRCH"); }
+      // Ending the current birth fences the remaining relay; wait for its own release so no relay outlives the test.
+      if (current !== null) {
+        store.endPresence(target, "test-cleanup", current);
+        const released = waitUntil(async () => leaseRow("codex-queue") === undefined && leaseRow("codex-deferred") === undefined, 15_000);
+        // A failed assertion stays the reported failure; a passing run must also prove that no relay outlives it.
+        if (completed) await released; else await released.catch(() => {});
       }
+      store.close();
     }
   }, 45_000);
 
@@ -1055,13 +761,12 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
   it("consumes queued peers at safe boundaries after restart without waking again after ACK", () => {
     const databasePath = path.join(stateDirectory(), "boundary-restart.sqlite3");
     const target = { host: "claude-code", sessionId: "queued-boundary" };
-    const binding = { ...target, instanceId: "boundary-instance", relayId: "boundary-relay", transport: "claude-inbox" };
+    const birth = { ...target, instanceId: "boundary-instance", transport: "claude-inbox" };
     const store = new SessionMessageStore(databasePath);
     store.send({ messageId: "boundary-0001", sender: { host: "codex", sessionId: "sender" }, target, body: "first" }, 1000);
     store.send({ messageId: "boundary-0002", sender: { host: "codex", sessionId: "sender" }, target, body: "second" }, 1001);
-    store.startPresence({ ...target, instanceId: binding.instanceId, transport: binding.transport, wakeVisibility: "silent", canWakeSilently: true,
-      deliveryCapabilities: transportDeliveryCapabilities(binding.transport) }, 1001);
-    expect(store.acquireRelay({ ...binding, pid: process.pid, parentPid: process.pid }, 1001)).toBe(true);
+    const binding = { ...birth, relayId: bindFixtureRelay(store, { ...birth, wakeVisibility: "silent", canWakeSilently: true,
+      deliveryCapabilities: transportDeliveryCapabilities(birth.transport) }, 1001) };
     expect(store.reserveManagedWake({ ...binding, nonce: "boundary-nonce-abcdefghijklmnop" }, 1002).dispatch).toBe(true);
     store.close();
     const reopened = new SessionMessageStore(databasePath);
@@ -1085,71 +790,27 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     }
   });
 
-  it("refuses the removed 2.x wake operations through the TLS broker without touching the queue", async () => {
+  it("refuses the removed 2.x wake and broker operations in process without touching the queue", async () => {
     const directory = stateDirectory();
-    const target = { host: "codex", sessionId: "broker-wake-target" };
+    const target = { host: "codex", sessionId: "removed-wake-target" };
     await prepareAndSend(directory, {
-      sender: { host: "claude-code", sessionId: "broker-wake-sender" },
+      sender: { host: "claude-code", sessionId: "removed-wake-sender" },
       target,
       body: "wake once",
       ttlSeconds: 600,
     });
-    const nonce = "broker-wake-nonce-abcdefghijklmnop";
+    const nonce = "removed-wake-nonce-abcdefghijklmnop";
     // 3.0 has no unbound reservation: reserve-wake names the birth and relay it rings.
     await expect(sessionMessageRequest("reserve-wake", { target, nonce }, directory)).rejects.toThrow(/instanceId/u);
-    for (const operation of ["release-wake", "claim-wake", "reconcile-wake-observation", "issue-wake"]) {
-      await expect(sessionMessageRequest(operation, { target, nonce }, directory)).rejects.toThrow(/Unknown broker operation/u);
+    for (const operation of ["release-wake", "claim-wake", "reconcile-wake-observation", "issue-wake",
+      "ping", "acquire-relay", "heartbeat-relay", "release-verified-relay"]) {
+      await expect(sessionMessageRequest(operation, { target, nonce }, directory)).rejects.toThrow(/Unknown session message operation/u);
     }
     await expect(sessionMessageRequest("pending", { target }, directory)).resolves.toEqual({ count: 1 });
   });
 
-  it("stops relay acquisition after three consecutive unknown identity checks", () => {
-    const first = relayIdentityDecision("unknown", 0);
-    const second = relayIdentityDecision("unknown", first.unknowns);
-    const third = relayIdentityDecision("unknown", second.unknowns);
-    expect([first.stop, second.stop, third.stop]).toEqual([false, false, true]);
-    expect(relayIdentityDecision("match", second.unknowns)).toEqual({ proceed: true, stop: false, unknowns: 0 });
-    expect(relayIdentityDecision("mismatch", 0)).toEqual({ proceed: false, stop: true, unknowns: 0 });
-  });
-
-  it("does not pass Claude inbox credentials into the broker process", () => {
-    expect(sessionMessageBrokerEnvironment({
-      KEEP_ME: "yes",
-      CLAUDE_CODE_MESSAGING_SOCKET: "socket-secret",
-      CLAUDE_CODE_MESSAGING_TOKEN: "token-secret",
-    })).toEqual({ KEEP_ME: "yes" });
-  });
-
-  it("pins the certificate, authenticates requests, survives restart, and supports arbitrary hosts", async () => {
+  it("survives reopening and supports arbitrary hosts through the in-process CLI adapter", async () => {
     const directory = stateDirectory();
-    await ensureSessionMessageBroker(directory);
-    const endpointPath = path.join(directory, "endpoint.json");
-    const endpoint = JSON.parse(await readFile(endpointPath, "utf8")) as { port: number; pid: number; certificateFingerprint256: string };
-    const certificate = await readFile(path.join(directory, "broker-cert.pem"), "utf8");
-    const token = (await readFile(path.join(directory, "broker.token"), "utf8")).trim();
-
-    const negotiated = await new Promise<string | null>((resolve, reject) => {
-      const socket = tls.connect({ host: "127.0.0.1", port: endpoint.port, ca: certificate, servername: "localhost", minVersion: "TLSv1.3", maxVersion: "TLSv1.3" });
-      socket.once("secureConnect", () => { const protocol = socket.getProtocol(); socket.destroy(); resolve(protocol); });
-      socket.once("error", reject);
-    });
-    expect(negotiated).toBe("TLSv1.3");
-
-    const wrongToken = await new Promise<Record<string, unknown>>((resolve, reject) => {
-      let output = "";
-      const socket = tls.connect({ host: "127.0.0.1", port: endpoint.port, ca: certificate, servername: "localhost", minVersion: "TLSv1.3", maxVersion: "TLSv1.3" });
-      socket.once("secureConnect", () => socket.write(`${JSON.stringify({ protocolVersion: SESSION_MESSAGE_PROTOCOL, token: "wrong", operation: "ping", payload: {} })}\n`));
-      socket.on("data", (chunk: Buffer) => { output += chunk.toString("utf8"); });
-      socket.once("end", () => resolve(JSON.parse(output) as Record<string, unknown>));
-      socket.once("error", reject);
-    });
-    expect(wrongToken).toMatchObject({ ok: false, error: "Broker authentication failed." });
-
-    const wrongFingerprint = Array.from({ length: 32 }, () => "00").join(":");
-    await writeFile(endpointPath, `${JSON.stringify({ ...endpoint, claimReceiptVersion: 1, protocolVersion: SESSION_MESSAGE_PROTOCOL, address: "127.0.0.1", startedAt: new Date().toISOString(), certificateFingerprint256: wrongFingerprint })}\n`, "utf8");
-    await expect(requestSessionMessageOnce("ping", {}, directory)).rejects.toThrow(/certificate pin/u);
-    await writeFile(endpointPath, `${JSON.stringify({ ...endpoint, claimReceiptVersion: 1, protocolVersion: SESSION_MESSAGE_PROTOCOL, address: "127.0.0.1", startedAt: new Date().toISOString() })}\n`, "utf8");
-
     const send = await prepareAndSend(directory, { sender: { host: "grok", sessionId: "g-1" }, target: { host: "spark", sessionId: "s-1" }, body: "portable hello", ttlSeconds: 600 });
     const portableId = (send.data as { messageId: string }).messageId;
     expect(send).toMatchObject({ ok: true, data: { messageId: portableId } });
@@ -1229,17 +890,14 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(batchCount).toBeGreaterThan(1);
     expect(claimedMetadataIds).toEqual(expectedMetadataIds);
 
-    await terminateBroker(directory);
-    await ensureSessionMessageBroker(directory);
+    // Reopen: the next operation opens a new connection to the same file.
+    closeSessionMessaging(directory);
     const claim = await runSessionMessageCli(JSON.stringify({ operation: "claim", payload: { target: { host: "spark", sessionId: "s-1" } } }), directory);
     expect(claim).toMatchObject({ ok: true, data: { messages: [{ messageId: portableId, body: "portable hello" }] } });
     const acknowledged = await runSessionMessageCli(JSON.stringify({ operation: "acknowledge", payload: { target: { host: "spark", sessionId: "s-1" }, messageIds: [portableId], receipts: (claim.data as { messages: Array<{ messageId: string; claimReceipt: string }> }).messages.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })) } }), directory);
     expect(acknowledged).toMatchObject({ ok: true, data: { acknowledged: 1 } });
 
     const database = await readFile(path.join(directory, "session-messages.sqlite3"));
-    const privateKey = await readFile(path.join(directory, "broker-key.pem"));
-    expect(database.includes(Buffer.from(token))).toBe(false);
-    expect(database.includes(privateKey)).toBe(false);
     expect(database.includes(Buffer.from("claude-inbox-token-probe"))).toBe(false);
     expect(database.includes(Buffer.from("cc-msg-socket-probe"))).toBe(false);
   }, 30_000);
@@ -1249,8 +907,6 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", directory);
     vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", path.join(directory, "trust.sqlite3"));
     vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "1");
-    // The broker captures its trust DB at startup; inherit the same fixture path as the hook.
-    await startSourceBroker(directory);
     // 3.0: the 2.x "legacy" unbound nonce no longer exists (migration drops it); "forged" keeps the unissued-marker case.
     for (const scenario of ["submitted", "unknown", "duplicate", "late", "idle", "forged", "mixed", "claude", "codex"]) {
       const target = { host: scenario === "claude" ? "claude-code" : scenario === "codex" ? "codex" : syntheticRootHost, sessionId: `empty-hook-${scenario}` };
@@ -1259,11 +915,10 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       const now = Date.now();
       try {
         store.send({ sender: { host: "portable", sessionId: "empty-sender" }, target, messageId: `body-${scenario}`, body: `body-${scenario}` }, now);
-        store.startPresence({ ...target, instanceId: "empty-instance", transport: "codex-queue", wakeVisibility: "user-message",
+        const relayId = bindFixtureRelay(store, { ...target, instanceId: "empty-instance", transport: "codex-queue", wakeVisibility: "user-message",
           canWakeSilently: false, deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" } }, now);
-        store.acquireRelay({ ...target, transport: "codex-queue", relayId: "empty-relay", pid: process.pid, parentPid: process.pid }, now);
         {
-          const reserved = store.reserveManagedWake({ ...target, nonce, instanceId: "empty-instance", transport: "codex-queue", relayId: "empty-relay" }, now);
+          const reserved = store.reserveManagedWake({ ...target, nonce, instanceId: "empty-instance", transport: "codex-queue", relayId }, now);
           const started = store.startManagedWake(reserved.attempt!, 600_000, now + 1);
           expect(started.dispatch).toBe(true);
           const outcome: WakeDispatchOutcome = scenario === "unknown" ? { result: "unknown", reasonCode: "SYNTHETIC_TIMEOUT" } : { result: "handed-off" };
@@ -1281,7 +936,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
           // Settle now (design 2.6): the claim boundary releases the hand-off, the new birth ends the late one.
           store.prune(now + 8);
         }
-        // The broker reads the wall clock when the hook runs; keep this scenario's births and relay live past the 20-second lease.
+        // The hook reads the authority clock when it runs; keep this scenario's births and relay live past the 20-second lease.
         const until = new Date(Date.now() + 10 * 60_000).toISOString();
         store.database.prepare("UPDATE session_presence SET lease_until = ? WHERE host = ? AND session_id = ? AND ended_at IS NULL")
           .run(until, target.host, target.sessionId);
@@ -1327,8 +982,6 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", directory);
     vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", path.join(directory, "trust.sqlite3"));
     vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "1");
-    // The broker captures its trust DB at startup; inherit the same fixture path as the hook.
-    await startSourceBroker(directory);
     const capabilities: DeliveryCapabilities = { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" };
     for (const host of [syntheticRootHost, "claude-code", "codex"]) {
       const target = { host, sessionId: `retired-hook-${host}` };
@@ -1336,14 +989,11 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       const base = Date.now() - 60_000;
       const store = new SessionMessageStore(path.join(directory, "session-messages.sqlite3"));
       try {
-        const presence = (instanceId: string, at: number) => {
-          store.startPresence({ ...target, instanceId, transport: "codex-queue", wakeVisibility: "user-message", canWakeSilently: false,
-            deliveryCapabilities: capabilities }, at);
-          store.acquireRelay({ ...target, transport: "codex-queue", relayId: `${instanceId}-relay`, pid: process.pid, parentPid: process.pid }, at);
-        };
-        presence("old-instance", base);
+        const presence = (instanceId: string, at: number) => bindFixtureRelay(store, { ...target, instanceId, transport: "codex-queue",
+          wakeVisibility: "user-message", canWakeSilently: false, deliveryCapabilities: capabilities }, at);
+        const oldRelayId = presence("old-instance", base);
         store.send({ sender: { host: "portable", sessionId: "retired-sender" }, target, messageId: `retired-body-${host}`, body: "current body", ttlSeconds: 86400 }, base);
-        const reserved = store.reserveManagedWake({ ...target, nonce, instanceId: "old-instance", transport: "codex-queue", relayId: "old-instance-relay" }, base);
+        const reserved = store.reserveManagedWake({ ...target, nonce, instanceId: "old-instance", transport: "codex-queue", relayId: oldRelayId }, base);
         const started = store.startManagedWake(reserved.attempt!, 600_000, base + 1);
         expect(store.recordManagedWakeOutcome(started.attempt!, { result: "handed-off" }, 600_000, base + 2)).toBe(true);
         // A new birth ends the old hand-off (design 2.6, birth-ended); the old marker then arrives.
@@ -1378,7 +1028,6 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
 
   it("keeps a maximum-size peer message within the hook context limit", async () => {
     const directory = stateDirectory();
-    await startSourceBroker(directory);
     const previous = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
     process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = directory;
     try {
@@ -1454,7 +1103,6 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
 
   it("escapes peer bodies inside one bounded JSON block", async () => {
     const directory = stateDirectory();
-    await startSourceBroker(directory);
     const previous = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
     process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = directory;
     try {
@@ -1509,7 +1157,6 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
 
   it("starts the relay without spending a second claim budget during SessionStart", async () => {
     const directory = stateDirectory();
-    await startSourceBroker(directory);
     const previous = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
     process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = directory;
     try {
@@ -1530,7 +1177,6 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
 
   it("leaves synthetic core Stop messages queued for a supported context event", async () => {
     const directory = stateDirectory();
-    await startSourceBroker(directory);
     const previous = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
     process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = directory;
     try {
@@ -1588,13 +1234,15 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     expect(boundary.stdout).toBe("");
     const relay = await runNodeChild([bundledSessionMessageRelay], { env });
     expect(relay.status, relay.stderr).toBe(2);
-    expect(await readdir(directory)).toContain("broker.token");
+    // The boundary opened the shared store in place; no broker endpoint, token, certificate or lock exists in 3.0.
+    const entries = await readdir(directory);
+    expect(entries).toContain("session-messages.sqlite3");
+    expect(entries.filter((name) => /^(endpoint\.json|broker)/u.test(name))).toEqual([]);
     expect(await readdir(fallback)).toEqual([]);
   }, 30_000);
 
   it("keeps Claude Code Stop context delivery enabled", async () => {
     const directory = stateDirectory();
-    await startSourceBroker(directory);
     const previous = process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR;
     process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = directory;
     try {
@@ -1626,22 +1274,6 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
       tool_name: "mcp__agent_governance_suite__send_session_message", tool_input: {} }, syntheticRootHost);
     expect(child).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
   });
-
-  it("does not speak plaintext on the loopback port", async () => {
-    const directory = stateDirectory();
-    await ensureSessionMessageBroker(directory);
-    const endpoint = JSON.parse(await readFile(path.join(directory, "endpoint.json"), "utf8")) as { port: number };
-    const response = await new Promise<string>((resolve) => {
-      let output = "";
-      const socket = net.createConnection({ host: "127.0.0.1", port: endpoint.port });
-      socket.setTimeout(2000, () => socket.destroy());
-      socket.once("connect", () => socket.end('{"operation":"ping"}\n'));
-      socket.on("data", (chunk: Buffer) => { output += chunk.toString("utf8"); });
-      socket.once("close", () => resolve(output));
-      socket.once("error", () => resolve(output));
-    });
-    expect(response).not.toContain('"ok":true');
-  });
 });
 
 describe("session message MCP tools", () => {
@@ -1670,7 +1302,7 @@ describe("session message MCP tools", () => {
 
   const payload = (response: unknown) => JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: Record<string, unknown>; error: { code: string; message: string } | null };
 
-  it("reports an overlong Unicode body as INVALID_INPUT before broker access", async () => {
+  it("reports an overlong Unicode body as INVALID_INPUT before storage access", async () => {
     const service = new SessionMessageService(stateDirectory());
     await expect(service.prepare({
       _sessionBinding: { host: "fake-host", sessionId: "sender" },
@@ -1738,7 +1370,6 @@ describe("session message MCP tools", () => {
   }, 30_000);
   it("acknowledges processed peers in one bound batch without dropping foreign or unclaimed messages", async () => {
     const directory = stateDirectory();
-    await startSourceBroker(directory);
     const client = await connect(directory);
     const sender = {host: "producer", sessionId: "main"};
     const target = {host: "consumer", sessionId: "main"};

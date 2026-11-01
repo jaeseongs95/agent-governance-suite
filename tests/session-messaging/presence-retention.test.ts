@@ -1,14 +1,12 @@
 import { spawn } from "node:child_process";
 import { once } from "node:events";
-import { copyFileSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { copyFileSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { performance } from "node:perf_hooks";
 import { DatabaseSync } from "node:sqlite";
-import { fileURLToPath } from "node:url";
 import { afterEach, expect, it, vi } from "vitest";
-import { waitForSessionMessageBrokerReady } from "../../mcp-server/src/session-message-client.js";
-import { dispatchSessionMessageBrokerOperation } from "../../mcp-server/src/session-message-broker.js";
+import { closeSessionMessaging } from "../../mcp-server/src/session-message-client.js";
+import { dispatchSessionMessageOperation } from "../../mcp-server/src/session-message-operations.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import * as protocol from "../../mcp-server/src/session-message-protocol.js";
 import * as storeModule from "../../mcp-server/src/session-message-store.js";
@@ -34,10 +32,10 @@ type Store = InstanceType<typeof SessionMessageStore>;
 const RETENTION = (storeModule as Record<string, unknown>).PRESENCE_RETENTION_MS as number;
 const MAX_TARGETS = (protocol as Record<string, unknown>).SESSION_PRESENCE_LIST_MAX_TARGETS as number;
 const HOUR = 3600_000;
-const sourceBroker = fileURLToPath(new URL("../../mcp-server/src/session-message-broker.ts", import.meta.url));
+const HOST_PID = 4242;
 const capabilities = { supportedInjection: ["peer-wake", "tool-boundary"] as Array<"peer-wake" | "tool-boundary">, idleWake: "silent" as const };
 const cleanup: Array<() => void | Promise<void>> = [];
-// Reverse order: a broker exits and stores close before their directory goes (Windows cannot remove open files).
+// Reverse order: client connections and stores close before their directory goes (Windows cannot remove open files).
 afterEach(async () => { vi.unstubAllEnvs(); for (const task of cleanup.splice(0).reverse()) await task(); });
 
 function directory(): string {
@@ -45,80 +43,11 @@ function directory(): string {
   cleanup.push(() => rmSync(created, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 }));
   return created;
 }
-
-/** Test-only observation; the native child and the original 5000ms readiness check stay unchanged. */
-async function observedBroker(label: "large-board" | "slow-board", state: string, imports: string[] = [], env?: NodeJS.ProcessEnv) {
-  const started = performance.now();
-  const trace: Record<string, unknown>[] = [];
-  const safeCodes = new Set(["ETIMEDOUT", "ENOENT", "EACCES", "EPERM", "EINTR", "ENOBUFS", "ERR_CHILD_PROCESS_STDIO_MAXBUFFER"]);
-  const safeCode = (error: unknown) => {
-    try { const value = Object.getOwnPropertyDescriptor(error, "code")?.value; return safeCodes.has(value) ? value : null; }
-    catch { return null; }
-  };
-  let stderrBytes = 0;
-  let discarded = 0;
-  let tail = "";
-  let readinessStartedAtMs: number | null = null;
-  const elapsed = () => performance.now() - started;
-  const windowsQueryPhases = () => {
-    if (process.platform !== "win32") return [];
-    try {
-      const text = readFileSync(path.join(state, "startup-query-phases.log"), "utf8");
-      return text.length <= 1024 ? text.split(/\r?\n/u).filter(line => /^[1-8]:(?:script-enter|query-returned|query-finally)$/u.test(line)).slice(0, 24) : [];
-    } catch { return []; } // Missing observation is UNKNOWN, never query success.
-  };
-  const child = spawn(process.execPath, ["--import", new URL("./fixtures/presence-startup-trace.mjs", import.meta.url).href,
-    "--import", "tsx", ...imports.flatMap(value => ["--import", value]), sourceBroker, "--state-directory", state],
-  { windowsHide: true, stdio: ["ignore", "ignore", "pipe"], ...(env ? { env } : {}) });
-  const report = (phase: string, code: string | null = null) => {
-    try { console.info("AGS_PRESENCE_PARENT " + JSON.stringify({ label, phase, elapsedMs: elapsed(), readinessStartedAtMs, code,
-      exitCode: child.exitCode, signalCode: child.signalCode, stderrBytes, discarded, trace, windowsQueryPhases: windowsQueryPhases() })); }
-    catch { /* Diagnostics must not replace the readiness or cleanup result. */ }
-  };
-  child.stderr!.on("data", (chunk: Buffer) => {
-    stderrBytes += chunk.length;
-    const lines = (tail + chunk.toString("utf8")).split("\n");
-    tail = lines.pop()!;
-    if (tail.length > 1024) { tail = ""; discarded++; }
-    for (const line of lines) {
-      // Drain all bytes; retain only bounded, explicitly shaped, path-free preload records.
-      if (trace.length >= 20 || line.length > 512 || !line.startsWith("AGS_PRESENCE_STARTUP ")) { discarded++; continue; }
-      try {
-        const value = JSON.parse(line.slice("AGS_PRESENCE_STARTUP ".length)) as Record<string, unknown>;
-        if (!value || !["preload", "powershell-start", "powershell-end", "keygen-start", "keygen-end", "tls-create", "tls-created", "tls-listening"].includes(value.event as string)
-          || typeof value.atMs !== "number" || !Number.isFinite(value.atMs) || value.atMs < 0) { discarded++; continue; }
-        const record: Record<string, unknown> = { event: value.event, childMs: value.atMs, receivedAtMs: elapsed() };
-        if (value.event === "powershell-start" || value.event === "powershell-end") {
-          if (!Number.isInteger(value.call) || (value.call as number) < 1 || (value.call as number) > 8) { discarded++; continue; }
-          record.call = value.call;
-        }
-        if (value.event === "powershell-start") {
-          if (["broker-lock", "relay-sync", "hook-sync", "unknown"].includes(value.caller as string)) record.caller = value.caller;
-          if (["self-start-token", "peer-start-token", "other"].includes(value.kind as string)) record.kind = value.kind;
-        }
-        if (value.event === "powershell-end") {
-          if (typeof value.durationMs !== "number" || !Number.isFinite(value.durationMs) || value.durationMs < 0
-            || !["return", "throw"].includes(value.outcome as string)) { discarded++; continue; }
-          record.durationMs = value.durationMs; record.outcome = value.outcome;
-          record.code = safeCodes.has(value.code as string) ? value.code : null;
-        }
-        trace.push(record);
-      } catch { discarded++; }
-    }
-  });
-  child.stderr!.on("error", error => report("stderr-error", safeCode(error)));
-  child.once("spawn", () => report("spawn"));
-  child.once("error", error => report("child-error", safeCode(error)));
-  child.once("exit", () => report("exit"));
-  // Observe close without introducing a new cleanup wait; the existing runner owns all descendants.
-  child.once("close", () => report("closed-drained"));
-  cleanup.push(async () => {
-    if (child.exitCode === null && child.signalCode === null) {
-      const exit = once(child, "exit"); report("cleanup-kill"); child.kill(); await exit;
-    }
-  });
-  try { readinessStartedAtMs = elapsed(); await waitForSessionMessageBrokerReady(state, child, 5000); report("ready"); }
-  catch (error) { report("ready-failed", safeCode(error)); throw error; }
+/** A state directory the service reaches through this process's in-process client. */
+function serviceState(): string {
+  const created = directory();
+  cleanup.push(() => closeSessionMessaging(created));
+  return created;
 }
 
 function open(database: string): Store {
@@ -131,10 +60,17 @@ function born(store: Store, sessionId: string, instanceId: string, at: number, h
     deliveryCapabilities: capabilities, collaborationId: "collaboration-presence-retention",
     workspaceId: `/work/space/presence-retention/projects/agent-governance-suite-${sessionId}`, role: "implementation-writer" }, at);
 }
-function relay(store: Store, sessionId: string, at: number) {
-  store.acquireRelay({ host: "portable", sessionId, transport: "portable", relayId: `relay-${sessionId}`, pid: process.pid, parentPid: process.pid }, at);
+/** The current birth's relay: its grant, then the relay's first tick, which binds the host birth. Returns the fencing relay id. */
+function relay(store: Store, sessionId: string, at: number): string {
+  const identity = { host: "portable", sessionId, transport: "portable" };
+  const instanceId = store.presence(identity, at).instanceId!;
+  const { relayId } = store.grantRelay({ ...identity, instanceId, codeDigest: null, hostPid: HOST_PID }, at);
+  expect(relayId).not.toBeNull();
+  expect(store.relayTick({ ...identity, relayId: relayId!, instanceId, includePending: false, hostStart: "start-1" }, at))
+    .toMatchObject({ alive: true, hostBound: true });
+  return relayId!;
 }
-/** A real broker reads the wall clock, so rows meant to be live get a lease measured from now, after the slow seeding. */
+/** The service reads the wall clock, so rows meant to be live get a lease measured from now, after the slow seeding. */
 function keepLive(store: Store, sessionIds: string[]) {
   const now = Date.now();
   for (const sessionId of sessionIds) {
@@ -167,12 +103,12 @@ function largeFixture(database: string, now: number) {
       born(store, `recent-${index}`, `recent-${index}`, now - HOUR);
       store.endPresence({ host: "portable", sessionId: `recent-${index}` }, "session-end", `recent-${index}`, now - HOUR + 1000);
     }
-    // Relay leases go in directly: acquireRelay prunes, and the broker must first meet the full database.
+    // Relay leases go in directly, so the first pruning operation is the service's against the full database.
     for (const sessionId of ["live-0", "live-1"]) {
       born(store, sessionId, sessionId, now - 1000);
-      store.database.prepare(`INSERT INTO relay_leases (host, session_id, transport, relay_id, pid, parent_pid, lease_until, updated_at)
-        VALUES ('portable', ?, 'portable', ?, ?, ?, ?, ?)`).run(sessionId, `relay-${sessionId}`, process.pid, process.pid,
-        new Date(now + 60_000).toISOString(), new Date(now - 1000).toISOString());
+      store.database.prepare(`INSERT INTO relay_leases (host, session_id, transport, instance_id, relay_id, code_digest, granted_at, lease_until, updated_at)
+        VALUES ('portable', ?, 'portable', ?, ?, NULL, ?, ?, ?)`).run(sessionId, sessionId, `relay-${sessionId}`,
+        new Date(now - 1000).toISOString(), new Date(now + 60_000).toISOString(), new Date(now - 1000).toISOString());
     }
     keepLive(store, ["live-0", "live-1"]);
     store.database.exec("COMMIT");
@@ -180,11 +116,10 @@ function largeFixture(database: string, now: number) {
   } finally { store.close(); }
 }
 
-it("serves board liveness from a 342-identity, 1302-row database through a real broker in one request", async () => {
-  const state = directory();
+it("serves board liveness from a 342-identity, 1302-row database through the in-process service in one operation", async () => {
+  const state = serviceState();
   const now = Date.now();
   expect(largeFixture(path.join(state, "session-messages.sqlite3"), now)).toEqual({ rows: 1302, identities: 342 });
-  await observedBroker("large-board", state);
   const self = { host: "portable", sessionId: "live-0" };
   const result = await new SessionMessageService(state).listCurrentPresence(self);
   // Only the two live sessions: the 40 ended an hour ago and the 300 gone for days are not listed.
@@ -239,22 +174,27 @@ it("keeps retirement, presence and autoWake identical to a run that deletes no p
   const store = new SessionMessageStore(database);
   const t0 = Date.now() - 3 * 24 * HOUR;
   const target = (sessionId: string) => ({ host: "portable", sessionId });
-  const wake = (sessionId: string, instanceId: string, at: number) => {
+  const wake = (sessionId: string, instanceId: string, relayId: string, at: number) => {
     store.send({ sender: { host: "portable", sessionId: "sender" }, target: target(sessionId), messageId: `body-${sessionId}`, body: "b", ttlSeconds: 86400 }, at);
     const reserved = store.reserveManagedWake({ ...target(sessionId), nonce: `${sessionId}-nonce-abcdefghijklmnopqrstu`, instanceId,
-      transport: "portable", relayId: `relay-${sessionId}`, resume: true }, at);
+      transport: "portable", relayId, resume: true }, at);
     expect(reserved.dispatch).toBe(true);
     const started = store.startManagedWake(reserved.attempt!, 600_000, at + 1);
     expect(store.recordManagedWakeOutcome(started.attempt!, { result: "handed-off" }, 600_000, at + 2)).toBe(true);
   };
   // A: a handed-off wake of an old ended birth; a newer birth of the same instance is live now.
-  born(store, "reborn", "same", t0); relay(store, "reborn", t0); wake("reborn", "same", t0);
+  born(store, "reborn", "same", t0); wake("reborn", "same", relay(store, "reborn", t0), t0);
   store.endPresence(target("reborn"), "session-end", "same", t0 + 5000);
+  // 3.0 (I2, 2.6): the end of its birth releases the old hand-off as birth-ended; it is never observed.
+  store.prune(t0 + 5001);
+  const rebornWakes = (current: Store) => current.database.prepare(
+    "SELECT state, release_reason, observed_at FROM wake_nonces WHERE session_id = 'reborn' ORDER BY rowid").all().map((row) => ({ ...row }));
+  expect(rebornWakes(store)).toEqual([{ state: "released", release_reason: "birth-ended", observed_at: null }]);
   // B: an older birth still live while a newer instance of the same identity ended long ago (latest row is not live).
   born(store, "split", "live-old", t0); born(store, "split", "ended-new", t0 + 1000);
   store.endPresence(target("split"), "session-end", "ended-new", t0 + 2000);
   // C: a handed-off wake of an identity whose only birth ended long ago and never came back.
-  born(store, "gone", "gone", t0); relay(store, "gone", t0); wake("gone", "gone", t0);
+  born(store, "gone", "gone", t0); wake("gone", "gone", relay(store, "gone", t0), t0);
   store.endPresence(target("gone"), "session-end", "gone", t0 + 5000);
   // D: recently ended, E: live with relay.
   born(store, "recent", "recent", Date.now() - HOUR); store.endPresence(target("recent"), "session-end", "recent", Date.now() - HOUR + 1);
@@ -265,26 +205,28 @@ it("keeps retirement, presence and autoWake identical to a run that deletes no p
   const a = open(database); const b = open(control);
   b.database.exec("CREATE TRIGGER keep_presence BEFORE DELETE ON session_presence BEGIN SELECT RAISE(IGNORE); END;");
   // Keep every presence row alive in the live identities across the gap without creating a new generation.
+  // split's current (latest) birth has ended, so no relay can be granted to it in either run.
+  const rebornRelay = new Map<Store, string>();
   for (const current of [a, b]) {
     current.database.prepare("UPDATE session_presence SET lease_until = ? WHERE instance_id = 'live-old'").run(new Date(now + 60_000).toISOString());
-    born(current, "reborn", "same", now - 10); relay(current, "reborn", now - 10); relay(current, "split", now - 10);
+    born(current, "reborn", "same", now - 10); rebornRelay.set(current, relay(current, "reborn", now - 10));
     born(current, "live", "live", now - 10); relay(current, "live", now - 10);
   }
   a.prune(now); b.prune(now);
   expect(a.database.prepare("SELECT count(*) AS n FROM session_presence").get()).not.toEqual(b.database.prepare("SELECT count(*) AS n FROM session_presence").get());
   expect(a.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid").all()).toEqual(b.database.prepare("SELECT * FROM wake_nonces ORDER BY rowid").all());
   expect(a.database.prepare("SELECT * FROM messages ORDER BY rowid").all()).toEqual(b.database.prepare("SELECT * FROM messages ORDER BY rowid").all());
-  // D0353 / AC08: 세대·보관 기간·일반 활동은 특정 입력 표식의 소비 증거가 아니다. 3.0 (I2, 2.6): the old birth's
-  // hand-off is released as birth-ended, never observed, and the live birth is rung for its own body in both runs.
+  // D0353 / AC08: 세대·보관 기간·일반 활동은 특정 입력 표식의 소비 증거가 아니다. The old birth's released hand-off
+  // left the store after its 2.7 retention (WAKE_RESEND_MAX_MS) without ever being observed, and the live birth is rung
+  // for its own body in both runs.
   for (const current of [a, b]) {
     current.send({ sender: { host: "portable", sessionId: "sender" }, target: target("reborn"),
       messageId: "reborn-after-activity-body", body: "new pending body", ttlSeconds: 600 }, now + 1);
     current.observeNativeInput(target("reborn"), now + 1);
     current.prune(now + 2);
     expect(current.reserveManagedWake({ ...target("reborn"), nonce: "reborn-after-activity-abcdefghijklmnop", instanceId: "same",
-      transport: "portable", relayId: "relay-reborn", resume: true }, now + 2).dispatch).toBe(true);
-    expect({ ...current.database.prepare("SELECT state, release_reason, observed_at FROM wake_nonces WHERE session_id = 'reborn' ORDER BY rowid LIMIT 1").get() })
-      .toEqual({ state: "released", release_reason: "birth-ended", observed_at: null });
+      transport: "portable", relayId: rebornRelay.get(current)!, resume: true }, now + 2).dispatch).toBe(true);
+    expect(rebornWakes(current)).toEqual([{ state: "reserved", release_reason: null, observed_at: null }]);
   }
   for (const sessionId of ["reborn", "split", "recent", "live"]) {
     expect(withoutCheckedAt(a.listPresence(now, [target(sessionId)])[0]!)).toEqual(withoutCheckedAt(b.listPresence(now, [target(sessionId)])[0]!));
@@ -301,10 +243,10 @@ it("gives a purged instance's rebirth a later generation, so an old-generation m
   const store = open(path.join(state, "session-messages.sqlite3"));
   const target = { host: "portable", sessionId: "rebirth" };
   const t0 = Date.now() - 2 * 24 * HOUR;
-  const old = born(store, "rebirth", "same", t0); relay(store, "rebirth", t0);
+  const old = born(store, "rebirth", "same", t0); const oldRelay = relay(store, "rebirth", t0);
   store.send({ sender: { host: "portable", sessionId: "sender" }, target, messageId: "rebirth-old-body", body: "b", ttlSeconds: 86400 }, t0);
   const reserved = store.reserveManagedWake({ ...target, nonce: "rebirth-old-nonce-abcdefghijklmnopqr", instanceId: "same", transport: "portable",
-    relayId: "relay-rebirth", resume: true }, t0);
+    relayId: oldRelay, resume: true }, t0);
   const attempt = store.startManagedWake(reserved.attempt!, 600_000, t0 + 1).attempt!;
   expect(store.recordManagedWakeOutcome(attempt, { result: "handed-off" }, 600_000, t0 + 2)).toBe(true);
   store.endPresence(target, "session-end", "same", t0 + 3);
@@ -325,9 +267,10 @@ it("gives a purged instance's rebirth a later generation, so an old-generation m
   // (birth-ended) and only records the late arrival; it never becomes observed.
   expect({ ...store.database.prepare("SELECT state, release_reason, observed_at, consumed_at, late_observed_at FROM wake_nonces WHERE attempt_id = ?").get(attempt.attemptId) })
     .toEqual({ state: "released", release_reason: "birth-ended", observed_at: null, consumed_at: null, late_observed_at: new Date(now + 2).toISOString() });
-  relay(store, "rebirth", now + 3);
+  const newRelay = relay(store, "rebirth", now + 3);
+  expect(newRelay).not.toBe(oldRelay);
   const next = store.reserveManagedWake({ ...target, nonce: "rebirth-new-nonce-abcdefghijklmnopqr", instanceId: "same", transport: "portable",
-    relayId: "relay-rebirth", resume: true }, now + 4);
+    relayId: newRelay, resume: true }, now + 4);
   expect(next.dispatch).toBe(true);
   expect(next.attempt!.attemptId).not.toBe(attempt.attemptId);
 });
@@ -365,21 +308,21 @@ it("bounds list-presence: batches fit the response limit and oversized or overlo
       collaborationId: escaped(200), workspaceId: escaped(500), role: escaped(100) }, now);
     store.endPresence(target, escaped(100), escaped(128), now + 1);
   }
-  const data = dispatchSessionMessageBrokerOperation(store, "list-presence", { targets: worst });
+  const data = dispatchSessionMessageOperation(store, "list-presence", { targets: worst });
   expect((data as { sessions: unknown[] }).sessions).toHaveLength(MAX_TARGETS);
   expect(Buffer.byteLength(`${JSON.stringify({ ok: true, data })}\n`)).toBeLessThanOrEqual(protocol.SESSION_MESSAGE_MAX_RESPONSE_BYTES);
-  expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", { targets: [...worst, { host: "portable", sessionId: "extra" }] }))
+  expect(() => dispatchSessionMessageOperation(store, "list-presence", { targets: [...worst, { host: "portable", sessionId: "extra" }] }))
     .toThrow(/targets must list/);
-  expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", { targets: [] })).toThrow(/targets must list/);
+  expect(() => dispatchSessionMessageOperation(store, "list-presence", { targets: [] })).toThrow(/targets must list/);
   // 3.0: the untargeted request is gone; listing every session is list-current-presence.
-  expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", {})).toThrow(/targets must list/);
+  expect(() => dispatchSessionMessageOperation(store, "list-presence", {})).toThrow(/targets must list/);
 });
 
 it("lists every current session through list-current-presence, never through an untargeted list-presence", () => {
   const store = open(":memory:");
   born(store, "one", "one", Date.now());
-  expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", {})).toThrow(/targets must list/);
-  expect(dispatchSessionMessageBrokerOperation(store, "list-current-presence", { self: { host: "portable", sessionId: "one" } }))
+  expect(() => dispatchSessionMessageOperation(store, "list-presence", {})).toThrow(/targets must list/);
+  expect(dispatchSessionMessageOperation(store, "list-current-presence", { self: { host: "portable", sessionId: "one" } }))
     .toMatchObject({ sessions: [{ sessionId: "one", state: "online" }], truncated: 0 });
   // A retained row outlives any reservation that could still refer to its birth; a later attempt of a purged birth
   // reads presence-unknown and is released as birth-ended, so no 3.0 grace window depends on retention.

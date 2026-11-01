@@ -1,30 +1,12 @@
-import { readRelayCodeDigest } from "./relay-code-identity.js";
-import { randomUUID } from "node:crypto";
-
 import { failureContext, producerFailure, producerFailureReason } from "./failure-diagnostics.js";
 import { newWakeNonce, sessionMessageRequest, wakeMessage } from "./session-message-client.js";
-import { processExists, processIdentityState, type ProcessIdentityState } from "./process-identity.js";
+import { watchHostProcess, type HostWatch } from "./host-process-watch.js";
 import { persistRelayFailure, type WakeDispatchPort, type WakeDispatchOutcome } from "./session-message-wake-port.js";
 import { transportDeliveryCapabilities, transportWakePort } from "./wake-transports.js";
 import type { WakeReservation } from "./session-message-store.js";
 import { createRelayWakeObservation, type RelayWakeObservation } from "./relay-wake-observation.js";
 
-// Capture once: later file replacement must not make this running relay report new code.
-const STARTUP_CODE_DIGEST = readRelayCodeDigest(new URL(import.meta.url));
 const LOOP_MS = 5000;
-const IDENTITY_RECHECK_MS = 10 * 60_000;
-const IDENTITY_RETRY_MS = 60_000;
-const IDENTITY_UNKNOWN_LIMIT = 3;
-export function relayIdentityDecision(identity: ProcessIdentityState, previousUnknowns: number): {
-  proceed: boolean;
-  stop: boolean;
-  unknowns: number;
-} {
-  if (identity === "mismatch") return { proceed: false, stop: true, unknowns: 0 };
-  if (identity === "match") return { proceed: true, stop: false, unknowns: 0 };
-  const unknowns = previousUnknowns + 1;
-  return { proceed: false, stop: unknowns >= IDENTITY_UNKNOWN_LIMIT, unknowns };
-}
 
 export type SessionMessageTransport = string;
 
@@ -45,17 +27,21 @@ export interface RelayOptions {
   sessionId: string;
   instanceId: string;
   transport: SessionMessageTransport;
+  /** The host process the granting hook resolved. */
   parentPid: number;
-  parentStartToken: string;
-  /** Optional verified startup reservation; absence retains legacy acquisition. */
-  relayId?: string;
-  /** Boundary-hook re-serve of a generation that lost its relay: one acquisition attempt, no wait loop. */
-  recovery?: boolean;
+  /** The grant's holder id; the store fences every other relay of this lease (docs/ags30-broker-redesign.md 3.3). */
+  relayId: string;
+  /** The spawning hook's own start: a process with the host PID born later is not the host (3.4). */
+  hostAliveAt?: string;
+  /** A birth the caller already read (adapter observation); the watcher must see exactly this one. */
+  parentStartToken?: string;
 }
 
-// Startup outlasts one stale lease (RELAY_LEASE_MS 15s) left by a superseded or killed relay.
-const STARTUP_ACQUIRE_ATTEMPTS = 8;
-const ACQUIRE_RETRY_MS = 3000;
+export interface RelayDependencies {
+  request?: typeof sessionMessageRequest;
+  watch?: (pid: number, aliveAt: string | undefined) => HostWatch;
+  delay?: (milliseconds: number, stop: Promise<void>) => Promise<void>;
+}
 
 export function transportWakeCapabilities(transport: SessionMessageTransport): {
   wakeVisibility: "silent" | "user-message" | "none";
@@ -65,186 +51,95 @@ export function transportWakeCapabilities(transport: SessionMessageTransport): {
   return { wakeVisibility: idleWake, canWakeSilently: idleWake === "silent" };
 }
 
-async function delay(milliseconds: number): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, milliseconds));
+function delay(milliseconds: number, stop: Promise<void>): Promise<void> {
+  let timer: NodeJS.Timeout | undefined;
+  return Promise.race([new Promise<void>((resolve) => { timer = setTimeout(resolve, milliseconds); }), stop]).finally(() => clearTimeout(timer));
 }
 
-/** One dispatch cycle shared by the loop and isolated process regression fixtures. */
+/** One dispatch cycle shared by the loop and isolated process regression fixtures. Lease renewal runs beside it. */
 export async function dispatchManagedWake(options: Pick<RelayOptions, "host" | "sessionId" | "instanceId" | "transport">,
   relayId: string, port: WakeDispatchPort, request: typeof sessionMessageRequest = sessionMessageRequest,
   observation?: RelayWakeObservation): Promise<boolean> {
   if (port.capabilities.idleWake === "none" || !port.capabilities.supportedInjection.includes("peer-wake")) return false;
   const target = { host: options.host, sessionId: options.sessionId };
-  let renewal: Promise<void> | null = null;
-  const heartbeat = setInterval(() => {
-    if (renewal) return;
-    renewal = request("relay-tick", { target, transport: options.transport, relayId,
-      instanceId: options.instanceId, includePending: false }).then(() => {}, () => {})
-      .finally(() => { renewal = null; });
-  }, LOOP_MS);
+  const reserved = await request<WakeReservation>("reserve-wake", { target, nonce: newWakeNonce(),
+    instanceId: options.instanceId, transport: options.transport, relayId, resume: true });
+  if (!reserved.dispatch || !reserved.attempt) return false;
+  // The resend base comes from this port's declaration, never from a client hook (3.1).
+  const started = await request<WakeReservation>("start-wake", { attempt: reserved.attempt, resendBaseMs: port.resendBaseMs });
+  if (!started.dispatch || !started.attempt) return false;
+  let outcome: WakeDispatchOutcome = { result: "unknown", reasonCode: "ADAPTER_THREW" };
   try {
-    const reserved = await request<WakeReservation>("reserve-wake", { target, nonce: newWakeNonce(),
-      instanceId: options.instanceId, transport: options.transport, relayId, resume: true });
-    if (!reserved.dispatch || !reserved.attempt) return false;
-    // The resend base comes from this port's declaration, never from a client hook (3.1).
-    const started = await request<WakeReservation>("start-wake", { attempt: reserved.attempt, resendBaseMs: port.resendBaseMs });
-    if (!started.dispatch || !started.attempt) return false;
-    let outcome: WakeDispatchOutcome = { result: "unknown", reasonCode: "ADAPTER_THREW" };
-    try {
-      observation?.record("dispatch-attempt");
-      outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce), observation?.record);
-    }
-    catch { /* A thrown adapter cannot prove that no bytes were submitted. */ }
-    // A lost response leaves the row started; the store's start timeout turns it unknown with a resend deadline.
-    await request("record-wake-outcome", { attempt: started.attempt, outcome, resendBaseMs: port.resendBaseMs });
-    return true;
-  } finally {
-    clearInterval(heartbeat);
-    if (renewal) await renewal;
+    observation?.record("dispatch-attempt");
+    outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce), observation?.record);
   }
+  catch { /* A thrown adapter cannot prove that no bytes were submitted. */ }
+  // A lost record leaves the row started; the store's start timeout turns it unknown with a resend deadline.
+  await request("record-wake-outcome", { attempt: started.attempt, outcome, resendBaseMs: port.resendBaseMs });
+  return true;
 }
 
-export async function runSessionMessageRelay(options: RelayOptions, port: WakeDispatchPort = transportWakePort(options.transport)): Promise<void> {
+const HOST_ENDED = new Set(["HOST_PROCESS_ENDED", "HOST_PROCESS_GONE"]);
+
+/**
+ * Serves one granted lease until the host ends or the lease is fenced. Renewal ticks every LOOP_MS and is never queued
+ * behind a dispatch (D0003). No PID is trusted: liveness is the watcher's handle (Windows) or starttime (Linux).
+ */
+export async function runSessionMessageRelay(options: RelayOptions, port: WakeDispatchPort = transportWakePort(options.transport),
+  dependencies: RelayDependencies = {}): Promise<void> {
+  const request = dependencies.request ?? sessionMessageRequest;
+  const wait = dependencies.delay ?? delay;
   const observation = createRelayWakeObservation(options.transport, port);
-  let normalEnd = false;
-  try {
   const target = { host: options.host, sessionId: options.sessionId };
-  if (options.relayId !== undefined && (!/^verified-relay-v1:[0-9a-f-]{36}:[0-9a-f]{64}$/u.test(options.relayId) || !/^host-process-v1:[0-9a-f]{64}$/u.test(options.instanceId) || !options.relayId.endsWith(":"+options.instanceId.slice("host-process-v1:".length)))) throw new Error("Invalid relay startup reservation.");
-  const relayId = options.relayId ?? randomUUID();
-  let acquired = false;
-  let acquisitionUnknowns = 0;
-  // Acquisition failures are not exceptions; keep the last blocking cause so a missing relay is diagnosable.
-  let blocked = "RELAY_LEASE_HELD";
-  const attempts = options.recovery ? 1 : options.relayId ? 6 : STARTUP_ACQUIRE_ATTEMPTS;
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
-    const identity = processIdentityState(options.parentPid, options.parentStartToken);
-    const decision = relayIdentityDecision(identity, acquisitionUnknowns);
-    acquisitionUnknowns = decision.unknowns;
-    if (decision.stop) {
-      reportRelayFailure("acquire", producerFailure("RELAY_PARENT_IDENTITY_STOPPED", "The relay parent identity did not verify."));
-      return;
-    }
-    blocked = decision.proceed ? "RELAY_LEASE_HELD" : "RELAY_PARENT_IDENTITY_UNKNOWN";
-    try {
-      if (decision.proceed) {
-        const result = await sessionMessageRequest<{ acquired: boolean }>("acquire-relay", {
-          target,
-          transport: options.transport,
-          relayId,
-          pid: process.pid,
-          codeDigest: STARTUP_CODE_DIGEST,
-          parentPid: options.parentPid,
-          instanceId: options.instanceId,
-          ...(options.relayId ? {parentStartToken:options.parentStartToken}:{}),
-        });
-        acquired = result.acquired;
-        if (acquired) break;
-      }
-    } catch (error) {
-      blocked = "RELAY_ACQUIRE_REQUEST_FAILED";
-      reportRelayFailure("acquire", error); // Retry while a stale lease expires.
-    }
-    if (attempt + 1 < attempts) await delay(ACQUIRE_RETRY_MS);
-  }
-  if (!acquired) {
-    if (blocked === "RELAY_LEASE_HELD") {
-      try {
-        const current = await sessionMessageRequest<{ presence: { instanceId: string | null } }>("presence", { target });
-        if (current.presence.instanceId !== options.instanceId) blocked = "RELAY_GENERATION_SUPERSEDED";
-      } catch { /* Keep the lease cause; the request failure is not the acquisition cause. */ }
-    }
-    reportRelayFailure("acquire", producerFailure(blocked, "Relay acquisition ended without a lease."));
-    return;
-  }
-
+  let ended: string | null = null;
+  let wakeStop!: () => void;
+  const stopped = new Promise<void>((resolve) => { wakeStop = resolve; });
+  const stop = (reason: string) => { ended ??= reason; wakeStop(); };
+  let hostStart: string | undefined;
+  let hostSent = false;
+  let dispatching: Promise<void> | null = null;
+  let watcher: HostWatch | undefined;
   try {
-
-    let identityUnknowns = 0;
-    let nextIdentityCheck = Date.now() + IDENTITY_RECHECK_MS;
-    // Every end other than the parent's exit leaves a fixed reason in the local record.
-    const ended = (reason: string): void => { reportRelayFailure("run", producerFailure(reason, "The relay ended before its parent.")); };
-    while (true) {
-    if (!processExists(options.parentPid)) { normalEnd = true; return; }
-    const now = Date.now();
-    let checkedIdentity: ProcessIdentityState | null = null;
-    if (now >= nextIdentityCheck) {
-      checkedIdentity = processIdentityState(options.parentPid, options.parentStartToken);
-      if (checkedIdentity === "mismatch") { ended("RELAY_PARENT_IDENTITY_MISMATCH"); return; }
-      if (checkedIdentity === "unknown") {
-        identityUnknowns += 1;
-        if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) { ended("RELAY_PARENT_IDENTITY_UNKNOWN_LIMIT"); return; }
-        nextIdentityCheck = now + IDENTITY_RETRY_MS;
-      } else {
-        identityUnknowns = 0;
-        nextIdentityCheck = now + IDENTITY_RECHECK_MS;
-      }
-    }
-    try {
-      let pending = await sessionMessageRequest<{ alive: boolean; count: number }>("relay-tick", {
-        target, transport: options.transport, relayId, instanceId: options.instanceId, includePending: port.capabilities.idleWake !== "none",
-      });
-      if (!pending.alive) {
-        const identity = checkedIdentity ?? (options.parentStartToken
-          ? processIdentityState(options.parentPid, options.parentStartToken)
-          : (processExists(options.parentPid) ? "match" : "mismatch"));
-        checkedIdentity = identity;
-        if (identity !== "match") { ended(identity === "unknown" ? "RELAY_LEASE_LOST_PARENT_UNKNOWN" : "RELAY_LEASE_LOST_PARENT_MISMATCH"); return; }
-        const reacquired = await sessionMessageRequest<{ acquired: boolean }>("acquire-relay", {
-          target,
-          transport: options.transport,
-          relayId,
-          pid: process.pid,
-          codeDigest: STARTUP_CODE_DIGEST,
-          parentPid: options.parentPid,
-          instanceId: options.instanceId,
-          ...(options.relayId ? { parentStartToken: options.parentStartToken } : {}),
+    try { watcher = (dependencies.watch ?? watchHostProcess)(options.parentPid, options.hostAliveAt); }
+    catch (error) { stop(producerFailureReason(error) ?? "HOST_WATCH_FAILED"); }
+    watcher?.bound.then((token) => {
+      if (options.parentStartToken !== undefined && token !== options.parentStartToken) stop("RELAY_PARENT_IDENTITY_MISMATCH");
+      else hostStart = token;
+    }, (error: unknown) => stop(producerFailureReason(error) ?? "HOST_WATCH_FAILED"));
+    void watcher?.exited.then(stop);
+    while (ended === null) {
+      try {
+        const binding = hostStart !== undefined && !hostSent ? hostStart : undefined;
+        const tick = await request<{ alive: boolean; count: number; hostBound: boolean }>("relay-tick", {
+          target, transport: options.transport, relayId: options.relayId, instanceId: options.instanceId,
+          includePending: port.capabilities.idleWake !== "none", ...(binding !== undefined ? { hostStart: binding } : {}),
         });
-        if (!reacquired.acquired) { ended("RELAY_LEASE_LOST_REACQUIRE_REFUSED"); return; }
-        pending = await sessionMessageRequest<{ alive: boolean; count: number }>("relay-tick", {
-          target, transport: options.transport, relayId, instanceId: options.instanceId, includePending: port.capabilities.idleWake !== "none",
-        });
-        if (!pending.alive) { ended("RELAY_LEASE_LOST_AFTER_REACQUIRE"); return; }
-      }
-      if (port.capabilities.idleWake === "none") {
-        observation?.record("none-skip");
-        await delay(LOOP_MS);
-        continue;
-      }
-      if (pending.count > 0) {
-        const identity = checkedIdentity ?? processIdentityState(options.parentPid, options.parentStartToken);
-        if (identity === "mismatch") { ended("RELAY_PARENT_IDENTITY_MISMATCH"); return; }
-        if (identity === "unknown") {
-          if (checkedIdentity === null) identityUnknowns += 1;
-          if (identityUnknowns >= IDENTITY_UNKNOWN_LIMIT) { ended("RELAY_PARENT_IDENTITY_UNKNOWN_LIMIT"); return; }
-          nextIdentityCheck = Math.min(nextIdentityCheck, now + IDENTITY_RETRY_MS);
-          await delay(LOOP_MS);
-          continue;
+        if (!tick.alive) { stop(binding !== undefined ? "RELAY_HOST_BIRTH_MISMATCH" : "RELAY_LEASE_LOST"); break; }
+        if (binding !== undefined) hostSent = true;
+        if (port.capabilities.idleWake === "none") observation?.record("none-skip");
+        else if (tick.count > 0 && tick.hostBound && dispatching === null) {
+          dispatching = dispatchManagedWake(options, options.relayId, port, request, observation).then(() => {},
+            // Messages remain durable. A committed start is never retried on an uncertain result.
+            (error: unknown) => reportRelayFailure("tick", error)).finally(() => { dispatching = null; });
         }
-        identityUnknowns = 0;
-        nextIdentityCheck = now + IDENTITY_RECHECK_MS;
-        await dispatchManagedWake(options, relayId, port, sessionMessageRequest, observation);
+      } catch (error) {
+        reportRelayFailure("tick", error);
       }
-    } catch (error) {
-      // Messages remain durable. A committed start is never retried on an uncertain response.
-      reportRelayFailure("tick", error);
-    }
-      await delay(LOOP_MS);
+      if (ended === null) await wait(LOOP_MS, stopped);
     }
   } finally {
+    if (dispatching) await dispatching;
+    watcher?.close();
+    const reason = ended ?? "RELAY_ENDED";
+    let normalEnd = HOST_ENDED.has(reason);
+    if (!normalEnd) reportRelayFailure("run", producerFailure(reason, "The relay ended before its host."));
     try {
-      if (options.relayId) {
-        await sessionMessageRequest("release-verified-relay",{target,transport:options.transport,relayId,instanceId:options.instanceId,pid:process.pid},undefined,{totalTimeoutMs:3000,noOperationReplay:true});
-      } else {
-        // Release only this acquisition's lease so a replacement relay need not wait for expiry.
-        await sessionMessageRequest("presence-end",{target,instanceId:options.instanceId,reason:"host-process-ended",relayId,pid:process.pid},undefined,{totalTimeoutMs:3000});
-      }
+      await request("release-relay", { target, transport: options.transport, relayId: options.relayId, instanceId: options.instanceId,
+        reason: normalEnd ? "host-process-ended" : "relay-ended" });
     } catch (error) {
       normalEnd = false;
       reportRelayFailure("release", error); // Lease expiry still provides an unreachable fallback.
     }
-  }
-  } finally {
-    // Includes acquisition exits, and follows dispatch renewal plus the existing release cleanup.
     observation?.end(normalEnd);
   }
 }

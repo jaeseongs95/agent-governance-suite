@@ -1,5 +1,5 @@
 // Session board 3.0 (docs/ags30-session-board-design.md 6.1, U1-U10). Real SQLite throughout; the only replaced boundary
-// is the broker socket in the MCP cases, where a real SessionMessageStore answers listCurrentPresence in-process.
+// is the messaging call in the MCP cases, where a real SessionMessageStore answers listCurrentPresence at a fixed clock.
 // Clocks are explicit; nothing waits on wall time.
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
@@ -263,7 +263,7 @@ describe("U7/U8 MCP board tools", () => {
       lastSuccessfulCheckAt: "2026-09-19T00:00:00.000Z", nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null,
     });
     const messages = new SessionMessageService();
-    // Broker socket replaced by the real store in-process; a null store is an unreachable broker.
+    // The messaging call answered by the real store at clock T; a null store is unavailable messaging.
     messages.listCurrentPresence = async (identity) => {
       if (!store) throw new Error("connect ECONNREFUSED (synthetic broker down)");
       return store.listCurrentPresence(T, identity);

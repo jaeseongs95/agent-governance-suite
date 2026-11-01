@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, test, vi } from 'vitest';
 import { SessionMessageStore, WAKE_OBSERVATION_WINDOW_MS, WAKE_QUIET_MS } from '../../mcp-server/src/session-message-store.ts';
-import { dispatchSessionMessageBrokerOperation as dispatch } from '../../mcp-server/src/session-message-broker.ts';
+import { dispatchSessionMessageOperation as dispatch } from '../../mcp-server/src/session-message-operations.ts';
 import '../../mcp-server/src/builtin-hook-host-adapters.ts';
 import { adaptHostInput, registerHookHostAdapter } from '../../mcp-server/src/host-input-adapter.ts';
 import { recordWakeHookObservation, wakeBackoffDelay, wakeHookObservationReader } from '../../mcp-server/src/session-message-wake-port.ts';
@@ -36,6 +36,9 @@ const target = { host: 'portable', sessionId: 'wake-target' };
 const sender = { host: 'portable', sessionId: 'liveness-sender' };
 const capabilities = { supportedInjection: ['peer-wake', 'tool-boundary'], idleWake: 'silent' };
 const iso = ms => new Date(ms).toISOString();
+// The synthetic host process the hook reported (the parent of the fixture processes) and the birth its relay's watcher bound.
+const HOST_PID = process.pid;
+const HOST_START = 'synthetic-host-start';
 const validator = new ContractValidator();
 const resources = [];
 afterEach(() => {
@@ -52,35 +55,54 @@ function fixture() {
   const store = new SessionMessageStore(database);
   resources.push({ directory, stores: [store] });
   const now = Date.now();
-  live(store, 'instance-1', 'relay-1', now);
-  return { directory, database, store, now };
+  // Relay grants get fresh random relay_ids; the fixture names them (relay-1, relay-2) so a case can address one.
+  const f = { directory, database, store, now, relays: new Map() };
+  live(f, 'instance-1', 'relay-1', now);
+  return f;
 }
-function live(store, instanceId, relayId, at) {
-  store.startPresence({ ...target, instanceId, transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
-    deliveryCapabilities: capabilities }, at);
-  store.acquireRelay({ ...target, transport: 'portable', relayId, pid: process.pid, parentPid: process.pid }, at);
+const relayId = (f, relay) => { const value = f.relays.get(relay); assert.ok(value, relay); return value; };
+/**
+ * The birth's relay: the hook grants a lease under a new relay_id, or, while this instance's live lease serves it, that
+ * relay keeps serving. Its tick renews the lease and binds the host birth, so it may ring.
+ */
+function serve(f, instanceId, relay, at) {
+  const grant = f.store.grantRelay({ ...target, transport: 'portable', instanceId, codeDigest: null, hostPid: HOST_PID }, at);
+  const live = f.store.liveRelay(target, 'portable', at);
+  const id = grant.relayId ?? (grant.reason === 'RELAY_ALIVE' && live?.instanceId === instanceId ? live.relayId : null);
+  assert.ok(id, grant.reason);
+  assert.deepEqual(f.store.relayTick({ ...target, transport: 'portable', relayId: id, instanceId, includePending: false, hostStart: HOST_START }, at),
+    { alive: true, count: 0, hostBound: true });
+  f.relays.set(relay, id);
 }
-/** Keeps one presence birth alive across a long fixture gap without a new generation. */
-function keepAlive(store, instanceId, relayId, at) {
-  store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ? AND ended_at IS NULL').run(iso(at + 60_000), instanceId);
-  store.acquireRelay({ ...target, transport: 'portable', relayId, pid: process.pid, parentPid: process.pid }, at);
-  assert.equal(store.presence(target, at).state, 'online');
+function live(f, instanceId, relay, at) {
+  f.store.startPresence({ ...target, instanceId, transport: 'portable', wakeVisibility: 'silent', canWakeSilently: true,
+    deliveryCapabilities: capabilities, hostPid: HOST_PID }, at);
+  serve(f, instanceId, relay, at);
+}
+/** Keeps one presence birth alive across a long fixture gap without a new generation (one extension models the relay's ticks). */
+function keepAlive(f, instanceId, relay, at) {
+  f.store.database.prepare('UPDATE session_presence SET lease_until = ? WHERE instance_id = ? AND ended_at IS NULL').run(iso(at + 60_000), instanceId);
+  const renewed = f.relays.has(relay) && f.store.database.prepare("UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE transport = 'portable' AND relay_id = ?")
+    .run(iso(at + 15_000), iso(at), f.relays.get(relay)).changes === 1;
+  // A pruned lease of the still-live birth is granted again at the next boundary.
+  if (!renewed) serve(f, instanceId, relay, at);
+  assert.equal(f.store.presence(target, at).state, 'online');
 }
 function body(store, id, at) { store.send({ sender, target, messageId: id, body: id, ttlSeconds: 86400 }, at); }
-function request(instanceId, relayId, nonce = `${instanceId}-next-nonce-abcdefghijklmnop`) {
-  return { ...target, nonce, instanceId, transport: 'portable', relayId, resume: true };
+function request(f, instanceId, relay, nonce = `${instanceId}-next-nonce-abcdefghijklmnop`) {
+  return { ...target, nonce, instanceId, transport: 'portable', relayId: relayId(f, relay), resume: true };
 }
-function begin(store, at, input = request('instance-1', 'relay-1', 'liveness-first-nonce-abcdefghijklmnop')) {
-  const reserved = store.reserveManagedWake(input, at);
+function begin(f, at, input = request(f, 'instance-1', 'relay-1', 'liveness-first-nonce-abcdefghijklmnop')) {
+  const reserved = f.store.reserveManagedWake(input, at);
   assert.equal(reserved.dispatch, true);
-  const started = store.startManagedWake(reserved.attempt, BASE, at + 1);
+  const started = f.store.startManagedWake(reserved.attempt, BASE, at + 1);
   assert.equal(started.dispatch, true);
   return started.attempt;
 }
 /** Hands a marker to the host (outcome at f.now + 2) with one pending body. */
 function handOff(f, outcome = HANDED) {
   body(f.store, 'pending-body', f.now);
-  const attempt = begin(f.store, f.now);
+  const attempt = begin(f, f.now);
   if (outcome !== 'started') assert.equal(f.store.recordManagedWakeOutcome(attempt, outcome, BASE, f.now + 2), true);
   return attempt;
 }
@@ -100,8 +122,8 @@ const ACTIVE = "('reserved', 'started', 'handed-off', 'unknown')";
 test.each(['handed-off', 'unknown', 'started'])('I2/I11: a %s attempt of an old birth ends as birth-ended; its verified marker claims no current-birth body', outcome => {
   const f = fixture();
   const old = handOff(f, outcome === 'handed-off' ? HANDED : outcome === 'unknown' ? UNKNOWN : 'started');
-  live(f.store, 'instance-2', 'relay-2', f.now + 10);
-  const next = f.store.reserveManagedWake(request('instance-2', 'relay-2'), f.now + 11);
+  live(f, 'instance-2', 'relay-2', f.now + 10);
+  const next = f.store.reserveManagedWake(request(f, 'instance-2', 'relay-2'), f.now + 11);
   const ended = attemptRow(f.store, old);
   if (outcome === 'started') {
     // A started attempt changes only by the start timeout (2.6); it keeps the slot until then (I4, I5).
@@ -132,7 +154,7 @@ const deaths = {
   unreachable: () => null,
   ended: f => { assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-1', f.now + 10), true); return null; },
   'ended-new-generation': f => {
-    live(f.store, 'instance-2', 'relay-2', f.now + 20);
+    live(f, 'instance-2', 'relay-2', f.now + 20);
     assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-2', f.now + 30), true);
     return null;
   },
@@ -149,7 +171,7 @@ const deaths = {
   },
   // The wake's birth stays live, but a later birth of another instance ended and is the latest row.
   'live-birth-behind-ended': f => {
-    live(f.store, 'instance-2', 'relay-2', f.now + 20);
+    live(f, 'instance-2', 'relay-2', f.now + 20);
     assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-2', f.now + 30), true);
     return 'instance-1';
   },
@@ -183,8 +205,8 @@ test('an ended birth ends its hand-off; the verified late arrival claims nothing
   assert.equal(attemptRow(f.store, old).late_observed_at, iso(f.now + 13));
   assert.equal(attemptRow(f.store, old).state, 'released');
   assert.deepEqual(f.store.database.prepare('SELECT * FROM messages').all(), messages);
-  live(f.store, 'instance-1', 'relay-1', f.now + 14);
-  const started = begin(f.store, f.now + 14, request('instance-1', 'relay-1'));
+  live(f, 'instance-1', 'relay-1', f.now + 14);
+  const started = begin(f, f.now + 14, request(f, 'instance-1', 'relay-1'));
   assert.equal(f.store.recordManagedWakeOutcome(started, HANDED, BASE, f.now + 16), true);
   const delivered = hostClaim(f, observe(f, started, f.now + 17), f.now + 18);
   assert.equal(delivered.recognized, true); assert.deepEqual(delivered.messages.map(message => message.messageId), ['pending-body']);
@@ -204,7 +226,7 @@ const activities = {
 test.each(Object.keys(boundaries))('2.3/2.6: the claim boundary %s after the hand-off releases it as claimed-after-handoff and resets the streak', kind => {
   const f = fixture(); const old = handOff(f);
   const at = f.now + 30_000;
-  keepAlive(f.store, 'instance-1', 'relay-1', at);
+  keepAlive(f, 'instance-1', 'relay-1', at);
   boundaries[kind](f.store, at);
   f.store.prune(at + 1);
   const ended = attemptRow(f.store, old);
@@ -216,7 +238,7 @@ test.each(Object.keys(activities))('2.3: the activity-only path %s is no claim b
   const f = fixture(); const old = handOff(f);
   const before = attemptRow(f.store, old);
   const at = f.now + 30_000;
-  keepAlive(f.store, 'instance-1', 'relay-1', at);
+  keepAlive(f, 'instance-1', 'relay-1', at);
   activities[kind](f.store, at);
   f.store.prune(at + 1);
   assert.deepEqual(attemptRow(f.store, old), before);
@@ -227,19 +249,19 @@ test.each(Object.keys(activities))('2.3: the activity-only path %s is no claim b
 test('a reservation of an ended birth is replaced idempotently across two reopened connections, one active attempt only', () => {
   const f = fixture();
   body(f.store, 'pending-body', f.now);
-  const old = f.store.reserveManagedWake(request('instance-1', 'relay-1', 'liveness-first-nonce-abcdefghijklmnop'), f.now).attempt;
+  const old = f.store.reserveManagedWake(request(f, 'instance-1', 'relay-1', 'liveness-first-nonce-abcdefghijklmnop'), f.now).attempt;
   assert.ok(old);
   assert.equal(f.store.endPresence(target, 'fixture-ended', 'instance-1', f.now + 10), true);
-  live(f.store, 'instance-2', 'relay-2', f.now + 20);
+  live(f, 'instance-2', 'relay-2', f.now + 20);
   f.store.prune(f.now + 21);
   const replaced = attemptRow(f.store, old);
   assert.equal(replaced.state, 'not-delivered', 'a reservation has no external effect, so a replaced birth ends it as not-delivered');
   const peer = new SessionMessageStore(f.database); resources.at(-1).stores.push(peer);
   peer.prune(f.now + 25);
   assert.deepEqual(attemptRow(peer, old), replaced);
-  const first = peer.reserveManagedWake(request('instance-2', 'relay-2'), f.now + 26);
+  const first = peer.reserveManagedWake(request(f, 'instance-2', 'relay-2'), f.now + 26);
   assert.equal(first.dispatch, true);
-  const again = f.store.reserveManagedWake(request('instance-2', 'relay-2', 'another-nonce-abcdefghijklmnopqrst'), f.now + 27);
+  const again = f.store.reserveManagedWake(request(f, 'instance-2', 'relay-2', 'another-nonce-abcdefghijklmnopqrst'), f.now + 27);
   assert.equal(again.attempt.attemptId, first.attempt.attemptId);
   assert.equal(f.store.database.prepare(`SELECT count(*) AS n FROM wake_nonces WHERE state IN ${ACTIVE}`).get().n, 1);
   assert.deepEqual(attemptRow(f.store, old), replaced);
@@ -248,8 +270,8 @@ test('a reservation of an ended birth is replaced idempotently across two reopen
 /** Ends the first hand-off by a new birth and hands off a current attempt of that birth. */
 function endedAndCurrent(f) {
   const old = handOff(f);
-  live(f.store, 'instance-2', 'relay-2', f.now + 10);
-  const next = begin(f.store, f.now + 11, request('instance-2', 'relay-2'));
+  live(f, 'instance-2', 'relay-2', f.now + 10);
+  const next = begin(f, f.now + 11, request(f, 'instance-2', 'relay-2'));
   assert.equal(attemptRow(f.store, old).release_reason, 'birth-ended');
   return { old, next };
 }
@@ -305,10 +327,10 @@ test('I1: an ended marker cannot be laundered by forged provenance or a mixed un
 test('I1: an expired hook receipt is refused; a fresh verified receipt of the same marker claims the body once', () => {
   const f = fixture(); const old = handOff(f);
   const observed = observe(f, old, f.now + 5);
-  // The broker was down past the 30 second receipt TTL, so the same receipt is rejected on retry.
+  // The claim was retried past the 30 second receipt TTL, so the same receipt is rejected on retry.
   assert.equal(hostClaim(f, observed, f.now + 35_005).recognized, false);
   assert.equal(attemptRow(f.store, old).state, 'handed-off');
-  keepAlive(f.store, 'instance-1', 'relay-1', f.now + 40_000);
+  keepAlive(f, 'instance-1', 'relay-1', f.now + 40_000);
   const fresh = hostClaim(f, observe(f, old, f.now + 40_001), f.now + 40_002);
   assert.equal(fresh.recognized, true);
   assert.deepEqual(fresh.messages.map(message => message.messageId), ['pending-body']);
@@ -321,7 +343,7 @@ test('C2: a same-millisecond rebirth gets a distinct generation, so the previous
   const reborn = f.store.startPresence({ ...target, instanceId: 'instance-1', transport: 'portable', wakeVisibility: 'silent',
     canWakeSilently: true, deliveryCapabilities: capabilities }, f.now);
   assert.ok(reborn.startedAt > old.generation);
-  f.store.acquireRelay({ ...target, transport: 'portable', relayId: 'relay-1', pid: process.pid, parentPid: process.pid }, f.now + 3);
+  serve(f, 'instance-1', 'relay-1', f.now + 3);
   const result = hostClaim(f, observe(f, old, f.now + 4), f.now + 5);
   assert.equal(result.recognized, false); assert.deepEqual(result.messages, []);
   assert.equal(f.store.pendingCount(target, f.now + 5), 1);
@@ -349,14 +371,14 @@ test('2.8: autoWake v2 is advisory and reports each delivery path fact', () => {
   check(f.store, f.now + 21_000, 'no-live-relay', 'presence-not-online', iso(f.now + 19_000));
   const board = f.store.listPresence(f.now + 21_000, [target])[0];
   assert.equal(board.state, 'unreachable'); assert.equal(board.autoWake.state, 'no-live-relay'); assert.equal(board.relayLive, false);
-  keepAlive(f.store, 'instance-1', 'relay-1', f.now + 22_000);
+  keepAlive(f, 'instance-1', 'relay-1', f.now + 22_000);
   const handedAt = f.now + 22_000;
   const attempt = handOff({ ...f, now: handedAt });
   const outcomeAt = attemptRow(f.store, attempt).outcome_at;
   assert.equal(outcomeAt, iso(handedAt + 2));
   check(f.store, handedAt + 10, 'available', 'wake-in-flight', outcomeAt);
   const unanswered = handedAt + 2 + WAKE_OBSERVATION_WINDOW_MS + 1_000;
-  keepAlive(f.store, 'instance-1', 'relay-1', unanswered);
+  keepAlive(f, 'instance-1', 'relay-1', unanswered);
   check(f.store, unanswered, 'available', 'wake-unanswered', attemptRow(f.store, attempt).resend_due_at);
   const sent = f.store.submitPrepared(sender, f.store.prepare({ sender, target, body: 'advisory send', ttlSeconds: 600 }, unanswered).messageId, unanswered);
   assert.equal(sent.autoWake.reason, 'wake-unanswered');
@@ -371,7 +393,7 @@ test('2.8: autoWake v2 is advisory and reports each delivery path fact', () => {
     .map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
   assert.equal(f.store.status(sender, sent.messageId, unanswered + 6).autoWake, null);
   const quietAt = unanswered + 3 + WAKE_QUIET_MS + 1;
-  keepAlive(f.store, 'instance-1', 'relay-1', quietAt);
+  keepAlive(f, 'instance-1', 'relay-1', quietAt);
   check(f.store, quietAt, 'available', 'relay-live', iso(quietAt));
   assert.equal(dispatch(f.store, 'status', { sender, messageId: sent.messageId }).status.autoWake, null);
 });
@@ -384,7 +406,7 @@ test('I10: an unobserved hand-off is reported as unanswered after the observatio
     const attempt = handOff(f, outcome);
     const row = attemptRow(f.store, attempt);
     const handedOff = Date.parse(row.outcome_at);
-    const at = ms => { keepAlive(f.store, 'instance-1', 'relay-1', ms); return ms; };
+    const at = ms => { keepAlive(f, 'instance-1', 'relay-1', ms); return ms; };
     const inFlight = at(handedOff + WAKE_OBSERVATION_WINDOW_MS - 1);
     assert.deepEqual(f.store.autoWakeOutlook(target, inFlight),
       { state: 'available', reason: 'wake-in-flight', basisAt: row.outcome_at, checkedAt: iso(inFlight), authorityEffect: 'none' }, outcome.result);
@@ -396,7 +418,7 @@ test('I10: an unobserved hand-off is reported as unanswered after the observatio
     const sent = f.store.submitPrepared(sender, f.store.prepare({ sender, target, body: `after ${outcome.result}`, ttlSeconds: 600 }, overdue).messageId, overdue);
     assert.equal(sent.autoWake.reason, 'wake-unanswered', outcome.result);
     // Reporting only: suppression and the stored attempt are unchanged before the resend deadline (I4, I5).
-    assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), overdue).dispatch, false, outcome.result);
+    assert.equal(f.store.reserveManagedWake(request(f, 'instance-1', 'relay-1'), overdue).dispatch, false, outcome.result);
     assert.deepEqual(attemptRow(f.store, attempt), row, outcome.result);
   }
 });
@@ -420,7 +442,7 @@ async function result(p, input) {
 test('a reservation expiry committed by another process just before it exits leaves one ended row and one next reservation', async () => {
   const f = fixture();
   body(f.store, 'pending-body', f.now);
-  const reservation = f.store.reserveManagedWake(request('instance-1', 'relay-1', 'liveness-first-nonce-abcdefghijklmnop'), f.now);
+  const reservation = f.store.reserveManagedWake(request(f, 'instance-1', 'relay-1', 'liveness-first-nonce-abcdefghijklmnop'), f.now);
   assert.equal(reservation.dispatch, true);
   const old = reservation.attempt;
   const before = attemptRow(f.store, old);
@@ -433,8 +455,8 @@ test('a reservation expiry committed by another process just before it exits lea
   assert.deepEqual([released.state, released.release_reason, released.released_at], ['released', 'expired', iso(expiry)]);
   assert.deepEqual(without(released, ['state', 'release_reason', 'released_at']), without(before, ['state', 'release_reason', 'released_at']));
   f.store.prune(expiry + 1); assert.deepEqual(attemptRow(f.store, old), released);
-  live(f.store, 'instance-2', 'relay-2', expiry + 2);
-  assert.equal(f.store.reserveManagedWake(request('instance-2', 'relay-2'), expiry + 2).dispatch, true);
+  live(f, 'instance-2', 'relay-2', expiry + 2);
+  assert.equal(f.store.reserveManagedWake(request(f, 'instance-2', 'relay-2'), expiry + 2).dispatch, true);
 });
 
 test('two independent processes settling an ended birth agree on one birth-ended row', async () => {
@@ -453,8 +475,9 @@ test('two independent processes settling an ended birth agree on one birth-ended
 
 test('I5: two independent relay processes after a birth-ended release reserve exactly one new attempt', async () => {
   const f = fixture(); const old = handOff(f);
-  live(f.store, 'instance-2', 'relay-a', f.now + 20_000);
-  const raced = await Promise.all(['relay-a', 'relay-b'].map(id => child(f.database, 'wake-transition', id, f.directory)));
+  live(f, 'instance-2', 'relay-a', f.now + 20_000);
+  // relay-a holds the lease granted to the new birth; relay-b was never granted it.
+  const raced = await Promise.all([relayId(f, 'relay-a'), 'relay-b'].map(id => child(f.database, 'wake-transition', id, f.directory)));
   for (const p of raced) assert.equal(p.first.type, 'ready', p.stderr());
   const results = await Promise.all(raced.map(p => result(p, { kind: 'relay', now: f.now + 20_001 })));
   assert.equal(results.map(item => item.result).filter(item => item?.dispatch).length, 1);
@@ -465,7 +488,7 @@ test('I5: two independent relay processes after a birth-ended release reserve ex
 test('AGS-D-0304 (a): a transient failure retries with a new row after backoff, and a claim of every body stops the retry', () => {
   const f = fixture();
   body(f.store, 'f8b4539a', f.now);
-  const first = begin(f.store, f.now);
+  const first = begin(f, f.now);
   assert.equal(f.store.recordManagedWakeOutcome(first, TRANSIENT, BASE, f.now + 2), true);
   assert.equal(attemptRow(f.store, first).state, 'not-delivered');
   const retryNotBefore = f.store.database.prepare('SELECT retry_not_before FROM wake_paths WHERE instance_id = ?').get('instance-1').retry_not_before;
@@ -478,19 +501,19 @@ test('AGS-D-0304 (a): a transient failure retries with a new row after backoff, 
   assert.equal(afterClaim.state, 'delivered');
   assert.equal(afterClaim.wake.state, 'not-delivered');
   const backoffPassed = Date.parse(retryNotBefore) + WAKE_QUIET_MS;
-  keepAlive(f.store, 'instance-1', 'relay-1', backoffPassed);
-  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), backoffPassed).dispatch, false, 'nothing left to deliver');
+  keepAlive(f, 'instance-1', 'relay-1', backoffPassed);
+  assert.equal(f.store.reserveManagedWake(request(f, 'instance-1', 'relay-1'), backoffPassed).dispatch, false, 'nothing left to deliver');
   f.store.acknowledge(target, ['f8b4539a'], backoffPassed + 1, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt })));
   body(f.store, 'message-0001', backoffPassed + 2);
   body(f.store, 'message-0002', backoffPassed + 3);
-  const batchWake = begin(f.store, backoffPassed + 4, request('instance-1', 'relay-1', 'batch-wake-nonce-abcdefghijklmnop'));
+  const batchWake = begin(f, backoffPassed + 4, request(f, 'instance-1', 'relay-1', 'batch-wake-nonce-abcdefghijklmnop'));
   assert.equal(f.store.recordManagedWakeOutcome(batchWake, TRANSIENT, BASE, backoffPassed + 5), true);
   const batchClaim = f.store.claim(target, backoffPassed + 6, { maxMessages: 1 });
   assert.deepEqual(batchClaim.map(m => m.messageId), ['message-0001']);
   assert.equal(f.store.acknowledge(target, ['message-0001'], backoffPassed + 7, batchClaim.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
   const nextRetry = backoffPassed + 7 + 10 * 60_000;
-  keepAlive(f.store, 'instance-1', 'relay-1', nextRetry);
-  const resumedForRemaining = f.store.reserveManagedWake(request('instance-1', 'relay-1', 'batch-retry-nonce-abcdefghijklmnop'), nextRetry);
+  keepAlive(f, 'instance-1', 'relay-1', nextRetry);
+  const resumedForRemaining = f.store.reserveManagedWake(request(f, 'instance-1', 'relay-1', 'batch-retry-nonce-abcdefghijklmnop'), nextRetry);
   assert.equal(resumedForRemaining.dispatch, true, 'the remaining body is still rung');
   assert.notEqual(resumedForRemaining.attempt.attemptId, batchWake.attemptId, 'a retry is always a new row (2.2)');
   assert.notEqual(resumedForRemaining.attempt.nonce, batchWake.nonce);
@@ -499,12 +522,12 @@ test('AGS-D-0304 (a): a transient failure retries with a new row after backoff, 
 test('AGS-D-0304 (b): a claim after the hand-off stops reporting wake-in-flight; the boundary keeps the session from being rung at once', () => {
   const f = fixture();
   body(f.store, '417e2c85', f.now);
-  const attempt = begin(f.store, f.now);
+  const attempt = begin(f, f.now);
   const outcomeAt = f.now + 5_880;
   assert.equal(f.store.recordManagedWakeOutcome(attempt, HANDED, BASE, outcomeAt), true);
   assert.equal(f.store.autoWakeOutlook(target, outcomeAt + 100).reason, 'wake-in-flight');
   const claimAt = f.now + 38_000;
-  keepAlive(f.store, 'instance-1', 'relay-1', claimAt);
+  keepAlive(f, 'instance-1', 'relay-1', claimAt);
   const claimed = f.store.claim(target, claimAt);
   assert.deepEqual(claimed.map(m => m.messageId), ['417e2c85']);
   f.store.prune(claimAt + 50);
@@ -514,30 +537,30 @@ test('AGS-D-0304 (b): a claim after the hand-off stops reporting wake-in-flight;
   assert.equal(statusAfterClaim.wake.releaseReason, 'claimed-after-handoff');
   assert.equal(statusAfterClaim.autoWake.reason, 'recipient-active');
   const ackAt = f.now + 54_000;
-  keepAlive(f.store, 'instance-1', 'relay-1', ackAt);
+  keepAlive(f, 'instance-1', 'relay-1', ackAt);
   assert.equal(f.store.acknowledge(target, ['417e2c85'], ackAt, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
   assert.equal(f.store.status(sender, '417e2c85', ackAt + 100).state, 'acknowledged');
   body(f.store, 'after-ack', ackAt + 150);
-  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), ackAt + 200).dispatch, false, 'not quiet yet');
+  assert.equal(f.store.reserveManagedWake(request(f, 'instance-1', 'relay-1'), ackAt + 200).dispatch, false, 'not quiet yet');
 });
 
 test('D0353 / D0305: a claim and ACK after the hand-off free the slot; the next message is rung once the session is quiet', () => {
   const f = fixture();
   body(f.store, 'batch-1-msg', f.now);
-  const first = begin(f.store, f.now);
+  const first = begin(f, f.now);
   const outcomeAt = f.now + 5_880;
   assert.equal(f.store.recordManagedWakeOutcome(first, HANDED, BASE, outcomeAt), true);
   const claimAt = f.now + 38_000;
-  keepAlive(f.store, 'instance-1', 'relay-1', claimAt);
+  keepAlive(f, 'instance-1', 'relay-1', claimAt);
   const claimed = f.store.claim(target, claimAt);
   assert.deepEqual(claimed.map(m => m.messageId), ['batch-1-msg']);
   assert.equal(f.store.acknowledge(target, ['batch-1-msg'], f.now + 54_000, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt }))), 1);
   body(f.store, 'batch-2-msg', f.now + 55_000);
-  keepAlive(f.store, 'instance-1', 'relay-1', claimAt + WAKE_QUIET_MS - 1);
-  assert.equal(f.store.reserveManagedWake(request('instance-1', 'relay-1'), claimAt + WAKE_QUIET_MS - 1).dispatch, false);
+  keepAlive(f, 'instance-1', 'relay-1', claimAt + WAKE_QUIET_MS - 1);
+  assert.equal(f.store.reserveManagedWake(request(f, 'instance-1', 'relay-1'), claimAt + WAKE_QUIET_MS - 1).dispatch, false);
   assert.deepEqual([attemptRow(f.store, first).state, attemptRow(f.store, first).release_reason], ['released', 'claimed-after-handoff']);
-  keepAlive(f.store, 'instance-1', 'relay-1', claimAt + WAKE_QUIET_MS + 1);
-  const next = f.store.reserveManagedWake(request('instance-1', 'relay-1'), claimAt + WAKE_QUIET_MS + 1);
+  keepAlive(f, 'instance-1', 'relay-1', claimAt + WAKE_QUIET_MS + 1);
+  const next = f.store.reserveManagedWake(request(f, 'instance-1', 'relay-1'), claimAt + WAKE_QUIET_MS + 1);
   assert.equal(next.dispatch, true);
   assert.notEqual(next.attempt.attemptId, first.attemptId);
   // The late marker of the released attempt claims the current body of the same birth; the next attempt is not disturbed.

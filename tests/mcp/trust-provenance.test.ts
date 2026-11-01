@@ -15,6 +15,7 @@ import { createMcpServer } from "../../mcp-server/src/server.js";
 import { TrustService } from "../../mcp-server/src/trust-service.js";
 import { TrustStore } from "../../mcp-server/src/trust-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
+import { closeSessionMessaging } from "../../mcp-server/src/session-message-client.js";
 import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
@@ -95,15 +96,6 @@ afterEach(async () => {
   stores.clear();
   await Promise.all(directories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
 });
-
-async function terminateBroker(directory: string): Promise<void> {
-  try {
-    const { pid } = JSON.parse(readFileSync(join(directory, "endpoint.json"), "utf8")) as { pid: number };
-    process.kill(pid, "SIGTERM");
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ESRCH" && (error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-  }
-}
 
 describe("trust provenance", () => {
   it("reports authority and direct-user attestation as unavailable", async () => {
@@ -197,7 +189,7 @@ describe("trust provenance", () => {
       else process.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR = previousStateDirectory;
       if (previousTrustPath === undefined) delete process.env.AGENT_GOVERNANCE_TRUST_DB_PATH;
       else process.env.AGENT_GOVERNANCE_TRUST_DB_PATH = previousTrustPath;
-      await terminateBroker(directory);
+      closeSessionMessaging(directory); // The in-process connection holds the file open (Windows cannot remove it otherwise).
       await rm(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
     }
   }, 30_000);

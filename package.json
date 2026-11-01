@@ -14,7 +14,6 @@
     "lint": "eslint . && node scripts/validate-repository.mjs",
     "dev": "tsx mcp-server/src/index.ts",
     "runtime:check": "node scripts/check-runtime.mjs",
-    "process-identity:check": "tsx scripts/check-process-identity.ts",
     "bundle:check": "node scripts/check-bundle.mjs",
     "claude:build": "node scripts/build-claude-plugin.mjs",
     "claude:check": "node scripts/build-claude-plugin.mjs --check",

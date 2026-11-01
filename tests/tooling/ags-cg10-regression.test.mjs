@@ -8,7 +8,6 @@ import { SKILL_RUNTIME_ENTRYPOINTS } from "../../scripts/runtime-entrypoints.mjs
 
 const temporaryRoots = [];
 const bundles = [
-  "session-message-broker.mjs",
   "session-message-relay.mjs",
   "session-message-cli.mjs",
   "session-message-hook.mjs",
@@ -53,7 +52,7 @@ afterEach(async () => {
 });
 
 describe("CG10 messaging clean-room startup regression", () => {
-  it("copies and executes all four messaging bundles from the packaged layout without node_modules", async () => {
+  it("copies and executes all three messaging bundles from the packaged layout without node_modules", async () => {
     const { root, trace } = await fixture();
     await expect(runRuntimeSmokeCheck(root)).rejects.toThrow(/CG10_AFTER_MESSAGING/u);
     const calls = (await readFile(trace, "utf8")).trim().split("\n").map(line => JSON.parse(line));

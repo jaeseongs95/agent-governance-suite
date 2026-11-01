@@ -2,9 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const f = vi.hoisted(() => ({ request: vi.fn(), spawn: vi.fn() }));
 vi.mock("node:child_process", async original => ({ ...await original<typeof import("node:child_process")>(), spawn: f.spawn }));
-vi.mock("../../mcp-server/src/process-identity.js", async original => ({
-  ...await original<typeof import("../../mcp-server/src/process-identity.js")>(), processStartToken: () => "fixture-start-token",
-}));
 vi.mock("../../mcp-server/src/session-message-client.js", async original => ({
   ...await original<typeof import("../../mcp-server/src/session-message-client.js")>(), sessionMessageRequest: f.request,
 }));
@@ -24,6 +21,7 @@ const actors: ReadonlyArray<readonly [string, ActorObservation]> = [
 ];
 const acceptedActors = actors.slice(0, 2);
 const rejectedActors = actors.slice(2);
+const grantedRelayId = "0b7f6c1e-5d3a-4c8e-9f21-7a6b5c4d3e2f";
 const hostFor = (actor: string) => "p1-message-1026-a-" + actor;
 for (const [name, actor] of actors) {
   registerHookHostAdapter(hostFor(name), {
@@ -57,7 +55,9 @@ const messageInputs = [
 
 beforeEach(() => {
   vi.clearAllMocks();
-  f.request.mockReset().mockResolvedValue({ messages: [] });
+  // The hook spawns a relay only for the relay_id the presence-start grant returned.
+  f.request.mockReset().mockImplementation(async (operation: string) =>
+    operation === "presence-start" ? { presence: {}, relayId: grantedRelayId } : { messages: [] });
   f.spawn.mockReturnValue({ once: vi.fn(), unref: vi.fn() });
 });
 afterEach(() => { vi.restoreAllMocks(); });
@@ -80,6 +80,10 @@ describe("P1-ACTOR-1026-A message-only caller boundary", () => {
       } }), undefined, expect.any(Object));
       expect(f.request).toHaveBeenCalledTimes(1);
       expect(f.spawn).toHaveBeenCalledTimes(index === 0 ? 1 : 0);
+      if (index === 0) {
+        expect(f.request.mock.calls[0]![1]).toMatchObject({ hostPid: 4242 });
+        expect(f.spawn.mock.calls[0]![1]).toEqual(expect.arrayContaining(["--relay-id", grantedRelayId, "--parent-pid", "4242"]));
+      }
     }
   });
 

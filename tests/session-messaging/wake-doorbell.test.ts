@@ -10,7 +10,7 @@ import {
   SessionMessageStore, WAKE_FAILURE_LIMIT, WAKE_QUIET_MAX_MS, WAKE_QUIET_MS, WAKE_RESEND_MAX_MS, WAKE_START_TIMEOUT_MS,
   type WakeAttempt, type WakeReservation,
 } from "../../mcp-server/src/session-message-store.js";
-import { dispatchSessionMessageBrokerOperation as broker } from "../../mcp-server/src/session-message-broker.js";
+import { dispatchSessionMessageOperation as dispatch } from "../../mcp-server/src/session-message-operations.js";
 import { dispatchManagedWake } from "../../mcp-server/src/session-message-relay.js";
 import "../../mcp-server/src/builtin-hook-host-adapters.js";
 import { adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
@@ -48,6 +48,9 @@ const HANDED: WakeDispatchOutcome = { result: "handed-off" };
 const UNKNOWN: WakeDispatchOutcome = { result: "unknown", reasonCode: "SYNTHETIC_TIMEOUT" };
 const TRANSIENT: WakeDispatchOutcome = { result: "not-delivered", kind: "transient", reasonCode: "CODEX_NO_ACTIVE_SESSION" };
 const PREREQ: WakeDispatchOutcome = { result: "not-delivered", kind: "prerequisite-missing", reasonCode: "SYNTHETIC_EXECUTABLE_MISSING" };
+// The synthetic host process the hook reported and the birth its relay's watcher bound (docs/ags30-broker-redesign.md 3.3).
+const HOST_PID = process.pid;
+const HOST_START = "synthetic-host-start";
 const iso = (at: number) => new Date(at).toISOString();
 type Row = Record<string, unknown>;
 
@@ -73,21 +76,31 @@ function fixture(transport = TRANSPORT): Fixture {
   const store = new SessionMessageStore(database);
   resources.push({ directory, close: [() => store.close()] });
   vi.stubEnv("AGENT_GOVERNANCE_TRUST_DB_PATH", join(directory, "trust.sqlite3"));
-  const f: Fixture = { directory, database, store, t0: Date.now(), instanceId: "instance-1", relayId: "relay-1", transport };
-  live(f, "instance-1", "relay-1", f.t0);
+  const f: Fixture = { directory, database, store, t0: Date.now(), instanceId: "instance-1", relayId: "", transport };
+  live(f, "instance-1", f.t0);
   return f;
 }
-function live(f: Fixture, instanceId: string, relayId: string, at: number, caps = capabilities) {
+/** The hook grants a lease to the birth; the relay's first tick binds the host birth, so the relay may ring. */
+function bindRelay(f: Fixture, instanceId: string, at: number) {
+  const grant = f.store.grantRelay({ ...target, instanceId, transport: f.transport, codeDigest: null, hostPid: HOST_PID }, at);
+  assert.ok(grant.relayId, `grant refused: ${grant.reason}`);
+  assert.deepEqual(f.store.relayTick({ ...target, instanceId, transport: f.transport, relayId: grant.relayId, includePending: false, hostStart: HOST_START }, at),
+    { alive: true, count: 0, hostBound: true });
+  f.instanceId = instanceId; f.relayId = grant.relayId;
+}
+function live(f: Fixture, instanceId: string, at: number, caps = capabilities) {
   f.store.startPresence({ ...target, instanceId, transport: f.transport, wakeVisibility: caps.idleWake, canWakeSilently: caps.idleWake === "silent",
-    deliveryCapabilities: caps }, at);
-  assert.equal(f.store.acquireRelay({ ...target, instanceId, transport: f.transport, relayId, pid: process.pid, parentPid: process.pid }, at), true);
-  f.instanceId = instanceId; f.relayId = relayId;
+    deliveryCapabilities: caps, hostPid: HOST_PID }, at);
+  bindRelay(f, instanceId, at);
 }
 /** Keeps the current birth and its relay live across a gap without a new birth and without any claim boundary. */
 function jump(f: Fixture, at: number) {
   f.store.database.prepare("UPDATE session_presence SET lease_until = ? WHERE host = ? AND session_id = ? AND instance_id = ? AND ended_at IS NULL")
     .run(iso(at + 20_000), target.host, target.sessionId, f.instanceId);
-  assert.equal(f.store.acquireRelay({ ...target, instanceId: f.instanceId, transport: f.transport, relayId: f.relayId, pid: process.pid, parentPid: process.pid }, at), true);
+  // The relay kept renewing its lease over the gap (one extension models its ticks); a pruned lease is granted again.
+  const renewed = f.store.database.prepare("UPDATE relay_leases SET lease_until = ?, updated_at = ? WHERE host = ? AND session_id = ? AND transport = ? AND relay_id = ?")
+    .run(iso(at + 15_000), iso(at), target.host, target.sessionId, f.transport, f.relayId).changes;
+  if (renewed === 0) bindRelay(f, f.instanceId, at);
 }
 /** A live relay renews its lease every few seconds (relay-tick only; not a claim boundary). */
 function keep(f: Fixture, from: number, to: number) {
@@ -168,11 +181,9 @@ test("1: a stalled adapter call stays one external call across boundaries and ti
   const port: WakeDispatchPort = { capabilities, resendBaseMs: BASE, dispatch: async () => {
     calls++; entered(); return new Promise<WakeDispatchOutcome>(resolve => { release = resolve; });
   } };
-  // The relay's broker requests run against the same store with the fixture clock.
-  const relayRequest = (async (operation: string, payload: Record<string, any>) => { // eslint-disable-line @typescript-eslint/no-explicit-any -- broker wire payload
+  // The relay's dispatch requests run against the same store with the fixture clock (the cycle itself never renews the lease).
+  const relayRequest = (async (operation: string, payload: Record<string, any>) => { // eslint-disable-line @typescript-eslint/no-explicit-any -- operation payload
     const attempt = payload.attempt ?? payload;
-    if (operation === "relay-tick") return f.store.relayTick({ ...payload.target, transport: payload.transport, relayId: payload.relayId,
-      instanceId: payload.instanceId, includePending: payload.includePending }, clock);
     if (operation === "reserve-wake") return f.store.reserveManagedWake({ ...payload.target, nonce: payload.nonce, instanceId: payload.instanceId,
       relayId: payload.relayId, transport: payload.transport, resume: payload.resume }, clock);
     if (operation === "start-wake") { bases.push(payload.resendBaseMs); return f.store.startManagedWake(attempt, payload.resendBaseMs, clock); }
@@ -197,6 +208,8 @@ test("1: a stalled adapter call stays one external call across boundaries and ti
   assert.equal(timedOut.resend_due_at, iso(clock + BASE));
   // A later boundary releases the slot (claimed-after-handoff); the next body still finds the session not quiet.
   clock += 20_000; jump(f, clock); send(f, "next-body", clock - 1); boundary(f, clock);
+  // The boundary is recorded after the claim's own prune, so the release is settled by the next prune (as in 2.6).
+  f.store.prune(clock);
   const releasedRow = f.store.database.prepare("SELECT * FROM wake_nonces WHERE attempt_id = ?").get(String(attempt.attempt_id)) as Row;
   assert.equal(releasedRow.state, "released");
   assert.equal(releasedRow.release_reason, "claimed-after-handoff");
@@ -405,9 +418,9 @@ test("4b (I7): a busy session is still rung once its oldest claimable body waite
 
 test("5: the quiet condition also holds for the backoff retry and is rechecked inside the start CAS", () => {
   const f = fixture();
-  send(f, "quiet-a", f.t0);
-  send(f, "quiet-b", f.t0 + 1);
-  send(f, "quiet-c", f.t0 + 2);
+  send(f, "quiet-body-a", f.t0);
+  send(f, "quiet-body-b", f.t0 + 1);
+  send(f, "quiet-body-c", f.t0 + 2);
   assert.equal(f.store.recordManagedWakeOutcome(ring(f, f.t0 + 3), TRANSIENT, BASE, f.t0 + 3), true);
   const retryAt = Date.parse(String(birthPath(f)!.retry_not_before));
   // A boundary just before the backoff ends: the retry must wait for quiet.
@@ -445,7 +458,7 @@ test("6: an expired reservation is released unconditionally (no relay, expired b
   assert.equal(released.released_at, iso(expiresAt));
   assert.equal(activeCount(f), 0);
   // The slot is free for a new birth.
-  live(f, "instance-2", "relay-2", expiresAt + 1);
+  live(f, "instance-2", expiresAt + 1);
   send(f, "after-expiry", expiresAt + 1);
   dispatched(reserve(f, expiresAt + 2));
 });
@@ -497,6 +510,8 @@ test("10 (standalone): a backward or forward clock jump neither releases early n
   // Forward by two days: the hand-off is released and the quiet live session is rung.
   const later = f.t0 + 48 * HOUR;
   jump(f, later);
+  // A body lives at most MESSAGE_TTL_MAX_SECONDS (24 h), so clock-body has expired; a body sent at the new time waits.
+  send(f, "clock-body-later", later);
   const next = handOff(f, later);
   assert.equal(row(f, attempt).state, "released");
   assert.equal(row(f, attempt).release_reason, "resend-due");
@@ -514,10 +529,13 @@ test("10 (shared): authority time never runs backward, so a stale caller clock c
   resources.push({ directory, close: [() => value.owner.close()] });
   const store = value.messaging;
   const t0 = now;
-  store.startPresence({ ...target, instanceId: "shared-1", transport: TRANSPORT, wakeVisibility: "silent", canWakeSilently: true, deliveryCapabilities: capabilities }, t0);
-  assert.equal(store.acquireRelay({ ...target, instanceId: "shared-1", transport: TRANSPORT, relayId: "relay-shared", pid: process.pid, parentPid: process.pid }, t0), true);
+  store.startPresence({ ...target, instanceId: "shared-1", transport: TRANSPORT, wakeVisibility: "silent", canWakeSilently: true, deliveryCapabilities: capabilities,
+    hostPid: HOST_PID }, t0);
+  const relayId = store.grantRelay({ ...target, instanceId: "shared-1", transport: TRANSPORT, codeDigest: null, hostPid: HOST_PID }, t0).relayId!;
+  assert.ok(relayId);
+  assert.equal(store.relayTick({ ...target, instanceId: "shared-1", relayId, transport: TRANSPORT, includePending: false, hostStart: HOST_START }, t0).hostBound, true);
   store.send({ sender, target, messageId: "shared-body", body: "shared-body", ttlSeconds: 86_400 }, t0);
-  const binding = { ...target, instanceId: "shared-1", relayId: "relay-shared", transport: TRANSPORT, resume: true };
+  const binding = { ...target, instanceId: "shared-1", relayId, transport: TRANSPORT, resume: true };
   const attempt = dispatched(store.startManagedWake(dispatched(store.reserveManagedWake({ ...binding, nonce: nextNonce() }, t0)), BASE, t0));
   // The caller passes a clock one hour behind; the authority time (high water t0) is used.
   assert.equal(store.recordManagedWakeOutcome(attempt, HANDED, BASE, t0 - HOUR), true);
@@ -528,7 +546,7 @@ test("10 (shared): authority time never runs backward, so a stale caller clock c
   // The live relay renews its lease and the presence every 10 seconds of authority time.
   for (let at = t0 + 10_000; at <= t0 + BASE; at += 10_000) {
     now = at;
-    assert.equal(store.relayTick({ ...target, instanceId: "shared-1", relayId: "relay-shared", transport: TRANSPORT, includePending: false }, at).alive, true);
+    assert.equal(store.relayTick({ ...target, instanceId: "shared-1", relayId, transport: TRANSPORT, includePending: false }, at).alive, true);
   }
   // A caller still behind the authority clock: the authority time reaches the deadline.
   dispatched(store.reserveManagedWake({ ...binding, nonce: nextNonce() }, t0));
@@ -631,7 +649,7 @@ test("15 (I9): a prerequisite-missing birth is never rung again until a new birt
   // A new birth starts from zero (r3 F2) and is rung.
   const rebirth = f.t0 + 5 * HOUR + 1;
   assert.equal(f.store.endPresence(target, "synthetic-restart", f.instanceId, rebirth), true);
-  live(f, "instance-2", "relay-2", rebirth + 1);
+  live(f, "instance-2", rebirth + 1);
   dispatched(reserve(f, rebirth + 1));
   const path = birthPath(f)!;
   assert.equal(path.prerequisite_missing, null);
@@ -652,7 +670,7 @@ test("16: the board hook consume-wake still recognizes this target's marker, wha
   const attempt = handOff(f, f.t0);
   const before = row(f, attempt);
   assert.equal(f.store.consumeWake(target, attempt.nonce), true);
-  assert.deepEqual(broker(f.store, "consume-wake", { target, nonce: attempt.nonce }), { consumed: true });
+  assert.deepEqual(dispatch(f.store, "consume-wake", { target, nonce: attempt.nonce }), { consumed: true });
   assert.equal(f.store.consumeWake({ ...target, sessionId: "other-target" }, attempt.nonce), false);
   assert.equal(f.store.consumeWake(target, "unregistered-board-nonce-abcdefghijk"), false);
   assert.deepEqual(row(f, attempt), before);
@@ -682,7 +700,7 @@ test("2.6: a claim boundary after the hand-off or the end of its birth releases 
   assert.deepEqual([view.state, view.reason, view.basisAt], ["available", "recipient-active", iso(claimAt)]);
   // A boundary before the hand-off does not release it.
   const g = fixture();
-  send(g, "early-1", g.t0); send(g, "early-2", g.t0 + 1);
+  send(g, "early-body-1", g.t0); send(g, "early-body-2", g.t0 + 1);
   boundary(g, g.t0 + 2);
   jump(g, g.t0 + 2 + WAKE_QUIET_MS + 1);
   const quiet = handOff(g, g.t0 + 2 + WAKE_QUIET_MS + 1);
@@ -692,7 +710,7 @@ test("2.6: a claim boundary after the hand-off or the end of its birth releases 
   assert.equal(g.store.endPresence(target, "synthetic-exit", g.instanceId, g.t0 + 3 * MINUTE), true);
   g.store.prune(g.t0 + 3 * MINUTE + 1);
   assert.deepEqual([row(g, quiet).state, row(g, quiet).release_reason], ["released", "birth-ended"]);
-  live(g, "instance-2", "relay-2", g.t0 + 4 * MINUTE);
+  live(g, "instance-2", g.t0 + 4 * MINUTE);
   const reborn = dispatched(reserve(g, g.t0 + 4 * MINUTE));
   assert.notEqual(reborn.attemptId, quiet.attemptId);
 });
@@ -716,12 +734,12 @@ test("2.8: list-presence exports relayLive explicitly and autoWake never reports
   }
 });
 
-test("3.1: the broker refuses a resendBaseMs that is not a positive integer within WAKE_RESEND_MAX_MS", () => {
+test("3.1: the operation table refuses a resendBaseMs that is not a positive integer within WAKE_RESEND_MAX_MS", () => {
   const f = fixture();
   send(f, "base-body", f.t0);
   const reserved = dispatched(reserve(f, f.t0));
   for (const resendBaseMs of [0, -1, 1.5, WAKE_RESEND_MAX_MS + 1, "600000", undefined]) {
-    assert.throws(() => broker(f.store, "start-wake", { attempt: reserved, resendBaseMs }), Error, String(resendBaseMs));
+    assert.throws(() => dispatch(f.store, "start-wake", { attempt: reserved, resendBaseMs }), Error, String(resendBaseMs));
   }
   assert.equal(row(f, reserved).state, "reserved");
 });

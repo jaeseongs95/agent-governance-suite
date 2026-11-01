@@ -180,7 +180,7 @@ it("distinguishes a missing host adapter from an unexpected hook failure without
   expect(existsSync(f.database)).toBe(false);
 });
 
-it.each(["empty", "input", "stdin", "broker"] as const)(
+it.each(["empty", "input", "stdin", "state-directory"] as const)(
   "public message hook keeps exit 0 and distinguishes the %s path with bounded diagnostics", (scenario) => {
     const f = fixture();
     const args = [path.join(root, "mcp-server/dist/session-message-hook.mjs"), "--host=claude-code"];
@@ -197,8 +197,8 @@ it.each(["empty", "input", "stdin", "broker"] as const)(
       ].join("\n"), "utf8");
       args.unshift("--import", pathToFileURL(preload).href);
     }
-    if (scenario === "broker") {
-      // The client fails state-directory preparation before any broker process or DB can start.
+    if (scenario === "state-directory") {
+      // The in-process client fails state-directory preparation before any database can open.
       writeFileSync(f.env.AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR, "PRIVATE_STATE_FILE");
       input = JSON.stringify({ hook_event_name: "Stop", session_id: "PRIVATE_SESSION" });
     }
@@ -213,7 +213,7 @@ it.each(["empty", "input", "stdin", "broker"] as const)(
       .map(line => JSON.parse(line.slice(prefix.length)));
     if (scenario === "empty") expect(diagnostics).toEqual([]);
     else {
-      const [phase, reason] = scenario === "broker" ? ["handle", "BROKER_STATE_DIRECTORY_FAILED"]
+      const [phase, reason] = scenario === "state-directory" ? ["handle", "MESSAGING_STATE_DIRECTORY_FAILED"]
         : scenario === "stdin" ? ["stdin", "EIO"] : ["input", "INVALID_JSON"];
       expect(diagnostics).toEqual([expect.objectContaining({ phase, reason })]);
     }

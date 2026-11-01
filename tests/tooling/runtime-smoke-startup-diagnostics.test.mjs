@@ -65,7 +65,7 @@ function expectedStreamDescriptor(value) {
 function defaultSpawnResponse(scriptPath, args, options) {
   const relative = path.relative(cleanRoot, scriptPath);
   const base = path.basename(scriptPath);
-  if (base === "session-message-broker.mjs" || base === "session-message-relay.mjs") {
+  if (base === "session-message-relay.mjs") {
     return { status: 2, signal: null, stdout: "", stderr: "" };
   }
   if (base === "session-message-cli.mjs") {
@@ -426,7 +426,7 @@ describe("continuity-hook runtime startup smoke diagnostics", () => {
               shortCircuit: true,
               source: [
                 'export function spawnSync(_exec, [scriptPath]) {',
-                '  if (scriptPath.endsWith("session-message-broker.mjs") || scriptPath.endsWith("session-message-relay.mjs")) {',
+                '  if (scriptPath.endsWith("session-message-relay.mjs")) {',
                 '    return { status: 2, signal: null, stdout: "", stderr: "" };',
                 '  }',
                 '  if (scriptPath.endsWith("session-message-cli.mjs")) {',

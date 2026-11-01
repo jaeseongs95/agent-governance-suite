@@ -2,9 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const f = vi.hoisted(() => ({ request: vi.fn(), spawn: vi.fn() }));
 vi.mock("node:child_process", async original => ({ ...await original<typeof import("node:child_process")>(), spawn: f.spawn }));
-vi.mock("../../mcp-server/src/process-identity.js", async original => ({
-  ...await original<typeof import("../../mcp-server/src/process-identity.js")>(), processStartToken: () => "fixture-start-token",
-}));
 vi.mock("../../mcp-server/src/session-message-client.js", async original => ({
   ...await original<typeof import("../../mcp-server/src/session-message-client.js")>(), sessionMessageRequest: f.request,
 }));
