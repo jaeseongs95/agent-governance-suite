@@ -48,8 +48,9 @@ function fixture(transport = "d0353-synthetic") {
   const stores = new Set([store]);
   resources.push({directory, stores});
   const now = Date.now();
-  const f = {directory, database, store, stores, now, transport, retireAt: now + WAKE_TTL_MS + WAKE_RETIRE_GRACE_MS,
-    holdAt: now + WAKE_TTL_MS + WAKE_RETIRE_GRACE_MS - 100};
+  // latch() hands off at now+1 (started) or now+2 (outcome); the first unobserved hand-off is released grace after it.
+  const f = {directory, database, store, stores, now, transport, retireAt: now + 2 + WAKE_RETIRE_GRACE_MS,
+    holdAt: now + WAKE_RETIRE_GRACE_MS - 100};
   live(f, "instance-1", "relay-1", now);
   return f;
 }
@@ -121,7 +122,7 @@ test.each(restartCases)("AC08: $transport/$outcome 제출 후 연결 재시작�
   assert.deepEqual(row(f, attempt), retained);
   assert.equal(activity(f), undefined);
   assert.equal(f.store.pendingCount(target, f.holdAt), 1);
-  // Liveness: past the injection expiry plus grace a quiet live session gets exactly one new wake.
+  // Liveness: past the hand-off plus grace a quiet live session gets exactly one new wake.
   const next = dispatched(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), f.retireAt));
   assert.notEqual(next.attemptId, attempt.attemptId);
   assert.deepEqual(row(f, attempt), {...retained, state: "expired-unobserved", retired_at: iso(f.retireAt)});
@@ -163,7 +164,7 @@ test("AC08: 세션 시작·중계 임대·생존 신호는 실제 활동이나 �
 });
 
 // The 2026-11-01 field case: an idle live Codex session latched for hours after one dropped marker.
-test("AC08: 조용한 세션의 미관측 시도는 주입 만료와 유예 뒤 회수되고 새 깨우기는 두 연결에서도 하나뿐이다", () => {
+test("AC08: 조용한 세션의 미관측 시도는 넘긴 뒤 유예가 지나면 회수되고 새 깨우기는 두 연결에서도 하나뿐이다", () => {
   const f = fixture();
   const {attempt} = latch(f);
   const original = row(f, attempt);
@@ -341,4 +342,61 @@ test("시작 전 예약은 새 세대로 교체할 수 있고 미관측 제출 �
   assert.equal(duplicate.autoWake.state, "latched");
   assert.equal(duplicate.autoWake.reason, "wake-unobserved");
   assert.equal(f.store.reserveManagedWake(request(f, "instance-3", "relay-3", "d0353-third-nonce-abcdefghijklmnop"), f.holdAt + 8).dispatch, false);
+});
+
+function handOff(f: Fixture, nonce: string, at: number) {
+  const started = dispatched(f.store.startManagedWake(dispatched(f.store.reserveManagedWake(request(f, "instance-1", "relay-1", nonce), at)), at + 1));
+  assert.equal(f.store.recordManagedWakeOutcome(started, "submitted", at + 2), true);
+  return started;
+}
+
+// V4: under B (expiry+grace) the message that caused a lost wake expired before the release and was never delivered.
+test("D0353: 기본 TTL 메시지는 첫 미관측 표식이 회수된 뒤 만료 전에 전달된다", () => {
+  const f = fixture();
+  const prepared = f.store.prepare({sender, target, body: "default-ttl-body"}, f.now);
+  const message = f.store.submitPrepared(sender, prepared.messageId, f.now);
+  const lost = handOff(f, "d0353-lost-nonce-abcdefghijklmnop", f.now);
+  const releaseAt = f.now + 2 + WAKE_RETIRE_GRACE_MS;
+  assert.equal(f.store.reserveManagedWake(request(f), releaseAt - 1).dispatch, false);
+  assert.equal(row(f, lost).state, "submitted");
+  const next = handOff(f, "d0353-retry-nonce-abcdefghijklmnop", releaseAt);
+  assert.deepEqual({state: row(f, lost).state, retired_at: row(f, lost).retired_at}, {state: "expired-unobserved", retired_at: iso(releaseAt)});
+  const delivered = observe(f, next, releaseAt + 3);
+  assert.equal(delivered.recognized, true);
+  assert.deepEqual(delivered.messages.map(value => value.messageId), [message.messageId]);
+});
+
+// Bounds markers parked in a host queue (Codex keeps queued items while a thread is interrupted or running).
+test("D0353: 같은 탄생에서 연속 미관측 회수는 주입 만료와 유예까지 늦추고 관측되면 첫 간격으로 돌아간다", () => {
+  const f = fixture();
+  submit(f, "parked-body", f.now);
+  const first = handOff(f, "d0353-park1-nonce-abcdefghijklmnop", f.now);
+  const secondAt = f.now + 2 + WAKE_RETIRE_GRACE_MS;
+  const second = handOff(f, "d0353-park2-nonce-abcdefghijklmnop", secondAt);
+  assert.equal(row(f, first).state, "expired-unobserved");
+  assert.equal(row(f, second).prior_unobserved, 1);
+  const streakAt = secondAt + WAKE_TTL_MS + WAKE_RETIRE_GRACE_MS;
+  f.store.prune(secondAt + 2 + WAKE_RETIRE_GRACE_MS);
+  assert.equal(row(f, second).state, "submitted");
+  assert.equal(f.store.reserveManagedWake(request(f, "instance-1", "relay-1", "d0353-park3-nonce-abcdefghijklmnop"), streakAt - 1).dispatch, false);
+  const third = handOff(f, "d0353-park3-nonce-abcdefghijklmnop", streakAt);
+  assert.equal(row(f, second).state, "expired-unobserved");
+  assert.equal(row(f, third).prior_unobserved, 1);
+  assert.equal(observe(f, third, streakAt + 3).recognized, true);
+  submit(f, "after-observed-body", streakAt + 10);
+  const fourth = handOff(f, "d0353-park4-nonce-abcdefghijklmnop", streakAt + 10);
+  assert.equal(row(f, fourth).prior_unobserved, 0);
+});
+
+test("D0353: 새 탄생의 첫 미관측 시도는 이전 탄생의 연속 회수를 물려받지 않는다", () => {
+  const f = fixture();
+  submit(f, "rebirth-body", f.now);
+  const first = handOff(f, "d0353-birth1-nonce-abcdefghijklmnop", f.now);
+  const at = f.now + 2 + WAKE_RETIRE_GRACE_MS;
+  f.store.prune(at);
+  assert.equal(row(f, first).state, "expired-unobserved");
+  assert.equal(f.store.endPresence(target, "synthetic-restart", "instance-1", at + 1), true);
+  live(f, "instance-2", "relay-2", at + 2);
+  const next = dispatched(f.store.reserveManagedWake(request(f, "instance-2", "relay-2"), at + 2));
+  assert.equal(row(f, next).prior_unobserved, 0);
 });

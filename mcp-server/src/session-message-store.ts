@@ -348,6 +348,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         DROP TABLE wake_nonces;`);
         this.database.exec("ALTER TABLE wake_nonces_next RENAME TO wake_nonces;");
       }
+      if (!(this.database.prepare("PRAGMA table_info(wake_nonces)").all() as Array<{ name: string }>).some((column) => column.name === "prior_unobserved")) {
+        this.database.exec("ALTER TABLE wake_nonces ADD COLUMN prior_unobserved INTEGER NOT NULL DEFAULT 0 CHECK (prior_unobserved IN (0, 1));");
+      }
       this.database.exec(`CREATE UNIQUE INDEX IF NOT EXISTS wake_active_target ON wake_nonces (host, session_id)
         WHERE state IN ${ACTIVE_WAKE_STATES};`);
       // Last session-scoped hook or tool activity; retirement evidence only, never delivery evidence.
@@ -410,20 +413,22 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
 
   /**
    * Retires reservations under their existing expiry rules. D0353: activity, body claims and a changed birth cannot
-   * prove an external queue consumed a dispatched marker. Uncertain effects stay latched until that marker's verified
-   * observation or the existing definite non-submission path before the injection expiry plus grace. Past that bound
-   * the latch is released by time alone: a quiet live session has no other way to produce activity, so a marker the
-   * host dropped (interrupt, unload) would otherwise block every later wake of that session forever (D0353 liveness,
-   * observed 2026-11-01 on five idle Codex sessions). The cost is at most one extra marker per bound per session; a late
-   * arrival of the retired marker is recorded as evidence only. A reserved attempt keeps its existing expiry/retry
-   * rules. The row keeps its original binding, epoch and times; expired-unobserved is neither observation nor
-   * delivery. One UPDATE commits it atomically.
+   * prove an external queue consumed a dispatched marker, so they never release a hand-off. Time does: a quiet live
+   * session has no other way to produce evidence, and a marker the host dropped or parked (interrupt, unload) would
+   * otherwise block every later wake of that session forever (observed 2026-11-01 on five idle Codex sessions).
+   * The first unobserved hand-off is released WAKE_RETIRE_GRACE_MS after the hand-off, inside the default message TTL,
+   * so the message that caused it can still be delivered. A wake reserved right after such a release in the same birth
+   * (prior_unobserved) is released only after its injection expiry plus grace, which bounds markers parked in a host
+   * queue to about two per default-TTL message. A late arrival of a retired marker is evidence only and claims no body.
+   * A reserved attempt keeps its existing expiry/retry rules. The row keeps its original binding, epoch and times;
+   * expired-unobserved is neither observation nor delivery. One UPDATE commits it atomically.
    */
   private retireUnobservedWakes(nowMs: number): void {
     const now = iso(nowMs);
     this.database.prepare(`UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ?
       WHERE state IN ${ACTIVE_WAKE_STATES}
-        AND ((state IN ('started', 'submitted', 'unknown') AND expires_at <= ?)
+        AND ((state IN ('started', 'submitted', 'unknown') AND CASE WHEN prior_unobserved = 1 THEN expires_at <= ?
+            ELSE coalesce(outcome_at, started_at, expires_at) <= ? END)
         OR ((state = 'reserved' OR late_observed_at IS NOT NULL)
         AND ((expires_at <= ?
             AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
@@ -447,7 +452,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
               AND (m.claimed_at IS NULL OR m.acknowledged_at IS NULL)
               AND m.expires_at > ?
               AND m.created_at <= coalesce(wake_nonces.outcome_at, wake_nonces.started_at))))))`)
-      .run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), iso(nowMs - WAKE_RETIRE_GRACE_MS), now, now,
+      .run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), iso(nowMs - WAKE_RETIRE_GRACE_MS), iso(nowMs - WAKE_RETIRE_GRACE_MS), now, now,
         iso(nowMs - WAKE_OBSERVATION_WINDOW_MS), now, now);
   }
 
@@ -1374,10 +1379,14 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
           if (count.n >= MESSAGE_LIMIT) throw new Error("The bounded active wake store is full.");
           const generation = this.presence(input, nowMs).startedAt!;
           const attemptId = randomUUID();
+          // The target's latest attempt was a hand-off of this birth retired without any observation.
+          const priorUnobserved = this.database.prepare(`SELECT 1 FROM wake_nonces WHERE rowid = (SELECT max(rowid)
+            FROM wake_nonces WHERE host = ? AND session_id = ?) AND state = 'expired-unobserved' AND started_at IS NOT NULL
+            AND late_observed_at IS NULL AND birth_generation = ?`).get(input.host, input.sessionId, generation) ? 1 : 0;
           this.database.prepare(`INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce,
-            instance_id, birth_generation, transport, relay_id, attempt_id) VALUES (?, ?, ?, ?, 'reserved', ?, ?, ?, ?, ?, ?)`)
+            instance_id, birth_generation, transport, relay_id, attempt_id, prior_unobserved) VALUES (?, ?, ?, ?, 'reserved', ?, ?, ?, ?, ?, ?, ?)`)
             .run(nonceDigest(input.nonce), input.host, input.sessionId, iso(nowMs + WAKE_TTL_MS), input.nonce,
-              input.instanceId, generation, input.transport, input.relayId, attemptId);
+              input.instanceId, generation, input.transport, input.relayId, attemptId, priorUnobserved);
           attempt = { ...input, generation, attemptId, dispatchEpoch: 0 };
         }
       }

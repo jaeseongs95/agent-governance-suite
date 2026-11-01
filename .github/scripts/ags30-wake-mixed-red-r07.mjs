@@ -29,6 +29,8 @@ const expectedMutantDigest = new Map([
   ['c74b719f62106fcaaee77f5cdc02a04a9d40aa70986ed440ea3b31b086b07059', 'cb46b09fdac860406f9df4c6ddadf2fa9711ee36b535030d5c954289b43e057e'],
   // D0353의 미관측 시도 보존은 claimHostWake와 기존 네 결함 치환을 유지한다.
   ['db92adc330846455205ff204a3afdfc3a32bac3934c259e90c0b06bd9d2bbc8f', 'e87f00cef615b0b518792d9ab5264e88746608484451e6b54ceda037b96dac5d'],
+  // D0353 생존성: 넘긴 뒤 유예 회수와 연속 미관측 상한(prior_unobserved)도 claimHostWake와 네 치환을 바꾸지 않는다.
+  ['aea5b5f92a11df1dead13c010cf68e4e869792d2f77e21b93bd1942f6e1c3c9c', '94047aba555a5f4e43290ed2a0f051e5740e23ec3be4cc4d870e20a19e91ce03'],
 ]).get(sourceDigest);
 assert.ok(expectedMutantDigest, `UNKNOWN_WAKE_MIXED_RED_SOURCE:${sourceDigest}`);
 const baseline = Buffer.from(original.toString('utf8')
