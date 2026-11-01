@@ -129,7 +129,6 @@ test("boundary: a frame change before the first attempt can be independently rev
   comparison.rationale.forEach((item) => {
     item.evidenceRefs = item.evidenceRefs.filter((ref) => ref !== "evidence-attempt");
   });
-  review.implementationActorIds = [];
   review.evidenceRefs = review.evidenceRefs.filter((ref) => ref !== "evidence-attempt");
   comparison.requestArtifactDigest = reviewRequestDigest(request);
 
