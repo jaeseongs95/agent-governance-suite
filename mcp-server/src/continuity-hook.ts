@@ -106,10 +106,10 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
       if (readLineage) service.reanchorAfterCompact(sessionId, readLineage);
       return {};
   }
-  // A fork's parent is pinned before the model can change its own file; nothing is injected.
+  // Pin a fork's parent before the model can change its own file; the cue contains no snapshot body.
   if (observation.kind === "user-input") {
     if (readLineage) service.pinForkParent(sessionId, readLineage, false);
-    return {};
+    return observation.wakeOnly ? {} : sessionOutput(outputEventName, service.checkpointCueForSession(sessionId));
   }
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
     // A host that deferred its host-process read at the fork start reads it here, before any pin below.

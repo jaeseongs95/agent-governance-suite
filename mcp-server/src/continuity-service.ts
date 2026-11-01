@@ -720,11 +720,33 @@ export class ContinuityService implements ContinuityGateway {
     this.store.setPendingMarker(task.taskCorrelation, task.currentEpoch, summary.source, summary.revision, summary.snapshotDigest, task.rootId, this.now().toISOString());
   }
 
+  /** Ask while the model still has the correction; metadata alone cannot manufacture a checkpoint. */
+  checkpointCueForSession(rawSessionId: string, missingOnly = false): string | null {
+    return this.checkpointCue(this.ensureSession(rawSessionId), missingOnly);
+  }
+
+  private checkpointCue(task: ContinuityTaskRecord, missingOnly = false): string | null {
+    const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "direct", (current) => {
+      if (this.store.getTombstone(current.taskCorrelation, current.currentEpoch)) return null;
+      const snapshot = this.store.getSnapshot(current.taskCorrelation, current.currentEpoch);
+      if (missingOnly && snapshot) return null;
+      return [
+        "[Task continuity checkpoint check]",
+        missingOnly ? "사전 저장본 없음: 이 알림은 압축으로 유실된 내용을 복원하지 않는다." : `현재 작업의 저장본: ${snapshot ? "있음" : "없음"}.`,
+        "현재 요청의 교정·제약·결정·남은 작업을 잃으면 다음 행동이 달라지는지 확인하라. 달라진 상태가 아직 저장되지 않았다면 그 판단·작업을 이어가기 전에 context-continuity 스킬과 기존 checkpoint_context로 필요한 상태와 근거 참조만 저장하라.",
+        "재개·fork·인계는 inspect_context와 정확한 후보의 load_context를 먼저 수행하고 최신 요청과 대조하라. 없는 이전 정보는 추측하지 말고 현재 실제 전달된 문맥만 사용하라. workflow 원장을 직접 스냅샷으로 복제하지 마라.",
+        "이 알림은 저장·복원 성공이 아니다. 실제 응답을 확인하고 실패·미저장 상태를 구분하라. 보존할 변경이 없으면 추가 저장하지 말고 작업을 계속하라.",
+      ].join("\n");
+    });
+    return selected.kind === "available" ? selected.value : null;
+  }
+
   compactContext(rawSessionId: string): string | null {
     const task = this.ensureSession(rawSessionId);
-    if (task.suppressed || task.pendingConsumed) return null;
+    if (task.suppressed) return null;
     const summary = this.summary(task);
-    if (!summary || task.pendingRevision !== summary.revision || task.pendingDigest !== summary.snapshotDigest || task.pendingSource !== summary.source) return null;
+    if (!summary) return this.checkpointCue(task, true);
+    if (task.pendingConsumed || task.pendingRevision !== summary.revision || task.pendingDigest !== summary.snapshotDigest || task.pendingSource !== summary.source) return null;
     if (summary.source === "direct") return this.formatCandidate(this.candidateFor(task.taskCorrelation, task.currentEpoch));
     const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "workflow",
       (current) => this.workflowProjection(current));

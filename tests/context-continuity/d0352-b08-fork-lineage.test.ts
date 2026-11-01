@@ -74,8 +74,14 @@ function start(service: ContinuityService, session: string, source: string, tran
 
 /** The child's first user prompt: its parent is pinned here only when already found. */
 function prompt(service: ContinuityService, session: string, transcriptPath?: string) {
-  expect(hook(service, { hook_event_name: "UserPromptSubmit", session_id: session, prompt: "continue",
-    ...(transcriptPath ? { transcript_path: transcriptPath } : {}) })).toEqual({});
+  const output = hook(service, { hook_event_name: "UserPromptSubmit", session_id: session, prompt: "continue",
+    ...(transcriptPath ? { transcript_path: transcriptPath } : {}) });
+  expect(output).toMatchObject({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: expect.any(String) } });
+  const context = (output as { hookSpecificOutput: { additionalContext: string } }).hookSpecificOutput.additionalContext;
+  expect(context).toContain("[Task continuity checkpoint check]");
+  for (const tool of ["checkpoint_context", "inspect_context", "load_context"]) expect(context).toContain(tool);
+  for (const forbidden of [BODY_MARKER, checkpointInput().core.objective, "candidateToken=", "restoreToken", "_continuityBinding", "decision=DEFER", "decision=INJECT"])
+    expect(context).not.toContain(forbidden);
 }
 
 /** A write-capable host tool or non-AGS MCP tool boundary (before the tool runs): the final point a fork's parent is pinned. */
