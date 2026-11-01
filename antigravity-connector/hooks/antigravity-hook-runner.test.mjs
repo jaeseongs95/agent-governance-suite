@@ -693,7 +693,9 @@ try {
     let pidResolvedCount = 0;
     const hookCalls = [];
 
-    // (a) The connector routes the raw child marker; the actual common adapter denies its authority.
+    // (a) The connector routes the raw child marker unchanged and grants or denies nothing itself. In 3.0 the common
+    // adapter infers root for Antigravity whatever the marker (AGS-D-0019/D-0317); the child gate returns with the
+    // caller binding redesign. The common hook is not called here: with this synthetic host it would start a real relay.
     await executeAntigravityHookEvent(
       {
         conversationId: TEST_SESSION_ID,
@@ -716,9 +718,8 @@ try {
     assert.equal(pidResolvedCount, 1);
     assert.equal(hookCalls.length, 1);
     assert.equal(hookCalls[0].host, "antigravity"); assert.equal(hookCalls[0].input.agent_id, "subagent-42");
-    const { handleSessionMessageHook } = await import("../../mcp-server/dist/session-message-hook.mjs");
-    assert.deepEqual(await handleSessionMessageHook(hookCalls[0].input, hookCalls[0].host,
-      hookCalls[0].explicitPid, hookCalls[0].hookOptions), {});
+    assert.equal(hookCalls[0].explicitPid, 41804);
+    // Routing alone writes no state.
     assert.deepEqual(["session-board.sqlite3", "trust.sqlite3", "session-messaging"].filter(file => existsSync(path.join(tmpDir, file))), []);
     hookCalls.length = 0; pidResolvedCount = 0;
 

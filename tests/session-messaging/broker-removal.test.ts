@@ -1,4 +1,4 @@
-import { fork } from "node:child_process";
+import { fork, spawn } from "node:child_process";
 import { once } from "node:events";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -31,6 +31,7 @@ const connections: DatabaseSync[] = [];
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
   for (const connection of connections.splice(0)) { if (connection.isOpen) { if (connection.isTransaction) connection.exec("ROLLBACK"); connection.close(); } }
   for (const store of stores.splice(0)) { if (store.database.isOpen) store.close(); }
   for (const directory of directories.splice(0)) { closeSessionMessaging(directory); rmSync(directory, { recursive: true, force: true }); }
@@ -437,4 +438,29 @@ describe("CS-6 lease renewal runs beside a pending dispatch", () => {
     expect(store.liveRelay(target, transport)).toBeNull();
     expect(store.presence(target)).toMatchObject({ state: "ended", endReason: "host-process-ended" });
   });
+});
+
+describe("a relay whose host PID names no process (synthetic hosts, R5)", () => {
+  it("ends at the real watcher's first look, releases its lease and ends the birth", async () => {
+    vi.stubEnv("AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR", directory());
+    // A PID that certainly names no process: a child that has already exited and been reaped.
+    const child = spawn(process.execPath, ["-e", ""], { stdio: "ignore" });
+    await once(child, "exit");
+    const gone = child.pid!;
+    const store = open(path.join(directory(), "session-messages.sqlite3"), () => T0);
+    store.startPresence({ ...target, instanceId: "birth-gone", transport, wakeVisibility: "none", canWakeSilently: false,
+      deliveryCapabilities: { supportedInjection: [], idleWake: "none" }, hostPid: gone });
+    const relayId = store.grantRelay({ ...target, transport, instanceId: "birth-gone", codeDigest: null, hostPid: gone }).relayId!;
+    const operations: string[] = [];
+    const request = (async (operation: string, payload: Record<string, unknown>) => {
+      operations.push(operation);
+      return dispatchSessionMessageOperation(store, operation, payload);
+    }) as typeof sessionMessageRequest;
+    const port: WakeDispatchPort = { capabilities: { supportedInjection: [], idleWake: "none" }, resendBaseMs: 600_000, dispatch: vi.fn() };
+    // The production watcher and loop wait: the relay ends when the watcher reports the host gone, not on a timer.
+    await runSessionMessageRelay({ ...target, instanceId: "birth-gone", transport, parentPid: gone, relayId }, port, { request });
+    expect(operations.at(-1)).toBe("release-relay");
+    expect(store.liveRelay(target, transport)).toBeNull();
+    expect(store.presence(target)).toMatchObject({ state: "ended", endReason: "host-process-ended" });
+  }, 30_000);
 });

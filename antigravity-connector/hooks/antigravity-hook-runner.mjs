@@ -942,7 +942,8 @@ export function formatSecretFreeClaimDiagnosticLine(claimTracker) {
 }
 
 // R04-F01, R04-F04, R05-F02, R05-F03, #3313 N3 & #3317 M2 (aligned with central 01a14016 10193bee/10411a0d/796904a4/5eb3d511):
-// - Preserve observed actor identity (`agent_id`) on SessionStart and block observed subagents early.
+// - Preserve observed actor identity (`agent_id`) on SessionStart. Nothing here blocks a subagent: in 3.0 the common
+//   adapter infers root for Antigravity (AGS-D-0317) until the child gate returns.
 // - Resolve `{ pid, startToken }` (T1, using `/proc/<pid>/stat` fields[19] on Linux, `ps -o lstart=` on non-Linux Unix,
 //   and ISO-8601 UTC StartTime on Windows to match `mcp-server/src/process-identity.ts` 100%) and defensively copy it
 //   as an immutable pair so caller/inspector mutation after return cannot corrupt the passed token.
