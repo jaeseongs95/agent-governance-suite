@@ -1073,6 +1073,8 @@ export function resolveAntigravityAgentApiExeFromShim(homeDir = "", platform = p
   return { exe: "", reason: "AGENTAPI_SHIM_MISSING" };
 }
 
+const AGY_HOOK_LS_CONNECTION_NOT_EXPOSED = "AGY_HOOK_LS_CONNECTION_NOT_EXPOSED";
+
 // # ponytail: host-internal format stopgap (language_server.log, projects/*.json, agentapi.bat); replace with official host wake contract when available
 export function resolveAntigravityLanguageServerFromProcess(hostProcess = null, env = process.env, platform = process.platform, homeDir = "", options = {}) {
   const detail = hostProcessDetails.get(hostProcess)
@@ -1080,17 +1082,24 @@ export function resolveAntigravityLanguageServerFromProcess(hostProcess = null, 
       ? { command: text(hostProcess.command).trim(), commandLine: text(hostProcess.commandLine || hostProcess.command).trim() }
       : null);
 
+  const primaryExec = normalizeCandidateExecutablePath(extractPrimaryExecutableToken(detail?.command ?? ""));
+  const baseName = primaryExec ? path.win32.basename(primaryExec) : "";
+  // agy CLI 1.4.12 (Linux/Windows test hosts, 2026-11-01): the CLI runs its language server in-process and hands
+  // agent tool processes ANTIGRAVITY_AGENTAPI_EXE=<the agy binary> (`agy agentapi ...`; Linux
+  // ~/.gemini/antigravity-cli/bin/agentapi is `exec agy agentapi "$@"`, Windows ships no shim). Its hook processes get
+  // only ANTIGRAVITY_CONVERSATION_ID: the LS address and CSRF token are in no hook env, host argv or CLI log.
+  const agyCliHost = Boolean(primaryExec) && /^agy(?:\.exe)?$/iu.test(baseName)
+    && isRecognizedAntigravityHostProcess(baseName, primaryExec, env);
+
   let exe;
   let exeReason = null;
   const existingExe = text(env?.ANTIGRAVITY_AGENTAPI_EXE).trim();
   if (existingExe) {
     exe = existingExe;
   } else {
-    const primaryExec = normalizeCandidateExecutablePath(extractPrimaryExecutableToken(detail?.command ?? ""));
-    const baseName = primaryExec ? path.win32.basename(primaryExec) : "";
     if (
       primaryExec &&
-      /^language_server/iu.test(baseName) &&
+      (agyCliHost || /^language_server/iu.test(baseName)) &&
       isRecognizedAntigravityHostProcess(baseName, primaryExec, env) &&
       existsSync(primaryExec)
     ) {
@@ -1107,6 +1116,8 @@ export function resolveAntigravityLanguageServerFromProcess(hostProcess = null, 
   const existingToken = text(env?.ANTIGRAVITY_CSRF_TOKEN).trim();
   if (existingToken) {
     csrfToken = existingToken;
+  } else if (agyCliHost) {
+    csrfReason = AGY_HOOK_LS_CONNECTION_NOT_EXPOSED;
   } else if (detail?.commandLine) {
     const csrfMatch = /(?:^|\s)--csrf_token(?:=|\s+)(?:"([^"\r\n]+)"|'([^'\r\n]+)'|([^\s"'\r\n]+))/u.exec(detail.commandLine);
     const token = (csrfMatch?.[1] ?? csrfMatch?.[2] ?? csrfMatch?.[3] ?? "").trim();
@@ -1124,6 +1135,9 @@ export function resolveAntigravityLanguageServerFromProcess(hostProcess = null, 
   const existingAddress = text(env?.ANTIGRAVITY_LS_ADDRESS).trim();
   if (existingAddress) {
     lsAddress = existingAddress;
+  } else if (agyCliHost) {
+    // The IDE language_server.log is not the agy CLI's log; report the hook contract gap instead of a log read failure.
+    lsReason = AGY_HOOK_LS_CONNECTION_NOT_EXPOSED;
   } else {
     const appDataDir = text(options?.appDataDir ?? env?.APPDATA).trim();
     const logPath = text(options?.logFilePath).trim() || (
@@ -1257,7 +1271,7 @@ export function resolveAntigravityWakeEnvironment(canonicalInput = {}, hostProce
   else if (projRes.reason) diagnostics.push(projRes.reason);
 
   if (diagnostics.length > 0) {
-    resolved.ANTIGRAVITY_WAKE_ENV_DIAGNOSTIC = diagnostics.join(",");
+    resolved.ANTIGRAVITY_WAKE_ENV_DIAGNOSTIC = [...new Set(diagnostics)].join(",");
   }
 
   return Object.freeze(resolved);

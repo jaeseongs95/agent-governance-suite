@@ -56,10 +56,19 @@ function resolveGeminiAgentApiWithDiagnostic(
     if (shim.exe) {
       return { launch: { command: shim.exe, argsPrefix: ["agentapi"] } };
     }
+    // agy CLI 1.4.12 ships no Windows shim; its installer-default agy.exe serves `agy.exe agentapi ...` natively.
+    const agyExe = environment.LOCALAPPDATA ? path.win32.join(environment.LOCALAPPDATA, "agy", "bin", "agy.exe") : "";
+    if (agyExe && isVerifiedWindowsNativeExecutable(agyExe) && existsSync(agyExe)) {
+      return { launch: { command: agyExe, argsPrefix: ["agentapi"] } };
+    }
     return { launch: null, diagnostic: `missing-agentapi-exe:${shim.diagnostic ?? "AGENTAPI_SHIM_MISSING"}` };
   }
-  const command = path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi");
-  return { launch: { command: existsSync(command) ? command : "agentapi", argsPrefix: [] } };
+  // Antigravity IDE shim first, then the agy CLI 1.4.12 shim (`exec agy agentapi "$@"`), then PATH.
+  const command = [
+    path.join(homeDir, ".gemini", "antigravity", "bin", "agentapi"),
+    path.join(homeDir, ".gemini", "antigravity-cli", "bin", "agentapi"),
+  ].find((candidate) => existsSync(candidate));
+  return { launch: { command: command ?? "agentapi", argsPrefix: [] } };
 }
 export function resolveGeminiAgentApi(
   environment: NodeJS.ProcessEnv = process.env,
@@ -93,6 +102,22 @@ function reportAntigravityWakeFailure(phase: string, error: Error, environment: 
   reportWakeFailure(phase, error, environment, [detail, envDiag].filter(Boolean).join(";") || undefined);
 }
 
+/**
+ * agentapi (agy 1.4.12) reports a missing language-server connection as JSON on stdout, exit 1:
+ * `{"error":"ANTIGRAVITY_LS_ADDRESS is not set"}` or `{"error":"rpc error: ... missing CSRF token"}`.
+ * agy CLI hooks never receive that connection, so it is fixed for the birth, unlike a failed lookup.
+ */
+function agentApiConnectionMissing(stdout: unknown): boolean {
+  if (typeof stdout !== "string") return false;
+  try {
+    const reported = (JSON.parse(stdout) as { error?: unknown }).error;
+    return typeof reported === "string" && /ANTIGRAVITY_LS_ADDRESS is not set|missing CSRF token/u.test(reported);
+  } catch {
+    return false;
+  }
+}
+const lsConnectionMissing = (): Error => producerFailure("GEMINI_LS_CONNECTION_MISSING", "agentapi has no language-server connection.");
+
 const prerequisiteMissing = (reasonCode: string): WakeDispatchOutcome => ({ result: "not-delivered", kind: "prerequisite-missing", reasonCode });
 const transient = (reasonCode: string): WakeDispatchOutcome => ({ result: "not-delivered", kind: "transient", reasonCode });
 
@@ -121,8 +146,9 @@ async function ringAntigravity(sessionId: string, message: string, environment: 
     const meta = await new Promise<string>((resolve, reject) => {
       execFile(command, [...argsPrefix, "get-conversation-metadata", sessionId],
         { windowsHide: true, timeout: 5_000, env: childEnv, shell: false, windowsVerbatimArguments: false },
-        (error, stdout) => error ? reject(error) : resolve(stdout));
+        (error, stdout) => error ? reject(agentApiConnectionMissing(stdout) ? lsConnectionMissing() : error) : resolve(stdout));
     });
+    if (agentApiConnectionMissing(meta)) throw lsConnectionMissing();
     const parsed = JSON.parse(meta) as {
       response?: { conversationMetadata?: { metadata?: { projectId?: unknown } } };
     };
@@ -138,8 +164,9 @@ async function ringAntigravity(sessionId: string, message: string, environment: 
     reportAntigravityWakeFailure("gemini-metadata", error, childEnv);
     // No agentapi on PATH, or the conversation names no project: fixed for this birth. A failed lookup may recover.
     if (errorCode(cause) === "ENOENT") return prerequisiteMissing("GEMINI_AGENTAPI_UNAVAILABLE");
-    return producerFailureReason(error) === "GEMINI_METADATA_PROJECT_MISSING"
-      ? prerequisiteMissing("GEMINI_METADATA_PROJECT_MISSING") : transient("GEMINI_METADATA_FAILED");
+    const reason = producerFailureReason(error);
+    return reason === "GEMINI_METADATA_PROJECT_MISSING" || reason === "GEMINI_LS_CONNECTION_MISSING"
+      ? prerequisiteMissing(reason) : transient("GEMINI_METADATA_FAILED");
   }
   if (sourceProjectId !== targetProjectId) {
     reportAntigravityWakeFailure("gemini-metadata", producerFailure("GEMINI_PROJECT_MISMATCH", "Gemini conversation project identity does not match."), childEnv);
