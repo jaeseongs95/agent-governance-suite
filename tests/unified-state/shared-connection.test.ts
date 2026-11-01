@@ -154,7 +154,10 @@ describe("inactive native shared connection", () => {
     value.board.close(); expect(value.workflow.nextRunSequence()).toBe(2); value.owner.close();
     let rejected; try { value.workflow.nextRunSequence(); } catch (error) { rejected = error; }
     expect(rejected).toBeInstanceOf(WorkflowContractError);
-    expect(rejected).toMatchObject({ code: "MCP_UNAVAILABLE", details: { cause: "The shared owner is closed." } });
+    // AGS 3.0 error model R5: a fixed reason and a redacted cause (code CONNECTION_CLOSED only as a hash); no message.
+    expect(rejected).toMatchObject({ code: "MCP_UNAVAILABLE", details: { reason: "WORKFLOW_STORAGE_FAILED", cause: { type: "error",
+      code: expect.objectContaining({ length: 17, prefixSha256: "8f014eefc4511c30833e63e2050f937ebd89dc936a24c890a34dfd642ae8c045" }) } } });
+    expect(JSON.stringify((rejected as WorkflowContractError).details)).not.toContain("shared owner is closed");
   });
   it("B2-OWNER-07: native process crash rolls back queue/receipt; committed response loss replays the original ID", () => {
     const dir = directory(); const first = bundle(dir); const sender = { host: "crash-sender", sessionId: "s" }; const target = { host: "crash-recipient", sessionId: "t" };

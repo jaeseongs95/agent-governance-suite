@@ -62,7 +62,8 @@ Map.prototype.get = function(key) {
     expect(child.stderr, "STARTUP_FAILURE_DIAGNOSTIC_REQUIRED").toMatch(/^\[agent-governance-suite\] startup-failure \{[^\r\n]*\}\n$/u);
     const record = JSON.parse(child.stderr.slice(prefix.length));
     expect(record).toEqual({phase: "startup", context: mode === "default-log-off"
-      ? {type: "error", code: codeContext("MCP_UNAVAILABLE")}
+      // AGS 3.0 error model R6: the redacted producer cause (SQLITE_NOTADB) stays attached to the startup diagnostic.
+      ? {type: "error", code: codeContext("MCP_UNAVAILABLE"), producerCause: {type: "error", code: codeContext("ERR_SQLITE_ERROR"), sqlite: {errcode: 26, primaryCode: 26}}}
       : {type: "type-error", code: codeContext(privateCode), cause: {type: "syntax-error"}}});
     for (const secret of [privateMessage, privateCode, "PRIVATE_CAUSE_MESSAGE", "PRIVATE_ENV_VALUE", "PRIVATE_DATABASE_PATH", directory,
       "Bearer", "SELECT", "stack", "databasePath"]) expect(child.stderr).not.toContain(secret);
