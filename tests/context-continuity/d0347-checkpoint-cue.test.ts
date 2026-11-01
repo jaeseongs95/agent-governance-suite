@@ -179,7 +179,7 @@ describe("D0347 문맥을 보유한 입력 경계의 저장 유도", () => {
 
 describe("D0347 저장 유도의 현재 세대 재검증", () => {
   it.each((["checkpointCueForSession", "compactContext"] as const).flatMap(operation =>
-    (["clear", "suppress", "purge"] as const).map(change => ({ operation, change }))))("$operation: $change가 메타데이터 읽기 뒤 커밋되면 과거 권한으로 안내·스냅샷을 만들지 않는다", async ({ operation, change }) => {
+    (["clear", "suppress", "purge"] as const).map(change => ({ operation, change }))))("$operation / $change: 메타데이터 읽기 뒤 커밋되면 과거 권한으로 안내·스냅샷을 만들지 않는다", async ({ operation, change }) => {
     const directory = await mkdtemp(join(tmpdir(), "d0347-cue-race-"));
     directories.push(directory);
     const databasePath = join(directory, "continuity.sqlite3");

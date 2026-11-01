@@ -76,6 +76,10 @@ function start(service: ContinuityService, session: string, source: string, tran
 function prompt(service: ContinuityService, session: string, transcriptPath?: string) {
   const output = hook(service, { hook_event_name: "UserPromptSubmit", session_id: session, prompt: "continue",
     ...(transcriptPath ? { transcript_path: transcriptPath } : {}) });
+  expectCheckpointCue(output);
+}
+
+function expectCheckpointCue(output: Record<string, unknown>) {
   expect(output).toMatchObject({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: expect.any(String) } });
   const context = (output as { hookSpecificOutput: { additionalContext: string } }).hookSpecificOutput.additionalContext;
   expect(context).toContain("[Task continuity checkpoint check]");
@@ -572,8 +576,15 @@ describe("D0352 B08 Codex fork origin", () => {
 
   /** The child's SessionStart(source=fork) at its first prompt, then that prompt. */
   function codexFork(service: ContinuityService, child: string, file?: string, extra: Record<string, unknown> = {}) {
+    const correlation = service.correlateSession(child), before = service.store.getTask(correlation);
+    const snapshot = before ? service.store.getSnapshot(correlation, before.currentEpoch) : null;
     expect(hook(service, { hook_event_name: "SessionStart", source: "fork", session_id: child, ...(file ? { transcript_path: file } : {}), ...extra }, CODEX)).toEqual({});
-    expect(hook(service, { hook_event_name: "UserPromptSubmit", session_id: child, prompt: "continue", ...(file ? { transcript_path: file } : {}) }, CODEX)).toEqual({});
+    const output = hook(service, { hook_event_name: "UserPromptSubmit", session_id: child, prompt: "continue", ...(file ? { transcript_path: file } : {}), ...extra }, CODEX);
+    if (Object.hasOwn(extra, "agent_id")) {
+      expect(output).toEqual({});
+      expect(service.store.getTask(correlation)).toEqual(before);
+    } else expectCheckpointCue(output);
+    expect(service.store.getSnapshot(correlation, before?.currentEpoch ?? 1)).toEqual(snapshot);
   }
 
   it("C-P1: a Codex fork inspects and loads its host-named parent's checkpoint, then continues without STALE_REVISION", async () => {
