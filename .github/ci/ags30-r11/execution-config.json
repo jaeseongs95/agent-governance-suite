@@ -14,7 +14,6 @@
     "mcp-server/dist/host-attestation-hook.mjs",
     "mcp-server/dist/host-attestation-api.mjs",
     "mcp-server/dist/session-board-hook.mjs",
-    "mcp-server/dist/session-message-broker.mjs",
     "mcp-server/dist/session-message-relay.mjs",
     "mcp-server/dist/session-message-relay-guard.mjs",
     "mcp-server/dist/session-message-hook.mjs",
@@ -27,8 +26,6 @@
     "tests/mcp/host-attestation.test.ts",
     "tests/mcp/host-attestation-failures.test.ts",
     "tests/mcp/workflow-service.test.ts",
-    "tests/session-messaging/broker-process-lock.test.ts",
-    "tests/session-messaging/broker-lifecycle.test.ts",
     "tests/session-messaging/session-message.test.ts",
     "tests/mcp/jev-current-v1-contract-supplement.test.ts",
     "tests/session-messaging/gemini-relay-host-identity.test.ts",
@@ -37,8 +34,7 @@
     "tests/session-messaging/hook-opaque-host-contract.test.ts",
     "tests/session-messaging/hook-owned-cause-boundary.test.ts",
     "tests/session-messaging/verified-relay-hook.test.ts",
-    "tests/mcp/skill-classification-native.test.ts",
-    "tests/session-messaging/broker-process-lock.os.test.ts"
+    "tests/mcp/skill-classification-native.test.ts"
   ],
   "artifactMaximumBytesPerJob": 8388608,
   "limitations": [
@@ -48,14 +44,6 @@
     "Existing125 paid JEV proof and model quality not claimed. No live credentials attached.",
     "Generated runtime returned as candidate; installed/native real host/full acceptance not claimed."
   ],
-  "osMutationCollector": {
-    "bytes": 14377,
-    "sha256": "64630bfc0e31f425d63899d6c9998ba0cf527009b2b31aa7704a8653d7cd85ab"
-  },
-  "osPlan": {
-    "bytes": 6643,
-    "sha256": "49c22a0727f94b4a8c69c7de7da0730b50769cc4b5f9e8bdabb87d4dc2d12a6e"
-  },
   "gitContext": {
     "repository": "https://github.com/jaeseongs95/agent-governance-suite.git",
     "skillBaseline": "7bc7753012227938be2a46f68bf3e29d29d5ef34"

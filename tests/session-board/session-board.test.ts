@@ -178,7 +178,7 @@ describe("session board hook", () => {
     expect((listed.hookSpecificOutput as Record<string, unknown>).updatedInput).toBeUndefined();
   });
 
-  it("does not create a new request boundary for a broker-verified wake bell", () => {
+  it("does not create a new request boundary for a verified wake bell", () => {
     const board = open();
     handleSessionBoardHook(input("SessionStart"), board, "claude-code", at(0));
     setSummary(board, session(at(1)), "메시지 대기");
@@ -194,9 +194,14 @@ describe("session board hook", () => {
     const nonce = "subagent-wake-nonce-abcdefghijklmnop";
     store.send({ messageId: "subagent-wake-0001", sender: { host: "peer", sessionId: "sender" }, target, body: "pending" }, 1000);
     store.startPresence({ ...target, instanceId: "parent-instance", transport: "claude-inbox", wakeVisibility: "silent", canWakeSilently: true,
-      deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "silent" } }, 2000);
-    expect(store.acquireRelay({ ...target, transport: "claude-inbox", relayId: "parent-relay", pid: process.pid, parentPid: process.pid }, 2000)).toBe(true);
-    expect(store.reserveManagedWake({ ...target, nonce, instanceId: "parent-instance", transport: "claude-inbox", relayId: "parent-relay" }, 2000).dispatch).toBe(true);
+      deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "silent" }, hostPid: process.pid }, 2000);
+    const grant = store.grantRelay({ ...target, transport: "claude-inbox", instanceId: "parent-instance", codeDigest: null, hostPid: process.pid }, 2000);
+    expect(grant.relayId).not.toBeNull();
+    const relayId = grant.relayId!;
+    // The relay's first tick binds the host birth; a wake is reserved only for a bound host.
+    expect(store.relayTick({ ...target, transport: "claude-inbox", relayId, instanceId: "parent-instance", includePending: false, hostStart: "host-birth" }, 2001))
+      .toEqual({ alive: true, count: 0, hostBound: true });
+    expect(store.reserveManagedWake({ ...target, nonce, instanceId: "parent-instance", transport: "claude-inbox", relayId }, 2002).dispatch).toBe(true);
     const before = store.database.prepare("SELECT * FROM wake_nonces").all();
     let requests = 0;
     const request = (async <T>() => {
@@ -215,7 +220,7 @@ describe("session board hook", () => {
       expect(requests).toBe(0);
       // The parent's marker and body are untouched by the subagent prompt.
       expect(store.database.prepare("SELECT * FROM wake_nonces").all()).toEqual(before);
-      expect(store.pendingCount(target, 2002)).toBe(1);
+      expect(store.pendingCount(target, 2003)).toBe(1);
     } finally {
       if (previous === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
       else process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = previous;
@@ -370,7 +375,7 @@ describe("session board MCP tools", () => {
     expect(existsSync(missing)).toBe(false);
   });
 
-  it("overlays matching broker presence and leaves missing sessions unknown", async () => {
+  it("overlays matching messaging presence and leaves missing sessions unknown", async () => {
     const databasePath = boardPath();
     const board = open(databasePath);
     const now = new Date().toISOString();
@@ -387,7 +392,7 @@ describe("session board MCP tools", () => {
           collaborationId: "collaboration-1", workspaceId: "workspace-1", role: "worker",
           startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",
         }],
-        // A failed batch or an identity the broker would refuse: never asked, so its autoWake stays null.
+        // A failed batch or an identity the messaging service would refuse: never asked, so its autoWake stays null.
         unanswered: [{ host: "claude-code", sessionId: "unasked" }],
       },
       error: null,

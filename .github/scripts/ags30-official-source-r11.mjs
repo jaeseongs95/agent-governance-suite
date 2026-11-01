@@ -61,43 +61,6 @@ export function summarizeSuiteLoading(report, progressText, source) {
     conclusion: 'OBSERVATION_ONLY_NOT_A_SUITE_LOAD_PASS_OR_NEW_GATE' };
 }
 
-export function osProofFailure(evidence) {
-  if (evidence?.verdict === 'CONSISTENT') return null;
-  const codes = { PREPARATION: 'OS_CASE_PREPARATION_FAILED', RED_EXECUTION: 'OS_RED_EXECUTION_FAILED',
-    GREEN_EXECUTION: 'OS_GREEN_EXECUTION_FAILED', REPORT_READ: 'OS_REPORT_UNAVAILABLE',
-    RED_WITNESS: 'OS_RED_WITNESS_REJECTED', GREEN_WITNESS: 'OS_GREEN_WITNESS_REJECTED' };
-  const statuses = ['PASS', 'FAIL', 'INPUT_CHANGED', 'TIMED_OUT', 'SPAWN_ERROR'];
-  return { phase: '07-os-mutation-proof', status: 'FAIL', code: 'OS_PROOF_NOT_CONSISTENT',
-    verdict: ['INCOMPLETE', 'INCONSISTENT'].includes(evidence?.verdict) ? evidence.verdict : 'UNVERIFIED',
-    cases: ['OS-001', 'OS-002', 'OS-003'].map(caseId => {
-      const matches = Array.isArray(evidence?.cases) ? evidence.cases.filter(row => row?.caseId === caseId) : [];
-      const row = matches.length === 1 ? matches[0] : {};
-      const status = ['NOT_RUN', 'DEMONSTRATED', 'INVALID_OR_INCOMPLETE_EVIDENCE'].includes(row.status) ? row.status : 'UNVERIFIED';
-      const stage = typeof row.failureStage === 'string' && Object.hasOwn(codes, row.failureStage) ? row.failureStage : 'UNVERIFIED';
-      const artifact = suffix => {
-        const ref = row.artifacts?.[suffix[0]];
-        const expected = `${caseId}.${suffix[1]}`;
-        if (ref?.path !== expected || !Number.isSafeInteger(ref.bytes) || ref.bytes < 0 || ref.bytes > 8 * 1024 * 1024
-          || typeof ref.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(ref.sha256)) return null;
-        return { path: `os-proof/${expected}`, bytes: ref.bytes, sha256: ref.sha256 };
-      };
-      return { caseId, status, redStatus: statuses.includes(row.redStatus) ? row.redStatus : 'UNVERIFIED',
-        greenStatus: statuses.includes(row.greenStatus) ? row.greenStatus : 'UNVERIFIED',
-        failureStage: status === 'DEMONSTRATED' ? null : stage,
-        code: status === 'DEMONSTRATED' ? null : codes[stage] ?? 'OS_CASE_FAILURE_UNCLASSIFIED',
-        artifacts: { redReceipt: artifact(['redReceipt', 'red.receipt.json']), greenReceipt: artifact(['greenReceipt', 'green.receipt.json']),
-          redReport: artifact(['redReport', 'red.vitest.json']), greenReport: artifact(['greenReport', 'green.vitest.json']) } };
-    }) };
-}
-
-export function recordOSProofEvidence(record, evidence) {
-  record.mutationSensitivity = evidence;
-  record.formalEngineeringProof = evidence.verdict;
-  const failure = osProofFailure(evidence);
-  if (failure) record.aggregateFailures = [...(record.aggregateFailures ?? []), failure];
-  return evidence.verdict === 'CONSISTENT';
-}
-
 export function recordCollectorFailure(record, error) {
   record.failure = { name: error.name, message: error.message, code: error.code ?? null };
 }
@@ -364,7 +327,7 @@ async function main() {
   const record = { schemaVersion: 'AgsBoundedCiResult.v1', unit: identity.unit, nonce: identity.nonce,
     startedAt: new Date().toISOString(), runnerOs: process.env.RUNNER_OS, shardIndex, shardCount: config.shardCount, status: 'FAIL', sourceFreshness: 'NOT_RUN',
     runtimeCandidate: 'NOT_GENERATED', originalJev: { tasks: 3, cases: 125, acceptanceCriteria: 10, completionIncrease: 0 },
-    mutationSensitivity: 'NOT_RUN', formalEngineeringProof: 'NOT_COLLECTED', phases: [] };
+    phases: [] };
   let artifactOk;
   let beforeRows = null;
   let afterBuildRows = null;
@@ -502,16 +465,12 @@ async function main() {
     const configBytes = await fs.readFile(configPath);
     assertHeadBytes(helperRelative, executingHelperBytes);
     assertHeadBytes('.github/ci/ags30-r11/execution-config.json', configBytes);
-    const helperClosure = { ...config.ownershipHelpers, 'ags30-os-mutation-r01.mjs': config.osMutationCollector,
-      'ags30-shard-evidence-r09.mjs': config.shardEvidence };
+    const helperClosure = { ...config.ownershipHelpers, 'ags30-shard-evidence-r09.mjs': config.shardEvidence };
     for (const [name, expected] of Object.entries(helperClosure)) {
       const bytes = await fs.readFile(new URL('./' + name, import.meta.url));
       assertHeadBytes('.github/scripts/' + name, bytes);
       assert.equal(bytes.length, expected.bytes); assert.equal(sha(bytes), expected.sha256);
     }
-    const planBytes = await fs.readFile(path.join(dataRoot, 'os-test-plan.json'));
-    assertHeadBytes('.github/ci/ags30-r11/os-test-plan.json', planBytes);
-    assert.equal(planBytes.length, config.osPlan.bytes); assert.equal(sha(planBytes), config.osPlan.sha256);
     const sourcePins = { ...binding, files: manifest.files, portableId: config.portableId, transport };
     record.sourceBinding = sourcePins;
     await writeJson('environment.json', { node: process.version, platform: process.platform, arch: process.arch,
@@ -620,19 +579,6 @@ async function main() {
     mustPass(await command('07a-path-normalization', process.execPath, ['--test', 'tests/mutation-risk-preflight/path-normalization.node-test.mjs'], source, 60_000));
     mustPass(await command('07b-change-scope', process.execPath, ['--test', 'tests/change-scope-guardian/change-scope.node.mjs'], source, 60_000));
     // All selected regression files are included in full shard discovery; do not execute duplicate subsets.
-    assert.equal(config.selectors.at(-1), 'tests/session-messaging/broker-process-lock.os.test.ts');
-    const mutationModule = new URL('./ags30-os-mutation-r01.mjs', import.meta.url);
-    const mutationBytes = await fs.readFile(mutationModule);
-    assert.equal(mutationBytes.length, config.osMutationCollector.bytes);
-    assert.equal(sha(mutationBytes), config.osMutationCollector.sha256);
-    const planFile = path.join(dataRoot, 'os-test-plan.json');
-    const planBytes = await fs.readFile(planFile);
-    assert.equal(planBytes.length, config.osPlan.bytes);
-    assert.equal(sha(planBytes), config.osPlan.sha256);
-    const { collectOSMutations } = await import(mutationModule.href);
-    const osEvidence = await collectOSMutations({ sourceRoot: source, pnpmCli, planFile,
-      outputRoot: path.join(output, 'os-proof'), deadline, wholeSourcePortableId: config.portableId });
-    if (!recordOSProofEvidence(record, osEvidence)) testsPass = false;
     // Independent collection is evidence in its own right, including when full Vitest never emits JSON.
     const nodeRunner = 'import {listNodeTestFiles,runTests} from ' + JSON.stringify(pathToFileURL(path.join(source, 'scripts/run-tests.mjs')).href) + '; const files=listNodeTestFiles(); if(!files.length)throw Error("No Node suites"); console.log(JSON.stringify({files})); process.exitCode=await runTests(files,[process.execPath,"--test"]);';
     const nodeSuites = await command('08b-all-node-suites', process.execPath, ['--input-type=module', '-e', nodeRunner], source, 120_000);
@@ -679,7 +625,7 @@ async function main() {
     const allFiles = parseFileList(discovery.stdout.toString('utf8'),source,sourcePaths);
     const regressionFiles = [...config.selectors,'antigravity-connector/hooks/antigravity-hook-runner.test.mjs',
       'tests/session-messaging/wake-liveness.test.mjs','tests/session-messaging/hook-queue-read-close.test.ts',
-      'tests/tooling/skill-context-optimization.test.mjs','antigravity-connector/hooks/antigravity-hook-warm-ensure.test.mjs',
+      'tests/tooling/skill-context-optimization.test.mjs',
       'tests/mcp/host-attestation-d0179-sink.test.ts','tests/mcp/skill-classification-gateway.test.ts',
       'tests/session-messaging/wake-lifecycle.test.mjs','tests/mcp/skill-classification-providers.test.ts'];
     assert(regressionFiles.every(file=>allFiles.includes(file)),'Previously selected file missing from full discovery');
@@ -700,7 +646,7 @@ async function main() {
       const moduleBinding = bindShardReport(fullReport,allFiles,source,shardIndex,config.shardCount);
       await writeJson('08-full-test.module-binding.json',moduleBinding);
       if(moduleBinding.status!=='COMPLETE_SHARD_PASS')testsPass=false;
-      const selectedCases = moduleBinding.cases.filter(item=>regressionFiles.includes(item.file) && item.file!==config.selectors.at(-1));
+      const selectedCases = moduleBinding.cases.filter(item=>regressionFiles.includes(item.file));
       record.selectedRegression = {cases:selectedCases.length, pendingOrTodo:selectedCases.filter(item=>['pending','todo','skipped'].includes(item.status)).length};
       if(record.selectedRegression.pendingOrTodo!==0)testsPass=false;
       record.shardCoverage = {status:moduleBinding.status,allFilesDigest:moduleBinding.allFilesDigest,shardFilesDigest:moduleBinding.shardFilesDigest};

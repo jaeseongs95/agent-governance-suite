@@ -41,7 +41,7 @@ describe("AL06 runtime clean-room owned copy lifetime", () => {
       if (path.basename(source) === "contracts") {
         return delayed.promise.then(() => { delayedCopySettled = true; });
       }
-      if (path.basename(source) === "session-message-broker.mjs") return Promise.reject(primary);
+      if (path.basename(source) === "session-message-relay.mjs") return Promise.reject(primary);
       return Promise.resolve();
     });
     const outcome = runRuntimeSmokeCheck(sourceRoot).catch(error => error);
@@ -65,7 +65,7 @@ describe("AL06 runtime clean-room owned copy lifetime", () => {
   it("keeps the primary identity and retains a secondary cleanup failure through the existing diagnostics helper", async () => {
     const primary = Object.freeze(Object.assign(new Error("Missing messaging bundle."), { code: "ENOENT" }));
     const secondary = Object.assign(new Error("Cleanup could not remove the directory."), { code: "ENOTEMPTY" });
-    boundary.cp.mockImplementation(source => path.basename(source) === "session-message-broker.mjs"
+    boundary.cp.mockImplementation(source => path.basename(source) === "session-message-relay.mjs"
       ? Promise.reject(primary) : Promise.resolve());
     boundary.rm.mockRejectedValue(secondary);
 

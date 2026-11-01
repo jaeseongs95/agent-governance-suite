@@ -1758,15 +1758,14 @@ try {
     assert.equal(childDiag.context.producerCause?.type, "error");
 
     // (d) Isolated child process default `handleSessionMessageHook` -> `ensure-relay` failure path (no `sessionMessageHook` callback):
-    // Uses a real live process (`process.pid` + `processStartToken(process.pid)`) and points `AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR`
+    // Uses a real live process (`process.pid` with an adapter-supplied start token; no OS identity query exists) and points `AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR`
     // at a regular file so the default `handleSessionMessageHook` fails in `ensure-relay` and emits `[agent-governance-suite] peer-hook-failure`
     // with phase/reason/context on the isolated child's stderr.
     const blockedStateFile = path.join(tmpDir, "blocked-state-file");
     writeFileSync(blockedStateFile, "not-a-directory", "utf8");
     const defaultEnsureFailScript = [
       `import { startAntigravitySessionPresenceAndRelay } from ${JSON.stringify(pathToFileURL(runnerPath).href)};`,
-      `import { processStartToken } from ${JSON.stringify(pathToFileURL(path.resolve("mcp-server/dist/session-message-hook.mjs")).href.replace("session-message-hook.mjs", "../src/process-identity.ts"))};`,
-      `const token = processStartToken(process.pid);`,
+      `const token = "2026-10-27T00:00:00.000Z";`,
       `await startAntigravitySessionPresenceAndRelay({ hook_event_name: "SessionStart", session_id: ${JSON.stringify(TEST_SESSION_ID)}, workspace_id: ${JSON.stringify(tmpDir)} }, {`,
       `  now: () => 1000,`,
       `  deadlineMonotonicMs: 60000,`,
