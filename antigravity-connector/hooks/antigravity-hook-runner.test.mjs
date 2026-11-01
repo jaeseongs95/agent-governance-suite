@@ -577,10 +577,8 @@ try {
     assert.equal(resMsg.status, 0);
     assert.ok(resMsg.elapsedMs < 3000, `Expected Handler 2 prepare_session_message elapsedMs < 3000ms, got ${resMsg.elapsedMs}ms`);
     const parsedMsg = JSON.parse(resMsg.stdout);
-    // 3.0 stopgap: Antigravity is inferred root, so the common hook issues a one-use root proof.
-    assert.equal(parsedMsg.decision, "allow");
-    assert.equal(typeof parsedMsg.overwrite?.Arguments?._sessionProof, "string");
-    assert.equal(parsedMsg.overwrite?.Arguments?._sessionBinding, undefined);
+    // AGS 3.0: the server reads the caller from tools/call _meta, so the hook allows the call without rewriting it.
+    assert.deepEqual(parsedMsg, { decision: "allow" });
     for (const file of ["session-board.sqlite3", "trust.sqlite3", "session-messaging"])
       assert.equal(existsSync(path.join(tmpDir, file)), false);
     const boundary = buildCanonicalHookInput(JSON.parse(msgToolPayload), "PreToolUse", "session-message").toolBoundary;
@@ -592,9 +590,9 @@ try {
     assert.deepEqual(routed.overwrite.Arguments._sessionBinding, { host: "synthetic-connector-core", sessionId: TEST_SESSION_ID });
   }
 
-  // 10. [R02-F05]: Native common denial precedes advisory stages, so forged
-  // binding keys cannot survive through a fail-open advisory-stage exception.
-  // Both wrapper and direct reserved-key attempts remain denied without output bindings.
+  // 10. [R02-F05]: The AGS pass-through precedes advisory stages, so a fail-open advisory-stage exception
+  // cannot add or keep a binding. Caller fields reach the server unchanged and are refused there
+  // (RESERVED_CALLER_FIELD); the hook writes no overwrite for wrapper or direct calls.
   {
     const forgedWrapperInput = {
       conversationId: TEST_SESSION_ID,
@@ -628,11 +626,8 @@ try {
         },
       },
     );
-    assert.equal(outWhenStagesThrow.decision, "deny");
-    assert.match(outWhenStagesThrow.reason, /_hostAttestation/);
-    assert.equal(outWhenStagesThrow.overwrite, undefined);
-    // The early common governance entry owns AGS authorization. Advisory-stage
-    // failure injection must not bypass it or convert unsupported input to allow.
+    assert.deepEqual(outWhenStagesThrow, { decision: "allow" });
+    // Advisory stages never run for an AGS tool, so their failure cannot change the call.
     assert.equal(advisoryStageCalls, 0);
 
     const directForgedSession = await executeAntigravityHookEvent(
@@ -649,9 +644,7 @@ try {
       "PreToolUse",
       "",
     );
-    assert.equal(directForgedSession.decision, "deny");
-    assert.match(directForgedSession.reason, /_sessionBinding/);
-    assert.equal(directForgedSession.overwrite, undefined);
+    assert.deepEqual(directForgedSession, { decision: "allow" });
 
     const directForgedContinuity = await executeAntigravityHookEvent(
       {
@@ -667,9 +660,7 @@ try {
       "PreToolUse",
       "",
     );
-    assert.equal(directForgedContinuity.decision, "deny");
-    assert.match(directForgedContinuity.reason, /_continuityBinding/);
-    assert.equal(directForgedContinuity.overwrite, undefined);
+    assert.deepEqual(directForgedContinuity, { decision: "allow" });
   }
 
   // 11. [R04-F01, R04-F04, R05-F02 & R05-F03 Full Entrypoint & Mutable Observer Oracle]:
