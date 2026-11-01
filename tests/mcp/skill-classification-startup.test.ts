@@ -1,17 +1,18 @@
 import {execFileSync} from "node:child_process";
-import {Client} from "@modelcontextprotocol/sdk/client/index.js";
-import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {mkdtemp, rm, writeFile} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
-import {expect, it} from "vitest";
+import {expect} from "vitest";
+import {stdioServerTests} from "../helpers/stdio-server.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
-it.each(["unsupported-sibling", "invalid-isolation"] as const)("actual index startup preserves %s classification state and safe diagnostics", async mode => {
+// Each case's server starts before the case's time limit starts (stdioServerTests); the limit measures the calls.
+const serverTest = stdioServerTests();
+for (const mode of ["unsupported-sibling", "invalid-isolation"] as const) serverTest(`actual index startup preserves ${mode} classification state and safe diagnostics`, async ({defer, connect}) => {
   const directory = await mkdtemp(path.join(tmpdir(), "ags-native-startup-"));
-  expect(path.dirname(directory)).toBe(path.resolve(tmpdir()));
+  defer(() => rm(directory, {recursive: true, force: true}));
   const profilesPath = path.join(directory, "profiles.json"), definitionsPath = path.join(directory, "native.json"), configPath = path.join(directory, "config.json");
   const normal = {adapterId: "synthetic-native", host: "codex", executable: process.execPath, workingDirectory: directory,
     approvalRef: "fixture-only", capabilityEvidenceRef: "fixture-only", retryPolicyVerified: true, retryPolicyEvidenceRef: "fixture-only",
@@ -30,18 +31,20 @@ it.each(["unsupported-sibling", "invalid-isolation"] as const)("actual index sta
     AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: path.join(directory, "board.sqlite3"), AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: path.join(directory, "messages"),
   }).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
   // Existing source-stdio test runner: actual index, producer, factory, catch and MCP gateway. No native CLI invocation.
-  const transport = new StdioClientTransport({command: process.execPath, args: ["--import", "tsx", path.join(root, "mcp-server", "src", "index.ts")], cwd: root, env: environment, stderr: "pipe"});
-  const client = new Client({name: "native-startup-source-fixture", version: "1.0.0"});
   let diagnostic = "";
   const diagnosticPrefix = "[agent-governance-suite] classification-initialization-failed ";
   let received!: () => void;
   const diagnosticReceived = new Promise<void>(resolve => {received = resolve;});
-  transport.stderr?.on("data", chunk => {
-    diagnostic += String(chunk);
-    if (diagnostic.split(/\r?\n/u).slice(0, -1).some(line => line.startsWith(diagnosticPrefix))) received();
-  });
+  const server = await connect("native-startup-source-fixture", {command: process.execPath, args: ["--import", "tsx", path.join(root, "mcp-server", "src", "index.ts")], cwd: root, env: environment},
+    stream => stream?.on("data", chunk => {
+      diagnostic += String(chunk);
+      if (diagnostic.split(/\r?\n/u).slice(0, -1).some(line => line.startsWith(diagnosticPrefix))) received();
+    }));
+  return {directory, definitionsPath, environment, diagnosticPrefix, diagnosticReceived, diagnostic: () => diagnostic, server};
+}, async ({directory, definitionsPath, environment, diagnosticPrefix, diagnosticReceived, diagnostic, server}) => {
+  expect(path.dirname(directory)).toBe(path.resolve(tmpdir()));
+  const {client} = server;
   try {
-    await client.connect(transport);
     // 모델 입력에는 호출자 신원을 요구하지 않지만, 호스트가 관측하지 않은 실서버 호출은 거부한다.
     const advertised = (await client.listTools()).tools;
     for (const name of ["get_skill_inventory", "classify_skills"]) {
@@ -75,7 +78,7 @@ it.each(["unsupported-sibling", "invalid-isolation"] as const)("actual index sta
         await Promise.race([diagnosticReceived, new Promise<never>((_resolve, reject) => {timer = setTimeout(() => reject(new Error("STARTUP_DIAGNOSTIC_TIMEOUT")), 2000);})]);
       } finally {if (timer !== undefined) clearTimeout(timer);}
     }
-    const records = diagnostic.split(/\r?\n/u).filter(line => line.startsWith(diagnosticPrefix));
+    const records = diagnostic().split(/\r?\n/u).filter(line => line.startsWith(diagnosticPrefix));
     if (mode === "invalid-isolation") {
       expect(records).toHaveLength(1);
       expect(JSON.parse(records[0]!.slice(records[0]!.indexOf("{")))).toEqual({phase: "classification-initialization", reason: "INVALID_NATIVE_ISOLATION_ARGUMENT"});
@@ -96,8 +99,8 @@ it.each(["unsupported-sibling", "invalid-isolation"] as const)("actual index sta
       expect(classifiedText).not.toContain("PRIVATE_NATIVE_ARGUMENT"); expect(classifiedText).not.toContain(definitionsPath); expect(classifiedText).not.toContain(directory);
       expect((await client.listTools()).tools.some(tool => tool.name === "classify_skills")).toBe(true);
     }
-    expect(diagnostic).not.toContain("PRIVATE_NATIVE_ARGUMENT"); expect(diagnostic).not.toContain(definitionsPath);
+    expect(diagnostic()).not.toContain("PRIVATE_NATIVE_ARGUMENT"); expect(diagnostic()).not.toContain(definitionsPath);
   } finally {
-    try {await client.close();} finally {await transport.close(); await rm(directory, {recursive: true, force: true});}
+    await server.close();
   }
 }, 30_000);

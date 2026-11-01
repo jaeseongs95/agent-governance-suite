@@ -5,15 +5,16 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import type { Stream } from "node:stream";
 import { fileURLToPath } from "node:url";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { expect, it } from "vitest";
+import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { getDefaultEnvironment } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { expect } from "vitest";
 import type { ApiResultV1, AttemptLeaseV1, ConvergenceRootV1, WorkflowPlanV1, WorkflowReceiptV1 } from "../../contracts/types.js";
 import { RESERVED_CALLER_KEYS } from "../../mcp-server/src/caller-identity.js";
 import { hostActorId } from "../../mcp-server/src/host-attestation.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { codexCallMeta } from "../helpers/caller.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
+import { stdioServerTests, type StdioServer, type StdioStart } from "../helpers/stdio-server.js";
 
 const repository = fileURLToPath(new URL("../../", import.meta.url)), sessionId = "owned-host-session";
 function envelope<T>(response: Awaited<ReturnType<Client["callTool"]>>): ApiResultV1<T> {
@@ -34,7 +35,7 @@ function task(taskId: string) {
 const startupTrace = new URL("../session-messaging/fixtures/presence-startup-trace.mjs", import.meta.url).href;
 const STARTUP_EVENTS = new Set(["preload", "powershell-start", "powershell-end", "keygen-start", "keygen-end", "tls-create", "tls-created", "tls-listening"]);
 /** Drains the server's stderr (an unread pipe could block its writes) and forwards at most 20 shaped startup records. */
-function traceServerStartup(stderr: Stream | null, trace: (stage: string, details?: Record<string, unknown>) => void) {
+function traceServerStartup(stderr: Stream | null | undefined, trace: (stage: string, details?: Record<string, unknown>) => void) {
   if (!stderr) return;
   let tail = "", forwarded = 0, discarded = 0, firstByte = true;
   stderr.on("data", (chunk: Buffer) => {
@@ -58,7 +59,7 @@ function traceServerStartup(stderr: Stream | null, trace: (stage: string, detail
   stderr.once("end", () => trace("server.stderr-end", { forwarded, discarded }));
 }
 
-async function fixture(host: string, modelClass: "deep" | "lightweight" = "deep", resolvable = true) {
+async function fixture(scope: StdioStart, host: string, modelClass: "deep" | "lightweight" = "deep", resolvable = true) {
   // 고유 fixture와 누적 시간을 남겨 전체 30초 중 마지막으로 진입한 단계를 구분한다.
   // 호출 인자·출력과 자식 표준 오류 본문은 기록하지 않는다.
   const started = performance.now(), test = expect.getState().currentTestName;
@@ -67,7 +68,7 @@ async function fixture(host: string, modelClass: "deep" | "lightweight" = "deep"
     `[시험단계] ${JSON.stringify({ fixture: host, test, modelClass, sequence: ++sequence, stage, elapsedMs: performance.now() - started, ...details })}\n`);
   trace("fixture.begin");
   const directory = await mkdtemp(path.join(tmpdir(), "ags-host-composition-")), state = path.join(directory, "state"), database = path.join(state, "workflow.sqlite3");
-  let client: Client | undefined, transport: StdioClientTransport | undefined;
+  let server: StdioServer | undefined;
   try {
     await mkdir(path.join(directory, "mcp-server/dist"), { recursive: true }); await mkdir(state, { recursive: true });
     trace("copy.begin");
@@ -111,18 +112,17 @@ export function installation(host) {
     const unchanged = await Promise.all(protectedFiles.map(file => readFile(file)));
     // D0363: connect spans the server's whole start. The disposable preload reports only shaped, path-free startup
     // stages (Windows keygen/TLS/PowerShell calls) as they arrive, so a stalled connect still shows its last stage.
-    transport = new StdioClientTransport({ command: process.execPath, args: ["--import", startupTrace, serverWrapper], cwd: directory, env: environment, stderr: "pipe" });
-    traceServerStartup(transport.stderr, trace);
-    client = new Client({ name: "owned-host-public-entry", version: "1.0.0" });
     trace("connect.begin");
-    await client.connect(transport);
+    server = await scope.connect("owned-host-public-entry", { command: process.execPath, args: ["--import", startupTrace, serverWrapper], cwd: directory, env: environment },
+      stream => traceServerStartup(stream, trace));
     trace("connect.end");
+    const { client } = server;
     // The installed host writes the caller into tools/call _meta; no hook rewrites arguments.
     const rawCall = async <T>(name: string, args: Record<string, unknown>, meta?: Record<string, unknown>) => {
       trace("call.begin", { tool: name });
       let returned = false;
       try {
-        const response = envelope<T>(await client!.callTool({ name, arguments: args, ...(meta ? { _meta: meta } : {}) }));
+        const response = envelope<T>(await client.callTool({ name, arguments: args, ...(meta ? { _meta: meta } : {}) }));
         returned = true;
         return response;
       } finally { trace("call.end", { tool: name, outcome: returned ? "returned" : "threw" }); }
@@ -133,26 +133,38 @@ export function installation(host) {
       async unchanged() { expect(await Promise.all(protectedFiles.map(file => readFile(file)))).toEqual(unchanged); },
       async close() {
         trace("close.begin");
-        try { await client?.close(); trace("client-close.returned"); } finally {
-          trace("transport-close.begin");
-          try { await transport?.close(); trace("transport-close.returned"); } finally {
-            trace("remove.begin");
-            await rm(directory, { recursive: true, force: true });
-            trace("remove.returned");
-          }
+        // Closing the client also closes its transport.
+        try { await server?.close(); trace("client-close.returned"); } finally {
+          trace("remove.begin");
+          await rm(directory, { recursive: true, force: true });
+          trace("remove.returned");
         }
       } };
   } catch (error) {
     trace("fixture.error");
-    try { await client?.close(); } finally { try { await transport?.close(); } finally { await rm(directory, { recursive: true, force: true }); } }
+    try { await server?.close(); } finally { await rm(directory, { recursive: true, force: true }); }
     throw error;
   }
 }
 
-it("preserves identical installation bytes through public startup and guarded finalization, and gives an unknown host no ingress", async () => {
+// Every installed server of a test starts before the test's time limit starts (stdioServerTests); the limit measures only
+// the calls and shutdowns. Installations of one test are independent directories, so starting them first changes nothing.
+const serverTest = stdioServerTests();
+async function fixtures<K extends string>(scope: StdioStart, specs: Record<K, Parameters<typeof fixture> extends [unknown, ...infer R] ? R : never>) {
+  const started = {} as Record<K, Awaited<ReturnType<typeof fixture>>>;
+  for (const [name, spec] of Object.entries(specs) as Array<[K, Parameters<typeof fixture> extends [unknown, ...infer R] ? R : never]>) {
+    const f = await fixture(scope, ...spec);
+    scope.defer(() => f.close());
+    started[name] = f;
+  }
+  return started;
+}
+
+serverTest("preserves identical installation bytes through public startup and guarded finalization, and gives an unknown host no ingress",
+  scope => fixtures(scope, { codex: ["codex"], unknown: [`owned-${randomUUID()}`] }), async ({ codex, unknown }) => {
   let originalInstallationBytes: Buffer[] | undefined;
-  for (const host of ["codex", `owned-${randomUUID()}`]) {
-    const f = await fixture(host);
+  for (const f of [codex, unknown]) {
+    const host = f.host;
     try {
       if (originalInstallationBytes === undefined) originalInstallationBytes = f.installationBytes;
       else expect(f.installationBytes).toEqual(originalInstallationBytes);
@@ -199,8 +211,7 @@ it("preserves identical installation bytes through public startup and guarded fi
   }
 }, 30_000);
 
-it("rejects unobserved callers and admits an observed child caller", async () => {
-  const f = await fixture("codex");
+serverTest("rejects unobserved callers and admits an observed child caller", scope => fixture(scope, "codex"), async f => {
   try {
     const model = randomUUID(), args = { schemaVersion: "1.0.0", taskEnvelope: task("owned-host-negatives") };
     expect((await f.rawCall("plan_workflow", args)).error).toMatchObject({ code: "BINDING_REQUIRED", details: { reasonCode: "CALLER_PROVENANCE_UNAVAILABLE" } });
@@ -218,8 +229,8 @@ it("rejects unobserved callers and admits an observed child caller", async () =>
   } finally { await f.close(); }
 }, 30_000);
 
-it("reaches actual capability and authority rejection with a host-observed caller", async () => {
-  const f = await fixture("codex");
+serverTest("reaches actual capability and authority rejection with a host-observed caller",
+  scope => fixtures(scope, { f: ["codex"], absent: ["codex", "deep", false], low: ["codex", "lightweight"] }), async ({ f, absent, low }) => {
   try {
     const model = randomUUID(), args = { schemaVersion: "1.0.0", taskEnvelope: task("owned-host-authority") };
     const admitted = await f.call<WorkflowPlanV1>("plan_workflow", args, model, "medium");
@@ -228,13 +239,11 @@ it("reaches actual capability and authority rejection with a host-observed calle
     expect((await f.call("plan_workflow", args, model, "low")).error).toMatchObject({ code: "BINDING_INVALID", message: "Host observation does not satisfy the trusted model and effort policy." });
     await f.unchanged();
   } finally { await f.close(); }
-  const absent = await fixture("codex", "deep", false);
   try {
     expect((await absent.call("plan_workflow", { schemaVersion: "1.0.0", taskEnvelope: task("owned-host-no-capability") }, randomUUID())).error)
       .toMatchObject({ code: "BINDING_INVALID", message: "Host observation has no matching trusted execution capability and policy revision." });
     await absent.unchanged();
   } finally { await absent.close(); }
-  const low = await fixture("codex", "lightweight");
   try { const admitted = await low.call<WorkflowPlanV1>("plan_workflow", { schemaVersion: "1.0.0", taskEnvelope: task("owned-host-low-capability") }, randomUUID());
     expect(admitted.ok).toBe(true); expect(admitted.data?.bootstrapExecution?.context.modelClass).toBe("lightweight"); await low.unchanged(); }
   finally { await low.close(); }

@@ -5,7 +5,7 @@ import path from "node:path";
 import {performance} from "node:perf_hooks";
 import {fileURLToPath} from "node:url";
 import {expect, onTestFailed} from "vitest";
-import {connectStdioServer, stdioServerTests} from "../helpers/stdio-server.js";
+import {stdioServerTests} from "../helpers/stdio-server.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const customHost = "synthetic-installed-native";
@@ -14,7 +14,7 @@ const customHost = "synthetic-installed-native";
 // hook run, the tool call and the shutdown below.
 const serverTest = stdioServerTests();
 for (const mode of ["registered", "snapshot", "omitted-custom", "empty-builtin", "incomplete-evidence", "builtin-default"] as const) serverTest(
-  `public startup binds only trusted native composition for ${mode}`, async defer => {
+  `public startup binds only trusted native composition for ${mode}`, async ({defer, connect}) => {
     const started = performance.now();
     let phase = "입력 준비";
     const observe = (next: string) => {
@@ -69,12 +69,11 @@ ${startup}
       AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: path.join(directory, "messages"),
     }).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
     observe("연결 시작");
-    const server = await connectStdioServer("native-startup-composition-fixture", {command: process.execPath, args: ["--import", "tsx", wrapper], cwd: root, env: environment})
+    const server = await connect("native-startup-composition-fixture", {command: process.execPath, args: ["--import", "tsx", wrapper], cwd: root, env: environment})
       .catch((error: unknown) => {
         if (mode === "snapshot") console.error("시작 실패 진단 " + JSON.stringify({단계: phase, 경과밀리초: performance.now() - started}));
         throw error;
       });
-    defer(() => server.close());
     observe("연결 완료");
     return {server, directory, environment, observe, started, phase: () => phase};
   }, async ({server, directory, environment, observe, started, phase}) => {

@@ -1,17 +1,18 @@
 import {execFileSync} from "node:child_process";
-import {Client} from "@modelcontextprotocol/sdk/client/index.js";
-import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {mkdtemp, rm, writeFile} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
-import {expect, it} from "vitest";
+import {expect} from "vitest";
+import {stdioServerTests} from "../helpers/stdio-server.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
-it.each(["registered", "different-reference"] as const)("actual installation startup consumes only the %s wire registry entry", async mode => {
+// Each case's server starts before the case's time limit starts (stdioServerTests); the limit measures the calls.
+const serverTest = stdioServerTests();
+for (const mode of ["registered", "different-reference"] as const) serverTest(`actual installation startup consumes only the ${mode} wire registry entry`, async ({defer, connect}) => {
   const directory = await mkdtemp(path.join(tmpdir(), "ags-al09-wire-"));
-  expect(path.dirname(directory)).toBe(path.resolve(tmpdir()));
+  defer(() => rm(directory, {recursive: true, force: true}));
   const profilesPath = path.join(directory, "profiles.json"), runtimePath = path.join(directory, "runtime.json"), configPath = path.join(directory, "config.json");
   await writeFile(profilesPath, JSON.stringify({schemaVersion: "1.0.0", profileRevision: "al09-fixture", profiles: []}), "utf8");
   await writeFile(runtimePath, JSON.stringify({schemaVersion: "1.0.0", routes: [{kind: "remote", routeRef: "al09-fixture-route", approvalRef: "synthetic-only",
@@ -39,14 +40,16 @@ await startMcpServer(new Map([[${JSON.stringify(mode === "registered" ? "al09-in
     AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(directory, "continuity.sqlite3"), AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
     AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: path.join(directory, "board.sqlite3"), AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: path.join(directory, "messages"),
   }).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
-  const transport = new StdioClientTransport({command: process.execPath, args: ["--import", "tsx", wrapperPath], cwd: root, env: environment, stderr: "pipe"});
-  const client = new Client({name: "al09-installation-fixture", version: "1.0.0"});
   let diagnostics = "";
   let received!: () => void;
   const wireBound = new Promise<void>(resolve => {received = resolve;});
-  transport.stderr?.on("data", chunk => { diagnostics += String(chunk); if (diagnostics.includes("AL09_INSTALLED_WIRE_BOUND")) received(); });
+  const server = await connect("al09-installation-fixture", {command: process.execPath, args: ["--import", "tsx", wrapperPath], cwd: root, env: environment},
+    stream => stream?.on("data", chunk => { diagnostics += String(chunk); if (diagnostics.includes("AL09_INSTALLED_WIRE_BOUND")) received(); }));
+  return {directory, environment, wireBound, diagnostics: () => diagnostics, server};
+}, async ({directory, environment, wireBound, diagnostics, server}) => {
+  expect(path.dirname(directory)).toBe(path.resolve(tmpdir()));
+  const {client} = server;
   try {
-    await client.connect(transport);
     // Built CLI on owned synthetic Claude input; no native identity collection. It admits the call under its
     // tool-use ID (one row in the shared workflow DB) and prints nothing; the server claims the row from _meta.
     const admitted = execFileSync(process.execPath, [path.join(root, "mcp-server", "dist", "governance-hook.mjs"), "--host=claude-code"], {
@@ -67,10 +70,10 @@ await startMcpServer(new Map([[${JSON.stringify(mode === "registered" ? "al09-in
       } finally {if (timer !== undefined) clearTimeout(timer);}
     }
   } finally {
-    try {await client.close();} finally {await transport.close(); await rm(directory, {recursive: true, force: true});}
+    await server.close();
   }
-  expect(diagnostics.match(/AL09_INSTALLED_WIRE_BOUND/gu) ?? []).toHaveLength(mode === "registered" ? 1 : 0);
-  expect(diagnostics).not.toContain("classification-initialization-failed");
-  expect(diagnostics).not.toContain("AL09_UNEXPECTED_FETCH"); expect(diagnostics).not.toContain("AL09_UNEXPECTED_DISPATCH");
+  expect(diagnostics().match(/AL09_INSTALLED_WIRE_BOUND/gu) ?? []).toHaveLength(mode === "registered" ? 1 : 0);
+  expect(diagnostics()).not.toContain("classification-initialization-failed");
+  expect(diagnostics()).not.toContain("AL09_UNEXPECTED_FETCH"); expect(diagnostics()).not.toContain("AL09_UNEXPECTED_DISPATCH");
   // Synthetic trusted installation only; route binding does not qualify a live provider or dispatch a prompt.
 }, 30_000);

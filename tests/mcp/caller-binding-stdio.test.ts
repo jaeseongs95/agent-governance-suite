@@ -1,11 +1,11 @@
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { getDefaultEnvironment } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { spawnSync } from "node:child_process";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterAll, beforeAll, expect, it } from "vitest";
+import { expect, it } from "vitest";
+import { stdioServerForSuite } from "../helpers/stdio-server.js";
 
 // Packaged-boundary contract of the session binding: only the shipped hook and server bundles and the MCP
 // wire format are used, so the same file also runs against an older build. Synthetic hook input, not native capture.
@@ -14,11 +14,11 @@ const dist = (name: string) => path.join(root, "mcp-server", "dist", name);
 const TOOL = "validate_collaboration_decision";
 let directory = "";
 let environment: Record<string, string> = {};
-let client: Client;
-let transport: StdioClientTransport;
 
-beforeAll(async () => {
+// One server for the file, started before any test's time limit and outside a hook timer (stdioServerForSuite).
+const server = stdioServerForSuite(async ({ defer, connect }) => {
   directory = await mkdtemp(path.join(tmpdir(), "ags-caller-binding-stdio-"));
+  defer(() => rm(directory, { recursive: true, force: true }));
   environment = { ...getDefaultEnvironment(), AGENT_GOVERNANCE_HOST_ATTESTATION: "claude-code",
     AGENT_GOVERNANCE_DB_PATH: path.join(directory, "workflows.sqlite3"),
     AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
@@ -26,12 +26,7 @@ beforeAll(async () => {
     AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: path.join(directory, "board.sqlite3"),
     AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: path.join(directory, "messaging"),
     AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(directory, "shared") };
-  transport = new StdioClientTransport({ command: process.execPath, args: [dist("server.mjs")], cwd: directory, env: environment, stderr: "pipe" });
-  client = new Client({ name: "caller-binding-stdio", version: "1.0.0" });
-  await client.connect(transport);
-}, 20_000);
-afterAll(async () => {
-  try { await client?.close(); } finally { await transport?.close(); await rm(directory, { recursive: true, force: true }); }
+  return connect("caller-binding-stdio", { command: process.execPath, args: [dist("server.mjs")], cwd: directory, env: environment });
 });
 
 /** Runs the packaged Claude governance hook for one tool call, as Claude Code would before sending it. */
@@ -45,7 +40,7 @@ function admit(toolUseId: string, agentId?: string) {
   return { status: hooked.status, stdout: hooked.stdout };
 }
 async function call(args: Record<string, unknown>, toolUseId?: string) {
-  const reply = await client.callTool({ name: TOOL, arguments: args, ...(toolUseId ? { _meta: { "claudecode/toolUseId": toolUseId } } : {}) });
+  const reply = await server().client.callTool({ name: TOOL, arguments: args, ...(toolUseId ? { _meta: { "claudecode/toolUseId": toolUseId } } : {}) });
   return JSON.parse((reply.content as Array<{ text: string }>)[0]!.text) as { ok: boolean; data?: { callerObservation?: unknown }; error?: unknown };
 }
 

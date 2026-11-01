@@ -5,11 +5,12 @@ import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { deserializeMessage, serializeMessage } from "@modelcontextprotocol/sdk/shared/stdio.js";
-import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { getDefaultEnvironment } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import { describe, expect, it } from "vitest";
 
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
+import { stdioServerTests } from "../helpers/stdio-server.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { resolveToolSchemaProfile } from "../../mcp-server/src/runtime-config.js";
@@ -292,23 +293,21 @@ describe("MCP tool schema profiles", () => {
     }
   });
 
-  it("applies the environment profile in the bundled server", async () => {
+  // The bundled server starts before the test's time limit starts (stdioServerTests); the limit measures the calls.
+  const serverTest = stdioServerTests();
+  serverTest("applies the environment profile in the bundled server", async (scope) => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "tool-schema-profile-"));
+    scope.defer(() => rm(stateDirectory, { recursive: true, force: true }));
     const environment = getDefaultEnvironment();
     environment.AGENT_GOVERNANCE_SHARED_STATE_DIR = stateDirectory;
     environment.AGENT_GOVERNANCE_DB_PATH = join(stateDirectory, "workflows.sqlite3");
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = join(stateDirectory, "continuity.sqlite3");
     environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE = "anthropic";
-    const transport = new StdioClientTransport({ command: process.execPath, args: [bundledServer], cwd: rootDirectory, env: environment, stderr: "pipe" });
-    const client = new Client({ name: "tool-schema-profile-stdio", version: "1.0.0" });
-    try {
-      await client.connect(transport);
-      const planning = (await client.listTools()).tools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
-      expect(planning).toBeDefined();
-      expect(planning).not.toHaveProperty("oneOf");
-      expect(client.getInstructions()).toBe(serverInstructions());
-    } finally {
-      try { await transport.close(); } finally { await rm(stateDirectory, { recursive: true, force: true }); }
-    }
+    return scope.connect("tool-schema-profile-stdio", { command: process.execPath, args: [bundledServer], cwd: rootDirectory, env: environment });
+  }, async ({ client }) => {
+    const planning = (await client.listTools()).tools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
+    expect(planning).toBeDefined();
+    expect(planning).not.toHaveProperty("oneOf");
+    expect(client.getInstructions()).toBe(serverInstructions());
   }, 30_000);
 });

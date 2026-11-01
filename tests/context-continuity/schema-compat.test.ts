@@ -15,7 +15,7 @@ import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "../mcp/version-fixtures.js";
 import { codexCallMeta, rootCaller } from "../helpers/caller.js";
-import { connectStdioServer, stdioServerTests } from "../helpers/stdio-server.js";
+import { stdioServerTests } from "../helpers/stdio-server.js";
 
 // Owned fake core observation only; this adapter is not native role evidence.
 const syntheticHost = "synthetic-schema-compat";
@@ -300,7 +300,7 @@ describe("2.7.x continuity schema compatibility", () => {
 describe("source STDIO continuity startup diagnostics", () => {
   // Each source server (tsx) starts before its test's time limit starts (stdioServerTests); the limit measures only the calls.
   const serverTest = stdioServerTests();
-  for (const kind of ["healthy", "receiver", "future", "incompatible", "corrupt"]) serverTest(`keeps normal MCP usable when continuity is ${kind}`, async (defer) => {
+  for (const kind of ["healthy", "receiver", "future", "incompatible", "corrupt"]) serverTest(`keeps normal MCP usable when continuity is ${kind}`, async ({ connect }) => {
     const { directory, databasePath } = fixture(kind === "future" ? 4 : 3);
     if (kind === "corrupt") writeFileSync(databasePath, "private body: not a database", "utf8");
     if (kind === "incompatible") {
@@ -326,10 +326,9 @@ describe("source STDIO continuity startup diagnostics", () => {
       nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null });
     workflow.close();
     // The caller comes from tools/call _meta, so calls reach storage diagnostics even when the continuity DB cannot open.
-    const server = await connectStdioServer("compatibility-fixture", { command: process.execPath,
+    const server = await connect("compatibility-fixture", { command: process.execPath,
       args: ["--import", "tsx", fileURLToPath(new URL("../../mcp-server/src/index.ts", import.meta.url))],
       env: environment, cwd: fileURLToPath(new URL("../../", import.meta.url)) });
-    defer(() => server.close());
     return { server, databasePath, issuer, saved, beforeReceiver, meta };
   }, async ({ server, databasePath, issuer, saved, beforeReceiver, meta }) => {
     const { client } = server;

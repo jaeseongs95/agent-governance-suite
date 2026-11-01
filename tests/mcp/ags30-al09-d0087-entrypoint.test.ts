@@ -1,15 +1,14 @@
-import {Client} from "@modelcontextprotocol/sdk/client/index.js";
-import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {mkdtemp, rm, writeFile} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
-import {expect, it} from "vitest";
+import {expect} from "vitest";
 
 import type {ApiResultV1, TaskEnvelopeV1, WorkflowPlanV1} from "../../contracts/types.js";
 import {hostActorId} from "../../mcp-server/src/host-attestation.js";
 import type {ModelRoutingPresetsV1} from "../../mcp-server/src/host-execution-adapters.js";
 import {codexCallMeta} from "../helpers/caller.js";
+import {stdioServerTests} from "../helpers/stdio-server.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 // The installation supplies its own execution catalog for the Codex host, whose caller ingress is built in.
@@ -33,12 +32,13 @@ function argumentsFor(taskId: string): {schemaVersion: string; taskEnvelope: Tas
     decision: {complexity: "simple", hasConflicts: false}, orchestration: {requested: true, mcpAvailable: true}}};
 }
 
-it.each(["installed", "snapshot", "name-only", "mismatched", "builtin-default"] as const)(
-  "actual startMcpServer preserves trusted host authority for %s", async mode => {
+// Each case's server starts before the case's time limit starts (stdioServerTests); the limit measures the calls.
+const serverTest = stdioServerTests();
+for (const mode of ["installed", "snapshot", "name-only", "mismatched", "builtin-default"] as const) serverTest(
+  `actual startMcpServer preserves trusted host authority for ${mode}`, async ({defer, connect}) => {
     const directory = await mkdtemp(path.join(tmpdir(), "ags-al09-entrypoint-"));
-    expect(path.dirname(directory)).toBe(path.resolve(tmpdir()));
+    defer(() => rm(directory, {recursive: true, force: true}));
     const databasePath = path.join(directory, "workflow.sqlite3");
-    const selectedModel = mode === "builtin-default" ? "gpt-6-astra" : model;
     const wrapperPath = path.join(directory, "installation.mts");
     const entry = new URL("../../mcp-server/src/index.ts", import.meta.url).href;
     const adapterEntry = new URL("../../mcp-server/src/host-execution-adapters.ts", import.meta.url).href;
@@ -60,10 +60,11 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
       AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"), AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: path.join(directory, "board.sqlite3"),
       AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: path.join(directory, "messages"),
     }).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
-    const transport = new StdioClientTransport({command: process.execPath, args: ["--import", "tsx", wrapperPath], cwd: root, env: environment, stderr: "pipe"});
-    const client = new Client({name: "al09-entrypoint-fixture", version: "1.0.0"});
-    let diagnostics = "";
-    transport.stderr?.on("data", chunk => {diagnostics += String(chunk);});
+    return {directory, server: await connect("al09-entrypoint-fixture", {command: process.execPath, args: ["--import", "tsx", wrapperPath], cwd: root, env: environment})};
+  }, async ({directory, server}) => {
+    expect(path.dirname(directory)).toBe(path.resolve(tmpdir()));
+    const selectedModel = mode === "builtin-default" ? "gpt-6-astra" : model;
+    const {client} = server;
     async function call(input: Record<string, unknown>, meta?: Record<string, unknown>): Promise<ApiResultV1<WorkflowPlanV1>> {
       const reply = await client.callTool({name: "plan_workflow", arguments: input, ...(meta ? {_meta: meta} : {})});
       const text = (reply.content as Array<{type: string; text?: string}>).find(item => item.type === "text")!.text!;
@@ -72,7 +73,6 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
     const observed = (options: {model?: string; effort?: string; callId?: string} = {}) =>
       codexCallMeta(session, {model: options.model ?? selectedModel, effort: options.effort ?? "high", ...(options.callId ? {callId: options.callId} : {})});
     try {
-      await client.connect(transport);
       const args = argumentsFor(`entrypoint-${mode}`);
       // Caller ingress negatives stay raw, before the separate execution qualification checks.
       expect(await call(args)).toMatchObject({ok: false, error: {code: "BINDING_REQUIRED", details: {reasonCode: "CALLER_PROVENANCE_UNAVAILABLE"}}});
@@ -125,8 +125,8 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
         }
       }
     } finally {
-      try {await client.close();} finally {await transport.close(); await rm(directory, {recursive: true, force: true});}
+      await server.close();
     }
-    expect(diagnostics).not.toContain("AL09_UNEXPECTED_FETCH");
+    expect(server.stderr()).not.toContain("AL09_UNEXPECTED_FETCH");
   }, 30_000,
 );

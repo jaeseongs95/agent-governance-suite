@@ -5,12 +5,13 @@ import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { expect, it } from "vitest";
+import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { getDefaultEnvironment } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { expect } from "vitest";
 import type { ApiResultV1, AttemptLeaseV1, ConvergenceRootV1, WorkflowPlanV1, WorkflowReceiptV1 } from "../../contracts/types.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
+import { stdioServerTests, type StdioServer, type StdioStart } from "../helpers/stdio-server.js";
 
 const repository = fileURLToPath(new URL("../../", import.meta.url));
 const host = "claude-code", sessionId = "owned-f1-session";
@@ -29,10 +30,10 @@ function task(taskId: string) {
     decision: { complexity: "simple", hasConflicts: false }, orchestration: { requested: true, mcpAvailable: true } };
 }
 
-async function fixture(modelClass: "deep" | "lightweight" = "deep", resolvable = true) {
+async function fixture(connect: StdioStart["connect"], modelClass: "deep" | "lightweight" = "deep", resolvable = true) {
   const directory = await mkdtemp(path.join(tmpdir(), "ags-f1-composition-")), state = path.join(directory, "state");
   const database = path.join(state, "workflow.sqlite3");
-  let client: Client | undefined, transport: StdioClientTransport | undefined;
+  let server: StdioServer | undefined;
   try {
     await mkdir(path.join(directory, "mcp-server", "dist"), { recursive: true }); await mkdir(state, { recursive: true });
     await Promise.all([
@@ -63,8 +64,8 @@ export const executionAdapters = new Map([[adapter.host, adapter]]);
     const catalogPath = path.join(directory, "skills/coordinate-subagents/references/model-routing-presets.json");
     const protectedFiles = [authority, serverWrapper, catalogPath, path.join(repository, "skills/coordinate-subagents/references/model-routing-presets.json")];
     const unchanged = await Promise.all(protectedFiles.map(file => readFile(file)));
-    transport = new StdioClientTransport({ command: process.execPath, args: [serverWrapper], cwd: directory, env: environment, stderr: "pipe" });
-    client = new Client({ name: "owned-f1-public-entry", version: "1.0.0" }); await client.connect(transport);
+    server = await connect("owned-f1-public-entry", { command: process.execPath, args: [serverWrapper], cwd: directory, env: environment });
+    const { client } = server;
     let sequence = 0;
     // The built Claude governance hook records the call under its tool-use ID and prints nothing; the server claims it.
     const hook = async (tool: string, input: Record<string, unknown>, model: string, effort = "high", extra: Record<string, unknown> = {}) => {
@@ -79,20 +80,21 @@ export const executionAdapters = new Map([[adapter.host, adapter]]);
       expect(issued.stdout).toBe("");
       return { "claudecode/toolUseId": callId };
     };
-    const rawCall = async <T>(name: string, args: Record<string, unknown>, meta?: Record<string, unknown>) => envelope<T>(await client!.callTool({ name, arguments: args, ...(meta ? { _meta: meta } : {}) }));
+    const rawCall = async <T>(name: string, args: Record<string, unknown>, meta?: Record<string, unknown>) => envelope<T>(await client.callTool({ name, arguments: args, ...(meta ? { _meta: meta } : {}) }));
     const call = async <T>(name: string, args: Record<string, unknown>, model: string, effort = "high", extra: Record<string, unknown> = {}) =>
       rawCall<T>(name, args, await hook(name, args, model, effort, extra));
     return { directory, hook, call, rawCall,
       async unchanged() { expect(await Promise.all(protectedFiles.map(file => readFile(file)))).toEqual(unchanged); },
-      async close() { try { await client?.close(); } finally { try { await transport?.close(); } finally { await rm(directory, { recursive: true, force: true }); } } } };
+      async close() { try { await server?.close(); } finally { await rm(directory, { recursive: true, force: true }); } } };
   } catch (error) {
-    try { await client?.close(); } finally { try { await transport?.close(); } finally { await rm(directory, { recursive: true, force: true }); } }
+    try { await server?.close(); } finally { await rm(directory, { recursive: true, force: true }); }
     throw error;
   }
 }
 
-it("uses one explicit trusted producer for two opaque IDs through public hook/startup and guarded finalization", async () => {
-  const f = await fixture();
+// Each installed server starts before its test's time limit starts (stdioServerTests); the limit measures only the calls.
+const serverTest = stdioServerTests();
+serverTest("uses one explicit trusted producer for two opaque IDs through public hook/startup and guarded finalization", ({ connect }) => fixture(connect), async f => {
   try {
     for (const model of [randomUUID(), randomUUID()]) {
       expect(await readFile(path.join(f.directory, "skills/coordinate-subagents/references/model-routing-presets.json"), "utf8")).not.toContain(model);
@@ -127,8 +129,7 @@ it("uses one explicit trusted producer for two opaque IDs through public hook/st
   } finally { await f.close(); }
 }, 30_000);
 
-it("admits valid same-authority lightweight bootstrap without granting stage assurance", async () => {
-  const f = await fixture("lightweight");
+serverTest("admits valid same-authority lightweight bootstrap without granting stage assurance", ({ connect }) => fixture(connect, "lightweight"), async f => {
   try {
     const model = randomUUID(), args = { schemaVersion: "1.0.0", taskEnvelope: task("owned-f1-class-floor") };
     const admitted = await f.call<WorkflowPlanV1>("plan_workflow", args, model);
@@ -138,8 +139,7 @@ it("admits valid same-authority lightweight bootstrap without granting stage ass
   } finally { await f.close(); }
 }, 30_000);
 
-it("rejects an observed model that the installed authority cannot resolve", async () => {
-  const f = await fixture("deep", false);
+serverTest("rejects an observed model that the installed authority cannot resolve", ({ connect }) => fixture(connect, "deep", false), async f => {
   try {
     const model = randomUUID(), args = { schemaVersion: "1.0.0", taskEnvelope: task("owned-f1-unresolved") };
     expect((await f.call("plan_workflow", args, model)).error).toMatchObject({ code: "BINDING_INVALID", message: "Host observation has no matching trusted execution capability and policy revision." });
