@@ -155,17 +155,17 @@ export type CallerIngress = (tool: string, meta: Record<string, unknown> | undef
 - turn metadata의 `session_id`·`thread_id`가 `meta`의 값과 같아야 한다. 아니면 `CODEX_CALL_META_INVALID`.
 - root: `parent_thread_id`·`subagent_kind`가 없고 `thread_id === session_id`다.
 - child: `parent_thread_id`가 있고 `thread_id ≠ session_id`다. actor 키는 `thread_id`(hook `agent_id`와 같은 값, 1.5)다. 사슬은 `[root]`에 `parent_thread_id ≠ session_id`이면 부모 actor를 더한다. `parentChainComplete`는 `parent_thread_id === session_id`일 때만 true다(중간 조상은 이 호출의 `_meta`에 없다).
-- 그 밖(필드 누락, `subagent_kind`만 있음, `thread_id === session_id`인데 부모 표식 있음)은 `unavailable`이다. 사유는 `CODEX_CALL_META_MISSING`·`CODEX_CALL_META_INVALID`·`CODEX_ROOT_THREAD_MISMATCH`로 나눈다.
-- `execution`은 같은 객체의 `model`·`reasoning_effort`·`turn_id`에서 온다. 없으면 `{unavailable:"CODEX_EFFORT_ABSENT"}` 같은 값이 된다.
+- 필드가 없으면 `unavailable`(`CODEX_CALL_META_MISSING`)이다. 값이 서로 모순되면(`subagent_kind`만 있음, `thread_id === session_id`인데 부모 표식 있음, 자기 자신이 부모, 빈 부모) `BINDING_INVALID`로 거부한다. 사유는 `CODEX_CALL_META_INVALID`·`CODEX_ROOT_THREAD_MISMATCH`다.
+- `execution`은 같은 객체의 `model`·`reasoning_effort`·`turn_id`에서 온다. 하나라도 없으면 신원은 그대로 두고 `execution`만 `{unavailable:"CODEX_EXECUTION_META_MISSING"}`이 된다.
 - 판정 규칙은 0.164–0.166 소스에서 나왔다. 실호스트 채집(6.2)이 fork·resume에서 `thread_id === session_id` 가정이 깨진다고 보이면 그 조건만 adapter에서 조정한다.
 
 **Claude Code (`claude-admission`).**
 
 - PreToolUse governance hook은 인자를 고치지 않는다.
   - root·child 모두 출력 없이 exit 0으로 끝낸다. 호스트의 정상 승인 흐름을 탄다.
-  - `agent_id`가 있는데 비어 있거나 문자열이 아니면 행을 쓰지 않는다. 서버는 `CALL_ADMISSION_MISSING`으로 거부한다.
+  - `agent_id` 키가 있는데 비어 있거나 문자열이 아니면(`null` 포함) 행을 쓰지 않고 `HOOK_AGENT_ID_INVALID`로 거부한다(exit 2). 그런 호출이 서버에 닿아도 `CALL_ADMISSION_MISSING`이다.
   - 실패하면 exit 2로 끝낸다(`onFailure:"block"` 유지).
-- hook은 workflow DB의 `call_admissions(host, call_id, tool, session_id, agent_id, execution_json, transcript_path, created_at)`에 한 행을 쓴다. 키는 `(host, call_id)`다.
+- hook은 workflow DB의 `call_admissions(host, call_id, admission_json, created_at)`에 한 행을 쓴다. `admission_json`은 `{tool, sessionId, agentId, execution, transcriptPath}`이고 키는 `(host, call_id)`다.
 - 서버는 `agent_id`가 없으면 root, 있으면 child로 본다. Claude hook은 부모 agent를 주지 않으므로(1.5) child의 사슬은 `[root]`, `parentChainComplete=false`다.
 - 서버는 `meta["claudecode/toolUseId"]`로 `DELETE … RETURNING`을 실행해 그 행을 한 번만 회수한다. 도구 이름이 다르면 거부한다.
 - 행이 없으면 `CALL_ADMISSION_MISSING`이다. hook이 돌지 않았거나, matcher 밖 namespace이거나, 이미 소비된 경우다.
@@ -184,7 +184,7 @@ export type CallerIngress = (tool: string, meta: Record<string, unknown> | undef
 - `meta["antigravity.google/conversation_id"]`가 세션 ID다. hook의 `conversationId`와 같은 값이다(1.5).
 - root: `root_conversation_id`가 `conversation_id`와 같고 `parent_conversation_id`가 없다. `sessionId`는 `root_conversation_id`다.
 - child: `parent_conversation_id`가 있고 `conversation_id ≠ root_conversation_id`다. actor 키는 `conversation_id`다. 사슬은 Codex와 같은 규칙(`[root]` + 부모가 root가 아니면 부모)이다.
-- 그 밖은 `unavailable`이다. 사유는 `ANTIGRAVITY_CALL_META_MISSING`·`ANTIGRAVITY_CALL_META_INVALID`·`ANTIGRAVITY_ROOT_CONVERSATION_MISMATCH`다.
+- 필드가 없으면 `unavailable`(`ANTIGRAVITY_CALL_META_MISSING`)이다. 값이 모순되면 `BINDING_INVALID`(`ANTIGRAVITY_CALL_META_INVALID`·`ANTIGRAVITY_ROOT_CONVERSATION_MISMATCH`)다.
 - 호출 ID가 없으므로 `callId`는 null이고 `execution`은 `{unavailable:"ANTIGRAVITY_EXECUTION_UNOBSERVED"}`다.
 - `SessionActorProofs` v3, `_sessionProof`, 커넥터의 AGS 도구 proof 발급 경로를 지운다. 커넥터의 예약 키 거부는 schema가 대신한다.
 - `mcp_config.json`의 `AGENT_GOVERNANCE_HOST_ATTESTATION`을 `gemini`에서 `antigravity`로 바꾼다.
@@ -198,7 +198,7 @@ export type CallerIngress = (tool: string, meta: Record<string, unknown> | undef
 | 메시지 | `SessionMessageService.prepare/send/ack/status(args, caller)`. hook의 `_sessionBinding` 주입(`session-message-hook.ts:476-493`)과 governance hook의 MESSAGE 분기를 지운다 |
 | 현황판 | 현황판 설계의 서버 쓰기를 그대로 쓴다. `binding` 대신 `caller`를 받는다 |
 | collaboration | `validateCollaborationDecision(input, caller)`. `actorKind`는 `caller.actor.role`(root→`main`, child→`subagent`)에서 온다. child가 `user-turn` 출처를 주장하면 거부하는 `subagent` 분기(`trust-service.ts:54`)는 그대로 쓴다 |
-| continuity | `_continuityBinding`(hook 발급 `continuity-hook.ts:121-133`, 검증 `continuity-service.ts:880-888`)을 지운다. 서버가 `continuity.bindCall(caller, tool, lineageReader?)`로 같은 payload(c·e·anchors·fork parent)를 계산한다. Claude의 lineage는 admission의 `transcript_path`로 서버가 `readClaudeLineage`를 부른다. 경계 시점의 host-process fork pin(`readDeferredForkHostParent`·`pinForkParent`)은 기록 부작용이므로 Claude hook에 남긴다. `open_convergence_root`의 root 결속은 `prepareWorkflowStart`와 같은 caller 경로를 쓴다. 실패 보고 형식은 오류 모형 설계를 따른다(D-0056) |
+| continuity | `_continuityBinding`(hook 발급 `continuity-hook.ts:121-133`, 검증 `continuity-service.ts:880-888`)을 지운다. gateway 메서드가 `(value, caller)`를 받고, 서버가 `toolBinding(caller, tool)`로 같은 payload(c·e·anchors·fork parent)를 계산한다. lineage는 checkpoint·inspect에서만 `caller.readLineage`로 읽는다. Claude ingress가 admission의 `transcript_path`로 `readClaudeLineage`를 붙인다. 경계 시점의 host-process fork pin(`readDeferredForkHostParent`·`pinForkParent`)은 기록 부작용이므로 Claude hook에 남긴다. `open_convergence_root`의 root 결속은 `prepareWorkflowStart`와 같은 caller 경로를 쓴다. 실패 보고 형식은 오류 모형 설계를 따른다(D-0056) |
 | 실행 관측 | `_hostAttestation` token(`aghs2`), Codex rollout 해석(`codex-host-observation.ts`), Codex attestation strategy, hook attestation strategy registry(`host-attestation-hook.ts:583-660`)를 지운다. `HostAttestationProvider`는 `caller.execution`과 `callId`로 기존 one-use claim과 실행 하한 검사를 한다 |
 | governance hook | Codex 등록을 삭제한다. Claude는 「admission 기록 → continuity 경계 pin」만 하는 짧은 함수가 된다. child deny는 없다. agy 커넥터의 AGS 도구 proof 발급을 지운다 |
 
@@ -214,8 +214,8 @@ export type CallerIngress = (tool: string, meta: Record<string, unknown> | undef
 | 성질 | 현행 | 재설계 |
 | --- | --- | --- |
 | 모델이 신원을 고를 수 있나 | 진입부 한 줄로 막는다 | 신원이 인자에 없다 |
-| 같은 사용자 셸에서 위조 | 키를 읽어 proof를 위조할 수 있다 | Codex: stdio `_meta` 위조 불가(서버를 직접 띄우는 경우는 비목표). Claude: 아직 발급되지 않은 `toolu_` ID를 맞혀야 한다. agy: 현행과 같다 |
-| hook 누락·실패 | Codex는 fail-open 후 서버 거부(D-0302) | Codex는 hook이 없다. Claude·agy는 hook이 없으면 거부한다 |
+| 같은 사용자 셸에서 위조 | 키를 읽어 proof를 위조할 수 있다 | Codex: stdio `_meta` 위조 불가(서버를 직접 띄우는 경우는 비목표). Claude: 아직 발급되지 않은 `toolu_` ID를 맞혀야 한다. agy: Codex와 같다 |
+| hook 누락·실패 | Codex는 fail-open 후 서버 거부(D-0302) | Codex·agy는 hook이 없다. Claude는 hook이 없으면 거부한다 |
 | 호스트 승인 | Codex allow가 승인을 건너뛸 수 있다(D-0180) | 재작성이 없으므로 결정 출력도 없다 |
 | child 위장 | child가 root처럼 보일 수 있다(Codex 추론 root, D-0315) | 부모 표식은 호스트가 쓴다. 표식이 빠진 호출은 root로 추정하지 않고 거부한다 |
 
@@ -232,7 +232,7 @@ OS 격리가 아니라는 기존 문구(`docs/ags30-d0019-root-only-design.md:87
 
 - **삭제:** `codex-host-observation.ts`, Codex attestation strategy와 strategy registry(`host-attestation-hook.ts` 해당 부분), `hooks/hooks.json`의 Codex governance PreToolUse 항목(`:115-125`), `session-message-hook.ts`·`session-board-hook.ts`·`continuity-hook.ts`의 AGS 도구 `updatedInput` 분기, `HookHostAdapter.rewriteDecision`·`hookRewriteDecision`, `withHookHostAdapter`의 domain 중첩용 canonical 재사용(`host-input-adapter.ts:74-82`, 단일 진입만 남기면 필요 없음).
 - **새 파일:** `caller-identity.ts`(공통 계약과 불변식 `admitCaller`), adapter 3개(Codex·agy `_meta`, Claude admission)는 `builtin-hook-host-adapters.ts` 옆의 `builtin-caller-ingress.ts` 하나에 둔다. `session-actor-proof.ts`는 삭제한다.
-- **변경:** `server.ts`(진입부 627-640 교체, 서비스 호출부), `index.ts`(ingress 선택), `governance-hook.ts`(Claude 축소, agy 유지), `session-message-service.ts`, `trust-service.ts`, `continuity-service.ts`, `host-attestation.ts`, `sqlite-workflow-store.ts`(admission 표·회수), `claude-overlay/hooks/governance-hook.mjs`(빈 출력 허용), `mcp_config.json`, `diagnostics.ts:130`, `scripts/runtime-smoke.mjs`, `docs/ags30-d0019-root-only-design.md`(삭제, 행위자 계약은 이 문서 2.0·2.1이 대체), `docs/host-execution-attestation.md`, `docs/session-message-lifecycle.md`, `skills/session-board/references/entry-details.md`, dist·`claude-plugin` 재생성.
+- **변경:** `server.ts`(진입부 627-640 교체, 서비스 호출부), `index.ts`(ingress 선택), `governance-hook.ts`(Claude admission 기록만, Codex·agy 경로 삭제), `session-message-service.ts`, `trust-service.ts`, `continuity-service.ts`, `host-attestation.ts`, `sqlite-workflow-store.ts`(admission 표·회수), `claude-overlay/hooks/governance-hook.mjs`(빈 출력 허용), `mcp_config.json`, `diagnostics.ts:130`, `scripts/runtime-smoke.mjs`, `docs/ags30-d0019-root-only-design.md`(삭제, 행위자 계약은 이 문서 2.0·2.1이 대체), `docs/host-execution-attestation.md`, `docs/session-message-lifecycle.md`, `skills/session-board/references/entry-details.md`, dist·`claude-plugin` 재생성.
 
 ## 5. 이행 순서
 
