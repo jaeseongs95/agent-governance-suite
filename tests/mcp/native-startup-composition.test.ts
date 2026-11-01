@@ -1,18 +1,20 @@
 import {execFileSync} from "node:child_process";
-import {Client} from "@modelcontextprotocol/sdk/client/index.js";
-import {StdioClientTransport} from "@modelcontextprotocol/sdk/client/stdio.js";
 import {mkdtemp, rm, writeFile} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import path from "node:path";
 import {performance} from "node:perf_hooks";
 import {fileURLToPath} from "node:url";
-import {expect, it, onTestFailed} from "vitest";
+import {expect, onTestFailed} from "vitest";
+import {connectStdioServer, stdioServerTests} from "../helpers/stdio-server.js";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const customHost = "synthetic-installed-native";
 
-it.each(["registered", "snapshot", "omitted-custom", "empty-builtin", "incomplete-evidence", "builtin-default"] as const)(
-  "public startup binds only trusted native composition for %s", async mode => {
+// Each source server (tsx) starts before its test's time limit starts (stdioServerTests); the limit measures only the
+// hook run, the tool call and the shutdown below.
+const serverTest = stdioServerTests();
+for (const mode of ["registered", "snapshot", "omitted-custom", "empty-builtin", "incomplete-evidence", "builtin-default"] as const) serverTest(
+  `public startup binds only trusted native composition for ${mode}`, async defer => {
     const started = performance.now();
     let phase = "입력 준비";
     const observe = (next: string) => {
@@ -20,6 +22,7 @@ it.each(["registered", "snapshot", "omitted-custom", "empty-builtin", "incomplet
       if (mode === "snapshot") console.error("시작 단계 진단 " + JSON.stringify({단계: phase, 경과밀리초: performance.now() - started}));
     };
     const directory = await mkdtemp(path.join(tmpdir(), "ags-native-startup-"));
+    defer(() => rm(directory, {recursive: true, force: true}));
     expect(path.dirname(directory)).toBe(path.resolve(tmpdir()));
     const profilesPath = path.join(directory, "profiles.json"), runtimePath = path.join(directory, "runtime.json");
     const definitionsPath = path.join(directory, "native.json"), configPath = path.join(directory, "config.json");
@@ -65,17 +68,21 @@ ${startup}
       AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: path.join(directory, "board.sqlite3"),
       AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: path.join(directory, "messages"),
     }).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
-    const transport = new StdioClientTransport({command: process.execPath, args: ["--import", "tsx", wrapper], cwd: root, env: environment, stderr: "pipe"});
-    const client = new Client({name: "native-startup-composition-fixture", version: "1.0.0"});
-    let diagnostics = "";
-    transport.stderr?.on("data", chunk => {diagnostics += String(chunk);});
+    observe("연결 시작");
+    const server = await connectStdioServer("native-startup-composition-fixture", {command: process.execPath, args: ["--import", "tsx", wrapper], cwd: root, env: environment})
+      .catch((error: unknown) => {
+        if (mode === "snapshot") console.error("시작 실패 진단 " + JSON.stringify({단계: phase, 경과밀리초: performance.now() - started}));
+        throw error;
+      });
+    defer(() => server.close());
+    observe("연결 완료");
+    return {server, directory, environment, observe, started, phase: () => phase};
+  }, async ({server, directory, environment, observe, started, phase}) => {
+    const {client} = server;
     if (mode === "snapshot") onTestFailed(() => {
-      console.error("시작 실패 진단 " + JSON.stringify({단계: phase, 경과밀리초: performance.now() - started, 표준오류끝: diagnostics.slice(-4096)}));
+      console.error("시작 실패 진단 " + JSON.stringify({단계: phase(), 경과밀리초: performance.now() - started, 표준오류끝: server.stderr().slice(-4096)}));
     });
     try {
-      observe("연결 시작");
-      await client.connect(transport);
-      observe("연결 완료");
       // Built CLI on owned synthetic Claude input; no native identity collection.
     observe("훅 시작");
     const issued = execFileSync(process.execPath, [path.join(root, "mcp-server", "dist", "governance-hook.mjs"), "--host=claude-code"], {
@@ -96,15 +103,13 @@ ${startup}
       expect(result.data.issues.some(issue => issue.code === "CONFIGURED_DISCOVERY_UNAVAILABLE")).toBe(unavailable);
     } finally {
       observe("클라이언트 종료 시작");
-      try {await client.close(); observe("클라이언트 종료 완료");} finally {
-        observe("전송 종료 시작");
-        await transport.close();
-        observe("전송 종료 완료");
+      try {await server.close(); observe("클라이언트 종료 완료");} finally {
         observe("임시 입력 정리 시작");
         await rm(directory, {recursive: true, force: true});
         observe("임시 입력 정리 완료");
       }
     }
+    const diagnostics = server.stderr();
     expect(diagnostics.match(/NATIVE_STARTUP_TRUSTED_BEHAVIOR_BOUND/gu) ?? []).toHaveLength(mode === "registered" || mode === "snapshot" ? 1 : 0);
     if (mode === "omitted-custom" || mode === "empty-builtin") expect(diagnostics).toContain("NATIVE_ADAPTER_BEHAVIOR_UNAVAILABLE");
     else expect(diagnostics).not.toContain("classification-initialization-failed");

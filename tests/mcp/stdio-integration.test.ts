@@ -182,7 +182,7 @@ describe("bundled STDIO MCP server", () => {
       const unavailable = toolData(await client.callTool(rootCall("inspect_context", { schemaVersion: "1.0.0" })));
       expect(unavailable.error?.code).toBe("CONTINUITY_UNAVAILABLE");
     }
-  });
+  }, 15_000);
 
   serverTest("keeps workflow startup clean when both database settings resolve to one file", async (defer) => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-shared-db-"));
@@ -216,7 +216,7 @@ describe("bundled STDIO MCP server", () => {
       database.close();
       expect(JSON.stringify(tables)).not.toContain("continuity_");
     }
-  });
+  }, 15_000);
 
   serverTest("starts with the packaged registry and fails semantic planning closed without a trusted provider", async (defer) => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-stdio-"));
@@ -344,7 +344,7 @@ describe("bundled STDIO MCP server", () => {
         database.close();
       }
     }
-  });
+  }, 15_000);
 
   serverTest("shares continuity state between the packaged hook and the MCP server's verified caller", async (defer) => {
     const stateDirectory = await mkdtemp(join(tmpdir(), "skill-suite-continuity-stdio-"));
@@ -400,5 +400,5 @@ describe("bundled STDIO MCP server", () => {
       expect(JSON.stringify(resume)).toContain("decision=DEFER");
       expect(JSON.stringify(resume)).not.toContain("Resume this private direct task.");
     }
-  });
+  }, 15_000);
 });

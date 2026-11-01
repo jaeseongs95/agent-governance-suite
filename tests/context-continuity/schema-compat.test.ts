@@ -358,5 +358,5 @@ describe("source STDIO continuity startup diagnostics", () => {
       expect(text + server.stderr()).not.toContain("signing-secret");
       if (beforeReceiver) expect(state(databasePath)).toEqual(beforeReceiver);
     }
-  });
+  }, 15_000);
 });

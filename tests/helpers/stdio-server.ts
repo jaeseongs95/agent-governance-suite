@@ -46,7 +46,7 @@ export function stdioServerTests(): <T>(name: string, start: (defer: (cleanup: (
     }
     if (errors.length > 0) throw errors[0];
   });
-  return (name, start, run, timeout = 15_000) => {
+  return (name, start, run, timeout) => {
     starts.set(name, start);
     it(name, () => run(current as Parameters<typeof run>[0]), timeout);
   };
