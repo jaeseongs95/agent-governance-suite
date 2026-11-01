@@ -22,6 +22,9 @@ import { loadHostObservedInventory, type HostSkillDiscoverySnapshot } from "../.
 import { createClassificationRequest, digestClassificationValue } from "../../mcp-server/src/skill-classification/request.js";
 import { digestProviderProfileConfiguration } from "../../mcp-server/src/skill-classification/profiles.js";
 import { InMemoryClassificationBudget, SkillClassificationService } from "../../mcp-server/src/skill-classification/service.js";
+import { createClassificationProviderRuntime } from "../../mcp-server/src/skill-classification/runtime.js";
+import { jevNoulWireAdapter } from "../../mcp-server/src/skill-classification/providers.js";
+import { validateClassificationResponse } from "../../mcp-server/src/skill-classification/validation.js";
 import type { ClassificationResult, ProviderEvaluation, ProviderProfile, SkillClassificationRequestV1, SkillInventory, SkillSelectionDecisionV1 } from "../../mcp-server/src/skill-classification/types.js";
 
 const repository = fileURLToPath(new URL("../../", import.meta.url));
@@ -152,6 +155,85 @@ async function harness(options: { root?: string; needed?: string[]; uncertain?: 
 }
 
 describe("offline classification through actual MCP Client/Server transport", () => {
+  // V03/V04: 기존 합성 호스트·권위만 사용한다. 실제 Agent 판단이나 native/JEV 관측 증거가 아니다.
+  it.each(["stale", "independent-selection", "applicability", "duplicate", "unknown"] as const)("V03/V04 connected runtime classification: %s", async variant => {
+    const h = await harness({ withJev: true });
+    const profile = h.runtime.registry.profiles.find(value => value.providerKind === "jev")!;
+    const effect = vi.fn(), validationCodes: string[][] = [];
+    const adviceNeeded = variant === "independent-selection" ? "cs-engineering" : "code-review";
+    const invokeStructured = async (request: SkillClassificationRequestV1, selected: ProviderProfile, _signal: AbortSignal, beforeDispatch?: () => void): Promise<ProviderEvaluation> => {
+      await Promise.resolve();
+      if (variant === "stale") h.taskStates.get(request.requestId)!.cancelled = true;
+      beforeDispatch?.(); effect();
+      // 요청 모델 ID와 응답 revision은 다르다. 비용 0도 기존 fixture의 합성 값이다.
+      const decoded = jevNoulWireAdapter.decode({ model: selected.modelRevision,
+        answers: Object.fromEntries(request.skills.map(skill => [skill.skillId, { type: "noul", noul: skill.skillId === adviceNeeded ? 0.82 : 0.1 }])),
+        usage: { input_tokens: 1, output_tokens: 1 } }, request, selected);
+      expect(validateClassificationResponse(request, decoded.response)).toEqual([]);
+      const response = structuredClone(decoded.response), item = response.judgments.find(value => value.skillId === "code-review")!;
+      if (variant === "duplicate") response.judgments.push({ ...item });
+      if (variant === "unknown") response.judgments.push({ ...item, skillId: "unregistered" });
+      validationCodes.push(validateClassificationResponse(request, response));
+      return { ...decoded, response, usage: { ...decoded.usage, actualCostUsd: 0 }, dispatchState: "started" };
+    };
+    const runtime = createClassificationProviderRuntime({ schemaVersion: "1.0.0", routes: [{
+      routeRef: profile.approvedRouteRef, approvalRef: "fixture:connected-only", approved: true, providerKind: "jev", vendorId: profile.vendorId,
+      adapterRevision: profile.adapterRevision, modelIds: [profile.modelId], reasoningEfforts: [profile.reasoningEffort], structuredOutput: true,
+      kind: "native", nativeAdapterRef: "native", capabilityEvidenceRef: "synthetic", retryPolicyVerified: true,
+    }], budget: { jev: { limitUsd: 0, spentUsd: 0 }, vendors: {}, nativeAllowances: {
+      [profile.profileId]: { approvalRef: "fixture:connected-only", remainingCalls: 10 },
+    } } }, { nativeAdapters: new Map([["native", { capabilityEvidenceRef: "synthetic", retryPolicy: "no-retry", invokeStructured }]]) });
+    // 기존 service의 실제 snapshot fence를 네 번째 인자로 runtime까지 전달한다.
+    h.jevClassify.mockImplementation((request, ...args: unknown[]) => runtime.providers.jev.classify(
+      request, args[0] as ProviderProfile, args[1] as AbortSignal, args[2] as (() => void) | undefined,
+    ));
+    const request = { ...input(`connected-${variant}`), explicitSkillIds: ["code-review"],
+      originalPrompt: "code-review 스킬로 아래 고정 diff만 검토해. 수정하지 마.\n--- a/example.ts\n+++ b/example.ts\n@@ -1 +1 @@\n-export const answer = 1;\n+export const answer = 2;" };
+    const classified = await h.call<Advice>("classify_skills", request, variant === "stale");
+    expect(classified.error).toBeNull();
+    const advice = classified.data!;
+    expect(h.jevClassify).toHaveBeenCalledTimes(1);
+    expect(advice.agentSelectedSkillIds).toBeNull(); expect(advice.adviceApplied).toBe(false);
+    if (variant === "stale") {
+      expect(advice.result.response.error?.code).toBe("STALE_CLASSIFICATION");
+      expect(advice.result.attempts[0]).toMatchObject({ providerKind: "jev", errorCode: "STALE_CLASSIFICATION", dispatchState: "not-started" });
+      expect(effect).not.toHaveBeenCalled(); expect(validationCodes).toEqual([]);
+      expect(h.classify).not.toHaveBeenCalled(); expect(advice.selectionStatus).toBe("PROPOSED");
+      return;
+    }
+    expect(effect).toHaveBeenCalledTimes(1);
+    if (variant === "duplicate" || variant === "unknown") {
+      expect(validationCodes).toEqual([[variant === "duplicate" ? "DUPLICATE_SKILL_ID" : "UNKNOWN_SKILL_ID"]]);
+      expect(advice.result.attempts[0]).toMatchObject({ providerKind: "jev", status: "INVALID", errorCode: "INVALID_PROVIDER_RESPONSE" });
+      expect(advice.result.attempts.map(attempt => attempt.providerKind)).toEqual(["jev", "vendor"]);
+      expect(h.classify).toHaveBeenCalledTimes(1); expect(advice.result.response.error).toBeNull();
+      return;
+    }
+    expect(validationCodes).toEqual([[]]); expect(h.classify).not.toHaveBeenCalled();
+    expect(advice.result.attempts.map(attempt => attempt.providerKind)).toEqual(["jev"]);
+    expect(advice.result.response.judgments.find(item => item.skillId === adviceNeeded)).toMatchObject({
+      judgment: "needed", reasonRefs: ["profile:jev-mock:prompt-1"],
+    });
+    const selected = decision(advice, ["code-review"], request);
+    selected.selectionReasons = [{ skillId: "code-review", reason: "사용자가 code-review와 고정 diff 검토를 명시했다. 합성 공급자 조언과 별도로 작성한 선택이다." }];
+    selected.applicabilityChecks = [{ skillId: "code-review", applies: true, excluded: false, reasonRefs: ["fixture:explicit-code-review-fixed-diff"] }];
+    if (variant === "applicability") {
+      const unresolved = structuredClone(selected); unresolved.applicabilityChecks[0]!.applies = null;
+      const refused = await h.call<Accepted>("record_skill_selection", h.sign({ schemaVersion: "1.0.0", operationId: request.operationId, decision: unresolved }));
+      expect(refused.error).toBeNull(); expect(refused.data!.valid).toBe(false);
+      expect(refused.data!.errors).toContain("APPLICABILITY_UNRESOLVED:code-review");
+      expect((await h.call<Advice>("classify_skills", request)).data!.agentSelectedSkillIds).toBeNull();
+    }
+    const recorded = await h.call<Accepted>("record_skill_selection", h.sign({ schemaVersion: "1.0.0", operationId: request.operationId, decision: selected }));
+    expect(recorded.error).toBeNull();
+    const accepted = recorded.data!;
+    expect(accepted.valid).toBe(true); expect(accepted.decision!.agentSelectedSkillIds).toEqual(["code-review"]);
+    expect(accepted.runnableSkillIds).toEqual(["code-review"]);
+    if (variant === "independent-selection") expect(accepted.neededSkillIds).toEqual(expect.arrayContaining(["cs-engineering", "code-review"]));
+    expect(accepted).toMatchObject({ admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN" });
+    expect((await h.call<Advice>("classify_skills", request)).data!.agentSelectedSkillIds).toEqual(["code-review"]);
+    expect(h.jevClassify).toHaveBeenCalledTimes(1);
+  });
   it.each(["availability", "classification"] as const)("joins only identical concurrent intake while %s is pending", async stage => {
     const h = await harness({ providerTimeoutMs: heldProviderTimeoutMs, requestTimeoutMs: concurrentRequestTimeoutMs }), request = input("identical-flight"), entered = barrier(), release = barrier();
     if (stage === "availability") h.availability.mockImplementation(async () => { entered.open(); await release.promise; return { available: true, approved: true, routeKind: "native", reasonCode: null }; });
