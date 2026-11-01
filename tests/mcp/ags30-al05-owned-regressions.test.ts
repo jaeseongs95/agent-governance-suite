@@ -3,24 +3,19 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { CallerExecution } from "../../mcp-server/src/caller-identity.js";
 import {
   CLAUDE_TRANSCRIPT_MAX_BYTES,
-  findLatestAssistantObservation,
-  handleHostAttestationHook,
-  handleRegisteredHostAttestationHook,
-  registerHookAttestationStrategy,
+  observeClaudeExecution,
 } from "../../mcp-server/src/host-attestation-hook.js";
 import {
-  HOST_ATTESTATION_FIELD,
   HostAttestationProvider,
-  hostActorId,
-  issueHostAttestation,
   type HostExecutionAdapter,
   type ResolvedModelCapabilityV1,
 } from "../../mcp-server/src/host-attestation.js";
-import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { writeFailureDiagnostic } from "../../mcp-server/src/hook-error-diagnostics.js";
 import { createCatalogExecutionAdapters, type ModelRoutingPresetsV1 } from "../../mcp-server/src/host-execution-adapters.js";
+import { rootCaller } from "../helpers/caller.js";
 
 const sessionId = "al05-synthetic-session";
 const callId = "al05-current-call";
@@ -34,34 +29,25 @@ const clean = { taskId: "al05-task" };
 const input = {
   hook_event_name: "PreToolUse", session_id: sessionId, tool_use_id: callId,
   transcript_path: "synthetic-only.jsonl", tool_name: "mcp__agent_governance_suite__plan_workflow",
-  effort: { level: "high" }, tool_input: { ...clean,
-    [HOST_ATTESTATION_FIELD]: "aghs1.caller.forged", _hostSkillObservation: { sourceRef: "caller" } },
+  effort: { level: "high" }, tool_input: clean,
 };
 const now = () => new Date("2026-10-25T00:01:00.000Z");
 const session = (observedAt: string) => ({ model, source: "model-switch" as const, observedAt });
 const line = (observedModel = model, timestamp = "2026-10-25T00:00:10.000Z", id = callId) =>
   JSON.stringify({ type: "assistant", sessionId, timestamp, effort: "high",
     message: { model: observedModel, content: [{ type: "tool_use", id, name: "tool", input: {} }] } });
-const updated = (output: Record<string, unknown>) =>
-  (output.hookSpecificOutput as { updatedInput: Record<string, unknown> }).updatedInput;
+const bootstrap = { phase: "bootstrap" as const, taskId: clean.taskId, runId: null, stageId: null, revision: null };
+/** Qualifies one host-observed call against `selected`; returns the rejection, if any. */
+function qualify(selected: HostExecutionAdapter, execution: CallerExecution, provider = new HostAttestationProvider(selected)) {
+  let failure: unknown;
+  let context: unknown;
+  try {
+    context = provider.run("plan_workflow", rootCaller(selected.host, sessionId, { callId, execution }), () => provider.observe(bootstrap));
+  } catch (error) { failure = error; }
+  return { failure, context, provider };
+}
 const directories: string[] = [];
 afterEach(() => { for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true }); });
-
-it("AGS-D-0022 dispatches only explicitly registered strategies and never borrows a builtin for unknown IDs", () => {
-  const openStore = vi.fn(() => new InMemoryWorkflowStore());
-  const context = { databasePath: "synthetic-only.sqlite3", openStore };
-  expect(handleRegisteredHostAttestationHook("al05-unregistered-strategy", input, context))
-    .toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: clean } });
-  expect(openStore).not.toHaveBeenCalled();
-  const observe = vi.fn(() => ({ systemMessage: "synthetic strategy dispatched" }));
-  registerHookAttestationStrategy("al05-explicit-strategy", { observe });
-  expect(handleRegisteredHostAttestationHook("al05-explicit-strategy", input, context))
-    .toEqual({ systemMessage: "synthetic strategy dispatched" });
-  expect(observe).toHaveBeenCalledWith(input, context);
-  expect(openStore).not.toHaveBeenCalled();
-  expect(() => registerHookAttestationStrategy("al05-explicit-strategy", { observe }))
-    .toThrow("DUPLICATE_HOOK_ATTESTATION_STRATEGY");
-});
 
 describe("AGS-D-0032 bounded Claude transcript reads", () => {
   it("retains exact observations at the byte boundary", () => {
@@ -70,75 +56,46 @@ describe("AGS-D-0032 bounded Claude transcript reads", () => {
     const file = path.join(directory, "fixture.jsonl");
     const row = line();
     writeFileSync(file, " ".repeat(CLAUDE_TRANSCRIPT_MAX_BYTES - Buffer.byteLength(row)) + row, "utf8");
-    const output = handleHostAttestationHook({ ...input, transcript_path: file }, new InMemoryWorkflowStore(),
-      { adapter, maxWaitMs: 0, now });
-    expect(updated(output)).toEqual({ ...clean, [HOST_ATTESTATION_FIELD]: expect.any(String) });
+    expect(observeClaudeExecution({ ...input, transcript_path: file }, { maxWaitMs: 0, now }))
+      .toMatchObject({ model, effort: "high", provenance: "claude-code:transcript-tool-use" });
   });
 
-  it("refuses oversized history before a signing key or fallback model is consulted", () => {
+  it("refuses oversized history before a fallback model is consulted", () => {
     const directory = mkdtempSync(path.join(tmpdir(), "ags-al05-oversize-"));
     directories.push(directory);
     const file = path.join(directory, "fixture.jsonl");
     writeFileSync(file, line(), "utf8");
     truncateSync(file, CLAUDE_TRANSCRIPT_MAX_BYTES + 1);
-    const store = new InMemoryWorkflowStore();
-    const key = vi.spyOn(store, "getOrCreateSecret");
     const cache = vi.fn(() => session("2026-10-25T00:00:20.000Z"));
-    expect(() => handleHostAttestationHook({ ...input, transcript_path: file }, store,
-      { adapter, maxWaitMs: 0, now, readSessionModel: cache })).toThrow("TRANSCRIPT_LIMIT_EXCEEDED");
-    expect(key).not.toHaveBeenCalled();
+    expect(() => observeClaudeExecution({ ...input, transcript_path: file }, { maxWaitMs: 0, now, readSessionModel: cache }))
+      .toThrow("TRANSCRIPT_LIMIT_EXCEEDED");
     expect(cache).not.toHaveBeenCalled();
   });
 });
 
-describe("AGS-D-0033 latest actual model identity", () => {
-  const transcript = line(model, "2026-10-25T00:00:10.000Z", "old-call") + "\n"
-    + line("al05-unknown-new-model", "2026-10-25T00:00:30.000Z", "newer-call");
-
-  it("never substitutes an older qualified model or older session record for an unknown latest model", () => {
-    expect(findLatestAssistantObservation(transcript, sessionId, null, now().getTime(), adapter))
-      .toEqual({ model: "al05-unknown-new-model", at: Date.parse("2026-10-25T00:00:30.000Z") });
-    const store = new InMemoryWorkflowStore();
-    const key = vi.spyOn(store, "getOrCreateSecret");
-    const output = handleHostAttestationHook(input, store, { adapter, maxWaitMs: 0, now,
-      readText: () => transcript, readSessionModel: () => session("2026-10-25T00:00:20.000Z") });
-    const signed = updated(output);
-    expect(signed).toEqual({...clean, [HOST_ATTESTATION_FIELD]: expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u)});
-    const token = String(signed[HOST_ATTESTATION_FIELD]);
-    expect(JSON.parse(Buffer.from(token.split(".")[1]!, "base64url").toString("utf8")))
-      .toMatchObject({v: 2, model: "al05-unknown-new-model", reasoningEffort: "high", eligibility: null});
-    expect(key).toHaveBeenCalled();
-    const provider = new HostAttestationProvider(store, adapter);
-    let failure: unknown;
-    try {
-      provider.run("plan_workflow", signed, () =>
-        provider.observe({phase: "bootstrap", taskId: clean.taskId, runId: null, stageId: null, revision: null}));
-    } catch (error) { failure = error; }
-    expect(failure).toMatchObject({code: "BINDING_INVALID",
-      message: "Host observation has no matching trusted execution capability and policy revision."});
+describe("AGS-D-0033 actual model identity of the call", () => {
+  it("never substitutes a qualified session record for an unknown issuing model", () => {
+    const transcript = line(model, "2026-10-25T00:00:10.000Z", "old-call") + "\n" + line("al05-unknown-new-model", "2026-10-25T00:00:30.000Z");
+    const cache = vi.fn(() => session("2026-10-25T00:00:40.000Z"));
+    const execution = observeClaudeExecution(input, { maxWaitMs: 0, now, readText: () => transcript, readSessionModel: cache });
+    expect(execution).toMatchObject({ model: "al05-unknown-new-model", effort: "high" });
+    expect(cache).not.toHaveBeenCalled();
+    const { failure, provider } = qualify(adapter, execution);
+    expect(failure).toMatchObject({ code: "BINDING_INVALID",
+      message: "Host observation has no matching trusted execution capability and policy revision." });
     expect(provider.lastObservedCapability()).toBeNull();
-  });
-
-  it("keeps a genuinely newer session model and the synthetic-placeholder control", () => {
-    const options = { adapter, maxWaitMs: 0, now, readText: () => transcript,
-      readSessionModel: () => session("2026-10-25T00:00:40.000Z") };
-    expect(updated(handleHostAttestationHook(input, new InMemoryWorkflowStore(), options))[HOST_ATTESTATION_FIELD])
-      .toEqual(expect.any(String));
-    const placeholders = line(model, "2026-10-25T00:00:10.000Z", "old-call") + "\n"
-      + line("<synthetic>", "2026-10-25T00:00:30.000Z", "placeholder-call");
-    expect(findLatestAssistantObservation(placeholders, sessionId, null, now().getTime(), adapter)?.model).toBe(model);
   });
 });
 
-it("AGS-D-0091 describes only the observed missing signed call without claiming the adapter is disabled", () => {
-  const provider = new HostAttestationProvider(new InMemoryWorkflowStore(), adapter);
+it("AGS-D-0091 describes only the missing call observation without claiming the adapter is disabled", () => {
+  const provider = new HostAttestationProvider(adapter);
   expect(provider.diagnose()).toMatchObject({ host: adapter.host, status: "missing-call-observation",
-    connection: expect.stringContaining("no signed host observation") });
+    connection: expect.stringContaining("did not report the model, reasoning effort or call ID") });
   expect(String(provider.diagnose().connection)).not.toContain("Enable");
 });
 
-describe("AGS-D-0091 서명 관측의 현재 정책 거절 원인", () => {
-  function fixture(overrides: Partial<ResolvedModelCapabilityV1> = {}, effort: "medium" | "high" = "high") {
+describe("AGS-D-0091 관측의 현재 정책 거절 원인", () => {
+  function fixture(overrides: Partial<ResolvedModelCapabilityV1> = {}) {
     let capability: ResolvedModelCapabilityV1 = {
       host: adapter.host, provider: "d0091-provider", rawModel: model, resolvedModel: model,
       modelClass: "deep", minimumReasoningEffort: "high", supportedEfforts: ["medium", "high"],
@@ -146,66 +103,35 @@ describe("AGS-D-0091 서명 관측의 현재 정책 거절 원인", () => {
     };
     const resolve = vi.fn(() => capability);
     const selected: HostExecutionAdapter = { ...adapter, resolveModel: resolve };
-    const store = new InMemoryWorkflowStore();
-    const token = issueHostAttestation(store, selected, { tool: "plan_workflow", input: clean, model,
-      reasoningEffort: effort, actorId: hostActorId(adapter.host, sessionId), sessionId,
-      turnId: "d0091-turn", toolUseId: "d0091-call" });
-    expect(token).toEqual(expect.any(String));
-    const provider = new HostAttestationProvider(store, selected);
-    resolve.mockClear();
-    return { token: token!, provider, resolve,
-      update: (patch: Partial<ResolvedModelCapabilityV1>) => { capability = { ...capability, ...patch }; } };
+    return { selected, resolve, update: (patch: Partial<ResolvedModelCapabilityV1>) => { capability = { ...capability, ...patch }; } };
   }
-
-  function refuse(f: ReturnType<typeof fixture>, token = f.token): unknown {
-    let failure: unknown;
-    try {
-      f.provider.run("plan_workflow", { ...clean, [HOST_ATTESTATION_FIELD]: token }, () =>
-        f.provider.observe({ phase: "bootstrap", taskId: clean.taskId, runId: null, stageId: null, revision: null }));
-    } catch (error) { failure = error; }
-    expect(f.provider.lastObservedCapability()).toBeNull();
-    return failure;
-  }
+  const observed = (effort: "medium" | "high" = "high"): CallerExecution => ({ model, effort, turnId: "d0091-turn", provenance: "d0091-host-owned" });
 
   it.each([
     { label: "미지원 effort", supportedEfforts: ["high"] as const, reasonCode: "CURRENT_POLICY_EFFORT_UNSUPPORTED" },
     { label: "최소값 미달", supportedEfforts: ["medium", "high"] as const, reasonCode: "CURRENT_POLICY_EFFORT_BELOW_MINIMUM" },
   ])("$label 원인을 현재 정책으로 구분하고 자격을 부여하지 않는다", ({ supportedEfforts, reasonCode }) => {
-    const f = fixture({ supportedEfforts }, "medium");
-    expect(JSON.parse(Buffer.from(f.token.split(".")[1]!, "base64url").toString("utf8")))
-      .toMatchObject({ eligibility: null });
-    expect(refuse(f)).toMatchObject({ code: "BINDING_INVALID",
-      message: "Host observation has no matching trusted execution capability and policy revision.", details: { reasonCode } });
+    const f = fixture({ supportedEfforts: [...supportedEfforts] });
+    const { failure, provider } = qualify(f.selected, observed("medium"));
+    expect(failure).toMatchObject({ code: "BINDING_INVALID",
+      message: "Host observation does not satisfy the trusted model and effort policy.", details: { reasonCode } });
+    expect(provider.lastObservedCapability()).toBeNull();
     expect(f.resolve).toHaveBeenCalledTimes(1);
   });
 
-  it("현재 정책이 적합해져도 발급 시 null 자격을 승격하거나 과거 원인을 추정하지 않는다", () => {
-    const f = fixture({ supportedEfforts: [] });
-    expect(JSON.parse(Buffer.from(f.token.split(".")[1]!, "base64url").toString("utf8")))
-      .toMatchObject({ eligibility: null });
-    f.update({ supportedEfforts: ["high"] });
-    expect(refuse(f)).toMatchObject({ code: "BINDING_INVALID",
-      details: { reasonCode: "SIGNED_QUALIFICATION_SNAPSHOT_MISSING" } });
-    expect(f.resolve).toHaveBeenCalledTimes(1);
-  });
-
-  it("revision과 기타 자격 불일치를 거절하며 위조 서명에는 정책 원인을 노출하지 않는다", () => {
+  it("다른 호스트나 다른 원모델의 기술자를 자격으로 쓰지 않는다", () => {
     const f = fixture();
-    f.update({ policyRevision: "d0091-r2" });
-    expect(refuse(f)).toMatchObject({ code: "BINDING_INVALID",
+    f.update({ host: "d0091-other-host" });
+    expect(qualify(f.selected, observed()).failure).toMatchObject({ code: "BINDING_INVALID",
+      details: { reasonCode: "QUALIFICATION_CAPABILITY_MISMATCH" } });
+    f.update({ host: adapter.host, rawModel: "d0091-other-model" });
+    expect(qualify(f.selected, observed()).failure).toMatchObject({ code: "BINDING_INVALID",
+      details: { reasonCode: "QUALIFICATION_CAPABILITY_MISMATCH" } });
+    f.update({ rawModel: model, policyRevision: "" });
+    expect(qualify(f.selected, observed()).failure).toMatchObject({ code: "BINDING_INVALID",
       details: { reasonCode: "QUALIFICATION_POLICY_REVISION_MISMATCH" } });
-    expect(f.resolve).toHaveBeenCalledTimes(1);
-    f.update({ policyRevision: "d0091-r1", provider: "d0091-other-provider" });
-    expect(refuse(f)).toMatchObject({ code: "BINDING_INVALID",
-      details: { reasonCode: "SIGNED_QUALIFICATION_MISMATCH" } });
-    f.update({ host: "d0091-other-host", supportedEfforts: [] });
-    expect(refuse(f)).toMatchObject({ code: "BINDING_INVALID",
-      details: { reasonCode: "SIGNED_QUALIFICATION_MISMATCH" } });
-    f.resolve.mockClear();
-    const forged = refuse(f, `${f.token}tampered`);
-    expect(forged).toMatchObject({ code: "BINDING_INVALID", message: "Host attestation token signature is invalid." });
-    expect(forged).not.toHaveProperty("details.reasonCode");
-    expect(f.resolve).not.toHaveBeenCalled();
+    f.update({ policyRevision: "d0091-r1" });
+    expect(qualify(f.selected, observed()).context).toMatchObject({ model, modelClass: "deep", reasoningEffort: "high" });
   });
 });
 
@@ -217,15 +143,7 @@ it("AGS-D-0185 reuses the capability that was verified instead of resolving it a
   };
   const resolve = vi.fn(() => capability);
   const observedAdapter: HostExecutionAdapter = { ...adapter, resolveModel: resolve };
-  const store = new InMemoryWorkflowStore();
-  const token = issueHostAttestation(store, observedAdapter, { tool: "plan_workflow", input: clean,
-    model, reasoningEffort: "high", actorId: hostActorId(adapter.host, sessionId), sessionId,
-    turnId: "al05-turn", toolUseId: callId });
-  expect(token).toEqual(expect.any(String));
-  resolve.mockClear();
-  const provider = new HostAttestationProvider(store, observedAdapter);
-  const context = provider.run("plan_workflow", { ...clean, [HOST_ATTESTATION_FIELD]: token }, () =>
-    provider.observe({ phase: "bootstrap", taskId: clean.taskId, runId: null, stageId: null, revision: null }));
+  const { context, provider } = qualify(observedAdapter, { model, effort: "high", turnId: "al05-turn", provenance: "al05-host-owned" });
   expect(context).toMatchObject({ model, modelClass: "deep", reasoningEffort: "high" });
   expect(resolve).toHaveBeenCalledTimes(1);
   expect(provider.lastObservedCapability()).toBe(capability);
@@ -249,23 +167,8 @@ it.each([{ label: "missing", supported: undefined }, { label: "empty", supported
     };
     const selected = createCatalogExecutionAdapters(presets).adapters.get(adapter.host)!;
     expect(selected.resolveModel!(model)?.supportedEfforts).toEqual([]);
-    const store = new InMemoryWorkflowStore();
-    const key = vi.spyOn(store, "getOrCreateSecret");
-    const token = issueHostAttestation(store, selected, { tool: "plan_workflow", input: clean, model,
-      reasoningEffort: "high", actorId: hostActorId(adapter.host, sessionId), sessionId,
-      turnId: "catalog-turn", toolUseId: "catalog-call" });
-    expect(token).toEqual(expect.stringMatching(/^aghs2\.[^.]+\.[^.]+$/u));
-    expect(JSON.parse(Buffer.from(token!.split(".")[1]!, "base64url").toString("utf8")))
-      .toMatchObject({v: 2, model, reasoningEffort: "high", eligibility: null});
-    expect(key).toHaveBeenCalled();
-    const provider = new HostAttestationProvider(store, selected);
-    let failure: unknown;
-    try {
-      provider.run("plan_workflow", {...clean, [HOST_ATTESTATION_FIELD]: token}, () =>
-        provider.observe({phase: "bootstrap", taskId: clean.taskId, runId: null, stageId: null, revision: null}));
-    } catch (error) { failure = error; }
-    expect(failure).toMatchObject({code: "BINDING_INVALID",
-      message: "Host observation has no matching trusted execution capability and policy revision."});
+    const { failure, provider } = qualify(selected, { model, effort: "high", turnId: "catalog-turn", provenance: "catalog" });
+    expect(failure).toMatchObject({ code: "BINDING_INVALID" });
     expect(provider.lastObservedCapability()).toBeNull();
   },
 );

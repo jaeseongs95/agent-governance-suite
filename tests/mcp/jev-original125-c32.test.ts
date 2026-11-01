@@ -6,13 +6,10 @@ import {tmpdir} from "node:os";
 import path from "node:path";
 import {fileURLToPath, pathToFileURL} from "node:url";
 import {expect, it, vi} from "vitest";
-import "../../mcp-server/src/builtin-hook-host-adapters.js";
-import {adaptHostInput} from "../../mcp-server/src/host-input-adapter.js";
-import {SessionActorProofs, SESSION_PROOF_FIELD} from "../../mcp-server/src/session-actor-proof.js";
-import {SqliteWorkflowStore} from "../../mcp-server/src/sqlite-workflow-store.js";
 import {loadHostObservedInventory} from "../../mcp-server/src/skill-classification/host-discovery-adapter.js";
 import {digestProviderProfileConfiguration} from "../../mcp-server/src/skill-classification/profiles.js";
 import type {ProviderProfile} from "../../mcp-server/src/skill-classification/types.js";
+import {codexCallMeta} from "../helpers/caller.js";
 
 const repository = fileURLToPath(new URL("../../", import.meta.url));
 const input = {schemaVersion: "1.0.0", requestId: "fixture-c32-request", operationId: "fixture-c32-operation", originalPrompt: "닫힌 합성 재시작 경계만 확인해.",
@@ -43,7 +40,7 @@ async function fixture() {
   };
   await configure("1");
   const environment = Object.fromEntries(Object.entries({...process.env,
-    AGENT_GOVERNANCE_CLASSIFICATION_CONFIG: configPath, AGENT_GOVERNANCE_HOST_ATTESTATION: "", SKILL_REGISTRY_PATH: path.join(directory, "skills", "registry.json"),
+    AGENT_GOVERNANCE_CLASSIFICATION_CONFIG: configPath, AGENT_GOVERNANCE_HOST_ATTESTATION: "codex", SKILL_REGISTRY_PATH: path.join(directory, "skills", "registry.json"),
     AGENT_GOVERNANCE_SHARED_STATE_DIR: directory, AGENT_GOVERNANCE_DB_PATH: path.join(directory, "workflow.sqlite3"),
     AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(directory, "continuity.sqlite3"), AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"),
     AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: path.join(directory, "board.sqlite3"), AGENT_GOVERNANCE_SESSION_MESSAGE_STATE_DIR: path.join(directory, "messages"),
@@ -54,15 +51,9 @@ async function fixture() {
     const client = new Client({name: "c32-source-process-fixture", version: "1.0.0"});
     try {await client.connect(transport);} catch (error) {await transport.close(); throw error;}
     const call = async (name: string, data: Record<string, unknown>) => {
-      // 기존 startup 시험과 같은 소유 합성 세션 proof이다. 실제 호스트 증명이 아니다.
-      const store = new SqliteWorkflowStore(path.join(directory, "workflow.sqlite3"));
-      let proof: string;
-      try {
-        const observation = adaptHostInput({hook_event_name: "PreToolUse", session_id: "fixture-c32-session", tool_use_id: `fixture-c32-call-${randomUUID()}`,
-          tool_name: `mcp__agent_governance_suite__${name}`, tool_input: data, cwd: directory}, "claude-code").observation;
-        proof = new SessionActorProofs(store).issue(observation, name, data);
-      } finally {store.close();}
-      const reply = await client.callTool({name, arguments: {...data, [SESSION_PROOF_FIELD]: proof}});
+      // 소유 합성 호출자 _meta이다(Codex 형식, 실행 관측 없음). 실제 호스트 관측이 아니다.
+      const meta = codexCallMeta("fixture-c32-session", {model: null, effort: null, callId: `fixture-c32-call-${randomUUID()}`});
+      const reply = await client.callTool({name, arguments: data, _meta: meta});
       return JSON.parse((reply.content as Array<{type: string; text?: string}>).find(item => item.type === "text")!.text!);
     };
     return {call, close: async () => {try {await client.close();} finally {await transport.close();}}};

@@ -105,48 +105,20 @@ function defaultSpawnResponse(scriptPath, args, options) {
     return { status: 0, signal: null, stdout: "", stderr: "" };
   }
   if (base === "host-attestation-hook.mjs") {
-    const parsed = JSON.parse(options.input);
-    if (parsed.hook_event_name === "SessionStart") {
-      return { status: 0, signal: null, stdout: "", stderr: "" };
-    }
-    return {
-      status: 0,
-      signal: null,
-      stdout: JSON.stringify({
-        hookSpecificOutput: {
-          updatedInput: {
-            ...parsed.tool_input,
-            _hostAttestation: "aghs2.fixture",
-          },
-        },
-      }),
-      stderr: "",
-    };
-  }
-  if (base === "host-wrapper.mjs") {
-    return { status: 0, signal: null, stdout: "host-wrapper-fixture: ready", stderr: "" };
+    // Only SessionStart/PostModelSwitch reach this bundle; it records the session model and prints nothing.
+    expect(JSON.parse(options.input).hook_event_name).toBe("SessionStart");
+    return { status: 0, signal: null, stdout: "", stderr: "" };
   }
   if (base === "session-board-hook.mjs") {
     const input = JSON.parse(options.input);
     const boardTool = input.tool_name?.endsWith("__update_session_status");
-    // Synthetic CLI responses model the explicit host contract, never native evidence.
-    if (args.includes("--host=gemini")) {
-      return { status: 0, signal: null, stdout: boardTool ? JSON.stringify({
-        hookSpecificOutput: { permissionDecision: "deny" },
-      }) : "", stderr: "" };
-    }
+    // Synthetic CLI responses model the explicit host contract, never native evidence. AGS board tools pass
+    // through the board hook untouched: the server writes the summary after it verifies the caller.
+    if (args.includes("--host=gemini")) return { status: 0, signal: null, stdout: "", stderr: "" };
     expect(args).toEqual(["--host=claude-code"]);
     if (input.hook_event_name === "UserPromptSubmit") defaultSpawnResponse.boardPromptAt = "2026-10-26T00:00:00.000Z";
-    const denied = boardTool && (Object.hasOwn(input, "agent_id") || input.tool_input.summary.includes("\n"));
-    if (boardTool && !denied) defaultSpawnResponse.boardSummary = input.tool_input.summary;
-    return {
-      status: 0,
-      signal: null,
-      stdout: boardTool ? JSON.stringify({ hookSpecificOutput: denied ? { permissionDecision: "deny" } : {
-        updatedInput: { ...input.tool_input, _sessionBinding: { host: "claude-code", sessionId: input.session_id } },
-      } }) : "",
-      stderr: "",
-    };
+    expect(boardTool && Object.hasOwn(input, "agent_id")).toBe(false);
+    return { status: 0, signal: null, stdout: "", stderr: "" };
   }
   if (base === "read-board.mjs") {
     return { status: 0, signal: null, stdout: JSON.stringify({ summary: defaultSpawnResponse.boardSummary, last_prompt_at: defaultSpawnResponse.boardPromptAt }), stderr: "" };
@@ -154,19 +126,18 @@ function defaultSpawnResponse(scriptPath, args, options) {
   if (base === "governance-hook.mjs") {
     const input = JSON.parse(options.input);
     expect(args).toEqual(["--host=claude-code"]);
-    expect(input).toMatchObject({ hook_event_name: "PreToolUse", session_id: "clean-room-mcp-root", cwd: cleanRoot });
+    expect(input).toMatchObject({ hook_event_name: "PreToolUse", tool_use_id: expect.any(String) });
     expect(input).not.toHaveProperty("agent_id");
-    return { status: 0, signal: null, stdout: JSON.stringify({ hookSpecificOutput: {
-      hookEventName: "PreToolUse",
-      updatedInput: { ...input.tool_input, _sessionProof: `ags-root-v3.fixture-${input.tool_use_id}.signature` },
-    } }), stderr: "" };
+    // The admission hook records the call under its tool-use ID and prints nothing.
+    return { status: 0, signal: null, stdout: "", stderr: "" };
   }
   if (base === "server.mjs") {
     const toolCalls = String(options.input).trim().split("\n").map(line => JSON.parse(line)).filter(message => message.method === "tools/call");
     expect(toolCalls.map(message => message.params.name)).toEqual(["lookup_korean_prose_terms", "validate_collaboration_decision", "get_trust_capabilities"]);
+    expect(options.env.AGENT_GOVERNANCE_HOST_ATTESTATION).toBe("claude-code");
     for (const message of toolCalls) {
-      expect(message.params.arguments._sessionProof).toMatch(/^ags-root-v3\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/u);
-      expect(message.params.arguments).not.toHaveProperty("_sessionBinding");
+      expect(message.params._meta).toEqual({ "claudecode/toolUseId": expect.stringMatching(/^toolu_clean_room_mcp_\d+$/u) });
+      for (const key of ["_sessionProof", "_sessionBinding", "_hostAttestation", "_continuityBinding"]) expect(message.params.arguments).not.toHaveProperty(key);
     }
     const lookupEnvelope = { ok: true, data: { status: "matched", matches: [{ term: "MCP" }, { term: "SQLite" }] } };
     const validationEnvelope = {
@@ -505,7 +476,7 @@ describe("runtime smoke synthetic actor and proof fixture contracts", () => {
     const calls = boundary.spawnSync.mock.calls;
     const governance = calls.filter(([, [script]]) => path.basename(script) === "governance-hook.mjs");
     const server = calls.filter(([, [script]]) => path.basename(script) === "server.mjs");
-    expect(governance).toHaveLength(3);
+    expect(governance).toHaveLength(5);
     expect(server).toHaveLength(1);
     expect(boundary.cp).toHaveBeenCalledWith(
       path.join(sourceRoot, "mcp-server", "dist", "governance-hook.mjs"),
@@ -522,16 +493,18 @@ describe("runtime smoke synthetic actor and proof fixture contracts", () => {
       expect(options.env).not.toHaveProperty("NODE_PATH");
       expect(options.env).not.toHaveProperty("AGENT_GOVERNANCE_ROOT");
     }
-    const issued = governance.map(([, , options]) => JSON.parse(options.input));
-    expect(issued.map(input => input.tool_use_id)).toEqual([
-      "clean-room-mcp-call-1", "clean-room-mcp-call-2", "clean-room-mcp-call-3",
+    const admitted = governance.map(([, , options]) => JSON.parse(options.input));
+    expect(admitted.map(input => input.tool_use_id)).toEqual([
+      "toolu_clean_room", "toolu_not_written_yet", "toolu_clean_room_mcp_1", "toolu_clean_room_mcp_2", "toolu_clean_room_mcp_3",
     ]);
+    const issued = admitted.slice(2);
+    for (const input of issued) expect(input).toMatchObject({ session_id: "clean-room-mcp-root", cwd: cleanRoot });
     const outgoing = server[0][2].input.trim().split("\n").map(line => JSON.parse(line)).filter(message => message.method === "tools/call");
     for (let index = 0; index < issued.length; index++) {
-      const { _sessionProof, ...args } = outgoing[index].params.arguments;
       expect(outgoing[index].params.name).toBe(issued[index].tool_name.replace("mcp__agent_governance_suite__", ""));
-      expect(args).toEqual(issued[index].tool_input);
-      expect(_sessionProof).toBe(`ags-root-v3.fixture-${issued[index].tool_use_id}.signature`);
+      // The server receives the caller's arguments unchanged and the host tool-use ID in _meta.
+      expect(outgoing[index].params.arguments).toEqual(issued[index].tool_input);
+      expect(outgoing[index].params._meta).toEqual({ "claudecode/toolUseId": issued[index].tool_use_id });
     }
     const boardCalls = calls.filter(([, [script]]) => path.basename(script) === "session-board-hook.mjs");
     expect(boardCalls.slice(0, 2).map(([, [, ...args]]) => args)).toEqual([["--host=gemini"], ["--host=gemini"]]);
@@ -545,41 +518,19 @@ describe("runtime smoke synthetic actor and proof fixture contracts", () => {
   });
 
   it.each([
-    ["spawn error", response => ({ ...response, error: Object.assign(new Error("synthetic timeout"), { code: "ETIMEDOUT" }) }), "governance hook failed its clean-room root proof issuance."],
-    ["nonzero exit", response => ({ ...response, status: 2 }), "governance hook failed its clean-room root proof issuance."],
-    ["empty stdout", response => ({ ...response, stdout: "" }), "governance hook failed its clean-room root proof issuance."],
-    ["malformed JSON", response => ({ ...response, stdout: "{" }), "governance hook returned malformed clean-room JSON."],
-    ["missing proof", response => {
-      const value = JSON.parse(response.stdout);
-      delete value.hookSpecificOutput.updatedInput._sessionProof;
-      return { ...response, stdout: JSON.stringify(value) };
-    }, "governance hook did not issue a clean-room root proof."],
-    ["deny output", response => {
-      const value = JSON.parse(response.stdout);
-      value.hookSpecificOutput.permissionDecision = "deny";
-      return { ...response, stdout: JSON.stringify(value) };
-    }, "governance hook did not issue a clean-room root proof."],
-    ["caller binding", response => {
-      const value = JSON.parse(response.stdout);
-      value.hookSpecificOutput.updatedInput._sessionBinding = { host: "forged", sessionId: "forged" };
-      return { ...response, stdout: JSON.stringify(value) };
-    }, "governance hook did not issue a clean-room root proof."],
-    ["malformed proof token", response => {
-      const value = JSON.parse(response.stdout);
-      value.hookSpecificOutput.updatedInput._sessionProof = "not-a-proof";
-      return { ...response, stdout: JSON.stringify(value) };
-    }, "governance hook did not issue a clean-room root proof."],
-    ["altered tool arguments", response => {
-      const value = JSON.parse(response.stdout);
-      value.hookSpecificOutput.updatedInput.changed = true;
-      return { ...response, stdout: JSON.stringify(value) };
-    }, "governance hook changed clean-room tool arguments."],
-  ])("rejects governance CLI %s before sending any MCP call", async (_label, change, expectedMessage) => {
+    ["spawn error", response => ({ ...response, error: Object.assign(new Error("synthetic timeout"), { code: "ETIMEDOUT" }) })],
+    ["nonzero exit", response => ({ ...response, status: 2 })],
+    // An admission hook that prints anything (a rewrite, a decision) is not the silent admission contract.
+    ["rewritten arguments", response => ({ ...response, stdout: JSON.stringify({ hookSpecificOutput: { hookEventName: "PreToolUse",
+      updatedInput: { taskId: "clean-room-task", _sessionProof: "ags-root-v3.forged" } } }) })],
+    ["deny output", response => ({ ...response, stdout: JSON.stringify({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny" } }) })],
+    ["allow output", response => ({ ...response, stdout: JSON.stringify({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "allow" } }) })],
+  ])("rejects governance CLI %s before sending any MCP call", async (_label, change) => {
     boundary.spawnSync.mockImplementation((_executable, [script, ...args], options) => {
       const response = defaultSpawnResponse(script, args, options);
       return path.basename(script) === "governance-hook.mjs" ? change(response) : response;
     });
-    await expect(runRuntimeSmokeCheck(sourceRoot)).rejects.toThrow(expectedMessage);
+    await expect(runRuntimeSmokeCheck(sourceRoot)).rejects.toThrow("governance hook failed its node_modules-free admission smoke check.");
     expect(boundary.spawnSync.mock.calls.filter(([, [script]]) => path.basename(script) === "governance-hook.mjs")).toHaveLength(1);
     expect(boundary.spawnSync.mock.calls.filter(([, [script]]) => path.basename(script) === "server.mjs")).toHaveLength(0);
     expect(boundary.rm).toHaveBeenCalledExactlyOnceWith(cleanRoot, { recursive: true, force: true });
