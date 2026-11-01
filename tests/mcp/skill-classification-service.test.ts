@@ -3,6 +3,7 @@ import {InMemoryClassificationBudget, SkillClassificationService, type Classific
 import {ClassificationProviderError, unknownUsage} from "../../mcp-server/src/skill-classification/providers.js";
 import {createClassificationRequest} from "../../mcp-server/src/skill-classification/request.js";
 import {digestProviderProfileConfiguration} from "../../mcp-server/src/skill-classification/profiles.js";
+import {createClassificationProviderRuntime} from "../../mcp-server/src/skill-classification/runtime.js";
 import type {ProviderEvaluation, ProviderProfile, SkillClassificationProviderPort, SkillClassificationRequestV1} from "../../mcp-server/src/skill-classification/types.js";
 
 // TD-002/004, CONC-CANCEL-004, DIST-IDEMPOTENCY-002/RETRY-003/ORDER-004.
@@ -215,6 +216,60 @@ describe("fixed-profile classification service", () => {
     const budget = new InMemoryClassificationBudget({jev: {limitUsd: 5, spentUsd: null}, vendors: {"current-vendor": {limitUsd: null, spentUsd: null}}});
     const service = new SkillClassificationService({providers: {vendor: f.vendor}, budget});
     expect((await service.classify(f.input)).response.error?.code).toBe("BUDGET_UNAVAILABLE"); expect(f.vendor.classify).not.toHaveBeenCalled();
+  });
+  it.each(["remote", "native"] as const)("C-29 현금 한도 0은 양수 최대비용의 %s 전송을 막는다", async routeKind => {
+    const f = fixture(); f.input.config.jevEnabled = false;
+    // 실제 스키마를 거친 현금 0이며, 합성 native 허용량이 현금 승인을 대신하지 않는다.
+    const {budget} = createClassificationProviderRuntime({schemaVersion: "1.0.0", routes: [], budget: {
+      jev: {limitUsd: 0, spentUsd: 0}, vendors: {"current-vendor": {limitUsd: 0, spentUsd: 0}},
+      nativeAllowances: {vendor: {approvalRef: "synthetic-c29-only", remainingCalls: 1}},
+    }});
+    expect(budget.snapshot()).toMatchObject({limits: {"vendor:current-vendor": {limitUsd: 0, spentUsd: 0}}, reservations: []});
+    const dispatch = vi.fn();
+    vi.mocked(f.vendor.availability).mockResolvedValue({available: true, approved: true, routeKind, reasonCode: null});
+    vi.mocked(f.vendor.classify).mockImplementation(async (request, _profile, _signal, beforeDispatch) => {
+      beforeDispatch?.(); dispatch(); return f.evaluation(request);
+    });
+    const service = new SkillClassificationService({providers: {vendor: f.vendor}, budget});
+    const result = await service.classify(f.input);
+    expect(result.response.error?.code).toBe("BUDGET_UNAVAILABLE");
+    expect(result.attempts).toHaveLength(1); expect(result.attempts[0]).toMatchObject({dispatchState: "not-started", reservedCostUsd: 0});
+    expect(f.vendor.availability).toHaveBeenCalledTimes(1); expect(f.vendor.classify).not.toHaveBeenCalled(); expect(dispatch).not.toHaveBeenCalled();
+    expect(f.jev.availability).not.toHaveBeenCalled(); expect(f.jev.classify).not.toHaveBeenCalled();
+    expect(budget.snapshot()).toMatchObject({limits: {"vendor:current-vendor": {limitUsd: 0, spentUsd: 0}},
+      nativeAllowances: {vendor: {approvalRef: "synthetic-c29-only", remainingCalls: 1}}, reservations: []});
+  });
+  it.each([false, true])("C-29 현금 0의 native 최대비용 0도 별도 허용량에 종속된다: %s", async allowed => {
+    const f = fixture(); f.input.config.jevEnabled = false;
+    const profile = f.input.registry.profiles[1]!; profile.maximumCostUsd = 0;
+    requalifyFixtureProfile(profile, "synthetic-c29-native-zero");
+    const {budget} = createClassificationProviderRuntime({schemaVersion: "1.0.0", routes: [], budget: {
+      jev: {limitUsd: 0, spentUsd: 0}, vendors: {"current-vendor": {limitUsd: 0, spentUsd: 0}},
+      nativeAllowances: allowed ? {vendor: {approvalRef: "synthetic-c29-only", remainingCalls: 1}} : {},
+    }});
+    expect(budget.snapshot()).toMatchObject({limits: {"vendor:current-vendor": {limitUsd: 0, spentUsd: 0}}, reservations: []});
+    const dispatch = vi.fn();
+    vi.mocked(f.vendor.availability).mockResolvedValue({available: true, approved: true, routeKind: "native", reasonCode: null});
+    vi.mocked(f.vendor.classify).mockImplementation(async (request, _profile, _signal, beforeDispatch) => {
+      beforeDispatch?.(); dispatch(); const value = f.evaluation(request);
+      return {...value, usage: {...value.usage, actualCostUsd: 0}};
+    });
+    const service = new SkillClassificationService({providers: {vendor: f.vendor}, budget});
+    const first = await service.classify(f.input);
+    expect(first.response.status).toBe(allowed ? "SUCCESS" : "UNAVAILABLE");
+    expect(first.response.error?.code ?? null).toBe(allowed ? null : "BUDGET_UNAVAILABLE");
+    expect(first.attempts).toHaveLength(1); expect(first.attempts[0]).toMatchObject({dispatchState: allowed ? "started" : "not-started", reservedCostUsd: 0});
+    expect(f.vendor.classify).toHaveBeenCalledTimes(allowed ? 1 : 0); expect(dispatch).toHaveBeenCalledTimes(allowed ? 1 : 0);
+    expect(budget.snapshot().nativeAllowances.vendor?.remainingCalls ?? null).toBe(allowed ? 0 : null);
+    const nextRequest = createClassificationRequest({requestId: "c29-next-request", operationId: "c29-next-operation", originalPrompt: f.input.request.originalPrompt,
+      inventory: {skills: f.input.request.skills, issues: [], inventoryDigest: f.input.request.inventoryDigest, taxonomyRevision: f.input.request.taxonomyRevision}, classificationCriteriaRef: "criteria"});
+    const next = await service.classify({...f.input, request: nextRequest});
+    expect(next.response.error?.code).toBe("BUDGET_UNAVAILABLE");
+    expect(next.attempts).toHaveLength(1); expect(next.attempts[0]).toMatchObject({dispatchState: "not-started", reservedCostUsd: 0});
+    expect(f.vendor.availability).toHaveBeenCalledTimes(2); expect(f.vendor.classify).toHaveBeenCalledTimes(allowed ? 1 : 0); expect(dispatch).toHaveBeenCalledTimes(allowed ? 1 : 0);
+    expect(f.jev.availability).not.toHaveBeenCalled(); expect(f.jev.classify).not.toHaveBeenCalled();
+    expect(budget.snapshot()).toMatchObject({limits: {"vendor:current-vendor": {limitUsd: 0, spentUsd: 0}}, reservations: []});
+    expect(budget.snapshot().nativeAllowances.vendor?.remainingCalls ?? null).toBe(allowed ? 0 : null);
   });
   it("SS33 native cash zero still requires a separate confirmed allowance, never inferred from subscription", () => {
     const f = fixture(); const p = f.profile("vendor"); p.maximumCostUsd = 0;
