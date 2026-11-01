@@ -174,7 +174,12 @@ assertNoAuthorityEffects();
 vi.restoreAllMocks();
 });
 
-test("Antigravity PreInvocation recovers missing session presence and gemini-queue relay via handleSessionMessageHook", async () => {
+// D0364: the queue is inferred only with the source project identity its idle wake needs; the cases cover both.
+for (const [projectId, transport, supportedInjection, idleWake] of [
+  ["synthetic-project", "gemini-queue", ["peer-wake", "tool-boundary"], "user-message"],
+  [undefined, "gemini-deferred", ["tool-boundary"], "none"],
+]) test(`Antigravity PreInvocation recovers missing session presence and ${transport} relay via handleSessionMessageHook`, async () => {
+  vi.stubEnv("ANTIGRAVITY_PROJECT_ID", projectId);
   effects.request.mockReset();
   effects.spawn.mockReset();
   effects.token.mockClear();
@@ -213,10 +218,11 @@ test("Antigravity PreInvocation recovers missing session presence and gemini-que
     host: "antigravity",
     sessionId: "35201385-6197-49fa-ab79-0ebe754a89e5",
   });
-  assert.equal(ensurePayload.transport, "gemini-queue");
+  assert.equal(ensurePayload.transport, transport);
   assert.equal(ensurePayload.parentPid, 1234);
   assert.equal(ensurePayload.parentStartToken, "synthetic-T1");
-  assert.deepEqual(ensurePayload.supportedInjection, ["peer-wake", "tool-boundary"]);
-  assert.equal(ensurePayload.idleWake, "user-message");
+  assert.deepEqual(ensurePayload.supportedInjection, supportedInjection);
+  assert.equal(ensurePayload.idleWake, idleWake);
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
