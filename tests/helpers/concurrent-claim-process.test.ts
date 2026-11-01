@@ -1,8 +1,8 @@
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
-import { ClaimWorkerTimeoutError, cleanupIfClaimWorkersFinished, concurrentClaims, type ClaimWorkerState } from "./concurrent-claim-process.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ClaimWorkerTimeoutError, claimReapFailure, cleanupIfClaimWorkersFinished, concurrentClaims, type ClaimWorkerState } from "./concurrent-claim-process.js";
 
 const worker = new URL("./fixtures/claim-worker-modes.ts", import.meta.url);
 // Startup and reaping stay generous for slow Windows runners; only the stage under test is short.
@@ -76,6 +76,36 @@ describe("concurrentClaims stage deadlines", () => {
     expect(error.message).toMatch(/Claim process 0 timed out before result/u);
     expect(error.workers).toMatchObject([{ status: "TIMED_OUT", timedOutStage: "result", exit: "UNKNOWN" }]);
     expectFixturePreserved(directory, "result");
+  });
+
+  it("keeps the original stage error when the reap after it also misses its deadline (D0161)", async () => {
+    const directory = fixtureDirectory();
+    let holderPid: number | null = null;
+    try {
+      const error = await timedOut(concurrentClaims(worker, [{ mode: "hold-stdout" }], { readyMs: SLOW, resultMs: SHORT, exitMs: SLOW, reapMs: SHORT }));
+      holderPid = (JSON.parse(error.workers[0]!.lastRawStdout!) as { holderPid: number }).holderPid;
+      // The thrown error is the result-stage failure, not the later reap timeout.
+      expect(error.message).toMatch(/Claim process 0 timed out before result/u);
+      expect(error.workers).toMatchObject([{ status: "TIMED_OUT", timedOutStage: "result", exit: "UNKNOWN" }]);
+      const reap = claimReapFailure(error);
+      expect(reap).toBeInstanceOf(ClaimWorkerTimeoutError);
+      expect((reap as ClaimWorkerTimeoutError).message).toMatch(/did not close after termination/u);
+      // The killed worker never closed (its stdout is still held): it stays TIMED_OUT at its first missed stage.
+      expect((reap as ClaimWorkerTimeoutError).workers).toMatchObject([{ status: "TIMED_OUT", timedOutStage: "result", exit: "UNKNOWN" }]);
+      let preserved: unknown;
+      try { cleanupIfClaimWorkersFinished(() => rmSync(directory, { recursive: true })); } catch (caught) { preserved = caught; }
+      expect(preserved).toBeInstanceOf(ClaimWorkerTimeoutError);
+      expect((preserved as ClaimWorkerTimeoutError).workers).toMatchObject([{ status: "TIMED_OUT", timedOutStage: "result" }]);
+      expect(existsSync(directory)).toBe(true);
+    } finally {
+      if (holderPid !== null) {
+        const pid = holderPid;
+        process.kill(pid, "SIGKILL");
+        await vi.waitFor(() => { expect(() => process.kill(pid, 0)).toThrow(); }, { timeout: SLOW });
+      }
+    }
+    // Without an earlier failure nothing is kept beside the result.
+    expect(claimReapFailure(new Error("unrelated"))).toBeNull();
   });
 
   it("reports workers still running at fixture cleanup as UNKNOWN without deleting the fixture", async () => {

@@ -40,6 +40,13 @@ export class ClaimWorkerTimeoutError extends Error {
 
 // Workers that timed out or have not closed yet. Module state is per test file under Vitest isolation.
 const unfinishedWorkers = new Set<ClaimWorkerState>();
+// A reap deadline missed after an earlier stage failed, keyed by that stage's original error.
+const reapFailures = new WeakMap<object, unknown>();
+
+/** The reap failure that followed `error`, or null. It never replaces the original stage error that was thrown. */
+export function claimReapFailure(error: unknown): unknown {
+  return error !== null && typeof error === "object" ? reapFailures.get(error) ?? null : null;
+}
 
 /**
  * Runs `cleanup` only when every claim worker finished. Otherwise the fixture stays on disk and the
@@ -138,6 +145,7 @@ export async function concurrentClaims<T>(fixture: URL, inputs: unknown[], deadl
       child.once("message", message); child.once("error", onError); child.once("close", closed);
     });
   }
+  let stageFailure: { error: unknown } | null = null;
   try {
     await Promise.all(children.map((child, idx) => receive(child, idx, "ready")));
     assert.equal(new Set(children.map(child => child.pid)).size, inputs.length);
@@ -148,8 +156,17 @@ export async function concurrentClaims<T>(fixture: URL, inputs: unknown[], deadl
     const codes = await withDeadline(Promise.all(exits), limits.exitMs, "exit", "Claim workers did not exit after reporting");
     assert.deepEqual(codes, inputs.map(() => 0));
     return claims.map(message => (message as { result: T }).result);
+  } catch (error) {
+    stageFailure = { error };
+    throw error;
   } finally {
     children.forEach(child => { if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL"); });
-    await withDeadline(Promise.all(exits), limits.reapMs, "reap", "Claim workers did not close after termination");
+    const reaped = withDeadline(Promise.all(exits), limits.reapMs, "reap", "Claim workers did not close after termination");
+    // D0161: after a failed stage its original error stays the thrown one; a missed reap is kept beside it, and the
+    // unclosed workers stay recorded (TIMED_OUT, fixture preserved). Without an earlier failure the reap error is thrown.
+    const failure = stageFailure;
+    await (failure ? reaped.catch((reapError: unknown) => {
+      if (failure.error !== null && typeof failure.error === "object") reapFailures.set(failure.error, reapError);
+    }) : reaped);
   }
 }
