@@ -134,6 +134,7 @@ export function watchHostProcess(pid: number, bound: HostAliveBound): { bound: P
 | Windows | relay마다 PowerShell 하나를 비동기로 띄운다. 순서는 `GetProcessById` → `Handle`(handle 보유) → 같은 handle로 `StartTime` → `bound`와 비교 → token 출력 → `WaitForExit()`이다. 자식 프로세스가 끝나면 `exited`가 된다. `bound`는 hook의 `performance.timeOrigin`이다. | handle이 열려 있는 동안 Windows는 그 PID를 재사용하지 않는다. |
 | 그 밖 POSIX | 5초마다 `ps -o lstart=`를 비동기로 실행한다(지금 PI:17과 같다). | starttime 비교로 판정한다. |
 
+- 감시자는 hook이 아니라 relay가 띄운다. relay가 새로 만든 pipe만 넘기고(`stdio: ["ignore", "pipe", "ignore"]`) hook에서 물려받은 handle은 넘기지 않는다. 그래서 hook이 끝날 때 호스트가 hook의 job·pipe를 정리해도(D-0353) 감시자는 영향을 받지 않는다. relay 자신을 handle 상속 없이 띄우는 방식은 D-0353 브랜치의 수정을 따른다. 그 브랜치가 들어오면 이 브랜치를 rebase하고, relay가 Windows job에 묶여 죽지 않는지 실호스트에서 확인한다.
 - PowerShell 기동 시간은 relay 안에서 한 번만 쓴다. 이 시간은 어떤 hook 기한, MCP 요청, 시험 기한에도 들어가지 않는다(D-0331). 감시가 결과를 내기 전에는 `hostBound=false`이므로 울리지 않는다. 감시가 실패하면(권한 거부 등) 고정 사유를 기록하고 relay가 끝난다. 다음 경계에서 다시 시도한다.
 - hook은 신원을 조회하지 않는다. hook은 호스트 PID(`resolveHookProcessPid`)와 `bound`만 넘긴다. Linux hook은 `/proc`가 싸므로 `hostStart`를 직접 읽어 같이 넘길 수 있다. Antigravity 어댑터처럼 이미 token을 가진 호출자도 넘길 수 있다. 넘긴 값은 relay가 감시 결과와 정확히 비교한다.
 - D-0354(compact 중 세대 유지)는 `presence-start`에서 처리한다. live lease가 같은 instance이고, `presence.host_pid`가 같고, 코드 digest가 같으면 세대를 유지한다. Linux에서는 `hostStart`도 같아야 한다. Windows에서는 relay가 handle을 잡고 있으므로 같은 PID는 같은 프로세스다.
