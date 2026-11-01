@@ -64,7 +64,7 @@ let nonceCounter = 0;
 const nextNonce = () => `doorbell-${++nonceCounter}-nonce-abcdefghijklmnop`;
 
 interface Fixture {
-  directory: string; database: string; store: SessionMessageStore<any>; t0: number;
+  directory: string; database: string; store: SessionMessageStore; t0: number;
   instanceId: string; relayId: string; transport: string;
 }
 function fixture(transport = TRANSPORT): Fixture {
@@ -169,7 +169,7 @@ test("1: a stalled adapter call stays one external call across boundaries and ti
     calls++; entered(); return new Promise<WakeDispatchOutcome>(resolve => { release = resolve; });
   } };
   // The relay's broker requests run against the same store with the fixture clock.
-  const relayRequest = (async (operation: string, payload: Record<string, any>) => {
+  const relayRequest = (async (operation: string, payload: Record<string, any>) => { // eslint-disable-line @typescript-eslint/no-explicit-any -- broker wire payload
     const attempt = payload.attempt ?? payload;
     if (operation === "relay-tick") return f.store.relayTick({ ...payload.target, transport: payload.transport, relayId: payload.relayId,
       instanceId: payload.instanceId, includePending: payload.includePending }, clock);
