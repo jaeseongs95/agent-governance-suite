@@ -75,19 +75,36 @@ async function launch(mode: string) {
       }
     }
     const [endpoint, lock] = await Promise.all([fileState("endpoint.json"), fileState("broker.lock")]);
-    console.error("Disposable broker readiness failure:", { ...snapshot, endpoint, lock });
+    console.error("Disposable broker readiness failure:", { ...snapshot, endpoint, lock, late: await lateReadiness(snapshot.error) });
   }
-  return { directory, child, stderr: () => stderr, diagnose };
+  /** Diagnostic only, after the deadline already failed: a late own endpoint means slow startup, none means a stall or race. */
+  async function lateReadiness(error: string, windowMs = 10_000) {
+    if (!/startup deadline/u.test(error)) return null;
+    const from = performance.now();
+    while (performance.now() - from < windowMs) {
+      if (child.exitCode !== null || child.signalCode !== null) {
+        return { outcome: "exited", afterMs: Math.round(performance.now() - from), exitCode: child.exitCode, signalCode: child.signalCode };
+      }
+      const published = await readFile(path.join(directory, "endpoint.json"), "utf8").then(text => JSON.parse(text)?.pid === child.pid, () => false);
+      if (published) return { outcome: "published", afterMs: Math.round(performance.now() - from) };
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return { outcome: "not-published", afterMs: windowMs };
+  }
+  async function ready(timeoutMs: number) {
+    try {
+      await waitForSessionMessageBrokerReady(directory, child, timeoutMs);
+    } catch (error) {
+      await diagnose(error).catch(() => {});
+      throw error;
+    }
+  }
+  return { directory, child, stderr: () => stderr, diagnose, ready };
 }
 
 it("retries transient endpoint publication failures and serves the published endpoint", async () => {
-  const { directory, child, diagnose } = await launch("transient");
-  try {
-    await waitForSessionMessageBrokerReady(directory, child, 3000);
-  } catch (error) {
-    await diagnose(error).catch(() => {});
-    throw error;
-  }
+  const { directory, child, ready } = await launch("transient");
+  await ready(3000);
   expect(JSON.parse(await readFile(path.join(directory, "endpoint.json"), "utf8"))).toMatchObject({ pid: child.pid, claimReceiptVersion: 1 });
   await expect(requestSessionMessageOnce("ping", {}, directory)).resolves.toMatchObject({
     protocolVersion: "1.0.0",
@@ -121,8 +138,8 @@ it.each(["permanent", "ENOSPC", "credentials", "database"])("releases startup re
 });
 
 it("delivers and acknowledges a message using only the packaged CLI and broker", async () => {
-  const { directory, child } = await launch("transient");
-  await waitForSessionMessageBrokerReady(directory, child, 3000);
+  const { directory, ready } = await launch("transient");
+  await ready(3000);
   const sender = { host: "test-sender", sessionId: "sender" };
   const target = { host: "test-target", sessionId: "target" };
   const request = (operation: string, payload: Record<string, unknown>) => {
@@ -261,8 +278,8 @@ it("지원 표시가 없는 기존 endpoint는 명확히 거부하고 자동 새
 
 
 it("실제 TLS 입구는 구형 인수 frame을 상태 변경과 영수증 노출 전에 거부하고 정상 소비자는 원영수증으로 ACK한다", async () => {
-  const { directory, child } = await launch("transient");
-  await waitForSessionMessageBrokerReady(directory, child, 3000);
+  const { directory, ready } = await launch("transient");
+  await ready(3000);
   const sender = { host: "fixture", sessionId: "receipt-negotiation-sender" };
   const target = { host: "fixture", sessionId: "receipt-negotiation-target" };
   const send = async (body: string) => {

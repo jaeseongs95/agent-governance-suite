@@ -78,6 +78,9 @@ it("starts the bundled MCP server without acceptance schema files beside mcp-ser
       status: child.status,
       signal: child.signal,
       errorCode: child.error ? ["ETIMEDOUT", "ENOBUFS", "ENOENT", "EACCES", "EPERM"].includes(child.error.code) ? child.error.code : "OTHER" : null,
+      // Which replies arrived before a timeout separates a slow process start from a slow tools/list.
+      responseIds: (child.stdout ?? "").split(/\r?\n/u).flatMap((line) => { try { return [JSON.parse(line).id ?? null]; } catch { return []; } }),
+      stderrHead: (child.stderr ?? "").slice(0, 2048),
     });
     observe("assertions", "enter");
     expect(child.error).toBeUndefined();
