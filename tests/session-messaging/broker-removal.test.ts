@@ -1,6 +1,6 @@
 import { fork, spawn } from "node:child_process";
 import { once } from "node:events";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -610,6 +610,33 @@ describe("the host's SessionEnd ends exactly its own birth (R5 Windows, R10 /cle
     expect(store.liveRelay(session, transport)).not.toBeNull();
     await expect(sessionEnd(session.sessionId, "other")).resolves.toEqual({});
     expect(store.presence(session)).toMatchObject({ state: "ended", endReason: "host-session-ended" });
+  });
+
+  // Codex SessionEnd runs for the main thread when its conversation is archived or deleted, when Codex closes, and after
+  // it has been idle and open in no client for 30 minutes (learn.chatgpt.com/docs/hooks, SessionEnd). Its payload names
+  // that thread's session_id. The Codex adapter takes the host process only from --host-pid, so a SessionEnd command
+  // without it resolved no host and ended nothing: a cleared (/clear) or closed thread stayed online.
+  it("Codex: the packaged SessionEnd command passes its host process, so Codex's SessionEnd ends that thread's birth", async () => {
+    type Command = { command: string; commandWindows: string };
+    const config = JSON.parse(readFileSync(new URL("../../hooks/hooks.json", import.meta.url), "utf8")) as { hooks: Record<string, Array<{ hooks: Command[] }>> };
+    const start = config.hooks.SessionStart![0]!.hooks[0]!, end = config.hooks.SessionEnd![0]!.hooks[0]!;
+    expect(start.command).toContain("session-message-hook.mjs");
+    expect([end.command, end.commandWindows]).toEqual([start.command, start.commandWindows]);
+
+    const store = setup();
+    const session = { host: "codex", sessionId: "codex-session-end" };
+    store.startPresence({ ...session, instanceId: "birth-codex", transport, wakeVisibility: "none", canWakeSilently: false, deliveryCapabilities: none,
+      hostPid: process.ppid }, hookStart - SECOND);
+    const relayId = store.grantRelay({ ...session, transport, instanceId: "birth-codex", codeDigest: null, hostPid: process.ppid }).relayId!;
+    expect(store.relayTick({ ...session, transport, instanceId: "birth-codex", relayId, includePending: false, hostStart: EARLIER })).toMatchObject({ alive: true });
+    const payload = { hook_event_name: "SessionEnd", session_id: session.sessionId, reason: "other", cwd: process.cwd() };
+    // Without the host process (the former command) nothing is ended.
+    await expect(handleSessionMessageHook(payload, "codex")).resolves.toEqual({});
+    expect(store.presence(session)).toMatchObject({ state: "online", endedAt: null });
+    // With it (the command's --host-pid "$PPID" is the Codex process) the thread's own birth ends.
+    await expect(handleSessionMessageHook(payload, "codex", process.ppid)).resolves.toEqual({});
+    expect(store.presence(session)).toMatchObject({ state: "ended", endReason: "host-session-ended" });
+    expect(store.liveRelay(session, transport)).toBeNull();
   });
 
   it("after the relay's own release, SessionEnd changes nothing", async () => {
