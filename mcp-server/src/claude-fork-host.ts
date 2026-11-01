@@ -23,8 +23,7 @@ import type { ForkHostParentRead } from "./host-input-adapter.js";
  *
  * Limits (out of scope, same OS user, auditor 5970 W-1/L): a process can rewrite its own /proc cmdline memory, can be
  * ptraced, can be started with `exec -a`; its executable file can be replaced between the check and its use; on
- * Windows a certificate the same user adds to the CurrentUser root store makes a forged signature Valid, and the file
- * hash is not verified (below), so the same user's edit of claude.exe that keeps its signature block is not detected.
+ * Windows a certificate the same user adds to the CurrentUser root store makes a forged signature Valid.
  * TUI `/branch` is not observed.
  */
 export interface HostProcessView {
@@ -153,23 +152,12 @@ export interface WindowsProcessRow {
 }
 export type CommandRunner = (file: string, args: readonly string[]) => Pick<SpawnSyncReturns<string>, "status" | "stdout" | "error">;
 
-// D0352 Windows real host (tester c613 4ac47189, reviewer 902e d6037769): Get-AuthenticodeSignature hashes the whole
-// 335 MB claude.exe, about 2.9 s warm on this PC, so the snapshot ended in FORK_HOST_QUERY_TIMEOUT at 6 s. The signer
-// certificate and its chain are read instead (the cold snapshot measured 1.4-1.7 s on the same PC; 4.9 s with the
-// hash). The same-user file edit this skips is already out of scope (Limits above). Revocation is not checked and
-// certificate downloads wait at most 1 s, so the read stays local and bounded. Unsigned -> NotSigned, chain not built
-// -> NotTrusted (FORK_HOST_SIGNATURE_UNTRUSTED); any other failure fails the script (FORK_HOST_PROCESS_UNREADABLE).
 function windowsSnapshotScript(pid: number): string {
   return "[Console]::OutputEncoding=[Text.Encoding]::UTF8;$ErrorActionPreference='Stop';$all=@{};"
     + "foreach($p in Get-CimInstance Win32_Process -Property ProcessId,ParentProcessId,Name,ExecutablePath,CommandLine,CreationDate){$all[[int]$p.ProcessId]=$p};"
     + `$id=${pid};$out=@();for($i=0;$i -lt 8 -and $all.ContainsKey($id);$i++){$p=$all[$id];$sig=$null;`
-    + "if($p.Name -ieq 'claude.exe' -and $p.ExecutablePath){"
-    + "try{$c=[System.Security.Cryptography.X509Certificates.X509Certificate2]::new([System.Security.Cryptography.X509Certificates.X509Certificate]::CreateFromSignedFile($p.ExecutablePath))}"
-    + "catch{$e=$_.Exception;while($e.InnerException){$e=$e.InnerException};if($e -isnot [System.Security.Cryptography.CryptographicException]){throw};$c=$null};"
-    + "if($c){$ch=[System.Security.Cryptography.X509Certificates.X509Chain]::new();$ch.ChainPolicy.RevocationMode='NoCheck';"
-    + "$ch.ChainPolicy.UrlRetrievalTimeout=[TimeSpan]::FromSeconds(1);"
-    + "$sig=@{status=$(if($ch.Build($c)){'Valid'}else{'NotTrusted'});subject=[string]$c.Subject}}"
-    + "else{$sig=@{status='NotSigned';subject=''}}};"
+    + "if($p.Name -ieq 'claude.exe' -and $p.ExecutablePath){$s=Get-AuthenticodeSignature -LiteralPath $p.ExecutablePath;"
+    + "$sig=@{status=[string]$s.Status;subject=[string]$s.SignerCertificate.Subject}};"
     + "$out+=@{pid=[int]$p.ProcessId;ppid=[int]$p.ParentProcessId;exe=[string]$p.ExecutablePath;cmd=[string]$p.CommandLine;"
     + "created=[string]$p.CreationDate.ToFileTimeUtc();sig=$sig};$id=[int]$p.ParentProcessId};"
     + "ConvertTo-Json -Compress -Depth 4 -InputObject @($out)";

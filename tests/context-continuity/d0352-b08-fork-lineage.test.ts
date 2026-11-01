@@ -1022,10 +1022,7 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     expect(calls[0]!.file.toLowerCase()).toMatch(/system32\\windowspowershell\\v1\.0\\powershell\.exe$/u);
     expect(calls[0]!.args.slice(0, 2)).toEqual(["-NoProfile", "-NonInteractive"]);
     expect(calls[0]!.args.at(-1)).toContain("$id=10;");
-    // D0352 Windows real host: the signer certificate and chain are read without hashing the 335 MB executable.
-    expect(calls[0]!.args.at(-1)).toContain("CreateFromSignedFile($p.ExecutablePath)");
-    expect(calls[0]!.args.at(-1)).toContain("RevocationMode='NoCheck'");
-    expect(calls[0]!.args.at(-1)).not.toContain("Get-AuthenticodeSignature");
+    expect(calls[0]!.args.at(-1)).toContain("Get-AuthenticodeSignature");
     expect(WINDOWS_QUERY_TIMEOUT_MS).toBeLessThan(9000);
     const timedOut = Object.assign(new Error("spawnSync powershell.exe ETIMEDOUT"), { code: "ETIMEDOUT" });
     expect(windowsHostSnapshot(10, runner({ status: null, stdout: "", error: timedOut }))).toEqual({ reason: "FORK_HOST_QUERY_TIMEOUT" });
