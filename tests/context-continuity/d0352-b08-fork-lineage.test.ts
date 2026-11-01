@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { appendFile, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, resolve, sep } from "node:path";
+import { join, posix, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CheckpointContextRequestV1, ContinuitySnapshotV1 } from "../../contracts/types.js";
@@ -790,23 +790,28 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     const view = (exe: string, argv: string[], next: number): HostProcessView => ({ exe, argv, ppid: next, startToken: "t" + next, file: SAFE });
     const fork = ["claude", "--resume", A, "--fork-session"];
     const node = "/usr/bin/node";
-    // OS-native paths, as process.argv[1] and the launcher's argv hold them on the host that runs the test.
+    // ownHookLauncher sees process.argv[1] in the native form of the host that runs the test.
     const root = resolve("/home/u/.claude/plugins/cache/ags/agent-governance-suite/3.0.0");
-    const launcher = ownHookLauncher(join(root, "mcp-server", "dist", "continuity-hook.mjs"), node)!;
-    expect(launcher).toEqual({ exe: node, script: join(root, "hooks", "continuity-hook.mjs") });
+    const native = ownHookLauncher(join(root, "mcp-server", "dist", "continuity-hook.mjs"), node)!;
+    expect(native).toEqual({ exe: node, script: join(root, "hooks", "continuity-hook.mjs") });
     expect(ownHookLauncher(join(root, "node_modules", "vitest", "vitest.mjs"), node)).toBeNull();
     expect(ownHookLauncher(undefined, node)).toBeNull();
+    // The linux reads below hold linux argv, compared as linux paths; on a linux host that is exactly the launcher above
+    // (a Windows runner would otherwise feed its own paths into a linux read, CI 75f9cc99 Windows shard 2).
+    const linuxRoot = "/home/u/.claude/plugins/cache/ags/agent-governance-suite/3.0.0";
+    const launcher = { exe: node, script: posix.join(linuxRoot, "hooks", "continuity-hook.mjs") };
+    if (process.platform !== "win32") expect(native).toEqual(launcher);
     // Real-host shape: dist hook -> launcher node -> sh -> claude.exe, or the launcher directly under claude.exe.
     expect(readClaudeForkHostParent(SELF, "linux", 100, chain(view(node, [node, launcher.script], 101), view("/usr/bin/dash", ["sh", "-c", "node x"], 102),
       view(NATIVE, fork, 103)), launcher)).toEqual({ parentSessionId: A });
-    expect(readClaudeForkHostParent(SELF, "linux", 100, chain(view(node, [node, `${root}${sep}hooks${sep}${sep}continuity-hook.mjs`], 101), view(NATIVE, fork, 102)), launcher))
+    expect(readClaudeForkHostParent(SELF, "linux", 100, chain(view(node, [node, `${linuxRoot}/hooks//continuity-hook.mjs`], 101), view(NATIVE, fork, 102)), launcher))
       .toEqual({ parentSessionId: A });
     // Without the launcher skip this is the reason every real-host fork recorded.
     expect(readClaudeForkHostParent(SELF, "linux", 100, chain(view(node, [node, launcher.script], 101), view(NATIVE, fork, 102)), null))
       .toEqual({ reason: "FORK_HOST_UNRECOGNIZED" });
     // Another script, another node, a second launcher-like node, or the launcher above a shell: not skipped.
     for (const views of [
-      [view(node, [node, join(root, "hooks", "governance-hook.mjs")], 101), view(NATIVE, fork, 102)],
+      [view(node, [node, posix.join(linuxRoot, "hooks", "governance-hook.mjs")], 101), view(NATIVE, fork, 102)],
       [view("/opt/node", ["/opt/node", launcher.script], 101), view(NATIVE, fork, 102)],
       [view(node, [node, launcher.script], 101), view(node, [node, launcher.script], 102), view(NATIVE, fork, 103)],
       [view("/usr/bin/dash", ["sh"], 101), view(node, [node, launcher.script], 102), view(NATIVE, fork, 103)],
