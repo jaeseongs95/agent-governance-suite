@@ -140,6 +140,7 @@ function syntheticExecutionIngress(host: string): CallerIngress {
   return (_tool, meta) => {
     const named = meta?.[SYNTHETIC_EXECUTION] as { callId: string; model?: string; effort: string } | undefined;
     if (!named) return { provenance: "unavailable", reason: "TEST_CALLER_META_MISSING" };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the rest sibling drops this field
     const { provenance: _provenance, ...caller } = rootCaller(host, SESSION, { callId: named.callId,
       execution: named.model ? { model: named.model, effort: named.effort, turnId: null, provenance: `${host}:test` } : { unavailable: "TEST_EXECUTION_UNOBSERVED" } });
     return { provenance: "host-observed", caller };

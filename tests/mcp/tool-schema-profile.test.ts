@@ -86,7 +86,8 @@ function errorReason(response: unknown): [string | null, string | null] {
   return [error?.code ?? null, error?.details?.reasonCode ?? null];
 }
 
-const CALLER_FIELDS = ["_sessionProof", "_continuityBinding", "_sessionBinding"];
+// Every host-owned caller key, including _hostAttestation; none is a tool argument.
+const CALLER_FIELDS = RESERVED_CALLER_KEYS;
 
 describe("MCP tool schema profiles", () => {
   it("업무 필수 인자를 보존하고 호출자 신원 필드는 도구 입력으로 광고하지 않는다", async () => {

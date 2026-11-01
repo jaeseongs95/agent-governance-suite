@@ -24,6 +24,7 @@ export function fixedIngress(caller: VerifiedCaller | (() => VerifiedCaller) = r
   const ingress = ((tool, meta) => {
     calls.push({ tool, meta });
     const value = typeof caller === "function" ? caller() : caller;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the rest sibling drops this field
     const { provenance: _provenance, ...observed } = value;
     return { provenance: "host-observed", caller: { ...observed, callId: value.callId === null ? null : `${value.callId}-${++sequence}` } };
   }) as CallerIngress & { calls: Array<{ tool: string; meta: unknown }> };
@@ -48,5 +49,28 @@ export function codexCallMeta(sessionId = "test-session", options: {
       ...(options.effort === null ? {} : { reasoning_effort: options.effort ?? "high" }),
       ...(options.parent === undefined ? {} : { parent_thread_id: options.parent, subagent_kind: "thread_spawn" }),
     },
+  };
+}
+
+const CALLER_META = "agent-governance.test/caller";
+let callerSequence = 0;
+/** Owned test `_meta` naming a caller for metaIngress(); a fresh call ID per call. Not native host evidence. */
+export function callerMeta(identity: { host: string; sessionId: string } = { host: "synthetic-root-host", sessionId: "synthetic-root-session" },
+  agentKey?: string): Record<string, unknown> {
+  return { [CALLER_META]: { ...identity, ...(agentKey === undefined ? {} : { agentKey }), callId: `synthetic-call-${++callerSequence}` } };
+}
+
+/**
+ * Test double at the server's ingress boundary for in-memory clients: a call observes the caller its `_meta` names
+ * (see callerMeta), and a call without it is unobserved, so missing-caller negative tests stay negative.
+ */
+export function metaIngress(): CallerIngress {
+  return (_tool, meta) => {
+    const named = meta?.[CALLER_META] as { host: string; sessionId: string; agentKey?: string; callId: string } | undefined;
+    if (!named) return { provenance: "unavailable", reason: "TEST_CALLER_META_MISSING" };
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the rest sibling drops this field
+    const { provenance: _provenance, ...observed } = named.agentKey === undefined
+      ? rootCaller(named.host, named.sessionId) : childCaller(named.host, named.sessionId, named.agentKey);
+    return { provenance: "host-observed", caller: { ...observed, callId: named.callId } };
   };
 }

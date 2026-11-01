@@ -4,7 +4,8 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {afterEach, describe, expect, it, vi} from "vitest";
 import type {ApiResultV1, ExecutionContextV1} from "../../contracts/types.js";
-import {HOST_ATTESTATION_FIELD, HostAttestationProvider, hostActorId, issueHostAttestation, type HostExecutionAdapter} from "../../mcp-server/src/host-attestation.js";
+import type {CallerExecution, CallerIngress} from "../../mcp-server/src/caller-identity.js";
+import {HostAttestationProvider, type HostExecutionAdapter} from "../../mcp-server/src/host-attestation.js";
 import {InMemoryPluginUpdateStore} from "../../mcp-server/src/plugin-update-store.js";
 import {PluginUpdateService} from "../../mcp-server/src/plugin-update-service.js";
 import {FileSkillRegistry} from "../../mcp-server/src/registry.js";
@@ -19,7 +20,7 @@ import {digestProviderProfileConfiguration} from "../../mcp-server/src/skill-cla
 import {ApprovedRouteClassificationProvider, bindClassificationRouteTransport, ClassificationProviderError, unknownUsage} from "../../mcp-server/src/skill-classification/providers.js";
 import {InMemoryClassificationBudget, SkillClassificationService} from "../../mcp-server/src/skill-classification/service.js";
 import type {ClassificationResult, ProviderEvaluation, ProviderProfile, SkillClassificationRequestV1, SkillSelectionDecisionV1} from "../../mcp-server/src/skill-classification/types.js";
-import {createSyntheticRootProofFixture} from "./synthetic-root-proof-client.js";
+import {callerMeta, metaIngress} from "../helpers/caller.js";
 
 // 원 결함과 검수 지적의 기대값을 먼저 고정한 API 회귀 시험이다.
 // 기존 gateway·AL08·AL09의 실제 MCP 전송·서버·합성 관측 틀을 재사용한다.
@@ -34,6 +35,15 @@ const adapter: HostExecutionAdapter = {host: "fixture-host", provider: "fixture-
     minimumReasoningEffort: "high", supportedEfforts: ["high"], aliasUsed: false, policyRevision: "fixture-host-policy-r1", provenance,
   } : null};
 afterEach(async () => {while (cleanup.length) await cleanup.pop()!();});
+// The host reports the caller's execution in its own call metadata; this test-owned key carries it beside callerMeta().
+const EXECUTION_META = "agent-governance.test/execution";
+function executionIngress(): CallerIngress {
+  const named = metaIngress();
+  return (tool, meta) => {
+    const result = named(tool, meta), execution = meta?.[EXECUTION_META] as CallerExecution | undefined;
+    return result.provenance === "host-observed" && execution ? {provenance: "host-observed", caller: {...result.caller, execution}} : result;
+  };
+}
 function input() {
   return {schemaVersion: "1.0.0", requestId: "api-request", operationId: "api-operation", originalPrompt: "비공개 합성 자료를 읽기만 하고 수정하지 마라.",
     confirmedContext: {taskRevision: null, objective: null, actions: null, targets: null, constraints: null, prohibitedActions: null, background: null},
@@ -100,22 +110,20 @@ async function harness(options: {withJev?: boolean; vendorRoute?: "native" | "re
       observed.last = observation;
       return observation ? {taskRevision: request.confirmedContext.taskRevision, requestDigest: request.requestDigest, cancelled: false, sourceRef: "fixture:current-task"} : null;
     }});
-  const validator = new ContractValidator(), store = new InMemoryWorkflowStore(), root = createSyntheticRootProofFixture();
-  const attestation = new HostAttestationProvider(store, adapter);
+  const validator = new ContractValidator(), store = new InMemoryWorkflowStore();
+  const attestation = new HostAttestationProvider(adapter);
   const workflow = new WorkflowService(new FileSkillRegistry(path.join(repository, "skills/registry.json"), validator), validator, store, null, attestation);
   const updateFetcher = vi.fn(async () => {throw new Error("EXTERNAL_UPDATE_FORBIDDEN");});
-  const server = createMcpServer(workflow, new PluginUpdateService(new InMemoryPluginUpdateStore(), {fetcher: updateFetcher}), undefined, undefined, undefined, validator, "default", attestation, null, undefined, null, gateway, root.proofs);
+  const server = createMcpServer(workflow, new PluginUpdateService(new InMemoryPluginUpdateStore(), {fetcher: updateFetcher}), undefined, undefined, undefined, validator, "default", attestation, null, undefined, null, gateway, executionIngress());
   const client = new Client({name: "jev-cause-api-regression", version: "1.0.0"});
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   cleanup.push(async () => {try {await client.close();} finally {await server.close(); expect(fetcher).not.toHaveBeenCalled(); expect(updateFetcher).not.toHaveBeenCalled();}});
   await server.connect(serverTransport); await client.connect(clientTransport);
-  let sequence = 0;
-  const call = async <T>(name: string, args: Record<string, unknown>, sign = true): Promise<ApiResultV1<T>> => {
-    const token = sign ? issueHostAttestation(store, adapter, {tool: name, input: args, model: "fixture-host-model", reasoningEffort: "high",
-      actorId: hostActorId(adapter.host, "fixture-session"), sessionId: "fixture-session", turnId: "fixture-turn", toolUseId: "fixture-call-" + ++sequence}) : null;
-    if (sign) expect(token).not.toBeNull();
-    const signed = token ? {...args, [HOST_ATTESTATION_FIELD]: token} : args;
-    const reply = await client.callTool({name, arguments: root.argumentsFor(name, signed, {host: adapter.host, sessionId: "fixture-session"})});
+  // The caller is always observed; `execution` is what the host reported for this call (null: nothing reported).
+  const call = async <T>(name: string, args: Record<string, unknown>,
+    execution: CallerExecution | null = {model: "fixture-host-model", effort: "high", turnId: "fixture-turn", provenance: "fixture:host-owned"}): Promise<ApiResultV1<T>> => {
+    const reply = await client.callTool({name, arguments: args,
+      _meta: {...callerMeta({host: adapter.host, sessionId: "fixture-session"}), ...(execution ? {[EXECUTION_META]: execution} : {})}});
     return JSON.parse((reply.content as Array<{type: string; text?: string}>).find(item => item.type === "text")!.text!) as ApiResultV1<T>;
   };
   return {call, runtime, vendorProfile, jevProfile, vendor, jev, providers, budget, reserve, readRuntime, clock, observed};
@@ -153,11 +161,16 @@ describe("JEV 원인과 권한의 실제 MCP 응답", () => {
     expect(h.vendor.invoke).toHaveBeenCalledTimes(1);
   });
 
-  it("API69 결속: 무효 관측의 정확한 원인만 반환하고 토큰 원문은 숨긴다", async () => {
+  it("API69 결속: 무효 관측의 정확한 원인만 반환하고 관측·호출자 원문은 숨긴다", async () => {
     const h = await harness();
-    const reply = await h.call<Advice>("classify_skills", {...input(), [HOST_ATTESTATION_FIELD]: "PRIVATE_HOST_TOKEN_SENTINEL"}, false);
-    expect(reply).toMatchObject({ok: false, data: null, error: {code: "INVALID_INPUT", details: {category: "host-observation", reasonCode: "BINDING_INVALID"}}});
-    expect(JSON.stringify(reply)).not.toContain("PRIVATE_HOST_TOKEN_SENTINEL");
+    // The host reported an effort outside the closed set: the typed cause is returned, the raw value is not.
+    const reply = await h.call<Advice>("classify_skills", input(), {model: "fixture-host-model", effort: "PRIVATE_EFFORT_SENTINEL", turnId: "fixture-turn", provenance: "fixture:host-owned"});
+    expect(reply).toMatchObject({ok: false, data: null, error: {code: "INVALID_INPUT", details: {category: "host-observation", reasonCode: "BINDING_INVALID", observationReasonCode: "REASONING_EFFORT_INVALID"}}});
+    expect(JSON.stringify(reply)).not.toContain("PRIVATE_EFFORT_SENTINEL");
+    // A caller-supplied observation field is refused at the server entry before classification, without echoing it.
+    const forged = await h.call<Advice>("classify_skills", {...input(), _hostAttestation: "PRIVATE_HOST_TOKEN_SENTINEL"});
+    expect(forged).toMatchObject({ok: false, data: null, error: {code: "INVALID_INPUT", details: {reasonCode: "RESERVED_CALLER_FIELD", field: "_hostAttestation"}}});
+    expect(JSON.stringify(forged)).not.toContain("PRIVATE_HOST_TOKEN_SENTINEL");
     expect(h.vendor.availability).not.toHaveBeenCalled(); expect(h.reserve).not.toHaveBeenCalled(); expect(h.vendor.invoke).not.toHaveBeenCalled();
   });
 

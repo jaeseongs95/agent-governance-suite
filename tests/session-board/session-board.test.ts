@@ -31,7 +31,7 @@ import { SessionMessageStore } from "../../mcp-server/src/session-message-store.
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "../mcp/version-fixtures.js";
-import { createSyntheticRootProofFixture } from "../mcp/synthetic-root-proof-client.js";
+import { callerMeta, metaIngress } from "../helpers/caller.js";
 import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 
 // Second host core fixture only: native Codex remains capture-required.
@@ -147,7 +147,7 @@ describe("session board hook", () => {
   const tool = (name: string, toolInput: Record<string, unknown> = {}, extra: Record<string, unknown> = {}) => input("PreToolUse", { tool_name: name, tool_input: toolInput, ...extra });
   const boardTool = (name: string) => `mcp__plugin_agent-governance-suite_agent-governance-suite__${name}`;
 
-  it("never denies ordinary tool calls for a missing or stale board line, while preserving explicit board identity checks", () => {
+  it("never denies ordinary tool calls for a missing or stale board line, and leaves AGS board tool calls to the server", () => {
     const board = open();
     const run = (hookInput: Record<string, unknown>, minute: number) => handleSessionBoardHook(hookInput, board, "claude-code", at(minute));
     expect(run(input("UserPromptSubmit", { prompt: "비밀 요청 원문" }), 0)).toEqual({});
@@ -157,10 +157,14 @@ describe("session board hook", () => {
     expect(run(tool("Bash", { command: "git status && rm x" }), 4)).toEqual({});
     expect(run(tool("Write"), 5)).toEqual({});
 
-    expect(decision(run(tool(boardTool("update_session_status"), { schemaVersion: "1.0.0", summary: "x" }, { agent_id: "sub-1" }), 6))).toBe("deny");
-    expect(decision(run(tool(boardTool("update_session_status"), { schemaVersion: "1.0.0", summary: "둘\n줄" }), 7))).toBe("deny");
+    // The hook neither denies, rewrites nor writes AGS board calls; the server checks the caller and the summary.
+    expect(run(tool(boardTool("update_session_status"), { schemaVersion: "1.0.0", summary: "x" }, { agent_id: "sub-1" }), 6)).toEqual({});
+    expect(run(tool(boardTool("update_session_status"), { schemaVersion: "1.0.0", summary: "둘\n줄" }), 7)).toEqual({});
     const updated = run(tool(boardTool("update_session_status"), { schemaVersion: "1.0.0", summary: "현황판 구현", _sessionBinding: { host: "x", sessionId: "forged" } }), 8);
-    expect(updated).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { schemaVersion: "1.0.0", summary: "현황판 구현", _sessionBinding: { host: "claude-code", sessionId: "s1" } } } });
+    expect(updated).toEqual({});
+    expect(listSessions(board, at(8)).map((row) => [row.host, row.sessionId, row.summary])).toEqual([["claude-code", "s1", null]]);
+    // Stands in for the server's caller-verified write (server.ts sessionBoardResult).
+    setSummary(board, session(at(8)), "현황판 구현");
 
     run(input("UserPromptSubmit", { agent_id: "sub-1", prompt: "서브에이전트 입력" }), 9);
     expect(listSessions(board, at(9))[0]).toMatchObject({ summary: "현황판 구현", stale: false });
@@ -173,9 +177,7 @@ describe("session board hook", () => {
     expect(row).toMatchObject({ sessionId: "s1", cwd: "D:/work/repo", summary: "현황판 구현", stale: true });
     expect(JSON.stringify(listSessions(board, at(11)))).not.toContain("비밀 요청 원문");
 
-    const listed = run(tool(boardTool("list_session_status"), { schemaVersion: "1.0.0" }, { agent_id: "sub-1" }), 14);
-    expect(listed).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
-    expect((listed.hookSpecificOutput as Record<string, unknown>).updatedInput).toBeUndefined();
+    expect(run(tool(boardTool("list_session_status"), { schemaVersion: "1.0.0" }, { agent_id: "sub-1" }), 14)).toEqual({});
   });
 
   it("does not create a new request boundary for a broker-verified wake bell", () => {
@@ -277,12 +279,11 @@ describe("session board hook", () => {
 });
 
 describe("session board MCP tools", () => {
-  const roots = new WeakMap<Client, ReturnType<typeof createSyntheticRootProofFixture>>();
-  const proofArgs = (client: Client, tool: string, args: Record<string, unknown>, identity = { host: "synthetic-board-reader", sessionId: "reader" }) => {
-    const root = roots.get(client);
-    if (!root) throw new Error("Missing owned proof fixture.");
-    return root.argumentsFor(tool, args, identity);
-  };
+  type Identity = { host: string; sessionId: string };
+  const reader: Identity = { host: "synthetic-board-reader", sessionId: "reader" };
+  // The caller comes only from tools/call `_meta`; omitting it leaves the caller unobserved.
+  const call = (client: Client, name: string, args: Record<string, unknown>, identity: Identity | null = reader, agentKey?: string) =>
+    client.callTool({ name, arguments: args, ...(identity === null ? {} : { _meta: callerMeta(identity, agentKey) }) });
   function sessionMessages(
     presence: ApiResultV1<SessionPresenceList> = { schemaVersion: "1.0.0", ok: false, data: null, error: { code: "MCP_UNAVAILABLE", message: "unavailable", details: null } },
   ) {
@@ -300,41 +301,51 @@ describe("session board MCP tools", () => {
       lastSuccessfulCheckAt: "2026-09-19T00:00:00.000Z", nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null,
     });
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-    const root = createSyntheticRootProofFixture();
-    const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined, undefined, validator, "default", null, databasePath, messages, undefined, undefined, root.proofs);
+    const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined, undefined, validator, "default", null, databasePath, messages, undefined, undefined, metaIngress());
     const client = new Client({ name: "session-board", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
     await client.connect(clientTransport);
-    roots.set(client, root);
     return client;
   }
-  const payload = (response: unknown) => JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: unknown; error: { code: string } | null };
+  const payload = (response: unknown) => JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as {
+    ok: boolean; data: unknown; error: { code: string; details?: Record<string, unknown> | null } | null;
+  };
 
-  it("shares one board between the Claude launcher and a synthetic second host while unsupported Gemini stays denied", async () => {
+  it("shares one board between the Claude launcher and a synthetic second host while unsupported Gemini touches nothing", async () => {
     const state = mkdtempSync(path.join(tmpdir(), "session-board-state-"));
     directories.push(state);
     const env: NodeJS.ProcessEnv = { ...process.env, LOCALAPPDATA: state, XDG_STATE_HOME: state, HOME: state, AGENT_GOVERNANCE_SHARED_STATE_DIR: state, CLAUDE_PLUGIN_DATA: path.join(state, "plugin-data") };
     delete env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
     delete env.AGENT_GOVERNANCE_DB_PATH;
     const repository = fileURLToPath(new URL("../../", import.meta.url));
-    const update = (sessionId: string, toolName: string, summary: string, host: "codex" | "claude-code") => JSON.stringify({ hook_event_name: "PreToolUse", session_id: sessionId, ...(host === "claude-code" ? {} : { agent_id: "" }), cwd: "D:/work/repo", tool_name: toolName, tool_input: { schemaVersion: "1.0.0", summary } });
+    const hostFields = (host: "codex" | "claude-code") => host === "claude-code" ? {} : { agent_id: "" };
+    const start = (sessionId: string, host: "codex" | "claude-code") => JSON.stringify({ hook_event_name: "SessionStart", session_id: sessionId, ...hostFields(host), cwd: "D:/work/repo", source: "startup" });
+    const update = (sessionId: string, toolName: string, summary: string, host: "codex" | "claude-code") => JSON.stringify({ hook_event_name: "PreToolUse", session_id: sessionId, ...hostFields(host), cwd: "D:/work/repo", tool_name: toolName, tool_input: { schemaVersion: "1.0.0", summary } });
     const run = (script: string, input: string, args: string[] = []) => spawnSync(process.execPath, [path.join(repository, script), ...args], { env, input, encoding: "utf8", windowsHide: true });
+    const claudeStart = run("claude-plugin/hooks/session-board-hook.mjs", start("claude-1", "claude-code"));
     const claude = run("claude-plugin/hooks/session-board-hook.mjs", update("claude-1", "mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status", "Claude 작업", "claude-code"));
+    const geminiStart = run("mcp-server/dist/session-board-hook.mjs", start("gemini-1", "codex"), ["--host=gemini"]);
     const gemini = run("mcp-server/dist/session-board-hook.mjs", update("gemini-1", "mcp__agent-governance-suite__update_session_status", "Gemini 작업", "codex"), ["--host=gemini"]);
-    expect([claude.status, gemini.status]).toEqual([0, 0]);
-    expect(claude.stdout).toContain('"host":"claude-code"');
-    expect(JSON.parse(gemini.stdout)).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
-    expect(JSON.parse(gemini.stdout).hookSpecificOutput.updatedInput).toBeUndefined();
+    expect([claudeStart.status, claude.status, geminiStart.status, gemini.status]).toEqual([0, 0, 0, 0]);
+    // No hook rewrites, denies or answers an AGS board call; the server verifies the caller.
+    expect([claudeStart.stdout, claude.stdout, geminiStart.stdout, gemini.stdout]).toEqual(["", "", "", ""]);
     const shared = resolveSessionBoardDatabasePath(env);
     expect(existsSync(shared)).toBe(true);
     expect(existsSync(env.CLAUDE_PLUGIN_DATA!)).toBe(false);
 
     const syntheticBoard = open(shared);
-    const synthetic = handleSessionBoardHook(JSON.parse(update("synthetic-1", "mcp__agent-governance-suite__update_session_status", "두 번째 호스트 작업", "codex")), syntheticBoard, syntheticHost);
-    expect(synthetic).toMatchObject({ hookSpecificOutput: { updatedInput: { _sessionBinding: { host: syntheticHost, sessionId: "synthetic-1" } } } });
+    expect(handleSessionBoardHook(JSON.parse(start("synthetic-1", "codex")), syntheticBoard, syntheticHost)).toEqual({});
+    expect(handleSessionBoardHook(JSON.parse(update("synthetic-1", "mcp__agent-governance-suite__update_session_status", "두 번째 호스트 작업", "codex")), syntheticBoard, syntheticHost)).toEqual({});
+    // The hooks recorded the rows only (none for the unsupported host); none wrote the summary its tool input carried.
+    expect(listSessions(syntheticBoard, new Date().toISOString()).map((row) => [row.host, row.sessionId, row.summary]).sort()).toEqual([
+      ["claude-code", "claude-1", null],
+      [syntheticHost, "synthetic-1", null],
+    ]);
     const client = await connect(shared);
-    const listed = payload(await client.callTool({ name: "list_session_status", arguments: proofArgs(client, "list_session_status", { schemaVersion: "1.0.0" }, { host: syntheticHost, sessionId: "synthetic-1" }) }));
+    expect(payload(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "Claude 작업" }, { host: "claude-code", sessionId: "claude-1" })).ok).toBe(true);
+    expect(payload(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "두 번째 호스트 작업" }, { host: syntheticHost, sessionId: "synthetic-1" })).ok).toBe(true);
+    const listed = payload(await call(client, "list_session_status", { schemaVersion: "1.0.0" }, { host: syntheticHost, sessionId: "synthetic-1" }));
     const sessions = (listed.data as { sessions: Array<{ host: string; sessionId: string; summary: string; current: boolean }> }).sessions;
     expect(sessions.map((row) => [row.host, row.sessionId, row.summary, row.current]).sort()).toEqual([
       ["claude-code", "claude-1", "Claude 작업", false],
@@ -342,31 +353,48 @@ describe("session board MCP tools", () => {
     ]);
   });
 
-  it("reads back the hook-written line, lists the host board and refuses unbound updates", async () => {
+  it("writes only the verified caller's own line, lists the host board and refuses unobserved or self-named callers", async () => {
     const databasePath = boardPath();
     const board = open(databasePath);
-    handleSessionBoardHook({ hook_event_name: "PreToolUse", session_id: "s1", cwd: "D:/work/repo", tool_name: "mcp__agent_governance_suite__update_session_status", tool_input: { summary: "릴리스 준비" } }, board, "claude-code");
+    const hookUpdate = { hook_event_name: "PreToolUse", session_id: "s1", cwd: "D:/work/repo", tool_name: "mcp__agent_governance_suite__update_session_status", tool_input: { summary: "릴리스 준비" } };
+    expect(handleSessionBoardHook(hookUpdate, board, "claude-code")).toEqual({});
+    expect(listSessions(board, new Date().toISOString())).toEqual([]);
+    handleSessionBoardHook({ hook_event_name: "SessionStart", session_id: "s1", cwd: "D:/work/repo" }, board, "claude-code");
     const client = await connect(databasePath);
     const binding = { host: "claude-code", sessionId: "s1" };
+    const summaryOf = (sessionId: string) => listSessions(board, new Date().toISOString()).find((row) => row.sessionId === sessionId)?.summary;
     const tool = (await client.listTools()).tools.find((item) => item.name === "update_session_status");
     expect(tool?.description).toContain("Do not repeat it for an unchanged task.");
     expect(tool?.description).not.toContain("when a request starts");
 
-    const recorded = payload(await client.callTool({ name: "update_session_status", arguments: proofArgs(client, "update_session_status", { schemaVersion: "1.0.0", summary: "릴리스 준비" }, binding) }));
+    expect(payload(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "다른 줄" }, binding))).toMatchObject({ ok: true, data: { sessionId: "s1", summary: "다른 줄", current: true } });
+    const recorded = payload(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "릴리스 준비" }, binding));
     expect(recorded).toMatchObject({ ok: true, data: { sessionId: "s1", summary: "릴리스 준비", current: true } });
-    expect(payload(await client.callTool({ name: "update_session_status", arguments: proofArgs(client, "update_session_status", { schemaVersion: "1.0.0", summary: "다른 줄" }, binding) })).error?.code).toBe("MCP_UNAVAILABLE");
-    expect(payload(await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "릴리스 준비" } })).error?.code).toBe("BINDING_REQUIRED");
-    expect(payload(await client.callTool({ name: "update_session_status", arguments: proofArgs(client, "update_session_status", { summary: "릴리스 준비" }, binding) })).error?.code).toBe("INVALID_INPUT");
+    // A child acts in its root session's name (design 2.1): it writes the root's row, never a row of its own.
+    expect(payload(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "하위 갱신" }, binding, "sub-1"))).toMatchObject({ ok: true, data: { host: "claude-code", sessionId: "s1", summary: "하위 갱신" } });
+    expect(payload(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "릴리스 준비" }, binding)).ok).toBe(true);
 
-    const listed = payload(await client.callTool({ name: "list_session_status", arguments: proofArgs(client, "list_session_status", { schemaVersion: "1.0.0" }) }));
+    const unobserved = payload(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "관측 없음" }, null));
+    expect(unobserved.error).toMatchObject({ code: "BINDING_REQUIRED", details: { reasonCode: "CALLER_PROVENANCE_UNAVAILABLE" } });
+    expect(payload(await call(client, "update_session_status", { summary: "스키마 없음" }, binding)).error?.code).toBe("INVALID_INPUT");
+    expect(payload(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "둘\n줄" }, binding)).error?.code).toBe("INVALID_INPUT");
+    // A caller cannot name another session: a self-supplied binding is refused, and another verified session has no row here.
+    for (const identity of [reader, null]) {
+      const forged = payload(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "위조", _sessionBinding: binding }, identity));
+      expect(forged.error).toMatchObject({ code: "INVALID_INPUT", details: { reasonCode: "RESERVED_CALLER_FIELD", field: "_sessionBinding" } });
+    }
+    expect(payload(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "다른 세션" })).error?.code).toBe("MCP_UNAVAILABLE");
+    expect(summaryOf("s1")).toBe("릴리스 준비");
+
+    const listed = payload(await call(client, "list_session_status", { schemaVersion: "1.0.0" }));
     expect(listed).toMatchObject({ ok: true, data: { sessions: [{ sessionId: "s1", summary: "릴리스 준비", current: false, presence: { state: "unknown", instanceId: null, wakeVisibility: "none", canWakeSilently: false } }] } });
-    expect(payload(await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "릴리스 준비", _sessionBinding: binding } })).error?.code).toBe("BINDING_INVALID");
+    expect(payload(await call(client, "list_session_status", { schemaVersion: "1.0.0" }, null)).error?.code).toBe("BINDING_REQUIRED");
     const unavailable = await connect(null);
-    expect(payload(await unavailable.callTool({ name: "list_session_status", arguments: proofArgs(unavailable, "list_session_status", { schemaVersion: "1.0.0" }) })).error?.code).toBe("MCP_UNAVAILABLE");
+    expect(payload(await call(unavailable, "list_session_status", { schemaVersion: "1.0.0" })).error?.code).toBe("MCP_UNAVAILABLE");
     const missing = boardPath();
     const absent = await connect(missing);
-    expect(payload(await absent.callTool({ name: "list_session_status", arguments: proofArgs(absent, "list_session_status", { schemaVersion: "1.0.0" }) }))).toMatchObject({ ok: true, data: { sessions: [] } });
-    expect(payload(await absent.callTool({ name: "update_session_status", arguments: proofArgs(absent, "update_session_status", { schemaVersion: "1.0.0", summary: "x" }, binding) })).error?.code).toBe("MCP_UNAVAILABLE");
+    expect(payload(await call(absent, "list_session_status", { schemaVersion: "1.0.0" }))).toMatchObject({ ok: true, data: { sessions: [] } });
+    expect(payload(await call(absent, "update_session_status", { schemaVersion: "1.0.0", summary: "x" }, binding)).error?.code).toBe("MCP_UNAVAILABLE");
     expect(existsSync(missing)).toBe(false);
   });
 
@@ -393,7 +421,7 @@ describe("session board MCP tools", () => {
       error: null,
     }));
 
-    const listed = payload(await client.callTool({ name: "list_session_status", arguments: proofArgs(client, "list_session_status", { schemaVersion: "1.0.0" }) }));
+    const listed = payload(await call(client, "list_session_status", { schemaVersion: "1.0.0" }));
     const sessions = (listed.data as { sessions: Array<{ sessionId: string; presence: unknown }> }).sessions;
     expect(sessions.find((row) => row.sessionId === "online")?.presence).toEqual({
       host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", relayLive: true, wakeVisibility: "silent",
@@ -423,7 +451,7 @@ describe("session board MCP tools", () => {
       startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",
     }], unanswered: [] }, error: null }));
 
-    const listed = payload(await client.callTool({ name: "list_session_status", arguments: proofArgs(client, "list_session_status", { schemaVersion: "1.0.0" }, { host: "claude-code", sessionId: "caller" }) }));
+    const listed = payload(await call(client, "list_session_status", { schemaVersion: "1.0.0" }, { host: "claude-code", sessionId: "caller" }));
     const data = listed.data as { sessions: Array<{ sessionId: string }>; omittedWithoutSummary: number };
     expect(data.sessions.map((row) => row.sessionId).sort()).toEqual(["caller", "online", "worker"]);
     expect(data.omittedWithoutSummary).toBe(1);

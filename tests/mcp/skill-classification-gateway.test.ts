@@ -7,13 +7,13 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { concurrentRequestTimeoutMs, concurrentWaitMs, heldClassificationCalls, heldProviderTimeoutMs } from "./held-classification-calls.js";
 import type { ApiResultV1, ExecutionContextV1 } from "../../contracts/types.js";
-import { HOST_ATTESTATION_FIELD, HostAttestationProvider, hostActorId, issueHostAttestation, type HostExecutionAdapter } from "../../mcp-server/src/host-attestation.js";
+import type { CallerExecution, CallerIngress } from "../../mcp-server/src/caller-identity.js";
+import { HostAttestationProvider, type HostExecutionAdapter } from "../../mcp-server/src/host-attestation.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
-import { SESSION_PROOF_FIELD, SessionActorProofs } from "../../mcp-server/src/session-actor-proof.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { RuntimeSkillClassificationGateway, type ClassificationRuntimeSnapshot, type CurrentClassificationTask } from "../../mcp-server/src/skill-classification/gateway.js";
@@ -26,6 +26,7 @@ import { createClassificationProviderRuntime } from "../../mcp-server/src/skill-
 import { jevNoulWireAdapter } from "../../mcp-server/src/skill-classification/providers.js";
 import { validateClassificationResponse } from "../../mcp-server/src/skill-classification/validation.js";
 import type { ClassificationResult, ProviderEvaluation, ProviderProfile, SkillClassificationRequestV1, SkillInventory, SkillSelectionDecisionV1 } from "../../mcp-server/src/skill-classification/types.js";
+import { callerMeta, metaIngress } from "../helpers/caller.js";
 
 const repository = fileURLToPath(new URL("../../", import.meta.url));
 const cleanup: (() => Promise<void>)[] = [];
@@ -36,6 +37,15 @@ const adapter: HostExecutionAdapter = { host: "codex", provider: "openai-codex",
     resolvedModel: rawModel, modelClass: "general", minimumReasoningEffort: null, supportedEfforts: ["high"], aliasUsed: false,
     policyRevision: "synthetic-host-r1", provenance } : null };
 afterEach(async () => { while (cleanup.length) await cleanup.pop()!(); });
+// The host reports the caller's execution in its own call metadata; this test-owned key carries it beside callerMeta().
+const EXECUTION_META = "agent-governance.test/execution";
+function executionIngress(): CallerIngress {
+  const named = metaIngress();
+  return (tool, meta) => {
+    const result = named(tool, meta), execution = meta?.[EXECUTION_META] as CallerExecution | undefined;
+    return result.provenance === "host-observed" && execution ? { provenance: "host-observed", caller: { ...result.caller, execution } } : result;
+  };
+}
 function input(operationId = "operation-mcp") {
   return { schemaVersion: "1.0.0", requestId: `request-${operationId}`, operationId,
     originalPrompt: "  인용: ‘구현하라’\r\n현재 요청은 읽기 전용 검토, 수정 금지. e\u0301  ",
@@ -117,32 +127,36 @@ async function harness(options: { root?: string; needed?: string[]; uncertain?: 
   const gateway = new RuntimeSkillClassificationGateway({ root, service, readRuntime,
     observeRuntime: () => digestClassificationValue({ runtime, additionalSource: runtimeBytes.additionalSource }), observeTask, observeHostSkills });
   const validator = new ContractValidator(), store = new InMemoryWorkflowStore();
-  const sessionProofs = new SessionActorProofs(store);
-  const attestation = options.attest === false ? null : new HostAttestationProvider(store, hostAdapter);
+  // A call marked with an observation time is observed then (expiry tests); every other call now.
+  const observationClock = { at: null as Date | null };
+  const attestation = options.attest === false ? null : new HostAttestationProvider(hostAdapter, () => observationClock.at ?? new Date());
   const workflow = new WorkflowService(new FileSkillRegistry(path.join(repository, "skills/registry.json"), validator), validator, store, null, attestation);
   const updateFetcher = vi.fn(async () => { throw new Error("NETWORK_FORBIDDEN_IN_MOCK_TEST"); });
   const updates = new PluginUpdateService(new InMemoryPluginUpdateStore(), { fetcher: updateFetcher });
-  const server = createMcpServer(workflow, updates, undefined, undefined, undefined, validator, "default", attestation, null, undefined, null, gateway, sessionProofs);
+  const server = createMcpServer(workflow, updates, undefined, undefined, undefined, validator, "default", attestation, null, undefined, null, gateway, executionIngress());
   const client = new Client({ name: "classification-offline-boundary", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport); await client.connect(clientTransport);
   cleanup.push(async () => { await client.close(); await server.close(); expect(updateFetcher).not.toHaveBeenCalled(); });
-  let sequence = 0;
-  const sign = (args: Record<string, unknown>, now?: Date, tool = "record_skill_selection", sessionId = "synthetic-session") => {
-    const token = issueHostAttestation(store, hostAdapter, { tool, input: args, model: "synthetic-host-model", reasoningEffort: "high",
-      actorId: hostActorId("codex", sessionId), sessionId, turnId: "synthetic-turn", toolUseId: `fixture-call-${++sequence}`, ...(now ? { now } : {}) });
-    expect(token).not.toBeNull(); return { ...args, [HOST_ATTESTATION_FIELD]: token };
+  // `sign` marks arguments whose call carries the host-reported execution; the arguments themselves are sent unchanged.
+  const observedCalls = new WeakMap<Record<string, unknown>, Date | null>();
+  const sign = <A extends Record<string, unknown>>(args: A, now?: Date): A => {
+    const marked = { ...args };
+    observedCalls.set(marked, now ?? null);
+    return marked;
   };
   const call = async <T>(name: string, args: Record<string, unknown>, expectClassificationFailure = false, sessionId = "synthetic-session"): Promise<ApiResultV1<T>> => {
-    const observedInput = name === "classify_skills" && options.attest !== false ? sign(args, undefined, name, sessionId) : args;
-    // Synthetic root fixture only; this does not observe native host or process identity.
-    // Sign after host attestation so the one-use root proof binds the exact transported input.
-    const callInput = { ...observedInput, [SESSION_PROOF_FIELD]: sessionProofs.issue({
-      host: adapter.host, sessionId, callId: `fixture-root-call-${++sequence}`, kind: "tool-boundary", boundaryPhase: "before",
-      actor: { role: "root", basis: "observed", reasonCode: "SYNTHETIC_CLASSIFICATION_ROOT" },
-    }, name, observedInput) };
-    const response = await client.callTool({ name, arguments: callInput }, undefined,
-      options.requestTimeoutMs === undefined ? undefined : { timeout: options.requestTimeoutMs });
+    const observed = (name === "classify_skills" && options.attest !== false) || observedCalls.has(args);
+    const at = observedCalls.get(args) ?? null;
+    // Synthetic root caller only; this does not observe native host or process identity.
+    const meta = { ...callerMeta({ host: adapter.host, sessionId }), ...(observed ? { [EXECUTION_META]: {
+      model: "synthetic-host-model", effort: "high", turnId: "synthetic-turn", provenance: `${hostAdapter.host}:runtime` } satisfies CallerExecution } : {}) };
+    if (at) observationClock.at = at;
+    let response: Awaited<ReturnType<Client["callTool"]>>;
+    try {
+      response = await client.callTool({ name, arguments: args, _meta: meta }, undefined,
+        options.requestTimeoutMs === undefined ? undefined : { timeout: options.requestTimeoutMs });
+    } finally { if (at) observationClock.at = null; }
     const text = response.content as { type: string; text?: string }[];
     const result = JSON.parse(text.find(x => x.type === "text")!.text!) as ApiResultV1<T>;
     if (!expectClassificationFailure && name === "classify_skills" && result.error === null && result.data && typeof result.data === "object" && "result" in result.data) {
@@ -309,7 +323,7 @@ describe("offline classification through actual MCP Client/Server transport", ()
     expect(advice.data!.result.response.judgments).toHaveLength(26);
     expect(advice.data!.result.response.judgments.find(x => x.skillId === "code-review")!.judgment).toBe("needed");
   });
-  it("requires signed exact-call host observation and never trusts a caller selection receipt", async () => {
+  it("requires an exact-call host observation and never trusts a caller selection receipt", async () => {
     const h = await harness(), advice = (await h.call<Advice>("classify_skills", input())).data!;
     const args = { schemaVersion: "1.0.0", operationId: input().operationId, decision: decision(advice, ["code-review"]) };
     const missing = await h.call<Accepted>("record_skill_selection", args);
@@ -322,13 +336,15 @@ describe("offline classification through actual MCP Client/Server transport", ()
     expect(accepted.decision!.hostReceipt!.host).toBe("codex");
     expect(accepted).toMatchObject({ admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN" });
   });
-  it("rejects changed-argument signatures and expired observations", async () => {
+  // The observation belongs to the host call, not to the arguments, so there is no argument signature to change.
+  it("rejects expired observations and caller-supplied observation fields", async () => {
     const h = await harness(), advice = (await h.call<Advice>("classify_skills", input())).data!;
     const args = { schemaVersion: "1.0.0", operationId: input().operationId, decision: decision(advice, ["code-review"]) };
-    const signed = h.sign(args);
-    expect((await h.call<Accepted>("record_skill_selection", { ...signed, decision: decision(advice, []) })).error?.code).toBe("INVALID_INPUT");
-    expect((await h.call<Accepted>("record_skill_selection", h.sign(args, new Date("2000-01-01T00:00:00Z")))).error?.code).toBe("INVALID_INPUT");
-    expect((await h.call<Accepted>("record_skill_selection", { ...signed, [HOST_ATTESTATION_FIELD]: `${signed[HOST_ATTESTATION_FIELD]}tampered` })).error?.code).toBe("INVALID_INPUT");
+    expect((await h.call<Accepted>("record_skill_selection", h.sign(args, new Date("2000-01-01T00:00:00Z")))).error)
+      .toMatchObject({ code: "INVALID_INPUT", details: { category: "request-state", reasonCode: "HOST_SELECTION_OBSERVATION_EXPIRED" } });
+    expect((await h.call<Accepted>("record_skill_selection", h.sign({ ...args, _hostAttestation: "caller-made" }))).error)
+      .toMatchObject({ code: "INVALID_INPUT", details: { reasonCode: "RESERVED_CALLER_FIELD", field: "_hostAttestation" } });
+    expect((await h.call<Accepted>("record_skill_selection", h.sign(args))).data!.valid).toBe(true);
   });
   it("D0089: a class-only adapter's observation is refused with its capability cause visible to the caller", async () => {
     const classOnly = vi.fn((model: string) => model === "synthetic-host-model" ? "general" as const : null);
@@ -338,14 +354,13 @@ describe("offline classification through actual MCP Client/Server transport", ()
       details: { category: "host-observation", reasonCode: "BINDING_INVALID", observationReasonCode: "MISSING_MODEL_CAPABILITY" } } });
     expect(h.classify).not.toHaveBeenCalled();
     expect(classOnly).not.toHaveBeenCalled();
-    // The same model name with a trusted descriptor is classified, and a forged signature still fails before any cause.
+    // The same model name with a trusted descriptor is classified, and a caller-supplied observation still fails before any cause.
     const described = await harness();
     const advised = await described.call<Advice>("classify_skills", input("d0089-described"));
     expect(advised.error).toBeNull();
     const args = { schemaVersion: "1.0.0", operationId: input("d0089-described").operationId, decision: decision(advised.data!, ["code-review"], input("d0089-described")) };
-    const signed = described.sign(args);
-    const forged = await described.call<Accepted>("record_skill_selection", { ...signed, [HOST_ATTESTATION_FIELD]: `${signed[HOST_ATTESTATION_FIELD]}tampered` });
-    expect(forged.error?.details).toMatchObject({ category: "host-observation", reasonCode: "BINDING_INVALID" });
+    const forged = await described.call<Accepted>("record_skill_selection", described.sign({ ...args, _hostAttestation: "caller-made" }));
+    expect(forged.error).toMatchObject({ code: "INVALID_INPUT", details: { reasonCode: "RESERVED_CALLER_FIELD", field: "_hostAttestation" } });
     expect(forged.error?.details).not.toHaveProperty("observationReasonCode");
   });
   it("does not create selected status when host attestation is unavailable", async () => {
@@ -353,7 +368,8 @@ describe("offline classification through actual MCP Client/Server transport", ()
     const args = { schemaVersion: "1.0.0", operationId: input().operationId, decision: decision(advice, ["code-review"]) };
     const result = await h.call<Accepted>("record_skill_selection", args);
     expect(result.data).toMatchObject({ valid: false, errors: ["HOST_SELECTION_NOT_OBSERVED"], agentSelectedSkillIds: null });
-    expect((await h.call<Accepted>("record_skill_selection", h.sign(args))).error?.code).toBe("BINDING_REQUIRED");
+    // A host-reported execution qualifies nothing without the server's execution adapter.
+    expect((await h.call<Accepted>("record_skill_selection", h.sign(args))).data).toMatchObject({ valid: false, errors: ["HOST_SELECTION_NOT_OBSERVED"], agentSelectedSkillIds: null });
   });
   it("keeps AGENT choices independent of the same advice and handles accepted no-skill distinctly", async () => {
     const h = await harness({ needed: [] });

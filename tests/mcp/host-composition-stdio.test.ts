@@ -203,6 +203,7 @@ it("rejects unobserved callers and admits an observed child caller", async () =>
   try {
     const model = randomUUID(), args = { schemaVersion: "1.0.0", taskEnvelope: task("owned-host-negatives") };
     expect((await f.rawCall("plan_workflow", args)).error).toMatchObject({ code: "BINDING_REQUIRED", details: { reasonCode: "CALLER_PROVENANCE_UNAVAILABLE" } });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the rest sibling drops this field
     const { sessionId: _missing, ...withoutSession } = f.meta(model);
     expect((await f.rawCall("plan_workflow", args, withoutSession)).error).toMatchObject({ code: "BINDING_REQUIRED", details: { reasonCode: "CALLER_PROVENANCE_UNAVAILABLE" } });
     // A non-root thread without a parent contradicts itself; it is rejected, not admitted as a root.

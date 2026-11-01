@@ -6,9 +6,10 @@ import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
+import { callerMeta, metaIngress } from "../helpers/caller.js";
 import type { ApiResultV1, ExecutionContextV1 } from "../../contracts/types.js";
-import { HOST_ATTESTATION_FIELD, HostAttestationProvider, hostActorId, issueHostAttestation, type HostExecutionAdapter } from "../../mcp-server/src/host-attestation.js";
+import type { CallerExecution, CallerIngress } from "../../mcp-server/src/caller-identity.js";
+import { HostAttestationProvider, hostActorId, type HostExecutionAdapter } from "../../mcp-server/src/host-attestation.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
@@ -34,6 +35,15 @@ const adapter: HostExecutionAdapter = { host: "codex", provider: "openai-codex",
     resolvedModel: rawModel, modelClass: "general", minimumReasoningEffort: null, supportedEfforts: ["high"], aliasUsed: false,
     policyRevision: "synthetic-host-r1", provenance } : null };
 afterEach(async () => { vi.useRealTimers(); while (cleanup.length) await cleanup.pop()!(); });
+// The host reports the caller's execution in its own call metadata; this test-owned key carries it beside callerMeta().
+const EXECUTION_META = "agent-governance.test/execution";
+function executionIngress(): CallerIngress {
+  const named = metaIngress();
+  return (tool, meta) => {
+    const result = named(tool, meta), execution = meta?.[EXECUTION_META] as CallerExecution | undefined;
+    return result.provenance === "host-observed" && execution ? { provenance: "host-observed", caller: { ...result.caller, execution } } : result;
+  };
+}
 function input(operationId = "operation-mcp") {
   return { schemaVersion: "1.0.0", requestId: `request-${operationId}`, operationId,
     originalPrompt: "  인용: ‘구현하라’\r\n현재 요청은 읽기 전용 검토, 수정 금지. e\u0301  ",
@@ -105,26 +115,35 @@ async function harness(options: { root?: string; needed?: string[]; uncertain?: 
   const gateway = new RuntimeSkillClassificationGateway({ root, service, readRuntime,
     observeRuntime: () => digestClassificationValue({ runtime, additionalSource: runtimeBytes.additionalSource }), observeTask, observeHostSkills });
   const validator = new ContractValidator(), store = new InMemoryWorkflowStore();
-  const rootProof = createSyntheticRootProofFixture();
-  const attestation = options.attest === false ? null : new HostAttestationProvider(store, adapter);
+  // A call marked with an observation time is observed then (expiry tests); every other call now.
+  const observationClock = { at: null as Date | null };
+  const attestation = options.attest === false ? null : new HostAttestationProvider(adapter, () => observationClock.at ?? new Date());
   const workflow = new WorkflowService(new FileSkillRegistry(path.join(repository, "skills/registry.json"), validator), validator, store, null, attestation);
   const updateFetcher = vi.fn(async () => { throw new Error("NETWORK_FORBIDDEN_IN_MOCK_TEST"); });
   const updates = new PluginUpdateService(new InMemoryPluginUpdateStore(), { fetcher: updateFetcher });
-  const server = createMcpServer(workflow, updates, undefined, undefined, undefined, validator, "default", attestation, null, undefined, null, gateway, rootProof.proofs);
+  const server = createMcpServer(workflow, updates, undefined, undefined, undefined, validator, "default", attestation, null, undefined, null, gateway, executionIngress());
   const client = new Client({ name: "classification-offline-boundary", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport); await client.connect(clientTransport);
   cleanup.push(async () => { await client.close(); await server.close(); expect(updateFetcher).not.toHaveBeenCalled(); });
-  let sequence = 0;
-  const sign = (args: Record<string, unknown>, now?: Date, tool = "record_skill_selection", sessionId = "synthetic-session") => {
-    const token = issueHostAttestation(store, adapter, { tool, input: args, model: "synthetic-host-model", reasoningEffort: "high",
-      actorId: hostActorId("codex", sessionId), sessionId, turnId: "synthetic-turn", toolUseId: `fixture-call-${++sequence}`, ...(now ? { now } : {}) });
-    expect(token).not.toBeNull(); return { ...args, [HOST_ATTESTATION_FIELD]: token };
+  // `sign` marks arguments whose call carries the host-reported execution; the arguments themselves are sent unchanged.
+  const observedCalls = new WeakMap<Record<string, unknown>, Date | null>();
+  const sign = <A extends Record<string, unknown>>(args: A, now?: Date): A => {
+    const marked = { ...args };
+    observedCalls.set(marked, now ?? null);
+    return marked;
   };
   const call = async <T>(name: string, args: Record<string, unknown>, expectClassificationFailure = false, sessionId = "synthetic-session"): Promise<ApiResultV1<T>> => {
-    const observedInput = name === "classify_skills" && options.attest !== false ? sign(args, undefined, name, sessionId) : args;
-    const response = await client.callTool({ name, arguments: rootProof.argumentsFor(name, observedInput, { host: adapter.host, sessionId }) }, undefined,
-      options.requestTimeoutMs === undefined ? undefined : { timeout: options.requestTimeoutMs });
+    const observed = (name === "classify_skills" && options.attest !== false) || observedCalls.has(args);
+    const at = observedCalls.get(args) ?? null;
+    const meta = { ...callerMeta({ host: adapter.host, sessionId }), ...(observed ? { [EXECUTION_META]: {
+      model: "synthetic-host-model", effort: "high", turnId: "synthetic-turn", provenance: `${adapter.host}:runtime` } satisfies CallerExecution } : {}) };
+    if (at) observationClock.at = at;
+    let response: Awaited<ReturnType<Client["callTool"]>>;
+    try {
+      response = await client.callTool({ name, arguments: args, _meta: meta }, undefined,
+        options.requestTimeoutMs === undefined ? undefined : { timeout: options.requestTimeoutMs });
+    } finally { if (at) observationClock.at = null; }
     const text = response.content as { type: string; text?: string }[];
     const result = JSON.parse(text.find(x => x.type === "text")!.text!) as ApiResultV1<T>;
     if (!expectClassificationFailure && name === "classify_skills" && result.error === null && result.data && typeof result.data === "object" && "result" in result.data) {
@@ -271,7 +290,8 @@ describe("Agent continuation after a server-owned helper failure", () => {
   it("AO09 requires current actor, task, exact-call attestation and no caller receipt", async () => {
     const h = await harness(); failHelper(h); const advice = await failed(h), args = recordInput(advice);
     expect((await h.call<Accepted>("record_skill_selection", args)).data?.valid).toBe(false);
-    expect((await h.call<Accepted>("record_skill_selection", h.sign(args, undefined, "record_skill_selection", "different-session"))).data?.valid).toBe(false);
+    // Another verified session cannot complete this session's selection.
+    expect((await h.call<Accepted>("record_skill_selection", h.sign(args), false, "different-session")).data?.valid).toBe(false);
     expect((await h.call<Accepted>("record_skill_selection", h.sign(args, new Date("2000-01-01T00:00:00Z")))).error?.code).toBe("INVALID_INPUT");
     args.decision.hostReceipt = {receiptId: "caller", host: "opaque", requestDigest: args.decision.requestDigest, inventoryDigest: args.decision.inventoryDigest, agentSelectedSkillIds: ["code-review"], acceptedAt: new Date().toISOString()};
     expect((await h.call<Accepted>("record_skill_selection", h.sign(args))).error?.code).toBe("INVALID_INPUT");

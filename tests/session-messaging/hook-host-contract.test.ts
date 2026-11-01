@@ -94,10 +94,8 @@ describe("explicit hook CLI host contract (synthetic packaged fixtures, not nati
       const input = attestationInput(f.directory);
       for (const bundle of ["host-attestation-hook", "session-message-hook", "session-board-hook"]) {
         const tool = bundle === "host-attestation-hook" ? "plan_workflow" : bundle === "session-message-hook" ? "prepare_session_message" : "list_session_status";
-        const output = hook(bundle, args, { ...input, tool_name: "mcp__agent_governance_suite__" + tool }, f.env);
-        const updated = output.hookSpecificOutput?.updatedInput;
-        expect(updated?._hostAttestation).toBeUndefined();
-        expect(updated?._sessionBinding).toBeUndefined();
+        // No hook rewrites or decides an AGS tool call; an invalid selection also issues nothing.
+        expect(hook(bundle, args, { ...input, tool_name: "mcp__agent_governance_suite__" + tool }, f.env)).toEqual({});
       }
       expect(existsSync(f.database)).toBe(false);
       expect(existsSync(path.join(f.directory, "board.sqlite3"))).toBe(false);
@@ -109,9 +107,7 @@ it("does not treat an unknown host as Claude attestation or Codex delivery", () 
   const f = fixture();
   const input = attestationInput(f.directory);
   for (const bundle of ["host-attestation-hook", "session-message-hook"]) {
-    const output = hook(bundle, ["--host=unregistered-host"], input, f.env);
-    expect(output.hookSpecificOutput?.updatedInput?._hostAttestation).toBeUndefined();
-    expect(output.hookSpecificOutput?.updatedInput?._sessionBinding).toBeUndefined();
+    expect(hook(bundle, ["--host=unregistered-host"], input, f.env)).toEqual({});
   }
   expect(existsSync(f.database)).toBe(false);
 });

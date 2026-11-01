@@ -36,6 +36,7 @@ it("records actual MCP success, early caller rejection and thrown failure withou
         reasonCode: "ROOT_PROOF_SCOPE_OR_TIME_INVALID", failedChecks: ["expired"], token: "SECRET_TOKEN",
       });
     }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the rest sibling drops this field
     const {provenance: _provenance, ...caller} = rootCaller("fixture", "fixture");
     return {provenance: "host-observed", caller};
   };

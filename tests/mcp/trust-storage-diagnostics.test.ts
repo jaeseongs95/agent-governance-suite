@@ -14,7 +14,7 @@ import { TrustService } from "../../mcp-server/src/trust-service.js";
 import { TrustStore } from "../../mcp-server/src/trust-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import type { WorkflowService } from "../../mcp-server/src/workflow-service.js";
-import { createSyntheticRootProofFixture } from "./synthetic-root-proof-client.js";
+import { callerMeta, metaIngress } from "../helpers/caller.js";
 
 const directories: string[] = [];
 const stores: TrustStore[] = [];
@@ -96,8 +96,7 @@ describe("trust storage diagnostics", () => {
   it("preserves the storage diagnostic through the MCP validation boundary", async () => {
     const store = await brokenStore();
     const validator = new ContractValidator();
-    const rootProof = createSyntheticRootProofFixture();
-    const server = createMcpServer({} as WorkflowService, updateService(), undefined, undefined, undefined, validator, "default", null, null, undefined, new TrustService(store), null, rootProof.proofs);
+    const server = createMcpServer({} as WorkflowService, updateService(), undefined, undefined, undefined, validator, "default", null, null, undefined, new TrustService(store), null, metaIngress());
     const client = new Client({ name: "trust-storage", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
@@ -105,7 +104,8 @@ describe("trust storage diagnostics", () => {
     try {
       const response = await client.callTool({
         name: "validate_collaboration_decision",
-        arguments: rootProof.argumentsFor("validate_collaboration_decision", { decision: decision("source-abcdefghijklmnop") }),
+        arguments: { decision: decision("source-abcdefghijklmnop") },
+        _meta: callerMeta(),
       });
       const text = (response.content as Array<{ type: string; text: string }>).find((item) => item.type === "text")?.text ?? "{}";
       const parsed = JSON.parse(text);
