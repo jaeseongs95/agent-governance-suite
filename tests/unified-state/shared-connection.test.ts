@@ -185,7 +185,7 @@ describe("inactive native shared connection", () => {
   it("B2-OWNER-04: reopened native format retains state and rejects schema/version drift", () => {
     const dir = directory(); const first = bundle(dir); expect(first.workflow.nextRunSequence()).toBe(1); first.owner.close();
     const second = bundle(dir); expect(second.workflow.nextRunSequence()).toBe(2); second.owner.close();
-    const db = new DatabaseSync(second.owner.databasePath); db.exec("ALTER TABLE sessions ADD COLUMN forbidden_drift TEXT"); db.close();
+    const db = new DatabaseSync(second.owner.databasePath); db.exec("ALTER TABLE board_sessions ADD COLUMN forbidden_drift TEXT"); db.close();
     expect(() => bundle(dir)).toThrow(/Module versions and native schemas/u);
   });
   it("B2-OWNER-05: nested observations survive outer domain rollback and the next connection sees the maximum", () => {

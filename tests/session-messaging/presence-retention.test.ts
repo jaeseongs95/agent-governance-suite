@@ -371,15 +371,16 @@ it("bounds list-presence: batches fit the response limit and oversized or overlo
   expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", { targets: [...worst, { host: "portable", sessionId: "extra" }] }))
     .toThrow(/targets must list/);
   expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", { targets: [] })).toThrow(/targets must list/);
-  // The untargeted pre-2.7.4 request is refused explicitly once the stored identities no longer fit.
-  for (let index = 0; index < 60; index += 1) born(store, `many-${index}`, `many-${index}`, now);
-  expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", {})).toThrow(/exceeds the broker response limit/);
+  // 3.0: the untargeted request is gone; listing every session is list-current-presence.
+  expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", {})).toThrow(/targets must list/);
 });
 
-it("still lists every identity for an untargeted request that fits", () => {
+it("lists every current session through list-current-presence, never through an untargeted list-presence", () => {
   const store = open(":memory:");
   born(store, "one", "one", Date.now());
-  expect(dispatchSessionMessageBrokerOperation(store, "list-presence", {})).toMatchObject({ sessions: [{ sessionId: "one", state: "online" }] });
+  expect(() => dispatchSessionMessageBrokerOperation(store, "list-presence", {})).toThrow(/targets must list/);
+  expect(dispatchSessionMessageBrokerOperation(store, "list-current-presence", { self: { host: "portable", sessionId: "one" } }))
+    .toMatchObject({ sessions: [{ sessionId: "one", state: "online" }], truncated: 0 });
   // A retained row outlives any reservation that could still refer to its birth; a later attempt of a purged birth
   // reads presence-unknown and is released as birth-ended, so no 3.0 grace window depends on retention.
   expect(WAKE_TTL_MS).toBeLessThan(RETENTION);

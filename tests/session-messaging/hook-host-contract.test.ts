@@ -241,7 +241,8 @@ describe("L3 packaged failure diagnostics", () => {
       expect(existsSync(f.database)).toBe(false); expect(existsSync(path.join(f.directory, "board.sqlite3"))).toBe(false);
     }
   });
-  it.each(["callback-and-event", "throw", "event"])("reports board stdout %s once without leaking the error", (mode) => {
+  // 3.0: the board hook prints nothing on any event, so a broken stdout can never fail or be reported by it.
+  it.each(["callback-and-event", "throw", "event"])("never writes to a broken stdout (%s) and stays silent", (mode) => {
     const f = fixture();
     const preload = path.join(f.directory, "stdout-failure.mjs");
     writeFileSync(preload, [
@@ -254,13 +255,12 @@ describe("L3 packaged failure diagnostics", () => {
     ].join("\n"), "utf8");
     const result = spawnSync(process.execPath, ["--import", pathToFileURL(preload).href,
       path.join(root, "mcp-server/dist/session-board-hook.mjs"), "--host=codex"], {
-      input: JSON.stringify({ hook_event_name: "PreToolUse", session_id: "stdout-fixture",
-        tool_name: "mcp__agent_governance_suite__update_session_status",
-        tool_input: { schemaVersion: "1.0.0", summary: "source fixture only" } }),
+      input: JSON.stringify({ hook_event_name: "UserPromptSubmit", session_id: "stdout-fixture", cwd: f.directory, prompt: "source fixture only" }),
       env: { ...f.env, NODE_NO_WARNINGS: "1" }, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,
     });
     expect(result.error).toBeUndefined(); expect(result.status).toBe(0);
-    expect(result.stderr.split("\n").filter((line) => line.includes('"phase":"stdout"'))).toHaveLength(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).not.toContain('"phase":"stdout"');
     expect(result.stderr).not.toContain("private-stdout-message");
   });
 });

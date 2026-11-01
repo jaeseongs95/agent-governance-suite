@@ -388,7 +388,7 @@ describe("session message spool", () => {
     } });
     expect(dispatchSessionMessageBrokerOperation(store, "presence-heartbeat", { target, instanceId: "generic-instance" }))
       .toEqual({ alive: true });
-    expect(dispatchSessionMessageBrokerOperation(store, "list-presence", {}))
+    expect(dispatchSessionMessageBrokerOperation(store, "list-presence", { targets: [target] }))
       .toMatchObject({ sessions: [{ host: target.host, sessionId: target.sessionId, state: "online" }] });
     expect(dispatchSessionMessageBrokerOperation(store, "presence-end", { target, instanceId: "generic-instance", reason: "session-end" }))
       .toEqual({ ended: true });
