@@ -224,7 +224,7 @@ interface SessionBoardListV2 {
   - git 위치를 경우별로 확인한다: 일반 저장소, worktree(`.git` 파일 + `commondir`, 같은 `repoId`), detached, 저장소 아님, 읽을 수 없는 HEAD.
 - **U8 update(서버).**
   - 검증된 binding으로 쓰고, 파일이 없으면 만든다.
-  - 쓸 수 없으면 `MCP_UNAVAILABLE step:write` 응답이고, 예외가 나지 않는다.
+  - 기록하지 못하면 `MCP_UNAVAILABLE` 응답이고, 예외가 나지 않는다. `step`은 실제로 실패한 단계다. 파일을 열지 못하면 `open`, 열었지만 쓰지 못하면 `write`, 닫지 못하면 `close`다.
   - 호출자의 `_sessionBinding`은 거부된다.
 - **U9 governance hook.** 현황판 도구 호출에서 `openBoard`가 한 번도 불리지 않는다(spy). board 경로가 쓸 수 없는 상태여도 deny가 0이고 proof가 발급된다. `governance-hook-entry.test.ts:297` F2 사례를 이 단정으로 바꾼다.
 - **U10 분류.** prompt 뒤 `observeTask`가 `host-prompt:<actor>:<lastPromptAt>`를 돌려준다. 확인된 깨우기 입력 뒤에는 값이 바뀌지 않는다.
@@ -248,7 +248,7 @@ interface SessionBoardListV2 {
 | R6 | host 강제 종료(`kill -9`, `taskkill /F`) | 30초 안에 `online`이 아니게 된다. 10분 30초 안에 목록에서 빠진다. |
 | R7 | host와 relay 함께 강제 종료(`taskkill /F /T`, 프로세스 그룹 kill) | lease 20초 + 5초 안에 `unreachable`이 되고, 10분 뒤 빠진다 |
 | R8 | 재시작(새 세션) / resume(같은 ID) | 새 세션은 새 행이다. resume은 같은 행이고 새 `startedAt`이다. |
-| R9 | 쓸 수 없는 board(`chmod 0444`, Windows `icacls /deny`) | update는 `MCP_UNAVAILABLE step:write`, list는 presence를 보여 주고 `board.status:"unavailable"`이다. prompt와 다른 도구 지연·거부는 0이다. hook stderr에 `phase`가 남는다. |
+| R9 | 쓸 수 없는 board(`chmod 0444`, Windows `icacls /deny`) | update는 `MCP_UNAVAILABLE`이고 `step`은 실제로 실패한 단계다. 열지 못하면 `open`(Windows `icacls /deny` 실측: CANTOPEN), 열었지만 쓰지 못하면 `write`다. list는 presence를 보여 준다. board를 읽을 수 있으면 `board.status:"ok"`이고 요약이 그대로 나온다(Linux `chmod 0444` 실측). 읽지 못할 때만 `board.status:"unavailable"`과 실패 단계다. prompt와 다른 도구 지연·거부는 0이다. hook stderr에 `phase`가 남는다. |
 | R10 | Codex·Claude `/clear` | 옛 ID가 `online`으로 남는지 측정만 한다(D-0351). 통과로 적지 않는다. |
 
 ## 7. 남는 위험과 의존

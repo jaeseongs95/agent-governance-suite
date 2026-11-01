@@ -2,7 +2,7 @@
 // is the messaging call in the MCP cases, where a real SessionMessageStore answers listCurrentPresence at a fixed clock.
 // Clocks are explicit; nothing waits on wall time.
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -353,6 +353,21 @@ describe("U7/U8 MCP board tools", () => {
     writeFileSync(blocker, "");
     const blocked = await connect(path.join(blocker, "session-board.sqlite3"), presenceStore());
     expect(await call(blocked.client, "update_session_status", { schemaVersion: "1.0.0", summary: "x" })).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { step: "open" } } });
+  });
+
+  // R9 (docs/ags30-session-board-design.md 6): each answer names the step that actually failed. A board the server can
+  // read but not write (Linux chmod 0444) still lists its summary with board.status "ok"; an update fails at "write".
+  it.runIf(process.platform !== "win32" && process.getuid?.() !== 0)("R9: a read-only board still lists its summary, and an update reports the write step", async () => {
+    const store = presenceStore();
+    born(store, "caller", T - 1000);
+    const databasePath = boardPath();
+    const { client } = await connect(databasePath, store);
+    expect(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "읽기 전용 전" })).toMatchObject({ ok: true });
+    chmodSync(databasePath, 0o444);
+    expect(await call(client, "list_session_status", { schemaVersion: "1.0.0" }))
+      .toMatchObject({ ok: true, data: { sessions: [{ sessionId: "caller", summary: "읽기 전용 전" }], board: { status: "ok" } } });
+    expect(await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "x" }))
+      .toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { step: "write" } } });
   });
 });
 
