@@ -15,7 +15,9 @@ it("records each failed advisory stage and still fails open", async () => {
   });
   expect(output).toEqual({});
   expect(lines.every(line => line.startsWith("[agent-governance-suite] antigravity-stage-failure "))).toBe(true);
-  expect(parse(lines)).toEqual([{ stage: "session-message", code: "EACCES" }, { stage: "session-board", code: "EACCES" }]);
+  // PreInvocation runs only the session-message stage: the 3.0 board removed every agy board stage
+  // (docs/ags30-session-board-design.md, D7: agy has no prompt observation for the board hook).
+  expect(parse(lines)).toEqual([{ stage: "session-message", code: "EACCES" }]);
   expect(lines.join("")).not.toContain("PRIVATE");
 });
 

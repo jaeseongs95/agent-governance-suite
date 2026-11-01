@@ -15,6 +15,7 @@ import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
 import type { SkillClassificationGateway } from "../../mcp-server/src/skill-classification/gateway.js";
+import { closeSessionMessaging } from "../../mcp-server/src/session-message-client.js";
 import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { StateCleanupService } from "../../mcp-server/src/state-cleanup-service.js";
@@ -118,15 +119,20 @@ describe("public boundary mapping (contractFailure)", () => {
     try {
       // A regular file where the state directory's parent is expected: the store cannot be opened.
       writeFileSync(path.join(directory, "not-a-directory"), "x");
+      const state = path.join(directory, "state");
       const broken = new SessionMessageService(path.join(directory, "not-a-directory", "state"));
       const failed = await broken.send({ messageId: "fixture-message-id" }, rootCaller());
       expect(failed.error).toMatchObject({ code: "MCP_UNAVAILABLE", details: { reason: expect.any(String), cause: expect.any(Object) } });
       expect(failed.error?.message).toMatch(/^Session messaging could not complete the request\. Retry only the known prepared ID/u);
       expect(JSON.stringify(failed)).not.toContain(directory);
-      const rejected = await new SessionMessageService(path.join(directory, "state")).send({ messageId: "unknown-fixture-id" }, rootCaller());
+      const rejected = await new SessionMessageService(state).send({ messageId: "unknown-fixture-id" }, rootCaller());
       expect(rejected.error).toMatchObject({ code: "MCP_UNAVAILABLE", details: null });
       expect(rejected.error?.message).toMatch(/Retry only the known prepared ID/u);
-    } finally { rmSync(directory, { recursive: true, force: true }); }
+    } finally {
+      // The process keeps one open connection per state directory; Windows cannot remove an open database file.
+      closeSessionMessaging(path.join(directory, "state"));
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   it("unavailable state cleanup is MCP_UNAVAILABLE", async () => {
