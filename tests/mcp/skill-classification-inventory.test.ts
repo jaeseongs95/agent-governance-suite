@@ -77,6 +77,29 @@ describe("classification inventory source authority (SS26/SS37)", () => {
     await addSkill(root); await writeFile(path.join(root, "skills/skill-z17/SKILL.md"), "---\nname: skill-z17\n---\n");
     expect((await loadSkillInventory({ root })).issues[0]?.code).toBe("MISSING_DESCRIPTION");
   });
+  it("C-17 separates required metadata omissions from fields the schema lets be absent", async () => {
+    const root = await fixture(); await addSkill(root, "complete"); await addSkill(root);
+    expect((await loadSkillInventory({ root })).issues).toEqual([]);
+    // Optional: a source span's byte range may be given as well as omitted.
+    await metadata(root, (value) => { Object.assign((value.applicability as Record<string, unknown>[])[0]!, { startByte: 0, endByte: Buffer.byteLength("큐의") }); });
+    const ranged = await loadSkillInventory({ root });
+    expect(ranged.issues).toEqual([]);
+    expect(ranged.skills.find((skill) => skill.skillId === "skill-z17")?.applicability).toEqual(["큐의"]);
+    // Required: each missing schema field rejects only that skill.
+    for (const field of ["schemaVersion", "taxonomyRevision", "actions", "targets", "constraints", "dependencies", "applicability", "exclusions"]) {
+      await addSkill(root);
+      await metadata(root, (value) => { delete value[field]; });
+      const inventory = await loadSkillInventory({ root });
+      expect(inventory.issues, field).toEqual([{ skillId: "skill-z17", code: "MISSING_OR_INVALID_METADATA", field: "classification.json" }]);
+      expect(inventory.skills.map((skill) => skill.skillId), field).toEqual(["complete"]);
+    }
+    // capabilities is optional only beside a registry entry; a registry-less skill without it is rejected.
+    await addSkill(root);
+    await metadata(root, (value) => { delete value.capabilities; });
+    const uncapable = await loadSkillInventory({ root });
+    expect(uncapable.issues).toEqual([expect.objectContaining({ skillId: "skill-z17", code: "MISSING_CAPABILITY_OR_VERSION" })]);
+    expect(uncapable.skills.map((skill) => skill.skillId)).toEqual(["complete"]);
+  });
   it("rejects duplicate IDs/version conflicts and retains disabled registry entries", async () => {
     const root = await fixture(); await addSkill(root);
     const entry = { skillId: "skill-z17", version: "1.0.0", path: "./skill-z17", enabled: false, providers: [{ capabilities: ["concurrency-analysis"], phase: "analysis", phaseOrder: 10, requiredInputArtifacts: [], inputBindings: [], producedArtifacts: [], gate: { kind: "none", policy: "none" } }] };

@@ -173,4 +173,19 @@ describe("J30 current v1 contract supplement", () => {
     await expect(provider.classify(req, profile, new AbortController().signal)).rejects.toMatchObject({code: "INPUT_TOO_LONG", dispatchState: "not-started"});
     expect(localFetch).not.toHaveBeenCalled();
   });
+
+  it("C-07 decodes only the exact registered ID and rejects a confusable U+043E alias without merging it", () => {
+    const req = request([skill("code-review")]), profile = qualified(req);
+    const answer = {type: "noul", noul: 0.9};
+    const positive = {model: "fixture-model", answers: {"code-review": answer}, usage: {input_tokens: 1, output_tokens: 1}};
+    const decoded = jevNoulWireAdapter.decode(positive, req, profile).response;
+    expect(validateClassificationResponse(req, decoded)).toEqual([]);
+    expect(decoded.judgments.map(judgment => judgment.skillId)).toEqual(["code-review"]);
+    const confusable = "c\u043Ede-review";
+    expect(confusable).not.toBe("code-review");
+    expect([...confusable].map(character => character.codePointAt(0))).toEqual([0x63, 0x43E, 0x64, 0x65, 0x2D, 0x72, 0x65, 0x76, 0x69, 0x65, 0x77]);
+    expect(() => jevNoulWireAdapter.decode({...positive, answers: {[confusable]: answer}}, req, profile)).toThrow("INVALID_JEV_IDS");
+    // Next to the canonical answer the confusable key is an extra ID, never folded into it.
+    expect(() => jevNoulWireAdapter.decode({...positive, answers: {"code-review": answer, [confusable]: answer}}, req, profile)).toThrow("INVALID_JEV_IDS");
+  });
 });

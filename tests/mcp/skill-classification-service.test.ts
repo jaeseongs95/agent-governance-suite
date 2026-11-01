@@ -94,6 +94,36 @@ describe("fixed-profile classification service", () => {
     expect((await f.service.classify(changed)).response.error?.code).toBe("REQUEST_ID_CONFLICT");
     expect(await f.service.classify(f.input)).toEqual(result); expect(f.jev.classify).toHaveBeenCalledTimes(1);
   });
+  it("C-16 never serves a cached result for a request bound to a different inventoryDigest", async () => {
+    const f = fixture(); const first = await f.service.classify(f.input);
+    expect(first.response.status).toBe("SUCCESS");
+    const otherDigest = `sha256:${"b".repeat(64)}`;
+    // Same IDs and prompt, but the request is bound to another inventory: the cached result is no candidate for it.
+    const otherInventory = createClassificationRequest({requestId: "request", operationId: "operation", originalPrompt: f.input.request.originalPrompt,
+      inventory: {skills: f.input.request.skills, inventoryDigest: otherDigest, taxonomyRevision: "taxonomy", issues: []}, classificationCriteriaRef: "criteria"});
+    expect(otherInventory.requestDigest).not.toBe(f.input.request.requestDigest);
+    expect((await f.service.classify({...f.input, request: otherInventory})).response.error?.code).toBe("OPERATION_DIGEST_CONFLICT");
+    // The identical submission whose current snapshot now carries another inventory is not served the old result either.
+    const stale = await f.service.classify({...f.input, getCurrentSnapshot: () => ({...first.snapshot, inventoryDigest: otherDigest})});
+    expect(stale.response.error?.code).toBe("STALE_CLASSIFICATION");
+    expect(f.jev.classify).toHaveBeenCalledTimes(1);
+    expect(await f.service.classify(f.input)).toEqual(first);
+  });
+  it("C-31 rejects a different requestDigest for the same operation while the first is in flight", async () => {
+    const f = fixture(); f.input.config.timeoutMs = 10_000; let release!: () => void;
+    vi.mocked(f.jev.classify).mockImplementation(req => new Promise(resolve => { release = () => resolve(f.evaluation(req)); }));
+    const pending = f.service.classify(f.input);
+    await vi.waitFor(() => { expect(f.jev.classify).toHaveBeenCalledTimes(1); });
+    const changed = {...f.input, request: createClassificationRequest({requestId: "request", operationId: "operation", originalPrompt: "설명만",
+      inventory: {skills: f.input.request.skills, inventoryDigest: f.input.request.inventoryDigest, taxonomyRevision: "taxonomy", issues: []}, classificationCriteriaRef: "criteria"})};
+    expect(changed.request.requestDigest).not.toBe(f.input.request.requestDigest);
+    expect((await f.service.classify(changed)).response.error?.code).toBe("OPERATION_DIGEST_CONFLICT");
+    const shared = f.service.classify(f.input);
+    release();
+    const [first, second] = await Promise.all([pending, shared]);
+    expect(first.response.status).toBe("SUCCESS"); expect(second).toEqual(first);
+    expect(f.jev.classify).toHaveBeenCalledTimes(1); expect(f.vendor.classify).not.toHaveBeenCalled();
+  });
   it("SS32 bounded lifetime cache rejects new operations and preserves completed dedup records", async () => {
     const f = fixture(); const service = new SkillClassificationService({providers: {jev: f.jev, vendor: f.vendor}, budget: f.budget, maxOperations: 1});
     const result = await service.classify(f.input);
