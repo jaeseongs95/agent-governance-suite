@@ -91,15 +91,16 @@ async function harness(options: { root?: string; needed?: string[]; uncertain?: 
       reasoningEffort: null, supportedOptions: { reasoningEfforts: [null], structuredOutput: true }, judgmentPolicy: { neededAt: 0.8, notNeededAt: 0.2 } });
   }
   for (const configuredProfile of runtime.registry.profiles) configuredProfile.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(configuredProfile);
-  const classify = vi.fn(async (request: SkillClassificationRequestV1): Promise<ProviderEvaluation> => ({ response: { schemaVersion: "1.0.0", requestId: request.requestId,
+  const evaluate = async (request: SkillClassificationRequestV1): Promise<ProviderEvaluation> => ({ response: { schemaVersion: "1.0.0", requestId: request.requestId,
     operationId: request.operationId, requestDigest: request.requestDigest, inventoryDigest: request.inventoryDigest, status: options.uncertain?.length ? "PARTIAL" : "SUCCESS",
     judgments: request.skills.map(skill => ({ skillId: skill.skillId, judgment: options.uncertain?.includes(skill.skillId) ? "uncertain" : (options.needed ?? ["code-review"]).includes(skill.skillId) ? "needed" : "not-needed",
       reasonRefs: ["fixture:mock-source-role"], uncertaintyReason: options.uncertain?.includes(skill.skillId) ? "optional synthetic uncertainty" : null })),
     unresolvedItems: (options.uncertain ?? []).map(skillId => ({ skillId, reasonCode: "OPTIONAL_UNCERTAIN" })), error: null },
-    usage: { inputTokens: null, outputTokens: null, cachedInputTokens: null, actualCostUsd: 0 }, dispatchState: "started", diagnostics: null }));
+    usage: { inputTokens: null, outputTokens: null, cachedInputTokens: null, actualCostUsd: 0 }, dispatchState: "started", diagnostics: null });
+  const classify = vi.fn(evaluate);
   const availability = vi.fn(async () => ({ available: true, approved: true, routeKind: "native" as const, reasonCode: null }));
   const jevAvailability = vi.fn(async () => ({ available: true, approved: true, routeKind: "native" as const, reasonCode: null }));
-  const jevClassify = vi.fn(classify);
+  const jevClassify = vi.fn(evaluate);
   const service = new SkillClassificationService({ providers: { vendor: { availability, classify }, ...(options.withJev ? { jev: { availability: jevAvailability, classify: jevClassify } } : {}) },
     budget: new InMemoryClassificationBudget({ jev: { limitUsd: 0, spentUsd: 0 }, vendors: {}, nativeAllowances: {
       "vendor-mock": { approvalRef: "fixture:native-quota", remainingCalls: 100 }, "jev-mock": { approvalRef: "fixture:mock-jev-quota", remainingCalls: 100 } } }) });
