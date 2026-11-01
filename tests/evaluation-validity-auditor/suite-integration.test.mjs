@@ -7,7 +7,7 @@ import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { assertTaskEnvelope } from "../../skills/acceptance-evidence-validator/scripts/core.mjs";
-import { analyzeEvaluation } from "../../skills/evaluation-validity-auditor/scripts/core.mjs";
+import { analyzeEvaluation, sha256Canonical } from "../../skills/evaluation-validity-auditor/scripts/core.mjs";
 import { validateTaskContract } from "../../skills/task-contract/scripts/validate-task-contract.mjs";
 import { makeFixture, makePostFixture, rawDigest } from "./fixture.mjs";
 
@@ -38,6 +38,18 @@ function task() {
 
 function planRequest(taskEnvelope = task(), evaluationAuditPurpose = "quality-or-release") {
   return { schemaVersion: "1.0.0", taskEnvelope, evaluationAuditPurpose };
+}
+
+// A schema-valid report rewritten to claim PASS, with its blocking evidence removed and its digest recomputed.
+function forgedPass(report) {
+  const forged = structuredClone(report);
+  forged.verdict = "PASS";
+  forged.qualifiesAsQualityOrReleaseEvidence = forged.auditStage === "post-execution";
+  forged.limitations = forged.limitations.filter((item) => item !== "COOPERATIVE_PROVENANCE_ASSERTIONS");
+  forged.blockingCodes = [];
+  Object.assign(forged.checks.find((item) => item.checkId === "ROLE_INDEPENDENCE"), { status: "PASS", code: "CHECK_PASSED" });
+  delete forged.reportDigest;
+  return { ...forged, reportDigest: sha256Canonical(forged) };
 }
 
 function stageResult(receipt, report, state = "passed") {
@@ -105,47 +117,73 @@ describe("evaluation-validity-auditor suite descriptor", () => {
     expect(source.integratedChecksum).toMatch(/^sha256:[a-f0-9]{64}$/u);
   });
 
-  it("accepts a safe post-execution PASS receipt and still rejects free text", async () => {
+  it("records an unobserved-independence post-execution report as blocked and still rejects free text (D0336)", async () => {
     const registry = new FileSkillRegistry(registryPath, new ContractValidator());
     const service = new WorkflowService(registry, new ContractValidator());
     const fixture = await makePostFixture();
     const report = await analyzeEvaluation(fixture.post, { artifactRoot: fixture.root });
+    expect(report.verdict).toBe("BLOCKED");
     let receipt = service.startWorkflow(service.planWorkflow(planRequest()).data).data;
     expect(receipt.plan.stages).toHaveLength(1);
-    const accepted = service.recordStageResult(stageResult(receipt, report));
-    expect(accepted.ok, accepted.error?.message).toBe(true);
-    expect(service.finalizeWorkflow(receipt.runId, accepted.data.revision)).toMatchObject({
-      ok: true,
-      data: { state: "passed" },
-    });
+    const blocked = service.recordStageResult(stageResult(receipt, report, "blocked"));
+    expect(blocked).toMatchObject({ ok: true, data: { state: "blocked", error: { code: "MISSING_EVIDENCE" } } });
+    expect(service.getWorkflowStatus(receipt.runId).data.stageResults.map((item) => item.state)).toEqual(["blocked"]);
+    expect(service.finalizeWorkflow(receipt.runId, blocked.data.revision).ok).toBe(false);
+    expect(service.getWorkflowStatus(receipt.runId).data.state).toBe("blocked");
 
     receipt = service.startWorkflow(service.planWorkflow(planRequest({ ...task(), taskId: "unsafe-evaluation-validity-integration" })).data).data;
     const unsafe = structuredClone(report);
     unsafe.target.revision = "release candidate prose";
-    const rejected = service.recordStageResult(stageResult(receipt, unsafe));
+    const rejected = service.recordStageResult(stageResult(receipt, unsafe, "blocked"));
     expect(rejected.ok).toBe(false);
     expect(rejected.error?.message).toBe("Reference-only receipt policy rejected free text.");
   });
 
-  it("freezes the audit purpose in the signed plan and enforces pre versus post completion", async () => {
+  it("rejects a forged PASS for either purpose with the unobserved independence cause (D0336)", async () => {
     const registry = new FileSkillRegistry(registryPath, new ContractValidator());
     const service = new WorkflowService(registry, new ContractValidator());
     const pre = await makeFixture();
-    const preReport = await analyzeEvaluation(pre.base, { artifactRoot: pre.root });
+    const post = await makePostFixture();
+    const cases = [
+      ["design-readiness", forgedPass(await analyzeEvaluation(pre.base, { artifactRoot: pre.root }))],
+      ["quality-or-release", forgedPass(await analyzeEvaluation(post.post, { artifactRoot: post.root }))],
+    ];
+    for (const [purpose, forged] of cases) {
+      expect(forged.verdict).toBe("PASS");
+      const receipt = service.startWorkflow(service.planWorkflow(planRequest(task(), purpose)).data).data;
+      const rejected = service.recordStageResult(stageResult(receipt, forged));
+      expect(rejected.ok).toBe(false);
+      expect(rejected.error).toMatchObject({ code: "GATE_FAILED", details: { cause: "WORKER_INDEPENDENCE_UNOBSERVED", purpose, verdict: "PASS" } });
+      const status = service.getWorkflowStatus(receipt.runId).data;
+      expect(status.stageResults).toHaveLength(0);
+      expect(status.revision).toBe(receipt.revision);
+    }
+  });
 
+  it("does not finalize a passed stage recorded by earlier code (D0336)", async () => {
+    const registry = new FileSkillRegistry(registryPath, new ContractValidator());
+    const service = new WorkflowService(registry, new ContractValidator());
+    const fixture = await makePostFixture();
+    const forged = forgedPass(await analyzeEvaluation(fixture.post, { artifactRoot: fixture.root }));
+    const receipt = service.startWorkflow(service.planWorkflow(planRequest()).data).data;
+    // Stand in for the earlier record gate that accepted this PASS, then restore the current one for finalization.
+    const currentGate = service.assertEvaluationValidityGate;
+    service.assertEvaluationValidityGate = () => undefined;
+    const earlier = service.recordStageResult(stageResult(receipt, forged));
+    service.assertEvaluationValidityGate = currentGate;
+    expect(earlier.ok, earlier.error?.message).toBe(true);
+    expect(earlier.data.stageResults.map((item) => item.state)).toEqual(["passed"]);
+    const finalized = service.finalizeWorkflow(receipt.runId, earlier.data.revision);
+    expect(finalized.ok).toBe(false);
+    expect(finalized.error).toMatchObject({ code: "GATE_FAILED", details: { cause: "WORKER_INDEPENDENCE_UNOBSERVED" } });
+    expect(service.getWorkflowStatus(receipt.runId).data.state).not.toBe("passed");
+  });
+
+  it("freezes the audit purpose in the signed plan", () => {
+    const registry = new FileSkillRegistry(registryPath, new ContractValidator());
+    const service = new WorkflowService(registry, new ContractValidator());
     let plan = service.planWorkflow(planRequest(task(), "design-readiness")).data;
     expect(plan.stages[0].evaluationAuditPurpose).toBe("design-readiness");
-    let receipt = service.startWorkflow(plan).data;
-    const accepted = service.recordStageResult(stageResult(receipt, preReport));
-    expect(accepted.ok, accepted.error?.message).toBe(true);
-    expect(service.finalizeWorkflow(receipt.runId, accepted.data.revision).ok).toBe(true);
-
-    plan = service.planWorkflow(planRequest(task(), "quality-or-release")).data;
-    receipt = service.startWorkflow(plan).data;
-    const rejected = service.recordStageResult(stageResult(receipt, preReport));
-    expect(rejected.ok).toBe(false);
-    expect(rejected.error?.code).toBe("GATE_FAILED");
-    expect(service.getWorkflowStatus(receipt.runId).data.stageResults).toHaveLength(0);
 
     plan = service.planWorkflow(planRequest(task(), "design-readiness")).data;
     plan.stages[0].evaluationAuditPurpose = "quality-or-release";

@@ -11,7 +11,7 @@ Never copy fixture text, labels, prompts, model outputs, rubric prose or free-fo
 1. Resolve every relative locator inside the artifact root and reject absolute, traversal and escaping symlink or junction paths.
 2. Verify exactly one fixture manifest, rubric, oracle, aggregation rule and timing evidence artifact, then compare current bytes with their frozen digests.
 3. Parse the fixture manifest line by line with `EvaluationCaseRecord.v1`. Reject malformed, duplicate, missing, unknown or reordered cases.
-4. Require the auditor to differ from every author, executor and judge. Require judges to differ from authors and executors.
+4. Require the auditor to differ from every author, executor and judge. Require judges to differ from authors and executors. 현재 v1의 호출자 제공 UUID만으로는 실제 작업자 신원을 관찰할 수 없다. 확인된 역할 충돌은 `FAIL`, 관찰 불가는 `ROLE_INDEPENDENCE/BLOCKED`로 남긴다. UUID 변경이나 출처 표시만으로 재개방하지 않으며, 나머지 정적 검사와 유효한 집계 결과는 계속 보존한다.
 5. A semantic criterion requires `independent-review`; `self-report` may only supplement it. A deterministic criterion may use `deterministic-oracle` or `lexical-match`.
 6. Require independently observable provenance for every control artifact. The frozen time, audit time and execution start must preserve causal order.
 

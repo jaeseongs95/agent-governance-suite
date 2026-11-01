@@ -1287,22 +1287,16 @@ export class WorkflowService {
   private assertEvaluationValidityGate(stage: PlannedStageV1, result: StageResultV1): void {
     if (stage.requiredCapability !== "evaluation-validity-audit") return;
     const output = result.output.output;
-    const purpose = stage.evaluationAuditPurpose;
-    const isDesignReadiness = purpose === "design-readiness"
-      && output?.auditStage === "pre-execution"
-      && output?.verdict === "PASS"
-      && output?.qualifiesAsQualityOrReleaseEvidence === false;
-    const isQualityOrRelease = purpose === "quality-or-release"
-      && output?.auditStage === "post-execution"
-      && output?.verdict === "PASS"
-      && output?.qualifiesAsQualityOrReleaseEvidence === true;
-    if (isDesignReadiness || isQualityOrRelease) return;
+    // D0336: a v1 report carries only self-asserted actor UUIDs and no trust boundary observes worker separation,
+    // so no PASS can complete this stage, whatever its purpose, verdict, qualification flag, limitations or digest,
+    // and whether it is recorded now or was recorded by earlier code. A BLOCKED report still records as blocked.
     throw new WorkflowContractError(
       "GATE_FAILED",
-      "Evaluation validity PASS does not satisfy the frozen audit purpose.",
+      "Evaluation validity PASS cannot complete the stage: v1 does not observe worker independence.",
       {
         stageId: stage.stageId,
-        purpose: purpose ?? null,
+        cause: "WORKER_INDEPENDENCE_UNOBSERVED",
+        purpose: stage.evaluationAuditPurpose ?? null,
         auditStage: output?.auditStage ?? null,
         verdict: output?.verdict ?? null,
         qualifiesAsQualityOrReleaseEvidence: output?.qualifiesAsQualityOrReleaseEvidence ?? null,

@@ -179,9 +179,10 @@ function roleCheck(input) {
   const { authorIds, executorIds, judgeIds, auditorId } = input.actors;
   const producers = [...authorIds, ...executorIds, ...judgeIds];
   const judgeConflict = judgeIds.some((id) => authorIds.includes(id) || executorIds.includes(id));
+  // 자체 주장 UUID의 차이는 실제 작업자 분리의 관측이 아니다. v1에는 이를 검증하는 신뢰 입력이 없다.
   return producers.includes(auditorId) || judgeConflict
     ? check("ROLE_INDEPENDENCE", "FAIL", "ROLE_CONFLICT")
-    : check("ROLE_INDEPENDENCE", "PASS", "CHECK_PASSED");
+    : check("ROLE_INDEPENDENCE", "BLOCKED", "PROVENANCE_MISSING");
 }
 
 function methodCheck(input, states) {
