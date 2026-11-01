@@ -56,6 +56,7 @@ const directories: string[] = [];
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const bundledSessionMessageHook = fileURLToPath(new URL("../../mcp-server/dist/session-message-hook.mjs", import.meta.url));
 const bundledSessionMessageRelay = fileURLToPath(new URL("../../mcp-server/dist/session-message-relay.mjs", import.meta.url));
+const bundledSessionMessageRelayGuard = fileURLToPath(new URL("../../mcp-server/dist/session-message-relay-guard.mjs", import.meta.url));
 const sourceSessionMessageBroker = fileURLToPath(new URL("../../mcp-server/src/session-message-broker.ts", import.meta.url));
 const syntheticCoreHookDriver = fileURLToPath(new URL("./fixtures/synthetic-core-hook-driver.mjs", import.meta.url));
 // Explicit fake core root/child schema. Native Codex remains unsupported and is asserted separately.
@@ -1096,6 +1097,7 @@ describe("TLS 1.3 broker and vendor-neutral adapter", () => {
     const installedHook = path.join(installDirectory, "session-message-hook.mjs");
     await copyFile(bundledSessionMessageHook, installedHook);
     await copyFile(bundledSessionMessageRelay, path.join(installDirectory, "session-message-relay.mjs"));
+    await copyFile(bundledSessionMessageRelayGuard, path.join(installDirectory, "session-message-relay-guard.mjs"));
     expect(await optionalFile(path.join(directory, "node_modules"))).toBeNull();
     await startSourceBroker(directory);
     const file = path.join(directory, "session-messaging.json");

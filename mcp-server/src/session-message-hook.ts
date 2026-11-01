@@ -176,6 +176,8 @@ type ClaimWithRecovery = { messages: SessionMessage[] } & RelayRecoveryHint;
 function startRelay(host: SupportedHookHost, sessionId: string, instanceId: string, transport: SessionMessageTransport, explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>, budget?: HookBudget, relayId?: string, relayEnv?: Readonly<Record<string, string | undefined>>, relayOwner?: SessionMessageHookOptions["relayOwner"], extra: Readonly<{ recovery?: boolean; observedStartToken?: string }> = {}): void {
   remainingBudget(budget);
   const relayPath = fileURLToPath(new URL("./session-message-relay.mjs", import.meta.url));
+  // D0011: the relay process records its own abnormal end; this hook may exit before the relay does.
+  const relayGuard = new URL("./session-message-relay-guard.mjs", import.meta.url).href;
   const hostPid = relayId ? hostProcess?.pid : resolveHookProcessPid(host, explicitHostPid, hostProcess);
   if (!hostPid || !Number.isInteger(hostPid) || hostPid < 1) { relayNotStarted("RELAY_HOST_PID_UNRESOLVED"); return; }
   // Only a caller that read this birth in the same synchronous step passes it; others re-read after their awaits.
@@ -194,6 +196,7 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     error => { reportHookFailure("relay-observation", error); });
   if (budget && observation) process.once("exit", () => observation.flush());
   const child = spawn(process.execPath, [
+    "--import", relayGuard,
     relayPath,
     "--host", host,
     "--session-id", sessionId,
@@ -209,15 +212,9 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     stdio: "ignore",
     env: environment,
   });
-  let spawned = false;
-  child.once("spawn", () => { spawned = true; observation?.spawned(); });
-  // stdio stays ignored so a healthy detached relay never depends on this short-lived hook. A relay that dies
-  // while this process still runs (module load failure, rejected arguments, early crash) leaves a record with
-  // its exit status; a normal relay end exits 0. The listener does not ref the child or delay this hook.
-  child.once("exit", (exitCode, signal) => {
-    if (!spawned || (exitCode === 0 && !signal)) return;
-    reportHookFailure("relay-start", hookFailure("RELAY_CHILD_EXITED", "The session relay exited abnormally."), { exitCode, signal });
-  });
+  // stdio stays ignored so a healthy detached relay never depends on this short-lived hook. An abnormal relay end
+  // (module load failure, rejected arguments, early crash) is recorded by the preloaded guard inside the relay.
+  child.once("spawn", () => { observation?.spawned(); });
   // spawn 실패는 모든 시작 경로에서 비동기로 온다. 수신자가 없으면 보고 없이 훅 밖으로 빠진다.
   child.once("error", (error) => {
     reportHookFailure("relay-start", error); // 확인된 시작은 잠긴 채 남고 자동으로 다시 띄우지 않는다.

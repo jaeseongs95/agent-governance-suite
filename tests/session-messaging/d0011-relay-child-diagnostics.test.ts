@@ -1,7 +1,9 @@
+import { spawnSync } from "node:child_process";
 import { EventEmitter } from "node:events";
 import * as fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const f = vi.hoisted(() => ({ request: vi.fn(), token: vi.fn(), spawn: vi.fn() }));
@@ -22,7 +24,7 @@ syntheticCore.registerSyntheticCoreAdapters(registerHookHostAdapter, () => "code
 const host = syntheticCore.SYNTHETIC_CORE_HOST;
 
 // D0011: the detached relay child runs with ignored stdio, so a relay that dies early must leave a local record.
-// Mocked broker/process fixture only; the child is an EventEmitter and no real process is started.
+// The hook cases use a mocked broker and an EventEmitter child; the guard cases run real node processes.
 const SECRET = "secret-canary-d0011";
 let root: string;
 let state: string;
@@ -76,34 +78,62 @@ afterEach(() => {
 });
 
 describe("D0011 relay child diagnostics", () => {
-  it.each([
-    [2, null],
-    [1, null],
-    [null, "SIGKILL"],
-  ] as const)("records a spawned relay child that exits abnormally (code %s, signal %s)", async (exitCode, signal) => {
-    const child = await startSession("relay-child-exit");
-    expect(records()).toEqual([]);
+  it("preloads the exit guard into the relay process instead of watching the child from the hook", async () => {
+    const child = await startSession("relay-child-guarded");
+    const args = f.spawn.mock.calls[0]![1] as string[];
+    expect(args.slice(0, 2)).toEqual(["--import", expect.stringMatching(/^file:\/\/.*\/session-message-relay-guard\.mjs$/u)]);
+    expect(args[2]).toMatch(/[\\/]session-message-relay\.mjs$/u);
+    // The hook may exit before its relay (CI 5d210919, TEST codex-d0011-r02: relay ppid 1), so it records nothing itself.
     child.emit("spawn");
-    child.emit("exit", exitCode, signal);
-    expect(records()).toEqual([expect.objectContaining({ phase: "hook-relay-start", reason: "RELAY_CHILD_EXITED",
-      reasonBasis: "producer", exitCode, signal })]);
-    expect(hookFailureLines()).toEqual([expect.objectContaining({ phase: "relay-start", reason: "RELAY_CHILD_EXITED" })]);
-    // Only the exit status is recorded: never the environment, argv or child output.
-    expect(JSON.stringify(records())).not.toContain(SECRET);
-    expect(JSON.stringify(records())).not.toContain("relay-child-exit");
-  });
-
-  it("records nothing for a normal relay end or an exit without a confirmed spawn", async () => {
-    const normal = await startSession("relay-child-normal-end");
-    normal.emit("spawn");
-    normal.emit("exit", 0, null);
-    expect(records()).toEqual([]);
-    f.spawn.mockReset();
-    f.request.mockReset();
-    const unspawned = await startSession("relay-child-unspawned");
-    unspawned.emit("exit", 1, null);
+    child.emit("exit", 3, null);
     expect(records()).toEqual([]);
     expect(hookFailureLines()).toEqual([]);
+  });
+
+  describe("relay exit guard in a real relay process", () => {
+    const guard = new URL("../../mcp-server/dist/session-message-relay-guard.mjs", import.meta.url).href;
+    // No parent listens: the spawning test only waits for the end, and every record comes from the child itself.
+    function runGuarded(entry: string, args: string[] = []): number | null {
+      const env: NodeJS.ProcessEnv = { ...process.env };
+      delete env.NODE_OPTIONS;
+      const result = spawnSync(process.execPath, ["--import", guard, entry, ...args], { env, stdio: "ignore", windowsHide: true, timeout: 20_000 });
+      return result.status;
+    }
+    function entry(name: string, source: string): string {
+      const file = path.join(root, name);
+      fs.writeFileSync(file, source);
+      return file;
+    }
+
+    it.each([
+      ["an early non-zero exit", "exit-three.mjs", "process.exit(3);\n", 3],
+      ["an entry that fails to load", "syntax-error.mjs", "export const = ;\n", 1],
+      ["an uncaught startup throw", "throws.mjs", `throw new Error(${JSON.stringify(SECRET)});\n`, 1],
+    ] as const)("records %s with its exit code only", (_label, name, source, exitCode) => {
+      expect(runGuarded(entry(name, source))).toBe(exitCode);
+      expect(records()).toEqual([{ phase: "relay-exit", reason: "RELAY_PROCESS_EXITED", reasonBasis: "producer", exitCode }]);
+      const latest = fs.readFileSync(path.join(state, "relay-failure.latest.json"), "utf8");
+      expect(JSON.parse(latest)).toEqual({ phase: "relay-exit", reason: "RELAY_PROCESS_EXITED", reasonBasis: "producer", exitCode });
+      // Never the environment, the entry path or child output.
+      expect(JSON.stringify(records()) + latest).not.toContain(SECRET);
+      expect(JSON.stringify(records()) + latest).not.toContain(name);
+    });
+
+    it("records nothing for a relay process that ends normally", () => {
+      expect(runGuarded(entry("normal.mjs", "\n"))).toBe(0);
+      expect(records()).toEqual([]);
+    });
+
+    it("keeps the packaged relay's own cause next to its exit code", () => {
+      const relay = fileURLToPath(new URL("../../mcp-server/dist/session-message-relay.mjs", import.meta.url));
+      expect(runGuarded(relay, ["--host", host, "--session-id", "guarded-rejected-arguments"])).toBe(2);
+      expect(records()).toEqual(expect.arrayContaining([
+        expect.objectContaining({ phase: "arguments", reason: "RELAY_ARGUMENTS_REJECTED" }),
+        { phase: "relay-exit", reason: "RELAY_PROCESS_EXITED", reasonBasis: "producer", exitCode: 2 },
+      ]));
+      expect(records()).toHaveLength(2);
+      expect(JSON.stringify(records())).not.toContain("guarded-rejected-arguments");
+    });
   });
 
   it("records rejected relay arguments from the relay entrypoint itself", async () => {

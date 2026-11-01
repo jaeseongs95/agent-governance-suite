@@ -19,6 +19,7 @@ const requiredFiles = [
   "mcp-server/dist/session-message-cli.mjs",
   "mcp-server/dist/session-message-hook.mjs",
   "mcp-server/dist/session-message-relay.mjs",
+  "mcp-server/dist/session-message-relay-guard.mjs",
   "hooks/hooks.json",
   "runtime/schema-validation.mjs",
   "runtime/THIRD_PARTY_NOTICES.md",

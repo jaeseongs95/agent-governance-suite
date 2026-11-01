@@ -66,6 +66,12 @@ export const RUNTIME_BUNDLES = Object.freeze([
     executable: true,
   }),
   Object.freeze({
+    id: "session-message-relay-guard",
+    entry: "mcp-server/src/session-message-relay-guard.ts",
+    output: "mcp-server/dist/session-message-relay-guard.mjs",
+    executable: false,
+  }),
+  Object.freeze({
     id: "session-message-hook",
     entry: "mcp-server/src/session-message-hook.ts",
     output: "mcp-server/dist/session-message-hook.mjs",
