@@ -411,15 +411,20 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   /**
    * Retires reservations under their existing expiry rules. D0353: activity, body claims and a changed birth cannot
    * prove an external queue consumed a dispatched marker. Uncertain effects stay latched until that marker's verified
-   * observation or the existing definite non-submission path; elapsed time and terminal retention cannot reopen them.
-   * A reserved attempt has no uncertain effect and keeps its existing expiry/retry rules. The row keeps its original
-   * binding, epoch and times; expired-unobserved is neither observation nor delivery. One UPDATE commits it atomically.
+   * observation or the existing definite non-submission path before the injection expiry plus grace. Past that bound
+   * the latch is released by time alone: a quiet live session has no other way to produce activity, so a marker the
+   * host dropped (interrupt, unload) would otherwise block every later wake of that session forever (D0353 liveness,
+   * observed 2026-11-01 on five idle Codex sessions). The cost is at most one extra marker per bound per session; a late
+   * arrival of the retired marker is recorded as evidence only. A reserved attempt keeps its existing expiry/retry
+   * rules. The row keeps its original binding, epoch and times; expired-unobserved is neither observation nor
+   * delivery. One UPDATE commits it atomically.
    */
   private retireUnobservedWakes(nowMs: number): void {
     const now = iso(nowMs);
     this.database.prepare(`UPDATE wake_nonces SET state = 'expired-unobserved', retired_at = ?
       WHERE state IN ${ACTIVE_WAKE_STATES}
-        AND (state = 'reserved' OR late_observed_at IS NOT NULL)
+        AND ((state IN ('started', 'submitted', 'unknown') AND expires_at <= ?)
+        OR ((state = 'reserved' OR late_observed_at IS NOT NULL)
         AND ((expires_at <= ?
             AND (EXISTS (SELECT 1 FROM session_activity activity WHERE activity.host = wake_nonces.host
                 AND activity.session_id = wake_nonces.session_id AND activity.active_at > wake_nonces.expires_at)
@@ -441,8 +446,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
               AND m.target_session_id = wake_nonces.session_id
               AND (m.claimed_at IS NULL OR m.acknowledged_at IS NULL)
               AND m.expires_at > ?
-              AND m.created_at <= coalesce(wake_nonces.outcome_at, wake_nonces.started_at))))`)
-      .run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), now, now, iso(nowMs - WAKE_OBSERVATION_WINDOW_MS), now, now);
+              AND m.created_at <= coalesce(wake_nonces.outcome_at, wake_nonces.started_at))))))`)
+      .run(now, iso(nowMs - WAKE_RETIRE_GRACE_MS), iso(nowMs - WAKE_RETIRE_GRACE_MS), now, now,
+        iso(nowMs - WAKE_OBSERVATION_WINDOW_MS), now, now);
   }
 
   private recordActivity(target: SessionIdentity, nowMs: number): void {
