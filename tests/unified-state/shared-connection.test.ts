@@ -142,7 +142,7 @@ describe("inactive native shared connection", () => {
     const snapshot = value.owner.inspect();
     expect(snapshot.databases.filter(row => row.file !== "")).toHaveLength(1); expect(snapshot.databases[0]).toMatchObject({ name: "main", file: value.owner.databasePath }); expect(snapshot.databases.every(row => row.name === "main" || row.name === "temp" && row.file === "")).toBe(true);
     expect(Object.keys(snapshot.counts)).toHaveLength(30); expect(snapshot.counts.messages).toBe(1); expect(snapshot.counts.continuity_tasks).toBe(1);
-    expect(snapshot.modules.map(row => [row.module, row.version])).toEqual([["board", 0], ["continuity", 2], ["messaging", 3], ["trust", 1], ["workflow", 5]]);
+    expect(snapshot.modules.map(row => [row.module, row.version])).toEqual([["board", 1], ["continuity", 2], ["messaging", 3], ["trust", 1], ["workflow", 5]]);
     expect(snapshot.userVersion).toBe(1); expect(value.workflow.getSchemaVersion()).toBe(5); expect(value.continuity.getSchemaVersion()).toBe(2);
     expect(snapshot.integrity).toEqual([{ integrity_check: "ok" }]); expect(snapshot.foreignKeyViolations).toEqual([]);
     console.log("B2-RAW owner", JSON.stringify(snapshot));
@@ -172,7 +172,7 @@ describe("inactive native shared connection", () => {
   it("B2-OWNER-03: initializer failure rolls back DDL, module header and format marker together", () => {
     const dir = directory(); const filename = path.join(dir, "failed-init.sqlite3");
     const owner = new InactiveSharedConnection({ databasePath: filename, mode: "fixture-only", clock: () => 100 }); owners.add(owner);
-    expect(() => owner.initialize(() => { const module = owner.borrow("board"); module.initialize(() => { module.database.exec("CREATE TABLE sessions(id TEXT)"); module.setSchemaVersion(0); throw new Error("fixed-init-fault"); }); })).toThrow("fixed-init-fault");
+    expect(() => owner.initialize(() => { const module = owner.borrow("board"); module.initialize(() => { module.database.exec("CREATE TABLE board_sessions(id TEXT)"); module.setSchemaVersion(1); throw new Error("fixed-init-fault"); }); })).toThrow("fixed-init-fault");
     owner.close(); const db = new DatabaseSync(filename, { readOnly: true });
     try { expect(db.prepare("SELECT name FROM sqlite_schema WHERE type='table'").all()).toEqual([]); expect(db.prepare("PRAGMA user_version").get()).toMatchObject({ user_version: 0 }); } finally { db.close(); }
   });

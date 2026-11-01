@@ -11,7 +11,7 @@ import { SessionActorProofs } from "../../mcp-server/src/session-actor-proof.js"
 import { handleSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
 import { handleSessionMessageHook } from "../../mcp-server/src/session-message-hook.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
-import { listSessions, openBoard } from "../../skills/session-board/scripts/board-store.mjs";
+import { openBoard, readEntry } from "../../skills/session-board/scripts/board-store.mjs";
 
 // Source-derived contract inputs, NOT native capture or complete host child-isolation evidence.
 const wire = (event: string, extra: Record<string, unknown> = {}) => ({
@@ -59,19 +59,13 @@ it("does not register, prompt-update or overwrite the parent board row from a ch
   const board = openBoard(path.join(directory, "board.sqlite3"));
   const now = "2026-10-28T00:00:00.000Z";
   try {
-    for (const event of ["SessionStart", "UserPromptSubmit"]) {
-      handleSessionBoardHook(wire(event, { agent_id: "child" }), board, "codex", now);
-    }
-    expect(listSessions(board, now)).toEqual([]);
-    handleSessionBoardHook(toolWire("update_session_status"), board, "codex", now);
-    const before = listSessions(board, now);
-    expect(before).toHaveLength(1);
-    for (const tool of ["update_session_status", "list_session_status"]) {
-      expect(handleSessionBoardHook(toolWire(tool, { agent_id: "child" }), board, "codex", now)).toMatchObject({
-        hookSpecificOutput: { permissionDecision: "deny" },
-      });
-    }
-    expect(listSessions(board, now)).toEqual(before);
+    for (const event of events) handleSessionBoardHook(wire(event, { agent_id: "child", prompt: "child" }), board, "codex", now);
+    expect(readEntry(board, "codex", "parent-session")).toBeNull();
+    handleSessionBoardHook(wire("UserPromptSubmit", { prompt: "parent", cwd: "/work/parent" }), board, "codex", now);
+    const before = readEntry(board, "codex", "parent-session");
+    expect(before).toMatchObject({ cwd: "/work/parent", lastPromptAt: now });
+    handleSessionBoardHook(wire("UserPromptSubmit", { agent_id: "child", prompt: "child", cwd: "/work/child" }), board, "codex", "2026-10-28T00:01:00.000Z");
+    expect(readEntry(board, "codex", "parent-session")).toEqual(before);
   } finally { board.close(); }
 });
 

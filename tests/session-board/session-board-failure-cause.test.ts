@@ -85,7 +85,7 @@ describe("session board hook failure cause", () => {
     vi.stubEnv("AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH", path.join(blocker, "session-board.sqlite3"));
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     expect(await runSessionBoardHook("claude-code", JSON.stringify({
-      hook_event_name: "PreToolUse", session_id: "s1", tool_name: "Edit", tool_input: {},
+      hook_event_name: "UserPromptSubmit", session_id: "s1", prompt: "unusable board",
     }))).toBe("");
     const line = lines(spy).find((value) => value.includes('"phase":"open"'));
     expect(line).toBeDefined();
@@ -111,7 +111,8 @@ describe("session board MCP failure cause", () => {
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
     await client.connect(clientTransport);
-    const response = await client.callTool({ name: "list_session_status", arguments: root.argumentsFor("list_session_status", { schemaVersion: "1.0.0" }) });
+    // update writes the board without asking the broker, so the open step fails on the damaged file.
+    const response = await client.callTool({ name: "update_session_status", arguments: root.argumentsFor("update_session_status", { schemaVersion: "1.0.0", summary: "damaged board" }) });
     const text = (response as { content: Array<{ text: string }> }).content[0]!.text;
     const result = JSON.parse(text) as { ok: boolean; error: { code: string; details: Record<string, unknown> | null } | null };
     expect(result.ok).toBe(false);

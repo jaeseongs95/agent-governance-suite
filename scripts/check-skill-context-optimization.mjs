@@ -187,8 +187,13 @@ const GOVERNANCE_SOURCE_SUCCESSOR = Object.freeze({
     "skills/recovery-strategy-selector/contracts/recovery-strategy-selection-request.v1.schema.json": "684d92828e97be4763d7c8ace6250288b8df0b450f23b89f5b65842da7278d8e",
     "skills/recovery-strategy-selector/references/selection-protocol.md": "5d9d8070948ef8ec4ce0c1cf16de179586ce96dc660e1ce3b6a214ae4dbe8f7c",
     "skills/recovery-strategy-selector/scripts/core.mjs": "b378eca94a05a5008e27f60d582e3d167c243dfb4602c663a0eef22e75254625",
+    // AGS 3.0 session board redesign (docs/ags30-session-board-design.md); historical baselines stay frozen.
+    "skills/session-board/references/entry-details.md": "48bb9fef93a96f4166ad820321573ee5ec27343fec147494b24ece0814a98100",
+    "skills/session-board/scripts/board-store.d.mts": "df77f6a8d0ce1e576782c394ad6b78261003de23f32a03e9b6a4ef05de762bc0",
   },
   "previousHashes": {
+    "skills/session-board/references/entry-details.md": "e8ea65d5d3d372fe70ba0fe7cdba18d965704450f2a7084b27ce885695e68660",
+    "skills/session-board/scripts/board-store.d.mts": "d4a156f0a4f3a83fdaf655daf3fe88efd14c427c79ffceb1b8012d14c38a0098",
     "skills/blocker-diagnostician/SKILL.md": "5cc3e57aa82d28a7087717c13f39661911cefc6ec20d9ae9387a49bd1fadfb2e",
     "skills/blocker-diagnostician/references/entry-details.md": "5d3068c1151d10ff89304f2c3a5e18be6dc235d75cff179e3ff68a28d76aaebf",
     "skills/change-scope-guardian/references/entry-details.md": "d164e59584763265a4bd8ccfd6a4ee75560f1df4ef30cd44dee68d814baf185b",
@@ -209,7 +214,7 @@ const HOST_CONSUMPTION_SOURCE_SUCCESSOR = Object.freeze({
   "baselineRevision": "b0b455b3ef737cc67e0a350cc1477f4ce6162828",
   "hashes": {
     "skills/session-board/SKILL.md": "c23a8cebd2a794d9f281ba171f7dac073a5a91a68ceb9a26b748dd843a733bd2",
-    "skills/session-board/classification.json": "eaef99de3c235b16e4b6a53747d2ce198082fc279b4db7ba503e0a3c640a41ef"
+    "skills/session-board/classification.json": "c3f4ac0ab7f42e7ee9b40d586eeb1920b4e5e5d7ec6904905f58da1589dbfb22"
   },
   "previousHashes": {
     "skills/session-board/SKILL.md": "b4c2226e35c277c53dd89305c31961f81a2f739bbca61f47d567c12462ea209a",

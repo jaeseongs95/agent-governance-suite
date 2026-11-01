@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { registerHookHostAdapter, resolveHookHost } from "../../mcp-server/src/host-input-adapter.js";
 import { runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
@@ -66,14 +67,14 @@ describe("explicit hook CLI host contract (synthetic packaged fixtures, not nati
     expect(existsSync(path.join(f.directory, "host-models"))).toBe(false);
   });
 
-  for (const bundle of ["session-message-hook", "session-board-hook"]) {
+  for (const bundle of ["session-message-hook"]) {
     it.each([{ args: [], host: "codex" }, { args: ["--host=codex"], host: "codex" },
       { args: ["--host=claude-code"], host: "claude-code" }, { args: ["--host=gemini"], host: "gemini" },
       { args: ["--host", "gemini"], host: "gemini" }])(
       bundle + " binds the selected host while retaining its default ($host/$args)", ({ args, host }) => {
         expect(resolveHookHost(args, "codex")).toBe(host);
         const f = fixture();
-        const tool = bundle === "session-message-hook" ? "prepare_session_message" : "list_session_status";
+        const tool = "prepare_session_message";
         // Codex/Claude main hooks omit agent_id; keep the malformed marker on the unsupported Gemini case.
         const output = hook(bundle, args, { hook_event_name: "PreToolUse", session_id: "host-contract-session", ...(host === "gemini" ? { agent_id: "" } : {}),
           tool_name: "mcp__agent_governance_suite__" + tool,
@@ -89,6 +90,26 @@ describe("explicit hook CLI host contract (synthetic packaged fixtures, not nati
         }
       });
   }
+
+  it.each([{ args: [], host: "codex" }, { args: ["--host=codex"], host: "codex" },
+    { args: ["--host=claude-code"], host: "claude-code" }, { args: ["--host=gemini"], host: "gemini" },
+    { args: ["--host", "gemini"], host: "gemini" }])(
+    "session-board-hook records the prompt under the selected host while retaining its default ($host/$args)", ({ args, host }) => {
+      expect(resolveHookHost(args, "codex")).toBe(host);
+      const f = fixture();
+      const output = hook("session-board-hook", args, { hook_event_name: "UserPromptSubmit", session_id: "host-contract-session",
+        ...(host === "gemini" ? { agent_id: "" } : {}), cwd: f.directory, prompt: "host contract" }, f.env);
+      expect(output).toEqual({});
+      const board = path.join(f.directory, "board.sqlite3");
+      if (host === "gemini") {
+        for (const file of ["board.sqlite3", "workflow.sqlite3", "trust.sqlite3", "messaging"]) expect(existsSync(path.join(f.directory, file))).toBe(false);
+        return;
+      }
+      const database = new DatabaseSync(board, { readOnly: true });
+      try {
+        expect(database.prepare("SELECT host, session_id AS sessionId FROM board_sessions").all()).toEqual([{ host, sessionId: "host-contract-session" }]);
+      } finally { database.close(); }
+    });
 
   it.each([{ args: ["--host="] }, { args: ["--host=../invalid"] }, { args: ["--host=gemini", "--host=codex"] }, { args: ["--host", ""] }])(
     "does not fall back to another host for an invalid explicit selection ($args)", ({ args }) => {
@@ -244,7 +265,7 @@ describe("L3 packaged failure diagnostics", () => {
   });
 });
 
-it("preserves positive message and board binding with an explicit fake core root", async () => {
+it("preserves positive message binding and board prompt recording with an explicit fake core root", async () => {
   const f = fixture();
   const driver = fileURLToPath(new URL("./fixtures/synthetic-core-hook-driver.mjs", import.meta.url));
   const syntheticCore = await import(pathToFileURL(driver).href) as {
@@ -253,23 +274,23 @@ it("preserves positive message and board binding with an explicit fake core root
   };
   const host = syntheticCore.SYNTHETIC_CORE_HOST;
   syntheticCore.registerSyntheticCoreAdapters(registerHookHostAdapter, () => "codex-deferred");
-  for (const [bundle, tool] of [["session-message-hook", "prepare_session_message"], ["session-board-hook", "list_session_status"]]) {
-    const input = { hook_event_name: "PreToolUse", session_id: "host-contract-session", syntheticActor: "root",
-      tool_name: "mcp__agent_governance_suite__" + tool,
-      tool_input: { schemaVersion: "1.0.0", marker: "preserve", _sessionBinding: { host: "wrong", sessionId: "wrong" } } };
-    let output;
-    if (bundle === "session-message-hook") {
-      // The driver registers in the exact bundled consumer namespace.
-      const result = spawnSync(process.execPath, [driver, path.join(root, "mcp-server/dist/session-message-hook.mjs"), host], {
-        input: JSON.stringify(input), env: f.env, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,
-      });
-      expect(result.error).toBeUndefined(); expect(result.status, result.stderr).toBe(0);
-      output = JSON.parse(result.stdout);
-    } else {
-      vi.stubEnv("AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH", f.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH);
-      output = JSON.parse(await runSessionBoardHook(host, JSON.stringify(input)));
-    }
-    expect(output.hookSpecificOutput.updatedInput).toEqual({ schemaVersion: "1.0.0", marker: "preserve",
-      _sessionBinding: { host, sessionId: "host-contract-session" } });
-  }
+  const input = { hook_event_name: "PreToolUse", session_id: "host-contract-session", syntheticActor: "root",
+    tool_name: "mcp__agent_governance_suite__prepare_session_message",
+    tool_input: { schemaVersion: "1.0.0", marker: "preserve", _sessionBinding: { host: "wrong", sessionId: "wrong" } } };
+  // The driver registers in the exact bundled consumer namespace.
+  const result = spawnSync(process.execPath, [driver, path.join(root, "mcp-server/dist/session-message-hook.mjs"), host], {
+    input: JSON.stringify(input), env: f.env, encoding: "utf8", shell: false, windowsHide: true, timeout: 10_000,
+  });
+  expect(result.error).toBeUndefined(); expect(result.status, result.stderr).toBe(0);
+  expect(JSON.parse(result.stdout).hookSpecificOutput.updatedInput).toEqual({ schemaVersion: "1.0.0", marker: "preserve",
+    _sessionBinding: { host, sessionId: "host-contract-session" } });
+  // The board hook issues no binding (the governance hook does); it records the root prompt under the same host.
+  vi.stubEnv("AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH", f.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH);
+  expect(await runSessionBoardHook(host, JSON.stringify({ ...input, tool_name: "mcp__agent_governance_suite__list_session_status" }))).toBe("");
+  expect(await runSessionBoardHook(host, JSON.stringify({ hook_event_name: "UserPromptSubmit", session_id: "host-contract-session",
+    syntheticActor: "root", prompt: "fake core prompt" }))).toBe("");
+  const database = new DatabaseSync(f.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH!, { readOnly: true });
+  try {
+    expect(database.prepare("SELECT host, session_id AS sessionId FROM board_sessions").all()).toEqual([{ host, sessionId: "host-contract-session" }]);
+  } finally { database.close(); }
 });

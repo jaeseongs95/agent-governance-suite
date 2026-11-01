@@ -1,35 +1,32 @@
 import type { SharedModuleContext, SqlDatabase } from "../../../runtime/unified-state/shared-connection.mjs";
 import type { DatabaseSync } from "node:sqlite";
 
-export interface BoardSession {
+export interface BoardInput {
   host: string;
   sessionId: string;
-  cwd: string;
+  cwd: string | null;
   now: string;
 }
 
-export interface SessionView {
-  host: string;
-  sessionId: string;
-  cwd: string;
+export interface BoardEntry {
+  cwd: string | null;
   summary: string | null;
   summaryAt: string | null;
   lastPromptAt: string | null;
-  startedAt: string;
-  updatedAt: string;
-  stale: boolean;
-  current: boolean;
+  summaryStale: boolean | null;
 }
 
 export const SUMMARY_MAX_LENGTH: number;
+export const BOARD_FORMAT_VERSION: number;
+export class BoardFormatError extends Error {
+  code: "BOARD_FOREIGN_DATABASE";
+}
 export function openBoard(databasePath: SharedModuleContext, options?: { busyTimeoutMs?: number }): SqlDatabase;
 export function openBoard(databasePath: string, options?: { busyTimeoutMs?: number }): DatabaseSync;
-export function touchSession(db: SqlDatabase, session: BoardSession): void;
-export function recordPrompt(db: SqlDatabase, session: BoardSession): void;
+export function recordInput(db: SqlDatabase, session: BoardInput, kind: { prompt: boolean }): void;
 export function normalizeSummary(value: unknown): string | null;
-export function setSummary(db: SqlDatabase, session: BoardSession, summary: unknown): string;
-export function gateDecision(db: SqlDatabase, session: BoardSession): "allow" | "deny";
-export function pruneSessions(db: SqlDatabase, now: string): void;
-export function readSession(db: SqlDatabase, host: string, sessionId: string): SessionView | null;
-export function listSessions(db: SqlDatabase, now: string, current?: { host: string; sessionId: string } | null): SessionView[];
-export function isReadOnlyCommand(command: unknown): boolean;
+export function setSummary(db: SqlDatabase, session: Omit<BoardInput, "cwd">, summary: unknown): { summary: string; summaryAt: string };
+export function pruneBoard(db: SqlDatabase, now: string): void;
+export function readEntry(db: SqlDatabase, host: string, sessionId: string): BoardEntry | null;
+export function listPromptMarkers(db: SqlDatabase): Array<{ host: string; sessionId: string; lastPromptAt: string }>;
+export function locateRepository(cwd: string | null): { root: string; repoId: string; branch: string | null } | null;

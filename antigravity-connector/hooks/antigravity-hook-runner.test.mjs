@@ -806,8 +806,8 @@ try {
   }
 
   // 12. [R04-F03 Secondary Stage Skip Oracle (Note R05-F02 boundary)]:
-  // When primary stage (`session-message`) on PreInvocation consumes most of the total hook budget,
-  // secondary advisory stages (`session-board`) are skipped. (Note: full 10s boundary across broker claim +
+  // When primary stage (`session-message`) on SessionStart consumes most of the total hook budget,
+  // secondary advisory stages (`continuity`) are skipped. (Note: full 10s boundary across broker claim +
   // sync TrustStore + stdout requires the central `executionBudget` contract in COMMON-CONTRACT-CHANGE-REQUEST.r08.ko.md.)
   {
     let simulatedClockMs = 1000;
@@ -819,7 +819,7 @@ try {
         conversationId: TEST_SESSION_ID,
         workspacePaths: [tmpDir],
       },
-      "PreInvocation",
+      "SessionStart",
       "",
       {
         now: () => simulatedClockMs,
@@ -845,7 +845,7 @@ try {
       },
     );
 
-    assert.deepEqual(executedStages, ["session-message"], "Secondary session-board stage must be skipped when remaining budget < minSecondaryBudgetMs");
+    assert.deepEqual(executedStages, ["session-message"], "Secondary continuity stage must be skipped when remaining budget < minSecondaryBudgetMs");
     assert.deepEqual(preInvOut, {
       injectSteps: [{ systemMessage: { systemMessage: peerEnvelope } }],
     });
@@ -1154,7 +1154,7 @@ try {
 
     // (g) #3317 M1 & R10-F03 (bc631ee6): On SessionStart (invoked without unsupported `--hook=session-init` and using
     // the supported `stageRunner` injection boundary without inventing new product options), even when `out` is non-empty
-    // because `continuity` / `session-board` stages emitted `additionalContext`, if the `session-message` stage left
+    // because the `continuity` stage emitted `additionalContext`, if the `session-message` stage left
     // `claimTracker` in `claim-result-unknown`, `finalizeConnectorOutput` must still emit the default secret-free stderr
     // diagnostic line WITHOUT requiring `AGS_ANTIGRAVITY_DIAGNOSTIC_STDERR === "1"`. Conversely, when `after-claim-before-output`
     // transitions to `stdout-written-not-consumed` on non-empty `out`, default stderr remains silent unless `env=1`.
@@ -1185,19 +1185,12 @@ try {
               mutated: false,
             };
           }
-          if (stage === "session-board") {
-            return {
-              output: { hookSpecificOutput: { additionalContext: "[Session Board] 1 active session." } },
-              updatedToolInput: currentToolInput,
-              mutated: false,
-            };
-          }
           return { output: {}, updatedToolInput: currentToolInput, mutated: false };
         },
       },
     );
-    assert.deepEqual(seenStagesM1, ["session-message", "continuity", "session-board"]);
-    assert.equal(outM1Unknown.length > 0, true, "SessionStart with continuity/session-board output must produce non-empty out");
+    assert.deepEqual(seenStagesM1, ["session-message", "continuity"]);
+    assert.equal(outM1Unknown.length > 0, true, "SessionStart with continuity output must produce non-empty out");
     assert.equal(trackerM1Unknown.getSnapshot().state, "claim-result-unknown");
 
     const stdoutChunksM1 = [];

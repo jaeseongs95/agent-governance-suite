@@ -32,6 +32,7 @@ import {
   type AcknowledgeSessionMessagesRequestV1,
   type GetSessionMessageStatusRequestV1,
   type SessionAutoWakeOutlookV2,
+  type SessionBoardListV2,
   type PrepareStateCleanupRequestV1,
   type SuppressContextRestoreRequestV1,
   type PluginUpdateNoticeV1,
@@ -99,6 +100,7 @@ export const contractSchemas = {
   acknowledgeSessionMessagesRequest: loadSchema("acknowledge-session-messages-request.v1.schema.json"),
   getSessionMessageStatusRequest: loadSchema("get-session-message-status-request.v1.schema.json"),
   sessionAutoWakeOutlook: loadSchema("session-auto-wake-outlook.v2.schema.json"),
+  sessionBoardList: loadSchema("session-board-list.v2.schema.json"),
   prepareStateCleanupRequest: loadSchema("prepare-state-cleanup-request.v1.schema.json"),
   executeStateCleanupRequest: loadSchema("execute-state-cleanup-request.v1.schema.json"),
   stateCleanupPlan: loadSchema("state-cleanup-plan.v1.schema.json"),
@@ -289,6 +291,10 @@ export class ContractValidator {
 
   sessionAutoWakeOutlook(value: unknown): SessionAutoWakeOutlookV2 {
     return this.assert<SessionAutoWakeOutlookV2>("sessionAutoWakeOutlook", value);
+  }
+
+  sessionBoardList(value: unknown): SessionBoardListV2 {
+    return this.assert<SessionBoardListV2>("sessionBoardList", value);
   }
 
   prepareStateCleanupRequest(value: unknown): PrepareStateCleanupRequestV1 {

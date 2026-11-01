@@ -2,7 +2,6 @@ import { spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -294,33 +293,22 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     expect(existsSync(environment.AGENT_GOVERNANCE_DB_PATH!)).toBe(false);
   });
 
-  it.each(["close", "handle-and-close"] as const)("F2: board %s failure prevents central proof issuance after actually closing both stores", async mode => {
-    const { environment } = fixture();
-    isolateAmbient(environment);
-    const reported = captureDiagnostics();
-    const handleFailure = diagnostics.hookFailure("ENTRY_BOARD_HANDLE_FAILED", "synthetic board handle failure");
-    const closeFailure = diagnostics.hookFailure("ENTRY_BOARD_CLOSE_FAILED", "synthetic board cleanup failure");
-    const workflows = closedWorkflows();
-    const boards: DatabaseSync[] = [];
-    const originalOpen = boardStore.openBoard;
-    vi.spyOn(boardStore, "openBoard").mockImplementation((...args: Parameters<typeof boardStore.openBoard>) => {
-      const board = originalOpen(...args);
-      boards.push(board);
-      const originalClose = board.close.bind(board);
-      vi.spyOn(board, "close").mockImplementation(() => { originalClose(); throw closeFailure; });
-      return board;
-    });
-    if (mode === "handle-and-close") vi.spyOn(boardStore, "setSummary").mockImplementation(() => { throw handleFailure; });
-
-    denied(await runGovernanceHook("claude-code", JSON.stringify(input("update_session_status", { summary: "synthetic entry status" })), environment));
-    expect(boards).toHaveLength(1);
-    expect(boards[0]!.isOpen).toBe(false);
-    assertWorkflowClosed(workflows);
-    expect(reported).toHaveLength(1);
-    expect(reported[0]).toMatchObject({ component: "governance-hook", context: {
-      producerReason: mode === "close" ? "ENTRY_BOARD_CLOSE_FAILED" : "ENTRY_BOARD_HANDLE_FAILED",
-      ...(mode === "handle-and-close" ? { secondary: [{ producerReason: "ENTRY_BOARD_CLOSE_FAILED" }] } : {}),
-    } });
+  it("F2: board tools get only the root proof; the hook never opens the board, so an unusable board cannot deny them", async () => {
+    const { directory, environment } = fixture();
+    const blocker = path.join(directory, "blocker");
+    writeFileSync(blocker, "");
+    const unusable = { ...environment, AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: path.join(blocker, "board.sqlite3") };
+    isolateAmbient(unusable);
+    const open = vi.spyOn(boardStore, "openBoard");
+    for (const [tool, args] of [["update_session_status", { schemaVersion: "1.0.0", summary: "synthetic entry status" }], ["list_session_status", { schemaVersion: "1.0.0" }]] as const) {
+      const result = await runGovernanceHook("claude-code", JSON.stringify(input(tool, args)), unusable);
+      expect(result.ok, tool).toBe(true);
+      const specific = (JSON.parse(result.output) as { hookSpecificOutput: { permissionDecision?: string; updatedInput: Record<string, unknown> } }).hookSpecificOutput;
+      expect(specific.permissionDecision, tool).not.toBe("deny");
+      expect(specific.updatedInput, tool).toHaveProperty("_sessionProof");
+      expect(specific.updatedInput, tool).not.toHaveProperty("_sessionBinding");
+    }
+    expect(open).not.toHaveBeenCalled();
   });
 
   it.each(["close", "handle-and-close"] as const)("F2: continuity %s failure denies and preserves primary plus cleanup failures", async mode => {

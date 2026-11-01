@@ -6,7 +6,6 @@ import { actorAccess } from "./input-observation.js";
 import { SessionActorProofs, SESSION_PROOF_FIELD, withoutSessionProof } from "./session-actor-proof.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { resolveHostAttestation, resolveWorkflowDatabasePath } from "./runtime-config.js";
-import { runSessionBoardHook } from "./session-board-hook.js";
 import { handleSessionMessageHook } from "./session-message-hook.js";
 import { runContinuityHook } from "./continuity-hook.js";
 import { HOST_ATTESTATION_FIELD, HOST_ATTESTATION_TOOLS, withoutHostAttestation, type HostExecutionAdapter, type HostExecutionAdapterBase } from "./host-attestation.js";
@@ -14,7 +13,6 @@ import { handleRegisteredHostAttestationHook, snapshotHookAttestationStrategy, t
 import { WorkflowContractError } from "../../contracts/types.js";
 import { hookFailureContext, retainHookFailureSecondary, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 
-const BOARD_TOOLS = new Set(["update_session_status", "list_session_status"]);
 const MESSAGE_TOOLS = new Set(["prepare_session_message", "send_session_message", "acknowledge_session_messages", "get_session_message_status", "validate_collaboration_decision"]);
 const CONTINUITY_TOOLS = new Set(["open_convergence_root", "checkpoint_context", "inspect_context", "load_context", "suppress_context_restore", "purge_direct_context"]);
 type RecordValue = Record<string, unknown>;
@@ -102,10 +100,8 @@ export async function runGovernanceHook(
       let domainOutput: RecordValue | null = null;
       const databasePath = resolveWorkflowDatabasePath(environment);
       store = new SqliteWorkflowStore(databasePath);
-      if (BOARD_TOOLS.has(tool)) {
-        const encoded = await runSessionBoardHook(host, JSON.stringify(currentInput), undefined, true);
-        domainOutput = encoded ? record(JSON.parse(encoded)) : {};
-      } else if (MESSAGE_TOOLS.has(tool)) {
+      // Session board tools need only the root proof: the server writes the board under the verified binding.
+      if (MESSAGE_TOOLS.has(tool)) {
         domainOutput = await handleSessionMessageHook(currentInput, host);
       } else if (CONTINUITY_TOOLS.has(tool)) {
         const encoded = runContinuityHook(JSON.stringify(currentInput), environment, host, true);

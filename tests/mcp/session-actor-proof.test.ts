@@ -39,8 +39,8 @@ vi.mock("../../skills/session-board/scripts/board-store.mjs", async importOrigin
   return {
     ...original,
     openBoard: vi.fn(original.openBoard),
-    listSessions: vi.fn(original.listSessions),
-    readSession: vi.fn(original.readSession),
+    setSummary: vi.fn(original.setSummary),
+    readEntry: vi.fn(original.readEntry),
   };
 });
 
@@ -566,9 +566,9 @@ describe("session actor proof all tools gate", () => {
         vi.spyOn(fixture.continuity, "bindOpenedRoot"),
         vi.spyOn(fixture.glossary, "lookup"), vi.spyOn(fixture.trust, "capabilities"), vi.spyOn(fixture.trust, "validateCollaborationDecision"),
         vi.spyOn(fixture.messages, "prepare"), vi.spyOn(fixture.messages, "send"), vi.spyOn(fixture.messages, "acknowledge"),
-        vi.spyOn(fixture.messages, "status"), vi.spyOn(fixture.messages, "listPresence"),
+        vi.spyOn(fixture.messages, "status"), vi.spyOn(fixture.messages, "listCurrentPresence"),
         vi.spyOn(fixture.store, "claimExecutionObservation"), vi.spyOn(fixture.store, "insertRun"), vi.spyOn(fixture.store, "nextRunSequence"),
-        vi.mocked(existsSync), vi.mocked(board.openBoard), vi.mocked(board.listSessions), vi.mocked(board.readSession),
+        vi.mocked(existsSync), vi.mocked(board.openBoard), vi.mocked(board.setSummary), vi.mocked(board.readEntry),
         ...Object.values(fixture.classification),
       ];
       const tools = await allTools(fixture.client);

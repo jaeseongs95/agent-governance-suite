@@ -140,7 +140,7 @@ it("sets exit status 0 when session-board-hook CLI completes a normal event", as
   const directory = mkdtempSync(path.join(tmpdir(), "board-cli-exit-"));
   vi.stubEnv("AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH", path.join(directory, "session-board.sqlite3"));
   try {
-    f.stdin = JSON.stringify({ hook_event_name: "SessionStart", session_id: "cli-board-target", cwd: directory });
+    f.stdin = JSON.stringify({ hook_event_name: "UserPromptSubmit", session_id: "cli-board-target", cwd: directory, prompt: "cli board" });
     process.argv = [originalArgv[0]!, boardEntry, "--host=codex"];
     vi.resetModules();
     await import("../../mcp-server/src/session-board-hook.js");

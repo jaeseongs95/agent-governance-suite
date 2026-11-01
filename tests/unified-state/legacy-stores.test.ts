@@ -10,7 +10,7 @@ import { InactiveSharedConnection } from "../../runtime/unified-state/shared-con
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { ContinuityStoreError } from "../../mcp-server/src/continuity-store.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
-import { gateDecision, readSession, recordPrompt, setSummary } from "../../skills/session-board/scripts/board-store.mjs";
+import { readEntry, recordInput, setSummary } from "../../skills/session-board/scripts/board-store.mjs";
 import type { InputObservation } from "../../mcp-server/src/input-observation.js";
 import { insertV2WakeRows, V2_MESSAGING_TABLES, V2_SCHEMA_SQL } from "../session-messaging/fixtures/session-message-v2-schema.mjs";
 
@@ -99,9 +99,9 @@ describe("native legacy APIs on one inactive authority connection", () => {
     expect(value.wakeReader.verifyObservation(target, { ...observation, wakeCandidates: ["xxxxxxxxxxxxxxxxxxxxxxxx"] }, source.receiptId, now)).toBe(false); expect(value.wakeReader.verifyObservation({ ...target, sessionId: "wrong" }, observation, source.receiptId, now)).toBe(false); expect(value.wakeReader.verifyObservation(target, observation, source.receiptId, 1000)).toBe(false);
     const effect = value.messaging.claimHostWake(target, observation, source.receiptId, value.wakeReader, now); expect(effect.recognized).toBe(true); expect(effect.messages).toHaveLength(1); expect(effect.binding?.attemptId).toBe(started.attempt?.attemptId); expect(value.messaging.claimHostWake(target, observation, source.receiptId, value.wakeReader, now).messages).toEqual([]); expect(value.owner.inspect().databases.filter(row => row.file !== "")).toHaveLength(1);
   });
-  it("B2-LEGACY-07: board composite scope/gate and continuity correlation never merge identities", () => {
+  it("B2-LEGACY-07: board composite scope and continuity correlation never merge identities", () => {
     const value = fixture(); const a = { host: "board-a", sessionId: "same-session", cwd: "synthetic-cwd", now: iso(100) }; const b = { ...a, host: "board-b" };
-    recordPrompt(value.board, a); expect(gateDecision(value.board, a)).toBe("deny"); expect(gateDecision(value.board, a)).toBe("allow"); setSummary(value.board, a, "one synthetic line"); expect(readSession(value.board, a.host, a.sessionId)?.summary).toBe("one synthetic line"); expect(readSession(value.board, b.host, b.sessionId)).toBeNull(); expect(gateDecision(value.board, b)).toBe("deny");
+    recordInput(value.board, a, { prompt: true }); setSummary(value.board, a, "one synthetic line"); expect(readEntry(value.board, a.host, a.sessionId)).toMatchObject({ summary: "one synthetic line", lastPromptAt: iso(100), summaryStale: false }); expect(readEntry(value.board, b.host, b.sessionId)).toBeNull();
     const service = new ContinuityService(value.continuity, null, value.workflow, () => new Date(100)); const other = fixture(); const sameKeyService = new ContinuityService(other.continuity, null, other.workflow, () => new Date(100)); expect(service.correlateSession("raw-session-fixture")).toBe(sameKeyService.correlateSession("raw-session-fixture"));
     expect(service.correlateSession("another-raw-session")).not.toBe(service.correlateSession("raw-session-fixture"));
     const distinct = fixture(() => 100, { ...keys, continuity: Buffer.alloc(32, 5).toString("base64url") }); const distinctService = new ContinuityService(distinct.continuity, null, distinct.workflow, () => new Date(100)); expect(distinctService.correlateSession("raw-session-fixture")).not.toBe(service.correlateSession("raw-session-fixture"));

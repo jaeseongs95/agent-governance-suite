@@ -1,297 +1,260 @@
-import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+// Session board 3.0 (docs/ags30-session-board-design.md 6.1, U1-U10). Real SQLite throughout; the only replaced boundary
+// is the broker socket in the MCP cases, where a real SessionMessageStore answers listCurrentPresence in-process.
+// Clocks are explicit; nothing waits on wall time.
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { ApiResultV1 } from "../../contracts/types.js";
-
 import {
-  gateDecision,
-  isReadOnlyCommand,
-  listSessions,
+  BOARD_FORMAT_VERSION,
+  listPromptMarkers,
+  locateRepository,
   openBoard,
-  pruneSessions,
-  recordPrompt,
+  pruneBoard,
+  readEntry,
+  recordInput,
   setSummary,
-  touchSession,
 } from "../../skills/session-board/scripts/board-store.mjs";
+import { hostActorId } from "../../mcp-server/src/host-attestation.js";
+import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared-stores.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
-import { resolveSessionBoardDatabasePath } from "../../mcp-server/src/runtime-config.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
-import { handleSessionBoardHook, runSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
-import { SessionMessageService, type SessionPresenceList } from "../../mcp-server/src/session-message-service.js";
-import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
+import { handleSessionBoardHook } from "../../mcp-server/src/session-board-hook.js";
+import { SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "../../mcp-server/src/session-message-protocol.js";
+import { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
+import { PRESENCE_LEASE_MS, PRESENCE_UNREACHABLE_VISIBLE_MS, SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "../mcp/version-fixtures.js";
 import { createSyntheticRootProofFixture } from "../mcp/synthetic-root-proof-client.js";
-import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
-
-// Second host core fixture only: native Codex remains capture-required.
-const syntheticHost = "synthetic-board-root";
-registerHookHostAdapter(syntheticHost, {
-  processPid: () => undefined,
-  deliveryProfile: () => ({ transport: "claude-inbox", capabilities: { supportedInjection: [], idleWake: "none" }, blocksEmptyWakePrompt: false }),
-  ownsTool: name => isGovernanceHookTool("codex", name),
-  adaptInput: (payload, host) => {
-    const mapped = adaptHostInput(payload, "codex");
-    return { ...mapped, observation: { ...mapped.observation, host,
-      actor: { role: "root", basis: "observed", reasonCode: "SYNTHETIC_BOARD_ROOT" } } };
-  },
-});
+import "../../mcp-server/src/builtin-hook-host-adapters.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const directories: string[] = [];
-const boards: Array<ReturnType<typeof openBoard>> = [];
-
+const closers: Array<() => void> = [];
 afterEach(() => {
-  for (const board of boards.splice(0)) board.close();
+  for (const close of closers.splice(0).reverse()) close();
   for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true });
 });
 
-function boardPath(): string {
+function temp(): string {
   const directory = mkdtempSync(path.join(tmpdir(), "session-board-"));
   directories.push(directory);
-  return path.join(directory, "session-board.sqlite3");
+  return directory;
 }
-
-function open(databasePath = boardPath()): ReturnType<typeof openBoard> {
-  const board = openBoard(databasePath);
-  boards.push(board);
+const boardPath = () => path.join(temp(), "session-board.sqlite3");
+function open(file = boardPath()) {
+  const board = openBoard(file);
+  closers.push(() => { if (board.isOpen) board.close(); });
   return board;
 }
+const at = (minute: number) => new Date(Date.UTC(2026, 10, 1, 5, minute)).toISOString();
+const sha = (file: string) => createHash("sha256").update(readFileSync(file)).digest("hex");
+const tables = (db: DatabaseSync) => db.prepare("SELECT name FROM sqlite_schema WHERE type = 'table' ORDER BY name").all().map((row) => String(row.name));
+const LEGACY_SESSIONS = `CREATE TABLE sessions (host TEXT NOT NULL, session_id TEXT NOT NULL, cwd TEXT NOT NULL, summary TEXT, summary_at TEXT,
+  last_prompt_at TEXT, denied_for TEXT, started_at TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (host, session_id)) STRICT;`;
 
-const at = (minute: number): string => new Date(Date.UTC(2026, 8, 19, 5, minute)).toISOString();
-const session = (now: string, sessionId = "s1") => ({ host: "claude-code", sessionId, cwd: "D:/work/repo", now });
-const decision = (output: Record<string, unknown>) => (output.hookSpecificOutput as { permissionDecision?: string } | undefined)?.permissionDecision ?? null;
+describe("U1 standalone board reset", () => {
+  it("resets a 2.x board file to the empty 3.0 format once, then reopens unchanged", () => {
+    const file = boardPath();
+    const legacy = new DatabaseSync(file);
+    legacy.exec(LEGACY_SESSIONS);
+    legacy.prepare("INSERT INTO sessions VALUES ('codex', 'ghost', '/w', 'old line', ?, ?, NULL, ?, ?)").run(at(0), at(0), at(0), at(0));
+    legacy.close();
 
-describe("session board store", () => {
-  it("denies the first gated call of each request once until the line is written for that request", () => {
-    const board = open();
-    recordPrompt(board, session(at(0)));
-    expect(gateDecision(board, session(at(1)))).toBe("deny");
-    expect(gateDecision(board, session(at(2)))).toBe("allow");
-    setSummary(board, session(at(3)), "v1.21.0 준비 · claude/session-board");
-    expect(gateDecision(board, session(at(4)))).toBe("allow");
-    recordPrompt(board, session(at(5)));
-    expect(gateDecision(board, session(at(6)))).toBe("deny");
-    setSummary(board, session(at(7)), "v1.21.0 준비 · claude/session-board");
-    expect(gateDecision(board, session(at(8)))).toBe("allow");
+    const board = open(file);
+    expect(tables(board)).toEqual(["board_sessions"]);
+    expect(board.prepare("PRAGMA user_version").get()).toEqual({ user_version: 1 });
+    expect(BOARD_FORMAT_VERSION).toBe(1);
+    expect(readEntry(board, "codex", "ghost")).toBeNull();
+    setSummary(board, { host: "codex", sessionId: "kept", now: at(1) }, "3.0 line");
+    board.close();
+
+    const reopened = open(file);
+    expect(readEntry(reopened, "codex", "kept")).toMatchObject({ summary: "3.0 line", summaryAt: at(1) });
   });
 
-  it("uses the session start as the request marker when the host has no request event", () => {
-    const board = open();
-    touchSession(board, session(at(0)));
-    expect(gateDecision(board, session(at(1)))).toBe("deny");
-    expect(gateDecision(board, session(at(2)))).toBe("allow");
-    setSummary(board, session(at(3)), "Codex 작업");
-    expect(listSessions(board, at(4))[0]).toMatchObject({ summary: "Codex 작업", stale: false });
-  });
-
-  it("accepts only one bounded line", () => {
-    const board = open();
-    for (const bad of ["", "   ", "첫 줄\n둘째 줄", "x".repeat(201), 42]) {
-      expect(() => setSummary(board, session(at(0)), bad)).toThrow(/one non-empty line/u);
-    }
-    expect(setSummary(board, session(at(0)), `  ${"x".repeat(200)}  `)).toHaveLength(200);
-  });
-
-  it("lists recent sessions newest first with stale and current flags and prunes day-old rows", () => {
-    const board = open();
-    setSummary(board, session(at(0), "old"), "어제 작업");
-    setSummary(board, session(at(10), "a"), "A 작업");
-    recordPrompt(board, session(at(11), "a"));
-    setSummary(board, session(at(12), "b"), "B 작업");
-    const rows = listSessions(board, at(13), { host: "claude-code", sessionId: "b" });
-    expect(rows.map((row) => [row.sessionId, row.stale, row.current])).toEqual([["b", false, true], ["a", true, false], ["old", false, false]]);
-    const nextDay = new Date(Date.parse(at(5)) + 24 * 3600_000).toISOString();
-    pruneSessions(board, nextDay);
-    expect(listSessions(board, nextDay).map((row) => row.sessionId)).toEqual(["b", "a"]);
-  });
-
-  it("keeps rows intact and denies once when two connections race on the same request", () => {
-    const databasePath = boardPath();
-    const first = open(databasePath);
-    const second = open(databasePath);
-    recordPrompt(first, session(at(0)));
-    const decisions = [gateDecision(first, session(at(1))), gateDecision(second, session(at(1)))];
-    expect(decisions.filter((value) => value === "deny")).toHaveLength(1);
-    setSummary(second, session(at(2)), "두 번째 연결이 쓴 줄");
-    setSummary(first, session(at(3), "s2"), "다른 세션");
-    expect(listSessions(first, at(4)).map((row) => [row.sessionId, row.summary])).toEqual([["s2", "다른 세션"], ["s1", "두 번째 연결이 쓴 줄"]]);
-  });
-
-  it("recognizes only single read-only commands", () => {
-    for (const command of ["git status", "git log --oneline -3", "git diff --stat", "git show HEAD", "git branch", "git branch --list", "ls -la", "cat README.md", "pwd", "rg foo src", "grep -n x file"]) {
-      expect(isReadOnlyCommand(command)).toBe(true);
-    }
-    for (const command of [
-      "git status && rm -rf x", "cat a > b", "ls | xargs rm", "echo $(whoami)", "git branch -D main", "git commit -m x", "pnpm test", "cat `x`", "ls; rm a", "git status\nrm a", "", null,
-      "rg --pre ./x.sh foo", "rg foo --pre=./x.sh", "git diff --output=README.md", "git log --output a.txt", "git diff --ext-diff", "cat (Remove-Item x)", "ls @(rm x)", "cat $HOME/x", "ls {a,b}",
-      "git diff \"--output=o.txt\"", "git diff '--output=o.txt'", "git diff \\--output=o.txt", "rg '--pre=./x.sh' foo",
-    ]) {
-      expect(isReadOnlyCommand(command)).toBe(false);
-    }
+  it.each([
+    ["a foreign table next to the old board table", (db: DatabaseSync) => { db.exec(LEGACY_SESSIONS); db.exec("CREATE TABLE messages (id TEXT)"); }],
+    ["an unrelated database", (db: DatabaseSync) => db.exec("CREATE TABLE workflow_runs (run_id TEXT PRIMARY KEY)")],
+    ["a newer board format", (db: DatabaseSync) => { db.exec("CREATE TABLE board_sessions (x TEXT)"); db.exec("PRAGMA user_version = 2"); }],
+  ])("refuses %s and leaves the file bytes untouched", (_label, build) => {
+    const file = boardPath();
+    const db = new DatabaseSync(file);
+    build(db);
+    db.close();
+    const before = sha(file);
+    expect(() => openBoard(file)).toThrow(expect.objectContaining({ code: "BOARD_FOREIGN_DATABASE" }));
+    expect(sha(file)).toBe(before);
   });
 });
 
-describe("session board hook", () => {
-  const input = (event: string, extra: Record<string, unknown> = {}) => ({ hook_event_name: event, session_id: "s1", cwd: "D:/work/repo", ...extra });
-  const tool = (name: string, toolInput: Record<string, unknown> = {}, extra: Record<string, unknown> = {}) => input("PreToolUse", { tool_name: name, tool_input: toolInput, ...extra });
-  const boardTool = (name: string) => `mcp__plugin_agent-governance-suite_agent-governance-suite__${name}`;
+describe("U2 shared board reset", () => {
+  const keys = { workflow: Buffer.alloc(32, 1).toString("base64url"), continuity: Buffer.alloc(32, 2).toString("base64url"), trust: Buffer.alloc(32, 3).toString("base64url") };
+  const shape = (db: DatabaseSync, names: string[]) => JSON.stringify(names.map((name) => ({ name, columns: db.prepare(`PRAGMA table_info(${name})`).all(),
+    sql: (db.prepare("SELECT sql FROM sqlite_schema WHERE type='table' AND name=?").get(name) as { sql?: string } | undefined)?.sql,
+    indexes: (db.prepare("SELECT name,sql FROM sqlite_schema WHERE type='index' AND tbl_name=? ORDER BY name").all(name) as Array<{ name: string }>)
+      .map((index) => ({ ...index, columns: db.prepare("SELECT * FROM pragma_index_xinfo(?)").all(index.name) })) })));
 
-  it("never denies ordinary tool calls for a missing or stale board line, while preserving explicit board identity checks", () => {
-    const board = open();
-    const run = (hookInput: Record<string, unknown>, minute: number) => handleSessionBoardHook(hookInput, board, "claude-code", at(minute));
-    expect(run(input("UserPromptSubmit", { prompt: "비밀 요청 원문" }), 0)).toEqual({});
-    expect(run(tool("Bash", { command: "git status" }), 1)).toEqual({});
-    expect(run(tool("Edit", {}, { agent_id: "sub-1" }), 2)).toEqual({});
-    expect(run(tool("Read"), 3)).toEqual({});
-    expect(run(tool("Bash", { command: "git status && rm x" }), 4)).toEqual({});
-    expect(run(tool("Write"), 5)).toEqual({});
+  it("empties only the board module when a v0 board is upgraded; every other module keeps its schema and rows", () => {
+    const directory = temp();
+    const first = createInactiveSharedStores({ directory, mode: "fixture-only", clock: () => 100, syntheticKeys: keys });
+    first.workflow.nextRunSequence();
+    first.continuity.ensureTask("synthetic-correlation", new Date(100).toISOString());
+    first.messaging.send({ sender: { host: "a", sessionId: "s" }, target: { host: "b", sessionId: "r" }, messageId: "kept-message", body: "kept" }, 100);
+    const file = first.owner.databasePath;
+    first.owner.close();
 
-    expect(decision(run(tool(boardTool("update_session_status"), { schemaVersion: "1.0.0", summary: "x" }, { agent_id: "sub-1" }), 6))).toBe("deny");
-    expect(decision(run(tool(boardTool("update_session_status"), { schemaVersion: "1.0.0", summary: "둘\n줄" }), 7))).toBe("deny");
-    const updated = run(tool(boardTool("update_session_status"), { schemaVersion: "1.0.0", summary: "현황판 구현", _sessionBinding: { host: "x", sessionId: "forged" } }), 8);
-    expect(updated).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: { schemaVersion: "1.0.0", summary: "현황판 구현", _sessionBinding: { host: "claude-code", sessionId: "s1" } } } });
-
-    run(input("UserPromptSubmit", { agent_id: "sub-1", prompt: "서브에이전트 입력" }), 9);
-    expect(listSessions(board, at(9))[0]).toMatchObject({ summary: "현황판 구현", stale: false });
-    run(input("SessionStart", { agent_id: "sub-1" }), 10);
-    expect(listSessions(board, at(10))[0]).toMatchObject({ summary: "현황판 구현", stale: false });
-
-    run(input("UserPromptSubmit"), 11);
-    expect(decision(run(tool("Agent"), 12))).toBe(null);
-    const row = listSessions(board, at(13))[0];
-    expect(row).toMatchObject({ sessionId: "s1", cwd: "D:/work/repo", summary: "현황판 구현", stale: true });
-    expect(JSON.stringify(listSessions(board, at(11)))).not.toContain("비밀 요청 원문");
-
-    const listed = run(tool(boardTool("list_session_status"), { schemaVersion: "1.0.0" }, { agent_id: "sub-1" }), 14);
-    expect(listed).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
-    expect((listed.hookSpecificOutput as Record<string, unknown>).updatedInput).toBeUndefined();
-  });
-
-  it("does not create a new request boundary for a broker-verified wake bell", () => {
-    const board = open();
-    handleSessionBoardHook(input("SessionStart"), board, "claude-code", at(0));
-    setSummary(board, session(at(1)), "메시지 대기");
-    handleSessionBoardHook(input("UserPromptSubmit", { prompt: "verified wake" }), board, "claude-code", at(2), true);
-    expect(decision(handleSessionBoardHook(tool("Edit"), board, "claude-code", at(3)))).toBe(null);
-    handleSessionBoardHook(input("UserPromptSubmit", { prompt: "ordinary prompt" }), board, "claude-code", at(4));
-    expect(decision(handleSessionBoardHook(tool("Edit"), board, "claude-code", at(5)))).toBe(null);
-  });
-
-  it("does not consume a parent wake from an observed subagent prompt", async () => {
-    const store = new SessionMessageStore(":memory:");
-    const target = { host: "claude-code", sessionId: "parent" };
-    const nonce = "subagent-wake-nonce-abcdefghijklmnop";
-    store.send({ messageId: "subagent-wake-0001", sender: { host: "peer", sessionId: "sender" }, target, body: "pending" }, 1000);
-    store.startPresence({ ...target, instanceId: "parent-instance", transport: "claude-inbox", wakeVisibility: "silent", canWakeSilently: true,
-      deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "silent" } }, 2000);
-    expect(store.acquireRelay({ ...target, transport: "claude-inbox", relayId: "parent-relay", pid: process.pid, parentPid: process.pid }, 2000)).toBe(true);
-    expect(store.reserveManagedWake({ ...target, nonce, instanceId: "parent-instance", transport: "claude-inbox", relayId: "parent-relay" }, 2000).dispatch).toBe(true);
-    const before = store.database.prepare("SELECT * FROM wake_nonces").all();
-    let requests = 0;
-    const request = (async <T>() => {
-      requests += 1;
-      return { consumed: store.consumeWake(target, nonce) } as T;
-    }) as typeof import("../../mcp-server/src/session-message-client.js").sessionMessageRequest;
-    const previous = process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
-    process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = boardPath();
+    // Downgrade the board module to the 2.x layout (version 0, table sessions) with one stale row.
+    const legacy = new DatabaseSync(file);
     try {
-      await runSessionBoardHook("claude-code", JSON.stringify({
-        hook_event_name: "UserPromptSubmit",
-        session_id: target.sessionId,
-        agent_id: "sub-1",
-        prompt: `[agent-governance-suite:wake:${nonce}]`,
-      }), request);
-      expect(requests).toBe(0);
-      // The parent's marker and body are untouched by the subagent prompt.
-      expect(store.database.prepare("SELECT * FROM wake_nonces").all()).toEqual(before);
-      expect(store.pendingCount(target, 2002)).toBe(1);
-    } finally {
-      if (previous === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
-      else process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = previous;
-      store.close();
+      legacy.exec("DROP TABLE board_sessions;");
+      legacy.exec(LEGACY_SESSIONS);
+      legacy.prepare("INSERT INTO sessions VALUES ('codex', 'ghost', '/w', 'old line', ?, ?, NULL, ?, ?)").run(at(0), at(0), at(0), at(0));
+      legacy.prepare("UPDATE shared_module_schema SET version = 0, schema_json = ? WHERE module = 'board'").run(shape(legacy, ["sessions"]));
+    } finally { legacy.close(); }
+    const reader = new DatabaseSync(file, { readOnly: true });
+    const others = () => reader.prepare("SELECT module, version, schema_json FROM shared_module_schema WHERE module <> 'board' ORDER BY module").all();
+    const otherTables = () => tables(reader).filter((name) => !["sessions", "board_sessions"].includes(name))
+      .map((name) => [name, (reader.prepare(`SELECT count(*) AS n FROM ${name}`).get() as { n: number }).n]);
+    const before = { modules: others(), counts: otherTables() };
+    expect(before.counts).toContainEqual(["messages", 1]);
+    expect(before.counts).toContainEqual(["continuity_tasks", 1]);
+
+    const upgraded = createInactiveSharedStores({ directory, mode: "fixture-only", clock: () => 200, syntheticKeys: keys });
+    closers.push(() => upgraded.owner.close());
+    const snapshot = upgraded.owner.inspect();
+    expect(snapshot.modules.find((row) => row.module === "board")?.version).toBe(1);
+    expect(snapshot.counts.board_sessions).toBe(0);
+    expect(snapshot.counts).not.toHaveProperty("sessions");
+    expect({ modules: others(), counts: otherTables() }).toEqual(before);
+    reader.close();
+    expect(readEntry(upgraded.board, "codex", "ghost")).toBeNull();
+  });
+});
+
+describe("U3/U4 summary and retention rules", () => {
+  const who = { host: "claude-code", sessionId: "s1" };
+  it("accepts one bounded line and reports staleness only against an observed prompt", () => {
+    const board = open();
+    for (const bad of ["", "   ", "둘\n줄", "a\rb", "x".repeat(201), 42]) expect(() => setSummary(board, { ...who, now: at(0) }, bad)).toThrow();
+    expect(setSummary(board, { ...who, now: at(1) }, ` ${"x".repeat(200)} `)).toEqual({ summary: "x".repeat(200), summaryAt: at(1) });
+    // No prompt observed (e.g. a host without a prompt hook): unknown, never false.
+    expect(readEntry(board, who.host, who.sessionId)).toMatchObject({ summaryStale: null, lastPromptAt: null, cwd: null });
+    recordInput(board, { ...who, cwd: "/work/a", now: at(2) }, { prompt: true });
+    expect(readEntry(board, who.host, who.sessionId)).toMatchObject({ summaryStale: true, lastPromptAt: at(2), cwd: "/work/a" });
+    setSummary(board, { ...who, now: at(3) }, "새 줄");
+    expect(readEntry(board, who.host, who.sessionId)).toMatchObject({ summary: "새 줄", summaryStale: false, cwd: "/work/a" });
+    // A verified wake bell refreshes the directory but is not a new request.
+    recordInput(board, { ...who, cwd: "/work/b", now: at(4) }, { prompt: false });
+    expect(readEntry(board, who.host, who.sessionId)).toMatchObject({ summaryStale: false, lastPromptAt: at(2), cwd: "/work/b" });
+  });
+
+  it("prunes rows not seen for seven days and keeps a six-day-old row", () => {
+    const board = open();
+    const day = 24 * 60 * 60_000;
+    const base = Date.parse(at(0));
+    setSummary(board, { host: "h", sessionId: "old", now: new Date(base - 7 * day - 1).toISOString() }, "old");
+    setSummary(board, { host: "h", sessionId: "recent", now: new Date(base - 6 * day).toISOString() }, "recent");
+    pruneBoard(board, at(0));
+    expect(readEntry(board, "h", "old")).toBeNull();
+    expect(readEntry(board, "h", "recent")).not.toBeNull();
+  });
+});
+
+describe("U5 prompt hook", () => {
+  const prompt = (extra: Record<string, unknown> = {}) => ({ hook_event_name: "UserPromptSubmit", session_id: "s1", cwd: "/work/repo", prompt: "비밀 요청 원문", ...extra });
+  it("records only a main prompt's time and directory; child, wake and other events write nothing", () => {
+    const board = open();
+    for (const event of ["SessionStart", "PreToolUse", "PostToolUse", "Stop", "SessionEnd"]) {
+      expect(handleSessionBoardHook({ ...prompt(), hook_event_name: event, tool_name: "mcp__agent_governance_suite__update_session_status", tool_input: { summary: "x" } }, board, "codex", at(0))).toEqual({});
     }
+    expect(handleSessionBoardHook(prompt({ agent_id: "child" }), board, "codex", at(0))).toEqual({});
+    expect(readEntry(board, "codex", "s1")).toBeNull();
+    expect(handleSessionBoardHook(prompt(), board, "codex", at(1))).toEqual({});
+    expect(readEntry(board, "codex", "s1")).toMatchObject({ cwd: "/work/repo", lastPromptAt: at(1), summary: null });
+    handleSessionBoardHook(prompt(), board, "codex", at(2), true);
+    expect(readEntry(board, "codex", "s1")).toMatchObject({ lastPromptAt: at(1) });
+    expect(JSON.stringify(board.prepare("SELECT * FROM board_sessions").all())).not.toContain("비밀 요청 원문");
   });
 
-  it("does not reject any ordinary call when several hook processes observe the same request", async () => {
-    const databasePath = boardPath();
-    open(databasePath); // The schema exists, so the processes race on the session row itself.
-    const bundle = fileURLToPath(new URL("../../mcp-server/src/session-board-hook.ts", import.meta.url));
-    const hookInput = JSON.stringify(tool("Edit"));
-    const outputs = await Promise.all(Array.from({ length: 4 }, () => new Promise<{ status: number | null; stdout: string }>((resolve) => {
-      const child = spawn(process.execPath, ["--import", "tsx", bundle], { env: { ...process.env, AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: databasePath }, windowsHide: true });
-      let stdout = "";
-      child.stdout.on("data", (chunk: Buffer) => { stdout += chunk.toString("utf8"); });
-      child.on("close", (status) => resolve({ status, stdout }));
-      child.stdin.end(hookInput);
-    })));
-    expect(outputs.every((output) => output.status === 0)).toBe(true);
-    // Native Codex cannot write a board row without capture; ordinary tools still fail open.
-    expect(outputs.filter((output) => output.stdout.includes('"deny"'))).toHaveLength(0);
-    expect(listSessions(open(databasePath), at(0))).toEqual([]);
-  });
-
-  it("points every Codex hook command at a bundle that exists", () => {
+  it("registers the board hook only on prompts (no SessionStart or tool registrations)", () => {
     const repository = fileURLToPath(new URL("../../", import.meta.url));
-    const config = JSON.parse(readFileSync(path.join(repository, "hooks", "hooks.json"), "utf8")) as { hooks: Record<string, Array<{ hooks: Array<{ command: string; commandWindows: string }> }>> };
-    expect(config.hooks.UserPromptSubmit?.some((group) => group.hooks.some((hook) => hook.command.includes("session-board-hook.mjs")))).toBe(true);
-    for (const hook of Object.values(config.hooks).flat().flatMap((group) => group.hooks)) {
-      const posix = /^node "\$PLUGIN_ROOT\/([^"]+)"(?: .*)?$/u.exec(hook.command)?.[1];
-      const windows = /^node "\$env:PLUGIN_ROOT\\([^"]+)"(?: .*)?$/u.exec(hook.commandWindows)?.[1];
-      expect(posix, hook.command).toBeTruthy();
-      expect(windows?.split("\\").join("/"), hook.commandWindows).toBe(posix);
-      expect(existsSync(path.join(repository, posix!))).toBe(true);
-    }
-    const messageStart = config.hooks.SessionStart?.[0]?.hooks[0];
-    expect(messageStart).toBeDefined();
-    expect(messageStart!.command).toContain('--host-pid "$PPID"');
-    expect(messageStart!.commandWindows).toContain('Get-CimInstance Win32_Process');
-    expect(messageStart!.commandWindows).toContain('.ParentProcessId');
-  });
-
-  it("fails open on unreadable input or an unusable board", async () => {
-    expect(await runSessionBoardHook("claude-code", "not json")).toBe("");
-    const directory = mkdtempSync(path.join(tmpdir(), "session-board-blocked-"));
-    directories.push(directory);
-    const blocker = path.join(directory, "file");
-    writeFileSync(blocker, "");
-    const previous = process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
-    process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = path.join(blocker, "session-board.sqlite3");
-    try {
-      expect(await runSessionBoardHook("claude-code", JSON.stringify(tool("Edit")))).toBe("");
-    } finally {
-      if (previous === undefined) delete process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
-      else process.env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH = previous;
+    for (const file of ["hooks/hooks.json", "claude-overlay/hooks/hooks.json"]) {
+      const config = JSON.parse(readFileSync(path.join(repository, file), "utf8")) as { hooks: Record<string, Array<{ hooks: Array<Record<string, unknown>> }>> };
+      const events = Object.entries(config.hooks).filter(([, groups]) => JSON.stringify(groups).includes("session-board-hook")).map(([event]) => event);
+      expect(events, file).toEqual(["UserPromptSubmit"]);
     }
   });
 });
 
-describe("session board MCP tools", () => {
-  const roots = new WeakMap<Client, ReturnType<typeof createSyntheticRootProofFixture>>();
-  const proofArgs = (client: Client, tool: string, args: Record<string, unknown>, identity = { host: "synthetic-board-reader", sessionId: "reader" }) => {
-    const root = roots.get(client);
-    if (!root) throw new Error("Missing owned proof fixture.");
-    return root.argumentsFor(tool, args, identity);
-  };
-  function sessionMessages(
-    presence: ApiResultV1<SessionPresenceList> = { schemaVersion: "1.0.0", ok: false, data: null, error: { code: "MCP_UNAVAILABLE", message: "unavailable", details: null } },
-  ) {
-    const service = new SessionMessageService();
-    service.listPresence = async () => presence;
-    return service;
-  }
+const T = Date.parse(at(30));
+function presenceStore() {
+  const store = new SessionMessageStore(":memory:");
+  closers.push(() => store.close());
+  return store;
+}
+function born(store: SessionMessageStore, sessionId: string, startedMs: number, instanceId = sessionId, workspaceId?: string) {
+  store.startPresence({ host: "claude-code", sessionId, instanceId, transport: "claude-inbox", wakeVisibility: "silent", canWakeSilently: true,
+    ...(workspaceId ? { workspaceId } : {}) }, startedMs);
+}
+const self = { host: "claude-code", sessionId: "caller" };
 
-  async function connect(databasePath: string | null, messages = sessionMessages()): Promise<Client> {
+describe("U6 listCurrentPresence", () => {
+  it("lists online and recently lapsed current births only, self first whatever its state", () => {
+    const store = presenceStore();
+    born(store, "online", T - 1000);
+    born(store, "ended", T - 2000);
+    store.endPresence({ host: "claude-code", sessionId: "ended" }, "session-end", "ended", T - 1500);
+    // Lease ends PRESENCE_LEASE_MS after the start; lapse is measured from the lease end.
+    born(store, "lapsed-inside", T - PRESENCE_LEASE_MS - PRESENCE_UNREACHABLE_VISIBLE_MS + 1000);
+    born(store, "lapsed-outside", T - PRESENCE_LEASE_MS - PRESENCE_UNREACHABLE_VISIBLE_MS - 1000);
+    // An older birth that is still live must not show once a newer birth of the session has ended.
+    born(store, "rebirth-ended", T - 5000, "a");
+    born(store, "rebirth-ended", T - 4000, "b");
+    store.endPresence({ host: "claude-code", sessionId: "rebirth-ended" }, "session-end", "b", T - 3000);
+    // Restart: the new birth is listed with its own start.
+    born(store, "restarted", T - 900_000, "old");
+    born(store, "restarted", T - 3000, "new");
+
+    const listed = store.listCurrentPresence(T, self);
+    expect(listed.truncated).toBe(0);
+    expect(listed.sessions.map((row) => [row.sessionId, row.state])).toEqual([
+      ["caller", "unknown"], ["online", "online"], ["restarted", "online"], ["lapsed-inside", "unreachable"],
+    ]);
+    expect(listed.sessions.find((row) => row.sessionId === "restarted")?.startedAt).toBe(new Date(T - 3000).toISOString());
+    expect(store.listCurrentPresence(T, { host: "claude-code", sessionId: "ended" }).sessions[0]).toMatchObject({ sessionId: "ended", state: "ended" });
+  });
+
+  it("keeps the reply inside the broker response limit with maximum-length fields and counts the rest", () => {
+    const store = presenceStore();
+    const sessions = Array.from({ length: 60 }, (_, index) => `s${index}`.padEnd(200, "s"));
+    sessions.forEach((sessionId, index) => born(store, sessionId, T - 1000 - index, sessionId.slice(0, 120), "w".repeat(500)));
+    const listed = store.listCurrentPresence(T, { host: "claude-code", sessionId: sessions[0]! });
+    expect(Buffer.byteLength(`${JSON.stringify({ ok: true, data: listed })}\n`, "utf8")).toBeLessThanOrEqual(SESSION_MESSAGE_MAX_RESPONSE_BYTES);
+    expect(listed.sessions.length).toBeGreaterThan(1);
+    expect(listed.sessions.length + listed.truncated).toBe(60);
+    expect(listed.truncated).toBeGreaterThan(0);
+  });
+});
+
+describe("U7/U8 MCP board tools", () => {
+  const roots = new WeakMap<Client, ReturnType<typeof createSyntheticRootProofFixture>>();
+  const call = async (client: Client, tool: string, args: Record<string, unknown>, identity = self) => {
+    const root = roots.get(client)!;
+    const response = await client.callTool({ name: tool, arguments: root.argumentsFor(tool, args, identity) });
+    return JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: unknown; error: { code: string; details: Record<string, unknown> | null } | null };
+  };
+  async function connect(databasePath: string | null, store: SessionMessageStore | null) {
     const validator = new ContractValidator();
     const updates = new InMemoryPluginUpdateStore();
     updates.putPluginUpdateState({
@@ -299,6 +262,12 @@ describe("session board MCP tools", () => {
       latestCommit: "d".repeat(40), etag: "session-board", comparison: "up-to-date", lastAttemptAt: "2026-09-19T00:00:00.000Z",
       lastSuccessfulCheckAt: "2026-09-19T00:00:00.000Z", nextCheckAt: "2099-01-01T00:00:00.000Z", lastNotifiedVersion: null, lastNotifiedAt: null, lastErrorCode: null,
     });
+    const messages = new SessionMessageService();
+    // Broker socket replaced by the real store in-process; a null store is an unreachable broker.
+    messages.listCurrentPresence = async (identity) => {
+      if (!store) throw new Error("connect ECONNREFUSED (synthetic broker down)");
+      return store.listCurrentPresence(T, identity);
+    };
     const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
     const root = createSyntheticRootProofFixture();
     const server = createMcpServer(service, new PluginUpdateService(updates), undefined, undefined, undefined, validator, "default", null, databasePath, messages, undefined, undefined, root.proofs);
@@ -307,125 +276,115 @@ describe("session board MCP tools", () => {
     await server.connect(serverTransport);
     await client.connect(clientTransport);
     roots.set(client, root);
-    return client;
+    return { client, validator };
   }
-  const payload = (response: unknown) => JSON.parse((response as { content: Array<{ text: string }> }).content[0]!.text) as { ok: boolean; data: unknown; error: { code: string } | null };
 
-  it("shares one board between the Claude launcher and a synthetic second host while unsupported Gemini stays denied", async () => {
-    const state = mkdtempSync(path.join(tmpdir(), "session-board-state-"));
-    directories.push(state);
-    const env: NodeJS.ProcessEnv = { ...process.env, LOCALAPPDATA: state, XDG_STATE_HOME: state, HOME: state, AGENT_GOVERNANCE_SHARED_STATE_DIR: state, CLAUDE_PLUGIN_DATA: path.join(state, "plugin-data") };
-    delete env.AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH;
-    delete env.AGENT_GOVERNANCE_DB_PATH;
-    const repository = fileURLToPath(new URL("../../", import.meta.url));
-    const update = (sessionId: string, toolName: string, summary: string, host: "codex" | "claude-code") => JSON.stringify({ hook_event_name: "PreToolUse", session_id: sessionId, ...(host === "claude-code" ? {} : { agent_id: "" }), cwd: "D:/work/repo", tool_name: toolName, tool_input: { schemaVersion: "1.0.0", summary } });
-    const run = (script: string, input: string, args: string[] = []) => spawnSync(process.execPath, [path.join(repository, script), ...args], { env, input, encoding: "utf8", windowsHide: true });
-    const claude = run("claude-plugin/hooks/session-board-hook.mjs", update("claude-1", "mcp__plugin_agent-governance-suite_agent-governance-suite__update_session_status", "Claude 작업", "claude-code"));
-    const gemini = run("mcp-server/dist/session-board-hook.mjs", update("gemini-1", "mcp__agent-governance-suite__update_session_status", "Gemini 작업", "codex"), ["--host=gemini"]);
-    expect([claude.status, gemini.status]).toEqual([0, 0]);
-    expect(claude.stdout).toContain('"host":"claude-code"');
-    expect(JSON.parse(gemini.stdout)).toMatchObject({ hookSpecificOutput: { permissionDecision: "deny" } });
-    expect(JSON.parse(gemini.stdout).hookSpecificOutput.updatedInput).toBeUndefined();
-    const shared = resolveSessionBoardDatabasePath(env);
-    expect(existsSync(shared)).toBe(true);
-    expect(existsSync(env.CLAUDE_PLUGIN_DATA!)).toBe(false);
-
-    const syntheticBoard = open(shared);
-    const synthetic = handleSessionBoardHook(JSON.parse(update("synthetic-1", "mcp__agent-governance-suite__update_session_status", "두 번째 호스트 작업", "codex")), syntheticBoard, syntheticHost);
-    expect(synthetic).toMatchObject({ hookSpecificOutput: { updatedInput: { _sessionBinding: { host: syntheticHost, sessionId: "synthetic-1" } } } });
-    const client = await connect(shared);
-    const listed = payload(await client.callTool({ name: "list_session_status", arguments: proofArgs(client, "list_session_status", { schemaVersion: "1.0.0" }, { host: syntheticHost, sessionId: "synthetic-1" }) }));
-    const sessions = (listed.data as { sessions: Array<{ host: string; sessionId: string; summary: string; current: boolean }> }).sessions;
-    expect(sessions.map((row) => [row.host, row.sessionId, row.summary, row.current]).sort()).toEqual([
-      ["claude-code", "claude-1", "Claude 작업", false],
-      [syntheticHost, "synthetic-1", "두 번째 호스트 작업", true],
-    ]);
-  });
-
-  it("reads back the hook-written line, lists the host board and refuses unbound updates", async () => {
+  it("lists running sessions with location, summary and wake, and never lists an ended session that has a summary", async () => {
+    const store = presenceStore();
+    const repo = temp();
+    mkdirSync(path.join(repo, ".git"), { recursive: true });
+    writeFileSync(path.join(repo, ".git", "HEAD"), "ref: refs/heads/main\n");
+    mkdirSync(path.join(repo, "src"));
+    born(store, "caller", T - 1000);
+    born(store, "worker", T - 2000, "worker", path.join(repo, "src"));
+    born(store, "gone", T - 3000);
+    store.endPresence({ host: "claude-code", sessionId: "gone" }, "session-end", "gone", T - 2500);
     const databasePath = boardPath();
     const board = open(databasePath);
-    handleSessionBoardHook({ hook_event_name: "PreToolUse", session_id: "s1", cwd: "D:/work/repo", tool_name: "mcp__agent_governance_suite__update_session_status", tool_input: { summary: "릴리스 준비" } }, board, "claude-code");
-    const client = await connect(databasePath);
-    const binding = { host: "claude-code", sessionId: "s1" };
-    const tool = (await client.listTools()).tools.find((item) => item.name === "update_session_status");
-    expect(tool?.description).toContain("Do not repeat it for an unchanged task.");
-    expect(tool?.description).not.toContain("when a request starts");
+    setSummary(board, { host: "claude-code", sessionId: "gone", now: at(29) }, "끝난 세션의 줄");
+    setSummary(board, { host: "claude-code", sessionId: "worker", now: at(28) }, "릴리스 준비");
+    recordInput(board, { host: "claude-code", sessionId: "worker", cwd: null, now: at(29) }, { prompt: true });
+    board.close();
 
-    const recorded = payload(await client.callTool({ name: "update_session_status", arguments: proofArgs(client, "update_session_status", { schemaVersion: "1.0.0", summary: "릴리스 준비" }, binding) }));
-    expect(recorded).toMatchObject({ ok: true, data: { sessionId: "s1", summary: "릴리스 준비", current: true } });
-    expect(payload(await client.callTool({ name: "update_session_status", arguments: proofArgs(client, "update_session_status", { schemaVersion: "1.0.0", summary: "다른 줄" }, binding) })).error?.code).toBe("MCP_UNAVAILABLE");
-    expect(payload(await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "릴리스 준비" } })).error?.code).toBe("BINDING_REQUIRED");
-    expect(payload(await client.callTool({ name: "update_session_status", arguments: proofArgs(client, "update_session_status", { summary: "릴리스 준비" }, binding) })).error?.code).toBe("INVALID_INPUT");
+    const { client, validator } = await connect(databasePath, store);
+    const listed = await call(client, "list_session_status", { schemaVersion: "1.0.0" });
+    expect(listed.ok).toBe(true);
+    expect(validator.sessionBoardList(listed.data)).toBeTruthy();
+    const data = listed.data as { sessions: Array<Record<string, unknown>>; truncated: number; board: unknown };
+    expect(data.sessions.map((row) => row.sessionId)).toEqual(["caller", "worker"]);
+    expect(data.board).toEqual({ status: "ok" });
+    expect(data.sessions[0]).toMatchObject({ current: true, presence: "online", summary: null, summaryStale: null });
+    expect(data.sessions[1]).toEqual({
+      host: "claude-code", sessionId: "worker", current: false, presence: "online",
+      startedAt: new Date(T - 2000).toISOString(), lastSeenAt: new Date(T - 2000).toISOString(),
+      cwd: path.join(repo, "src"), repo: { root: repo, repoId: realpathSync(path.join(repo, ".git")), branch: "main" },
+      summary: "릴리스 준비", summaryAt: at(28), summaryStale: true, lastPromptAt: at(29),
+      wake: { state: "unsupported", reason: "no-idle-wake" },
+    });
+  });
 
-    const listed = payload(await client.callTool({ name: "list_session_status", arguments: proofArgs(client, "list_session_status", { schemaVersion: "1.0.0" }) }));
-    expect(listed).toMatchObject({ ok: true, data: { sessions: [{ sessionId: "s1", summary: "릴리스 준비", current: false, presence: { state: "unknown", instanceId: null, wakeVisibility: "none", canWakeSilently: false } }] } });
-    expect(payload(await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "릴리스 준비", _sessionBinding: binding } })).error?.code).toBe("BINDING_INVALID");
-    const unavailable = await connect(null);
-    expect(payload(await unavailable.callTool({ name: "list_session_status", arguments: proofArgs(unavailable, "list_session_status", { schemaVersion: "1.0.0" }) })).error?.code).toBe("MCP_UNAVAILABLE");
+  it("reports missing liveness instead of guessing, and lists without summaries when only the board file is unreadable", async () => {
+    const down = await connect(boardPath(), null);
+    expect(await call(down.client, "list_session_status", { schemaVersion: "1.0.0" })).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { step: "presence" } } });
+
+    const store = presenceStore();
+    born(store, "caller", T - 1000);
+    const damaged = boardPath();
+    writeFileSync(damaged, "x".repeat(4096));
+    const { client, validator } = await connect(damaged, store);
+    const listed = await call(client, "list_session_status", { schemaVersion: "1.0.0" });
+    expect(listed).toMatchObject({ ok: true, data: { sessions: [{ sessionId: "caller", presence: "online", summary: null }], board: { status: "unavailable", step: "open" } } });
+    expect(validator.sessionBoardList(listed.data)).toBeTruthy();
+
     const missing = boardPath();
-    const absent = await connect(missing);
-    expect(payload(await absent.callTool({ name: "list_session_status", arguments: proofArgs(absent, "list_session_status", { schemaVersion: "1.0.0" }) }))).toMatchObject({ ok: true, data: { sessions: [] } });
-    expect(payload(await absent.callTool({ name: "update_session_status", arguments: proofArgs(absent, "update_session_status", { schemaVersion: "1.0.0", summary: "x" }, binding) })).error?.code).toBe("MCP_UNAVAILABLE");
+    const absent = await connect(missing, store);
+    expect(await call(absent.client, "list_session_status", { schemaVersion: "1.0.0" })).toMatchObject({ ok: true, data: { board: { status: "ok" } } });
     expect(existsSync(missing)).toBe(false);
   });
 
-  it("overlays matching broker presence and leaves missing sessions unknown", async () => {
+  it("writes the summary under the verified binding, creates the file, and reports an unwritable board", async () => {
     const databasePath = boardPath();
+    const { client } = await connect(databasePath, presenceStore());
+    const written = await call(client, "update_session_status", { schemaVersion: "1.0.0", summary: "현황판 구현" });
+    expect(written).toMatchObject({ ok: true, data: { summary: "현황판 구현", summaryAt: expect.any(String) } });
     const board = open(databasePath);
-    const now = new Date().toISOString();
-    setSummary(board, session(now, "online"), "온라인 작업");
-    setSummary(board, session(now, "missing"), "누락 작업");
-    setSummary(board, session(now, "unasked"), "묻지 못한 작업");
-    const client = await connect(databasePath, sessionMessages({
-      schemaVersion: "1.0.0",
-      ok: true,
-      data: {
-        sessions: [{
-          host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", relayLive: true, wakeVisibility: "silent",
-          canWakeSilently: true, deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "silent" },
-          collaborationId: "collaboration-1", workspaceId: "workspace-1", role: "worker",
-          startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",
-        }],
-        // A failed batch or an identity the broker would refuse: never asked, so its autoWake stays null.
-        unanswered: [{ host: "claude-code", sessionId: "unasked" }],
-      },
-      error: null,
-    }));
+    expect(readEntry(board, self.host, self.sessionId)).toMatchObject({ summary: "현황판 구현" });
+    expect((await client.callTool({ name: "update_session_status", arguments: { schemaVersion: "1.0.0", summary: "x" } }) as { content: Array<{ text: string }> }).content[0]!.text).toContain("BINDING_REQUIRED");
+    const forged = await client.callTool({ name: "update_session_status", arguments: { ...roots.get(client)!.argumentsFor("update_session_status", { schemaVersion: "1.0.0", summary: "x" }, self), _sessionBinding: { host: "x", sessionId: "y" } } });
+    expect((forged as { content: Array<{ text: string }> }).content[0]!.text).toContain("BINDING_INVALID");
 
-    const listed = payload(await client.callTool({ name: "list_session_status", arguments: proofArgs(client, "list_session_status", { schemaVersion: "1.0.0" }) }));
-    const sessions = (listed.data as { sessions: Array<{ sessionId: string; presence: unknown }> }).sessions;
-    expect(sessions.find((row) => row.sessionId === "online")?.presence).toEqual({
-      host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", relayLive: true, wakeVisibility: "silent",
-      canWakeSilently: true, deliveryCapabilities: { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "silent" },
-      collaborationId: "collaboration-1", workspaceId: "workspace-1", role: "worker",
-      startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",
-    });
-    expect(sessions.find((row) => row.sessionId === "missing")?.presence).toEqual({
-      host: "claude-code", sessionId: "missing", instanceId: null, transport: null, wakeVisibility: "none",
-      canWakeSilently: false, deliveryCapabilities: { supportedInjection: [], idleWake: "none" }, collaborationId: null, workspaceId: null, role: null,
-      startedAt: null, heartbeatAt: null, leaseUntil: null, endedAt: null, endReason: null, state: "unknown",
-      autoWake: { state: "no-live-relay", reason: "presence-unknown", basisAt: null, checkedAt: expect.any(String), authorityEffect: "none" },
-    });
-    expect(sessions.find((row) => row.sessionId === "unasked")?.presence).toMatchObject({ state: "unknown", instanceId: null, autoWake: null });
+    const blocker = path.join(temp(), "file");
+    writeFileSync(blocker, "");
+    const blocked = await connect(path.join(blocker, "session-board.sqlite3"), presenceStore());
+    expect(await call(blocked.client, "update_session_status", { schemaVersion: "1.0.0", summary: "x" })).toMatchObject({ ok: false, error: { code: "MCP_UNAVAILABLE", details: { step: "open" } } });
   });
+});
 
-  it("counts instead of listing rows with no summary and no live presence", async () => {
-    const databasePath = boardPath();
-    const board = open(databasePath);
-    const now = new Date().toISOString();
-    setSummary(board, session(now, "worker"), "작업 중");
-    for (const sessionId of ["child", "online", "caller"]) recordPrompt(board, session(now, sessionId));
-    const client = await connect(databasePath, sessionMessages({ schemaVersion: "1.0.0", ok: true, data: { sessions: [{
-      host: "claude-code", sessionId: "online", instanceId: "instance-1", transport: "tls", relayLive: true, wakeVisibility: "silent",
-      canWakeSilently: true, deliveryCapabilities: { supportedInjection: ["peer-wake"], idleWake: "silent" },
-      collaborationId: null, workspaceId: null, role: null,
-      startedAt: now, heartbeatAt: now, leaseUntil: now, endedAt: null, endReason: null, state: "online",
-    }], unanswered: [] }, error: null }));
+describe("U5/D5 repository location", () => {
+  it("reads branch and a worktree-shared repository id from git files only", () => {
+    const repo = temp();
+    mkdirSync(path.join(repo, ".git", "worktrees", "wt"), { recursive: true });
+    writeFileSync(path.join(repo, ".git", "HEAD"), "ref: refs/heads/main\n");
+    writeFileSync(path.join(repo, ".git", "worktrees", "wt", "HEAD"), "ref: refs/heads/feat/board\n");
+    writeFileSync(path.join(repo, ".git", "worktrees", "wt", "commondir"), "../..\n");
+    const worktree = temp();
+    writeFileSync(path.join(worktree, ".git"), `gitdir: ${path.join(repo, ".git", "worktrees", "wt")}\n`);
+    mkdirSync(path.join(worktree, "a", "b"), { recursive: true });
+    const detached = temp();
+    mkdirSync(path.join(detached, ".git"));
+    writeFileSync(path.join(detached, ".git", "HEAD"), `${"a".repeat(40)}\n`);
 
-    const listed = payload(await client.callTool({ name: "list_session_status", arguments: proofArgs(client, "list_session_status", { schemaVersion: "1.0.0" }, { host: "claude-code", sessionId: "caller" }) }));
-    const data = listed.data as { sessions: Array<{ sessionId: string }>; omittedWithoutSummary: number };
-    expect(data.sessions.map((row) => row.sessionId).sort()).toEqual(["caller", "online", "worker"]);
-    expect(data.omittedWithoutSummary).toBe(1);
+    const main = locateRepository(repo);
+    const linked = locateRepository(path.join(worktree, "a", "b"));
+    expect(main).toEqual({ root: repo, repoId: realpathSync(path.join(repo, ".git")), branch: "main" });
+    expect(linked).toEqual({ root: worktree, repoId: main!.repoId, branch: "feat/board" });
+    expect(locateRepository(detached)).toMatchObject({ branch: null });
+    expect(locateRepository(temp())).toBeNull();
+    expect(locateRepository(null)).toBeNull();
+    expect(locateRepository("relative/path")).toBeNull();
+  });
+});
+
+describe("U10 classification prompt marker", () => {
+  it("exposes the prompt marker by actor and keeps it across a verified wake", () => {
+    const board = open();
+    const input = { hook_event_name: "UserPromptSubmit", session_id: "s1", cwd: "/w", prompt: "요청" };
+    handleSessionBoardHook(input, board, "claude-code", at(1));
+    const marker = () => listPromptMarkers(board).find((row) => hostActorId(row.host, row.sessionId) === hostActorId("claude-code", "s1"))?.lastPromptAt;
+    expect(marker()).toBe(at(1));
+    handleSessionBoardHook(input, board, "claude-code", at(2), true);
+    expect(marker()).toBe(at(1));
+    handleSessionBoardHook(input, board, "claude-code", at(3));
+    expect(marker()).toBe(at(3));
   });
 });

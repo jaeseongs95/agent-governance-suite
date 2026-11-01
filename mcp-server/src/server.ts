@@ -12,9 +12,12 @@ import {
   type PluginUpdateStatusV1,
   type KoreanProseGlossaryLookupResultV1,
   type ResponseModeV1,
+  type SessionBoardEntryV2,
+  type SessionBoardListV2,
+  type SessionBoardUpdateV2,
   WorkflowContractError,
 } from "../../contracts/types.js";
-import { listSessions, normalizeSummary, openBoard, readSession } from "../../skills/session-board/scripts/board-store.mjs";
+import { locateRepository, normalizeSummary, openBoard, readEntry, setSummary, type BoardEntry } from "../../skills/session-board/scripts/board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
 import { failureContext, retainFailureSecondary } from "./failure-diagnostics.js";
 import { inlineSchemaReferences } from "./tool-schema-inline.js";
@@ -33,8 +36,7 @@ import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from 
 import { ContractValidator } from "./schema-validator.js";
 import { z } from "zod";
 import { classificationInputSchema, selectionInputSchema, type SkillClassificationGateway } from "./skill-classification/gateway.js";
-import { SessionMessageService, type SessionPresenceList } from "./session-message-service.js";
-import type { SessionPresenceView } from "./session-message-store.js";
+import { SessionMessageService } from "./session-message-service.js";
 import { type TrustService } from "./trust-service.js";
 
 type ObjectSchema = Record<string, unknown> & {
@@ -235,45 +237,15 @@ const CLASSIFICATION_REQUEST_REJECTIONS = new Set([
 ]);
 
 /**
- * Session board tools are an interface over the skill's board store. The PreToolUse hook writes the line with the
- * host's session identity and binds it here; this side validates the call and reads the board back.
+ * Session board tools. The server writes the summary under the binding it verified from the root hook proof, and
+ * lists the sessions whose messaging presence says they are running (or recently unreachable). The board file only
+ * adds the one-line summary, prompt time and working directory; it never decides liveness.
  */
-function unknownPresence(host: string, sessionId: string, brokerAnswered: boolean): SessionPresenceView {
-  return {
-    host,
-    sessionId,
-    instanceId: null,
-    transport: null,
-    wakeVisibility: "none",
-    canWakeSilently: false,
-    deliveryCapabilities: { supportedInjection: [], idleWake: "none" },
-    collaborationId: null,
-    workspaceId: null,
-    role: null,
-    startedAt: null,
-    heartbeatAt: null,
-    leaseUntil: null,
-    endedAt: null,
-    endReason: null,
-    state: "unknown",
-    relayLive: false,
-    // Advisory only; null when the broker could not be asked.
-    autoWake: brokerAnswered ? { state: "no-live-relay", reason: "presence-unknown", basisAt: null,
-      checkedAt: new Date().toISOString(), authorityEffect: "none" } : null,
-  };
-}
+type BoardDatabase = ReturnType<typeof openBoard>;
 
-function withPresence<T extends { host: string; sessionId: string }>(
-  sessions: T[],
-  presence: ApiResultV1<SessionPresenceList>,
-): Array<T & { presence: SessionPresenceView }> {
-  const key = (item: { host: string; sessionId: string }) => `${item.host}\u0000${item.sessionId}`;
-  const bySession = new Map(presence.ok && presence.data ? presence.data.sessions.map((item) => [key(item), item]) : []);
-  const unanswered = new Set((presence.data?.unanswered ?? []).map(key));
-  return sessions.map((session) => ({
-    ...session,
-    presence: bySession.get(key(session)) ?? unknownPresence(session.host, session.sessionId, presence.ok && !unanswered.has(key(session))),
-  }));
+function closeOnce(board: BoardDatabase | null, error: unknown): void {
+  // A close failure after the primary failure stays attached as a secondary cause.
+  try { board?.close(); } catch (closeError) { retainFailureSecondary(error, closeError); }
 }
 
 async function sessionBoardResult(
@@ -300,47 +272,77 @@ async function sessionBoardResult(
     return apiError("BINDING_REQUIRED", "The session binding is missing; hook execution or binding delivery was not observed for this call.");
   }
   if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
-  // The tools never create the board; only the hook's first write does.
-  if (!existsSync(databasePath)) {
-    return tool === "list_session_status"
-      ? apiOk({ sessions: [] })
-      : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
-  }
-  let board: ReturnType<typeof openBoard> | null = null;
-  let step: "open" | "list" | "close" | "presence" | "read" = "open";
-  // Closes at most once; a close failure is reported, never discarded.
-  const closeBoard = (): void => {
-    const opened = board;
-    board = null;
-    opened?.close();
-  };
-  try {
-    board = openBoard(databasePath);
-    if (tool === "list_session_status") {
-      step = "list";
-      const sessions = listSessions(board, new Date().toISOString(), binding);
+  const self = binding;
+
+  if (tool === "update_session_status") {
+    let board: BoardDatabase | null = null;
+    let step: "open" | "write" | "close" = "open";
+    try {
+      board = openBoard(databasePath);
+      step = "write";
+      const written: SessionBoardUpdateV2 = setSummary(board, { ...self, now: new Date().toISOString() }, summary);
       step = "close";
-      closeBoard();
-      step = "presence";
-      const listed = withPresence(sessions, await sessionMessages.listPresence(sessions));
-      // A row with no summary and no live presence tells nothing about current work (mostly child sessions,
-      // AGS-D-0018); listing each one only costs tokens, so it is counted instead.
-      const shown = listed.filter((session) => session.summary !== null || session.current || session.presence.state === "online");
-      return apiOk({ sessions: shown, omittedWithoutSummary: listed.length - shown.length });
+      const opened = board;
+      board = null;
+      opened.close();
+      return apiOk(written);
+    } catch (error) {
+      closeOnce(board, error);
+      // Bounded, redacted cause (no message, path or SQL); the session's other work is not affected.
+      return apiError("MCP_UNAVAILABLE", "The session board line was not recorded.", { step, cause: failureContext(error) });
     }
-    step = "read";
-    const row = readSession(board, binding!.host, binding!.sessionId);
-    step = "close";
-    closeBoard();
-    return row && row.summary === summary
-      ? apiOk(row)
-      : apiError("MCP_UNAVAILABLE", "The session board line was not recorded; the next gated tool call is allowed anyway.");
-  } catch (error) {
-    // A close failure after the primary failure stays attached as a secondary cause.
-    try { closeBoard(); } catch (closeError) { retainFailureSecondary(error, closeError); }
-    // Keep the failed step and a bounded, redacted cause (no message, path or SQL).
-    return apiError("MCP_UNAVAILABLE", "The session board is unavailable.", { step, cause: failureContext(error) });
   }
+
+  let presence: Awaited<ReturnType<SessionMessageService["listCurrentPresence"]>>;
+  try {
+    presence = await sessionMessages.listCurrentPresence(self);
+  } catch (error) {
+    // Without presence nobody can tell which sessions run; board rows are never shown in its place.
+    return apiError("MCP_UNAVAILABLE", "Session liveness is unavailable, so the session board cannot list running sessions.",
+      { step: "presence", cause: failureContext(error) });
+  }
+  const entries = new Map<string, BoardEntry | null>();
+  const key = (item: { host: string; sessionId: string }) => `${item.host}\u0000${item.sessionId}`;
+  let boardStatus: SessionBoardListV2["board"] = { status: "ok" };
+  // A missing file only means no summary was written yet; listing never creates it.
+  if (existsSync(databasePath)) {
+    let board: BoardDatabase | null = null;
+    let step: "open" | "read" | "close" = "open";
+    try {
+      board = openBoard(databasePath);
+      step = "read";
+      for (const item of presence.sessions) entries.set(key(item), readEntry(board, item.host, item.sessionId));
+      step = "close";
+      const opened = board;
+      board = null;
+      opened.close();
+    } catch (error) {
+      closeOnce(board, error);
+      entries.clear();
+      boardStatus = { status: "unavailable", step, cause: failureContext(error) };
+    }
+  }
+  const sessions: SessionBoardEntryV2[] = presence.sessions.map((item) => {
+    const entry = entries.get(key(item)) ?? null;
+    const cwd = entry?.cwd ?? item.workspaceId;
+    return {
+      host: item.host,
+      sessionId: item.sessionId,
+      current: item.host === self.host && item.sessionId === self.sessionId,
+      presence: item.state,
+      startedAt: item.startedAt,
+      lastSeenAt: item.heartbeatAt,
+      cwd,
+      repo: locateRepository(cwd),
+      summary: entry?.summary ?? null,
+      summaryAt: entry?.summaryAt ?? null,
+      summaryStale: entry?.summaryStale ?? null,
+      lastPromptAt: entry?.lastPromptAt ?? null,
+      wake: item.autoWake ? { state: item.autoWake.state, reason: item.autoWake.reason } : null,
+    };
+  });
+  const result: SessionBoardListV2 = { sessions, truncated: presence.truncated, board: boardStatus };
+  return apiOk(result);
 }
 
 /**
@@ -577,13 +579,13 @@ export function createMcpServer(
       },
       {
         name: "update_session_status",
-        description: "Write this session's one-line current work (what, where, next external step) to the local session board shared by every host on this machine. The plugin hook binds the session; call it when the work or next external step changes. Do not repeat it for an unchanged task.",
+        description: "Write this session's one-line current work (what it does and the next external step) to the local session board shared by every host on this machine. The plugin hook binds the session; call it when the work or next external step changes. Do not repeat it for an unchanged task. If the board cannot be written, report it and continue.",
         inputSchema: contractSchemas.updateSessionStatusRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "list_session_status",
-        description: "List the sessions of every host on this machine (Claude Code and Codex share one local session board) with host, working directory, current-work line and a stale flag. Sessions with no current-work line and no live presence are only counted (omittedWithoutSummary). Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and end wake attempts whose release condition holds (idempotent housekeeping).",
+        description: "List the sessions on this machine that are running now (presence online) or recently unreachable, across every host: working directory, git repository and branch, one-line current work, whether the line predates the last prompt (summaryStale) and whether the session can be woken. Ended sessions are not listed; your own session is the first row. Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and end wake attempts whose release condition holds (idempotent housekeeping).",
         inputSchema: contractSchemas.listSessionStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },

@@ -9,7 +9,7 @@ import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 import { TrustStore } from "../../mcp-server/src/trust-store.js";
-import { openBoard, setSummary, readSession } from "../../skills/session-board/scripts/board-store.mjs";
+import { openBoard, setSummary, readEntry } from "../../skills/session-board/scripts/board-store.mjs";
 import { WorkflowContractError } from "../../contracts/types.js";
 
 const directories: string[] = [];
@@ -56,7 +56,7 @@ describe("explicit inactive factory boundary", () => {
       expect(workflow.getSchemaVersion()).toBe(5); expect(workflow.nextRunSequence()).toBe(1); expect(continuity.getSchemaVersion()).toBe(2); expect(continuity.ensureTask("standalone-synthetic", new Date(100).toISOString()).currentEpoch).toBe(1);
       const sender = { host: "standalone-a", sessionId: "s" }; const target = { host: "standalone-b", sessionId: "t" }; const draft = messaging.prepare({ sender, target, body: "synthetic standalone" }, 100); expect(messaging.submitPrepared(sender, draft.messageId, 100).duplicate).toBe(false); const claimed = messaging.claim(target, 100); expect(claimed).toHaveLength(1); expect(messaging.acknowledge(target, [draft.messageId], 100, claimed.map(message => ({ messageId: message.messageId, claimReceipt: message.claimReceipt! })))).toBe(1);
       const source = trust.recordInputSource({ originKind: "peer", ...sender, eventId: "standalone-event", contentDigest: `sha256:${"a".repeat(64)}`, observedAt: new Date(100).toISOString(), expiresAt: new Date(1000).toISOString(), authorityEffect: "none", attestation: { kind: "broker-peer-envelope", adapter: "fixture", capabilityVersion: "1.0.0" } }); expect(trust.verify(source)).toBe(true);
-      const session = { ...sender, cwd: "synthetic-cwd", now: new Date(100).toISOString() }; setSummary(board, session, "standalone fixture"); expect(readSession(board, sender.host, sender.sessionId)?.summary).toBe("standalone fixture");
+      const session = { ...sender, now: new Date(100).toISOString() }; setSummary(board, session, "standalone fixture"); expect(readEntry(board, sender.host, sender.sessionId)?.summary).toBe("standalone fixture");
     } finally { workflow.close(); continuity.close(); messaging.close(); trust.close(); board.close(); }
   });
 });
