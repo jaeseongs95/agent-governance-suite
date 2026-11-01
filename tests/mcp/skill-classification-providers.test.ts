@@ -127,7 +127,12 @@ describe("approved classification wire adapters", () => {
     expect(f.fetcher).not.toHaveBeenCalled();
   });
   it("SS39 supplied vendor wire mapping sees fixed model/effort and preserves meaningful metadata", async () => {
-    const f = fixture(); f.profile.providerKind = "vendor"; f.profile.vendorId = "current-vendor"; f.profile.modelId = "model-a"; f.profile.modelRevision = "model-a"; f.profile.reasoningEffort = "low";
+    const f = fixture(), originalProfile = structuredClone(f.profile);
+    const before = await f.provider.classify(f.request, originalProfile, new AbortController().signal);
+    expect(f.fetcher).toHaveBeenCalledTimes(1);
+    const originalWire = f.fetcher.mock.calls[0]![1]!.body;
+    f.fetcher.mockClear();
+    f.profile.providerKind = "vendor"; f.profile.vendorId = "current-vendor"; f.profile.modelId = "model-a"; f.profile.modelRevision = "model-a"; f.profile.reasoningEffort = "low";
     f.profile.supportedOptions.reasoningEfforts = ["low"]; f.profile.judgmentPolicy = null;
     f.profile.qualification.modelRevision = "model-a"; f.profile.qualificationRevision = "synthetic-vendor-wire";
     f.profile.qualification.profileConfigurationDigest = digestProviderProfileConfiguration(f.profile);
@@ -137,9 +142,15 @@ describe("approved classification wire adapters", () => {
     const route: ApprovedClassificationRoute = bindClassificationRouteTransport({...f.route, providerKind: "vendor", vendorId: "current-vendor", modelIds: ["model-a"], reasoningEfforts: ["low"], adapter: {encode, decode}});
     const provider = new ApprovedRouteClassificationProvider([route], f.fetcher);
     await provider.classify(f.request, f.profile, new AbortController().signal);
+    expect(f.fetcher).toHaveBeenCalledTimes(1);
     const wire = JSON.parse(String(f.fetcher.mock.calls[0]?.[1]?.body)); expect(wire).toMatchObject({model: "model-a", reasoning: "low", max_output_tokens: 1000});
     const user = JSON.parse(wire.messages[1].content); expect(user.originalPrompt).toBe(f.request.originalPrompt); expect(user.skills[0].exclusions).toEqual(["implementation"]);
     expect(wire.messages[1].content).not.toContain("LOCAL_PATH_NOT_FOR_WIRE"); expect(decode).toHaveBeenCalledTimes(1);
+    // 새 합성 vendor 경로 사용 뒤에도 원 provider의 요청·응답 계약을 유지한다.
+    f.fetcher.mockClear();
+    expect(await f.provider.classify(f.request, originalProfile, new AbortController().signal)).toEqual(before);
+    expect(f.fetcher).toHaveBeenCalledTimes(1);
+    expect(f.fetcher.mock.calls[0]![1]!.body).toBe(originalWire);
   });
   it("SS39 native success requires an actual invoked structured capability with its approved evidence", async () => {
     const f = fixture(); const invokeStructured = vi.fn(async () => jevNoulWireAdapter.decode(f.body, f.request, f.profile));
