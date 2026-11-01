@@ -81,6 +81,7 @@ describe("concurrentClaims stage deadlines", () => {
   it("keeps the original stage error when the reap after it also misses its deadline (D0161)", async () => {
     const directory = fixtureDirectory();
     let holderPid: number | null = null;
+    let failure: { error: unknown } | null = null;
     try {
       const error = await timedOut(concurrentClaims(worker, [{ mode: "hold-stdout" }], { readyMs: SLOW, resultMs: SHORT, exitMs: SLOW, reapMs: SHORT }));
       holderPid = (JSON.parse(error.workers[0]!.lastRawStdout!) as { holderPid: number }).holderPid;
@@ -97,16 +98,27 @@ describe("concurrentClaims stage deadlines", () => {
       expect(preserved).toBeInstanceOf(ClaimWorkerTimeoutError);
       expect((preserved as ClaimWorkerTimeoutError).workers).toMatchObject([{ status: "TIMED_OUT", timedOutStage: "result" }]);
       expect(existsSync(directory)).toBe(true);
-    } finally {
-      if (holderPid !== null) {
-        const pid = holderPid;
-        // An already ended holder (ESRCH) must not replace a failure reported above; the wait below confirms it is gone.
-        try { process.kill(pid, "SIGKILL"); } catch { /* already ended */ }
-        await vi.waitFor(() => { expect(() => process.kill(pid, 0)).toThrow(); }, { timeout: SLOW });
-      }
-      // Never leave this test's timed-out worker registered for the next test, even when an assertion above failed.
-      try { cleanupIfClaimWorkersFinished(() => undefined); } catch { /* the registration is cleared before this throws */ }
+    } catch (error) { failure = { error }; }
+    // Cleanup runs after the assertions, never in a finally, so its own failure cannot replace one reported above.
+    const cleanupErrors: unknown[] = [];
+    if (holderPid !== null) {
+      const pid = holderPid;
+      // Only ESRCH means the holder already ended; any other kill or probe error is kept.
+      try { process.kill(pid, "SIGKILL"); } catch (caught) { if ((caught as NodeJS.ErrnoException).code !== "ESRCH") cleanupErrors.push(caught); }
+      try {
+        await vi.waitFor(() => {
+          let probe: unknown = null;
+          try { process.kill(pid, 0); } catch (caught) { probe = caught; }
+          expect((probe as NodeJS.ErrnoException | null)?.code).toBe("ESRCH");
+        }, { timeout: SLOW });
+      } catch (caught) { cleanupErrors.push(caught); }
     }
+    // Always drain this test's timed-out worker registration so it cannot reach the next test; the drain happens
+    // before cleanupIfClaimWorkersFinished reports the registered workers, which is expected after a failure here.
+    try { cleanupIfClaimWorkersFinished(() => undefined); } catch (caught) { if (!(caught instanceof ClaimWorkerTimeoutError)) cleanupErrors.push(caught); }
+    if (failure && cleanupErrors.length > 0) throw new AggregateError([failure.error, ...cleanupErrors], "D0161 assertion failed and the holder cleanup also failed");
+    if (failure) throw failure.error;
+    if (cleanupErrors.length > 0) throw new AggregateError(cleanupErrors, "D0161 holder cleanup failed");
     // Without an earlier failure nothing is kept beside the result.
     expect(claimReapFailure(new Error("unrelated"))).toBeNull();
   });
