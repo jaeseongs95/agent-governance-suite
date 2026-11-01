@@ -4,10 +4,9 @@
   "title": "SuppressContextRestoreRequest.v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "expectedEpoch", "_continuityBinding"],
+  "required": ["schemaVersion", "expectedEpoch"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
-    "expectedEpoch": { "type": "integer", "minimum": 1 },
-    "_continuityBinding": { "type": "string", "minLength": 16 }
+    "expectedEpoch": { "type": "integer", "minimum": 1 }
   }
 }

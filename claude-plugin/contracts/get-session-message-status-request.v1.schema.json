@@ -7,15 +7,6 @@
   "required": ["schemaVersion", "messageId"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
-    "messageId": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "_sessionBinding": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["host", "sessionId"],
-      "properties": {
-        "host": { "type": "string", "minLength": 1, "maxLength": 64 },
-        "sessionId": { "type": "string", "minLength": 1, "maxLength": 200 }
-      }
-    }
+    "messageId": { "type": "string", "minLength": 1, "maxLength": 128 }
   }
 }

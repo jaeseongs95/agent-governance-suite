@@ -8,7 +8,7 @@
 - 첫 저장은 `expectedRevision: 0`, 이후 저장은 직전 revision을 사용한다.
 - 재시도에는 같은 `requestId`와 같은 입력을 사용한다. 다른 내용에는 새 `requestId`를 사용한다.
 
-세션 결속은 서버가 호스트 관측으로 정하므로 인자에 binding을 넣지 않는다. binding 오류가 나면 새 도구 호출을 만들고, stale revision이면 `inspect_context`로 현재 metadata를 확인한 뒤 의도적인 replacement 여부를 판단한다.
+Hook이 추가한 `_continuityBinding`은 수정하거나 재사용하지 않는다. binding 오류가 나면 새 도구 호출을 만들고, stale revision이면 `inspect_context`로 현재 metadata를 확인한 뒤 의도적인 replacement 여부를 판단한다.
 
 ## 복원
 

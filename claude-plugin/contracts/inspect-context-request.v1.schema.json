@@ -4,9 +4,8 @@
   "title": "InspectContextRequest.v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "_continuityBinding"],
+  "required": ["schemaVersion"],
   "properties": {
-    "schemaVersion": { "const": "1.0.0" },
-    "_continuityBinding": { "type": "string", "minLength": 16 }
+    "schemaVersion": { "const": "1.0.0" }
   }
 }
