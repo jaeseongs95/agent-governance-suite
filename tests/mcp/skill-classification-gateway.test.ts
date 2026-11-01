@@ -326,9 +326,10 @@ describe("offline classification through actual MCP Client/Server transport", ()
     const h = await harness(), advice = (await h.call<Advice>("classify_skills", input())).data!;
     const args = { schemaVersion: "1.0.0", operationId: input().operationId, decision: decision(advice, ["code-review"]) };
     const signed = h.sign(args);
-    expect((await h.call<Accepted>("record_skill_selection", { ...signed, decision: decision(advice, []) })).error?.code).toBe("INVALID_INPUT");
-    expect((await h.call<Accepted>("record_skill_selection", h.sign(args, new Date("2000-01-01T00:00:00Z")))).error?.code).toBe("INVALID_INPUT");
-    expect((await h.call<Accepted>("record_skill_selection", { ...signed, [HOST_ATTESTATION_FIELD]: `${signed[HOST_ATTESTATION_FIELD]}tampered` })).error?.code).toBe("INVALID_INPUT");
+    // AGS 3.0 error model P1: the attestation verifier's own BINDING_INVALID is no longer relabeled INVALID_INPUT.
+    expect((await h.call<Accepted>("record_skill_selection", { ...signed, decision: decision(advice, []) })).error?.code).toBe("BINDING_INVALID");
+    expect((await h.call<Accepted>("record_skill_selection", h.sign(args, new Date("2000-01-01T00:00:00Z")))).error?.code).toBe("BINDING_INVALID");
+    expect((await h.call<Accepted>("record_skill_selection", { ...signed, [HOST_ATTESTATION_FIELD]: `${signed[HOST_ATTESTATION_FIELD]}tampered` })).error?.code).toBe("BINDING_INVALID");
   });
   it("D0089: a class-only adapter's observation is refused with its capability cause visible to the caller", async () => {
     const classOnly = vi.fn((model: string) => model === "synthetic-host-model" ? "general" as const : null);

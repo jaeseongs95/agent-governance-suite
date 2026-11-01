@@ -132,8 +132,11 @@ describe("AL09 server boundary regressions", () => {
         publicSynthetic: true,
       });
         expect(payload(reply).error?.code).toBe("MCP_UNAVAILABLE");
-        expect(payload(reply).error?.details ?? null).toBeNull();
+        // AGS 3.0 error model R2/R5: only a fixed reason and a redacted cause (no name, message or phase) are exposed.
+        expect(payload(reply).error?.details).toEqual({ reason: "INTERNAL_FAILURE", cause: { type: "error" } });
         expect(JSON.stringify(reply)).not.toContain("PRIVATE_CONFIGURATION_PATH");
+        expect(JSON.stringify(reply)).not.toContain("ClassificationInitializationError");
+        expect(JSON.stringify(reply)).not.toContain("classification-initialization");
       }, { classification: { inventory: async () => null, classify: async () => { throw thrown; }, accept: async () => null } });
     }
   });

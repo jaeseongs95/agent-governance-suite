@@ -71,7 +71,7 @@ describe("public boundary mapping (contractFailure)", () => {
   it("server failureResult: a non-contract glossary failure is MCP_UNAVAILABLE with a redacted cause", async () => {
     const glossary: KoreanProseGlossaryGateway = { lookup: () => { throw new Error(SECRET); } };
     const sourceText = "가";
-    const sourceDigest = `sha256:${createHash("sha256").update(sourceText, "utf8").digest("hex")}`;
+    const sourceDigest = createHash("sha256").update(sourceText, "utf8").digest("hex");
     await withServer(async (call) => {
       expectServerFailure(await call("lookup_korean_prose_terms", { schemaVersion: "1.0.0", sourceText, sourceDigest }));
     }, { glossary });
@@ -80,7 +80,7 @@ describe("public boundary mapping (contractFailure)", () => {
   it("the glossary rejects a mismatched caller digest as a contract INVALID_INPUT itself", () => {
     const glossary = new SqliteKoreanProseGlossary(":memory:");
     let caught: unknown;
-    try { glossary.lookup({ schemaVersion: "1.0.0", sourceText: "가", sourceDigest: `sha256:${"0".repeat(64)}` } as never); }
+    try { glossary.lookup({ schemaVersion: "1.0.0", sourceText: "가", sourceDigest: "0".repeat(64) } as never); }
     catch (error) { caught = error; }
     expect(caught).toBeInstanceOf(WorkflowContractError);
     expect((caught as WorkflowContractError).code).toBe("INVALID_INPUT");
