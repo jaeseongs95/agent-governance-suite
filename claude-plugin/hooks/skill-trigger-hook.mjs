@@ -11,6 +11,10 @@ try {
       additionalContext: "Claude Code 호출: MCP 서버 instructions의 공통 접수 기준을 따르고, 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.",
     } }));
   }
-} catch {
-  // Optional host context must not block the session.
+} catch (cause) {
+  // Optional host context must not block the session, but the failure stays visible (no message, path or input).
+  try {
+    process.stderr.write(`[agent-governance-suite] launcher-failure ${JSON.stringify({ launcher: "skill-trigger-hook",
+      ...(cause instanceof SyntaxError ? { code: "INVALID_JSON" } : typeof cause?.code === "string" && /^[A-Z][A-Z0-9_]{0,63}$/u.test(cause.code) ? { code: cause.code } : {}) })}\n`);
+  } catch { /* A broken diagnostic sink cannot block the host. */ }
 }
