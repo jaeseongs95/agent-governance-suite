@@ -322,6 +322,57 @@ export function matchesTaskContractAuthorizationSuccessor(path, bytes) {
     && createHash("sha256").update(bytes).digest("hex") === TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes[path];
 }
 
+// Project only the exact 1.0.2 private-preparation successor onto its reviewed
+// predecessor. Historical pins and authority checks remain unchanged.
+const PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR = Object.freeze({
+  revision: "mutation-risk-preflight-1.0.2-private-preparation",
+  baselineRevision: "59a580ac950e4813108d5b3a83bf01b9de0d7ccb",
+  authorityEffect: "none",
+  hashes: {
+    "skills/mutation-risk-preflight/README.md": [
+      "c7bc39a506ff4aeed3726cea2c92ef4558e62d0d28d03ccde09d083a33ada213",
+      "0b53b679be4eb87053a019ca78d33cccd0b3d1f3a7888853b643e8a69344afa7"
+    ],
+    "skills/mutation-risk-preflight/SKILL.md": [
+      "9aa4e7cb143bb0ad9ffc5f6c03ed32331e1f14562cd4322fab0e36cd29c21ce1",
+      "25fbe08cc026df65c7e5788a7c9ad4414a7b5be52f55a587952773966eb29ecb"
+    ],
+    "skills/mutation-risk-preflight/classification.json": [
+      "ddf79c9ba8187a9e6de0af7a88f280372dccbf859a672ea335d16caa45735933",
+      "c89920b9450dc403770228a033918e0d47aee987902e44a64f1c817e83d5860e"
+    ],
+    "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json": [
+      "eaf3bc82d4d18372544e54f39cfe0d6214ade77e983589de62789828207b8dc6",
+      "978288d69583b0f39f7412d3140d57537804de3bc2703060994bc9a7b472d064"
+    ],
+    "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json": [
+      "4e6f86d0baf672ef0bd83a4a9c592bd8ec5dcab1f342071372908f52e5217fde",
+      "b8a4e1ca5f5e203639545d27cc190421d91d132569cec70f5b579d39337b7331"
+    ],
+    "skills/mutation-risk-preflight/integration/skill-descriptor.json": [
+      "c0340eaf53126034cb3ba13b2c9adbd03fdbecb23942687fca771487dc393264",
+      "e7905d5b63cfb2536b96c70047ad5231951ccccf4b06adc29a18d8531eeb673a"
+    ],
+    "skills/mutation-risk-preflight/references/entry-details.md": [
+      "1630c479078b9df86da6a14cf679c113ed2e4be3c9da2bc4cb5707c1f99c4fba",
+      "b9d8952a60a92f7e0ef98c9d90f076dddfc9bedcbd8a0e3af0b02d1dd50bffd4"
+    ],
+    "skills/mutation-risk-preflight/references/recovery-requirements.md": [
+      "973da35b3d3080878c746bf32563764a6d7c580dc7912ab040edd68123086d19",
+      "6b9534f7a9db0f7210a9a16c5bd9c930bbd458a4ce2aeb05547dc959ac5259a8"
+    ],
+    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": [
+      "9ff002852bc34338ed94fdf0e9c5060cdb92f602961d2a959237d365ffeae40c",
+      "6f2daebb1af36b4a1d8a23de444f81227525107a4419d4f9f4c752141c7dbf05"
+    ]
+  },
+});
+
+export function matchesPreflightPrivatePreparationSuccessor(path, bytes) {
+  const hashes = PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes[path];
+  return Boolean(hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]);
+}
+
 const PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR = Object.freeze({
   "revision": "preflight-additive-source-successor-r01",
   "authorityEffect": "none",
@@ -535,6 +586,10 @@ const LIVE_HOST_GUIDANCE_SUCCESSOR = Object.freeze({
 });
 
 function historicalBytes(path, bytes) {
+  if (matchesPreflightPrivatePreparationSuccessor(path, bytes)) {
+    bytes = git("show", `${PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.baselineRevision}:${path}`);
+    if (createHash("sha256").update(bytes).digest("hex") !== PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes[path][0]) throw new Error(`Historical preflight private-preparation source differs: ${path}`);
+  }
   const guidance = LIVE_HOST_GUIDANCE_SUCCESSOR.hashes[path];
   if (guidance && createHash("sha256").update(bytes).digest("hex") === guidance[1]) {
     bytes = git("show", `${LIVE_HOST_GUIDANCE_SUCCESSOR.baselineRevision}:${path}`);
@@ -763,6 +818,9 @@ export function checkRegistryContextCompatibility(registry) {
 
 export function checkSkillContextOptimization() {
   const errors = [];
+  for (const currentPath of Object.keys(PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes)) {
+    if (!matchesPreflightPrivatePreparationSuccessor(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight private-preparation successor bytes differ: ${currentPath}`);
+  }
   for (const [currentPath, hashes] of Object.entries(LIVE_HOST_GUIDANCE_SUCCESSOR.hashes)) {
     if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== hashes[1]) {
       errors.push(`live host guidance successor bytes differ: ${currentPath}`);
@@ -774,7 +832,7 @@ export function checkSkillContextOptimization() {
     }
   }
   for (const successorPath of Object.keys(SKILL_POLICY_WORDING_SUCCESSOR.hashes)) {
-    if (!matchesSkillPolicyWordingSuccessor(successorPath, readFileSync(join(ROOT, successorPath)))) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
+    if (!matchesPreflightPrivatePreparationSuccessor(successorPath, readFileSync(join(ROOT, successorPath))) && !matchesSkillPolicyWordingSuccessor(successorPath, readFileSync(join(ROOT, successorPath)))) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
   }
   for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) {
     if (!matchesClassificationUpdate(reviewedPath, readHistorical(ROOT, reviewedPath))) errors.push(`classification: reviewed bytes differ: ${reviewedPath}`);
@@ -875,6 +933,7 @@ export function checkSkillContextOptimization() {
     if (!readHistorical(ROOT, ...descriptorPath.split("/")).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
 
     const allowed = new Set([skillPath, detailPath]);
+    for (const currentPath of Object.keys(PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     for (const implementationPath of IMPLEMENTATION_PATHS) if (implementationPath.startsWith(`skills/${skillId}/`)) allowed.add(implementationPath);
     for (const currentPath of Object.keys(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     for (const currentPath of Object.keys(GOVERNANCE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
@@ -907,7 +966,7 @@ export function checkSkillContextOptimization() {
     if (Object.hasOwn(NODE24_README_MINIMUMS, skillId)) {
       const readmePath = `skills/${skillId}/README.md`;
       const baselineReadme = baselineFile(readmePath).toString("utf8").replaceAll("\r\n", "\n");
-      const candidateReadme = readFileSync(join(ROOT, ...readmePath.split("/")), "utf8").replaceAll("\r\n", "\n");
+      const candidateReadme = readHistorical(ROOT, readmePath).toString("utf8").replaceAll("\r\n", "\n");
       if (!matchesNode24ReadmeUpdate(skillId, baselineReadme, candidateReadme)) errors.push(`${skillId}: README.md differs beyond the Node 24 minimum update`);
       allowed.add(readmePath);
     }
@@ -937,6 +996,7 @@ export function checkSkillContextOptimization() {
   return {
     baselineRevision: BASELINE,
     currentHostConsumptionSourceSuccessors: [HOST_CONSUMPTION_SOURCE_SUCCESSOR],
+    currentPreflightPrivatePreparationSuccessors: [PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR],
     currentPreflightAdditiveSourceSuccessors: [PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR],
     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
     policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],

@@ -67,10 +67,10 @@
     {
       "skillId": "mutation-risk-preflight",
       "path": "skills/mutation-risk-preflight",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:4b2b28524d9b01a6d2eb2ddad72d0b45e8adbbf910c5c8e60ea30dc771e14dd4",
+      "integratedChecksum": "sha256:3ca9d701972fd8ac3b82b829251432691d1a8d6f60414cd4be83264c99238fbf",
       "checksumScope": "relative paths and normalized text bytes under skills/mutation-risk-preflight"
     },
     {

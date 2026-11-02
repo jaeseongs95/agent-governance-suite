@@ -8,14 +8,33 @@ const readRegistry = () => JSON.parse(readFileSync(new URL("../../skills/registr
 // The current registry-contract fixture is deliberately not the oracle for old descriptors.
 const BASELINE_DIGEST = "4b470ad0e10d748d59b359aaa96e1c81653e748e4a272cc3bf96ab107133e9c5";
 const digest = (value) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
+// Preserve the original 22-descriptor oracle; only the approved preflight
+// version successor is projected, so every other field still affects its hash.
+const historicalRegistry = (registry) => ({
+  ...registry,
+  skills: registry.skills.filter((entry) => entry.skillId !== "prompt-engineering").map((entry) =>
+    entry.skillId === "mutation-risk-preflight" && entry.version === "1.0.2"
+      ? { ...entry, version: "1.0.1" } : entry),
+});
 
 describe("additive prompt-engineering registry integration", () => {
   it("preserves all 22 original descriptors and registry-level fields", () => {
     const registry = readRegistry();
-    const withoutAddition = { ...registry, skills: registry.skills.filter((entry) => entry.skillId !== "prompt-engineering") };
+    const withoutAddition = historicalRegistry(registry);
     expect(withoutAddition.skills).toHaveLength(22);
     expect(digest(withoutAddition)).toBe(BASELINE_DIGEST);
     expect(registry.skills.filter((entry) => entry.skillId === "prompt-engineering")).toHaveLength(1);
+  });
+
+  it.each(["version", "priority", "gate", "bindings"])("rejects unrelated preflight descriptor drift: %s", (change) => {
+    const registry = readRegistry();
+    const descriptor = registry.skills.find((entry) => entry.skillId === "mutation-risk-preflight");
+    if (change === "version") descriptor.version = "1.0.3";
+    if (change === "priority") descriptor.priority += 1;
+    if (change === "gate") descriptor.providers[0].gate.policy = "none";
+    if (change === "bindings") descriptor.providers[0].inputBindings[0].sources = ["untrusted:approval"];
+    expect(digest(historicalRegistry(registry))).not.toBe(BASELINE_DIGEST);
+    expect(checkRegistryContextCompatibility(registry)).toContain("registry differs from the 3.0 contract");
   });
 
   it("exposes one optional workflow provider whose direct descriptor matches the registry", () => {
@@ -67,7 +86,7 @@ describe("additive prompt-engineering registry integration", () => {
     const registry = readRegistry();
     registry.skills.find((entry) => entry.skillId === skillId).priority += 1;
     expect(checkRegistryContextCompatibility(registry)).toContain("registry differs from the 3.0 contract");
-    const withoutAddition = { ...registry, skills: registry.skills.filter((entry) => entry.skillId !== "prompt-engineering") };
+    const withoutAddition = historicalRegistry(registry);
     expect(digest(withoutAddition)).not.toBe(BASELINE_DIGEST);
   });
 });

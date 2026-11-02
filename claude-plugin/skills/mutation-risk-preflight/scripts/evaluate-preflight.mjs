@@ -175,9 +175,14 @@ export function evaluatePreflight(input, options = {}) {
   const currentStateMatched = targets.every((target) => input.currentStateEvidenceRefs.some((evidence) => canonicalLocator(evidence.targetLocator) === target.locator && evidence.fingerprint === target.expectedFingerprint));
   const recoveryRequired = RECOVERY_ACTIONS.has(input.actionClass) || externalImpact;
   const containment = input.recoveryPlan.freshResourceContainment;
+  const preparation = containment?.externalPreparation;
+  const privateExternalPreparation = Boolean(preparation
+    && externalImpact && ["deploy", "other"].includes(input.actionClass)
+    && !targets.some((target) => /^(production|prod|shared)$/i.test(target.environment))
+    && !input.recoveryPlan.backupRef && !input.recoveryPlan.restoreTestEvidenceRef);
   const containmentSufficient = Boolean(containment
     && ["permission-change", "deploy", "other"].includes(input.actionClass)
-    && !externalImpact && !dataLossPotential
+    && ((!externalImpact && !preparation) || privateExternalPreparation) && !dataLossPotential
     && input.recoveryPlan.available && !input.recoveryPlan.irreversibilityAccepted
     && input.recoveryPlan.method?.trim() && input.recoveryPlan.restoreProcedureRef?.trim()
     && containment.commandDigest === digest(input.plannedCommandOrTool)
@@ -191,6 +196,15 @@ export function evaluatePreflight(input, options = {}) {
     && (Boolean(input.recoveryPlan.restoreTestEvidenceRef) || input.recoveryPlan.irreversibilityAccepted))
     || (!input.recoveryPlan.available && input.recoveryPlan.irreversibilityAccepted);
   const blastRadiusMatched = input.expectedBlastRadius.affectedTargets >= targets.length;
+  const containmentRefs = [containment?.guardEvidenceRef.locator, preparation?.effectsEvidenceRef.locator];
+  const recoveryMessage = containmentSufficient
+    ? (preparation
+      ? "비공개 외부 신규 자원의 중단·보존 조건과 효과 근거가 제출됐습니다. 원격 상태·근거 진위·복원 시험의 자동 검증은 아닙니다."
+      : "새 자원만 추가하고 실패 시 중단·보존하는 containment 근거가 있습니다. 복원 검증 완료를 뜻하지 않습니다.")
+    : recoverySufficient ? "복구 또는 명시적 비가역성 수용 근거가 있습니다. 근거 참조의 진위나 실제 시험 실행을 자동 검증하지 않습니다."
+      : containment && externalImpact
+        ? "외부 신규 준비는 비공개·기존 상태 보존·제한된 효과의 근거가 필요하며, 공개·운영·공유 상태·권한 변경에는 사용할 수 없습니다."
+        : "복구 설계를 보완해야 합니다.";
 
   const checks = [
     { checkId: "target-specificity", state: unsafe.length ? "failed" : "passed", evidenceRefs: [], message: unsafe.join(" ") || "모든 대상이 구체적으로 식별됐습니다." },
@@ -198,7 +212,7 @@ export function evaluatePreflight(input, options = {}) {
     { checkId: "authorization-match", state: authorizationMatched ? "passed" : "failed", evidenceRefs: [input.authorizationRef.locator], message: authorizationMatched ? "행동, 대상과 환경이 허용 범위에 있습니다." : "권한 범위가 행동, 대상 또는 환경과 일치하지 않습니다." },
     { checkId: "current-state", state: currentStateMatched ? "passed" : "unknown", evidenceRefs: refLocators(input.currentStateEvidenceRefs), message: currentStateMatched ? "현재 fingerprint가 예상값과 일치합니다." : "모든 대상의 현재 fingerprint를 확인하지 못했습니다." },
     { checkId: "approval", state: approval.status === "observed" || approval.status === "not-required" ? "passed" : "unknown", evidenceRefs: approval.refs, message: `승인 상태: ${approval.status}` },
-    { checkId: "recovery", state: recoverySufficient ? "passed" : "failed", evidenceRefs: uniqueRefs([input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef, containment?.guardEvidenceRef.locator]), message: containmentSufficient ? "새 자원만 추가하고 실패 시 중단·보존하는 containment 근거가 있습니다. 복원 검증 완료를 뜻하지 않습니다." : recoverySufficient ? "복구 또는 명시적 비가역성 수용 근거가 있습니다." : "복구 설계를 보완해야 합니다." },
+    { checkId: "recovery", state: recoverySufficient ? "passed" : "failed", evidenceRefs: uniqueRefs([input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef, ...containmentRefs]), message: recoveryMessage },
     { checkId: "blast-radius", state: blastRadiusMatched ? "passed" : "failed", evidenceRefs: [], message: blastRadiusMatched ? "예상 영향 범위가 모든 대상을 포함합니다." : "예상 영향 범위가 대상 수보다 작습니다." },
   ];
   const unresolved = [];
@@ -214,11 +228,11 @@ export function evaluatePreflight(input, options = {}) {
     unresolved.push(`현재 작업에 맞는 승인이 필요합니다: ${approval.status}`);
   } else if (!recoverySufficient || !blastRadiusMatched) {
     verdict = "NEEDS_REDESIGN";
-    if (!recoverySufficient) unresolved.push("복구 계획이나 복구 검증 근거가 부족합니다.");
+    if (!recoverySufficient) unresolved.push(recoveryMessage);
     if (!blastRadiusMatched) unresolved.push("영향 범위를 다시 계산해야 합니다.");
   }
 
-  const recoveryRefs = uniqueRefs([input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef, containment?.guardEvidenceRef.locator]);
+  const recoveryRefs = uniqueRefs([input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef, ...containmentRefs]);
   return {
     schemaVersion: VERSION, operationId: input.operationId, actionDigest, targetDigest,
     classification: { actionClass: input.actionClass, reversibility: input.recoveryPlan.irreversibilityAccepted ? "irreversible" : (recoverySufficient && !containment ? "reversible" : "conditional"), externalImpact, dataLossPotential, permissionImpact },

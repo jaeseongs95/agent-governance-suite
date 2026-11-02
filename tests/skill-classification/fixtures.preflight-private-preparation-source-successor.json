@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "preflight-private-preparation-source-binding-r14",
+  "role": "source-binding-only-not-evaluation-or-install-authority",
+  "sourceBaseRevision": "59a580ac950e4813108d5b3a83bf01b9de0d7ccb",
+  "frozenPredecessor": {
+    "path": "tests/skill-classification/fixtures.continuity-handoff-source-successor.json",
+    "bytes": 1445,
+    "digest": "sha256:26887410dff5a98284a90898a76dd6b9cc5e6ea53bc209261180f3d609d39e57"
+  },
+  "bindings": [
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "previousDigest": "sha256:9aa4e7cb143bb0ad9ffc5f6c03ed32331e1f14562cd4322fab0e36cd29c21ce1",
+      "digest": "sha256:25fbe08cc026df65c7e5788a7c9ad4414a7b5be52f55a587952773966eb29ecb",
+      "bytes": 3347
+    }
+  ],
+  "fixtureFileRewritten": false,
+  "fixtureReferences": 1,
+  "labelChanges": [],
+  "priceAndBudgetChanges": [],
+  "modelBehavior": "NOT_RUN"
+}

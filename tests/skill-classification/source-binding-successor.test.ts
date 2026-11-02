@@ -9,6 +9,33 @@ const currentSourceBinding = loadCurrentSourceBindings(root);
 const current = JSON.parse(readFileSync(new URL("./fixtures.json", import.meta.url), "utf8"));
 const successor = JSON.parse(readFileSync(new URL("./fixtures.source-successor.json", import.meta.url), "utf8"));
 const hash = (bytes: string | Buffer) => "sha256:" + createHash("sha256").update(bytes).digest("hex");
+it("adds only the exact preflight 1.0.2 source while retaining the frozen oracle", () => {
+  const bytes = readFileSync(new URL("./fixtures.preflight-private-preparation-source-successor.json", import.meta.url));
+  expect(hash(bytes)).toBe("sha256:0ed854e4ab0877ef5b4faee6dd350b612282099ff3836711cd9f3555781f770a");
+  const manifest = JSON.parse(bytes.toString("utf8"));
+  expect(manifest.frozenPredecessor).toEqual({
+    path: "tests/skill-classification/fixtures.continuity-handoff-source-successor.json",
+    bytes: 1445,
+    digest: "sha256:26887410dff5a98284a90898a76dd6b9cc5e6ea53bc209261180f3d609d39e57",
+  });
+  expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
+  expect(manifest.fixtureFileRewritten).toBe(false);
+  expect(manifest.labelChanges).toEqual([]);
+  expect(manifest.priceAndBudgetChanges).toEqual([]);
+  expect(manifest.modelBehavior).toBe("NOT_RUN");
+  expect(manifest.bindings).toEqual([{
+    path: "skills/mutation-risk-preflight/SKILL.md",
+    previousDigest: "sha256:9aa4e7cb143bb0ad9ffc5f6c03ed32331e1f14562cd4322fab0e36cd29c21ce1",
+    digest: "sha256:25fbe08cc026df65c7e5788a7c9ad4414a7b5be52f55a587952773966eb29ecb",
+    bytes: 3347,
+  }]);
+  const binding = manifest.bindings[0];
+  expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
+  expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  expect(hash(readFileSync(path.join(root, binding.path)))).toBe(binding.digest);
+  expect(current.sourceSkills.filter((source: {path: string; digest: string}) => source.path === binding.path && source.digest === binding.previousDigest)).toHaveLength(manifest.fixtureReferences);
+  expect(manifest.fixtureReferences).toBe(1);
+});
 it("동결 판정 기준을 보존하고 인계 지침의 현재 바이트만 결속한다", () => {
   const bytes = readFileSync(new URL("./fixtures.continuity-handoff-source-successor.json", import.meta.url));
   expect(hash(bytes)).toBe("sha256:26887410dff5a98284a90898a76dd6b9cc5e6ea53bc209261180f3d609d39e57");
@@ -17,7 +44,7 @@ it("동결 판정 기준을 보존하고 인계 지침의 현재 바이트만 �
   expect(manifest.labelChanges).toEqual([]);
   expect(manifest.priceAndBudgetChanges).toEqual([]);
   expect(manifest.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: "continuity-handoff-source-binding-r13"});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: "preflight-private-preparation-source-binding-r14"});
   expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
   for (const source of manifest.bindings) {
     const actual = readFileSync(path.join(root, source.path));
