@@ -151,7 +151,7 @@ describe("CS-1 fencing: a later grant retires the previous relay", () => {
     const clock = { now: T0 };
     const store = open(path.join(directory(), "session-messages.sqlite3"), () => clock.now);
     store.startPresence({ ...target, instanceId: "birth-legacy", transport, wakeVisibility: "silent", canWakeSilently: true, deliveryCapabilities: capabilities });
-    clock.now = T0 + 16 * SECOND; // its old relay is gone: no live lease
+    clock.now = T0 + 21 * SECOND; // past PRESENCE_LEASE_MS (20 s): its old relay is gone and the birth is unreachable
     expect(store.relayRecoveryInstance(target)).toBe("birth-legacy");
     const adopted = store.grantRelay({ ...target, transport, instanceId: "birth-legacy", codeDigest: null, hostPid: 4242 });
     expect(adopted.relayId).toEqual(expect.any(String));
