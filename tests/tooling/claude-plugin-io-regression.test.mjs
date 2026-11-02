@@ -31,11 +31,10 @@ async function fixture() {
   await write("hooks/hooks.json", JSON.stringify({ hooks: { SessionStart: [] } }));
   await write("claude-overlay/hooks/hooks.json", JSON.stringify({ hooks: { SessionStart: [] } }));
   await write(sourceManifest, JSON.stringify({ name: "agent-governance-suite" }));
-  for (const args of [["init"], ["add", "."]]) {
-    const result = spawnSync("git", args, { cwd: root, encoding: "utf8", timeout: 10_000, windowsHide: true });
-    expect(result.error).toBeUndefined();
-    expect(result.status, result.stderr).toBe(0);
-  }
+  // The build lists files with `git ls-files --cached --others`, so an untracked tree is enough; no `git add`.
+  const init = spawnSync("git", ["init"], { cwd: root, encoding: "utf8", windowsHide: true });
+  expect(init.error).toBeUndefined();
+  expect(init.status, init.stderr).toBe(0);
   for (const [relative, bytes] of await renderClaudePlugin(root)) await write(`${OUTPUT_DIRECTORY}/${relative}`, bytes);
   return { root, write };
 }
