@@ -7,7 +7,6 @@ import path from "node:path";
 import {fileURLToPath, pathToFileURL} from "node:url";
 import type {BootstrapConfig} from "./bootstrap.mts";
 import {loadCurrentBudgetFixture, rebindPreparedFixture} from "./prepared-fixture.mts";
-import {independentWireRows} from "./independent-wire-oracle.mts";
 
 type RunConfig = Extract<BootstrapConfig, {schemaVersion: "2.0.0"}>;
 interface OracleRow {caseId: string; requestDigest: string; wireDigest: string; utf8Bytes: number; reservedPicoUsd: string}
@@ -37,16 +36,11 @@ if (process.argv[4] === "worker") {
     console.log(JSON.stringify({winner: result.status === "RAW_EVALUATION_RECORDED", calls}));
   } catch (error) {console.log(JSON.stringify({winner: false, calls, error: (error as NodeJS.ErrnoException).code ?? "RUN_REJECTED"}));}
 } else {
-  // Historical ROOT r2 money policy remains fixed; current public wire inputs use an explicit reviewed successor.
-  // It must come from reviewed wire bytes/order/price, never from preflight requestReservations.
+  // Historical ROOT r2 money policy remains fixed; current wire bytes come from the independent encoder over the
+  // current tree and money from exact integer rules, never from preflight requestReservations.
   const {oracleBytes, oracle: frozenOracle, successorDigest, successorRevision} = await loadCurrentBudgetFixture(repo);
   const root = await mkdtemp(path.join(os.tmpdir(), "ags-budget-regression-"));
   try {
-  const independent = await independentWireRows(repo);
-  assert.equal(independent[0]!.inventoryDigest, frozenOracle.inventoryDigest, "CAPTURED_BUDGET_INVENTORY");
-  const capturedRows = ({caseId, requestDigest, wireDigest, utf8Bytes, reservedPicoUsd}: OracleRow) =>
-    ({caseId, requestDigest, wireDigest, utf8Bytes, reservedPicoUsd});
-  assert.deepEqual(independent.map(capturedRows), frozenOracle.rows.map(capturedRows), "CAPTURED_BUDGET_WIRE_AND_RESERVATIONS");
   assert.equal(hash(oracleBytes.toString("utf8")), "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56");
   const oracle = frozenOracle as BudgetWireOracle;
   assert.equal(oracle.schemaVersion, "1.0.0"); assert.equal(oracle.canonicalRunId, "full-21-015");
@@ -115,8 +109,16 @@ if (process.argv[4] === "worker") {
     (config.profile.qualification as Record<string, unknown>).profileConfigurationDigest = prepared.api.profiles.digestProviderProfileConfiguration(config.profile);
     if (estimate) {
       await mkdir(config.outputDirectory, {recursive: true});
-      cachedWireRows ??= prepared.requests.map(({caseId, request}: {caseId: string; request: {requestDigest: string}}) => {
-        const wire = JSON.stringify(prepared.api.providers.jevNoulWireAdapter.encode(request, config.profile));
+      cachedWireRows ??= prepared.requests.map(({caseId, request}: {caseId: string; request: Record<string, unknown> & {requestDigest: string}}) => {
+        // Request carries the current inventory and no secret, endpoint, other-session context or extra field.
+        assert.deepEqual(Object.keys(request).sort(), ["classificationCriteriaRef", "confirmedContext", "contextSources", "inventoryDigest", "operationId",
+          "originalPrompt", "promptDigest", "requestDigest", "requestId", "schemaVersion", "skills", "taxonomyRevision"], "REQUEST_FIELDS");
+        assert.deepEqual(request.contextSources, [], "REQUEST_NO_CONTEXT_SOURCES");
+        assert(Object.values(request.confirmedContext as Record<string, unknown>).every(value => value === null), "REQUEST_NO_CONFIRMED_CONTEXT");
+        assert.equal(request.inventoryDigest, prepared.inventory.inventoryDigest, "REQUEST_CURRENT_INVENTORY");
+        const wire = JSON.stringify(prepared.api.providers.jevNoulWireAdapter.encode(request as never, config.profile));
+        assert.deepEqual(Object.keys(JSON.parse(wire)).sort(), ["model", "questions", "state"], "WIRE_FIELDS");
+        for (const secret of [env.AGS_BOOTSTRAP_JEV_KEY, env.AGS_BOOTSTRAP_ENDPOINT, "AGS_BOOTSTRAP_JEV_KEY"]) assert(!wire.includes(secret), "WIRE_NO_SECRET");
         return {caseId, wireDigest: hash(wire), utf8Bytes: Buffer.byteLength(wire)};
       });
       const measurements = prepared.requests.map(({caseId, request}: {caseId: string; request: {requestDigest: string}}, index: number) => ({

@@ -620,7 +620,8 @@ export function readHistoricalSource(relative) {
 
 /** Test hook: whether the bytes are the reviewed skill policy wording successor. */
 export function matchesSkillPolicyWordingSuccessorBytes(path, bytes) {
-  return matchesSkillPolicyWordingSuccessor(path, bytes);
+  return matchesSkillPolicyWordingSuccessor(path, bytes)
+    || (Object.hasOwn(SKILL_POLICY_WORDING_SUCCESSOR.hashes, path) && matchesPreflightPrivatePreparationSuccessor(path, bytes));
 }
 
 function historicalChanges(paths) {

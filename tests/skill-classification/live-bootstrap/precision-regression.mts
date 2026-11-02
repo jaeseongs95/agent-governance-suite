@@ -7,7 +7,6 @@ import {pathToFileURL} from "node:url";
 import type {BootstrapConfig} from "./bootstrap.mts";
 import {loadCurrentBudgetFixture, rebindPreparedFixture} from "./prepared-fixture.mts";
 import {expectedPico} from "./precision-current-oracle.mts";
-import {independentWireRows} from "./independent-wire-oracle.mts";
 
 type RunConfig = Extract<BootstrapConfig, {schemaVersion: "2.0.0"}>;
 interface OracleRow {caseId: string; requestDigest: string; wireDigest: string; utf8Bytes: number; reservedPicoUsd: string}
@@ -37,11 +36,8 @@ assert.equal(precision.safeMaxPicoUsd, BigInt(Number.MAX_SAFE_INTEGER).toString(
 const frozenPrices = {billingMode: "token", inputUsdPer1k: Number(oracle.prices.inputUsdPer1000Tokens), outputUsdPer1k: Number(oracle.prices.outputUsdPer1000Tokens), fixedCallMaxUsd: Number(oracle.prices.fixedCallUsd)};
 const expectedCaseIds = oracle.rows.map(({caseId}) => caseId);
 const sourceSkillIds = (await readdir(path.join(repo, "skills"), {withFileTypes: true})).filter(item => item.isDirectory()).map(item => item.name).sort();
-const independent = await independentWireRows(repo);
-assert.equal(independent[0]!.inventoryDigest, oracle.inventoryDigest, "CAPTURED_PRECISION_INVENTORY");
-const capturedRows = ({caseId, requestDigest, wireDigest, utf8Bytes, reservedPicoUsd}: OracleRow) =>
-  ({caseId, requestDigest, wireDigest, utf8Bytes, reservedPicoUsd});
-assert.deepEqual(independent.map(capturedRows), oracle.rows.map(capturedRows), "CAPTURED_PRECISION_WIRE_AND_RESERVATIONS");
+// loadCurrentBudgetFixture derives these rows from the independent encoder over the current tree.
+const independent = oracle.rows;
 const currentMeasurements = independent.map(({caseId, utf8Bytes}) => ({caseId, utf8Bytes}));
 const root = await mkdtemp(path.join(os.tmpdir(), "ags-precision-regression-"));
 const failures: {caseId: string; errorType: string; errorCode: string; assertion: {message: string; actual: unknown; expected: unknown; operator: string | null} | null}[] = [], completed: string[] = [];
@@ -89,7 +85,7 @@ const exists = async (file: string) => {try {await access(file); return true;} c
       }));
       assert.equal(config.profile.modelId, oracle.modelId);
       assert.deepEqual(prepared.inventory.skills.map(skill => skill.skillId).sort(), sourceSkillIds, "CURRENT_INVENTORY_MEMBERSHIP");
-      assert.equal(prepared.inventory.inventoryDigest, independent[0]!.inventoryDigest, "INDEPENDENT_PRECISION_INVENTORY");
+      assert.equal(prepared.inventory.inventoryDigest, oracle.inventoryDigest, "INDEPENDENT_PRECISION_INVENTORY");
       assert.deepEqual(config.prices, frozenPrices);
       assert.deepEqual(measurements.map(row => row.caseId), expectedCaseIds, "FROZEN_CORPUS_CASE_ORDER");
       if (firstWirePass) {

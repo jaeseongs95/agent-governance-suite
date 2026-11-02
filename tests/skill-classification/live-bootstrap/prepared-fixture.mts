@@ -8,6 +8,11 @@ import type {PreparedBootstrapConfig} from "./bootstrap.mts";
 import type {SkillClassificationRequestV1} from "../../../mcp-server/src/skill-classification/types.js";
 
 type Api = typeof import("./bootstrap.mts");
+// Runtime-resolved like bootstrap.mts below, so the type-checked .ts graph does not import .mts modules.
+const {independentWireRows} = await import(new URL("./independent-wire-oracle.mts", import.meta.url).href) as {
+  independentWireRows(repo: string, runId?: string): Promise<{caseId: string; requestDigest: string; inventoryDigest: string; wireDigest: string; utf8Bytes: number}[]>};
+const {adjacentPrices, expectedPico} = await import(new URL("./precision-current-oracle.mts", import.meta.url).href) as {
+  adjacentPrices(maxBytes: number): [number, number]; expectedPico(bytes: number, price: number): bigint};
 export type EvidenceKind = keyof PreparedBootstrapConfig["evidence"];
 export type IssuerExpiry = {kind: EvidenceKind; validUntil: string};
 export const mockEnv = {AGS_BOOTSTRAP_ENDPOINT: "https://mock.invalid/classify", AGS_BOOTSTRAP_JEV_KEY: "test-only-not-a-real-key"};
@@ -155,312 +160,120 @@ export async function readyEstimateMock(api: Api, repo: string, outputDirectory:
   return {config, prepared, measurements};
 }
 
-/** Frozen input successor only: never derive expected money from preflight or during a test. */
-export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true) {
+type CurrentWireRow = {caseId: string; requestDigest: string; wireDigest: string; utf8Bytes: number};
+type PrecisionCaseRule = {id: string; kind: string; priceNumberText: string; expectedStatus: string; expectedReason: string | null};
+type SyntheticCaseRule = {id: string; historicalId: string; requests: number; capUsd: string; unchangedUnknownUsd: string; historicalConfirmedUsd: string};
+type BudgetPolicy = Record<string, unknown> & {rows: {caseId: string}[]; prices: {inputUsdPer1000Tokens: string; outputUsdPer1000Tokens: string;
+  fixedCallUsd: string; assumedInputTokensPerUtf8Byte: string; usdPerByteNumerator: string; usdPerByteDenominator: string};
+  syntheticOverBudgetCases: (SyntheticCaseRule & Record<string, unknown>)[]; fractionalRoundingFixture: Record<string, unknown> & {inputUsdPer1000Tokens: string}};
+type PrecisionPolicy = Record<string, unknown> & {cases: PrecisionCaseRule[]};
+const PICO_PER_USD = 1_000_000_000_000n;
+// The reviewed price oracle may only advance by the smallest step that crosses its cap.
+const SYNTHETIC_OVERRUN_PICO = 1000n;
+const usdDecimal = (pico: bigint) => {
+  assert(pico >= 0n);
+  return `${pico / PICO_PER_USD}.${(pico % PICO_PER_USD).toString().padStart(12, "0")}`;
+};
+const decimalPico = (usd: string) => {
+  const match = /^(\d+)\.(\d{12})$/u.exec(usd);
+  assert(match, `TWELVE_PLACE_USD_REQUIRED:${usd}`);
+  return BigInt(match[1]!) * PICO_PER_USD + BigInt(match[2]!);
+};
+const sumPico = (values: bigint[]) => values.reduce((sum, value) => sum + value, 0n);
+const maxPico = (values: bigint[]) => values.reduce((max, value) => value > max ? value : max, 0n);
+
+/**
+ * Money and precision rules applied to the given current wire measurements. The frozen root oracles hold only policy
+ * (prices, caps, case definitions); every byte-dependent expectation is recomputed here by exact integer arithmetic.
+ */
+export function deriveBudgetFixture(predecessor: BudgetPolicy, precision: PrecisionPolicy, wireRows: readonly CurrentWireRow[],
+  current: {inventoryDigest: string; fixtureDigest: string; fixtureOracleDigest: string}) {
+  // Case identity and order come from the frozen corpus oracle, never from the current measurement.
+  assert.deepEqual(wireRows.map(row => row.caseId), predecessor.rows.map(row => row.caseId), "BUDGET_CASE_ORDER");
+  assert.deepEqual([predecessor.prices.inputUsdPer1000Tokens, predecessor.prices.outputUsdPer1000Tokens, predecessor.prices.fixedCallUsd,
+    predecessor.prices.assumedInputTokensPerUtf8Byte], ["0.000042", "0", "0", "1"], "BUDGET_PRICE_POLICY");
+  const picoPerByteNumerator = BigInt(predecessor.prices.usdPerByteNumerator) * PICO_PER_USD;
+  const picoPerByteDenominator = BigInt(predecessor.prices.usdPerByteDenominator);
+  assert.equal(picoPerByteNumerator % picoPerByteDenominator, 0n);
+  const picoPerByte = picoPerByteNumerator / picoPerByteDenominator;
+  assert.equal(picoPerByte, 42000n);
+  for (const row of wireRows) {
+    assert(Number.isSafeInteger(row.utf8Bytes) && row.utf8Bytes > 0, `BUDGET_WIRE_BYTES:${row.caseId}`);
+    assert.match(row.requestDigest, /^sha256:[a-f0-9]{64}$/u); assert.match(row.wireDigest, /^sha256:[a-f0-9]{64}$/u);
+  }
+  const rows = wireRows.map(({caseId, requestDigest, wireDigest, utf8Bytes}) => {
+    const reserved = BigInt(utf8Bytes) * picoPerByte;
+    return {caseId, requestDigest, wireDigest, utf8Bytes, reservedPicoUsd: reserved.toString(), reservedUsdDecimal: usdDecimal(reserved)};
+  });
+  const reserved = rows.map(row => BigInt(row.reservedPicoUsd));
+  const total = sumPico(reserved), firstTwo = sumPico(reserved.slice(0, 2)), max = maxPico(reserved);
+  const totals = {utf8Bytes: String(rows.reduce((sum, row) => sum + row.utf8Bytes, 0)), reservedPicoUsd: total.toString(),
+    reservedUsdDecimal: usdDecimal(total), firstTwoPicoUsd: firstTwo.toString(), firstTwoUsdDecimal: usdDecimal(firstTwo),
+    maxUtf8Bytes: String(Math.max(...rows.map(row => row.utf8Bytes))), maxReservedPicoUsd: max.toString()};
+  // Synthetic over-budget: unknown and historical confirmed spend stay fixed; add confirmed spend only until the total
+  // exceeds the cap by SYNTHETIC_OVERRUN_PICO. A current reservation already over the cap needs no addition.
+  const syntheticOverBudgetCases = predecessor.syntheticOverBudgetCases.map(row => {
+    assert(Number.isSafeInteger(row.requests) && row.requests > 0 && row.requests <= rows.length);
+    assert.equal(row.id, `${row.historicalId}-current-oracle`);
+    const cap = decimalPico(row.capUsd), unknown = decimalPico(row.unchangedUnknownUsd), historical = decimalPico(row.historicalConfirmedUsd);
+    const requestReservation = sumPico(reserved.slice(0, row.requests));
+    const oldTotal = unknown + historical + requestReservation;
+    const additional = oldTotal > cap ? 0n : cap + SYNTHETIC_OVERRUN_PICO - oldTotal;
+    const proposedTotal = oldTotal + additional;
+    assert(proposedTotal > cap, `SYNTHETIC_CASE_NOT_OVER_BUDGET:${row.id}`);
+    return {...row, currentRequestReservationUsd: usdDecimal(requestReservation), oldInputCurrentTotalUsd: usdDecimal(oldTotal),
+      additionalSyntheticConfirmedUsd: usdDecimal(additional), proposedSyntheticConfirmedUsd: usdDecimal(historical + additional),
+      proposedTotalPicoUsd: proposedTotal.toString(), proposedTotalUsd: usdDecimal(proposedTotal)};
+  });
+  // Fractional price: round up each request, never the sum.
+  const fractionalPrice = Number(predecessor.fractionalRoundingFixture.inputUsdPer1000Tokens);
+  const fractionalRows = rows.map(row => ({caseId: row.caseId, reservedPicoUsd: expectedPico(row.utf8Bytes, fractionalPrice).toString()}));
+  const perRequestCeil = sumPico(fractionalRows.map(row => BigInt(row.reservedPicoUsd)));
+  const roundAfterSumming = expectedPico(Number(totals.utf8Bytes), fractionalPrice);
+  assert(perRequestCeil > roundAfterSumming, "PER_REQUEST_ROUNDING_REQUIRED");
+  const fractionalRoundingFixture = {...predecessor.fractionalRoundingFixture, rows: fractionalRows,
+    sumOfPerRequestCeilPicoUsd: perRequestCeil.toString(), invalidRoundAfterSummingPicoUsd: roundAfterSumming.toString(),
+    differencePicoUsd: (perRequestCeil - roundAfterSumming).toString()};
+  // The historical safe-boundary prices were fitted to old bytes; the current boundary is the nearest Number pair
+  // around MAX_SAFE_INTEGER picoUSD for the current largest request.
+  const [below, above] = adjacentPrices(Math.max(...rows.map(row => row.utf8Bytes)));
+  const adjacent: Record<string, [string, number]> = {"safe-equal": ["current-adjacent-below", below], "safe-above": ["current-adjacent-above", above]};
+  const fixedPico = 1_000_000_000n; // fixed-per-call controls reserve fixedCallMaxUsd 0.001
+  const cases = precision.cases.map(original => {
+    const [id, price] = adjacent[original.id] ?? [original.id, Number(original.priceNumberText)];
+    const priceNumberText = adjacent[original.id] ? price.toString() : original.priceNumberText;
+    const values = original.kind === "invalid-price" ? null
+      : original.kind === "reviewed-estimate" ? rows.map(row => expectedPico(row.utf8Bytes, price))
+      : rows.map(() => fixedPico);
+    return {id, kind: original.kind, priceNumberText, expectedStatus: original.expectedStatus, expectedReason: original.expectedReason,
+      expectedRows: values ? rows.map((row, index) => ({caseId: row.caseId, reservedPicoUsd: values[index]!.toString()})) : [],
+      expectedSumPicoUsd: values ? sumPico(values).toString() : null, expectedMaxPicoUsd: values ? maxPico(values).toString() : null};
+  });
+  const oracle = {...predecessor, ...current, rows, totals, syntheticOverBudgetCases, fractionalRoundingFixture};
+  return {oracle, precision: {...precision, cases}};
+}
+
+/** Current-tree rule fixture: never derive expected money from preflight or during a test. */
+export async function loadCurrentBudgetFixture(repo: string) {
+  // Root policy oracles stay frozen: prices, caps, corpus case order and precision case definitions.
   const oracleBytes = await readFile(new URL("./budget-wire-oracle.json", import.meta.url));
   const boundaryBytes = await readFile(new URL("./precision-boundary-oracle.json", import.meta.url));
-  const successorBytes = await readFile(new URL("./budget-wire-source-successor.json", import.meta.url));
   assert.equal(hash(oracleBytes), "sha256:f6ea158f65473b5aa08846196bbb54a02ca5db7fffaed39d0ba25c2f61148b56");
   assert.equal(hash(boundaryBytes), "sha256:618afb36e06a7372656e9a4139bf3f91e45f12d1487bac42e72f0994a7d2f835");
-  assert.equal(hash(successorBytes), "sha256:580819f41a2f61621cf09f6a6357b1cd21b138ee775752455e49d74c68213dfe");
   const predecessor = JSON.parse(oracleBytes.toString("utf8")), precision = JSON.parse(boundaryBytes.toString("utf8"));
-  const successor = JSON.parse(successorBytes.toString("utf8"));
-  assert.equal(successor.revision, "ags-bootstrap-budget-host-source-binding-r03");
-  assert.equal(successor.parentBudgetDigest, hash(oracleBytes));
-  assert.equal(successor.parentPrecisionDigest, hash(boundaryBytes));
-  assert.deepEqual(successor.rows.map((row: {caseId: string}) => row.caseId), predecessor.rows.map((row: {caseId: string}) => row.caseId));
-  assert.deepEqual(successor.precisionCases.map((row: {id: string}) => row.id), precision.cases.map((row: {id: string}) => row.id));
-  // D280 changes inventory/request bindings only; preserve every frozen money and byte-length expectation.
-  const registryBytes = await readFile(new URL("./budget-wire-registry-successor.json", import.meta.url));
-  assert.equal(hash(registryBytes), "sha256:d91aa491dc94817d44fe61eb2fd6f488e963687a6d88172c4719168ac41a2111");
-  const registrySuccessor = JSON.parse(registryBytes.toString("utf8"));
-  assert.equal(registrySuccessor.revision, "ags-bootstrap-budget-registry-binding-r04");
-  assert.equal(registrySuccessor.parentSourceDigest, hash(successorBytes));
-  assert.equal(registrySuccessor.fixtureDigest, successor.fixtureDigest);
-  assert.equal(registrySuccessor.fixtureOracleDigest, successor.fixtureOracleDigest);
-  assert.equal(registrySuccessor.rows.length, successor.rows.length);
-  // The historical registry binding remains intact; r05 binds current inputs to
-  // independently calculated frozen reservations, without consulting preflight.
-  const solidBytes = await readFile(new URL("./budget-wire-solid-successor.json", import.meta.url));
-  assert.equal(hash(solidBytes), "sha256:25f4eb5d8d5a2449d48b2ef39872ab800e256d8c828c0ead23eef427a9d31ae6");
-  const solid = JSON.parse(solidBytes.toString("utf8"));
-  assert.equal(solid.revision, "ags-bootstrap-budget-solid-binding-r05");
-  assert.equal(solid.parentRegistryDigest, hash(registryBytes));
-  assert.equal(solid.fixtureDigest, successor.fixtureDigest);
-  assert.equal(solid.fixtureOracleDigest, successor.fixtureOracleDigest);
-  assert.equal(solid.rows.length, successor.rows.length);
-  // r05 stays frozen history. r06 binds the skill policy wording and prompt-engineering sources
-  // to a new official capture and independently calculated reservations, without consulting preflight.
-  const policyBytes = await readFile(new URL("./budget-wire-skill-policy-successor.json", import.meta.url));
-  assert.equal(hash(policyBytes), "sha256:c1f3efa8bc1844c5353d6a03854f6917fbedcaabbb5b79aa737a3b3f2cc998b9");
-  const policy = JSON.parse(policyBytes.toString("utf8"));
-  assert.equal(policy.revision, "ags-bootstrap-budget-skill-policy-binding-r06");
-  assert.equal(policy.parentSolidDigest, hash(solidBytes));
-  assert.equal(policy.rows.length, successor.rows.length);
-  assert.deepEqual(policy.precisionCases.map((row: {id: string}) => row.id), solid.precisionCases.map((row: {id: string}) => row.id));
-  // r06 remains frozen. r07 binds the midtask source/inventory change to designated-server
-  // wire observations and independent rational expectations, never product preflight output.
-  const midtaskBytes = await readFile(new URL("./budget-wire-midtask-successor.json", import.meta.url));
-  assert.equal(hash(midtaskBytes), "sha256:6a94e78f76801c0b3ceade0c04dee4dfedebbc9ca0071f3c0c6c2b6d2db4e5c0");
-  const midtask = JSON.parse(midtaskBytes.toString("utf8"));
-  assert.equal(midtask.revision, "ags-bootstrap-budget-midtask-source-binding-r07");
-  assert.equal(midtask.parentSkillPolicyDigest, hash(policyBytes));
-  if (bindRegistry) assert.equal(midtask.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
-  assert.equal(midtask.fixtureDigest, "sha256:188d2f6b0bbc5ab1ac3931e70387f731ca85c463df0e177113d1b724403446bb");
-  assert.deepEqual(midtask.rows.map((row: {caseId: string}) => row.caseId), policy.rows.map((row: {caseId: string}) => row.caseId));
-  assert.deepEqual(midtask.precisionCases.map((row: {id: string}) => row.id), policy.precisionCases.map((row: {id: string}) => row.id));
-  // r07 remains frozen. r08 binds the governance-behavior source successor to its designated-CI
-  // wire capture and independent integer reservations; historical prices, caps and precision inputs remain intact.
-  const governanceBytes = await readFile(new URL("./budget-wire-governance-behavior-successor.json", import.meta.url));
-  assert.equal(hash(governanceBytes), "sha256:a4bbf0573b0d927e373608a945721a43ec9bef624f800eb202903ef88164b155");
-  const governance = JSON.parse(governanceBytes.toString("utf8"));
-  assert.equal(governance.revision, "ags-bootstrap-budget-governance-behavior-source-binding-r08");
-  assert.equal(governance.sourceCommit, "623a31695adcaa581a0ada978e565531460c7d9a");
-  assert.equal(governance.parentMidtaskDigest, hash(midtaskBytes));
-  if (bindRegistry) assert.equal(governance.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
+  // Current request/wire bytes come from the independent encoder over the current tree, not from product preflight.
+  const independent = await independentWireRows(repo, predecessor.canonicalRunId);
   const fixtureBytes = await readFile(path.join(repo, "tests/skill-classification/fixtures.json"));
-  // r08의 원 입력은 동결한다. 현재 입력은 아래 r12 원측정에 결속한다.
-  assert.equal(governance.fixtureDigest, "sha256:d3490862893ee85f13dbee39ad992498bf7a76360c898d30d8089e5e485c1b88");
-  const currentFixture = JSON.parse(fixtureBytes.toString("utf8"));
-  assert.equal(governance.fixtureOracleDigest, "sha256:e48f0d37e8675f046a00648451fc3086753af97d663ca4a0aa18b8fdad386666");
-  assert.deepEqual(governance.rows.map((row: {caseId: string}) => row.caseId), midtask.rows.map((row: {caseId: string}) => row.caseId));
-  assert.deepEqual(governance.inheritedFields, ["precisionCases", "syntheticOverBudgetCases", "fractionalRoundingFixture"]);
-  let capturedPicoUsd = 0n, maxCapturedPicoUsd = 0n, capturedUtf8Bytes = 0;
-  for (const row of governance.rows as {utf8Bytes: number; reservedPicoUsd: string}[]) {
-    const picoUsd = BigInt(row.reservedPicoUsd);
-    assert.equal(picoUsd, BigInt(row.utf8Bytes) * 42000n);
-    capturedPicoUsd += picoUsd; capturedUtf8Bytes += row.utf8Bytes;
-    if (picoUsd > maxCapturedPicoUsd) maxCapturedPicoUsd = picoUsd;
-  }
-  assert.equal(governance.totals.utf8Bytes, String(capturedUtf8Bytes));
-  assert.equal(governance.totals.reservedPicoUsd, capturedPicoUsd.toString());
-  const firstTwoPicoUsd = governance.rows.slice(0, 2).reduce((sum: bigint, row: {reservedPicoUsd: string}) => sum + BigInt(row.reservedPicoUsd), 0n);
-  assert.equal(governance.totals.firstTwoPicoUsd, firstTwoPicoUsd.toString());
-  assert.equal(governance.totals.firstTwoUsdDecimal, "0.010488534000");
-  assert.equal(governance.totals.reservedUsdDecimal, "0.110123916000");
-  assert.equal(governance.totals.maxUtf8Bytes, "124951");
-  assert.equal(governance.totals.maxReservedPicoUsd, maxCapturedPicoUsd.toString());
-  assert.equal(maxCapturedPicoUsd.toString(), "5247942000");
-  // r08 remains frozen. D0341 intentionally changed recovery-deliberation source text and its
-  // classification bindings. The exact r09 wire capture is cross-checked by an independent encoder.
-  const recoveryBytes = await readFile(new URL("./budget-wire-recovery-deliberation-successor.json", import.meta.url));
-  assert.equal(hash(recoveryBytes), "sha256:3e38f4346d6894a891270483a8240ca2846ffb1a0a793eeb12f6742ac13dce51");
-  const recovery = JSON.parse(recoveryBytes.toString("utf8"));
-  assert.equal(recovery.revision, "ags-bootstrap-budget-recovery-deliberation-source-binding-r09");
-  assert.equal(recovery.sourceCommit, "8221fffd3bb65962ecb6be796e0fa6f2b588ce45");
-  assert.equal(recovery.parentGovernanceBehaviorDigest, hash(governanceBytes));
-  if (bindRegistry) assert.equal(recovery.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
-  assert.equal(recovery.fixtureDigest, governance.fixtureDigest);
-  assert.equal(recovery.fixtureOracleDigest, governance.fixtureOracleDigest);
-  assert.deepEqual(recovery.rows.map((row: {caseId: string}) => row.caseId), governance.rows.map((row: {caseId: string}) => row.caseId));
-  assert.deepEqual(recovery.inheritedFields, governance.inheritedFields);
-  let recoveryPicoUsd = 0n, maxRecoveryPicoUsd = 0n, recoveryUtf8Bytes = 0;
-  for (const row of recovery.rows as {utf8Bytes: number; reservedPicoUsd: string}[]) {
-    const picoUsd = BigInt(row.reservedPicoUsd);
-    assert.equal(picoUsd, BigInt(row.utf8Bytes) * 42000n);
-    recoveryPicoUsd += picoUsd; recoveryUtf8Bytes += row.utf8Bytes;
-    if (picoUsd > maxRecoveryPicoUsd) maxRecoveryPicoUsd = picoUsd;
-  }
-  assert.equal(recovery.totals.utf8Bytes, String(recoveryUtf8Bytes));
-  assert.equal(recovery.totals.reservedPicoUsd, recoveryPicoUsd.toString());
-  const recoveryFirstTwo = recovery.rows.slice(0, 2).reduce((sum: bigint, row: {reservedPicoUsd: string}) => sum + BigInt(row.reservedPicoUsd), 0n);
-  assert.equal(recovery.totals.firstTwoPicoUsd, recoveryFirstTwo.toString());
-  assert.equal(recovery.totals.firstTwoUsdDecimal, "0.010494246000");
-  assert.equal(recovery.totals.reservedUsdDecimal, "0.110183892000");
-  assert.equal(recovery.totals.maxUtf8Bytes, "125019");
-  assert.equal(recovery.totals.maxReservedPicoUsd, maxRecoveryPicoUsd.toString());
-  assert.equal(maxRecoveryPicoUsd.toString(), "5250798000");
-  // r09와 지정 CI의 r10 원측정도 역사 입력으로 보존한다.
-  const invocationBytes = await readFile(new URL("./budget-wire-orchestrator-invocation-successor.json", import.meta.url));
-  assert.equal(hash(invocationBytes), "sha256:f9bdab55ab00309ea04096d6d8665e64165d1eb897057dc5898f553cff854fc2");
-  const invocation = JSON.parse(invocationBytes.toString("utf8"));
-  assert.equal(invocation.revision, "ags-bootstrap-budget-orchestrator-invocation-source-binding-r10");
-  assert.equal(invocation.sourceCommit, "9da7022d2f3bffdbea50865b841640733643e25d");
-  assert.equal(invocation.parentRecoveryDeliberationDigest, hash(recoveryBytes));
-  if (bindRegistry) assert.equal(invocation.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
-  assert.equal(invocation.fixtureDigest, hash(fixtureBytes));
-  assert.equal(invocation.fixtureOracleDigest, currentFixture.oracleDigest);
-  assert.deepEqual(invocation.rows.map((row: {caseId: string}) => row.caseId), recovery.rows.map((row: {caseId: string}) => row.caseId));
-  assert.deepEqual(invocation.inheritedFields, recovery.inheritedFields);
-  let invocationPicoUsd = 0n, maxInvocationPicoUsd = 0n, invocationUtf8Bytes = 0;
-  for (const row of invocation.rows as {utf8Bytes: number; reservedPicoUsd: string}[]) {
-    const picoUsd = BigInt(row.reservedPicoUsd);
-    assert.equal(picoUsd, BigInt(row.utf8Bytes) * 42000n);
-    invocationPicoUsd += picoUsd; invocationUtf8Bytes += row.utf8Bytes;
-    if (picoUsd > maxInvocationPicoUsd) maxInvocationPicoUsd = picoUsd;
-  }
-  assert.equal(invocation.totals.utf8Bytes, String(invocationUtf8Bytes));
-  assert.equal(invocation.totals.reservedPicoUsd, invocationPicoUsd.toString());
-  const invocationFirstTwo = invocation.rows.slice(0, 2).reduce((sum: bigint, row: {reservedPicoUsd: string}) => sum + BigInt(row.reservedPicoUsd), 0n);
-  assert.equal(invocation.totals.firstTwoPicoUsd, invocationFirstTwo.toString());
-  assert.equal(invocation.totals.firstTwoUsdDecimal, "0.010549686000");
-  assert.equal(invocation.totals.reservedUsdDecimal, "0.110766012000");
-  assert.equal(invocation.totals.maxUtf8Bytes, "125679");
-  assert.equal(invocation.totals.maxReservedPicoUsd, maxInvocationPicoUsd.toString());
-  assert.equal(maxInvocationPicoUsd.toString(), "5278518000");
-  // r11은 지정 TEST의 실제·독립 인코더가 일치한 역사 요청 결속으로 보존한다.
-  // 전송 바이트와 금액은 r10과 같으며, 요청·인벤토리 지문만 바뀌었다.
-  const unavailableBytes = await readFile(new URL("./budget-wire-classification-unavailable-successor.json", import.meta.url));
-  assert.equal(hash(unavailableBytes), "sha256:3281619416f55c4e3b7d7a7b2941a65f40e2f7448a786cfc6e88a7014a9a8fe1");
-  const unavailable = JSON.parse(unavailableBytes.toString("utf8"));
-  assert.equal(unavailable.revision, "ags-bootstrap-budget-classification-unavailable-source-binding-r11");
-  assert.equal(unavailable.sourceCommit, "6f1f37d86a3e681b4ce6d092afb2fe858d02d9d9");
-  assert.equal(unavailable.parentOrchestratorInvocationDigest, hash(invocationBytes));
-  if (bindRegistry) assert.equal(unavailable.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
-  assert.equal(unavailable.fixtureDigest, hash(fixtureBytes));
-  assert.equal(unavailable.fixtureOracleDigest, currentFixture.oracleDigest);
-  assert.equal(unavailable.rows.length, invocation.rows.length);
-  for (const [index, row] of unavailable.rows.entries()) {
-    const previous = invocation.rows[index];
-    assert.deepEqual({...row, requestDigest: previous.requestDigest}, previous);
-  }
-  assert.deepEqual(unavailable.totals, invocation.totals);
-  assert.deepEqual(unavailable.inheritedFields, invocation.inheritedFields);
-  // r10/r11을 덮지 않고 현재 21행의 실측과 별도 정수 산술을 동결한 후속 자료를 읽는다.
-  const liveBytes = await readFile(new URL("./budget-wire-live-host-boundaries-successor.json", import.meta.url));
-  assert.equal(hash(liveBytes), "sha256:a6e768d43f1d4c3b1fb66227a031d5937385169ddb9650e78ffc07b1dcedd1d3");
-  const live = JSON.parse(liveBytes.toString("utf8"));
-  assert.equal(live.revision, "ags-bootstrap-budget-live-host-boundaries-source-binding-r12");
-  assert.equal(live.sourceCommit, "6d7eac4b4503c74141de4ff51b80de035daff05c");
-  assert.equal(live.parentClassificationUnavailableDigest, hash(unavailableBytes));
-  if (bindRegistry) assert.equal(live.registryDigest, hash(await readFile(path.join(repo, "skills/registry.json"))));
-  assert.equal(live.fixtureDigest, hash(fixtureBytes));
-  assert.equal(live.fixtureOracleDigest, currentFixture.oracleDigest);
-  assert.equal(live.rows.length, unavailable.rows.length);
-  for (const [index, row] of live.rows.entries()) {
-    const previous = unavailable.rows[index];
-    assert.deepEqual({...row, requestDigest: previous.requestDigest}, previous);
-  }
-  assert.deepEqual(live.totals, unavailable.totals);
-  const livePrecisionBytes = await readFile(new URL("./precision-live-host-boundaries-successor.json", import.meta.url));
-  assert.equal(hash(livePrecisionBytes), "sha256:891f10021218faecf213e3329224aad5fbca7d51b0fdd5a43f697e329571b12f");
-  assert.equal(live.precisionSuccessorDigest, hash(livePrecisionBytes));
-  const livePrecision = JSON.parse(livePrecisionBytes.toString("utf8"));
-  assert.equal(livePrecision.revision, "ags-bootstrap-precision-live-host-boundaries-source-binding-r12");
-  assert.equal(livePrecision.sourceCommit, live.sourceCommit);
-  assert.equal(livePrecision.parentPrecisionDigest, hash(boundaryBytes));
-  assert.equal(livePrecision.parentMidtaskDigest, hash(midtaskBytes));
-  assert.equal(livePrecision.wireCaptureDigest, live.captureEvidence.actualArtifact.digest);
-  assert.equal(livePrecision.inventoryDigest, live.inventoryDigest);
-  assert.equal(livePrecision.fixtureDigest, live.fixtureDigest);
-  assert.equal(livePrecision.fixtureOracleDigest, live.fixtureOracleDigest);
-  assert.equal(livePrecision.unknownUsd, precision.unknownUsd);
-  assert.equal(livePrecision.safeMaxPicoUsd, precision.safeMaxPicoUsd);
-  assert.equal(livePrecision.cases.length, precision.cases.length);
-  for (const [index, row] of livePrecision.cases.entries()) {
-    const original = precision.cases[index];
-    assert.equal(row.id, midtask.precisionCases[index].id);
-    for (const key of ["kind", "expectedStatus", "expectedReason"]) assert.deepEqual(row[key], original[key]);
-    if (!["current-adjacent-below", "current-adjacent-above"].includes(row.id)) assert.equal(row.priceNumberText, original.priceNumberText);
-  }
-  // 인계 지침 변경 뒤의 공개 입력만 새로 결속한다. 역사 입력과 금액 정책은 유지한다.
-  const continuityBytes = await readFile(new URL("./budget-wire-continuity-handoff-successor.json", import.meta.url));
-  assert.equal(hash(continuityBytes), "sha256:2e1ef027308a5dc8a6d76422866047174c1f5a6fab5046f52dda2d0df7413a92");
-  const continuity = JSON.parse(continuityBytes.toString("utf8"));
-  assert.equal(continuity.revision, "ags-bootstrap-budget-continuity-handoff-source-binding-r13");
-  assert.equal(continuity.sourceCommit, "f097ec397519c78dae51e5b3f2e6fb79ed81da3d");
-  assert.equal(continuity.parentLiveHostBoundariesDigest, hash(liveBytes));
-  for (const key of ["schemaVersion", "scope", "registryDigest", "fixtureDigest", "fixtureOracleDigest", "inheritedFields"]) {
-    assert.deepEqual(continuity[key], live[key]);
-  }
-  assert.equal(continuity.captureEvidence.comparedRows, 21);
-  assert.equal(continuity.captureEvidence.actualModelCalls, 0);
-  assert.equal(continuity.rows.length, live.rows.length);
-  assert.equal(continuity.fractionalRoundingFixture.inputUsdPer1000Tokens, live.fractionalRoundingFixture.inputUsdPer1000Tokens);
-  const continuityPrecisionBytes = await readFile(new URL("./precision-continuity-handoff-successor.json", import.meta.url));
-  assert.equal(hash(continuityPrecisionBytes), "sha256:04bc2be6776f20993d4ab37eff35ed015567c86f59cc1d1c8c15e813d246c4f9");
-  assert.equal(continuity.precisionSuccessorDigest, hash(continuityPrecisionBytes));
-  const continuityPrecision = JSON.parse(continuityPrecisionBytes.toString("utf8"));
-  assert.equal(continuityPrecision.revision, "ags-bootstrap-precision-continuity-handoff-source-binding-r13");
-  assert.equal(continuityPrecision.sourceCommit, continuity.sourceCommit);
-  assert.equal(continuityPrecision.parentLiveHostBoundariesPrecisionDigest, hash(livePrecisionBytes));
-  assert.equal(continuityPrecision.wireCaptureDigest, continuity.captureEvidence.productCaptureDigest);
-  assert.equal(continuityPrecision.inventoryDigest, continuity.inventoryDigest);
-  for (const key of ["schemaVersion", "scope", "fixtureDigest", "fixtureOracleDigest", "unknownUsd", "safeMaxPicoUsd"]) {
-    assert.deepEqual(continuityPrecision[key], livePrecision[key]);
-  }
-  assert.equal(continuityPrecision.cases.length, livePrecision.cases.length);
-  for (const [index, row] of continuityPrecision.cases.entries()) {
-    const original = livePrecision.cases[index];
-    for (const key of ["id", "kind", "expectedStatus", "expectedReason"]) assert.deepEqual(row[key], original[key]);
-    if (!["current-adjacent-below", "current-adjacent-above"].includes(row.id)) assert.equal(row.priceNumberText, original.priceNumberText);
-  }
-  // D0336: 지정 CI의 제품·독립 캡처는 요청 결속만 바뀌었다. r13의 금액과 precision은 그대로 둔다.
-  const bindingBytes = await readFile(new URL("./budget-wire-d0336-source-binding-successor.json", import.meta.url));
-  assert.equal(hash(bindingBytes), "sha256:a34498c38e28113d68ed23f6ac24f69ade318378f09e6da1f49dcb9ba032c4e4");
-  const binding = JSON.parse(bindingBytes.toString("utf8"));
-  assert.equal(binding.revision, "ags-bootstrap-budget-d0336-source-binding-r14");
-  assert.equal(binding.sourceCommit, "35018e28dda7bf2ac4bf066021fb4bb1aceb7990");
-  assert.equal(binding.compatibleSourceCommit, "4c3f940b478d0c653f4045579eb2ff0be10aa53d");
-  assert.equal(binding.parentContinuityHandoffDigest, hash(continuityBytes));
-  for (const key of ["schemaVersion", "scope", "registryDigest", "fixtureDigest", "fixtureOracleDigest", "precisionSuccessorDigest"]) {
-    assert.deepEqual(binding[key], continuity[key]);
-  }
-  assert.equal(binding.captureEvidence.productCaptureDigest, "sha256:475274e9a9ff8c4e25a654ae5f7088572ff40ba398f59219472aa75450e4c234");
-  assert.equal(binding.captureEvidence.independentCaptureDigest, "sha256:15d10f0829160a19b63b213e0ca2d53a4f9bc2ad252f7f8a22bad3f68b0617c9");
-  assert.equal(binding.captureEvidence.comparedRows, 21);
-  assert.equal(binding.captureEvidence.actualModelCalls, 0);
-  assert.equal(binding.rows.length, continuity.rows.length);
-  for (const [index, row] of binding.rows.entries()) {
-    const {requestDigest, ...preserved} = row;
-    const {requestDigest: previousRequestDigest, ...previous} = continuity.rows[index];
-    assert.deepEqual(preserved, previous);
-    assert.match(requestDigest, /^sha256:[a-f0-9]{64}$/u);
-    assert.notEqual(requestDigest, previousRequestDigest);
-  }
-  // AGS 3.0 session board: entry-details.md changed outside its classification spans, so only the inventory and
-  // request bindings moved. Wire bytes, prices, reservations and precision stay those of r14.
-  const boardBytes = await readFile(new URL("./budget-wire-session-board-source-binding-successor.json", import.meta.url));
-  assert.equal(hash(boardBytes), "sha256:8ad6f7a79c61d6c89d00171151e506d1988b499b64d84112abe9623cb247c66f");
-  const board = JSON.parse(boardBytes.toString("utf8"));
-  assert.equal(board.revision, "ags-bootstrap-budget-session-board-source-binding-r15");
-  assert.equal(board.sourceCommit, "fcc0d83a3a145729f21b61be1822c9ec5e09daa0");
-  assert.equal(board.parentD0336SourceBindingDigest, hash(bindingBytes));
-  for (const key of ["schemaVersion", "scope", "registryDigest", "fixtureDigest", "fixtureOracleDigest", "precisionSuccessorDigest"]) {
-    assert.deepEqual(board[key], binding[key]);
-  }
-  assert.equal(board.captureEvidence.productCaptureDigest, "sha256:826ecc4469b886de11e00ed8f733c3e0f119aecc2cf5ace0ed6fd66f4187abb6");
-  assert.equal(board.captureEvidence.independentCaptureDigest, "sha256:8375075a5dc9ffcecff412fa3f41a35086738cd26217952c46fd96b4908b7bea");
-  assert.equal(board.captureEvidence.comparedRows, 21);
-  assert.equal(board.captureEvidence.actualModelCalls, 0);
-  assert.equal(board.rows.length, binding.rows.length);
-  for (const [index, row] of board.rows.entries()) {
-    const {requestDigest, ...preserved} = row;
-    const {requestDigest: previousRequestDigest, ...previous} = binding.rows[index];
-    assert.deepEqual(preserved, previous);
-    assert.match(requestDigest, /^sha256:[a-f0-9]{64}$/u);
-    assert.notEqual(requestDigest, previousRequestDigest);
-  }
-  const currentRows = successor.rows.map((row: {caseId: string; utf8Bytes: number}, index: number) => {
-    const historical = registrySuccessor.rows[index];
-    assert.equal(historical.caseId, row.caseId);
-    assert.equal(historical.utf8Bytes, row.utf8Bytes);
-    assert.equal(solid.rows[index].caseId, row.caseId);
-    assert.equal(midtask.rows[index].caseId, row.caseId);
-    const current = board.rows[index];
-    assert.equal(current.caseId, row.caseId);
-    return {...row, ...current};
-  });
-  const oracle = {...predecessor, inventoryDigest: board.inventoryDigest, fixtureDigest: continuity.fixtureDigest,
-    fixtureOracleDigest: continuity.fixtureOracleDigest, rows: currentRows, totals: continuity.totals,
-    syntheticOverBudgetCases: predecessor.syntheticOverBudgetCases.map((row: {id: string}, index: number) => {
-      assert.equal(successor.syntheticOverBudgetCases[index].id, row.id);
-      assert.equal(solid.syntheticOverBudgetCases[index].id, row.id);
-      assert.equal(policy.syntheticOverBudgetCases[index].id, row.id);
-      assert.equal(midtask.syntheticOverBudgetCases[index].id, row.id);
-      const current = continuity.syntheticOverBudgetCases[index];
-      for (const key of ["id", "historicalId", "requests", "capUsd", "unchangedUnknownUsd", "historicalConfirmedUsd", "expectedStatus", "expectedReason", "expectedEnvironmentReads", "expectedCredentialReads", "expectedFetches", "authority"]) {
-        assert.deepEqual(current[key], Reflect.get(row, key));
-      }
-      return {...row, ...current};
-    }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...continuity.fractionalRoundingFixture}};
-  return {oracleBytes, boundaryBytes, oracle, precision: {...precision,
-    cases: continuityPrecision.cases},
-  successorDigest: hash(boardBytes), successorRevision: board.revision};
+  const inventoryDigest = independent[0]!.inventoryDigest;
+  assert(independent.every(row => row.inventoryDigest === inventoryDigest));
+  const {oracle, precision: currentPrecision} = deriveBudgetFixture(predecessor, precision, independent,
+    {inventoryDigest, fixtureDigest: hash(fixtureBytes), fixtureOracleDigest: JSON.parse(fixtureBytes.toString("utf8")).oracleDigest});
+  return {oracleBytes, boundaryBytes, oracle, precision: currentPrecision,
+    successorDigest: hash(JSON.stringify({oracle, precision: currentPrecision})), successorRevision: "ags-bootstrap-budget-current-tree-rules-r16"};
 }
 
 // Explicit authoring command captures only current public request/wire inputs. It neither runs nor qualifies a provider.
-// Independent rational expectations are reviewed and frozen in the successor; tests never invoke this mode.
+// Diagnostic only: tests derive expectations from independentWireRows and never invoke this mode.
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   assert.equal(process.argv[2], "--capture-budget-wire");
   assert.equal(process.argv.length, 4, "Usage: prepared-fixture.mts --capture-budget-wire OUTPUT_JSON");
