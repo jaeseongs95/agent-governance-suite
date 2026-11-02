@@ -278,10 +278,10 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     const repo = path.resolve(process.platform === "win32" ? "C:\\work\\repo" : "/work/repo");
     const write = (name: string) => JSON.stringify({ hook_event_name: "PreToolUse", session_id: "synthetic-entry-root", cwd: repo,
       tool_name: "Write", tool_input: { file_path: path.join(repo, name), content: "x" } });
+    // Each edit opens and closes the workflow store once; the hook's own close (the third) fails.
+    closedWorkflows(diagnostics.hookFailure("ENTRY_WORKFLOW_CLOSE_FAILED", "synthetic central cleanup failure"), 3);
     for (const name of ["a.ts", "b.ts"]) expect(runContinuityHook(write(name), environment, "claude-code")).toBe("");
-    // No transcript_path: the execution observation fails, so the hook refuses the start before the server sees it.
-    const refused = await runGovernanceHook("claude-code", JSON.stringify(input("start_workflow", {})), environment);
-    expect(refused.ok).toBe(false);
+    denied(await runGovernanceHook("claude-code", JSON.stringify(input("start_workflow", {})), environment), "ENTRY_WORKFLOW_CLOSE_FAILED");
     expect(runContinuityHook(write("c.ts"), environment, "claude-code")).toBe("");
   });
 
