@@ -261,7 +261,7 @@ export function loadCurrentSourceBindings(repo: string) {
   }
   const preflightPath = resolve(repo, "tests/skill-classification/fixtures.preflight-private-preparation-source-successor.json");
   const preflightBytes = readFileSync(preflightPath);
-  if (hashBytes(preflightBytes) !== "sha256:0ed854e4ab0877ef5b4faee6dd350b612282099ff3836711cd9f3555781f770a") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  if (hashBytes(preflightBytes) !== "sha256:fb58272e0f10de935dcfffcb9590ad5012d4065ae16f81d25be1059eed73f5fe") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
   const preflight = JSON.parse(preflightBytes.toString("utf8")) as typeof successor;
   if (resolve(repo, preflight.frozenPredecessor.path) !== handoffPath || handoffBytes.length !== preflight.frozenPredecessor.bytes || hashBytes(handoffBytes) !== preflight.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");

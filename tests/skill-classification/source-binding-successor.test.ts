@@ -1,4 +1,5 @@
 import {createHash} from "node:crypto";
+import {execFileSync} from "node:child_process";
 import {readFileSync} from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
@@ -11,7 +12,10 @@ const successor = JSON.parse(readFileSync(new URL("./fixtures.source-successor.j
 const hash = (bytes: string | Buffer) => "sha256:" + createHash("sha256").update(bytes).digest("hex");
 it("adds only the exact preflight 1.0.2 source while retaining the frozen oracle", () => {
   const bytes = readFileSync(new URL("./fixtures.preflight-private-preparation-source-successor.json", import.meta.url));
-  expect(hash(bytes)).toBe("sha256:0ed854e4ab0877ef5b4faee6dd350b612282099ff3836711cd9f3555781f770a");
+  expect(hash(bytes)).toBe("sha256:fb58272e0f10de935dcfffcb9590ad5012d4065ae16f81d25be1059eed73f5fe");
+  const committed = execFileSync("git", ["show", "HEAD:tests/skill-classification/fixtures.preflight-private-preparation-source-successor.json"], {cwd: root});
+  expect(bytes.equals(committed)).toBe(true);
+  expect(hash(committed)).toBe("sha256:fb58272e0f10de935dcfffcb9590ad5012d4065ae16f81d25be1059eed73f5fe");
   const manifest = JSON.parse(bytes.toString("utf8"));
   expect(manifest.frozenPredecessor).toEqual({
     path: "tests/skill-classification/fixtures.continuity-handoff-source-successor.json",
