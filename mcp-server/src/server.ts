@@ -667,7 +667,8 @@ export function createMcpServer(
     let caller: VerifiedCaller;
     try {
       const meta = request.params._meta;
-      caller = admitCaller(callerIngress(request.params.name, meta && typeof meta === "object" ? meta as Record<string, unknown> : undefined), hostActorId);
+      caller = admitCaller(callerIngress(request.params.name, meta && typeof meta === "object" ? meta as Record<string, unknown> : undefined,
+        request.params.arguments), hostActorId);
       diagnostics?.event("binding", "DEBUG", "binding_check", {method: request.params.name, correlation, verified: true,
         actorRole: caller.actor.role, parentChainLength: caller.parentChain.length, parentChainComplete: caller.parentChainComplete});
     } catch (error) {

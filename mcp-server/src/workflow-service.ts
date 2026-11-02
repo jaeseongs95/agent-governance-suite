@@ -913,8 +913,11 @@ export class WorkflowService {
           // Only a passing stage has to clear the assurance floor. A failing one still records
           // what ran when the host can see it: requiring attestation there would push legitimate
           // unattested failures into abort_workflow, which drops the failure fingerprint.
-          const enforced = result.state === "passed";
-          trustedStageContext = enforced
+          const passed = result.state === "passed";
+          // The floor applies to an agent whose model an agent chose. The root session runs the model the user chose,
+          // so its record is observed and bound but never refused for model or effort.
+          const enforced = passed && (caller === null || caller.parentChain.length > 0);
+          trustedStageContext = passed
             ? this.observeTrustedExecutionContext(binding, subject)
             : this.observeExecutionContext(binding);
           if (trustedStageContext) {
@@ -1890,8 +1893,8 @@ export class WorkflowService {
       context.schemaVersion !== CONTRACT_VERSION
       || typeof context.model !== "string"
       || context.model.length === 0
-      || !MODEL_CLASS.includes(context.modelClass)
-      || !REASONING_EFFORT.includes(context.reasoningEffort)
+      || (context.modelClass !== null && !MODEL_CLASS.includes(context.modelClass))
+      || (context.reasoningEffort !== null && !REASONING_EFFORT.includes(context.reasoningEffort))
       || !["runtime", "spawn-result"].includes(context.source)
       || Number.isNaN(Date.parse(context.observedAt))
     ) {
@@ -1915,18 +1918,17 @@ export class WorkflowService {
       );
     }
 
-    const modelClassRank = MODEL_CLASS.indexOf(context.modelClass);
-    const minimumModelClassRank = MODEL_CLASS.indexOf(minimumModelClass);
-    const reasoningRank = REASONING_EFFORT.indexOf(context.reasoningEffort);
-    const minimumReasoningRank = REASONING_EFFORT.indexOf(minimumReasoningEffort);
-    if (
-      modelClassRank < minimumModelClassRank
-      || reasoningRank < minimumReasoningRank
-    ) {
+    // A model no catalog names has no class to compare and is not refused for it; a known lighter class is.
+    const reasonCode = context.reasoningEffort === null ? "REASONING_EFFORT_UNOBSERVED"
+      : REASONING_EFFORT.indexOf(context.reasoningEffort) < REASONING_EFFORT.indexOf(minimumReasoningEffort) ? "REASONING_EFFORT_BELOW_FLOOR"
+        : context.modelClass !== null && MODEL_CLASS.indexOf(context.modelClass) < MODEL_CLASS.indexOf(minimumModelClass) ? "MODEL_CLASS_BELOW_FLOOR"
+          : null;
+    if (reasonCode) {
       throw new WorkflowContractError(
         "GATE_FAILED",
         `${subject} execution profile is below the planned semantic assurance floor.`,
         {
+          reasonCode,
           model: context.model,
           modelClass: context.modelClass,
           reasoningEffort: context.reasoningEffort,
@@ -1943,6 +1945,7 @@ export class WorkflowService {
       stage.executionRequirement,
       result.executionContext,
       `Stage '${stage.stageId}'`,
+      result.recordedBy?.parentChain.length !== 0,
     );
   }
 

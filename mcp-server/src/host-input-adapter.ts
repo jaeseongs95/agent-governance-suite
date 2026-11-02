@@ -1,4 +1,5 @@
 import { types as utilTypes } from "node:util";
+import type { CallerExecution } from "./caller-identity.js";
 import { hookFailure, hookFailureContext, hookFailureReason } from "./hook-error-diagnostics.js";
 import { type DeliveryCapabilities, type InputObservation } from "./input-observation.js";
 import type { SessionMessageTransport } from "./session-message-relay.js";
@@ -77,6 +78,10 @@ export function adaptHostInput(input: Record<string, unknown>, host: string): Ad
 }
 
 /** Tool ownership is configured at the adapter boundary, never inferred from a local suffix. */
+export function hookExecutionObserver(host: string): HookHostAdapter["observeExecution"] {
+  return selectedHookHostAdapter(host)?.observeExecution;
+}
+
 export function isGovernanceHookTool(host: string, toolName: string): boolean {
   return selectedHookHostAdapter(host)?.ownsTool?.(toolName) === true;
 }
@@ -111,6 +116,8 @@ export interface HookHostAdapter {
    * segment that is exactly `*` matches one directory name. The phase gate does not count edits below them.
    */
   agentNoteRoots?: (environment: NodeJS.ProcessEnv) => string[];
+  /** The model and effort the host reported for this tool call; hosts that report them nowhere omit it. */
+  observeExecution?: (input: Record<string, unknown>, environment: NodeJS.ProcessEnv) => CallerExecution;
 }
 
 // A host entry registers trusted adapter code in the same module namespace it consumes.

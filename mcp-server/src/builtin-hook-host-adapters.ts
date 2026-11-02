@@ -11,6 +11,10 @@ import type { InputObservation, InputObservationKind } from "./input-observation
 import { normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import type { SessionMessageTransport } from "./session-message-relay.js";
 import { transportDeliveryCapabilities } from "./wake-transports.js";
+import { canonicalJson } from "./convergence-logic.js";
+import type { CallerExecution } from "./caller-identity.js";
+import { observeClaudeExecution, readSessionModel, sessionModelDirectory } from "./host-attestation-hook.js";
+import { resolveWorkflowDatabasePath } from "./runtime-config.js";
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -284,8 +288,28 @@ function adaptAntigravityHookInput(input: Record<string, unknown>, host: string)
   // multi_replace_file_content (agy hooks docs) name it in TargetFile.
   setEditTargets(adapted, input, (tool, toolInput) => ANTIGRAVITY_EDIT_TOOLS.has(tool) ? [toolInput.TargetFile ?? toolInput.Path] : null);
   const { observation } = adapted;
-  if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before" && !observation.callId) observation.callId = randomUUID();
+  if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before" && !observation.callId) {
+    // agy gives the hook no call ID. The key holds what the host writes on both sides (conversation, tool, arguments)
+    // so the server finds this row for its tools/call; the random suffix keeps each call's observation distinct.
+    observation.callId = `${antigravityCallKey(observation.sessionId, observation.toolName ?? "", observation.toolInput ?? {}).call}:${randomUUID()}`;
+  }
   return adapted;
+}
+
+const digest = (value: string) => createHash("sha256").update(value, "utf8").digest("hex").slice(0, 32);
+/** Row key prefixes for one agy call: `caller` = conversation and tool, `call` = that plus the canonical arguments. */
+export function antigravityCallKey(conversationId: string, toolName: string, args: unknown): { caller: string; call: string } {
+  const caller = digest(JSON.stringify([conversationId, toolName.split("__").at(-1) ?? toolName]));
+  return { caller, call: `${caller}:${digest(canonicalJson(args ?? {}, "Tool arguments"))}` };
+}
+
+const AGY_EFFORT = /^(.+)-(low|medium|high)$/;
+/** agy names the model and effort in one hook field (`gemini-4-argon-medium`, agy 1.4.12 `agy models`). */
+function observeAntigravityExecution(input: Record<string, unknown>): CallerExecution {
+  const name = text(input.model);
+  if (!name) return { unavailable: "ANTIGRAVITY_MODEL_NAME_MISSING" };
+  const match = AGY_EFFORT.exec(name);
+  return { model: match?.[1] ?? name, effort: match?.[2] ?? null, turnId: null, provenance: "antigravity:hook-model-name" };
 }
 
 const GOVERNANCE_TOOL_PREFIXES = new Set([
@@ -430,6 +454,8 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
   }],
   ["claude-code", {
     adaptInput: adaptClaudeHookInput, ownsTool: ownsGovernanceTool,
+    observeExecution: (input, environment) => observeClaudeExecution(input, { host: "claude-code",
+      readSessionModel: (id) => readSessionModel(sessionModelDirectory(resolveWorkflowDatabasePath(environment)), id) }),
     deliveryProfile: () => deliveryProfile("claude-inbox", false),
     processPid: () => process.ppid, agentNoteRoots: claudeNoteRoots,
   }],
@@ -440,7 +466,7 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
     processPid: (pid, observation) => observation ? pid : undefined,
   }],
   ["antigravity", {
-    adaptInput: adaptAntigravityHookInput, ownsTool: ownsGovernanceTool,
+    adaptInput: adaptAntigravityHookInput, ownsTool: ownsGovernanceTool, observeExecution: observeAntigravityExecution,
     deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(antigravityQueueEnabled(environment, diagnose, defaultQueueWake) ? "antigravity-queue" : "gemini-deferred", false),
     processPid: (pid, observation) => observation ? pid : undefined, agentNoteRoots: antigravityNoteRoots,
   }],

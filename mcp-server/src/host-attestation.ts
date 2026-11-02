@@ -241,7 +241,6 @@ function invalid(message: string, details?: Record<string, unknown>): WorkflowCo
 
 /** Why the current policy rejects an observed model and effort; never inferred from the caller. */
 function qualificationRejectionReason(capability: ResolvedModelCapabilityV1, effort: ReasoningEffortV1): string {
-  if (!MODEL_CLASS.includes(capability.modelClass)) return "MODEL_CLASS_UNSUPPORTED";
   if (!capability.supportedEfforts.includes(effort)) return "CURRENT_POLICY_EFFORT_UNSUPPORTED";
   return "CURRENT_POLICY_EFFORT_BELOW_MINIMUM";
 }
@@ -295,34 +294,33 @@ export class HostAttestationProvider implements TrustedExecutionContextProvider 
     if (caller.host !== this.adapter.host) {
       throw invalid("Host observation belongs to another host adapter.", { reasonCode: "HOST_ADAPTER_MISMATCH" });
     }
-    const effort = execution.effort;
-    if (!isReasoningEffort(effort)) throw invalid("Host observation has an unknown reasoning effort.", { reasonCode: "REASONING_EFFORT_INVALID" });
+    // The catalog only describes models it knows. A model or effort it does not know still runs: the main session's
+    // model is the user's choice and a new release must not stop AGS. Findings are kept as notes for audit.
+    const notes: string[] = [];
+    const effort = isReasoningEffort(execution.effort) ? execution.effort : null;
+    if (effort === null) notes.push(execution.effort === null ? "HOST_EFFORT_UNREPORTED" : "REASONING_EFFORT_UNRECOGNIZED");
     const capability = resolveAdapterModelCapability(this.adapter, execution.model, execution.provenance);
     if (!capability) {
       const judgment = judgeAdapterModelCapability(this.adapter, execution.model, execution.provenance);
-      throw invalid("Host observation has no matching trusted execution capability and policy revision.", {
-        reasonCode: judgment.status === "undetermined" ? judgment.reason : "MODEL_CAPABILITY_UNRESOLVED",
-      });
-    }
-    // A descriptor qualifies only for this host and model under one stated policy revision; none is invented.
-    const mismatch = capability.host !== this.adapter.host || capability.rawModel !== execution.model || !nonEmpty(capability.resolvedModel)
-      ? "QUALIFICATION_CAPABILITY_MISMATCH"
-      : !nonEmpty(capability.policyRevision)
-        || (this.adapter.policyRevision !== undefined && this.adapter.policyRevision !== capability.policyRevision)
-        ? "QUALIFICATION_POLICY_REVISION_MISMATCH" : null;
-    if (mismatch) throw invalid("Host observation has no matching trusted execution capability and policy revision.", { reasonCode: mismatch });
-    if (!MODEL_CLASS.includes(capability.modelClass) || !satisfiesModelEffortPolicy(capability, effort)) {
-      throw invalid("Host observation does not satisfy the trusted model and effort policy.", {
-        reasonCode: qualificationRejectionReason(capability, effort),
-      });
+      notes.push(judgment.status === "undetermined" ? judgment.reason : "MODEL_CAPABILITY_UNRESOLVED");
+    } else {
+      // A resolved descriptor that contradicts this host, model or policy revision is a broken installation, not a new model.
+      const mismatch = capability.host !== this.adapter.host || capability.rawModel !== execution.model || !nonEmpty(capability.resolvedModel)
+        ? "QUALIFICATION_CAPABILITY_MISMATCH"
+        : !nonEmpty(capability.policyRevision)
+          || (this.adapter.policyRevision !== undefined && this.adapter.policyRevision !== capability.policyRevision)
+          ? "QUALIFICATION_POLICY_REVISION_MISMATCH" : null;
+      if (mismatch) throw invalid("Host observation has no matching trusted execution capability and policy revision.", { reasonCode: mismatch });
+      if (effort !== null && !satisfiesModelEffortPolicy(capability, effort)) notes.push(qualificationRejectionReason(capability, effort));
     }
     this.lastVerifiedCapability = capability;
     const now = this.now();
     return {
       schemaVersion: CONTRACT_VERSION,
       model: execution.model,
-      modelClass: capability.modelClass,
+      modelClass: capability?.modelClass ?? null,
       reasoningEffort: effort,
+      ...(notes.length ? { policyNotes: notes } : {}),
       source: "runtime",
       observedAt: now.toISOString(),
       // One host call yields one consumable observation, however often the call is retried.

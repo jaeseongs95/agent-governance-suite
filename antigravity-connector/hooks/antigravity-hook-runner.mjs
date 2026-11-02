@@ -1478,14 +1478,30 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
   return { output: {}, updatedToolInput: currentToolInput, mutated: false };
 }
 
+const AGS_TOOL_PREFIX = "mcp__agent-governance-suite__";
+/** Must equal HOST_ATTESTATION_TOOLS (mcp-server/src/host-attestation.ts); a test compares them. */
+export const OBSERVED_AGS_TOOLS = new Set(["plan_workflow", "start_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
+
+function recordAgsCallObservation(canonicalInput, options) {
+  const hookPath = typeof options?.governanceHookPath === "string" ? options.governanceHookPath
+    : fileURLToPath(new URL("../../mcp-server/dist/governance-hook.mjs", import.meta.url));
+  spawnSync(process.execPath, [hookPath, "--host=antigravity"], {
+    input: JSON.stringify(canonicalInput), encoding: "utf8", stdio: ["pipe", "ignore", "ignore"],
+    timeout: STAGE_TIMEOUT_MS, env: process.env,
+  });
+}
+
 export async function executeAntigravityHookEvent(rawInput, explicitEvent, explicitHook, options = {}) {
   const event = validateExplicitEvent(explicitEvent, rawInput);
   if (!event) return {};
 
   const { canonicalInput, toolBoundary } = buildCanonicalHookInput(rawInput, event);
-  if (event === "PreToolUse" && toolBoundary?.canonicalName.startsWith("mcp__agent-governance-suite__")) {
+  if (event === "PreToolUse" && toolBoundary?.canonicalName.startsWith(AGS_TOOL_PREFIX)) {
     // The AGS server identifies the caller from the host-written tools/call _meta (conversation, root and parent
     // conversation IDs) and refuses caller identity fields itself; the hook neither rewrites nor signs anything.
+    // _meta has no model, so the hook records the host's modelName for the server to claim. A failed record only
+    // leaves the call unobserved for the server to report; it never blocks the call.
+    if (OBSERVED_AGS_TOOLS.has(toolBoundary.canonicalName.slice(AGS_TOOL_PREFIX.length))) recordAgsCallObservation(canonicalInput, options);
     return { decision: "allow" };
   }
 

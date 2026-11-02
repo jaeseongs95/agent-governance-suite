@@ -1,7 +1,7 @@
 import { WorkflowContractError } from "../../contracts/types.js";
 import type { CallerIngress, IngressResult, ObservedCaller } from "./caller-identity.js";
-import { readClaudeLineage } from "./builtin-hook-host-adapters.js";
-import { hostActorId } from "./host-attestation.js";
+import { antigravityCallKey, readClaudeLineage } from "./builtin-hook-host-adapters.js";
+import { HOST_ATTESTATION_TOOLS, hostActorId } from "./host-attestation.js";
 import type { WorkflowStore } from "./workflow-store.js";
 
 // Host fact sources: tests/real-host/binding-capture (2026-11-01) and docs/ags30-session-binding-design.md 1.5.
@@ -43,9 +43,10 @@ export function codexMetaIngress(host = "codex"): CallerIngress {
     const turn = record(meta?.["x-codex-turn-metadata"]);
     if (!sessionId || !threadId || !callId || !turn) return unavailable("CODEX_CALL_META_MISSING");
     if (turn.session_id !== sessionId || turn.thread_id !== threadId) invalid("CODEX_CALL_META_INVALID");
-    const model = text(turn.model), effort = text(turn.reasoning_effort);
-    const execution = model && effort
-      ? { model, effort, turnId: text(turn.turn_id), provenance: `${host}:mcp-meta` }
+    // A model without a reported effort is still observed; the effort stays unknown rather than refusing the call.
+    const model = text(turn.model);
+    const execution = model
+      ? { model, effort: text(turn.reasoning_effort), turnId: text(turn.turn_id), provenance: `${host}:mcp-meta` }
       : { unavailable: "CODEX_EXECUTION_META_MISSING" };
     if (turn.parent_thread_id === undefined || turn.parent_thread_id === null) {
       if (turn.subagent_kind !== undefined && turn.subagent_kind !== null) invalid("CODEX_CALL_META_INVALID");
@@ -60,20 +61,32 @@ export function codexMetaIngress(host = "codex"): CallerIngress {
 
 const AGY = "antigravity.google/";
 
-/** agy 1.4.12 writes the calling conversation, its root and (for a subagent) its direct parent; no call ID or model. */
-export function antigravityMetaIngress(host = "antigravity"): CallerIngress {
-  return (_tool, meta) => {
+/**
+ * agy 1.4.12 writes the calling conversation, its root and (for a subagent) its direct parent; no call ID or model.
+ * The caller comes from `_meta` alone. The model and effort come from the PreToolUse hook's row, keyed by what the
+ * host writes on both sides: this conversation, the tool and the arguments. Without a store nothing is observed.
+ */
+export function antigravityMetaIngress(store: WorkflowStore | null = null, host = "antigravity"): CallerIngress {
+  return (tool, meta, args) => {
     const conversation = text(meta?.[`${AGY}conversation_id`]), root = text(meta?.[`${AGY}root_conversation_id`]);
     if (!conversation || !root) return unavailable("ANTIGRAVITY_CALL_META_MISSING");
-    const execution = { unavailable: "ANTIGRAVITY_EXECUTION_UNOBSERVED" };
+    let callId: string | null = null;
+    let execution: ObservedCaller["execution"] = { unavailable: "ANTIGRAVITY_EXECUTION_UNOBSERVED" };
+    if (store && HOST_ATTESTATION_TOOLS.has(tool)) {
+      const key = antigravityCallKey(conversation, tool, args);
+      const { admission, callerRows } = store.claimLatestCallAdmission(host, `${key.call}:`, `${key.caller}:`);
+      if (admission) ({ callId, execution } = admission);
+      // Rows for this conversation and tool with other arguments mean the hook ran but the arguments differ.
+      else execution = { unavailable: callerRows > 0 ? "ANTIGRAVITY_OBSERVATION_UNMATCHED" : "ANTIGRAVITY_OBSERVATION_MISSING" };
+    }
     const rawParent = meta?.[`${AGY}parent_conversation_id`];
     if (rawParent === undefined || rawParent === null) {
       if (conversation !== root) invalid("ANTIGRAVITY_ROOT_CONVERSATION_MISMATCH");
-      return observed(host, root, null, null, null, execution);
+      return observed(host, root, null, null, callId, execution);
     }
     const parent = text(rawParent);
     if (!parent || conversation === root || parent === conversation) invalid("ANTIGRAVITY_CALL_META_INVALID");
-    return observed(host, root, conversation, parent, null, execution);
+    return observed(host, root, conversation, parent, callId, execution);
   };
 }
 
@@ -96,7 +109,7 @@ export function claudeAdmissionIngress(store: WorkflowStore, host = "claude-code
 /** Installation selects one ingress by AGENT_GOVERNANCE_HOST_ATTESTATION; an unknown host has none. */
 export function builtinCallerIngress(host: string | undefined, store: WorkflowStore): CallerIngress | null {
   if (host === "codex") return codexMetaIngress();
-  if (host === "antigravity") return antigravityMetaIngress();
+  if (host === "antigravity") return antigravityMetaIngress(store);
   if (host === "claude-code") return claudeAdmissionIngress(store);
   return null;
 }

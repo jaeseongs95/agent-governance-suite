@@ -209,6 +209,18 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     }));
   }
 
+  claimLatestCallAdmission(host: string, callPrefix: string, callerPrefix: string): { admission: CallAdmission | null; callerRows: number } {
+    return this.guard("Cannot claim the host call admission.", {}, () => this.transaction(() => {
+      const under = "host = ? AND substr(call_id, 1, length(?)) = ?";
+      const { count } = this.database.prepare(`SELECT count(*) AS count FROM call_admissions WHERE ${under}`)
+        .get(host, callerPrefix, callerPrefix) as { count: number };
+      const row = this.database.prepare(`SELECT admission_json FROM call_admissions WHERE ${under} ORDER BY created_at DESC, rowid DESC LIMIT 1`)
+        .get(host, callPrefix, callPrefix) as { admission_json: string } | undefined;
+      this.database.prepare(`DELETE FROM call_admissions WHERE ${under}`).run(host, callPrefix, callPrefix);
+      return { admission: row ? JSON.parse(row.admission_json) as CallAdmission : null, callerRows: Number(count) };
+    }));
+  }
+
   nextRunSequence(): number {
     return this.guard("Cannot reserve the next workflow run sequence.", {}, () => this.transaction(() => {
       const row = this.database.prepare("SELECT value FROM workflow_metadata WHERE key = 'run-sequence'").get() as MetadataRow | undefined;

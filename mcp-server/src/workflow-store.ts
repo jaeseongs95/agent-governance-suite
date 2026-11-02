@@ -62,6 +62,11 @@ export interface WorkflowStore {
   recordCallAdmission(admission: CallAdmission): void;
   /** Deletes and returns the row, so a second claim of the same call finds nothing. */
   claimCallAdmission(host: string, callId: string): CallAdmission | null;
+  /**
+   * For hosts that give no call ID: claims the newest row whose call ID starts with `callPrefix` and deletes the rest
+   * under it (calls the host never sent on). `callerRows` counts rows under `callerPrefix` before the claim.
+   */
+  claimLatestCallAdmission(host: string, callPrefix: string, callerPrefix: string): { admission: CallAdmission | null; callerRows: number };
   nextRunSequence(): number;
   insertRun(receipt: WorkflowReceiptV1): void;
   getRun(runId: string): WorkflowReceiptV1 | null;
@@ -133,6 +138,15 @@ export class InMemoryWorkflowStore implements WorkflowStore {
     const row = this.admissions.get(key) ?? null;
     this.admissions.delete(key);
     return row;
+  }
+
+  claimLatestCallAdmission(host: string, callPrefix: string, callerPrefix: string): { admission: CallAdmission | null; callerRows: number } {
+    const rows = [...this.admissions.entries()].filter(([, row]) => row.host === host);
+    const callerRows = rows.filter(([, row]) => row.callId.startsWith(callerPrefix)).length;
+    const matched = rows.filter(([, row]) => row.callId.startsWith(callPrefix));
+    for (const [key] of matched) this.admissions.delete(key);
+    // Insertion order is record order, so the last match is the newest.
+    return { admission: matched.at(-1)?.[1] ?? null, callerRows };
   }
 
   nextRunSequence(): number {

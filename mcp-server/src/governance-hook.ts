@@ -2,12 +2,12 @@ import { isHookEntry } from "./hook-entry.js";
 import "./builtin-hook-host-adapters.js";
 import { readFileSync } from "node:fs";
 import { types } from "node:util";
-import { adaptHostInput, isGovernanceHookTool, resolveHookHost } from "./host-input-adapter.js";
+import { adaptHostInput, hookExecutionObserver, isGovernanceHookTool, resolveHookHost } from "./host-input-adapter.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { assertDistinctDatabasePaths, resolveContinuityDatabasePath, resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { runContinuityHook } from "./continuity-hook.js";
 import { HOST_ATTESTATION_TOOLS } from "./host-attestation.js";
-import { observationFailureCode, observeClaudeExecution, readSessionModel, sessionModelDirectory } from "./host-attestation-hook.js";
+import { observationFailureCode } from "./host-attestation-hook.js";
 import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
 import { ContinuityService } from "./continuity-service.js";
 import { failureReason } from "./failure-diagnostics.js";
@@ -56,10 +56,10 @@ function failureReasonCode(failure: unknown): string {
 }
 
 /**
- * Claude Code PreToolUse for AGS tools. Claude's tools/call `_meta` carries only the tool-use ID, so this hook
- * records the caller (session, agent) and the observed execution under that ID; the server claims the row once.
- * It never rewrites arguments and never decides permission, so the host's own approval flow runs unchanged.
- * Codex and agy need no hook: their `_meta` names the caller (docs/ags30-session-binding-design.md 2.2).
+ * PreToolUse for AGS tools on hosts whose tools/call `_meta` lacks the model: Claude Code (only the tool-use ID) and
+ * agy (only the conversation IDs). The hook records the observed execution under the host adapter's call ID; the
+ * server claims the row once. It never rewrites arguments and never decides permission, so the host's own approval
+ * flow runs unchanged. Codex needs no hook: its `_meta` names the caller and model (docs/ags30-session-binding-design.md 2.2).
  */
 export async function runGovernanceHook(
   host: string, raw: string, environment: NodeJS.ProcessEnv = process.env,
@@ -86,9 +86,9 @@ export async function runGovernanceHook(
     // The continuity hook reads the host process for a deferred fork here, before the server pins from lineage.
     if (CONTINUITY_TOOLS.has(tool)) runContinuityHook(raw, environment, host, true);
     const databasePath = resolveWorkflowDatabasePath(environment);
-    const execution = HOST_ATTESTATION_TOOLS.has(tool)
-      ? observeClaudeExecution(input, { host, readSessionModel: (id) => readSessionModel(sessionModelDirectory(databasePath), id) })
-      : { unavailable: "EXECUTION_NOT_REQUIRED" };
+    const observe = hookExecutionObserver(host);
+    const execution = !HOST_ATTESTATION_TOOLS.has(tool) ? { unavailable: "EXECUTION_NOT_REQUIRED" }
+      : observe ? observe(input, environment) : { unavailable: "HOOK_EXECUTION_OBSERVER_UNAVAILABLE" };
     store = new SqliteWorkflowStore(databasePath);
     const transcriptPath = typeof input.transcript_path === "string" && input.transcript_path ? input.transcript_path : null;
     store.recordCallAdmission({ host, callId, tool, sessionId, agentId: agentId as string | null, execution, transcriptPath });

@@ -9,7 +9,7 @@ export interface CallerActor {
 }
 
 export type CallerExecution =
-  | { model: string; effort: string; turnId: string | null; provenance: string }
+  | { model: string; effort: string | null; turnId: string | null; provenance: string }
   | { unavailable: string };
 
 export interface VerifiedCaller {
@@ -35,7 +35,7 @@ export type IngressResult =
   | { provenance: "unavailable"; reason: string };
 
 /** One adapter per host. Contradictions (malformed, mismatched, already consumed) throw WorkflowContractError. */
-export type CallerIngress = (tool: string, meta: Record<string, unknown> | undefined) => IngressResult;
+export type CallerIngress = (tool: string, meta: Record<string, unknown> | undefined, args?: unknown) => IngressResult;
 
 export const MAX_PARENT_CHAIN = 16;
 export const RESERVED_CALLER_KEYS = ["_sessionBinding", "_continuityBinding", "_hostAttestation", "_sessionProof"] as const;
