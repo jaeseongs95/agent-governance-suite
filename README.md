@@ -64,11 +64,12 @@ codex plugin add agent-governance-suite@agent-governance
 
 ### Gemini / Antigravity
 
-Antigravity 또는 Gemini CLI 환경에서 설치 및 사용할 수 있습니다.
+`agy`(Antigravity CLI)의 `plugin install`은 로컬 디렉터리만 받습니다. 릴리스 태그를 받아 그 디렉터리를 설치합니다.
 
 ```bash
-agy plugin marketplace add jaeseongs95/agent-governance-suite
-agy plugin install agent-governance-suite@agent-governance
+git clone --depth 1 --branch v3.1.0 https://github.com/jaeseongs95/agent-governance-suite.git
+agy plugin install ./agent-governance-suite
+agy plugin list
 ```
 
 또는 워크스페이스 루트의 `mcp_config.json`을 통해 로컬 MCP 서버(`AGENT_GOVERNANCE_HOST_ATTESTATION=gemini`)를 바로 연동할 수 있습니다. `GEMINI.md`와 `AGENTS.md` 지침이 자동으로 로드됩니다.
