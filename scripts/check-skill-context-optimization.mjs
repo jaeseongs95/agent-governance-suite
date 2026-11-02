@@ -247,6 +247,11 @@ const ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_SOURCE_HASHES = Object.freeze({
   "skills/orchestrator/SKILL.md": "4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
   "skills/orchestrator/classification.json": "c43f537d2c0fff5c8f9f569cb224d8d6925076d271fdf47b78253bc41ba5ace4",
 });
+// Phase check (docs/ags30-phase-check-design.md 3.1): staged change work starts with plan_workflow; exact successor bytes only.
+const ORCHESTRATOR_PHASE_CHECK_SOURCE_HASHES = Object.freeze({
+  "skills/orchestrator/SKILL.md": "9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
+  "skills/orchestrator/classification.json": "268eae71468978406b87e29774029fabbee8a7b576d06e4fd95ca269b284c55e",
+});
 // 참고자료는 역사 원문으로 투영하지 않고 현재의 정확한 분류 원문으로 판정한다.
 const ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_REFERENCE_HASHES = Object.freeze({
   "skills/orchestrator/references/skill-classification.md": "f33cce4afc3ef2480c94799f46ae78e133c1576e3b57a257c1046f6956d811c9",
@@ -260,7 +265,7 @@ const TASK_CONTRACT_ROUTING_SOURCE_HASHES = Object.freeze({
 function matchesOrchestratorSourceSuccessor(path, bytes) {
   const digest = createHash("sha256").update(bytes).digest("hex");
   return [ORCHESTRATOR_MIDTASK_SOURCE_HASHES, ORCHESTRATOR_RESOURCE_IMPACT_SOURCE_HASHES, ORCHESTRATOR_BEHAVIOR_SOURCE_HASHES,
-    ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_SOURCE_HASHES]
+    ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_SOURCE_HASHES, ORCHESTRATOR_PHASE_CHECK_SOURCE_HASHES]
     .some(hashes => Object.hasOwn(hashes, path) && digest === hashes[path]);
 }
 

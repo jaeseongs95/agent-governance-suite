@@ -21,7 +21,7 @@
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 0,
       "endByte": 175
     },
@@ -29,7 +29,7 @@
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 9,
       "endLine": 11,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 0,
       "endByte": 246
     },
@@ -37,7 +37,7 @@
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 13,
       "endLine": 16,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 0,
       "endByte": 295
     },
@@ -45,7 +45,7 @@
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 16,
       "endLine": 16,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 511,
       "endByte": 764
     },
@@ -53,21 +53,21 @@
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 18,
       "endLine": 18,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d"
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00"
     },
     {
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 20,
       "endLine": 25,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 0,
-      "endByte": 3717
+      "endByte": 3792
     },
     {
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 26,
       "endLine": 26,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 0,
       "endByte": 148
     },
@@ -75,15 +75,15 @@
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 27,
       "endLine": 27,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 0,
-      "endByte": 86
+      "endByte": 113
     },
     {
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 28,
       "endLine": 28,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 0,
       "endByte": 363
     },
@@ -91,7 +91,7 @@
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 29,
       "endLine": 31,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d"
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00"
     }
   ],
   "exclusions": [
@@ -99,7 +99,7 @@
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 176,
       "endByte": 341
     },
@@ -107,7 +107,7 @@
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 11,
       "endLine": 11,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 220,
       "endByte": 313
     },
@@ -115,7 +115,7 @@
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 16,
       "endLine": 16,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 235,
       "endByte": 319
     },
@@ -123,7 +123,7 @@
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 16,
       "endLine": 16,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 320,
       "endByte": 510
     },
@@ -131,15 +131,15 @@
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 25,
       "endLine": 25,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
-      "startByte": 240,
-      "endByte": 317
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
+      "startByte": 315,
+      "endByte": 392
     },
     {
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 26,
       "endLine": 26,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 149,
       "endByte": 344
     },
@@ -147,15 +147,15 @@
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 27,
       "endLine": 27,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
-      "startByte": 87,
-      "endByte": 291
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
+      "startByte": 114,
+      "endByte": 277
     },
     {
       "path": "skills/orchestrator/SKILL.md",
       "startLine": 28,
       "endLine": 28,
-      "digest": "sha256:4b00fd06d5636f2ef914a5ac66dec10145a62887371813ec1592f0790b4e965d",
+      "digest": "sha256:9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
       "startByte": 725,
       "endByte": 857
     }
