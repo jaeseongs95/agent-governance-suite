@@ -394,6 +394,12 @@ export function matchesPreflightPlatformEventsSuccessor(path, bytes) {
   return Boolean(hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]);
 }
 
+function matchesPreflightPrivatePreparationChain(path, bytes) {
+  return matchesPreflightPrivatePreparationSuccessor(path, bytes)
+    || (matchesPreflightPlatformEventsSuccessor(path, bytes)
+      && PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes[path][0] === PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes[path]?.[1]);
+}
+
 function beforePreflightPlatformEvents(path, bytes) {
   if (!matchesPreflightPlatformEventsSuccessor(path, bytes)) return bytes;
   const original = git("show", `${PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.baselineRevision}:${path}`);
@@ -643,7 +649,7 @@ export function readHistoricalSource(relative) {
 /** Test hook: whether the bytes are the reviewed skill policy wording successor. */
 export function matchesSkillPolicyWordingSuccessorBytes(path, bytes) {
   return matchesSkillPolicyWordingSuccessor(path, bytes)
-    || (Object.hasOwn(SKILL_POLICY_WORDING_SUCCESSOR.hashes, path) && matchesPreflightPrivatePreparationSuccessor(path, beforePreflightPlatformEvents(path, bytes)));
+    || (Object.hasOwn(SKILL_POLICY_WORDING_SUCCESSOR.hashes, path) && matchesPreflightPrivatePreparationChain(path, bytes));
 }
 
 function historicalChanges(paths) {
@@ -852,7 +858,7 @@ export function checkSkillContextOptimization() {
     if (!matchesPreflightPlatformEventsSuccessor(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight platform-events successor bytes differ: ${currentPath}`);
   }
   for (const currentPath of Object.keys(PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes)) {
-    if (!matchesPreflightPrivatePreparationSuccessor(currentPath, beforePreflightPlatformEvents(currentPath, readFileSync(join(ROOT, currentPath))))) errors.push(`preflight private-preparation successor bytes differ: ${currentPath}`);
+    if (!matchesPreflightPrivatePreparationChain(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight private-preparation successor bytes differ: ${currentPath}`);
   }
   for (const [currentPath, hashes] of Object.entries(LIVE_HOST_GUIDANCE_SUCCESSOR.hashes)) {
     if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== hashes[1]) {
@@ -865,8 +871,8 @@ export function checkSkillContextOptimization() {
     }
   }
   for (const successorPath of Object.keys(SKILL_POLICY_WORDING_SUCCESSOR.hashes)) {
-    const bytes = beforePreflightPlatformEvents(successorPath, readFileSync(join(ROOT, successorPath)));
-    if (!matchesPreflightPrivatePreparationSuccessor(successorPath, bytes) && !matchesSkillPolicyWordingSuccessor(successorPath, bytes)) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
+    const bytes = readFileSync(join(ROOT, successorPath));
+    if (!matchesPreflightPrivatePreparationChain(successorPath, bytes) && !matchesSkillPolicyWordingSuccessor(successorPath, bytes)) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
   }
   for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) {
     if (!matchesClassificationUpdate(reviewedPath, readHistorical(ROOT, reviewedPath))) errors.push(`classification: reviewed bytes differ: ${reviewedPath}`);
