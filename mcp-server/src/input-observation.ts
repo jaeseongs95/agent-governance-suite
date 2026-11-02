@@ -55,6 +55,12 @@ export function actorAccess(actor: unknown): { allowed: boolean; reasonCode: str
   } catch { return invalid; }
 }
 
+/** Read like actorAccess: a missing or malformed actor is not an observed child. */
 export function isObservedSubagent(observation: InputObservation): boolean {
-  return observation.actor.role === "child" && observation.actor.basis === "observed";
+  const actor: unknown = observation.actor;
+  if (!actor || typeof actor !== "object" || utilTypes.isProxy(actor) || Array.isArray(actor)) return false;
+  try {
+    return Object.getOwnPropertyDescriptor(actor, "role")?.value === "child"
+      && Object.getOwnPropertyDescriptor(actor, "basis")?.value === "observed";
+  } catch { return false; }
 }
