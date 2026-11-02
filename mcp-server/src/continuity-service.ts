@@ -63,6 +63,9 @@ const FORK_HOST_DEFERRED_EVENT = "fork-host-deferred";
 /** Pinned fork parents followed upward when deciding whether one candidate descends from another. */
 const FORK_ANCESTRY_LIMIT = 32;
 const LINEAGE_ANCHOR_COUNT = 16;
+/** Phase check (design ags30-phase-check 3.2-3.3): a file edit, and the turn-end check that covers it. */
+const PHASE_EDIT_EVENT = "phase-edit";
+const PHASE_CHECK_EVENT = "phase-check";
 
 export interface WorkflowContinuityCardV1 {
   schemaVersion: "1.0.0";
@@ -745,6 +748,50 @@ export class ContinuityService implements ContinuityGateway {
   recordPostCompact(rawSessionId: string, rawTurnId: string | null, success: boolean): void {
     const task = this.ensureSession(rawSessionId);
     this.store.recordObservation(task.taskCorrelation, task.currentEpoch, "post-compact", rawTurnId ? this.hashOpaque("turn", rawTurnId) : null, success, this.now().toISOString());
+  }
+
+  /** A file edit since the last phase check; one row covers every edit until the next check. */
+  recordEditForSession(rawSessionId: string): void {
+    const now = this.now().toISOString();
+    // ensureTask, not ensureSession: an edit boundary never rotates a bound epoch.
+    const { taskCorrelation: c, currentEpoch: e } = this.store.ensureTask(this.correlateSession(rawSessionId), now);
+    const edit = this.store.lastObservationId(c, e, PHASE_EDIT_EVENT);
+    if (edit !== null && edit > (this.store.lastObservationId(c, e, PHASE_CHECK_EVENT) ?? 0)) return;
+    this.store.recordObservation(c, e, PHASE_EDIT_EVENT, null, true, now);
+  }
+
+  /**
+   * At turn end, once per edit run: the stages the stored state does not show as passed, from stored state only.
+   * Returns the cue text, or null when nothing was edited since the last check or nothing is missing.
+   */
+  phaseCheckForSession(rawSessionId: string): string | null {
+    const task = this.store.getTask(this.correlateSession(rawSessionId));
+    if (!task) return null;
+    const { taskCorrelation: c, currentEpoch: e } = task;
+    const edit = this.store.lastObservationId(c, e, PHASE_EDIT_EVENT);
+    if (edit === null || edit < (this.store.lastObservationId(c, e, PHASE_CHECK_EVENT) ?? 0)) return null;
+    const missing = this.missingPhases(task);
+    this.store.recordObservation(c, e, PHASE_CHECK_EVENT, null, missing.length === 0, this.now().toISOString());
+    return missing.length === 0 ? null
+      : `[AGS 단계 확인] 이번 작업에서 파일 변경이 관측됐고 다음이 확인되지 않았다: ${missing.join(", ")}.\n`
+        + "먼저 어떤 단계를 빠뜨렸는지 사용자에게 밝혀라. 그 단계가 이번 작업에 필요하면 지금 진행하라. 필요 없으면 이유를 한 줄로 밝히고 끝내라.";
+  }
+
+  private missingPhases(task: ContinuityTaskRecord): string[] {
+    if (!task.rootId) return ["workflow 없이 변경함"];
+    if (!this.workflowStore) return ["단계 상태 확인 불가"];
+    const snapshot = this.workflowStore.getConvergenceSnapshot(task.rootId);
+    if (!snapshot) return ["단계 상태 확인 불가"];
+    if (snapshot.root.state === "completed" || snapshot.root.state === "abandoned") return [];
+    const runId = snapshot.workflowRunIds.at(-1);
+    // A root with no run planned no stages: the change ran outside a workflow.
+    if (!runId) return ["workflow 없이 변경함"];
+    const receipt = this.workflowStore.getRun(runId);
+    if (!receipt) return ["단계 상태 확인 불가"];
+    // Same pass test as the finalize gate (workflow-service finalize).
+    return receipt.plan.stages
+      .filter(stage => receipt.stageResults.find(result => result.stageId === stage.stageId)?.state !== "passed")
+      .map(stage => stage.stageId);
   }
 
   formatCandidate(candidate: ContinuityCandidateV1): string | null {

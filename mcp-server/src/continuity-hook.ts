@@ -28,6 +28,10 @@ const BOUND_TOOLS = new Set([
   "purge_direct_context",
 ]);
 
+/** Host file-edit tools: Claude's, Codex apply_patch, and Antigravity's as its runner maps them (Write, Edit, MultiEdit).
+ * Shell and delegation tools are not edits: a read-only turn would be flagged (design ags30-phase-check 3.2). */
+const EDIT_TOOLS = new Set(["Edit", "Write", "MultiEdit", "NotebookEdit", "apply_patch"]);
+
 function localToolName(host: string, canonicalName: string): string | null {
   if (!isGovernanceHookTool(host, canonicalName)) return null;
   const tool = canonicalName.includes("__") ? canonicalName.split("__").at(-1)! : canonicalName;
@@ -36,6 +40,7 @@ function localToolName(host: string, canonicalName: string): string | null {
 
 interface NormalizedContinuityInput {
   observation: InputObservation;
+  lifecycle: AdaptedHostInput["lifecycle"];
   outputEventName: string;
   action: ContinuityAction | undefined;
   readLineage: (() => LineageRead) | undefined;
@@ -78,7 +83,7 @@ function normalizedContinuityInput(adapted: AdaptedHostInput): NormalizedContinu
     }
     if (observation.boundaryPhase !== undefined) continuityConflict();
   }
-  return { observation, outputEventName, action, readLineage: typeof readLineage === "function" ? readLineage : undefined,
+  return { observation, lifecycle, outputEventName, action, readLineage: typeof readLineage === "function" ? readLineage : undefined,
     readForkOrigin: typeof readForkOrigin === "function" ? readForkOrigin : undefined,
     readForkHostParent: typeof readForkHostParent === "function" ? readForkHostParent : undefined };
 }
@@ -87,6 +92,17 @@ function sessionOutput(eventName: string, additionalContext: string | null): Rec
   return additionalContext ? {
     hookSpecificOutput: { hookEventName: eventName, additionalContext },
   } : {};
+}
+
+/** The host's turn end (Stop); a session end (lifecycle end) is not a turn the agent can continue. */
+function isTurnEnd(input: NormalizedContinuityInput): boolean {
+  return input.observation.kind === "turn-end" && input.lifecycle === "none" && input.action === undefined;
+}
+
+/** Codex Stop takes only JSON and continues with `reason`; the other hosts take the canonical context. */
+function stopOutput(host: string, eventName: string, cue: string | null): Record<string, unknown> {
+  if (!cue) return {};
+  return host === "codex" ? { decision: "block", reason: cue } : sessionOutput(eventName, cue);
 }
 
 function handleNormalizedContinuityHook(input: NormalizedContinuityInput, service: ContinuityService, host: string): Record<string, unknown> {
@@ -120,11 +136,13 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
       // Write-capable host tools and every non-AGS MCP tool reach this boundary before they run: the last point the
       // fork's file is the host's. AGS tools pin through their own binding below.
       if (readLineage) service.pinForkParent(sessionId, readLineage);
+      if (EDIT_TOOLS.has(observation.toolName ?? "")) service.recordEditForSession(sessionId);
       return {};
     }
     // AGS tools pin and bind on the server from the verified caller; the hook only did the host-process read above.
     return {};
   }
+  if (isTurnEnd(input)) return stopOutput(host, outputEventName, service.phaseCheckForSession(sessionId));
   return {};
 }
 
@@ -180,7 +198,9 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
       || normalized.action?.kind === "resume" || normalized.action?.kind === "compact"
       || normalized.action?.kind === "startup" || normalized.action?.kind === "fork" || normalized.action?.kind === "post-compact"
       || (normalized.observation.kind === "tool-boundary" && normalized.observation.boundaryPhase === "before"
-        && localToolName(host, normalized.observation.toolName ?? "") !== null);
+        && localToolName(host, normalized.observation.toolName ?? "") !== null)
+      // The turn-end phase check reads the bound workflow's stages; a failed open reports and checks as unavailable.
+      || isTurnEnd(normalized);
     if (needsWorkflowState) {
       try { workflow = new SqliteWorkflowStore(workflowDatabasePath); }
       catch (cause) {

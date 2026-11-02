@@ -442,6 +442,14 @@ export class SqliteContinuityStore {
     return row ? { id: row.observation_id, at: row.observed_at } : null;
   }
 
+  /** The store position of the newest observation of this exact event, or null. */
+  lastObservationId(taskCorrelation: string, epoch: number, event: string): number | null {
+    const row = this.database.prepare(`
+      SELECT MAX(observation_id) AS id FROM continuity_observations WHERE task_correlation = ? AND epoch = ? AND event = ?
+    `).get(taskCorrelation, epoch, event) as { id: number | null } | undefined;
+    return row?.id ?? null;
+  }
+
   /** Copies a selected parent snapshot into an empty child epoch only; existing child state is never replaced. */
   adoptSnapshot(taskCorrelation: string, epoch: number, snapshot: ContinuitySnapshotV1): boolean {
     return this.transaction("Cannot adopt the continuity snapshot.", () => {

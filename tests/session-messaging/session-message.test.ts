@@ -1216,9 +1216,10 @@ describe("in-process messaging and vendor-neutral adapter", () => {
 
   it("does not register an unsupported Codex Stop context hook", async () => {
     const config = JSON.parse(await readFile(fileURLToPath(new URL("../../hooks/hooks.json", import.meta.url)), "utf8")) as {
-      hooks: Record<string, Array<{ hooks: Array<{ timeout?: number }> }>>;
+      hooks: Record<string, Array<{ hooks: Array<{ command?: string; timeout?: number }> }>>;
     };
-    expect(config.hooks.Stop).toBeUndefined();
+    // Codex Stop runs only the continuity phase check (JSON decision output); no message context hook is registered.
+    expect(config.hooks.Stop?.flatMap(group => group.hooks).map(hook => hook.command)).toEqual(['node "$PLUGIN_ROOT/mcp-server/dist/continuity-hook.mjs"']);
     expect(config.hooks.SessionEnd).toBeDefined();
     expect(config.hooks.SessionEnd?.[0]?.hooks[0]?.timeout).toBeUndefined();
   });
