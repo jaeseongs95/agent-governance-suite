@@ -35,7 +35,19 @@
         "commandDigest": { "$ref": "#/$defs/digest" },
         "targetDigest": { "$ref": "#/$defs/digest" },
         "guardEvidenceRef": { "type": "object", "additionalProperties": false, "required": ["locator", "digest"], "properties": { "locator": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" } } },
-        "partialFailure": { "const": "stop-preserve" }
+        "partialFailure": { "const": "stop-preserve" },
+        "externalPreparation": {
+          "description": "Reviewed private, unpublished create-only effects; not a declaration of no external impact or permission to publish.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["exposure", "existingState", "sideEffects", "effectsEvidenceRef"],
+          "properties": {
+            "exposure": { "const": "private-unpublished" },
+            "existingState": { "const": "preserved" },
+            "sideEffects": { "const": "scoped-resources-only" },
+            "effectsEvidenceRef": { "type": "object", "additionalProperties": false, "required": ["locator", "digest"], "properties": { "locator": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" } } }
+          }
+        }
       }
     },
     "blastRadius": { "type": "object", "additionalProperties": false, "required": ["affectedTargets", "affectedUsers", "external", "description"], "properties": { "affectedTargets": { "type": "integer", "minimum": 1 }, "affectedUsers": { "type": "integer", "minimum": 0 }, "external": { "type": "boolean" }, "description": { "type": "string", "minLength": 1 } } }

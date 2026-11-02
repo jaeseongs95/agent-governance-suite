@@ -259,10 +259,17 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, handoff.frozenPredecessor.path) !== successorPath || successorBytes.length !== handoff.frozenPredecessor.bytes || hashBytes(successorBytes) !== handoff.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const currentManifest = {...manifest, revision: handoff.revision, bindings: [...manifest.bindings, ...successor.bindings, ...handoff.bindings]};
-  files.push(successorPath, handoffPath);
+  const preflightPath = resolve(repo, "tests/skill-classification/fixtures.preflight-private-preparation-source-successor.json");
+  const preflightBytes = readFileSync(preflightPath);
+  if (hashBytes(preflightBytes) !== "sha256:0ed854e4ab0877ef5b4faee6dd350b612282099ff3836711cd9f3555781f770a") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const preflight = JSON.parse(preflightBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, preflight.frozenPredecessor.path) !== handoffPath || handoffBytes.length !== preflight.frozenPredecessor.bytes || hashBytes(handoffBytes) !== preflight.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const currentManifest = {...manifest, revision: preflight.revision, bindings: [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings]};
+  files.push(successorPath, handoffPath, preflightPath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(handoffBytes),
+    manifest: currentManifest, files, digest: hashBytes(preflightBytes),
     resolveDigest(sourcePath: string, digest: string): string {
       const binding = currentManifest.bindings.find(row => row.path === sourcePath);
       if (!binding) return digest;
