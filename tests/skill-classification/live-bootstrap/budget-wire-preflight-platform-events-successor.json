@@ -1,0 +1,231 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "ags-bootstrap-budget-preflight-platform-events-source-binding-r16",
+  "scope": "OFFLINE_SYNTHETIC_ONLY_NOT_PAID_OR_QUALIFICATION",
+  "sourceBaseRevision": "459e57b6188f5edf435bd1da9573c62ac2cdea3b",
+  "parentPrivatePreparationDigest": "sha256:b4ac2bab9fc798f7e8dc81c23cf2fa29b90cc7304c67333b8153254de013339b",
+  "inventoryDigest": "sha256:45aa333439cba786395c4f0146988781fae084ef32e24acb3378bc0402d186c4",
+  "fixtureDigest": "sha256:947b92701fe640dfa94c532b92f82fb251e401e9b4b7c3616afe3d5c2e263065",
+  "fixtureOracleDigest": "sha256:33ca2c2edc3b20d3287eddc45d907ac6bba0b742386aa7ab7a5516a30b6cd914",
+  "registryDigest": "sha256:54a4405e9fe72bc98c46bc86e6f92ea3551ad3a08028676fac1e8e0b9430c8b3",
+  "previousRegistryDigest": "sha256:b118c5a9acbcc90c5d582283c0ce7b8acc78af1b831e32d982fa5009bad83d13",
+  "sourceBindings": [
+    {
+      "path": "skills/registry.json",
+      "previousDigest": "sha256:b118c5a9acbcc90c5d582283c0ce7b8acc78af1b831e32d982fa5009bad83d13",
+      "digest": "sha256:54a4405e9fe72bc98c46bc86e6f92ea3551ad3a08028676fac1e8e0b9430c8b3",
+      "bytes": 87080
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "previousDigest": "sha256:25fbe08cc026df65c7e5788a7c9ad4414a7b5be52f55a587952773966eb29ecb",
+      "digest": "sha256:f3975e529669c17acd83a951b816aa57efa7c8fef469130726200b057e131188",
+      "bytes": 3793
+    },
+    {
+      "path": "skills/mutation-risk-preflight/classification.json",
+      "previousDigest": "sha256:c89920b9450dc403770228a033918e0d47aee987902e44a64f1c817e83d5860e",
+      "digest": "sha256:257f8f3affdc01511c44052de26e0c7e65076f61663ebce0d7871ca9550ce25e",
+      "bytes": 1751
+    }
+  ],
+  "captureEvidence": {
+    "scope": "OFFLINE_SYNTHETIC_ONLY_NOT_PAID_OR_QUALIFICATION",
+    "productCaptureDigest": "sha256:14cbf670b63c5c1cc7e71cd955eaa82078c390a5fa8a09d8e1423f819ad57024",
+    "independentCaptureDigest": "sha256:fd7657d2deac9cdd4fe0a3541ffc9807dfe5fafdbecbe1b25a2fccb29c05dcaa",
+    "comparedRows": 21,
+    "actualModelCalls": 0,
+    "networkCalls": 0,
+    "pricePicoUsdPerUtf8Byte": "42000",
+    "byteLengthChanges": 0,
+    "reservationChanges": 0
+  },
+  "rows": [
+    {
+      "caseId": "SS01",
+      "requestDigest": "sha256:b61d4e38dae8afbf1e98601b70e346a8a62676031b66d839cc7dbaeb08117085",
+      "wireDigest": "sha256:5ff3a6e19f881b925161cc25c2ee8210d3fa609dcbdf0113d0e2db16fad5fee8",
+      "utf8Bytes": 125645,
+      "reservedPicoUsd": "5277090000",
+      "reservedUsdDecimal": "0.005277090000"
+    },
+    {
+      "caseId": "SS02",
+      "requestDigest": "sha256:27cb1239bc48e55da683c2accd95987966a5cacd779c6d1cf1a37266a1b6015f",
+      "wireDigest": "sha256:bebb143e036efe48c2a558ed5f3dd766f790c3c85aa9ffa931a45d1e8e2b8858",
+      "utf8Bytes": 125614,
+      "reservedPicoUsd": "5275788000",
+      "reservedUsdDecimal": "0.005275788000"
+    },
+    {
+      "caseId": "SS03",
+      "requestDigest": "sha256:b68770f4c672b312eda3b3b6e2830f7cf5019e8428cdf19067aabe4985b8ef33",
+      "wireDigest": "sha256:9f25143016831ce13b9a4f9f4f2602e2453261ce46a08c50a7aede898ec7faef",
+      "utf8Bytes": 125717,
+      "reservedPicoUsd": "5280114000",
+      "reservedUsdDecimal": "0.005280114000"
+    },
+    {
+      "caseId": "SS04",
+      "requestDigest": "sha256:f240a4bed327cd016243c583fecb027697ca923bc2d97dd463dc8f514a2fd24a",
+      "wireDigest": "sha256:c556aa958aeddb9d0a48073e938c2932a693b1e4e29c75f0538a2a0ed49774a5",
+      "utf8Bytes": 125714,
+      "reservedPicoUsd": "5279988000",
+      "reservedUsdDecimal": "0.005279988000"
+    },
+    {
+      "caseId": "SS05",
+      "requestDigest": "sha256:f3e96f8ec8f7ad4b1dd70ca2cb6ca5555a57a79fd02537f0bb34bf86644470ab",
+      "wireDigest": "sha256:49220613b85d9d38e53b143dca155f8dceb222e343395f07222cae8d307d17ff",
+      "utf8Bytes": 125649,
+      "reservedPicoUsd": "5277258000",
+      "reservedUsdDecimal": "0.005277258000"
+    },
+    {
+      "caseId": "SS06",
+      "requestDigest": "sha256:c113f8753dd423d8f1c2167ad6e77673a79e81e704c843c3e0b9a6e97faa2a2e",
+      "wireDigest": "sha256:f727a0f91219e6478cf70d4c034f23ce7673e28a64cd195573952954c6933a10",
+      "utf8Bytes": 125663,
+      "reservedPicoUsd": "5277846000",
+      "reservedUsdDecimal": "0.005277846000"
+    },
+    {
+      "caseId": "SS07",
+      "requestDigest": "sha256:fff88fa3cc07f3d692e4917cd94022f6c4fd005ca1435db3d7b2f9dfe580f003",
+      "wireDigest": "sha256:30d708c15d945969bf13e705e83018755c2b30d018b03ce47be1269fcd58133a",
+      "utf8Bytes": 125679,
+      "reservedPicoUsd": "5278518000",
+      "reservedUsdDecimal": "0.005278518000"
+    },
+    {
+      "caseId": "SS08",
+      "requestDigest": "sha256:b8a7cf0d01c84dbf243e5597ff322acc4ddf9f1d0c74c8aa44ac3616bf090436",
+      "wireDigest": "sha256:b52ef5f7c277861a879d650eddb2609462e659dfecae19f11a3e5b2e0954c16d",
+      "utf8Bytes": 125634,
+      "reservedPicoUsd": "5276628000",
+      "reservedUsdDecimal": "0.005276628000"
+    },
+    {
+      "caseId": "SS09",
+      "requestDigest": "sha256:9e0922a43878df5ca38aadaa991616e065b2dd6932618cd419aa6a88ba80d0c0",
+      "wireDigest": "sha256:2e1c658839d9f696450e8bab77aeaba0fac02b9f89889abe82d866c77e518081",
+      "utf8Bytes": 125618,
+      "reservedPicoUsd": "5275956000",
+      "reservedUsdDecimal": "0.005275956000"
+    },
+    {
+      "caseId": "SS10",
+      "requestDigest": "sha256:c30708c2caf6222e9573b34781d0eab41875b7529110e3c26f9dc07ea9678d7d",
+      "wireDigest": "sha256:2faae6f8a8ed2f34ba31030bde606a6b3af434407775584d86da07c8b8763b13",
+      "utf8Bytes": 125629,
+      "reservedPicoUsd": "5276418000",
+      "reservedUsdDecimal": "0.005276418000"
+    },
+    {
+      "caseId": "SS11",
+      "requestDigest": "sha256:88a770864e3dba08ac9db4f5a4b62dfb18c779888707fbc0f8f0487016d9f63a",
+      "wireDigest": "sha256:514acc19118bdf5d6c7138eb63dbd7f04f2e15cc394dfcc6f4bf5d3112cf52c4",
+      "utf8Bytes": 125681,
+      "reservedPicoUsd": "5278602000",
+      "reservedUsdDecimal": "0.005278602000"
+    },
+    {
+      "caseId": "SS12",
+      "requestDigest": "sha256:01a32faa38b7a70ad661185a57879901a5804e67564e6c3fcb3cf7f0aded140e",
+      "wireDigest": "sha256:0a21c5ec7b2a97fe85fd04c0842951d8471f87be0c7aad11986c5f16010ed42a",
+      "utf8Bytes": 125518,
+      "reservedPicoUsd": "5271756000",
+      "reservedUsdDecimal": "0.005271756000"
+    },
+    {
+      "caseId": "SS13",
+      "requestDigest": "sha256:a2d2d5f0e9137a039d31831aeb4820c04bef080af19977b59fbb16ec74b5e0b7",
+      "wireDigest": "sha256:c52fd054cff1ec630f607850f6839a4c32573a12b6238681ed349e29af3ddd0d",
+      "utf8Bytes": 125559,
+      "reservedPicoUsd": "5273478000",
+      "reservedUsdDecimal": "0.005273478000"
+    },
+    {
+      "caseId": "SS14",
+      "requestDigest": "sha256:2bbd020e383ab8a7f74c2714c3a2192fb6519cecc11f4789347bbaedd3f65f6a",
+      "wireDigest": "sha256:e7c18d5e28f05ef7a47cfd28154e366bd2367541d8bff1f6e64d46a29acd7f5b",
+      "utf8Bytes": 125655,
+      "reservedPicoUsd": "5277510000",
+      "reservedUsdDecimal": "0.005277510000"
+    },
+    {
+      "caseId": "SS15",
+      "requestDigest": "sha256:9c98fcd90a439f2de34b80ea70e17f943ebe735fa03cb5a1f627cac3886c58d7",
+      "wireDigest": "sha256:16792c684891d04e68e6d9760736f6fc22a503be5147d5ea017c9f9e4fc93afd",
+      "utf8Bytes": 125533,
+      "reservedPicoUsd": "5272386000",
+      "reservedUsdDecimal": "0.005272386000"
+    },
+    {
+      "caseId": "SS16",
+      "requestDigest": "sha256:c9965ba21f796581cd63d38329842e206149a64a8babd0b8ac3ec074d457754d",
+      "wireDigest": "sha256:4e8d8b5bd414f96127916164be65a22da2ac9b57f4b17a35e0a743295a4cd6db",
+      "utf8Bytes": 125621,
+      "reservedPicoUsd": "5276082000",
+      "reservedUsdDecimal": "0.005276082000"
+    },
+    {
+      "caseId": "SS17",
+      "requestDigest": "sha256:182718213fcc0350e777fe03c47885a538543755bf68541eeaea6de1aff1839f",
+      "wireDigest": "sha256:c8088afb385f4ab55b7f65f79ab5b474fe8bbfd43d2d2d2133d52f635de96967",
+      "utf8Bytes": 125681,
+      "reservedPicoUsd": "5278602000",
+      "reservedUsdDecimal": "0.005278602000"
+    },
+    {
+      "caseId": "SS18",
+      "requestDigest": "sha256:3a6a4489bfc6cc952deb6f844bb16f413ac3ee762f2e84980f7be635e758e9be",
+      "wireDigest": "sha256:c12d83665770571f2517c98e1db291a3c0ace5a7ad78ab74325d4e553a609448",
+      "utf8Bytes": 125592,
+      "reservedPicoUsd": "5274864000",
+      "reservedUsdDecimal": "0.005274864000"
+    },
+    {
+      "caseId": "SS23",
+      "requestDigest": "sha256:139a69eca8ed364fe7a407112be731f5677a068d1bedb678093053c20b3fe910",
+      "wireDigest": "sha256:6239d5beaab877c8b116ad18a75c353c7c34ee4f2d799df75a509145adba8af1",
+      "utf8Bytes": 125602,
+      "reservedPicoUsd": "5275284000",
+      "reservedUsdDecimal": "0.005275284000"
+    },
+    {
+      "caseId": "SS28",
+      "requestDigest": "sha256:6f760524ffb4ed40db72b524c809a9d705b13ba66348c109038e7811610bfe5d",
+      "wireDigest": "sha256:c6f31e179db1136ee874e226aa8339953e6a339545b145e456506483ac1b627b",
+      "utf8Bytes": 125525,
+      "reservedPicoUsd": "5272050000",
+      "reservedUsdDecimal": "0.005272050000"
+    },
+    {
+      "caseId": "SS37",
+      "requestDigest": "sha256:86bdb52ee1ca6f71049a47e38a016c1c1e935e2ef30bae85e2304aac07c2c99c",
+      "wireDigest": "sha256:348207ac79b6f2d1c0de9715ec2d993260389da9f267d2b6b483bc44596ff87e",
+      "utf8Bytes": 125555,
+      "reservedPicoUsd": "5273310000",
+      "reservedUsdDecimal": "0.005273310000"
+    }
+  ],
+  "totals": {
+    "utf8Bytes": "2638084",
+    "reservedPicoUsd": "110799528000",
+    "reservedUsdDecimal": "0.110799528000",
+    "firstTwoPicoUsd": "10552878000",
+    "firstTwoUsdDecimal": "0.010552878000",
+    "maxUtf8Bytes": "125717",
+    "maxReservedPicoUsd": "5280114000"
+  },
+  "precisionSuccessorDigest": "sha256:04bc2be6776f20993d4ab37eff35ed015567c86f59cc1d1c8c15e813d246c4f9",
+  "inheritedFields": [
+    "prices",
+    "caps",
+    "precisionCases",
+    "syntheticOverBudgetCases",
+    "fractionalRoundingFixture"
+  ],
+  "provenance": "1.0.3의 현재 공개 21행을 제품 인코더와 독립 wire 계약으로 대조했다. 1.0.2 대비 요청·wire 지문만 변경되었으며 모든 UTF-8 길이와 42000 picoUSD/byte 예약금액이 동일하다. 기존 가격·상한·precision·합성입력·UNKNOWN·판정은 보존한다. 모델·네트워크 호출은 없다."
+}

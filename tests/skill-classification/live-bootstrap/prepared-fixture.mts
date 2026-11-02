@@ -161,10 +161,16 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   assert.equal(hash(privateBytes), "sha256:b4ac2bab9fc798f7e8dc81c23cf2fa29b90cc7304c67333b8153254de013339b");
   const privateSuccessor = JSON.parse(privateBytes.toString("utf8"));
   assert.equal(privateSuccessor.revision, "ags-bootstrap-budget-preflight-private-source-binding-r15");
+  const platformBytes = await readFile(new URL("./budget-wire-preflight-platform-events-successor.json", import.meta.url));
+  assert.equal(hash(platformBytes), "sha256:b980cce0367190be51e74b7b16a8da7db2f22c8afcbcf2d6758d9a035bd9a1da");
+  const platformSuccessor = JSON.parse(platformBytes.toString("utf8"));
+  assert.equal(platformSuccessor.revision, "ags-bootstrap-budget-preflight-platform-events-source-binding-r16");
   const actualRegistryDigest = hash(await readFile(path.join(repo, "skills/registry.json")));
+  const privateRegistryDigest = actualRegistryDigest === platformSuccessor.registryDigest
+    ? platformSuccessor.previousRegistryDigest : actualRegistryDigest;
   // Only the exact 1.0.2 registry successor projects onto the historical registry binding.
-  const historicalRegistryDigest = actualRegistryDigest === privateSuccessor.registryDigest
-    ? privateSuccessor.previousRegistryDigest : actualRegistryDigest;
+  const historicalRegistryDigest = privateRegistryDigest === privateSuccessor.registryDigest
+    ? privateSuccessor.previousRegistryDigest : privateRegistryDigest;
   const oracleBytes = await readFile(new URL("./budget-wire-oracle.json", import.meta.url));
   const boundaryBytes = await readFile(new URL("./precision-boundary-oracle.json", import.meta.url));
   const successorBytes = await readFile(new URL("./budget-wire-source-successor.json", import.meta.url));
@@ -418,13 +424,16 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
   }
   assert.equal(privateSuccessor.parentD0336Digest, hash(bindingBytes));
   assert.equal(privateSuccessor.parentContinuityHandoffDigest, hash(continuityBytes));
-  if (bindRegistry) assert.equal(privateSuccessor.registryDigest, actualRegistryDigest);
+  if (bindRegistry) assert.equal(privateSuccessor.registryDigest, privateRegistryDigest);
   assert.equal(privateSuccessor.previousRegistryDigest, binding.registryDigest);
   for (const source of privateSuccessor.sourceBindings as {path: string; digest: string; bytes: number}[]) {
     if (!bindRegistry && source.path === "skills/registry.json") continue;
+    const current = platformSuccessor.sourceBindings.find((row: {path: string}) => row.path === source.path);
+    if (current) assert.equal(current.previousDigest, source.digest);
+    const expected = current ?? source;
     const bytes = await readFile(path.join(repo, source.path));
-    assert.equal(bytes.length, source.bytes);
-    assert.equal(hash(bytes), source.digest);
+    assert.equal(bytes.length, expected.bytes);
+    assert.equal(hash(bytes), expected.digest);
   }
   for (const key of ["fixtureDigest", "fixtureOracleDigest", "precisionSuccessorDigest"]) assert.equal(privateSuccessor[key], binding[key]);
   assert.equal(privateSuccessor.rows.length, binding.rows.length);
@@ -436,17 +445,30 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
     assert.notEqual(row.wireDigest, previous.wireDigest, "PREFLIGHT_CURRENT_WIRE_BINDING_REQUIRED");
     assert.equal(BigInt(row.reservedPicoUsd), BigInt(row.utf8Bytes) * 42000n);
   }
+  assert.equal(platformSuccessor.parentPrivatePreparationDigest, hash(privateBytes));
+  assert.equal(platformSuccessor.previousRegistryDigest, privateSuccessor.registryDigest);
+  if (bindRegistry) assert.equal(platformSuccessor.registryDigest, actualRegistryDigest);
+  for (const key of ["fixtureDigest", "fixtureOracleDigest", "precisionSuccessorDigest"]) assert.equal(platformSuccessor[key], privateSuccessor[key]);
+  assert.equal(platformSuccessor.rows.length, privateSuccessor.rows.length);
+  assert.deepEqual(platformSuccessor.totals, privateSuccessor.totals);
+  for (const [index, row] of platformSuccessor.rows.entries()) {
+    const previous = privateSuccessor.rows[index];
+    for (const key of ["caseId", "utf8Bytes", "reservedPicoUsd", "reservedUsdDecimal"]) assert.equal(row[key], previous[key]);
+    assert.notEqual(row.requestDigest, previous.requestDigest, "PLATFORM_CURRENT_REQUEST_BINDING_REQUIRED");
+    assert.notEqual(row.wireDigest, previous.wireDigest, "PLATFORM_CURRENT_WIRE_BINDING_REQUIRED");
+    assert.equal(BigInt(row.reservedPicoUsd), BigInt(row.utf8Bytes) * 42000n);
+  }
   const currentRows = successor.rows.map((row: {caseId: string; utf8Bytes: number}, index: number) => {
     const historical = registrySuccessor.rows[index];
     assert.equal(historical.caseId, row.caseId);
     assert.equal(historical.utf8Bytes, row.utf8Bytes);
     assert.equal(solid.rows[index].caseId, row.caseId);
     assert.equal(midtask.rows[index].caseId, row.caseId);
-    const current = privateSuccessor.rows[index];
+    const current = platformSuccessor.rows[index];
     assert.equal(current.caseId, row.caseId);
     return {...row, ...current};
   });
-  const oracle = {...predecessor, inventoryDigest: privateSuccessor.inventoryDigest, fixtureDigest: continuity.fixtureDigest,
+  const oracle = {...predecessor, inventoryDigest: platformSuccessor.inventoryDigest, fixtureDigest: continuity.fixtureDigest,
     fixtureOracleDigest: continuity.fixtureOracleDigest, rows: currentRows, totals: continuity.totals,
     syntheticOverBudgetCases: predecessor.syntheticOverBudgetCases.map((row: {id: string}, index: number) => {
       assert.equal(successor.syntheticOverBudgetCases[index].id, row.id);
@@ -461,7 +483,7 @@ export async function loadCurrentBudgetFixture(repo: string, bindRegistry = true
     }), fractionalRoundingFixture: {...predecessor.fractionalRoundingFixture, ...continuity.fractionalRoundingFixture}};
   return {oracleBytes, boundaryBytes, oracle, precision: {...precision,
     cases: continuityPrecision.cases},
-  successorDigest: hash(privateBytes), successorRevision: privateSuccessor.revision};
+  successorDigest: hash(platformBytes), successorRevision: platformSuccessor.revision};
 }
 
 // Explicit authoring command captures only current public request/wire inputs. It neither runs nor qualifies a provider.

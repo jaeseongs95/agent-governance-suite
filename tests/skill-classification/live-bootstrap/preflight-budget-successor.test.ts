@@ -31,14 +31,14 @@ it("accepts the exact source successor and rejects registry and repinned histori
 
     const registryPath = path.join(input, "skills/registry.json"), registryBytes = await readFile(registryPath);
     const registry = JSON.parse(registryBytes.toString("utf8"));
-    registry.skills.find((entry: {skillId: string}) => entry.skillId === "mutation-risk-preflight").version = "1.0.3";
+    registry.skills.find((entry: {skillId: string}) => entry.skillId === "mutation-risk-preflight").version = "1.0.4";
     await writeFile(registryPath, JSON.stringify(registry, null, 2) + "\n");
     expect(invoke().status).toBe(1);
     await writeFile(registryPath, registryBytes);
 
-    const successorPath = path.join(scratch, "budget-wire-preflight-private-successor.json");
+    const successorPath = path.join(scratch, "budget-wire-preflight-platform-events-successor.json");
     const successorBytes = await readFile(successorPath), successor = JSON.parse(successorBytes.toString("utf8"));
-    const previous = JSON.parse(await readFile(path.join(scratch, "budget-wire-d0336-source-binding-successor.json"), "utf8"));
+    const previous = JSON.parse(await readFile(path.join(scratch, "budget-wire-preflight-private-successor.json"), "utf8"));
     successor.rows[0].wireDigest = previous.rows[0].wireDigest;
     const changed = JSON.stringify(successor, null, 2) + "\n";
     await writeFile(successorPath, changed);
@@ -47,7 +47,7 @@ it("accepts the exact source successor and rejects registry and repinned histori
     await writeFile(helper, (await readFile(helper, "utf8")).replace(hash(successorBytes), hash(changed)));
     const bypass = invoke();
     expect(bypass.status).toBe(1);
-    expect(bypass.stderr).toContain("PREFLIGHT_CURRENT_WIRE_BINDING_REQUIRED");
+    expect(bypass.stderr).toContain("PLATFORM_CURRENT_WIRE_BINDING_REQUIRED");
     expect(hash(await readFile(path.join(repo, "tests/skill-classification/fixtures.json")))).toBe(successor.fixtureDigest);
     expect(execFileSync("git", ["diff", "--", "tests/skill-classification/fixtures.json"], {cwd: repo, encoding: "utf8"})).toBe("");
   } finally {
