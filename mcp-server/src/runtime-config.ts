@@ -66,6 +66,14 @@ function sharedUserStateDirectory(
   return path.resolve(homeDirectory, ".agent-governance-suite");
 }
 
+/** The per-user root every host installation shares; the state service keeps its owner lock and endpoint file here. */
+export function resolveSharedStateDirectory(
+  environment: NodeJS.ProcessEnv = process.env,
+  homeDirectory: string = homedir(),
+): string {
+  return sharedUserStateDirectory(environment, homeDirectory);
+}
+
 /** Resolves the per-user TLS broker directory shared by supported local hosts. */
 export function resolveSessionMessageStateDirectory(
   environment: NodeJS.ProcessEnv = process.env,

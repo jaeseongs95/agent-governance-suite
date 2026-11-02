@@ -31,3 +31,12 @@ export function compareInstalledVersion(installedVersion: string, stableVersion:
   const order = compareStableVersionNumbers(prerelease?.[1] ?? installedVersion, stableVersion);
   return order === 0 && prerelease ? -1 : order;
 }
+
+/** Orders two running versions (stable or prerelease); prereleases of the same release are not ordered (0). */
+export function compareRunningVersions(leftVersion: string, rightVersion: string): number {
+  const left = PRERELEASE.exec(leftVersion);
+  const right = PRERELEASE.exec(rightVersion);
+  const order = compareStableVersionNumbers(left?.[1] ?? leftVersion, right?.[1] ?? rightVersion);
+  if (order !== 0 || Boolean(left) === Boolean(right)) return order;
+  return left ? -1 : 1;
+}

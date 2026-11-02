@@ -218,9 +218,11 @@ Claude 설치는 workflow·continuity DB를 `CLAUDE_PLUGIN_DATA` 아래에 따�
 
 | OS | 주소 | 권한 |
 | --- | --- | --- |
-| Linux | `$XDG_RUNTIME_DIR/agent-governance-suite/service.sock`, 없으면 `~/.agent-governance-suite/run/service.sock` | 폴더 0700, 기존 상태 폴더와 같은 방식(`session-message-client.ts:51-52`) |
+| Linux | `$XDG_RUNTIME_DIR/agent-governance-suite/service.sock`, 없으면 `~/.agent-governance-suite/run/service.sock`. 상태 폴더를 기본값이 아닌 곳으로 지정하면 `<상태 폴더>/run/service.sock` | 폴더 0700, 기존 상태 폴더와 같은 방식(`session-message-client.ts:51-52`) |
 | macOS | `~/.agent-governance-suite/run/service.sock` | 폴더 0700 |
 | Windows | `\\.\pipe\agent-governance-suite-<기동마다 새 무작위 32자>` | 기본 DACL은 Everyone에 읽기를 준다. 이름은 접속 정보 파일로만 알린다(아래 「접속 정보와 상호 확인」, 8.1 M3). |
+
+socket 주소는 소유자 잠금이 지키는 상태 폴더 하나에만 속해야 한다. 상태 폴더가 다른 두 서비스가 XDG 주소 하나를 같이 쓰면 각자 자기 잠금을 잡고 상대의 socket을 지울 수 있다(D2). 그래서 XDG 주소는 기본 상태 폴더에만 쓴다.
 
 경로가 `sun_path` 한도(Linux 107B, macOS 103B)를 넘으면 `SERVICE_SOCKET_PATH_TOO_LONG`으로 바로 실패한다(Node 문서 같은 절). 줄여서 다른 곳에 만들지 않는다.
 
@@ -524,7 +526,7 @@ PGlite는 연결이 하나라 「풀」 자리에 대기열(4.3)이 온다. 획�
 
 | 커밋 | 내용 | 소유 파일 | 선행 |
 | --- | --- | --- | --- |
-| 1-1 | IPC 주소·권한·줄 framing·hello/welcome/refuse, 클라이언트(`ensureService`, 기한, 결과 불확실 처리). 분리 실행 함수를 공용 모듈로 옮김 | 새 `mcp-server/src/service/ipc-endpoint.ts`, `ipc-framing.ts`, `service-client.ts`, `detached-launch.ts`; `session-message-hook.ts:186-233`(이동만) | 측정 2·3 |
+| 1-1 | IPC 주소·권한·줄 framing·hello/welcome/refuse·상호 확인, 클라이언트(`ensureService`, 기한, 결과 불확실 처리). 서비스 분리 실행(Linux·macOS detached, Windows CIM). relay의 `launchWithoutInheritedHandles`는 옮기지 않는다(4.2) | 새 `mcp-server/src/service/ipc-endpoint.ts`, `ipc-framing.ts`, `service-client.ts`, `detached-launch.ts` | 측정 2·3 |
 | 1-2 | 서비스 프로세스: 소유자 잠금, listen, 연결 상한, 대기열, 유휴 종료, 버전 교체, `service.status` | 새 `mcp-server/src/service/ags-service.ts`, `service-main.ts` | 1-1 |
 | 1-3 | 구성 분리: `index.ts`의 store·service 조립을 profile별 함수로 옮김. 서비스가 `role: "mcp"` 연결마다 `createMcpServer`를 붙임 | `index.ts`, 새 `service/compose.ts`, `server.ts`(인자만) | 1-2 |
 | 1-4 | shim: `server.mjs` entry를 shim으로 바꿈. 재연결·initialize 재전송 | 새 `mcp-server/src/mcp-shim.ts`, `scripts/runtime-bundles.mjs` | 1-3 |
