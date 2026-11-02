@@ -17,6 +17,7 @@ import { codexExecutionAdapter } from "../../mcp-server/src/host-execution-adapt
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
 import { PluginUpdateService } from "../../mcp-server/src/plugin-update-service.js";
 import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
+import { openBoard, recordInput } from "../../skills/session-board/scripts/board-store.mjs";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
@@ -37,6 +38,7 @@ afterEach(async () => {
 async function harness() {
   const directory = mkdtempSync(path.join(tmpdir(), "minimal-start-"));
   const workflowPath = path.join(directory, "workflow.sqlite3");
+  const boardPath = path.join(directory, "session-board.sqlite3");
   const validator = new ContractValidator();
   const store = new SqliteWorkflowStore(workflowPath);
   const continuityStore = new SqliteContinuityStore(path.join(directory, "continuity.sqlite3"));
@@ -45,7 +47,7 @@ async function harness() {
   const provider = new HostAttestationProvider(codexExecutionAdapter);
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
   const server = createMcpServer(service, new PluginUpdateService(new InMemoryPluginUpdateStore()), continuity, undefined, undefined, validator,
-    "default", provider, null, undefined, null, null, codexMetaIngress());
+    "default", provider, boardPath, undefined, null, null, codexMetaIngress());
   const client = new Client({ name: "minimal-start", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
@@ -70,7 +72,18 @@ async function harness() {
   const writeFile = (name: string) => handleContinuityHook({ hook_event_name: "PreToolUse", session_id: SESSION, cwd: repo,
     tool_name: "apply_patch", tool_input: { command: `*** Begin Patch\n*** Add File: ${name}\n*** End Patch` } }, hookService(), "codex", {});
   const stop = () => handleContinuityHook({ hook_event_name: "Stop", session_id: SESSION, cwd: repo }, hookService(), "codex", {});
-  return { service, continuity, call, counts, writeFile, stop };
+  /** The session-board row the host's own hook writes from its input cwd. */
+  const reportCwd = (cwd: string) => {
+    const board = openBoard(boardPath);
+    try { recordInput(board, { host: "codex", sessionId: SESSION, cwd, now: new Date().toISOString() }, { prompt: true }); } finally { board.close(); }
+  };
+  const rootWorkspaces = () => {
+    const database = new DatabaseSync(workflowPath, { readOnly: true });
+    try {
+      return (database.prepare("SELECT workspace_id FROM convergence_roots").all() as Array<{ workspace_id: string }>).map(row => row.workspace_id);
+    } finally { database.close(); }
+  };
+  return { service, continuity, call, counts, writeFile, stop, reportCwd, rootWorkspaces };
 }
 
 const minimal = { goal: "Change three files.", stages: ["minimal-implementation"], acceptanceCriteria: ["The change works."], workspace: repo };
@@ -107,6 +120,19 @@ describe("start_workflow minimal start", () => {
     const started = await call<MinimalWorkflowStartV1>(minimal);
     expect(started.data?.lateAdoption).toEqual({ label: "사후 편입·근거 미검증", priorFileCount: 2 });
     expect(writeFile("c.ts")).toEqual({});
+  });
+
+  it("defaults the workspace to the session's reported working directory, never the server's", async () => {
+    const { call, counts, reportCwd, rootWorkspaces } = await harness();
+    const unnamed = { goal: minimal.goal, stages: minimal.stages, acceptanceCriteria: minimal.acceptanceCriteria };
+    const refused = await call<MinimalWorkflowStartV1>(unnamed);
+    expect(refused.error).toMatchObject({ code: "INVALID_INPUT", details: { field: "workspace" } });
+    expect(counts()).toEqual({ convergence_roots: 0, convergence_leases: 0, workflow_runs: 0, execution_observation_claims: 0 });
+    reportCwd(repo);
+    const started = await call<MinimalWorkflowStartV1>(unnamed);
+    expect(started.error).toBeNull();
+    expect(started.data!.defaultsUsed).toContain("workspace");
+    expect(rootWorkspaces()).toEqual([path.basename(repo)]);
   });
 
   it("leaves no root, lease, run or consumed observation when a later step fails, and keeps the step's own code", async () => {

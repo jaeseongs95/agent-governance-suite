@@ -179,7 +179,7 @@ cwd는 기준으로 쓰지 않는다. 설정은 hook 프로세스의 환경에�
 
 거부 전용이던 `start_workflow`를 최소 시작으로 바꾼다. 새 도구를 늘리지 않는다.
 
-- 입력: `goal`, `stages`(AGENT가 고른 capability, 1개 이상), `acceptanceCriteria`(1개 이상). 선택: `workspace`(절대 경로, 기본 서버 cwd), `writeTargets`(기본 workspace 전체).
+- 입력: `goal`, `stages`(AGENT가 고른 capability, 1개 이상), `acceptanceCriteria`(1개 이상). 선택: `workspace`(절대 경로), `writeTargets`(기본 workspace 전체). `workspace`를 생략하면 그 세션의 hook이 호스트 입력의 `cwd`로 세션 현황판에 남긴 작업 폴더를 쓴다. 서버 프로세스의 cwd는 쓰지 않는다(Codex는 MCP 서버를 plugin 폴더에서 띄워, Codex 0.166 실제 호스트에서 다른 시험의 root와 `ROOT_CONFLICT`가 났다). 현황판에 작업 폴더가 없으면 `INVALID_INPUT`(`field: workspace`)이다.
 - 서버가 한 workflow transaction 안에서 `planWorkflow`(신뢰 실행 관측 필수) → `openConvergenceRoot` → `claimWorkflowAttempt`(관측된 호출자) → `startGuardedWorkflow`(continuity 결속은 commit 전)를 차례로 부른다. 네 단계의 검사·결속·attestation을 그대로 쓰며 따로 구현하지 않는다. 어느 단계가 실패하면 그 단계의 코드·세부를 그대로 돌려주고 root·lease·run·소비한 관측을 모두 되돌린다.
 - 나머지 TaskEnvelope 필드는 기본값(`riskLevel: "medium"`, 권한 목록 비움, 작업 단위 1개 등)으로 채우고 결과의 `defaultsUsed`에 적는다. 계획을 만들 수 없으면(없는 capability 등) 계획의 첫 오류를 돌려준다.
 - 시작 전에 구간에 센 파일이 있으면(잠금 중이면 거부로 끝난 구간의 파일. 그 뒤 phase-check로 구간이 바뀌어도 센다) `lateAdoption: {label: "사후 편입·근거 미검증", priorFileCount}`을 돌려주고 TaskEnvelope `constraints`에 같은 문구를 넣어 root에 남긴다.

@@ -251,6 +251,25 @@ function closeOnce(board: BoardDatabase | null, error: unknown): void {
   try { board?.close(); } catch (closeError) { retainFailureSecondary(error, closeError); }
 }
 
+/**
+ * The working directory the session's own hook last recorded on the board, or null when the board or the row is
+ * missing or unreadable. Only a default for start_workflow: the caller can always name the workspace.
+ */
+function observedSessionWorkspace(databasePath: string | null, caller: VerifiedCaller): string | null {
+  if (!databasePath || !existsSync(databasePath)) return null;
+  let board: BoardDatabase | null = null;
+  try {
+    board = openBoard(databasePath);
+    const cwd = readEntry(board, caller.host, caller.sessionId)?.cwd;
+    return typeof cwd === "string" && cwd ? cwd : null;
+  } catch (error) {
+    process.stderr.write(JSON.stringify({ event: "session-workspace-unread", reason: failureReason(error).reason ?? "UNEXPECTED_FAILURE" }) + "\n");
+    return null;
+  } finally {
+    try { board?.close(); } catch { /* the read result does not depend on close */ }
+  }
+}
+
 async function sessionBoardResult(
   tool: "update_session_status" | "list_session_status",
   args: Record<string, unknown>,
@@ -378,7 +397,7 @@ const minimalWorkflowStartInputSchema: Record<string, unknown> = {
     stages: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 },
       description: "Capabilities from the skill registry, chosen by the AGENT, e.g. minimal-implementation, test-sensitivity-review, change-code-review." },
     acceptanceCriteria: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 } },
-    workspace: { type: "string", minLength: 1, description: "Absolute workspace path. Default: the server's working directory." },
+    workspace: { type: "string", minLength: 1, description: "Absolute workspace path. Default: the working directory this session's host reported to AGS; required when none was reported." },
     writeTargets: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 },
       description: "Paths the work changes, relative to the workspace. Default: the whole workspace." },
   },
@@ -793,6 +812,7 @@ export function createMcpServer(
               priorFileCount: () => continuity.editWindowFileCount(caller.sessionId),
               settle: () => continuity.settleFinishedWorkflow(caller.sessionId),
               beforeCommit: rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId),
+              sessionWorkspace: () => observedSessionWorkspace(sessionBoardPath, caller),
             });
             // An AGS infrastructure failure must not leave the session's edits refused (design ags30-phase-check 7.6).
             if (!started.ok && started.error && WORKFLOW_START_INFRASTRUCTURE_FAILURES.has(started.error.code)) {

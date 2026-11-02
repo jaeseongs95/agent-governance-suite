@@ -163,6 +163,11 @@ export interface MinimalStartContinuity {
   settle(): void;
   /** Binds the session to the new root before the run commits (start_guarded_workflow's correlation). */
   beforeCommit(rootId: string): void;
+  /**
+   * The working directory the host reported for the calling session (session board), the default workspace. The
+   * server's own directory is not used: a host may start the MCP server in the plugin folder.
+   */
+  sessionWorkspace?(): string | null;
 }
 
 export interface MinimalWorkflowStartV1 {
@@ -220,8 +225,7 @@ function minimalStartRequest(raw: unknown): MinimalStartRequest {
 }
 
 /** The TaskEnvelope and frame of a minimal start; the AGENT's stage choice is used as given, never expanded. */
-function minimalTask(request: MinimalStartRequest, priorFileCount: number): { task: TaskEnvelopeV1; frame: ConvergenceFrameV1; defaultsUsed: string[] } {
-  const workspace = request.workspace ?? process.cwd();
+function minimalTask(request: MinimalStartRequest, workspace: string, priorFileCount: number): { task: TaskEnvelopeV1; frame: ConvergenceFrameV1; defaultsUsed: string[] } {
   const task: TaskEnvelopeV1 = {
     schemaVersion: CONTRACT_VERSION,
     taskId: `task-${randomUUID()}`,
@@ -625,10 +629,15 @@ export class WorkflowService {
   startMinimalWorkflow(rawRequest: unknown, caller: ObservedCallerV1 | null, continuity: MinimalStartContinuity): ApiResultV1<MinimalWorkflowStartV1> {
     return this.attempt(() => {
       const request = minimalStartRequest(rawRequest);
+      const observed = request.workspace === null ? continuity.sessionWorkspace?.() ?? null : null;
+      const workspace = request.workspace ?? (observed && path.isAbsolute(observed) ? observed : null);
+      if (!workspace) {
+        throw new WorkflowContractError("INVALID_INPUT", "workspace is required: the host has not reported this session's working directory.", { field: "workspace" });
+      }
       // Edits made in this window before the start are covered by the run but were not observed under it.
       const priorFileCount = continuity.priorFileCount();
       continuity.settle();
-      const { task, frame, defaultsUsed } = minimalTask(request, priorFileCount);
+      const { task, frame, defaultsUsed } = minimalTask(request, workspace, priorFileCount);
       return this.store.withWorkflowTransaction(() => {
         const plan = unwrapResult(this.planWorkflow(task, true));
         const blocked = plan.state === "ready" ? null : plan.errors[0];
