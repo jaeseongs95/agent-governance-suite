@@ -133,3 +133,78 @@ Codex 출력 형식은 continuity hook이 host 인자로 정한다(`resolveHookH
 
 - Codex 사용자는 AGS plugin hook을 `/hooks`에서 신뢰해야 이 기능이 동작한다. 기존 AGS hook(UserPromptSubmit 등)도 같은 조건이다.
 - Windows agy는 SSH 세션에서 구독 로그인을 다시 요구해 시험하지 못했다.
+
+## 7. 강제(3.0.3)
+
+기준 commit: `d39d90c5`(v3.0.2). 사용자 원문: 「걍 강제시켜야겠다.」 「워크플로우 만드는 작업.」 「근데 내가 강제하기 싫었던이유가 가벼운작업도 워크플로우 만드는거때문에 절차가 복잡해질까봐였는데, 너가 지금 하고있는 작업자체가 복잡한데도 넌 워크플로우를 안만들었잖아. …」 「AGS는 클로드만 쓰는게 아니라니까?」 이 절은 1장의 「차단하지 않는다」를 바꾼다. 단계 선택은 그대로 AGENT가 한다.
+
+### 7.1 판단
+
+3.3의 「필요 없으면 이유를 한 줄로 밝히고 끝내라」는 자기 선언 면제였고, 다단계 작업이 이 문구로 workflow 없이 끝났다. 판정을 에이전트 선언이 아니라 hook 관측으로 정한다. Stop 반복은 강제 수단이 아니다(Codex는 이어 가기 상한이 없고 Claude는 8회 뒤 무력화된다). 세 호스트가 모두 지원하는 편집 도구 PreToolUse 거부(deny)로 강제한다.
+
+### 7.2 편집 관측과 판정
+
+- 대상 경로: 호스트 adapter가 도구 입력에서 읽는다. Claude `Edit`·`Write`·`MultiEdit`의 `file_path`, `NotebookEdit`의 `notebook_path`. Codex `apply_patch`의 `tool_input.command`에서 `*** Add/Update/Delete File:`와 `*** Move to:` 경로. agy는 runner가 `Write`·`Edit`·`MultiEdit`로 바꾼 도구의 `TargetFile`(agy 1.4.12 바이너리의 인자 이름). 상대 경로는 hook 입력의 `cwd`로 푼다. 경로를 읽지 못한 편집 도구는 파일 하나(「경로 미확인」)로 센다.
+- 정규화: `path.resolve`, Windows는 구분자를 `\`로 맞추고 대소문자를 무시한다.
+- 구간: 마지막 `phase-check`와 마지막 workflow 시작(`phase-workflow-start`) 중 나중 것 이후.
+- 활성 workflow: task에 결속된 root가 `completed`·`abandoned`가 아니고, 최신 run이 있고, 그 run이 `passed`·`failed`·`blocked`가 아니다. abandoned root와 끝난 run은 workflow 없음이다.
+- 활성 workflow가 없으면 이번 편집의 새 파일을 더해 구간의 서로 다른 제품 파일이 `WORKFLOW_FILE_LIMIT`(3, 시작값) 이상이 될 때 그 호출을 거부하고 `phase-deny`를 남긴다. 이미 센 파일만 다시 고치는 호출은 허용한다. 활성 workflow 아래 편집은 세지 않으므로 workflow가 끝난 뒤 편집은 새로 센다.
+- 잠금: 마지막 workflow 시작 뒤에 `phase-deny`가 있으면 그 뒤 제품 파일 편집을 모두 거부한다. phase-check로 풀리지 않고 workflow 시작으로만 풀린다.
+- 서브에이전트: Claude·Codex는 child 편집의 `session_id`가 부모 세션이다. child(`agent_id` 관측) 편집은 같은 구간에 더하고 같은 판정을 받는다. 편집 집계 밖에서는 지금처럼 child를 다루지 않는다(pin·바인딩 없음).
+- 거부 문구(호스트 공통 `hookSpecificOutput.permissionDecision: "deny"`, agy runner가 `{decision: "deny", reason}`으로 바꾼다):
+
+```text
+[AGS] workflow 없이 제품 파일 3개째 변경: <이번 호출의 경로> (앞서 바꾼 제품 파일 N개 포함). 먼저 workflow를 시작하라(최소 시작 호출 예: start_workflow {"goal":"<목표>","stages":["minimal-implementation","test-sensitivity-review"],"acceptanceCriteria":["<수용 기준>"]}).
+```
+
+### 7.3 면제
+
+세지 않는 경로: OS 임시 폴더(`os.tmpdir()`, Claude scratchpad 포함), 호스트의 에이전트 메모 폴더, 사용자 설정 `AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS`(플랫폼 경로 구분자로 나눈 절대 경로). 호스트 메모 폴더는 adapter가 정한다.
+
+| 호스트 | 폴더 | 근거 |
+| --- | --- | --- |
+| Claude | `<CLAUDE_CONFIG_DIR 또는 ~/.claude>/projects/*/memory` | 사용자 지시(메모리 폴더) |
+| Codex | 없음 | Codex 0.166의 메모리는 `~/.codex/memories_1.sqlite`(시험 서버 관측)로, 편집 도구가 쓰는 파일이 아니다 |
+| agy | `~/.gemini/antigravity-cli/brain`, `~/.gemini/antigravity/brain` | CLI 경로는 시험 서버(agy 1.4.12)에서 관측. 편집기 경로는 관측하지 않았다 |
+
+cwd는 기준으로 쓰지 않는다. 설정은 hook 프로세스의 환경에서만 읽으며 도구 입력으로는 바꿀 수 없다.
+
+### 7.4 Stop
+
+- 활성 run에 passed가 아닌 stage가 있을 때만 「[AGS 단계 확인] 진행 중인 workflow에서 다음 단계가 아직 passed가 아니다: <stage>. 빠진 단계를 지금 진행하거나, 필요 없으면 계획을 고쳐 그 단계를 빼라.」를 낸다. 기준 미만이거나 workflow 없는 구간은 출력 0이다. 「workflow 없이 변경함」과 「이유를 한 줄로」 문구는 없앴다.
+- 7.6의 인프라 실패가 구간에 있으면 원인 코드를 한 번 낸다.
+- 출력 형식은 3.4 그대로다. Codex Stop 입력의 `stop_hook_active`가 true면(이미 Stop으로 이어 간 turn) phase-check만 남기고 출력 0이다.
+
+### 7.5 최소 시작 `start_workflow`
+
+거부 전용이던 `start_workflow`를 최소 시작으로 바꾼다. 새 도구를 늘리지 않는다.
+
+- 입력: `goal`, `stages`(AGENT가 고른 capability, 1개 이상), `acceptanceCriteria`(1개 이상). 선택: `workspace`(절대 경로, 기본 서버 cwd), `writeTargets`(기본 workspace 전체).
+- 서버가 한 workflow transaction 안에서 `planWorkflow`(신뢰 실행 관측 필수) → `openConvergenceRoot` → `claimWorkflowAttempt`(관측된 호출자) → `startGuardedWorkflow`(continuity 결속은 commit 전)를 차례로 부른다. 네 단계의 검사·결속·attestation을 그대로 쓰며 따로 구현하지 않는다. 어느 단계가 실패하면 그 단계의 코드·세부를 그대로 돌려주고 root·lease·run·소비한 관측을 모두 되돌린다.
+- 나머지 TaskEnvelope 필드는 기본값(`riskLevel: "medium"`, 권한 목록 비움, 작업 단위 1개 등)으로 채우고 결과의 `defaultsUsed`에 적는다. 계획을 만들 수 없으면(없는 capability 등) 계획의 첫 오류를 돌려준다.
+- 시작 전에 구간에 센 파일이 있으면 `lateAdoption: {label: "사후 편입·근거 미검증", priorFileCount}`을 돌려주고 TaskEnvelope `constraints`에 같은 문구를 넣어 root에 남긴다.
+- 끝난 workflow에 결속된 세션은 시작 전에 새 epoch로 옮긴다(새 프롬프트가 하는 것과 같다).
+- Claude governance hook이 transcript에서 실행 관측을 읽도록 `HOST_ATTESTATION_TOOLS`에 `start_workflow`를 넣었다.
+- 기존 4단계 경로는 바뀌지 않는다. `start_guarded_workflow`의 continuity 결속도 workflow 시작 관측을 남겨 잠금을 푼다.
+
+### 7.6 오류
+
+- AGS 인프라 오류는 원인 코드를 그대로 보이고 통과시킨다. hook이 workflow 저장소를 열지 못하거나 읽지 못하면 `phase-gate-unavailable:<원인 코드>`를 남기고 편집을 허용한다. 시작 호출이 `MCP_UNAVAILABLE`·`CONTINUITY_UNAVAILABLE`·`BINDING_REQUIRED`·`BINDING_INVALID`·`INTEGRITY_FAILED`로 실패하면 서버가 `workflow-start-failed:<코드>[:<reasonCode>]`를 남기고, 그 구간의 편집을 허용한다. 다음 Stop이 원인 코드를 한 번 낸다.
+- 입력 검증 오류(`INVALID_INPUT`, `GATE_FAILED`, `ROOT_CONFLICT`, `LEASE_CONFLICT` 등)는 통과 사유가 아니다.
+- continuity 저장소 자체가 열리지 않으면 지금처럼 hook이 진단 한 줄을 남기고 출력 없이 끝난다(fail-open).
+
+### 7.7 관측(수치 조정용)
+
+모두 `continuity_observations` 행이다. 경로는 HMAC으로만 남는다.
+
+- `phase-file`: 구간의 서로 다른 제품 파일(`turn_hash` = 경로 HMAC).
+- `phase-deny`: 거부 1건마다 1행.
+- `phase-workflow-start`: 시작 1건마다 1행, `success = 1`이면 거부 뒤의 시작. 「거부 뒤 시작 비율」은 `success = 1` 시작 수를 잠금 구간 수와 비교해 얻는다.
+- `workflow-start-failed:*`, `phase-gate-unavailable:*`: 인프라 실패.
+
+### 7.8 남는 한계
+
+- 셸(`Bash`·`PowerShell`·`run_command`)로 바꾼 파일은 세지 않는다. 편집 도구만 막는다.
+- Claude governance hook이 `start_workflow` 호출 자체를 거부하면(transcript 관측 실패 등) 서버가 호출을 받지 못해 `workflow-start-failed`를 남길 수 없다. 그 세션은 잠긴 채 남는다. governance hook의 실패 경로에서 `start_workflow`의 원인 코드를 continuity에 남겨야 풀리며, 이 부분은 governance hook 오류 처리 핫픽스(transcript 끝부분 읽기)와 겹쳐 이번 변경에 넣지 않았다. agy runner의 host-attestation 단계 fail-closed 거부도 같다.
+- 다른 세션의 활성 root가 같은 workspace를 덮으면 최소 시작은 `ROOT_CONFLICT`로 실패하고 통과 사유가 아니다.
+- 구간은 turn마다(Stop의 phase-check) 다시 센다. 한 turn에 2개씩 여러 turn에 나눠 고치면 거부되지 않는다.
