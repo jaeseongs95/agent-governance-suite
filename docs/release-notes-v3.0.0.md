@@ -44,6 +44,10 @@ workflow·trust DB 스키마가 더 새것이면 `MCP_UNAVAILABLE`(`reason: "SCH
 - 쓸 수 없는 현황판(R9): update는 `MCP_UNAVAILABLE`이고 `step`은 실제로 실패한 단계(`open`·`write`)다. 읽을 수 있으면 list는 `board.status: "ok"`와 요약을 그대로 보여 주고, 읽지 못할 때만 `unavailable`과 실패 단계를 보인다(`docs/ags30-session-board-design.md`).
 - messaging은 위 v4 형식을 쓴다.
 
+## 스킬 변경
+
+- mutation-risk-preflight 1.0.2: 제한된 신규 비공개 외부 준비(`freshResourceContainment.externalPreparation`)를 구분한다. 효과 근거가 있는 비공개 신규 외부 준비는 조건부 중단·보존 경로로 점검할 수 있고, 실제 공개·기존 객체 변경·권한 확대에는 이 경로를 적용하지 않는다.
+
 ## 고친 결함
 
 - D-0353: Windows Codex hook이 relay를 붙잡지 않게 했고, 관측되지 않은 깨우기를 정해진 만료·유예 뒤에 해제하며 일반 활동으로는 해제하지 않게 했다.
