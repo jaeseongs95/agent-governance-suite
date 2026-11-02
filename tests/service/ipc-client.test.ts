@@ -126,7 +126,8 @@ describe("service address and endpoint file", () => {
     expect(serviceListenAddress(state, "win32")).not.toBe(first);
   });
 
-  it("uses XDG_RUNTIME_DIR only for the default state directory and fails a socket path over sun_path", () => {
+  // Unix socket paths are resolved with the host path module, so these cases run on the Unix hosts they describe.
+  it.skipIf(process.platform === "win32")("uses XDG_RUNTIME_DIR only for the default state directory and fails a socket path over sun_path", () => {
     const home = path.join(path.sep, "home", "u");
     const defaultState = path.join(home, ".agent-governance-suite");
     expect(serviceListenAddress(defaultState, "linux", { XDG_RUNTIME_DIR: "/run/user/1000" }, home))
