@@ -369,7 +369,7 @@ const PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR = Object.freeze({
       "6b9534f7a9db0f7210a9a16c5bd9c930bbd458a4ce2aeb05547dc959ac5259a8"
     ],
     "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": [
-      "835a1dcf1881e71e93c500a2cb8c28df5e0544ac0a157542ece552a5c0e6176f",
+      "9ff002852bc34338ed94fdf0e9c5060cdb92f602961d2a959237d365ffeae40c",
       "31b4b4cece61b5609972202aebd90235d95c78b05aaa9b439bbf26ecfdb55557"
     ]
   },
