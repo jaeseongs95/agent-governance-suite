@@ -69,7 +69,8 @@ async function harness() {
   const hookService = () => new ContinuityService(continuityStore, null, store);
   const writeFile = (name: string) => handleContinuityHook({ hook_event_name: "PreToolUse", session_id: SESSION, cwd: repo,
     tool_name: "apply_patch", tool_input: { command: `*** Begin Patch\n*** Add File: ${name}\n*** End Patch` } }, hookService(), "codex", {});
-  return { service, continuity, call, counts, writeFile };
+  const stop = () => handleContinuityHook({ hook_event_name: "Stop", session_id: SESSION, cwd: repo }, hookService(), "codex", {});
+  return { service, continuity, call, counts, writeFile, stop };
 }
 
 const minimal = { goal: "Change three files.", stages: ["minimal-implementation"], acceptanceCriteria: ["The change works."], workspace: repo };
@@ -92,6 +93,17 @@ describe("start_workflow minimal start", () => {
     const { call, writeFile } = await harness();
     for (const name of ["a.ts", "b.ts"]) expect(writeFile(name)).toEqual({});
     expect(isDeny(writeFile("c.ts"))).toBe(true);
+    const started = await call<MinimalWorkflowStartV1>(minimal);
+    expect(started.data?.lateAdoption).toEqual({ label: "사후 편입·근거 미검증", priorFileCount: 2 });
+    expect(writeFile("c.ts")).toEqual({});
+  });
+
+  it("still marks the refused window's edits as late adoption after a turn end, which keeps the lock", async () => {
+    const { call, writeFile, stop } = await harness();
+    for (const name of ["a.ts", "b.ts"]) expect(writeFile(name)).toEqual({});
+    expect(isDeny(writeFile("c.ts"))).toBe(true);
+    expect(stop()).toEqual({});
+    expect(isDeny(writeFile("a.ts"))).toBe(true);
     const started = await call<MinimalWorkflowStartV1>(minimal);
     expect(started.data?.lateAdoption).toEqual({ label: "사후 편입·근거 미검증", priorFileCount: 2 });
     expect(writeFile("c.ts")).toEqual({});

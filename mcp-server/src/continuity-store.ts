@@ -443,10 +443,11 @@ export class SqliteContinuityStore {
   }
 
   /** The store position of the newest observation of this exact event, or null. */
-  lastObservationId(taskCorrelation: string, epoch: number, event: string): number | null {
+  lastObservationId(taskCorrelation: string, epoch: number, event: string, beforeId = Number.MAX_SAFE_INTEGER): number | null {
     const row = this.database.prepare(`
-      SELECT MAX(observation_id) AS id FROM continuity_observations WHERE task_correlation = ? AND epoch = ? AND event = ?
-    `).get(taskCorrelation, epoch, event) as { id: number | null } | undefined;
+      SELECT MAX(observation_id) AS id FROM continuity_observations
+      WHERE task_correlation = ? AND epoch = ? AND event = ? AND observation_id < ?
+    `).get(taskCorrelation, epoch, event, beforeId) as { id: number | null } | undefined;
     return row?.id ?? null;
   }
 

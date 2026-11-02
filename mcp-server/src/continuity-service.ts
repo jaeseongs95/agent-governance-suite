@@ -158,7 +158,10 @@ export interface ContinuityGateway {
   bindOpenedRoot(caller: VerifiedCaller, rootId: string): boolean;
   /** Called only with the session identity verified by the MCP ingress. */
   prepareWorkflowStart(rawSessionId: string, rootId: string): void;
-  /** Distinct product files edited in the current window before a workflow covers them (design ags30-phase-check 7). */
+  /**
+   * Distinct product files edited without a workflow that a start now adopts (design ags30-phase-check 7.5): the current
+   * window, or while locked the window that ended in the refusal, which a later phase check does not clear.
+   */
   editWindowFileCount(rawSessionId: string): number;
   /** Records an AGS infrastructure failure of a workflow start so the session's current window is not refused. */
   recordWorkflowStartFailure(rawSessionId: string, cause: unknown): void;
@@ -744,7 +747,12 @@ export class ContinuityService implements ContinuityGateway {
     const task = this.store.getTask(this.correlateSession(rawSessionId));
     if (!task) return 0;
     const { taskCorrelation: c, currentEpoch: e } = task;
-    return new Set(this.store.observationHashesAfter(c, e, PHASE_FILE_EVENT, this.windowStart(c, e))).size;
+    let from = this.windowStart(c, e);
+    if (this.locked(c, e)) {
+      const deny = this.store.lastObservationId(c, e, PHASE_DENY_EVENT) ?? 0;
+      from = Math.max(this.store.lastObservationId(c, e, PHASE_CHECK_EVENT, deny) ?? 0, this.store.lastObservationId(c, e, PHASE_START_EVENT) ?? 0);
+    }
+    return new Set(this.store.observationHashesAfter(c, e, PHASE_FILE_EVENT, from)).size;
   }
 
   recordWorkflowStartFailure(rawSessionId: string, cause: unknown): void {
@@ -841,7 +849,7 @@ export class ContinuityService implements ContinuityGateway {
    * WORKFLOW_FILE_LIMIT distinct files in the window is refused and locks the window; files already counted stay
    * editable until then. An AGS infrastructure failure never refuses: it is recorded and named once at the next Stop.
    */
-  gateEditForSession(rawSessionId: string, targets: readonly string[]): string | null {
+  gateEditForSession(rawSessionId: string, targets: readonly string[], shown: readonly string[] = targets): string | null {
     const now = this.now().toISOString();
     const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
     const { taskCorrelation: c, currentEpoch: e } = task;
@@ -863,7 +871,7 @@ export class ContinuityService implements ContinuityGateway {
     }
     this.store.recordObservation(c, e, PHASE_DENY_EVENT, null, false, now);
     const earlier = counted.size > 0 ? ` (앞서 바꾼 제품 파일 ${counted.size}개 포함)` : "";
-    return `[AGS] workflow 없이 제품 파일 ${WORKFLOW_FILE_LIMIT}개째 변경: ${targets.join(", ")}${earlier}. `
+    return `[AGS] workflow 없이 제품 파일 ${WORKFLOW_FILE_LIMIT}개째 변경: ${shown.join(", ")}${earlier}. `
       + `먼저 workflow를 시작하라(최소 시작 호출 예: ${MINIMAL_WORKFLOW_START_EXAMPLE}).`;
   }
 

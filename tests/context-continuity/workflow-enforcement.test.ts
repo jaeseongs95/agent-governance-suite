@@ -19,8 +19,6 @@ const session = "enforce-session";
 const at = "2026-11-02T09:00:00.000Z";
 const repo = path.resolve(process.platform === "win32" ? "C:\\work\\repo" : "/work/repo");
 const file = (name: string) => path.join(repo, name);
-/** The gate shows normalized paths: lower case on Windows. */
-const shown = (name: string) => process.platform === "win32" ? file(name).toLowerCase() : file(name);
 const stores = new Set<SqliteContinuityStore>();
 const NO_ENV: NodeJS.ProcessEnv = {};
 
@@ -114,7 +112,7 @@ describe("workflow gate", () => {
     expect(handleContinuityHook(write("a.ts"), target, "claude-code", NO_ENV)).toEqual({});
     const denied = handleContinuityHook(write("c.ts"), target, "claude-code", NO_ENV);
     expect(denied).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny",
-      permissionDecisionReason: `[AGS] workflow 없이 제품 파일 3개째 변경: ${shown("c.ts")} (앞서 바꾼 제품 파일 2개 포함). 먼저 workflow를 시작하라(최소 시작 호출 예: ${MINIMAL_WORKFLOW_START_EXAMPLE}).` } });
+      permissionDecisionReason: `[AGS] workflow 없이 제품 파일 3개째 변경: ${file("c.ts")} (앞서 바꾼 제품 파일 2개 포함). 먼저 workflow를 시작하라(최소 시작 호출 예: ${MINIMAL_WORKFLOW_START_EXAMPLE}).` } });
     // Only refusals and distinct files are rows; the refused file is not counted.
     expect(events(target).filter(event => event === "phase-file")).toHaveLength(2);
     expect(events(target).filter(event => event === "phase-deny")).toHaveLength(1);

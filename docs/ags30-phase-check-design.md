@@ -182,7 +182,7 @@ cwd는 기준으로 쓰지 않는다. 설정은 hook 프로세스의 환경에�
 - 입력: `goal`, `stages`(AGENT가 고른 capability, 1개 이상), `acceptanceCriteria`(1개 이상). 선택: `workspace`(절대 경로, 기본 서버 cwd), `writeTargets`(기본 workspace 전체).
 - 서버가 한 workflow transaction 안에서 `planWorkflow`(신뢰 실행 관측 필수) → `openConvergenceRoot` → `claimWorkflowAttempt`(관측된 호출자) → `startGuardedWorkflow`(continuity 결속은 commit 전)를 차례로 부른다. 네 단계의 검사·결속·attestation을 그대로 쓰며 따로 구현하지 않는다. 어느 단계가 실패하면 그 단계의 코드·세부를 그대로 돌려주고 root·lease·run·소비한 관측을 모두 되돌린다.
 - 나머지 TaskEnvelope 필드는 기본값(`riskLevel: "medium"`, 권한 목록 비움, 작업 단위 1개 등)으로 채우고 결과의 `defaultsUsed`에 적는다. 계획을 만들 수 없으면(없는 capability 등) 계획의 첫 오류를 돌려준다.
-- 시작 전에 구간에 센 파일이 있으면 `lateAdoption: {label: "사후 편입·근거 미검증", priorFileCount}`을 돌려주고 TaskEnvelope `constraints`에 같은 문구를 넣어 root에 남긴다.
+- 시작 전에 구간에 센 파일이 있으면(잠금 중이면 거부로 끝난 구간의 파일. 그 뒤 phase-check로 구간이 바뀌어도 센다) `lateAdoption: {label: "사후 편입·근거 미검증", priorFileCount}`을 돌려주고 TaskEnvelope `constraints`에 같은 문구를 넣어 root에 남긴다.
 - 끝난 workflow에 결속된 세션은 시작 전에 새 epoch로 옮긴다(새 프롬프트가 하는 것과 같다).
 - Claude governance hook이 transcript에서 실행 관측을 읽도록 `HOST_ATTESTATION_TOOLS`에 `start_workflow`를 넣었다.
 - 기존 4단계 경로는 바뀌지 않는다. `start_guarded_workflow`의 continuity 결속도 workflow 시작 관측을 남겨 잠금을 푼다.

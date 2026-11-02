@@ -59,11 +59,20 @@ function isExemptEditPath(target: string, roots: readonly string[][]): boolean {
 }
 
 /** The product files an edit will change; a tool whose target the adapter could not read still counts as one file. */
-function productEditTargets(observation: InputObservation, host: string, environment: NodeJS.ProcessEnv): string[] {
+/** Keyed by the normalized path; the value is the path as the tool gave it (resolved), which the refusal shows. */
+function productEditTargets(observation: InputObservation, host: string, environment: NodeJS.ProcessEnv): Map<string, string> {
   const targets = observation.editTargets ?? [];
-  if (targets.length === 0) return [`(경로 미확인: ${observation.toolName ?? "edit"})`];
+  if (targets.length === 0) {
+    const unknown = `(경로 미확인: ${observation.toolName ?? "edit"})`;
+    return new Map([[unknown, unknown]]);
+  }
   const roots = exemptEditRoots(host, environment);
-  return [...new Set(targets.map(normalizedEditPath))].filter(target => !isExemptEditPath(target, roots));
+  const product = new Map<string, string>();
+  for (const target of targets) {
+    const key = normalizedEditPath(target);
+    if (!product.has(key) && !isExemptEditPath(key, roots)) product.set(key, path.resolve(target));
+  }
+  return product;
 }
 
 function deniedEdit(reason: string): Record<string, unknown> {
@@ -146,8 +155,8 @@ function stopOutput(host: string, eventName: string, cue: string | null): Record
 /** A file edit before it runs: the workflow gate (design ags30-phase-check 7.2). Exempt-only edits are not recorded. */
 function gateEdit(observation: InputObservation, service: ContinuityService, host: string, environment: NodeJS.ProcessEnv): Record<string, unknown> {
   const targets = productEditTargets(observation, host, environment);
-  if (targets.length === 0) return {};
-  const refusal = service.gateEditForSession(observation.sessionId, targets);
+  if (targets.size === 0) return {};
+  const refusal = service.gateEditForSession(observation.sessionId, [...targets.keys()], [...targets.values()]);
   return refusal ? deniedEdit(refusal) : {};
 }
 
