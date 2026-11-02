@@ -10,6 +10,26 @@ const currentSourceBinding = loadCurrentSourceBindings(root);
 const current = JSON.parse(readFileSync(new URL("./fixtures.json", import.meta.url), "utf8"));
 const successor = JSON.parse(readFileSync(new URL("./fixtures.source-successor.json", import.meta.url), "utf8"));
 const hash = (bytes: string | Buffer) => "sha256:" + createHash("sha256").update(bytes).digest("hex");
+it("chains the exact orchestrator phase-check source after platform-events", () => {
+  const bytes = readFileSync(new URL("./fixtures.orchestrator-phase-check-source-successor.json", import.meta.url));
+  expect(hash(bytes)).toBe("sha256:7eb7d5b4a67b7afc3a48f3e7dd76fdab8f208fc65597e92535400df8f7627429");
+  expect(bytes.includes(Buffer.from("
+"))).toBe(false);
+  const manifest = JSON.parse(bytes.toString("utf8"));
+  expect(manifest.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.preflight-platform-events-source-successor.json", bytes: readFileSync(path.join(root, "tests/skill-classification/fixtures.preflight-platform-events-source-successor.json")).length, digest: "sha256:0d9584c9607e98b953470bd20c7cfbfda82cf5558906368296eba87d68768a03"});
+  expect(manifest.bindings.map((binding: {path: string}) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json"]);
+  expect(manifest.spanPreservation.changedSpans).toEqual(["applicability[5]", "applicability[7]", "exclusions[6]"]);
+  expect(manifest.fixtureFileRewritten).toBe(false);
+  expect(manifest.labelChanges).toEqual([]);
+  expect(manifest.priceAndBudgetChanges).toEqual([]);
+  for (const binding of manifest.bindings) {
+    const actual = readFileSync(path.join(root, binding.path));
+    expect(actual.length).toBe(binding.bytes);
+    expect(hash(actual)).toBe(binding.digest);
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
+    expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+});
 it("chains the exact platform-events source without rewriting earlier oracles", () => {
   const bytes = readFileSync(new URL("./fixtures.preflight-platform-events-source-successor.json", import.meta.url));
   expect(hash(bytes)).toBe("sha256:0d9584c9607e98b953470bd20c7cfbfda82cf5558906368296eba87d68768a03");
@@ -69,7 +89,7 @@ it("동결 판정 기준을 보존하고 인계 지침의 현재 바이트만 �
   expect(manifest.labelChanges).toEqual([]);
   expect(manifest.priceAndBudgetChanges).toEqual([]);
   expect(manifest.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: "preflight-platform-events-source-binding-r15"});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: "orchestrator-phase-check-source-binding-r16"});
   expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
   for (const source of manifest.bindings) {
     const actual = readFileSync(path.join(root, source.path));
@@ -238,15 +258,16 @@ it("binds the current unavailable-classification guidance while preserving the f
   expect(hash(JSON.stringify(semantics(current)))).toBe(semanticDigest);
   for (const source of binding.bindings) {
     const actual = readFileSync(path.join(root, source.path));
-    expect(actual.length).toBe(source.bytes);
-    expect(hash(actual)).toBe(source.digest);
-    expect(currentSourceBinding.resolveDigest(source.path, source.previousDigest)).toBe(source.digest);
+    expect(hash(actual)).toBe(currentSourceBinding.resolveDigest(source.path, source.previousDigest));
     expect(() => currentSourceBinding.resolveDigest(source.path, "sha256:" + "0".repeat(64))).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
   const metadata = JSON.parse(readFileSync(path.join(root, "skills/orchestrator/classification.json"), "utf8"));
   const sourceLines = readFileSync(path.join(root, "skills/orchestrator/SKILL.md"), "utf8").split(/\r?\n/);
   expect(binding.spanPreservation.spans).toHaveLength(18);
-  for (const span of binding.spanPreservation.spans) {
+  const phase = JSON.parse(readFileSync(new URL("./fixtures.orchestrator-phase-check-source-successor.json", import.meta.url), "utf8"));
+  expect(phase.spanPreservation.spans.map((span: {group: string; index: number}) => [span.group, span.index]))
+    .toEqual(binding.spanPreservation.spans.map((span: {group: string; index: number}) => [span.group, span.index]));
+  for (const span of phase.spanPreservation.spans) {
     const actual = metadata[span.group][span.index];
     expect(actual.startLine).toBe(span.startLine);
     expect(actual.endLine).toBe(span.endLine);
