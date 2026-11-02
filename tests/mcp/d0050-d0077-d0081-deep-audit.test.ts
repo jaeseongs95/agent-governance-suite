@@ -248,10 +248,11 @@ describe("D0050 / D0077 / D0081 Deep Audit Tests", () => {
   describe("D0077: Closed-World Offline Status & Explicit Network Check", () => {
     it("keeps status queries strictly offline even when cache is expired, and uses network only on explicit update check", async () => {
       let networkCalls = 0;
+      const newer = `${Number(PLUGIN_INFO.version.split(".")[0]) + 1}.0.0`;
       const remoteTags = [
         {
-          ref: "refs/tags/v3.0.1",
-          object: { sha: "a".repeat(40), type: "commit", url: "https://api.github.com/repos/example/tags/v3.0.1" }
+          ref: `refs/tags/v${newer}`,
+          object: { sha: "a".repeat(40), type: "commit", url: `https://api.github.com/repos/example/tags/v${newer}` }
         }
       ];
 
@@ -267,8 +268,8 @@ describe("D0050 / D0077 / D0081 Deep Audit Tests", () => {
       updateStore.putPluginUpdateState({
         targetId: PLUGIN_INFO.id,
         currentVersion: PLUGIN_INFO.version,
-        latestVersion: "3.0.1",
-        latestTag: "v3.0.1",
+        latestVersion: newer,
+        latestTag: `v${newer}`,
         latestCommit: "a".repeat(40),
         etag: null,
         comparison: "update-available",
@@ -286,7 +287,7 @@ describe("D0050 / D0077 / D0081 Deep Audit Tests", () => {
         expect(networkCalls).toBe(0); // Zero network calls!
         const reply1Str = JSON.stringify(reply1);
         expect(reply1Str).toContain("plugin-update-notice");
-        expect(reply1Str).toContain("3.0.1");
+        expect(reply1Str).toContain(newer);
 
         // 2. Call get_trust_capabilities: MUST NOT make network calls
         await call("get_trust_capabilities", {});
