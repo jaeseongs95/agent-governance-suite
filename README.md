@@ -35,7 +35,7 @@ flowchart LR
 Node.js **24.0.0 이상**과 사용할 호스트의 플러그인 기능이 필요합니다. 협업에 참여할 호스트마다 AGS를 설치합니다. 플러그인 사용을 위해 이 저장소를 clone하거나 `pnpm install`을 실행할 필요는 없습니다.
 
 <!-- release-version:start -->
-현재 공개 릴리스는 `v3.0.2`이며 아래 설치 예시는 이 버전 기준입니다. 3.0은 2.x와 호환하지 않으며 바뀐 점은 [3.0.0 릴리스 노트](docs/release-notes-v3.0.0.md), [3.0.1 릴리스 노트](docs/release-notes-v3.0.1.md), [3.0.2 릴리스 노트](docs/release-notes-v3.0.2.md)에 정리했습니다. 이번 릴리스는 결함 수정을 우선했으며 실제 호스트 재측정과 양 Cloud 검증은 완료로 주장하지 않습니다. 포함된 스킬은 아래 스킬 표와 같습니다. JEV 계층을 통한 스킬의 발견·분류·평가·추천을 지원하고, AGENT가 적용 조건을 대조해 최종 선택합니다. 실제 사용에는 승인된 JEV 또는 현재 벤더의 분류 설정·지원 프로필·예산과 호스트 발견 자료가 필요합니다. 실제 운영 DB 이전·공용 MCP 전환은 완료로 주장하지 않습니다.
+현재 공개 릴리스는 `v3.1.0`이며 아래 설치 예시는 이 버전 기준입니다. 3.0은 2.x와 호환하지 않으며 바뀐 점은 [3.0.0 릴리스 노트](docs/release-notes-v3.0.0.md), [3.0.1 릴리스 노트](docs/release-notes-v3.0.1.md), [3.0.2 릴리스 노트](docs/release-notes-v3.0.2.md), [3.1.0 릴리스 노트](docs/release-notes-v3.1.0.md)에 정리했습니다. 이번 릴리스는 결함 수정을 우선했으며 실제 호스트 재측정과 양 Cloud 검증은 완료로 주장하지 않습니다. 포함된 스킬은 아래 스킬 표와 같습니다. JEV 계층을 통한 스킬의 발견·분류·평가·추천을 지원하고, AGENT가 적용 조건을 대조해 최종 선택합니다. 실제 사용에는 승인된 JEV 또는 현재 벤더의 분류 설정·지원 프로필·예산과 호스트 발견 자료가 필요합니다. 실제 운영 DB 이전·공용 MCP 전환은 완료로 주장하지 않습니다.
 <!-- release-version:end -->
 
 ### Claude Code
@@ -55,7 +55,7 @@ Claude Code 안에서 실행합니다.
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.0.2
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.1.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->

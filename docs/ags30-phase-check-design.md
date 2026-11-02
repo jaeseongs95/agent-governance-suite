@@ -205,6 +205,7 @@ cwd는 기준으로 쓰지 않는다. 설정은 hook 프로세스의 환경에�
 ### 7.8 남는 한계
 
 - 셸(`Bash`·`PowerShell`·`run_command`)로 바꾼 파일은 세지 않는다. 편집 도구만 막는다.
-- Claude governance hook이 `start_workflow` 호출 자체를 거부하면(transcript 관측 실패 등) 서버가 호출을 받지 못해 `workflow-start-failed`를 남길 수 없다. 그 세션은 잠긴 채 남는다. governance hook의 실패 경로에서 `start_workflow`의 원인 코드를 continuity에 남겨야 풀리며, 이 부분은 governance hook 오류 처리 핫픽스(transcript 끝부분 읽기)와 겹쳐 이번 변경에 넣지 않았다. agy runner의 host-attestation 단계 fail-closed 거부도 같다.
+- Claude governance hook이 `start_workflow` 호출 자체를 거부하면 서버가 호출을 받지 못한다. 그래서 hook이 실패 경로에서 같은 `workflow-start-failed:BINDING_REQUIRED:<hook 원인 코드>`를 continuity에 직접 남긴다(`governance-hook.ts` `recordStartRefusal`). 기록마저 실패하면 `WORKFLOW_START_FAILURE_UNRECORDED` 진단을 남기고 거부는 그대로다. agy runner의 host-attestation 단계 fail-closed 거부는 아직 같은 처리를 하지 않는다.
+- agy 1.4.12는 호출 `_meta`에 모델을 싣지 않아(`ANTIGRAVITY_EXECUTION_UNOBSERVED`) 신뢰 실행 관측이 필수인 workflow 시작(`plan_workflow`·`start_workflow`의 bootstrap)이 `BINDING_REQUIRED`로 실패한다(v3.0.2부터 같은 코드). agy에서는 거부 뒤 시작이 인프라 실패로 통과하므로 강제가 한 번 거부에 그친다. 3.1.1에서 정책을 정해 고친다.
 - 다른 세션의 활성 root가 같은 workspace를 덮으면 최소 시작은 `ROOT_CONFLICT`로 실패하고 통과 사유가 아니다.
 - 구간은 turn마다(Stop의 phase-check) 다시 센다. 한 turn에 2개씩 여러 turn에 나눠 고치면 거부되지 않는다.
