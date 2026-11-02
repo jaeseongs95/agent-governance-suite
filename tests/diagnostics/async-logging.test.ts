@@ -85,21 +85,38 @@ it("requires an actual JSON event while permitting empty rotated files", () => {
 });
 
 it("uses the library rotation and retention for a completed bounded batch",async()=>{
+  // 회전은 라이브러리 주기 타이머로만 일어난다. 경과 시간을 가정하지 않고 실제 파일 번호가 오르는 것을 기다린다.
+  // 제품은 직전 정리(cleanup-complete)가 끝나기 전의 다음 reopen을 거부하므로, N번 파일이 열렸다면
+  // N-1번을 열 때의 정리가 이미 끝났고 N-2-retainedFiles 이하 번호는 남아 있지 않아야 한다.
+  const retainedFiles=1, target=retainedFiles+3;
   const result=await execute(`
 import {createDiagnostics,readDiagnosticConfig} from './diagnostics.mjs';
-const log=await createDiagnostics(readDiagnosticConfig(JSON.stringify({level:'INFO',destination:'file',file:'rotation-case',rotationBytes:2048,rotationIntervalMs:100,retainedFiles:2})),new Set(['get_skill_inventory']));
+import {readdir} from 'node:fs/promises';
+const log=await createDiagnostics(readDiagnosticConfig(JSON.stringify({level:'INFO',destination:'file',file:'rotation-case',rotationBytes:2048,rotationIntervalMs:100,retainedFiles:${retainedFiles},flushDeadlineMs:1000})),new Set(['get_skill_inventory']));
 await readyAtMost(log);
-for(let i=0;i<15;i++){for(let j=0;j<30;j++)log.event('request','INFO','request_start',{method:'get_skill_inventory'});await new Promise(r=>setTimeout(r,15));}
-await new Promise(r=>setTimeout(r,100));await log.close();console.log(JSON.stringify(log.loss));
+const numbers=async()=>(await readdir('.')).flatMap(name=>{const match=/^rotation-case-.+[.]([0-9]+)[.]log$/.exec(name);return match?[Number(match[1])]:[];}).sort((a,b)=>a-b);
+const snapshots=[];let top=0,polls=0;
+while(top<${target}&&log.loss.sinkErrors===0){
+  log.event('request','INFO','request_start',{method:'get_skill_inventory'});
+  const present=await numbers();polls++;
+  if((present.at(-1)??0)>top){top=present.at(-1);snapshots.push({top,present});}
+  await new Promise(resolve=>setImmediate(resolve));
+}
+await log.close();console.log(JSON.stringify({top,polls,snapshots,loss:log.loss}));
 `);
-  expect(result.code).toBe(0);
   const entries=await readdir(root);
   const files=entries.filter(name=>name.startsWith('rotation-case-')&&name.endsWith('.log'));
-  // Distinguish sink/close loss, rotation and filename filtering without changing the original oracle.
-  let loss:unknown={state:'invalid-json',bytes:Buffer.byteLength(result.out)};
-  try {loss=JSON.parse(result.out);}catch{/* Diagnostic state above preserves a missing/partial child report. */}
-  const observation=JSON.stringify({elapsedMs:result.elapsed,loss,files:await Promise.all(entries.map(async name=>({name,bytes:(await stat(path.join(root,name))).size})))});
-  expect(files.length,observation).toBeGreaterThan(1);expect(files.length,observation).toBeLessThanOrEqual(3);
+  let child:{top:number;snapshots:Array<{top:number;present:number[]}>;loss:{sinkErrors:number}}|undefined;
+  try {child=JSON.parse(result.out);}catch{/* 아래 관측값이 누락·부분 보고를 보존한다. */}
+  const observation=JSON.stringify({elapsedMs:result.elapsed,code:result.code,out:result.out,err:result.err,files:await Promise.all(entries.map(async name=>({name,bytes:(await stat(path.join(root,name))).size})))});
+  expect(result.code,observation).toBe(0);
+  expect(child?.loss.sinkErrors,observation).toBe(0);
+  expect(child?.top,observation).toBeGreaterThanOrEqual(target);
+  for (const snapshot of child!.snapshots) expect(snapshot.present.every(number=>number>snapshot.top-2-retainedFiles),observation).toBe(true);
+  const remaining=files.map(name=>Number(/[.]([0-9]+)[.]log$/.exec(name)?.[1]));
+  // 종료 중 한 번 더 회전할 수 있지만, 이미 정리가 확정된 번호가 다시 생기지는 않는다.
+  expect(remaining.length,observation).toBeGreaterThan(0);
+  expect(remaining.every(number=>number>child!.top-2-retainedFiles&&number<=child!.top+1),observation).toBe(true);
   const bytes=await Promise.all(files.map(file=>readFile(path.join(root,file),'utf8')));
   expect(rotationEvents(bytes).every(row=>row.event==='request_start'||row.event==='shutdown_start')).toBe(true);
 });
