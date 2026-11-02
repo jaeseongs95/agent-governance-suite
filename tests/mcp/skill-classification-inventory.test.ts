@@ -212,7 +212,7 @@ describe("signed source evidence and selection context regression", () => {
 
   it("keeps the no-specialist reply clause separate from orchestration exclusions", async () => {
     const source = await readFile("skills/orchestrator/SKILL.md", "utf8");
-    const line = source.split("\n").find(text => text.startsWith("- 전문 스킬이 필요 없는"))!;
+    const line = source.split("\n").find(text => text.startsWith("- 질문 답변, 설명, 인사"))!;
     expect(line).toBeTypeOf("string");
     const boundary = line.indexOf(". ");
     expect(boundary).toBeGreaterThan(2);
