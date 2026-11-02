@@ -4,11 +4,12 @@ import { readFileSync } from "node:fs";
 import { types } from "node:util";
 import { adaptHostInput, isGovernanceHookTool, resolveHookHost } from "./host-input-adapter.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
-import { resolveWorkflowDatabasePath } from "./runtime-config.js";
+import { assertDistinctDatabasePaths, resolveContinuityDatabasePath, resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { runContinuityHook } from "./continuity-hook.js";
 import { HOST_ATTESTATION_TOOLS } from "./host-attestation.js";
 import { observationFailureCode, observeClaudeExecution, readSessionModel, sessionModelDirectory } from "./host-attestation-hook.js";
-import { ContinuityStoreError } from "./continuity-store.js";
+import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
+import { ContinuityService } from "./continuity-service.js";
 import { failureReason } from "./failure-diagnostics.js";
 import { WorkflowContractError } from "../../contracts/types.js";
 import { hookFailureContext, retainHookFailureSecondary, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
@@ -20,6 +21,19 @@ function record(value: unknown): RecordValue {
 }
 function denied(reasonCode: string): RecordValue {
   return { hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: reasonCode } };
+}
+/**
+ * A refused start never reaches the server, so the server cannot record the start failure that keeps the session's
+ * edits passing (design ags30-phase-check 7.6). The hook records the same observation itself.
+ */
+function recordStartRefusal(environment: NodeJS.ProcessEnv, sessionId: string, reasonCode: string): void {
+  const continuityPath = resolveContinuityDatabasePath(environment);
+  assertDistinctDatabasePaths(resolveWorkflowDatabasePath(environment), continuityPath);
+  const continuity = new SqliteContinuityStore(continuityPath);
+  try {
+    new ContinuityService(continuity, null).recordWorkflowStartFailure(sessionId,
+      new WorkflowContractError("BINDING_REQUIRED", "The governance hook refused the workflow start.", { reasonCode }));
+  } finally { continuity.close(); }
 }
 function missing(reasonCode: string): never {
   throw new WorkflowContractError("BINDING_REQUIRED", "The host hook input does not identify this call.", { reasonCode });
@@ -53,6 +67,8 @@ export async function runGovernanceHook(
   let store: SqliteWorkflowStore | undefined;
   let failure: unknown;
   let failed = false;
+  let tool = "";
+  let sessionId = "";
   try {
     const input = record(JSON.parse(raw));
     const { observation } = adaptHostInput(input, host);
@@ -60,9 +76,9 @@ export async function runGovernanceHook(
     if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "before" || !isGovernanceHookTool(host, toolName)) {
       return { ok: true, output: "" };
     }
-    const tool = toolName.split("__").at(-1)!;
+    tool = toolName.split("__").at(-1)!;
     const callId = observation.callId?.trim();
-    const sessionId = observation.sessionId.trim();
+    sessionId = observation.sessionId.trim();
     if (!callId || !sessionId) missing("HOOK_CALL_FIELDS_MISSING");
     // A present but malformed agent marker must not record a root row.
     const agentId = Object.hasOwn(input, "agent_id") ? input.agent_id : null;
@@ -90,6 +106,13 @@ export async function runGovernanceHook(
     try { writeFailureDiagnostic(JSON.stringify({ component: "governance-hook", reasonCode, ...(causeReason ? { causeReason } : {}),
       context: hookFailureContext(failure) })); }
     catch { /* The nonzero failure and denial do not depend on diagnostic output. */ }
+    if (tool === "start_workflow" && sessionId) {
+      try { recordStartRefusal(environment, sessionId, reasonCode); }
+      catch (cause) {
+        try { writeFailureDiagnostic(JSON.stringify({ component: "governance-hook", reasonCode: "WORKFLOW_START_FAILURE_UNRECORDED",
+          causeReason: failureReason(cause).reason ?? "UNEXPECTED_FAILURE" })); } catch { /* The denial stands either way. */ }
+      }
+    }
     return { ok: false, output: JSON.stringify(denied(reasonCode)) };
   }
   return { ok: true, output: "" };
