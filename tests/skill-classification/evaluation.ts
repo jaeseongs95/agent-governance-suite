@@ -266,15 +266,34 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, preflight.frozenPredecessor.path) !== handoffPath || handoffBytes.length !== preflight.frozenPredecessor.bytes || hashBytes(handoffBytes) !== preflight.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const currentManifest = {...manifest, revision: preflight.revision, bindings: [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings]};
-  files.push(successorPath, handoffPath, preflightPath);
+  const platformPath = resolve(repo, "tests/skill-classification/fixtures.preflight-platform-events-source-successor.json");
+  const platformBytes = readFileSync(platformPath);
+  if (hashBytes(platformBytes) !== "sha256:0d9584c9607e98b953470bd20c7cfbfda82cf5558906368296eba87d68768a03") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const platform = JSON.parse(platformBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, platform.frozenPredecessor.path) !== preflightPath || preflightBytes.length !== platform.frozenPredecessor.bytes || hashBytes(preflightBytes) !== platform.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings];
+  const currentBindings = new Map<string, typeof manifest.bindings[number]>();
+  for (const binding of allBindings) {
+    const previous = currentBindings.get(binding.path);
+    if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+    currentBindings.set(binding.path, binding);
+  }
+  const currentManifest = {...manifest, revision: platform.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(preflightBytes),
+    manifest: currentManifest, files, digest: hashBytes(platformBytes),
     resolveDigest(sourcePath: string, digest: string): string {
-      const binding = currentManifest.bindings.find(row => row.path === sourcePath);
-      if (!binding) return digest;
-      if (binding.previousDigest !== digest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
-      return binding.digest;
+      const chain = allBindings.filter(row => row.path === sourcePath);
+      if (chain.length === 0) return digest;
+      const start = chain.findIndex(row => row.previousDigest === digest);
+      if (start < 0) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+      for (const binding of chain.slice(start)) {
+        if (binding.previousDigest !== digest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+        digest = binding.digest;
+      }
+      return digest;
     },
   };
 }

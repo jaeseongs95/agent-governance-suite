@@ -37,17 +37,40 @@
         "guardEvidenceRef": { "type": "object", "additionalProperties": false, "required": ["locator", "digest"], "properties": { "locator": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" } } },
         "partialFailure": { "const": "stop-preserve" },
         "externalPreparation": {
-          "description": "Reviewed private, unpublished create-only effects; not a declaration of no external impact or permission to publish.",
+          "description": "Reviewed private, unpublished create-only effects with either strict scoped resources or explicitly bounded provider-standard events; not permission to publish.",
           "type": "object",
           "additionalProperties": false,
           "required": ["exposure", "existingState", "sideEffects", "effectsEvidenceRef"],
           "properties": {
             "exposure": { "const": "private-unpublished" },
             "existingState": { "const": "preserved" },
-            "sideEffects": { "const": "scoped-resources-only" },
+            "sideEffects": { "enum": ["scoped-resources-only", "scoped-resources-plus-platform-events"] },
+            "platformEvents": { "$ref": "#/$defs/platformEvents" },
             "effectsEvidenceRef": { "type": "object", "additionalProperties": false, "required": ["locator", "digest"], "properties": { "locator": { "type": "string", "minLength": 1 }, "digest": { "$ref": "#/$defs/digest" } } }
-          }
+          },
+          "oneOf": [
+            { "properties": { "sideEffects": { "const": "scoped-resources-only" }, "platformEvents": false } },
+            { "properties": { "sideEffects": { "const": "scoped-resources-plus-platform-events" }, "platformEvents": { "$ref": "#/$defs/platformEvents" } }, "required": ["platformEvents"] }
+          ]
         }
+      }
+    },
+    "platformEvents": {
+      "description": "Evidence-backed limits for provider-standard events to existing integrations. Unobservable recipients do not mean no recipients; concrete unsafe effects and approval conflicts are forbidden.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["providerStandardEvents", "integrationChanges", "recipientChanges", "permissionChanges", "separateDispatches", "payloadScope", "recipientInventory", "knownHighRiskFollowUpEffects", "approvalConditions", "requiredTargetQueries"],
+      "properties": {
+        "providerStandardEvents": { "const": "possible" },
+        "integrationChanges": { "const": 0 },
+        "recipientChanges": { "const": 0 },
+        "permissionChanges": { "const": 0 },
+        "separateDispatches": { "const": 0 },
+        "payloadScope": { "const": "approved-targets-only" },
+        "recipientInventory": { "enum": ["observed", "not-observable"] },
+        "knownHighRiskFollowUpEffects": { "type": "array", "maxItems": 0, "items": { "type": "string", "minLength": 1 } },
+        "approvalConditions": { "const": "compatible" },
+        "requiredTargetQueries": { "const": "succeeded" }
       }
     },
     "blastRadius": { "type": "object", "additionalProperties": false, "required": ["affectedTargets", "affectedUsers", "external", "description"], "properties": { "affectedTargets": { "type": "integer", "minimum": 1 }, "affectedUsers": { "type": "integer", "minimum": 0 }, "external": { "type": "boolean" }, "description": { "type": "string", "minLength": 1 } } }

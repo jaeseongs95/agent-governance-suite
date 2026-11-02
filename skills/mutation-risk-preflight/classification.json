@@ -20,7 +20,7 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:25fbe08cc026df65c7e5788a7c9ad4414a7b5be52f55a587952773966eb29ecb",
+      "digest": "sha256:f3975e529669c17acd83a951b816aa57efa7c8fef469130726200b057e131188",
       "startByte": 0,
       "endByte": 266
     },
@@ -28,7 +28,7 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 9,
       "endLine": 11,
-      "digest": "sha256:25fbe08cc026df65c7e5788a7c9ad4414a7b5be52f55a587952773966eb29ecb",
+      "digest": "sha256:f3975e529669c17acd83a951b816aa57efa7c8fef469130726200b057e131188",
       "startByte": 0,
       "endByte": 179
     },
@@ -36,7 +36,7 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 15,
       "endLine": 24,
-      "digest": "sha256:25fbe08cc026df65c7e5788a7c9ad4414a7b5be52f55a587952773966eb29ecb"
+      "digest": "sha256:f3975e529669c17acd83a951b816aa57efa7c8fef469130726200b057e131188"
     }
   ],
   "exclusions": [
@@ -44,7 +44,7 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:25fbe08cc026df65c7e5788a7c9ad4414a7b5be52f55a587952773966eb29ecb",
+      "digest": "sha256:f3975e529669c17acd83a951b816aa57efa7c8fef469130726200b057e131188",
       "startByte": 267,
       "endByte": 430
     },
@@ -52,7 +52,7 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 11,
       "endLine": 11,
-      "digest": "sha256:25fbe08cc026df65c7e5788a7c9ad4414a7b5be52f55a587952773966eb29ecb",
+      "digest": "sha256:f3975e529669c17acd83a951b816aa57efa7c8fef469130726200b057e131188",
       "startByte": 153,
       "endByte": 265
     },
@@ -60,7 +60,7 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 26,
       "endLine": 26,
-      "digest": "sha256:25fbe08cc026df65c7e5788a7c9ad4414a7b5be52f55a587952773966eb29ecb"
+      "digest": "sha256:f3975e529669c17acd83a951b816aa57efa7c8fef469130726200b057e131188"
     }
   ]
 }

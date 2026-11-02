@@ -47,6 +47,7 @@ workflow·trust DB 스키마가 더 새것이면 `MCP_UNAVAILABLE`(`reason: "SCH
 ## 스킬 변경
 
 - mutation-risk-preflight 1.0.2: 제한된 신규 비공개 외부 준비(`freshResourceContainment.externalPreparation`)를 구분한다. 효과 근거가 있는 비공개 신규 외부 준비는 조건부 중단·보존 경로로 점검할 수 있고, 실제 공개·기존 객체 변경·권한 확대에는 이 경로를 적용하지 않는다.
+- mutation-risk-preflight 1.0.3: 기존 `scoped-resources-only`는 엄격한 의미를 그대로 두고, 공급자 표준 이벤트가 기존 통합에 전달될 수 있는 경우를 `scoped-resources-plus-platform-events`로 따로 기록한다. 수신자 전체 목록을 볼 수 없으면 `not-observable`로 남긴다. 통합·수신자·권한 변경, 별도 dispatch, 알려진 고위험 후속 효과, 승인 조건 충돌, 필수 대상 조회 실패는 계속 거부한다.
 
 ## 고친 결함
 

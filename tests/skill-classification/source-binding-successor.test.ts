@@ -10,6 +10,26 @@ const currentSourceBinding = loadCurrentSourceBindings(root);
 const current = JSON.parse(readFileSync(new URL("./fixtures.json", import.meta.url), "utf8"));
 const successor = JSON.parse(readFileSync(new URL("./fixtures.source-successor.json", import.meta.url), "utf8"));
 const hash = (bytes: string | Buffer) => "sha256:" + createHash("sha256").update(bytes).digest("hex");
+it("chains the exact platform-events source without rewriting earlier oracles", () => {
+  const bytes = readFileSync(new URL("./fixtures.preflight-platform-events-source-successor.json", import.meta.url));
+  expect(hash(bytes)).toBe("sha256:0d9584c9607e98b953470bd20c7cfbfda82cf5558906368296eba87d68768a03");
+  expect(bytes.includes(Buffer.from("\r\n"))).toBe(false);
+  const manifest = JSON.parse(bytes.toString("utf8"));
+  expect(manifest.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.preflight-private-preparation-source-successor.json", bytes: 905, digest: "sha256:fb58272e0f10de935dcfffcb9590ad5012d4065ae16f81d25be1059eed73f5fe"});
+  expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
+  expect(manifest.bindings).toHaveLength(2);
+  expect(manifest.fixtureFileRewritten).toBe(false);
+  expect(manifest.labelChanges).toEqual([]);
+  expect(manifest.priceAndBudgetChanges).toEqual([]);
+  for (const binding of manifest.bindings) {
+    const actual = readFileSync(path.join(root, binding.path));
+    expect(actual.length).toBe(binding.bytes);
+    expect(hash(actual)).toBe(binding.digest);
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
+    expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+    expect(() => currentSourceBinding.resolveDigest(binding.path, "sha256:" + "0".repeat(64))).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+});
 it("adds only the exact preflight 1.0.2 source while retaining the frozen oracle", () => {
   const bytes = readFileSync(new URL("./fixtures.preflight-private-preparation-source-successor.json", import.meta.url));
   expect(hash(bytes)).toBe("sha256:fb58272e0f10de935dcfffcb9590ad5012d4065ae16f81d25be1059eed73f5fe");
@@ -34,9 +54,10 @@ it("adds only the exact preflight 1.0.2 source while retaining the frozen oracle
     bytes: 3347,
   }]);
   const binding = manifest.bindings[0];
-  expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
-  expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
-  expect(hash(readFileSync(path.join(root, binding.path)))).toBe(binding.digest);
+  const currentDigest = currentSourceBinding.manifest.bindings.find(row => row.path === binding.path)!.digest;
+  expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(currentDigest);
+  expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(currentDigest);
+  expect(hash(readFileSync(path.join(root, binding.path)))).toBe(currentDigest);
   expect(current.sourceSkills.filter((source: {path: string; digest: string}) => source.path === binding.path && source.digest === binding.previousDigest)).toHaveLength(manifest.fixtureReferences);
   expect(manifest.fixtureReferences).toBe(1);
 });
@@ -48,7 +69,7 @@ it("동결 판정 기준을 보존하고 인계 지침의 현재 바이트만 �
   expect(manifest.labelChanges).toEqual([]);
   expect(manifest.priceAndBudgetChanges).toEqual([]);
   expect(manifest.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: "preflight-private-preparation-source-binding-r14"});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: "preflight-platform-events-source-binding-r15"});
   expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
   for (const source of manifest.bindings) {
     const actual = readFileSync(path.join(root, source.path));
