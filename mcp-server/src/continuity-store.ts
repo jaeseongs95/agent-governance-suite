@@ -451,6 +451,14 @@ export class SqliteContinuityStore {
     return row?.id ?? null;
   }
 
+  firstObservationIdAfter(taskCorrelation: string, epoch: number, event: string, afterId: number): number | null {
+    const row = this.database.prepare(`
+      SELECT MIN(observation_id) AS id FROM continuity_observations
+      WHERE task_correlation = ? AND epoch = ? AND event = ? AND observation_id > ?
+    `).get(taskCorrelation, epoch, event, afterId) as { id: number | null } | undefined;
+    return row?.id ?? null;
+  }
+
   /** The turn_hash values of this exact event recorded after `afterId`, in store order. */
   observationHashesAfter(taskCorrelation: string, epoch: number, event: string, afterId: number): string[] {
     return (this.database.prepare(`

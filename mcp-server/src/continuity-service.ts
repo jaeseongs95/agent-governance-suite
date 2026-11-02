@@ -749,8 +749,10 @@ export class ContinuityService implements ContinuityGateway {
     const { taskCorrelation: c, currentEpoch: e } = task;
     let from = this.windowStart(c, e);
     if (this.locked(c, e)) {
-      const deny = this.store.lastObservationId(c, e, PHASE_DENY_EVENT) ?? 0;
-      from = Math.max(this.store.lastObservationId(c, e, PHASE_CHECK_EVENT, deny) ?? 0, this.store.lastObservationId(c, e, PHASE_START_EVENT) ?? 0);
+      // The lock began at the first refusal after the last start; nothing was counted after it.
+      const lastStart = this.store.lastObservationId(c, e, PHASE_START_EVENT) ?? 0;
+      const firstDeny = this.store.firstObservationIdAfter(c, e, PHASE_DENY_EVENT, lastStart) ?? 0;
+      from = Math.max(this.store.lastObservationId(c, e, PHASE_CHECK_EVENT, firstDeny) ?? 0, lastStart);
     }
     return new Set(this.store.observationHashesAfter(c, e, PHASE_FILE_EVENT, from)).size;
   }
