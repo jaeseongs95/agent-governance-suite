@@ -481,13 +481,15 @@ class AgsService implements RunningService {
     }
     return new Promise((resolve, reject) => {
       const enqueuedAt = performance.now();
+      // Which bound ends the wait is decided here; a timer may fire a fraction early by performance.now().
+      const deadlineBound = deadline - enqueuedAt <= this.queueWaitMaxMs;
       const waitMs = Math.max(0, Math.min(this.queueWaitMaxMs, deadline - enqueuedAt));
       const job: Job = { work, deadline, enqueuedAt, resolve, reject, timer: setTimeout(() => {
         const index = this.waiting.indexOf(job);
         if (index < 0) return;
         this.waiting.splice(index, 1);
         this.queueWait.add(performance.now() - enqueuedAt);
-        if (!(job.deadline - performance.now() >= 1)) { reject(this.expired()); return; }
+        if (deadlineBound) { reject(this.expired()); return; }
         this.counters.busyRejections += 1;
         reject(requestFailure("SERVICE_BUSY", "The request waited too long in the service queue.", "none", true,
           { queueLength: this.waiting.length, queueLimit: this.queueLimit }));
