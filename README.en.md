@@ -194,7 +194,7 @@ The current working tree contains 23 specialist skills, two local infrastructure
 | [`coordinate-subagents`](skills/coordinate-subagents/) | Manages delegation decisions, ownership, context handoff, and verification responsibilities. |
 | [`ponytail`](skills/ponytail/) | Guides the agent toward the simplest implementation that satisfies the request. |
 | [`change-scope-guardian`](skills/change-scope-guardian/) | Compares the baseline with current changes to find out-of-scope files. |
-| [`mutation-risk-preflight`](skills/mutation-risk-preflight/) | Checks targets, approval, impact, and recovery, including constrained preparation of new unpublished external resources. |
+| [`mutation-risk-preflight`](skills/mutation-risk-preflight/) | 1.0.3: Checks targets, approval, impact, and recovery; distinguishes strict effects from standard events to existing integrations during private external preparation. |
 | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | Reviews evidence and counterarguments from independent perspectives. |
 | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | Audits changes to the task contract and decision frame across iterations. |
 | [`acceptance-evidence-validator`](skills/acceptance-evidence-validator/) | Compares acceptance criteria with evidence for the current result. |

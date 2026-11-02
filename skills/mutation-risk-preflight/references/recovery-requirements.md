@@ -20,10 +20,37 @@ backup이 존재한다는 사실과 실제 restore 가능성을 구분한다. da
 
 외부 호출이라는 사실과 실제 공개·기존 상태 변경을 구분한다. `deploy`·`other`의 신규 비공개 준비에만 `freshResourceContainment.externalPreparation`를 추가할 수 있다. 기존 `externalImpact: true`와 승인 요구는 유지한다. production/prod/shared 환경, `publish`, 권한 변경·삭제·덮어쓰기·이전·마이그레이션·결제·전역 설정 변경에는 적용하지 않는다.
 
-- `exposure: "private-unpublished"`, `existingState: "preserved"`, `sideEffects: "scoped-resources-only"`와 `effectsEvidenceRef: { locator, digest }`를 함께 제공한다. 이 선언만으로 효과를 입증한 것으로 보지 않는다.
-- 효과 근거는 검토한 source/API 계약 버전과 실제 대상 조건을 가리켜야 한다. 생성물·의도된 종속 자원을 모두 target/scope에 포함하고 비공개성을 확인한다. 공개 tag·공개 URL·별도 알림/webhook·자동 배포·비용·기존 권한/트래픽/설정 변경 같은 독립 효과가 있거나 불명확하면 이 경로를 선택하지 않는다. `draft`라는 이름만으로 비공개·무영향을 추정하지 않는다.
+- `exposure: "private-unpublished"`, `existingState: "preserved"`, `effectsEvidenceRef: { locator, digest }`와 아래 두 `sideEffects` 중 실제 효과에 맞는 하나를 제공한다. 이 선언만으로 효과를 입증한 것으로 보지 않는다.
+- `scoped-resources-only`는 기존 엄격한 모드다. 생성물·승인된 종속 자원 외의 이벤트 전달과 독립 효과가 없다는 근거가 필요하다. 이 모드에 `platformEvents`를 붙이거나 표준 이벤트 예외를 숨겨 넣지 않는다.
+- `scoped-resources-plus-platform-events`는 승인된 자원의 생성에 따라 공급자가 기존 통합으로 보내는 표준 이벤트를 별도로 기록하는 모드다. 아래 추가 계약을 모두 만족해야 한다.
+- 효과 근거는 검토한 source/API 계약 버전과 실제 대상 조건을 가리켜야 한다. 생성물·의도된 종속 자원을 모두 target/scope에 포함하고 비공개성을 확인한다. 공개 tag·공개 URL·새 webhook·별도 알림/dispatch·자동 배포·과금·비밀 추가·기존 권한/트래픽/설정 변경 같은 구체적 독립 효과가 있거나 필수 효과 근거가 불명확하면 이 경로를 선택하지 않는다. `draft`라는 이름만으로 비공개·무영향을 추정하지 않는다.
 - 결과 유실·timeout은 미실행 증거가 아니다. 쓰기 결과가 불명확해도 자동 재시도·삭제 없이 실제 단계·종료 결과와 잔존 상태를 보존한다. 그 후의 공개·기존 객체 수정은 실제 상태와 기존 승인에 맞는 별도 intent로 다시 점검한다. 일반적인 파일 회차마다 별도 승인을 붙이지 않는다.
 - 이 외부 준비 모드에는 복원용 `backupRef`·`restoreTestEvidenceRef`를 섞지 않고 `irreversibilityAccepted: false`를 유지한다. 모드 조건이 실패하면 복원 경로로 자동 fallback하지 않는다. 기존 로컬 containment도 외부 준비 선언을 무시해 통과시키지 않는다.
+
+### 기존 통합으로의 공급자 표준 이벤트
+
+`scoped-resources-plus-platform-events`는 다음 `platformEvents` 객체를 필수로 제출한다. JSON Schema는 필수 필드·값·빈 고위험 목록을 강제하고 evaluator는 원래 승인·권한·부재·조건부 생성·중단 및 보존 검사를 그대로 적용한다.
+
+```json
+{
+  "providerStandardEvents": "possible",
+  "integrationChanges": 0,
+  "recipientChanges": 0,
+  "permissionChanges": 0,
+  "separateDispatches": 0,
+  "payloadScope": "approved-targets-only",
+  "recipientInventory": "not-observable",
+  "knownHighRiskFollowUpEffects": [],
+  "approvalConditions": "compatible",
+  "requiredTargetQueries": "succeeded"
+}
+```
+
+- `providerStandardEvents: "possible"`은 기존 통합에 이벤트가 갈 수 있음을 긍정 기록한다. 이벤트 종류·발생 조건·승인 대상 payload·확인한 기존 통합과 후속 효과를 `effectsEvidenceRef` 원자료에 남긴다. 이벤트 수신이나 후속 처리 완료를 증명한다는 뜻은 아니다.
+- `recipientInventory`는 확인한 범위에서 전체 수신자 목록을 관측했으면 `observed`, API/권한 한계로 전체 목록을 관측할 수 없으면 `not-observable`이다. 목록 미관측만으로 거부하지 않지만 `none`으로 바꾸지 않는다. hooks/workflows 0건은 모든 앱 부재의 증거가 아니며, 목록 API의 403도 앱 부재를 증명하지 않는다.
+- 기존 통합·수신자·권한을 바꾸지 않고 새 hook·토큰·앱 설치나 별도 dispatch를 만들지 않아야 한다. payload는 승인 대상만 포함하고 비밀이나 추가 대상을 넣지 않는다. 알려진 자동 배포·과금·비밀 추가 등 고위험 후속 효과는 빈 목록으로 숨기지 말고 진행을 거부한다. 모든 수신자의 무해함을 증명하라는 요구와 구체적으로 알려진 위험을 무시하는 것은 모두 이 계약과 다르다.
+- 원 사용자 승인의 무알림 조건이나 특정 수신자 제한과 충돌하면 `approvalConditions: "compatible"`로 기록할 수 없다. 정확한 대상·권한·조건부 생성·비공개성 판정에 필요한 조회가 실패하면 `requiredTargetQueries: "succeeded"`로 기록할 수 없다. 전체 수신자 목록 API의 관측 한계는 이 필수 대상 조회와 구분한다.
+- 실제 원자료가 필드를 지지할 때만 위 값을 제출한다. schema-valid 선언이나 403을 성공으로 해석하지 않는다. 표준 이벤트의 일반적 가능성만으로 기존 승인을 폐기하거나, 이 모드를 실제 공개·운영 변경의 승인으로 확대하지 않는다.
 
 ### 근거 참조와 실제 검증의 구분
 

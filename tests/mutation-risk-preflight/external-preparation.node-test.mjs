@@ -108,3 +108,117 @@ test("receipt binds external effects evidence and rejects changed reports", () =
   forged.classification.externalImpact = false;
   assert.equal(verifyReceipt({ report: forged, intent: input, verificationTime: now }).valid, false);
 });
+
+function platformEventIntent(environment = "external", actionClass = "deploy") {
+  const input = intent(environment, actionClass);
+  const preparation = input.recoveryPlan.freshResourceContainment.externalPreparation;
+  preparation.sideEffects = "scoped-resources-plus-platform-events";
+  preparation.platformEvents = {
+    providerStandardEvents: "possible", integrationChanges: 0, recipientChanges: 0,
+    permissionChanges: 0, separateDispatches: 0, payloadScope: "approved-targets-only",
+    recipientInventory: "not-observable", knownHighRiskFollowUpEffects: [],
+    approvalConditions: "compatible", requiredTargetQueries: "succeeded",
+  };
+  input.expectedBlastRadius.description = "private resource creation; provider-standard events may reach existing integrations";
+  return input;
+}
+
+for (const recipientInventory of ["observed", "not-observable"]) {
+  test(`platform events: ${recipientInventory} recipients preserve approval, external impact and restore limits`, () => {
+    const input = platformEventIntent();
+    input.recoveryPlan.freshResourceContainment.externalPreparation.platformEvents.recipientInventory = recipientInventory;
+    const report = evaluatePreflight(input, { now });
+    assert.equal(validateMutationIntent(input), true, JSON.stringify(validateMutationIntent.errors));
+    assert.equal(validateMutationReport(report), true);
+    assert.equal(report.verdict, "READY", JSON.stringify(report.unresolved));
+    assert.equal(report.classification.externalImpact, true);
+    assert.equal(report.approval.required, true);
+    assert.equal(report.approval.status, "observed");
+    assert.equal(report.recovery.restoreTested, false);
+    assert.equal(report.recovery.irreversibilityAccepted, false);
+    const check = report.checks.find(value => value.checkId === "platform-events");
+    assert.equal(check.state, "passed");
+    assert.match(check.message, /possible/);
+    assert.ok(check.message.includes(recipientInventory));
+    assert.deepEqual(check.evidenceRefs, [input.recoveryPlan.freshResourceContainment.externalPreparation.effectsEvidenceRef.locator]);
+    assert.equal(verifyReceipt({ report, intent: input, verificationTime: now }).valid, true);
+  });
+}
+
+for (const [field, invalid] of [
+  ["providerStandardEvents", "none"], ["integrationChanges", 1], ["recipientChanges", 1],
+  ["permissionChanges", 1], ["separateDispatches", 1], ["payloadScope", "extra-secret"],
+  ["recipientInventory", "none"], ["knownHighRiskFollowUpEffects", ["automatic-deployment"]],
+  ["knownHighRiskFollowUpEffects", ["billing"]], ["knownHighRiskFollowUpEffects", ["secret-addition"]],
+  ["approvalConditions", "notification-forbidden"], ["approvalConditions", "recipient-conflict"],
+  ["requiredTargetQueries", "failed"],
+]) {
+  test(`platform events reject ${field}=${JSON.stringify(invalid)}`, () => {
+    const input = platformEventIntent();
+    input.recoveryPlan.freshResourceContainment.externalPreparation.platformEvents[field] = invalid;
+    assert.equal(evaluatePreflight(input, { now }).verdict, "BLOCKED");
+  });
+}
+
+for (const field of Object.keys(platformEventIntent().recoveryPlan.freshResourceContainment.externalPreparation.platformEvents)) {
+  test(`platform events require ${field}`, () => {
+    const input = platformEventIntent();
+    delete input.recoveryPlan.freshResourceContainment.externalPreparation.platformEvents[field];
+    assert.equal(evaluatePreflight(input, { now }).verdict, "BLOCKED");
+  });
+}
+
+test("platform events require an explicit mode and cannot broaden strict scoped-resources-only", () => {
+  const input = platformEventIntent();
+  const preparation = input.recoveryPlan.freshResourceContainment.externalPreparation;
+  delete preparation.platformEvents;
+  assert.equal(evaluatePreflight(input, { now }).verdict, "BLOCKED");
+  preparation.platformEvents = platformEventIntent().recoveryPlan.freshResourceContainment.externalPreparation.platformEvents;
+  preparation.sideEffects = "scoped-resources-only";
+  assert.equal(evaluatePreflight(input, { now }).verdict, "BLOCKED");
+  assert.equal(evaluatePreflight(intent(), { now }).verdict, "READY");
+});
+
+for (const [name, mutate, expected] of [
+  ["missing approval", value => { value.approvalEvidenceRefs = []; }, "NEEDS_APPROVAL"],
+  ["missing target observation", value => { value.currentStateEvidenceRefs = []; }, "NEEDS_INPUT"],
+  ["present target", value => { value.currentStateEvidenceRefs[0].existence = "present"; }, "NEEDS_REDESIGN"],
+  ["command change", value => { value.plannedCommandOrTool.action += "; dispatch"; }, "NEEDS_REDESIGN"],
+  ["retry instead of stop-preserve", value => { value.recoveryPlan.freshResourceContainment.partialFailure = "retry"; }, "BLOCKED"],
+  ["restore claim", value => { value.recoveryPlan.restoreTestEvidenceRef = "evidence://restore"; }, "NEEDS_REDESIGN"],
+]) {
+  test(`platform events preserve ${name} rejection`, () => {
+    const input = platformEventIntent(); mutate(input);
+    assert.equal(evaluatePreflight(input, { now }).verdict, expected);
+  });
+}
+
+for (const environment of ["production", "prod", "shared"]) {
+  test(`platform events cannot reclassify ${environment}`, () => {
+    assert.equal(evaluatePreflight(platformEventIntent(environment), { now }).verdict, "NEEDS_REDESIGN");
+  });
+}
+
+for (const actionClass of ["publish", "permission-change", "delete", "overwrite", "migrate", "move", "billing", "global-config"]) {
+  test(`platform events cannot authorize ${actionClass}`, () => {
+    assert.equal(evaluatePreflight(platformEventIntent("external", actionClass), { now }).verdict, "NEEDS_REDESIGN");
+  });
+}
+
+test("platform events bind the mode, recipient observation and effects evidence into the receipt", () => {
+  const input = platformEventIntent(), report = evaluatePreflight(input, { now });
+  assert.equal(report.verdict, "READY");
+  for (const mutate of [
+    value => { value.recoveryPlan.freshResourceContainment.externalPreparation.platformEvents.recipientInventory = "observed"; },
+    value => { value.recoveryPlan.freshResourceContainment.externalPreparation.effectsEvidenceRef.digest = hash("changed effects"); },
+    value => { const preparation = value.recoveryPlan.freshResourceContainment.externalPreparation; delete preparation.platformEvents; preparation.sideEffects = "scoped-resources-only"; },
+  ]) {
+    const changed = structuredClone(input); mutate(changed);
+    const verification = verifyReceipt({ report, intent: changed, verificationTime: now });
+    assert.equal(verification.valid, false);
+    assert.equal(verification.errorCode, "STALE_REVISION");
+  }
+  const forged = structuredClone(report);
+  forged.checks.find(value => value.checkId === "platform-events").message = "No recipients";
+  assert.equal(verifyReceipt({ report: forged, intent: input, verificationTime: now }).valid, false);
+});

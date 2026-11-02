@@ -215,6 +215,13 @@ export function evaluatePreflight(input, options = {}) {
     { checkId: "recovery", state: recoverySufficient ? "passed" : "failed", evidenceRefs: uniqueRefs([input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef, ...containmentRefs]), message: recoveryMessage },
     { checkId: "blast-radius", state: blastRadiusMatched ? "passed" : "failed", evidenceRefs: [], message: blastRadiusMatched ? "예상 영향 범위가 모든 대상을 포함합니다." : "예상 영향 범위가 대상 수보다 작습니다." },
   ];
+  if (preparation?.sideEffects === "scoped-resources-plus-platform-events") {
+    checks.push({
+      checkId: "platform-events", state: containmentSufficient ? "passed" : "failed",
+      evidenceRefs: [preparation.effectsEvidenceRef.locator],
+      message: `공급자 표준 이벤트: ${preparation.platformEvents.providerStandardEvents}; 기존 수신자 목록: ${preparation.platformEvents.recipientInventory}. 통합·수신자·권한 변경과 별도 dispatch는 0이며, 승인 대상 payload만 허용합니다. 알려진 고위험 후속 효과·승인 조건 충돌이 없고 필수 대상 조회가 성공했다는 제출 근거를 점검합니다. 수신·후속 처리 완료나 원격 근거 진위를 자동 검증하지 않습니다.`,
+    });
+  }
   const unresolved = [];
   let verdict = "READY";
   if (unsafe.length || !scopeIncluded || scopeExcluded || !authorizationMatched) {

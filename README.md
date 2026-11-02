@@ -188,7 +188,7 @@ MCP workflow는 계획된 단계의 순서, 결과 형식, 필수 근거와 감�
 | [`coordinate-subagents`](skills/coordinate-subagents/) | 위임의 필요성, 담당 영역, 전달할 맥락과 검증 책임을 관리합니다. |
 | [`ponytail`](skills/ponytail/) | 요청을 만족하는 가장 단순한 구현을 고르도록 안내합니다. |
 | [`change-scope-guardian`](skills/change-scope-guardian/) | 기준선과 현재 변경을 대조해 범위를 벗어난 파일을 찾습니다. |
-| [`mutation-risk-preflight`](skills/mutation-risk-preflight/) | 위험한 변경의 대상·승인·영향·복구 조건을 점검하고, 제한된 신규 비공개 외부 준비를 구분합니다. |
+| [`mutation-risk-preflight`](skills/mutation-risk-preflight/) | 1.0.3: 위험한 변경의 대상·승인·영향·복구를 점검하고, 신규 비공개 준비의 엄격한 효과 제한과 기존 통합 표준 이벤트를 구분합니다. |
 | [`independent-deliberation-panel`](skills/independent-deliberation-panel/) | 복잡한 결정의 근거와 반론을 독립된 관점에서 검토합니다. |
 | [`iteration-frame-auditor`](skills/iteration-frame-auditor/) | 반복 작업에서 계약과 판단 전제가 달라졌는지 감사합니다. |
 | [`acceptance-evidence-validator`](skills/acceptance-evidence-validator/) | 완료 기준을 현재 결과의 근거와 대조합니다. |
