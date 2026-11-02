@@ -13,7 +13,7 @@ import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js"
 import { adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 
-// Design docs/ags30-phase-check-design.md 7 (enforcement, 3.0.3). Synthetic hook inputs and stores; no real host run.
+// Design docs/ags30-phase-check-design.md 7 (enforcement, 3.1.0). Synthetic hook inputs and stores; no real host run.
 // Product paths are synthetic absolute paths outside the OS temporary directory, which the gate exempts.
 const session = "enforce-session";
 const at = "2026-11-02T09:00:00.000Z";

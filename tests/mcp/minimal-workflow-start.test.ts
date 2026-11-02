@@ -41,9 +41,11 @@ async function harness() {
   const store = new SqliteWorkflowStore(workflowPath);
   const continuityStore = new SqliteContinuityStore(path.join(directory, "continuity.sqlite3"));
   const continuity = new ContinuityService(continuityStore, validator, store);
-  const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, new HostAttestationProvider(codexExecutionAdapter));
+  // One provider: the server sets the current call on it and the workflow service observes through it.
+  const provider = new HostAttestationProvider(codexExecutionAdapter);
+  const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, provider);
   const server = createMcpServer(service, new PluginUpdateService(new InMemoryPluginUpdateStore()), continuity, undefined, undefined, validator,
-    "default", new HostAttestationProvider(codexExecutionAdapter), null, undefined, null, null, codexMetaIngress());
+    "default", provider, null, undefined, null, null, codexMetaIngress());
   const client = new Client({ name: "minimal-start", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
