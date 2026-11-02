@@ -2,6 +2,7 @@ import { isHookEntry } from "./hook-entry.js";
 import { actorAccess, isObservedSubagent, type InputObservation } from "./input-observation.js";
 import { WorkflowContractError } from "../../contracts/types.js";
 import "./builtin-hook-host-adapters.js";
+import { randomUUID } from "node:crypto";
 import { readFileSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -63,8 +64,9 @@ function isExemptEditPath(target: string, roots: readonly string[][]): boolean {
 function productEditTargets(observation: InputObservation, host: string, environment: NodeJS.ProcessEnv): Map<string, string> {
   const targets = observation.editTargets ?? [];
   if (targets.length === 0) {
+    // Each such call is its own file: one shared key would let unread edits repeat without ever reaching the limit.
     const unknown = `(경로 미확인: ${observation.toolName ?? "edit"})`;
-    return new Map([[unknown, unknown]]);
+    return new Map([[`${unknown}#${observation.callId ?? randomUUID()}`, unknown]]);
   }
   const roots = exemptEditRoots(host, environment);
   const product = new Map<string, string>();

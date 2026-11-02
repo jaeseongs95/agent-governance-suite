@@ -98,6 +98,9 @@ describe("edit target extraction", () => {
     expect(adaptHostInput(edit("claude-code", "NotebookEdit", { notebook_path: "nb.ipynb" }), "claude-code").observation.editTargets).toEqual([file("nb.ipynb")]);
     expect(adaptHostInput(edit("claude-code", "Edit", { file_path: file("x.ts") }), "claude-code").observation.editTargets).toEqual([file("x.ts")]);
     expect(adaptHostInput(edit("antigravity", "Write", { TargetFile: file("y.ts") }), "antigravity").observation.editTargets).toEqual([file("y.ts")]);
+    // agy 1.4.12 CLI hook input (test server capture): write_file and edit_file, mapped to Write and Edit, name Path.
+    expect(adaptHostInput(edit("antigravity", "Write", { Path: file("p.ts"), Content: "x", Overwrite: true }), "antigravity").observation.editTargets).toEqual([file("p.ts")]);
+    expect(adaptHostInput(edit("antigravity", "Edit", { Path: file("p.ts"), Target: "x", Replacement: "y" }), "antigravity").observation.editTargets).toEqual([file("p.ts")]);
     // Shell, delegation and read tools are not edits; an edit tool without a readable target is still an edit.
     expect(adaptHostInput(edit("claude-code", "Bash", { command: "sed -i s/a/b/ x" }), "claude-code").observation.editTargets).toBeUndefined();
     expect(adaptHostInput(edit("codex", "apply_patch", {}), "codex").observation.editTargets).toEqual([]);
@@ -116,6 +119,23 @@ describe("workflow gate", () => {
     // Only refusals and distinct files are rows; the refused file is not counted.
     expect(events(target).filter(event => event === "phase-file")).toHaveLength(2);
     expect(events(target).filter(event => event === "phase-deny")).toHaveLength(1);
+  });
+
+  it("refuses the third agy CLI write_file by its Path", () => {
+    const target = service();
+    const agy = (name: string) => edit("antigravity", "Write", { Path: file(name), Content: "x", Overwrite: true });
+    expect(handleContinuityHook(agy("a.ts"), target, "antigravity", NO_ENV)).toEqual({});
+    expect(handleContinuityHook(agy("b.ts"), target, "antigravity", NO_ENV)).toEqual({});
+    expect(isDeny(handleContinuityHook(agy("c.ts"), target, "antigravity", NO_ENV))).toBe(true);
+  });
+
+  it("counts each edit call whose target could not be read as its own file", () => {
+    const target = service();
+    const unread = () => edit("claude-code", "Write", { content: "x" });
+    expect(handleContinuityHook(unread(), target, "claude-code", NO_ENV)).toEqual({});
+    expect(handleContinuityHook(unread(), target, "claude-code", NO_ENV)).toEqual({});
+    const denied = handleContinuityHook(unread(), target, "claude-code", NO_ENV);
+    expect(reason(denied)).toContain("(경로 미확인: Write)");
   });
 
   it("refuses one patch that adds three files at once, and Codex gets the same deny shape", () => {

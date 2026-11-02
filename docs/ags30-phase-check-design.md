@@ -144,7 +144,7 @@ Codex 출력 형식은 continuity hook이 host 인자로 정한다(`resolveHookH
 
 ### 7.2 편집 관측과 판정
 
-- 대상 경로: 호스트 adapter가 도구 입력에서 읽는다. Claude `Edit`·`Write`·`MultiEdit`의 `file_path`, `NotebookEdit`의 `notebook_path`. Codex `apply_patch`의 `tool_input.command`에서 `*** Add/Update/Delete File:`와 `*** Move to:` 경로. agy는 runner가 `Write`·`Edit`·`MultiEdit`로 바꾼 도구의 `TargetFile`(agy 1.4.12 바이너리의 인자 이름). 상대 경로는 hook 입력의 `cwd`로 푼다. 경로를 읽지 못한 편집 도구는 파일 하나(「경로 미확인」)로 센다.
+- 대상 경로: 호스트 adapter가 도구 입력에서 읽는다. Claude `Edit`·`Write`·`MultiEdit`의 `file_path`, `NotebookEdit`의 `notebook_path`. Codex `apply_patch`의 `tool_input.command`에서 `*** Add/Update/Delete File:`와 `*** Move to:` 경로. agy는 runner가 `Write`·`Edit`·`MultiEdit`로 바꾼 도구의 `Path`(agy 1.4.12 CLI의 `write_file`·`edit_file`, 시험 서버 hook 입력에서 관측) 또는 `TargetFile`(`write_to_file`·`replace_file_content`·`multi_replace_file_content`, agy hooks 문서). 상대 경로는 hook 입력의 `cwd`로 푼다. 경로를 읽지 못한 편집 도구는 호출마다 파일 하나(「경로 미확인」)로 센다.
 - 정규화: `path.resolve`, Windows는 구분자를 `\`로 맞추고 대소문자를 무시한다.
 - 구간: 마지막 `phase-check`와 마지막 workflow 시작(`phase-workflow-start`) 중 나중 것 이후.
 - 활성 workflow: task에 결속된 root가 `completed`·`abandoned`가 아니고, 최신 run이 있고, 그 run이 `passed`·`failed`·`blocked`가 아니다. abandoned root와 끝난 run은 workflow 없음이다.
