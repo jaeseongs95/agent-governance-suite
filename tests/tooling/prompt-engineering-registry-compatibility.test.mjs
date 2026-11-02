@@ -13,7 +13,7 @@ const digest = (value) => createHash("sha256").update(JSON.stringify(value)).dig
 const historicalRegistry = (registry) => ({
   ...registry,
   skills: registry.skills.filter((entry) => entry.skillId !== "prompt-engineering").map((entry) =>
-    entry.skillId === "mutation-risk-preflight" && entry.version === "1.0.2"
+    entry.skillId === "mutation-risk-preflight" && entry.version === "1.0.3"
       ? { ...entry, version: "1.0.1" } : entry),
 });
 
@@ -29,7 +29,7 @@ describe("additive prompt-engineering registry integration", () => {
   it.each(["version", "priority", "gate", "bindings"])("rejects unrelated preflight descriptor drift: %s", (change) => {
     const registry = readRegistry();
     const descriptor = registry.skills.find((entry) => entry.skillId === "mutation-risk-preflight");
-    if (change === "version") descriptor.version = "1.0.3";
+    if (change === "version") descriptor.version = "1.0.4";
     if (change === "priority") descriptor.priority += 1;
     if (change === "gate") descriptor.providers[0].gate.policy = "none";
     if (change === "bindings") descriptor.providers[0].inputBindings[0].sources = ["untrusted:approval"];

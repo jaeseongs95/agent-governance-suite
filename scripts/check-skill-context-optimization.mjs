@@ -373,6 +373,34 @@ export function matchesPreflightPrivatePreparationSuccessor(path, bytes) {
   return Boolean(hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]);
 }
 
+// Bind 1.0.3 exactly, then reuse the unchanged 1.0.2 -> historical chain.
+const PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR = Object.freeze({
+  revision: "mutation-risk-preflight-1.0.3-platform-events",
+  baselineRevision: "459e57b6188f5edf435bd1da9573c62ac2cdea3b",
+  authorityEffect: "none",
+  hashes: {
+    "skills/mutation-risk-preflight/README.md": ["0b53b679be4eb87053a019ca78d33cccd0b3d1f3a7888853b643e8a69344afa7", "ed6a995b580aeb20c1da67237cfda161c6d219a5e7e444d8d91bc82acf954968"],
+    "skills/mutation-risk-preflight/SKILL.md": ["25fbe08cc026df65c7e5788a7c9ad4414a7b5be52f55a587952773966eb29ecb", "f3975e529669c17acd83a951b816aa57efa7c8fef469130726200b057e131188"],
+    "skills/mutation-risk-preflight/classification.json": ["c89920b9450dc403770228a033918e0d47aee987902e44a64f1c817e83d5860e", "257f8f3affdc01511c44052de26e0c7e65076f61663ebce0d7871ca9550ce25e"],
+    "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json": ["978288d69583b0f39f7412d3140d57537804de3bc2703060994bc9a7b472d064", "6e0e6d58bd0ca772633f37c02fe6e109da2a5a03a8a382406c3e08a0ac53473a"],
+    "skills/mutation-risk-preflight/integration/skill-descriptor.json": ["e7905d5b63cfb2536b96c70047ad5231951ccccf4b06adc29a18d8531eeb673a", "1e4f8dbc7e7d61a711ab884fb459389e4ef82b11c58765faa0f490d147cb7c58"],
+    "skills/mutation-risk-preflight/references/recovery-requirements.md": ["6b9534f7a9db0f7210a9a16c5bd9c930bbd458a4ce2aeb05547dc959ac5259a8", "eea0b3129263b17d12d7f05ecd823b6882ca35cc6211e5613431b429875e3842"],
+    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": ["6f2daebb1af36b4a1d8a23de444f81227525107a4419d4f9f4c752141c7dbf05", "fd4cca0e7afe944888d5b1e4c9994b68e2611c8d1eb615c4dbe2e9d5ab88c3ab"],
+  },
+});
+
+export function matchesPreflightPlatformEventsSuccessor(path, bytes) {
+  const hashes = PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes[path];
+  return Boolean(hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]);
+}
+
+function beforePreflightPlatformEvents(path, bytes) {
+  if (!matchesPreflightPlatformEventsSuccessor(path, bytes)) return bytes;
+  const original = git("show", `${PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.baselineRevision}:${path}`);
+  if (createHash("sha256").update(original).digest("hex") !== PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes[path][0]) throw new Error(`Historical preflight platform-events source differs: ${path}`);
+  return original;
+}
+
 const PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR = Object.freeze({
   "revision": "preflight-additive-source-successor-r01",
   "authorityEffect": "none",
@@ -586,6 +614,7 @@ const LIVE_HOST_GUIDANCE_SUCCESSOR = Object.freeze({
 });
 
 function historicalBytes(path, bytes) {
+  bytes = beforePreflightPlatformEvents(path, bytes);
   if (matchesPreflightPrivatePreparationSuccessor(path, bytes)) {
     bytes = git("show", `${PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.baselineRevision}:${path}`);
     if (createHash("sha256").update(bytes).digest("hex") !== PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes[path][0]) throw new Error(`Historical preflight private-preparation source differs: ${path}`);
@@ -614,7 +643,7 @@ export function readHistoricalSource(relative) {
 /** Test hook: whether the bytes are the reviewed skill policy wording successor. */
 export function matchesSkillPolicyWordingSuccessorBytes(path, bytes) {
   return matchesSkillPolicyWordingSuccessor(path, bytes)
-    || (Object.hasOwn(SKILL_POLICY_WORDING_SUCCESSOR.hashes, path) && matchesPreflightPrivatePreparationSuccessor(path, bytes));
+    || (Object.hasOwn(SKILL_POLICY_WORDING_SUCCESSOR.hashes, path) && matchesPreflightPrivatePreparationSuccessor(path, beforePreflightPlatformEvents(path, bytes)));
 }
 
 function historicalChanges(paths) {
@@ -819,8 +848,11 @@ export function checkRegistryContextCompatibility(registry) {
 
 export function checkSkillContextOptimization() {
   const errors = [];
+  for (const currentPath of Object.keys(PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes)) {
+    if (!matchesPreflightPlatformEventsSuccessor(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight platform-events successor bytes differ: ${currentPath}`);
+  }
   for (const currentPath of Object.keys(PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes)) {
-    if (!matchesPreflightPrivatePreparationSuccessor(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight private-preparation successor bytes differ: ${currentPath}`);
+    if (!matchesPreflightPrivatePreparationSuccessor(currentPath, beforePreflightPlatformEvents(currentPath, readFileSync(join(ROOT, currentPath))))) errors.push(`preflight private-preparation successor bytes differ: ${currentPath}`);
   }
   for (const [currentPath, hashes] of Object.entries(LIVE_HOST_GUIDANCE_SUCCESSOR.hashes)) {
     if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== hashes[1]) {
@@ -833,7 +865,8 @@ export function checkSkillContextOptimization() {
     }
   }
   for (const successorPath of Object.keys(SKILL_POLICY_WORDING_SUCCESSOR.hashes)) {
-    if (!matchesPreflightPrivatePreparationSuccessor(successorPath, readFileSync(join(ROOT, successorPath))) && !matchesSkillPolicyWordingSuccessor(successorPath, readFileSync(join(ROOT, successorPath)))) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
+    const bytes = beforePreflightPlatformEvents(successorPath, readFileSync(join(ROOT, successorPath)));
+    if (!matchesPreflightPrivatePreparationSuccessor(successorPath, bytes) && !matchesSkillPolicyWordingSuccessor(successorPath, bytes)) errors.push(`skill policy wording successor bytes differ: ${successorPath}`);
   }
   for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) {
     if (!matchesClassificationUpdate(reviewedPath, readHistorical(ROOT, reviewedPath))) errors.push(`classification: reviewed bytes differ: ${reviewedPath}`);
@@ -998,6 +1031,7 @@ export function checkSkillContextOptimization() {
     baselineRevision: BASELINE,
     currentHostConsumptionSourceSuccessors: [HOST_CONSUMPTION_SOURCE_SUCCESSOR],
     currentPreflightPrivatePreparationSuccessors: [PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR],
+    currentPreflightPlatformEventsSuccessors: [PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR],
     currentPreflightAdditiveSourceSuccessors: [PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR],
     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
     policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],
