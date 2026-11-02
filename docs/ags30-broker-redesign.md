@@ -110,7 +110,7 @@ CREATE TABLE relay_leases (
 
 | 연산 | 호출자 | 한 transaction 안의 규칙 |
 |---|---|---|
-| `grant-relay` | hook (SessionStart, 경계 복구) | presence가 online이어야 한다. `presence.host_pid`가 있는데 hook이 찾은 호스트 PID와 다르면 거절한다(`HOST_MISMATCH`). 기존 lease가 같은 instance이고 아직 live이며, 코드 digest가 같거나 grant한 지 `RELAY_START_GRACE_MS`(30초)가 안 됐으면 거절한다(`RELAY_ALIVE`). 그 밖에는 새 `relay_id`로 upsert하고 `lease_until = now + 30s`로 둔다. |
+| `grant-relay` | hook (SessionStart, 경계 복구) | presence가 online이어야 한다. `presence.host_pid`가 있는데 hook이 찾은 호스트 PID와 다르면 거절한다(`HOST_MISMATCH`). 비어 있으면(3.0 이전 SessionStart가 만든 세대) 요청한 PID를 `host_pid IS NULL` 조건으로 기록한다. 경계 hook은 살아 있는 relay를 바꾸라는 힌트(`replace`)가 아닐 때만 자기 호스트 PID로 이 입양을 요청한다. 기존 lease가 같은 instance이고 아직 live이며, 코드 digest가 같거나 grant한 지 `RELAY_START_GRACE_MS`(30초)가 안 됐으면 거절한다(`RELAY_ALIVE`). 그 밖에는 새 `relay_id`로 upsert하고 `lease_until = now + 30s`로 둔다. |
 | `relay-tick` | relay, 5초마다 | `relay_id`·instance가 현재 행과 같고 presence가 online일 때만 lease(15초)와 presence(20초)를 갱신한다. 처음 보낸 `hostStart`는 `presence.host_start`가 비어 있으면 기록한다. 이미 있는데 값이 다르면 `alive:false`를 돌려준다. 자기 instance presence가 이미 끝났으면 `ended:true`를 더해 돌려주고, relay는 이를 실패가 아닌 정상 종료로 처리한다. 반환은 `{alive, count, hostBound, ended?}`다. |
 | `release-relay` | relay 종료, 호스트 사망 | 자기 `relay_id` 행만 지우고 자기 instance presence를 끝낸다. |
 | `presence-end-host` | hook (SessionEnd) | 현재 presence 세대가 이 hook의 호스트 세대일 때만 끝내고 그 세대의 lease를 지운다. 조건은 셋이다. `presence.host_pid`가 hook의 호스트 PID와 같다. relay가 묶은 `presence.host_start`가 있고 hook 자신의 시작(`hostAliveAtBound`, 감시자와 같은 경계)보다 늦지 않다. 세대의 `started_at`이 hook 시작보다 늦지 않다. 먼저 끝낸 쪽만 남는다(`endPresence`는 이미 끝난 세대를 바꾸지 않는다). |
