@@ -280,17 +280,24 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, phase.frozenPredecessor.path) !== platformPath || platformBytes.length !== phase.frozenPredecessor.bytes || hashBytes(platformBytes) !== phase.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings];
+  const enforcePath = resolve(repo, "tests/skill-classification/fixtures.orchestrator-workflow-enforcement-source-successor.json");
+  const enforceBytes = readFileSync(enforcePath);
+  if (hashBytes(enforceBytes) !== "sha256:afaea7927b706378254cefc0a3c5b4068c1a98ae68c492972e856dd294c51a75") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const enforce = JSON.parse(enforceBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, enforce.frozenPredecessor.path) !== phasePath || phaseBytes.length !== enforce.frozenPredecessor.bytes || hashBytes(phaseBytes) !== enforce.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: phase.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath);
+  const currentManifest = {...manifest, revision: enforce.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(phaseBytes),
+    manifest: currentManifest, files, digest: hashBytes(enforceBytes),
     resolveDigest(sourcePath: string, digest: string): string {
       const chain = allBindings.filter(row => row.path === sourcePath);
       if (chain.length === 0) return digest;

@@ -251,6 +251,25 @@ function closeOnce(board: BoardDatabase | null, error: unknown): void {
   try { board?.close(); } catch (closeError) { retainFailureSecondary(error, closeError); }
 }
 
+/**
+ * The working directory the session's own hook last recorded on the board, or null when the board or the row is
+ * missing or unreadable. Only a default for start_workflow: the caller can always name the workspace.
+ */
+function observedSessionWorkspace(databasePath: string | null, caller: VerifiedCaller): string | null {
+  if (!databasePath || !existsSync(databasePath)) return null;
+  let board: BoardDatabase | null = null;
+  try {
+    board = openBoard(databasePath);
+    const cwd = readEntry(board, caller.host, caller.sessionId)?.cwd;
+    return typeof cwd === "string" && cwd ? cwd : null;
+  } catch (error) {
+    process.stderr.write(JSON.stringify({ event: "session-workspace-unread", reason: failureReason(error).reason ?? "UNEXPECTED_FAILURE" }) + "\n");
+    return null;
+  } finally {
+    try { board?.close(); } catch { /* the read result does not depend on close */ }
+  }
+}
+
 async function sessionBoardResult(
   tool: "update_session_status" | "list_session_status",
   args: Record<string, unknown>,
@@ -367,6 +386,25 @@ const planWorkflowInlineInputSchema: ObjectSchema = {
     requiredAuditPhase: { enum: ["pre-execution", "post-execution", "pre-deploy", "post-deploy"] },
   },
 };
+
+/** start_workflow (design ags30-phase-check 7.5): the AGENT's goal, stages and acceptance criteria; the rest is defaulted. */
+const minimalWorkflowStartInputSchema: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["goal", "stages", "acceptanceCriteria"],
+  properties: {
+    goal: { type: "string", minLength: 1, maxLength: 2000 },
+    stages: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 },
+      description: "Capabilities from the skill registry, chosen by the AGENT, e.g. minimal-implementation, test-sensitivity-review, change-code-review." },
+    acceptanceCriteria: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 } },
+    workspace: { type: "string", minLength: 1, description: "Absolute workspace path. Default: the working directory this session's host reported to AGS; required when none was reported." },
+    writeTargets: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 },
+      description: "Paths the work changes, relative to the workspace. Default: the whole workspace." },
+  },
+};
+
+/** Failures the AGENT cannot fix by changing its input: the session's window then passes with the cause recorded. */
+const WORKFLOW_START_INFRASTRUCTURE_FAILURES: ReadonlySet<string> = new Set(["MCP_UNAVAILABLE", "CONTINUITY_UNAVAILABLE", "BINDING_REQUIRED", "BINDING_INVALID", "INTEGRITY_FAILED"]);
 
 export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "default"): Record<string, unknown> {
   return usesInlineReferences(profile) ? planWorkflowInlineInputSchema : planWorkflowInputSchema;
@@ -504,8 +542,8 @@ export function createMcpServer(
       },
       {
         name: "start_workflow",
-        description: "Reject unguarded workflow starts. Use open_convergence_root, claim_workflow_attempt and start_guarded_workflow to start a bound run.",
-        inputSchema: contractSchemas.workflowPlan,
+        description: "Start a guarded workflow in one call: the server plans, opens the root, claims the lease and starts the run in one transaction, with the same checks as plan_workflow, open_convergence_root, claim_workflow_attempt and start_guarded_workflow. Give the goal, the stages you choose as capabilities, and the acceptance criteria; the result lists the TaskEnvelope fields filled with defaults. Edits already made in the current window are marked as late adoption (unverified evidence). A failed step leaves no root, lease or run.",
+        inputSchema: minimalWorkflowStartInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
@@ -769,7 +807,21 @@ export function createMcpServer(
           result = withMode("responseMode", () => service.resolveConvergenceGate(domainArguments(args, "responseMode"), observedCaller(caller)), convergenceStatusSummary);
           break;
         case "start_workflow":
-          result = service.rejectUnguardedWorkflow(args);
+          result = attested("start_workflow", input => {
+            const started = service.startMinimalWorkflow(input, observedCaller(caller), {
+              priorFileCount: () => continuity.editWindowFileCount(caller.sessionId),
+              settle: () => continuity.settleFinishedWorkflow(caller.sessionId),
+              beforeCommit: rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId),
+              sessionWorkspace: () => observedSessionWorkspace(sessionBoardPath, caller),
+            });
+            // An AGS infrastructure failure must not leave the session's edits refused (design ags30-phase-check 7.6).
+            if (!started.ok && started.error && WORKFLOW_START_INFRASTRUCTURE_FAILURES.has(started.error.code)) {
+              const { code, message, details } = started.error;
+              try { continuity.recordWorkflowStartFailure(caller.sessionId, new WorkflowContractError(code, message, details)); }
+              catch (cause) { process.stderr.write(JSON.stringify({ event: "workflow-start-failure-unrecorded", reason: failureReason(cause).reason ?? "UNEXPECTED_FAILURE" }) + "\n"); }
+            }
+            return started;
+          });
           break;
         case "record_stage_result":
           result = withMode(

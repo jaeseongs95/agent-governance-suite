@@ -13,13 +13,14 @@ import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js"
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { InMemoryWorkflowStore, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
 
-// Design docs/ags30-phase-check-design.md 3.2-3.4 and 4. Synthetic store and hook inputs only; no real host run.
+// Design docs/ags30-phase-check-design.md 3.2-3.4, 4 and 7 (enforcement, 3.1.0). Synthetic store and hook inputs only.
 const stores = new Set<SqliteContinuityStore>();
 const directories: string[] = [];
 const session = "phase-check-session";
 const at = "2026-11-02T03:00:00.000Z";
-const CUE_HEAD = "[AGS 단계 확인] 이번 작업에서 파일 변경이 관측됐고 다음이 확인되지 않았다: ";
-const CUE_TAIL = "먼저 어떤 단계를 빠뜨렸는지 사용자에게 밝혀라. 그 단계가 이번 작업에 필요하면 지금 진행하라. 필요 없으면 이유를 한 줄로 밝히고 끝내라.";
+const CUE_HEAD = "[AGS 단계 확인] 진행 중인 workflow에서 다음 단계가 아직 passed가 아니다: ";
+const CUE_TAIL = "빠진 단계를 지금 진행하거나, 필요 없으면 계획을 고쳐 그 단계를 빼라.";
+const UNAVAILABLE = "[AGS] workflow 상태를 확인하지 못해 이번 구간의 제품 파일 변경을 막지 않았다. 원인 코드: ";
 
 afterEach(async () => {
   vi.restoreAllMocks();
@@ -123,10 +124,11 @@ describe("phase check service", () => {
     expect(lastIds(service)).toEqual({ edit: null, check: null });
   });
 
-  it("reports a change made without a workflow", () => {
+  it("gives no output for a change made without a workflow, but records the check", () => {
     const service = createService();
     service.recordEditForSession(session);
-    expect(service.phaseCheckForSession(session)).toBe(cue("workflow 없이 변경함"));
+    expect(service.phaseCheckForSession(session)).toBeNull();
+    expect(checkRows(service)).toEqual([{ success: 1 }]);
   });
 
   it("names the latest run's stages that did not pass", () => {
@@ -143,24 +145,24 @@ describe("phase check service", () => {
     }
   });
 
-  it("surfaces an unopened workflow store as unavailable stage state", () => {
+  it("names an unopened workflow store by its cause code", () => {
     const service = createService(null);
     bindRoot(service, "phase-root");
     service.recordEditForSession(session);
-    expect(service.phaseCheckForSession(session)).toBe(cue("단계 상태 확인 불가"));
+    expect(service.phaseCheckForSession(session)).toBe(`${UNAVAILABLE}phase-gate-unavailable:WORKFLOW_STORE_UNAVAILABLE.`);
   });
 
   it("does not repeat a check, keeps one edit row per run of edits, and checks again after a new edit", () => {
-    const service = createService();
+    const service = boundWorkflow(["stage-01-testing"], []);
     service.recordEditForSession(session);
     const { edit } = lastIds(service);
     service.recordEditForSession(session);
     expect(lastIds(service).edit).toBe(edit);
-    expect(service.phaseCheckForSession(session)).toBe(cue("workflow 없이 변경함"));
+    expect(service.phaseCheckForSession(session)).toBe(cue("stage-01-testing"));
     expect(service.phaseCheckForSession(session)).toBeNull();
     service.recordEditForSession(session);
     expect(lastIds(service).edit!).toBeGreaterThan(lastIds(service).check!);
-    expect(service.phaseCheckForSession(session)).toBe(cue("workflow 없이 변경함"));
+    expect(service.phaseCheckForSession(session)).toBe(cue("stage-01-testing"));
     expect(service.phaseCheckForSession(session)).toBeNull();
     expect(checkRows(service)).toEqual([{ success: 0 }, { success: 0 }]);
   });
@@ -171,31 +173,30 @@ describe("phase check hook", () => {
   const stop = { hook_event_name: "Stop", session_id: session };
 
   it("Claude: an Edit before the tool, then Stop, gives the cue as Stop additionalContext", () => {
-    const service = createService();
+    const service = boundWorkflow(["stage-01-testing"], []);
     expect(handleContinuityHook(pre("Edit"), service, "claude-code")).toEqual({});
-    expect(handleContinuityHook(stop, service, "claude-code")).toEqual({ hookSpecificOutput: { hookEventName: "Stop", additionalContext: cue("workflow 없이 변경함") } });
+    expect(handleContinuityHook(stop, service, "claude-code")).toEqual({ hookSpecificOutput: { hookEventName: "Stop", additionalContext: cue("stage-01-testing") } });
     expect(handleContinuityHook(stop, service, "claude-code")).toEqual({});
   });
 
   it("Codex: apply_patch then Stop gives a block decision whose reason is the cue", () => {
-    const service = createService();
+    const service = boundWorkflow(["stage-01-testing"], []);
     expect(handleContinuityHook(pre("apply_patch"), service, "codex")).toEqual({});
-    expect(handleContinuityHook(stop, service, "codex")).toEqual({ decision: "block", reason: cue("workflow 없이 변경함") });
+    expect(handleContinuityHook(stop, service, "codex")).toEqual({ decision: "block", reason: cue("stage-01-testing") });
     expect(handleContinuityHook(stop, service, "codex")).toEqual({});
   });
 
-  it("does not count Bash, PowerShell, Agent or Task as edits, nor a child's edit", () => {
-    const service = createService();
+  it("does not count Bash, PowerShell, Agent or Task as edits", () => {
+    const service = boundWorkflow(["stage-01-testing"], []);
     for (const tool of ["Bash", "PowerShell", "Agent", "Task"]) expect(handleContinuityHook(pre(tool), service, "claude-code")).toEqual({});
-    expect(handleContinuityHook(pre("Write", { agent_id: "child-agent" }), service, "claude-code")).toEqual({});
     expect(handleContinuityHook(stop, service, "claude-code")).toEqual({});
     // Positive control: the root's own edit is counted.
     expect(handleContinuityHook(pre("Write"), service, "claude-code")).toEqual({});
-    expect(handleContinuityHook(stop, service, "claude-code")).toMatchObject({ hookSpecificOutput: { additionalContext: cue("workflow 없이 변경함") } });
+    expect(handleContinuityHook(stop, service, "claude-code")).toMatchObject({ hookSpecificOutput: { additionalContext: cue("stage-01-testing") } });
   });
 
   it("does not check at SessionEnd; the pending edit is checked at the next Stop", () => {
-    const service = createService();
+    const service = boundWorkflow(["stage-01-testing"], []);
     expect(handleContinuityHook(pre("MultiEdit"), service, "claude-code")).toEqual({});
     expect(handleContinuityHook({ hook_event_name: "SessionEnd", session_id: session, reason: "other" }, service, "claude-code")).toEqual({});
     expect(lastIds(service).check).toBeNull();

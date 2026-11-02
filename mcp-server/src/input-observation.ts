@@ -19,6 +19,11 @@ export interface InputObservation {
   boundaryPhase?: "before" | "after";
   toolName?: string;
   toolInput?: Record<string, unknown>;
+  /** File-edit tool boundary only: the absolute paths the host tool will change, as its adapter reads them from the
+   * tool input. An empty list is an edit tool whose target the adapter could not read. Absent: not a file edit. */
+  editTargets?: string[];
+  /** Turn end only: the host reports that this turn was already continued by its Stop hook. */
+  stopHookActive?: boolean;
   wakeCandidates?: string[];
   wakeOnly?: boolean;
   workspaceId?: string;
@@ -50,6 +55,12 @@ export function actorAccess(actor: unknown): { allowed: boolean; reasonCode: str
   } catch { return invalid; }
 }
 
+/** Read like actorAccess: a missing or malformed actor is not an observed child. */
 export function isObservedSubagent(observation: InputObservation): boolean {
-  return observation.actor.role === "child" && observation.actor.basis === "observed";
+  const actor: unknown = observation.actor;
+  if (!actor || typeof actor !== "object" || utilTypes.isProxy(actor) || Array.isArray(actor)) return false;
+  try {
+    return Object.getOwnPropertyDescriptor(actor, "role")?.value === "child"
+      && Object.getOwnPropertyDescriptor(actor, "basis")?.value === "observed";
+  } catch { return false; }
 }

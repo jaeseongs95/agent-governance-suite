@@ -1,4 +1,5 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import path from "node:path";
 
 import {
   type ApiResultV1,
@@ -154,6 +155,112 @@ function consumedLeases(snapshot: ConvergenceSnapshot, epoch: number): AttemptLe
  * Planning does not create a stored run, but strict planning atomically consumes
  * a trusted observation claim. Specialists remain directly callable.
  */
+/** Session continuity the minimal start reads before and binds inside its transaction. */
+export interface MinimalStartContinuity {
+  /** Distinct product files edited in the session's current window before the start. */
+  priorFileCount(): number;
+  /** Moves a session still bound to a finished workflow to a new epoch so the new root can bind. */
+  settle(): void;
+  /** Binds the session to the new root before the run commits (start_guarded_workflow's correlation). */
+  beforeCommit(rootId: string): void;
+  /**
+   * The working directory the host reported for the calling session (session board), the default workspace. The
+   * server's own directory is not used: a host may start the MCP server in the plugin folder.
+   */
+  sessionWorkspace?(): string | null;
+}
+
+export interface MinimalWorkflowStartV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  taskId: string;
+  rootId: string;
+  runId: string;
+  revision: number;
+  state: WorkflowState;
+  stages: Array<{ stageId: string; capability: string }>;
+  /** TaskEnvelope and frame fields the server filled with defaults instead of the caller. */
+  defaultsUsed: string[];
+  /** Product files changed in this window before the start: covered by the run, not observed under it. */
+  lateAdoption: { label: string; priorFileCount: number } | null;
+}
+
+interface MinimalStartRequest {
+  goal: string;
+  stages: string[];
+  acceptanceCriteria: string[];
+  workspace: string | null;
+  writeTargets: string[];
+}
+
+export const LATE_ADOPTION_LABEL = "사후 편입·근거 미검증";
+const MINIMAL_START_KEYS = new Set(["goal", "stages", "acceptanceCriteria", "workspace", "writeTargets"]);
+
+function nonEmptyStrings(value: unknown, field: string, minimum: number): string[] {
+  if (!Array.isArray(value) || value.length < minimum || value.length > 32
+    || value.some(item => typeof item !== "string" || !item.trim() || item.length > 2000) || new Set(value).size !== value.length) {
+    throw new WorkflowContractError("INVALID_INPUT", `${field} must be ${minimum > 0 ? "a non-empty" : "an"} array of distinct non-empty strings.`, { field });
+  }
+  return [...value] as string[];
+}
+
+function minimalStartRequest(raw: unknown): MinimalStartRequest {
+  const input = asRecord(raw);
+  const unknownKey = Object.keys(input).find(key => !MINIMAL_START_KEYS.has(key));
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw) || unknownKey) {
+    throw new WorkflowContractError("INVALID_INPUT", "start_workflow accepts goal, stages, acceptanceCriteria and optional workspace and writeTargets.", unknownKey ? { field: unknownKey } : null);
+  }
+  if (typeof input.goal !== "string" || !input.goal.trim() || input.goal.length > 2000) {
+    throw new WorkflowContractError("INVALID_INPUT", "goal must be a non-empty string.", { field: "goal" });
+  }
+  if (input.workspace !== undefined && (typeof input.workspace !== "string" || !path.isAbsolute(input.workspace))) {
+    throw new WorkflowContractError("INVALID_INPUT", "workspace must be an absolute path.", { field: "workspace" });
+  }
+  return {
+    goal: input.goal.trim(),
+    stages: nonEmptyStrings(input.stages, "stages", 1),
+    acceptanceCriteria: nonEmptyStrings(input.acceptanceCriteria, "acceptanceCriteria", 1),
+    workspace: typeof input.workspace === "string" ? input.workspace : null,
+    writeTargets: input.writeTargets === undefined ? ["."] : nonEmptyStrings(input.writeTargets, "writeTargets", 1),
+  };
+}
+
+/** The TaskEnvelope and frame of a minimal start; the AGENT's stage choice is used as given, never expanded. */
+function minimalTask(request: MinimalStartRequest, workspace: string, priorFileCount: number): { task: TaskEnvelopeV1; frame: ConvergenceFrameV1; defaultsUsed: string[] } {
+  const task: TaskEnvelopeV1 = {
+    schemaVersion: CONTRACT_VERSION,
+    taskId: `task-${randomUUID()}`,
+    objective: request.goal,
+    scope: { included: [...request.writeTargets], excluded: [] },
+    acceptanceCriteria: [...request.acceptanceCriteria],
+    riskLevel: "medium",
+    workUnits: [{ id: "work", objective: request.goal, dependencies: [], writeTargets: [...request.writeTargets] }],
+    requiredCapabilities: [...request.stages],
+    constraints: priorFileCount > 0 ? [`${LATE_ADOPTION_LABEL}: workflow 시작 전 이 구간에서 제품 파일 ${priorFileCount}개가 이미 바뀌었다.`] : [],
+    authorization: { allowedActions: [], prohibitedActions: [], approvalRequired: [] },
+    decision: { complexity: "complex", hasConflicts: false },
+    orchestration: { requested: true, mcpAvailable: true },
+  };
+  const frame: ConvergenceFrameV1 = {
+    schemaVersion: CONTRACT_VERSION,
+    workspace: { workspaceId: path.basename(workspace) || "workspace", locator: workspace },
+    controlArtifacts: [{ artifactId: "acceptance-criteria", role: "pass-condition", locator: "taskEnvelope.acceptanceCriteria", digest: convergenceDigest(task.acceptanceCriteria) }],
+    targetArtifacts: request.writeTargets.map((locator, index) => ({
+      artifactId: `target-${index + 1}`, role: "target" as const, locator, digest: convergenceDigest({ objective: task.objective, locator }),
+    })),
+    operationalSettings: { maxAttemptsPerEpoch: 3, maxEpochs: 2, leaseTtlSeconds: 300 },
+  };
+  const defaultsUsed = ["taskId", "scope", "riskLevel", "workUnits", "constraints", "authorization", "decision", "orchestration", "frame", "outputTargets",
+    ...(request.workspace === null ? ["workspace"] : []), ...(request.writeTargets.length === 1 && request.writeTargets[0] === "." ? ["writeTargets"] : [])];
+  return { task, frame, defaultsUsed };
+}
+
+/** A sub-step's failure keeps its own code, message and details, and rolls back the enclosing transaction. */
+function unwrapResult<T>(result: ApiResultV1<T>): T {
+  if (result.ok && result.data !== null) return result.data;
+  const error = result.error ?? { code: "MCP_UNAVAILABLE" as const, message: "The workflow step returned no result.", details: null };
+  throw new WorkflowContractError(error.code, error.message, error.details);
+}
+
 export class WorkflowService {
   private readonly planSigningKey: Buffer;
 
@@ -513,6 +620,53 @@ export class WorkflowService {
     });
   }
 
+  /**
+   * The minimal workflow start (design ags30-phase-check 7.5): one call that plans, opens a root, claims a lease and
+   * starts the run through the same checks as the four separate calls, in one workflow transaction. The caller names
+   * the goal, the stages (capabilities) and the acceptance criteria; every other TaskEnvelope field takes a default
+   * listed in `defaultsUsed`. A failure at any step rolls back the root, lease, run and observation it created.
+   */
+  startMinimalWorkflow(rawRequest: unknown, caller: ObservedCallerV1 | null, continuity: MinimalStartContinuity): ApiResultV1<MinimalWorkflowStartV1> {
+    return this.attempt(() => {
+      const request = minimalStartRequest(rawRequest);
+      const observed = request.workspace === null ? continuity.sessionWorkspace?.() ?? null : null;
+      const workspace = request.workspace ?? (observed && path.isAbsolute(observed) ? observed : null);
+      if (!workspace) {
+        throw new WorkflowContractError("INVALID_INPUT", "workspace is required: the host has not reported this session's working directory.", { field: "workspace" });
+      }
+      // Edits made in this window before the start are covered by the run but were not observed under it.
+      const priorFileCount = continuity.priorFileCount();
+      continuity.settle();
+      const { task, frame, defaultsUsed } = minimalTask(request, workspace, priorFileCount);
+      return this.store.withWorkflowTransaction(() => {
+        const plan = unwrapResult(this.planWorkflow(task, true));
+        const blocked = plan.state === "ready" ? null : plan.errors[0];
+        if (blocked) throw new WorkflowContractError(blocked.code, blocked.message, blocked.details);
+        const root = unwrapResult(this.openConvergenceRoot({
+          schemaVersion: CONTRACT_VERSION, parentRootId: null, taskEnvelope: task, frame, userApprovalRefs: [],
+        }));
+        const lease = unwrapResult(this.claimWorkflowAttempt({
+          schemaVersion: CONTRACT_VERSION, rootId: root.rootId, expectedRevision: root.revision, plan,
+          outputTargets: request.writeTargets, priorFailure: null,
+        }, true, caller));
+        const receipt = unwrapResult(this.startGuardedWorkflow({
+          schemaVersion: CONTRACT_VERSION, leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan,
+        }, true, continuity.beforeCommit));
+        return {
+          schemaVersion: CONTRACT_VERSION,
+          taskId: task.taskId,
+          rootId: root.rootId,
+          runId: receipt.runId,
+          revision: receipt.revision,
+          state: receipt.state,
+          stages: receipt.plan.stages.map(stage => ({ stageId: stage.stageId, capability: stage.requiredCapability })),
+          defaultsUsed,
+          lateAdoption: priorFileCount > 0 ? { label: LATE_ADOPTION_LABEL, priorFileCount } : null,
+        };
+      });
+    });
+  }
+
   private normalizeAttemptProposal(rawProposal: unknown): AttemptProposalV1 {
     const candidate = asRecord(rawProposal);
     const hasTaskEnvelope = Object.hasOwn(candidate, "taskEnvelope");
@@ -651,7 +805,7 @@ export class WorkflowService {
     });
   }
 
-  /** Embedding compatibility only. The MCP start_workflow tool rejects new unguarded orchestrated runs. */
+  /** Embedding compatibility only. The MCP start_workflow tool is the guarded minimal start (startMinimalWorkflow). */
   startWorkflow(rawPlan: unknown): ApiResultV1<WorkflowReceiptV1> {
     return this.attempt(() => {
       const plan = clone(this.validator.workflowPlan(rawPlan));

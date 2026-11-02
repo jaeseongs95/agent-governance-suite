@@ -174,7 +174,7 @@ try {
   for (const relative of ["mcp-server/src/skill-classification", "skills", "tests/skill-classification/fixtures.json",
     "tests/skill-classification/evaluation.ts", "tests/skill-classification/fixtures.source-successor.json",
     "tests/skill-classification/fixtures.unavailable-source-successor.json", "tests/skill-classification/fixtures.live-host-boundaries-source-successor.json",
-    "tests/skill-classification/fixtures.continuity-handoff-source-successor.json", "tests/skill-classification/fixtures.preflight-private-preparation-source-successor.json", "tests/skill-classification/fixtures.preflight-platform-events-source-successor.json", "tests/skill-classification/fixtures.orchestrator-phase-check-source-successor.json", "package.json"]) {
+    "tests/skill-classification/fixtures.continuity-handoff-source-successor.json", "tests/skill-classification/fixtures.preflight-private-preparation-source-successor.json", "tests/skill-classification/fixtures.preflight-platform-events-source-successor.json", "tests/skill-classification/fixtures.orchestrator-phase-check-source-successor.json", "tests/skill-classification/fixtures.orchestrator-workflow-enforcement-source-successor.json", "package.json"]) {
     const target = path.join(copiedRepo, relative); await mkdir(path.dirname(target), {recursive: true});
     await cp(path.join(repo, relative), target, {recursive: true});
   }

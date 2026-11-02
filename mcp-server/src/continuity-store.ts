@@ -443,11 +443,38 @@ export class SqliteContinuityStore {
   }
 
   /** The store position of the newest observation of this exact event, or null. */
-  lastObservationId(taskCorrelation: string, epoch: number, event: string): number | null {
+  lastObservationId(taskCorrelation: string, epoch: number, event: string, beforeId = Number.MAX_SAFE_INTEGER): number | null {
     const row = this.database.prepare(`
-      SELECT MAX(observation_id) AS id FROM continuity_observations WHERE task_correlation = ? AND epoch = ? AND event = ?
-    `).get(taskCorrelation, epoch, event) as { id: number | null } | undefined;
+      SELECT MAX(observation_id) AS id FROM continuity_observations
+      WHERE task_correlation = ? AND epoch = ? AND event = ? AND observation_id < ?
+    `).get(taskCorrelation, epoch, event, beforeId) as { id: number | null } | undefined;
     return row?.id ?? null;
+  }
+
+  firstObservationIdAfter(taskCorrelation: string, epoch: number, event: string, afterId: number): number | null {
+    const row = this.database.prepare(`
+      SELECT MIN(observation_id) AS id FROM continuity_observations
+      WHERE task_correlation = ? AND epoch = ? AND event = ? AND observation_id > ?
+    `).get(taskCorrelation, epoch, event, afterId) as { id: number | null } | undefined;
+    return row?.id ?? null;
+  }
+
+  /** The turn_hash values of this exact event recorded after `afterId`, in store order. */
+  observationHashesAfter(taskCorrelation: string, epoch: number, event: string, afterId: number): string[] {
+    return (this.database.prepare(`
+      SELECT turn_hash FROM continuity_observations
+      WHERE task_correlation = ? AND epoch = ? AND event = ? AND observation_id > ? AND turn_hash IS NOT NULL
+      ORDER BY observation_id ASC
+    `).all(taskCorrelation, epoch, event, afterId) as Array<{ turn_hash: string }>).map(row => row.turn_hash);
+  }
+
+  /** The events starting with `prefix` recorded after `afterId`, in store order. */
+  observationEventsAfter(taskCorrelation: string, epoch: number, prefix: string, afterId: number): string[] {
+    return (this.database.prepare(`
+      SELECT event FROM continuity_observations
+      WHERE task_correlation = ? AND epoch = ? AND substr(event, 1, ?) = ? AND observation_id > ?
+      ORDER BY observation_id ASC
+    `).all(taskCorrelation, epoch, prefix.length, prefix, afterId) as Array<{ event: string }>).map(row => row.event);
   }
 
   /** Copies a selected parent snapshot into an empty child epoch only; existing child state is never replaced. */

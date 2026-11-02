@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { homedir } from "node:os";
 import { types as utilTypes } from "node:util";
 import { hookFailure, retainHookFailureCause, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
 import { closeSync, constants, fstatSync, openSync, readSync, statSync } from "node:fs";
@@ -17,6 +18,34 @@ function text(value: unknown): string {
 
 function record(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+/**
+ * The absolute paths a file-edit tool call will change, resolved against the hook's working directory. The tool input
+ * key is host-owned; a missing or non-string value yields no path, and the caller still sees an edit (empty list).
+ */
+function editTargetPaths(input: Record<string, unknown>, paths: unknown[]): string[] {
+  const base = text(input.cwd) || process.cwd();
+  return [...new Set(paths.filter((value): value is string => typeof value === "string" && value.trim() !== "")
+    .map(value => path.resolve(base, value.trim())))];
+}
+
+/** Codex apply_patch: every file the patch adds, updates, deletes or moves to (`*** <Action> File: <path>`, `*** Move to:`). */
+export function applyPatchTargets(command: unknown): string[] {
+  if (typeof command !== "string") return [];
+  const paths: string[] = [];
+  for (const line of command.split("\n")) {
+    const match = /^\*\*\* (?:(?:Add|Update|Delete) File|Move to): (.+?)\r?$/u.exec(line);
+    if (match) paths.push(match[1]!);
+  }
+  return paths;
+}
+
+function setEditTargets(adapted: AdaptedHostInput, input: Record<string, unknown>, targets: (toolName: string, toolInput: Record<string, unknown>) => unknown[] | null): void {
+  const { observation } = adapted;
+  if (observation.kind !== "tool-boundary" || observation.boundaryPhase !== "before") return;
+  const paths = targets(observation.toolName ?? "", observation.toolInput ?? {});
+  if (paths) observation.editTargets = editTargetPaths(input, paths);
 }
 
 /** Keeps vendor event names and actor fields at the host adapter boundary. */
@@ -90,6 +119,10 @@ function adaptInferredRootHookInput(input: Record<string, unknown>, host: string
 
 function adaptCodexHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
   const adapted = adaptInferredRootHookInput(input, host, "CODEX");
+  // apply_patch is Codex's file edit; its patch text is tool_input.command (Codex hooks, PreToolUse).
+  setEditTargets(adapted, input, (tool, toolInput) => tool === "apply_patch" ? applyPatchTargets(toolInput.command) : null);
+  // Codex Stop reports a turn its Stop hook already continued; a second continuation could loop without a host limit.
+  if (adapted.observation.kind === "turn-end" && adapted.lifecycle === "none" && input.stop_hook_active === true) adapted.observation.stopHookActive = true;
   if (adapted.observation.actor.role !== "root") return adapted;
   if (Object.hasOwn(input, "agent_id")) {
     // Codex's native subagent hook context serializes agent_id even though session_id names the parent.
@@ -150,6 +183,8 @@ function readCodexForkOrigin(transcriptPath: string, sessionId: string): ForkOri
   return { parentSessionId, at };
 }
 
+const CLAUDE_EDIT_TOOLS = new Set(["Edit", "Write", "MultiEdit", "NotebookEdit"]);
+
 /** Claude's supported native hook schema omits agent_id for root calls.
  * Absence supports inference only; an explicit empty or malformed ID never does. */
 function adaptClaudeHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
@@ -157,6 +192,7 @@ function adaptClaudeHookInput(input: Record<string, unknown>, host: string): Ada
     role: "indeterminate", basis: "unavailable", reasonCode: "CLAUDE_NATIVE_EVENT_UNRECOGNIZED",
   };
   const adapted = adaptBuiltinHookInput(input, host, actor);
+  setEditTargets(adapted, input, (tool, toolInput) => CLAUDE_EDIT_TOOLS.has(tool) ? [tool === "NotebookEdit" ? toolInput.notebook_path : toolInput.file_path] : null);
   const knownEvent = adapted.lifecycle !== "none" || adapted.observation.kind !== "unknown" || adapted.continuityAction !== undefined;
   if (!knownEvent) return adapted;
   if (!adapted.observation.sessionId.trim()) actor.reasonCode = "CLAUDE_NATIVE_SESSION_ID_INVALID";
@@ -237,10 +273,16 @@ function adaptGeminiHookInput(input: Record<string, unknown>, host: string): Ada
   });
 }
 
+const ANTIGRAVITY_EDIT_TOOLS = new Set(["Write", "Edit", "MultiEdit"]);
+
 /** ponytail: Antigravity PreToolUse carries no tool call ID (agy hooks.md), so each hook run
  * draws a random one to keep the root proof one-use. Bind the native ID once Antigravity sends one. */
 function adaptAntigravityHookInput(input: Record<string, unknown>, host: string): AdaptedHostInput {
   const adapted = adaptInferredRootHookInput(input, host, "ANTIGRAVITY");
+  // The runner maps the file tools to Write, Edit and MultiEdit and passes their arguments. agy 1.4.12 CLI hook input
+  // (test server capture): write_file and edit_file name the file in Path. write_to_file, replace_file_content and
+  // multi_replace_file_content (agy hooks docs) name it in TargetFile.
+  setEditTargets(adapted, input, (tool, toolInput) => ANTIGRAVITY_EDIT_TOOLS.has(tool) ? [toolInput.TargetFile ?? toolInput.Path] : null);
   const { observation } = adapted;
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before" && !observation.callId) observation.callId = randomUUID();
   return adapted;
@@ -363,6 +405,22 @@ function antigravityQueueEnabled(environment: NodeJS.ProcessEnv, diagnose: (reas
   return queueEnabled("antigravity", environment.AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE, environment, diagnose, defaultEnabled);
 }
 
+function home(environment: NodeJS.ProcessEnv): string {
+  return environment.HOME || environment.USERPROFILE || homedir();
+}
+
+/** Claude Code auto memory: `<config dir>/projects/<project>/memory` (CLAUDE_CONFIG_DIR, default ~/.claude). */
+function claudeNoteRoots(environment: NodeJS.ProcessEnv): string[] {
+  return [path.join(environment.CLAUDE_CONFIG_DIR || path.join(home(environment), ".claude"), "projects", "*", "memory")];
+}
+
+/** Antigravity agent artifacts (task, plan, scratch): the CLI's `~/.gemini/antigravity-cli/brain` (agy 1.4.12), the
+ * editor's `~/.gemini/antigravity/brain`. Codex keeps memories in SQLite, not in files an edit tool writes. */
+function antigravityNoteRoots(environment: NodeJS.ProcessEnv): string[] {
+  const gemini = path.join(home(environment), ".gemini");
+  return [path.join(gemini, "antigravity-cli", "brain"), path.join(gemini, "antigravity", "brain")];
+}
+
 // Builtin wiring belongs to this composition module; core registration has no vendor list.
 const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
   ["codex", {
@@ -373,7 +431,7 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
   ["claude-code", {
     adaptInput: adaptClaudeHookInput, ownsTool: ownsGovernanceTool,
     deliveryProfile: () => deliveryProfile("claude-inbox", false),
-    processPid: () => process.ppid,
+    processPid: () => process.ppid, agentNoteRoots: claudeNoteRoots,
   }],
   ["gemini", {
     adaptInput: adaptGeminiHookInput, ownsTool: ownsGovernanceTool,
@@ -384,7 +442,7 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
   ["antigravity", {
     adaptInput: adaptAntigravityHookInput, ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose, defaultQueueWake) => deliveryProfile(antigravityQueueEnabled(environment, diagnose, defaultQueueWake) ? "antigravity-queue" : "gemini-deferred", false),
-    processPid: (pid, observation) => observation ? pid : undefined,
+    processPid: (pid, observation) => observation ? pid : undefined, agentNoteRoots: antigravityNoteRoots,
   }],
 ]);
 

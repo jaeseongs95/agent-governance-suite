@@ -1,15 +1,18 @@
 import { isHookEntry } from "./hook-entry.js";
-import { actorAccess, type InputObservation } from "./input-observation.js";
+import { actorAccess, isObservedSubagent, type InputObservation } from "./input-observation.js";
 import { WorkflowContractError } from "../../contracts/types.js";
 import "./builtin-hook-host-adapters.js";
-import { readFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { readFileSync, realpathSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { types } from "node:util";
 
-import { ContinuityService } from "./continuity-service.js";
+import { ContinuityService, workflowFailureCode } from "./continuity-service.js";
 import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
 import { hookFailureContext, hookFailureReason, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
 import { failureReason } from "./failure-diagnostics.js";
-import { adaptHostInput, isGovernanceHookTool, resolveHookHost, type AdaptedHostInput, type ContinuityAction, type ForkHostParentRead, type ForkOriginRead, type LineageRead } from "./host-input-adapter.js";
+import { adaptHostInput, hostAgentNoteRoots, isGovernanceHookTool, resolveHookHost, type AdaptedHostInput, type ContinuityAction, type ForkHostParentRead, type ForkOriginRead, type LineageRead } from "./host-input-adapter.js";
 import {
   assertDistinctDatabasePaths,
   resolveContinuityDatabasePath,
@@ -28,9 +31,55 @@ const BOUND_TOOLS = new Set([
   "purge_direct_context",
 ]);
 
-/** Host file-edit tools: Claude's, Codex apply_patch, and Antigravity's as its runner maps them (Write, Edit, MultiEdit).
- * Shell and delegation tools are not edits: a read-only turn would be flagged (design ags30-phase-check 3.2). */
-const EDIT_TOOLS = new Set(["Edit", "Write", "MultiEdit", "NotebookEdit", "apply_patch"]);
+/** Extra exempt directories, separated by the platform path delimiter. Set by the user's environment, never a tool input. */
+const EXEMPT_PATHS_VARIABLE = "AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS";
+
+/** Edit paths compare as the platform's file system does: Windows paths without case or separator differences. */
+function normalizedEditPath(value: string): string {
+  const resolved = path.resolve(value);
+  return process.platform === "win32" ? resolved.replaceAll("/", "\\").toLowerCase() : resolved;
+}
+
+function realOrSelf(value: string): string[] {
+  try { return [value, realpathSync(value)]; } catch { return [value]; }
+}
+
+/**
+ * Non-product directories (design ags30-phase-check 7.3): the OS temporary directory (agent scratch space), the host's
+ * own note directories and the user's configured list. The working directory is not a criterion.
+ */
+function exemptEditRoots(host: string, environment: NodeJS.ProcessEnv): string[][] {
+  const configured = (environment[EXEMPT_PATHS_VARIABLE] ?? "").split(path.delimiter).map(entry => entry.trim()).filter(entry => path.isAbsolute(entry));
+  return [...new Set([tmpdir(), ...hostAgentNoteRoots(host, environment), ...configured].flatMap(realOrSelf).map(normalizedEditPath))]
+    .map(root => root.split(path.sep));
+}
+
+function isExemptEditPath(target: string, roots: readonly string[][]): boolean {
+  const segments = target.split(path.sep);
+  return roots.some(root => root.length <= segments.length && root.every((segment, index) => segment === "*" || segment === segments[index]));
+}
+
+/** The product files an edit will change; a tool whose target the adapter could not read still counts as one file. */
+/** Keyed by the normalized path; the value is the path as the tool gave it (resolved), which the refusal shows. */
+function productEditTargets(observation: InputObservation, host: string, environment: NodeJS.ProcessEnv): Map<string, string> {
+  const targets = observation.editTargets ?? [];
+  if (targets.length === 0) {
+    // Each such call is its own file: one shared key would let unread edits repeat without ever reaching the limit.
+    const unknown = `(경로 미확인: ${observation.toolName ?? "edit"})`;
+    return new Map([[`${unknown}#${observation.callId ?? randomUUID()}`, unknown]]);
+  }
+  const roots = exemptEditRoots(host, environment);
+  const product = new Map<string, string>();
+  for (const target of targets) {
+    const key = normalizedEditPath(target);
+    if (!product.has(key) && !isExemptEditPath(key, roots)) product.set(key, path.resolve(target));
+  }
+  return product;
+}
+
+function deniedEdit(reason: string): Record<string, unknown> {
+  return { hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: reason } };
+}
 
 function localToolName(host: string, canonicalName: string): string | null {
   if (!isGovernanceHookTool(host, canonicalName)) return null;
@@ -105,10 +154,27 @@ function stopOutput(host: string, eventName: string, cue: string | null): Record
   return host === "codex" ? { decision: "block", reason: cue } : sessionOutput(eventName, cue);
 }
 
-function handleNormalizedContinuityHook(input: NormalizedContinuityInput, service: ContinuityService, host: string): Record<string, unknown> {
+/** A file edit before it runs: the workflow gate (design ags30-phase-check 7.2). Exempt-only edits are not recorded. */
+function gateEdit(observation: InputObservation, service: ContinuityService, host: string, environment: NodeJS.ProcessEnv): Record<string, unknown> {
+  const targets = productEditTargets(observation, host, environment);
+  if (targets.size === 0) return {};
+  const refusal = service.gateEditForSession(observation.sessionId, [...targets.keys()], [...targets.values()]);
+  return refusal ? deniedEdit(refusal) : {};
+}
+
+function isEditBoundary(observation: InputObservation): boolean {
+  return observation.kind === "tool-boundary" && observation.boundaryPhase === "before" && observation.editTargets !== undefined;
+}
+
+function handleNormalizedContinuityHook(input: NormalizedContinuityInput, service: ContinuityService, host: string,
+  environment: NodeJS.ProcessEnv): Record<string, unknown> {
   const { observation, action, outputEventName, readLineage, readForkOrigin, readForkHostParent } = input;
   const sessionId = observation.sessionId;
-  if (!sessionId || !actorAccess(observation.actor).allowed) return {};
+  if (!sessionId) return {};
+  // A subagent's edit counts in its parent session's window (the host names the parent in session_id). Nothing else
+  // a child does pins or binds continuity state.
+  if (isObservedSubagent(observation)) return isEditBoundary(observation) ? gateEdit(observation, service, host, environment) : {};
+  if (!actorAccess(observation.actor).allowed) return {};
   switch (action?.kind) {
     case "startup": service.ensureSession(sessionId); return {};
     case "fork": service.startFork(sessionId, readForkOrigin, readForkHostParent); return {};
@@ -136,18 +202,19 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
       // Write-capable host tools and every non-AGS MCP tool reach this boundary before they run: the last point the
       // fork's file is the host's. AGS tools pin through their own binding below.
       if (readLineage) service.pinForkParent(sessionId, readLineage);
-      if (EDIT_TOOLS.has(observation.toolName ?? "")) service.recordEditForSession(sessionId);
-      return {};
+      return isEditBoundary(observation) ? gateEdit(observation, service, host, environment) : {};
     }
     // AGS tools pin and bind on the server from the verified caller; the hook only did the host-process read above.
     return {};
   }
-  if (isTurnEnd(input)) return stopOutput(host, outputEventName, service.phaseCheckForSession(sessionId));
+  // A turn the host already continued through its Stop hook is checked without a second continuation.
+  if (isTurnEnd(input)) return stopOutput(host, outputEventName, service.phaseCheckForSession(sessionId, observation.stopHookActive === true));
   return {};
 }
 
-export function handleContinuityHook(input: HookInput, service: ContinuityService, host = "codex"): Record<string, unknown> {
-  return handleNormalizedContinuityHook(normalizedContinuityInput(adaptHostInput(input, host)), service, host);
+export function handleContinuityHook(input: HookInput, service: ContinuityService, host = "codex",
+  environment: NodeJS.ProcessEnv = process.env): Record<string, unknown> {
+  return handleNormalizedContinuityHook(normalizedContinuityInput(adaptHostInput(input, host)), service, host, environment);
 }
 
 type ContinuityHookPhase = "host-entry" | "stdin" | "input" | "storage" | "workflow-store" | "handle" | "close" | "stdout";
@@ -181,6 +248,7 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
   let phase: ContinuityHookPhase = "input";
   let continuity: SqliteContinuityStore | null = null;
   let workflow: SqliteWorkflowStore | null = null;
+  let workflowFailure: string | null = null;
   let primary: unknown;
   let failed = false;
   let result = "";
@@ -199,6 +267,8 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
       || normalized.action?.kind === "startup" || normalized.action?.kind === "fork" || normalized.action?.kind === "post-compact"
       || (normalized.observation.kind === "tool-boundary" && normalized.observation.boundaryPhase === "before"
         && localToolName(host, normalized.observation.toolName ?? "") !== null)
+      // The edit gate reads whether the bound workflow is active; a failed open passes and is named at the next Stop.
+      || isEditBoundary(normalized.observation)
       // The turn-end phase check reads the bound workflow's stages; a failed open reports and checks as unavailable.
       || isTurnEnd(normalized);
     if (needsWorkflowState) {
@@ -207,10 +277,11 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
         // Missing authority keeps roots bound; context remains optional and the cause visible.
         reportContinuityFailure("workflow-store", cause);
         workflow = null;
+        workflowFailure = workflowFailureCode(cause);
       }
     }
     phase = "handle";
-    const output = handleNormalizedContinuityHook(normalized, new ContinuityService(continuity, null, workflow), host);
+    const output = handleNormalizedContinuityHook(normalized, new ContinuityService(continuity, null, workflow, undefined, workflowFailure), host, environment);
     result = Object.keys(output).length > 0 ? JSON.stringify(output) : "";
   } catch (cause) {
     primary = cause;

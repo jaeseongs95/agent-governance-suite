@@ -25,6 +25,7 @@ import {
 import type { WorkflowStore } from "./workflow-store.js";
 import type { ForkHostParentRead, ForkOriginRead, LineageRead } from "./host-input-adapter.js";
 import type { VerifiedCaller } from "./caller-identity.js";
+import { failureReason } from "./failure-diagnostics.js";
 
 const CANDIDATE_TOKEN_TTL_SECONDS = 3600;
 
@@ -66,6 +67,38 @@ const LINEAGE_ANCHOR_COUNT = 16;
 /** Phase check (design ags30-phase-check 3.2-3.3): a file edit, and the turn-end check that covers it. */
 const PHASE_EDIT_EVENT = "phase-edit";
 const PHASE_CHECK_EVENT = "phase-check";
+/**
+ * Workflow enforcement (design ags30-phase-check 7). A window is every observation after the later of the last phase
+ * check and the last workflow start. Each distinct product file edited in a window without an active workflow is one
+ * phase-file row (turn_hash: the HMAC of the normalized path); each refused edit is one phase-deny row, and a
+ * phase-deny after the last workflow start locks edits across phase checks until a workflow starts.
+ */
+const PHASE_FILE_EVENT = "phase-file";
+const PHASE_DENY_EVENT = "phase-deny";
+/** success = 1 when a refused edit preceded the start (the "start after deny" rate). */
+const PHASE_START_EVENT = "phase-workflow-start";
+/** AGS infrastructure failures: the window passes and the next Stop names the cause code once. */
+const START_FAILED_PREFIX = "workflow-start-failed:";
+const GATE_UNAVAILABLE_PREFIX = "phase-gate-unavailable:";
+/**
+ * Starting value, not a measured threshold: without an active workflow, the edit that makes this many distinct product
+ * files in one window is refused. Tune it from the phase-deny and phase-workflow-start rows.
+ */
+export const WORKFLOW_FILE_LIMIT = 3;
+/** The fixed minimal start every refusal names. */
+export const MINIMAL_WORKFLOW_START_EXAMPLE = 'start_workflow {"goal":"<목표>","stages":["minimal-implementation","test-sensitivity-review"],"acceptanceCriteria":["<수용 기준>"]}';
+const RUN_TERMINAL_STATES = new Set(["passed", "failed", "blocked"]);
+
+type WorkflowActivity = "active" | "none" | { unavailable: string };
+
+/** A failure's stable code: a workflow contract error keeps its own code and reason, never a generic one. */
+export function workflowFailureCode(cause: unknown): string {
+  if (cause instanceof WorkflowContractError && !types.isProxy(cause)) {
+    const reason = cause.details?.reasonCode ?? cause.details?.reason;
+    return typeof reason === "string" && /^[A-Za-z0-9_.:-]{1,80}$/u.test(reason) ? `${cause.code}:${reason}` : cause.code;
+  }
+  return failureReason(cause).reason ?? "UNEXPECTED_FAILURE";
+}
 
 export interface WorkflowContinuityCardV1 {
   schemaVersion: "1.0.0";
@@ -125,6 +158,15 @@ export interface ContinuityGateway {
   bindOpenedRoot(caller: VerifiedCaller, rootId: string): boolean;
   /** Called only with the session identity verified by the MCP ingress. */
   prepareWorkflowStart(rawSessionId: string, rootId: string): void;
+  /**
+   * Distinct product files edited without a workflow that a start now adopts (design ags30-phase-check 7.5): the current
+   * window, or while locked the window that ended in the refusal, which a later phase check does not clear.
+   */
+  editWindowFileCount(rawSessionId: string): number;
+  /** Records an AGS infrastructure failure of a workflow start so the session's current window is not refused. */
+  recordWorkflowStartFailure(rawSessionId: string, cause: unknown): void;
+  /** Moves a session bound to a finished workflow to a new epoch, as a new prompt would, so a new start can bind. */
+  settleFinishedWorkflow(rawSessionId: string): void;
 }
 
 function ok<T>(data: T): ApiResultV1<T> {
@@ -184,6 +226,8 @@ export class ContinuityService implements ContinuityGateway {
     private readonly validator: ContractValidator | null,
     private readonly workflowStore: WorkflowStore | null = null,
     private readonly now: () => Date = () => new Date(),
+    /** Why the hook could not open the workflow store, when it could not; the gate names this code instead of a generic one. */
+    private readonly workflowStoreFailure: string | null = null,
   ) {
     this.secret = store.getOrCreateSecret(() => randomBytes(32).toString("base64url"));
   }
@@ -192,7 +236,7 @@ export class ContinuityService implements ContinuityGateway {
     return `hmac-sha256:${this.hmac(`session\0${rawSessionId}`)}`;
   }
 
-  hashOpaque(kind: "request" | "turn", value: string): string {
+  hashOpaque(kind: "request" | "turn" | "file", value: string): string {
     return `hmac-sha256:${this.hmac(`${kind}\0${value}`)}`;
   }
 
@@ -694,7 +738,35 @@ export class ContinuityService implements ContinuityGateway {
       || !this.store.bindRoot(task.taskCorrelation, task.currentEpoch, rootId, now, task.rootId)) {
       throw new WorkflowContractError("BINDING_INVALID", "The workflow start conflicts with the current continuity task.");
     }
+    const { taskCorrelation: c, currentEpoch: e } = task;
+    // A start ends the window and its lock; success marks a start that followed a refused edit.
+    this.store.recordObservation(c, e, PHASE_START_EVENT, null, this.locked(c, e), now);
   }
+
+  editWindowFileCount(rawSessionId: string): number {
+    const task = this.store.getTask(this.correlateSession(rawSessionId));
+    if (!task) return 0;
+    const { taskCorrelation: c, currentEpoch: e } = task;
+    let from = this.windowStart(c, e);
+    if (this.locked(c, e)) {
+      // The lock began at the first refusal after the last start; nothing was counted after it.
+      const lastStart = this.store.lastObservationId(c, e, PHASE_START_EVENT) ?? 0;
+      const firstDeny = this.store.firstObservationIdAfter(c, e, PHASE_DENY_EVENT, lastStart) ?? 0;
+      from = Math.max(this.store.lastObservationId(c, e, PHASE_CHECK_EVENT, firstDeny) ?? 0, lastStart);
+    }
+    return new Set(this.store.observationHashesAfter(c, e, PHASE_FILE_EVENT, from)).size;
+  }
+
+  recordWorkflowStartFailure(rawSessionId: string, cause: unknown): void {
+    const now = this.now().toISOString();
+    const { taskCorrelation: c, currentEpoch: e } = this.store.ensureTask(this.correlateSession(rawSessionId), now);
+    this.store.recordObservation(c, e, START_FAILED_PREFIX + workflowFailureCode(cause), null, false, now);
+  }
+
+  settleFinishedWorkflow(rawSessionId: string): void {
+    this.ensureSession(rawSessionId);
+  }
+
 
   candidateForSession(rawSessionId: string): ContinuityCandidateV1 {
     const task = this.ensureSession(rawSessionId);
@@ -755,39 +827,105 @@ export class ContinuityService implements ContinuityGateway {
     const now = this.now().toISOString();
     // ensureTask, not ensureSession: an edit boundary never rotates a bound epoch.
     const { taskCorrelation: c, currentEpoch: e } = this.store.ensureTask(this.correlateSession(rawSessionId), now);
+    this.recordEdit(c, e, now);
+  }
+
+  private recordEdit(c: string, e: number, now: string): void {
     const edit = this.store.lastObservationId(c, e, PHASE_EDIT_EVENT);
     if (edit !== null && edit > (this.store.lastObservationId(c, e, PHASE_CHECK_EVENT) ?? 0)) return;
     this.store.recordObservation(c, e, PHASE_EDIT_EVENT, null, true, now);
   }
 
+  private windowStart(c: string, e: number): number {
+    return Math.max(this.store.lastObservationId(c, e, PHASE_CHECK_EVENT) ?? 0, this.store.lastObservationId(c, e, PHASE_START_EVENT) ?? 0);
+  }
+
+  /** A refusal after the last workflow start: a phase check does not lift it, a workflow start does. */
+  private locked(c: string, e: number): boolean {
+    return (this.store.lastObservationId(c, e, PHASE_DENY_EVENT) ?? 0) > (this.store.lastObservationId(c, e, PHASE_START_EVENT) ?? 0);
+  }
+
   /**
-   * At turn end, once per edit run: the stages the stored state does not show as passed, from stored state only.
-   * Returns the cue text, or null when nothing was edited since the last check or nothing is missing.
+   * Before a product file edit (design ags30-phase-check 7.2): `targets` are the normalized, non-exempt paths the tool
+   * will change. Returns the refusal reason, or null to let the edit run. Without an active workflow the edit that makes
+   * WORKFLOW_FILE_LIMIT distinct files in the window is refused and locks the window; files already counted stay
+   * editable until then. An AGS infrastructure failure never refuses: it is recorded and named once at the next Stop.
    */
-  phaseCheckForSession(rawSessionId: string): string | null {
+  gateEditForSession(rawSessionId: string, targets: readonly string[], shown: readonly string[] = targets): string | null {
+    const now = this.now().toISOString();
+    const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
+    const { taskCorrelation: c, currentEpoch: e } = task;
+    this.recordEdit(c, e, now);
+    const activity = this.workflowActivity(task);
+    if (activity === "active") return null;
+    const windowStart = this.windowStart(c, e);
+    if (activity !== "none") {
+      const event = GATE_UNAVAILABLE_PREFIX + activity.unavailable;
+      if (this.store.observationEventsAfter(c, e, event, windowStart).length === 0) this.store.recordObservation(c, e, event, null, false, now);
+      return null;
+    }
+    if (this.store.observationEventsAfter(c, e, START_FAILED_PREFIX, windowStart).length > 0) return null;
+    const counted = new Set(this.store.observationHashesAfter(c, e, PHASE_FILE_EVENT, windowStart));
+    const fresh = [...new Set(targets.map(target => this.hashOpaque("file", target)))].filter(hash => !counted.has(hash));
+    if (!this.locked(c, e) && (fresh.length === 0 || counted.size + fresh.length < WORKFLOW_FILE_LIMIT)) {
+      for (const hash of fresh) this.store.recordObservation(c, e, PHASE_FILE_EVENT, hash, true, now);
+      return null;
+    }
+    this.store.recordObservation(c, e, PHASE_DENY_EVENT, null, false, now);
+    const earlier = counted.size > 0 ? ` (앞서 바꾼 제품 파일 ${counted.size}개 포함)` : "";
+    return `[AGS] workflow 없이 제품 파일 ${WORKFLOW_FILE_LIMIT}개째 변경: ${shown.join(", ")}${earlier}. `
+      + `먼저 workflow를 시작하라(최소 시작 호출 예: ${MINIMAL_WORKFLOW_START_EXAMPLE}).`;
+  }
+
+  /** Active workflow: the bound root is open, has a run, and that run is not terminal. */
+  private workflowActivity(task: ContinuityTaskRecord): WorkflowActivity {
+    if (!task.rootId) return "none";
+    if (!this.workflowStore) return { unavailable: this.workflowStoreFailure ?? "WORKFLOW_STORE_UNAVAILABLE" };
+    try {
+      const snapshot = this.workflowStore.getConvergenceSnapshot(task.rootId);
+      if (!snapshot || snapshot.root.state === "completed" || snapshot.root.state === "abandoned") return "none";
+      const runId = snapshot.workflowRunIds.at(-1);
+      const receipt = runId ? this.workflowStore.getRun(runId) : null;
+      return receipt && !RUN_TERMINAL_STATES.has(receipt.state) ? "active" : "none";
+    } catch (cause) {
+      return { unavailable: workflowFailureCode(cause) };
+    }
+  }
+
+  /**
+   * At turn end, once per edit run (design ags30-phase-check 7.4): the stages of the active run that have not passed,
+   * and the AGS infrastructure failures that let this window pass. A window with no active run and no failure gives
+   * no output. `quiet` records the check without output (a turn the host already continued).
+   */
+  phaseCheckForSession(rawSessionId: string, quiet = false): string | null {
     const task = this.store.getTask(this.correlateSession(rawSessionId));
     if (!task) return null;
     const { taskCorrelation: c, currentEpoch: e } = task;
+    const lastCheck = this.store.lastObservationId(c, e, PHASE_CHECK_EVENT) ?? 0;
     const edit = this.store.lastObservationId(c, e, PHASE_EDIT_EVENT);
-    if (edit === null || edit < (this.store.lastObservationId(c, e, PHASE_CHECK_EVENT) ?? 0)) return null;
-    const missing = this.missingPhases(task);
-    this.store.recordObservation(c, e, PHASE_CHECK_EVENT, null, missing.length === 0, this.now().toISOString());
-    return missing.length === 0 ? null
-      : `[AGS 단계 확인] 이번 작업에서 파일 변경이 관측됐고 다음이 확인되지 않았다: ${missing.join(", ")}.\n`
-        + "먼저 어떤 단계를 빠뜨렸는지 사용자에게 밝혀라. 그 단계가 이번 작업에 필요하면 지금 진행하라. 필요 없으면 이유를 한 줄로 밝히고 끝내라.";
+    const failures = [START_FAILED_PREFIX, GATE_UNAVAILABLE_PREFIX]
+      .flatMap(prefix => this.store.observationEventsAfter(c, e, prefix, lastCheck));
+    if ((edit === null || edit < lastCheck) && failures.length === 0) return null;
+    const activity = this.workflowActivity(task);
+    if (typeof activity === "object") failures.push(GATE_UNAVAILABLE_PREFIX + activity.unavailable);
+    const pending = activity === "active" ? this.pendingStages(task) : [];
+    this.store.recordObservation(c, e, PHASE_CHECK_EVENT, null, pending.length === 0 && failures.length === 0, this.now().toISOString());
+    const lines: string[] = [];
+    if (failures.length > 0) {
+      lines.push(`[AGS] workflow 상태를 확인하지 못해 이번 구간의 제품 파일 변경을 막지 않았다. 원인 코드: ${[...new Set(failures)].join(", ")}.`);
+    }
+    if (pending.length > 0) {
+      lines.push(`[AGS 단계 확인] 진행 중인 workflow에서 다음 단계가 아직 passed가 아니다: ${pending.join(", ")}.`,
+        "빠진 단계를 지금 진행하거나, 필요 없으면 계획을 고쳐 그 단계를 빼라.");
+    }
+    return quiet || lines.length === 0 ? null : lines.join("\n");
   }
 
-  private missingPhases(task: ContinuityTaskRecord): string[] {
-    if (!task.rootId) return ["workflow 없이 변경함"];
-    if (!this.workflowStore) return ["단계 상태 확인 불가"];
-    const snapshot = this.workflowStore.getConvergenceSnapshot(task.rootId);
-    if (!snapshot) return ["단계 상태 확인 불가"];
-    if (snapshot.root.state === "completed" || snapshot.root.state === "abandoned") return [];
-    const runId = snapshot.workflowRunIds.at(-1);
-    // A root with no run planned no stages: the change ran outside a workflow.
-    if (!runId) return ["workflow 없이 변경함"];
-    const receipt = this.workflowStore.getRun(runId);
-    if (!receipt) return ["단계 상태 확인 불가"];
+  private pendingStages(task: ContinuityTaskRecord): string[] {
+    const snapshot = task.rootId ? this.workflowStore?.getConvergenceSnapshot(task.rootId) : null;
+    const runId = snapshot?.workflowRunIds.at(-1);
+    const receipt = runId ? this.workflowStore?.getRun(runId) : null;
+    if (!receipt) return [];
     // Same pass test as the finalize gate (workflow-service finalize).
     return receipt.plan.stages
       .filter(stage => receipt.stageResults.find(result => result.stageId === stage.stageId)?.state !== "passed")
@@ -970,4 +1108,7 @@ export class UnavailableContinuityService implements ContinuityGateway {
   bindOpenedRoot(): boolean { return false; }
   // Direct checkpoint access is unavailable too; preserve optional continuity.
   prepareWorkflowStart(): void {}
+  editWindowFileCount(): number { return 0; }
+  recordWorkflowStartFailure(): void {}
+  settleFinishedWorkflow(): void {}
 }

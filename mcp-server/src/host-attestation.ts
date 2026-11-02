@@ -17,7 +17,7 @@ import type { ExecutionObservationBindingV1, TrustedExecutionContextProvider } f
  * current tool call supplies model, effort and call ID; this module only qualifies them against the
  * trusted installation adapter. Nothing here is read from tool arguments.
  */
-export const HOST_ATTESTATION_TOOLS: ReadonlySet<string> = new Set(["plan_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
+export const HOST_ATTESTATION_TOOLS: ReadonlySet<string> = new Set(["plan_workflow", "start_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
 
 // An observation is consumable for five minutes after the server accepts the call.
 const OBSERVATION_TTL_MS = 5 * 60 * 1000;
