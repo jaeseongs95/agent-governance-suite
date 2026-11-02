@@ -594,16 +594,18 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   // relay (it never acquired or died), this boundary starts one single-attempt relay for it; the lease keeps one
   // owner and acquire-relay fences superseded generations. Until such a hook runs, an idle session has no relay.
   // The relay parent must be the exact host birth that generation's SessionStart reported. This hook's own host
-  // process is compared with it; a hook without its host's identity, a legacy generation without a report, another
-  // process of the same session or a reused PID is refused with a recorded reason and starts nothing.
+  // process is compared with it; a hook without its host's identity, another process of the same session or a reused
+  // PID is refused with a recorded reason and starts nothing. A generation a pre-3.0 SessionStart created has no
+  // reported host: a relay-less one (no replacement of a live relay) is adopted by this hook's live host, which
+  // grantRelay records only while the generation still has none, so a second process then gets HOST_MISMATCH.
   const recoverUnverifiedRelay = async (claimed: RelayRecoveryHint | undefined): Promise<void> => {
     const recovery = claimed?.relayRecovery;
     if (!recovery?.instanceId || options.recoverExistingSession || !actorAccess(observation.actor).allowed) return;
     try {
       const hostPid = resolveHookProcessPid(host, explicitHostPid, undefined);
       if (!hostPid) throw hookFailure("RELAY_RECOVERY_HOST_UNIDENTIFIED", "This hook did not receive its host process identity.");
-      if (!Number.isInteger(recovery.hostPid)) throw hookFailure("RELAY_RECOVERY_PARENT_UNREPORTED", "The relay-less generation has no reported host process to bind.");
-      if (recovery.hostPid !== hostPid) throw hookFailure("RELAY_RECOVERY_PARENT_MISMATCH", "This hook's host process is not the generation's reported host.");
+      if (!Number.isInteger(recovery.hostPid) && recovery.replace === true) throw hookFailure("RELAY_RECOVERY_PARENT_UNREPORTED", "A live relay of a generation without a reported host process is not replaced.");
+      if (Number.isInteger(recovery.hostPid) && recovery.hostPid !== hostPid) throw hookFailure("RELAY_RECOVERY_PARENT_MISMATCH", "This hook's host process is not the generation's reported host.");
       const codeDigest = installedRelayCode();
       const grant = await request<{ relayId: unknown; reason?: unknown }>("grant-relay", { target, transport: profile.transport,
         instanceId: recovery.instanceId, hostPid, ...(codeDigest ? { codeDigest } : {}) });

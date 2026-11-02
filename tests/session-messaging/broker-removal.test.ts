@@ -146,6 +146,20 @@ describe("CS-1 fencing: a later grant retires the previous relay", () => {
     expect(store.database.prepare("SELECT host_pid, host_start FROM session_presence WHERE instance_id = ?").get("birth-unhosted"))
       .toEqual({ host_pid: null, host_start: null });
   });
+
+  it("a relay-less pre-3.0 birth is adopted by the first hook host only; its relay then binds that host birth", () => {
+    const clock = { now: T0 };
+    const store = open(path.join(directory(), "session-messages.sqlite3"), () => clock.now);
+    store.startPresence({ ...target, instanceId: "birth-legacy", transport, wakeVisibility: "silent", canWakeSilently: true, deliveryCapabilities: capabilities });
+    clock.now = T0 + 16 * SECOND; // its old relay is gone: no live lease
+    expect(store.relayRecoveryInstance(target)).toBe("birth-legacy");
+    const adopted = store.grantRelay({ ...target, transport, instanceId: "birth-legacy", codeDigest: null, hostPid: 4242 });
+    expect(adopted.relayId).toEqual(expect.any(String));
+    expect(store.grantRelay({ ...target, transport, instanceId: "birth-legacy", codeDigest: null, hostPid: 5151 })).toEqual({ relayId: null, reason: "HOST_MISMATCH" });
+    expect(tick(store, "birth-legacy", adopted.relayId!)).toEqual({ alive: true, count: 0, hostBound: true });
+    expect(store.database.prepare("SELECT host_pid, host_start FROM session_presence WHERE instance_id = ?").get("birth-legacy"))
+      .toEqual({ host_pid: 4242, host_start: HOST_START });
+  });
 });
 
 describe("CS-2 single dispatch: the start CAS admits one dispatch per attempt across connections", () => {

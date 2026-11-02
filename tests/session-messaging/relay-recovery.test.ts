@@ -118,10 +118,23 @@ it("HOOK-6: every packaged hook that can receive a recovery hint passes the host
   }
 });
 
+it("HOOK-4b: a relay-less pre-3.0 generation without a reported host is adopted by this hook's host", async () => {
+  f.request.mockImplementation(answer(["claim-deferred"], { instanceId: "I2" }));
+  await handleSessionMessageHook(post, host, 424242);
+  const grants = f.request.mock.calls.filter(([operation]) => operation === "grant-relay");
+  expect(grants).toHaveLength(1);
+  expect(grants[0]![1]).toMatchObject({ instanceId: "I2", hostPid: 424242 });
+  expect(f.spawn).toHaveBeenCalledTimes(1);
+  const args = f.spawn.mock.calls[0]![1] as string[];
+  for (const [flag, value] of [["--instance-id", "I2"], ["--parent-pid", "424242"], ["--relay-id", relayId]] as const) {
+    expect(args[args.indexOf(flag) + 1]).toBe(value);
+  }
+});
+
 it("HOOK-4: a recovery relay is refused, with a recorded reason, unless this hook's host is the generation's reported host", async () => {
   const stderr = vi.spyOn(console, "error").mockImplementation(() => {});
   const cases = [
-    [{ instanceId: "I2" }, "RELAY_RECOVERY_PARENT_UNREPORTED"], // a generation without a reported host: nothing to bind
+    [{ instanceId: "I2", replace: true }, "RELAY_RECOVERY_PARENT_UNREPORTED"], // a live relay of an unreported generation stays
     [{ ...hint, hostPid: 515151 }, "RELAY_RECOVERY_PARENT_MISMATCH"], // another process of the same session
   ] as const;
   for (const [recovery, reason] of cases) {
