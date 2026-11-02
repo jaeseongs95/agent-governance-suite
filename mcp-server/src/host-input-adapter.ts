@@ -106,6 +106,11 @@ export interface HookHostAdapter {
   deliveryProfile(environment: NodeJS.ProcessEnv, diagnose: (reason: string, observation?: unknown) => void, defaultQueueWake?: boolean): HostDeliveryProfile;
   processPid(explicitHostPid?: number, hostProcess?: Readonly<{ pid: number; startToken: string }>): number | undefined;
   peerWait?: (observation: InputObservation) => NativePeerWaitObservation | null;
+  /**
+   * Directories the host itself keeps for the agent's own notes (memory, plan artifacts), never product files. A
+   * segment that is exactly `*` matches one directory name. The phase gate does not count edits below them.
+   */
+  agentNoteRoots?: (environment: NodeJS.ProcessEnv) => string[];
 }
 
 // A host entry registers trusted adapter code in the same module namespace it consumes.
@@ -115,7 +120,8 @@ export function registerHookHostAdapter(host: string, adapter: HookHostAdapter):
   if (typeof host !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,199}$/u.test(host)
     || !adapter || typeof adapter.deliveryProfile !== "function" || typeof adapter.processPid !== "function"
     || (adapter.adaptInput !== undefined && typeof adapter.adaptInput !== "function")
-    || (adapter.ownsTool !== undefined && typeof adapter.ownsTool !== "function")) throw hookHostFailure("adapter");
+    || (adapter.ownsTool !== undefined && typeof adapter.ownsTool !== "function")
+    || (adapter.agentNoteRoots !== undefined && typeof adapter.agentNoteRoots !== "function")) throw hookHostFailure("adapter");
   if (hookHostAdapters.has(host)) throw hookHostFailure("duplicate");
   hookHostAdapters.set(host, Object.freeze({ ...adapter }));
 }
@@ -152,6 +158,11 @@ export function hostDeliveryProfile(host: string, environment: NodeJS.ProcessEnv
   const adapter = selectedHookHostAdapter(host);
   if (!adapter) throw hookHostFailure("unavailable");
   return adapter.deliveryProfile(environment, diagnose, defaultQueueWake);
+}
+
+/** The host's own note directories; a host without the capability names none. */
+export function hostAgentNoteRoots(host: string, environment: NodeJS.ProcessEnv): string[] {
+  return selectedHookHostAdapter(host)?.agentNoteRoots?.(environment) ?? [];
 }
 
 export function nativePeerWait(observation: InputObservation): NativePeerWaitObservation | null {

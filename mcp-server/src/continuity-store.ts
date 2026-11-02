@@ -450,6 +450,24 @@ export class SqliteContinuityStore {
     return row?.id ?? null;
   }
 
+  /** The turn_hash values of this exact event recorded after `afterId`, in store order. */
+  observationHashesAfter(taskCorrelation: string, epoch: number, event: string, afterId: number): string[] {
+    return (this.database.prepare(`
+      SELECT turn_hash FROM continuity_observations
+      WHERE task_correlation = ? AND epoch = ? AND event = ? AND observation_id > ? AND turn_hash IS NOT NULL
+      ORDER BY observation_id ASC
+    `).all(taskCorrelation, epoch, event, afterId) as Array<{ turn_hash: string }>).map(row => row.turn_hash);
+  }
+
+  /** The events starting with `prefix` recorded after `afterId`, in store order. */
+  observationEventsAfter(taskCorrelation: string, epoch: number, prefix: string, afterId: number): string[] {
+    return (this.database.prepare(`
+      SELECT event FROM continuity_observations
+      WHERE task_correlation = ? AND epoch = ? AND substr(event, 1, ?) = ? AND observation_id > ?
+      ORDER BY observation_id ASC
+    `).all(taskCorrelation, epoch, prefix.length, prefix, afterId) as Array<{ event: string }>).map(row => row.event);
+  }
+
   /** Copies a selected parent snapshot into an empty child epoch only; existing child state is never replaced. */
   adoptSnapshot(taskCorrelation: string, epoch: number, snapshot: ContinuitySnapshotV1): boolean {
     return this.transaction("Cannot adopt the continuity snapshot.", () => {

@@ -19,6 +19,11 @@ export interface InputObservation {
   boundaryPhase?: "before" | "after";
   toolName?: string;
   toolInput?: Record<string, unknown>;
+  /** File-edit tool boundary only: the absolute paths the host tool will change, as its adapter reads them from the
+   * tool input. An empty list is an edit tool whose target the adapter could not read. Absent: not a file edit. */
+  editTargets?: string[];
+  /** Turn end only: the host reports that this turn was already continued by its Stop hook. */
+  stopHookActive?: boolean;
   wakeCandidates?: string[];
   wakeOnly?: boolean;
   workspaceId?: string;
