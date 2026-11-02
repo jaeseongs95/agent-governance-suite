@@ -562,8 +562,15 @@ export function observeClaudeExecution(input: HookInput, options: HostAttestatio
     for (const candidate of candidates) {
       const probe = reader.probe(candidate, toolUseId);
       if (probe.state === "indeterminate") return { unavailable: probe.reason };
-      if (probe.state === "present") return { unavailable: "CLAUDE_ISSUING_MESSAGE_REJECTED" };
+      if (probe.state === "present") {
+        // The probe reopens the file, so it can see an issuer written after the search above read it.
+        observation = reader.find(candidate, toolUseId, sessionId, agentId);
+        if (!observation) return { unavailable: "CLAUDE_ISSUING_MESSAGE_REJECTED" };
+        break;
+      }
     }
+  }
+  if (!observation) {
     // Subagents get no SessionStart or model-switch hooks, so only their own written message counts.
     const session = agentId ? null : options.readSessionModel?.(sessionId) ?? null;
     if (!session) return { unavailable: "CLAUDE_MODEL_UNOBSERVED" };

@@ -74,6 +74,25 @@ describe("AGS-D-0032 bounded Claude transcript reads", () => {
   });
 });
 
+// Interactive Claude writes the issuing message while the hook runs: the search reads the file before it lands
+// and the later probe sees it. The call is the session's own, so it is observed, not rejected.
+it("observes an issuing message written between the search and the probe", () => {
+  let reads = 0;
+  const readText = () => (++reads === 1 ? "" : line());
+  const cache = vi.fn(() => session("2026-10-25T00:00:20.000Z"));
+  expect(observeClaudeExecution(input, { maxWaitMs: 0, now, readText, readSessionModel: cache }))
+    .toMatchObject({ model, effort: "high", provenance: "claude-code:transcript-tool-use" });
+  expect(cache).not.toHaveBeenCalled();
+});
+
+it("still rejects a late issuing message from another session", () => {
+  let reads = 0;
+  const foreign = JSON.stringify({ ...JSON.parse(line()), sessionId: "al05-other-session" });
+  const readText = () => (++reads === 1 ? "" : foreign);
+  expect(observeClaudeExecution(input, { maxWaitMs: 0, now, readText }))
+    .toEqual({ unavailable: "CLAUDE_ISSUING_MESSAGE_REJECTED" });
+});
+
 describe("AGS-D-0033 actual model identity of the call", () => {
   it("never substitutes a qualified session record for an unknown issuing model", () => {
     const transcript = line(model, "2026-10-25T00:00:10.000Z", "old-call") + "\n" + line("al05-unknown-new-model", "2026-10-25T00:00:30.000Z");
