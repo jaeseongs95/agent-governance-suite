@@ -199,10 +199,10 @@ describe("AL09 server boundary regressions", () => {
     });
   });
 
-  it("D0080 advertises the actual unguarded-start rejection", async () => {
+  it("D0080 advertises start_workflow as the guarded one-call start and rejects an unguarded plan", async () => {
     await withServer(async (client, call) => {
       const tools = (await client.listTools()).tools;
-      expect(tools.find(tool => tool.name === "start_workflow")?.description).toContain("Reject unguarded");
+      expect(tools.find(tool => tool.name === "start_workflow")?.description).toContain("Start a guarded workflow in one call");
       expect(payload(await call("start_workflow", {})).error?.code).toBe("INVALID_INPUT");
     });
   });

@@ -252,6 +252,12 @@ const ORCHESTRATOR_PHASE_CHECK_SOURCE_HASHES = Object.freeze({
   "skills/orchestrator/SKILL.md": "9449361d827e52ae9de6d6be5248fe76e18b8165ee0a26900e7f54b241876b00",
   "skills/orchestrator/classification.json": "268eae71468978406b87e29774029fabbee8a7b576d06e4fd95ca269b284c55e",
 });
+// Workflow enforcement (docs/ags30-phase-check-design.md 7): start_workflow is the minimal start; exact successor bytes only.
+const ORCHESTRATOR_WORKFLOW_ENFORCEMENT_SOURCE_HASHES = Object.freeze({
+  "skills/orchestrator/SKILL.md": "e9be18c4d7f14a8aca9a3ce521501e6a673626a96d5bb07735f562e11c153001",
+  "skills/orchestrator/classification.json": "52d8d444e8c8fdadd4786d730191b37c6430c97993dcb93e447cccb5c69dfe02",
+  "skills/orchestrator/references/mcp-execution.md": "e5521ac3485c022342deab25a65bf61f66578e6623beda0490f797439ebc48a0",
+});
 // 참고자료는 역사 원문으로 투영하지 않고 현재의 정확한 분류 원문으로 판정한다.
 const ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_REFERENCE_HASHES = Object.freeze({
   "skills/orchestrator/references/skill-classification.md": "f33cce4afc3ef2480c94799f46ae78e133c1576e3b57a257c1046f6956d811c9",
@@ -265,7 +271,7 @@ const TASK_CONTRACT_ROUTING_SOURCE_HASHES = Object.freeze({
 function matchesOrchestratorSourceSuccessor(path, bytes) {
   const digest = createHash("sha256").update(bytes).digest("hex");
   return [ORCHESTRATOR_MIDTASK_SOURCE_HASHES, ORCHESTRATOR_RESOURCE_IMPACT_SOURCE_HASHES, ORCHESTRATOR_BEHAVIOR_SOURCE_HASHES,
-    ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_SOURCE_HASHES, ORCHESTRATOR_PHASE_CHECK_SOURCE_HASHES]
+    ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_SOURCE_HASHES, ORCHESTRATOR_PHASE_CHECK_SOURCE_HASHES, ORCHESTRATOR_WORKFLOW_ENFORCEMENT_SOURCE_HASHES]
     .some(hashes => Object.hasOwn(hashes, path) && digest === hashes[path]);
 }
 
