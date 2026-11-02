@@ -1833,3 +1833,98 @@ try {
   rmSync(tmpDir, { recursive: true, force: true });
 }
 }, 30_000);
+
+test("maps the official agy file edit tools to canonical edit tool names", () => {
+  for (const [agyName, canonicalName] of [
+    ["write_to_file", "Write"],
+    ["replace_file_content", "Edit"],
+    ["multi_replace_file_content", "MultiEdit"],
+    ["default_api:replace_file_content", "Edit"],
+  ]) {
+    const built = buildCanonicalHookInput(
+      { conversationId: TEST_SESSION_ID, toolCall: { name: agyName, args: { TargetFile: "a.txt" } } },
+      "PreToolUse",
+    );
+    assert.equal(built.canonicalInput.tool_name, canonicalName, agyName);
+    assert.equal(built.toolBoundary.localTool, canonicalName, agyName);
+    assert.equal(built.toolBoundary.isShellMapped, false, agyName);
+  }
+});
+
+function stopStageRunner(contexts, executedStages, onStage = () => {}) {
+  return async (stage, event, _rawInput, currentToolInput) => {
+    executedStages.push(`${stage}:${event}`);
+    onStage(stage);
+    const additionalContext = contexts[stage];
+    return {
+      output: additionalContext ? { hookSpecificOutput: { hookEventName: "Stop", additionalContext } } : {},
+      updatedToolInput: currentToolInput,
+      mutated: false,
+    };
+  };
+}
+
+const STOP_INPUT = { conversationId: TEST_SESSION_ID, executionNum: 1, fullyIdle: true };
+const PEER_TEXT = "[agent-governance-suite peer message BEGIN]\n{\"message\":\"pending\"}\n[agent-governance-suite peer message END]";
+const PHASE_TEXT = "[AGS 단계 확인] 이번 작업에서 파일 변경이 관측됐고 다음이 확인되지 않았다: test.";
+
+test("Stop joins session-message and continuity texts into one continue reason", async () => {
+  const executedStages = [];
+  const out = await executeAntigravityHookEvent(STOP_INPUT, "Stop", "", {
+    now: () => 1000,
+    entryMonotonicMs: 1000,
+    stageRunner: stopStageRunner({ "session-message": PEER_TEXT, continuity: PHASE_TEXT }, executedStages),
+  });
+  assert.deepEqual(executedStages, ["session-message:Stop", "continuity:Stop"]);
+  assert.deepEqual(out, { decision: "continue", reason: `${PEER_TEXT}\n\n${PHASE_TEXT}` });
+
+  const duplicate = await executeAntigravityHookEvent(STOP_INPUT, "Stop", "", {
+    now: () => 1000,
+    entryMonotonicMs: 1000,
+    stageRunner: stopStageRunner({ "session-message": PHASE_TEXT, continuity: PHASE_TEXT }, []),
+  });
+  assert.deepEqual(duplicate, { decision: "continue", reason: PHASE_TEXT }, "The same text must appear once");
+
+  const explicitStages = [];
+  await executeAntigravityHookEvent(STOP_INPUT, "Stop", "session-message", {
+    now: () => 1000,
+    entryMonotonicMs: 1000,
+    stageRunner: stopStageRunner({}, explicitStages),
+  });
+  assert.deepEqual(explicitStages, ["session-message:Stop"], "An explicit hook runs alone");
+});
+
+test("Stop returns the continuity text as the reason when only continuity speaks", async () => {
+  const out = await executeAntigravityHookEvent(STOP_INPUT, "Stop", "", {
+    now: () => 1000,
+    entryMonotonicMs: 1000,
+    stageRunner: stopStageRunner({ continuity: PHASE_TEXT }, []),
+  });
+  assert.deepEqual(out, { decision: "continue", reason: PHASE_TEXT });
+});
+
+test("Stop runs continuity after session-message and skips it when the budget is short", async () => {
+  const ample = [];
+  await executeAntigravityHookEvent(STOP_INPUT, "Stop", "", {
+    now: () => 1000,
+    entryMonotonicMs: 1000,
+    totalBudgetMs: 9200,
+    minSecondaryBudgetMs: 1500,
+    stageRunner: stopStageRunner({}, ample),
+  });
+  assert.deepEqual(ample, ["session-message:Stop", "continuity:Stop"]);
+
+  let clockMs = 1000;
+  const short = [];
+  const out = await executeAntigravityHookEvent(STOP_INPUT, "Stop", "", {
+    now: () => clockMs,
+    entryMonotonicMs: 1000,
+    totalBudgetMs: 9200,
+    minSecondaryBudgetMs: 1500,
+    stageRunner: stopStageRunner({ "session-message": PEER_TEXT, continuity: PHASE_TEXT }, short, (stage) => {
+      if (stage === "session-message") clockMs += 8100;
+    }),
+  });
+  assert.deepEqual(short, ["session-message:Stop"], "Continuity must be skipped when remaining budget < minSecondaryBudgetMs");
+  assert.deepEqual(out, { decision: "continue", reason: PEER_TEXT });
+});

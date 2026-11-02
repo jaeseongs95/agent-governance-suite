@@ -33,6 +33,7 @@ export const NON_CONTINUABLE_STOP_REASONS = new Set([
   "TERMINAL_CUSTOM_HOOK",
 ]);
 
+const PHASE_EDIT_TOOLS = new Set(["Write", "Edit", "MultiEdit"]);
 const CONTINUITY_BOUND_TOOLS = new Set([
   "open_convergence_root",
   "checkpoint_context",
@@ -61,6 +62,10 @@ const TOOL_NAME_MAP = {
   run_command: "Bash",
   write_file: "Write",
   edit_file: "Edit",
+  // Official agy file tools (https://antigravity.google/docs/hooks, fetched 2026-11-02).
+  write_to_file: "Write",
+  replace_file_content: "Edit",
+  multi_replace_file_content: "MultiEdit",
   invoke_subagent: "Agent",
 };
 
@@ -1310,6 +1315,16 @@ export async function startAntigravitySessionPresenceAndRelay(canonicalInput, op
   }
 }
 
+// b70204be (1): a terminal or canceled Stop must never be turned into continuation by any stage.
+function isNonContinuableStop(rawInput) {
+  const reason = text(rawInput.terminationReason);
+  return Boolean(
+    rawInput.error ||
+    rawInput.fullyIdle === false ||
+    Number(rawInput.executionNum ?? 0) > 3 ||
+    (reason && NON_CONTINUABLE_STOP_REASONS.has(reason)));
+}
+
 async function runSingleHookStage(hookName, event, rawInput, currentToolInput, options = {}) {
   const { canonicalInput, toolBoundary } = buildCanonicalHookInput(rawInput, event);
   if (!canonicalInput.session_id) return { output: {}, updatedToolInput: currentToolInput, mutated: false };
@@ -1341,16 +1356,8 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
     if (event === "PostToolUse") return { output: {}, updatedToolInput: currentToolInput, mutated: false };
 
     // b70204be (1): Check terminationReason (e.g. USER_CANCELED, ERROR, MAX_*) as well as error/fullyIdle/executionNum on Stop.
-    if (event === "Stop") {
-      const reason = text(rawInput.terminationReason);
-      if (
-        rawInput.error ||
-        rawInput.fullyIdle === false ||
-        Number(rawInput.executionNum ?? 0) > 3 ||
-        (reason && NON_CONTINUABLE_STOP_REASONS.has(reason))
-      ) {
-        return { output: {}, updatedToolInput: currentToolInput, mutated: false };
-      }
+    if (event === "Stop" && isNonContinuableStop(rawInput)) {
+      return { output: {}, updatedToolInput: currentToolInput, mutated: false };
     }
 
     // AGS PreToolUse is handled once by the common governance entry below.
@@ -1410,6 +1417,9 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
   }
 
   if (hookName === "continuity") {
+    if (event === "Stop" && isNonContinuableStop(rawInput)) {
+      return { output: {}, updatedToolInput: currentToolInput, mutated: false };
+    }
     let cleanArgs = currentToolInput;
     let mutated = false;
     if (event === "PreToolUse") {
@@ -1427,7 +1437,8 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
       }
       // Optimization (G1): Only spawn continuity-hook.mjs on PreToolUse when the tool is actually a continuity-bound tool!
       const localTool = toolBoundary?.localTool ?? "";
-      if (!CONTINUITY_BOUND_TOOLS.has(localTool)) {
+      // File edit tools reach continuity so the end-of-turn phase check can see the change.
+      if (!CONTINUITY_BOUND_TOOLS.has(localTool) && !PHASE_EDIT_TOOLS.has(localTool)) {
         return { output: {}, updatedToolInput: cleanArgs, mutated };
       }
     }
@@ -1618,13 +1629,26 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
     if (remainingBudgetMs() < MIN_PRIMARY_HOOK_BUDGET_MS) {
       return {};
     }
-    try {
-      const res = await runStage(explicitHook || "session-message", "Stop", rawInput, {}, stageOptions);
-      return translateCanonicalOutputToAntigravity("Stop", res.output, null);
-    } catch (cause) {
-      reportStageFailure(explicitHook || "session-message", cause, options?.writeStderr);
-      return {};
+    const stages = explicitHook ? [explicitHook] : ["session-message", "continuity"];
+    const contexts = [];
+    for (let idx = 0; idx < stages.length; idx++) {
+      const stage = stages[idx];
+      // Same rule as SessionStart (R04-F03): never skip the primary, skip continuity when the budget is short.
+      if (idx > 0 && remainingBudgetMs() < minSecondaryBudgetMs) {
+        break;
+      }
+      try {
+        const res = await runStage(stage, "Stop", rawInput, {}, stageOptions);
+        const ctx = text(record(record(res.output).hookSpecificOutput).additionalContext);
+        if (ctx && !contexts.includes(ctx)) contexts.push(ctx);
+      } catch (cause) {
+        reportStageFailure(stage, cause, options?.writeStderr);
+      }
     }
+    // Antigravity Stop takes one reason, so both stages' texts join into it.
+    return contexts.length > 0
+      ? translateCanonicalOutputToAntigravity("Stop", { hookSpecificOutput: { hookEventName: "Stop", additionalContext: contexts.join("\n\n") } }, null)
+      : {};
   }
 
   return {};
