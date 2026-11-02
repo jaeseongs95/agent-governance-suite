@@ -35,7 +35,7 @@ AGS supports this workflow with task contracts, specialist skills, the session b
 You need Node.js **24.0.0 or later** and plugin support in the host you use. Install AGS in each participating host. Using the plugin does not require cloning this repository or running `pnpm install`.
 
 <!-- release-version:start -->
-This document prepares the 3.0.0 public release; after the tag and Release are published, the current public release is `v3.0.0`. Version 2.9.1 is already public, and the v3.0.0 installation examples below apply after the tag and Release are published. Version 3.0 is not compatible with 2.x; the changes are summarized in the [3.0.0 release notes](docs/release-notes-v3.0.0.md) (Korean). This release prioritizes defect fixes; native-host re-measurement and dual-Cloud verification are not claimed complete. The included skills are listed in the skill table below. The JEV layer supports skill discovery, classification, evaluation, and recommendations; the AGENT checks applicability conditions and makes the final selection. Actual use requires approved classification settings for JEV or the current vendor, supported profiles, budget, and host discovery data. Production database migration and shared MCP cutover are not claimed complete.
+The current public release is `v3.0.1`, and the installation examples below use it. Version 3.0 is not compatible with 2.x; the changes are summarized in the [3.0.0 release notes](docs/release-notes-v3.0.0.md) and the [3.0.1 release notes](docs/release-notes-v3.0.1.md) (Korean). This release prioritizes defect fixes; native-host re-measurement and dual-Cloud verification are not claimed complete. The included skills are listed in the skill table below. The JEV layer supports skill discovery, classification, evaluation, and recommendations; the AGENT checks applicability conditions and makes the final selection. Actual use requires approved classification settings for JEV or the current vendor, supported profiles, budget, and host discovery data. Production database migration and shared MCP cutover are not claimed complete.
 <!-- release-version:end -->
 
 ### Claude Code
@@ -55,7 +55,7 @@ Run in a terminal:
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.0.0
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.0.1
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
