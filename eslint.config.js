@@ -8,6 +8,8 @@ export default tseslint.config(
       "claude-plugin/**",
       "**/__pycache__/**",
       "**/evals/results/**",
+      // One-off measurement scripts (docs/ags31-dbms-service-design.md 8장); only their results are kept.
+      "tests/measure/**",
       "node_modules/**"
     ]
   },
