@@ -60,11 +60,12 @@ function input(tool = "get_trust_capabilities", args: Record<string, unknown> = 
   };
 }
 
-function denied(outcome: { ok: boolean; output: string }) {
+/** The denial names the actual cause; only a cause without any code is GOVERNANCE_HOOK_FAILED. */
+function denied(outcome: { ok: boolean; output: string }, reasonCode = "GOVERNANCE_HOOK_FAILED") {
   expect(outcome.ok).toBe(false);
   const output = JSON.parse(outcome.output);
   expect(output).toEqual({ hookSpecificOutput: {
-    hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: "GOVERNANCE_HOOK_FAILED",
+    hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: reasonCode,
   } });
   for (const key of RESERVED_CALLER_KEYS) expect(outcome.output).not.toContain(key);
 }
@@ -259,13 +260,14 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     });
     const admit = vi.spyOn(SqliteWorkflowStore.prototype, "recordCallAdmission");
 
-    denied(await runGovernanceHook("claude-code", JSON.stringify(input("inspect_context")), environment));
+    denied(await runGovernanceHook("claude-code", JSON.stringify(input("inspect_context")), environment), "ENTRY_CONTINUITY_CLOSE_FAILED");
     expect(continuities).toHaveLength(1);
     expect(() => continuities[0]!.getOrCreateSecret(() => "unused")).toThrow();
     assertWorkflowClosed(workflows, 1);
     expect(admit).not.toHaveBeenCalled();
     expect(reported).toHaveLength(1);
-    expect(reported[0]).toMatchObject({ component: "governance-hook", context: { producerReason: "ENTRY_CONTINUITY_CLOSE_FAILED" } });
+    expect(reported[0]).toMatchObject({ component: "governance-hook", reasonCode: "ENTRY_CONTINUITY_CLOSE_FAILED",
+      context: { producerReason: "ENTRY_CONTINUITY_CLOSE_FAILED" } });
   });
 
   it("F2: central workflow cleanup failure denies an otherwise admitted call", async () => {
@@ -274,10 +276,11 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
     const reported = captureDiagnostics();
     const closeFailure = diagnostics.hookFailure("ENTRY_WORKFLOW_CLOSE_FAILED", "synthetic central cleanup failure");
     const workflows = closedWorkflows(closeFailure);
-    denied(await runGovernanceHook("claude-code", JSON.stringify(input()), environment));
+    denied(await runGovernanceHook("claude-code", JSON.stringify(input()), environment), "ENTRY_WORKFLOW_CLOSE_FAILED");
     assertWorkflowClosed(workflows);
     expect(reported).toHaveLength(1);
-    expect(reported[0]).toMatchObject({ component: "governance-hook", context: { producerReason: "ENTRY_WORKFLOW_CLOSE_FAILED" } });
+    expect(reported[0]).toMatchObject({ component: "governance-hook", reasonCode: "ENTRY_WORKFLOW_CLOSE_FAILED",
+      context: { producerReason: "ENTRY_WORKFLOW_CLOSE_FAILED" } });
   });
 
 

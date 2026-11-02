@@ -1,12 +1,15 @@
 import { isHookEntry } from "./hook-entry.js";
 import "./builtin-hook-host-adapters.js";
 import { readFileSync } from "node:fs";
+import { types } from "node:util";
 import { adaptHostInput, isGovernanceHookTool, resolveHookHost } from "./host-input-adapter.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { resolveWorkflowDatabasePath } from "./runtime-config.js";
 import { runContinuityHook } from "./continuity-hook.js";
 import { HOST_ATTESTATION_TOOLS } from "./host-attestation.js";
-import { observeClaudeExecution, readSessionModel, sessionModelDirectory } from "./host-attestation-hook.js";
+import { observationFailureCode, observeClaudeExecution, readSessionModel, sessionModelDirectory } from "./host-attestation-hook.js";
+import { ContinuityStoreError } from "./continuity-store.js";
+import { failureReason } from "./failure-diagnostics.js";
 import { WorkflowContractError } from "../../contracts/types.js";
 import { hookFailureContext, retainHookFailureSecondary, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 
@@ -20,6 +23,22 @@ function denied(reasonCode: string): RecordValue {
 }
 function missing(reasonCode: string): never {
   throw new WorkflowContractError("BINDING_REQUIRED", "The host hook input does not identify this call.", { reasonCode });
+}
+
+/**
+ * The denial names the failed cause: a contract reason, the failed observation step (TRANSCRIPT_READ_FAILED,
+ * TRANSCRIPT_LINE_LIMIT_EXCEEDED, SESSION_MODEL_INVALID, ...), a continuity store reason, an OS/SQLite/JSON class or a
+ * producer reason. Only a cause with none of these is GOVERNANCE_HOOK_FAILED. All are fixed codes, never messages.
+ */
+function failureReasonCode(failure: unknown): string {
+  try {
+    if (types.isProxy(failure)) return "GOVERNANCE_HOOK_FAILED";
+    if (failure instanceof WorkflowContractError) {
+      return typeof failure.details?.reasonCode === "string" ? failure.details.reasonCode : `WORKFLOW_${failure.code}`;
+    }
+    if (failure instanceof ContinuityStoreError) return failure.reason;
+  } catch { return "GOVERNANCE_HOOK_FAILED"; }
+  return observationFailureCode(failure) ?? failureReason(failure).reason ?? "GOVERNANCE_HOOK_FAILED";
 }
 
 /**
@@ -65,9 +84,11 @@ export async function runGovernanceHook(
     }
   }
   if (failed) {
-    const reasonCode = failure instanceof WorkflowContractError && typeof failure.details?.reasonCode === "string"
-      ? failure.details.reasonCode : "GOVERNANCE_HOOK_FAILED";
-    try { writeFailureDiagnostic(JSON.stringify({ component: "governance-hook", reasonCode, context: hookFailureContext(failure) })); }
+    const reasonCode = failureReasonCode(failure);
+    // The observation step's own cause class (EACCES, EISDIR, ...) stays separate from the step code.
+    const causeReason = observationFailureCode(failure) && failure instanceof Error ? failureReason(failure.cause).reason : null;
+    try { writeFailureDiagnostic(JSON.stringify({ component: "governance-hook", reasonCode, ...(causeReason ? { causeReason } : {}),
+      context: hookFailureContext(failure) })); }
     catch { /* The nonzero failure and denial do not depend on diagnostic output. */ }
     return { ok: false, output: JSON.stringify(denied(reasonCode)) };
   }

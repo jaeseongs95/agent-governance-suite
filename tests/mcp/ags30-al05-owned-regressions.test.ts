@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CallerExecution } from "../../mcp-server/src/caller-identity.js";
 import {
-  CLAUDE_TRANSCRIPT_MAX_BYTES,
+  CLAUDE_TRANSCRIPT_LINE_MAX_BYTES,
   observeClaudeExecution,
 } from "../../mcp-server/src/host-attestation-hook.js";
 import {
@@ -49,26 +49,27 @@ function qualify(selected: HostExecutionAdapter, execution: CallerExecution, pro
 const directories: string[] = [];
 afterEach(() => { for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true }); });
 
+// The whole-file limit was removed (a 490 MB session transcript refused every call); memory is bounded per line instead.
 describe("AGS-D-0032 bounded Claude transcript reads", () => {
   it("retains exact observations at the byte boundary", () => {
     const directory = mkdtempSync(path.join(tmpdir(), "ags-al05-boundary-"));
     directories.push(directory);
     const file = path.join(directory, "fixture.jsonl");
     const row = line();
-    writeFileSync(file, " ".repeat(CLAUDE_TRANSCRIPT_MAX_BYTES - Buffer.byteLength(row)) + row, "utf8");
+    writeFileSync(file, " ".repeat(CLAUDE_TRANSCRIPT_LINE_MAX_BYTES - Buffer.byteLength(row)) + row, "utf8");
     expect(observeClaudeExecution({ ...input, transcript_path: file }, { maxWaitMs: 0, now }))
       .toMatchObject({ model, effort: "high", provenance: "claude-code:transcript-tool-use" });
   });
 
-  it("refuses oversized history before a fallback model is consulted", () => {
+  it("refuses an oversized line before a fallback model is consulted", () => {
     const directory = mkdtempSync(path.join(tmpdir(), "ags-al05-oversize-"));
     directories.push(directory);
     const file = path.join(directory, "fixture.jsonl");
     writeFileSync(file, line(), "utf8");
-    truncateSync(file, CLAUDE_TRANSCRIPT_MAX_BYTES + 1);
+    truncateSync(file, CLAUDE_TRANSCRIPT_LINE_MAX_BYTES + 1);
     const cache = vi.fn(() => session("2026-10-25T00:00:20.000Z"));
     expect(() => observeClaudeExecution({ ...input, transcript_path: file }, { maxWaitMs: 0, now, readSessionModel: cache }))
-      .toThrow("TRANSCRIPT_LIMIT_EXCEEDED");
+      .toThrow("TRANSCRIPT_LINE_LIMIT_EXCEEDED");
     expect(cache).not.toHaveBeenCalled();
   });
 });

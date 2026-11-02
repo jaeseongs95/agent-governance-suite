@@ -110,9 +110,10 @@ it("denies the call and diagnoses a real observation read failure through the pa
   expect(result.error).toBeUndefined();
   expect(result.status).toBe(2);
   expect(JSON.parse(result.stdout)).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse",
-    permissionDecision: "deny", permissionDecisionReason: "GOVERNANCE_HOOK_FAILED" } });
+    permissionDecision: "deny", permissionDecisionReason: "TRANSCRIPT_READ_FAILED" } });
   expect(JSON.parse(result.stderr.trim())).toEqual({
-    component: "governance-hook", reasonCode: "GOVERNANCE_HOOK_FAILED",
+    component: "governance-hook", reasonCode: "TRANSCRIPT_READ_FAILED",
+    causeReason: process.platform === "win32" ? expect.stringMatching(/^E[A-Z]+$/u) : "EISDIR",
     context: { ...fixedCodeContext("TRANSCRIPT_READ_FAILED"), cause: expect.objectContaining({ type: "error" }) },
   });
   expect(result.stderr).not.toContain(directory);
