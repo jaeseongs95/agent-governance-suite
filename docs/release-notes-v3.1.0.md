@@ -44,4 +44,13 @@
 
 ## 검증
 
-- 검증 결과는 발행 직전에 채운다.
+대상 커밋은 `9e41d882`이다(이 노트를 더한 커밋은 문서만 바꾼다).
+
+- CI: run 41454385176, ubuntu-latest·windows-latest(Node 24) 모두 성공.
+- Linux 시험 서버 전체 시험(`corepack pnpm test`): 종료 코드 0. vitest 시험 파일 269개 통과·1개 skip, 시험 3963개 통과·15 skip·8 todo. node:test 486/486 통과.
+- 시작 거부 fail-open 수정의 회귀 시험(`tests/mcp/governance-hook-entry.test.ts`): 수정판 23/23 통과, 수정 전 `governance-hook.ts`로 바꾸면 새 사례가 실패(3번째 편집이 거부됨).
+- 로그 회전 시험: Linux 20회·Windows 20회 연속 통과, 결함 주입 2종에서 실패 확인.
+- 공식 배포판 실호스트 시험(alpha·beta·gamma 순서로 파일 3개를 쓰고, 거부되면 `start_workflow` 뒤 다시 쓰기):
+  - Claude Code 2.1.316(Windows, `--plugin-dir`): 3개째 거부, transcript 약 10.7MB(10,674,337바이트) 세션에서 `start_workflow` 성공(사후 편입, 앞선 파일 2개), 그 뒤 편집 성공, Stop 단계 확인 1회 뒤 출력 없음.
+  - Codex 0.166.0(Windows, npm): 3개째 `apply_patch` 거부, `start_workflow` 성공 뒤 편집 성공, Stop은 응답을 한 번 이어 가고 끝남.
+  - agy 1.4.12(Linux): 3개째 `write_file` 거부, `start_workflow`는 알려진 제한대로 `BINDING_REQUIRED`(`ANTIGRAVITY_EXECUTION_UNOBSERVED`), 그 뒤 편집은 원인 코드 `workflow-start-failed:BINDING_REQUIRED`와 함께 통과.
