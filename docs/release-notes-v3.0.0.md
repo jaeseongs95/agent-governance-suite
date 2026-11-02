@@ -53,6 +53,9 @@ workflow·trust DB 스키마가 더 새것이면 `MCP_UNAVAILABLE`(`reason: "SCH
 - D-0353: Windows Codex hook이 relay를 붙잡지 않게 했고, 관측되지 않은 깨우기를 정해진 만료·유예 뒤에 해제하며 일반 활동으로는 해제하지 않게 했다.
 - D-0351: 호스트의 SessionEnd에서 그 출생을 끝내고, 깨울 수 없다고 밝힌 대상을 정확한 출생 세대로 막는다. Codex SessionEnd hook에도 호스트 프로세스(`--host-pid`)를 넘긴다.
 - D-0354 계열: agy CLI를 호스트 프로세스로 인식하고, relay가 뜨지 않거나 일찍 끝난 이유와 시작 거부 사유를 기록하며, 같은 호스트 출생의 시작 사건이 살아 있는 세대를 바꾸지 않게 했다. relay 복구는 그 세대가 보고한 호스트 출생에만 결속한다.
+- D-0352: Claude fork 세션의 부모(continuity)를 Linux·Windows에서 호스트가 띄운 Claude 실행 인자로 읽는다. Windows는 첫 도구 경계에서 읽고, 손대지 않은 도구 경계에서는 읽지 않으며, 저장소 손상(`CORRUPT_DATABASE`)을 트랜잭션 안에서도 그대로 보고한다.
+- D-0364: Gemini/Antigravity 큐 기본값은 유휴 깨우기에 필요한 프로젝트 식별이 있을 때만 추론한다. 없으면 수신자를 gemini-deferred로 등록해, 끝내 `GEMINI_PROJECT_ID_MISSING`로 실패할 깨우기를 가능(available)으로 알리지 않는다.
+- D-0313: 메시지 저장소 파일 전체 해시를 고정해 목록에 없는 소스를 거부하던 CI 보조 시험 도구(07e wake-mixed-red)를 없앴다. 그 도구가 지키던 불변(확인된 관측 표식과 현재 receipt는 현재 본문만 한 번 claim)은 단위 시험으로 남겼다.
 - R5: 호스트가 SIGTERM으로 relay를 멈추면 lease를 놓는다.
 - 좀비 호스트: Linux에서 좀비·종료 상태의 호스트 프로세스를 끝난 것으로 본다.
 - Codex ENOENT: Windows npm 설치(PATH에 `codex.cmd`만 있음)에서도 shell 없이 Codex 큐 깨우기를 시작한다.
