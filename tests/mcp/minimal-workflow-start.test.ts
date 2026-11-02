@@ -98,15 +98,20 @@ describe("start_workflow minimal start", () => {
   });
 
   it("leaves no root, lease, run or consumed observation when a later step fails, and keeps the step's own code", async () => {
-    const { service, continuity, call, counts, writeFile } = await harness();
+    const { continuity, call, counts, writeFile } = await harness();
     // Fail after the root opened and the lease was claimed: the run start's correlation step.
     vi.spyOn(continuity, "prepareWorkflowStart").mockImplementation(() => { throw new Error("injected correlation failure"); });
     const failed = await call<MinimalWorkflowStartV1>(minimal);
     expect(failed.ok).toBe(false);
     expect(failed.error?.code).toBe("MCP_UNAVAILABLE");
     expect(counts()).toEqual({ convergence_roots: 0, convergence_leases: 0, workflow_runs: 0, execution_observation_claims: 0 });
-    vi.restoreAllMocks();
-    // Fail at the claim step with its own contract code.
+    // The injected failure is an infrastructure code: this window's edits pass.
+    for (const name of ["a.ts", "b.ts", "c.ts"]) expect(writeFile(name)).toEqual({});
+  });
+
+  it("rolls back a failed claim step, keeps its own code, and keeps a non-infrastructure failure enforced", async () => {
+    const { service, call, counts, writeFile } = await harness();
+    // Fail at the claim step, after the root opened, with its own contract code.
     const claim = vi.spyOn(service, "claimWorkflowAttempt").mockReturnValue({ schemaVersion: "1.0.0", ok: false, data: null,
       error: { code: "LEASE_CONFLICT", message: "injected", details: { reasonCode: "INJECTED" } } });
     const conflicted = await call<MinimalWorkflowStartV1>(minimal);
