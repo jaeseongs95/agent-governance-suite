@@ -179,7 +179,8 @@ Claude 설치는 workflow·continuity DB를 `CLAUDE_PLUGIN_DATA` 아래에 따�
 **OS별 분리 실행.**
 
 - Linux·macOS: `spawn(process.execPath, [service], {detached: true, stdio: "ignore"})` 뒤 `unref()`. relay와 같다(`session-message-hook.ts:268-289`). `detached`는 새 프로세스 그룹을 만들어 Claude가 hook 그룹에 보내는 SIGTERM(`session-message-relay.ts:83-88`)을 받지 않는다.
-- Windows: 호출자가 shim이든 hook이든 `launchWithoutInheritedHandles`(`session-message-hook.ts:192-212`)를 공용 모듈로 옮겨 쓴다. 호스트 pipe handle을 물려받으면 호스트가 hook 종료를 기다리기 때문이다(`:52-55`). job 상속 문제는 D7·측정 2다.
+- Windows: CIM `Win32_Process.Create`로 띄운다(8.1 M2). 이 경로는 handle도 job도 물려받지 않는다. 호스트 pipe handle을 물려받으면 호스트가 hook 종료를 기다리고(`session-message-hook.ts:52-55`), 호스트 job을 물려받으면 KILL_ON_JOB_CLOSE job이 닫힐 때 함께 죽는다(측정 확인). 환경 변수도 물려받지 않으므로 상태 폴더는 명령줄 인자로 넘긴다. relay의 `launchWithoutInheritedHandles`(`:192-212`)는 relay에 그대로 둔다.
+- 첫 초기화(빈 dataDir)는 서비스가 짧은 자식 프로세스로 initdb만 하고 끝낸 뒤 연다(8.1 M1, 상주 메모리 차이).
 
 **단일 인스턴스.** 다음 순서로 판정한다. PID는 보지 않는다.
 
@@ -219,11 +220,17 @@ Claude 설치는 workflow·continuity DB를 `CLAUDE_PLUGIN_DATA` 아래에 따�
 | --- | --- | --- |
 | Linux | `$XDG_RUNTIME_DIR/agent-governance-suite/service.sock`, 없으면 `~/.agent-governance-suite/run/service.sock` | 폴더 0700, 기존 상태 폴더와 같은 방식(`session-message-client.ts:51-52`) |
 | macOS | `~/.agent-governance-suite/run/service.sock` | 폴더 0700 |
-| Windows | `\\.\pipe\agent-governance-suite-<사용자 식별 해시 16자>` | 측정 3에서 정한다. 기본 DACL은 Everyone에 읽기를 준다(아래). |
+| Windows | `\\.\pipe\agent-governance-suite-<기동마다 새 무작위 32자>` | 기본 DACL은 Everyone에 읽기를 준다. 이름은 접속 정보 파일로만 알린다(아래 「접속 정보와 상호 확인」, 8.1 M3). |
 
 경로가 `sun_path` 한도(Linux 107B, macOS 103B)를 넘으면 `SERVICE_SOCKET_PATH_TOO_LONG`으로 바로 실패한다(Node 문서 같은 절). 줄여서 다른 곳에 만들지 않는다.
 
-Windows 기본 보안 설명자는 LocalSystem·administrators·creator owner에 전체 권한을, Everyone과 anonymous에 읽기를 준다(https://learn.microsoft.com/en-us/windows/win32/ipc/named-pipe-security-and-access-rights). Node `listen`의 `readableAll`·`writableAll`은 기본 false지만 Windows에서 DACL을 어떻게 만드는지 문서에 없다(https://nodejs.org/api/net.html#serverlistenoptions-callback). 다른 사용자가 같은 이름을 먼저 만들어 서비스를 사칭할 수 있는지도 측정 3에서 본다.
+Windows 기본 보안 설명자는 LocalSystem·administrators·creator owner에 전체 권한을, Everyone과 anonymous에 읽기를 준다(https://learn.microsoft.com/en-us/windows/win32/ipc/named-pipe-security-and-access-rights). Node `listen`의 `readableAll`·`writableAll`은 기본 false지만 Windows에서 DACL을 어떻게 만드는지 문서에 없다(https://nodejs.org/api/net.html#serverlistenoptions-callback). 측정 3에서 다른 사용자가 같은 이름을 먼저 만들어 서비스를 사칭할 수 있음을 확인했다(8.1).
+
+**접속 정보와 상호 확인(M3 반영, 세 OS 같은 코드).** 서비스는 잠금을 잡고 listen에 성공한 뒤 상태 폴더의 `service/endpoint.json`(사용자 전용, 임시 파일 뒤 rename)에 `{address, key, pid, version, startedAt}`을 쓴다. `key`는 기동마다 새 32바이트 난수다. Windows는 pipe 이름도 기동마다 새로 정한다. 그래서 다른 사용자가 이름을 미리 만들어 서비스 기동을 막을 수 없다. 클라이언트는 이 파일에서 주소와 key를 읽는다. 파일이 없거나 연결이 거부되면 4.2의 기동 경로로 간다.
+
+hello 전에 한 번 확인한다. 클라이언트가 `{"ags":"challenge","nonce":<32바이트>}`를 보내면, 서비스가 `HMAC-SHA256(key, "service" ‖ nonce ‖ serviceNonce)`와 `serviceNonce`를 답한다. 클라이언트는 맞으면 `HMAC-SHA256(key, "client" ‖ serviceNonce)`를 실어 hello를 보낸다. 서비스 확인이 틀리면 클라이언트는 profile을 보내지 않고 닫는다. 사유는 `SERVICE_IDENTITY_MISMATCH`이며 다시 띄우지 않는다. 클라이언트 확인이 틀리면 서비스는 `refuse`를 보낸다. Unix socket은 폴더 0700만으로 막히지만, OS마다 다른 경로를 두지 않으려고 같은 확인을 쓴다. 신뢰 경계는 여전히 「같은 OS 사용자」다. 접속 정보 파일을 읽을 수 있는 사용자는 서비스를 쓸 수 있다.
+
+잠금은 잡았는데 listen이 `EADDRINUSE`이면 「이미 실행 중」이 아니다. 사유 `SERVICE_ENDPOINT_IN_USE`로 끝내고 진단에 남긴다. Windows는 새 이름으로 한 번 더 시도한다.
 
 **형식.** MCP stdio와 같은 줄 단위 UTF-8 JSON이다. 한 줄 상한 16 MiB(추정 시작값). 연결의 첫 줄은 핸드셰이크다.
 
@@ -579,6 +586,26 @@ PGlite는 연결이 하나라 「풀」 자리에 대기열(4.3)이 온다. 획�
 
 M1·M5 결과가 나오기 전에는 2단계 커밋을 시작하지 않는다. M2·M3 결과가 나오기 전에는 1-1을 끝내지 않는다.
 
+### 8.1 측정 결과(11-02)와 설계 반영
+
+Linux 시험 서버(vCPU 2, 7.8G, Node 24.22.1)와 Windows 시험 서버(Server 2022 20348, Node 24.22.2, Defender 실시간 검사 켬)에서 PGlite 0.5.14로 쟀다. 스크립트는 `tests/measure/linux/`, `tests/measure/windows/`, 결과 원본은 각 서버의 `measure-dbms-20261102/logs/`, `C:\ags-measure-dbms\results\`다. macOS와 M5는 아직 재지 않았다.
+
+| 항목 | 결과 | 분기 판정과 설계 반영 |
+| --- | --- | --- |
+| M1 강제 종료 | Linux SIGKILL 100회(쓰기 중 76): 열기 실패·손실·손상 0. Windows `taskkill /F` 100회(쓰기 중 92): 0·0·0, 최종 146,437행 연속, `bt_index_check`·`verify_heapam` 통과. 첫 initdb 중 kill 20회도 20/20 다시 열림 | A1 유지. 전원 차단·OS 비정상 종료는 재지 않았다(페이지 캐시가 남음). |
+| M1 동시 열기 | 같은 dataDir를 두 프로세스가 열면 오류가 없다. A가 B 이후 보고한 커밋(1,141·1,231·1,221건)이 다시 열면 모두 사라졌다. 3/3 재현, 무결성 검사는 통과 | PGlite에는 잠금이 없다. 서비스는 `owner.lock`(4.2)을 잡은 뒤에만 PGlite를 연다. 이관기·`migrate` 명령도 같은 잠금을 잡는다. 시험: 잠금 없이 두 번째 열기를 시도하는 경로가 코드에 없음을 bundle 검사로, 두 번째 서비스가 `SERVICE_ALREADY_RUNNING`으로 끝남을 통합 시험으로 확인한다. |
+| M1 첫 초기화 | Linux 4.0~4.2초, Windows 6.3~6.4초. 다시 열기 Linux 0.25초, Windows p50 0.9초 | Windows가 5초를 넘는다. 첫 초기화는 SessionStart에서 기다리지 않는다(4.2 분기). initdb는 서비스가 아닌 짧은 자식 프로세스에서 하고 끝낸다. initdb를 한 프로세스는 RSS가 568MB로 남았고, 다시 연 프로세스는 314MB였다. |
+| M1 메모리 | 기본 `shared_buffers=128MB`: 다시 연 뒤 RSS 314~360MB. `postgresqlconf`로 `shared_buffers=16MB, work_mem=1MB, maintenance_work_mem=8MB, wal_buffers=1MB`: 186~241MB. 2천 건 쓰는 동안 최대치(VmHWM)는 두 설정 모두 700~850MB로 올랐다(원인 미확인). `initialMemory`는 128MB 미만이면 LinkError | 위 저메모리 설정을 기본으로 둔다. 이 설정은 dataDir의 `postgresql.conf`에 남는다(설정 없이 다시 열어도 16MB). 상주 약 0.2GB와 일시 최대 약 0.7GB는 현행(세션당 72MB)보다 세션이 적을 때 크다. 11장 미해결에 둔다. |
+| M1 적재 | esbuild 단일 `.mjs`(641~658KB) 옆에 `pglite.wasm` 9.1MB, `pglite.data` 6.2MB, `initdb.wasm` 0.3MB. 두 OS 모두 적재 성공. `contrib/amcheck`는 `../amcheck.tar.gz`를 찾는다 | dist에 세 파일을 둔다. amcheck는 제품에 넣지 않는다(시험 전용). |
+| M1 int8 | 안전 정수 안이면 `number`, 넘으면 `bigint`. 한 열에 섞여 나온다 | 5.4대로 int8 파서를 하나 두어 한 타입으로 고정한다. |
+| M2 왕복 | Linux 연결+hello+요청 p50 0.34ms, p99 1.27ms. 연결 유지 p99 0.20ms. Windows pipe p50 0.40ms, p99 1.43ms. 연결 유지 p99 0.21ms | 50ms보다 훨씬 작다. 4.5 예산표 유지. |
+| M2 냉기동 | Linux detached spawn → 첫 응답 p50 56ms, PGlite 기존 dataDir 포함 p50 768ms·p99 1.57초, initdb 포함 4.77초. Windows ShellExecute 중앙값 1.31초(최대 3.23초), CIM 0.75초(최대 3.02초) | 5초 hook(IPC 1.5초)은 서비스를 띄우지 않는다는 4.2 표 유지. |
+| M2 job 생존(D7) | KILL_ON_JOB_CLOSE job 안의 호스트가 ShellExecute로 띄운 서비스는 job이 닫히면 죽었다. CIM `Win32_Process.Create`로 띄운 서비스는 job 밖에서 살았다. 실제 sshd 세션 job(flags `0x2800`)에서도 같았다. CIM으로 띄운 프로세스는 호출자 환경 변수를 물려받지 않는다(부모 WmiPrvSE) | D7 확정. Windows 서비스 기동은 CIM `Win32_Process.Create`로 한다. 서비스에 필요한 값(상태 폴더 등)은 명령줄 인자로, 연결별 값은 hello profile로 보낸다. 서비스는 `AGENT_GOVERNANCE_*` 환경 변수를 읽지 않는다. 호스트별 실제 job flag는 재지 않았다(흉내만). |
+| M2 shim | Linux 최소 shim RSS 47.5MB(빈 node 42.7MB) | 세션당 약 25MB 줄어든다. |
+| D2 잠금 | Windows 소유자 `taskkill /F` 50회: 50/50 첫 시도에 잠금 획득, p50 90ms. 살아 있는 동안 50/50 `database is locked` | D2 유지. |
+| M3 pipe | 기본 SDDL `D:(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;BA)(A;;FR;;;WD)(A;;FR;;;AN)`. 다른 사용자는 읽기 전용 연결만 되고 쓰기·새 인스턴스는 err=5. 그러나 서비스보다 먼저 같은 이름을 만들 수 있었다. 그러면 서비스는 `EADDRINUSE`로 끝나고, 클라이언트는 선점자에 연결되어 hello·profile을 그대로 보냈다. libuv는 첫 인스턴스에만 `FILE_FLAG_FIRST_PIPE_INSTANCE`를 쓰고 `PIPE_REJECT_REMOTE_CLIENTS`는 쓰지 않는다(https://raw.githubusercontent.com/libuv/libuv/v1.52.1/src/win/pipe.c) | 클라이언트가 서비스를 확인해야 한다. 4.3 「접속 정보와 상호 확인」으로 반영한다. |
+| M4 부하 | 37연결, PGlite 연결 하나 앞 FIFO, 요청 하나 = 삽입 3 + 갱신 1. 800rps까지 손실·`SERVICE_BUSY` 0, 서비스 측 대기 p99 0.98ms, 클라이언트 왕복 p99 66.7ms. 1600rps에서 처리량 967/s, 클라이언트 왕복 p50 1.6초, `SERVICE_BUSY` 32.6%. 서비스 측 대기열 길이는 최대 1이었다 | 실사용 부하(hook 이벤트당 1회)보다 여유가 크다. 행 단위 잠금 검토 조건에 해당하지 않는다. PGlite가 같은 스레드에서 돌아 이벤트 루프가 막히는 동안 요청이 소켓 버퍼에서 기다려 서비스 측 대기열 지표에 보이지 않았다(추정). 진단에 `perf_hooks.monitorEventLoopDelay`의 p99·최대를 더하고, 대기열 대기가 아니라 「요청 수신부터」 시간을 잰다(5.9). 부하 발생기가 같은 서버에서 돌아 절대값에 영향이 섞였다. |
+
 ## 9. 시험
 
 모든 시험은 고치기 전 코드에서 실패하는 것을 먼저 확인한다(red-green).
@@ -633,8 +660,9 @@ hook·shim·relay·cli bundle에는 두 패키지가 들어가지 않는다. 1-8
 
 - 서비스는 다른 프로세스의 OS 사용자를 확인하지 못한다. Node `net`에 상대 자격 증명 API가 없다(Node 문서에서 찾지 못함). 신뢰 경계는 「같은 OS 사용자」이고 폴더 권한·pipe DACL로만 막는다.
 - MCP 호스트의 도구 timeout. 서비스 기본 30초가 그보다 긴지 모른다.
-- PGlite가 같은 `dataDir`를 두 프로세스가 여는 것을 스스로 막는지 모른다(추정: 막지 않음). 소유자 잠금(4.2)이 이 점을 대신한다.
-- Windows에서 OS 파일 잠금이 프로세스 종료 직후 풀리는지(M2).
+- PGlite는 같은 `dataDir`를 두 프로세스가 여는 것을 막지 않고, 이때 커밋이 조용히 사라진다(8.1 M1에서 확인). 소유자 잠금(4.2)만이 이를 막는다.
+- 전원 차단·OS 비정상 종료 뒤 PGlite 내구성. 측정은 프로세스 강제 종료만 했다.
+- 호스트(Claude Code·Codex)가 실제로 쓰는 Windows job flag. 측정은 흉내였다.
 - Codex·agy Stop 입력에 `stop_hook_active`가 있는지(4.5).
 
 **미해결.**
@@ -645,4 +673,5 @@ hook·shim·relay·cli bundle에는 두 패키지가 들어가지 않는다. 1-8
 - 낮은 버전 shim을 높은 버전 서비스가 받을 때 도구 목록은 서비스 코드 기준이다. registry는 클라이언트 설치 것이다. 두 버전 사이에 도구 계약이 바뀌면 `minClientProtocol`을 올려 거부해야 한다. 어떤 변경을 프로토콜 변경으로 볼지 규칙이 아직 없다.
 - `input_observations`를 일시 상태로 볼지(6장).
 - PgBouncer 도입 기준(M4).
+- 로컬 PGlite 메모리(8.1 M1). 저메모리 설정으로 상주 약 0.2GB, 쓰기 중 일시 최대 약 0.7GB다. 세션이 1~3개인 사용자는 현행보다 메모리를 더 쓴다. 일시 최대의 원인을 찾지 못했다. 2단계 착수 전에 macOS 측정과 함께 다시 판정한다. 대안은 embedded-postgres(첫 기동 다운로드·포트·고아 프로세스 대책 필요)다.
 - 원격 PG 연결 설정 파일의 비밀번호 보관 방식(설정 파일 0600 참조 경로 또는 `PGPASSFILE`). 서비스 한 곳에만 둔다는 원칙만 정했다. node-postgres TLS 설정: https://node-postgres.com/features/ssl, libpq `verify-full` 의미: https://www.postgresql.org/docs/current/libpq-ssl.html.
