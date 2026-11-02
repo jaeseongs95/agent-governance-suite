@@ -13,8 +13,7 @@ const hash = (bytes: string | Buffer) => "sha256:" + createHash("sha256").update
 it("chains the exact orchestrator phase-check source after platform-events", () => {
   const bytes = readFileSync(new URL("./fixtures.orchestrator-phase-check-source-successor.json", import.meta.url));
   expect(hash(bytes)).toBe("sha256:7eb7d5b4a67b7afc3a48f3e7dd76fdab8f208fc65597e92535400df8f7627429");
-  expect(bytes.includes(Buffer.from("
-"))).toBe(false);
+  expect(bytes.includes(Buffer.from("\r\n"))).toBe(false);
   const manifest = JSON.parse(bytes.toString("utf8"));
   expect(manifest.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.preflight-platform-events-source-successor.json", bytes: readFileSync(path.join(root, "tests/skill-classification/fixtures.preflight-platform-events-source-successor.json")).length, digest: "sha256:0d9584c9607e98b953470bd20c7cfbfda82cf5558906368296eba87d68768a03"});
   expect(manifest.bindings.map((binding: {path: string}) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json"]);
