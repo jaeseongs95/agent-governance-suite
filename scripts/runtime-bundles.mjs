@@ -66,6 +66,12 @@ export const RUNTIME_BUNDLES = Object.freeze([
     executable: true,
   }),
   Object.freeze({
+    id: "ags-service",
+    entry: "mcp-server/src/service/service-main.ts",
+    output: "mcp-server/dist/ags-service.mjs",
+    executable: true,
+  }),
+  Object.freeze({
     id: "session-message-cli",
     entry: "mcp-server/src/session-message-cli.ts",
     output: "mcp-server/dist/session-message-cli.mjs",

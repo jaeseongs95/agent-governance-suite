@@ -38,6 +38,8 @@ export interface EnsureServiceOptions {
   deadlineMs: number;
   /** false: never start a service (hooks that must not, 4.2). Default: this installation's ags-service.mjs. */
   launch?: false | ServiceLauncher;
+  /** false: never ask an older service to hand over (a status query). Default true. */
+  handover?: boolean;
 }
 
 export type ServiceFailure = Error & { code: string; effect: ServiceEffect; retryable: boolean; details?: unknown };
@@ -240,7 +242,7 @@ export async function ensureService(options: EnsureServiceOptions): Promise<Serv
   let launches = 0;
   let lastLaunchAt = -Infinity;
   let attempt = 0;
-  let handedOver = false;
+  let handedOver = options.handover === false;
   for (;;) {
     const remaining = remainingOf(deadline);
     if (remaining < 1) {

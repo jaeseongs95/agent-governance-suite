@@ -185,7 +185,7 @@ Claude 설치는 workflow·continuity DB를 `CLAUDE_PLUGIN_DATA` 아래에 따�
 **단일 인스턴스.** 다음 순서로 판정한다. PID는 보지 않는다.
 
 1. 상태 폴더의 `service/owner.lock`을 `node:sqlite`로 열고 `PRAGMA locking_mode = EXCLUSIVE; BEGIN EXCLUSIVE; COMMIT;`을 busy_timeout 0으로 실행한다. 실패하면 다른 서비스가 살아 있다. 종료 코드 0, 사유 `SERVICE_ALREADY_RUNNING`으로 끝낸다.
-2. 잠금을 가진 쪽만 남은 socket 파일을 지우고 바인딩한다. Windows pipe는 소유 프로세스가 끝나면 OS가 지운다(Node 문서 같은 절).
+2. 잠금을 가진 쪽만 남은 socket 파일을 지우고 바인딩한다. 지우기 전에 한 번 연결해 본다. 아무도 받지 않으면(`ECONNREFUSED`) 죽은 서비스가 남긴 파일이므로 지운다. 누가 받고 있거나 socket이 아닌 파일이면 지우지 않고 `SERVICE_ENDPOINT_IN_USE`로 끝낸다. Windows pipe는 소유 프로세스가 끝나면 OS가 지운다(Node 문서 같은 절).
 3. OS 잠금은 프로세스가 죽으면 풀린다(POSIX `fcntl`, Windows `LockFileEx`). Windows는 풀리는 시점이 즉시라고 보장되지 않는다(추정, 측정 2).
 
 **유휴 종료.** 열린 연결이 0인 상태가 10분 이어지면 store를 닫고 종료한다. shim과 relay는 연결을 계속 유지하므로 세션이 하나라도 살아 있으면 서비스도 산다. 10분은 시작값이다. 측정 4의 hook 간격 분포로 정한다.
@@ -241,7 +241,7 @@ hello 전에 한 번 확인한다. 클라이언트가 `{"ags":"challenge","nonce
 {"ags":"welcome","protocol":1,"service":{"version":"3.1.0","build":"sha256:…","minClientProtocol":1},"schema":{"workflow":6,"continuity":2,"trust":1,"messaging":4,"board":1}}
 ```
 
-거부는 `{"ags":"refuse","reason":"SERVICE_PROTOCOL_UNSUPPORTED"}`를 보내고 닫는다. hello가 1초 안에 오지 않으면 닫는다. 읽기 권한만 있는 연결이 자리를 차지하지 못하게 하기 위해서다.
+거부는 `{"ags":"refuse","reason":"SERVICE_PROTOCOL_UNSUPPORTED"}`를 보내고 닫는다. 거부 사유는 `SERVICE_PROTOCOL_UNSUPPORTED`, `SERVICE_CLIENT_UNVERIFIED`(클라이언트 확인 틀림), `SERVICE_HELLO_INVALID`(형식), `SERVICE_SHUTTING_DOWN`(교체·종료 중), `SERVICE_ROLE_UNAVAILABLE`(1-2 단계의 `mcp`, 1-3에서 없어짐)이다. 교체 요청이 같거나 낮은 버전에서 오면 `SERVICE_HANDOVER_REFUSED`로 답하고 서비스는 그대로 둔다. hello가 1초 안에 오지 않으면 닫는다. 읽기 권한만 있는 연결이 자리를 차지하지 못하게 하기 위해서다.
 
 `role`은 둘이다. 판단: MCP를 그대로 중계하는 쪽이 shim에는 더 단순하고, hook에는 JSON-RPC가 더 단순하다.
 
@@ -497,6 +497,8 @@ PGlite는 연결이 하나라 「풀」 자리에 대기열(4.3)이 온다. 획�
 - 대기열 길이, 대기 p50·p99, `SERVICE_BUSY` 거부 수
 - 연결 수(role별), 서비스 버전·build·uptime, 모듈별 스키마 버전, 백엔드 종류
 
+1-2 단계에는 profile별 로그 설정이 아직 없어서(1-3에서 붙임) lifecycle 사건(`started`, `start_failed`, `listen_failed`, `handover`, `shutdown_start`, `stopped` 등)을 상태 폴더의 `service/service-events.log`(JSON 줄, 1 MiB 넘으면 한 세대 보관)와 stderr에 남긴다. `diagnostics.ts` lifecycle 범주로 옮기는 일은 1-3에서 한다.
+
 `STORE_POOL_EXHAUSTED`·`SERVICE_BUSY` 오류 응답의 `details`에도 그 순간의 `waitingCount`·대기열 길이를 넣는다. 막힌 원인이 도구 결과에 바로 보인다.
 
 ## 6. 이관(SQLite → PG, 일회성)
@@ -527,7 +529,7 @@ PGlite는 연결이 하나라 「풀」 자리에 대기열(4.3)이 온다. 획�
 | 커밋 | 내용 | 소유 파일 | 선행 |
 | --- | --- | --- | --- |
 | 1-1 | IPC 주소·권한·줄 framing·hello/welcome/refuse·상호 확인, 클라이언트(`ensureService`, 기한, 결과 불확실 처리). 서비스 분리 실행(Linux·macOS detached, Windows CIM). relay의 `launchWithoutInheritedHandles`는 옮기지 않는다(4.2) | 새 `mcp-server/src/service/ipc-endpoint.ts`, `ipc-framing.ts`, `service-client.ts`, `detached-launch.ts` | 측정 2·3 |
-| 1-2 | 서비스 프로세스: 소유자 잠금, listen, 연결 상한, 대기열, 유휴 종료, 버전 교체, `service.status` | 새 `mcp-server/src/service/ags-service.ts`, `service-main.ts` | 1-1 |
+| 1-2 | 서비스 프로세스: 소유자 잠금, listen, 연결 상한, 대기열, 유휴 종료, 버전 교체, `service.status`, bundle entry 등록 | 새 `mcp-server/src/service/ags-service.ts`, `service-main.ts`; `scripts/runtime-bundles.mjs`(entry 한 줄) | 1-1 |
 | 1-3 | 구성 분리: `index.ts`의 store·service 조립을 profile별 함수로 옮김. 서비스가 `role: "mcp"` 연결마다 `createMcpServer`를 붙임 | `index.ts`, 새 `service/compose.ts`, `server.ts`(인자만) | 1-2 |
 | 1-4 | shim: `server.mjs` entry를 shim으로 바꿈. 재연결·initialize 재전송 | 새 `mcp-server/src/mcp-shim.ts`, `scripts/runtime-bundles.mjs` | 1-3 |
 | 1-5 | messaging을 서비스로: `sessionMessageRequest`가 IPC를 쓰게 함. relay·cli·board-hook·session-message-hook이 자동으로 따라옴 | `session-message-client.ts`, `session-message-service.ts` | 1-2 |
@@ -650,7 +652,7 @@ Linux 시험 서버(vCPU 2, 7.8G, Node 24.22.1)와 Windows 시험 서버(Server 
 
 | 패키지 | 단계 | bundle 방식 |
 | --- | --- | --- |
-| 없음 | 1단계 | 새 entry 하나(`ags-service.mjs`, `RUNTIME_BUNDLES`에 추가). `server.mjs` entry를 `mcp-shim.ts`로 바꾼다. 의존성 추가 없음. |
+| 없음 | 1단계 | 새 entry 하나(`mcp-server/src/service/service-main.ts` → `ags-service.mjs`, 1-2에서 `RUNTIME_BUNDLES`에 추가). `server.mjs` entry를 `mcp-shim.ts`로 바꾼다. 의존성 추가 없음. |
 | `@electric-sql/pglite`(0.5.14, unpacked 26,362,217B, 의존성 0, postinstall 없음 — dossier V2) | 2단계 | JS는 `ags-service.mjs`에 bundle한다. wasm·data 파일은 bundle할 수 없으므로 `mcp-server/dist/pglite/`로 복사하고 `pgliteWasmModule`·`initdbWasmModule`·`fsBundle`로 넘긴다(5.2). 복사할 파일 이름은 0.5.14 패키지에서 확인한다(추정: `pglite.wasm`, `initdb.wasm`, `pglite.data`). `RUNTIME_ARTIFACTS`에 넣어 `check-bundle.mjs`가 같은지 검사하게 한다. wasm은 metafile에 없으므로 notice 생성기가 PGlite 패키지를 JS 입력으로 잡는지 확인한다. |
 | `pg`(node-postgres) | 2단계 | 순수 JS라 `ags-service.mjs`에 bundle한다. 선택 의존 `pg-native`는 `external`로 둔다(추정: 그 밖의 선택 import도 확인). |
 
