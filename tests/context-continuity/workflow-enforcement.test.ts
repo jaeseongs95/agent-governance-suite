@@ -94,7 +94,7 @@ describe("edit target extraction", () => {
 
   it("resolves relative patch paths against the hook's cwd and names each host's own target key", () => {
     const codex = adaptHostInput(edit("codex", "apply_patch", { command: "*** Begin Patch\n*** Update File: src/a.ts\n*** Add File: /abs/b.ts\n*** End Patch" }), "codex");
-    expect(codex.observation.editTargets).toEqual([file(path.join("src", "a.ts")), path.resolve("/abs/b.ts")]);
+    expect(codex.observation.editTargets).toEqual([file(path.join("src", "a.ts")), path.resolve(repo, "/abs/b.ts")]);
     expect(adaptHostInput(edit("claude-code", "NotebookEdit", { notebook_path: "nb.ipynb" }), "claude-code").observation.editTargets).toEqual([file("nb.ipynb")]);
     expect(adaptHostInput(edit("claude-code", "Edit", { file_path: file("x.ts") }), "claude-code").observation.editTargets).toEqual([file("x.ts")]);
     expect(adaptHostInput(edit("antigravity", "Write", { TargetFile: file("y.ts") }), "antigravity").observation.editTargets).toEqual([file("y.ts")]);
