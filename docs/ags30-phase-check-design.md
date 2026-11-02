@@ -119,7 +119,17 @@ Codex 출력 형식은 continuity hook이 host 인자로 정한다(`resolveHookH
 - subagent(child)의 편집.
 - Codex hosted tool의 편집(공식 문서상 로컬 hook 경로를 쓰지 않는다).
 - 에이전트가 댄 이유의 진위.
-- 실제 호스트에서 아직 확인하지 않은 것:
-  - Codex의 이어 가기 프롬프트가 UserPromptSubmit hook을 다시 실행하는지
-  - agy Stop hook이 실제로 실행되는지(제3자 포럼에 실행되지 않는다는 보고가 있다)
-  - Codex에서 새 plugin hook이 신뢰 검토 뒤에 실행되는지
+- Codex의 이어 가기 프롬프트가 UserPromptSubmit hook을 다시 실행하는지(이어 가기 동작은 6장에서 확인했지만, UserPromptSubmit 재실행 여부는 출력으로 구분하지 못했다).
+
+## 6. 실제 호스트 확인(2026-11-02, 커밋 `6d54ef40`)
+
+임시 프로젝트의 `notes.txt` 한 줄을 고치게 하고 Stop 뒤의 답변을 봤다. 방법은 개발가이드 「테스트 서버 시험 방법」 6장에 적었다.
+
+| 호스트 | 환경 | 결과 |
+| --- | --- | --- |
+| Claude Code 2.1.316 | Windows, `--plugin-dir` | 첫 답변 뒤 이어서 「I skipped the governance workflow (plan_workflow) for this change. It isn't needed here because …」(turns=3) |
+| Codex 0.166.0 | Windows, 로컬 마켓플레이스 | hook 신뢰 전에는 plugin hook이 실행되지 않아 첫 답변에서 끝남. `--dangerously-bypass-hook-trust`로 실행하면 이어서 「별도 workflow 단계는 생략했으며, 명확한 단일 파일 문구 변경이라 필요하지 않았습니다.」 |
+| agy 1.4.12 | Linux, `agy plugin install` | 「이번 작업에서 AGS workflow 시작 단계를 빠뜨렸으나, … 생략하고 마칩니다.」 Stop hook이 실행됨 |
+
+- Codex 사용자는 AGS plugin hook을 `/hooks`에서 신뢰해야 이 기능이 동작한다. 기존 AGS hook(UserPromptSubmit 등)도 같은 조건이다.
+- Windows agy는 SSH 세션에서 구독 로그인을 다시 요구해 시험하지 못했다.
