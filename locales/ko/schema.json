@@ -1,0 +1,10 @@
+{
+  "schema.stageResultV1.properties.artifactChecks.description": "서버 소유. 서버가 이 결과를 기록할 때 직접 확인한 것이다. 호출자는 보내면 안 된다. 없으면 아무것도 확인하지 않았다는 뜻이다.",
+  "schema.stageResultV1.properties.recordedBy.description": "서버 소유. 이 결과를 기록한 관측된 호출자다. 호출자는 보내면 안 된다. provenance가 host-observed이면 호출자가 위조할 수 없는 신원을 호스트가 제공했다는 뜻이다.",
+  "schema.stageResultV1.properties.outputFile.description": "output.output이 도구 인자에 넣기에 너무 클 때 그 값을 담는 로컬 JSON 파일이다. 이때 output.output은 null이어야 한다. 서버는 파일을 읽고 digest를 확인한 뒤 인라인 output과 같은 방식으로 검증한다.",
+  "schema.stageResultV1.defs.providerArtifact.properties.verified.description": "provider의 선언일 뿐이다. gate 판정은 서버 소유의 artifactChecks를 쓴다.",
+  "schema.stageResultV1.defs.evidence.properties.verified.description": "호출자의 선언일 뿐이다. gate 판정은 서버 소유의 artifactChecks를 쓴다.",
+  "schema.stageResultV1.defs.evidence.properties.digest.description": "locator에 있는 파일의 sha256이며, 서버가 로컬 파일을 확인할 수 있게 한다.",
+  "schema.convergenceReviewV1.properties.reviewerActorId.description": "기록하는 root가 선언한 값이다. AGS는 검토자의 신원·독립성·문맥을 관측하지 않는다.",
+  "schema.convergenceReviewV1.properties.observedReviewer.description": "서버 소유. 이 검토를 기록한 관측된 호출자와 AGS가 확인할 수 있었던 독립성이다. 호출자는 보내면 안 된다."
+}

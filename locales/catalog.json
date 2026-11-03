@@ -11,6 +11,15 @@
     },
     "server": {
       "sourceLocale": "en"
+    },
+    "tools": {
+      "sourceLocale": "en"
+    },
+    "schema": {
+      "sourceLocale": "en"
+    },
+    "instructions": {
+      "sourceLocale": "ko"
     }
   }
 }

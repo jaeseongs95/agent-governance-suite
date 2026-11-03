@@ -16,6 +16,7 @@ import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { resolveToolSchemaProfile } from "../../mcp-server/src/runtime-config.js";
 import { ContractValidator, contractSchemas } from "../../mcp-server/src/schema-validator.js";
 import { SESSION_MESSAGE_SERVER_INSTRUCTIONS, SKILL_INTAKE_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
+import { LOCALE_ENVIRONMENT, type SupportedLocale } from "../../mcp-server/src/i18n.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
@@ -51,10 +52,11 @@ function updateService(): PluginUpdateService {
   return new PluginUpdateService(store);
 }
 
-async function connect(profile?: ToolSchemaProfile, trace?: ProtocolTrace, ingress: CallerIngress | null = fixedIngress(rootCaller())): Promise<Client> {
+// The service default locale is explicit: the English tool texts and the Korean instructions are compared below.
+async function connect(profile?: ToolSchemaProfile, trace?: ProtocolTrace, ingress: CallerIngress | null = fixedIngress(rootCaller()), locale: SupportedLocale = "en"): Promise<Client> {
   const validator = new ContractValidator();
   const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-  const server = createMcpServer(service, updateService(), undefined, undefined, undefined, validator, profile, null, null, undefined, null, null, ingress);
+  const server = createMcpServer(service, updateService(), undefined, undefined, undefined, validator, profile, null, null, undefined, null, null, ingress, locale);
   const client = new Client({ name: "tool-schema-profile", version: "1.0.0" });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   if (trace) {
@@ -244,7 +246,7 @@ describe("MCP tool schema profiles", () => {
 
   it("advertises the same host-neutral intake instructions to every schema profile", async () => {
     const expected = `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
-    expect(serverInstructions()).toBe(expected);
+    expect(serverInstructions("ko")).toBe(expected);
     // Initialization projects the actual shared criteria, not merely their location.
     const shared = await readFile(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8");
     const intake = shared.split("<!-- skill-intake:start -->\n")[1]?.split("\n<!-- skill-intake:end -->")[0];
@@ -261,9 +263,9 @@ describe("MCP tool schema profiles", () => {
       expect(expected).not.toMatch(hostSpecific);
     }
     const traces: ProtocolTrace[] = [[], [], []];
-    const implicit = await connect(undefined, traces[0]);
-    const codex = await connect("default", traces[1]);
-    const claude = await connect("anthropic", traces[2]);
+    const implicit = await connect(undefined, traces[0], undefined, "ko");
+    const codex = await connect("default", traces[1], undefined, "ko");
+    const claude = await connect("anthropic", traces[2], undefined, "ko");
     try {
       for (const trace of traces) {
         const requests = trace.filter(row => row.direction === "client").map(row => JSON.parse(row.wire));
@@ -303,11 +305,12 @@ describe("MCP tool schema profiles", () => {
     environment.AGENT_GOVERNANCE_DB_PATH = join(stateDirectory, "workflows.sqlite3");
     environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH = join(stateDirectory, "continuity.sqlite3");
     environment.AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE = "anthropic";
+    environment[LOCALE_ENVIRONMENT] = "ko";
     return scope.connect("tool-schema-profile-stdio", { command: process.execPath, args: [bundledServer], cwd: rootDirectory, env: environment });
   }, async ({ client }) => {
     const planning = (await client.listTools()).tools.find((tool) => tool.name === "plan_workflow")?.inputSchema;
     expect(planning).toBeDefined();
     expect(planning).not.toHaveProperty("oneOf");
-    expect(client.getInstructions()).toBe(serverInstructions());
+    expect(client.getInstructions()).toBe(serverInstructions("ko"));
   }, 30_000);
 });

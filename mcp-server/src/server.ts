@@ -18,7 +18,8 @@ import {
   WorkflowContractError,
   contractErrorBody,
 } from "../../contracts/types.js";
-import { CONTENT_LANGUAGE_META, msg, render, resolveHostLocale, resolveRequestLocale, ROOT_LOCALE, type MessageRef, type SupportedLocale } from "./i18n.js";
+import { CONTENT_LANGUAGE_META, msg, render, resolveHostLocale, resolveRequestLocale, ROOT_LOCALE, type MessageKey, type MessageRef, type SupportedLocale } from "./i18n.js";
+import { CATALOGS } from "./i18n-catalog.generated.js";
 import { locateRepository, normalizeSummary, openBoard, readEntry, setSummary, type BoardEntry } from "../../skills/session-board/scripts/board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
 import { contractFailure, failureContext, failureReason, retainFailureSecondary } from "./failure-diagnostics.js";
@@ -65,68 +66,168 @@ function embeddedSchema(source: Record<string, unknown>): ObjectSchema {
   return schema;
 }
 
-const taskEnvelopeInputSchema = embeddedSchema(contractSchemas.taskEnvelope);
-const planWorkflowInputSchema = {
-  type: "object",
-  oneOf: [
-    taskEnvelopeInputSchema,
-    {
-      type: "object",
-      additionalProperties: false,
-      required: ["schemaVersion", "taskEnvelope"],
-      properties: {
-        schemaVersion: { const: "1.0.0" },
-        taskEnvelope: taskEnvelopeInputSchema,
-        evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] },
-        requiredAuditPhase: { enum: ["pre-execution", "post-execution", "pre-deploy", "post-deploy"] },
-      },
-      allOf: [{
-        if: {
-          properties: {
-            taskEnvelope: {
-              properties: {
-                requiredCapabilities: {
-                  type: "array",
-                  contains: { const: "evaluation-validity-audit" },
+type ContractDocuments = typeof contractSchemas;
+
+/**
+ * The catalog key of the schema `description` at `pointer` in a contract file (docs/i18n-design.md 5.2):
+ * schema.<file name in camel case>.<pointer segments>, e.g. stage-result.v1.schema.json#/$defs/evidence/description
+ * is schema.stageResultV1.defs.evidence.description.
+ */
+export function schemaDescriptionKey(file: string, pointer: readonly string[]): string {
+  const identifier = (text: string) => text.replace(/[^A-Za-z0-9_-]/gu, "_");
+  const [first = "", ...rest] = file.replace(/\.schema\.json$/u, "").split(/[-.]/u);
+  const fileId = first + rest.map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join("");
+  return ["schema", identifier(fileId), ...pointer.map((segment) => (segment === "$defs" ? "defs" : identifier(segment)))].join(".");
+}
+
+/** A contract document whose catalogued descriptions are in `locale`; the files themselves are never changed (CONTENT_LOCK). */
+function localizeContract(document: Record<string, unknown>, locale: SupportedLocale): Record<string, unknown> {
+  const file = String(document.$id).split("/").at(-1) ?? "";
+  const walk = (node: unknown, pointer: string[]): unknown => {
+    if (Array.isArray(node)) return node.map((item, index) => walk(item, [...pointer, String(index)]));
+    if (!node || typeof node !== "object") return node;
+    return Object.fromEntries(Object.entries(node).map(([name, value]) => {
+      const at = [...pointer, name];
+      if (name !== "description" || typeof value !== "string") return [name, walk(value, at)];
+      const key = schemaDescriptionKey(file, at);
+      return [name, key in CATALOGS[ROOT_LOCALE] ? render({ key, params: {} }, locale) : value];
+    }));
+  };
+  return walk(document, []) as Record<string, unknown>;
+}
+
+// ponytail: one localized copy per shipped locale, built on first use; the bound is the locale count.
+const localizedContractCache = new Map<SupportedLocale, ContractDocuments>();
+
+function localizedContracts(locale: SupportedLocale): ContractDocuments {
+  // The schema domain's source locale is en: the contract files are its text, so they are advertised as they are.
+  if (locale === ROOT_LOCALE) return contractSchemas;
+  let documents = localizedContractCache.get(locale);
+  if (!documents) {
+    documents = Object.fromEntries(Object.entries(contractSchemas).map(([name, document]) => [name, localizeContract(document, locale)])) as ContractDocuments;
+    localizedContractCache.set(locale, documents);
+  }
+  return documents;
+}
+
+type ToolTextKey = Extract<MessageKey, `tools.${string}`>;
+const toolText = (key: ToolTextKey, locale: SupportedLocale) => render({ key, params: {} }, locale);
+
+/** The advertised input schemas that carry descriptions, built from contract documents with their descriptions in `locale`. */
+function buildInputSchemas(contracts: ContractDocuments, locale: SupportedLocale) {
+  const taskEnvelopeInputSchema = embeddedSchema(contracts.taskEnvelope);
+  const planWorkflow = {
+    type: "object",
+    oneOf: [
+      taskEnvelopeInputSchema,
+      {
+        type: "object",
+        additionalProperties: false,
+        required: ["schemaVersion", "taskEnvelope"],
+        properties: {
+          schemaVersion: { const: "1.0.0" },
+          taskEnvelope: taskEnvelopeInputSchema,
+          evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] },
+          requiredAuditPhase: { enum: ["pre-execution", "post-execution", "pre-deploy", "post-deploy"] },
+        },
+        allOf: [{
+          if: {
+            properties: {
+              taskEnvelope: {
+                properties: {
+                  requiredCapabilities: {
+                    type: "array",
+                    contains: { const: "evaluation-validity-audit" },
+                  },
                 },
+                required: ["requiredCapabilities"],
               },
-              required: ["requiredCapabilities"],
             },
           },
-        },
-        then: { required: ["evaluationAuditPurpose"] },
-      }],
-    },
-  ],
-} as const;
+          then: { required: ["evaluationAuditPurpose"] },
+        }],
+      },
+    ],
+  } as const;
 
-const openConvergenceRootInputSchema = toolSchema(contractSchemas.openConvergenceRootRequest, {
-  add: {
-    responseMode: responseModeProperty,
-  },
-});
-const attemptProposalInputSchema = toolSchema(contractSchemas.attemptProposal, {
-  optional: ["taskEnvelope", "frame"],
-});
-attemptProposalInputSchema.dependentRequired = {
-  taskEnvelope: ["frame"],
-  frame: ["taskEnvelope"],
-};
-const guardedWorkflowStartInputSchema = toolSchema(contractSchemas.guardedWorkflowStartRequest, {
-  add: { responseMode: responseModeProperty },
-  optional: ["plan"],
-});
-const resolveConvergenceGateInputSchema = toolSchema(contractSchemas.resolveConvergenceGateRequest, {
-  add: { responseMode: responseModeProperty },
-});
-const recordStageResultInputSchema = toolSchema(contractSchemas.stageResult, {
-  add: { responseMode: responseModeProperty },
-});
-if (recordStageResultInputSchema.properties) {
-  delete recordStageResultInputSchema.properties.executionContext;
+  const planWorkflowInline: ObjectSchema = {
+    type: "object",
+    description: toolText("tools.plan_workflow.inlineInput", locale),
+    additionalProperties: false,
+    properties: {
+      ...structuredClone(taskEnvelopeInputSchema.properties ?? {}),
+      taskEnvelope: structuredClone(taskEnvelopeInputSchema),
+      evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] },
+      requiredAuditPhase: { enum: ["pre-execution", "post-execution", "pre-deploy", "post-deploy"] },
+    },
+  };
+
+  const openConvergenceRoot = toolSchema(contracts.openConvergenceRootRequest, {
+    add: {
+      responseMode: responseModeProperty,
+    },
+  });
+  const attemptProposal = toolSchema(contracts.attemptProposal, {
+    optional: ["taskEnvelope", "frame"],
+  });
+  attemptProposal.dependentRequired = {
+    taskEnvelope: ["frame"],
+    frame: ["taskEnvelope"],
+  };
+  const guardedWorkflowStart = toolSchema(contracts.guardedWorkflowStartRequest, {
+    add: { responseMode: responseModeProperty },
+    optional: ["plan"],
+  });
+  const resolveConvergenceGate = toolSchema(contracts.resolveConvergenceGateRequest, {
+    add: { responseMode: responseModeProperty },
+  });
+  const recordStageResult = toolSchema(contracts.stageResult, {
+    add: { responseMode: responseModeProperty },
+  });
+  if (recordStageResult.properties) {
+    delete recordStageResult.properties.executionContext;
+  }
+  recordStageResult.required = (recordStageResult.required ?? [])
+    .filter((name) => name !== "executionContext");
+
+  /** start_workflow (design ags30-phase-check 7.5): the AGENT's goal, stages and acceptance criteria; the rest is defaulted. */
+  const minimalWorkflowStart: Record<string, unknown> = {
+    type: "object",
+    additionalProperties: false,
+    required: ["goal", "stages", "acceptanceCriteria"],
+    properties: {
+      goal: { type: "string", minLength: 1, maxLength: 2000 },
+      stages: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 },
+        description: toolText("tools.start_workflow.input.stages", locale) },
+      acceptanceCriteria: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 } },
+      workspace: { type: "string", minLength: 1, description: toolText("tools.start_workflow.input.workspace", locale) },
+      writeTargets: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 },
+        description: toolText("tools.start_workflow.input.writeTargets", locale) },
+    },
+  };
+
+  const prepareSessionMessage = structuredClone(contracts.prepareSessionMessageRequest) as ObjectSchema;
+  const sendBodySchema = prepareSessionMessage.properties?.body as Record<string, unknown> | undefined;
+  if (sendBodySchema) sendBodySchema.description = toolText("tools.prepare_session_message.input.body", locale);
+
+  return {
+    planWorkflow, planWorkflowInline, openConvergenceRoot, attemptProposal, guardedWorkflowStart, resolveConvergenceGate,
+    recordStageResult, minimalWorkflowStart, prepareSessionMessage,
+  };
 }
-recordStageResultInputSchema.required = (recordStageResultInputSchema.required ?? [])
-  .filter((name) => name !== "executionContext");
+
+type InputSchemas = ReturnType<typeof buildInputSchemas>;
+// ponytail: built once per shipped locale on first use; the bound is the locale count.
+const inputSchemaCache = new Map<SupportedLocale, InputSchemas>();
+
+function inputSchemas(locale: SupportedLocale): InputSchemas {
+  let schemas = inputSchemaCache.get(locale);
+  if (!schemas) {
+    schemas = buildInputSchemas(localizedContracts(locale), locale);
+    inputSchemaCache.set(locale, schemas);
+  }
+  return schemas;
+}
 
 const revisionInputSchema = {
   type: "object",
@@ -166,10 +267,6 @@ const updateCheckInputSchema = {
     force: { type: "boolean", default: false },
   },
 } as const;
-
-const prepareSessionMessageInputSchema = structuredClone(contractSchemas.prepareSessionMessageRequest) as ObjectSchema;
-const sendBodySchema = prepareSessionMessageInputSchema.properties?.body as Record<string, unknown> | undefined;
-if (sendBodySchema) sendBodySchema.description = "A non-empty message body limited to 4096 UTF-8 bytes by the service.";
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -222,27 +319,27 @@ function apiOk<T>(data: T): ApiResultV1<T> {
   return { schemaVersion: "1.0.0", ok: true, data, error: null };
 }
 
-function invalidInput(message: MessageRef | string): ApiResultV1<never> {
+function invalidInput(message: MessageRef): ApiResultV1<never> {
   return apiError("INVALID_INPUT", message);
 }
 
-function apiError(code: ErrorCode, message: MessageRef | string, details: Record<string, unknown> | null = null): ApiResultV1<never> {
-  const error = typeof message === "string" ? { code, message, details } : contractErrorBody(code, message, details);
-  return { schemaVersion: "1.0.0", ok: false, data: null, error };
+function apiError(code: ErrorCode, message: MessageRef, details: Record<string, unknown> | null = null): ApiResultV1<never> {
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: contractErrorBody(code, message, details) };
 }
 
 /**
- * Contract errors keep their own code and sanitized details. Any other failure is a server failure
+ * Contract errors keep their own code, message key and sanitized details. Any other failure is a server failure
  * (contractFailure: MCP_UNAVAILABLE, fixed message, reason and redacted cause), never invalid input.
- * `_fallback` is retained only so existing call sites stay unchanged; no caller text is derived from the error.
+ * No caller text is derived from the error.
  */
-function failureResult(error: unknown, _fallback: string, suffix = ""): ApiResultV1<never> {
-  if (error instanceof WorkflowContractError) {
-    if (suffix === "") return { schemaVersion: "1.0.0", ok: false, data: null, error: error.toBody() };
-    return apiError(error.code, `${error.message}${suffix}`, error.details);
-  }
-  const failure = contractFailure(error);
-  return apiError(failure.code, failure.message, failure.details);
+function failureResult(error: unknown): ApiResultV1<never> {
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: contractFailure(error).toBody() };
+}
+
+/** send_session_message failures: a contract error also tells the caller how to retry, as one catalog sentence. */
+function sendFailureResult(error: unknown): ApiResultV1<never> {
+  if (!(error instanceof WorkflowContractError)) return failureResult(error);
+  return apiError(error.code, msg("server.sessionMessage.sendInvalid", { cause: error.message }), error.details);
 }
 
 const CLASSIFICATION_REQUEST_REJECTIONS = new Set([
@@ -300,9 +397,9 @@ async function sessionBoardResult(
       validator.listSessionStatusRequest(args);
     }
   } catch (error) {
-    return failureResult(error, "Session board input is invalid.");
+    return failureResult(error);
   }
-  if (!databasePath) return apiError("MCP_UNAVAILABLE", "The session board is not configured.");
+  if (!databasePath) return apiError("MCP_UNAVAILABLE", msg("server.sessionBoard.notConfigured", {}));
   const self = binding;
 
   if (tool === "update_session_status") {
@@ -320,7 +417,7 @@ async function sessionBoardResult(
     } catch (error) {
       closeOnce(board, error);
       // Bounded, redacted cause (no message, path or SQL); the session's other work is not affected.
-      return apiError("MCP_UNAVAILABLE", "The session board line was not recorded.", { step, cause: failureContext(error) });
+      return apiError("MCP_UNAVAILABLE", msg("server.sessionBoard.notRecorded", {}), { step, cause: failureContext(error) });
     }
   }
 
@@ -329,7 +426,7 @@ async function sessionBoardResult(
     presence = await sessionMessages.listCurrentPresence(self);
   } catch (error) {
     // Without presence nobody can tell which sessions run; board rows are never shown in its place.
-    return apiError("MCP_UNAVAILABLE", "Session liveness is unavailable, so the session board cannot list running sessions.",
+    return apiError("MCP_UNAVAILABLE", msg("server.sessionBoard.livenessUnavailable", {}),
       { step: "presence", cause: failureContext(error) });
   }
   const entries = new Map<string, BoardEntry | null>();
@@ -387,53 +484,40 @@ function usesInlineReferences(profile: ToolSchemaProfile): boolean {
   return profile === "inline-references" || profile === "anthropic";
 }
 
-const planWorkflowInlineInputSchema: ObjectSchema = {
-  type: "object",
-  description: "Send either a TaskEnvelope.v1 object at the top level, or { schemaVersion, taskEnvelope, evaluationAuditPurpose?, requiredAuditPhase? }. The server validates the exact PlanWorkflowRequest.v1 contract.",
-  additionalProperties: false,
-  properties: {
-    ...structuredClone(taskEnvelopeInputSchema.properties ?? {}),
-    taskEnvelope: structuredClone(taskEnvelopeInputSchema),
-    evaluationAuditPurpose: { enum: ["design-readiness", "quality-or-release"] },
-    requiredAuditPhase: { enum: ["pre-execution", "post-execution", "pre-deploy", "post-deploy"] },
-  },
-};
-
-/** start_workflow (design ags30-phase-check 7.5): the AGENT's goal, stages and acceptance criteria; the rest is defaulted. */
-const minimalWorkflowStartInputSchema: Record<string, unknown> = {
-  type: "object",
-  additionalProperties: false,
-  required: ["goal", "stages", "acceptanceCriteria"],
-  properties: {
-    goal: { type: "string", minLength: 1, maxLength: 2000 },
-    stages: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 },
-      description: "Capabilities from the skill registry, chosen by the AGENT, e.g. minimal-implementation. Stages that produce required artifacts are refused here; use plan_workflow for them." },
-    acceptanceCriteria: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 } },
-    workspace: { type: "string", minLength: 1, description: "Absolute workspace path. Default: the working directory this session's host reported to AGS; required when none was reported." },
-    writeTargets: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 },
-      description: "Paths the work changes, relative to the workspace. Default: the whole workspace." },
-  },
-};
-
 /** Failures the AGENT cannot fix by changing its input: the session's window then passes with the cause recorded. */
 const WORKFLOW_START_INFRASTRUCTURE_FAILURES: ReadonlySet<string> = new Set(["MCP_UNAVAILABLE", "CONTINUITY_UNAVAILABLE", "BINDING_REQUIRED", "BINDING_INVALID", "INTEGRITY_FAILED"]);
 
-export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "default"): Record<string, unknown> {
-  return usesInlineReferences(profile) ? planWorkflowInlineInputSchema : planWorkflowInputSchema;
+export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "default", locale: SupportedLocale = ROOT_LOCALE): Record<string, unknown> {
+  const schemas = inputSchemas(locale);
+  return usesInlineReferences(profile) ? schemas.planWorkflowInline : schemas.planWorkflow;
 }
 
 /** Both hosts receive the selection policy from the shared skill, not a second policy copy. */
-const intake = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8")
+const intakeBlock = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8")
   .match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1];
-if (!intake) throw new Error("Shared skill intake instructions are missing.");
-export const SKILL_INTAKE_SERVER_INSTRUCTIONS = `agent-governance-suite 접수 안내: 다음은 skills/orchestrator/SKILL.md의 공통 원본이다. 적용되는 전문 스킬을 호스트가 제공하는 설치된 스킬 호출 방식으로 실행한다.\n\n${intake}\n\n여러 전문 단계를 연결할 때 references/entry-details.md, MCP 실행·실패 처리는 references/mcp-execution.md를 따른다.`;
+if (!intakeBlock) throw new Error("Shared skill intake instructions are missing.");
+const intake: string = intakeBlock;
 
-export function serverInstructions(): string {
-  return `${SKILL_INTAKE_SERVER_INSTRUCTIONS}\n${SESSION_MESSAGE_SERVER_INSTRUCTIONS}`;
+/**
+ * The intake block stays the installed SKILL.md text, so it is in the package language (docs/i18n-design.md 4.2);
+ * only the sentences around it follow `locale`.
+ */
+export function skillIntakeServerInstructions(locale: SupportedLocale): string {
+  return render(msg("instructions.intake.frame", { intake }), locale);
 }
 
 // Prompt-engineering: preserve messaging actions while separating advisory wake state from delivery evidence.
-export const SESSION_MESSAGE_SERVER_INSTRUCTIONS = "세션 메시지는 prepare_session_message로 대상·본문·TTL을 고정하고 시스템이 발급한 messageId를 받은 뒤 send_session_message(messageId)로 전송한다. ID를 직접 만들거나 send에 내용을 다시 넣지 않는다. 전송 결과가 불명확하면 받은 같은 ID로 status를 조회하거나 send를 재시도한다. unknown ID는 이전 전송 완료나 기록 정리 가능성이 있으므로 저장한 영수증과 대조한다. 새 prepare는 새 전송 의도에만 사용하며 불명확한 기존 전송을 무조건 다시 준비하지 않는다. send 성공은 큐에 넣었다는 뜻이며 상대가 받거나 처리했다는 뜻이 아니다. send 뒤 autoWake.state가 available이면 호스트 기능으로 따로 깨우지 않는다. no-live-relay·unsupported이면 AGS 자동 깨우기 경로를 사용할 수 없으므로 상대의 처리가 지금 필요할 때만 호스트 기능으로 한 번 깨운다. no-live-relay·unsupported이고 상대의 처리가 지금 필요하면 확인된 전달 상태와 AGS 자동 깨우기 경로를 사용할 수 없다는 사실을 사용자에게 알린다. available의 wake-unanswered는 넘긴 깨우기에 응답 근거가 아직 없다는 사실이며 다시 울릴 시각이 지나면 다시 울릴 수 있다. degraded는 이 수신 세션의 자동 깨우기가 연속 실패했거나 전제조건이 없다는 뜻이며, 메시지는 큐에 남아 상대가 자기 턴 종료·도구 경계·입력에서 인수할 때까지 늦을 수 있다. degraded이고 상대의 처리가 지금 필요하면 확인된 전달 상태와 상대가 경계에서 인수하기 전까지 늦을 수 있다는 사실을 사용자에게 알린다. autoWake는 기준 시점의 자동 깨우기 참고값(authorityEffect: none)이며 상대의 현재 작업·수면 상태나 메시지 전달·처리·승인 증거가 아니다. 필요한 보고에는 확인된 큐 등록·전달 상태만 쓰고 autoWake만으로 현재 깨어남이나 이후 전달을 단정하지 않는다. 정상 전송 뒤에는 메시지마다 영수증·status 조회나 수신 확인 보고를 되풀이하지 않는다. 수신자는 실제 처리한 messageId만 모아 acknowledge_session_messages로 한 번에 ACK한다. 처리하지 못한 ID는 ACK하지 않아 재전달 가능성을 보존한다. ACK는 메시지 처리 확인이며 업무 완료나 승인 증거가 아니다. 본문 없는 깨우기 신호나 내용 없는 메시지를 받아도 진행 중인 작업을 멈추지 않으며, 본문을 받지 못한 메시지의 내용은 짐작하지 않는다. 메시지는 새 결과·막힌 일·결정 요청이 있을 때만 필요한 상대 한 곳에 한 번 보내고, 보고에 대한 보고·같은 내용 재송신·중계만을 위한 중계·수신 확인용 왕복 메시지를 만들지 않는다.";
+export function sessionMessageServerInstructions(locale: SupportedLocale): string {
+  return render(msg("instructions.sessionMessage.guide", {}), locale);
+}
+
+/** The instructions in their source locale (ko), as written and reviewed. */
+export const SKILL_INTAKE_SERVER_INSTRUCTIONS = skillIntakeServerInstructions("ko");
+export const SESSION_MESSAGE_SERVER_INSTRUCTIONS = sessionMessageServerInstructions("ko");
+
+export function serverInstructions(locale: SupportedLocale = resolveHostLocale().locale): string {
+  return `${skillIntakeServerInstructions(locale)}\n${sessionMessageServerInstructions(locale)}`;
+}
 
 function validUpdateArguments(args: Record<string, unknown>): boolean {
   return Object.keys(args).every((key) => key === "force")
@@ -460,23 +544,30 @@ export function createMcpServer(
 ): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
-    { capabilities: { tools: {} }, instructions: serverInstructions() },
+    // SDK 1.30.0 fixes instructions at construction (private _oninitialize), so they use the service default locale.
+    { capabilities: { tools: {} }, instructions: serverInstructions(defaultLocale) },
   );
 
-  const contractDocuments = Object.values(contractSchemas) as Array<Record<string, unknown>>;
   // Anthropic hosts cannot resolve $ref in tool schemas, so they receive fully inlined copies.
-  const advertise = <T extends { inputSchema: Record<string, unknown> }>(tools: T[]): T[] => tools.map((tool) => {
-    const inputSchema = structuredClone(tool.inputSchema) as ObjectSchema;
-    if (usesInlineReferences(toolSchemaProfile) && JSON.stringify(inputSchema).includes('"$ref"')) {
-      return { ...tool, inputSchema: inlineSchemaReferences(inputSchema, contractDocuments) };
-    }
-    return { ...tool, inputSchema };
-  });
+  const advertise = <T extends { inputSchema: Record<string, unknown> }>(tools: T[], locale: SupportedLocale): T[] => {
+    const contractDocuments = Object.values(localizedContracts(locale)) as Array<Record<string, unknown>>;
+    return tools.map((tool) => {
+      const inputSchema = structuredClone(tool.inputSchema) as ObjectSchema;
+      if (usesInlineReferences(toolSchemaProfile) && JSON.stringify(inputSchema).includes('"$ref"')) {
+        return { ...tool, inputSchema: inlineSchemaReferences(inputSchema, contractDocuments) };
+      }
+      return { ...tool, inputSchema };
+    });
+  };
 
-  const tools = advertise([
+  const toolList = (locale: SupportedLocale) => {
+    const schemas = inputSchemas(locale);
+    const contracts = localizedContracts(locale);
+    const description = (key: ToolTextKey) => toolText(key, locale);
+    return advertise([
       {
         name: "get_skill_inventory",
-        description: "Read the full installed skill inventory from SKILL.md and registry source metadata, including infrastructure skills and source conflicts. No semantic selection or execution. HOST_DISCOVERY_UNAVAILABLE only means no host discovery snapshot is configured; the listed skills are still installed and usable.",
+        description: description("tools.get_skill_inventory.description"),
         inputSchema: {type: "object", additionalProperties: false, properties: {}},
         // D0347: the inventory itself only reads local skill, registry and discovery sources, so the call neither
         // destroys data nor reaches an external system. readOnlyHint stays unset: the shared call boundary still
@@ -485,184 +576,200 @@ export function createMcpServer(
       },
       {
         name: "classify_skills",
-        description: "Package the exact original prompt and confirmed context without an extra LLM; obtain bound classification advice through the configured JEV or current vendor fixed profile. The AGENT still makes the final selection. Missing routes, qualification or budget remain unavailable. Classification is optional advice: NEEDS_INPUT with HOST_DISCOVERY_UNAVAILABLE or an unconfigured route means no classification support is set up here, so choose the skills yourself from get_skill_inventory and continue the task.",
+        description: description("tools.classify_skills.description"),
         inputSchema: z.toJSONSchema(classificationInputSchema) as Record<string, unknown>,
       },
       {
         name: "record_skill_selection",
-        description: "Validate the AGENT's own selection against the bound advice, explicit/required skills, applicability, dependencies and current revisions. The host hook supplies actual call observation; caller receipts are rejected. Selection does not grant admission or prove reading/application/verification.",
+        description: description("tools.record_skill_selection.description"),
         inputSchema: z.toJSONSchema(selectionInputSchema) as Record<string, unknown>,
       },
       {
         name: "lookup_korean_prose_terms",
-        description: "Look up curated Korean prose glossary terms once before MCP selection. The source and matches are never persisted.",
-        inputSchema: contractSchemas.koreanProseGlossaryLookupRequest,
+        description: description("tools.lookup_korean_prose_terms.description"),
+        inputSchema: contracts.koreanProseGlossaryLookupRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "check_for_updates",
-        description: "Check the fixed Agent Governance Suite repository for a newer stable plugin tag without installing it.",
+        description: description("tools.check_for_updates.description"),
         inputSchema: updateCheckInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: false, destructiveHint: false, openWorldHint: true },
       },
       {
         name: "get_trust_capabilities",
-        description: "Report the provenance and authority capabilities that this release can actually enforce.",
+        description: description("tools.get_trust_capabilities.description"),
         inputSchema: { type: "object", additionalProperties: false },
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "validate_collaboration_decision",
-        description: "Validate a collaboration decision structurally and report independent receipt provenance observations without issuing authority or attesting direct user input.",
-        inputSchema: contractSchemas.validateCollaborationDecisionRequest,
+        description: description("tools.validate_collaboration_decision.description"),
+        inputSchema: contracts.validateCollaborationDecisionRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "plan_workflow",
-        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose. A stage executionRequirement floor (minimumModelClass, minimumReasoningEffort) applies only when a subagent records a passed stage; the root session records with the model and effort the user chose and is never refused for them. MODEL_NOT_IN_CATALOG and a null modelClass are notes, not refusals.",
-        inputSchema: planWorkflowToolInputSchema(toolSchemaProfile),
+        description: description("tools.plan_workflow.description"),
+        inputSchema: usesInlineReferences(toolSchemaProfile) ? schemas.planWorkflowInline : schemas.planWorkflow,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "open_convergence_root",
-        description: "Create one durable immutable task lineage. userApprovalRefs of a replacement are recorded as declared; AGS does not observe user approval. Use responseMode=compact to avoid echoing task and frame inputs.",
-        inputSchema: openConvergenceRootInputSchema,
+        description: description("tools.open_convergence_root.description"),
+        inputSchema: schemas.openConvergenceRoot,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "claim_workflow_attempt",
-        description: "Issue a one-use lease after validating stability and attempt budget; a retry names prior-failure evidence as local files the server hashes. taskEnvelope and frame may be omitted to reuse the bound root.",
-        inputSchema: attemptProposalInputSchema,
+        description: description("tools.claim_workflow_attempt.description"),
+        inputSchema: schemas.attemptProposal,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "start_guarded_workflow",
-        description: "Atomically consume a lease and start its bound plan; plan may be omitted and responseMode=compact avoids returning the full receipt.",
-        inputSchema: guardedWorkflowStartInputSchema,
+        description: description("tools.start_guarded_workflow.description"),
+        inputSchema: schemas.guardedWorkflowStart,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "get_convergence_status",
-        description: "Read convergence state; detail=compact returns handles and counts, while the default full mode includes complete history.",
+        description: description("tools.get_convergence_status.description"),
         inputSchema: convergenceIdInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "resolve_convergence_gate",
-        description: "Record a frame review declared by the root. AGS does not observe reviewer identity, independence or context; see unverifiedClaims. Use responseMode=compact to return handles and counts only.",
-        inputSchema: resolveConvergenceGateInputSchema,
+        description: description("tools.resolve_convergence_gate.description"),
+        inputSchema: schemas.resolveConvergenceGate,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "start_workflow",
-        description: "Start a guarded workflow in one call: the server plans, opens the root, claims the lease and starts the run in one transaction, with the same checks as plan_workflow, open_convergence_root, claim_workflow_attempt and start_guarded_workflow. Give the goal, the stages you choose as capabilities, and the acceptance criteria; the result lists the TaskEnvelope fields filled with defaults. Stages that produce required artifacts (for example test-sensitivity-review and change-code-review) can pass only against an artifact target fixed in the plan, which start_workflow cannot set, so it refuses them: plan those with plan_workflow and taskEnvelope.artifactContracts once the target is known. Edits already made in the current window are marked as late adoption (unverified evidence). A failed step leaves no root, lease or run. A stage executionRequirement floor (minimumModelClass, minimumReasoningEffort) applies only when a subagent records a passed stage; the root session records with the model and effort the user chose and is never refused for them. MODEL_NOT_IN_CATALOG and a null modelClass are notes, not refusals.",
-        inputSchema: minimalWorkflowStartInputSchema,
+        description: description("tools.start_workflow.description"),
+        inputSchema: schemas.minimalWorkflowStart,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "record_stage_result",
-        description: "Record one ordered stage result. The server hashes local files named with a digest and records artifactChecks; verified flags are declarations. Use responseMode=compact to avoid echoing the accumulated receipt. A stage executionRequirement floor (minimumModelClass, minimumReasoningEffort) applies only when a subagent records a passed stage; the root session records with the model and effort the user chose and is never refused for them. MODEL_NOT_IN_CATALOG and a null modelClass are notes, not refusals.",
-        inputSchema: recordStageResultInputSchema,
+        description: description("tools.record_stage_result.description"),
+        inputSchema: schemas.recordStageResult,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "get_workflow_status",
-        description: "Read workflow state; detail=compact returns fixed-size progress metadata, while the default full mode returns the receipt.",
+        description: description("tools.get_workflow_status.description"),
         inputSchema: workflowIdInputSchema,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "finalize_workflow",
-        description: "Finalize a fully passed workflow. passed means every planned stage recorded PASS and the bindings AGS can check hold; unverifiedClaims lists what AGS did not observe. Use responseMode=compact to avoid returning the full terminal receipt.",
+        description: description("tools.finalize_workflow.description"),
         inputSchema: revisionInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "abort_workflow",
-        description: "Abort a non-terminal workflow; use responseMode=compact to avoid returning the full terminal receipt.",
+        description: description("tools.abort_workflow.description"),
         inputSchema: revisionInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
       },
       {
         name: "checkpoint_context",
-        description: "Replace the current direct-task continuity snapshot using CAS and an idempotent requestId; nextActions remain historical candidates.",
-        inputSchema: contractSchemas.checkpointContextRequest,
+        description: description("tools.checkpoint_context.description"),
+        inputSchema: contracts.checkpointContextRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "inspect_context",
-        description: "Inspect continuity metadata and obtain an opaque restore candidate without returning snapshot body text.",
-        inputSchema: contractSchemas.inspectContextRequest,
+        description: description("tools.inspect_context.description"),
+        inputSchema: contracts.inspectContextRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "load_context",
-        description: "Explicitly load a restore candidate after rechecking its task, epoch, revision, and digest.",
-        inputSchema: contractSchemas.loadContextRequest,
+        description: description("tools.load_context.description"),
+        inputSchema: contracts.loadContextRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "suppress_context_restore",
-        description: "Suppress automatic restore candidates for the current epoch without deleting stored payloads.",
-        inputSchema: contractSchemas.suppressContextRestoreRequest,
+        description: description("tools.suppress_context_restore.description"),
+        inputSchema: contracts.suppressContextRestoreRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "purge_direct_context",
-        description: "Delete the current direct-task payload and retain only a hash tombstone; workflow receipts are never deleted.",
-        inputSchema: contractSchemas.purgeDirectContextRequest,
+        description: description("tools.purge_direct_context.description"),
+        inputSchema: contracts.purgeDirectContextRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: true, openWorldHint: false },
       },
       {
         name: "prepare_state_cleanup",
-        description: "Preview fixed retention cleanup candidates and issue a one-use token without deleting data.",
-        inputSchema: contractSchemas.prepareStateCleanupRequest,
+        description: description("tools.prepare_state_cleanup.description"),
+        inputSchema: contracts.prepareStateCleanupRequest,
         annotations: { readOnlyHint: true, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "execute_state_cleanup",
-        description: "Recheck a preview token, create verified SQLite backups, and atomically delete only the bound inactive candidates. Backups are retained until manually deleted.",
-        inputSchema: contractSchemas.executeStateCleanupRequest,
+        description: description("tools.execute_state_cleanup.description"),
+        inputSchema: contracts.executeStateCleanupRequest,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
       },
       {
         name: "update_session_status",
-        description: "Write this session's one-line current work (what it does and the next external step) to the local session board shared by every host on this machine. The plugin hook binds the session; call it when the work or next external step changes. Do not repeat it for an unchanged task. If the board cannot be written, report it and continue.",
-        inputSchema: contractSchemas.updateSessionStatusRequest,
+        description: description("tools.update_session_status.description"),
+        inputSchema: contracts.updateSessionStatusRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "list_session_status",
-        description: "List the sessions on this machine that are running now (presence online) or recently unreachable, across every host: working directory, git repository and branch, one-line current work, whether the line predates the last prompt (summaryStale) and whether the session can be woken. Ended sessions are not listed; your own session is the first row. Check it before merges, pushes, tags, releases or installs. Reading may prune expired message-broker records and end wake attempts whose release condition holds (idempotent housekeeping).",
-        inputSchema: contractSchemas.listSessionStatusRequest,
+        description: description("tools.list_session_status.description"),
+        inputSchema: contracts.listSessionStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "prepare_session_message",
-        description: "Prepare immutable target, body and TTL without delivery. The bound sender receives a system-issued messageId; call send_session_message with that ID. Re-preparing after a lost prepare reply creates only an unused draft. When this sender (250) or all senders (1000) already hold the maximum retained receipts, no draft is created and error.details gives scope and earliestReleaseAt.",
-        inputSchema: prepareSessionMessageInputSchema,
+        description: description("tools.prepare_session_message.description"),
+        inputSchema: schemas.prepareSessionMessage,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "send_session_message",
-        description: "Submit only a messageId issued by prepare_session_message to this bound sender. Retry the same ID after an uncertain reply or compare saved receipts/status. Unknown ID does not prove no delivery; prepare again only for a new intent. A successful result means the broker queued the message, not that the recipient received it. The advisory autoWake (available, degraded, unsupported, no-live-relay; reason, basisAt) says whether the recipient's idle wake path works now; it is not delivery, completion or permission evidence. degraded: wakes keep failing or lack a prerequisite, so the message may wait for the recipient's next turn end, tool boundary or input; tell the user only if action is needed now. A receipt-capacity rejection with error.details (scope, earliestReleaseAt) is definite: nothing was queued. The rejected messageId stays prepared until the expiresAt returned by prepare; if earliestReleaseAt is before that expiresAt, retry that same ID after earliestReleaseAt, otherwise prepare again. Never do both.",
-        inputSchema: contractSchemas.sendSessionMessageRequest,
+        description: description("tools.send_session_message.description"),
+        inputSchema: contracts.sendSessionMessageRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "acknowledge_session_messages",
-        description: "실제로 처리한 서로 다른 피어 메시지를 한 번에 수신 확인한다. 각 봉투 receipt의 messageId와 claimReceipt를 receipts 배열에 그대로 넣고, 같은 식별자를 messageIds에 넣는다. 과거 회차의 영수증을 최신 회차로 바꾸거나 추측하지 않는다. 처리하지 않은 메시지는 확인하지 않는다. 이는 처리 근거이며 완료나 승인이 아니다. 영수증이 없는 옛 형식 역사 행만 messageIds 단독 확인을 지원한다. 새 전달에서 영수증이 누락되거나 회차가 다르면 확인 수는 0이다. 임대 만료 후 재인수되지 않은 같은 원회차는 늦게 확인할 수 있다.",
-        inputSchema: contractSchemas.acknowledgeSessionMessagesRequest,
+        description: description("tools.acknowledge_session_messages.description"),
+        inputSchema: contracts.acknowledgeSessionMessagesRequest,
         annotations: { readOnlyHint: false, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "get_session_message_status",
-        description: "Read prepared, queued, delivered, acknowledged or retained submitted receipt status for this bound sender. Unknown may mean old records were removed; compare saved receipts and do not automatically prepare a resend. Unacknowledged queue rows include the advisory autoWake recipient wake outlook with its basis time; it is not delivery, completion or permission evidence. Reading may prune expired message-broker records and end wake attempts whose release condition holds (idempotent housekeeping).",
-        inputSchema: contractSchemas.getSessionMessageStatusRequest,
+        description: description("tools.get_session_message_status.description"),
+        inputSchema: contracts.getSessionMessageStatusRequest,
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
-    ]);
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({tools}));
+    ], locale);
+  };
+  // ponytail: each locale's list is built once and kept; the bound is the shipped locale count.
+  const toolLists = new Map<SupportedLocale, ReturnType<typeof toolList>>();
+  const toolsFor = (locale: SupportedLocale) => {
+    let tools = toolLists.get(locale);
+    if (!tools) {
+      tools = toolList(locale);
+      toolLists.set(locale, tools);
+    }
+    return tools;
+  };
+  // The default list is built now, so a schema that cannot be advertised fails at startup as before.
+  toolsFor(defaultLocale);
+  server.setRequestHandler(ListToolsRequestSchema, async (request) => {
+    const locale = resolveRequestLocale(request.params?._meta, defaultLocale);
+    return { tools: toolsFor(locale), _meta: { [CONTENT_LANGUAGE_META]: locale } };
+  });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const locale = resolveRequestLocale(request.params._meta, defaultLocale);
@@ -671,7 +778,7 @@ export function createMcpServer(
     const args = asRecord(request.params.arguments);
     const reserved = RESERVED_CALLER_KEYS.find(key => Object.hasOwn(args, key));
     if (reserved) return respond(apiError("INVALID_INPUT", msg("server.call.reservedCallerField", {}), {reasonCode: "RESERVED_CALLER_FIELD", field: reserved}));
-    if (!callerIngress) return respond(apiError("BINDING_REQUIRED", "No host caller ingress is configured for this server.", {reasonCode: "HOST_INGRESS_UNAVAILABLE"}));
+    if (!callerIngress) return respond(apiError("BINDING_REQUIRED", msg("server.call.callerIngressMissing", {}), {reasonCode: "HOST_INGRESS_UNAVAILABLE"}));
     let caller: VerifiedCaller;
     try {
       const meta = request.params._meta;
@@ -683,7 +790,7 @@ export function createMcpServer(
       }
       // Error model R2: a non-contract failure (e.g. the admission store) is a server failure with its reason and
       // redacted cause, not a cause-less fixed reason.
-      return respond(failureResult(error, ""));
+      return respond(failureResult(error));
     }
     // Only a host with an execution adapter qualifies the caller's observed model and effort.
     const attested = <T>(tool: string, call: (input: Record<string, unknown>) => T): T =>
@@ -691,21 +798,21 @@ export function createMcpServer(
     // Rejects an unknown mode before the call runs; compact mode projects successful results only.
     const withMode = <T, U>(field: "responseMode" | "detail", call: () => ApiResultV1<T>, project: (value: T) => U): ApiResultV1<T | U> => {
       const mode = responseMode(args, field);
-      return mode === null ? invalidInput(`${field} must be compact or full.`) : projectResult(call(), mode, project);
+      return mode === null ? invalidInput(msg("server.call.responseModeInvalid", { field })) : projectResult(call(), mode, project);
     };
     let updateStatus: PluginUpdateStatusV1 | null = null;
     let result: ApiResultV1<unknown>;
 
     if (["get_skill_inventory", "classify_skills", "record_skill_selection"].includes(request.params.name)) {
-      if (!classification) result = apiError("MCP_UNAVAILABLE", "Skill classification is not configured for this server.");
+      if (!classification) result = apiError("MCP_UNAVAILABLE", msg("server.classification.notConfigured", {}));
       else {
         try {
           if (request.params.name !== "get_skill_inventory") {
             const checked = (request.params.name === "classify_skills" ? classificationInputSchema : selectionInputSchema).safeParse(args);
-            if (!checked.success) return respond(invalidInput("Skill classification input does not match its contract."));
+            if (!checked.success) return respond(invalidInput(msg("server.classification.inputMismatch", {})));
           }
           if (request.params.name === "get_skill_inventory") {
-            if (Object.keys(args).length > 0) return respond(invalidInput("get_skill_inventory accepts no arguments."));
+            if (Object.keys(args).length > 0) return respond(invalidInput(msg("server.classification.inventoryArguments", {})));
             result = apiOk(await classification.inventory());
           } else if (request.params.name === "classify_skills") {
             const classified = attested("classify_skills", input => {
@@ -729,21 +836,21 @@ export function createMcpServer(
             // MISSING_MODEL_CAPABILITY for a class-only adapter, D0089) stays visible to the caller.
             const observationReasonCode = error.details?.reasonCode;
             result = apiError(error.code, error.code === "MCP_UNAVAILABLE"
-              ? "Skill classification host observation is unavailable; no selection was accepted."
-              : "Skill classification host observation is invalid; no selection was accepted.", {
+              ? msg("server.classification.observationUnavailable", {})
+              : msg("server.classification.observationInvalid", {}), {
               category: "host-observation", reasonCode: error.code,
               ...(typeof observationReasonCode === "string" ? { observationReasonCode } : {}),
             });
           } else if (error instanceof Error && CLASSIFICATION_REQUEST_REJECTIONS.has(error.message)) {
-            result = apiError("INVALID_INPUT", "Skill classification request was rejected; no selection was accepted.", {
+            result = apiError("INVALID_INPUT", msg("server.classification.requestRejected", {}), {
               category: "request-state", reasonCode: error.message,
             });
           } else if (error instanceof ClassificationInitializationError) {
-            result = apiError("MCP_UNAVAILABLE", "Skill classification initialization is unavailable; no selection was accepted.", {
+            result = apiError("MCP_UNAVAILABLE", msg("server.classification.initializationUnavailable", {}), {
               category: "configuration", phase: error.phase, reasonCode: error.message,
             });
           } else {
-            result = apiError("MCP_UNAVAILABLE", "Skill classification configuration or runtime is unavailable; no selection was accepted.", {
+            result = apiError("MCP_UNAVAILABLE", msg("server.classification.runtimeUnavailable", {}), {
               reason: failureReason(error).reason ?? "INTERNAL_FAILURE", cause: failureContext(error),
             });
           }
@@ -755,11 +862,11 @@ export function createMcpServer(
         const output = validator.koreanProseGlossaryLookupResult(glossary.lookup(input));
         result = apiOk<KoreanProseGlossaryLookupResultV1>(output);
       } catch (error) {
-        result = failureResult(error, "Glossary lookup input is invalid.");
+        result = failureResult(error);
       }
     } else if (request.params.name === "check_for_updates") {
       if (!validUpdateArguments(args)) {
-        result = invalidInput("check_for_updates accepts only an optional boolean force field.");
+        result = invalidInput(msg("server.updates.argumentsInvalid", {}));
       } else {
         updateStatus = await updates.check(args.force === true);
         result = apiOk(updateStatus);
@@ -769,21 +876,21 @@ export function createMcpServer(
       switch (request.params.name) {
         case "get_trust_capabilities":
           result = Object.keys(args).length > 0
-            ? invalidInput("get_trust_capabilities accepts no arguments.")
+            ? invalidInput(msg("server.trust.capabilitiesArguments", {}))
             : trust
             ? trust.capabilities()
-            : apiError("MCP_UNAVAILABLE", "The trust receipt store is unavailable.");
+            : apiError("MCP_UNAVAILABLE", msg("server.trust.storeUnavailable", {}));
           break;
         case "validate_collaboration_decision":
           if (!trust) {
-            result = apiError("MCP_UNAVAILABLE", "The trust receipt store is unavailable.");
+            result = apiError("MCP_UNAVAILABLE", msg("server.trust.storeUnavailable", {}));
             break;
           }
           try {
             result = trust.validateCollaborationDecision(validator.validateCollaborationDecisionRequest(args), caller);
           } catch (error) {
             // Contract errors keep their own code and sanitized details (including storage diagnostics).
-            result = failureResult(error, "Collaboration decision validation input is invalid.");
+            result = failureResult(error);
           }
           break;
         case "plan_workflow":
@@ -821,8 +928,10 @@ export function createMcpServer(
             });
             // An AGS infrastructure failure must not leave the session's edits refused (design ags30-phase-check 7.6).
             if (!started.ok && started.error && WORKFLOW_START_INFRASTRUCTURE_FAILURES.has(started.error.code)) {
-              const { code, message, details } = started.error;
-              try { continuity.recordWorkflowStartFailure(caller.sessionId, new WorkflowContractError(code, message, details)); }
+              // The recorder keeps only the code and reason; the message is carried as its key when the body has one.
+              const { code, message, messageKey, params, details } = started.error;
+              const ref = messageKey ? { key: messageKey, params: params ?? {} } as MessageRef : message;
+              try { continuity.recordWorkflowStartFailure(caller.sessionId, new WorkflowContractError(code, ref, details)); }
               catch (cause) { process.stderr.write(JSON.stringify({ event: "workflow-start-failure-unrecorded", reason: failureReason(cause).reason ?? "UNEXPECTED_FAILURE" }) + "\n"); }
             }
             return started;
@@ -862,7 +971,7 @@ export function createMcpServer(
         case "prepare_state_cleanup":
           result = cleanup
             ? cleanup.prepare(args)
-            : apiError("MCP_UNAVAILABLE", "State cleanup is unavailable because its local stores did not initialize.", { reason: "STATE_CLEANUP_UNAVAILABLE" });
+            : apiError("MCP_UNAVAILABLE", msg("server.stateCleanup.unavailable", {}), { reason: "STATE_CLEANUP_UNAVAILABLE" });
           break;
         case "update_session_status":
         case "list_session_status":
@@ -873,7 +982,7 @@ export function createMcpServer(
             validator.prepareSessionMessageRequest(args);
             result = await sessionMessages.prepare(args, caller);
           } catch (error) {
-            result = failureResult(error, "Session message preparation is invalid.");
+            result = failureResult(error);
           }
           break;
         case "send_session_message":
@@ -881,7 +990,7 @@ export function createMcpServer(
             validator.sendSessionMessageRequest(args);
             result = await sessionMessages.send(args, caller);
           } catch (error) {
-            result = failureResult(error, "Session message input is invalid.", " Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status.");
+            result = sendFailureResult(error);
           }
           break;
         case "acknowledge_session_messages":
@@ -889,7 +998,7 @@ export function createMcpServer(
             validator.acknowledgeSessionMessagesRequest(args);
             result = await sessionMessages.acknowledge(args, caller);
           } catch (error) {
-            result = failureResult(error, "Session message acknowledgement is invalid.");
+            result = failureResult(error);
           }
           break;
         case "get_session_message_status":
@@ -897,25 +1006,16 @@ export function createMcpServer(
             validator.getSessionMessageStatusRequest(args);
             result = await sessionMessages.status(args, caller);
           } catch (error) {
-            result = failureResult(error, "Session message status input is invalid.");
+            result = failureResult(error);
           }
           break;
         case "execute_state_cleanup":
           result = cleanup
             ? cleanup.execute(args)
-            : apiError("MCP_UNAVAILABLE", "State cleanup is unavailable because its local stores did not initialize.", { reason: "STATE_CLEANUP_UNAVAILABLE" });
+            : apiError("MCP_UNAVAILABLE", msg("server.stateCleanup.unavailable", {}), { reason: "STATE_CLEANUP_UNAVAILABLE" });
           break;
         default:
-          result = {
-          schemaVersion: "1.0.0",
-          ok: false,
-          data: null,
-          error: {
-            code: "INVALID_INPUT",
-            message: "Unknown workflow tool.",
-            details: { tool: request.params.name },
-          },
-          };
+          result = apiError("INVALID_INPUT", msg("server.call.unknownTool", {}), { tool: request.params.name });
       }
     }
 

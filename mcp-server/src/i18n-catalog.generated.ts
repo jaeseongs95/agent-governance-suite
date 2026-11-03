@@ -2,19 +2,90 @@
 
 import en_hooks from "../../locales/en/hooks.json" with { type: "json" };
 import en_server from "../../locales/en/server.json" with { type: "json" };
+import en_tools from "../../locales/en/tools.json" with { type: "json" };
+import en_schema from "../../locales/en/schema.json" with { type: "json" };
+import en_instructions from "../../locales/en/instructions.json" with { type: "json" };
 import ko_hooks from "../../locales/ko/hooks.json" with { type: "json" };
 import ko_server from "../../locales/ko/server.json" with { type: "json" };
+import ko_tools from "../../locales/ko/tools.json" with { type: "json" };
+import ko_schema from "../../locales/ko/schema.json" with { type: "json" };
+import ko_instructions from "../../locales/ko/instructions.json" with { type: "json" };
 
 export const SUPPORTED_LOCALES = ["en","ko"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 export const ROOT_LOCALE: SupportedLocale = "en";
 
 export const CATALOGS: Readonly<Record<SupportedLocale, Readonly<Record<string, string>>>> = {
-  "en": { ...en_hooks, ...en_server },
-  "ko": { ...ko_hooks, ...ko_server },
+  "en": { ...en_hooks, ...en_server, ...en_tools, ...en_schema, ...en_instructions },
+  "ko": { ...ko_hooks, ...ko_server, ...ko_tools, ...ko_schema, ...ko_instructions },
 };
 
 export interface MessageParams {
   "hooks.editGate.denied": { "limit": number; "paths": number | string; "earlier": number; "example": number | string; };
   "server.call.reservedCallerField": Record<string, never>;
+  "server.call.callerIngressMissing": Record<string, never>;
+  "server.call.responseModeInvalid": { "field": number | string; };
+  "server.call.unknownTool": Record<string, never>;
+  "server.sessionBoard.notConfigured": Record<string, never>;
+  "server.sessionBoard.notRecorded": Record<string, never>;
+  "server.sessionBoard.livenessUnavailable": Record<string, never>;
+  "server.classification.notConfigured": Record<string, never>;
+  "server.classification.inputMismatch": Record<string, never>;
+  "server.classification.inventoryArguments": Record<string, never>;
+  "server.classification.observationUnavailable": Record<string, never>;
+  "server.classification.observationInvalid": Record<string, never>;
+  "server.classification.requestRejected": Record<string, never>;
+  "server.classification.initializationUnavailable": Record<string, never>;
+  "server.classification.runtimeUnavailable": Record<string, never>;
+  "server.updates.argumentsInvalid": Record<string, never>;
+  "server.trust.capabilitiesArguments": Record<string, never>;
+  "server.trust.storeUnavailable": Record<string, never>;
+  "server.stateCleanup.unavailable": Record<string, never>;
+  "server.sessionMessage.sendInvalid": { "cause": number | string; };
+  "tools.get_skill_inventory.description": Record<string, never>;
+  "tools.classify_skills.description": Record<string, never>;
+  "tools.record_skill_selection.description": Record<string, never>;
+  "tools.lookup_korean_prose_terms.description": Record<string, never>;
+  "tools.check_for_updates.description": Record<string, never>;
+  "tools.get_trust_capabilities.description": Record<string, never>;
+  "tools.validate_collaboration_decision.description": Record<string, never>;
+  "tools.plan_workflow.description": Record<string, never>;
+  "tools.open_convergence_root.description": Record<string, never>;
+  "tools.claim_workflow_attempt.description": Record<string, never>;
+  "tools.start_guarded_workflow.description": Record<string, never>;
+  "tools.get_convergence_status.description": Record<string, never>;
+  "tools.resolve_convergence_gate.description": Record<string, never>;
+  "tools.start_workflow.description": Record<string, never>;
+  "tools.record_stage_result.description": Record<string, never>;
+  "tools.get_workflow_status.description": Record<string, never>;
+  "tools.finalize_workflow.description": Record<string, never>;
+  "tools.abort_workflow.description": Record<string, never>;
+  "tools.checkpoint_context.description": Record<string, never>;
+  "tools.inspect_context.description": Record<string, never>;
+  "tools.load_context.description": Record<string, never>;
+  "tools.suppress_context_restore.description": Record<string, never>;
+  "tools.purge_direct_context.description": Record<string, never>;
+  "tools.prepare_state_cleanup.description": Record<string, never>;
+  "tools.execute_state_cleanup.description": Record<string, never>;
+  "tools.update_session_status.description": Record<string, never>;
+  "tools.list_session_status.description": Record<string, never>;
+  "tools.prepare_session_message.description": Record<string, never>;
+  "tools.send_session_message.description": Record<string, never>;
+  "tools.acknowledge_session_messages.description": Record<string, never>;
+  "tools.get_session_message_status.description": Record<string, never>;
+  "tools.plan_workflow.inlineInput": Record<string, never>;
+  "tools.start_workflow.input.stages": Record<string, never>;
+  "tools.start_workflow.input.workspace": Record<string, never>;
+  "tools.start_workflow.input.writeTargets": Record<string, never>;
+  "tools.prepare_session_message.input.body": Record<string, never>;
+  "schema.stageResultV1.properties.artifactChecks.description": Record<string, never>;
+  "schema.stageResultV1.properties.recordedBy.description": Record<string, never>;
+  "schema.stageResultV1.properties.outputFile.description": Record<string, never>;
+  "schema.stageResultV1.defs.providerArtifact.properties.verified.description": Record<string, never>;
+  "schema.stageResultV1.defs.evidence.properties.verified.description": Record<string, never>;
+  "schema.stageResultV1.defs.evidence.properties.digest.description": Record<string, never>;
+  "schema.convergenceReviewV1.properties.reviewerActorId.description": Record<string, never>;
+  "schema.convergenceReviewV1.properties.observedReviewer.description": Record<string, never>;
+  "instructions.intake.frame": { "intake": number | string; };
+  "instructions.sessionMessage.guide": Record<string, never>;
 }

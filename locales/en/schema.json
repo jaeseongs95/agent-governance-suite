@@ -1,0 +1,10 @@
+{
+  "schema.stageResultV1.properties.artifactChecks.description": "Server-owned. What the server itself checked when it recorded this result; callers must not send it. Absent means nothing was checked.",
+  "schema.stageResultV1.properties.recordedBy.description": "Server-owned. The observed caller that recorded this result; callers must not send it. provenance host-observed means the host supplied an identity the caller cannot forge.",
+  "schema.stageResultV1.properties.outputFile.description": "Local JSON file holding output.output when it is too large for tool arguments. output.output must then be null; the server reads the file, checks the digest and validates it like inline output.",
+  "schema.stageResultV1.defs.providerArtifact.properties.verified.description": "Provider declaration only. Gate decisions use the server-owned artifactChecks.",
+  "schema.stageResultV1.defs.evidence.properties.verified.description": "Caller declaration only. Gate decisions use the server-owned artifactChecks.",
+  "schema.stageResultV1.defs.evidence.properties.digest.description": "sha256 of the file at locator, so the server can check a local file.",
+  "schema.convergenceReviewV1.properties.reviewerActorId.description": "Declared by the recording root. AGS does not observe reviewer identity, independence or context.",
+  "schema.convergenceReviewV1.properties.observedReviewer.description": "Server-owned. The observed caller that recorded this review and the independence AGS could check; callers must not send it."
+}

@@ -1,3 +1,22 @@
 {
-  "server.call.reservedCallerField": "Caller identity is host-owned and is not accepted in tool arguments."
+  "server.call.reservedCallerField": "Caller identity is host-owned and is not accepted in tool arguments.",
+  "server.call.callerIngressMissing": "No host caller ingress is configured for this server.",
+  "server.call.responseModeInvalid": "{field} must be compact or full.",
+  "server.call.unknownTool": "Unknown workflow tool.",
+  "server.sessionBoard.notConfigured": "The session board is not configured.",
+  "server.sessionBoard.notRecorded": "The session board line was not recorded.",
+  "server.sessionBoard.livenessUnavailable": "Session liveness is unavailable, so the session board cannot list running sessions.",
+  "server.classification.notConfigured": "Skill classification is not configured for this server.",
+  "server.classification.inputMismatch": "Skill classification input does not match its contract.",
+  "server.classification.inventoryArguments": "get_skill_inventory accepts no arguments.",
+  "server.classification.observationUnavailable": "Skill classification host observation is unavailable; no selection was accepted.",
+  "server.classification.observationInvalid": "Skill classification host observation is invalid; no selection was accepted.",
+  "server.classification.requestRejected": "Skill classification request was rejected; no selection was accepted.",
+  "server.classification.initializationUnavailable": "Skill classification initialization is unavailable; no selection was accepted.",
+  "server.classification.runtimeUnavailable": "Skill classification configuration or runtime is unavailable; no selection was accepted.",
+  "server.updates.argumentsInvalid": "check_for_updates accepts only an optional boolean force field.",
+  "server.trust.capabilitiesArguments": "get_trust_capabilities accepts no arguments.",
+  "server.trust.storeUnavailable": "The trust receipt store is unavailable.",
+  "server.stateCleanup.unavailable": "State cleanup is unavailable because its local stores did not initialize.",
+  "server.sessionMessage.sendInvalid": "{cause} Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status."
 }
