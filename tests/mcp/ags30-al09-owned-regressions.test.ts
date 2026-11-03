@@ -216,6 +216,8 @@ describe("AL09 server boundary regressions", () => {
       }
       expect(tools.get("classify_skills")).toContain("choose the skills yourself from get_skill_inventory and continue the task");
       expect(tools.get("get_skill_inventory")).toContain("HOST_DISCOVERY_UNAVAILABLE only means no host discovery snapshot is configured");
+      expect(tools.get("start_workflow")).toContain("test-sensitivity-review needs a required red-green or mutation test case for every acceptance criterion");
+      expect(tools.get("start_workflow")).toContain("change-code-review needs review requirements equal to the acceptance criteria");
     });
   });
 });

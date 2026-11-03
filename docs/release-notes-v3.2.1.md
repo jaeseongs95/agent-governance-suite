@@ -1,6 +1,6 @@
 # AGS 3.2.1 릴리스 노트
 
-3.2.1은 Antigravity(agy) 설치본을 release마다 자동으로 만들어 붙이고, 에이전트가 workflow 하한과 스킬 분류 결과를 잘못 읽고 작업을 멈추던 문제를 도구 설명으로 고친다. 3.2.0에 손으로 올린 agy 설치본에서 빠진 파일 2개도 채운다. DB 스키마, MCP 도구 목록과 입력 스키마, 계약은 3.2.0과 같다. 바뀐 것은 도구 설명 문장, 버전 표기, release 도구다. 3.2.0을 쓰는 호스트는 3.2.1로 바꾸고 AGS 프로세스를 다시 시작하면 새 설명이 보인다.
+3.2.1은 Antigravity(agy) 설치본을 release마다 자동으로 만들어 붙이고, 에이전트가 workflow 하한과 스킬 분류 결과를 잘못 읽고 작업을 멈추던 문제를 도구 설명으로 고친다. `start_workflow`로 시작한 run에서 시험·리뷰 단계를 기록할 수 없던 문제도 고친다. 3.2.0에 손으로 올린 agy 설치본에서 빠진 파일 2개도 채운다. DB 스키마, MCP 도구 목록과 입력 스키마, 계약은 3.2.0과 같다. 바뀐 것은 도구 설명 문장, `start_workflow` 응답에 더한 필드 2개, 버전 표기, release 도구다. 3.2.0을 쓰는 호스트는 3.2.1로 바꾸고 AGS 프로세스를 다시 시작하면 새 설명이 보인다.
 
 ## 바뀐 점
 
@@ -21,6 +21,12 @@
 - Antigravity에서 `gemini-4-argon`(medium) 메인 세션이 `plan_workflow` 응답의 단계 하한(`minimumModelClass: general`, `minimumReasoningEffort: high`)과 `MODEL_NOT_IN_CATALOG`를 보고, 단계 기록이 거부될 것이라며 작업을 멈췄다. 3.2.0은 하한을 서브에이전트가 통과 기록을 낼 때만 적용하고 메인 세션은 모델·effort로 거부하지 않는데, 응답과 도구 설명 어디에도 그 사실이 없었다.
 - 이제 `plan_workflow`·`start_workflow`·`record_stage_result` 설명에 하한은 서브에이전트의 통과 기록에만 적용되고 메인 세션은 거부되지 않으며, `MODEL_NOT_IN_CATALOG`와 `modelClass: null`은 기록일 뿐이라고 적는다.
 - 같은 세션에서 `classify_skills`가 `NEEDS_INPUT`(`HOST_DISCOVERY_UNAVAILABLE`)을 돌려주자 분류를 진행할 수 없다고 보고했다. 이 값은 분류 지원(`AGENT_GOVERNANCE_CLASSIFICATION_CONFIG`)이 설정되지 않았다는 뜻이다. 이제 `classify_skills` 설명은 그때 `get_skill_inventory`에서 직접 골라 작업을 계속하라고 하고, `get_skill_inventory` 설명은 그 값이 설치된 스킬을 못 쓴다는 뜻이 아니라고 적는다.
+
+### `start_workflow`로 시작한 run의 시험·리뷰 단계 기록
+
+- `test-sensitivity-review`와 `change-code-review` 단계는 기록할 때 `engineering-stage-bundle`에 workflow의 TaskEnvelope 원본을 넣어 `taskDigest`와 맞춰 봐야 한다. 그런데 `start_workflow`는 서버가 기본값으로 채운 TaskEnvelope를 응답에 넣지 않았다. 그래서 `start_workflow`로 시작한 에이전트는 서버 코드를 읽고 envelope를 재구성하지 않는 한 이 두 단계를 기록할 수 없었다.
+- 이제 `start_workflow` 응답에 `taskEnvelope`와 `taskDigest`가 들어 있다. `taskDigest`는 engineering-practices CLI의 `hashJson`과 같은 값이다.
+- `start_workflow` 설명에 두 단계의 조건을 적었다. `test-sensitivity-review`는 수용 기준마다 required red-green 또는 mutation 사례가 필요하고, `change-code-review`는 리뷰 requirements가 수용 기준과 같아야 한다. CI 실행·release·설치처럼 시험으로 보일 수 없는 기준은 이 단계를 고른 run에 넣지 않는다. 지금까지는 설명이 이 단계를 예로 들면서 조건을 알리지 않아서, 기록하는 시점에 가서야 거부됐다.
 
 ## 업그레이드 시 확인할 것
 

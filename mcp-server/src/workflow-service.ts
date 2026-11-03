@@ -173,6 +173,9 @@ export interface MinimalStartContinuity {
 export interface MinimalWorkflowStartV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   taskId: string;
+  /** The TaskEnvelope the server built, and its digest: engineering stage bundles bind this exact task. */
+  taskEnvelope: TaskEnvelopeV1;
+  taskDigest: string;
   rootId: string;
   runId: string;
   revision: number;
@@ -647,6 +650,8 @@ export class WorkflowService {
         return {
           schemaVersion: CONTRACT_VERSION,
           taskId: task.taskId,
+          taskEnvelope: clone(task),
+          taskDigest: convergenceDigest(task),
           rootId: root.rootId,
           runId: receipt.runId,
           revision: receipt.revision,
