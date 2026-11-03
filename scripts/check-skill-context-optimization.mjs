@@ -1,12 +1,34 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFileSync, readdirSync } from "node:fs";
-import { dirname, join, posix, resolve } from "node:path";
+import { readFileSync as readFileBytes, readdirSync } from "node:fs";
+import { dirname, join, posix, relative as relativePath, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+// 3.3.0 multi-workflow guidance (docs/ags30-phase-check-design.md 7.5): these exact reviewed bytes stand for
+// their predecessor at `revision`, so every existing pin keeps checking the same chain. Altered bytes are never projected.
+const MULTI_WORKFLOW_GUIDANCE_SUCCESSOR = Object.freeze({
+  revision: "92f22e25d21eddff22c2400dabc0699d73700927",
+  hashes: Object.freeze({
+    "skills/orchestrator/references/convergence-guard.md": ["cb8bbae8f94c18a9c6dc4a90bec8bcaf0b91e414ffb223d1a514ab92d3bdb70f", "ad162b606d35a84995b579902f523e1a0ff426b6988fddf93cf263141466aca5"],
+    "skills/orchestrator/references/mcp-execution.md": ["7106404c5bf8cacb3bb4ab2d63af0c0ac955a8ee9f3eb53462c1062e2ebd221a", "d32a61ac3c1da7017e2f1bcc312c6e412a32de7e7107b437b53fb80574444dd1"],
+  }),
+});
+
+/** Reads a file as the pinned checks see it: a reviewed guidance successor reads as its exact predecessor. */
+function readFileSync(path, encoding) {
+  const bytes = readFileBytes(path);
+  const relative = relativePath(ROOT, String(path)).replaceAll("\\", "/");
+  const hashes = Object.hasOwn(MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.hashes, relative) ? MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.hashes[relative] : null;
+  let projected = bytes;
+  if (hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]) {
+    projected = execFileSync("git", ["-C", ROOT, "show", `${MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.revision}:${relative}`]);
+    if (createHash("sha256").update(projected).digest("hex") !== hashes[0]) throw new Error(`Multi-workflow guidance predecessor bytes differ: ${relative}`);
+  }
+  return encoding ? projected.toString(typeof encoding === "string" ? encoding : encoding.encoding) : projected;
+}
 const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
 // Context-only successor. Current source checks require the exact after bytes;
 // historical checks project them onto this separately verified predecessor.
@@ -194,8 +216,11 @@ export function checkSpecialistBehaviorSources() {
     ...git("diff", "--name-only", SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision, "--", "skills").toString("utf8").trim().split(/\r?\n/u),
     ...git("ls-files", "--others", "--exclude-standard", "--", "skills").toString("utf8").trim().split(/\r?\n/u),
   ].filter(relative => /^skills\/[^/]+\/.+\.(?:md|ya?ml)$/iu.test(relative) || /^skills\/[^/]+\/classification\.json$/u.test(relative)));
+  const projectsToBaseline = relative => Object.hasOwn(MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.hashes, relative)
+    && readFileSync(join(root, relative)).equals(git("show", `${SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision}:${relative}`));
   for (const relative of contextChanges) {
-    if (!Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes, relative) && !Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.additions, relative)) {
+    if (!Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes, relative) && !Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.additions, relative)
+      && !projectsToBaseline(relative)) {
       errors.push(`specialist behavior unpinned context change: ${relative}`);
     }
   }
