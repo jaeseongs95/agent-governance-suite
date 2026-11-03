@@ -95,4 +95,6 @@ CI 실패는 코드 결함만 뜻하도록 시험 위치를 나눴다. 자세한
   - Claude Code(Windows, headless, 3eb7a1e7): `start_workflow`를 다른 도구와 같은 메시지에서 병렬로 3번, 단독으로 1번 불러 모두 성공. 편집 관문 docs 4/4 허용·제품 파일 3번째 거부. workflow 시험에서 두 파일 모두 바뀜.
   - Codex(Windows, 3eb7a1e7): workflow 시험에서 두 파일 모두 바뀜.
   - agy(Linux, 3eb7a1e7): 편집 관문 docs 4/4 허용·제품 파일 3번째 거부. workflow 시험에서 두 파일 모두 바뀜. 시험 뒤 플러그인을 지워 서버를 되돌림.
-  - 시험하지 못한 조합: Linux의 Claude Code·Codex는 시험 계정(mcpops)에서 실행 파일을 찾지 못했다(PATH·`find /` 모두 0건, 설치 경로 확인 중). Windows의 agy는 SSH 세션에서 Google OAuth 재로그인을 요구하며 멈춘다(`Waiting for authentication`).
+  - Claude Code(Linux, headless, 4186346c, CLI 2.1.314): `start_workflow` 병렬 3번·단독 1번 모두 성공. 편집 관문 docs 4/4 허용·제품 파일 3번째 거부. workflow 시험에서 두 파일 모두 바뀜.
+  - Codex(Linux, 4186346c, CLI 0.166.0): workflow 시험에서 두 파일 모두 바뀜. 첫 실행은 서버 공용 Codex 설정에 켜져 있던 다른 시험의 예전 AGS 플러그인 2개가 PreToolUse hook에서 `start_workflow`를 `INVALID_INPUT`으로 막아 실패했다. 3.2.0의 Codex hook에는 이 hook이 없다. 그 두 플러그인을 이 실행에서만 `-c plugins.<이름>.enabled=false`로 끄고 다시 돌려 통과했다. 시험 뒤 후보 플러그인과 마켓플레이스를 지워 서버를 되돌림.
+  - 시험하지 못한 조합: Windows의 agy는 SSH 세션에서 Google OAuth 재로그인을 요구하며 멈춘다(`Waiting for authentication`).
