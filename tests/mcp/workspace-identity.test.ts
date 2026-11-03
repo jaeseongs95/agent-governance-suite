@@ -4,13 +4,12 @@ import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import os from "node:os";
-
 import { WorkflowContractError, type ConvergenceRootV1 } from "../../contracts/types.js";
 import { findRootConflict } from "../../mcp-server/src/convergence-logic.js";
 import {
   assertSupportedScopeEntry,
   hostIdentity,
+  osMachineId,
   pathWithin,
   repositoryCheckouts,
   repositoryInDirectory,
@@ -456,23 +455,37 @@ describe("pathWithin", () => {
 });
 
 describe("host identity", () => {
-  it("creates the host ID once in the shared state directory, keeps it when the machine is renamed, and refuses one it cannot create", () => {
-    const shared = join(fixtureRoot(), "shared");
-    const environment = { AGENT_GOVERNANCE_SHARED_STATE_DIR: shared };
-    const hostname = vi.spyOn(os, "hostname").mockReturnValue("first-name");
-    try {
-      const id = hostIdentity(environment);
-      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u);
-      expect(fs.readFileSync(join(shared, "host-id"), "utf8").trim()).toBe(id);
-      hostname.mockReturnValue("renamed-machine");
-      expect(hostIdentity(environment)).toBe(id);
-    } finally {
-      hostname.mockRestore();
-    }
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
+  const sharedAt = (name: string) => ({ AGENT_GOVERNANCE_SHARED_STATE_DIR: join(fixtureRoot(), name) });
+  const unresolvedHost = expect.objectContaining({ code: "INVALID_INPUT", details: expect.objectContaining({ reason: "HOST_IDENTITY_UNRESOLVED" }) });
+
+  it("derives the host ID from the machine ID, so a lost or different state directory gives the same ID back", () => {
+    const machine = () => "machine-a";
+    const first = sharedAt("shared");
+    const id = hostIdentity(first, machine);
+    expect(id).toMatch(UUID);
+    expect(id).not.toContain("machine-a");
+    expect(fs.readFileSync(join(first.AGENT_GOVERNANCE_SHARED_STATE_DIR, "host-id"), "utf8").trim()).toBe(id);
+    // A deleted or never shared state directory (a fresh process reads another file) derives the same ID again.
+    fs.rmSync(first.AGENT_GOVERNANCE_SHARED_STATE_DIR, { recursive: true, force: true });
+    expect(hostIdentity(sharedAt("other-shared"), machine)).toBe(id);
+    expect(hostIdentity(sharedAt("third-shared"), () => "machine-b")).not.toBe(id);
+    // Caching is optional: an unwritable state directory still yields the derived ID.
     const blocker = join(fixtureRoot(), "not-a-directory");
     write(blocker, "x");
-    expect(() => hostIdentity({ AGENT_GOVERNANCE_SHARED_STATE_DIR: join(blocker, "shared") }))
-      .toThrow(expect.objectContaining({ code: "INVALID_INPUT", details: expect.objectContaining({ reason: "HOST_IDENTITY_UNRESOLVED" }) }));
+    expect(hostIdentity({ AGENT_GOVERNANCE_SHARED_STATE_DIR: join(blocker, "shared") }, machine)).toBe(id);
+    if (["win32", "linux", "darwin"].includes(process.platform)) expect(osMachineId()).toEqual(expect.any(String));
+  });
+
+  it("without a machine ID creates a random host ID once and refuses one it cannot create", () => {
+    const shared = sharedAt("random-shared");
+    const id = hostIdentity(shared, () => null);
+    expect(id).toMatch(UUID);
+    expect(fs.readFileSync(join(shared.AGENT_GOVERNANCE_SHARED_STATE_DIR, "host-id"), "utf8").trim()).toBe(id);
+    expect(hostIdentity(sharedAt("random-other"), () => null)).not.toBe(id);
+    const blocker = join(fixtureRoot(), "not-a-directory-either");
+    write(blocker, "x");
+    expect(() => hostIdentity({ AGENT_GOVERNANCE_SHARED_STATE_DIR: join(blocker, "shared") }, () => null)).toThrow(unresolvedHost);
   });
 
   it("keeps the same paths on different host IDs apart and takes an identity stored without a host as this host's", () => {

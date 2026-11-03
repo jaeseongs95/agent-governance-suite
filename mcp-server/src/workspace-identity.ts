@@ -1,4 +1,5 @@
-import { randomUUID } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -248,34 +249,74 @@ function readHostId(file: string): string | null {
   }
 }
 
+/** The OS's own machine ID, or null where none is readable (a container without /etc/machine-id). */
+export function osMachineId(): string | null {
+  try {
+    if (process.platform === "win32") {
+      const reg = path.join(process.env.SystemRoot || "C:\\Windows", "System32", "reg.exe");
+      const out = execFileSync(reg, ["query", "HKLM\\SOFTWARE\\Microsoft\\Cryptography", "/v", "MachineGuid"], { encoding: "utf8", windowsHide: true, timeout: 5000 });
+      return /MachineGuid\s+REG_SZ\s+(\S+)/u.exec(out)?.[1] ?? null;
+    }
+    if (process.platform === "darwin") {
+      const out = execFileSync("/usr/sbin/ioreg", ["-rd1", "-c", "IOPlatformExpertDevice"], { encoding: "utf8", timeout: 5000 });
+      return /"IOPlatformUUID" = "([^"]+)"/u.exec(out)?.[1] ?? null;
+    }
+    for (const file of ["/etc/machine-id", "/var/lib/dbus/machine-id"]) {
+      try { const value = fs.readFileSync(file, "utf8").trim(); if (value) return value; } catch { /* next source */ }
+    }
+  } catch { /* no machine ID */ }
+  return null;
+}
+
+/** A stable UUID-shaped digest of the machine ID; the raw ID never leaves this function. */
+function derivedHostId(machineId: string): string {
+  const hex = createHash("sha256").update(`agent-governance-suite/host-id/v1\0${machineId}`, "utf8").digest("hex");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+}
+
 /**
- * This machine's AGS host ID: a random UUID created once in the shared AGS state directory and read from then on, so
- * a renamed machine or a restarted container keeps its roots. The file is published with a hard link, so two first
- * readers end with the one ID that won. ponytail: copying the state directory to another machine copies the host ID
- * too, which only makes the two machines' roots block each other; a machine-bound ID if that ever matters.
+ * This machine's AGS host ID. It is derived from the OS machine ID, so deleting or resetting the AGS state directory,
+ * or a hook and a server reading different state directories, give back the same ID and stored roots keep blocking.
+ * The `host-id` file in the shared AGS state directory only caches it (and is read first, so most calls spawn
+ * nothing). Without an OS machine ID a random UUID is created once and published with a hard link, so two first
+ * readers end with the one that won. ponytail: that fallback ID is lost with the file, and copying the state
+ * directory copies it (which only makes the two machines' roots block each other).
  */
-export function hostIdentity(environment: NodeJS.ProcessEnv = process.env): string {
+export function hostIdentity(environment: NodeJS.ProcessEnv = process.env, machineId: () => string | null = osMachineId): string {
   const unresolved = (cause?: unknown) => new WorkflowContractError("INVALID_INPUT", msg("services.workspace.hostUnresolved", {}),
     { reason: "HOST_IDENTITY_UNRESOLVED", ...(cause ? { cause: (cause as NodeJS.ErrnoException).code ?? "unreadable" } : {}) });
   let file: string;
   try { file = resolveHostIdPath(environment); } catch (error) { throw unresolved(error); }
   if (cachedHost?.file === file) return cachedHost.id;
-  try {
-    let id = readHostId(file);
-    if (!id) {
-      fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
-      const draft = `${file}.${process.pid}.${randomUUID()}`;
-      fs.writeFileSync(draft, `${randomUUID()}\n`, { flag: "wx", mode: 0o600 });
-      try { fs.linkSync(draft, file); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
-      finally { fs.rmSync(draft, { force: true }); }
-      id = readHostId(file);
+  let id: string | null = null;
+  try { id = readHostId(file); } catch { /* derive or create below */ }
+  if (!id) {
+    const machine = machineId();
+    if (machine) {
+      id = derivedHostId(machine);
+      // The same bytes on every attempt, so a plain rename publishes it; failing to cache only costs a re-derivation.
+      try {
+        fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
+        const draft = `${file}.${process.pid}.${randomUUID()}`;
+        fs.writeFileSync(draft, `${id}\n`, { flag: "wx", mode: 0o600 });
+        try { fs.renameSync(draft, file); } finally { fs.rmSync(draft, { force: true }); }
+      } catch { /* uncached */ }
+    } else {
+      try {
+        fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
+        const draft = `${file}.${process.pid}.${randomUUID()}`;
+        fs.writeFileSync(draft, `${randomUUID()}\n`, { flag: "wx", mode: 0o600 });
+        try { fs.linkSync(draft, file); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
+        finally { fs.rmSync(draft, { force: true }); }
+        id = readHostId(file);
+      } catch (error) {
+        throw unresolved(error);
+      }
     }
-    if (!id) throw unresolved();
-    cachedHost = { file, id };
-    return id;
-  } catch (error) {
-    throw error instanceof WorkflowContractError ? error : unresolved(error);
   }
+  if (!id) throw unresolved();
+  cachedHost = { file, id };
+  return id;
 }
 
 /** Paths on different hosts never overlap; an identity without a host is this host's. */
