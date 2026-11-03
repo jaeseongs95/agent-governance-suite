@@ -98,6 +98,7 @@
 
 - 압축 hook이 모델 행동을 낫게 하는지는 아직 입증되지 않았다. 이번 시험은 천장이었다. direct 저장본의 `DEFER` 경로가 실제로 쓰이지 않은 점, workflow 카드가 목록마다 4개로 잘리는 점, 여러 root가 묶인 작업의 카드(N7)는 더 어려운 조건의 시험 뒤 다룬다.
 - CI windows-latest에서 `tests/mcp/skill-classification-gateway.test.ts`의 「does not approve changed inventory or source metadata despite an eligible fixed profile」이 가끔 30초를 넘긴다. 3.4.0 코드로 돈 8번 중 2번(f4b6e0c7, 3984fae7)이 시간 초과였고, 정리 단계에서 복사한 `skills` 폴더가 `ENOTEMPTY`로 지워지지 않았다. 나머지 6번은 3~8초였다. 같은 시험이 Linux에서는 0.9초이고 3.3.0 CI 두 번은 4초·8초였다. JEV 변경만 넣은 판과 결함 수정만 넣은 판, 코드 전체를 넣은 판은 각각 통과해서 원인 커밋을 특정하지 못했다. 시간 한도는 바꾸지 않았다. 원인(복사한 파일을 무언가가 쥐고 있는 것으로 보임)은 후속 과제로 남긴다.
+- CI windows-latest 러너에서 같은 시각에 돌던 두 시험 파일이 함께 평소의 10~60배로 느려져 30초를 넘긴 일이 3.3.0 후보에서 한 번 있었다(3.3.0 릴리스 노트, CI 41688974476). 실패한 작업만 다시 돌리자 통과했다. 러너 내부를 관측하지 못해 원인은 확정하지 못했다.
 - `bootstrap-contract`와 `prepared-bootstrap`은 시간이 줄지 않았다. 원인과 남은 방법은 위 「시험 구조」 절에 적었다.
 - 경로를 알 수 없는 편집 도구는 편집 관문이 막지 못한다. 막으려면 컴퓨터 전체를 막아야 한다(설계 문서 7.8).
 - sandbox가 기계 ID 파일을 모두 가리는 Linux에서는 sandbox 밖과 다른 host ID가 생길 수 있다.
@@ -105,4 +106,13 @@
 - Codex 실호스트 시험은 이번에도 돌리지 않았다. Codex API 크레딧 문제가 풀린 뒤 전체 시험에서 확인한다.
 
 ## 검증
-<!-- TODO -->
+
+- **Linux 시험 서버 전체 시험(3984fae7)**
+  - 설치·tsc·`claude:check`·`en:check`·release metadata 검사 종료 코드 모두 0. 이어서 `pnpm test:server`(build, `run-tests.mjs` 전체 범위, `check-runtime`)를 돌렸다.
+  - vitest: 파일 277개 중 275개 통과·1개 skip·1개 실패, 시험 4108개 통과·2개 실패. 실패는 `tests/tooling/runner-main.test.mjs` 2건이다. 실행기가 vitest 종료 코드를 오류 보고에 함께 싣게 바꾼 뒤 시험의 기대값을 맞추지 않아서 났다. 기대값에 `vitestExitCode: 0`을 넣어 고쳤다(11ea63b4).
+  - 실행기가 vitest 실패 뒤에도 node:test를 돌렸다. node:test 499/499. 요약은 `{"vitestExitCode":1,"nodeExitCode":0}`이고 종료 코드는 실패였다. 바뀐 실행기가 의도대로 동작한 기록이다.
+- **Linux 시험 서버(11ea63b4)**: 바뀐 시험 `runner-main`·`test-scope` 18/18 통과.
+- **CI 41688661270(11ea63b4)**: ubuntu·windows success.
+- **3.3.0 후보 1b041762 병합(5a73b5bd)**: 11ea63b4와의 차이는 문서뿐이다. 충돌 난 `scripts/check-skill-context-optimization.mjs`는 3.4.0 쪽을 남겼다. 같은 수정이 b0fc2b4d에 먼저 들어가 있었다. 로컬에서 검사 스크립트를 돌려 통과했다.
+- **Windows 시험 서버 전체 시험(5a73b5bd, `pnpm test:server`)**: 설치·시험 종료 코드 0. vitest 파일 277개 중 275개 통과·2개 skip, 시험 4097개 통과·28개 skip·8개 todo(1848초, 3.3.0 후보는 2202초). node:test 499개 중 498개 통과·1개 skip·실패 0. 실행기 요약은 `{"vitestExitCode":0,"nodeExitCode":0}`이다.
+- **발행된 3.3.0(5b34f946) 병합(e8b87545)**: 3.3.0 발행 게이트에서 고친 두 가지가 들어왔다. `antigravity-hook-runner` 시험의 근거 없는 벽시계 상한 단언 제거와, `tests/` 밖 시험의 분류다(3.3.0 릴리스 노트 「발행 후보 881ffadc」). 분류는 3.4.0에 이미 같은 수정이 있어서 `scripts/test-scope.mjs`와 그 시험은 3.4.0 쪽을 남겼다. 5a73b5bd와 다른 파일은 그 시험 파일 하나와 문서다. 단언만 지운 변경이라 시험 서버에서는 다시 돌리지 않았다. Linux 시험 서버에서는 같은 변경을 3.3.0 쪽(881ffadc)에서 돌려 통과했다.
