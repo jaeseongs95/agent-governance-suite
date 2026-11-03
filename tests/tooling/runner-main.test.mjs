@@ -13,7 +13,10 @@ const names = ["alpha.node-test.mjs", "beta.node-test.mjs", "gamma.node-test.mjs
 function fixture() {
   const directory = mkdtempSync(path.join(tmpdir(), "ags-runner-main-")); owned.push(directory);
   mkdirSync(path.join(directory, "scripts"));
-  for (const name of ["run-tests.mjs", "python-runner.mjs", "test-subreaper.py"]) {
+  // The runner and every sibling module it imports, so a new import cannot leave the copy incomplete.
+  const runner = readFileSync(path.join(root, "scripts", "run-tests.mjs"), "utf8");
+  const siblings = [...runner.matchAll(/from "\.\/([^"/]+)"/gu)].map(match => match[1]);
+  for (const name of ["run-tests.mjs", "test-subreaper.py", ...siblings]) {
     copyFileSync(path.join(root, "scripts", name), path.join(directory, "scripts", name));
   }
   mkdirSync(path.join(directory, "node_modules", "vitest"), { recursive: true });
