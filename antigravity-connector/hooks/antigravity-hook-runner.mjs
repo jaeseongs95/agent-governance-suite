@@ -1482,30 +1482,39 @@ const AGS_TOOL_PREFIX = "mcp__agent-governance-suite__";
 /** Must equal HOST_ATTESTATION_TOOLS (mcp-server/src/host-attestation.ts); a test compares them. */
 export const OBSERVED_AGS_TOOLS = new Set(["plan_workflow", "start_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
 
+/**
+ * Runs a record-only AGS hook (the hook's output is not used). A spawn error, timeout or non-zero exit is reported
+ * on stderr under the stage name; the hook decision does not change. options.spawnSync replaces the spawn in tests.
+ */
+function runRecordHook(stage, hookPath, input, options, childStderr) {
+  const spawn = typeof options?.spawnSync === "function" ? options.spawnSync : spawnSync;
+  const res = spawn(process.execPath, [hookPath, "--host=antigravity"], {
+    input: JSON.stringify(input), encoding: "utf8", stdio: ["pipe", "ignore", childStderr],
+    timeout: STAGE_TIMEOUT_MS, env: process.env,
+  });
+  if (res?.error || res?.status !== 0) {
+    reportStageFailure(stage, res?.error ?? { code: res?.signal ? "HOOK_KILLED" : "HOOK_EXIT_NONZERO" }, options?.writeStderr);
+  }
+}
+
 function recordAgsCallObservation(canonicalInput, options) {
   const hookPath = typeof options?.governanceHookPath === "string" ? options.governanceHookPath
     : fileURLToPath(new URL("../../mcp-server/dist/governance-hook.mjs", import.meta.url));
-  spawnSync(process.execPath, [hookPath, "--host=antigravity"], {
-    input: JSON.stringify(canonicalInput), encoding: "utf8", stdio: ["pipe", "ignore", "ignore"],
-    timeout: STAGE_TIMEOUT_MS, env: process.env,
-  });
+  runRecordHook("host-attestation-record", hookPath, canonicalInput, options, "ignore");
 }
 
 /**
  * agy has no prompt-submit event; PreInvocation starts the turn for the user's input. It records that input's time
  * and workspace on the session board the way UserPromptSubmit does on the other hosts, so a workflow started without
  * an explicit workspace finds this session's working directory. A failed record leaves the board row unchanged and
- * the server reports the missing workspace; the board hook writes its own bounded failure line to stderr.
+ * the server reports the missing workspace; the failure is reported on stderr (runRecordHook).
  * ponytail: no prompt text is passed, so a wake-only turn also counts as a prompt; pass lastUserInput if that matters.
  */
 function recordAgsSessionInput(canonicalInput, options) {
   const hookPath = typeof options?.sessionBoardHookPath === "string" ? options.sessionBoardHookPath
     : fileURLToPath(new URL("../../mcp-server/dist/session-board-hook.mjs", import.meta.url));
   const input = { hook_event_name: "UserPromptSubmit", session_id: canonicalInput.session_id, ...(canonicalInput.cwd ? { cwd: canonicalInput.cwd } : {}) };
-  spawnSync(process.execPath, [hookPath, "--host=antigravity"], {
-    input: JSON.stringify(input), encoding: "utf8", stdio: ["pipe", "ignore", "inherit"],
-    timeout: STAGE_TIMEOUT_MS, env: process.env,
-  });
+  runRecordHook("session-board", hookPath, input, options, "inherit");
 }
 
 export async function executeAntigravityHookEvent(rawInput, explicitEvent, explicitHook, options = {}) {

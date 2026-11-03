@@ -1,9 +1,6 @@
-import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { describe, expect, it, vi } from "vitest";
-
-import { openBoard, readEntry } from "../../skills/session-board/scripts/board-store.mjs";
+import { describe, expect, it } from "vitest";
 
 import "../../mcp-server/src/builtin-hook-host-adapters.js";
 import { antigravityMetaIngress } from "../../mcp-server/src/builtin-caller-ingress.js";
@@ -111,23 +108,34 @@ describe("AGS 3.1.1 agy call observation", () => {
     expect(ingress("start_workflow", meta, args)).toMatchObject({ caller: { callId: null, execution: { unavailable: "ANTIGRAVITY_OBSERVATION_UNMATCHED" } } });
   });
 
-  it("records the agy session's workspace on the board at PreInvocation", async () => {
-    const state = mkdtempSync(path.join(tmpdir(), "ags311-board-"));
-    const workspace = path.join(state, "project");
-    vi.stubEnv("AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH", path.join(state, "board.sqlite3"));
-    try {
-      const runner = await import(new URL("../../antigravity-connector/hooks/antigravity-hook-runner.mjs", import.meta.url).href) as {
-        executeAntigravityHookEvent: (input: unknown, event: string, hook: string | undefined, options: unknown) => Promise<unknown>;
-      };
-      await runner.executeAntigravityHookEvent({ conversationId: conversation, workspacePaths: [workspace], modelName: "gemini-4-argon-medium" },
-        "PreInvocation", undefined, { sessionMessageHook: () => ({}) });
-      const board = openBoard(path.join(state, "board.sqlite3"));
-      try { expect(readEntry(board, "antigravity", conversation)).toMatchObject({ cwd: workspace }); }
-      finally { board.close(); }
-    } finally {
-      vi.unstubAllEnvs();
-      rmSync(state, { recursive: true, force: true });
-    }
+  // The board hook itself is covered by the session-board tests; here only what the runner hands it, without a child process.
+  const preInvocation = async (spawnSync: (...args: unknown[]) => unknown) => {
+    const runner = await import(new URL("../../antigravity-connector/hooks/antigravity-hook-runner.mjs", import.meta.url).href) as {
+      executeAntigravityHookEvent: (input: unknown, event: string, hook: string | undefined, options: unknown) => Promise<unknown>;
+    };
+    const stderr: string[] = [];
+    await runner.executeAntigravityHookEvent({ conversationId: conversation, workspacePaths: [workspace], modelName: "gemini-4-argon-medium" },
+      "PreInvocation", undefined, { sessionMessageHook: () => ({}), spawnSync, writeStderr: (line: string) => stderr.push(line) });
+    return stderr;
+  };
+  const workspace = path.join(tmpdir(), "ags311-project");
+
+  it("hands the agy session's workspace to the board hook at PreInvocation", async () => {
+    const calls: Array<{ args: string[]; input: unknown }> = [];
+    const stderr = await preInvocation((_cmd, args, options) => {
+      calls.push({ args: args as string[], input: JSON.parse((options as { input: string }).input) });
+      return { status: 0 };
+    });
+    expect(calls.map(({ args, input }) => ({ hook: path.basename(args[0] ?? ""), input }))).toEqual([
+      { hook: "session-board-hook.mjs", input: { hook_event_name: "UserPromptSubmit", session_id: conversation, cwd: workspace } }]);
+    expect(stderr).toEqual([]);
+  });
+
+  it("reports a board hook that timed out or failed instead of dropping it silently", async () => {
+    const timedOut = await preInvocation(() => ({ status: null, signal: "SIGTERM", error: Object.assign(new Error("spawnSync ETIMEDOUT"), { code: "ETIMEDOUT" }) }));
+    expect(timedOut.map((line) => JSON.parse(line.slice(line.indexOf("{"))))).toEqual([{ stage: "session-board", code: "ETIMEDOUT" }]);
+    const failed = await preInvocation(() => ({ status: 1, signal: null }));
+    expect(failed.map((line) => JSON.parse(line.slice(line.indexOf("{"))))).toEqual([{ stage: "session-board", code: "HOOK_EXIT_NONZERO" }]);
   });
 
   it("records only the tools the server observes", async () => {
