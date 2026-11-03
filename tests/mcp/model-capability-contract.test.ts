@@ -24,6 +24,7 @@ import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { getPolicyRevision, resolveModelSelection } from "../../skills/coordinate-subagents/scripts/model-routing.mjs";
 import syntheticCatalogV2 from "./fixtures/synthetic-model-catalog-v2.json" with { type: "json" };
 import { childCaller, rootCaller } from "../helpers/caller.js";
+import { observedCaller } from "../../mcp-server/src/caller-actor.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const SESSION = "session-capability-contract";
@@ -178,17 +179,19 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
         () => foreignService.recordStageResult(stageInput, true))).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "HOST_ADAPTER_MISMATCH" } } });
       expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
       const recorded = provider.run("record_stage_result", stageCaller,
-        () => service.recordStageResult(stageInput, true));
+        () => service.recordStageResult(stageInput, true, observedCaller(stageCaller)));
       expect(provider.lastObservedCapability()).toMatchObject({ provider: adapter.provider, policyRevision: adapter.policyRevision, rawModel: model });
       if (modelClass === "lightweight" || effort === "low") {
         expect(recorded.error).toMatchObject({ code: "GATE_FAILED",
           details: { reasonCode: effort === "low" ? "REASONING_EFFORT_BELOW_FLOOR" : "MODEL_CLASS_BELOW_FLOOR" } });
         expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
         // The root session runs the model the user chose: the same result recorded by the root is observed, not refused.
-        const rootRecorded = provider.run("record_stage_result", rootCaller(adapter.host, SESSION, {
+        const rootStageCaller = rootCaller(adapter.host, SESSION, {
           callId: `d0094-opaque-root-stage-${ordinal}`,
           execution: { model, effort, turnId: "d0094-opaque-stage-turn", provenance: "synthetic-authority-host:runtime" },
-        }), () => service.recordStageResult(stageInput, true));
+        });
+        const rootRecorded = provider.run("record_stage_result", rootStageCaller,
+          () => service.recordStageResult(stageInput, true, observedCaller(rootStageCaller)));
         expect(rootRecorded.ok, JSON.stringify(rootRecorded)).toBe(true);
         expect(rootRecorded.data?.stageResults[0]?.executionContext).toMatchObject({ model, modelClass, reasoningEffort: effort });
       } else {

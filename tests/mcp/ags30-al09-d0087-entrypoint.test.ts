@@ -112,9 +112,11 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
           expect(await call(lowArgs, lowCall)).toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
         }
         if (mode === "installed") {
+          // 3.1.1: an effort outside the installed entry is recorded, not refused.
           const lowResult = await call(args, observed({effort: "low"}));
-          expect(lowResult, JSON.stringify(lowResult)).toMatchObject({ok: false, error: {code: "BINDING_INVALID",
-            details: {reasonCode: "CURRENT_POLICY_EFFORT_UNSUPPORTED"}}});
+          expect(lowResult.ok, JSON.stringify(lowResult)).toBe(true);
+          expect(lowResult.data!.bootstrapExecution!.context).toMatchObject({reasoningEffort: "low",
+            policyNotes: ["CURRENT_POLICY_EFFORT_UNSUPPORTED"]});
           // 기존 capability의 경량 관측과 앞의 거부를 별도로 검증한다.
           const reasoningEffort = "high";
           const weakArgs = argumentsFor(`entrypoint-valid-light-${reasoningEffort}`);
