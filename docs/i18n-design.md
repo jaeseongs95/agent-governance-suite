@@ -58,29 +58,89 @@
 
 ### 4.1 프로세스 단위(MCP 서버, hook, CLI, 스킬 스크립트)
 
-모든 프로세스가 `runtime/i18n`의 같은 함수로 다음 순서에 따라 정한다.
+AGS는 세 층으로 배치된다. 층마다 같은 기계일 수도, 다른 기계일 수도 있다.
 
-1. 환경 변수 `AGENT_GOVERNANCE_LOCALE`: BCP 47 태그 목록(쉼표 구분, 예 `en-US,ko`).
-2. AGS 사용자 설정: `<AGENT_GOVERNANCE_SHARED_STATE_DIR>/settings.json`의 `locale`. 관리자 페이지가 바꾸는 값이 이것이다.
-3. 설치 패키지의 기본 locale: 패키지 빌드가 적는 `release/locale.json`의 `locale`. 그 패키지의 스킬·manifest 언어와 같다.
+| 층 | 실행 위치 | 여기서 렌더링하는 문장 |
+|---|---|---|
+| ① 호스트 PC | 사용자 PC | hook, CLI, 스킬 스크립트, 정적 패키지 문장, (있으면) stdio shim |
+| ② AGS/MCP 서비스 | 같은 PC 또는 원격 서버 | `instructions`, 도구 설명, 도구 결과·오류, 관리자 페이지 |
+| ③ DBMS | 서비스 안 내장(로컬) 또는 서비스와 다른 원격 서버 | 렌더링하지 않는다 |
+
+한 층이 다른 층의 파일을 읽는다고 가정하지 않는다. 원격 서비스는 사용자 PC의 설정 파일이나 패키지를 읽을 수 없다. 그래서 사용자의 언어는 ① 호스트 PC에서 정하고, 요청에 실어 ②로 보낸다.
+
+#### ① 호스트 PC의 locale
+
+호스트 쪽 프로세스는 모두 `runtime/i18n`의 같은 함수로 다음 순서에 따라 정한다.
+
+1. 환경 변수 `AGENT_GOVERNANCE_LOCALE`: `Accept-Language` 문법의 언어 목록(예 `en-US,ko;q=0.5`). 시험과 고급 사용자를 위한 것이다.
+2. 사용자 설정: `<공유 상태 디렉터리>/settings.json`의 `locale`(기본 `~/.agent-governance-suite/settings.json`). 로컬 관리자 페이지나 설정 명령이 바꾼다.
+3. 설치 패키지의 기본 locale: 패키지 빌드가 적는 `runtime/locale.json`. 그 패키지의 스킬·manifest 언어와 같다. `runtime/`은 세 호스트의 패키지에 모두 들어가는 폴더라 이 위치를 쓴다.
 4. 근(root) locale `en`.
 
-1~3의 각 값은 RFC 4647 Lookup으로 지원 locale과 맞춘다. 맞는 것이 없으면 다음 단계로 간다. 잘못된 태그는 그 단계만 건너뛰고, 건너뛴 사실을 `code`(`LOCALE_INVALID`)로 진단에 남긴다.
-
+- 1~3의 각 값은 RFC 4647 Lookup으로 지원 locale과 맞춘다. 맞는 것이 없으면 다음 단계로 간다.
+- 잘못된 값은 그 단계만 건너뛰고, 건너뛴 사실을 `code`(`LOCALE_INVALID`)로 진단에 남긴다.
 - hook은 호출마다 새 프로세스라 설정 변경이 바로 반영된다.
-- MCP 서버는 `instructions`와 도구 목록을 initialize 때 보내므로 시작할 때 한 번 정한다. 바꾸려면 AGS 프로세스를 다시 시작한다. 관리자 페이지는 이 사실을 화면에 표시한다.
-- 키 단위 fallback: 정한 locale → 그 언어의 상위 태그 → `en`. 출시 locale은 4번 원칙 때문에 이 경로를 타지 않는다.
+- 키 단위 fallback: 정한 locale → 그 언어의 상위 태그 → `en`. 출시 locale은 원칙 4 때문에 이 경로를 타지 않는다.
+
+#### ② 서비스의 locale
+
+서비스는 요청마다 다음 순서로 정한다. 같은 서비스가 언어가 다른 여러 사용자를 받을 수 있기 때문이다.
+
+1. 요청의 `params._meta["io.modelcontextprotocol/acceptLanguage"]`: MCP SEP-2792(요청 단위 사용자 언어, 2026-10-17 accepted, 최종 문구와 참조 구현이 남아 있음)의 키다. 값은 `Accept-Language` 문법이다.
+   - 호스트가 이 키를 보낸다는 근거는 아직 없다.
+   - 그래서 AGS의 호스트 쪽 shim(DBMS 전환 A2의 stdio shim)이 ①에서 정한 locale을 모든 요청에 붙인다. shim이 없는 로컬 stdio 서버는 같은 PC이므로 ①의 함수를 그대로 쓴다.
+2. 서비스 기본값: 서비스 기계의 `AGENT_GOVERNANCE_LOCALE` 또는 서비스 설정. 원격 서비스 운영자가 정한다.
+3. `en`.
+
+- 서비스는 응답의 `_meta["io.modelcontextprotocol/contentLanguage"]`에 렌더링한 locale을 적는다.
+- locale은 표시 방식만 바꾸고 권한·판정에 영향을 주지 않는다. 그래도 신뢰 경계 입력이므로 길이(256자)·문법을 검사하고, 잘못되면 다음 단계로 넘긴다.
+- `instructions`와 도구 목록은 initialize 요청의 `_meta` 값으로 그 세션의 locale로 렌더링한다. 규격 draft(2026-07-28)처럼 initialize가 없어지면 요청마다 렌더링한다.
+
+#### ③ DBMS
+
+- DB에는 문장을 저장하지 않는다(원칙 2). key, params, UTC 시각만 저장한다. 그래서 DB가 어느 서버에 있든, 어떤 locale로 설정돼 있든 결과가 같다.
+- DB 서버의 오류 문장은 그 서버의 `lc_messages` 언어로 나온다. AGS는 이 문장을 사용자에게 그대로 내보내지 않는다. SQLSTATE를 AGS `code`로 대응시켜 카탈로그 문장으로 낸다.
+- 식별자 열은 DB 서버 locale에 따라 정렬·비교가 달라지지 않게 `COLLATE "C"`로 둔다. 화면에 보일 문장의 정렬은 렌더링한 쪽에서 `Intl.Collator`로 한다.
+
+#### 버전이 다른 층
+
+층마다 AGS 버전이 다를 수 있다(호스트 패키지 3.3.0, 원격 서비스 3.4.0 등).
+
+- 출시한 키의 뜻과 params는 바꾸지 않는다. 바꿀 때는 새 키를 만든다.
+- 모르는 키를 받은 렌더러는 실패하지 않는다. 받은 `message`를 그대로 쓰고, `message`가 없으면 `code`와 key를 보여 준다.
+
+#### 규모: 원격 서비스 하나에 컴퓨터 1억 대
+
+원격 서비스는 인스턴스 여러 개로 수평 확장한다. 그래서 i18n은 접속하는 컴퓨터 수에 비례하는 서버 상태를 만들지 않는다.
+
+- **요청 단위·무상태 렌더링.** locale은 요청(또는 그 세션의 initialize)에 실려 오고, 렌더링에 필요한 것은 카탈로그와 그 요청뿐이다. 접속 컴퓨터별 locale 표를 서버 메모리에 두지 않는다. 그래서 어느 인스턴스가 요청을 받아도 결과가 같다.
+- **메모리 상한은 카탈로그 크기다.** 인스턴스가 시작할 때 출시 locale × 키 수만큼 메시지를 미리 컴파일한다(지금 기준 약 1,000개 × 2). 요청마다 파싱하지 않고, 렌더링 결과는 캐시하지 않는다. 그래서 메모리가 컴퓨터 수나 params 종류에 따라 늘지 않는다.
+- **입력 상한.** `acceptLanguage` 값은 256자, 언어 범위 16개까지만 읽는다. 넘으면 그 값 전체를 버리고 다음 단계로 간다. 파싱은 값 길이에 대해 선형이다.
+- **기록은 code로 한다.** 로그·지표에는 렌더링한 문장 대신 `code`, `messageKey`, locale을 남긴다. 언어가 달라도 같은 사건으로 집계된다.
+- **판 섞임을 전제로 한다.** 단계적 배포 중에는 인스턴스마다 카탈로그 판이 다르다. 위 "버전이 다른 층" 규칙(키 불변, 모르는 키도 실패하지 않음)이 이 경우에도 그대로 적용된다.
+- **관리자 페이지는 브라우저에서 렌더링한다.** API는 `messageKey`·`params`를 주고 화면이 렌더링한다. 카탈로그는 판별 불변 경로(`/locales/<판>/<tag>/<domain>.json`)로 내보내 CDN과 브라우저에 오래 캐시되게 한다. 그래서 서버는 화면 문장 렌더링을 하지 않는다.
+- **사용자별 설정.** 원격 관리자 페이지의 사용자별 표시 언어만 DB에 저장한다. 읽기는 사용자 인증 정보와 함께 오는 값이나 인스턴스 로컬 캐시로 처리하고, 요청마다 DB를 조회하지 않는다.
+
+#### 컴퓨터를 잘 모르는 사용자
+
+MCP 서비스와 DBMS는 로컬 PC에 설치할 수 있어야 하고, 이 경로가 기본이다. 설정을 하나도 건드리지 않은 사용자에게도 맞는 언어가 나와야 한다.
+
+- 언어 선택은 설치 단계에서 한다. README와 설치 안내가 한국어·영어 패키지를 나란히 보여 준다. 환경 변수나 설정 파일은 필수가 아니다.
+- 설치된 패키지 언어와 OS 언어(`Intl.DateTimeFormat().resolvedOptions().locale`)가 다르면, `check_for_updates`와 로컬 관리자 페이지가 맞는 언어 패키지가 있다고 그 OS 언어로 알려 준다. OS 언어로 실행 중 문장만 바꾸지는 않는다. 바꾸면 스킬(정적 문장)과 언어가 섞이기 때문이다.
+- 설치·연결 실패 안내(DB 파일 열기 실패, 서비스 미기동, 원격 연결 거부 등)도 카탈로그 문장이다. 원인을 짐작하게 하지 않는다. 사용자가 할 다음 행동 하나를 그 언어로 적고, 지원 요청용 `code`를 함께 보여 준다.
+- 로컬 DBMS를 쉽게 설치하는 방법(서비스 안 내장 DB 등)은 DBMS 전환(3.5.0 예정)이 정한다. 그 설치기와 상태 화면의 문장도 이 카탈로그를 쓴다.
 
 ### 4.2 정적 문장과 실행 중 문장
 
-호스트는 플러그인 폴더의 `skills/`, `hooks.json`, manifest를 그대로 읽는다. 세 호스트(Claude Code, Codex, Antigravity) 모두 이 파일들에 locale별 변형을 고르는 기능이 없다. 그래서 정적 문장의 언어는 설치한 패키지가 정하고, 1·2번 설정은 실행 중 렌더링하는 문장에만 적용된다. 서버 `instructions`의 접수 블록은 설치된 `skills/orchestrator/SKILL.md`에서 읽으므로 정적 문장에 속한다(스킬과 같은 원본이라는 지금 원칙을 유지한다).
+호스트는 플러그인 폴더의 `skills/`, `hooks.json`, manifest를 그대로 읽는다. 세 호스트(Claude Code, Codex, Antigravity) 모두 이 파일들에 locale별 변형을 고르는 기능이 없다. 그래서 정적 문장의 언어는 설치한 패키지가 정하고, 환경 변수·사용자 설정은 실행 중 렌더링하는 문장에만 적용된다. 서버 `instructions`의 접수 블록은 설치된 `skills/orchestrator/SKILL.md`에서 읽으므로 정적 문장에 속한다(스킬과 같은 원본이라는 지금 원칙을 유지한다).
 
 설정과 패키지 언어가 다르면 두 언어가 섞인다. 관리자 페이지와 `check_for_updates` 결과에 "패키지 언어"와 "표시 언어"를 따로 보여 준다.
 
 ### 4.3 요청 단위
 
-- MCP: 요청마다 locale을 실어 보내는 표준 필드는 확인하지 못했다(미확인, 구현 때 MCP 규격에서 확인). 확인되기 전까지는 도구 입력에 locale 인자를 추가하지 않는다. 도구 결과는 프로세스 locale을 따른다.
-- 관리자 페이지 HTTP: 사용자가 고른 값 → `Accept-Language` → 프로세스 locale → `en`. 응답에 `Content-Language`를 붙인다.
+- MCP: 4.1 ②의 `_meta` 키를 쓴다. 도구 입력 schema에 locale 인자를 추가하지 않는다.
+- 관리자 페이지 HTTP: 보는 사람이 고른 값(로컬이면 `settings.json`, 원격이면 인증된 사용자별 설정으로 DB에 저장) → `Accept-Language` → 서비스 기본값 → `en`. 응답에 `Content-Language`를 붙인다.
+- 원격 관리자 페이지에서 고른 표시 언어는 그 화면에만 적용된다. 사용자 PC의 hook·패키지 언어는 바꾸지 못한다(다른 기계의 파일이다). 화면에 이 사실을 적는다.
 
 ## 5. 카탈로그
 
@@ -164,8 +224,11 @@ locales/
 - 기존 설치 경로(`claude-plugin/`, 저장소 루트의 Codex 플러그인, agy zip)는 `ko` 패키지로 유지해 지금 사용자의 동작을 바꾸지 않는다.
 - `en` 배포:
   - agy: release asset `agent-governance-suite-antigravity-<tag>-en.zip`을 같은 workflow가 만든다. 기존 zip 이름은 `ko`로 유지한다.
-  - Claude Code, Codex: 같은 식별자를 다른 원본에서 배포하는 방법(별도 marketplace 파일, 생성 branch, 하위 경로 지정 등)이 각 호스트에서 되는지 확인하지 못했다(미확인). 구현 첫 단계에서 실제 호스트로 확인하고, 되지 않으면 그 사실과 대안을 보고한 뒤 정한다.
-- 패키지 빌드는 `release/locale.json`을 적는다(4.1의 3번).
+  - Claude Code: 플러그인 `source`는 `git-subdir`(`url`, `path`, `ref`)로 저장소 하위 폴더를 가리킬 수 있다(code.claude.com plugins marketplace-reference). 스킬 접두사는 marketplace 항목 이름이 아니라 플러그인 manifest의 `name`에서 온다. 같은 manifest 이름의 플러그인 두 개를 함께 켜면 한쪽 hook이 빠진다(plugins loading 문서).
+  - Codex: marketplace `source`에 `git-subdir`(`url`, `path`, `ref`)가 있다(developers.openai.com codex plugins build).
+  - 배포안(추론, 실호스트 확인 필요): marketplace 하나에 항목 두 개를 둔다. 기존 `agent-governance-suite`(ko)와 `agent-governance-suite-en`이다. en 항목은 생성 폴더(`claude-plugin-en/`, `codex-plugin-en/`)를 `git-subdir`로 가리키고, 그 manifest `name`은 `agent-governance-suite`로 둔다. 그러면 스킬 이름이 같다. 두 언어를 동시에 켜지 않도록 README와 설치 안내에 적는다.
+  - 이 배포안은 Linux 시험 서버에서 Claude Code·Codex 실제 설치로 확인한다. 항목 이름과 manifest 이름이 다르면 거부되는지가 핵심이다. 거부되면 그 결과와 대안(언어별 ref의 marketplace 등)을 보고하고 정한다.
+- 패키지 빌드는 `runtime/locale.json`을 적는다(4.1 ①의 3번).
 - README: `README.en.md`의 설치 안내를 `en` 패키지로 바꾼다.
 
 ## 9. 관리자 페이지와의 연계
@@ -173,7 +236,7 @@ locales/
 - 같은 `runtime/i18n` 모듈과 `locales/`를 쓴다. 화면 문장은 `admin` domain에 둔다.
 - API의 모든 메시지 객체는 `{ code, messageKey, params, message, locale }`이다. 화면은 `message`를 그대로 쓰거나 자기 locale로 `messageKey`·`params`를 다시 렌더링한다.
 - 저장 데이터는 key·params와 UTC ISO 8601 시각만 갖는다. 날짜·숫자 표시는 협상한 locale로 `Intl`이 한다.
-- 표시 언어 설정 화면은 `settings.json`의 `locale`을 바꾼다. hook에는 바로, MCP 서버에는 재시작 뒤 적용된다는 것을 같이 보여 준다.
+- 로컬 관리자 페이지의 표시 언어 설정은 `settings.json`의 `locale`을 바꾼다. hook에는 바로 적용되고, 서비스에는 다음 세션(initialize)부터 적용된다. 원격 관리자 페이지는 4.3을 따른다.
 - 처음 출시 locale에 오른쪽→왼쪽 언어는 없다. 화면은 CSS 논리 속성(`margin-inline-start` 등)으로 만들어 나중에 추가할 수 있게 한다.
 
 ## 10. 시험
@@ -196,7 +259,7 @@ locales/
 
 ## 12. 남은 확인
 
-- MCP 규격의 요청 단위 locale 필드 유무(4.3).
-- Claude Code·Codex에서 같은 플러그인 식별자를 locale별 원본으로 배포하는 방법(8장).
+- SEP-2792가 최종 규격에 들어갈 때 키 이름·문법이 바뀌는지(4.1 ②). 바뀌면 shim과 서비스의 읽는 곳 한 군데만 고친다.
+- Claude Code·Codex 배포안의 실호스트 확인(8장).
 - `intl-messageformat` 도입 공급망 기록(`docs/supply-chain.md` 절차).
 - 번역 분량: 스킬 문장 파일 135개(한글 포함 줄 약 3,200), 도구 설명 35곳, 오류 문장 약 463곳, hook 문장 약 12종, 스킬 스크립트 약 300줄.
