@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { CODEX_EN_NAME, CODEX_MANIFEST, EN_LOCALE, LOCALE_FILE, PACKAGES, checkEnPackage, renderEnPackage } from "../../scripts/build-en-packages.mjs";
+import { CODEX_EN_NAME, CODEX_MANIFEST, EN_LOCALE, LOCALE_FILE, PACKAGES, checkEnPackage, ignoredPackageFiles, renderEnPackage } from "../../scripts/build-en-packages.mjs";
 
 const root = path.resolve(import.meta.dirname, "..", "..");
 const json = async (...parts) => JSON.parse(await readFile(path.join(root, ...parts), "utf8"));
@@ -36,6 +36,10 @@ describe("English-only packages", () => {
       expect(codex.has(file), file).toBe(true);
     }
     expect([...codex.keys()].some((file) => file.startsWith("tests/") || file.startsWith("claude-plugin/"))).toBe(false);
+  });
+
+  it.each(Object.keys(PACKAGES))("%s has no file that .gitignore would leave out of the published tree", async (name) => {
+    expect(await ignoredPackageFiles(name, root)).toEqual([]);
   });
 
   it("lists the English entries next to the Korean ones in both marketplaces", async () => {
