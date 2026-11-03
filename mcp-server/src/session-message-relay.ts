@@ -4,7 +4,6 @@ import { watchHostProcess, type HostWatch } from "./host-process-watch.js";
 import { persistRelayFailure, type WakeDispatchPort, type WakeDispatchOutcome } from "./session-message-wake-port.js";
 import { transportDeliveryCapabilities, transportWakePort } from "./wake-transports.js";
 import type { WakeReservation } from "./session-message-store.js";
-import { createRelayWakeObservation, type RelayWakeObservation } from "./relay-wake-observation.js";
 
 const LOOP_MS = 5000;
 
@@ -58,8 +57,7 @@ function delay(milliseconds: number, stop: Promise<void>): Promise<void> {
 
 /** One dispatch cycle shared by the loop and isolated process regression fixtures. Lease renewal runs beside it. */
 export async function dispatchManagedWake(options: Pick<RelayOptions, "host" | "sessionId" | "instanceId" | "transport">,
-  relayId: string, port: WakeDispatchPort, request: typeof sessionMessageRequest = sessionMessageRequest,
-  observation?: RelayWakeObservation): Promise<boolean> {
+  relayId: string, port: WakeDispatchPort, request: typeof sessionMessageRequest = sessionMessageRequest): Promise<boolean> {
   if (port.capabilities.idleWake === "none" || !port.capabilities.supportedInjection.includes("peer-wake")) return false;
   const target = { host: options.host, sessionId: options.sessionId };
   const reserved = await request<WakeReservation>("reserve-wake", { target, nonce: newWakeNonce(),
@@ -70,8 +68,7 @@ export async function dispatchManagedWake(options: Pick<RelayOptions, "host" | "
   if (!started.dispatch || !started.attempt) return false;
   let outcome: WakeDispatchOutcome = { result: "unknown", reasonCode: "ADAPTER_THREW" };
   try {
-    observation?.record("dispatch-attempt");
-    outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce), observation?.record);
+    outcome = await port.dispatch(target, wakeMessage(started.attempt.nonce));
   }
   catch { /* A thrown adapter cannot prove that no bytes were submitted. */ }
   // A lost record leaves the row started; the store's start timeout turns it unknown with a resend deadline.
@@ -98,7 +95,6 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
   dependencies: RelayDependencies = {}): Promise<void> {
   const request = dependencies.request ?? sessionMessageRequest;
   const wait = dependencies.delay ?? delay;
-  const observation = createRelayWakeObservation(options.transport, port);
   const target = { host: options.host, sessionId: options.sessionId };
   let ended: string | null = null;
   let wakeStop!: () => void;
@@ -134,9 +130,8 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
         if (!tick.alive) { stop(tick.ended === true ? BIRTH_ENDED : binding !== undefined ? "RELAY_HOST_BIRTH_MISMATCH" : "RELAY_LEASE_LOST"); break; }
         if (binding !== undefined) hostSent = true;
         prerequisiteSent = true;
-        if (port.capabilities.idleWake === "none") observation?.record("none-skip");
-        else if (tick.count > 0 && tick.hostBound && dispatching === null) {
-          dispatching = dispatchManagedWake(options, options.relayId, port, request, observation).then(() => {},
+        if (port.capabilities.idleWake !== "none" && tick.count > 0 && tick.hostBound && dispatching === null) {
+          dispatching = dispatchManagedWake(options, options.relayId, port, request).then(() => {},
             // Messages remain durable. A committed start is never retried on an uncertain result.
             (error: unknown) => reportRelayFailure("tick", error)).finally(() => { dispatching = null; });
         }
@@ -150,17 +145,15 @@ export async function runSessionMessageRelay(options: RelayOptions, port: WakeDi
     watcher?.close();
     const reason: string = ended ?? "RELAY_ENDED";
     const hostEnded = HOST_ENDED.has(reason);
-    let normalEnd = hostEnded || reason === STOPPED || reason === BIRTH_ENDED;
+    const normalEnd = hostEnded || reason === STOPPED || reason === BIRTH_ENDED;
     if (!normalEnd) reportRelayFailure("run", producerFailure(reason, "The relay ended before its host."));
     try {
       await request("release-relay", { target, transport: options.transport, relayId: options.relayId, instanceId: options.instanceId,
         reason: hostEnded ? "host-process-ended" : reason === STOPPED ? "relay-stop-requested" : reason === BIRTH_ENDED ? "birth-ended" : "relay-ended" });
     } catch (error) {
-      normalEnd = false;
       reportRelayFailure("release", error); // Lease expiry still provides an unreachable fallback.
     } finally {
       process.removeListener(STOP_SIGNAL, stopRequested);
     }
-    observation?.end(normalEnd);
   }
 }

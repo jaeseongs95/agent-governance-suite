@@ -7,7 +7,7 @@ import { codexQueueWakePort } from "./wake-transport-codex.js";
 /** idleWake none is reported as unsupported from the declaration; the relay never dispatches it. */
 function deferredWakePort(): WakeDispatchPort {
   return {
-    capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" }, observesNativeLaunch: true,
+    capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
     resendBaseMs: 10 * 60_000, // Unused: a port that is never dispatched has no resend; the field is required.
     dispatch: async () => { throw new Error("Deferred wake transport has no idle wake."); },
   };

@@ -54,7 +54,6 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
 `, "utf8");
     const environment = Object.fromEntries(Object.entries({...process.env,
       AGENT_GOVERNANCE_CLASSIFICATION_CONFIG: "", AGENT_GOVERNANCE_HOST_ATTESTATION: host,
-      AGENT_GOVERNANCE_LOG_CONFIG: "",
       SKILL_REGISTRY_PATH: path.join(root, "skills", "registry.json"), AGENT_GOVERNANCE_SHARED_STATE_DIR: directory,
       AGENT_GOVERNANCE_DB_PATH: databasePath, AGENT_GOVERNANCE_CONTINUITY_DB_PATH: path.join(directory, "continuity.sqlite3"),
       AGENT_GOVERNANCE_TRUST_DB_PATH: path.join(directory, "trust.sqlite3"), AGENT_GOVERNANCE_SESSION_BOARD_DB_PATH: path.join(directory, "board.sqlite3"),

@@ -1,5 +1,4 @@
 import { ClassificationInitializationError } from "./skill-classification/runtime.js";
-import type { Diagnostics, DiagnosticOutcome } from "./diagnostics.js";
 import { admitCaller, RESERVED_CALLER_KEYS, type CallerIngress, type VerifiedCaller } from "./caller-identity.js";
 import { observedCaller } from "./caller-actor.js";
 import { existsSync, readFileSync } from "node:fs";
@@ -443,7 +442,6 @@ export function createMcpServer(
   trust: TrustService | null = null,
   classification: SkillClassificationGateway | null = null,
   callerIngress: CallerIngress | null = null,
-  diagnostics?: Diagnostics,
 ): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -467,7 +465,7 @@ export function createMcpServer(
         inputSchema: {type: "object", additionalProperties: false, properties: {}},
         // D0347: the inventory itself only reads local skill, registry and discovery sources, so the call neither
         // destroys data nor reaches an external system. readOnlyHint stays unset: the shared call boundary still
-        // consumes the session proof and may write diagnostics.
+        // consumes the session proof.
         annotations: { destructiveHint: false, openWorldHint: false },
       },
       {
@@ -649,17 +647,11 @@ export function createMcpServer(
         annotations: { readOnlyHint: true, idempotentHint: true, destructiveHint: false, openWorldHint: false },
       },
     ]);
-  diagnostics?.registerMethods(tools.map(tool => tool.name));
   server.setRequestHandler(ListToolsRequestSchema, async () => ({tools}));
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    let diagnosticOutcome: DiagnosticOutcome | undefined;
-    const respond = <T>(result: ApiResultV1<T>) => {
-      diagnosticOutcome = {ok: result.ok, errorCode: result.error?.code,
-        reasonCode: result.error?.details?.reasonCode, failedChecks: result.error?.details?.failedChecks};
-      return toolResult(result);
-    };
-    const handle = async (correlation?: string) => {
+    const respond = <T>(result: ApiResultV1<T>) => toolResult(result);
+    const handle = async () => {
     const args = asRecord(request.params.arguments);
     const reserved = RESERVED_CALLER_KEYS.find(key => Object.hasOwn(args, key));
     if (reserved) return respond(apiError("INVALID_INPUT", "Caller identity is host-owned and is not accepted in tool arguments.", {reasonCode: "RESERVED_CALLER_FIELD", field: reserved}));
@@ -669,16 +661,12 @@ export function createMcpServer(
       const meta = request.params._meta;
       caller = admitCaller(callerIngress(request.params.name, meta && typeof meta === "object" ? meta as Record<string, unknown> : undefined,
         request.params.arguments), hostActorId);
-      diagnostics?.event("binding", "DEBUG", "binding_check", {method: request.params.name, correlation, verified: true,
-        actorRole: caller.actor.role, parentChainLength: caller.parentChain.length, parentChainComplete: caller.parentChainComplete});
     } catch (error) {
       if (error instanceof WorkflowContractError) {
-        diagnostics?.event("binding", "DEBUG", "binding_check", {method: request.params.name, correlation, verified: false, reasonCode: error.details?.reasonCode});
         return respond(apiError(error.code, error.message, error.details));
       }
       // Error model R2: a non-contract failure (e.g. the admission store) is a server failure with its reason and
       // redacted cause, not a cause-less fixed reason.
-      diagnostics?.event("binding", "WARN", "binding_check", {method: request.params.name, correlation, verified: false, cause: failureContext(error)});
       return respond(failureResult(error, ""));
     }
     // Only a host with an execution adapter qualifies the caller's observed model and effort.
@@ -920,7 +908,7 @@ export function createMcpServer(
     if (notice) response.content.push({ type: "text", text: JSON.stringify(notice) });
     return response;
     };
-    return diagnostics ? diagnostics.observe(request.params.name, request.params.arguments, handle, () => diagnosticOutcome) : handle();
+    return handle();
   });
 
   return server;

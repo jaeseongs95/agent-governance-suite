@@ -1,6 +1,3 @@
-import {createDiagnostics, readDiagnosticConfig, type Diagnostics} from "./diagnostics.js";
-import {createHash} from "node:crypto";
-import { PLUGIN_INFO } from "./plugin-info.js";
 import { builtinCallerIngress } from "./builtin-caller-ingress.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
@@ -44,7 +41,6 @@ import { bindNativeClassificationDefinitions } from "./skill-classification/nati
 import { failureContext } from "./failure-diagnostics.js";
 import { writeFailureDiagnostic } from "./hook-error-diagnostics.js";
 
-let diagnostics: Diagnostics | undefined;
 
 /** Trusted installation code supplies adapters; request JSON and environment names cannot register them. */
 export async function startMcpServer(
@@ -56,21 +52,6 @@ export async function startMcpServer(
   // Snapshot trusted composition before the first asynchronous operation.
   const installedWireAdapters = new Map(wireAdapters);
   const installedNativeBehaviors = nativeBehaviors === undefined ? undefined : new Map(nativeBehaviors);
-  let loggingConfig;
-  let logConfigInvalid = false;
-  try {loggingConfig = readDiagnosticConfig(process.env.AGENT_GOVERNANCE_LOG_CONFIG);} catch {
-    logConfigInvalid = true;
-    loggingConfig = {...readDiagnosticConfig(undefined), categories: {lifecycle: "WARN" as const}};
-  }
-  diagnostics = await createDiagnostics(loggingConfig, new Set());
-  if (logConfigInvalid) {
-    diagnostics.event("lifecycle", "WARN", "configuration_invalid", {reasonCode: "LOG_CONFIG_INVALID"});
-    void diagnostics.close();
-  }
-  let runtimeHash: string | undefined;
-  try {if (loggingConfig.level !== "OFF" || Object.values(loggingConfig.categories ?? {}).some(level => level !== "OFF")) runtimeHash = createHash("sha256").update(await readFile(new URL(import.meta.url))).digest("hex");} catch { /* Startup diagnostics may be unavailable; never alter service startup. */ }
-  diagnostics.event("lifecycle", "INFO", "startup", {buildVersion: PLUGIN_INFO.version, runtimeHash, runtimePath: import.meta.url});
-  process.once("beforeExit", () => {void diagnostics?.close();});
   const registryPath = resolveRegistryPath();
   const workflowDatabasePath = resolveWorkflowDatabasePath();
   const continuityDatabasePath = resolveContinuityDatabasePath();
@@ -173,19 +154,14 @@ export async function startMcpServer(
     },
     service: new SkillClassificationService(providerRuntime),
   });
-  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, classification, builtinCallerIngress(process.env.AGENT_GOVERNANCE_HOST_ATTESTATION, store), diagnostics);
+  const server = createMcpServer(service, updates, continuity, cleanup, glossary, validator, resolveToolSchemaProfile(), hostAttestation, resolveSessionBoardDatabasePath(), undefined, trust, classification, builtinCallerIngress(process.env.AGENT_GOVERNANCE_HOST_ATTESTATION, store));
   await server.connect(new StdioServerTransport());
-  diagnostics.event("lifecycle", "INFO", "connected");
-  const previousClose = server.onclose;
-  server.onclose = () => {previousClose?.(); void diagnostics?.close();};
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   void startMcpServer().catch(error => {
     process.exitCode = 1;
-    // Fatal startup must remain observable even before diagnostics exist or when logging is OFF.
+    // Fatal startup stays observable on stderr.
     writeFailureDiagnostic("[agent-governance-suite] startup-failure " + JSON.stringify({phase: "startup", context: failureContext(error)}) + "\n");
-    diagnostics?.event("lifecycle", "FATAL", "startup_failed");
-    void diagnostics?.close();
   });
 }

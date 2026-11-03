@@ -35,14 +35,12 @@ export function isWakeDispatchOutcome(value: unknown): value is WakeDispatchOutc
   return result === "not-delivered" && (kind === "transient" || kind === "prerequisite-missing")
     && typeof reasonCode === "string" && REASON_CODE.test(reasonCode);
 }
-export type WakeLaunchObserver =(event: "native-launch-attempt" | "native-spawn") => void;
 export interface WakeDispatchPort {
   capabilities: DeliveryCapabilities;
   /** Only adapters instrumenting their actual launch sites may declare complete coverage. */
-  observesNativeLaunch?: boolean;
   /** Time after which an unobserved hand-off may be rung again (doubled per unanswered streak). Not stored in presence. */
   resendBaseMs: number;
-  dispatch(target: SessionIdentity, message: string, observe?: WakeLaunchObserver): Promise<WakeDispatchOutcome>;
+  dispatch(target: SessionIdentity, message: string): Promise<WakeDispatchOutcome>;
   /**
    * A prerequisite this port can tell is missing before any wake, without an external effect: the reason code its
    * dispatch would report as prerequisite-missing, or null. Never throws. The relay reports it on its first tick, so the

@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { accessSync, constants, existsSync, statSync } from "node:fs";
 import path from "node:path";
-import { errorCode, type WakeDispatchOutcome, type WakeDispatchPort, type WakeLaunchObserver } from "./session-message-wake-port.js";
+import { errorCode, type WakeDispatchOutcome, type WakeDispatchPort } from "./session-message-wake-port.js";
 
 /** Codex rejects a queue for a thread it is not running yet; nothing was queued, and it may start shortly. */
 const NO_ACTIVE_SESSION = "No active session found";
@@ -65,10 +65,9 @@ export function codexLaunchPrerequisite(environment: NodeJS.ProcessEnv = process
   return launch.command === "codex" && codexOnPath(environment, platform) === false ? "CODEX_EXECUTABLE_MISSING" : null;
 }
 
-function ringCodex(sessionId: string, message: string, observe?: WakeLaunchObserver): Promise<WakeDispatchOutcome> {
+function ringCodex(sessionId: string, message: string): Promise<WakeDispatchOutcome> {
   return new Promise((resolve) => {
     let spawned = false;
-    try { observe?.("native-launch-attempt"); } catch { /* Observation never changes submission. */ }
     const launch = codexLaunch();
     if ("missing" in launch) {
       resolve({ result: "not-delivered", kind: "prerequisite-missing", reasonCode: launch.missing });
@@ -78,7 +77,6 @@ function ringCodex(sessionId: string, message: string, observe?: WakeLaunchObser
       { windowsHide: true, timeout: 10_000 }, (error, _stdout, stderr) => resolve(codexWakeOutcome(error, spawned, String(stderr ?? ""))));
     child.once("spawn", () => {
       spawned = true;
-      try { observe?.("native-spawn"); } catch { /* Observation never changes the outcome. */ }
     });
   });
 }
@@ -86,8 +84,7 @@ function ringCodex(sessionId: string, message: string, observe?: WakeLaunchObser
 /** Persistent host queue: a held marker survives, so a resend is useful only after a longer wait (design 3.2). */
 export const codexQueueWakePort: WakeDispatchPort = {
   capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
-  observesNativeLaunch: true,
   resendBaseMs: 20 * 60_000,
-  dispatch: (target, message, observe) => ringCodex(target.sessionId, message, observe),
+  dispatch: (target, message) => ringCodex(target.sessionId, message),
   prerequisite: (environment) => codexLaunchPrerequisite(environment),
 };

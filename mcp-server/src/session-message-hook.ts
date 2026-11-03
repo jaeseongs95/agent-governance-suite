@@ -15,7 +15,6 @@ import type { SessionMessageTransport } from "./session-message-relay.js";
 import type { SessionMessage } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
 import { hostAliveAtBound } from "./host-process-watch.js";
-import { createRelaySpawnObservation } from "./relay-wake-observation.js";
 import { readRelayCodeDigest } from "./relay-code-identity.js";
 import { adaptHostInput, hostDeliveryProfile, nativePeerWait, resolveHookHost, resolveHookProcessPid, type SupportedHookHost } from "./host-input-adapter.js";
 
@@ -63,7 +62,7 @@ export interface SessionMessageHookOptions {
 
 export type HookFailurePhase = "options" | "input" | "handle" | "serialize" | "stdin" | "host-entry" | "stdout"
   | "presence-start" | "clear-deferred" | "ensure-relay" | "relay-start" | "recovery" | "peer-wait" | "observer-sync" | "observer-async"
-  | "relay-observation" | "presence-end";
+  | "presence-end";
 
 /** The same bounded classification that the diagnostic line carries; never messages, paths or peer bodies. */
 export type SessionMessageHookFailure = Readonly<{
@@ -215,20 +214,15 @@ function launchWithoutInheritedHandles(args: readonly string[], environment: Nod
 const RELAY_LAUNCHER_TIMEOUT_MS = 5_000;
 
 /** The launcher exits before this hook does, so the host sees its hook pipes close when the hook exits. */
-function launchRelayWithoutInheritedHandles(args: readonly string[], environment: NodeJS.ProcessEnv,
-  observation: ReturnType<typeof createRelaySpawnObservation>): void {
-  launchWithoutInheritedHandles(args, environment, RELAY_LAUNCHER_TIMEOUT_MS, (error, pid) => {
+function launchRelayWithoutInheritedHandles(args: readonly string[], environment: NodeJS.ProcessEnv): void {
+  launchWithoutInheritedHandles(args, environment, RELAY_LAUNCHER_TIMEOUT_MS, (error) => {
     if (error) {
       // An OS start code or a launcher reason stays as observed; a launcher exit or timeout gets a fixed reason.
       const { code, signal } = error as { code?: unknown; signal?: unknown };
       reportHookFailure("relay-start", typeof code === "string" || hookFailureReason(error) ? error
         : retainHookFailureCause(hookFailure("RELAY_LAUNCHER_FAILED", "The relay launcher reported no relay process."), error),
         { exitCode: typeof code === "number" ? code : null, signal: typeof signal === "string" ? signal : null });
-      observation?.failed();
-      return;
     }
-    observation?.returned(pid);
-    observation?.spawned();
   });
 }
 
@@ -244,11 +238,6 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
   const hostAliveAt = hostAliveAtBound();
   remainingBudget(budget);
   const environment = relayEnvironment(relayEnv);
-  // 부모 관측은 spawn 호출 직전에 시작한다. 예산 경로는 신원 조회·파일 접근 없이 메모리에만 쌓고
-  // 프로세스 종료 때 한 번 게시한다. 게시는 훅 결과·claim 마감 뒤이며 프로세스 수명 안이다.
-  const observation = createRelaySpawnObservation(transport, environment, Boolean(budget),
-    error => { reportHookFailure("relay-observation", error); });
-  if (budget && observation) process.once("exit", () => observation.flush());
   const relayArgs = [
     "--import", relayGuard,
     relayPath,
@@ -262,7 +251,7 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     ...(startToken ? ["--parent-start-token", startToken] : []),
   ];
   if (isolateHandles && !relayOwner && process.platform === "win32") {
-    launchRelayWithoutInheritedHandles(relayArgs, environment, observation);
+    launchRelayWithoutInheritedHandles(relayArgs, environment);
     return;
   }
   const child = spawn(process.execPath, relayArgs, {
@@ -273,11 +262,9 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
   });
   // stdio stays ignored so a healthy detached relay never depends on this short-lived hook. An abnormal relay end
   // (module load failure, rejected arguments, early crash) is recorded by the preloaded guard inside the relay.
-  child.once("spawn", () => { observation?.spawned(); });
   // spawn 실패는 모든 시작 경로에서 비동기로 온다. 수신자가 없으면 보고 없이 훅 밖으로 빠진다.
   child.once("error", (error) => {
     reportHookFailure("relay-start", error); // 확인된 시작은 잠긴 채 남고 자동으로 다시 띄우지 않는다.
-    observation?.failed();
   });
   if (relayOwner) {
     // 프로세스 참조와 OS 계보를 유지한다. 비동기 어댑터의 종료 대기는 훅 요청 예산 밖에 둔다.
@@ -287,7 +274,6 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
       throw error;
     }
   } else child.unref();
-  observation?.returned(child.pid);
 }
 
 export type RecordedSessionMessage = SessionMessage & { sourceReceiptId: string; contentDigest: string };

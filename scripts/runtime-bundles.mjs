@@ -12,12 +12,6 @@ export const RUNTIME_BUNDLES = Object.freeze([
     executable: false,
   }),
   Object.freeze({
-    id: "diagnostics-worker",
-    entry: "mcp-server/src/diagnostics-worker.ts",
-    output: "mcp-server/dist/diagnostics-worker.mjs",
-    executable: true,
-  }),
-  Object.freeze({
     id: "mcp-server",
     entry: "mcp-server/src/index.ts",
     output: "mcp-server/dist/server.mjs",
@@ -180,7 +174,7 @@ export async function buildRuntimeBundle(target, outputRoot = ROOT) {
     // Omit path-bearing debug module keys/comments without changing dependency resolution.
     minifyIdentifiers: true,
     minifyWhitespace: true,
-    banner: { js: target.id === "diagnostics-worker" ? "#!/usr/bin/env node\nimport {createRequire as agsRequire} from 'node:module'; const require = agsRequire(import.meta.url);" : target.executable ? "#!/usr/bin/env node" : "/* eslint-disable */" },
+    banner: { js: target.executable ? "#!/usr/bin/env node" : "/* eslint-disable */" },
   });
 }
 
