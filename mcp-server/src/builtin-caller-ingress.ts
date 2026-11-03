@@ -3,6 +3,7 @@ import type { CallerIngress, IngressResult, ObservedCaller } from "./caller-iden
 import { antigravityCallKey, readClaudeLineage } from "./builtin-hook-host-adapters.js";
 import { HOST_ATTESTATION_TOOLS, hostActorId } from "./host-attestation.js";
 import type { WorkflowStore } from "./workflow-store.js";
+import { msg } from "./i18n.js";
 
 // Host fact sources: tests/real-host/binding-capture (2026-11-01) and docs/ags30-session-binding-design.md 1.5.
 
@@ -19,7 +20,7 @@ function unavailable(reason: string): IngressResult {
 }
 
 function invalid(reasonCode: string): never {
-  throw new WorkflowContractError("BINDING_INVALID", "The host caller metadata is inconsistent.", { reasonCode });
+  throw new WorkflowContractError("BINDING_INVALID", msg("services.caller.metadataInconsistent", {}), { reasonCode });
 }
 
 /** Root, or a child of `parent` under the root session `sessionId`. Hosts here name only the direct parent. */

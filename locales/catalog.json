@@ -11,6 +11,9 @@
     },
     "server": {
       "sourceLocale": "en"
+    },
+    "services": {
+      "sourceLocale": "en"
     }
   }
 }

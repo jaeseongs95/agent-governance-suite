@@ -11,6 +11,7 @@ import {
 } from "../../contracts/types.js";
 import type { VerifiedCaller } from "./caller-identity.js";
 import type { ExecutionObservationBindingV1, TrustedExecutionContextProvider } from "./workflow-service.js";
+import { msg, type MessageRef } from "./i18n.js";
 
 /**
  * Execution observation for the workflow tools with execution floors. The host-observed caller of the
@@ -232,7 +233,7 @@ export function satisfiesModelEffortPolicy(
   return true;
 }
 
-function invalid(message: string, details?: Record<string, unknown>): WorkflowContractError {
+function invalid(message: MessageRef, details?: Record<string, unknown>): WorkflowContractError {
   return new WorkflowContractError("BINDING_INVALID", message, details);
 }
 
@@ -289,7 +290,7 @@ export class HostAttestationProvider implements TrustedExecutionContextProvider 
     const execution = caller.execution;
     if ("unavailable" in execution || !caller.callId) return null;
     if (caller.host !== this.adapter.host) {
-      throw invalid("Host observation belongs to another host adapter.", { reasonCode: "HOST_ADAPTER_MISMATCH" });
+      throw invalid(msg("services.hostAttestation.adapterMismatch", {}), { reasonCode: "HOST_ADAPTER_MISMATCH" });
     }
     // The catalog only describes models it knows. A model or effort it does not know still runs: the main session's
     // model is the user's choice and a new release must not stop AGS. Findings are kept as notes for audit.
@@ -307,7 +308,7 @@ export class HostAttestationProvider implements TrustedExecutionContextProvider 
         : !nonEmpty(capability.policyRevision)
           || (this.adapter.policyRevision !== undefined && this.adapter.policyRevision !== capability.policyRevision)
           ? "QUALIFICATION_POLICY_REVISION_MISMATCH" : null;
-      if (mismatch) throw invalid("Host observation has no matching trusted execution capability and policy revision.", { reasonCode: mismatch });
+      if (mismatch) throw invalid(msg("services.hostAttestation.capabilityMismatch", {}), { reasonCode: mismatch });
       if (effort !== null && !satisfiesModelEffortPolicy(capability, effort)) notes.push(qualificationRejectionReason(capability, effort));
     }
     this.lastVerifiedCapability = capability;

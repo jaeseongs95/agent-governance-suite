@@ -14,6 +14,7 @@ import { contractFailure } from "./failure-diagnostics.js";
 import type { SqliteContinuityStore, ContinuityCleanupPreview } from "./continuity-store.js";
 import type { ContractValidator } from "./schema-validator.js";
 import type { SqliteWorkflowStore, WorkflowCleanupPreview } from "./sqlite-workflow-store.js";
+import { msg } from "./i18n.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_PLAN_TOKEN_BYTES = 64 * 1024;
@@ -134,14 +135,14 @@ export class StateCleanupService {
       if (currentDigest !== payload.candidateDigest
         || (payload.candidates !== undefined && JSON.stringify(candidates) !== JSON.stringify(payload.candidates))
         || (payload.linkedRuns !== undefined && JSON.stringify(current.workflow.linkedRuns) !== JSON.stringify(payload.linkedRuns))) {
-        throw new WorkflowContractError("STALE_REVISION", "State cleanup candidates changed after preview.", {
+        throw new WorkflowContractError("STALE_REVISION", msg("services.stateCleanup.candidatesChanged", {}), {
           planId: payload.planId,
           expectedDigest: payload.candidateDigest,
           actualDigest: currentDigest,
         });
       }
       if (!this.workflowStore.claimCleanupPlan(payload.planId, payload.candidateDigest, now.toISOString())) {
-        throw new WorkflowContractError("STALE_REVISION", "The state cleanup plan token was already used.", { planId: payload.planId });
+        throw new WorkflowContractError("STALE_REVISION", msg("services.stateCleanup.tokenUsed", {}), { planId: payload.planId });
       }
 
       const workflowHasCandidates = candidates.workflowRoots.length > 0 || candidates.standaloneWorkflowRuns.length > 0;
@@ -257,19 +258,19 @@ export class StateCleanupService {
     const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
     const signature = createHmac("sha256", this.secret).update(encoded).digest("base64url");
     const token = `${encoded}.${signature}`;
-    if (Buffer.byteLength(token, "utf8") > MAX_PLAN_TOKEN_BYTES) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token exceeds the supported size.");
+    if (Buffer.byteLength(token, "utf8") > MAX_PLAN_TOKEN_BYTES) throw new WorkflowContractError("INVALID_INPUT", msg("services.stateCleanup.tokenTooLarge", {}));
     return token;
   }
 
   private verify(token: string): CleanupTokenPayload {
-    if (Buffer.byteLength(token, "utf8") > MAX_PLAN_TOKEN_BYTES) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token exceeds the supported size.");
+    if (Buffer.byteLength(token, "utf8") > MAX_PLAN_TOKEN_BYTES) throw new WorkflowContractError("INVALID_INPUT", msg("services.stateCleanup.tokenTooLarge", {}));
     const [encoded, signature, extra] = token.split(".");
-    if (!encoded || !signature || extra) throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed.");
+    if (!encoded || !signature || extra) throw new WorkflowContractError("INVALID_INPUT", msg("services.stateCleanup.tokenMalformed", {}));
     const expected = createHmac("sha256", this.secret).update(encoded).digest();
     let actual: Buffer;
-    try { actual = Buffer.from(signature, "base64url"); } catch { throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token is malformed."); }
+    try { actual = Buffer.from(signature, "base64url"); } catch { throw new WorkflowContractError("INVALID_INPUT", msg("services.stateCleanup.tokenMalformed", {})); }
     if (actual.toString("base64url") !== signature || actual.length !== expected.length || !timingSafeEqual(actual, expected)) {
-      throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token signature is invalid.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("services.stateCleanup.tokenSignatureInvalid", {}));
     }
     let payload: CleanupTokenPayload;
     try {
@@ -279,14 +280,14 @@ export class StateCleanupService {
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("invalid payload object");
       payload = parsed as CleanupTokenPayload;
     } catch {
-      throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan token payload is invalid.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("services.stateCleanup.tokenPayloadInvalid", {}));
     }
     if (Object.prototype.hasOwnProperty.call(payload, "rootProtection")) {
       let observed: NonNullable<CleanupTokenPayload["rootProtection"]>;
       try { observed = this.validator.stateCleanupRootProtection(payload.rootProtection); }
-      catch { throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan root protection diagnostics are invalid."); }
+      catch { throw new WorkflowContractError("INVALID_INPUT", msg("services.stateCleanup.rootProtectionInvalid", {})); }
       if (observed.previewCreatedAt !== payload.createdAt) {
-        throw new WorkflowContractError("INVALID_INPUT", "The state cleanup plan root protection preview timestamp does not match.");
+        throw new WorkflowContractError("INVALID_INPUT", msg("services.stateCleanup.rootProtectionTimestamp", {}));
       }
     }
     return payload;
@@ -296,15 +297,15 @@ export class StateCleanupService {
     const current = this.databaseIdentities();
     const workflow = payload.databases.workflow;
     if (workflow.path !== current.workflow.path || workflow.schemaVersion !== current.workflow.schemaVersion) {
-      throw new WorkflowContractError("STALE_REVISION", "The workflow database identity or schema changed after preview.");
+      throw new WorkflowContractError("STALE_REVISION", msg("services.stateCleanup.workflowDatabaseChanged", {}));
     }
     if (JSON.stringify(current.continuity) !== JSON.stringify(payload.databases.continuity)) {
-      throw new WorkflowContractError("STALE_REVISION", "The continuity database identity or schema changed after preview.");
+      throw new WorkflowContractError("STALE_REVISION", msg("services.stateCleanup.continuityDatabaseChanged", {}));
     }
   }
 
   private backupPath(databasePath: string, label: string, planId: string): string {
-    if (databasePath === ":memory:") throw new WorkflowContractError("INVALID_INPUT", "In-memory databases cannot be cleaned destructively.");
+    if (databasePath === ":memory:") throw new WorkflowContractError("INVALID_INPUT", msg("services.stateCleanup.inMemoryDatabase", {}));
     const directory = path.join(path.dirname(path.resolve(databasePath)), "backups");
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     return path.join(directory, `${label}-before-cleanup-${planId}.sqlite3`);

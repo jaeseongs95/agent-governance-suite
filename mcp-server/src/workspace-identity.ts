@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { WorkflowContractError } from "../../contracts/types.js";
+import { msg } from "./i18n.js";
 
 export type ConservativeReason = "glob-prefix" | "leading-glob" | "legacy-unsupported";
 
@@ -38,7 +39,7 @@ export function assertSupportedScopeEntry(entry: string): void {
   if (isUnsupported(entry)) {
     throw new WorkflowContractError(
       "INVALID_INPUT",
-      "Scope entries must be file system paths without control characters.",
+      msg("services.workspace.unsupportedScopeEntry", {}),
       { reason: "UNSUPPORTED_SCOPE_ENTRY", entry },
     );
   }
@@ -49,10 +50,21 @@ export function pathWithin(child: string, parent: string): boolean {
   return parent === "" || child === parent || child.startsWith(`${parent}/`);
 }
 
+/** Fixed causes have their own sentence; any other cause is an OS error code, shown as it is. */
+const UNRESOLVED_CAUSES = {
+  "walk limit reached": "services.workspace.unresolvedWalkLimit",
+  "pointer file too large": "services.workspace.unresolvedPointerTooLarge",
+  "missing gitdir line": "services.workspace.unresolvedMissingGitdir",
+  "gitdir is not a directory": "services.workspace.unresolvedGitdirNotDirectory",
+  "empty commondir": "services.workspace.unresolvedEmptyCommondir",
+  "commondir is not a directory": "services.workspace.unresolvedCommondirNotDirectory",
+} as const;
+
 function unresolved(target: string, cause: string): WorkflowContractError {
+  const fixed = Object.hasOwn(UNRESOLVED_CAUSES, cause) ? UNRESOLVED_CAUSES[cause as keyof typeof UNRESOLVED_CAUSES] : null;
   return new WorkflowContractError(
     "INVALID_INPUT",
-    `Workspace identity cannot be resolved for ${target}: ${cause}.`,
+    fixed ? msg(fixed, { target }) : msg("services.workspace.unresolved", { target, cause }),
     { reason: "WORKSPACE_IDENTITY_UNRESOLVED", path: target, cause },
   );
 }

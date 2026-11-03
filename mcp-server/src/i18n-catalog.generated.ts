@@ -2,19 +2,65 @@
 
 import en_hooks from "../../locales/en/hooks.json" with { type: "json" };
 import en_server from "../../locales/en/server.json" with { type: "json" };
+import en_services from "../../locales/en/services.json" with { type: "json" };
 import ko_hooks from "../../locales/ko/hooks.json" with { type: "json" };
 import ko_server from "../../locales/ko/server.json" with { type: "json" };
+import ko_services from "../../locales/ko/services.json" with { type: "json" };
 
 export const SUPPORTED_LOCALES = ["en","ko"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 export const ROOT_LOCALE: SupportedLocale = "en";
 
 export const CATALOGS: Readonly<Record<SupportedLocale, Readonly<Record<string, string>>>> = {
-  "en": { ...en_hooks, ...en_server },
-  "ko": { ...ko_hooks, ...ko_server },
+  "en": { ...en_hooks, ...en_server, ...en_services },
+  "ko": { ...ko_hooks, ...ko_server, ...ko_services },
 };
 
 export interface MessageParams {
   "hooks.editGate.denied": { "limit": number; "paths": number | string; "earlier": number; "example": number | string; };
   "server.call.reservedCallerField": Record<string, never>;
+  "services.caller.metadataInconsistent": Record<string, never>;
+  "services.caller.notObserved": Record<string, never>;
+  "services.caller.observationInconsistent": Record<string, never>;
+  "services.failure.serverUnavailable": Record<string, never>;
+  "services.glossary.sourceDigestMismatch": Record<string, never>;
+  "services.governanceHook.callUnidentified": Record<string, never>;
+  "services.governanceHook.startRefused": Record<string, never>;
+  "services.hostAttestation.adapterMismatch": Record<string, never>;
+  "services.hostAttestation.capabilityMismatch": Record<string, never>;
+  "services.stateCleanup.candidatesChanged": Record<string, never>;
+  "services.stateCleanup.continuityDatabaseChanged": Record<string, never>;
+  "services.stateCleanup.inMemoryDatabase": Record<string, never>;
+  "services.stateCleanup.rootProtectionInvalid": Record<string, never>;
+  "services.stateCleanup.rootProtectionTimestamp": Record<string, never>;
+  "services.stateCleanup.tokenMalformed": Record<string, never>;
+  "services.stateCleanup.tokenPayloadInvalid": Record<string, never>;
+  "services.stateCleanup.tokenSignatureInvalid": Record<string, never>;
+  "services.stateCleanup.tokenTooLarge": Record<string, never>;
+  "services.stateCleanup.tokenUsed": Record<string, never>;
+  "services.stateCleanup.workflowDatabaseChanged": Record<string, never>;
+  "services.trust.attestationNotObject": Record<string, never>;
+  "services.trust.brokerAttestationPeer": Record<string, never>;
+  "services.trust.busyTimeoutInvalid": Record<string, never>;
+  "services.trust.databasePathEmpty": Record<string, never>;
+  "services.trust.directUserUnsupported": Record<string, never>;
+  "services.trust.initializeFailed": Record<string, never>;
+  "services.trust.inputEventConflict": Record<string, never>;
+  "services.trust.inputSourceAttestationUnsupportedFields": Record<string, never>;
+  "services.trust.inputSourceMetadataUnsupportedFields": Record<string, never>;
+  "services.trust.peerInputEnvelope": Record<string, never>;
+  "services.trust.readLatestReceiptFailed": Record<string, never>;
+  "services.trust.readReceiptFailed": Record<string, never>;
+  "services.trust.recordReceiptFailed": Record<string, never>;
+  "services.trust.schemaNewer": Record<string, never>;
+  "services.trust.syntheticKeyMismatch": Record<string, never>;
+  "services.trust.syntheticKeyRequired": Record<string, never>;
+  "services.workspace.unresolved": { "target": number | string; "cause": number | string; };
+  "services.workspace.unresolvedCommondirNotDirectory": { "target": number | string; };
+  "services.workspace.unresolvedEmptyCommondir": { "target": number | string; };
+  "services.workspace.unresolvedGitdirNotDirectory": { "target": number | string; };
+  "services.workspace.unresolvedMissingGitdir": { "target": number | string; };
+  "services.workspace.unresolvedPointerTooLarge": { "target": number | string; };
+  "services.workspace.unresolvedWalkLimit": { "target": number | string; };
+  "services.workspace.unsupportedScopeEntry": Record<string, never>;
 }
