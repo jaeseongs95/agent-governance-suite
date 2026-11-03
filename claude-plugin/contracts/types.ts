@@ -66,8 +66,12 @@ export type ReasoningEffortV1 = (typeof REASONING_EFFORT)[number];
 export interface ExecutionContextV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   model: string;
-  modelClass: ModelClassV1;
-  reasoningEffort: ReasoningEffortV1;
+  /** Null when no installed catalog entry names the observed model; the model still runs (any vendor, any release). */
+  modelClass: ModelClassV1 | null;
+  /** Null when the host reported no effort, or one outside REASONING_EFFORT. */
+  reasoningEffort: ReasoningEffortV1 | null;
+  /** Catalog findings kept for audit only (e.g. MODEL_NOT_IN_CATALOG); they never refuse the call. */
+  policyNotes?: string[];
   source: "runtime" | "spawn-result";
   observedAt: string;
   /**

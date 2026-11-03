@@ -584,7 +584,8 @@
             "lightweight",
             "general",
             "deep",
-            "frontier"
+            "frontier",
+            null
           ]
         },
         "reasoningEffort": {
@@ -594,8 +595,18 @@
             "high",
             "xhigh",
             "max",
-            "ultra"
+            "ultra",
+            null
           ]
+        },
+        "policyNotes": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+          }
         },
         "source": {
           "enum": [
