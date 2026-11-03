@@ -984,6 +984,7 @@ export class WorkflowService {
         throw new WorkflowContractError(
           "BINDING_INVALID",
           msg("workflow.service.strictMCPStageExecutionRejects", {}),
+          { reasonCode: "EXECUTION_CONTEXT_CALLER_SUPPLIED" },
         );
       }
       // A copy: the server adds its own fields, and the caller's object must stay reusable.
@@ -1923,7 +1924,7 @@ export class WorkflowService {
       throw new WorkflowContractError(
         "BINDING_INVALID",
         msg("workflow.service.attestationNotBound", subject),
-        { binding, context },
+        { reasonCode: "EXECUTION_OBSERVATION_UNBOUND", binding, context },
       );
     }
   }
@@ -1935,7 +1936,7 @@ export class WorkflowService {
       throw new WorkflowContractError(
         "BINDING_INVALID",
         msg("workflow.service.attestationObservationTime", subject),
-        { observedAt: context.observedAt },
+        { reasonCode: "EXECUTION_OBSERVATION_TIME_INVALID", observedAt: context.observedAt },
       );
     }
   }
@@ -1946,14 +1947,14 @@ export class WorkflowService {
       throw new WorkflowContractError(
         "BINDING_INVALID",
         msg("workflow.service.attestationClaimFieldsMissing", subject),
-        { observationId: null },
+        { reasonCode: "EXECUTION_OBSERVATION_ID_MISSING", observationId: null },
       );
     }
     if (!this.store.claimExecutionObservation(observationId, new Date().toISOString())) {
       throw new WorkflowContractError(
         "BINDING_INVALID",
         msg("workflow.service.attestationConsumed", subject),
-        { observationId },
+        { reasonCode: "EXECUTION_OBSERVATION_CONSUMED", observationId },
       );
     }
   }
@@ -2012,7 +2013,7 @@ export class WorkflowService {
       throw new WorkflowContractError(
         "BINDING_INVALID",
         msg("workflow.service.executionContextMalformed", subject),
-        { context },
+        { reasonCode: "EXECUTION_CONTEXT_MALFORMED", context },
       );
     }
 

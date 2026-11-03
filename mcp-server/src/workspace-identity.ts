@@ -92,6 +92,17 @@ function physicalPath(target: string): { real: string; existing: string } {
       const code = (error as NodeJS.ErrnoException).code;
       const parent = path.dirname(current);
       if ((code !== "ENOENT" && code !== "ENOTDIR") || parent === current) throw unresolved(target, code ?? "unreadable");
+      // A dangling link is followed: what gets created through it lands at its target, not beside the link.
+      let link: string | null;
+      try {
+        link = fs.lstatSync(current, { throwIfNoEntry: false })?.isSymbolicLink() ? fs.readlinkSync(current) : null;
+      } catch (cause) {
+        throw unresolved(target, (cause as NodeJS.ErrnoException).code ?? "unreadable");
+      }
+      if (link !== null) {
+        current = path.resolve(parent, link);
+        continue;
+      }
       suffix.unshift(path.basename(current));
       current = parent;
     }
@@ -236,6 +247,15 @@ export function identify(target: string): Pick<SurfaceIdentityV1, "physical" | "
   return { physical: normalizedKey(physical.real), git: discoverGit(physical) };
 }
 
+/** For a root whose Git evidence cannot be read: the physical key alone, or the lexical one when even that cannot be told. */
+function identifyPhysicalOnly(target: string): Pick<SurfaceIdentityV1, "physical" | "git"> {
+  try {
+    return { physical: normalizedKey(physicalPath(target).real), git: null };
+  } catch {
+    return { physical: normalizedKey(path.resolve(target)), git: null };
+  }
+}
+
 const HOST_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
 let cachedHost: { file: string; id: string } | null = null;
 
@@ -295,8 +315,9 @@ function derivedHostId(machineId: string): string {
  * deleted, copied or different AGS state directory cannot give one machine two IDs, and stored roots keep blocking.
  * A machine ID that cannot be read is HOST_IDENTITY_UNRESOLVED (root saves are refused; the edit gate takes the
  * same-host side). Only where the OS has no machine ID is a random UUID created once in `host-id` of the shared AGS
- * state directory, published with a hard link so two first readers end with the one that won. ponytail: that
- * fallback ID is lost with the file, and copying the state directory copies it.
+ * state directory, published with a hard link (an exclusive create where the file system has none) so two first
+ * readers end with the one that won. ponytail: that fallback ID is lost with the file, and copying the state directory
+ * copies it.
  */
 export function hostIdentity(environment: NodeJS.ProcessEnv = process.env, machineId: () => string | null = osMachineId): string {
   const unresolved = (cause?: unknown) => new WorkflowContractError("INVALID_INPUT", msg("services.workspace.hostUnresolved", {}),
@@ -312,9 +333,18 @@ export function hostIdentity(environment: NodeJS.ProcessEnv = process.env, machi
     if (!id) {
       fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
       const draft = `${file}.${process.pid}.${randomUUID()}`;
-      fs.writeFileSync(draft, `${randomUUID()}\n`, { flag: "wx", mode: 0o600 });
-      try { fs.linkSync(draft, file); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
-      finally { fs.rmSync(draft, { force: true }); }
+      const content = `${randomUUID()}\n`;
+      fs.writeFileSync(draft, content, { flag: "wx", mode: 0o600 });
+      try { fs.linkSync(draft, file); } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "EEXIST") {
+          // No hard links here (FAT, some network drives): an exclusive create still lets exactly one first reader win.
+          // ponytail: a reader between that create and its write sees no ID yet and is HOST_IDENTITY_UNRESOLVED (retried
+          // on the next call); a crash in that gap leaves an empty file that stays unresolved until it is removed.
+          try { fs.writeFileSync(file, content, { flag: "wx", mode: 0o600 }); } catch (exclusive) {
+            if ((exclusive as NodeJS.ErrnoException).code !== "EEXIST") throw exclusive;
+          }
+        }
+      } finally { fs.rmSync(draft, { force: true }); }
       id = readHostId(file);
     }
     if (!id) throw unresolved();
@@ -333,10 +363,11 @@ export function sameHost(left: { host?: string }, right: { host?: string }): boo
 export function resolveRootIdentity(
   workspaceLocator: string,
   entries: readonly string[],
-  options: { legacy?: boolean } = {},
+  options: { legacy?: boolean; physicalOnly?: boolean } = {},
 ): RootIdentityV1 {
   if (!options.legacy) for (const entry of entries) assertSupportedScopeEntry(entry);
-  const workspace = identify(workspaceLocator);
+  const surfaceOf = options.physicalOnly ? identifyPhysicalOnly : identify;
+  const workspace = surfaceOf(workspaceLocator);
   const surfaces = entries.map((entry): SurfaceIdentityV1 => {
     if (isUnsupported(entry)) return { entry, ...workspace, conservative: "legacy-unsupported" };
     const segments = entry.split(SEGMENT_SEPARATOR);
@@ -350,7 +381,7 @@ export function resolveRootIdentity(
     const target = globIndex < 0 ? entry : `${segments.slice(0, globIndex).join("/")}/`;
     return {
       entry,
-      ...identify(path.resolve(workspaceLocator, target)),
+      ...surfaceOf(path.resolve(workspaceLocator, target)),
       conservative: globIndex < 0 ? null : "glob-prefix",
     };
   });

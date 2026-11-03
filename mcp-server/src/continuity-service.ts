@@ -84,6 +84,8 @@ const PHASE_DENY_EVENT = "phase-deny";
 const PHASE_START_EVENT = "phase-workflow-start";
 /** AGS infrastructure failures: the window passes and the next Stop names the cause code once. */
 const START_FAILED_PREFIX = "workflow-start-failed:";
+/** The binding names an epoch the task has moved past; reload or inspect again. */
+const EPOCH_STALE = { reasonCode: "CONTINUITY_EPOCH_STALE" } as const;
 const GATE_UNAVAILABLE_PREFIX = "phase-gate-unavailable:";
 /** A window edit that passed only because a workflow start failed; Stop then says edits were not blocked. */
 const START_FAILURE_PASS_EVENT = "phase-start-failure-pass";
@@ -595,7 +597,7 @@ export class ContinuityService implements ContinuityGateway {
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(request as unknown as Record<string, unknown>);
       const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot, Array.isArray(binding.a) ? binding.a : []);
-      if (stored.kind === "epoch-mismatch") return failure("BINDING_INVALID", msg("continuity.binding.stale", {}));
+      if (stored.kind === "epoch-mismatch") return failure("BINDING_INVALID", msg("continuity.binding.stale", {}), EPOCH_STALE);
       if (stored.kind === "source-conflict") return failure("SNAPSHOT_CONFLICT", msg("continuity.checkpoint.disabledAfterRoot", {}));
       if (stored.kind === "replay") {
         const receipt = JSON.parse(stored.request.resultJson) as Partial<CheckpointReplayReceiptV1>;
@@ -652,7 +654,7 @@ export class ContinuityService implements ContinuityGateway {
       if (
         (fork ? candidate.f !== binding.c || candidate.g !== binding.e : candidate.c !== binding.c || candidate.e !== binding.e) ||
         candidate.e !== request.epoch || candidate.r !== request.revision || candidate.d !== request.digest
-      ) throw new WorkflowContractError("BINDING_INVALID", msg("continuity.restore.candidateMismatch", {}));
+      ) throw new WorkflowContractError("BINDING_INVALID", msg("continuity.restore.candidateMismatch", {}), { reasonCode: "CONTINUITY_CANDIDATE_MISMATCH" });
       const task = this.currentTask(binding);
       if (task.suppressed) throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", msg("continuity.restore.suppressed", {}));
       if (fork) return ok<ContinuitySnapshotV1 | WorkflowContinuityCardV1>(this.loadForkParent(candidate, binding));
@@ -725,7 +727,7 @@ export class ContinuityService implements ContinuityGateway {
       });
       const now = this.now().toISOString();
       const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now, binding.e);
-      if (purged.kind === "epoch-mismatch") return failure("BINDING_INVALID", msg("continuity.binding.stale", {}));
+      if (purged.kind === "epoch-mismatch") return failure("BINDING_INVALID", msg("continuity.binding.stale", {}), EPOCH_STALE);
       if (purged.kind === "replay") {
         let replay: ContinuityPurgeResultV1 | null = null;
         try { replay = purgeReceipt(JSON.parse(purged.request.resultJson) as unknown); } catch { /* Reject malformed stored state below. */ }
@@ -892,14 +894,16 @@ export class ContinuityService implements ContinuityGateway {
    * path, or the same checkout-relative path in another checkout of its repository) it is refused; inside an active
    * root of this session it passes; any other target counts in the window, where the edit that makes
    * WORKFLOW_FILE_LIMIT distinct files is refused and locks the window; files already counted stay editable until
-   * then. An AGS infrastructure failure never refuses: it is recorded and named once at the next Stop.
+   * then. An AGS infrastructure failure never refuses: it is recorded and named once at the next Stop. `unversioned`
+   * (absolute paths outside version control, design 7.3) meet only the gated check: they are never counted or recorded.
    */
   gateEditForSession(rawSessionId: string, targets: readonly string[], shown: readonly string[] = targets,
-    example = minimalWorkflowStartExample(ROOT_LOCALE)): MessageRef<"hooks.editGate.denied" | "hooks.editGate.gatedRoot"> | null {
+    example = minimalWorkflowStartExample(ROOT_LOCALE), unversioned: readonly string[] = []):
+    MessageRef<"hooks.editGate.denied" | "hooks.editGate.gatedRoot"> | null {
     const now = this.now().toISOString();
     const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
     const { taskCorrelation: c, currentEpoch: e } = task;
-    this.recordEdit(c, e, now);
+    if (targets.length > 0) this.recordEdit(c, e, now);
     const windowStart = this.windowStart(c, e);
     const unavailable = (code: string): null => {
       const event = GATE_UNAVAILABLE_PREFIX + code;
@@ -917,16 +921,17 @@ export class ContinuityService implements ContinuityGateway {
     // A host ID that cannot be read or created counts as this host, so every root still covers (conservative).
     let host = "";
     if (roots.length > 0) try { host = hostIdentity(); } catch { host = ""; }
-    const identities = targets.map((key, index) => {
-      const given = shown[index] ?? key;
+    const checked = [...targets.map((key, index) => shown[index] ?? key), ...unversioned];
+    const identities = checked.map(given => {
       // ponytail: a target whose identity cannot be read (or an unread tool target) only counts in the window.
       if (roots.length === 0 || !path.isAbsolute(given)) return null;
       try { return identify(given); } catch { return null; }
     });
     for (const [index, target] of identities.entries()) {
       const gated = target && roots.find(item => GATED_ROOT_STATES.has(item.root.state) && surfaceCovers(item.identity, target, host, true));
-      if (gated) return msg("hooks.editGate.gatedRoot", { path: shown[index] ?? targets[index]!, rootId: gated.root.rootId, state: gated.root.state });
+      if (gated) return msg("hooks.editGate.gatedRoot", { path: checked[index]!, rootId: gated.root.rootId, state: gated.root.state });
     }
+    if (targets.length === 0) return null;
     const activity = this.workflowActivity(task);
     if (!Array.isArray(activity)) return unavailable(activity.unavailable);
     const active = new Set(activity.map(item => item.rootId));
@@ -1111,7 +1116,7 @@ export class ContinuityService implements ContinuityGateway {
   }
 
   private currentReadValue<T>(result: ContinuityCurrentRead<T>): T {
-    if (result.kind === "epoch-mismatch") throw new WorkflowContractError("BINDING_INVALID", msg("continuity.binding.stale", {}));
+    if (result.kind === "epoch-mismatch") throw new WorkflowContractError("BINDING_INVALID", msg("continuity.binding.stale", {}), EPOCH_STALE);
     if (result.kind === "source-conflict") throw new WorkflowContractError("SNAPSHOT_CONFLICT", msg("continuity.source.changed", {}));
     if (result.kind === "suppressed") throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", msg("continuity.restore.suppressed", {}));
     return result.value;
@@ -1119,14 +1124,17 @@ export class ContinuityService implements ContinuityGateway {
 
   private currentTask(binding: ToolBindingPayload): ContinuityTaskRecord {
     const task = this.store.getTask(binding.c);
-    if (!task || task.currentEpoch !== binding.e) throw new WorkflowContractError("BINDING_INVALID", msg("continuity.binding.stale", {}));
+    if (!task || task.currentEpoch !== binding.e) throw new WorkflowContractError("BINDING_INVALID", msg("continuity.binding.stale", {}), EPOCH_STALE);
     return task;
   }
 
   private verifyCandidate(token: string): CandidatePayload {
     const payload = this.verifySigned<CandidatePayload>(token);
-    if (payload.v !== 1 || payload.x < Math.floor(this.now().getTime() / 1000) || !["direct", "workflow"].includes(payload.s)) {
-      throw new WorkflowContractError("BINDING_INVALID", msg("continuity.token.invalid", {}));
+    if (payload.v !== 1 || !["direct", "workflow"].includes(payload.s)) {
+      throw new WorkflowContractError("BINDING_INVALID", msg("continuity.token.invalid", {}), { reasonCode: "CONTINUITY_TOKEN_INVALID" });
+    }
+    if (payload.x < Math.floor(this.now().getTime() / 1000)) {
+      throw new WorkflowContractError("BINDING_INVALID", msg("continuity.token.invalid", {}), { reasonCode: "CONTINUITY_TOKEN_EXPIRED" });
     }
     return payload;
   }
@@ -1139,10 +1147,10 @@ export class ContinuityService implements ContinuityGateway {
 
   private verifySigned<T>(token: string): T {
     const parsed = parseJsonToken<T>(token);
-    if (!parsed) throw new WorkflowContractError("BINDING_INVALID", msg("continuity.token.malformed", {}));
+    if (!parsed) throw new WorkflowContractError("BINDING_INVALID", msg("continuity.token.malformed", {}), { reasonCode: "CONTINUITY_TOKEN_MALFORMED" });
     const expected = createHmac("sha256", this.secret).update(parsed.body).digest();
     if (expected.length !== parsed.signature.length || !timingSafeEqual(expected, parsed.signature)) {
-      throw new WorkflowContractError("BINDING_INVALID", msg("continuity.token.verificationFailed", {}));
+      throw new WorkflowContractError("BINDING_INVALID", msg("continuity.token.verificationFailed", {}), { reasonCode: "CONTINUITY_TOKEN_SIGNATURE_INVALID" });
     }
     return parsed.payload;
   }

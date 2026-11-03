@@ -122,11 +122,6 @@ export interface IdentifiedRoot {
   observedWorkspace: boolean;
 }
 
-function normalizedScope(value: string, workspaceLocator: string): string {
-  const normalized = path.resolve(workspaceLocator, value).replaceAll("\\", "/").replace(/\/+$/u, "");
-  return process.platform === "win32" ? normalized.toLowerCase() : normalized;
-}
-
 /**
  * Whether what is derived for a surface now was really seen. Identity is read from the nearest
  * existing ancestor, so below a path that is gone it describes that ancestor: a deleted worktree
@@ -186,12 +181,9 @@ export function activeRootIdentity(
   }
   const locator = root.frame.workspace.locator;
   if (!observed && !derived) {
-    // No host: an unresolved root is taken as this host's, so it keeps blocking here.
-    const identity: RootIdentityV1 = {
-      version: 1,
-      workspacePhysical: normalizedScope(".", locator),
-      surfaces: writeSurface(root).map((entry) => ({ entry, physical: normalizedScope(entry, locator), git: null, conservative: null })),
-    };
+    // No host: an unresolved root is taken as this host's, so it keeps blocking here. Its paths still resolve links and
+    // globs as far as they can be read, so an alias of the same files overlaps.
+    const identity = resolveRootIdentity(locator, writeSurface(root), { legacy: true, physicalOnly: true });
     return { ...known, identity, resolved: false, fresh: false, inferred: [] };
   }
   const workspaceExists = existsSync(locator);

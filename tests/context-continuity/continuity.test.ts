@@ -212,6 +212,37 @@ describe("direct task continuity", () => {
     expect(service.loadContext(loadInput, asRoot("other-session")).error?.code).toBe("BINDING_INVALID");
   });
 
+  // Defect (3.4.0): every restore-token failure was the same BINDING_INVALID without a reason, so a caller could not tell
+  // an expired token (inspect again) from a forged or foreign one.
+  it("names the cause of each BINDING_INVALID restore-token failure in details.reasonCode", () => {
+    let now = new Date("2026-09-13T01:00:00.000Z");
+    const service = createService(":memory:", new InMemoryWorkflowStore(), () => now);
+    const snapshot = directCheckpoint(service).data!;
+    const candidate = service.inspectContext({ schemaVersion: "1.0.0" as const }, asRoot("raw-session")).data!;
+    const loadInput = {
+      schemaVersion: "1.0.0" as const,
+      candidateToken: candidate.restoreToken!,
+      epoch: candidate.summary!.epoch,
+      revision: candidate.summary!.revision,
+      digest: candidate.summary!.snapshotDigest,
+    };
+    const reasonOf = (input: typeof loadInput, session = "raw-session") => {
+      const error = service.loadContext(input, asRoot(session)).error;
+      return { code: error?.code, reasonCode: error?.details?.reasonCode };
+    };
+    const [body, signature] = loadInput.candidateToken.split(".") as [string, string];
+    const flipped = `${signature.slice(0, 2)}${signature[2] === "A" ? "B" : "A"}${signature.slice(3)}`;
+
+    expect(reasonOf({ ...loadInput, candidateToken: nonCanonicalSignatureAlias(loadInput.candidateToken) }))
+      .toEqual({ code: "BINDING_INVALID", reasonCode: "CONTINUITY_TOKEN_MALFORMED" });
+    expect(reasonOf({ ...loadInput, candidateToken: `${body}.${flipped}` }))
+      .toEqual({ code: "BINDING_INVALID", reasonCode: "CONTINUITY_TOKEN_SIGNATURE_INVALID" });
+    expect(reasonOf(loadInput, "other-session")).toEqual({ code: "BINDING_INVALID", reasonCode: "CONTINUITY_CANDIDATE_MISMATCH" });
+    expect(service.loadContext(loadInput, asRoot("raw-session")).data).toEqual(snapshot);
+    now = new Date("2026-09-13T03:00:00.000Z");
+    expect(reasonOf(loadInput)).toEqual({ code: "BINDING_INVALID", reasonCode: "CONTINUITY_TOKEN_EXPIRED" });
+  });
+
   it.each(["SessionStart", "PreCompact", "PostCompact", "PreToolUse"])("unsupported native Gemini %s cannot mutate lifecycle state or receive context", (event) => {
     const service = createService();
     const output = handleNativeContinuityHook({ hook_event_name: event, session_id: "native-unobserved", source: "resume",

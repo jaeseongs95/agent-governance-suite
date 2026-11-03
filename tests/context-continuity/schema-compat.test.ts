@@ -297,6 +297,35 @@ describe("2.7.x continuity schema compatibility", () => {
   });
 });
 
+// Defect (3.4.0): ownedElsewhere (event = ? across every task) and the edit gate's exact-event reads scanned the whole
+// observation table. A v2 store gains the index when opened; nothing else in its schema or rows changes.
+describe("continuity observation event index", () => {
+  const plan = (databasePath: string) => {
+    const raw = new DatabaseSync(databasePath, { readOnly: true });
+    try {
+      return (raw.prepare("EXPLAIN QUERY PLAN SELECT 1 FROM continuity_observations WHERE event = ? AND task_correlation <> ?")
+        .all("workflow-root:r", "task") as Array<{ detail: string }>).map(row => row.detail).join(" | ");
+    } finally { raw.close(); }
+  };
+
+  it("adds the index to a v2 store made without it and keeps its rows and version", () => {
+    const { databasePath } = fixture(2);
+    const first = open(databasePath);
+    first.service.checkpointContext(input(), asRoot());
+    first.store.close();
+    const raw = new DatabaseSync(databasePath);
+    raw.exec("DROP INDEX IF EXISTS continuity_observations_event;");
+    raw.close();
+    expect(plan(databasePath)).toContain("SCAN continuity_observations");
+    const before = state(databasePath);
+
+    open(databasePath).store.close();
+
+    expect(plan(databasePath)).toContain("USING COVERING INDEX continuity_observations_event");
+    expect(state(databasePath)).toEqual(before);
+  });
+});
+
 describe("source STDIO continuity startup diagnostics", () => {
   // Each source server (tsx) starts before its test's time limit starts (stdioServerTests); the limit measures only the calls.
   const serverTest = stdioServerTests();
