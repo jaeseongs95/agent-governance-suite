@@ -52,6 +52,9 @@ jobs:
       - name: Report Claude plugin drift
         shell: bash
         run: pnpm claude:drift
+      - name: Report English package drift
+        shell: bash
+        run: pnpm en:drift
       - name: Lint
         shell: bash
         run: pnpm lint

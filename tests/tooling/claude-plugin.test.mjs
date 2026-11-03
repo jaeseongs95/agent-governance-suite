@@ -88,6 +88,13 @@ describe("generated Claude plugin", () => {
         version: release.version,
         ref: `v${release.version}`,
       }),
+      // The English-only package (docs/i18n-design.md 8) releases with the same version.
+      expect.objectContaining({
+        name: "agent-governance-suite-en",
+        source: `./${OUTPUT_DIRECTORY}-en`,
+        version: release.version,
+        ref: `v${release.version}`,
+      }),
     ]);
     expect(claudeMarketplace.plugins[0].ref).toBe(codexMarketplace.plugins[0].source.ref);
     const codexManifest = await readFile(path.join(root, ".codex-plugin", "plugin.json"), "utf8");

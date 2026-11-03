@@ -201,8 +201,8 @@ locales/
 
 - `skills/`는 원문 그대로 둔다. 스킬마다 원문 locale을 `skills/registry.json`에 적는다(지금 기준 ponytail은 `en`, 나머지는 `ko`).
 - 번역은 `locales/<tag>/skills/<스킬>/<같은 상대 경로>`에 둔다. 대상은 `SKILL.md`(frontmatter `description` 포함), `README.md`, `references/**/*.md`, `agents/openai.yaml`, 프롬프트 양식 같은 문장 파일이다. 스크립트·JSON·SQLite 같은 비문장 파일은 복제하지 않는다.
-- locale L 패키지의 각 문장 파일은 `locales/L/skills/…`에 번역이 있으면 그것, 원문 locale이 L이면 원문을 쓴다. 둘 다 아니면 빌드가 실패한다.
-- 그래서 `ko` 패키지에는 ponytail 한국어 번역이, `en` 패키지에는 나머지 25개 스킬의 영어 번역이 들어간다.
+- locale L 패키지의 각 문장 파일은 `locales/L/skills/…`에 번역이 있으면 그것을 쓰고, 없으면 원문을 쓴다(3.3.0 결정). 스킬 번역은 행동을 전부 다시 시험해야 하므로 후속 과제로 미뤘고(사용자: 「스킬을 번역하면 행동을 전부 테스트해봐야하니까 후속과제로 넘기라는거야.」), 그동안 `en` 패키지는 스킬 본문을 원문 그대로 담는다.
+- 번역이 들어오면 `ko` 패키지에는 ponytail 한국어 번역이, `en` 패키지에는 나머지 25개 스킬의 영어 번역이 들어간다. 번역이 원문보다 오래되면(7.2 `sourceChecksum`) CI가 실패한다.
 
 ### 7.2 잠금
 
@@ -229,6 +229,9 @@ locales/
   - 배포안(추론, 실호스트 확인 필요): marketplace 하나에 항목 두 개를 둔다. 기존 `agent-governance-suite`(ko)와 `agent-governance-suite-en`이다. en 항목은 생성 폴더(`claude-plugin-en/`, `codex-plugin-en/`)를 `git-subdir`로 가리키고, 그 manifest `name`은 `agent-governance-suite`로 둔다. 그러면 스킬 이름이 같다. 두 언어를 동시에 켜지 않도록 README와 설치 안내에 적는다.
   - 이 배포안은 Linux 시험 서버에서 Claude Code·Codex 실제 설치로 확인한다. 항목 이름과 manifest 이름이 다르면 거부되는지가 핵심이다. 거부되면 그 결과와 대안(언어별 ref의 marketplace 등)을 보고하고 정한다.
 - 패키지 빌드는 `runtime/locale.json`을 적는다(4.1 ①의 3번).
+- 3.3.0 구현: `scripts/build-en-packages.mjs`가 `claude-plugin-en/`(커밋된 `claude-plugin/`)과 `codex-plugin-en/`(Codex 플러그인이 읽는 추적 파일: `.codex-plugin`, `.mcp.json`, `hooks`, `contracts`, `mcp-server/dist`, `runtime`, `skills`, engineering-practices 잠금이 고정한 adaptation 2개, `release/version.json`, `LICENSE`, `README.en.md`→`README.md`)을 만든다. 두 패키지는 원본과 `runtime/locale.json`만 다르다. `pnpm en:check`는 차이를 실패로, CI의 `pnpm en:drift`는 경고로 보고한다(공유 원본 변경마다 재생성을 강제하지 않는 `claude:drift`와 같은 이유). 발행 전에는 `en:check`를 통과해야 한다.
+- agy `-en` zip은 `scripts/build-antigravity-package.mjs --locale en`이 같은 목록을 묶고 `runtime/locale.json`만 가상 파일로 바꾼다. git 2.55는 가상 파일에 `--prefix`를 붙이지 않으므로 경로에 접두사를 직접 넣는다.
+- marketplace: Claude `{"name":"agent-governance-suite-en","source":"./claude-plugin-en"}`, Codex `{"name":"agent-governance-suite-en","source":{"source":"git-subdir","url":…,"path":"codex-plugin-en","ref":…}}`. 항목 이름과 manifest 이름이 달라도 된다(code.claude.com plugins loading "Entry name and manifest name"). 설치 키는 항목 이름, 스킬 접두사는 manifest 이름이다.
 - README: `README.en.md`의 설치 안내를 `en` 패키지로 바꾼다.
 
 ## 9. 관리자 페이지와의 연계

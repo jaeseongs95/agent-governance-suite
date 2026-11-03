@@ -1,6 +1,6 @@
 {
   "name": "agent-governance-suite",
-  "version": "3.2.1",
+  "version": "3.3.0",
   "private": true,
   "description": "Governance and engineering specialists with declarative local orchestration, a local convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
   "type": "module",
@@ -21,6 +21,9 @@
     "claude:build": "node scripts/build-claude-plugin.mjs",
     "claude:check": "node scripts/build-claude-plugin.mjs --check",
     "claude:drift": "node scripts/build-claude-plugin.mjs --drift",
+    "en:build": "node scripts/build-en-packages.mjs",
+    "en:check": "node scripts/build-en-packages.mjs --check",
+    "en:drift": "node scripts/build-en-packages.mjs --drift",
     "validate:all": "node scripts/validate-repository.mjs && node scripts/run-python-validations.mjs && tsx scripts/korean-prose-glossary.ts --mode check",
     "validate:official": "node scripts/validate-official.mjs",
     "validate:skill": "node scripts/validate-skill.mjs",

@@ -35,8 +35,20 @@ AGS supports this workflow with task contracts, specialist skills, the session b
 You need Node.js **24.0.0 or later** and plugin support in the host you use. Install AGS in each participating host. Using the plugin does not require cloning this repository or running `pnpm install`.
 
 <!-- release-version:start -->
-The current public release is `v3.2.1`, and the installation examples below use it. Version 3.0 is not compatible with 2.x; the changes are summarized in the [3.0.0 release notes](docs/release-notes-v3.0.0.md) , the [3.0.1 release notes](docs/release-notes-v3.0.1.md), the [3.0.2 release notes](docs/release-notes-v3.0.2.md), the [3.1.0 release notes](docs/release-notes-v3.1.0.md), [3.2.0 release notes](docs/release-notes-v3.2.0.md), and the [3.2.1 release notes](docs/release-notes-v3.2.1.md) (Korean). This release prioritizes defect fixes; native-host re-measurement and dual-Cloud verification are not claimed complete. The included skills are listed in the skill table below. The JEV layer supports skill discovery, classification, evaluation, and recommendations; the AGENT checks applicability conditions and makes the final selection. Actual use requires approved classification settings for JEV or the current vendor, supported profiles, budget, and host discovery data. Production database migration and shared MCP cutover are not claimed complete.
+The current public release is `v3.3.0`, and the installation examples below use it. Version 3.0 is not compatible with 2.x; the changes are summarized in the [3.0.0 release notes](docs/release-notes-v3.0.0.md) , the [3.0.1 release notes](docs/release-notes-v3.0.1.md), the [3.0.2 release notes](docs/release-notes-v3.0.2.md), the [3.1.0 release notes](docs/release-notes-v3.1.0.md), [3.2.0 release notes](docs/release-notes-v3.2.0.md), the [3.2.1 release notes](docs/release-notes-v3.2.1.md), and the [3.3.0 release notes](docs/release-notes-v3.3.0.md) (Korean). This release prioritizes defect fixes; native-host re-measurement and dual-Cloud verification are not claimed complete. The included skills are listed in the skill table below. The JEV layer supports skill discovery, classification, evaluation, and recommendations; the AGENT checks applicability conditions and makes the final selection. Actual use requires approved classification settings for JEV or the current vendor, supported profiles, budget, and host discovery data. Production database migration and shared MCP cutover are not claimed complete.
 <!-- release-version:end -->
+
+### English-only package
+
+Each host can install an English-only package of the same plugin. AGS messages, MCP tool descriptions, hook text and errors are in English; skill text stays in its source language (mostly Korean) until skills are translated. Skill names stay `agent-governance-suite:<skill>`, and state is shared, so you can switch packages by reinstalling. **Enable only one of the two packages in a host**: with both enabled, Claude Code loads the hooks of only one.
+
+| Host | Korean package | English-only package |
+|---|---|---|
+| Claude Code | `agent-governance-suite@agent-governance-claude` | `agent-governance-suite-en@agent-governance-claude` |
+| Codex | `agent-governance-suite@agent-governance` | `agent-governance-suite-en@agent-governance` |
+| Antigravity | `agent-governance-suite-antigravity-<tag>.zip` | `agent-governance-suite-antigravity-<tag>-en.zip` |
+
+The commands below install the Korean package; replace the name or the file as in the table for the English one.
 
 ### Claude Code
 
@@ -55,7 +67,7 @@ Run in a terminal:
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.2.1
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.3.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -68,8 +80,8 @@ Start a new Codex session after installation. Review and trust the installed hoo
 
 <!-- release-agy:start -->
 ```bash
-curl -LO https://github.com/jaeseongs95/agent-governance-suite/releases/download/v3.2.1/agent-governance-suite-antigravity-v3.2.1.zip
-unzip agent-governance-suite-antigravity-v3.2.1.zip
+curl -LO https://github.com/jaeseongs95/agent-governance-suite/releases/download/v3.3.0/agent-governance-suite-antigravity-v3.3.0.zip
+unzip agent-governance-suite-antigravity-v3.3.0.zip
 agy plugin install ./agent-governance-suite
 agy plugin list
 ```

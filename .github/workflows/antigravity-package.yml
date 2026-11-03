@@ -1,6 +1,6 @@
 name: Antigravity package
 
-# Attach the Antigravity (agy) install copy to every published release.
+# Attach the Antigravity (agy) install copies (Korean and English) to every published release.
 # workflow_dispatch rebuilds and replaces it for an existing release tag.
 on:
   release:
@@ -36,5 +36,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           out="$RUNNER_TEMP/agent-governance-suite-antigravity-$TAG.zip"
+          out_en="$RUNNER_TEMP/agent-governance-suite-antigravity-$TAG-en.zip"
           node scripts/build-antigravity-package.mjs --ref "refs/tags/$TAG" --out "$out"
-          gh release upload "$TAG" "$out" --clobber
+          node scripts/build-antigravity-package.mjs --ref "refs/tags/$TAG" --out "$out_en" --locale en
+          gh release upload "$TAG" "$out" "$out_en" --clobber

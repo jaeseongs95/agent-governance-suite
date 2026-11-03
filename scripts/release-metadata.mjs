@@ -12,6 +12,8 @@ export const RELEASE_INSTALL = /(<!-- release-install:start -->\r?\n[\s\S]*?--re
 // Every release tag inside the Antigravity install block (download URL and file name) follows the release.
 export const RELEASE_AGY = /(<!-- release-agy:start -->\r?\n)([\s\S]*?)(\r?\n<!-- release-agy:end -->)/u;
 const RELEASE_TAG = /\bv\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?=[/.])/gu;
+// The Korean package and the English-only package (docs/i18n-design.md 8) release together.
+export const PLUGIN_ENTRIES = Object.freeze(["agent-governance-suite", "agent-governance-suite-en"]);
 export const PLUGIN_INFO_VERSION = /version: "\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?"/u;
 
 export function replaceExactlyOnce(text, pattern, replacement, label) {
@@ -70,16 +72,20 @@ export async function expectedReleaseFiles() {
     await updateJson(".codex-plugin/plugin.json", (document) => { document.version = version; }),
     await updateJson(".gemini-plugin/plugin.json", (document) => { document.version = version; }),
     await updateJson(".agents/plugins/marketplace.json", (document) => {
-      const entries = document.plugins?.filter((entry) => entry.name === "agent-governance-suite") ?? [];
-      if (entries.length !== 1) throw new Error("marketplace plugin entry must occur exactly once");
-      entries[0].source.ref = `v${version}`;
+      for (const name of PLUGIN_ENTRIES) {
+        const entries = document.plugins?.filter((entry) => entry.name === name) ?? [];
+        if (entries.length !== 1) throw new Error(`marketplace plugin entry ${name} must occur exactly once`);
+        entries[0].source.ref = `v${version}`;
+      }
     }),
     await updateJson(".claude-plugin/marketplace.json", (document) => {
       document.version = version;
-      const entries = document.plugins?.filter((entry) => entry.name === "agent-governance-suite") ?? [];
-      if (entries.length !== 1) throw new Error("Claude marketplace plugin entry must occur exactly once");
-      entries[0].version = version;
-      entries[0].ref = `v${version}`;
+      for (const name of PLUGIN_ENTRIES) {
+        const entries = document.plugins?.filter((entry) => entry.name === name) ?? [];
+        if (entries.length !== 1) throw new Error(`Claude marketplace plugin entry ${name} must occur exactly once`);
+        entries[0].version = version;
+        entries[0].ref = `v${version}`;
+      }
     }),
     await updateText("mcp-server/src/plugin-info.ts", (text) => replaceExactlyOnce(
       text,
