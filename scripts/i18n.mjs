@@ -25,7 +25,8 @@ function placeholders(message) {
   };
   const walk = (elements) => {
     for (const element of elements) {
-      if (element.type === TYPE.argument) add(element.value, ["string", "number"]);
+      // A plain argument also takes another catalog message ({key, params}), rendered in the same locale.
+      if (element.type === TYPE.argument) add(element.value, ["string", "number", "message"]);
       else if (element.type === TYPE.number) add(element.value, ["number"]);
       else if (element.type === TYPE.date || element.type === TYPE.time) add(element.value, ["date", "number"]);
       else if (element.type === TYPE.select) add(element.value, ["string"]);
@@ -100,7 +101,8 @@ export function checkCatalogs(root = ROOT) {
   return problems;
 }
 
-const typeOf = (allowed) => [...allowed].sort().map((kind) => (kind === "date" ? "Date" : kind)).join(" | ") || "never";
+const TYPE_NAMES = { date: "Date", message: "NestedMessage" };
+const typeOf = (allowed) => [...allowed].sort().map((kind) => TYPE_NAMES[kind] ?? kind).join(" | ") || "never";
 
 /** The generated module: catalogs bundled from JSON and one params type per key, taken from the source locale. */
 export function renderGenerated(root = ROOT) {
@@ -115,6 +117,8 @@ export function renderGenerated(root = ROOT) {
   lines.push("", `export const SUPPORTED_LOCALES = ${JSON.stringify(catalog.locales)} as const;`);
   lines.push("export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];");
   lines.push(`export const ROOT_LOCALE: SupportedLocale = ${JSON.stringify(catalog.rootLocale)};`, "");
+  lines.push("/** Another catalog message as a placeholder value; it is rendered in the same locale. */");
+  lines.push("export interface NestedMessage { readonly key: string; readonly params: Readonly<Record<string, unknown>> }", "");
   lines.push("export const CATALOGS: Readonly<Record<SupportedLocale, Readonly<Record<string, string>>>> = {");
   for (const locale of catalog.locales) {
     lines.push(`  ${JSON.stringify(locale)}: { ${Object.keys(catalog.domains).map((domain) => `...${ident(locale, domain)}`).join(", ")} },`);

@@ -17,14 +17,14 @@ function failure(code: ErrorCode, message: MessageRef, details: Record<string, u
 /**
  * Error model R2/R5: a messaging rejection (BrokerRequestRejected) keeps its own domain message; a contract error keeps
  * its code; any other failure (busy writer, storage, deadline, state directory) is reported by its reason and redacted
- * cause under a fixed message, never its raw text. An uncertain send adds the retry guidance to the same sentence; the
- * rejection's own text stays in the root locale there, since a catalog message cannot hold another one.
+ * cause under a fixed message, never its raw text. An uncertain send adds the retry guidance to the same sentence, with
+ * the rejection's own message nested in it (rendered in the reader's locale).
  */
 function unavailable(error: unknown, uncertainSend = false): ApiResultV1<never> {
   if (error instanceof WorkflowContractError || error instanceof BrokerRequestRejected) {
     const code = error instanceof WorkflowContractError ? error.code : "MCP_UNAVAILABLE";
     const details = error instanceof WorkflowContractError ? error.details : null;
-    if (uncertainSend) return failure(code, msg("services.sessionMessage.send.retryAfterRejection", { reason: error.message }), details);
+    if (uncertainSend) return failure(code, msg("services.sessionMessage.send.retryAfterRejection", { reason: error.ref ?? error.message }), details);
     if (error instanceof BrokerRequestRejected) return failure(code, error.ref);
     return { schemaVersion: "1.0.0", ok: false, data: null, error: error.toBody() };
   }

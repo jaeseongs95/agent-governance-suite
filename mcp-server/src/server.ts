@@ -339,7 +339,7 @@ function failureResult(error: unknown): ApiResultV1<never> {
 /** send_session_message failures: a contract error also tells the caller how to retry, as one catalog sentence. */
 function sendFailureResult(error: unknown): ApiResultV1<never> {
   if (!(error instanceof WorkflowContractError)) return failureResult(error);
-  return apiError(error.code, msg("server.sessionMessage.sendInvalid", { cause: error.message }), error.details);
+  return apiError(error.code, msg("server.sessionMessage.sendInvalid", { cause: error.ref ?? error.message }), error.details);
 }
 
 const CLASSIFICATION_REQUEST_REJECTIONS = new Set([
@@ -925,6 +925,7 @@ export function createMcpServer(
               settle: () => continuity.settleFinishedWorkflow(caller.sessionId),
               beforeCommit: rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId),
               sessionWorkspace: () => observedSessionWorkspace(sessionBoardPath, caller),
+              locale,
             });
             // An AGS infrastructure failure must not leave the session's edits refused (design ags30-phase-check 7.6).
             if (!started.ok && started.error && WORKFLOW_START_INFRASTRUCTURE_FAILURES.has(started.error.code)) {

@@ -163,11 +163,22 @@ function formatter(locale: SupportedLocale, key: string): IntlMessageFormat | nu
   return null;
 }
 
-/** Renders in the locale, then the root locale; a key no catalog knows (another AGS version) renders as the key, never throws. */
+function isNestedMessage(value: unknown): value is StoredMessageRef {
+  return value !== null && typeof value === "object" && !(value instanceof Date)
+    && typeof (value as { key?: unknown }).key === "string"
+    && (value as { params?: unknown }).params !== null && typeof (value as { params?: unknown }).params === "object";
+}
+
+/**
+ * Renders in the locale, then the root locale; a key no catalog knows (another AGS version) renders as the key, never throws.
+ * A param that is itself a message ({key, params}, e.g. a rejection's cause) is rendered in the same locale first.
+ */
 export function render(ref: MessageRef | StoredMessageRef, locale: SupportedLocale): string {
   const compiled = formatter(locale, ref.key);
   if (!compiled) return ref.key;
-  const output = compiled.format(ref.params as Record<string, string | number | Date>);
+  const params = Object.fromEntries(Object.entries(ref.params as Record<string, unknown>)
+    .map(([name, value]) => [name, isNestedMessage(value) ? render(value, locale) : value]));
+  const output = compiled.format(params as Record<string, string | number | Date>);
   return Array.isArray(output) ? output.join("") : String(output);
 }
 

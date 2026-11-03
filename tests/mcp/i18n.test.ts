@@ -101,6 +101,14 @@ describe("rendering", () => {
     expect(render(denied(2), "en")).toContain("(including 2 product files changed earlier)");
   });
 
+  it("renders a message nested in params in the same locale", () => {
+    const sent = msg("server.sessionMessage.sendInvalid", { cause: msg("server.call.reservedCallerField", {}) });
+    expect(render(sent, "ko").startsWith("호출자 신원은 호스트가 정하므로 도구 인자로 받지 않는다. ")).toBe(true);
+    expect(render(sent, "en").startsWith("Caller identity is host-owned and is not accepted in tool arguments. Use prepare_session_message")).toBe(true);
+    // Stored bodies read back as JSON nest the same way.
+    expect(render(JSON.parse(JSON.stringify(sent)) as typeof sent, "ko")).toBe(render(sent, "ko"));
+  });
+
   it("never throws on a key from another AGS version", () => {
     expect(render({ key: "hooks.fromLaterVersion", params: { n: 1 } }, "ko")).toBe("hooks.fromLaterVersion");
   });
