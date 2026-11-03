@@ -66,6 +66,9 @@
 5. `prepare_state_cleanup`·`execute_state_cleanup`이 미초기화 상태일 때: `INVALID_INPUT` → `MCP_UNAVAILABLE`.
 6. stage validator의 spawn 실패·signal 종료·status 0인데 JSON이 아님: `GATE_FAILED`/`INVALID_INPUT` → `MCP_UNAVAILABLE`(`reason` 각각 `VALIDATOR_SPAWN_FAILED`·`VALIDATOR_TERMINATED`·`VALIDATOR_OUTPUT_INVALID`). 공개 details에서 `stderr` 원문을 지운다(`childCode`는 유지). 허용되지 않은 status에서 child가 보고한 code를 보존하는 동작은 그대로다.
 7. `lookup_korean_prose_terms`의 sourceDigest 불일치는 계속 `INVALID_INPUT`이다. 생산자(`korean-prose-glossary.ts:64`)가 직접 계약 오류를 던지도록 바꾸기 때문이다.
+8. (3.4.0) `BINDING_INVALID`는 원인별 `details.reasonCode`를 함께 낸다. 3.3.0까지 아래 원인은 code가 같고 reasonCode가 없어서, 호출자와 `workflow-start-failed:<code>[:<reasonCode>]` 관측이 서로 구분하지 못했다. 이미 reasonCode가 있던 호출자·호스트 관측 오류(`CALLER_*`, `HOST_ADAPTER_MISMATCH` 등)는 그대로다.
+   - 신뢰 실행 관측(`workflow-service.ts`): `EXECUTION_OBSERVATION_CONSUMED`(이미 소비됨), `EXECUTION_OBSERVATION_UNBOUND`(task·run·stage·revision 결속 불일치), `EXECUTION_OBSERVATION_TIME_INVALID`, `EXECUTION_OBSERVATION_ID_MISSING`, `EXECUTION_CONTEXT_MALFORMED`, `EXECUTION_CONTEXT_CALLER_SUPPLIED`(호출자가 `executionContext`를 직접 넣음).
+   - continuity 결속(`continuity-service.ts`): `CONTINUITY_EPOCH_STALE`, `CONTINUITY_CANDIDATE_MISMATCH`, `CONTINUITY_TOKEN_EXPIRED`, `CONTINUITY_TOKEN_INVALID`, `CONTINUITY_TOKEN_MALFORMED`, `CONTINUITY_TOKEN_SIGNATURE_INVALID`.
 
 ## 5. 결함 → 패턴 → 수정
 

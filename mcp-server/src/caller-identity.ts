@@ -35,7 +35,11 @@ export type IngressResult =
   | { provenance: "host-observed"; caller: ObservedCaller }
   | { provenance: "unavailable"; reason: string };
 
-/** One adapter per host. Contradictions (malformed, mismatched, already consumed) throw WorkflowContractError. */
+/**
+ * One adapter per host. Contradictions (malformed or mismatched metadata) throw BINDING_INVALID with a reasonCode; a
+ * missing or already claimed admission is unavailable (claiming deletes it). A host call observed again is refused
+ * later, when its execution observation is claimed (EXECUTION_OBSERVATION_CONSUMED).
+ */
 export type CallerIngress = (tool: string, meta: Record<string, unknown> | undefined, args?: unknown) => IngressResult;
 
 export const MAX_PARENT_CHAIN = 16;

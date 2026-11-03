@@ -79,23 +79,29 @@ export function underVersionControl(target: string): boolean {
   }
 }
 
-/** The product files an edit will change; a tool whose target the adapter could not read still counts as one file. */
-/** Keyed by the normalized path; the value is the path as the tool gave it (resolved), which the refusal shows. */
+/**
+ * The product files an edit will change; a tool whose target the adapter could not read still counts as one file.
+ * `product` is keyed by the normalized path; the value is the path as the tool gave it (resolved), which the refusal
+ * shows. `unversioned` holds the non-exempt paths outside version control: they are not counted (7.3), but a gated
+ * root's write surface still covers them.
+ */
 function productEditTargets(observation: InputObservation, host: string, environment: NodeJS.ProcessEnv,
-  locale: SupportedLocale): Map<string, string> {
+  locale: SupportedLocale): { product: Map<string, string>; unversioned: string[] } {
   const targets = observation.editTargets ?? [];
   if (targets.length === 0) {
     // Each such call is its own file: one shared key would let unread edits repeat without ever reaching the limit.
     const unknown = render(msg("hooks.editGate.unknownPath", { tool: observation.toolName ?? "edit" }), locale);
-    return new Map([[`${unknown}#${observation.callId ?? randomUUID()}`, unknown]]);
+    return { product: new Map([[`${unknown}#${observation.callId ?? randomUUID()}`, unknown]]), unversioned: [] };
   }
   const roots = exemptEditRoots(host, environment);
   const product = new Map<string, string>();
+  const unversioned = new Map<string, string>();
   for (const target of targets) {
     const key = normalizedEditPath(target);
-    if (!product.has(key) && !isExemptEditPath(key, roots) && underVersionControl(target)) product.set(key, path.resolve(target));
+    if (product.has(key) || unversioned.has(key) || isExemptEditPath(key, roots)) continue;
+    (underVersionControl(target) ? product : unversioned).set(key, path.resolve(target));
   }
-  return product;
+  return { product, unversioned: [...unversioned.values()] };
 }
 
 function deniedEdit(reason: string): Record<string, unknown> {
@@ -178,9 +184,10 @@ function stopOutput(host: string, eventName: string, cue: string | null): Record
 /** A file edit before it runs: the workflow gate (design ags30-phase-check 7.2). Exempt-only edits are not recorded. */
 function gateEdit(observation: InputObservation, service: ContinuityService, host: string, environment: NodeJS.ProcessEnv,
   locale: SupportedLocale): Record<string, unknown> {
-  const targets = productEditTargets(observation, host, environment, locale);
-  if (targets.size === 0) return {};
-  const refusal = service.gateEditForSession(observation.sessionId, [...targets.keys()], [...targets.values()], minimalWorkflowStartExample(locale));
+  const { product: targets, unversioned } = productEditTargets(observation, host, environment, locale);
+  if (targets.size === 0 && unversioned.length === 0) return {};
+  const refusal = service.gateEditForSession(observation.sessionId, [...targets.keys()], [...targets.values()],
+    minimalWorkflowStartExample(locale), unversioned);
   return refusal ? deniedEdit(render(refusal, locale)) : {};
 }
 

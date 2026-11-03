@@ -389,9 +389,10 @@ describe("host execution observation through the MCP boundary", () => {
         code: "BINDING_REQUIRED", details: { ingressReason: "CALL_ADMISSION_MISSING" } });
     }
     // The same host call observed again (re-admitted, or re-sent with the same _meta) yields the consumed observation.
+    // Its own reasonCode (3.4.0) tells it apart from the other BINDING_INVALID causes, also in workflow-start-failed:*.
     const again = adapter.host === "claude-code" ? observedCall(store, adapter, "plan_workflow", { callId: String(once["claudecode/toolUseId"]) }) : once;
     expect((await raw<WorkflowPlanV1>("plan_workflow", planArguments("replay"), again)).error).toMatchObject({
-      code: "BINDING_INVALID", messageKey: "workflow.service.attestationConsumed" });
+      code: "BINDING_INVALID", messageKey: "workflow.service.attestationConsumed", details: { reasonCode: "EXECUTION_OBSERVATION_CONSUMED" } });
     expect((await call<WorkflowPlanV1>("plan_workflow", planArguments("fresh"))).ok).toBe(true);
   });
 

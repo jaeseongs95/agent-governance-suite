@@ -70,6 +70,11 @@ const LINEAGE_ANCHOR_EVENT = "lineage-anchor:";
 /** One row per (task, epoch, root) a workflow start or open bound; see bindRoot. */
 const ROOT_BOUND_EVENT = "workflow-root:";
 const MAX_COMPATIBLE_SCHEMA_VERSION = 3;
+/**
+ * Exact-event lookups (ownedElsewhere across tasks; the per-task event reads of the edit gate) would otherwise scan every
+ * observation. Prefix reads (substr) still scan, bounded by observation cleanup.
+ */
+const OBSERVATION_EVENT_INDEX = "CREATE INDEX IF NOT EXISTS continuity_observations_event ON continuity_observations(event, task_correlation, epoch);";
 const SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
 
 // Column/type/nullability/key/default signatures of the shared v2 tables and the additive v3 receiver table.
@@ -902,6 +907,8 @@ export class SqliteContinuityStore {
     const version = this.assertSupportedSchema();
     if (version >= SCHEMA_VERSION) {
       this.validateExistingSchema(version);
+      // Additive: a v2 store made before the index gains it; versions that predate it ignore it (columns are compared).
+      if (version === SCHEMA_VERSION) this.database.exec(OBSERVATION_EVENT_INDEX);
       return;
     }
     this.database.exec(`
@@ -967,6 +974,7 @@ export class SqliteContinuityStore {
         ON continuity_tombstones(purged_at, task_correlation, epoch);
       CREATE INDEX IF NOT EXISTS continuity_observations_cleanup
         ON continuity_observations(observed_at, task_correlation, epoch);
+      ${OBSERVATION_EVENT_INDEX}
     `);
     if (this.shared) this.shared.setSchemaVersion(SCHEMA_VERSION);
     else this.database.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);

@@ -5,10 +5,11 @@ import { spawnSync } from "node:child_process";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { WorkflowContractError, type ConvergenceRootV1 } from "../../contracts/types.js";
-import { findRootConflict } from "../../mcp-server/src/convergence-logic.js";
+import { activeRootIdentity, findRootConflict, surfaceCovers } from "../../mcp-server/src/convergence-logic.js";
 import {
   assertSupportedScopeEntry,
   hostIdentity,
+  identify,
   osMachineId,
   pathWithin,
   repositoryCheckouts,
@@ -283,6 +284,55 @@ describe("resolveRootIdentity physical keys", () => {
   });
 });
 
+describe("symlinks on paths that do not resolve yet (3.4.0)", () => {
+  // Defect: a dangling link was walked past like a missing directory, so its key named the link, not where files land.
+  it("follows a dangling link to its target, so the key matches the target before and after it exists", () => {
+    const root = fixtureRoot();
+    const target = join(root, "real", "out");
+    try {
+      symlinkSync(target, join(root, "alias"), "junction");
+    } catch {
+      return; // The platform refuses links without elevation.
+    }
+
+    const viaAlias = resolveRootIdentity(root, ["alias/sub.ts"]).surfaces[0]!;
+
+    expect(viaAlias.physical).toBe(key(root, "real", "out", "sub.ts"));
+    expect(viaAlias.physical).toBe(resolveRootIdentity(root, ["real/out/sub.ts"]).surfaces[0]!.physical);
+    mkdirSync(target, { recursive: true });
+    expect(resolveRootIdentity(root, ["alias/sub.ts"]).surfaces[0]!.physical).toBe(viaAlias.physical);
+  });
+
+  // Defect: a root whose identity could not be derived kept lexical paths, so an alias locator or a glob never overlapped.
+  it("resolves links and globs of a root whose Git evidence cannot be read", () => {
+    const root = fixtureRoot();
+    const workspace = join(root, "ws");
+    write(join(workspace, "broken", ".git"), "not a git pointer\n");
+    write(join(workspace, "clean", "src", "a.ts"));
+    write(join(workspace, "clean", "lib", "b.ts"));
+    const alias = join(root, "alias");
+    try {
+      symlinkSync(workspace, alias, "junction");
+    } catch {
+      return; // The platform refuses links without elevation.
+    }
+    const entries = ["broken/x.ts", "clean/src", "clean/lib/**"];
+    const unresolvedRoot = {
+      rootId: "unresolved", parentRootId: null, state: "needs-review",
+      taskEnvelope: { scope: { included: entries, excluded: [] }, workUnits: [] },
+      frame: { workspace: { workspaceId: "ws", locator: alias }, targetArtifacts: [] },
+    } as unknown as ConvergenceRootV1;
+
+    const active = activeRootIdentity(unresolvedRoot, null);
+
+    expect(active.resolved).toBe(false);
+    expect(active.identity.workspacePhysical).toBe(key(workspace));
+    expect(surfaceCovers(active.identity, identify(join(workspace, "clean", "src", "a.ts")), "this-host", true)).toBe(true);
+    expect(surfaceCovers(active.identity, identify(join(workspace, "clean", "lib", "b.ts")), "this-host", true)).toBe(true);
+    expect(surfaceCovers(active.identity, identify(join(workspace, "clean", "other.ts")), "this-host", true)).toBe(false);
+  });
+});
+
 describe("resolveRootIdentity entry classes", () => {
   it("widens a glob to the directory before the first meta segment", () => {
     const root = fixtureRoot();
@@ -493,6 +543,31 @@ describe("host identity", () => {
     const blocker = join(fixtureRoot(), "not-a-directory-either");
     write(blocker, "x");
     expect(() => hostIdentity({ AGENT_GOVERNANCE_SHARED_STATE_DIR: join(blocker, "shared") }, () => null)).toThrow(unresolvedHost);
+  });
+
+  // Defect H2: on a file system without hard links (FAT, some network drives) linkSync failed and the host ID stayed
+  // HOST_IDENTITY_UNRESOLVED for good. The fallback publishes with an exclusive create, and a first reader that loses
+  // that race ends with the winner's ID.
+  it("without hard links publishes the random host ID with an exclusive create and keeps the one that won", () => {
+    const noLink = () => { throw Object.assign(new Error("hard links unsupported"), { code: "EPERM" }); };
+    const link = vi.spyOn(fs, "linkSync").mockImplementation(noLink);
+    try {
+      const shared = sharedAt("no-hard-links");
+      const id = hostIdentity(shared, () => null);
+      expect(id).toMatch(UUID);
+      expect(fs.readFileSync(join(shared.AGENT_GOVERNANCE_SHARED_STATE_DIR, "host-id"), "utf8").trim()).toBe(id);
+      expect(fs.readdirSync(shared.AGENT_GOVERNANCE_SHARED_STATE_DIR)).toEqual(["host-id"]);
+
+      const raced = sharedAt("no-hard-links-raced");
+      const winner = "11111111-2222-4333-8444-555555555555";
+      link.mockImplementation((_draft, file) => {
+        fs.writeFileSync(file, `${winner}\n`, { flag: "wx" });
+        noLink();
+      });
+      expect(hostIdentity(raced, () => null)).toBe(winner);
+    } finally {
+      link.mockRestore();
+    }
   });
 
   it("keeps the same paths on different host IDs apart and takes an identity stored without a host as this host's", () => {

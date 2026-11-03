@@ -193,6 +193,16 @@ describe("workflow gate", () => {
     expect(events(target)).not.toContain("phase-deny");
   });
 
+  // Defect N8 (3.4.0): a path outside version control was dropped before the gated check, so the files of a gated root
+  // whose write scope lies outside any checkout could be changed with an edit tool.
+  it("refuses a gated root's scope outside any checkout and still neither counts nor records other such files", () => {
+    const target = service(workflowWith([{ state: "needs-review", rootId: "gated-outside", runState: "failed", workspace: outsideCheckout }]));
+    const outside = (name: string) => edit("claude-code", "Write", { file_path: path.join(outsideCheckout, name), content: "x" });
+    expect(reason(handleContinuityHook(outside("src/x.ts"), target, "claude-code", NO_ENV))).toContain("gated-outside");
+    for (const name of ["notes.md", "report.md", "guide.md"]) expect(handleContinuityHook(outside(name), target, "claude-code", NO_ENV)).toEqual({});
+    expect(events(target).filter(event => ["phase-edit", "phase-file", "phase-deny"].includes(event))).toEqual([]);
+  });
+
   it("finds the checkout of a new file in new folders, a worktree's .git file and another version control's root", () => {
     const base = mkdtempSync(path.join(tmpdir(), "ags-vcs-"));
     try {
