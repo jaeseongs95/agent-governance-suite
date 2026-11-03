@@ -1,5 +1,6 @@
 import path from "node:path";
 import { type StageResultV1, WorkflowContractError } from "../../contracts/types.js";
+import { msg } from "./i18n.js";
 import { canonicalJson } from "./convergence-logic.js";
 import { ContractValidator } from "./schema-validator.js";
 import { runStageValidator } from "./stage-validator-process.js";
@@ -10,23 +11,23 @@ export function assertEngineeringStageBundle(
   result: StageResultV1, validator: ContractValidator,
 ): void {
   if (!["test-sensitivity-review", "change-code-review"].includes(capability) || result.output.kind !== "output") return;
-  if (!taskDigest) throw new WorkflowContractError("BINDING_REQUIRED", "Engineering review requires a signed task digest.");
+  if (!taskDigest) throw new WorkflowContractError("BINDING_REQUIRED", msg("workflow.engineering.engineeringReviewRequiresSignedTask", {}));
   const references = result.output.artifacts.filter(artifact => artifact.artifactId === "engineering-stage-bundle");
   const reference = references[0];
   if (references.length !== 1 || !reference?.verified || !path.isAbsolute(reference.locator) || /^[\\/]{2}/u.test(reference.locator)) {
-    throw new WorkflowContractError("MISSING_EVIDENCE", "Engineering review requires one verified local engineering-stage-bundle artifact.");
+    throw new WorkflowContractError("MISSING_EVIDENCE", msg("workflow.engineering.engineeringReviewRequiresVerifiedLocal", {}));
   }
   const root = path.dirname(reference.locator);
   const assessment = runStageValidator("Engineering stage", path.join(rootDirectory, "runtime/engineering-practices/cli.mjs"), [
     "check-stage-bundle", "--root", root, "--input", path.basename(reference.locator), "--bundle-digest", reference.digest,
     "--task-digest", taskDigest, "--capability", capability], [0, 1]);
   if (assessment.kind !== "engineering-stage-check") {
-    throw new WorkflowContractError("GATE_FAILED", "Engineering stage files could not be validated.",
+    throw new WorkflowContractError("GATE_FAILED", msg("workflow.engineering.engineeringStageFilesCouldValidated", {}),
       {step: "kind", kind: typeof assessment.kind === "string" ? assessment.kind : null});
   }
   validator.planWorkflowRequest(assessment.task);
   if (canonicalJson(assessment.result, "Engineering result") !== canonicalJson(result.output.output, "Engineering provider output")) {
-    throw new WorkflowContractError("INTEGRITY_FAILED", "Provider output differs from validated raw engineering files.");
+    throw new WorkflowContractError("INTEGRITY_FAILED", msg("workflow.engineering.providerOutputDiffersValidatedRaw", {}));
   }
   const resultRef = assessment.resultRef as { path: string; digest: string };
   const artifactId = capability === "test-sensitivity-review" ? "engineering-test-result" : "engineering-review-result";
@@ -35,6 +36,6 @@ export function assertEngineeringStageBundle(
   if (reports.length !== 1 || !report?.verified || report.digest !== resultRef.digest
     || path.resolve(report.locator) !== path.resolve(root, resultRef.path)
     || report.targetDigest !== assessment.targetDigest || reference.targetDigest !== assessment.targetDigest) {
-    throw new WorkflowContractError("INTEGRITY_FAILED", "Engineering artifacts must bind the validated result bytes and current candidate.");
+    throw new WorkflowContractError("INTEGRITY_FAILED", msg("workflow.engineering.engineeringArtifactsBindValidatedResult", {}));
   }
 }

@@ -1,0 +1,4 @@
+{
+  "workflowRecord.lateAdoption.constraint": "Late adoption, evidence unverified: product files in this window had already changed before the workflow started (count: {priorFileCount}).",
+  "workflowRecord.lateAdoption.label": "Late adoption, evidence unverified"
+}

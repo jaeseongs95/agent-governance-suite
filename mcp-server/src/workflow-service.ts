@@ -36,7 +36,10 @@ import {
   type WorkflowReceiptV1,
   type WorkflowState,
   WorkflowContractError,
+  contractErrorBody,
 } from "../../contracts/types.js";
+import { msg, render, ROOT_LOCALE, type MessageRef, type SupportedLocale } from "./i18n.js";
+import { LATE_ADOPTION_LABEL, lateAdoptionConstraint } from "./workflow-record-messages.js";
 import {
   canonicalJson,
   conflictDetails,
@@ -100,7 +103,15 @@ const USER_GATE_RECEIPT_STATES = new Set<WorkflowState>([
 /** Schema-validator detail keys that are safe to carry on a wrapped gate failure. */
 const SCHEMA_CAUSE_DETAIL_KEYS = ["schemaPath", "expectedDigest", "actualDigest", "validationErrors"] as const;
 
-const LEASE_UNAVAILABLE = "The attempt lease is missing, already consumed, or superseded by a newer claim; read the convergence status and claim again.";
+/** Who an execution check is about; each message renders it through its `subject` select, with `stageId` for a stage. */
+interface ExecutionSubject {
+  subject: "bootstrapOrchestration" | "workflowAttempt" | "guardedStart" | "workflowAttemptBootstrap" | "guardedStartBootstrap" | "stage";
+  stageId: string;
+}
+const BOOTSTRAP_ORCHESTRATION: ExecutionSubject = { subject: "bootstrapOrchestration", stageId: "" };
+const stageSubject = (stageId: string): ExecutionSubject => ({ subject: "stage", stageId });
+
+const LEASE_UNAVAILABLE = msg("workflow.service.attemptLeaseMissingConsumedSuperseded", {});
 const TRUSTED_EXECUTION_CLOCK_SKEW_MS = 5 * 1000;
 const PLAN_INTEGRITY_TOKEN = /^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/u;
 
@@ -163,6 +174,8 @@ export interface MinimalStartContinuity {
   settle(): void;
   /** Binds the session to the new root before the run commits (start_guarded_workflow's correlation). */
   beforeCommit(rootId: string): void;
+  /** The request's locale for the result's display text (lateAdoption.label); the root locale when absent. */
+  locale?: SupportedLocale;
   /**
    * The working directory the host reported for the calling session (session board), the default workspace. The
    * server's own directory is not used: a host may start the MCP server in the plugin folder.
@@ -181,7 +194,7 @@ export interface MinimalWorkflowStartV1 {
   /** TaskEnvelope and frame fields the server filled with defaults instead of the caller. */
   defaultsUsed: string[];
   /** Product files changed in this window before the start: covered by the run, not observed under it. */
-  lateAdoption: { label: string; priorFileCount: number } | null;
+  lateAdoption: { label: string; messageKey: string; params: Record<string, never>; priorFileCount: number } | null;
 }
 
 interface MinimalStartRequest {
@@ -192,13 +205,12 @@ interface MinimalStartRequest {
   writeTargets: string[];
 }
 
-export const LATE_ADOPTION_LABEL = "사후 편입·근거 미검증";
 const MINIMAL_START_KEYS = new Set(["goal", "stages", "acceptanceCriteria", "workspace", "writeTargets"]);
 
 function nonEmptyStrings(value: unknown, field: string, minimum: number): string[] {
   if (!Array.isArray(value) || value.length < minimum || value.length > 32
     || value.some(item => typeof item !== "string" || !item.trim() || item.length > 2000) || new Set(value).size !== value.length) {
-    throw new WorkflowContractError("INVALID_INPUT", `${field} must be ${minimum > 0 ? "a non-empty" : "an"} array of distinct non-empty strings.`, { field });
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.distinctStringArray", { field, size: minimum > 0 ? "nonEmpty" : "any" }), { field });
   }
   return [...value] as string[];
 }
@@ -207,13 +219,13 @@ function minimalStartRequest(raw: unknown): MinimalStartRequest {
   const input = asRecord(raw);
   const unknownKey = Object.keys(input).find(key => !MINIMAL_START_KEYS.has(key));
   if (raw === null || typeof raw !== "object" || Array.isArray(raw) || unknownKey) {
-    throw new WorkflowContractError("INVALID_INPUT", "start_workflow accepts goal, stages, acceptanceCriteria and optional workspace and writeTargets.", unknownKey ? { field: unknownKey } : null);
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.startWorkflowAcceptsGoalStages", {}), unknownKey ? { field: unknownKey } : null);
   }
   if (typeof input.goal !== "string" || !input.goal.trim() || input.goal.length > 2000) {
-    throw new WorkflowContractError("INVALID_INPUT", "goal must be a non-empty string.", { field: "goal" });
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.goalNonEmptyString", {}), { field: "goal" });
   }
   if (input.workspace !== undefined && (typeof input.workspace !== "string" || !path.isAbsolute(input.workspace))) {
-    throw new WorkflowContractError("INVALID_INPUT", "workspace must be an absolute path.", { field: "workspace" });
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.workspaceAbsolutePath", {}), { field: "workspace" });
   }
   return {
     goal: input.goal.trim(),
@@ -235,7 +247,8 @@ function minimalTask(request: MinimalStartRequest, workspace: string, priorFileC
     riskLevel: "medium",
     workUnits: [{ id: "work", objective: request.goal, dependencies: [], writeTargets: [...request.writeTargets] }],
     requiredCapabilities: [...request.stages],
-    constraints: priorFileCount > 0 ? [`${LATE_ADOPTION_LABEL}: workflow 시작 전 이 구간에서 제품 파일 ${priorFileCount}개가 이미 바뀌었다.`] : [],
+    // Stored in the root locale like every stored message (docs/i18n-design.md 3.2); readers map it back with recordMessageRef.
+    constraints: priorFileCount > 0 ? [render(lateAdoptionConstraint(priorFileCount), ROOT_LOCALE)] : [],
     authorization: { allowedActions: [], prohibitedActions: [], approvalRequired: [] },
     decision: { complexity: "complex", hasConflicts: false },
     orchestration: { requested: true, mcpAvailable: true },
@@ -254,11 +267,19 @@ function minimalTask(request: MinimalStartRequest, workspace: string, priorFileC
   return { task, frame, defaultsUsed };
 }
 
+/** An error body thrown again with its own code, key, params and details. */
+function bodyError(body: ContractErrorBody): WorkflowContractError {
+  // Bodies built here all carry a key; one from code not yet on the catalog keeps its text as the only param.
+  const ref = body.messageKey
+    ? { key: body.messageKey, params: body.params ?? {} } as MessageRef
+    : msg("workflow.service.unkeyedFailure", { message: body.message });
+  return new WorkflowContractError(body.code, ref, body.details);
+}
+
 /** A sub-step's failure keeps its own code, message and details, and rolls back the enclosing transaction. */
 function unwrapResult<T>(result: ApiResultV1<T>): T {
   if (result.ok && result.data !== null) return result.data;
-  const error = result.error ?? { code: "MCP_UNAVAILABLE" as const, message: "The workflow step returned no result.", details: null };
-  throw new WorkflowContractError(error.code, error.message, error.details);
+  throw bodyError(result.error ?? contractErrorBody("MCP_UNAVAILABLE", msg("workflow.service.workflowStepReturnedResult", {})));
 }
 
 export class WorkflowService {
@@ -274,7 +295,7 @@ export class WorkflowService {
     const encodedKey = this.store.getOrCreateSecret(PLAN_SIGNING_KEY, createPlanSigningKey);
     this.planSigningKey = Buffer.from(encodedKey, "base64url");
     if (this.planSigningKey.length !== 32) {
-      throw new WorkflowContractError("INTEGRITY_FAILED", "Stored plan signing key is invalid.", { reason: "PLAN_SIGNING_KEY_INVALID" });
+      throw new WorkflowContractError("INTEGRITY_FAILED", msg("workflow.service.storedPlanSigningKeyInvalid", {}), { reason: "PLAN_SIGNING_KEY_INVALID" });
     }
   }
 
@@ -290,7 +311,7 @@ export class WorkflowService {
       if (task.requiredCapabilities.includes("evaluation-validity-audit") && evaluationAuditPurpose === undefined) {
         throw new WorkflowContractError(
           "INVALID_INPUT",
-          "Evaluation validity planning requires the structured request with evaluationAuditPurpose.",
+          msg("workflow.service.evaluationValidityPlanningRequiresStructured", {}),
         );
       }
       if (requireExecutionContext && task.orchestration.requested) {
@@ -301,11 +322,11 @@ export class WorkflowService {
           stageId: null,
           revision: null,
         };
-        trustedBootstrapContext = this.observeTrustedExecutionContext(binding, "bootstrap orchestration");
+        trustedBootstrapContext = this.observeTrustedExecutionContext(binding, BOOTSTRAP_ORCHESTRATION);
         this.assertTrustedExecutionContext(
           this.bootstrapExecutionRequirement(),
           trustedBootstrapContext,
-          "bootstrap orchestration",
+          BOOTSTRAP_ORCHESTRATION,
           binding,
           false,
         );
@@ -315,7 +336,7 @@ export class WorkflowService {
       const plan = this.buildPlan(task, this.registry.read(), evaluationAuditPurpose, executionContext, requiredAuditPhase);
       plan.integrityToken = this.signPlan(plan);
       this.validator.workflowPlan(plan);
-      if (trustedBootstrapContext) this.consumeTrustedExecutionObservation(trustedBootstrapContext, "bootstrap orchestration");
+      if (trustedBootstrapContext) this.consumeTrustedExecutionObservation(trustedBootstrapContext, BOOTSTRAP_ORCHESTRATION);
       return plan;
     });
   }
@@ -326,17 +347,17 @@ export class WorkflowService {
       this.validateWorkUnitGraph(request.taskEnvelope);
       this.assertConvergenceFrame(request.frame);
       if (!request.taskEnvelope.orchestration.requested || !request.taskEnvelope.orchestration.mcpAvailable) {
-        throw new WorkflowContractError("INVALID_INPUT", "Convergence roots require an MCP-backed orchestrated task.");
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.convergenceRootsRequireMCPBacked", {}));
       }
       if (request.parentRootId && request.userApprovalRefs.length === 0) {
-        throw new WorkflowContractError("INVALID_INPUT", "Replacing a convergence root requires user approval evidence.", {
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.replacingConvergenceRootRequiresUser", {}), {
           parentRootId: request.parentRootId,
         });
       }
       if (request.parentRootId) {
         const parent = this.requireConvergenceSnapshot(request.parentRootId).root;
         if (!["needs-review", "needs-user"].includes(parent.state)) {
-          throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root may be replaced.", {
+          throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.gatedConvergenceRootReplaced", {}), {
             parentRootId: parent.rootId,
             parentState: parent.state,
           });
@@ -363,7 +384,7 @@ export class WorkflowService {
       // The store decides workspace binding and conflicts from server-derived identities, in the insert transaction.
       const conflict = this.store.insertConvergenceRoot(root);
       if (conflict) {
-        throw new WorkflowContractError("ROOT_CONFLICT", "An active convergence root already covers this workspace scope.", conflictDetails(conflict));
+        throw new WorkflowContractError("ROOT_CONFLICT", msg("workflow.service.activeConvergenceRootCoversWorkspace", {}), conflictDetails(conflict));
       }
       return clone(root);
     });
@@ -375,16 +396,16 @@ export class WorkflowService {
       const proposal = clone(this.normalizeAttemptProposal(rawProposal));
       const actorId = caller?.actor ?? null;
       this.assertPlanIntegrity(proposal.plan);
-      if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(proposal.plan, "Workflow attempt");
+      if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(proposal.plan, "workflowAttempt");
       this.assertConvergenceFrame(proposal.frame);
       if (proposal.plan.executionMode !== "orchestrated" || proposal.plan.state !== "ready") {
-        throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready orchestrated plan can claim an attempt lease.");
+        throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.readyOrchestratedPlanClaimAttempt", {}));
       }
       if (proposal.plan.taskId !== proposal.taskEnvelope.taskId) {
-        throw new WorkflowContractError("INVALID_INPUT", "Attempt task and workflow plan IDs do not match.");
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.attemptTaskWorkflowPlanIDs", {}));
       }
       if (proposal.plan.taskDigest !== convergenceDigest(proposal.taskEnvelope)) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan is bound to a different task envelope.", {
+        throw new WorkflowContractError("LEASE_CONFLICT", msg("workflow.service.workflowPlanBoundDifferentTask", {}), {
           rootId: proposal.rootId,
           taskId: proposal.taskEnvelope.taskId,
         });
@@ -404,7 +425,7 @@ export class WorkflowService {
       );
       expectedPlan.integrityToken = this.signPlan(expectedPlan);
       if (canonicalJson(expectedPlan, "Plan") !== canonicalJson(proposal.plan, "Plan")) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The workflow plan was not produced from the proposed task envelope.", {
+        throw new WorkflowContractError("LEASE_CONFLICT", msg("workflow.service.workflowPlanProducedProposedTask", {}), {
           rootId: proposal.rootId,
           taskId: proposal.taskEnvelope.taskId,
         });
@@ -414,7 +435,7 @@ export class WorkflowService {
       const snapshot = this.requireConvergenceSnapshot(proposal.rootId);
       const root = snapshot.root;
       if (proposal.expectedRevision !== root.revision) {
-        throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the convergence root.", {
+        throw new WorkflowContractError("STALE_REVISION", msg("workflow.service.expectedRevisionMatchConvergenceRoot", {}), {
           expectedRevision: proposal.expectedRevision,
           actualRevision: root.revision,
         });
@@ -429,7 +450,7 @@ export class WorkflowService {
       if (frameChanged) {
         // The task or control frame changed before the next full attempt.
         if (root.state === "open") this.moveRootToReview(root);
-        throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "Task, control, workspace, operational, or artifact-role changes require independent review.", {
+        throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", msg("workflow.service.taskControlWorkspaceOperationalArtifact", {}), {
           rootId: root.rootId,
           expected: {
             taskDigest: root.taskDigest,
@@ -446,14 +467,14 @@ export class WorkflowService {
       const currentOutcomes = snapshot.outcomes.filter((outcome) => outcome.epoch === root.currentEpoch);
       const latestOutcome = currentOutcomes.at(-1) ?? null;
       if (currentOutcomes.length < attempts.length) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The previous full attempt is still active and must reach a terminal outcome before another lease can be claimed.", {
+        throw new WorkflowContractError("LEASE_CONFLICT", msg("workflow.service.previousFullAttemptStillActive", {}), {
           rootId: root.rootId,
           epoch: root.currentEpoch,
         });
       }
       if (attempts.length >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
         this.moveRootToReview(root);
-        throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Three full attempts have already started in this convergence epoch.", {
+        throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", msg("workflow.service.threeFullAttemptsStartedConvergence", {}), {
           rootId: root.rootId,
           epoch: root.currentEpoch,
           attemptsUsed: attempts.length,
@@ -463,11 +484,11 @@ export class WorkflowService {
       let priorEvidenceDigests: Sha256Digest[] = [];
       if (attempts.length === 0) {
         if (proposal.priorFailure !== null) {
-          throw new WorkflowContractError("INVALID_INPUT", "The first attempt in an epoch must not claim a prior failure.");
+          throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.firstAttemptEpochClaimPrior", {}));
         }
       } else {
         if (!latestOutcome || latestOutcome.state === "passed") {
-          throw new WorkflowContractError("LEASE_CONFLICT", "The previous full attempt has not produced a retryable failure.", {
+          throw new WorkflowContractError("LEASE_CONFLICT", msg("workflow.service.previousFullAttemptProducedRetryable", {}), {
             rootId: root.rootId,
           });
         }
@@ -483,7 +504,7 @@ export class WorkflowService {
               evidenceRefs: proposal.priorFailure?.evidenceRefs ?? [],
               rejectedAt: new Date().toISOString(),
             },
-            "A retry must bind the latest failure fingerprint and a discriminating hypothesis.",
+            msg("workflow.service.retryMustBindLatestFingerprint", {}),
             { expectedFingerprint: latestOutcome.failureFingerprint },
           );
         }
@@ -498,7 +519,7 @@ export class WorkflowService {
         priorEvidenceDigests = [...new Set(proposal.priorFailure.evidenceRefs.map((locator) => {
           const digest = localFileDigest(locator);
           if (!digest) {
-            throw new WorkflowContractError("MISSING_EVIDENCE", "Prior-failure evidence must be readable local files.", {
+            throw new WorkflowContractError("MISSING_EVIDENCE", msg("workflow.service.priorFailureEvidenceReadableLocal", {}), {
               rootId: root.rootId, locator, reason: "EVIDENCE_FILE_UNREADABLE",
             });
           }
@@ -523,7 +544,7 @@ export class WorkflowService {
               evidenceRefs: priorEvidenceDigests,
               rejectedAt: new Date().toISOString(),
             },
-            "The proposed retry changes neither the target nor the observed evidence.",
+            msg("workflow.service.retryChangesNothing", {}),
             { rootId: root.rootId, route: "diagnose" },
           );
         }
@@ -551,7 +572,7 @@ export class WorkflowService {
       };
       this.validator.attemptLease(lease);
       if (!this.store.insertAttemptLease(updatedRoot, root.revision, proposal, lease)) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The convergence root changed while the lease was being claimed.", {
+        throw new WorkflowContractError("LEASE_CONFLICT", msg("workflow.service.convergenceRootChangedWhileLease", {}), {
           rootId: root.rootId,
         });
       }
@@ -567,12 +588,12 @@ export class WorkflowService {
           const result = this.startGuardedWorkflow(rawRequest, requireTrustedExecutionContext);
           if (result.ok && result.data) {
             const binding = this.store.getGuardedRunBinding(result.data.runId);
-            if (!binding) throw new WorkflowContractError("LEASE_CONFLICT", "The started workflow has no guarded root binding.");
+            if (!binding) throw new WorkflowContractError("LEASE_CONFLICT", msg("workflow.service.startedWorkflowGuardedRootBinding", {}));
             // Commit correlation before publishing the run. A correlation failure
             // rolls back the run; a later workflow commit failure stays fail-closed.
             const prepared: unknown = beforeCommit(binding.root.rootId);
             if (typeof (prepared as { then?: unknown } | null | undefined)?.then === "function") {
-              throw new WorkflowContractError("INVALID_INPUT", "Workflow correlation callbacks must be synchronous.");
+              throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.workflowCorrelationCallbacksSynchronous", {}));
             }
           }
           return result;
@@ -585,28 +606,28 @@ export class WorkflowService {
       const request = this.normalizeGuardedWorkflowStartRequest(rawRequest);
       const plan = clone(request.plan);
       this.assertPlanIntegrity(plan);
-      if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(plan, "Guarded workflow start");
+      if (requireTrustedExecutionContext) this.assertStrictPlanExecutionAssurance(plan, "guardedStart");
       if (plan.executionMode !== "orchestrated" || plan.state !== "ready") {
-        throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready orchestrated workflow can use a convergence lease.");
+        throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.readyOrchestratedWorkflowUseConvergence", {}));
       }
       const binding = this.store.getAttemptLease(request.leaseId);
       if (!binding || binding.lease.state !== "issued") {
         throw new WorkflowContractError("LEASE_CONFLICT", LEASE_UNAVAILABLE, { leaseId: request.leaseId });
       }
       if (request.expectedRootRevision !== binding.root.revision || request.expectedRootRevision !== binding.lease.rootRevision) {
-        throw new WorkflowContractError("STALE_REVISION", "The guarded start does not target the current convergence revision.", {
+        throw new WorkflowContractError("STALE_REVISION", msg("workflow.service.guardedStartTargetCurrentConvergence", {}), {
           expectedRevision: request.expectedRootRevision,
           actualRevision: binding.root.revision,
         });
       }
       if (plan.integrityToken !== binding.lease.planIntegrityToken || canonicalJson(plan, "Plan") !== canonicalJson(binding.proposal.plan, "Plan")) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is bound to a different workflow plan.", { leaseId: request.leaseId });
+        throw new WorkflowContractError("LEASE_CONFLICT", msg("workflow.service.attemptLeaseBoundDifferentWorkflow", {}), { leaseId: request.leaseId });
       }
 
       const receipt = this.newRunningReceipt(plan);
       const started = this.store.insertGuardedRun(receipt, request.leaseId, request.expectedRootRevision, new Date().toISOString());
       if (!started) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease could not be consumed atomically.", { leaseId: request.leaseId });
+        throw new WorkflowContractError("LEASE_CONFLICT", msg("workflow.service.attemptLeaseCouldConsumedAtomically", {}), { leaseId: request.leaseId });
       }
       return clone(receipt);
     });
@@ -624,7 +645,7 @@ export class WorkflowService {
       const observed = request.workspace === null ? continuity.sessionWorkspace?.() ?? null : null;
       const workspace = request.workspace ?? (observed && path.isAbsolute(observed) ? observed : null);
       if (!workspace) {
-        throw new WorkflowContractError("INVALID_INPUT", "workspace is required: the host has not reported this session's working directory.", { field: "workspace" });
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.workspaceRequiredHostReportedSession", {}), { field: "workspace" });
       }
       // Edits made in this window before the start are covered by the run but were not observed under it.
       const priorFileCount = continuity.priorFileCount();
@@ -635,10 +656,10 @@ export class WorkflowService {
         // A passed record of these stages must match an artifact target fixed in the plan, which this start cannot know.
         const needTargets = plan.stages.filter(stage => stage.requiredArtifacts.length > 0).map(stage => stage.requiredCapability);
         if (needTargets.length > 0) {
-          throw new WorkflowContractError("INVALID_INPUT", "start_workflow cannot fix artifact targets, so these stages could never be recorded as passed. Plan them with plan_workflow and taskEnvelope.artifactContracts once the target is known.", { field: "stages", capabilities: needTargets });
+          throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.startWorkflowFixArtifactTargets", {}), { field: "stages", capabilities: needTargets });
         }
         const blocked = plan.state === "ready" ? null : plan.errors[0];
-        if (blocked) throw new WorkflowContractError(blocked.code, blocked.message, blocked.details);
+        if (blocked) throw bodyError(blocked);
         const root = unwrapResult(this.openConvergenceRoot({
           schemaVersion: CONTRACT_VERSION, parentRootId: null, taskEnvelope: task, frame, userApprovalRefs: [],
         }));
@@ -658,7 +679,9 @@ export class WorkflowService {
           state: receipt.state,
           stages: receipt.plan.stages.map(stage => ({ stageId: stage.stageId, capability: stage.requiredCapability })),
           defaultsUsed,
-          lateAdoption: priorFileCount > 0 ? { label: LATE_ADOPTION_LABEL, priorFileCount } : null,
+          lateAdoption: priorFileCount > 0
+            ? { label: render(LATE_ADOPTION_LABEL, continuity.locale ?? ROOT_LOCALE), messageKey: LATE_ADOPTION_LABEL.key, params: {}, priorFileCount }
+            : null,
         };
       });
     });
@@ -669,7 +692,7 @@ export class WorkflowService {
     const hasTaskEnvelope = Object.hasOwn(candidate, "taskEnvelope");
     const hasFrame = Object.hasOwn(candidate, "frame");
     if (hasTaskEnvelope !== hasFrame) {
-      throw new WorkflowContractError("INVALID_INPUT", "Attempt proposal must provide both taskEnvelope and frame, or omit both.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.attemptProposalProvideBothTaskEnvelope", {}));
     }
     if (hasTaskEnvelope) return this.validator.attemptProposal(rawProposal);
 
@@ -710,36 +733,36 @@ export class WorkflowService {
       const request = this.validator.resolveConvergenceGateRequest(rawRequest);
       const review = clone(request.review);
       if (Object.hasOwn(review, "observedReviewer")) {
-        throw new WorkflowContractError("INVALID_INPUT", "observedReviewer is server-owned; callers must not send it.", {
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.observedReviewerServerOwnedCallersSend", {}), {
           reason: "SERVER_OWNED_FIELD",
         });
       }
       const snapshot = this.requireConvergenceSnapshot(request.rootId);
       const root = snapshot.root;
       if (request.expectedRevision !== root.revision || review.rootRevision !== root.revision) {
-        throw new WorkflowContractError("STALE_REVISION", "The convergence review does not target the current root revision.", {
+        throw new WorkflowContractError("STALE_REVISION", msg("workflow.service.convergenceReviewTargetCurrentRoot", {}), {
           expectedRevision: request.expectedRevision,
           reviewRevision: review.rootRevision,
           actualRevision: root.revision,
         });
       }
       if (review.rootId !== root.rootId || review.epoch !== root.currentEpoch) {
-        throw new WorkflowContractError("INVALID_INPUT", "The convergence review targets a different root or epoch.");
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.convergenceReviewTargetsDifferentRoot", {}));
       }
       if (root.state !== "needs-review") {
-        throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root can be resolved.", { state: root.state });
+        throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.gatedConvergenceRootResolved", {}), { state: root.state });
       }
       // Fresh context stays the root's declaration. A declared reviewer that names an actor AGS observed as
       // a lease claimer or as a recorder without host-observed identity contradicts itself.
       if (!review.freshContext.confirmed || !review.freshContext.evidenceRef) {
-        throw new WorkflowContractError("GATE_FAILED", "The frame review declares that it was not made in a fresh context.");
+        throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.frameReviewDeclaresMadeFresh", {}));
       }
       const observedActors = new Set([
         ...snapshot.leases.filter((lease) => lease.state === "consumed").map((lease) => lease.actorId),
         caller?.provenance === "host-observed" ? null : caller?.actor,
       ].filter((actorId): actorId is string => typeof actorId === "string"));
       if (observedActors.has(review.reviewerActorId)) {
-        throw new WorkflowContractError("GATE_FAILED", "The declared frame reviewer is an actor AGS observed in this lineage.", {
+        throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.declaredFrameReviewerActorAGS", {}), {
           reason: "REVIEWER_IS_OBSERVED_ROOT",
         });
       }
@@ -748,7 +771,7 @@ export class WorkflowService {
         return run ? implementationRecorders(run) : [];
       }));
       if (reviewerIndependence === "violated") {
-        throw new WorkflowContractError("GATE_FAILED", "The observed reviewer implemented or delegated work in this lineage.", {
+        throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.observedReviewerImplementedDelegatedWork", {}), {
           reason: "REVIEWER_NOT_INDEPENDENT",
         });
       }
@@ -771,10 +794,10 @@ export class WorkflowService {
           this.assertConvergenceFrame(proposedFrame);
           const nextDigests = this.convergenceDigests(updatedRoot.taskEnvelope, proposedFrame);
           if (nextDigests.workspaceDigest !== root.workspaceDigest || nextDigests.operationalDigest !== root.operationalDigest) {
-            throw new WorkflowContractError("INVALID_INPUT", "A semantics-preserving review cannot change workspace or guard policy.");
+            throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.semanticsPreservingReviewChangeWorkspace", {}));
           }
           if (nextDigests.targetDigest === root.targetDigest) {
-            throw new WorkflowContractError("GATE_FAILED", "A new convergence epoch requires a verified target-frame correction.");
+            throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.newConvergenceEpochRequiresVerified", {}));
           }
           updatedRoot.currentEpoch += 1;
           updatedRoot.state = "open";
@@ -785,7 +808,7 @@ export class WorkflowService {
 
       this.validator.convergenceRoot(updatedRoot);
       if (!this.store.updateConvergenceRoot(updatedRoot, root.revision, review)) {
-        throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while recording the review.");
+        throw new WorkflowContractError("STALE_REVISION", msg("workflow.service.convergenceRootChangedWhileRecording", {}));
       }
       return this.buildConvergenceStatus(this.requireConvergenceSnapshot(root.rootId));
     });
@@ -796,9 +819,9 @@ export class WorkflowService {
       const plan = clone(this.validator.workflowPlan(rawPlan));
       this.assertPlanIntegrity(plan);
       if (plan.executionMode === "orchestrated") {
-        throw new WorkflowContractError("LEASE_REQUIRED", "New orchestrated workflows must start through start_guarded_workflow.");
+        throw new WorkflowContractError("LEASE_REQUIRED", msg("workflow.service.newOrchestratedWorkflowsStartThrough", {}));
       }
-      throw new WorkflowContractError("INVALID_TRANSITION", "Direct skill plans are not started by the MCP orchestrator.");
+      throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.directSkillPlansStartedMCP", {}));
     });
   }
 
@@ -808,12 +831,12 @@ export class WorkflowService {
       const plan = clone(this.validator.workflowPlan(rawPlan));
       this.assertPlanIntegrity(plan);
       if (plan.executionMode !== "orchestrated") {
-        throw new WorkflowContractError("INVALID_TRANSITION", "Direct skill plans are not started by the MCP orchestrator.");
+        throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.directSkillPlansStartedMCP", {}));
       }
       if (plan.state !== "ready") {
         const error = plan.errors.find((item) => item.code === "MCP_UNAVAILABLE");
-        if (error) throw new WorkflowContractError(error.code, error.message, error.details);
-        throw new WorkflowContractError("INVALID_TRANSITION", "Only a ready workflow plan can be started.", {
+        if (error) throw bodyError(error);
+        throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.readyWorkflowPlanStarted", {}), {
           planState: plan.state,
         });
       }
@@ -830,7 +853,7 @@ export class WorkflowService {
       const callerResult = asRecord(rawResult);
       for (const field of ["artifactChecks", "recordedBy"]) {
         if (Object.hasOwn(callerResult, field)) {
-          throw new WorkflowContractError("INVALID_INPUT", `${field} is server-owned; callers must not send it.`, {
+          throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.serverOwnedField", { field }), {
             reason: "SERVER_OWNED_FIELD",
             field,
           });
@@ -839,26 +862,26 @@ export class WorkflowService {
       if (requireTrustedExecutionContext && Object.prototype.hasOwnProperty.call(callerResult, "executionContext")) {
         throw new WorkflowContractError(
           "BINDING_INVALID",
-          "Strict MCP stage execution rejects caller-supplied executionContext.",
+          msg("workflow.service.strictMCPStageExecutionRejects", {}),
         );
       }
       // A copy: the server adds its own fields, and the caller's object must stay reusable.
       const result = clone(this.validator.stageResult(rawResult));
       if (result.outputFile && result.output.output !== null) {
-        throw new WorkflowContractError("INVALID_INPUT", "output.output must be null when outputFile carries the provider output.");
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.outputOutputNullWhenOutputFile", {}));
       }
       return this.change(result.runId, result.expectedRevision, (receipt) => {
         if (receipt.state !== "running") {
-          throw new WorkflowContractError("INVALID_TRANSITION", "Stage results require a running workflow.", {
+          throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.stageResultsRequireRunningWorkflow", {}), {
             state: receipt.state,
           });
         }
         const target = receipt.plan.stages.find((stage) => stage.stageId === result.stageId);
         if (!target) {
-          throw new WorkflowContractError("INVALID_INPUT", "Stage does not belong to this run.", { stageId: result.stageId });
+          throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.stageBelongRun", {}), { stageId: result.stageId });
         }
         if (target.state !== "ready") {
-          throw new WorkflowContractError("INVALID_TRANSITION", "A stage result may only be recorded once.", {
+          throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.stageResultRecordedOnce", {}), {
             stageId: result.stageId,
             stageState: target.state,
           });
@@ -867,7 +890,7 @@ export class WorkflowService {
           (stage) => stage.order < target.order && stage.state !== "passed",
         );
         if (priorStage) {
-          throw new WorkflowContractError("INVALID_TRANSITION", "Stages must be recorded in plan order.", {
+          throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.stagesRecordedPlanOrder", {}), {
             requiredStageId: priorStage.stageId,
             requestedStageId: result.stageId,
           });
@@ -876,7 +899,7 @@ export class WorkflowService {
         if (result.outputFile) {
           // Receipt policies compare actors across stages through the stored output, so policy stages stay inline.
           if (target.receiptPolicy) {
-            throw new WorkflowContractError("INVALID_INPUT", "Stages with a receipt policy must record their output inline.", {
+            throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.stagesReceiptPolicyRecordTheir", {}), {
               stageId: target.stageId,
             });
           }
@@ -892,7 +915,7 @@ export class WorkflowService {
         ) {
           throw new WorkflowContractError(
             "BINDING_REQUIRED",
-            `Stage '${target.stageId}' has no execution assurance requirement and cannot pass through the strict MCP boundary.`,
+            msg("workflow.service.stageWithoutExecutionRequirementStrict", { stageId: target.stageId }),
           );
         }
         if (
@@ -906,7 +929,7 @@ export class WorkflowService {
             stageId: target.stageId,
             revision: result.expectedRevision,
           };
-          const subject = `Stage '${target.stageId}'`;
+          const subject = stageSubject(target.stageId);
           // Only a passing stage has to clear the assurance floor. A failing one still records
           // what ran when the host can see it: requiring attestation there would push legitimate
           // unattested failures into abort_workflow, which drops the failure fingerprint.
@@ -946,7 +969,7 @@ export class WorkflowService {
           ? independence(caller, implementationRecorders(receipt))
           : "unobserved";
         if (checkerIndependence === "violated") {
-          throw new WorkflowContractError("GATE_FAILED", "The observed auditor implemented this run or was delegated by its implementer.", {
+          throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.observedAuditorImplementedRunDelegated", {}), {
             stageId: target.stageId,
             reason: "AUDITOR_NOT_INDEPENDENT",
           });
@@ -962,7 +985,7 @@ export class WorkflowService {
           this.assertBaselineLineage(receipt, target, checked);
         }
         target.state = result.state;
-        if (trustedStageContext) this.consumeTrustedExecutionObservation(trustedStageContext, `Stage '${target.stageId}'`);
+        if (trustedStageContext) this.consumeTrustedExecutionObservation(trustedStageContext, stageSubject(target.stageId));
         receipt.stageResults.push(clone(result));
         receipt.unverifiedClaims = unique([
           ...receipt.unverifiedClaims,
@@ -998,12 +1021,12 @@ export class WorkflowService {
   finalizeWorkflow(runId: string, expectedRevision: number): ApiResultV1<WorkflowReceiptV1> {
     return this.change(runId, expectedRevision, (receipt) => {
       if (receipt.state !== "running") {
-        throw new WorkflowContractError("INVALID_TRANSITION", "Only a running workflow can be finalized.", {
+        throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.runningWorkflowFinalized", {}), {
           state: receipt.state,
         });
       }
       if (receipt.blockers.length > 0 || receipt.unresolved.length > 0) {
-        throw new WorkflowContractError("GATE_FAILED", "Workflow has unresolved blockers or findings.", {
+        throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.workflowUnresolvedBlockersFindings", {}), {
           blockers: receipt.blockers,
           unresolved: receipt.unresolved,
         });
@@ -1012,7 +1035,7 @@ export class WorkflowService {
       for (const stage of receipt.plan.stages) {
         const result = receipt.stageResults.find((item) => item.stageId === stage.stageId);
         if (!result || result.state !== "passed") {
-          throw new WorkflowContractError("GATE_FAILED", "Every planned stage must pass before finalization.", {
+          throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.everyPlannedStagePassBefore", {}), {
             stageId: stage.stageId,
             stageState: result?.state ?? "ready",
           });
@@ -1039,7 +1062,7 @@ export class WorkflowService {
 
       const mandatoryAudit = receipt.plan.stages.find((stage) => stage.riskGate === "mandatory");
       if (mandatoryAudit && mandatoryAudit.state !== "passed") {
-        throw new WorkflowContractError("GATE_FAILED", "Mandatory audit stage did not pass.", {
+        throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.mandatoryAuditStageDidPass", {}), {
           stageId: mandatoryAudit.stageId,
         });
       }
@@ -1055,7 +1078,7 @@ export class WorkflowService {
   abortWorkflow(runId: string, expectedRevision: number): ApiResultV1<WorkflowReceiptV1> {
     return this.change(runId, expectedRevision, (receipt) => {
       if (receipt.state === "passed" || receipt.state === "failed" || receipt.state === "blocked") {
-        throw new WorkflowContractError("INVALID_TRANSITION", "A terminal workflow cannot be aborted.", {
+        throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.terminalWorkflowAborted", {}), {
           state: receipt.state,
         });
       }
@@ -1089,19 +1112,12 @@ export class WorkflowService {
     for (const capability of this.requiredCapabilities(task)) {
       const skill = selectSkillByCapability(skills, capability);
       if (!skill) {
-        errors.push({
-          code: "GATE_FAILED",
-          message: `No enabled registry descriptor provides '${capability}'.`,
-          details: { capability },
-        });
+        errors.push(contractErrorBody("GATE_FAILED", msg("workflow.service.noProviderForCapability", { capability }), { capability }));
         continue;
       }
       if (skill.executionClass === "bootstrap") {
-        errors.push({
-          code: "GATE_FAILED",
-          message: `Capability '${capability}' is a bootstrap provider and must run before plan_workflow.`,
-          details: { capability, providerKey: skill.providerKey },
-        });
+        errors.push(contractErrorBody("GATE_FAILED", msg("workflow.service.bootstrapCapabilityInPlan", { capability }),
+          { capability, providerKey: skill.providerKey }));
         continue;
       }
       const selected = selectedProviders.get(skill.providerKey);
@@ -1115,11 +1131,8 @@ export class WorkflowService {
     const selectedProviderList = [...selectedProviders.values()];
     const executionClasses = new Set(selectedProviderList.map(({ provider }) => provider.executionClass));
     if (executionClasses.size > 1) {
-      errors.push({
-        code: "INVALID_TRANSITION",
-        message: "Recovery providers must run in a separate workflow.",
-        details: { executionClasses: [...executionClasses] },
-      });
+      errors.push(contractErrorBody("INVALID_TRANSITION", msg("workflow.service.recoveryProvidersRunSeparateWorkflow", {}),
+        { executionClasses: [...executionClasses] }));
     }
     for (const { provider: consumer } of selectedProviderList) {
       for (const binding of consumer.inputBindings.filter((item) => item.operation === "require-external")) {
@@ -1127,14 +1140,10 @@ export class WorkflowService {
           provider.providerKey !== consumer.providerKey
           && provider.producedArtifacts.includes(binding.targetArtifact));
         if (producer) {
-          errors.push({
-            code: "INVALID_TRANSITION",
-            message: `Artifact '${binding.targetArtifact}' must come from a completed external run.`,
-            details: {
-              consumerProviderKey: consumer.providerKey,
-              producerProviderKey: producer.provider.providerKey,
-            },
-          });
+          errors.push(contractErrorBody("INVALID_TRANSITION", msg("workflow.service.artifactFromExternalRun", { artifact: binding.targetArtifact }), {
+            consumerProviderKey: consumer.providerKey,
+            producerProviderKey: producer.provider.providerKey,
+          }));
         }
       }
     }
@@ -1150,7 +1159,7 @@ export class WorkflowService {
         ? evaluationAuditPurpose
         : undefined;
       if (capability === "evaluation-validity-audit" && stageEvaluationAuditPurpose === undefined) {
-        throw new WorkflowContractError("INVALID_INPUT", "Evaluation audit purpose is missing from the planning request.");
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.evaluationAuditPurposeMissingPlanning", {}));
       }
       const order = stages.length + 1;
       const artifactContract = this.plannedArtifactContract(task, satisfiedCapabilities, stageRequiredArtifacts);
@@ -1191,16 +1200,12 @@ export class WorkflowService {
     }
 
     if (executionMode === "orchestrated" && !task.orchestration.mcpAvailable) {
-      errors.unshift({
-        code: "MCP_UNAVAILABLE",
-        message: "The orchestrator is blocked because MCP is unavailable.",
-        details: null,
-      });
+      errors.unshift(contractErrorBody("MCP_UNAVAILABLE", msg("workflow.service.orchestratorBlockedBecauseMCPUnavailable", {})));
     }
 
     for (const contract of task.artifactContracts ?? []) {
       if (!stages.some((stage) => stage.satisfiedCapabilities.includes(contract.capability))) {
-        throw new WorkflowContractError("INVALID_INPUT", "Artifact contract capability is not in the selected plan.", {
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.artifactContractCapabilitySelectedPlan", {}), {
           capability: contract.capability,
         });
       }
@@ -1245,7 +1250,7 @@ export class WorkflowService {
       for (const artifact of item.provider.producedArtifacts) {
         const existing = producedBy.get(artifact);
         if (existing !== undefined && items[existing]?.provider.providerKey !== item.provider.providerKey) {
-          throw new WorkflowContractError("INVALID_INPUT", "Selected providers produce the same artifact.", {
+          throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.selectedProvidersProduceSameArtifact", {}), {
             artifact,
             providers: [items[existing]?.provider.providerKey, item.provider.providerKey],
           });
@@ -1288,7 +1293,7 @@ export class WorkflowService {
       }
     }
     if (ordered.length !== items.length) {
-      throw new WorkflowContractError("INVALID_INPUT", "Selected provider artifact dependencies contain a cycle.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.selectedProviderArtifactDependenciesContain", {}));
     }
     return ordered;
   }
@@ -1306,7 +1311,7 @@ export class WorkflowService {
     }
     const rule = this.mappedState(stage, providerResult);
     if (result.state !== rule.state) {
-      throw new WorkflowContractError("INVALID_TRANSITION", "Stage state does not match the provider state mapping.", {
+      throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.stageStateMatchProviderState", {}), {
         stageId: result.stageId,
         expectedState: rule.state,
         actualState: result.state,
@@ -1314,35 +1319,35 @@ export class WorkflowService {
     }
     const providerError = providerResult.error;
     if (rule.errorRequired !== Boolean(providerError)) {
-      throw new WorkflowContractError("INVALID_TRANSITION", "Provider error presence does not match the state mapping.", {
+      throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.providerErrorPresenceMatchState", {}), {
         stageId: result.stageId,
         errorRequired: rule.errorRequired,
       });
     }
     if (providerError && rule.allowedErrorCodes && !rule.allowedErrorCodes.includes(providerError.code)) {
-      throw new WorkflowContractError("INVALID_TRANSITION", "Provider error code is not allowed by the state mapping.", {
+      throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.providerErrorCodeAllowedState", {}), {
         stageId: result.stageId,
         errorCode: providerError.code,
       });
     }
     if ((providerError?.code ?? null) !== (result.error?.code ?? null)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Stage error must mirror the provider result error.", {
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.stageErrorMirrorProviderResult", {}), {
         stageId: result.stageId,
       });
     }
     if (result.state === "passed") {
       this.assertExecutionAssurance(stage, result);
       if (result.evidence.length === 0) {
-        throw new WorkflowContractError("MISSING_EVIDENCE", "A passed stage requires evidence.", {
+        throw new WorkflowContractError("MISSING_EVIDENCE", msg("workflow.service.passedStageRequiresEvidence", {}), {
           stageId: result.stageId,
         });
       }
       if (result.error) {
-        throw new WorkflowContractError("INVALID_INPUT", "A passed stage cannot contain an error.");
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.passedStageContainError", {}));
       }
     }
     if ((result.state === "failed" || result.state === "blocked") && rule.errorRequired && !result.error) {
-      throw new WorkflowContractError("INVALID_INPUT", "Failed or blocked stages require an error object.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.failedBlockedStagesRequireError", {}));
     }
   }
 
@@ -1363,7 +1368,7 @@ export class WorkflowService {
     if (providerResult.kind === "adapter-error") {
       const errorCode = providerResult.error?.code;
       if (!errorCode || !stage.stateMapping.adapterErrors.includes(errorCode)) {
-        throw new WorkflowContractError("INVALID_TRANSITION", "Adapter error is not allowed by the provider descriptor.", {
+        throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.adapterErrorAllowedProviderDescriptor", {}), {
           stageId: stage.stageId,
           errorCode: errorCode ?? null,
         });
@@ -1376,7 +1381,7 @@ export class WorkflowService {
       if (typeof value === "string") rule = stage.stateMapping.values?.[value] ?? "reject";
     }
     if (rule === "reject") {
-      throw new WorkflowContractError("INVALID_TRANSITION", "Provider verdict is not mapped by the descriptor.", {
+      throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.providerVerdictMappedDescriptor", {}), {
         stageId: stage.stageId,
         selector: stage.stateMapping.selector ?? null,
       });
@@ -1392,13 +1397,13 @@ export class WorkflowService {
     const contracts = (task.artifactContracts ?? []).filter((item) => capabilities.includes(item.capability));
     if (contracts.length === 0) return undefined; // Legacy non-passing observations remain recordable.
     if (contracts.length !== 1) {
-      throw new WorkflowContractError("INVALID_INPUT", "A selected stage needs one unambiguous artifact contract.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.selectedStageNeedsUnambiguousArtifact", {}));
     }
     const contract = contracts[0]!;
     const ids = contract.produced.map((item) => item.artifactId);
     if (ids.length !== requiredArtifacts.length || new Set(ids).size !== ids.length
       || requiredArtifacts.some((id) => !ids.includes(id))) {
-      throw new WorkflowContractError("INVALID_INPUT", "Artifact contract IDs must exactly match the planned outputs.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.artifactContractIDsExactlyMatch", {}));
     }
     return clone(contract);
   }
@@ -1408,7 +1413,7 @@ export class WorkflowService {
       (artifactId) => !result.output.artifacts.some((artifact) => artifact.artifactId === artifactId),
     );
     if (missingArtifacts.length > 0) {
-      throw new WorkflowContractError("MISSING_EVIDENCE", "Required artifacts are missing from the stage result.", {
+      throw new WorkflowContractError("MISSING_EVIDENCE", msg("workflow.service.requiredArtifactsMissingStageResult", {}), {
         stageId: stage.stageId, missingArtifacts,
       });
     }
@@ -1416,7 +1421,7 @@ export class WorkflowService {
       const expected = stage.artifactContract?.produced.find((item) => item.artifactId === artifactId);
       const actual = result.output.artifacts.filter((item) => item.artifactId === artifactId);
       if (!expected || actual.length !== 1 || !actual[0]!.locator || !actual[0]!.digest) {
-        throw new WorkflowContractError("MISSING_EVIDENCE", "Required artifact lacks a declared target or a unique recorded digest.", {
+        throw new WorkflowContractError("MISSING_EVIDENCE", msg("workflow.service.requiredArtifactLacksDeclaredTarget", {}), {
           stageId: stage.stageId, artifactId,
         });
       }
@@ -1424,7 +1429,7 @@ export class WorkflowService {
       const targetDigest = actual[0]!.targetDigest.startsWith("sha256:")
         ? actual[0]!.targetDigest : `sha256:${actual[0]!.targetDigest}`;
       if (actual[0]!.schemaId !== expected.schemaId || targetDigest !== expected.targetDigest) {
-        throw new WorkflowContractError("BINDING_INVALID", "Artifact schema or target differs from the signed plan.", {
+        throw new WorkflowContractError("BINDING_INVALID", msg("workflow.service.artifactSchemaTargetDiffersSigned", {}), {
           stageId: stage.stageId, artifactId,
         });
       }
@@ -1452,7 +1457,7 @@ export class WorkflowService {
       if (!verified) missing.push({ artifactId, producerStageId: producer.stageId });
     }
     if (missing.length > 0) {
-      throw new WorkflowContractError("MISSING_EVIDENCE", "Planned input artifacts are not backed by producer results.", {
+      throw new WorkflowContractError("MISSING_EVIDENCE", msg("workflow.service.plannedInputArtifactsBackedProducer", {}), {
         stageId: stage.stageId,
         missingInputs: missing,
       });
@@ -1462,7 +1467,7 @@ export class WorkflowService {
   private assertDeliberationGate(stage: PlannedStageV1, result: StageResultV1): void {
     if (!stage.requiredArtifacts.includes("decision-record")) return;
     if (!stage.gate.validatorSchema) {
-      throw new WorkflowContractError("GATE_FAILED", "Deliberation provider must declare its decision record validator schema.", {
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.deliberationProviderDeclareDecisionRecord", {}), {
         stageId: stage.stageId,
       });
     }
@@ -1482,7 +1487,7 @@ export class WorkflowService {
       for (const key of SCHEMA_CAUSE_DETAIL_KEYS) {
         if (contractError?.details && Object.hasOwn(contractError.details, key)) causeDetails[key] = contractError.details[key];
       }
-      throw new WorkflowContractError("GATE_FAILED", "Deliberation requires a schema-valid DecisionRecord.v1.", {
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.deliberationRequiresSchemaValidDecisionRecord", {}), {
         stageId: stage.stageId,
         causeCode: contractError?.code ?? null,
         causeDetails: Object.keys(causeDetails).length > 0 ? causeDetails : null,
@@ -1491,7 +1496,7 @@ export class WorkflowService {
     }
     const semanticErrors = validateDecisionRecordSemantics(record);
     if (semanticErrors.length > 0) {
-      throw new WorkflowContractError("GATE_FAILED", "DecisionRecord.v1 failed canonical semantic validation.", {
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.decisionRecordV1FailedCanonicalSemantic", {}), {
         stageId: stage.stageId,
         semanticErrors,
       });
@@ -1504,7 +1509,7 @@ export class WorkflowService {
       || proposal === null
       || proposal.status === "no_consensus"
     ) {
-      throw new WorkflowContractError("GATE_FAILED", "Deliberation result is not eligible to advance the workflow.", {
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.deliberationResultEligibleAdvanceWorkflow", {}), {
         stageId: stage.stageId,
         assurance: run.assurance,
         capabilityShortfall: run.capability_shortfall,
@@ -1512,13 +1517,13 @@ export class WorkflowService {
       });
     }
     if ((run.stage === "HIGH" || run.stage === "CRITICAL") && run.strict !== true) {
-      throw new WorkflowContractError("GATE_FAILED", "HIGH and CRITICAL deliberation requires strict execution assurance.", {
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.highCriticalDeliberationRequiresStrict", {}), {
         stageId: stage.stageId,
         stage: run.stage,
       });
     }
     if (proposal.status === "conditional_consensus" && result.output.output?.conditionsVerified !== true) {
-      throw new WorkflowContractError("GATE_FAILED", "Conditional consensus may advance only after its conditions are verified.", {
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.conditionalConsensusAdvanceAfterConditions", {}), {
         stageId: stage.stageId,
       });
     }
@@ -1532,7 +1537,7 @@ export class WorkflowService {
     // and whether it is recorded now or was recorded by earlier code. A BLOCKED report still records as blocked.
     throw new WorkflowContractError(
       "GATE_FAILED",
-      "Evaluation validity PASS cannot complete the stage: v1 does not observe worker independence.",
+      msg("workflow.service.evaluationValidityPASSCompleteStage", {}),
       {
         stageId: stage.stageId,
         cause: "WORKER_INDEPENDENCE_UNOBSERVED",
@@ -1575,33 +1580,33 @@ export class WorkflowService {
       || phase !== requiredPhase
       || typeof output?.postExecutionVerified !== "boolean"
     ) {
-      throw new WorkflowContractError("GATE_FAILED", "Mandatory audit requires a declared current, fresh, non-delegated PASS with no blocking findings.", {
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.mandatoryAuditRequiresDeclaredCurrent", {}), {
         stageId: stage.stageId,
         requiredPhase,
       });
     }
     if ((requiredPhase === "post-execution" || requiredPhase === "post-deploy") && output.postExecutionVerified !== true) {
-      throw new WorkflowContractError("GATE_FAILED", "Post-execution and post-deploy audits must declare verified resulting state.", {
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.postExecutionPostDeployAudits", {}), {
         stageId: stage.stageId,
         phase: requiredPhase,
       });
     }
     const verdictTarget = result.output.artifacts.find((artifact) => artifact.artifactId === "gate-verdict")?.targetDigest;
     if (!verdictTarget || evidenceKey(auditTarget) !== evidenceKey(verdictTarget)) {
-      throw new WorkflowContractError("GATE_FAILED", "The audit target must be the signed plan target of the gate verdict.", {
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.auditTargetSignedPlanTarget", {}), {
         stageId: stage.stageId,
         reason: "AUDIT_TARGET_NOT_PLANNED",
       });
     }
     if (implementationActorIds.includes(auditorId)) {
-      throw new WorkflowContractError("GATE_FAILED", "The declared auditor is also declared as an implementation actor.", {
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.declaredAuditorAlsoDeclaredImplementation", {}), {
         stageId: stage.stageId,
         auditorId,
         implementationActorIds,
       });
     }
     if (observedActors.includes(auditorId)) {
-      throw new WorkflowContractError("GATE_FAILED", "The declared auditor is an actor AGS observed recording or claiming this run.", {
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.declaredAuditorActorAGSObserved", {}), {
         stageId: stage.stageId,
         reason: "AUDITOR_IS_OBSERVED_ROOT",
       });
@@ -1617,7 +1622,7 @@ export class WorkflowService {
         ? result.output.artifacts.find((item) => item.artifactId === check.artifactId && item.locator === check.locator)?.digest
         : result.evidence.find((item) => item.artifactId === check.artifactId && item.locator === check.locator)?.digest;
       if (!recorded || localFileDigest(check.locator) !== evidenceKey(recorded)) {
-        throw new WorkflowContractError("GATE_FAILED", "A file the audit recorded changed after the audit.", {
+        throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.fileAuditRecordedChangedAfter", {}), {
           stageId: stage.stageId,
           artifactId: check.artifactId,
           reason: "AUDIT_TARGET_CHANGED",
@@ -1636,7 +1641,7 @@ export class WorkflowService {
       const actual = digest ? localFileDigest(locator) : null;
       if (actual && actual !== evidenceKey(digest!)) {
         if (result.state === "passed") {
-          throw new WorkflowContractError("BINDING_INVALID", "A recorded digest does not match the local file it names.", {
+          throw new WorkflowContractError("BINDING_INVALID", msg("workflow.service.recordedDigestMatchLocalFile", {}), {
             stageId: stage.stageId,
             artifactId,
             reason: "ARTIFACT_DIGEST_MISMATCH",
@@ -1659,7 +1664,7 @@ export class WorkflowService {
     const recorded = capture ? result.output.output?.manifestSha256 : result.output.output?.baselineDigest;
     const pinned = this.lineageBaseline(receipt.runId) ?? (assurance ? this.runBaseline(receipt) : null);
     if (pinned !== null && recorded !== pinned) {
-      throw new WorkflowContractError("BINDING_INVALID", "The workspace baseline differs from the first baseline of this lineage.", {
+      throw new WorkflowContractError("BINDING_INVALID", msg("workflow.service.workspaceBaselineDiffersFirstBaseline", {}), {
         stageId: stage.stageId,
         reason: "BASELINE_REBOUND",
       });
@@ -1696,7 +1701,7 @@ export class WorkflowService {
 
   private requireAuditPhase(stage: PlannedStageV1): AuditPhaseV1 {
     if (stage.requiredAuditPhase === undefined) {
-      throw new WorkflowContractError("BINDING_REQUIRED", "Mandatory audit plan has no frozen required phase; create a new plan without modifying the signed plan.", {
+      throw new WorkflowContractError("BINDING_REQUIRED", msg("workflow.service.mandatoryAuditPlanFrozenRequired", {}), {
         stageId: stage.stageId,
       });
     }
@@ -1750,13 +1755,13 @@ export class WorkflowService {
 
   private observeTrustedExecutionContext(
     binding: ExecutionObservationBindingV1,
-    subject: string,
+    subject: ExecutionSubject,
   ): ExecutionContextV1 {
     const context = this.observeExecutionContext(binding);
     if (!context) {
       throw new WorkflowContractError(
         "BINDING_REQUIRED",
-        `${subject} requires trusted host execution attestation.`,
+        msg("workflow.service.requiresTrustedAttestation", subject),
         { binding, observation: this.trustedExecutionContextProvider?.diagnose?.() ?? {
           status: "provider-not-configured",
           connection: "Connect a host-owned TrustedExecutionContextProvider or enable a supported host attestation adapter. Caller executionContext is not a trusted observation.",
@@ -1769,7 +1774,7 @@ export class WorkflowService {
   private assertTrustedExecutionContext(
     requirement: ExecutionRequirementV1,
     context: ExecutionContextV1,
-    subject: string,
+    subject: ExecutionSubject,
     binding: ExecutionObservationBindingV1,
     enforceMinimum = true,
   ): void {
@@ -1781,7 +1786,7 @@ export class WorkflowService {
 
   private assertTrustedExecutionBinding(
     context: ExecutionContextV1,
-    subject: string,
+    subject: ExecutionSubject,
     binding: ExecutionObservationBindingV1,
   ): void {
     if (
@@ -1796,48 +1801,48 @@ export class WorkflowService {
     ) {
       throw new WorkflowContractError(
         "BINDING_INVALID",
-        `${subject} trusted execution attestation is not bound to the requested task/run/stage/revision.`,
+        msg("workflow.service.attestationNotBound", subject),
         { binding, context },
       );
     }
   }
 
   // An observation does not age out: reuse is refused by the one-use claim, not by time. A legacy expiresAt is ignored.
-  private assertTrustedExecutionFreshness(context: ExecutionContextV1, subject: string): void {
+  private assertTrustedExecutionFreshness(context: ExecutionContextV1, subject: ExecutionSubject): void {
     const observedAt = Date.parse(context.observedAt);
     if (Number.isNaN(observedAt) || observedAt > Date.now() + TRUSTED_EXECUTION_CLOCK_SKEW_MS) {
       throw new WorkflowContractError(
         "BINDING_INVALID",
-        `${subject} trusted execution attestation has an invalid or future observation time.`,
+        msg("workflow.service.attestationObservationTime", subject),
         { observedAt: context.observedAt },
       );
     }
   }
 
-  private consumeTrustedExecutionObservation(context: ExecutionContextV1, subject: string): void {
+  private consumeTrustedExecutionObservation(context: ExecutionContextV1, subject: ExecutionSubject): void {
     const observationId = context.observationId;
     if (!observationId) {
       throw new WorkflowContractError(
         "BINDING_INVALID",
-        `${subject} trusted execution attestation is missing its one-use claim fields.`,
+        msg("workflow.service.attestationClaimFieldsMissing", subject),
         { observationId: null },
       );
     }
     if (!this.store.claimExecutionObservation(observationId, new Date().toISOString())) {
       throw new WorkflowContractError(
         "BINDING_INVALID",
-        `${subject} trusted execution attestation was already consumed.`,
+        msg("workflow.service.attestationConsumed", subject),
         { observationId },
       );
     }
   }
 
-  private assertStrictPlanExecutionAssurance(plan: WorkflowPlanV1, subject: string): void {
+  private assertStrictPlanExecutionAssurance(plan: WorkflowPlanV1, subject: "workflowAttempt" | "guardedStart"): void {
     const bootstrap = plan.bootstrapExecution;
     if (!bootstrap) {
       throw new WorkflowContractError(
         "BINDING_REQUIRED",
-        `${subject} requires a plan with trusted bootstrap execution assurance.`,
+        msg("workflow.service.planRequiresBootstrapAssurance", { subject }),
       );
     }
     const binding: ExecutionObservationBindingV1 = {
@@ -1847,13 +1852,14 @@ export class WorkflowService {
       stageId: null,
       revision: null,
     };
-    this.assertExecutionContext(bootstrap.requirement, bootstrap.context, `${subject} bootstrap`, false);
-    this.assertTrustedExecutionBinding(bootstrap.context, `${subject} bootstrap`, binding);
+    const bootstrapSubject: ExecutionSubject = { subject: `${subject}Bootstrap`, stageId: "" };
+    this.assertExecutionContext(bootstrap.requirement, bootstrap.context, bootstrapSubject, false);
+    this.assertTrustedExecutionBinding(bootstrap.context, bootstrapSubject, binding);
     for (const stage of plan.stages) {
       if (!stage.executionRequirement && !isDeterministicStage(stage.satisfiedCapabilities)) {
         throw new WorkflowContractError(
           "BINDING_REQUIRED",
-          `${subject} stage '${stage.stageId}' has no execution assurance requirement.`,
+          msg("workflow.service.planStageWithoutExecutionRequirement", { subject, stageId: stage.stageId }),
         );
       }
     }
@@ -1862,14 +1868,14 @@ export class WorkflowService {
   private assertExecutionContext(
     requirement: ExecutionRequirementV1,
     context: ExecutionContextV1 | null | undefined,
-    subject: string,
+    subject: ExecutionSubject,
     enforceMinimum = true,
   ): void {
     if (requirement.kind === "deterministic") return;
     if (!context) {
       throw new WorkflowContractError(
         "BINDING_REQUIRED",
-        `${subject} requires observed model and reasoning metadata.`,
+        msg("workflow.service.requiresObservedModel", subject),
         { requirement },
       );
     }
@@ -1884,7 +1890,7 @@ export class WorkflowService {
     ) {
       throw new WorkflowContractError(
         "BINDING_INVALID",
-        `${subject} execution context is malformed or not host-observed.`,
+        msg("workflow.service.executionContextMalformed", subject),
         { context },
       );
     }
@@ -1897,7 +1903,7 @@ export class WorkflowService {
     if (!minimumModelClass || !minimumReasoningEffort) {
       throw new WorkflowContractError(
         "INVALID_INPUT",
-        `${subject} semantic requirement is incomplete.`,
+        msg("workflow.service.semanticRequirementIncomplete", subject),
         { requirement },
       );
     }
@@ -1910,7 +1916,7 @@ export class WorkflowService {
     if (reasonCode) {
       throw new WorkflowContractError(
         "GATE_FAILED",
-        `${subject} execution profile is below the planned semantic assurance floor.`,
+        msg("workflow.service.executionProfileBelowFloor", subject),
         {
           reasonCode,
           model: context.model,
@@ -1928,7 +1934,7 @@ export class WorkflowService {
     this.assertExecutionContext(
       stage.executionRequirement,
       result.executionContext,
-      `Stage '${stage.stageId}'`,
+      stageSubject(stage.stageId),
       result.recordedBy?.parentChain.length !== 0,
     );
   }
@@ -1937,14 +1943,14 @@ export class WorkflowService {
     const graph = new Map<string, string[]>();
     for (const unit of task.workUnits) {
       if (graph.has(unit.id)) {
-        throw new WorkflowContractError("INVALID_INPUT", "Work unit IDs must be unique.", { workUnitId: unit.id });
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.workUnitIDsUnique", {}), { workUnitId: unit.id });
       }
       graph.set(unit.id, unit.dependencies);
     }
     for (const unit of task.workUnits) {
       for (const dependencyId of unit.dependencies) {
         if (!graph.has(dependencyId)) {
-          throw new WorkflowContractError("INVALID_INPUT", "Work unit dependency does not exist.", {
+          throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.workUnitDependencyExist", {}), {
             workUnitId: unit.id,
             dependencyId,
           });
@@ -1956,7 +1962,7 @@ export class WorkflowService {
     const visited = new Set<string>();
     const visit = (unitId: string): void => {
       if (visiting.has(unitId)) {
-        throw new WorkflowContractError("INVALID_INPUT", "Work unit dependencies must not contain a cycle.", {
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.workUnitDependenciesContainCycle", {}), {
           workUnitId: unitId,
         });
       }
@@ -1991,7 +1997,7 @@ export class WorkflowService {
     if (!PLAN_INTEGRITY_TOKEN.test(plan.integrityToken)) {
       throw new WorkflowContractError(
         "INVALID_INPUT",
-        "Workflow plan integrity token is not canonical base64url.",
+        msg("workflow.service.workflowPlanIntegrityTokenCanonical", {}),
       );
     }
     const expected = Buffer.from(this.signPlan(plan), "base64url");
@@ -2001,7 +2007,7 @@ export class WorkflowService {
       || supplied.length !== expected.length
       || !timingSafeEqual(supplied, expected)
     ) {
-      throw new WorkflowContractError("INVALID_INPUT", "Workflow plan integrity token is missing, modified, or signed by a different workflow store.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.workflowPlanIntegrityTokenMissing", {}));
     }
     for (const stage of plan.stages) {
       if (stage.riskGate === "mandatory" && stage.requiredArtifacts.includes("gate-verdict")) this.requireAuditPhase(stage);
@@ -2025,10 +2031,10 @@ export class WorkflowService {
     this.validator.convergenceFrame(frame);
     const artifactIds = [...frame.controlArtifacts, ...frame.targetArtifacts].map((artifact) => artifact.artifactId);
     if (new Set(artifactIds).size !== artifactIds.length) {
-      throw new WorkflowContractError("INVALID_INPUT", "Convergence artifact IDs must be unique across control and target frames.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.convergenceArtifactIDsUniqueAcross", {}));
     }
     if (frame.operationalSettings.maxAttemptsPerEpoch !== 3 || frame.operationalSettings.maxEpochs !== 2) {
-      throw new WorkflowContractError("INVALID_INPUT", "The convergence guard policy is fixed at three attempts and two epochs.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.convergenceGuardPolicyFixedThree", {}));
     }
   }
 
@@ -2040,7 +2046,7 @@ export class WorkflowService {
 
   private requireConvergenceSnapshot(rootId: string): ConvergenceSnapshot {
     const snapshot = this.store.getConvergenceSnapshot(rootId);
-    if (!snapshot) throw new WorkflowContractError("RUN_NOT_FOUND", "Convergence root was not found.", { rootId });
+    if (!snapshot) throw new WorkflowContractError("RUN_NOT_FOUND", msg("workflow.service.convergenceRootFound", {}), { rootId });
     this.validator.convergenceRoot(snapshot.root);
     return snapshot;
   }
@@ -2069,7 +2075,7 @@ export class WorkflowService {
   private rejectRetry(
     root: ConvergenceRootV1,
     entry: RetryRejectionV1,
-    message: string,
+    message: MessageRef,
     details: Record<string, unknown>,
   ): never {
     const recorded = root.retryRejections ?? [];
@@ -2080,7 +2086,7 @@ export class WorkflowService {
       updated.retryRejections = [...recorded, entry];
       this.validator.convergenceRoot(updated);
       if (!this.store.updateConvergenceRoot(updated, root.revision)) {
-        throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while recording the rejected retry.", {
+        throw new WorkflowContractError("STALE_REVISION", msg("workflow.service.convergenceRootChangedWhileRecording2", {}), {
           rootId: root.rootId,
         });
       }
@@ -2093,7 +2099,7 @@ export class WorkflowService {
     const updated = bumpedRoot(root, new Date().toISOString());
     updated.state = "needs-review";
     if (!this.store.updateConvergenceRoot(updated, root.revision)) {
-      throw new WorkflowContractError("STALE_REVISION", "The convergence root changed while applying its gate.", {
+      throw new WorkflowContractError("STALE_REVISION", msg("workflow.service.convergenceRootChangedWhileApplying", {}), {
         rootId: root.rootId,
       });
     }
@@ -2102,12 +2108,12 @@ export class WorkflowService {
   private throwRootGate(root: ConvergenceRootV1, snapshot: ConvergenceSnapshot): never {
     const attempts = consumedLeases(snapshot, root.currentEpoch).length;
     if (root.state === "needs-review" && attempts >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
-      throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", "Independent review is required before another full attempt.", {
+      throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", msg("workflow.service.independentReviewRequiredBeforeAnother", {}), {
         rootId: root.rootId,
         epoch: root.currentEpoch,
       });
     }
-    throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", "The convergence root is gated and cannot issue another lease.", {
+    throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", msg("workflow.service.convergenceRootGatedIssueAnother", {}), {
       rootId: root.rootId,
       state: root.state,
     });
@@ -2118,22 +2124,13 @@ export class WorkflowService {
     let gateError: ContractErrorBody | null = null;
     if (snapshot.root.state === "needs-review") {
       gateError = attemptsUsed >= snapshot.root.frame.operationalSettings.maxAttemptsPerEpoch
-        ? {
-            code: "ATTEMPT_BUDGET_EXHAUSTED",
-            message: "Independent review is required before another full attempt.",
-            details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch },
-          }
-        : {
-            code: "FRAME_REVIEW_REQUIRED",
-            message: "A task or control-frame change requires independent review.",
-            details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch },
-          };
+        ? contractErrorBody("ATTEMPT_BUDGET_EXHAUSTED", msg("workflow.service.independentReviewRequiredBeforeAnother", {}),
+          { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch })
+        : contractErrorBody("FRAME_REVIEW_REQUIRED", msg("workflow.service.taskControlFrameChangeRequires", {}),
+          { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch });
     } else if (snapshot.root.state === "needs-user") {
-      gateError = {
-        code: "FRAME_REVIEW_REQUIRED",
-        message: "The proposed change requires a new user contract.",
-        details: { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch },
-      };
+      gateError = contractErrorBody("FRAME_REVIEW_REQUIRED", msg("workflow.service.proposedChangeRequiresNewUser", {}),
+        { rootId: snapshot.root.rootId, epoch: snapshot.root.currentEpoch });
     }
     return {
       schemaVersion: CONTRACT_VERSION,
@@ -2155,22 +2152,22 @@ export class WorkflowService {
 
   private assertReviewRoute(review: ConvergenceReviewV1): void {
     if (review.evidenceRefs.length === 0) {
-      throw new WorkflowContractError("MISSING_EVIDENCE", "A convergence review requires evidence.");
+      throw new WorkflowContractError("MISSING_EVIDENCE", msg("workflow.service.convergenceReviewRequiresEvidence", {}));
     }
     if (review.classification === "semantics-preserving") {
       if (review.route === "resume-new-epoch") {
         if (!review.comparability.comparable || !review.proposedFrame) {
-          throw new WorkflowContractError("GATE_FAILED", "Resuming a new epoch requires a comparable, semantics-preserving frame.");
+          throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.resumingNewEpochRequiresComparable", {}));
         }
       } else if (!["diagnose", "stop"].includes(review.route)) {
-        throw new WorkflowContractError("GATE_FAILED", "A semantics-preserving review has an incompatible route.", { route: review.route });
+        throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.semanticsPreservingReviewIncompatibleRoute", {}), { route: review.route });
       }
     } else if (review.classification === "semantics-changing") {
       if (review.route !== "needs-user" || review.proposedFrame === null) {
-        throw new WorkflowContractError("GATE_FAILED", "Semantics-changing reviews must return the proposed frame to the user.");
+        throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.semanticsChangingReviewsReturnProposed", {}));
       }
     } else if (!["panel", "needs-user", "stop"].includes(review.route)) {
-      throw new WorkflowContractError("GATE_FAILED", "Ambiguous frame reviews must route to a panel, the user, or stop.");
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.service.ambiguousFrameReviewsRoutePanel", {}));
     }
   }
 
@@ -2231,7 +2228,7 @@ export class WorkflowService {
     return this.attempt(() => {
       const receipt = this.requireRun(runId);
       if (!Number.isInteger(expectedRevision) || expectedRevision !== receipt.revision) {
-        throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
+        throw new WorkflowContractError("STALE_REVISION", msg("workflow.service.expectedRevisionMatchCurrentRunRevision", {}), {
           expectedRevision,
           actualRevision: receipt.revision,
         });
@@ -2245,7 +2242,7 @@ export class WorkflowService {
         : undefined;
       if (!this.store.updateRun(receipt, expectedRevision, convergence)) {
         const current = this.store.getRun(runId);
-        throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the current run revision.", {
+        throw new WorkflowContractError("STALE_REVISION", msg("workflow.service.expectedRevisionMatchCurrentRunRevision", {}), {
           expectedRevision,
           actualRevision: current?.revision ?? null,
         });
@@ -2257,7 +2254,7 @@ export class WorkflowService {
   private requireRun(runId: string): WorkflowReceiptV1 {
     const receipt = this.store.getRun(runId);
     if (!receipt) {
-      throw new WorkflowContractError("RUN_NOT_FOUND", "Run was not found in workflow storage.", { runId });
+      throw new WorkflowContractError("RUN_NOT_FOUND", msg("workflow.service.runFoundWorkflowStorage", {}), { runId });
     }
     this.assertReceipt(receipt);
     return receipt;

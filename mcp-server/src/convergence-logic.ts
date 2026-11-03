@@ -9,6 +9,7 @@ import {
   type TaskEnvelopeV1,
   WorkflowContractError,
 } from "../../contracts/types.js";
+import { msg } from "./i18n.js";
 import {
   pathWithin,
   repositoryCheckouts,
@@ -18,11 +19,25 @@ import {
   type SurfaceIdentityV1,
 } from "./workspace-identity.js";
 
+/** canonicalJson subjects with a catalog phrase; any other subject is shown as given. */
+const CANONICAL_SUBJECTS: Readonly<Record<string, string>> = {
+  "Convergence input": "convergenceInput",
+  "Tool arguments": "toolArguments",
+  "CS review": "csReview",
+  "CS provider output": "csProviderOutput",
+  "Engineering result": "engineeringResult",
+  "Engineering provider output": "engineeringProviderOutput",
+  "Input source receipt": "inputSourceReceipt",
+  "Source attestation": "sourceAttestation",
+  "Plan": "plan",
+};
+const canonicalSubject = (label: string) => ({ subject: CANONICAL_SUBJECTS[label] ?? "other", label });
+
 export function canonicalJson(value: unknown, subject = "Convergence input"): string {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
     if (!Number.isFinite(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-finite number.`);
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.convergence.nonFiniteNumber", canonicalSubject(subject)));
     }
     return JSON.stringify(value);
   }
@@ -31,7 +46,7 @@ export function canonicalJson(value: unknown, subject = "Convergence input"): st
     const record = value as Record<string, unknown>;
     return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key], subject)}`).join(",")}}`;
   }
-  throw new WorkflowContractError("INVALID_INPUT", `${subject} contains a non-serializable value.`);
+  throw new WorkflowContractError("INVALID_INPUT", msg("workflow.convergence.nonSerializableValue", canonicalSubject(subject)));
 }
 
 export function convergenceDigest(value: unknown): Sha256Digest {
@@ -357,14 +372,14 @@ export function planRootInsertion(
   if (root.parentRootId) {
     parent = actives.find((active) => active.root.rootId === root.parentRootId) ?? null;
     if (!parent || !GATED_STATES.includes(parent.root.state)) {
-      throw new WorkflowContractError("INVALID_TRANSITION", "Only a gated convergence root may be replaced.", {
+      throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.gatedConvergenceRootReplaced", {}), {
         parentRootId: root.parentRootId,
         parentState: parent?.root.state ?? null,
       });
     }
     match = replacementMatch({ root, identity }, parent);
     if (!match) {
-      throw new WorkflowContractError("INVALID_INPUT", "A replacement root must remain bound to the same workspace.", {
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.convergence.replacementRootRemainBoundSame", {}), {
         parentRootId: root.parentRootId,
         ...(parent.resolved ? {} : { reason: "WORKSPACE_IDENTITY_UNRESOLVED" }),
       });

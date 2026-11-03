@@ -15,6 +15,7 @@ import {
   type WorkflowReceiptV1,
   WorkflowContractError,
 } from "../../contracts/types.js";
+import { msg, type MessageRef } from "./i18n.js";
 import {
   mergePluginUpdateState,
   type PluginUpdateStore,
@@ -126,7 +127,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       return;
     }
     if (!databasePath.trim()) {
-      throw new WorkflowContractError("INVALID_INPUT", "Workflow database path must not be empty.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.store.workflowDatabasePathEmpty", {}));
     }
     if (databasePath !== ":memory:") {
       mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 0o700 });
@@ -149,25 +150,25 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       } catch {
         // Preserve the initialization failure.
       }
-      throw this.storageError("Cannot initialize the workflow database.", cause);
+      throw this.storageError(msg("workflow.store.initializeWorkflowDatabase", {}), cause);
     }
   }
 
   currentTimeMilliseconds(): number {
     // Read the native VFS UTC clock on both processes; Date.now can use process-local calibration.
     // This is wall time; the original strict proof timestamp comparisons still apply.
-    return this.guard("Cannot read the workflow clock.", {}, () => {
+    return this.guard(msg("workflow.store.readWorkflowClock", {}), {}, () => {
       const row = this.database.prepare("SELECT CAST(round(unixepoch('subsec') * 1000) AS INTEGER) AS now_ms").get();
       const now = row?.now_ms;
       if (typeof now !== "number" || !Number.isSafeInteger(now) || now < 0) {
-        throw new WorkflowContractError("MCP_UNAVAILABLE", "The workflow clock did not return valid UTC milliseconds.");
+        throw new WorkflowContractError("MCP_UNAVAILABLE", msg("workflow.store.workflowClockDidReturnValid", {}));
       }
       return now;
     });
   }
 
   getOrCreateSecret(name: string, create: () => string): string {
-    return this.guard("Cannot read or create workflow metadata.", { key: name }, () => this.transaction(() => {
+    return this.guard(msg("workflow.store.readCreateWorkflowMetadata", {}), { key: name }, () => this.transaction(() => {
       const existing = this.database.prepare("SELECT value FROM workflow_metadata WHERE key = ?").get(name) as MetadataRow | undefined;
       if (existing) return existing.value;
       const value = create();
@@ -180,7 +181,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   claimExecutionObservation(observationId: string, consumedAt: string): boolean {
-    return this.guard("Cannot claim the trusted execution observation.", { observationId }, () => this.transaction(() => {
+    return this.guard(msg("workflow.store.claimTrustedExecutionObservation", {}), { observationId }, () => this.transaction(() => {
       // Claims never expire; the legacy expires_at column keeps an empty value.
       const result = this.database.prepare(`
         INSERT OR IGNORE INTO execution_observation_claims(observation_id, expires_at, consumed_at)
@@ -191,7 +192,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   recordCallAdmission(admission: CallAdmission): void {
-    this.guard("Cannot record the host call admission.", {}, () => this.transaction(() => {
+    this.guard(msg("workflow.store.recordHostCallAdmission", {}), {}, () => this.transaction(() => {
       const now = new Date(this.currentTimeMilliseconds());
       // ponytail: day-old unclaimed rows are pruned on the next write; no background sweeper.
       this.database.prepare("DELETE FROM call_admissions WHERE created_at < ?").run(new Date(now.getTime() - 86_400_000).toISOString());
@@ -202,7 +203,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   claimCallAdmission(host: string, callId: string): CallAdmission | null {
-    return this.guard("Cannot claim the host call admission.", {}, () => this.transaction(() => {
+    return this.guard(msg("workflow.store.claimHostCallAdmission", {}), {}, () => this.transaction(() => {
       const row = this.database.prepare(`
         DELETE FROM call_admissions WHERE host = ? AND call_id = ? RETURNING admission_json
       `).get(host, callId) as { admission_json: string } | undefined;
@@ -211,7 +212,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   claimLatestCallAdmission(host: string, callPrefix: string, callerPrefix: string): { admission: CallAdmission | null; callerRows: number } {
-    return this.guard("Cannot claim the host call admission.", {}, () => this.transaction(() => {
+    return this.guard(msg("workflow.store.claimHostCallAdmission", {}), {}, () => this.transaction(() => {
       const under = "host = ? AND substr(call_id, 1, length(?)) = ?";
       const { count } = this.database.prepare(`SELECT count(*) AS count FROM call_admissions WHERE ${under}`)
         .get(host, callerPrefix, callerPrefix) as { count: number };
@@ -223,16 +224,16 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   nextRunSequence(): number {
-    return this.guard("Cannot reserve the next workflow run sequence.", {}, () => this.transaction(() => {
+    return this.guard(msg("workflow.store.reserveNextWorkflowRunSequence", {}), {}, () => this.transaction(() => {
       const row = this.database.prepare("SELECT value FROM workflow_metadata WHERE key = 'run-sequence'").get() as MetadataRow | undefined;
       const valid = !row || /^(0|[1-9][0-9]*)$/.test(row.value);
       const current = row && valid ? Number.parseInt(row.value, 10) : 0;
       if (!valid || !Number.isSafeInteger(current) || current < 0) {
-        throw new WorkflowContractError("INTEGRITY_FAILED", "Workflow run sequence is invalid.", { reason: "RUN_SEQUENCE_INVALID" });
+        throw new WorkflowContractError("INTEGRITY_FAILED", msg("workflow.store.workflowRunSequenceInvalid", {}), { reason: "RUN_SEQUENCE_INVALID" });
       }
       const next = current + 1;
       if (!Number.isSafeInteger(next)) {
-        throw new WorkflowContractError("MCP_UNAVAILABLE", "Workflow run sequence is exhausted.", { reason: "RUN_SEQUENCE_EXHAUSTED" });
+        throw new WorkflowContractError("MCP_UNAVAILABLE", msg("workflow.store.workflowRunSequenceExhausted", {}), { reason: "RUN_SEQUENCE_EXHAUSTED" });
       }
       this.database.prepare(`
         INSERT INTO workflow_metadata (key, value, updated_at)
@@ -245,11 +246,11 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
 
   insertRun(receipt: WorkflowReceiptV1): void {
     const now = new Date().toISOString();
-    this.guard("Cannot persist the workflow run.", { runId: receipt.runId }, () => this.insertRunRow(receipt, now));
+    this.guard(msg("workflow.store.persistWorkflowRun", {}), { runId: receipt.runId }, () => this.insertRunRow(receipt, now));
   }
 
   getRun(runId: string): WorkflowReceiptV1 | null {
-    return this.guard("Cannot read the workflow run.", { runId }, () => {
+    return this.guard(msg("workflow.store.readWorkflowRun", {}), { runId }, () => {
       const row = this.database.prepare(`
         SELECT revision, receipt_json
         FROM workflow_runs
@@ -258,7 +259,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       if (!row) return null;
       const receipt = JSON.parse(row.receipt_json) as WorkflowReceiptV1;
       if (receipt.runId !== runId || receipt.revision !== row.revision) {
-        throw new WorkflowContractError("INTEGRITY_FAILED", "Stored workflow receipt metadata does not match its payload.", {
+        throw new WorkflowContractError("INTEGRITY_FAILED", msg("workflow.store.storedWorkflowReceiptMetadataMatch", {}), {
           reason: "RECEIPT_METADATA_MISMATCH",
           runId,
           storedRevision: row.revision,
@@ -275,7 +276,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     expectedRevision: number,
     convergence?: { root: ConvergenceRootV1; expectedRootRevision: number; outcome: AttemptOutcomeV1 },
   ): boolean {
-    return this.guard("Cannot update the workflow run.", { runId: receipt.runId }, () => this.transaction(() => {
+    return this.guard(msg("workflow.store.updateWorkflowRun", {}), { runId: receipt.runId }, () => this.transaction(() => {
       const result = this.database.prepare(`
         UPDATE workflow_runs
         SET revision = ?, state = ?, receipt_json = ?, updated_at = ?
@@ -290,7 +291,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       );
       if (Number(result.changes) !== 1) return false;
       if (!convergence) return true;
-      if (!this.casRoot(convergence.root, convergence.expectedRootRevision)) throw new WorkflowContractError("STALE_REVISION", "Convergence root changed while recording the workflow outcome.");
+      if (!this.casRoot(convergence.root, convergence.expectedRootRevision)) throw new WorkflowContractError("STALE_REVISION", msg("workflow.store.convergenceRootChangedWhileRecording", {}));
       const attemptUpdate = this.database.prepare(`
         UPDATE convergence_attempts
         SET state = ?, outcome_json = ?, updated_at = ?
@@ -301,16 +302,16 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         convergence.outcome.recordedAt,
         receipt.runId,
       );
-      if (Number(attemptUpdate.changes) !== 1) throw new WorkflowContractError("LEASE_CONFLICT", "Guarded attempt outcome was already recorded or is missing.", { runId: receipt.runId });
+      if (Number(attemptUpdate.changes) !== 1) throw new WorkflowContractError("LEASE_CONFLICT", msg("workflow.store.guardedAttemptOutcomeRecordedMissing", {}), { runId: receipt.runId });
       return true;
     }));
   }
 
   insertConvergenceRoot(root: ConvergenceRootV1): RootConflict | null {
-    return this.guard("Cannot persist the convergence root.", { rootId: root.rootId }, () => this.transaction(() => {
+    return this.guard(msg("workflow.store.persistConvergenceRoot", {}), { rootId: root.rootId }, () => this.transaction(() => {
       const parentRow = root.parentRootId ? this.rootRow(root.parentRootId) : undefined;
       if (root.parentRootId && !parentRow) {
-        throw new WorkflowContractError("INVALID_INPUT", "Parent convergence root was not found.", { rootId: root.parentRootId });
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.store.parentConvergenceRootFound", {}), { rootId: root.parentRootId });
       }
       // ponytail: every active root is compared in process; index the derived identity if a ledger ever holds thousands.
       const rows = this.database.prepare(`
@@ -356,7 +357,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   getConvergenceSnapshot(rootId: string): ConvergenceSnapshot | null {
-    return this.guard("Cannot read convergence state.", { rootId },
+    return this.guard(msg("workflow.store.readConvergenceState", {}), { rootId },
       () => this.transaction(() => this.readConvergenceSnapshot(rootId), "BEGIN;"));
   }
 
@@ -367,7 +368,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         try {
           const result = operation();
           if (typeof (result as { then?: unknown } | null | undefined)?.then === "function") {
-            throw new WorkflowContractError("INVALID_INPUT", "Workflow transaction callbacks must be synchronous.");
+            throw new WorkflowContractError("INVALID_INPUT", msg("workflow.store.workflowTransactionCallbacksSynchronous", {}));
           }
           return result;
         } catch (cause) {
@@ -377,7 +378,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       });
     } catch (cause) {
       if (callbackFailed || cause instanceof WorkflowContractError) throw cause;
-      throw this.storageError("Cannot execute the workflow transaction.", cause);
+      throw this.storageError(msg("workflow.store.executeWorkflowTransaction", {}), cause);
     }
   }
 
@@ -399,7 +400,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   updateConvergenceRoot(root: ConvergenceRootV1, expectedRevision: number, review?: ConvergenceReviewV1): boolean {
-    return this.guard("Cannot update the convergence root.", { rootId: root.rootId }, () => this.transaction(() => {
+    return this.guard(msg("workflow.store.updateConvergenceRoot", {}), { rootId: root.rootId }, () => this.transaction(() => {
       const current = this.rootRow(root.rootId);
       if (!current || current.revision !== expectedRevision) return false;
       const previous = JSON.parse(current.root_json) as ConvergenceRootV1;
@@ -421,7 +422,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     proposal: AttemptProposalV1,
     lease: AttemptLeaseV1,
   ): boolean {
-    return this.guard("Cannot claim the convergence attempt lease.", { rootId: root.rootId }, () => this.transaction(() => {
+    return this.guard(msg("workflow.store.claimConvergenceAttemptLease", {}), { rootId: root.rootId }, () => this.transaction(() => {
       // No write before the CAS: transaction() commits whatever ran before a false return.
       if (!this.casRoot(root, expectedRevision)) return false;
       // Leases do not expire by time. A newer claim on the current root supersedes an unstarted one.
@@ -452,11 +453,11 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         lease.expiresAt,
       );
       return true;
-    }), "The convergence database is busy; read status before retrying the lease claim.");
+    }), msg("workflow.store.convergenceDatabaseBusyReadStatus", {}));
   }
 
   getAttemptLease(leaseId: string): Omit<GuardedRunBinding, "outcome"> | null {
-    return this.guard("Cannot read the convergence attempt lease.", { leaseId }, () => {
+    return this.guard(msg("workflow.store.readConvergenceAttemptLease", {}), { leaseId }, () => {
       const row = this.leaseRow(leaseId);
       if (!row) return null;
       const lease = JSON.parse(row.lease_json) as AttemptLeaseV1;
@@ -473,7 +474,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     expectedRootRevision: number,
     consumedAt: string,
   ): GuardedRunBinding | null {
-    return this.guard("Cannot start the guarded workflow run.", { leaseId }, () => this.transaction(() => {
+    return this.guard(msg("workflow.store.startGuardedWorkflowRun", {}), { leaseId }, () => this.transaction(() => {
       const leaseRow = this.leaseRow(leaseId);
       if (!leaseRow) return null;
       const lease = JSON.parse(leaseRow.lease_json) as AttemptLeaseV1;
@@ -502,11 +503,11 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
         VALUES (?, ?, ?, ?, ?)
       `).run(receipt.runId, root.rootId, lease.leaseId, lease.epoch, lease.ordinal);
       return { root, proposal, lease, outcome: null };
-    }), "The convergence database is busy or the lease was consumed concurrently.");
+    }), msg("workflow.store.convergenceDatabaseBusyLeaseConsumed", {}));
   }
 
   getGuardedRunBinding(runId: string): GuardedRunBinding | null {
-    return this.guard("Cannot read the guarded workflow binding.", { runId }, () => {
+    return this.guard(msg("workflow.store.readGuardedWorkflowBinding", {}), { runId }, () => {
       const link = this.database.prepare(`SELECT root_id, lease_id FROM workflow_attempt_links WHERE run_id = ?`).get(runId) as WorkflowAttemptLinkRow | undefined;
       if (!link) return null;
       const rootRow = this.rootRow(link.root_id);
@@ -523,11 +524,11 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   getPluginUpdateState(targetId: string): StoredPluginUpdateState | null {
-    return this.guard("Cannot read plugin update state.", { targetId }, () => this.readPluginUpdateStateRow(targetId));
+    return this.guard(msg("workflow.store.readPluginUpdateState", {}), { targetId }, () => this.readPluginUpdateStateRow(targetId));
   }
 
   putPluginUpdateState(state: StoredPluginUpdateState): void {
-    this.guard("Cannot persist plugin update state.", { targetId: state.targetId }, () => this.transaction(() => {
+    this.guard(msg("workflow.store.persistPluginUpdateState", {}), { targetId: state.targetId }, () => this.transaction(() => {
       const merged = mergePluginUpdateState(this.readPluginUpdateStateRow(state.targetId), state);
       this.database.prepare(`
       INSERT INTO plugin_update_state (
@@ -567,7 +568,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   claimPluginUpdateNotice(targetId: string, latestVersion: string, notifiedAt: string): boolean {
-    return this.guard("Cannot claim plugin update notice.", { targetId, latestVersion }, () => this.transaction(() => {
+    return this.guard(msg("workflow.store.claimPluginUpdateNotice", {}), { targetId, latestVersion }, () => this.transaction(() => {
       const state = this.readPluginUpdateStateRow(targetId);
       if (
         !state
@@ -603,7 +604,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       for (const rootId of [...new Set(rootIds)].sort()) {
         const row = readState.get(rootId) as { state: string } | undefined;
         if (row && ["open", "needs-review", "needs-user"].includes(row.state)) {
-          throw new WorkflowContractError("STALE_REVISION", "A continuity cleanup root became active after preview.", { rootId });
+          throw new WorkflowContractError("STALE_REVISION", msg("workflow.store.continuityCleanupRootBecameActive", {}), { rootId });
         }
       }
       return operation();
@@ -611,7 +612,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   previewCleanup(cutoff: string): WorkflowCleanupPreview {
-    return this.guard("Cannot preview workflow state cleanup.", {}, () => this.transaction(() => {
+    return this.guard(msg("workflow.store.previewWorkflowStateCleanup", {}), {}, () => this.transaction(() => {
     const roots = this.database.prepare(`
       SELECT root_id, revision, state, updated_at
       FROM convergence_roots
@@ -684,7 +685,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   claimCleanupPlan(planId: string, planDigest: string, claimedAt: string): boolean {
-    return this.guard("Cannot claim the state cleanup plan.", { planId }, () => {
+    return this.guard(msg("workflow.store.claimStateCleanupPlan", {}), { planId }, () => {
       const result = this.database.prepare(`
         INSERT OR IGNORE INTO state_cleanup_claims(plan_id, plan_digest, claimed_at)
         VALUES (?, ?, ?)
@@ -696,9 +697,9 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   backupTo(targetPath: string): void {
     if (this.shared) throw new Error("SHARED_BACKUP_OWNER_REQUIRED: a shared database backup requires an explicit owner contract.");
     if (this.databasePath === ":memory:") {
-      throw new WorkflowContractError("INVALID_INPUT", "An in-memory workflow database cannot be cleaned destructively.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.store.memoryWorkflowDatabaseCleanedDestructively", {}));
     }
-    this.guard("Cannot create a verified workflow cleanup backup.", { targetPath }, () => {
+    this.guard(msg("workflow.store.createVerifiedWorkflowCleanupBackup", {}), { targetPath }, () => {
       this.database.prepare("VACUUM INTO ?").run(targetPath);
       const backup = new DatabaseSync(targetPath, { readOnly: true });
       try {
@@ -711,7 +712,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   executeCleanup(preview: WorkflowCleanupPreview): { roots: number; runs: number } {
-    return this.guard("Cannot execute workflow state cleanup.", {}, () => this.transaction(() => {
+    return this.guard(msg("workflow.store.executeWorkflowStateCleanup", {}), {}, () => this.transaction(() => {
       const verifyRoot = this.database.prepare(`
         SELECT state, revision, updated_at FROM convergence_roots WHERE root_id = ?
       `);
@@ -721,29 +722,29 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       for (const root of preview.roots) {
         const row = verifyRoot.get(root.rootId) as { state: string; revision: number; updated_at: string } | undefined;
         if (!row || row.state !== root.state || row.revision !== root.revision || row.updated_at !== root.updatedAt) {
-          throw new WorkflowContractError("STALE_REVISION", "A cleanup root changed after preview.", { rootId: root.rootId });
+          throw new WorkflowContractError("STALE_REVISION", msg("workflow.store.cleanupRootChangedAfterPreview", {}), { rootId: root.rootId });
         }
         const actualRunIds = (this.database.prepare(`
           SELECT run_id FROM workflow_attempt_links WHERE root_id = ? ORDER BY run_id
         `).all(root.rootId) as unknown as Array<{ run_id: string }>).map((item) => item.run_id);
         if (JSON.stringify(actualRunIds) !== JSON.stringify(root.runIds)) {
-          throw new WorkflowContractError("STALE_REVISION", "A cleanup root's linked runs changed after preview.", { rootId: root.rootId });
+          throw new WorkflowContractError("STALE_REVISION", msg("workflow.store.cleanupRootLinkedRunsChanged", {}), { rootId: root.rootId });
         }
         const expected = preview.linkedRuns.find(item => item.rootId === root.rootId);
         if (!expected || JSON.stringify(expected.runs.map(run => run.runId)) !== JSON.stringify(root.runIds)) {
-          throw new WorkflowContractError("STALE_REVISION", "A cleanup root's linked receipt snapshot is missing.", { rootId: root.rootId });
+          throw new WorkflowContractError("STALE_REVISION", msg("workflow.store.cleanupRootLinkedReceiptMissing", {}), { rootId: root.rootId });
         }
         for (const run of expected.runs) {
           const row = verifyRun.get(run.runId) as { state: string; revision: number; updated_at: string } | undefined;
           if (!row || row.state !== run.state || row.revision !== run.revision || row.updated_at !== run.updatedAt) {
-            throw new WorkflowContractError("STALE_REVISION", "A cleanup linked workflow run changed after preview.", { rootId: root.rootId, runId: run.runId });
+            throw new WorkflowContractError("STALE_REVISION", msg("workflow.store.cleanupLinkedWorkflowRunChanged", {}), { rootId: root.rootId, runId: run.runId });
           }
         }
       }
       for (const run of preview.standaloneRuns) {
         const row = verifyRun.get(run.runId) as { state: string; revision: number; updated_at: string } | undefined;
         if (!row || row.state !== run.state || row.revision !== run.revision || row.updated_at !== run.updatedAt) {
-          throw new WorkflowContractError("STALE_REVISION", "A cleanup workflow run changed after preview.", { runId: run.runId });
+          throw new WorkflowContractError("STALE_REVISION", msg("workflow.store.cleanupWorkflowRunChangedAfter", {}), { runId: run.runId });
         }
       }
 
@@ -784,7 +785,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       // Read the migration version only after the writer lock is acquired.
       const row = { user_version: this.getSchemaVersion() };
       if (row.user_version > SCHEMA_VERSION) {
-        throw new WorkflowContractError("MCP_UNAVAILABLE", "Workflow database schema is newer than this server supports.", {
+        throw new WorkflowContractError("MCP_UNAVAILABLE", msg("workflow.store.workflowDatabaseSchemaNewerThan", {}), {
           reason: "SCHEMA_NEWER",
           supportedVersion: SCHEMA_VERSION,
           actualVersion: row.user_version,
@@ -1130,7 +1131,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
    * error; with contentionMessage, a busy database or a duplicate issued lease
    * becomes LEASE_CONFLICT instead.
    */
-  private guard<T>(message: string, details: Record<string, unknown>, operation: () => T, contentionMessage?: string): T {
+  private guard<T>(message: MessageRef, details: Record<string, unknown>, operation: () => T, contentionMessage?: MessageRef): T {
     try {
       return operation();
     } catch (cause) {
@@ -1153,7 +1154,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
    * reason. Details carry a fixed-vocabulary reason, a redacted cause and the SQLite result code, never
    * the database path or the driver message; the actual error stays a private cause link.
    */
-  private storageError(message: string, cause: unknown, details: Record<string, unknown> = {}): WorkflowContractError {
+  private storageError(message: MessageRef, cause: unknown, details: Record<string, unknown> = {}): WorkflowContractError {
     const errcode = typeof cause === "object" && cause !== null ? (cause as { errcode?: unknown }).errcode : undefined;
     const ownReason = cause instanceof WorkflowContractError ? cause.details?.reason : undefined;
     return retainFailureCause(new WorkflowContractError(cause instanceof WorkflowContractError ? cause.code : "MCP_UNAVAILABLE", message, {

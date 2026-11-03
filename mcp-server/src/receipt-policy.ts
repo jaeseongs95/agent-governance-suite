@@ -7,6 +7,7 @@ import {
   WORKFLOW_STATE,
   WorkflowContractError,
 } from "../../contracts/types.js";
+import { msg } from "./i18n.js";
 
 const DIGEST = /^(?:sha256:)?[a-f0-9]{64}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -71,7 +72,7 @@ function isSafeScalar(value: string): boolean {
 
 function assertSafeString(value: string, fixedTokens: Set<string>, location: string, allowEmpty = false): void {
   if ((allowEmpty && value === "") || fixedTokens.has(value) || PROTOCOL_TOKENS.has(value) || isSafeScalar(value)) return;
-  throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt policy rejected free text.", {
+  throw new WorkflowContractError("INVALID_INPUT", msg("workflow.receiptPolicy.referenceReceiptPolicyRejectedFree", {}), {
     location,
   });
 }
@@ -102,7 +103,7 @@ function assertSafeError(
   if (error.details) {
     for (const [key, value] of Object.entries(error.details)) {
       if (!ERROR_DETAIL_KEYS.has(key)) {
-        throw new WorkflowContractError("INVALID_INPUT", "Reference-only error details contain an undeclared field.", {
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.receiptPolicy.referenceErrorDetailsContainUndeclared", {}), {
           location: `${location}/details/${key}`,
         });
       }
@@ -137,7 +138,7 @@ export function assertReceiptPolicy(
   ]);
   for (const [index, artifact] of result.output.artifacts.entries()) {
     if (!allowedArtifacts.has(artifact.artifactId)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt contains an undeclared artifact.", {
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.receiptPolicy.referenceReceiptContainsUndeclaredArtifact", {}), {
         stageId: stage.stageId,
         artifactId: artifact.artifactId,
       });
@@ -145,7 +146,7 @@ export function assertReceiptPolicy(
     assertSafeString(artifact.schemaId, fixedTokens, `/output/artifacts/${index}/schemaId`);
     assertSafeString(artifact.locator, fixedTokens, `/output/artifacts/${index}/locator`);
     if (!DIGEST.test(artifact.digest) || !DIGEST.test(artifact.targetDigest)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Reference-only artifact digests must be opaque SHA-256 references.", {
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.receiptPolicy.referenceArtifactDigestsOpaqueSHA", {}), {
         stageId: stage.stageId,
         artifactId: artifact.artifactId,
       });
@@ -154,7 +155,7 @@ export function assertReceiptPolicy(
 
   for (const [index, evidence] of result.evidence.entries()) {
     if (!allowedArtifacts.has(evidence.artifactId)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Reference-only receipt contains undeclared evidence.", {
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.receiptPolicy.referenceReceiptContainsUndeclaredEvidence", {}), {
         stageId: stage.stageId,
         artifactId: evidence.artifactId,
       });
@@ -174,7 +175,7 @@ export function assertReceiptPolicy(
     (evidence) => evidence.artifactId === artifactId && evidence.verified && isOpaqueReference(evidence.locator),
   ));
   if (missingExternalInputs.length > 0) {
-    throw new WorkflowContractError("MISSING_EVIDENCE", "Reference-only stage prerequisites require verified artifact references.", {
+    throw new WorkflowContractError("MISSING_EVIDENCE", msg("workflow.receiptPolicy.referenceStagePrerequisitesRequireVerified", {}), {
       stageId: stage.stageId,
       missingInputs: missingExternalInputs,
     });
@@ -188,7 +189,7 @@ export function assertReceiptPolicy(
       const priorResult = receipt.stageResults.find((candidate) => candidate.stageId === priorStage.stageId);
       const actorId = priorResult && jsonPointer(priorResult.output, priorStage.receiptPolicy!.actorIdPointer!);
       if (typeof actorId !== "string" || actorId === NIL_UUID || !UUID.test(actorId)) {
-        throw new WorkflowContractError("MISSING_EVIDENCE", "A prior policy stage has no valid actor binding.", {
+        throw new WorkflowContractError("MISSING_EVIDENCE", msg("workflow.receiptPolicy.priorPolicyStageValidActor", {}), {
           stageId: stage.stageId,
           conflictingStageId: priorStage.stageId,
         });
@@ -200,7 +201,7 @@ export function assertReceiptPolicy(
       || actorIds.length !== expectedActorIds.length
       || new Set(actorIds).size !== actorIds.length
       || actorIds.some((actorId, index) => actorId !== expectedActorIds[index])) {
-      throw new WorkflowContractError("GATE_FAILED", "Receipt actor IDs must exactly match prior policy actors in plan order.", {
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.receiptPolicy.receiptActorIDsExactlyMatch", {}), {
         stageId: stage.stageId,
         actorIdsPointer: policy.actorIdsPointer,
       });
@@ -210,7 +211,7 @@ export function assertReceiptPolicy(
   if (!policy.actorIdPointer) return;
   const actorId = jsonPointer(result.output, policy.actorIdPointer);
   if (typeof actorId !== "string" || actorId === NIL_UUID || !UUID.test(actorId)) {
-    throw new WorkflowContractError("INVALID_INPUT", "Receipt actor ID must be a nonempty canonical lowercase UUID.", {
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.receiptPolicy.receiptActorIDNonemptyCanonical", {}), {
       stageId: stage.stageId,
       actorIdPointer: policy.actorIdPointer,
     });
@@ -220,7 +221,7 @@ export function assertReceiptPolicy(
     const priorStage = receipt.plan.stages.find((candidate) => candidate.stageId === priorResult.stageId);
     if (!priorStage?.receiptPolicy?.actorIdPointer) continue;
     if (jsonPointer(priorResult.output, priorStage.receiptPolicy.actorIdPointer) === actorId) {
-      throw new WorkflowContractError("GATE_FAILED", "Receipt actor ID must be unique across policy stages in this run.", {
+      throw new WorkflowContractError("GATE_FAILED", msg("workflow.receiptPolicy.receiptActorIDUniqueAcross", {}), {
         stageId: stage.stageId,
         conflictingStageId: priorStage.stageId,
       });

@@ -49,6 +49,16 @@ import {
   type WorkflowStatusSummaryV1,
   WorkflowContractError,
 } from "../../contracts/types.js";
+import { msg } from "./i18n.js";
+
+/** Schema labels with a catalog phrase; any other label is shown as given. */
+const SCHEMA_SUBJECTS: Readonly<Record<string, string>> = {
+  "provider result": "providerResult",
+  "provider output": "providerOutput",
+  "reference-only output": "referenceOnlyOutput",
+  "deliberation decision record": "decisionRecord",
+};
+const schemaSubject = (label: string) => ({ subject: SCHEMA_SUBJECTS[label] ?? "other", label });
 
 type JsonSchema = Record<string, unknown>;
 const addFormats = addFormatsModule as unknown as FormatsPlugin;
@@ -159,10 +169,10 @@ export class ContractValidator {
   private assert<T>(name: keyof ContractValidator["validators"], value: unknown): T {
     const validate = this.validators[name];
     if (!validate) {
-      throw new WorkflowContractError("INVALID_INPUT", `Validator '${name}' is not registered.`);
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.schema.validatorNotRegistered", { name }));
     }
     if (!validate(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", `${name} does not match its v1 contract.`, {
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.schema.contractMismatch", { name }), {
         validationErrors: errorText(validate.errors),
       });
     }
@@ -384,7 +394,7 @@ export class ContractValidator {
       if ((record.type === "object" || record.properties) && record.additionalProperties !== false) {
         throw new WorkflowContractError(
           "INVALID_INPUT",
-          "A reference-only provider output schema must close every declared object.",
+          msg("workflow.schema.referenceProviderOutputSchemaClose", {}),
           { schemaPath: reference.path },
         );
       }
@@ -423,7 +433,7 @@ export class ContractValidator {
     for (const schema of schemas.values()) ajv.addSchema(schema);
     const validate = (targetId ? ajv.getSchema(targetId) : undefined) ?? ajv.compile(targetSchema);
     if (!validate(value)) {
-      throw new WorkflowContractError("INVALID_INPUT", `${label} does not match its declared schema.`, {
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.schema.declaredSchemaMismatch", schemaSubject(label)), {
         schemaPath: reference.path,
         validationErrors: errorText(validate.errors),
       });
@@ -439,14 +449,14 @@ export class ContractValidator {
     const root = path.resolve(rootDirectory);
     const schemaPath = path.resolve(root, reference.path);
     if (schemaPath !== root && !schemaPath.startsWith(`${root}${path.sep}`)) {
-      throw new WorkflowContractError("INVALID_INPUT", `${label} schema escapes the plugin root.`, {
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.schema.schemaEscapesPluginRoot", schemaSubject(label)), {
         schemaPath: reference.path,
       });
     }
     const raw = readFileSync(schemaPath);
     const digest = `sha256:${createHash("sha256").update(raw).digest("hex")}`;
     if (digest !== reference.digest) {
-      throw new WorkflowContractError("STALE_REVISION", `${label} schema changed after planning.`, {
+      throw new WorkflowContractError("STALE_REVISION", msg("workflow.schema.schemaChangedAfterPlanning", schemaSubject(label)), {
         schemaPath: reference.path,
         expectedDigest: reference.digest,
         actualDigest: digest,

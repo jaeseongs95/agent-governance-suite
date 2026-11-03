@@ -11,6 +11,12 @@
     },
     "server": {
       "sourceLocale": "en"
+    },
+    "workflow": {
+      "sourceLocale": "en"
+    },
+    "workflowRecord": {
+      "sourceLocale": "ko"
     }
   }
 }

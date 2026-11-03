@@ -3,6 +3,7 @@ import { closeSync, constants, fstatSync, openSync, readSync } from "node:fs";
 import path from "node:path";
 
 import { type StageOutputFileV1, WorkflowContractError } from "../../contracts/types.js";
+import { msg } from "./i18n.js";
 
 /** Provider outputs larger than this are not accepted by reference either. */
 export const MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
@@ -10,7 +11,7 @@ export const MAX_STAGE_OUTPUT_FILE_BYTES = 16 * 1024 * 1024;
 export type StageOutputFileReader = (locator: string) => Buffer;
 
 function unreadable(locator: string): WorkflowContractError {
-  return new WorkflowContractError("INVALID_INPUT", "outputFile.locator is not a readable regular local file of at most 16 MiB.", { locator });
+  return new WorkflowContractError("INVALID_INPUT", msg("workflow.outputFile.outputFileLocatorReadableRegularLocal", {}), { locator });
 }
 
 /**
@@ -20,10 +21,10 @@ function unreadable(locator: string): WorkflowContractError {
  */
 export function readLocalStageOutputFile(locator: string): Buffer {
   if (!path.isAbsolute(locator)) {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must be an absolute local path.");
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.outputFile.outputFileLocatorAbsoluteLocalPath", {}));
   }
   if (/^[\\/]{2}/u.test(locator)) {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile.locator must not be a network path.");
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.outputFile.outputFileLocatorNetworkPath", {}));
   }
   let descriptor: number | null = null;
   try {
@@ -60,7 +61,7 @@ export function loadStageOutputFile(
   const digest = `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
   if (digest !== reference.digest) {
     // The file's actual digest is not echoed back.
-    throw new WorkflowContractError("INTEGRITY_FAILED", "outputFile content does not match its digest.", {
+    throw new WorkflowContractError("INTEGRITY_FAILED", msg("workflow.outputFile.outputFileContentMatchDigest", {}), {
       locator: reference.locator,
       expected: reference.digest,
     });
@@ -70,10 +71,10 @@ export function loadStageOutputFile(
     // Files written by Windows tools may start with a byte order mark.
     parsed = JSON.parse(bytes.toString("utf8").replace(/^\uFEFF/u, ""));
   } catch {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile is not valid JSON.", { locator: reference.locator });
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.outputFile.outputFileValidJSON", {}), { locator: reference.locator });
   }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new WorkflowContractError("INVALID_INPUT", "outputFile must contain a JSON object.", { locator: reference.locator });
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.outputFile.outputFileContainJSONObject", {}), { locator: reference.locator });
   }
   return parsed as Record<string, unknown>;
 }

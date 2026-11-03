@@ -22,6 +22,7 @@ import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { createMcpServer } from "../../mcp-server/src/server.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { WorkflowService, type MinimalWorkflowStartV1 } from "../../mcp-server/src/workflow-service.js";
+import { recordMessageRef } from "../../mcp-server/src/workflow-record-messages.js";
 import { codexCallMeta } from "../helpers/caller.js";
 
 // Design docs/ags30-phase-check-design.md 7.5-7.6: start_workflow plans, opens, claims and starts in one transaction.
@@ -85,10 +86,22 @@ async function harness() {
       return (database.prepare("SELECT workspace_id FROM convergence_roots").all() as Array<{ workspace_id: string }>).map(row => row.workspace_id);
     } finally { database.close(); }
   };
-  return { service, continuity, call, counts, writeFile, stop, reportCwd, rootWorkspaces };
+  const rootConstraints = () => {
+    const database = new DatabaseSync(workflowPath, { readOnly: true });
+    try {
+      return (database.prepare("SELECT root_json FROM convergence_roots").all() as Array<{ root_json: string }>)
+        .flatMap(row => (JSON.parse(row.root_json) as { taskEnvelope: { constraints: string[] } }).taskEnvelope.constraints);
+    } finally { database.close(); }
+  };
+  return { service, continuity, call, counts, writeFile, stop, reportCwd, rootWorkspaces, rootConstraints };
 }
 
 const minimal = { goal: "Change three files.", stages: ["minimal-implementation"], acceptanceCriteria: ["The change works."], workspace: repo };
+/** The label is display text in the request's locale; the key and the count are the contract. */
+const expectLateAdoption = (lateAdoption: MinimalWorkflowStartV1["lateAdoption"] | undefined, priorFileCount: number) => {
+  expect(lateAdoption).toMatchObject({ messageKey: "workflowRecord.lateAdoption.label", params: {}, priorFileCount });
+  expect(["Late adoption, evidence unverified", "사후 편입·근거 미검증"]).toContain(lateAdoption?.label);
+};
 const isDeny = (output: Record<string, unknown>) => (output.hookSpecificOutput as Record<string, unknown> | undefined)?.permissionDecision === "deny";
 
 describe("start_workflow minimal start", () => {
@@ -105,11 +118,15 @@ describe("start_workflow minimal start", () => {
   });
 
   it("marks edits made earlier in the window as late adoption and lifts the lock", async () => {
-    const { call, writeFile } = await harness();
+    const { call, writeFile, rootConstraints } = await harness();
     for (const name of ["a.ts", "b.ts"]) expect(writeFile(name)).toEqual({});
     expect(isDeny(writeFile("c.ts"))).toBe(true);
     const started = await call<MinimalWorkflowStartV1>(minimal);
-    expect(started.data?.lateAdoption).toEqual({ label: "사후 편입·근거 미검증", priorFileCount: 2 });
+    expectLateAdoption(started.data?.lateAdoption, 2);
+    // The record keeps the root-locale text, which maps back to its key and params (docs/i18n-design.md 3.2).
+    const [constraint] = rootConstraints();
+    expect(constraint).toBe("Late adoption, evidence unverified: product files in this window had already changed before the workflow started (count: 2).");
+    expect(recordMessageRef(constraint!)).toEqual({ key: "workflowRecord.lateAdoption.constraint", params: { priorFileCount: 2 } });
     expect(writeFile("c.ts")).toEqual({});
   });
 
@@ -120,7 +137,7 @@ describe("start_workflow minimal start", () => {
     expect(stop()).toEqual({});
     expect(isDeny(writeFile("a.ts"))).toBe(true);
     const started = await call<MinimalWorkflowStartV1>(minimal);
-    expect(started.data?.lateAdoption).toEqual({ label: "사후 편입·근거 미검증", priorFileCount: 2 });
+    expectLateAdoption(started.data?.lateAdoption, 2);
     expect(writeFile("c.ts")).toEqual({});
   });
 

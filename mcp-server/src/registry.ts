@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { type RoutedSkillProviderV2, type SkillDescriptorV2, WorkflowContractError } from "../../contracts/types.js";
+import { msg } from "./i18n.js";
 import { ContractValidator } from "./schema-validator.js";
 
 interface RegistryDocument {
@@ -26,13 +27,13 @@ export class FileSkillRegistry {
     try {
       raw = JSON.parse(readFileSync(this.registryPath, "utf8")) as RegistryDocument;
     } catch (cause) {
-      throw new WorkflowContractError("INVALID_INPUT", "Cannot read the skill registry.", {
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.registry.readSkillRegistry", {}), {
         registryPath: this.registryPath,
         cause: cause instanceof Error ? cause.message : String(cause),
       });
     }
     if (raw.schemaVersion !== "2.0.0" || !Array.isArray(raw.skills)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Registry must be a v2 object with a skills array.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.registry.registryV2ObjectSkillsArray", {}));
     }
 
     const descriptors = raw.skills.map((candidate) => this.validator.skillDescriptorV2(candidate));
@@ -41,7 +42,7 @@ export class FileSkillRegistry {
     for (const descriptor of descriptors) {
       this.assertDescriptorPath(descriptor);
       if (skillIds.has(descriptor.skillId)) {
-        throw new WorkflowContractError("INVALID_INPUT", "Registry contains duplicate skillId values.", {
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.registry.registryContainsDuplicateSkillIdValues", {}), {
           skillId: descriptor.skillId,
         });
       }
@@ -68,7 +69,7 @@ export class FileSkillRegistry {
 
   private assertDescriptorPath(descriptor: SkillDescriptorV2): void {
     if (descriptor.path !== `./${descriptor.skillId}`) {
-      throw new WorkflowContractError("INVALID_INPUT", "Registry path must match skillId.", {
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.registry.registryPathMatchSkillId", {}), {
         skillId: descriptor.skillId,
         path: descriptor.path,
       });
@@ -78,7 +79,7 @@ export class FileSkillRegistry {
       const bindings = new Set(provider.inputBindings.map((binding) => binding.targetArtifact));
       for (const artifact of provider.requiredInputArtifacts) {
         if (!bindings.has(artifact)) {
-          throw new WorkflowContractError("INVALID_INPUT", "Every required input artifact needs an input binding.", {
+          throw new WorkflowContractError("INVALID_INPUT", msg("workflow.registry.everyRequiredInputArtifactNeeds", {}), {
             skillId: descriptor.skillId,
             phase: provider.phase,
             artifact,
@@ -89,13 +90,13 @@ export class FileSkillRegistry {
       for (const schemaPath of [provider.outputSchema, provider.resultSchema, ...(gateSchema ? [gateSchema] : [])]) {
         const resolved = path.resolve(this.rootDirectory, schemaPath);
         if (resolved !== this.rootDirectory && !resolved.startsWith(`${this.rootDirectory}${path.sep}`)) {
-          throw new WorkflowContractError("INVALID_INPUT", "Provider schema path escapes the plugin root.", {
+          throw new WorkflowContractError("INVALID_INPUT", msg("workflow.registry.providerSchemaPathEscapesPlugin", {}), {
             skillId: descriptor.skillId,
             schemaPath,
           });
         }
         if (schemaPath.startsWith("skills/") && resolved !== skillRoot && !resolved.startsWith(`${skillRoot}${path.sep}`)) {
-          throw new WorkflowContractError("INVALID_INPUT", "Skill-local schema path must remain inside its skill directory.", {
+          throw new WorkflowContractError("INVALID_INPUT", msg("workflow.registry.skillLocalSchemaPathRemain", {}), {
             skillId: descriptor.skillId,
             schemaPath,
           });
@@ -108,7 +109,7 @@ export class FileSkillRegistry {
     try {
       return `sha256:${createHash("sha256").update(readFileSync(path.resolve(this.rootDirectory, relativePath))).digest("hex")}`;
     } catch (cause) {
-      throw new WorkflowContractError("INVALID_INPUT", "Cannot read a provider schema.", {
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.registry.readProviderSchema", {}), {
         schemaPath: relativePath,
         cause: cause instanceof Error ? cause.message : String(cause),
       });
@@ -133,7 +134,7 @@ export class FileSkillRegistry {
       if (candidates.length < 2) continue;
       const priorities = new Set(candidates.map((candidate) => candidate.priority));
       if (priorities.size !== candidates.length || candidates.some((candidate) => candidate.selectionCriteria.length === 0)) {
-        throw new WorkflowContractError("INVALID_INPUT", "Overlapping capability providers require unique priorities and selection criteria.", {
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.registry.overlappingCapabilityProvidersRequireUnique", {}), {
           capability,
           providers: candidates.map((candidate) => candidate.providerKey),
         });

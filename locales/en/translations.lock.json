@@ -1,3 +1,5 @@
 {
-  "hooks.editGate.denied": "cbd857ccd2afa218d7d5380c621de901d54b05d3f2769c1c2e6d731ce43807a3"
+  "hooks.editGate.denied": "cbd857ccd2afa218d7d5380c621de901d54b05d3f2769c1c2e6d731ce43807a3",
+  "workflowRecord.lateAdoption.constraint": "08367960ecaf5f72749e07035989012f15bc0acd0a54534994e44f289d0fa70c",
+  "workflowRecord.lateAdoption.label": "83568cada47cc2a08639e65805da9c50b3fd34568f29bb02007f6b38592dc606"
 }

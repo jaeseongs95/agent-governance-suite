@@ -9,6 +9,7 @@ import {
   type WorkflowReceiptV1,
   WorkflowContractError,
 } from "../../contracts/types.js";
+import { msg } from "./i18n.js";
 import {
   activeRootIdentity,
   convergenceDigest,
@@ -155,7 +156,7 @@ export class InMemoryWorkflowStore implements WorkflowStore {
 
   insertRun(receipt: WorkflowReceiptV1): void {
     if (this.runs.has(receipt.runId)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Workflow run already exists.", { runId: receipt.runId });
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.store.workflowRunExists", {}), { runId: receipt.runId });
     }
     this.runs.set(receipt.runId, clone(receipt));
   }
@@ -185,10 +186,10 @@ export class InMemoryWorkflowStore implements WorkflowStore {
 
   insertConvergenceRoot(root: ConvergenceRootV1): RootConflict | null {
     if (this.convergence.has(root.rootId)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Convergence root already exists.", { rootId: root.rootId });
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.store.convergenceRootExists", {}), { rootId: root.rootId });
     }
     if (root.parentRootId && !this.convergence.has(root.parentRootId)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Parent convergence root was not found.", { rootId: root.parentRootId });
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.store.parentConvergenceRootFound", {}), { rootId: root.parentRootId });
     }
     const actives = [...this.convergence.values()]
       .filter((snapshot) => !["completed", "abandoned"].includes(snapshot.root.state))
@@ -238,7 +239,7 @@ export class InMemoryWorkflowStore implements WorkflowStore {
     try {
       const result = operation();
       if (typeof (result as { then?: unknown } | null | undefined)?.then === "function") {
-        throw new WorkflowContractError("INVALID_INPUT", "Workflow transaction callbacks must be synchronous.");
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.store.workflowTransactionCallbacksSynchronous", {}));
       }
       return result;
     } catch (cause) {

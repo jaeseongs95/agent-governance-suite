@@ -1,5 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { ERROR_CODE, type ErrorCode, WorkflowContractError } from "../../contracts/types.js";
+import { msg } from "./i18n.js";
+
+/** Validator labels with a catalog phrase; any other label is shown as given. */
+const VALIDATOR_SUBJECTS: Readonly<Record<string, string>> = { "CS stage bundle": "csStageBundle", "Engineering stage": "engineeringStage" };
 
 /** Child CLIs report their own failures as `{code,message}` or `{error:{code,message}}` on stdout or stderr. */
 function childError(...streams: string[]): {code: string; message: string} | null {
@@ -22,14 +26,15 @@ export function runStageValidator(label: string, script: string, args: string[],
     {encoding: "utf8", timeout: 10_000, maxBuffer: 4 * 1024 * 1024, windowsHide: true});
   const stdout = checked.stdout ?? "";
   const stderr = checked.stderr ?? "";
+  const subject = { subject: VALIDATOR_SUBJECTS[label] ?? "other", label };
   if (checked.error) {
     const errno = (checked.error as NodeJS.ErrnoException).code ?? null;
     // The validator never ran to completion: the server is unavailable, the supplied files were not judged.
-    throw new WorkflowContractError("MCP_UNAVAILABLE", `${label} validator could not run (${errno ?? checked.error.name}).`,
+    throw new WorkflowContractError("MCP_UNAVAILABLE", msg("workflow.validatorProcess.couldNotRun", { ...subject, reason: errno ?? checked.error.name }),
       {step: "spawn", reason: "VALIDATOR_SPAWN_FAILED", errno, signal: checked.signal});
   }
   if (checked.signal) {
-    throw new WorkflowContractError("MCP_UNAVAILABLE", `${label} validator was terminated by ${checked.signal}.`,
+    throw new WorkflowContractError("MCP_UNAVAILABLE", msg("workflow.validatorProcess.terminated", { ...subject, signal: checked.signal }),
       {step: "terminated", reason: "VALIDATOR_TERMINATED", signal: checked.signal, status: checked.status});
   }
   let parsed: Record<string, unknown> | null = null;
@@ -38,11 +43,14 @@ export function runStageValidator(label: string, script: string, args: string[],
   if (!okStatuses.includes(checked.status ?? -1) || (!parsed && (checked.status !== 0 || stderr.trim()))) {
     const cause = childError(stdout, stderr);
     const code = cause && (ERROR_CODE as readonly string[]).includes(cause.code) ? cause.code as ErrorCode : "GATE_FAILED";
-    throw new WorkflowContractError(code, cause?.message || `${label} validator exited with status ${checked.status}.`,
+    // The child's own sentence comes from its CLI and passes through as it is (that CLI renders its own catalog).
+    throw new WorkflowContractError(code, cause?.message
+      ? msg("workflow.validatorProcess.childFailure", { message: cause.message })
+      : msg("workflow.validatorProcess.exitStatus", { ...subject, status: String(checked.status) }),
       {step: "exit", status: checked.status, childCode: cause?.code ?? null});
   }
   // A successful validator exit without a JSON report is a validator failure, never the caller's invalid input.
-  if (!parsed) throw new WorkflowContractError("MCP_UNAVAILABLE", `${label} validator did not return bounded JSON.`,
+  if (!parsed) throw new WorkflowContractError("MCP_UNAVAILABLE", msg("workflow.validatorProcess.unboundedOutput", subject),
     {step: "parse", reason: "VALIDATOR_OUTPUT_INVALID", status: checked.status});
   return parsed;
 }

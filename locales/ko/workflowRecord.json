@@ -1,0 +1,4 @@
+{
+  "workflowRecord.lateAdoption.constraint": "사후 편입·근거 미검증: workflow 시작 전 이 구간에서 제품 파일 {priorFileCount}개가 이미 바뀌었다.",
+  "workflowRecord.lateAdoption.label": "사후 편입·근거 미검증"
+}

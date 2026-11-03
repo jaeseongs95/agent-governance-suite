@@ -1,6 +1,7 @@
 import path from "node:path";
 
 import { type PlannedStageV1, type Sha256Digest, type StageResultV1, WorkflowContractError } from "../../contracts/types.js";
+import { msg, type MessageRef } from "./i18n.js";
 import { validateReportAgainstRequest } from "../../skills/acceptance-evidence-validator/scripts/core.mjs";
 import { validateSemantics as validateSecurityAudit } from "../../skills/software-security-auditor/scripts/core.mjs";
 import { convergenceDigest } from "./convergence-logic.js";
@@ -16,7 +17,9 @@ export interface ProviderSemanticContext {
 }
 
 interface ProviderSemanticValidator {
-  message: string;
+  /** The validator's failure, and the same failure when the provider output is missing. */
+  message: MessageRef;
+  outputMissing: MessageRef;
   /** Returns the skill validator's own errors; binding failures throw with their own code. */
   validate(context: ProviderSemanticContext): string[];
 }
@@ -38,13 +41,13 @@ function field(value: unknown, key: string): unknown {
  */
 function acceptanceEvidenceSemantics({ taskId, taskDigest, stage, result, output }: ProviderSemanticContext): string[] {
   if (!taskDigest) {
-    throw new WorkflowContractError("BINDING_REQUIRED", "Acceptance evidence verification requires a signed task digest.", { stageId: stage.stageId });
+    throw new WorkflowContractError("BINDING_REQUIRED", msg("workflow.provider.acceptanceEvidenceVerificationRequiresSigned", {}), { stageId: stage.stageId });
   }
   const references = result.output.artifacts.filter((artifact) => artifact.artifactId === ACCEPTANCE_REQUEST_ARTIFACT);
   const reference = references[0];
   if (references.length !== 1 || !reference?.verified || !path.isAbsolute(reference.locator)
     || /^(?:\\\\|\/\/)/u.test(reference.locator)) {
-    throw new WorkflowContractError("MISSING_EVIDENCE", "An acceptance evidence report requires one verified local acceptance-evidence-request artifact.", {
+    throw new WorkflowContractError("MISSING_EVIDENCE", msg("workflow.provider.acceptanceEvidenceReportRequiresVerified", {}), {
       stageId: stage.stageId,
       artifactId: ACCEPTANCE_REQUEST_ARTIFACT,
     });
@@ -62,7 +65,7 @@ function acceptanceEvidenceSemantics({ taskId, taskDigest, stage, result, output
     || requestTarget !== sha256Form(reference.targetDigest)
     || declaredTargets.some((declared) => declared !== requestTarget)
   ) {
-    throw new WorkflowContractError("BINDING_INVALID", "The frozen acceptance request is not bound to this task and the signed plan target.", {
+    throw new WorkflowContractError("BINDING_INVALID", msg("workflow.provider.frozenAcceptanceRequestBoundTask", {}), {
       stageId: stage.stageId,
       taskBound: requestTaskId === taskId && requestTaskDigest === taskDigest,
       requestTarget: typeof requestTarget === "string" ? requestTarget : null,
@@ -78,11 +81,13 @@ function acceptanceEvidenceSemantics({ taskId, taskDigest, stage, result, output
  */
 const PROVIDER_SEMANTIC_VALIDATORS: Readonly<Record<string, ProviderSemanticValidator>> = {
   "software-security-audit": {
-    message: "Security audit report is inconsistent.",
+    message: msg("workflow.provider.securityAuditReportInconsistent", {}),
+    outputMissing: msg("workflow.provider.securityAuditReportOutputMissing", {}),
     validate: ({ output }) => validateSecurityAudit(output),
   },
   "acceptance-evidence-validation": {
-    message: "Acceptance evidence report is inconsistent.",
+    message: msg("workflow.provider.acceptanceEvidenceReportInconsistent", {}),
+    outputMissing: msg("workflow.provider.acceptanceEvidenceReportOutputMissing", {}),
     validate: acceptanceEvidenceSemantics,
   },
 };
@@ -96,7 +101,7 @@ export function assertProviderSemantics(
   for (const name of names) {
     const validator = PROVIDER_SEMANTIC_VALIDATORS[name]!;
     if (context.output === null) {
-      throw new WorkflowContractError("INVALID_INPUT", `${validator.message} The provider output is missing.`, {
+      throw new WorkflowContractError("INVALID_INPUT", validator.outputMissing, {
         stageId: stage.stageId,
         validator: name,
       });
