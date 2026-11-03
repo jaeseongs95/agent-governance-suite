@@ -526,8 +526,9 @@ const ORCHESTRATOR_WORKFLOW_ENFORCEMENT_SOURCE_HASHES = Object.freeze({
   "skills/orchestrator/references/mcp-execution.md": "e5521ac3485c022342deab25a65bf61f66578e6623beda0490f797439ebc48a0",
 });
 // 참고자료는 역사 원문으로 투영하지 않고 현재의 정확한 분류 원문으로 판정한다.
+// 3.4.0: JEV 계층과 TypeSafe 구현의 관계, 예산 상한의 수명을 적은 문단을 더했다.
 const ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_REFERENCE_HASHES = Object.freeze({
-  "skills/orchestrator/references/skill-classification.md": "f33cce4afc3ef2480c94799f46ae78e133c1576e3b57a257c1046f6956d811c9",
+  "skills/orchestrator/references/skill-classification.md": "ccf0c8829325f2874447c67993f2c04edb02ea462713de10f3733eabc892c6ac",
 });
 // D0352 makes the field guide use the existing common routing decision.
 // Preserve the optimization baseline; allow only this reviewed source delta.

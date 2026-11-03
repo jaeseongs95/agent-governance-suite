@@ -52,6 +52,10 @@ mutating workflow 도구의 `responseMode`와 status 도구의 `detail`은 서�
 
 run, revision, run ID sequence, 계획 서명 키, 업데이트 상태, 정리 claim과 trusted execution observation claim은 SQLite schema v6에 저장합니다. 서버를 다시 시작해도 이전 run과 observation의 일회성 소비 상태를 복구하고, 같은 데이터베이스를 공유하는 서버 인스턴스는 optimistic revision 검증과 원자적 observation claim으로 충돌·재사용을 거부합니다. observation claim은 만료 뒤에도 opaque ID tombstone으로 유지해 같은 ID의 재사용을 허용하지 않습니다. compact 전송도 저장 단위를 바꾸지 않으며 전체 `WorkflowReceipt`의 평문 JSON을 유지합니다. 따라서 `StageResult`의 provider output, evidence note, findings, blockers와 error에 원문 코드, 로그, 비밀값이나 개인정보가 들어 있으면 그 내용도 DB에 남습니다. MCP 서버는 필드 내용을 걸러 내거나 자동으로 만료·삭제하지 않으므로 호출자는 민감한 원문을 제출하지 않고 DB 경로의 접근 권한과 보존 기간을 관리해야 합니다.
 
+## 스킬 분류 조언 계층(JEV)
+
+`providerKind: "jev"`는 특정 제품이 아니라 선택을 돕는 조언 계층의 자리입니다. 결정은 AGENT가 하며, TypeSafe는 이 계층의 구현 하나입니다. `noul_*` 점수 종류와 `JEV_*` 이유 코드는 TypeSafe adapter가 내는 값입니다. profile 설정 규칙(reasoning effort, `judgmentPolicy`)은 각 wire adapter의 `validateConfiguration`이 정하고, 인증 헤더는 adapter의 transport 계약이 정합니다(기본값 `authorization: Bearer`). profile·route JSON·요청은 인증 헤더를 정하지 못합니다. `mcp-server/src/skill-classification/service.ts`의 `dispatchAdvisoryAttempt`는 용도에 묶이지 않은 dispatch 엔진으로, 외부 전송 허용, 예산 예약·정산, dispatch fence, usage 검증, helper 실패 증거를 맡습니다. 스킬 분류는 이 엔진을 쓰는 task이며 실패 응답, qualification, stale 판정, 응답 검증을 맡습니다. task는 fence나 helper 실패 증거를 바꾸지 못합니다. JEV 예산 상한(USD 5)은 서버 프로세스 하나가 살아 있는 동안의 한도이며 재시작을 넘어 누적되지 않습니다.
+
 ## 로컬 task continuity
 
 Continuity는 같은 MCP 서버 프로세스 안의 별도 서비스이며 workflow DB와 분리된 SQLite schema v2를 사용합니다. Direct-task replacement snapshot, session epoch, compact marker, HMAC binding, hash-only 관측과 보존 기간 조회 index는 기본적으로 workflow DB 옆의 `continuity.sqlite3`에 저장합니다. Orchestrated 상태의 원장은 계속 `workflows.sqlite3`의 `TaskEnvelope`, `WorkflowReceipt`와 convergence root이고 continuity DB에는 root 결속과 marker만 둡니다.

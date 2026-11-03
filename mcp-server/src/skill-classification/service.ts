@@ -4,7 +4,7 @@ import {ClassificationProviderError, unavailableResponse, unknownUsage, sanitize
 import {validateClassificationResponse} from "./validation.js";
 import {digestClassificationValue, projectClassificationRequest, validateClassificationRequest} from "./request.js";
 import {nativeDecodeFailureCodes} from "./types.js";
-import type {ClassificationAttempt, ClassificationConfig, ClassificationResult, ClassificationSkipped, ClassificationSnapshot, DispatchState, ProviderEvaluation, ProviderProfile, ProviderProfileRegistry, SkillClassificationProviderPort, SkillClassificationRequestV1} from "./types.js";
+import type {ClassificationAttempt, ClassificationConfig, ClassificationResult, ClassificationScoreDiagnostics, ClassificationSkipped, ClassificationSnapshot, DispatchState, ProviderEvaluation, ProviderProfile, ProviderProfileRegistry, SkillClassificationProviderPort, SkillClassificationRequestV1, SkillClassificationResponseV1} from "./types.js";
 
 /** https://nodejs.org/api/timers.html#settimeoutcallback-delay-args */
 export const MAX_CLASSIFICATION_TIMEOUT_MS = 2_147_483_647;
@@ -220,110 +220,161 @@ export class SkillClassificationService {
         if (kind === "jev") {skipped.push({providerKind: kind, profileId: profile.profileId, reasonCode: "INPUT_TOO_LONG", dispatchState: "not-started"}); continue;}
         return this.failure(input, snapshot, "INPUT_TOO_LONG", attempts, "UNAVAILABLE", skipped);
       }
-      const evaluated = await this.attempt(input, snapshot, provider, profile);
+      const bindingCurrent = this.providerFence(provider, profile);
+      const evaluated = await dispatchAdvisoryAttempt({provider, profile, budget: this.options.budget, timeoutMs: input.config.timeoutMs,
+        externalClassificationAllowed: input.config.externalClassificationAllowed, remoteContentAllowed: input.remoteContentAllowed, signal: input.signal, bindingCurrent},
+      this.classificationTask(input, snapshot, profile));
       attempts.push(evaluated.attempt);
       const result: ClassificationResult = {request: input.request, config: input.config, profileRevision: input.registry.profileRevision, snapshot, attempts, skipped, response: evaluated.evaluation.response};
-      this.resultFences.set(result, evaluated.bindingCurrent);
+      this.resultFences.set(result, bindingCurrent);
       const current = this.current(input, result);
       if (current !== result) return current;
       if (["SUCCESS", "PARTIAL", "UNCERTAIN"].includes(result.response.status) && result.response.error === null) return result;
       helperFailure = evaluated.helperFailure;
-      helperBinding = helperFailure ? evaluated.bindingCurrent : undefined;
+      helperBinding = helperFailure ? bindingCurrent : undefined;
       if (kind === "vendor") return this.bindHelperFailure(result, helperFailure);
     }
     return this.failure(input, snapshot, "PROVIDER_UNAVAILABLE", attempts, "UNAVAILABLE", skipped);
   }
-  private async attempt(input: ClassificationServiceInput, snapshot: ClassificationSnapshot, provider: SkillClassificationProviderPort, profile: ProviderProfile) {
-    const bindingCurrent = this.providerFence(provider, profile);
-    const controller = new AbortController();
-    let dispatchFenced = false;
-    const failures = new WeakMap<ProviderEvaluation, Omit<HelperFailure, "helperResultDigest">>();
-    const qualify = (evaluation: ProviderEvaluation) => {
-      const code = evaluation.response.error?.code;
-      if (dispatchFenced && code && continuationFailureCodes.has(code)) failures.set(evaluation, {profileId: profile.profileId, errorCode: code});
-      return evaluation;
-    };
-    let dispatchState: DispatchState = "not-started";
-    let reserved = false;
-    let retainedUsage = unknownUsage();
-    let timedOut = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const reservationId = JSON.stringify([input.request.operationId, input.request.requestDigest, profile.profileId]);
-    const stopped = new Promise<ProviderEvaluation>((resolve) => {
-      const stop = (code: string) => {controller.abort(); resolve(qualify({response: unavailableResponse(input.request, code, dispatchState, dispatchState === "not-started" ? "UNAVAILABLE" : "UNCERTAIN"), usage: unknownUsage(), dispatchState, diagnostics: null}));};
-      timer = setTimeout(() => {timedOut = true; stop("PROVIDER_TIMEOUT");}, input.config.timeoutMs);
-      controller.signal.addEventListener("abort", () => stop(timedOut ? "PROVIDER_TIMEOUT" : "CANCELLED"), {once: true});
-    });
-    const cancel = () => controller.abort();
-    input.signal?.addEventListener("abort", cancel, {once: true});
-    if (input.signal?.aborted) controller.abort();
-    const work = async (): Promise<ProviderEvaluation> => {
-      try {
-        if (input.remoteContentAllowed === false && provider.routeKind !== undefined && provider.routeKind(profile) !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
-        const availability = await provider.availability(profile);
-        if (controller.signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
-        if (!availability.available || !availability.approved) {
-          const codes = ["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE"];
-          throw new ClassificationProviderError(availability.reasonCode && codes.includes(availability.reasonCode) ? availability.reasonCode : "PROVIDER_UNAVAILABLE", "not-started");
-        }
-        if (input.remoteContentAllowed === false && availability.routeKind !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
-        if (!input.config.externalClassificationAllowed && availability.routeKind !== "native") throw new ClassificationProviderError("EXTERNAL_CLASSIFICATION_BLOCKED", "not-started");
-        if (input.getCurrentSnapshot && stale(snapshot, input.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
-        const invalid = this.validateProfile(profile, input.request, this.now());
-        if (invalid) throw new ClassificationProviderError(invalid, "not-started");
-        if (!this.options.budget.reserve(profile, reservationId, profile.maximumCostUsd!, availability.routeKind)) throw new ClassificationProviderError("BUDGET_UNAVAILABLE", "not-started");
-        reserved = true;
-        dispatchState = "unknown";
-        const beforeDispatch = () => {
-          dispatchFenced = false;
-          if (input.remoteContentAllowed === false && provider.routeKind !== undefined && provider.routeKind(profile) !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
-          if (controller.signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
-          if (input.getCurrentSnapshot && stale(snapshot, input.getCurrentSnapshot())) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
-          if (this.validateProfile(profile, input.request, this.now()) !== null || !bindingCurrent()) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
-          dispatchFenced = true;
-        };
-        let evaluation: ProviderEvaluation;
-        let providerFailure: ClassificationProviderError | null = null;
-        try { evaluation = await provider.classify(input.request, profile, controller.signal, beforeDispatch); }
-        catch (error) {
-          if (!(error instanceof ClassificationProviderError) || !error.usage) throw error;
-          providerFailure = error;
-          evaluation = {response: unavailableResponse(input.request, error.code, error.dispatchState), usage: error.usage, dispatchState: error.dispatchState, diagnostics: null};
-        }
-        if (controller.signal.aborted) return evaluation; // only the already-settled race may publish
-        const usage = evaluation.usage;
-        // Classification/token errors do not erase an independently valid reported charge.
-        if (usage && Number.isFinite(usage.actualCostUsd) && usage.actualCostUsd! >= 0) retainedUsage.actualCostUsd = usage.actualCostUsd;
-        if (!["not-started", "started", "unknown"].includes(evaluation.dispatchState) || !usage
-          || ![usage.inputTokens, usage.outputTokens, usage.cachedInputTokens].every((n) => n === null || (Number.isSafeInteger(n) && n >= 0))
-          || (usage.actualCostUsd !== null && (!Number.isFinite(usage.actualCostUsd) || usage.actualCostUsd < 0))
-          || (usage.inputTokens !== null && usage.cachedInputTokens !== null && usage.cachedInputTokens > usage.inputTokens)
-          || (evaluation.diagnostics !== null && (!evaluation.diagnostics || typeof evaluation.diagnostics.scoreKind !== "string" || !Array.isArray(evaluation.diagnostics.scores)
-            || evaluation.diagnostics.scoreKind.length === 0 || evaluation.diagnostics.scoreKind.length > 128
-            || new Set(evaluation.diagnostics.scores.map(score => score.skillId)).size !== evaluation.diagnostics.scores.length
-            || evaluation.diagnostics.scores.some((score) => !input.request.skills.some(skill => skill.skillId === score.skillId) || !Number.isFinite(score.value))))) throw new ClassificationProviderError("INVALID_PROVIDER_USAGE", "unknown", true);
-        retainedUsage = {...usage};
-        if (providerFailure) throw providerFailure;
-        if (validateClassificationResponse(input.request, evaluation.response).length > 0) throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", evaluation.dispatchState, true);
-        if (usage.actualCostUsd !== null && usage.actualCostUsd > profile.maximumCostUsd!) return {...evaluation,
-          response: unavailableResponse(input.request, "COST_CEILING_EXCEEDED", evaluation.dispatchState)};
-        if (usage.outputTokens !== null && usage.outputTokens > profile.maximumOutputTokens) return qualify({...evaluation,
-          response: unavailableResponse(input.request, "OUTPUT_TOO_LONG", evaluation.dispatchState, "INVALID")});
-        // A returned response error alone is not trusted failure provenance.
-        return evaluation;
-      } catch (error) {
-        const safe = error instanceof ClassificationProviderError ? new ClassificationProviderError(providerFailureCodes.has(error.code) ? error.code : "PROVIDER_UNAVAILABLE",
-          ["not-started", "started", "unknown"].includes(error.dispatchState) ? error.dispatchState : "unknown", error.invalid === true, error.code === "RATE_LIMITED" ? sanitizeRateLimitObservation(error.rateLimitObservation) : null) : new ClassificationProviderError("PROVIDER_UNAVAILABLE", dispatchState);
-        if (safe.code === "NATIVE_TIMEOUT" || safe.code === "PROVIDER_TIMEOUT") timedOut = true;
-        return qualify({response: unavailableResponse(input.request, safe.code, safe.dispatchState, safe.invalid ? "INVALID" : timedOut && safe.dispatchState !== "not-started" ? "UNCERTAIN" : "UNAVAILABLE"), usage: retainedUsage, dispatchState: safe.dispatchState, diagnostics: null, rateLimitObservation: safe.rateLimitObservation});
-      }
-    };
-    let evaluation: ProviderEvaluation;
-    try { evaluation = await Promise.race([work(), stopped]); }
-    finally { if (timer !== undefined) clearTimeout(timer); input.signal?.removeEventListener("abort", cancel); }
-    if (reserved) this.options.budget.settle(reservationId, evaluation.usage.actualCostUsd, evaluation.dispatchState);
-    const attempt: ClassificationAttempt = {providerKind: profile.providerKind, profileId: profile.profileId, modelId: profile.modelId, reasoningEffort: profile.reasoningEffort,
-      dispatchState: evaluation.dispatchState, status: evaluation.response.status, errorCode: evaluation.response.error?.code ?? null, timedOut, usage: evaluation.usage, reservedCostUsd: reserved ? profile.maximumCostUsd! : 0, diagnostics: structuredClone(evaluation.diagnostics), rateLimitObservation: evaluation.response.error?.code === "RATE_LIMITED" ? sanitizeRateLimitObservation(evaluation.rateLimitObservation) : null};
-    return {evaluation, attempt, bindingCurrent, helperFailure: failures.get(evaluation) ?? null};
+  /** The skill classification task: request, failure responses, qualification, staleness and response checks. */
+  private classificationTask(input: ClassificationServiceInput, snapshot: ClassificationSnapshot, profile: ProviderProfile): AdvisoryDispatchTask {
+    const request = input.request;
+    return {request,
+      failureResponse: (code, dispatchState, status) => unavailableResponse(request, code, dispatchState, status),
+      stale: () => input.getCurrentSnapshot !== undefined && stale(snapshot, input.getCurrentSnapshot()),
+      qualify: () => this.validateProfile(profile, request, this.now()),
+      validDiagnostics: ({scoreKind, scores}) => typeof scoreKind === "string" && Array.isArray(scores) && scoreKind.length > 0 && scoreKind.length <= 128
+        && new Set(scores.map(score => score.skillId)).size === scores.length
+        && scores.every(score => request.skills.some(skill => skill.skillId === score.skillId) && Number.isFinite(score.value)),
+      validResponse: response => validateClassificationResponse(request, response).length === 0};
   }
+}
+
+/** Service-owned controls for one dispatch. No task supplies or reaches them. */
+export interface AdvisoryDispatchControls {
+  provider: SkillClassificationProviderPort;
+  profile: ProviderProfile;
+  budget: ClassificationBudgetPort;
+  timeoutMs: number;
+  externalClassificationAllowed: boolean;
+  /** Gateway-owned content permission, already bound there to the approved request digests. */
+  remoteContentAllowed: boolean | undefined;
+  signal: AbortSignal | undefined;
+  /** Provider registry identity captured before the attempt. */
+  bindingCurrent: () => boolean;
+}
+/** One advisory purpose. The engine calls these only at its own points; budget, fence and failure evidence stay with the engine. */
+export interface AdvisoryDispatchTask {
+  /** Fixed request; its operationId and requestDigest form the reservation identity. */
+  readonly request: SkillClassificationRequestV1;
+  failureResponse(code: string, dispatchState: DispatchState, status: "UNAVAILABLE" | "INVALID" | "UNCERTAIN"): SkillClassificationResponseV1;
+  stale(): boolean;
+  /** Profile qualification; null when the profile may be used now. */
+  qualify(): string | null;
+  validDiagnostics(diagnostics: ClassificationScoreDiagnostics): boolean;
+  validResponse(response: SkillClassificationResponseV1): boolean;
+}
+export interface AdvisoryDispatchOutcome {
+  evaluation: ProviderEvaluation;
+  attempt: ClassificationAttempt;
+  helperFailure: {profileId: string; errorCode: string} | null;
+}
+
+/** Purpose-neutral dispatch engine: transmission permission, budget, dispatch fence, usage checks and helper-failure evidence. */
+export async function dispatchAdvisoryAttempt(controls: AdvisoryDispatchControls, task: AdvisoryDispatchTask): Promise<AdvisoryDispatchOutcome> {
+  const {provider, profile, budget, bindingCurrent} = controls;
+  const request = task.request, failureResponse = task.failureResponse.bind(task);
+  // A throwing task method is a task fault, never a provider fault that could become helper-failure evidence.
+  const guarded = <A extends unknown[], R>(method: (...args: A) => R) => (...args: A): R => {
+    try {return method.apply(task, args);} catch {throw new Error("ADVISORY_TASK_FAULT");}
+  };
+  const isStale = guarded(task.stale), qualify = guarded(task.qualify);
+  const validDiagnostics = guarded(task.validDiagnostics), validResponse = guarded(task.validResponse);
+  const controller = new AbortController();
+  let dispatchFenced = false;
+  const failures = new WeakMap<ProviderEvaluation, {profileId: string; errorCode: string}>();
+  // Evidence uses the engine's own code and fence, never a code read back from a task-built response.
+  const withEvidence = (evaluation: ProviderEvaluation, code: string) => {
+    if (dispatchFenced && continuationFailureCodes.has(code)) failures.set(evaluation, {profileId: profile.profileId, errorCode: code});
+    return evaluation;
+  };
+  let dispatchState: DispatchState = "not-started";
+  let reserved = false;
+  let retainedUsage = unknownUsage();
+  let timedOut = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const reservationId = JSON.stringify([request.operationId, request.requestDigest, profile.profileId]);
+  const stopped = new Promise<ProviderEvaluation>((resolve) => {
+    const stop = (code: string) => {controller.abort(); resolve(withEvidence({response: failureResponse(code, dispatchState, dispatchState === "not-started" ? "UNAVAILABLE" : "UNCERTAIN"), usage: unknownUsage(), dispatchState, diagnostics: null}, code));};
+    timer = setTimeout(() => {timedOut = true; stop("PROVIDER_TIMEOUT");}, controls.timeoutMs);
+    controller.signal.addEventListener("abort", () => stop(timedOut ? "PROVIDER_TIMEOUT" : "CANCELLED"), {once: true});
+  });
+  const cancel = () => controller.abort();
+  controls.signal?.addEventListener("abort", cancel, {once: true});
+  if (controls.signal?.aborted) controller.abort();
+  const work = async (): Promise<ProviderEvaluation> => {
+    try {
+      if (controls.remoteContentAllowed === false && provider.routeKind !== undefined && provider.routeKind(profile) !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
+      const availability = await provider.availability(profile);
+      if (controller.signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
+      if (!availability.available || !availability.approved) {
+        const codes = ["ROUTE_NOT_APPROVED", "ROUTE_CAPABILITY_MISMATCH", "CREDENTIAL_UNAVAILABLE", "INVALID_APPROVED_ENDPOINT", "NATIVE_STRUCTURED_CAPABILITY_UNAVAILABLE", "REMOTE_ADAPTER_UNAVAILABLE"];
+        throw new ClassificationProviderError(availability.reasonCode && codes.includes(availability.reasonCode) ? availability.reasonCode : "PROVIDER_UNAVAILABLE", "not-started");
+      }
+      if (controls.remoteContentAllowed === false && availability.routeKind !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
+      if (!controls.externalClassificationAllowed && availability.routeKind !== "native") throw new ClassificationProviderError("EXTERNAL_CLASSIFICATION_BLOCKED", "not-started");
+      if (isStale()) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
+      const invalid = qualify();
+      if (invalid) throw new ClassificationProviderError(invalid, "not-started");
+      if (!budget.reserve(profile, reservationId, profile.maximumCostUsd!, availability.routeKind)) throw new ClassificationProviderError("BUDGET_UNAVAILABLE", "not-started");
+      reserved = true;
+      dispatchState = "unknown";
+      const beforeDispatch = () => {
+        dispatchFenced = false;
+        if (controls.remoteContentAllowed === false && provider.routeKind !== undefined && provider.routeKind(profile) !== "native") throw new ClassificationProviderError("REMOTE_CONTENT_NOT_APPROVED", "not-started");
+        if (controller.signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
+        if (isStale()) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
+        if (qualify() !== null || !bindingCurrent()) throw new ClassificationProviderError("STALE_CLASSIFICATION", "not-started");
+        dispatchFenced = true;
+      };
+      let evaluation: ProviderEvaluation;
+      let providerFailure: ClassificationProviderError | null = null;
+      try { evaluation = await provider.classify(request, profile, controller.signal, beforeDispatch); }
+      catch (error) {
+        if (!(error instanceof ClassificationProviderError) || !error.usage) throw error;
+        providerFailure = error;
+        evaluation = {response: failureResponse(error.code, error.dispatchState, "UNAVAILABLE"), usage: error.usage, dispatchState: error.dispatchState, diagnostics: null};
+      }
+      if (controller.signal.aborted) return evaluation; // only the already-settled race may publish
+      const usage = evaluation.usage;
+      // Classification/token errors do not erase an independently valid reported charge.
+      if (usage && Number.isFinite(usage.actualCostUsd) && usage.actualCostUsd! >= 0) retainedUsage.actualCostUsd = usage.actualCostUsd;
+      if (!["not-started", "started", "unknown"].includes(evaluation.dispatchState) || !usage
+        || ![usage.inputTokens, usage.outputTokens, usage.cachedInputTokens].every((n) => n === null || (Number.isSafeInteger(n) && n >= 0))
+        || (usage.actualCostUsd !== null && (!Number.isFinite(usage.actualCostUsd) || usage.actualCostUsd < 0))
+        || (usage.inputTokens !== null && usage.cachedInputTokens !== null && usage.cachedInputTokens > usage.inputTokens)
+        || (evaluation.diagnostics !== null && (!evaluation.diagnostics || !validDiagnostics(evaluation.diagnostics)))) throw new ClassificationProviderError("INVALID_PROVIDER_USAGE", "unknown", true);
+      retainedUsage = {...usage};
+      if (providerFailure) throw providerFailure;
+      if (!validResponse(evaluation.response)) throw new ClassificationProviderError("INVALID_PROVIDER_RESPONSE", evaluation.dispatchState, true);
+      if (usage.actualCostUsd !== null && usage.actualCostUsd > profile.maximumCostUsd!) return {...evaluation,
+        response: failureResponse("COST_CEILING_EXCEEDED", evaluation.dispatchState, "UNAVAILABLE")};
+      if (usage.outputTokens !== null && usage.outputTokens > profile.maximumOutputTokens) return withEvidence({...evaluation,
+        response: failureResponse("OUTPUT_TOO_LONG", evaluation.dispatchState, "INVALID")}, "OUTPUT_TOO_LONG");
+      // A returned response error alone is not trusted failure provenance.
+      return evaluation;
+    } catch (error) {
+      const safe = error instanceof ClassificationProviderError ? new ClassificationProviderError(providerFailureCodes.has(error.code) ? error.code : "PROVIDER_UNAVAILABLE",
+        ["not-started", "started", "unknown"].includes(error.dispatchState) ? error.dispatchState : "unknown", error.invalid === true, error.code === "RATE_LIMITED" ? sanitizeRateLimitObservation(error.rateLimitObservation) : null) : new ClassificationProviderError("PROVIDER_UNAVAILABLE", dispatchState);
+      if (safe.code === "NATIVE_TIMEOUT" || safe.code === "PROVIDER_TIMEOUT") timedOut = true;
+      return withEvidence({response: failureResponse(safe.code, safe.dispatchState, safe.invalid ? "INVALID" : timedOut && safe.dispatchState !== "not-started" ? "UNCERTAIN" : "UNAVAILABLE"), usage: retainedUsage, dispatchState: safe.dispatchState, diagnostics: null, rateLimitObservation: safe.rateLimitObservation}, safe.code);
+    }
+  };
+  let evaluation: ProviderEvaluation;
+  try { evaluation = await Promise.race([work(), stopped]); }
+  finally { if (timer !== undefined) clearTimeout(timer); controls.signal?.removeEventListener("abort", cancel); }
+  if (reserved) budget.settle(reservationId, evaluation.usage.actualCostUsd, evaluation.dispatchState);
+  const attempt: ClassificationAttempt = {providerKind: profile.providerKind, profileId: profile.profileId, modelId: profile.modelId, reasoningEffort: profile.reasoningEffort,
+    dispatchState: evaluation.dispatchState, status: evaluation.response.status, errorCode: evaluation.response.error?.code ?? null, timedOut, usage: evaluation.usage, reservedCostUsd: reserved ? profile.maximumCostUsd! : 0, diagnostics: structuredClone(evaluation.diagnostics), rateLimitObservation: evaluation.response.error?.code === "RATE_LIMITED" ? sanitizeRateLimitObservation(evaluation.rateLimitObservation) : null};
+  return {evaluation, attempt, helperFailure: failures.get(evaluation) ?? null};
 }

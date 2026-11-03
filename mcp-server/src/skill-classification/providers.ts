@@ -58,8 +58,13 @@ export interface ClassificationWireAdapter {
 }
 export interface ClassificationTransportContract {
   readonly headers: Readonly<Record<string, string>>;
+  /** Credential header fixed by trusted adapter code; it carries the raw key. Absent means `authorization: Bearer <key>`. */
+  readonly credentialHeader?: string;
   matches(route: ApprovedClassificationRoute): boolean;
 }
+const headerName = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/u;
+// fetch rejects other bytes with a TypeError after the dispatch fence; reject them while nothing is sent.
+const validCredential = (key: unknown): key is string => typeof key === "string" && /^[\x21-\x7E]+$/u.test(key);
 interface RouteBase {
   routeRef: string;
   approvalRef: string;
@@ -111,16 +116,21 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
     try {
       const contract = route.transport === undefined ? this.defaultTransport : route.transport;
       if (!contract || typeof contract.matches !== "function" || !contract.headers || typeof contract.headers !== "object" || Array.isArray(contract.headers)) return false;
-      if (Object.entries(contract.headers).some(([name, value]) => !/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/u.test(name)
-        || ["authorization", "content-type"].includes(name.toLowerCase()) || typeof value !== "string" || /[\r\n]/u.test(value))) return false;
-      if (route.kind === "native" && Object.keys(contract.headers).length !== 0) return false;
+      const credentialHeader = contract.credentialHeader;
+      if (credentialHeader !== undefined && (typeof credentialHeader !== "string" || !headerName.test(credentialHeader)
+        || ["authorization", "content-type"].includes(credentialHeader.toLowerCase()))) return false;
+      const reserved = ["authorization", "content-type", ...(credentialHeader === undefined ? [] : [credentialHeader.toLowerCase()])];
+      if (Object.entries(contract.headers).some(([name, value]) => !headerName.test(name)
+        || reserved.includes(name.toLowerCase()) || typeof value !== "string" || /[^\t\x20-\x7E]/u.test(value))) return false;
+      if (route.kind === "native" && (Object.keys(contract.headers).length !== 0 || credentialHeader !== undefined)) return false;
       return contract.matches(route) === true;
     } catch { return false; }
   }
   private routeBinding(route: ApprovedClassificationRoute): string {
+    const transport = route.transport === undefined ? this.defaultTransport : route.transport;
     return JSON.stringify([route.routeRef, route.approvalRef, route.approved, route.providerKind, route.vendorId, route.adapterRevision,
       route.modelIds, route.reasoningEfforts, route.structuredOutput, route.kind, route.kind === "remote" ? route.endpoint : null,
-      (route.transport === undefined ? this.defaultTransport : route.transport).headers]);
+      transport.headers, transport.credentialHeader ?? null]);
   }
   /** Server-owned identities survive JSON snapshots and remain checkable through selection commit. */
   captureConfigurationFence(profile: ProviderConfiguration): () => boolean {
@@ -129,7 +139,7 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
       if (!route) return () => false;
       const binding = this.routeBinding(route), routeTransport = route.transport;
       const transport = routeTransport === undefined ? this.defaultTransport : routeTransport;
-      const matches = transport.matches, headers = transport.headers, validate = this.validateConfiguration;
+      const matches = transport.matches, headers = transport.headers, credentialHeader = transport.credentialHeader, validate = this.validateConfiguration;
       const adapter = route.kind === "remote" ? route.adapter : null;
       const encode = adapter?.encode, decode = adapter?.decode, validateRawResponse = adapter?.validateRawResponse;
       const validateConfiguration = adapter?.validateConfiguration, adapterTransport = adapter?.transport;
@@ -138,7 +148,7 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
       return () => {
         try {
           return this.validateConfiguration === validate && this.route(fixedProfile) === route && this.routeBinding(route) === binding
-            && route.transport === routeTransport && transport.matches === matches && transport.headers === headers
+            && route.transport === routeTransport && transport.matches === matches && transport.headers === headers && transport.credentialHeader === credentialHeader
             && (route.kind === "remote" ? route.adapter === adapter && route.getCredential === getCredential
               && adapter!.encode === encode && adapter!.decode === decode && adapter!.validateRawResponse === validateRawResponse
               && adapter!.validateConfiguration === validateConfiguration && adapter!.transport === adapterTransport : route.invokeStructured === invokeStructured);
@@ -158,7 +168,7 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
       try {
         const endpoint = new URL(route.endpoint);
         if (endpoint.protocol !== "https:" || endpoint.username || endpoint.password) return absent("INVALID_APPROVED_ENDPOINT");
-        if (!await route.getCredential()) return absent("CREDENTIAL_UNAVAILABLE");
+        if (!validCredential(await route.getCredential())) return absent("CREDENTIAL_UNAVAILABLE");
       } catch { return absent("CREDENTIAL_UNAVAILABLE"); }
     }
     return {available: true, approved: true, routeKind: route.kind, reasonCode: null};
@@ -170,7 +180,7 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
     if (signal.aborted) throw new ClassificationProviderError("CANCELLED", "not-started");
     const fixedRequest = structuredClone(request), fixedProfile = structuredClone(profile);
     const routeTransport = route.transport, transport = routeTransport === undefined ? this.defaultTransport : routeTransport;
-    const fixedHeaders = {...transport.headers};
+    const fixedHeaders = {...transport.headers}, credentialHeader = transport.credentialHeader;
     const configurationCurrent = this.captureConfigurationFence(fixedProfile);
     const requestBinding = digestClassificationValue(fixedRequest), profileBinding = digestClassificationValue(fixedProfile);
     const configurationValidator = this.validateConfiguration;
@@ -197,7 +207,7 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
     if (endpoint.protocol !== "https:" || endpoint.username || endpoint.password) throw new ClassificationProviderError("INVALID_APPROVED_ENDPOINT", "not-started");
     let key: string | null;
     try { key = await getCredential.call(route); } catch { throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started"); }
-    if (!key) throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started");
+    if (!validCredential(key)) throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started");
     assertCurrent();
     let body: string;
     try { body = JSON.stringify(encode.call(adapter, fixedRequest, fixedProfile)); }
@@ -205,7 +215,9 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
     if (typeof body !== "string") throw new ClassificationProviderError("INVALID_PROVIDER_REQUEST", "not-started", true);
     if (Buffer.byteLength(body, "utf8") > fixedProfile.maximumInputBytes) throw new ClassificationProviderError("INPUT_TOO_LONG", "not-started");
     assertCurrent();
-    const headers: Record<string, string> = {authorization: `Bearer ${key}`, "content-type": "application/json", ...fixedHeaders};
+    // The credential travels only in this header, never in the endpoint or body.
+    const headers: Record<string, string> = {...credentialHeader === undefined ? {authorization: `Bearer ${key}`} : {[credentialHeader]: key},
+      "content-type": "application/json", ...fixedHeaders};
     beforeDispatch?.();
     assertCurrent();
     let response: Response;
@@ -290,8 +302,14 @@ function validateJevAnswerKeys(bodyText: string): void {
   }
 }
 
+/** TypeSafe noul protocol: judgments come from judgmentPolicy thresholds and the API takes no reasoning effort. */
+function validateNoulConfiguration(profile: ProviderConfiguration): string | null {
+  return profile.reasoningEffort !== null || profile.judgmentPolicy === null ? "UNSUPPORTED_OPTIONS" : null;
+}
+
 // TypeSafe API: https://docs.typesafe.ai/api. Endpoint/authentication come only from an approved route.
 export const jevNoulWireAdapter: ClassificationWireAdapter = {
+  validateConfiguration: validateNoulConfiguration,
   validateRawResponse: validateJevAnswerKeys,
   encode(request, profile) {
     return {model: profile.modelId, state: classificationState(request), questions: Object.fromEntries(projectClassificationRequest(request).payload.skills.map((skill) => [skill.skillId,
@@ -344,6 +362,7 @@ function assertSufficiencyProfile(profile: ProviderConfiguration): void {
 
 /** Opt-in two-axis wire: an insufficient applicability context is distinct from a low probability of need. */
 export const jevNoulSufficiencyWireAdapter: ClassificationWireAdapter = {
+  validateConfiguration: validateNoulConfiguration,
   validateRawResponse: validateJevAnswerKeys,
   encode(request, profile) {
     assertSufficiencyProfile(profile);
@@ -394,6 +413,7 @@ function assertSharedRulesProfile(profile: ProviderConfiguration): void {
   if (profile.adapterRevision !== JEV_NOUL_SHARED_RULES_ADAPTER_REVISION || profile.promptRevision !== JEV_NOUL_SHARED_RULES_PROMPT_REVISION) throw new Error("JEV_SHARED_RULES_PROFILE_MISMATCH");
 }
 export const jevNoulSharedRulesWireAdapter: ClassificationWireAdapter = {
+  validateConfiguration: validateNoulConfiguration,
   validateRawResponse: validateJevAnswerKeys,
   encode(request, profile) {
     assertSharedRulesProfile(profile);
@@ -420,6 +440,7 @@ function assertSharedV5Profile(profile: ProviderConfiguration): void {
   if (profile.adapterRevision !== JEV_NOUL_SHARED_RULES_V5_ADAPTER_REVISION || profile.promptRevision !== JEV_NOUL_SHARED_RULES_V5_PROMPT_REVISION) throw new Error("JEV_SHARED_V5_PROFILE_MISMATCH");
 }
 export const jevNoulSharedRulesV5WireAdapter: ClassificationWireAdapter = {
+  validateConfiguration: validateNoulConfiguration,
   validateRawResponse: validateJevAnswerKeys,
   encode(request, profile) {
     assertSharedV5Profile(profile);
@@ -445,6 +466,7 @@ export const jevNoulSharedRulesV5LongContextWireAdapter: ClassificationWireAdapt
       && route.adapter.transport === route.transport && Object.keys(route.transport?.headers ?? {}).length === 1
       && route.transport?.headers["TypeSafe-Danger-Zone-Long-Context"] === "true",
   }),
+  validateConfiguration: validateNoulConfiguration,
   validateRawResponse: validateJevAnswerKeys,
   encode(request, profile) {
     assertLongContextV5Profile(profile);
@@ -479,6 +501,7 @@ function assertSharedV6Profile(profile: ProviderConfiguration): void {
   if (profile.adapterRevision !== JEV_NOUL_SHARED_RULES_V6_ADAPTER_REVISION || profile.promptRevision !== JEV_NOUL_SHARED_RULES_V6_PROMPT_REVISION) throw new Error("JEV_SHARED_V6_PROFILE_MISMATCH");
 }
 export const jevNoulSharedRulesV6WireAdapter: ClassificationWireAdapter = {
+  validateConfiguration: validateNoulConfiguration,
   validateRawResponse: validateJevAnswerKeys,
   encode(request, profile) {
     assertSharedV6Profile(profile);
@@ -507,6 +530,7 @@ export const jevNoulSharedRulesV6LongContextWireAdapter: ClassificationWireAdapt
       && route.adapter.transport === route.transport && Object.keys(route.transport?.headers ?? {}).length === 1
       && route.transport?.headers["TypeSafe-Danger-Zone-Long-Context"] === "true",
   }),
+  validateConfiguration: validateNoulConfiguration,
   validateRawResponse: validateJevAnswerKeys,
   encode(request, profile) {
     assertLongContextV6Profile(profile);
@@ -626,9 +650,12 @@ const builtinWireAdapters = new Map(Object.entries({
   [JEV_NOUL_SHARED_RULES_V6_ADAPTER_REVISION]: jevNoulSharedRulesV6WireAdapter,
   [JEV_NOUL_SHARED_RULES_V6_LONG_CONTEXT_ADAPTER_REVISION]: jevNoulSharedRulesV6LongContextWireAdapter,
 }).map(([reference, adapter]) => [reference, Object.freeze({adapter, transport: adapter.transport, validateConfiguration: adapter.validateConfiguration})]));
-/** Compatibility for ports without a protocol hook; no revision list or null-policy exception. */
+// Choice protocols bind their own revision; the older builtins keep route aliases such as a1 -> jev-noul-v1.
+const revisionBoundBuiltins = new Set<string>([JEV_SKILL_SELECTION_CHOICE_ADAPTER_REVISION, JEV_SKILL_SELECTION_CHOICE_LONG_CONTEXT_ADAPTER_REVISION]);
+/** Compatibility for ports without a protocol hook. The common layer holds no protocol rule: a hookless
+ * advisory-slot port predates hooks and was the TypeSafe v1 wire, so that adapter's own rule applies. */
 export function validateLegacyProviderConfiguration(profile: ProviderConfiguration): string | null {
-  return profile.providerKind === "jev" && (profile.reasoningEffort !== null || profile.judgmentPolicy === null) ? "UNSUPPORTED_OPTIONS" : null;
+  return profile.providerKind === "jev" ? validateNoulConfiguration(profile) : null;
 }
 /** Legacy inspection only. Dispatch uses the actual route's adapter instead of this lookup. */
 export function validateBuiltinProviderConfiguration(profile: ProviderConfiguration): string | null {
@@ -651,6 +678,6 @@ export function resolveClassificationWireAdapter(wireAdapterRef: string, route: 
   registered?: ReadonlyMap<string, ClassificationWireAdapter>): ClassificationWireAdapter | undefined {
   const builtin = builtinWireAdapters.get(wireAdapterRef);
   if (builtin?.transport && (route.providerKind !== "jev" || route.adapterRevision !== wireAdapterRef)) throw new Error("INVALID_JEV_CONTEXT_ROUTE");
-  if (builtin?.validateConfiguration && (route.providerKind !== "jev" || route.adapterRevision !== wireAdapterRef)) throw new Error("INVALID_JEV_CHOICE_ROUTE");
+  if (revisionBoundBuiltins.has(wireAdapterRef) && (route.providerKind !== "jev" || route.adapterRevision !== wireAdapterRef)) throw new Error("INVALID_JEV_CHOICE_ROUTE");
   return route.providerKind === "jev" && builtin ? builtin.adapter : registered?.get(wireAdapterRef);
 }
