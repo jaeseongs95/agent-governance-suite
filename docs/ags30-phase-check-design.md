@@ -159,6 +159,8 @@ Codex 출력 형식은 continuity hook이 host 인자로 정한다(`resolveHookH
 
 ### 7.3 면제
 
+제품 파일은 버전 관리 아래에 있는 파일이다(3.1.1). 편집 대상에서 위로 올라가며 `.git`(디렉터리, 또는 worktree·submodule의 `.git` 파일), `.hg`, `.svn`, `.jj` 중 하나를 찾는다. 아직 없는 새 파일은 없는 상위 폴더를 지나쳐 올라간다. 끝까지 없으면 세지 않는다. 상위 폴더를 읽다 오류가 나면(권한 등) 센다. 3.1.0은 아래 면제만 빼고 모든 경로를 세서, 저장소 밖 질의 문서(Google Drive 폴더)를 쓰던 Codex 세션이 3개째에서 거부됐다.
+
 세지 않는 경로: OS 임시 폴더(`os.tmpdir()`, Claude scratchpad 포함), 호스트의 에이전트 메모 폴더, 사용자 설정 `AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS`(플랫폼 경로 구분자로 나눈 절대 경로). 호스트 메모 폴더는 adapter가 정한다.
 
 | 호스트 | 폴더 | 근거 |
@@ -210,3 +212,4 @@ cwd는 기준으로 쓰지 않는다. 설정은 hook 프로세스의 환경에�
 - agy 1.4.12는 호출 `_meta`에 모델을 싣지 않아(`ANTIGRAVITY_EXECUTION_UNOBSERVED`) 신뢰 실행 관측이 필수인 workflow 시작(`plan_workflow`·`start_workflow`의 bootstrap)이 `BINDING_REQUIRED`로 실패한다(v3.0.2부터 같은 코드). agy에서는 거부 뒤 시작이 인프라 실패로 통과하므로 강제가 한 번 거부에 그친다. 3.1.1에서 정책을 정해 고친다.
 - 다른 세션의 활성 root가 같은 workspace를 덮으면 최소 시작은 `ROOT_CONFLICT`로 실패하고 통과 사유가 아니다.
 - 구간은 turn마다(Stop의 phase-check) 다시 센다. 한 turn에 2개씩 여러 turn에 나눠 고치면 거부되지 않는다.
+- 버전 관리 밖의 제품(`git init` 전에 만드는 새 프로젝트, 저장소 밖 설정 파일)은 세지 않는다. `GIT_DIR`로 따로 둔 저장소도 표지가 없어 세지 않는다.

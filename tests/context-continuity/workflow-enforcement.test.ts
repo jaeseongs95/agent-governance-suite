@@ -1,5 +1,7 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { DatabaseSync } from "node:sqlite";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -7,17 +9,19 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { WorkflowContractError, type ConvergenceRootV1, type TaskEnvelopeV1 } from "../../contracts/types.js";
 import { applyPatchTargets } from "../../mcp-server/src/builtin-hook-host-adapters.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
-import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
+import { handleContinuityHook, underVersionControl } from "../../mcp-server/src/continuity-hook.js";
 import { ContinuityService, MINIMAL_WORKFLOW_START_EXAMPLE, WORKFLOW_FILE_LIMIT } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 
 // Design docs/ags30-phase-check-design.md 7 (enforcement, 3.1.0). Synthetic hook inputs and stores; no real host run.
-// Product paths are synthetic absolute paths outside the OS temporary directory, which the gate exempts.
+// Product paths are synthetic paths inside this checkout (under version control, outside the OS temporary directory,
+// which the gate exempts); they are never created. A file outside any checkout is not a product file (7.3).
 const session = "enforce-session";
 const at = "2026-11-02T09:00:00.000Z";
-const repo = path.resolve(process.platform === "win32" ? "C:\\work\\repo" : "/work/repo");
+const repo = fileURLToPath(new URL("../../.phase-fixture/repo", import.meta.url));
+const outsideCheckout = path.resolve(process.platform === "win32" ? "C:\\ags-phase-no-vcs" : "/ags-phase-no-vcs");
 const file = (name: string) => path.join(repo, name);
 const stores = new Set<SqliteContinuityStore>();
 const NO_ENV: NodeJS.ProcessEnv = {};
@@ -157,6 +161,34 @@ describe("workflow gate", () => {
     // Positive control: the same environment still counts product files.
     for (const name of ["a.ts", "b.ts"]) expect(handleContinuityHook(write(name), target, "claude-code", environment)).toEqual({});
     expect(isDeny(handleContinuityHook(write("c.ts"), target, "claude-code", environment))).toBe(true);
+  });
+
+  it("does not count notes and documents outside any checkout, so they never lock the gate", () => {
+    const target = service();
+    for (const name of ["inquiry.md", "guide.md", "report.md", "notes.md"]) {
+      expect(handleContinuityHook(edit("codex", "apply_patch", { command: `*** Begin Patch\n*** Add File: ${path.join(outsideCheckout, name)}\n*** End Patch` }),
+        target, "codex", NO_ENV)).toEqual({});
+    }
+    expect(events(target)).not.toContain("phase-file");
+    expect(events(target)).not.toContain("phase-deny");
+  });
+
+  it("finds the checkout of a new file in new folders, a worktree's .git file and another version control's root", () => {
+    const base = mkdtempSync(path.join(tmpdir(), "ags-vcs-"));
+    try {
+      mkdirSync(path.join(base, "git", ".git"), { recursive: true });
+      mkdirSync(path.join(base, "worktree"));
+      writeFileSync(path.join(base, "worktree", ".git"), "gitdir: /elsewhere/.git/worktrees/w\n");
+      mkdirSync(path.join(base, "hg", ".hg"), { recursive: true });
+      mkdirSync(path.join(base, "plain"));
+      expect(underVersionControl(path.join(base, "git", "new", "deeper", "a.ts"))).toBe(true);
+      expect(underVersionControl(path.join(base, "worktree", "src", "b.ts"))).toBe(true);
+      expect(underVersionControl(path.join(base, "hg", "c.ts"))).toBe(true);
+      expect(underVersionControl(path.join(base, "plain", "d.md"))).toBe(false);
+      expect(underVersionControl(path.join(base, "missing", "e.md"))).toBe(false);
+    } finally {
+      rmSync(base, { recursive: true, force: true });
+    }
   });
 
   it("compares Windows paths without case or separator differences", () => {

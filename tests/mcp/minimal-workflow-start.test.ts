@@ -28,6 +28,8 @@ import { codexCallMeta } from "../helpers/caller.js";
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const SESSION = "minimal-start-session";
 const repo = path.resolve(process.platform === "win32" ? "C:\\work\\minimal-repo" : "/work/minimal-repo");
+// The gate counts only files under version control (design 7.3): the edits go to a synthetic path in this checkout.
+const productDir = fileURLToPath(new URL("../../.phase-fixture/minimal-repo", import.meta.url));
 const cleanups: Array<() => Promise<void> | void> = [];
 
 afterEach(async () => {
@@ -69,7 +71,7 @@ async function harness() {
   };
   /** The hook side: the same continuity and workflow stores the edit gate reads. */
   const hookService = () => new ContinuityService(continuityStore, null, store);
-  const writeFile = (name: string) => handleContinuityHook({ hook_event_name: "PreToolUse", session_id: SESSION, cwd: repo,
+  const writeFile = (name: string) => handleContinuityHook({ hook_event_name: "PreToolUse", session_id: SESSION, cwd: productDir,
     tool_name: "apply_patch", tool_input: { command: `*** Begin Patch\n*** Add File: ${name}\n*** End Patch` } }, hookService(), "codex", {});
   const stop = () => handleContinuityHook({ hook_event_name: "Stop", session_id: SESSION, cwd: repo }, hookService(), "codex", {});
   /** The session-board row the host's own hook writes from its input cwd. */

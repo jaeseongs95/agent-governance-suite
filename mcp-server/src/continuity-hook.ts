@@ -3,7 +3,7 @@ import { actorAccess, isObservedSubagent, type InputObservation } from "./input-
 import { WorkflowContractError } from "../../contracts/types.js";
 import "./builtin-hook-host-adapters.js";
 import { randomUUID } from "node:crypto";
-import { readFileSync, realpathSync } from "node:fs";
+import { readFileSync, realpathSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { types } from "node:util";
@@ -59,6 +59,25 @@ function isExemptEditPath(target: string, roots: readonly string[][]): boolean {
   return roots.some(root => root.length <= segments.length && root.every((segment, index) => segment === "*" || segment === segments[index]));
 }
 
+/** A `.git` directory, or the `.git` file of a worktree or submodule, and the other version controls' roots. */
+const VCS_MARKERS = [".git", ".hg", ".svn", ".jj"];
+
+/**
+ * A product file is under version control (design ags30-phase-check 7.3): notes, inquiry documents and reports outside
+ * any checkout are not counted. Missing parents of a new file are walked past. A parent the hook cannot read counts the
+ * file, so a read failure never opens the gate.
+ */
+export function underVersionControl(target: string): boolean {
+  for (let directory = path.dirname(path.resolve(target)); ; directory = path.dirname(directory)) {
+    try {
+      if (VCS_MARKERS.some(marker => statSync(path.join(directory, marker), { throwIfNoEntry: false }))) return true;
+    } catch {
+      return true;
+    }
+    if (path.dirname(directory) === directory) return false;
+  }
+}
+
 /** The product files an edit will change; a tool whose target the adapter could not read still counts as one file. */
 /** Keyed by the normalized path; the value is the path as the tool gave it (resolved), which the refusal shows. */
 function productEditTargets(observation: InputObservation, host: string, environment: NodeJS.ProcessEnv): Map<string, string> {
@@ -72,7 +91,7 @@ function productEditTargets(observation: InputObservation, host: string, environ
   const product = new Map<string, string>();
   for (const target of targets) {
     const key = normalizedEditPath(target);
-    if (!product.has(key) && !isExemptEditPath(key, roots)) product.set(key, path.resolve(target));
+    if (!product.has(key) && !isExemptEditPath(key, roots) && underVersionControl(target)) product.set(key, path.resolve(target));
   }
   return product;
 }
