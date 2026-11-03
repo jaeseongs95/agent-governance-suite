@@ -67,6 +67,8 @@ export interface ContinuityCleanupPreview {
 
 const SCHEMA_VERSION = 2;
 const LINEAGE_ANCHOR_EVENT = "lineage-anchor:";
+/** One row per (task, epoch, root) a workflow start or open bound; see bindRoot. */
+const ROOT_BOUND_EVENT = "workflow-root:";
 const MAX_COMPATIBLE_SCHEMA_VERSION = 3;
 const SHA256_DIGEST = /^sha256:[a-f0-9]{64}$/u;
 
@@ -257,14 +259,43 @@ export class SqliteContinuityStore {
     }, taskCorrelation);
   }
 
-  bindRoot(taskCorrelation: string, epoch: number, rootId: string, now: string, expectedRootId?: string | null): boolean {
+  /**
+   * Binds one more root to the task's epoch (compare-and-set on the epoch only). root_id stays the primary, the newest
+   * bound root, which the restore card and the pending marker read. Every bound root is one ROOT_BOUND_EVENT row of
+   * that epoch; the rows outlive a rotation, so ownership does not depend on the epoch. They are observation rows, not
+   * a new table, like the fork pins: the shared-state module inventory then needs no change.
+   */
+  bindRoot(taskCorrelation: string, epoch: number, rootId: string, now: string): boolean {
     return this.transaction(msg("continuity.store.bindRoot", {}), () => {
       const result = this.database.prepare(`
         UPDATE continuity_tasks SET root_id = ?, suppressed = 0, updated_at = ?
-        WHERE task_correlation = ? AND current_epoch = ? AND (? = 0 OR root_id IS ?)
-      `).run(rootId, now, taskCorrelation, epoch, expectedRootId === undefined ? 0 : 1, expectedRootId ?? null);
-      return result.changes === 1;
+        WHERE task_correlation = ? AND current_epoch = ?
+      `).run(rootId, now, taskCorrelation, epoch);
+      if (result.changes !== 1) return false;
+      this.database.prepare(`
+        INSERT INTO continuity_observations(task_correlation, epoch, event, turn_hash, success, observed_at)
+        SELECT ?, ?, ?, NULL, 1, ? WHERE NOT EXISTS (
+          SELECT 1 FROM continuity_observations WHERE task_correlation = ? AND epoch = ? AND event = ?
+        )
+      `).run(taskCorrelation, epoch, ROOT_BOUND_EVENT + rootId, now, taskCorrelation, epoch, ROOT_BOUND_EVENT + rootId);
+      return true;
     }, taskCorrelation);
+  }
+
+  /** Every root bound to this epoch, oldest first; a primary bound by an older version without its row is included. */
+  boundRoots(taskCorrelation: string, epoch: number): string[] {
+    const task = this.getTask(taskCorrelation);
+    const rows = this.observationEventsAfter(taskCorrelation, epoch, ROOT_BOUND_EVENT, 0).map(event => event.slice(ROOT_BOUND_EVENT.length));
+    const primary = task?.currentEpoch === epoch ? task.rootId : null;
+    return [...new Set(primary ? [...rows, primary] : rows)];
+  }
+
+  /** Whether this task ever bound the root, in any epoch. */
+  ownsRoot(taskCorrelation: string, rootId: string): boolean {
+    if (this.getTask(taskCorrelation)?.rootId === rootId) return true;
+    return Boolean(this.database.prepare(`
+      SELECT 1 FROM continuity_observations WHERE task_correlation = ? AND event = ? LIMIT 1
+    `).get(taskCorrelation, ROOT_BOUND_EVENT + rootId));
   }
 
   setSuppressed(taskCorrelation: string, epoch: number, now: string): boolean {

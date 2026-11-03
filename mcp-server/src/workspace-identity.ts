@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 import { WorkflowContractError } from "../../contracts/types.js";
@@ -15,6 +16,8 @@ export interface SurfaceIdentityV1 {
 
 export interface RootIdentityV1 {
   version: 1;
+  /** hostIdentity() where the paths were resolved; an identity stored without it is taken as this host's. */
+  host?: string;
   workspacePhysical: string;
   surfaces: SurfaceIdentityV1[];
 }
@@ -225,9 +228,27 @@ export function repositoryInDirectory(container: string, commonDir: string): "ov
   } catch { return "unknown"; }
 }
 
-function identify(target: string): Pick<SurfaceIdentityV1, "physical" | "git"> {
+/** The physical key and checkout of one path, as a root surface resolves it (also the edit gate's target). */
+export function identify(target: string): Pick<SurfaceIdentityV1, "physical" | "git"> {
   const physical = physicalPath(target);
   return { physical: normalizedKey(physical.real), git: discoverGit(physical) };
+}
+
+/**
+ * This machine's name, lowercased and without its domain, so "Box.local" and "box" match. ponytail: two machines with
+ * the same name count as one host, which only makes their roots block each other; a host ID file if that ever matters.
+ */
+export function hostIdentity(): string {
+  const host = os.hostname().trim().toLowerCase().split(".")[0] ?? "";
+  if (!host) {
+    throw new WorkflowContractError("INVALID_INPUT", msg("services.workspace.hostUnresolved", {}), { reason: "HOST_IDENTITY_UNRESOLVED" });
+  }
+  return host;
+}
+
+/** Paths on different hosts never overlap; an identity without a host is this host's. */
+export function sameHost(left: { host?: string }, right: { host?: string }): boolean {
+  return !left.host || !right.host || left.host === right.host;
 }
 
 export function resolveRootIdentity(
@@ -254,5 +275,5 @@ export function resolveRootIdentity(
       conservative: globIndex < 0 ? null : "glob-prefix",
     };
   });
-  return { version: 1, workspacePhysical: workspace.physical, surfaces };
+  return { version: 1, host: hostIdentity(), workspacePhysical: workspace.physical, surfaces };
 }

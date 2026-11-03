@@ -1,6 +1,6 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -58,8 +58,8 @@ async function harness() {
   cleanups.push(() => rmSync(directory, { recursive: true, force: true }));
   cleanups.push(() => { store.close(); continuityStore.close(); });
   cleanups.push(async () => { await client.close(); await server.close(); });
-  const call = async <T>(args: Record<string, unknown>, observed = true): Promise<ApiResultV1<T>> => {
-    const response = await client.callTool({ name: "start_workflow", arguments: args, _meta: codexCallMeta(SESSION, observed ? {} : { model: null }) });
+  const call = async <T>(args: Record<string, unknown>, observed = true, sessionId = SESSION): Promise<ApiResultV1<T>> => {
+    const response = await client.callTool({ name: "start_workflow", arguments: args, _meta: codexCallMeta(sessionId, observed ? {} : { model: null }) });
     const text = (response.content as Array<{ type: string; text?: string }>).find(item => item.type === "text")?.text;
     return JSON.parse(text!) as ApiResultV1<T>;
   };
@@ -93,10 +93,11 @@ async function harness() {
         .flatMap(row => (JSON.parse(row.root_json) as { taskEnvelope: { constraints: string[] } }).taskEnvelope.constraints);
     } finally { database.close(); }
   };
-  return { service, continuity, call, counts, writeFile, stop, reportCwd, rootWorkspaces, rootConstraints };
+  return { service, store, directory, continuity, call, counts, writeFile, stop, reportCwd, rootWorkspaces, rootConstraints };
 }
 
-const minimal = { goal: "Change three files.", stages: ["minimal-implementation"], acceptanceCriteria: ["The change works."], workspace: repo };
+// The workflow covers the folder the edits go to, so they are inside its write scope.
+const minimal = { goal: "Change three files.", stages: ["minimal-implementation"], acceptanceCriteria: ["The change works."], workspace: productDir, writeTargets: ["."] };
 /** The label is display text in the request's locale; the key and the count are the contract. */
 const expectLateAdoption = (lateAdoption: MinimalWorkflowStartV1["lateAdoption"] | undefined, priorFileCount: number) => {
   expect(lateAdoption).toMatchObject({ messageKey: "workflowRecord.lateAdoption.label", params: {}, priorFileCount });
@@ -111,8 +112,9 @@ describe("start_workflow minimal start", () => {
     expect(started.error).toBeNull();
     expect(started.data).toMatchObject({ state: "running", lateAdoption: null,
       stages: [{ capability: "minimal-implementation" }] });
-    expect(started.data!.defaultsUsed).toEqual(expect.arrayContaining(["taskId", "riskLevel", "authorization", "frame", "writeTargets"]));
+    expect(started.data!.defaultsUsed).toEqual(expect.arrayContaining(["taskId", "riskLevel", "authorization", "frame"]));
     expect(started.data!.defaultsUsed).not.toContain("workspace");
+    expect(started.data!.defaultsUsed).not.toContain("writeTargets");
     expect(counts()).toEqual({ convergence_roots: 1, convergence_leases: 1, workflow_runs: 1, execution_observation_claims: 1 });
     for (const name of ["a.ts", "b.ts", "c.ts", "d.ts"]) expect(writeFile(name)).toEqual({});
   });
@@ -143,7 +145,7 @@ describe("start_workflow minimal start", () => {
 
   it("defaults the workspace to the session's reported working directory, never the server's", async () => {
     const { call, counts, reportCwd, rootWorkspaces } = await harness();
-    const unnamed = { goal: minimal.goal, stages: minimal.stages, acceptanceCriteria: minimal.acceptanceCriteria };
+    const unnamed = { goal: minimal.goal, stages: minimal.stages, acceptanceCriteria: minimal.acceptanceCriteria, writeTargets: ["."] };
     const refused = await call<MinimalWorkflowStartV1>(unnamed);
     expect(refused.error).toMatchObject({ code: "INVALID_INPUT", details: { field: "workspace" } });
     expect(counts()).toEqual({ convergence_roots: 0, convergence_leases: 0, workflow_runs: 0, execution_observation_claims: 0 });
@@ -209,5 +211,69 @@ describe("start_workflow minimal start", () => {
     expect(["BINDING_REQUIRED", "BINDING_INVALID", "MCP_UNAVAILABLE"]).toContain(unobserved.error?.code);
     expect(counts().convergence_roots).toBe(0);
     expect(writeFile("c.ts")).toEqual({});
+  });
+});
+
+// Several workflows per session (3.3.0): disjoint starts, continuation by rootId and ROOT_CONFLICT guidance.
+describe("start_workflow with several workflows in one session", () => {
+  const scoped = (writeTargets: string[], goal = `Change ${writeTargets.join(", ")}.`) => ({ ...minimal, goal, writeTargets });
+  type ConflictDetails = { existingPath: string; requestedEntry: string; ownedBySession: boolean; nextActions: Array<{ action: string }> };
+
+  it("starts a second workflow on paths that do not overlap and passes edits inside each", async () => {
+    const { call, writeFile, counts } = await harness();
+    const first = await call<MinimalWorkflowStartV1>(scoped(["alpha"]));
+    const second = await call<MinimalWorkflowStartV1>(scoped(["beta"]));
+    expect(first.error).toBeNull();
+    expect(second.error).toBeNull();
+    expect(second.data?.rootId).not.toBe(first.data?.rootId);
+    expect(counts()).toMatchObject({ convergence_roots: 2, workflow_runs: 2 });
+    for (const name of ["alpha/1.ts", "alpha/2.ts", "beta/1.ts", "beta/2.ts"]) expect(writeFile(name)).toEqual({});
+  });
+
+  it("requires writeTargets", async () => {
+    const { call, counts } = await harness();
+    const withoutTargets: Record<string, unknown> = { ...minimal };
+    delete withoutTargets.writeTargets;
+    expect((await call(withoutTargets)).error).toMatchObject({ code: "INVALID_INPUT", details: { field: "writeTargets" } });
+    expect(counts().convergence_roots).toBe(0);
+  });
+
+  it("names the overlapping path, the owner and the next actions in ROOT_CONFLICT", async () => {
+    const { call } = await harness();
+    const first = await call<MinimalWorkflowStartV1>(scoped(["shared"]));
+    expect(first.error).toBeNull();
+    const own = await call(scoped(["shared/inner"]));
+    expect(own.error).toMatchObject({ code: "ROOT_CONFLICT", messageKey: "workflow.service.startWorkflowRootConflict",
+      details: { rootId: first.data!.rootId, requestedEntry: "shared/inner", ownedBySession: true } });
+    const ownDetails = own.error!.details as unknown as ConflictDetails;
+    expect(ownDetails.existingPath.toLowerCase()).toContain("shared");
+    expect(ownDetails.nextActions.map(item => item.action)).toEqual(["restart-with-disjoint-writeTargets", "continue-own-root"]);
+    expect(own.error!.message).toContain("shared/inner");
+    const foreign = await call(scoped(["shared"]), true, "another-session");
+    expect(foreign.error).toMatchObject({ code: "ROOT_CONFLICT", details: { ownedBySession: false } });
+    expect((foreign.error!.details as unknown as ConflictDetails).nextActions.map(item => item.action)).toEqual(["restart-with-disjoint-writeTargets"]);
+  });
+
+  it("continues only this session's own open root with rootId, and refuses another session's or a closed root", async () => {
+    const { call, service, store, directory } = await harness();
+    const first = await call<MinimalWorkflowStartV1>(scoped(["alpha"]));
+    expect(service.abortWorkflow(first.data!.runId, first.data!.revision).error).toBeNull();
+    const evidence = path.join(directory, "failure-notes.txt");
+    writeFileSync(evidence, "why the first attempt stopped");
+    const priorFailure = { hypothesis: "h", changeSummary: "c", discriminator: "d", evidenceRefs: [evidence] };
+    const continued = { ...scoped(["alpha"]), rootId: first.data!.rootId };
+    expect((await call(continued, true, "another-session")).error).toMatchObject({ code: "INVALID_INPUT", details: { reason: "ROOT_NOT_OWNED" } });
+    expect((await call(continued)).error).toMatchObject({ code: "INVALID_INPUT", details: { reason: "PRIOR_FAILURE_REQUIRED" } });
+    expect((await call({ ...continued, goal: "Something else.", priorFailure })).error)
+      .toMatchObject({ code: "INVALID_INPUT", details: { reason: "ROOT_TASK_MISMATCH", field: "goal" } });
+    const resumed = await call<MinimalWorkflowStartV1>({ ...continued, priorFailure });
+    expect(resumed.error).toBeNull();
+    expect(resumed.data).toMatchObject({ rootId: first.data!.rootId, state: "running" });
+    expect(resumed.data!.runId).not.toBe(first.data!.runId);
+    // A root that is no longer open is not continued.
+    expect(service.abortWorkflow(resumed.data!.runId, resumed.data!.revision).error).toBeNull();
+    const current = store.getConvergenceSnapshot(first.data!.rootId)!.root;
+    expect(store.updateConvergenceRoot({ ...current, state: "abandoned", revision: current.revision + 1 }, current.revision)).toBe(true);
+    expect((await call({ ...continued, priorFailure })).error).toMatchObject({ code: "INVALID_TRANSITION", details: { reason: "ROOT_NOT_OPEN", state: "abandoned" } });
   });
 });

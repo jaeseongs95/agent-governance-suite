@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,8 +28,8 @@ const stores = new Set<SqliteContinuityStore>();
 const NO_ENV: NodeJS.ProcessEnv = {};
 const EN_ENV: NodeJS.ProcessEnv = { AGENT_GOVERNANCE_LOCALE: "en" };
 // The start example every refusal names, byte for byte, in each shipped locale.
-const KO_EXAMPLE = 'start_workflow {"goal":"<목표>","stages":["minimal-implementation"],"acceptanceCriteria":["<수용 기준>"]}';
-const EN_EXAMPLE = 'start_workflow {"goal":"<goal>","stages":["minimal-implementation"],"acceptanceCriteria":["<acceptance criterion>"]}';
+const KO_EXAMPLE = 'start_workflow {"goal":"<목표>","stages":["minimal-implementation"],"acceptanceCriteria":["<수용 기준>"],"writeTargets":["<바꿀 경로>"]}';
+const EN_EXAMPLE = 'start_workflow {"goal":"<goal>","stages":["minimal-implementation"],"acceptanceCriteria":["<acceptance criterion>"],"writeTargets":["<path to change>"]}';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -37,16 +37,16 @@ afterEach(() => {
   stores.clear();
 });
 
-function root(state: ConvergenceRootV1["state"], rootId = "enforce-root"): ConvergenceRootV1 {
+function root(state: ConvergenceRootV1["state"], rootId = "enforce-root", scope = "src", workspace = repo): ConvergenceRootV1 {
   const task: TaskEnvelopeV1 = {
-    schemaVersion: "1.0.0", taskId: "enforce-task", objective: "Enforcement fixture.",
-    scope: { included: ["src"], excluded: [] }, acceptanceCriteria: ["Tests pass."], riskLevel: "low",
-    workUnits: [{ id: "work", objective: "Work.", dependencies: [], writeTargets: ["src"] }],
+    schemaVersion: "1.0.0", taskId: "enforce-task", objective: `Enforcement fixture ${rootId}.`,
+    scope: { included: [scope], excluded: [] }, acceptanceCriteria: ["Tests pass."], riskLevel: "low",
+    workUnits: [{ id: "work", objective: "Work.", dependencies: [], writeTargets: [scope] }],
     requiredCapabilities: [], constraints: [], authorization: { allowedActions: [], prohibitedActions: [], approvalRequired: [] },
     decision: { complexity: "complex", hasConflicts: false }, orchestration: { requested: true, mcpAvailable: true },
   };
   const frame = {
-    schemaVersion: "1.0.0" as const, workspace: { workspaceId: "repo", locator: repo }, controlArtifacts: [], targetArtifacts: [],
+    schemaVersion: "1.0.0" as const, workspace: { workspaceId: "repo", locator: workspace }, controlArtifacts: [], targetArtifacts: [],
     operationalSettings: { maxAttemptsPerEpoch: 3 as const, maxEpochs: 2 as const, leaseTtlSeconds: 300 },
   };
   return {
@@ -57,10 +57,10 @@ function root(state: ConvergenceRootV1["state"], rootId = "enforce-root"): Conve
   };
 }
 
-/** A workflow store whose roots have one run each in `runState` (null: no run). */
-function workflowWith(roots: Array<{ state: ConvergenceRootV1["state"]; rootId: string; runState: string | null }>) {
+/** A workflow store whose roots (write scope `scope`, default src) have one run each in `runState` (null: no run). */
+function workflowWith(roots: Array<{ state: ConvergenceRootV1["state"]; rootId: string; runState: string | null; scope?: string; workspace?: string }>) {
   const workflow = new InMemoryWorkflowStore();
-  for (const item of roots) expect(workflow.insertConvergenceRoot(root(item.state, item.rootId))).toBeNull();
+  for (const item of roots) expect(workflow.insertConvergenceRoot(root(item.state, item.rootId, item.scope, item.workspace))).toBeNull();
   const snapshot = workflow.getConvergenceSnapshot.bind(workflow);
   vi.spyOn(workflow, "getConvergenceSnapshot").mockImplementation(rootId => {
     const current = snapshot(rootId);
@@ -251,12 +251,12 @@ describe("workflow gate", () => {
     }
   });
 
-  it("counts edits made under an active workflow in no window, so a finished workflow starts a new count", () => {
+  it("counts edits inside an active workflow's write scope in no window, so a finished workflow starts a new count", () => {
     const roots = [{ state: "open" as const, rootId: "enforce-root", runState: "running" as string | null }];
     const target = service(workflowWith(roots));
     handleContinuityHook(write("a.ts"), target, "claude-code", NO_ENV);
     target.prepareWorkflowStart(session, "enforce-root");
-    for (const name of ["b.ts", "c.ts", "d.ts"]) expect(handleContinuityHook(write(name), target, "claude-code", NO_ENV)).toEqual({});
+    for (const name of ["b.ts", "c.ts", "d.ts"]) expect(handleContinuityHook(write(path.join("src", name)), target, "claude-code", NO_ENV)).toEqual({});
     roots[0]!.runState = "passed";
     for (const name of ["e.ts", "f.ts"]) expect(handleContinuityHook(write(name), target, "claude-code", NO_ENV)).toEqual({});
     expect(isDeny(handleContinuityHook(write("g.ts"), target, "claude-code", NO_ENV))).toBe(true);
@@ -317,5 +317,80 @@ describe("Stop output", () => {
     expect(events(target).at(-1)).toBe("phase-check");
     handleContinuityHook(edit("codex", "apply_patch", { command: "*** Begin Patch\n*** Add File: b.ts\n*** End Patch" }), target, "codex", NO_ENV);
     expect(handleContinuityHook(stop({ stop_hook_active: false }), target, "codex", NO_ENV)).toMatchObject({ decision: "block" });
+  });
+});
+
+// Several workflows per session (3.3.0): each bound root's write scope passes, a gated scope refuses everyone.
+describe("several workflows in one session", () => {
+  it("passes edits inside each of two active roots of one session and still counts the paths outside both", () => {
+    const target = service(workflowWith([
+      { state: "open", rootId: "root-alpha", runState: "running", scope: "alpha" },
+      { state: "open", rootId: "root-beta", runState: "running", scope: "beta" },
+    ]));
+    target.prepareWorkflowStart(session, "root-alpha");
+    target.prepareWorkflowStart(session, "root-beta");
+    for (const name of ["alpha/1.ts", "alpha/2.ts", "beta/1.ts", "beta/2.ts"]) {
+      expect(handleContinuityHook(write(name), target, "claude-code", NO_ENV)).toEqual({});
+    }
+    expect(events(target).filter(event => event === "phase-file")).toHaveLength(0);
+    for (const name of ["a.ts", "b.ts"]) expect(handleContinuityHook(write(name), target, "claude-code", NO_ENV)).toEqual({});
+    expect(isDeny(handleContinuityHook(write("c.ts"), target, "claude-code", NO_ENV))).toBe(true);
+  });
+
+  it("shows the pending stages and goal of every active root at Stop", () => {
+    const target = service(workflowWith([
+      { state: "open", rootId: "root-alpha", runState: "running", scope: "alpha" },
+      { state: "open", rootId: "root-beta", runState: "running", scope: "beta" },
+    ]));
+    target.prepareWorkflowStart(session, "root-alpha");
+    target.prepareWorkflowStart(session, "root-beta");
+    handleContinuityHook(write("alpha/1.ts"), target, "claude-code", EN_ENV);
+    const text = String((handleContinuityHook(stop(), target, "claude-code", EN_ENV).hookSpecificOutput as Record<string, unknown>).additionalContext);
+    expect(text).toContain("Workflow goal: Enforcement fixture root-alpha.");
+    expect(text).toContain("Workflow goal: Enforcement fixture root-beta.");
+  });
+
+  it.each(["needs-review", "needs-user"] as const)("refuses a %s root's scope for its own session, another session and another checkout, even after a failed start", state => {
+    const target = service(workflowWith([{ state, rootId: "gated-root", runState: "failed" }]));
+    target.prepareWorkflowStart(session, "gated-root");
+    // A recorded start failure lets the window pass, but never a gated scope.
+    target.recordWorkflowStartFailure(session, new WorkflowContractError("BINDING_INVALID", msg("continuity.binding.stale", {})));
+    const own = handleContinuityHook(write("src/x.ts"), target, "claude-code", EN_ENV);
+    expect(reason(own)).toBe(`[AGS] ${file("src/x.ts")} is in the write scope of workflow root gated-root (${state}), which awaits a decision, so it cannot be changed. Change it after that root is decided with resolve_convergence_gate, and keep working on parts that do not overlap.`);
+    expect(isDeny(handleContinuityHook({ ...write("src/y.ts"), session_id: "another-session" }, target, "claude-code", NO_ENV))).toBe(true);
+    // Outside the gated scope the start failure still lets this window pass.
+    for (const name of ["a.ts", "b.ts", "c.ts"]) expect(handleContinuityHook(write(name), target, "claude-code", NO_ENV)).toEqual({});
+  });
+
+  it("refuses the same checkout-relative path of a gated root in another checkout of its repository", () => {
+    const base = realpathSync.native(mkdtempSync(path.join(tmpdir(), "ags-gated-")));
+    try {
+      const main = path.join(base, "main"), linked = path.join(base, "linked");
+      mkdirSync(path.join(main, ".git", "worktrees", "linked"), { recursive: true });
+      writeFileSync(path.join(main, ".git", "worktrees", "linked", "commondir"), "../..\n");
+      mkdirSync(linked);
+      writeFileSync(path.join(linked, ".git"), `gitdir: ${path.join(main, ".git", "worktrees", "linked")}\n`);
+      const target = service(workflowWith([{ state: "needs-review", rootId: "gated-root", runState: "failed", workspace: main }]));
+      expect(target.gateEditForSession("another-session", [path.join(linked, "src", "x.ts")])).toMatchObject({ key: "hooks.editGate.gatedRoot" });
+      expect(target.gateEditForSession("another-session", [path.join(linked, "docs", "x.md")])).toBeNull();
+    } finally {
+      rmSync(base, { recursive: true, force: true });
+    }
+  });
+
+  it("moves the epoch on only when every bound root has settled", () => {
+    const roots = [
+      { state: "open" as const, rootId: "root-alpha", runState: "passed" as string | null, scope: "alpha" },
+      { state: "open" as const, rootId: "root-beta", runState: "running" as string | null, scope: "beta" },
+    ];
+    const target = service(workflowWith(roots));
+    target.prepareWorkflowStart(session, "root-alpha");
+    target.prepareWorkflowStart(session, "root-beta");
+    expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 1, rootId: "root-beta" });
+    roots[1]!.runState = "failed";
+    expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 2, rootId: null });
+    // Ownership outlives the epoch, so a settled open root can still be continued by this session only.
+    expect(target.ownsRoot(session, "root-alpha")).toBe(true);
+    expect(target.ownsRoot("another-session", "root-alpha")).toBe(false);
   });
 });

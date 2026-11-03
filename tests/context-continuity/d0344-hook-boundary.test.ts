@@ -505,7 +505,8 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
     expect(fixture.continuity.getSnapshot(correlation, 1)).toEqual(fixture.historical);
   });
 
-  it.each(["continuity-update", "throw", "async", "epoch-cas", "root-cas"] as const)("%s callback failure rolls back run, lease, links and sequence", async failure => {
+  // A second root bound to the same epoch is not a failure any more (several workflows per session); only the epoch is compared.
+  it.each(["continuity-update", "throw", "async", "epoch-cas"] as const)("%s callback failure rolls back run, lease, links and sequence", async failure => {
     const fixture = await harness(), pending = claim(fixture), correlation = fixture.initialContinuity.correlateSession(session);
     fixture.initialContinuity.clearSession(session);
     const beforeTask = fixture.continuity.getTask(correlation), beforeWorkflow = fixture.workflow.getConvergenceSnapshot(fixture.root.rootId);
@@ -514,13 +515,12 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
     try {
       if (failure === "continuity-update") database.exec(`CREATE TRIGGER d0344_reject_start_binding BEFORE UPDATE OF root_id ON continuity_tasks
         BEGIN SELECT RAISE(ABORT, 'd0344-owned-start-binding-failure'); END;`);
-      if (failure === "epoch-cas" || failure === "root-cas") {
+      if (failure === "epoch-cas") {
         const original = fixture.continuity.bindRoot.bind(fixture.continuity);
         vi.spyOn(fixture.continuity, "bindRoot").mockImplementationOnce((...args) => {
           const competing = new SqliteContinuityStore(fixture.env.AGENT_GOVERNANCE_CONTINUITY_DB_PATH);
           try {
-            if (failure === "epoch-cas") competing.rotateEpoch(correlation, new Date().toISOString());
-            else expect(competing.bindRoot(correlation, 2, "competing-root", new Date().toISOString())).toBe(true);
+            competing.rotateEpoch(correlation, new Date().toISOString());
             expectedTask = competing.getTask(correlation);
           } finally { competing.close(); }
           return original(...args);
@@ -543,7 +543,8 @@ describe("D0344 guarded start correlates a resumed root before publishing its ru
       // AGS 3.0 error model R2/R5: the callback failure is a server failure with a redacted cause, never its message.
       if (failure === "throw") expect(started.error).toMatchObject({ code: "MCP_UNAVAILABLE", details: { reason: "INTERNAL_FAILURE", cause: { type: "error" } } });
       if (failure === "throw") expect(JSON.stringify(started.error)).not.toContain("d0344-original-callback-cause");
-      if (failure === "epoch-cas" || failure === "root-cas") expect(started.error?.code).toBe("BINDING_INVALID");
+      // A lost epoch race is retryable, so it is STALE_REVISION, never the infrastructure code BINDING_INVALID.
+      if (failure === "epoch-cas") expect(started.error?.code).toBe("STALE_REVISION");
       expect(fixture.workflow.getConvergenceSnapshot(fixture.root.rootId)).toEqual(beforeWorkflow);
       expect(workflowRows(fixture)).toEqual(beforeRows);
       expect(fixture.continuity.getTask(correlation)).toEqual(expectedTask);

@@ -14,6 +14,7 @@ import {
   activeRootIdentity,
   convergenceDigest,
   planRootInsertion,
+  type IdentifiedRoot,
   type RootConflict,
   type StoredIdentity,
 } from "./convergence-logic.js";
@@ -78,6 +79,8 @@ export interface WorkflowStore {
   ): boolean;
   /** Returns the blocking root and the reason, or null once the root is stored. */
   insertConvergenceRoot(root: ConvergenceRootV1): RootConflict | null;
+  /** Every root not completed or abandoned, with the identity a new root's conflict check would compare against. */
+  activeRootIdentities(): IdentifiedRoot[];
   getConvergenceSnapshot(rootId: string): ConvergenceSnapshot | null;
   /** Keeps workflow writes excluded until the synchronous callback returns; callback failures roll back workflow writes. */
   withWorkflowTransaction<T>(operation: () => T): T;
@@ -191,16 +194,7 @@ export class InMemoryWorkflowStore implements WorkflowStore {
     if (root.parentRootId && !this.convergence.has(root.parentRootId)) {
       throw new WorkflowContractError("INVALID_INPUT", msg("workflow.store.parentConvergenceRootFound", {}), { rootId: root.parentRootId });
     }
-    const actives = [...this.convergence.values()]
-      .filter((snapshot) => !["completed", "abandoned"].includes(snapshot.root.state))
-      .map((snapshot) => {
-        const active = activeRootIdentity(snapshot.root, this.identities.get(snapshot.root.rootId) ?? null);
-        if (active.fresh) {
-          this.identities.set(snapshot.root.rootId, { identity: active.identity, surfaceDigest: active.surfaceDigest, inferred: active.inferred });
-        }
-        return active;
-      });
-    const plan = planRootInsertion(root, actives);
+    const plan = planRootInsertion(root, this.activeRootIdentities());
     if (plan.conflict) return clone(plan.conflict);
     this.identities.set(root.rootId, { identity: plan.identity, surfaceDigest: plan.surfaceDigest, inferred: plan.inferred });
     if (root.parentRootId) {
@@ -218,6 +212,18 @@ export class InMemoryWorkflowStore implements WorkflowStore {
       workflowRunIds: [],
     });
     return null;
+  }
+
+  activeRootIdentities(): IdentifiedRoot[] {
+    return [...this.convergence.values()]
+      .filter((snapshot) => !["completed", "abandoned"].includes(snapshot.root.state))
+      .map((snapshot) => {
+        const active = activeRootIdentity(snapshot.root, this.identities.get(snapshot.root.rootId) ?? null);
+        if (active.fresh) {
+          this.identities.set(snapshot.root.rootId, { identity: active.identity, surfaceDigest: active.surfaceDigest, inferred: active.inferred });
+        }
+        return active;
+      });
   }
 
   getConvergenceSnapshot(rootId: string): ConvergenceSnapshot | null {

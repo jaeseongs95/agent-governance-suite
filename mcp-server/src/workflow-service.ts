@@ -174,6 +174,8 @@ export interface MinimalStartContinuity {
   settle(): void;
   /** Binds the session to the new root before the run commits (start_guarded_workflow's correlation). */
   beforeCommit(rootId: string): void;
+  /** Whether the calling session ever bound this root: only its own open root can be continued (rootId). */
+  ownsRoot(rootId: string): boolean;
   /** The request's locale for the result's display text (lateAdoption.label); the root locale when absent. */
   locale?: SupportedLocale;
   /**
@@ -197,15 +199,22 @@ export interface MinimalWorkflowStartV1 {
   lateAdoption: { label: string; messageKey: string; params: Record<string, never>; priorFileCount: number } | null;
 }
 
+/** A retry's account of the failed attempt; the server adds the failure fingerprint from the latest outcome. */
+type MinimalPriorFailure = Omit<NonNullable<AttemptProposalV1["priorFailure"]>, "fingerprint">;
+
 interface MinimalStartRequest {
   goal: string;
   stages: string[];
   acceptanceCriteria: string[];
   workspace: string | null;
   writeTargets: string[];
+  /** Continue this session's own open root with a new attempt instead of opening a root. */
+  rootId: string | null;
+  priorFailure: MinimalPriorFailure | null;
 }
 
-const MINIMAL_START_KEYS = new Set(["goal", "stages", "acceptanceCriteria", "workspace", "writeTargets"]);
+const MINIMAL_START_KEYS = new Set(["goal", "stages", "acceptanceCriteria", "workspace", "writeTargets", "rootId", "priorFailure"]);
+const PRIOR_FAILURE_KEYS = ["hypothesis", "changeSummary", "discriminator", "evidenceRefs"];
 
 function nonEmptyStrings(value: unknown, field: string, minimum: number): string[] {
   if (!Array.isArray(value) || value.length < minimum || value.length > 32
@@ -227,13 +236,60 @@ function minimalStartRequest(raw: unknown): MinimalStartRequest {
   if (input.workspace !== undefined && (typeof input.workspace !== "string" || !path.isAbsolute(input.workspace))) {
     throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.workspaceAbsolutePath", {}), { field: "workspace" });
   }
+  if (input.rootId !== undefined && (typeof input.rootId !== "string" || !input.rootId.trim())) {
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.startWorkflowAcceptsGoalStages", {}), { field: "rootId" });
+  }
+  const prior = asRecord(input.priorFailure);
+  if (input.priorFailure !== undefined && (input.rootId === undefined || Object.keys(prior).sort().join() !== [...PRIOR_FAILURE_KEYS].sort().join()
+    || PRIOR_FAILURE_KEYS.slice(0, 3).some(key => typeof prior[key] !== "string" || !(prior[key] as string).trim()))) {
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.startWorkflowPriorFailureShape", {}), { field: "priorFailure" });
+  }
   return {
     goal: input.goal.trim(),
     stages: nonEmptyStrings(input.stages, "stages", 1),
     acceptanceCriteria: nonEmptyStrings(input.acceptanceCriteria, "acceptanceCriteria", 1),
     workspace: typeof input.workspace === "string" ? input.workspace : null,
-    writeTargets: input.writeTargets === undefined ? ["."] : nonEmptyStrings(input.writeTargets, "writeTargets", 1),
+    // Required: a default of the whole workspace made every start cover every other start's paths (ROOT_CONFLICT).
+    writeTargets: nonEmptyStrings(input.writeTargets, "writeTargets", 1),
+    rootId: typeof input.rootId === "string" ? input.rootId : null,
+    priorFailure: input.priorFailure === undefined ? null : {
+      hypothesis: prior.hypothesis as string, changeSummary: prior.changeSummary as string, discriminator: prior.discriminator as string,
+      evidenceRefs: nonEmptyStrings(prior.evidenceRefs, "priorFailure.evidenceRefs", 1),
+    },
   };
+}
+
+/** The first request field that differs from the continued root's frozen task, or null. */
+function continuedTaskMismatch(request: MinimalStartRequest, root: ConvergenceRootV1): string | null {
+  const task = root.taskEnvelope;
+  const same = (left: readonly string[], right: readonly string[]) => JSON.stringify(left) === JSON.stringify(right);
+  if (request.goal !== task.objective.trim()) return "goal";
+  if (!same(request.stages, task.requiredCapabilities)) return "stages";
+  if (!same(request.acceptanceCriteria, task.acceptanceCriteria)) return "acceptanceCriteria";
+  if (!same(request.writeTargets, task.scope.included)) return "writeTargets";
+  if (request.workspace !== null && request.workspace !== root.frame.workspace.locator) return "workspace";
+  return null;
+}
+
+/**
+ * ROOT_CONFLICT of a minimal start, with what the caller can do next: start again on writeTargets that do not
+ * overlap and hold back only the blocked part; continue its own open root with rootId; or resolve a gated root.
+ */
+function startConflict(body: ContractErrorBody, ownsRoot: (rootId: string) => boolean): WorkflowContractError {
+  const details = body.details ?? {};
+  const rootId = String(details.rootId ?? "");
+  const state = String(details.blockerState ?? "");
+  const owned = rootId !== "" && ownsRoot(rootId);
+  const gated = state === "needs-review" || state === "needs-user";
+  const nextActions = [
+    { action: "restart-with-disjoint-writeTargets", tool: "start_workflow" },
+    ...(owned && state === "open" ? [{ action: "continue-own-root", tool: "start_workflow", arguments: { rootId } }] : []),
+    ...(gated ? [{ action: "resolve-gate", tool: "resolve_convergence_gate", arguments: { rootId } }] : []),
+  ];
+  return new WorkflowContractError("ROOT_CONFLICT", msg("workflow.service.startWorkflowRootConflict", {
+    requested: String(details.requestedEntry ?? ""), existing: String(details.existingPath ?? details.existingEntry ?? ""), rootId, state,
+    owned: owned ? "yes" : "no", action: gated ? "resolve" : owned && state === "open" ? "continue" : "disjoint",
+  }), { ...details, ownedBySession: owned, nextActions });
 }
 
 /** The TaskEnvelope and frame of a minimal start; the AGENT's stage choice is used as given, never expanded. */
@@ -263,7 +319,7 @@ function minimalTask(request: MinimalStartRequest, workspace: string, priorFileC
     operationalSettings: { maxAttemptsPerEpoch: 3, maxEpochs: 2, leaseTtlSeconds: 300 },
   };
   const defaultsUsed = ["taskId", "scope", "riskLevel", "workUnits", "constraints", "authorization", "decision", "orchestration", "frame", "outputTargets",
-    ...(request.workspace === null ? ["workspace"] : []), ...(request.writeTargets.length === 1 && request.writeTargets[0] === "." ? ["writeTargets"] : [])];
+    ...(request.workspace === null ? ["workspace"] : [])];
   return { task, frame, defaultsUsed };
 }
 
@@ -642,16 +698,23 @@ export class WorkflowService {
   startMinimalWorkflow(rawRequest: unknown, caller: ObservedCallerV1 | null, continuity: MinimalStartContinuity): ApiResultV1<MinimalWorkflowStartV1> {
     return this.attempt(() => {
       const request = minimalStartRequest(rawRequest);
+      if (request.rootId !== null && !continuity.ownsRoot(request.rootId)) {
+        throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.startWorkflowRootNotOwned", { rootId: request.rootId }),
+          { field: "rootId", reason: "ROOT_NOT_OWNED", rootId: request.rootId });
+      }
       const observed = request.workspace === null ? continuity.sessionWorkspace?.() ?? null : null;
       const workspace = request.workspace ?? (observed && path.isAbsolute(observed) ? observed : null);
-      if (!workspace) {
+      if (!workspace && request.rootId === null) {
         throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.workspaceRequiredHostReportedSession", {}), { field: "workspace" });
       }
       // Edits made in this window before the start are covered by the run but were not observed under it.
       const priorFileCount = continuity.priorFileCount();
       continuity.settle();
-      const { task, frame, defaultsUsed } = minimalTask(request, workspace, priorFileCount);
+      // ponytail: a continued root keeps its frozen task, so late adoption is only reported, not added to its constraints.
+      const fresh = request.rootId === null ? minimalTask(request, workspace!, priorFileCount) : null;
       return this.store.withWorkflowTransaction(() => {
+        const continued = request.rootId === null ? null : this.continuedRoot(request.rootId, request);
+        const task = continued ? continued.root.taskEnvelope : fresh!.task;
         const plan = unwrapResult(this.planWorkflow(task, true));
         // A passed record of these stages must match an artifact target fixed in the plan, which this start cannot know.
         const needTargets = plan.stages.filter(stage => stage.requiredArtifacts.length > 0).map(stage => stage.requiredCapability);
@@ -660,12 +723,17 @@ export class WorkflowService {
         }
         const blocked = plan.state === "ready" ? null : plan.errors[0];
         if (blocked) throw bodyError(blocked);
-        const root = unwrapResult(this.openConvergenceRoot({
-          schemaVersion: CONTRACT_VERSION, parentRootId: null, taskEnvelope: task, frame, userApprovalRefs: [],
-        }));
+        let root = continued?.root;
+        if (!root) {
+          const opened = this.openConvergenceRoot({
+            schemaVersion: CONTRACT_VERSION, parentRootId: null, taskEnvelope: task, frame: fresh!.frame, userApprovalRefs: [],
+          });
+          if (!opened.ok && opened.error?.code === "ROOT_CONFLICT") throw startConflict(opened.error, rootId => continuity.ownsRoot(rootId));
+          root = unwrapResult(opened);
+        }
         const lease = unwrapResult(this.claimWorkflowAttempt({
           schemaVersion: CONTRACT_VERSION, rootId: root.rootId, expectedRevision: root.revision, plan,
-          outputTargets: request.writeTargets, priorFailure: null,
+          outputTargets: continued?.outputTargets ?? request.writeTargets, priorFailure: continued?.priorFailure ?? null,
         }, true, caller));
         const receipt = unwrapResult(this.startGuardedWorkflow({
           schemaVersion: CONTRACT_VERSION, leaseId: lease.leaseId, expectedRootRevision: lease.rootRevision, plan,
@@ -678,13 +746,46 @@ export class WorkflowService {
           revision: receipt.revision,
           state: receipt.state,
           stages: receipt.plan.stages.map(stage => ({ stageId: stage.stageId, capability: stage.requiredCapability })),
-          defaultsUsed,
+          defaultsUsed: fresh?.defaultsUsed ?? [],
           lateAdoption: priorFileCount > 0
             ? { label: render(LATE_ADOPTION_LABEL, continuity.locale ?? ROOT_LOCALE), messageKey: LATE_ADOPTION_LABEL.key, params: {}, priorFileCount }
             : null,
         };
       });
     });
+  }
+
+  /**
+   * The open root a start continues (start_workflow rootId, after a failed or aborted attempt left it open): the request
+   * must name the root's own frozen task, and a retry after a failed attempt brings priorFailure, bound here to the
+   * latest outcome's fingerprint. The claim then applies the usual retry checks (new evidence or a changed target).
+   */
+  private continuedRoot(rootId: string, request: MinimalStartRequest): {
+    root: ConvergenceRootV1; outputTargets: string[]; priorFailure: AttemptProposalV1["priorFailure"];
+  } {
+    const snapshot = this.requireConvergenceSnapshot(rootId);
+    const root = snapshot.root;
+    if (root.state !== "open") {
+      throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.startWorkflowRootNotOpen", { rootId, state: root.state }),
+        { field: "rootId", reason: "ROOT_NOT_OPEN", rootId, state: root.state });
+    }
+    const field = continuedTaskMismatch(request, root);
+    if (field) {
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.startWorkflowRootTaskMismatch", { field }),
+        { field, reason: "ROOT_TASK_MISMATCH", rootId });
+    }
+    const latest = snapshot.outcomes.filter(outcome => outcome.epoch === root.currentEpoch).at(-1);
+    const failed = latest && latest.state !== "passed" ? latest : null;
+    if (Boolean(failed) !== Boolean(request.priorFailure)) {
+      throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.startWorkflowPriorFailure", { required: failed ? "yes" : "no" }),
+        { field: "priorFailure", reason: failed ? "PRIOR_FAILURE_REQUIRED" : "PRIOR_FAILURE_UNEXPECTED", rootId });
+    }
+    const lastLease = snapshot.leases.filter(lease => lease.state === "consumed").at(-1);
+    return {
+      root,
+      outputTargets: lastLease?.outputTargets ?? root.taskEnvelope.scope.included,
+      priorFailure: failed && request.priorFailure ? { fingerprint: failed.failureFingerprint ?? "", ...request.priorFailure } : null,
+    };
   }
 
   private normalizeAttemptProposal(rawProposal: unknown): AttemptProposalV1 {

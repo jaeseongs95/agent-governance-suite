@@ -15,6 +15,7 @@ import {
   repositoryCheckouts,
   repositoryInDirectory,
   resolveRootIdentity,
+  sameHost,
   type RootIdentityV1,
   type SurfaceIdentityV1,
 } from "./workspace-identity.js";
@@ -184,6 +185,7 @@ export function activeRootIdentity(
   }
   const locator = root.frame.workspace.locator;
   if (!observed && !derived) {
+    // No host: an unresolved root is taken as this host's, so it keeps blocking here.
     const identity: RootIdentityV1 = {
       version: 1,
       workspacePhysical: normalizedScope(".", locator),
@@ -204,8 +206,10 @@ export function activeRootIdentity(
     resolved = false;
     return surface;
   });
+  const host = observed ? observed.host : derived!.host;
   const identity: RootIdentityV1 = {
     version: 1,
+    ...(host ? { host } : {}),
     workspacePhysical: observed?.workspacePhysical ?? derived!.workspacePhysical,
     surfaces,
   };
@@ -298,7 +302,7 @@ export function findRootConflict(
   const checkouts = new Map<string, ReturnType<typeof repositoryCheckouts>>();
   const scans = new Map<string, ReturnType<typeof repositoryInDirectory>>();
   for (const active of actives) {
-    if (active.root.rootId === candidate.root.parentRootId) continue;
+    if (active.root.rootId === candidate.root.parentRootId || !sameHost(candidate.identity, active.identity)) continue;
     for (const requested of candidate.identity.surfaces) {
       for (const existing of active.identity.surfaces) {
         if (overlaps(requested.physical, existing.physical)) {
@@ -394,6 +398,16 @@ export function planRootInsertion(
   };
 }
 
+/**
+ * Whether a root's write surface holds `target` (an identify() result on this host): its physical path, or with
+ * `lineage` (a gated root) the same checkout-relative path in any checkout of the same repository.
+ */
+export function surfaceCovers(identity: RootIdentityV1, target: Pick<SurfaceIdentityV1, "physical" | "git">, host: string, lineage: boolean): boolean {
+  return sameHost(identity, { host }) && identity.surfaces.some(surface => pathWithin(target.physical, surface.physical)
+    || (lineage && target.git !== null && surface.git !== null && target.git.commonDir === surface.git.commonDir
+      && pathWithin(target.git.relative, surface.git.relative)));
+}
+
 /** ROOT_CONFLICT details: which root blocks, whether it is gated, and why the entries collide. */
 export function conflictDetails(conflict: RootConflict): Record<string, unknown> {
   return {
@@ -405,6 +419,7 @@ export function conflictDetails(conflict: RootConflict): Record<string, unknown>
     ...(conflict.kind === "lineage-unresolved" ? { reason: "WORKSPACE_IDENTITY_UNRESOLVED" } : {}),
     requestedEntry: conflict.requested.entry,
     existingEntry: conflict.existing.entry,
+    existingPath: conflict.existing.physical,
     conservativeExpansion: [conflict.requested.conservative, conflict.existing.conservative].filter((reason) => reason !== null),
   };
 }

@@ -4,13 +4,18 @@ import { dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { WorkflowContractError } from "../../contracts/types.js";
+import os from "node:os";
+
+import { WorkflowContractError, type ConvergenceRootV1 } from "../../contracts/types.js";
+import { findRootConflict } from "../../mcp-server/src/convergence-logic.js";
 import {
   assertSupportedScopeEntry,
+  hostIdentity,
   pathWithin,
   repositoryCheckouts,
   repositoryInDirectory,
   resolveRootIdentity,
+  type RootIdentityV1,
 } from "../../mcp-server/src/workspace-identity.js";
 
 const windows = process.platform === "win32";
@@ -79,6 +84,7 @@ describe("resolveRootIdentity Git discovery", () => {
 
     expect(left).toEqual({
       version: 1,
+      host: hostIdentity(),
       workspacePhysical: key(main),
       surfaces: [{
         entry: "src/a.ts",
@@ -447,5 +453,32 @@ describe("pathWithin", () => {
     expect(pathWithin("src/a", "")).toBe(true);
     expect(pathWithin("", "")).toBe(true);
     expect(pathWithin("", "src")).toBe(false);
+  });
+});
+
+describe("host identity", () => {
+  it("normalizes the machine name and refuses an unreadable one", () => {
+    const hostname = vi.spyOn(os, "hostname");
+    try {
+      hostname.mockReturnValue(" Build-Box.Example.COM ");
+      expect(hostIdentity()).toBe("build-box");
+      hostname.mockReturnValue("");
+      expect(() => hostIdentity()).toThrow(expect.objectContaining({ code: "INVALID_INPUT", details: { reason: "HOST_IDENTITY_UNRESOLVED" } }));
+    } finally {
+      hostname.mockRestore();
+    }
+  });
+
+  it("keeps the same paths on different hosts apart and takes an identity stored without a host as this host's", () => {
+    const identity = resolveRootIdentity(fixtureRoot(), ["src"]);
+    expect(identity.host).toBe(hostIdentity());
+    const candidate = { root: { rootId: "candidate", parentRootId: null } as unknown as ConvergenceRootV1, identity };
+    const active = (stored: RootIdentityV1) => [{ root: { rootId: "existing", state: "open" } as unknown as ConvergenceRootV1,
+      identity: stored, resolved: true, legacy: false, observedWorkspace: true }];
+    expect(findRootConflict(candidate, null, active({ ...identity, host: "another-host" }))).toBeNull();
+    const legacy: RootIdentityV1 = { ...identity };
+    delete legacy.host;
+    expect(findRootConflict(candidate, null, active(legacy))?.kind).toBe("physical");
+    expect(findRootConflict(candidate, null, active(identity))?.kind).toBe("physical");
   });
 });

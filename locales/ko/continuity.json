@@ -48,6 +48,5 @@
   "continuity.store.unsupportedSchema": "지원하지 않는 continuity schema 버전 {version}이다.",
   "continuity.token.invalid": "복원 후보 token이 올바르지 않거나 만료되었다.",
   "continuity.token.malformed": "서명된 continuity token의 형식이 잘못되었다.",
-  "continuity.token.verificationFailed": "서명된 continuity token 검증에 실패했다.",
-  "continuity.workflowStart.conflict": "workflow 시작이 현재 continuity 작업과 충돌한다."
+  "continuity.token.verificationFailed": "서명된 continuity token 검증에 실패했다."
 }

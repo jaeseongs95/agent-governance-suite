@@ -48,6 +48,5 @@
   "continuity.store.unsupportedSchema": "Unsupported continuity schema version {version}.",
   "continuity.token.invalid": "Restore candidate token is invalid or expired.",
   "continuity.token.malformed": "Signed continuity token is malformed.",
-  "continuity.token.verificationFailed": "Signed continuity token failed verification.",
-  "continuity.workflowStart.conflict": "The workflow start conflicts with the current continuity task."
+  "continuity.token.verificationFailed": "Signed continuity token failed verification."
 }

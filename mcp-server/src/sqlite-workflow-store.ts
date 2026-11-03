@@ -30,6 +30,7 @@ import {
   failureFingerprint,
   normalizeWorkspaceLocator,
   planRootInsertion,
+  type IdentifiedRoot,
   type ReplacementMatch,
   type RootConflict,
   type StoredIdentity,
@@ -313,22 +314,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       if (root.parentRootId && !parentRow) {
         throw new WorkflowContractError("INVALID_INPUT", msg("workflow.store.parentConvergenceRootFound", {}), { rootId: root.parentRootId });
       }
-      // ponytail: every active root is compared in process; index the derived identity if a ledger ever holds thousands.
-      const rows = this.database.prepare(`
-        SELECT roots.root_id, roots.root_json, roots.revision, identities.identity_json, identities.surface_digest
-        FROM convergence_roots AS roots
-        LEFT JOIN convergence_root_identities AS identities ON identities.root_id = roots.root_id
-        WHERE roots.state NOT IN ('completed', 'abandoned')
-      `).all() as unknown as ActiveRootRow[];
-      const actives = rows.map((row) => {
-        const active = activeRootIdentity(
-          JSON.parse(row.root_json) as ConvergenceRootV1,
-          row.identity_json && row.surface_digest ? this.storedIdentity(row.identity_json, row.surface_digest) : null,
-        );
-        if (active.fresh) this.saveRootIdentity(row.root_id, active.identity, active.inferred, active.surfaceDigest, null, root.createdAt);
-        return active;
-      });
-      const plan = planRootInsertion(root, actives);
+      const plan = planRootInsertion(root, this.readActiveRoots(root.createdAt));
       if (plan.conflict) return plan.conflict;
       if (parentRow) {
         const parent = JSON.parse(parentRow.root_json) as ConvergenceRootV1;
@@ -354,6 +340,32 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       this.saveRootIdentity(root.rootId, plan.identity, plan.inferred, plan.surfaceDigest, plan.match, root.createdAt);
       return null;
     }));
+  }
+
+  activeRootIdentities(): IdentifiedRoot[] {
+    return this.guard(msg("workflow.store.readConvergenceState", {}), {}, () => this.transaction(() => this.readActiveRoots(null), "BEGIN;"));
+  }
+
+  /**
+   * Every active root with its identity; `persistAt` saves fresh identities (a root insert), null only reads (the edit
+   * gate). ponytail: every active root is compared in process, on each insert and each gated edit (3.4.0 C9); index the
+   * derived identity if a ledger ever holds thousands.
+   */
+  private readActiveRoots(persistAt: string | null): IdentifiedRoot[] {
+    const rows = this.database.prepare(`
+      SELECT roots.root_id, roots.root_json, roots.revision, identities.identity_json, identities.surface_digest
+      FROM convergence_roots AS roots
+      LEFT JOIN convergence_root_identities AS identities ON identities.root_id = roots.root_id
+      WHERE roots.state NOT IN ('completed', 'abandoned')
+    `).all() as unknown as ActiveRootRow[];
+    return rows.map((row) => {
+      const active = activeRootIdentity(
+        JSON.parse(row.root_json) as ConvergenceRootV1,
+        row.identity_json && row.surface_digest ? this.storedIdentity(row.identity_json, row.surface_digest) : null,
+      );
+      if (active.fresh && persistAt) this.saveRootIdentity(row.root_id, active.identity, active.inferred, active.surfaceDigest, null, persistAt);
+      return active;
+    });
   }
 
   getConvergenceSnapshot(rootId: string): ConvergenceSnapshot | null {

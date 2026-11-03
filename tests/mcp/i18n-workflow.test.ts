@@ -19,7 +19,7 @@ function service(): WorkflowService {
   return new WorkflowService(new FileSkillRegistry(registryPath, validator), validator);
 }
 
-const continuity: MinimalStartContinuity = { priorFileCount: () => 0, settle: () => undefined, beforeCommit: () => undefined };
+const continuity: MinimalStartContinuity = { priorFileCount: () => 0, settle: () => undefined, beforeCommit: () => undefined, ownsRoot: () => false };
 
 function task(capabilities: string[]): TaskEnvelopeV1 {
   return {
@@ -54,7 +54,7 @@ describe("workflow error messages", () => {
   });
 
   it("keeps a sub-step's key when the minimal start rethrows it (execution subject select)", () => {
-    const result = service().startMinimalWorkflow({ goal: "g", stages: ["minimal-implementation"], acceptanceCriteria: ["done"], workspace }, null, continuity);
+    const result = service().startMinimalWorkflow({ goal: "g", stages: ["minimal-implementation"], acceptanceCriteria: ["done"], workspace, writeTargets: ["synthetic"] }, null, continuity);
     expect(result.error).toMatchObject({
       code: "BINDING_REQUIRED", message: "bootstrap orchestration requires trusted host execution attestation.",
       messageKey: "workflow.service.requiresTrustedAttestation", params: { subject: "bootstrapOrchestration", stageId: "" },

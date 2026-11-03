@@ -190,19 +190,26 @@ function buildInputSchemas(contracts: ContractDocuments, locale: SupportedLocale
   recordStageResult.required = (recordStageResult.required ?? [])
     .filter((name) => name !== "executionContext");
 
-  /** start_workflow (design ags30-phase-check 7.5): the AGENT's goal, stages and acceptance criteria; the rest is defaulted. */
+  /** start_workflow (design ags30-phase-check 7.5): the AGENT's goal, stages, acceptance criteria and write targets; the rest is defaulted. */
+  const strings = { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 } };
+  const text = { type: "string", minLength: 1 };
   const minimalWorkflowStart: Record<string, unknown> = {
     type: "object",
     additionalProperties: false,
-    required: ["goal", "stages", "acceptanceCriteria"],
+    required: ["goal", "stages", "acceptanceCriteria", "writeTargets"],
     properties: {
       goal: { type: "string", minLength: 1, maxLength: 2000 },
       stages: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 },
         description: toolText("tools.start_workflow.input.stages", locale) },
       acceptanceCriteria: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 } },
       workspace: { type: "string", minLength: 1, description: toolText("tools.start_workflow.input.workspace", locale) },
-      writeTargets: { type: "array", minItems: 1, maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 },
-        description: toolText("tools.start_workflow.input.writeTargets", locale) },
+      writeTargets: { ...strings, description: toolText("tools.start_workflow.input.writeTargets", locale) },
+      rootId: { ...text, description: toolText("tools.start_workflow.input.rootId", locale) },
+      priorFailure: {
+        type: "object", additionalProperties: false, required: ["hypothesis", "changeSummary", "discriminator", "evidenceRefs"],
+        properties: { hypothesis: text, changeSummary: text, discriminator: text, evidenceRefs: strings },
+        description: toolText("tools.start_workflow.input.priorFailure", locale),
+      },
     },
   };
 
@@ -484,7 +491,11 @@ function usesInlineReferences(profile: ToolSchemaProfile): boolean {
   return profile === "inline-references" || profile === "anthropic";
 }
 
-/** Failures the AGENT cannot fix by changing its input: the session's window then passes with the cause recorded. */
+/**
+ * Failures the AGENT cannot fix by changing its input: the session's window then passes with the cause recorded.
+ * BINDING_INVALID stays: a start now raises it only from the caller and host observation (adapter or capability
+ * mismatch, a consumed or unbound observation), never from the session's binding, which is STALE_REVISION.
+ */
 const WORKFLOW_START_INFRASTRUCTURE_FAILURES: ReadonlySet<string> = new Set(["MCP_UNAVAILABLE", "CONTINUITY_UNAVAILABLE", "BINDING_REQUIRED", "BINDING_INVALID", "INTEGRITY_FAILED"]);
 
 export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "default", locale: SupportedLocale = ROOT_LOCALE): Record<string, unknown> {
@@ -924,6 +935,7 @@ export function createMcpServer(
               priorFileCount: () => continuity.editWindowFileCount(caller.sessionId),
               settle: () => continuity.settleFinishedWorkflow(caller.sessionId),
               beforeCommit: rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId),
+              ownsRoot: rootId => continuity.ownsRoot(caller.sessionId, rootId),
               sessionWorkspace: () => observedSessionWorkspace(sessionBoardPath, caller),
               locale,
             });

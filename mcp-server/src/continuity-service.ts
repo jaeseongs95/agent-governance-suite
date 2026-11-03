@@ -1,4 +1,5 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import path from "node:path";
 import { types } from "node:util";
 
 import {
@@ -8,12 +9,13 @@ import {
   type ContinuitySnapshotV1,
   type ContinuitySummaryV1,
   type ErrorCode,
+  type WorkflowReceiptV1,
   type Sha256Digest,
   WorkflowContractError,
   contractErrorBody,
 } from "../../contracts/types.js";
 import { msg, render, ROOT_LOCALE, type MessageRef, type SupportedLocale } from "./i18n.js";
-import { canonicalJson, convergenceDigest } from "./convergence-logic.js";
+import { canonicalJson, convergenceDigest, surfaceCovers, type IdentifiedRoot } from "./convergence-logic.js";
 import type { ContractValidator } from "./schema-validator.js";
 import {
   ContinuityStoreError,
@@ -24,7 +26,8 @@ import {
   isBodyFreeRequestReceipt,
   SqliteContinuityStore,
 } from "./continuity-store.js";
-import type { WorkflowStore } from "./workflow-store.js";
+import type { ConvergenceSnapshot, WorkflowStore } from "./workflow-store.js";
+import { hostIdentity, identify } from "./workspace-identity.js";
 import type { ForkHostParentRead, ForkOriginRead, LineageRead } from "./host-input-adapter.js";
 import type { VerifiedCaller } from "./caller-identity.js";
 import { failureReason } from "./failure-diagnostics.js";
@@ -93,11 +96,15 @@ export function minimalWorkflowStartExample(locale: SupportedLocale): string {
     goal: render(msg("hooks.editGate.goalPlaceholder", {}), locale),
     stages: ["minimal-implementation"],
     acceptanceCriteria: [render(msg("hooks.editGate.criterionPlaceholder", {}), locale)],
+    writeTargets: [render(msg("hooks.editGate.writeTargetPlaceholder", {}), locale)],
   })}`;
 }
 const RUN_TERMINAL_STATES = new Set(["passed", "failed", "blocked"]);
 
-type WorkflowActivity = "active" | "none" | { unavailable: string };
+/** A bound root whose latest run is not terminal, with that run. */
+interface ActiveRoot { rootId: string; snapshot: ConvergenceSnapshot; receipt: WorkflowReceiptV1 }
+type WorkflowActivity = ActiveRoot[] | { unavailable: string };
+const GATED_ROOT_STATES = new Set(["needs-review", "needs-user"]);
 
 /** A failure's stable code: a workflow contract error keeps its own code and reason, never a generic one. */
 export function workflowFailureCode(cause: unknown): string {
@@ -172,8 +179,10 @@ export interface ContinuityGateway {
   suppressContextRestore(value: unknown, caller: VerifiedCaller): ApiResultV1<{ schemaVersion: "1.0.0"; suppressed: true; epoch: number }>;
   purgeDirectContext(value: unknown, caller: VerifiedCaller): ApiResultV1<ContinuityPurgeResultV1>;
   bindOpenedRoot(caller: VerifiedCaller, rootId: string): boolean;
-  /** Called only with the session identity verified by the MCP ingress. */
+  /** Called only with the session identity verified by the MCP ingress: binds one more root to the session. */
   prepareWorkflowStart(rawSessionId: string, rootId: string): void;
+  /** Whether this session ever bound the root, in any epoch (start_workflow rootId and ROOT_CONFLICT ownership). */
+  ownsRoot(rawSessionId: string, rootId: string): boolean;
   /**
    * Distinct product files edited without a workflow that a start now adopts (design ags30-phase-check 7.5): the current
    * window, or while locked the window that ended in the refusal, which a later phase check does not clear.
@@ -275,31 +284,35 @@ export class ContinuityService implements ContinuityGateway {
     }
   }
 
+  /** The epoch moves on only when every root bound to it has settled; one running root keeps all of them bound. */
   private rotateBoundEpoch(task: ContinuityTaskRecord, now: string, rootId: string, workflowStore: WorkflowStore,
     fromWorkflow: <T>(read: () => T) => T): ContinuityTaskRecord {
     // Keep workflow writers excluded until the separate continuity CAS commits.
     return workflowStore.withWorkflowTransaction(() => this.store.rotateEpoch(task.taskCorrelation, now, {
       epoch: task.currentEpoch,
       rootId,
-      isTerminal: () => {
-        const snapshot = fromWorkflow(() => workflowStore.getConvergenceSnapshot(rootId));
-        if (!snapshot || snapshot.root.rootId !== rootId || !CONVERGENCE_ROOT_STATE.includes(snapshot.root.state)) return false;
-        const terminalRoot = snapshot.root.state === "completed" || snapshot.root.state === "abandoned";
-        if (!terminalRoot && snapshot.workflowRunIds.length === 0) return false;
-        // A finished run may leave its root open or awaiting review. Every linked
-        // run and every consumed lease, including older epochs, must be settled.
-        if (!snapshot.workflowRunIds.every(runId => {
-          const receipt = fromWorkflow(() => workflowStore.getRun(runId));
-          return receipt !== null && ["passed", "failed", "blocked"].includes(receipt.state);
-        })) return false;
-        const finished = new Map(snapshot.outcomes.map(outcome => [outcome.leaseId, outcome]));
-        return snapshot.leases.every(lease => {
-          if (lease.state !== "consumed") return true;
-          const outcome = finished.get(lease.leaseId);
-          return outcome?.rootId === rootId && outcome.epoch === lease.epoch && outcome.ordinal === lease.ordinal;
-        });
-      },
+      isTerminal: () => this.store.boundRoots(task.taskCorrelation, task.currentEpoch)
+        .every(bound => this.rootSettled(bound, workflowStore, fromWorkflow)),
     }));
+  }
+
+  private rootSettled(rootId: string, workflowStore: WorkflowStore, fromWorkflow: <T>(read: () => T) => T): boolean {
+    const snapshot = fromWorkflow(() => workflowStore.getConvergenceSnapshot(rootId));
+    if (!snapshot || snapshot.root.rootId !== rootId || !CONVERGENCE_ROOT_STATE.includes(snapshot.root.state)) return false;
+    const terminalRoot = snapshot.root.state === "completed" || snapshot.root.state === "abandoned";
+    if (!terminalRoot && snapshot.workflowRunIds.length === 0) return false;
+    // A finished run may leave its root open or awaiting review. Every linked
+    // run and every consumed lease, including older epochs, must be settled.
+    if (!snapshot.workflowRunIds.every(runId => {
+      const receipt = fromWorkflow(() => workflowStore.getRun(runId));
+      return receipt !== null && ["passed", "failed", "blocked"].includes(receipt.state);
+    })) return false;
+    const finished = new Map(snapshot.outcomes.map(outcome => [outcome.leaseId, outcome]));
+    return snapshot.leases.every(lease => {
+      if (lease.state !== "consumed") return true;
+      const outcome = finished.get(lease.leaseId);
+      return outcome?.rootId === rootId && outcome.epoch === lease.epoch && outcome.ordinal === lease.ordinal;
+    });
   }
 
   clearSession(rawSessionId: string): ContinuityTaskRecord {
@@ -750,13 +763,18 @@ export class ContinuityService implements ContinuityGateway {
   prepareWorkflowStart(rawSessionId: string, rootId: string): void {
     const now = this.now().toISOString();
     const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
-    if ((task.rootId !== null && task.rootId !== rootId)
-      || !this.store.bindRoot(task.taskCorrelation, task.currentEpoch, rootId, now, task.rootId)) {
-      throw new WorkflowContractError("BINDING_INVALID", msg("continuity.workflowStart.conflict", {}));
+    // Roots bound earlier do not conflict: overlapping paths are the convergence guard's ROOT_CONFLICT. Only a
+    // concurrent epoch change fails here, and the start can be retried, so it is not an infrastructure failure.
+    if (!this.store.bindRoot(task.taskCorrelation, task.currentEpoch, rootId, now)) {
+      throw new WorkflowContractError("STALE_REVISION", msg("continuity.binding.stale", {}), { reason: "CONTINUITY_EPOCH_CHANGED" });
     }
     const { taskCorrelation: c, currentEpoch: e } = task;
     // A start ends the window and its lock; success marks a start that followed a refused edit.
     this.store.recordObservation(c, e, PHASE_START_EVENT, null, this.locked(c, e), now);
+  }
+
+  ownsRoot(rawSessionId: string, rootId: string): boolean {
+    return this.store.ownsRoot(this.correlateSession(rawSessionId), rootId);
   }
 
   editWindowFileCount(rawSessionId: string): number {
@@ -862,45 +880,76 @@ export class ContinuityService implements ContinuityGateway {
 
   /**
    * Before a product file edit (design ags30-phase-check 7.2): `targets` are the normalized, non-exempt paths the tool
-   * will change. Returns the refusal reason, or null to let the edit run. Without an active workflow the edit that makes
-   * WORKFLOW_FILE_LIMIT distinct files in the window is refused and locks the window; files already counted stay
-   * editable until then. An AGS infrastructure failure never refuses: it is recorded and named once at the next Stop.
+   * will change and `shown` the same paths as given (resolved). Returns the refusal reason, or null to let the edit
+   * run. Each target in turn: inside the write surface of any session's gated root (needs-review, needs-user; the same
+   * path, or the same checkout-relative path in another checkout of its repository) it is refused; inside an active
+   * root of this session it passes; any other target counts in the window, where the edit that makes
+   * WORKFLOW_FILE_LIMIT distinct files is refused and locks the window; files already counted stay editable until
+   * then. An AGS infrastructure failure never refuses: it is recorded and named once at the next Stop.
    */
   gateEditForSession(rawSessionId: string, targets: readonly string[], shown: readonly string[] = targets,
-    example = minimalWorkflowStartExample(ROOT_LOCALE)): MessageRef<"hooks.editGate.denied"> | null {
+    example = minimalWorkflowStartExample(ROOT_LOCALE)): MessageRef<"hooks.editGate.denied" | "hooks.editGate.gatedRoot"> | null {
     const now = this.now().toISOString();
     const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
     const { taskCorrelation: c, currentEpoch: e } = task;
     this.recordEdit(c, e, now);
-    const activity = this.workflowActivity(task);
-    if (activity === "active") return null;
     const windowStart = this.windowStart(c, e);
-    if (activity !== "none") {
-      const event = GATE_UNAVAILABLE_PREFIX + activity.unavailable;
+    const unavailable = (code: string): null => {
+      const event = GATE_UNAVAILABLE_PREFIX + code;
       if (this.store.observationEventsAfter(c, e, event, windowStart).length === 0) this.store.recordObservation(c, e, event, null, false, now);
       return null;
+    };
+    const activity = this.workflowActivity(task);
+    if (!Array.isArray(activity)) return unavailable(activity.unavailable);
+    let roots: IdentifiedRoot[] = [];
+    if (this.workflowStore) {
+      try { roots = this.workflowStore.activeRootIdentities(); } catch (cause) { return unavailable(workflowFailureCode(cause)); }
     }
+    const active = new Set(activity.map(item => item.rootId));
+    const host = roots.length > 0 ? hostIdentity() : "";
+    const outside: number[] = [];
+    for (const [index, key] of targets.entries()) {
+      const given = shown[index] ?? key;
+      // ponytail: a target whose identity cannot be read (or an unread tool target) only counts in the window.
+      let target: ReturnType<typeof identify> | null = null;
+      if (roots.length > 0 && path.isAbsolute(given)) {
+        try { target = identify(given); } catch { target = null; }
+      }
+      if (target) {
+        const resolved = target;
+        const gated = roots.find(item => GATED_ROOT_STATES.has(item.root.state) && surfaceCovers(item.identity, resolved, host, true));
+        if (gated) return msg("hooks.editGate.gatedRoot", { path: given, rootId: gated.root.rootId, state: gated.root.state });
+        if (roots.some(item => active.has(item.root.rootId) && surfaceCovers(item.identity, resolved, host, false))) continue;
+      }
+      outside.push(index);
+    }
+    if (outside.length === 0) return null;
     if (this.store.observationEventsAfter(c, e, START_FAILED_PREFIX, windowStart).length > 0) return null;
     const counted = new Set(this.store.observationHashesAfter(c, e, PHASE_FILE_EVENT, windowStart));
-    const fresh = [...new Set(targets.map(target => this.hashOpaque("file", target)))].filter(hash => !counted.has(hash));
+    const fresh = [...new Set(outside.map(index => this.hashOpaque("file", targets[index]!)))].filter(hash => !counted.has(hash));
     if (!this.locked(c, e) && (fresh.length === 0 || counted.size + fresh.length < WORKFLOW_FILE_LIMIT)) {
       for (const hash of fresh) this.store.recordObservation(c, e, PHASE_FILE_EVENT, hash, true, now);
       return null;
     }
     this.store.recordObservation(c, e, PHASE_DENY_EVENT, null, false, now);
-    return msg("hooks.editGate.denied", { limit: WORKFLOW_FILE_LIMIT, paths: shown.join(", "), earlier: counted.size, example });
+    const paths = outside.map(index => shown[index] ?? targets[index]!).join(", ");
+    return msg("hooks.editGate.denied", { limit: WORKFLOW_FILE_LIMIT, paths, earlier: counted.size, example });
   }
 
-  /** Active workflow: the bound root is open, has a run, and that run is not terminal. */
+  /** The session's active workflows: each bound root not completed or abandoned whose latest run is not terminal. */
   private workflowActivity(task: ContinuityTaskRecord): WorkflowActivity {
-    if (!task.rootId) return "none";
-    if (!this.workflowStore) return { unavailable: this.workflowStoreFailure ?? "WORKFLOW_STORE_UNAVAILABLE" };
+    const bound = this.store.boundRoots(task.taskCorrelation, task.currentEpoch);
+    if (bound.length === 0) return [];
+    const workflowStore = this.workflowStore;
+    if (!workflowStore) return { unavailable: this.workflowStoreFailure ?? "WORKFLOW_STORE_UNAVAILABLE" };
     try {
-      const snapshot = this.workflowStore.getConvergenceSnapshot(task.rootId);
-      if (!snapshot || snapshot.root.state === "completed" || snapshot.root.state === "abandoned") return "none";
-      const runId = snapshot.workflowRunIds.at(-1);
-      const receipt = runId ? this.workflowStore.getRun(runId) : null;
-      return receipt && !RUN_TERMINAL_STATES.has(receipt.state) ? "active" : "none";
+      return bound.flatMap(rootId => {
+        const snapshot = workflowStore.getConvergenceSnapshot(rootId);
+        if (!snapshot || snapshot.root.state === "completed" || snapshot.root.state === "abandoned") return [];
+        const runId = snapshot.workflowRunIds.at(-1);
+        const receipt = runId ? workflowStore.getRun(runId) : null;
+        return receipt && !RUN_TERMINAL_STATES.has(receipt.state) ? [{ rootId, snapshot, receipt }] : [];
+      });
     } catch (cause) {
       return { unavailable: workflowFailureCode(cause) };
     }
@@ -921,28 +970,24 @@ export class ContinuityService implements ContinuityGateway {
       .flatMap(prefix => this.store.observationEventsAfter(c, e, prefix, lastCheck));
     if ((edit === null || edit < lastCheck) && failures.length === 0) return null;
     const activity = this.workflowActivity(task);
-    if (typeof activity === "object") failures.push(GATE_UNAVAILABLE_PREFIX + activity.unavailable);
-    const pending = activity === "active" ? this.pendingStages(task) : { stages: [], goal: "" };
-    this.store.recordObservation(c, e, PHASE_CHECK_EVENT, null, pending.stages.length === 0 && failures.length === 0, this.now().toISOString());
+    if (!Array.isArray(activity)) failures.push(GATE_UNAVAILABLE_PREFIX + activity.unavailable);
+    const pending = Array.isArray(activity) ? activity.map(item => this.pendingStages(item)).filter(item => item.stages.length > 0) : [];
+    this.store.recordObservation(c, e, PHASE_CHECK_EVENT, null, pending.length === 0 && failures.length === 0, this.now().toISOString());
     const lines: MessageRef[] = [];
     if (failures.length > 0) lines.push(msg("hooks.phaseCheck.unavailable", { codes: [...new Set(failures)].join(", ") }));
-    if (pending.stages.length > 0) {
+    if (pending.length > 0) {
       // Codex and agy continue the turn with this text as its only instruction (continuity-hook stopOutput, agy runner).
-      // It names the workflow's goal: told only "the user's remaining work", Codex took its last request (one file of two)
-      // as the whole task and stopped (3.2.0 candidate real-host run).
-      lines.push(msg("hooks.phaseCheck.pending", { stages: pending.stages.join(", ") }),
-        msg("hooks.phaseCheck.goal", { goal: pending.goal }),
-        msg("hooks.phaseCheck.continue", {}),
-        msg("hooks.phaseCheck.waiting", {}));
+      // It names each workflow's goal: told only "the user's remaining work", Codex took its last request (one file of
+      // two) as the whole task and stopped (3.2.0 candidate real-host run).
+      for (const item of pending) {
+        lines.push(msg("hooks.phaseCheck.pending", { stages: item.stages.join(", ") }), msg("hooks.phaseCheck.goal", { goal: item.goal }));
+      }
+      lines.push(msg("hooks.phaseCheck.continue", {}), msg("hooks.phaseCheck.waiting", {}));
     }
     return quiet || lines.length === 0 ? null : lines;
   }
 
-  private pendingStages(task: ContinuityTaskRecord): { stages: string[]; goal: string } {
-    const snapshot = task.rootId ? this.workflowStore?.getConvergenceSnapshot(task.rootId) : null;
-    const runId = snapshot?.workflowRunIds.at(-1);
-    const receipt = runId ? this.workflowStore?.getRun(runId) : null;
-    if (!snapshot || !receipt) return { stages: [], goal: "" };
+  private pendingStages({ snapshot, receipt }: ActiveRoot): { stages: string[]; goal: string } {
     // Same pass test as the finalize gate (workflow-service finalize).
     const stages = receipt.plan.stages
       .filter(stage => receipt.stageResults.find(result => result.stageId === stage.stageId)?.state !== "passed")
@@ -1113,6 +1158,7 @@ export class UnavailableContinuityService implements ContinuityGateway {
   bindOpenedRoot(): boolean { return false; }
   // Direct checkpoint access is unavailable too; preserve optional continuity.
   prepareWorkflowStart(): void {}
+  ownsRoot(): boolean { return false; }
   editWindowFileCount(): number { return 0; }
   recordWorkflowStartFailure(): void {}
   settleFinishedWorkflow(): void {}
