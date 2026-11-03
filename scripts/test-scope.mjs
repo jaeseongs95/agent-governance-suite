@@ -88,8 +88,11 @@ export const ciScope = testScope === "ci";
 export const serverScope = testScope === "server";
 
 /** Whether a test file runs in the current scope. */
-export function inScope(file, server = new Set(serverOnlyTests())) {
-  return testScope === "all" || server.has(file) === serverScope;
+let serverOnlyCache;
+/** The repository scan for server-only tests runs at most once per process, and not at all for the full scope. */
+export function inScope(file, server) {
+  if (testScope === "all") return true;
+  return (server ?? (serverOnlyCache ??= new Set(serverOnlyTests()))).has(file) === serverScope;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename)) {

@@ -303,6 +303,25 @@ describe("symlinks on paths that do not resolve yet (3.4.0)", () => {
     expect(resolveRootIdentity(root, ["alias/sub.ts"]).surfaces[0]!.physical).toBe(viaAlias.physical);
   });
 
+  // Review F2: a dangling link's `..` must climb from the physical directory, as the kernel does.
+  it("takes a dangling link's leading `..` from the physical parent and refuses `..` after a name", () => {
+    const root = fixtureRoot();
+    mkdirSync(join(root, "real", "sub"), { recursive: true });
+    mkdirSync(join(root, "x", "inner"), { recursive: true });
+    try {
+      symlinkSync(join(root, "real", "sub"), join(root, "linked"), "junction");
+      symlinkSync("../out", join(root, "real", "sub", "up"), "dir");
+      symlinkSync("x/inner/../../elsewhere", join(root, "climb"), "dir");
+    } catch {
+      return; // Relative links need elevation on Windows.
+    }
+
+    // Lexically linked/up/../out would be <root>/out; the link lives in real/sub, so files land in real/out.
+    expect(resolveRootIdentity(root, ["linked/up/f.ts"]).surfaces[0]!.physical).toBe(key(root, "real", "out", "f.ts"));
+    expect(() => resolveRootIdentity(root, ["climb/f.ts"])).toThrow(expect.objectContaining({ code: "INVALID_INPUT",
+      details: expect.objectContaining({ reason: "WORKSPACE_IDENTITY_UNRESOLVED", cause: "dangling link climbs after a name" }) }));
+  });
+
   // Defect: a root whose identity could not be derived kept lexical paths, so an alias locator or a glob never overlapped.
   it("resolves links and globs of a root whose Git evidence cannot be read", () => {
     const root = fixtureRoot();

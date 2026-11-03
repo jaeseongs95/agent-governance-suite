@@ -103,7 +103,18 @@ function physicalPath(target: string): { real: string; existing: string } {
         link = null;
       }
       if (link !== null) {
-        current = path.resolve(parent, link);
+        // The kernel resolves each component physically, path.resolve folds `..` lexically. Leading `..` are taken from
+        // the physical parent, so they agree; a `..` after a name could climb out of a linked directory, so it is refused.
+        const segments = link.split(/[\\/]+/u).filter((segment) => segment !== "" && segment !== ".");
+        const named = segments.findIndex((segment) => segment !== "..");
+        if (named >= 0 && segments.slice(named).includes("..")) throw unresolved(target, "dangling link climbs after a name");
+        let base: string;
+        try {
+          base = path.isAbsolute(link) ? link : path.resolve(fs.realpathSync.native(parent), link);
+        } catch (cause) {
+          throw unresolved(target, (cause as NodeJS.ErrnoException).code ?? "unreadable");
+        }
+        current = path.resolve(base);
         continue;
       }
       suffix.unshift(path.basename(current));

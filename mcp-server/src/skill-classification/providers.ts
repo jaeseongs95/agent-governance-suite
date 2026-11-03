@@ -63,8 +63,17 @@ export interface ClassificationTransportContract {
   matches(route: ApprovedClassificationRoute): boolean;
 }
 const headerName = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/u;
-// fetch rejects other bytes with a TypeError after the dispatch fence; reject them while nothing is sent.
-const validCredential = (key: unknown): key is string => typeof key === "string" && /^[\x21-\x7E]+$/u.test(key);
+/**
+ * The key as it goes on the wire, or why it cannot. Like fetch's header normalization, leading and trailing tab, space,
+ * CR and LF are dropped (a key read from a CRLF file or `set KEY=value ` keeps working). What is left must be printable
+ * ASCII; fetch would otherwise throw only after the dispatch fence, so it is refused while nothing is sent.
+ */
+function credentialValue(key: unknown): {key: string} | {code: "CREDENTIAL_UNAVAILABLE" | "CREDENTIAL_MALFORMED"} {
+  if (typeof key !== "string") return {code: "CREDENTIAL_UNAVAILABLE"};
+  const trimmed = key.replace(/^[\t\n\r ]+|[\t\n\r ]+$/gu, "");
+  if (trimmed.length === 0) return {code: "CREDENTIAL_UNAVAILABLE"};
+  return /^[\x20-\x7E]+$/u.test(trimmed) ? {key: trimmed} : {code: "CREDENTIAL_MALFORMED"};
+}
 interface RouteBase {
   routeRef: string;
   approvalRef: string;
@@ -168,7 +177,8 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
       try {
         const endpoint = new URL(route.endpoint);
         if (endpoint.protocol !== "https:" || endpoint.username || endpoint.password) return absent("INVALID_APPROVED_ENDPOINT");
-        if (!validCredential(await route.getCredential())) return absent("CREDENTIAL_UNAVAILABLE");
+        const credential = credentialValue(await route.getCredential());
+        if ("code" in credential) return absent(credential.code);
       } catch { return absent("CREDENTIAL_UNAVAILABLE"); }
     }
     return {available: true, approved: true, routeKind: route.kind, reasonCode: null};
@@ -205,9 +215,11 @@ export class ApprovedRouteClassificationProvider implements SkillClassificationP
     let endpoint: URL;
     try { endpoint = new URL(route.endpoint); } catch { throw new ClassificationProviderError("INVALID_APPROVED_ENDPOINT", "not-started"); }
     if (endpoint.protocol !== "https:" || endpoint.username || endpoint.password) throw new ClassificationProviderError("INVALID_APPROVED_ENDPOINT", "not-started");
-    let key: string | null;
-    try { key = await getCredential.call(route); } catch { throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started"); }
-    if (!validCredential(key)) throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started");
+    let raw: string | null;
+    try { raw = await getCredential.call(route); } catch { throw new ClassificationProviderError("CREDENTIAL_UNAVAILABLE", "not-started"); }
+    const credential = credentialValue(raw);
+    if ("code" in credential) throw new ClassificationProviderError(credential.code, "not-started");
+    const key = credential.key;
     assertCurrent();
     let body: string;
     try { body = JSON.stringify(encode.call(adapter, fixedRequest, fixedProfile)); }

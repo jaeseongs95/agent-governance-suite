@@ -100,15 +100,26 @@ describe("A. adapter-owned credential header", () => {
     transport.credentialHeader = "x-other-key";
     expect(f.service.validateResultBinding(result)).toBe("STALE_CLASSIFICATION");
   });
-  it.each(["SECRET\r\nx-injected: 1", "SECRET\n", "SECRET KEY", "키"])("rejects key %j before the fence with no send and no helper-failure evidence", async key => {
+  it.each([["SECRET\r\nx-injected: 1", "CREDENTIAL_MALFORMED"], ["키", "CREDENTIAL_MALFORMED"], ["SECRET\u0000", "CREDENTIAL_MALFORMED"],
+    [" \r\n", "CREDENTIAL_UNAVAILABLE"]] as const)("rejects key %j as %s before the fence with no send and no helper-failure evidence", async (key, code) => {
     const f = fixture(undefined, key), reserve = vi.spyOn(f.budget, "reserve");
     const result = await f.service.classify(f.input);
-    expect(result.attempts[0]).toMatchObject({errorCode: "CREDENTIAL_UNAVAILABLE", dispatchState: "not-started", reservedCostUsd: 0});
+    expect(result.attempts[0]).toMatchObject({errorCode: code, dispatchState: "not-started", reservedCostUsd: 0});
     expect(f.service.helperFailure(result)).toBeNull(); expect(reserve).not.toHaveBeenCalled(); expect(f.fetcher).not.toHaveBeenCalled();
     const beforeDispatch = vi.fn();
-    await expect(f.provider.classify(f.request, f.profile, new AbortController().signal, beforeDispatch)).rejects.toMatchObject({code: "CREDENTIAL_UNAVAILABLE", dispatchState: "not-started"});
+    await expect(f.provider.classify(f.request, f.profile, new AbortController().signal, beforeDispatch)).rejects.toMatchObject({code, dispatchState: "not-started"});
     expect(beforeDispatch).not.toHaveBeenCalled(); expect(f.fetcher).not.toHaveBeenCalled();
   });
+  it.each([["SECRET\r\n", "SECRET"], ["\tSECRET ", "SECRET"], ["SECRET KEY", "SECRET KEY"]] as const)(
+    "sends key %j as fetch would normalize it, %j", async (key, sent) => {
+      for (const transport of [contract(), contract(keyHeader)]) {
+        const f = fixture(transport, key);
+        expect((await f.provider.classify(f.request, f.profile, new AbortController().signal)).response.status).toBe("SUCCESS");
+        const headers = sentHeaders(f.fetcher);
+        expect(transport.credentialHeader === undefined ? headers.get("authorization") : headers.get(keyHeader))
+          .toBe(transport.credentialHeader === undefined ? `Bearer ${sent}` : sent);
+      }
+    });
 });
 
 describe("B. TypeSafe rules live in the TypeSafe adapters", () => {

@@ -2,7 +2,7 @@
 
 3.4.0은 네 가지를 담는다. 시험 구조를 고쳤고, JEV를 교체 가능한 조언 계층으로 정리했다. 압축 관련 hook이 실제로 도움이 되는지 실호스트에서 시험했고, 3.3.0에서 미룬 결함과 최적화를 반영했다. 시험 구조와 JEV는 방향이 갈릴 수 있어서 사용자 지시(「테스트 방법에 대해서는 토론으로 방향성 결정해야된다고 적어주고.」)에 따라 각각 reviewer 3명의 토론으로 방향을 정했다.
 
-호환성: 공개 도구 계약, 오류 code, DB schema 버전은 바뀌지 않는다. `BINDING_INVALID`에 `details.reasonCode`가 더해졌고, continuity DB는 열 때 인덱스 하나를 더 만든다. 3.3.0 서버도 이 인덱스가 있는 DB를 그대로 연다. JEV route의 인증 헤더는 지정하지 않으면 지금처럼 Bearer다.
+호환성: 공개 도구 계약, 오류 code, DB schema 버전은 바뀌지 않는다. `BINDING_INVALID`에 `details.reasonCode`가 더해졌고, continuity DB는 열 때 인덱스 하나를 더 만든다. 3.3.0 서버도 이 인덱스가 있는 DB를 그대로 연다. JEV route의 인증 헤더는 지정하지 않으면 지금처럼 Bearer다. 분류 시도의 이유 코드에 `CREDENTIAL_MALFORMED`가 더해졌다.
 
 ## 바뀐 점
 
@@ -12,7 +12,7 @@
 
 - **분류 대상 일치.** 3.3.0까지 `scripts/test-scope.mjs`는 `tests/` 아래만 분류했다. vitest는 `antigravity-connector/hooks/*.test.mjs`도 모으는데, 그중 프로세스를 띄우는 2개가 CI에서 돌았다. 이제 vitest가 모으는 모든 파일(저장소에서 `node_modules`·`.git` 제외)과 node:test 파일을 분류한다. `tests/tooling/test-scope.test.mjs`가 `vitest list` 결과와 분류 대상이 같은지 확인한다.
 - **`AGS_TEST_SCOPE=server`.** 서버 전용 시험만 돈다. 개발 중에는 CI(`ci`)와 테스트 서버(`server`)를 동시에 돌린다. 두 범위를 합치면 전체이고 서로 겹치지 않는다. 실측 결과 vitest 파일은 server 128개와 ci 148개, node:test 파일은 15개와 11개였다. 정해지지 않은 값은 오류로 멈춘다.
-- **실행기.** `scripts/run-tests.mjs`는 vitest가 실패해도 node:test를 끝까지 돌리고 두 종료 코드를 함께 알린다. 예전에는 vitest 실패 뒤 node:test 결과를 보려고 다시 돌려야 했다.
+- **실행기.** `scripts/run-tests.mjs`는 vitest가 실패해도 node:test를 끝까지 돌리고 두 종료 코드를 함께 알린다. node:test 단계가 오류로 끝나도 그 오류 보고에 vitest 종료 코드가 남는다. 예전에는 vitest 실패 뒤 node:test 결과를 보려고 다시 돌려야 했다.
 - **바꾸지 않은 것.** vitest의 isolate·pool·worker 수는 그대로다. 모듈 캐시(`workspace-identity.ts`), `node:` mock 35개 파일, `process.env` 대입 24개 파일, 한 실행이 공유하는 상태 디렉터리 때문에 시험 사이 상태가 섞일 수 있다. 2코어 서버에서는 vitest가 이미 worker를 1개만 쓴다(기본값 `max(코어 수 - 1, 1)`).
 - **느린 시험의 반복 작업 제거.** 아래는 Linux 시험 서버(2코어)에서 잰 파일별 시간이다. 전은 3.3.0 후보 전체 시험(en2 로그), 후는 b0fc2b4d 시험이다.
 
@@ -30,7 +30,7 @@
 
 토론 결정: JEV는 결정 계층이 아니라 선택을 돕는 조언 계층이고, TypeSafe는 그 구현 하나다. 이 원칙에 맞게 TypeSafe 고유 규칙을 공통 계층에서 adapter로 옮기고, 전송 엔진을 스킬 분류 용도에서 떼어 냈다. 공개 계약, port 시그니처, `"jev"` 값, 기존 qualification digest는 바꾸지 않았다.
 
-- **인증 헤더는 adapter가 정한다.** 신뢰된 adapter의 transport 계약에 `credentialHeader`를 둘 수 있고, 없으면 지금처럼 `authorization: Bearer <key>`를 보낸다. profile, route JSON, 요청은 인증 헤더를 정하지 못한다. 추가 헤더로 인증 헤더를 덮을 수 없고, 인증 헤더 이름은 route binding과 configuration fence에 들어가서 호출 중이나 수락 뒤에 바뀌면 `STALE_CLASSIFICATION`이 된다. fetch가 거부할 바이트(공백, 줄바꿈, 비ASCII)가 든 키는 예산 예약과 전송 전에 `CREDENTIAL_UNAVAILABLE`로 거부한다. 예전에는 fence를 지난 뒤 fetch의 TypeError가 helper 실패 증거로 남았다. 추가 헤더 값도 탭과 출력 가능한 ASCII만 허용한다.
+- **인증 헤더는 adapter가 정한다.** 신뢰된 adapter의 transport 계약에 `credentialHeader`를 둘 수 있고, 없으면 지금처럼 `authorization: Bearer <key>`를 보낸다. profile, route JSON, 요청은 인증 헤더를 정하지 못한다. 추가 헤더로 인증 헤더를 덮을 수 없고, 인증 헤더 이름은 route binding과 configuration fence에 들어가서 호출 중이나 수락 뒤에 바뀌면 `STALE_CLASSIFICATION`이 된다. 키는 fetch의 헤더 정규화처럼 앞뒤 탭·공백·CR·LF를 떼고 보낸다(CRLF 파일이나 `set KEY=값 `에서 읽은 키도 그대로 동작한다). 그러고도 출력 가능한 ASCII가 아닌 바이트(가운데의 줄바꿈, NUL, 비ASCII)가 남으면 예산 예약과 전송 전에 새 이유 코드 `CREDENTIAL_MALFORMED`로 거부한다. 키가 없거나 비어 있으면 지금처럼 `CREDENTIAL_UNAVAILABLE`이다. 예전에는 이런 키가 fence를 지난 뒤 fetch의 TypeError로 실패해 helper 실패 증거로 남았다. 추가 헤더 값도 탭과 출력 가능한 ASCII만 허용한다.
 - **TypeSafe 규칙은 TypeSafe adapter에 있다.** reasoning effort를 받지 않고 `judgmentPolicy`가 있어야 한다는 noul 규칙을 noul adapter 7개의 `validateConfiguration`으로 옮겼다. 훅이 없는 port를 위한 옛 함수도 같은 규칙을 부른다. 기본 제공 adapter 9개 전부에서 옛 규칙과 새 규칙의 결과가 같은지 표로 확인한다. 동작이 바뀐 곳은 하나다. vendor route에 TypeSafe noul adapter를 직접 묶으면 이제 noul 규칙이 적용된다.
 - **전송 엔진과 용도를 나눴다.** `dispatchAdvisoryAttempt`는 용도에 묶이지 않은 엔진으로 외부 전송 허용, 예산 예약·정산, dispatch fence, usage 검증, helper 실패 증거를 맡는다. 스킬 분류는 이 엔진을 쓰는 task이며 실패 응답, qualification, stale 판정, 응답 검증을 준다. helper 실패 증거는 엔진이 정한 코드로만 남는다. task가 응답에 다른 코드를 적거나 task 메서드가 오류를 던져도 증거가 되지 않는다.
 - **문서.** `docs/architecture.md`와 `skills/orchestrator/references/skill-classification.md`에 계층과 구현의 관계, `noul_*`·`JEV_*` 값의 출처, 예산 상한(USD 5)이 서버 프로세스 하나의 수명 동안의 한도라는 점을 적었다.
@@ -64,7 +64,7 @@
 
 3.3.0을 검토하며 찾았지만 3.3.0 범위 밖이었던 결함이다.
 
-- **끊긴 symlink.** 실제 경로를 구할 때 끊긴 링크를 없는 폴더처럼 지나쳐, 키가 실제로 파일이 생길 위치가 아니라 링크 경로를 가리켰다. 이제 링크를 대상까지 따라간다(`workspace-identity.ts`).
+- **끊긴 symlink.** 실제 경로를 구할 때 끊긴 링크를 없는 폴더처럼 지나쳐, 키가 실제로 파일이 생길 위치가 아니라 링크 경로를 가리켰다. 이제 링크를 대상까지 따라간다(`workspace-identity.ts`). 링크 대상 앞쪽의 `..`는 물리 경로로 푼 부모에서 계산한다. 이름 뒤에 오는 `..`(`a/../b`)는 커널과 문자열 계산이 다를 수 있어서 식별할 수 없음으로 거부한다.
 - **식별하지 못한 root의 겹침.** 식별 정보를 도출하지 못한 root는 lexical 경로를 그대로 썼다. 그래서 alias나 glob으로 같은 파일을 가리켜도 겹침으로 잡지 못했고, 판정 대기 root의 편집 관문을 그 경로로 비켜 갈 수 있었다. 이제 읽을 수 있는 만큼 링크와 glob을 실제 경로로 풀어 비교한다(`convergence-logic.ts`).
 - **VCS 밖 경로와 편집 관문.** VCS 밖 경로는 편집 개수에서 빠지는데(설계 7.3), 판정 대기 root 검사 전에 빠져서 저장소 밖에 있는 판정 대기 root의 파일을 바꿀 수 있었다. 이제 판정 대기 root 검사는 받고, 개수에 세거나 기록하지는 않는다(`continuity-hook.ts`, `continuity-service.ts`). 경로를 알 수 없는 도구는 막으려면 컴퓨터 전체를 막아야 하므로 한계로 두고 설계 문서 7.8에 적었다.
 - **`BINDING_INVALID` 원인.** 신뢰 실행 관측 오류와 continuity 토큰 오류가 모두 reasonCode 없는 `BINDING_INVALID`라 `workflow-start-failed:*` 관측에서 원인을 구분할 수 없었다. 새 공개 code는 만들지 않고 `details.reasonCode` 12종을 붙였다. 이미 소비된 관측은 `EXECUTION_OBSERVATION_CONSUMED`다(`docs/ags30-error-model.md` 8).

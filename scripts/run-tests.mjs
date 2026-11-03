@@ -107,8 +107,9 @@ export async function runTests(arguments_, command = [process.execPath, path.joi
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   let phase = "vitest";
   let reason = "RUNNER_UNAVAILABLE";
+  let vitestExitCode = null;
   try {
-    const vitestExitCode = await runTests(process.argv.slice(2));
+    vitestExitCode = await runTests(process.argv.slice(2));
     // node:test runs even after a Vitest failure, so one run reports both suites; a test-server rerun takes ~20 minutes.
     phase = "node-collection";
     const files = listNodeTestFiles().filter(file => inScope(path.relative(root, file).split(path.sep).join("/")));
@@ -126,7 +127,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     const primary = dual ? cause.errors[0] : cause;
     const childExitCode = primary?.code === "RUNNER_CLEANUP_FAILED" && Number.isInteger(primary.childExitCode) ? primary.childExitCode : null;
     if (primary?.code === "RUNNER_CLEANUP_FAILED") { phase = "cleanup"; reason = "RUNNER_CLEANUP_FAILED"; }
-    console.error(JSON.stringify({ component: "test-runner", phase, reason, ...(childExitCode !== null ? { childExitCode } : {}) }));
+    // A Vitest result reached before a later node:test failure stays in the report.
+    console.error(JSON.stringify({ component: "test-runner", phase, reason, ...(childExitCode !== null ? { childExitCode } : {}),
+      ...(vitestExitCode !== null && phase !== "vitest" ? { vitestExitCode } : {}) }));
     // Native Error diagnostics keep the original public code, syscall and actionable message.
     console.error(primary);
     if (dual) {
