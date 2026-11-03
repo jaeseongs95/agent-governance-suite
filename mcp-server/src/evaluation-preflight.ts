@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { access } from "node:fs/promises";
 
+import { msg, render, ROOT_LOCALE, type MessageRef } from "./i18n.js";
+
 export type EvaluationPreflightCode =
   | "ARTIFACT_BINDING_MISMATCH"
   | "ACTOR_BINDING_MISMATCH"
@@ -16,13 +18,17 @@ export type EvaluationPreflightCode =
   | "RUN_OUT_OF_BUDGET";
 
 export class EvaluationPreflightError extends Error {
+  /** The catalog message; null for callers outside mcp-server/src that still pass text (i18n migration). */
+  readonly ref: MessageRef | null;
+
   constructor(
     readonly code: EvaluationPreflightCode,
-    message: string,
+    message: MessageRef | string,
     readonly details: Record<string, unknown> = {},
   ) {
-    super(`${code}: ${message}`);
+    super(`${code}: ${typeof message === "string" ? message : render(message, ROOT_LOCALE)}`);
     this.name = "EvaluationPreflightError";
+    this.ref = typeof message === "string" ? null : message;
   }
 }
 
@@ -84,7 +90,7 @@ export async function assertEvaluationPreflight(
     || request.approvedRunCount < 1
     || request.runOrdinal > request.approvedRunCount
   ) {
-    throw new EvaluationPreflightError("RUN_OUT_OF_BUDGET", "run ordinal is outside the approved evaluation count", {
+    throw new EvaluationPreflightError("RUN_OUT_OF_BUDGET", msg("services.evaluationPreflight.runOrdinalIsOutsideTheApproved", {}), {
       runOrdinal: request.runOrdinal,
       approvedRunCount: request.approvedRunCount,
     });
@@ -92,7 +98,7 @@ export async function assertEvaluationPreflight(
 
   for (const outputPath of request.outputPaths) {
     if (await pathExists(outputPath)) {
-      throw new EvaluationPreflightError("OUTPUT_EXISTS", "evaluation output would be overwritten", { outputPath });
+      throw new EvaluationPreflightError("OUTPUT_EXISTS", msg("services.evaluationPreflight.evaluationOutputWouldBeOverwritten", {}), { outputPath });
     }
   }
 
@@ -100,17 +106,17 @@ export async function assertEvaluationPreflight(
   const actorIds = new Set<string>();
   for (const actor of request.actors) {
     if (!actor.role || !actor.actorId || (actor.declaredActorId !== undefined && actor.declaredActorId !== actor.actorId)) {
-      throw new EvaluationPreflightError("ACTOR_BINDING_MISMATCH", "declared and observed actors must match", {
+      throw new EvaluationPreflightError("ACTOR_BINDING_MISMATCH", msg("services.evaluationPreflight.declaredAndObservedActorsMustMatch", {}), {
         role: actor.role,
         actorId: actor.actorId,
         declaredActorId: actor.declaredActorId ?? null,
       });
     }
     if (actorsByRole.has(actor.role)) {
-      throw new EvaluationPreflightError("ACTOR_BINDING_MISMATCH", "actor roles must be unique", { role: actor.role });
+      throw new EvaluationPreflightError("ACTOR_BINDING_MISMATCH", msg("services.evaluationPreflight.actorRolesMustBeUnique", {}), { role: actor.role });
     }
     if (actorIds.has(actor.actorId)) {
-      throw new EvaluationPreflightError("ACTOR_REUSE", "evaluation roles must use distinct actors", {
+      throw new EvaluationPreflightError("ACTOR_REUSE", msg("services.evaluationPreflight.evaluationRolesMustUseDistinctActors", {}), {
         role: actor.role,
         actorId: actor.actorId,
       });
@@ -127,7 +133,7 @@ export async function assertEvaluationPreflight(
       binding.expectedSha256 !== undefined
       && (!DIGEST_PATTERN.test(binding.expectedSha256) || actual !== binding.expectedSha256)
     ) {
-      throw new EvaluationPreflightError("DIGEST_MISMATCH", "artifact does not match its frozen digest", {
+      throw new EvaluationPreflightError("DIGEST_MISMATCH", msg("services.evaluationPreflight.artifactDoesNotMatchItsFrozen", {}), {
         name: binding.name,
         expectedSha256: binding.expectedSha256,
         actualSha256: actual,
@@ -141,7 +147,7 @@ export async function assertEvaluationPreflight(
   }));
   const canonicalArtifacts = parsedArtifacts.filter(({ artifact }) => artifact.canonicalIds === true);
   if (canonicalArtifacts.length !== 1) {
-    throw new EvaluationPreflightError("ID_SEQUENCE_MISMATCH", "exactly one artifact must define the canonical ID sequence", {
+    throw new EvaluationPreflightError("ID_SEQUENCE_MISMATCH", msg("services.evaluationPreflight.exactlyOneArtifactMustDefineThe", {}), {
       canonicalArtifactCount: canonicalArtifacts.length,
     });
   }
@@ -149,7 +155,7 @@ export async function assertEvaluationPreflight(
   const canonical = canonicalArtifacts[0]!;
   const canonicalIds = readIds(canonical.artifact, canonical.records);
   if (canonicalIds.length !== request.expectedRecordCount) {
-    throw new EvaluationPreflightError("ID_SEQUENCE_MISMATCH", "canonical artifact count does not match the frozen case count", {
+    throw new EvaluationPreflightError("ID_SEQUENCE_MISMATCH", msg("services.evaluationPreflight.canonicalArtifactCountDoesNotMatch", {}), {
       artifact: canonical.artifact.name,
       expectedRecordCount: request.expectedRecordCount,
       actualRecordCount: canonicalIds.length,
@@ -162,7 +168,7 @@ export async function assertEvaluationPreflight(
     if (artifact.idField) {
       const ids = readIds(artifact, records);
       if (ids.length !== canonicalIds.length || ids.some((id, index) => id !== canonicalIds[index])) {
-        throw new EvaluationPreflightError("ID_SEQUENCE_MISMATCH", "artifact IDs do not match the canonical sequence", {
+        throw new EvaluationPreflightError("ID_SEQUENCE_MISMATCH", msg("services.evaluationPreflight.artifactIdsDoNotMatchThe", {}), {
           artifact: artifact.name,
           expectedCount: canonicalIds.length,
           actualCount: ids.length,
@@ -172,14 +178,14 @@ export async function assertEvaluationPreflight(
     if (artifact.actorRole) {
       const expectedActorId = actorsByRole.get(artifact.actorRole);
       if (!expectedActorId) {
-        throw new EvaluationPreflightError("ACTOR_BINDING_MISMATCH", "artifact references an undeclared actor role", {
+        throw new EvaluationPreflightError("ACTOR_BINDING_MISMATCH", msg("services.evaluationPreflight.artifactReferencesAnUndeclaredActorRole", {}), {
           artifact: artifact.name,
           role: artifact.actorRole,
         });
       }
       const actorField = artifact.actorField ?? "actorId";
       if (records.some((record) => record[actorField] !== expectedActorId)) {
-        throw new EvaluationPreflightError("ACTOR_BINDING_MISMATCH", "artifact records do not match the declared actor", {
+        throw new EvaluationPreflightError("ACTOR_BINDING_MISMATCH", msg("services.evaluationPreflight.artifactRecordsDoNotMatchThe", {}), {
           artifact: artifact.name,
           role: artifact.actorRole,
           actorField,
@@ -194,7 +200,7 @@ export async function assertEvaluationPreflight(
     const source = artifactsByName.get(binding.sourceArtifact);
     const target = artifactsByName.get(binding.targetArtifact);
     if (!source || !target || source.length !== target.length || binding.fields.length === 0) {
-      throw new EvaluationPreflightError("ARTIFACT_BINDING_MISMATCH", "record binding references incompatible artifacts", {
+      throw new EvaluationPreflightError("ARTIFACT_BINDING_MISMATCH", msg("services.evaluationPreflight.recordBindingReferencesIncompatibleArtifacts", {}), {
         sourceArtifact: binding.sourceArtifact,
         targetArtifact: binding.targetArtifact,
       });
@@ -203,7 +209,7 @@ export async function assertEvaluationPreflight(
       const targetRecord = target[index]!;
       for (const field of binding.fields) {
         if (!Object.hasOwn(sourceRecord, field) || sourceRecord[field] !== targetRecord[field]) {
-          throw new EvaluationPreflightError("ARTIFACT_BINDING_MISMATCH", "bound evaluation fields differ", {
+          throw new EvaluationPreflightError("ARTIFACT_BINDING_MISMATCH", msg("services.evaluationPreflight.boundEvaluationFieldsDiffer", {}), {
             sourceArtifact: binding.sourceArtifact,
             targetArtifact: binding.targetArtifact,
             field,
@@ -220,7 +226,7 @@ export async function assertEvaluationPreflight(
 function parseJsonl(name: string, text: string): Array<Record<string, unknown>> {
   const lines = text.split(/\r?\n/u).filter((line) => line.trim().length > 0);
   if (lines.length === 0) {
-    throw new EvaluationPreflightError("EMPTY_ARTIFACT", "required evaluation artifact is empty", { artifact: name });
+    throw new EvaluationPreflightError("EMPTY_ARTIFACT", msg("services.evaluationPreflight.requiredEvaluationArtifactIsEmpty", {}), { artifact: name });
   }
   return lines.map((line, index) => {
     try {
@@ -228,7 +234,7 @@ function parseJsonl(name: string, text: string): Array<Record<string, unknown>> 
       if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("record is not an object");
       return value as Record<string, unknown>;
     } catch (error) {
-      throw new EvaluationPreflightError("INVALID_JSONL", "evaluation artifact contains invalid JSONL", {
+      throw new EvaluationPreflightError("INVALID_JSONL", msg("services.evaluationPreflight.evaluationArtifactContainsInvalidJsonl", {}), {
         artifact: name,
         line: index + 1,
         reason: error instanceof Error ? error.message : String(error),
@@ -242,7 +248,7 @@ function readIds(artifact: EvaluationArtifactSpec, records: Array<Record<string,
   const ids = records.map((record, index) => {
     const value = record[idField];
     if (typeof value !== "string" || value.length === 0) {
-      throw new EvaluationPreflightError("EMPTY_REQUIRED_FIELD", "record ID must be a non-empty string", {
+      throw new EvaluationPreflightError("EMPTY_REQUIRED_FIELD", msg("services.evaluationPreflight.recordIdMustBeANonempty", {}), {
         artifact: artifact.name,
         field: idField,
         record: index + 1,
@@ -253,7 +259,7 @@ function readIds(artifact: EvaluationArtifactSpec, records: Array<Record<string,
   const seen = new Set<string>();
   for (const id of ids) {
     if (seen.has(id)) {
-      throw new EvaluationPreflightError("DUPLICATE_ID", "evaluation artifact contains a duplicate ID", {
+      throw new EvaluationPreflightError("DUPLICATE_ID", msg("services.evaluationPreflight.evaluationArtifactContainsADuplicateId", {}), {
         artifact: artifact.name,
         id,
       });
@@ -270,7 +276,7 @@ function validateRequiredFields(
   for (const [index, record] of records.entries()) {
     for (const field of artifact.requiredFields ?? []) {
       if (!Object.hasOwn(record, field) || record[field] === null || record[field] === undefined) {
-        throw new EvaluationPreflightError("EMPTY_REQUIRED_FIELD", "required evaluation field is missing", {
+        throw new EvaluationPreflightError("EMPTY_REQUIRED_FIELD", msg("services.evaluationPreflight.requiredEvaluationFieldIsMissing", {}), {
           artifact: artifact.name,
           field,
           record: index + 1,
@@ -279,7 +285,7 @@ function validateRequiredFields(
     }
     for (const field of artifact.nonEmptyStringFields ?? []) {
       if (typeof record[field] !== "string" || String(record[field]).trim().length === 0) {
-        throw new EvaluationPreflightError("EMPTY_REQUIRED_FIELD", "required evaluation text field is empty", {
+        throw new EvaluationPreflightError("EMPTY_REQUIRED_FIELD", msg("services.evaluationPreflight.requiredEvaluationTextFieldIsEmpty", {}), {
           artifact: artifact.name,
           field,
           record: index + 1,
@@ -298,7 +304,7 @@ function validateForbiddenVisibleFields(
   for (const [index, record] of records.entries()) {
     const found = findForbiddenField(record, forbidden);
     if (found) {
-      throw new EvaluationPreflightError("FORBIDDEN_VISIBLE_FIELD", "hidden evaluation data is visible to a role", {
+      throw new EvaluationPreflightError("FORBIDDEN_VISIBLE_FIELD", msg("services.evaluationPreflight.hiddenEvaluationDataIsVisibleTo", {}), {
         artifact: artifact.name,
         field: found,
         record: index + 1,

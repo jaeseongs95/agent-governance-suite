@@ -13,6 +13,7 @@ import {
 } from "../../contracts/types.js";
 import { canonicalJson } from "./convergence-logic.js";
 import { failureContext, retainFailureCause, retainFailureSecondary, tagProducerFailure } from "./failure-diagnostics.js";
+import { msg, type MessageRef } from "./i18n.js";
 
 type UnsignedInputSource = Omit<InputSourceReceiptV1, "schemaVersion" | "receiptId" | "integrityToken">;
 interface ReceiptRow { receipt_json: string }
@@ -33,10 +34,10 @@ function verifyInputSource(receipt: InputSourceReceiptV1, signingKey: Buffer): b
   } catch { return false; }
 }
 
-function rejectUnexpectedKeys(value: object, allowed: Set<string>, label: string): void {
+function rejectUnexpectedKeys(value: object, allowed: Set<string>, rejection: MessageRef): void {
   const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
   if (unexpected.length > 0) {
-    throw new WorkflowContractError("INVALID_INPUT", `${label} contains unsupported fields.`, { unexpected });
+    throw new WorkflowContractError("INVALID_INPUT", rejection, { unexpected });
   }
 }
 
@@ -53,7 +54,7 @@ export class TrustStore {
     const busyTimeoutMs = options.busyTimeoutMs ?? 5000;
     if (!Number.isInteger(busyTimeoutMs) || busyTimeoutMs < 0 || busyTimeoutMs > 2_147_483_647
       || (typeof input !== "string" && options.busyTimeoutMs !== undefined)) {
-      throw new WorkflowContractError("INVALID_INPUT", "A standalone trust store requires a valid busy timeout.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("services.trust.busyTimeoutInvalid", {}));
     }
     this.shared = typeof input === "string" ? undefined : input;
     this.databasePath = typeof input === "string" ? input : input.databasePath;
@@ -61,13 +62,13 @@ export class TrustStore {
     const databasePath = this.databasePath;
     if (this.shared) {
       this.database = this.shared.database;
-      if (!syntheticSecret || Buffer.from(syntheticSecret, "base64url").length !== 32) throw new WorkflowContractError("INVALID_INPUT", "An explicit new synthetic trust key is required.");
+      if (!syntheticSecret || Buffer.from(syntheticSecret, "base64url").length !== 32) throw new WorkflowContractError("INVALID_INPUT", msg("services.trust.syntheticKeyRequired", {}));
       this.shared.initialize(() => this.initializeSchema());
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
-      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", msg("services.trust.syntheticKeyMismatch", {}));
       return;
     }
-    if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", "Trust database path must not be empty.");
+    if (!databasePath.trim()) throw new WorkflowContractError("INVALID_INPUT", msg("services.trust.databasePathEmpty", {}));
     if (databasePath !== ":memory:") mkdirSync(path.dirname(path.resolve(databasePath)), { recursive: true, mode: 0o700 });
     this.database = new DatabaseSync(databasePath);
     try {
@@ -76,7 +77,7 @@ export class TrustStore {
       if (databasePath !== ":memory:") this.database.exec("PRAGMA journal_mode = WAL;");
       this.initializeSchema();
       this.signingKey = Buffer.from(this.getOrCreateSecret(TRUST_SIGNING_KEY), "base64url");
-      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", "The stored trust key differs from the explicit synthetic namespace.");
+      if (this.shared && this.signingKey.toString("base64url") !== syntheticSecret) throw new WorkflowContractError("REQUEST_CONFLICT", msg("services.trust.syntheticKeyMismatch", {}));
       if (this.signingKey.length !== 32) throw tagProducerFailure(new Error("Stored trust signing key is invalid."), "TRUST_SIGNING_KEY_INVALID");
       if (databasePath !== ":memory:" && process.platform !== "win32") chmodSync(path.resolve(databasePath), 0o600);
     } catch (cause) {
@@ -86,26 +87,26 @@ export class TrustStore {
         closeFailed = true;
         closeFailure = utilTypes.isNativeError(closeError) ? tagProducerFailure(closeError, "TRUST_CLOSE_FAILED") : closeError;
       }
-      const failure = cause instanceof WorkflowContractError ? cause : this.storageError("Cannot initialize the trust database.", cause);
+      const failure = cause instanceof WorkflowContractError ? cause : this.storageError(msg("services.trust.initializeFailed", {}), cause);
       if (closeFailed) retainFailureSecondary(failure, closeFailure);
       throw failure;
     }
   }
 
   recordInputSource(input: UnsignedInputSource): InputSourceReceiptV1 {
-    rejectUnexpectedKeys(input, INPUT_SOURCE_KEYS, "Input source metadata");
+    rejectUnexpectedKeys(input, INPUT_SOURCE_KEYS, msg("services.trust.inputSourceMetadataUnsupportedFields", {}));
     if (!input.attestation || typeof input.attestation !== "object" || Array.isArray(input.attestation)) {
-      throw new WorkflowContractError("INVALID_INPUT", "Input source attestation must be an object.");
+      throw new WorkflowContractError("INVALID_INPUT", msg("services.trust.attestationNotObject", {}));
     }
-    rejectUnexpectedKeys(input.attestation, ATTESTATION_KEYS, "Input source attestation");
+    rejectUnexpectedKeys(input.attestation, ATTESTATION_KEYS, msg("services.trust.inputSourceAttestationUnsupportedFields", {}));
     if (input.originKind === "user-turn" || input.attestation.kind === "host-direct-user-event") {
-      throw new WorkflowContractError("BINDING_INVALID", "This release cannot attest direct-user approval sources.");
+      throw new WorkflowContractError("BINDING_INVALID", msg("services.trust.directUserUnsupported", {}));
     }
     if (input.originKind === "peer" && (input.authorityEffect !== "none" || input.attestation.kind !== "broker-peer-envelope")) {
-      throw new WorkflowContractError("BINDING_INVALID", "Peer input must be a non-authorizing broker envelope.");
+      throw new WorkflowContractError("BINDING_INVALID", msg("services.trust.peerInputEnvelope", {}));
     }
     if (input.originKind !== "peer" && input.attestation.kind === "broker-peer-envelope") {
-      throw new WorkflowContractError("BINDING_INVALID", "Broker peer attestations must be classified as peer input.");
+      throw new WorkflowContractError("BINDING_INVALID", msg("services.trust.brokerAttestationPeer", {}));
     }
     const receipt = this.seal({
       schemaVersion: CONTRACT_VERSION,
@@ -124,7 +125,7 @@ export class TrustStore {
         capabilityVersion: input.attestation.capabilityVersion,
       },
     });
-    return this.guard("Cannot record the input source receipt.", { receiptId: receipt.receiptId }, () => this.transaction(() => {
+    return this.guard(msg("services.trust.recordReceiptFailed", {}), { receiptId: receipt.receiptId }, () => this.transaction(() => {
       const existing = this.database.prepare(`
         SELECT receipt_json FROM input_source_receipts
         WHERE host = ? AND session_id = ? AND event_id = ?
@@ -136,7 +137,7 @@ export class TrustStore {
           && prior.authorityEffect === receipt.authorityEffect
           && canonicalJson(prior.attestation, "Source attestation") === canonicalJson(receipt.attestation, "Source attestation");
         if (sameSecurityMetadata) return structuredClone(prior);
-        throw tagProducerFailure(new WorkflowContractError("REQUEST_CONFLICT", "The input event was already recorded with different content or provenance metadata.", {
+        throw tagProducerFailure(new WorkflowContractError("REQUEST_CONFLICT", msg("services.trust.inputEventConflict", {}), {
           host: receipt.host,
           sessionId: receipt.sessionId,
           eventId: receipt.eventId,
@@ -163,7 +164,7 @@ export class TrustStore {
   }
 
   latestInputSource(binding: SessionBindingV1): InputSourceReceiptV1 | null {
-    return this.guard("Cannot read the latest input source receipt.", { ...binding }, () => {
+    return this.guard(msg("services.trust.readLatestReceiptFailed", {}), { ...binding }, () => {
       const row = this.database.prepare(`
         SELECT receipt_json FROM input_source_receipts
         WHERE host = ? AND session_id = ?
@@ -174,7 +175,7 @@ export class TrustStore {
   }
 
   getInputSource(receiptId: string): InputSourceReceiptV1 | null {
-    return this.guard("Cannot read the input source receipt.", { receiptId }, () => {
+    return this.guard(msg("services.trust.readReceiptFailed", {}), { receiptId }, () => {
       const row = this.database.prepare("SELECT receipt_json FROM input_source_receipts WHERE receipt_id = ?")
         .get(receiptId) as ReceiptRow | undefined;
       return row ? JSON.parse(row.receipt_json) as InputSourceReceiptV1 : null;
@@ -221,7 +222,7 @@ export class TrustStore {
   private initializeSchema(): void {
     const version = this.shared?.getSchemaVersion() ?? (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
     if (version > SCHEMA_VERSION) {
-      throw tagProducerFailure(new WorkflowContractError("MCP_UNAVAILABLE", "Trust database schema is newer than this server supports.", {
+      throw tagProducerFailure(new WorkflowContractError("MCP_UNAVAILABLE", msg("services.trust.schemaNewer", {}), {
         reason: "SCHEMA_NEWER",
         supportedVersion: SCHEMA_VERSION,
         actualVersion: version,
@@ -278,7 +279,7 @@ export class TrustStore {
     }
   }
 
-  private guard<T>(message: string, details: Record<string, unknown>, operation: () => T): T {
+  private guard<T>(message: MessageRef, details: Record<string, unknown>, operation: () => T): T {
     try {
       return operation();
     } catch (cause) {
@@ -291,7 +292,7 @@ export class TrustStore {
    * A storage or driver failure means the trust store is unavailable, never that the caller's input was invalid.
    * Details keep a bounded, redacted cause (no message, path or SQL); the actual error stays a private producer cause.
    */
-  private storageError(message: string, cause: unknown, details: Record<string, unknown> = {}): WorkflowContractError {
+  private storageError(message: MessageRef, cause: unknown, details: Record<string, unknown> = {}): WorkflowContractError {
     return retainFailureCause(tagProducerFailure(new WorkflowContractError("MCP_UNAVAILABLE", message, {
       ...details,
       reason: "TRUST_STORAGE_FAILED",

@@ -7,6 +7,8 @@ import { TrustStore } from "./trust-store.js";
 import { failureContext, producerFailureReason } from "./failure-diagnostics.js";
 import type { InputSourceReceiptV1 } from "../../contracts/types.js";
 import { resolveSessionMessageStateDirectory, resolveTrustDatabasePath } from "./runtime-config.js";
+import { msg } from "./i18n.js";
+import { SessionMessageError } from "./session-message-protocol.js";
 
 // Common wake contract only. Vendor transports live in wake-transport-*.ts; wake-transports.ts composes them.
 
@@ -191,7 +193,7 @@ function observationDigest(event: InputObservation): `sha256:${string}` {
 
 /** Uses existing, non-authorizing source provenance. No public tool issues this hook receipt. */
 export function recordWakeHookObservation(observation: InputObservation, nowMs = Date.now()): string {
-  if (!isWakeHookObservation(observation, observation)) throw new Error("Invalid host wake observation.");
+  if (!isWakeHookObservation(observation, observation)) throw new SessionMessageError(msg("services.sessionMessage.wake.hostObservationInvalid", {}));
   const trust = new TrustStore(resolveTrustDatabasePath());
   try {
     return trust.recordInputSource({ originKind: "peer", host: observation.host, sessionId: observation.sessionId,

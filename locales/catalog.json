@@ -17,6 +17,9 @@
     },
     "workflowRecord": {
       "sourceLocale": "ko"
+    },
+    "services": {
+      "sourceLocale": "en"
     }
   }
 }

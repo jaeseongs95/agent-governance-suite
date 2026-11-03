@@ -1340,12 +1340,26 @@ describe("session message MCP tools", () => {
       ok: false,
       errorCode: "EIO",
       error: "Failed to read session message request from stdin (EIO): input/output error",
+      messageKey: "services.sessionMessage.cli.stdinReadFailed",
+      params: { errorCode: "EIO", reason: "input/output error" },
     });
     expect(formatSessionMessageStdinReadError(Object.assign(new Error("bad file descriptor"), { code: "EBADF" }))).toEqual({
       protocolVersion: "1.0.0",
       ok: false,
       errorCode: "EBADF",
       error: "Failed to read session message request from stdin (EBADF): bad file descriptor",
+      messageKey: "services.sessionMessage.cli.stdinReadFailed",
+      params: { errorCode: "EBADF", reason: "bad file descriptor" },
+    });
+    // The same key renders in the host locale the CLI resolved; the operating system's reason stays as it is.
+    expect(formatSessionMessageStdinReadError(Object.assign(new Error("bad file descriptor"), { code: "EBADF" }), "ko")).toMatchObject({
+      errorCode: "EBADF",
+      error: "stdin에서 세션 메시지 요청을 읽지 못했다(EBADF): bad file descriptor",
+      messageKey: "services.sessionMessage.cli.stdinReadFailed",
+    });
+    expect(formatSessionMessageStdinReadError(null, "en")).toMatchObject({
+      errorCode: "STDIN_READ_ERROR",
+      error: "Failed to read session message request from stdin (STDIN_READ_ERROR): stdin read failed",
     });
     await expect(executeSessionMessageCliFromStdin(() => "{not-json")).rejects.toThrow(SyntaxError);
   });

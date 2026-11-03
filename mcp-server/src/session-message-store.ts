@@ -8,10 +8,11 @@ import { retainFailureSecondary, tagProducerFailure } from "./failure-diagnostic
 import { startNotAfter } from "./host-process-watch.js";
 import type { SharedModuleContext, SqlDatabase } from "../../runtime/unified-state/shared-connection.mjs";
 
-import { isBoundedIdentity, SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES } from "./session-message-protocol.js";
+import { isBoundedIdentity, SESSION_MESSAGE_BODY_MAX_BYTES, SESSION_MESSAGE_MAX_RESPONSE_BYTES, SessionMessageError } from "./session-message-protocol.js";
 import { isWakeDispatchOutcome, isWakeHookObservation, wakeBackoffDelay, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
 import type { DeliveryCapabilities, InputObservation, InputObservationKind } from "./input-observation.js";
 import type { SessionAutoWakeOutlookV2 } from "../../contracts/types.js";
+import { msg, type MessageRef } from "./i18n.js";
 
 export const MESSAGE_BODY_MAX_BYTES = SESSION_MESSAGE_BODY_MAX_BYTES;
 export const MESSAGE_TTL_DEFAULT_SECONDS = 3600;
@@ -73,7 +74,7 @@ const WAKE_COPY_COLUMNS = ["nonce_digest", "host", "session_id", "expires_at", "
   "late_observed_at", "retired_at"] as const;
 const resendDelay = (baseMs: number, streak: number): number => Math.min(baseMs * 2 ** streak, WAKE_RESEND_MAX_MS);
 function assertResendBase(resendBaseMs: number): void {
-  if (!Number.isSafeInteger(resendBaseMs) || resendBaseMs < 1 || resendBaseMs > WAKE_RESEND_MAX_MS) throw new Error("Invalid wake resend base.");
+  if (!Number.isSafeInteger(resendBaseMs) || resendBaseMs < 1 || resendBaseMs > WAKE_RESEND_MAX_MS) throw new SessionMessageError(msg("services.sessionMessage.wake.resendBaseInvalid", {}));
 }
 export const PRESENCE_LEASE_MS = 20_000;
 /** Ended or lapsed presence rows stay this long after their lease end (message-broker housekeeping). */
@@ -160,7 +161,7 @@ function nonceDigest(nonce: string): string {
 }
 
 function boundedIdentity(value: SessionIdentity): void {
-  if (!isBoundedIdentity(value)) throw new Error("host and sessionId must use bounded identifier characters.");
+  if (!isBoundedIdentity(value)) throw new SessionMessageError(msg("services.sessionMessage.identity.unbounded", {}));
 }
 
 function claimedMessage(
@@ -208,10 +209,10 @@ export interface MessageCapacityDetails {
 }
 
 /** A capacity rejection rolls back its transaction: nothing was queued or drafted. */
-export class MessageCapacityError extends Error {
+export class MessageCapacityError extends SessionMessageError {
   readonly details: MessageCapacityDetails;
 
-  constructor(message: string, details: MessageCapacityDetails) {
+  constructor(message: MessageRef, details: MessageCapacityDetails) {
     super(message);
     this.name = "MessageCapacityError";
     this.details = details;
@@ -258,11 +259,11 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         // receipts and ACKs must survive power loss; a per-call busy wait is set by the in-process client.
         this.database.exec(`PRAGMA busy_timeout = ${Math.max(0, Math.floor(options.busyTimeoutMs ?? 5000))}; PRAGMA synchronous = FULL;`);
         const storedVersion = (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version;
-        if (storedVersion > MESSAGE_SCHEMA_VERSION) throw new Error(`The session message database schema ${storedVersion} is newer than this runtime supports.`);
+        if (storedVersion > MESSAGE_SCHEMA_VERSION) throw new SessionMessageError(msg("services.sessionMessage.store.schemaNewer", { version: storedVersion }));
         if (databasePath !== ":memory:") {
           // Several processes share this file. A file system without WAL shared memory is refused, never silently downgraded.
           const mode = (this.database.prepare("PRAGMA journal_mode = WAL").get() as { journal_mode: string }).journal_mode;
-          if (mode !== "wal") throw tagProducerFailure(new Error("The session message state directory does not support SQLite WAL."), "MESSAGING_STATE_UNSUPPORTED");
+          if (mode !== "wal") throw tagProducerFailure(new SessionMessageError(msg("services.sessionMessage.store.walUnsupported", {})), "MESSAGING_STATE_UNSUPPORTED");
         }
         // D0059: a current file opens without a write lock; otherwise the version is read again under the lock below.
         if (storedVersion === MESSAGE_SCHEMA_VERSION) return;
@@ -273,7 +274,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     }
     const initialize = () => this.transaction(() => {
       const version = (this.shared?.getSchemaVersion() ?? (this.database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version);
-      if (version > MESSAGE_SCHEMA_VERSION) throw new Error(`The session message database schema ${version} is newer than this runtime supports.`);
+      if (version > MESSAGE_SCHEMA_VERSION) throw new SessionMessageError(msg("services.sessionMessage.store.schemaNewer", { version }));
       if (!this.shared) this.database.exec("CREATE TABLE IF NOT EXISTS authority_time (singleton INTEGER PRIMARY KEY CHECK (singleton = 1), last_ms INTEGER NOT NULL) STRICT; INSERT OR IGNORE INTO authority_time VALUES (1, 0);");
       this.database.exec(`CREATE TABLE IF NOT EXISTS messages (
         message_id TEXT PRIMARY KEY,
@@ -569,15 +570,19 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   }
 
   /** Sender quota first, then the global pool; call inside the caller's transaction after prune. */
-  private assertReceiptCapacity(sender: SessionIdentity, suffix: string): void {
+  private assertReceiptCapacity(sender: SessionIdentity, phase: "prepare" | "submit"): void {
     const owned = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL AND sender_host = ? AND sender_session_id = ?")
       .get(sender.host, sender.sessionId) as { count: number; earliest: string | null };
     if (owned.count >= MESSAGE_SENDER_RECEIPT_LIMIT) {
-      throw new MessageCapacityError(`The bounded message receipt store is full for this sender${suffix}`, { scope: "sender", earliestReleaseAt: owned.earliest });
+      throw new MessageCapacityError(phase === "prepare" ? msg("services.sessionMessage.capacity.senderReceiptsFullNoDraft", {})
+        : msg("services.sessionMessage.capacity.senderReceiptsFull", {}), { scope: "sender", earliestReleaseAt: owned.earliest });
     }
     const all = this.database.prepare("SELECT count(*) AS count, min(expires_at) AS earliest FROM prepared_messages WHERE receipt IS NOT NULL")
       .get() as { count: number; earliest: string | null };
-    if (all.count >= MESSAGE_RECEIPT_LIMIT) throw new MessageCapacityError(`The bounded message receipt store is full${suffix}`, { scope: "global", earliestReleaseAt: all.earliest });
+    if (all.count >= MESSAGE_RECEIPT_LIMIT) {
+      throw new MessageCapacityError(phase === "prepare" ? msg("services.sessionMessage.capacity.receiptsFullNoDraft", {})
+        : msg("services.sessionMessage.capacity.receiptsFull", {}), { scope: "global", earliestReleaseAt: all.earliest });
+    }
   }
 
   /** Preparation is durable but has no queue, peer-relation or wake effect. */
@@ -585,9 +590,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     boundedIdentity(input.sender);
     boundedIdentity(input.target);
     const ttlSeconds = input.ttlSeconds ?? MESSAGE_TTL_DEFAULT_SECONDS;
-    if (typeof input.body !== "string" || !input.body.trim() || Buffer.byteLength(input.body, "utf8") > MESSAGE_BODY_MAX_BYTES) throw new Error("body must contain 1-4096 UTF-8 bytes.");
-    if (input.body.includes("\0")) throw new Error("body must not contain NUL characters.");
-    if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) throw new Error("ttlSeconds must be an integer from 30 to 86400.");
+    if (typeof input.body !== "string" || !input.body.trim() || Buffer.byteLength(input.body, "utf8") > MESSAGE_BODY_MAX_BYTES) throw new SessionMessageError(msg("services.sessionMessage.message.bodySize", { maxBytes: MESSAGE_BODY_MAX_BYTES }));
+    if (input.body.includes("\0")) throw new SessionMessageError(msg("services.sessionMessage.message.bodyNul", {}));
+    if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) throw new SessionMessageError(msg("services.sessionMessage.message.ttlRange", { maxSeconds: MESSAGE_TTL_MAX_SECONDS }));
     if (!this.inTransaction) return this.transaction(() => this.prepare(input, nowMs));
     nowMs = this.time(nowMs);
     const result = { messageId: randomUUID(), preparedAt: iso(nowMs), expiresAt: iso(nowMs + MESSAGE_DRAFT_TTL_MS) };
@@ -595,11 +600,11 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return this.transaction(() => {
       this.prune(nowMs);
       // Admission only; submitPrepared repeats the authoritative check.
-      this.assertReceiptCapacity(input.sender, "; no draft was created.");
+      this.assertReceiptCapacity(input.sender, "prepare");
       const drafts = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL").get() as { count: number };
       const owned = this.database.prepare("SELECT count(*) AS count FROM prepared_messages WHERE receipt IS NULL AND sender_host = ? AND sender_session_id = ?").get(input.sender.host, input.sender.sessionId) as { count: number };
       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes FROM prepared_messages").get() as { bytes: number };
-      if (drafts.count >= MESSAGE_DRAFT_LIMIT || owned.count >= MESSAGE_SENDER_DRAFT_LIMIT || bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new Error("The bounded message preparation store is full.");
+      if (drafts.count >= MESSAGE_DRAFT_LIMIT || owned.count >= MESSAGE_SENDER_DRAFT_LIMIT || bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new SessionMessageError(msg("services.sessionMessage.capacity.preparationFull", {}));
       this.database.prepare(`INSERT INTO prepared_messages (message_id, sender_host, sender_session_id, target_host, target_session_id, body, ttl_seconds, prepared_at, expires_at, record_bytes)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
         .run(result.messageId, input.sender.host, input.sender.sessionId, input.target.host, input.target.sessionId, input.body, ttlSeconds, result.preparedAt, result.expiresAt, recordBytes);
@@ -620,7 +625,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       this.prune(nowMs);
       const row = this.database.prepare("SELECT * FROM prepared_messages WHERE message_id = ? AND sender_host = ? AND sender_session_id = ? AND expires_at > ?")
         .get(messageId, sender.host, sender.sessionId, iso(nowMs)) as Record<string, unknown> | undefined;
-      if (!row) throw new Error("Issued message ID is unavailable; delivery may be unknown. Compare saved receipts/status; prepare only a new intent.");
+      if (!row) throw new SessionMessageError(msg("services.sessionMessage.message.issuedIdUnavailable", {}));
       const target = { host: String(row.target_host), sessionId: String(row.target_session_id) };
       if (row.receipt !== null) {
         const receipt = JSON.parse(String(row.receipt)) as { messageId: string; createdAt: string; expiresAt: string };
@@ -628,13 +633,13 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
 
         return { ...receipt, duplicate: true, autoWake };
       }
-      this.assertReceiptCapacity(sender, ".");
+      this.assertReceiptCapacity(sender, "submit");
       const receipt = this.send({ messageId, sender, target, body: String(row.body), ttlSeconds: Number(row.ttl_seconds) }, nowMs);
       const receiptJson = JSON.stringify({ messageId: receipt.messageId, createdAt: receipt.createdAt, expiresAt: receipt.expiresAt });
       const expiresAt = iso(Date.parse(receipt.expiresAt) + MESSAGE_RECEIPT_EXTRA_MS);
       const recordBytes = Buffer.byteLength(JSON.stringify({ messageId, sender, target: { host: row.target_host, sessionId: row.target_session_id }, preparedAt: row.prepared_at, ttlSeconds: row.ttl_seconds, receipt: receiptJson, expiresAt }), "utf8");
       const bytes = this.database.prepare("SELECT coalesce(sum(record_bytes), 0) AS bytes, min(expires_at) AS earliest FROM prepared_messages WHERE message_id <> ?").get(messageId) as { bytes: number; earliest: string | null };
-      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new MessageCapacityError("The bounded message receipt store is full.", { scope: "global", earliestReleaseAt: bytes.earliest });
+      if (bytes.bytes + recordBytes > MESSAGE_ID_RECORD_BYTES_LIMIT) throw new MessageCapacityError(msg("services.sessionMessage.capacity.receiptsFull", {}), { scope: "global", earliestReleaseAt: bytes.earliest });
       this.database.prepare("UPDATE prepared_messages SET body = NULL, receipt = ?, expires_at = ?, record_bytes = ? WHERE message_id = ?")
         .run(receiptJson, expiresAt, recordBytes, messageId);
       const autoWake = this.autoWakeOutlook(target, nowMs);
@@ -655,14 +660,14 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     boundedIdentity(input.sender);
     boundedIdentity(input.target);
     const bodyBytes = Buffer.byteLength(input.body, "utf8");
-    if (input.body.includes("\0")) throw new Error("body must not contain NUL characters.");
-    if (!input.body.trim() || bodyBytes > MESSAGE_BODY_MAX_BYTES) throw new Error(`body must contain 1-${MESSAGE_BODY_MAX_BYTES} UTF-8 bytes.`);
+    if (input.body.includes("\0")) throw new SessionMessageError(msg("services.sessionMessage.message.bodyNul", {}));
+    if (!input.body.trim() || bodyBytes > MESSAGE_BODY_MAX_BYTES) throw new SessionMessageError(msg("services.sessionMessage.message.bodySize", { maxBytes: MESSAGE_BODY_MAX_BYTES }));
     const ttlSeconds = input.ttlSeconds ?? MESSAGE_TTL_DEFAULT_SECONDS;
     if (!Number.isInteger(ttlSeconds) || ttlSeconds < 30 || ttlSeconds > MESSAGE_TTL_MAX_SECONDS) {
-      throw new Error(`ttlSeconds must be an integer from 30 to ${MESSAGE_TTL_MAX_SECONDS}.`);
+      throw new SessionMessageError(msg("services.sessionMessage.message.ttlRange", { maxSeconds: MESSAGE_TTL_MAX_SECONDS }));
     }
     const messageId = input.messageId ?? randomUUID();
-    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new Error("messageId must be 8-128 safe identifier characters.");
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/u.test(messageId)) throw new SessionMessageError(msg("services.sessionMessage.message.idShape", {}));
     if (!this.inTransaction) return this.transaction(() => this.send(input, nowMs));
     nowMs = this.time(nowMs);
     this.prune(nowMs);
@@ -674,11 +679,11 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         && existing.target_session_id === input.target.sessionId
         && existing.body === input.body
         && Date.parse(String(existing.expires_at)) - Date.parse(String(existing.created_at)) === ttlSeconds * 1000;
-      if (!same) throw new Error("messageId already belongs to a different message.");
+      if (!same) throw new SessionMessageError(msg("services.sessionMessage.message.idTaken", {}));
       return { messageId, createdAt: String(existing.created_at), expiresAt: String(existing.expires_at), duplicate: true };
     }
     const totals = this.database.prepare("SELECT count(*) AS count, coalesce(sum(body_bytes), 0) AS bytes FROM messages WHERE acknowledged_at IS NULL AND expires_at > ?").get(iso(nowMs)) as { count: number; bytes: number };
-    if (totals.count >= MESSAGE_LIMIT || totals.bytes + bodyBytes > MESSAGE_BYTES_LIMIT) throw new Error("The bounded message spool is full.");
+    if (totals.count >= MESSAGE_LIMIT || totals.bytes + bodyBytes > MESSAGE_BYTES_LIMIT) throw new SessionMessageError(msg("services.sessionMessage.capacity.spoolFull", {}));
     const createdAt = iso(nowMs);
     const expiresAt = iso(nowMs + ttlSeconds * 1000);
     this.database.prepare(`INSERT INTO messages (
@@ -695,10 +700,10 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     const maxMessages = limits.maxMessages ?? CLAIM_MAX_MESSAGES;
     const maxBodyChars = limits.maxBodyChars ?? SESSION_MESSAGE_MAX_RESPONSE_BYTES;
     if (!Number.isInteger(maxMessages) || maxMessages < 1 || maxMessages > CLAIM_MAX_MESSAGES) {
-      throw new Error(`maxMessages must be an integer from 1 to ${CLAIM_MAX_MESSAGES}.`);
+      throw new SessionMessageError(msg("services.sessionMessage.claim.maxMessagesRange", { max: CLAIM_MAX_MESSAGES }));
     }
     if (!Number.isInteger(maxBodyChars) || maxBodyChars < 1 || maxBodyChars > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
-      throw new Error(`maxBodyChars must be an integer from 1 to ${SESSION_MESSAGE_MAX_RESPONSE_BYTES}.`);
+      throw new SessionMessageError(msg("services.sessionMessage.claim.maxBodyCharsRange", { max: SESSION_MESSAGE_MAX_RESPONSE_BYTES }));
     }
     const now = iso(nowMs);
     const statement = this.database.prepare(`UPDATE messages SET claimed_at = ?, claim_until = ?, claim_receipt = ?,
@@ -719,7 +724,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       const message = { ...claimedMessage(row, attempts + 1, firstDeliveredAt), claimReceipt };
       const next = [...projected, message];
       if (bodyChars + message.body.length > maxBodyChars || claimResponseBytes(next) > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
-        if (selected.length === 0) throw new Error("The next message exceeds the caller claim budget.");
+        if (selected.length === 0) throw new SessionMessageError(msg("services.sessionMessage.claim.budgetExceeded", {}));
         break;
       }
       selected.push({ row, claimReceipt });
@@ -758,7 +763,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
         .get(target.host, target.sessionId) !== undefined);
     if ((verifiedBirth || instanceId !== undefined)
       && (!instanceId || current.instanceId !== instanceId || current.endedAt !== null)) {
-      throw tagProducerFailure(new Error("The hook does not belong to the current host process generation."),
+      throw tagProducerFailure(new SessionMessageError(msg("services.sessionMessage.hook.generationMismatch", {})),
         "SESSION_MESSAGE_HOOK_INSTANCE_MISMATCH");
     }
   }
@@ -820,14 +825,14 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   acknowledge(target: SessionIdentity, messageIds: string[], nowMs = AUTHORITY_NOW, claims: readonly MessageClaimReceipt[] = []): number {
     boundedIdentity(target);
     if (messageIds.length < 1 || messageIds.length > 50 || messageIds.some((id) => typeof id !== "string" || id.length > 128)) {
-      throw new Error("messageIds must contain 1-50 bounded identifiers.");
+      throw new SessionMessageError(msg("services.sessionMessage.acknowledge.messageIdsRange", {}));
     }
-    if (!Array.isArray(claims) || claims.length > 50) throw new Error("claims must contain at most 50 claim receipts.");
+    if (!Array.isArray(claims) || claims.length > 50) throw new SessionMessageError(msg("services.sessionMessage.acknowledge.claimsRange", {}));
     const receipts = new Map<string, string>();
     for (const claim of claims) {
       if (!claim || typeof claim.messageId !== "string" || !messageIds.includes(claim.messageId)
         || typeof claim.claimReceipt !== "string" || !/^[1-9][0-9]{0,15}:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u.test(claim.claimReceipt)
-        || receipts.has(claim.messageId)) throw new Error("Each claim receipt must identify one requested message and its original claim.");
+        || receipts.has(claim.messageId)) throw new SessionMessageError(msg("services.sessionMessage.acknowledge.claimReceiptInvalid", {}));
       receipts.set(claim.messageId, claim.claimReceipt);
     }
     if (!this.inTransaction) return this.transaction(() => this.acknowledge(target, messageIds, nowMs, claims));
@@ -1008,8 +1013,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   grantRelay(input: SessionIdentity & { transport: string; instanceId: string; codeDigest: string | null; hostPid?: number }, nowMs = AUTHORITY_NOW): RelayGrant {
     boundedIdentity(input);
     relayCodeDigest(input.codeDigest);
-    if (!input.instanceId || input.instanceId.length > 128 || !input.transport || input.transport.length > 64) throw new Error("Invalid relay grant identity.");
-    if (input.hostPid !== undefined && (!Number.isSafeInteger(input.hostPid) || input.hostPid < 1)) throw new Error("Invalid relay host process.");
+    if (!input.instanceId || input.instanceId.length > 128 || !input.transport || input.transport.length > 64) throw new SessionMessageError(msg("services.sessionMessage.relay.grantIdentityInvalid", {}));
+    if (input.hostPid !== undefined && (!Number.isSafeInteger(input.hostPid) || input.hostPid < 1)) throw new SessionMessageError(msg("services.sessionMessage.relay.hostProcessInvalid", {}));
     if (!this.inTransaction) return this.transaction(() => this.grantRelay(input, nowMs));
     nowMs = this.time(nowMs);
     const presence = this.presence(input, nowMs);
@@ -1054,7 +1059,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (!Number.isInteger(input.hostPid) || input.hostPid < 1 || !/^host-process-v1:[0-9a-f]{64}$/u.test(input.instanceId)
       || !input.hostStart.trim() || input.hostStart.length > 200
       || input.instanceId !== "host-process-v1:" + createHash("sha256").update(JSON.stringify([input.host, input.sessionId, input.hostPid, input.hostStart])).digest("hex")) {
-      throw new Error("Invalid verified host process birth.");
+      throw new SessionMessageError(msg("services.sessionMessage.relay.hostBirthInvalid", {}));
     }
     if (!this.inTransaction) return this.transaction(() => this.ensureVerifiedGeneration(input, nowMs));
     nowMs = this.time(nowMs);
@@ -1088,7 +1093,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   /** The relay's own end: drop only its lease (its relay_id) and end its own birth, atomically. */
   releaseRelay(input: SessionIdentity & { transport: string; relayId: string; instanceId: string; reason: string }, nowMs = AUTHORITY_NOW): boolean {
     boundedIdentity(input);
-    if (!input.relayId || input.relayId.length > 128 || !input.reason || input.reason.length > 100) throw new Error("Invalid relay release.");
+    if (!input.relayId || input.relayId.length > 128 || !input.reason || input.reason.length > 100) throw new SessionMessageError(msg("services.sessionMessage.relay.releaseInvalid", {}));
     if (!this.inTransaction) return this.transaction(() => this.releaseRelay(input, nowMs));
     nowMs = this.time(nowMs);
     const removed = this.database.prepare("DELETE FROM relay_leases WHERE host=? AND session_id=? AND transport=? AND relay_id=?")
@@ -1110,7 +1115,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     boundedIdentity(input);
     if (!Number.isSafeInteger(input.hostPid) || input.hostPid < 1 || typeof input.hostAliveAt !== "string" || input.hostAliveAt.length > 64
       || !Number.isSafeInteger(input.hookStartedAt) || input.hookStartedAt < 0 || !input.reason || input.reason.length > 100) {
-      throw new Error("Invalid host session end.");
+      throw new SessionMessageError(msg("services.sessionMessage.relay.sessionEndInvalid", {}));
     }
     if (!this.inTransaction) return this.transaction(() => this.endHostSession(input, nowMs));
     nowMs = this.time(nowMs);
@@ -1134,7 +1139,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (!input.transport || input.transport.length > 64 || !input.relayId || input.relayId.length > 128 || !input.instanceId || input.instanceId.length > 128
       || typeof input.includePending !== "boolean" || (input.hostStart !== undefined && (!input.hostStart.trim() || input.hostStart.length > 200))
       || (input.prerequisiteMissing !== undefined && !/^[A-Z][A-Z0-9_]{0,63}$/u.test(input.prerequisiteMissing))) {
-      throw new Error("Invalid relay tick identity or includePending.");
+      throw new SessionMessageError(msg("services.sessionMessage.relay.tickInvalid", {}));
     }
     if (!this.inTransaction) return this.transaction(() => this.relayTick(input, nowMs));
     nowMs = this.time(nowMs);
@@ -1254,9 +1259,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
   /** Gates 1-5 of 2.5. Retries always reserve a new row and nonce; only an unstarted row of the same birth resumes. */
   reserveManagedWake(input: WakeRelayBinding & { nonce: string; resume?: boolean }, atMs?: number): WakeReservation {
     boundedIdentity(input);
-    if (!/^[A-Za-z0-9_-]{22,128}$/u.test(input.nonce)) throw new Error("Invalid wake nonce.");
+    if (!/^[A-Za-z0-9_-]{22,128}$/u.test(input.nonce)) throw new SessionMessageError(msg("services.sessionMessage.wake.nonceInvalid", {}));
     for (const value of [input.instanceId, input.relayId, input.transport]) {
-      if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(value)) throw new Error("Invalid wake relay binding.");
+      if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u.test(value)) throw new SessionMessageError(msg("services.sessionMessage.wake.relayBindingInvalid", {}));
     }
     if (!this.inTransaction) return this.transaction(() => this.reserveManagedWake(input, atMs));
     return this.transaction(() => {
@@ -1279,7 +1284,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       }
       if (!open) return none;
       const count = this.database.prepare(`SELECT count(*) AS n FROM wake_nonces WHERE state IN ${ACTIVE_WAKE_STATES}`).get() as { n: number };
-      if (count.n >= MESSAGE_LIMIT) throw new Error("The bounded active wake store is full.");
+      if (count.n >= MESSAGE_LIMIT) throw new SessionMessageError(msg("services.sessionMessage.capacity.wakeFull", {}));
       const attemptId = randomUUID();
       this.database.prepare(`INSERT INTO wake_nonces (nonce_digest, host, session_id, expires_at, state, nonce,
         instance_id, birth_generation, transport, relay_id, attempt_id) VALUES (?, ?, ?, ?, 'reserved', ?, ?, ?, ?, ?, ?)`)
@@ -1318,7 +1323,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
    * (I11). The birth's path takes the outcome of this exact attempt even when it arrives after the row ended.
    */
   recordManagedWakeOutcome(attempt: WakeAttempt, outcome: WakeDispatchOutcome, resendBaseMs: number, nowMs = AUTHORITY_NOW): boolean {
-    if (!isWakeDispatchOutcome(outcome)) throw new Error("Invalid wake dispatch outcome.");
+    if (!isWakeDispatchOutcome(outcome)) throw new SessionMessageError(msg("services.sessionMessage.wake.outcomeInvalid", {}));
     assertResendBase(resendBaseMs);
     if (!this.inTransaction) return this.transaction(() => this.recordManagedWakeOutcome(attempt, outcome, resendBaseMs, nowMs));
     nowMs = this.time(nowMs);
@@ -1430,17 +1435,17 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     hostStart?: string;
   }, nowMs = AUTHORITY_NOW): SessionPresence {
     boundedIdentity(input);
-    if (!input.instanceId || input.instanceId.length > 128 || !input.transport || input.transport.length > 64) throw new Error("Invalid presence identity.");
+    if (!input.instanceId || input.instanceId.length > 128 || !input.transport || input.transport.length > 64) throw new SessionMessageError(msg("services.sessionMessage.presence.identityInvalid", {}));
     if ((input.hostPid !== undefined && (!Number.isSafeInteger(input.hostPid) || input.hostPid < 1))
       || (input.hostStart !== undefined && (input.hostPid === undefined || typeof input.hostStart !== "string" || !input.hostStart.trim() || input.hostStart.length > 200))) {
-      throw new Error("Invalid reported host process.");
+      throw new SessionMessageError(msg("services.sessionMessage.presence.hostProcessInvalid", {}));
     }
     for (const [name, value, maximum] of [
       ["collaborationId", input.collaborationId, 200],
       ["workspaceId", input.workspaceId, 500],
       ["role", input.role, 100],
     ] as const) {
-      if (value !== undefined && (!value || value.length > maximum)) throw new Error(`${name} is invalid.`);
+      if (value !== undefined && (!value || value.length > maximum)) throw new SessionMessageError(msg("services.sessionMessage.field.invalid", { field: name }));
     }
     if (!this.inTransaction) return this.transaction(() => this.startPresence(input, nowMs));
     nowMs = this.time(nowMs);
@@ -1473,7 +1478,7 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
 
   heartbeatPresence(target: SessionIdentity, instanceId: string, nowMs = AUTHORITY_NOW): boolean {
     boundedIdentity(target);
-    if (!instanceId) throw new Error("presence instanceId is required.");
+    if (!instanceId) throw new SessionMessageError(msg("services.sessionMessage.presence.instanceIdRequired", {}));
     if (!this.inTransaction) return this.transaction(() => this.heartbeatPresence(target, instanceId, nowMs));
     nowMs = this.time(nowMs);
     const row = this.database.prepare(`SELECT instance_id FROM session_presence
@@ -1488,8 +1493,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
 
   endPresence(target: SessionIdentity, reason: string, instanceId: string, nowMs = AUTHORITY_NOW): boolean {
     boundedIdentity(target);
-    if (!reason || reason.length > 100) throw new Error("endReason is invalid.");
-    if (!instanceId) throw new Error("presence instanceId is required.");
+    if (!reason || reason.length > 100) throw new SessionMessageError(msg("services.sessionMessage.presence.endReasonInvalid", {}));
+    if (!instanceId) throw new SessionMessageError(msg("services.sessionMessage.presence.instanceIdRequired", {}));
     if (!this.inTransaction) return this.transaction(() => this.endPresence(target, reason, instanceId, nowMs));
     nowMs = this.time(nowMs);
     const row = this.database.prepare(`SELECT instance_id FROM session_presence
@@ -1594,12 +1599,12 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
    */
   private time(nowMs: number): number {
     if (this.shared) return this.shared.time(Number.isNaN(nowMs) ? 0 : nowMs);
-    if (!this.inTransaction) throw new Error("Time and expiry decisions require the writer transaction.");
+    if (!this.inTransaction) throw new SessionMessageError(msg("services.sessionMessage.store.writerTransactionRequired", {}));
     if (!Number.isNaN(nowMs)) return nowMs;
     if (this.transactionNow === undefined) {
       const stored = (this.database.prepare("SELECT last_ms FROM authority_time WHERE singleton = 1").get() as { last_ms: number } | undefined)?.last_ms ?? 0;
       const sampled = this.clock();
-      if (!Number.isSafeInteger(sampled) || sampled < 0) throw new Error("The session message clock is invalid.");
+      if (!Number.isSafeInteger(sampled) || sampled < 0) throw new SessionMessageError(msg("services.sessionMessage.store.clockInvalid", {}));
       this.transactionNow = Math.max(stored, sampled);
       this.database.prepare("UPDATE authority_time SET last_ms = ? WHERE singleton = 1").run(this.transactionNow);
     }

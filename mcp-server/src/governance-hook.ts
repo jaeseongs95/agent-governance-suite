@@ -13,6 +13,7 @@ import { ContinuityService } from "./continuity-service.js";
 import { failureReason } from "./failure-diagnostics.js";
 import { WorkflowContractError } from "../../contracts/types.js";
 import { hookFailureContext, retainHookFailureSecondary, writeFailureDiagnostic } from "./hook-error-diagnostics.js";
+import { msg } from "./i18n.js";
 
 const CONTINUITY_TOOLS = new Set(["open_convergence_root", "checkpoint_context", "inspect_context", "load_context", "suppress_context_restore", "purge_direct_context"]);
 type RecordValue = Record<string, unknown>;
@@ -32,11 +33,11 @@ function recordStartRefusal(environment: NodeJS.ProcessEnv, sessionId: string, r
   const continuity = new SqliteContinuityStore(continuityPath);
   try {
     new ContinuityService(continuity, null).recordWorkflowStartFailure(sessionId,
-      new WorkflowContractError("BINDING_REQUIRED", "The governance hook refused the workflow start.", { reasonCode }));
+      new WorkflowContractError("BINDING_REQUIRED", msg("services.governanceHook.startRefused", {}), { reasonCode }));
   } finally { continuity.close(); }
 }
 function missing(reasonCode: string): never {
-  throw new WorkflowContractError("BINDING_REQUIRED", "The host hook input does not identify this call.", { reasonCode });
+  throw new WorkflowContractError("BINDING_REQUIRED", msg("services.governanceHook.callUnidentified", {}), { reasonCode });
 }
 
 /**

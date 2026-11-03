@@ -1,4 +1,13 @@
+import { ROOT_LOCALE, render, type MessageRef } from "./i18n.js";
+
 export const SESSION_MESSAGE_PROTOCOL = "2.1.0";
+
+/** A session messaging failure whose text is a catalog message. `message` is its root-locale rendering. */
+export class SessionMessageError extends Error {
+  constructor(readonly ref: MessageRef) {
+    super(render(ref, ROOT_LOCALE));
+  }
+}
 
 // 인수 전 소비자의 회차 영수증 지원을 확인한다. 조회 프레임 형식은 바꾸지 않는다.
 export const SESSION_MESSAGE_CLAIM_OPERATIONS: readonly string[] = Object.freeze([

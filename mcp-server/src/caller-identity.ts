@@ -1,5 +1,6 @@
 import { WorkflowContractError } from "../../contracts/types.js";
 import type { LineageRead } from "./host-input-adapter.js";
+import { msg } from "./i18n.js";
 
 /** Vendor-neutral caller contract. Host specifics live only in ingress adapters (builtin-caller-ingress.ts). */
 export interface CallerActor {
@@ -41,13 +42,13 @@ export const MAX_PARENT_CHAIN = 16;
 export const RESERVED_CALLER_KEYS = ["_sessionBinding", "_continuityBinding", "_hostAttestation", "_sessionProof"] as const;
 
 function invalid(reasonCode: string): never {
-  throw new WorkflowContractError("BINDING_INVALID", "The host caller observation is inconsistent.", { reasonCode });
+  throw new WorkflowContractError("BINDING_INVALID", msg("services.caller.observationInconsistent", {}), { reasonCode });
 }
 
 /** Core invariants every adapter result passes; no vendor field is read here. */
 export function admitCaller(result: IngressResult, rootActorId: (host: string, sessionId: string) => string): VerifiedCaller {
   if (result.provenance !== "host-observed") {
-    throw new WorkflowContractError("BINDING_REQUIRED", "The host did not observe this caller; it is not presumed to be a root.", {
+    throw new WorkflowContractError("BINDING_REQUIRED", msg("services.caller.notObserved", {}), {
       reasonCode: "CALLER_PROVENANCE_UNAVAILABLE", ingressReason: result.reason,
     });
   }
