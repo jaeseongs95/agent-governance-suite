@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { analyzeDiagnosis, requestArtifactDigest as diagnosisRequestDigest } from "../../skills/blocker-diagnostician/scripts/core.mjs";
 import {
@@ -223,6 +223,10 @@ function taskContract(recoveryHandoff, { allowedActions = ["local-edit", "rollba
   };
   return { taskContractRequest, taskContractReport };
 }
+
+// The assertions below compare the Korean source sentences (catalog domain skillChecksKo); the host locale is not left to the environment.
+beforeAll(() => { vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "ko"); });
+afterAll(() => { vi.unstubAllEnvs(); });
 
 describe("recovery strategy selector", () => {
   it("normal: selects the only strategy that passes the Objective Gate", () => {
@@ -458,6 +462,22 @@ describe("recovery strategy selector", () => {
     expect(result.errors.join("\n")).toMatch(/allowed action을 확대/);
     expect(result.errors.join("\n")).toMatch(/provenance/);
     expect(validateBindingReportSchema(result)).toBe(true);
+  });
+
+  it("i18n: renders validation errors in the host locale (en and ko)", async () => {
+    const request = selectionRequest();
+    const output = handoff(request, [strategy("safe")]);
+    output.selectionRequestDigest = digest({ stale: true });
+    const frozen = selectionRequestDigest(request);
+    vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "en");
+    expect(validateHandoff(request, output, frozen)).toContain("The handoff does not match the externally frozen selection request digest.");
+    request.sourceWorkflow.receipt.plan.taskId = "unrelated-task";
+    request.sourceWorkflow.receiptDigest = digest(request.sourceWorkflow.receipt);
+    expect(() => validateRequest(request)).toThrow("The source workflow receipt is not bound to the source task envelope.");
+    vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "ko");
+    const second = selectionRequest();
+    expect(validateHandoff(second, output, selectionRequestDigest(second))).toContain("handoff가 외부에 동결된 selection request digest와 일치하지 않습니다.");
+    expect(() => validateRequest(request)).toThrow("source workflow receipt가 원본 task envelope에 결속되지 않았습니다.");
   });
 
   it("contracts compile and the digest CLI accepts stdin JSON", () => {

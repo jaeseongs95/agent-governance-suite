@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Ajv2020, addFormats } from "../../../runtime/schema-validation.mjs";
+import { hostText } from "../../../runtime/i18n.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const files = {
@@ -19,8 +20,8 @@ const validators = Object.fromEntries(Object.entries(schemas).map(([name, schema
 export function assertSchema(name, value) {
   const validate = validators[name];
   if (!validate(value)) {
-    const detail = validate.errors?.map((error) => `${error.instancePath || "/"} ${error.message}`).join("; ") ?? "unknown schema error";
-    throw new Error(`${name} schema validation failed: ${detail}`);
+    const detail = validate.errors?.map((error) => `${error.instancePath || "/"} ${error.message}`).join("; ") ?? hostText("skillScripts.changeScope.unknownSchemaError");
+    throw new Error(hostText("skillScripts.changeScope.schemaFailed", { name, detail }));
   }
   return value;
 }

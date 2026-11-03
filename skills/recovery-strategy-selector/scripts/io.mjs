@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { hostText } from "../../../runtime/i18n.mjs";
 
 export async function readJsonInput(argv = process.argv.slice(2)) {
   const index = argv.indexOf("--input");
@@ -6,7 +7,7 @@ export async function readJsonInput(argv = process.argv.slice(2)) {
   let raw = "";
   process.stdin.setEncoding("utf8");
   for await (const chunk of process.stdin) raw += chunk;
-  if (!raw.trim()) throw new Error("stdin 또는 --input으로 JSON 입력이 필요합니다.");
+  if (!raw.trim()) throw new Error(hostText("skillChecksKo.recoveryStrategySelectorIo.jsonInputRequired"));
   return JSON.parse(raw);
 }
 

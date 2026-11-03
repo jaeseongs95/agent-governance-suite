@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, onTestFinished, vi } from "vitest";
 
 import type { ConvergenceFrameV1, StageResultV1, TaskEnvelopeV1 } from "../../contracts/types.js";
 import {
@@ -425,6 +425,9 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
   });
 
   it("closes policy-authority, alias-selection, and effort-subset gaps across routing and server attestation (F03, F04, F05)", () => {
+    // The routing script renders its errors in the host locale (package default ko); these assertions pin English.
+    vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "en");
+    onTestFinished(() => { vi.unstubAllEnvs(); });
     // F03: Caller options cannot smuggle `presets` or reorder `model_class_order` / `effort_order` to weaken mandatory highRisk floors.
     expect(() =>
       resolveModelSelection({

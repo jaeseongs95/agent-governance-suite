@@ -5,7 +5,7 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { execute, main } from "../../skills/codex-token-usage-analyzer/scripts/cli.mjs";
 import { digest } from "../../skills/codex-token-usage-analyzer/scripts/core.mjs";
@@ -65,7 +65,13 @@ async function json(relative) {
   return JSON.parse(await readFile(path.join(skillRoot, relative), "utf8"));
 }
 
+// The messages are Korean in the source locale. Every case below pins the locale it expects.
+beforeEach(() => {
+  vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "ko");
+});
+
 afterEach(async () => {
+  vi.unstubAllEnvs();
   await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
 });
 
@@ -355,5 +361,58 @@ describe("codex-token-usage-analyzer integration", () => {
       "Cache input이 Input보다 큼",
       "Reasoning output이 Output보다 큼"
     ]));
+  });
+
+  it("renders the same report in the Korean source locale and in English", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "suite-token-locale-"));
+    temporaryDirectories.push(directory);
+    const sessionsRoot = path.join(directory, "sessions");
+    await mkdir(sessionsRoot);
+    const usage = { input_tokens: 10, cached_input_tokens: 3, cache_write_input_tokens: 0, output_tokens: 4, reasoning_output_tokens: 1, total_tokens: 14 };
+    const rows = [
+      { type: "session_meta", payload: { id: threadId, title: "locale", cwd: "D:\\work\\suite" } },
+      { timestamp: "2026-01-01T00:00:00Z", type: "turn_context", payload: { turn_id: "turn-1", model: "gpt-test", effort: "high" } },
+      { timestamp: "2026-01-01T00:00:01Z", type: "token_usage_record", payload: { thread_id: threadId, turn_id: "turn-1", response_id: "response-1", usage, turn_token_usage: usage, thread_token_usage: usage } },
+      { timestamp: "2026-01-01T00:00:02Z", type: "event_msg", payload: { type: "token_count", info: { total_token_usage: { ...usage, cached_input_tokens: 12 }, last_token_usage: usage } } }
+    ];
+    await writeFile(path.join(sessionsRoot, "session.jsonl"), `${rows.map(JSON.stringify).join("\n")}\n`, "utf8");
+    const locations = { root: directory, sessionsRoot, indexFile: path.join(directory, "missing") };
+    const run = async (locale, request) => {
+      vi.stubEnv("AGENT_GOVERNANCE_LOCALE", locale);
+      return execute({ schemaVersion: "1.0.0", ...request }, { locations, pluginRoot: path.join(directory, "plugin"), stamp: "20260101000000000" });
+    };
+
+    const korean = await run("ko", { target: threadId, markdown: { directory: path.join(directory, "md-ko") } });
+    const english = await run("en", { target: threadId, markdown: { directory: path.join(directory, "md-en") } });
+    expect(korean.result.output.verdict).toBe("PARTIAL");
+    expect(english.result.output.verdict).toBe("PARTIAL");
+    expect(korean.result.output.partialReasons).toContain("Cache input이 Input보다 큼");
+    expect(english.result.output.partialReasons).toContain("Cache input is greater than Input");
+    expect(english.result.output.totals).toEqual(korean.result.output.totals);
+    const koreanMarkdown = await readFile(korean.result.output.markdownArtifact.path, "utf8");
+    const englishMarkdown = await readFile(english.result.output.markdownArtifact.path, "utf8");
+    expect(koreanMarkdown).toContain("## Token 사용량 스냅샷");
+    expect(koreanMarkdown).toContain("- 집계 상태: 부분 집계");
+    expect(englishMarkdown).toContain("## Token usage snapshot");
+    expect(englishMarkdown).toContain("- Aggregation status: partial");
+    expect(englishMarkdown).not.toMatch(/[가-힣]/u);
+
+    const koreanMissing = await run("ko", { target: "nothing here" });
+    const englishMissing = await run("en", { target: "nothing here" });
+    expect(koreanMissing.result.error).toEqual({
+      code: "RUN_NOT_FOUND",
+      message: "입력한 세션 제목 또는 프로젝트명과 일치하는 최상위 thread를 찾지 못했습니다.",
+      details: { target: "nothing here", reason: "not_found" }
+    });
+    expect(englishMissing.result.error).toEqual({
+      code: "RUN_NOT_FOUND",
+      message: "No top-level thread matches the session title or project name you entered.",
+      details: { target: "nothing here", reason: "not_found" }
+    });
+
+    const koreanContract = await run("ko", { target: "x", markdown: { directory: "relative/dir" } });
+    const englishContract = await run("en", { target: "x", markdown: { directory: "relative/dir" } });
+    expect(koreanContract.result.error.message).toBe("Markdown 저장 디렉터리는 절대 경로여야 합니다.");
+    expect(englishContract.result.error.message).toBe("The Markdown output directory must be an absolute path.");
   });
 });

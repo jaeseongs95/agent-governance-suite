@@ -8,6 +8,9 @@ import { fileURLToPath } from "node:url";
 import { analyzeDiagnosis, checkInputDigest, clusterFailures, InputError, requestArtifactDigest, validateReport } from "../../skills/blocker-diagnostician/scripts/core.mjs";
 import { compileAllSchemas } from "../../skills/blocker-diagnostician/scripts/schema-validation.mjs";
 
+// Messages are asserted in the source locale; the package default locale is ko.
+process.env.AGENT_GOVERNANCE_LOCALE = "en";
+
 const testRoot = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(testRoot, "..", "..", "skills", "blocker-diagnostician");
 const fixture = async (name) => JSON.parse(await readFile(path.join(testRoot, "fixtures", `${name}.json`), "utf8"));
@@ -342,5 +345,24 @@ test("runtime scripts do not import Agent Governance Suite", async () => {
   for (const file of files) {
     const content = await readFile(path.join(skillRoot, "scripts", file), "utf8");
     assert.equal(content.includes("agent-governance-suite/"), false);
+  }
+});
+
+test("i18n: errors render in the host locale, in process and from the CLI", () => {
+  const inLocale = (locale, action) => {
+    process.env.AGENT_GOVERNANCE_LOCALE = locale;
+    try { return action(); } finally { process.env.AGENT_GOVERNANCE_LOCALE = "en"; }
+  };
+  const thrown = () => { try { analyzeDiagnosis(null); } catch (error) { return error.message; } return null; };
+  assert.equal(inLocale("en", thrown), "Input must be an object.");
+  assert.equal(inLocale("ko", thrown), "입력은 객체여야 한다.");
+  assert.deepEqual(inLocale("en", () => validateReport(null)), ["report must be an object"]);
+  assert.deepEqual(inLocale("ko", () => validateReport(null)), ["report는 객체여야 한다"]);
+  for (const [locale, message] of [["en", "Input must be an object."], ["ko", "입력은 객체여야 한다."]]) {
+    const run = spawnSync(process.execPath, [path.join(skillRoot, "scripts", "cli.mjs")], {
+      encoding: "utf8", input: "null", env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale }
+    });
+    assert.equal(run.status, 2);
+    assert.deepEqual(JSON.parse(run.stdout).error, { code: "INVALID_INPUT", message, details: null });
   }
 });

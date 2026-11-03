@@ -4,35 +4,36 @@ import path from "node:path";
 import process from "node:process";
 import { pathToFileURL } from "node:url";
 
+import { hostText } from "../../../runtime/i18n.mjs";
 import { contractErrors, validateWorkspaceProfile } from "./schema-validation.mjs";
 
 export function validateProfile(profile) {
   const errors = [];
   if (!validateWorkspaceProfile(profile)) {
-    errors.push(...contractErrors(validateWorkspaceProfile).map((error) => `schema${error}`));
+    errors.push(...contractErrors(validateWorkspaceProfile).map((error) => hostText("skillChecks.workspaceConventionProfiler.schemaViolation", { error })));
     return errors;
   }
   if (!profile || typeof profile !== "object" || Array.isArray(profile)) return errors;
   const evidence = new Map();
   for (const item of profile.evidenceIndex ?? []) {
     const ref = `${item.locator}#${item.digest}`;
-    if (evidence.has(ref) || [...evidence.values()].some((entry) => entry.locator === item.locator)) errors.push(`duplicate evidence locator: ${item.locator}`);
+    if (evidence.has(ref) || [...evidence.values()].some((entry) => entry.locator === item.locator)) errors.push(hostText("skillChecks.workspaceConventionProfiler.duplicateEvidenceLocator", { locator: item.locator }));
     evidence.set(ref, item);
   }
   const checkRefs = (refs, criterion, expectedKind = null) => {
     for (const ref of refs ?? []) {
       const item = evidence.get(ref);
-      if (!item) errors.push(`${criterion} references missing evidence: ${ref}`);
-      else if (expectedKind && item.kind !== expectedKind) errors.push(`${criterion} requires ${expectedKind} evidence: ${ref}`);
+      if (!item) errors.push(hostText("skillChecks.workspaceConventionProfiler.missingEvidenceReference", { criterion, ref }));
+      else if (expectedKind && item.kind !== expectedKind) errors.push(hostText("skillChecks.workspaceConventionProfiler.evidenceKindRequired", { criterion, expectedKind, ref }));
     }
   };
-  for (const ecosystem of profile.ecosystems ?? []) checkRefs(ecosystem.manifestRefs, `ecosystem ${ecosystem.language}`);
-  for (const item of profile.structure ?? []) checkRefs(item.evidenceRefs, `structure ${item.role}`, "directory");
+  for (const ecosystem of profile.ecosystems ?? []) checkRefs(ecosystem.manifestRefs, hostText("skillChecks.workspaceConventionProfiler.criterionEcosystem", { language: ecosystem.language }));
+  for (const item of profile.structure ?? []) checkRefs(item.evidenceRefs, hostText("skillChecks.workspaceConventionProfiler.criterionStructure", { role: item.role }), "directory");
   for (const convention of profile?.conventions ?? []) {
-    if (convention.confidence === "confirmed" && !convention.evidenceRefs?.length) errors.push(`confirmed convention lacks evidence: ${convention.subject}`);
-    checkRefs(convention.evidenceRefs, `convention ${convention.subject}`);
+    if (convention.confidence === "confirmed" && !convention.evidenceRefs?.length) errors.push(hostText("skillChecks.workspaceConventionProfiler.confirmedConventionNoEvidence", { subject: convention.subject }));
+    checkRefs(convention.evidenceRefs, hostText("skillChecks.workspaceConventionProfiler.criterionConvention", { subject: convention.subject }));
   }
-  for (const command of profile.commands ?? []) checkRefs([command.sourceRef], `command ${command.command}`);
+  for (const command of profile.commands ?? []) checkRefs([command.sourceRef], hostText("skillChecks.workspaceConventionProfiler.criterionCommand", { command: command.command }));
   return errors;
 }
 

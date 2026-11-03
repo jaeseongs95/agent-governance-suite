@@ -1,98 +1,99 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateSchema, schemaEngine } from './schema-validation.mjs';
+import { hostText } from './messages.mjs';
 import { CsError, requireCondition as need, hashJson, hashBytes, uniqueBy, sameSet, parseJson, readBoundedFile, readArtifact, portablePath } from './primitives.mjs';
 export { CsError, hashJson, hashBytes, schemaEngine };
 export const SKILL_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const VERSION = '0.1.0';
-const assertDigest = (left, right, label) => need(left === right, 'INTEGRITY_FAILED', `${label} mismatch.`);
-const refsExist = (refs, map, label) => { for (const r of refs) need(map.has(r), 'INVALID_INPUT', `Unknown ${label}: ${r}.`); };
+const assertDigest = (left, right, label) => need(left === right, 'INTEGRITY_FAILED', 'skillTools.csEngineering.digestMismatch', { label });
+const refsExist = (refs, map, label) => { for (const r of refs) need(map.has(r), 'INVALID_INPUT', 'skillTools.csEngineering.unknownReference', { label, value: r }); };
 
 export function loadPack(root = SKILL_ROOT) {
   const lock = parseJson(readBoundedFile(root, 'assets/knowledge-lock.json'));
-  need(lock.schemaVersion === '1.0.0' && lock.version === VERSION && Array.isArray(lock.files), 'INVALID_INPUT', 'Invalid knowledge lock.');
-  uniqueBy(lock.files, 'path', 'knowledge file');
+  need(lock.schemaVersion === '1.0.0' && lock.version === VERSION && Array.isArray(lock.files), 'INVALID_INPUT', 'skillTools.csEngineering.invalidKnowledgeLock');
+  uniqueBy(lock.files, 'path', 'knowledgeFile');
   for (const entry of lock.files) readArtifact(root, entry);
   const catalogue = parseJson(readBoundedFile(root, 'assets/rule-catalog.json'));
   const sources = parseJson(readBoundedFile(root, 'assets/sources.json'));
   const sourceIds = uniqueBy(sources.sources, 'id', 'source');
   const modules = uniqueBy(catalogue.modules, 'id', 'module');
-  const catalogueRules = uniqueBy(catalogue.rules, 'id', 'catalogue rule');
+  const catalogueRules = uniqueBy(catalogue.rules, 'id', 'catalogueRule');
   const rules = new Map();
   for (const module of modules.values()) {
-    need(['draft', 'validated'].includes(module.status), 'INVALID_INPUT', 'Invalid module status.');
+    need(['draft', 'validated'].includes(module.status), 'INVALID_INPUT', 'skillTools.csEngineering.invalidModuleStatus');
     const rows = parseJson(readBoundedFile(root, module.ruleFile));
-    need(Array.isArray(rows) && rows.length > 0, 'INVALID_INPUT', 'Empty knowledge module.');
-    need(sameSet(rows.map(r => r.id), module.ruleIds), 'INVALID_INPUT', 'Module rule list mismatch.');
+    need(Array.isArray(rows) && rows.length > 0, 'INVALID_INPUT', 'skillTools.csEngineering.emptyKnowledgeModule');
+    need(sameSet(rows.map(r => r.id), module.ruleIds), 'INVALID_INPUT', 'skillTools.csEngineering.moduleRuleListMismatch');
     for (const card of rows) {
-      need(!rules.has(card.id), 'INVALID_INPUT', 'Duplicate rule ID.');
-      need(card.domain === module.id && card.status === module.status && card.version === VERSION, 'INVALID_INPUT', 'Rule metadata mismatch.');
-      for (const k of ['title','principle','invariant','validationScope']) need(typeof card[k] === 'string' && card[k].trim(), 'INVALID_INPUT', `Rule lacks ${k}.`);
-      for (const k of ['appliesWhen','assumptions','failureModes','decisionQuestions','verificationObligations','nonGoals','sources']) need(Array.isArray(card[k]) && card[k].length > 0 && card[k].every(x => typeof x === 'string' && x.trim()), 'INVALID_INPUT', `Rule lacks ${k}.`);
+      need(!rules.has(card.id), 'INVALID_INPUT', 'skillTools.csEngineering.duplicateRuleId');
+      need(card.domain === module.id && card.status === module.status && card.version === VERSION, 'INVALID_INPUT', 'skillTools.csEngineering.ruleMetadataMismatch');
+      for (const k of ['title','principle','invariant','validationScope']) need(typeof card[k] === 'string' && card[k].trim(), 'INVALID_INPUT', 'skillTools.csEngineering.ruleLacksField', { field: k });
+      for (const k of ['appliesWhen','assumptions','failureModes','decisionQuestions','verificationObligations','nonGoals','sources']) need(Array.isArray(card[k]) && card[k].length > 0 && card[k].every(x => typeof x === 'string' && x.trim()), 'INVALID_INPUT', 'skillTools.csEngineering.ruleLacksField', { field: k });
       refsExist(card.sources, sourceIds, 'source');
       const index = catalogueRules.get(card.id);
-      need(index && index.domain === module.id && index.path === module.ruleFile && index.status === card.status, 'INVALID_INPUT', 'Catalogue row mismatch.');
-      assertDigest(index.digest, hashJson(card), 'Rule digest');
+      need(index && index.domain === module.id && index.path === module.ruleFile && index.status === card.status, 'INVALID_INPUT', 'skillTools.csEngineering.catalogueRowMismatch');
+      assertDigest(index.digest, hashJson(card), 'ruleDigest');
       rules.set(card.id, card);
     }
   }
-  need(rules.size === catalogueRules.size, 'INVALID_INPUT', 'Unloaded catalogue rule.');
+  need(rules.size === catalogueRules.size, 'INVALID_INPUT', 'skillTools.csEngineering.unloadedCatalogueRule');
   const locked = new Set(lock.files.map(x => x.path));
-  for (const p of ['assets/rule-catalog.json','assets/sources.json', ...catalogue.modules.flatMap(m => [m.reference, m.ruleFile])]) need(locked.has(p), 'INTEGRITY_FAILED', 'Knowledge lock is missing a required source.');
+  for (const p of ['assets/rule-catalog.json','assets/sources.json', ...catalogue.modules.flatMap(m => [m.reference, m.ruleFile])]) need(locked.has(p), 'INTEGRITY_FAILED', 'skillTools.csEngineering.lockMissingSource');
   return { root, version: VERSION, digest: hashJson(lock), catalogue, rules, modules };
 }
 export function selectRules(pack, { domains = [], ruleIds = [], allowDraft = false } = {}) {
-  need(Array.isArray(domains) && Array.isArray(ruleIds), 'INVALID_INPUT', 'Selection must use arrays.');
-  domains.forEach(d => need(pack.modules.has(d), 'INVALID_INPUT', `Unknown domain: ${d}.`));
-  ruleIds.forEach(id => need(pack.rules.has(id), 'INVALID_INPUT', `Unknown rule: ${id}.`));
+  need(Array.isArray(domains) && Array.isArray(ruleIds), 'INVALID_INPUT', 'skillTools.csEngineering.selectionNeedsArrays');
+  domains.forEach(d => need(pack.modules.has(d), 'INVALID_INPUT', 'skillTools.csEngineering.unknownDomain', { value: d }));
+  ruleIds.forEach(id => need(pack.rules.has(id), 'INVALID_INPUT', 'skillTools.csEngineering.unknownRule', { value: id }));
   return [...pack.rules.values()].filter(r => (!domains.length && !ruleIds.length || domains.includes(r.domain) || ruleIds.includes(r.id)) && (allowDraft || r.status === 'validated'));
 }
 export function validateRequest(request) {
   validateSchema('cs-request', request);
-  const sourceIds = uniqueBy(request.sourceRefs, 'id', 'source reference');
-  uniqueBy(request.sourceRefs, 'path', 'source path');
-  uniqueBy(request.operationalFacts, 'id', 'operational fact');
+  const sourceIds = uniqueBy(request.sourceRefs, 'id', 'sourceReference');
+  uniqueBy(request.sourceRefs, 'path', 'sourcePath');
+  uniqueBy(request.operationalFacts, 'id', 'operationalFact');
   request.sourceRefs.forEach(r => portablePath(r.path));
-  request.operationalFacts.forEach(f => refsExist(f.evidenceRefs, sourceIds, 'fact evidence'));
-  assertDigest(request.sourceSnapshotDigest, hashJson(request.sourceRefs), 'Source snapshot');
+  request.operationalFacts.forEach(f => refsExist(f.evidenceRefs, sourceIds, 'factEvidence'));
+  assertDigest(request.sourceSnapshotDigest, hashJson(request.sourceRefs), 'sourceSnapshot');
   return request;
 }
 export function validateConstraintReport(report, { pack = loadPack(), request = null } = {}) {
   validateSchema('cs-constraint-report', report);
-  assertDigest(report.knowledgePackDigest, pack.digest, 'Knowledge pack');
-  need(report.knowledgePackVersion === pack.version, 'INTEGRITY_FAILED', 'Knowledge version mismatch.');
-  const selected = uniqueBy(report.selectedRules, 'ruleId', 'selected rule');
+  assertDigest(report.knowledgePackDigest, pack.digest, 'knowledgePack');
+  need(report.knowledgePackVersion === pack.version, 'INTEGRITY_FAILED', 'skillTools.csEngineering.knowledgeVersionMismatch');
+  const selected = uniqueBy(report.selectedRules, 'ruleId', 'selectedRule');
   for (const row of selected.values()) {
     const rule = pack.rules.get(row.ruleId);
-    need(rule, 'INVALID_INPUT', 'Selected rule does not exist.');
-    assertDigest(row.ruleDigest, hashJson(rule), 'Selected rule');
-    need(rule.status === 'validated' || report.draftUse.allowed, 'INVALID_INPUT', 'Draft rule requires explicit draft-use basis.');
+    need(rule, 'INVALID_INPUT', 'skillTools.csEngineering.selectedRuleMissing');
+    assertDigest(row.ruleDigest, hashJson(rule), 'selectedRule');
+    need(rule.status === 'validated' || report.draftUse.allowed, 'INVALID_INPUT', 'skillTools.csEngineering.draftNeedsBasis');
   }
   const facts = uniqueBy(report.facts, 'id', 'fact');
   const assumptions = uniqueBy(report.assumptions, 'id', 'assumption');
   const basis = new Map([...facts, ...assumptions]);
-  need(basis.size === facts.size + assumptions.size, 'INVALID_INPUT', 'Fact and assumption IDs collide.');
+  need(basis.size === facts.size + assumptions.size, 'INVALID_INPUT', 'skillTools.csEngineering.factAssumptionCollide');
   const invs = uniqueBy(report.invariants, 'id', 'invariant');
   const obligations = uniqueBy(report.verificationObligations, 'id', 'obligation');
-  const choices = uniqueBy(report.designChoices, 'id', 'design choice');
+  const choices = uniqueBy(report.designChoices, 'id', 'designChoice');
   for (const inv of invs.values()) {
-    refsExist(inv.basisRefs, basis, 'invariant basis');
-    refsExist(inv.ruleIds, selected, 'selected invariant rule');
-    if (inv.requirementLevel === 'required-invariant') need(inv.basisRefs.some(id => facts.has(id)), 'INVALID_INPUT', 'A required invariant cannot rest solely on an unverified assumption.');
+    refsExist(inv.basisRefs, basis, 'invariantBasis');
+    refsExist(inv.ruleIds, selected, 'selectedInvariantRule');
+    if (inv.requirementLevel === 'required-invariant') need(inv.basisRefs.some(id => facts.has(id)), 'INVALID_INPUT', 'skillTools.csEngineering.requiredInvariantNeedsFact');
   }
-  for (const c of choices.values()) refsExist(c.basisRefs, basis, 'choice basis');
+  for (const c of choices.values()) refsExist(c.basisRefs, basis, 'choiceBasis');
   for (const ob of obligations.values()) {
-    refsExist(ob.invariantIds, invs, 'obligation invariant');
+    refsExist(ob.invariantIds, invs, 'obligationInvariant');
     const isRequired = ob.invariantIds.some(id => invs.get(id).requirementLevel === 'required-invariant');
-    need(ob.requirementLevel === (isRequired ? 'required' : 'advisory'), 'INVALID_INPUT', 'Obligation severity does not match its invariants.');
+    need(ob.requirementLevel === (isRequired ? 'required' : 'advisory'), 'INVALID_INPUT', 'skillTools.csEngineering.obligationSeverityMismatch');
   }
-  for (const inv of invs.values()) if (inv.requirementLevel === 'required-invariant') need([...obligations.values()].some(o => o.invariantIds.includes(inv.id) && o.requirementLevel === 'required'), 'INVALID_INPUT', 'Required invariant has no verification obligation.');
-  if (report.applicability === 'applicable' && report.verdict === 'READY') need(selected.size > 0 && invs.size > 0 && obligations.size > 0, 'INVALID_INPUT', 'Applicable READY report requires rules, invariants and obligations.');
-  if (report.applicability === 'not-applicable') need(selected.size === 0 && invs.size === 0 && obligations.size === 0 && choices.size === 0, 'INVALID_INPUT', 'Non-applicable report contains applied constraints.');
+  for (const inv of invs.values()) if (inv.requirementLevel === 'required-invariant') need([...obligations.values()].some(o => o.invariantIds.includes(inv.id) && o.requirementLevel === 'required'), 'INVALID_INPUT', 'skillTools.csEngineering.requiredInvariantNoObligation');
+  if (report.applicability === 'applicable' && report.verdict === 'READY') need(selected.size > 0 && invs.size > 0 && obligations.size > 0, 'INVALID_INPUT', 'skillTools.csEngineering.applicableReadyIncomplete');
+  if (report.applicability === 'not-applicable') need(selected.size === 0 && invs.size === 0 && obligations.size === 0 && choices.size === 0, 'INVALID_INPUT', 'skillTools.csEngineering.notApplicableHasConstraints');
   if (request) {
     validateRequest(request);
-    assertDigest(report.requestDigest, hashJson(request), 'Request');
-    assertDigest(report.sourceSnapshotDigest, request.sourceSnapshotDigest, 'Source snapshot');
+    assertDigest(report.requestDigest, hashJson(request), 'request');
+    assertDigest(report.sourceSnapshotDigest, request.sourceSnapshotDigest, 'sourceSnapshot');
     const refs = new Map(request.sourceRefs.map(x => [x.id, x]));
     for (const f of facts.values()) refsExist(f.evidenceRefs, refs, 'fact evidence');
   }
@@ -102,15 +103,15 @@ export function validateBinding(binding, { task, request, constraint, policy, pa
   validateSchema('cs-engineering-binding', binding);
   validateSchema('cs-policy', policy);
   const validated = validateConstraintReport(constraint, { pack, request });
-  need(constraint.verdict === 'READY', 'INVALID_INPUT', 'Only a READY constraint report can be frozen.');
-  assertDigest(binding.requestDigest, hashJson(request), 'Bound request');
-  assertDigest(binding.constraintReportDigest, hashJson(constraint), 'Bound report');
-  assertDigest(binding.taskDigest, hashJson(task), 'Bound task');
-  assertDigest(binding.knowledgePackDigest, pack.digest, 'Bound knowledge');
-  assertDigest(binding.policyDigest, hashJson(policy), 'Bound policy');
-  need(binding.knowledgePackVersion === pack.version && binding.policyId === policy.policyId && binding.policyVersion === policy.version && binding.mode === policy.mode, 'INTEGRITY_FAILED', 'Policy or knowledge binding changed.');
-  need(sameSet(binding.requiredObligationIds, validated.requiredObligationIds), 'INTEGRITY_FAILED', 'Required obligation set changed.');
-  if (!policy.allowDraft) need(!constraint.selectedRules.some(r => pack.rules.get(r.ruleId).status === 'draft'), 'INVALID_INPUT', 'Policy does not authorize draft knowledge.');
+  need(constraint.verdict === 'READY', 'INVALID_INPUT', 'skillTools.csEngineering.onlyReadyFrozen');
+  assertDigest(binding.requestDigest, hashJson(request), 'boundRequest');
+  assertDigest(binding.constraintReportDigest, hashJson(constraint), 'boundReport');
+  assertDigest(binding.taskDigest, hashJson(task), 'boundTask');
+  assertDigest(binding.knowledgePackDigest, pack.digest, 'boundKnowledge');
+  assertDigest(binding.policyDigest, hashJson(policy), 'boundPolicy');
+  need(binding.knowledgePackVersion === pack.version && binding.policyId === policy.policyId && binding.policyVersion === policy.version && binding.mode === policy.mode, 'INTEGRITY_FAILED', 'skillTools.csEngineering.policyKnowledgeChanged');
+  need(sameSet(binding.requiredObligationIds, validated.requiredObligationIds), 'INTEGRITY_FAILED', 'skillTools.csEngineering.requiredObligationsChanged');
+  if (!policy.allowDraft) need(!constraint.selectedRules.some(r => pack.rules.get(r.ruleId).status === 'draft'), 'INVALID_INPUT', 'skillTools.csEngineering.draftNotAuthorized');
   portablePath(binding.requestRef.path); portablePath(binding.constraintReportRef.path);
   // This validates a supplied policy, not its authority. The embedding host must
   // pass its already authenticated, pinned policy and validate TaskEnvelope.v1.
@@ -119,29 +120,29 @@ export function validateBinding(binding, { task, request, constraint, policy, pa
 export function validateReviewReport(review, { constraint, candidateDigest, pack = loadPack() }) {
   validateSchema('cs-review-report', review);
   const { invariants, obligations, requiredObligationIds } = validateConstraintReport(constraint, { pack });
-  need(constraint.verdict === 'READY', 'INVALID_INPUT', 'Review requires frozen READY constraints.');
-  assertDigest(review.constraintReportDigest, hashJson(constraint), 'Review constraint');
-  assertDigest(review.candidateDigest, candidateDigest, 'Review candidate');
+  need(constraint.verdict === 'READY', 'INVALID_INPUT', 'skillTools.csEngineering.reviewNeedsReady');
+  assertDigest(review.constraintReportDigest, hashJson(constraint), 'reviewConstraint');
+  assertDigest(review.candidateDigest, candidateDigest, 'reviewCandidate');
   const evidence = uniqueBy(review.evidence, 'id', 'evidence');
   const findings = uniqueBy(review.findings, 'id', 'finding');
-  const byInvariant = uniqueBy(review.findings, 'invariantId', 'reviewed invariant');
-  const results = uniqueBy(review.verificationResults, 'obligationId', 'verification result');
-  need(sameSet([...invariants.keys()], [...byInvariant.keys()]), 'INVALID_INPUT', 'Each invariant must be reviewed exactly once.');
-  need(sameSet([...obligations.keys()], [...results.keys()]), 'INVALID_INPUT', 'Each obligation must have exactly one result, including NOT_RUN.');
-  for (const e of evidence.values()) { portablePath(e.path); assertDigest(e.targetDigest, candidateDigest, 'Evidence candidate'); }
+  const byInvariant = uniqueBy(review.findings, 'invariantId', 'reviewedInvariant');
+  const results = uniqueBy(review.verificationResults, 'obligationId', 'verificationResult');
+  need(sameSet([...invariants.keys()], [...byInvariant.keys()]), 'INVALID_INPUT', 'skillTools.csEngineering.invariantReviewCoverage');
+  need(sameSet([...obligations.keys()], [...results.keys()]), 'INVALID_INPUT', 'skillTools.csEngineering.obligationResultCoverage');
+  for (const e of evidence.values()) { portablePath(e.path); assertDigest(e.targetDigest, candidateDigest, 'evidenceCandidate'); }
   for (const r of results.values()) {
     const o = obligations.get(r.obligationId);
-    assertDigest(r.targetDigest, candidateDigest, 'Result candidate');
-    need(r.method === o.method, 'INVALID_INPUT', 'Verification method changed.');
-    refsExist(r.evidenceRefs, evidence, 'result evidence');
+    assertDigest(r.targetDigest, candidateDigest, 'resultCandidate');
+    need(r.method === o.method, 'INVALID_INPUT', 'skillTools.csEngineering.verificationMethodChanged');
+    refsExist(r.evidenceRefs, evidence, 'resultEvidence');
     if (r.executionStatus === 'EXECUTED') {
-      need(r.result !== 'UNKNOWN' && r.evidenceRefs.length > 0, 'INVALID_INPUT', 'Executed result requires an observed PASS/FAIL and evidence.');
-      need(r.environmentRef === o.requiredEnvironment, 'INVALID_INPUT', 'Verification environment does not match frozen plan.');
+      need(r.result !== 'UNKNOWN' && r.evidenceRefs.length > 0, 'INVALID_INPUT', 'skillTools.csEngineering.executedNeedsEvidence');
+      need(r.environmentRef === o.requiredEnvironment, 'INVALID_INPUT', 'skillTools.csEngineering.environmentMismatch');
       for (const id of r.evidenceRefs) {
         const e = evidence.get(id);
-        need(e.kind === r.method && e.environmentRef === r.environmentRef, 'INVALID_INPUT', 'Evidence kind or environment does not match result.');
+        need(e.kind === r.method && e.environmentRef === r.environmentRef, 'INVALID_INPUT', 'skillTools.csEngineering.evidenceKindMismatch');
       }
-    } else need(r.result === 'UNKNOWN' && r.evidenceRefs.length === 0, 'INVALID_INPUT', 'Non-executed work cannot claim PASS/FAIL or execution evidence.');
+    } else need(r.result === 'UNKNOWN' && r.evidenceRefs.length === 0, 'INVALID_INPUT', 'skillTools.csEngineering.nonExecutedClaims');
   }
   const blocking = [], unverified = [];
   for (const id of requiredObligationIds) {
@@ -152,32 +153,32 @@ export function validateReviewReport(review, { constraint, candidateDigest, pack
   for (const f of findings.values()) {
     const inv = invariants.get(f.invariantId);
     const relevant = [...obligations.values()].filter(o => o.invariantIds.includes(inv.id));
-    refsExist(f.evidenceRefs, evidence, 'finding evidence');
+    refsExist(f.evidenceRefs, evidence, 'findingEvidence');
     const resultEvidence = new Set(relevant.flatMap(o => results.get(o.id).evidenceRefs));
-    for (const id of f.evidenceRefs) need(resultEvidence.has(id), 'INVALID_INPUT', 'Finding evidence is not connected to this invariant verification.');
-    if (['SATISFIED','VIOLATED'].includes(f.status)) need(f.evidenceRefs.length > 0, 'INVALID_INPUT', 'A conclusive finding requires evidence.');
-    if (f.status === 'SATISFIED') need(relevant.length > 0 && relevant.every(o => { const r = results.get(o.id); return r.executionStatus === 'EXECUTED' && r.result === 'PASS'; }), 'INVALID_INPUT', 'SATISFIED finding has incomplete or failing obligations.');
-    if (f.status === 'VIOLATED') need(relevant.some(o => results.get(o.id).result === 'FAIL'), 'INVALID_INPUT', 'VIOLATED finding has no failing verification result.');
+    for (const id of f.evidenceRefs) need(resultEvidence.has(id), 'INVALID_INPUT', 'skillTools.csEngineering.findingEvidenceUnconnected');
+    if (['SATISFIED','VIOLATED'].includes(f.status)) need(f.evidenceRefs.length > 0, 'INVALID_INPUT', 'skillTools.csEngineering.conclusiveNeedsEvidence');
+    if (f.status === 'SATISFIED') need(relevant.length > 0 && relevant.every(o => { const r = results.get(o.id); return r.executionStatus === 'EXECUTED' && r.result === 'PASS'; }), 'INVALID_INPUT', 'skillTools.csEngineering.satisfiedIncomplete');
+    if (f.status === 'VIOLATED') need(relevant.some(o => results.get(o.id).result === 'FAIL'), 'INVALID_INPUT', 'skillTools.csEngineering.violatedNoFail');
     if (inv.requirementLevel === 'required-invariant') {
       if (f.status === 'VIOLATED') { blocking.push(f.id); requiredViolation = true; }
       if (f.status === 'UNVERIFIED' || f.status === 'NOT_APPLICABLE') missingRequiredFinding = true;
       if (relevant.some(o => results.get(o.id).result === 'FAIL')) {
         requiredViolation = true;
-        need(f.status === 'VIOLATED', 'INVALID_INPUT', 'A required failed verification cannot be hidden by another finding status.');
+        need(f.status === 'VIOLATED', 'INVALID_INPUT', 'skillTools.csEngineering.failedVerificationHidden');
       }
     }
   }
   const expected = requiredViolation ? 'FAIL' : (unverified.length || missingRequiredFinding) ? 'BLOCKED' : 'PASS';
-  need(sameSet(review.blockingFindingIds, blocking), 'INVALID_INPUT', 'Blocking finding list is inaccurate.');
-  need(sameSet(review.unverifiedRequiredObligationIds, unverified), 'INVALID_INPUT', 'Unverified obligation list is inaccurate.');
-  need(review.verdict === expected, 'INVALID_INPUT', `Review verdict must be ${expected}.`);
+  need(sameSet(review.blockingFindingIds, blocking), 'INVALID_INPUT', 'skillTools.csEngineering.blockingListInaccurate');
+  need(sameSet(review.unverifiedRequiredObligationIds, unverified), 'INVALID_INPUT', 'skillTools.csEngineering.unverifiedListInaccurate');
+  need(review.verdict === expected, 'INVALID_INPUT', 'skillTools.csEngineering.reviewVerdictMismatch', { expected });
   return { verdict: expected, blockingFindingIds: blocking, unverifiedRequiredObligationIds: unverified, requiredCount: requiredObligationIds.length };
 }
 export function validateCandidate(candidate) {
   validateSchema('cs-candidate', candidate);
-  uniqueBy(candidate.files, 'path', 'candidate file');
+  uniqueBy(candidate.files, 'path', 'candidateFile');
   candidate.files.forEach(x => portablePath(x.path));
-  need(candidate.files.every((x, i) => i === 0 || candidate.files[i-1].path < x.path), 'INVALID_INPUT', 'Candidate file paths must be sorted.');
+  need(candidate.files.every((x, i) => i === 0 || candidate.files[i-1].path < x.path), 'INVALID_INPUT', 'skillTools.csEngineering.candidatePathsUnsorted');
   return hashJson(candidate);
 }
 export function checkBundle({ root, binding, task, policy, review, candidate, pack = loadPack() }) {
@@ -197,14 +198,14 @@ export function checkBundle({ root, binding, task, policy, review, candidate, pa
     mode: policy.mode, schemaEngine, knowledgePackDigest: pack.digest,
     candidateDigest, constraintReportDigest: hashJson(constraint), checkedRawFiles: count,
     requiredObligationCount: assessment.requiredCount,
-    assurance: 'Structural and semantic consistency plus raw-file digests. Not proof of test execution, source correctness, policy authority, independent audit, or MCP all-path enforcement.'
+    assurance: hostText('skillTools.csEngineering.bundleAssurance')
   };
 }
 export function providerResult(output, artifacts = []) {
   return { schemaVersion: '1.0.0', kind: 'output', output, artifacts,
-    error: ['FAIL','NEEDS_REDESIGN'].includes(output.verdict) ? { code:'GATE_FAILED',message:'CS conditions are violated.',details:null }
-      : ['BLOCKED','NEEDS_INPUT'].includes(output.verdict) ? {code:'MISSING_EVIDENCE',message:'CS input or verification is incomplete.',details:null} : null };
+    error: ['FAIL','NEEDS_REDESIGN'].includes(output.verdict) ? { code:'GATE_FAILED',message:hostText('skillTools.csEngineering.gateFailed'),details:null }
+      : ['BLOCKED','NEEDS_INPUT'].includes(output.verdict) ? {code:'MISSING_EVIDENCE',message:hostText('skillTools.csEngineering.missingEvidence'),details:null} : null };
 }
 export function adapterError(error) {
-  return { schemaVersion:'1.0.0',kind:'adapter-error',output:null,artifacts:[],error:{code:error instanceof CsError ? error.code : 'INVALID_INPUT',message:error instanceof CsError ? error.message : 'Unable to read or validate CS input.',details:error instanceof CsError ? error.details : null} };
+  return { schemaVersion:'1.0.0',kind:'adapter-error',output:null,artifacts:[],error:{code:error instanceof CsError ? error.code : 'INVALID_INPUT',message:error instanceof CsError ? error.message : hostText('skillTools.csEngineering.unreadableInput'),details:error instanceof CsError ? error.details : null} };
 }

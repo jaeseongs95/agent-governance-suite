@@ -54,7 +54,7 @@ syncBuiltinESMExports();
   }
   return spawnSync(process.execPath, [...args, path.join(f.directory, entry)], {
     cwd: f.directory, encoding: "utf8", timeout: 10_000, windowsHide: true,
-    env: { ...process.env, AGENT_GOVERNANCE_ROOT: f.directory },
+    env: { ...process.env, AGENT_GOVERNANCE_ROOT: f.directory, ...f.env },
   });
 }
 
@@ -176,6 +176,9 @@ const profilerPrefix = "skills/workspace-convention-profiler/";
 function profilerFixture() {
   const f = fixture();
   f.copy(profilerEntry);
+  // The diagnostics are catalog sentences: the fixture carries the shared runtime/i18n.mjs and asks for the English source text.
+  f.copy("runtime/i18n.mjs");
+  f.env = { AGENT_GOVERNANCE_LOCALE: "en" };
   const write = (relative, bytes) => f.write(profilerPrefix + relative, bytes);
   write("SKILL.md", "---\nname: workspace-convention-profiler\nmetadata:\n  version: 1.0.0\n---\n[local](README.md)\n");
   write("README.md", "fixture\n");

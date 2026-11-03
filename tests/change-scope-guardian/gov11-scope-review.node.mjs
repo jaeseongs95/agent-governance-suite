@@ -8,6 +8,9 @@ import test, { after } from 'node:test';
 import { tmpdir } from 'node:os';
 import { canonicalJson, sha256, validateReport } from '../../skills/change-scope-guardian/scripts/lib.mjs';
 
+// Messages are asserted in the source locale; the package default locale is ko.
+process.env.AGENT_GOVERNANCE_LOCALE = "en";
+
 const root = resolve(import.meta.dirname, '../..');
 const evidence = process.env.GOV11_EVIDENCE_DIR;
 const descriptor = JSON.parse(readFileSync(join(root, 'skills/change-scope-guardian/integration/skill-descriptor.json'), 'utf8'));

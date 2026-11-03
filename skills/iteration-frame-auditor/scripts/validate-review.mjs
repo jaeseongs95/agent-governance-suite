@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
 
+import { hostText } from "../../../runtime/i18n.mjs";
+
 import { validateReview } from "./core.mjs";
 import { readJsonArgument, writeJson } from "./io.mjs";
 
@@ -16,10 +18,10 @@ try {
   let requestArtifactDigest;
 
   if (requestIndex >= 0 || reviewIndex >= 0 || comparisonIndex >= 0 || digestIndex >= 0) {
-    if (!args[requestIndex + 1]) throw new Error("--request requires a file path.");
-    if (!args[reviewIndex + 1]) throw new Error("--review requires a file path.");
-    if (!args[comparisonIndex + 1]) throw new Error("--comparison requires a file path.");
-    if (!args[digestIndex + 1]) throw new Error("--request-digest requires the external frozen request artifact digest.");
+    if (!args[requestIndex + 1]) throw new Error(hostText("skillTools.iterationFrame.flagNeedsPath", { flag: "--request" }));
+    if (!args[reviewIndex + 1]) throw new Error(hostText("skillTools.iterationFrame.flagNeedsPath", { flag: "--review" }));
+    if (!args[comparisonIndex + 1]) throw new Error(hostText("skillTools.iterationFrame.flagNeedsPath", { flag: "--comparison" }));
+    if (!args[digestIndex + 1]) throw new Error(hostText("skillTools.iterationFrame.digestFlagNeedsValue"));
     request = JSON.parse(await readFile(args[requestIndex + 1], "utf8"));
     review = JSON.parse(await readFile(args[reviewIndex + 1], "utf8"));
     comparison = JSON.parse(await readFile(args[comparisonIndex + 1], "utf8"));

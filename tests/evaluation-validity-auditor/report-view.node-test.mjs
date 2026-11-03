@@ -10,8 +10,9 @@ import { makeFixture, makePostFixture, rawDigest } from "./fixture.mjs";
 
 const suiteRoot = fileURLToPath(new URL("../../", import.meta.url));
 const scriptPath = (suite, script) => path.join(suite, "skills/evaluation-validity-auditor/scripts", script);
-const execute = (script, args, suite = suiteRoot) => spawnSync(process.execPath, [scriptPath(suite, script), ...args], {
-  encoding: "utf8", timeout: 15000, maxBuffer: 1024 * 1024,
+// The human view is Korean in the source locale; each run pins the locale it expects.
+const execute = (script, args, suite = suiteRoot, locale = "ko") => spawnSync(process.execPath, [scriptPath(suite, script), ...args], {
+  encoding: "utf8", timeout: 15000, maxBuffer: 1024 * 1024, env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale },
 });
 
 async function prepare(t, post = true) {
@@ -147,6 +148,8 @@ test("GOV07 human report CLI works in an installation tree without node_modules"
   await mkdir(path.join(installed, "runtime"), { recursive: true });
   await cp(path.join(suiteRoot, "skills/evaluation-validity-auditor"), path.join(installed, "skills/evaluation-validity-auditor"), { recursive: true });
   await cp(path.join(suiteRoot, "runtime/schema-validation.mjs"), path.join(installed, "runtime/schema-validation.mjs"));
+  await cp(path.join(suiteRoot, "runtime/i18n.mjs"), path.join(installed, "runtime/i18n.mjs"));
+  await cp(path.join(suiteRoot, "runtime/locale.json"), path.join(installed, "runtime/locale.json"));
   const result = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"], installed);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /결론: 판정 보류 \(BLOCKED\)/);
@@ -156,4 +159,34 @@ test("GOV07 human report CLI works in an installation tree without node_modules"
   assert.equal(validation.status, 0, validation.stdout + validation.stderr);
   assert.match(validation.stdout, /보고서 검증: 통과/);
   assert.equal((await readFile(f.input, "utf8")), JSON.stringify(f.request));
+});
+
+test("the human view and the input errors follow the host locale while the JSON stays the same", async t => {
+  const f = await prepare(t);
+  const jsonKo = execute("cli.mjs", auditArgs(f), suiteRoot, "ko");
+  const jsonEn = execute("cli.mjs", auditArgs(f), suiteRoot, "en");
+  assert.equal(jsonEn.status, 0, jsonEn.stderr);
+  assert.equal(jsonEn.stdout, jsonKo.stdout);
+  const report = JSON.parse(jsonEn.stdout);
+
+  const ko = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"], suiteRoot, "ko");
+  const en = execute("cli.mjs", [...auditArgs(f), "--format", "human-ko"], suiteRoot, "en");
+  assert.equal(en.status, 0, en.stderr);
+  assert.match(ko.stdout, /결론: 판정 보류 \(BLOCKED\), 실행 후 평가 유효성 감사입니다\./);
+  assert.match(en.stdout, /Conclusion: Verdict withheld \(BLOCKED\), post-execution evaluation validity audit\./);
+  assert.match(en.stdout, /Metric \S+: numerator 1, denominator 4, value 0\.25;/);
+  assert.match(en.stdout, /\(COOPERATIVE_PROVENANCE_ASSERTIONS\)/);
+  assert.doesNotMatch(en.stdout, /[가-힣]/u);
+  for (const id of [report.auditId, report.requestDigest, report.reportDigest]) assert.ok(en.stdout.includes(id), id);
+
+  const validationEn = execute("validate-report.mjs", [...await validationArgs(f, report), "--format", "human-ko"], suiteRoot, "en");
+  assert.equal(validationEn.status, 0, validationEn.stdout + validationEn.stderr);
+  assert.match(validationEn.stdout, /^Report validation: passed\./);
+  assert.ok(validationEn.stdout.endsWith(en.stdout));
+
+  const missingRoot = (locale) => JSON.parse(execute("cli.mjs", ["--input", f.input], suiteRoot, locale).stdout);
+  assert.deepEqual(missingRoot("en"), { schemaVersion: "1.0.0", ok: false, error: { code: "INVALID_INPUT", message: "--artifact-root is required.", details: null } });
+  assert.deepEqual(missingRoot("ko"), { schemaVersion: "1.0.0", ok: false, error: { code: "INVALID_INPUT", message: "--artifact-root가 필요하다.", details: null } });
+  const ioEn = execute("cli.mjs", ["--format", "human-ko", "--input", f.root, "--artifact-root", f.root], suiteRoot, "en");
+  assert.match(ioEn.stdout, /^Conclusion: I\/O error \(EISDIR\)\./);
 });

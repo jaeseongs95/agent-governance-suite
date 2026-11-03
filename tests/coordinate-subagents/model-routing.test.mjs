@@ -1,8 +1,9 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { cpSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { fileURLToPath } from "node:url";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { recordModelApplication, resolveModelSelection } from "../../skills/coordinate-subagents/scripts/model-routing.mjs";
 
@@ -21,6 +22,10 @@ const record = () => ({
 });
 
 describe("packaged model routing", () => {
+  // The package default locale is ko, so the English sentences asserted below pin the locale explicitly.
+  beforeEach(() => { vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "en"); });
+  afterEach(() => { vi.unstubAllEnvs(); });
+
   it.each([
     ["discovery", "gpt-5.6-luna", "high"],
     ["general-implementation", "gpt-5.6-terra", "medium"],
@@ -171,6 +176,33 @@ describe("packaged model routing", () => {
         expect(result.contextMode).toBe("limited");
       }
     });
+  });
+
+  it.each([
+    ["en", /independent-audit requires highRisk: true/, "Requested combination unavailable or below risk floor"],
+    ["ko", /independent-audit에는 highRisk: true가 필요하다/, "요청한 조합을 쓸 수 없거나 위험 하한보다 낮다"],
+  ])("renders thrown errors and fallback reasons in the %s host locale", (locale, thrown, reason) => {
+    vi.stubEnv("AGENT_GOVERNANCE_LOCALE", locale);
+    const audit = { ...options(), role: "independent-audit", user: { model: "gpt-5.6-luna", effort: "high" } };
+    expect(() => resolveModelSelection(audit)).toThrow(thrown);
+    const inherited = resolveModelSelection({ ...options(), highRisk: true, user: { model: "missing" }, inherited: { model: "gpt-5.6-sol", effort: "high" } });
+    expect(inherited.fallbackReason).toBe(reason);
+  });
+
+  it("prints the usage sentence of the host locale and the bare message keys when the skill is copied alone", () => {
+    const clean = mkdtempSync(path.join(tmpdir(), "routing-i18n-"));
+    try {
+      cpSync(new URL("../../skills/coordinate-subagents", import.meta.url), path.join(clean, "skill"), { recursive: true });
+      const standaloneCli = path.join(clean, "skill/scripts/model-routing.mjs");
+      const run = (script, locale) => spawnSync(process.execPath, [script], { cwd: clean, encoding: "utf8", windowsHide: true, env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale } });
+      const installed = fileURLToPath(new URL("../../skills/coordinate-subagents/scripts/model-routing.mjs", import.meta.url));
+      expect(run(installed, "en").stderr.trim()).toBe("Usage: node model-routing.mjs resolve|record input.json [--presets presets.json]");
+      expect(run(installed, "ko").stderr.trim()).toBe("사용법: node model-routing.mjs resolve|record input.json [--presets presets.json]");
+      // No runtime/i18n.mjs beside a lone skill folder: the key is all there is to print.
+      expect(run(standaloneCli, "en").stderr.trim()).toBe("skillTools.modelRouting.usage");
+    } finally {
+      rmSync(clean, { recursive: true, force: true });
+    }
   });
 
   it("runs the public resolve and record CLI without node_modules", () => {

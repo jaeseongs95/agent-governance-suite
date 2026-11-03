@@ -5,6 +5,8 @@ import path from 'node:path';
 import { verifySnapshot, assertSnapshot, snapshotDelta, validatePlan, validateProof, validateReviewRequest, validateReview, assertReceipt, seal, providerResult } from '../../runtime/engineering-practices/core.mjs';
 import { hashBytes } from '../../runtime/engineering-practices/io.mjs';
 import { fixture, writeJson, H } from './helpers.mjs';
+// Messages follow the host locale (package default ko); these assertions read the English source text.
+process.env.AGENT_GOVERNANCE_LOCALE = 'en';
 const fail = fn => assert.throws(fn);
 function finding(overrides = {}) { return { id: 'F1', path: 'sample/page.mjs', side: 'head', lineStart: 1, lineEnd: 1, category: 'defect', severity: 'high', confidence: 'supported', blocking: true, title: 'Fixture finding', contract: 'Fixture contract', trace: 'Fixture explicit path', impact: 'Fixture observable effect', correction: 'Fixture minimal fix', ...overrides }; }
 test('real red/green example is consistent', t => { const f = fixture(t); assert.equal(f.red.status, 'FAIL'); assert.equal(f.green.status, 'PASS'); assert.equal(validateProof(f.root, f.plan, f.proof).verdict, 'CONSISTENT'); });

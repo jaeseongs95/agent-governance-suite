@@ -3,6 +3,7 @@ import { overlapsProtectedSpan } from "./protected-spans.mjs";
 import { createSourceUnitManifest } from "./source-units.mjs";
 import { ContractError, SCHEMA_VERSION, requireObject, sha256, stableJson } from "./lib.mjs";
 import { validateProviderPlan } from "./provider-plan.mjs";
+import { hostText } from "../../../runtime/i18n.mjs";
 
 /** @typedef {{id: string, unitId: string, sourceDigest: string, start: number, end: number, replacement: string, actorId: string}} Edit */
 /** @typedef {{editId: string, decision: "accept" | "retain", reasonCode: string, sourceDefect: string, invariantDelta: string}} VerificationDecision */
@@ -21,10 +22,10 @@ const GLOSSARY_POLICIES = new Set(["protect", "prefer", "allow", "avoid"]);
  */
 export function finalizeRequest(value) {
   const request = requireObject(value, "request");
-  if (request.schemaVersion !== SCHEMA_VERSION) throw new ContractError("REQUEST_SCHEMA_VERSION", "unsupported request schema version");
-  if (request.mode !== "mcp" && request.mode !== "direct") throw new ContractError("MODE", "mode must be mcp or direct");
+  if (request.schemaVersion !== SCHEMA_VERSION) throw new ContractError("REQUEST_SCHEMA_VERSION", hostText("skillChecks.koreanProseEditorFinalizer.requestSchemaVersionUnsupported"));
+  if (request.mode !== "mcp" && request.mode !== "direct") throw new ContractError("MODE", hostText("skillChecks.koreanProseEditorFinalizer.modeInvalid"));
   const mode = request.mode;
-  if (typeof request.source !== "string") throw new ContractError("SOURCE", "source must be a string");
+  if (typeof request.source !== "string") throw new ContractError("SOURCE", hostText("skillChecks.koreanProseEditorFinalizer.sourceNotString"));
   const source = request.source;
   const sourceDigest = sha256(source);
   const plan = validateProviderPlan(request.plan, { subagentsAvailable: request.subagentsAvailable === true });

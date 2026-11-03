@@ -140,8 +140,10 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
     }
 
     const results = [];
+    // Expected output is a code or a root-locale (en) sentence; the user's locale settings must not change the probe.
+    const englishEnvironment = { ...environment, AGENT_GOVERNANCE_LOCALE: "en" };
     for (const entrypoint of SKILL_RUNTIME_ENTRYPOINTS) {
-      const result = runNode(entrypoint.path, "{}\n");
+      const result = runNode(entrypoint.path, "{}\n", [], englishEnvironment);
       const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
       if (result.error) {
         throw new Error(`${entrypoint.path} could not run in the clean room: ${result.error.message}`);

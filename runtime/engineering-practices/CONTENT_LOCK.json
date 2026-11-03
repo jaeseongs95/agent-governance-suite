@@ -51,15 +51,15 @@
     },
     {
       "path": "runtime/engineering-practices/cli.mjs",
-      "digest": "sha256:118be91e187ea538f07a5918dfb4d7c53dba6071bdf63eceb0cc876eadeff840"
+      "digest": "sha256:b70717ab156b2413522fec87e1ce62f4554e7195fdf645ca68a47a5a68a898b8"
     },
     {
       "path": "runtime/engineering-practices/core.mjs",
-      "digest": "sha256:ead06d27cf70a03d84e2ba9510947ce22a5e39e751f241bbf4d137fe4292f52c"
+      "digest": "sha256:a99717aec1a30a54547de19cf911384c348a0c3723b4a22ac3864e2e22301e3e"
     },
     {
       "path": "runtime/engineering-practices/io.mjs",
-      "digest": "sha256:835d31b3857075d6bb76aa0d28ce3d8659365f274f9205778e66ff4ca614a62c"
+      "digest": "sha256:6014e912b5bccf1c484e1762f2e3f3bdb41a9938d037a04fd159d70ae193bea3"
     },
     {
       "path": "runtime/engineering-practices/licenses/awesome-agent-skills.txt",
@@ -75,15 +75,15 @@
     },
     {
       "path": "runtime/engineering-practices/runner.mjs",
-      "digest": "sha256:2f7590c87c555821a1b1215eaf6eb45bab5eaa31e039fd1a9b12114c79a9a58b"
+      "digest": "sha256:e7f8d38bf682715ee57cd8f8b7ca5a162f45e137f31b37d7a080688c0fd17ab9"
     },
     {
       "path": "runtime/engineering-practices/schema.mjs",
-      "digest": "sha256:9c882762afee30611f4cd5b82edd904ff8c5ee699247d490cde9f059870d64d6"
+      "digest": "sha256:df944af0bf00b4ea6dd1d3e7769a34ac1ea8b01548c7545a7d21682a91e808b1"
     },
     {
       "path": "runtime/engineering-practices/stage-bundle.mjs",
-      "digest": "sha256:230bcb6efe3d94fd6694a84d31427c87a2b74d6c45db6c59cc0e9517e7ce6191"
+      "digest": "sha256:710f5b8b344e8e3f6d4d18a615c4d0d3f897fbceb0da84a62791275fffae985e"
     },
     {
       "path": "skills/code-review/LICENSE",

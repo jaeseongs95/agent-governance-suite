@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { readFileSync } from "node:fs";
+import { hostText } from "../../../runtime/i18n.mjs";
 
 const defaultRegistryUrl = new URL("../../registry.json", import.meta.url);
 
@@ -20,15 +21,15 @@ function parseArguments(argv) {
     }
     if (argument === "--capability") {
       const capability = argv[index + 1];
-      if (!capability || capability.startsWith("--")) fail("--capability requires a non-empty value.");
+      if (!capability || capability.startsWith("--")) fail(hostText("skillScripts.orchestrator.capabilityRequiresValue"));
       capabilities.push(capability);
       index += 1;
       continue;
     }
-    fail(`Unknown argument: ${argument}`);
+    fail(hostText("skillScripts.orchestrator.unknownArgument", { argument }));
   }
-  if (all && capabilities.length > 0) fail("Use --all or --capability, not both.");
-  if (!all && capabilities.length === 0) fail("Specify at least one --capability value or use --all.");
+  if (all && capabilities.length > 0) fail(hostText("skillScripts.orchestrator.allOrCapability"));
+  if (!all && capabilities.length === 0) fail(hostText("skillScripts.orchestrator.specifyCapability"));
   return { all, capabilities: [...new Set(capabilities)] };
 }
 
@@ -38,10 +39,10 @@ function readRegistry() {
   try {
     registry = JSON.parse(readFileSync(registryPath, "utf8"));
   } catch (error) {
-    fail(`Unable to read skill registry: ${error instanceof Error ? error.message : String(error)}`, 1);
+    fail(hostText("skillScripts.orchestrator.registryUnreadable", { message: error instanceof Error ? error.message : String(error) }), 1);
   }
   if (registry?.schemaVersion !== "2.0.0" || !Array.isArray(registry.skills)) {
-    fail("Skill registry must be a SkillDescriptor.v2 collection.", 1);
+    fail(hostText("skillScripts.orchestrator.registryNotV2"), 1);
   }
   return registry;
 }

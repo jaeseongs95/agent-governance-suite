@@ -8,6 +8,14 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 
+// The assertions compare the Korean source sentences of profileWorkspace (catalog domain skillChecksKo); validateProfile is English-sourced (skillChecks).
+process.env.AGENT_GOVERNANCE_LOCALE = "ko";
+async function inLocale(locale, action) {
+  const previous = process.env.AGENT_GOVERNANCE_LOCALE;
+  process.env.AGENT_GOVERNANCE_LOCALE = locale;
+  try { return await action(); } finally { process.env.AGENT_GOVERNANCE_LOCALE = previous; }
+}
+
 import { portablePath, profileWorkspace } from "../../skills/workspace-convention-profiler/scripts/profile-workspace.mjs";
 import { validateProfile } from "../../skills/workspace-convention-profiler/scripts/validate-profile.mjs";
 
@@ -92,10 +100,30 @@ test("confirmed 관례와 모든 criterion ref는 checksum evidence index에 결
   assert.ok(output.structure.every((item) => item.evidenceRefs.every((ref) => /^.+\/#sha256:[a-f0-9]{64}$/.test(ref))));
   const tampered = structuredClone(output);
   tampered.conventions[0].evidenceRefs = ["does/not/exist/"];
-  assert.ok(validateProfile(tampered).some((error) => error.includes("references missing evidence")));
+  assert.ok((await inLocale("en", () => validateProfile(tampered))).some((error) => error.includes("references missing evidence")));
   const commandTampered = structuredClone(output);
   commandTampered.commands[0].sourceRef = "missing.json#sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-  assert.ok(validateProfile(commandTampered).some((error) => error.includes("references missing evidence")));
+  assert.ok((await inLocale("en", () => validateProfile(commandTampered))).some((error) => error.includes("references missing evidence")));
+});
+
+test("사람이 읽는 문장은 호스트 locale(en·ko)로 나오고 profileFingerprint는 locale과 무관하다", async () => {
+  const workspace = path.join(fixtures, "node-monorepo");
+  const run = (locale, overrides) => inLocale(locale, () => profileWorkspace(request(workspace, overrides)));
+  const limited = { evidenceLimits: { maxFiles: 100, maxBytesPerFile: 10, excludedPatterns: [] } };
+  const [en, ko] = [await run("en", limited), await run("ko", limited)];
+  assert.match(en.limitations[0], /^Omitted an evidence file because of the maxBytesPerFile(10) limit: /);
+  assert.match(ko.limitations[0], /^근거 파일을 maxBytesPerFile(10) 제한으로 생략했습니다: /);
+  assert.equal(en.profileFingerprint, ko.profileFingerprint);
+  const [fullEn, fullKo] = [await run("en"), await run("ko")];
+  assert.match(fullEn.conventions[0].observedPattern, /^Confirmed the .+ structure at /);
+  assert.match(fullKo.conventions[0].observedPattern, / 경로에서 .+ 구조를 확인했습니다.$/);
+  assert.equal(fullEn.profileFingerprint, fullKo.profileFingerprint);
+  const blocked = await inLocale("en", () => profileWorkspace({}));
+  assert.match(blocked.limitations[0], /^WorkspaceProfileRequest.v1 contract violation: /);
+  const tampered = structuredClone(fullEn);
+  tampered.commands[0].sourceRef = "missing.json#sha256:" + "a".repeat(64);
+  assert.match((await inLocale("en", () => validateProfile(tampered)))[0], /^command .+ references missing evidence: /);
+  assert.match((await inLocale("ko", () => validateProfile(tampered)))[0], /^존재하지 않는 근거를 참조한다 (명령 .+): /);
 });
 
 test("request 런타임 검증은 schemaVersion, item과 additionalProperties를 엄격히 적용한다", async () => {

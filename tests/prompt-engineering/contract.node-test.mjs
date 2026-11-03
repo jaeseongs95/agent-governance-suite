@@ -4,6 +4,9 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { checkReport } from "../../skills/prompt-engineering/scripts/check-report.mjs";
 
+// Messages are asserted in the source locale; the package default locale is ko.
+process.env.AGENT_GOVERNANCE_LOCALE = "en";
+
 const requestTemplate = JSON.parse(await readFile(new URL("./fixtures/request.json", import.meta.url), "utf8"));
 const reportTemplate = JSON.parse(await readFile(new URL("./fixtures/report.json", import.meta.url), "utf8"));
 const sha256 = (bytes) => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
@@ -284,4 +287,13 @@ test("classification references current, distinct applicability and exclusion so
   assert.equal(metadata.schemaVersion, "1.0.0");
   assert.equal(metadata.taxonomyRevision, "1.0.0");
   assert.deepEqual(metadata.dependencies, []);
+});
+
+test("i18n: check errors render in the host locale", () => {
+  const inLocale = (locale) => {
+    process.env.AGENT_GOVERNANCE_LOCALE = locale;
+    try { return checkReport(Buffer.from("{"), reportTemplate); } finally { process.env.AGENT_GOVERNANCE_LOCALE = "en"; }
+  };
+  assert.deepEqual(inLocale("en"), { valid: false, errors: ["request is not valid JSON"] });
+  assert.deepEqual(inLocale("ko"), { valid: false, errors: ["request가 올바른 JSON이 아니다"] });
 });

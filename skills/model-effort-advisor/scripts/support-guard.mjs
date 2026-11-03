@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { hostText } from "../../../runtime/i18n.mjs";
 import { Ajv2020 } from "../../../runtime/schema-validation.mjs";
 
 const classes = ["lightweight", "general", "deep", "frontier"];
@@ -41,7 +42,7 @@ export function guardModelSupport(advice, context = {}) {
     result.recommendation.exactModel = null;
     result.rationaleCodes = [...new Set([...result.rationaleCodes, "CURRENT_SELECTION_NOT_OBSERVED"])];
     result.userNotice = context?.explicitFitRequest === true
-      ? "현재 설정 또는 해당 공급자의 지원 근거를 충분히 확인할 수 없습니다. 설정을 바꾸지 않고 요청을 계속 진행합니다."
+      ? hostText("skillReportsKo.modelEffortAdvisor.supportUnobservedNotice")
       : null;
   } else {
     result.observation = {
@@ -65,7 +66,11 @@ export function guardModelSupport(advice, context = {}) {
       : (classRank > maxClass && effortRank > maxEffort) || classRank - maxClass >= 2 || effortRank - maxEffort >= 2
         ? "OVER_PROVISIONED" : "ADEQUATE";
     result.userNotice = result.verdict === "ADEQUATE" ? null
-      : `설정 안내: 이 요청의 권장 범위는 ${rec.modelClassMin}~${rec.modelClassMax} / ${rec.reasoningEffortMin}~${rec.reasoningEffortMax}입니다. 현재 설정은 ${result.verdict === "UNDER_PROVISIONED" ? "부족할 수 있습니다" : "다소 과합니다"}. 설정은 자동으로 바꾸지 않고 요청은 계속 진행합니다.`;
+      : hostText("skillReportsKo.modelEffortAdvisor.rangeNotice", {
+        modelClassMin: rec.modelClassMin, modelClassMax: rec.modelClassMax,
+        reasoningEffortMin: rec.reasoningEffortMin, reasoningEffortMax: rec.reasoningEffortMax,
+        verdict: result.verdict,
+      });
   }
   if (!validate(result)) throw new Error("INVALID_GUARDED_ADVICE");
   return { advice: result, supportStatus };

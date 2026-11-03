@@ -11,6 +11,17 @@ import {
   validateValidationSchema,
 } from "./schema-validation.mjs";
 
+// The skill also runs from a copy that has no AGS runtime beside it. Then a message is its key and parameters,
+// which still tells the reader what happened; the AGS runtime renders it in the host locale.
+const runtimeI18n = new URL("../../../runtime/i18n.mjs", import.meta.url);
+export const hostText = await import(runtimeI18n.href).then(
+  (runtime) => runtime.hostText,
+  (error) => {
+    if (error?.code !== "ERR_MODULE_NOT_FOUND") throw error;
+    return (key, params = {}) => `${key} ${JSON.stringify(params)}`;
+  },
+);
+
 const CONTROL_ROLES = ["fixture-manifest", "rubric", "oracle", "aggregation-rule", "timing-evidence"];
 const POST_ROLES = ["result-records", "aggregate-claim"];
 const PRE_CHECK_IDS = [
@@ -40,7 +51,7 @@ export function canonicalJson(value) {
   if (value && typeof value === "object") {
     return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
   }
-  throw new InputError("Input contains a non-JSON value.");
+  throw new InputError(hostText("skillReports.evaluationValidityAuditor.nonJsonValue"));
 }
 
 export function sha256Canonical(value) {
@@ -65,19 +76,19 @@ function isAbsoluteOnAnyPlatform(locator) {
 }
 
 async function inspectArtifacts(input, artifactRoot) {
-  if (typeof artifactRoot !== "string" || artifactRoot.length === 0) throw new InputError("--artifact-root is required.");
+  if (typeof artifactRoot !== "string" || artifactRoot.length === 0) throw new InputError(hostText("skillReports.evaluationValidityAuditor.artifactRootRequired"));
   let root;
   try { root = await realpath(path.resolve(artifactRoot)); }
-  catch { throw new InputError("Artifact root does not exist or cannot be resolved."); }
+  catch { throw new InputError(hostText("skillReports.evaluationValidityAuditor.artifactRootUnresolved")); }
   const states = new Map();
   for (const artifact of input.artifacts) {
-    if (states.has(artifact.artifactId)) throw new InputError(`Duplicate artifact ID: ${artifact.artifactId}`);
-    if (isAbsoluteOnAnyPlatform(artifact.locator)) throw new InputError(`Artifact locator must be relative: ${artifact.artifactId}`);
+    if (states.has(artifact.artifactId)) throw new InputError(hostText("skillReports.evaluationValidityAuditor.duplicateArtifactId", { artifactId: artifact.artifactId }));
+    if (isAbsoluteOnAnyPlatform(artifact.locator)) throw new InputError(hostText("skillReports.evaluationValidityAuditor.locatorNotRelative", { artifactId: artifact.artifactId }));
     const candidate = path.resolve(root, artifact.locator);
-    if (!isWithin(root, candidate)) throw new InputError(`Artifact locator escapes artifact root: ${artifact.artifactId}`);
+    if (!isWithin(root, candidate)) throw new InputError(hostText("skillReports.evaluationValidityAuditor.locatorEscapesRoot", { artifactId: artifact.artifactId }));
     try {
       const resolved = await realpath(candidate);
-      if (!isWithin(root, resolved)) throw new InputError(`Artifact symlink escapes artifact root: ${artifact.artifactId}`);
+      if (!isWithin(root, resolved)) throw new InputError(hostText("skillReports.evaluationValidityAuditor.symlinkEscapesRoot", { artifactId: artifact.artifactId }));
       const bytes = await readFile(resolved);
       states.set(artifact.artifactId, { artifact, exists: true, digestMatches: sha256Raw(bytes) === artifact.digest, bytes });
     } catch (error) {
@@ -393,7 +404,7 @@ function evidenceIndex(states) {
 
 export async function analyzeEvaluation(input, options = {}) {
   if (!input || typeof input !== "object" || Array.isArray(input) || !validateRequestSchema(input)) {
-    throw new InputError("EvaluationValidityRequest.v1 validation failed.", { errors: structuredClone(validateRequestSchema?.errors ?? []) });
+    throw new InputError(hostText("skillReports.evaluationValidityAuditor.requestInvalid"), { errors: structuredClone(validateRequestSchema?.errors ?? []) });
   }
   const states = await inspectArtifacts(input, options.artifactRoot);
   const caseManifest = parseCaseManifest(input, states);
@@ -446,38 +457,38 @@ export async function analyzeEvaluation(input, options = {}) {
     verdict,
   };
   const complete = { ...report, reportDigest: sha256Canonical(report) };
-  if (!validateReportSchema(complete)) throw new InputError("Generated report does not satisfy EvaluationValidityReport.v1.", { errors: structuredClone(validateReportSchema.errors) });
+  if (!validateReportSchema(complete)) throw new InputError(hostText("skillReports.evaluationValidityAuditor.generatedReportInvalid"), { errors: structuredClone(validateReportSchema.errors) });
   return complete;
 }
 
 export async function validateReport(validation, options = {}) {
-  if (!validation || typeof validation !== "object" || Array.isArray(validation)) throw new InputError("EvaluationValidityValidation.v1 must be an object.");
+  if (!validation || typeof validation !== "object" || Array.isArray(validation)) throw new InputError(hostText("skillReports.evaluationValidityAuditor.validationNotObject"));
   if (!validateValidationSchema(validation)) {
     const schemaErrors = structuredClone(validateValidationSchema.errors ?? []);
     const reportOnly = schemaErrors.length > 0 && schemaErrors.every((error) => error.instancePath === "/report" || error.instancePath.startsWith("/report/"));
-    if (reportOnly) return [`report schema validation failed: ${JSON.stringify(schemaErrors)}`];
-    throw new InputError("EvaluationValidityValidation.v1 input validation failed.", { errors: schemaErrors });
+    if (reportOnly) return [hostText("skillReports.evaluationValidityAuditor.reportSchemaFailed", { errors: JSON.stringify(schemaErrors) })];
+    throw new InputError(hostText("skillReports.evaluationValidityAuditor.validationInputInvalid"), { errors: schemaErrors });
   }
   const errors = [];
   const requestDigest = sha256Canonical(validation.request);
-  if (validation.requestArtifact.digest !== requestDigest) errors.push("requestArtifact.digest does not match the canonical frozen request");
-  if (validation.report.requestDigest !== requestDigest) errors.push("report.requestDigest does not match the canonical frozen request");
+  if (validation.requestArtifact.digest !== requestDigest) errors.push(hostText("skillReports.evaluationValidityAuditor.requestArtifactDigestMismatch"));
+  if (validation.report.requestDigest !== requestDigest) errors.push(hostText("skillReports.evaluationValidityAuditor.reportRequestDigestMismatch"));
   const payload = { ...validation.report };
   delete payload.reportDigest;
-  if (validation.report.reportDigest !== sha256Canonical(payload)) errors.push("reportDigest does not match the canonical report");
+  if (validation.report.reportDigest !== sha256Canonical(payload)) errors.push(hostText("skillReports.evaluationValidityAuditor.reportDigestMismatch"));
   try {
     const expected = await analyzeEvaluation(validation.request, options);
-    if (canonicalJson(expected) !== canonicalJson(validation.report)) errors.push("report does not match the current request and artifact evidence");
+    if (canonicalJson(expected) !== canonicalJson(validation.report)) errors.push(hostText("skillReports.evaluationValidityAuditor.reportStale"));
   } catch (error) {
     if (error instanceof InputError) throw error;
-    errors.push(`request cannot substantiate report: ${error instanceof Error ? error.message : String(error)}`);
+    errors.push(hostText("skillReports.evaluationValidityAuditor.requestCannotSubstantiate", { detail: error instanceof Error ? error.message : String(error) }));
   }
   return errors;
 }
 
 export function digestRequest(input) {
   if (!input || typeof input !== "object" || Array.isArray(input) || !validateRequestSchema(input)) {
-    throw new InputError("EvaluationValidityRequest.v1 validation failed.", { errors: structuredClone(validateRequestSchema?.errors ?? []) });
+    throw new InputError(hostText("skillReports.evaluationValidityAuditor.requestInvalid"), { errors: structuredClone(validateRequestSchema?.errors ?? []) });
   }
   return {
     schemaVersion: "1.0.0",

@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { deriveCollaborationRoute, validateCollaborationDecision } from "../../skills/orchestrator/scripts/collaboration-decision.mjs";
+import { collaborationDecisionStructuralDiagnostic, deriveCollaborationRoute, validateCollaborationDecision } from "../../skills/orchestrator/scripts/collaboration-decision.mjs";
 
 const base = () => ({
   schemaVersion: "1.1.0",
@@ -20,6 +22,10 @@ const base = () => ({
 });
 
 describe("CollaborationDecision.v1", () => {
+  // Messages are asserted in the source locale; the package default locale is ko.
+  beforeEach(() => { vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "en"); });
+  afterEach(() => { vi.unstubAllEnvs(); });
+
   it("preserves legacy decisions and uses current semantics for new decisions", () => {
     const historical = { ...base(), schemaVersion: "1.0.0", auditSeparationRequired: true, route: "audit-only" };
     expect(validateCollaborationDecision(historical)).toEqual([]);
@@ -134,5 +140,27 @@ describe("CollaborationDecision.v1", () => {
     peer.userDirective = "require";
     peer.route = "delegate";
     expect(validateCollaborationDecision(peer).length).toBeGreaterThan(0);
+  });
+
+  it("renders the route error and the structural diagnostic in the host locale", () => {
+    const forged = base();
+    forged.route = "direct";
+    const english = collaborationDecisionStructuralDiagnostic(forged);
+    expect(english.errors).toEqual(["route must be delegate for the declared directive, benefit criteria, and audit separation."]);
+    expect(english.diagnostic).toBe("This check validates the schema and deterministic route only; it does not read or authenticate source receipts.");
+    vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "ko");
+    const korean = collaborationDecisionStructuralDiagnostic(forged);
+    expect(korean.errors).toEqual(["선언된 directive, 이익 기준, 감사 분리에 따르면 route는 delegate이어야 한다."]);
+    expect(korean.diagnostic).toBe("이 검사는 스키마와 결정적 route만 검증한다. source receipt를 읽거나 인증하지 않는다.");
+    expect(korean.valid).toBe(false);
+  });
+
+  it("prints the structural diagnostic of the CLI in the host locale", () => {
+    const script = fileURLToPath(new URL("../../skills/orchestrator/scripts/validate-collaboration-decision.mjs", import.meta.url));
+    const run = (locale) => JSON.parse(spawnSync(process.execPath, [script], {
+      input: "{", encoding: "utf8", windowsHide: true, env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale },
+    }).stdout);
+    expect(run("en").diagnostic).toBe("This check validates the schema and deterministic route only; it does not read or authenticate source receipts.");
+    expect(run("ko").diagnostic).toBe("이 검사는 스키마와 결정적 route만 검증한다. source receipt를 읽거나 인증하지 않는다.");
   });
 });

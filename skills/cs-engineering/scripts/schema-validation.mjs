@@ -15,7 +15,7 @@ export const schemaEngine = ajv ? 'ags-ajv2020' : 'standalone-closed-schema-subs
 const compiled = new Map();
 const allowed = new Set(['$schema','$id','title','description','type','properties','additionalProperties','required','items','minItems','maxItems','uniqueItems','minLength','maxLength','pattern','enum','const']);
 function auditSchema(s) {
-  for (const k of Object.keys(s)) requireCondition(allowed.has(k), 'INVALID_INPUT', `Unsupported standalone schema keyword: ${k}.`);
+  for (const k of Object.keys(s)) requireCondition(allowed.has(k), 'INVALID_INPUT', 'skillTools.csEngineering.unsupportedSchemaKeyword', { keyword: k });
   if (s.properties) for (const child of Object.values(s.properties)) auditSchema(child);
   if (s.items) auditSchema(s.items);
   if (s.pattern) new RegExp(s.pattern, 'u');
@@ -53,7 +53,7 @@ function check(s, v, at, errors) {
   }
 }
 export function validateSchema(name, value) {
-  requireCondition(/^[a-z][a-z-]+$/u.test(name), 'INVALID_INPUT', 'Invalid contract name.');
+  requireCondition(/^[a-z][a-z-]+$/u.test(name), 'INVALID_INPUT', 'skillTools.csEngineering.invalidContractName');
   canonicalJson(value);
   if (!compiled.has(name)) {
     const schema = JSON.parse(readFileSync(path.join(skillRoot, 'contracts', name + '.v1.schema.json'), 'utf8'));
@@ -61,7 +61,7 @@ export function validateSchema(name, value) {
     compiled.set(name, ajv ? ajv.compile(schema) : schema);
   }
   const validator = compiled.get(name);
-  if (ajv) requireCondition(validator(value), 'INVALID_INPUT', `${name}: schema validation failed.`, { errors: validator.errors });
-  else { const errors = []; check(validator, value, '', errors); requireCondition(errors.length === 0, 'INVALID_INPUT', `${name}: schema validation failed.`, { errors: errors.slice(0, 30) }); }
+  if (ajv) requireCondition(validator(value), 'INVALID_INPUT', 'skillTools.csEngineering.schemaValidationFailed', { name }, { errors: validator.errors });
+  else { const errors = []; check(validator, value, '', errors); requireCondition(errors.length === 0, 'INVALID_INPUT', 'skillTools.csEngineering.schemaValidationFailed', { name }, { errors: errors.slice(0, 30) }); }
   return value;
 }

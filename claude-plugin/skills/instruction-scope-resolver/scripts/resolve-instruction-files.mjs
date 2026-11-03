@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { Ajv2020 } from "../../../runtime/schema-validation.mjs";
+import { hostText } from "../../../runtime/i18n.mjs";
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(SCRIPT_DIRECTORY, "..");
@@ -50,8 +51,8 @@ async function validators() {
   return { request: ajv.compile(requestSchema), output: ajv.compile(outputSchema) };
 }
 
-function invalid(message, details = null) {
-  const error = new Error(message);
+function invalid(key, params = {}, details = null) {
+  const error = new Error(hostText(key, params));
   error.code = "INVALID_INPUT";
   error.details = details;
   return error;
@@ -63,7 +64,7 @@ async function canonicalTarget(workspaceRoot, target) {
   const suffix = [];
   while (!(await exists(cursor))) {
     const parent = path.dirname(cursor);
-    if (parent === cursor) throw invalid("No existing ancestor was found for the target.", { target: target.path });
+    if (parent === cursor) throw invalid("skillTools.instructionScope.noExistingAncestor", {}, { target: target.path });
     suffix.unshift(path.basename(cursor));
     cursor = parent;
   }
@@ -71,10 +72,10 @@ async function canonicalTarget(workspaceRoot, target) {
   const existingReal = await realpath(cursor);
   let resolvedPath = path.join(existingReal, ...suffix);
   const targetExists = suffix.length === 0;
-  if (targetExists && !(await exists(requestedAbsolute))) throw invalid("Target state changed during resolution.");
+  if (targetExists && !(await exists(requestedAbsolute))) throw invalid("skillTools.instructionScope.targetStateChanged");
   if (targetExists) resolvedPath = await realpath(requestedAbsolute);
   if (!targetExists && !target.mayNotExist) {
-    throw invalid("Target does not exist and mayNotExist is false.", { target: target.path });
+    throw invalid("skillTools.instructionScope.targetMissing", {}, { target: target.path });
   }
   const targetDirectory = targetExists && existingStats.isFile() ? path.dirname(resolvedPath) : resolvedPath;
   return { requestedPath: target.path, resolvedPath, exists: targetExists, targetDirectory };
@@ -102,16 +103,16 @@ const DEFAULT_INSTRUCTION_FILES = Object.freeze([
 // host policy; absent adapter configuration always keeps the common AGENTS rule.
 function instructionFiles(options) {
   if (!options || typeof options !== "object" || Array.isArray(options)
-    || Object.keys(options).some(key => key !== "instructionFiles")) throw invalid("Invalid instruction adapter options.");
+    || Object.keys(options).some(key => key !== "instructionFiles")) throw invalid("skillTools.instructionScope.invalidAdapterOptions");
   const files = options.instructionFiles ?? DEFAULT_INSTRUCTION_FILES;
-  if (!Array.isArray(files) || files.length === 0 || files.length > 8) throw invalid("Invalid instruction file descriptor.");
+  if (!Array.isArray(files) || files.length === 0 || files.length > 8) throw invalid("skillTools.instructionScope.invalidFileDescriptor");
   const seen = new Set();
   return files.map(file => {
     if (!file || typeof file !== "object" || Array.isArray(file)
       || Object.keys(file).some(key => !["name", "kind"].includes(key))
       || typeof file.name !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}\.md$/u.test(file.name)
       || !["agents", "override"].includes(file.kind) || seen.has(file.name.toLowerCase())) {
-      throw invalid("Invalid instruction file descriptor.");
+      throw invalid("skillTools.instructionScope.invalidFileDescriptor");
     }
     seen.add(file.name.toLowerCase());
     return { name: file.name, kind: file.kind };
@@ -127,7 +128,7 @@ async function selectedInstruction(directory, authorizedRoots, files) {
     if (!(await exists(candidate))) continue;
     const actual = await realpath(candidate);
     if (!authorizedRoots.some((root) => isPathWithin(root, actual))) {
-      throw invalid("An instruction file resolves outside authorized instruction roots.", { path: candidate });
+      throw invalid("skillTools.instructionScope.instructionOutsideRoots", {}, { path: candidate });
     }
     const data = await readFile(actual);
     if (data.toString("utf8").trim().length === 0) continue;
@@ -147,25 +148,25 @@ export async function resolveInstructionFiles(request, adapterOptions = {}) {
   const files = instructionFiles(adapterOptions);
   const check = await validators();
   if (!check.request(request)) {
-    throw invalid("InstructionScopeRequest.v1 validation failed.", { errors: check.request.errors });
+    throw invalid("skillTools.instructionScope.requestValidationFailed", {}, { errors: check.request.errors });
   }
 
   const workspaceRoot = await realpath(path.resolve(request.workspaceRoot));
   const workspaceStats = await lstat(workspaceRoot);
-  if (!workspaceStats.isDirectory()) throw invalid("workspaceRoot must be a directory.");
+  if (!workspaceStats.isDirectory()) throw invalid("skillTools.instructionScope.workspaceRootNotDirectory");
 
   const authorizedRootRecords = [];
   const findings = [];
   for (const root of [...request.instructionRoots].sort((a, b) => a.precedence - b.precedence || a.path.localeCompare(b.path))) {
     if (!root.authorized) {
-      findings.push(`Skipped unauthorized instruction root: ${root.path}`);
+      findings.push(hostText("skillTools.instructionScope.skippedUnauthorizedRoot", { path: root.path }));
       continue;
     }
     const actual = await realpath(path.resolve(workspaceRoot, root.path));
-    if (!(await lstat(actual)).isDirectory()) throw invalid("instructionRoot must be a directory.", { path: root.path });
+    if (!(await lstat(actual)).isDirectory()) throw invalid("skillTools.instructionScope.instructionRootNotDirectory", {}, { path: root.path });
     authorizedRootRecords.push({ path: actual, precedence: root.precedence });
   }
-  if (authorizedRootRecords.length === 0) throw invalid("At least one authorized instruction root is required.");
+  if (authorizedRootRecords.length === 0) throw invalid("skillTools.instructionScope.noAuthorizedRoot");
 
   const authorizedRoots = authorizedRootRecords.map((root) => root.path);
   const targetResults = [];
@@ -173,15 +174,15 @@ export async function resolveInstructionFiles(request, adapterOptions = {}) {
   for (const target of request.targets) {
     const requestedAbsolute = path.resolve(workspaceRoot, target.path);
     if (!isPathWithin(workspaceRoot, requestedAbsolute)) {
-      throw invalid("Target path is outside workspaceRoot.", { target: target.path, requestedAbsolute });
+      throw invalid("skillTools.instructionScope.targetOutsideWorkspace", {}, { target: target.path, requestedAbsolute });
     }
     const resolved = await canonicalTarget(workspaceRoot, target);
     if (!isPathWithin(workspaceRoot, resolved.resolvedPath)) {
-      throw invalid("Target resolves outside workspaceRoot.", { target: target.path, resolvedPath: resolved.resolvedPath });
+      throw invalid("skillTools.instructionScope.targetResolvesOutside", {}, { target: target.path, resolvedPath: resolved.resolvedPath });
     }
     const applicableRoots = authorizedRootRecords.filter((root) => isPathWithin(root.path, resolved.targetDirectory));
     if (applicableRoots.length === 0) {
-      throw invalid("Target is not covered by an authorized instruction root.", { target: target.path });
+      throw invalid("skillTools.instructionScope.targetNotCovered", {}, { target: target.path });
     }
 
     const directories = new Map();
@@ -203,7 +204,7 @@ export async function resolveInstructionFiles(request, adapterOptions = {}) {
       chain.push(instruction);
       manifest.set(instruction.path, instruction);
     }
-    if (!resolved.exists) findings.push(`Target does not exist; future nested instructions cannot be observed: ${target.path}`);
+    if (!resolved.exists) findings.push(hostText("skillTools.instructionScope.futureNestedUnobservable", { path: target.path }));
     targetResults.push({
       requestedPath: resolved.requestedPath,
       resolvedPath: resolved.resolvedPath,
@@ -224,7 +225,7 @@ export async function resolveInstructionFiles(request, adapterOptions = {}) {
     analysisStatus: "required",
     verdict: "ANALYSIS_REQUIRED",
   };
-  if (!check.output(output)) throw invalid("Generated output failed its schema.", { errors: check.output.errors });
+  if (!check.output(output)) throw invalid("skillTools.instructionScope.outputSchemaFailed", {}, { errors: check.output.errors });
   return output;
 }
 
@@ -232,13 +233,13 @@ async function readInput(argv) {
   const inputIndex = argv.indexOf("--input");
   if (inputIndex >= 0) {
     const filename = argv[inputIndex + 1];
-    if (!filename) throw invalid("--input requires a file path.");
+    if (!filename) throw invalid("skillTools.instructionScope.inputNeedsPath");
     return JSON.parse(await readFile(filename, "utf8"));
   }
   let body = "";
   process.stdin.setEncoding("utf8");
   for await (const chunk of process.stdin) body += chunk;
-  if (!body.trim()) throw invalid("Expected JSON on stdin or --input <file>.");
+  if (!body.trim()) throw invalid("skillTools.instructionScope.inputExpected");
   return JSON.parse(body);
 }
 

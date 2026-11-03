@@ -1,14 +1,25 @@
-import { readFileSync } from "node:fs";
-import { pathToFileURL } from "node:url";
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { resolveCatalogModel } from "./model-catalog-adapter.mjs";
+
+// Messages come from the AGS runtime when this skill sits beside it (repository, plugin or zip layout). A skill folder
+// copied alone has no catalog, so it prints the message key and its parameters. An existing but broken runtime is not
+// guarded: its import failure surfaces instead of silently falling back.
+const agsI18n = fileURLToPath(new URL("../../../runtime/i18n.mjs", import.meta.url));
+const renderHostText = existsSync(agsI18n) ? (await import(pathToFileURL(agsI18n).href)).hostText : null;
+function hostText(key, params = {}) {
+  if (renderHostText) return renderHostText(key, params);
+  return Object.keys(params).length ? `${key} ${JSON.stringify(params)}` : key;
+}
 
 const presets = JSON.parse(readFileSync(new URL("../references/model-routing-presets.json", import.meta.url), "utf8"));
 const classes = Object.freeze(["lightweight", "general", "deep", "frontier"]);
 const efforts = Object.freeze(["low", "medium", "high", "xhigh", "max", "ultra"]);
 const defaultRoles = Object.freeze(["discovery", "general-implementation", "complex-reasoning", "independent-audit"]);
 
-function check(condition, message) {
-  if (!condition) throw new Error(message);
+// The message is a catalog key rendered only on failure.
+function check(condition, key, params = {}) {
+  if (!condition) throw new Error(hostText(key, params));
 }
 
 function same(left, right) {
@@ -27,7 +38,7 @@ function assertImmutablePolicyOrder(currentPresets) {
       Array.isArray(currentPresets.model_class_order)
         && currentPresets.model_class_order.length === classes.length
         && currentPresets.model_class_order.every((item, index) => item === classes[index]),
-      "model_class_order is an immutable contract and cannot be reordered",
+      "skillTools.modelRouting.modelClassOrderImmutable",
     );
   }
   if (currentPresets.effort_order !== undefined) {
@@ -35,7 +46,7 @@ function assertImmutablePolicyOrder(currentPresets) {
       Array.isArray(currentPresets.effort_order)
         && currentPresets.effort_order.length === efforts.length
         && currentPresets.effort_order.every((item, index) => item === efforts[index]),
-      "effort_order is an immutable contract and cannot be reordered",
+      "skillTools.modelRouting.effortOrderImmutable",
     );
   }
 }
@@ -85,26 +96,26 @@ function resolveSupportedSetting(setting, options, currentPresets = presets) {
 function validateOptions(options, currentPresets = presets) {
   assertImmutablePolicyOrder(currentPresets);
   const currentRoles = Array.isArray(currentPresets.roles) ? currentPresets.roles : defaultRoles;
-  check(options && typeof options.provider === "string", "provider is required");
-  check(!Object.hasOwn(options, "presets"), "policy presets cannot be overridden via caller options");
-  check(typeof options.highRisk === "boolean", "highRisk must be explicit");
-  check(Array.isArray(options.supported), "supported must come from current host capabilities");
+  check(options && typeof options.provider === "string", "skillTools.modelRouting.providerRequired");
+  check(!Object.hasOwn(options, "presets"), "skillTools.modelRouting.presetsNotOverridableOptions");
+  check(typeof options.highRisk === "boolean", "skillTools.modelRouting.highRiskExplicit");
+  check(Array.isArray(options.supported), "skillTools.modelRouting.supportedFromHost");
   const names = new Set();
   for (const item of options.supported) {
-    check(typeof item.model === "string" && !names.has(item.model), "model capabilities must be unique");
+    check(typeof item.model === "string" && !names.has(item.model), "skillTools.modelRouting.capabilitiesUnique");
     names.add(item.model);
-    check(item.modelClass === null || classes.includes(item.modelClass), "unknown modelClass must be null");
-    check(Array.isArray(item.efforts) && item.efforts.every((effort) => efforts.includes(effort)), "invalid supported efforts");
+    check(item.modelClass === null || classes.includes(item.modelClass), "skillTools.modelRouting.unknownModelClassNull");
+    check(Array.isArray(item.efforts) && item.efforts.every((effort) => efforts.includes(effort)), "skillTools.modelRouting.invalidSupportedEfforts");
   }
-  check(currentRoles.includes(options.role), "unknown assignment role");
-  check(options.role !== "independent-audit" || options.highRisk, "independent-audit requires highRisk: true");
-  check(["economy", "balanced", "quality"].includes(options.profile ?? currentPresets.default_profile ?? presets.default_profile), "unknown profile");
-  check(options.inheritOnly === undefined || typeof options.inheritOnly === "boolean", "inheritOnly must be boolean");
-  check(options.inheritanceSupported === undefined || typeof options.inheritanceSupported === "boolean", "inheritanceSupported must be boolean");
+  check(currentRoles.includes(options.role), "skillTools.modelRouting.unknownRole");
+  check(options.role !== "independent-audit" || options.highRisk, "skillTools.modelRouting.auditNeedsHighRisk");
+  check(["economy", "balanced", "quality"].includes(options.profile ?? currentPresets.default_profile ?? presets.default_profile), "skillTools.modelRouting.unknownProfile");
+  check(options.inheritOnly === undefined || typeof options.inheritOnly === "boolean", "skillTools.modelRouting.inheritOnlyBoolean");
+  check(options.inheritanceSupported === undefined || typeof options.inheritanceSupported === "boolean", "skillTools.modelRouting.inheritanceSupportedBoolean");
   if (options.user) {
-    check(Object.keys(options.user).every((key) => ["model", "effort"].includes(key)), "unknown user override field");
-    check(options.user.model === undefined || typeof options.user.model === "string", "invalid user model");
-    check(options.user.effort === undefined || efforts.includes(options.user.effort), "invalid user effort");
+    check(Object.keys(options.user).every((key) => ["model", "effort"].includes(key)), "skillTools.modelRouting.unknownUserOverrideField");
+    check(options.user.model === undefined || typeof options.user.model === "string", "skillTools.modelRouting.invalidUserModel");
+    check(options.user.effort === undefined || efforts.includes(options.user.effort), "skillTools.modelRouting.invalidUserEffort");
   }
 }
 
@@ -137,55 +148,55 @@ export function resolveModelSelection(options, customPresets = presets) {
   if (inheritedSelection) {
     return {
       requested, selection: inheritedSelection, delivery: "inherited",
-      fallbackReason: options.inheritOnly ? "Host/context requires inheritance" : "Requested combination unavailable or below risk floor",
+      fallbackReason: options.inheritOnly ? hostText("skillTools.modelRouting.reasonInheritanceRequired") : hostText("skillTools.modelRouting.reasonCombinationUnavailable"),
     };
   }
   if (!options.highRisk && options.inheritanceSupported && !options.inherited) {
-    return { requested, selection: null, delivery: "inherited", fallbackReason: "Host supports inheritance but effective settings are not observable" };
+    return { requested, selection: null, delivery: "inherited", fallbackReason: hostText("skillTools.modelRouting.reasonSettingsNotObservable") };
   }
-  return { requested, selection: null, delivery: "blocked", fallbackReason: "No supported configuration establishes the required floor" };
+  return { requested, selection: null, delivery: "blocked", fallbackReason: hostText("skillTools.modelRouting.reasonNoFloor") };
 }
 
 // Observations are caller-visible evidence, not cryptographic execution attestation.
 export function recordModelApplication(input, customPresets = presets) {
-  check(typeof input.assignmentId === "string" && input.assignmentId.length > 0, "assignmentId is required");
-  check(typeof input.selectionReason === "string" && input.selectionReason.length > 0, "selectionReason is required");
-  check(!Object.hasOwn(input, "presets"), "policy presets cannot be overridden via caller input");
+  check(typeof input.assignmentId === "string" && input.assignmentId.length > 0, "skillTools.modelRouting.assignmentIdRequired");
+  check(typeof input.selectionReason === "string" && input.selectionReason.length > 0, "skillTools.modelRouting.selectionReasonRequired");
+  check(!Object.hasOwn(input, "presets"), "skillTools.modelRouting.presetsNotOverridableInput");
   const currentPresets = activePresets(customPresets);
   const plan = resolveModelSelection(input.options, currentPresets);
   const application = currentPresets.providers?.[input.options.provider]?.application;
-  check(application, "Application recording requires a provider adapter");
+  check(application, "skillTools.modelRouting.adapterRequired");
   const args = input.spawnArguments;
-  check(args && typeof args === "object" && !Array.isArray(args), "spawnArguments must contain actual host settings arguments");
+  check(args && typeof args === "object" && !Array.isArray(args), "skillTools.modelRouting.spawnArgumentsRequired");
   let contextMode = input.contextMode;
   let context;
   if (application.context_field) {
     context = args[application.context_field] ?? application.default_context;
-    check(typeof context === "string" && (context === application.full_history_value || context === application.limited_context_value || /^[1-9][0-9]*$/u.test(context)), "Invalid host context argument");
+    check(typeof context === "string" && (context === application.full_history_value || context === application.limited_context_value || /^[1-9][0-9]*$/u.test(context)), "skillTools.modelRouting.invalidContextArgument");
     contextMode = context === application.full_history_value ? "full-history" : "limited";
-    check(input.contextMode === undefined || input.contextMode === contextMode, "contextMode contradicts actual host arguments");
+    check(input.contextMode === undefined || input.contextMode === contextMode, "skillTools.modelRouting.contextModeContradicts");
   }
-  check(["limited", "full-history"].includes(contextMode), "invalid contextMode");
+  check(["limited", "full-history"].includes(contextMode), "skillTools.modelRouting.invalidContextMode");
   // An independent audit must start fresh; a context reason never justifies inherited parent turns.
   check(input.options.role !== "independent-audit" || (contextMode === "limited"
     && (!application.context_field || context === application.limited_context_value)),
-  "independent-audit-inherited-context: independent-audit must start in a fresh context without inherited parent turns or full history");
+  "skillTools.modelRouting.auditInheritedContext");
   if (contextMode === "full-history") {
-    check(typeof input.contextReason === "string" && input.contextReason.length > 0, "full-history requires contextReason");
+    check(typeof input.contextReason === "string" && input.contextReason.length > 0, "skillTools.modelRouting.fullHistoryNeedsReason");
   }
-  check(plan.delivery !== "blocked", plan.fallbackReason);
+  if (plan.delivery === "blocked") throw new Error(plan.fallbackReason);
   const dispatched = args[application.model_field] === undefined && args[application.effort_field] === undefined
     ? null : { model: args[application.model_field], effort: args[application.effort_field] };
   if (plan.delivery === "explicit") {
-    check(same(dispatched, plan.selection), "Both dispatched model and effort must match the selection");
+    check(same(dispatched, plan.selection), "skillTools.modelRouting.dispatchMustMatch");
   } else {
-    check(dispatched === null, "Inherited execution must not contain overrides");
+    check(dispatched === null, "skillTools.modelRouting.inheritedNoOverrides");
   }
-  check(!(contextMode === "full-history" && application.full_history_overrides === false && dispatched), "Full-history overrides are unsupported by this adapter");
+  check(!(contextMode === "full-history" && application.full_history_overrides === false && dispatched), "skillTools.modelRouting.fullHistoryOverridesUnsupported");
   const observation = input.observation ?? null;
   if (observation) {
-    check(["spawn-result", "host-task-view", "tool-contract"].includes(observation.source), "Observation must be caller-visible host evidence");
-    check(typeof observation.reference === "string" && observation.reference.length > 0, "Observation requires an evidence reference");
+    check(["spawn-result", "host-task-view", "tool-contract"].includes(observation.source), "skillTools.modelRouting.observationSource");
+    check(typeof observation.reference === "string" && observation.reference.length > 0, "skillTools.modelRouting.observationReference");
   }
   const confirmed = same(observation, plan.selection) || (
     plan.delivery === "inherited" && plan.selection === null && Boolean(resolveSupportedSetting(observation, input.options, currentPresets))
@@ -200,7 +211,7 @@ export function recordModelApplication(input, customPresets = presets) {
       status: confirmed ? (plan.delivery === "inherited" ? "inherited" : "applied") : "unverified",
       model: observation?.model ?? null, effort: observation?.effort ?? null,
     },
-    fallbackReason: confirmed ? plan.fallbackReason : [plan.fallbackReason, "Effective model and effort not confirmed by caller-visible evidence"].filter(Boolean).join("; "),
+    fallbackReason: confirmed ? plan.fallbackReason : [plan.fallbackReason, hostText("skillTools.modelRouting.reasonNotConfirmed")].filter(Boolean).join("; "),
   };
 }
 
@@ -208,11 +219,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   try {
     const [operation, inputPath, ...extra] = process.argv.slice(2);
     const explicitPresets = extra.length === 2 && extra[0] === "--presets" && extra[1];
-    check(["resolve", "record"].includes(operation) && inputPath && (extra.length === 0 || explicitPresets), "Usage: node model-routing.mjs resolve|record input.json [--presets presets.json]");
+    check(["resolve", "record"].includes(operation) && inputPath && (extra.length === 0 || explicitPresets), "skillTools.modelRouting.usage");
     const input = JSON.parse(readFileSync(inputPath, "utf8"));
     // Same supplied-data boundary as the API's customPresets; this does not authenticate policy or host evidence.
     const currentPresets = explicitPresets ? JSON.parse(readFileSync(explicitPresets, "utf8")) : presets;
-    check(currentPresets && typeof currentPresets === "object" && !Array.isArray(currentPresets), "presets must contain a JSON object");
+    check(currentPresets && typeof currentPresets === "object" && !Array.isArray(currentPresets), "skillTools.modelRouting.presetsJsonObject");
     const result = operation === "resolve" ? resolveModelSelection(input, currentPresets) : recordModelApplication(input, currentPresets);
     console.log(JSON.stringify(result, null, 2));
     if (result.delivery === "blocked") process.exitCode = 1;

@@ -8,6 +8,8 @@ import { checkStageBundle } from '../../runtime/engineering-practices/stage-bund
 import { validateProof, validateReview } from '../../runtime/engineering-practices/core.mjs';
 import { hashJson } from '../../runtime/engineering-practices/io.mjs';
 import { fixture, writeJson } from './helpers.mjs';
+// Messages follow the host locale (package default ko); these assertions read the English source text.
+process.env.AGENT_GOVERNANCE_LOCALE = 'en';
 
 function bundle(t, capability='test-sensitivity-review') {
   const f=fixture(t);

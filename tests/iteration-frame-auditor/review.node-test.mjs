@@ -8,6 +8,9 @@ import { fileURLToPath } from "node:url";
 import { artifactDigest, InputError, reviewRequestDigest, validateRequest, validateReview } from "../../skills/iteration-frame-auditor/scripts/core.mjs";
 import { compileAllSchemas } from "../../skills/iteration-frame-auditor/scripts/schema-validation.mjs";
 
+// The package default locale is ko; the sentences asserted below are English.
+process.env.AGENT_GOVERNANCE_LOCALE = "en";
+
 const testRoot = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(testRoot, "..", "..", "skills", "iteration-frame-auditor");
 const fixture = async (name) => JSON.parse(await readFile(path.join(testRoot, "fixtures", `${name}.json`), "utf8"));

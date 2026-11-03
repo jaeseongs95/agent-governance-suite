@@ -6,7 +6,8 @@ import path from 'node:path';
 import { ROOT, SKILL, EXAMPLE, scratch, fixture } from './helpers.mjs';
 import { hashJson, hashBytes } from '../../skills/cs-engineering/scripts/core.mjs';
 const cli=path.join(SKILL,'scripts/validate.mjs');
-const run=(args,script=cli,cwd=ROOT)=>spawnSync(process.execPath,[script,...args],{cwd,encoding:'utf8',timeout:15000,env:{...process.env,NODE_PATH:''}});
+// The package default locale is ko; the sentences asserted below are English unless a test passes another locale.
+const run=(args,script=cli,cwd=ROOT,locale='en')=>spawnSync(process.execPath,[script,...args],{cwd,encoding:'utf8',timeout:15000,env:{...process.env,NODE_PATH:'',AGENT_GOVERNANCE_LOCALE:locale}});
 const bundleArgs=root=>['check-bundle','--root',root,'--binding','binding.json','--task','task.json','--policy','policy.json','--review','review.json','--candidate','candidate.json'];
 test('CLI self-check and defaults are executable without npm dependencies',()=>{const r=run(['self-check']);assert.equal(r.status,0,r.stderr);assert.equal(JSON.parse(r.stdout).rules,40);const c=run(['catalog']);assert.equal(JSON.parse(c.stdout).rules.length,20);});
 test('CLI complete example validates actual raw evidence',()=>{const r=run(bundleArgs(EXAMPLE));assert.equal(r.status,0,r.stdout+r.stderr);assert.equal(JSON.parse(r.stdout).verdict,'PASS');});
@@ -15,6 +16,21 @@ test('CLI blocked result has nonzero exit code, not silent success',t=>{const ro
 test('observe policy preserves negative verdict while reporting host policy outcome',t=>{const root=scratch(t,true),f=fixture();f.policy.mode='observe';f.binding.mode='observe';f.binding.policyDigest=hashJson(f.policy);f.review.verificationResults[0].result='FAIL';f.review.findings[0].status='VIOLATED';f.review.blockingFindingIds=['F-CLAIM'];f.review.verdict='FAIL';for(const k of ['policy','binding','review'])writeFileSync(path.join(root,k+'.json'),JSON.stringify(f[k]));const r=run(bundleArgs(root));assert.equal(r.status,3,r.stdout);assert.equal(JSON.parse(r.stdout).canProceedUnderSuppliedPolicy,true);assert.equal(JSON.parse(r.stdout).verdict,'FAIL');});
 test('skill-only clean-room installation works without repository or node_modules',t=>{const root=scratch(t);cpSync(SKILL,path.join(root,'skills/cs-engineering'),{recursive:true});const script=path.join(root,'skills/cs-engineering/scripts/validate.mjs'),example=path.join(root,'skills/cs-engineering/assets/examples/sqlite-queue');assert.equal(existsSync(path.join(root,'node_modules')),false);let r=run(['self-check'],script,root);assert.equal(r.status,0,r.stdout+r.stderr);assert.equal(JSON.parse(r.stdout).schemaEngine,'standalone-closed-schema-subset');r=run(bundleArgs(example),script,root);assert.equal(r.status,0,r.stdout+r.stderr);});
 test('an existing broken AGS runtime never silently falls back',t=>{const root=scratch(t);cpSync(SKILL,path.join(root,'skills/cs-engineering'),{recursive:true});mkdirSync(path.join(root,'runtime'));writeFileSync(path.join(root,'runtime/schema-validation.mjs'),'throw new Error("broken-existing-runtime");\n');const r=run(['self-check'],path.join(root,'skills/cs-engineering/scripts/validate.mjs'),root);assert.notEqual(r.status,0);assert.ok(r.stderr.includes('broken-existing-runtime'));});
+test('CLI error sentences follow the host locale (en and ko)',()=>{
+  const message=(args,locale)=>JSON.parse(run(args,cli,ROOT,locale).stdout).error.message;
+  assert.equal(message(['not-a-command'],'en'),'Unknown command.');
+  assert.equal(message(['not-a-command'],'ko'),'알 수 없는 명령이다.');
+  assert.equal(message(['rules','--domain','missing'],'en'),'Unknown domain: missing.');
+  assert.equal(message(['rules','--domain','missing'],'ko'),'알 수 없는 domain이다: missing.');
+  assert.equal(JSON.parse(run(['self-check'],cli,ROOT,'en').stdout).scope,'knowledge files, catalogue, rule digests and module structure');
+  assert.equal(JSON.parse(run(['self-check'],cli,ROOT,'ko').stdout).scope,'지식 파일, 카탈로그, 규칙 digest, 모듈 구조');
+});
+test('skill-only clean-room installation prints message keys because it has no AGS catalog',t=>{const root=scratch(t);cpSync(SKILL,path.join(root,'skills/cs-engineering'),{recursive:true});const script=path.join(root,'skills/cs-engineering/scripts/validate.mjs');
+  assert.equal(existsSync(path.join(root,'runtime')),false);
+  const r=run(['rules','--domain','missing'],script,root,'ko');assert.equal(r.status,2,r.stdout+r.stderr);
+  assert.equal(JSON.parse(r.stdout).error.message,'skillTools.csEngineering.unknownDomain {"value":"missing"}');
+  assert.equal(JSON.parse(run(['not-a-command'],script,root).stdout).error.message,'skillTools.csEngineering.unknownCommand');});
+test('an existing broken AGS i18n runtime never silently falls back to message keys',t=>{const root=scratch(t);cpSync(SKILL,path.join(root,'skills/cs-engineering'),{recursive:true});mkdirSync(path.join(root,'runtime'));writeFileSync(path.join(root,'runtime/i18n.mjs'),'throw new Error("broken-existing-i18n-runtime");\n');const r=run(['self-check'],path.join(root,'skills/cs-engineering/scripts/validate.mjs'),root);assert.notEqual(r.status,0);assert.ok(r.stderr.includes('broken-existing-i18n-runtime'));});
 test('provider-result command returns the passing AGS result envelope',()=>{const r=run(['provider-result','--root',EXAMPLE,'--input','review.json','--mode','review','--constraint','constraints.json','--candidate','candidate.json']);assert.equal(r.status,0,r.stdout);const o=JSON.parse(r.stdout);assert.equal(o.schemaVersion,'1.0.0');assert.equal(o.kind,'output');assert.equal(o.output.verdict,'PASS');assert.equal(o.error,null);});
 test('provider-result command keeps BLOCKED exit status in its nested output',t=>{const root=scratch(t,true),f=fixture();Object.assign(f.review.verificationResults[0],{executionStatus:'NOT_RUN',result:'UNKNOWN',evidenceRefs:[]});Object.assign(f.review.findings[0],{status:'UNVERIFIED',evidenceRefs:[]});f.review.unverifiedRequiredObligationIds=['OB-CLAIM'];f.review.verdict='BLOCKED';writeFileSync(path.join(root,'review.json'),JSON.stringify(f.review));const r=run(['provider-result','--root',root,'--input','review.json','--mode','review','--constraint','constraints.json','--candidate','candidate.json']);assert.equal(r.status,4,r.stdout);assert.equal(JSON.parse(r.stdout).error.code,'MISSING_EVIDENCE');});
 

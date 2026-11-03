@@ -161,6 +161,18 @@ export async function buildThirdPartyNotices(metafile, root = ROOT) {
   ].join("\n");
 }
 
+// Skill scripts import the prebuilt runtime/i18n.mjs. A bundle that inlines such a script (mcp-server/dist imports
+// some skill modules) takes the bundle's entry instead, so one catalog and one formatter cache are bundled, shared
+// with mcp-server/src/i18n.ts, and the package locale path is resolved from that bundle's own location.
+const SHARED_I18N_ENTRY = path.join(ROOT, "scripts", "i18n-runtime-entry.mjs");
+const sharedI18n = Object.freeze({
+  name: "shared-i18n",
+  setup(build) {
+    // esbuild filters are Go regular expressions, which reject the u flag.
+    build.onResolve({ filter: /(?:^|[\\/])runtime[\\/]i18n\.mjs$/ }, () => ({ path: SHARED_I18N_ENTRY }));
+  },
+});
+
 export async function buildRuntimeBundle(target, outputRoot = ROOT) {
   const { build } = await import("esbuild");
   return build({
@@ -181,6 +193,7 @@ export async function buildRuntimeBundle(target, outputRoot = ROOT) {
     minifyIdentifiers: true,
     minifyWhitespace: true,
     banner: { js: target.executable ? "#!/usr/bin/env node" : "/* eslint-disable */" },
+    plugins: target.id === "i18n-runtime" ? [] : [sharedI18n],
   });
 }
 
