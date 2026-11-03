@@ -30,7 +30,7 @@ MCP가 반환한 `rootId`는 요약, 재개, 서브에이전트 handoff와 fresh
 - `NEW_EVIDENCE_REQUIRED`: 같은 실행을 반복하지 말고 실패 원인을 가르는 진단을 수행한다.
 - `FRAME_REVIEW_REQUIRED`: target을 제외한 task, control, workspace, operational 의미가 바뀌었거나 artifact 역할이 바뀌었다. 새 전체 실행 전에 fresh-context `iteration-frame-auditor`를 호출한다.
 - `ATTEMPT_BUDGET_EXHAUSTED`: 현재 epoch에서 세 번의 전체 실행이 시작됐다. 독립 검토 전에는 네 번째 실행을 만들지 않는다.
-- `ROOT_CONFLICT`: 기존 root를 조회해 재사용한다. 실제 사용자의 새 계약이 있을 때만 parent 관계를 보존한 replacement root를 연다.
+- `ROOT_CONFLICT`: 응답의 겹친 경로(`requestedEntry`, `existingPath`)와 `ownedBySession`, `nextActions`를 확인한다. 한 세션은 겹치지 않는 경로로 workflow를 여러 개 함께 진행할 수 있으므로, 겹치지 않는 writeTargets로 새 workflow를 시작하고 막힌 부분만 보류한다. 이 세션의 open root와 겹치면 그 workflow 안에서 계속하거나, 시도가 끝났으면 `start_workflow`에 `rootId`를 넣어 이어 간다. 판정을 기다리는 root와 겹치면 `resolve_convergence_gate`로 먼저 판정한다. 실제 사용자의 새 계약이 있을 때만 parent 관계를 보존한 replacement root를 연다.
 - `LEASE_CONFLICT`: 기존 lease/run 상태를 먼저 조회하며 다른 진입점으로 우회하지 않는다. 시작 전 lease가 사라졌거나 대체됐으면 현재 revision으로 다시 claim한다. 시작된 run이 끝나지 않았으면 그 run을 마치거나 `abort_workflow`로 닫는다.
 
 독립 검토가 원래 사용자 계약을 보존하고 결과 비교 가능성이 있다고 판정한 경우에만 `resolve_convergence_gate`로 두 번째 epoch를 연다. 모호하면 `independent-deliberation-panel`, 사용자 가치·범위·수용 기준·권한이 달라지면 사용자에게 돌린다. 두 번째 epoch 뒤에는 독립 검토만으로 다시 초기화하지 않는다.

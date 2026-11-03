@@ -30,6 +30,6 @@ MCP 응답에 별도의 `plugin-update-notice` content block이 있으면 현재
 
 MCP 연결이나 필요한 MCP 도구를 사용할 수 없더라도, 설치된 전문 스킬을 직접 호출해 처리할 수 있는 요청은 진행한다. MCP 없이는 필요한 통합 작업 자체를 수행할 수 없는 경우에만 통합 결과를 `BLOCKED`로 표시하고, 직접 사용할 수 있는 스킬과 필요한 MCP 기능을 함께 밝힌다.
 
-MCP 미지원과 신뢰할 수 있는 실행 관측 부재는 다른 실패다. MCP가 `BINDING_REQUIRED`나 `BINDING_INVALID`를 반환하면 해당 guarded workflow를 시작하지 않고, 이미 시작한 run의 stage를 `passed`로 진행하지 않는다. 관측값이나 실행 하한을 추정·보정해 다시 보내지 않는다. 설치된 전문 스킬로 독립 처리할 수 있는 허용 부분만 진행하고, 그 결과를 필수 guarded 통합이나 감사 증거로 표현하지 않는다. 통합 실행을 더 진행하지 않으면 시작한 run은 `abort_workflow`로 닫고 반환 코드와 영향받은 완료 판정을 사용자에게 밝힌다.
+MCP 미지원과 신뢰할 수 있는 실행 관측 부재는 다른 실패다. MCP가 `BINDING_REQUIRED`나 `BINDING_INVALID`를 반환하면 해당 guarded workflow를 시작하지 않고, 이미 시작한 run의 stage를 `passed`로 진행하지 않는다. 이 코드는 호스트 실행 관측의 문제이며, 세션에 이미 다른 workflow가 있다는 뜻이 아니다. 관측값이나 실행 하한을 추정·보정해 다시 보내지 않는다. 그 workflow가 맡을 막힌 부분만 보류하고, 설치된 전문 스킬로 독립 처리할 수 있는 허용 부분은 진행하며, 그 결과를 필수 guarded 통합이나 감사 증거로 표현하지 않는다. 통합 실행을 더 진행하지 않으면 시작한 run은 `abort_workflow`로 닫고 반환 코드와 영향받은 완료 판정을 사용자에게 밝힌다.
 
 `passed` 기록 시 model·effort 하한 미달로 `GATE_FAILED`가 확인된 subagent의 semantic stage는 그 하한을 충족하는 실행자가 전문 작업을 실제로 다시 수행한 뒤 새 관측으로 기록한다. 사용자 설정으로 실행하는 root 세션에는 이 하한을 이유로 재실행을 요구하지 않으며, 실제 관측·결속이나 artifact·gate 오류는 그대로 처리한다. token이나 관측의 만료가 확인된 경우에는 호스트가 현재 호출을 다시 관측해 새 token을 제공하는 정상 호출 경로로 재시도할 수 있다. 이때도 현재 task·run·stage·revision 결속, 신선도, 한 번 소비와 기존 수렴 가드를 그대로 적용한다. `BINDING_INVALID` 코드나 승인 대기 시간만으로 원인을 만료로 단정하거나 같은 token을 재전송하지 않는다. 원인이 확인되지 않으면 영향을 받은 경계를 멈추고 진단 근거와 필요한 관측을 남긴다.
