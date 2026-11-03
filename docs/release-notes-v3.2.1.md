@@ -43,3 +43,9 @@
 - `release-agy` 표식 안에 버전 표기가 하나도 없으면 `sync-release-metadata.mjs`는 오류 없이 지나간다(다른 README 블록은 실패한다).
 
 ## 검증
+
+- CI 41609016580(81c39eeb): `Node 24 / ubuntu-latest`, `Node 24 / windows-latest` 모두 success.
+- Windows CI에서 러너 속도에 따라 시간 초과로 실패하던 `tests/context-continuity/d0352-b08-fork-lineage.test.ts` H-W6은 시험 방식을 바꿨다. 실제 PowerShell 조회를 비동기로 먼저 실행하고 그 출력을 `windowsHostSnapshot`에 넘긴다. 제품의 조회 한도(`WINDOWS_QUERY_TIMEOUT_MS` 6000ms)는 바꾸지 않았다. 시간 초과 분기는 기존 fake 시험이 계속 덮는다.
+- Linux 시험 서버(81c39eeb): `corepack pnpm build` 종료 0, al09·`minimal-workflow-start`·묶음 시험 종료 0. v3.2.1 묶음은 파일 614개·디렉터리 174개, 버전 3.2.1. `agy plugin validate` 0, `agy plugin install` 0(스킬 26·MCP 서버 1·hook 2), 편집 관문 시험 0, agy workflow 시험 0. 시험 뒤 `agy plugin uninstall` 0, 설치 목록은 비었다.
+- AGS workflow로 진행했다. 구현·시험 민감도(mutation 6건)·독립 코드 리뷰(02832c53, 차단 결함 없음) 단계를 기록하고 passed로 확정했다. 그 뒤 81c39eeb는 시험 파일과 문서만 바꿨다.
+- v3.2.0 release의 agy zip을 3.2.1 목록으로 다시 묶어 바꿔 올렸다(sha256 `1c2134aa…`).
