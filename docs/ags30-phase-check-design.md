@@ -147,14 +147,15 @@ Codex 출력 형식은 continuity hook이 host 인자로 정한다(`resolveHookH
 - 대상 경로: 호스트 adapter가 도구 입력에서 읽는다. Claude `Edit`·`Write`·`MultiEdit`의 `file_path`, `NotebookEdit`의 `notebook_path`. Codex `apply_patch`의 `tool_input.command`에서 `*** Add/Update/Delete File:`와 `*** Move to:` 경로. agy는 runner가 `Write`·`Edit`·`MultiEdit`로 바꾼 도구의 `Path`(agy 1.4.12 CLI의 `write_file`·`edit_file`, 시험 서버 hook 입력에서 관측) 또는 `TargetFile`(`write_to_file`·`replace_file_content`·`multi_replace_file_content`, agy hooks 문서). 상대 경로는 hook 입력의 `cwd`로 푼다. 경로를 읽지 못한 편집 도구는 호출마다 파일 하나(「경로 미확인」)로 센다.
 - 정규화: `path.resolve`, Windows는 구분자를 `\`로 맞추고 대소문자를 무시한다.
 - 구간: 마지막 `phase-check`와 마지막 workflow 시작(`phase-workflow-start`) 중 나중 것 이후.
-- 활성 workflow: task에 결속된 root가 `completed`·`abandoned`가 아니고, 최신 run이 있고, 그 run이 `passed`·`failed`·`blocked`가 아니다. abandoned root와 끝난 run은 workflow 없음이다.
-- 활성 workflow가 없으면 이번 편집의 새 파일을 더해 구간의 서로 다른 제품 파일이 `WORKFLOW_FILE_LIMIT`(3, 시작값) 이상이 될 때 그 호출을 거부하고 `phase-deny`를 남긴다. 이미 센 파일만 다시 고치는 호출은 허용한다. 활성 workflow 아래 편집은 세지 않으므로 workflow가 끝난 뒤 편집은 새로 센다.
+- 활성 workflow: task의 현재 epoch에 결속된 root(3.3.0부터 여러 개) 중 `completed`·`abandoned`가 아니고, 최신 run이 있고, 그 run이 `passed`·`failed`·`blocked`가 아닌 것. abandoned root와 끝난 run은 workflow 없음이다.
+- 편집 대상마다 차례로 본다(3.3.0). ① 어느 세션이든 판정을 기다리는 root(`needs-review`·`needs-user`)의 쓰기 범위 안이면 거부한다. 같은 물리 경로이거나, 같은 저장소(commonDir)의 다른 checkout에서 checkout 기준 상대 경로가 같으면 안이다. 시작 실패의 통과(7.6)도 이 거부를 풀지 않는다. ② 이 세션의 활성 workflow 쓰기 범위 안(물리 경로)이면 세지 않고 허용한다. ③ 나머지는 구간에 센다.
+- ③의 새 파일을 더해 구간의 서로 다른 제품 파일이 `WORKFLOW_FILE_LIMIT`(3, 시작값) 이상이 될 때 그 호출을 거부하고 `phase-deny`를 남긴다. 이미 센 파일만 다시 고치는 호출은 허용한다. workflow 범위 안 편집은 세지 않으므로 workflow가 끝난 뒤 편집은 새로 센다.
 - 잠금: 마지막 workflow 시작 뒤에 `phase-deny`가 있으면 그 뒤 제품 파일 편집을 모두 거부한다. phase-check로 풀리지 않고 workflow 시작으로만 풀린다.
 - 서브에이전트: Claude·Codex는 child 편집의 `session_id`가 부모 세션이다. child(`agent_id` 관측) 편집은 같은 구간에 더하고 같은 판정을 받는다. 편집 집계 밖에서는 지금처럼 child를 다루지 않는다(pin·바인딩 없음).
 - 거부 문구(호스트 공통 `hookSpecificOutput.permissionDecision: "deny"`, agy runner가 `{decision: "deny", reason}`으로 바꾼다):
 
 ```text
-[AGS] workflow 없이 제품 파일 3개째 변경: <이번 호출의 경로> (앞서 바꾼 제품 파일 N개 포함). 먼저 workflow를 시작하라(최소 시작 호출 예: start_workflow {"goal":"<목표>","stages":["minimal-implementation"],"acceptanceCriteria":["<수용 기준>"]}).
+[AGS] workflow 없이 제품 파일 3개째 변경: <이번 호출의 경로> (앞서 바꾼 제품 파일 N개 포함). 먼저 workflow를 시작하라(최소 시작 호출 예: start_workflow {"goal":"<목표>","stages":["minimal-implementation"],"acceptanceCriteria":["<수용 기준>"],"writeTargets":["<바꿀 경로>"]}).
 ```
 
 ### 7.3 면제
@@ -182,18 +183,22 @@ cwd는 기준으로 쓰지 않는다. 설정은 hook 프로세스의 환경에�
 
 거부 전용이던 `start_workflow`를 최소 시작으로 바꾼다. 새 도구를 늘리지 않는다.
 
-- 입력: `goal`, `stages`(AGENT가 고른 capability, 1개 이상), `acceptanceCriteria`(1개 이상). 선택: `workspace`(절대 경로), `writeTargets`(기본 workspace 전체). `workspace`를 생략하면 그 세션의 hook이 호스트 입력의 `cwd`로 세션 현황판에 남긴 작업 폴더를 쓴다. 서버 프로세스의 cwd는 쓰지 않는다(Codex는 MCP 서버를 plugin 폴더에서 띄워, Codex 0.166 실제 호스트에서 다른 시험의 root와 `ROOT_CONFLICT`가 났다). 현황판에 작업 폴더가 없으면 `INVALID_INPUT`(`field: workspace`)이다.
+- 입력: `goal`, `stages`(AGENT가 고른 capability, 1개 이상), `acceptanceCriteria`(1개 이상), `writeTargets`(3.3.0부터 필수. 기본값 workspace 전체는 모든 시작을 서로 겹치게 했다). 선택: `workspace`(절대 경로), `rootId`·`priorFailure`(아래 이어 가기). `workspace`를 생략하면 그 세션의 hook이 호스트 입력의 `cwd`로 세션 현황판에 남긴 작업 폴더를 쓴다. 서버 프로세스의 cwd는 쓰지 않는다(Codex는 MCP 서버를 plugin 폴더에서 띄워, Codex 0.166 실제 호스트에서 다른 시험의 root와 `ROOT_CONFLICT`가 났다). 현황판에 작업 폴더가 없으면 `INVALID_INPUT`(`field: workspace`)이다.
 - 서버가 한 workflow transaction 안에서 `planWorkflow`(신뢰 실행 관측 필수) → `openConvergenceRoot` → `claimWorkflowAttempt`(관측된 호출자) → `startGuardedWorkflow`(continuity 결속은 commit 전)를 차례로 부른다. 네 단계의 검사·결속·attestation을 그대로 쓰며 따로 구현하지 않는다. 어느 단계가 실패하면 그 단계의 코드·세부를 그대로 돌려주고 root·lease·run·소비한 관측을 모두 되돌린다.
 - 나머지 TaskEnvelope 필드는 기본값(`riskLevel: "medium"`, 권한 목록 비움, 작업 단위 1개 등)으로 채우고 결과의 `defaultsUsed`에 적는다. 계획을 만들 수 없으면(없는 capability 등) 계획의 첫 오류를 돌려준다.
 - 시작 전에 구간에 센 파일이 있으면(잠금 중이면 거부로 끝난 구간의 파일. 그 뒤 phase-check로 구간이 바뀌어도 센다) `lateAdoption: {label: "사후 편입·근거 미검증", priorFileCount}`을 돌려주고 TaskEnvelope `constraints`에 같은 문구를 넣어 root에 남긴다.
-- 끝난 workflow에 결속된 세션은 시작 전에 새 epoch로 옮긴다(새 프롬프트가 하는 것과 같다).
+- 한 세션은 겹치지 않는 경로로 workflow를 여러 개 함께 진행한다(3.3.0). 세션 결속은 epoch마다 root 여러 개이며 `continuity_tasks.root_id`는 가장 최근 root(복원 카드·pending marker용)다. 결속 행은 `continuity_observations`의 `workflow-root:<rootId>`로 남긴다(공유 상태 모듈 표 목록을 바꾸지 않도록 fork pin과 같은 방식). 다른 root와의 세션 결속 충돌은 없다. 경로 충돌은 convergence 가드의 `ROOT_CONFLICT`가 맡는다. 결속 CAS는 epoch만 보며, 실패하면 다시 시도할 수 있는 `STALE_REVISION`이다.
+- 결속된 root가 모두 정리됐을 때만(각 root의 run·소비 lease가 모두 끝남) 시작 전에 새 epoch로 옮긴다(새 프롬프트가 하는 것과 같다). 하나라도 진행 중이면 옮기지 않는다.
+- 이어 가기: `rootId`를 주면 새 root를 열지 않고 이 세션이 결속했던(epoch 무관) `open` root에 새 시도를 만든다. 다른 세션의 root는 `INVALID_INPUT`(`ROOT_NOT_OWNED`), open이 아닌 root는 `INVALID_TRANSITION`(`ROOT_NOT_OPEN`)이다. `goal`·`stages`·`acceptanceCriteria`·`writeTargets`는 그 root의 값과 같아야 한다(`ROOT_TASK_MISMATCH`). 최근 시도가 실패했으면 `priorFailure`(hypothesis·changeSummary·discriminator·evidenceRefs)가 필요하고 실패 fingerprint는 서버가 최근 outcome에서 채운다. 에이전트용 root 포기 도구는 두지 않았다.
+- `ROOT_CONFLICT`는 겹친 경로(`requestedEntry`·`existingPath`), 이 세션 소유 여부(`ownedBySession`), `nextActions`(겹치지 않는 writeTargets로 다시 시작 / 자기 open root면 rootId로 이어 가기 / 판정 대기 root면 `resolve_convergence_gate`)를 돌려준다.
+- root 식별에 호스트(`os.hostname()`을 소문자로, 도메인을 뗀 값)를 넣는다. 호스트가 다르면 같은 경로라도 겹치지 않는다. 호스트 없이 저장된 예전 식별은 같은 호스트로 본다. 이름이 같은 두 컴퓨터는 같은 호스트로 보아 막는 쪽으로 판정한다. 호스트 이름을 읽지 못하면 `INVALID_INPUT`(`HOST_IDENTITY_UNRESOLVED`)이다.
 - Claude governance hook이 transcript에서 실행 관측을 읽도록 `HOST_ATTESTATION_TOOLS`에 `start_workflow`를 넣었다.
 - 기존 4단계 경로는 바뀌지 않는다. `start_guarded_workflow`의 continuity 결속도 workflow 시작 관측을 남겨 잠금을 푼다.
 - 3.2.1: 필수 산출물(`requiredArtifacts`)이 있는 단계는 passed 기록 때 plan의 `taskEnvelope.artifactContracts` 대상 digest와 맞아야 한다. 최소 시작은 이 계약을 만들지 않으므로, 그런 단계가 하나라도 있으면 `INVALID_INPUT`(`details.field: "stages"`, `details.capabilities`)으로 거부하고 아무것도 남기지 않는다. 현재 registry에서 최소 시작이 받는 단계는 `minimal-implementation`뿐이다. 나머지는 대상이 정해진 뒤 4단계 경로로 시작한다.
 
 ### 7.6 오류
 
-- AGS 인프라 오류는 원인 코드를 그대로 보이고 통과시킨다. hook이 workflow 저장소를 열지 못하거나 읽지 못하면 `phase-gate-unavailable:<원인 코드>`를 남기고 편집을 허용한다. 시작 호출이 `MCP_UNAVAILABLE`·`CONTINUITY_UNAVAILABLE`·`BINDING_REQUIRED`·`BINDING_INVALID`·`INTEGRITY_FAILED`로 실패하면 서버가 `workflow-start-failed:<코드>[:<reasonCode>]`를 남기고, 그 구간의 편집을 허용한다. 다음 Stop이 원인 코드를 한 번 낸다.
+- AGS 인프라 오류는 원인 코드를 그대로 보이고 통과시킨다. hook이 workflow 저장소를 열지 못하거나 읽지 못하면 `phase-gate-unavailable:<원인 코드>`를 남기고 편집을 허용한다. 시작 호출이 `MCP_UNAVAILABLE`·`CONTINUITY_UNAVAILABLE`·`BINDING_REQUIRED`·`BINDING_INVALID`·`INTEGRITY_FAILED`로 실패하면 서버가 `workflow-start-failed:<코드>[:<reasonCode>]`를 남기고, 그 구간의 편집을 허용한다(판정 대기 root 범위의 거부는 제외). 다음 Stop이 원인 코드를 한 번 낸다. 3.3.0부터 시작의 `BINDING_INVALID`는 호출자·호스트 실행 관측(adapter·capability 불일치, 소비됐거나 결속이 맞지 않는 관측)에서만 나오고 세션 결속에서는 나오지 않는다.
 - 입력 검증 오류(`INVALID_INPUT`, `GATE_FAILED`, `ROOT_CONFLICT`, `LEASE_CONFLICT` 등)는 통과 사유가 아니다.
 - continuity 저장소 자체가 열리지 않으면 지금처럼 hook이 진단 한 줄을 남기고 출력 없이 끝난다(fail-open).
 
