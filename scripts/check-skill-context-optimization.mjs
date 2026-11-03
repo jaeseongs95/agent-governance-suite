@@ -17,16 +17,18 @@ const MULTI_WORKFLOW_GUIDANCE_SUCCESSOR = Object.freeze({
   }),
 });
 
+/** A reviewed multi-workflow guidance successor stands for its exact predecessor; any other bytes are returned as they are. */
+function beforeMultiWorkflowGuidance(relative, bytes) {
+  const hashes = Object.hasOwn(MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.hashes, relative) ? MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.hashes[relative] : null;
+  if (!hashes || createHash("sha256").update(bytes).digest("hex") !== hashes[1]) return bytes;
+  const projected = execFileSync("git", ["-C", ROOT, "show", `${MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.revision}:${relative}`]);
+  if (createHash("sha256").update(projected).digest("hex") !== hashes[0]) throw new Error(`Multi-workflow guidance predecessor bytes differ: ${relative}`);
+  return projected;
+}
+
 /** Reads a file as the pinned checks see it: a reviewed guidance successor reads as its exact predecessor. */
 function readFileSync(path, encoding) {
-  const bytes = readFileBytes(path);
-  const relative = relativePath(ROOT, String(path)).replaceAll("\\", "/");
-  const hashes = Object.hasOwn(MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.hashes, relative) ? MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.hashes[relative] : null;
-  let projected = bytes;
-  if (hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]) {
-    projected = execFileSync("git", ["-C", ROOT, "show", `${MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.revision}:${relative}`]);
-    if (createHash("sha256").update(projected).digest("hex") !== hashes[0]) throw new Error(`Multi-workflow guidance predecessor bytes differ: ${relative}`);
-  }
+  const projected = beforeMultiWorkflowGuidance(relativePath(ROOT, String(path)).replaceAll("\\", "/"), readFileBytes(path));
   return encoding ? projected.toString(typeof encoding === "string" ? encoding : encoding.encoding) : projected;
 }
 const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
@@ -137,6 +139,7 @@ function contextDigest(bytes) {
 
 /** True only for explicitly pinned current context, never for a predecessor or an unlisted path. */
 export function matchesSpecialistBehaviorSuccessor(path, bytes) {
+  bytes = beforeMultiWorkflowGuidance(path, bytes);
   const hashes = Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes, path) ? SPECIALIST_BEHAVIOR_SUCCESSOR.hashes[path] : null;
   return Boolean(hashes && contextDigest(bytes) === hashes[1]);
 }
@@ -971,6 +974,7 @@ export function readHistoricalSource(relative) {
 
 /** Test hook: whether the bytes are the reviewed skill policy wording successor. */
 export function matchesSkillPolicyWordingSuccessorBytes(path, bytes) {
+  bytes = beforeMultiWorkflowGuidance(path, bytes);
   return matchesSkillPolicyWordingSuccessor(path, bytes)
     || (Object.hasOwn(SKILL_POLICY_WORDING_SUCCESSOR.hashes, path) && matchesPreflightPrivatePreparationChain(path, bytes));
 }

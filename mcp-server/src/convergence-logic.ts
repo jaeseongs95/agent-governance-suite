@@ -209,11 +209,12 @@ export function activeRootIdentity(
   });
   // The host is fixed when the root is first stored; deriving again on another machine never claims it (N1).
   const host = observed?.host;
+  // Same key order as planRootInsertion stores, so `fresh` (a JSON comparison) never rewrites an unchanged identity.
   const identity: RootIdentityV1 = {
     version: 1,
-    ...(host ? { host } : {}),
     workspacePhysical: observed?.workspacePhysical ?? derived!.workspacePhysical,
     surfaces,
+    ...(host ? { host } : {}),
   };
   // Once its path exists a surface has been observed; nothing unobserved starts out as inferred.
   const inferred = surfaces.map((surface, index) => wasInferred(index) && !existsSync(surface.physical || "/"));
