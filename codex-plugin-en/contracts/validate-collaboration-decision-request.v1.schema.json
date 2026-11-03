@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/validate-collaboration-decision-request.v1.schema.json",
+  "title": "ValidateCollaborationDecisionRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["decision"],
+  "properties": {
+    "decision": { "type": "object" }
+  }
+}

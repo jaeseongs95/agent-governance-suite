@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/guarded-workflow-start-request.v1.schema.json",
+  "title": "GuardedWorkflowStartRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "leaseId", "expectedRootRevision", "plan"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "leaseId": { "type": "string", "minLength": 1 },
+    "expectedRootRevision": { "type": "integer", "minimum": 0 },
+    "plan": { "$ref": "https://skill-suite.local/contracts/workflow-plan.v1.schema.json" }
+  }
+}

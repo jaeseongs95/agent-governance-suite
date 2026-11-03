@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-skills.local/iteration-frame-auditor/contracts/iteration-frame-comparison.v1.schema.json",
+  "title": "IterationFrameComparison.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "rootId", "reviewedEpoch", "requestArtifactDigest", "reviewer", "comparisons", "evidenceRefs", "rationale", "limitations"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "rootId": { "$ref": "#/$defs/nonEmptyString" },
+    "reviewedEpoch": { "type": "integer", "minimum": 1 },
+    "requestArtifactDigest": { "$ref": "#/$defs/digest" },
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actorId", "freshContext"],
+      "properties": {
+        "actorId": { "$ref": "#/$defs/nonEmptyString" },
+        "freshContext": { "const": true }
+      }
+    },
+    "comparisons": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract", "control", "target"],
+      "properties": {
+        "contract": { "$ref": "#/$defs/contractComparison" },
+        "control": { "$ref": "#/$defs/controlComparison" },
+        "target": { "$ref": "#/$defs/targetComparison" }
+      }
+    },
+    "evidenceRefs": { "$ref": "#/$defs/nonEmptyStringSet" },
+    "rationale": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["statement", "evidenceRefs"],
+        "properties": {
+          "statement": { "$ref": "#/$defs/nonEmptyString" },
+          "evidenceRefs": { "$ref": "#/$defs/nonEmptyStringSet" }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonEmptyString" },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "nonEmptyStringSet": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/nonEmptyString" },
+      "uniqueItems": true
+    },
+    "comparisonBase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["impact", "changedPaths", "evidenceRefs"],
+      "properties": {
+        "impact": { "type": "string" },
+        "changedPaths": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" },
+          "uniqueItems": true
+        },
+        "evidenceRefs": { "$ref": "#/$defs/nonEmptyStringSet" }
+      }
+    },
+    "contractComparison": {
+      "allOf": [
+        { "$ref": "#/$defs/comparisonBase" },
+        { "type": "object", "properties": { "impact": { "enum": ["unchanged", "semantics-changing", "uncertain"] } } }
+      ]
+    },
+    "controlComparison": {
+      "allOf": [
+        { "$ref": "#/$defs/comparisonBase" },
+        { "type": "object", "properties": { "impact": { "enum": ["unchanged", "semantics-preserving", "semantics-changing", "uncertain"] } } }
+      ]
+    },
+    "targetComparison": {
+      "allOf": [
+        { "$ref": "#/$defs/comparisonBase" },
+        { "type": "object", "properties": { "impact": { "enum": ["unchanged", "changed", "uncertain"] } } }
+      ]
+    }
+  }
+}

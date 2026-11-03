@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/convergence-frame.v1.schema.json",
+  "title": "ConvergenceFrame.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "workspace", "controlArtifacts", "targetArtifacts", "operationalSettings"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "workspace": { "$ref": "#/$defs/workspace" },
+    "controlArtifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/controlArtifact" },
+      "uniqueItems": true
+    },
+    "targetArtifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/targetArtifact" },
+      "uniqueItems": true
+    },
+    "operationalSettings": { "$ref": "#/$defs/operationalSettings" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workspaceId", "locator"],
+      "properties": {
+        "workspaceId": { "type": "string", "minLength": 1 },
+        "locator": { "type": "string", "minLength": 1 }
+      }
+    },
+    "controlArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "role", "locator", "digest"],
+      "properties": {
+        "artifactId": { "type": "string", "minLength": 1 },
+        "role": { "enum": ["validator", "rubric", "oracle", "aggregation", "pass-condition", "evaluation-input"] },
+        "locator": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "targetArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "role", "locator", "digest"],
+      "properties": {
+        "artifactId": { "type": "string", "minLength": 1 },
+        "role": { "enum": ["target", "candidate"] },
+        "locator": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "operationalSettings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxAttemptsPerEpoch", "maxEpochs", "leaseTtlSeconds"],
+      "properties": {
+        "maxAttemptsPerEpoch": { "const": 3 },
+        "maxEpochs": { "const": 2 },
+        "leaseTtlSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 }
+      }
+    }
+  }
+}

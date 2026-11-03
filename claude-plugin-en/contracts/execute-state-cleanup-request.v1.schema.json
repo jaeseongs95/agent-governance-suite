@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/execute-state-cleanup-request.v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "planToken"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "planToken": { "type": "string", "minLength": 80 }
+  }
+}

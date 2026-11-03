@@ -1,0 +1,11 @@
+# Live dispatch verification
+
+Use this check when validating a host adapter or a changed delegation policy. It is separate from deterministic repository tests and uses real host collaboration tools. Keep the work read-only, bounded, and useful; do not create artificial waits or claim speed/cost savings from overlap alone.
+
+1. Pin the candidate revision or file digests, supported model/effort combinations, host slot contract, and two independent verification units. Give each unit enough raw context without the intended verdict. Keep a third useful verification unit with the coordinator. Select different adequate configurations where the host supports them, using `model-routing.mjs resolve` and the assignment roles.
+2. Give each worker the candidate skill path, owned question, exclusions, permitted tools, completion criterion, and expected evidence. Use limited context unless a recorded reason requires full history. Read-only workers may read the same source; they may not edit it or spawn additional workers for this check.
+3. Record actual spawn arguments and caller-visible responses. While workers run, complete the coordinator unit. Capture timestamped progress/tool evidence from the host for both coordinator and workers. Agent existence or a late final response alone does not prove overlapping work.
+4. Run `model-routing.mjs record` for each dispatch. If the host does not expose effective model/effort, record `unverified` even when the requested arguments were accepted. Separately label any later session inspection as posthoc evidence. Do not ask a worker to guess its own model.
+5. Integrate results and record: assignment IDs, candidate, requested/actual arguments, application records, verification outcomes, and timestamped execution evidence. Overlap is confirmed only where observed execution intervals overlap; insufficient telemetry is `unverified`. Compare each scoped result with its completion criterion, not the model name.
+
+The check passes only the assertions actually observed. Model application, useful concurrency, behavioral correctness, and output quality are separate assertions. Preserve missing telemetry as a limitation; never fabricate a successful record to satisfy a test.

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/cs-stage-bundle.v1.schema.json",
+  "title": "CsStageBundle.v1 — caller supplied stage references, no policy authority",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "binding", "task", "policy", "review", "candidate"],
+  "properties": {
+    "schemaVersion": {"const": "1.0.0"},
+    "binding": {"type": "object", "additionalProperties": false, "required": ["path", "digest"], "properties": {"path": {"type": "string", "minLength": 1, "maxLength": 4096}, "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}},
+    "task": {"type": "object", "additionalProperties": false, "required": ["path", "digest"], "properties": {"path": {"type": "string", "minLength": 1, "maxLength": 4096}, "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}},
+    "policy": {"type": "object", "additionalProperties": false, "required": ["path", "digest"], "properties": {"path": {"type": "string", "minLength": 1, "maxLength": 4096}, "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}},
+    "review": {"type": "object", "additionalProperties": false, "required": ["path", "digest"], "properties": {"path": {"type": "string", "minLength": 1, "maxLength": 4096}, "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}},
+    "candidate": {"type": "object", "additionalProperties": false, "required": ["path", "digest"], "properties": {"path": {"type": "string", "minLength": 1, "maxLength": 4096}, "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}}
+  }
+}

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Context Continuity"
+  short_description: "긴 direct task의 핵심 상태만 checkpoint하고 안전하게 복원합니다"
+  default_prompt: "Use $context-continuity to preserve only the task state whose loss would change execution after compaction or resume."
+policy:
+  allow_implicit_invocation: true

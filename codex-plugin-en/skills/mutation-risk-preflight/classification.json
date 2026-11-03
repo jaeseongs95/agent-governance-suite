@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "read-only-mutation-preflight"
+  ],
+  "targets": [
+    "deletion",
+    "deployment",
+    "publication",
+    "migration",
+    "permission",
+    "payment",
+    "global-settings"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad",
+      "startByte": 0,
+      "endByte": 266
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad",
+      "startByte": 0,
+      "endByte": 152
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "startLine": 21,
+      "endLine": 30,
+      "digest": "sha256:00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad",
+      "startByte": 0,
+      "endByte": 577
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad",
+      "startByte": 267,
+      "endByte": 430
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad",
+      "startByte": 153,
+      "endByte": 265
+    },
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "startLine": 32,
+      "endLine": 32,
+      "digest": "sha256:00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad",
+      "startByte": 0,
+      "endByte": 392
+    }
+  ]
+}

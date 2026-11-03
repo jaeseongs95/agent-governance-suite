@@ -1,0 +1,130 @@
+[
+  {
+    "id": "DESIGN-CONTRACT-001",
+    "version": "0.1.0",
+    "domain": "software-design",
+    "status": "draft",
+    "title": "모듈 경계와 책임",
+    "appliesWhen": [
+      "새 모듈·서비스·스킬을 추가한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "입력·출력·권한·소유권을 하나의 책임에 맞춘다.",
+    "invariant": "전문 모듈이 기존 조정·감사·승인 책임을 몰래 대신하지 않는다.",
+    "failureModes": [
+      "CS 스킬이 자체 세션·DB·배포 승인을 만들어 기존 경로를 우회한다."
+    ],
+    "decisionQuestions": [
+      "기존 책임과 중복되는가?",
+      "외부 부작용과 오류 계약은 명시됐는가?"
+    ],
+    "verificationObligations": [
+      "공개 입력·출력과 호출 경로를 검토하고 금지된 부작용이 없는지 확인한다."
+    ],
+    "nonGoals": [
+      "추상화 자체를 목적 삼아 모든 로직을 계층화하지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  },
+  {
+    "id": "DESIGN-STATE-002",
+    "version": "0.1.0",
+    "domain": "software-design",
+    "status": "draft",
+    "title": "명시적 상태 전이",
+    "appliesWhen": [
+      "진행·실패·재시도·완료 상태를 저장한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "가능한 전이를 정의하고 불가능한 전이를 거부한다.",
+    "invariant": "완료·검증·미실행 상태가 혼동되지 않는다.",
+    "failureModes": [
+      "NOT_RUN 결과가 empty findings 때문에 PASS로 바뀐다."
+    ],
+    "decisionQuestions": [
+      "최종 상태에서 재개가 가능한 조건은 무엇인가?",
+      "중복 이벤트는 어떻게 처리하는가?"
+    ],
+    "verificationObligations": [
+      "전이 표의 허용·거부 간선을 모두 검사하고 replay·stale 상태를 추가한다."
+    ],
+    "nonGoals": [
+      "불필요한 상태를 늘려 읽기 어렵게 만들지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  },
+  {
+    "id": "DESIGN-COMPAT-003",
+    "version": "0.1.0",
+    "domain": "software-design",
+    "status": "draft",
+    "title": "계약 버전과 호환성",
+    "appliesWhen": [
+      "입출력·저장 schema를 확장한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "허용 필드·버전·의미 변경을 명시적으로 분기한다.",
+    "invariant": "구버전 경로가 새 필수 조건을 조용히 제거하거나 우회하지 않는다.",
+    "failureModes": [
+      "알 수 없는 필드를 버리고 요청을 구버전 형식으로 재시도한다."
+    ],
+    "decisionQuestions": [
+      "추가 필드가 서명·digest·재개에 보존되는가?",
+      "기존 데이터 읽기는 가능한가?"
+    ],
+    "verificationObligations": [
+      "구·신 버전 교차 입력과 필드 손실·stale revision·downgrade를 시험한다."
+    ],
+    "nonGoals": [
+      "모든 계약의 버전을 한꺼번에 올리지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  },
+  {
+    "id": "DESIGN-MINIMAL-004",
+    "version": "0.1.0",
+    "domain": "software-design",
+    "status": "draft",
+    "title": "불변조건을 만족하는 최소 변경",
+    "appliesWhen": [
+      "여러 구현 대안 중 선택한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "필수 정확성·권한·검증을 보존한 채 복잡도를 최소화한다.",
+    "invariant": "불필요한 서비스·의존성 없이 동결된 요구를 충족한다.",
+    "failureModes": [
+      "단순함을 이유로 재시도 정합성·감사·검증을 삭제한다."
+    ],
+    "decisionQuestions": [
+      "기존 기능으로 해결할 수 있는가?",
+      "대안별 실패 범위와 운영 비용은 무엇인가?"
+    ],
+    "verificationObligations": [
+      "필수 조건과 변경 범위를 대조하고 미채택 대안의 실제 필요성을 검토한다."
+    ],
+    "nonGoals": [
+      "권고를 gate로 승격해 사용자 범위를 확대하지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  }
+]

@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "checkpoint-context",
+    "restore-context"
+  ],
+  "targets": [
+    "direct-task-context"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "capabilities": [
+    "direct-context-continuity"
+  ],
+  "applicability": [
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:338dec78ba593585a046887c411a3aacd3c12c4d601e052ef71f912593266330",
+      "startByte": 0,
+      "endByte": 216
+    },
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:338dec78ba593585a046887c411a3aacd3c12c4d601e052ef71f912593266330",
+      "startByte": 0,
+      "endByte": 77
+    },
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "startLine": 17,
+      "endLine": 25,
+      "digest": "sha256:338dec78ba593585a046887c411a3aacd3c12c4d601e052ef71f912593266330",
+      "startByte": 0,
+      "endByte": 409
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:338dec78ba593585a046887c411a3aacd3c12c4d601e052ef71f912593266330",
+      "startByte": 217,
+      "endByte": 305
+    },
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:338dec78ba593585a046887c411a3aacd3c12c4d601e052ef71f912593266330",
+      "startByte": 78,
+      "endByte": 256
+    },
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "startLine": 15,
+      "endLine": 15,
+      "digest": "sha256:338dec78ba593585a046887c411a3aacd3c12c4d601e052ef71f912593266330",
+      "startByte": 0,
+      "endByte": 196
+    },
+    {
+      "path": "skills/context-continuity/SKILL.md",
+      "startLine": 27,
+      "endLine": 27,
+      "digest": "sha256:338dec78ba593585a046887c411a3aacd3c12c4d601e052ef71f912593266330",
+      "startByte": 0,
+      "endByte": 323
+    }
+  ]
+}

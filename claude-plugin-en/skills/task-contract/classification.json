@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "define-task-contract"
+  ],
+  "targets": [
+    "user-request",
+    "instructions",
+    "acceptance-criteria"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/task-contract/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:3978551c31daa62bc88893621ad05fd8f86a5e3e06df2b2b6a4d6d72721bfef2",
+      "startByte": 0,
+      "endByte": 197
+    },
+    {
+      "path": "skills/task-contract/SKILL.md",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:3978551c31daa62bc88893621ad05fd8f86a5e3e06df2b2b6a4d6d72721bfef2",
+      "startByte": 0,
+      "endByte": 88
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/task-contract/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:3978551c31daa62bc88893621ad05fd8f86a5e3e06df2b2b6a4d6d72721bfef2",
+      "startByte": 198,
+      "endByte": 321
+    },
+    {
+      "path": "skills/task-contract/SKILL.md",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:3978551c31daa62bc88893621ad05fd8f86a5e3e06df2b2b6a4d6d72721bfef2",
+      "startByte": 89,
+      "endByte": 174
+    }
+  ]
+}

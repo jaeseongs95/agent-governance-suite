@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/korean-prose-editor/source-unit-manifest.v1.schema.json",
+  "title": "Private deterministic source unit manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sourceDigest", "sourceLength", "units"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "sourceDigest": { "$ref": "#/$defs/digest" },
+    "sourceLength": { "type": "integer", "minimum": 0 },
+    "units": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["unitId", "start", "end", "kind", "digest", "protectedSpanIds"],
+        "properties": {
+          "unitId": { "type": "string", "pattern": "^unit-[0-9]{4,}$" },
+          "start": { "type": "integer", "minimum": 0 },
+          "end": { "type": "integer", "minimum": 0 },
+          "kind": { "enum": ["prose", "fenced-code"] },
+          "digest": { "$ref": "#/$defs/digest" },
+          "protectedSpanIds": { "type": "array", "items": { "type": "string", "pattern": "^span-[0-9]{4,}$" }, "uniqueItems": true }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

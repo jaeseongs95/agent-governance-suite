@@ -1,0 +1,6 @@
+interface:
+  display_name: "소프트웨어 보안 감사"
+  short_description: "공격 경로와 방어 통제를 확인하고 취약점·근거·검사 공백을 보고합니다"
+  default_prompt: "Use $software-security-auditor to audit the source and configuration within the authorized scope."
+policy:
+  allow_implicit_invocation: true

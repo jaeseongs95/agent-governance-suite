@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operationId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requestDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "inventoryDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "SUCCESS",
+        "PARTIAL",
+        "UNAVAILABLE",
+        "INVALID",
+        "UNCERTAIN"
+      ]
+    },
+    "judgments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "skillId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "judgment": {
+            "type": "string",
+            "enum": [
+              "needed",
+              "not-needed",
+              "uncertain"
+            ]
+          },
+          "reasonRefs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "uncertaintyReason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "skillId",
+          "judgment",
+          "reasonRefs",
+          "uncertaintyReason"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "unresolvedItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "skillId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reasonCode": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "skillId",
+          "reasonCode"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "retryable": {
+              "type": "boolean"
+            },
+            "dispatchState": {
+              "type": "string",
+              "enum": [
+                "not-started",
+                "started",
+                "unknown"
+              ]
+            }
+          },
+          "required": [
+            "code",
+            "retryable",
+            "dispatchState"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "operationId",
+    "requestDigest",
+    "inventoryDigest",
+    "status",
+    "judgments",
+    "unresolvedItems",
+    "error"
+  ],
+  "additionalProperties": false,
+  "$id": "https://agent-governance.local/skill-classification-response.v1.schema.json"
+}

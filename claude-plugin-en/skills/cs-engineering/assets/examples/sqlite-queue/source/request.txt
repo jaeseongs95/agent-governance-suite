@@ -1,0 +1,1 @@
+Reference scenario: several local processes claim a SQLite task queue. A valid generation may publish its result while its lease is live. A stale or expired owner must not overwrite a result. External side effects and multi-host shared filesystems are out of scope.

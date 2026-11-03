@@ -1,0 +1,220 @@
+{
+  "schemaVersion": "3.0.0",
+  "sources": [
+    {
+      "skillId": "coordinate-subagents",
+      "path": "skills/coordinate-subagents",
+      "version": "1.1.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:f6b0b5076bb8a04e9579c1cf747915c20388659425b98aca61396ec4cee7fbd3",
+      "checksumScope": "relative paths and normalized text bytes under skills/coordinate-subagents"
+    },
+    {
+      "skillId": "independent-audit-gate",
+      "path": "skills/independent-audit-gate",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:cb64400b887acd81e5420f6e13076cbfb412aeb939f09a04393344b252b44030",
+      "checksumScope": "relative paths and normalized text bytes under skills/independent-audit-gate"
+    },
+    {
+      "skillId": "independent-deliberation-panel",
+      "path": "skills/independent-deliberation-panel",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:b390723d316267ad45f2bd42ffcadd425518b5f2d375f4d397ea3d2c81fbeb42",
+      "checksumScope": "relative paths and normalized text bytes under skills/independent-deliberation-panel"
+    },
+    {
+      "skillId": "task-contract",
+      "path": "skills/task-contract",
+      "version": "1.1.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:2f1f654677758781b846bf761dfff545b10a4973011b037629bc94f4778128a0",
+      "checksumScope": "relative paths and normalized text bytes under skills/task-contract"
+    },
+    {
+      "skillId": "acceptance-evidence-validator",
+      "path": "skills/acceptance-evidence-validator",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:f92e5c0874dcba1ddfe8f70338c85612c83ef0f57f960f723c2bb8c0b527029b",
+      "checksumScope": "relative paths and normalized text bytes under skills/acceptance-evidence-validator"
+    },
+    {
+      "skillId": "blocker-diagnostician",
+      "path": "skills/blocker-diagnostician",
+      "version": "1.1.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:846da6db21961fbeff96f6fbd8177393061c0ec4d38b8182b6f57d15af7e0ffc",
+      "checksumScope": "relative paths and normalized text bytes under skills/blocker-diagnostician"
+    },
+    {
+      "skillId": "workspace-convention-profiler",
+      "path": "skills/workspace-convention-profiler",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:cc552a64e9b56a4b88209c5d65251b4336173dc5de6594c05ad56b6b2f5ae8ba",
+      "checksumScope": "relative paths and normalized text bytes under skills/workspace-convention-profiler"
+    },
+    {
+      "skillId": "mutation-risk-preflight",
+      "path": "skills/mutation-risk-preflight",
+      "version": "1.0.3",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:1483d709f21de2e0bb9899f57bb1df1b6a5c20bb4a5a035092691c79e0f4d399",
+      "checksumScope": "relative paths and normalized text bytes under skills/mutation-risk-preflight"
+    },
+    {
+      "skillId": "instruction-scope-resolver",
+      "path": "skills/instruction-scope-resolver",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:c4a808e75b49b7a6ce0cbbafa9779a3664be270ef42b370bc23c78ee4aa0e01c",
+      "checksumScope": "relative paths and normalized text bytes under skills/instruction-scope-resolver"
+    },
+    {
+      "skillId": "change-scope-guardian",
+      "path": "skills/change-scope-guardian",
+      "version": "1.0.0",
+      "versionSource": "version-file",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:9a3c8b0350bc673b453f55d4021801196637225d3d48601e55839d31dc0fd18e",
+      "checksumScope": "relative paths and normalized text bytes under skills/change-scope-guardian"
+    },
+    {
+      "skillId": "model-effort-advisor",
+      "path": "skills/model-effort-advisor",
+      "version": "0.1.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:5d8e68677c108410102a355fd5663428ee9ab706ee2270a2b5187bd420715611",
+      "checksumScope": "relative paths and normalized text bytes under skills/model-effort-advisor"
+    },
+    {
+      "skillId": "iteration-frame-auditor",
+      "path": "skills/iteration-frame-auditor",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:f672974e999b11e1c06115f44b16f3a1d25bb14a4413336bc9d1bd4f6485b9e3",
+      "checksumScope": "relative paths and normalized text bytes under skills/iteration-frame-auditor"
+    },
+    {
+      "skillId": "recovery-strategy-selector",
+      "path": "skills/recovery-strategy-selector",
+      "version": "0.2.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:4c612cc64fe4001a1d4cc284a59c0c4a1c59c08c9015aafd6d6f9730bd679e28",
+      "checksumScope": "relative paths and normalized text bytes under skills/recovery-strategy-selector"
+    },
+    {
+      "skillId": "korean-prose-editor",
+      "path": "skills/korean-prose-editor",
+      "version": "0.1.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:ccc1f8db1184be2d1e3170c6e095faa6f1ef7bca1df77820a5785919221c40c4",
+      "checksumScope": "relative paths and normalized text bytes under skills/korean-prose-editor"
+    },
+    {
+      "skillId": "evaluation-validity-auditor",
+      "path": "skills/evaluation-validity-auditor",
+      "version": "1.0.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:b437700e65e27321111eadb4bdfb740adccc30e64518fe94a9fc78b1878fac97",
+      "checksumScope": "relative paths and normalized text bytes under skills/evaluation-validity-auditor"
+    },
+    {
+      "skillId": "ponytail",
+      "path": "skills/ponytail",
+      "source": "https://github.com/DietrichGebert/ponytail.git",
+      "sourcePath": "skills/ponytail",
+      "version": "4.10.0",
+      "versionSource": "version-file",
+      "ref": {
+        "kind": "commit",
+        "value": "83b2cbc3bc50df3030c49d1dfe598ccefe850a85",
+        "commit": "83b2cbc3bc50df3030c49d1dfe598ccefe850a85"
+      },
+      "updatePolicy": "notify-only",
+      "upstreamChecksum": "sha256:995cb2e7021987093a4f376e4e7d2801fcfc3f3c4cd5a5fc9fbb4fff2ee4d450",
+      "integratedChecksum": "sha256:1355d79be1c75208c96d079dc19777d79f579a0f57aecc5838d8431f9f9d6e25",
+      "checksumScope": "relative paths and normalized text bytes under skills/ponytail",
+      "downstreamModifications": [
+        "Drop the argument-hint frontmatter key, which the Codex skill validator rejects; the Claude overlay restores it.",
+        "Add agents/openai.yaml with the display name and implicit-invocation policy used by the other suite skills.",
+        "Add LICENSE copied from the upstream repository root, which the skill directory does not carry.",
+        "Remove reviewing from the description's coding-task list and exclude code review, audits, verification, and completion checks, so implicit invocation does not load the skill during governance review stages.",
+        "Scope persistence to responses that write or change code, and replace the Boundaries paragraph so reviews, audits, verification, completion reports and non-coding answers are excluded, user, project and repository instructions override the Output and test rules, requested behavior and acceptance criteria are never cut, and the Caveman pairing, which the suite does not ship, is dropped. Clarify the existing bug-fix paragraph with derived code-mirroring lists or completeness checks, intentional allowlist/test-table and line-local typo exceptions; preserve original-failure verification and diagnostic errors. Explicit disable/user overrides precede implicit or mandatory-first use; later explicit use stays request-scoped. No separate defect gate or mandatory commit format is added.",
+        "Originally imported from https://github.com/jaeseongs95/ponytail.git at commit 83b2cbc3bc50df3030c49d1dfe598ccefe850a85. After that URI became unavailable, verify the same commit and upstream checksum through https://github.com/DietrichGebert/ponytail.git. Future stable-tag notifications now use this public upstream; notify-only policy and automaticInstall: false remain unchanged.",
+        "Replace shortest-patch, reduced-scope and one-test defaults with the smallest complete solution, original-failure evidence and authorized test-environment rules; preserve caller invariants and explicit user overrides, and apply the shared specialist behavior standard."
+      ]
+    },
+    {
+      "skillId": "software-security-auditor",
+      "path": "skills/software-security-auditor",
+      "version": "0.1.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:1f855047354c5b610d4a48eb7f8c8773d70b73daeacb09678974fb070323951d",
+      "checksumScope": "relative paths and normalized text bytes under skills/software-security-auditor"
+    },
+    {
+      "skillId": "cs-engineering",
+      "path": "skills/cs-engineering",
+      "version": "0.2.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:fd7cefcedac96f123a323530ef47916de6ed4e605391f792fe0363b6970841cb",
+      "checksumScope": "relative paths and normalized text bytes under skills/cs-engineering"
+    },
+    {
+      "skillId": "test-engineering",
+      "path": "skills/test-engineering",
+      "version": "0.1.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:c81d358033ecd5433167bc208258fef0a143f57987eeb51dbbf917245d1433e9",
+      "checksumScope": "relative paths and normalized text bytes under skills/test-engineering"
+    },
+    {
+      "skillId": "code-review",
+      "path": "skills/code-review",
+      "version": "0.1.0",
+      "versionSource": "skill-metadata",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:8de3269c8ff18f73e038967664be9baa1ae5b86ddc06a1e58b85ab8fac6aa12c",
+      "checksumScope": "relative paths and normalized text bytes under skills/code-review"
+    },
+    {
+      "skillId": "solid-design",
+      "path": "skills/solid-design",
+      "version": "0.1.0",
+      "versionSource": "version-file",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:0998891ffd0b24b0361236b48fe1febccfe4afc93bc71c75ab7afcc48585dc3b",
+      "checksumScope": "relative paths and normalized text bytes under skills/solid-design"
+    },
+    {
+      "skillId": "prompt-engineering",
+      "path": "skills/prompt-engineering",
+      "version": "0.1.0",
+      "versionSource": "version-file",
+      "updatePolicy": "internal",
+      "integratedChecksum": "sha256:e3e2b4748731ee6abf130f8c6b468ac2327cb6c22dd0627e064559b483a8bda7",
+      "checksumScope": "relative paths and normalized text bytes under skills/prompt-engineering"
+    }
+  ]
+}

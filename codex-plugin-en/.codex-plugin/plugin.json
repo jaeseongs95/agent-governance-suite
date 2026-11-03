@@ -1,0 +1,47 @@
+{
+  "id": "agent-governance-suite",
+  "name": "agent-governance-suite",
+  "version": "3.3.0",
+  "description": "Route governance and engineering specialists through declarative provider contracts, a local MCP convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
+  "author": {
+    "name": "jaeseongs95",
+    "url": "https://github.com/jaeseongs95"
+  },
+  "homepage": "https://github.com/jaeseongs95/agent-governance-suite",
+  "repository": "https://github.com/jaeseongs95/agent-governance-suite",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "governance",
+    "orchestration",
+    "audit",
+    "scope",
+    "evidence"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Agent Governance Suite",
+    "shortDescription": "전문 스킬과 감사 흐름을 조정합니다",
+    "longDescription": "전문 스킬의 책임을 유지하면서 요청을 분류하고, 실행 순서와 증거를 연결하는 거버넌스 플러그인입니다.",
+    "developerName": "jaeseongs95",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Skill routing",
+      "MCP coordination",
+      "Convergence attempt gating",
+      "Local task continuity",
+      "Audit gating",
+      "Scope and evidence validation",
+      "Mutation preflight",
+      "Test engineering",
+      "Code review",
+      "MCP-assisted Korean prose workflow",
+      "Semantic execution assurance"
+    ],
+    "websiteURL": "https://github.com/jaeseongs95/agent-governance-suite",
+    "defaultPrompt": [
+      "Use $orchestrator to route this governance request to the appropriate installed skills."
+    ]
+  }
+}

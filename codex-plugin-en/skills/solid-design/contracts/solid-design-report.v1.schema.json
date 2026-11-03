@@ -1,0 +1,308 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/skills/solid-design/contracts/solid-design-report.v1.schema.json",
+  "title": "SolidDesignReport.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "requestDigest",
+    "snapshotRef",
+    "status",
+    "summary",
+    "principlesConsidered",
+    "scope",
+    "findings",
+    "limitations",
+    "handoffs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requestDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "snapshotRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "ANALYZED",
+        "NOT_APPLICABLE",
+        "NEEDS_INPUT"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "principlesConsidered": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "SRP",
+          "OCP",
+          "LSP",
+          "ISP",
+          "DIP"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reviewed",
+        "notReviewed"
+      ],
+      "properties": {
+        "reviewed": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "notReviewed": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "principles",
+          "target",
+          "evidenceRefs",
+          "observation",
+          "reasoning",
+          "contractRefs",
+          "recommendation",
+          "preserve",
+          "verificationNeeds",
+          "relatedFindingRefs"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "contract-violation",
+              "design-recommendation",
+              "preserve-boundary"
+            ]
+          },
+          "principles": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "SRP",
+                "OCP",
+                "LSP",
+                "ISP",
+                "DIP"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidenceRefs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true,
+            "minItems": 1
+          },
+          "observation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reasoning": {
+            "type": "string",
+            "minLength": 1
+          },
+          "contractRefs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "recommendation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "preserve": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "verificationNeeds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "relatedFindingRefs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "contract-violation"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "contractRefs": {
+                  "minItems": 1
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "handoffs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "owner",
+          "reason",
+          "artifactRefs"
+        ],
+        "properties": {
+          "owner": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "artifactRefs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ANALYZED"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "principlesConsidered": {
+            "minItems": 1
+          },
+          "scope": {
+            "properties": {
+              "reviewed": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "NOT_APPLICABLE"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "principlesConsidered": {
+            "maxItems": 0
+          },
+          "findings": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "NEEDS_INPUT"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "limitations": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

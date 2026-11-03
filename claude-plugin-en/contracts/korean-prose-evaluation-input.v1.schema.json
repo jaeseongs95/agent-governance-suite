@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/korean-prose-evaluation-input.v1.schema.json",
+  "title": "KoreanProseEvaluationInput.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "sourceText"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "sourceText": { "type": "string", "minLength": 1 },
+    "protectedStrings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

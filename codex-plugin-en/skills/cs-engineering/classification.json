@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "derive-cs-constraints",
+    "review-cs-behavior"
+  ],
+  "targets": [
+    "concurrency",
+    "database",
+    "messaging",
+    "algorithms",
+    "resource-lifetime",
+    "performance"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 3,
+      "endLine": 7,
+      "digest": "sha256:624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51",
+      "startByte": 0,
+      "endByte": 381
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 19,
+      "endLine": 22,
+      "digest": "sha256:624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51",
+      "startByte": 0,
+      "endByte": 305
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 25,
+      "endLine": 27,
+      "digest": "sha256:624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51",
+      "startByte": 0,
+      "endByte": 269
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 33,
+      "endLine": 33,
+      "digest": "sha256:624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51",
+      "startByte": 0,
+      "endByte": 70
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 7,
+      "endLine": 9,
+      "digest": "sha256:624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51",
+      "startByte": 57,
+      "endByte": 346
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 23,
+      "endLine": 23,
+      "digest": "sha256:624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51",
+      "startByte": 0,
+      "endByte": 80
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 28,
+      "endLine": 29,
+      "digest": "sha256:624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51",
+      "startByte": 0,
+      "endByte": 169
+    },
+    {
+      "path": "skills/cs-engineering/SKILL.md",
+      "startLine": 33,
+      "endLine": 33,
+      "digest": "sha256:624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51",
+      "startByte": 71,
+      "endByte": 120
+    }
+  ]
+}

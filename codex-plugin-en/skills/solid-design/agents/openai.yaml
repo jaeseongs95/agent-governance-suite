@@ -1,0 +1,4 @@
+interface:
+  display_name: "SOLID 설계 원칙"
+  short_description: "AGS 기존 계약을 보존하며 SOLID 경계와 최소 설계를 판단"
+  default_prompt: "$solid-design을 사용해 현재 요구와 코드의 SOLID 설계 경계를 검토하고 최소 변경 방향을 제시해줘."

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/korean-prose-quality-adjudication-input.v1.schema.json",
+  "title": "KoreanProseQualityAdjudicationInput.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "run", "caseId", "sourceText", "finalText"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "run": { "type": "integer", "minimum": 1 },
+    "caseId": { "type": "string", "minLength": 1 },
+    "sourceText": { "type": "string", "minLength": 1 },
+    "finalText": { "type": "string", "minLength": 1 }
+  }
+}

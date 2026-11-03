@@ -1,0 +1,6 @@
+interface:
+  display_name: "test-engineering"
+  short_description: "요구와 결함에 연결된 테스트 설계·회귀 보호"
+  default_prompt: "Use $test-engineering for the requested scope, preserve AGS ownership, and report unverified items."
+policy:
+  allow_implicit_invocation: true

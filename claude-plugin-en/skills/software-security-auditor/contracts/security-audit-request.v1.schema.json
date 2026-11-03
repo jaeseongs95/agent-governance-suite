@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-suite.local/software-security-auditor/security-audit-request.v1.schema.json",
+  "title": "SecurityAuditRequest.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "target",
+    "mode",
+    "profiles",
+    "excluded",
+    "environment",
+    "authorization",
+    "checks",
+    "providedEvidence"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identifier",
+        "baseRef",
+        "files"
+      ],
+      "properties": {
+        "identifier": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseRef": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "digest"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^sha256:[a-f0-9]{64}$"
+              }
+            }
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "mode": {
+      "enum": [
+        "repository",
+        "diff"
+      ]
+    },
+    "profiles": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "web-api",
+          "cli-mcp"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "excluded": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "environment": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "localReproduction",
+        "constraints"
+      ],
+      "properties": {
+        "localReproduction": {
+          "type": "boolean"
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "description"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "providedEvidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "digest"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          }
+        }
+      },
+      "minItems": 0
+    }
+  }
+}

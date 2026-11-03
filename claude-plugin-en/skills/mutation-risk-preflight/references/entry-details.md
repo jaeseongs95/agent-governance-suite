@@ -1,0 +1,17 @@
+## 불변조건
+
+- 삭제·배포·마이그레이션을 비롯한 mutation 명령이나 외부 도구를 호출하지 않는다.
+- 사용자의 요청을 별도 승인으로 바꾸거나, 과거 승인을 현재 대상에 맞는 것으로 추정하지 않는다. 승인 근거는 요청자와 다른 사용자 본인의 결정이어야 하며, 요청한 에이전트가 승인자 도구나 저장된 사용자 로그인으로 승인을 직접 실행한 `approve` 호출은 승인 근거로 인정하지 않고 `NEEDS_APPROVAL`로 판정한다.
+- 광범위한 glob, 해석되지 않은 환경변수, `~`, 홈·filesystem·drive·저장소 루트 전체는 `READY`로 판정하지 않는다.
+- 대상, 환경, 범위, 권한, 승인, 현재 상태, 복구 계획, 영향 범위나 행동이 바뀌면 기존 receipt를 무효화한다.
+- 사전점검 결과를 변경 후 독립 감사나 릴리스 판정으로 사용하지 않는다.
+- `NEEDS_REDESIGN`의 복구·효과 근거 부족을 승인 부족으로 바꾸지 않는다. 동일 행동의 기존 유효 승인은 보존하고, 실제로 달라지는 범위·권한·완료 조건만 구분한다. 생성 전에는 존재하지 않는 동일 객체의 복원 시험을 이미 했다고 요구하거나 기록하지 말고, 실제 효과에 맞는 신규 준비 계약과 생성 후 시험을 구분한다.
+
+## 절차
+
+1. `MutationIntent.v1`에서 operation, action, 정확한 target과 현재 fingerprint를 확인한다.
+2. [위험 분류](risk-matrix.md)에서 행동별 필수 승인과 복구 조건을 확인한다.
+3. [승인·권한 규칙](approval-and-authority.md)에 따라 근거가 같은 operation, action, target, environment를 가리키는지 대조한다.
+4. [복구 요건](recovery-requirements.md)에 따라 backup 존재와 restore 검증을 구분한다.
+5. `scripts/evaluate-preflight.mjs`로 `MutationPreflightReport.v1`과 action·target digest를 만든다.
+6. 실제 변경을 수행할 주체는 직전에 대상의 현재 상태를 다시 관측해 그 fingerprint를 intent에 넣고, `scripts/verify-preflight-receipt.mjs`로 receipt와 그 intent가 같은지 확인해야 한다. 검증기는 실제 대상을 읽지 않으므로, 다시 관측하지 않은 intent로 받은 `valid`는 현재 상태를 증명하지 않는다. 검증기는 원 `observedAt` 시점으로 보고서 전체를 재생성해 비교하고, 현재 시점으로 다시 평가해 행동·대상·환경·승인·fingerprint·복구 계획·영향 범위가 그대로인지 확인한다. 시간 경과만으로는 receipt를 거부하지 않는다. 승인 증거 자체의 `expiresAt`은 그대로 적용된다.

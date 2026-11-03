@@ -1,0 +1,1 @@
+This is an authored example for CS Engineering, not a description of an existing AGS bug. The example environment uses Python sqlite3, separate spawned processes and a local temporary database. Injected integer times keep lease tests deterministic.

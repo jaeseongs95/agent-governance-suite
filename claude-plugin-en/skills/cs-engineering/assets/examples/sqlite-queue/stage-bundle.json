@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "binding": {
+    "path": "binding.json",
+    "digest": "sha256:7ccdbc9e9424ef07173d87c5f51141e1ef03cef4c4c99832a5e6f92c296d980e"
+  },
+  "task": {
+    "path": "task.json",
+    "digest": "sha256:ad26674fd4324e8d8aea7eb41ee818872233cada9012e9ad95eca02b84ec6bb2"
+  },
+  "policy": {
+    "path": "policy.json",
+    "digest": "sha256:84e0ca731600b904f372c7754a3052a3fcc0345710cedf4bde2239de268ceb31"
+  },
+  "review": {
+    "path": "review.json",
+    "digest": "sha256:51980b33e88751281be8c7e46ebe6d57b8fbcefc7dab23494549c916f244cff3"
+  },
+  "candidate": {
+    "path": "candidate.json",
+    "digest": "sha256:420efbcde3bfae38adc317a795528af681c95649d73c739c5065af0f6446baa5"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "assess-model-effort-fit"
+  ],
+  "targets": [
+    "observed-current-model",
+    "observed-reasoning-effort"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595",
+      "startByte": 0,
+      "endByte": 211
+    },
+    {
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595",
+      "startByte": 0,
+      "endByte": 96
+    },
+    {
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "startLine": 15,
+      "endLine": 19,
+      "digest": "sha256:f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595",
+      "startByte": 0,
+      "endByte": 378
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595",
+      "startByte": 212,
+      "endByte": 351
+    },
+    {
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595",
+      "startByte": 97,
+      "endByte": 263
+    },
+    {
+      "path": "skills/model-effort-advisor/SKILL.md",
+      "startLine": 21,
+      "endLine": 21,
+      "digest": "sha256:f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595",
+      "startByte": 0,
+      "endByte": 322
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "read-only-iteration-frame-audit"
+  ],
+  "targets": [
+    "invariant-contract",
+    "iteration-frame"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:b7ac836ba1d362d85450a62ffd3470fc21652389caa600b1bafdd52245ce4162",
+      "startByte": 0,
+      "endByte": 151
+    },
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "startLine": 12,
+      "endLine": 12,
+      "digest": "sha256:b7ac836ba1d362d85450a62ffd3470fc21652389caa600b1bafdd52245ce4162",
+      "startByte": 0,
+      "endByte": 129
+    },
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "startLine": 18,
+      "endLine": 21,
+      "digest": "sha256:b7ac836ba1d362d85450a62ffd3470fc21652389caa600b1bafdd52245ce4162",
+      "startByte": 0,
+      "endByte": 218
+    },
+    {
+      "path": "skills/iteration-frame-auditor/references/entry-details.md",
+      "startLine": 30,
+      "endLine": 30,
+      "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432",
+      "startByte": 0,
+      "endByte": 9
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "startLine": 3,
+      "endLine": 3,
+      "digest": "sha256:b7ac836ba1d362d85450a62ffd3470fc21652389caa600b1bafdd52245ce4162",
+      "startByte": 152,
+      "endByte": 252
+    },
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "startLine": 12,
+      "endLine": 12,
+      "digest": "sha256:b7ac836ba1d362d85450a62ffd3470fc21652389caa600b1bafdd52245ce4162",
+      "startByte": 130,
+      "endByte": 294
+    },
+    {
+      "path": "skills/iteration-frame-auditor/SKILL.md",
+      "startLine": 22,
+      "endLine": 22,
+      "digest": "sha256:b7ac836ba1d362d85450a62ffd3470fc21652389caa600b1bafdd52245ce4162",
+      "startByte": 0,
+      "endByte": 117
+    },
+    {
+      "path": "skills/iteration-frame-auditor/references/entry-details.md",
+      "startLine": 32,
+      "endLine": 32,
+      "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432",
+      "startByte": 0,
+      "endByte": 102
+    },
+    {
+      "path": "skills/iteration-frame-auditor/references/entry-details.md",
+      "startLine": 33,
+      "endLine": 33,
+      "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432",
+      "startByte": 0,
+      "endByte": 107
+    },
+    {
+      "path": "skills/iteration-frame-auditor/references/entry-details.md",
+      "startLine": 34,
+      "endLine": 34,
+      "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432",
+      "startByte": 0,
+      "endByte": 110
+    },
+    {
+      "path": "skills/iteration-frame-auditor/references/entry-details.md",
+      "startLine": 35,
+      "endLine": 35,
+      "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432",
+      "startByte": 0,
+      "endByte": 116
+    },
+    {
+      "path": "skills/iteration-frame-auditor/references/entry-details.md",
+      "startLine": 36,
+      "endLine": 36,
+      "digest": "sha256:e24b38f7ef5af28b09fb063df5438d98fa4e354dd165c00ebaae4463fe279432",
+      "startByte": 0,
+      "endByte": 172
+    }
+  ]
+}

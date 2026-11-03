@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/attempt-outcome.v1.schema.json",
+  "title": "AttemptOutcome.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "outcomeId", "rootId", "rootRevision", "leaseId", "epoch", "ordinal", "workflowRunId", "state", "receiptDigest", "failureFingerprint", "evidenceRefs", "recordedAt"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "outcomeId": { "type": "string", "minLength": 1 },
+    "rootId": { "type": "string", "minLength": 1 },
+    "rootRevision": { "type": "integer", "minimum": 0 },
+    "leaseId": { "type": "string", "minLength": 1 },
+    "epoch": { "type": "integer", "minimum": 1, "maximum": 2 },
+    "ordinal": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "workflowRunId": { "type": "string", "minLength": 1 },
+    "state": { "enum": ["passed", "failed", "aborted"] },
+    "receiptDigest": {
+      "oneOf": [
+        { "$ref": "#/$defs/digest" },
+        { "type": "null" }
+      ]
+    },
+    "failureFingerprint": { "type": ["string", "null"], "minLength": 1 },
+    "evidenceRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "recordedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0.0",
+  "taxonomyRevision": "1.0.0",
+  "actions": [
+    "implement-minimal-code",
+    "design-minimal-code",
+    "choose-dependencies"
+  ],
+  "targets": [
+    "code",
+    "libraries",
+    "dependencies"
+  ],
+  "constraints": [],
+  "dependencies": [],
+  "applicability": [
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 3,
+      "endLine": 12,
+      "digest": "sha256:705c6f5aeff30330a5de661b4a28370a0e071e5fecd76cc6e8e88b074a96c250",
+      "startByte": 0,
+      "endByte": 769
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 53,
+      "endLine": 63,
+      "digest": "sha256:705c6f5aeff30330a5de661b4a28370a0e071e5fecd76cc6e8e88b074a96c250",
+      "startByte": 0,
+      "endByte": 810
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 127,
+      "endLine": 133,
+      "digest": "sha256:705c6f5aeff30330a5de661b4a28370a0e071e5fecd76cc6e8e88b074a96c250",
+      "startByte": 0,
+      "endByte": 531
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 137,
+      "endLine": 137,
+      "digest": "sha256:705c6f5aeff30330a5de661b4a28370a0e071e5fecd76cc6e8e88b074a96c250",
+      "startByte": 0,
+      "endByte": 297
+    }
+  ],
+  "exclusions": [
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 12,
+      "endLine": 15,
+      "digest": "sha256:705c6f5aeff30330a5de661b4a28370a0e071e5fecd76cc6e8e88b074a96c250",
+      "startByte": 0,
+      "endByte": 242
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 30,
+      "endLine": 30,
+      "digest": "sha256:705c6f5aeff30330a5de661b4a28370a0e071e5fecd76cc6e8e88b074a96c250",
+      "startByte": 0,
+      "endByte": 523
+    },
+    {
+      "path": "skills/ponytail/SKILL.md",
+      "startLine": 139,
+      "endLine": 144,
+      "digest": "sha256:705c6f5aeff30330a5de661b4a28370a0e071e5fecd76cc6e8e88b074a96c250",
+      "startByte": 0,
+      "endByte": 528
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+[
+  {
+    "id": "OS-LIFETIME-001",
+    "version": "0.1.0",
+    "domain": "operating-systems",
+    "status": "draft",
+    "title": "자원 수명과 단일 책임",
+    "appliesWhen": [
+      "파일·프로세스·락·소켓을 확보한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "획득과 해제의 책임·범위를 짝지어라.",
+    "invariant": "정상·오류·취소 경로 모두에서 자신이 소유한 자원을 회수한다.",
+    "failureModes": [
+      "예외 경로가 close·unlock·child 종료를 건너뛴다."
+    ],
+    "decisionQuestions": [
+      "소유권이 언제 이전되는가?",
+      "부모 종료 후 자식이 남는가?"
+    ],
+    "verificationObligations": [
+      "획득 직후와 사용 중 오류를 주입해 핸들·락·자식 프로세스 잔존을 확인한다."
+    ],
+    "nonGoals": [
+      "다른 작업의 프로세스나 파일을 일괄 정리하지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  },
+  {
+    "id": "OS-PUBLISH-002",
+    "version": "0.1.0",
+    "domain": "operating-systems",
+    "status": "draft",
+    "title": "파일 게시와 내구성",
+    "appliesWhen": [
+      "설정·체크포인트·보고서를 파일로 교체한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "완전한 내용의 게시와 장애 후 내구성을 분리한다.",
+    "invariant": "독자는 완성된 구버전 또는 신버전만 읽고 중간 JSON을 읽지 않는다.",
+    "failureModes": [
+      "대상 파일에 직접 쓰다가 중단되어 절반 JSON이 남는다."
+    ],
+    "decisionQuestions": [
+      "같은 파일시스템인가?",
+      "rename의 플랫폼 의미와 flush 요구는 무엇인가?"
+    ],
+    "verificationObligations": [
+      "같은 디렉터리 임시 파일·검증·원자 교체 경로를 확인하고 게시 전후 장애를 시험한다."
+    ],
+    "nonGoals": [
+      "rename만으로 전원 손실 내구성을 보장한다고 하지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  },
+  {
+    "id": "OS-CLOCK-003",
+    "version": "0.1.0",
+    "domain": "operating-systems",
+    "status": "draft",
+    "title": "경과 시간과 벽시계",
+    "appliesWhen": [
+      "timeout·TTL·lease 만료를 계산한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "동일 프로세스 경과 시간과 저장·공유 시간을 구분한다.",
+    "invariant": "시계 보정 때문에 경과 시간 제한이 무한 연장되거나 잘못 만료되지 않는다.",
+    "failureModes": [
+      "벽시계가 뒤로 가서 timeout 조건이 장시간 거짓이 된다."
+    ],
+    "decisionQuestions": [
+      "재시작 후에도 비교 가능한 기준인가?",
+      "다른 호스트의 시계 오차는 허용되는가?"
+    ],
+    "verificationObligations": [
+      "앞뒤 시계 점프와 재시작을 주입해 deadline·lease 의미를 검증한다."
+    ],
+    "nonGoals": [
+      "서로 다른 프로세스의 monotonic 값을 무조건 직접 비교하지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  },
+  {
+    "id": "OS-PATH-004",
+    "version": "0.1.0",
+    "domain": "operating-systems",
+    "status": "draft",
+    "title": "경로와 실제 파일 경계",
+    "appliesWhen": [
+      "외부 입력으로 파일을 열거나 쓰며 허용 root가 있다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "문자열 접두사만으로 파일 접근 경계를 판정하지 않는다.",
+    "invariant": "허용 root 밖 대상·symlink 탈출·장치 파일은 접근 전에 거절한다.",
+    "failureModes": [
+      "/safe와 /safe-evil을 같은 prefix로 허용하거나 symlink를 따라간다."
+    ],
+    "decisionQuestions": [
+      "절대 경로·..·UNC·드라이브·ADS는 어떻게 처리하는가?",
+      "검사와 open 사이 교체는 가능한가?"
+    ],
+    "verificationObligations": [
+      "traversal·symlink·대용량·비정규 파일을 넣고 읽기 전에 거절되는지 확인한다."
+    ],
+    "nonGoals": [
+      "신뢰할 수 없는 사용자가 root를 동시에 교체할 때 완전한 OS sandbox라고 주장하지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "authored guidance; no promotion to the default implicit-selection pool"
+  }
+]

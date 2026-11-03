@@ -1,0 +1,328 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-governance-suite.local/software-security-auditor/security-audit-report.v1.schema.json",
+  "title": "SecurityAuditReport.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "request",
+    "requestDigest",
+    "targetDigest",
+    "status",
+    "threatModel",
+    "checks",
+    "findings",
+    "evidence",
+    "limitations"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "request": {
+      "$ref": "https://agent-governance-suite.local/software-security-auditor/security-audit-request.v1.schema.json"
+    },
+    "requestDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "targetDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "status": {
+      "enum": [
+        "complete",
+        "partial",
+        "blocked"
+      ]
+    },
+    "threatModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assets",
+        "actors",
+        "entrypoints",
+        "trustBoundaries"
+      ],
+      "properties": {
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "actors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "entrypoints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "trustBoundaries": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "status",
+          "evidenceRefs",
+          "observation",
+          "method"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "checked",
+              "not-checked",
+              "not-applicable"
+            ]
+          },
+          "evidenceRefs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 0,
+            "uniqueItems": true
+          },
+          "observation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "method": {
+            "enum": [
+              "static-analysis",
+              "local-reproduction",
+              "not-executed"
+            ]
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "status",
+          "severity",
+          "checkIds",
+          "locations",
+          "preconditions",
+          "attackPath",
+          "impact",
+          "defenseReview",
+          "evidenceRefs",
+          "proof",
+          "remediation",
+          "retest"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "confirmed",
+              "suspected",
+              "refuted"
+            ]
+          },
+          "severity": {
+            "enum": [
+              "critical",
+              "high",
+              "medium",
+              "low",
+              "informational"
+            ]
+          },
+          "checkIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "locations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path",
+                "line"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "line": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            },
+            "minItems": 1
+          },
+          "preconditions": {
+            "type": "string",
+            "minLength": 1
+          },
+          "attackPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "impact": {
+            "type": "string",
+            "minLength": 1
+          },
+          "defenseReview": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidenceRefs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "proof": {
+            "enum": [
+              "static-analysis",
+              "local-reproduction",
+              "unverified"
+            ]
+          },
+          "remediation": {
+            "type": "string",
+            "minLength": 1
+          },
+          "retest": {
+            "type": "string",
+            "minLength": 1
+          },
+          "cvss": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "vector",
+              "rationale"
+            ],
+            "properties": {
+              "vector": {
+                "type": "string",
+                "minLength": 1
+              },
+              "rationale": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      },
+      "minItems": 0
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "digest",
+          "targetDigest",
+          "kind",
+          "description"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          },
+          "targetDigest": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          },
+          "kind": {
+            "enum": [
+              "source",
+              "test",
+              "tool",
+              "advisory",
+              "configuration"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "minItems": 0
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    }
+  }
+}

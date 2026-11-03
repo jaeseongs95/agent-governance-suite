@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/korean-prose-receipt-binding.v1.schema.json",
+  "title": "KoreanProseReceiptBinding.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "frameId", "frameDigest", "run", "cycleManifestSha256", "startClaimSha256", "roleMetaSha256"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "frameId": { "type": "string", "minLength": 1 },
+    "frameDigest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "run": { "type": "integer", "minimum": 1 },
+    "cycleManifestSha256": { "$ref": "#/$defs/digest" },
+    "startClaimSha256": { "$ref": "#/$defs/digest" },
+    "roleMetaSha256": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selection", "editing", "verification"],
+      "properties": {
+        "selection": { "$ref": "#/$defs/digest" },
+        "editing": { "$ref": "#/$defs/digest" },
+        "verification": { "$ref": "#/$defs/digest" }
+      }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

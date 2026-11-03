@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/korean-prose-glossary-lookup-result.v1.schema.json",
+  "title": "Korean prose glossary lookup result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "sourceDigest", "glossary", "matches", "matchSetDigest", "warnings"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "status": { "enum": ["matched", "no-match", "unavailable", "limit-exceeded", "unsupported-normalization"] },
+    "sourceDigest": { "$ref": "#/$defs/digest" },
+    "glossary": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "version", "contentDigest"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "version": { "type": "string", "minLength": 1 },
+            "contentDigest": { "$ref": "#/$defs/digest" }
+          }
+        }
+      ]
+    },
+    "matches": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["start", "end", "entryId", "policy", "canonicalForm", "priority"],
+        "properties": {
+          "start": { "type": "integer", "minimum": 0, "maximum": 200000 },
+          "end": { "type": "integer", "minimum": 1, "maximum": 200000 },
+          "entryId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "policy": { "enum": ["protect", "prefer", "allow", "avoid"] },
+          "canonicalForm": { "type": "string", "minLength": 1 },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 1000 }
+        }
+      }
+    },
+    "matchSetDigest": { "oneOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+    "warnings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["GLOSSARY_UNAVAILABLE", "GLOSSARY_MATCH_LIMIT_EXCEEDED", "GLOSSARY_UNSUPPORTED_NORMALIZATION"] }
+    }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

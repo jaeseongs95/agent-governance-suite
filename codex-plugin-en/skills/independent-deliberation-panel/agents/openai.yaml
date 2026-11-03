@@ -1,0 +1,7 @@
+interface:
+  display_name: "Independent Deliberation Panel"
+  short_description: "독립된 제3자 관점과 논쟁으로 합의 가능성과 이견을 판정"
+  default_prompt: "Use $independent-deliberation-panel to examine this decision from independent perspectives, debate material issues, and produce an evidence-based consensus proposal or explain why no consensus is justified."
+
+policy:
+  allow_implicit_invocation: true

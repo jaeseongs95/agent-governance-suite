@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0.0",
+  "scopeSummary": "Only candidate/queue.py. Deliberate reference example, not an entire AGS tree.",
+  "files": [
+    {
+      "path": "candidate/queue.py",
+      "digest": "sha256:4bd3ed50da73659ebe233c32c9243193eaf66634bb71307354ce2e0385bb66ee"
+    }
+  ]
+}

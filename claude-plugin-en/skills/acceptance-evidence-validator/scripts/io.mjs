@@ -1,0 +1,20 @@
+import { readFile } from "node:fs/promises";
+import { hostText } from "../../../runtime/i18n.mjs";
+
+export async function readJsonArgument(argv, name = "--input") {
+  const index = argv.indexOf(name);
+  if (index >= 0) {
+    const file = argv[index + 1];
+    if (!file) throw new Error(hostText("skillScripts.acceptanceEvidence.requiresFilePath", { name }));
+    return JSON.parse(await readFile(file, "utf8"));
+  }
+  let raw = "";
+  process.stdin.setEncoding("utf8");
+  for await (const chunk of process.stdin) raw += chunk;
+  if (!raw.trim()) throw new Error(hostText("skillScripts.acceptanceEvidence.expectedJsonInput"));
+  return JSON.parse(raw);
+}
+
+export function writeJson(value, stream = process.stdout) {
+  stream.write(`${JSON.stringify(value, null, 2)}\n`);
+}

@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skill-suite.local/contracts/cs-request.v1.schema.json",
+  "title": "cs-request.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "mode",
+    "objective",
+    "sourceSnapshotDigest",
+    "sourceRefs",
+    "operationalFacts",
+    "existingContractRef"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "requestId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "mode": {
+      "enum": [
+        "derive",
+        "review"
+      ]
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "sourceSnapshotDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "sourceRefs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "digest"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16384
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          }
+        }
+      },
+      "minItems": 1,
+      "maxItems": 10000
+    },
+    "operationalFacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "statement",
+          "evidenceRefs"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+          },
+          "statement": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16384
+          },
+          "evidenceRefs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+            },
+            "minItems": 1,
+            "maxItems": 10000,
+            "uniqueItems": true
+          }
+        }
+      },
+      "minItems": 0,
+      "maxItems": 10000
+    },
+    "existingContractRef": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

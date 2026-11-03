@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1.0.0",
+  "policyId": "REFERENCE-LOCAL",
+  "version": "1.0.0",
+  "mode": "enforce",
+  "allowDraft": false
+}

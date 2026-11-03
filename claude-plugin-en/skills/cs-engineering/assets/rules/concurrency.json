@@ -1,0 +1,132 @@
+[
+  {
+    "id": "CONC-CLAIM-001",
+    "version": "0.1.0",
+    "domain": "concurrency",
+    "status": "validated",
+    "title": "조회와 원자적 claim",
+    "appliesWhen": [
+      "복수 실행 주체가 대기 작업을 가져간다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "관측과 소유권 확정을 분리하고 성공 지점을 명확히 한다.",
+    "invariant": "동일 작업의 같은 소유권 세대에서 claim 성공자는 최대 하나다.",
+    "failureModes": [
+      "SELECT 후 무조건 UPDATE해 둘 다 성공했다고 판단한다."
+    ],
+    "decisionQuestions": [
+      "경합 패자가 무엇을 관측하는가?",
+      "조건부 갱신 행 수를 검사하는가?"
+    ],
+    "verificationObligations": [
+      "독립 연결·프로세스의 동시 claim에서 승자 수와 상태를 직접 관측한다."
+    ],
+    "nonGoals": [
+      "단일 스레드 mock만으로 프로세스 경합 검증을 대체하지 않는다."
+    ],
+    "sources": [
+      "SQLITE-TX",
+      "SQLITE-ISO"
+    ],
+    "validationScope": "bounded executable reference cases in tests/cs-engineering/reference-mechanisms.test.mjs and sqlite_reference_test.py; local checks, not AGS product/host certification"
+  },
+  {
+    "id": "CONC-FENCE-002",
+    "version": "0.1.0",
+    "domain": "concurrency",
+    "status": "validated",
+    "title": "오래된 소유자의 쓰기 차단",
+    "appliesWhen": [
+      "lease 만료·재할당·재시작으로 소유자가 바뀐다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "새 소유권 세대는 이전 실행을 물리적으로 멈춘다는 뜻이 아니다.",
+    "invariant": "보호 대상의 결과 확정은 현재 유효한 세대만 수행한다.",
+    "failureModes": [
+      "만료된 worker가 늦게 복귀해 새 worker 결과를 덮어쓴다."
+    ],
+    "decisionQuestions": [
+      "token 확인과 결과 기록은 같은 원자 경계인가?",
+      "외부 자원도 token을 검증하는가?"
+    ],
+    "verificationObligations": [
+      "재할당 후 이전 token의 완료 쓰기를 시도해 영향 행 수 0을 관측한다."
+    ],
+    "nonGoals": [
+      "DB fencing으로 외부 API의 exactly-once까지 보장하지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "bounded executable reference cases in tests/cs-engineering/reference-mechanisms.test.mjs and sqlite_reference_test.py; local checks, not AGS product/host certification"
+  },
+  {
+    "id": "CONC-LOCK-003",
+    "version": "0.1.0",
+    "domain": "concurrency",
+    "status": "validated",
+    "title": "교착과 락 순서",
+    "appliesWhen": [
+      "둘 이상의 자원 락을 중첩 획득한다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "순환 대기 경로를 제거하거나 명시적으로 탐지·복구한다.",
+    "invariant": "지원되는 획득 경로에 무한 순환 대기가 없다.",
+    "failureModes": [
+      "A→B와 B→A 순서가 동시에 존재한다."
+    ],
+    "decisionQuestions": [
+      "전역 순서를 따르는가?",
+      "락을 잡고 외부 I/O를 기다리는가?"
+    ],
+    "verificationObligations": [
+      "획득 순서 그래프의 순환을 검사하고 반대 순서 경합과 timeout 정리를 시험한다."
+    ],
+    "nonGoals": [
+      "timeout 하나만 추가하고 자원·상태 복구를 생략하지 않는다."
+    ],
+    "sources": [
+      "JLS-17",
+      "AGS-DESIGN"
+    ],
+    "validationScope": "bounded executable reference cases in tests/cs-engineering/reference-mechanisms.test.mjs and sqlite_reference_test.py; local checks, not AGS product/host certification"
+  },
+  {
+    "id": "CONC-CANCEL-004",
+    "version": "0.1.0",
+    "domain": "concurrency",
+    "status": "validated",
+    "title": "취소와 결과 확정 경합",
+    "appliesWhen": [
+      "작업 취소·종료 요청과 완료 처리가 겹친다."
+    ],
+    "assumptions": [
+      "요청과 허용된 대상의 실제 코드·운영 경계가 확인되어 있다."
+    ],
+    "principle": "취소 요청과 취소 완료는 다른 상태다.",
+    "invariant": "작업 상태의 허용 전이만 이루어지고 자원 소유권이 유실되지 않는다.",
+    "failureModes": [
+      "취소 완료를 먼저 보고한 뒤 비동기 작업이 외부 결과를 확정한다."
+    ],
+    "decisionQuestions": [
+      "취소는 best-effort인가 강한 보장인가?",
+      "완료가 먼저 이기면 응답은 무엇인가?"
+    ],
+    "verificationObligations": [
+      "취소 전·중·완료 직후 시점을 나눠 최종 상태와 부작용을 검사한다."
+    ],
+    "nonGoals": [
+      "취소 불가능한 외부 처리를 이미 취소됐다고 보고하지 않는다."
+    ],
+    "sources": [
+      "AGS-DESIGN"
+    ],
+    "validationScope": "bounded executable reference cases in tests/cs-engineering/reference-mechanisms.test.mjs and sqlite_reference_test.py; local checks, not AGS product/host certification"
+  }
+]

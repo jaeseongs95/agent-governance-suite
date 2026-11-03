@@ -1,0 +1,6 @@
+interface:
+  display_name: "프롬프트 엔지니어링"
+  short_description: "요구와 환경을 보존하며 프롬프트를 설계·진단하고 비교 검증"
+  default_prompt: "$prompt-engineering을 사용해 현재 요구와 실행 환경에 맞는 프롬프트를 설계하거나 개선하고, 변경 이유와 실제 검증 범위를 알려줘."
+policy:
+  allow_implicit_invocation: true

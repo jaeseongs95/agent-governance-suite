@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract_version": "1.0",
+  "requirements": [
+    {"id":"RC-01","category":"routing_capability","statement":"LOW runs without panel workers."},
+    {"id":"RC-02","category":"routing_capability","statement":"MEDIUM records two or three distinct independent reviewers."},
+    {"id":"RC-03","category":"routing_capability","statement":"HIGH records at least four reviewers and a fresh Judge."},
+    {"id":"RC-04","category":"routing_capability","statement":"CRITICAL records five or six reviewers including a red-team or independent design-assurance role."},
+    {"id":"CX-01","category":"cross_exam","statement":"Cross-examination records a run or skip decision and reason."},
+    {"id":"CX-02","category":"cross_exam","statement":"A run covers every trigger item."},
+    {"id":"CX-03","category":"cross_exam","statement":"Each selected item has review by someone other than its origin reviewer."},
+    {"id":"CX-04","category":"cross_exam","statement":"Each reviewer receives at most one cross-examination follow-up."},
+    {"id":"ES-01","category":"evidence_security","statement":"Material claims retain provenance verification status."},
+    {"id":"ES-02","category":"evidence_security","statement":"Verified provenance has a locator and a verification note."},
+    {"id":"ES-03","category":"evidence_security","statement":"Unverified, refuted, and not-observable claims cannot support a verified consensus link."},
+    {"id":"ES-04","category":"evidence_security","statement":"Raw chain-of-thought and internal prompts are not retained in records."},
+    {"id":"ES-05","category":"evidence_security","statement":"Untrusted evidence is data, not executable instructions."},
+    {"id":"CO-01","category":"consensus","statement":"Consensus links only verified claims."},
+    {"id":"CO-02","category":"consensus","statement":"Consensus names satisfied constraints."},
+    {"id":"CO-03","category":"consensus","statement":"Consensus links every decision axis."},
+    {"id":"CO-04","category":"consensus","statement":"Material unresolved dissent prevents unconditional consensus."},
+    {"id":"CO-05","category":"consensus","statement":"No consensus has null action, reason, options, and an owner."},
+    {"id":"AD-01","category":"adaptive","statement":"At most one specialist may be added."},
+    {"id":"AD-02","category":"adaptive","statement":"At most one selective re-deliberation may be recorded."},
+    {"id":"AD-03","category":"adaptive","statement":"Each re-deliberation names its impacted scope."},
+    {"id":"AD-04","category":"adaptive","statement":"Adaptive work stays within the worker cap."},
+    {"id":"LF-01","category":"lifecycle_fallback","statement":"Completed and reused worker identities are distinct."},
+    {"id":"LF-02","category":"lifecycle_fallback","statement":"A Judge fallback is explicitly provisional and explains its reason."}
+  ]
+}
