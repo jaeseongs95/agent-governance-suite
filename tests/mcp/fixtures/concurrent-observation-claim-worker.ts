@@ -3,7 +3,6 @@ import { SqliteWorkflowStore } from "../../../mcp-server/src/sqlite-workflow-sto
 const input = JSON.parse(process.argv[2]!) as {
   databasePath: string;
   observationId: string;
-  expiresAt: string;
   consumedAt: string;
 };
 const store = new SqliteWorkflowStore(input.databasePath);
@@ -17,7 +16,7 @@ process.once("message", (message: unknown) => {
     if (message !== "claim") throw new Error("Unexpected worker command.");
     process.send!({
       type: "result",
-      result: store.claimExecutionObservation(input.observationId, input.expiresAt, input.consumedAt),
+      result: store.claimExecutionObservation(input.observationId, input.consumedAt),
     }, () => process.disconnect!());
   } finally {
     store.close();

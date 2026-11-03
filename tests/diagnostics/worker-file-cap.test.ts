@@ -82,6 +82,7 @@ it("counts buffered bytes that cross the actual file rotation boundary", async (
     const writes = messages.filter(probe("write-complete"));
     expect(writes.every(message => message.error === null && message.written === message.bytes), evidence()).toBe(true);
     expect(messages.filter(message => probe("reopen-returned")(message) && message.explicitFile === true), evidence()).toHaveLength(1);
+    expect(messages.filter(probe("rotation-flush-requested")), evidence()).toHaveLength(1);
     const third = messages.find(probe("admitted", 3));
     if (third) expect(third.bytes, evidence()).toBe(700);
     else expect(messages.reduce((sum, message) => sum + Number(message.droppedBytes ?? 0), 0), evidence()).toBe(700);

@@ -917,7 +917,7 @@ export class ContinuityService implements ContinuityGateway {
     if (pending.stages.length > 0) {
       // Codex and agy continue the turn with this text as its only instruction (continuity-hook stopOutput, agy runner).
       // It names the workflow's goal: told only "the user's remaining work", Codex took its last request (one file of two)
-      // as the whole task and stopped (3.1.1 real-host run).
+      // as the whole task and stopped (3.2.0 candidate real-host run).
       lines.push(`[AGS 단계 확인] 진행 중인 workflow에 아직 passed가 아닌 단계가 있다: ${pending.stages.join(", ")}.`,
         `workflow 목표: ${pending.goal}`,
         "이 목표가 아직 이뤄지지 않았으면 멈추지 말고 남은 작업을 이어서 하라. 방금 받은 요청을 끝냈어도 목표가 남았으면 이어서 한다. 단계 결과는 그 단계의 작업과 검증을 실제로 마친 뒤에만 기록하고, 기록만 하고 끝내지 마라.",

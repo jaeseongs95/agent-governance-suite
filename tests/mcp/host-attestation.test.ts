@@ -408,7 +408,7 @@ describe("host execution observation through the MCP boundary", () => {
       expect(planned.error).toBeNull();
       const context = planned.data!.bootstrapExecution!.context;
       expect(context.observedAt).toBe("2026-11-02T00:10:00.000Z");
-      expect(Date.parse(context.expiresAt!) - Date.parse(context.observedAt)).toBe(5 * 60 * 1000);
+      expect(context.expiresAt).toBeUndefined();
     } finally {
       vi.useRealTimers();
       store.close();

@@ -179,12 +179,13 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     }));
   }
 
-  claimExecutionObservation(observationId: string, expiresAt: string, consumedAt: string): boolean {
+  claimExecutionObservation(observationId: string, consumedAt: string): boolean {
     return this.guard("Cannot claim the trusted execution observation.", { observationId }, () => this.transaction(() => {
+      // Claims never expire; the legacy expires_at column keeps an empty value.
       const result = this.database.prepare(`
         INSERT OR IGNORE INTO execution_observation_claims(observation_id, expires_at, consumed_at)
-        VALUES (?, ?, ?)
-      `).run(observationId, expiresAt, consumedAt);
+        VALUES (?, '', ?)
+      `).run(observationId, consumedAt);
       return Number(result.changes) === 1;
     }));
   }
@@ -421,8 +422,19 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     lease: AttemptLeaseV1,
   ): boolean {
     return this.guard("Cannot claim the convergence attempt lease.", { rootId: root.rootId }, () => this.transaction(() => {
-      if (this.shared && Date.parse(lease.expiresAt) <= this.shared.time(Date.parse(lease.issuedAt))) return false;
+      // No write before the CAS: transaction() commits whatever ran before a false return.
       if (!this.casRoot(root, expectedRevision)) return false;
+      // Leases do not expire by time. A newer claim on the current root supersedes an unstarted one.
+      const issued = this.database.prepare(`
+        SELECT lease_id, lease_json FROM convergence_leases WHERE root_id = ? AND state = 'issued'
+      `).all(root.rootId) as Array<{ lease_id: string; lease_json: string }>;
+      for (const row of issued) {
+        const superseded = JSON.parse(row.lease_json) as AttemptLeaseV1;
+        superseded.state = "expired";
+        this.database.prepare(`
+          UPDATE convergence_leases SET state = 'expired', lease_json = ? WHERE lease_id = ? AND state = 'issued'
+        `).run(JSON.stringify(superseded), row.lease_id);
+      }
       this.database.prepare(`
         INSERT INTO convergence_leases (
           lease_id, root_id, root_revision, epoch, ordinal, state, lease_json, proposal_json, issued_at, expires_at
@@ -441,20 +453,6 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       );
       return true;
     }), "The convergence database is busy; read status before retrying the lease claim.");
-  }
-
-  expireAttemptLease(leaseId: string): boolean {
-    return this.guard("Cannot expire the convergence attempt lease.", { leaseId }, () => this.transaction(() => {
-      const row = this.leaseRow(leaseId);
-      if (!row) return false;
-      const lease = JSON.parse(row.lease_json) as AttemptLeaseV1;
-      if (lease.state !== "issued") return false;
-      lease.state = "expired";
-      const result = this.database.prepare(`
-        UPDATE convergence_leases SET state = 'expired', lease_json = ? WHERE lease_id = ? AND state = 'issued'
-      `).run(JSON.stringify(lease), leaseId);
-      return Number(result.changes) === 1;
-    }));
   }
 
   getAttemptLease(leaseId: string): Omit<GuardedRunBinding, "outcome"> | null {
@@ -480,8 +478,7 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
       if (!leaseRow) return null;
       const lease = JSON.parse(leaseRow.lease_json) as AttemptLeaseV1;
       const proposal = JSON.parse(leaseRow.proposal_json) as AttemptProposalV1;
-      const decisionTime = this.shared ? this.shared.time(Date.parse(consumedAt)) : Math.max(Date.parse(consumedAt), Date.now());
-      if (lease.state !== "issued" || lease.rootRevision !== expectedRootRevision || Date.parse(lease.expiresAt) <= decisionTime) return null;
+      if (lease.state !== "issued" || lease.rootRevision !== expectedRootRevision) return null;
       const rootRow = this.rootRow(lease.rootId);
       if (!rootRow || rootRow.revision !== expectedRootRevision) return null;
       const root = JSON.parse(rootRow.root_json) as ConvergenceRootV1;

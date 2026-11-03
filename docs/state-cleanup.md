@@ -1,6 +1,6 @@
 # SQLite 상태 보존과 정리
 
-상태 정리는 자동으로 실행되지 않는다. `prepare_state_cleanup`은 현재 후보를 읽기만 하고 15분 동안 유효한 HMAC 서명 token을 반환한다. 사용자가 그 미리보기를 확인한 뒤 같은 실행 중 `execute_state_cleanup`에 token을 전달해야 삭제가 시작된다. token은 데이터베이스 경로와 schema version, 정책, cutoff, 정확한 후보 ID·revision·timestamp·digest에 결속되고 한 번만 사용할 수 있다.
+상태 정리는 자동으로 실행되지 않는다. `prepare_state_cleanup`은 현재 후보를 읽기만 하고 HMAC 서명 token을 반환한다. 사용자가 그 미리보기를 확인한 뒤 `execute_state_cleanup`에 token을 전달해야 삭제가 시작된다. token에는 유효 시간이 없다. 확인을 기다리는 동안 후보가 바뀌면 digest 불일치로 거부된다. token은 데이터베이스 경로와 schema version, 정책, cutoff, 정확한 후보 ID·revision·timestamp·digest에 결속되고 한 번만 사용할 수 있다.
 
 고정 보존 정책은 다음과 같다.
 

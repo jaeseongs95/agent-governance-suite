@@ -16,7 +16,6 @@ import type { ContractValidator } from "./schema-validator.js";
 import type { SqliteWorkflowStore, WorkflowCleanupPreview } from "./sqlite-workflow-store.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const TOKEN_TTL_MS = 15 * 60 * 1000;
 const MAX_PLAN_TOKEN_BYTES = 64 * 1024;
 const POLICY: StateCleanupPolicyV1 = {
   workflowRetentionDays: 180,
@@ -28,7 +27,6 @@ interface CleanupTokenPayload {
   schemaVersion: "1.0.0";
   planId: string;
   createdAt: string;
-  expiresAt: string;
   policy: StateCleanupPolicyV1;
   cutoffs: StateCleanupPlanV1["cutoffs"];
   candidates?: StateCleanupPlanV1["candidates"];
@@ -90,7 +88,6 @@ export class StateCleanupService {
         schemaVersion: "1.0.0",
         planId: randomUUID(),
         createdAt,
-        expiresAt: new Date(created.getTime() + TOKEN_TTL_MS).toISOString(),
         policy: POLICY,
         cutoffs,
         candidateDigest,
@@ -101,7 +98,6 @@ export class StateCleanupService {
         schemaVersion: "1.0.0",
         planId: payload.planId,
         createdAt,
-        expiresAt: payload.expiresAt,
         policy: POLICY,
         cutoffs,
         candidates,
@@ -129,10 +125,8 @@ export class StateCleanupService {
     try {
       const request = this.validator.executeStateCleanupRequest(value);
       const payload = this.verify(request.planToken);
+      // The token does not age out: one-use claim, candidate digest and database identity guard it.
       const now = this.clock();
-      if (Date.parse(payload.expiresAt) <= now.getTime()) {
-        throw new WorkflowContractError("STALE_REVISION", "The state cleanup plan token expired.", { planId: payload.planId });
-      }
       this.assertDatabaseIdentity(payload);
       const current = this.currentCandidates(payload.cutoffs);
       const candidates = current.candidates;

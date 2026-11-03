@@ -9,7 +9,7 @@ if (directory) {
   const report = fields => process.send?.({fixture: "write-rotation-boundary", ...fields});
   const matches = file => typeof file === "string" && file.startsWith(path.join(directory, "safe-fixture."));
   const descriptors = new Map();
-  let generation = 0, heldWrite = false, secondAdmitted = false, pendingFlush;
+  let generation = 0, heldWrite = false, secondAdmitted = false, pendingFlush, rotationFlushes = 0;
   const sequences = line => {
     try {return String(line).split("\n").filter(Boolean).map(row => JSON.parse(row).fixtureSequence);}
     catch {
@@ -72,6 +72,13 @@ if (directory) {
         return result;
       };
       this.flush = function (...parameters) {
+        // Only the first rotation is under test. pino-roll schedules the next one on the next whole-second boundary,
+        // which a slow runner can reach inside this fixture; hold it until close so the count does not depend on time.
+        // Chained rotation is covered by worker-rotation.test.ts.
+        if (typeof parameters[0] === "function" && ++rotationFlushes > 1) {
+          report({event: "rotation-flush-deferred", ordinal: rotationFlushes});
+          return;
+        }
         const invoke = () => {
           if (typeof parameters[0] === "function") report({event: "rotation-flush-requested"});
           return sinkFlush.apply(this, parameters);

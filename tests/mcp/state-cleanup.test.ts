@@ -355,7 +355,7 @@ describe("state cleanup", () => {
     }
   });
 
-  it("expires an unused plan after fifteen minutes", async () => {
+  it("keeps an unused plan usable however long the user takes to confirm", async () => {
     const directory = await mkdtemp(path.join(tmpdir(), "state-cleanup-expiry-"));
     directories.push(directory);
     const workflow = new SqliteWorkflowStore(path.join(directory, "workflows.sqlite3"));
@@ -363,10 +363,11 @@ describe("state cleanup", () => {
     try {
       const service = new StateCleanupService(workflow, null, new ContractValidator(), () => new Date(clock));
       const plan = service.prepare({ schemaVersion: "1.0.0" }).data!;
-      clock = new Date(NOW.getTime() + 15 * 60 * 1000);
-      const expired = service.execute({ schemaVersion: "1.0.0", planToken: plan.planToken });
-      expect(expired.ok).toBe(false);
-      expect(expired.error?.code).toBe("STALE_REVISION");
+      expect(Object.hasOwn(plan, "expiresAt")).toBe(false);
+      clock = new Date(NOW.getTime() + 24 * 60 * 60 * 1000);
+      const late = service.execute({ schemaVersion: "1.0.0", planToken: plan.planToken });
+      expect(late.error).toBeNull();
+      expect(late.data?.status).toBe("no-op");
     } finally {
       workflow.close();
     }

@@ -153,7 +153,7 @@ describe("AGS30 AL07 owned regressions", () => {
     const first = keep(new SqliteWorkflowStore(filename)); intercept.mockRestore();
     expect(competitorOpened).toBe(true); expect(first.getSchemaVersion()).toBe(6); expect(first.getRun("preserved")?.runId).toBe("preserved");
   });
-  it("AGS-D-0060: expiry is checked after the writer lock even when consumedAt was fresh before waiting", () => {
+  it("AGS-D-0060 (3.2.0): a lease past its legacy expiresAt still starts after the writer lock", () => {
     let clock = 100; vi.spyOn(Date, "now").mockImplementation(() => clock);
     const workflow = keep(new SqliteWorkflowStore(":memory:")); const root = workflowRoot(); workflow.insertConvergenceRoot(root);
     const claimed = { ...root, revision: 2 };
@@ -164,8 +164,8 @@ describe("AGS30 AL07 owned regressions", () => {
     expect(workflow.insertAttemptLease(claimed, 1, proposal, lease)).toBe(true);
     const exec = DatabaseSync.prototype.exec;
     const intercept = vi.spyOn(DatabaseSync.prototype, "exec").mockImplementation(function (this: DatabaseSync, sql: string) { const result = exec.call(this, sql); if (sql === "BEGIN IMMEDIATE;") clock = 200; return result; });
-    expect(workflow.insertGuardedRun(receipt("guarded-run"), lease.leaseId, 2, new Date(100).toISOString())).toBeNull(); intercept.mockRestore();
-    expect(workflow.getRun("guarded-run")).toBeNull(); expect(workflow.getAttemptLease(lease.leaseId)?.lease.state).toBe("issued"); expect(workflow.getConvergenceSnapshot(root.rootId)?.root.revision).toBe(2);
+    expect(workflow.insertGuardedRun(receipt("guarded-run"), lease.leaseId, 2, new Date(100).toISOString())).not.toBeNull(); intercept.mockRestore();
+    expect(workflow.getRun("guarded-run")?.runId).toBe("guarded-run"); expect(workflow.getAttemptLease(lease.leaseId)?.lease.state).toBe("consumed"); expect(workflow.getConvergenceSnapshot(root.rootId)?.root.revision).toBe(3);
   });
   it("AGS-D-0149: authority table shape drift and shared index drift fail closed", () => {
     const opaqueDirectory = directory();

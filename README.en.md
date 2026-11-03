@@ -35,7 +35,7 @@ AGS supports this workflow with task contracts, specialist skills, the session b
 You need Node.js **24.0.0 or later** and plugin support in the host you use. Install AGS in each participating host. Using the plugin does not require cloning this repository or running `pnpm install`.
 
 <!-- release-version:start -->
-The current public release is `v3.1.1`, and the installation examples below use it. Version 3.0 is not compatible with 2.x; the changes are summarized in the [3.0.0 release notes](docs/release-notes-v3.0.0.md) , the [3.0.1 release notes](docs/release-notes-v3.0.1.md), the [3.0.2 release notes](docs/release-notes-v3.0.2.md), the [3.1.0 release notes](docs/release-notes-v3.1.0.md), and the [3.1.1 release notes](docs/release-notes-v3.1.1.md) (Korean). This release prioritizes defect fixes; native-host re-measurement and dual-Cloud verification are not claimed complete. The included skills are listed in the skill table below. The JEV layer supports skill discovery, classification, evaluation, and recommendations; the AGENT checks applicability conditions and makes the final selection. Actual use requires approved classification settings for JEV or the current vendor, supported profiles, budget, and host discovery data. Production database migration and shared MCP cutover are not claimed complete.
+The current public release is `v3.2.0`, and the installation examples below use it. Version 3.0 is not compatible with 2.x; the changes are summarized in the [3.0.0 release notes](docs/release-notes-v3.0.0.md) , the [3.0.1 release notes](docs/release-notes-v3.0.1.md), the [3.0.2 release notes](docs/release-notes-v3.0.2.md), the [3.1.0 release notes](docs/release-notes-v3.1.0.md), and the [3.2.0 release notes](docs/release-notes-v3.2.0.md) (Korean). This release prioritizes defect fixes; native-host re-measurement and dual-Cloud verification are not claimed complete. The included skills are listed in the skill table below. The JEV layer supports skill discovery, classification, evaluation, and recommendations; the AGENT checks applicability conditions and makes the final selection. Actual use requires approved classification settings for JEV or the current vendor, supported profiles, budget, and host discovery data. Production database migration and shared MCP cutover are not claimed complete.
 <!-- release-version:end -->
 
 ### Claude Code
@@ -55,7 +55,7 @@ Run in a terminal:
 
 <!-- release-install:start -->
 ```bash
-codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.1.1
+codex plugin marketplace add jaeseongs95/agent-governance-suite --ref v3.2.0
 codex plugin add agent-governance-suite@agent-governance
 ```
 <!-- release-install:end -->
@@ -67,7 +67,7 @@ Start a new Codex session after installation. Review and trust the installed hoo
 `agy` (the Antigravity CLI) `plugin install` accepts only a local directory. Fetch the release tag and install that directory.
 
 ```bash
-git clone --depth 1 --branch v3.1.1 https://github.com/jaeseongs95/agent-governance-suite.git
+git clone --depth 1 --branch v3.2.0 https://github.com/jaeseongs95/agent-governance-suite.git
 agy plugin install ./agent-governance-suite
 agy plugin list
 ```

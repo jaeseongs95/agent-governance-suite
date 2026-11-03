@@ -707,7 +707,7 @@ describe("D0344 workflow transaction fence", () => {
         const outerRoot = { ...value, revision: 2, state: "needs-review" as const };
         expect(workflow.updateConvergenceRoot(outerRoot, 1)).toBe(true);
         workflow.getOrCreateSecret("d0344-rollback-secret", () => "uncommitted-secret");
-        expect(workflow.claimExecutionObservation("d0344-rollback-observation", "9999-01-01T00:00:00.000Z", now)).toBe(true);
+        expect(workflow.claimExecutionObservation("d0344-rollback-observation", now)).toBe(true);
         let innerCaught: unknown;
         try {
           workflow.withWorkflowTransaction(() => {
@@ -731,7 +731,7 @@ describe("D0344 workflow transaction fence", () => {
     expect(workflow.getConvergenceSnapshot(value.rootId)).toEqual(before);
     expect(workflow.nextRunSequence()).toBe(1);
     expect(workflow.getOrCreateSecret("d0344-rollback-secret", () => "fresh-secret")).toBe("fresh-secret");
-    expect(workflow.claimExecutionObservation("d0344-rollback-observation", "9999-01-01T00:00:00.000Z", now)).toBe(true);
+    expect(workflow.claimExecutionObservation("d0344-rollback-observation", now)).toBe(true);
   });
 
   it.each(["memory", "sqlite"] as const)("%s rejects thenables and rolls back synchronous writes made before their return", async engine => {

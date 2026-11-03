@@ -411,7 +411,6 @@ export interface StateCleanupPlanV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   planId: string;
   createdAt: string;
-  expiresAt: string;
   policy: StateCleanupPolicyV1;
   cutoffs: {
     workflow: string;

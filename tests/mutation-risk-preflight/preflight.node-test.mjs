@@ -97,12 +97,14 @@ test("receipt는 대상 fingerprint, action과 만료 시각 변경을 거부한
   const stale = verifyReceipt({ report, intent: changed, verificationTime: "2026-09-09T00:01:00.000Z" });
   assert.equal(stale.valid, false);
   assert.equal(stale.errorCode, "STALE_REVISION");
-  const expired = verifyReceipt({ report, intent, verificationTime: "2026-09-09T00:16:00.000Z" });
-  assert.equal(expired.valid, false);
-  assert.equal(expired.errorCode, "STALE_REVISION");
+  // Time passing alone does not invalidate a receipt; only a changed intent, state or approval does.
+  assert.equal(verifyReceipt({ report, intent, verificationTime: "2026-09-10T00:00:00.000Z" }).valid, true);
+  const early = verifyReceipt({ report, intent, verificationTime: "2026-09-08T23:59:00.000Z" });
+  assert.equal(early.valid, false);
+  assert.equal(early.errorCode, "STALE_REVISION");
 });
 
-test("receipt 유효기간 연장과 report 필드 변조를 거부한다", async () => {
+test("receipt에 없는 필드 추가와 report 필드 변조를 거부한다", async () => {
   const intent = await fixture("local-delete");
   const report = evaluatePreflight(intent, { now: evaluationTime });
   const extended = structuredClone(report);
@@ -298,9 +300,8 @@ for (const distribution of ["skills", "claude-plugin/skills"]) {
           else {
             assert.equal(output.verdict, "READY");
             assert.equal(output.operationId, intent.operationId);
-            assert.equal(Date.parse(output.validUntil) - Date.parse(output.observedAt), 15 * 60_000);
+            assert.equal(Object.hasOwn(output, "validUntil"), false);
             delete output.observedAt;
-            delete output.validUntil;
           }
           return output;
         };
@@ -369,9 +370,8 @@ for (const distribution of ["skills", "claude-plugin/skills"]) {
             assert.equal(output.verdict, "READY");
             assert.equal(output.operationId, intent.operationId);
             assert.equal((output.operationId.match(/�/g) ?? []).length, 1, "원래 정상 U+FFFD는 하나만 유지해야 한다");
-            assert.equal(Date.parse(output.validUntil) - Date.parse(output.observedAt), 15 * 60_000);
+            assert.equal(Object.hasOwn(output, "validUntil"), false);
             delete output.observedAt;
-            delete output.validUntil;
           }
           return output;
         };
@@ -413,8 +413,8 @@ for (const distribution of ["skills", "claude-plugin/skills"]) {
           assert.deepEqual(normalize(await runInputCli(script, bytes, bytes.length)), expected);
         });
         if (verifying) {
-          await t.test("실제 만료된 영수증의 파일과 stdin 거부", async () => {
-            const expired = Buffer.from(JSON.stringify({ ...input, verificationTime: input.report.validUntil }));
+          await t.test("실제 관측 시각 이전 검증의 파일과 stdin 거부", async () => {
+            const expired = Buffer.from(JSON.stringify({ ...input, verificationTime: new Date(Date.parse(input.report.observedAt) - 60_000).toISOString() }));
             await writeFile(file, expired);
             const reference = await runInputCli(script, expired, undefined, file);
             const result = await runInputCli(script, expired);

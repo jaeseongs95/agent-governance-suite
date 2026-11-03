@@ -1,7 +1,7 @@
 # Agent Governance Suite 향후 로드맵
 
 <!-- release-version:start -->
-문서 기준일은 2026년 10월 8일이다. 현재 공개 릴리스는 `v3.1.1`이다. 3.0은 2.x와 호환하지 않으며 결함 수정을 우선한다. 바뀐 점은 [3.0.0 릴리스 노트](release-notes-v3.0.0.md), [3.0.1 릴리스 노트](release-notes-v3.0.1.md), [3.0.2 릴리스 노트](release-notes-v3.0.2.md), [3.1.0 릴리스 노트](release-notes-v3.1.0.md), [3.1.1 릴리스 노트](release-notes-v3.1.1.md)에 정리했다. JEV 계층을 통한 스킬의 발견·분류·평가·추천을 지원하고 AGENT가 적용 조건을 대조해 최종 선택한다. 실제 사용에는 승인된 JEV 또는 현재 벤더의 분류 설정·지원 프로필·예산과 호스트 발견 자료가 필요하다. 운영 DB 이전·공용 MCP 전환, 실제 현재 host 관측과 양 Cloud 검증은 후속 과제로 남는다. 기존 권한·암호화·세션 메시지·유효기간과 중복 소비 계약 및 한국어 산문 품질 미평가 상태를 유지한다.
+문서 기준일은 2026년 10월 8일이다. 현재 공개 릴리스는 `v3.2.0`이다. 3.0은 2.x와 호환하지 않으며 결함 수정을 우선한다. 바뀐 점은 [3.0.0 릴리스 노트](release-notes-v3.0.0.md), [3.0.1 릴리스 노트](release-notes-v3.0.1.md), [3.0.2 릴리스 노트](release-notes-v3.0.2.md), [3.1.0 릴리스 노트](release-notes-v3.1.0.md), [3.2.0 릴리스 노트](release-notes-v3.2.0.md)에 정리했다. JEV 계층을 통한 스킬의 발견·분류·평가·추천을 지원하고 AGENT가 적용 조건을 대조해 최종 선택한다. 실제 사용에는 승인된 JEV 또는 현재 벤더의 분류 설정·지원 프로필·예산과 호스트 발견 자료가 필요하다. 운영 DB 이전·공용 MCP 전환, 실제 현재 host 관측과 양 Cloud 검증은 후속 과제로 남는다. 기존 권한·암호화·세션 메시지·유효기간과 중복 소비 계약 및 한국어 산문 품질 미평가 상태를 유지한다.
 <!-- release-version:end -->
 
 이 문서는 프로젝트 코드와 설계 문서뿐 아니라 이 저장소에서 진행한 Codex 작업의 논의를 함께 반영한다. 일정은 특정 날짜보다 단계별 종료 조건을 기준으로 관리한다. 각 단계의 필수 검증을 마치기 전에는 다음 릴리스 범위로 넘기지 않는다.
@@ -261,7 +261,7 @@ source lock, 업데이트 후보 탐지, 릴리스 버전 생성과 SQLite 보�
 - 오프라인 검사는 `SKILL.md` metadata 또는 legacy `VERSION`, registry, 직접 descriptor와 통합 checksum을 교차 검증하고, 원격 검사는 고정 ref checkout의 원본 checksum까지 확인한다.
 - 매주 월요일 09:00 KST와 수동 실행에서 정확한 `vX.Y.Z` tag를 확인한다. 수정 없는 스킬만 스킬별 draft PR 후보가 되며 원본 코드는 실행하지 않는다. 실제 PR 생성에는 저장소 관리자의 Actions Pull Request 권한 설정이 남아 있다.
 - `release/version.json`에서 package, plugin manifest, marketplace, MCP metadata와 한·영 README·roadmap의 현재 버전 표면을 생성·검사한다.
-- `prepare_state_cleanup`과 `execute_state_cleanup`이 180일 terminal workflow, 30일 비활성 continuity payload와 180일 비활성 continuity record를 확인 기반으로 정리한다. 15분 일회성 token, 후보 재검증, DB별 검증 backup과 transaction을 강제한다.
+- `prepare_state_cleanup`과 `execute_state_cleanup`이 180일 terminal workflow, 30일 비활성 continuity payload와 180일 비활성 continuity record를 확인 기반으로 정리한다. 일회성 token, 후보 재검증, DB별 검증 backup과 transaction을 강제한다.
 - 앱 수준 DB 암호화는 추가하지 않고 OS 계정 권한·BitLocker 정책을 문서화했다. Windows에서는 보호 활성 상태를 검증하지 않았음을 receipt에 표시한다.
 
 ### 종료 기준

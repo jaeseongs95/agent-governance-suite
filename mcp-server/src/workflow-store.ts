@@ -57,7 +57,7 @@ export interface WorkflowStore {
   /** UTC milliseconds from this store's clock provider; failures must not fall back to another clock. */
   currentTimeMilliseconds(): number;
   getOrCreateSecret(name: string, create: () => string): string;
-  claimExecutionObservation(observationId: string, expiresAt: string, consumedAt: string): boolean;
+  claimExecutionObservation(observationId: string, consumedAt: string): boolean;
   /** Replaces an unclaimed row with the same key; rows older than a day are pruned on write. */
   recordCallAdmission(admission: CallAdmission): void;
   /** Deletes and returns the row, so a second claim of the same call finds nothing. */
@@ -91,7 +91,6 @@ export interface WorkflowStore {
     proposal: AttemptProposalV1,
     lease: AttemptLeaseV1,
   ): boolean;
-  expireAttemptLease(leaseId: string): boolean;
   getAttemptLease(leaseId: string): Omit<GuardedRunBinding, "outcome"> | null;
   insertGuardedRun(
     receipt: WorkflowReceiptV1,
@@ -121,9 +120,9 @@ export class InMemoryWorkflowStore implements WorkflowStore {
     return value;
   }
 
-  claimExecutionObservation(observationId: string, expiresAt: string): boolean {
+  claimExecutionObservation(observationId: string, consumedAt: string): boolean {
     if (this.executionObservations.has(observationId)) return false;
-    this.executionObservations.set(observationId, expiresAt);
+    this.executionObservations.set(observationId, consumedAt);
     return true;
   }
 
@@ -270,22 +269,13 @@ export class InMemoryWorkflowStore implements WorkflowStore {
   ): boolean {
     const snapshot = this.convergence.get(root.rootId);
     if (!snapshot || snapshot.root.revision !== expectedRevision) return false;
-    if (snapshot.leases.some((item) => item.state === "issued")) return false;
     if (snapshot.leases.some((item) => item.leaseId === lease.leaseId)) return false;
+    // A newer claim on the current root supersedes an unstarted lease; leases do not expire by time.
+    for (const item of snapshot.leases) if (item.state === "issued") item.state = "expired";
     snapshot.root = clone(root);
     snapshot.proposals.push(clone(proposal));
     snapshot.leases.push(clone(lease));
     return true;
-  }
-
-  expireAttemptLease(leaseId: string): boolean {
-    for (const snapshot of this.convergence.values()) {
-      const lease = snapshot.leases.find((item) => item.leaseId === leaseId);
-      if (!lease || lease.state !== "issued") continue;
-      lease.state = "expired";
-      return true;
-    }
-    return false;
   }
 
   getAttemptLease(leaseId: string): Omit<GuardedRunBinding, "outcome"> | null {
@@ -307,7 +297,6 @@ export class InMemoryWorkflowStore implements WorkflowStore {
     for (const snapshot of this.convergence.values()) {
       const lease = snapshot.leases.find((item) => item.leaseId === leaseId);
       if (!lease || lease.state !== "issued" || snapshot.root.revision !== expectedRootRevision) continue;
-      if (Date.parse(lease.expiresAt) <= Date.parse(consumedAt)) return null;
       const proposal = snapshot.proposals.find((item) => convergenceDigest(item) === lease.proposalDigest);
       if (!proposal) return null;
       lease.state = "consumed";

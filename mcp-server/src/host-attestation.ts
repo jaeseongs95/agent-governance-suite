@@ -19,9 +19,6 @@ import type { ExecutionObservationBindingV1, TrustedExecutionContextProvider } f
  */
 export const HOST_ATTESTATION_TOOLS: ReadonlySet<string> = new Set(["plan_workflow", "start_workflow", "record_stage_result", "classify_skills", "record_skill_selection"]);
 
-// An observation is consumable for five minutes after the server accepts the call.
-const OBSERVATION_TTL_MS = 5 * 60 * 1000;
-
 export interface ResolvedModelCapabilityV1 {
   readonly provider: string;
   readonly host: string;
@@ -330,7 +327,6 @@ export class HostAttestationProvider implements TrustedExecutionContextProvider 
       stageId: binding.stageId,
       revision: binding.revision,
       actorId: caller.actor.id,
-      expiresAt: new Date(now.getTime() + OBSERVATION_TTL_MS).toISOString(),
     };
   }
 }

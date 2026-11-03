@@ -1,6 +1,6 @@
 # 실행 관측과 호스트 연결
 
-실행 관측은 서버가 검증한 호출자(`VerifiedCaller`, [세션 결속 설계](ags30-session-binding-design.md) 2.1)의 `execution`에서 온다. 호스트별 caller ingress가 그 값을 호스트가 쓴 사실에서 채우고, 공통 `HostAttestationProvider`가 신뢰된 adapter로 자격을 판정하며, `WorkflowService`가 task/run/stage/revision 결속, 유효기간, 한 번 소비와 실행 하한을 집행한다. 도구 인자의 `executionContext` JSON이나 설정 희망값은 관측을 대신하지 않는다. 서명 token(`_hostAttestation`, `aghs1`·`aghs2`)은 없다.
+실행 관측은 서버가 검증한 호출자(`VerifiedCaller`, [세션 결속 설계](ags30-session-binding-design.md) 2.1)의 `execution`에서 온다. 호스트별 caller ingress가 그 값을 호스트가 쓴 사실에서 채우고, 공통 `HostAttestationProvider`가 신뢰된 adapter로 자격을 판정하며, `WorkflowService`가 task/run/stage/revision 결속, 한 번 소비와 실행 하한을 집행한다. 관측은 시간이 지나도 만료되지 않는다. 재사용은 한 번 소비 기록이 영구히 막고, 미래 시각의 관측만 거부한다. 도구 인자의 `executionContext` JSON이나 설정 희망값은 관측을 대신하지 않는다. 서명 token(`_hostAttestation`, `aghs1`·`aghs2`)은 없다.
 
 ## 관측과 실행 자격
 

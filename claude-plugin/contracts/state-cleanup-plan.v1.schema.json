@@ -3,12 +3,11 @@
   "$id": "https://skill-suite.local/contracts/state-cleanup-plan.v1.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "planId", "createdAt", "expiresAt", "policy", "cutoffs", "candidates", "counts", "candidateDigest", "protection", "planToken"],
+  "required": ["schemaVersion", "planId", "createdAt", "policy", "cutoffs", "candidates", "counts", "candidateDigest", "protection", "planToken"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
     "planId": { "type": "string", "format": "uuid" },
     "createdAt": { "type": "string", "format": "date-time" },
-    "expiresAt": { "type": "string", "format": "date-time" },
     "policy": { "$ref": "#/$defs/policy" },
     "cutoffs": {
       "type": "object", "additionalProperties": false,

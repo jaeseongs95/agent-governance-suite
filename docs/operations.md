@@ -28,7 +28,7 @@ MCP 서버는 workflow 실행 상태와 계획 서명 키를 `workflows.sqlite3`
 
 이전 기본 경로의 현황판과 message spool은 새 공용 루트로 자동 병합하지 않습니다. live SQLite WAL을 복사하면 서로 다른 상태가 섞일 수 있기 때문입니다. 3.0부터 broker 프로세스는 없고 각 프로세스가 같은 SQLite 파일을 직접 엽니다. 2.x가 남긴 `endpoint.json`·`broker.token`·`broker-key.pem`·`broker-cert.pem`·`broker.lock*`은 3.0이 읽지도 지우지도 않으며, 모든 2.x 프로세스를 끝낸 뒤 지워도 됩니다. 기본 경로를 바꾸는 업데이트는 모든 호스트에 함께 적용하고 세션을 다시 시작합니다. 기존 경로는 그대로 남으며, 필요한 대기 메시지는 업데이트 전에 처리하거나 TTL 만료에 맡깁니다.
 
-상태 정리는 자동 실행되지 않습니다. `prepare_state_cleanup`으로 180일이 지난 terminal workflow 상태와 30일이 지난 비활성 continuity payload를 미리 본 뒤, 사용자가 확인한 같은 15분 token을 `execute_state_cleanup`에 전달해야 합니다. 삭제 전 검증된 SQLite backup을 만들며 backup은 자동 삭제하지 않습니다. 자세한 정책과 복구 절차는 [SQLite 상태 보존과 정리](state-cleanup.md)를 참고하십시오.
+상태 정리는 자동 실행되지 않습니다. `prepare_state_cleanup`으로 180일이 지난 terminal workflow 상태와 30일이 지난 비활성 continuity payload를 미리 본 뒤, 사용자가 확인한 같은 token을 `execute_state_cleanup`에 전달해야 합니다. 삭제 전 검증된 SQLite backup을 만들며 backup은 자동 삭제하지 않습니다. 자세한 정책과 복구 절차는 [SQLite 상태 보존과 정리](state-cleanup.md)를 참고하십시오.
 
 ```bash
 AGENT_GOVERNANCE_DB_PATH=/absolute/path/workflows.sqlite3 pnpm dev

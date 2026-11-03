@@ -469,21 +469,13 @@ describe("SqliteWorkflowStore", () => {
     });
   });
 
-  it("retains trusted observation tombstones after their validity window", async () => {
+  it("retains trusted observation tombstones without expiry", async () => {
     const databaseDirectory = await mkdtemp(join(tmpdir(), "skill-suite-observation-tombstone-"));
     temporaryDirectories.push(databaseDirectory);
     const store = openSqliteStore(join(databaseDirectory, "workflow-state.sqlite3"));
     const observationId = "never-reuse-this-observation";
-    expect(store.claimExecutionObservation(
-      observationId,
-      "2026-09-15T00:01:00.000Z",
-      "2026-09-15T00:00:00.000Z",
-    )).toBe(true);
-    expect(store.claimExecutionObservation(
-      observationId,
-      "2026-09-16T00:01:00.000Z",
-      "2026-09-16T00:00:00.000Z",
-    )).toBe(false);
+    expect(store.claimExecutionObservation(observationId, "2026-09-15T00:00:00.000Z")).toBe(true);
+    expect(store.claimExecutionObservation(observationId, "2027-09-16T00:00:00.000Z")).toBe(false);
   });
 });
 
@@ -582,14 +574,20 @@ describe("WorkflowService", () => {
     });
   });
 
-  it("rejects stale, replayed, and cross-stage trusted observations", async () => {
-    const staleProvider = trustedProvider((binding) => trustedExecutionContext(binding, {
+  it("accepts an old trusted observation and rejects future-dated, replayed, and cross-stage ones", async () => {
+    // Time alone never refuses an observation, including a past legacy expiresAt.
+    const oldProvider = trustedProvider((binding) => trustedExecutionContext(binding, {
       observedAt: "2020-01-01T00:00:00.000Z",
       expiresAt: "2020-01-01T00:01:00.000Z",
     }));
-    const { service: staleService } = await createService(skills, undefined, null, staleProvider);
+    const { service: oldService } = await createService(skills, undefined, null, oldProvider);
+    expect(oldService.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task() }, true).error).toBeNull();
+    const futureProvider = trustedProvider((binding) => trustedExecutionContext(binding, {
+      observedAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    }));
+    const { service: futureService } = await createService(skills, undefined, null, futureProvider);
     expect(
-      staleService.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task() }, true).error?.code,
+      futureService.planWorkflow({ schemaVersion: "1.0.0", taskEnvelope: task() }, true).error?.code,
     ).toBe("BINDING_INVALID");
 
     const replayId = "fixture-replay-observation";

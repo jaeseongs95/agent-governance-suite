@@ -34,9 +34,8 @@ export function verifyReceipt(input) {
   if (now.getTime() < observedAt.getTime()) return invalid("STALE_REVISION", "검증 시각이 receipt 관측 시각보다 빠릅니다.", report);
   const baseline = evaluatePreflight(intent, { now: report.observedAt });
   if (baseline.verdict !== "READY" || canonicalJson(baseline) !== canonicalJson(report)) {
-    return invalid("STALE_REVISION", "receipt가 원 관측 시각의 intent, 증거 또는 고정 유효기간과 일치하지 않습니다.", report, baseline);
+    return invalid("STALE_REVISION", "receipt가 원 관측 시각의 intent 또는 증거와 일치하지 않습니다.", report, baseline);
   }
-  if (Date.parse(report.validUntil) <= now.getTime()) return invalid("STALE_REVISION", "preflight receipt가 만료됐습니다.", report, baseline);
   const current = evaluatePreflight(intent, { now });
   if (current.verdict !== "READY" || current.actionDigest !== report.actionDigest || current.targetDigest !== report.targetDigest) {
     return invalid("STALE_REVISION", "행동, 대상, 환경, 승인, fingerprint, 복구 계획 또는 영향 범위가 바뀌었습니다.", report, current);

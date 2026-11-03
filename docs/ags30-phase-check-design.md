@@ -159,7 +159,7 @@ Codex 출력 형식은 continuity hook이 host 인자로 정한다(`resolveHookH
 
 ### 7.3 면제
 
-제품 파일은 버전 관리 아래에 있는 파일이다(3.1.1). 편집 대상에서 위로 올라가며 `.git`(디렉터리, 또는 worktree·submodule의 `.git` 파일), `.hg`, `.svn`, `.jj` 중 하나를 찾는다. 아직 없는 새 파일은 없는 상위 폴더를 지나쳐 올라간다. 끝까지 없으면 세지 않는다. 상위 폴더를 읽다 오류가 나면(권한 등) 센다. 3.1.0은 아래 면제만 빼고 모든 경로를 세서, 저장소 밖 질의 문서(Google Drive 폴더)를 쓰던 Codex 세션이 3개째에서 거부됐다.
+제품 파일은 버전 관리 아래에 있는 파일이다(3.2.0). 편집 대상에서 위로 올라가며 `.git`(디렉터리, 또는 worktree·submodule의 `.git` 파일), `.hg`, `.svn`, `.jj` 중 하나를 찾는다. 아직 없는 새 파일은 없는 상위 폴더를 지나쳐 올라간다. 끝까지 없으면 세지 않는다. 상위 폴더를 읽다 오류가 나면(권한 등) 센다. 3.1.0은 아래 면제만 빼고 모든 경로를 세서, 저장소 밖 질의 문서(Google Drive 폴더)를 쓰던 Codex 세션이 3개째에서 거부됐다.
 
 세지 않는 경로: OS 임시 폴더(`os.tmpdir()`, Claude scratchpad 포함), 호스트의 에이전트 메모 폴더, 사용자 설정 `AGENT_GOVERNANCE_PHASE_EXEMPT_PATHS`(플랫폼 경로 구분자로 나눈 절대 경로). 호스트 메모 폴더는 adapter가 정한다.
 
@@ -174,7 +174,7 @@ cwd는 기준으로 쓰지 않는다. 설정은 hook 프로세스의 환경에�
 ### 7.4 Stop
 
 - 활성 run에 passed가 아닌 stage가 있을 때만 「[AGS 단계 확인] 진행 중인 workflow에 아직 passed가 아닌 단계가 있다: <stage>. workflow 목표: <TaskEnvelope objective, 공백을 한 칸으로 줄이고 300자까지>. 이 목표가 아직 이뤄지지 않았으면 멈추지 말고 남은 작업을 이어서 하라. 방금 받은 요청을 끝냈어도 목표가 남았으면 이어서 한다. 단계 결과는 그 단계의 작업과 검증을 실제로 마친 뒤에만 기록하고, 기록만 하고 끝내지 마라. 사용자의 답이나 승인이 있어야 진행할 수 있으면 무엇을 기다리는지 한 줄로 쓰고 끝내라. 필요 없는 단계는 계획을 고쳐 뺀다.」를 낸다.
-- 3.1.1에서 문구를 바꿨다. Codex는 이 문구를 `reason`으로 받아 turn을 이어 가며, 그 turn에서는 이 문구가 유일한 지시다. 3.1.0의 「빠진 단계를 지금 진행하거나, 필요 없으면 계획을 고쳐 그 단계를 빼라.」를 받은 Codex는 단계 상태를 조회하고 `record_stage_result`(blocked)만 한 뒤 멈췄다. 두 번째 Stop은 `stop_hook_active`로 출력이 없어서 그대로 끝났다. 목표 없이 「사용자가 맡긴 작업이 남았으면 이어서 하라」고만 한 후보 문구로는, Codex가 마지막 요청(두 파일 중 하나)을 맡은 일 전체로 보고 멈췄다(실호스트 1회). 그래서 workflow 목표를 문구에 넣는다. agy runner도 Stop 문맥을 `continue`로 바꿔 같은 방식으로 이어 간다. 기준 미만이거나 workflow 없는 구간은 출력 0이다. 「workflow 없이 변경함」과 「이유를 한 줄로」 문구는 없앴다.
+- 3.2.0에서 문구를 바꿨다. Codex는 이 문구를 `reason`으로 받아 turn을 이어 가며, 그 turn에서는 이 문구가 유일한 지시다. 3.1.0의 「빠진 단계를 지금 진행하거나, 필요 없으면 계획을 고쳐 그 단계를 빼라.」를 받은 Codex는 단계 상태를 조회하고 `record_stage_result`(blocked)만 한 뒤 멈췄다. 두 번째 Stop은 `stop_hook_active`로 출력이 없어서 그대로 끝났다. 목표 없이 「사용자가 맡긴 작업이 남았으면 이어서 하라」고만 한 후보 문구로는, Codex가 마지막 요청(두 파일 중 하나)을 맡은 일 전체로 보고 멈췄다(실호스트 1회). 그래서 workflow 목표를 문구에 넣는다. agy runner도 Stop 문맥을 `continue`로 바꿔 같은 방식으로 이어 간다. 기준 미만이거나 workflow 없는 구간은 출력 0이다. 「workflow 없이 변경함」과 「이유를 한 줄로」 문구는 없앴다.
 - 7.6의 인프라 실패가 구간에 있으면 원인 코드를 한 번 낸다.
 - 출력 형식은 3.4 그대로다. Codex Stop 입력의 `stop_hook_active`가 true면(이미 Stop으로 이어 간 turn) phase-check만 남기고 출력 0이다.
 
@@ -209,7 +209,7 @@ cwd는 기준으로 쓰지 않는다. 설정은 hook 프로세스의 환경에�
 
 - 셸(`Bash`·`PowerShell`·`run_command`)로 바꾼 파일은 세지 않는다. 편집 도구만 막는다.
 - Claude governance hook이 `start_workflow` 호출 자체를 거부하면 서버가 호출을 받지 못한다. 그래서 hook이 실패 경로에서 같은 `workflow-start-failed:BINDING_REQUIRED:<hook 원인 코드>`를 continuity에 직접 남긴다(`governance-hook.ts` `recordStartRefusal`). 기록마저 실패하면 `WORKFLOW_START_FAILURE_UNRECORDED` 진단을 남기고 거부는 그대로다. agy runner의 host-attestation 단계 fail-closed 거부는 아직 같은 처리를 하지 않는다.
-- agy 1.4.12는 호출 `_meta`에 모델을 싣지 않아(`ANTIGRAVITY_EXECUTION_UNOBSERVED`) 신뢰 실행 관측이 필수인 workflow 시작(`plan_workflow`·`start_workflow`의 bootstrap)이 `BINDING_REQUIRED`로 실패한다(v3.0.2부터 같은 코드). agy에서는 거부 뒤 시작이 인프라 실패로 통과하므로 강제가 한 번 거부에 그친다. 3.1.1에서 정책을 정해 고친다.
+- agy 1.4.12는 호출 `_meta`에 모델을 싣지 않아(`ANTIGRAVITY_EXECUTION_UNOBSERVED`) 신뢰 실행 관측이 필수인 workflow 시작(`plan_workflow`·`start_workflow`의 bootstrap)이 `BINDING_REQUIRED`로 실패한다(v3.0.2부터 같은 코드). agy에서는 거부 뒤 시작이 인프라 실패로 통과하므로 강제가 한 번 거부에 그친다. 3.2.0에서 고쳤다(agy PreToolUse 관측 기록과 서버 짝짓기).
 - 다른 세션의 활성 root가 같은 workspace를 덮으면 최소 시작은 `ROOT_CONFLICT`로 실패하고 통과 사유가 아니다.
 - 구간은 turn마다(Stop의 phase-check) 다시 센다. 한 turn에 2개씩 여러 turn에 나눠 고치면 거부되지 않는다.
 - 버전 관리 밖의 제품(`git init` 전에 만드는 새 프로젝트, 저장소 밖 설정 파일)은 세지 않는다. `GIT_DIR`로 따로 둔 저장소도 표지가 없어 세지 않는다.

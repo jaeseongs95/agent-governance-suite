@@ -516,7 +516,7 @@ describe("local MCP convergence guard", () => {
     expect(reused.error?.code).toBe("LEASE_CONFLICT");
   });
 
-  it("preserves stale and expiry checks for planless guarded starts", async () => {
+  it("preserves stale checks and starts a planless lease however late", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-09-13T00:00:00.000Z"));
     try {
@@ -541,14 +541,15 @@ describe("local MCP convergence guard", () => {
       expect(stale.error?.code).toBe("STALE_REVISION");
       expect(status(service, root.rootId).leases[0]?.state).toBe("issued");
 
-      vi.advanceTimersByTime(301_000);
-      const expired = service.startGuardedWorkflow({
+      // Leases do not expire by time, far past the legacy leaseTtlSeconds.
+      vi.advanceTimersByTime(24 * 60 * 60 * 1000);
+      const late = service.startGuardedWorkflow({
         schemaVersion: "1.0.0",
         leaseId: lease.data!.leaseId,
         expectedRootRevision: lease.data!.rootRevision,
       });
-      expect(expired.error?.code).toBe("LEASE_CONFLICT");
-      expect(status(service, root.rootId).leases[0]?.state).toBe("expired");
+      expect(late.error).toBeNull();
+      expect(status(service, root.rootId).leases[0]?.state).toBe("consumed");
     } finally {
       vi.useRealTimers();
     }
@@ -840,29 +841,37 @@ describe("local MCP convergence guard", () => {
     expect(changedTarget.data?.epoch).toBe(2);
   });
 
-  it("does not burn proposal evidence when its lease expired before starting", async () => {
+  it("lets a newer claim supersede an unstarted lease without burning its proposal evidence", async () => {
     const { service } = await createHarness();
     const root = openRoot(service);
     const attempt = claimAndStart(service, root);
     let current = recordFailureAndStatus(service, root.rootId, attempt.receipt);
-    vi.useFakeTimers();
-    try {
-      const unstarted = service.claimWorkflowAttempt(proposal(service, current.root, {
-        priorFailure: latestFailure(current, "test:unstarted-proposal-evidence"),
-      }));
-      expect(unstarted.error).toBeNull();
-      vi.advanceTimersByTime(301_000);
-      current = status(service, root.rootId);
-      expect(current.leases.at(-1)?.state).toBe("expired");
-      const retried = service.claimWorkflowAttempt(proposal(service, current.root, {
-        priorFailure: latestFailure(current, "test:unstarted-proposal-evidence"),
-      }));
-      expect(retried.error).toBeNull();
-      expect(retried.data?.ordinal).toBe(2);
-      expect(status(service, root.rootId).attemptsUsedInEpoch).toBe(1);
-    } finally {
-      vi.useRealTimers();
-    }
+    const unstarted = service.claimWorkflowAttempt(proposal(service, current.root, {
+      priorFailure: latestFailure(current, "test:unstarted-proposal-evidence"),
+    }));
+    expect(unstarted.error).toBeNull();
+    current = status(service, root.rootId);
+    // A refused claim leaves the issued lease untouched.
+    const refused = service.claimWorkflowAttempt(proposal(service, { ...current.root, revision: current.root.revision - 1 }, {
+      priorFailure: latestFailure(current, "test:unstarted-proposal-evidence"),
+    }));
+    expect(refused.error?.code).toBe("STALE_REVISION");
+    expect(status(service, root.rootId).leases.at(-1)).toMatchObject({ leaseId: unstarted.data!.leaseId, state: "issued" });
+    const retried = service.claimWorkflowAttempt(proposal(service, current.root, {
+      priorFailure: latestFailure(current, "test:unstarted-proposal-evidence"),
+    }));
+    expect(retried.error).toBeNull();
+    expect(retried.data?.ordinal).toBe(2);
+    current = status(service, root.rootId);
+    expect(current.leases.find((lease) => lease.leaseId === unstarted.data!.leaseId)?.state).toBe("expired");
+    expect(current.leases.filter((lease) => lease.state === "issued").map((lease) => lease.leaseId)).toEqual([retried.data!.leaseId]);
+    expect(current.attemptsUsedInEpoch).toBe(1);
+    const superseded = service.startGuardedWorkflow({
+      schemaVersion: "1.0.0",
+      leaseId: unstarted.data!.leaseId,
+      expectedRootRevision: current.root.revision,
+    });
+    expect(superseded.error?.code).toBe("LEASE_CONFLICT");
   });
 
   it("records a rejected retry on the root without spending attempt budget", async () => {
@@ -1083,18 +1092,18 @@ describe("local MCP convergence guard", () => {
     );
     expect(workerResults.filter((result) => result.ok)).toHaveLength(1);
     expect(workerResults.filter((result) => !result.ok)).toHaveLength(1);
-    expect(workerResults.find((result) => !result.ok)?.error?.code).toBe("LEASE_CONFLICT");
+    // The loser either lost the root CAS or read the winner's revision first; both refuse the claim.
+    expect(["LEASE_CONFLICT", "STALE_REVISION"]).toContain(workerResults.find((result) => !result.ok)?.error?.code);
     expect(status(harness.service, root.rootId).leases.filter((lease) => lease.state === "issued")).toHaveLength(1);
   });
 
   it("allows only one trusted observation claim across two SQLite connections", async () => {
     const harness = await createHarness();
     const observationId = "concurrent-trusted-observation";
-    const expiresAt = new Date(Date.now() + 60_000).toISOString();
     const consumedAt = new Date().toISOString();
     const results = await concurrentClaims<boolean>(
       new URL("./fixtures/concurrent-observation-claim-worker.ts", import.meta.url),
-      [0, 1].map(() => ({ databasePath: harness.databasePath, observationId, expiresAt, consumedAt })),
+      [0, 1].map(() => ({ databasePath: harness.databasePath, observationId, consumedAt })),
     );
     expect(results.sort()).toEqual([false, true]);
   });

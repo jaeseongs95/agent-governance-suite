@@ -100,7 +100,7 @@ const USER_GATE_RECEIPT_STATES = new Set<WorkflowState>([
 /** Schema-validator detail keys that are safe to carry on a wrapped gate failure. */
 const SCHEMA_CAUSE_DETAIL_KEYS = ["schemaPath", "expectedDigest", "actualDigest", "validationErrors"] as const;
 
-const TRUSTED_EXECUTION_MAX_AGE_MS = 5 * 60 * 1000;
+const LEASE_UNAVAILABLE = "The attempt lease is missing, already consumed, or superseded by a newer claim; read the convergence status and claim again.";
 const TRUSTED_EXECUTION_CLOCK_SKEW_MS = 5 * 1000;
 const PLAN_INTEGRITY_TOKEN = /^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/u;
 
@@ -410,13 +410,9 @@ export class WorkflowService {
         });
       }
 
-      const snapshot = this.liveConvergenceSnapshot(proposal.rootId);
+      // An issued but unstarted lease does not block: the store supersedes it when this claim commits.
+      const snapshot = this.requireConvergenceSnapshot(proposal.rootId);
       const root = snapshot.root;
-      if (snapshot.leases.some((lease) => lease.state === "issued")) {
-        throw new WorkflowContractError("LEASE_CONFLICT", "A live attempt lease already exists for this convergence root.", {
-          rootId: root.rootId,
-        });
-      }
       if (proposal.expectedRevision !== root.revision) {
         throw new WorkflowContractError("STALE_REVISION", "expectedRevision does not match the convergence root.", {
           expectedRevision: proposal.expectedRevision,
@@ -595,11 +591,7 @@ export class WorkflowService {
       }
       const binding = this.store.getAttemptLease(request.leaseId);
       if (!binding || binding.lease.state !== "issued") {
-        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is missing, expired, or already consumed.", { leaseId: request.leaseId });
-      }
-      if (Date.parse(binding.lease.expiresAt) <= Date.now()) {
-        this.store.expireAttemptLease(binding.lease.leaseId);
-        throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease expired before workflow start.", { leaseId: request.leaseId });
+        throw new WorkflowContractError("LEASE_CONFLICT", LEASE_UNAVAILABLE, { leaseId: request.leaseId });
       }
       if (request.expectedRootRevision !== binding.root.revision || request.expectedRootRevision !== binding.lease.rootRevision) {
         throw new WorkflowContractError("STALE_REVISION", "The guarded start does not target the current convergence revision.", {
@@ -692,7 +684,7 @@ export class WorkflowService {
     const leaseId = typeof candidate.leaseId === "string" ? candidate.leaseId : "";
     const binding = this.store.getAttemptLease(leaseId);
     if (!binding) {
-      throw new WorkflowContractError("LEASE_CONFLICT", "The attempt lease is missing, expired, or already consumed.", { leaseId });
+      throw new WorkflowContractError("LEASE_CONFLICT", LEASE_UNAVAILABLE, { leaseId });
     }
     return this.validator.guardedWorkflowStartRequest({
       ...candidate,
@@ -702,7 +694,7 @@ export class WorkflowService {
 
   getConvergenceStatus(rootId: string): ApiResultV1<ConvergenceStatusV1> {
     return this.attempt(() => {
-      const status = this.buildConvergenceStatus(this.liveConvergenceSnapshot(rootId));
+      const status = this.buildConvergenceStatus(this.requireConvergenceSnapshot(rootId));
       this.validator.convergenceStatus(status);
       return clone(status);
     });
@@ -1796,7 +1788,6 @@ export class WorkflowService {
       || context.revision !== binding.revision
       || typeof context.actorId !== "string"
       || context.actorId.length === 0
-      || typeof context.expiresAt !== "string"
     ) {
       throw new WorkflowContractError(
         "BINDING_INVALID",
@@ -1806,40 +1797,28 @@ export class WorkflowService {
     }
   }
 
+  // An observation does not age out: reuse is refused by the one-use claim, not by time. A legacy expiresAt is ignored.
   private assertTrustedExecutionFreshness(context: ExecutionContextV1, subject: string): void {
     const observedAt = Date.parse(context.observedAt);
-    const expiresAt = Date.parse(context.expiresAt ?? "");
-    const now = Date.now();
-    if (
-      Number.isNaN(observedAt)
-      || Number.isNaN(expiresAt)
-      || observedAt > now + TRUSTED_EXECUTION_CLOCK_SKEW_MS
-      || now - observedAt > TRUSTED_EXECUTION_MAX_AGE_MS
-      || expiresAt <= now
-      || expiresAt < observedAt
-      || expiresAt - observedAt > TRUSTED_EXECUTION_MAX_AGE_MS
-    ) {
+    if (Number.isNaN(observedAt) || observedAt > Date.now() + TRUSTED_EXECUTION_CLOCK_SKEW_MS) {
       throw new WorkflowContractError(
         "BINDING_INVALID",
-        `${subject} trusted execution attestation is stale, expired, or has an invalid validity window.`,
-        { observedAt: context.observedAt, expiresAt: context.expiresAt },
+        `${subject} trusted execution attestation has an invalid or future observation time.`,
+        { observedAt: context.observedAt },
       );
     }
   }
 
   private consumeTrustedExecutionObservation(context: ExecutionContextV1, subject: string): void {
     const observationId = context.observationId;
-    const expiresAt = context.expiresAt;
-    if (!observationId || !expiresAt) {
+    if (!observationId) {
       throw new WorkflowContractError(
         "BINDING_INVALID",
         `${subject} trusted execution attestation is missing its one-use claim fields.`,
-        { observationId: observationId ?? null, expiresAt: expiresAt ?? null },
+        { observationId: null },
       );
     }
-    const consumedAt = new Date().toISOString();
-    const canonicalExpiry = new Date(expiresAt).toISOString();
-    if (!this.store.claimExecutionObservation(observationId, canonicalExpiry, consumedAt)) {
+    if (!this.store.claimExecutionObservation(observationId, new Date().toISOString())) {
       throw new WorkflowContractError(
         "BINDING_INVALID",
         `${subject} trusted execution attestation was already consumed.`,
@@ -2059,15 +2038,6 @@ export class WorkflowService {
     if (!snapshot) throw new WorkflowContractError("RUN_NOT_FOUND", "Convergence root was not found.", { rootId });
     this.validator.convergenceRoot(snapshot.root);
     return snapshot;
-  }
-
-  /** Expires stale issued leases, then rereads the root so callers see the current lease state. */
-  private liveConvergenceSnapshot(rootId: string): ConvergenceSnapshot {
-    const now = Date.now();
-    for (const lease of this.requireConvergenceSnapshot(rootId).leases) {
-      if (lease.state === "issued" && Date.parse(lease.expiresAt) <= now) this.store.expireAttemptLease(lease.leaseId);
-    }
-    return this.requireConvergenceSnapshot(rootId);
   }
 
   private newRunningReceipt(plan: WorkflowPlanV1): WorkflowReceiptV1 {

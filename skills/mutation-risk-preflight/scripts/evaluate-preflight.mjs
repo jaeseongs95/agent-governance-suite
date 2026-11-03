@@ -9,7 +9,6 @@ import { failureCode } from "../../../runtime/failure-diagnostics.mjs";
 import { contractErrors, validateMutationIntent } from "./schema-validation.mjs";
 
 const VERSION = "1.0.0";
-export const PREFLIGHT_VALIDITY_MINUTES = 15;
 const APPROVAL_ACTIONS = new Set(["delete", "deploy", "publish", "migrate", "permission-change", "billing", "global-config"]);
 const RECOVERY_ACTIONS = new Set(["delete", "overwrite", "deploy", "publish", "migrate", "permission-change", "billing", "global-config"]);
 const DATA_LOSS_ACTIONS = new Set(["delete", "overwrite", "migrate"]);
@@ -147,7 +146,7 @@ function blockedReport(input, reasons, now) {
     checks: [{ checkId: "input-validity", state: "failed", evidenceRefs: [], message: reasons.join(" ") }],
     approval: { required: false, status: "not-required", evidenceRefs: [] }, recovery: { available: false, restoreTested: false, irreversibilityAccepted: false, evidenceRefs: [] },
     blastRadius, unresolved: reasons,
-    invalidationTriggers: ["입력 변경", "대상 변경"], validUntil: now.toISOString(), observedAt: now.toISOString(), verdict: "BLOCKED",
+    invalidationTriggers: ["입력 변경", "대상 변경"], observedAt: now.toISOString(), verdict: "BLOCKED",
   };
 }
 
@@ -249,7 +248,7 @@ export function evaluatePreflight(input, options = {}) {
     recovery: { available: input.recoveryPlan.available, restoreTested: !containment && Boolean(input.recoveryPlan.restoreTestEvidenceRef), irreversibilityAccepted: input.recoveryPlan.irreversibilityAccepted, evidenceRefs: recoveryRefs },
     blastRadius: input.expectedBlastRadius, unresolved: [...new Set(unresolved)],
     invalidationTriggers: ["action 또는 planned tool 변경", "target 또는 environment 변경", "current-state evidence 또는 fingerprint 변경", "scope 또는 authorization 변경", "승인 evidence의 만료 또는 범위 변경", "복구 계획 변경", "예상 blast radius 변경"],
-    validUntil: new Date(now.getTime() + PREFLIGHT_VALIDITY_MINUTES * 60_000).toISOString(), observedAt: now.toISOString(), verdict,
+    observedAt: now.toISOString(), verdict,
   };
 }
 
