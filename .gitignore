@@ -18,3 +18,10 @@ __pycache__/
 !claude-plugin/mcp-server/dist/
 !claude-plugin/mcp-server/dist/*.mjs
 !claude-plugin/skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3
+# Generated English-only packages (scripts/build-en-packages.mjs) ship the same bundles.
+!claude-plugin-en/mcp-server/dist/
+!claude-plugin-en/mcp-server/dist/*.mjs
+!claude-plugin-en/skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3
+!codex-plugin-en/mcp-server/dist/
+!codex-plugin-en/mcp-server/dist/**
+!codex-plugin-en/skills/korean-prose-editor/resources/korean-prose-glossary.sqlite3
