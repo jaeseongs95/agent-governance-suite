@@ -10,3 +10,7 @@
 mcp-server/dist/server.mjs text eol=lf -whitespace
 claude-plugin/mcp-server/dist/server.mjs text eol=lf -whitespace
 claude-plugin/** linguist-generated=true
+claude-plugin-en/mcp-server/dist/server.mjs text eol=lf -whitespace
+codex-plugin-en/mcp-server/dist/server.mjs text eol=lf -whitespace
+claude-plugin-en/** linguist-generated=true
+codex-plugin-en/** linguist-generated=true
