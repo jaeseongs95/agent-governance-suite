@@ -459,22 +459,29 @@ describe("host identity", () => {
   const sharedAt = (name: string) => ({ AGENT_GOVERNANCE_SHARED_STATE_DIR: join(fixtureRoot(), name) });
   const unresolvedHost = expect.objectContaining({ code: "INVALID_INPUT", details: expect.objectContaining({ reason: "HOST_IDENTITY_UNRESOLVED" }) });
 
-  it("derives the host ID from the machine ID, so a lost or different state directory gives the same ID back", () => {
+  it("derives the host ID from the machine ID and ignores any host-id file, so no state directory can split one machine", () => {
     const machine = () => "machine-a";
     const first = sharedAt("shared");
     const id = hostIdentity(first, machine);
     expect(id).toMatch(UUID);
     expect(id).not.toContain("machine-a");
-    expect(fs.readFileSync(join(first.AGENT_GOVERNANCE_SHARED_STATE_DIR, "host-id"), "utf8").trim()).toBe(id);
-    // A deleted or never shared state directory (a fresh process reads another file) derives the same ID again.
-    fs.rmSync(first.AGENT_GOVERNANCE_SHARED_STATE_DIR, { recursive: true, force: true });
+    expect(fs.existsSync(join(first.AGENT_GOVERNANCE_SHARED_STATE_DIR, "host-id"))).toBe(false);
+    // A different, copied or stale host-id (an earlier fallback, another machine's) never overrides the derived ID.
+    const stale = sharedAt("stale-shared");
+    write(join(stale.AGENT_GOVERNANCE_SHARED_STATE_DIR, "host-id"), "00000000-0000-4000-8000-000000000000\n");
+    expect(hostIdentity(stale, machine)).toBe(id);
     expect(hostIdentity(sharedAt("other-shared"), machine)).toBe(id);
     expect(hostIdentity(sharedAt("third-shared"), () => "machine-b")).not.toBe(id);
-    // Caching is optional: an unwritable state directory still yields the derived ID.
     const blocker = join(fixtureRoot(), "not-a-directory");
     write(blocker, "x");
     expect(hostIdentity({ AGENT_GOVERNANCE_SHARED_STATE_DIR: join(blocker, "shared") }, machine)).toBe(id);
     if (["win32", "linux", "darwin"].includes(process.platform)) expect(osMachineId()).toEqual(expect.any(String));
+  });
+
+  it("refuses a machine ID it cannot read instead of creating a random host ID", () => {
+    const shared = sharedAt("failed-read");
+    expect(() => hostIdentity(shared, () => { throw new Error("spawn failed"); })).toThrow(unresolvedHost);
+    expect(fs.existsSync(join(shared.AGENT_GOVERNANCE_SHARED_STATE_DIR, "host-id"))).toBe(false);
   });
 
   it("without a machine ID creates a random host ID once and refuses one it cannot create", () => {
