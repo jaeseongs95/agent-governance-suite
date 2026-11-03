@@ -89,11 +89,16 @@
   - 기계 ID 읽기가 계속 실패하는 환경(정책으로 `reg.exe` 차단 등)에서는 root를 여는 시작이 모두 `INVALID_INPUT`(`HOST_IDENTITY_UNRESOLVED`)이다.
 - **이 PC 3.2.0 설치본의 결함(3.2.1에서 수정):** 3.2.0 `start_workflow`로 연 다중 workflow 개발 run은 `change-code-review` 단계의 산출물 대상 계약이 없어 passed로 기록할 수 없었다. 그래서 그 단계는 `blocked`(`MISSING_EVIDENCE`)로 남겼다. 리뷰 원파일 묶음은 `check-stage-bundle`을 통과했다(`NO_BLOCKING_FINDINGS`).
 - **실호스트 미실행:** Codex는 API 크레딧이 없어 실호스트 실행을 하지 않았다. 영어 패키지도 Codex에서는 설치·목록 확인까지만 했다.
-- **스킬 본문:** `en` 패키지에서도 스킬 본문은 대부분 한국어다.
+- **스킬 본문:** `en` 패키지에서도 스킬 본문은 대부분 한국어다. MCP `instructions`는 앞뒤 안내 문장만 영어다. 본문에 그대로 싣는 orchestrator 공통 접수 기준(`skills/orchestrator/SKILL.md`의 intake 블록)은 한국어로 나온다. Linux 실측 결과 7089자 중 한글이 2280자였다. 스킬 번역 때 함께 바뀐다.
 
 ## 검증
 
 - **다중 workflow 최종 후보 1aa8617f**
   - Linux 시험 서버 `pnpm test:server`: INSTALL·TSC·I18N_CHECK·TEST 종료 코드 모두 0, vitest 파일 274개 통과·1개 skip, 시험 4059개 통과, node:test 499/499
   - CI 41661964476: ubuntu·windows success
-- 발행 후보의 검증 결과는 발행 직전에 이 절에 덧붙인다.
+- **영어 패키지 실설치(Linux 시험 서버, d7e48d94 브랜치)**
+  - Claude Code 2.1.314: 설정 폴더를 따로 두고 `claude plugin marketplace add jaeseongs95/agent-governance-suite@feat/en-package-20261104`, `claude plugin install agent-governance-suite-en@agent-governance-claude`를 실행했다. 둘 다 exit 0이고 목록에 3.3.0 enabled로 나왔다. 설치본의 `runtime/locale.json`은 `en`이다.
+  - `claude -p` 실행: 스킬 25개가 `agent-governance-suite:*`로 보였고, MCP 서버는 `connected`, AGS 도구는 31개였다. SessionStart hook 출력에 한글은 0자였다.
+  - 처음 설치에서는 `mcp-server/dist`가 `.gitignore` 때문에 커밋에서 빠져 `ERR_MODULE_NOT_FOUND`가 났다. 예외 규칙과 `en:check`·시험의 ignore 검사를 넣어 고쳤다.
+  - Codex 0.166.0: `CODEX_HOME`을 따로 두고 `git-subdir` 항목으로 `codex plugin add agent-governance-suite-en@agent-governance`를 실행했다. exit 0이고 `installed, enabled 3.3.0`으로 나왔다. 설치본의 locale은 `en`, manifest는 `agent-governance-suite-en`이다. 실행은 하지 않았다(크레딧 없음).
+- 발행 후보의 전체 시험 결과는 발행 직전에 이 절에 덧붙인다.
