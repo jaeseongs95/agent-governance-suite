@@ -31,11 +31,20 @@
 
 ## 알려진 제한
 
-- agy 짝짓기는 호출 ID 없이 (대화, 도구, 인자)로 한다. 같은 대화에서 같은 인자로 같은 도구를 거의 동시에 두 번 부르고 두 hook 기록이 서버가 꺼내기 전에 모두 쌓이면, 첫 호출이 가장 최근 기록을 쓰면서 같은 키의 기록을 모두 지운다. 그래서 두 번째 호출은 `ANTIGRAVITY_OBSERVATION_MISSING`으로 거부되고 다시 부르면 된다. 남은 기록을 지우는 것은 보내지 않은 호출의 기록이 나중 호출에 쓰이지 않게 하기 위해서다.
+- agy 짝짓기는 호출 ID 없이 (대화, 도구, 인자)로 한다. 같은 대화에서 같은 인자로 같은 도구를 거의 동시에 두 번 부르고 두 hook 기록이 서버가 꺼내기 전에 모두 쌓이면, 첫 호출이 가장 최근 기록을 쓰면서 같은 키의 기록을 모두 지운다. 그래서 두 번째 호출은 `ANTIGRAVITY_OBSERVATION_MISSING`으로 거부되고 다시 부르면 된다. 남은 기록을 지우는 것은 보내지 않은 호출의 기록이 나중 호출에 쓰이지 않게 하기 위해서다. 반대로 hook은 돌았지만 서버로 보내지지 않은 호출의 기록은 하루 동안 남는다. 그 사이 같은 대화에서 같은 인자로 같은 도구를 부르면, 그 기록이 더 최근 기록이 없을 때 쓰일 수 있다. 그 사이에 모델을 바꿨다면 바꾸기 전 모델로 기록된다.
 - 새 호스트를 붙이려면 아직 ingress 목록과 호스트 목록을 함께 고쳐야 한다. 서브에이전트를 띄우는 시점의 관측도 아직 없다. 둘 다 3.2에서 다룬다.
 - 대화형 Claude 세션에서는 실행 관측 호출(`plan_workflow`·`start_workflow`·`record_stage_result`·`classify_skills`·`record_skill_selection`)마다 hook이 transcript를 처음부터 끝까지 읽는다. 호출 메시지가 hook보다 늦게 기록되어 처음 찾기에서 놓치기 때문이다. Windows 시험 서버 측정에서는 100MB 0.9초, 300MB 2.3초, 500MB 4.3초가 걸렸다. 이 기울기면 1.2GB쯤에서 hook 제한 시간 10초에 닿아 호출이 막힐 수 있다(외삽). 전체를 읽는 것은 호출 메시지가 없다는 것을 증명한 뒤에만 세션 모델로 대신 관측하기 위해서다. 그래서 끝 쪽만 읽도록 줄이지 않고, 3.2에서 이미 읽은 구간의 판정을 세션별로 저장해 새로 붙은 부분만 읽게 고친다. headless 세션은 메시지를 바로 찾으므로 크기와 상관없이 2ms였다.
 - 3.1.0의 나머지 제한(셸로 바꾼 파일은 세지 않음, 구간은 turn마다 다시 셈)은 그대로다.
 
 ## 검증
 
-<!-- 3.1.1 verification: filled in after the release-candidate runs -->
+전체 시험·실호스트 시험의 대상 커밋은 `57a75d1c`이다. 그 뒤 커밋은 이 노트만 바꾼다.
+
+- CI: run 41561330596, ubuntu-latest·windows-latest(Node 24) 모두 성공.
+- Linux 시험 서버 전체 시험(`node scripts/build.mjs && node scripts/run-tests.mjs`): 종료 코드 0. vitest 시험 파일 270개 통과·1개 skip, 시험 3977개 통과·15 skip·8 todo. node:test 486/486 통과.
+- 공식 배포판 실호스트 시험(`start_workflow` 1회 호출, `workspace` 인자 없음, 관측은 각 호스트의 AGS 상태 DB에서 읽음):
+  - Claude Code 2.1.316(Windows, `--plugin-dir`, headless, API key): ok, `claude-opus-5-5 / deep / medium`.
+  - Claude Code 2.1.316(Windows, `--plugin-dir`, 대화형 ConPTY): ok, `claude-sonnet-5-5 / general / medium`. 이 시험 서버의 API key로는 대화형 요청만 API가 `400 credit balance too low`를 돌려줘서(같은 key로 headless는 성공), 대화형은 구독 로그인으로 실행했다.
+  - Codex 0.166.0(Windows, 로컬 마켓플레이스): ok, `gpt-6.1-sol / general / low`. 설치본 파일 1,950개의 해시가 원본과 같았다.
+  - agy 1.4.12(Linux, `agy plugin install`): ok, `gemini-4-argon / null / medium / ["MODEL_NOT_IN_CATALOG"]`. 현황판에 임시 프로젝트 cwd가 기록됐다.
+- 수정 전 코드(`f95be489`)에서도 Claude Haiku(`claude-haiku-5-5 / lightweight / medium`)와 대화형 Sonnet이 ok였다. Claude Code 2.1.316은 세 모델 모두 hook에 effort를 실었다. 그래서 effort 없는 Claude 관측은 단위 시험(`tests/mcp/host-attestation.test.ts`, `tests/mcp/model-capability-contract.test.ts`)으로만 확인했다.
