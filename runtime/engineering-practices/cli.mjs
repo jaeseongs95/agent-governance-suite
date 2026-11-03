@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { PracticeError, requireCondition as need, readBoundedFile, parseJson, hashBytes } from './io.mjs';
 import { captureSnapshot, validatePlan, validateProof, validateReview, selfCheck, loadCatalog, providerResult } from './core.mjs';
 import { runCommand } from './runner.mjs';
+import { hostText } from '../i18n.mjs';
 import { checkStageBundle } from './stage-bundle.mjs';
 const COMMANDS = {
   'self-check': [], 'catalog': ['module'], 'snapshot': ['root', 'files'],
@@ -12,28 +13,28 @@ const COMMANDS = {
   'check-stage-bundle': ['root', 'input', 'bundle-digest', 'task-digest', 'capability']
 };
 export function parseArgs(argv) {
-  const [cmd, ...tokens] = argv; need(Object.hasOwn(COMMANDS, cmd), 'INVALID_INPUT', 'Unknown command. Use self-check, catalog, snapshot, run, check-plan, check-proof, check-review or provider-result.');
+  const [cmd, ...tokens] = argv; need(Object.hasOwn(COMMANDS, cmd), 'INVALID_INPUT', 'practices.cli.unknownCommandUseSelfCheckCatalog');
   const options = Object.create(null); let command = [];
   for (let i = 0; i < tokens.length; i++) {
     const t = tokens[i];
-    if (t === '--') { need(cmd === 'run', 'INVALID_INPUT', 'Command separator is only valid for run.'); command = tokens.slice(i + 1); break; }
-    need(t.startsWith('--') && COMMANDS[cmd].includes(t.slice(2)), 'INVALID_INPUT', 'Unknown option.');
-    const key = t.slice(2); need(!Object.hasOwn(options, key) && tokens[i + 1] && !tokens[i + 1].startsWith('--'), 'INVALID_INPUT', 'Duplicate or missing option value.');
+    if (t === '--') { need(cmd === 'run', 'INVALID_INPUT', 'practices.cli.commandSeparatorIsOnlyValidFor'); command = tokens.slice(i + 1); break; }
+    need(t.startsWith('--') && COMMANDS[cmd].includes(t.slice(2)), 'INVALID_INPUT', 'practices.cli.unknownOption');
+    const key = t.slice(2); need(!Object.hasOwn(options, key) && tokens[i + 1] && !tokens[i + 1].startsWith('--'), 'INVALID_INPUT', 'practices.cli.duplicateOrMissingOptionValue');
     options[key] = tokens[++i];
   }
-  if (!['self-check', 'catalog'].includes(cmd)) need(options.root, 'INVALID_INPUT', '--root is required.');
+  if (!['self-check', 'catalog'].includes(cmd)) need(options.root, 'INVALID_INPUT', 'practices.cli.rootIsRequired');
   const required = { snapshot: ['files'], run: ['snapshot'], 'check-plan': ['plan'], 'check-proof': ['plan', 'proof'], 'check-review': ['request', 'report'], 'provider-result': ['capability', 'result', 'locator'],
     'check-stage-bundle': ['input', 'bundle-digest', 'task-digest', 'capability'] };
-  for (const k of required[cmd] ?? []) need(options[k], 'INVALID_INPUT', `--${k} is required.`);
-  if (cmd === 'run') need(command.length, 'INVALID_INPUT', 'Supply the explicit command after --.');
+  for (const k of required[cmd] ?? []) need(options[k], 'INVALID_INPUT', 'practices.cli.optionRequired', { option: k });
+  if (cmd === 'run') need(command.length, 'INVALID_INPUT', 'practices.cli.supplyTheExplicitCommandAfter');
   return { cmd, options, command };
 }
 export function execute(argv) {
   const { cmd, options: o, command } = parseArgs(argv);
   const read = p => parseJson(readBoundedFile(o.root, p, 8 * 1024 * 1024));
   if (cmd === 'self-check') return { value: selfCheck(), exitCode: 0 };
-  if (cmd === 'catalog') { const c = loadCatalog(); need(!o.module || c.rules.some(r => r.module === o.module), 'INVALID_INPUT', 'Unknown module.'); return { value: { ...c, rules: o.module ? c.rules.filter(r => r.module === o.module) : c.rules }, exitCode: 0 }; }
-  if (cmd === 'snapshot') { const p = read(o.files); need(Array.isArray(p), 'INVALID_INPUT', 'File selection must be a JSON array of relative paths.'); return { value: captureSnapshot(o.root, p), exitCode: 0 }; }
+  if (cmd === 'catalog') { const c = loadCatalog(); need(!o.module || c.rules.some(r => r.module === o.module), 'INVALID_INPUT', 'practices.cli.unknownModule'); return { value: { ...c, rules: o.module ? c.rules.filter(r => r.module === o.module) : c.rules }, exitCode: 0 }; }
+  if (cmd === 'snapshot') { const p = read(o.files); need(Array.isArray(p), 'INVALID_INPUT', 'practices.cli.fileSelectionMustBeAJson'); return { value: captureSnapshot(o.root, p), exitCode: 0 }; }
   if (cmd === 'run') {
     const timeoutMs = o['timeout-ms'] === undefined ? 30000 : Number(o['timeout-ms']);
     const value = runCommand(o.root, read(o.snapshot), command, { timeoutMs, ...(o['environment-note'] ? { environmentNote: o['environment-note'] } : {}) });
@@ -51,6 +52,10 @@ export function execute(argv) {
 }
 export async function main(argv) {
   try { const { value, exitCode } = execute(argv); console.log(JSON.stringify(value, null, 2)); process.exitCode = exitCode; }
-  catch (e) { console.error(JSON.stringify({ status: 'ERROR', code: e instanceof PracticeError ? e.code : 'IO_ERROR', message: e instanceof PracticeError ? e.message : 'Could not read or execute the explicitly requested local input.' }, null, 2)); process.exitCode = 2; }
+  catch (e) {
+    // The key and params are the language-independent contract; message is the host-locale text.
+    const known = e instanceof PracticeError, messageKey = known ? e.messageKey : 'practices.cli.ioError', params = known ? e.params : {};
+    console.error(JSON.stringify({ status: 'ERROR', code: known ? e.code : 'IO_ERROR', message: known ? e.message : hostText(messageKey, params), messageKey, params }, null, 2)); process.exitCode = 2;
+  }
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await main(process.argv.slice(2));

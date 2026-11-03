@@ -12,6 +12,8 @@ import { captureSnapshot, assertReceipt } from '../../runtime/engineering-practi
 import { runCommand } from '../../runtime/engineering-practices/runner.mjs';
 import { execute } from '../../runtime/engineering-practices/cli.mjs';
 import { hashBytes } from '../../runtime/engineering-practices/io.mjs';
+// Messages follow the host locale (package default ko); these assertions read the English source text.
+process.env.AGENT_GOVERNANCE_LOCALE = 'en';
 
 function fixture(t) {
   const root = mkdtempSync(path.join(tmpdir(), 'ags-cg09-'));
