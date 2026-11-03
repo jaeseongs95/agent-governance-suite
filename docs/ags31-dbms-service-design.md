@@ -1,6 +1,6 @@
 # AGS 3.1 상태 서비스와 DBMS 전환 설계
 
-기준 commit: `d39d90c5`(v3.0.2), 작업 브랜치 `feat/dbms-service-20261102`. 줄 번호는 모두 이 commit 기준이다. 이 문서는 설계만 담는다. 구현과 시험 결과는 적지 않는다. 확인하지 못한 내용은 (추정)으로 표시한다.
+기준 commit: `d39d90c5`(v3.0.2), 작업 브랜치 `feat/dbms-service-20261102`. 줄 번호는 따로 적지 않으면 이 commit 기준이다. 출시 버전은 3.3.0이다. 3.1.1로 준비하던 수정과 시간 만료 제거가 3.2.0으로 먼저 나가기 때문이다(5.10). 5.10의 줄 번호는 3.2.0 후보 `9d623d7a` 기준이다. 이 문서는 설계만 담는다. 구현과 시험 결과는 적지 않는다. 확인하지 못한 내용은 (추정)으로 표시한다.
 
 ## 1. 목적
 
@@ -501,6 +501,30 @@ PGlite는 연결이 하나라 「풀」 자리에 대기열(4.3)이 온다. 획�
 
 `STORE_POOL_EXHAUSTED`·`SERVICE_BUSY` 오류 응답의 `details`에도 그 순간의 `waitingCount`·대기열 길이를 넣는다. 막힌 원인이 도구 결과에 바로 보인다.
 
+### 5.10 3.2.0 반영: 시간 만료 제거와 lease 대체
+
+3.2.0은 이유가 기록되지 않은 시간 만료 넷을 뺐다(사전 점검 receipt 15분, 실행 관측 5분, 상태 정리 token 15분, 단계 시도 lease 300초). 2단계 PG store는 3.2.0의 의미를 그대로 옮긴다. 시간 만료를 PG에서 다시 들이지 않는다.
+
+**3.2.0이 바꾼 store 의미(사실, `9d623d7a`).**
+
+- 관측 claim은 만료가 없다. `claimExecutionObservation(observationId, consumedAt)`로 인자가 둘이 되었다(`workflow-store.ts:60`, `sqlite-workflow-store.ts:182`). `expires_at` 열은 SQLite v6 그대로 두고 빈 문자열을 넣는다.
+- lease는 시간으로 만료되지 않는다. `insertAttemptLease`가 root CAS가 성공한 뒤 같은 트랜잭션에서 그 root의 `issued` lease를 `expired`로 바꾸고 새 lease를 넣는다(`sqlite-workflow-store.ts:418-`). `expireAttemptLease`는 없어졌다. `leaseTtlSeconds`와 lease `expiresAt`은 `operationalDigest`(`convergence-logic.ts:53`)와 저장된 root를 맞추려고 남긴 검사하지 않는 필드다.
+- 상태 정리 token은 만료가 없다. 한 번 claim, 후보 digest, DB 신원이 막는다.
+- SQLite `user_version`은 올리지 않았다(workflow 6 그대로).
+
+**PG로 옮길 때 지킬 것.**
+
+- **CAS 전에 쓰지 않는다.** SQLite `transaction()`은 콜백이 값을 반환하면 COMMIT한다(`sqlite-workflow-store.ts:1109-`). PG `transaction`도 `body`가 throw할 때만 ROLLBACK한다(5.1). 그래서 대체는 root CAS(`UPDATE ... WHERE revision = $expected`의 `rowCount === 1`) 뒤에만 한다. CAS 뒤에 생긴 이상은 반환값이 아니라 throw로 알린다.
+- **부분 유일 인덱스는 그대로 옮긴다.** `convergence_one_issued_lease ON convergence_leases(root_id) WHERE state = 'issued'`(`sqlite-workflow-store.ts:877`)는 PG 부분 인덱스로 같은 의미다(https://www.postgresql.org/docs/current/indexes-partial.html). 같은 트랜잭션에서 UPDATE를 먼저, INSERT를 나중에 하면 통과한다.
+- **충돌 사유.** 동시 claim에서 진 쪽은 `LEASE_CONFLICT`(CAS 실패나 부분 인덱스의 `23505`) 또는 `STALE_REVISION`(이긴 쪽의 revision을 먼저 읽음)을 받는다. 3.2.0 시험이 둘 다 받아들인다(`tests/mcp/convergence-guard.test.ts`의 두 연결 claim 시험). PG에서는 5.8의 SQLSTATE 매핑에 `23505`(이 인덱스) → `LEASE_CONFLICT`를 넣는다. SQLite 메시지 정규식(`isLeaseContention`)은 늘리지 않는다.
+- **시계 의존이 줄었다.** 3.2.0 뒤 workflow에서 DB 시계를 읽는 곳은 `call_admissions` 하루 정리 하나다(`currentTimeMilliseconds()`, `sqlite-workflow-store.ts:156`, 호출 `:195`). lease·관측·정리 token의 거부 판정은 시계를 쓰지 않으므로, 여러 PC가 시계 하나를 써야 한다는 5.5 규칙은 workflow에서 정리 시점에만 걸린다.
+- **스키마 번호.** PG 첫 버전은 지금처럼 SQLite 최신(workflow 6)과 같게 시작한다(5.7). 3.2.0이 번호를 올리지 않았으므로 바뀌지 않는다.
+- **`expires_at` 열은 v6에 남긴다.** 이관 검증은 테이블마다 정규 JSON digest를 비교한다(6장). 열을 빼고 옮기면 열 매핑 규칙이 따로 필요하다. 그래서 이관은 열을 그대로 옮기고, 열 제거는 이관 뒤 `contract` 마이그레이션(v7)으로 한다(5.7 절차). `lease_json`·`proposal_json`이 읽기의 정본이고 열 값은 읽지 않는다.
+- **이관 직후 남은 `issued` lease.** 3.0.x·3.1.0이 남긴 `issued` lease는 시간이 지났어도 그대로 옮긴다. 다음 claim이 대체하고, 그 전에는 원래 claim한 쪽이 시작할 수 있다. root revision에 묶여 있어 안전 문제는 없다.
+- **포트.** 2-6에서 `WorkflowStore`를 async로 바꿀 때 3.2.0 시그니처를 그대로 쓴다. 예: `claimExecutionObservation(observationId, consumedAt): Promise<boolean>`.
+- **상태 정리의 DB 신원과 backup.** 3.2.0 token은 시간 대신 DB 신원(경로·스키마 버전)에 묶인다(`state-cleanup-service.ts`). PG에서는 파일 경로 대신 (PG schema, namespace, `module_schema.version`)을 신원으로 쓴다. 삭제 전 backup은 PGlite는 `dumpDataDir`, 원격 PG는 운영자 backup에 맡길지 정하지 않았다(11장 미해결).
+- **merge 순서.** 2단계 착수 전에 3.2.0 main을 이 브랜치에 merge한다. 겹치는 파일은 `sqlite-workflow-store.ts`, `workflow-store.ts`, `workflow-service.ts`, `state-cleanup-service.ts`, `contracts/types.ts`, `contracts/state-cleanup-plan.v1.schema.json`이다. 이 문서의 `d39d90c5` 줄 번호는 그때 다시 맞춘다.
+
 ## 6. 이관(SQLite → PG, 일회성)
 
 - **시점.** 2단계 서비스가 namespace를 처음 볼 때, PG의 그 schema가 비어 있고 원본 SQLite 파일이 있으면 한 번 실행한다. 사용자 명령 `ags-service import --dry-run`으로 미리 볼 수 있다.
@@ -630,6 +654,7 @@ Linux 시험 서버(vCPU 2, 7.8G, Node 24.22.1)와 Windows 시험 서버(Server 
 - 경합: 같은 모듈에 동시 쓰기 2~16개, 용량 경계(`session-message-store.ts:570-580`)에서 한도 초과가 없음. 교차 트랜잭션 잠금 순서에서 교착 0.
 - 시간: 잠금을 기다린 트랜잭션의 시각이 앞 트랜잭션보다 작지 않음(D4). 시계를 뒤로 돌린 PC 흉내에서 high-water 유지.
 - 오류: `lock_timeout`·`statement_timeout`·풀 고갈·연결 끊김을 각각 일으켜 5.8 사유가 나옴.
+- 3.2.0 의미: 시간이 많이 지나도 lease·관측·정리 token이 거부되지 않음, 새 claim이 시작 전 lease를 대체, 거부된 claim은 기존 lease를 그대로 둠, 두 연결 동시 claim에서 하나만 이김(5.10). 3.2.0 시험을 백엔드 인자로 그대로 돈다.
 - 마이그레이션: 상위 버전 거부, `min_client_version` 거부, 비소유자 역할 `MIGRATION_REQUIRED`, contract 자동 적용 안 함, 동시 기동 두 서비스가 expand를 한 번만 적용.
 - 서명: PGlite HMAC `keyId` 왕복, Ed25519 두 서비스 상호 검증, 키 파일 동시 생성 경합, 공개키만 바꾼 행으로는 기존 서명 검증 실패.
 - 이관: 실사용 사본 이관 → 행 수·digest 일치, 일시 상태 초기화, 원본 `user_version` 1000, 3.0.2 bundle이 원본을 열면 실패, `--revert` 뒤 다시 열림. 중간 실패 시 원본 미변경.
@@ -677,5 +702,7 @@ hook·shim·relay·cli bundle에는 두 패키지가 들어가지 않는다. 1-8
 - 낮은 버전 shim을 높은 버전 서비스가 받을 때 도구 목록은 서비스 코드 기준이다. registry는 클라이언트 설치 것이다. 두 버전 사이에 도구 계약이 바뀌면 `minClientProtocol`을 올려 거부해야 한다. 어떤 변경을 프로토콜 변경으로 볼지 규칙이 아직 없다.
 - `input_observations`를 일시 상태로 볼지(6장).
 - PgBouncer 도입 기준(M4).
+- 상태 정리의 PG 신원과 삭제 전 backup 방식(5.10).
+- 같은 root를 두 에이전트가 번갈아 claim하면 서로의 시작 전 lease를 대체한다(3.2.0). 안전 문제는 아니지만, 원격 PG로 여러 PC가 같은 root를 쓰는 배치(P2·P3)에서 실제로 생기는지 실호스트로 확인하지 않았다.
 - 로컬 PGlite 메모리(8.1 M1). 저메모리 설정으로 상주 약 0.2GB, 쓰기 중 일시 최대 약 0.7GB다. 세션이 1~3개인 사용자는 현행보다 메모리를 더 쓴다. 일시 최대의 원인을 찾지 못했다. 2단계 착수 전에 macOS 측정과 함께 다시 판정한다. 대안은 embedded-postgres(첫 기동 다운로드·포트·고아 프로세스 대책 필요)다.
 - 원격 PG 연결 설정 파일의 비밀번호 보관 방식(설정 파일 0600 참조 경로 또는 `PGPASSFILE`). 서비스 한 곳에만 둔다는 원칙만 정했다. node-postgres TLS 설정: https://node-postgres.com/features/ssl, libpq `verify-full` 의미: https://www.postgresql.org/docs/current/libpq-ssl.html.
