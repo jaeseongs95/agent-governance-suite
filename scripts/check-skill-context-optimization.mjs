@@ -8,6 +8,24 @@ import { isDeepStrictEqual } from "node:util";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
+// i18n 2단계(docs/i18n-design.md 6): 이 고정 스크립트들은 출력 문장만 카탈로그 키로 옮겼다. 검토한 i18n 바이트는
+// 직전 고정 digest로 대응시켜 기존 사슬을 그대로 검사한다. 실행 바이트의 과거 내용은 읽지 않는다.
+const SCRIPT_I18N_SUCCESSOR = Object.freeze({
+  revision: "skill-script-i18n-r01",
+  authorityEffect: "none",
+  hashes: {
+    "skills/evaluation-validity-auditor/scripts/core.mjs": ["3a917987e413a3ae7d312e10c66901e76632de92614576fac70b44156720dd5f", "66e87c01b58de6721ca8a4cef24b519aad5d1dec6bb63c295b8ab9e247f037ef"],
+    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": ["365e0a4a15b1bbf8e521cf7f2e603718276335d5ae258960b9dd7fd9a25dbc3a", "93c4f5dafe50c4718b6cd2898a872106e26d394ad4fc43a5635568f6a77d6bc5"],
+    "skills/recovery-strategy-selector/scripts/core.mjs": ["b378eca94a05a5008e27f60d582e3d167c243dfb4602c663a0eef22e75254625", "c74dca9a4b0e1ad010f64cbd4e5770bdfd58d5cd1474af4569d39aba625ad82a"],
+  },
+});
+
+/** The digest pinned checks compare: reviewed i18n bytes stand for the exact predecessor they replaced. */
+function pinnedDigest(path, bytes) {
+  const digest = createHash("sha256").update(bytes).digest("hex");
+  const successor = SCRIPT_I18N_SUCCESSOR.hashes[path];
+  return successor && digest === successor[1] ? successor[0] : digest;
+}
 // AC-010 adds peer instructions after the reviewed optimization. Preserve all
 // historical bytes and compare the exact, separately frozen addition as well.
 const SESSION_BOARD_ADDITION = "scripts/fixtures/session-board-peer-message-guidance.2.6.0.md";
@@ -283,7 +301,7 @@ export function matchesGovernanceSourceSuccessor(path, bytes) {
   // Current mid-task selection wording is an exact source successor, not a 2.x runtime contract.
   // Historical reconstruction below still uses the separately pinned predecessor bytes.
   if (matchesOrchestratorSourceSuccessor(path, bytes)) return true;
-  const digest = createHash("sha256").update(bytes).digest("hex");
+  const digest = pinnedDigest(path, bytes);
   return [GOVERNANCE_SOURCE_SUCCESSOR.hashes, ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_REFERENCE_HASHES]
     .some(hashes => Object.hasOwn(hashes, path) && digest === hashes[path]);
 }
@@ -392,7 +410,7 @@ const PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR = Object.freeze({
 
 export function matchesPreflightPrivatePreparationSuccessor(path, bytes) {
   const hashes = PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes[path];
-  return Boolean(hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]);
+  return Boolean(hashes && pinnedDigest(path, bytes) === hashes[1]);
 }
 
 // Bind 1.0.3 exactly, then reuse the unchanged 1.0.2 -> historical chain.
@@ -413,7 +431,7 @@ const PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR = Object.freeze({
 
 export function matchesPreflightPlatformEventsSuccessor(path, bytes) {
   const hashes = PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes[path];
-  return Boolean(hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]);
+  return Boolean(hashes && pinnedDigest(path, bytes) === hashes[1]);
 }
 
 // Bind the receipt expiry removal (9d623d7a) exactly, then reuse the unchanged 1.0.3/1.0.2 -> historical chain.
@@ -430,7 +448,7 @@ const PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR = Object.freeze({
 
 export function matchesPreflightExpiryRemovalSuccessor(path, bytes) {
   const hashes = PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR.hashes[path];
-  return Boolean(hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]);
+  return Boolean(hashes && pinnedDigest(path, bytes) === hashes[1]);
 }
 
 function matchesPreflightPlatformEventsChain(path, bytes) {
@@ -613,18 +631,22 @@ function matchesSkillPolicyWordingSuccessor(path, bytes) {
     && createHash("sha256").update(bytes).digest("hex") === SKILL_POLICY_WORDING_SUCCESSOR.hashes[path];
 }
 
-// 문맥 검사는 실행 바이트를 판정하지 않는다. 기존 허용 경로만 보존한다.
+// 문맥 검사는 실행 바이트를 판정하지 않는다. 기존 허용 경로를 보존하고, i18n 2단계에서 출력 문장만 카탈로그로 옮긴 스크립트를 더한다.
 const IMPLEMENTATION_PATHS = new Set([
   "skills/acceptance-evidence-validator/scripts/check-repository.mjs",
   "skills/acceptance-evidence-validator/scripts/core.mjs",
   "skills/acceptance-evidence-validator/scripts/io.mjs",
   "skills/acceptance-evidence-validator/scripts/schema-validation.mjs",
+  "skills/acceptance-evidence-validator/scripts/validate-report.mjs",
   "skills/blocker-diagnostician/scripts/check-repository.mjs",
   "skills/blocker-diagnostician/scripts/cli.mjs",
   "skills/blocker-diagnostician/scripts/core.mjs",
   "skills/blocker-diagnostician/scripts/io.mjs",
+  "skills/blocker-diagnostician/scripts/validate-report.mjs",
+  "skills/change-scope-guardian/scripts/compile-schemas.mjs",
   "skills/change-scope-guardian/scripts/lib.mjs",
   "skills/change-scope-guardian/scripts/schema-validator.mjs",
+  "skills/change-scope-guardian/scripts/validate-report.mjs",
   "skills/codex-token-usage-analyzer/scripts/cli.mjs",
   "skills/codex-token-usage-analyzer/scripts/core.mjs",
   "skills/codex-token-usage-analyzer/scripts/schema-validation.mjs",
@@ -642,13 +664,20 @@ const IMPLEMENTATION_PATHS = new Set([
   "skills/iteration-frame-auditor/scripts/core.mjs",
   "skills/iteration-frame-auditor/scripts/digest-request.mjs",
   "skills/iteration-frame-auditor/scripts/io.mjs",
+  "skills/iteration-frame-auditor/scripts/validate-review.mjs",
   "skills/korean-prose-editor/scripts/finalizer-core.mjs",
+  "skills/korean-prose-editor/scripts/lib.mjs",
   "skills/korean-prose-editor/scripts/protected-spans.mjs",
+  "skills/korean-prose-editor/scripts/provider-plan.mjs",
+  "skills/korean-prose-editor/scripts/source-units.mjs",
   "skills/model-effort-advisor/scripts/support-guard.mjs",
   "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs",
   "skills/mutation-risk-preflight/scripts/schema-validation.mjs",
   "skills/mutation-risk-preflight/scripts/validate-skill.mjs",
   "skills/mutation-risk-preflight/scripts/verify-preflight-receipt.mjs",
+  "skills/orchestrator/scripts/collaboration-decision.mjs",
+  "skills/orchestrator/scripts/query-registry.mjs",
+  "skills/orchestrator/scripts/validate-collaboration-decision.mjs",
   "skills/recovery-strategy-selector/scripts/io.mjs",
   "skills/recovery-strategy-selector/scripts/schema-validation.mjs",
   "skills/session-board/scripts/board-store.mjs",
@@ -1104,6 +1133,7 @@ export function checkSkillContextOptimization() {
     currentPreflightPlatformEventsSuccessors: [PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR],
     currentPreflightExpiryRemovalSuccessors: [PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR],
     currentPreflightAdditiveSourceSuccessors: [PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR],
+    currentScriptI18nSuccessors: [SCRIPT_I18N_SUCCESSOR],
     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
     policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],
     reviewedImplementationUpdates: [REVIEWED_IMPLEMENTATION_R1],

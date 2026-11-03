@@ -60,6 +60,28 @@ describe("skill context optimization", () => {
     } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
   });
 
+  it.each([
+    ["skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs", "preflight expiry-removal successor bytes differ"],
+    ["skills/evaluation-validity-auditor/scripts/core.mjs", "governance source successor bytes differ"],
+    ["skills/recovery-strategy-selector/scripts/core.mjs", "governance source successor bytes differ"],
+  ])("binds the reviewed i18n script bytes exactly: %s", async (relative, message) => {
+    expect(checkSkillContextOptimization().currentScriptI18nSuccessors[0].hashes[relative]).toHaveLength(2);
+    vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
+      const bytes = readFileSync(file, ...args);
+      if (String(file).replaceAll("\\", "/").endsWith(`/${relative}`)) {
+        const altered = Buffer.from(bytes); altered[altered.length - 1] ^= 1; return altered;
+      }
+      return bytes;
+    } }));
+    try {
+      vi.resetModules();
+      const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      expect(report.pass).toBe(false);
+      expect(report.errors).toContain(`${message}: ${relative}`);
+    } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
+  });
+
   it("rejects altered contract evidence", async () => {
     const relative = "skills/independent-deliberation-panel/evals/fixtures/valid/ad01_specialist_cap.json";
     vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {

@@ -6,9 +6,9 @@ import path from 'node:path';
 import { verifySnapshot, captureSnapshot, seal, assertReceipt } from './core.mjs';
 import { requireCondition as need, hashBytes } from './io.mjs';
 export function runCommand(root, snapshot, argv, { timeoutMs = 30000, environmentNote = 'Inherited process environment; undeclared environmental inputs are not captured.' } = {}) {
-  need(Array.isArray(argv) && argv.length > 0 && argv.length <= 128 && argv.every(x => typeof x === 'string' && x.length > 0 && !x.includes('\0')), 'INVALID_INPUT', 'Explicit bounded argv is required.');
-  need(Number.isSafeInteger(timeoutMs) && timeoutMs >= 1 && timeoutMs <= 300000, 'INVALID_INPUT', 'timeoutMs must be within 1..300000.');
-  need(typeof environmentNote === 'string' && environmentNote.trim(), 'INVALID_INPUT', 'Environment note is required.');
+  need(Array.isArray(argv) && argv.length > 0 && argv.length <= 128 && argv.every(x => typeof x === 'string' && x.length > 0 && !x.includes('\0')), 'INVALID_INPUT', 'practices.runner.explicitBoundedArgvIsRequired');
+  need(Number.isSafeInteger(timeoutMs) && timeoutMs >= 1 && timeoutMs <= 300000, 'INVALID_INPUT', 'practices.runner.timeoutmsMustBeWithin1300000');
+  need(typeof environmentNote === 'string' && environmentNote.trim(), 'INVALID_INPUT', 'practices.runner.environmentNoteIsRequired');
   verifySnapshot(root, snapshot);
   // Prevent the parent node:test harness from suppressing a nested --test invocation.
   const childEnv = { ...process.env };

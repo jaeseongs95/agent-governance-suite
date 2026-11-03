@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
 import { validateReport } from "./core.mjs";
+import { hostText } from "../../../runtime/i18n.mjs";
 import { readJsonArgument, writeJson } from "./io.mjs";
 
 try {
@@ -10,9 +11,9 @@ try {
   const artifactIndex = args.indexOf("--request-artifact");
   let validation;
   if (reportIndex >= 0 || requestIndex >= 0 || artifactIndex >= 0) {
-    if (reportIndex < 0 || !args[reportIndex + 1]) throw new Error("--report requires a file path.");
-    if (requestIndex < 0 || !args[requestIndex + 1]) throw new Error("--request requires a file path.");
-    if (artifactIndex < 0 || !args[artifactIndex + 1]) throw new Error("--request-artifact requires a file path.");
+    if (reportIndex < 0 || !args[reportIndex + 1]) throw new Error(hostText("skillScripts.acceptanceEvidence.requiresFilePath", { name: "--report" }));
+    if (requestIndex < 0 || !args[requestIndex + 1]) throw new Error(hostText("skillScripts.acceptanceEvidence.requiresFilePath", { name: "--request" }));
+    if (artifactIndex < 0 || !args[artifactIndex + 1]) throw new Error(hostText("skillScripts.acceptanceEvidence.requiresFilePath", { name: "--request-artifact" }));
     validation = {
       schemaVersion: "1.0.0",
       report: JSON.parse(await readFile(args[reportIndex + 1], "utf8")),

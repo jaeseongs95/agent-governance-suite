@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { validateInputSchema, validateReportSchema, validateReportValidationSchema, validateTaskEnvelopeSchema } from "./schema-validation.mjs";
+import { hostText } from "../../../runtime/i18n.mjs";
 
 export class InputError extends Error {
   constructor(message, details = null) {
@@ -16,7 +17,7 @@ export function canonicalJson(value) {
   if (value && typeof value === "object") {
     return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
   }
-  throw new InputError("Input contains a non-JSON value.");
+  throw new InputError(hostText("skillScripts.acceptanceEvidence.nonJsonValue"));
 }
 
 export function sha256(value) {
@@ -38,52 +39,52 @@ export function authorityEvidenceDigest(evidence, authorityValue) {
 }
 
 function nonEmptyString(value, name) {
-  if (typeof value !== "string" || value.trim().length === 0) throw new InputError(`${name} must be a non-empty string.`);
+  if (typeof value !== "string" || value.trim().length === 0) throw new InputError(hostText("skillScripts.acceptanceEvidence.mustBeNonEmptyString", { name }));
 }
 
 function stringArray(value, name, { min = 0 } = {}) {
   if (!Array.isArray(value) || value.length < min || value.some((item) => typeof item !== "string" || item.trim().length === 0)) {
-    throw new InputError(`${name} must be an array of non-empty strings.`);
+    throw new InputError(hostText("skillScripts.acceptanceEvidence.mustBeStringArray", { name }));
   }
-  if (new Set(value).size !== value.length) throw new InputError(`${name} must not contain duplicates.`);
+  if (new Set(value).size !== value.length) throw new InputError(hostText("skillScripts.acceptanceEvidence.mustNotDuplicate", { name }));
 }
 
 function exactKeys(value, allowed, name) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new InputError(`${name} must be an object.`);
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new InputError(hostText("skillScripts.acceptanceEvidence.mustBeObject", { name }));
   const extras = Object.keys(value).filter((key) => !allowed.includes(key));
-  if (extras.length > 0) throw new InputError(`${name} contains unsupported fields: ${extras.join(", ")}.`);
+  if (extras.length > 0) throw new InputError(hostText("skillScripts.acceptanceEvidence.unsupportedFields", { name, fields: extras.join(", ") }));
 }
 
 export function assertTaskEnvelope(task) {
-  if (!task || typeof task !== "object" || Array.isArray(task)) throw new InputError("taskEnvelope must be an object.");
-  if (!validateTaskEnvelopeSchema(task)) throw new InputError("TaskEnvelope.v1 validation failed.", { errors: structuredClone(validateTaskEnvelopeSchema.errors) });
-  if (task.schemaVersion !== "1.0.0") throw new InputError("taskEnvelope.schemaVersion must be 1.0.0.");
+  if (!task || typeof task !== "object" || Array.isArray(task)) throw new InputError(hostText("skillScripts.acceptanceEvidence.taskEnvelopeNotObject"));
+  if (!validateTaskEnvelopeSchema(task)) throw new InputError(hostText("skillScripts.acceptanceEvidence.taskEnvelopeSchemaFailed"), { errors: structuredClone(validateTaskEnvelopeSchema.errors) });
+  if (task.schemaVersion !== "1.0.0") throw new InputError(hostText("skillScripts.acceptanceEvidence.taskEnvelopeSchemaVersion"));
   nonEmptyString(task.taskId, "taskEnvelope.taskId");
   nonEmptyString(task.objective, "taskEnvelope.objective");
   exactKeys(task.scope, ["included", "excluded"], "taskEnvelope.scope");
   stringArray(task.scope.included, "taskEnvelope.scope.included");
   stringArray(task.scope.excluded, "taskEnvelope.scope.excluded");
   stringArray(task.acceptanceCriteria, "taskEnvelope.acceptanceCriteria", { min: 1 });
-  if (!["low", "medium", "high", "critical"].includes(task.riskLevel)) throw new InputError("taskEnvelope.riskLevel is invalid.");
-  if (!Array.isArray(task.workUnits)) throw new InputError("taskEnvelope.workUnits must be an array.");
+  if (!["low", "medium", "high", "critical"].includes(task.riskLevel)) throw new InputError(hostText("skillScripts.acceptanceEvidence.taskEnvelopeRiskLevel"));
+  if (!Array.isArray(task.workUnits)) throw new InputError(hostText("skillScripts.acceptanceEvidence.workUnitsNotArray"));
   const workUnitIds = new Set();
   for (const unit of task.workUnits) {
     exactKeys(unit, ["id", "objective", "dependencies", "writeTargets"], "taskEnvelope.workUnit");
     nonEmptyString(unit.id, "taskEnvelope.workUnit.id");
-    if (workUnitIds.has(unit.id)) throw new InputError(`Duplicate work unit id: ${unit.id}.`);
+    if (workUnitIds.has(unit.id)) throw new InputError(hostText("skillScripts.acceptanceEvidence.duplicateWorkUnit", { id: unit.id }));
     workUnitIds.add(unit.id);
     nonEmptyString(unit.objective, `taskEnvelope.workUnit ${unit.id} objective`);
     stringArray(unit.dependencies, `taskEnvelope.workUnit ${unit.id} dependencies`);
     stringArray(unit.writeTargets, `taskEnvelope.workUnit ${unit.id} writeTargets`);
   }
   for (const unit of task.workUnits) {
-    for (const dependency of unit.dependencies) if (!workUnitIds.has(dependency)) throw new InputError(`Unknown work unit dependency: ${dependency}.`);
+    for (const dependency of unit.dependencies) if (!workUnitIds.has(dependency)) throw new InputError(hostText("skillScripts.acceptanceEvidence.unknownDependency", { dependency }));
   }
   const graph = new Map(task.workUnits.map((unit) => [unit.id, unit.dependencies]));
   const visiting = new Set();
   const visited = new Set();
   const visit = (id) => {
-    if (visiting.has(id)) throw new InputError(`Work unit dependency cycle at ${id}.`);
+    if (visiting.has(id)) throw new InputError(hostText("skillScripts.acceptanceEvidence.dependencyCycle", { id }));
     if (visited.has(id)) return;
     visiting.add(id);
     for (const dependency of graph.get(id) ?? []) visit(dependency);
@@ -97,11 +98,11 @@ export function assertTaskEnvelope(task) {
   for (const key of ["allowedActions", "prohibitedActions", "approvalRequired"]) stringArray(task.authorization[key], `taskEnvelope.authorization.${key}`);
   exactKeys(task.decision, ["complexity", "hasConflicts"], "taskEnvelope.decision");
   if (!["simple", "complex"].includes(task.decision.complexity) || typeof task.decision.hasConflicts !== "boolean") {
-    throw new InputError("taskEnvelope.decision is invalid.");
+    throw new InputError(hostText("skillScripts.acceptanceEvidence.taskEnvelopeDecision"));
   }
   exactKeys(task.orchestration, ["requested", "mcpAvailable"], "taskEnvelope.orchestration");
   if (typeof task.orchestration.requested !== "boolean" || typeof task.orchestration.mcpAvailable !== "boolean") {
-    throw new InputError("taskEnvelope.orchestration is invalid.");
+    throw new InputError(hostText("skillScripts.acceptanceEvidence.taskEnvelopeOrchestration"));
   }
 }
 
@@ -110,19 +111,19 @@ function criterionId(index) {
 }
 
 export function analyzeAcceptance(input) {
-  if (!input || typeof input !== "object" || Array.isArray(input)) throw new InputError("Input must be an object.");
-  if (!validateInputSchema(input)) throw new InputError("AcceptanceEvidenceInput.v1 validation failed.", { errors: structuredClone(validateInputSchema.errors) });
-  if (input.schemaVersion !== "1.0.0") throw new InputError("schemaVersion must be 1.0.0.");
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw new InputError(hostText("skillScripts.acceptanceEvidence.inputNotObject"));
+  if (!validateInputSchema(input)) throw new InputError(hostText("skillScripts.acceptanceEvidence.inputSchemaFailed"), { errors: structuredClone(validateInputSchema.errors) });
+  if (input.schemaVersion !== "1.0.0") throw new InputError(hostText("skillScripts.acceptanceEvidence.schemaVersion"));
   exactKeys(input, ["schemaVersion", "taskEnvelope", "target", "evidence", "verificationCommands", "knownLimitations", "criterionOverrides"], "input");
   assertTaskEnvelope(input.taskEnvelope);
-  if (!input.target || typeof input.target !== "object") throw new InputError("target is required.");
+  if (!input.target || typeof input.target !== "object") throw new InputError(hostText("skillScripts.acceptanceEvidence.targetRequired"));
   exactKeys(input.target, ["kind", "identifier", "digest"], "target");
   for (const key of ["kind", "identifier", "digest"]) nonEmptyString(input.target[key], `target.${key}`);
-  if (!/^sha256:[a-f0-9]{64}$/u.test(input.target.digest)) throw new InputError("target.digest must be a sha256 digest.");
-  if (!Array.isArray(input.evidence)) throw new InputError("evidence must be an array.");
-  if (!Array.isArray(input.verificationCommands)) throw new InputError("verificationCommands must be an array.");
+  if (!/^sha256:[a-f0-9]{64}$/u.test(input.target.digest)) throw new InputError(hostText("skillScripts.acceptanceEvidence.targetDigestSha256"));
+  if (!Array.isArray(input.evidence)) throw new InputError(hostText("skillScripts.acceptanceEvidence.evidenceNotArray"));
+  if (!Array.isArray(input.verificationCommands)) throw new InputError(hostText("skillScripts.acceptanceEvidence.verificationCommandsNotArray"));
   stringArray(input.knownLimitations, "knownLimitations");
-  if (!Array.isArray(input.criterionOverrides)) throw new InputError("criterionOverrides must be an array.");
+  if (!Array.isArray(input.criterionOverrides)) throw new InputError(hostText("skillScripts.acceptanceEvidence.criterionOverridesNotArray"));
 
   const validCriterionIds = input.taskEnvelope.acceptanceCriteria.map((_, index) => criterionId(index));
   const validSet = new Set(validCriterionIds);
@@ -130,17 +131,17 @@ export function analyzeAcceptance(input) {
   for (const evidence of input.evidence) {
     exactKeys(evidence, ["id", "kind", "locator", "digest", "targetDigest", "verified", "criterionIds", "direction", "observedResult"], `evidence ${evidence?.id ?? "unknown"}`);
     nonEmptyString(evidence.id, "evidence.id");
-    if (evidenceIds.has(evidence.id)) throw new InputError(`Duplicate evidence id: ${evidence.id}`);
+    if (evidenceIds.has(evidence.id)) throw new InputError(hostText("skillScripts.acceptanceEvidence.duplicateEvidence", { id: evidence.id }));
     evidenceIds.add(evidence.id);
     nonEmptyString(evidence.locator, `evidence ${evidence.id} locator`);
     nonEmptyString(evidence.digest, `evidence ${evidence.id} digest`);
     nonEmptyString(evidence.targetDigest, `evidence ${evidence.id} targetDigest`);
-    if (!/^sha256:[a-f0-9]{64}$/u.test(evidence.digest) || !/^sha256:[a-f0-9]{64}$/u.test(evidence.targetDigest)) throw new InputError(`evidence ${evidence.id} digests must be sha256 values.`);
-    if (!["user-input", "file", "test", "document", "tool"].includes(evidence.kind)) throw new InputError(`evidence ${evidence.id} kind is invalid.`);
-    if (typeof evidence.verified !== "boolean") throw new InputError(`evidence ${evidence.id} verified must be boolean.`);
-    if (!["supports", "refutes"].includes(evidence.direction)) throw new InputError(`evidence ${evidence.id} direction is invalid.`);
+    if (!/^sha256:[a-f0-9]{64}$/u.test(evidence.digest) || !/^sha256:[a-f0-9]{64}$/u.test(evidence.targetDigest)) throw new InputError(hostText("skillScripts.acceptanceEvidence.evidenceDigestsSha256", { id: evidence.id }));
+    if (!["user-input", "file", "test", "document", "tool"].includes(evidence.kind)) throw new InputError(hostText("skillScripts.acceptanceEvidence.evidenceKind", { id: evidence.id }));
+    if (typeof evidence.verified !== "boolean") throw new InputError(hostText("skillScripts.acceptanceEvidence.evidenceVerified", { id: evidence.id }));
+    if (!["supports", "refutes"].includes(evidence.direction)) throw new InputError(hostText("skillScripts.acceptanceEvidence.evidenceDirection", { id: evidence.id }));
     stringArray(evidence.criterionIds, `evidence ${evidence.id} criterionIds`, { min: 1 });
-    for (const id of evidence.criterionIds) if (!validSet.has(id)) throw new InputError(`Evidence ${evidence.id} references unknown criterion ${id}.`);
+    for (const id of evidence.criterionIds) if (!validSet.has(id)) throw new InputError(hostText("skillScripts.acceptanceEvidence.evidenceUnknownCriterion", { evidenceId: evidence.id, criterionId: id }));
     nonEmptyString(evidence.observedResult, `evidence ${evidence.id} observedResult`);
   }
 
@@ -148,23 +149,23 @@ export function analyzeAcceptance(input) {
   for (const command of input.verificationCommands) {
     exactKeys(command, ["id", "command", "exitCode", "locator", "targetDigest", "criterionIds"], "verificationCommand");
     nonEmptyString(command.id, "verificationCommand.id");
-    if (commandIds.has(command.id)) throw new InputError(`Duplicate verificationCommand id: ${command.id}.`);
+    if (commandIds.has(command.id)) throw new InputError(hostText("skillScripts.acceptanceEvidence.duplicateCommand", { id: command.id }));
     commandIds.add(command.id);
-    if (evidenceIds.has(`command:${command.id}`)) throw new InputError(`Evidence id command:${command.id} is reserved for a verification command.`);
+    if (evidenceIds.has(`command:${command.id}`)) throw new InputError(hostText("skillScripts.acceptanceEvidence.reservedCommandEvidenceId", { id: command.id }));
     nonEmptyString(command.command, "verificationCommand.command");
-    if (!Number.isInteger(command.exitCode)) throw new InputError("verificationCommand.exitCode must be an integer.");
+    if (!Number.isInteger(command.exitCode)) throw new InputError(hostText("skillScripts.acceptanceEvidence.commandExitCode"));
     nonEmptyString(command.locator, "verificationCommand.locator");
-    if (!/^sha256:[a-f0-9]{64}$/u.test(command.targetDigest ?? "")) throw new InputError("verificationCommand.targetDigest must be a sha256 value.");
+    if (!/^sha256:[a-f0-9]{64}$/u.test(command.targetDigest ?? "")) throw new InputError(hostText("skillScripts.acceptanceEvidence.commandTargetDigest"));
     stringArray(command.criterionIds, `verificationCommand ${command.id} criterionIds`, { min: 1 });
-    for (const id of command.criterionIds) if (!validSet.has(id)) throw new InputError(`Verification command ${command.id} references unknown criterion ${id}.`);
+    for (const id of command.criterionIds) if (!validSet.has(id)) throw new InputError(hostText("skillScripts.acceptanceEvidence.commandUnknownCriterion", { commandId: command.id, criterionId: id }));
   }
 
   const overrides = new Map();
   for (const override of input.criterionOverrides) {
     exactKeys(override, ["criterionId", "status", "rationale", "authorityRef"], `override ${override?.criterionId ?? "unknown"}`);
-    if (!validSet.has(override.criterionId)) throw new InputError(`Override references unknown criterion ${override.criterionId}.`);
-    if (overrides.has(override.criterionId)) throw new InputError(`Duplicate override for ${override.criterionId}.`);
-    if (override.status !== "not-applicable") throw new InputError("Only not-applicable overrides are supported.");
+    if (!validSet.has(override.criterionId)) throw new InputError(hostText("skillScripts.acceptanceEvidence.overrideUnknownCriterion", { criterionId: override.criterionId }));
+    if (overrides.has(override.criterionId)) throw new InputError(hostText("skillScripts.acceptanceEvidence.duplicateOverride", { criterionId: override.criterionId }));
+    if (override.status !== "not-applicable") throw new InputError(hostText("skillScripts.acceptanceEvidence.onlyNotApplicable"));
     nonEmptyString(override.rationale, `override ${override.criterionId} rationale`);
     nonEmptyString(override.authorityRef, `override ${override.criterionId} authorityRef`);
     overrides.set(override.criterionId, override);
@@ -200,15 +201,15 @@ export function analyzeAcceptance(input) {
   for (const override of overrides.values()) {
     const authority = currentEvidence.find((item) => item.evidenceId === override.authorityRef);
     if (!authority || !["user-input", "document"].includes(authority.kind) || authority.direction !== "supports" || !authority.criterionIds.includes(override.criterionId)) {
-      throw new InputError(`Override ${override.criterionId} must reference verified current authority evidence for that criterion.`);
+      throw new InputError(hostText("skillScripts.acceptanceEvidence.overrideNeedsAuthority", { criterionId: override.criterionId }));
     }
     const match = /^task-envelope#\/(scope\/excluded|authorization\/prohibitedActions)\/([0-9]+)$/u.exec(authority.locator);
-    if (!match) throw new InputError(`Override ${override.criterionId} authority evidence must locate an excluded scope or prohibited action in TaskEnvelope.`);
+    if (!match) throw new InputError(hostText("skillScripts.acceptanceEvidence.overrideAuthorityLocator", { criterionId: override.criterionId }));
     const collection = match[1] === "scope/excluded" ? input.taskEnvelope.scope.excluded : input.taskEnvelope.authorization.prohibitedActions;
     const value = collection[Number(match[2])];
-    if (typeof value !== "string" || value.length === 0) throw new InputError(`Override ${override.criterionId} authority locator does not resolve in TaskEnvelope.`);
+    if (typeof value !== "string" || value.length === 0) throw new InputError(hostText("skillScripts.acceptanceEvidence.overrideLocatorUnresolved", { criterionId: override.criterionId }));
     const expectedDigest = authorityEvidenceDigest(authority, value);
-    if (authority.digest !== expectedDigest) throw new InputError(`Override ${override.criterionId} authority evidence digest does not match TaskEnvelope.`);
+    if (authority.digest !== expectedDigest) throw new InputError(hostText("skillScripts.acceptanceEvidence.overrideDigestMismatch", { criterionId: override.criterionId }));
   }
 
   const criteria = input.taskEnvelope.acceptanceCriteria.map((statement, index) => {
@@ -295,15 +296,15 @@ export function analyzeAcceptance(input) {
 }
 
 export function validateReport(validation) {
-  if (!validation || typeof validation !== "object" || Array.isArray(validation)) return ["validation input must be an object"];
+  if (!validation || typeof validation !== "object" || Array.isArray(validation)) return [hostText("skillScripts.acceptanceEvidence.validationInputNotObject")];
   if (!validateReportValidationSchema(validation)) {
-    return [`validation input schema validation failed: ${JSON.stringify(validateReportValidationSchema.errors)}`];
+    return [hostText("skillScripts.acceptanceEvidence.validationInputSchemaFailed", { errors: JSON.stringify(validateReportValidationSchema.errors) })];
   }
   const { report, request, requestArtifact } = validation;
-  if (!report || typeof report !== "object" || Array.isArray(report)) return ["report must be an object"];
+  if (!report || typeof report !== "object" || Array.isArray(report)) return [hostText("skillScripts.acceptanceEvidence.reportNotObject")];
   const errors = [];
   if (requestArtifact.digest !== sha256(request)) {
-    errors.push("requestArtifact.digest does not match the canonical frozen request");
+    errors.push(hostText("skillScripts.acceptanceEvidence.requestArtifactDigestMismatch"));
   }
   return [...errors, ...validateReportAgainstRequest(report, request)];
 }
@@ -315,56 +316,56 @@ export function validateReport(validation) {
  */
 export function validateReportAgainstRequest(report, request) {
   const errors = [];
-  if (!report || typeof report !== "object" || Array.isArray(report)) return ["report must be an object"];
-  if (!validateReportSchema(report)) errors.push(`report schema validation failed: ${JSON.stringify(validateReportSchema.errors)}`);
-  if (report.schemaVersion !== "1.0.0") errors.push("report.schemaVersion must be 1.0.0");
-  if (!report.target || typeof report.target.digest !== "string") errors.push("report.target.digest is required");
-  if (!Array.isArray(report.criteria) || report.criteria.length === 0) errors.push("report.criteria must be non-empty");
-  if (!Array.isArray(report.unresolvedCriteria)) errors.push("report.unresolvedCriteria must be an array");
-  if (!Array.isArray(report.limitations)) errors.push("report.limitations must be an array");
-  if (!Array.isArray(report.verifiedEvidenceIndex)) errors.push("report.verifiedEvidenceIndex must be an array");
-  if (!["PASS", "FAIL", "BLOCKED", "NEEDS_INPUT"].includes(report.verdict)) errors.push("report.verdict is invalid");
+  if (!report || typeof report !== "object" || Array.isArray(report)) return [hostText("skillScripts.acceptanceEvidence.reportNotObject")];
+  if (!validateReportSchema(report)) errors.push(hostText("skillScripts.acceptanceEvidence.reportSchemaFailed", { errors: JSON.stringify(validateReportSchema.errors) }));
+  if (report.schemaVersion !== "1.0.0") errors.push(hostText("skillScripts.acceptanceEvidence.reportSchemaVersion"));
+  if (!report.target || typeof report.target.digest !== "string") errors.push(hostText("skillScripts.acceptanceEvidence.reportTargetDigestRequired"));
+  if (!Array.isArray(report.criteria) || report.criteria.length === 0) errors.push(hostText("skillScripts.acceptanceEvidence.reportCriteriaEmpty"));
+  if (!Array.isArray(report.unresolvedCriteria)) errors.push(hostText("skillScripts.acceptanceEvidence.reportUnresolvedNotArray"));
+  if (!Array.isArray(report.limitations)) errors.push(hostText("skillScripts.acceptanceEvidence.reportLimitationsNotArray"));
+  if (!Array.isArray(report.verifiedEvidenceIndex)) errors.push(hostText("skillScripts.acceptanceEvidence.reportIndexNotArray"));
+  if (!["PASS", "FAIL", "BLOCKED", "NEEDS_INPUT"].includes(report.verdict)) errors.push(hostText("skillScripts.acceptanceEvidence.reportVerdictInvalid"));
   const index = new Map();
   if (Array.isArray(report.verifiedEvidenceIndex)) {
     for (const item of report.verifiedEvidenceIndex) {
-      if (index.has(item.evidenceId)) errors.push(`verified evidence ID is duplicated: ${item.evidenceId}`);
+      if (index.has(item.evidenceId)) errors.push(hostText("skillScripts.acceptanceEvidence.indexDuplicateEvidence", { evidenceId: item.evidenceId }));
       index.set(item.evidenceId, item);
-      if (item.targetDigest !== report.target?.digest) errors.push(`verified evidence ${item.evidenceId} is stale`);
+      if (item.targetDigest !== report.target?.digest) errors.push(hostText("skillScripts.acceptanceEvidence.indexStaleEvidence", { evidenceId: item.evidenceId }));
     }
   }
   if (Array.isArray(report.criteria)) {
     const ids = report.criteria.map((item) => item.criterionId);
-    if (new Set(ids).size !== ids.length) errors.push("criterion IDs must be unique");
+    if (new Set(ids).size !== ids.length) errors.push(hostText("skillScripts.acceptanceEvidence.criterionIdsUnique"));
     for (const item of report.criteria) {
-      if (!/^AC-[0-9]{3,}$/u.test(item.criterionId ?? "")) errors.push(`invalid criterion ID: ${item.criterionId}`);
-      if (!["satisfied", "unsatisfied", "insufficient-evidence", "not-applicable"].includes(item.status)) errors.push(`invalid status for ${item.criterionId}`);
-      if (item.status === "satisfied" && (!Array.isArray(item.evidenceRefs) || item.evidenceRefs.length === 0)) errors.push(`${item.criterionId} satisfied without evidence`);
-      if (item.status === "not-applicable" && (!item.rationale || !Array.isArray(item.evidenceRefs) || item.evidenceRefs.length === 0)) errors.push(`${item.criterionId} not-applicable without authority`);
+      if (!/^AC-[0-9]{3,}$/u.test(item.criterionId ?? "")) errors.push(hostText("skillScripts.acceptanceEvidence.criterionIdInvalid", { criterionId: item.criterionId }));
+      if (!["satisfied", "unsatisfied", "insufficient-evidence", "not-applicable"].includes(item.status)) errors.push(hostText("skillScripts.acceptanceEvidence.criterionStatusInvalid", { criterionId: item.criterionId }));
+      if (item.status === "satisfied" && (!Array.isArray(item.evidenceRefs) || item.evidenceRefs.length === 0)) errors.push(hostText("skillScripts.acceptanceEvidence.satisfiedWithoutEvidence", { criterionId: item.criterionId }));
+      if (item.status === "not-applicable" && (!item.rationale || !Array.isArray(item.evidenceRefs) || item.evidenceRefs.length === 0)) errors.push(hostText("skillScripts.acceptanceEvidence.notApplicableWithoutAuthority", { criterionId: item.criterionId }));
       for (const ref of item.evidenceRefs ?? []) {
         const evidence = index.get(ref);
-        if (!evidence) errors.push(`${item.criterionId} references evidence absent from verifiedEvidenceIndex: ${ref}`);
-        else if (!evidence.criterionIds?.includes(item.criterionId)) errors.push(`${ref} is not bound to ${item.criterionId}`);
-        else if (item.status === "satisfied" && evidence.direction !== "supports") errors.push(`${item.criterionId} satisfied with non-supporting evidence ${ref}`);
-        else if (item.status === "unsatisfied" && evidence.direction !== "refutes") errors.push(`${item.criterionId} unsatisfied without refuting evidence ${ref}`);
+        if (!evidence) errors.push(hostText("skillScripts.acceptanceEvidence.evidenceAbsentFromIndex", { criterionId: item.criterionId, ref }));
+        else if (!evidence.criterionIds?.includes(item.criterionId)) errors.push(hostText("skillScripts.acceptanceEvidence.evidenceNotBound", { ref, criterionId: item.criterionId }));
+        else if (item.status === "satisfied" && evidence.direction !== "supports") errors.push(hostText("skillScripts.acceptanceEvidence.satisfiedNonSupporting", { criterionId: item.criterionId, ref }));
+        else if (item.status === "unsatisfied" && evidence.direction !== "refutes") errors.push(hostText("skillScripts.acceptanceEvidence.unsatisfiedNoRefuting", { criterionId: item.criterionId, ref }));
       }
     }
     const hasFailure = report.criteria.some((item) => item.status === "unsatisfied");
     const hasMissing = report.criteria.some((item) => item.status === "insufficient-evidence");
     const expected = hasFailure ? "FAIL" : hasMissing ? "BLOCKED" : "PASS";
-    if (report.verdict !== expected && report.verdict !== "NEEDS_INPUT") errors.push(`verdict must be ${expected}`);
+    if (report.verdict !== expected && report.verdict !== "NEEDS_INPUT") errors.push(hostText("skillScripts.acceptanceEvidence.verdictMustBe", { verdict: expected }));
     const expectedUnresolved = report.criteria.filter((item) => item.status === "insufficient-evidence").map((item) => item.criterionId).sort();
     const actualUnresolved = Array.isArray(report.unresolvedCriteria) ? [...report.unresolvedCriteria].sort() : [];
-    if (canonicalJson(expectedUnresolved) !== canonicalJson(actualUnresolved)) errors.push("unresolvedCriteria does not match criterion statuses");
+    if (canonicalJson(expectedUnresolved) !== canonicalJson(actualUnresolved)) errors.push(hostText("skillScripts.acceptanceEvidence.unresolvedVsStatuses"));
     try {
       const expectedReport = analyzeAcceptance(request);
-      if (canonicalJson(expectedReport.target) !== canonicalJson(report.target)) errors.push("report target does not match request target");
-      if (canonicalJson(expectedReport.criteria) !== canonicalJson(report.criteria)) errors.push("report criteria do not match the request-derived criteria and evidence one-to-one");
-      if (canonicalJson(expectedReport.verifiedEvidenceIndex) !== canonicalJson(report.verifiedEvidenceIndex)) errors.push("verifiedEvidenceIndex does not exactly match current verified request evidence");
-      if (canonicalJson(expectedReport.unresolvedCriteria) !== canonicalJson(report.unresolvedCriteria)) errors.push("unresolvedCriteria does not match request-derived status");
-      if (canonicalJson(expectedReport.limitations) !== canonicalJson(report.limitations)) errors.push("limitations do not match request-derived limitations");
-      if (expectedReport.verdict !== report.verdict) errors.push(`verdict must be ${expectedReport.verdict}`);
+      if (canonicalJson(expectedReport.target) !== canonicalJson(report.target)) errors.push(hostText("skillScripts.acceptanceEvidence.targetMismatch"));
+      if (canonicalJson(expectedReport.criteria) !== canonicalJson(report.criteria)) errors.push(hostText("skillScripts.acceptanceEvidence.criteriaMismatch"));
+      if (canonicalJson(expectedReport.verifiedEvidenceIndex) !== canonicalJson(report.verifiedEvidenceIndex)) errors.push(hostText("skillScripts.acceptanceEvidence.indexMismatch"));
+      if (canonicalJson(expectedReport.unresolvedCriteria) !== canonicalJson(report.unresolvedCriteria)) errors.push(hostText("skillScripts.acceptanceEvidence.unresolvedMismatch"));
+      if (canonicalJson(expectedReport.limitations) !== canonicalJson(report.limitations)) errors.push(hostText("skillScripts.acceptanceEvidence.limitationsMismatch"));
+      if (expectedReport.verdict !== report.verdict) errors.push(hostText("skillScripts.acceptanceEvidence.verdictMustBe", { verdict: expectedReport.verdict }));
     } catch (error) {
-      errors.push(`request cannot substantiate report: ${error instanceof Error ? error.message : String(error)}`);
+      errors.push(hostText("skillScripts.acceptanceEvidence.requestCannotSubstantiate", { message: error instanceof Error ? error.message : String(error) }));
     }
   }
   return errors;

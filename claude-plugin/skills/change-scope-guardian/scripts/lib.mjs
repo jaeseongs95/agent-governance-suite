@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { lstatSync, readFileSync, readlinkSync, realpathSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import { assertSchema } from "./schema-validator.mjs";
+import { hostText } from "../../../runtime/i18n.mjs";
 
 export function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
@@ -30,15 +31,15 @@ function runGit(root, args, encoding = "utf8") {
     });
   } catch (error) {
     const detail = error?.stderr ? String(error.stderr).trim() : error.message;
-    throw new Error(`Git command failed: ${detail}`);
+    throw new Error(hostText("skillScripts.changeScope.gitFailed", { detail }));
   }
 }
 
 export function resolveRepository(inputRoot) {
-  if (typeof inputRoot !== "string" || inputRoot.trim() === "") throw new Error("repositoryRoot is required");
+  if (typeof inputRoot !== "string" || inputRoot.trim() === "") throw new Error(hostText("skillScripts.changeScope.repositoryRootRequired"));
   const requested = realpathSync(resolve(inputRoot));
   if (runGit(requested, ["rev-parse", "--is-inside-work-tree"]).trim() !== "true") {
-    throw new Error("repositoryRoot is not inside a Git worktree");
+    throw new Error(hostText("skillScripts.changeScope.notGitWorktree"));
   }
   const root = realpathSync(runGit(requested, ["rev-parse", "--show-toplevel"]).trim());
   const identity = sha256(process.platform === "win32" ? root.toLowerCase() : root);
@@ -86,7 +87,7 @@ function listRepositoryFiles(root, maxFiles, comparisonTarget, commit) {
       : ["ls-files", "-z", "--cached", "--others", "--exclude-standard"];
   const raw = runGit(root, args, "buffer");
   const files = raw.toString("utf8").split("\0").filter(Boolean);
-  if (files.length > maxFiles) throw new Error(`Repository file count ${files.length} exceeds maxFiles ${maxFiles}`);
+  if (files.length > maxFiles) throw new Error(hostText("skillScripts.changeScope.fileCountExceeds", { count: files.length, maxFiles }));
   return files;
 }
 
@@ -102,7 +103,7 @@ function inspectPath(root, path, statusInfo, comparisonTarget, commit, inTarget)
   }
   const absolute = resolve(root, ...path.split("/"));
   const rel = relative(root, absolute);
-  if (rel.startsWith("..") || isAbsolute(rel)) throw new Error(`Path escapes repository: ${path}`);
+  if (rel.startsWith("..") || isAbsolute(rel)) throw new Error(hostText("skillScripts.changeScope.pathEscapes", { path }));
   try {
     const stat = lstatSync(absolute);
     if (stat.isSymbolicLink()) {
@@ -123,13 +124,13 @@ export function captureBaseline(request, now = new Date()) {
   validateRequest(request, "capture");
   const repository = resolveRepository(request.repositoryRoot);
   const comparisonTarget = request.comparisonTarget ?? "working-tree";
-  if (!new Set(["working-tree", "index", "commit"]).has(comparisonTarget)) throw new Error("comparisonTarget is invalid");
+  if (!new Set(["working-tree", "index", "commit"]).has(comparisonTarget)) throw new Error(hostText("skillScripts.changeScope.comparisonTargetInvalid"));
   if (request.baseline !== undefined) {
     // Scope update: re-bind the original pre-task state to the new task envelope.
     // A fresh capture here would absorb this task's own edits as preexisting changes.
     const original = request.baseline;
-    if (original.repository.identity !== repository.identity) throw new Error("baseline repository identity does not match");
-    if (original.comparisonTarget !== comparisonTarget) throw new Error("baseline comparisonTarget does not match");
+    if (original.repository.identity !== repository.identity) throw new Error(hostText("skillScripts.changeScope.baselineIdentityMismatch"));
+    if (original.comparisonTarget !== comparisonTarget) throw new Error(hostText("skillScripts.changeScope.baselineTargetMismatch"));
     const { head, targetRef, entries, capturedAt } = original;
     const taskEnvelopeDigest = sha256(canonicalJson(request.taskEnvelope));
     const manifestSha256 = sha256(canonicalJson({ repositoryIdentity: original.repository.identity, head, comparisonTarget, targetRef, taskEnvelopeDigest, entries, capturedAt }));
@@ -178,9 +179,9 @@ export function captureBaseline(request, now = new Date()) {
 }
 
 function normalizeRule(rule) {
-  if (typeof rule !== "string") throw new Error("scope rule must be a string");
+  if (typeof rule !== "string") throw new Error(hostText("skillScripts.changeScope.ruleNotString"));
   let normalized = rule.trim().replaceAll("\\", "/").replace(/^\.\//, "").replace(/\/$/, "");
-  if (!normalized || normalized === "." || isAbsolute(normalized) || /^[A-Za-z][A-Za-z0-9+.-]*:/.test(normalized) || /^~/.test(normalized) || normalized === ".." || normalized.startsWith("../") || /(^|\/)\.\.?($|\/)/.test(normalized) || /\/\//.test(normalized) || /[\u0000-\u001f\u007f]/.test(normalized) || /[$%]?[A-Za-z_][A-Za-z0-9_]*%?/.test(normalized) && /[$%]/.test(normalized)) throw new Error(`scope rule is unsafe: ${rule}`);
+  if (!normalized || normalized === "." || isAbsolute(normalized) || /^[A-Za-z][A-Za-z0-9+.-]*:/.test(normalized) || /^~/.test(normalized) || normalized === ".." || normalized.startsWith("../") || /(^|\/)\.\.?($|\/)/.test(normalized) || /\/\//.test(normalized) || /[\u0000-\u001f\u007f]/.test(normalized) || /[$%]?[A-Za-z_][A-Za-z0-9_]*%?/.test(normalized) && /[$%]/.test(normalized)) throw new Error(hostText("skillScripts.changeScope.ruleUnsafe", { rule }));
   return normalized;
 }
 
@@ -232,10 +233,10 @@ export function compareScope(request, now = new Date()) {
     });
   }
   validateBaseline(baseline);
-  if (request.baselineArtifactDigest !== baseline.manifestSha256) throw new Error("baseline artifact digest does not match the frozen digest");
-  if (baseline.repository?.identity !== current.repository.identity) throw new Error("baseline repository identity does not match");
-  if (baseline.comparisonTarget !== current.comparisonTarget) throw new Error("baseline comparisonTarget does not match");
-  if (baseline.taskEnvelopeDigest !== sha256(canonicalJson(request.taskEnvelope))) throw new Error("baseline taskEnvelope digest does not match");
+  if (request.baselineArtifactDigest !== baseline.manifestSha256) throw new Error(hostText("skillScripts.changeScope.baselineDigestMismatch"));
+  if (baseline.repository?.identity !== current.repository.identity) throw new Error(hostText("skillScripts.changeScope.baselineIdentityMismatch"));
+  if (baseline.comparisonTarget !== current.comparisonTarget) throw new Error(hostText("skillScripts.changeScope.baselineTargetMismatch"));
+  if (baseline.taskEnvelopeDigest !== sha256(canonicalJson(request.taskEnvelope))) throw new Error(hostText("skillScripts.changeScope.baselineTaskEnvelopeMismatch"));
 
   const included = [...(request.taskEnvelope.scope?.included ?? []), ...(request.taskEnvelope.workUnits ?? []).flatMap((unit) => unit.writeTargets ?? [])];
   const excluded = request.taskEnvelope.scope?.excluded ?? [];
@@ -294,9 +295,9 @@ function finalizeReport(report) {
 
 export function validateBaseline(value) {
   assertSchema("baseline", value);
-  if (!value.repository?.identity || !/^[a-f0-9]{64}$/.test(value.repository.identity)) throw new Error("repository identity is invalid");
+  if (!value.repository?.identity || !/^[a-f0-9]{64}$/.test(value.repository.identity)) throw new Error(hostText("skillScripts.changeScope.identityInvalid"));
   const paths = value.entries.map((entry) => entry.path);
-  if (new Set(paths).size !== paths.length || paths.some((path) => !path || path.includes("\\") || path.startsWith("../") || isAbsolute(path))) throw new Error("baseline paths must be unique repository-relative POSIX paths");
+  if (new Set(paths).size !== paths.length || paths.some((path) => !path || path.includes("\\") || path.startsWith("../") || isAbsolute(path))) throw new Error(hostText("skillScripts.changeScope.baselinePaths"));
   const expected = sha256(canonicalJson({
     repositoryIdentity: value.repository.identity,
     head: value.head,
@@ -306,35 +307,35 @@ export function validateBaseline(value) {
     entries: value.entries,
     capturedAt: value.capturedAt
   }));
-  if (value.manifestSha256 !== expected) throw new Error("baseline manifest checksum is invalid");
+  if (value.manifestSha256 !== expected) throw new Error(hostText("skillScripts.changeScope.baselineChecksum"));
   return value;
 }
 
 export function validateTaskEnvelope(value) {
   assertSchema("taskEnvelope", value);
   const exactKeys = (object, keys, label) => {
-    if (!object || typeof object !== "object" || Array.isArray(object) || Object.keys(object).some((key) => !keys.includes(key)) || keys.some((key) => !(key in object))) throw new Error(`${label} fields are invalid`);
+    if (!object || typeof object !== "object" || Array.isArray(object) || Object.keys(object).some((key) => !keys.includes(key)) || keys.some((key) => !(key in object))) throw new Error(hostText("skillScripts.changeScope.fieldsInvalid", { label }));
   };
   const stringArray = (array, label, allowEmpty = true) => {
-    if (!Array.isArray(array) || (!allowEmpty && array.length === 0) || array.some((item) => typeof item !== "string" || item.length === 0) || new Set(array).size !== array.length) throw new Error(`${label} is invalid`);
+    if (!Array.isArray(array) || (!allowEmpty && array.length === 0) || array.some((item) => typeof item !== "string" || item.length === 0) || new Set(array).size !== array.length) throw new Error(hostText("skillScripts.changeScope.labelInvalid", { label }));
   };
   // The shared schema above owns root fields, including optional extensions.
-  if (value.schemaVersion !== "1.0.0" || typeof value.taskId !== "string" || !value.taskId || typeof value.objective !== "string" || !value.objective) throw new Error("TaskEnvelope.v1 identity fields are invalid");
+  if (value.schemaVersion !== "1.0.0" || typeof value.taskId !== "string" || !value.taskId || typeof value.objective !== "string" || !value.objective) throw new Error(hostText("skillScripts.changeScope.envelopeIdentity"));
   exactKeys(value.scope, ["included", "excluded"], "TaskEnvelope.v1 scope");
   stringArray(value.scope.included, "TaskEnvelope.v1 scope.included");
   stringArray(value.scope.excluded, "TaskEnvelope.v1 scope.excluded");
   for (const rule of [...value.scope.included, ...value.scope.excluded]) normalizeRule(rule);
   stringArray(value.acceptanceCriteria, "TaskEnvelope.v1 acceptanceCriteria", false);
-  if (!["low", "medium", "high", "critical"].includes(value.riskLevel)) throw new Error("TaskEnvelope.v1 riskLevel is invalid");
-  if (!Array.isArray(value.workUnits)) throw new Error("TaskEnvelope.v1 workUnits are invalid");
+  if (!["low", "medium", "high", "critical"].includes(value.riskLevel)) throw new Error(hostText("skillScripts.changeScope.envelopeRiskLevel"));
+  if (!Array.isArray(value.workUnits)) throw new Error(hostText("skillScripts.changeScope.envelopeWorkUnits"));
   for (const unit of value.workUnits) {
     exactKeys(unit, ["id", "objective", "dependencies", "writeTargets"], "TaskEnvelope.v1 work unit");
-    if (typeof unit.id !== "string" || !unit.id || typeof unit.objective !== "string" || !unit.objective) throw new Error("TaskEnvelope.v1 work unit identity is invalid");
+    if (typeof unit.id !== "string" || !unit.id || typeof unit.objective !== "string" || !unit.objective) throw new Error(hostText("skillScripts.changeScope.envelopeWorkUnitIdentity"));
     stringArray(unit.dependencies, "TaskEnvelope.v1 work unit dependencies");
     stringArray(unit.writeTargets, "TaskEnvelope.v1 work unit writeTargets");
     for (const rule of unit.writeTargets) normalizeRule(rule);
   }
-  if (new Set(value.workUnits.map((unit) => unit.id)).size !== value.workUnits.length) throw new Error("TaskEnvelope.v1 work unit IDs are not unique");
+  if (new Set(value.workUnits.map((unit) => unit.id)).size !== value.workUnits.length) throw new Error(hostText("skillScripts.changeScope.envelopeWorkUnitIds"));
   stringArray(value.requiredCapabilities, "TaskEnvelope.v1 requiredCapabilities");
   stringArray(value.constraints, "TaskEnvelope.v1 constraints");
   exactKeys(value.authorization, ["allowedActions", "prohibitedActions", "approvalRequired"], "TaskEnvelope.v1 authorization");
@@ -342,50 +343,50 @@ export function validateTaskEnvelope(value) {
   stringArray(value.authorization.prohibitedActions, "TaskEnvelope.v1 prohibitedActions");
   stringArray(value.authorization.approvalRequired, "TaskEnvelope.v1 approvalRequired");
   exactKeys(value.decision, ["complexity", "hasConflicts"], "TaskEnvelope.v1 decision");
-  if (!["simple", "complex"].includes(value.decision.complexity) || typeof value.decision.hasConflicts !== "boolean") throw new Error("TaskEnvelope.v1 decision is invalid");
+  if (!["simple", "complex"].includes(value.decision.complexity) || typeof value.decision.hasConflicts !== "boolean") throw new Error(hostText("skillScripts.changeScope.envelopeDecision"));
   exactKeys(value.orchestration, ["requested", "mcpAvailable"], "TaskEnvelope.v1 orchestration");
-  if (typeof value.orchestration.requested !== "boolean" || typeof value.orchestration.mcpAvailable !== "boolean") throw new Error("TaskEnvelope.v1 orchestration is invalid");
+  if (typeof value.orchestration.requested !== "boolean" || typeof value.orchestration.mcpAvailable !== "boolean") throw new Error(hostText("skillScripts.changeScope.envelopeOrchestration"));
   return value;
 }
 
 export function validateRequest(value, expectedMode) {
   assertSchema("request", value);
-  if (!value || value.schemaVersion !== "1.0.0" || value.mode !== expectedMode) throw new Error(`ChangeScopeRequest.v1 mode must be ${expectedMode}`);
-  if (typeof value.repositoryRoot !== "string" || !value.repositoryRoot) throw new Error("repositoryRoot is required");
-  if (!["working-tree", "index", "commit"].includes(value.comparisonTarget)) throw new Error("comparisonTarget is invalid");
-  if (value.comparisonTarget === "commit" && (typeof value.commit !== "string" || !value.commit)) throw new Error("commit is required for commit comparison");
-  if (value.maxFiles !== undefined && (!Number.isInteger(value.maxFiles) || value.maxFiles < 1 || value.maxFiles > 200000)) throw new Error("maxFiles is invalid");
+  if (!value || value.schemaVersion !== "1.0.0" || value.mode !== expectedMode) throw new Error(hostText("skillScripts.changeScope.requestMode", { mode: expectedMode }));
+  if (typeof value.repositoryRoot !== "string" || !value.repositoryRoot) throw new Error(hostText("skillScripts.changeScope.repositoryRootRequired"));
+  if (!["working-tree", "index", "commit"].includes(value.comparisonTarget)) throw new Error(hostText("skillScripts.changeScope.comparisonTargetInvalid"));
+  if (value.comparisonTarget === "commit" && (typeof value.commit !== "string" || !value.commit)) throw new Error(hostText("skillScripts.changeScope.commitRequired"));
+  if (value.maxFiles !== undefined && (!Number.isInteger(value.maxFiles) || value.maxFiles < 1 || value.maxFiles > 200000)) throw new Error(hostText("skillScripts.changeScope.maxFilesInvalid"));
   validateTaskEnvelope(value.taskEnvelope);
   if (value.baseline !== undefined) {
     validateBaseline(value.baseline);
-    if (value.baselineArtifactDigest !== value.baseline.manifestSha256) throw new Error("baseline artifact digest does not match the frozen digest");
+    if (value.baselineArtifactDigest !== value.baseline.manifestSha256) throw new Error(hostText("skillScripts.changeScope.baselineDigestMismatch"));
   }
   return value;
 }
 
 export function validateReport(value, expectedArtifactDigest) {
   assertSchema("report", value);
-  if (!/^[a-f0-9]{64}$/.test(expectedArtifactDigest ?? "") || value.reportSha256 !== expectedArtifactDigest) throw new Error("report artifact digest does not match the frozen digest");
+  if (!/^[a-f0-9]{64}$/.test(expectedArtifactDigest ?? "") || value.reportSha256 !== expectedArtifactDigest) throw new Error(hostText("skillScripts.changeScope.reportDigestMismatch"));
   const classes = ["in-scope", "excluded", "unplanned", "preexisting-untouched", "preexisting-overlap", "ownership-unknown"];
   for (const classification of classes) {
     const actual = value.changes.filter((item) => item.classification === classification).length;
-    if (value.summary[classification] !== actual) throw new Error(`summary count is invalid for ${classification}`);
+    if (value.summary[classification] !== actual) throw new Error(hostText("skillScripts.changeScope.summaryCount", { classification }));
   }
-  if (value.changes.some((item) => !item || typeof item.path !== "string" || (item.matchedRule !== null && typeof item.matchedRule !== "string"))) throw new Error("change path or matchedRule is invalid");
-  if (new Set(value.changes.map((item) => item.path)).size !== value.changes.length) throw new Error("change paths must be unique");
-  if (value.baselineDigest === "0".repeat(64) && value.changes.some((item) => item.classification !== "ownership-unknown")) throw new Error("a missing baseline cannot classify known scope changes");
+  if (value.changes.some((item) => !item || typeof item.path !== "string" || (item.matchedRule !== null && typeof item.matchedRule !== "string"))) throw new Error(hostText("skillScripts.changeScope.changeInvalid"));
+  if (new Set(value.changes.map((item) => item.path)).size !== value.changes.length) throw new Error(hostText("skillScripts.changeScope.changePathsUnique"));
+  if (value.baselineDigest === "0".repeat(64) && value.changes.some((item) => item.classification !== "ownership-unknown")) throw new Error(hostText("skillScripts.changeScope.missingBaseline"));
   let expected = "PASS";
   if (value.baselineDigest === "0".repeat(64) || value.summary["ownership-unknown"] > 0) expected = "INCONCLUSIVE";
   else if (value.summary.excluded > 0) expected = "BLOCKED";
   else if (value.summary["preexisting-overlap"] > 0 || value.summary.unplanned > 0) expected = "NEEDS_REVIEW";
-  if (value.verdict !== expected) throw new Error(`verdict ${value.verdict} does not match ${expected}`);
-  if (!/^[a-f0-9]{64}$/.test(value.baselineDigest) || !/^[a-f0-9]{64}$/.test(value.currentDigest)) throw new Error("report digest is invalid");
+  if (value.verdict !== expected) throw new Error(hostText("skillScripts.changeScope.verdictMismatch", { verdict: value.verdict, expected }));
+  if (!/^[a-f0-9]{64}$/.test(value.baselineDigest) || !/^[a-f0-9]{64}$/.test(value.currentDigest)) throw new Error(hostText("skillScripts.changeScope.reportDigestInvalid"));
   const expectedFindings = value.changes
     .filter((item) => !new Set(["in-scope", "preexisting-untouched"]).has(item.classification))
     .map((item) => `${item.classification}:${item.path}`);
-  if (canonicalJson([...new Set(value.findings)].sort()) !== canonicalJson([...new Set(expectedFindings)].sort())) throw new Error("report findings do not match changes");
+  if (canonicalJson([...new Set(value.findings)].sort()) !== canonicalJson([...new Set(expectedFindings)].sort())) throw new Error(hostText("skillScripts.changeScope.findingsMismatch"));
   const { reportSha256, ...unsigned } = value;
-  if (reportSha256 !== sha256(canonicalJson(unsigned))) throw new Error("report checksum is invalid");
+  if (reportSha256 !== sha256(canonicalJson(unsigned))) throw new Error(hostText("skillScripts.changeScope.reportChecksum"));
   return value;
 }
 
@@ -394,7 +395,7 @@ export async function readJsonInput(argument) {
   const chunks = [];
   for await (const chunk of process.stdin) chunks.push(chunk);
   const raw = Buffer.concat(chunks).toString("utf8");
-  if (!raw.trim()) throw new Error("JSON input is required via a file argument or stdin");
+  if (!raw.trim()) throw new Error(hostText("skillScripts.changeScope.jsonInputRequired"));
   return JSON.parse(raw);
 }
 

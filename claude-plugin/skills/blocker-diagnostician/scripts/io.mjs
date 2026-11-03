@@ -1,16 +1,17 @@
 import { readFile } from "node:fs/promises";
+import { hostText } from "../../../runtime/i18n.mjs";
 
 export async function readJsonArgument(argv, name = "--input") {
   const index = argv.indexOf(name);
   if (index >= 0) {
     const file = argv[index + 1];
-    if (!file) throw new Error(`${name} requires a file path.`);
+    if (!file) throw new Error(hostText("skillScripts.blockerDiagnostician.requiresFilePath", { name }));
     return JSON.parse(await readFile(file, "utf8"));
   }
   let raw = "";
   process.stdin.setEncoding("utf8");
   for await (const chunk of process.stdin) raw += chunk;
-  if (!raw.trim()) throw new Error("Expected JSON on stdin or an input file argument.");
+  if (!raw.trim()) throw new Error(hostText("skillScripts.blockerDiagnostician.expectedJsonInput"));
   return JSON.parse(raw);
 }
 

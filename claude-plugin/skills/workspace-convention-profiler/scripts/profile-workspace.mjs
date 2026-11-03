@@ -6,6 +6,7 @@ import path from "node:path";
 import process from "node:process";
 import { pathToFileURL } from "node:url";
 
+import { hostText, msg, render } from "../../../runtime/i18n.mjs";
 import { contractErrors, validateWorkspaceRequest } from "./schema-validation.mjs";
 
 const CONTRACT_VERSION = "1.0.0";
@@ -28,12 +29,25 @@ export function canonicalJson(value) {
   return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
 }
 
+/**
+ * A sentence of the profile: `text` in the host locale, `canonical` in the source locale of the catalog domain. profileFingerprint
+ * hashes the profile, so the fingerprint of one workspace state uses `canonical` and does not depend on the host locale.
+ */
+const FINGERPRINT_LOCALE = "ko";
+function sentence(key, params = {}) {
+  const ref = msg(key, params);
+  return { text: hostText(key, params), canonical: render(ref, FINGERPRINT_LOCALE) };
+}
+
+const sortedTexts = (items, field) => items.map((item) => item[field]).sort();
+const uniqueSortedTexts = (items, field) => [...new Set(items.map((item) => item[field]))].sort();
+
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
 
 function validateRequest(input) {
-  if (!validateWorkspaceRequest(input)) throw new Error(`WorkspaceProfileRequest.v1 계약 위반: ${contractErrors(validateWorkspaceRequest).join("; ")}`);
+  if (!validateWorkspaceRequest(input)) throw new Error(hostText("skillChecksKo.workspaceConventionProfiler.requestContractViolation", { errors: contractErrors(validateWorkspaceRequest).join("; ") }));
 }
 
 function isWithin(root, candidate) {
@@ -72,7 +86,7 @@ async function collectCandidates(root, limits) {
         const isInstruction = /^AGENTS(?:\.override)?\.md$/i.test(entry.name);
         if (MANIFEST_NAMES.has(entry.name) || isTopReadme || isWorkflow || isInstruction) files.push({ absolute, relative });
       }
-      if (files.length > limits.maxFiles) throw new Error(`근거 파일 수가 maxFiles(${limits.maxFiles})를 초과했습니다.`);
+      if (files.length > limits.maxFiles) throw new Error(hostText("skillChecksKo.workspaceConventionProfiler.evidenceFileLimitExceeded", { maxFiles: limits.maxFiles }));
     }
   }
   await visit(root);
@@ -82,7 +96,7 @@ async function collectCandidates(root, limits) {
 async function evidenceFor(file, maxBytesPerFile, limitations) {
   const stat = await lstat(file.absolute);
   if (stat.size > maxBytesPerFile) {
-    limitations.push(`근거 파일을 maxBytesPerFile(${maxBytesPerFile}) 제한으로 생략했습니다: ${file.relative} (${stat.size} bytes).`);
+    limitations.push(sentence("skillChecksKo.workspaceConventionProfiler.evidenceFileOmitted", { maxBytesPerFile, file: file.relative, size: stat.size }));
     return null;
   }
   const content = await readFile(file.absolute);
@@ -154,14 +168,14 @@ export async function profileWorkspace(input) {
     validateRequest(input);
     const root = path.resolve(input.workspaceRoot);
     const rootStat = await lstat(root);
-    if (!rootStat.isDirectory()) throw new Error("workspaceRoot는 디렉터리여야 합니다.");
+    if (!rootStat.isDirectory()) throw new Error(hostText("skillChecksKo.workspaceConventionProfiler.workspaceRootNotDirectory"));
     const rootReal = await realpath(root);
     for (const target of [...input.targetPaths, ...input.resolvedInstructionRefs]) {
       const resolved = path.resolve(root, target);
-      if (!isWithin(root, resolved)) throw new Error(`workspace 밖의 경로는 조사할 수 없습니다: ${target}`);
+      if (!isWithin(root, resolved)) throw new Error(hostText("skillChecksKo.workspaceConventionProfiler.pathOutsideWorkspace", { target }));
       try {
         const targetReal = await realpath(resolved);
-        if (!isWithin(rootReal, targetReal)) throw new Error(`workspace 밖을 가리키는 경로는 조사할 수 없습니다: ${target}`);
+        if (!isWithin(rootReal, targetReal)) throw new Error(hostText("skillChecksKo.workspaceConventionProfiler.pathPointsOutsideWorkspace", { target }));
       } catch (error) {
         if (input.resolvedInstructionRefs.includes(target) || error?.code !== "ENOENT") throw error;
       }
@@ -210,13 +224,13 @@ export async function profileWorkspace(input) {
     const directoryRefs = new Map(directoryEvidence.map((item) => [item.locator.slice(0, -1), item.ref]));
     for (const item of structure) item.evidenceRefs = item.paths.map((directory) => directoryRefs.get(directory));
     structure.sort((a, b) => a.role.localeCompare(b.role));
-    const conventions = structure.map((item) => ({ subject: `${item.role}-layout`, observedPattern: `${item.paths.join(", ")} 경로에서 ${item.role} 구조를 확인했습니다.`, confidence: "confirmed", evidenceRefs: item.evidenceRefs }));
+    const conventions = structure.map((item) => ({ subject: `${item.role}-layout`, observedPattern: sentence("skillChecksKo.workspaceConventionProfiler.layoutObserved", { paths: item.paths.join(", "), role: item.role }), confidence: "confirmed", evidenceRefs: item.evidenceRefs }));
     const openQuestions = [];
     for (const purpose of ["build", "test", "lint", "dev", "validate"]) {
       const variants = [...new Set(commands.filter((item) => item.purpose === purpose).map((item) => item.command))];
-      if (variants.length > 1) openQuestions.push(`${purpose} 목적의 명령이 여러 출처에서 다릅니다: ${variants.join(" | ")}`);
+      if (variants.length > 1) openQuestions.push(sentence("skillChecksKo.workspaceConventionProfiler.commandVariants", { purpose, variants: variants.join(" | ") }));
     }
-    if (input.resolvedInstructionRefs.length === 0) openQuestions.push("적용 지침 범위가 확인되지 않았습니다.");
+    if (input.resolvedInstructionRefs.length === 0) openQuestions.push(sentence("skillChecksKo.workspaceConventionProfiler.instructionScopeUnconfirmed"));
     const changeHotspots = input.targetPaths.map((target) => {
       const portable = portablePath(target);
       const parent = path.posix.dirname(portable);
@@ -232,15 +246,17 @@ export async function profileWorkspace(input) {
     const git = gitInfo(root);
     const workspace = { root: portablePath(root), vcsType: git.vcsType, currentRef: git.currentRef, dirtyState: git.dirtyState };
     const evidenceIndex = [...evidence, ...directoryEvidence].map(({ locator, digest, size, kind }) => ({ locator, digest, size, kind })).sort((a, b) => a.locator.localeCompare(b.locator));
+    const conventionsAs = (field) => conventions.map((item) => ({ ...item, observedPattern: item.observedPattern[field] }));
     const output = {
       schemaVersion: CONTRACT_VERSION,
       workspace,
-      ecosystems: uniqueEcosystems, structure, conventions, commands, changeHotspots, generatedOrVendoredPaths,
-      openQuestions: [...new Set(openQuestions)].sort(), limitations: limitations.sort(),
+      ecosystems: uniqueEcosystems, structure, conventions: conventionsAs("text"), commands, changeHotspots, generatedOrVendoredPaths,
+      openQuestions: uniqueSortedTexts(openQuestions, "text"), limitations: sortedTexts(limitations, "text"),
       evidenceIndex,
       observedAt: new Date().toISOString(), verdict: "PASS",
     };
-    const { observedAt: _observedAt, ...fingerprintOutput } = output;
+    const { observedAt: _observedAt, ...shownOutput } = output;
+    const fingerprintOutput = { ...shownOutput, conventions: conventionsAs("canonical"), openQuestions: uniqueSortedTexts(openQuestions, "canonical"), limitations: sortedTexts(limitations, "canonical") };
     const fingerprintInput = {
       request: {
         workspaceRoot: workspace.root,
@@ -266,7 +282,7 @@ async function readInput(argv) {
   let raw = "";
   process.stdin.setEncoding("utf8");
   for await (const chunk of process.stdin) raw += chunk;
-  if (!raw.trim()) throw new Error("stdin 또는 --input으로 JSON 입력이 필요합니다.");
+  if (!raw.trim()) throw new Error(hostText("skillChecksKo.workspaceConventionProfiler.jsonInputRequired"));
   return JSON.parse(raw);
 }
 

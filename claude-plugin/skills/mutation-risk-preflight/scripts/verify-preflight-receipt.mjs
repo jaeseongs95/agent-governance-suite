@@ -4,6 +4,7 @@ import path from "node:path";
 import process from "node:process";
 import { pathToFileURL } from "node:url";
 
+import { hostText } from "../../../runtime/i18n.mjs";
 import { canonicalJson, evaluatePreflight } from "./evaluate-preflight.mjs";
 import { contractErrors, validateMutationIntent, validateMutationReport } from "./schema-validation.mjs";
 
@@ -22,25 +23,25 @@ export function verifyReceipt(input) {
   const report = input?.report;
   const intent = input?.intent;
   const now = new Date(input?.verificationTime ?? Date.now());
-  if (!report || !intent || Number.isNaN(now.getTime())) return invalid("INVALID_INPUT", "report, intent와 유효한 verificationTime이 필요합니다.", report);
+  if (!report || !intent || Number.isNaN(now.getTime())) return invalid("INVALID_INPUT", hostText("skillChecksKo.mutationRiskPreflightVerify.inputsRequired"), report);
   const reportValid = validateMutationReport(report);
   const intentValid = validateMutationIntent(intent);
   if (!reportValid || !intentValid) {
     const details = [...(!reportValid ? contractErrors(validateMutationReport).map((item) => `report${item}`) : []), ...(!intentValid ? contractErrors(validateMutationIntent).map((item) => `intent${item}`) : [])];
-    return invalid("INVALID_INPUT", `계약 검증에 실패했습니다: ${details.join("; ")}`, report);
+    return invalid("INVALID_INPUT", hostText("skillChecksKo.mutationRiskPreflightVerify.contractViolation", { details: details.join("; ") }), report);
   }
-  if (report.verdict !== "READY") return invalid("INVALID_TRANSITION", "READY receipt만 실행 직전 재검증할 수 있습니다.", report);
+  if (report.verdict !== "READY") return invalid("INVALID_TRANSITION", hostText("skillChecksKo.mutationRiskPreflightVerify.onlyReadyReceipt"), report);
   const observedAt = new Date(report.observedAt);
-  if (now.getTime() < observedAt.getTime()) return invalid("STALE_REVISION", "검증 시각이 receipt 관측 시각보다 빠릅니다.", report);
+  if (now.getTime() < observedAt.getTime()) return invalid("STALE_REVISION", hostText("skillChecksKo.mutationRiskPreflightVerify.verificationBeforeObservation"), report);
   const baseline = evaluatePreflight(intent, { now: report.observedAt });
   if (baseline.verdict !== "READY" || canonicalJson(baseline) !== canonicalJson(report)) {
-    return invalid("STALE_REVISION", "receipt가 원 관측 시각의 intent 또는 증거와 일치하지 않습니다.", report, baseline);
+    return invalid("STALE_REVISION", hostText("skillChecksKo.mutationRiskPreflightVerify.receiptMismatchAtObservation"), report, baseline);
   }
   const current = evaluatePreflight(intent, { now });
   if (current.verdict !== "READY" || current.actionDigest !== report.actionDigest || current.targetDigest !== report.targetDigest) {
-    return invalid("STALE_REVISION", "행동, 대상, 환경, 승인, fingerprint, 복구 계획 또는 영향 범위가 바뀌었습니다.", report, current);
+    return invalid("STALE_REVISION", hostText("skillChecksKo.mutationRiskPreflightVerify.intentChangedSinceReceipt"), report, current);
   }
-  return { schemaVersion: "1.0.0", valid: true, errorCode: null, reason: "receipt와 현재 mutation intent가 일치합니다. 검증기는 실제 대상을 읽지 않으므로 intent의 fingerprint는 실행 직전에 다시 관측한 값이어야 합니다. 이 결과는 실행 권한을 새로 부여하지 않습니다.", actionDigest: current.actionDigest, targetDigest: current.targetDigest };
+  return { schemaVersion: "1.0.0", valid: true, errorCode: null, reason: hostText("skillChecksKo.mutationRiskPreflightVerify.receiptMatches"), actionDigest: current.actionDigest, targetDigest: current.targetDigest };
 }
 
 async function readInput(argv) {

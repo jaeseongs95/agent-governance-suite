@@ -6,6 +6,7 @@ import process from "node:process";
 import { pathToFileURL } from "node:url";
 
 import { failureCode } from "../../../runtime/failure-diagnostics.mjs";
+import { hostText } from "../../../runtime/i18n.mjs";
 import { contractErrors, validateMutationIntent } from "./schema-validation.mjs";
 
 const VERSION = "1.0.0";
@@ -36,12 +37,12 @@ export function canonicalLocator(value) {
 
 export function unsafeTarget(target) {
   const locator = canonicalLocator(target.locator);
-  if (["/", ".", "..", "~"].includes(locator)) return "filesystem, home 또는 현재 디렉터리 루트는 허용되지 않습니다.";
-  if (/^[a-z]:(?:\.)?$/i.test(locator)) return "drive root는 허용되지 않습니다.";
-  if (/^\/\/[^/]+\/[^/]+$/.test(locator)) return "UNC share root는 허용되지 않습니다.";
-  if (/[*?\[\]]/.test(target.locator)) return "해석되지 않은 glob이 있습니다.";
-  if (/\$\{|\$[A-Za-z_]|%[^%]+%/.test(target.locator)) return "해석되지 않은 환경변수가 있습니다.";
-  if (/^(home|filesystem-root|drive-root|repository-root)$/i.test(target.targetType)) return `${target.targetType} 전체는 허용되지 않습니다.`;
+  if (["/", ".", "..", "~"].includes(locator)) return hostText("skillChecksKo.mutationRiskPreflight.unsafeRootTarget");
+  if (/^[a-z]:(?:\.)?$/i.test(locator)) return hostText("skillChecksKo.mutationRiskPreflight.unsafeDriveRoot");
+  if (/^\/\/[^/]+\/[^/]+$/.test(locator)) return hostText("skillChecksKo.mutationRiskPreflight.unsafeUncShareRoot");
+  if (/[*?\[\]]/.test(target.locator)) return hostText("skillChecksKo.mutationRiskPreflight.unsafeUnresolvedGlob");
+  if (/\$\{|\$[A-Za-z_]|%[^%]+%/.test(target.locator)) return hostText("skillChecksKo.mutationRiskPreflight.unsafeUnresolvedEnvironmentVariable");
+  if (/^(home|filesystem-root|drive-root|repository-root)$/i.test(target.targetType)) return hostText("skillChecksKo.mutationRiskPreflight.unsafeWholeTargetType", { targetType: target.targetType });
   return null;
 }
 
@@ -136,7 +137,7 @@ function blockedReport(input, reasons, now) {
       external: suppliedBlastRadius.external,
       description: suppliedBlastRadius.description,
     }
-    : { affectedTargets: 1, affectedUsers: 0, external: false, description: "확인되지 않음" };
+    : { affectedTargets: 1, affectedUsers: 0, external: false, description: hostText("skillChecksKo.mutationRiskPreflight.blastRadiusUnconfirmed") };
   const safeTargets = Array.isArray(safeInput.targets) ? safeInput.targets : [];
   const targetDigest = digest(safeTargets.map((target) => ({ locator: canonicalLocator(target?.locator ?? "unknown") })));
   const actionClass = APPROVAL_ACTIONS.has(safeInput.actionClass) || ["overwrite", "move", "other"].includes(safeInput.actionClass) ? safeInput.actionClass : "other";
@@ -146,14 +147,14 @@ function blockedReport(input, reasons, now) {
     checks: [{ checkId: "input-validity", state: "failed", evidenceRefs: [], message: reasons.join(" ") }],
     approval: { required: false, status: "not-required", evidenceRefs: [] }, recovery: { available: false, restoreTested: false, irreversibilityAccepted: false, evidenceRefs: [] },
     blastRadius, unresolved: reasons,
-    invalidationTriggers: ["입력 변경", "대상 변경"], observedAt: now.toISOString(), verdict: "BLOCKED",
+    invalidationTriggers: [hostText("skillChecksKo.mutationRiskPreflight.invalidationInputChanged"), hostText("skillChecksKo.mutationRiskPreflight.invalidationTargetChanged")], observedAt: now.toISOString(), verdict: "BLOCKED",
   };
 }
 
 export function evaluatePreflight(input, options = {}) {
   const now = options.now ? new Date(options.now) : new Date();
   const validationErrors = validateMutationIntent(input) ? [] : contractErrors(validateMutationIntent);
-  if (Number.isNaN(now.getTime())) return blockedReport(input, ["평가 시각이 유효하지 않습니다."], new Date(0));
+  if (Number.isNaN(now.getTime())) return blockedReport(input, [hostText("skillChecksKo.mutationRiskPreflight.evaluationTimeInvalid")], new Date(0));
   if (validationErrors.length) return blockedReport(input, validationErrors, now);
 
   const targets = input.targets.map((target) => ({ ...target, locator: canonicalLocator(target.locator) }));
@@ -203,40 +204,43 @@ export function evaluatePreflight(input, options = {}) {
       : "새 자원만 추가하고 실패 시 중단·보존하는 containment 근거가 있습니다. 복원 검증 완료를 뜻하지 않습니다.")
     : recoverySufficient ? "복구 또는 명시적 비가역성 수용 근거가 있습니다. 근거 참조의 진위나 실제 시험 실행을 자동 검증하지 않습니다."
       : containment && externalImpact
-        ? "외부 신규 준비는 비공개·기존 상태 보존·제한된 효과의 근거가 필요하며, 공개·운영·공유 상태·권한 변경에는 사용할 수 없습니다."
-        : "복구 설계를 보완해야 합니다.";
+        ? hostText("skillChecksKo.mutationRiskPreflight.recoveryExternalPreparationEvidenceNeeded")
+        : hostText("skillChecksKo.mutationRiskPreflight.recoveryDesignNeedsWork");
 
+  // Sentences that a READY report can contain (passed checks, invalidationTriggers) stay fixed Korean: verify-preflight-receipt.mjs
+  // recomputes the whole report and compares canonical JSON, so a host-locale sentence would make a receipt stale in another locale.
+  const approvalPassed = approval.status === "observed" || approval.status === "not-required";
   const checks = [
     { checkId: "target-specificity", state: unsafe.length ? "failed" : "passed", evidenceRefs: [], message: unsafe.join(" ") || "모든 대상이 구체적으로 식별됐습니다." },
-    { checkId: "scope-match", state: scopeIncluded && !scopeExcluded ? "passed" : "failed", evidenceRefs: [input.scopeRef.locator], message: scopeIncluded && !scopeExcluded ? "대상이 작업 범위 안에 있습니다." : "대상이 포함 범위에 없거나 제외 범위와 겹칩니다." },
-    { checkId: "authorization-match", state: authorizationMatched ? "passed" : "failed", evidenceRefs: [input.authorizationRef.locator], message: authorizationMatched ? "행동, 대상과 환경이 허용 범위에 있습니다." : "권한 범위가 행동, 대상 또는 환경과 일치하지 않습니다." },
-    { checkId: "current-state", state: currentStateMatched ? "passed" : "unknown", evidenceRefs: refLocators(input.currentStateEvidenceRefs), message: currentStateMatched ? "현재 fingerprint가 예상값과 일치합니다." : "모든 대상의 현재 fingerprint를 확인하지 못했습니다." },
-    { checkId: "approval", state: approval.status === "observed" || approval.status === "not-required" ? "passed" : "unknown", evidenceRefs: approval.refs, message: `승인 상태: ${approval.status}` },
+    { checkId: "scope-match", state: scopeIncluded && !scopeExcluded ? "passed" : "failed", evidenceRefs: [input.scopeRef.locator], message: scopeIncluded && !scopeExcluded ? "대상이 작업 범위 안에 있습니다." : hostText("skillChecksKo.mutationRiskPreflight.scopeMismatchCheck") },
+    { checkId: "authorization-match", state: authorizationMatched ? "passed" : "failed", evidenceRefs: [input.authorizationRef.locator], message: authorizationMatched ? "행동, 대상과 환경이 허용 범위에 있습니다." : hostText("skillChecksKo.mutationRiskPreflight.authorizationMismatchCheck") },
+    { checkId: "current-state", state: currentStateMatched ? "passed" : "unknown", evidenceRefs: refLocators(input.currentStateEvidenceRefs), message: currentStateMatched ? "현재 fingerprint가 예상값과 일치합니다." : hostText("skillChecksKo.mutationRiskPreflight.currentStateUnconfirmedCheck") },
+    { checkId: "approval", state: approvalPassed ? "passed" : "unknown", evidenceRefs: approval.refs, message: approvalPassed ? `승인 상태: ${approval.status}` : hostText("skillChecksKo.mutationRiskPreflight.approvalStatusCheck", { status: approval.status }) },
     { checkId: "recovery", state: recoverySufficient ? "passed" : "failed", evidenceRefs: uniqueRefs([input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef, ...containmentRefs]), message: recoveryMessage },
-    { checkId: "blast-radius", state: blastRadiusMatched ? "passed" : "failed", evidenceRefs: [], message: blastRadiusMatched ? "예상 영향 범위가 모든 대상을 포함합니다." : "예상 영향 범위가 대상 수보다 작습니다." },
+    { checkId: "blast-radius", state: blastRadiusMatched ? "passed" : "failed", evidenceRefs: [], message: blastRadiusMatched ? "예상 영향 범위가 모든 대상을 포함합니다." : hostText("skillChecksKo.mutationRiskPreflight.blastRadiusSmallerCheck") },
   ];
   if (preparation?.sideEffects === "scoped-resources-plus-platform-events") {
     checks.push({
       checkId: "platform-events", state: containmentSufficient ? "passed" : "failed",
       evidenceRefs: [preparation.effectsEvidenceRef.locator],
-      message: `공급자 표준 이벤트: ${preparation.platformEvents.providerStandardEvents}; 기존 수신자 목록: ${preparation.platformEvents.recipientInventory}. 통합·수신자·권한 변경과 별도 dispatch는 0이며, 승인 대상 payload만 허용합니다. 알려진 고위험 후속 효과·승인 조건 충돌이 없고 필수 대상 조회가 성공했다는 제출 근거를 점검합니다. 수신·후속 처리 완료나 원격 근거 진위를 자동 검증하지 않습니다.`,
+      message: containmentSufficient ? `공급자 표준 이벤트: ${preparation.platformEvents.providerStandardEvents}; 기존 수신자 목록: ${preparation.platformEvents.recipientInventory}. 통합·수신자·권한 변경과 별도 dispatch는 0이며, 승인 대상 payload만 허용합니다. 알려진 고위험 후속 효과·승인 조건 충돌이 없고 필수 대상 조회가 성공했다는 제출 근거를 점검합니다. 수신·후속 처리 완료나 원격 근거 진위를 자동 검증하지 않습니다.` : hostText("skillChecksKo.mutationRiskPreflight.platformEventsCheck", { providerStandardEvents: preparation.platformEvents.providerStandardEvents, recipientInventory: preparation.platformEvents.recipientInventory }),
     });
   }
   const unresolved = [];
   let verdict = "READY";
   if (unsafe.length || !scopeIncluded || scopeExcluded || !authorizationMatched) {
     verdict = "BLOCKED";
-    unresolved.push(...unsafe, ...(!scopeIncluded || scopeExcluded ? ["작업 범위와 대상이 일치하지 않습니다."] : []), ...(!authorizationMatched ? ["권한 범위와 행동·대상·환경이 일치하지 않습니다."] : []));
+    unresolved.push(...unsafe, ...(!scopeIncluded || scopeExcluded ? [hostText("skillChecksKo.mutationRiskPreflight.unresolvedScopeMismatch")] : []), ...(!authorizationMatched ? [hostText("skillChecksKo.mutationRiskPreflight.unresolvedAuthorizationMismatch")] : []));
   } else if (!currentStateMatched) {
     verdict = "NEEDS_INPUT";
-    unresolved.push("모든 대상의 현재 fingerprint 근거가 필요합니다.");
+    unresolved.push(hostText("skillChecksKo.mutationRiskPreflight.unresolvedCurrentStateEvidence"));
   } else if (!["observed", "not-required"].includes(approval.status)) {
     verdict = "NEEDS_APPROVAL";
-    unresolved.push(`현재 작업에 맞는 승인이 필요합니다: ${approval.status}`);
+    unresolved.push(hostText("skillChecksKo.mutationRiskPreflight.unresolvedApprovalNeeded", { status: approval.status }));
   } else if (!recoverySufficient || !blastRadiusMatched) {
     verdict = "NEEDS_REDESIGN";
     if (!recoverySufficient) unresolved.push(recoveryMessage);
-    if (!blastRadiusMatched) unresolved.push("영향 범위를 다시 계산해야 합니다.");
+    if (!blastRadiusMatched) unresolved.push(hostText("skillChecksKo.mutationRiskPreflight.unresolvedBlastRadiusRecompute"));
   }
 
   const recoveryRefs = uniqueRefs([input.recoveryPlan.backupRef, input.recoveryPlan.restoreProcedureRef, input.recoveryPlan.restoreTestEvidenceRef, ...containmentRefs]);
@@ -255,13 +259,13 @@ export function evaluatePreflight(input, options = {}) {
 async function readInput(argv) {
   const index = argv.indexOf("--input");
   if (index >= 0) {
-    if (!argv[index + 1]) throw new SyntaxError("--input에 JSON 파일 경로가 필요합니다.");
+    if (!argv[index + 1]) throw new SyntaxError(hostText("skillChecksKo.mutationRiskPreflight.inputPathRequired"));
     return JSON.parse(await readFile(argv[index + 1], "utf8"));
   }
   let raw = "";
   process.stdin.setEncoding("utf8");
   for await (const chunk of process.stdin) raw += chunk;
-  if (!raw.trim()) throw new SyntaxError("stdin 또는 --input으로 JSON 입력이 필요합니다.");
+  if (!raw.trim()) throw new SyntaxError(hostText("skillChecksKo.mutationRiskPreflight.jsonInputRequired"));
   return JSON.parse(raw);
 }
 
