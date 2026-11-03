@@ -50,6 +50,17 @@ MCP 서버의 선택형 진단 로그(`AGENT_GOVERNANCE_LOG_CONFIG`)를 뺐다. 
 
 세션 메시지 TTL·draft·wake, peer-wait, 세션 현황판 보존, 업데이트 확인 캐시처럼 만료가 없으면 자리가 영구히 잡히거나 같은 조회가 반복되는 시간 창은 기능상 필요해 남겼다. continuity 후보 token 1시간, JEV 프로필 `qualification.validUntil`, 호스트 발견 자료 `expiresAt`은 이번에 바꾸지 않았다.
 
+### CI와 테스트 서버 나눔
+
+CI 실패는 코드 결함만 뜻하도록 시험 위치를 나눴다. 자세한 내용은 `docs/ci-and-test-servers.md`에 있다.
+
+- **CI(GitHub Actions)**: 정적 검사와, 프로세스 안에서만 도는 시험을 돌린다(`AGS_TEST_SCOPE=ci`).
+- **Linux·Windows 테스트 서버**: 실제 프로세스·워커·stdio MCP 서버를 쓰는 시험과 설치 런타임 smoke를 실측한다(`pnpm test:server`).
+- **나누는 기준**: `scripts/test-scope.mjs`가 시험 파일과, 그 파일이 가져오는 로컬 헬퍼를 읽어 정한다. 사람이 목록을 관리하지 않는다.
+- **바꾼 이유**: 전에는 한 job이 전체 시험을 돌렸다. 그래서 같은 runtime smoke가 러너 부하에 따라 10초에서 30초 넘게까지 걸렸고, 30초 제한에 걸려 실패했다. 이 PC에서는 8.8초였다.
+- **중복 제거**: 빌드와 runtime smoke가 각각 두 번 돌던 것을 한 번으로 줄였다.
+- **결과**: 통과한 실행 기준으로 Windows job은 약 14분에서 5분으로, ubuntu job은 약 8분에서 3분으로 줄었다(CI 41561330596·41571316966 → 41585315885).
+
 ## 업그레이드 시 확인할 것
 
 - `ExecutionContext.v1`의 `modelClass`·`reasoningEffort`가 null일 수 있고 `policyNotes` 배열이 생겼다. 이 값을 직접 읽는 도구는 null을 처리해야 한다.
@@ -71,4 +82,17 @@ MCP 서버의 선택형 진단 로그(`AGENT_GOVERNANCE_LOG_CONFIG`)를 뺐다. 
 
 ## 검증
 
-(후보 시험 뒤 채운다.)
+제품 코드(`claude-plugin`, `skills`, `mcp-server`, `runtime`)는 3eb7a1e7 이후 바뀌지 않았다. 그 뒤 커밋은 시험·CI 설정·문서만 고쳤다. 아래는 각 결과를 낸 커밋이다.
+
+- **CI**: 41585315885(8130e966) ubuntu·windows 모두 통과. CI 범위에서 vitest 143개 파일과 node:test 10개 파일이 돌았다.
+- **Linux 테스트 서버**
+  - 전체 vitest(8130e966, `--maxWorkers=1`): 262개 파일 통과, 1개 실패, 1개 건너뜀(264). 실패는 `tests/tooling/runner-main.test.mjs` 하나였다. 이 시험은 `run-tests.mjs`를 임시 폴더에 복사해 도는데, 복사 목록에 새로 import한 `test-scope.mjs`가 없었고 수집 기록에 덧붙인 칸을 시험이 그대로 비교했다. a0a7ba8a·4186346c에서 시험을 고쳤다.
+  - 4186346c: `runner-main` 13건 통과, node:test 24개 파일 486건 통과, 설치 런타임 확인 `runtime: ready (34 skill CLIs, Node.js 24.22.1)`.
+- **Windows 테스트 서버**
+  - 전체 vitest는 CI 41583141605(8543b075)의 windows job에서 돌았다. 260개 파일이 통과했고 runtime smoke 하나가 러너 부하로 30초 제한에 걸렸다. 이 실패가 CI와 테스트 서버를 나눈 계기다.
+  - 4186346c: `runtime-smoke`·`runner-main`·`test-scope` 3개 파일 23건 통과, node:test 486건(485 통과, 1 건너뜀), 설치 런타임 확인 `runtime: ready (34 skill CLIs, Node.js 24.22.2)`.
+- **실호스트**: 같은 시험을 각 호스트에서 돌렸다. 편집 관문 시험은 버전 관리 밖 파일 4개와 저장소 안 제품 파일 3개를 차례로 쓰게 해서, 앞의 4개와 제품 파일 2개는 쓰이고 세 번째 제품 파일은 거부되는지 본다. workflow 시험은 `start_workflow`를 부른 뒤 파일 하나만 고치라고 하고, 턴 끝 단계 확인을 받아 작업 목표대로 두 파일(a.txt, b.txt)이 모두 바뀌는지 본다.
+  - Claude Code(Windows, headless, 3eb7a1e7): `start_workflow`를 다른 도구와 같은 메시지에서 병렬로 3번, 단독으로 1번 불러 모두 성공. 편집 관문 docs 4/4 허용·제품 파일 3번째 거부. workflow 시험에서 두 파일 모두 바뀜.
+  - Codex(Windows, 3eb7a1e7): workflow 시험에서 두 파일 모두 바뀜.
+  - agy(Linux, 3eb7a1e7): 편집 관문 docs 4/4 허용·제품 파일 3번째 거부. workflow 시험에서 두 파일 모두 바뀜. 시험 뒤 플러그인을 지워 서버를 되돌림.
+  - 시험하지 못한 조합: Linux의 Claude Code·Codex는 시험 계정(mcpops)에서 실행 파일을 찾지 못했다(PATH·`find /` 모두 0건, 설치 경로 확인 중). Windows의 agy는 SSH 세션에서 Google OAuth 재로그인을 요구하며 멈춘다(`Waiting for authentication`).
