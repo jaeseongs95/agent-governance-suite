@@ -70,15 +70,13 @@ const TRANSCRIPT = path.join("transcripts", `${SESSION}.jsonl`);
 const bootstrap = (taskId: string) => ({ phase: "bootstrap" as const, taskId, runId: null, stageId: null, revision: null });
 
 /** The observed model has no trusted capability: the provider refuses it instead of inventing a class. */
-function expectIneligibleObservation(adapter: HostExecutionAdapter, execution: CallerExecution): void {
+/** 3.1.1: a model no catalog entry names still runs; it is observed as itself with no class and a catalog note. */
+function expectUnclassifiedObservation(adapter: HostExecutionAdapter, execution: CallerExecution): void {
   expect(execution).toMatchObject({ model: expect.any(String), effort: expect.any(String) });
   const provider = new HostAttestationProvider(adapter);
-  let failure: unknown;
-  try {
-    provider.run("plan_workflow", rootCaller(adapter.host, SESSION, { execution }), () => provider.observe(bootstrap("ineligible")));
-  } catch (error) { failure = error; }
-  expect(failure).toMatchObject({ code: "BINDING_INVALID",
-    message: "Host observation has no matching trusted execution capability and policy revision." });
+  const context = provider.run("plan_workflow", rootCaller(adapter.host, SESSION, { execution }), () => provider.observe(bootstrap("unclassified")));
+  expect(context).toMatchObject({ model: "model" in execution ? execution.model : "", modelClass: null,
+    policyNotes: [expect.stringMatching(/^[A-Z_]+$/)] });
   expect(provider.lastObservedCapability()).toBeNull();
 }
 
@@ -476,11 +474,12 @@ describe("host execution observation through the MCP boundary", () => {
   });
 
   // Moved from codex-host-observation.test.ts: the raw model is kept while the real provider denies eligibility.
-  it.each(["unknown-model", "constructor"])("keeps the raw Codex model %s and denies execution eligibility", async (model) => {
+  // A model the catalog does not name runs as itself; a prototype key such as "constructor" never yields a class.
+  it.each(["unknown-model", "constructor"])("keeps the raw Codex model %s and grants it no class", async (model) => {
     const { store, call } = await harness(true, codexExecutionAdapter);
-    expect(await call<WorkflowPlanV1>("plan_workflow", planArguments(`codex-${model}`), observedCall(store, codexExecutionAdapter, "plan_workflow", { model })))
-      .toMatchObject({ ok: false, data: null, error: { code: "BINDING_INVALID",
-        message: "Host observation has no matching trusted execution capability and policy revision." } });
+    const planned = await call<WorkflowPlanV1>("plan_workflow", planArguments(`codex-${model}`), observedCall(store, codexExecutionAdapter, "plan_workflow", { model }));
+    expect(planned.ok, JSON.stringify(planned)).toBe(true);
+    expect(planned.data!.bootstrapExecution!.context).toMatchObject({ model, modelClass: null, policyNotes: ["MODEL_NOT_IN_CATALOG"] });
   });
 });
 
@@ -522,7 +521,7 @@ describe("Claude execution observation recorded by the governance hook", () => {
   it("keeps an unknown model raw and reports every unobserved case by its reason", async () => {
     const unknown = observe(base, { ...noWait, readText: () => transcriptLine("toolu_hook", { model: "unknown-model-id" }) });
     expect(unknown).toMatchObject({ model: "unknown-model-id", effort: "high", provenance: "claude-code:transcript-tool-use" });
-    expectIneligibleObservation(claudeCodeExecutionAdapter, unknown);
+    expectUnclassifiedObservation(claudeCodeExecutionAdapter, unknown);
     expect(observe(base, { ...noWait, maxWaitMs: 0, readText: () => null })).toEqual({ unavailable: "CLAUDE_MODEL_UNOBSERVED" });
     expect(observe({ ...base, transcript_path: undefined }, noWait)).toEqual({ unavailable: "CLAUDE_CALL_FIELDS_MISSING" });
     expect(observe({ ...base, tool_use_id: undefined }, noWait)).toEqual({ unavailable: "CLAUDE_CALL_FIELDS_MISSING" });
@@ -636,7 +635,7 @@ describe("Claude execution observation recorded by the governance hook", () => {
       expect(run(null, null)).toEqual({ unavailable: "CLAUDE_MODEL_UNOBSERVED" });
       expect(run(null, record("claude-opus-5", "2026-09-19T00:10:01.000Z", "session-start"), { ...base, effort: undefined }))
         .toEqual({ unavailable: "CLAUDE_EFFORT_UNOBSERVED" });
-      expectIneligibleObservation(claudeCodeExecutionAdapter, run(written(), record("claude-next", "2026-09-19T00:10:18.000Z")));
+      expectUnclassifiedObservation(claudeCodeExecutionAdapter, run(written(), record("claude-next", "2026-09-19T00:10:18.000Z")));
     });
 
     it("uses only the subagent's own written messages, never the session model", () => {
@@ -716,12 +715,14 @@ describe("host attestation configuration", () => {
         () => provider.observe(bootstrap("fourth-host-task")));
     } catch (error) { foreign = error; }
     expect(foreign).toMatchObject({code: "BINDING_INVALID", details: {reasonCode: "HOST_ADAPTER_MISMATCH"}});
-    for (const [options, failure] of [
-      [{model: "unobserved-model"}, {message: "Host observation has no matching trusted execution capability and policy revision.", details: {reasonCode: "MODEL_NOT_IN_CATALOG"}}],
-      [{model: "opaque-fourth-model", effort: "low"}, {details: {reasonCode: "CURRENT_POLICY_EFFORT_UNSUPPORTED"}}],
+    // Catalog findings are recorded, never refused (3.1.1): an unnamed model and an effort outside the entry both run.
+    for (const [options, context] of [
+      [{model: "unobserved-model"}, {model: "unobserved-model", modelClass: null, policyNotes: ["MODEL_NOT_IN_CATALOG"]}],
+      [{model: "opaque-fourth-model", effort: "low"}, {modelClass: "deep", reasoningEffort: "low", policyNotes: ["CURRENT_POLICY_EFFORT_UNSUPPORTED"]}],
     ] as const) {
-      expect(await call<WorkflowPlanV1>("plan_workflow", args, observedCall(store, adapter!, "plan_workflow", options)))
-        .toMatchObject({ok: false, error: {code: "BINDING_INVALID", ...failure}});
+      const result = await call<WorkflowPlanV1>("plan_workflow", args, observedCall(store, adapter!, "plan_workflow", options));
+      expect(result.ok, JSON.stringify(result)).toBe(true);
+      expect(result.data!.bootstrapExecution!.context).toMatchObject(context);
     }
     const noProvider = await harness(false, adapter!);
     expect(await noProvider.call<WorkflowPlanV1>("plan_workflow", args))
@@ -1054,7 +1055,7 @@ describe("AGS-D-0179 correlated issuing observations", () => {
     expect(provider.run("plan_workflow", rootCaller("claude-code", SESSION, { execution }), () => provider.observe(bootstrap("d0179"))))
       .toMatchObject({ model, modelClass: "deep" });
     expect(provider.lastObservedCapability()).toMatchObject({ provider: "synthetic", modelClass: "deep" });
-    expectIneligibleObservation({ ...trusted, modelClassForModel: () => null, resolveModel: () => null }, execution);
+    expectUnclassifiedObservation({ ...trusted, modelClassForModel: () => null, resolveModel: () => null }, execution);
     // Hook preservation only: the full opaque-model workflow policy (0086 etc.) remains a separate obligation.
   });
 
@@ -1331,22 +1332,15 @@ describe("AGS-D-0328 host and model-vendor separation", () => {
       policyRevision: "synthetic-d0328-unknown",
       provenance: "polyglot:test",
     });
+    // The ambiguous model still runs (3.1.1); no vendor's class is picked, and the ambiguity is kept as a note.
     const collidingProvider = new HostAttestationProvider(adapter);
-    let collidingFailure: unknown;
-    try {
-      collidingProvider.run(
-        "plan_workflow",
-        rootCaller("synthetic-polyglot-host", "session-d0328", { callId: "call-d0328-colliding",
-          execution: { model: "colliding-model", effort: "high", turnId: "turn-d0328", provenance: "synthetic-polyglot-host:test" } }),
-        () => collidingProvider.observe(bootstrap("d0328-colliding-task")),
-      );
-    } catch (error) {
-      collidingFailure = error;
-    }
-    expect(collidingFailure).toMatchObject({
-      code: "BINDING_INVALID",
-      details: { reasonCode: "AMBIGUOUS_PROVIDER_MATCH" },
-    });
+    expect(collidingProvider.run(
+      "plan_workflow",
+      rootCaller("synthetic-polyglot-host", "session-d0328", { callId: "call-d0328-colliding",
+        execution: { model: "colliding-model", effort: "high", turnId: "turn-d0328", provenance: "synthetic-polyglot-host:test" } }),
+      () => collidingProvider.observe(bootstrap("d0328-colliding-task")),
+    )).toMatchObject({ model: "colliding-model", modelClass: null, policyNotes: ["AMBIGUOUS_PROVIDER_MATCH"] });
+    expect(collidingProvider.lastObservedCapability()).toBeNull();
 
     // Legacy/custom adapter without provider identity must not infer provider from adapter.host.
     // @ts-expect-error Legacy/custom adapter without resolveModel must declare provider at compile time.

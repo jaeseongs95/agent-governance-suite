@@ -94,15 +94,17 @@ it("still rejects a late issuing message from another session", () => {
 });
 
 describe("AGS-D-0033 actual model identity of the call", () => {
+  // 3.1.1: an unknown model runs (the catalog never grants execution); it is still the issuing model, never a substitute.
   it("never substitutes a qualified session record for an unknown issuing model", () => {
     const transcript = line(model, "2026-10-25T00:00:10.000Z", "old-call") + "\n" + line("al05-unknown-new-model", "2026-10-25T00:00:30.000Z");
     const cache = vi.fn(() => session("2026-10-25T00:00:40.000Z"));
     const execution = observeClaudeExecution(input, { maxWaitMs: 0, now, readText: () => transcript, readSessionModel: cache });
     expect(execution).toMatchObject({ model: "al05-unknown-new-model", effort: "high" });
     expect(cache).not.toHaveBeenCalled();
-    const { failure, provider } = qualify(adapter, execution);
-    expect(failure).toMatchObject({ code: "BINDING_INVALID",
-      message: "Host observation has no matching trusted execution capability and policy revision." });
+    const { failure, context, provider } = qualify(adapter, execution);
+    expect(failure).toBeUndefined();
+    expect(context).toMatchObject({ model: "al05-unknown-new-model", modelClass: null, reasoningEffort: "high",
+      policyNotes: [expect.stringMatching(/^[A-Z_]+$/)] });
     expect(provider.lastObservedCapability()).toBeNull();
   });
 });
@@ -130,12 +132,11 @@ describe("AGS-D-0091 관측의 현재 정책 거절 원인", () => {
   it.each([
     { label: "미지원 effort", supportedEfforts: ["high"] as const, reasonCode: "CURRENT_POLICY_EFFORT_UNSUPPORTED" },
     { label: "최소값 미달", supportedEfforts: ["medium", "high"] as const, reasonCode: "CURRENT_POLICY_EFFORT_BELOW_MINIMUM" },
-  ])("$label 원인을 현재 정책으로 구분하고 자격을 부여하지 않는다", ({ supportedEfforts, reasonCode }) => {
+  ])("$label 원인을 현재 정책으로 구분해 기록하고 실행은 막지 않는다", ({ supportedEfforts, reasonCode }) => {
     const f = fixture({ supportedEfforts: [...supportedEfforts] });
-    const { failure, provider } = qualify(f.selected, observed("medium"));
-    expect(failure).toMatchObject({ code: "BINDING_INVALID",
-      message: "Host observation does not satisfy the trusted model and effort policy.", details: { reasonCode } });
-    expect(provider.lastObservedCapability()).toBeNull();
+    const { failure, context } = qualify(f.selected, observed("medium"));
+    expect(failure).toBeUndefined();
+    expect(context).toMatchObject({ modelClass: "deep", reasoningEffort: "medium", policyNotes: [reasonCode] });
     expect(f.resolve).toHaveBeenCalledTimes(1);
   });
 
@@ -178,7 +179,7 @@ it("AGS-D-0209 preserves producer serialization and absorbs only diagnostic writ
 });
 
 it.each([{ label: "missing", supported: undefined }, { label: "empty", supported: [] as const }])(
-  "AGS-D-0089 catalog $label efforts never grant every reasoning effort", ({ supported }) => {
+  "AGS-D-0089 catalog $label efforts never grant every reasoning effort (recorded, not refused)", ({ supported }) => {
     const presets: ModelRoutingPresetsV1 = {
       schema_version: 1, model_class_order: ["deep"], effort_order: ["high"],
       providers: { synthetic: { host: adapter.host, catalog: { matching: "exact-only", models: {
@@ -187,8 +188,8 @@ it.each([{ label: "missing", supported: undefined }, { label: "empty", supported
     };
     const selected = createCatalogExecutionAdapters(presets).adapters.get(adapter.host)!;
     expect(selected.resolveModel!(model)?.supportedEfforts).toEqual([]);
-    const { failure, provider } = qualify(selected, { model, effort: "high", turnId: "catalog-turn", provenance: "catalog" });
-    expect(failure).toMatchObject({ code: "BINDING_INVALID" });
-    expect(provider.lastObservedCapability()).toBeNull();
+    const { failure, context } = qualify(selected, { model, effort: "high", turnId: "catalog-turn", provenance: "catalog" });
+    expect(failure).toBeUndefined();
+    expect(context).toMatchObject({ modelClass: "deep", reasoningEffort: "high", policyNotes: ["CURRENT_POLICY_EFFORT_UNSUPPORTED"] });
   },
 );

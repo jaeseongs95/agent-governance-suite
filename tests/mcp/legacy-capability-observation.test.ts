@@ -87,8 +87,9 @@ describe("D0089 레거시 분류 콜백은 능력 관측이 아니다", () => {
       const adapter: HostExecutionAdapter = { host: HOST, provider: PROVIDER, ...(revision === undefined ? {} : { policyRevision: revision }), modelClassForModel: classify };
       const f = fixture(adapter);
       const result = f.run(model);
-      expect(result).toMatchObject({ ok: false, data: null, error: { code: "BINDING_INVALID",
-        details: { reasonCode: "MISSING_MODEL_CAPABILITY" } } });
+      // 3.1.1: the model runs, but the legacy callback's "frontier" never becomes its class.
+      expect(result.ok, JSON.stringify(result)).toBe(true);
+      expect(result.data!.bootstrapExecution!.context).toMatchObject({ model, modelClass: null, policyNotes: ["MISSING_MODEL_CAPABILITY"] });
       expect(f.provider.lastObservedCapability()).toBeNull();
       expect(classify).not.toHaveBeenCalled();
     },

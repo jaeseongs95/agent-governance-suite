@@ -70,7 +70,8 @@ describe("C call-time execution eligibility controls", () => {
     const legacy: HostExecutionAdapter = { host: HOST, provider: "owned-provider", modelClassForModel: classify };
     expect(resolveAdapterModelCapability(legacy, MODEL)).toBeNull();
     const f = fixture(legacy);
-    expect(f.run()).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "MISSING_MODEL_CAPABILITY" } } });
+    // 3.1.1: it runs unclassified; the class answer is never used.
+    expect(f.run()).toMatchObject({ ok: true, data: { bootstrapExecution: { context: { modelClass: null, policyNotes: ["MISSING_MODEL_CAPABILITY"] } } } });
     expect(f.provider.lastObservedCapability()).toBeNull();
     expect(classify).not.toHaveBeenCalled();
     // The same opaque model name passes once the adapter states a trusted descriptor: the name itself is never the reason.
@@ -82,9 +83,9 @@ describe("C call-time execution eligibility controls", () => {
     expect(g.run()).toMatchObject({ ok: true });
     expect(g.provider.lastObservedCapability()).toMatchObject({ modelClass: "deep", supportedEfforts: ["high"], policyRevision: "owned-r1" });
   });
-  it("rejects unsupported legacy observations without inventing eligibility or a revision", () => {
+  it("observes unsupported legacy observations without inventing eligibility or a revision", () => {
     const f = fixture({ host: HOST, provider: "owned-provider", modelClassForModel: () => null });
-    expect(f.run("opaque-unsupported")).toMatchObject({ ok: false, error: { code: "BINDING_INVALID" } });
+    expect(f.run("opaque-unsupported")).toMatchObject({ ok: true, data: { bootstrapExecution: { context: { model: "opaque-unsupported", modelClass: null } } } });
     expect(f.provider.lastObservedCapability()).toBeNull();
   });
   it("does not invent a revision for a modern descriptor that supplies none", () => {
@@ -111,13 +112,13 @@ describe("C call-time execution eligibility controls", () => {
     expect(replay.error?.message).toContain("already consumed");
     expect(f.run(MODEL, "owned-next-call")).toMatchObject({ ok: true });
   });
-  it.each(["support", "minimum"] as const)("enforces the call-time %s policy", mode => {
+  it.each(["support", "minimum"] as const)("records the call-time %s policy without refusing the call", mode => {
     const { adapter, state } = modern(), f = fixture(adapter);
     expect(f.run()).toMatchObject({ ok: true });
     state.value = { ...state.value, supportedEfforts: mode === "support" ? ["xhigh"] : ["high", "xhigh"],
       minimumReasoningEffort: mode === "minimum" ? "xhigh" : "high" };
-    expect(f.run()).toMatchObject({ ok: false, error: { code: "BINDING_INVALID",
-      details: { reasonCode: mode === "support" ? "CURRENT_POLICY_EFFORT_UNSUPPORTED" : "CURRENT_POLICY_EFFORT_BELOW_MINIMUM" } } });
+    expect(f.run()).toMatchObject({ ok: true, data: { bootstrapExecution: { context: { reasoningEffort: "high",
+      policyNotes: [mode === "support" ? "CURRENT_POLICY_EFFORT_UNSUPPORTED" : "CURRENT_POLICY_EFFORT_BELOW_MINIMUM"] } } } });
   });
   it.each([true, false])("qualifies under the rotated revision for declared/descriptor-only revisions: declared=%s", declared => {
     const { adapter, state } = modern(declared), f = fixture(adapter);

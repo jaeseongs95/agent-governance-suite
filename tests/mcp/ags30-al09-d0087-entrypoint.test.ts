@@ -83,9 +83,12 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
         expect(await call(args, observed())).toMatchObject({ok: false, error: {code: "BINDING_REQUIRED",
           details: {observation: {status: "provider-not-configured"}}}});
       } else if (mode === "name-only") {
-        // No execution adapters were passed: the built-in Codex catalog applies and does not know the installation's model.
-        expect(await call(args, observed())).toMatchObject({ok: false, error: {code: "BINDING_INVALID",
-          details: {reasonCode: "MODEL_NOT_IN_CATALOG"}}});
+        // No execution adapters were passed: the built-in Codex catalog applies and does not know the installation's
+        // model. The model still runs (3.1.1); the observation keeps it with no class and the catalog finding.
+        const unknownPlan = await call(args, observed());
+        expect(unknownPlan.ok, JSON.stringify(unknownPlan)).toBe(true);
+        expect(unknownPlan.data!.bootstrapExecution!.context).toMatchObject({model: selectedModel, modelClass: null,
+          reasoningEffort: "high", policyNotes: ["MODEL_NOT_IN_CATALOG"], actorId: hostActorId(host, session)});
       } else {
         const once = observed({callId: `fixture-call-${mode}`});
         const planned = await call(args, once);
@@ -94,8 +97,9 @@ ${mode === "installed" ? "await startMcpServer(new Map(), suite.adapters);"
           reasoningEffort: "high", actorId: hostActorId(host, session)});
         expect(await call(args, once)).toMatchObject({ok: false, error: {code: "BINDING_INVALID"}});
         const unknownResult = await call(args, observed({model: "unobserved-model"}));
-        expect(unknownResult, JSON.stringify(unknownResult)).toMatchObject({ok: false, error: {code: "BINDING_INVALID",
-          message: "Host observation has no matching trusted execution capability and policy revision."}});
+        expect(unknownResult.ok, JSON.stringify(unknownResult)).toBe(true);
+        expect(unknownResult.data!.bootstrapExecution!.context).toMatchObject({model: "unobserved-model", modelClass: null,
+          policyNotes: ["MODEL_NOT_IN_CATALOG"]});
         if (mode === "builtin-default") {
           const lowArgs = argumentsFor("entrypoint-valid-low");
           const lowCall = observed({effort: "low"});

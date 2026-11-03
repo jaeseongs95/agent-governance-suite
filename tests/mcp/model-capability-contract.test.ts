@@ -23,7 +23,7 @@ import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { getPolicyRevision, resolveModelSelection } from "../../skills/coordinate-subagents/scripts/model-routing.mjs";
 import syntheticCatalogV2 from "./fixtures/synthetic-model-catalog-v2.json" with { type: "json" };
-import { rootCaller } from "../helpers/caller.js";
+import { childCaller, rootCaller } from "../helpers/caller.js";
 
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
 const SESSION = "session-capability-contract";
@@ -168,30 +168,33 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
         evidence: [{ artifactId: "opaque-stage", kind: "test", locator: "model-capability-contract.test.ts", verified: true, note: "같은 opaque 관측의 인메모리 단계 소비 회귀." }],
         findings: [], blockers: [], error: null,
       };
-      const stageCaller = rootCaller(adapter.host, SESSION, {
+      // The floor binds an agent whose model an agent chose (3.1.1), so the stage is recorded by a child first.
+      const stageCaller = childCaller(adapter.host, SESSION, "d0094-agent", {
         callId: `d0094-opaque-stage-${ordinal}`,
         execution: { model, effort, turnId: "d0094-opaque-stage-turn", provenance: "synthetic-authority-host:runtime" },
       });
       // 다른 권위의 어댑터와 자격 없는 모델 관측은 같은 단계에서도 소비할 수 없다.
       expect(foreignProvider.run("record_stage_result", stageCaller,
         () => foreignService.recordStageResult(stageInput, true))).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "HOST_ADAPTER_MISMATCH" } } });
-      const unqualifiedCaller = rootCaller(adapter.host, SESSION, {
-        callId: `d0094-opaque-unqualified-${ordinal}`,
-        execution: { model: "unobserved-model", effort, turnId: "d0094-opaque-stage-turn", provenance: "synthetic-authority-host:runtime" },
-      });
-      expect(provider.run("record_stage_result", unqualifiedCaller,
-        () => service.recordStageResult(stageInput, true)).error?.code).toBe("BINDING_INVALID");
       expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
       const recorded = provider.run("record_stage_result", stageCaller,
         () => service.recordStageResult(stageInput, true));
       expect(provider.lastObservedCapability()).toMatchObject({ provider: adapter.provider, policyRevision: adapter.policyRevision, rawModel: model });
       if (modelClass === "lightweight" || effort === "low") {
-        expect(recorded.error?.code).toBe("GATE_FAILED");
+        expect(recorded.error).toMatchObject({ code: "GATE_FAILED",
+          details: { reasonCode: effort === "low" ? "REASONING_EFFORT_BELOW_FLOOR" : "MODEL_CLASS_BELOW_FLOOR" } });
         expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
+        // The root session runs the model the user chose: the same result recorded by the root is observed, not refused.
+        const rootRecorded = provider.run("record_stage_result", rootCaller(adapter.host, SESSION, {
+          callId: `d0094-opaque-root-stage-${ordinal}`,
+          execution: { model, effort, turnId: "d0094-opaque-stage-turn", provenance: "synthetic-authority-host:runtime" },
+        }), () => service.recordStageResult(stageInput, true));
+        expect(rootRecorded.ok, JSON.stringify(rootRecorded)).toBe(true);
+        expect(rootRecorded.data?.stageResults[0]?.executionContext).toMatchObject({ model, modelClass, reasoningEffort: effort });
       } else {
         expect(recorded.ok).toBe(true);
         expect(recorded.data?.stageResults[0]?.executionContext).toMatchObject({
-          model, modelClass, reasoningEffort: effort, actorId: hostActorId(adapter.host, SESSION),
+          model, modelClass, reasoningEffort: effort, actorId: hostActorId(adapter.host, SESSION, "d0094-agent"),
           taskId: input.taskEnvelope.taskId, runId: receipt.runId, stageId: stage.stageId, revision: receipt.revision,
         });
       }
@@ -315,10 +318,10 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     });
     const belowMinimum = provider.run("plan_workflow", lowCaller,
       () => service.planWorkflow(lowArgs, true));
-    expect(belowMinimum).toMatchObject({ ok: false, error: { code: "BINDING_INVALID",
-      message: "Host observation does not satisfy the trusted model and effort policy.",
-      details: { reasonCode: "CURRENT_POLICY_EFFORT_BELOW_MINIMUM" } } });
-    expect(provider.lastObservedCapability()).toBeNull();
+    // 3.1.1: the catalog's effort rule is recorded, never refused.
+    expect(belowMinimum.ok, JSON.stringify(belowMinimum)).toBe(true);
+    expect(belowMinimum.data!.bootstrapExecution!.context).toMatchObject({ reasoningEffort: "high",
+      policyNotes: ["CURRENT_POLICY_EFFORT_BELOW_MINIMUM"] });
 
     const validCaller = rootCaller("codex", SESSION, {
       callId: "call-valid",
@@ -507,10 +510,9 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     const narrowedService = new WorkflowService(new FileSkillRegistry(registryPath, narrowedValidator), narrowedValidator, store, null, narrowedProvider);
     const unsupported = narrowedProvider.run("plan_workflow", narrowedCaller,
       () => narrowedService.planWorkflow(narrowedArgs, true));
-    expect(unsupported).toMatchObject({ ok: false, error: { code: "BINDING_INVALID",
-      message: "Host observation does not satisfy the trusted model and effort policy.",
-      details: { reasonCode: "CURRENT_POLICY_EFFORT_UNSUPPORTED" } } });
-    expect(narrowedProvider.lastObservedCapability()).toBeNull();
+    expect(unsupported.ok, JSON.stringify(unsupported)).toBe(true);
+    expect(unsupported.data!.bootstrapExecution!.context).toMatchObject({ reasoningEffort: "ultra",
+      policyNotes: ["CURRENT_POLICY_EFFORT_UNSUPPORTED"] });
   });
 
   it("preserves below-minimum rejection, replay, missing-observation handling, and assurance floors (AC4)", () => {
@@ -525,13 +527,12 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     const defaultPolicyCaller = codexCaller("call-rev-1", "gpt-6-astra", "high", "turn-rev");
     const defaultService = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, store, null, defaultProvider);
 
-    // Raw Luna/medium is observed; below-model-minimum effort still cannot produce an ExecutionContext.
+    // Raw Luna/medium is observed; the catalog's below-minimum effort is a note (3.1.1), not a refusal.
     const belowModelFloor = defaultProvider.run("plan_workflow", codexCaller("call-luna-1", "gpt-5.6-luna", "medium", "turn-luna"),
       () => defaultService.planWorkflow(planArgs, true));
-    expect(belowModelFloor).toMatchObject({ ok: false, error: { code: "BINDING_INVALID",
-      message: "Host observation does not satisfy the trusted model and effort policy.",
-      details: { reasonCode: "CURRENT_POLICY_EFFORT_BELOW_MINIMUM" } } });
-    expect(defaultProvider.lastObservedCapability()).toBeNull();
+    expect(belowModelFloor.ok, JSON.stringify(belowModelFloor)).toBe(true);
+    expect(belowModelFloor.data!.bootstrapExecution!.context).toMatchObject({ model: "gpt-5.6-luna", reasoningEffort: "medium",
+      policyNotes: ["CURRENT_POLICY_EFFORT_BELOW_MINIMUM"] });
 
     // 유효한 lightweight 관측도 접수할 수 있으며 실제 단계 자격은 별도로 검사한다.
     const belowBootstrapFloor = defaultProvider.run(
@@ -786,7 +787,9 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     const legacyArgs = { schemaVersion: "1.0.0", taskEnvelope: createTask("legacy-revision-control", "high") };
     const legacyResult = legacyProvider.run("plan_workflow", rootCaller("codex", SESSION, { callId: "legacy-control-call", execution }),
       () => legacyService.planWorkflow(legacyArgs, true));
-    expect(legacyResult).toMatchObject({ ok: false, error: { code: "BINDING_INVALID", details: { reasonCode: "MISSING_MODEL_CAPABILITY" } } });
+    // The legacy class answer still grants no class; the model runs unclassified (3.1.1).
+    expect(legacyResult.ok, JSON.stringify(legacyResult)).toBe(true);
+    expect(legacyResult.data!.bootstrapExecution!.context).toMatchObject({ modelClass: null, policyNotes: ["MISSING_MODEL_CAPABILITY"] });
     expect(legacyProvider.lastObservedCapability()).toBeNull();
   });
 });

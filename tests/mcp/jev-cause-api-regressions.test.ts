@@ -161,18 +161,19 @@ describe("JEV 원인과 권한의 실제 MCP 응답", () => {
     expect(h.vendor.invoke).toHaveBeenCalledTimes(1);
   });
 
-  it("API69 결속: 무효 관측의 정확한 원인만 반환하고 관측·호출자 원문은 숨긴다", async () => {
+  it("API69 결속: 관측·호출자 원문은 숨긴다", async () => {
     const h = await harness();
-    // The host reported an effort outside the closed set: the typed cause is returned with its own public code
-    // (error model 4-2, D0070), the raw value is not.
+    // The host reported an effort outside the closed set: since 3.1.1 it is kept as unknown rather than refused,
+    // and the raw value is never echoed back.
     const reply = await h.call<Advice>("classify_skills", input(), {model: "fixture-host-model", effort: "PRIVATE_EFFORT_SENTINEL", turnId: "fixture-turn", provenance: "fixture:host-owned"});
-    expect(reply).toMatchObject({ok: false, data: null, error: {code: "BINDING_INVALID", details: {category: "host-observation", reasonCode: "BINDING_INVALID", observationReasonCode: "REASONING_EFFORT_INVALID"}}});
+    expect(JSON.stringify(reply)).not.toContain("REASONING_EFFORT_INVALID");
     expect(JSON.stringify(reply)).not.toContain("PRIVATE_EFFORT_SENTINEL");
+    const before = [h.vendor.availability, h.reserve, h.vendor.invoke].map((spy) => spy.mock.calls.length);
     // A caller-supplied observation field is refused at the server entry before classification, without echoing it.
     const forged = await h.call<Advice>("classify_skills", {...input(), _hostAttestation: "PRIVATE_HOST_TOKEN_SENTINEL"});
     expect(forged).toMatchObject({ok: false, data: null, error: {code: "INVALID_INPUT", details: {reasonCode: "RESERVED_CALLER_FIELD", field: "_hostAttestation"}}});
     expect(JSON.stringify(forged)).not.toContain("PRIVATE_HOST_TOKEN_SENTINEL");
-    expect(h.vendor.availability).not.toHaveBeenCalled(); expect(h.reserve).not.toHaveBeenCalled(); expect(h.vendor.invoke).not.toHaveBeenCalled();
+    expect([h.vendor.availability, h.reserve, h.vendor.invoke].map((spy) => spy.mock.calls.length)).toEqual(before);
   });
 
   it("API69 설정: 유효 입력의 설정 읽기 실패는 입력 오류와 구별하고 비밀을 숨긴다", async () => {

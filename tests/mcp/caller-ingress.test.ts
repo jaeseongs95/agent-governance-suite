@@ -162,8 +162,10 @@ describe("Codex _meta ingress (captured 0.166.0 shapes)", () => {
     expect(rejection(() => ingress("t", meta))).toMatchObject({ code: "BINDING_INVALID", reasonCode });
   });
 
-  it("keeps identity when the model or effort is absent and reports execution as unavailable", () => {
-    expect(observed(ingress("t", codexMeta(S, { reasoning_effort: undefined }))).execution).toEqual({ unavailable: "CODEX_EXECUTION_META_MISSING" });
+  it("keeps identity when the model or effort is absent; a model alone is observed with an unknown effort", () => {
+    expect(observed(ingress("t", codexMeta(S, { reasoning_effort: undefined }))).execution)
+      .toMatchObject({ model: expect.any(String), effort: null, provenance: "codex:mcp-meta" });
+    expect(observed(ingress("t", codexMeta(S, { model: undefined }))).execution).toEqual({ unavailable: "CODEX_EXECUTION_META_MISSING" });
   });
 
   it("is not influenced by identity-looking tool arguments", () => {
@@ -302,9 +304,10 @@ describe("execution observation from the caller", () => {
     expect(provider.run("plan_workflow", observedCaller, () => provider.diagnose())).toMatchObject({ reasonCode });
   });
 
-  it("rejects an unknown effort instead of qualifying it", () => {
+  it("keeps an unknown effort as unknown instead of qualifying or refusing it", () => {
     const observedCaller = caller({ model: "gpt-6-astra", effort: "turbo", turnId: null, provenance: "codex:mcp-meta" });
-    expect(rejection(() => provider.run("plan_workflow", observedCaller, () => provider.observe(binding)))).toMatchObject({ code: "BINDING_INVALID", reasonCode: "REASONING_EFFORT_INVALID" });
+    expect(provider.run("plan_workflow", observedCaller, () => provider.observe(binding)))
+      .toMatchObject({ model: "gpt-6-astra", reasoningEffort: null, policyNotes: ["REASONING_EFFORT_UNRECOGNIZED"] });
   });
 
   it("observes nothing outside a run or for tools without execution floors", () => {
