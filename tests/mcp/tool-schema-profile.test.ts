@@ -16,7 +16,7 @@ import { FileSkillRegistry } from "../../mcp-server/src/registry.js";
 import { resolveToolSchemaProfile } from "../../mcp-server/src/runtime-config.js";
 import { ContractValidator, contractSchemas } from "../../mcp-server/src/schema-validator.js";
 import { SESSION_MESSAGE_SERVER_INSTRUCTIONS, SKILL_INTAKE_SERVER_INSTRUCTIONS, createMcpServer, planWorkflowToolInputSchema, serverInstructions, type ToolSchemaProfile } from "../../mcp-server/src/server.js";
-import { LOCALE_ENVIRONMENT, type SupportedLocale } from "../../mcp-server/src/i18n.js";
+import { ACCEPT_LANGUAGE_META, LOCALE_ENVIRONMENT, SUPPORTED_LOCALES, type SupportedLocale } from "../../mcp-server/src/i18n.js";
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { CURRENT_VERSION, STABLE_VERSION } from "./version-fixtures.js";
@@ -108,6 +108,12 @@ describe("MCP tool schema profiles", () => {
           expect(tool.inputSchema.properties ?? {}, `${tool.name}.${field}`).not.toHaveProperty(field);
           expect(tool.inputSchema.required ?? [], `${tool.name}.${field}`).not.toContain(field);
           expect(JSON.stringify(tool.inputSchema), `${tool.name}.${field}`).not.toContain(field);
+        }
+      }
+      // Hosts cap tool descriptions at 1024 characters, so every shipped locale must fit, not only the default one.
+      for (const locale of SUPPORTED_LOCALES) {
+        for (const tool of (await implicit.listTools({ _meta: { [ACCEPT_LANGUAGE_META]: locale } })).tools) {
+          expect(tool.description?.length ?? 0, `${locale} ${tool.name}`).toBeLessThanOrEqual(1024);
         }
       }
       expect(planning).toMatchObject({ type: "object", oneOf: expect.any(Array) });

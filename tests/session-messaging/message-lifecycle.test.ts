@@ -275,7 +275,7 @@ it("packaged CLI discovers prepare/send and rejects old or unknown send with zer
   const legacy = cli("send", { sender, target, body: "old shape", messageId: "caller-legacy-id" });
   expect(legacy.status).toBe(1); expect(JSON.parse(legacy.stdout).error).toMatch(/prepare/u);
   const unknown = cli("send", { sender, messageId: "unknown-issued-id" });
-  expect(unknown.status).toBe(1); expect(JSON.parse(unknown.stdout).error).toMatch(/delivery may be unknown/u);
+  expect(unknown.status).toBe(1); expect(JSON.parse(unknown.stdout).messageKey).toBe("services.sessionMessage.message.issuedIdUnavailable");
   expect(JSON.parse(cli("pending", { target }).stdout).data.count).toBe(1);
 }, 15_000);
 

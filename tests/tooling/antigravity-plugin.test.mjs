@@ -125,7 +125,7 @@ describe("Antigravity native plugin layout (AGS-D-0321)", () => {
     expect(Object.keys(claudePlugin.mcpServers ?? {})).toEqual(["agent-governance-suite"]);
 
     const serverSource = readFileSync(path.join(ROOT, "mcp-server", "src", "server.ts"), "utf8");
-    const advertiseBlock = serverSource.split("const tools = advertise([")[1]?.split("diagnostics?.registerMethods")[0] ?? "";
+    const advertiseBlock = serverSource.split("return advertise([")[1]?.split("], locale);")[0] ?? "";
     const toolNames = [...advertiseBlock.matchAll(/^\s*name:\s*"([^"]+)"/gmu)].map((m) => m[1]);
     expect(toolNames.length).toBe(31);
     expect(toolNames).toContain("validate_collaboration_decision");
