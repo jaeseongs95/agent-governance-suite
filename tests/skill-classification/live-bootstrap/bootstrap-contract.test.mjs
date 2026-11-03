@@ -150,7 +150,7 @@ describe("live bootstrap offline CLI contracts", () => {
           expect(report.checks).toHaveLength(3);
           expect(report.checks[0]).toBe("baseline: GREEN");
           expect(report.checks[1]).toMatch(new RegExp(`^${scenario}: RED INDEPENDENT_`));
-          expect(report.checks[2]).toBe(`${scenario}:restored: GREEN`);
+          expect(report.checks[2]).toBe(`${scenario}:restored: BYTES_IDENTICAL`);
         }
       } finally {
         if (root) removeSourceScratch(root);

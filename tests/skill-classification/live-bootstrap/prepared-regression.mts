@@ -6,7 +6,7 @@ import {syncBuiltinESMExports} from "node:module";
 import os from "node:os";
 import path from "node:path";
 import {pathToFileURL} from "node:url";
-import {readyMock, readyEstimateMock, mockEnv, mockResponse, hash} from "./prepared-fixture.mjs";
+import {readyMock, readyMockFromBinding, readyEstimateMock, mockEnv, mockResponse, hash} from "./prepared-fixture.mjs";
 import type {PreparedBootstrapConfig} from "./bootstrap.mts";
 import {loadCurrentSourceBindings} from "../evaluation.js";
 
@@ -183,9 +183,14 @@ try {
   const sourceBytes = await readFile(sourceFile);
   const digestFile = path.join(copiedRepo, "mcp-server/src/skill-classification/digest.ts");
   const digestBytes = await readFile(digestFile);
+  // One preparation seeds the 18 fixtures; each original run below still freshly prepares and rechecks the copied
+  // source, authority and evidence (bootstrap-fixture-reuse.test.ts C1-C3). `bound.api` is the run's cached module set.
+  const {prepared: bound} = await fixture("mutation-seed", {}, copiedRepo);
+  const binding = Object.freeze({inventoryDigest: bound.inventory.inventoryDigest, taxonomyRevision: bound.inventory.taxonomyRevision});
   for (const stage of ["credential", "encode"] as const) {
     for (const kind of ["authority", "owner", "revision", "cancel", "ledger", "lock", "evidence", "source", "digest"]) {
-      const {config: value, prepared: bound} = await fixture(`${stage}-${kind}`, {}, copiedRepo);
+      const value = await readyMockFromBinding(api, copiedRepo, path.join(root, `${stage}-${kind}`), `${stage}-${kind}`, binding,
+        bound.api.evaluationConfig.createProviderEvaluationConfiguration);
       let armed = false, fired = false, sends = 0;
       let changedLedger: Buffer | null = null;
       const adapter = bound.api.providers.jevNoulWireAdapter, originalEncode = adapter.encode;

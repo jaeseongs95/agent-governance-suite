@@ -68,6 +68,9 @@ function decision(advice: Advice, selected: string[] | null, request = input()):
     unresolvedSkillReferences: [], selectionStatus: selected === null ? "NEEDS_INPUT" : "SELECTED", adviceApplied: selected !== null, hostReceipt: null };
 }
 
+// ContractValidator holds only compiled schemas (no per-call state), so one instance serves every harness.
+const validator = new ContractValidator();
+
 async function harness(options: { root?: string; needed?: string[]; uncertain?: string[]; mode?: "shadow" | "select"; attest?: boolean; taskObserved?: boolean; withJev?: boolean; providerTimeoutMs?: number; requestTimeoutMs?: number } = {}) {
   const root = options.root ?? repository;
   const localInventory = await loadSkillInventory({ root });
@@ -114,7 +117,7 @@ async function harness(options: { root?: string; needed?: string[]; uncertain?: 
     });
   const gateway = new RuntimeSkillClassificationGateway({ root, service, readRuntime,
     observeRuntime: () => digestClassificationValue({ runtime, additionalSource: runtimeBytes.additionalSource }), observeTask, observeHostSkills });
-  const validator = new ContractValidator(), store = new InMemoryWorkflowStore();
+  const store = new InMemoryWorkflowStore();
   // A call marked with an observation time is observed then (expiry tests); every other call now.
   const observationClock = { at: null as Date | null };
   const attestation = options.attest === false ? null : new HostAttestationProvider(adapter, () => observationClock.at ?? new Date());

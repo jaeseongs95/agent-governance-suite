@@ -71,8 +71,8 @@ try {
   observe("baseline-complete");
   for (const [id, file, before, after, marker] of cases) {
     if (scenario !== undefined && id !== scenario) continue;
-    const target = path.join(root,file), original = await readFile(target,"utf8"); assert.equal(original.split(before).length,2,`MUTATION_ANCHOR:${id}`);
-    await writeFile(target,original.replace(before,after),"utf8");
+    const target = path.join(root,file), original = await readFile(target), source = original.toString("utf8"); assert.equal(source.split(before).length,2,`MUTATION_ANCHOR:${id}`);
+    await writeFile(target,source.replace(before,after),"utf8");
     try {
       observe("mutation-enter");
       const result = await runOracle();
@@ -80,8 +80,12 @@ try {
       assert(result.stderr.includes(marker),`${id}:expected ${marker}: ${result.stderr}`);
       checks.push(`${id}: RED ${marker}`);
       observe("mutation-complete");
-    } finally { observe("restore-enter"); await writeFile(target,original,"utf8"); }
-    await green(`${id}:restored`);
+    } finally { observe("restore-enter"); await writeFile(target,original); }
+    // This runner wrote only `target` and the oracle writes only under its temp directory, so exact original bytes
+    // return the tree the baseline oracle found GREEN; another oracle run would recheck the same source.
+    // The next scenario (full CLI) starts from that tree.
+    assert((await readFile(target)).equals(original),`${id}:RESTORE_BYTES_DIFFER`);
+    checks.push(`${id}:restored: BYTES_IDENTICAL`);
     observe("restore-complete");
   }
   console.log(JSON.stringify({status:"INDEPENDENT_MUTATIONS_PASS",checks,actualApiCalls:0,actualCredentialLookups:0}));

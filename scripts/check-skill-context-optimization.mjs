@@ -7,6 +7,24 @@ import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+// Output named only by full commit SHAs (`show <sha>:<path>`, `diff --name-only <sha> <sha> -- <path>`) cannot change,
+// so it is kept for the process, across module reloads (vi.resetModules). The cache belongs to the execFileSync in use,
+// so a mocked child_process sees every call. Working-tree and index reads (`diff <sha> --`, `ls-files`) always run.
+const COMMIT = /^[0-9a-f]{40}$/u;
+const IMMUTABLE_GIT = Symbol.for("ags.check-skill-context-optimization.immutable-git");
+
+function git(...args) {
+  const run = () => execFileSync("git", ["-C", ROOT, ...args], { maxBuffer: 20 * 1024 * 1024 });
+  const immutable = (args.length === 2 && args[0] === "show" && /^[0-9a-f]{40}:/u.test(args[1]))
+    || (args.length === 6 && args[0] === "diff" && args[1] === "--name-only" && COMMIT.test(args[2]) && COMMIT.test(args[3]) && args[4] === "--");
+  if (!immutable) return run();
+  const caches = (globalThis[IMMUTABLE_GIT] ??= new WeakMap());
+  if (!caches.has(execFileSync)) caches.set(execFileSync, new Map());
+  const cache = caches.get(execFileSync);
+  const key = JSON.stringify([ROOT, ...args]);
+  if (!cache.has(key)) cache.set(key, run());
+  return Buffer.from(cache.get(key));
+}
 // 3.3.0 multi-workflow guidance (docs/ags30-phase-check-design.md 7.5): these exact reviewed bytes stand for
 // their predecessor at `revision`, so every existing pin keeps checking the same chain. Altered bytes are never projected.
 const MULTI_WORKFLOW_GUIDANCE_SUCCESSOR = Object.freeze({
@@ -21,7 +39,7 @@ const MULTI_WORKFLOW_GUIDANCE_SUCCESSOR = Object.freeze({
 function beforeMultiWorkflowGuidance(relative, bytes) {
   const hashes = Object.hasOwn(MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.hashes, relative) ? MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.hashes[relative] : null;
   if (!hashes || createHash("sha256").update(bytes).digest("hex") !== hashes[1]) return bytes;
-  const projected = execFileSync("git", ["-C", ROOT, "show", `${MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.revision}:${relative}`]);
+  const projected = git("show", `${MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.revision}:${relative}`);
   if (createHash("sha256").update(projected).digest("hex") !== hashes[0]) throw new Error(`Multi-workflow guidance predecessor bytes differ: ${relative}`);
   return projected;
 }
@@ -776,10 +794,6 @@ const NODE24_README_MINIMUMS = Object.freeze({
   "workspace-convention-profiler": "Node.js 22 이상",
 });
 const NAVIGATION = Buffer.from('<!-- optimization-navigation:start condition="the skill is activated for the request" reference="references/entry-details.md" do-not-load-otherwise="true" -->\n- If the skill is activated for the request, read [entry details](references/entry-details.md) before producing any result or taking any action; otherwise do not read it.\n<!-- optimization-navigation:end -->\n');
-
-function git(...args) {
-  return execFileSync("git", ["-C", ROOT, ...args], { maxBuffer: 20 * 1024 * 1024 });
-}
 
 // Skill policy wording successor. The current bytes below are the reviewed wording
 // successor of the baseline revision bytes. Historical checks read the baseline
