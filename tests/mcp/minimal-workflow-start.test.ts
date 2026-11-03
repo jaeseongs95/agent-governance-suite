@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ApiResultV1 } from "../../contracts/types.js";
 import { codexMetaIngress } from "../../mcp-server/src/builtin-caller-ingress.js";
 import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
-import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
+import { ContinuityService, MINIMAL_WORKFLOW_START_EXAMPLE } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { HostAttestationProvider } from "../../mcp-server/src/host-attestation.js";
 import { codexExecutionAdapter } from "../../mcp-server/src/host-execution-adapters.js";
@@ -170,6 +170,14 @@ describe("start_workflow minimal start", () => {
       details: { field: "stages", capabilities: ["test-sensitivity-review", "change-code-review"] } });
     expect(refused.error?.message).toContain("plan_workflow and taskEnvelope.artifactContracts");
     expect(counts()).toEqual({ convergence_roots: 0, convergence_leases: 0, workflow_runs: 0, execution_observation_claims: 0 });
+  });
+
+  it("3.2.1 the edit gate's start example is a start that works", async () => {
+    const { call } = await harness();
+    const example = JSON.parse(MINIMAL_WORKFLOW_START_EXAMPLE.replace(/^start_workflow /u, "")) as Record<string, unknown>;
+    const started = await call<MinimalWorkflowStartV1>({ ...example, workspace: repo });
+    expect(started.error).toBeNull();
+    expect(started.data?.state).toBe("running");
   });
 
   it("rejects invalid input without recording a pass, and passes the window after an infrastructure failure", async () => {
