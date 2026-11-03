@@ -915,8 +915,11 @@ export class ContinuityService implements ContinuityGateway {
       lines.push(`[AGS] workflow 상태를 확인하지 못해 이번 구간의 제품 파일 변경을 막지 않았다. 원인 코드: ${[...new Set(failures)].join(", ")}.`);
     }
     if (pending.length > 0) {
-      lines.push(`[AGS 단계 확인] 진행 중인 workflow에서 다음 단계가 아직 passed가 아니다: ${pending.join(", ")}.`,
-        "빠진 단계를 지금 진행하거나, 필요 없으면 계획을 고쳐 그 단계를 빼라.");
+      // Codex continues the turn with this text as its only instruction (continuity-hook stopOutput): it must point at the
+      // user's work, or the agent records the stages and stops.
+      lines.push(`[AGS 단계 확인] 진행 중인 workflow에 아직 passed가 아닌 단계가 있다: ${pending.join(", ")}.`,
+        "사용자가 맡긴 작업이 끝나지 않았으면 멈추지 말고 남은 작업을 이어서 하라. 단계 결과는 그 단계의 작업과 검증을 실제로 마친 뒤에만 기록하고, 기록만 하고 끝내지 마라.",
+        "사용자의 답이나 승인이 있어야 진행할 수 있으면 무엇을 기다리는지 한 줄로 쓰고 끝내라. 필요 없는 단계는 계획을 고쳐 뺀다.");
     }
     return quiet || lines.length === 0 ? null : lines.join("\n");
   }
