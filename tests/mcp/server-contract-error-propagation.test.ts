@@ -56,6 +56,8 @@ describe("MCP boundary contract error propagation", () => {
       expect(parsed.error).toEqual({
         code: "MCP_UNAVAILABLE",
         message: "Synthetic message storage is unavailable.",
+        messageKey: "workflow.service.unkeyedFailure",
+        params: { message: "Synthetic message storage is unavailable." },
         details: { reason: "SYNTHETIC_STORAGE_FAILED" },
       });
     } finally {

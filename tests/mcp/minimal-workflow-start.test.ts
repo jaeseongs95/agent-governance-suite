@@ -185,7 +185,7 @@ describe("start_workflow minimal start", () => {
     const refused = await call({ ...minimal, stages: ["minimal-implementation", "test-sensitivity-review", "change-code-review"] });
     expect(refused.error).toMatchObject({ code: "INVALID_INPUT",
       details: { field: "stages", capabilities: ["test-sensitivity-review", "change-code-review"] } });
-    expect(refused.error?.message).toContain("plan_workflow and taskEnvelope.artifactContracts");
+    expect(refused.error?.messageKey).toBe("workflow.service.startWorkflowFixArtifactTargets");
     expect(counts()).toEqual({ convergence_roots: 0, convergence_leases: 0, workflow_runs: 0, execution_observation_claims: 0 });
   });
 

@@ -203,11 +203,12 @@ describe("server.ts error messages (docs/i18n-design.md 6)", () => {
     try {
       const english = await fixture.call("send_session_message", { schemaVersion: "1.0.0" });
       expect(english.error).toMatchObject({ code: "INVALID_INPUT", messageKey: "server.sessionMessage.sendInvalid" });
-      const cause = String(english.error?.params?.cause);
-      expect(cause).not.toBe("");
-      expect(english.error?.message).toBe(`${cause} Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status.`);
+      // The cause is itself a catalog message, rendered in the reader's locale.
+      const cause = english.error?.params?.cause as { key: string; params: Record<string, unknown> };
+      expect(cause).toMatchObject({ key: expect.any(String), params: expect.any(Object) });
+      expect(english.error?.message).toBe(`${render(cause, "en")} Use prepare_session_message for a new intent, then send only its returned messageId. For an uncertain prior send, retry that known ID or compare saved receipts/status.`);
       const korean = await fixture.call("send_session_message", { schemaVersion: "1.0.0" }, "ko");
-      expect(korean.error?.message).toBe(`${cause} 새 전송 의도에는 prepare_session_message를 쓰고, 그 결과로 받은 messageId만 보낸다. 이전 전송 결과가 불확실하면 이미 아는 그 ID로 재시도하거나 저장한 영수증·status를 대조한다.`);
+      expect(korean.error?.message).toBe(`${render(cause, "ko")} 새 전송 의도에는 prepare_session_message를 쓰고, 그 결과로 받은 messageId만 보낸다. 이전 전송 결과가 불확실하면 이미 아는 그 ID로 재시도하거나 저장한 영수증·status를 대조한다.`);
     } finally { await fixture.close(); }
   });
 });

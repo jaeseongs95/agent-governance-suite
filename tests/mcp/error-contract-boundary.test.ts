@@ -37,7 +37,7 @@ function payload(reply: unknown): Body {
 }
 
 function expectServerFailure(body: { error: ErrorBody }): void {
-  expect(body.error).toMatchObject({ code: "MCP_UNAVAILABLE", message: "The server could not complete the request.",
+  expect(body.error).toMatchObject({ code: "MCP_UNAVAILABLE", messageKey: "services.failure.serverUnavailable",
     details: { reason: "INTERNAL_FAILURE", cause: expect.objectContaining({ type: expect.any(String) }) } });
   expect(JSON.stringify(body)).not.toContain("FIXTURE_SECRET_SENTINEL");
   expect(JSON.stringify(body)).not.toContain("/private/fixture-path");
