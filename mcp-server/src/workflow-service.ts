@@ -58,6 +58,7 @@ import { independence } from "./caller-actor.js";
 import { assertCsStageBundle } from "./cs-engineering-validator.js";
 import { assertEngineeringStageBundle } from "./engineering-practices-validator.js";
 import { contractFailure } from "./failure-diagnostics.js";
+import { hostIdentity } from "./workspace-identity.js";
 import {
   clone,
   createPlanSigningKey,
@@ -719,6 +720,9 @@ export class WorkflowService {
       continuity.settle();
       // ponytail: a continued root keeps its frozen task, so late adoption is only reported, not added to its constraints.
       const fresh = request.rootId === null ? minimalTask(request, workspace!, priorFileCount) : null;
+      // The root insert below runs inside this transaction's write lock; read the machine ID (a reg.exe/ioreg spawn on
+      // first use) before taking it.
+      if (fresh) hostIdentity();
       return this.store.withWorkflowTransaction(() => {
         const continued = request.rootId === null ? null : this.continuedRoot(request.rootId, request);
         const task = continued ? continued.root.taskEnvelope : fresh!.task;
