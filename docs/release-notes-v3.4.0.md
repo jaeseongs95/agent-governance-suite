@@ -97,6 +97,7 @@
 ## 알려진 제한
 
 - 압축 hook이 모델 행동을 낫게 하는지는 아직 입증되지 않았다. 이번 시험은 천장이었다. direct 저장본의 `DEFER` 경로가 실제로 쓰이지 않은 점, workflow 카드가 목록마다 4개로 잘리는 점, 여러 root가 묶인 작업의 카드(N7)는 더 어려운 조건의 시험 뒤 다룬다.
+- CI windows-latest에서 `tests/mcp/skill-classification-gateway.test.ts`의 「does not approve changed inventory or source metadata despite an eligible fixed profile」이 가끔 30초를 넘긴다. 3.4.0 코드로 돈 8번 중 2번(f4b6e0c7, 3984fae7)이 시간 초과였고, 정리 단계에서 복사한 `skills` 폴더가 `ENOTEMPTY`로 지워지지 않았다. 나머지 6번은 3~8초였다. 같은 시험이 Linux에서는 0.9초이고 3.3.0 CI 두 번은 4초·8초였다. JEV 변경만 넣은 판과 결함 수정만 넣은 판, 코드 전체를 넣은 판은 각각 통과해서 원인 커밋을 특정하지 못했다. 시간 한도는 바꾸지 않았다. 원인(복사한 파일을 무언가가 쥐고 있는 것으로 보임)은 후속 과제로 남긴다.
 - `bootstrap-contract`와 `prepared-bootstrap`은 시간이 줄지 않았다. 원인과 남은 방법은 위 「시험 구조」 절에 적었다.
 - 경로를 알 수 없는 편집 도구는 편집 관문이 막지 못한다. 막으려면 컴퓨터 전체를 막아야 한다(설계 문서 7.8).
 - sandbox가 기계 ID 파일을 모두 가리는 Linux에서는 sandbox 밖과 다른 host ID가 생길 수 있다.
