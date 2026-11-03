@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
@@ -11,6 +12,7 @@ import {
   matchesPreflightExpiryRemovalSuccessor,
   matchesPreflightPrivatePreparationSuccessor,
   matchesPreflightPlatformEventsSuccessor,
+  pinnedDigest,
   readHistoricalSource,
 } from "../../scripts/check-skill-context-optimization.mjs";
 
@@ -69,7 +71,9 @@ test("current specialist guidance preserves exact preflight predecessors and rej
     const current = readFileSync(new URL(`../../${path}`, import.meta.url));
     const predecessor = execFileSync("git", ["show", `${preBehaviorRevision}:${path}`], { cwd: root });
     const altered = Buffer.concat([current, Buffer.from("\n")]);
-    assert.deepEqual(beforeSpecialistBehaviorSuccessor(path, current), predecessor, path);
+    // Reviewed i18n script bytes stand for their exact predecessor by digest (SCRIPT_I18N_SUCCESSOR); others compare as bytes.
+    assert.equal(pinnedDigest(path, beforeSpecialistBehaviorSuccessor(path, current)),
+      createHash("sha256").update(predecessor).digest("hex"), path);
     assert.deepEqual(beforeSpecialistBehaviorSuccessor(path, altered), altered, path);
     for (const matcher of [
       matchesPreflightExpiryRemovalSuccessor,

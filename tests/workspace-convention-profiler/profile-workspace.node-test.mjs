@@ -111,8 +111,8 @@ test("사람이 읽는 문장은 호스트 locale(en·ko)로 나오고 profileFi
   const run = (locale, overrides) => inLocale(locale, () => profileWorkspace(request(workspace, overrides)));
   const limited = { evidenceLimits: { maxFiles: 100, maxBytesPerFile: 10, excludedPatterns: [] } };
   const [en, ko] = [await run("en", limited), await run("ko", limited)];
-  assert.match(en.limitations[0], /^Omitted an evidence file because of the maxBytesPerFile(10) limit: /);
-  assert.match(ko.limitations[0], /^근거 파일을 maxBytesPerFile(10) 제한으로 생략했습니다: /);
+  assert.match(en.limitations[0], /^Omitted an evidence file because of the maxBytesPerFile\(10\) limit: /);
+  assert.match(ko.limitations[0], /^근거 파일을 maxBytesPerFile\(10\) 제한으로 생략했습니다: /);
   assert.equal(en.profileFingerprint, ko.profileFingerprint);
   const [fullEn, fullKo] = [await run("en"), await run("ko")];
   assert.match(fullEn.conventions[0].observedPattern, /^Confirmed the .+ structure at /);
@@ -123,7 +123,7 @@ test("사람이 읽는 문장은 호스트 locale(en·ko)로 나오고 profileFi
   const tampered = structuredClone(fullEn);
   tampered.commands[0].sourceRef = "missing.json#sha256:" + "a".repeat(64);
   assert.match((await inLocale("en", () => validateProfile(tampered)))[0], /^command .+ references missing evidence: /);
-  assert.match((await inLocale("ko", () => validateProfile(tampered)))[0], /^존재하지 않는 근거를 참조한다 (명령 .+): /);
+  assert.match((await inLocale("ko", () => validateProfile(tampered)))[0], /^존재하지 않는 근거를 참조한다 \(명령 .+\): /);
 });
 
 test("request 런타임 검증은 schemaVersion, item과 additionalProperties를 엄격히 적용한다", async () => {
@@ -147,10 +147,10 @@ test("validateProfile은 전체 output schema를 적용한다", async () => {
   const output = await profileWorkspace(request(path.join(fixtures, "node-monorepo")));
   const extraProperty = structuredClone(output);
   extraProperty.unexpected = true;
-  assert.ok(validateProfile(extraProperty).some((error) => error.startsWith("schema")));
+  assert.ok((await inLocale("en", () => validateProfile(extraProperty))).some((error) => error.startsWith("schema")));
   const invalidArrayItem = structuredClone(output);
   invalidArrayItem.openQuestions.push(42);
-  assert.ok(validateProfile(invalidArrayItem).some((error) => error.startsWith("schema")));
+  assert.ok((await inLocale("en", () => validateProfile(invalidArrayItem))).some((error) => error.startsWith("schema")));
 });
 
 test("workspace 밖 대상과 Windows 경로 표현을 안전하게 처리한다", async () => {

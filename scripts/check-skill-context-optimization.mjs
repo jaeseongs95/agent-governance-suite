@@ -223,7 +223,7 @@ const SCRIPT_I18N_SUCCESSOR = Object.freeze({
 });
 
 /** The digest pinned checks compare: reviewed i18n bytes stand for the exact predecessor they replaced. */
-function pinnedDigest(path, bytes) {
+export function pinnedDigest(path, bytes) {
   const digest = createHash("sha256").update(bytes).digest("hex");
   const successor = SCRIPT_I18N_SUCCESSOR.hashes[path];
   return successor && digest === successor[1] ? successor[0] : digest;
