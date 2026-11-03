@@ -23,8 +23,6 @@ import { createMcpServer } from "../../mcp-server/src/server.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { WorkflowService, type MinimalWorkflowStartV1 } from "../../mcp-server/src/workflow-service.js";
 import { codexCallMeta } from "../helpers/caller.js";
-// @ts-expect-error the engineering-practices runtime is plain JavaScript without declarations.
-import { hashJson } from "../../runtime/engineering-practices/io.mjs";
 
 // Design docs/ags30-phase-check-design.md 7.5-7.6: start_workflow plans, opens, claims and starts in one transaction.
 const registryPath = fileURLToPath(new URL("../../skills/registry.json", import.meta.url));
@@ -102,10 +100,6 @@ describe("start_workflow minimal start", () => {
       stages: [{ capability: "minimal-implementation" }] });
     expect(started.data!.defaultsUsed).toEqual(expect.arrayContaining(["taskId", "riskLevel", "authorization", "frame", "writeTargets"]));
     expect(started.data!.defaultsUsed).not.toContain("workspace");
-    // Engineering stage bundles bind this exact task: the CLI's own digest must match the returned one.
-    expect(started.data!.taskEnvelope).toMatchObject({ taskId: started.data!.taskId, objective: minimal.goal,
-      acceptanceCriteria: minimal.acceptanceCriteria, requiredCapabilities: minimal.stages });
-    expect(hashJson(started.data!.taskEnvelope)).toBe(started.data!.taskDigest);
     expect(counts()).toEqual({ convergence_roots: 1, convergence_leases: 1, workflow_runs: 1, execution_observation_claims: 1 });
     for (const name of ["a.ts", "b.ts", "c.ts", "d.ts"]) expect(writeFile(name)).toEqual({});
   });
@@ -167,6 +161,15 @@ describe("start_workflow minimal start", () => {
     // A LEASE_CONFLICT is not an infrastructure failure: the session stays enforced.
     for (const name of ["a.ts", "b.ts"]) writeFile(name);
     expect(isDeny(writeFile("c.ts"))).toBe(true);
+  });
+
+  it("3.2.1 refuses stages whose passed record needs an artifact target it cannot fix, and leaves nothing behind", async () => {
+    const { call, counts } = await harness();
+    const refused = await call({ ...minimal, stages: ["minimal-implementation", "test-sensitivity-review", "change-code-review"] });
+    expect(refused.error).toMatchObject({ code: "INVALID_INPUT",
+      details: { field: "stages", capabilities: ["test-sensitivity-review", "change-code-review"] } });
+    expect(refused.error?.message).toContain("plan_workflow and taskEnvelope.artifactContracts");
+    expect(counts()).toEqual({ convergence_roots: 0, convergence_leases: 0, workflow_runs: 0, execution_observation_claims: 0 });
   });
 
   it("rejects invalid input without recording a pass, and passes the window after an infrastructure failure", async () => {

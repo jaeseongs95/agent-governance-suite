@@ -86,7 +86,7 @@ const GATE_UNAVAILABLE_PREFIX = "phase-gate-unavailable:";
  */
 export const WORKFLOW_FILE_LIMIT = 3;
 /** The fixed minimal start every refusal names. */
-export const MINIMAL_WORKFLOW_START_EXAMPLE = 'start_workflow {"goal":"<목표>","stages":["minimal-implementation","test-sensitivity-review"],"acceptanceCriteria":["<수용 기준>"]}';
+export const MINIMAL_WORKFLOW_START_EXAMPLE = 'start_workflow {"goal":"<목표>","stages":["minimal-implementation"],"acceptanceCriteria":["<수용 기준>"]}';
 const RUN_TERMINAL_STATES = new Set(["passed", "failed", "blocked"]);
 
 type WorkflowActivity = "active" | "none" | { unavailable: string };

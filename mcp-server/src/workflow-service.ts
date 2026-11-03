@@ -173,9 +173,6 @@ export interface MinimalStartContinuity {
 export interface MinimalWorkflowStartV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   taskId: string;
-  /** The TaskEnvelope the server built, and its digest: engineering stage bundles bind this exact task. */
-  taskEnvelope: TaskEnvelopeV1;
-  taskDigest: string;
   rootId: string;
   runId: string;
   revision: number;
@@ -635,6 +632,11 @@ export class WorkflowService {
       const { task, frame, defaultsUsed } = minimalTask(request, workspace, priorFileCount);
       return this.store.withWorkflowTransaction(() => {
         const plan = unwrapResult(this.planWorkflow(task, true));
+        // A passed record of these stages must match an artifact target fixed in the plan, which this start cannot know.
+        const needTargets = plan.stages.filter(stage => stage.requiredArtifacts.length > 0).map(stage => stage.requiredCapability);
+        if (needTargets.length > 0) {
+          throw new WorkflowContractError("INVALID_INPUT", "start_workflow cannot fix artifact targets, so these stages could never be recorded as passed. Plan them with plan_workflow and taskEnvelope.artifactContracts once the target is known.", { field: "stages", capabilities: needTargets });
+        }
         const blocked = plan.state === "ready" ? null : plan.errors[0];
         if (blocked) throw new WorkflowContractError(blocked.code, blocked.message, blocked.details);
         const root = unwrapResult(this.openConvergenceRoot({
@@ -650,8 +652,6 @@ export class WorkflowService {
         return {
           schemaVersion: CONTRACT_VERSION,
           taskId: task.taskId,
-          taskEnvelope: clone(task),
-          taskDigest: convergenceDigest(task),
           rootId: root.rootId,
           runId: receipt.runId,
           revision: receipt.revision,

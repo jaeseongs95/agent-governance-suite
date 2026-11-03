@@ -154,7 +154,7 @@ Codex 출력 형식은 continuity hook이 host 인자로 정한다(`resolveHookH
 - 거부 문구(호스트 공통 `hookSpecificOutput.permissionDecision: "deny"`, agy runner가 `{decision: "deny", reason}`으로 바꾼다):
 
 ```text
-[AGS] workflow 없이 제품 파일 3개째 변경: <이번 호출의 경로> (앞서 바꾼 제품 파일 N개 포함). 먼저 workflow를 시작하라(최소 시작 호출 예: start_workflow {"goal":"<목표>","stages":["minimal-implementation","test-sensitivity-review"],"acceptanceCriteria":["<수용 기준>"]}).
+[AGS] workflow 없이 제품 파일 3개째 변경: <이번 호출의 경로> (앞서 바꾼 제품 파일 N개 포함). 먼저 workflow를 시작하라(최소 시작 호출 예: start_workflow {"goal":"<목표>","stages":["minimal-implementation"],"acceptanceCriteria":["<수용 기준>"]}).
 ```
 
 ### 7.3 면제
