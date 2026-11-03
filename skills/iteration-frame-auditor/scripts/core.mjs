@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+import { hostText } from "../../../runtime/i18n.mjs";
+
 import { validateComparisonSchema, validateRequestSchema, validateReviewSchema } from "./schema-validation.mjs";
 
 export class InputError extends Error {
@@ -17,7 +19,7 @@ export function canonicalJson(value) {
   if (value && typeof value === "object") {
     return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
   }
-  throw new InputError("Input contains a non-JSON value.");
+  throw new InputError(hostText("skillTools.iterationFrame.nonJsonValue"));
 }
 
 export function artifactDigest(value) {
@@ -33,24 +35,24 @@ function schemaErrors(validator) {
 }
 
 function requireDigest(actual, value, label) {
-  if (actual !== artifactDigest(value)) throw new InputError(`${label} does not match its canonical artifact.`);
+  if (actual !== artifactDigest(value)) throw new InputError(hostText("skillTools.iterationFrame.digestMismatch", { label }));
 }
 
-function requireKnownEvidence(refs, inventory, label) {
+function requireKnownEvidence(refs, inventory, subject, id = "") {
   const known = new Set(inventory.map((item) => item.evidenceRef));
   for (const ref of refs) {
-    if (!known.has(ref)) throw new InputError(`${label} references evidence outside evidenceInventory: ${ref}.`);
+    if (!known.has(ref)) throw new InputError(hostText("skillTools.iterationFrame.unknownEvidence", { subject, id, ref }));
   }
 }
 
 function unique(values, label) {
-  if (new Set(values).size !== values.length) throw new InputError(`${label} must not contain duplicates.`);
+  if (new Set(values).size !== values.length) throw new InputError(hostText("skillTools.iterationFrame.duplicates", { label }));
 }
 
 export function validateRequest(request) {
-  if (!request || typeof request !== "object" || Array.isArray(request)) throw new InputError("Request must be an object.");
+  if (!request || typeof request !== "object" || Array.isArray(request)) throw new InputError(hostText("skillTools.iterationFrame.requestNotObject"));
   if (!validateRequestSchema(request)) {
-    throw new InputError("IterationFrameAuditRequest.v1 validation failed.", { errors: schemaErrors(validateRequestSchema) });
+    throw new InputError(hostText("skillTools.iterationFrame.requestSchemaFailed"), { errors: schemaErrors(validateRequestSchema) });
   }
 
   requireDigest(request.root.contractDigest, request.root.contract, "root.contractDigest");
@@ -67,7 +69,7 @@ export function validateRequest(request) {
   const requiredKinds = new Set(["contract-comparison", "control-comparison", "target-comparison", "reviewer-separation"]);
   if (request.attemptHistory.length > 0) requiredKinds.add("attempt-outcome");
   for (const item of request.evidenceInventory) requiredKinds.delete(item.kind);
-  if (requiredKinds.size > 0) throw new InputError(`evidenceInventory is missing required evidence kinds: ${[...requiredKinds].join(", ")}.`);
+  if (requiredKinds.size > 0) throw new InputError(hostText("skillTools.iterationFrame.missingEvidenceKinds", { kinds: [...requiredKinds].join(", ") }));
 
   const attemptIds = [];
   const sequenceKeys = [];
@@ -75,11 +77,11 @@ export function validateRequest(request) {
   for (const attempt of request.attemptHistory) {
     attemptIds.push(attempt.attemptId);
     sequenceKeys.push(`${attempt.epoch}:${attempt.sequence}`);
-    if (attempt.epoch > request.root.epoch) throw new InputError(`attempt ${attempt.attemptId} belongs to a future epoch.`);
+    if (attempt.epoch > request.root.epoch) throw new InputError(hostText("skillTools.iterationFrame.futureEpoch", { attemptId: attempt.attemptId }));
     for (const actorId of attempt.implementationActorIds) implementationActors.add(actorId);
-    requireKnownEvidence(attempt.evidenceRefs, request.evidenceInventory, `attempt ${attempt.attemptId}`);
+    requireKnownEvidence(attempt.evidenceRefs, request.evidenceInventory, "attempt", attempt.attemptId);
     if (!attempt.evidenceRefs.some((ref) => request.evidenceInventory.find((item) => item.evidenceRef === ref)?.kind === "attempt-outcome")) {
-      throw new InputError(`attempt ${attempt.attemptId} requires attempt-outcome evidence.`);
+      throw new InputError(hostText("skillTools.iterationFrame.attemptNeedsOutcome", { attemptId: attempt.attemptId }));
     }
   }
   unique(attemptIds, "attemptHistory.attemptId");
@@ -87,14 +89,14 @@ export function validateRequest(request) {
 
   const assignedActors = new Set(request.reviewer.implementationActorIds);
   if (assignedActors.size !== implementationActors.size || [...implementationActors].some((actorId) => !assignedActors.has(actorId))) {
-    throw new InputError("reviewer.implementationActorIds must exactly match implementation actors in attemptHistory.");
+    throw new InputError(hostText("skillTools.iterationFrame.reviewerActorsMismatch"));
   }
   if (implementationActors.has(request.reviewer.actorId)) {
-    throw new InputError("reviewer.actorId must be distinct from every implementation actor.");
+    throw new InputError(hostText("skillTools.iterationFrame.reviewerNotDistinct"));
   }
-  requireKnownEvidence([request.reviewer.freshContextEvidenceRef], request.evidenceInventory, "reviewer assignment");
+  requireKnownEvidence([request.reviewer.freshContextEvidenceRef], request.evidenceInventory, "reviewerAssignment");
   if (request.evidenceInventory.find((item) => item.evidenceRef === request.reviewer.freshContextEvidenceRef)?.kind !== "reviewer-separation") {
-    throw new InputError("reviewer.freshContextEvidenceRef must identify reviewer-separation evidence.");
+    throw new InputError(hostText("skillTools.iterationFrame.freshContextEvidenceKind"));
   }
 
   requireKnownEvidence(request.proposal.evidenceRefs, request.evidenceInventory, "proposal");
@@ -106,13 +108,14 @@ export function validateRequest(request) {
   ];
   for (const [role, changed] of differences) {
     if (changed && !changedRoles.has(role) && !changedRoles.has("unknown")) {
-      throw new InputError(`proposal.changeSummary does not account for the changed ${role} artifact.`);
+      throw new InputError(hostText("skillTools.iterationFrame.changeSummaryMissing", { role }));
     }
   }
 }
 
-function push(errors, condition, message) {
-  if (!condition) errors.push(message);
+// The message is a catalog key rendered only on failure.
+function push(errors, condition, key, params = {}) {
+  if (!condition) errors.push(hostText(key, params));
 }
 
 function evidenceKindMatches(refs, kind, inventory) {
@@ -122,19 +125,19 @@ function evidenceKindMatches(refs, kind, inventory) {
 
 function checkComparisonShape(errors, comparison, expectedChanged, label) {
   const unchanged = comparison.impact === "unchanged";
-  push(errors, unchanged === !expectedChanged, `${label}.impact conflicts with canonical artifact equality`);
-  push(errors, unchanged ? comparison.changedPaths.length === 0 : comparison.changedPaths.length > 0, `${label}.changedPaths conflicts with impact`);
+  push(errors, unchanged === !expectedChanged, "skillTools.iterationFrame.impactConflictsEquality", { label });
+  push(errors, unchanged ? comparison.changedPaths.length === 0 : comparison.changedPaths.length > 0, "skillTools.iterationFrame.changedPathsConflictsImpact", { label });
 }
 
 export function validateReview(review, comparison = null, request = null, frozenRequestArtifactDigest = null) {
   const errors = [];
-  if (!review || typeof review !== "object" || Array.isArray(review)) return ["review must be an object"];
-  if (!validateReviewSchema(review)) return [`review schema validation failed: ${JSON.stringify(schemaErrors(validateReviewSchema))}`];
-  if (!comparison || typeof comparison !== "object" || Array.isArray(comparison)) return ["iteration frame comparison is required"];
-  if (!validateComparisonSchema(comparison)) return [`comparison schema validation failed: ${JSON.stringify(schemaErrors(validateComparisonSchema))}`];
-  if (!request) errors.push("the original audit request is required");
+  if (!review || typeof review !== "object" || Array.isArray(review)) return [hostText("skillTools.iterationFrame.reviewNotObject")];
+  if (!validateReviewSchema(review)) return [hostText("skillTools.iterationFrame.reviewSchemaFailed", { errors: JSON.stringify(schemaErrors(validateReviewSchema)) })];
+  if (!comparison || typeof comparison !== "object" || Array.isArray(comparison)) return [hostText("skillTools.iterationFrame.comparisonRequired")];
+  if (!validateComparisonSchema(comparison)) return [hostText("skillTools.iterationFrame.comparisonSchemaFailed", { errors: JSON.stringify(schemaErrors(validateComparisonSchema)) })];
+  if (!request) errors.push(hostText("skillTools.iterationFrame.auditRequestRequired"));
   if (typeof frozenRequestArtifactDigest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(frozenRequestArtifactDigest)) {
-    errors.push("a valid external frozen request artifact digest is required");
+    errors.push(hostText("skillTools.iterationFrame.frozenDigestRequired"));
   }
   if (!request) return errors;
 
@@ -143,26 +146,26 @@ export function validateReview(review, comparison = null, request = null, frozen
   } catch (error) {
     // Only an input rejection becomes a review error; an internal failure propagates instead of posing as one.
     if (!(error instanceof InputError)) throw error;
-    errors.push(`request cannot substantiate review: ${error.message}`);
-    if (error instanceof InputError && error.details) errors.push(`request validation details: ${JSON.stringify(error.details)}`);
+    errors.push(hostText("skillTools.iterationFrame.requestCannotSubstantiate", { message: error.message }));
+    if (error instanceof InputError && error.details) errors.push(hostText("skillTools.iterationFrame.requestValidationDetails", { details: JSON.stringify(error.details) }));
     return errors;
   }
 
   const computedRequestDigest = reviewRequestDigest(request);
-  if (computedRequestDigest !== frozenRequestArtifactDigest) errors.push("the request does not match the external frozen request artifact digest");
-  if (comparison.requestArtifactDigest !== frozenRequestArtifactDigest) errors.push("comparison.requestArtifactDigest does not match the external frozen request artifact digest");
-  if (review.rootId !== request.root.rootId) errors.push("review.rootId does not match request.root.rootId");
-  if (review.rootRevision !== request.root.revision) errors.push("review.rootRevision does not match request.root.revision");
-  if (review.epoch !== request.root.epoch) errors.push("review.epoch does not match request.root.epoch");
-  if (review.reviewerActorId !== request.reviewer.actorId) errors.push("review.reviewerActorId does not match the assigned reviewer");
-  if (review.freshContext.confirmed !== true) errors.push("reviewer must attest freshContext.confirmed true");
-  if (review.freshContext.evidenceRef !== request.reviewer.freshContextEvidenceRef) errors.push("review fresh-context evidence does not match the reviewer assignment");
-  if (request.reviewer.implementationActorIds.includes(review.reviewerActorId)) errors.push("reviewer must be distinct from implementation actors");
-  if (review.proposedFrame === null || artifactDigest(review.proposedFrame) !== request.proposal.frameDigest) errors.push("review.proposedFrame does not match the proposed frame artifact");
+  if (computedRequestDigest !== frozenRequestArtifactDigest) errors.push(hostText("skillTools.iterationFrame.requestDigestMismatch"));
+  if (comparison.requestArtifactDigest !== frozenRequestArtifactDigest) errors.push(hostText("skillTools.iterationFrame.comparisonDigestMismatch"));
+  if (review.rootId !== request.root.rootId) errors.push(hostText("skillTools.iterationFrame.reviewRootIdMismatch"));
+  if (review.rootRevision !== request.root.revision) errors.push(hostText("skillTools.iterationFrame.reviewRootRevisionMismatch"));
+  if (review.epoch !== request.root.epoch) errors.push(hostText("skillTools.iterationFrame.reviewEpochMismatch"));
+  if (review.reviewerActorId !== request.reviewer.actorId) errors.push(hostText("skillTools.iterationFrame.reviewerActorMismatch"));
+  if (review.freshContext.confirmed !== true) errors.push(hostText("skillTools.iterationFrame.freshContextNotConfirmed"));
+  if (review.freshContext.evidenceRef !== request.reviewer.freshContextEvidenceRef) errors.push(hostText("skillTools.iterationFrame.freshContextEvidenceMismatch"));
+  if (request.reviewer.implementationActorIds.includes(review.reviewerActorId)) errors.push(hostText("skillTools.iterationFrame.reviewerNotDistinctActors"));
+  if (review.proposedFrame === null || artifactDigest(review.proposedFrame) !== request.proposal.frameDigest) errors.push(hostText("skillTools.iterationFrame.proposedFrameMismatch"));
 
-  if (comparison.rootId !== request.root.rootId) errors.push("comparison.rootId does not match request.root.rootId");
-  if (comparison.reviewedEpoch !== request.root.epoch) errors.push("comparison.reviewedEpoch does not match request.root.epoch");
-  if (comparison.reviewer.actorId !== request.reviewer.actorId || comparison.reviewer.freshContext !== true) errors.push("comparison reviewer does not match the fresh reviewer assignment");
+  if (comparison.rootId !== request.root.rootId) errors.push(hostText("skillTools.iterationFrame.comparisonRootIdMismatch"));
+  if (comparison.reviewedEpoch !== request.root.epoch) errors.push(hostText("skillTools.iterationFrame.comparisonEpochMismatch"));
+  if (comparison.reviewer.actorId !== request.reviewer.actorId || comparison.reviewer.freshContext !== true) errors.push(hostText("skillTools.iterationFrame.comparisonReviewerMismatch"));
 
   const comparisons = comparison.comparisons;
   const contractChanged = request.root.contractDigest !== request.proposal.contractDigest;
@@ -173,21 +176,21 @@ export function validateReview(review, comparison = null, request = null, frozen
   checkComparisonShape(errors, comparisons.target, targetChanged, "comparisons.target");
 
   if (contractChanged && comparisons.contract.impact !== "semantics-changing") {
-    errors.push("a changed immutable contract must be classified as semantics-changing");
+    errors.push(hostText("skillTools.iterationFrame.contractMustBeSemantic"));
   }
-  if (!controlChanged && comparisons.control.impact !== "unchanged") errors.push("an identical control frame must be classified as unchanged");
-  if (!targetChanged && comparisons.target.impact !== "unchanged") errors.push("an identical target frame must be classified as unchanged");
+  if (!controlChanged && comparisons.control.impact !== "unchanged") errors.push(hostText("skillTools.iterationFrame.controlMustBeUnchanged"));
+  if (!targetChanged && comparisons.target.impact !== "unchanged") errors.push(hostText("skillTools.iterationFrame.targetMustBeUnchanged"));
 
   const inventory = request.evidenceInventory;
   const evidenceGroups = [
-    [comparisons.contract.evidenceRefs, "contract-comparison", "contract comparison"],
-    [comparisons.control.evidenceRefs, "control-comparison", "control comparison"],
-    [comparisons.target.evidenceRefs, "target-comparison", "target comparison"]
+    [comparisons.contract.evidenceRefs, "contract-comparison", "contractComparison"],
+    [comparisons.control.evidenceRefs, "control-comparison", "controlComparison"],
+    [comparisons.target.evidenceRefs, "target-comparison", "targetComparison"]
   ];
   for (const [refs, kind, label] of evidenceGroups) {
     try {
       requireKnownEvidence(refs, inventory, label);
-      if (!evidenceKindMatches(refs, kind, inventory)) errors.push(`${label} requires ${kind} evidence`);
+      if (!evidenceKindMatches(refs, kind, inventory)) errors.push(hostText("skillTools.iterationFrame.comparisonNeedsEvidenceKind", { subject: label, kind }));
     } catch (error) {
       errors.push(error instanceof Error ? error.message : String(error));
     }
@@ -204,11 +207,11 @@ export function validateReview(review, comparison = null, request = null, frozen
     }
   }
   if (request.attemptHistory.length > 0 && !evidenceKindMatches(review.evidenceRefs ?? [], "attempt-outcome", inventory)) {
-    errors.push("review evidence must include attempt-outcome evidence when attempt history is non-empty");
+    errors.push(hostText("skillTools.iterationFrame.reviewNeedsAttemptOutcome"));
   }
-  if (!evidenceKindMatches(review.evidenceRefs ?? [], "reviewer-separation", inventory)) errors.push("review evidence must include reviewer-separation evidence");
+  if (!evidenceKindMatches(review.evidenceRefs ?? [], "reviewer-separation", inventory)) errors.push(hostText("skillTools.iterationFrame.reviewNeedsSeparation"));
   for (const ref of comparison.evidenceRefs) {
-    if (!review.evidenceRefs.includes(ref)) errors.push(`review.evidenceRefs does not include comparison evidence ${ref}`);
+    if (!review.evidenceRefs.includes(ref)) errors.push(hostText("skillTools.iterationFrame.reviewMissingComparisonEvidence", { ref }));
   }
 
   const unknownRole = request.proposal.changeSummary.some((item) => item.claimedRole === "unknown");
@@ -216,23 +219,23 @@ export function validateReview(review, comparison = null, request = null, frozen
   const semanticChange = comparisons.contract.impact === "semantics-changing" || comparisons.control.impact === "semantics-changing";
 
   if (uncertain) {
-    push(errors, review.classification === "ambiguous", "uncertain or unknown changes require classification ambiguous");
-    push(errors, review.comparability.comparable === false, "ambiguous changes must be non-comparable");
-    push(errors, review.route === "panel", "ambiguous changes must route to panel");
+    push(errors, review.classification === "ambiguous", "skillTools.iterationFrame.uncertainNeedsAmbiguous");
+    push(errors, review.comparability.comparable === false, "skillTools.iterationFrame.ambiguousNonComparable");
+    push(errors, review.route === "panel", "skillTools.iterationFrame.ambiguousRoutePanel");
   } else if (semanticChange) {
-    push(errors, review.classification === "semantics-changing", "semantic frame changes require classification semantics-changing");
-    push(errors, review.comparability.comparable === false, "semantics-changing review must be non-comparable");
-    push(errors, review.route === "needs-user", "semantics-changing review must route to needs-user");
+    push(errors, review.classification === "semantics-changing", "skillTools.iterationFrame.semanticNeedsClassification");
+    push(errors, review.comparability.comparable === false, "skillTools.iterationFrame.semanticNonComparable");
+    push(errors, review.route === "needs-user", "skillTools.iterationFrame.semanticRouteNeedsUser");
   } else {
-    push(errors, review.classification === "semantics-preserving", "stable contract and control semantics require classification semantics-preserving");
-    push(errors, review.comparability.comparable === true, "semantics-preserving review must be comparable");
+    push(errors, review.classification === "semantics-preserving", "skillTools.iterationFrame.stableNeedsPreserving");
+    push(errors, review.comparability.comparable === true, "skillTools.iterationFrame.preservingComparable");
     const allowedRoutes = targetChanged ? ["resume-new-epoch", "diagnose", "stop"] : ["diagnose", "stop"];
-    push(errors, allowedRoutes.includes(review.route), `semantics-preserving ${targetChanged ? "changed" : "unchanged"} target has incompatible route`);
+    push(errors, allowedRoutes.includes(review.route), "skillTools.iterationFrame.incompatibleRoute", { targetState: targetChanged ? "changed" : "unchanged" });
   }
 
   if (review.route === "resume-new-epoch") {
-    push(errors, targetChanged, "resume-new-epoch requires an actual target change");
-    push(errors, comparisons.target.impact === "changed", "resume-new-epoch requires target impact changed");
+    push(errors, targetChanged, "skillTools.iterationFrame.resumeNeedsTargetChange");
+    push(errors, comparisons.target.impact === "changed", "skillTools.iterationFrame.resumeNeedsImpactChanged");
   }
   return errors;
 }

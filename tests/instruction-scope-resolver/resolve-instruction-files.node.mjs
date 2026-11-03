@@ -9,6 +9,9 @@ import { resolveAntigravityInstructionFiles } from "../../antigravity-connector/
 
 import { isPathWithin, pathFlavor, resolveInstructionFiles } from "../../skills/instruction-scope-resolver/scripts/resolve-instruction-files.mjs";
 
+// The package default locale is ko; the sentences asserted below are English.
+process.env.AGENT_GOVERNANCE_LOCALE = "en";
+
 async function workspace() {
   const root = await mkdtemp(path.join(os.tmpdir(), "instruction-scope-"));
   await mkdir(path.join(root, "src", "nested"), { recursive: true });

@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 
 import { isRepoRelativePosixPath, validateTaskContract } from "../../skills/task-contract/scripts/validate-task-contract.mjs";
 
+// The package default locale is ko; the sentences asserted below are English.
+process.env.AGENT_GOVERNANCE_LOCALE = "en";
 const testsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)));
 const fixture = async (relative) => JSON.parse(await readFile(path.join(testsRoot, "fixtures", relative), "utf8"));
 const clone = (value) => JSON.parse(JSON.stringify(value));

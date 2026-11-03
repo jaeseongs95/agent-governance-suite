@@ -5,6 +5,8 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
+// The package default locale is ko; the sentences asserted below are English.
+process.env.AGENT_GOVERNANCE_LOCALE = "en";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const fixture = async (name) => JSON.parse(await readFile(path.join(root, "tests/task-contract/fixtures", name), "utf8"));
 function cli(input) {
