@@ -1092,7 +1092,7 @@ describe("in-process messaging and vendor-neutral adapter", () => {
 
   // Prompt-engineering development checks: instruction semantics, not target-model behavior or holdout evaluation.
   it("keeps autoWake advisory and reports only confirmed delivery facts (AGS-D-0354)", () => {
-    for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions()]) {
+    for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions("ko")]) {
       expect(instructions).toMatch(/send 성공은 큐에 넣었다는 뜻이며 상대가 받거나 처리했다는 뜻이 아니다/u);
       expect(instructions).toMatch(/autoWake는[^.]*참고값\(authorityEffect: none\)[^.]*메시지 전달·처리·승인 증거가 아니다/u);
       expect(instructions).toMatch(/보고에는 확인된 큐 등록·전달 상태만/u);
@@ -1102,13 +1102,13 @@ describe("in-process messaging and vendor-neutral adapter", () => {
   });
 
   it("notifies the user when an unavailable AGS wake path needs action now (AGS-D-0311)", () => {
-    for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions()]) {
+    for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions("ko")]) {
       expect(instructions).toMatch(/no-live-relay·unsupported이고 상대의 처리가 지금 필요하면 확인된 전달 상태와 AGS 자동 깨우기 경로를 사용할 수 없다는 사실을 사용자에게 알린다/u);
     }
   });
 
   it("limits extra host wake to an unavailable path needed now and preserves empty-wake handling (AGS-D-0354)", () => {
-    for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions()]) {
+    for (const instructions of [SESSION_MESSAGE_SERVER_INSTRUCTIONS, serverInstructions("ko")]) {
       expect(instructions).toMatch(/autoWake.state가 available이면 호스트 기능으로 따로 깨우지 않는다/u);
       expect(instructions).toMatch(/no-live-relay·unsupported이면[^.]*상대의 처리가 지금 필요할 때만 호스트 기능으로 한 번 깨운다/u);
       // 3.0 (design 2.8): latched is gone; wake-unanswered and degraded are reported as facts.
@@ -1307,7 +1307,7 @@ describe("session message MCP tools", () => {
       lastNotifiedAt: null, lastErrorCode: null,
     });
     const workflow = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator, new InMemoryWorkflowStore());
-    const server = createMcpServer(workflow, new PluginUpdateService(updateStore), undefined, undefined, undefined, validator, "default", null, null, new SessionMessageService(directory), null, null, metaIngress());
+    const server = createMcpServer(workflow, new PluginUpdateService(updateStore), undefined, undefined, undefined, validator, "default", null, null, new SessionMessageService(directory), null, null, metaIngress(), "en");
     const client = new Client({ name: "session-messages", version: "1.0.0" });
     const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
     await server.connect(serverTransport);
