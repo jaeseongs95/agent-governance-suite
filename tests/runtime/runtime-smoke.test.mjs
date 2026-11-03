@@ -33,6 +33,8 @@ describe("installed skill runtime", () => {
     try {
       await mkdir(path.join(cleanRoot, "runtime"), { recursive: true });
       await cp(path.join(root, "runtime/schema-validation.mjs"), path.join(cleanRoot, "runtime/schema-validation.mjs"));
+      await cp(path.join(root, "runtime/i18n.mjs"), path.join(cleanRoot, "runtime/i18n.mjs"));
+      await cp(path.join(root, "runtime/locale.json"), path.join(cleanRoot, "runtime/locale.json"));
       await mkdir(path.join(cleanRoot, "skills"), { recursive: true });
       await cp(path.join(root, "skills/model-effort-advisor"), path.join(cleanRoot, "skills/model-effort-advisor"), { recursive: true });
       await expect(access(path.join(cleanRoot, "node_modules"))).rejects.toMatchObject({ code: "ENOENT" });

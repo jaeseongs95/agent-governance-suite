@@ -1,0 +1,23 @@
+{
+  "skillReports.evaluationValidityAuditor.artifactRootRequired": "--artifact-root is required.",
+  "skillReports.evaluationValidityAuditor.artifactRootUnresolved": "Artifact root does not exist or cannot be resolved.",
+  "skillReports.evaluationValidityAuditor.duplicateArtifactId": "Duplicate artifact ID: {artifactId}",
+  "skillReports.evaluationValidityAuditor.formatInvalid": "--format must be json or human-ko.",
+  "skillReports.evaluationValidityAuditor.generatedReportInvalid": "Generated report does not satisfy EvaluationValidityReport.v1.",
+  "skillReports.evaluationValidityAuditor.locatorEscapesRoot": "Artifact locator escapes artifact root: {artifactId}",
+  "skillReports.evaluationValidityAuditor.locatorNotRelative": "Artifact locator must be relative: {artifactId}",
+  "skillReports.evaluationValidityAuditor.nonJsonValue": "Input contains a non-JSON value.",
+  "skillReports.evaluationValidityAuditor.optionRequired": "{name} is required.",
+  "skillReports.evaluationValidityAuditor.optionRequiresValue": "{name} requires a value.",
+  "skillReports.evaluationValidityAuditor.provideJson": "Provide JSON through stdin or --input.",
+  "skillReports.evaluationValidityAuditor.reportDigestMismatch": "reportDigest does not match the canonical report",
+  "skillReports.evaluationValidityAuditor.reportRequestDigestMismatch": "report.requestDigest does not match the canonical frozen request",
+  "skillReports.evaluationValidityAuditor.reportSchemaFailed": "report schema validation failed: {errors}",
+  "skillReports.evaluationValidityAuditor.reportStale": "report does not match the current request and artifact evidence",
+  "skillReports.evaluationValidityAuditor.requestArtifactDigestMismatch": "requestArtifact.digest does not match the canonical frozen request",
+  "skillReports.evaluationValidityAuditor.requestCannotSubstantiate": "request cannot substantiate report: {detail}",
+  "skillReports.evaluationValidityAuditor.requestInvalid": "EvaluationValidityRequest.v1 validation failed.",
+  "skillReports.evaluationValidityAuditor.symlinkEscapesRoot": "Artifact symlink escapes artifact root: {artifactId}",
+  "skillReports.evaluationValidityAuditor.validationInputInvalid": "EvaluationValidityValidation.v1 input validation failed.",
+  "skillReports.evaluationValidityAuditor.validationNotObject": "EvaluationValidityValidation.v1 must be an object."
+}

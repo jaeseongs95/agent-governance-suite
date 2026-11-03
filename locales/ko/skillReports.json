@@ -1,0 +1,23 @@
+{
+  "skillReports.evaluationValidityAuditor.artifactRootRequired": "--artifact-root가 필요하다.",
+  "skillReports.evaluationValidityAuditor.artifactRootUnresolved": "증거 root가 없거나 해석할 수 없다.",
+  "skillReports.evaluationValidityAuditor.duplicateArtifactId": "증거 ID가 중복됐다: {artifactId}",
+  "skillReports.evaluationValidityAuditor.formatInvalid": "--format은 json 또는 human-ko여야 한다.",
+  "skillReports.evaluationValidityAuditor.generatedReportInvalid": "생성한 보고서가 EvaluationValidityReport.v1을 만족하지 않는다.",
+  "skillReports.evaluationValidityAuditor.locatorEscapesRoot": "증거 locator가 증거 root를 벗어난다: {artifactId}",
+  "skillReports.evaluationValidityAuditor.locatorNotRelative": "증거 locator는 상대 경로여야 한다: {artifactId}",
+  "skillReports.evaluationValidityAuditor.nonJsonValue": "입력에 JSON이 아닌 값이 있다.",
+  "skillReports.evaluationValidityAuditor.optionRequired": "{name}이 필요하다.",
+  "skillReports.evaluationValidityAuditor.optionRequiresValue": "{name}에 값이 필요하다.",
+  "skillReports.evaluationValidityAuditor.provideJson": "JSON을 stdin 또는 --input으로 전달하라.",
+  "skillReports.evaluationValidityAuditor.reportDigestMismatch": "reportDigest가 정규화한 보고서와 다르다",
+  "skillReports.evaluationValidityAuditor.reportRequestDigestMismatch": "report.requestDigest가 정규화한 동결 요청과 다르다",
+  "skillReports.evaluationValidityAuditor.reportSchemaFailed": "보고서 schema 검증에 실패했다: {errors}",
+  "skillReports.evaluationValidityAuditor.reportStale": "보고서가 현재 요청과 증거 파일과 다르다",
+  "skillReports.evaluationValidityAuditor.requestArtifactDigestMismatch": "requestArtifact.digest가 정규화한 동결 요청과 다르다",
+  "skillReports.evaluationValidityAuditor.requestCannotSubstantiate": "요청으로 보고서를 뒷받침할 수 없다: {detail}",
+  "skillReports.evaluationValidityAuditor.requestInvalid": "EvaluationValidityRequest.v1 검증에 실패했다.",
+  "skillReports.evaluationValidityAuditor.symlinkEscapesRoot": "증거 symlink가 증거 root를 벗어난다: {artifactId}",
+  "skillReports.evaluationValidityAuditor.validationInputInvalid": "EvaluationValidityValidation.v1 입력 검증에 실패했다.",
+  "skillReports.evaluationValidityAuditor.validationNotObject": "EvaluationValidityValidation.v1은 객체여야 한다."
+}

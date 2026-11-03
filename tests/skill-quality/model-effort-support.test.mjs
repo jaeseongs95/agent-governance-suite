@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { guardModelSupport } from "../../skills/model-effort-advisor/scripts/support-guard.mjs";
 
 const fixtureBytes = readFileSync(new URL("./model-effort-support-cases.json", import.meta.url));
@@ -104,5 +104,33 @@ describe("model effort provider support boundary", () => {
       expect(result.stderr).toBe("INVALID_INPUT\n");
       expect(result.stderr).not.toContain("secret-sentinel");
     }
+  });
+});
+
+describe("model effort notices follow the host locale", () => {
+  afterEach(() => vi.unstubAllEnvs());
+  const noticeIn = (locale, item) => {
+    vi.stubEnv("AGENT_GOVERNANCE_LOCALE", locale);
+    return guardModelSupport(item.advice, item.context).advice.userNotice;
+  };
+  it("renders the range notice in Korean and in English from the same verdict", () => {
+    const item = cases.find((value) => value.id === "material-over-fit");
+    const range = (value) => value.match(/(\w+)~(\w+) \/ (\w+)~(\w+)/u).slice(1, 5);
+    const korean = noticeIn("ko", item);
+    const english = noticeIn("en", item);
+    expect(korean).toMatch(/^설정 안내: 이 요청의 권장 범위는 .+입니다\. 현재 설정은 다소 과합니다\. 설정은 자동으로 바꾸지 않고 요청은 계속 진행합니다\.$/u);
+    expect(english).toMatch(/^Setting notice: the recommended range for this request is .+\. The current setting is somewhat excessive\. The setting is not changed automatically, and the request continues\.$/u);
+    expect(range(english)).toEqual(range(korean));
+  });
+  it("renders the under-provisioned wording and the unobserved notice in both locales", () => {
+    const item = structuredClone(cases.find((value) => value.id === "material-over-fit"));
+    item.context.currentSelection.model = "q-general";
+    item.context.currentSelection.reasoningEffort = "medium";
+    Object.assign(item.advice.recommendation, { modelClassMin: "deep", modelClassMax: "frontier", reasoningEffortMin: "high", reasoningEffortMax: "max" });
+    expect(noticeIn("ko", item)).toContain("현재 설정은 부족할 수 있습니다.");
+    expect(noticeIn("en", item)).toContain("The current setting may be insufficient.");
+    const unobserved = cases.find((value) => value.id === "unmapped-current-model");
+    expect(noticeIn("ko", unobserved)).toBe("현재 설정 또는 해당 공급자의 지원 근거를 충분히 확인할 수 없습니다. 설정을 바꾸지 않고 요청을 계속 진행합니다.");
+    expect(noticeIn("en", unobserved)).toBe("Cannot sufficiently confirm the current setting or the provider's support evidence. The request continues without changing any setting.");
   });
 });

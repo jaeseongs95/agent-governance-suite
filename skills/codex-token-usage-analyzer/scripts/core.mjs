@@ -5,6 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import readline from "node:readline";
 
+import { hostText } from "../../../runtime/i18n.mjs";
+
 export const FIELDS = Object.freeze([
   "input_tokens",
   "cached_input_tokens",
@@ -14,8 +16,10 @@ export const FIELDS = Object.freeze([
   "total_tokens"
 ]);
 
-const UNKNOWN_MODEL = "미확인 모델";
-const UNKNOWN_EFFORT = "미확인";
+// The "unknown" labels are rendered values, not constants: the host locale decides the text, and every
+// comparison in one analysis runs in one process with one locale.
+const unknownModel = () => hostText("skillReportsKo.codexTokenUsageAnalyzer.unknownModel");
+const unknownEffort = () => hostText("skillReportsKo.codexTokenUsageAnalyzer.unknown");
 const UUID_SOURCE = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
 const THREAD_ID = new RegExp(`^${UUID_SOURCE}$`);
 const THREAD_LINK = new RegExp(`^codex://threads/(${UUID_SOURCE})$`);
@@ -221,7 +225,7 @@ export function matchProject(query, roots) {
     const cwd = trimSeparators(session.cwd);
     paths.set(projectPathKey(cwd), cwd);
   }
-  if (paths.size > 1) return { roots: [], label: null, error: "같은 마지막 폴더명을 가진 프로젝트가 여러 개입니다. 전체 경로를 입력하세요.", reason: "ambiguous_target" };
+  if (paths.size > 1) return { roots: [], label: null, error: hostText("skillReportsKo.codexTokenUsageAnalyzer.ambiguousProject"), reason: "ambiguous_target" };
   return { roots: matches.map((session) => session.id).sort(), label: paths.values().next().value, error: null, reason: null };
 }
 
@@ -233,11 +237,11 @@ export function resolveDetailed(query, index) {
     const indexMeta = index?.[INDEX_META];
     const inaccessible = Boolean(indexMeta && (indexMeta.inaccessibleThreads.has(id) || indexMeta.unidentifiedInaccessibleFiles > 0));
     return inaccessible
-      ? { resolution: null, error: "대상 thread의 session metadata 또는 로그에 접근할 수 없습니다.", reason: "inaccessible_target", verdict: "BLOCKED" }
-      : { resolution: null, error: "입력한 thread ID와 일치하는 세션을 찾지 못했습니다.", reason: "not_found", verdict: "NEEDS_INPUT" };
+      ? { resolution: null, error: hostText("skillReportsKo.codexTokenUsageAnalyzer.targetInaccessible"), reason: "inaccessible_target", verdict: "BLOCKED" }
+      : { resolution: null, error: hostText("skillReportsKo.codexTokenUsageAnalyzer.threadNotFound"), reason: "not_found", verdict: "NEEDS_INPUT" };
   }
   if (cleaned.startsWith("codex://threads/") || UUID_LIKE.test(cleaned)) {
-    return { resolution: null, error: "thread ID 또는 codex://threads 딥링크 형식이 올바르지 않습니다.", reason: "invalid_target_format", verdict: "NEEDS_INPUT" };
+    return { resolution: null, error: hostText("skillReportsKo.codexTokenUsageAnalyzer.invalidTargetFormat"), reason: "invalid_target_format", verdict: "NEEDS_INPUT" };
   }
 
   const roots = new Map([...index].filter(([, session]) => session.parent === null));
@@ -247,7 +251,7 @@ export function resolveDetailed(query, index) {
     if (project.error) return { resolution: null, error: project.error, reason: project.reason ?? "ambiguous_target", verdict: "NEEDS_INPUT" };
     return project.roots.length
       ? { resolution: { roots: project.roots, kind: "project", label: project.label }, error: null, reason: null, verdict: null }
-      : { resolution: null, error: "입력한 프로젝트명과 일치하는 최상위 thread를 찾지 못했습니다.", reason: "not_found", verdict: "NEEDS_INPUT" };
+      : { resolution: null, error: hostText("skillReportsKo.codexTokenUsageAnalyzer.projectNotFound"), reason: "not_found", verdict: "NEEDS_INPUT" };
   }
 
   const titled = [...roots.values()].filter((session) => session.title === cleaned).map((session) => session.id).sort();
@@ -256,7 +260,7 @@ export function resolveDetailed(query, index) {
   if (project.error) return { resolution: null, error: project.error, reason: project.reason ?? "ambiguous_target", verdict: "NEEDS_INPUT" };
   return project.roots.length
     ? { resolution: { roots: project.roots, kind: "project", label: project.label }, error: null, reason: null, verdict: null }
-    : { resolution: null, error: "입력한 세션 제목 또는 프로젝트명과 일치하는 최상위 thread를 찾지 못했습니다.", reason: "not_found", verdict: "NEEDS_INPUT" };
+    : { resolution: null, error: hostText("skillReportsKo.codexTokenUsageAnalyzer.titleOrProjectNotFound"), reason: "not_found", verdict: "NEEDS_INPUT" };
 }
 
 export function tree(root, index) {
@@ -322,19 +326,19 @@ function checkedUsage(raw, result, scope) {
   const values = {};
   for (const name of FIELDS) {
     values[name] = validCounter(source[name]) ? source[name] : null;
-    if (values[name] === null) result.partialReasons.add(`${scope}의 ${name} 누락 또는 잘못된 값`);
+    if (values[name] === null) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.scopedFieldInvalid", { scope, name }));
   }
   if (["input_tokens", "output_tokens", "total_tokens"].every((name) => values[name] !== null) && values.total_tokens !== values.input_tokens + values.output_tokens) {
     values.total_tokens = null;
-    result.partialReasons.add(`${scope}의 total_tokens와 Input + Output 불일치`);
+    result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.scopedTotalMismatch", { scope }));
   }
   if (values.input_tokens !== null && values.cached_input_tokens !== null && values.cached_input_tokens > values.input_tokens) {
     values.cached_input_tokens = null;
-    result.partialReasons.add(`${scope}의 Cache input이 Input보다 큼`);
+    result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.scopedCacheExceedsInput", { scope }));
   }
   if (values.output_tokens !== null && values.reasoning_output_tokens !== null && values.reasoning_output_tokens > values.output_tokens) {
     values.reasoning_output_tokens = null;
-    result.partialReasons.add(`${scope}의 Reasoning output이 Output보다 큼`);
+    result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.scopedReasoningExceedsOutput", { scope }));
   }
   return values;
 }
@@ -358,10 +362,10 @@ function compareEvent(left, right) {
 function reconcileResult(result) {
   const modelValues = sumUsage(result.byModel.values());
   for (const name of FIELDS) {
-    if (modelValues[name] !== result.values[name]) result.partialReasons.add(`thread 모델 합계와 ${name} 합계 불일치`);
-    if (result.values[name] !== null && result.latest[name] !== null && result.values[name] !== result.latest[name]) result.partialReasons.add(`최신 누적값과 ${name} 합계 불일치`);
+    if (modelValues[name] !== result.values[name]) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.threadModelSumMismatch", { name }));
+    if (result.values[name] !== null && result.latest[name] !== null && result.values[name] !== result.latest[name]) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.latestCumulativeMismatch", { name }));
   }
-  if (result.values.input_tokens !== null && result.values.output_tokens !== null && result.values.total_tokens !== null && result.values.total_tokens !== result.values.input_tokens + result.values.output_tokens) result.partialReasons.add("thread total_tokens와 Input + Output 불일치");
+  if (result.values.input_tokens !== null && result.values.output_tokens !== null && result.values.total_tokens !== null && result.values.total_tokens !== result.values.input_tokens + result.values.output_tokens) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.threadTotalMismatch"));
 }
 
 function validateTotalTokenUsage(source, result) {
@@ -369,20 +373,20 @@ function validateTotalTokenUsage(source, result) {
   for (const name of FIELDS) {
     if (!validCounter(source[name])) {
       invalid.add(name);
-      result.partialReasons.add(`${name} 누락 또는 잘못된 값`);
+      result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.fieldInvalid", { name }));
     }
   }
   if (!["input_tokens", "output_tokens", "total_tokens"].some((name) => invalid.has(name)) && source.total_tokens !== source.input_tokens + source.output_tokens) {
     invalid.add("total_tokens");
-    result.partialReasons.add("total_tokens와 Input + Output 불일치");
+    result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.totalMismatch"));
   }
   if (!["input_tokens", "cached_input_tokens"].some((name) => invalid.has(name)) && source.cached_input_tokens > source.input_tokens) {
     invalid.add("cached_input_tokens");
-    result.partialReasons.add("Cache input이 Input보다 큼");
+    result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.cacheExceedsInput"));
   }
   if (!["output_tokens", "reasoning_output_tokens"].some((name) => invalid.has(name)) && source.reasoning_output_tokens > source.output_tokens) {
     invalid.add("reasoning_output_tokens");
-    result.partialReasons.add("Reasoning output이 Output보다 큼");
+    result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.reasoningExceedsOutput"));
   }
   return invalid;
 }
@@ -424,17 +428,17 @@ function analyzeModern(result, events) {
       const unchanged = previousTokenCount && FIELDS.every((name) => previousTokenCount[name] === current[name]);
       previousTokenCount = current;
       if (unchanged) continue;
-      if (!latestRecordUsage || FIELDS.some((name) => !validCounter(last[name]) || last[name] !== latestRecordUsage[name])) result.partialReasons.add("token_count last usage와 최신 token_usage_record usage 불일치");
+      if (!latestRecordUsage || FIELDS.some((name) => !validCounter(last[name]) || last[name] !== latestRecordUsage[name])) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.lastUsageMismatch"));
       continue;
     }
     if (record.type !== "token_usage_record") continue;
     if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
-      result.partialReasons.add("token_usage_record payload 누락 또는 오류");
+      result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.usageRecordPayloadInvalid"));
       continue;
     }
     const owner = payload.thread_id;
     if (typeof owner !== "string" || owner.toLowerCase() !== result.session.id) {
-      result.partialReasons.add("token_usage_record의 thread ID 불일치");
+      result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.usageRecordThreadMismatch"));
       continue;
     }
     const signature = canonicalJson({
@@ -447,11 +451,11 @@ function analyzeModern(result, events) {
     const responseId = payload.response_id;
     if (typeof responseId === "string" && responseId) {
       if (seenResponses.has(responseId)) {
-        if (seenResponses.get(responseId) !== signature) result.partialReasons.add("같은 response_id의 token 사용량 불일치");
+        if (seenResponses.get(responseId) !== signature) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.responseUsageMismatch"));
         continue;
       }
       seenResponses.set(responseId, signature);
-    } else result.partialReasons.add("token_usage_record의 response_id 누락 또는 오류");
+    } else result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.usageRecordResponseIdInvalid"));
 
     result.tokenCountEvents += 1;
     if (when) result.times.push(when);
@@ -470,28 +474,28 @@ function analyzeModern(result, events) {
     }
     const selectedModel = selected?.model === null || selected?.model === undefined ? (selected ? null : currentModel) : String(selected.model);
     const selectedEffort = selected?.effort === null || selected?.effort === undefined ? (selected ? null : currentEffort) : String(selected.effort);
-    if (!selected && (selectedModel !== null || selectedEffort !== null)) result.partialReasons.add("동일 turn_id의 turn_context 부재로 직전 문맥 사용");
-    const model = selectedModel ?? UNKNOWN_MODEL;
-    const effort = selectedEffort ?? UNKNOWN_EFFORT;
+    if (!selected && (selectedModel !== null || selectedEffort !== null)) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.turnContextFallback"));
+    const model = selectedModel ?? unknownModel();
+    const effort = selectedEffort ?? unknownEffort();
     const bucketKey = modelKey(model, effort);
     result.models.add(bucketKey);
-    if (selectedModel === null) result.partialReasons.add("token_usage_record와 일치하는 turn_context 또는 model 부재");
-    if (selectedEffort === null) result.partialReasons.add("token_usage_record와 일치하는 effort 부재");
+    if (selectedModel === null) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.turnContextOrModelMissing"));
+    if (selectedEffort === null) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.effortMissing"));
     if (!result.byModel.has(bucketKey)) result.byModel.set(bucketKey, emptyUsage());
     addUsage(result.byModel.get(bucketKey), usage);
 
-    if (turnId === null) result.partialReasons.add("token_usage_record의 turn_id 누락 또는 오류");
+    if (turnId === null) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.usageRecordTurnIdInvalid"));
     else {
       if (!turnTotals.has(turnId)) turnTotals.set(turnId, emptyUsage());
       const accumulated = turnTotals.get(turnId);
       addUsage(accumulated, usage);
-      for (const name of FIELDS) if (accumulated[name] !== turnUsage[name]) result.partialReasons.add(`turn usage 합계와 ${name} 누적값 불일치`);
+      for (const name of FIELDS) if (accumulated[name] !== turnUsage[name]) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.turnUsageSumMismatch", { name }));
     }
     for (const name of FIELDS) {
       const previous = previousThread[name];
       const increment = usage[name];
       const current = threadUsage[name];
-      if (previous !== null && increment !== null && current !== null && current !== previous + increment) result.partialReasons.add(`thread usage 증분과 ${name} 누적값 불일치`);
+      if (previous !== null && increment !== null && current !== null && current !== previous + increment) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.threadUsageIncrementMismatch", { name }));
       previousThread[name] = current;
     }
     latestThread = threadUsage;
@@ -499,9 +503,9 @@ function analyzeModern(result, events) {
   if (result.tokenCountEvents === 0 || latestThread === null) {
     result.values = emptyUsage(null);
     result.latest = emptyUsage(null);
-    result.byModel.set(modelKey(UNKNOWN_MODEL, UNKNOWN_EFFORT), emptyUsage(null));
-    result.models.add(modelKey(UNKNOWN_MODEL, UNKNOWN_EFFORT));
-    result.partialReasons.add("token_usage_record 미관측");
+    result.byModel.set(modelKey(unknownModel(), unknownEffort()), emptyUsage(null));
+    result.models.add(modelKey(unknownModel(), unknownEffort()));
+    result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.usageRecordNotObserved"));
   } else {
     result.values = { ...latestThread };
     result.latest = { ...latestThread };
@@ -516,19 +520,19 @@ export async function analyze(session) {
   for (const file of session.files) {
     for await (const [lineNumber, record] of records(file)) {
       if (!record) {
-        result.partialReasons.add("손상되거나 객체가 아닌 JSONL 행");
+        result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.corruptJsonlRow"));
         continue;
       }
       const payload = record.payload;
       const relevant = record.type === "turn_context" || record.type === "token_usage_record" || (record.type === "event_msg" && payload && typeof payload === "object" && payload.type === "token_count");
       if (!relevant) continue;
       const when = eventTime(record.timestamp);
-      if (!when) result.partialReasons.add("관련 이벤트의 시각 누락 또는 오류");
+      if (!when) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.eventTimeInvalid"));
       const ordinal = Number.isInteger(record.ordinal) ? record.ordinal : 0;
       events.push({ key: [when?.getTime() ?? MIN_TIME, ordinal, file.toLowerCase(), lineNumber], record, when });
     }
   }
-  if (session.metadataConflict) result.partialReasons.add("rollover 메타데이터의 parent 불일치");
+  if (session.metadataConflict) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.rolloverParentMismatch"));
   events.sort(compareEvent);
   if (events.some((event) => event.record.type === "token_usage_record")) return analyzeModern(result, events);
 
@@ -553,15 +557,15 @@ export async function analyze(session) {
     const invalid = new Set(FIELDS.filter((name) => !validCounter(source[name])));
     if (!["input_tokens", "output_tokens", "total_tokens"].some((name) => invalid.has(name)) && source.total_tokens !== source.input_tokens + source.output_tokens) {
       invalid.add("total_tokens");
-      result.partialReasons.add("total_tokens와 Input + Output 불일치");
+      result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.totalMismatch"));
     }
     if (!["input_tokens", "cached_input_tokens"].some((name) => invalid.has(name)) && source.cached_input_tokens > source.input_tokens) {
       invalid.add("cached_input_tokens");
-      result.partialReasons.add("Cache input이 Input보다 큼");
+      result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.cacheExceedsInput"));
     }
     if (!["output_tokens", "reasoning_output_tokens"].some((name) => invalid.has(name)) && source.reasoning_output_tokens > source.output_tokens) {
       invalid.add("reasoning_output_tokens");
-      result.partialReasons.add("Reasoning output이 Output보다 큼");
+      result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.reasoningExceedsOutput"));
     }
     const delta = {};
     for (const name of FIELDS) {
@@ -570,7 +574,7 @@ export async function analyze(session) {
         reliable[name] = false;
         result.latest[name] = null;
         delta[name] = null;
-        result.partialReasons.add(`${name} 누락 또는 잘못된 값`);
+        result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.fieldInvalid", { name }));
       } else if (!reliable[name]) delta[name] = null;
       else if (previous[name] === null) {
         previous[name] = value;
@@ -580,26 +584,26 @@ export async function analyze(session) {
         reliable[name] = false;
         result.latest[name] = null;
         delta[name] = null;
-        result.partialReasons.add(`${name} 누적값 감소`);
+        result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.cumulativeDecreased", { name }));
       } else {
         delta[name] = value - previous[name];
         previous[name] = value;
         result.latest[name] = value;
       }
     }
-    const bucketKey = modelKey(model ?? UNKNOWN_MODEL, effort ?? UNKNOWN_EFFORT);
+    const bucketKey = modelKey(model ?? unknownModel(), effort ?? unknownEffort());
     result.models.add(bucketKey);
-    if (model === null) result.partialReasons.add("token_count 앞 turn_context 또는 model 부재");
-    if (effort === null) result.partialReasons.add("token_count 앞 effort 부재");
+    if (model === null) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.tokenCountModelMissing"));
+    if (effort === null) result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.tokenCountEffortMissing"));
     addUsage(result.values, delta);
     if (!result.byModel.has(bucketKey)) result.byModel.set(bucketKey, emptyUsage());
     addUsage(result.byModel.get(bucketKey), delta);
   }
   if (result.tokenCountEvents === 0) {
     result.values = emptyUsage(null);
-    result.byModel.set(modelKey(UNKNOWN_MODEL, UNKNOWN_EFFORT), emptyUsage(null));
-    result.models.add(modelKey(UNKNOWN_MODEL, UNKNOWN_EFFORT));
-    result.partialReasons.add("token_count 미관측");
+    result.byModel.set(modelKey(unknownModel(), unknownEffort()), emptyUsage(null));
+    result.models.add(modelKey(unknownModel(), unknownEffort()));
+    result.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.tokenCountNotObserved"));
   }
   reconcileResult(result);
   return result;
@@ -649,7 +653,7 @@ export function getReportMeta(report) {
 }
 
 export function needsInputReport(message, targetText = "", meta = null) {
-  const reason = meta?.reason ?? (message.includes("형식이 올바르지 않습니다") ? "invalid_target_format" : message.includes("여러 개입니다") ? "ambiguous_target" : "not_found");
+  const reason = meta?.reason ?? (message === hostText("skillReportsKo.codexTokenUsageAnalyzer.invalidTargetFormat") ? "invalid_target_format" : message === hostText("skillReportsKo.codexTokenUsageAnalyzer.ambiguousProject") ? "ambiguous_target" : "not_found");
   const code = meta?.code ?? (reason === "not_found" ? "RUN_NOT_FOUND" : "INVALID_INPUT");
   return withReportMeta(
     reportShell("NEEDS_INPUT", message, { kind: "unknown", label: targetText, rootThreadIds: [] }),
@@ -676,8 +680,8 @@ export function buildReport(resolution, results) {
     }
   }
   const modelTotal = sumUsage(buckets.values());
-  for (const name of FIELDS) if (modelTotal[name] !== totals[name]) reasons.add(`전체 모델 합계와 전체 thread ${name} 합계 불일치`);
-  if (totals.input_tokens !== null && totals.output_tokens !== null && totals.total_tokens !== null && totals.total_tokens !== totals.input_tokens + totals.output_tokens) reasons.add("전체 total_tokens와 Input + Output 불일치");
+  for (const name of FIELDS) if (modelTotal[name] !== totals[name]) reasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.overallModelSumMismatch", { name }));
+  if (totals.input_tokens !== null && totals.output_tokens !== null && totals.total_tokens !== null && totals.total_tokens !== totals.input_tokens + totals.output_tokens) reasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.overallTotalMismatch"));
   const rootSet = new Set(resolution.roots);
   let childIndex = 0;
   const threads = results.map((result, index) => {
@@ -715,7 +719,7 @@ export function buildReport(resolution, results) {
     totals: withDerived(totals),
     models: [...buckets].sort(([left], [right]) => left.localeCompare(right)).map(([key, values]) => {
       const [model, effort] = splitModelKey(key);
-      return { model, effort, status: model === UNKNOWN_MODEL || effort === UNKNOWN_EFFORT || FIELDS.some((name) => values[name] === null) ? "partial" : "complete", values: withDerived(values) };
+      return { model, effort, status: model === unknownModel() || effort === unknownEffort() || FIELDS.some((name) => values[name] === null) ? "partial" : "complete", values: withDerived(values) };
     }),
     threads,
     partialReasons: [...reasons].sort(),
@@ -735,13 +739,13 @@ export async function analyzeRequest(request, options = {}) {
   try {
     const stats = await stat(locations.sessionsRoot);
     if (!stats.isDirectory()) {
-      return blockedReport("세션 로그 경로에 접근할 수 없습니다 (ENOTDIR): 디렉터리가 아닙니다.", request.target, { causeCode: "ENOTDIR" });
+      return blockedReport(hostText("skillReportsKo.codexTokenUsageAnalyzer.sessionsRootNotDirectory"), request.target, { causeCode: "ENOTDIR" });
     }
   } catch (error) {
     const causeCode = typeof error?.code === "string" && error.code ? error.code : null;
     const codePart = causeCode ? ` (${causeCode})` : "";
     return blockedReport(
-      `세션 로그 경로에 접근할 수 없습니다${codePart}: ${error instanceof Error ? error.message : String(error)}`,
+      hostText("skillReportsKo.codexTokenUsageAnalyzer.sessionsRootInaccessible", { codePart, detail: error instanceof Error ? error.message : String(error) }),
       request.target,
       causeCode ? { causeCode } : null
     );
@@ -753,7 +757,7 @@ export async function analyzeRequest(request, options = {}) {
   } catch (error) {
     const causeCode = typeof error?.code === "string" && error.code ? error.code : null;
     return blockedReport(
-      `세션 로그를 읽을 수 없습니다: ${error instanceof Error ? error.message : String(error)}`,
+      hostText("skillReportsKo.codexTokenUsageAnalyzer.sessionsReadFailed", { detail: error instanceof Error ? error.message : String(error) }),
       request.target,
       causeCode ? { causeCode } : null
     );
@@ -780,13 +784,13 @@ export async function analyzeRequest(request, options = {}) {
     for (const id of identifiers) results.push(await analyze(index.get(id)));
   } catch (error) {
     const causeCode = typeof error?.code === "string" && error.code ? error.code : null;
-    return blockedReport("대상 thread의 session metadata 또는 로그에 접근할 수 없습니다.", request.target, {
+    return blockedReport(hostText("skillReportsKo.codexTokenUsageAnalyzer.targetInaccessible"), request.target, {
       reason: "inaccessible_target",
       ...(causeCode ? { causeCode } : {})
     });
   }
   const byId = new Map(results.map((result) => [result.session.id, result]));
-  for (const id of cycleRoots) byId.get(id)?.partialReasons.add("parent thread 관계 순환");
+  for (const id of cycleRoots) byId.get(id)?.partialReasons.add(hostText("skillReportsKo.codexTokenUsageAnalyzer.parentCycle"));
   return buildReport(resolution, results);
 }
 
@@ -809,7 +813,7 @@ export function safeFilename(title) {
 }
 
 function displayNumber(value) {
-  return value === null ? "미확인" : value.toLocaleString("en-US");
+  return value === null ? hostText("skillReportsKo.codexTokenUsageAnalyzer.unknown") : value.toLocaleString("en-US");
 }
 
 function markdownCells(values) {
@@ -817,32 +821,33 @@ function markdownCells(values) {
 }
 
 export function makeMarkdown(report) {
-  if (!["PASS", "PARTIAL"].includes(report.verdict)) throw new Error("Markdown은 PASS 또는 PARTIAL 결과에만 생성할 수 있습니다.");
-  const lines = ["## Token 사용량 스냅샷", ""];
+  if (!["PASS", "PARTIAL"].includes(report.verdict)) throw new Error(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownRequiresResult"));
+  const count = (value) => value.toLocaleString("en-US");
+  const state = (partial) => (partial ? "partial" : "complete");
+  const lines = [hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownTitle"), ""];
   if (report.target.kind === "project") {
-    lines.push(`- 대상 프로젝트: ${markdownText(report.target.label)}`);
-    lines.push(`- 대상 범위: 최상위 작업 \`${report.counts.rootThreads.toLocaleString("en-US")}\`개, 하위 작업 \`${(report.counts.totalThreads - report.counts.rootThreads).toLocaleString("en-US")}\`개`);
+    lines.push(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownProjectTarget", { label: markdownText(report.target.label) }));
+    lines.push(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownProjectScope", { rootThreads: count(report.counts.rootThreads), childThreads: count(report.counts.totalThreads - report.counts.rootThreads) }));
   } else {
     const target = report.threads[0];
-    lines.push(`- 대상 작업: ${markdownText(target?.title ?? "untitled-session")} — \`${target?.threadId ?? report.target.rootThreadIds[0]}\``);
-    lines.push(`- 대상 트리: 대상 1개, 하위 작업 \`${Math.max(0, report.counts.totalThreads - 1).toLocaleString("en-US")}\`개`);
+    lines.push(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownThreadTarget", { title: markdownText(target?.title ?? "untitled-session"), threadId: target?.threadId ?? report.target.rootThreadIds[0] }));
+    lines.push(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownThreadTree", { childThreads: count(Math.max(0, report.counts.totalThreads - 1)) }));
   }
-  const range = report.observedAt.from ? (report.observedAt.from === report.observedAt.to ? report.observedAt.from : `${report.observedAt.from} ~ ${report.observedAt.to}`) : "미확인";
-  const observedLabel = report.counts.observations === 1 ? "관측 시각" : "관측 시각 범위";
-  lines.push(`- ${observedLabel}: ${range}`);
-  lines.push(`- 집계 상태: ${report.verdict === "PARTIAL" ? "부분 집계" : "완전 집계"} — 발견된 ${report.counts.totalThreads.toLocaleString("en-US")}개 thread 중 ${report.counts.observedThreads.toLocaleString("en-US")}개 token 사용량 관측 완료`);
-  if (report.partialReasons.length) lines.push(`- 부분 집계 사유: ${markdownText(report.partialReasons.join("; "))}`);
-  lines.push("- 이 값은 로컬 로그의 관측값이며 API 청구액이나 Codex 계정 한도를 뜻하지 않습니다.");
-  lines.push("", "| 범위 | Input | Cache input | 비캐시 input | Cache write | Output | 입출력 합계 |", "| ----- | ----: | ----------: | -----------: | ----------: | -----: | ------------: |", `| ${report.target.kind === "project" ? "프로젝트 전체" : "대상 + 하위 작업 전체"} | ${markdownCells(report.totals).join(" | ")} |`, "", `Output 중 reasoning: ${displayNumber(report.totals.reasoning_output_tokens)}. Reasoning output은 Output에 포함되어 입출력 합계에 더하지 않습니다.`, "", "## 모델별 Token 내역", "", "| 모델 | 추론 수준 | Input | Cache input | 비캐시 input | Cache write | Output | 입출력 합계 | 귀속 상태 |", "| ---- | --------- | ----: | ----------: | -----------: | ----------: | -----: | ------------: | --------- |");
-  for (const model of report.models) lines.push(`| ${markdownText(model.model)} | ${markdownText(model.effort)} | ${markdownCells(model.values).join(" | ")} | ${model.status === "partial" ? "부분" : "완전"} |`);
-  lines.push("", "## Thread별 내역", "", "| 역할 | Thread ID | 집계 상태 | 관측된 모델·추론 수준 | token 사용량 관측 시각 | Input | Cache input | 비캐시 input | Output | 입출력 합계 |", "| ---- | --------- | --------- | --------------------- | ---------------------- | ----: | ----------: | -----------: | -----: | ------------: |");
+  const observedRange = (observedAt) => (observedAt.from ? (observedAt.from === observedAt.to ? observedAt.from : `${observedAt.from} ~ ${observedAt.to}`) : hostText("skillReportsKo.codexTokenUsageAnalyzer.unknown"));
+  lines.push(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownObservedAt", { kind: report.counts.observations === 1 ? "single" : "range", range: observedRange(report.observedAt) }));
+  lines.push(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownAggregateStatus", { state: state(report.verdict === "PARTIAL"), total: count(report.counts.totalThreads), observed: count(report.counts.observedThreads) }));
+  if (report.partialReasons.length) lines.push(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownPartialReasons", { reasons: markdownText(report.partialReasons.join("; ")) }));
+  lines.push(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownDisclaimer"));
+  lines.push("", hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownTotalsHeader"), "| ----- | ----: | ----------: | -----------: | ----------: | -----: | ------------: |", `| ${hostText(report.target.kind === "project" ? "skillReportsKo.codexTokenUsageAnalyzer.markdownScopeProject" : "skillReportsKo.codexTokenUsageAnalyzer.markdownScopeThread")} | ${markdownCells(report.totals).join(" | ")} |`, "", hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownReasoningNote", { value: displayNumber(report.totals.reasoning_output_tokens) }), "", hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownModelsHeading"), "", hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownModelsHeader"), "| ---- | --------- | ----: | ----------: | -----------: | ----------: | -----: | ------------: | --------- |");
+  for (const model of report.models) lines.push(`| ${markdownText(model.model)} | ${markdownText(model.effort)} | ${markdownCells(model.values).join(" | ")} | ${hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownAttributionState", { state: state(model.status === "partial") })} |`);
+  lines.push("", hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownThreadsHeading"), "", hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownThreadsHeader"), "| ---- | --------- | --------- | --------------------- | ---------------------- | ----: | ----------: | -----------: | -----: | ------------: |");
   for (const thread of report.threads) {
-    const models = thread.models.map(({ model, effort }) => `${markdownText(model)}/${markdownText(effort)}`).join(", ") || "미확인";
-    const when = thread.observedAt.from ? (thread.observedAt.from === thread.observedAt.to ? thread.observedAt.from : `${thread.observedAt.from} ~ ${thread.observedAt.to}`) : "미확인";
+    const models = thread.models.map(({ model, effort }) => `${markdownText(model)}/${markdownText(effort)}`).join(", ") || hostText("skillReportsKo.codexTokenUsageAnalyzer.unknown");
+    const when = observedRange(thread.observedAt);
     const values = markdownCells(thread.values);
-    lines.push(`| ${markdownText(thread.role)} | \`${thread.threadId}\` | ${thread.status === "partial" ? "부분 집계" : "완전 집계"} | ${models} | ${when} | ${values[0]} | ${values[1]} | ${values[2]} | ${values[4]} | ${values[5]} |`);
+    lines.push(`| ${markdownText(thread.role)} | \`${thread.threadId}\` | ${hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownAggregateState", { state: state(thread.status === "partial") })} | ${models} | ${when} | ${values[0]} | ${values[1]} | ${values[2]} | ${values[4]} | ${values[5]} |`);
   }
-  lines.push("", "- 입출력 합계는 Input + Output이며, Cache input은 Input에 포함됩니다.", "- Reasoning output은 Output에 포함된 세부값이므로 입출력 합계에 다시 더하지 않습니다.", "- 작업이 계속 실행 중이면 이후 token 값은 증가할 수 있습니다.", "");
+  lines.push("", hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownNoteTotal"), hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownNoteReasoning"), hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownNoteRunning"), "");
   return lines.join("\n");
 }
 
@@ -865,17 +870,17 @@ export function isWithin(root, candidate) {
 }
 
 export async function validateMarkdownDirectory(directory, { sessionsRoot, pluginRoot }) {
-  if (!isPortableAbsolute(directory)) throw new Error("Markdown 저장 디렉터리는 절대 경로여야 합니다.");
+  if (!isPortableAbsolute(directory)) throw new Error(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownDirectoryNotAbsolute"));
   const destination = path.resolve(directory);
-  if (isWithin(sessionsRoot, destination)) throw new Error("세션 로그 경로 아래에는 Markdown을 저장할 수 없습니다.");
-  if (isWithin(pluginRoot, destination)) throw new Error("플러그인 설치 경로 아래에는 Markdown을 저장할 수 없습니다.");
+  if (isWithin(sessionsRoot, destination)) throw new Error(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownUnderSessions"));
+  if (isWithin(pluginRoot, destination)) throw new Error(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownUnderPlugin"));
   const [prospectiveDestination, realSessionsRoot, realPluginRoot] = await Promise.all([
     prospectiveRealPath(destination),
     canonicalExistingPath(sessionsRoot),
     canonicalExistingPath(pluginRoot)
   ]);
-  if (isWithin(realSessionsRoot, prospectiveDestination)) throw new Error("세션 로그 경로 아래에는 Markdown을 저장할 수 없습니다.");
-  if (isWithin(realPluginRoot, prospectiveDestination)) throw new Error("플러그인 설치 경로 아래에는 Markdown을 저장할 수 없습니다.");
+  if (isWithin(realSessionsRoot, prospectiveDestination)) throw new Error(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownUnderSessions"));
+  if (isWithin(realPluginRoot, prospectiveDestination)) throw new Error(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownUnderPlugin"));
   return destination;
 }
 
@@ -887,11 +892,11 @@ export async function writeNewMarkdown(report, directory, options = {}) {
     canonicalExistingPath(options.sessionsRoot),
     canonicalExistingPath(options.pluginRoot)
   ]);
-  if (isWithin(realSessionsRoot, realDestination)) throw new Error("세션 로그 경로 아래에는 Markdown을 저장할 수 없습니다.");
-  if (isWithin(realPluginRoot, realDestination)) throw new Error("플러그인 설치 경로 아래에는 Markdown을 저장할 수 없습니다.");
+  if (isWithin(realSessionsRoot, realDestination)) throw new Error(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownUnderSessions"));
+  if (isWithin(realPluginRoot, realDestination)) throw new Error(hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownUnderPlugin"));
   const stamp = options.stamp ?? new Date().toISOString().replace(/[-:TZ]/g, "").slice(0, 17);
   const id = report.target.kind === "project" ? "project" : (report.target.rootThreadIds[0] ?? "00000000").replace(/[^0-9a-f]/gi, "").slice(0, 8) || "00000000";
-  const title = report.target.kind === "project" ? `${pathLeaf(report.target.label) || report.target.label} 프로젝트 전체` : report.threads[0]?.title ?? "untitled-session";
+  const title = report.target.kind === "project" ? hostText("skillReportsKo.codexTokenUsageAnalyzer.markdownProjectFileTitle", { name: pathLeaf(report.target.label) || report.target.label }) : report.threads[0]?.title ?? "untitled-session";
   const base = `${safeFilename(title)}_${id}_${stamp}`;
   const content = makeMarkdown(report);
   for (let suffix = 1; ; suffix += 1) {
