@@ -10,6 +10,7 @@ import en_schema from "../../locales/en/schema.json" with { type: "json" };
 import en_instructions from "../../locales/en/instructions.json" with { type: "json" };
 import en_continuity from "../../locales/en/continuity.json" with { type: "json" };
 import en_peer from "../../locales/en/peer.json" with { type: "json" };
+import en_connector from "../../locales/en/connector.json" with { type: "json" };
 import ko_hooks from "../../locales/ko/hooks.json" with { type: "json" };
 import ko_server from "../../locales/ko/server.json" with { type: "json" };
 import ko_workflow from "../../locales/ko/workflow.json" with { type: "json" };
@@ -20,6 +21,7 @@ import ko_schema from "../../locales/ko/schema.json" with { type: "json" };
 import ko_instructions from "../../locales/ko/instructions.json" with { type: "json" };
 import ko_continuity from "../../locales/ko/continuity.json" with { type: "json" };
 import ko_peer from "../../locales/ko/peer.json" with { type: "json" };
+import ko_connector from "../../locales/ko/connector.json" with { type: "json" };
 
 export const SUPPORTED_LOCALES = ["en","ko"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
@@ -29,8 +31,8 @@ export const ROOT_LOCALE: SupportedLocale = "en";
 export interface NestedMessage { readonly key: string; readonly params: Readonly<Record<string, unknown>> }
 
 export const CATALOGS: Readonly<Record<SupportedLocale, Readonly<Record<string, string>>>> = {
-  "en": { ...en_hooks, ...en_server, ...en_workflow, ...en_workflowRecord, ...en_services, ...en_tools, ...en_schema, ...en_instructions, ...en_continuity, ...en_peer },
-  "ko": { ...ko_hooks, ...ko_server, ...ko_workflow, ...ko_workflowRecord, ...ko_services, ...ko_tools, ...ko_schema, ...ko_instructions, ...ko_continuity, ...ko_peer },
+  "en": { ...en_hooks, ...en_server, ...en_workflow, ...en_workflowRecord, ...en_services, ...en_tools, ...en_schema, ...en_instructions, ...en_continuity, ...en_peer, ...en_connector },
+  "ko": { ...ko_hooks, ...ko_server, ...ko_workflow, ...ko_workflowRecord, ...ko_services, ...ko_tools, ...ko_schema, ...ko_instructions, ...ko_continuity, ...ko_peer, ...ko_connector },
 };
 
 export interface MessageParams {
@@ -319,8 +321,12 @@ export interface MessageParams {
   "services.evaluationPreflight.boundEvaluationFieldsDiffer": Record<string, never>;
   "services.evaluationPreflight.canonicalArtifactCountDoesNotMatch": Record<string, never>;
   "services.evaluationPreflight.declaredAndObservedActorsMustMatch": Record<string, never>;
+  "services.evaluationPreflight.editingMetadataDoesNotBindTheSelectionActor": Record<string, never>;
   "services.evaluationPreflight.evaluationArtifactContainsADuplicateId": Record<string, never>;
   "services.evaluationPreflight.evaluationArtifactContainsInvalidJsonl": Record<string, never>;
+  "services.evaluationPreflight.evaluationManifestIsMissingFrozenRunMetadata": Record<string, never>;
+  "services.evaluationPreflight.evaluationMetadataIsNotValidJson": Record<string, never>;
+  "services.evaluationPreflight.evaluationMetadataMustBeAJsonObject": Record<string, never>;
   "services.evaluationPreflight.evaluationOutputWouldBeOverwritten": Record<string, never>;
   "services.evaluationPreflight.evaluationRolesMustUseDistinctActors": Record<string, never>;
   "services.evaluationPreflight.exactlyOneArtifactMustDefineThe": Record<string, never>;
@@ -329,8 +335,11 @@ export interface MessageParams {
   "services.evaluationPreflight.recordIdMustBeANonempty": Record<string, never>;
   "services.evaluationPreflight.requiredEvaluationArtifactIsEmpty": Record<string, never>;
   "services.evaluationPreflight.requiredEvaluationFieldIsMissing": Record<string, never>;
+  "services.evaluationPreflight.requiredEvaluationMetadataFieldIsMissing": Record<string, never>;
   "services.evaluationPreflight.requiredEvaluationTextFieldIsEmpty": Record<string, never>;
+  "services.evaluationPreflight.roleMetadataDoesNotMatchTheFrozenRun": Record<string, never>;
   "services.evaluationPreflight.runOrdinalIsOutsideTheApproved": Record<string, never>;
+  "services.evaluationPreflight.verificationInputMetadataIsNotFrozenAndBlind": Record<string, never>;
   "services.failure.serverUnavailable": Record<string, never>;
   "services.glossary.sourceDigestMismatch": Record<string, never>;
   "services.governanceHook.callUnidentified": Record<string, never>;
@@ -557,4 +566,12 @@ export interface MessageParams {
   "peer.wait.unavailable": Record<string, never>;
   "peer.wake.noMessage": Record<string, never>;
   "peer.wake.retired": Record<string, never>;
+  "connector.attestation.boundaryCheckFailed": Record<string, never>;
+  "connector.attestation.directCallerBinding": Record<string, never>;
+  "connector.attestation.directReservedField": { "field": NestedMessage | number | string; };
+  "connector.attestation.unverifiedCallerWithoutSession": { "field": NestedMessage | number | string; };
+  "connector.failClosed.reservedFieldInUnparsedInput": { "field": NestedMessage | number | string; };
+  "connector.failClosed.stdinUnreadable": Record<string, never>;
+  "connector.failClosed.topLevelException": Record<string, never>;
+  "connector.failClosed.unexpectedError": Record<string, never>;
 }

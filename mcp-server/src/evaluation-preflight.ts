@@ -18,17 +18,17 @@ export type EvaluationPreflightCode =
   | "RUN_OUT_OF_BUDGET";
 
 export class EvaluationPreflightError extends Error {
-  /** The catalog message; null for callers outside mcp-server/src that still pass text (i18n migration). */
-  readonly ref: MessageRef | null;
+  /** The catalog message; Error.message is its root-locale text after the code. */
+  readonly ref: MessageRef;
 
   constructor(
     readonly code: EvaluationPreflightCode,
-    message: MessageRef | string,
+    message: MessageRef,
     readonly details: Record<string, unknown> = {},
   ) {
-    super(`${code}: ${typeof message === "string" ? message : render(message, ROOT_LOCALE)}`);
+    super(`${code}: ${render(message, ROOT_LOCALE)}`);
     this.name = "EvaluationPreflightError";
-    this.ref = typeof message === "string" ? null : message;
+    this.ref = message;
   }
 }
 

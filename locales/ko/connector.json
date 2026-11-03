@@ -1,0 +1,10 @@
+{
+  "connector.attestation.boundaryCheckFailed": "호스트 증명 경계 확인에 실패해 차단했다.",
+  "connector.attestation.directCallerBinding": "Antigravity에서 직접 도구 호출은 검증되지 않은 호출자 _continuityBinding 필드를 실을 수 없다.",
+  "connector.attestation.directReservedField": "Antigravity에서 직접 도구 호출은 검증되지 않은 {field} 필드를 실을 수 없다.",
+  "connector.attestation.unverifiedCallerWithoutSession": "검증되지 않은 호출자 {field} 필드를 거부했다(세션 맥락 없음).",
+  "connector.failClosed.reservedFieldInUnparsedInput": "차단: 해석하지 못했거나 실패한 PreToolUse 입력에 {field} 필드가 들어 있었다.",
+  "connector.failClosed.stdinUnreadable": "차단: 호스트 증명용 stdin을 읽지 못했다.",
+  "connector.failClosed.topLevelException": "차단: 커넥터 최상위에서 예기치 않은 예외가 났다.",
+  "connector.failClosed.unexpectedError": "차단: 호스트 증명 커넥터에서 예기치 않은 오류가 났다."
+}

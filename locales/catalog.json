@@ -35,6 +35,9 @@
     },
     "peer": {
       "sourceLocale": "en"
+    },
+    "connector": {
+      "sourceLocale": "en"
     }
   }
 }

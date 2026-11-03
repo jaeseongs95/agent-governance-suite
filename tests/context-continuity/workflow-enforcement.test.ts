@@ -14,6 +14,7 @@ import { ContinuityService, minimalWorkflowStartExample, WORKFLOW_FILE_LIMIT } f
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
+import { msg } from "../../mcp-server/src/i18n.js";
 
 // Design docs/ags30-phase-check-design.md 7 (enforcement, 3.1.0). Synthetic hook inputs and stores; no real host run.
 // Product paths are synthetic paths inside this checkout (under version control, outside the OS temporary directory,
@@ -290,7 +291,7 @@ describe("infrastructure failures fail open with their cause", () => {
   it("passes the window after a workflow start infrastructure failure and names its code, not a generic one", () => {
     const target = service();
     for (const name of ["a.ts", "b.ts"]) handleContinuityHook(write(name), target, "claude-code", NO_ENV);
-    target.recordWorkflowStartFailure(session, new WorkflowContractError("BINDING_REQUIRED", "No host observation.", { reasonCode: "TRANSCRIPT_LIMIT_EXCEEDED" }));
+    target.recordWorkflowStartFailure(session, new WorkflowContractError("BINDING_REQUIRED", msg("workflow.service.unkeyedFailure", { message: "No host observation." }), { reasonCode: "TRANSCRIPT_LIMIT_EXCEEDED" }));
     expect(handleContinuityHook(write("c.ts"), target, "claude-code", NO_ENV)).toEqual({});
     expect(handleContinuityHook(stop(), target, "claude-code", NO_ENV)).toMatchObject({ hookSpecificOutput: {
       additionalContext: expect.stringContaining("원인 코드: workflow-start-failed:BINDING_REQUIRED:TRANSCRIPT_LIMIT_EXCEEDED.") } });

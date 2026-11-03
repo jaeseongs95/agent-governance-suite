@@ -23,6 +23,7 @@ import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import type { CallerIngress } from "../../mcp-server/src/caller-identity.js";
 import { fixedIngress, rootCaller } from "../helpers/caller.js";
+import { msg } from "../../mcp-server/src/i18n.js";
 
 // AGS 3.0 error model P1: a system failure is never relabeled INVALID_INPUT and never leaks its message.
 const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
@@ -149,7 +150,7 @@ describe("public boundary mapping (contractFailure)", () => {
     const classification: SkillClassificationGateway = { inventory: async () => null, classify: async () => { calls += 1; return null; }, accept: async () => null };
     const hostAttestation = new HostAttestationProvider({ host: "fixture", provider: "fixture-provider", modelClassForModel: () => "general" });
     vi.spyOn(hostAttestation, "run").mockImplementation(() => {
-      throw new WorkflowContractError("MCP_UNAVAILABLE", "Observation store is unavailable.", { reasonCode: "OBSERVATION_STORE_UNAVAILABLE" });
+      throw new WorkflowContractError("MCP_UNAVAILABLE", msg("workflow.service.unkeyedFailure", { message: "Observation store is unavailable." }), { reasonCode: "OBSERVATION_STORE_UNAVAILABLE" });
     });
     await withServer(async (call) => {
       const body = await call("classify_skills", classificationInput);

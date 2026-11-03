@@ -10,6 +10,14 @@ import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 import { types } from "node:util";
 import { failureCode, failureContext, retainFailureCause, retainFailureSecondary } from "../../runtime/failure-diagnostics.mjs";
+import { msg, render, resolveHostLocale } from "../../runtime/i18n.mjs";
+
+let denyLocale = null;
+/** A deny reason in the host locale (docs/i18n-design.md 4.1 ①); the locale is read once, when the first reason is shown. */
+function denyReason(key, params) {
+  denyLocale ??= resolveHostLocale().locale;
+  return render(msg(key, params), denyLocale);
+}
 
 // Queue wake defaults are passed per invocation; importing this module never changes user ENV.
 
@@ -1340,7 +1348,7 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
     if (event === "PreToolUse" && Object.hasOwn(currentToolInput, "_hostAttestation")) {
       if (!toolBoundary?.isMcpWrapperCall) {
         return {
-          output: { decision: "deny", reason: "Direct tool call cannot carry unverified _hostAttestation on Antigravity." },
+          output: { decision: "deny", reason: denyReason("connector.attestation.directReservedField", { field: "_hostAttestation" }) },
           updatedToolInput: currentToolInput,
           mutated: false,
         };
@@ -1426,7 +1434,7 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
       if (Object.hasOwn(cleanArgs, "_continuityBinding")) {
         if (!toolBoundary?.isMcpWrapperCall) {
           return {
-            output: { decision: "deny", reason: "Direct tool call cannot carry unverified caller _continuityBinding on Antigravity." },
+            output: { decision: "deny", reason: denyReason("connector.attestation.directCallerBinding", {}) },
             updatedToolInput: currentToolInput,
             mutated: false,
           };
@@ -1536,7 +1544,7 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
     if (event === "PreToolUse" && toolBoundary) {
       const forgedKey = findFirstReservedKey(toolBoundary.toolInput);
       if (forgedKey) {
-        return { decision: "deny", reason: `Unverified caller ${forgedKey} rejected (missing session context).` };
+        return { decision: "deny", reason: denyReason("connector.attestation.unverifiedCallerWithoutSession", { field: forgedKey }) };
       }
     }
     return {};
@@ -1592,7 +1600,7 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
     for (const reservedKey of RESERVED_TOOL_KEYS) {
       if (Object.hasOwn(currentToolInput, reservedKey)) {
         if (!toolBoundary?.isMcpWrapperCall) {
-          return { decision: "deny", reason: `Direct tool call cannot carry unverified ${reservedKey} on Antigravity.` };
+          return { decision: "deny", reason: denyReason("connector.attestation.directReservedField", { field: reservedKey }) };
         }
         delete currentToolInput[reservedKey];
         anyMutated = true;
@@ -1620,7 +1628,7 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
         reportStageFailure(stage, cause, options?.writeStderr);
         // F1 fail-closed: if the host-attestation stage throws, deny the tool call immediately.
         if (stage === "host-attestation") {
-          return { decision: "deny", reason: "Host attestation boundary check failed closed." };
+          return { decision: "deny", reason: denyReason("connector.attestation.boundaryCheckFailed", {}) };
         }
         // Other stages remain fail-open while preserving the already-stripped reserved keys state.
       }
@@ -1715,10 +1723,10 @@ export function failClosedPreToolUseFallback(raw, eventArg, hookArg) {
   const isPreToolOrAttestation = eventArg === "PreToolUse" || hookArg === "host-attestation" || Boolean(matchedReservedKey);
   if (!isPreToolOrAttestation) return null;
   if (matchedReservedKey) {
-    return { decision: "deny", reason: `Fail-closed: unparsed or failed PreToolUse input contained ${matchedReservedKey}.` };
+    return { decision: "deny", reason: denyReason("connector.failClosed.reservedFieldInUnparsedInput", { field: matchedReservedKey }) };
   }
   if (hookArg === "host-attestation") {
-    return { decision: "deny", reason: "Fail-closed: host-attestation connector encountered an unexpected error." };
+    return { decision: "deny", reason: denyReason("connector.failClosed.unexpectedError", {}) };
   }
   return null;
 }
@@ -1846,7 +1854,7 @@ async function runConnector() {
     reportStageFailure("stdin", cause);
     const hookArg = process.argv.find((a) => a.startsWith("--hook="))?.slice(7) ?? "";
     if (hookArg === "host-attestation") {
-      process.stdout.write(JSON.stringify({ decision: "deny", reason: "Fail-closed: unable to read stdin for host-attestation." }));
+      process.stdout.write(JSON.stringify({ decision: "deny", reason: denyReason("connector.failClosed.stdinUnreadable", {}) }));
     }
     return;
   }
@@ -1860,7 +1868,7 @@ if (path.resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
     const hookArg = process.argv.find((a) => a.startsWith("--hook="))?.slice(7) ?? "";
     const eventArg = process.argv.find((a) => a.startsWith("--event="))?.slice(8) ?? "";
     if (hookArg === "host-attestation" || eventArg === "PreToolUse") {
-      process.stdout.write(JSON.stringify({ decision: "deny", reason: "Fail-closed: unexpected top-level connector exception." }));
+      process.stdout.write(JSON.stringify({ decision: "deny", reason: denyReason("connector.failClosed.topLevelException", {}) }));
     }
   });
 }

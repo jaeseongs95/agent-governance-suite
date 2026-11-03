@@ -1,0 +1,10 @@
+{
+  "connector.attestation.boundaryCheckFailed": "Host attestation boundary check failed closed.",
+  "connector.attestation.directCallerBinding": "Direct tool call cannot carry unverified caller _continuityBinding on Antigravity.",
+  "connector.attestation.directReservedField": "Direct tool call cannot carry unverified {field} on Antigravity.",
+  "connector.attestation.unverifiedCallerWithoutSession": "Unverified caller {field} rejected (missing session context).",
+  "connector.failClosed.reservedFieldInUnparsedInput": "Fail-closed: unparsed or failed PreToolUse input contained {field}.",
+  "connector.failClosed.stdinUnreadable": "Fail-closed: unable to read stdin for host-attestation.",
+  "connector.failClosed.topLevelException": "Fail-closed: unexpected top-level connector exception.",
+  "connector.failClosed.unexpectedError": "Fail-closed: host-attestation connector encountered an unexpected error."
+}

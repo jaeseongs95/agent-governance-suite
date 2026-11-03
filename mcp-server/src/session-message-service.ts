@@ -24,7 +24,7 @@ function unavailable(error: unknown, uncertainSend = false): ApiResultV1<never> 
   if (error instanceof WorkflowContractError || error instanceof BrokerRequestRejected) {
     const code = error instanceof WorkflowContractError ? error.code : "MCP_UNAVAILABLE";
     const details = error instanceof WorkflowContractError ? error.details : null;
-    if (uncertainSend) return failure(code, msg("services.sessionMessage.send.retryAfterRejection", { reason: error.ref ?? error.message }), details);
+    if (uncertainSend) return failure(code, msg("services.sessionMessage.send.retryAfterRejection", { reason: error.ref }), details);
     if (error instanceof BrokerRequestRejected) return failure(code, error.ref);
     return { schemaVersion: "1.0.0", ok: false, data: null, error: error.toBody() };
   }

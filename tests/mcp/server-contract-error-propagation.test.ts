@@ -10,6 +10,7 @@ import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import type { SessionMessageService } from "../../mcp-server/src/session-message-service.js";
 import type { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 import { callerMeta, metaIngress } from "../helpers/caller.js";
+import { msg } from "../../mcp-server/src/i18n.js";
 
 function updateService(): PluginUpdateService {
   const store = new InMemoryPluginUpdateStore();
@@ -35,7 +36,7 @@ describe("MCP boundary contract error propagation", () => {
   it("keeps a service contract error code and sanitized details instead of reclassifying it as invalid input", async () => {
     const failing = {
       prepare: async () => {
-        throw new WorkflowContractError("MCP_UNAVAILABLE", "Synthetic message storage is unavailable.", { reason: "SYNTHETIC_STORAGE_FAILED" });
+        throw new WorkflowContractError("MCP_UNAVAILABLE", msg("workflow.service.unkeyedFailure", { message: "Synthetic message storage is unavailable." }), { reason: "SYNTHETIC_STORAGE_FAILED" });
       },
     } as unknown as SessionMessageService;
     const server = createMcpServer({} as WorkflowService, updateService(), undefined, undefined, undefined, new ContractValidator(), "default", null, null, failing, null, null, metaIngress());

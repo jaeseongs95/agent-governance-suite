@@ -1134,20 +1134,20 @@ export interface WorkflowStatusSummaryV1 {
 }
 
 export class WorkflowContractError extends Error {
-  /** The catalog message; null only for call sites not yet moved to the catalog (i18n migration). */
-  readonly ref: MessageRef | null;
+  /** The catalog message: the key and params are the contract, Error.message is its root-locale text. */
+  readonly ref: MessageRef;
 
   constructor(
     readonly code: ErrorCode,
-    message: MessageRef | string,
+    message: MessageRef,
     readonly details: Record<string, unknown> | null = null,
   ) {
-    super(typeof message === "string" ? message : render(message, ROOT_LOCALE));
-    this.ref = typeof message === "string" ? null : message;
+    super(render(message, ROOT_LOCALE));
+    this.ref = message;
     this.name = "WorkflowContractError";
   }
 
   toBody(): ContractErrorBody {
-    return this.ref ? contractErrorBody(this.code, this.ref, this.details) : { code: this.code, message: this.message, details: this.details };
+    return contractErrorBody(this.code, this.ref, this.details);
   }
 }

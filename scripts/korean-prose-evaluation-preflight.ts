@@ -21,6 +21,7 @@ import {
   type KoreanProseReadinessResult,
 } from "./korean-prose-readiness.js";
 import { assertConcreteKoreanProseExecutionProvenance } from "./korean-prose-execution-provenance.js";
+import { msg } from "../mcp-server/src/i18n.js";
 
 export type KoreanProseEvaluationPhase = "selection" | "editing" | "verification" | "record";
 
@@ -269,7 +270,7 @@ export async function preflightKoreanProseEvaluation(
     const editingActorId = stringField(editingMeta, "actorId", "ACTOR_BINDING_MISMATCH");
     const selectorActorId = stringField(editingMeta, "selectorActorId", "ACTOR_BINDING_MISMATCH");
     if (selectorActorId !== actors.find((actor) => actor.role === "selection")?.actorId) {
-      throw new EvaluationPreflightError("ACTOR_BINDING_MISMATCH", "editing metadata does not bind the selection actor", {
+      throw new EvaluationPreflightError("ACTOR_BINDING_MISMATCH", msg("services.evaluationPreflight.editingMetadataDoesNotBindTheSelectionActor", {}), {
         selectorActorId,
       });
     }
@@ -392,7 +393,7 @@ function assertRoleMeta(
     || (requireRun && meta.run !== run)
     || (requireRun && meta.status !== "complete")
   ) {
-    throw new EvaluationPreflightError("ACTOR_BINDING_MISMATCH", "role metadata does not match the frozen run", {
+    throw new EvaluationPreflightError("ACTOR_BINDING_MISMATCH", msg("services.evaluationPreflight.roleMetadataDoesNotMatchTheFrozenRun", {}), {
       role,
       run,
       caseCount,
@@ -408,7 +409,7 @@ function assertFrozenVerificationInput(meta: Record<string, unknown>, run: numbe
     || meta.containsExpectedDecision !== false
     || meta.containsEditorRationale !== false
   ) {
-    throw new EvaluationPreflightError("FORBIDDEN_VISIBLE_FIELD", "verification input metadata is not frozen and blind", {
+    throw new EvaluationPreflightError("FORBIDDEN_VISIBLE_FIELD", msg("services.evaluationPreflight.verificationInputMetadataIsNotFrozenAndBlind", {}), {
       run,
       caseCount,
     });
@@ -421,7 +422,7 @@ function asManifest(value: Record<string, unknown>): EvaluationManifest {
     || !Number.isInteger(value.runCount)
     || typeof value.inputSha256 !== "string"
   ) {
-    throw new EvaluationPreflightError("DIGEST_MISMATCH", "evaluation manifest is missing frozen run metadata");
+    throw new EvaluationPreflightError("DIGEST_MISMATCH", msg("services.evaluationPreflight.evaluationManifestIsMissingFrozenRunMetadata", {}));
   }
   return {
     caseCount: value.caseCount as number,
@@ -437,7 +438,7 @@ function stringField(
 ): string {
   const fieldValue = value[field];
   if (typeof fieldValue !== "string" || fieldValue.length === 0) {
-    throw new EvaluationPreflightError(code, "required evaluation metadata field is missing", { field });
+    throw new EvaluationPreflightError(code, msg("services.evaluationPreflight.requiredEvaluationMetadataFieldIsMissing", {}), { field });
   }
   return fieldValue;
 }
@@ -449,13 +450,13 @@ async function readJson(file: string): Promise<Record<string, unknown>> {
   try {
     value = JSON.parse(text) as unknown;
   } catch (error) {
-    throw new EvaluationPreflightError("INVALID_JSONL", "evaluation metadata is not valid JSON", {
+    throw new EvaluationPreflightError("INVALID_JSONL", msg("services.evaluationPreflight.evaluationMetadataIsNotValidJson", {}), {
       file,
       reason: error instanceof Error ? error.message : String(error),
     });
   }
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new EvaluationPreflightError("INVALID_JSONL", "evaluation metadata must be a JSON object", { file });
+    throw new EvaluationPreflightError("INVALID_JSONL", msg("services.evaluationPreflight.evaluationMetadataMustBeAJsonObject", {}), { file });
   }
   return value as Record<string, unknown>;
 }

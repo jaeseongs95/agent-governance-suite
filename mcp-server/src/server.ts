@@ -339,7 +339,7 @@ function failureResult(error: unknown): ApiResultV1<never> {
 /** send_session_message failures: a contract error also tells the caller how to retry, as one catalog sentence. */
 function sendFailureResult(error: unknown): ApiResultV1<never> {
   if (!(error instanceof WorkflowContractError)) return failureResult(error);
-  return apiError(error.code, msg("server.sessionMessage.sendInvalid", { cause: error.ref ?? error.message }), error.details);
+  return apiError(error.code, msg("server.sessionMessage.sendInvalid", { cause: error.ref }), error.details);
 }
 
 const CLASSIFICATION_REQUEST_REJECTIONS = new Set([
@@ -931,7 +931,7 @@ export function createMcpServer(
             if (!started.ok && started.error && WORKFLOW_START_INFRASTRUCTURE_FAILURES.has(started.error.code)) {
               // The recorder keeps only the code and reason; the message is carried as its key when the body has one.
               const { code, message, messageKey, params, details } = started.error;
-              const ref = messageKey ? { key: messageKey, params: params ?? {} } as MessageRef : message;
+              const ref = messageKey ? { key: messageKey, params: params ?? {} } as MessageRef : msg("workflow.service.unkeyedFailure", { message });
               try { continuity.recordWorkflowStartFailure(caller.sessionId, new WorkflowContractError(code, ref, details)); }
               catch (cause) { process.stderr.write(JSON.stringify({ event: "workflow-start-failure-unrecorded", reason: failureReason(cause).reason ?? "UNEXPECTED_FAILURE" }) + "\n"); }
             }
