@@ -112,7 +112,7 @@ describe("installed skill runtime", () => {
     const workflow = await readFile(path.join(root, ".github/workflows/ci.yml"), "utf8");
     const bundleCheck = workflow.indexOf("run: pnpm bundle:check");
     const build = workflow.indexOf("run: pnpm build");
-    const test = workflow.indexOf("run: pnpm test");
+    const test = workflow.indexOf("run: node scripts/run-tests.mjs");
     expect(bundleCheck).toBeGreaterThan(-1);
     expect(bundleCheck).toBeLessThan(build);
     expect(bundleCheck).toBeLessThan(test);

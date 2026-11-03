@@ -64,12 +64,16 @@ jobs:
       - name: Build
         shell: bash
         run: pnpm build
-      - name: Test
+      # The Build step above already produced the bundles, so run the suites
+      # directly. CI keeps the tests whose verdict cannot depend on runner
+      # speed; the Linux and Windows test servers run everything, including
+      # the installed-runtime smoke (pnpm test:server). See
+      # docs/ci-and-test-servers.md.
+      - name: Test (CI scope)
         shell: bash
-        run: pnpm test
-      - name: Verify installed runtime
-        shell: bash
-        run: pnpm runtime:check
+        env:
+          AGS_TEST_SCOPE: ci
+        run: node scripts/run-tests.mjs
       - name: Validate plugin and skills
         shell: bash
         env:
