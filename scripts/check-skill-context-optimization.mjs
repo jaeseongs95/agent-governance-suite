@@ -25,22 +25,33 @@ function git(...args) {
   if (!cache.has(key)) cache.set(key, run());
   return Buffer.from(cache.get(key));
 }
-// 3.3.0 multi-workflow guidance (docs/ags30-phase-check-design.md 7.5): these exact reviewed bytes stand for
-// their predecessor at `revision`, so every existing pin keeps checking the same chain. Altered bytes are never projected.
-const MULTI_WORKFLOW_GUIDANCE_SUCCESSOR = Object.freeze({
-  revision: "92f22e25d21eddff22c2400dabc0699d73700927",
-  hashes: Object.freeze({
-    "skills/orchestrator/references/convergence-guard.md": ["cb8bbae8f94c18a9c6dc4a90bec8bcaf0b91e414ffb223d1a514ab92d3bdb70f", "ad162b606d35a84995b579902f523e1a0ff426b6988fddf93cf263141466aca5"],
-    "skills/orchestrator/references/mcp-execution.md": ["7106404c5bf8cacb3bb4ab2d63af0c0ac955a8ee9f3eb53462c1062e2ebd221a", "d32a61ac3c1da7017e2f1bcc312c6e412a32de7e7107b437b53fb80574444dd1"],
+// Reviewed guidance successors: these exact bytes stand for their predecessor at `revision`, so every existing pin
+// keeps checking the same chain. Altered bytes are never projected.
+// - 3.3.0 multi-workflow guidance (docs/ags30-phase-check-design.md 7.5)
+// - 3.4.0 JEV layer paragraph (docs/release-notes-v3.4.0.md): JEV is the advisory slot, TypeSafe one implementation.
+const GUIDANCE_SUCCESSORS = Object.freeze([
+  Object.freeze({
+    revision: "92f22e25d21eddff22c2400dabc0699d73700927",
+    hashes: Object.freeze({
+      "skills/orchestrator/references/convergence-guard.md": ["cb8bbae8f94c18a9c6dc4a90bec8bcaf0b91e414ffb223d1a514ab92d3bdb70f", "ad162b606d35a84995b579902f523e1a0ff426b6988fddf93cf263141466aca5"],
+      "skills/orchestrator/references/mcp-execution.md": ["7106404c5bf8cacb3bb4ab2d63af0c0ac955a8ee9f3eb53462c1062e2ebd221a", "d32a61ac3c1da7017e2f1bcc312c6e412a32de7e7107b437b53fb80574444dd1"],
+    }),
   }),
-});
+  Object.freeze({
+    revision: "b0fc2b4d69e2fee195e4146cf9fbd3de2f94fa5b",
+    hashes: Object.freeze({
+      "skills/orchestrator/references/skill-classification.md": ["f33cce4afc3ef2480c94799f46ae78e133c1576e3b57a257c1046f6956d811c9", "ccf0c8829325f2874447c67993f2c04edb02ea462713de10f3733eabc892c6ac"],
+    }),
+  }),
+]);
+const guidanceSuccessor = relative => GUIDANCE_SUCCESSORS.find(successor => Object.hasOwn(successor.hashes, relative));
 
-/** A reviewed multi-workflow guidance successor stands for its exact predecessor; any other bytes are returned as they are. */
+/** A reviewed guidance successor stands for its exact predecessor; any other bytes are returned as they are. */
 function beforeMultiWorkflowGuidance(relative, bytes) {
-  const hashes = Object.hasOwn(MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.hashes, relative) ? MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.hashes[relative] : null;
+  const successor = guidanceSuccessor(relative), hashes = successor?.hashes[relative];
   if (!hashes || createHash("sha256").update(bytes).digest("hex") !== hashes[1]) return bytes;
-  const projected = git("show", `${MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.revision}:${relative}`);
-  if (createHash("sha256").update(projected).digest("hex") !== hashes[0]) throw new Error(`Multi-workflow guidance predecessor bytes differ: ${relative}`);
+  const projected = git("show", `${successor.revision}:${relative}`);
+  if (createHash("sha256").update(projected).digest("hex") !== hashes[0]) throw new Error(`Guidance successor predecessor bytes differ: ${relative}`);
   return projected;
 }
 
@@ -237,7 +248,7 @@ export function checkSpecialistBehaviorSources() {
     ...git("diff", "--name-only", SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision, "--", "skills").toString("utf8").trim().split(/\r?\n/u),
     ...git("ls-files", "--others", "--exclude-standard", "--", "skills").toString("utf8").trim().split(/\r?\n/u),
   ].filter(relative => /^skills\/[^/]+\/.+\.(?:md|ya?ml)$/iu.test(relative) || /^skills\/[^/]+\/classification\.json$/u.test(relative)));
-  const projectsToBaseline = relative => Object.hasOwn(MULTI_WORKFLOW_GUIDANCE_SUCCESSOR.hashes, relative)
+  const projectsToBaseline = relative => guidanceSuccessor(relative) !== undefined
     && readFileSync(join(root, relative)).equals(git("show", `${SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision}:${relative}`));
   for (const relative of contextChanges) {
     if (!Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes, relative) && !Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.additions, relative)
@@ -526,9 +537,8 @@ const ORCHESTRATOR_WORKFLOW_ENFORCEMENT_SOURCE_HASHES = Object.freeze({
   "skills/orchestrator/references/mcp-execution.md": "e5521ac3485c022342deab25a65bf61f66578e6623beda0490f797439ebc48a0",
 });
 // 참고자료는 역사 원문으로 투영하지 않고 현재의 정확한 분류 원문으로 판정한다.
-// 3.4.0: JEV 계층과 TypeSafe 구현의 관계, 예산 상한의 수명을 적은 문단을 더했다.
 const ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_REFERENCE_HASHES = Object.freeze({
-  "skills/orchestrator/references/skill-classification.md": "ccf0c8829325f2874447c67993f2c04edb02ea462713de10f3733eabc892c6ac",
+  "skills/orchestrator/references/skill-classification.md": "f33cce4afc3ef2480c94799f46ae78e133c1576e3b57a257c1046f6956d811c9",
 });
 // D0352 makes the field guide use the existing common routing decision.
 // Preserve the optimization baseline; allow only this reviewed source delta.
