@@ -95,8 +95,12 @@ it("readSkillVersion은 VERSION이 없을 때만 neither 오류를 내고 읽기
 });
 
 it("mutation-risk-preflight validator는 JSON 문법 오류와 읽기 실패를 구분한다", async () => {
-  const root = await suiteRoot();
-  await mkdir(path.join(root, "scripts"));
+  // The installed layout: skills/<name>/scripts beside the package's runtime/i18n.mjs, rendered in English.
+  const suite = await suiteRoot();
+  await mkdir(path.join(suite, "runtime"));
+  await copyFile(path.join(repository, "runtime", "i18n.mjs"), path.join(suite, "runtime", "i18n.mjs"));
+  const root = path.join(suite, "skills", "mutation-risk-preflight");
+  await mkdir(path.join(root, "scripts"), { recursive: true });
   await mkdir(path.join(root, "contracts", "upstream"), { recursive: true });
   await mkdir(path.join(root, "integration"));
   await copyFile(
@@ -107,7 +111,8 @@ it("mutation-risk-preflight validator는 JSON 문법 오류와 읽기 실패를 
   await writeFile(path.join(root, "contracts", "upstream", "lock.json"), JSON.stringify({ upstreams: [{ snapshotPath: "SKILL.md", sha256: "0" }] }));
   await writeFile(path.join(root, "contracts", "syntax.json"), "{");
   await mkdir(path.join(root, "contracts", "unreadable.json"));
-  const result = spawnSync(process.execPath, [path.join(root, "scripts", "validate-skill.mjs")], { encoding: "utf8" });
+  const result = spawnSync(process.execPath, [path.join(root, "scripts", "validate-skill.mjs")],
+    { encoding: "utf8", env: { ...process.env, AGENT_GOVERNANCE_LOCALE: "en" } });
   const { errors } = JSON.parse(result.stdout);
   expect(result.status).toBe(1);
   expect(errors).toContain("invalid JSON contracts/syntax.json");

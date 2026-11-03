@@ -466,7 +466,8 @@ describe("recovery strategy selector", () => {
 
   it("i18n: renders validation errors in the host locale (en and ko)", async () => {
     const request = selectionRequest();
-    const output = handoff(request, [strategy("safe")]);
+    // A schema-valid handoff (two strategies), so the digest check is the one that reports.
+    const output = handoff(request, [strategy("direct"), strategy("contained", { causeFit: "containment" })]);
     output.selectionRequestDigest = digest({ stale: true });
     const frozen = selectionRequestDigest(request);
     vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "en");
