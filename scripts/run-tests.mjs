@@ -4,7 +4,7 @@ import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { findPython } from "./python-runner.mjs";
-import { ciScope, serverOnlyTests } from "./test-scope.mjs";
+import { inScope } from "./test-scope.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 
@@ -108,19 +108,19 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   let phase = "vitest";
   let reason = "RUNNER_UNAVAILABLE";
   try {
-    process.exitCode = await runTests(process.argv.slice(2));
-    if (process.exitCode === 0) {
-      phase = "node-collection";
-      const serverOnly = ciScope ? new Set(serverOnlyTests().map(file => path.join(root, ...file.split("/")))) : new Set();
-      const files = listNodeTestFiles().filter(file => !serverOnly.has(file));
-      console.log(JSON.stringify({ runner: "node:test", fileCount: files.length, files }));
-      if (files.length === 0) {
-        reason = "NODE_TEST_COLLECTION_EMPTY";
-        throw new Error("No node:test suites were collected.");
-      }
-      phase = "node-run";
-      process.exitCode = await runTests(files, [process.execPath, "--test"]);
+    const vitestExitCode = await runTests(process.argv.slice(2));
+    // node:test runs even after a Vitest failure, so one run reports both suites; a test-server rerun takes ~20 minutes.
+    phase = "node-collection";
+    const files = listNodeTestFiles().filter(file => inScope(path.relative(root, file).split(path.sep).join("/")));
+    console.log(JSON.stringify({ runner: "node:test", fileCount: files.length, files }));
+    if (files.length === 0) {
+      reason = "NODE_TEST_COLLECTION_EMPTY";
+      throw new Error("No node:test suites were collected.");
     }
+    phase = "node-run";
+    const nodeExitCode = await runTests(files, [process.execPath, "--test"]);
+    console.log(JSON.stringify({ runner: "summary", vitestExitCode, nodeExitCode }));
+    process.exitCode = vitestExitCode !== 0 ? vitestExitCode : nodeExitCode;
   } catch (cause) {
     const dual = cause instanceof AggregateError && cause.errors.length === 2 && cause.cause === cause.errors[0];
     const primary = dual ? cause.errors[0] : cause;

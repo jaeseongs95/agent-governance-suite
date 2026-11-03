@@ -48,29 +48,52 @@ export function crossesProcessBoundary(file, visiting = new Set()) {
   return result;
 }
 
+// The files Vitest collects (its default include, configDefaults.include) and the node:test suites
+// scripts/run-tests.mjs collects. The whole repository is searched like Vitest does, minus its default
+// excludes, so a test outside tests/ is classified too (antigravity-connector/hooks has some).
+const VITEST_FILE = /\.(?:test|spec)\.[cm]?[jt]sx?$/u;
+const NODE_TEST_FILE = /\.node-test\.mjs$/u;
+const EXCLUDED_DIRECTORIES = new Set(["node_modules", ".git"]);
+
 function listTests(directory, pattern) {
   const files = [];
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     if (entry.isSymbolicLink()) continue;
     const target = path.join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...listTests(target, pattern));
+    if (entry.isDirectory()) { if (!EXCLUDED_DIRECTORIES.has(entry.name)) files.push(...listTests(target, pattern)); }
     else if (entry.isFile() && pattern.test(entry.name)) files.push(target);
   }
   return files.sort();
 }
 
-/** Test files the test servers measure and CI leaves out, relative to the repository root with "/" separators. */
-export function serverOnlyTests(pattern = /\.(?:test|node-test)\.(?:ts|mts|mjs|js)$/u) {
-  return listTests(path.join(root, "tests"), pattern)
-    .filter(file => crossesProcessBoundary(file))
-    .map(file => path.relative(root, file).split(path.sep).join("/"));
+const relative = file => path.relative(root, file).split(path.sep).join("/");
+
+/** Every Vitest and node:test file, relative to the repository root with "/" separators. */
+export function testFiles() {
+  return [...listTests(root, VITEST_FILE), ...listTests(root, NODE_TEST_FILE)].map(relative).sort();
 }
 
-/** AGS_TEST_SCOPE=ci selects the CI subset; anything else (test servers, local) runs everything. */
-export const ciScope = process.env.AGS_TEST_SCOPE === "ci";
+/** Test files the test servers measure and CI leaves out, relative to the repository root with "/" separators. */
+export function serverOnlyTests() {
+  return testFiles().filter(file => crossesProcessBoundary(path.join(root, ...file.split("/"))));
+}
+
+/**
+ * AGS_TEST_SCOPE=ci runs the CI subset and AGS_TEST_SCOPE=server the rest, so during development CI and a test server
+ * can split the suite between them; unset (test servers, release candidates) runs everything.
+ */
+export const testScope = process.env.AGS_TEST_SCOPE || "all";
+if (!["all", "ci", "server"].includes(testScope)) throw new Error(`AGS_TEST_SCOPE must be ci or server: ${testScope}`);
+export const ciScope = testScope === "ci";
+export const serverScope = testScope === "server";
+
+/** Whether a test file runs in the current scope. */
+export function inScope(file, server = new Set(serverOnlyTests())) {
+  return testScope === "all" || server.has(file) === serverScope;
+}
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename)) {
-  const all = listTests(path.join(root, "tests"), /\.(?:test|node-test)\.(?:ts|mts|mjs|js)$/u);
+  const all = testFiles();
   const server = serverOnlyTests();
   console.log(JSON.stringify({ total: all.length, serverOnly: server.length, ci: all.length - server.length }));
 }
