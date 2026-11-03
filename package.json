@@ -12,7 +12,9 @@
     "build": "tsc --noEmit && node scripts/build.mjs",
     "test": "node scripts/build.mjs && node scripts/run-tests.mjs",
     "test:server": "node scripts/build.mjs && node scripts/run-tests.mjs && node scripts/check-runtime.mjs",
-    "lint": "eslint . && node scripts/validate-repository.mjs",
+    "lint": "eslint . && node scripts/validate-repository.mjs && node scripts/i18n.mjs --check",
+    "i18n:write": "node scripts/i18n.mjs --write",
+    "i18n:check": "node scripts/i18n.mjs --check",
     "dev": "tsx mcp-server/src/index.ts",
     "runtime:check": "node scripts/check-runtime.mjs",
     "bundle:check": "node scripts/check-bundle.mjs",
@@ -41,10 +43,12 @@
     "@modelcontextprotocol/sdk": "^1.30.0",
     "ajv": "^8.20.0",
     "ajv-formats": "3.0.1",
+    "intl-messageformat": "^12.1.4",
     "zod": "^4.5.4"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@formatjs/icu-messageformat-parser": "^3.5.22",
     "@types/node": "^26.5.0",
     "esbuild": "^0.28.2",
     "eslint": "^10.10.0",

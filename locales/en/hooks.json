@@ -1,0 +1,3 @@
+{
+  "hooks.editGate.denied": "[AGS] Changing a {limit, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} product file without a workflow: {paths}{earlier, plural, =0 {} one { (including # product file changed earlier)} other { (including # product files changed earlier)}}. Start a workflow first (minimal start call: {example})."
+}

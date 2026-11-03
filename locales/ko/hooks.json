@@ -1,0 +1,3 @@
+{
+  "hooks.editGate.denied": "[AGS] workflow 없이 제품 파일 {limit, number}개째 변경: {paths}{earlier, plural, =0 {} other { (앞서 바꾼 제품 파일 #개 포함)}}. 먼저 workflow를 시작하라(최소 시작 호출 예: {example})."
+}
