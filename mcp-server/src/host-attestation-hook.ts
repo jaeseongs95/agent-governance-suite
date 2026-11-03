@@ -61,6 +61,8 @@ export interface HostAttestationHookOptions {
   readText?: (file: string) => string | null;
   sleep?: (milliseconds: number) => void;
   maxWaitMs?: number;
+  /** Wait when no session model can stand in for the issuing message (headless sessions, subagents). */
+  maxWaitWithoutSessionModelMs?: number;
   pollIntervalMs?: number;
   now?: () => Date;
   readSessionModel?: (sessionId: string) => SessionModelRecord | null;
@@ -541,22 +543,36 @@ export function observeClaudeExecution(input: HookInput, options: HostAttestatio
   const reader = options.readText ? textTranscriptReader(options.readText) : fileTranscriptReader;
   const sleep = options.sleep ?? sleepSync;
   const maxWaitMs = options.maxWaitMs ?? 300;
+  // An explicit maxWaitMs bounds every wait; by default a call with no session model to fall back on waits longer.
+  const maxWaitWithoutSessionModelMs = options.maxWaitWithoutSessionModelMs ?? options.maxWaitMs ?? 5000;
   const pollIntervalMs = options.pollIntervalMs ?? 100;
   const candidates = transcriptCandidates(transcriptPath, sessionId, agentId);
   const startedAtMs = options.now?.().getTime() ?? Date.now();
   const elapsedMs = () => Math.max(0, (options.now?.().getTime() ?? Date.now()) - startedAtMs);
-  let observation: TranscriptObservation | null = null;
-  let provenance = `${host}:transcript-tool-use`;
-  // Headless sessions write the issuing message before the hook runs; interactive ones do not,
-  // so the wait stays short and the session model below covers interactive sessions.
-  for (let waited = 0; ; waited += pollIntervalMs) {
-    for (const candidate of candidates) {
-      observation = reader.find(candidate, toolUseId, sessionId, agentId);
-      if (observation) break;
+  let waited = 0;
+  const search = (untilMs: number): TranscriptObservation | null => {
+    for (; ; waited += pollIntervalMs) {
+      for (const candidate of candidates) {
+        const found = reader.find(candidate, toolUseId, sessionId, agentId);
+        if (found) return found;
+      }
+      if (waited >= untilMs || elapsedMs() >= untilMs) return null;
+      sleep(pollIntervalMs);
     }
-    if (observation || waited >= maxWaitMs || elapsedMs() >= maxWaitMs) break;
-    sleep(pollIntervalMs);
+  };
+  let provenance = `${host}:transcript-tool-use`;
+  // The harness writes the issuing message after the hook starts when it is still streaming: an interactive
+  // turn, or a headless message that issues several tools at once (about 450 ms on the Windows test server).
+  let observation = search(maxWaitMs);
+  // Subagents get no SessionStart or model-switch hooks, so only their own written message counts.
+  let session: SessionModelRecord | null = null;
+  let sessionFailure: unknown = null;
+  if (!observation && !agentId) {
+    try { session = options.readSessionModel?.(sessionId) ?? null; }
+    catch (cause) { sessionFailure = cause; }
   }
+  // ponytail: polling under the hook's 10 s limit; a batch still streaming after the wait stays unobserved.
+  if (!observation && !session && !sessionFailure) observation = search(maxWaitWithoutSessionModelMs);
   if (!observation) {
     // An issuing message that was found but rejected (another session, a sidechain, no model) stays unobserved.
     for (const candidate of candidates) {
@@ -571,8 +587,7 @@ export function observeClaudeExecution(input: HookInput, options: HostAttestatio
     }
   }
   if (!observation) {
-    // Subagents get no SessionStart or model-switch hooks, so only their own written message counts.
-    const session = agentId ? null : options.readSessionModel?.(sessionId) ?? null;
+    if (sessionFailure) throw sessionFailure;
     if (!session) return { unavailable: "CLAUDE_MODEL_UNOBSERVED" };
     observation = { model: session.model, effort: null };
     provenance = `${host}:${session.source}`;

@@ -570,6 +570,30 @@ describe("Claude execution observation recorded by the governance hook", () => {
     expect(slowSleeps).toBe(0);
   });
 
+  it("keeps waiting for a message still being streamed when no session model can stand in", () => {
+    // A headless message that issues several tools appeared about 450 ms after the hook started.
+    const streaming = (sessionModel: SessionModelRecord | null) => {
+      let clockMs = 0;
+      const result = observe(base, {
+        now: () => new Date(clockMs),
+        sleep: (milliseconds) => { clockMs += milliseconds; },
+        readText: () => (clockMs >= 500 ? transcriptLine("toolu_hook") : transcriptLine("toolu_older")),
+        readSessionModel: () => sessionModel,
+      });
+      return { result, waitedMs: clockMs };
+    };
+    expect(streaming(null)).toMatchObject({
+      result: { model: "claude-opus-5", effort: "high", provenance: "claude-code:transcript-tool-use" }, waitedMs: 500 });
+    // An interactive session keeps the short wait and falls back to the model it recorded.
+    const session: SessionModelRecord = { model: "claude-sonnet-5", source: "session-start", observedAt: new Date(0).toISOString() };
+    expect(streaming(session)).toMatchObject({ result: { model: "claude-sonnet-5", provenance: "claude-code:session-start" }, waitedMs: 300 });
+    // A message that never appears is given up at the longer limit.
+    let clockMs = 0;
+    expect(observe(base, { now: () => new Date(clockMs), sleep: (milliseconds) => { clockMs += milliseconds; },
+      readText: () => null, readSessionModel: () => null })).toEqual({ unavailable: "CLAUDE_MODEL_UNOBSERVED" });
+    expect(clockMs).toBe(5000);
+  });
+
   it("observes a missing effort as null and rejects foreign sessions and sidechain issuing messages", () => {
     const read = (line: string) => ({ ...noWait, maxWaitMs: 0, readText: () => line });
     expect(observe(base, read(transcriptLine("toolu_hook", { sessionId: "other" })))).toEqual({ unavailable: "CLAUDE_ISSUING_MESSAGE_REJECTED" });

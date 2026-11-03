@@ -1,6 +1,6 @@
 # AGS 3.1.1 릴리스 노트
 
-3.1.1은 설치된 모델 목록에 없는 모델로도 AGS가 실행되게 한다. Antigravity(agy)에서 workflow를 시작할 수 없던 결함과 대화형 Claude 세션에서 workflow 시작이 거부되던 결함도 고친다. workflow 관문이 Codex 작업을 멈추게 하던 두 결함(turn 끝 문구, 저장소 밖 문서 편집 차단)도 고친다. DB 스키마와 MCP 도구 목록은 바뀌지 않았다. 실행 관측 계약(`ExecutionContext.v1`)에서 두 필드가 null을 받게 되었다. 3.1.0을 쓰는 호스트는 3.1.1로 바꾸고 AGS 프로세스를 다시 시작한다.
+3.1.1은 설치된 모델 목록에 없는 모델로도 AGS가 실행되게 한다. Antigravity(agy)에서 workflow를 시작할 수 없던 결함과 Claude 세션에서 workflow 시작이 거부되던 결함(대화형 세션, 그리고 headless에서 다른 도구와 함께 부른 경우)도 고친다. workflow 관문이 Codex 작업을 멈추게 하던 두 결함(turn 끝 문구, 저장소 밖 문서 편집 차단)도 고친다. DB 스키마와 MCP 도구 목록은 바뀌지 않았다. 실행 관측 계약(`ExecutionContext.v1`)에서 두 필드가 null을 받게 되었다. 3.1.0을 쓰는 호스트는 3.1.1로 바꾸고 AGS 프로세스를 다시 시작한다.
 
 ## 바뀐 점
 
@@ -20,10 +20,11 @@
 - agy는 hook 입력에 작업 폴더를 주지 않는 경우가 있다. 그래서 `workspace`를 생략한 `start_workflow`가 세션 현황판에서 작업 폴더를 찾지 못해 실패했다. 이제 PreInvocation hook이 세션의 cwd를 현황판에 기록한다. prompt 본문은 넘기지 않으므로, 깨우기만 하는 턴도 prompt 턴으로 기록된다.
 - hook runner가 관측 기록 hook이나 현황판 hook을 띄우다 실패하거나 시간 제한(2초)에 걸리면 그 사실을 stderr에 남긴다. 3.1.1 이전 후보에서는 결과를 버려서, 현황판 기록이 빠져도 아무 표시가 없었다.
 
-### 대화형 Claude 세션의 workflow 시작
+### Claude 세션의 workflow 시작
 
 - 대화형 Claude는 PreToolUse hook이 도는 동안 호출 메시지를 transcript에 쓴다. 3.1.0의 실행 관측 hook은 처음 찾을 때 그 메시지를 놓친다. 그 뒤 다시 열어 확인할 때 메시지가 보이면 `CLAUDE_ISSUING_MESSAGE_REJECTED`로 거부했다. 그래서 대화형 세션에서 `start_workflow`·`record_stage_result`가 실패할 수 있었다.
 - 이제 확인 단계에서 메시지가 보이면 한 번 더 찾고, 그때도 거부될 때만 거부한다.
+- headless Claude(`claude -p`)에서도 모델이 `start_workflow` 같은 관측 대상 도구를 다른 도구와 한 메시지에서 함께 부르면 거부됐다(3.1.0부터). 호출 메시지가 아직 스트리밍 중이라 hook이 시작된 뒤에 기록되는데(Windows 시험 서버에서 441~463ms), hook은 0.3초만 기다렸고 headless에는 대신할 세션 모델 기록이 없어 `CLAUDE_MODEL_UNOBSERVED`로 끝났다. 이제 대신할 세션 모델이 없으면(headless, 서브에이전트) 호출 메시지를 5초까지 기다린다. 세션 모델이 있는 대화형 메인 세션은 지금처럼 0.3초 뒤 세션 모델로 관측한다.
 
 ### workflow 관문
 
@@ -42,6 +43,7 @@
 - 대화형 Claude 세션에서는 실행 관측 호출(`plan_workflow`·`start_workflow`·`record_stage_result`·`classify_skills`·`record_skill_selection`)마다 hook이 transcript를 처음부터 끝까지 읽는다. 호출 메시지가 hook보다 늦게 기록되어 처음 찾기에서 놓치기 때문이다. Windows 시험 서버 측정에서는 100MB 0.9초, 300MB 2.3초, 500MB 4.3초가 걸렸다. 이 기울기면 1.2GB쯤에서 hook 제한 시간 10초에 닿아 호출이 막힐 수 있다(외삽). 전체를 읽는 것은 호출 메시지가 없다는 것을 증명한 뒤에만 세션 모델로 대신 관측하기 위해서다. 그래서 끝 쪽만 읽도록 줄이지 않고, 3.2에서 이미 읽은 구간의 판정을 세션별로 저장해 새로 붙은 부분만 읽게 고친다. headless 세션은 메시지를 바로 찾으므로 크기와 상관없이 2ms였다.
 - 3.1.0의 나머지 제한(셸로 바꾼 파일은 세지 않음, 구간은 turn마다 다시 셈)은 그대로다.
 - 버전 관리 밖의 제품(`git init` 전에 만드는 새 프로젝트, 저장소 밖 설정 파일)은 편집 관문이 세지 않는다.
+- 대신할 세션 모델이 없는 Claude 호출은 호출 메시지를 5초까지 기다린다. 한 메시지의 도구 입력이 길어 5초 안에 스트리밍이 끝나지 않으면 여전히 `CLAUDE_MODEL_UNOBSERVED`로 거부되고, 그 도구를 따로 다시 부르면 된다. 어차피 거부될 호출(다른 세션의 메시지, 메시지를 늦게 쓰는 서브에이전트)은 거부까지 최대 5초가 더 걸린다. transcript가 아주 크면 이 대기와 전체 읽기가 hook 제한 시간 10초를 넘을 수 있다.
 
 ## 검증
 
