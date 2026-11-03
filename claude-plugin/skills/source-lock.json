@@ -70,7 +70,7 @@
       "version": "1.0.3",
       "versionSource": "skill-metadata",
       "updatePolicy": "internal",
-      "integratedChecksum": "sha256:f5e455560de58e406d51e493d58a5e05b759a23773836ad431d2baf42461b344",
+      "integratedChecksum": "sha256:a7bafaa0e9e7dd5600e4d50ff4bec6466583b19927ae15481923a874230bdc8f",
       "checksumScope": "relative paths and normalized text bytes under skills/mutation-risk-preflight"
     },
     {

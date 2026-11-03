@@ -6,6 +6,7 @@ import test from "node:test";
 import {
   checkRegistryContextCompatibility,
   matchesPreflightAdditiveSourceSuccessor,
+  matchesPreflightExpiryRemovalSuccessor,
   matchesPreflightPrivatePreparationSuccessor,
   matchesPreflightPlatformEventsSuccessor,
   readHistoricalSource,
@@ -14,6 +15,7 @@ import {
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const baseline = "59a580ac950e4813108d5b3a83bf01b9de0d7ccb";
 const privatePreparationRevision = "245a1e85ab649acb4a6766ad2332191edb35cb74";
+const platformEventsRevision = "7326e5f6d74112c9935bc5d270ad46aa28476ad9";
 const paths = [
   "README.md", "SKILL.md", "classification.json",
   "contracts/mutation-intent.v1.schema.json", "contracts/mutation-preflight-report.v1.schema.json",
@@ -21,20 +23,30 @@ const paths = [
   "references/recovery-requirements.md", "scripts/evaluate-preflight.mjs",
 ].map((path) => `skills/mutation-risk-preflight/${path}`);
 
-test("exact platform-events and private-preparation successors preserve the historical chain", () => {
+test("exact expiry-removal, platform-events and private-preparation successors preserve the historical chain", () => {
   for (const path of paths) {
     const current = readFileSync(new URL(`../../${path}`, import.meta.url));
+    const platformEvents = execFileSync("git", ["show", `${platformEventsRevision}:${path}`], { cwd: root });
     const privatePreparation = execFileSync("git", ["show", `${privatePreparationRevision}:${path}`], { cwd: root });
     const historical = execFileSync("git", ["show", `${baseline}:${path}`], { cwd: root });
-    const changed = !current.equals(privatePreparation);
+    const expiryChanged = !current.equals(platformEvents);
+    const changed = !platformEvents.equals(privatePreparation);
+    assert.equal(matchesPreflightExpiryRemovalSuccessor(path, current), expiryChanged, path);
+    assert.equal(matchesPreflightExpiryRemovalSuccessor(path, platformEvents), false, path);
+    assert.equal(matchesPreflightExpiryRemovalSuccessor(path, historical), false, path);
+    assert.equal(matchesPreflightExpiryRemovalSuccessor(path, Buffer.concat([current, Buffer.from("\n")])), false, path);
+    if (!expiryChanged) {
+      assert.equal(matchesPreflightPrivatePreparationSuccessor(path, current), !changed, path);
+      assert.equal(matchesPreflightPlatformEventsSuccessor(path, current), changed, path);
+    }
     assert.equal(matchesPreflightPrivatePreparationSuccessor(path, privatePreparation), true, path);
-    assert.equal(matchesPreflightPrivatePreparationSuccessor(path, current), !changed, path);
-    assert.equal(matchesPreflightPlatformEventsSuccessor(path, current), changed, path);
+    assert.equal(matchesPreflightPrivatePreparationSuccessor(path, platformEvents), !changed, path);
+    assert.equal(matchesPreflightPlatformEventsSuccessor(path, platformEvents), changed, path);
     assert.equal(matchesPreflightPlatformEventsSuccessor(path, privatePreparation), false, path);
     assert.equal(matchesPreflightPlatformEventsSuccessor(path, historical), false, path);
-    assert.equal(matchesPreflightPlatformEventsSuccessor(path, Buffer.concat([current, Buffer.from("\n")])), false, path);
+    assert.equal(matchesPreflightPlatformEventsSuccessor(path, Buffer.concat([platformEvents, Buffer.from("\n")])), false, path);
     assert.equal(matchesPreflightPrivatePreparationSuccessor(path, historical), false, path);
-    assert.equal(matchesPreflightPrivatePreparationSuccessor(path, Buffer.concat([current, Buffer.from("\n")])), false, path);
+    assert.equal(matchesPreflightPrivatePreparationSuccessor(path, Buffer.concat([platformEvents, Buffer.from("\n")])), false, path);
     // These three files already had a reviewed policy-wording projection.
     const historicalRevision = ["SKILL.md", "classification.json", "references/entry-details.md"].some((suffix) => path === `skills/mutation-risk-preflight/${suffix}`)
       ? "c53ad5947bc5cc6a4e076eb9931e454e300d5c3b" : baseline;
@@ -42,6 +54,7 @@ test("exact platform-events and private-preparation successors preserve the hist
   }
   assert.equal(matchesPreflightPrivatePreparationSuccessor("skills/unreviewed/SKILL.md", Buffer.from("anything")), false);
   assert.equal(matchesPreflightPlatformEventsSuccessor("skills/unreviewed/SKILL.md", Buffer.from("anything")), false);
+  assert.equal(matchesPreflightExpiryRemovalSuccessor("skills/unreviewed/SKILL.md", Buffer.from("anything")), false);
 });
 
 test("existing additive pins remain valid after the exact successor projection", () => {

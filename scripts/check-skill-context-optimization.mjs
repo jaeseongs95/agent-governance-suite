@@ -267,6 +267,10 @@ const ORCHESTRATOR_CLASSIFICATION_UNAVAILABLE_REFERENCE_HASHES = Object.freeze({
 const TASK_CONTRACT_ROUTING_SOURCE_HASHES = Object.freeze({
   "skills/task-contract/references/field-guide.md": "09083264f2f4746dcda5e9f342d0a0ec27ca21cb692965d036121dc882bc1ac7",
 });
+// 9d623d7a: attempt leases no longer expire by time. Allow only these exact reference bytes.
+const ORCHESTRATOR_LEASE_EXPIRY_REMOVAL_SOURCE_HASHES = Object.freeze({
+  "skills/orchestrator/references/convergence-guard.md": "cb8bbae8f94c18a9c6dc4a90bec8bcaf0b91e414ffb223d1a514ab92d3bdb70f",
+});
 
 function matchesOrchestratorSourceSuccessor(path, bytes) {
   const digest = createHash("sha256").update(bytes).digest("hex");
@@ -412,10 +416,42 @@ export function matchesPreflightPlatformEventsSuccessor(path, bytes) {
   return Boolean(hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]);
 }
 
+// Bind the receipt expiry removal (9d623d7a) exactly, then reuse the unchanged 1.0.3/1.0.2 -> historical chain.
+const PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR = Object.freeze({
+  revision: "mutation-risk-preflight-receipt-expiry-removal",
+  baselineRevision: "7326e5f6d74112c9935bc5d270ad46aa28476ad9",
+  authorityEffect: "none",
+  hashes: {
+    "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json": ["b8a4e1ca5f5e203639545d27cc190421d91d132569cec70f5b579d39337b7331", "011e06daac326d162351f06701d461ae3bedbeda37b2003b8e518c28c065884d"],
+    "skills/mutation-risk-preflight/references/entry-details.md": ["b9d8952a60a92f7e0ef98c9d90f076dddfc9bedcbd8a0e3af0b02d1dd50bffd4", "f7281b2a0a79469ec552fc988b5380a758ba01fc3de536a76e4b737e7cf4de23"],
+    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": ["f095e57681872a6d819cf463e7518255e9e878af3103aa0d2f6d51e0023a01fe", "365e0a4a15b1bbf8e521cf7f2e603718276335d5ae258960b9dd7fd9a25dbc3a"],
+  },
+});
+
+export function matchesPreflightExpiryRemovalSuccessor(path, bytes) {
+  const hashes = PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR.hashes[path];
+  return Boolean(hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]);
+}
+
+function matchesPreflightPlatformEventsChain(path, bytes) {
+  return matchesPreflightPlatformEventsSuccessor(path, bytes)
+    || (matchesPreflightExpiryRemovalSuccessor(path, bytes)
+      && PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR.hashes[path][0] === PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes[path]?.[1]);
+}
+
 function matchesPreflightPrivatePreparationChain(path, bytes) {
   return matchesPreflightPrivatePreparationSuccessor(path, bytes)
-    || (matchesPreflightPlatformEventsSuccessor(path, bytes)
-      && PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes[path][0] === PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes[path]?.[1]);
+    || (matchesPreflightPlatformEventsChain(path, bytes)
+      && PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes[path][0] === PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes[path]?.[1])
+    || (matchesPreflightExpiryRemovalSuccessor(path, bytes)
+      && PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR.hashes[path][0] === PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes[path]?.[1]);
+}
+
+function beforePreflightExpiryRemoval(path, bytes) {
+  if (!matchesPreflightExpiryRemovalSuccessor(path, bytes)) return bytes;
+  const original = git("show", `${PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR.baselineRevision}:${path}`);
+  if (createHash("sha256").update(original).digest("hex") !== PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR.hashes[path][0]) throw new Error(`Historical preflight expiry-removal source differs: ${path}`);
+  return original;
 }
 
 function beforePreflightPlatformEvents(path, bytes) {
@@ -638,6 +674,7 @@ const LIVE_HOST_GUIDANCE_SUCCESSOR = Object.freeze({
 });
 
 function historicalBytes(path, bytes) {
+  bytes = beforePreflightExpiryRemoval(path, bytes);
   bytes = beforePreflightPlatformEvents(path, bytes);
   if (matchesPreflightPrivatePreparationSuccessor(path, bytes)) {
     bytes = git("show", `${PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.baselineRevision}:${path}`);
@@ -873,7 +910,10 @@ export function checkRegistryContextCompatibility(registry) {
 export function checkSkillContextOptimization() {
   const errors = [];
   for (const currentPath of Object.keys(PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes)) {
-    if (!matchesPreflightPlatformEventsSuccessor(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight platform-events successor bytes differ: ${currentPath}`);
+    if (!matchesPreflightPlatformEventsChain(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight platform-events successor bytes differ: ${currentPath}`);
+  }
+  for (const currentPath of Object.keys(PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR.hashes)) {
+    if (!matchesPreflightExpiryRemovalSuccessor(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight expiry-removal successor bytes differ: ${currentPath}`);
   }
   for (const currentPath of Object.keys(PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes)) {
     if (!matchesPreflightPrivatePreparationChain(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight private-preparation successor bytes differ: ${currentPath}`);
@@ -886,6 +926,11 @@ export function checkSkillContextOptimization() {
   for (const [currentPath, expectedHash] of Object.entries(TASK_CONTRACT_ROUTING_SOURCE_HASHES)) {
     if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== expectedHash) {
       errors.push(`task-contract routing source differs: ${currentPath}`);
+    }
+  }
+  for (const [currentPath, expectedHash] of Object.entries(ORCHESTRATOR_LEASE_EXPIRY_REMOVAL_SOURCE_HASHES)) {
+    if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== expectedHash) {
+      errors.push(`orchestrator lease expiry-removal source differs: ${currentPath}`);
     }
   }
   for (const successorPath of Object.keys(SKILL_POLICY_WORDING_SUCCESSOR.hashes)) {
@@ -1001,6 +1046,7 @@ export function checkSkillContextOptimization() {
     for (const reviewedPath of Object.keys(CLASSIFICATION_UPDATE.hashes)) if (reviewedPath.startsWith(`skills/${skillId}/`)) allowed.add(reviewedPath);
     for (const currentPath of Object.keys(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     for (const currentPath of Object.keys(TASK_CONTRACT_ROUTING_SOURCE_HASHES)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
+    for (const currentPath of Object.keys(ORCHESTRATOR_LEASE_EXPIRY_REMOVAL_SOURCE_HASHES)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     if (skillId === "session-board") {
       for (const reviewedPath of ["skills/session-board/scripts/board-store.d.mts"]) {
         if (!matchesReviewedImplementationUpdate(reviewedPath, readHistorical(ROOT, reviewedPath))) {
@@ -1056,6 +1102,7 @@ export function checkSkillContextOptimization() {
     currentHostConsumptionSourceSuccessors: [HOST_CONSUMPTION_SOURCE_SUCCESSOR],
     currentPreflightPrivatePreparationSuccessors: [PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR],
     currentPreflightPlatformEventsSuccessors: [PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR],
+    currentPreflightExpiryRemovalSuccessors: [PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR],
     currentPreflightAdditiveSourceSuccessors: [PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR],
     approvedAdditions: [{ skillId: "session-board", path: SESSION_BOARD_ADDITION, sha256: SESSION_BOARD_ADDITION_SHA256 }],
     policyBaselineUpdates: [{ skillId: "orchestrator", ...ORCHESTRATOR_INTAKE }],
