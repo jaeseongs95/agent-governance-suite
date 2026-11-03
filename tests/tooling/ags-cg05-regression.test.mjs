@@ -1,13 +1,17 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { profileWorkspace } from "../../skills/workspace-convention-profiler/scripts/profile-workspace.mjs";
 import { validateProfile } from "../../skills/workspace-convention-profiler/scripts/validate-profile.mjs";
 
 // SOURCE ONLY: written for CG05; execution requires the existing authorized test lane.
 const temporaryDirectories = [];
+
+// The limitations compare the Korean source sentences of profileWorkspace (catalog domain skillChecksKo).
+beforeAll(() => { vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "ko"); });
+afterAll(() => { vi.unstubAllEnvs(); });
 const request = (workspaceRoot, maxBytesPerFile = 100000) => ({
   schemaVersion: "1.0.0", workspaceRoot, taskObjective: "CG05 regression fixture", targetPaths: [],
   resolvedInstructionRefs: [], knownConstraints: [],

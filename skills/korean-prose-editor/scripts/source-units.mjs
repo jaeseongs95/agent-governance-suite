@@ -1,4 +1,5 @@
 import { SCHEMA_VERSION, sha256 } from "./lib.mjs";
+import { hostText } from "../../../runtime/i18n.mjs";
 
 const FENCE_LINE = /^( {0,3})(`{3,}|~{3,})[^\r\n]*(?:\r?\n|$)/gmu;
 
@@ -11,9 +12,9 @@ const FENCE_LINE = /^( {0,3})(`{3,}|~{3,})[^\r\n]*(?:\r?\n|$)/gmu;
  * @param {{sourceDigest: string, sourceLength: number, spans: Array<{id: string, start: number, end: number}>}} manifest
  */
 export function createSourceUnitManifest(source, manifest) {
-  if (typeof source !== "string") throw new TypeError("source must be a string");
+  if (typeof source !== "string") throw new TypeError(hostText("skillChecks.koreanProseEditorUnits.sourceNotString"));
   if (manifest?.sourceDigest !== sha256(source) || manifest?.sourceLength !== source.length || !Array.isArray(manifest?.spans)) {
-    throw new TypeError("manifest must match source");
+    throw new TypeError(hostText("skillChecks.koreanProseEditorUnits.manifestSourceMismatch"));
   }
 
   const ranges = fencedRanges(source);

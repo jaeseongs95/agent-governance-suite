@@ -1,4 +1,5 @@
 import { SCHEMA_VERSION, sha256 } from "./lib.mjs";
+import { hostText } from "../../../runtime/i18n.mjs";
 
 /** @typedef {{kind: string, start: number, end: number, text: string, priority: number}} Candidate */
 
@@ -17,9 +18,9 @@ const PATTERNS = [
 
 /** @param {string} source @param {string[]} [protectedStrings] */
 export function extractProtectedSpans(source, protectedStrings = []) {
-  if (typeof source !== "string") throw new TypeError("source must be a string");
+  if (typeof source !== "string") throw new TypeError(hostText("skillChecks.koreanProseEditorSpans.sourceNotString"));
   if (!Array.isArray(protectedStrings) || protectedStrings.some((value) => typeof value !== "string" || value.length === 0 || !source.includes(value))) {
-    throw new TypeError("protectedStrings must contain nonempty strings present in source");
+    throw new TypeError(hostText("skillChecks.koreanProseEditorSpans.protectedStringsInvalid"));
   }
   /** @type {Candidate[]} */
   const candidates = [];
