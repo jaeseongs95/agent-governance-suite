@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ApiResultV1 } from "../../contracts/types.js";
 import { codexMetaIngress } from "../../mcp-server/src/builtin-caller-ingress.js";
 import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
-import { ContinuityService, MINIMAL_WORKFLOW_START_EXAMPLE } from "../../mcp-server/src/continuity-service.js";
+import { ContinuityService, minimalWorkflowStartExample } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { HostAttestationProvider } from "../../mcp-server/src/host-attestation.js";
 import { codexExecutionAdapter } from "../../mcp-server/src/host-execution-adapters.js";
@@ -174,7 +174,7 @@ describe("start_workflow minimal start", () => {
 
   it("3.2.1 the edit gate's start example is a start that works", async () => {
     const { call } = await harness();
-    const example = JSON.parse(MINIMAL_WORKFLOW_START_EXAMPLE.replace(/^start_workflow /u, "")) as Record<string, unknown>;
+    const example = JSON.parse(minimalWorkflowStartExample("ko").replace(/^start_workflow /u, "")) as Record<string, unknown>;
     const started = await call<MinimalWorkflowStartV1>({ ...example, workspace: repo });
     expect(started.error).toBeNull();
     expect(started.data?.state).toBe("running");

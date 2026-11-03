@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CheckpointContextRequestV1, ContinuitySnapshotV1 } from "../../contracts/types.js";
 import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
-import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
+import { ContinuityService, renderHookText } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { wakeMessage } from "../../mcp-server/src/session-message-client.js";
@@ -225,5 +225,51 @@ describe("D0347 저장 유도의 현재 세대 재검증", () => {
       epoch: candidate.summary!.epoch, revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest,
     }, asRoot(session));
     expect(loaded.data).toEqual(saved);
+  });
+});
+
+// The cue and the restore candidate are rendered by the hook in the host locale; key and params stay the same.
+describe("checkpoint cue and restore candidate locale", () => {
+  const CUE_KO_TAIL = [
+    "현재 요청의 교정·제약·결정·남은 작업을 잃으면 다음 행동이 달라지는지 확인하라. 달라진 상태가 아직 저장되지 않았다면 그 판단·작업을 이어가기 전에 context-continuity 스킬과 기존 checkpoint_context로 필요한 상태와 근거 참조만 저장하라.",
+    "재개·fork·인계는 inspect_context와 정확한 후보의 load_context를 먼저 수행하고 최신 요청과 대조하라. 없는 이전 정보는 추측하지 말고 현재 실제 전달된 문맥만 사용하라. workflow 원장을 직접 스냅샷으로 복제하지 마라.",
+    "이 알림은 저장·복원 성공이 아니다. 실제 응답을 확인하고 실패·미저장 상태를 구분하라. 보존할 변경이 없으면 추가 저장하지 말고 작업을 계속하라.",
+  ];
+  const CUE_EN_TAIL = [
+    "Check whether losing the current request's corrections, constraints, decisions and remaining work would change the next action. If that changed state is not saved yet, save only the needed state and evidence references with the context-continuity skill and the existing checkpoint_context before continuing that decision or work.",
+    "For a resume, fork or handoff, run inspect_context and load_context of the exact candidate first and reconcile them with the latest request. Do not guess earlier information that is not there; use only the context actually delivered now. Do not copy the workflow ledger into a snapshot yourself.",
+    "This notice is not a successful save or restore. Check the actual response and tell failed and unsaved states apart. If there is no change to keep, do not save again; continue the work.",
+  ];
+  const cue = (status: string, tail: string[]) => ["[Task continuity checkpoint check]", status, ...tail].join("\n");
+
+  it("renders each cue state byte for byte in ko and in en", () => {
+    const service = createService();
+    expect(renderHookText(service.checkpointCueForSession(session), "ko")).toBe(cue("현재 작업의 저장본: 없음.", CUE_KO_TAIL));
+    expect(renderHookText(service.checkpointCueForSession(session, true), "ko"))
+      .toBe(cue("사전 저장본 없음: 이 알림은 압축으로 유실된 내용을 복원하지 않는다.", CUE_KO_TAIL));
+    expect(renderHookText(service.checkpointCueForSession(session), "en")).toBe(cue("Save of the current task: none.", CUE_EN_TAIL));
+    expect(renderHookText(service.checkpointCueForSession(session, true), "en"))
+      .toBe(cue("No prior save: this notice does not restore content lost to compaction.", CUE_EN_TAIL));
+    checkpoint(service);
+    expect(renderHookText(service.checkpointCueForSession(session), "ko")).toBe(cue("현재 작업의 저장본: 있음.", CUE_KO_TAIL));
+    expect(renderHookText(service.checkpointCueForSession(session), "en")).toBe(cue("Save of the current task: present.", CUE_EN_TAIL));
+  });
+
+  it("AGENT_GOVERNANCE_LOCALE=en renders the hook cue and the resume candidate in English", () => {
+    const service = createService(), en = { AGENT_GOVERNANCE_LOCALE: "en" };
+    const input = { hook_event_name: "UserPromptSubmit", session_id: session, prompt: "x" };
+    expect(context(handleContinuityHook(input, service, "codex", en), "UserPromptSubmit")).toBe(cue("Save of the current task: none.", CUE_EN_TAIL));
+    expect(context(handleContinuityHook(input, service, "codex", {}), "UserPromptSubmit")).toBe(cue("현재 작업의 저장본: 없음.", CUE_KO_TAIL));
+    checkpoint(service);
+    const resume = { hook_event_name: "SessionStart", source: "resume", session_id: session };
+    const english = context(handleContinuityHook(resume, service, "codex", en), "SessionStart").split("\n");
+    expect(english[0]).toBe("[Task continuity restore candidate — metadata only]");
+    expect(english.slice(1, 3)).toEqual(["decision=DEFER", "source=direct"]);
+    expect(english.at(-1)).toBe("No snapshot body was injected. Treat nextActions as historical candidates only; call load_context explicitly after checking the current user request.");
+    const korean = context(handleContinuityHook(resume, service, "codex", {}), "SessionStart").split("\n");
+    // Only the sentence changes; every machine line keeps its bytes.
+    expect(korean.slice(0, -1).map(line => line.replace(/^candidateToken=.*/u, "candidateToken="))).toEqual(
+      english.slice(0, -1).map(line => line.replace(/^candidateToken=.*/u, "candidateToken=")));
+    expect(korean.at(-1)).toBe("스냅샷 본문은 주입하지 않았다. nextActions는 과거 후보로만 다루고, 현재 사용자 요청을 확인한 뒤 load_context를 명시적으로 호출하라.");
   });
 });

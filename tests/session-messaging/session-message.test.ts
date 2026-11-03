@@ -30,6 +30,7 @@ import { antigravityWakeOutcome, resolveGeminiAgentApi } from "../../mcp-server/
 import { transportDeliveryCapabilities } from "../../mcp-server/src/wake-transports.js";
 import { MESSAGE_BODY_MAX_BYTES, PRESENCE_LEASE_MS, SessionMessageStore } from "../../mcp-server/src/session-message-store.js";
 import { SESSION_MESSAGE_HOOK_CONTEXT_MAX_BYTES } from "../../mcp-server/src/session-message-protocol.js";
+import { msg, render } from "../../mcp-server/src/i18n.js";
 import { adaptHostInput, hostDeliveryProfile, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { supportsInjection, type DeliveryCapabilities } from "../../mcp-server/src/input-observation.js";
 import { InMemoryPluginUpdateStore } from "../../mcp-server/src/plugin-update-store.js";
@@ -1064,7 +1065,7 @@ describe("in-process messaging and vendor-neutral adapter", () => {
   // the model saw only the peer warning and never acknowledged). The envelope itself names the acknowledgement tool once.
   it("names the acknowledgement tool once outside the peer blocks and keeps each block's untrusted-peer warning", () => {
     const messages = ["batch-peer-01", "batch-peer-02"].map(messageId => ({messageId, sender: {host: "peer", sessionId: "sender"}, recipient: {host: "recipient", sessionId: "main"}, body: "business payload", createdAt: "2026-10-26T00:00:00.000Z", expiresAt: "2026-10-26T01:00:00.000Z", deliveryAttempt: 1, firstDeliveredAt: "2026-10-26T00:00:01.000Z", sourceReceiptId: `source-${messageId}`, contentDigest: "sha256:synthetic"}));
-    const context = sessionMessageEnvelope(messages);
+    const context = sessionMessageEnvelope(messages, "en");
     const lines = context.split(/\n/u);
     const guidance = lines.filter(line => line.includes("acknowledge_session_messages"));
     expect(guidance).toHaveLength(1);
@@ -1075,6 +1076,12 @@ describe("in-process messaging and vendor-neutral adapter", () => {
     for (const message of messages) expect(context).toContain(JSON.stringify(message.messageId));
     expect(SESSION_MESSAGE_SERVER_INSTRUCTIONS).toContain("acknowledge_session_messages");
     expect(SESSION_MESSAGE_SERVER_INSTRUCTIONS).toContain("한 번에");
+    // The host locale renders the same envelope sentences; the fixed BEGIN/END delimiters do not change.
+    const korean = sessionMessageEnvelope(messages, "ko").split(/\n/u);
+    expect(korean[0]).toBe(render(msg("peer.envelope.ackGuidance", {}), "ko"));
+    expect(korean[0]).not.toBe(guidance[0]);
+    expect(korean.filter(line => line === render(msg("peer.envelope.warning", {}), "ko"))).toHaveLength(2);
+    expect(korean.filter(line => line === "[agent-governance-suite peer message BEGIN]")).toHaveLength(2);
   });
 
   it("keeps the largest one-message claim inside the hook context limit with the acknowledgement line", () => {
@@ -1084,10 +1091,13 @@ describe("in-process messaging and vendor-neutral adapter", () => {
     const message = { messageId: longest(128), sender: identity, recipient: identity, body: "\u0001".repeat(4096), createdAt: "2026-10-26T00:00:00.000Z",
       expiresAt: "2026-10-26T01:00:00.000Z", deliveryAttempt: 999, firstDeliveredAt: "2026-10-26T00:00:01.000Z", claimReceipt: `999:${"0".repeat(36)}`,
       sourceReceiptId: longest(128), contentDigest: `sha256:${"0".repeat(64)}` };
-    const context = sessionMessageEnvelope([message]);
-    expect(context).toContain('"messageEncoding":"base64-utf8"');
-    expect(context).toContain("acknowledge_session_messages");
-    expect(Buffer.byteLength(context, "utf8")).toBeLessThanOrEqual(8192);
+    // Korean takes more UTF-8 bytes than English; the largest claim must fit in every shipped locale.
+    for (const locale of ["en", "ko"] as const) {
+      const context = sessionMessageEnvelope([message], locale);
+      expect(context).toContain('"messageEncoding":"base64-utf8"');
+      expect(context).toContain("acknowledge_session_messages");
+      expect(Buffer.byteLength(context, "utf8")).toBeLessThanOrEqual(8192);
+    }
   });
 
   // Prompt-engineering development checks: instruction semantics, not target-model behavior or holdout evaluation.

@@ -9,7 +9,7 @@ import type {
 } from "../../contracts/types.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
-import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
+import { ContinuityService, renderHookText } from "../../mcp-server/src/continuity-service.js";
 import { ContinuityStoreError, SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { createInactiveSharedStores } from "../../mcp-server/src/inactive-shared-stores.js";
@@ -166,7 +166,7 @@ describe("D0344 terminal workflow to fresh direct task", () => {
       bindRoot(target, value);
       const oldWorkflowLoad = loadInput(target.candidateForSession(session));
       target.markPreCompact(session);
-      expect(target.compactContext(session)).toContain("decision=INJECT");
+      expect(renderHookText(target.compactContext(session), "ko")).toContain("decision=INJECT");
       const correlation = target.correlateSession(session);
       expect(target.store.setSuppressed(correlation, 1, now)).toBe(true);
       const receipt = target.store.getRequest(correlation, 1, target.hashOpaque("request", "same-request-id"));
@@ -186,7 +186,7 @@ describe("D0344 terminal workflow to fresh direct task", () => {
         lastAutoInjectedRevision: null, pendingSource: null, pendingRevision: null, pendingDigest: null,
         pendingRootId: null, pendingConsumed: false });
       expect(target.candidateForSession(session)).toMatchObject({ decision: "REJECT", summary: null, restoreToken: null });
-      const beforeCompact = target.store.getTask(correlation), missing = target.compactContext(session);
+      const beforeCompact = target.store.getTask(correlation), missing = renderHookText(target.compactContext(session), "ko");
       expect(missing).toContain("[Task continuity checkpoint check]");
       expect(missing).toContain("사전 저장본 없음");
       for (const forbidden of [historical.core.objective, value.taskEnvelope.objective, oldDirectLoad.candidateToken, oldWorkflowLoad.candidateToken,

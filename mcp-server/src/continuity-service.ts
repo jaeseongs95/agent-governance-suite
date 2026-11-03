@@ -10,7 +10,9 @@ import {
   type ErrorCode,
   type Sha256Digest,
   WorkflowContractError,
+  contractErrorBody,
 } from "../../contracts/types.js";
+import { msg, render, ROOT_LOCALE, type MessageRef, type SupportedLocale } from "./i18n.js";
 import { canonicalJson, convergenceDigest } from "./convergence-logic.js";
 import type { ContractValidator } from "./schema-validator.js";
 import {
@@ -85,8 +87,14 @@ const GATE_UNAVAILABLE_PREFIX = "phase-gate-unavailable:";
  * files in one window is refused. Tune it from the phase-deny and phase-workflow-start rows.
  */
 export const WORKFLOW_FILE_LIMIT = 3;
-/** The fixed minimal start every refusal names. */
-export const MINIMAL_WORKFLOW_START_EXAMPLE = 'start_workflow {"goal":"<목표>","stages":["minimal-implementation"],"acceptanceCriteria":["<수용 기준>"]}';
+/** The fixed minimal start every refusal names; only its placeholder words follow the locale. */
+export function minimalWorkflowStartExample(locale: SupportedLocale): string {
+  return `start_workflow ${JSON.stringify({
+    goal: render(msg("hooks.editGate.goalPlaceholder", {}), locale),
+    stages: ["minimal-implementation"],
+    acceptanceCriteria: [render(msg("hooks.editGate.criterionPlaceholder", {}), locale)],
+  })}`;
+}
 const RUN_TERMINAL_STATES = new Set(["passed", "failed", "blocked"]);
 
 type WorkflowActivity = "active" | "none" | { unavailable: string };
@@ -98,6 +106,14 @@ export function workflowFailureCode(cause: unknown): string {
     return typeof reason === "string" && /^[A-Za-z0-9_.:-]{1,80}$/u.test(reason) ? `${cause.code}:${reason}` : cause.code;
   }
   return failureReason(cause).reason ?? "UNEXPECTED_FAILURE";
+}
+
+/** Hook output lines: catalog messages the hook entry renders in the host locale, one per line (docs/i18n-design.md 6). */
+export type HookText = readonly MessageRef[];
+
+/** The text a hook shows, or null when there is nothing to show. */
+export function renderHookText(text: HookText | null, locale: SupportedLocale): string | null {
+  return text ? text.map(line => render(line, locale)).join("\n") : null;
 }
 
 export interface WorkflowContinuityCardV1 {
@@ -173,8 +189,8 @@ function ok<T>(data: T): ApiResultV1<T> {
   return { schemaVersion: "1.0.0", ok: true, data, error: null };
 }
 
-function failure(code: ErrorCode, message: string, details: Record<string, unknown> | null = null): ApiResultV1<never> {
-  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
+function failure(code: ErrorCode, message: MessageRef, details: Record<string, unknown> | null = null): ApiResultV1<never> {
+  return { schemaVersion: "1.0.0", ok: false, data: null, error: contractErrorBody(code, message, details) };
 }
 
 /** A stored purge result: the body-free "purged" receipt shape, never a checkpoint or scrubbed request. */
@@ -544,7 +560,7 @@ export class ContinuityService implements ContinuityGateway {
       const request = this.validator!.checkpointContextRequest(value);
       const binding = this.toolBinding(caller, "checkpoint_context");
       const task = this.currentTask(binding);
-      if (task.rootId) throw new WorkflowContractError("SNAPSHOT_CONFLICT", "Direct checkpoints are disabled after a workflow root is bound.", { rootId: task.rootId });
+      if (task.rootId) throw new WorkflowContractError("SNAPSHOT_CONFLICT", msg("continuity.checkpoint.disabledAfterRoot", {}), { rootId: task.rootId });
       const now = this.now().toISOString();
       const current = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
         () => this.store.getSnapshot(binding.c, binding.e), true));
@@ -564,8 +580,8 @@ export class ContinuityService implements ContinuityGateway {
       const requestHash = this.hashOpaque("request", request.requestId);
       const commandDigest = convergenceDigest(request as unknown as Record<string, unknown>);
       const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot, Array.isArray(binding.a) ? binding.a : []);
-      if (stored.kind === "epoch-mismatch") return failure("BINDING_INVALID", "Continuity task binding is stale.");
-      if (stored.kind === "source-conflict") return failure("SNAPSHOT_CONFLICT", "Direct checkpoints are disabled after a workflow root is bound.");
+      if (stored.kind === "epoch-mismatch") return failure("BINDING_INVALID", msg("continuity.binding.stale", {}));
+      if (stored.kind === "source-conflict") return failure("SNAPSHOT_CONFLICT", msg("continuity.checkpoint.disabledAfterRoot", {}));
       if (stored.kind === "replay") {
         const receipt = JSON.parse(stored.request.resultJson) as Partial<CheckpointReplayReceiptV1>;
         const replaySnapshot = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
@@ -575,12 +591,12 @@ export class ContinuityService implements ContinuityGateway {
           !replaySnapshot || replaySnapshot.revision !== receipt.revision ||
           replaySnapshot.snapshotDigest !== receipt.snapshotDigest
         ) {
-          return failure("STALE_REVISION", "The idempotent checkpoint result is no longer available after replacement or purge.");
+          return failure("STALE_REVISION", msg("continuity.checkpoint.replayUnavailable", {}));
         }
         return ok(replaySnapshot);
       }
-      if (stored.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for different checkpoint content.");
-      if (stored.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed.", { expectedRevision: request.expectedRevision, actualRevision: stored.actualRevision });
+      if (stored.kind === "conflict") return failure("REQUEST_CONFLICT", msg("continuity.checkpoint.requestConflict", {}));
+      if (stored.kind === "stale") return failure("STALE_REVISION", msg("continuity.checkpoint.revisionChanged", {}), { expectedRevision: request.expectedRevision, actualRevision: stored.actualRevision });
       return ok(snapshot);
     });
   }
@@ -621,24 +637,24 @@ export class ContinuityService implements ContinuityGateway {
       if (
         (fork ? candidate.f !== binding.c || candidate.g !== binding.e : candidate.c !== binding.c || candidate.e !== binding.e) ||
         candidate.e !== request.epoch || candidate.r !== request.revision || candidate.d !== request.digest
-      ) throw new WorkflowContractError("BINDING_INVALID", "Restore candidate does not match the current task and requested state.");
+      ) throw new WorkflowContractError("BINDING_INVALID", msg("continuity.restore.candidateMismatch", {}));
       const task = this.currentTask(binding);
-      if (task.suppressed) throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", "Restore is suppressed for the current epoch.");
+      if (task.suppressed) throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", msg("continuity.restore.suppressed", {}));
       if (fork) return ok<ContinuitySnapshotV1 | WorkflowContinuityCardV1>(this.loadForkParent(candidate, binding));
       if (candidate.s === "direct") {
         const snapshot = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
           () => this.store.getSnapshot(binding.c, binding.e)));
         if (!snapshot || snapshot.revision !== candidate.r || snapshot.snapshotDigest !== candidate.d) {
-          throw new WorkflowContractError("STALE_REVISION", "The direct restore candidate is stale.");
+          throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.directStale", {}));
         }
         const { snapshotDigest, ...base } = snapshot;
-        if (convergenceDigest(base) !== snapshotDigest) throw new WorkflowContractError("INTEGRITY_FAILED", "The direct snapshot digest is invalid.");
+        if (convergenceDigest(base) !== snapshotDigest) throw new WorkflowContractError("INTEGRITY_FAILED", msg("continuity.snapshot.digestInvalid", {}));
         return ok<ContinuitySnapshotV1 | WorkflowContinuityCardV1>(snapshot);
       }
       const card = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "workflow",
         (current) => this.workflowProjection(current)));
       if (!card || card.revision !== candidate.r || card.snapshotDigest !== candidate.d) {
-        throw new WorkflowContractError("STALE_REVISION", "The workflow restore candidate is stale.");
+        throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.workflowStale", {}));
       }
       return ok<ContinuitySnapshotV1 | WorkflowContinuityCardV1>(card);
     });
@@ -649,14 +665,14 @@ export class ContinuityService implements ContinuityGateway {
     const snapshot = this.currentReadValue(this.store.readCurrentState(candidate.c, candidate.e, "direct",
       () => this.store.getSnapshot(candidate.c, candidate.e)));
     if (!snapshot || snapshot.revision !== candidate.r || snapshot.snapshotDigest !== candidate.d) {
-      throw new WorkflowContractError("STALE_REVISION", "The fork parent restore candidate is stale.");
+      throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.forkParentStale", {}));
     }
     const { snapshotDigest, ...base } = snapshot;
-    if (convergenceDigest(base) !== snapshotDigest) throw new WorkflowContractError("INTEGRITY_FAILED", "The direct snapshot digest is invalid.");
+    if (convergenceDigest(base) !== snapshotDigest) throw new WorkflowContractError("INTEGRITY_FAILED", msg("continuity.snapshot.digestInvalid", {}));
     const adopted = { ...base, taskCorrelation: binding.c, epoch: binding.e, updatedAt: this.now().toISOString() };
     // Only an empty child epoch adopts; a child that already loaded or saved keeps its own state.
     if (!this.store.adoptSnapshot(binding.c, binding.e, { ...adopted, snapshotDigest: convergenceDigest(adopted) })) {
-      throw new WorkflowContractError("STALE_REVISION", "The fork child already has its own continuity state.");
+      throw new WorkflowContractError("STALE_REVISION", msg("continuity.restore.forkChildHasState", {}));
     }
     return snapshot;
   }
@@ -665,8 +681,8 @@ export class ContinuityService implements ContinuityGateway {
     return this.guard(() => {
       const request = this.validator!.suppressContextRestoreRequest(value);
       const binding = this.toolBinding(caller, "suppress_context_restore");
-      if (request.expectedEpoch !== binding.e) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.", { actualEpoch: binding.e });
-      if (!this.store.setSuppressed(binding.c, binding.e, this.now().toISOString())) throw new WorkflowContractError("STALE_REVISION", "The continuity epoch changed.");
+      if (request.expectedEpoch !== binding.e) throw new WorkflowContractError("STALE_REVISION", msg("continuity.epoch.changed", {}), { actualEpoch: binding.e });
+      if (!this.store.setSuppressed(binding.c, binding.e, this.now().toISOString())) throw new WorkflowContractError("STALE_REVISION", msg("continuity.epoch.changed", {}));
       return ok({ schemaVersion: "1.0.0", suppressed: true, epoch: binding.e });
     });
   }
@@ -678,7 +694,7 @@ export class ContinuityService implements ContinuityGateway {
       this.currentTask(binding);
       const current = this.store.getSnapshot(binding.c, request.expectedEpoch);
       if (current && current.revision !== request.expectedRevision) {
-        return failure("STALE_REVISION", "The direct checkpoint revision changed.", {
+        return failure("STALE_REVISION", msg("continuity.checkpoint.revisionChanged", {}), {
           expectedRevision: request.expectedRevision,
           actualRevision: current.revision,
         });
@@ -694,7 +710,7 @@ export class ContinuityService implements ContinuityGateway {
       });
       const now = this.now().toISOString();
       const purged = this.store.purge(binding.c, request.expectedEpoch, request.expectedRevision, requestHash, commandDigest, tombstoneDigest, now, binding.e);
-      if (purged.kind === "epoch-mismatch") return failure("BINDING_INVALID", "Continuity task binding is stale.");
+      if (purged.kind === "epoch-mismatch") return failure("BINDING_INVALID", msg("continuity.binding.stale", {}));
       if (purged.kind === "replay") {
         let replay: ContinuityPurgeResultV1 | null = null;
         try { replay = purgeReceipt(JSON.parse(purged.request.resultJson) as unknown); } catch { /* Reject malformed stored state below. */ }
@@ -704,7 +720,7 @@ export class ContinuityService implements ContinuityGateway {
           replay.revision !== request.expectedRevision || replay.revision !== tombstone.revision ||
           replay.tombstoneDigest !== tombstone.payloadDigest || replay.purgedAt !== tombstone.purgedAt
         ) {
-          return failure("STALE_REVISION", "The idempotent purge result is no longer available.");
+          return failure("STALE_REVISION", msg("continuity.purge.replayUnavailable", {}));
         }
         return ok({
           schemaVersion: "1.0.0",
@@ -715,8 +731,8 @@ export class ContinuityService implements ContinuityGateway {
           purgedAt: replay.purgedAt,
         });
       }
-      if (purged.kind === "conflict") return failure("REQUEST_CONFLICT", "requestId was already used for a different purge request.");
-      if (purged.kind === "stale") return failure("STALE_REVISION", "The direct checkpoint revision changed or no payload exists.", { expectedRevision: request.expectedRevision, actualRevision: purged.actualRevision });
+      if (purged.kind === "conflict") return failure("REQUEST_CONFLICT", msg("continuity.purge.requestConflict", {}));
+      if (purged.kind === "stale") return failure("STALE_REVISION", msg("continuity.purge.revisionChanged", {}), { expectedRevision: request.expectedRevision, actualRevision: purged.actualRevision });
       return ok({ schemaVersion: "1.0.0", purged: true, epoch: request.expectedEpoch, revision: request.expectedRevision, tombstoneDigest, purgedAt: now });
     });
   }
@@ -736,7 +752,7 @@ export class ContinuityService implements ContinuityGateway {
     const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
     if ((task.rootId !== null && task.rootId !== rootId)
       || !this.store.bindRoot(task.taskCorrelation, task.currentEpoch, rootId, now, task.rootId)) {
-      throw new WorkflowContractError("BINDING_INVALID", "The workflow start conflicts with the current continuity task.");
+      throw new WorkflowContractError("BINDING_INVALID", msg("continuity.workflowStart.conflict", {}));
     }
     const { taskCorrelation: c, currentEpoch: e } = task;
     // A start ends the window and its lock; success marks a start that followed a refused edit.
@@ -782,27 +798,26 @@ export class ContinuityService implements ContinuityGateway {
   }
 
   /** Ask while the model still has the correction; metadata alone cannot manufacture a checkpoint. */
-  checkpointCueForSession(rawSessionId: string, missingOnly = false): string | null {
+  checkpointCueForSession(rawSessionId: string, missingOnly = false): HookText | null {
     return this.checkpointCue(this.ensureSession(rawSessionId), missingOnly);
   }
 
-  private checkpointCue(task: ContinuityTaskRecord, missingOnly = false): string | null {
+  private checkpointCue(task: ContinuityTaskRecord, missingOnly = false): HookText | null {
     const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "direct", (current) => {
       if (this.store.getTombstone(current.taskCorrelation, current.currentEpoch)) return null;
       const snapshot = this.store.getSnapshot(current.taskCorrelation, current.currentEpoch);
       if (missingOnly && snapshot) return null;
       return [
-        "[Task continuity checkpoint check]",
-        missingOnly ? "사전 저장본 없음: 이 알림은 압축으로 유실된 내용을 복원하지 않는다." : `현재 작업의 저장본: ${snapshot ? "있음" : "없음"}.`,
-        "현재 요청의 교정·제약·결정·남은 작업을 잃으면 다음 행동이 달라지는지 확인하라. 달라진 상태가 아직 저장되지 않았다면 그 판단·작업을 이어가기 전에 context-continuity 스킬과 기존 checkpoint_context로 필요한 상태와 근거 참조만 저장하라.",
-        "재개·fork·인계는 inspect_context와 정확한 후보의 load_context를 먼저 수행하고 최신 요청과 대조하라. 없는 이전 정보는 추측하지 말고 현재 실제 전달된 문맥만 사용하라. workflow 원장을 직접 스냅샷으로 복제하지 마라.",
-        "이 알림은 저장·복원 성공이 아니다. 실제 응답을 확인하고 실패·미저장 상태를 구분하라. 보존할 변경이 없으면 추가 저장하지 말고 작업을 계속하라.",
-      ].join("\n");
+        msg("hooks.checkpointCue.status", { state: missingOnly ? "missing" : snapshot ? "saved" : "none" }),
+        msg("hooks.checkpointCue.save", {}),
+        msg("hooks.checkpointCue.resume", {}),
+        msg("hooks.checkpointCue.notice", {}),
+      ];
     });
     return selected.kind === "available" ? selected.value : null;
   }
 
-  compactContext(rawSessionId: string): string | null {
+  compactContext(rawSessionId: string): HookText | null {
     const task = this.ensureSession(rawSessionId);
     if (task.suppressed) return null;
     const summary = this.summary(task);
@@ -851,7 +866,8 @@ export class ContinuityService implements ContinuityGateway {
    * WORKFLOW_FILE_LIMIT distinct files in the window is refused and locks the window; files already counted stay
    * editable until then. An AGS infrastructure failure never refuses: it is recorded and named once at the next Stop.
    */
-  gateEditForSession(rawSessionId: string, targets: readonly string[], shown: readonly string[] = targets): string | null {
+  gateEditForSession(rawSessionId: string, targets: readonly string[], shown: readonly string[] = targets,
+    example = minimalWorkflowStartExample(ROOT_LOCALE)): MessageRef<"hooks.editGate.denied"> | null {
     const now = this.now().toISOString();
     const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
     const { taskCorrelation: c, currentEpoch: e } = task;
@@ -872,9 +888,7 @@ export class ContinuityService implements ContinuityGateway {
       return null;
     }
     this.store.recordObservation(c, e, PHASE_DENY_EVENT, null, false, now);
-    const earlier = counted.size > 0 ? ` (앞서 바꾼 제품 파일 ${counted.size}개 포함)` : "";
-    return `[AGS] workflow 없이 제품 파일 ${WORKFLOW_FILE_LIMIT}개째 변경: ${shown.join(", ")}${earlier}. `
-      + `먼저 workflow를 시작하라(최소 시작 호출 예: ${MINIMAL_WORKFLOW_START_EXAMPLE}).`;
+    return msg("hooks.editGate.denied", { limit: WORKFLOW_FILE_LIMIT, paths: shown.join(", "), earlier: counted.size, example });
   }
 
   /** Active workflow: the bound root is open, has a run, and that run is not terminal. */
@@ -897,7 +911,7 @@ export class ContinuityService implements ContinuityGateway {
    * and the AGS infrastructure failures that let this window pass. A window with no active run and no failure gives
    * no output. `quiet` records the check without output (a turn the host already continued).
    */
-  phaseCheckForSession(rawSessionId: string, quiet = false): string | null {
+  phaseCheckForSession(rawSessionId: string, quiet = false): HookText | null {
     const task = this.store.getTask(this.correlateSession(rawSessionId));
     if (!task) return null;
     const { taskCorrelation: c, currentEpoch: e } = task;
@@ -910,20 +924,18 @@ export class ContinuityService implements ContinuityGateway {
     if (typeof activity === "object") failures.push(GATE_UNAVAILABLE_PREFIX + activity.unavailable);
     const pending = activity === "active" ? this.pendingStages(task) : { stages: [], goal: "" };
     this.store.recordObservation(c, e, PHASE_CHECK_EVENT, null, pending.stages.length === 0 && failures.length === 0, this.now().toISOString());
-    const lines: string[] = [];
-    if (failures.length > 0) {
-      lines.push(`[AGS] workflow 상태를 확인하지 못해 이번 구간의 제품 파일 변경을 막지 않았다. 원인 코드: ${[...new Set(failures)].join(", ")}.`);
-    }
+    const lines: MessageRef[] = [];
+    if (failures.length > 0) lines.push(msg("hooks.phaseCheck.unavailable", { codes: [...new Set(failures)].join(", ") }));
     if (pending.stages.length > 0) {
       // Codex and agy continue the turn with this text as its only instruction (continuity-hook stopOutput, agy runner).
       // It names the workflow's goal: told only "the user's remaining work", Codex took its last request (one file of two)
       // as the whole task and stopped (3.2.0 candidate real-host run).
-      lines.push(`[AGS 단계 확인] 진행 중인 workflow에 아직 passed가 아닌 단계가 있다: ${pending.stages.join(", ")}.`,
-        `workflow 목표: ${pending.goal}`,
-        "이 목표가 아직 이뤄지지 않았으면 멈추지 말고 남은 작업을 이어서 하라. 방금 받은 요청을 끝냈어도 목표가 남았으면 이어서 한다. 단계 결과는 그 단계의 작업과 검증을 실제로 마친 뒤에만 기록하고, 기록만 하고 끝내지 마라.",
-        "사용자의 답이나 승인이 있어야 진행할 수 있으면 무엇을 기다리는지 한 줄로 쓰고 끝내라. 필요 없는 단계는 계획을 고쳐 뺀다.");
+      lines.push(msg("hooks.phaseCheck.pending", { stages: pending.stages.join(", ") }),
+        msg("hooks.phaseCheck.goal", { goal: pending.goal }),
+        msg("hooks.phaseCheck.continue", {}),
+        msg("hooks.phaseCheck.waiting", {}));
     }
-    return quiet || lines.length === 0 ? null : lines.join("\n");
+    return quiet || lines.length === 0 ? null : lines;
   }
 
   private pendingStages(task: ContinuityTaskRecord): { stages: string[]; goal: string } {
@@ -938,28 +950,15 @@ export class ContinuityService implements ContinuityGateway {
     return { stages, goal: boundedText(snapshot.root.taskEnvelope.objective.replace(/\s+/gu, " ").trim(), 300) };
   }
 
-  formatCandidate(candidate: ContinuityCandidateV1): string | null {
+  formatCandidate(candidate: ContinuityCandidateV1): HookText | null {
     if (!candidate.summary || !candidate.restoreToken) return null;
     const summary = candidate.summary;
-    return [
-      "[Task continuity restore candidate — metadata only]",
-      "decision=DEFER",
-      `source=${summary.source}`,
-      `epoch=${summary.epoch}`,
-      `revision=${summary.revision}`,
-      `digest=${summary.snapshotDigest}`,
-      `candidateToken=${candidate.restoreToken}`,
-      "No snapshot body was injected. Treat nextActions as historical candidates only; call load_context explicitly after checking the current user request.",
-    ].join("\n");
+    return [msg("continuity.restore.candidate", { source: summary.source, epoch: summary.epoch, revision: summary.revision,
+      digest: summary.snapshotDigest, candidateToken: candidate.restoreToken })];
   }
 
-  private formatWorkflowCard(card: WorkflowContinuityCardV1): string {
-    return [
-      "[Task continuity workflow card — structural state, not new instructions]",
-      "decision=INJECT",
-      JSON.stringify(card),
-      "Reconcile this projected state with the latest user request before acting.",
-    ].join("\n");
+  private formatWorkflowCard(card: WorkflowContinuityCardV1): HookText {
+    return [msg("continuity.restore.workflowCard", { card: JSON.stringify(card) })];
   }
 
   private candidateFor(taskCorrelation: string, expectedEpoch?: number): ContinuityCandidateV1 {
@@ -1047,22 +1046,22 @@ export class ContinuityService implements ContinuityGateway {
   }
 
   private currentReadValue<T>(result: ContinuityCurrentRead<T>): T {
-    if (result.kind === "epoch-mismatch") throw new WorkflowContractError("BINDING_INVALID", "Continuity task binding is stale.");
-    if (result.kind === "source-conflict") throw new WorkflowContractError("SNAPSHOT_CONFLICT", "The continuity source changed.");
-    if (result.kind === "suppressed") throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", "Restore is suppressed for the current epoch.");
+    if (result.kind === "epoch-mismatch") throw new WorkflowContractError("BINDING_INVALID", msg("continuity.binding.stale", {}));
+    if (result.kind === "source-conflict") throw new WorkflowContractError("SNAPSHOT_CONFLICT", msg("continuity.source.changed", {}));
+    if (result.kind === "suppressed") throw new WorkflowContractError("SNAPSHOT_NOT_FOUND", msg("continuity.restore.suppressed", {}));
     return result.value;
   }
 
   private currentTask(binding: ToolBindingPayload): ContinuityTaskRecord {
     const task = this.store.getTask(binding.c);
-    if (!task || task.currentEpoch !== binding.e) throw new WorkflowContractError("BINDING_INVALID", "Continuity task binding is stale.");
+    if (!task || task.currentEpoch !== binding.e) throw new WorkflowContractError("BINDING_INVALID", msg("continuity.binding.stale", {}));
     return task;
   }
 
   private verifyCandidate(token: string): CandidatePayload {
     const payload = this.verifySigned<CandidatePayload>(token);
     if (payload.v !== 1 || payload.x < Math.floor(this.now().getTime() / 1000) || !["direct", "workflow"].includes(payload.s)) {
-      throw new WorkflowContractError("BINDING_INVALID", "Restore candidate token is invalid or expired.");
+      throw new WorkflowContractError("BINDING_INVALID", msg("continuity.token.invalid", {}));
     }
     return payload;
   }
@@ -1075,10 +1074,10 @@ export class ContinuityService implements ContinuityGateway {
 
   private verifySigned<T>(token: string): T {
     const parsed = parseJsonToken<T>(token);
-    if (!parsed) throw new WorkflowContractError("BINDING_INVALID", "Signed continuity token is malformed.");
+    if (!parsed) throw new WorkflowContractError("BINDING_INVALID", msg("continuity.token.malformed", {}));
     const expected = createHmac("sha256", this.secret).update(parsed.body).digest();
     if (expected.length !== parsed.signature.length || !timingSafeEqual(expected, parsed.signature)) {
-      throw new WorkflowContractError("BINDING_INVALID", "Signed continuity token failed verification.");
+      throw new WorkflowContractError("BINDING_INVALID", msg("continuity.token.verificationFailed", {}));
     }
     return parsed.payload;
   }
@@ -1091,11 +1090,11 @@ export class ContinuityService implements ContinuityGateway {
     try {
       return action();
     } catch (error) {
-      if (error instanceof WorkflowContractError) return failure(error.code, error.message, error.details);
+      if (error instanceof WorkflowContractError) return { schemaVersion: "1.0.0", ok: false, data: null, error: error.toBody() };
       // The public code stays CONTINUITY_UNAVAILABLE; the detail keeps the store's stable reason (D0057).
       const reason = continuityUnavailableReason(error);
-      if (error instanceof ContinuityStoreError && !types.isProxy(error)) return failure("CONTINUITY_UNAVAILABLE", error.message, { reason });
-      return failure("CONTINUITY_UNAVAILABLE", "Continuity operation failed.", { reason });
+      if (error instanceof ContinuityStoreError && !types.isProxy(error)) return failure("CONTINUITY_UNAVAILABLE", error.ref, { reason });
+      return failure("CONTINUITY_UNAVAILABLE", msg("continuity.operation.failed", {}), { reason });
     }
   }
 }
@@ -1104,7 +1103,7 @@ export class UnavailableContinuityService implements ContinuityGateway {
   constructor(private readonly reason: ContinuityUnavailableReason = "STORE_UNAVAILABLE") {}
 
   private unavailable<T>(): ApiResultV1<T> {
-    return failure("CONTINUITY_UNAVAILABLE", "The optional continuity store is unavailable.", { reason: this.reason });
+    return failure("CONTINUITY_UNAVAILABLE", msg("continuity.store.optionalUnavailable", {}), { reason: this.reason });
   }
   checkpointContext(): ApiResultV1<ContinuitySnapshotV1> { return this.unavailable(); }
   inspectContext(): ApiResultV1<ContinuityCandidateV1> { return this.unavailable(); }

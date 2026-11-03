@@ -18,7 +18,7 @@ import { claudeAdmissionIngress } from "../../mcp-server/src/builtin-caller-ingr
 import { admitCaller } from "../../mcp-server/src/caller-identity.js";
 import { hostActorId } from "../../mcp-server/src/host-attestation.js";
 import { adaptHostInput, isGovernanceHookTool, registerHookHostAdapter, type AdaptedHostInput, type ContinuityAction, type HookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
-import { ContinuityService, UnavailableContinuityService } from "../../mcp-server/src/continuity-service.js";
+import { ContinuityService, renderHookText, UnavailableContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
@@ -434,7 +434,7 @@ describe("workflow projection and fail-open lifecycle", () => {
     service.bindOpenedRoot(asRoot("workflow-session"), root.rootId);
 
     service.markPreCompact("workflow-session");
-    const injected = service.compactContext("workflow-session");
+    const injected = renderHookText(service.compactContext("workflow-session"), "ko");
     expect(injected).toContain("decision=INJECT");
     expect(injected).toContain(root.taskEnvelope.objective);
     expect(injected!.length).toBeLessThan(12_000);
@@ -458,7 +458,7 @@ describe("workflow projection and fail-open lifecycle", () => {
     const service = createService(":memory:", workflow);
     service.bindOpenedRoot(asRoot("workflow-session"), root.rootId);
     service.markPreCompact("workflow-session");
-    const injected = service.compactContext("workflow-session")!;
+    const injected = renderHookText(service.compactContext("workflow-session"), "ko")!;
     const card = JSON.parse(injected.split("\n")[2]!) as { excludedScope: string[]; evidenceRefs: Array<{ artifactId: string }>; evidenceRefsOmitted: number };
     expect(card.excludedScope).toEqual(["deploy", "release", "tags", "main [+2 omitted]"]);
     expect(card.evidenceRefs.map(item => item.artifactId)).toEqual(["a0", "a1", "a2", "a3", "a4", "a5"]);
@@ -799,7 +799,7 @@ describe("current continuity authority versus historical payload", () => {
       epoch: candidate.summary!.epoch, revision: candidate.summary!.revision, digest: candidate.summary!.snapshotDigest };
     expect(service.loadContext(input, asRoot("shared-workflow")).ok).toBe(true);
     service.markPreCompact("shared-workflow");
-    expect(service.compactContext("shared-workflow")).toContain("decision=INJECT");
+    expect(renderHookText(service.compactContext("shared-workflow"), "ko")).toContain("decision=INJECT");
     const beforeRollback = bundle.continuity.getTask(c);
     let callbackReached = false;
     let nestedWriteSucceeded = false;
