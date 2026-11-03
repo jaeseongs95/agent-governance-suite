@@ -18,4 +18,8 @@ describe("CI and test-server split", () => {
     expect(server.has("tests/mcp/korean-prose-execution-provenance.test.ts")).toBe(false);
     expect(server.has("tests/tooling/test-scope.test.mjs")).toBe(false);
   });
+
+  it("classifies a test outside tests/ that starts a process", () => {
+    expect(server.has("antigravity-connector/hooks/antigravity-hook-runner.test.mjs")).toBe(true);
+  });
 });

@@ -48,29 +48,41 @@ export function crossesProcessBoundary(file, visiting = new Set()) {
   return result;
 }
 
+// The files Vitest collects (its default include, configDefaults.include) and the node:test suites
+// scripts/run-tests.mjs collects. The whole repository is searched like Vitest does, minus its default
+// excludes, so a test outside tests/ is classified too (antigravity-connector/hooks has some).
+const VITEST_FILE = /\.(?:test|spec)\.[cm]?[jt]sx?$/u;
+const NODE_TEST_FILE = /\.node-test\.mjs$/u;
+const EXCLUDED_DIRECTORIES = new Set(["node_modules", ".git"]);
+
 function listTests(directory, pattern) {
   const files = [];
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     if (entry.isSymbolicLink()) continue;
     const target = path.join(directory, entry.name);
-    if (entry.isDirectory()) files.push(...listTests(target, pattern));
+    if (entry.isDirectory()) { if (!EXCLUDED_DIRECTORIES.has(entry.name)) files.push(...listTests(target, pattern)); }
     else if (entry.isFile() && pattern.test(entry.name)) files.push(target);
   }
   return files.sort();
 }
 
+const relative = file => path.relative(root, file).split(path.sep).join("/");
+
+/** Every Vitest and node:test file, relative to the repository root with "/" separators. */
+export function testFiles() {
+  return [...listTests(root, VITEST_FILE), ...listTests(root, NODE_TEST_FILE)].map(relative).sort();
+}
+
 /** Test files the test servers measure and CI leaves out, relative to the repository root with "/" separators. */
-export function serverOnlyTests(pattern = /\.(?:test|node-test)\.(?:ts|mts|mjs|js)$/u) {
-  return listTests(path.join(root, "tests"), pattern)
-    .filter(file => crossesProcessBoundary(file))
-    .map(file => path.relative(root, file).split(path.sep).join("/"));
+export function serverOnlyTests() {
+  return testFiles().filter(file => crossesProcessBoundary(path.join(root, ...file.split("/"))));
 }
 
 /** AGS_TEST_SCOPE=ci selects the CI subset; anything else (test servers, local) runs everything. */
 export const ciScope = process.env.AGS_TEST_SCOPE === "ci";
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename)) {
-  const all = listTests(path.join(root, "tests"), /\.(?:test|node-test)\.(?:ts|mts|mjs|js)$/u);
+  const all = testFiles();
   const server = serverOnlyTests();
   console.log(JSON.stringify({ total: all.length, serverOnly: server.length, ci: all.length - server.length }));
 }
