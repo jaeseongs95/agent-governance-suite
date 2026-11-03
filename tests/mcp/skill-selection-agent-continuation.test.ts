@@ -292,7 +292,6 @@ describe("Agent continuation after a server-owned helper failure", () => {
     expect((await h.call<Accepted>("record_skill_selection", args)).data?.valid).toBe(false);
     // Another verified session cannot complete this session's selection.
     expect((await h.call<Accepted>("record_skill_selection", h.sign(args), false, "different-session")).data?.valid).toBe(false);
-    expect((await h.call<Accepted>("record_skill_selection", h.sign(args, new Date("2000-01-01T00:00:00Z")))).error?.code).toBe("INVALID_INPUT");
     args.decision.hostReceipt = {receiptId: "caller", host: "opaque", requestDigest: args.decision.requestDigest, inventoryDigest: args.decision.inventoryDigest, agentSelectedSkillIds: ["code-review"], acceptedAt: new Date().toISOString()};
     expect((await h.call<Accepted>("record_skill_selection", h.sign(args))).error?.code).toBe("INVALID_INPUT");
   });

@@ -163,7 +163,7 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     }
     const observedTask = this.options.observeTask?.(operation.result.request, observation) ?? null;
     if (!operation.task || !observedTask || observedTask.cancelled || observedTask.taskRevision !== operation.task.taskRevision || observedTask.requestDigest !== operation.task.requestDigest || observedTask.sourceRef !== operation.task.sourceRef || operation.actorId !== observation.actorId) return {valid: false, errors: ["HOST_TASK_CHANGED_OR_NOT_OBSERVED"], agentSelectedSkillIds: null};
-    // The server mints the observation during this call, so time does not age it out; one host call yields one observationId.
+    // The server mints this observation during the call and never stores it, so time does not age it out; a recorded decision cannot be replaced.
     if (input.decision.hostReceipt !== null) throw new Error("CALLER_SELECTION_RECEIPT_REJECTED");
     if (input.decision.agentSelectedSkillIds === null) throw new Error("AGENT_SELECTION_MISSING");
     if (JSON.stringify(operation.explicit) !== JSON.stringify(input.decision.explicitSkillIds) || JSON.stringify(operation.required) !== JSON.stringify(input.decision.ruleRequiredSkillIds)) throw new Error("REQUIRED_SKILL_SNAPSHOT_CHANGED");

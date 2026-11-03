@@ -26,10 +26,15 @@ it("counts buffered bytes that cross the actual file rotation boundary", async (
   async function received(predicate: (message: Record<string, unknown>) => boolean, deadlineMs = 1000): Promise<Record<string, unknown>> {
     const existing = messages.find(predicate);
     if (existing) return existing;
-    for await (const [message] of on(child, "message", {signal: AbortSignal.timeout(deadlineMs)})) {
-      if (predicate(message as Record<string, unknown>)) return message as Record<string, unknown>;
+    try {
+      for await (const [message] of on(child, "message", {signal: AbortSignal.timeout(deadlineMs)})) {
+        if (predicate(message as Record<string, unknown>)) return message as Record<string, unknown>;
+      }
+    } catch (error) {
+      // Name the phase that waited and keep every fixture message, so a missing event is diagnosable from CI output.
+      throw new Error(`WRITE_ROTATION_FIXTURE_MESSAGE_MISSING (${(error as Error).name}) ${evidence()}`);
     }
-    throw new Error("WRITE_ROTATION_FIXTURE_MESSAGE_MISSING");
+    throw new Error(`WRITE_ROTATION_FIXTURE_MESSAGE_MISSING ${evidence()}`);
   }
   const probe = (event: string, sequence?: number) => (message: Record<string, unknown>) =>
     message.fixture === "write-rotation-boundary" && message.event === event
