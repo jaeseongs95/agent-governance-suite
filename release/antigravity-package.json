@@ -1,0 +1,19 @@
+{
+  "paths": [
+    ".gemini-plugin",
+    "hooks.json",
+    "mcp_config.json",
+    "antigravity-connector",
+    "contracts",
+    "mcp-server/dist",
+    "runtime",
+    "skills",
+    "release/version.json",
+    "LICENSE",
+    "README.md",
+    "README.en.md"
+  ],
+  "exclude": [
+    "antigravity-connector/**/*.test.mjs"
+  ]
+}

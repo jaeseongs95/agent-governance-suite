@@ -98,3 +98,13 @@ CI 실패는 코드 결함만 뜻하도록 시험 위치를 나눴다. 자세한
   - Claude Code(Linux, headless, 4186346c, CLI 2.1.314): `start_workflow` 병렬 3번·단독 1번 모두 성공. 편집 관문 docs 4/4 허용·제품 파일 3번째 거부. workflow 시험에서 두 파일 모두 바뀜.
   - Codex(Linux, 4186346c, CLI 0.166.0): workflow 시험에서 두 파일 모두 바뀜. 첫 실행은 서버 공용 Codex 설정에 켜져 있던 다른 시험의 예전 AGS 플러그인 2개가 PreToolUse hook에서 `start_workflow`를 `INVALID_INPUT`으로 막아 실패했다. 3.2.0의 Codex hook에는 이 hook이 없다. 그 두 플러그인을 이 실행에서만 `-c plugins.<이름>.enabled=false`로 끄고 다시 돌려 통과했다. 시험 뒤 후보 플러그인과 마켓플레이스를 지워 서버를 되돌림.
   - 시험하지 못한 조합: Windows의 agy는 SSH 세션에서 Google OAuth 재로그인을 요구하며 멈춘다(`Waiting for authentication`).
+
+## Antigravity(agy) 설치본
+
+`agent-governance-suite-antigravity-v3.2.0.zip`은 v3.2.0 태그에서 agy가 쓰는 파일만 묶은 설치본이다. 파일 612개, 디렉터리 172개다. 태그 전체를 받은 폴더(디렉터리 442개)를 설치하면 Antigravity 앱의 맞춤 설정 → 설치됨 화면이 "Loading installed plugins..."에서 멈출 수 있다. 원인은 앱의 플러그인 폴더 감시 초기화이고 AGS 코드는 같다. 이 설치본은 감시할 폴더 수를 줄인다.
+
+- 들어 있는 것: `.gemini-plugin/`, `hooks.json`, `mcp_config.json`, `antigravity-connector/`(시험 파일 제외), `contracts/`, `mcp-server/dist/`, `runtime/`, `skills/`, `release/version.json`, `LICENSE`, `README.md`, `README.en.md`
+- 만든 명령: `git archive --format=zip --prefix=agent-governance-suite/ v3.2.0 -- .gemini-plugin hooks.json mcp_config.json antigravity-connector contracts mcp-server/dist runtime skills release/version.json LICENSE README.md README.en.md ':(exclude)antigravity-connector/**/*.test.mjs'`
+- 설치: zip을 풀고 Antigravity 앱을 닫은 뒤 `agy plugin install <풀린 폴더>/agent-governance-suite`를 실행한다. 앱이 켜져 있으면 기존 설치 폴더를 지우지 못해 `used by another process`로 실패한다.
+- 확인(Linux 테스트 서버, agy 1.4.12): `agy plugin validate` 통과(스킬 26·hook 2·MCP 서버 1). 같은 명령으로 서버에서 만든 묶음과 이 zip의 파일 해시가 모두 같다(zip 안 시각만 다르다). 편집 관문 시험은 docs 4/4 허용, 제품 파일 3번째 거부. workflow 시험에서 두 파일 모두 바뀜. 시험 뒤 플러그인을 지워 서버를 되돌림.
+- Antigravity 앱 화면이 이 설치본으로 열리는지는 확인하지 않았다.
