@@ -23,6 +23,11 @@ export function msg<K extends MessageKey>(key: K, params: MessageParams[K]): Mes
   return { key, params };
 }
 
+/** Whether this catalog can render a key reported by another process (e.g. a skill CLI) in any locale. */
+export function isCatalogKey(key: string): boolean {
+  return Object.hasOwn(CATALOGS[ROOT_LOCALE], key);
+}
+
 /** MCP SEP-2792 request and response keys in `_meta` (docs/i18n-design.md 4.1 ②). */
 export const ACCEPT_LANGUAGE_META = "io.modelcontextprotocol/acceptLanguage";
 export const CONTENT_LANGUAGE_META = "io.modelcontextprotocol/contentLanguage";

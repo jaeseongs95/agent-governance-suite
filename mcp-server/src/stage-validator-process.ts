@@ -1,17 +1,24 @@
 import { spawnSync } from "node:child_process";
 import { ERROR_CODE, type ErrorCode, WorkflowContractError } from "../../contracts/types.js";
-import { msg } from "./i18n.js";
+import { isCatalogKey, msg, type StoredMessageRef } from "./i18n.js";
 
 /** Validator labels with a catalog phrase; any other label is shown as given. */
 const VALIDATOR_SUBJECTS: Readonly<Record<string, string>> = { "CS stage bundle": "csStageBundle", "Engineering stage": "engineeringStage" };
 
 /** Child CLIs report their own failures as `{code,message}` or `{error:{code,message}}` on stdout or stderr. */
-function childError(...streams: string[]): {code: string; message: string} | null {
+function childError(...streams: string[]): {code: string; message: string; ref: StoredMessageRef | null} | null {
+  type Reported = {code?: unknown; message?: unknown; messageKey?: unknown; params?: unknown};
   for (const text of streams) {
     try {
-      const parsed = JSON.parse(text) as {code?: unknown; message?: unknown; error?: {code?: unknown; message?: unknown} | null};
+      const parsed = JSON.parse(text) as Reported & {error?: Reported | null};
       const source = typeof parsed.code === "string" ? parsed : parsed.error;
-      if (source && typeof source.code === "string") return {code: source.code, message: typeof source.message === "string" ? source.message : ""};
+      if (source && typeof source.code === "string") {
+        // A key this catalog knows is re-rendered in the reader's locale; otherwise the child's own sentence is kept.
+        const ref = typeof source.messageKey === "string" && isCatalogKey(source.messageKey)
+          && source.params !== null && typeof source.params === "object" && !Array.isArray(source.params)
+          ? {key: source.messageKey, params: source.params as Readonly<Record<string, unknown>>} : null;
+        return {code: source.code, message: typeof source.message === "string" ? source.message : "", ref};
+      }
     } catch { /* not JSON; try the next stream */ }
   }
   return null;
@@ -43,9 +50,9 @@ export function runStageValidator(label: string, script: string, args: string[],
   if (!okStatuses.includes(checked.status ?? -1) || (!parsed && (checked.status !== 0 || stderr.trim()))) {
     const cause = childError(stdout, stderr);
     const code = cause && (ERROR_CODE as readonly string[]).includes(cause.code) ? cause.code as ErrorCode : "GATE_FAILED";
-    // The child's own sentence comes from its CLI and passes through as it is (that CLI renders its own catalog).
-    throw new WorkflowContractError(code, cause?.message
-      ? msg("workflow.validatorProcess.childFailure", { message: cause.message })
+    // A catalog key from the child nests, so the reader's locale renders it; an unkeyed sentence passes through as it is.
+    throw new WorkflowContractError(code, cause?.ref || cause?.message
+      ? msg("workflow.validatorProcess.childFailure", { message: cause.ref ?? cause.message })
       : msg("workflow.validatorProcess.exitStatus", { ...subject, status: String(checked.status) }),
       {step: "exit", status: checked.status, childCode: cause?.code ?? null});
   }
