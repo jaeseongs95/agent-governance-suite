@@ -1,0 +1,3 @@
+{
+  "server.call.reservedCallerField": "Caller identity is host-owned and is not accepted in tool arguments."
+}

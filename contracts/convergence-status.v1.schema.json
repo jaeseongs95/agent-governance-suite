@@ -39,6 +39,8 @@
       "properties": {
         "code": { "$ref": "#/$defs/errorCode" },
         "message": { "type": "string", "minLength": 1 },
+        "messageKey": { "type": "string", "pattern": "^[a-z][A-Za-z0-9]*([.][A-Za-z0-9_-]+)+$" },
+        "params": { "type": "object" },
         "details": { "type": ["object", "null"], "additionalProperties": true }
       }
     }

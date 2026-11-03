@@ -1,3 +1,5 @@
+import { ROOT_LOCALE, render, type MessageRef } from "../mcp-server/src/i18n.js";
+
 /** Public v1 values. Do not add ad-hoc states or error codes at call sites. */
 export const CONTRACT_VERSION = "1.0.0" as const;
 
@@ -497,10 +499,21 @@ export const POLICY_CAPABILITY = {
   audit: "independent-audit",
 } as const;
 
+/**
+ * `message` is the root-locale (en) text, so stored bodies and digests do not depend on who asked.
+ * `messageKey` and `params` let each reader render it in its own locale (docs/i18n-design.md 3, 6).
+ */
 export interface ContractErrorBody {
   code: ErrorCode;
   message: string;
+  messageKey?: string;
+  params?: Readonly<Record<string, unknown>>;
   details: Record<string, unknown> | null;
+}
+
+/** An error body from a catalog message. */
+export function contractErrorBody(code: ErrorCode, ref: MessageRef, details: Record<string, unknown> | null = null): ContractErrorBody {
+  return { code, message: render(ref, ROOT_LOCALE), messageKey: ref.key, params: ref.params as Readonly<Record<string, unknown>>, details };
 }
 
 export interface ApiResultV1<T> {
@@ -1121,16 +1134,20 @@ export interface WorkflowStatusSummaryV1 {
 }
 
 export class WorkflowContractError extends Error {
+  /** The catalog message; null only for call sites not yet moved to the catalog (i18n migration). */
+  readonly ref: MessageRef | null;
+
   constructor(
     readonly code: ErrorCode,
-    message: string,
+    message: MessageRef | string,
     readonly details: Record<string, unknown> | null = null,
   ) {
-    super(message);
+    super(typeof message === "string" ? message : render(message, ROOT_LOCALE));
+    this.ref = typeof message === "string" ? null : message;
     this.name = "WorkflowContractError";
   }
 
   toBody(): ContractErrorBody {
-    return { code: this.code, message: this.message, details: this.details };
+    return this.ref ? contractErrorBody(this.code, this.ref, this.details) : { code: this.code, message: this.message, details: this.details };
   }
 }

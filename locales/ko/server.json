@@ -1,0 +1,3 @@
+{
+  "server.call.reservedCallerField": "호출자 신원은 호스트가 정하므로 도구 인자로 받지 않는다."
+}

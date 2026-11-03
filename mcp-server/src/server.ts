@@ -16,7 +16,9 @@ import {
   type SessionBoardListV2,
   type SessionBoardUpdateV2,
   WorkflowContractError,
+  contractErrorBody,
 } from "../../contracts/types.js";
+import { CONTENT_LANGUAGE_META, msg, render, resolveHostLocale, resolveRequestLocale, ROOT_LOCALE, type MessageRef, type SupportedLocale } from "./i18n.js";
 import { locateRepository, normalizeSummary, openBoard, readEntry, setSummary, type BoardEntry } from "../../skills/session-board/scripts/board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
 import { contractFailure, failureContext, failureReason, retainFailureSecondary } from "./failure-diagnostics.js";
@@ -199,13 +201,20 @@ function projectResult<T, U>(
   return { ...result, data: project(result.data) };
 }
 
-function toolResult<T>(result: ApiResultV1<T>) {
+/**
+ * The edge where a result meets its reader: the top-level error is rendered in the request's locale from its key.
+ * Bodies nested in data (stored receipts) keep their root-locale text and key, so their digests do not change.
+ */
+function toolResult<T>(result: ApiResultV1<T>, locale: SupportedLocale = ROOT_LOCALE) {
+  const error = result.error;
+  const shown = error?.messageKey ? { ...result, error: { ...error, message: render({ key: error.messageKey, params: error.params ?? {} }, locale) } } : result;
   const content: Array<{ type: "text"; text: string }> = [
-    { type: "text", text: JSON.stringify(result) },
+    { type: "text", text: JSON.stringify(shown) },
   ];
   return {
     content,
     isError: !result.ok,
+    _meta: { [CONTENT_LANGUAGE_META]: locale },
   };
 }
 
@@ -213,12 +222,13 @@ function apiOk<T>(data: T): ApiResultV1<T> {
   return { schemaVersion: "1.0.0", ok: true, data, error: null };
 }
 
-function invalidInput(message: string): ApiResultV1<never> {
+function invalidInput(message: MessageRef | string): ApiResultV1<never> {
   return apiError("INVALID_INPUT", message);
 }
 
-function apiError(code: ErrorCode, message: string, details: Record<string, unknown> | null = null): ApiResultV1<never> {
-  return { schemaVersion: "1.0.0", ok: false, data: null, error: { code, message, details } };
+function apiError(code: ErrorCode, message: MessageRef | string, details: Record<string, unknown> | null = null): ApiResultV1<never> {
+  const error = typeof message === "string" ? { code, message, details } : contractErrorBody(code, message, details);
+  return { schemaVersion: "1.0.0", ok: false, data: null, error };
 }
 
 /**
@@ -227,7 +237,10 @@ function apiError(code: ErrorCode, message: string, details: Record<string, unkn
  * `_fallback` is retained only so existing call sites stay unchanged; no caller text is derived from the error.
  */
 function failureResult(error: unknown, _fallback: string, suffix = ""): ApiResultV1<never> {
-  if (error instanceof WorkflowContractError) return apiError(error.code, `${error.message}${suffix}`, error.details);
+  if (error instanceof WorkflowContractError) {
+    if (suffix === "") return { schemaVersion: "1.0.0", ok: false, data: null, error: error.toBody() };
+    return apiError(error.code, `${error.message}${suffix}`, error.details);
+  }
   const failure = contractFailure(error);
   return apiError(failure.code, failure.message, failure.details);
 }
@@ -442,6 +455,8 @@ export function createMcpServer(
   trust: TrustService | null = null,
   classification: SkillClassificationGateway | null = null,
   callerIngress: CallerIngress | null = null,
+  /** The locale for requests that name none (docs/i18n-design.md 4.1 ②). */
+  defaultLocale: SupportedLocale = resolveHostLocale().locale,
 ): Server {
   const server = new Server(
     { name: PLUGIN_INFO.id, version: PLUGIN_INFO.version },
@@ -650,11 +665,12 @@ export function createMcpServer(
   server.setRequestHandler(ListToolsRequestSchema, async () => ({tools}));
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const respond = <T>(result: ApiResultV1<T>) => toolResult(result);
+    const locale = resolveRequestLocale(request.params._meta, defaultLocale);
+    const respond = <T>(result: ApiResultV1<T>) => toolResult(result, locale);
     const handle = async () => {
     const args = asRecord(request.params.arguments);
     const reserved = RESERVED_CALLER_KEYS.find(key => Object.hasOwn(args, key));
-    if (reserved) return respond(apiError("INVALID_INPUT", "Caller identity is host-owned and is not accepted in tool arguments.", {reasonCode: "RESERVED_CALLER_FIELD", field: reserved}));
+    if (reserved) return respond(apiError("INVALID_INPUT", msg("server.call.reservedCallerField", {}), {reasonCode: "RESERVED_CALLER_FIELD", field: reserved}));
     if (!callerIngress) return respond(apiError("BINDING_REQUIRED", "No host caller ingress is configured for this server.", {reasonCode: "HOST_INGRESS_UNAVAILABLE"}));
     let caller: VerifiedCaller;
     try {
@@ -663,7 +679,7 @@ export function createMcpServer(
         request.params.arguments), hostActorId);
     } catch (error) {
       if (error instanceof WorkflowContractError) {
-        return respond(apiError(error.code, error.message, error.details));
+        return respond({ schemaVersion: "1.0.0", ok: false, data: null, error: error.toBody() });
       }
       // Error model R2: a non-contract failure (e.g. the admission store) is a server failure with its reason and
       // redacted cause, not a cause-less fixed reason.
