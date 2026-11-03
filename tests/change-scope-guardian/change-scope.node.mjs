@@ -6,6 +6,9 @@ import { tmpdir } from "node:os";
 import test from "node:test";
 import { canonicalJson, captureBaseline, compareScope, resolveRepository, sha256, validateBaseline, validateReport } from "../../skills/change-scope-guardian/scripts/lib.mjs";
 
+// Messages are asserted in the source locale; the package default locale is ko.
+process.env.AGENT_GOVERNANCE_LOCALE = "en";
+
 const roots = [];
 const behaviorCases = JSON.parse(readFileSync(new URL("./behavior-cases.json", import.meta.url), "utf8"));
 function behaviorCase(id) {

@@ -4,6 +4,9 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { checkReport } from "../../skills/solid-design/scripts/check-report.mjs";
 
+// Messages are asserted in the source locale; the package default locale is ko.
+process.env.AGENT_GOVERNANCE_LOCALE = "en";
+
 const request = {
   schemaVersion: "1.0.0", requestId: "solid-fixture-r1", objective: "Review cancellation semantics",
   snapshotRef: "fixture:cancel-r1", targets: ["adapter.ts", "caller.ts"],
@@ -95,4 +98,13 @@ test("classification binds current, distinct applicability and exclusion source 
   assert.ok(positive.length && negative.length);
   assert.ok(!positive.some((line) => negative.includes(line)));
   assert.deepEqual(classification.dependencies, []);
+});
+
+test("i18n: check errors render in the host locale", () => {
+  const inLocale = (locale) => {
+    process.env.AGENT_GOVERNANCE_LOCALE = locale;
+    try { return checkReport(Buffer.from("{"), base); } finally { process.env.AGENT_GOVERNANCE_LOCALE = "en"; }
+  };
+  assert.deepEqual(inLocale("en"), { valid: false, errors: ["request is not valid JSON"] });
+  assert.deepEqual(inLocale("ko"), { valid: false, errors: ["request가 올바른 JSON이 아니다"] });
 });

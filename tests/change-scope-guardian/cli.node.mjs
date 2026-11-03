@@ -5,6 +5,9 @@ import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
 
+// Messages are asserted in the source locale; the package default locale is ko.
+process.env.AGENT_GOVERNANCE_LOCALE = "en";
+
 const repoRoot = resolve(import.meta.dirname, "..", "..", "skills", "change-scope-guardian");
 
 function taskEnvelope() {
@@ -72,4 +75,25 @@ test("capture CLI rejects input that does not match ChangeScopeRequest.v1", () =
   });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /request schema validation failed/);
+});
+
+test("i18n: the capture CLI reports an invalid request in the host locale", () => {
+  const capture = (locale) => spawnSync(process.execPath, [join(repoRoot, "scripts/capture-workspace-baseline.mjs")], {
+    input: JSON.stringify({ repositoryRoot: ".", comparisonTarget: "working-tree" }),
+    encoding: "utf8",
+    env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale }
+  });
+  const english = capture("en");
+  const korean = capture("ko");
+  assert.notEqual(english.status, 0);
+  assert.notEqual(korean.status, 0);
+  assert.match(english.stderr, /^request schema validation failed: /);
+  assert.match(korean.stderr, /^request 스키마 검증에 실패했다: /);
+  const missingRoot = (locale) => spawnSync(process.execPath, [join(repoRoot, "scripts/validate-report.mjs")], {
+    input: JSON.stringify({}),
+    encoding: "utf8",
+    env: { ...process.env, AGENT_GOVERNANCE_LOCALE: locale }
+  });
+  assert.equal(missingRoot("en").stderr.trim(), "artifact and externally frozen expectedArtifactDigest are required");
+  assert.equal(missingRoot("ko").stderr.trim(), "artifact와 외부에서 고정한 expectedArtifactDigest가 필요하다");
 });

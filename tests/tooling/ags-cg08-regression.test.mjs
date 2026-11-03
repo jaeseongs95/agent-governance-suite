@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { analyzeAcceptance, validateReport, sha256 } from "../../skills/acceptance-evidence-validator/scripts/core.mjs";
 import { InputError, validateRequest, validateReview } from "../../skills/iteration-frame-auditor/scripts/core.mjs";
@@ -8,6 +8,10 @@ const json = async (relative) => JSON.parse(await readFile(new URL(relative, imp
 const acceptanceFixture = () => json("../acceptance-evidence-validator/fixtures/not-applicable.json");
 
 describe("CG08 iteration and acceptance contract regressions", () => {
+  // Messages are asserted in the source locale; the package default locale is ko.
+  beforeEach(() => { vi.stubEnv("AGENT_GOVERNANCE_LOCALE", "en"); });
+  afterEach(() => { vi.unstubAllEnvs(); });
+
   it("AGS-D-0117 preserves nested request schema details through the review boundary", async () => {
     const { review: template } = await json("../iteration-frame-auditor/fixtures/normal-target-only.json");
     const comparison = Object.fromEntries([

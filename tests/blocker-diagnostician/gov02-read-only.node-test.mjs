@@ -6,6 +6,9 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { checkInputDigest, requestArtifactDigest } from '../../skills/blocker-diagnostician/scripts/core.mjs';
 
+// Messages are asserted in the source locale; the package default locale is ko.
+process.env.AGENT_GOVERNANCE_LOCALE = "en";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const scripts = path.join(root, 'skills/blocker-diagnostician/scripts');
 const ordinary = () => {

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { collaborationDecisionStructuralDiagnostic } from "./collaboration-decision.mjs";
+import { hostText } from "../../../runtime/i18n.mjs";
 
 try {
   const input = process.argv[2]
@@ -21,7 +22,7 @@ try {
     scope: "structural-only",
     valid: false,
     errors: [error instanceof Error ? error.message : String(error)],
-    diagnostic: "This check validates the schema and deterministic route only; it does not read or authenticate source receipts.",
+    diagnostic: hostText("skillScripts.orchestrator.structuralDiagnostic"),
   })}\n`);
   process.exitCode = 1;
 }

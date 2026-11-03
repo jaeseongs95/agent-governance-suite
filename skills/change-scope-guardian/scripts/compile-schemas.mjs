@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Ajv2020, addFormats } from "../../../runtime/schema-validation.mjs";
+import { hostText } from "../../../runtime/i18n.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const schemas = [];
@@ -26,4 +27,4 @@ addFormats(ajv);
 for (const schema of schemas) ajv.addSchema(schema);
 for (const schema of schemas) ajv.getSchema(schema.$id);
 
-process.stdout.write(`schemas: ${schemas.length} compiled\n`);
+process.stdout.write(`${hostText("skillScripts.changeScope.schemasCompiled", { count: schemas.length })}\n`);

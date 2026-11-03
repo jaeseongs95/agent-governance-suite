@@ -1,5 +1,6 @@
 import { Ajv2020 } from "../../../runtime/schema-validation.mjs";
 import schema from "../contracts/collaboration-decision.v1.schema.json" with { type: "json" };
+import { hostText } from "../../../runtime/i18n.mjs";
 
 const validateSchema = new Ajv2020({ allErrors: true, strict: true }).compile(schema);
 
@@ -35,7 +36,7 @@ export function deriveCollaborationRoute(decision) {
 export function validateCollaborationDecision(decision) {
   if (!validateSchema(decision)) return (validateSchema.errors ?? []).map((error) => `${error.instancePath || "/"} ${error.message}`);
   const expectedRoute = deriveCollaborationRoute(decision);
-  return decision.route === expectedRoute ? [] : [`route must be ${expectedRoute} for the declared directive, benefit criteria, and audit separation.`];
+  return decision.route === expectedRoute ? [] : [hostText("skillScripts.orchestrator.routeMustBe", { route: expectedRoute })];
 }
 
 export function collaborationDecisionStructuralDiagnostic(decision) {
@@ -44,6 +45,6 @@ export function collaborationDecisionStructuralDiagnostic(decision) {
     scope: "structural-only",
     valid: errors.length === 0,
     errors,
-    diagnostic: "This check validates the schema and deterministic route only; it does not read or authenticate source receipts.",
+    diagnostic: hostText("skillScripts.orchestrator.structuralDiagnostic"),
   };
 }
