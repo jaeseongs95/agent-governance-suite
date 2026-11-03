@@ -35,7 +35,7 @@ import {
   type RootConflict,
   type StoredIdentity,
 } from "./convergence-logic.js";
-import { type RootIdentityV1 } from "./workspace-identity.js";
+import { hostIdentity, type RootIdentityV1 } from "./workspace-identity.js";
 import {
   type CallAdmission,
   type ConvergenceSnapshot,
@@ -309,6 +309,8 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
   }
 
   insertConvergenceRoot(root: ConvergenceRootV1): RootConflict | null {
+    // Reads the machine ID (a reg.exe/ioreg spawn on first use) before the write lock, not while holding it.
+    hostIdentity();
     return this.guard(msg("workflow.store.persistConvergenceRoot", {}), { rootId: root.rootId }, () => this.transaction(() => {
       const parentRow = root.parentRootId ? this.rootRow(root.parentRootId) : undefined;
       if (root.parentRootId && !parentRow) {
