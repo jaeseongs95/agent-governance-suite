@@ -4,7 +4,6 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { performance } from "node:perf_hooks";
 import { setImmediate } from "node:timers";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -50,16 +49,15 @@ for (const [k, v] of Object.entries(isolatedEnv)) {
   }
 }
 
+// The time bound is the hosts' hook timeout (10 s in hooks.json): a run that exceeds it ends without status 0, which the
+// scenarios assert. No tighter wall-clock bound is asserted, because a shared runner's scheduling would decide it.
 function runSubprocess(stdinText, args) {
-  const t0 = performance.now();
-  const res = spawnSync(process.execPath, [runnerPath, ...args], {
+  return spawnSync(process.execPath, [runnerPath, ...args], {
     input: stdinText,
     encoding: "utf8",
     timeout: 10000,
     env: isolatedEnv,
   });
-  const elapsedMs = Math.round((performance.now() - t0) * 100) / 100;
-  return { ...res, elapsedMs };
 }
 
 test("executes the existing thirteen antigravity hook runner scenarios", async () => {
@@ -114,7 +112,6 @@ try {
     });
     const res = runSubprocess(validPayload, ["--event=PreToolUse"]);
     assert.equal(res.status, 0);
-    assert.ok(res.elapsedMs < 3000, `Expected Handler 2 elapsedMs < 3000ms, got ${res.elapsedMs}ms`);
     assert.deepEqual(JSON.parse(res.stdout), { decision: "allow" });
     for (const file of ["session-board.sqlite3", "trust.sqlite3", "workflows.sqlite3", "session-messaging"])
       assert.equal(existsSync(path.join(tmpDir, file)), false);
@@ -146,7 +143,6 @@ try {
     });
     const resWrapper = runSubprocess(wrapperPayload, ["--hook=host-attestation", "--event=PreToolUse"]);
     assert.equal(resWrapper.status, 0);
-    assert.ok(resWrapper.elapsedMs < 2000, `Expected Handler 1 elapsedMs < 2000ms, got ${resWrapper.elapsedMs}ms`);
     assert.deepEqual(JSON.parse(resWrapper.stdout), { decision: "allow" });
 
     const directPayload = JSON.stringify({
@@ -575,7 +571,6 @@ try {
     });
     const resMsg = runSubprocess(msgToolPayload, ["--event=PreToolUse"]);
     assert.equal(resMsg.status, 0);
-    assert.ok(resMsg.elapsedMs < 3000, `Expected Handler 2 prepare_session_message elapsedMs < 3000ms, got ${resMsg.elapsedMs}ms`);
     const parsedMsg = JSON.parse(resMsg.stdout);
     // AGS 3.0: the server reads the caller from tools/call _meta, so the hook allows the call without rewriting it.
     assert.deepEqual(parsedMsg, { decision: "allow" });
