@@ -21,6 +21,7 @@ import {
   reportClaudePluginDrift,
 } from "../../scripts/build-claude-plugin.mjs";
 import { SEMVER } from "../../scripts/release-metadata.mjs";
+import { PACKAGES as EN_PACKAGES } from "../../scripts/build-en-packages.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const pluginRoot = path.join(root, OUTPUT_DIRECTORY);
@@ -171,6 +172,13 @@ describe("generated Claude plugin", () => {
     const allowed = new Set(["skills/orchestrator/SKILL.md", "claude-plugin/skills/orchestrator/SKILL.md", "tests/tooling/claude-plugin.test.mjs", projectionPath, frozenAdditionPath]);
     const listed = spawnSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
     expect(listed.status).toBe(0);
+    // The English packages are generated copies of those files (scripts/build-en-packages.mjs).
+    for (const file of [...allowed]) {
+      for (const [name, select] of Object.entries(EN_PACKAGES)) {
+        const target = select(file);
+        if (target !== null) allowed.add(`${name}/${target}`);
+      }
+    }
     const files = listed.stdout.split("\0").filter((file) => file && !allowed.has(file));
     expect(files.length).toBeGreaterThan(500);
     for (const file of files) {
