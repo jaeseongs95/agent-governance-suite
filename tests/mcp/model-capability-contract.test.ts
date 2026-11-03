@@ -85,6 +85,8 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
     { riskLevel: "critical", modelClass: "general", effort: "high" },
     { riskLevel: "critical", modelClass: "lightweight", effort: "high" },
     { riskLevel: "critical", modelClass: "general", effort: "low" },
+    // A host that reports no effort is observed with a null effort: the root runs, a child floor refuses it.
+    { riskLevel: "critical", modelClass: "general", effort: null },
   ] as const)("이름 등록 없는 opaque 관측을 같은 guarded workflow 단계에서 소비한다: $riskLevel/$modelClass/$effort (D0094)", ({ riskLevel, modelClass, effort }) => {
     let model = "";
     const adapter: HostExecutionAdapter = {
@@ -181,9 +183,9 @@ describe("AGS-08A vendor-neutral model/capability contract and single-catalog up
       const recorded = provider.run("record_stage_result", stageCaller,
         () => service.recordStageResult(stageInput, true, observedCaller(stageCaller)));
       expect(provider.lastObservedCapability()).toMatchObject({ provider: adapter.provider, policyRevision: adapter.policyRevision, rawModel: model });
-      if (modelClass === "lightweight" || effort === "low") {
-        expect(recorded.error).toMatchObject({ code: "GATE_FAILED",
-          details: { reasonCode: effort === "low" ? "REASONING_EFFORT_BELOW_FLOOR" : "MODEL_CLASS_BELOW_FLOOR" } });
+      if (modelClass === "lightweight" || effort === "low" || effort === null) {
+        expect(recorded.error).toMatchObject({ code: "GATE_FAILED", details: { reasonCode: effort === null ? "REASONING_EFFORT_UNOBSERVED"
+          : effort === "low" ? "REASONING_EFFORT_BELOW_FLOOR" : "MODEL_CLASS_BELOW_FLOOR" } });
         expect(service.getWorkflowStatus(receipt.runId).data?.stageResults).toEqual([]);
         // The root session runs the model the user chose: the same result recorded by the root is observed, not refused.
         const rootStageCaller = rootCaller(adapter.host, SESSION, {

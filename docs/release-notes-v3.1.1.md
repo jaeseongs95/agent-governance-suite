@@ -11,7 +11,7 @@
 - 메인 세션(root)은 사용자가 고른 모델·effort로 실행하며 모델·effort를 이유로 거부하지 않는다. 신원·결속·1회 소비 같은 관측 요건은 그대로다.
 - 하한은 서브에이전트(child)가 기록하는, 하한이 계획된 단계에만 적용한다. effort를 관측하지 못하면 `REASONING_EFFORT_UNOBSERVED`, effort가 계획된 하한보다 낮으면 `REASONING_EFFORT_BELOW_FLOOR`, 목록이 아는 등급이 하한보다 낮으면 `MODEL_CLASS_BELOW_FLOOR`로 거부한다. 등급을 모르는 모델(`modelClass: null`)은 등급으로 거부하지 않고 기록한다.
 - 설치된 어댑터의 기술자가 관측과 모순되면(호스트·모델 이름·정책 개정 불일치) 계속 거부한다.
-- Codex는 effort를 보고하지 않아도 모델만으로 관측한다.
+- Codex와 Claude Code는 effort를 보고하지 않아도 모델만으로 관측한다. 3.1.0의 Claude 관측은 hook에 effort가 없으면 `CLAUDE_EFFORT_UNOBSERVED`로 root 호출까지 거부했다. 이제 `reasoningEffort: null`로 기록하고, effort 하한이 있는 child 단계만 `REASONING_EFFORT_UNOBSERVED`로 거부한다.
 
 ### Antigravity(agy) 실행 관측
 
@@ -31,8 +31,9 @@
 
 ## 알려진 제한
 
-- agy 짝짓기는 호출 ID 없이 (대화, 도구, 인자)로 한다. 같은 대화에서 같은 인자로 같은 도구를 거의 동시에 두 번 부르면 어느 기록이 어느 호출 것인지 구분하지 않는다. 두 호출 모두 같은 세션의 같은 모델 관측이므로 결과는 같다.
+- agy 짝짓기는 호출 ID 없이 (대화, 도구, 인자)로 한다. 같은 대화에서 같은 인자로 같은 도구를 거의 동시에 두 번 부르고 두 hook 기록이 서버가 꺼내기 전에 모두 쌓이면, 첫 호출이 가장 최근 기록을 쓰면서 같은 키의 기록을 모두 지운다. 그래서 두 번째 호출은 `ANTIGRAVITY_OBSERVATION_MISSING`으로 거부되고 다시 부르면 된다. 남은 기록을 지우는 것은 보내지 않은 호출의 기록이 나중 호출에 쓰이지 않게 하기 위해서다.
 - 새 호스트를 붙이려면 아직 ingress 목록과 호스트 목록을 함께 고쳐야 한다. 서브에이전트를 띄우는 시점의 관측도 아직 없다. 둘 다 3.2에서 다룬다.
+- 대화형 Claude 세션에서는 실행 관측 호출(`plan_workflow`·`start_workflow`·`record_stage_result`·`classify_skills`·`record_skill_selection`)마다 hook이 transcript를 처음부터 끝까지 읽는다. 호출 메시지가 hook보다 늦게 기록되어 처음 찾기에서 놓치기 때문이다. Windows 시험 서버 측정에서는 100MB 0.9초, 300MB 2.3초, 500MB 4.3초가 걸렸다. 이 기울기면 1.2GB쯤에서 hook 제한 시간 10초에 닿아 호출이 막힐 수 있다(외삽). 전체를 읽는 것은 호출 메시지가 없다는 것을 증명한 뒤에만 세션 모델로 대신 관측하기 위해서다. 그래서 끝 쪽만 읽도록 줄이지 않고, 3.2에서 이미 읽은 구간의 판정을 세션별로 저장해 새로 붙은 부분만 읽게 고친다. headless 세션은 메시지를 바로 찾으므로 크기와 상관없이 2ms였다.
 - 3.1.0의 나머지 제한(셸로 바꾼 파일은 세지 않음, 구간은 turn마다 다시 셈)은 그대로다.
 
 ## 검증

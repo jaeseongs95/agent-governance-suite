@@ -13,9 +13,9 @@
 
 | 호스트 | 관측 출처 | 한계 |
 | --- | --- | --- |
-| Codex | `.mcp.json`의 `AGENT_GOVERNANCE_HOST_ATTESTATION=codex`. 서버가 `tools/call` `_meta`의 `x-codex-turn-metadata`(`model`, `reasoning_effort`, `turn_id`)와 `callId`를 읽는다. hook이 없다 | model이나 effort가 없으면 `CODEX_EXECUTION_META_MISSING`. child도 자기 thread의 값을 쓴다 |
-| Claude Code | manifest의 `AGENT_GOVERNANCE_HOST_ATTESTATION=claude-code`. PreToolUse governance hook이 effort(`effort.level`)와 model(발신 transcript 항목, 없으면 `SessionStart`·`PostModelSwitch`가 기록한 세션 model)을 admission 행에 기록하고, 서버가 `claudecode/toolUseId`로 그 행을 한 번 회수한다 | 둘 중 하나라도 관측하지 못하면 `CLAUDE_MODEL_UNOBSERVED`·`CLAUDE_EFFORT_UNOBSERVED` 등. transcript-latest 추정은 하지 않는다 |
-| Antigravity | `mcp_config.json`의 `AGENT_GOVERNANCE_HOST_ATTESTATION=antigravity`. `_meta`가 대화 ID만 준다 | model·effort·호출 ID가 없어 `ANTIGRAVITY_EXECUTION_UNOBSERVED`. 실행 하한 도구는 관측 없이 진행할 수 없다 |
+| Codex | `.mcp.json`의 `AGENT_GOVERNANCE_HOST_ATTESTATION=codex`. 서버가 `tools/call` `_meta`의 `x-codex-turn-metadata`(`model`, `reasoning_effort`, `turn_id`)와 `callId`를 읽는다. hook이 없다 | model이 없으면 `CODEX_EXECUTION_META_MISSING`. effort가 없으면 `reasoningEffort: null`로 관측한다. child도 자기 thread의 값을 쓴다 |
+| Claude Code | manifest의 `AGENT_GOVERNANCE_HOST_ATTESTATION=claude-code`. PreToolUse governance hook이 effort(`effort.level`)와 model(발신 transcript 항목, 없으면 `SessionStart`·`PostModelSwitch`가 기록한 세션 model)을 admission 행에 기록하고, 서버가 `claudecode/toolUseId`로 그 행을 한 번 회수한다 | model을 관측하지 못하면 `CLAUDE_MODEL_UNOBSERVED` 등. effort가 없으면 `reasoningEffort: null`로 관측한다. transcript-latest 추정은 하지 않는다 |
+| Antigravity | `mcp_config.json`의 `AGENT_GOVERNANCE_HOST_ATTESTATION=antigravity`. `_meta`가 대화 ID만 준다. hook runner의 PreToolUse가 hook 입력의 `modelName`(effort 접미사는 떼어 effort로)을 기록하고, 서버가 (대화, 도구, 정규화한 인자 digest)가 같은 가장 최근 행을 한 번 꺼낸다 | 그 대화·도구의 행이 없으면 `ANTIGRAVITY_OBSERVATION_MISSING`, 인자가 다르면 `ANTIGRAVITY_OBSERVATION_UNMATCHED`. 호출 ID가 없어서, 같은 인자로 거의 동시에 부른 두 호출의 hook 행이 둘 다 서버 회수 전에 쌓이면 첫 회수가 같은 키의 행을 모두 지워 두 번째 호출은 `ANTIGRAVITY_OBSERVATION_MISSING`으로 거부된다 |
 
 `AGENT_GOVERNANCE_HOST_ATTESTATION`이 없거나 위 세 값 밖이면 caller ingress가 없어 모든 도구가 `HOST_INGRESS_UNAVAILABLE`로 거부된다.
 

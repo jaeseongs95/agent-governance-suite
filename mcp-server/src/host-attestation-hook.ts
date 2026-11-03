@@ -579,8 +579,8 @@ export function observeClaudeExecution(input: HookInput, options: HostAttestatio
   }
   // The transcript records the effort of the exact message; the hook reports the effort of the
   // current tool-use context. When both are present and differ, the lower one counts.
+  // A model without a reported effort is still observed, as for Codex; floors that need an effort refuse later.
   const effort = observedEffort(text(record(input.effort)?.level), observation.effort);
-  if (!effort) return { unavailable: "CLAUDE_EFFORT_UNOBSERVED" };
   return { model: observation.model, effort, turnId: text(input.turn_id), provenance };
 }
 

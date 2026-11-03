@@ -570,12 +570,12 @@ describe("Claude execution observation recorded by the governance hook", () => {
     expect(slowSleeps).toBe(0);
   });
 
-  it("rejects missing effort, foreign sessions and sidechain issuing messages", () => {
+  it("observes a missing effort as null and rejects foreign sessions and sidechain issuing messages", () => {
     const read = (line: string) => ({ ...noWait, maxWaitMs: 0, readText: () => line });
     expect(observe(base, read(transcriptLine("toolu_hook", { sessionId: "other" })))).toEqual({ unavailable: "CLAUDE_ISSUING_MESSAGE_REJECTED" });
     expect(observe(base, read(transcriptLine("toolu_hook", { isSidechain: true })))).toEqual({ unavailable: "CLAUDE_ISSUING_MESSAGE_REJECTED" });
     const noEffortLine = JSON.stringify({ ...JSON.parse(transcriptLine("toolu_hook")), effort: undefined });
-    expect(observe({ ...base, effort: undefined }, read(noEffortLine))).toEqual({ unavailable: "CLAUDE_EFFORT_UNOBSERVED" });
+    expect(observe({ ...base, effort: undefined }, read(noEffortLine))).toMatchObject({ model: "claude-opus-5", effort: null });
   });
 
   it("reads a subagent's own transcript, and the admission records the subagent as the actor", () => {
@@ -619,7 +619,7 @@ describe("Claude execution observation recorded by the governance hook", () => {
       const session = record("claude-opus-5", "2026-09-19T00:10:01.000Z", "session-start");
       expect(run(written({ model: "claude-opus-5", effort: "low" }), session)).toMatchObject({ model: "claude-opus-5", effort: "high" });
       // A model without effort support (Haiku) sends no hook effort; an earlier Opus message must not stand in for it.
-      expect(run(written({ model: "claude-opus-5", effort: "xhigh" }), session, { ...base, effort: undefined })).toEqual({ unavailable: "CLAUDE_EFFORT_UNOBSERVED" });
+      expect(run(written({ model: "claude-opus-5", effort: "xhigh" }), session, { ...base, effort: undefined })).toMatchObject({ model: "claude-opus-5", effort: null });
     });
 
     it("does not fall back when the issuing message was found but rejected", () => {
@@ -631,10 +631,10 @@ describe("Claude execution observation recorded by the governance hook", () => {
       expect(run(noModel, session)).toEqual({ unavailable: "CLAUDE_ISSUING_MESSAGE_REJECTED" });
     });
 
-    it("requires model and effort observations and retains an ineligible switched model", () => {
+    it("requires a model observation, keeps an unreported effort as null and retains an ineligible switched model", () => {
       expect(run(null, null)).toEqual({ unavailable: "CLAUDE_MODEL_UNOBSERVED" });
       expect(run(null, record("claude-opus-5", "2026-09-19T00:10:01.000Z", "session-start"), { ...base, effort: undefined }))
-        .toEqual({ unavailable: "CLAUDE_EFFORT_UNOBSERVED" });
+        .toEqual({ model: "claude-opus-5", effort: null, turnId: null, provenance: "claude-code:session-start" });
       expectUnclassifiedObservation(claudeCodeExecutionAdapter, run(written(), record("claude-next", "2026-09-19T00:10:18.000Z")));
     });
 
