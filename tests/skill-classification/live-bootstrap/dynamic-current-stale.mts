@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import {pathToFileURL} from "node:url";
 import {readyEstimateMock} from "./prepared-fixture.mts";
+import {loadCurrentSourceBindings} from "../evaluation.js";
 
 const repo = path.resolve(process.argv[2] ?? ".");
 const helper = path.resolve(process.argv[3] ?? path.join(import.meta.dirname, "bootstrap.mts"));
@@ -23,7 +24,13 @@ try {
   await cp(path.join(repo, "skills"), path.join(root, "skills"), {recursive: true});
   await cp(path.join(repo, "mcp-server/src"), path.join(root, "mcp-server/src"), {recursive: true});
   await mkdir(path.join(root, "tests/skill-classification"), {recursive: true});
-  for (const name of ["evaluation.ts", "fixtures.json", "fixtures.source-successor.json", "fixtures.unavailable-source-successor.json", "fixtures.live-host-boundaries-source-successor.json", "fixtures.continuity-handoff-source-successor.json", "fixtures.preflight-private-preparation-source-successor.json", "fixtures.preflight-platform-events-source-successor.json", "fixtures.orchestrator-phase-check-source-successor.json", "fixtures.orchestrator-workflow-enforcement-source-successor.json"]) await cp(path.join(repo, "tests/skill-classification", name), path.join(root, "tests/skill-classification", name));
+  const sourceFiles = new Set([path.join(repo, "tests/skill-classification/evaluation.ts"),
+    path.join(repo, "tests/skill-classification/fixtures.json"), ...loadCurrentSourceBindings(repo).files]);
+  for (const source of sourceFiles) {
+    const target = path.join(root, path.relative(repo, source));
+    await mkdir(path.dirname(target), {recursive: true});
+    await cp(source, target);
+  }
   const {config} = await readyEstimateMock(api, root, path.join(root, "out"), "current-stale-registry");
   const baseline = await api.preflight(config, await api.prepare(config));
   assert(!baseline.blocked.includes("ESTIMATE_SOURCE_OR_INPUT_UNBOUND"), "BASELINE_ESTIMATE_BOUND");

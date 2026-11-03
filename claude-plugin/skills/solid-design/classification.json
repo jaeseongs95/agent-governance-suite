@@ -18,7 +18,9 @@
       "path": "skills/solid-design/SKILL.md",
       "startLine": 4,
       "endLine": 5,
-      "digest": "sha256:38f03d44593d79f0a6bc0c2084187ae81eacf9a567c387c359ab4601278978a6"
+      "digest": "sha256:402a4e5a5c44493b7dc4a33a21b6cd0f29e701ed9a060422975159caef609aac",
+      "startByte": 0,
+      "endByte": 368
     }
   ],
   "exclusions": [
@@ -26,7 +28,9 @@
       "path": "skills/solid-design/SKILL.md",
       "startLine": 6,
       "endLine": 6,
-      "digest": "sha256:38f03d44593d79f0a6bc0c2084187ae81eacf9a567c387c359ab4601278978a6"
+      "digest": "sha256:402a4e5a5c44493b7dc4a33a21b6cd0f29e701ed9a060422975159caef609aac",
+      "startByte": 0,
+      "endByte": 226
     }
   ]
 }

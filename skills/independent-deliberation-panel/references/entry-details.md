@@ -9,7 +9,7 @@
 | `max_distinct_workers` | 정수 `0`–`8` | `8` | 실제로 instantiated 된 reviewer, Judge, specialist의 합계 상한이다. Coordinator와 미생성 역할은 세지 않는다. |
 | `include_decision_record` | `true`, `false` | `false` | `true`면 사용자용 10개 섹션에 schema-valid `DecisionRecord.v1`를 함께 낸다. `false`면 record 전체는 기본 출력하지 않는다. |
 
-상위 시스템·개발자·적용 가능한 `AGENTS.md` 지침이 항상 우선한다. 그 아래에서 사용자의 명시적 안전·증거·독립성·Judge 요구와 네 제어의 명시 값이 기본값보다 우선하며, 한 제어의 값은 다른 제어를 암묵적으로 바꾸지 않는다. 예를 들어 `adaptive_review: off`는 Stage 4 cross-examination, Stage 5 evidence 확인, required fresh Judge 또는 `strict` preflight를 생략시키지 않는다. 사용자가 요구한 reviewer 수·fresh Judge·증거 수단은 등급과 함께 required capability를 정한다.
+시스템·개발자 지침의 범위에서 사용자의 명시적 지시를 우선하고, 충돌하지 않는 적용 `AGENTS.md` 지침과 기본값을 함께 따른다. 사용자의 명시적 안전·증거·독립성·Judge 요구와 네 제어의 명시 값이 기본값보다 우선하며, 한 제어의 값은 다른 제어를 암묵적으로 바꾸지 않는다. 예를 들어 `adaptive_review: off`는 Stage 4 cross-examination, Stage 5 evidence 확인, required fresh Judge 또는 `strict` preflight를 생략시키지 않는다. 사용자가 요구한 reviewer 수·fresh Judge·증거 수단은 등급과 함께 required capability를 정한다.
 
 허용 목록 밖의 값, 정수가 아닌 값·범위 밖 숫자, 모호한 표기, 서로 충돌하는 중복 값은 조용히 보정·추측하지 않는다. Coordinator는 해당 제어를 invalid로 공개하고 실행 전에 명확화를 요청한다. 상위 지침이 즉시 처리를 요구하고 유효한 나머지 요청만으로 범위가 명확할 때에는 invalid 제어를 적용하지 않은 사실과 사용한 기본값을 `Method / Run Summary`에 남긴다. `adaptive_review: off` 자체는 capability shortfall이 아니며, specialist·re-deliberation·그에 따른 adaptive artifact를 만들지 않는다는 뜻이다.
 
@@ -31,6 +31,13 @@
 7. **Fresh Judge** — Round 1과 cross-examination에 참여하지 않은 Judge에게 정제된 dossier만 전달해 축별 판정을 받는다. fresh Judge를 만들 수 없으면 reviewer를 Judge로 재사용하지 않는다.
 
 `DecisionRecord.v1`과 Judge dossier에는 raw reviewer/Judge output, raw chain-of-thought, 내부 프롬프트, 대화 transcript, 비밀 또는 불필요한 개인 데이터를 넣거나 저장하지 않는다. schema와 validator가 기계적으로 확인하는 범위는 명시적 금지 필드 부재와 record shape다. briefing·dossier 경계 준수와 자유문자열 안의 개인정보·raw output 배제는 Coordinator의 절차 의무이며 schema가 증명하지 않는다. keyword 검사로 프라이버시나 외부 시스템의 비저장을 보장한다고 주장하지 않는다. reviewer와 Judge briefing에는 재위임 금지를 명시하고 Coordinator만 worker 예산과 생명주기를 관리한다. 스킬은 worker의 도구 권한을 기술적으로 차단하지 못하므로, 시도·관찰 가능한 재위임은 해당 worker를 독립 participant에서 제외하고 `run.failures`에 기록한다. 그 결과 required 수나 격리를 충족하지 못하면 `provisional`로 내린다.
+
+## 프레임 변경과 판정 근거를 추적한다
+
+- 사용자 정정이나 새 원자료가 결정 질문·제약·성공 기준을 바꾸면 case brief를 먼저 갱신하고 영향을 받는 claim·issue·axis를 식별한다. 이전 프레임의 결론을 새 요청의 합의로 재사용하지 않는다.
+- 반증된 claim은 `refuted` 근거와 함께 보존하고 합의의 support에서 제외한다. 같은 주장을 다른 문구나 reviewer 이름으로 되살리지 않으며, Judge dossier에는 필요한 반증과 남은 쟁점도 전달한다.
+- worker 생성·역할 배정·record 작성과 실제 review 완료를 구분한다. 완료 결과와 현재 후보가 연결되지 않으면 독립 검토 수나 판정 근거에 넣지 않는다. schema-valid 기록으로 관찰되지 않은 실행을 메우지 않는다.
+- 기존 단계·재숙고·worker 상한 안에서 해결되지 않은 쟁점은 영향과 필요한 증거를 남기고 종료한다. 원하는 결론을 얻기 위해 같은 입력으로 새 패널을 열거나 run ID만 바꿔 상한을 초기화하지 않는다.
 
 ## 규모와 독립성
 

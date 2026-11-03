@@ -73,11 +73,18 @@ Read [the delegation playbook](delegation-playbook.md) when preparing briefs, ba
 - Do not redo delegated work. Review evidence, compare alternatives, resolve conflicts, and integrate the results.
 - Resolve disagreements from requirements, current artifacts, and verification results rather than model identity.
 
+## Keep live assignments consistent with user steering
+
+- Keep each assignment's owner, scope, input/candidate reference, and observed state in the existing task record. Do not create a second ledger merely for coordination.
+- When the user corrects scope, withdraws an action, or pauses work, stop dispatching affected units and send the changed constraint to their active owners. A sent cancellation is not proof that a worker or its child process stopped.
+- Confirm release of write ownership from the worker's response and available host/process state before assigning the same files or external state to a replacement. If that state is unknown, keep the conflicting write pending and continue disjoint work; do not turn an unreachable worker into a free slot by assumption.
+- Compare late results against the latest scope and current target before integration. Preserve useful evidence, but do not apply a stale patch, resume cancelled work, or accept a superseded completion claim just because the assignment originally allowed it.
+
 ## Require independent audits for high-risk work
 
 <!-- policy-contract: audit.independent-required -->
 
-Treat security, permissions, payments, data loss, schema migrations, deployments, and global configuration changes as high risk. Assign an auditor who did not implement the change. Follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge eligibility and non-reuse. The auditor must inspect the requirements, final change, verification evidence, and plausible failure modes directly.
+Assess the actual security, permission, payment, data-loss, migration, deployment and global-configuration impact under `independent-audit-gate`. A topic label, test environment, ordinary branch push or project setting alone does not establish a high-risk effect. When that gate applies, require an independent audit. Assign an auditor who did not implement the change. Follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`) for auditor and Judge eligibility and non-reuse. The auditor must inspect the requirements, final change, verification evidence, and plausible failure modes directly.
 
 <!-- policy-contract: audit.no-completion-without-auditor -->
 <!-- policy-contract: audit.reaudit-after-change -->

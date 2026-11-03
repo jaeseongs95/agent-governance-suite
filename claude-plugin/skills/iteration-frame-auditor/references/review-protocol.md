@@ -34,6 +34,8 @@
 
 `resume-new-epoch`는 reviewer의 권고다. 서버는 epoch 횟수, attempt budget, review freshness와 root revision을 별도로 확인한 뒤에만 gate를 연다.
 
+target digest가 달라도 실패 조건과 무관한 metadata·이름·주석만 달라졌다면 그것만으로 새 실행의 근거를 삼지 않는다. 어떤 교정이 실패 조건에 영향을 주는지 artifact와 attempt evidence로 확인하고, 그런 근거가 없으면 `diagnose` 또는 `stop`을 선택한다. 잘못된 verifier나 oracle을 수정할 필요가 있더라도 pass/fail 의미가 바뀌면 기존 실패와 같은 평가로 비교하지 않는다. 변경 전 실패 기록을 보존하고 위 routing matrix의 `semantics-changing` 경로를 따른다.
+
 ## Separation of duties
 
 검토자 ID는 request에 기록된 모든 implementation actor ID와 달라야 한다. `freshContext: true`는 cooperative-sealed assertion이며 악의적인 ID 위조를 방지하는 attestation은 아니다. 이 assertion을 제공할 수 없는 환경에서는 fail-closed로 유지한다.

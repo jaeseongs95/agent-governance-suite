@@ -67,9 +67,11 @@ test("v2 descriptor binding과 state mapping이 ProviderResult 오류 계약과 
 test("validate-skill은 한글·공백·#·%가 있는 설치 경로에서도 실제 파일을 찾아 검증한다", async () => {
   const parent = await mkdtemp(path.join(tmpdir(), "설치 경로 #50% "));
   try {
-    const installed = path.join(parent, "플러그인 사본", "workspace-convention-profiler");
-    await cp(skillRoot, installed, { recursive: true });
-    // validate-skill은 독립 배포 형태의 package.json을 요구하므로 SKILL.md 버전과 맞춘 사본을 둔다.
+    const installedSkills = path.join(parent, "플러그인 사본", "skills");
+    const installed = path.join(installedSkills, "workspace-convention-profiler");
+    // 공통 참고 자료도 해석할 수 있도록 실제 suite의 skills 트리를 함께 복사한다.
+    await cp(path.dirname(skillRoot), installedSkills, { recursive: true });
+    // validate-skill이 요구하는 package.json은 SKILL.md 버전과 맞춘 사본을 둔다.
     const version = (await readFile(path.join(skillRoot, "SKILL.md"), "utf8")).match(/^\s*version:\s*["']?([^"'\s]+)["']?\s*$/m)?.[1];
     await writeFile(path.join(installed, "package.json"), `${JSON.stringify({ name: "workspace-convention-profiler", version })}\n`);
     const result = spawnSync(process.execPath, [path.join(installed, "scripts", "validate-skill.mjs")], { encoding: "utf8" });

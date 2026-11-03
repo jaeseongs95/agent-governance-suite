@@ -8,6 +8,8 @@ metadata:
 
 # Independent Deliberation Panel
 
+이 스킬을 적용할 때 [공통 행동 기준](../independent-audit-gate/references/specialist-behavior.md)을 먼저 읽고 따른다.
+
 원안 작성자나 초기 결론의 전제에서 떨어진 관점으로 고위험 판단을 검토한다. 이 스킬은 인지적 관점과 증거 기반 통합 절차를 제공할 뿐, 파일 변경·배포·외부 메시지 같은 권한을 새로 부여하지 않는다. 상위 시스템·개발자 지시를 덮어쓰거나 collaboration 도구를 제공·활성화하거나 worker 생성·provider 수준 격리를 강제할 수도 없다.
 
 ## 적용 경계

@@ -8,8 +8,8 @@
     },
     {
       "file": "references/entry-details.md",
-      "find": "상위 시스템·개발자·적용 가능한 `AGENTS.md` 지침이 항상 우선한다.",
-      "replace": "상위 시스템·개발자·적용 가능한 `CLAUDE.md`(import된 `AGENTS.md` 포함) 지침이 항상 우선한다."
+      "find": "시스템·개발자 지침의 범위에서 사용자의 명시적 지시를 우선하고, 충돌하지 않는 적용 `AGENTS.md` 지침과 기본값을 함께 따른다.",
+      "replace": "시스템·개발자 지침의 범위에서 사용자의 명시적 지시를 우선하고, 충돌하지 않는 적용 `CLAUDE.md`(import된 `AGENTS.md` 포함) 지침과 기본값을 함께 따른다."
     },
     {
       "file": "references/entry-details.md",

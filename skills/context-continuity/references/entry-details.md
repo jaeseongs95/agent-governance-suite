@@ -10,6 +10,12 @@
 
 Hook이 추가한 `_continuityBinding`은 수정하거나 재사용하지 않는다. binding 오류가 나면 새 도구 호출을 만들고, stale revision이면 `inspect_context`로 현재 metadata를 확인한 뒤 의도적인 replacement 여부를 판단한다.
 
+## 정정과 미완료 상태를 보존한다
+
+- 사용자가 해석이나 판단 기준을 정정하면 `decisions`·`constraints`에 새 기준과 폐기한 전제를 짧게 함께 남긴다. 정정의 대상·조건·확신 수준을 유지하고, 과거 기본값으로 돌아가지 않게 한다.
+- `progress`에는 실제 완료한 범위와 근거를, `blockers`에는 필요한 미관측 상태를 남긴다. 실행 결과가 불명확한 작업은 기존 요청·실행 식별자를 `evidenceRefs`로 보존하며 실패 또는 미실행으로 바꾸지 않는다.
+- 복원 후 현재 사용자 요청, 대상 ref·상태와 근거의 적용성을 대조하고 그다음 `nextActions`를 선택한다. 인계에 남은 후보만으로 불명확한 실행을 재시도하거나 중단·취소된 작업을 재개하지 않는다.
+
 ## 복원
 
 재개·인계 요청에서 이전 상태를 복원할 때는 스킬 본문을 읽는 것으로 상태 확인을 대신하지 않는다. Hook 카드가 없으면 `inspect_context`를 `schemaVersion: "1.0.0"`으로 실제 호출해 현재 작업의 후보를 확인한다. Resume과 direct compact의 Hook 카드에는 본문이 없으며 `DEFER` metadata만 있다. `DEFER` 후보의 task·epoch·revision·digest를 현재 사용자 요청과 대조한 뒤 `load_context`를 실제 호출한다. Hook 카드의 `candidateToken`·epoch·revision·digest를 그대로 사용한다. `inspect_context` 응답이면 `restoreToken`을 `candidateToken`으로, summary의 epoch·revision·snapshotDigest를 각각 epoch·revision·digest로 지정한다. 반환된 snapshot도 과거 상태이므로 최신 사용자 요청이 우선한다.

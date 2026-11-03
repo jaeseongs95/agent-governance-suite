@@ -8,6 +8,8 @@ metadata:
 
 # Workspace Convention Profiler
 
+이 스킬을 적용할 때 [공통 행동 기준](../independent-audit-gate/references/specialist-behavior.md)을 먼저 읽고 따른다.
+
 현재 작업과 관련된 저장소 구조와 관례를 근거와 함께 정리한다. 관측된 사실, 반복 사례에서 얻은 추론, 확인하지 못한 항목을 구분하고 저장소에 새 관례를 만들지 않는다.
 
 ## 적용 조건

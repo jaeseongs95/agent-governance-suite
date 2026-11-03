@@ -27,6 +27,8 @@ caller가 제공한 stable tuple과 operation, environment digest를 canonical J
 
 후보 검사와 `attemptedChecks`는 실행 대상을 나타내는 `checkInput`을 함께 보존한다. 스크립트는 `checkId + checkInput`의 canonical JSON에서 `inputDigest`를 다시 계산한다. caller가 digest, 질문 문구, 정보가치나 비용 점수만 바꿔 중복 검사를 새 입력처럼 만들 수 없다. 한 outcome의 `supportsHypotheses`와 `refutesHypotheses`에는 같은 가설 ID가 함께 들어갈 수 없다.
 
+이 결정적 중복 검사는 두 검사의 의미가 같은지 추론하지 않는다. `checkId`를 바꾸거나 판별 결과에 영향 없는 nonce를 `checkInput`에 넣어 같은 검사를 다시 후보로 만들지 않는다. 같은 명령을 다시 쓸 필요가 있다면 실제로 달라진 소스·입력·환경과 이번에 구별할 결과를 먼저 제시한다. 상태가 바뀌지 않았다면 재시도 횟수만 늘리지 않는다.
+
 후보의 작업 범위와 권한은 원 사용자 요청·goal·프로젝트 지침에 근거한다. `prohibitedChecks`가 최우선이고, 다음이 `approvalRequired`, 마지막이 `allowedChecks`다. check ID나 `requiredAuthorization` 중 하나라도 금지 목록에 있으면 선택하지 않고, 승인 목록에 있으면 `NEEDS_APPROVAL`로 제안한다. 그 밖의 기존 작업 범위 read-only 검사는 check ID의 별도 허용 없이 진행하되 `requiredAuthorization`에 기록한 추가 권한은 모두 허용돼야 한다. 개인정보·비밀·다른 작업·저장된 receipt 접근의 확대를 통상 읽기로 취급하지 않는다. read-only가 아닌 검사는 check ID와 추가 권한이 모두 허용돼야 한다. caller의 위험 등급·peer 승인 주장 자체는 권한의 출처가 아니며, 원래의 금지·승인 경계를 제거하지 않는다.
 
 ## 종료

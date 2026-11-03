@@ -3,6 +3,7 @@ import {writeSync} from "node:fs";
 import {cp, mkdir, readFile, writeFile} from "node:fs/promises";
 import {spawn} from "node:child_process";
 import path from "node:path";
+import {loadCurrentSourceBindings} from "../evaluation.js";
 const repo = path.resolve(process.argv[2] ?? ".");
 const directory = path.join(repo, "tests/skill-classification/live-bootstrap");
 const cases = [
@@ -39,7 +40,13 @@ try {
   await cp(path.join(repo, "skills"), path.join(root, "skills"), {recursive:true});
   await cp(path.join(repo, "mcp-server/src"), path.join(root, "mcp-server/src"), {recursive:true});
   await mkdir(path.join(root, "tests/skill-classification/live-bootstrap"), {recursive:true});
-  for (const file of ["fixtures.json", "evaluation.ts", "fixtures.source-successor.json", "fixtures.unavailable-source-successor.json", "fixtures.live-host-boundaries-source-successor.json", "fixtures.continuity-handoff-source-successor.json", "fixtures.preflight-private-preparation-source-successor.json", "fixtures.preflight-platform-events-source-successor.json", "fixtures.orchestrator-phase-check-source-successor.json", "fixtures.orchestrator-workflow-enforcement-source-successor.json"]) await cp(path.join(repo,"tests/skill-classification",file),path.join(root,"tests/skill-classification",file));
+  const sourceFiles = new Set([path.join(repo, "tests/skill-classification/evaluation.ts"),
+    path.join(repo, "tests/skill-classification/fixtures.json"), ...loadCurrentSourceBindings(repo).files]);
+  for (const source of sourceFiles) {
+    const target = path.join(root, path.relative(repo, source));
+    await mkdir(path.dirname(target), {recursive: true});
+    await cp(source, target);
+  }
   for (const file of ["bootstrap.mts","prepared-fixture.mts","independent-wire-oracle.mts","precision-current-oracle.mts","dynamic-current-oracle.mts"]) await cp(path.join(directory,file),path.join(root,"tests/skill-classification/live-bootstrap",file));
   const checks: string[] = [];
   const runOracle = () => new Promise<{status: number | null; stderr: string}>((resolve, reject) => {

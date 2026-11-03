@@ -5,6 +5,7 @@ import path from "node:path";
 import {describe, expect, it} from "vitest";
 import * as api from "./bootstrap.mjs";
 import {readyMock, readyMockFromBinding, type FixtureBinding} from "./prepared-fixture.mjs";
+import {loadCurrentSourceBindings} from "../evaluation.js";
 
 const repo = path.resolve(import.meta.dirname, "../../..");
 async function ownedRoot(action: (root: string) => Promise<void>) {
@@ -60,10 +61,9 @@ describe("bootstrap fixture binding reuse", () => {
     await ownedRoot(async root => {
       const copiedRepo = path.join(root, "source-copy");
       await mkdir(copiedRepo);
-      for (const relative of ["mcp-server/src/skill-classification", "skills", "tests/skill-classification/fixtures.json",
-        "tests/skill-classification/evaluation.ts", "tests/skill-classification/fixtures.source-successor.json",
-        "tests/skill-classification/fixtures.unavailable-source-successor.json", "tests/skill-classification/fixtures.live-host-boundaries-source-successor.json",
-        "tests/skill-classification/fixtures.continuity-handoff-source-successor.json", "tests/skill-classification/fixtures.preflight-private-preparation-source-successor.json", "tests/skill-classification/fixtures.preflight-platform-events-source-successor.json", "tests/skill-classification/fixtures.orchestrator-phase-check-source-successor.json", "tests/skill-classification/fixtures.orchestrator-workflow-enforcement-source-successor.json", "package.json"]) {
+      for (const relative of new Set(["mcp-server/src/skill-classification", "skills", "tests/skill-classification/fixtures.json",
+        "tests/skill-classification/evaluation.ts", "package.json",
+        ...loadCurrentSourceBindings(repo).files.map(file => path.relative(repo, file))])) {
         const target = path.join(copiedRepo, relative);
         await mkdir(path.dirname(target), {recursive: true});
         await cp(path.join(repo, relative), target, {recursive: true});

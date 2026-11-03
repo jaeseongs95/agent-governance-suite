@@ -61,7 +61,7 @@ When reusing a completed agent, send a complete new brief. Do not assume the old
 
 If a spawn or dispatch fails, inspect agent status before deciding what happened. Then choose the narrowest applicable recovery:
 
-1. Retry a transient dispatch once when the status supports it.
+1. Retry a transient dispatch once only when status confirms that no worker was created. A missing response or worker ID alone does not establish non-execution; retain the request identity and inspect the existing operation before dispatching a replacement.
 2. Reuse an idle existing agent with a fresh brief. For auditor and Judge eligibility or reuse, follow `independent-audit-gate` (`references/audit-protocol.md`, `2. 감사자 독립성`).
 3. Queue the unit for a later batch.
 4. Keep the unit local only when delegation is no longer possible and disclose why.

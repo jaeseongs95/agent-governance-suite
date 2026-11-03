@@ -192,19 +192,22 @@ describe("signed source evidence and selection context regression", () => {
   });
 
   it.each([
-    ["orchestrator", "skills/orchestrator/SKILL.md", 18],
-    ["orchestrator", "skills/orchestrator/SKILL.md", 20],
-    ["orchestrator", "skills/orchestrator/SKILL.md", 21],
-    ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", 5],
-    ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", 6],
-    ["korean-prose-editor", "skills/korean-prose-editor/references/entry-details.md", 9],
-    ["korean-prose-editor", "skills/korean-prose-editor/references/entry-details.md", 3],
-    ["session-board", "skills/session-board/SKILL.md", 19],
-    ["session-board", "skills/session-board/SKILL.md", 21],
-  ])("retains contextual subject/phase/antecedent for %s:%s:%i", async (skillId, sourcePath, lineNumber) => {
-    const line = (await readFile(String(sourcePath), "utf8")).split("\n")[Number(lineNumber) - 1]!.trim();
+    ["orchestrator", "skills/orchestrator/SKILL.md", "작업 중 목표·범위·위험이나 필요한 전문 판단이 달라지면"],
+    ["orchestrator", "skills/orchestrator/SKILL.md", "- 코드 작성·수정·설계나 라이브러리·의존성 선택 단계에는"],
+    ["orchestrator", "skills/orchestrator/SKILL.md", "- 대형 빌드·시험, 대량 파일·데이터 처리, 장시간·동시 실행을 시작하기 전에는"],
+    ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", "- `pre-execution`에서는"],
+    ["evaluation-validity-auditor", "skills/evaluation-validity-auditor/references/entry-details.md", "- `post-execution`에서는"],
+    ["korean-prose-editor", "skills/korean-prose-editor/references/entry-details.md", "저장소의 동결 평가에서는"],
+    ["korean-prose-editor", "skills/korean-prose-editor/references/entry-details.md", "이 스킬을 직접 실행하는 경로는"],
+    ["session-board", "skills/session-board/SKILL.md", "- 서브에이전트는 이 도구를 호출하지 않는다."],
+    ["session-board", "skills/session-board/SKILL.md", "현황판은 작업을 막는 승인 관문이 아니다."],
+  ])("retains contextual subject/phase/antecedent for %s:%s:%s", async (skillId, sourcePath, prefix) => {
+    const matching = (await readFile(sourcePath, "utf8")).split("\n").map(line => line.trim()).filter(line => line.startsWith(prefix));
+    expect(matching).toHaveLength(1);
+    const line = matching[0]!;
     expect(line.length).toBeGreaterThan(0);
     const inventory = await loadSkillInventory({ root: process.cwd() });
+    expect(inventory.issues).toEqual([]);
     const skill = inventory.skills.find(candidate => candidate.skillId === skillId)!;
     expect(skill.applicability.join("\n")).toContain(line);
     expect(skill.exclusions.some(text => line.includes(text))).toBe(false);
@@ -229,8 +232,15 @@ describe("signed source evidence and selection context regression", () => {
   });
 
   it("keeps the update-session tool antecedent together with its subagent restriction", async () => {
-    const context = (await readFile("skills/session-board/SKILL.md", "utf8")).split("\n").slice(14, 19).join("\n").trim();
+    const lines = (await readFile("skills/session-board/SKILL.md", "utf8")).split("\n");
+    const starts = lines.flatMap((line, index) => line.startsWith("- 새 작업을 시작하거나 작업 내용·다음 외부 작업이 바뀌면") ? [index] : []);
+    const ends = lines.flatMap((line, index) => line.startsWith("- 서브에이전트는 이 도구를 호출하지 않는다.") ? [index] : []);
+    expect(starts).toHaveLength(1);
+    expect(ends).toHaveLength(1);
+    expect(ends[0]).toBeGreaterThan(starts[0]!);
+    const context = lines.slice(starts[0], ends[0]! + 1).join("\n").trim();
     const inventory = await loadSkillInventory({ root: process.cwd() });
+    expect(inventory.issues).toEqual([]);
     const skill = inventory.skills.find(candidate => candidate.skillId === "session-board")!;
     expect(skill.applicability.join("\n")).toContain(context);
   });

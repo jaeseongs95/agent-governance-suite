@@ -91,7 +91,7 @@
     },
     {
       "path": "skills/code-review/SKILL.md",
-      "digest": "sha256:19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd"
+      "digest": "sha256:e452e63ee1047d5162b348f16fa86a8c2464d054469ba7e1144960ef018cf2a6"
     },
     {
       "path": "skills/code-review/VERSION",
@@ -107,7 +107,7 @@
     },
     {
       "path": "skills/code-review/classification.json",
-      "digest": "sha256:d4253d69e8ebf8f384f5e5a93e375f128546e06a72c54220eea0c28f99521ac4"
+      "digest": "sha256:7119963aff673aa5d95247ec90d77be9ebddf2ae64b9aba353e30a488a6b1510"
     },
     {
       "path": "skills/code-review/integration/skill-descriptor.json",
@@ -171,7 +171,7 @@
     },
     {
       "path": "skills/test-engineering/SKILL.md",
-      "digest": "sha256:13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927"
+      "digest": "sha256:75e60228fe7307be776ed4925ea18a830f0e59d99a2d6a22715252731b37a3cc"
     },
     {
       "path": "skills/test-engineering/VERSION",
@@ -187,7 +187,7 @@
     },
     {
       "path": "skills/test-engineering/classification.json",
-      "digest": "sha256:b7cd174b0a314bf228ac0a32f9c7c33ffe1494852c90ebd73c7682d548bb3e1c"
+      "digest": "sha256:3e603b14e5f27eb21506d03b33afab40b4cf1ce6cc070e0936b6690c745e636f"
     },
     {
       "path": "skills/test-engineering/integration/skill-descriptor.json",

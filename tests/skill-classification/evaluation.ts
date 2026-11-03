@@ -287,17 +287,24 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, enforce.frozenPredecessor.path) !== phasePath || phaseBytes.length !== enforce.frozenPredecessor.bytes || hashBytes(phaseBytes) !== enforce.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings];
+  const specialistPath = resolve(repo, "tests/skill-classification/fixtures.specialist-behavior-source-successor.json");
+  const specialistBytes = readFileSync(specialistPath);
+  if (hashBytes(specialistBytes) !== "sha256:2870d4bc84873ae1e9bc84d85607e932350dec9fbfe70a8253c44c036c4ab34a") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const specialist = JSON.parse(specialistBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, specialist.frozenPredecessor.path) !== enforcePath || enforceBytes.length !== specialist.frozenPredecessor.bytes || hashBytes(enforceBytes) !== specialist.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: enforce.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath);
+  const currentManifest = {...manifest, revision: specialist.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(enforceBytes),
+    manifest: currentManifest, files, digest: hashBytes(specialistBytes),
     resolveDigest(sourcePath: string, digest: string): string {
       const chain = allBindings.filter(row => row.path === sourcePath);
       if (chain.length === 0) return digest;
