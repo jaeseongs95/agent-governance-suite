@@ -97,7 +97,10 @@ function physicalPath(target: string): { real: string; existing: string } {
       try {
         link = fs.lstatSync(current, { throwIfNoEntry: false })?.isSymbolicLink() ? fs.readlinkSync(current) : null;
       } catch (cause) {
-        throw unresolved(target, (cause as NodeJS.ErrnoException).code ?? "unreadable");
+        // Below a file (ENOTDIR) or gone meanwhile (ENOENT) there is no link to follow; anything else cannot be told.
+        const linkCode = (cause as NodeJS.ErrnoException).code;
+        if (linkCode !== "ENOENT" && linkCode !== "ENOTDIR") throw unresolved(target, linkCode ?? "unreadable");
+        link = null;
       }
       if (link !== null) {
         current = path.resolve(parent, link);
