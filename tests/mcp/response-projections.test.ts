@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { fixtureLocator } from "../helpers/fixture-locator.js";
 
 import type {
   ConvergenceStatusV1,
@@ -190,7 +191,7 @@ describe("compact MCP response projections", () => {
       },
       frame: {
         schemaVersion: "1.0.0",
-        workspace: { workspaceId: "workspace", locator: "D:/workspace" },
+        workspace: { workspaceId: "workspace", locator: fixtureLocator("workspace") },
         controlArtifacts: [{ artifactId: "control", role: "validator", locator: "control.json", digest: digest("d") }],
         targetArtifacts: [{ artifactId: "target", role: "candidate", locator: "target.json", digest: digest("e") }],
         operationalSettings: { maxAttemptsPerEpoch: 3, maxEpochs: 2, leaseTtlSeconds: 300 },

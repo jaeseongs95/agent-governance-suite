@@ -4,6 +4,7 @@ import { join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { fixtureLocator } from "../helpers/fixture-locator.js";
 
 import type { ConvergenceRootV1, TaskEnvelopeV1 } from "../../contracts/types.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
@@ -52,7 +53,7 @@ function workflowRoot(state: ConvergenceRootV1["state"] = "open"): ConvergenceRo
     decision: { complexity: "complex", hasConflicts: false }, orchestration: { requested: true, mcpAvailable: true },
   };
   const frame = {
-    schemaVersion: "1.0.0" as const, workspace: { workspaceId: "workspace", locator: "D:/workspace" }, controlArtifacts: [], targetArtifacts: [],
+    schemaVersion: "1.0.0" as const, workspace: { workspaceId: "workspace", locator: fixtureLocator("workspace") }, controlArtifacts: [], targetArtifacts: [],
     operationalSettings: { maxAttemptsPerEpoch: 3 as const, maxEpochs: 2 as const, leaseTtlSeconds: 300 },
   };
   return {

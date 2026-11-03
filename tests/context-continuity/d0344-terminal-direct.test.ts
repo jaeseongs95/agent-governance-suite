@@ -17,6 +17,7 @@ import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { InMemoryWorkflowStore, type ConvergenceSnapshot, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { rootCaller } from "../helpers/caller.js";
+import { fixtureLocator } from "../helpers/fixture-locator.js";
 
 // D0344 test plan: service/lifecycle + real SQLite conditional-rotation boundaries.
 // AC B: settled linked runs permit E -> E+1 even while a root remains open/needs-review.
@@ -77,7 +78,7 @@ function root(): ConvergenceRootV1 {
     authorization: { allowedActions: ["edit"], prohibitedActions: ["deploy"], approvalRequired: [] },
     decision: { complexity: "complex", hasConflicts: false }, orchestration: { requested: true, mcpAvailable: true },
   };
-  const frame = { schemaVersion: "1.0.0" as const, workspace: { workspaceId: "d0344", locator: "D:/d0344" },
+  const frame = { schemaVersion: "1.0.0" as const, workspace: { workspaceId: "d0344", locator: fixtureLocator("d0344") },
     controlArtifacts: [], targetArtifacts: [],
     operationalSettings: { maxAttemptsPerEpoch: 3 as const, maxEpochs: 2 as const, leaseTtlSeconds: 300 } };
   return { schemaVersion: "1.0.0", rootId: "d0344-root", parentRootId: null, revision: 1, state: "open", currentEpoch: 1,

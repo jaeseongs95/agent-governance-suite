@@ -28,6 +28,7 @@ import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.
 import { WorkflowService } from "../../mcp-server/src/workflow-service.js";
 
 import { cleanupIfClaimWorkersFinished, concurrentClaims } from "../helpers/concurrent-claim-process.js";
+import { fixtureLocator } from "../helpers/fixture-locator.js";
 
 const temporaryDirectories: string[] = [];
 const sqliteStores = new Set<SqliteWorkflowStore>();
@@ -160,7 +161,7 @@ function frame(options: {
   const workspaceId = options.workspaceId ?? "workspace-fixture";
   return {
     schemaVersion: "1.0.0",
-    workspace: { workspaceId, locator: `D:/fixtures/${workspaceId}` },
+    workspace: { workspaceId, locator: fixtureLocator("fixtures", workspaceId) },
     controlArtifacts: [{
       artifactId: "fixed-validator",
       role: "validator",
@@ -430,7 +431,7 @@ describe("local MCP convergence guard", () => {
     expect(aliasConflict.error?.code).toBe("ROOT_CONFLICT");
 
     const normalizedAliasFrame = frame({ workspaceId: "workspace-dot-alias" });
-    normalizedAliasFrame.workspace.locator = "D:/fixtures/./workspace-fixture";
+    normalizedAliasFrame.workspace.locator = `${fixtureLocator("fixtures")}/./workspace-fixture`;
     const normalizedAliasConflict = service.openConvergenceRoot({
       schemaVersion: "1.0.0",
       parentRootId: null,

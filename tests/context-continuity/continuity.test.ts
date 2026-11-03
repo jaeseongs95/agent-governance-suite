@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { mkdtemp, rm } from "node:fs/promises";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { fixtureLocator } from "../helpers/fixture-locator.js";
 import type {
   CheckpointContextRequestV1,
   ConvergenceRootV1,
@@ -132,7 +133,7 @@ function workflowRoot(): ConvergenceRootV1 {
   const task = taskEnvelope();
   const frame = {
     schemaVersion: "1.0.0" as const,
-    workspace: { workspaceId: "workspace", locator: "D:/workspace" },
+    workspace: { workspaceId: "workspace", locator: fixtureLocator("workspace") },
     controlArtifacts: [],
     targetArtifacts: [],
     operationalSettings: { maxAttemptsPerEpoch: 3 as const, maxEpochs: 2 as const, leaseTtlSeconds: 300 },

@@ -17,6 +17,7 @@ import { InactiveUnifiedAuthority, createProviderAdapter, fixtureDigest } from "
 // @ts-expect-error Existing JavaScript fixtures have no declaration file.
 import { scopeA, workflowRef, workflowRow, nextWorkflowRow, records, reference, snapshot } from "../unified-state/fixtures.mjs";
 import { rootCaller } from "../helpers/caller.js";
+import { fixtureLocator } from "../helpers/fixture-locator.js";
 
 const directories: string[] = [];
 const stores = new Set<{ close(): void }>();
@@ -62,7 +63,7 @@ function workflowRoot(): ConvergenceRootV1 {
   const task = taskEnvelope();
   const frame = {
     schemaVersion: "1.0.0" as const,
-    workspace: { workspaceId: "workspace", locator: "D:/workspace" },
+    workspace: { workspaceId: "workspace", locator: fixtureLocator("workspace") },
     controlArtifacts: [],
     targetArtifacts: [],
     operationalSettings: { maxAttemptsPerEpoch: 3 as const, maxEpochs: 2 as const, leaseTtlSeconds: 300 },
