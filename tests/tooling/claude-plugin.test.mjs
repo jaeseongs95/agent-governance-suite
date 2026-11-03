@@ -133,7 +133,7 @@ describe("generated Claude plugin", () => {
     expect(section).not.toMatch(/BINDING_INVALID[^\n]*(?:다시 실행|다시 한다|재시도|전환)/u);
     expect(section).not.toMatch(/5분[^\n]*(?:같은 호출|재시도|다시)/u);
     const recovery = await orchestrator(root, "references", "mcp-execution.md");
-    for (const guard of ["실행 하한 미달이 확인된", "만료가 확인된 경우", "결속, 신선도, 한 번 소비와 기존 수렴 가드", "코드나 승인 대기 시간만으로 원인을 만료로 단정"]) {
+    for (const guard of ["하한 미달로 `GATE_FAILED`가 확인된 subagent", "만료가 확인된 경우", "결속, 신선도, 한 번 소비와 기존 수렴 가드", "코드나 승인 대기 시간만으로 원인을 만료로 단정"]) {
       expect(recovery).toContain(guard);
     }
     // Each common selection sentence reaches Claude exactly once.
