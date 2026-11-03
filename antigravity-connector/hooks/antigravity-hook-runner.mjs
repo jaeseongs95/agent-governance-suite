@@ -1491,6 +1491,23 @@ function recordAgsCallObservation(canonicalInput, options) {
   });
 }
 
+/**
+ * agy has no prompt-submit event; PreInvocation starts the turn for the user's input. It records that input's time
+ * and workspace on the session board the way UserPromptSubmit does on the other hosts, so a workflow started without
+ * an explicit workspace finds this session's working directory. A failed record leaves the board row unchanged and
+ * the server reports the missing workspace; the board hook writes its own bounded failure line to stderr.
+ * ponytail: no prompt text is passed, so a wake-only turn also counts as a prompt; pass lastUserInput if that matters.
+ */
+function recordAgsSessionInput(canonicalInput, options) {
+  const hookPath = typeof options?.sessionBoardHookPath === "string" ? options.sessionBoardHookPath
+    : fileURLToPath(new URL("../../mcp-server/dist/session-board-hook.mjs", import.meta.url));
+  const input = { hook_event_name: "UserPromptSubmit", session_id: canonicalInput.session_id, ...(canonicalInput.cwd ? { cwd: canonicalInput.cwd } : {}) };
+  spawnSync(process.execPath, [hookPath, "--host=antigravity"], {
+    input: JSON.stringify(input), encoding: "utf8", stdio: ["pipe", "ignore", "inherit"],
+    timeout: STAGE_TIMEOUT_MS, env: process.env,
+  });
+}
+
 export async function executeAntigravityHookEvent(rawInput, explicitEvent, explicitHook, options = {}) {
   const event = validateExplicitEvent(explicitEvent, rawInput);
   if (!event) return {};
@@ -1637,6 +1654,9 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
         // Fail open per stage, with the failed stage and its code recorded.
         reportStageFailure(stage, cause, options?.writeStderr);
       }
+    }
+    if (!explicitHook && event === "PreInvocation" && canonicalInput.session_id && remainingBudgetMs() >= minSecondaryBudgetMs) {
+      recordAgsSessionInput(canonicalInput, options);
     }
     return injected.length > 0 ? { injectSteps: injected } : {};
   }
