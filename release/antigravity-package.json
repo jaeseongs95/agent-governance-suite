@@ -7,6 +7,8 @@
     "contracts",
     "mcp-server/dist",
     "runtime",
+    "claude-overlay/adaptations/code-review.json",
+    "claude-overlay/adaptations/test-engineering.json",
     "skills",
     "release/version.json",
     "LICENSE",

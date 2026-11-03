@@ -31,6 +31,9 @@ function referencedFiles() {
       entries.add(toRelative(path.resolve(ROOT, path.dirname(loader), match[1])));
     }
   }
+  // The engineering-practices CLI (`self-check`) reads every file its content lock names.
+  const lock = JSON.parse(readFileSync(path.join(ROOT, "runtime", "engineering-practices", "CONTENT_LOCK.json"), "utf8"));
+  for (const file of lock.files) entries.add(file.path);
   return [...entries].sort();
 }
 
@@ -52,7 +55,8 @@ describe("Antigravity install package (release/antigravity-package.json)", () =>
   });
 
   it("leaves out what agy does not read", () => {
-    for (const relative of ["claude-plugin/x", "tests/x", "docs/x", ".git/x", "antigravity-connector/hooks/antigravity-hook-runner.test.mjs"]) {
+    for (const relative of ["claude-plugin/x", "tests/x", "docs/x", ".git/x", "claude-overlay/adaptations/ponytail.json",
+      "antigravity-connector/hooks/antigravity-hook-runner.test.mjs", "antigravity-connector/x.test.mjs"]) {
       expect(inPackage(relative), `${relative} should not be packaged`).toBe(false);
     }
   });

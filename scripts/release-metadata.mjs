@@ -9,6 +9,9 @@ export const SEMVER = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/u;
 export const RELEASE_VERSION_KO = /(<!-- release-version:start -->\r?\n[\s\S]*?현재 (?:공개 릴리스는|릴리스 후보는) `v)\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(`[^\r\n]*\r?\n<!-- release-version:end -->)/u;
 export const RELEASE_VERSION_EN = /(<!-- release-version:start -->\r?\n[\s\S]*?current (?:public release is|release candidate is) `v)\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(`[^\r\n]*\r?\n<!-- release-version:end -->)/u;
 export const RELEASE_INSTALL = /(<!-- release-install:start -->\r?\n[\s\S]*?--ref v)\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?([\s\S]*?\r?\n<!-- release-install:end -->)/u;
+// Every release tag inside the Antigravity install block (download URL and file name) follows the release.
+export const RELEASE_AGY = /(<!-- release-agy:start -->\r?\n)([\s\S]*?)(\r?\n<!-- release-agy:end -->)/u;
+const RELEASE_TAG = /\bv\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?=[/.])/gu;
 export const PLUGIN_INFO_VERSION = /version: "\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?"/u;
 
 export function replaceExactlyOnce(text, pattern, replacement, label) {
@@ -56,7 +59,10 @@ export async function expectedReleaseFiles() {
     assertMarkerPair(text, "release-version", file);
     assertMarkerPair(text, "release-install", file);
     const versioned = replaceExactlyOnce(text, versionPattern, `$1${version}$2`, `${file} release-version`);
-    return statusText(replaceExactlyOnce(versioned, RELEASE_INSTALL, `$1${installVersion}$2`, `${file} release-install`));
+    assertMarkerPair(text, "release-agy", file);
+    const installed = replaceExactlyOnce(versioned, RELEASE_INSTALL, `$1${installVersion}$2`, `${file} release-install`);
+    return statusText(installed.replace(RELEASE_AGY, (_, start, body, end) =>
+      `${start}${body.replace(RELEASE_TAG, `v${installVersion}`)}${end}`));
   });
   return [
     await updateJson("package.json", (document) => { document.version = version; }),

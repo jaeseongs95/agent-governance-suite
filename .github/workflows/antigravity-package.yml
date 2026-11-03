@@ -36,5 +36,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           out="$RUNNER_TEMP/agent-governance-suite-antigravity-$TAG.zip"
-          node scripts/build-antigravity-package.mjs --ref "$TAG" --out "$out"
+          node scripts/build-antigravity-package.mjs --ref "refs/tags/$TAG" --out "$out"
           gh release upload "$TAG" "$out" --clobber

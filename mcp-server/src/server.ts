@@ -461,7 +461,7 @@ export function createMcpServer(
   const tools = advertise([
       {
         name: "get_skill_inventory",
-        description: "Read the full installed skill inventory from SKILL.md and registry source metadata, including infrastructure skills and source conflicts. No semantic selection or execution.",
+        description: "Read the full installed skill inventory from SKILL.md and registry source metadata, including infrastructure skills and source conflicts. No semantic selection or execution. HOST_DISCOVERY_UNAVAILABLE only means no host discovery snapshot is configured; the listed skills are still installed and usable.",
         inputSchema: {type: "object", additionalProperties: false, properties: {}},
         // D0347: the inventory itself only reads local skill, registry and discovery sources, so the call neither
         // destroys data nor reaches an external system. readOnlyHint stays unset: the shared call boundary still
@@ -470,7 +470,7 @@ export function createMcpServer(
       },
       {
         name: "classify_skills",
-        description: "Package the exact original prompt and confirmed context without an extra LLM; obtain bound classification advice through the configured JEV or current vendor fixed profile. The AGENT still makes the final selection. Missing routes, qualification or budget remain unavailable.",
+        description: "Package the exact original prompt and confirmed context without an extra LLM; obtain bound classification advice through the configured JEV or current vendor fixed profile. The AGENT still makes the final selection. Missing routes, qualification or budget remain unavailable. Classification is optional advice: NEEDS_INPUT with HOST_DISCOVERY_UNAVAILABLE or an unconfigured route means no classification support is set up here, so choose the skills yourself from get_skill_inventory and continue the task.",
         inputSchema: z.toJSONSchema(classificationInputSchema) as Record<string, unknown>,
       },
       {
@@ -504,7 +504,7 @@ export function createMcpServer(
       },
       {
         name: "plan_workflow",
-        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose.",
+        description: "Read the current skill registry and return a capability-based workflow plan without storing a run. Orchestrated semantic workflows require server-side trusted execution attestation; callers cannot submit executionContext. Trusted observation claims are persisted even though no workflow run is stored. Evaluation validity audits also bind their purpose. A stage executionRequirement floor (minimumModelClass, minimumReasoningEffort) applies only when a subagent records a passed stage; the root session records with the model and effort the user chose and is never refused for them. MODEL_NOT_IN_CATALOG and a null modelClass are notes, not refusals.",
         inputSchema: planWorkflowToolInputSchema(toolSchemaProfile),
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
@@ -540,13 +540,13 @@ export function createMcpServer(
       },
       {
         name: "start_workflow",
-        description: "Start a guarded workflow in one call: the server plans, opens the root, claims the lease and starts the run in one transaction, with the same checks as plan_workflow, open_convergence_root, claim_workflow_attempt and start_guarded_workflow. Give the goal, the stages you choose as capabilities, and the acceptance criteria; the result lists the TaskEnvelope fields filled with defaults. Edits already made in the current window are marked as late adoption (unverified evidence). A failed step leaves no root, lease or run.",
+        description: "Start a guarded workflow in one call: the server plans, opens the root, claims the lease and starts the run in one transaction, with the same checks as plan_workflow, open_convergence_root, claim_workflow_attempt and start_guarded_workflow. Give the goal, the stages you choose as capabilities, and the acceptance criteria; the result lists the TaskEnvelope fields filled with defaults. Edits already made in the current window are marked as late adoption (unverified evidence). A failed step leaves no root, lease or run. A stage executionRequirement floor (minimumModelClass, minimumReasoningEffort) applies only when a subagent records a passed stage; the root session records with the model and effort the user chose and is never refused for them. MODEL_NOT_IN_CATALOG and a null modelClass are notes, not refusals.",
         inputSchema: minimalWorkflowStartInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },
       {
         name: "record_stage_result",
-        description: "Record one ordered stage result. The server hashes local files named with a digest and records artifactChecks; verified flags are declarations. Use responseMode=compact to avoid echoing the accumulated receipt.",
+        description: "Record one ordered stage result. The server hashes local files named with a digest and records artifactChecks; verified flags are declarations. Use responseMode=compact to avoid echoing the accumulated receipt. A stage executionRequirement floor (minimumModelClass, minimumReasoningEffort) applies only when a subagent records a passed stage; the root session records with the model and effort the user chose and is never refused for them. MODEL_NOT_IN_CATALOG and a null modelClass are notes, not refusals.",
         inputSchema: recordStageResultInputSchema,
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },

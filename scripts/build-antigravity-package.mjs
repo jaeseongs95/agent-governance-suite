@@ -9,11 +9,14 @@ import { ROOT, parseArguments } from "./lib.mjs";
 // that Antigravity's plugin watcher has to register, and its installed-plugins view stalled on that.
 const { ref, out } = parseArguments(process.argv.slice(2));
 if (!ref || !out) throw new Error("Usage: node scripts/build-antigravity-package.mjs --ref <tag or commit> --out <file.zip>");
+if (ref.startsWith("-")) throw new Error(`--ref must name a tag or commit: ${ref}`);
 
 const { paths, exclude } = JSON.parse(readFileSync(path.join(ROOT, "release", "antigravity-package.json"), "utf8"));
 mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
+// glob magic gives exclude patterns the same meaning as path.matchesGlob in the package test
+// (`**/` also matches no directory); plain git pathspecs would not.
 execFileSync("git", [
   "-C", ROOT, "archive", "--format=zip", "--prefix=agent-governance-suite/", "-o", path.resolve(out), ref,
-  "--", ...paths, ...exclude.map((pattern) => `:(exclude)${pattern}`),
+  "--", ...paths, ...exclude.map((pattern) => `:(exclude,glob)${pattern}`),
 ], { stdio: "inherit" });
 console.log(`antigravity package: ${path.resolve(out)}`);

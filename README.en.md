@@ -64,13 +64,16 @@ Start a new Codex session after installation. Review and trust the installed hoo
 
 ### Gemini / Antigravity
 
-`agy` (the Antigravity CLI) `plugin install` accepts only a local directory. Fetch the release tag and install that directory.
+`agy` (the Antigravity CLI) `plugin install` accepts only a local directory. Download the Antigravity package attached to the release, extract it and install that directory. The package holds only the files agy reads; installing the whole repository can stall the installed-plugins view of the Antigravity app. Close the Antigravity app while installing, or the install cannot replace the existing plugin folder. On Windows, extract with `Expand-Archive`.
 
+<!-- release-agy:start -->
 ```bash
-git clone --depth 1 --branch v3.2.0 https://github.com/jaeseongs95/agent-governance-suite.git
+curl -LO https://github.com/jaeseongs95/agent-governance-suite/releases/download/v3.2.1/agent-governance-suite-antigravity-v3.2.1.zip
+unzip agent-governance-suite-antigravity-v3.2.1.zip
 agy plugin install ./agent-governance-suite
 agy plugin list
 ```
+<!-- release-agy:end -->
 
 Or connect the local MCP server directly in your workspace using `mcp_config.json` with `AGENT_GOVERNANCE_HOST_ATTESTATION=gemini`. `GEMINI.md` and `AGENTS.md` instructions are loaded automatically.
 

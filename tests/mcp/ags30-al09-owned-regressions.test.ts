@@ -206,6 +206,18 @@ describe("AL09 server boundary regressions", () => {
       expect(payload(await call("start_workflow", {})).error?.code).toBe("INVALID_INPUT");
     });
   });
+
+  it("3.2.1 tells the agent that stage floors bind subagents only and that classification is optional", async () => {
+    await withServer(async (client) => {
+      const tools = new Map((await client.listTools()).tools.map(tool => [tool.name, tool.description ?? ""]));
+      for (const name of ["plan_workflow", "start_workflow", "record_stage_result"]) {
+        expect(tools.get(name), name).toContain("applies only when a subagent records a passed stage");
+        expect(tools.get(name), name).toContain("never refused for them");
+      }
+      expect(tools.get("classify_skills")).toContain("choose the skills yourself from get_skill_inventory and continue the task");
+      expect(tools.get("get_skill_inventory")).toContain("HOST_DISCOVERY_UNAVAILABLE only means no host discovery snapshot is configured");
+    });
+  });
 });
 
 it("D0081 resolves schema positions while preserving literal annotation and assertion data", () => {

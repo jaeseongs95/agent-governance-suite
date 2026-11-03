@@ -64,13 +64,16 @@ codex plugin add agent-governance-suite@agent-governance
 
 ### Gemini / Antigravity
 
-`agy`(Antigravity CLI)의 `plugin install`은 로컬 디렉터리만 받습니다. 릴리스 태그를 받아 그 디렉터리를 설치합니다.
+`agy`(Antigravity CLI)의 `plugin install`은 로컬 디렉터리만 받습니다. 릴리스에 붙은 agy 설치본을 받아 풀고 그 디렉터리를 설치합니다. 설치본에는 agy가 읽는 파일만 들어 있습니다. 저장소 전체를 설치하면 Antigravity 앱의 설치됨 화면이 멈출 수 있습니다. 설치하는 동안 Antigravity 앱을 닫아 둡니다. 켜져 있으면 기존 설치 폴더를 지우지 못해 설치가 실패합니다. Windows에서는 `Expand-Archive`로 풉니다.
 
+<!-- release-agy:start -->
 ```bash
-git clone --depth 1 --branch v3.2.0 https://github.com/jaeseongs95/agent-governance-suite.git
+curl -LO https://github.com/jaeseongs95/agent-governance-suite/releases/download/v3.2.1/agent-governance-suite-antigravity-v3.2.1.zip
+unzip agent-governance-suite-antigravity-v3.2.1.zip
 agy plugin install ./agent-governance-suite
 agy plugin list
 ```
+<!-- release-agy:end -->
 
 또는 워크스페이스 루트의 `mcp_config.json`을 통해 로컬 MCP 서버(`AGENT_GOVERNANCE_HOST_ATTESTATION=gemini`)를 바로 연동할 수 있습니다. `GEMINI.md`와 `AGENTS.md` 지침이 자동으로 로드됩니다.
 
