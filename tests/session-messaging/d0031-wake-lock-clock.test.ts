@@ -90,7 +90,7 @@ it.each(["all", "nonce", "message", "presence", "relay", "live"] as const)(
     } else {
       expect(result).toBe(true);
       expect(dispatch).toHaveBeenCalledTimes(1);
-      expect(dispatch.mock.calls[0]).toEqual([target, `[agent-governance-suite:wake:${attempt!.nonce}]`, undefined]);
+      expect(dispatch.mock.calls[0]).toEqual([target, `[agent-governance-suite:wake:${attempt!.nonce}]`]);
     }
     // start-wake read its time once, under the writer lock (D0031/D0060).
     expect(startSamples).toEqual([{ at: mode === "live" ? T0 : expiresAt + 25, inTransaction: true }]);
