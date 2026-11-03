@@ -1,7 +1,9 @@
+import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { appendFile, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, posix, resolve } from "node:path";
+import { promisify } from "node:util";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CheckpointContextRequestV1, ContinuitySnapshotV1 } from "../../contracts/types.js";
@@ -1157,8 +1159,14 @@ describe("D0352 B08 Claude fork host argv (N1z repair)", () => {
     }
   });
 
-  it.runIf(process.platform === "win32")("H-W6: on Windows the real snapshot reads this process and its own ancestors", () => {
-    const snapshot = windowsHostSnapshot();
+  it.runIf(process.platform === "win32")("H-W6: on Windows the real snapshot reads this process and its own ancestors", async () => {
+    // The real query, run without blocking the event loop and without the product's 6 s limit: how fast the
+    // runner is decides nothing here. The limit itself is covered by the ETIMEDOUT case above.
+    let query: { file: string; args: readonly string[] } | null = null;
+    windowsHostSnapshot(process.pid, (file, args) => { query = { file, args }; return { status: 1, stdout: "" }; });
+    const { file, args } = query!;
+    const { stdout } = await promisify(execFile)(file, [...args], { encoding: "utf8", windowsHide: true, maxBuffer: 1 << 20 });
+    const snapshot = windowsHostSnapshot(process.pid, () => ({ status: 0, stdout }));
     if ("reason" in snapshot) throw new Error(snapshot.reason);
     expect(snapshot[0]!.pid).toBe(process.pid);
     expect(snapshot[0]!.exe.toLowerCase()).toBe(process.execPath.toLowerCase());

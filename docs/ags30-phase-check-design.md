@@ -189,6 +189,7 @@ cwd는 기준으로 쓰지 않는다. 설정은 hook 프로세스의 환경에�
 - 끝난 workflow에 결속된 세션은 시작 전에 새 epoch로 옮긴다(새 프롬프트가 하는 것과 같다).
 - Claude governance hook이 transcript에서 실행 관측을 읽도록 `HOST_ATTESTATION_TOOLS`에 `start_workflow`를 넣었다.
 - 기존 4단계 경로는 바뀌지 않는다. `start_guarded_workflow`의 continuity 결속도 workflow 시작 관측을 남겨 잠금을 푼다.
+- 3.2.1: 필수 산출물(`requiredArtifacts`)이 있는 단계는 passed 기록 때 plan의 `taskEnvelope.artifactContracts` 대상 digest와 맞아야 한다. 최소 시작은 이 계약을 만들지 않으므로, 그런 단계가 하나라도 있으면 `INVALID_INPUT`(`details.field: "stages"`, `details.capabilities`)으로 거부하고 아무것도 남기지 않는다. 현재 registry에서 최소 시작이 받는 단계는 `minimal-implementation`뿐이다. 나머지는 대상이 정해진 뒤 4단계 경로로 시작한다.
 
 ### 7.6 오류
 
