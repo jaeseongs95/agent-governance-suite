@@ -113,7 +113,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
       phase = "node-collection";
       const serverOnly = ciScope ? new Set(serverOnlyTests().map(file => path.join(root, ...file.split("/")))) : new Set();
       const files = listNodeTestFiles().filter(file => !serverOnly.has(file));
-      console.log(JSON.stringify({ runner: "node:test", scope: ciScope ? "ci" : "all", fileCount: files.length, files }));
+      console.log(JSON.stringify({ runner: "node:test", fileCount: files.length, files }));
       if (files.length === 0) {
         reason = "NODE_TEST_COLLECTION_EMPTY";
         throw new Error("No node:test suites were collected.");
