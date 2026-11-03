@@ -124,7 +124,8 @@ export async function runRuntimeSmokeCheck(sourceRoot) {
       } else {
         const envelope = JSON.parse(result.stdout);
         if (envelope?.protocolVersion !== "1.0.0" || envelope.ok !== false
-          || envelope.error !== "Unsupported session message operation.") {
+          // The text follows the host locale; the key is the language-independent contract.
+          || envelope.messageKey !== "services.sessionMessage.cli.unsupportedOperation" || typeof envelope.error !== "string") {
           throw new Error(`${script} did not reject invalid messaging input.\n${output}`);
         }
       }

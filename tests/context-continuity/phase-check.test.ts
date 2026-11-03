@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ConvergenceRootV1, TaskEnvelopeV1 } from "../../contracts/types.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { handleContinuityHook, runContinuityHook } from "../../mcp-server/src/continuity-hook.js";
-import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
+import { ContinuityService, renderHookText } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { InMemoryWorkflowStore, type WorkflowStore } from "../../mcp-server/src/workflow-store.js";
@@ -138,7 +138,7 @@ describe("phase check service", () => {
   it("names the latest run's stages that did not pass", () => {
     const service = boundWorkflow(["stage-01-design", "stage-02-implementation", "stage-03-testing"], ["stage-02-implementation"]);
     service.recordEditForSession(session);
-    expect(service.phaseCheckForSession(session)).toBe(cue("stage-01-design, stage-03-testing"));
+    expect(renderHookText(service.phaseCheckForSession(session), "ko")).toBe(cue("stage-01-design, stage-03-testing"));
   });
 
   it("returns null and records a successful check when every stage passed or the root finished", () => {
@@ -153,7 +153,7 @@ describe("phase check service", () => {
     const service = createService(null);
     bindRoot(service, "phase-root");
     service.recordEditForSession(session);
-    expect(service.phaseCheckForSession(session)).toBe(`${UNAVAILABLE}phase-gate-unavailable:WORKFLOW_STORE_UNAVAILABLE.`);
+    expect(renderHookText(service.phaseCheckForSession(session), "ko")).toBe(`${UNAVAILABLE}phase-gate-unavailable:WORKFLOW_STORE_UNAVAILABLE.`);
   });
 
   it("does not repeat a check, keeps one edit row per run of edits, and checks again after a new edit", () => {
@@ -162,11 +162,11 @@ describe("phase check service", () => {
     const { edit } = lastIds(service);
     service.recordEditForSession(session);
     expect(lastIds(service).edit).toBe(edit);
-    expect(service.phaseCheckForSession(session)).toBe(cue("stage-01-testing"));
+    expect(renderHookText(service.phaseCheckForSession(session), "ko")).toBe(cue("stage-01-testing"));
     expect(service.phaseCheckForSession(session)).toBeNull();
     service.recordEditForSession(session);
     expect(lastIds(service).edit!).toBeGreaterThan(lastIds(service).check!);
-    expect(service.phaseCheckForSession(session)).toBe(cue("stage-01-testing"));
+    expect(renderHookText(service.phaseCheckForSession(session), "ko")).toBe(cue("stage-01-testing"));
     expect(service.phaseCheckForSession(session)).toBeNull();
     expect(checkRows(service)).toEqual([{ success: 0 }, { success: 0 }]);
   });
@@ -188,6 +188,23 @@ describe("phase check hook", () => {
     expect(handleContinuityHook(pre("apply_patch"), service, "codex")).toEqual({});
     expect(handleContinuityHook(stop, service, "codex")).toEqual({ decision: "block", reason: cue("stage-01-testing") });
     expect(handleContinuityHook(stop, service, "codex")).toEqual({});
+  });
+
+  it("AGENT_GOVERNANCE_LOCALE=en renders the stage check and the unavailable notice in English", () => {
+    const en = { AGENT_GOVERNANCE_LOCALE: "en" };
+    const service = boundWorkflow(["stage-01-testing"], []);
+    expect(handleContinuityHook(pre("apply_patch"), service, "codex", en)).toEqual({});
+    expect(handleContinuityHook(stop, service, "codex", en)).toEqual({ decision: "block", reason: [
+      "[AGS stage check] The running workflow has stages that are not passed yet: stage-01-testing.",
+      "Workflow goal: Phase check fixture.",
+      "If this goal is not met yet, do not stop; continue the remaining work. Even when the request just received is done, continue while the goal remains. Record a stage result only after actually finishing that stage's work and verification, and do not stop at recording.",
+      "If you cannot proceed without the user's answer or approval, write in one line what you are waiting for and stop. Remove unneeded stages by revising the plan.",
+    ].join("\n") });
+    const unavailable = createService(null);
+    bindRoot(unavailable, "phase-root");
+    unavailable.recordEditForSession(session);
+    expect(renderHookText(unavailable.phaseCheckForSession(session), "en"))
+      .toBe("[AGS] The workflow state could not be checked, so product file changes in this window were not blocked. Cause codes: phase-gate-unavailable:WORKFLOW_STORE_UNAVAILABLE.");
   });
 
   it("does not count Bash, PowerShell, Agent or Task as edits", () => {

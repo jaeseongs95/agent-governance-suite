@@ -25,7 +25,7 @@ async function fixture() {
   const trace = path.join(root, "trace.jsonl");
   for (const bundle of bundles) {
     const response = bundle === "session-message-cli.mjs"
-      ? 'process.stdout.write(JSON.stringify({ protocolVersion: "1.0.0", ok: false, error: "Unsupported session message operation." }) + "\\n"); process.exitCode = 1;'
+      ? 'process.stdout.write(JSON.stringify({ protocolVersion: "1.0.0", ok: false, error: "Unsupported session message operation.", messageKey: "services.sessionMessage.cli.unsupportedOperation", params: {} }) + "\\n"); process.exitCode = 1;'
       : bundle === "session-message-hook.mjs"
         ? 'console.error("[agent-governance-suite] peer-hook-failure " + JSON.stringify({ phase: "input", reason: "INVALID_JSON", reasonBasis: "unverified-observation", context: { type: "syntax-error" } }));'
         : "process.exitCode = 2;";

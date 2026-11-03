@@ -12,6 +12,12 @@ export const RUNTIME_BUNDLES = Object.freeze([
     executable: false,
   }),
   Object.freeze({
+    id: "i18n-runtime",
+    entry: "scripts/i18n-runtime-entry.mjs",
+    output: "runtime/i18n.mjs",
+    executable: false,
+  }),
+  Object.freeze({
     id: "mcp-server",
     entry: "mcp-server/src/index.ts",
     output: "mcp-server/dist/server.mjs",

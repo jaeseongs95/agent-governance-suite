@@ -131,6 +131,25 @@ it("writes a successful hook output once and leaves the exit status unset", asyn
   expect(failures()).toEqual([]);
 });
 
+it.each([
+  ["en", "Async resume is unconfirmed. Use a bounded query or bounded wait and continue on the next user turn; do not assume returning will wake this session."],
+  ["ko", "비동기 재개가 확인되지 않았다. 제한된 조회나 제한된 대기를 쓰고 다음 사용자 차례에 이어서 하라. 돌아가면 이 세션이 깨어난다고 가정하지 마라."],
+])("renders the broker's guidance key in the host locale (AGENT_GOVERNANCE_LOCALE=%s)", async (locale, text) => {
+  vi.stubEnv("AGENT_GOVERNANCE_LOCALE", locale);
+  f.request.mockResolvedValueOnce({ ...peerWaitDecision, guidance: "root-locale-text", guidanceKey: "peer.wait.boundedGuidance", guidanceParams: {} });
+  await runCli(peerWait, ["--host=codex"]);
+  await vi.waitFor(() => expect(written).toHaveLength(1));
+  await settled();
+  expect(JSON.parse(written[0]!)).toMatchObject({ hookSpecificOutput: { additionalContext: text } });
+  // A key this catalog does not know (another AGS version) keeps the broker's own text.
+  f.request.mockResolvedValueOnce({ ...peerWaitDecision, guidance: "root-locale-text", guidanceKey: "peer.wait.fromNewerBroker", guidanceParams: {} });
+  await runCli(peerWait, ["--host=codex"]);
+  await vi.waitFor(() => expect(written).toHaveLength(2));
+  await settled();
+  expect(JSON.parse(written[1]!)).toMatchObject({ hookSpecificOutput: { additionalContext: "root-locale-text" } });
+  expect(failures()).toEqual([]);
+});
+
 it("retains the stdout failure diagnostic and fail-open exit 0", async () => {
   stdoutError = Object.assign(new Error("private-stdout-message"), { code: "EPIPE" });
   f.request.mockResolvedValueOnce(peerWaitDecision);

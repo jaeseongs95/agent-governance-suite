@@ -20,6 +20,7 @@ vi.mock("../../mcp-server/src/session-message-client.js", async (original) => {
 import "../../mcp-server/src/builtin-hook-host-adapters.js";
 import { nativePeerWait, adaptHostInput, registerHookHostAdapter } from "../../mcp-server/src/host-input-adapter.js";
 import { PeerWaitPolicy } from "../../mcp-server/src/peer-wait-policy.js";
+import { render } from "../../mcp-server/src/i18n.js";
 import { dispatchSessionMessageOperation as dispatch } from "../../mcp-server/src/session-message-operations.js";
 import { closeSessionMessaging, runSessionMessageOperation } from "../../mcp-server/src/session-message-client.js";
 import { runSessionMessageCli } from "../../mcp-server/src/session-message-cli.js";
@@ -236,6 +237,18 @@ describe("peer wait policy boundaries", () => {
     expect(hostWake(store, ["invalid-nonce-peer-wait"])).toMatchObject({ recognized: false });
     dispatch(store, "claim", { target });
     expect(decision(store)).toMatchObject({ action: "bounded", resume: "unknown" });
+  });
+
+  it("carries the guidance as a catalog key with root-locale text, so the hook can render it in its own locale", () => {
+    const input = { sender, targets: [target], timeoutMs: 0, peersObserved: true, resumeObserved: true, fingerprint: "keyed" };
+    const resumed = new PeerWaitPolicy().decide(input, 1000);
+    expect(resumed).toMatchObject({ guidanceKey: "peer.wait.snapshotGuidance", guidanceParams: {},
+      guidance: "Use one immediate snapshot (timeoutMs: 0), then continue independent work or return; peer delivery can resume this session. A receipt or ACK is not task completion or approval." });
+    const bounded = new PeerWaitPolicy().decide({ ...input, resumeObserved: false }, 1000);
+    expect(bounded).toMatchObject({ guidanceKey: "peer.wait.boundedGuidance",
+      guidance: "Async resume is unconfirmed. Use a bounded query or bounded wait and continue on the next user turn; do not assume returning will wake this session." });
+    expect(render({ key: bounded.guidanceKey, params: bounded.guidanceParams }, "en")).toBe(bounded.guidance);
+    expect(render({ key: bounded.guidanceKey, params: bounded.guidanceParams }, "ko")).toBe("비동기 재개가 확인되지 않았다. 제한된 조회나 제한된 대기를 쓰고 다음 사용자 차례에 이어서 하라. 돌아가면 이 세션이 깨어난다고 가정하지 마라.");
   });
 
   it("expires snapshot records without timers and leaves no state in a fresh in-memory policy", () => {

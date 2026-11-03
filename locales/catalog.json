@@ -29,6 +29,12 @@
     },
     "instructions": {
       "sourceLocale": "ko"
+    },
+    "continuity": {
+      "sourceLocale": "en"
+    },
+    "peer": {
+      "sourceLocale": "en"
     }
   }
 }

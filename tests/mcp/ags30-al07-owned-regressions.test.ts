@@ -5,7 +5,7 @@ import { DatabaseSync } from "node:sqlite";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AttemptLeaseV1, AttemptProposalV1, ConvergenceRootV1, TaskEnvelopeV1, WorkflowReceiptV1 } from "../../contracts/types.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
-import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
+import { ContinuityService, renderHookText } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
@@ -124,7 +124,7 @@ describe("AGS30 AL07 owned regressions", () => {
     const service = new ContinuityService(keep(new SqliteContinuityStore(":memory:")), null, workflow, () => new Date(NOW));
     service.bindOpenedRoot(rootCaller("codex", "array-session"), root.rootId);
     service.markPreCompact("array-session");
-    const output = service.compactContext("array-session");
+    const output = renderHookText(service.compactContext("array-session"), "ko");
     expect(output).toContain("criterion-3 [+2 omitted]"); expect(output).not.toContain("criterion-4");
     const card = JSON.parse(output!.split("\n")[2]!) as { acceptanceCriteria: string[] };
     expect(card.acceptanceCriteria).toHaveLength(4); expect(card.acceptanceCriteria.every(value => value.length <= 240)).toBe(true);

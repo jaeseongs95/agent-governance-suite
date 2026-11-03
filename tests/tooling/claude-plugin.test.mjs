@@ -177,7 +177,10 @@ describe("generated Claude plugin", () => {
     if (path.dirname(path.resolve(directory)) !== path.resolve(tmpdir())) throw new Error("Unexpected disposable fixture path");
     temporaryDirectories.push(directory);
     await mkdir(path.join(directory, "hooks"));
+    await mkdir(path.join(directory, "runtime"));
     await mkdir(path.join(directory, "skills", "orchestrator"), { recursive: true });
+    // The plugin layout: hooks/ beside runtime/, whose catalog bundle and package locale (ko) the launcher reads.
+    for (const file of ["i18n.mjs", "locale.json"]) await writeFile(path.join(directory, "runtime", file), await readFile(path.join(root, "runtime", file)));
     const launcher = await readFile(path.join(root, "claude-overlay", "hooks", "skill-trigger-hook.mjs"));
     const shared = await readFile(path.join(root, "skills", "orchestrator", "SKILL.md"), "utf8");
     // A changed source must change the emitted context, proving there is no adapter policy copy.
@@ -186,7 +189,9 @@ describe("generated Claude plugin", () => {
     const hook = path.join(directory, "hooks", "skill-trigger-hook.mjs");
     await writeFile(hook, launcher);
     await writeFile(path.join(directory, "skills", "orchestrator", "SKILL.md"), current);
-    const invoke = (input) => spawnSync(process.execPath, [hook], { input: JSON.stringify(input), encoding: "utf8" });
+    const hostEnvironment = { ...process.env };
+    delete hostEnvironment.AGENT_GOVERNANCE_LOCALE;
+    const invoke = (input, env = hostEnvironment) => spawnSync(process.execPath, [hook], { input: JSON.stringify(input), encoding: "utf8", env });
     const start = invoke({ hook_event_name: "SessionStart", source: "startup" });
     expect(start.status).toBe(0);
     expect(start.stderr).toBe("");
@@ -195,6 +200,10 @@ describe("generated Claude plugin", () => {
     expect(context.additionalContext).toBe("Claude Code 호출: MCP 서버 instructions의 공통 접수 기준을 따르고, 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다.");
     expect(context.additionalContext).not.toContain(intake);
     expect(context.additionalContext).not.toContain("fixture-source-revision");
+    const english = invoke({ hook_event_name: "SessionStart", source: "startup" }, { ...hostEnvironment, AGENT_GOVERNANCE_LOCALE: "en" });
+    expect(english.status).toBe(0);
+    expect(english.stderr).toBe("");
+    expect(JSON.parse(english.stdout).hookSpecificOutput.additionalContext).toBe("Claude Code invocation: follow the common intake criteria in the MCP server instructions, and actually invoke each selected installed skill with the Skill tool or the /agent-governance-suite:<skill-name> command.");
     for (const prompt of ["git rebase랑 merge 차이가 뭐예요? 간단히 설명해 주세요.", "안녕하세요!", "change.diff 파일에 있는 변경 사항을 리뷰해 주세요."]) {
       const result = invoke({ hook_event_name: "UserPromptSubmit", prompt });
       expect(result.status).toBe(0);

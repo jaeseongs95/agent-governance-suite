@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { types } from "node:util";
 
-import { ContinuityService, workflowFailureCode } from "./continuity-service.js";
+import { ContinuityService, minimalWorkflowStartExample, renderHookText, workflowFailureCode } from "./continuity-service.js";
 import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
 import { hookFailureContext, hookFailureReason, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
 import { failureReason } from "./failure-diagnostics.js";
@@ -19,6 +19,7 @@ import {
   resolveWorkflowDatabasePath,
 } from "./runtime-config.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
+import { msg, render, resolveHostLocale, type SupportedLocale } from "./i18n.js";
 
 type HookInput = Record<string, unknown>;
 
@@ -80,11 +81,12 @@ export function underVersionControl(target: string): boolean {
 
 /** The product files an edit will change; a tool whose target the adapter could not read still counts as one file. */
 /** Keyed by the normalized path; the value is the path as the tool gave it (resolved), which the refusal shows. */
-function productEditTargets(observation: InputObservation, host: string, environment: NodeJS.ProcessEnv): Map<string, string> {
+function productEditTargets(observation: InputObservation, host: string, environment: NodeJS.ProcessEnv,
+  locale: SupportedLocale): Map<string, string> {
   const targets = observation.editTargets ?? [];
   if (targets.length === 0) {
     // Each such call is its own file: one shared key would let unread edits repeat without ever reaching the limit.
-    const unknown = `(경로 미확인: ${observation.toolName ?? "edit"})`;
+    const unknown = render(msg("hooks.editGate.unknownPath", { tool: observation.toolName ?? "edit" }), locale);
     return new Map([[`${unknown}#${observation.callId ?? randomUUID()}`, unknown]]);
   }
   const roots = exemptEditRoots(host, environment);
@@ -117,7 +119,7 @@ interface NormalizedContinuityInput {
 }
 
 function continuityConflict(): never {
-  throw new WorkflowContractError("BINDING_INVALID", "Continuity lifecycle conflicts with the normalized host observation.", {
+  throw new WorkflowContractError("BINDING_INVALID", msg("continuity.hook.observationConflict", {}), {
     reasonCode: "CONTINUITY_HOOK_OBSERVATION_CONFLICT",
   });
 }
@@ -174,11 +176,12 @@ function stopOutput(host: string, eventName: string, cue: string | null): Record
 }
 
 /** A file edit before it runs: the workflow gate (design ags30-phase-check 7.2). Exempt-only edits are not recorded. */
-function gateEdit(observation: InputObservation, service: ContinuityService, host: string, environment: NodeJS.ProcessEnv): Record<string, unknown> {
-  const targets = productEditTargets(observation, host, environment);
+function gateEdit(observation: InputObservation, service: ContinuityService, host: string, environment: NodeJS.ProcessEnv,
+  locale: SupportedLocale): Record<string, unknown> {
+  const targets = productEditTargets(observation, host, environment, locale);
   if (targets.size === 0) return {};
-  const refusal = service.gateEditForSession(observation.sessionId, [...targets.keys()], [...targets.values()]);
-  return refusal ? deniedEdit(refusal) : {};
+  const refusal = service.gateEditForSession(observation.sessionId, [...targets.keys()], [...targets.values()], minimalWorkflowStartExample(locale));
+  return refusal ? deniedEdit(render(refusal, locale)) : {};
 }
 
 function isEditBoundary(observation: InputObservation): boolean {
@@ -186,22 +189,22 @@ function isEditBoundary(observation: InputObservation): boolean {
 }
 
 function handleNormalizedContinuityHook(input: NormalizedContinuityInput, service: ContinuityService, host: string,
-  environment: NodeJS.ProcessEnv): Record<string, unknown> {
+  environment: NodeJS.ProcessEnv, locale: SupportedLocale): Record<string, unknown> {
   const { observation, action, outputEventName, readLineage, readForkOrigin, readForkHostParent } = input;
   const sessionId = observation.sessionId;
   if (!sessionId) return {};
   // A subagent's edit counts in its parent session's window (the host names the parent in session_id). Nothing else
   // a child does pins or binds continuity state.
-  if (isObservedSubagent(observation)) return isEditBoundary(observation) ? gateEdit(observation, service, host, environment) : {};
+  if (isObservedSubagent(observation)) return isEditBoundary(observation) ? gateEdit(observation, service, host, environment, locale) : {};
   if (!actorAccess(observation.actor).allowed) return {};
   switch (action?.kind) {
     case "startup": service.ensureSession(sessionId); return {};
     case "fork": service.startFork(sessionId, readForkOrigin, readForkHostParent); return {};
     case "clear": service.clearSession(sessionId); return {};
-    case "resume": return sessionOutput(outputEventName, service.formatCandidate(service.candidateForSession(sessionId)));
+    case "resume": return sessionOutput(outputEventName, renderHookText(service.formatCandidate(service.candidateForSession(sessionId)), locale));
     case "compact":
       if (readLineage) service.reanchorAfterCompact(sessionId, readLineage);
-      return sessionOutput(outputEventName, service.compactContext(sessionId));
+      return sessionOutput(outputEventName, renderHookText(service.compactContext(sessionId), locale));
     case "pre-compact": service.markPreCompact(sessionId); return {};
     case "post-compact":
       service.recordPostCompact(sessionId, action.turnId, action.successful);
@@ -211,7 +214,7 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
   // Pin a fork's parent before the model can change its own file; the cue contains no snapshot body.
   if (observation.kind === "user-input") {
     if (readLineage) service.pinForkParent(sessionId, readLineage, false);
-    return observation.wakeOnly ? {} : sessionOutput(outputEventName, service.checkpointCueForSession(sessionId));
+    return observation.wakeOnly ? {} : sessionOutput(outputEventName, renderHookText(service.checkpointCueForSession(sessionId), locale));
   }
   if (observation.kind === "tool-boundary" && observation.boundaryPhase === "before") {
     // A host that deferred its host-process read at the fork start reads it here, before any pin below.
@@ -221,19 +224,22 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
       // Write-capable host tools and every non-AGS MCP tool reach this boundary before they run: the last point the
       // fork's file is the host's. AGS tools pin through their own binding below.
       if (readLineage) service.pinForkParent(sessionId, readLineage);
-      return isEditBoundary(observation) ? gateEdit(observation, service, host, environment) : {};
+      return isEditBoundary(observation) ? gateEdit(observation, service, host, environment, locale) : {};
     }
     // AGS tools pin and bind on the server from the verified caller; the hook only did the host-process read above.
     return {};
   }
   // A turn the host already continued through its Stop hook is checked without a second continuation.
-  if (isTurnEnd(input)) return stopOutput(host, outputEventName, service.phaseCheckForSession(sessionId, observation.stopHookActive === true));
+  if (isTurnEnd(input)) {
+    return stopOutput(host, outputEventName, renderHookText(service.phaseCheckForSession(sessionId, observation.stopHookActive === true), locale));
+  }
   return {};
 }
 
+/** The host locale is read once per hook call (docs/i18n-design.md 4.1 ①); a test may pin it. */
 export function handleContinuityHook(input: HookInput, service: ContinuityService, host = "codex",
-  environment: NodeJS.ProcessEnv = process.env): Record<string, unknown> {
-  return handleNormalizedContinuityHook(normalizedContinuityInput(adaptHostInput(input, host)), service, host, environment);
+  environment: NodeJS.ProcessEnv = process.env, locale: SupportedLocale = resolveHostLocale({ environment }).locale): Record<string, unknown> {
+  return handleNormalizedContinuityHook(normalizedContinuityInput(adaptHostInput(input, host)), service, host, environment, locale);
 }
 
 type ContinuityHookPhase = "host-entry" | "stdin" | "input" | "storage" | "workflow-store" | "handle" | "close" | "stdout";
@@ -300,7 +306,8 @@ export function runContinuityHook(raw: string, environment: NodeJS.ProcessEnv = 
       }
     }
     phase = "handle";
-    const output = handleNormalizedContinuityHook(normalized, new ContinuityService(continuity, null, workflow, undefined, workflowFailure), host, environment);
+    const output = handleNormalizedContinuityHook(normalized, new ContinuityService(continuity, null, workflow, undefined, workflowFailure), host, environment,
+      resolveHostLocale({ environment }).locale);
     result = Object.keys(output).length > 0 ? JSON.stringify(output) : "";
   } catch (cause) {
     primary = cause;

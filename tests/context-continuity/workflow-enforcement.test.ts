@@ -10,7 +10,7 @@ import { WorkflowContractError, type ConvergenceRootV1, type TaskEnvelopeV1 } fr
 import { applyPatchTargets } from "../../mcp-server/src/builtin-hook-host-adapters.js";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { handleContinuityHook, underVersionControl } from "../../mcp-server/src/continuity-hook.js";
-import { ContinuityService, MINIMAL_WORKFLOW_START_EXAMPLE, WORKFLOW_FILE_LIMIT } from "../../mcp-server/src/continuity-service.js";
+import { ContinuityService, minimalWorkflowStartExample, WORKFLOW_FILE_LIMIT } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { adaptHostInput } from "../../mcp-server/src/host-input-adapter.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
@@ -25,6 +25,10 @@ const outsideCheckout = path.resolve(process.platform === "win32" ? "C:\\ags-pha
 const file = (name: string) => path.join(repo, name);
 const stores = new Set<SqliteContinuityStore>();
 const NO_ENV: NodeJS.ProcessEnv = {};
+const EN_ENV: NodeJS.ProcessEnv = { AGENT_GOVERNANCE_LOCALE: "en" };
+// The start example every refusal names, byte for byte, in each shipped locale.
+const KO_EXAMPLE = 'start_workflow {"goal":"<목표>","stages":["minimal-implementation"],"acceptanceCriteria":["<수용 기준>"]}';
+const EN_EXAMPLE = 'start_workflow {"goal":"<goal>","stages":["minimal-implementation"],"acceptanceCriteria":["<acceptance criterion>"]}';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -119,10 +123,25 @@ describe("workflow gate", () => {
     expect(handleContinuityHook(write("a.ts"), target, "claude-code", NO_ENV)).toEqual({});
     const denied = handleContinuityHook(write("c.ts"), target, "claude-code", NO_ENV);
     expect(denied).toEqual({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny",
-      permissionDecisionReason: `[AGS] workflow 없이 제품 파일 3개째 변경: ${file("c.ts")} (앞서 바꾼 제품 파일 2개 포함). 먼저 workflow를 시작하라(최소 시작 호출 예: ${MINIMAL_WORKFLOW_START_EXAMPLE}).` } });
+      permissionDecisionReason: `[AGS] workflow 없이 제품 파일 3개째 변경: ${file("c.ts")} (앞서 바꾼 제품 파일 2개 포함). 먼저 workflow를 시작하라(최소 시작 호출 예: ${KO_EXAMPLE}).` } });
     // Only refusals and distinct files are rows; the refused file is not counted.
     expect(events(target).filter(event => event === "phase-file")).toHaveLength(2);
     expect(events(target).filter(event => event === "phase-deny")).toHaveLength(1);
+  });
+
+  it("renders the refusal and its start example in the host locale (AGENT_GOVERNANCE_LOCALE=en)", () => {
+    expect(minimalWorkflowStartExample("ko")).toBe(KO_EXAMPLE);
+    expect(minimalWorkflowStartExample("en")).toBe(EN_EXAMPLE);
+    const target = service();
+    for (const name of ["a.ts", "b.ts"]) expect(handleContinuityHook(write(name), target, "claude-code", EN_ENV)).toEqual({});
+    expect(reason(handleContinuityHook(write("c.ts"), target, "claude-code", EN_ENV))).toBe(
+      `[AGS] Changing a 3rd product file without a workflow: ${file("c.ts")} (including 2 product files changed earlier). Start a workflow first (minimal start call: ${EN_EXAMPLE}).`);
+    // An unreadable target is shown in the same locale; the locale changes only the text, never the count.
+    const unread = service();
+    const patch = (name: string) => edit("codex", "apply_patch", { command: `*** Begin Patch\n*** Update File: ${name}\n*** End Patch` });
+    for (const name of ["a.ts", "b.ts"]) expect(handleContinuityHook(patch(name), unread, "codex", EN_ENV)).toEqual({});
+    expect(reason(handleContinuityHook(edit("codex", "apply_patch", {}), unread, "codex", EN_ENV)))
+      .toMatch(/^\[AGS\] Changing a 3rd product file without a workflow: \(path unknown: apply_patch\) \(including 2 product files changed earlier\)\./u);
   });
 
   it("refuses the third agy CLI write_file by its Path", () => {

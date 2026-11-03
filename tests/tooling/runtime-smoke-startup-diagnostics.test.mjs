@@ -72,7 +72,7 @@ function defaultSpawnResponse(scriptPath, args, options) {
     return {
       status: 1,
       signal: null,
-      stdout: JSON.stringify({ protocolVersion: "1.0.0", ok: false, error: "Unsupported session message operation." }),
+      stdout: JSON.stringify({ protocolVersion: "1.0.0", ok: false, error: "Unsupported session message operation.", messageKey: "services.sessionMessage.cli.unsupportedOperation", params: {} }),
       stderr: "",
     };
   }
@@ -412,7 +412,7 @@ describe("continuity-hook runtime startup smoke diagnostics", () => {
                 '    return { status: 2, signal: null, stdout: "", stderr: "" };',
                 '  }',
                 '  if (scriptPath.endsWith("session-message-cli.mjs")) {',
-                '    return { status: 1, signal: null, stdout: JSON.stringify({ protocolVersion: "1.0.0", ok: false, error: "Unsupported session message operation." }), stderr: "" };',
+                '    return { status: 1, signal: null, stdout: JSON.stringify({ protocolVersion: "1.0.0", ok: false, error: "Unsupported session message operation.", messageKey: "services.sessionMessage.cli.unsupportedOperation", params: {} }), stderr: "" };',
                 '  }',
                 '  if (scriptPath.endsWith("session-message-hook.mjs")) {',
                 '    return { status: 0, signal: null, stdout: "", stderr: "[agent-governance-suite] peer-hook-failure " + JSON.stringify({ phase: "input", reason: "INVALID_JSON" }) + "\\\\n" };',

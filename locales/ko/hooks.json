@@ -1,3 +1,16 @@
 {
-  "hooks.editGate.denied": "[AGS] workflow 없이 제품 파일 {limit, number}개째 변경: {paths}{earlier, plural, =0 {} other { (앞서 바꾼 제품 파일 #개 포함)}}. 먼저 workflow를 시작하라(최소 시작 호출 예: {example})."
+  "hooks.checkpointCue.notice": "이 알림은 저장·복원 성공이 아니다. 실제 응답을 확인하고 실패·미저장 상태를 구분하라. 보존할 변경이 없으면 추가 저장하지 말고 작업을 계속하라.",
+  "hooks.checkpointCue.resume": "재개·fork·인계는 inspect_context와 정확한 후보의 load_context를 먼저 수행하고 최신 요청과 대조하라. 없는 이전 정보는 추측하지 말고 현재 실제 전달된 문맥만 사용하라. workflow 원장을 직접 스냅샷으로 복제하지 마라.",
+  "hooks.checkpointCue.save": "현재 요청의 교정·제약·결정·남은 작업을 잃으면 다음 행동이 달라지는지 확인하라. 달라진 상태가 아직 저장되지 않았다면 그 판단·작업을 이어가기 전에 context-continuity 스킬과 기존 checkpoint_context로 필요한 상태와 근거 참조만 저장하라.",
+  "hooks.checkpointCue.status": "[Task continuity checkpoint check]\n{state, select, missing {사전 저장본 없음: 이 알림은 압축으로 유실된 내용을 복원하지 않는다.} saved {현재 작업의 저장본: 있음.} other {현재 작업의 저장본: 없음.}}",
+  "hooks.editGate.criterionPlaceholder": "<수용 기준>",
+  "hooks.editGate.denied": "[AGS] workflow 없이 제품 파일 {limit, number}개째 변경: {paths}{earlier, plural, =0 {} other { (앞서 바꾼 제품 파일 #개 포함)}}. 먼저 workflow를 시작하라(최소 시작 호출 예: {example}).",
+  "hooks.editGate.goalPlaceholder": "<목표>",
+  "hooks.editGate.unknownPath": "(경로 미확인: {tool})",
+  "hooks.phaseCheck.continue": "이 목표가 아직 이뤄지지 않았으면 멈추지 말고 남은 작업을 이어서 하라. 방금 받은 요청을 끝냈어도 목표가 남았으면 이어서 한다. 단계 결과는 그 단계의 작업과 검증을 실제로 마친 뒤에만 기록하고, 기록만 하고 끝내지 마라.",
+  "hooks.phaseCheck.goal": "workflow 목표: {goal}",
+  "hooks.phaseCheck.pending": "[AGS 단계 확인] 진행 중인 workflow에 아직 passed가 아닌 단계가 있다: {stages}.",
+  "hooks.phaseCheck.unavailable": "[AGS] workflow 상태를 확인하지 못해 이번 구간의 제품 파일 변경을 막지 않았다. 원인 코드: {codes}.",
+  "hooks.phaseCheck.waiting": "사용자의 답이나 승인이 있어야 진행할 수 있으면 무엇을 기다리는지 한 줄로 쓰고 끝내라. 필요 없는 단계는 계획을 고쳐 뺀다.",
+  "hooks.skillTrigger.invocation": "Claude Code 호출: MCP 서버 instructions의 공통 접수 기준을 따르고, 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다."
 }

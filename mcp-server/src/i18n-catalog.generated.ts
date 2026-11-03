@@ -8,6 +8,8 @@ import en_services from "../../locales/en/services.json" with { type: "json" };
 import en_tools from "../../locales/en/tools.json" with { type: "json" };
 import en_schema from "../../locales/en/schema.json" with { type: "json" };
 import en_instructions from "../../locales/en/instructions.json" with { type: "json" };
+import en_continuity from "../../locales/en/continuity.json" with { type: "json" };
+import en_peer from "../../locales/en/peer.json" with { type: "json" };
 import ko_hooks from "../../locales/ko/hooks.json" with { type: "json" };
 import ko_server from "../../locales/ko/server.json" with { type: "json" };
 import ko_workflow from "../../locales/ko/workflow.json" with { type: "json" };
@@ -16,6 +18,8 @@ import ko_services from "../../locales/ko/services.json" with { type: "json" };
 import ko_tools from "../../locales/ko/tools.json" with { type: "json" };
 import ko_schema from "../../locales/ko/schema.json" with { type: "json" };
 import ko_instructions from "../../locales/ko/instructions.json" with { type: "json" };
+import ko_continuity from "../../locales/ko/continuity.json" with { type: "json" };
+import ko_peer from "../../locales/ko/peer.json" with { type: "json" };
 
 export const SUPPORTED_LOCALES = ["en","ko"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
@@ -25,12 +29,25 @@ export const ROOT_LOCALE: SupportedLocale = "en";
 export interface NestedMessage { readonly key: string; readonly params: Readonly<Record<string, unknown>> }
 
 export const CATALOGS: Readonly<Record<SupportedLocale, Readonly<Record<string, string>>>> = {
-  "en": { ...en_hooks, ...en_server, ...en_workflow, ...en_workflowRecord, ...en_services, ...en_tools, ...en_schema, ...en_instructions },
-  "ko": { ...ko_hooks, ...ko_server, ...ko_workflow, ...ko_workflowRecord, ...ko_services, ...ko_tools, ...ko_schema, ...ko_instructions },
+  "en": { ...en_hooks, ...en_server, ...en_workflow, ...en_workflowRecord, ...en_services, ...en_tools, ...en_schema, ...en_instructions, ...en_continuity, ...en_peer },
+  "ko": { ...ko_hooks, ...ko_server, ...ko_workflow, ...ko_workflowRecord, ...ko_services, ...ko_tools, ...ko_schema, ...ko_instructions, ...ko_continuity, ...ko_peer },
 };
 
 export interface MessageParams {
+  "hooks.checkpointCue.notice": Record<string, never>;
+  "hooks.checkpointCue.resume": Record<string, never>;
+  "hooks.checkpointCue.save": Record<string, never>;
+  "hooks.checkpointCue.status": { "state": string; };
+  "hooks.editGate.criterionPlaceholder": Record<string, never>;
   "hooks.editGate.denied": { "limit": number; "paths": NestedMessage | number | string; "earlier": number; "example": NestedMessage | number | string; };
+  "hooks.editGate.goalPlaceholder": Record<string, never>;
+  "hooks.editGate.unknownPath": { "tool": NestedMessage | number | string; };
+  "hooks.phaseCheck.continue": Record<string, never>;
+  "hooks.phaseCheck.goal": { "goal": NestedMessage | number | string; };
+  "hooks.phaseCheck.pending": { "stages": NestedMessage | number | string; };
+  "hooks.phaseCheck.unavailable": { "codes": NestedMessage | number | string; };
+  "hooks.phaseCheck.waiting": Record<string, never>;
+  "hooks.skillTrigger.invocation": Record<string, never>;
   "server.call.reservedCallerField": Record<string, never>;
   "server.call.callerIngressMissing": Record<string, never>;
   "server.call.responseModeInvalid": { "field": NestedMessage | number | string; };
@@ -482,4 +499,62 @@ export interface MessageParams {
   "schema.convergenceReviewV1.properties.observedReviewer.description": Record<string, never>;
   "instructions.intake.frame": { "intake": NestedMessage | number | string; };
   "instructions.sessionMessage.guide": Record<string, never>;
+  "continuity.binding.stale": Record<string, never>;
+  "continuity.checkpoint.disabledAfterRoot": Record<string, never>;
+  "continuity.checkpoint.replayUnavailable": Record<string, never>;
+  "continuity.checkpoint.requestConflict": Record<string, never>;
+  "continuity.checkpoint.revisionChanged": Record<string, never>;
+  "continuity.epoch.changed": Record<string, never>;
+  "continuity.hook.observationConflict": Record<string, never>;
+  "continuity.operation.failed": Record<string, never>;
+  "continuity.purge.replayUnavailable": Record<string, never>;
+  "continuity.purge.requestConflict": Record<string, never>;
+  "continuity.purge.revisionChanged": Record<string, never>;
+  "continuity.restore.candidate": { "source": NestedMessage | number | string; "epoch": NestedMessage | number | string; "revision": NestedMessage | number | string; "digest": NestedMessage | number | string; "candidateToken": NestedMessage | number | string; };
+  "continuity.restore.candidateMismatch": Record<string, never>;
+  "continuity.restore.directStale": Record<string, never>;
+  "continuity.restore.forkChildHasState": Record<string, never>;
+  "continuity.restore.forkParentStale": Record<string, never>;
+  "continuity.restore.suppressed": Record<string, never>;
+  "continuity.restore.workflowCard": { "card": NestedMessage | number | string; };
+  "continuity.restore.workflowStale": Record<string, never>;
+  "continuity.snapshot.digestInvalid": Record<string, never>;
+  "continuity.source.changed": Record<string, never>;
+  "continuity.store.adoptSnapshot": Record<string, never>;
+  "continuity.store.bindRoot": Record<string, never>;
+  "continuity.store.checkpoint": Record<string, never>;
+  "continuity.store.cleanupBackup": Record<string, never>;
+  "continuity.store.consumeRestore": Record<string, never>;
+  "continuity.store.executeCleanup": Record<string, never>;
+  "continuity.store.inMemoryCleanup": Record<string, never>;
+  "continuity.store.incompatibleSchema": Record<string, never>;
+  "continuity.store.initDatabase": Record<string, never>;
+  "continuity.store.initSecret": Record<string, never>;
+  "continuity.store.initTask": Record<string, never>;
+  "continuity.store.integrityFailed": Record<string, never>;
+  "continuity.store.lineageAnchors": Record<string, never>;
+  "continuity.store.markPending": Record<string, never>;
+  "continuity.store.optionalUnavailable": Record<string, never>;
+  "continuity.store.pathEmpty": Record<string, never>;
+  "continuity.store.purge": Record<string, never>;
+  "continuity.store.readCurrentState": Record<string, never>;
+  "continuity.store.receiverStateUnsupported": Record<string, never>;
+  "continuity.store.recordObservation": Record<string, never>;
+  "continuity.store.rotateEpoch": Record<string, never>;
+  "continuity.store.snapshotChanged": { "task": NestedMessage | number | string; "epoch": NestedMessage | number | string; };
+  "continuity.store.suppress": Record<string, never>;
+  "continuity.store.taskChanged": { "task": NestedMessage | number | string; };
+  "continuity.store.taskGainedChildState": { "task": NestedMessage | number | string; };
+  "continuity.store.unsupportedSchema": { "version": NestedMessage | number | string; };
+  "continuity.token.invalid": Record<string, never>;
+  "continuity.token.malformed": Record<string, never>;
+  "continuity.token.verificationFailed": Record<string, never>;
+  "continuity.workflowStart.conflict": Record<string, never>;
+  "peer.envelope.ackGuidance": Record<string, never>;
+  "peer.envelope.warning": Record<string, never>;
+  "peer.wait.boundedGuidance": Record<string, never>;
+  "peer.wait.snapshotGuidance": Record<string, never>;
+  "peer.wait.unavailable": Record<string, never>;
+  "peer.wake.noMessage": Record<string, never>;
+  "peer.wake.retired": Record<string, never>;
 }

@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { convergenceDigest } from "../../mcp-server/src/convergence-logic.js";
 import { ContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { ContinuityStoreError, continuityUnavailableReason, SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
+import { msg } from "../../mcp-server/src/i18n.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { InMemoryWorkflowStore } from "../../mcp-server/src/workflow-store.js";
 import { rootCaller } from "../helpers/caller.js";
@@ -91,11 +92,11 @@ describe("D0057 continuity store failure reasons", () => {
     const proxy = new Proxy({}, { has: trap, get: trap, getPrototypeOf: trap, getOwnPropertyDescriptor: trap });
     expect(continuityUnavailableReason(proxy)).toBe("STORE_UNAVAILABLE");
     expect(trap).not.toHaveBeenCalled();
-    const masquerade = new Proxy(new ContinuityStoreError("m", undefined, "CORRUPT_DATABASE"), {});
+    const masquerade = new Proxy(new ContinuityStoreError(msg("continuity.operation.failed", {}), undefined, "CORRUPT_DATABASE"), {});
     expect(continuityUnavailableReason(masquerade)).toBe("STORE_UNAVAILABLE");
     for (const value of [null, undefined, "errcode 11", 11, { errcode: "11" }, Object.create({ errcode: 11 })]) {
       expect(continuityUnavailableReason(value), String(value)).toBe("STORE_UNAVAILABLE");
     }
-    expect(continuityUnavailableReason(new ContinuityStoreError("m", undefined, "UNSUPPORTED_SCHEMA"))).toBe("UNSUPPORTED_SCHEMA");
+    expect(continuityUnavailableReason(new ContinuityStoreError(msg("continuity.operation.failed", {}), undefined, "UNSUPPORTED_SCHEMA"))).toBe("UNSUPPORTED_SCHEMA");
   });
 });

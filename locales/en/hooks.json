@@ -1,3 +1,16 @@
 {
-  "hooks.editGate.denied": "[AGS] Changing a {limit, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} product file without a workflow: {paths}{earlier, plural, =0 {} one { (including # product file changed earlier)} other { (including # product files changed earlier)}}. Start a workflow first (minimal start call: {example})."
+  "hooks.checkpointCue.notice": "This notice is not a successful save or restore. Check the actual response and tell failed and unsaved states apart. If there is no change to keep, do not save again; continue the work.",
+  "hooks.checkpointCue.resume": "For a resume, fork or handoff, run inspect_context and load_context of the exact candidate first and reconcile them with the latest request. Do not guess earlier information that is not there; use only the context actually delivered now. Do not copy the workflow ledger into a snapshot yourself.",
+  "hooks.checkpointCue.save": "Check whether losing the current request's corrections, constraints, decisions and remaining work would change the next action. If that changed state is not saved yet, save only the needed state and evidence references with the context-continuity skill and the existing checkpoint_context before continuing that decision or work.",
+  "hooks.checkpointCue.status": "[Task continuity checkpoint check]\n{state, select, missing {No prior save: this notice does not restore content lost to compaction.} saved {Save of the current task: present.} other {Save of the current task: none.}}",
+  "hooks.editGate.criterionPlaceholder": "<acceptance criterion>",
+  "hooks.editGate.denied": "[AGS] Changing a {limit, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} product file without a workflow: {paths}{earlier, plural, =0 {} one { (including # product file changed earlier)} other { (including # product files changed earlier)}}. Start a workflow first (minimal start call: {example}).",
+  "hooks.editGate.goalPlaceholder": "<goal>",
+  "hooks.editGate.unknownPath": "(path unknown: {tool})",
+  "hooks.phaseCheck.continue": "If this goal is not met yet, do not stop; continue the remaining work. Even when the request just received is done, continue while the goal remains. Record a stage result only after actually finishing that stage's work and verification, and do not stop at recording.",
+  "hooks.phaseCheck.goal": "Workflow goal: {goal}",
+  "hooks.phaseCheck.pending": "[AGS stage check] The running workflow has stages that are not passed yet: {stages}.",
+  "hooks.phaseCheck.unavailable": "[AGS] The workflow state could not be checked, so product file changes in this window were not blocked. Cause codes: {codes}.",
+  "hooks.phaseCheck.waiting": "If you cannot proceed without the user's answer or approval, write in one line what you are waiting for and stop. Remove unneeded stages by revising the plan.",
+  "hooks.skillTrigger.invocation": "Claude Code invocation: follow the common intake criteria in the MCP server instructions, and actually invoke each selected installed skill with the Skill tool or the /agent-governance-suite:<skill-name> command."
 }
