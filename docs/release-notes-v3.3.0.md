@@ -107,3 +107,4 @@
   - Windows 시험 서버 첫 실행(7fbe8b44)에서 Linux와 CI에서 보이지 않던 실패가 나왔다. 수렴 frame 시험 fixture가 `D:/` 드라이브를 고정으로 썼는데, 이 서버에는 D: 드라이브가 없어 workspace 식별이 `WORKSPACE_IDENTITY_UNRESOLVED`(ENOENT)로 거부됐다. 해당 파일은 convergence-guard, continuity, d0344-terminal-direct였다. fixture 경로를 임시 디렉터리 아래로 바꿨다(55f1b38c). 이 시험들은 서버 전용이라 CI Windows에서는 돌지 않는다. Windows 서버(460ab868)에서 바뀐 7개 파일 234개 시험이 통과했다.
   - CI 41675486783(460ab868): ubuntu·windows success.
   - 영어 패키지 번들이 lint 대상에 들어가 CI가 실패한 것(41670002876)은 `claude-plugin/`처럼 생성물로 제외해 고쳤다(7fbe8b44).
+  - Windows 시험 서버 전체 시험(460ab868): vitest 파일 276개 중 272개 통과·2개 skip·2개 실패. 실패는 `tests/tooling/skill-context-optimization.test.mjs` 26건과 `tests/tooling/specialist-behavior-source.test.mjs` 12건이고 모두 30초 시간 초과였다(파일 시간 992초, 401초). 검사 스크립트가 검사 한 번에 `git show`·`git diff`를 수백 번 띄우는데, 이 서버에서는 git 프로세스 시작이 느리다. 시간 한도는 바꾸지 않고, 커밋 SHA로만 이름 붙은 git 출력을 프로세스 안에서 재사용하게 고쳤다. 작업 트리와 index 읽기는 매번 한다. 검사 출력은 바뀌지 않는다.
