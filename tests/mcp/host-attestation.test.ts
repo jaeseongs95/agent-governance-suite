@@ -391,7 +391,7 @@ describe("host execution observation through the MCP boundary", () => {
     // The same host call observed again (re-admitted, or re-sent with the same _meta) yields the consumed observation.
     const again = adapter.host === "claude-code" ? observedCall(store, adapter, "plan_workflow", { callId: String(once["claudecode/toolUseId"]) }) : once;
     expect((await raw<WorkflowPlanV1>("plan_workflow", planArguments("replay"), again)).error).toMatchObject({
-      code: "BINDING_INVALID", message: expect.stringContaining("trusted execution attestation was already consumed") });
+      code: "BINDING_INVALID", messageKey: "workflow.service.attestationConsumed" });
     expect((await call<WorkflowPlanV1>("plan_workflow", planArguments("fresh"))).ok).toBe(true);
   });
 
