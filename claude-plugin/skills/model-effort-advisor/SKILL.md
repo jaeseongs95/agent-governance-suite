@@ -8,6 +8,8 @@ metadata:
 
 # Model Effort Advisor
 
+이 스킬을 적용할 때 [공통 행동 기준](../independent-audit-gate/references/specialist-behavior.md)을 먼저 읽고 따른다.
+
 요청을 시작할 때 현재 모델·추론 수준과 필요한 작업 강도를 비교한다. 평가는 작업을 막는 gate가 아니라 사용자가 호스트에서 관측한 현재 모델·추론 선택을 조정할지 판단하게 돕는 짧은 안내다.
 
 ## 적용 조건

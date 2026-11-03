@@ -15,21 +15,25 @@
       "path": "skills/blocker-diagnostician/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:0b2ed15e57c2c344661a3ae64073181d6f7b8940b7ef4e315daf010629c7f0de",
+      "digest": "sha256:45a4607b88363a062ea0fe30298dbd45c27912d2227bb34e3bb392a0fd54af2f",
       "startByte": 0,
       "endByte": 151
     },
     {
       "path": "skills/blocker-diagnostician/SKILL.md",
-      "startLine": 9,
-      "endLine": 16,
-      "digest": "sha256:0b2ed15e57c2c344661a3ae64073181d6f7b8940b7ef4e315daf010629c7f0de"
+      "startLine": 21,
+      "endLine": 24,
+      "digest": "sha256:45a4607b88363a062ea0fe30298dbd45c27912d2227bb34e3bb392a0fd54af2f",
+      "startByte": 0,
+      "endByte": 579
     },
     {
       "path": "skills/blocker-diagnostician/references/entry-details.md",
       "startLine": 29,
       "endLine": 29,
-      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"
+      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01",
+      "startByte": 0,
+      "endByte": 9
     }
   ],
   "exclusions": [
@@ -37,51 +41,65 @@
       "path": "skills/blocker-diagnostician/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:0b2ed15e57c2c344661a3ae64073181d6f7b8940b7ef4e315daf010629c7f0de",
+      "digest": "sha256:45a4607b88363a062ea0fe30298dbd45c27912d2227bb34e3bb392a0fd54af2f",
       "startByte": 152,
       "endByte": 276
     },
     {
       "path": "skills/blocker-diagnostician/SKILL.md",
-      "startLine": 17,
-      "endLine": 17,
-      "digest": "sha256:0b2ed15e57c2c344661a3ae64073181d6f7b8940b7ef4e315daf010629c7f0de"
+      "startLine": 25,
+      "endLine": 25,
+      "digest": "sha256:45a4607b88363a062ea0fe30298dbd45c27912d2227bb34e3bb392a0fd54af2f",
+      "startByte": 0,
+      "endByte": 120
     },
     {
       "path": "skills/blocker-diagnostician/SKILL.md",
-      "startLine": 18,
-      "endLine": 18,
-      "digest": "sha256:0b2ed15e57c2c344661a3ae64073181d6f7b8940b7ef4e315daf010629c7f0de"
+      "startLine": 26,
+      "endLine": 26,
+      "digest": "sha256:45a4607b88363a062ea0fe30298dbd45c27912d2227bb34e3bb392a0fd54af2f",
+      "startByte": 0,
+      "endByte": 121
     },
     {
       "path": "skills/blocker-diagnostician/references/entry-details.md",
       "startLine": 26,
       "endLine": 26,
-      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"
+      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01",
+      "startByte": 0,
+      "endByte": 833
     },
     {
       "path": "skills/blocker-diagnostician/references/entry-details.md",
       "startLine": 31,
       "endLine": 31,
-      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"
+      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01",
+      "startByte": 0,
+      "endByte": 85
     },
     {
       "path": "skills/blocker-diagnostician/references/entry-details.md",
       "startLine": 32,
       "endLine": 32,
-      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"
+      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01",
+      "startByte": 0,
+      "endByte": 106
     },
     {
       "path": "skills/blocker-diagnostician/references/entry-details.md",
       "startLine": 33,
       "endLine": 33,
-      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"
+      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01",
+      "startByte": 0,
+      "endByte": 73
     },
     {
       "path": "skills/blocker-diagnostician/references/entry-details.md",
       "startLine": 34,
       "endLine": 34,
-      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01"
+      "digest": "sha256:ddcfe8425096b30f6c0d0f58900af39e7b8756e2594b35cd596601215ffa3a01",
+      "startByte": 0,
+      "endByte": 405
     }
   ]
 }

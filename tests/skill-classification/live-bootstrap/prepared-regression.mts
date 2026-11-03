@@ -8,6 +8,7 @@ import path from "node:path";
 import {pathToFileURL} from "node:url";
 import {readyMock, readyEstimateMock, mockEnv, mockResponse, hash} from "./prepared-fixture.mjs";
 import type {PreparedBootstrapConfig} from "./bootstrap.mts";
+import {loadCurrentSourceBindings} from "../evaluation.js";
 
 type Api = typeof import("./bootstrap.mts");
 const repo = path.resolve(process.argv[2]!);
@@ -171,10 +172,9 @@ try {
   }
   const copiedRepo = path.join(root, "source-copy");
   await mkdir(copiedRepo);
-  for (const relative of ["mcp-server/src/skill-classification", "skills", "tests/skill-classification/fixtures.json",
-    "tests/skill-classification/evaluation.ts", "tests/skill-classification/fixtures.source-successor.json",
-    "tests/skill-classification/fixtures.unavailable-source-successor.json", "tests/skill-classification/fixtures.live-host-boundaries-source-successor.json",
-    "tests/skill-classification/fixtures.continuity-handoff-source-successor.json", "tests/skill-classification/fixtures.preflight-private-preparation-source-successor.json", "tests/skill-classification/fixtures.preflight-platform-events-source-successor.json", "tests/skill-classification/fixtures.orchestrator-phase-check-source-successor.json", "tests/skill-classification/fixtures.orchestrator-workflow-enforcement-source-successor.json", "package.json"]) {
+  for (const relative of new Set(["mcp-server/src/skill-classification", "skills", "tests/skill-classification/fixtures.json",
+    "tests/skill-classification/evaluation.ts", "package.json",
+    ...loadCurrentSourceBindings(repo).files.map(file => path.relative(repo, file))])) {
     const target = path.join(copiedRepo, relative); await mkdir(path.dirname(target), {recursive: true});
     await cp(path.join(repo, relative), target, {recursive: true});
   }

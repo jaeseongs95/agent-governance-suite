@@ -15,23 +15,23 @@
       "path": "skills/acceptance-evidence-validator/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:934cc5ef2e5d187c31e2eef086c61ff03b5e76cec50bf82be648eda87e228fda",
+      "digest": "sha256:24cee8ff520bcd394af0b3d3aa9d28d8147838191660373b3ce9f3fbd8e8d02f",
       "startByte": 0,
       "endByte": 151
     },
     {
       "path": "skills/acceptance-evidence-validator/SKILL.md",
-      "startLine": 9,
-      "endLine": 11,
-      "digest": "sha256:934cc5ef2e5d187c31e2eef086c61ff03b5e76cec50bf82be648eda87e228fda",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:24cee8ff520bcd394af0b3d3aa9d28d8147838191660373b3ce9f3fbd8e8d02f",
       "startByte": 0,
-      "endByte": 117
+      "endByte": 84
     },
     {
       "path": "skills/acceptance-evidence-validator/SKILL.md",
-      "startLine": 13,
-      "endLine": 16,
-      "digest": "sha256:934cc5ef2e5d187c31e2eef086c61ff03b5e76cec50bf82be648eda87e228fda",
+      "startLine": 21,
+      "endLine": 24,
+      "digest": "sha256:24cee8ff520bcd394af0b3d3aa9d28d8147838191660373b3ce9f3fbd8e8d02f",
       "startByte": 0,
       "endByte": 259
     },
@@ -39,7 +39,9 @@
       "path": "skills/acceptance-evidence-validator/references/entry-details.md",
       "startLine": 24,
       "endLine": 24,
-      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
+      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991",
+      "startByte": 0,
+      "endByte": 19
     }
   ],
   "exclusions": [
@@ -47,65 +49,79 @@
       "path": "skills/acceptance-evidence-validator/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:934cc5ef2e5d187c31e2eef086c61ff03b5e76cec50bf82be648eda87e228fda",
+      "digest": "sha256:24cee8ff520bcd394af0b3d3aa9d28d8147838191660373b3ce9f3fbd8e8d02f",
       "startByte": 152,
       "endByte": 262
     },
     {
       "path": "skills/acceptance-evidence-validator/SKILL.md",
-      "startLine": 11,
-      "endLine": 11,
-      "digest": "sha256:934cc5ef2e5d187c31e2eef086c61ff03b5e76cec50bf82be648eda87e228fda",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:24cee8ff520bcd394af0b3d3aa9d28d8147838191660373b3ce9f3fbd8e8d02f",
       "startByte": 85,
       "endByte": 233
     },
     {
       "path": "skills/acceptance-evidence-validator/SKILL.md",
-      "startLine": 17,
-      "endLine": 17,
-      "digest": "sha256:934cc5ef2e5d187c31e2eef086c61ff03b5e76cec50bf82be648eda87e228fda"
+      "startLine": 25,
+      "endLine": 25,
+      "digest": "sha256:24cee8ff520bcd394af0b3d3aa9d28d8147838191660373b3ce9f3fbd8e8d02f",
+      "startByte": 0,
+      "endByte": 89
     },
     {
       "path": "skills/acceptance-evidence-validator/SKILL.md",
-      "startLine": 18,
-      "endLine": 18,
-      "digest": "sha256:934cc5ef2e5d187c31e2eef086c61ff03b5e76cec50bf82be648eda87e228fda"
+      "startLine": 26,
+      "endLine": 26,
+      "digest": "sha256:24cee8ff520bcd394af0b3d3aa9d28d8147838191660373b3ce9f3fbd8e8d02f",
+      "startByte": 0,
+      "endByte": 127
     },
     {
       "path": "skills/acceptance-evidence-validator/references/entry-details.md",
       "startLine": 26,
       "endLine": 26,
-      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
+      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991",
+      "startByte": 0,
+      "endByte": 106
     },
     {
       "path": "skills/acceptance-evidence-validator/references/entry-details.md",
       "startLine": 27,
       "endLine": 27,
-      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
+      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991",
+      "startByte": 0,
+      "endByte": 85
     },
     {
       "path": "skills/acceptance-evidence-validator/references/entry-details.md",
       "startLine": 28,
       "endLine": 28,
-      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
+      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991",
+      "startByte": 0,
+      "endByte": 89
     },
     {
       "path": "skills/acceptance-evidence-validator/references/entry-details.md",
       "startLine": 29,
       "endLine": 29,
-      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
+      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991",
+      "startByte": 0,
+      "endByte": 179
     },
     {
       "path": "skills/acceptance-evidence-validator/references/entry-details.md",
       "startLine": 30,
       "endLine": 30,
-      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991"
+      "digest": "sha256:2170380d980dbefbc306d256edad72b594ea27fc4de2fb58e6f7845343a64991",
+      "startByte": 0,
+      "endByte": 106
     },
     {
       "path": "skills/acceptance-evidence-validator/SKILL.md",
-      "startLine": 16,
-      "endLine": 16,
-      "digest": "sha256:934cc5ef2e5d187c31e2eef086c61ff03b5e76cec50bf82be648eda87e228fda",
+      "startLine": 24,
+      "endLine": 24,
+      "digest": "sha256:24cee8ff520bcd394af0b3d3aa9d28d8147838191660373b3ce9f3fbd8e8d02f",
       "startByte": 145,
       "endByte": 254
     }

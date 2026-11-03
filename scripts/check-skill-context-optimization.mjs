@@ -8,6 +8,208 @@ import { isDeepStrictEqual } from "node:util";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
+// Context-only successor. Current source checks require the exact after bytes;
+// historical checks project them onto this separately verified predecessor.
+// These pins issue no execution authority and do not evaluate model behavior.
+const SPECIALIST_BEHAVIOR_SUCCESSOR = Object.freeze({
+  revision: "specialist-behavior-2026-11-03-r01",
+  baselineRevision: "480b8dfc143d15c7fb9fdab349d698d75f009893",
+  scope: "skill-context-only",
+  authorityEffect: "none",
+  skillIds: Object.freeze([
+    "acceptance-evidence-validator", "blocker-diagnostician", "change-scope-guardian",
+    "code-review", "codex-token-usage-analyzer", "context-continuity", "coordinate-subagents",
+    "cs-engineering", "evaluation-validity-auditor", "independent-audit-gate",
+    "independent-deliberation-panel", "instruction-scope-resolver", "iteration-frame-auditor",
+    "korean-prose-editor", "model-effort-advisor", "mutation-risk-preflight", "orchestrator",
+    "ponytail", "prompt-engineering", "recovery-strategy-selector", "session-board",
+    "software-security-auditor", "solid-design", "task-contract", "test-engineering",
+    "workspace-convention-profiler",
+  ]),
+  // Exact candidate context bytes; historical pins above/below stay unchanged.
+  hashes: Object.freeze({
+    "skills/acceptance-evidence-validator/SKILL.md": Object.freeze(["934cc5ef2e5d187c31e2eef086c61ff03b5e76cec50bf82be648eda87e228fda", "24cee8ff520bcd394af0b3d3aa9d28d8147838191660373b3ce9f3fbd8e8d02f"]),
+    "skills/acceptance-evidence-validator/classification.json": Object.freeze(["1fd5e0c18593382cd7114cd110f073fd3a6ee1520e4740f790e6916ec0e34c8a", "99894b6b18ab993c8a9b375961e1f303b77337548358bec3a15058ea79529949"]),
+    "skills/acceptance-evidence-validator/references/evidence-protocol.md": Object.freeze(["229d6f16a1b560b8482d3283f5a46f74f86a405d47c0bdf592d18f3f3e3897d0", "f34164f4fec2dd2ee896a26dd8fbe5bbb9a07ed63a24a9c9593d35ee8ba40031"]),
+    "skills/blocker-diagnostician/SKILL.md": Object.freeze(["0b2ed15e57c2c344661a3ae64073181d6f7b8940b7ef4e315daf010629c7f0de", "45a4607b88363a062ea0fe30298dbd45c27912d2227bb34e3bb392a0fd54af2f"]),
+    "skills/blocker-diagnostician/classification.json": Object.freeze(["3c18e212dfa724027c245ec1692cd39addd12e762cc635f3cb9c5cf09dc73eec", "7cc63979194e79cd4a7889b5e25203cd03144f2290510b866ec38c1eb0efa0fb"]),
+    "skills/blocker-diagnostician/references/diagnosis-protocol.md": Object.freeze(["4d7d9e47a2549d2af39565646aa8ce8e7da3c52006367cafb7fc34d243749610", "a57d43df0a69b58a952f985b53c454b8d91159eb6a77f1fd151986fcb76e7a0f"]),
+    "skills/change-scope-guardian/SKILL.md": Object.freeze(["4628178a929e8be1da1f36e7cdc553b7fc6a5ed932ad3f30f5bdc075228ca60e", "c40977808a57ee10e97c4945caa8f5f9363140e745f2dbac002ece68cba6d7ca"]),
+    "skills/change-scope-guardian/classification.json": Object.freeze(["52103f0dde99c31e42dd548e6234a5198d9a1a5b7d639087dd54a52ae304ff0f", "e42a9918e6bc6990352b532e24f905726516aa77922c23a143845c74e1eb7542"]),
+    "skills/code-review/SKILL.md": Object.freeze(["19825762e948103a2ebc1adebd4afef9912370c670bf7b8590470d8893c66ebd", "e452e63ee1047d5162b348f16fa86a8c2464d054469ba7e1144960ef018cf2a6"]),
+    "skills/code-review/classification.json": Object.freeze(["d4253d69e8ebf8f384f5e5a93e375f128546e06a72c54220eea0c28f99521ac4", "7119963aff673aa5d95247ec90d77be9ebddf2ae64b9aba353e30a488a6b1510"]),
+    "skills/codex-token-usage-analyzer/SKILL.md": Object.freeze(["81e119d5c8ef11d8f2c928f8c3c9d518941643ae9c88c03cdb8a6ece09f80f1f", "0de104afb13d2095c585ec64ca8a326dc8392f03749c70f0a21affab5e060e18"]),
+    "skills/codex-token-usage-analyzer/classification.json": Object.freeze(["1f52246a9a1e8cd22c811d6ed26409910a7d844f4d4f67ca5d639f00d2ca03d3", "b9c2eca1a447e64000e57a8c25cd1faa279ad9487c6250b8fb44a15edba39082"]),
+    "skills/codex-token-usage-analyzer/references/entry-details.md": Object.freeze(["95d3acae36c832218dcaa0d31fbbc1c89b572ba013dff2ab07525910601ac5d4", "969fe68d7a60c1f16d84c04df9c9cdb691146b774390d39e7a6b030541c109af"]),
+    "skills/context-continuity/SKILL.md": Object.freeze(["99e064693b3f0003f3b391f81f5173b79a28060e7f46ec81081923e75e646f41", "338dec78ba593585a046887c411a3aacd3c12c4d601e052ef71f912593266330"]),
+    "skills/context-continuity/classification.json": Object.freeze(["86988758d42dae54f6379a1cf3a3f1e7053dc7510727e2da43a58b3c1f47ee87", "ca054eefa1fdbfbd7bf47e4652f6fc58a9c35010612e7772e233dc2d8d59c049"]),
+    "skills/context-continuity/references/entry-details.md": Object.freeze(["3089f69c1a8738e63537ddfbbad0f757fd3d269248c47a42d694d77a7b62e660", "1f2a60899a145e349d37db84b8de7c8635fec8634036b09a8516d5895e5b4eca"]),
+    "skills/coordinate-subagents/SKILL.md": Object.freeze(["6ba85d995e098afe3cdeb8d20a0b130d383447a5ac6d1781c87e6b52461a7e2e", "2083c3a6ac114a34fea4014d6dda913e78670347cae9685e894fd7a0473aea8f"]),
+    "skills/coordinate-subagents/classification.json": Object.freeze(["dacd0c4e2c57c8766a261f7235331055537a9344a9fe09528611810070ea994b", "9ee93e2b274e672d3f5d707d1236e74928a814de787ff7d2bac33f84c49381e6"]),
+    "skills/coordinate-subagents/references/delegation-playbook.md": Object.freeze(["3215b5e38f7881ddaa5e8262de280642c3560a4236f38e15b3a6fabc176d80aa", "55b9b7fe79d90096c3af3a8ad1fbdd71c7f58c96ceea88fed457595c525c03d0"]),
+    "skills/coordinate-subagents/references/entry-details.md": Object.freeze(["2ace1181d7483e37ecd63e5b80c768ce376504ed9982142f0b519c76a08814df", "4f29865da0ca78b114e038120d0a3165e5d22d339d0a81b9e11c1c1ce726577a"]),
+    "skills/cs-engineering/SKILL.md": Object.freeze(["435939d54f74626d07cbfbedd87fcb1a8e13338bc6c0e46d5233d80a7733d681", "624d0365164ef23d9e2d5e749e9cd9309cd92b2335767abd7df95f29ec977f51"]),
+    "skills/cs-engineering/classification.json": Object.freeze(["9656b3af5a26f9fb4b5e7e0104d429889a7669e683a61a541b07b88d0d5cf610", "8eb3ed74d4d88977b9392a786f7ca23b3917ded3f584c377397b4a333a1003da"]),
+    "skills/evaluation-validity-auditor/SKILL.md": Object.freeze(["eba09d8fd9d7ae08a58cf0ae640041beb1ac084b97fadbfc1af89efe0fd74230", "de0f1e1f294fdf0ec84844375816918f23431dddf92f43c2a18bbdf5ab3ba53d"]),
+    "skills/evaluation-validity-auditor/classification.json": Object.freeze(["46b94a039e643a333f021f4792f92edb3b19263e47206c1f1b75e1afcbbbb9df", "9c3a46c657096918959313cf29ea86482a0d893e381f1b10348c482dee2ca01b"]),
+    "skills/independent-audit-gate/SKILL.md": Object.freeze(["abb5d4c1fa0607851018cd6f6a2f3ecf314cc829149ea0d15c5474ed9afd2a18", "601e00c54a44ec31f472c4cc447441c9a8167769f8721d349591b47feeb92aab"]),
+    "skills/independent-audit-gate/classification.json": Object.freeze(["6295cdc92ab7f3fa381023f7d7e363115f212f5dc128d02e90f518ad39142f10", "2d6752feb9ec2751e166e33b7e3f1b2c6b3c977a4e7332362c60a4306d17bda9"]),
+    "skills/independent-audit-gate/references/entry-details.md": Object.freeze(["0c390f9b8ccb7a3ef01f77dea4f92cec25d785e28b917e7305f76fdb42f05af9", "61297d9377a5dc3ed9765f52bb5c96cea40fe7c2e8476ba8544540d99d015c84"]),
+    "skills/independent-deliberation-panel/SKILL.md": Object.freeze(["eb21677b0f377116250691a8cf84b44ec853c4de9c56e27ea17585016a151f54", "9af2cea03f08d3494ca4f5cd0c857e88def422ec7bef58238873243c8e15caf9"]),
+    "skills/independent-deliberation-panel/classification.json": Object.freeze(["71ecafe2dc7eab91bb7ee5ebac230f2b0d3a7e58b9ff15c8cfdc3517a0aa21fd", "0670008787912ad6e46c79ea8bc33e21726a14a23d0ee43069306bf11158bd03"]),
+    "skills/independent-deliberation-panel/references/entry-details.md": Object.freeze(["f7fcfd9206f63c282a51c01446250dfc97eb7c65e576c00131030d1e0e2dbd65", "6d8bf85e8701dedbd5a5e4e0304011e516c0f8e81369756bc1aa5b2ab858502e"]),
+    "skills/instruction-scope-resolver/SKILL.md": Object.freeze(["5884f45b804b2b50dbfd060e73f2412940fa4e23b66b28eb256a71af4111d0cb", "9873f1f03764a68e4f8c123510287308e229c156bdf5ed9fe5eec5306d729b8b"]),
+    "skills/instruction-scope-resolver/classification.json": Object.freeze(["260ffec71166aa7a6403d78f98b3a2e41bac4f0eebc66ce242ac7d0618c453dc", "eeed71b8551ec9fda0ed5aec40afa54de2e63b2c58a6bc1a9fe27d26673655a5"]),
+    "skills/instruction-scope-resolver/references/entry-details.md": Object.freeze(["f40835131e257fff01e5913ae979d55af4546ed503e925e74dad716b432f90c3", "b2232aeb5f30d7efcb222fb7c4ea8a6106e1515a03a766839e0ac7f480c50116"]),
+    "skills/iteration-frame-auditor/SKILL.md": Object.freeze(["e83cf0abff280adfca9f12c35afd67e3787c75ce4e7866f7d1e402f59211945f", "b7ac836ba1d362d85450a62ffd3470fc21652389caa600b1bafdd52245ce4162"]),
+    "skills/iteration-frame-auditor/classification.json": Object.freeze(["bfe14a5aa19ba5711963f4b93abce34e44ac4809bcb16c1f5fe7f8ce7dce5a59", "253a1f8029ef051f0f3812b416705c26575562a991dae5f07350fbe0dc2f31f1"]),
+    "skills/iteration-frame-auditor/references/review-protocol.md": Object.freeze(["1abfd6a06a67d11277e24db17ee2e9fe8c2597e37304202378f782b959472793", "c65692186d03c13973cd56bed09ce5f7f263038acc0de1b1720cb3499e1906a7"]),
+    "skills/korean-prose-editor/SKILL.md": Object.freeze(["f8e43316850730a78febb8e440e81421a81f9549b08f064f0316e0493fcd9ae7", "79e2d73edeab4edfe39d5b3663a67990aeeee47fcd65fbee8dcf176457cd9a25"]),
+    "skills/korean-prose-editor/classification.json": Object.freeze(["8f49189dcf8106d2f242a186b8ebf46238ae5ed54101e43e7860dc7eedfe0ceb", "0ed8b69e72dc6b156de412743084e7600a84d466f9d113cdc4c792608d768701"]),
+    "skills/korean-prose-editor/references/entry-details.md": Object.freeze(["26ce188795767864370bbd07ae06ba5e164ff802b301656daa3759626996a9a1", "35986d36d80f376f655f8feb933efb533ffa8542d64dc4f2b6c4c52b38fa264b"]),
+    "skills/model-effort-advisor/SKILL.md": Object.freeze(["fa84d128bf1d9a6742b74f13080db98f304803e84168b8de39a9e120a01a9a6a", "f1142996644991ca8d444a4e4004aa8650f4c00a8d9e9e0eecd5d7672b773595"]),
+    "skills/model-effort-advisor/classification.json": Object.freeze(["9dee08d541f2a0dae21352cbbd4d1e8c3cbf7cdaefcf7db94bf0cf8598f17518", "2794ab01288c3d531c49b31704ba565bb554b64fb59369946c39237237038faf"]),
+    "skills/model-effort-advisor/references/entry-details.md": Object.freeze(["806874cf4ff417e5e5416a48df8f373ba7483591dbc916ce5edb3868280255de", "4fd8153834b5ab19ea12af67634e5ac8b06a5645f7cafc62c9fca2289d18368f"]),
+    "skills/mutation-risk-preflight/SKILL.md": Object.freeze(["f3975e529669c17acd83a951b816aa57efa7c8fef469130726200b057e131188", "00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad"]),
+    "skills/mutation-risk-preflight/classification.json": Object.freeze(["257f8f3affdc01511c44052de26e0c7e65076f61663ebce0d7871ca9550ce25e", "045eb47dcd98736fdd763f06535d8d8b9c95aa9f5000fb7677d39548641eec3a"]),
+    "skills/orchestrator/SKILL.md": Object.freeze(["e9be18c4d7f14a8aca9a3ce521501e6a673626a96d5bb07735f562e11c153001", "02b979178d585cd3396865a86703c4a1102263ff52c8c9739163ea763a03ce25"]),
+    "skills/orchestrator/classification.json": Object.freeze(["52d8d444e8c8fdadd4786d730191b37c6430c97993dcb93e447cccb5c69dfe02", "fb1741dda17b431dd0a8c02935ba0a0b6f72989846ebc7df3761ef01ec04c487"]),
+    "skills/orchestrator/references/entry-details.md": Object.freeze(["86af016cfc8399a656181f5253189c098b53434aaa8b7d4fd1353d586248333f", "d9bf7de0283d671735e7c4f4e9994df12a0d24bd6f3be97182394c5c247016ab"]),
+    "skills/orchestrator/references/mcp-execution.md": Object.freeze(["e5521ac3485c022342deab25a65bf61f66578e6623beda0490f797439ebc48a0", "7106404c5bf8cacb3bb4ab2d63af0c0ac955a8ee9f3eb53462c1062e2ebd221a"]),
+    "skills/ponytail/SKILL.md": Object.freeze(["2ce28db45c1a84e63fa2af7079e58a3803fc26b16ab7073436efd55b1e1214f9", "705c6f5aeff30330a5de661b4a28370a0e071e5fecd76cc6e8e88b074a96c250"]),
+    "skills/ponytail/classification.json": Object.freeze(["add19e4199c76e6dbd9fc128763b4b71da7dd93d3b03f71a7344092132ca1191", "6f263e26ab1bb4b49ebe751395f5323fed4f8074a72089fc8aa28b6a17765f18"]),
+    "skills/prompt-engineering/SKILL.md": Object.freeze(["8f613fa02ddb64f272fc86c5dbeffd4258bb32d9b2ced5b121b5b3bf8b7cec04", "9acdb598fcb0e559bf66ebb41e5c132d9f11bd9eb4af0b21085be98ff553a06b"]),
+    "skills/prompt-engineering/classification.json": Object.freeze(["df00228c13434c02834092b71d6dbb4eec9bc9da3c10719b8fb360bd4d3fa90e", "5b24ea34f89e9548362f42def75e286048c8b1d90920cafbebf439b76ffc087d"]),
+    "skills/recovery-strategy-selector/SKILL.md": Object.freeze(["ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25", "c87bf352f10b77f14981829f89109b834f07a2c813b3dd00cf39abdb19f74c6e"]),
+    "skills/recovery-strategy-selector/classification.json": Object.freeze(["f1a123fad0c83c1af38579e2920823cf0bec3e86bbc3d27bdb122eb5c45dd622", "cbf6dda5aca35fe316599f673c0ab09f9915af931f0cc0c41e386cc8d473b7d4"]),
+    "skills/session-board/SKILL.md": Object.freeze(["c23a8cebd2a794d9f281ba171f7dac073a5a91a68ceb9a26b748dd843a733bd2", "f244a6238e7d5e65bcf2418e1f70b61a82372f9b045d3f53947181b1d614efb7"]),
+    "skills/session-board/classification.json": Object.freeze(["b859ff49fbeeee79efef9e61101aa9a9ffb04ddc9d4e330bec918960f26e4e38", "3dfe3113ab8908d6b10a67f9e33e1805b7d06a91e58267311371d70509e575f5"]),
+    "skills/session-board/references/entry-details.md": Object.freeze(["1db28dc5c1ea4319e3c61f24270e3a5d52fe7e4acd00b7b5ad025a9131ffe778", "b89b50e2bacf86ca9268505d244336d5cbb212a7894ce629125201f512b8efce"]),
+    "skills/software-security-auditor/SKILL.md": Object.freeze(["d996eba32563c04c608d17bc19ce16bf25bba752c317f458f9a386b6358df2b5", "294e5f7314049536f8eab3f1799bc5879a1d95e740310ad6b163f047fe492081"]),
+    "skills/software-security-auditor/classification.json": Object.freeze(["f6354e18d117d008a8c8e8fc176eefa96e72eebb6040980d92dc3b4f861c3228", "ef252bf544e2f6917c10bb35456d173ea705de14b47c6d630b4ee2c2a92294de"]),
+    "skills/solid-design/SKILL.md": Object.freeze(["38f03d44593d79f0a6bc0c2084187ae81eacf9a567c387c359ab4601278978a6", "402a4e5a5c44493b7dc4a33a21b6cd0f29e701ed9a060422975159caef609aac"]),
+    "skills/solid-design/classification.json": Object.freeze(["14bd24bcfa856590f022bc0035c4cc8841d8f661765c26d10132a92e3c632069", "6c93f273ba7ed585f494d6043289e1bd6bac969390d788a50a69f021653f26f3"]),
+    "skills/task-contract/SKILL.md": Object.freeze(["92cf19444e6c97b1d1d017f8eed481135d708095d89411668ab215123d1266aa", "3978551c31daa62bc88893621ad05fd8f86a5e3e06df2b2b6a4d6d72721bfef2"]),
+    "skills/task-contract/classification.json": Object.freeze(["5fe716cb110508b99b3a113d9b4281c67f266cdd74fa56c2d2259b6ec4322238", "3a707ca184ba512bd016f5e5fcc10f033e28e51dec122889b98e9ccadaba1dda"]),
+    "skills/task-contract/references/acceptance-criteria.md": Object.freeze(["ae6977721dee30fa64b3c8f467b2c81f9e7a3b0f3de3f3d062e7391fe88ae6b1", "55e07c6e2ea67a566f08644668b806b2ed50acca067f39969dd6f6738a9d37fe"]),
+    "skills/test-engineering/SKILL.md": Object.freeze(["13f7bd7399070ee4db92b34067406e7ed000b3ae2f5ec04b1ff2ca4d32784927", "75e60228fe7307be776ed4925ea18a830f0e59d99a2d6a22715252731b37a3cc"]),
+    "skills/test-engineering/classification.json": Object.freeze(["b7cd174b0a314bf228ac0a32f9c7c33ffe1494852c90ebd73c7682d548bb3e1c", "3e603b14e5f27eb21506d03b33afab40b4cf1ce6cc070e0936b6690c745e636f"]),
+    "skills/workspace-convention-profiler/SKILL.md": Object.freeze(["4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7", "776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db"]),
+    "skills/workspace-convention-profiler/classification.json": Object.freeze(["15c01583cc8a233fd969ea873cf5ba0d56a6fc305cd2a9ff7ed7b57338cb2853", "7725b4d90a72e37bd9b2fa00f97c8e9d9ba760faf99b096e2ff4fa58d94d8f61"]),
+    "skills/workspace-convention-profiler/references/entry-details.md": Object.freeze(["9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91", "9ac1425cb2864dfd1119618f5fc5d5513b762dd5c6a0916246b19e97bf21f178"]),
+  }),
+  additions: Object.freeze({
+    "skills/independent-audit-gate/references/specialist-behavior.md": "fc1107c28eac3dc9d2bb69442b695a4164c6d4d9980a237fc1967fe39a5ac50d",
+  }),
+});
+const SPECIALIST_BEHAVIOR_REFERENCE = "skills/independent-audit-gate/references/specialist-behavior.md";
+
+/** Read-only source-validation metadata, not a runtime skill selector or approval. */
+export function getSpecialistBehaviorSuccessor() {
+  return SPECIALIST_BEHAVIOR_SUCCESSOR;
+}
+
+function contextDigest(bytes) {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+/** True only for explicitly pinned current context, never for a predecessor or an unlisted path. */
+export function matchesSpecialistBehaviorSuccessor(path, bytes) {
+  const hashes = Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes, path) ? SPECIALIST_BEHAVIOR_SUCCESSOR.hashes[path] : null;
+  return Boolean(hashes && contextDigest(bytes) === hashes[1]);
+}
+
+/** An exact current successor may be projected; altered bytes are never replaced with trusted history. */
+export function beforeSpecialistBehaviorSuccessor(path, bytes) {
+  if (!matchesSpecialistBehaviorSuccessor(path, bytes)) return bytes;
+  const original = git("show", `${SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision}:${path}`);
+  if (contextDigest(original) !== SPECIALIST_BEHAVIOR_SUCCESSOR.hashes[path][0]) {
+    throw new Error(`Specialist behavior predecessor bytes differ: ${path}`);
+  }
+  return original;
+}
+
+function readBeforeSpecialistBehavior(root, relative) {
+  return beforeSpecialistBehaviorSuccessor(relative, readFileSync(join(root, relative)));
+}
+
+/** Checks source integrity and required navigation only; semantic behavior needs separate evidence. */
+export function checkSpecialistBehaviorSources() {
+  const root = ROOT;
+  const errors = [];
+  const sources = new Map();
+  const expectedEntries = SPECIALIST_BEHAVIOR_SUCCESSOR.skillIds.map(id => `skills/${id}/SKILL.md`);
+  const pinnedEntries = Object.keys(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes).filter(relative => /^skills\/[^/]+\/SKILL\.md$/u.test(relative));
+  if (!sameSet(expectedEntries, pinnedEntries)) errors.push("specialist behavior skill coverage differs from the 26 pinned entries");
+  if (!sameSet(Object.keys(SPECIALIST_BEHAVIOR_SUCCESSOR.additions), [SPECIALIST_BEHAVIOR_REFERENCE])) {
+    errors.push("specialist behavior shared reference coverage differs");
+  }
+  const read = relative => {
+    if (sources.has(relative)) return sources.get(relative);
+    try { const bytes = readFileSync(join(root, relative)); sources.set(relative, bytes); return bytes; }
+    catch { errors.push(`specialist behavior source missing: ${relative}`); sources.set(relative, null); return null; }
+  };
+  for (const [relative, hashes] of Object.entries(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes)) {
+    if (!/^skills\/[a-z0-9-]+\/(?:SKILL\.md|classification\.json|references\/[a-z0-9/._-]+\.md)$/u.test(relative)
+      || relative.split("/").some(part => part === "." || part === "..")
+      || hashes.length !== 2 || hashes.some(hash => !/^[a-f0-9]{64}$/u.test(hash)) || hashes[0] === hashes[1]) {
+      errors.push(`specialist behavior source pin is invalid: ${relative}`);
+      continue;
+    }
+    const bytes = read(relative);
+    if (!bytes) continue;
+    if (!matchesSpecialistBehaviorSuccessor(relative, bytes)) errors.push(`specialist behavior successor bytes differ: ${relative}`);
+    else beforeSpecialistBehaviorSuccessor(relative, bytes);
+  }
+  for (const [relative, expected] of Object.entries(SPECIALIST_BEHAVIOR_SUCCESSOR.additions)) {
+    const bytes = read(relative);
+    if (bytes && (!/^[a-f0-9]{64}$/u.test(expected) || contextDigest(bytes) !== expected)) {
+      errors.push(`specialist behavior addition bytes differ: ${relative}`);
+    }
+  }
+  const actualEntries = readdirSync(join(root, "skills"), { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .flatMap(entry => {
+      const relative = `skills/${entry.name}/SKILL.md`;
+      try { readFileSync(join(root, relative)); return [relative]; }
+      catch { return []; }
+    });
+  if (!sameSet(actualEntries, expectedEntries)) errors.push("specialist behavior entry inventory differs from the 26 pinned skills");
+  for (const relative of expectedEntries) {
+    const bytes = read(relative);
+    if (!bytes) continue;
+    const skillId = relative.split("/")[1];
+    const target = skillId === "independent-audit-gate" ? "references/specialist-behavior.md" : "../independent-audit-gate/references/specialist-behavior.md";
+    const required = `이 스킬을 적용할 때 [공통 행동 기준](${target})을 먼저 읽고 따른다.`;
+    const source = bytes.toString("utf8");
+    const links = [...source.matchAll(/\[[^\]]*\]\(([^)\s]*specialist-behavior\.md)\)/gu)];
+    if (source.split(required).length !== 2 || links.length !== 1
+      || posix.normalize(posix.join(posix.dirname(relative), links[0]?.[1] ?? "")) !== SPECIALIST_BEHAVIOR_REFERENCE) {
+      errors.push(`specialist behavior required link differs: ${relative}`);
+    }
+  }
+  // Cover the six entries outside the older 20-skill optimization too. New or
+  // changed context is explicit; ordinary executable edits remain source-lock's responsibility.
+  const contextChanges = new Set([
+    ...git("diff", "--name-only", SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision, "--", "skills").toString("utf8").trim().split(/\r?\n/u),
+    ...git("ls-files", "--others", "--exclude-standard", "--", "skills").toString("utf8").trim().split(/\r?\n/u),
+  ].filter(relative => /^skills\/[^/]+\/.+\.(?:md|ya?ml)$/iu.test(relative) || /^skills\/[^/]+\/classification\.json$/u.test(relative)));
+  for (const relative of contextChanges) {
+    if (!Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes, relative) && !Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.additions, relative)) {
+      errors.push(`specialist behavior unpinned context change: ${relative}`);
+    }
+  }
+  return {
+    scope: "skill-context-only", authorityEffect: "none",
+    validationScope: "source-bytes-links-and-historical-binding",
+    modelBehaviorValidated: false,
+    pass: errors.length === 0, errors,
+    skillCount: expectedEntries.length,
+    currentEntryBytes: expectedEntries.reduce((total, relative) => total + (sources.get(relative)?.length ?? 0), 0),
+    sharedReferenceBytes: sources.get(SPECIALIST_BEHAVIOR_REFERENCE)?.length ?? 0,
+  };
+}
+
 // AC-010 adds peer instructions after the reviewed optimization. Preserve all
 // historical bytes and compare the exact, separately frozen addition as well.
 const SESSION_BOARD_ADDITION = "scripts/fixtures/session-board-peer-message-guidance.2.6.0.md";
@@ -225,6 +427,7 @@ const HOST_CONSUMPTION_SOURCE_SUCCESSOR = Object.freeze({
 });
 
 export function matchesHostConsumptionSourceSuccessor(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   return Object.hasOwn(HOST_CONSUMPTION_SOURCE_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === HOST_CONSUMPTION_SOURCE_SUCCESSOR.hashes[path];
 }
@@ -280,6 +483,7 @@ function matchesOrchestratorSourceSuccessor(path, bytes) {
 }
 
 export function matchesGovernanceSourceSuccessor(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   // Current mid-task selection wording is an exact source successor, not a 2.x runtime contract.
   // Historical reconstruction below still uses the separately pinned predecessor bytes.
   if (matchesOrchestratorSourceSuccessor(path, bytes)) return true;
@@ -289,6 +493,7 @@ export function matchesGovernanceSourceSuccessor(path, bytes) {
 }
 
 function beforeGovernanceSuccessor(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   if (matchesHostConsumptionSourceSuccessor(path, bytes)) {
     const original = git("show", `${HOST_CONSUMPTION_SOURCE_SUCCESSOR.baselineRevision}:${path}`);
     if (createHash("sha256").update(original).digest("hex") !== HOST_CONSUMPTION_SOURCE_SUCCESSOR.previousHashes[path]) throw new Error(`Historical host consumption source differs: ${path}`);
@@ -303,6 +508,7 @@ function beforeGovernanceSuccessor(path, bytes) {
 }
 
 export function matchesPonytailPolicySuccessor(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
   return Object.hasOwn(PONYTAIL_POLICY_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === PONYTAIL_POLICY_SUCCESSOR.hashes[path];
@@ -340,6 +546,7 @@ const TASK_CONTRACT_AUTHORIZATION_SUCCESSOR = Object.freeze({
 });
 
 export function matchesTaskContractAuthorizationSuccessor(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   return Object.hasOwn(TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === TASK_CONTRACT_AUTHORIZATION_SUCCESSOR.hashes[path];
 }
@@ -391,6 +598,7 @@ const PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR = Object.freeze({
 });
 
 export function matchesPreflightPrivatePreparationSuccessor(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   const hashes = PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes[path];
   return Boolean(hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]);
 }
@@ -412,6 +620,7 @@ const PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR = Object.freeze({
 });
 
 export function matchesPreflightPlatformEventsSuccessor(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   const hashes = PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes[path];
   return Boolean(hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]);
 }
@@ -429,6 +638,7 @@ const PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR = Object.freeze({
 });
 
 export function matchesPreflightExpiryRemovalSuccessor(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   const hashes = PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR.hashes[path];
   return Boolean(hashes && createHash("sha256").update(bytes).digest("hex") === hashes[1]);
 }
@@ -471,11 +681,13 @@ const PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR = Object.freeze({
 });
 
 export function matchesPreflightAdditiveSourceSuccessor(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   return Object.hasOwn(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes, path)
     && createHash("sha256").update(bytes).digest("hex") === PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes[path];
 }
 
 export function matchesCurrentImplementationPin(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   if (matchesPreflightAdditiveSourceSuccessor(path, bytes)) return true;
   if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
   if (matchesTaskContractAuthorizationSuccessor(path, bytes)) return true;
@@ -605,6 +817,7 @@ const SKILL_POLICY_WORDING_SUCCESSOR = Object.freeze({
 });
 
 function matchesSkillPolicyWordingSuccessor(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   const liveGuidance = LIVE_HOST_GUIDANCE_SUCCESSOR.hashes[path];
   if (liveGuidance && createHash("sha256").update(bytes).digest("hex") === liveGuidance[1]) return true;
   // Exact reviewed mid-task successor follows the same pinned historical projection.
@@ -674,6 +887,7 @@ const LIVE_HOST_GUIDANCE_SUCCESSOR = Object.freeze({
 });
 
 function historicalBytes(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   bytes = beforePreflightExpiryRemoval(path, bytes);
   bytes = beforePreflightPlatformEvents(path, bytes);
   if (matchesPreflightPrivatePreparationSuccessor(path, bytes)) {
@@ -750,6 +964,7 @@ function matchesArtifactScopeCliSource(path, bytes) {
 
 export function matchesEngineeringReferenceUpdate(name, bytes) {
   const reviewedPath = `skills/orchestrator/references/engineering-practices/${name}`;
+  bytes = beforeSpecialistBehaviorSuccessor(reviewedPath, bytes);
   if (matchesArtifactScopeCliSource(reviewedPath, bytes)) return true;
   if (matchesGovernanceSourceSuccessor(reviewedPath, bytes)) return true;
   if (Object.hasOwn(REVIEWED_IMPLEMENTATION_R1.hashes, reviewedPath)) {
@@ -760,6 +975,7 @@ export function matchesEngineeringReferenceUpdate(name, bytes) {
 }
 
 export function matchesReviewedImplementationUpdate(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   if (matchesArtifactScopeCliSource(path, bytes)) return true;
   if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
   const reviewed = Object.hasOwn(REVIEWED_IMPLEMENTATION_R2.hashes, path) ? REVIEWED_IMPLEMENTATION_R2 : REVIEWED_IMPLEMENTATION_R1;
@@ -768,6 +984,7 @@ export function matchesReviewedImplementationUpdate(path, bytes) {
 }
 
 export function matchesClassificationUpdate(path, bytes) {
+  bytes = beforeSpecialistBehaviorSuccessor(path, bytes);
   if (matchesHostConsumptionSourceSuccessor(path, bytes)) return true;
   if (matchesGovernanceSourceSuccessor(path, bytes)) return true;
   return matchesPonytailPolicySuccessor(path, bytes) || Object.hasOwn(CLASSIFICATION_UPDATE.hashes, path)
@@ -908,7 +1125,8 @@ export function checkRegistryContextCompatibility(registry) {
 }
 
 export function checkSkillContextOptimization() {
-  const errors = [];
+  const behaviorSources = checkSpecialistBehaviorSources();
+  const errors = [...behaviorSources.errors];
   for (const currentPath of Object.keys(PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes)) {
     if (!matchesPreflightPlatformEventsChain(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight platform-events successor bytes differ: ${currentPath}`);
   }
@@ -919,17 +1137,17 @@ export function checkSkillContextOptimization() {
     if (!matchesPreflightPrivatePreparationChain(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight private-preparation successor bytes differ: ${currentPath}`);
   }
   for (const [currentPath, hashes] of Object.entries(LIVE_HOST_GUIDANCE_SUCCESSOR.hashes)) {
-    if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== hashes[1]) {
+    if (createHash("sha256").update(readBeforeSpecialistBehavior(ROOT, currentPath)).digest("hex") !== hashes[1]) {
       errors.push(`live host guidance successor bytes differ: ${currentPath}`);
     }
   }
   for (const [currentPath, expectedHash] of Object.entries(TASK_CONTRACT_ROUTING_SOURCE_HASHES)) {
-    if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== expectedHash) {
+    if (createHash("sha256").update(readBeforeSpecialistBehavior(ROOT, currentPath)).digest("hex") !== expectedHash) {
       errors.push(`task-contract routing source differs: ${currentPath}`);
     }
   }
   for (const [currentPath, expectedHash] of Object.entries(ORCHESTRATOR_LEASE_EXPIRY_REMOVAL_SOURCE_HASHES)) {
-    if (createHash("sha256").update(readFileSync(join(ROOT, currentPath))).digest("hex") !== expectedHash) {
+    if (createHash("sha256").update(readBeforeSpecialistBehavior(ROOT, currentPath)).digest("hex") !== expectedHash) {
       errors.push(`orchestrator lease expiry-removal source differs: ${currentPath}`);
     }
   }
@@ -1036,6 +1254,9 @@ export function checkSkillContextOptimization() {
     if (!readHistorical(ROOT, ...descriptorPath.split("/")).equals(baselineFile(descriptorPath))) errors.push(`${skillId}: agents/openai.yaml changed`);
 
     const allowed = new Set([skillPath, detailPath]);
+    for (const currentPath of [...Object.keys(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes), ...Object.keys(SPECIALIST_BEHAVIOR_SUCCESSOR.additions)]) {
+      if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
+    }
     for (const currentPath of Object.keys(PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     for (const implementationPath of IMPLEMENTATION_PATHS) if (implementationPath.startsWith(`skills/${skillId}/`)) allowed.add(implementationPath);
     for (const currentPath of Object.keys(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
@@ -1092,13 +1313,16 @@ export function checkSkillContextOptimization() {
   const ponytailChanged = [...new Set([
     ...git("diff", "--name-only", BASELINE, "--", "skills/ponytail").toString("utf8").trim().split(/\r?\n/u),
     ...git("ls-files", "--others", "--exclude-standard", "--", "skills/ponytail").toString("utf8").trim().split(/\r?\n/u),
-  ].filter(Boolean))].filter((file) => !Object.hasOwn(CLASSIFICATION_UPDATE.hashes, file) && !Object.hasOwn(PONYTAIL_POLICY_SUCCESSOR.hashes, file));
+  ].filter(Boolean))].filter((file) => !Object.hasOwn(CLASSIFICATION_UPDATE.hashes, file) && !Object.hasOwn(PONYTAIL_POLICY_SUCCESSOR.hashes, file)
+    && !Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes, file) && !Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.additions, file));
   ponytailChanged.splice(0, ponytailChanged.length, ...historicalChanges(ponytailChanged));
   if (ponytailChanged.length) errors.push(`excluded skill ponytail unexpected changes: ${ponytailChanged.join(", ")}`);
   if (candidateBytes >= baselineBytes) errors.push("combined initial SKILL.md bytes did not shrink");
 
   return {
     baselineRevision: BASELINE,
+    currentSpecialistBehaviorSuccessors: [SPECIALIST_BEHAVIOR_SUCCESSOR],
+    currentSpecialistBehavior: behaviorSources,
     currentHostConsumptionSourceSuccessors: [HOST_CONSUMPTION_SOURCE_SUCCESSOR],
     currentPreflightPrivatePreparationSuccessors: [PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR],
     currentPreflightPlatformEventsSuccessors: [PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR],

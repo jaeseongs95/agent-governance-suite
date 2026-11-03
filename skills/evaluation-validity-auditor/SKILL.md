@@ -8,7 +8,15 @@ metadata:
 
 # Evaluation Validity Auditor
 
+이 스킬을 적용할 때 [공통 행동 기준](../independent-audit-gate/references/specialist-behavior.md)을 먼저 읽고 따른다.
+
 평가 결과를 품질 gate, 완료 주장 또는 릴리스 근거로 사용하기 전에 평가 자체의 유효성을 독립적으로 확인한다. 이 스킬은 평가를 실행하거나 fixture, rubric, oracle, threshold, 결과와 실패 기록을 수정하지 않는다.
+
+## 평가 주장의 경계
+
+- 평가 대상이 정답·예상 판정·이전 실패 해설을 전달받았는지 실제 입력과 실행 기록을 확인한다. 같은 작업 맥락에서 이름만 바꾼 평가자를 독립 검토자로 인정하지 않는다.
+- 실패·timeout·누락을 제외한 성공률이나 유리한 재실행만 모은 집계를 받아들이지 않는다. 원래 case·run·criterion 전체와 재시도 이력을 대조한다.
+- 구조·문구 검사를 통과한 것과 에이전트 행동이 개선된 것을 구분한다. 실제 행동 평가 없이 모델·호스트 전반의 품질 향상으로 일반화하지 않는다.
 
 <!-- optimization-navigation:start condition="the skill is activated for the request" reference="references/entry-details.md" do-not-load-otherwise="true" -->
 - If the skill is activated for the request, read [entry details](references/entry-details.md) before producing any result or taking any action; otherwise do not read it.

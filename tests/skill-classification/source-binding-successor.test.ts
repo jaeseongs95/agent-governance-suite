@@ -1,15 +1,161 @@
 import {createHash} from "node:crypto";
 import {execFileSync} from "node:child_process";
-import {readFileSync} from "node:fs";
+import {readFileSync, readdirSync} from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import {expect, it} from "vitest";
 import {oracleDigest, loadCurrentSourceBindings} from "./evaluation.js";
+import {loadSkillInventory} from "../../mcp-server/src/skill-classification/inventory.js";
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const currentSourceBinding = loadCurrentSourceBindings(root);
 const current = JSON.parse(readFileSync(new URL("./fixtures.json", import.meta.url), "utf8"));
 const successor = JSON.parse(readFileSync(new URL("./fixtures.source-successor.json", import.meta.url), "utf8"));
 const hash = (bytes: string | Buffer) => "sha256:" + createHash("sha256").update(bytes).digest("hex");
+const specialistBytes = readFileSync(new URL("./fixtures.specialist-behavior-source-successor.json", import.meta.url));
+const specialist = JSON.parse(specialistBytes.toString("utf8"));
+type SourceSpan = {path: string; startLine: number; endLine: number; digest: string; startByte?: number; endByte?: number};
+type RecordedSpan = SourceSpan & {selectedBytes: number; selectedDigest: string};
+type SourcePin = {path: string; bytes: number; digest: string; gitBlob: string};
+type ReboundSpan = {skillId: string; group: "applicability" | "exclusions"; index: number; change: string; previous: RecordedSpan; current: RecordedSpan};
+let pinnedMainSources: Map<string, Buffer> | null = null;
+function mainSource(relativePath: string): Buffer {
+  if (pinnedMainSources === null) {
+    const pins: SourcePin[] = [...specialist.sourceInventory.sourceFiles, ...specialist.sourceInventory.descriptorFiles];
+    const bytes = execFileSync("git", ["cat-file", "--batch"], {
+      cwd: root,
+      input: pins.map(pin => `${specialist.sourceBaseRevision}:${pin.path}\n`).join(""),
+      maxBuffer: 4 * 1024 * 1024,
+    });
+    const sources = new Map<string, Buffer>();
+    let offset = 0;
+    for (const pin of pins) {
+      const headerEnd = bytes.indexOf(10, offset);
+      const header = bytes.subarray(offset, headerEnd).toString("utf8");
+      const parsed = /^([a-f0-9]{40}) blob ([0-9]+)$/.exec(header);
+      if (!parsed) throw new Error(`PINNED_MAIN_SOURCE_UNAVAILABLE:${pin.path}:${header}`);
+      expect(parsed[1]).toBe(pin.gitBlob);
+      const length = Number(parsed[2]);
+      expect(length).toBe(pin.bytes);
+      const source = bytes.subarray(headerEnd + 1, headerEnd + 1 + length);
+      expect(hash(source)).toBe(pin.digest);
+      expect(bytes[headerEnd + 1 + length]).toBe(10);
+      sources.set(pin.path, source);
+      offset = headerEnd + 2 + length;
+    }
+    expect(offset).toBe(bytes.length);
+    pinnedMainSources = sources;
+  }
+  const source = pinnedMainSources.get(relativePath);
+  if (!source) throw new Error(`PINNED_MAIN_SOURCE_NOT_REGISTERED:${relativePath}`);
+  return source;
+}
+function sourceRef(span: RecordedSpan): SourceSpan {
+  return {path: span.path, startLine: span.startLine, endLine: span.endLine, digest: span.digest,
+    ...(span.startByte === undefined ? {} : {startByte: span.startByte}),
+    ...(span.endByte === undefined ? {} : {endByte: span.endByte})};
+}
+function selectedSource(bytes: Buffer, span: SourceSpan): Buffer {
+  expect(hash(bytes)).toBe(span.digest);
+  const lines = bytes.toString("utf8").split(/\r?\n/);
+  expect(span.startLine).toBeGreaterThanOrEqual(1);
+  expect(span.endLine).toBeGreaterThanOrEqual(span.startLine);
+  expect(span.endLine).toBeLessThanOrEqual(lines.length);
+  const joined = Buffer.from(lines.slice(span.startLine - 1, span.endLine).join("\n"));
+  const start = span.startByte ?? 0, end = span.endByte ?? joined.length;
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+  expect(end).toBeLessThanOrEqual(joined.length);
+  const selected = joined.subarray(start, end);
+  expect(() => new TextDecoder("utf-8", {fatal: true}).decode(selected)).not.toThrow();
+  return selected;
+}
+it("appends the exact specialist behavior successor without changing frozen fixture semantics", () => {
+  expect(specialistBytes.length).toBe(270309);
+  expect(hash(specialistBytes)).toBe("sha256:2870d4bc84873ae1e9bc84d85607e932350dec9fbfe70a8253c44c036c4ab34a");
+  expect(specialistBytes.includes(Buffer.from("\r\n"))).toBe(false);
+  expect(specialist.revision).toBe("specialist-behavior-source-binding-r18");
+  expect(specialist.sourceBaseRevision).toBe("480b8dfc143d15c7fb9fdab349d698d75f009893");
+  expect(specialist.role).toBe("source-binding-only-not-evaluation-or-install-authority");
+  expect(specialist.frozenPredecessor).toEqual({
+    path: "tests/skill-classification/fixtures.orchestrator-workflow-enforcement-source-successor.json",
+    bytes: 7507,
+    digest: "sha256:afaea7927b706378254cefc0a3c5b4068c1a98ae68c492972e856dd294c51a75",
+  });
+  expect(hash(readFileSync(path.join(root, specialist.frozenPredecessor.path)))).toBe(specialist.frozenPredecessor.digest);
+  expect(specialist.fixtureFileRewritten).toBe(false);
+  expect(specialist.labelChanges).toEqual([]);
+  expect(specialist.priceAndBudgetChanges).toEqual([]);
+  expect(specialist.modelBehavior).toBe("NOT_RUN");
+  expect(specialist.bindings).toHaveLength(58);
+  expect(new Set(specialist.bindings.map((binding: {path: string}) => binding.path)).size).toBe(58);
+  for (const binding of specialist.bindings) {
+    expect(hash(mainSource(binding.path))).toBe(binding.previousDigest);
+    const actual = readFileSync(path.join(root, binding.path));
+    expect(actual.length).toBe(binding.bytes);
+    expect(hash(actual)).toBe(binding.digest);
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
+    expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+    expect(() => currentSourceBinding.resolveDigest(binding.path, "sha256:" + "0".repeat(64))).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+});
+it("rebinds all 215 spans from pinned main to valid current UTF-8 evidence and the real inventory", async () => {
+  const descriptorPaths = readdirSync(path.join(root, "skills"), {withFileTypes: true})
+    .filter(entry => entry.isDirectory()).map(entry => `skills/${entry.name}/classification.json`).sort();
+  expect(specialist.sourceInventory.skillCount).toBe(26);
+  expect(specialist.sourceInventory.referenceCount).toBe(215);
+  expect(specialist.sourceInventory.descriptorFiles.map((pin: SourcePin) => pin.path)).toEqual(descriptorPaths);
+  expect(specialist.sourceInventory.sourceFiles).toHaveLength(37);
+  const spans: ReboundSpan[] = specialist.spanPreservation.spans;
+  expect(spans).toHaveLength(215);
+  expect(new Set(spans.map(span => `${span.skillId}:${span.group}[${span.index}]`)).size).toBe(215);
+  const inventory = await loadSkillInventory({root});
+  expect(inventory.issues).toEqual([]);
+  expect(inventory.skills.map(skill => skill.skillId).sort()).toEqual(descriptorPaths.map(file => file.split("/")[1]));
+  const skills = new Map(inventory.skills.map(skill => [skill.skillId, skill]));
+  let references = 0;
+  for (const descriptorPath of descriptorPaths) {
+    const before = JSON.parse(mainSource(descriptorPath).toString("utf8"));
+    const after = JSON.parse(readFileSync(path.join(root, descriptorPath), "utf8"));
+    const stableFields = (value: Record<string, unknown>) => Object.fromEntries(Object.entries(value).filter(([key]) => !["applicability", "exclusions"].includes(key)));
+    expect(stableFields(after)).toEqual(stableFields(before));
+    for (const group of ["applicability", "exclusions"]) {
+      expect(after[group]).toHaveLength(before[group].length);
+      references += after[group].length;
+    }
+  }
+  expect(references).toBe(215);
+  for (const span of spans) {
+    const descriptorPath = `skills/${span.skillId}/classification.json`;
+    const before = JSON.parse(mainSource(descriptorPath).toString("utf8"));
+    const after = JSON.parse(readFileSync(path.join(root, descriptorPath), "utf8"));
+    expect(before[span.group][span.index]).toEqual(sourceRef(span.previous));
+    expect(after[span.group][span.index]).toEqual(sourceRef(span.current));
+    const previousSelected = selectedSource(mainSource(span.previous.path), span.previous);
+    expect(previousSelected.length).toBe(span.previous.selectedBytes);
+    expect(hash(previousSelected)).toBe(span.previous.selectedDigest);
+    const selected = selectedSource(readFileSync(path.join(root, span.current.path)), span.current);
+    expect(selected.length).toBe(span.current.selectedBytes);
+    expect(hash(selected)).toBe(span.current.selectedDigest);
+    expect(selected.toString("utf8")).toMatch(/[\p{L}\p{N}]/u);
+    expect(skills.get(span.skillId)![span.group]).toContain(selected.toString("utf8").trim());
+    if (span.change === "exact-excerpt") expect(selected.equals(previousSelected)).toBe(true);
+  }
+  expect(specialist.spanPreservation.changedSpans).toEqual(spans.filter(span => span.change !== "exact-excerpt").map(span => `${span.skillId}:${span.group}[${span.index}]`));
+});
+it("replaces both historical quote-only applicability spans with actual activation evidence", () => {
+  const expected = new Map([
+    ["code-review", "변경분 리뷰가 요청되면 사용한다."],
+    ["test-engineering", "테스트 설계·구현·회귀 보호가 요청되면 사용한다."],
+  ]);
+  const repaired: ReboundSpan[] = specialist.spanPreservation.spans.filter((span: ReboundSpan) => span.change === "replace-punctuation-with-applicability");
+  expect(repaired.map(span => span.skillId)).toEqual([...expected.keys()]);
+  for (const span of repaired) {
+    expect(selectedSource(mainSource(span.previous.path), span.previous).toString("utf8")).toBe('"');
+    expect(selectedSource(readFileSync(path.join(root, span.current.path)), span.current).toString("utf8")).toBe(expected.get(span.skillId));
+    expect(span.group).toBe("applicability");
+    expect(span.index).toBe(1);
+  }
+});
 it("chains the exact orchestrator workflow-enforcement source after phase-check", () => {
   const bytes = readFileSync(new URL("./fixtures.orchestrator-workflow-enforcement-source-successor.json", import.meta.url));
   expect(hash(bytes)).toBe("sha256:afaea7927b706378254cefc0a3c5b4068c1a98ae68c492972e856dd294c51a75");
@@ -23,10 +169,11 @@ it("chains the exact orchestrator workflow-enforcement source after phase-check"
   expect(manifest.priceAndBudgetChanges).toEqual([]);
   for (const binding of manifest.bindings) {
     const actual = readFileSync(path.join(root, binding.path));
-    expect(actual.length).toBe(binding.bytes);
-    expect(hash(actual)).toBe(binding.digest);
-    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
-    expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+    const historical = mainSource(binding.path);
+    expect(historical.length).toBe(binding.bytes);
+    expect(hash(historical)).toBe(binding.digest);
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(hash(actual));
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(hash(actual));
   }
 });
 it("chains the exact orchestrator phase-check source after platform-events", () => {
@@ -58,10 +205,11 @@ it("chains the exact platform-events source without rewriting earlier oracles", 
   expect(manifest.priceAndBudgetChanges).toEqual([]);
   for (const binding of manifest.bindings) {
     const actual = readFileSync(path.join(root, binding.path));
-    expect(actual.length).toBe(binding.bytes);
-    expect(hash(actual)).toBe(binding.digest);
-    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
-    expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+    const historical = mainSource(binding.path);
+    expect(historical.length).toBe(binding.bytes);
+    expect(hash(historical)).toBe(binding.digest);
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(hash(actual));
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(hash(actual));
     expect(() => currentSourceBinding.resolveDigest(binding.path, "sha256:" + "0".repeat(64))).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
 });
@@ -104,13 +252,14 @@ it("동결 판정 기준을 보존하고 인계 지침의 현재 바이트만 �
   expect(manifest.labelChanges).toEqual([]);
   expect(manifest.priceAndBudgetChanges).toEqual([]);
   expect(manifest.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: "orchestrator-workflow-enforcement-source-binding-r17"});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: "specialist-behavior-source-binding-r18"});
   expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
   for (const source of manifest.bindings) {
     const actual = readFileSync(path.join(root, source.path));
-    expect(actual.length).toBe(source.bytes);
-    expect(hash(actual)).toBe(source.digest);
-    expect(currentSourceBinding.resolveDigest(source.path, source.previousDigest)).toBe(source.digest);
+    const historical = mainSource(source.path);
+    expect(historical.length).toBe(source.bytes);
+    expect(hash(historical)).toBe(source.digest);
+    expect(currentSourceBinding.resolveDigest(source.path, source.previousDigest)).toBe(hash(actual));
     expect(() => currentSourceBinding.resolveDigest(source.path, "sha256:" + "0".repeat(64))).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
 });
@@ -276,8 +425,8 @@ it("binds the current unavailable-classification guidance while preserving the f
     expect(hash(actual)).toBe(currentSourceBinding.resolveDigest(source.path, source.previousDigest));
     expect(() => currentSourceBinding.resolveDigest(source.path, "sha256:" + "0".repeat(64))).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const metadata = JSON.parse(readFileSync(path.join(root, "skills/orchestrator/classification.json"), "utf8"));
-  const sourceLines = readFileSync(path.join(root, "skills/orchestrator/SKILL.md"), "utf8").split(/\r?\n/);
+  const metadata = JSON.parse(mainSource("skills/orchestrator/classification.json").toString("utf8"));
+  const sourceLines = mainSource("skills/orchestrator/SKILL.md").toString("utf8").split(/\r?\n/);
   expect(binding.spanPreservation.spans).toHaveLength(18);
   const phase = JSON.parse(readFileSync(new URL("./fixtures.orchestrator-workflow-enforcement-source-successor.json", import.meta.url), "utf8"));
   expect(phase.spanPreservation.spans.map((span: {group: string; index: number}) => [span.group, span.index]))

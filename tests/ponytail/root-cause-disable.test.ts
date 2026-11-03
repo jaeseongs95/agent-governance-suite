@@ -18,8 +18,12 @@ it("keeps causal correction in the existing bug-fix and test rules without a new
   expect(text.replace(/\s+/gu, " ")).toContain("Derive the list with existing code, or add a check that fails when it is incomplete");
   expect(text.replace(/\s+/gu, " ")).toContain("allowlists and test case tables stay hand-written");
   expect(text.replace(/\s+/gu, " ")).toContain("A typo or wrong constant in the line itself is its own root cause: fix the line");
-  expect(text.replace(/\s+/gu, " ")).toContain("the command or CI step that originally failed, passing where it failed");
-  expect(text.replace(/\s+/gu, " ")).toContain("a new test counts only if it fails on the pre-fix code");
+  expect(text.replace(/\s+/gu, " ")).toContain("A bug fix's check must exercise the original failure condition on the intended environment");
+  expect(text.replace(/\s+/gu, " ")).toContain("demonstrate failure on the pre-fix behavior when reproducible and state the gap when it is not");
+  expect(text.replace(/\s+/gu, " ")).toContain("do not impose a one-test ceiling or replace integration evidence with an ad hoc self-check");
+  expect(text.replace(/\s+/gu, " ")).toContain("do not ship a reduced substitute and ask whether the user still wants the original requirement");
+  expect(text).not.toContain("leaves ONE runnable check behind");
+  expect(text).not.toContain("Ship the lazy version");
   expect(text.replace(/\s+/gu, " ")).toContain("never swallow or flatten an error to shorten code");
   expect(text).toContain("../orchestrator/references/engineering-practices/implementation.md");
   expect(text).toContain("Preserve CS invariants and verification obligations supplied for the task");

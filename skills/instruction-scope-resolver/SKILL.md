@@ -8,6 +8,8 @@ metadata:
 
 # Instruction Scope Resolver
 
+이 스킬을 적용할 때 [공통 행동 기준](../independent-audit-gate/references/specialist-behavior.md)을 먼저 읽고 따른다.
+
 대상 경로마다 실제로 적용되는 저장소 지침을 찾고 근거를 남긴다. 파일을 만들거나 수정하지 않으며, 저장소 지침을 근거로 사용자 권한을 넓히지 않는다.
 
 ## 입력 확인

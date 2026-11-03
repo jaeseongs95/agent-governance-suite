@@ -7,7 +7,13 @@ metadata:
 
 # Iteration Frame Auditor
 
+이 스킬을 적용할 때 [공통 행동 기준](../independent-audit-gate/references/specialist-behavior.md)을 먼저 읽고 따른다.
+
 수렴 구간을 다시 열기 전에 불변 작업 계약, 이전 attempt, 기존·제안 frame을 독립적으로 비교한다. 구현자와 분리된 fresh-context 검토자로서 비교 가능성과 의미 보존 여부만 판정하고, 수정이나 승인 결정을 대신하지 않는다.
+
+- 실패 조건과 무관한 이름·시각·주석 변경만으로 새 epoch를 권고하지 않는다. target digest 차이와 실패 조건에 영향을 주는 실제 교정을 구분한다.
+- 실패 사례 삭제, threshold 완화, skip 추가나 oracle 변경을 구현 교정으로 포장하지 않는다. 잘못된 평가를 고치는 경우도 평가 의미가 달라지면 새 비교 기준으로 분리한다.
+- 작성자의 결론 대신 원 contract·artifact·attempt를 직접 비교한다. fresh context를 확보하지 못하면 ID나 선언만 바꿔 독립성을 꾸미지 않는다.
 
 ## 적용 범위
 

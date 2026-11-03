@@ -17,29 +17,33 @@
       "path": "skills/workspace-convention-profiler/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7",
+      "digest": "sha256:776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db",
       "startByte": 0,
       "endByte": 141
     },
     {
       "path": "skills/workspace-convention-profiler/SKILL.md",
-      "startLine": 9,
-      "endLine": 11,
-      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db",
       "startByte": 0,
-      "endByte": 120
+      "endByte": 87
     },
     {
       "path": "skills/workspace-convention-profiler/SKILL.md",
-      "startLine": 13,
-      "endLine": 17,
-      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7"
+      "startLine": 15,
+      "endLine": 19,
+      "digest": "sha256:776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db",
+      "startByte": 0,
+      "endByte": 353
     },
     {
       "path": "skills/workspace-convention-profiler/references/entry-details.md",
-      "startLine": 1,
-      "endLine": 1,
-      "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
+      "startLine": 7,
+      "endLine": 7,
+      "digest": "sha256:9ac1425cb2864dfd1119618f5fc5d5513b762dd5c6a0916246b19e97bf21f178",
+      "startByte": 0,
+      "endByte": 9
     }
   ],
   "exclusions": [
@@ -47,53 +51,65 @@
       "path": "skills/workspace-convention-profiler/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7",
+      "digest": "sha256:776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db",
       "startByte": 142,
       "endByte": 236
     },
     {
       "path": "skills/workspace-convention-profiler/SKILL.md",
-      "startLine": 11,
-      "endLine": 11,
-      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db",
       "startByte": 88,
       "endByte": 231
     },
     {
       "path": "skills/workspace-convention-profiler/SKILL.md",
-      "startLine": 19,
-      "endLine": 19,
-      "digest": "sha256:4627b887cc63c1fe911990043f5fc6a6479b18b51ca2f89ddec7007c712707f7"
+      "startLine": 21,
+      "endLine": 21,
+      "digest": "sha256:776ffe39f24e8ce60bcee1cfdd56527dc4b915c117a0a77b7c2e6cb4d40880db",
+      "startByte": 0,
+      "endByte": 173
     },
     {
       "path": "skills/workspace-convention-profiler/references/entry-details.md",
-      "startLine": 3,
-      "endLine": 3,
-      "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
+      "startLine": 9,
+      "endLine": 9,
+      "digest": "sha256:9ac1425cb2864dfd1119618f5fc5d5513b762dd5c6a0916246b19e97bf21f178",
+      "startByte": 0,
+      "endByte": 144
     },
     {
       "path": "skills/workspace-convention-profiler/references/entry-details.md",
-      "startLine": 4,
-      "endLine": 4,
-      "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
+      "startLine": 10,
+      "endLine": 10,
+      "digest": "sha256:9ac1425cb2864dfd1119618f5fc5d5513b762dd5c6a0916246b19e97bf21f178",
+      "startByte": 0,
+      "endByte": 86
     },
     {
       "path": "skills/workspace-convention-profiler/references/entry-details.md",
-      "startLine": 5,
-      "endLine": 5,
-      "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
+      "startLine": 11,
+      "endLine": 11,
+      "digest": "sha256:9ac1425cb2864dfd1119618f5fc5d5513b762dd5c6a0916246b19e97bf21f178",
+      "startByte": 0,
+      "endByte": 90
     },
     {
       "path": "skills/workspace-convention-profiler/references/entry-details.md",
-      "startLine": 6,
-      "endLine": 6,
-      "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
+      "startLine": 12,
+      "endLine": 12,
+      "digest": "sha256:9ac1425cb2864dfd1119618f5fc5d5513b762dd5c6a0916246b19e97bf21f178",
+      "startByte": 0,
+      "endByte": 114
     },
     {
       "path": "skills/workspace-convention-profiler/references/entry-details.md",
-      "startLine": 7,
-      "endLine": 7,
-      "digest": "sha256:9248ec283c0ad3a95d335c3a8d32a2fbb2942f8b15eb8ee3762efdbbe85efb91"
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:9ac1425cb2864dfd1119618f5fc5d5513b762dd5c6a0916246b19e97bf21f178",
+      "startByte": 0,
+      "endByte": 112
     }
   ]
 }

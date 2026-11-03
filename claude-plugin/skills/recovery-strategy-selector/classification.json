@@ -15,29 +15,33 @@
       "path": "skills/recovery-strategy-selector/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25",
+      "digest": "sha256:c87bf352f10b77f14981829f89109b834f07a2c813b3dd00cf39abdb19f74c6e",
       "startByte": 0,
       "endByte": 175
     },
     {
       "path": "skills/recovery-strategy-selector/SKILL.md",
-      "startLine": 9,
-      "endLine": 11,
-      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:c87bf352f10b77f14981829f89109b834f07a2c813b3dd00cf39abdb19f74c6e",
       "startByte": 0,
-      "endByte": 209
+      "endByte": 179
     },
     {
       "path": "skills/recovery-strategy-selector/references/entry-details.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a"
+      "digest": "sha256:5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a",
+      "startByte": 0,
+      "endByte": 319
     },
     {
       "path": "skills/recovery-strategy-selector/references/entry-details.md",
       "startLine": 24,
       "endLine": 24,
-      "digest": "sha256:5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a"
+      "digest": "sha256:5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a",
+      "startByte": 0,
+      "endByte": 26
     }
   ],
   "exclusions": [
@@ -45,15 +49,15 @@
       "path": "skills/recovery-strategy-selector/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25",
+      "digest": "sha256:c87bf352f10b77f14981829f89109b834f07a2c813b3dd00cf39abdb19f74c6e",
       "startByte": 176,
       "endByte": 263
     },
     {
       "path": "skills/recovery-strategy-selector/SKILL.md",
-      "startLine": 11,
-      "endLine": 11,
-      "digest": "sha256:ca85c3ba0d589fd91aa26629b1f689dad515e1e326f98fab4b7c775a4b86de25",
+      "startLine": 13,
+      "endLine": 13,
+      "digest": "sha256:c87bf352f10b77f14981829f89109b834f07a2c813b3dd00cf39abdb19f74c6e",
       "startByte": 180,
       "endByte": 255
     },
@@ -61,25 +65,33 @@
       "path": "skills/recovery-strategy-selector/references/entry-details.md",
       "startLine": 26,
       "endLine": 26,
-      "digest": "sha256:5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a"
+      "digest": "sha256:5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a",
+      "startByte": 0,
+      "endByte": 99
     },
     {
       "path": "skills/recovery-strategy-selector/references/entry-details.md",
       "startLine": 27,
       "endLine": 27,
-      "digest": "sha256:5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a"
+      "digest": "sha256:5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a",
+      "startByte": 0,
+      "endByte": 169
     },
     {
       "path": "skills/recovery-strategy-selector/references/entry-details.md",
       "startLine": 28,
       "endLine": 28,
-      "digest": "sha256:5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a"
+      "digest": "sha256:5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a",
+      "startByte": 0,
+      "endByte": 217
     },
     {
       "path": "skills/recovery-strategy-selector/references/entry-details.md",
       "startLine": 29,
       "endLine": 29,
-      "digest": "sha256:5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a"
+      "digest": "sha256:5939abcfcf5412dc82ccf39571ee2e225723fa4be1956363a0b24b4e50cab48a",
+      "startByte": 0,
+      "endByte": 151
     }
   ]
 }

@@ -8,6 +8,8 @@ metadata:
 
 # Codex Token Usage Analyzer
 
+이 스킬을 적용할 때 [공통 행동 기준](../independent-audit-gate/references/specialist-behavior.md)을 먼저 읽고 따른다.
+
 사용자가 이 스킬을 명시적으로 호출하고 로컬 Codex 작업 또는 프로젝트의 token 사용량 집계를 요청했을 때만 실행한다.
 
 <!-- optimization-navigation:start condition="the skill is activated for the request" reference="references/entry-details.md" do-not-load-otherwise="true" -->

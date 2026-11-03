@@ -8,11 +8,19 @@ metadata:
 
 # Software Security Auditor
 
+이 스킬을 적용할 때 [공통 행동 기준](../independent-audit-gate/references/specialist-behavior.md)을 먼저 읽고 따른다.
+
 보안 분석을 요청했거나 수용 기준이 요구할 때 사용한다. 보안 관련 파일이 있다는 이유만으로 일반 작업에 추가하지 않는다. 조사 완료와 소프트웨어 안전 판정은 다르다. 수정·승인·배포 권한을 만들지 않는다.
 
 <!-- optimization-navigation:start condition="the skill is activated for the request" reference="references/entry-details.md" do-not-load-otherwise="true" -->
 - If the skill is activated for the request, read [entry details](references/entry-details.md) before producing any result or taking any action; otherwise do not read it.
 <!-- optimization-navigation:end -->
+## 방어 효과와 재현 범위
+
+- 방어 함수·설정의 존재와 실제 실행 경로에서의 효과를 구분하라. router·호출자에 연결되는지, 민감한 부작용보다 먼저 검사되는지 확인하라. 거부 응답을 받았다는 사실만으로 쓰기·전송·권한 변경이 없었다고 판단하지 마라.
+- `local-reproduction`은 계약의 검사 방법 이름이며 실행 호스트의 승인·격리 증명이 아니다. 재현이 허용된 역할일 때도 사용자 지정 시험 환경과 자원 소유권을 확인하라. 소스가 있는 기기나 공유 loopback 서비스를 임의 대체 환경으로 쓰지 마라.
+- 충분한 소스 근거로 확인한 공격 조건·도달 경로·영향은 그 수준으로 보고하라. 실제 공격을 성공시키지 않았다는 이유만으로 확인된 결함을 단순 추측으로 낮추거나, 확신을 높이려고 허용 범위 밖 능동 검사를 추가하지 마라.
+
 ## 기존 게이트와 연결
 
 단독 보안 조사는 독립 완료 감사가 아니다. 기존 `independent-audit-gate`의 감사자로 참여하면 해당 실행 안전·독립성 규칙을 먼저 따른다. 감사자는 새 재현 코드를 작성·실행하지 않고 fixture 명세를 구현자에게 반환한다. 구현자가 만든 테스트를 고정된 후보에서 확인한다.

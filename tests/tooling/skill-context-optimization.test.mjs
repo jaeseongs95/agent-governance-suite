@@ -541,7 +541,10 @@ describe("skill policy wording regressions (AGS-D-0093, AGS-D-0306..0310)", () =
 
     for (const text of readBoth("skills/ponytail/SKILL.md")) {
       expect(text).toContain("## Operational work");
-      expect(text).toContain("Do not write an analysis document, a test harness, a new API, or a cloned\nenvironment before doing the asked operation.");
+      expect(text).toContain("in the authorized execution environment and check the result directly");
+      expect(text).toContain("Create an isolated checkout or\nfixture when the user's constraints or actual interference risk require it;");
+      expect(text).toContain("do not build unrelated tools or analysis documents.");
+      expect(text).not.toContain("Do not write an analysis document, a test harness, a new API, or a cloned\nenvironment before doing the asked operation.");
     }
 
     expect(readFileSync(path.join(root, "skills/task-contract/SKILL.md"), "utf8"))

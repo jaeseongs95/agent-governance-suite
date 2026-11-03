@@ -4,7 +4,9 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import {
+  beforeSpecialistBehaviorSuccessor,
   checkRegistryContextCompatibility,
+  checkSpecialistBehaviorSources,
   matchesPreflightAdditiveSourceSuccessor,
   matchesPreflightExpiryRemovalSuccessor,
   matchesPreflightPrivatePreparationSuccessor,
@@ -16,6 +18,7 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const baseline = "59a580ac950e4813108d5b3a83bf01b9de0d7ccb";
 const privatePreparationRevision = "245a1e85ab649acb4a6766ad2332191edb35cb74";
 const platformEventsRevision = "7326e5f6d74112c9935bc5d270ad46aa28476ad9";
+const preBehaviorRevision = "480b8dfc143d15c7fb9fdab349d698d75f009893";
 const paths = [
   "README.md", "SKILL.md", "classification.json",
   "contracts/mutation-intent.v1.schema.json", "contracts/mutation-preflight-report.v1.schema.json",
@@ -25,7 +28,8 @@ const paths = [
 
 test("exact expiry-removal, platform-events and private-preparation successors preserve the historical chain", () => {
   for (const path of paths) {
-    const current = readFileSync(new URL(`../../${path}`, import.meta.url));
+    // Pin this historical chain's endpoint; current specialist guidance is checked separately below.
+    const current = execFileSync("git", ["show", `${preBehaviorRevision}:${path}`], { cwd: root });
     const platformEvents = execFileSync("git", ["show", `${platformEventsRevision}:${path}`], { cwd: root });
     const privatePreparation = execFileSync("git", ["show", `${privatePreparationRevision}:${path}`], { cwd: root });
     const historical = execFileSync("git", ["show", `${baseline}:${path}`], { cwd: root });
@@ -55,6 +59,27 @@ test("exact expiry-removal, platform-events and private-preparation successors p
   assert.equal(matchesPreflightPrivatePreparationSuccessor("skills/unreviewed/SKILL.md", Buffer.from("anything")), false);
   assert.equal(matchesPreflightPlatformEventsSuccessor("skills/unreviewed/SKILL.md", Buffer.from("anything")), false);
   assert.equal(matchesPreflightExpiryRemovalSuccessor("skills/unreviewed/SKILL.md", Buffer.from("anything")), false);
+});
+
+test("current specialist guidance preserves exact preflight predecessors and rejects altered bytes", () => {
+  const report = checkSpecialistBehaviorSources();
+  assert.deepEqual(report.errors, []);
+  assert.equal(report.pass, true);
+  for (const path of paths) {
+    const current = readFileSync(new URL(`../../${path}`, import.meta.url));
+    const predecessor = execFileSync("git", ["show", `${preBehaviorRevision}:${path}`], { cwd: root });
+    const altered = Buffer.concat([current, Buffer.from("\n")]);
+    assert.deepEqual(beforeSpecialistBehaviorSuccessor(path, current), predecessor, path);
+    assert.deepEqual(beforeSpecialistBehaviorSuccessor(path, altered), altered, path);
+    for (const matcher of [
+      matchesPreflightExpiryRemovalSuccessor,
+      matchesPreflightPlatformEventsSuccessor,
+      matchesPreflightPrivatePreparationSuccessor,
+    ]) {
+      assert.equal(matcher(path, current), matcher(path, predecessor), path);
+      assert.equal(matcher(path, altered), false, path);
+    }
+  }
 });
 
 test("existing additive pins remain valid after the exact successor projection", () => {

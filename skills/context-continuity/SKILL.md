@@ -8,6 +8,8 @@ metadata:
 
 # Context Continuity
 
+이 스킬을 적용할 때 [공통 행동 기준](../independent-audit-gate/references/specialist-behavior.md)을 먼저 읽고 따른다.
+
 긴 direct task의 중요한 상태만 로컬 MCP 경계에 checkpoint한다. 이 스킬은 무엇을 보존할지 판단하며, MCP 서버는 의미를 추측하지 않고 replacement snapshot의 revision, digest, binding과 복원 상태만 관리한다.
 
 Orchestrated workflow에는 direct snapshot을 만들지 않는다. `TaskEnvelope`, `WorkflowReceipt`, convergence root가 기준 원장이며 compact Hook이 그 구조적 상태를 투영한다.

@@ -8,6 +8,8 @@ metadata:
 
 # Coordinate Subagents
 
+이 스킬을 적용할 때 [공통 행동 기준](../independent-audit-gate/references/specialist-behavior.md)을 먼저 읽고 따른다.
+
 Coordinate work across subagents without expanding the user's scope, permissions, or requested side effects.
 
 ## Apply instruction priority

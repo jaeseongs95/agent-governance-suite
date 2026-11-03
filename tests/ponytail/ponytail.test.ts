@@ -103,9 +103,12 @@ describe("ponytail at the implementation step", () => {
     expect(hooks).not.toMatch(/ponytail/iu);
     expect(readFileSync(`${root}claude-overlay/hooks/skill-trigger-hook.mjs`, "utf8")).not.toMatch(/ponytail/iu);
     const modifications = lock.sources.find((source) => source.skillId === "ponytail")!.downstreamModifications as string[];
-    expect(modifications).toHaveLength(6);
+    expect(modifications).toHaveLength(7);
     expect(modifications[5]).toContain("Originally imported from https://github.com/jaeseongs95/ponytail.git at commit 83b2cbc3bc50df3030c49d1dfe598ccefe850a85");
     expect(modifications[5]).toContain("Future stable-tag notifications now use this public upstream");
     expect(modifications[5]).toContain("notify-only policy and automaticInstall: false remain unchanged");
+    expect(modifications[6]).toContain("smallest complete solution");
+    expect(modifications[6]).toContain("original-failure evidence and authorized test-environment rules");
+    expect(modifications[6]).toContain("apply the shared specialist behavior standard");
   });
 });

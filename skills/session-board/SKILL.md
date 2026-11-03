@@ -8,6 +8,8 @@ metadata:
 
 # Session Board
 
+이 스킬을 적용할 때 [공통 행동 기준](../independent-audit-gate/references/specialist-behavior.md)을 먼저 읽고 따른다.
+
 같은 컴퓨터에서 동시에 일하는 세션들이 서로 무엇을 하는지 알고 부딪히지 않게 한다. 세션 ID와 작업 디렉터리는 플러그인 훅이 채우고, 에이전트는 지금 하는 일 한 줄만 적는다. 현황판은 이 컴퓨터의 모든 에이전트 호스트가 함께 쓰는 로컬 SQLite 파일 하나이며 외부로 보내지 않는다.
 
 ## 작업이 바뀔 때 한 줄 갱신

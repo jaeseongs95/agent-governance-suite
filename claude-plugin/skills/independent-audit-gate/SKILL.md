@@ -8,6 +8,8 @@ metadata:
 
 # Independent Audit Gate
 
+이 스킬을 적용할 때 [공통 행동 기준](references/specialist-behavior.md)을 먼저 읽고 따른다.
+
 고위험 변경을 완료로 선언하기 전에 독립 감사와 증거 확인을 강제한다. 변경을 만든 주체와 다른 감사자가 최종 대상을 직접 검사하고 `PASS`, `FAIL`, `BLOCKED` 중 하나로 판정하게 한다.
 
 ## 적용 범위

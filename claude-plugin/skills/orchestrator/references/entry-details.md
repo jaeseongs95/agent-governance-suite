@@ -31,7 +31,7 @@
 1. 사용자가 특정 전문 스킬을 명시했으면 해당 스킬의 적용 조건을 확인하고 그 스킬을 호출한다. 요청과 무관한 capability를 덧붙이지 않되, 그 스킬이나 요청된 흐름에 필요한 승인·검증·독립성 gate는 면제하지 않는다.
 2. 그 밖의 전문 기능은 요청의 목표와 수용 기준에서 capability를 추출하고 레지스트리 descriptor로 찾는다. 선택한 capability, provider, phase와 선택 이유를 계획에 남긴다.
    `evaluation-validity-audit`를 선택할 때는 공유 `TaskEnvelope.v1`을 변경하지 않는다. `plan_workflow`에 `{ schemaVersion, taskEnvelope, evaluationAuditPurpose }` 구조를 넘기고, 실행 전 설계 감사면 `evaluationAuditPurpose`를 `design-readiness`로, 평가 결과를 품질·릴리스 근거로 제출하는 감사면 `quality-or-release`로 고정한다. 후자는 `post-execution PASS`와 `qualifiesAsQualityOrReleaseEvidence: true`가 모두 확인되지 않으면 완료하지 않는다.
-3. 호스트 runtime metadata, 사용자 텍스트나 이번 요청의 화면 캡처에서 현재 task의 모델과 추론 수준을 모두 관측한 경우 `model-effort-fit-assessment`를 요청한다. 현재 선택이 없으면 일반 direct 작업에서는 이 capability 때문에 묻거나 작업을 멈추지 않으며, 결과가 `ADEQUATE`이면 사용자 안내를 생략한다. 단, MCP `orchestrated` workflow를 계획할 때는 별도 규칙을 적용한다. caller는 `plan_workflow` 인자에 `executionContext`를 넣지 않는다. 현재 bootstrap 실행에 대한 model class·추론 수준과 task 결속은 호스트가 서버 측 `TrustedExecutionContextProvider`를 통해 authoritative observation으로 제공해야 한다. provider가 없거나 관측값이 최소 semantic assurance 하한보다 낮아 MCP가 `BINDING_REQUIRED` 또는 `BINDING_INVALID`를 반환하면 값을 임의로 보정·추정하지 않고 해당 workflow를 시작하지 않는다.
+3. 호스트 runtime metadata, 사용자 텍스트나 이번 요청의 화면 캡처에서 현재 task의 모델과 추론 수준을 모두 관측한 경우 `model-effort-fit-assessment`를 요청한다. 현재 선택이 없으면 일반 direct 작업에서는 이 capability 때문에 묻거나 작업을 멈추지 않으며, 결과가 `ADEQUATE`이면 사용자 안내를 생략한다. 단, MCP `orchestrated` workflow를 계획할 때는 별도 규칙을 적용한다. caller는 `plan_workflow` 인자에 `executionContext`를 넣지 않는다. 현재 bootstrap 실행 설정과 task 결속은 호스트가 서버 측 `TrustedExecutionContextProvider`를 통해 authoritative observation으로 제공해야 한다. bootstrap은 신뢰할 수 있는 관측·결속을 검사하며 stage의 model·effort 하한을 root 세션의 사용자 선택 설정을 바꾸거나 거부하는 근거로 쓰지 않는다. 관측 제공자 부재나 잘못된 결속으로 MCP가 `BINDING_REQUIRED` 또는 `BINDING_INVALID`를 반환하면 값을 임의로 보정·추정하지 않고 해당 workflow를 시작하지 않는다.
 4. `CollaborationDecision.v1.route`가 `delegate`인 경우에만 `subagent-coordination`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. `auditSeparationRequired`는 route와 독립된 의무다. `delegate`와 함께 참이면 구현 위임과 별도 감사자를 모두 계획한다. `audit-only`는 구현 위임 없이 감사 의무만 남은 경우다. 감사자는 구현에 참여하지 않고 최종 후보가 준비된 뒤 감사하며, 사용자 금지나 실행 불가가 있으면 감사 완료로 처리하지 않는다. 작업 단위가 둘 이상이거나 `orchestration.requested: true`라는 사실만으로 추가하지 않는다.
 5. 실제로 양립할 수 없는 대안이나 충돌하는 근거 중 하나를 선택해야 하고, 독립 관점과 교차 반박이 그 선택에 필요한 경우에만 `independent-deliberation`을 `TaskEnvelope.v1.requiredCapabilities`에 명시한다. `decision.complexity: complex`만으로 추가하지 않으며, 이 단계는 구현이나 완료 게이트를 대체하지 않는다.
 6. 정확한 최종 대상이 있는 고위험 변경의 실행·병합·릴리스·완료 가능 여부를 판정하는 요청에는 `independent-audit`을 추가한다. 감사 전의 구현·수정·자체 검증은 이 provider의 역할이 아니다.
@@ -49,7 +49,8 @@
 - 각 단계마다 담당 스킬, 입력 출처, 기대 산출물, 다음 단계와 중단 조건을 기록한다.
 - provider가 선언한 `inputBindings`의 `select`, `collect`, `combine`, `require-external`만 사용한다. 누락된 입력을 새로 만들거나 다른 artifact로 조용히 대체하지 않는다.
 - 전문 스킬 결과는 선언된 `ProviderResult.v1` envelope로 연결한다. `outputSchema`, `resultSchema`, `stateMapping`을 통과하지 못한 결과를 다음 단계의 입력으로 사용하지 않는다.
-- MCP 계획 stage에 `executionRequirement`가 있으면 그 stage를 요구 하한을 충족하는 실행자 설정으로 수행하되, caller는 `StageResult.v1`이나 `record_stage_result` 인자에 `executionContext`를 넣지 않는다. 실제 실행자의 model class·추론 수준과 정확한 run·stage·revision 결속은 호스트가 서버 측 `TrustedExecutionContextProvider`를 통해 관측한다. 현재 세션 값, 다른 worker 값이나 모델 이름에서 추측한 class를 caller 입력으로 대신하지 않는다. semantic stage의 관측값이 없거나 하한 미달이면 MCP의 `BINDING_REQUIRED` 또는 `BINDING_INVALID`를 그대로 처리하고 `passed`로 진행하지 않는다. `korean-prose-finalization`처럼 계획이 `deterministic`으로 표시한 stage에는 이 관측값을 요구하지 않는다.
+- MCP 계획 stage에 `executionRequirement`가 있어도 caller는 `StageResult.v1`이나 `record_stage_result` 인자에 `executionContext`를 넣지 않는다. 실제 실행자의 model class·추론 수준과 정확한 run·stage·revision 결속은 호스트가 서버 측 `TrustedExecutionContextProvider`를 통해 관측한다. 현재 세션 값, 다른 worker 값이나 모델 이름에서 추측한 class를 caller 입력으로 대신하지 않는다. semantic stage의 `passed`에 필요한 신뢰 관측이 없거나 결속이 잘못되면 MCP의 `BINDING_REQUIRED` 또는 `BINDING_INVALID`를 그대로 처리하고 `passed`로 진행하지 않는다. `korean-prose-finalization`처럼 계획이 `deterministic`으로 표시한 stage에는 이 관측값을 요구하지 않는다.
+- `executionRequirement`의 `minimumModelClass`·`minimumReasoningEffort` 하한은 subagent가 semantic stage를 `passed`로 기록할 때만 적용한다. 호스트가 root로 확인한 세션은 사용자가 고른 설정을 유지하며, 해당 하한을 이유로 모델 변경·재실행을 강제하거나 기록을 거부하지 않는다. `MODEL_NOT_IN_CATALOG`와 `modelClass: null`은 안내이며 그 자체로 거부 사유가 아니다. root/subagent 구분은 호스트가 검증한 caller 계보를 따르고, 예외를 얻으려고 계보나 관측값을 바꾸지 않는다. subagent의 하한 검사 실패는 `GATE_FAILED`로 보존하며, 실패·차단 결과를 `passed`로 바꾸지 않는다. root 예외도 신뢰 관측·결속이나 artifact·gate 검사를 면제하지 않는다.
 - 한 스킬의 결과를 다음 스킬에 전달할 때는 확인한 사실, 대상 식별자, 원시 증거 위치, 열린 제한사항을 보존한다. 요약으로 원시 결과나 불확실성을 대체하지 않는다.
 - 하위 실행에는 전체 대화를 기본 상속하지 않는다. 목표, 성공 조건, 책임 범위, 원자료 위치, 확정된 결정, 검증과 반환 형식만 담은 제한된 brief를 사용한다. 전체 대화가 없으면 정확성을 유지할 수 없는 경우에만 예외 사유를 기록하고 상속한다.
 - 큰 로그와 전문 결과는 artifact 참조와 digest로 전달하고, 상위 컨텍스트에는 결론, 근거 위치와 미해결 사항만 유지한다.
@@ -60,6 +61,8 @@
 `independent-deliberation` 또는 `independent-audit` provider를 호출하기 전에 [전문 단계 handoff 계약](specialist-handoffs.md)에서 해당 절을 읽고 입력, 결과 투영과 진행 조건을 적용한다.
 
 ## 결과 통합
+
+사용자 정정이나 새 실패 근거가 들어오면 영향받는 선택·입력·판정·위임만 다시 결속한다. 앞 단계의 `PASS` 개수나 다수 찬성으로 남은 실패를 덮지 않는다. 역할별 산출물 완료와 사용자 수용 기준 충족을 대조하고, 이미 끝난 독립 단계를 이유 없이 재실행하지 않는다.
 
 전문 스킬의 분석·계획·보고서 생성 완료는 해당 단계의 결과이며 사용자 요청 전체의 완료와 구분한다. 분석·계획만 요청받았다면 후속 변경을 실행하지 않는다. 사용자 요청에 구현·실행·검증이 포함되어 있고 이미 허용됐다면 전문 결과를 기존 담당 실행자·도구의 후속 작업 입력으로 연결하고, 기존 역할 범위와 필수 gate 안에서 그 작업과 필요한 검증까지 계속 수행한다. 후보·보고서 반환만으로 전체 완료를 보고하거나 실행 가능한 후속 확인을 사용자에게 넘기지 않는다.
 
