@@ -16,5 +16,5 @@ export const CATALOGS: Readonly<Record<SupportedLocale, Readonly<Record<string, 
 
 export interface MessageParams {
   "hooks.editGate.denied": { "limit": number; "paths": number | string; "earlier": number; "example": number | string; };
-  "server.call.reservedCallerField": {};
+  "server.call.reservedCallerField": Record<string, never>;
 }

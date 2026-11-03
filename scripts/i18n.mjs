@@ -127,7 +127,7 @@ export function renderGenerated(root = ROOT) {
     }
   }
   lines.push("}", "");
-  return lines.join("\n").replace(/\{ {2}\}/gu, "{}");
+  return lines.join("\n").replace(/\{ {2}\}/gu, "Record<string, never>");
 }
 
 function accept(root, locale) {
