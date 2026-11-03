@@ -44,13 +44,14 @@ function diagnostic(result) {
 }
 function calls(f) { return readFileSync(f.calls, "utf8").trim().split(/\r?\n/u).map(line => JSON.parse(line)); }
 
+// The Vitest result reached before the node:test failure stays in the report (3.4.0).
 it("main reports the actual missing-collection cause after one successful Vitest child", () => {
   const f = fixture();
   const result = launch(f);
   expect(result.error).toBeUndefined();
   expect(result.status).toBe(1);
   expect(diagnostic(result)).toEqual({ component: "test-runner", phase: "node-collection",
-    reason: "RUNNER_UNAVAILABLE" });
+    reason: "RUNNER_UNAVAILABLE", vitestExitCode: 0 });
   expect(result.stderr).toContain("ENOENT");
   expect(result.stderr).toContain("scandir");
   expect(result.stderr).toContain(path.join(f.directory, "tests"));
@@ -66,7 +67,7 @@ it("main distinguishes an empty collection from an unavailable reader and does n
   expect(result.error).toBeUndefined();
   expect(result.status).toBe(1);
   expect(diagnostic(result)).toEqual({ component: "test-runner", phase: "node-collection",
-    reason: "NODE_TEST_COLLECTION_EMPTY" });
+    reason: "NODE_TEST_COLLECTION_EMPTY", vitestExitCode: 0 });
   expect(result.stderr).toContain("No node:test suites were collected.");
   expect(calls(f)).toHaveLength(1);
   expect(JSON.parse(result.stdout.trim())).toEqual({ runner: "node:test", fileCount: 0, files: [] });
