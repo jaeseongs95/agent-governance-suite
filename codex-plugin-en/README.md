@@ -40,7 +40,7 @@ The current public release is `v3.3.0`, and the installation examples below use 
 
 ### English-only package
 
-Each host can install an English-only package of the same plugin. AGS messages, MCP tool descriptions, hook text and errors are in English; skill text stays in its source language (mostly Korean) until skills are translated. Skill names stay `agent-governance-suite:<skill>`, and state is shared, so you can switch packages by reinstalling. **Enable only one of the two packages in a host**: with both enabled, Claude Code loads the hooks of only one.
+Each host can install an English-only package of the same plugin. AGS messages, MCP tool descriptions, hook text and errors are in English; skill text stays in its source language (mostly Korean) until skills are translated. In Claude Code skill names stay `agent-governance-suite:<skill>`; the Codex English package is named `agent-governance-suite-en` because Codex requires the entry and manifest names to match. State is shared, so you can switch packages by reinstalling. **Enable only one of the two packages in a host**: with both enabled, Claude Code loads the hooks of only one and Codex runs both.
 
 | Host | Korean package | English-only package |
 |---|---|---|

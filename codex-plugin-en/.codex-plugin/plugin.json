@@ -1,6 +1,6 @@
 {
-  "id": "agent-governance-suite",
-  "name": "agent-governance-suite",
+  "id": "agent-governance-suite-en",
+  "name": "agent-governance-suite-en",
   "version": "3.3.0",
   "description": "Route governance and engineering specialists through declarative provider contracts, a local MCP convergence guard, opt-in task continuity, and an MCP-assisted Korean prose workflow.",
   "author": {
@@ -21,9 +21,9 @@
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
-    "displayName": "Agent Governance Suite",
-    "shortDescription": "전문 스킬과 감사 흐름을 조정합니다",
-    "longDescription": "전문 스킬의 책임을 유지하면서 요청을 분류하고, 실행 순서와 증거를 연결하는 거버넌스 플러그인입니다.",
+    "displayName": "Agent Governance Suite (English)",
+    "shortDescription": "Coordinates specialist skills and audit flows",
+    "longDescription": "A governance plugin that classifies requests and links execution order and evidence while keeping each specialist skill's responsibility. AGS messages are in English; skill text stays in its source language.",
     "developerName": "jaeseongs95",
     "category": "Developer Tools",
     "capabilities": [
