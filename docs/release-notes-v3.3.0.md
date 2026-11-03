@@ -101,4 +101,9 @@
   - `claude -p` 실행: 스킬 25개가 `agent-governance-suite:*`로 보였고, MCP 서버는 `connected`, AGS 도구는 31개였다. SessionStart hook 출력에 한글은 0자였다.
   - 처음 설치에서는 `mcp-server/dist`가 `.gitignore` 때문에 커밋에서 빠져 `ERR_MODULE_NOT_FOUND`가 났다. 예외 규칙과 `en:check`·시험의 ignore 검사를 넣어 고쳤다.
   - Codex 0.166.0: `CODEX_HOME`을 따로 두고 `git-subdir` 항목으로 `codex plugin add agent-governance-suite-en@agent-governance`를 실행했다. exit 0이고 `installed, enabled 3.3.0`으로 나왔다. 설치본의 locale은 `en`, manifest는 `agent-governance-suite-en`이다. 실행은 하지 않았다(크레딧 없음).
-- 발행 후보의 전체 시험 결과는 발행 직전에 이 절에 덧붙인다.
+- **발행 후보 460ab868**
+  - Linux 시험 서버 전체 시험(d7e48d94): vitest 파일 276개 중 274개 통과·1개 skip·1개 실패. 실패는 `tests/tooling/claude-plugin.test.mjs`의 공통 접수 문장 사본 검사였다. 생성 패키지 `claude-plugin-en/`의 사본을 허용 목록에 넣지 않아서 났다. 허용 목록을 `build-en-packages`의 경로 대응으로 도출하게 고쳤다(460ab868).
+  - Linux 시험 서버(460ab868): 그 뒤 바뀐 시험 8개 파일 241개 통과. vitest 실패 때문에 돌지 못한 node:test 499/499, 설치 런타임 smoke 종료 코드 0. tsc·build 0.
+  - Windows 시험 서버 첫 실행(7fbe8b44)에서 Linux와 CI에서 보이지 않던 실패가 나왔다. 수렴 frame 시험 fixture가 `D:/` 드라이브를 고정으로 썼는데, 이 서버에는 D: 드라이브가 없어 workspace 식별이 `WORKSPACE_IDENTITY_UNRESOLVED`(ENOENT)로 거부됐다. 해당 파일은 convergence-guard, continuity, d0344-terminal-direct였다. fixture 경로를 임시 디렉터리 아래로 바꿨다(55f1b38c). 이 시험들은 서버 전용이라 CI Windows에서는 돌지 않는다. Windows 서버(460ab868)에서 바뀐 7개 파일 234개 시험이 통과했다.
+  - CI 41675486783(460ab868): ubuntu·windows success.
+  - 영어 패키지 번들이 lint 대상에 들어가 CI가 실패한 것(41670002876)은 `claude-plugin/`처럼 생성물로 제외해 고쳤다(7fbe8b44).
