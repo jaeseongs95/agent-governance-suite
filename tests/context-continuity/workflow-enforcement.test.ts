@@ -299,6 +299,16 @@ describe("infrastructure failures fail open with their cause", () => {
     for (const name of ["d.ts", "e.ts"]) expect(handleContinuityHook(write(name), target, "claude-code", NO_ENV)).toEqual({});
     expect(isDeny(handleContinuityHook(write("f.ts"), target, "claude-code", NO_ENV))).toBe(true);
   });
+
+  it("names a start failure without claiming edits were let through when every edit stayed inside an active root", () => {
+    const target = service(workflowWith([{ state: "open", rootId: "root-alpha", runState: "running", scope: "alpha" }]));
+    target.prepareWorkflowStart(session, "root-alpha");
+    target.recordWorkflowStartFailure(session, new WorkflowContractError("BINDING_REQUIRED", msg("workflow.service.unkeyedFailure", { message: "No host observation." }), { reasonCode: "TRANSCRIPT_LIMIT_EXCEEDED" }));
+    expect(handleContinuityHook(write("alpha/1.ts"), target, "claude-code", NO_ENV)).toEqual({});
+    const text = String((handleContinuityHook(stop(), target, "claude-code", NO_ENV).hookSpecificOutput as Record<string, unknown>).additionalContext);
+    expect(text).toContain("[AGS] 이번 구간에 workflow 시작이 실패했다. 원인 코드: workflow-start-failed:BINDING_REQUIRED:TRANSCRIPT_LIMIT_EXCEEDED. 편집 관문은 평소대로 판정했다.");
+    expect(text).not.toContain("막지 않았다");
+  });
 });
 
 describe("Stop output", () => {

@@ -12,6 +12,7 @@
   "hooks.phaseCheck.continue": "이 목표가 아직 이뤄지지 않았으면 멈추지 말고 남은 작업을 이어서 하라. 방금 받은 요청을 끝냈어도 목표가 남았으면 이어서 한다. 단계 결과는 그 단계의 작업과 검증을 실제로 마친 뒤에만 기록하고, 기록만 하고 끝내지 마라.",
   "hooks.phaseCheck.goal": "workflow 목표: {goal}",
   "hooks.phaseCheck.pending": "[AGS 단계 확인] 진행 중인 workflow에 아직 passed가 아닌 단계가 있다: {stages}.",
+  "hooks.phaseCheck.startFailed": "[AGS] 이번 구간에 workflow 시작이 실패했다. 원인 코드: {codes}. 편집 관문은 평소대로 판정했다.",
   "hooks.phaseCheck.unavailable": "[AGS] workflow 상태를 확인하지 못해 이번 구간의 제품 파일 변경을 막지 않았다. 원인 코드: {codes}.",
   "hooks.phaseCheck.waiting": "사용자의 답이나 승인이 있어야 진행할 수 있으면 무엇을 기다리는지 한 줄로 쓰고 끝내라. 필요 없는 단계는 계획을 고쳐 뺀다.",
   "hooks.skillTrigger.invocation": "Claude Code 호출: MCP 서버 instructions의 공통 접수 기준을 따르고, 선택한 설치 스킬은 Skill 도구나 /agent-governance-suite:<skill-name> 명령으로 실제 호출한다."

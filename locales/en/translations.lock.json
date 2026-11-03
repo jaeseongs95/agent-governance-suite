@@ -12,6 +12,7 @@
   "hooks.phaseCheck.continue": "5a36cca6e77df318a2ed1887192332dda8cf53c2e6924435b11479eecdf34e82",
   "hooks.phaseCheck.goal": "680f020f05fc087994ab8e357c8279bfa3e656747b696e1bf6edab2bca587964",
   "hooks.phaseCheck.pending": "f2ea546b4f4685c13189077cdb1d56c7ed42689e31960d04f4d15317913d7fbf",
+  "hooks.phaseCheck.startFailed": "1a77492ce531c566d44337454e7f292c9a25f61ee41f02b8bbc8e29045b88175",
   "hooks.phaseCheck.unavailable": "0398d972e26afe2adbe27ec3d033d14ea36528a20c6b7895027919cd81e5306f",
   "hooks.phaseCheck.waiting": "478ffb199c717aba9e14ebeb722a7e753b4a11c357d62b4472387f39af3b7285",
   "hooks.skillTrigger.invocation": "03a5258f496091f24312b85e7d7f93afc6e8e1c29e815b072a49516a2de7834c",

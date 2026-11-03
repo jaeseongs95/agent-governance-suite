@@ -63,6 +63,7 @@ export interface MessageParams {
   "hooks.phaseCheck.continue": Record<string, never>;
   "hooks.phaseCheck.goal": { "goal": NestedMessage | number | string; };
   "hooks.phaseCheck.pending": { "stages": NestedMessage | number | string; };
+  "hooks.phaseCheck.startFailed": { "codes": NestedMessage | number | string; };
   "hooks.phaseCheck.unavailable": { "codes": NestedMessage | number | string; };
   "hooks.phaseCheck.waiting": Record<string, never>;
   "hooks.skillTrigger.invocation": Record<string, never>;

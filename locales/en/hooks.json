@@ -12,6 +12,7 @@
   "hooks.phaseCheck.continue": "If this goal is not met yet, do not stop; continue the remaining work. Even when the request just received is done, continue while the goal remains. Record a stage result only after actually finishing that stage's work and verification, and do not stop at recording.",
   "hooks.phaseCheck.goal": "Workflow goal: {goal}",
   "hooks.phaseCheck.pending": "[AGS stage check] The running workflow has stages that are not passed yet: {stages}.",
+  "hooks.phaseCheck.startFailed": "[AGS] A workflow start failed in this window. Cause codes: {codes}. The edit gate judged edits as usual.",
   "hooks.phaseCheck.unavailable": "[AGS] The workflow state could not be checked, so product file changes in this window were not blocked. Cause codes: {codes}.",
   "hooks.phaseCheck.waiting": "If you cannot proceed without the user's answer or approval, write in one line what you are waiting for and stop. Remove unneeded stages by revising the plan.",
   "hooks.skillTrigger.invocation": "Claude Code invocation: follow the common intake criteria in the MCP server instructions, and actually invoke each selected installed skill with the Skill tool or the /agent-governance-suite:<skill-name> command."

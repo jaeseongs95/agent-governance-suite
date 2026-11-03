@@ -85,6 +85,8 @@ const PHASE_START_EVENT = "phase-workflow-start";
 /** AGS infrastructure failures: the window passes and the next Stop names the cause code once. */
 const START_FAILED_PREFIX = "workflow-start-failed:";
 const GATE_UNAVAILABLE_PREFIX = "phase-gate-unavailable:";
+/** A window edit that passed only because a workflow start failed; Stop then says edits were not blocked. */
+const START_FAILURE_PASS_EVENT = "phase-start-failure-pass";
 /**
  * Starting value, not a measured threshold: without an active workflow, the edit that makes this many distinct product
  * files in one window is refused. Tune it from the phase-deny and phase-workflow-start rows.
@@ -924,7 +926,12 @@ export class ContinuityService implements ContinuityGateway {
       outside.push(index);
     }
     if (outside.length === 0) return null;
-    if (this.store.observationEventsAfter(c, e, START_FAILED_PREFIX, windowStart).length > 0) return null;
+    if (this.store.observationEventsAfter(c, e, START_FAILED_PREFIX, windowStart).length > 0) {
+      if (this.store.observationEventsAfter(c, e, START_FAILURE_PASS_EVENT, windowStart).length === 0) {
+        this.store.recordObservation(c, e, START_FAILURE_PASS_EVENT, null, false, now);
+      }
+      return null;
+    }
     const counted = new Set(this.store.observationHashesAfter(c, e, PHASE_FILE_EVENT, windowStart));
     const fresh = [...new Set(outside.map(index => this.hashOpaque("file", targets[index]!)))].filter(hash => !counted.has(hash));
     if (!this.locked(c, e) && (fresh.length === 0 || counted.size + fresh.length < WORKFLOW_FILE_LIMIT)) {
@@ -974,7 +981,11 @@ export class ContinuityService implements ContinuityGateway {
     const pending = Array.isArray(activity) ? activity.map(item => this.pendingStages(item)).filter(item => item.stages.length > 0) : [];
     this.store.recordObservation(c, e, PHASE_CHECK_EVENT, null, pending.length === 0 && failures.length === 0, this.now().toISOString());
     const lines: MessageRef[] = [];
-    if (failures.length > 0) lines.push(msg("hooks.phaseCheck.unavailable", { codes: [...new Set(failures)].join(", ") }));
+    // Only a gate that could not judge, or an edit passed because of a start failure, let changes through unchecked.
+    const unchecked = failures.some(code => code.startsWith(GATE_UNAVAILABLE_PREFIX))
+      || this.store.observationEventsAfter(c, e, START_FAILURE_PASS_EVENT, lastCheck).length > 0;
+    const codes = [...new Set(failures)].join(", ");
+    if (failures.length > 0) lines.push(unchecked ? msg("hooks.phaseCheck.unavailable", { codes }) : msg("hooks.phaseCheck.startFailed", { codes }));
     if (pending.length > 0) {
       // Codex and agy continue the turn with this text as its only instruction (continuity-hook stopOutput, agy runner).
       // It names each workflow's goal: told only "the user's remaining work", Codex took its last request (one file of

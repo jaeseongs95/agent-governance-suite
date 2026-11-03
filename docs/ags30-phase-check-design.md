@@ -198,7 +198,7 @@ cwd는 기준으로 쓰지 않는다. 설정은 hook 프로세스의 환경에�
 
 ### 7.6 오류
 
-- AGS 인프라 오류는 원인 코드를 그대로 보이고 통과시킨다. hook이 workflow 저장소를 열지 못하거나 읽지 못하면 `phase-gate-unavailable:<원인 코드>`를 남기고 편집을 허용한다. 시작 호출이 `MCP_UNAVAILABLE`·`CONTINUITY_UNAVAILABLE`·`BINDING_REQUIRED`·`BINDING_INVALID`·`INTEGRITY_FAILED`로 실패하면 서버가 `workflow-start-failed:<코드>[:<reasonCode>]`를 남기고, 그 구간의 편집을 허용한다(판정 대기 root 범위의 거부는 제외). 다음 Stop이 원인 코드를 한 번 낸다. 3.3.0부터 시작의 `BINDING_INVALID`는 호출자·호스트 실행 관측(adapter·capability 불일치, 소비됐거나 결속이 맞지 않는 관측)에서만 나오고 세션 결속에서는 나오지 않는다.
+- AGS 인프라 오류는 원인 코드를 그대로 보이고 통과시킨다. hook이 workflow 저장소를 열지 못하거나 읽지 못하면 `phase-gate-unavailable:<원인 코드>`를 남기고 편집을 허용한다. 시작 호출이 `MCP_UNAVAILABLE`·`CONTINUITY_UNAVAILABLE`·`BINDING_REQUIRED`·`BINDING_INVALID`·`INTEGRITY_FAILED`로 실패하면 서버가 `workflow-start-failed:<코드>[:<reasonCode>]`를 남기고, 그 구간의 편집을 허용한다(판정 대기 root 범위의 거부는 제외). 다음 Stop이 원인 코드를 한 번 낸다. 3.3.0부터 Stop은 실제로 판정 없이 통과시킨 편집이 있을 때(관문이 판정하지 못했거나 시작 실패 때문에 구간 편집을 통과시켰을 때)만 「막지 않았다」고 말하고, 시작 실패만 있고 편집은 평소대로 판정됐으면 시작 실패와 원인 코드만 알린다(`hooks.phaseCheck.startFailed`). 또 3.3.0부터 시작의 `BINDING_INVALID`는 호출자·호스트 실행 관측(adapter·capability 불일치, 소비됐거나 결속이 맞지 않는 관측)에서만 나오고 세션 결속에서는 나오지 않는다.
 - 입력 검증 오류(`INVALID_INPUT`, `GATE_FAILED`, `ROOT_CONFLICT`, `LEASE_CONFLICT` 등)는 통과 사유가 아니다.
 - continuity 저장소 자체가 열리지 않으면 지금처럼 hook이 진단 한 줄을 남기고 출력 없이 끝난다(fail-open).
 
