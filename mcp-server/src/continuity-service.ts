@@ -908,31 +908,34 @@ export class ContinuityService implements ContinuityGateway {
     if ((edit === null || edit < lastCheck) && failures.length === 0) return null;
     const activity = this.workflowActivity(task);
     if (typeof activity === "object") failures.push(GATE_UNAVAILABLE_PREFIX + activity.unavailable);
-    const pending = activity === "active" ? this.pendingStages(task) : [];
-    this.store.recordObservation(c, e, PHASE_CHECK_EVENT, null, pending.length === 0 && failures.length === 0, this.now().toISOString());
+    const pending = activity === "active" ? this.pendingStages(task) : { stages: [], goal: "" };
+    this.store.recordObservation(c, e, PHASE_CHECK_EVENT, null, pending.stages.length === 0 && failures.length === 0, this.now().toISOString());
     const lines: string[] = [];
     if (failures.length > 0) {
       lines.push(`[AGS] workflow 상태를 확인하지 못해 이번 구간의 제품 파일 변경을 막지 않았다. 원인 코드: ${[...new Set(failures)].join(", ")}.`);
     }
-    if (pending.length > 0) {
-      // Codex continues the turn with this text as its only instruction (continuity-hook stopOutput): it must point at the
-      // user's work, or the agent records the stages and stops.
-      lines.push(`[AGS 단계 확인] 진행 중인 workflow에 아직 passed가 아닌 단계가 있다: ${pending.join(", ")}.`,
-        "사용자가 맡긴 작업이 끝나지 않았으면 멈추지 말고 남은 작업을 이어서 하라. 단계 결과는 그 단계의 작업과 검증을 실제로 마친 뒤에만 기록하고, 기록만 하고 끝내지 마라.",
+    if (pending.stages.length > 0) {
+      // Codex and agy continue the turn with this text as its only instruction (continuity-hook stopOutput, agy runner).
+      // It names the workflow's goal: told only "the user's remaining work", Codex took its last request (one file of two)
+      // as the whole task and stopped (3.1.1 real-host run).
+      lines.push(`[AGS 단계 확인] 진행 중인 workflow에 아직 passed가 아닌 단계가 있다: ${pending.stages.join(", ")}.`,
+        `workflow 목표: ${pending.goal}`,
+        "이 목표가 아직 이뤄지지 않았으면 멈추지 말고 남은 작업을 이어서 하라. 방금 받은 요청을 끝냈어도 목표가 남았으면 이어서 한다. 단계 결과는 그 단계의 작업과 검증을 실제로 마친 뒤에만 기록하고, 기록만 하고 끝내지 마라.",
         "사용자의 답이나 승인이 있어야 진행할 수 있으면 무엇을 기다리는지 한 줄로 쓰고 끝내라. 필요 없는 단계는 계획을 고쳐 뺀다.");
     }
     return quiet || lines.length === 0 ? null : lines.join("\n");
   }
 
-  private pendingStages(task: ContinuityTaskRecord): string[] {
+  private pendingStages(task: ContinuityTaskRecord): { stages: string[]; goal: string } {
     const snapshot = task.rootId ? this.workflowStore?.getConvergenceSnapshot(task.rootId) : null;
     const runId = snapshot?.workflowRunIds.at(-1);
     const receipt = runId ? this.workflowStore?.getRun(runId) : null;
-    if (!receipt) return [];
+    if (!snapshot || !receipt) return { stages: [], goal: "" };
     // Same pass test as the finalize gate (workflow-service finalize).
-    return receipt.plan.stages
+    const stages = receipt.plan.stages
       .filter(stage => receipt.stageResults.find(result => result.stageId === stage.stageId)?.state !== "passed")
       .map(stage => stage.stageId);
+    return { stages, goal: boundedText(snapshot.root.taskEnvelope.objective.replace(/\s+/gu, " ").trim(), 300) };
   }
 
   formatCandidate(candidate: ContinuityCandidateV1): string | null {

@@ -19,9 +19,10 @@ const directories: string[] = [];
 const session = "phase-check-session";
 const at = "2026-11-02T03:00:00.000Z";
 const CUE_HEAD = "[AGS 단계 확인] 진행 중인 workflow에 아직 passed가 아닌 단계가 있다: ";
-// Codex continues the turn with the cue as its only instruction: it names the user's remaining work first, so the
-// continued turn does not end after recording stages (3.1.1).
-const CUE_TAIL = "사용자가 맡긴 작업이 끝나지 않았으면 멈추지 말고 남은 작업을 이어서 하라. 단계 결과는 그 단계의 작업과 검증을 실제로 마친 뒤에만 기록하고, 기록만 하고 끝내지 마라.\n"
+// Codex and agy continue the turn with the cue as its only instruction: it names the workflow's goal and says to keep
+// working toward it, so the continued turn does not end after recording stages or after the last request (3.1.1).
+const CUE_GOAL = "workflow 목표: Phase check fixture.";
+const CUE_TAIL = "이 목표가 아직 이뤄지지 않았으면 멈추지 말고 남은 작업을 이어서 하라. 방금 받은 요청을 끝냈어도 목표가 남았으면 이어서 한다. 단계 결과는 그 단계의 작업과 검증을 실제로 마친 뒤에만 기록하고, 기록만 하고 끝내지 마라.\n"
   + "사용자의 답이나 승인이 있어야 진행할 수 있으면 무엇을 기다리는지 한 줄로 쓰고 끝내라. 필요 없는 단계는 계획을 고쳐 뺀다.";
 const UNAVAILABLE = "[AGS] workflow 상태를 확인하지 못해 이번 구간의 제품 파일 변경을 막지 않았다. 원인 코드: ";
 
@@ -39,7 +40,7 @@ function createService(workflow: WorkflowStore | null = null, databasePath = ":m
 }
 
 function cue(missing: string): string {
-  return `${CUE_HEAD}${missing}.\n${CUE_TAIL}`;
+  return `${CUE_HEAD}${missing}.\n${CUE_GOAL}\n${CUE_TAIL}`;
 }
 
 function workflowRoot(state: ConvergenceRootV1["state"] = "open"): ConvergenceRootV1 {
