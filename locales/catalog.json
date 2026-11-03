@@ -38,6 +38,27 @@
     },
     "connector": {
       "sourceLocale": "en"
+    },
+    "practices": {
+      "sourceLocale": "en"
+    },
+    "skillScripts": {
+      "sourceLocale": "en"
+    },
+    "skillTools": {
+      "sourceLocale": "en"
+    },
+    "skillReports": {
+      "sourceLocale": "en"
+    },
+    "skillReportsKo": {
+      "sourceLocale": "ko"
+    },
+    "skillChecks": {
+      "sourceLocale": "en"
+    },
+    "skillChecksKo": {
+      "sourceLocale": "ko"
     }
   }
 }
