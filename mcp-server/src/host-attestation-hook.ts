@@ -561,33 +561,39 @@ export function observeClaudeExecution(input: HookInput, options: HostAttestatio
     }
   };
   let provenance = `${host}:transcript-tool-use`;
-  // The harness writes the issuing message after the hook starts when it is still streaming: an interactive
-  // turn, or a headless message that issues several tools at once (about 450 ms on the Windows test server).
-  let observation = search(maxWaitMs);
-  // Subagents get no SessionStart or model-switch hooks, so only their own written message counts.
-  let session: SessionModelRecord | null = null;
-  let sessionFailure: unknown = null;
-  if (!observation && !agentId) {
-    try { session = options.readSessionModel?.(sessionId) ?? null; }
-    catch (cause) { sessionFailure = cause; }
-  }
-  // ponytail: polling under the hook's 10 s limit; a batch still streaming after the wait stays unobserved.
-  if (!observation && !session && !sessionFailure) observation = search(maxWaitWithoutSessionModelMs);
-  if (!observation) {
-    // An issuing message that was found but rejected (another session, a sidechain, no model) stays unobserved.
+  // An issuing message that was found but rejected (another session, a sidechain, no model) stays unobserved.
+  const probeIssuer = (): TranscriptObservation | { unavailable: string } | null => {
     for (const candidate of candidates) {
       const probe = reader.probe(candidate, toolUseId);
       if (probe.state === "indeterminate") return { unavailable: probe.reason };
       if (probe.state === "present") {
         // The probe reopens the file, so it can see an issuer written after the search above read it.
-        observation = reader.find(candidate, toolUseId, sessionId, agentId);
-        if (!observation) return { unavailable: "CLAUDE_ISSUING_MESSAGE_REJECTED" };
-        break;
+        return reader.find(candidate, toolUseId, sessionId, agentId) ?? { unavailable: "CLAUDE_ISSUING_MESSAGE_REJECTED" };
       }
+    }
+    return null;
+  };
+  // The harness writes the issuing message after the hook starts when it is still streaming: an interactive
+  // turn, or a headless message that issues several tools at once (about 450 ms on the Windows test server).
+  let observation = search(maxWaitMs);
+  if (!observation) {
+    const probed = probeIssuer();
+    if (probed && "unavailable" in probed) return probed;
+    observation = probed;
+  }
+  // Only proven absence reaches the session model. Subagents get no SessionStart or model-switch hooks,
+  // so only their own written message counts.
+  const session = observation || agentId ? null : options.readSessionModel?.(sessionId) ?? null;
+  // ponytail: polling under the hook's 10 s limit; a batch still streaming after the wait stays unobserved.
+  if (!observation && !session && waited < maxWaitWithoutSessionModelMs && elapsedMs() < maxWaitWithoutSessionModelMs) {
+    observation = search(maxWaitWithoutSessionModelMs);
+    if (!observation) {
+      const probed = probeIssuer();
+      if (probed && "unavailable" in probed) return probed;
+      observation = probed;
     }
   }
   if (!observation) {
-    if (sessionFailure) throw sessionFailure;
     if (!session) return { unavailable: "CLAUDE_MODEL_UNOBSERVED" };
     observation = { model: session.model, effort: null };
     provenance = `${host}:${session.source}`;
