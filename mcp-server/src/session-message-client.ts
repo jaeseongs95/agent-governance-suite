@@ -4,11 +4,13 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 
 import { tagProducerFailure, retainFailureCause } from "./failure-diagnostics.js";
+import { msg, type MessageRef } from "./i18n.js";
 import { resolveSessionMessageStateDirectory } from "./runtime-config.js";
 import { dispatchSessionMessageOperation } from "./session-message-operations.js";
 import { MessageCapacityError, SessionMessageStore } from "./session-message-store.js";
 import { createWakeHookObservationReader, type WakeHookObservationReader } from "./session-message-wake-port.js";
 
+import { SessionMessageError } from "./session-message-protocol.js";
 export { SESSION_MESSAGE_PROTOCOL } from "./session-message-protocol.js";
 export const WAKE_PREFIX = "[agent-governance-suite:wake:";
 
@@ -18,10 +20,10 @@ export const WAKE_PREFIX = "[agent-governance-suite:wake:";
  */
 
 /** A domain rejection of the operation (validation, capacity, unknown ID), not a storage failure. Nothing was written. */
-export class BrokerRequestRejected extends Error {
+export class BrokerRequestRejected extends SessionMessageError {
   readonly details: { scope: "sender" | "global"; earliestReleaseAt: string | null } | null;
 
-  constructor(message: string, details: unknown = null) {
+  constructor(message: MessageRef, details: unknown = null) {
     super(message);
     tagProducerFailure(this, "BROKER_REQUEST_REJECTED");
     const record = details && typeof details === "object" && !Array.isArray(details) ? details as Record<string, unknown> : null;
@@ -51,7 +53,7 @@ function open(stateDirectory: string, busyTimeoutMs: number, clock?: () => numbe
     mkdirSync(key, { recursive: true, mode: 0o700 });
     try { chmodSync(key, 0o700); } catch { /* Windows ACLs remain governed by the user profile. */ }
   } catch (cause) {
-    throw retainFailureCause(tagProducerFailure(new Error("Cannot prepare the session message state directory."), "MESSAGING_STATE_DIRECTORY_FAILED"), cause);
+    throw retainFailureCause(tagProducerFailure(new SessionMessageError(msg("services.sessionMessage.stateDirectoryFailed", {})), "MESSAGING_STATE_DIRECTORY_FAILED"), cause);
   }
   const trustDatabasePath = process.env.AGENT_GOVERNANCE_TRUST_DB_PATH?.trim()
     ? path.resolve(process.env.AGENT_GOVERNANCE_TRUST_DB_PATH.trim()) : path.join(key, "trust.sqlite3");
@@ -83,7 +85,7 @@ export function runSessionMessageOperation<T>(operation: string, payload: Record
     // The first open may run the schema transaction, so it waits no longer than this call's budget.
     messaging = open(stateDirectory, busy, options.clock);
   } catch (error) {
-    if (isBusy(error)) throw retainFailureCause(tagProducerFailure(new Error("Another process holds the session message writer lock."), "MESSAGING_BUSY"), error);
+    if (isBusy(error)) throw retainFailureCause(tagProducerFailure(new SessionMessageError(msg("services.sessionMessage.writerBusy", {})), "MESSAGING_BUSY"), error);
     if (isStorageFailure(error)) throw tagProducerFailure(error as Error, "MESSAGING_STORAGE_FAILED");
     throw error;
   }
@@ -92,11 +94,13 @@ export function runSessionMessageOperation<T>(operation: string, payload: Record
     store.database.exec(`PRAGMA busy_timeout = ${busy};`);
     return dispatchSessionMessageOperation(store, operation, payload, reader) as T;
   } catch (error) {
-    if (isBusy(error)) throw retainFailureCause(tagProducerFailure(new Error("Another process holds the session message writer lock."), "MESSAGING_BUSY"), error);
-    if (error instanceof MessageCapacityError) throw new BrokerRequestRejected(error.message, error.details);
+    if (isBusy(error)) throw retainFailureCause(tagProducerFailure(new SessionMessageError(msg("services.sessionMessage.writerBusy", {})), "MESSAGING_BUSY"), error);
+    if (error instanceof MessageCapacityError) throw new BrokerRequestRejected(error.ref, error.details);
     if (isStorageFailure(error)) throw tagProducerFailure(error as Error, "MESSAGING_STORAGE_FAILED");
     if (error instanceof Error && !(error instanceof BrokerRequestRejected) && (error as { code?: unknown }).code === undefined) {
-      throw retainFailureCause(new BrokerRequestRejected(error.message), error);
+      // Every rejection this module throws carries its catalog message; another error's own text is kept as it is.
+      throw retainFailureCause(new BrokerRequestRejected(error instanceof SessionMessageError ? error.ref
+        : msg("services.sessionMessage.unclassifiedRejection", { reason: error.message })), error);
     }
     throw error;
   }
@@ -127,11 +131,11 @@ export async function sessionMessageRequest<T>(
   } = {},
 ): Promise<T> {
   const deadline = Math.min(options.deadlineMonotonicMs ?? Infinity, performance.now() + (options.totalTimeoutMs ?? SESSION_MESSAGE_REQUEST_TIMEOUT_MS));
-  const expired = () => tagProducerFailure(new Error("The session message request deadline expired."), "BROKER_DEADLINE_EXPIRED");
+  const expired = () => tagProducerFailure(new SessionMessageError(msg("services.sessionMessage.deadlineExpired", {})), "BROKER_DEADLINE_EXPIRED");
   if (!(deadline - performance.now() >= 1)) throw expired();
   if (options.prepareStateDirectory) {
     try { await options.prepareStateDirectory(stateDirectory); }
-    catch (cause) { throw retainFailureCause(tagProducerFailure(new Error("Cannot prepare the session message state directory."), "MESSAGING_STATE_DIRECTORY_FAILED"), cause); }
+    catch (cause) { throw retainFailureCause(tagProducerFailure(new SessionMessageError(msg("services.sessionMessage.stateDirectoryFailed", {})), "MESSAGING_STATE_DIRECTORY_FAILED"), cause); }
   }
   const remaining = deadline - performance.now();
   if (!(remaining >= 1)) throw expired();

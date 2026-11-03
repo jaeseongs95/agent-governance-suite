@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 
-import { SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_PRESENCE_LIST_MAX_TARGETS } from "./session-message-protocol.js";
+import { SESSION_MESSAGE_MAX_RESPONSE_BYTES, SESSION_PRESENCE_LIST_MAX_TARGETS, SessionMessageError } from "./session-message-protocol.js";
 import { SessionMessageStore, WAKE_RESEND_MAX_MS, type SessionIdentity, type WakeAttempt } from "./session-message-store.js";
 import { isWakeDispatchOutcome, type WakeDispatchOutcome, type WakeHookObservationReader } from "./session-message-wake-port.js";
 import type { InputObservation, InputObservationKind } from "./input-observation.js";
 import { PeerWaitPolicy, normalizePeerWaitTargets } from "./peer-wait-policy.js";
 import { readRelayCodeDigest, relayCodeDigest } from "./relay-code-identity.js";
+import { msg, render, ROOT_LOCALE } from "./i18n.js";
 
 /**
  * The validated operation table of session messaging. Every caller (MCP service, hooks, CLI, relay) runs it in its own
@@ -17,19 +18,19 @@ export const SESSION_MESSAGE_OPERATIONS = ["prepare", "send", "claim", "claim-ho
   "reserve-wake", "start-wake", "record-wake-outcome", "wake-status", "consume-wake"] as const;
 
 function identity(value: unknown): SessionIdentity {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Session identity is required.");
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new SessionMessageError(msg("services.sessionMessage.identity.required", {}));
   const record = value as Record<string, unknown>;
-  if (typeof record.host !== "string" || typeof record.sessionId !== "string") throw new Error("Session identity is invalid.");
+  if (typeof record.host !== "string" || typeof record.sessionId !== "string") throw new SessionMessageError(msg("services.sessionMessage.identity.invalid", {}));
   return { host: record.host, sessionId: record.sessionId };
 }
 
 function string(value: unknown, name: string): string {
-  if (typeof value !== "string") throw new Error(`${name} must be a string.`);
+  if (typeof value !== "string") throw new SessionMessageError(msg("services.sessionMessage.field.notString", { field: name }));
   return value;
 }
 
 function integer(value: unknown, name: string): number {
-  if (typeof value !== "number" || !Number.isInteger(value)) throw new Error(`${name} must be an integer.`);
+  if (typeof value !== "number" || !Number.isInteger(value)) throw new SessionMessageError(msg("services.sessionMessage.field.notInteger", { field: name }));
   return value;
 }
 
@@ -42,50 +43,50 @@ function optionalString(record: Record<string, unknown>, name: string): string |
 }
 
 function boolean(value: unknown, name: string): boolean {
-  if (typeof value !== "boolean") throw new Error(`${name} must be a boolean.`);
+  if (typeof value !== "boolean") throw new SessionMessageError(msg("services.sessionMessage.field.notBoolean", { field: name }));
   return value;
 }
 
 function wakeAttempt(value: unknown): WakeAttempt {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Wake attempt is required.");
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new SessionMessageError(msg("services.sessionMessage.wake.attemptRequired", {}));
   const attempt = value as Record<string, unknown>;
   const result = { ...identity(attempt), nonce: string(attempt.nonce, "nonce"), instanceId: string(attempt.instanceId, "instanceId"),
     transport: string(attempt.transport, "transport"), relayId: string(attempt.relayId, "relayId"), generation: string(attempt.generation, "generation"),
     attemptId: string(attempt.attemptId, "attemptId"), dispatchEpoch: integer(attempt.dispatchEpoch, "dispatchEpoch") };
   if (result.nonce.length > 128 || result.generation.length > 100 || result.attemptId.length > 128
-    || result.instanceId.length > 128 || result.transport.length > 64 || result.relayId.length > 128 || result.dispatchEpoch < 0) throw new Error("Invalid wake attempt.");
+    || result.instanceId.length > 128 || result.transport.length > 64 || result.relayId.length > 128 || result.dispatchEpoch < 0) throw new SessionMessageError(msg("services.sessionMessage.wake.attemptInvalid", {}));
   return result;
 }
 
 /** The relay reads this from its transport's port declaration; an out-of-range value is refused, never clamped. */
 function resendBaseMs(value: unknown): number {
   const result = integer(value, "resendBaseMs");
-  if (result < 1 || result > WAKE_RESEND_MAX_MS) throw new Error(`resendBaseMs must be 1 to ${WAKE_RESEND_MAX_MS}.`);
+  if (result < 1 || result > WAKE_RESEND_MAX_MS) throw new SessionMessageError(msg("services.sessionMessage.wake.resendBaseRange", { max: WAKE_RESEND_MAX_MS }));
   return result;
 }
 
 function wakeOutcome(value: unknown): WakeDispatchOutcome {
-  if (!isWakeDispatchOutcome(value)) throw new Error("Invalid wake dispatch outcome.");
+  if (!isWakeDispatchOutcome(value)) throw new SessionMessageError(msg("services.sessionMessage.wake.outcomeInvalid", {}));
   return value;
 }
 
 function supportedInjection(value: unknown): InputObservationKind[] {
   const allowed = new Set<InputObservationKind>(["user-input", "peer-wake", "tool-boundary", "turn-end", "unknown"]);
   if (!Array.isArray(value) || value.some((item) => typeof item !== "string" || !allowed.has(item as InputObservationKind))) {
-    throw new Error("supportedInjection is invalid.");
+    throw new SessionMessageError(msg("services.sessionMessage.wake.supportedInjectionInvalid", {}));
   }
   return [...new Set(value)] as InputObservationKind[];
 }
 
 function visibility(value: unknown, name: string): "silent" | "user-message" | "none" {
-  if (value !== "silent" && value !== "user-message" && value !== "none") throw new Error(`${name} is invalid.`);
+  if (value !== "silent" && value !== "user-message" && value !== "none") throw new SessionMessageError(msg("services.sessionMessage.field.invalid", { field: name }));
   return value;
 }
 
 function hostPid(record: Record<string, unknown>, name: string): number | undefined {
   if (!Object.hasOwn(record, name)) return undefined;
   const pid = integer(record[name], name);
-  if (pid < 1) throw new Error(`${name} is invalid.`);
+  if (pid < 1) throw new SessionMessageError(msg("services.sessionMessage.field.invalid", { field: name }));
   return pid;
 }
 
@@ -116,12 +117,12 @@ function withRelayRecovery(store: SessionMessageStore, payload: Record<string, u
 
 function peerWait(store: SessionMessageStore, payload: Record<string, unknown>): unknown {
   const sender = identity(payload.sender);
-  if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > 8) throw new Error("targets must contain 1..8 identities.");
+  if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > 8) throw new SessionMessageError(msg("services.sessionMessage.peerWait.targetsRange", {}));
   const targets = normalizePeerWaitTargets(payload.targets.map(identity));
   const timeoutMs = integer(payload.timeoutMs, "timeoutMs");
-  if (timeoutMs < 0 || timeoutMs > 3_600_000) throw new Error("timeoutMs is out of range.");
+  if (timeoutMs < 0 || timeoutMs > 3_600_000) throw new SessionMessageError(msg("services.sessionMessage.peerWait.timeoutRange", {}));
   const queryRevision = optionalString(payload, "queryRevision") ?? "";
-  if (queryRevision.length > 256) throw new Error("queryRevision is too long.");
+  if (queryRevision.length > 256) throw new SessionMessageError(msg("services.sessionMessage.peerWait.queryRevisionTooLong", {}));
   const presence = store.presence(sender);
   const resumeObserved = presence.deliveryCapabilities.idleWake !== "none" && presence.wakeVisibility === presence.deliveryCapabilities.idleWake
     && presence.deliveryCapabilities.supportedInjection.includes("peer-wake") && store.peerWaitResumeObserved(sender);
@@ -135,10 +136,10 @@ function ensureRelay(store: SessionMessageStore, payload: Record<string, unknown
   const target = identity(payload.target);
   const pid = hostPid(payload, "parentPid");
   const start = string(payload.parentStartToken, "parentStartToken");
-  if (pid === undefined || !start.trim() || start.length > 200) throw new Error("Invalid relay host observation.");
+  if (pid === undefined || !start.trim() || start.length > 200) throw new SessionMessageError(msg("services.sessionMessage.relay.hostObservationInvalid", {}));
   const expected = Object.hasOwn(payload, "expectedPresenceInstanceId")
     ? payload.expectedPresenceInstanceId === null ? null : string(payload.expectedPresenceInstanceId, "expectedPresenceInstanceId") : undefined;
-  if (typeof expected === "string" && expected.length > 128) throw new Error("Invalid expected host process generation.");
+  if (typeof expected === "string" && expected.length > 128) throw new SessionMessageError(msg("services.sessionMessage.relay.expectedGenerationInvalid", {}));
   const idleWake = visibility(payload.idleWake, "idleWake");
   return store.ensureVerifiedGeneration({ ...target,
     instanceId: "host-process-v1:" + createHash("sha256").update(JSON.stringify([target.host, target.sessionId, pid, start])).digest("hex"),
@@ -187,13 +188,13 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
   wakeObserver?: WakeHookObservationReader): unknown {
   switch (operation) {
     case "prepare": {
-      if (Object.keys(payload).some((key) => !["sender", "target", "body", "ttlSeconds"].includes(key))) throw new Error("prepare accepts sender, target, body and ttlSeconds; IDs are system-issued.");
+      if (Object.keys(payload).some((key) => !["sender", "target", "body", "ttlSeconds"].includes(key))) throw new SessionMessageError(msg("services.sessionMessage.operation.prepareFields", {}));
       const ttlSeconds = optionalInteger(payload, "ttlSeconds");
       return store.prepare({ sender: identity(payload.sender), target: identity(payload.target), body: string(payload.body, "body"),
         ...(ttlSeconds === undefined ? {} : { ttlSeconds }) });
     }
     case "send": {
-      if (Object.keys(payload).some((key) => !["sender", "messageId"].includes(key))) throw new Error("send accepts only sender and the ID returned by prepare; message content is immutable. Retry the known ID or compare saved receipts/status if delivery is unknown.");
+      if (Object.keys(payload).some((key) => !["sender", "messageId"].includes(key))) throw new SessionMessageError(msg("services.sessionMessage.operation.sendFields", {}));
       return store.submitPrepared(identity(payload.sender), string(payload.messageId, "messageId"));
     }
     case "claim": {
@@ -204,7 +205,7 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
     }
     case "claim-host-wake": {
       if (Object.keys(payload).some((key) => !["target", "observation", "sourceReceiptId", "maxMessages", "maxBodyChars"].includes(key))) {
-        throw new Error("Host wake claim requires a non-authorizing hook source receipt.");
+        throw new SessionMessageError(msg("services.sessionMessage.operation.hostWakeReceiptRequired", {}));
       }
       const maxMessages = optionalInteger(payload, "maxMessages");
       const maxBodyChars = optionalInteger(payload, "maxBodyChars");
@@ -235,7 +236,7 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
       return withRelayRecovery(store, payload, { cleared: true });
     }
     case "acknowledge": {
-      if (payload.receipts !== undefined && !Array.isArray(payload.receipts)) throw new Error("receipts must be an array.");
+      if (payload.receipts !== undefined && !Array.isArray(payload.receipts)) throw new SessionMessageError(msg("services.sessionMessage.acknowledge.receiptsNotArray", {}));
       const claims = (payload.receipts ?? []) as Array<Record<string, unknown>>;
       return { acknowledged: store.acknowledge(identity(payload.target),
         Array.isArray(payload.messageIds) ? payload.messageIds.map(value => string(value, "messageId")) : [], undefined,
@@ -243,7 +244,9 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
     }
     case "status": {
       const status = store.status(identity(payload.sender), string(payload.messageId, "messageId"));
-      return { status, ...(status === null ? { guidance: "Delivery is unknown; compare saved receipts. Prepare only a new intent, not an automatic resend." } : {}) };
+      // The guidance is root-locale text with its key and params, so a reader can render it in its own locale.
+      const guidance = msg("services.sessionMessage.status.deliveryUnknown", {});
+      return { status, ...(status === null ? { guidance: render(guidance, ROOT_LOCALE), guidanceKey: guidance.key, guidanceParams: guidance.params } : {}) };
     }
     case "peer-wait": return peerWait(store, payload);
     case "pending": return { count: store.pendingCount(identity(payload.target)) };
@@ -270,13 +273,13 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
     case "presence": return { presence: store.presence(identity(payload.target)) };
     case "list-presence": {
       if (!Array.isArray(payload.targets) || payload.targets.length < 1 || payload.targets.length > SESSION_PRESENCE_LIST_MAX_TARGETS) {
-        throw new Error(`targets must list 1 to ${SESSION_PRESENCE_LIST_MAX_TARGETS} session identities.`);
+        throw new SessionMessageError(msg("services.sessionMessage.presence.targetsRange", { max: SESSION_PRESENCE_LIST_MAX_TARGETS }));
       }
       const targets: SessionIdentity[] = payload.targets.map(identity);
       const result = { sessions: store.listPresence(undefined, targets, installedRelayCode()) };
       // Refuse explicitly rather than send a reply a bounded consumer would drop.
       if (Buffer.byteLength(`${JSON.stringify({ ok: true, data: result })}\n`, "utf8") > SESSION_MESSAGE_MAX_RESPONSE_BYTES) {
-        throw new Error("The presence list exceeds the response limit; request fewer targets.");
+        throw new SessionMessageError(msg("services.sessionMessage.presence.responseTooLarge", {}));
       }
       return result;
     }
@@ -290,6 +293,6 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
       resendBaseMs(payload.resendBaseMs)) };
     case "wake-status": return { wake: store.managedWakeStatus(identity(payload.target)) };
     case "consume-wake": return { consumed: store.consumeWake(identity(payload.target), string(payload.nonce, "nonce")) };
-    default: throw new Error("Unknown session message operation.");
+    default: throw new SessionMessageError(msg("services.sessionMessage.operation.unknown", {}));
   }
 }
