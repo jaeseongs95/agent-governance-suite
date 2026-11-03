@@ -236,12 +236,17 @@ serverTest("reaches actual capability and authority rejection with a host-observ
     const admitted = await f.call<WorkflowPlanV1>("plan_workflow", args, model, "medium");
     expect(admitted.ok).toBe(true);
     expect(admitted.data?.bootstrapExecution?.context.reasoningEffort).toBe("medium");
-    expect((await f.call("plan_workflow", args, model, "low")).error).toMatchObject({ code: "BINDING_INVALID", message: "Host observation does not satisfy the trusted model and effort policy." });
+    // AGS 3.1.1: the root session's effort is the user's choice; an effort the catalog does not support is recorded.
+    const low = await f.call<WorkflowPlanV1>("plan_workflow", args, model, "low");
+    expect(low.error).toBeNull();
+    expect(low.data?.bootstrapExecution?.context).toMatchObject({ reasoningEffort: "low", policyNotes: ["CURRENT_POLICY_EFFORT_UNSUPPORTED"] });
     await f.unchanged();
   } finally { await f.close(); }
   try {
-    expect((await absent.call("plan_workflow", { schemaVersion: "1.0.0", taskEnvelope: task("owned-host-no-capability") }, randomUUID())).error)
-      .toMatchObject({ code: "BINDING_INVALID", message: "Host observation has no matching trusted execution capability and policy revision." });
+    // A model the installed catalog cannot resolve still runs with its class unknown.
+    const unresolved = await absent.call<WorkflowPlanV1>("plan_workflow", { schemaVersion: "1.0.0", taskEnvelope: task("owned-host-no-capability") }, randomUUID());
+    expect(unresolved.error).toBeNull();
+    expect(unresolved.data?.bootstrapExecution?.context).toMatchObject({ modelClass: null, policyNotes: ["MODEL_NOT_IN_CATALOG"] });
     await absent.unchanged();
   } finally { await absent.close(); }
   try { const admitted = await low.call<WorkflowPlanV1>("plan_workflow", { schemaVersion: "1.0.0", taskEnvelope: task("owned-host-low-capability") }, randomUUID());

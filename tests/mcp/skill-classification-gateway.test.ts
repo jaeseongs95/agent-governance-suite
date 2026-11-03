@@ -346,13 +346,13 @@ describe("offline classification through actual MCP Client/Server transport", ()
       .toMatchObject({ code: "INVALID_INPUT", details: { reasonCode: "RESERVED_CALLER_FIELD", field: "_hostAttestation" } });
     expect((await h.call<Accepted>("record_skill_selection", h.sign(args))).data!.valid).toBe(true);
   });
-  it("D0089: a class-only adapter's observation is refused with its capability cause visible to the caller", async () => {
+  it("D0089: a class-only adapter's observation runs without a class synthesized from the mapping", async () => {
     const classOnly = vi.fn((model: string) => model === "synthetic-host-model" ? "general" as const : null);
     const h = await harness({ adapter: { host: "codex", provider: "openai-codex", modelClassForModel: classOnly } });
-    const refused = await h.call<Advice>("classify_skills", input("d0089-class-only"));
-    expect(refused).toMatchObject({ ok: false, data: null, error: { code: "BINDING_INVALID",
-      details: { category: "host-observation", reasonCode: "BINDING_INVALID", observationReasonCode: "MISSING_MODEL_CAPABILITY" } } });
-    expect(h.classify).not.toHaveBeenCalled();
+    // AGS 3.1.1: a missing descriptor no longer refuses the call; the class mapping alone still grants no class.
+    const unclassified = await h.call<Advice>("classify_skills", input("d0089-class-only"));
+    expect(unclassified.error).toBeNull();
+    expect(h.classify).toHaveBeenCalledTimes(1);
     expect(classOnly).not.toHaveBeenCalled();
     // The same model name with a trusted descriptor is classified, and a caller-supplied observation still fails before any cause.
     const described = await harness();

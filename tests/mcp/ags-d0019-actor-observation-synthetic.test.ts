@@ -102,7 +102,8 @@ describe("AGS-D-0019 synthetic builtin adapters", () => {
   it("draws a fresh Antigravity call ID because its PreToolUse carries none", () => {
     expect(adaptHostInput(input("PreToolUse", { tool_use_id: "native-call" }), "antigravity").observation.callId).toBe("native-call");
     const drawn = [1, 2].map(() => adaptHostInput(input("PreToolUse"), "antigravity").observation.callId);
-    expect(drawn[0]).toMatch(/^[0-9a-f-]{36}$/u);
+    // AGS 3.1.1: the drawn ID keeps the (conversation, tool, arguments) key the server claims it by, then a fresh UUID.
+    expect(drawn[0]).toMatch(/^[0-9a-f]{32}:[0-9a-f-]{36}$/u);
     expect(drawn[0]).not.toBe(drawn[1]);
   });
 

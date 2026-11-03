@@ -139,10 +139,13 @@ serverTest("admits valid same-authority lightweight bootstrap without granting s
   } finally { await f.close(); }
 }, 30_000);
 
-serverTest("rejects an observed model that the installed authority cannot resolve", ({ connect }) => fixture(connect, "deep", false), async f => {
+serverTest("runs an observed model that the installed authority cannot resolve with its class unknown", ({ connect }) => fixture(connect, "deep", false), async f => {
   try {
     const model = randomUUID(), args = { schemaVersion: "1.0.0", taskEnvelope: task("owned-f1-unresolved") };
-    expect((await f.call("plan_workflow", args, model)).error).toMatchObject({ code: "BINDING_INVALID", message: "Host observation has no matching trusted execution capability and policy revision." });
+    // AGS 3.1.1: the catalog is not a permission to run; the unresolved model is observed and noted.
+    const unresolved = await f.call<WorkflowPlanV1>("plan_workflow", args, model);
+    expect(unresolved.error).toBeNull();
+    expect(unresolved.data?.bootstrapExecution?.context).toMatchObject({ model, modelClass: null, policyNotes: ["MODEL_NOT_IN_CATALOG"] });
     // Without the hook admission the server does not presume a root caller.
     expect((await f.rawCall("plan_workflow", args)).error).toMatchObject({ code: "BINDING_REQUIRED", details: { reasonCode: "CALLER_PROVENANCE_UNAVAILABLE" } });
     await f.unchanged();

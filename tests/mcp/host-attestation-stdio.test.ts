@@ -120,8 +120,11 @@ describe("packaged execution observation fixtures (not native-host evidence)", (
 
     const opaque = await rawCall<WorkflowPlanV1>("plan_workflow", planInput,
       await admitted("plan_workflow", planInput, "opaque-unapproved-default-entry-fixture"));
-    expect(opaque.data).toBeNull();
-    expect(opaque.error).toMatchObject({ code: "BINDING_INVALID", message: "Host observation has no matching trusted execution capability and policy revision." });
+    // AGS 3.1.1: a model the catalog does not name still runs; its class stays unknown and the plan says why.
+    expect(opaque.error).toBeNull();
+    expect(opaque.data!.bootstrapExecution!.context).toMatchObject({
+      model: "opaque-unapproved-default-entry-fixture", modelClass: null, policyNotes: ["MODEL_NOT_IN_CATALOG"],
+    });
 
     const belowFloor = await rawCall<WorkflowPlanV1>("plan_workflow", planInput, await admitted("plan_workflow", planInput, "claude-haiku-5"));
     expect(belowFloor.ok).toBe(true);

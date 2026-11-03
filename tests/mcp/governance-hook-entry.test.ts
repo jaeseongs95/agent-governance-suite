@@ -13,7 +13,7 @@ import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js"
 import * as diagnostics from "../../mcp-server/src/hook-error-diagnostics.js";
 import { claudeAdmissionIngress } from "../../mcp-server/src/builtin-caller-ingress.js";
 import { RESERVED_CALLER_KEYS } from "../../mcp-server/src/caller-identity.js";
-import { hostActorId } from "../../mcp-server/src/host-attestation.js";
+import { HOST_ATTESTATION_TOOLS, hostActorId } from "../../mcp-server/src/host-attestation.js";
 import { SqliteWorkflowStore } from "../../mcp-server/src/sqlite-workflow-store.js";
 
 // Engineering test plan: F1 = built CLI single owner/stdout + one persisted call admission (no proof, no rewrite);
@@ -159,7 +159,8 @@ describe("governance hook entry regressions (synthetic Node 24 fixtures)", () =>
       const result = registeredAntigravityCall(environment, wrapped, args, sessionId, tool);
       expect(result.outputs).toEqual([{ decision: "allow" }]);
       expect(result.args).toEqual(args);
-      expect(existsSync(environment.AGENT_GOVERNANCE_DB_PATH!)).toBe(false);
+      // AGS 3.1.1: an observed tool's call leaves one call admission for the server to claim; nothing else is written.
+      expect(existsSync(environment.AGENT_GOVERNANCE_DB_PATH!)).toBe(HOST_ATTESTATION_TOOLS.has(tool) && sessionId !== "");
       expect(existsSync(environment.AGENT_GOVERNANCE_CONTINUITY_DB_PATH!)).toBe(false);
     }
   });
