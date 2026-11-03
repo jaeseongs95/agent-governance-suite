@@ -255,7 +255,7 @@ export interface MessageParams {
   "workflow.service.startWorkflowFixArtifactTargets": Record<string, never>;
   "workflow.service.startWorkflowPriorFailure": { "required": string; };
   "workflow.service.startWorkflowPriorFailureShape": Record<string, never>;
-  "workflow.service.startWorkflowRootConflict": { "requested": NestedMessage | number | string; "existing": NestedMessage | number | string; "rootId": NestedMessage | number | string; "state": NestedMessage | number | string; "owned": string; "action": string; };
+  "workflow.service.startWorkflowRootConflict": { "requested": NestedMessage | number | string; "existing": NestedMessage | number | string; "rootId": NestedMessage | number | string; "state": NestedMessage | number | string; "owned": string; "action": string; "runId": NestedMessage | number | string; };
   "workflow.service.startWorkflowRootNotOpen": { "rootId": NestedMessage | number | string; "state": NestedMessage | number | string; };
   "workflow.service.startWorkflowRootNotOwned": { "rootId": NestedMessage | number | string; };
   "workflow.service.startWorkflowRootTaskMismatch": { "field": NestedMessage | number | string; };
@@ -534,6 +534,7 @@ export interface MessageParams {
   "schema.convergenceReviewV1.properties.observedReviewer.description": Record<string, never>;
   "instructions.intake.frame": { "intake": NestedMessage | number | string; };
   "instructions.sessionMessage.guide": Record<string, never>;
+  "continuity.binding.rootOwnedElsewhere": { "rootId": NestedMessage | number | string; };
   "continuity.binding.stale": Record<string, never>;
   "continuity.checkpoint.disabledAfterRoot": Record<string, never>;
   "continuity.checkpoint.replayUnavailable": Record<string, never>;

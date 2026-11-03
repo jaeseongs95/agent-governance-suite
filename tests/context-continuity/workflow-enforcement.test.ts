@@ -1,5 +1,5 @@
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import os, { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { DatabaseSync } from "node:sqlite";
@@ -402,5 +402,61 @@ describe("several workflows in one session", () => {
     // Ownership outlives the epoch, so a settled open root can still be continued by this session only.
     expect(target.ownsRoot(session, "root-alpha")).toBe(true);
     expect(target.ownsRoot("another-session", "root-alpha")).toBe(false);
+  });
+
+  it("does not move the epoch while an older root runs, even when the newest (primary) root has settled", () => {
+    const roots = [
+      { state: "open" as const, rootId: "root-alpha", runState: "running" as string | null, scope: "alpha" },
+      { state: "open" as const, rootId: "root-beta", runState: "passed" as string | null, scope: "beta" },
+    ];
+    const target = service(workflowWith(roots));
+    target.prepareWorkflowStart(session, "root-alpha");
+    target.prepareWorkflowStart(session, "root-beta");
+    expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 1, rootId: "root-beta" });
+    roots[0]!.runState = "blocked";
+    expect(target.ensureSession(session)).toMatchObject({ currentEpoch: 2, rootId: null });
+  });
+
+  it("refuses to bind a root another session already bound, and lets its own session bind it again", () => {
+    const target = service(workflowWith([{ state: "open", rootId: "root-alpha", runState: "running", scope: "alpha" }]));
+    target.prepareWorkflowStart(session, "root-alpha");
+    expect(() => target.prepareWorkflowStart("another-session", "root-alpha"))
+      .toThrow(expect.objectContaining({ code: "INVALID_INPUT", details: { reason: "ROOT_NOT_OWNED", rootId: "root-alpha" } }));
+    expect(target.ownsRoot("another-session", "root-alpha")).toBe(false);
+    expect(() => target.prepareWorkflowStart(session, "root-alpha")).not.toThrow();
+  });
+
+  it("keeps refusing a gated scope and keeps ROOT_CONFLICT after the machine is renamed", () => {
+    const workflow = workflowWith([{ state: "needs-review", rootId: "gated-root", runState: "failed" }]);
+    const target = service(workflow);
+    const hostname = vi.spyOn(os, "hostname").mockReturnValue("renamed-machine");
+    expect(target.gateEditForSession("another-session", [file("src/x.ts")])).toMatchObject({ key: "hooks.editGate.gatedRoot" });
+    expect(workflow.insertConvergenceRoot(root("open", "overlapping-root", "src/inner"))).toMatchObject({ kind: "physical" });
+    hostname.mockRestore();
+  });
+
+  it("checks gated scopes first when a bound root cannot be read, and names a failed store open at Stop", () => {
+    const workflow = workflowWith([
+      { state: "needs-review", rootId: "gated-root", runState: "failed" },
+      { state: "open", rootId: "broken-root", runState: "running", scope: "alpha" },
+    ]);
+    const target = service(workflow);
+    target.prepareWorkflowStart(session, "broken-root");
+    const read = vi.mocked(workflow.getConvergenceSnapshot).getMockImplementation()!;
+    vi.spyOn(workflow, "getConvergenceSnapshot").mockImplementation(rootId => {
+      if (rootId === "broken-root") throw new Error("synthetic unreadable root");
+      return read(rootId);
+    });
+    expect(target.gateEditForSession(session, [file("src/x.ts")])).toMatchObject({ key: "hooks.editGate.gatedRoot" });
+    expect(target.gateEditForSession(session, [file("alpha/x.ts")])).toBeNull();
+    // A store that failed to open cannot check gated roots even for a session without a workflow: Stop says so.
+    const unopened = service(null, "WORKFLOW_MCP_UNAVAILABLE");
+    expect(handleContinuityHook(write("a.ts"), unopened, "claude-code", NO_ENV)).toEqual({});
+    expect(handleContinuityHook(stop(), unopened, "claude-code", NO_ENV)).toMatchObject({ hookSpecificOutput: {
+      additionalContext: expect.stringContaining("phase-gate-unavailable:WORKFLOW_MCP_UNAVAILABLE") } });
+    // A store that was never configured is not a failure.
+    const unconfigured = service(null);
+    expect(handleContinuityHook(write("a.ts"), unconfigured, "claude-code", NO_ENV)).toEqual({});
+    expect(handleContinuityHook(stop(), unconfigured, "claude-code", NO_ENV)).toEqual({});
   });
 });

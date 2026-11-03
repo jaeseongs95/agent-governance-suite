@@ -74,6 +74,14 @@ export function resolveUserSettingsPath(
   return path.join(sharedUserStateDirectory(environment, homeDirectory), "settings.json");
 }
 
+/** This machine's persistent AGS host ID (root identities), beside the other shared host state. */
+export function resolveHostIdPath(
+  environment: NodeJS.ProcessEnv = process.env,
+  homeDirectory: string = homedir(),
+): string {
+  return path.join(sharedUserStateDirectory(environment, homeDirectory), "host-id");
+}
+
 /** The default locale the installed package was built for (docs/i18n-design.md 4.1 ①). */
 export function resolvePackageLocalePath(moduleUrl: string = import.meta.url): string {
   return fileURLToPath(new URL("../../runtime/locale.json", moduleUrl));

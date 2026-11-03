@@ -1,3 +1,6 @@
+import { tmpdir } from "node:os";
+import path from "node:path";
+
 import { configDefaults, defineConfig } from "vitest/config";
 
 import { ciScope, serverOnlyTests } from "./scripts/test-scope.mjs";
@@ -11,6 +14,8 @@ export default defineConfig({
   test: {
     testTimeout: 30_000,
     hookTimeout: 30_000,
+    // In-process tests that store a root create the AGS host ID (shared state); keep it out of the tester's home.
+    env: { AGENT_GOVERNANCE_SHARED_STATE_DIR: path.join(tmpdir(), "ags-vitest-shared-state") },
     exclude: ciScope ? [...configDefaults.exclude, ...serverOnlyTests()] : configDefaults.exclude
   }
 });

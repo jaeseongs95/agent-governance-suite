@@ -143,7 +143,7 @@
   "services.trust.schemaNewer": "Trust database schema is newer than this server supports.",
   "services.trust.syntheticKeyMismatch": "The stored trust key differs from the explicit synthetic namespace.",
   "services.trust.syntheticKeyRequired": "An explicit new synthetic trust key is required.",
-  "services.workspace.hostUnresolved": "The host name of this machine cannot be read, so paths cannot be bound to a host.",
+  "services.workspace.hostUnresolved": "The AGS host ID of this machine cannot be read or created in the shared AGS state directory, so paths cannot be bound to a host.",
   "services.workspace.unresolved": "Workspace identity cannot be resolved for {target}: {cause}.",
   "services.workspace.unresolvedCommondirNotDirectory": "Workspace identity cannot be resolved for {target}: commondir is not a directory.",
   "services.workspace.unresolvedEmptyCommondir": "Workspace identity cannot be resolved for {target}: empty commondir.",

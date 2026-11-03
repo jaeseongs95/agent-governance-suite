@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ApiResultV1 } from "../../contracts/types.js";
 import { codexMetaIngress } from "../../mcp-server/src/builtin-caller-ingress.js";
 import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
-import { ContinuityService, minimalWorkflowStartExample } from "../../mcp-server/src/continuity-service.js";
+import { ContinuityService, minimalWorkflowStartExample, UnavailableContinuityService } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
 import { HostAttestationProvider } from "../../mcp-server/src/host-attestation.js";
 import { codexExecutionAdapter } from "../../mcp-server/src/host-execution-adapters.js";
@@ -217,7 +217,8 @@ describe("start_workflow minimal start", () => {
 // Several workflows per session (3.3.0): disjoint starts, continuation by rootId and ROOT_CONFLICT guidance.
 describe("start_workflow with several workflows in one session", () => {
   const scoped = (writeTargets: string[], goal = `Change ${writeTargets.join(", ")}.`) => ({ ...minimal, goal, writeTargets });
-  type ConflictDetails = { existingPath: string; requestedEntry: string; ownedBySession: boolean; nextActions: Array<{ action: string }> };
+  type ConflictDetails = { existingPath: string; requestedEntry: string; ownedBySession: boolean;
+    nextActions: Array<{ action: string; tool: string; arguments?: Record<string, unknown> }> };
 
   it("starts a second workflow on paths that do not overlap and passes edits inside each", async () => {
     const { call, writeFile, counts } = await harness();
@@ -239,7 +240,7 @@ describe("start_workflow with several workflows in one session", () => {
   });
 
   it("names the overlapping path, the owner and the next actions in ROOT_CONFLICT", async () => {
-    const { call } = await harness();
+    const { call, service } = await harness();
     const first = await call<MinimalWorkflowStartV1>(scoped(["shared"]));
     expect(first.error).toBeNull();
     const own = await call(scoped(["shared/inner"]));
@@ -247,8 +248,16 @@ describe("start_workflow with several workflows in one session", () => {
       details: { rootId: first.data!.rootId, requestedEntry: "shared/inner", ownedBySession: true } });
     const ownDetails = own.error!.details as unknown as ConflictDetails;
     expect(ownDetails.existingPath.toLowerCase()).toContain("shared");
-    expect(ownDetails.nextActions.map(item => item.action)).toEqual(["restart-with-disjoint-writeTargets", "continue-own-root"]);
+    // Its run is still running: the next action is that run, not a continuation start that would not match the task.
+    expect(ownDetails.nextActions).toEqual([{ action: "restart-with-disjoint-writeTargets", tool: "start_workflow" },
+      { action: "continue-running-workflow", tool: "get_workflow_status", arguments: { runId: first.data!.runId } }]);
     expect(own.error!.message).toContain("shared/inner");
+    expect(own.error!.message).toContain(first.data!.runId);
+    // Once its attempt ended, the open root is continued with rootId.
+    expect(service.abortWorkflow(first.data!.runId, first.data!.revision).error).toBeNull();
+    const ended = await call(scoped(["shared/inner"]));
+    expect((ended.error!.details as unknown as ConflictDetails).nextActions.at(-1))
+      .toEqual({ action: "continue-own-root", tool: "start_workflow", arguments: { rootId: first.data!.rootId } });
     const foreign = await call(scoped(["shared"]), true, "another-session");
     expect(foreign.error).toMatchObject({ code: "ROOT_CONFLICT", details: { ownedBySession: false } });
     expect((foreign.error!.details as unknown as ConflictDetails).nextActions.map(item => item.action)).toEqual(["restart-with-disjoint-writeTargets"]);
@@ -276,4 +285,14 @@ describe("start_workflow with several workflows in one session", () => {
     expect(store.updateConvergenceRoot({ ...current, state: "abandoned", revision: current.revision + 1 }, current.revision)).toBe(true);
     expect((await call({ ...continued, priorFailure })).error).toMatchObject({ code: "INVALID_TRANSITION", details: { reason: "ROOT_NOT_OPEN", state: "abandoned" } });
   });
+});
+
+it("tells a missing continuity store apart from another session's root when continuing by rootId", () => {
+  const validator = new ContractValidator();
+  const service = new WorkflowService(new FileSkillRegistry(registryPath, validator), validator);
+  const unavailable = new UnavailableContinuityService();
+  const result = service.startMinimalWorkflow({ ...minimal, rootId: "root-unknown" }, null, {
+    priorFileCount: () => 0, settle: () => undefined, beforeCommit: () => undefined, ownsRoot: () => unavailable.ownsRoot(),
+  });
+  expect(result.error).toMatchObject({ code: "CONTINUITY_UNAVAILABLE", details: { reason: "STORE_UNAVAILABLE" } });
 });

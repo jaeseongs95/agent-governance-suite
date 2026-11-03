@@ -1,4 +1,5 @@
 {
+  "continuity.binding.rootOwnedElsewhere": "Root {rootId} belongs to another session, so this session cannot start a workflow run on it. Start a workflow on writeTargets that do not overlap it.",
   "continuity.binding.stale": "Continuity task binding is stale.",
   "continuity.checkpoint.disabledAfterRoot": "Direct checkpoints are disabled after a workflow root is bound.",
   "continuity.checkpoint.replayUnavailable": "The idempotent checkpoint result is no longer available after replacement or purge.",

@@ -290,6 +290,15 @@ export class SqliteContinuityStore {
     return [...new Set(primary ? [...rows, primary] : rows)];
   }
 
+  /** Whether another task ever bound the root, in any epoch. */
+  ownedElsewhere(taskCorrelation: string, rootId: string): boolean {
+    return Boolean(this.database.prepare(`
+      SELECT 1 FROM continuity_observations WHERE event = ? AND task_correlation <> ?
+      UNION ALL SELECT 1 FROM continuity_tasks WHERE root_id = ? AND task_correlation <> ?
+      LIMIT 1
+    `).get(ROOT_BOUND_EVENT + rootId, taskCorrelation, rootId, taskCorrelation));
+  }
+
   /** Whether this task ever bound the root, in any epoch. */
   ownsRoot(taskCorrelation: string, rootId: string): boolean {
     if (this.getTask(taskCorrelation)?.rootId === rootId) return true;

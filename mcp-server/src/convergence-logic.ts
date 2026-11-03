@@ -14,6 +14,7 @@ import {
   pathWithin,
   repositoryCheckouts,
   repositoryInDirectory,
+  hostIdentity,
   resolveRootIdentity,
   sameHost,
   type RootIdentityV1,
@@ -206,7 +207,8 @@ export function activeRootIdentity(
     resolved = false;
     return surface;
   });
-  const host = observed ? observed.host : derived!.host;
+  // The host is fixed when the root is first stored; deriving again on another machine never claims it (N1).
+  const host = observed?.host;
   const identity: RootIdentityV1 = {
     version: 1,
     ...(host ? { host } : {}),
@@ -370,7 +372,7 @@ export function planRootInsertion(
   match: ReplacementMatch | null;
   conflict: RootConflict | null;
 } {
-  const identity = rootIdentity(root);
+  const identity = { ...rootIdentity(root), host: hostIdentity() };
   let parent: IdentifiedRoot | null = null;
   let match: ReplacementMatch | null = null;
   if (root.parentRootId) {

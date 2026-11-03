@@ -767,6 +767,11 @@ export class ContinuityService implements ContinuityGateway {
     const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
     // Roots bound earlier do not conflict: overlapping paths are the convergence guard's ROOT_CONFLICT. Only a
     // concurrent epoch change fails here, and the start can be retried, so it is not an infrastructure failure.
+    // ponytail: the owner check and the bind are two continuity statements; the caller's workflow transaction (one
+    // lease, one run) keeps two sessions from starting the same root at once.
+    if (this.store.ownedElsewhere(task.taskCorrelation, rootId)) {
+      throw new WorkflowContractError("INVALID_INPUT", msg("continuity.binding.rootOwnedElsewhere", { rootId }), { reason: "ROOT_NOT_OWNED", rootId });
+    }
     if (!this.store.bindRoot(task.taskCorrelation, task.currentEpoch, rootId, now)) {
       throw new WorkflowContractError("STALE_REVISION", msg("continuity.binding.stale", {}), { reason: "CONTINUITY_EPOCH_CHANGED" });
     }
@@ -901,30 +906,34 @@ export class ContinuityService implements ContinuityGateway {
       if (this.store.observationEventsAfter(c, e, event, windowStart).length === 0) this.store.recordObservation(c, e, event, null, false, now);
       return null;
     };
-    const activity = this.workflowActivity(task);
-    if (!Array.isArray(activity)) return unavailable(activity.unavailable);
+    // The gated check runs first and needs only the active roots, so a bound root that cannot be read does not lift it.
     let roots: IdentifiedRoot[] = [];
     if (this.workflowStore) {
       try { roots = this.workflowStore.activeRootIdentities(); } catch (cause) { return unavailable(workflowFailureCode(cause)); }
+    } else if (this.workflowStoreFailure) {
+      // The store failed to open, so no gated root could be checked; a store that was never configured is not a failure.
+      unavailable(this.workflowStoreFailure);
     }
-    const active = new Set(activity.map(item => item.rootId));
-    const host = roots.length > 0 ? hostIdentity() : "";
-    const outside: number[] = [];
-    for (const [index, key] of targets.entries()) {
+    // A host ID that cannot be read or created counts as this host, so every root still covers (conservative).
+    let host = "";
+    if (roots.length > 0) try { host = hostIdentity(); } catch { host = ""; }
+    const identities = targets.map((key, index) => {
       const given = shown[index] ?? key;
       // ponytail: a target whose identity cannot be read (or an unread tool target) only counts in the window.
-      let target: ReturnType<typeof identify> | null = null;
-      if (roots.length > 0 && path.isAbsolute(given)) {
-        try { target = identify(given); } catch { target = null; }
-      }
-      if (target) {
-        const resolved = target;
-        const gated = roots.find(item => GATED_ROOT_STATES.has(item.root.state) && surfaceCovers(item.identity, resolved, host, true));
-        if (gated) return msg("hooks.editGate.gatedRoot", { path: given, rootId: gated.root.rootId, state: gated.root.state });
-        if (roots.some(item => active.has(item.root.rootId) && surfaceCovers(item.identity, resolved, host, false))) continue;
-      }
-      outside.push(index);
+      if (roots.length === 0 || !path.isAbsolute(given)) return null;
+      try { return identify(given); } catch { return null; }
+    });
+    for (const [index, target] of identities.entries()) {
+      const gated = target && roots.find(item => GATED_ROOT_STATES.has(item.root.state) && surfaceCovers(item.identity, target, host, true));
+      if (gated) return msg("hooks.editGate.gatedRoot", { path: shown[index] ?? targets[index]!, rootId: gated.root.rootId, state: gated.root.state });
     }
+    const activity = this.workflowActivity(task);
+    if (!Array.isArray(activity)) return unavailable(activity.unavailable);
+    const active = new Set(activity.map(item => item.rootId));
+    const outside = targets.flatMap((_key, index) => {
+      const target = identities[index];
+      return target && roots.some(item => active.has(item.root.rootId) && surfaceCovers(item.identity, target, host, false)) ? [] : [index];
+    });
     if (outside.length === 0) return null;
     if (this.store.observationEventsAfter(c, e, START_FAILED_PREFIX, windowStart).length > 0) {
       if (this.store.observationEventsAfter(c, e, START_FAILURE_PASS_EVENT, windowStart).length === 0) {
@@ -1169,7 +1178,10 @@ export class UnavailableContinuityService implements ContinuityGateway {
   bindOpenedRoot(): boolean { return false; }
   // Direct checkpoint access is unavailable too; preserve optional continuity.
   prepareWorkflowStart(): void {}
-  ownsRoot(): boolean { return false; }
+  /** Ownership cannot be told without the continuity store: that is its own failure, not another session's root. */
+  ownsRoot(): boolean {
+    throw new WorkflowContractError("CONTINUITY_UNAVAILABLE", msg("continuity.store.optionalUnavailable", {}), { reason: this.reason });
+  }
   editWindowFileCount(): number { return 0; }
   recordWorkflowStartFailure(): void {}
   settleFinishedWorkflow(): void {}

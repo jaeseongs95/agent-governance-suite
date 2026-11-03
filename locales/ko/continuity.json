@@ -1,4 +1,5 @@
 {
+  "continuity.binding.rootOwnedElsewhere": "root {rootId}는 다른 세션의 root라서 이 세션은 그 root로 workflow run을 시작할 수 없다. 그 root와 겹치지 않는 writeTargets로 workflow를 시작하라.",
   "continuity.binding.stale": "continuity 작업 binding이 오래되었다.",
   "continuity.checkpoint.disabledAfterRoot": "workflow root가 묶인 뒤에는 direct checkpoint를 쓸 수 없다.",
   "continuity.checkpoint.replayUnavailable": "교체나 purge 뒤라 멱등 checkpoint 결과를 더 이상 쓸 수 없다.",

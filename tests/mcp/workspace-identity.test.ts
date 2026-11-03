@@ -84,7 +84,6 @@ describe("resolveRootIdentity Git discovery", () => {
 
     expect(left).toEqual({
       version: 1,
-      host: hostIdentity(),
       workspacePhysical: key(main),
       surfaces: [{
         entry: "src/a.ts",
@@ -457,21 +456,27 @@ describe("pathWithin", () => {
 });
 
 describe("host identity", () => {
-  it("normalizes the machine name and refuses an unreadable one", () => {
-    const hostname = vi.spyOn(os, "hostname");
+  it("creates the host ID once in the shared state directory, keeps it when the machine is renamed, and refuses one it cannot create", () => {
+    const shared = join(fixtureRoot(), "shared");
+    const environment = { AGENT_GOVERNANCE_SHARED_STATE_DIR: shared };
+    const hostname = vi.spyOn(os, "hostname").mockReturnValue("first-name");
     try {
-      hostname.mockReturnValue(" Build-Box.Example.COM ");
-      expect(hostIdentity()).toBe("build-box");
-      hostname.mockReturnValue("");
-      expect(() => hostIdentity()).toThrow(expect.objectContaining({ code: "INVALID_INPUT", details: { reason: "HOST_IDENTITY_UNRESOLVED" } }));
+      const id = hostIdentity(environment);
+      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u);
+      expect(fs.readFileSync(join(shared, "host-id"), "utf8").trim()).toBe(id);
+      hostname.mockReturnValue("renamed-machine");
+      expect(hostIdentity(environment)).toBe(id);
     } finally {
       hostname.mockRestore();
     }
+    const blocker = join(fixtureRoot(), "not-a-directory");
+    write(blocker, "x");
+    expect(() => hostIdentity({ AGENT_GOVERNANCE_SHARED_STATE_DIR: join(blocker, "shared") }))
+      .toThrow(expect.objectContaining({ code: "INVALID_INPUT", details: expect.objectContaining({ reason: "HOST_IDENTITY_UNRESOLVED" }) }));
   });
 
-  it("keeps the same paths on different hosts apart and takes an identity stored without a host as this host's", () => {
-    const identity = resolveRootIdentity(fixtureRoot(), ["src"]);
-    expect(identity.host).toBe(hostIdentity());
+  it("keeps the same paths on different host IDs apart and takes an identity stored without a host as this host's", () => {
+    const identity: RootIdentityV1 = { ...resolveRootIdentity(fixtureRoot(), ["src"]), host: hostIdentity() };
     const candidate = { root: { rootId: "candidate", parentRootId: null } as unknown as ConvergenceRootV1, identity };
     const active = (stored: RootIdentityV1) => [{ root: { rootId: "existing", state: "open" } as unknown as ConvergenceRootV1,
       identity: stored, resolved: true, legacy: false, observedWorkspace: true }];

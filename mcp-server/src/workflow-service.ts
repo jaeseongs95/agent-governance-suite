@@ -273,22 +273,29 @@ function continuedTaskMismatch(request: MinimalStartRequest, root: ConvergenceRo
 
 /**
  * ROOT_CONFLICT of a minimal start, with what the caller can do next: start again on writeTargets that do not
- * overlap and hold back only the blocked part; continue its own open root with rootId; or resolve a gated root.
+ * overlap and hold back only the blocked part; keep working in its own running workflow (`runningRunId`), or continue
+ * its own open root whose attempt ended with rootId; or resolve a gated root. Ownership that cannot be read (no
+ * continuity store) leaves only the actions that need none.
  */
-function startConflict(body: ContractErrorBody, ownsRoot: (rootId: string) => boolean): WorkflowContractError {
+function startConflict(body: ContractErrorBody, ownsRoot: (rootId: string) => boolean,
+  runningRunId: (rootId: string) => string | null): WorkflowContractError {
   const details = body.details ?? {};
   const rootId = String(details.rootId ?? "");
   const state = String(details.blockerState ?? "");
-  const owned = rootId !== "" && ownsRoot(rootId);
+  let owned: boolean;
+  try { owned = rootId !== "" && ownsRoot(rootId); } catch { owned = false; }
   const gated = state === "needs-review" || state === "needs-user";
+  const runId = owned && state === "open" ? runningRunId(rootId) : null;
+  const action = gated ? "resolve" : !owned || state !== "open" ? "disjoint" : runId ? "running" : "continue";
   const nextActions = [
     { action: "restart-with-disjoint-writeTargets", tool: "start_workflow" },
-    ...(owned && state === "open" ? [{ action: "continue-own-root", tool: "start_workflow", arguments: { rootId } }] : []),
+    ...(action === "running" ? [{ action: "continue-running-workflow", tool: "get_workflow_status", arguments: { runId } }] : []),
+    ...(action === "continue" ? [{ action: "continue-own-root", tool: "start_workflow", arguments: { rootId } }] : []),
     ...(gated ? [{ action: "resolve-gate", tool: "resolve_convergence_gate", arguments: { rootId } }] : []),
   ];
   return new WorkflowContractError("ROOT_CONFLICT", msg("workflow.service.startWorkflowRootConflict", {
     requested: String(details.requestedEntry ?? ""), existing: String(details.existingPath ?? details.existingEntry ?? ""), rootId, state,
-    owned: owned ? "yes" : "no", action: gated ? "resolve" : owned && state === "open" ? "continue" : "disjoint",
+    owned: owned ? "yes" : "no", action, runId: runId ?? "",
   }), { ...details, ownedBySession: owned, nextActions });
 }
 
@@ -728,7 +735,9 @@ export class WorkflowService {
           const opened = this.openConvergenceRoot({
             schemaVersion: CONTRACT_VERSION, parentRootId: null, taskEnvelope: task, frame: fresh!.frame, userApprovalRefs: [],
           });
-          if (!opened.ok && opened.error?.code === "ROOT_CONFLICT") throw startConflict(opened.error, rootId => continuity.ownsRoot(rootId));
+          if (!opened.ok && opened.error?.code === "ROOT_CONFLICT") {
+            throw startConflict(opened.error, rootId => continuity.ownsRoot(rootId), rootId => this.runningRunId(rootId));
+          }
           root = unwrapResult(opened);
         }
         const lease = unwrapResult(this.claimWorkflowAttempt({
@@ -753,6 +762,13 @@ export class WorkflowService {
         };
       });
     });
+  }
+
+  /** The root's latest run when it has not ended, or null. */
+  private runningRunId(rootId: string): string | null {
+    const runId = this.store.getConvergenceSnapshot(rootId)?.workflowRunIds.at(-1);
+    const state = runId ? this.store.getRun(runId)?.state : undefined;
+    return runId && state && !["passed", "failed", "blocked"].includes(state) ? runId : null;
   }
 
   /**

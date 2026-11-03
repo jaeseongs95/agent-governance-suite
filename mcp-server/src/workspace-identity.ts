@@ -1,9 +1,10 @@
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 
 import { WorkflowContractError } from "../../contracts/types.js";
 import { msg } from "./i18n.js";
+import { resolveHostIdPath } from "./runtime-config.js";
 
 export type ConservativeReason = "glob-prefix" | "leading-glob" | "legacy-unsupported";
 
@@ -16,7 +17,7 @@ export interface SurfaceIdentityV1 {
 
 export interface RootIdentityV1 {
   version: 1;
-  /** hostIdentity() where the paths were resolved; an identity stored without it is taken as this host's. */
+  /** hostIdentity() of the machine that first stored the root; an identity without it is taken as this host's. */
   host?: string;
   workspacePhysical: string;
   surfaces: SurfaceIdentityV1[];
@@ -234,16 +235,47 @@ export function identify(target: string): Pick<SurfaceIdentityV1, "physical" | "
   return { physical: normalizedKey(physical.real), git: discoverGit(physical) };
 }
 
-/**
- * This machine's name, lowercased and without its domain, so "Box.local" and "box" match. ponytail: two machines with
- * the same name count as one host, which only makes their roots block each other; a host ID file if that ever matters.
- */
-export function hostIdentity(): string {
-  const host = os.hostname().trim().toLowerCase().split(".")[0] ?? "";
-  if (!host) {
-    throw new WorkflowContractError("INVALID_INPUT", msg("services.workspace.hostUnresolved", {}), { reason: "HOST_IDENTITY_UNRESOLVED" });
+const HOST_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
+let cachedHost: { file: string; id: string } | null = null;
+
+function readHostId(file: string): string | null {
+  try {
+    const value = fs.readFileSync(file, "utf8").trim();
+    return HOST_ID.test(value) ? value : null;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
   }
-  return host;
+}
+
+/**
+ * This machine's AGS host ID: a random UUID created once in the shared AGS state directory and read from then on, so
+ * a renamed machine or a restarted container keeps its roots. The file is published with a hard link, so two first
+ * readers end with the one ID that won. ponytail: copying the state directory to another machine copies the host ID
+ * too, which only makes the two machines' roots block each other; a machine-bound ID if that ever matters.
+ */
+export function hostIdentity(environment: NodeJS.ProcessEnv = process.env): string {
+  const unresolved = (cause?: unknown) => new WorkflowContractError("INVALID_INPUT", msg("services.workspace.hostUnresolved", {}),
+    { reason: "HOST_IDENTITY_UNRESOLVED", ...(cause ? { cause: (cause as NodeJS.ErrnoException).code ?? "unreadable" } : {}) });
+  let file: string;
+  try { file = resolveHostIdPath(environment); } catch (error) { throw unresolved(error); }
+  if (cachedHost?.file === file) return cachedHost.id;
+  try {
+    let id = readHostId(file);
+    if (!id) {
+      fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
+      const draft = `${file}.${process.pid}.${randomUUID()}`;
+      fs.writeFileSync(draft, `${randomUUID()}\n`, { flag: "wx", mode: 0o600 });
+      try { fs.linkSync(draft, file); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error; }
+      finally { fs.rmSync(draft, { force: true }); }
+      id = readHostId(file);
+    }
+    if (!id) throw unresolved();
+    cachedHost = { file, id };
+    return id;
+  } catch (error) {
+    throw error instanceof WorkflowContractError ? error : unresolved(error);
+  }
 }
 
 /** Paths on different hosts never overlap; an identity without a host is this host's. */
@@ -275,5 +307,5 @@ export function resolveRootIdentity(
       conservative: globIndex < 0 ? null : "glob-prefix",
     };
   });
-  return { version: 1, host: hostIdentity(), workspacePhysical: workspace.physical, surfaces };
+  return { version: 1, workspacePhysical: workspace.physical, surfaces };
 }
