@@ -2,7 +2,8 @@
 // Generates the English-only packages (docs/i18n-design.md 8):
 //   claude-plugin-en/  the committed claude-plugin/ tree
 //   codex-plugin-en/   the tracked files the Codex plugin reads
-// Both differ from their source only in runtime/locale.json, which makes AGS speak English.
+// Both differ from their source in runtime/locale.json, which makes AGS speak English; the Codex
+// package also renames its manifest (see codexManifest).
 // Skill text stays in its source language until skills are translated (i18n design 7.1).
 //
 // Usage: node scripts/build-en-packages.mjs [--check | --drift]
@@ -40,6 +41,27 @@ export const PACKAGES = Object.freeze({
   },
 });
 
+export const CODEX_MANIFEST = ".codex-plugin/plugin.json";
+export const CODEX_EN_NAME = "agent-governance-suite-en";
+
+// Codex refuses a marketplace entry whose name differs from the manifest name (codex-cli 0.166.0:
+// "plugin.json name `agent-governance-suite` does not match marketplace plugin name"), so the
+// English Codex package carries its entry name. Claude Code allows the two names to differ and
+// keeps the manifest name, so Claude skill names do not change.
+function codexManifest(content) {
+  const manifest = JSON.parse(content.toString("utf8"));
+  manifest.id = CODEX_EN_NAME;
+  manifest.name = CODEX_EN_NAME;
+  manifest.interface = {
+    ...manifest.interface,
+    displayName: `${manifest.interface.displayName} (English)`,
+    shortDescription: "Coordinates specialist skills and audit flows",
+    longDescription: "A governance plugin that classifies requests and links execution order and evidence while keeping each specialist skill's responsibility. AGS messages are in English; skill text stays in its source language.",
+  };
+  return Buffer.from(`${JSON.stringify(manifest, null, 2)}
+`);
+}
+
 function trackedFiles(root) {
   return execFileSync("git", ["-C", root, "ls-files", "-z"], { encoding: "utf8" }).split("\0").filter(Boolean);
 }
@@ -55,6 +77,7 @@ export async function renderEnPackage(name, root = ROOT) {
   }
   if (!files.has(LOCALE_FILE)) throw new Error(`${name}: ${LOCALE_FILE} is missing from the source`);
   files.set(LOCALE_FILE, EN_LOCALE);
+  if (name === "codex-plugin-en") files.set(CODEX_MANIFEST, codexManifest(files.get(CODEX_MANIFEST)));
   return files;
 }
 

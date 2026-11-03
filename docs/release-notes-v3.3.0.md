@@ -56,8 +56,13 @@
   | Codex | `agent-governance-suite@agent-governance` | `agent-governance-suite-en@agent-governance` |
   | agy | `agent-governance-suite-antigravity-<tag>.zip` | `agent-governance-suite-antigravity-<tag>-en.zip` |
 
-- **스킬 이름과 상태:** manifest 이름은 두 패키지 모두 `agent-governance-suite`다. 그래서 스킬 이름(`agent-governance-suite:<skill>`)과 상태 DB가 같고, 다시 설치하면 언어를 바꿀 수 있다. **한 호스트에서 두 패키지를 함께 켜지 않는다.** 같은 manifest 이름이 둘이면 Claude Code는 한쪽 hook만 불러온다.
-- **생성:** `scripts/build-en-packages.mjs`가 `claude-plugin-en/`과 `codex-plugin-en/`을 만든다. 둘 다 원본과 `runtime/locale.json`만 다르다.
+- **manifest 이름:**
+  - Claude Code는 항목 이름과 manifest 이름이 달라도 된다. 그래서 영어판 manifest 이름도 `agent-governance-suite`로 두어, 스킬 이름(`agent-governance-suite:<skill>`)이 같다.
+  - Codex는 둘이 같아야 한다. codex-cli 0.166.0이 `plugin.json name 'agent-governance-suite' does not match marketplace plugin name 'agent-governance-suite-en'`으로 설치를 거부했다. 그래서 Codex 영어판은 manifest `id`·`name`을 `agent-governance-suite-en`으로 하고, 소개 문구를 영어로 바꾼다. Codex에서 스킬이 어떤 이름으로 보이는지는 실행 확인을 못 했다(크레딧 없음, 미확인).
+- **상태:** MCP 서버 이름과 상태 DB 위치는 두 패키지가 같다. 다시 설치하면 언어를 바꿀 수 있다.
+- **한 호스트에서 두 패키지를 함께 켜지 않는다.** Claude Code는 같은 manifest 이름이 둘이면 한쪽 hook만 불러오고, Codex는 이름이 달라 hook과 MCP 서버가 둘 다 돈다.
+- **생성:** `scripts/build-en-packages.mjs`가 `claude-plugin-en/`과 `codex-plugin-en/`을 만든다. 원본과 다른 것은 `runtime/locale.json`이다.
+  - Codex 영어판은 manifest도 바꾼다(위).
   - `pnpm en:check`는 차이를 실패로 보고하고, CI의 `pnpm en:drift`는 경고로 보고한다.
   - agy `-en` zip은 release workflow가 `build-antigravity-package.mjs --locale en`으로 함께 만들어 붙인다.
   - `sync-release-metadata.mjs`는 두 marketplace의 `-en` 항목 버전도 맞춘다.
