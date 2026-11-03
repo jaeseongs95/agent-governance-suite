@@ -163,7 +163,7 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     }
     const observedTask = this.options.observeTask?.(operation.result.request, observation) ?? null;
     if (!operation.task || !observedTask || observedTask.cancelled || observedTask.taskRevision !== operation.task.taskRevision || observedTask.requestDigest !== operation.task.requestDigest || observedTask.sourceRef !== operation.task.sourceRef || operation.actorId !== observation.actorId) return {valid: false, errors: ["HOST_TASK_CHANGED_OR_NOT_OBSERVED"], agentSelectedSkillIds: null};
-    if (!Number.isFinite(Date.parse(observation.expiresAt ?? "")) || Date.parse(observation.expiresAt!) <= (this.options.now?.() ?? new Date()).getTime()) throw new Error("HOST_SELECTION_OBSERVATION_EXPIRED");
+    // The server mints the observation during this call, so time does not age it out; one host call yields one observationId.
     if (input.decision.hostReceipt !== null) throw new Error("CALLER_SELECTION_RECEIPT_REJECTED");
     if (input.decision.agentSelectedSkillIds === null) throw new Error("AGENT_SELECTION_MISSING");
     if (JSON.stringify(operation.explicit) !== JSON.stringify(input.decision.explicitSkillIds) || JSON.stringify(operation.required) !== JSON.stringify(input.decision.ruleRequiredSkillIds)) throw new Error("REQUIRED_SKILL_SNAPSHOT_CHANGED");
@@ -205,8 +205,6 @@ export class RuntimeSkillClassificationGateway implements SkillClassificationGat
     if (this.options.observeRuntime && operation.runtimeObservation !== this.options.observeRuntime()) return {valid: false, errors: ["RUNTIME_SOURCE_CHANGED"], agentSelectedSkillIds: null};
     if ((operation.hostExpiresAt !== null && Date.parse(operation.hostExpiresAt) <= (this.options.now?.() ?? new Date()).getTime())
       || (expiresAt !== null && Date.parse(expiresAt) <= (this.options.now?.() ?? new Date()).getTime())) return {valid: false, errors: ["HOST_DISCOVERY_EXPIRED"], agentSelectedSkillIds: null};
-    // The selection observation must still be live at this synchronous commit boundary.
-    if (!Number.isFinite(Date.parse(observation.expiresAt ?? "")) || Date.parse(observation.expiresAt!) <= (this.options.now?.() ?? new Date()).getTime()) throw new Error("HOST_SELECTION_OBSERVATION_EXPIRED");
     if (operation.decision === null) {
       operation.decision = decision;
       operation.selectionSource = source;

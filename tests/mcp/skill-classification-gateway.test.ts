@@ -337,11 +337,9 @@ describe("offline classification through actual MCP Client/Server transport", ()
     expect(accepted).toMatchObject({ admissionStatus: "NOT_EVALUATED", readStatus: "NOT_OBSERVED", appliedStatus: "NOT_OBSERVED", verifiedStatus: "NOT_RUN" });
   });
   // The observation belongs to the host call, not to the arguments, so there is no argument signature to change.
-  it("rejects expired observations and caller-supplied observation fields", async () => {
+  it("rejects caller-supplied observation fields", async () => {
     const h = await harness(), advice = (await h.call<Advice>("classify_skills", input())).data!;
     const args = { schemaVersion: "1.0.0", operationId: input().operationId, decision: decision(advice, ["code-review"]) };
-    expect((await h.call<Accepted>("record_skill_selection", h.sign(args, new Date("2000-01-01T00:00:00Z")))).error)
-      .toMatchObject({ code: "INVALID_INPUT", details: { category: "request-state", reasonCode: "HOST_SELECTION_OBSERVATION_EXPIRED" } });
     expect((await h.call<Accepted>("record_skill_selection", h.sign({ ...args, _hostAttestation: "caller-made" }))).error)
       .toMatchObject({ code: "INVALID_INPUT", details: { reasonCode: "RESERVED_CALLER_FIELD", field: "_hostAttestation" } });
     expect((await h.call<Accepted>("record_skill_selection", h.sign(args))).data!.valid).toBe(true);

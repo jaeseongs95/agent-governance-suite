@@ -40,7 +40,7 @@ export function verifyReceipt(input) {
   if (current.verdict !== "READY" || current.actionDigest !== report.actionDigest || current.targetDigest !== report.targetDigest) {
     return invalid("STALE_REVISION", "행동, 대상, 환경, 승인, fingerprint, 복구 계획 또는 영향 범위가 바뀌었습니다.", report, current);
   }
-  return { schemaVersion: "1.0.0", valid: true, errorCode: null, reason: "receipt와 현재 mutation intent가 일치합니다. 이 결과는 실행 권한을 새로 부여하지 않습니다.", actionDigest: current.actionDigest, targetDigest: current.targetDigest };
+  return { schemaVersion: "1.0.0", valid: true, errorCode: null, reason: "receipt와 현재 mutation intent가 일치합니다. 검증기는 실제 대상을 읽지 않으므로 intent의 fingerprint는 실행 직전에 다시 관측한 값이어야 합니다. 이 결과는 실행 권한을 새로 부여하지 않습니다.", actionDigest: current.actionDigest, targetDigest: current.targetDigest };
 }
 
 async function readInput(argv) {

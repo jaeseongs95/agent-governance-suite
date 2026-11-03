@@ -69,13 +69,14 @@ describe("native legacy APIs on one inactive authority connection", () => {
     now = 30101; expect(store.status(sender, draft.messageId, now)).toMatchObject({ state: "acknowledged", messageId: draft.messageId }); expect(store.claim(target, now)).toEqual([]);
     console.log("B2-RAW receipt", JSON.stringify({ first, replay, afterExpiry: store.status(sender, draft.messageId, now), counts: value.owner.inspect().counts }));
   });
-  it("B2-LEGACY-04: valid later clock plus stale revision cannot resurrect the native workflow lease", () => {
+  it("B2-LEGACY-04: a later shared clock does not expire the native workflow lease and a stale revision still cannot write", () => {
     let now = 100; const value = fixture(() => now); const initial = root(path.dirname(value.owner.databasePath)); expect(value.workflow.insertConvergenceRoot(initial)).toBeNull();
     const leased = { ...initial, revision: 1 }; const token = lease(initial); const proposal: AttemptProposalV1 = { schemaVersion: "1.0.0", rootId: initial.rootId, expectedRevision: 0, taskEnvelope: initial.taskEnvelope, frame: initial.frame, plan: receipt().plan, outputTargets: [], priorFailure: null };
     expect(value.workflow.insertAttemptLease(leased, 0, proposal, token)).toBe(true);
     now = 200; expect(value.workflow.updateConvergenceRoot({ ...leased, revision: 2 }, 99)).toBe(false); expect(value.owner.inspect().time).toBe(200);
-    now = 105; expect(value.workflow.insertGuardedRun(receipt("old-owner-run"), token.leaseId, 1, iso(105))).toBeNull(); expect(value.workflow.getRun("old-owner-run")).toBeNull(); expect(value.workflow.getConvergenceSnapshot(initial.rootId)?.root.revision).toBe(1); expect(value.workflow.getAttemptLease(token.leaseId)?.lease.state).toBe("issued");
-    console.log("B2-RAW native-expiry", JSON.stringify({ time: value.owner.inspect().time, root: value.workflow.getConvergenceSnapshot(initial.rootId)?.root.revision, run: value.workflow.getRun("old-owner-run") }));
+    // Leases do not expire by time (3.2.0): the lease's legacy expiresAt (110) is behind the shared clock (200) and the start still succeeds.
+    now = 105; expect(value.workflow.insertGuardedRun(receipt("old-owner-run"), token.leaseId, 1, iso(105))).not.toBeNull(); expect(value.workflow.getRun("old-owner-run")).not.toBeNull(); expect(value.workflow.getConvergenceSnapshot(initial.rootId)?.root.revision).toBe(2); expect(value.workflow.getAttemptLease(token.leaseId)?.lease.state).toBe("consumed");
+    console.log("B2-RAW native-no-expiry", JSON.stringify({ time: value.owner.inspect().time, root: value.workflow.getConvergenceSnapshot(initial.rootId)?.root.revision, run: value.workflow.getRun("old-owner-run") }));
   });
   it("B2-LEGACY-05: real synthetic HMAC and original provenance conflict are preserved", () => {
     const value = fixture(); const input = { originKind: "peer" as const, host: "synthetic-host", sessionId: "synthetic-session", eventId: "original-source-event", contentDigest: `sha256:${"a".repeat(64)}` as const, observedAt: iso(100), expiresAt: iso(1000), authorityEffect: "none" as const, attestation: { kind: "broker-peer-envelope" as const, adapter: "synthetic-adapter", capabilityVersion: "1.0.0" as const } };

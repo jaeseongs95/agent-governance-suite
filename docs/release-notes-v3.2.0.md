@@ -33,12 +33,12 @@
 
 ### 시간 만료 제거
 
-다른 세션이 준비를 마친 서비스 교체를 사전 점검 결과의 15분 만료 때문에 미루고 절차를 다시 정리하는 일이 있었다. 고정 만료 상수를 모두 찾아 도입 커밋과 설계 문서에서 이유를 확인했다. 아래 넷은 이유가 기록되어 있지 않았고, 시간 말고 다른 장치가 이미 같은 위험을 막고 있어 뺐다.
+다른 세션이 준비를 마친 서비스 교체를 사전 점검 결과의 15분 만료 때문에 미루고 절차를 다시 정리하는 일이 있었다. 고정 만료 상수를 모두 찾아 도입 커밋과 설계 문서에서 이유를 확인했다. 아래 넷은 이유가 기록되어 있지 않아 뺐다. 각 항목에 시간 대신 같은 위험을 막는 장치와 그 한계를 적었다.
 
-- **사전 점검 receipt 15분**(`mutation-risk-preflight`): 시간이 지났다는 이유만으로는 receipt를 거부하지 않는다. 실행 직전 검증은 지금처럼 원 관측 시점으로 보고서를 다시 만들어 비교하고, 현재 시점으로 다시 평가해 행동·대상·환경·승인·fingerprint·복구 계획·영향 범위가 바뀌었으면 거부한다. 승인 증거 자체의 `expiresAt`은 그대로 적용한다. 보고서(`MutationPreflightReport.v1`)에서 `validUntil`이 빠졌다.
-- **실행 관측 5분**: 서버가 호출 시점에 만들어 바로 쓰는 관측이라 실제로 걸리는 경로가 없었다. 재사용은 한 번 소비 기록이 영구히 막는다. 미래 시각의 관측만 거부한다. 관측에 `expiresAt`을 더 싣지 않으며, 저장된 계획에 남은 `expiresAt`은 무시한다.
+- **사전 점검 receipt 15분**(`mutation-risk-preflight`): 시간이 지났다는 이유만으로는 receipt를 거부하지 않는다. 실행 직전 검증은 지금처럼 원 관측 시점으로 보고서를 다시 만들어 비교하고, 현재 시점으로 다시 평가해 행동·대상·환경·승인·fingerprint·복구 계획·영향 범위가 바뀌었으면 거부한다. 승인 증거 자체의 `expiresAt`은 그대로 적용한다. 대상 상태가 바뀌었는지는 15분 창으로도 보장되지 않았다(15분 안에도 바뀔 수 있다). 검증기는 실제 대상을 읽지 않으므로, 실행자가 실행 직전에 대상을 다시 관측해 그 fingerprint를 intent에 넣고 검증해야 한다. 이 의무를 절차(entry-details 6단계)와 검증 결과 문구에 적었다. 보고서(`MutationPreflightReport.v1`)에서 `validUntil`이 빠졌다.
+- **실행 관측 5분**: 서버가 호출 시점에 만들어 바로 쓰는 관측이라 실제로 걸리는 경로가 없었다. 재사용은 한 번 소비 기록이 영구히 막는다. 미래 시각의 관측만 거부한다. 관측에 `expiresAt`을 더 싣지 않으며, 저장된 계획에 남은 `expiresAt`은 무시한다. skill 선택 기록(`record_skill_selection`)도 같은 관측을 쓰므로 그쪽 만료 검사(`HOST_SELECTION_OBSERVATION_EXPIRED`)도 뺐다.
 - **상태 정리 token 15분**: 미리보기를 확인하는 데 걸리는 시간으로 거부하지 않는다. 한 번만 쓸 수 있고, 확인을 기다리는 동안 후보가 바뀌면 digest가 달라 거부된다. DB 경로·스키마 결속과 삭제 전 backup도 그대로다. 계획(`StateCleanupPlan.v1`)에서 `expiresAt`이 빠졌다.
-- **workflow 단계 시도 lease 300초**: claim한 뒤 시작까지 5분이 넘으면(권한 승인 대기, 긴 생각, 컨텍스트 압축) 시작이 거부되고 다시 claim해야 했다. 이제 lease는 시간으로 만료되지 않는다. 대신 같은 root에 새 claim이 오면 아직 시작하지 않은 lease를 대체한다. 그래서 claim한 세션이 죽거나 leaseId를 잃어도 다시 claim 한 번이면 풀린다. 대체는 root revision을 비교해 바꾸는 쓰기(CAS)가 성공한 같은 트랜잭션 안에서만 하므로, 거부된 claim은 남의 lease를 건드리지 않는다. 대체된 lease는 root revision이 낡아 시작할 수 없다. 시도 예산은 시작한 시도만 세므로 대체는 예산을 쓰지 않는다. 어떻게 할지는 독립 reviewer 셋(동시성, 운영성, 단순성)과 별도 Judge 토론으로 정했다. `leaseTtlSeconds`와 lease의 `expiresAt`은 저장된 root의 digest와 맞추기 위해 남겼고 검사하지 않는다. 두 claim이 동시에 오면 진 쪽은 `LEASE_CONFLICT` 또는 `STALE_REVISION`을 받는다.
+- **workflow 단계 시도 lease 300초**: claim한 뒤 시작까지 5분이 넘으면(권한 승인 대기, 긴 생각, 컨텍스트 압축) 시작이 거부되고 다시 claim해야 했다. 이제 lease는 시간으로 만료되지 않는다. 대신 같은 root에 새 claim이 오면 아직 시작하지 않은 lease를 대체한다. 그래서 claim한 세션이 죽거나 leaseId를 잃어도 다시 claim 한 번이면 풀린다. 대체는 root revision을 비교해 바꾸는 쓰기(CAS)가 성공한 같은 트랜잭션 안에서만 하므로, revision이 맞지 않아 거부된 claim은 남의 lease를 건드리지 않는다. 거부 자체를 root에 기록하는 claim(낡은 실패 지문, 새 근거 없음, frame 변경)은 root revision을 올리므로, 그 앞에 받은 시작 전 lease는 시작할 수 없게 되고 다음 claim에서 대체된다. 대체된 lease는 root revision이 낡아 시작할 수 없다. 시도 예산은 시작한 시도만 세므로 대체는 예산을 쓰지 않는다. 어떻게 할지는 독립 reviewer 셋(동시성, 운영성, 단순성)과 별도 Judge 토론으로 정했다. `leaseTtlSeconds`와 lease의 `expiresAt`은 저장된 root의 digest와 맞추기 위해 남겼고 검사하지 않는다. 두 claim이 동시에 오면 진 쪽은 `LEASE_CONFLICT` 또는 `STALE_REVISION`을 받는다.
 
 세션 메시지 TTL·draft·wake, peer-wait, 세션 현황판 보존, 업데이트 확인 캐시처럼 만료가 없으면 자리가 영구히 잡히거나 같은 조회가 반복되는 시간 창은 기능상 필요해 남겼다. continuity 후보 token 1시간, JEV 프로필 `qualification.validUntil`, 호스트 발견 자료 `expiresAt`은 이번에 바꾸지 않았다.
 

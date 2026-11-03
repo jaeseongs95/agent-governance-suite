@@ -148,15 +148,14 @@ describe("JEV 원인과 권한의 실제 MCP 응답", () => {
     expect(h.reserve).toHaveBeenCalledTimes(1); expect(h.reserve.mock.calls[0]![0].providerKind).toBe("vendor"); expect(h.vendor.invoke).toHaveBeenCalledTimes(1);
   });
 
-  it("API69 만료: 승인 관측이 비동기 읽기 중 만료되면 정확한 요청 상태 원인을 반환한다", async () => {
+  it("API69 만료 없음: 비동기 읽기가 오래 걸려도 승인 관측을 시간으로 거부하지 않는다", async () => {
     const h = await harness(), advice = (await h.call<Advice>("classify_skills", input())).data!;
     h.readRuntime.mockImplementationOnce(async () => {
-      expect(h.observed.last?.expiresAt).toEqual(expect.any(String));
-      h.clock.now = new Date(Date.parse(h.observed.last!.expiresAt!) + 60_000);
+      h.clock.now = new Date(h.clock.now.getTime() + 24 * 60 * 60 * 1000);
       return h.runtime;
     });
     const reply = await h.call<Accepted>("record_skill_selection", {schemaVersion: "1.0.0", operationId: input().operationId, decision: decision(advice)});
-    expect(reply).toMatchObject({ok: false, data: null, error: {code: "INVALID_INPUT", details: {category: "request-state", reasonCode: "HOST_SELECTION_OBSERVATION_EXPIRED"}}});
+    expect(reply.error).toBeNull(); expect(reply.data).toMatchObject({valid: true});
     expect(JSON.stringify(reply)).not.toContain("fixture-host-model");
     expect(h.vendor.invoke).toHaveBeenCalledTimes(1);
   });

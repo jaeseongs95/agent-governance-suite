@@ -81,16 +81,14 @@ import {createNativeClassificationAdapters} from "../../mcp-server/src/skill-cla
 import {bindNativeClassificationDefinitions} from "../../mcp-server/src/skill-classification/native-cli-strategies.js";
 
 describe("R17 freshness at the public commit and dispatch boundaries", () => {
-  it.each([0, 1])("r17-observation: an accept observation expiring during runtime await is rejected at expiry+%s and a fresh receipt can commit", async offset => {
+  it("r17-observation: an accept observation is not aged out by a slow runtime await", async () => {
     const h = await harness(), advice = await h.classify();
-    const old = observation(advice.result.request.requestDigest, h.now);
-    old.expiresAt = new Date(h.now.getTime() + 1000).toISOString(); old.observationId = "expired-receipt";
-    h.readRuntime.mockImplementationOnce(async () => {h.now.setTime(Date.parse(old.expiresAt!) + offset); return h.runtime;});
-    await expect(h.gateway.accept({schemaVersion: "1.0.0", operationId: h.input.operationId, decision: selection(advice)}, old)).rejects.toThrow("HOST_SELECTION_OBSERVATION_EXPIRED");
-    const cached = await h.classify(); expect(cached.agentSelectedSkillIds).toBeNull();
-    const fresh = observation(advice.result.request.requestDigest, h.now); fresh.observationId = "fresh-receipt";
-    const accepted = await h.gateway.accept({schemaVersion: "1.0.0", operationId: h.input.operationId, decision: selection(advice)}, fresh) as Accepted;
-    expect(accepted.valid).toBe(true); expect(accepted.decision?.hostReceipt?.receiptId).toBe("fresh-receipt");
+    // A legacy expiresAt already in the past is ignored; the host discovery snapshot (300 s) is still current.
+    const old = observation(advice.result.request.requestDigest, h.now); old.observationId = "old-receipt";
+    old.expiresAt = new Date(h.now.getTime() + 1000).toISOString();
+    h.readRuntime.mockImplementationOnce(async () => {h.now.setTime(h.now.getTime() + 2000); return h.runtime;});
+    const accepted = await h.gateway.accept({schemaVersion: "1.0.0", operationId: h.input.operationId, decision: selection(advice)}, old) as Accepted;
+    expect(accepted.valid).toBe(true); expect(accepted.decision?.hostReceipt?.receiptId).toBe("old-receipt");
   });
   it.each([
     {kind: "remote", change: "revision"}, {kind: "remote", change: "enabled"},

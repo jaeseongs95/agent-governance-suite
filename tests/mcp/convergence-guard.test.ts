@@ -851,7 +851,7 @@ describe("local MCP convergence guard", () => {
     }));
     expect(unstarted.error).toBeNull();
     current = status(service, root.rootId);
-    // A refused claim leaves the issued lease untouched.
+    // A claim refused on revision writes nothing and leaves the issued lease untouched.
     const refused = service.claimWorkflowAttempt(proposal(service, { ...current.root, revision: current.root.revision - 1 }, {
       priorFailure: latestFailure(current, "test:unstarted-proposal-evidence"),
     }));
@@ -872,6 +872,34 @@ describe("local MCP convergence guard", () => {
       expectedRootRevision: current.root.revision,
     });
     expect(superseded.error?.code).toBe("LEASE_CONFLICT");
+  });
+
+  it("a refusal that records a rejection advances the root, so the unstarted lease waits for the next claim to supersede it", async () => {
+    const { service } = await createHarness();
+    const root = openRoot(service);
+    const attempt = claimAndStart(service, root);
+    let current = recordFailureAndStatus(service, root.rootId, attempt.receipt);
+    const unstarted = service.claimWorkflowAttempt(proposal(service, current.root, {
+      priorFailure: latestFailure(current, "test:recorded-refusal-evidence"),
+    }));
+    expect(unstarted.error).toBeNull();
+    current = status(service, root.rootId);
+    const staleFingerprint = { ...latestFailure(current, "test:recorded-refusal-evidence")!, fingerprint: `sha256:${"0".repeat(64)}` as const };
+    const refused = service.claimWorkflowAttempt(proposal(service, current.root, { priorFailure: staleFingerprint }));
+    expect(refused.error?.code).toBe("NEW_EVIDENCE_REQUIRED");
+    expect(refused.error?.details).toMatchObject({ rootRevision: current.root.revision + 1 });
+    const blocked = service.startGuardedWorkflow({ schemaVersion: "1.0.0", leaseId: unstarted.data!.leaseId, expectedRootRevision: current.root.revision });
+    expect(blocked.error?.code).toBe("STALE_REVISION");
+    current = status(service, root.rootId);
+    const reclaimed = service.claimWorkflowAttempt(proposal(service, current.root, {
+      priorFailure: latestFailure(current, "test:recorded-refusal-evidence"),
+    }));
+    expect(reclaimed.error).toBeNull();
+    current = status(service, root.rootId);
+    expect(current.leases.find((lease) => lease.leaseId === unstarted.data!.leaseId)?.state).toBe("expired");
+    expect(current.attemptsUsedInEpoch).toBe(1);
+    const started = service.startGuardedWorkflow({ schemaVersion: "1.0.0", leaseId: reclaimed.data!.leaseId, expectedRootRevision: current.root.revision });
+    expect(started.error).toBeNull();
   });
 
   it("records a rejected retry on the root without spending attempt budget", async () => {

@@ -235,7 +235,7 @@ function failureResult(error: unknown, _fallback: string, suffix = ""): ApiResul
 
 const CLASSIFICATION_REQUEST_REJECTIONS = new Set([
   "OPERATION_DIGEST_CONFLICT", "STALE_CLASSIFICATION_OPERATION", "UNKNOWN_CLASSIFICATION_OPERATION",
-  "HOST_SELECTION_OBSERVATION_EXPIRED", "CALLER_SELECTION_RECEIPT_REJECTED", "AGENT_SELECTION_MISSING",
+  "CALLER_SELECTION_RECEIPT_REJECTED", "AGENT_SELECTION_MISSING",
   "REQUIRED_SKILL_SNAPSHOT_CHANGED", "SELECTION_ALREADY_RECORDED",
 ]);
 
@@ -602,7 +602,7 @@ export function createMcpServer(
       },
       {
         name: "prepare_state_cleanup",
-        description: "Preview fixed retention cleanup candidates and issue a 15-minute, one-use token without deleting data.",
+        description: "Preview fixed retention cleanup candidates and issue a one-use token without deleting data.",
         inputSchema: contractSchemas.prepareStateCleanupRequest,
         annotations: { readOnlyHint: true, idempotentHint: false, destructiveHint: false, openWorldHint: false },
       },

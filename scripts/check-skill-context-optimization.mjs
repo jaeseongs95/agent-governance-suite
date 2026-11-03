@@ -423,7 +423,7 @@ const PREFLIGHT_EXPIRY_REMOVAL_SUCCESSOR = Object.freeze({
   authorityEffect: "none",
   hashes: {
     "skills/mutation-risk-preflight/contracts/mutation-preflight-report.v1.schema.json": ["b8a4e1ca5f5e203639545d27cc190421d91d132569cec70f5b579d39337b7331", "011e06daac326d162351f06701d461ae3bedbeda37b2003b8e518c28c065884d"],
-    "skills/mutation-risk-preflight/references/entry-details.md": ["b9d8952a60a92f7e0ef98c9d90f076dddfc9bedcbd8a0e3af0b02d1dd50bffd4", "f7281b2a0a79469ec552fc988b5380a758ba01fc3de536a76e4b737e7cf4de23"],
+    "skills/mutation-risk-preflight/references/entry-details.md": ["b9d8952a60a92f7e0ef98c9d90f076dddfc9bedcbd8a0e3af0b02d1dd50bffd4", "027c08a08a559af62f945c00dab640e79deb88d6d9afe2042d1271d6ddd04f54"],
     "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": ["f095e57681872a6d819cf463e7518255e9e878af3103aa0d2f6d51e0023a01fe", "365e0a4a15b1bbf8e521cf7f2e603718276335d5ae258960b9dd7fd9a25dbc3a"],
   },
 });
