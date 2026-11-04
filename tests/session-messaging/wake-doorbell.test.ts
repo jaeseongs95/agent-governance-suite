@@ -770,3 +770,24 @@ test("3.1: the operation table refuses a resendBaseMs that is not a positive int
   }
   assert.equal(row(f, reserved).state, "reserved");
 });
+
+test("3.6.0: a message's status wake is only an attempt started while that message was pending, else null", () => {
+  const f = fixture();
+  const wakeOf = (id: string, at: number) => (f.store.status(sender, id, at) as { wake: Row | null }).wake;
+  send(f, "first-body", f.t0 + 1_000);
+  const first = handOff(f, f.t0 + 2_000);
+  assert.equal(wakeOf("first-body", f.t0 + 2_500)?.attemptId, first.attemptId);
+  // The first body is claimed and acknowledged; a later body did not cause the attempt that rang before it existed.
+  assert.equal(boundary(f, f.t0 + 3_000).length, 1);
+  send(f, "second-body", f.t0 + 4_000);
+  assert.equal(wakeOf("second-body", f.t0 + 4_500), null);
+  // A quiet gap later the second body rings its own attempt; the first body's status keeps its own attempt.
+  const later = f.t0 + 3_000 + WAKE_QUIET_MS + 1_000;
+  jump(f, later);
+  const second = handOff(f, later);
+  assert.notEqual(second.attemptId, first.attemptId);
+  assert.equal(wakeOf("second-body", later + 1)?.attemptId, second.attemptId);
+  assert.equal(wakeOf("first-body", later + 1)?.attemptId, first.attemptId);
+  // The target's own wake-status still reads its latest attempt.
+  assert.equal((dispatch(f.store, "wake-status", { target }) as { wake: Row | null }).wake?.attemptId, second.attemptId);
+});

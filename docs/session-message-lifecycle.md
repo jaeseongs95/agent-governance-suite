@@ -184,15 +184,15 @@ receipt는 `authorityEffect: none`이다. 이 검사는 협력하는 로컬 hook
 
 delivery profile의 `blocksEmptyWakePrompt`가 켜진 host의 hook은 현재 managed wake가 검증됐는데 인수한 본문이 없거나(`recognized: true`, 빈 messages), 끝난 시도의 marker만 왔을 때(`retired: true`) `UserPromptSubmit`의 `decision: block`으로 그 marker prompt를 모델 요청 전에 막는다. host 화면에 marker가 한 번 보이는 것은 막지 않는다. 현재 내장 어댑터(Claude·Codex·Gemini·Antigravity)는 모두 이 값을 끈다. 따라서 지금은 빈 wake prompt를 막지 않고 기존 fail-open 처리를 따른다. `Stop`의 같은 decision은 continuation을 뜻하므로 이 처리에 쓰지 않는다. 메시지 전달 자체를 exactly-once 업무 실행으로 확대하지 않는다.
 
-`wake-status`와 메시지 status의 `wake` diagnostic은 대상의 최신 시도의 상태·해제 이유·시각을 보여 주며 본문이나 nonce는 포함하지 않는다. 메시지 status의 `wake`는 그 메시지의 알림이 아니라 대상의 최신 알림이다.
+`wake-status`와 메시지 status의 `wake` diagnostic은 시도의 상태·해제 이유·시각을 보여 주며 본문이나 nonce는 포함하지 않는다. `wake-status`는 대상의 최신 시도다. 메시지 status의 `wake`(3.6.0부터)는 그 메시지가 대기 중일 때(생성부터 ACK까지) 시작된 시도만 보여 주고, 없으면 `null`이다. 시도는 대상에 인수할 본문이 있을 때만 시작되므로 그 시도는 이 메시지를 위해 울렸다. 아직 시작하지 않은(`reserved`) 시도, 메시지보다 먼저 시작했거나 ACK 뒤에 시작한 시도는 보이지 않는다. 3.5.x까지는 메시지와 무관하게 대상의 최신 시도를 보여 줬다.
 
 ### capability
 
 | adapter | 주입과 idle 깨우기 | 넘긴 뒤 의미 |
 | --- | --- | --- |
 | claude-inbox | peer-wake·tool-boundary·turn-end, silent next | `handed-off`는 전달이 아니다 |
-| codex-queue | peer-wake·tool-boundary, user-message | `handed-off`는 전달이 아니다 |
-| codex-deferred | tool-boundary만, idle wake 없음 | idle 알림 발송 0, `unsupported` |
+| codex-queue | peer-wake·tool-boundary·turn-end, user-message | `handed-off`는 전달이 아니다 |
+| codex-deferred | tool-boundary·turn-end, idle wake 없음 | idle 알림 발송 0, `unsupported` |
 | antigravity-queue | peer-wake·tool-boundary, user-message | 관측 hook이 없어 `claimed-after-handoff`·`resend-due`로 해제 |
 | gemini-deferred | idle wake 없음 | idle 알림 발송 0, `unsupported` |
 
@@ -227,6 +227,10 @@ antigravity의 queue wake 설정 env는 `AGENT_GOVERNANCE_ANTIGRAVITY_QUEUE_WAKE
 `degraded`이면 메시지는 큐에 남고, 상대가 자기 턴 종료·도구 경계·입력에서 인수할 때까지 늦을 수 있다. 송신자는 상대의 처리가 지금 필요할 때만 확인된 전달 상태와 이 지연 가능성을 사용자에게 알린다.
 
 presence lease가 끝나고 live relay가 없으면 presence `state`는 `unreachable`이나 `ended`이고 `autoWake`는 `no-live-relay`다. 현황판은 오래된 online을 보여 주지 않는다. relay는 SessionStart hook에서 뜬다. 그 뒤에는 주 세션의 입력, 도구 실행 뒤 경계와 턴 종료 hook이 현재 세대에 live relay가 없다는 broker 응답을 받았을 때만 그 세대의 relay를 다시 띄운다. 어댑터가 검증된 복구를 켰으면 `list-presence`가 내보내는 명시적 `relayLive`로 확인한 뒤(autoWake에서 추정하지 않는다) 시작 grant(`ensure-relay`)를 받고, 아니면 입력 관측·claim·`clear-deferred` 응답의 복구 정보로 한 번만 시도하며, 그 hook의 host process가 해당 세대가 보고한 host birth와 다르면 사유를 기록하고 띄우지 않는다. 이런 hook이 아직 실행되지 않은 세션, 예를 들어 재부팅 뒤 아직 turn이 없는 Codex 세션은 `no-live-relay`로 보이며 메시지는 큐에 남는다. broker가 답하지 않은 identity의 `autoWake`는 `null`이다.
+
+Codex hook(3.6.0): Windows의 입력·도구 뒤·턴 종료 명령은 host PID를 계산해 넘기지 않고 PowerShell 자기 PID(`--host-shell-pid $PID`)만 넘긴다. hook은 그 셸이 자기 부모인지 확인하고, 위 복구가 실제로 필요할 때만 OS 조회(CIM)로 셸의 부모, 곧 Codex PID를 읽는다. 그 PID를 세대가 보고한 host와 비교하는 규칙은 같다. SessionStart·SessionEnd와 Linux·macOS(`--host-pid "$PPID"`)는 바뀌지 않는다. Windows에서 hook마다 돌던 조회가 hook 시간의 대부분이었다(2026-11-04 측정, AGS 3.5.3: 한가할 때 75%, 동시 8개 85%).
+
+Codex hook 명령의 실행 상한(3.6.0): `hooks/hooks.json`의 `timeout`(10초)은 node가 뜨기 전 단계(플러그인 신뢰 hash, Windows PowerShell 시작)까지 센다. 그래서 `session-message-hook` 진입점은 node 시작부터 `10초 − 3초(시작 전 몫) − 0.5초(stdout 몫)` = 6.5초를 상한으로 쓴다(`HOOK_COMMAND_BUDGET`, 시험이 hooks.json timeout과 맞는지 확인한다). 본문 claim은 상한까지 1초 이상 남았을 때만 시작한다. 상한에 걸리면 기존 실패 보고(`peer-hook-failure`)에 `phase`, `reason: HOOK_BUDGET_EXPIRED`(messaging 요청 안이면 `BROKER_DEADLINE_EXPIRED`)와 멈춘 단계 `step`(요청 이름, `host-pid`, `wake-observation`, `peer-receipt`, `peer-envelope`, `relay-launcher`)을 남기고 아무것도 출력하지 않는다. 상한 아래에서는 출처 영수증 저장소가 잠금을 기다리지 않는다(busy timeout 0). 잠겨 있으면 그 단계가 사유를 남기고 실패한다. claim 뒤에 실패하면 그 본문은 claim lease가 끝날 때까지 다시 전달되지 않고, 끝난 뒤 다음 경계에서 다시 인수된다. 동기 SQLite 대기 자체는 끊을 수 없으므로 10초 안 종료를 보장하지는 않는다. SessionEnd는 Codex 기본 1초(최대 3초) 제한을 그대로 받는다.
 
 #### 세대 식별(C2)
 

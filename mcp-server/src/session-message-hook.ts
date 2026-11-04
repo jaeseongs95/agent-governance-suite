@@ -16,7 +16,7 @@ import type { SessionMessage } from "./session-message-store.js";
 import { TrustStore } from "./trust-store.js";
 import { hostAliveAtBound } from "./host-process-watch.js";
 import { readRelayCodeDigest } from "./relay-code-identity.js";
-import { adaptHostInput, hostDeliveryProfile, nativePeerWait, resolveHookHost, resolveHookProcessPid, type SupportedHookHost } from "./host-input-adapter.js";
+import { adaptHostInput, hostDeliveryProfile, nativePeerWait, resolveHookHost, resolveHookProcessPid, turnEndContinuation, type SupportedHookHost } from "./host-input-adapter.js";
 
 // Addons register and consume this exact bundled namespace; other bundles/processes have separate registries.
 export { registerHookHostAdapter } from "./host-input-adapter.js";
@@ -45,6 +45,9 @@ export interface SessionMessageHookOptions {
   recoverExistingSession?: boolean;
   /** Host adapter callback; snapshots the claiming event's generation before asynchronous recovery. */
   resolveHostProcess?: () => Readonly<{ pid: number; startToken: string }> | null | Promise<Readonly<{ pid: number; startToken: string }> | null>;
+  /** Host PID read only when relay recovery needs it, within timeoutMs; an explicit host PID takes precedence.
+   * Rejects with a fixed reason when the PID cannot be read. */
+  resolveHostPid?: (timeoutMs: number) => Promise<number>;
   /** Adapter-scoped environment overrides passed only to a spawned relay child; never mutates process.env. */
   relayEnv?: Readonly<Record<string, string | undefined>>;
   /** 비동기 수명 어댑터가 참조된 자식을 close까지 소유한다. 동기 복구 훅에서는 사용하지 않는다. */
@@ -65,12 +68,17 @@ export type HookFailurePhase = "options" | "input" | "handle" | "serialize" | "s
   | "presence-start" | "clear-deferred" | "ensure-relay" | "relay-start" | "recovery" | "peer-wait" | "observer-sync" | "observer-async"
   | "presence-end";
 
+/** The step a handle-phase failure stopped in: a messaging operation name or a fixed local step. Never input values. */
+export type HookFailureStep = string;
+
 /** The same bounded classification that the diagnostic line carries; never messages, paths or peer bodies. */
 export type SessionMessageHookFailure = Readonly<{
   phase: HookFailurePhase;
   reason: string;
   reasonBasis: "unverified-observation" | "producer" | "unknown";
   producerReason?: string;
+  /** Present when the failure happened inside a known step of the phase (for example a budget that expired there). */
+  step?: HookFailureStep;
 }>;
 
 /** Distinguishes a failed hook from a successful hook that had nothing to inject. Both stay fail-open (empty output). */
@@ -84,7 +92,7 @@ const PERSISTED_HOOK_PHASES: ReadonlySet<HookFailurePhase> = new Set(["presence-
 type HookFailureDetail = Readonly<{ grantReason?: string; exitCode?: number | null; signal?: string | null }>;
 
 /** Fixed producer/OS reasons plus bounded metadata; never error messages, SQL, paths or peer bodies. */
-function reportHookFailure(phase: HookFailurePhase, error: unknown, detail?: HookFailureDetail): SessionMessageHookFailure {
+function reportHookFailure(phase: HookFailurePhase, error: unknown, detail?: HookFailureDetail, step?: HookFailureStep): SessionMessageHookFailure {
   const context = hookFailureContext(error);
   let reason = "UNEXPECTED_FAILURE";
   try {
@@ -104,7 +112,7 @@ function reportHookFailure(phase: HookFailurePhase, error: unknown, detail?: Hoo
   const reasonBasis: SessionMessageHookFailure["reasonBasis"] = observed ? "unverified-observation" : ownedReason ? "producer" : "unknown";
   if (!observed) reason = ownedReason ?? reason;
   const failure: SessionMessageHookFailure = Object.freeze({ phase, reason, reasonBasis,
-    ...(ownedReason ? {producerReason: ownedReason} : {}) });
+    ...(ownedReason ? {producerReason: ownedReason} : {}), ...(step ? { step } : {}) });
   try { writeFailureDiagnostic("[agent-governance-suite] peer-hook-failure " + JSON.stringify({ ...failure, context }), (line) => console.error(line)); }
   catch { /* A broken diagnostic sink cannot block a hook or authorize replay. */ }
   if (PERSISTED_HOOK_PHASES.has(phase)) {
@@ -130,6 +138,12 @@ function remainingBudget(budget: HookBudget, reserve = 0): number {
   return remaining;
 }
 
+/** A child step bounded by the remaining budget that ended at the deadline reports the expired budget, keeping its cause. */
+function budgetExpiredOr(budget: HookBudget, error: unknown): unknown {
+  return budget && budget.deadlineMonotonicMs - performance.now() < 1
+    ? retainHookFailureCause(hookFailure("HOOK_BUDGET_EXPIRED", "The session message hook budget expired."), error) : error;
+}
+
 function snapshotOptions(options: SessionMessageHookOptions): SessionMessageHookOptions {
   if (observingClaimState) throw hookFailure("CLAIM_OBSERVER_REENTRY", "Claim observers cannot reenter the hook synchronously.");
   const budget = options.executionBudget ? Object.freeze({ ...options.executionBudget }) : undefined;
@@ -143,6 +157,7 @@ function snapshotOptions(options: SessionMessageHookOptions): SessionMessageHook
   if (options.ensureRelay !== undefined && typeof options.ensureRelay !== "boolean") throw hookFailure("INVALID_RELAY_ENSURE_OPTION", "Invalid relay ensure capability.");
   if (options.recoverExistingSession !== undefined && typeof options.recoverExistingSession !== "boolean") throw hookFailure("INVALID_RELAY_RECOVERY_OPTION", "Invalid relay recovery capability.");
   if (options.resolveHostProcess !== undefined && typeof options.resolveHostProcess !== "function") throw hookFailure("INVALID_HOST_PROCESS_RESOLVER", "Invalid host process resolver.");
+  if (options.resolveHostPid !== undefined && typeof options.resolveHostPid !== "function") throw hookFailure("INVALID_HOST_PID_RESOLVER", "Invalid host PID resolver.");
   if (options.relayOwner !== undefined && typeof options.relayOwner !== "function") throw hookFailure("INVALID_RELAY_OWNER", "Invalid relay owner.");
   if (options.isolateDetachedHandles !== undefined && typeof options.isolateDetachedHandles !== "boolean") {
     throw hookFailure("INVALID_HANDLE_ISOLATION_OPTION", "Invalid handle isolation option.");
@@ -189,6 +204,10 @@ function windowsArgument(value: string): string {
   return `"${value.replace(/(\\*)"/gu, "$1$1\\\"").replace(/(\\+)$/u, "$1$1")}"`;
 }
 
+function windowsPowerShell(): string {
+  return `${process.env.SystemRoot ?? "C:\\Windows"}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`;
+}
+
 /** Windows: starts node with these arguments through Start-Process without -NoNewWindow, i.e. ShellExecuteEx, so the
  * process gets this process's environment and job but none of its handles. */
 function launchWithoutInheritedHandles(args: readonly string[], environment: NodeJS.ProcessEnv, timeoutMs: number,
@@ -197,7 +216,7 @@ function launchWithoutInheritedHandles(args: readonly string[], environment: Nod
   const literal = (value: string) => `'${value.replace(/['\u2018\u2019\u201a\u201b]/gu, "$&$&")}'`;
   const script = `$p = Start-Process -FilePath ${literal(process.execPath)} -ArgumentList ${literal(args.map(windowsArgument).join(" "))}`
     + " -WindowStyle Hidden -PassThru; [Console]::Out.Write($p.Id)";
-  const powershell = `${process.env.SystemRoot ?? "C:\\Windows"}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`;
+  const powershell = windowsPowerShell();
   try {
     // execFile accepts only an unsigned integer timeout, and 0 would mean no timeout.
     execFile(powershell, ["-NoLogo", "-NoProfile", "-NonInteractive", "-EncodedCommand", Buffer.from(script, "utf16le").toString("base64")],
@@ -213,13 +232,44 @@ function launchWithoutInheritedHandles(args: readonly string[], environment: Nod
 }
 
 const RELAY_LAUNCHER_TIMEOUT_MS = 5_000;
+const HOST_PID_LOOKUP_TIMEOUT_MS = 5_000;
 
-/** The launcher exits before this hook does, so the host sees its hook pipes close when the hook exits. */
-function launchRelayWithoutInheritedHandles(args: readonly string[], environment: NodeJS.ProcessEnv): void {
-  launchWithoutInheritedHandles(args, environment, RELAY_LAUNCHER_TIMEOUT_MS, (error) => {
-    if (error) {
+/**
+ * The parent PID of a live process, read from the OS within timeoutMs. Node has no API for another process's parent;
+ * Windows reads it through CIM, which costs a PowerShell start, so callers read it only when they need it.
+ */
+export function readParentProcessId(pid: number, timeoutMs: number, platform: NodeJS.Platform = process.platform): Promise<number> {
+  if (!Number.isSafeInteger(pid) || pid < 1) return Promise.reject(hookFailure("HOST_PID_LOOKUP_INVALID", "The process id is invalid."));
+  const [command, args] = platform === "win32"
+    ? [windowsPowerShell(), ["-NoLogo", "-NoProfile", "-NonInteractive",
+      "-EncodedCommand", Buffer.from(`[Console]::Out.Write((Get-CimInstance Win32_Process -Filter 'ProcessId=${pid}' -ErrorAction Stop).ParentProcessId)`, "utf16le").toString("base64")]]
+    : ["ps", ["-o", "ppid=", "-p", String(pid)]];
+  return new Promise((resolve, reject) => {
+    try {
+      execFile(command, args, { windowsHide: true, timeout: Math.max(1, Math.floor(timeoutMs)) }, (error, stdout) => {
+        const parent = Number(String(stdout).trim());
+        if (error) reject(retainHookFailureCause(hookFailure((error as { killed?: unknown }).killed === true ? "HOST_PID_LOOKUP_TIMED_OUT" : "HOST_PID_LOOKUP_FAILED",
+          "The host process id could not be read."), error));
+        else if (!Number.isSafeInteger(parent) || parent < 1) reject(hookFailure("HOST_PID_LOOKUP_FAILED", "The host process id could not be read."));
+        else resolve(parent);
+      });
+    } catch (error) {
+      reject(retainHookFailureCause(hookFailure("HOST_PID_LOOKUP_FAILED", "The host process id could not be read."), error));
+    }
+  });
+}
+
+/** The launcher exits before this hook does, so the host sees its hook pipes close when the hook exits. A budgeted hook
+ * waits for it no longer than its remaining budget: the host would end the hook, with the launcher in its job, first. */
+function launchRelayWithoutInheritedHandles(args: readonly string[], environment: NodeJS.ProcessEnv, budget: HookBudget): void {
+  launchWithoutInheritedHandles(args, environment, Math.min(RELAY_LAUNCHER_TIMEOUT_MS, remainingBudget(budget)), (error) => {
+    if (!error) return;
+    const expired = budgetExpiredOr(budget, error);
+    const { code, signal } = error as { code?: unknown; signal?: unknown };
+    if (expired !== error) {
+      reportHookFailure("relay-start", expired, { exitCode: null, signal: typeof signal === "string" ? signal : null }, "relay-launcher");
+    } else {
       // An OS start code or a launcher reason stays as observed; a launcher exit or timeout gets a fixed reason.
-      const { code, signal } = error as { code?: unknown; signal?: unknown };
       reportHookFailure("relay-start", typeof code === "string" || hookFailureReason(error) ? error
         : retainHookFailureCause(hookFailure("RELAY_LAUNCHER_FAILED", "The relay launcher reported no relay process."), error),
         { exitCode: typeof code === "number" ? code : null, signal: typeof signal === "string" ? signal : null });
@@ -252,7 +302,7 @@ function startRelay(host: SupportedHookHost, sessionId: string, instanceId: stri
     ...(startToken ? ["--parent-start-token", startToken] : []),
   ];
   if (isolateHandles && !relayOwner && process.platform === "win32") {
-    launchRelayWithoutInheritedHandles(relayArgs, environment);
+    launchRelayWithoutInheritedHandles(relayArgs, environment, budget);
     return;
   }
   const child = spawn(process.execPath, relayArgs, {
@@ -379,7 +429,9 @@ function peerWaitGuidance(decision: PeerWaitDecision, locale: SupportedLocale): 
   return rendered === decision.guidanceKey ? decision.guidance : rendered;
 }
 
-export async function handleSessionMessageHook(input: Record<string, unknown>, host: SupportedHookHost, explicitHostPid?: number, options: SessionMessageHookOptions = {}): Promise<Record<string, unknown>> {
+/** progress.step names the step in progress; runSessionMessageHookOutcome reports it with a failure of this call. */
+export async function handleSessionMessageHook(input: Record<string, unknown>, host: SupportedHookHost, explicitHostPid?: number, options: SessionMessageHookOptions = {},
+  progress: { step?: HookFailureStep | undefined } = {}): Promise<Record<string, unknown>> {
   options = snapshotOptions(options);
   const budget = options.executionBudget;
   // Read once, and only when this call shows text (docs/i18n-design.md 4.1 ①).
@@ -397,15 +449,16 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   let profile = readProfile();
   const profileRelayEnv = JSON.stringify(Object.entries(options.relayEnv ?? {}));
   const target = { host, sessionId };
-  // This path opens a second provenance store before claiming; it is not budget-enabled yet.
-  const refuseBudgetedPeerWake = () => {
-    if (budget && observation.kind === "user-input" && observation.wakeOnly && observation.wakeCandidates?.length
-      && supportsInjection(profile.capabilities, "peer-wake")) {
-      throw hookFailure("BUDGETED_PEER_WAKE_UNSUPPORTED", "Budgeted peer-wake receipt recording is not supported.");
-    }
+  // Names the synchronous step a failure stops in. Its own lock wait cannot be preempted, so under a budget its store
+  // waits for no lock (busy timeout 0) and the step fails with its reason instead of running past the budget.
+  const stepped = <T>(step: HookFailureStep, run: () => T): T => {
+    progress.step = step;
+    const value = run();
+    progress.step = undefined;
+    return value;
   };
-  refuseBudgetedPeerWake();
   async function request<T>(operation: string, payload: Record<string, unknown>): Promise<T> {
+    progress.step = operation;
     remainingBudget(budget);
     const claim = operation === "claim-deferred" || operation === "claim-turn-end";
     if (budget) remainingBudget(budget, claim ? budget.postClaimReserveMs : 0);
@@ -425,6 +478,7 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
       observeClaim(options, "response-received", messages.map((message) => message.messageId));
     }
     remainingBudget(budget);
+    progress.step = undefined;
     return result;
   }
   async function ensureVerifiedRelay(hostProcess: Readonly<{ pid: number; startToken: string }>, expectedPresenceInstanceId?: string | null): Promise<void> {
@@ -567,7 +621,6 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     const resolvedRelayEnv = JSON.stringify(Object.entries(options.relayEnv ?? {}));
     if (resolvedRelayEnv !== profileRelayEnv) {
       profile = readProfile();
-      refuseBudgetedPeerWake();
     }
   }
 
@@ -600,7 +653,16 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     const recovery = claimed?.relayRecovery;
     if (!recovery?.instanceId || options.recoverExistingSession || !actorAccess(observation.actor).allowed) return;
     try {
-      const hostPid = resolveHookProcessPid(host, explicitHostPid, undefined);
+      // A host whose hook command passes no host PID (the Windows Codex shell) has it read here, only for recovery.
+      let observedHostPid = explicitHostPid;
+      if (observedHostPid === undefined && options.resolveHostPid) {
+        progress.step = "host-pid";
+        try { observedHostPid = await options.resolveHostPid(Math.min(HOST_PID_LOOKUP_TIMEOUT_MS, remainingBudget(budget))); }
+        catch (error) { throw budgetExpiredOr(budget, error); }
+        progress.step = undefined;
+        remainingBudget(budget);
+      }
+      const hostPid = resolveHookProcessPid(host, observedHostPid, undefined);
       if (!hostPid) throw hookFailure("RELAY_RECOVERY_HOST_UNIDENTIFIED", "This hook did not receive its host process identity.");
       if (!Number.isInteger(recovery.hostPid) && recovery.replace === true) throw hookFailure("RELAY_RECOVERY_PARENT_UNREPORTED", "A live relay of a generation without a reported host process is not replaced.");
       if (Number.isInteger(recovery.hostPid) && recovery.hostPid !== hostPid) throw hookFailure("RELAY_RECOVERY_PARENT_MISMATCH", "This hook's host process is not the generation's reported host.");
@@ -611,9 +673,10 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
         if (grant.reason !== "RELAY_ALIVE") relayNotStarted("RELAY_SPAWN_NOT_GRANTED", { grantReason: typeof grant.reason === "string" && /^[A-Z_]{1,64}$/u.test(grant.reason) ? grant.reason : "UNREPORTED" });
         return;
       }
-      startRelay(host, sessionId, recovery.instanceId, profile.transport, explicitHostPid, undefined, budget, grant.relayId, options.relayEnv, undefined,
+      startRelay(host, sessionId, recovery.instanceId, profile.transport, hostPid, undefined, budget, grant.relayId, options.relayEnv, undefined,
         options.isolateDetachedHandles === true);
-    } catch (error) { reportHookFailure("recovery", error); }
+    } catch (error) { reportHookFailure("recovery", error, undefined, progress.step); }
+    progress.step = undefined;
   };
   const limits = { target, maxMessages: HOST_CLAIM_MAX_MESSAGES, maxBodyChars: HOST_CLAIM_MAX_BODY_CHARS };
   const relayCode = installedRelayCode();
@@ -622,10 +685,12 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   let messages: SessionMessage[] = [];
   if (observation.kind === "user-input") {
     if (observation.wakeOnly && observation.wakeCandidates?.length && supportsInjection(profile.capabilities, "peer-wake")) {
+      remainingBudget(budget);
+      const sourceReceiptId = stepped("wake-observation", () => recordWakeHookObservation(observation, Date.now(), budget ? { busyTimeoutMs: 0 } : {}));
       const result = await request<{ recognized: boolean; messages: SessionMessage[]; managed: boolean; retired?: boolean }>("claim-host-wake", {
         ...limits,
         observation,
-        sourceReceiptId: recordWakeHookObservation(observation),
+        sourceReceiptId,
       });
       // UserPromptSubmit blocks before a model request. An empty/unavailable
       // claim alone cannot discard input: require a verified current managed wake.
@@ -647,7 +712,9 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
     messages = claimed.messages;
     await recoverUnverifiedRelay(claimed);
   } else if (observation.kind === "turn-end") {
-    if (supportsInjection(profile.capabilities, "turn-end")) {
+    // A turn the host already continued through its Stop hook gets no second continuation from messaging: a body waits
+    // for the next boundary, so a stream of messages cannot extend one turn without end.
+    if (supportsInjection(profile.capabilities, "turn-end") && observation.stopHookActive !== true) {
       const claimed = await request<ClaimWithRecovery>("claim-turn-end", fencedLimits);
       messages = claimed.messages;
       await recoverUnverifiedRelay(claimed);
@@ -657,17 +724,20 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   }
   remainingBudget(budget);
   if (messages.length === 0) return {};
-  const recorded = recordPeerMessages(host, sessionId, messages, budget);
+  const recorded = stepped("peer-receipt", () => recordPeerMessages(host, sessionId, messages, budget));
   remainingBudget(budget);
-  const envelope = sessionMessageEnvelope(recorded, locale());
+  const envelope = stepped("peer-envelope", () => sessionMessageEnvelope(recorded, locale()));
   remainingBudget(budget);
-  return additionalContext(adapted.outputEventName, envelope);
+  // At a turn end the body continues the turn; the host decides the form (Codex: decision/reason).
+  return observation.kind === "turn-end" ? turnEndContinuation(host, adapted.outputEventName, envelope)
+    : additionalContext(adapted.outputEventName, envelope);
 }
 
 /** Every failure is fail-open (empty output), but the outcome keeps the failed step and reason distinct from an
  * empty success so a caller can tell "no message" from "messaging failed". */
 export async function runSessionMessageHookOutcome(host: SupportedHookHost, raw: string, explicitHostPid?: number, options: SessionMessageHookOptions = {}): Promise<SessionMessageHookOutcome> {
   let phase: HookFailurePhase = "options";
+  const progress: { step?: HookFailureStep | undefined } = {};
   try {
     options = snapshotOptions(options);
     phase = "input";
@@ -675,15 +745,39 @@ export async function runSessionMessageHookOutcome(host: SupportedHookHost, raw:
     if (!input || typeof input !== "object" || Array.isArray(input)) throw hookFailure("INVALID_HOOK_INPUT", "Invalid hook input.");
     phase = "handle";
     remainingBudget(options.executionBudget);
-    const output = await handleSessionMessageHook(input, host, explicitHostPid, options);
+    const output = await handleSessionMessageHook(input, host, explicitHostPid, options, progress);
     remainingBudget(options.executionBudget);
     phase = "serialize";
     const serialized = Object.keys(output).length > 0 ? JSON.stringify(output) : "";
     remainingBudget(options.executionBudget);
     return { ok: true, output: serialized };
   } catch (error) {
-    return { ok: false, output: "", failure: reportHookFailure(phase, error) };
+    return { ok: false, output: "", failure: reportHookFailure(phase, error, undefined, phase === "handle" ? progress.step : undefined) };
   }
+}
+
+/**
+ * The hook command budget (3.6.0). Every hooks/hooks.json entry that runs this file with a `timeout` gives
+ * HOOK_COMMAND_TIMEOUT_MS (tests/session-messaging/codex-hook-boundaries.test.ts checks it). The host's clock starts before
+ * node does: the host checks the plugin's trust hash and, on Windows, starts PowerShell first. This process's own clock
+ * (performance.now(), from node's start) therefore gets the timeout less that pre-start reserve and a stdout reserve,
+ * so a budget that expires is reported with its step before the host ends the hook without any record.
+ */
+export const HOOK_COMMAND_TIMEOUT_MS = 10_000;
+const HOOK_COMMAND_PRE_START_RESERVE_MS = 3_000;
+const HOOK_COMMAND_STDOUT_RESERVE_MS = 500;
+export const HOOK_COMMAND_BUDGET: Readonly<{ deadlineMonotonicMs: number; postClaimReserveMs: number }> = Object.freeze({
+  deadlineMonotonicMs: HOOK_COMMAND_TIMEOUT_MS - HOOK_COMMAND_PRE_START_RESERVE_MS - HOOK_COMMAND_STDOUT_RESERVE_MS,
+  // A claim starts only while this much budget remains for its receipt and envelope; a body claimed and then lost
+  // waits out its claim lease before it is claimed again.
+  postClaimReserveMs: 1_000,
+});
+
+/** `--name <positive integer>` once, or undefined. */
+function pidArgument(name: string): number | undefined {
+  const index = process.argv.indexOf(name);
+  const value = index >= 0 ? Number.parseInt(process.argv[index + 1] ?? "", 10) : Number.NaN;
+  return Number.isInteger(value) ? value : undefined;
 }
 
 /** Every broker failure is fail-open so messaging never blocks the host. Use runSessionMessageHookOutcome to
@@ -700,12 +794,19 @@ if (isHookEntry(import.meta.url, "session-message-hook")) {
   let raw: string | null = null;
   try { raw = readFileSync(0, "utf8"); } catch (error) { failed("stdin", error); }
   if (raw !== null) {
-    const hostPidIndex = process.argv.indexOf("--host-pid");
-    const hostPid = Number.parseInt(hostPidIndex >= 0 ? process.argv[hostPidIndex + 1] ?? "" : "", 10);
+    const hostPid = pidArgument("--host-pid");
+    // `--host-shell-pid <shell PID>`: the host started this hook in that shell, so the host is the shell's parent. Reading
+    // it costs an OS query (Windows CIM), which runs only when relay recovery needs the host (see recoverUnverifiedRelay).
+    const shellPid = hostPid === undefined ? pidArgument("--host-shell-pid") : undefined;
+    const resolveHostPid = shellPid === undefined ? undefined : async (timeoutMs: number): Promise<number> => {
+      if (process.ppid !== shellPid) throw hookFailure("HOOK_SHELL_PID_MISMATCH", "The named shell is not this hook's parent process.");
+      return await readParentProcessId(shellPid, timeoutMs);
+    };
     try {
       const host = resolveHookHost(process.argv.slice(2), "codex");
       // This entry is the Codex hook command; Codex runs it through PowerShell on Windows (see isolateDetachedHandles).
-      void runSessionMessageHookOutcome(host, raw, Number.isInteger(hostPid) ? hostPid : undefined, { isolateDetachedHandles: true })
+      void runSessionMessageHookOutcome(host, raw, hostPid, { isolateDetachedHandles: true, executionBudget: HOOK_COMMAND_BUDGET,
+        ...(resolveHostPid ? { resolveHostPid } : {}) })
         .then((outcome) => {
           // The typed outcome already reported its failed phase and reason; public exit remains fail-open.
           if (!outcome.ok) return;

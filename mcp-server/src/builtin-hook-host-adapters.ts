@@ -451,6 +451,8 @@ const builtinHookHostAdapters = new Map<string, Readonly<HookHostAdapter>>([
     adaptInput: adaptCodexHookInput, ownsTool: ownsGovernanceTool,
     deliveryProfile: (environment, diagnose) => deliveryProfile(codexQueueEnabled(environment, diagnose) ? "codex-queue" : "codex-deferred", false),
     processPid: (pid) => pid, peerWait: codexNativePeerWait,
+    // Codex Stop output is decision/reason only (codex-rs hooks StopCommandOutputWire, deny_unknown_fields; 0.166.0).
+    continuesTurnWithReason: true,
   }],
   ["claude-code", {
     adaptInput: adaptClaudeHookInput, ownsTool: ownsGovernanceTool,

@@ -165,13 +165,19 @@ it("synchronous observer reentry cannot start another hook claim", async () => {
   expect(f.request).toHaveBeenCalledTimes(1); expect(f.close).toHaveBeenCalledTimes(1);
 });
 
-it("rejects unsupported budgeted peer wake before recording its source", async () => {
+it("records a budgeted peer wake's source without a lock wait, then claims it under the budget (3.6.0)", async () => {
   const diagnostic = vi.spyOn(console, "error").mockImplementation(() => {});
   vi.stubEnv("AGENT_GOVERNANCE_CODEX_QUEUE_WAKE", "1");
+  f.wake.mockReturnValue("wake-source-synthetic");
+  f.request.mockImplementation(async () => ({ recognized: true, managed: true, messages: [message] }));
   const wake = { hook_event_name: "UserPromptSubmit", session_id: "budget-target", prompt: "[agent-governance-suite:wake:abcdefghijklmnopqrstuvwxyz]" };
-  expect(await runSessionMessageHook("codex", JSON.stringify(wake), undefined, { executionBudget: budget() })).toBe("");
-  expect(f.wake).not.toHaveBeenCalled(); expect(f.request).not.toHaveBeenCalled(); expect(f.open).not.toHaveBeenCalled();
-  expect(diagnostic.mock.calls[0]![0]).toContain("BUDGETED_PEER_WAKE_UNSUPPORTED");
+  expect(await runSessionMessageHook("codex", JSON.stringify(wake), undefined, { executionBudget: budget() })).toContain("source-synthetic");
+  expect(f.wake).toHaveBeenCalledTimes(1);
+  expect(f.wake.mock.calls[0]![2]).toEqual({ busyTimeoutMs: 0 });
+  expect(f.request.mock.calls.map(([operation]) => operation)).toEqual(["claim-host-wake"]);
+  expect(f.request.mock.calls[0]![1]).toMatchObject({ sourceReceiptId: "wake-source-synthetic" });
+  expect(f.request.mock.calls[0]![3]).toMatchObject({ deadlineMonotonicMs: 800 });
+  expect(diagnostic).not.toHaveBeenCalled();
 });
 
 it.each(["envelope", "output"])("checks actual time after %s serialization, preserving cleanup and phase", async (stage) => {
