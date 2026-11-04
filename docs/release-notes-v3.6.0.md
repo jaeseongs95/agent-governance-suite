@@ -100,8 +100,8 @@ workflow를 고치는 것은 하려는 일이 바뀌었기 때문이다. 그런�
 Codex 0.166.0은 stdio MCP 서버에 기본 환경 변수(HOME, PATH 등)와 `env_vars`에 적은 이름만 넘긴다(`codex-rs/rmcp-client/src/utils.rs`). AGS `.mcp.json`에 `env_vars`가 없어 `AGENT_GOVERNANCE_*`·`XDG_STATE_HOME`·`LOCALAPPDATA`가 서버에 가지 않았고, hook과 서버가 서로 다른 상태 DB를 봤다. 그래서 hook이 기록한 작업 폴더를 서버가 몰라 첫 `start_workflow`가 「workspace가 필요하다」로 실패했다.
 
 3.6.0 후보(`4982457`)의 실호스트 A/B에서는 workspace를 생략한 첫 `start_workflow`가 Codex 2회 중 2회, Claude Code 2회 중 1회 같은 오류로 실패했다. 원인은 시험 환경에 있었다. 시험 서버의 전역 Codex 설정에 옛 시험 빌드 AGS 3.0.0-rc.1 두 개가 켜져 있었고, 이 빌드는 옛 현황판 형식(표 `sessions`)을 쓴다. 그래서 현황판 파일 `~/.agent-governance-suite/session-board.sqlite3`에 `board_sessions` 옆에 `sessions`가 다시 생겼다. 3.x는 2.x 형식과 호환하지 않으므로 이 파일을 `BOARD_FOREIGN_DATABASE`로 거부하고, hook은 작업 폴더를 기록하지 못했다(그날 기록 0건, 실호스트 Claude 1회 debug 로그의 `board-hook-failure {"phase":"open"…}`). 거부 자체는 의도한 동작이다. 결함은 서버가 이 읽기 실패를 「호스트가 이 세션의 작업 폴더를 알리지 않았다」로 보고해 실제 원인을 가린 것이다. 3.5.3도 같은 상태였고, 3.5.3 쪽 에이전트는 처음부터 workspace를 직접 넘겨서 이 오류를 만나지 않았다.
-<!-- TODO 수정 후보 A/B에서 workspace 생략 시 성공 건수, env_vars 수정 확인 범위 -->
 
+옛 시험 빌드를 지우고 수정 후보(`bb0aee55`)로 다시 돌린 A/B에서는, 3.6.0이 workspace 없이 부른 `start_workflow` 5회(Claude Code 1, Codex 3, agy 1)가 모두 그 실행의 작업 폴더를 찾았다. 하네스는 실행마다 `AGENT_GOVERNANCE_SHARED_STATE_DIR`를 새 폴더로 주므로, Codex 서버가 hook과 같은 현황판을 읽었다는 것은 `env_vars`로 이 변수가 서버에 갔다는 뜻이다. 같은 조건에서 3.5.3 Codex는 1회 「workspace가 필요하다」로 실패한 뒤 workspace를 넘겨 진행했다.
 
 ### 바뀐 점
 
@@ -159,14 +159,24 @@ PostgreSQL 전환(3.7.0)은 잠금 문제를 없애지만 위 PowerShell 조회,
 
 ## 검증
 
-대상 커밋은 `4982457182cfe737d87d46f0b8d681b3afc2f3d4`다.
+대상 커밋은 `bb0aee5598607c1dc5fb4619823ff671c23acdbc`다. 그 뒤 커밋은 이 릴리스 노트만 바꿨다.
 
-- **CI:** run 41828340699, `Node 24 / ubuntu-latest`·`Node 24 / windows-latest` 모두 success.
+- **CI:** run 41850656664, `Node 24 / ubuntu-latest`·`Node 24 / windows-latest` 모두 success.
 - **정적 검사 10종:** `i18n --check`, Claude·en 패키지 `--check`, `check-skill-context-optimization`, `check-source-lock`, `sync-release-metadata`, `check-bundle`, `validate-repository`, eslint, `tsc --noEmit` 모두 종료 코드 0.
-<!-- TODO Linux·Windows 시험 서버, 실호스트 A/B -->
+- **Linux 시험 서버(Node 24.22.1):** 빌드, `run-tests`, 실행 시험 모두 종료 코드 0. vitest 파일 287 통과·1 skip, 시험 4183 통과·15 skip·8 todo. node:test 501/501.
+- **Windows 시험 서버:** 빌드, 시험, 실행 시험 모두 종료 코드 0. vitest 파일 286 통과·2 skip, 시험 4170 통과·28 skip·8 todo. node:test 500 통과·1 skip·실패 0.
+  - 앞 후보(`4982457`)의 첫 Windows 실행에서 node:test 1건(`sibling-stdin-utf8`의 profile-workspace 자식 프로세스)이 10초 제한에 SIGTERM으로 끝났다. 같은 후보의 전체 재실행 1회와 node:test 단계만 5회 반복, 이번 후보 실행에서는 재현되지 않았다. 원인은 확인하지 못했고, 제한 시간은 바꾸지 않았다.
+- **회귀 시험의 결함 탐지:** 수정 전 소스(`c2064e88`의 `mcp-server/src`·`locales`)로 빌드하면 `minimal-workflow-start.test.ts`의 「읽을 수 없는 현황판」 시험이 실패한다(그 서버는 원인을 `UNEXPECTED_FAILURE`로 남기고 「호스트가 알리지 않았다」로 보고).
+- **실호스트 A/B(Linux, A=3.5.3, B=`bb0aee55`, 호스트마다 2회씩, 한 번에 한 실행):**
+  - 세 파일 작업: 13회 중 12회 완료(`mul 3 4`=12, `test.js` 그대로, README 한 줄). 남은 1회(Codex B 1회)는 앞 A/B가 `finalize_workflow` 없이 남긴 open root가 같은 절대 경로를 쥐고 있어 `ROOT_CONFLICT`로 멈췄다. 하네스가 회차마다 같은 작업 폴더 경로를 다시 쓴 탓이다. 제품은 다른 세션 root라 정상 거부했다. 새 경로로 다시 돌린 1회는 완료했다.
+  - 스킬 시나리오 12회: 설계 질문 턴에서 바뀐 파일 0.
+  - 플러그인 설정: 시험 전후 Codex·agy 플러그인 목록 차이 없음. Codex 중복 MCP 서버 경고 0.
+  - agy 실행 8회(4982457 4회, `bb0aee55` 4회)는 회당 295~453초로 모두 끝났고, 응답 없이 멈춘 실행은 없었다.
 
 ### 이번에 고치지 않은 것
 
 - 서브에이전트에는 스킬 목적 안내가 닿지 않는다. 메시지마다 나가는 안내는 사용자 메시지(UserPromptSubmit)에서만 나가고, AGS는 서브에이전트 시작 이벤트(Claude Code `SubagentStart`)를 등록하지 않는다. 그래서 부모가 지시문에 스킬을 적지 않으면 서브에이전트는 스킬 대조 안내를 받지 못한다. workflow 변경 안내만 서브에이전트가 workflow 도구를 부를 때 닿는다. 다음 판에서 서브에이전트 시작 hook으로 고친다.
 - 메인 에이전트에게 서브에이전트 위임을 권하는 안내가 없다. 기본값은 직접 수행이고, 사용자가 요청하지 않으면 순이익 조건을 모두 확인해야 위임한다. 독립적으로 나눌 수 있는 일에서도 위임 검토로 이어지지 않는다. 위 서브에이전트 안내와 함께 다음 판에서 고친다.
-- 3.5.3 실호스트 시험에서 agy 실행 1회가 약 7분 동안 응답하지 않았다. 그동안 AGS hook 프로세스는 돌지 않았고, 원인은 확인하지 못했다. <!-- TODO A/B 재발 여부 -->
+- 3.5.3 실호스트 시험에서 agy 실행 1회가 약 7분 동안 응답하지 않았다. 그동안 AGS hook 프로세스는 돌지 않았고, 원인은 확인하지 못했다. 3.6.0 A/B의 agy 8회에서는 재발하지 않았다.
+- 두 차례 실호스트 A/B에서 Claude Code B 4회 중 4회가 `checkpoint_context`를 같은 `requestId`로 다른 내용과 함께 다시 불러 `REQUEST_CONFLICT`를 받았다. 서버는 계약대로 거부했고, 에이전트가 requestId를 재사용한 것이다. 작업은 모두 완료했다.
+- 실호스트 A/B에서 Claude Code B 1회는 세 파일을 편집 도구가 아니라 셸 명령(heredoc) 한 번으로 바꿨고, 「workflow 없이 제품 파일 세 개째 변경」 거부를 거치지 않았다. 이 거부는 편집 도구 호출만 센다. 3.5.3과 같은 한계다.
