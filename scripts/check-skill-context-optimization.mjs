@@ -34,7 +34,6 @@ function git(...args) {
 // - 3.5.2 intake line (docs/release-notes-v3.5.2.md): ask once before the first write on an undetermined premise that changes the structure.
 // - 3.6.0 intake lines (9c438be1): name checkpoint_context instead of the retired context-continuity skill, re-check
 //   skills each message, reconcile plans; coordinate-subagents gives a verification agent an independent judgment.
-// - 3.6.0 mutation-risk-preflight (7f3d1255): an approval whose evidence states no expiresAt does not expire.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
   Object.freeze({
@@ -78,13 +77,6 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/coordinate-subagents/references/entry-details.md": ["4f29865da0ca78b114e038120d0a3165e5d22d339d0a81b9e11c1c1ce726577a", "5769d6ee39c9396cac4e55ace84257a93219c0fc3e8b293f67c9973747a0dc88"],
       "skills/orchestrator/SKILL.md": ["b4fea1a91eaa7dbff3049749d441c366baa962ad66a9e7d65cdcc55467b22604", "03ca8869bbf594118eb2020868d19e3c1e5bf1f8be4ec0ec071f2f237b8b122e"],
       "skills/orchestrator/classification.json": ["887c5a38a041681a71e419b9a9e087f884ff8370cb5142c24ab80f290d4ab57f", "7396c12527514eb07a892499cc9f2d55250228a06de7d6ba042a6a7b01fe2642"],
-    }),
-  }),
-  Object.freeze({
-    revision: "7f3d1255c37d0443600754e5360614cc114cfa6e",
-    hashes: Object.freeze({
-      "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json": ["6e0e6d58bd0ca772633f37c02fe6e109da2a5a03a8a382406c3e08a0ac53473a", "761c3185090df53f2f73c12dea07e368964661a730a7ef7c61f9bd5bf52416fe"],
-      "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": ["93c4f5dafe50c4718b6cd2898a872106e26d394ad4fc43a5635568f6a77d6bc5", "d79381c7888c91f452642e343f5603e7851eef9b874c4455c890d0a53ab3d8ca"],
     }),
   }),
 ]);
@@ -390,11 +382,26 @@ const SCRIPT_I18N_SUCCESSOR = Object.freeze({
   },
 });
 
-/** The digest pinned checks compare: reviewed i18n bytes stand for the exact predecessor they replaced. */
+// 3.6.0: an approval whose evidence states no expiresAt does not expire. Reviewed bytes stand for the exact
+// predecessor by digest, newest first; executable history is not read.
+const APPROVAL_EXPIRY_SUCCESSOR = Object.freeze({
+  revision: "mutation-risk-preflight-approval-expiry-optional",
+  authorityEffect: "none",
+  hashes: {
+    "skills/mutation-risk-preflight/contracts/mutation-intent.v1.schema.json": ["6e0e6d58bd0ca772633f37c02fe6e109da2a5a03a8a382406c3e08a0ac53473a", "761c3185090df53f2f73c12dea07e368964661a730a7ef7c61f9bd5bf52416fe"],
+    "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": ["93c4f5dafe50c4718b6cd2898a872106e26d394ad4fc43a5635568f6a77d6bc5", "d79381c7888c91f452642e343f5603e7851eef9b874c4455c890d0a53ab3d8ca"],
+  },
+});
+const DIGEST_SUCCESSORS = Object.freeze([APPROVAL_EXPIRY_SUCCESSOR, SCRIPT_I18N_SUCCESSOR]);
+
+/** The digest pinned checks compare: reviewed bytes stand for the exact predecessor they replaced. */
 export function pinnedDigest(path, bytes) {
-  const digest = createHash("sha256").update(bytes).digest("hex");
-  const successor = SCRIPT_I18N_SUCCESSOR.hashes[path];
-  return successor && digest === successor[1] ? successor[0] : digest;
+  let digest = createHash("sha256").update(bytes).digest("hex");
+  for (const { hashes } of DIGEST_SUCCESSORS) {
+    const successor = hashes[path];
+    if (successor && digest === successor[1]) digest = successor[0];
+  }
+  return digest;
 }
 // AC-010 adds peer instructions after the reviewed optimization. Preserve all
 // historical bytes and compare the exact, separately frozen addition as well.
