@@ -187,7 +187,13 @@ export interface MinimalStartContinuity {
    * The working directory the host reported for the calling session (session board), the default workspace. The
    * server's own directory is not used: a host may start the MCP server in the plugin folder.
    */
-  sessionWorkspace?(): string | null;
+  sessionWorkspace?(): SessionWorkspaceObservation;
+}
+
+/** The session's reported working directory, or why the record holding it could not be read. */
+export interface SessionWorkspaceObservation {
+  workspace: string | null;
+  unreadable?: string;
 }
 
 /** The presence of a root's owner sessions, read when asked (ROOT_CONFLICT guidance, release_convergence_root). */
@@ -769,8 +775,12 @@ export class WorkflowService {
           { field: "rootId", reason: "ROOT_NOT_OWNED", rootId: request.rootId });
       }
       const observed = request.workspace === null ? continuity.sessionWorkspace?.() ?? null : null;
-      const workspace = request.workspace ?? (observed && path.isAbsolute(observed) ? observed : null);
+      const workspace = request.workspace ?? (observed?.workspace && path.isAbsolute(observed.workspace) ? observed.workspace : null);
       if (!workspace && request.rootId === null) {
+        if (observed?.unreadable) {
+          throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.workspaceRequiredSessionRecordUnreadable", { reason: observed.unreadable }),
+            { field: "workspace", reason: "SESSION_RECORD_UNREADABLE", cause: observed.unreadable });
+        }
         throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.workspaceRequiredHostReportedSession", {}), { field: "workspace" });
       }
       // Edits made in this window before the start are covered by the run but were not observed under it.

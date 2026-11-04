@@ -192,6 +192,7 @@
   "workflow.service.workspaceAbsolutePath": "workspace must be an absolute path.",
   "workflow.service.workspaceBaselineDiffersFirstBaseline": "The workspace baseline differs from the first baseline of this lineage.",
   "workflow.service.workspaceRequiredHostReportedSession": "workspace is required: the host has not reported this session's working directory.",
+  "workflow.service.workspaceRequiredSessionRecordUnreadable": "workspace is required: this session's working-directory record (session board) could not be read ({reason}). Pass the workspace as an absolute path.",
   "workflow.store.claimConvergenceAttemptLease": "Cannot claim the convergence attempt lease.",
   "workflow.store.claimHostCallAdmission": "Cannot claim the host call admission.",
   "workflow.store.claimPluginUpdateNotice": "Cannot claim plugin update notice.",

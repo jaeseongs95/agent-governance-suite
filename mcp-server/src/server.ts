@@ -22,7 +22,7 @@ import {
 } from "../../contracts/types.js";
 import { CONTENT_LANGUAGE_META, msg, render, resolveHostLocale, resolveRequestLocale, ROOT_LOCALE, type MessageKey, type MessageRef, type SupportedLocale } from "./i18n.js";
 import { CATALOGS } from "./i18n-catalog.generated.js";
-import { locateRepository, normalizeSummary, openBoard, readEntry, setSummary, type BoardEntry } from "../../skills/session-board/scripts/board-store.mjs";
+import { BoardFormatError, locateRepository, normalizeSummary, openBoard, readEntry, setSummary, type BoardEntry } from "../../skills/session-board/scripts/board-store.mjs";
 import { contractSchemas } from "./schema-validator.js";
 import { contractFailure, failureContext, failureReason, retainFailureSecondary } from "./failure-diagnostics.js";
 import { inlineSchemaReferences } from "./tool-schema-inline.js";
@@ -35,7 +35,7 @@ import {
   convergenceStatusSummary,
   workflowStatusSummary,
 } from "./response-projections.js";
-import { type RootAccess, type RootOwnerPresenceV1, WorkflowService } from "./workflow-service.js";
+import { type RootAccess, type RootOwnerPresenceV1, type SessionWorkspaceObservation, WorkflowService } from "./workflow-service.js";
 import { hostActorId, type HostAttestationProvider } from "./host-attestation.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from "./korean-prose-glossary.js";
@@ -409,19 +409,21 @@ function closeOnce(board: BoardDatabase | null, error: unknown): void {
 }
 
 /**
- * The working directory the session's own hook last recorded on the board, or null when the board or the row is
- * missing or unreadable. Only a default for start_workflow: the caller can always name the workspace.
+ * The working directory the session's own hook last recorded on the board (null when the board or the row is missing),
+ * or the reason the board could not be read, so start_workflow does not report an unreadable board as an unreported
+ * directory. Only a default for start_workflow: the caller can always name the workspace.
  */
-function observedSessionWorkspace(databasePath: string | null, caller: VerifiedCaller): string | null {
-  if (!databasePath || !existsSync(databasePath)) return null;
+function observedSessionWorkspace(databasePath: string | null, caller: VerifiedCaller): SessionWorkspaceObservation {
+  if (!databasePath || !existsSync(databasePath)) return { workspace: null };
   let board: BoardDatabase | null = null;
   try {
     board = openBoard(databasePath);
     const cwd = readEntry(board, caller.host, caller.sessionId)?.cwd;
-    return typeof cwd === "string" && cwd ? cwd : null;
+    return { workspace: typeof cwd === "string" && cwd ? cwd : null };
   } catch (error) {
-    process.stderr.write(JSON.stringify({ event: "session-workspace-unread", reason: failureReason(error).reason ?? "UNEXPECTED_FAILURE" }) + "\n");
-    return null;
+    const reason = (error instanceof BoardFormatError ? error.code : null) ?? failureReason(error).reason ?? "UNEXPECTED_FAILURE";
+    process.stderr.write(JSON.stringify({ event: "session-workspace-unread", reason }) + "\n");
+    return { workspace: null, unreadable: reason };
   } finally {
     try { board?.close(); } catch { /* the read result does not depend on close */ }
   }

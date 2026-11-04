@@ -285,6 +285,7 @@ export interface MessageParams {
   "workflow.service.workspaceAbsolutePath": Record<string, never>;
   "workflow.service.workspaceBaselineDiffersFirstBaseline": Record<string, never>;
   "workflow.service.workspaceRequiredHostReportedSession": Record<string, never>;
+  "workflow.service.workspaceRequiredSessionRecordUnreadable": { "reason": NestedMessage | number | string; };
   "workflow.store.claimConvergenceAttemptLease": Record<string, never>;
   "workflow.store.claimHostCallAdmission": Record<string, never>;
   "workflow.store.claimPluginUpdateNotice": Record<string, never>;

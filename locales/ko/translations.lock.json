@@ -1149,6 +1149,7 @@
   "workflow.service.workspaceAbsolutePath": "64f4c97756dee7f0e567c87664878c5c87d60493f887961c8c9a173360ad5f62",
   "workflow.service.workspaceBaselineDiffersFirstBaseline": "97153a73db55497ee1970cf72b60c4c7e09ece95732a3dd4b73ab383e89aa705",
   "workflow.service.workspaceRequiredHostReportedSession": "e698eb4ab1aae4acec0a833b064c39cdb0381f1e9973093a28d1be3e542a27a2",
+  "workflow.service.workspaceRequiredSessionRecordUnreadable": "e955d5d8e5a58e4a27ea921cef7ca1c3a1d58192cba03049f63f3d8a12f97ed2",
   "workflow.store.claimConvergenceAttemptLease": "1bd1df80a97cebb3c23af2bb32ba79227c166111819c5f7f9323b4e3407b3af1",
   "workflow.store.claimHostCallAdmission": "1ab336076cd033babf6b65458ba83d2ffe9986360235156df37fb68925d87841",
   "workflow.store.claimPluginUpdateNotice": "6fdcf40072c4dc2fc826b08f446766968e9e4cabdcb524acfaea6f209069d690",
