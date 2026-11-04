@@ -17,10 +17,12 @@ const multiBytes = readFileSync(new URL("./fixtures.orchestrator-multi-workflow-
 const multi = JSON.parse(multiBytes.toString("utf8"));
 const overwriteBytes = readFileSync(new URL("./fixtures.mutation-risk-preflight-overwrite-ask-source-successor.json", import.meta.url));
 const overwrite = JSON.parse(overwriteBytes.toString("utf8"));
+const premiseBytes = readFileSync(new URL("./fixtures.orchestrator-intake-premise-ask-source-successor.json", import.meta.url));
+const premise = JSON.parse(premiseBytes.toString("utf8"));
 type LaterBinding = {path: string; previousDigest: string; digest: string};
 /** For each file a successor after specialist behavior rebound: the first rebinding's base and predecessor, the last one's digest. */
 const reboundAfterSpecialist = new Map<string, {sourceBaseRevision: string; previousDigest: string; digest: string}>();
-for (const later of [multi, overwrite]) {
+for (const later of [multi, overwrite, premise]) {
   for (const binding of later.bindings as LaterBinding[]) {
     const first = reboundAfterSpecialist.get(binding.path);
     reboundAfterSpecialist.set(binding.path, first ? {...first, digest: binding.digest}
@@ -38,6 +40,12 @@ function specialistSource(relativePath: string): Buffer {
   const later = reboundAfterSpecialist.get(relativePath);
   if (!later) return readFileSync(path.join(root, relativePath));
   return sourceAt(later.sourceBaseRevision, relativePath, later.previousDigest);
+}
+/** A source as the multi-workflow successor bound it: a file the intake premise successor rebound reads at its base. */
+function multiSource(relativePath: string): Buffer {
+  const later = (premise.bindings as LaterBinding[]).find(binding => binding.path === relativePath);
+  if (!later) return readFileSync(path.join(root, relativePath));
+  return sourceAt(premise.sourceBaseRevision, relativePath, later.previousDigest);
 }
 type SourceSpan = {path: string; startLine: number; endLine: number; digest: string; startByte?: number; endByte?: number};
 type RecordedSpan = SourceSpan & {selectedBytes: number; selectedDigest: string};
@@ -108,20 +116,22 @@ it("chains the exact orchestrator multi-workflow source after specialist behavio
   expect(multi.priceAndBudgetChanges).toEqual([]);
   expect(multi.modelBehavior).toBe("NOT_RUN");
   for (const binding of multi.bindings) {
-    const actual = readFileSync(path.join(root, binding.path));
+    const actual = multiSource(binding.path);
     expect(actual.length).toBe(binding.bytes);
     expect(hash(actual)).toBe(binding.digest);
     expect(hash(specialistSource(binding.path))).toBe(binding.previousDigest);
-    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
-    expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+    const later = (premise.bindings as LaterBinding[]).find(row => row.path === binding.path);
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(later?.digest ?? binding.digest);
+    if (later) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(later.digest);
+    else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
   const before = JSON.parse(specialistSource("skills/orchestrator/classification.json").toString("utf8"));
-  const after = JSON.parse(readFileSync(path.join(root, "skills/orchestrator/classification.json"), "utf8"));
+  const after = JSON.parse(multiSource("skills/orchestrator/classification.json").toString("utf8"));
   const stableFields = (value: Record<string, unknown>) =>
     Object.fromEntries(Object.entries(value).filter(([key]) => !["applicability", "exclusions"].includes(key)));
   expect(stableFields(after)).toEqual(stableFields(before));
   const previousLines = specialistSource("skills/orchestrator/SKILL.md").toString("utf8").split(/\r?\n/);
-  const lines = readFileSync(path.join(root, "skills/orchestrator/SKILL.md"), "utf8").split(/\r?\n/);
+  const lines = multiSource("skills/orchestrator/SKILL.md").toString("utf8").split(/\r?\n/);
   // The one inserted sentence, taken from the two sources (the intake wording lives only in SKILL.md).
   const [was, now] = [previousLines.join("\n"), lines.join("\n")];
   let head = 0, tail = 0;
@@ -138,7 +148,10 @@ it("chains the exact orchestrator multi-workflow source after specialist behavio
     expect([current.startLine, current.endLine, current.startByte ?? 0]).toEqual([span.startLine, span.endLine, span.startByte]);
     const selected = Buffer.from(lines.slice(span.startLine - 1, span.endLine).join("\n")).subarray(span.startByte, span.endByte);
     expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
-    expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    // A span the intake premise successor widened is checked against the current inventory in that successor's test.
+    if (!premise.spanPreservation.changedSpans.includes(`${span.group}[${span.index}]`)) {
+      expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    }
     const previous = Buffer.from(previousLines.slice(span.startLine - 1, span.endLine).join("\n")).subarray(span.previousStartByte, span.previousEndByte);
     // Unchanged spans keep their exact text; the two widened spans differ only by the one inserted sentence.
     if (!multi.spanPreservation.changedSpans.includes(`${span.group}[${span.index}]`)) expect(selected.equals(previous)).toBe(true);
@@ -197,6 +210,78 @@ it("chains the exact mutation-risk-preflight overwrite source after the multi-wo
     expect(preflight[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
     const previousSelected = Buffer.from(previousLines.slice(span.previousStartLine - 1, span.previousEndLine).join("\n")).subarray(span.previousStartByte, span.previousEndByte);
     expect(selected.equals(previousSelected)).toBe(true);
+  }
+});
+it("chains the exact orchestrator intake premise source after the overwrite source, widening only the span over the changed line", async () => {
+  expect(hash(premiseBytes)).toBe("sha256:fd1acda5ee529f0654b909f261b237baa073b5d3b60220a228e9882276e75dbb");
+  expect(premiseBytes.includes(Buffer.from("\r\n"))).toBe(false);
+  expect(premise.revision).toBe("orchestrator-intake-premise-ask-source-binding-r21");
+  expect(premise.sourceBaseRevision).toBe("fc5ea360bbafafc8f5e54d466eb04f0d3ceba1bb");
+  expect(premise.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.mutation-risk-preflight-overwrite-ask-source-successor.json",
+    bytes: overwriteBytes.length, digest: hash(overwriteBytes)});
+  expect(premise.bindings.map((binding: {path: string}) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json"]);
+  expect(premise.spanPreservation.changedSpans).toEqual(["applicability[5]"]);
+  expect(premise.fixtureFileRewritten).toBe(false);
+  expect(premise.labelChanges).toEqual([]);
+  expect(premise.priceAndBudgetChanges).toEqual([]);
+  expect(premise.modelBehavior).toBe("NOT_RUN");
+  for (const binding of premise.bindings) {
+    const actual = readFileSync(path.join(root, binding.path));
+    expect(actual.length).toBe(binding.bytes);
+    expect(hash(actual)).toBe(binding.digest);
+    // The predecessor is the multi-workflow successor's exact bytes, read at this successor's base.
+    expect(multi.bindings.find((row: LaterBinding) => row.path === binding.path).digest).toBe(binding.previousDigest);
+    expect(hash(multiSource(binding.path))).toBe(binding.previousDigest);
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
+    expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const before = JSON.parse(multiSource("skills/orchestrator/classification.json").toString("utf8"));
+  const after = JSON.parse(readFileSync(path.join(root, "skills/orchestrator/classification.json"), "utf8"));
+  const stableFields = (value: Record<string, unknown>) =>
+    Object.fromEntries(Object.entries(value).filter(([key]) => !["applicability", "exclusions"].includes(key)));
+  expect(stableFields(after)).toEqual(stableFields(before));
+  const previousLines = multiSource("skills/orchestrator/SKILL.md").toString("utf8").split(/\r?\n/);
+  const lines = readFileSync(path.join(root, "skills/orchestrator/SKILL.md"), "utf8").split(/\r?\n/);
+  // The inserted text, taken from the two sources (the intake wording lives only in SKILL.md): one line changes,
+  // and it gains two sentences placed right before that line's last sentence.
+  expect(lines.length).toBe(previousLines.length);
+  const changedLines = lines.flatMap((line, index) => line === previousLines[index] ? [] : [index]);
+  expect(changedLines).toEqual([24]);
+  const [was, now] = [previousLines[24]!, lines[24]!];
+  const lastSentence = was.lastIndexOf("다. ") + 3;
+  expect(lastSentence).toBeGreaterThan(3);
+  expect(now.startsWith(was.slice(0, lastSentence)) && now.endsWith(was.slice(lastSentence))).toBe(true);
+  const inserted = now.slice(lastSentence, now.length - (was.length - lastSentence));
+  expect(inserted.length).toBeGreaterThan(0);
+  expect(inserted).toMatch(/^[^\n]*다\. $/u);
+  expect(inserted.match(/다\. /gu)).toHaveLength(2);
+  const shift = Buffer.byteLength(inserted);
+  const inventory = await loadSkillInventory({root});
+  const orchestrator = inventory.skills.find(skill => skill.skillId === "orchestrator")!;
+  expect(premise.spanPreservation.spans).toHaveLength(after.applicability.length + after.exclusions.length);
+  for (const span of premise.spanPreservation.spans) {
+    const current = after[span.group][span.index], previous = before[span.group][span.index];
+    expect([current.startLine, current.endLine, current.startByte ?? 0]).toEqual([span.startLine, span.endLine, span.startByte]);
+    expect([previous.startLine, previous.endLine, previous.startByte ?? 0]).toEqual([span.previousStartLine, span.previousEndLine, span.previousStartByte]);
+    // No line moves; only a span over the changed line widens, by exactly the inserted bytes.
+    expect([span.startLine, span.endLine]).toEqual([span.previousStartLine, span.previousEndLine]);
+    expect(current.digest).toBe(hash(readFileSync(path.join(root, current.path))));
+    const selected = Buffer.from(lines.slice(span.startLine - 1, span.endLine).join("\n")).subarray(span.startByte, span.endByte);
+    expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
+    expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    const previousSelected = Buffer.from(previousLines.slice(span.previousStartLine - 1, span.previousEndLine).join("\n")).subarray(span.previousStartByte, span.previousEndByte);
+    const widened = span.startLine <= 25 && span.endLine >= 25;
+    expect(premise.spanPreservation.changedSpans.includes(`${span.group}[${span.index}]`)).toBe(widened);
+    if (!widened) {
+      expect([span.startByte, span.endByte]).toEqual([span.previousStartByte, span.previousEndByte]);
+      expect(selected.equals(previousSelected)).toBe(true);
+    } else {
+      // Where the inserted text begins inside this span's selection.
+      const offset = Buffer.byteLength([...lines.slice(span.startLine - 1, 24), was.slice(0, lastSentence)].join("\n")) - span.startByte;
+      expect([span.startByte, span.endByte]).toEqual([span.previousStartByte, span.previousEndByte + shift]);
+      expect(selected.subarray(offset, offset + shift).toString("utf8")).toBe(inserted);
+      expect(Buffer.concat([selected.subarray(0, offset), selected.subarray(offset + shift)]).equals(previousSelected)).toBe(true);
+    }
   }
 });
 it("appends the exact specialist behavior successor without changing frozen fixture semantics", () => {
@@ -385,7 +470,7 @@ it("동결 판정 기준을 보존하고 인계 지침의 현재 바이트만 �
   expect(manifest.labelChanges).toEqual([]);
   expect(manifest.priceAndBudgetChanges).toEqual([]);
   expect(manifest.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: "mutation-risk-preflight-overwrite-ask-source-binding-r20"});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: "orchestrator-intake-premise-ask-source-binding-r21"});
   expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
   for (const source of manifest.bindings) {
     const actual = readFileSync(path.join(root, source.path));

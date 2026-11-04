@@ -308,17 +308,24 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, overwrite.frozenPredecessor.path) !== multiPath || multiBytes.length !== overwrite.frozenPredecessor.bytes || hashBytes(multiBytes) !== overwrite.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings];
+  const premisePath = resolve(repo, "tests/skill-classification/fixtures.orchestrator-intake-premise-ask-source-successor.json");
+  const premiseBytes = readFileSync(premisePath);
+  if (hashBytes(premiseBytes) !== "sha256:fd1acda5ee529f0654b909f261b237baa073b5d3b60220a228e9882276e75dbb") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const premise = JSON.parse(premiseBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, premise.frozenPredecessor.path) !== overwritePath || overwriteBytes.length !== premise.frozenPredecessor.bytes || hashBytes(overwriteBytes) !== premise.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: overwrite.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath);
+  const currentManifest = {...manifest, revision: premise.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(overwriteBytes),
+    manifest: currentManifest, files, digest: hashBytes(premiseBytes),
     resolveDigest(sourcePath: string, digest: string): string {
       const chain = allBindings.filter(row => row.path === sourcePath);
       if (chain.length === 0) return digest;

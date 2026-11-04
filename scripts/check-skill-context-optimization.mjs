@@ -31,6 +31,8 @@ function git(...args) {
 // - 3.4.0 JEV layer paragraph (docs/release-notes-v3.4.0.md): JEV is the advisory slot, TypeSafe one implementation.
 // - 3.5.1 intake line (docs/release-notes-v3.5.1.md): separate tasks start separate workflows with non-overlapping writeTargets.
 // - 3.5.2 mutation-risk-preflight overwrite line (docs/release-notes-v3.5.2.md): ask before overwriting user state that cannot be backed up.
+// - 3.5.2 intake line (docs/release-notes-v3.5.2.md): ask once before the first write on an undetermined premise that changes the structure.
+// A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
   Object.freeze({
     revision: "92f22e25d21eddff22c2400dabc0699d73700927",
@@ -59,16 +61,24 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/mutation-risk-preflight/classification.json": ["045eb47dcd98736fdd763f06535d8d8b9c95aa9f5000fb7677d39548641eec3a", "984e917b95b59a090bb68e441fc9455b7a432c081997e90598f4d191fab43725"],
     }),
   }),
+  Object.freeze({
+    revision: "fc5ea360bbafafc8f5e54d466eb04f0d3ceba1bb",
+    hashes: Object.freeze({
+      "skills/orchestrator/SKILL.md": ["59977f4d215a5a67192c010016c049e65fafdd38c7e12b528e60a1ca8167e31d", "b4fea1a91eaa7dbff3049749d441c366baa962ad66a9e7d65cdcc55467b22604"],
+      "skills/orchestrator/classification.json": ["0bfffe499ca0d60c444f92205f3f8dbfff328e9070ae6ee551ab1c219d871f1d", "887c5a38a041681a71e419b9a9e087f884ff8370cb5142c24ab80f290d4ab57f"],
+    }),
+  }),
 ]);
 const guidanceSuccessor = relative => GUIDANCE_SUCCESSORS.find(successor => Object.hasOwn(successor.hashes, relative));
 
 /** A reviewed guidance successor stands for its exact predecessor; any other bytes are returned as they are. */
 function beforeMultiWorkflowGuidance(relative, bytes) {
-  const successor = guidanceSuccessor(relative), hashes = successor?.hashes[relative];
-  if (!hashes || createHash("sha256").update(bytes).digest("hex") !== hashes[1]) return bytes;
+  const digest = createHash("sha256").update(bytes).digest("hex");
+  const successor = GUIDANCE_SUCCESSORS.find(entry => Object.hasOwn(entry.hashes, relative) && entry.hashes[relative][1] === digest);
+  if (!successor) return bytes;
   const projected = git("show", `${successor.revision}:${relative}`);
-  if (createHash("sha256").update(projected).digest("hex") !== hashes[0]) throw new Error(`Guidance successor predecessor bytes differ: ${relative}`);
-  return projected;
+  if (createHash("sha256").update(projected).digest("hex") !== successor.hashes[relative][0]) throw new Error(`Guidance successor predecessor bytes differ: ${relative}`);
+  return beforeMultiWorkflowGuidance(relative, projected);
 }
 
 /** Reads a file as the pinned checks see it: a reviewed guidance successor reads as its exact predecessor. */
