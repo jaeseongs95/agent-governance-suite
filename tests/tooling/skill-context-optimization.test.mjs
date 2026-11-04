@@ -269,7 +269,7 @@ describe("skill context optimization", () => {
     const { execFileSync } = await import("node:child_process");
     vi.doMock("node:child_process", () => ({
       execFileSync: (file, args, options) => {
-        if (file === "git" && args.includes("ls-files") && args.at(-1) === "skills/model-effort-advisor") {
+        if (file === "git" && args.includes("ls-files") && args.at(-1) === "skills") {
           return Buffer.from("skills/model-effort-advisor/scripts/unreviewed.mjs\n");
         }
         return execFileSync(file, args, options);
@@ -327,7 +327,7 @@ describe("skill context optimization", () => {
     const { execFileSync } = await import("node:child_process");
     const relative = `skills/${owner}/classification-extra.json`;
     vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
-      if (file === "git" && args.includes("ls-files") && args.at(-1) === `skills/${owner}`) return Buffer.from(`${relative}\n`);
+      if (file === "git" && args.includes("ls-files") && args.at(-1) === "skills") return Buffer.from(`${relative}\n`);
       return execFileSync(file, args, options);
     } }));
     try {
