@@ -246,13 +246,15 @@ export class SqliteContinuityStore {
     epoch: number;
     rootId: string;
     isTerminal: () => boolean;
+    /** The settled epoch's session record re-based on the next epoch; it moves with the session, the workflow does not. */
+    carry?: (snapshot: ContinuitySnapshotV1, nextEpoch: number) => ContinuitySnapshotV1;
   }): ContinuityTaskRecord {
     this.ensureTask(taskCorrelation, now);
     return this.transaction(msg("continuity.store.rotateEpoch", {}), () => {
       const current = this.getTask(taskCorrelation)!;
       if (expected && (current.currentEpoch !== expected.epoch || current.rootId !== expected.rootId
         || expected.isTerminal() !== true)) return current;
-      this.database.prepare(`
+      const rotated = this.database.prepare(`
         UPDATE continuity_tasks
         SET current_epoch = current_epoch + 1, root_id = NULL, suppressed = 0,
             last_auto_injected_revision = NULL, pending_source = NULL,
@@ -260,6 +262,14 @@ export class SqliteContinuityStore {
             pending_consumed = 0, updated_at = ?
         WHERE task_correlation = ? AND current_epoch = ? AND root_id IS ?
       `).run(now, taskCorrelation, current.currentEpoch, current.rootId);
+      const previous = expected?.carry && rotated.changes === 1 ? this.getSnapshot(taskCorrelation, current.currentEpoch) : null;
+      if (previous && expected?.carry) {
+        const carried = expected.carry(previous, current.currentEpoch + 1);
+        this.database.prepare(`
+          INSERT INTO continuity_snapshots(task_correlation, epoch, revision, snapshot_digest, snapshot_json, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).run(taskCorrelation, carried.epoch, carried.revision, carried.snapshotDigest, JSON.stringify(carried), carried.updatedAt);
+      }
       return this.getTask(taskCorrelation)!;
     }, taskCorrelation);
   }

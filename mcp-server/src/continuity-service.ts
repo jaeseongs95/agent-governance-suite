@@ -297,6 +297,13 @@ export class ContinuityService implements ContinuityGateway {
       rootId,
       isTerminal: () => this.store.boundRoots(task.taskCorrelation, task.currentEpoch)
         .every(bound => this.rootSettled(bound, workflowStore, fromWorkflow)),
+      // The session's corrections and remaining work outlive its finished workflows. Same revision, so the next save
+      // continues from it; the old epoch's tokens and markers stay fenced.
+      carry: (snapshot, nextEpoch) => {
+        const moved = { ...snapshot, epoch: nextEpoch } as Partial<ContinuitySnapshotV1>;
+        delete moved.snapshotDigest;
+        return { ...moved, snapshotDigest: convergenceDigest(moved) } as ContinuitySnapshotV1;
+      },
     }));
   }
 
