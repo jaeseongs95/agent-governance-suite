@@ -30,3 +30,15 @@
 
 worker 수를 바꾸는 것은 3.4.0 토론 결정(worker 수 유지)을 뒤집는 일이고, Windows에서 시간 한도를 넘는 시험이 먼저 고쳐져야 한다. 이 측정을 근거로 후속 판에서 다시 다룬다.
 
+## 검증
+
+시험 대상은 a3ff6640이다. 그 뒤로는 이 문서만 바뀌었다.
+
+- Linux 시험 서버: 전체 시험 `TEST_SERVER_EXIT=0`(1318초). vitest 파일 277개 통과·1개 skip, 시험 4118개 통과(skip 15, todo 8). node:test 499/499 통과.
+- Windows 시험 서버: 전체 시험 `TEST_SERVER_EXIT=0`(2435초). vitest 파일 276개 통과·2개 skip. node:test 498개 통과·1개 skip·실패 0.
+- 실호스트(Linux, 6.7 체크리스트):
+  - 실행 파일: Claude Code 2.1.314, codex-cli 0.166.0, agy 1.4.12.
+  - headless로 `notes.txt`의 red를 blue로 바꾸는 실행이 셋 모두 exit 0이었고, 파일이 실제로 바뀌었다.
+  - 도구 없이 접수 지침의 다중 workflow 문장을 인용하게 한 질문은 벤더마다 2회씩 6/6 YES였다. 6회 모두 문장을 그대로 인용했다.
+  - 시험 뒤 `agy plugin list`·`codex plugin marketplace list`·Codex 설정은 시험 전과 같았다.
+  - Claude 대화형 실행은 하지 않았다. 이번 변경은 transcript나 호출 시점에 기대지 않는다.
