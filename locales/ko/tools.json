@@ -7,7 +7,7 @@
   "tools.get_trust_capabilities.description": "이 릴리스가 실제로 강제할 수 있는 출처(provenance)·권한(authority) 기능을 보고한다.",
   "tools.validate_collaboration_decision.description": "협업 결정을 구조적으로 검증하고 독립 영수증 출처 관측을 보고한다. 권한을 발급하거나 직접 사용자 입력임을 증명하지 않는다.",
   "tools.plan_workflow.description": "현재 skill registry를 읽어 capability 기반 workflow 계획을 돌려주며, run은 저장하지 않는다. 조율된 의미 기반 workflow에는 서버 쪽 신뢰 실행 증명(attestation)이 필요하며, 호출자는 executionContext를 제출할 수 없다. workflow run을 저장하지 않아도 신뢰 관측 주장은 저장한다. 평가 타당성 감사는 그 목적도 결속한다. 단계의 executionRequirement 하한(minimumModelClass, minimumReasoningEffort)은 subagent가 통과한 단계를 기록할 때만 적용된다. root 세션은 사용자가 고른 모델과 추론 수준으로 기록하며, 그 모델과 추론 수준 때문에 거부되는 일은 없다. MODEL_NOT_IN_CATALOG와 null modelClass는 거부가 아니라 참고 사항이다.",
-  "tools.open_convergence_root.description": "지속되는 불변 작업 계보 하나를 만든다. 교체의 userApprovalRefs는 선언된 그대로 기록하며, AGS는 사용자 승인을 관측하지 않는다. task와 frame 입력을 되돌려 받지 않으려면 responseMode=compact를 쓴다.",
+  "tools.open_convergence_root.description": "지속되는 불변 작업 계보 하나를 만든다. 교체의 userApprovalRefs는 선언된 그대로 기록하며, AGS는 사용자 승인을 관측하지 않는다. 최종 후보가 바뀌어도 run과 root의 artifactContracts는 그대로다(frame 검토로도 다시 결속되지 않는다). run을 중단하고 새 taskEnvelope로 claim해 FRAME_REVIEW_REQUIRED로 root를 검토 상태로 만든 뒤, parentRootId·새 taskEnvelope·사용자 승인으로 교체 root를 열고 그 root에서 계획·claim·시작한다. task와 frame 입력을 되돌려 받지 않으려면 responseMode=compact를 쓴다.",
   "tools.claim_workflow_attempt.description": "안정성과 시도 예산을 검증한 뒤 한 번 쓰는 lease를 발급한다. 재시도는 이전 실패 근거를 서버가 hash하는 로컬 파일로 지정한다. 결속된 root를 다시 쓰려면 taskEnvelope와 frame을 생략할 수 있다.",
   "tools.start_guarded_workflow.description": "lease를 원자적으로 소비하고 그 lease에 결속된 plan을 시작한다. plan은 생략할 수 있고, responseMode=compact를 쓰면 전체 영수증을 돌려주지 않는다.",
   "tools.get_convergence_status.description": "수렴 상태를 읽는다. detail=compact는 handle과 개수를 돌려주고, 기본값인 full 모드는 전체 이력을 포함한다.",
