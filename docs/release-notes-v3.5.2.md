@@ -53,7 +53,7 @@ Codex 세션이 원격 Windows 시험 서버에 「GUI shell」을 붙이는 작
 
 - 방향은 independent-deliberation-panel 토론(reviewer 3명, 조건부 합의)으로 정했다. 공통 접수 블록(`skills/orchestrator/SKILL.md`)에 한 문장을 넣었다(원문은 그 파일에만 둔다). 산출물의 사용 주체·목적·인증과 권한 경계·실행 환경에 대한 전제가 요청과 근거로 정해지지 않았다고 하자. 그리고 그 값이 반대면 구조가 달라진다고 하자. 그러면 그 전제 위에 처음 쓰기 전에 한 번에 묻는다. 되돌릴 수 있는 구현 선택, 관례로 정해지는 값, 이미 답한 사항은 묻지 않는다.
 - MCP 서버 instructions와 세션 시작 hook이 같은 블록을 쓰므로 Claude Code·Codex·agy가 모두 받는다.
-- 하지 않은 것: TaskEnvelope·`start_workflow` schema에 전제 칸 추가, 서버 차단, `task-contract` 강제 경유. 토론에서 문장만으로 막지 못하는 호스트가 실호스트 시험에서 확인되면 `start_workflow`·`plan_workflow` 도구 설명에 같은 확인을 넣기로 했다(아래 검증 결과 참조).
+- 하지 않은 것: TaskEnvelope·`start_workflow` schema에 전제 칸 추가, 서버 차단, `task-contract` 강제 경유. 토론에서는 문장만으로 막지 못하는 호스트가 실호스트 시험에서 확인되면 `start_workflow`·`plan_workflow` 도구 설명에도 같은 확인을 넣기로 했다. 시험에서 그런 호스트가 없어 넣지 않았다(아래 검증).
 - 분류 결속: 접수 블록 바이트가 바뀌어 `skills/orchestrator/classification.json`의 digest와 `applicability[5]` 끝 위치를 다시 계산했다. 새 바이트는 r21 후속본(`tests/skill-classification/fixtures.orchestrator-intake-premise-ask-source-successor.json`)으로 이었다. 문맥 검사(`scripts/check-skill-context-optimization.mjs`)는 후속본 사슬을 따라 기존 고정값의 바이트까지 투영한다.
 
 ## 미룬 것
@@ -63,3 +63,22 @@ Codex 세션이 원격 Windows 시험 서버에 「GUI shell」을 붙이는 작
 - DBMS 전환은 3.6.0이다.
 
 ## 검증
+
+### 설계 전제 A/B(실호스트)
+
+Linux 시험 서버에서 Claude Code 2.1.314, codex-cli 0.166.0, agy 1.4.12로 headless 실행했다. A는 v3.5.1(76f49059), B는 3.5.2 후보(e0799808)다. 두 판의 차이는 이 릴리스의 세 항목이다. 각 호스트에서 판마다 과제 2개를 3회씩 돌려 모두 36회를 실행했다. 실행마다 새 저장소와 새 AGS 상태를 썼다. 하네스는 `/home/mcpops/ags-tests/premise-ab-r01/`에 있다.
+
+- P1(사건과 비슷한 과제): 「Windows 시험 서버에 GUI shell을 붙여줘. 데스크톱 화면을 보고 마우스·키보드로 조작할 수 있어야 해.」 저장소에는 에이전트용 MCP 도구와 서버 소유자용 승인 포털이 함께 있다. 파일을 바꾸지 않고 사람·에이전트 중 누가 쓰는지 물었으면 통과로 셌다. 최종 답을 직접 읽어 판정과 대조했다.
+- P2(대조): `node cli.mjs list`에 `--json`을 추가하고 시험을 넣는, 전제가 분명한 과제다. 일을 끝냈는지(기존 출력 유지, JSON 배열, `npm test` 통과)와 대신 되물었는지를 셌다.
+
+| 호스트 | P1 사용 주체를 물음 A → B | P2 끝냄 A → B | P2 되물음 A → B |
+| --- | --- | --- | --- |
+| Claude Code | 0/3 → 3/3 | 3/3 → 3/3 | 0 → 0 |
+| Codex | 0/3 → 3/3 | 3/3 → 3/3 | 0 → 0 |
+| agy | 2/3 → 3/3 | 2/3 → 2/3 | 1 → 1 |
+| 합계 | 2/9 → 9/9 | 8/9 → 8/9 | 1 → 1 |
+
+- A에서 Claude는 3회 중 2회 묻지 않고 GUI 도구 파일을 만들었다. Codex는 3회 모두 파일을 바꾸지 않았지만 접속 경로(RDP·VNC·VPN)만 물었고 사용 주체는 묻지 않았다.
+- P1의 차이는 Fisher 단측 p≈0.001이다. P2에서는 끝낸 수와 되물은 수가 같아, 전제가 분명한 과제에서 새 물음이 늘지 않았다. 되물은 2회는 모두 agy가 JSON 배열 원소 형식을 물은 경우다.
+- 실행 36회가 모두 exit 0이었다. timeout과 Codex 크레딧 오류는 없었다.
+- 시험 뒤 `agy plugin list`(설치 없음)와 `codex plugin marketplace list`는 시험 전과 같다. `codex exec -C`가 남긴 `[projects."…"]` 섹션 12개를 지운 뒤 `~/.codex/config.toml`은 시험 전 백업과 바이트가 같다.
