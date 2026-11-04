@@ -21,6 +21,10 @@ async function governanceVariables() {
   return names;
 }
 
+// The tool schema profile is chosen per host package (the Claude overlay sets it); a value left in the user's shell must
+// not switch the Codex server to another host's profile.
+const NOT_PASSED = new Set(["AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE"]);
+
 describe("Codex MCP server environment", () => {
   // Codex hands a stdio MCP server only its default variables plus the names in env_vars (codex rust-v0.166.0
   // rmcp-client/src/utils.rs create_env_for_mcp_server); hooks get the full environment. A state path variable missing
@@ -28,8 +32,10 @@ describe("Codex MCP server environment", () => {
   it.each([".mcp.json", "codex-plugin-en/.mcp.json"])("%s passes every AGS variable and the state base through", async (file) => {
     const server = JSON.parse(await readFile(path.join(root, file), "utf8")).mcpServers["agent-governance-suite"];
     const passed = new Set(server.env_vars);
-    const missing = [...await governanceVariables()].filter((name) => !passed.has(name) && !(name in server.env));
+    const missing = [...await governanceVariables()]
+      .filter((name) => !NOT_PASSED.has(name) && !passed.has(name) && !(name in server.env));
     expect(missing).toEqual([]);
+    for (const name of NOT_PASSED) expect(passed.has(name), name).toBe(false);
     for (const base of ["XDG_STATE_HOME", "LOCALAPPDATA"]) expect(passed.has(base), base).toBe(true);
   });
 });
