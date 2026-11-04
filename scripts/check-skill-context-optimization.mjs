@@ -1288,13 +1288,6 @@ export function checkSkillContextOptimization() {
     });
   if (!sameSet(detailOwners, TARGETS)) errors.push("target skill set does not match the 20 reviewed optimization targets");
 
-  // One working-tree listing per run, split per skill below: `-- skills/<id>` pathspecs list the same paths.
-  const skillChanges = [...new Set([
-    ...git("diff", "--name-only", BASELINE, "--", "skills").toString("utf8").trim().split(/\r?\n/u),
-    ...git("ls-files", "--others", "--exclude-standard", "--", "skills").toString("utf8").trim().split(/\r?\n/u),
-  ].filter(Boolean))];
-  const changedUnder = (directory) => skillChanges.filter((file) => file === directory || file.startsWith(`${directory}/`));
-
   let baselineBytes = 0;
   let candidateBytes = 0;
   const skills = [];
@@ -1393,7 +1386,10 @@ export function checkSkillContextOptimization() {
       if (!matchesNode24ReadmeUpdate(skillId, baselineReadme, candidateReadme)) errors.push(`${skillId}: README.md differs beyond the Node 24 minimum update`);
       allowed.add(readmePath);
     }
-    const unexpected = historicalChanges(changedUnder(`skills/${skillId}`)).filter((path) => !allowed.has(path));
+    const changed = git("diff", "--name-only", BASELINE, "--", `skills/${skillId}`).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
+    changed.push(...git("ls-files", "--others", "--exclude-standard", "--", `skills/${skillId}`)
+      .toString("utf8").trim().split(/\r?\n/u).filter(Boolean));
+    const unexpected = historicalChanges([...new Set(changed)]).filter((path) => !allowed.has(path));
     if (unexpected.length) errors.push(`${skillId}: unexpected skill-owned changes: ${unexpected.join(", ")}`);
 
     baselineBytes += baseline.length;
@@ -1405,7 +1401,10 @@ export function checkSkillContextOptimization() {
   errors.push(...checkRegistryContextCompatibility(registry));
   const ponytail = readHistorical(ROOT, "skills/ponytail/SKILL.md");
   if (!withoutClassificationAddition("ponytail", ponytail).equals(baselineFile("skills/ponytail/SKILL.md"))) errors.push("excluded skill ponytail historical instructions changed");
-  const ponytailChanged = changedUnder("skills/ponytail").filter((file) => !Object.hasOwn(CLASSIFICATION_UPDATE.hashes, file) && !Object.hasOwn(PONYTAIL_POLICY_SUCCESSOR.hashes, file)
+  const ponytailChanged = [...new Set([
+    ...git("diff", "--name-only", BASELINE, "--", "skills/ponytail").toString("utf8").trim().split(/\r?\n/u),
+    ...git("ls-files", "--others", "--exclude-standard", "--", "skills/ponytail").toString("utf8").trim().split(/\r?\n/u),
+  ].filter(Boolean))].filter((file) => !Object.hasOwn(CLASSIFICATION_UPDATE.hashes, file) && !Object.hasOwn(PONYTAIL_POLICY_SUCCESSOR.hashes, file)
     && !Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.hashes, file) && !Object.hasOwn(SPECIALIST_BEHAVIOR_SUCCESSOR.additions, file));
   ponytailChanged.splice(0, ponytailChanged.length, ...historicalChanges(ponytailChanged));
   if (ponytailChanged.length) errors.push(`excluded skill ponytail unexpected changes: ${ponytailChanged.join(", ")}`);
