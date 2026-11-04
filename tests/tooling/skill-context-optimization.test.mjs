@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -66,6 +67,7 @@ describe("skill context optimization", () => {
     "skills/context-continuity/classification.json",
     "skills/context-continuity/references/entry-details.md",
   ];
+  const retirementBytes = relative => execFileSync("git", ["show", `e6e313864a4fe1be15ac2b199fb56284dbc327a9:${relative}`], { cwd: fileURLToPath(new URL("../../", import.meta.url)) });
   it("keeps the retired context-continuity sources out of the tree and reads them at their exact retirement bytes", () => {
     const report = checkSkillContextOptimization();
     expect(report).toMatchObject({ pass: true, errors: [] });
@@ -73,11 +75,12 @@ describe("skill context optimization", () => {
     expect(Object.keys(report.retiredSkills[0].hashes).toSorted()).toEqual(retiredSources);
     for (const relative of retiredSources) {
       expect(() => readFileSync(new URL(`../../${relative}`, import.meta.url)), relative).toThrow();
-      expect(createHash("sha256").update(readHistoricalSource(relative)).digest("hex"), relative).toBe(report.retiredSkills[0].hashes[relative]);
+      expect(createHash("sha256").update(retirementBytes(relative)).digest("hex"), relative).toBe(report.retiredSkills[0].hashes[relative]);
+      expect(readHistoricalSource(relative).length, relative).toBeGreaterThan(0);
     }
   });
   it.each(retiredSources)("rejects a retired source that reappears, even with its retirement bytes: %s", async relative => {
-    const retired = readHistoricalSource(relative);
+    const retired = retirementBytes(relative);
     vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
       if (String(file).replaceAll("\\", "/").endsWith(`/${relative}`)) return Buffer.from(retired);
       return readFileSync(file, ...args);

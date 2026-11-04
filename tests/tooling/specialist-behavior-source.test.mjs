@@ -15,6 +15,15 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const base = "480b8dfc143d15c7fb9fdab349d698d75f009893";
 const common = "skills/independent-audit-gate/references/specialist-behavior.md";
 const current = relative => readFileSync(path.join(root, relative));
+// context-continuity is retired (continuity is MCP tools and hooks): its pinned sources are gone from the tree and
+// the checker reads them at the retirement revision.
+const retirement = "e6e313864a4fe1be15ac2b199fb56284dbc327a9";
+const retired = relative => relative.startsWith("skills/context-continuity/");
+const currentOrRetired = relative => {
+  if (!retired(relative)) return current(relative);
+  expect(() => current(relative), relative).toThrow();
+  return execFileSync("git", ["show", `${retirement}:${relative}`], { cwd: root });
+};
 const original = relative => execFileSync("git", ["show", `${base}:${relative}`], { cwd: root });
 
 async function withAlteredSource(relative, replacement, check) {
@@ -52,7 +61,7 @@ describe("specialist behavior source successor", () => {
     expect(contract.skillIds).toHaveLength(26);
     expect(Object.keys(contract.hashes).filter(relative => relative.endsWith("/SKILL.md"))).toHaveLength(26);
     for (const relative of Object.keys(contract.hashes)) {
-      const bytes = current(relative);
+      const bytes = currentOrRetired(relative);
       expect(matchesSpecialistBehaviorSuccessor(relative, bytes), relative).toBe(true);
       const before = beforeSpecialistBehaviorSuccessor(relative, bytes);
       expect(before, relative).toEqual(original(relative));

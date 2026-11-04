@@ -680,7 +680,7 @@ describe("v6 independent prompt lineage and generic transport binding", () => {
     f.fetcher.mockResolvedValue(new Response(JSON.stringify(raw(0.9, 0.9))));
     return f;
   }
-  it("binds the exact nine-rule semantics and preserves 26 real descriptors and 40 phases in 52 questions", async () => {
+  it("binds the exact nine-rule semantics and preserves 25 real descriptors and 40 phases in 50 questions", async () => {
     const inventory = await loadSkillInventory({root: fileURLToPath(new URL("../../", import.meta.url))});
     expect(inventory.issues).toEqual([]);
     expect(inventory.skills).toHaveLength(25);
@@ -692,7 +692,7 @@ describe("v6 independent prompt lineage and generic transport binding", () => {
     const next = jevNoulSharedRulesV6WireAdapter.encode(request, f.profile) as {state: Record<string, unknown>; questions: Record<string, {instructions: {skill: unknown; question: string; ruleApplication: string}; criteria: unknown}>};
     const prior = jevNoulSharedRulesV5WireAdapter.encode(request, {...f.profile, adapterRevision: JEV_NOUL_SHARED_RULES_V5_ADAPTER_REVISION, promptRevision: JEV_NOUL_SHARED_RULES_V5_PROMPT_REVISION}) as typeof next;
     expect(Object.keys(next.questions)).toEqual(Object.keys(prior.questions));
-    expect(Object.keys(next.questions)).toHaveLength(52);
+    expect(Object.keys(next.questions)).toHaveLength(50);
     expect({...next.state, classificationRules: prior.state.classificationRules}).toEqual(prior.state);
     for (const [id, question] of Object.entries(next.questions)) {
       const axis = id.endsWith("_applicability") ? "applicability" : "sufficiency";

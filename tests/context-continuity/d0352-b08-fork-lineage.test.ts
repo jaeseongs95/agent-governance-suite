@@ -88,7 +88,7 @@ function prompt(service: ContinuityService, session: string, transcriptPath?: st
 function expectCheckpointCue(output: Record<string, unknown>) {
   expect(output).toMatchObject({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: expect.any(String) } });
   const context = (output as { hookSpecificOutput: { additionalContext: string } }).hookSpecificOutput.additionalContext;
-  expect(context).toContain("[Task continuity checkpoint check]");
+  expect(context).toMatch(/^\[AGS (?:턴 확인|turn check)\]$/mu);
   for (const tool of ["checkpoint_context", "inspect_context", "load_context"]) expect(context).toContain(tool);
   for (const forbidden of [BODY_MARKER, checkpointInput().core.objective, "candidateToken=", "restoreToken", "_continuityBinding", "decision=DEFER", "decision=INJECT"])
     expect(context).not.toContain(forbidden);

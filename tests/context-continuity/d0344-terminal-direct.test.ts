@@ -188,7 +188,7 @@ describe("D0344 terminal workflow to fresh direct task", () => {
         pendingRootId: null, pendingConsumed: false });
       expect(target.candidateForSession(session)).toMatchObject({ decision: "REJECT", summary: null, restoreToken: null });
       const beforeCompact = target.store.getTask(correlation), missing = renderHookText(target.compactContext(session), "ko");
-      expect(missing).toContain("[Task continuity checkpoint check]");
+      expect(missing).toContain("[AGS 턴 확인]");
       expect(missing).toContain("사전 저장본 없음");
       for (const forbidden of [historical.core.objective, value.taskEnvelope.objective, oldDirectLoad.candidateToken, oldWorkflowLoad.candidateToken,
         "candidateToken=", "restoreToken", "_continuityBinding", "decision=DEFER", "decision=INJECT"])
