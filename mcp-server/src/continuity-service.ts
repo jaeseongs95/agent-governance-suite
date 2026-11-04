@@ -31,6 +31,7 @@ import { hostIdentity, identify } from "./workspace-identity.js";
 import type { ForkHostParentRead, ForkOriginRead, LineageRead } from "./host-input-adapter.js";
 import type { VerifiedCaller } from "./caller-identity.js";
 import { failureReason } from "./failure-diagnostics.js";
+import { installedSkillTargets } from "./skill-intake.js";
 
 const CANDIDATE_TOKEN_TTL_SECONDS = 3600;
 
@@ -856,6 +857,7 @@ export class ContinuityService implements ContinuityGateway {
       if (missingOnly && snapshot) return null;
       return [
         msg("hooks.checkpointCue.status", { state: missingOnly ? "missing" : snapshot ? "saved" : "none" }),
+        msg("hooks.checkpointCue.skills", { targets: installedSkillTargets() }),
         msg("hooks.checkpointCue.save", {}),
         msg("hooks.checkpointCue.resume", {}),
         msg("hooks.checkpointCue.notice", {}),

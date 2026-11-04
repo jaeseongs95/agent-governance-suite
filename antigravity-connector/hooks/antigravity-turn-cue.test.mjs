@@ -81,5 +81,7 @@ describe("agy turn cue (behavior 6)", () => {
     expect(cue).toContain("checkpoint_context");
     expect(cue).toContain("스킬 선택을 다시 판단");
     expect(cue).not.toContain("context-continuity");
+    // The built hook finds the installed skills next to mcp-server/dist and lists their purposes.
+    expect(cue).toContain("- cs-engineering: concurrency, database, messaging, algorithms, resource-lifetime, performance");
   });
 });

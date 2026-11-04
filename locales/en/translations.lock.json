@@ -1,7 +1,8 @@
 {
-  "hooks.checkpointCue.notice": "c6092b1a47433cce67552ccf23ca851833c7666036a678d4cd98424965418aec",
+  "hooks.checkpointCue.notice": "3f4e4c8c3fbed3e8a401f6745ee1273fccdb24c17cb9298c7ec6c14382ad018b",
   "hooks.checkpointCue.resume": "2357e397d30fb14ed870ffedaa2727cad4ec01dfd3fe2dff9671cf5b63ef8aed",
   "hooks.checkpointCue.save": "3a14d341f83610c192933fcad42992e021ced51201c7900d557978cb1da1710e",
+  "hooks.checkpointCue.skills": "9e9f4da815fbafdf1aca06025988660830fd6c989e0dd3cccab166e772b9d410",
   "hooks.checkpointCue.status": "f757f283b3b52ddffb6637366cbabcebccf1c44ed09114f9f029ee7b7d7224d9",
   "hooks.editGate.criterionPlaceholder": "808164d140111d8fb7d6002a20a7c0d471b98eaedf13dfe491d497cb15e8349c",
   "hooks.editGate.denied": "cbd857ccd2afa218d7d5380c621de901d54b05d3f2769c1c2e6d731ce43807a3",

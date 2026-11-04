@@ -8,6 +8,7 @@ import type { CheckpointContextRequestV1, ContinuitySnapshotV1 } from "../../con
 import { handleContinuityHook } from "../../mcp-server/src/continuity-hook.js";
 import { ContinuityService, renderHookText } from "../../mcp-server/src/continuity-service.js";
 import { SqliteContinuityStore } from "../../mcp-server/src/continuity-store.js";
+import { installedSkillTargets } from "../../mcp-server/src/skill-intake.js";
 import { ContractValidator } from "../../mcp-server/src/schema-validator.js";
 import { wakeMessage } from "../../mcp-server/src/session-message-client.js";
 import { rootCaller } from "../helpers/caller.js";
@@ -241,15 +242,19 @@ describe("D0347 저장 유도의 현재 세대 재검증", () => {
 // The cue and the restore candidate are rendered by the hook in the host locale; key and params stay the same.
 describe("checkpoint cue and restore candidate locale", () => {
   // Behavior 5 (d7585d74): the AGS turn check text.
+  // The skill line carries the installed purpose map; its content is checked on its own in d0360-skill-purpose-cue.
+  const SKILLS = installedSkillTargets();
   const CUE_KO_TAIL = [
+    "스킬은 목적별로 나뉘어 있다. 답하거나 다음 도구를 쓰기 전에 이번 메시지가 요구하는 판단·행동을 아래 스킬별 대상과 대조하고, 맞는 스킬은 그 판단·행동 전에 지금 호출한다(질문·확인 요청도 포함한다). 이름·키워드가 아니라 실제로 할 판단이 그 대상에 드는지로 고른다. 앞서 호출한 스킬의 지침은 그때의 판단·행동에만 적용된다. 이번 목적에 맞지 않는 이전 스킬 지침은 적용하지 않는다. 서브에이전트에 맡길 때는 고른 스킬을 지시문에 적는다.\n" + SKILLS,
     "이번 사용자 메시지가 교정, 새 결정·승인·금지, 추가 작업, 범위 변경 중 하나면 답하거나 다음 도구를 쓰기 전에 두 가지를 하라. (1) 바뀐 목표·범위·위험에 맞춰 스킬 선택을 다시 판단하고, 새로 필요한 스킬은 지금 호출한다. (2) checkpoint_context로 사용자 원문과 바뀐 남은 일을 저장한다.",
     "압축·재개·fork 뒤라 앞의 결정·남은 일이 대화에 보이지 않으면 먼저 inspect_context를 호출하고, DEFER 후보는 load_context로 불러와 최신 요청과 대조하라.",
-    "이 알림은 저장·복원을 대신하지 않는다. 바뀐 것이 없는 메시지(질문·인사·진행 확인)에는 아무것도 더하지 말고 계속하라.",
+    "이 알림은 저장·복원을 대신하지 않는다. 저장할 변화가 없는 메시지에는 기록을 더하지 말고 계속하라.",
   ];
   const CUE_EN_TAIL = [
+    "Skills are split by purpose. Before answering or using the next tool, match the judgment or action this message calls for against each skill's targets below, and call every matching skill now, before that judgment or action (questions and check requests included). Choose by whether the judgment you will actually make falls under the targets, not by names or keywords. A skill called earlier applies only to the judgment or action it was called for; do not apply an earlier skill's guidance that does not fit this purpose. When delegating to a subagent, name the chosen skills in its brief.\n" + SKILLS,
     "If this user message is a correction, a new decision, approval or prohibition, more work, or a scope change, do two things before answering or using the next tool: (1) re-decide the skill selection for the changed goal, scope and risk, and call any newly needed skill now; (2) save the user's own words and the changed remaining work with checkpoint_context.",
     "After compaction, resume or fork, if earlier decisions or remaining work are not visible in the conversation, call inspect_context first and load a DEFER candidate with load_context, then check it against the latest request.",
-    "This notice does not save or restore anything. For a message that changes nothing (a question, a greeting, a progress check) add nothing and continue.",
+    "This notice does not save or restore anything. For a message with nothing to save, add no record and continue.",
   ];
   const cue = (header: string, status: string, tail: string[]) => [header, status, ...tail].join("\n");
   const ko = (status: string) => cue("[AGS 턴 확인]", status, CUE_KO_TAIL);
