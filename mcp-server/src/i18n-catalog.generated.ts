@@ -538,7 +538,6 @@ export interface MessageParams {
   "instructions.sessionMessage.guide": Record<string, never>;
   "continuity.binding.rootOwnedElsewhere": { "rootId": NestedMessage | number | string; };
   "continuity.binding.stale": Record<string, never>;
-  "continuity.checkpoint.disabledAfterRoot": Record<string, never>;
   "continuity.checkpoint.replayUnavailable": Record<string, never>;
   "continuity.checkpoint.requestConflict": Record<string, never>;
   "continuity.checkpoint.revisionChanged": Record<string, never>;

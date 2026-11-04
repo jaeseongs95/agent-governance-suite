@@ -576,8 +576,9 @@ export class ContinuityService implements ContinuityGateway {
     return this.guard(() => {
       const request = this.validator!.checkpointContextRequest(value);
       const binding = this.toolBinding(caller, "checkpoint_context");
-      const task = this.currentTask(binding);
-      if (task.rootId) throw new WorkflowContractError("SNAPSHOT_CONFLICT", msg("continuity.checkpoint.disabledAfterRoot", {}), { rootId: task.rootId });
+      // A bound workflow root does not close the session's own record: the workflow ledger has no place for user
+      // corrections, decisions or remaining work, and multistage work always runs under a workflow.
+      this.currentTask(binding);
       const now = this.now().toISOString();
       const current = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
         () => this.store.getSnapshot(binding.c, binding.e), true));
@@ -598,7 +599,6 @@ export class ContinuityService implements ContinuityGateway {
       const commandDigest = convergenceDigest(request as unknown as Record<string, unknown>);
       const stored = this.store.checkpoint(binding.c, binding.e, request.expectedRevision, requestHash, commandDigest, snapshot, Array.isArray(binding.a) ? binding.a : []);
       if (stored.kind === "epoch-mismatch") return failure("BINDING_INVALID", msg("continuity.binding.stale", {}), EPOCH_STALE);
-      if (stored.kind === "source-conflict") return failure("SNAPSHOT_CONFLICT", msg("continuity.checkpoint.disabledAfterRoot", {}));
       if (stored.kind === "replay") {
         const receipt = JSON.parse(stored.request.resultJson) as Partial<CheckpointReplayReceiptV1>;
         const replaySnapshot = this.currentReadValue(this.store.readCurrentState(binding.c, binding.e, "direct",
@@ -821,7 +821,8 @@ export class ContinuityService implements ContinuityGateway {
     if (task.suppressed) return;
     const summary = this.summary(task);
     if (!summary) return;
-    this.store.setPendingMarker(task.taskCorrelation, task.currentEpoch, summary.source, summary.revision, summary.snapshotDigest, task.rootId, this.now().toISOString());
+    this.store.setPendingMarker(task.taskCorrelation, task.currentEpoch, summary.source, summary.revision, summary.snapshotDigest,
+      summary.source === "direct" ? null : task.rootId, this.now().toISOString());
   }
 
   /** Ask while the model still has the correction; metadata alone cannot manufacture a checkpoint. */
@@ -850,7 +851,12 @@ export class ContinuityService implements ContinuityGateway {
     const summary = this.summary(task);
     if (!summary) return this.checkpointCue(task, true);
     if (task.pendingConsumed || task.pendingRevision !== summary.revision || task.pendingDigest !== summary.snapshotDigest || task.pendingSource !== summary.source) return null;
-    if (summary.source === "direct") return this.formatCandidate(this.candidateFor(task.taskCorrelation, task.currentEpoch));
+    if (summary.source === "direct") {
+      const candidate = this.formatCandidate(this.candidateFor(task.taskCorrelation, task.currentEpoch));
+      // A bound workflow is shown beside the session's record, so its unfinished stages are not lost either.
+      const card = task.rootId ? this.workflowProjection(task) : null;
+      return candidate && card ? [...candidate, ...this.formatWorkflowCard(card)] : candidate;
+    }
     const selected = this.store.readCurrentState(task.taskCorrelation, task.currentEpoch, "workflow",
       (current) => this.workflowProjection(current));
     const card = selected.kind === "available" ? selected.value : null;
@@ -1050,20 +1056,19 @@ export class ContinuityService implements ContinuityGateway {
   private summary(task: ContinuityTaskRecord): ContinuitySummaryV1 | null {
     const selected = this.store.readCurrentState<ContinuitySummaryV1 | null>(
       task.taskCorrelation, task.currentEpoch, "either", (current) => {
-        if (current.rootId) {
-          const card = this.workflowProjection(current);
-          // Projection unavailable never re-authorizes historical direct payload.
-          return card ? {
-            schemaVersion: "1.0.0", source: "workflow", taskCorrelation: current.taskCorrelation,
-            epoch: current.currentEpoch, revision: card.revision, status: card.rootState,
-            snapshotDigest: card.snapshotDigest, updatedAt: card.updatedAt,
-          } : null;
-        }
+        // The session's own record comes first: it carries the corrections, decisions and remaining work the workflow
+        // ledger has no place for. A bound root without one is restored from the workflow projection.
         const snapshot = this.store.getSnapshot(current.taskCorrelation, current.currentEpoch);
-        return snapshot ? {
+        if (snapshot) return {
           schemaVersion: "1.0.0", source: "direct", taskCorrelation: current.taskCorrelation,
           epoch: current.currentEpoch, revision: snapshot.revision, status: snapshot.status,
           snapshotDigest: snapshot.snapshotDigest, updatedAt: snapshot.updatedAt,
+        };
+        const card = current.rootId ? this.workflowProjection(current) : null;
+        return card ? {
+          schemaVersion: "1.0.0", source: "workflow", taskCorrelation: current.taskCorrelation,
+          epoch: current.currentEpoch, revision: card.revision, status: card.rootState,
+          snapshotDigest: card.snapshotDigest, updatedAt: card.updatedAt,
         } : null;
       });
     return selected.kind === "available" ? selected.value : null;

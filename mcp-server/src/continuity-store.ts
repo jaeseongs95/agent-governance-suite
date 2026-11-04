@@ -332,7 +332,9 @@ export class SqliteContinuityStore {
     return this.transaction<ContinuityCurrentRead<T>>(msg("continuity.store.readCurrentState", {}), () => {
       const task = this.readTask(taskCorrelation);
       if (!task || task.currentEpoch !== epoch) return { kind: "epoch-mismatch" };
-      if ((source === "direct" && task.rootId !== null) || (source === "workflow" && task.rootId === null)) return { kind: "source-conflict" };
+      // A direct snapshot is the session's own record (corrections, decisions, remaining work); it stays readable and
+      // writable while workflow roots are bound. Only a workflow read needs a bound root.
+      if (source === "workflow" && task.rootId === null) return { kind: "source-conflict" };
       if (task.suppressed && !allowSuppressed) return { kind: "suppressed" };
       return { kind: "available", task, value: read(task) };
     }, taskCorrelation);
@@ -371,11 +373,10 @@ export class SqliteContinuityStore {
     commandDigest: string,
     snapshot: ContinuitySnapshotV1,
     lineageAnchors: readonly string[] = [],
-  ): { kind: "stored" } | { kind: "stale"; actualRevision: number } | { kind: "replay"; request: StoredRequest } | { kind: "conflict" } | { kind: "epoch-mismatch" } | { kind: "source-conflict" } {
+  ): { kind: "stored" } | { kind: "stale"; actualRevision: number } | { kind: "replay"; request: StoredRequest } | { kind: "conflict" } | { kind: "epoch-mismatch" } {
     return this.transaction(msg("continuity.store.checkpoint", {}), () => {
       const task = this.readTask(taskCorrelation);
       if (!task || task.currentEpoch !== epoch) return { kind: "epoch-mismatch" };
-      if (task.rootId !== null) return { kind: "source-conflict" };
       const replay = this.getRequest(taskCorrelation, epoch, requestHash);
       if (replay) return replay.commandDigest === commandDigest ? { kind: "replay", request: replay } : { kind: "conflict" };
       const current = this.getSnapshot(taskCorrelation, epoch);
@@ -598,7 +599,7 @@ export class SqliteContinuityStore {
     return this.transaction(msg("continuity.store.markPending", {}), () => {
       const task = this.readTask(taskCorrelation);
       if (!task || task.currentEpoch !== epoch || task.suppressed) return false;
-      if (source === "direct" ? task.rootId !== null || rootId !== null : !rootId || task.rootId !== rootId) return false;
+      if (source === "direct" ? rootId !== null : !rootId || task.rootId !== rootId) return false;
       const result = this.database.prepare(`
         UPDATE continuity_tasks SET pending_source = ?, pending_revision = ?, pending_digest = ?,
           pending_root_id = ?, pending_consumed = 0, updated_at = ?

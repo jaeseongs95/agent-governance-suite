@@ -1,8 +1,8 @@
 {
-  "hooks.checkpointCue.notice": "이 알림은 저장·복원 성공이 아니다. 실제 응답을 확인하고 실패·미저장 상태를 구분하라. 보존할 변경이 없으면 추가 저장하지 말고 작업을 계속하라.",
-  "hooks.checkpointCue.resume": "재개·fork·인계는 inspect_context와 정확한 후보의 load_context를 먼저 수행하고 최신 요청과 대조하라. 없는 이전 정보는 추측하지 말고 현재 실제 전달된 문맥만 사용하라. workflow 원장을 직접 스냅샷으로 복제하지 마라.",
-  "hooks.checkpointCue.save": "현재 요청의 교정·제약·결정·남은 작업을 잃으면 다음 행동이 달라지는지 확인하라. 달라진 상태가 아직 저장되지 않았다면 그 판단·작업을 이어가기 전에 context-continuity 스킬과 기존 checkpoint_context로 필요한 상태와 근거 참조만 저장하라.",
-  "hooks.checkpointCue.status": "[Task continuity checkpoint check]\n{state, select, missing {사전 저장본 없음: 이 알림은 압축으로 유실된 내용을 복원하지 않는다.} saved {현재 작업의 저장본: 있음.} other {현재 작업의 저장본: 없음.}}",
+  "hooks.checkpointCue.notice": "이 알림은 저장·복원을 대신하지 않는다. 바뀐 것이 없는 메시지(질문·인사·진행 확인)에는 아무것도 더하지 말고 계속하라.",
+  "hooks.checkpointCue.resume": "압축·재개·fork 뒤라 앞의 결정·남은 일이 대화에 보이지 않으면 먼저 inspect_context를 호출하고, DEFER 후보는 load_context로 불러와 최신 요청과 대조하라.",
+  "hooks.checkpointCue.save": "이번 사용자 메시지가 교정, 새 결정·승인·금지, 추가 작업, 범위 변경 중 하나면 답하거나 다음 도구를 쓰기 전에 두 가지를 하라. (1) 바뀐 목표·범위·위험에 맞춰 스킬 선택을 다시 판단하고, 새로 필요한 스킬은 지금 호출한다. (2) checkpoint_context로 사용자 원문과 바뀐 남은 일을 저장한다.",
+  "hooks.checkpointCue.status": "[AGS 턴 확인]\n{state, select, missing {사전 저장본 없음: 이 알림은 압축으로 유실된 내용을 복원하지 않는다.} saved {이 세션의 작업 기록: 있음.} other {이 세션의 작업 기록: 없음.}}",
   "hooks.editGate.criterionPlaceholder": "<수용 기준>",
   "hooks.editGate.denied": "[AGS] workflow 없이 제품 파일 {limit, number}개째 변경: {paths}{earlier, plural, =0 {} other { (앞서 바꾼 제품 파일 #개 포함)}}. 먼저 workflow를 시작하라(최소 시작 호출 예: {example}).",
   "hooks.editGate.gatedRoot": "[AGS] {path}은(는) 판정을 기다리는 workflow root {rootId}({state})의 쓰기 범위라 바꿀 수 없다. 이 범위는 resolve_convergence_gate로 그 root를 판정한 뒤에 바꾸고, 겹치지 않는 다른 부분의 작업은 계속하라.",

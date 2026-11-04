@@ -1432,6 +1432,21 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
     return { output: intakeHook({ ...canonicalInput, hook_event_name: "SessionStart" }, "antigravity"), updatedToolInput: currentToolInput, mutated: false };
   }
 
+  if (hookName === "turn") {
+    // The per-turn cue the other hosts get from UserPromptSubmit (skill re-selection and checkpoint_context); agy has no
+    // prompt-submit event, so a turn's first model call stands for it, as in recordAgsSessionInput.
+    const hookPath = typeof options?.continuityHookPath === "string" ? options.continuityHookPath
+      : fileURLToPath(new URL("../../mcp-server/dist/continuity-hook.mjs", import.meta.url));
+    const input = { hook_event_name: "UserPromptSubmit", session_id: canonicalInput.session_id, ...(canonicalInput.cwd ? { cwd: canonicalInput.cwd } : {}) };
+    const remainingBudgetMs = typeof options?.remainingBudgetMs === "function" ? options.remainingBudgetMs() : STAGE_TIMEOUT_MS;
+    const res = spawnSync(process.execPath, [hookPath, "--host=antigravity"], {
+      input: JSON.stringify(input), encoding: "utf8", stdio: ["pipe", "pipe", "ignore"],
+      timeout: Math.max(250, Math.min(STAGE_TIMEOUT_MS, Math.floor(remainingBudgetMs))), env: process.env,
+    });
+    const output = res.status === 0 && res.stdout?.trim() ? record(JSON.parse(res.stdout)) : {};
+    return { output, updatedToolInput: currentToolInput, mutated: false };
+  }
+
   if (hookName === "continuity") {
     if (event === "Stop" && isNonContinuableStop(rawInput)) {
       return { output: {}, updatedToolInput: currentToolInput, mutated: false };
@@ -1658,7 +1673,7 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
       ? [explicitHook]
       : event === "SessionStart"
         ? ["session-message", "continuity"]
-        : turnStart ? ["session-message", "intake"] : ["session-message"];
+        : turnStart ? ["session-message", "intake", "turn"] : ["session-message"];
     const injected = [];
     const seenTexts = new Set();
 
@@ -1676,8 +1691,8 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
         const ctx = text(record(record(res.output).hookSpecificOutput).additionalContext);
         if (ctx && !seenTexts.has(ctx)) {
           seenTexts.add(ctx);
-          // The intake pointer repeats every turn, so it is ephemeral and does not pile up in the trajectory.
-          injected.push(stage === "intake" ? { ephemeralMessage: ctx } : { systemMessage: { systemMessage: ctx } });
+          // The intake pointer and the turn cue repeat every turn, so they are ephemeral and do not pile up in the trajectory.
+          injected.push(stage === "intake" || stage === "turn" ? { ephemeralMessage: ctx } : { systemMessage: { systemMessage: ctx } });
         }
       } catch (cause) {
         // Fail open per stage, with the failed stage and its code recorded.
