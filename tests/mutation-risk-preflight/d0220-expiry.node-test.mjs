@@ -57,3 +57,18 @@ test("D0220: a future expiry on a mismatched operation cannot rescue the unusabl
   const report = evaluate(input);
   assert.equal(report.verdict, "NEEDS_APPROVAL"); assert.equal(report.approval.status, "stale");
 });
+
+test("an approval whose evidence states no expiry stays observed", async () => {
+  const input = await intent(undefined);
+  delete input.approvalEvidenceRefs[0].expiresAt;
+  const report = evaluate(input);
+  assert.equal(report.approval.status, "observed"); assert.equal(report.verdict, "READY");
+});
+
+test("an approval without expiry for another operation still does not match", async () => {
+  const input = await intent(undefined), matching = input.approvalEvidenceRefs[0];
+  delete matching.expiresAt;
+  matching.operationId = "different-operation";
+  const report = evaluate(input);
+  assert.equal(report.approval.status, "mismatched"); assert.equal(report.verdict, "NEEDS_APPROVAL");
+});
