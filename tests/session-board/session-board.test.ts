@@ -83,28 +83,9 @@ describe("U1 standalone board reset", () => {
     expect(readEntry(reopened, "codex", "kept")).toMatchObject({ summary: "3.0 line", summaryAt: at(1) });
   });
 
-  it("opens a current board that a still-running 2.x install re-created its table beside, and leaves that table alone", () => {
-    const file = boardPath();
-    open(file).close();
-    // A 2.x install writing the same file after the reset adds its own table back (seen on a shared test host).
-    const legacy = new DatabaseSync(file);
-    legacy.exec(LEGACY_SESSIONS);
-    legacy.prepare("INSERT INTO sessions VALUES ('codex', 'two-x', '/w2', NULL, NULL, ?, NULL, ?, ?)").run(at(0), at(0), at(0));
-    legacy.close();
-
-    const board = open(file);
-    recordInput(board, { host: "codex", sessionId: "three-x", cwd: "/w3", now: at(1) }, { prompt: true });
-    expect(readEntry(board, "codex", "three-x")).toMatchObject({ cwd: "/w3", lastPromptAt: at(1) });
-    expect(tables(board)).toEqual(["board_sessions", "sessions"]);
-    expect(board.prepare("SELECT session_id, cwd FROM sessions").all()).toEqual([{ session_id: "two-x", cwd: "/w2" }]);
-  });
-
   it.each([
     ["a foreign table next to the old board table", (db: DatabaseSync) => { db.exec(LEGACY_SESSIONS); db.exec("CREATE TABLE messages (id TEXT)"); }],
     ["an unrelated database", (db: DatabaseSync) => db.exec("CREATE TABLE workflow_runs (run_id TEXT PRIMARY KEY)")],
-    ["a foreign table next to the current board table", (db: DatabaseSync) => {
-      db.exec("CREATE TABLE board_sessions (x TEXT)"); db.exec(LEGACY_SESSIONS); db.exec("CREATE TABLE messages (id TEXT)"); db.exec("PRAGMA user_version = 1");
-    }],
     ["a newer board format", (db: DatabaseSync) => { db.exec("CREATE TABLE board_sessions (x TEXT)"); db.exec("PRAGMA user_version = 2"); }],
   ])("refuses %s and leaves the file bytes untouched", (_label, build) => {
     const file = boardPath();

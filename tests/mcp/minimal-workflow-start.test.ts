@@ -156,8 +156,8 @@ describe("start_workflow minimal start", () => {
     expect(rootWorkspaces()).toEqual([path.basename(repo)]);
   });
 
-  it("reports an unreadable session board apart from an unreported directory, and reads a board a 2.x install shares", async () => {
-    const { call, boardPath, reportCwd } = await harness();
+  it("reports an unreadable session board apart from an unreported directory", async () => {
+    const { call, boardPath } = await harness();
     const unnamed = { goal: minimal.goal, stages: minimal.stages, acceptanceCriteria: minimal.acceptanceCriteria, writeTargets: ["."] };
     const foreign = new DatabaseSync(boardPath);
     foreign.exec("CREATE TABLE workflow_runs (run_id TEXT PRIMARY KEY)");
@@ -166,16 +166,6 @@ describe("start_workflow minimal start", () => {
     expect(unreadable.error).toMatchObject({ code: "INVALID_INPUT",
       details: { field: "workspace", reason: "SESSION_RECORD_UNREADABLE", cause: "BOARD_FOREIGN_DATABASE" } });
     expect(unreadable.error!.message).toContain("BOARD_FOREIGN_DATABASE");
-    rmSync(boardPath, { force: true });
-
-    reportCwd(repo);
-    // A 2.x install writing the same file re-creates its own table beside the current one.
-    const legacy = new DatabaseSync(boardPath);
-    legacy.exec("CREATE TABLE sessions (host TEXT NOT NULL, session_id TEXT NOT NULL, cwd TEXT NOT NULL, summary TEXT, summary_at TEXT, last_prompt_at TEXT, denied_for TEXT, started_at TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (host, session_id)) STRICT");
-    legacy.close();
-    const started = await call<MinimalWorkflowStartV1>(unnamed);
-    expect(started.error).toBeNull();
-    expect(started.data!.defaultsUsed).toContain("workspace");
   });
 
   it("leaves no root, lease, run or consumed observation when a later step fails, and keeps the step's own code", async () => {

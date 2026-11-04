@@ -32,8 +32,7 @@ function tables(db) {
 
 /**
  * Opens the board. A 2.x board file (user_version 0 holding only the old table) is reset to the empty 3.0 format in
- * one transaction. The old table beside the current one (a 2.x install writing the same file) is left as it is; any
- * other content is refused untouched, so a misconfigured path can never drop foreign data.
+ * one transaction; any other content is refused untouched, so a misconfigured path can never drop foreign data.
  */
 export function openBoard(input, { busyTimeoutMs = 5000 } = {}) {
   if (typeof input !== "string") {
@@ -53,9 +52,8 @@ export function openBoard(input, { busyTimeoutMs = 5000 } = {}) {
     try {
       const version = db.prepare("PRAGMA user_version").get().user_version;
       const present = tables(db);
-      if (version === BOARD_FORMAT_VERSION && present.includes(TABLE) && present.every((name) => name === TABLE || name === LEGACY_TABLE)) {
-        // Current format. A 2.x install still running on this machine re-creates its own table beside it after the
-        // reset; that table is the 2.x board's live data, so it stays untouched instead of making the file foreign.
+      if (version === BOARD_FORMAT_VERSION && present.length === 1 && present[0] === TABLE) {
+        // Current format.
       } else if (version === 0 && present.every((name) => name === LEGACY_TABLE)) {
         db.exec(`DROP TABLE IF EXISTS ${LEGACY_TABLE};`);
         db.exec(CREATE_TABLE);

@@ -99,7 +99,7 @@ workflow를 고치는 것은 하려는 일이 바뀌었기 때문이다. 그런�
 
 Codex 0.166.0은 stdio MCP 서버에 기본 환경 변수(HOME, PATH 등)와 `env_vars`에 적은 이름만 넘긴다(`codex-rs/rmcp-client/src/utils.rs`). AGS `.mcp.json`에 `env_vars`가 없어 `AGENT_GOVERNANCE_*`·`XDG_STATE_HOME`·`LOCALAPPDATA`가 서버에 가지 않았고, hook과 서버가 서로 다른 상태 DB를 봤다. 그래서 hook이 기록한 작업 폴더를 서버가 몰라 첫 `start_workflow`가 「workspace가 필요하다」로 실패했다.
 
-3.6.0 후보(`4982457`)의 실호스트 A/B에서는 workspace를 생략한 첫 `start_workflow`가 Codex 2회 중 2회, Claude Code 2회 중 1회 같은 오류로 실패했다. 원인은 위와 다른 곳에 있었다. 시험 서버의 현황판 파일 `~/.agent-governance-suite/session-board.sqlite3`에 3.x 표 `board_sessions` 옆에 2.x 표 `sessions`가 함께 있었다. 같은 컴퓨터에서 아직 돌던 2.x 설치본이 3.x의 초기화 뒤에 자기 표를 다시 만든 것이다. 3.x의 `openBoard`는 표가 둘인 파일을 `BOARD_FOREIGN_DATABASE`로 거부했다(`skills/session-board/scripts/board-store.mjs`). 그래서 hook이 작업 폴더를 한 번도 기록하지 못했다(그날 기록 0건, 실호스트 Claude 1회 debug 로그의 `board-hook-failure {"phase":"open"…}`). 서버도 이 읽기 실패를 「호스트가 이 세션의 작업 폴더를 알리지 않았다」로 보고해, 실제 원인이 보이지 않았다. 3.5.3도 같은 상태였다. 3.5.3 쪽 에이전트는 처음부터 workspace를 직접 넘겨서 이 오류를 만나지 않았다.
+3.6.0 후보(`4982457`)의 실호스트 A/B에서는 workspace를 생략한 첫 `start_workflow`가 Codex 2회 중 2회, Claude Code 2회 중 1회 같은 오류로 실패했다. 원인은 시험 환경에 있었다. 시험 서버의 전역 Codex 설정에 옛 시험 빌드 AGS 3.0.0-rc.1 두 개가 켜져 있었고, 이 빌드는 옛 현황판 형식(표 `sessions`)을 쓴다. 그래서 현황판 파일 `~/.agent-governance-suite/session-board.sqlite3`에 `board_sessions` 옆에 `sessions`가 다시 생겼다. 3.x는 2.x 형식과 호환하지 않으므로 이 파일을 `BOARD_FOREIGN_DATABASE`로 거부하고, hook은 작업 폴더를 기록하지 못했다(그날 기록 0건, 실호스트 Claude 1회 debug 로그의 `board-hook-failure {"phase":"open"…}`). 거부 자체는 의도한 동작이다. 결함은 서버가 이 읽기 실패를 「호스트가 이 세션의 작업 폴더를 알리지 않았다」로 보고해 실제 원인을 가린 것이다. 3.5.3도 같은 상태였고, 3.5.3 쪽 에이전트는 처음부터 workspace를 직접 넘겨서 이 오류를 만나지 않았다.
 <!-- TODO 수정 후보 A/B에서 workspace 생략 시 성공 건수, env_vars 수정 확인 범위 -->
 
 
@@ -108,9 +108,8 @@ Codex 0.166.0은 stdio MCP 서버에 기본 환경 변수(HOME, PATH 등)와 `en
 - Codex용 `.mcp.json`(ko·en)에 `env_vars`로 서버가 읽는 `AGENT_GOVERNANCE_*` 전부와 `XDG_STATE_HOME`·`LOCALAPPDATA`를 적었다.
 - `tests/tooling/codex-mcp-env.test.mjs`가 서버·session-board 소스에서 읽는 `AGENT_GOVERNANCE_*` 이름을 모아 두 `.mcp.json`에 빠짐없이 있는지 검사한다.
 - `AGENT_GOVERNANCE_TOOL_SCHEMA_PROFILE`은 넘기지 않는다. 도구 schema profile은 호스트 패키지가 정하므로, 사용자 셸에 남은 값이 Codex의 profile을 바꾸면 안 된다. 시험이 이 이름이 빠져 있는지 확인한다.
-- 현황판 파일에 현재 표와 2.x 표만 있으면 연다. 2.x 표와 그 행은 2.x 설치본의 데이터이므로 바꾸지 않는다. 그 밖의 내용이 있는 파일은 전처럼 거부한다.
 - workspace를 생략한 `start_workflow`가 현황판을 읽지 못하면 「작업 폴더 기록(현황판)을 읽지 못했다(원인 코드)」로 보고한다(`details.reason` `SESSION_RECORD_UNREADABLE`, `details.cause`에 원인 코드). 기록이 없을 때만 「호스트가 알리지 않았다」를 쓴다. 현황판 hook의 실패 진단에도 `BOARD_FOREIGN_DATABASE`를 그대로 남긴다.
-- `tests/session-board/session-board.test.ts`와 `tests/mcp/minimal-workflow-start.test.ts`가 두 경우를 검사한다.
+- `tests/mcp/minimal-workflow-start.test.ts`가 읽을 수 없는 현황판에서 이 오류와 원인 코드를 검사한다.
 
 ## 만료일 없는 승인
 
