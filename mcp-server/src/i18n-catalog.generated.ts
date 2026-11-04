@@ -534,6 +534,7 @@ export interface MessageParams {
   "schema.convergenceReviewV1.properties.reviewerActorId.description": Record<string, never>;
   "schema.convergenceReviewV1.properties.observedReviewer.description": Record<string, never>;
   "instructions.intake.frame": { "intake": NestedMessage | number | string; };
+  "instructions.intake.pointer": { "path": NestedMessage | number | string; };
   "instructions.sessionMessage.guide": Record<string, never>;
   "continuity.binding.rootOwnedElsewhere": { "rootId": NestedMessage | number | string; };
   "continuity.binding.stale": Record<string, never>;

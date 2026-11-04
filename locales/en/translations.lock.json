@@ -18,6 +18,7 @@
   "hooks.phaseCheck.waiting": "478ffb199c717aba9e14ebeb722a7e753b4a11c357d62b4472387f39af3b7285",
   "hooks.skillTrigger.invocation": "03a5258f496091f24312b85e7d7f93afc6e8e1c29e815b072a49516a2de7834c",
   "instructions.intake.frame": "355a9f622d73af6b74f1f23dcce3188270dbc9adb03ba1df98bde061a1190224",
+  "instructions.intake.pointer": "6eceb3ac6c0b1d0cdf304fae702dce10d8570344bdc995b8d467dfe57e2e390a",
   "instructions.sessionMessage.guide": "3d5d9bc552753c81eb1dec91fe8520e64fe721b7bf82055ed5f8aabb25b4645c",
   "skillChecksKo.mutationRiskPreflight.approvalStatusCheck": "a5b8c5dd23c628dc1e6e8850c5cd8195234551c15a6e49b8fe100e77d8aace57",
   "skillChecksKo.mutationRiskPreflight.authorizationMismatchCheck": "ac57a2e07292a3299c416ae4cd44c37e9b1bbed9cc8dfcc6e2a190bddec0a7d7",

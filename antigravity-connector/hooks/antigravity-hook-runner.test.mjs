@@ -1167,7 +1167,7 @@ try {
         },
       },
     );
-    assert.deepEqual(seenStagesM1, ["session-message", "intake", "continuity"]);
+    assert.deepEqual(seenStagesM1, ["session-message", "continuity"]);
     assert.equal(outM1Unknown.length > 0, true, "SessionStart with continuity output must produce non-empty out");
     assert.equal(trackerM1Unknown.getSnapshot().state, "claim-result-unknown");
 

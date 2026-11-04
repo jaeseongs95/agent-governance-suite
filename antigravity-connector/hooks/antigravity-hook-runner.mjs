@@ -1425,11 +1425,11 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
   }
 
   if (hookName === "intake") {
-    // The shared session-start intake (agy does not show MCP server instructions to the model, 2026-11-04).
+    // The shared intake hook gives its pointer at a context start; for agy that is a turn's first model call.
     const intakeHook = typeof options?.intakeHook === "function"
       ? options.intakeHook
       : (await import("../../mcp-server/dist/intake-hook.mjs")).intakeHookOutput;
-    return { output: intakeHook(canonicalInput, "antigravity"), updatedToolInput: currentToolInput, mutated: false };
+    return { output: intakeHook({ ...canonicalInput, hook_event_name: "SessionStart" }, "antigravity"), updatedToolInput: currentToolInput, mutated: false };
   }
 
   if (hookName === "continuity") {
@@ -1651,11 +1651,14 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
   }
 
   if (event === "SessionStart" || event === "PreInvocation" || event === "PostInvocation") {
+    // agy has no compaction hook event, and its compaction drops system messages a SessionStart hook injected (agy 1.5.0,
+    // 2026-11-04). So the context start for the shared intake is each turn's first model call, the first turn included.
+    const turnStart = event === "PreInvocation" && rawInput.invocationNum === 0;
     const stages = explicitHook
       ? [explicitHook]
       : event === "SessionStart"
-        ? ["session-message", "intake", "continuity"]
-        : ["session-message"];
+        ? ["session-message", "continuity"]
+        : turnStart ? ["session-message", "intake"] : ["session-message"];
     const injected = [];
     const seenTexts = new Set();
 
@@ -1673,7 +1676,8 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
         const ctx = text(record(record(res.output).hookSpecificOutput).additionalContext);
         if (ctx && !seenTexts.has(ctx)) {
           seenTexts.add(ctx);
-          injected.push({ systemMessage: { systemMessage: ctx } });
+          // The intake pointer repeats every turn, so it is ephemeral and does not pile up in the trajectory.
+          injected.push(stage === "intake" ? { ephemeralMessage: ctx } : { systemMessage: { systemMessage: ctx } });
         }
       } catch (cause) {
         // Fail open per stage, with the failed stage and its code recorded.
