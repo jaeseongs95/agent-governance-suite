@@ -34,7 +34,8 @@ describe("classification inventory source authority (SS26/SS37)", () => {
     const directories = (await readdir("skills", { withFileTypes: true })).filter((item) => item.isDirectory());
     expect(inventory.issues).toEqual([]);
     expect(inventory.skills).toHaveLength(directories.length);
-    expect(inventory.skills.map((skill) => skill.skillId)).toEqual(expect.arrayContaining(["orchestrator", "context-continuity", "session-board"]));
+    expect(inventory.skills.map((skill) => skill.skillId)).toEqual(expect.arrayContaining(["orchestrator", "session-board"]));
+    expect(inventory.skills.map((skill) => skill.skillId)).not.toContain("context-continuity");
     const prose = inventory.skills.find((skill) => skill.skillId === "korean-prose-editor")!;
     expect(prose.phases.map((item) => item.phase)).toEqual(["korean-prose-selection", "korean-prose-editing", "korean-prose-verification", "korean-prose-finalization"]);
     expect(prose.phases[3]?.inputBindings?.find((binding) => binding.targetArtifact === "edit-verification-report")?.sources).toEqual(["provider:korean-prose-verification.edit-verification-report"]);
@@ -141,10 +142,10 @@ describe("classification inventory source authority (SS26/SS37)", () => {
 });
 
 describe("signed source evidence and selection context regression", () => {
-  it("keeps all 26 skills while separating applicable evidence from exclusions", async () => {
+  it("keeps all 25 skills while separating applicable evidence from exclusions", async () => {
     const inventory = await loadSkillInventory({ root: process.cwd() });
     expect(inventory.issues).toEqual([]);
-    expect(inventory.skills).toHaveLength(26);
+    expect(inventory.skills).toHaveLength(25);
     for (const skill of inventory.skills) {
       expect(skill.applicability, skill.skillId).not.toEqual(skill.exclusions);
       expect(skill.applicability.filter(text => skill.exclusions.includes(text)), skill.skillId).toEqual([]);
@@ -173,7 +174,7 @@ describe("signed source evidence and selection context regression", () => {
     const projected = projectClassificationRequest(request);
     const wire = jevNoulWireAdapter.encode(request, { modelId: "synthetic-local-only" } as ProviderProfile) as { state: { originalPrompt: string }; questions: Record<string, { instructions: { skill: unknown } }> };
     expect(wire.state.originalPrompt).toBe(originalPrompt);
-    expect(Object.keys(wire.questions)).toHaveLength(26);
+    expect(Object.keys(wire.questions)).toHaveLength(25);
     for (const skill of [inventory.skills.find(s => s.skillId === skillId), request.skills.find(s => s.skillId === skillId), projected.payload.skills.find(s => s.skillId === skillId), wire.questions[skillId]!.instructions.skill]) expect(JSON.stringify(skill)).toContain(needle);
   });
 

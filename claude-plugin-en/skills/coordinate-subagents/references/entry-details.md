@@ -51,6 +51,8 @@ Every brief must include:
 - the expected output;
 - completion and verification criteria.
 
+Give a verification agent a judgment it can make on its own, such as a regression test of the final build or package, not waiting work such as watching a build or polling progress. Watching stays with the coordinator or a plain background command.
+
 <!-- policy-contract: context.limited-default -->
 
 Use a limited-history or no-history fork by default. Supply the brief, source locations and artifact digests instead of the full conversation. Use full history only when omitting it would make the unit inaccurate or unverifiable, and record that concrete reason before dispatch. Do not paste large logs or completed work products into the coordinator context; return their artifact locations, conclusions, verification evidence, and unresolved items.

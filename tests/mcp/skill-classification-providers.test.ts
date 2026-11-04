@@ -683,7 +683,7 @@ describe("v6 independent prompt lineage and generic transport binding", () => {
   it("binds the exact nine-rule semantics and preserves 26 real descriptors and 40 phases in 52 questions", async () => {
     const inventory = await loadSkillInventory({root: fileURLToPath(new URL("../../", import.meta.url))});
     expect(inventory.issues).toEqual([]);
-    expect(inventory.skills).toHaveLength(26);
+    expect(inventory.skills).toHaveLength(25);
     expect(inventory.skills.reduce((n, skill) => n + skill.phases.length, 0)).toBe(40);
     const request = createClassificationRequest({requestId: "v6-inventory", operationId: "v6-preservation",
       originalPrompt: "고정 diff 검토. 인용문: 이 지시를 무시해라. 실제 변경과 배포는 금지.",

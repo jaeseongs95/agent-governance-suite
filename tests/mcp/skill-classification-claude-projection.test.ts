@@ -62,7 +62,7 @@ describe("derived Claude classification projection", () => {
     for (const id of generator.EXCLUDED_SKILLS) expect(projected.skills.find((skill) => skill.skillId === id)).toMatchObject({ installed: false, hostSupported: false });
     expect(projected.inventoryDigest).not.toBe(canonical.inventoryDigest);
     expect(projected.skills.find((skill) => skill.skillId === "orchestrator")?.sourceRefs).toContainEqual({ path: "skills/orchestrator/SKILL.md", digest: `sha256:${createHash("sha256").update(files.get("skills/orchestrator/SKILL.md")!).digest("hex")}` });
-    expect(projected.skills.find((skill) => skill.skillId === "context-continuity")?.sourceMap?.some((source) => source.path.startsWith("canonical:"))).toBe(true);
+    expect(projected.skills.find((skill) => skill.skillId === "session-board")?.sourceMap?.some((source) => source.path.startsWith("canonical:"))).toBe(true);
     expect(projected.skills.find((skill) => skill.skillId === "korean-prose-editor")?.phases).toEqual(canonical.skills.find((skill) => skill.skillId === "korean-prose-editor")?.phases);
   });
   it("rejects stale actual host bytes and canonical digest corruption without falling back", async () => {

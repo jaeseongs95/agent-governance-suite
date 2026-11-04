@@ -32,6 +32,8 @@ function git(...args) {
 // - 3.5.1 intake line (docs/release-notes-v3.5.1.md): separate tasks start separate workflows with non-overlapping writeTargets.
 // - 3.5.2 mutation-risk-preflight overwrite line (docs/release-notes-v3.5.2.md): ask before overwriting user state that cannot be backed up.
 // - 3.5.2 intake line (docs/release-notes-v3.5.2.md): ask once before the first write on an undetermined premise that changes the structure.
+// - 3.6.0 intake lines (9c438be1): name checkpoint_context instead of the retired context-continuity skill, re-check
+//   skills each message, reconcile plans; coordinate-subagents gives a verification agent an independent judgment.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
   Object.freeze({
@@ -68,8 +70,82 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/orchestrator/classification.json": ["0bfffe499ca0d60c444f92205f3f8dbfff328e9070ae6ee551ab1c219d871f1d", "887c5a38a041681a71e419b9a9e087f884ff8370cb5142c24ab80f290d4ab57f"],
     }),
   }),
+  Object.freeze({
+    revision: "e6e313864a4fe1be15ac2b199fb56284dbc327a9",
+    hashes: Object.freeze({
+      "skills/coordinate-subagents/classification.json": ["9ee93e2b274e672d3f5d707d1236e74928a814de787ff7d2bac33f84c49381e6", "e39a699e1bf8a024513fc79de21cd3b960f345af068cd1e4d761474b570e65a0"],
+      "skills/coordinate-subagents/references/entry-details.md": ["4f29865da0ca78b114e038120d0a3165e5d22d339d0a81b9e11c1c1ce726577a", "5769d6ee39c9396cac4e55ace84257a93219c0fc3e8b293f67c9973747a0dc88"],
+      "skills/orchestrator/SKILL.md": ["b4fea1a91eaa7dbff3049749d441c366baa962ad66a9e7d65cdcc55467b22604", "03ca8869bbf594118eb2020868d19e3c1e5bf1f8be4ec0ec071f2f237b8b122e"],
+      "skills/orchestrator/classification.json": ["887c5a38a041681a71e419b9a9e087f884ff8370cb5142c24ab80f290d4ab57f", "7396c12527514eb07a892499cc9f2d55250228a06de7d6ba042a6a7b01fe2642"],
+    }),
+  }),
 ]);
 const guidanceSuccessor = relative => GUIDANCE_SUCCESSORS.find(successor => Object.hasOwn(successor.hashes, relative));
+
+// Retired skills. context-continuity is no longer a skill: continuity is the MCP tools checkpoint_context,
+// inspect_context, load_context, suppress_context_restore and purge_direct_context plus the hooks. The tree holds none
+// of these paths; every pinned check reads each one at `revision` with its exact digest. A path that reappears in the
+// tree, a file missing from these pins or altered history fails.
+const RETIRED_SKILLS = Object.freeze({
+  revision: "e6e313864a4fe1be15ac2b199fb56284dbc327a9",
+  skillIds: Object.freeze(["context-continuity"]),
+  hashes: Object.freeze({
+    "skills/context-continuity/SKILL.md": "338dec78ba593585a046887c411a3aacd3c12c4d601e052ef71f912593266330",
+    "skills/context-continuity/agents/openai.yaml": "fbeeced183253cf5cc7bf1dd02b21a5089333e221b3f1700c74d42f567d91224",
+    "skills/context-continuity/classification.json": "ca054eefa1fdbfbd7bf47e4652f6fc58a9c35010612e7772e233dc2d8d59c049",
+    "skills/context-continuity/references/entry-details.md": "1f2a60899a145e349d37db84b8de7c8635fec8634036b09a8516d5895e5b4eca",
+  }),
+});
+
+/** The exact bytes a retired path had at its retirement revision. */
+function retiredBytes(relative) {
+  const bytes = git("show", `${RETIRED_SKILLS.revision}:${relative}`);
+  if (createHash("sha256").update(bytes).digest("hex") !== RETIRED_SKILLS.hashes[relative]) throw new Error(`Retired skill history differs: ${relative}`);
+  return bytes;
+}
+
+/** Tree bytes; a missing retired path reads as its retirement bytes, any other missing path still throws. */
+function readTracked(path, relative) {
+  try { return readFileBytes(path); }
+  catch (error) {
+    if (error?.code !== "ENOENT" || !Object.hasOwn(RETIRED_SKILLS.hashes, relative)) throw error;
+    return retiredBytes(relative);
+  }
+}
+
+/** Skill directory names as the pinned checks see them: the tree's directories plus the retired skills. */
+function skillDirectoryNames() {
+  const present = readdirSync(join(ROOT, "skills"), { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => entry.name);
+  return [...new Set([...present, ...RETIRED_SKILLS.skillIds])];
+}
+
+/** Drops a removed retired path a working-tree diff reports unless it already differed at the retirement revision. */
+function projectRetiredChanges(base, paths) {
+  return paths.filter(relative => {
+    if (!Object.hasOwn(RETIRED_SKILLS.hashes, relative)) return true;
+    try { readFileBytes(join(ROOT, relative)); return true; }
+    catch (error) { if (error?.code !== "ENOENT") throw error; }
+    return git("diff", "--name-only", base, RETIRED_SKILLS.revision, "--", relative).toString("utf8").trim() !== "";
+  });
+}
+
+/** A retired skill stays out of the tree and the index, and its pins cover exactly its files at the retirement revision. */
+function checkRetiredSkills() {
+  const errors = [];
+  const present = new Set(readdirSync(join(ROOT, "skills"), { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => entry.name));
+  const scopes = RETIRED_SKILLS.skillIds.map(skillId => `skills/${skillId}`);
+  for (const skillId of RETIRED_SKILLS.skillIds) if (present.has(skillId)) errors.push(`retired skill directory present: skills/${skillId}`);
+  for (const relative of Object.keys(RETIRED_SKILLS.hashes)) {
+    try { readFileBytes(join(ROOT, relative)); errors.push(`retired skill source present: ${relative}`); }
+    catch (error) { if (error?.code !== "ENOENT") throw error; }
+    retiredBytes(relative);
+  }
+  const tracked = git("ls-files", "--", ...scopes).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
+  if (tracked.length) errors.push(`retired skill paths still tracked: ${tracked.join(", ")}`);
+  const historical = git("ls-tree", "-r", "--name-only", RETIRED_SKILLS.revision, "--", ...scopes).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
+  if (!sameSet(historical, Object.keys(RETIRED_SKILLS.hashes))) errors.push("retired skill pins differ from its files at the retirement revision");
+  return errors;
+}
 
 /** A reviewed guidance successor stands for its exact predecessor; any other bytes are returned as they are. */
 function beforeMultiWorkflowGuidance(relative, bytes) {
@@ -83,7 +159,8 @@ function beforeMultiWorkflowGuidance(relative, bytes) {
 
 /** Reads a file as the pinned checks see it: a reviewed guidance successor reads as its exact predecessor. */
 function readFileSync(path, encoding) {
-  const projected = beforeMultiWorkflowGuidance(relativePath(ROOT, String(path)).replaceAll("\\", "/"), readFileBytes(path));
+  const relative = relativePath(ROOT, String(path)).replaceAll("\\", "/");
+  const projected = beforeMultiWorkflowGuidance(relative, readTracked(path, relative));
   return encoding ? projected.toString(typeof encoding === "string" ? encoding : encoding.encoding) : projected;
 }
 const BASELINE = "7bc7753012227938be2a46f68bf3e29d29d5ef34";
@@ -247,10 +324,9 @@ export function checkSpecialistBehaviorSources() {
       errors.push(`specialist behavior addition bytes differ: ${relative}`);
     }
   }
-  const actualEntries = readdirSync(join(root, "skills"), { withFileTypes: true })
-    .filter(entry => entry.isDirectory())
-    .flatMap(entry => {
-      const relative = `skills/${entry.name}/SKILL.md`;
+  const actualEntries = skillDirectoryNames()
+    .flatMap(name => {
+      const relative = `skills/${name}/SKILL.md`;
       try { readFileSync(join(root, relative)); return [relative]; }
       catch { return []; }
     });
@@ -271,7 +347,8 @@ export function checkSpecialistBehaviorSources() {
   // Cover the six entries outside the older 20-skill optimization too. New or
   // changed context is explicit; ordinary executable edits remain source-lock's responsibility.
   const contextChanges = new Set([
-    ...git("diff", "--name-only", SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision, "--", "skills").toString("utf8").trim().split(/\r?\n/u),
+    ...projectRetiredChanges(SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision,
+      git("diff", "--name-only", SPECIALIST_BEHAVIOR_SUCCESSOR.baselineRevision, "--", "skills").toString("utf8").trim().split(/\r?\n/u)),
     ...git("ls-files", "--others", "--exclude-standard", "--", "skills").toString("utf8").trim().split(/\r?\n/u),
   ].filter(relative => /^skills\/[^/]+\/.+\.(?:md|ya?ml)$/iu.test(relative) || /^skills\/[^/]+\/classification\.json$/u.test(relative)));
   const projectsToBaseline = relative => guidanceSuccessor(relative) !== undefined
@@ -1235,7 +1312,7 @@ export function checkRegistryContextCompatibility(registry) {
 
 export function checkSkillContextOptimization() {
   const behaviorSources = checkSpecialistBehaviorSources();
-  const errors = [...behaviorSources.errors];
+  const errors = [...behaviorSources.errors, ...checkRetiredSkills()];
   for (const currentPath of Object.keys(PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR.hashes)) {
     if (!matchesPreflightPlatformEventsChain(currentPath, readFileSync(join(ROOT, currentPath)))) errors.push(`preflight platform-events successor bytes differ: ${currentPath}`);
   }
@@ -1293,9 +1370,7 @@ export function checkSkillContextOptimization() {
   for (const currentPath of Object.keys(HOST_CONSUMPTION_SOURCE_SUCCESSOR.hashes)) {
     if (!matchesHostConsumptionSourceSuccessor(currentPath, readHistorical(ROOT, currentPath))) errors.push(`host consumption successor bytes differ: ${currentPath}`);
   }
-  const detailOwners = readdirSync(join(ROOT, "skills"), { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
+  const detailOwners = skillDirectoryNames()
     .filter((skillId) => {
       try {
         readHistorical(ROOT, "skills", skillId, "references", "entry-details.md");
@@ -1404,7 +1479,7 @@ export function checkSkillContextOptimization() {
       if (!matchesNode24ReadmeUpdate(skillId, baselineReadme, candidateReadme)) errors.push(`${skillId}: README.md differs beyond the Node 24 minimum update`);
       allowed.add(readmePath);
     }
-    const changed = git("diff", "--name-only", BASELINE, "--", `skills/${skillId}`).toString("utf8").trim().split(/\r?\n/u).filter(Boolean);
+    const changed = projectRetiredChanges(BASELINE, git("diff", "--name-only", BASELINE, "--", `skills/${skillId}`).toString("utf8").trim().split(/\r?\n/u).filter(Boolean));
     changed.push(...git("ls-files", "--others", "--exclude-standard", "--", `skills/${skillId}`)
       .toString("utf8").trim().split(/\r?\n/u).filter(Boolean));
     const unexpected = historicalChanges([...new Set(changed)]).filter((path) => !allowed.has(path));
@@ -1432,6 +1507,7 @@ export function checkSkillContextOptimization() {
     baselineRevision: BASELINE,
     currentSpecialistBehaviorSuccessors: [SPECIALIST_BEHAVIOR_SUCCESSOR],
     currentSpecialistBehavior: behaviorSources,
+    retiredSkills: [RETIRED_SKILLS],
     currentHostConsumptionSourceSuccessors: [HOST_CONSUMPTION_SOURCE_SUCCESSOR],
     currentPreflightPrivatePreparationSuccessors: [PREFLIGHT_PRIVATE_PREPARATION_SUCCESSOR],
     currentPreflightPlatformEventsSuccessors: [PREFLIGHT_PLATFORM_EVENTS_SUCCESSOR],
