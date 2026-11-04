@@ -12,6 +12,7 @@ import {
   CONTRACT_VERSION,
   type ConvergenceFrameV1,
   type ConvergenceReviewV1,
+  type ConvergenceRootReleaseV1,
   type ConvergenceRootV1,
   type ConvergenceStatusV1,
   type ContractErrorBody,
@@ -25,6 +26,7 @@ import {
   RISK_LEVEL,
   type RiskLevel,
   type RetryRejectionV1,
+  type RootOwnerPresenceState,
   type PlannedStageV1,
   POLICY_CAPABILITY,
   type RoutedSkillProviderV2,
@@ -57,7 +59,7 @@ import { convergenceUnverifiedClaims, externalInputs, stageUnverifiedClaims, uni
 import { independence } from "./caller-actor.js";
 import { assertCsStageBundle } from "./cs-engineering-validator.js";
 import { assertEngineeringStageBundle } from "./engineering-practices-validator.js";
-import { contractFailure } from "./failure-diagnostics.js";
+import { contractFailure, failureReason } from "./failure-diagnostics.js";
 import { hostIdentity } from "./workspace-identity.js";
 import {
   clone,
@@ -177,6 +179,8 @@ export interface MinimalStartContinuity {
   beforeCommit(rootId: string): void;
   /** Whether the calling session ever bound this root: only its own open root can be continued (rootId). */
   ownsRoot(rootId: string): boolean;
+  /** The blocking root's owner presence for ROOT_CONFLICT guidance; absent, the conflict names it unknown. */
+  ownerPresence?(rootId: string): RootOwnerPresenceV1;
   /** The request's locale for the result's display text (lateAdoption.label); the root locale when absent. */
   locale?: SupportedLocale;
   /**
@@ -184,6 +188,70 @@ export interface MinimalStartContinuity {
    * server's own directory is not used: a host may start the MCP server in the plugin folder.
    */
   sessionWorkspace?(): string | null;
+}
+
+/** The presence of a root's owner sessions, read when asked (ROOT_CONFLICT guidance, release_convergence_root). */
+export interface RootOwnerPresenceV1 {
+  /** online when any owner session is online; else unreachable, ended, or unknown (no presence row kept). */
+  state: RootOwnerPresenceState;
+  /** The calling session owns the root itself; presence is then not read. */
+  self: boolean;
+  /** Whether any session's continuity binding names the root; false for a root no session bound. */
+  ownerBound: boolean;
+  /** Owner sessions presence still keeps: host and session ID as the session board shows them, and the actor ID. */
+  sessions: Array<{ host: string; sessionId: string; actorId: string; state: RootOwnerPresenceState; lastSeenAt: string | null; endedAt: string | null }>;
+  /** Why presence or ownership could not be read; the state is then unknown and another session may not release the root. */
+  unavailable: string | null;
+  observedAt: string;
+}
+
+/** What one tool call may do to a root, from the calling session's verified identity (composed by the server). */
+export interface RootAccess {
+  /** Whether the calling session bound the root; throws when ownership cannot be read (no continuity store). */
+  ownsRoot(rootId: string): boolean;
+  /** Whether another session bound the root and the calling session did not. */
+  ownedByOtherSession(rootId: string): boolean;
+  /** The owner sessions' presence, read now. */
+  ownerPresence(rootId: string): RootOwnerPresenceV1;
+  /** The caller's actor ID (no raw session ID), recorded on a release. */
+  actorId: string | null;
+}
+
+/** release_convergence_root's result: the abandoned root's handle, its release record and the run it closed. */
+export interface ConvergenceRootReleaseResultV1 {
+  schemaVersion: typeof CONTRACT_VERSION;
+  rootId: string;
+  revision: number;
+  state: "abandoned";
+  release: ConvergenceRootReleaseV1;
+  closedRun: { runId: string; state: WorkflowState; revision: number } | null;
+}
+
+/** Blocker and unresolved entry of a run closed because its root was released. */
+export const ROOT_RELEASED_BLOCKER = "root-released";
+const RUN_TERMINAL_STATES = new Set<string>(["passed", "failed", "blocked"]);
+const RELEASE_KEYS = new Set(["rootId", "expectedRevision", "reason", "userApprovalRefs"]);
+
+/** The release_convergence_root request, checked at the trust boundary. */
+function releaseRequest(raw: unknown): { rootId: string; expectedRevision: number; reason: string; userApprovalRefs: string[] } {
+  const input = asRecord(raw);
+  const approvals = input.userApprovalRefs ?? [];
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw) || Object.keys(input).some(key => !RELEASE_KEYS.has(key))
+    || typeof input.rootId !== "string" || !input.rootId.trim()
+    || typeof input.expectedRevision !== "number" || !Number.isInteger(input.expectedRevision) || input.expectedRevision < 0
+    || typeof input.reason !== "string" || !input.reason.trim() || input.reason.length > 2000
+    || !Array.isArray(approvals) || approvals.length > 32 || new Set(approvals).size !== approvals.length
+    || approvals.some(item => typeof item !== "string" || !item.trim() || item.length > 2000)) {
+    throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.releaseRootInputInvalid", {}), { reason: "RELEASE_INPUT_INVALID" });
+  }
+  return { rootId: input.rootId, expectedRevision: input.expectedRevision, reason: input.reason.trim(), userApprovalRefs: [...approvals] as string[] };
+}
+
+/** The released root's error for a caller that tries to go on with it (start_workflow rootId, a claim). */
+function releasedRootError(root: ConvergenceRootV1, release: ConvergenceRootReleaseV1): WorkflowContractError {
+  return new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.rootReleased", {
+    rootId: root.rootId, releasedAt: release.releasedAt, byOwner: release.releasedByOwner ? "yes" : "no", reason: release.reason,
+  }), { reason: "ROOT_RELEASED", rootId: root.rootId, state: root.state, release: clone(release) });
 }
 
 export interface MinimalWorkflowStartV1 {
@@ -272,32 +340,9 @@ function continuedTaskMismatch(request: MinimalStartRequest, root: ConvergenceRo
   return null;
 }
 
-/**
- * ROOT_CONFLICT of a minimal start, with what the caller can do next: start again on writeTargets that do not
- * overlap and hold back only the blocked part; keep working in its own running workflow (`runningRunId`), or continue
- * its own open root whose attempt ended with rootId; or resolve a gated root. Ownership that cannot be read (no
- * continuity store) leaves only the actions that need none.
- */
-function startConflict(body: ContractErrorBody, ownsRoot: (rootId: string) => boolean,
-  runningRunId: (rootId: string) => string | null): WorkflowContractError {
-  const details = body.details ?? {};
-  const rootId = String(details.rootId ?? "");
-  const state = String(details.blockerState ?? "");
-  let owned: boolean;
-  try { owned = rootId !== "" && ownsRoot(rootId); } catch { owned = false; }
-  const gated = state === "needs-review" || state === "needs-user";
-  const runId = owned && state === "open" ? runningRunId(rootId) : null;
-  const action = gated ? "resolve" : !owned || state !== "open" ? "disjoint" : runId ? "running" : "continue";
-  const nextActions = [
-    { action: "restart-with-disjoint-writeTargets", tool: "start_workflow" },
-    ...(action === "running" ? [{ action: "continue-running-workflow", tool: "get_workflow_status", arguments: { runId } }] : []),
-    ...(action === "continue" ? [{ action: "continue-own-root", tool: "start_workflow", arguments: { rootId } }] : []),
-    ...(gated ? [{ action: "resolve-gate", tool: "resolve_convergence_gate", arguments: { rootId } }] : []),
-  ];
-  return new WorkflowContractError("ROOT_CONFLICT", msg("workflow.service.startWorkflowRootConflict", {
-    requested: String(details.requestedEntry ?? ""), existing: String(details.existingPath ?? details.existingEntry ?? ""), rootId, state,
-    owned: owned ? "yes" : "no", action, runId: runId ?? "",
-  }), { ...details, ownedBySession: owned, nextActions });
+/** Presence that was not read: no release by another session is offered on it. */
+function unreadPresence(reason: string): RootOwnerPresenceV1 {
+  return { state: "unknown", self: false, ownerBound: false, sessions: [], unavailable: reason, observedAt: new Date().toISOString() };
 }
 
 /** The TaskEnvelope and frame of a minimal start; the AGENT's stage choice is used as given, never expanded. */
@@ -405,7 +450,8 @@ export class WorkflowService {
     });
   }
 
-  openConvergenceRoot(rawRequest: unknown): ApiResultV1<ConvergenceRootV1> {
+  /** `access` is the calling session's (MCP tool call); without it, ownership is not checked and no presence is read. */
+  openConvergenceRoot(rawRequest: unknown, access: RootAccess | null = null): ApiResultV1<ConvergenceRootV1> {
     return this.attempt(() => {
       const request = this.validator.openConvergenceRootRequest(rawRequest);
       this.validateWorkUnitGraph(request.taskEnvelope);
@@ -420,6 +466,11 @@ export class WorkflowService {
       }
       if (request.parentRootId) {
         const parent = this.requireConvergenceSnapshot(request.parentRootId).root;
+        // Replacing abandons the parent: only its own session may, so another session's root is not taken this way.
+        if (access?.ownedByOtherSession(parent.rootId)) {
+          throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.replaceRootNotOwned", { rootId: parent.rootId }),
+            { field: "parentRootId", reason: "ROOT_NOT_OWNED", rootId: parent.rootId });
+        }
         if (!["needs-review", "needs-user"].includes(parent.state)) {
           throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.gatedConvergenceRootReplaced", {}), {
             parentRootId: parent.rootId,
@@ -448,14 +499,15 @@ export class WorkflowService {
       // The store decides workspace binding and conflicts from server-derived identities, in the insert transaction.
       const conflict = this.store.insertConvergenceRoot(root);
       if (conflict) {
-        throw new WorkflowContractError("ROOT_CONFLICT", msg("workflow.service.activeConvergenceRootCoversWorkspace", {}), conflictDetails(conflict));
+        throw this.rootConflict(conflictDetails(conflict), "open", rootId => access?.ownsRoot(rootId) ?? false,
+          access ? rootId => access.ownerPresence(rootId) : null);
       }
       return clone(root);
     });
   }
 
   claimWorkflowAttempt(rawProposal: unknown, requireTrustedExecutionContext = false,
-    caller: ObservedCallerV1 | null = null): ApiResultV1<AttemptLeaseV1> {
+    caller: ObservedCallerV1 | null = null, access: RootAccess | null = null): ApiResultV1<AttemptLeaseV1> {
     return this.attempt(() => {
       const proposal = clone(this.normalizeAttemptProposal(rawProposal));
       const actorId = caller?.actor ?? null;
@@ -512,6 +564,12 @@ export class WorkflowService {
         || proposedDigests.operationalDigest !== root.operationalDigest
         || this.artifactRolesChanged(root.frame, proposal.frame);
       if (frameChanged) {
+        // A frame change moves an open root to review: only its own session may, so another session's root is not
+        // gated this way (a root no session bound keeps the previous behavior).
+        if (access?.ownedByOtherSession(root.rootId)) {
+          throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.claimFrameChangeRootNotOwned", { rootId: root.rootId }),
+            { field: "rootId", reason: "ROOT_NOT_OWNED", rootId: root.rootId });
+        }
         // The task or control frame changed before the next full attempt.
         if (root.state === "open") this.moveRootToReview(root);
         throw new WorkflowContractError("FRAME_REVIEW_REQUIRED", msg("workflow.service.taskControlWorkspaceOperationalArtifact", {}), {
@@ -740,7 +798,8 @@ export class WorkflowService {
             schemaVersion: CONTRACT_VERSION, parentRootId: null, taskEnvelope: task, frame: fresh!.frame, userApprovalRefs: [],
           });
           if (!opened.ok && opened.error?.code === "ROOT_CONFLICT") {
-            throw startConflict(opened.error, rootId => continuity.ownsRoot(rootId), rootId => this.runningRunId(rootId));
+            throw this.rootConflict(opened.error.details ?? {}, "start", rootId => continuity.ownsRoot(rootId),
+              continuity.ownerPresence ? rootId => continuity.ownerPresence!(rootId) : null);
           }
           root = unwrapResult(opened);
         }
@@ -768,11 +827,160 @@ export class WorkflowService {
     });
   }
 
-  /** The root's latest run when it has not ended, or null. */
-  private runningRunId(rootId: string): string | null {
-    const runId = this.store.getConvergenceSnapshot(rootId)?.workflowRunIds.at(-1);
-    const state = runId ? this.store.getRun(runId)?.state : undefined;
-    return runId && state && !["passed", "failed", "blocked"].includes(state) ? runId : null;
+  /**
+   * ROOT_CONFLICT with what the caller can do next, on both start paths (start_workflow, open_convergence_root): start
+   * again on a scope that does not overlap; keep working in its own running workflow, or continue its own open root
+   * whose attempt ended; resolve a gated root; or release the root (release_convergence_root): its own, or another
+   * session's whose owner session is not online, with the user's decision. The root's times and latest run are only
+   * shown: no decision here or in the release reads them. Ownership that cannot be read leaves only the actions that
+   * need none.
+   */
+  private rootConflict(details: Record<string, unknown>, path: "start" | "open", ownsRoot: (rootId: string) => boolean,
+    ownerPresence: ((rootId: string) => RootOwnerPresenceV1) | null): WorkflowContractError {
+    const rootId = String(details.rootId ?? "");
+    const state = String(details.blockerState ?? "");
+    let owned: boolean;
+    try { owned = rootId !== "" && ownsRoot(rootId); } catch { owned = false; }
+    const gated = state === "needs-review" || state === "needs-user";
+    const latestRunId = this.store.getConvergenceSnapshot(rootId)?.workflowRunIds.at(-1) ?? null;
+    const latest = latestRunId ? this.store.getRun(latestRunId) : null;
+    const latestRun = latest ? { runId: latest.runId, state: latest.state, updatedAt: this.store.getRunUpdatedAt(latest.runId) } : null;
+    const runId = owned && state === "open" && latest && !RUN_TERMINAL_STATES.has(latest.state) ? latest.runId : null;
+    let presence: RootOwnerPresenceV1;
+    if (owned) presence = { state: "online", self: true, ownerBound: true, sessions: [], unavailable: null, observedAt: new Date().toISOString() };
+    else if (!ownerPresence) presence = unreadPresence("PRESENCE_NOT_READ");
+    else {
+      try { presence = ownerPresence(rootId); } catch (cause) { presence = unreadPresence(failureReason(cause).reason ?? "PRESENCE_UNAVAILABLE"); }
+    }
+    const action = gated ? "resolve" : !owned || state !== "open" ? "disjoint" : runId ? "running" : "continue";
+    const release = owned ? "own" : presence.unavailable ? "none" : presence.state === "online" ? "online" : "approval";
+    const releaseArguments = { rootId, expectedRevision: details.rootRevision };
+    const onlineOwner = presence.sessions.find(session => session.state === "online");
+    const nextActions = [
+      { action: "restart-with-disjoint-writeTargets", tool: path === "start" ? "start_workflow" : "open_convergence_root" },
+      ...(action === "running" ? [{ action: "continue-running-workflow", tool: "get_workflow_status", arguments: { runId } }] : []),
+      ...(action === "continue" ? [{ action: "continue-own-root", tool: path === "start" ? "start_workflow" : "claim_workflow_attempt", arguments: { rootId } }] : []),
+      ...(gated ? [{ action: "resolve-gate", tool: "resolve_convergence_gate", arguments: { rootId } }] : []),
+      ...(release === "own" ? [{ action: "release-own-root", tool: "release_convergence_root", arguments: releaseArguments }] : []),
+      ...(release === "approval"
+        ? [{ action: "release-with-user-approval", tool: "release_convergence_root", arguments: releaseArguments, requires: ["userApprovalRefs"] }] : []),
+      ...(release === "online" && onlineOwner
+        ? [{ action: "ask-owner-session", tool: "prepare_session_message", arguments: { targetHost: onlineOwner.host, targetSessionId: onlineOwner.sessionId } }] : []),
+    ];
+    const context = msg("workflow.service.rootConflictContext", {
+      createdAt: String(details.rootCreatedAt ?? ""), updatedAt: String(details.rootUpdatedAt ?? ""),
+      latestRun: latestRun ? "some" : "none", latestRunId: latestRun?.runId ?? "", latestRunState: latestRun?.state ?? "",
+      latestRunUpdatedAt: latestRun?.updatedAt ?? "", presence: presence.state,
+    });
+    const existing = String(details.existingPath ?? details.existingEntry ?? "");
+    const ref = path === "start"
+      ? msg("workflow.service.startWorkflowRootConflict", { requested: String(details.requestedEntry ?? ""), existing, rootId, state,
+        owned: owned ? "yes" : "no", action, runId: runId ?? "", context, release })
+      : msg("workflow.service.activeConvergenceRootCoversWorkspace", { existing, rootId, state, context, release });
+    return new WorkflowContractError("ROOT_CONFLICT", ref, { ...details, ownedBySession: owned, latestRun, ownerPresence: presence, nextActions });
+  }
+
+  /**
+   * Releases a root so its scope stops blocking other workflows (release_convergence_root). The owner session releases
+   * its own open or gated root. Another session releases it only when no owner session is online, read now, and only
+   * with the user's decision (userApprovalRefs). A run still in progress is closed as blocked and the root becomes
+   * abandoned in one workflow transaction; the root keeps who released it, when, on which presence and approval.
+   */
+  releaseConvergenceRoot(rawRequest: unknown, access: RootAccess): ApiResultV1<ConvergenceRootReleaseResultV1> {
+    return this.attempt(() => {
+      const request = releaseRequest(rawRequest);
+      return this.store.withWorkflowTransaction(() => {
+        const snapshot = this.requireConvergenceSnapshot(request.rootId);
+        const root = snapshot.root;
+        if (request.expectedRevision !== root.revision) {
+          throw new WorkflowContractError("STALE_REVISION", msg("workflow.service.expectedRevisionMatchConvergenceRoot", {}), {
+            expectedRevision: request.expectedRevision, actualRevision: root.revision,
+          });
+        }
+        if (root.state === "completed" || root.state === "abandoned") {
+          throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.releaseRootNotActive", { rootId: root.rootId, state: root.state }),
+            { reason: "ROOT_NOT_ACTIVE", rootId: root.rootId, state: root.state, ...(root.release ? { release: clone(root.release) } : {}) });
+        }
+        const owned = access.ownsRoot(root.rootId);
+        let presence: RootOwnerPresenceV1 | null = null;
+        if (!owned) {
+          presence = access.ownerPresence(root.rootId);
+          if (presence.unavailable) {
+            throw new WorkflowContractError("MCP_UNAVAILABLE", msg("workflow.service.releaseRootPresenceUnavailable", { rootId: root.rootId }),
+              { reason: "OWNER_PRESENCE_UNAVAILABLE", rootId: root.rootId, cause: presence.unavailable });
+          }
+          if (presence.state === "online") {
+            throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.releaseRootOwnerOnline", { rootId: root.rootId }),
+              { reason: "OWNER_SESSION_ONLINE", rootId: root.rootId, ownerPresence: presence });
+          }
+          if (request.userApprovalRefs.length === 0) {
+            throw new WorkflowContractError("INVALID_INPUT", msg("workflow.service.releaseRootApprovalRequired", { rootId: root.rootId }),
+              { reason: "USER_APPROVAL_REQUIRED", field: "userApprovalRefs", rootId: root.rootId, ownerPresence: presence });
+          }
+        }
+        const releasedAt = new Date().toISOString();
+        const latestRunId = snapshot.workflowRunIds.at(-1) ?? null;
+        const latest = latestRunId ? this.requireRun(latestRunId) : null;
+        const running = latest && !RUN_TERMINAL_STATES.has(latest.state) ? latest : null;
+        const release: ConvergenceRootReleaseV1 = {
+          releasedAt,
+          releasedBy: access.actorId,
+          releasedByOwner: owned,
+          previousState: root.state,
+          ownerPresence: presence?.state ?? null,
+          ...(presence ? { presenceObservedAt: presence.observedAt } : {}),
+          ownerActors: [...new Set(presence?.sessions.map(session => session.actorId) ?? [])],
+          userApprovalRefs: [...request.userApprovalRefs],
+          reason: request.reason,
+          closedRunId: running?.runId ?? null,
+        };
+        let updated: ConvergenceRootV1;
+        if (running) {
+          const expectedRevision = running.revision;
+          running.state = "blocked";
+          running.plan.state = "blocked";
+          running.plan.currentStageId = null;
+          running.plan.nextStageId = null;
+          this.addUnique(running.blockers, [ROOT_RELEASED_BLOCKER]);
+          this.addUnique(running.unresolved, [ROOT_RELEASED_BLOCKER]);
+          running.error = null;
+          running.revision += 1;
+          this.assertReceipt(running);
+          const binding = this.store.getGuardedRunBinding(running.runId);
+          const convergence = binding && !binding.outcome ? this.convergenceOutcome(running, binding) : undefined;
+          updated = convergence?.root ?? bumpedRoot(root, releasedAt);
+          updated.state = "abandoned";
+          updated.release = release;
+          this.validator.convergenceRoot(updated);
+          const stored = convergence
+            ? this.store.updateRun(running, expectedRevision, { ...convergence, root: updated })
+            : this.store.updateRun(running, expectedRevision) && this.store.updateConvergenceRoot(updated, root.revision);
+          if (!stored) {
+            throw new WorkflowContractError("STALE_REVISION", msg("workflow.service.expectedRevisionMatchCurrentRunRevision", {}), {
+              runId: running.runId, expectedRevision,
+            });
+          }
+        } else {
+          updated = bumpedRoot(root, releasedAt);
+          updated.state = "abandoned";
+          updated.release = release;
+          this.validator.convergenceRoot(updated);
+          if (!this.store.updateConvergenceRoot(updated, root.revision)) {
+            throw new WorkflowContractError("STALE_REVISION", msg("workflow.service.expectedRevisionMatchConvergenceRoot", {}), {
+              expectedRevision: request.expectedRevision, actualRevision: this.store.getConvergenceSnapshot(root.rootId)?.root.revision ?? null,
+            });
+          }
+        }
+        return {
+          schemaVersion: CONTRACT_VERSION,
+          rootId: updated.rootId,
+          revision: updated.revision,
+          state: "abandoned" as const,
+          release: clone(release),
+          closedRun: running ? { runId: running.runId, state: running.state, revision: running.revision } : null,
+        };
+      });
+    });
   }
 
   /**
@@ -785,6 +993,7 @@ export class WorkflowService {
   } {
     const snapshot = this.requireConvergenceSnapshot(rootId);
     const root = snapshot.root;
+    if (root.release) throw releasedRootError(root, root.release);
     if (root.state !== "open") {
       throw new WorkflowContractError("INVALID_TRANSITION", msg("workflow.service.startWorkflowRootNotOpen", { rootId, state: root.state }),
         { field: "rootId", reason: "ROOT_NOT_OPEN", rootId, state: root.state });
@@ -2228,6 +2437,7 @@ export class WorkflowService {
   }
 
   private throwRootGate(root: ConvergenceRootV1, snapshot: ConvergenceSnapshot): never {
+    if (root.release) throw releasedRootError(root, root.release);
     const attempts = consumedLeases(snapshot, root.currentEpoch).length;
     if (root.state === "needs-review" && attempts >= root.frame.operationalSettings.maxAttemptsPerEpoch) {
       throw new WorkflowContractError("ATTEMPT_BUDGET_EXHAUSTED", msg("workflow.service.independentReviewRequiredBeforeAnother", {}), {
@@ -2300,7 +2510,7 @@ export class WorkflowService {
     const recordedAt = new Date().toISOString();
     const expectedRootRevision = binding.root.revision;
     const root = bumpedRoot(binding.root, recordedAt);
-    const aborted = receipt.blockers.includes("aborted-by-caller");
+    const aborted = receipt.blockers.includes("aborted-by-caller") || receipt.blockers.includes(ROOT_RELEASED_BLOCKER);
     const passed = receipt.state === "passed";
     const state: AttemptOutcomeV1["state"] = passed ? "passed" : aborted ? "aborted" : "failed";
     const attemptsUsed = consumedLeases(this.requireConvergenceSnapshot(root.rootId), root.currentEpoch).length;

@@ -249,18 +249,22 @@ describe("start_workflow with several workflows in one session", () => {
     const ownDetails = own.error!.details as unknown as ConflictDetails;
     expect(ownDetails.existingPath.toLowerCase()).toContain("shared");
     // Its run is still running: the next action is that run, not a continuation start that would not match the task.
+    // 3.6.0: its own root can also be released.
     expect(ownDetails.nextActions).toEqual([{ action: "restart-with-disjoint-writeTargets", tool: "start_workflow" },
-      { action: "continue-running-workflow", tool: "get_workflow_status", arguments: { runId: first.data!.runId } }]);
+      { action: "continue-running-workflow", tool: "get_workflow_status", arguments: { runId: first.data!.runId } },
+      { action: "release-own-root", tool: "release_convergence_root", arguments: { rootId: first.data!.rootId, expectedRevision: expect.any(Number) } }]);
     expect(own.error!.message).toContain("shared/inner");
     expect(own.error!.message).toContain(first.data!.runId);
     // Once its attempt ended, the open root is continued with rootId.
     expect(service.abortWorkflow(first.data!.runId, first.data!.revision).error).toBeNull();
     const ended = await call(scoped(["shared/inner"]));
-    expect((ended.error!.details as unknown as ConflictDetails).nextActions.at(-1))
-      .toEqual({ action: "continue-own-root", tool: "start_workflow", arguments: { rootId: first.data!.rootId } });
+    expect((ended.error!.details as unknown as ConflictDetails).nextActions)
+      .toContainEqual({ action: "continue-own-root", tool: "start_workflow", arguments: { rootId: first.data!.rootId } });
     const foreign = await call(scoped(["shared"]), true, "another-session");
     expect(foreign.error).toMatchObject({ code: "ROOT_CONFLICT", details: { ownedBySession: false } });
-    expect((foreign.error!.details as unknown as ConflictDetails).nextActions.map(item => item.action)).toEqual(["restart-with-disjoint-writeTargets"]);
+    // 3.6.0: no presence of the owner session is kept here, so the user may decide to release it.
+    expect((foreign.error!.details as unknown as ConflictDetails).nextActions.map(item => item.action))
+      .toEqual(["restart-with-disjoint-writeTargets", "release-with-user-approval"]);
   });
 
   it("continues only this session's own open root with rootId, and refuses another session's or a closed root", async () => {

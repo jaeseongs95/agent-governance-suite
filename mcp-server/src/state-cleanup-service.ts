@@ -176,8 +176,7 @@ export class StateCleanupService {
           this.continuityStore.backupTo(continuityResult.backupPath);
           this.protectBackup(continuityResult.backupPath);
           const guardedRootIds = [...current.continuity.tasks, ...current.continuity.snapshots]
-            .map((candidate) => candidate.rootId)
-            .filter((rootId): rootId is string => rootId !== null);
+            .flatMap((candidate) => this.continuityStore!.allBoundRoots(candidate.taskCorrelation));
           const deleted = this.workflowStore.withInactiveRootGuard(guardedRootIds, () => this.continuityStore!.executeCleanup(
             current.continuity!,
             now.toISOString(),
@@ -224,13 +223,17 @@ export class StateCleanupService {
     let protectedContinuityTasks = continuity?.protectedActiveTasks ?? 0;
     if (continuity) {
       const protectedRootTaskIds = new Set<string>();
+      // A session binds several roots (3.3.0); its primary rootId is only the newest. Any active root it ever bound keeps
+      // the task and its binding rows, the root's ownership record.
+      const bindsActiveRoot = (taskCorrelation: string) => this.continuityStore!.allBoundRoots(taskCorrelation)
+        .some((rootId) => this.workflowStore.isConvergenceRootActive(rootId));
       continuity.tasks = continuity.tasks.filter((task) => {
-        const active = task.rootId ? this.workflowStore.isConvergenceRootActive(task.rootId) : false;
+        const active = bindsActiveRoot(task.taskCorrelation);
         if (active) protectedRootTaskIds.add(task.taskCorrelation);
         return !active;
       });
       continuity.snapshots = continuity.snapshots.filter((snapshot) => {
-        const active = snapshot.rootId ? this.workflowStore.isConvergenceRootActive(snapshot.rootId) : false;
+        const active = bindsActiveRoot(snapshot.taskCorrelation);
         if (active) protectedRootTaskIds.add(snapshot.taskCorrelation);
         return !active;
       });

@@ -304,6 +304,25 @@ export class SqliteContinuityStore {
     `).get(ROOT_BOUND_EVENT + rootId, taskCorrelation, rootId, taskCorrelation));
   }
 
+  /** Whether any task ever bound the root, in any epoch: a root no session bound has no owner. */
+  rootBound(rootId: string): boolean {
+    return Boolean(this.database.prepare(`
+      SELECT 1 FROM continuity_observations WHERE event = ?
+      UNION ALL SELECT 1 FROM continuity_tasks WHERE root_id = ?
+      LIMIT 1
+    `).get(ROOT_BOUND_EVENT + rootId, rootId));
+  }
+
+  /** Every root the task ever bound, in any epoch, with its primary: what state cleanup must not take from it. */
+  allBoundRoots(taskCorrelation: string): string[] {
+    const rows = this.database.prepare(`
+      SELECT DISTINCT substr(event, ?) AS root_id FROM continuity_observations
+      WHERE task_correlation = ? AND substr(event, 1, ?) = ?
+    `).all(ROOT_BOUND_EVENT.length + 1, taskCorrelation, ROOT_BOUND_EVENT.length, ROOT_BOUND_EVENT) as Array<{ root_id: string }>;
+    const primary = this.readTask(taskCorrelation)?.rootId ?? null;
+    return [...new Set([...rows.map(row => row.root_id), ...(primary ? [primary] : [])])];
+  }
+
   /** Whether this task ever bound the root, in any epoch. */
   ownsRoot(taskCorrelation: string, rootId: string): boolean {
     if (this.getTask(taskCorrelation)?.rootId === rootId) return true;

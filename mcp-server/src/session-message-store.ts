@@ -1594,6 +1594,23 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     return { sessions, truncated };
   }
 
+  /**
+   * The latest birth of every session presence still keeps (online, lapsed, or ended until housekeeping drops it
+   * PRESENCE_RETENTION_MS after its lease end). Root ownership reads it to tell whether a root's owner session still
+   * runs; a session never seen here, or already dropped, is not listed (its presence is unknown).
+   */
+  listKnownPresence(nowMs = AUTHORITY_NOW): Array<Pick<SessionPresence, "host" | "sessionId" | "state" | "heartbeatAt" | "endedAt">> {
+    if (!this.inTransaction) return this.transaction(() => this.listKnownPresence(nowMs));
+    nowMs = this.time(nowMs);
+    this.prune(nowMs);
+    const rows = this.database.prepare("SELECT DISTINCT host, session_id FROM session_presence WHERE superseded_at IS NULL")
+      .all() as Array<{ host: string; session_id: string }>;
+    return rows.map((row) => {
+      const presence = this.presence({ host: row.host, sessionId: row.session_id }, nowMs);
+      return { host: presence.host, sessionId: presence.sessionId, state: presence.state, heartbeatAt: presence.heartbeatAt, endedAt: presence.endedAt };
+    });
+  }
+
   listPresence(nowMs = AUTHORITY_NOW, targets: SessionIdentity[], expectedCodeDigest: string | null = null): SessionPresenceView[] {
     if (!this.inTransaction) return this.transaction(() => this.listPresence(nowMs, targets, expectedCodeDigest));
     nowMs = this.time(nowMs);

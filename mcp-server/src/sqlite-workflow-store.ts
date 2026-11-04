@@ -250,6 +250,11 @@ export class SqliteWorkflowStore implements WorkflowStore, PluginUpdateStore {
     this.guard(msg("workflow.store.persistWorkflowRun", {}), { runId: receipt.runId }, () => this.insertRunRow(receipt, now));
   }
 
+  getRunUpdatedAt(runId: string): string | null {
+    return this.guard(msg("workflow.store.readWorkflowRun", {}), { runId }, () => (this.database.prepare(
+      "SELECT updated_at FROM workflow_runs WHERE run_id = ?").get(runId) as { updated_at: string } | undefined)?.updated_at ?? null);
+  }
+
   getRun(runId: string): WorkflowReceiptV1 | null {
     return this.guard(msg("workflow.store.readWorkflowRun", {}), { runId }, () => {
       const row = this.database.prepare(`

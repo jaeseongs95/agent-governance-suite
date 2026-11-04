@@ -137,6 +137,36 @@ describe("state cleanup", () => {
     }
   });
 
+  it("3.6.0 keeps a session's task while any root it bound is active, not only its newest root", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "state-cleanup-bound-roots-"));
+    directories.push(directory);
+    const workflowPath = path.join(directory, "workflows.sqlite3");
+    const workflow = new SqliteWorkflowStore(workflowPath);
+    const continuity = new SqliteContinuityStore(path.join(directory, "continuity.sqlite3"));
+    try {
+      workflow.insertRun(receipt("older-active-run", "running"));
+      workflow.insertRun(receipt("newest-done-run"));
+      linkRun(workflowPath, "older-active-root", "older-active-run", "open");
+      linkRun(workflowPath, "newest-done-root", "newest-done-run", "completed");
+      // One session bound two roots (3.3.0): the primary root_id is the newest, which has finished.
+      continuity.ensureTask("multi-root", OLD);
+      expect(continuity.bindRoot("multi-root", 1, "older-active-root", OLD)).toBe(true);
+      expect(continuity.bindRoot("multi-root", 1, "newest-done-root", OLD)).toBe(true);
+      expect(continuity.getTask("multi-root")?.rootId).toBe("newest-done-root");
+
+      const service = new StateCleanupService(workflow, continuity, new ContractValidator(), () => new Date(NOW));
+      const preview = service.prepare({ schemaVersion: "1.0.0" });
+      expect(preview.ok).toBe(true);
+      expect(preview.data!.candidates.continuityTasks.map(task => task.taskCorrelation)).not.toContain("multi-root");
+      expect(service.execute({ schemaVersion: "1.0.0", planToken: preview.data!.planToken }).ok).toBe(true);
+      // The active root's ownership record stays.
+      expect(continuity.ownsRoot("multi-root", "older-active-root")).toBe(true);
+    } finally {
+      continuity.close();
+      workflow.close();
+    }
+  });
+
   it("rejects stale and tampered tokens before deletion", async () => {
     const directory = await mkdtemp(path.join(tmpdir(), "state-cleanup-stale-"));
     directories.push(directory);

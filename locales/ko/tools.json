@@ -36,5 +36,10 @@
   "tools.start_workflow.input.writeTargets": "작업이 바꾸는 경로로, 작업 공간 기준 상대 경로다. 필수다. run이 진행 중이면 이 안의 편집은 편집 관문을 통과한다. 한 세션은 겹치지 않는 경로로 workflow를 여러 개 함께 진행할 수 있다.",
   "tools.start_workflow.input.rootId": "새 root를 여는 대신 이 세션의 open root를 이어 간다(실패하거나 중단된 시도 뒤). goal, stages, acceptanceCriteria, writeTargets는 그 root의 값이어야 한다.",
   "tools.start_workflow.input.priorFailure": "실패한 시도 뒤 rootId와 함께 쓴다. hypothesis, changeSummary, discriminator와 evidenceRefs(새 근거가 담긴 로컬 파일)를 준다. 실패 fingerprint는 서버가 채운다.",
-  "tools.prepare_session_message.input.body": "비어 있지 않은 메시지 본문이며, 서비스가 UTF-8 4096바이트로 제한한다."
+  "tools.prepare_session_message.input.body": "비어 있지 않은 메시지 본문이며, 서비스가 UTF-8 4096바이트로 제한한다.",
+  "tools.release_convergence_root.description": "convergence root를 놓아 그 쓰기 범위가 다른 workflow를 더 막지 않게 한다. ROOT_CONFLICT(또는 get_convergence_status)가 더 필요 없는 root를 가리킬 때 호출하라. 이 세션이 더 이어 가지 않을 자기 root(open, needs-review, needs-user)이거나, 소유 세션이 online이 아닌 다른 세션의 root를 사용자가 놓아도 된다고 결정한 경우다. 서버는 호출 시점에 소유 여부를 확인하고 소유 세션의 presence를 읽는다. 다른 세션의 root는 소유 세션이 online이면 거부되고, userApprovalRefs에 사용자 결정이 있어야 한다. root는 abandoned가 되고, 그 root에서 진행 중인 run은 blocked(root-released)로 닫히며, 누가·언제·어떤 presence 판독과 승인으로 놓았는지 root에 기록된다. 놓은 root는 이어 갈 수 없으니 새 workflow를 시작하라.",
+  "tools.release_convergence_root.input.rootId": "놓을 root다. 예: ROOT_CONFLICT의 details.rootId.",
+  "tools.release_convergence_root.input.expectedRevision": "root의 현재 revision이다. ROOT_CONFLICT의 details.rootRevision이나 get_convergence_status의 root.revision.",
+  "tools.release_convergence_root.input.reason": "그 root가 더 필요 없는 이유다. root에 기록된다.",
+  "tools.release_convergence_root.input.userApprovalRefs": "root를 놓아도 된다는 사용자 결정의 참조다(예: 사용자 메시지). 다른 세션의 root에는 필수이고, 이 세션의 root에는 선택이다."
 }
