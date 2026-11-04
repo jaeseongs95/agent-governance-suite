@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -71,14 +72,19 @@ describe("shared context-start intake", () => {
     });
     expect(seen).toEqual(["session-message", "continuity"]);
 
+    // Behavior 6 (d7585d74): the same first call also runs the turn stage after intake; a stub stands in for the
+    // continuity hook here (its cue is covered in antigravity-turn-cue.test.mjs) so no real state store is opened.
+    const turnHook = path.join(mkdtempSync(path.join(os.tmpdir(), "ags-intake-turn-")), "turn.mjs");
+    writeFileSync(turnHook, "process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: \"UserPromptSubmit\", additionalContext: \"TURN-CUE\" } }));\n");
     const options = {
+      continuityHookPath: turnHook,
       sessionMessageHook: () => ({}),
       spawnSync: () => ({ status: 0 }),
       writeStderr: () => undefined,
       intakeHook: (input: Record<string, unknown>, host: string) => intakeHookOutput(input, host, resolveHostLocale().locale),
     };
     expect(await executeAntigravityHookEvent({ conversationId: "intake-agy-turn", invocationNum: 0, initialNumSteps: 18 }, "PreInvocation", undefined, options))
-      .toEqual({ injectSteps: [{ ephemeralMessage: skillIntakePointer(resolveHostLocale().locale) }] });
+      .toEqual({ injectSteps: [{ ephemeralMessage: skillIntakePointer(resolveHostLocale().locale) }, { ephemeralMessage: "TURN-CUE" }] });
     for (const [event, input] of [
       ["PreInvocation", { conversationId: "intake-agy-turn", invocationNum: 1, initialNumSteps: 21 }],
       ["PreInvocation", { conversationId: "intake-agy-turn" }],

@@ -678,7 +678,10 @@ describe("current continuity authority versus historical payload", () => {
 
   for (const change of ["clear", "root"] as const) {
     for (const replay of [false, true]) {
-      it(change + " before checkpoint transaction rejects " + (replay ? "replay" : "write"), async () => {
+      // Behavior 1 (d7585d74): a root bound between the read and the write no longer closes the session record; only a
+      // clear (a new epoch) fences the old authority.
+      it(change === "clear" ? "clear before checkpoint transaction rejects " + (replay ? "replay" : "write")
+        : "root bound before checkpoint transaction still " + (replay ? "replays" : "writes") + " the session record", async () => {
         const { first, second } = await twoContinuityConnections();
         const session = "transaction-" + change + replay;
         const snapshot = directCheckpoint(first, session).data!;
@@ -691,7 +694,16 @@ describe("current continuity authority versus historical payload", () => {
           return original(...args);
         });
         const result = first.checkpointContext(input, asRoot(session));
-        expect(result.error?.code).toBe(change === "clear" ? "BINDING_INVALID" : "SNAPSHOT_CONFLICT");
+        if (change === "root") {
+          expect(result.error).toBeNull();
+          if (replay) expect(result.data).toEqual(snapshot);
+          else expect(result.data).toMatchObject({ source: "direct", epoch: 1, revision: 2 });
+          expect(second.store.getSnapshot(correlation, 1)).toEqual(result.data);
+          expect(second.store.getRequest(correlation, 1, first.hashOpaque("request", "new-receipt")) === null).toBe(replay);
+          expect(second.store.getTask(correlation)).toMatchObject({ currentEpoch: 1, rootId: "root-after-read" });
+          return;
+        }
+        expect(result.error?.code).toBe("BINDING_INVALID");
         expect(result.data).toBeNull();
         expect(second.store.getSnapshot(correlation, 1)).toEqual(snapshot);
         expect(second.store.getRequest(correlation, 1, first.hashOpaque("request", "new-receipt"))).toBeNull();
@@ -715,22 +727,31 @@ describe("current continuity authority versus historical payload", () => {
     expect(second.store.getSnapshot(first.correlateSession("replay-body"), 1)).toEqual(snapshot);
   });
 
-  it("root-bound missing projection never falls back to a direct body and explicit purge remains available", async () => {
+  // Behaviors 2-3 (d7585d74): the session's own record comes first while a root is bound, so a root without a
+  // workflow projection no longer hides it; the compaction marker is a direct one without a root. Purge still works.
+  it("root-bound missing projection keeps the session's direct record restorable and explicit purge remains available", async () => {
     const { first, second } = await twoContinuityConnections();
     const session = "missing-root";
     const snapshot = directCheckpoint(first, session).data!;
     const load = directLoadInput(first, session);
     const correlation = first.correlateSession(session);
     expect(second.store.bindRoot(correlation, 1, "root-without-projection", "2026-09-13T01:00:00.000Z")).toBe(true);
-    expect(first.loadContext(load, asRoot(session)).error?.code).toBe("SNAPSHOT_CONFLICT");
-    expect(first.candidateForSession(session)).toMatchObject({ decision: "REJECT", summary: null, restoreToken: null });
+    expect(first.loadContext(load, asRoot(session)).data).toEqual(snapshot);
+    expect(first.candidateForSession(session)).toMatchObject({ decision: "DEFER",
+      summary: { source: "direct", epoch: 1, revision: snapshot.revision, snapshotDigest: snapshot.snapshotDigest } });
     first.markPreCompact(session);
-    expect(first.compactContext(session)).toBeNull();
-    expect(first.store.getTask(correlation)?.pendingSource).toBeNull();
+    expect(first.store.getTask(correlation)).toMatchObject({ pendingSource: "direct", pendingRootId: null,
+      pendingRevision: snapshot.revision, pendingDigest: snapshot.snapshotDigest });
+    // No projection to show beside it: the card is the direct candidate alone, metadata only.
+    const card = renderHookText(first.compactContext(session), "en")!;
+    expect(card).toContain("source=direct");
+    expect(card).not.toContain("[Task continuity workflow card");
+    expect(card).not.toContain(snapshot.core.objective);
     expect(first.store.getSnapshot(correlation, 1)).toEqual(snapshot);
     const purge = { schemaVersion: "1.0.0" as const, requestId: "root-purge", expectedEpoch: 1, expectedRevision: 1 };
     expect(first.purgeDirectContext(purge, asRoot(session)).data?.purged).toBe(true);
     expect(first.store.getTask(correlation)?.rootId).toBe("root-without-projection");
+    expect(first.candidateForSession(session)).toMatchObject({ decision: "REJECT", summary: null, restoreToken: null });
   });
 
   it("purge transaction rejects a stale current binding but a newly bound request can purge the old epoch", async () => {
@@ -750,14 +771,17 @@ describe("current continuity authority versus historical payload", () => {
     expect(first.store.getTask(correlation)?.currentEpoch).toBe(2);
   });
 
-  it("pending markers reject wrong root, direct source after binding, suppression, and stale epoch", () => {
+  // Behavior 3 (d7585d74): while a root is bound a direct marker (no root) is accepted; one naming a root is not.
+  it("pending markers accept a rootless direct marker after binding and reject a direct marker naming a root, wrong root, suppression, and stale epoch", () => {
     const service = createService();
     const task = service.ensureSession("marker-guards");
     const c = task.taskCorrelation;
     const now = "2026-09-13T01:00:00.000Z";
     const digest = convergenceDigest("marker");
     expect(service.store.bindRoot(c, 1, "root-a", now)).toBe(true);
-    expect(service.store.setPendingMarker(c, 1, "direct", 1, digest, null, now)).toBe(false);
+    expect(service.store.setPendingMarker(c, 1, "direct", 1, digest, "root-a", now)).toBe(false);
+    expect(service.store.setPendingMarker(c, 1, "direct", 1, digest, null, now)).toBe(true);
+    expect(service.store.getTask(c)).toMatchObject({ pendingSource: "direct", pendingRootId: null });
     expect(service.store.setPendingMarker(c, 1, "workflow", 1, digest, "root-b", now)).toBe(false);
     expect(service.store.setPendingMarker(c, 1, "workflow", 1, digest, "root-a", now)).toBe(true);
     expect(service.store.bindRoot(c, 1, "root-b", now)).toBe(true);

@@ -88,8 +88,10 @@ function prompt(service: ContinuityService, session: string, transcriptPath?: st
 function expectCheckpointCue(output: Record<string, unknown>) {
   expect(output).toMatchObject({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: expect.any(String) } });
   const context = (output as { hookSpecificOutput: { additionalContext: string } }).hookSpecificOutput.additionalContext;
-  expect(context).toContain("[Task continuity checkpoint check]");
+  // Behavior 5 (d7585d74): the per-turn cue is the AGS turn check and names checkpoint_context, not a skill.
+  expect(context).toContain("[AGS 턴 확인]");
   for (const tool of ["checkpoint_context", "inspect_context", "load_context"]) expect(context).toContain(tool);
+  expect(context).not.toContain("context-continuity");
   for (const forbidden of [BODY_MARKER, checkpointInput().core.objective, "candidateToken=", "restoreToken", "_continuityBinding", "decision=DEFER", "decision=INJECT"])
     expect(context).not.toContain(forbidden);
 }
