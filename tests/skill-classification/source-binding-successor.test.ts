@@ -108,6 +108,14 @@ it("chains the exact orchestrator multi-workflow source after specialist behavio
   expect(stableFields(after)).toEqual(stableFields(before));
   const previousLines = specialistSource("skills/orchestrator/SKILL.md").toString("utf8").split(/\r?\n/);
   const lines = readFileSync(path.join(root, "skills/orchestrator/SKILL.md"), "utf8").split(/\r?\n/);
+  // The one inserted sentence, taken from the two sources (the intake wording lives only in SKILL.md).
+  const [was, now] = [previousLines.join("\n"), lines.join("\n")];
+  let head = 0, tail = 0;
+  while (was[head] === now[head]) head++;
+  while (tail < was.length - head && was[was.length - 1 - tail] === now[now.length - 1 - tail]) tail++;
+  expect(was.length - head - tail).toBe(0);
+  const inserted = now.slice(head, now.length - tail);
+  expect(inserted).toMatch(/^[^\n]*writeTargets[^\n]*다\. $/u);
   const inventory = await loadSkillInventory({root});
   const orchestrator = inventory.skills.find(skill => skill.skillId === "orchestrator")!;
   expect(multi.spanPreservation.spans).toHaveLength(after.applicability.length + after.exclusions.length);
@@ -120,7 +128,7 @@ it("chains the exact orchestrator multi-workflow source after specialist behavio
     const previous = Buffer.from(previousLines.slice(span.startLine - 1, span.endLine).join("\n")).subarray(span.previousStartByte, span.previousEndByte);
     // Unchanged spans keep their exact text; the two widened spans differ only by the one inserted sentence.
     if (!multi.spanPreservation.changedSpans.includes(`${span.group}[${span.index}]`)) expect(selected.equals(previous)).toBe(true);
-    else expect(selected.toString("utf8").replace("범위가 다른 작업은 겹치지 않는 writeTargets로 workflow를 따로 시작하며, 한 세션은 workflow 여러 개를 함께 진행할 수 있다. ", "")).toBe(previous.toString("utf8"));
+    else expect(selected.toString("utf8").replace(inserted, "")).toBe(previous.toString("utf8"));
   }
 });
 it("appends the exact specialist behavior successor without changing frozen fixture semantics", () => {
