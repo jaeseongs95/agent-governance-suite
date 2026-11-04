@@ -460,7 +460,8 @@ export async function handleSessionMessageHook(input: Record<string, unknown>, h
   async function request<T>(operation: string, payload: Record<string, unknown>): Promise<T> {
     progress.step = operation;
     remainingBudget(budget);
-    const claim = operation === "claim-deferred" || operation === "claim-turn-end";
+    // Every operation that claims bodies keeps the post-claim reserve and is never replayed.
+    const claim = operation === "claim-deferred" || operation === "claim-turn-end" || operation === "claim-host-wake";
     if (budget) remainingBudget(budget, claim ? budget.postClaimReserveMs : 0);
     let attempted = false;
     const result = await sessionMessageRequest<T>(operation, payload, undefined, budget ? {
