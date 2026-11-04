@@ -15,15 +15,29 @@ const specialistBytes = readFileSync(new URL("./fixtures.specialist-behavior-sou
 const specialist = JSON.parse(specialistBytes.toString("utf8"));
 const multiBytes = readFileSync(new URL("./fixtures.orchestrator-multi-workflow-source-successor.json", import.meta.url));
 const multi = JSON.parse(multiBytes.toString("utf8"));
-const reboundAfterSpecialist = new Map<string, {previousDigest: string; digest: string}>(
-  multi.bindings.map((binding: {path: string; previousDigest: string; digest: string}) => [binding.path, binding]));
+const overwriteBytes = readFileSync(new URL("./fixtures.mutation-risk-preflight-overwrite-ask-source-successor.json", import.meta.url));
+const overwrite = JSON.parse(overwriteBytes.toString("utf8"));
+type LaterBinding = {path: string; previousDigest: string; digest: string};
+/** For each file a successor after specialist behavior rebound: the first rebinding's base and predecessor, the last one's digest. */
+const reboundAfterSpecialist = new Map<string, {sourceBaseRevision: string; previousDigest: string; digest: string}>();
+for (const later of [multi, overwrite]) {
+  for (const binding of later.bindings as LaterBinding[]) {
+    const first = reboundAfterSpecialist.get(binding.path);
+    reboundAfterSpecialist.set(binding.path, first ? {...first, digest: binding.digest}
+      : {sourceBaseRevision: later.sourceBaseRevision, previousDigest: binding.previousDigest, digest: binding.digest});
+  }
+}
+/** A source as of a git revision, checked against the digest the binding recorded for it. */
+function sourceAt(revision: string, relativePath: string, digest: string): Buffer {
+  const bytes = execFileSync("git", ["show", `${revision}:${relativePath}`], {cwd: root, maxBuffer: 4 * 1024 * 1024});
+  expect(hash(bytes)).toBe(digest);
+  return bytes;
+}
 /** A source as the specialist successor bound it: a file a later successor rebound reads at that successor's base. */
 function specialistSource(relativePath: string): Buffer {
   const later = reboundAfterSpecialist.get(relativePath);
   if (!later) return readFileSync(path.join(root, relativePath));
-  const bytes = execFileSync("git", ["show", `${multi.sourceBaseRevision}:${relativePath}`], {cwd: root, maxBuffer: 4 * 1024 * 1024});
-  expect(hash(bytes)).toBe(later.previousDigest);
-  return bytes;
+  return sourceAt(later.sourceBaseRevision, relativePath, later.previousDigest);
 }
 type SourceSpan = {path: string; startLine: number; endLine: number; digest: string; startByte?: number; endByte?: number};
 type RecordedSpan = SourceSpan & {selectedBytes: number; selectedDigest: string};
@@ -129,6 +143,60 @@ it("chains the exact orchestrator multi-workflow source after specialist behavio
     // Unchanged spans keep their exact text; the two widened spans differ only by the one inserted sentence.
     if (!multi.spanPreservation.changedSpans.includes(`${span.group}[${span.index}]`)) expect(selected.equals(previous)).toBe(true);
     else expect(selected.toString("utf8").replace(inserted, "")).toBe(previous.toString("utf8"));
+  }
+});
+it("chains the exact mutation-risk-preflight overwrite source after the multi-workflow source, moving only the spans below the added line", async () => {
+  expect(hash(overwriteBytes)).toBe("sha256:831f685e583f4f872553bbe101f786bfc48bfa3a1d38540564c9df461943466f");
+  expect(overwriteBytes.includes(Buffer.from("\r\n"))).toBe(false);
+  expect(overwrite.revision).toBe("mutation-risk-preflight-overwrite-ask-source-binding-r20");
+  expect(overwrite.sourceBaseRevision).toBe("a3ff66402860c508c80f7a996d1875ffa8700702");
+  expect(overwrite.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.orchestrator-multi-workflow-source-successor.json",
+    bytes: multiBytes.length, digest: hash(multiBytes)});
+  expect(overwrite.bindings.map((binding: {path: string}) => binding.path)).toEqual(["skills/mutation-risk-preflight/SKILL.md", "skills/mutation-risk-preflight/classification.json"]);
+  expect(overwrite.spanPreservation.changedSpans).toEqual([]);
+  expect(overwrite.fixtureFileRewritten).toBe(false);
+  expect(overwrite.labelChanges).toEqual([]);
+  expect(overwrite.priceAndBudgetChanges).toEqual([]);
+  expect(overwrite.modelBehavior).toBe("NOT_RUN");
+  const base = (relativePath: string) => sourceAt(overwrite.sourceBaseRevision, relativePath,
+    overwrite.bindings.find((binding: LaterBinding) => binding.path === relativePath).previousDigest);
+  for (const binding of overwrite.bindings) {
+    const actual = readFileSync(path.join(root, binding.path));
+    expect(actual.length).toBe(binding.bytes);
+    expect(hash(actual)).toBe(binding.digest);
+    expect(hash(specialistSource(binding.path))).toBe(binding.previousDigest);
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
+    expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const before = JSON.parse(base("skills/mutation-risk-preflight/classification.json").toString("utf8"));
+  const after = JSON.parse(readFileSync(path.join(root, "skills/mutation-risk-preflight/classification.json"), "utf8"));
+  const stableFields = (value: Record<string, unknown>) =>
+    Object.fromEntries(Object.entries(value).filter(([key]) => !["applicability", "exclusions"].includes(key)));
+  expect(stableFields(after)).toEqual(stableFields(before));
+  const previousLines = base("skills/mutation-risk-preflight/SKILL.md").toString("utf8").split(/\r?\n/);
+  const lines = readFileSync(path.join(root, "skills/mutation-risk-preflight/SKILL.md"), "utf8").split(/\r?\n/);
+  // The one added line, taken from the two sources (the guidance wording lives only in SKILL.md).
+  expect(lines.length).toBe(previousLines.length + 1);
+  const added = lines.findIndex((line, index) => line !== previousLines[index]);
+  expect([...lines.slice(0, added), ...lines.slice(added + 1)]).toEqual(previousLines);
+  expect(added + 1).toBe(18);
+  expect(lines[added]).toMatch(/^- [^\n]*`irreversibilityAccepted`[^\n]*다\.$/u);
+  const inventory = await loadSkillInventory({root});
+  const preflight = inventory.skills.find(skill => skill.skillId === "mutation-risk-preflight")!;
+  expect(overwrite.spanPreservation.spans).toHaveLength(after.applicability.length + after.exclusions.length);
+  for (const span of overwrite.spanPreservation.spans) {
+    const current = after[span.group][span.index], previous = before[span.group][span.index];
+    expect([current.startLine, current.endLine, current.startByte ?? 0]).toEqual([span.startLine, span.endLine, span.startByte]);
+    expect([previous.startLine, previous.endLine, previous.startByte ?? 0]).toEqual([span.previousStartLine, span.previousEndLine, span.previousStartByte]);
+    // Spans below the added line move down by exactly one line; spans above it keep their lines.
+    const shift = span.previousStartLine > added ? 1 : 0;
+    expect([span.startLine, span.endLine]).toEqual([span.previousStartLine + shift, span.previousEndLine + shift]);
+    expect(current.digest).toBe(hash(readFileSync(path.join(root, current.path))));
+    const selected = Buffer.from(lines.slice(span.startLine - 1, span.endLine).join("\n")).subarray(span.startByte, span.endByte);
+    expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
+    expect(preflight[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    const previousSelected = Buffer.from(previousLines.slice(span.previousStartLine - 1, span.previousEndLine).join("\n")).subarray(span.previousStartByte, span.previousEndByte);
+    expect(selected.equals(previousSelected)).toBe(true);
   }
 });
 it("appends the exact specialist behavior successor without changing frozen fixture semantics", () => {
@@ -317,7 +385,7 @@ it("동결 판정 기준을 보존하고 인계 지침의 현재 바이트만 �
   expect(manifest.labelChanges).toEqual([]);
   expect(manifest.priceAndBudgetChanges).toEqual([]);
   expect(manifest.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: "orchestrator-multi-workflow-source-binding-r19"});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: "mutation-risk-preflight-overwrite-ask-source-binding-r20"});
   expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
   for (const source of manifest.bindings) {
     const actual = readFileSync(path.join(root, source.path));

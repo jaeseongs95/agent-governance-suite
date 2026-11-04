@@ -30,6 +30,7 @@ function git(...args) {
 // - 3.3.0 multi-workflow guidance (docs/ags30-phase-check-design.md 7.5)
 // - 3.4.0 JEV layer paragraph (docs/release-notes-v3.4.0.md): JEV is the advisory slot, TypeSafe one implementation.
 // - 3.5.1 intake line (docs/release-notes-v3.5.1.md): separate tasks start separate workflows with non-overlapping writeTargets.
+// - 3.5.2 mutation-risk-preflight overwrite line (docs/release-notes-v3.5.2.md): ask before overwriting user state that cannot be backed up.
 const GUIDANCE_SUCCESSORS = Object.freeze([
   Object.freeze({
     revision: "92f22e25d21eddff22c2400dabc0699d73700927",
@@ -49,6 +50,13 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
     hashes: Object.freeze({
       "skills/orchestrator/SKILL.md": ["02b979178d585cd3396865a86703c4a1102263ff52c8c9739163ea763a03ce25", "59977f4d215a5a67192c010016c049e65fafdd38c7e12b528e60a1ca8167e31d"],
       "skills/orchestrator/classification.json": ["fb1741dda17b431dd0a8c02935ba0a0b6f72989846ebc7df3761ef01ec04c487", "0bfffe499ca0d60c444f92205f3f8dbfff328e9070ae6ee551ab1c219d871f1d"],
+    }),
+  }),
+  Object.freeze({
+    revision: "a3ff66402860c508c80f7a996d1875ffa8700702",
+    hashes: Object.freeze({
+      "skills/mutation-risk-preflight/SKILL.md": ["00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad", "03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15"],
+      "skills/mutation-risk-preflight/classification.json": ["045eb47dcd98736fdd763f06535d8d8b9c95aa9f5000fb7677d39548641eec3a", "984e917b95b59a090bb68e441fc9455b7a432c081997e90598f4d191fab43725"],
     }),
   }),
 ]);

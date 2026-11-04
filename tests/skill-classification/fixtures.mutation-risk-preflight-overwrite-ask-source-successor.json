@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "1.0.0",
+  "revision": "mutation-risk-preflight-overwrite-ask-source-binding-r20",
+  "role": "source-binding-only-not-evaluation-or-install-authority",
+  "sourceBaseRevision": "a3ff66402860c508c80f7a996d1875ffa8700702",
+  "frozenPredecessor": {
+    "path": "tests/skill-classification/fixtures.orchestrator-multi-workflow-source-successor.json",
+    "bytes": 7564,
+    "digest": "sha256:2cb48a780ad6edf78f1ff68d468c053947ac8ab81b3b00177fb4068d21488f1c"
+  },
+  "bindings": [
+    {
+      "path": "skills/mutation-risk-preflight/SKILL.md",
+      "previousDigest": "sha256:00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad",
+      "digest": "sha256:03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15",
+      "bytes": 4901
+    },
+    {
+      "path": "skills/mutation-risk-preflight/classification.json",
+      "previousDigest": "sha256:045eb47dcd98736fdd763f06535d8d8b9c95aa9f5000fb7677d39548641eec3a",
+      "digest": "sha256:984e917b95b59a090bb68e441fc9455b7a432c081997e90598f4d191fab43725",
+      "bytes": 1840
+    }
+  ],
+  "spanPreservation": {
+    "baselineCommit": "a3ff66402860c508c80f7a996d1875ffa8700702",
+    "changedSpans": [],
+    "spans": [
+      {
+        "group": "applicability",
+        "index": 0,
+        "startLine": 3,
+        "endLine": 3,
+        "previousStartLine": 3,
+        "previousEndLine": 3,
+        "previousStartByte": 0,
+        "previousEndByte": 266,
+        "startByte": 0,
+        "endByte": 266,
+        "bytes": 266,
+        "digest": "sha256:8a95b73c885de158fe7aa2e78f1fe9394a2a0ec41e5d18ed838878d4c8de0d6d"
+      },
+      {
+        "group": "applicability",
+        "index": 1,
+        "startLine": 13,
+        "endLine": 13,
+        "previousStartLine": 13,
+        "previousEndLine": 13,
+        "previousStartByte": 0,
+        "previousEndByte": 152,
+        "startByte": 0,
+        "endByte": 152,
+        "bytes": 152,
+        "digest": "sha256:36ab0a6f04158fec64e793da588d26fd1082e88e195a755a0163f7f9cd6c2a30"
+      },
+      {
+        "group": "applicability",
+        "index": 2,
+        "startLine": 22,
+        "endLine": 31,
+        "previousStartLine": 21,
+        "previousEndLine": 30,
+        "previousStartByte": 0,
+        "previousEndByte": 577,
+        "startByte": 0,
+        "endByte": 577,
+        "bytes": 577,
+        "digest": "sha256:904ffde73924fbc16952c88444ef6e48c755af4c8994daa846a08efccc1b454c"
+      },
+      {
+        "group": "exclusions",
+        "index": 0,
+        "startLine": 3,
+        "endLine": 3,
+        "previousStartLine": 3,
+        "previousEndLine": 3,
+        "previousStartByte": 267,
+        "previousEndByte": 430,
+        "startByte": 267,
+        "endByte": 430,
+        "bytes": 163,
+        "digest": "sha256:8e036ff5183236b9a34962913532653bfc22f2b575996a30335b234373cc2b26"
+      },
+      {
+        "group": "exclusions",
+        "index": 1,
+        "startLine": 13,
+        "endLine": 13,
+        "previousStartLine": 13,
+        "previousEndLine": 13,
+        "previousStartByte": 153,
+        "previousEndByte": 265,
+        "startByte": 153,
+        "endByte": 265,
+        "bytes": 112,
+        "digest": "sha256:763f18e59869802c4e77ca9c96b4ee4371e0f1dc658be7f78af0e2c579225e9f"
+      },
+      {
+        "group": "exclusions",
+        "index": 2,
+        "startLine": 33,
+        "endLine": 33,
+        "previousStartLine": 32,
+        "previousEndLine": 32,
+        "previousStartByte": 0,
+        "previousEndByte": 392,
+        "startByte": 0,
+        "endByte": 392,
+        "bytes": 392,
+        "digest": "sha256:00ffa4780cb97eb45e15c7343925d087c35f3c2e091f8559647b768ead1c9d46"
+      }
+    ]
+  },
+  "fixtureFileRewritten": false,
+  "labelChanges": [],
+  "priceAndBudgetChanges": [],
+  "modelBehavior": "NOT_RUN"
+}

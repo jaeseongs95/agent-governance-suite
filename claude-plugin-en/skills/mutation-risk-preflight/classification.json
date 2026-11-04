@@ -20,7 +20,7 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad",
+      "digest": "sha256:03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15",
       "startByte": 0,
       "endByte": 266
     },
@@ -28,15 +28,15 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad",
+      "digest": "sha256:03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15",
       "startByte": 0,
       "endByte": 152
     },
     {
       "path": "skills/mutation-risk-preflight/SKILL.md",
-      "startLine": 21,
-      "endLine": 30,
-      "digest": "sha256:00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad",
+      "startLine": 22,
+      "endLine": 31,
+      "digest": "sha256:03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15",
       "startByte": 0,
       "endByte": 577
     }
@@ -46,7 +46,7 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 3,
       "endLine": 3,
-      "digest": "sha256:00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad",
+      "digest": "sha256:03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15",
       "startByte": 267,
       "endByte": 430
     },
@@ -54,15 +54,15 @@
       "path": "skills/mutation-risk-preflight/SKILL.md",
       "startLine": 13,
       "endLine": 13,
-      "digest": "sha256:00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad",
+      "digest": "sha256:03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15",
       "startByte": 153,
       "endByte": 265
     },
     {
       "path": "skills/mutation-risk-preflight/SKILL.md",
-      "startLine": 32,
-      "endLine": 32,
-      "digest": "sha256:00b8848c38e5eb3f8175f70b8c615d663b2a036a751603266502e3dbd48522ad",
+      "startLine": 33,
+      "endLine": 33,
+      "digest": "sha256:03661acd0d0690a2576d77c0abd9e2baa8a7a0294d80760d50c617ea4f5bfa15",
       "startByte": 0,
       "endByte": 392
     }
