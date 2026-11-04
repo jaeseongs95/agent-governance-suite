@@ -50,7 +50,8 @@ async function call(tool: string, outcome: ApiResultV1<unknown>, options: { clas
   await client.connect(clientTransport);
   try {
     const response = await client.callTool({ name: tool, arguments: { runId: "run-synthetic", expectedRevision: 3 }, _meta: callerMeta() });
-    return (response.content as Array<{ type: string; text: string }>).map(item => item.text);
+    // Other notices (such as the plugin update notice) may follow; the reselection notice is found by its skill list.
+    return (response.content as Array<{ type: string; text: string }>).map(item => item.text).filter(text => text.includes("- ponytail: "));
   } finally {
     await client.close();
     await server.close();
@@ -59,7 +60,7 @@ async function call(tool: string, outcome: ApiResultV1<unknown>, options: { clas
 
 describe("skill reselection at a workflow change", () => {
   it("asks to match the next judgment against every installed skill and names the stage provider as a contract only", async () => {
-    const [, notice] = await call("abort_workflow", apiOk(receipt));
+    const [notice] = await call("abort_workflow", apiOk(receipt));
     expect(notice).toContain("다음 단계: stage-02(capability minimal-implementation). 그 결과는 ponytail provider 계약으로 기록한다.");
     expect(notice).toContain("설치된 스킬 전체의 대상과 대조하고, 맞는 스킬은 모두 지금 호출한다(없으면 0개, 여럿이면 여럿)");
     expect(notice).toContain("단계의 provider는 그 단계 결과를 기록하는 계약일 뿐이다. 그 단계에서 쓸 스킬을 제한하지 않으며, 다른 스킬을 쓰는 데 계획 수정이 필요하지 않다.");
@@ -72,12 +73,12 @@ describe("skill reselection at a workflow change", () => {
   });
 
   it("offers classification advice only when the server has classification support configured", async () => {
-    const [, notice] = await call("abort_workflow", apiOk(receipt), { classification: true });
+    const [notice] = await call("abort_workflow", apiOk(receipt), { classification: true });
     expect(notice).toContain("스킬 분류 지원이 설정돼 있다. 다음 단계의 실제 작업과 전체 inventory를 classify_skills에 넘겨 조언을 받을 수 있다. 조언은 채택·교정·기각하고 최종 선택은 직접 한다.");
   });
 
   it("speaks the request locale", async () => {
-    const [, notice] = await call("abort_workflow", apiOk(receipt), { locale: "en" });
+    const [notice] = await call("abort_workflow", apiOk(receipt), { locale: "en" });
     expect(notice).toContain("call every matching skill now (none, one or several)");
     expect(notice).toContain("it does not limit the skills used in that stage, and using another skill needs no plan change");
     expect(notice).toContain("Next stage: stage-02 (capability minimal-implementation). Its result is recorded under the ponytail provider contract.");
@@ -86,8 +87,8 @@ describe("skill reselection at a workflow change", () => {
   it("adds nothing to a refused change or to a tool that changes no workflow", async () => {
     const refused: ApiResultV1<never> = { schemaVersion: "1.0.0", ok: false, data: null,
       error: contractErrorBody("STALE_REVISION", msg("workflow.service.unkeyedFailure", { message: "stale" }), null) };
-    expect(await call("abort_workflow", refused)).toHaveLength(1);
-    expect(await call("get_workflow_status", apiOk(receipt))).toHaveLength(1);
+    expect(await call("abort_workflow", refused)).toEqual([]);
+    expect(await call("get_workflow_status", apiOk(receipt))).toEqual([]);
   });
 
   it("takes the stage now due from a plan, and names no stage once none is due", () => {
