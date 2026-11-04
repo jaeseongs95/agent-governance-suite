@@ -15,6 +15,8 @@ import {
   type SessionBoardEntryV2,
   type SessionBoardListV2,
   type SessionBoardUpdateV2,
+  type WorkflowPlanV1,
+  type WorkflowReceiptV1,
   WorkflowContractError,
   contractErrorBody,
 } from "../../contracts/types.js";
@@ -25,7 +27,7 @@ import { contractSchemas } from "./schema-validator.js";
 import { contractFailure, failureContext, failureReason, retainFailureSecondary } from "./failure-diagnostics.js";
 import { inlineSchemaReferences } from "./tool-schema-inline.js";
 import { PLUGIN_INFO } from "./plugin-info.js";
-import { skillIntakeText } from "./skill-intake.js";
+import { installedSkillTargets, skillIntakeText } from "./skill-intake.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
 import { type ContinuityGateway, UnavailableContinuityService } from "./continuity-service.js";
 import {
@@ -323,6 +325,31 @@ function projectResult<T, U>(
  * The edge where a result meets its reader: the top-level error is rendered in the request's locale from its key.
  * Bodies nested in data (stored receipts) keep their root-locale text and key, so their digests do not change.
  */
+/**
+ * Tools whose success changes the workflow. A workflow changes because the work's purpose changed, so the next judgment
+ * is matched against every installed skill again. A stage's skillId names the provider contract its result is recorded
+ * under; it never narrows the skills used in that stage.
+ */
+const WORKFLOW_CHANGE_TOOLS = new Set(["plan_workflow", "start_workflow", "start_guarded_workflow", "record_stage_result",
+  "claim_workflow_attempt", "resolve_convergence_gate", "open_convergence_root", "release_convergence_root",
+  "finalize_workflow", "abort_workflow"]);
+
+/** The skill reselection notice for a workflow change; the stage line names the stage now due, when there is one. */
+export function workflowChangeNotice(data: unknown, receipt: (runId: string) => WorkflowReceiptV1 | null,
+  classificationConfigured: boolean): MessageRef[] {
+  const record = data !== null && typeof data === "object" ? data as Record<string, unknown> : null;
+  // A plan carries its stage pointers itself; every other run response names its run.
+  const plan = record && Array.isArray(record.stages) && "nextStageId" in record ? record as unknown as WorkflowPlanV1
+    : typeof record?.runId === "string" ? receipt(record.runId)?.plan ?? null : null;
+  const stageId = plan ? plan.currentStageId ?? plan.nextStageId : null;
+  const stage = plan?.stages.find(candidate => candidate.stageId === stageId);
+  return [
+    ...(stage ? [msg("server.workflowChange.stage", { stageId: stage.stageId, capability: stage.requiredCapability, provider: stage.skillId })] : []),
+    msg("server.workflowChange.skills", { targets: installedSkillTargets() }),
+    ...(classificationConfigured ? [msg("server.workflowChange.classification", {})] : []),
+  ];
+}
+
 function toolResult<T>(result: ApiResultV1<T>, locale: SupportedLocale = ROOT_LOCALE) {
   const error = result.error;
   const shown = error?.messageKey ? { ...result, error: { ...error, message: render({ key: error.messageKey, params: error.params ?? {} }, locale) } } : result;
@@ -1087,6 +1114,13 @@ export function createMcpServer(
     }
 
     const response = respond(result);
+    if (result.ok && WORKFLOW_CHANGE_TOOLS.has(request.params.name)) {
+      const lines = workflowChangeNotice(result.data, runId => {
+        const status = service.getWorkflowStatus(runId);
+        return status.ok ? status.data : null;
+      }, classification !== null);
+      response.content.push({ type: "text", text: lines.map(line => render(line, locale)).join("\n") });
+    }
     const notice = updateStatus ? updates.takeNotice(updateStatus) : null;
     if (notice) response.content.push({ type: "text", text: JSON.stringify(notice) });
     return response;

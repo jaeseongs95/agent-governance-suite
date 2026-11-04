@@ -46,7 +46,7 @@
 
 ## 실행 순서와 입출력 연결
 
-- 각 단계마다 담당 스킬, 입력 출처, 기대 산출물, 다음 단계와 중단 조건을 기록한다.
+- 각 단계마다 결과를 기록하는 provider 계약, 입력 출처, 기대 산출물, 다음 단계와 중단 조건을 기록한다. provider는 그 단계에서 쓸 스킬을 제한하지 않는다. 단계 안의 판단·행동마다 설치된 스킬 전체와 다시 대조해 맞는 스킬을 모두 호출하며, 다른 스킬을 쓰려고 계획을 고치지 않는다.
 - provider가 선언한 `inputBindings`의 `select`, `collect`, `combine`, `require-external`만 사용한다. 누락된 입력을 새로 만들거나 다른 artifact로 조용히 대체하지 않는다.
 - 전문 스킬 결과는 선언된 `ProviderResult.v1` envelope로 연결한다. `outputSchema`, `resultSchema`, `stateMapping`을 통과하지 못한 결과를 다음 단계의 입력으로 사용하지 않는다.
 - MCP 계획 stage에 `executionRequirement`가 있어도 caller는 `StageResult.v1`이나 `record_stage_result` 인자에 `executionContext`를 넣지 않는다. 실제 실행자의 model class·추론 수준과 정확한 run·stage·revision 결속은 호스트가 서버 측 `TrustedExecutionContextProvider`를 통해 관측한다. 현재 세션 값, 다른 worker 값이나 모델 이름에서 추측한 class를 caller 입력으로 대신하지 않는다. semantic stage의 `passed`에 필요한 신뢰 관측이 없거나 결속이 잘못되면 MCP의 `BINDING_REQUIRED` 또는 `BINDING_INVALID`를 그대로 처리하고 `passed`로 진행하지 않는다. `korean-prose-finalization`처럼 계획이 `deterministic`으로 표시한 stage에는 이 관측값을 요구하지 않는다.

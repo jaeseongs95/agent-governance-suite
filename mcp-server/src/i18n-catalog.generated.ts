@@ -89,6 +89,9 @@ export interface MessageParams {
   "server.trust.storeUnavailable": Record<string, never>;
   "server.stateCleanup.unavailable": Record<string, never>;
   "server.sessionMessage.sendInvalid": { "cause": NestedMessage | number | string; };
+  "server.workflowChange.stage": { "stageId": NestedMessage | number | string; "capability": NestedMessage | number | string; "provider": NestedMessage | number | string; };
+  "server.workflowChange.skills": { "targets": NestedMessage | number | string; };
+  "server.workflowChange.classification": Record<string, never>;
   "workflow.convergence.nonFiniteNumber": { "subject": string; "label": NestedMessage | number | string; };
   "workflow.convergence.nonSerializableValue": { "subject": string; "label": NestedMessage | number | string; };
   "workflow.convergence.replacementRootRemainBoundSame": Record<string, never>;

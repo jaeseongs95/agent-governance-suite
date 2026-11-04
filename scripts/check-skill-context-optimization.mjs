@@ -34,6 +34,8 @@ function git(...args) {
 // - 3.5.2 intake line (docs/release-notes-v3.5.2.md): ask once before the first write on an undetermined premise that changes the structure.
 // - 3.6.0 intake lines (9c438be1): name checkpoint_context instead of the retired context-continuity skill, re-check
 //   skills each message, reconcile plans; coordinate-subagents gives a verification agent an independent judgment.
+// - 3.6.0 orchestrator stage line (155c3d15): a stage's provider is the contract its result is recorded under and does
+//   not limit the skills used in the stage.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
   Object.freeze({
@@ -77,6 +79,12 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/coordinate-subagents/references/entry-details.md": ["4f29865da0ca78b114e038120d0a3165e5d22d339d0a81b9e11c1c1ce726577a", "5769d6ee39c9396cac4e55ace84257a93219c0fc3e8b293f67c9973747a0dc88"],
       "skills/orchestrator/SKILL.md": ["b4fea1a91eaa7dbff3049749d441c366baa962ad66a9e7d65cdcc55467b22604", "03ca8869bbf594118eb2020868d19e3c1e5bf1f8be4ec0ec071f2f237b8b122e"],
       "skills/orchestrator/classification.json": ["887c5a38a041681a71e419b9a9e087f884ff8370cb5142c24ab80f290d4ab57f", "7396c12527514eb07a892499cc9f2d55250228a06de7d6ba042a6a7b01fe2642"],
+    }),
+  }),
+  Object.freeze({
+    revision: "155c3d1568e7e64a0b6640c80afc4bbf39d7cab3",
+    hashes: Object.freeze({
+      "skills/orchestrator/references/entry-details.md": ["d9bf7de0283d671735e7c4f4e9994df12a0d24bd6f3be97182394c5c247016ab", "9827e50e480fbd70813e9c6f9643029e17e6b50d577bebd38d14b0e803a775fa"],
     }),
   }),
 ]);
