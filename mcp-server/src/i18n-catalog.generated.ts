@@ -139,7 +139,7 @@ export interface MessageParams {
   "workflow.schema.schemaChangedAfterPlanning": { "subject": string; "label": NestedMessage | number | string; };
   "workflow.schema.schemaEscapesPluginRoot": { "subject": string; "label": NestedMessage | number | string; };
   "workflow.schema.validatorNotRegistered": { "name": NestedMessage | number | string; };
-  "workflow.service.activeConvergenceRootCoversWorkspace": Record<string, never>;
+  "workflow.service.activeConvergenceRootCoversWorkspace": { "rootId": NestedMessage | number | string; "state": NestedMessage | number | string; "existing": NestedMessage | number | string; "context": NestedMessage | number | string; "release": string; };
   "workflow.service.adapterErrorAllowedProviderDescriptor": Record<string, never>;
   "workflow.service.ambiguousFrameReviewsRoutePanel": Record<string, never>;
   "workflow.service.artifactContractCapabilitySelectedPlan": Record<string, never>;
@@ -256,7 +256,7 @@ export interface MessageParams {
   "workflow.service.startWorkflowFixArtifactTargets": Record<string, never>;
   "workflow.service.startWorkflowPriorFailure": { "required": string; };
   "workflow.service.startWorkflowPriorFailureShape": Record<string, never>;
-  "workflow.service.startWorkflowRootConflict": { "requested": NestedMessage | number | string; "existing": NestedMessage | number | string; "rootId": NestedMessage | number | string; "state": NestedMessage | number | string; "owned": string; "action": string; "runId": NestedMessage | number | string; };
+  "workflow.service.startWorkflowRootConflict": { "requested": NestedMessage | number | string; "existing": NestedMessage | number | string; "rootId": NestedMessage | number | string; "state": NestedMessage | number | string; "owned": string; "context": NestedMessage | number | string; "action": string; "runId": NestedMessage | number | string; "release": string; };
   "workflow.service.startWorkflowRootNotOpen": { "rootId": NestedMessage | number | string; "state": NestedMessage | number | string; };
   "workflow.service.startWorkflowRootNotOwned": { "rootId": NestedMessage | number | string; };
   "workflow.service.startWorkflowRootTaskMismatch": { "field": NestedMessage | number | string; };
@@ -332,6 +332,15 @@ export interface MessageParams {
   "workflow.validatorProcess.exitStatus": { "subject": string; "label": NestedMessage | number | string; "status": NestedMessage | number | string; };
   "workflow.validatorProcess.terminated": { "subject": string; "label": NestedMessage | number | string; "signal": NestedMessage | number | string; };
   "workflow.validatorProcess.unboundedOutput": { "subject": string; "label": NestedMessage | number | string; };
+  "workflow.service.rootConflictContext": { "createdAt": NestedMessage | number | string; "updatedAt": NestedMessage | number | string; "latestRun": string; "latestRunId": NestedMessage | number | string; "latestRunState": NestedMessage | number | string; "latestRunUpdatedAt": NestedMessage | number | string; "presence": string; };
+  "workflow.service.rootReleased": { "rootId": NestedMessage | number | string; "releasedAt": NestedMessage | number | string; "byOwner": string; "reason": NestedMessage | number | string; };
+  "workflow.service.releaseRootInputInvalid": Record<string, never>;
+  "workflow.service.releaseRootNotActive": { "rootId": NestedMessage | number | string; "state": NestedMessage | number | string; };
+  "workflow.service.releaseRootOwnerOnline": { "rootId": NestedMessage | number | string; };
+  "workflow.service.releaseRootApprovalRequired": { "rootId": NestedMessage | number | string; };
+  "workflow.service.releaseRootPresenceUnavailable": { "rootId": NestedMessage | number | string; };
+  "workflow.service.claimFrameChangeRootNotOwned": { "rootId": NestedMessage | number | string; };
+  "workflow.service.replaceRootNotOwned": { "rootId": NestedMessage | number | string; };
   "workflowRecord.lateAdoption.constraint": { "priorFileCount": NestedMessage | number | string; };
   "workflowRecord.lateAdoption.label": Record<string, never>;
   "services.caller.metadataInconsistent": Record<string, never>;
@@ -525,6 +534,11 @@ export interface MessageParams {
   "tools.start_workflow.input.rootId": Record<string, never>;
   "tools.start_workflow.input.priorFailure": Record<string, never>;
   "tools.prepare_session_message.input.body": Record<string, never>;
+  "tools.release_convergence_root.description": Record<string, never>;
+  "tools.release_convergence_root.input.rootId": Record<string, never>;
+  "tools.release_convergence_root.input.expectedRevision": Record<string, never>;
+  "tools.release_convergence_root.input.reason": Record<string, never>;
+  "tools.release_convergence_root.input.userApprovalRefs": Record<string, never>;
   "schema.stageResultV1.properties.artifactChecks.description": Record<string, never>;
   "schema.stageResultV1.properties.recordedBy.description": Record<string, never>;
   "schema.stageResultV1.properties.outputFile.description": Record<string, never>;

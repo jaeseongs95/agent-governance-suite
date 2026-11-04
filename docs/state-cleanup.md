@@ -8,6 +8,7 @@
 - `active`가 아닌 continuity snapshot payload: 30일 뒤 hash tombstone으로 치환
 - `active`가 아닌 continuity task와 request/tombstone/observation metadata: 180일 뒤 전체 삭제
 - active workflow root, 그 root에 연결된 run, active continuity snapshot/task: 삭제하지 않음
+- 세션이 결속한 root 가운데 하나라도 active이면 그 continuity task와 snapshot: 삭제하지 않음(3.6.0). 한 세션은 root를 여러 개 결속하고 `root_id`는 가장 최근 root만 가리킨다. 3.5.x는 이 대표 root만 보아서, 대표 root가 끝나면 다른 active root의 소유 기록(`workflow-root:<rootId>` 관측 행)까지 지울 수 있었다.
 - workflow metadata, run sequence, plugin update state, cleanup claim과 signing key: 삭제하지 않음
 
 terminal convergence root와 연결된 run은 하나의 단위로 계산하고 삭제한다. 실행 직전에 후보를 다시 계산하며 하나라도 바뀌면 stale token으로 거절한다. continuity 삭제 transaction 안에서는 snapshot 상태·root 연결과 task의 모든 자식 레코드 시각을 다시 확인하며, 연결된 workflow root가 활성화되지 못하도록 workflow write lock을 함께 유지한다. 삭제할 데이터베이스마다 먼저 같은 상태 디렉터리의 `backups/` 아래에 `VACUUM INTO` snapshot을 만들고 그 snapshot의 `PRAGMA integrity_check`가 `ok`인지 확인한다. 데이터베이스별 삭제는 독립된 transaction이다. 한 데이터베이스가 실패해도 이미 완료된 다른 데이터베이스 결과와 각 backup 경로를 receipt에 남긴다.

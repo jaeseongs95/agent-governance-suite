@@ -33,7 +33,7 @@ import {
   convergenceStatusSummary,
   workflowStatusSummary,
 } from "./response-projections.js";
-import { WorkflowService } from "./workflow-service.js";
+import { type RootAccess, type RootOwnerPresenceV1, WorkflowService } from "./workflow-service.js";
 import { hostActorId, type HostAttestationProvider } from "./host-attestation.js";
 import { StateCleanupService } from "./state-cleanup-service.js";
 import { type KoreanProseGlossaryGateway, UnavailableKoreanProseGlossary } from "./korean-prose-glossary.js";
@@ -214,13 +214,26 @@ function buildInputSchemas(contracts: ContractDocuments, locale: SupportedLocale
     },
   };
 
+  const releaseConvergenceRoot: Record<string, unknown> = {
+    type: "object",
+    additionalProperties: false,
+    required: ["rootId", "expectedRevision", "reason"],
+    properties: {
+      rootId: { ...text, description: toolText("tools.release_convergence_root.input.rootId", locale) },
+      expectedRevision: { type: "integer", minimum: 0, description: toolText("tools.release_convergence_root.input.expectedRevision", locale) },
+      reason: { type: "string", minLength: 1, maxLength: 2000, description: toolText("tools.release_convergence_root.input.reason", locale) },
+      userApprovalRefs: { type: "array", maxItems: 32, uniqueItems: true, items: { type: "string", minLength: 1 },
+        description: toolText("tools.release_convergence_root.input.userApprovalRefs", locale) },
+    },
+  };
+
   const prepareSessionMessage = structuredClone(contracts.prepareSessionMessageRequest) as ObjectSchema;
   const sendBodySchema = prepareSessionMessage.properties?.body as Record<string, unknown> | undefined;
   if (sendBodySchema) sendBodySchema.description = toolText("tools.prepare_session_message.input.body", locale);
 
   return {
     planWorkflow, planWorkflowInline, openConvergenceRoot, attemptProposal, guardedWorkflowStart, resolveConvergenceGate,
-    recordStageResult, minimalWorkflowStart, prepareSessionMessage,
+    recordStageResult, minimalWorkflowStart, releaseConvergenceRoot, prepareSessionMessage,
   };
 }
 
@@ -385,6 +398,40 @@ function observedSessionWorkspace(databasePath: string | null, caller: VerifiedC
   } finally {
     try { board?.close(); } catch { /* the read result does not depend on close */ }
   }
+}
+
+/**
+ * The presence of a root's owner sessions: every session presence still keeps whose continuity binding names the root
+ * (bindings hold only an HMAC of the session ID, so each known session is checked by its own ID). online wins, then
+ * unreachable, then ended; unknown when no owner session is kept (a root no session bound, or one whose owner presence
+ * was already dropped). A failed read is reported as unavailable, never as an absent owner.
+ */
+function readRootOwnerPresence(rootId: string, continuity: ContinuityGateway, sessionMessages: SessionMessageService,
+  caller: VerifiedCaller): RootOwnerPresenceV1 {
+  const observedAt = new Date().toISOString();
+  const unavailable = (cause: unknown): RootOwnerPresenceV1 => ({ state: "unknown", self: false, ownerBound: false, sessions: [],
+    unavailable: failureReason(cause).reason ?? "PRESENCE_UNAVAILABLE", observedAt });
+  let ownerBound: boolean;
+  let known: ReturnType<SessionMessageService["knownPresence"]>;
+  try {
+    ownerBound = continuity.rootBound(rootId);
+    known = ownerBound ? sessionMessages.knownPresence() : [];
+  } catch (cause) {
+    return unavailable(cause);
+  }
+  const sessions: RootOwnerPresenceV1["sessions"] = [];
+  try {
+    for (const item of known) {
+      if (item.host === caller.host && item.sessionId === caller.sessionId) continue;
+      if (!continuity.ownsRoot(item.sessionId, rootId)) continue;
+      sessions.push({ host: item.host, sessionId: item.sessionId, actorId: hostActorId(item.host, item.sessionId), state: item.state,
+        lastSeenAt: item.heartbeatAt, endedAt: item.endedAt });
+    }
+  } catch (cause) {
+    return unavailable(cause);
+  }
+  const state = (["online", "unreachable", "ended"] as const).find(candidate => sessions.some(session => session.state === candidate)) ?? "unknown";
+  return { state, self: false, ownerBound, sessions, unavailable: null, observedAt };
 }
 
 async function sessionBoardResult(
@@ -676,6 +723,12 @@ export function createMcpServer(
         annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
       },
       {
+        name: "release_convergence_root",
+        description: description("tools.release_convergence_root.description"),
+        inputSchema: schemas.releaseConvergenceRoot,
+        annotations: { readOnlyHint: false, idempotentHint: false, destructiveHint: true, openWorldHint: false },
+      },
+      {
         name: "checkpoint_context",
         description: description("tools.checkpoint_context.description"),
         inputSchema: contracts.checkpointContextRequest,
@@ -801,6 +854,13 @@ export function createMcpServer(
       const mode = responseMode(args, field);
       return mode === null ? invalidInput(msg("server.call.responseModeInvalid", { field })) : projectResult(call(), mode, project);
     };
+    // The calling session's rights over a root: ownership from its continuity binding, owner presence read when asked.
+    const rootAccess: RootAccess = {
+      ownsRoot: rootId => continuity.ownsRoot(caller.sessionId, rootId),
+      ownedByOtherSession: rootId => continuity.rootOwnedElsewhere(caller.sessionId, rootId) && !continuity.ownsRoot(caller.sessionId, rootId),
+      ownerPresence: rootId => readRootOwnerPresence(rootId, continuity, sessionMessages, caller),
+      actorId: caller.actor.id,
+    };
     let updateStatus: PluginUpdateStatusV1 | null = null;
     let result: ApiResultV1<unknown>;
 
@@ -899,7 +959,7 @@ export function createMcpServer(
           break;
         case "open_convergence_root":
           result = withMode("responseMode", () => {
-            const opened = service.openConvergenceRoot(domainArguments(args, "responseMode"));
+            const opened = service.openConvergenceRoot(domainArguments(args, "responseMode"), rootAccess);
             if (opened.ok && opened.data && !continuity.bindOpenedRoot(caller, opened.data.rootId)) {
               process.stderr.write(JSON.stringify({ event: "continuity-root-binding-unavailable" }) + "\n");
             }
@@ -907,7 +967,7 @@ export function createMcpServer(
           }, convergenceRootHandle);
           break;
         case "claim_workflow_attempt":
-          result = service.claimWorkflowAttempt(args, true, observedCaller(caller));
+          result = service.claimWorkflowAttempt(args, true, observedCaller(caller), rootAccess);
           break;
         case "start_guarded_workflow":
           result = withMode("responseMode", () => service.startGuardedWorkflow(domainArguments(args, "responseMode"), true,
@@ -926,6 +986,7 @@ export function createMcpServer(
               settle: () => continuity.settleFinishedWorkflow(caller.sessionId),
               beforeCommit: rootId => continuity.prepareWorkflowStart(caller.sessionId, rootId),
               ownsRoot: rootId => continuity.ownsRoot(caller.sessionId, rootId),
+              ownerPresence: rootAccess.ownerPresence,
               sessionWorkspace: () => observedSessionWorkspace(sessionBoardPath, caller),
               locale,
             });
@@ -955,6 +1016,9 @@ export function createMcpServer(
           break;
         case "abort_workflow":
           result = withMode("responseMode", () => service.abortWorkflow(String(args.runId ?? ""), integer(args.expectedRevision)), workflowStatusSummary);
+          break;
+        case "release_convergence_root":
+          result = service.releaseConvergenceRoot(args, rootAccess);
           break;
         case "checkpoint_context":
           result = continuity.checkpointContext(args, caller);

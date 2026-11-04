@@ -72,6 +72,8 @@ export interface WorkflowStore {
   nextRunSequence(): number;
   insertRun(receipt: WorkflowReceiptV1): void;
   getRun(runId: string): WorkflowReceiptV1 | null;
+  /** When the run was last written, or null for an unknown run (shown on ROOT_CONFLICT, never used to decide). */
+  getRunUpdatedAt(runId: string): string | null;
   updateRun(
     receipt: WorkflowReceiptV1,
     expectedRevision: number,
@@ -107,6 +109,7 @@ export interface WorkflowStore {
 
 export class InMemoryWorkflowStore implements WorkflowStore {
   private runs = new Map<string, WorkflowReceiptV1>();
+  private runUpdatedAt = new Map<string, string>();
   private secrets = new Map<string, string>();
   private executionObservations = new Map<string, string>();
   private convergence = new Map<string, ConvergenceSnapshot>();
@@ -162,11 +165,16 @@ export class InMemoryWorkflowStore implements WorkflowStore {
       throw new WorkflowContractError("INVALID_INPUT", msg("workflow.store.workflowRunExists", {}), { runId: receipt.runId });
     }
     this.runs.set(receipt.runId, clone(receipt));
+    this.runUpdatedAt.set(receipt.runId, new Date().toISOString());
   }
 
   getRun(runId: string): WorkflowReceiptV1 | null {
     const receipt = this.runs.get(runId);
     return receipt ? clone(receipt) : null;
+  }
+
+  getRunUpdatedAt(runId: string): string | null {
+    return this.runUpdatedAt.get(runId) ?? null;
   }
 
   updateRun(
@@ -184,6 +192,7 @@ export class InMemoryWorkflowStore implements WorkflowStore {
       snapshot.outcomes.push(clone(convergence.outcome));
     }
     this.runs.set(receipt.runId, clone(receipt));
+    this.runUpdatedAt.set(receipt.runId, new Date().toISOString());
     return true;
   }
 
@@ -235,6 +244,7 @@ export class InMemoryWorkflowStore implements WorkflowStore {
     // ponytail: rollback copies O(store) state; use the SQLite store for large or persistent workflows.
     const previous = {
       runs: new Map(clone([...this.runs])),
+      runUpdatedAt: new Map(this.runUpdatedAt),
       secrets: new Map(this.secrets),
       executionObservations: new Map(this.executionObservations),
       convergence: new Map(clone([...this.convergence])),
@@ -250,6 +260,7 @@ export class InMemoryWorkflowStore implements WorkflowStore {
       return result;
     } catch (cause) {
       this.runs = previous.runs;
+      this.runUpdatedAt = previous.runUpdatedAt;
       this.secrets = previous.secrets;
       this.executionObservations = previous.executionObservations;
       this.convergence = previous.convergence;
@@ -311,6 +322,7 @@ export class InMemoryWorkflowStore implements WorkflowStore {
       snapshot.root.updatedAt = consumedAt;
       snapshot.workflowRunIds.push(receipt.runId);
       this.runs.set(receipt.runId, clone(receipt));
+      this.runUpdatedAt.set(receipt.runId, consumedAt);
       this.guardedRuns.set(receipt.runId, { rootId: snapshot.root.rootId, leaseId });
       return { root: clone(snapshot.root), proposal: clone(proposal), lease: clone(lease), outcome: null };
     }

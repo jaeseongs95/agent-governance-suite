@@ -2,8 +2,8 @@ import { contractErrorBody, WorkflowContractError, type ApiResultV1, type ErrorC
 import type { VerifiedCaller } from "./caller-identity.js";
 import { failureContext, failureReason } from "./failure-diagnostics.js";
 import { msg, type MessageRef } from "./i18n.js";
-import { BrokerRequestRejected, sessionMessageRequest } from "./session-message-client.js";
-import type { CurrentPresence } from "./session-message-store.js";
+import { BrokerRequestRejected, runSessionMessageOperation, sessionMessageRequest } from "./session-message-client.js";
+import type { CurrentPresence, SessionPresence } from "./session-message-store.js";
 import { SESSION_MESSAGE_BODY_MAX_BYTES } from "./session-message-protocol.js";
 
 function ok<T>(data: T): ApiResultV1<T> {
@@ -111,5 +111,14 @@ export class SessionMessageService {
   /** The session board's liveness view: one broker request whose reply the store keeps inside the response limit. */
   async listCurrentPresence(self: SessionBindingV1): Promise<{ sessions: CurrentPresence[]; truncated: number }> {
     return sessionMessageRequest("list-current-presence", { self }, this.stateDirectory);
+  }
+
+  /**
+   * Every session presence still keeps, read synchronously so a workflow decision (root ownership) can use it inside its
+   * own transaction. Failures propagate: a caller that cannot read presence must not treat the owner as gone.
+   */
+  knownPresence(): Array<Pick<SessionPresence, "host" | "sessionId" | "state" | "heartbeatAt" | "endedAt">> {
+    return runSessionMessageOperation<{ sessions: Array<Pick<SessionPresence, "host" | "sessionId" | "state" | "heartbeatAt" | "endedAt">> }>(
+      "list-known-presence", {}, this.stateDirectory).sessions;
   }
 }

@@ -819,8 +819,31 @@ export interface ConvergenceRootV1 {
   operationalDigest: Sha256Digest;
   userApprovalRefs: string[];
   retryRejections?: RetryRejectionV1[];
+  /** Set when a session released the root (release_convergence_root); the root is then abandoned. */
+  release?: ConvergenceRootReleaseV1;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Presence of the session that owns a root, as session messaging reports it; unknown when no presence row is kept. */
+export type RootOwnerPresenceState = "online" | "unreachable" | "ended" | "unknown";
+
+/** Who released a root, when, on which presence reading and with which user decision. */
+export interface ConvergenceRootReleaseV1 {
+  releasedAt: string;
+  /** The releasing caller's actor ID (no raw session ID), or null when none was observed. */
+  releasedBy: string | null;
+  releasedByOwner: boolean;
+  previousState: "open" | "needs-review" | "needs-user";
+  /** The owner sessions' presence read at release time by a non-owner; null when the owner released its own root. */
+  ownerPresence: RootOwnerPresenceState | null;
+  presenceObservedAt?: string;
+  /** Actor IDs of the owner sessions presence still knew. */
+  ownerActors: string[];
+  userApprovalRefs: string[];
+  reason: string;
+  /** The run the release closed as blocked, if one was still in progress. */
+  closedRunId: string | null;
 }
 
 /** One rejected retry claim, kept so its evidence cannot be recycled as new. */

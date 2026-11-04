@@ -50,7 +50,7 @@
   "workflow.schema.schemaChangedAfterPlanning": "{subject, select, providerResult {provider 결과} providerOutput {provider 출력} referenceOnlyOutput {참조 전용 출력} decisionRecord {deliberation decision record} other {{label}}}: 계획 뒤에 schema가 바뀌었다.",
   "workflow.schema.schemaEscapesPluginRoot": "{subject, select, providerResult {provider 결과} providerOutput {provider 출력} referenceOnlyOutput {참조 전용 출력} decisionRecord {deliberation decision record} other {{label}}}: schema가 플러그인 루트 밖을 가리킨다.",
   "workflow.schema.validatorNotRegistered": "validator ''{name}''이(가) 등록되어 있지 않다.",
-  "workflow.service.activeConvergenceRootCoversWorkspace": "활성 convergence root가 이미 이 workspace 범위를 덮고 있다.",
+  "workflow.service.activeConvergenceRootCoversWorkspace": "활성 convergence root가 이미 이 workspace 범위를 덮고 있다. root {rootId}({state})가 {existing}을(를) 쓴다. {context} {release, select, own {이 세션의 root다. 이어 가거나, 더 필요 없으면 release_convergence_root로 놓아라.} approval {소유 세션이 online이 아니다. 사용자가 그 root가 더 필요 없다고 결정하면 그 결정을 userApprovalRefs에 넣어 release_convergence_root로 놓고, 아니면 겹치지 않는 범위로 새 root를 열어라.} online {소유 세션이 online이다. 그 세션에 물어보거나(prepare_session_message) 겹치지 않는 범위로 새 root를 열어라.} other {겹치지 않는 범위로 새 root를 열어라.}}",
   "workflow.service.adapterErrorAllowedProviderDescriptor": "provider descriptor가 허용하지 않는 adapter 오류다.",
   "workflow.service.ambiguousFrameReviewsRoutePanel": "판단이 모호한 frame 검토는 panel이나 사용자에게 보내거나 중단해야 한다.",
   "workflow.service.artifactContractCapabilitySelectedPlan": "artifact 계약의 capability가 선택한 계획에 없다.",
@@ -167,7 +167,7 @@
   "workflow.service.startWorkflowFixArtifactTargets": "start_workflow는 artifact 대상을 고정할 수 없어서 이 단계들은 통과로 기록될 수 없다. 대상이 정해지면 plan_workflow와 taskEnvelope.artifactContracts로 계획한다.",
   "workflow.service.startWorkflowPriorFailure": "{required, select, yes {root의 최근 시도가 실패했으므로 이어 가려면 priorFailure가 필요하다. 실패 fingerprint는 서버가 채운다.} other {root에 다시 시도할 실패한 시도가 없으므로 priorFailure를 넣지 않는다.}}",
   "workflow.service.startWorkflowPriorFailureShape": "priorFailure는 rootId와 함께 쓰며 hypothesis, changeSummary, discriminator(비어 있지 않은 문자열)와 evidenceRefs(새 근거가 담긴 로컬 파일)만 가진다.",
-  "workflow.service.startWorkflowRootConflict": "writeTarget {requested}이(가) 활성 root {rootId}({state}{owned, select, yes {, 이 세션이 시작함} other {}})가 쓰는 {existing}과(와) 겹친다. {action, select, running {그 root의 run {runId}이(가) 아직 진행 중이다. 그 workflow 안에서 계속하라(get_workflow_status에서 단계를 볼 수 있다).} continue {그 root의 시도가 끝났다. start_workflow에 rootId {rootId}를 넣어 이어 간다.} resolve {그 root는 판정을 기다린다. 먼저 resolve_convergence_gate로 판정하라.} other {겹치지 않는 writeTargets로 다시 시작하고, 막힌 부분만 보류하라.}}",
+  "workflow.service.startWorkflowRootConflict": "writeTarget {requested}이(가) 활성 root {rootId}({state}{owned, select, yes {, 이 세션이 시작함} other {}})가 쓰는 {existing}과(와) 겹친다. {context} {action, select, running {그 root의 run {runId}이(가) 아직 진행 중이다. 그 workflow 안에서 계속하라(get_workflow_status에서 단계를 볼 수 있다).} continue {그 root의 시도가 끝났다. start_workflow에 rootId {rootId}를 넣어 이어 간다.} resolve {그 root는 판정을 기다린다. 먼저 resolve_convergence_gate로 판정하라.} other {겹치지 않는 writeTargets로 다시 시작하고, 막힌 부분만 보류하라.}}{release, select, own { 이 세션이 그 root를 더 쓰지 않으면 release_convergence_root로 놓아라.} approval { 소유 세션이 online이 아니다. 사용자가 그 root가 더 필요 없다고 결정하면 그 결정을 userApprovalRefs에 넣어 release_convergence_root로 놓아라.} online { 소유 세션이 online이다. root를 놓지 말고 그 세션에 물어보라(prepare_session_message).} other {}}",
   "workflow.service.startWorkflowRootNotOpen": "root {rootId}는 open이 아니라 {state} 상태라서 start_workflow로 이어 갈 수 없다. 판정을 기다리는 root는 resolve_convergence_gate로 판정하고, 끝난 root는 이어 가지 않는다.",
   "workflow.service.startWorkflowRootNotOwned": "root {rootId}는 이 세션이 시작한 root가 아니라서 start_workflow로 이어 갈 수 없다. 그 root와 겹치지 않는 writeTargets로 새 workflow를 시작하라.",
   "workflow.service.startWorkflowRootTaskMismatch": "root를 이어 가려면 {field}가 그 root를 시작할 때의 값과 같아야 한다(get_convergence_status에서 그 작업을 볼 수 있다).",
@@ -242,5 +242,14 @@
   "workflow.validatorProcess.couldNotRun": "{subject, select, csStageBundle {CS 단계 묶음} engineeringStage {engineering 단계} other {{label}}}: validator를 실행하지 못했다({reason}).",
   "workflow.validatorProcess.exitStatus": "{subject, select, csStageBundle {CS 단계 묶음} engineeringStage {engineering 단계} other {{label}}}: validator가 상태 {status}로 끝났다.",
   "workflow.validatorProcess.terminated": "{subject, select, csStageBundle {CS 단계 묶음} engineeringStage {engineering 단계} other {{label}}}: validator가 {signal}로 종료되었다.",
-  "workflow.validatorProcess.unboundedOutput": "{subject, select, csStageBundle {CS 단계 묶음} engineeringStage {engineering 단계} other {{label}}}: validator가 크기 제한 안의 JSON을 돌려주지 않았다."
+  "workflow.validatorProcess.unboundedOutput": "{subject, select, csStageBundle {CS 단계 묶음} engineeringStage {engineering 단계} other {{label}}}: validator가 크기 제한 안의 JSON을 돌려주지 않았다.",
+  "workflow.service.rootConflictContext": "참고용(판정에 쓰지 않음): 그 root는 {createdAt}에 만들어졌고 {updatedAt}에 마지막으로 바뀌었다. {latestRun, select, none {아직 run이 없다.} other {최근 run {latestRunId}은(는) {latestRunState} 상태다({latestRunUpdatedAt}에 바뀜).}} 소유 세션은 {presence, select, online {online} unreachable {응답 없음(unreachable)} ended {종료됨(ended)} other {알 수 없음(unknown)}} 상태다.",
+  "workflow.service.rootReleased": "root {rootId}는 {releasedAt}에 {byOwner, select, yes {소유 세션이} other {다른 세션이 사용자 결정을 받아}} 놓았다(사유: {reason}). 그래서 이어 갈 수 없다. start_workflow로 새 workflow를 시작하라.",
+  "workflow.service.releaseRootInputInvalid": "release_convergence_root는 rootId, expectedRevision(root revision), reason(1~2000자)과 선택 항목 userApprovalRefs(서로 다른 비어 있지 않은 문자열)를 받는다.",
+  "workflow.service.releaseRootNotActive": "root {rootId}는 {state} 상태라서 놓을 것이 없다.",
+  "workflow.service.releaseRootOwnerOnline": "root {rootId}는 online인 다른 세션의 root라서 이 세션이 놓을 수 없다. 그 세션에 놓거나 끝내 달라고 요청하라(prepare_session_message).",
+  "workflow.service.releaseRootApprovalRequired": "root {rootId}는 다른 세션의 root다. 사용자가 더 필요 없다고 결정한 뒤에만 놓고, 그 결정을 userApprovalRefs에 넣어라.",
+  "workflow.service.releaseRootPresenceUnavailable": "root {rootId}는 다른 세션의 root인데 그 세션의 presence를 읽지 못해 놓지 않았다. 다시 시도하고, 계속 읽지 못하면 사용자에게 알려라.",
+  "workflow.service.claimFrameChangeRootNotOwned": "root {rootId}는 다른 세션이 시작한 root라서 이 세션이 그 task나 frame을 바꿀 수 없다. 겹치지 않는 범위에서 작업하거나 그 세션에 물어보라.",
+  "workflow.service.replaceRootNotOwned": "root {rootId}는 다른 세션이 시작한 root라서 이 세션이 교체할 수 없다. 겹치지 않는 범위에서 작업하거나 그 세션에 물어보라."
 }

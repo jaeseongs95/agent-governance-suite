@@ -14,7 +14,7 @@ import { msg, render, ROOT_LOCALE } from "./i18n.js";
  */
 export const SESSION_MESSAGE_OPERATIONS = ["prepare", "send", "claim", "claim-host-wake", "observe-native-input", "claim-deferred",
   "claim-turn-end", "clear-deferred", "acknowledge", "status", "peer-wait", "pending", "ensure-relay", "grant-relay", "release-relay",
-  "relay-tick", "presence-start", "presence-heartbeat", "presence-end", "presence-end-host", "presence", "list-presence", "list-current-presence",
+  "relay-tick", "presence-start", "presence-heartbeat", "presence-end", "presence-end-host", "presence", "list-presence", "list-current-presence", "list-known-presence",
   "reserve-wake", "start-wake", "record-wake-outcome", "wake-status", "consume-wake"] as const;
 
 function identity(value: unknown): SessionIdentity {
@@ -285,6 +285,8 @@ function dispatchOperation(store: SessionMessageStore, operation: string, payloa
     }
     // Session board liveness: the store keeps the reply inside its byte budget and counts the rest.
     case "list-current-presence": return store.listCurrentPresence(undefined, identity(payload.self));
+    // Root ownership: every session presence still keeps, so a root's owner session can be found by its own ID.
+    case "list-known-presence": return { sessions: store.listKnownPresence() };
     case "reserve-wake": return store.reserveManagedWake({ ...identity(payload.target), nonce: string(payload.nonce, "nonce"),
       instanceId: string(payload.instanceId, "instanceId"), relayId: string(payload.relayId, "relayId"), transport: string(payload.transport, "transport"),
       ...(payload.resume === undefined ? {} : { resume: boolean(payload.resume, "resume") }) });

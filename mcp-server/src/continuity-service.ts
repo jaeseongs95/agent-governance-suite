@@ -187,6 +187,10 @@ export interface ContinuityGateway {
   prepareWorkflowStart(rawSessionId: string, rootId: string): void;
   /** Whether this session ever bound the root, in any epoch (start_workflow rootId and ROOT_CONFLICT ownership). */
   ownsRoot(rawSessionId: string, rootId: string): boolean;
+  /** Whether another session bound the root (claim frame change and replacement refuse it). False without a store: nobody owns it. */
+  rootOwnedElsewhere(rawSessionId: string, rootId: string): boolean;
+  /** Whether any session bound the root. False without a store. */
+  rootBound(rootId: string): boolean;
   /**
    * Distinct product files edited without a workflow that a start now adopts (design ags30-phase-check 7.5): the current
    * window, or while locked the window that ended in the refusal, which a later phase check does not clear.
@@ -793,6 +797,14 @@ export class ContinuityService implements ContinuityGateway {
     return this.store.ownsRoot(this.correlateSession(rawSessionId), rootId);
   }
 
+  rootOwnedElsewhere(rawSessionId: string, rootId: string): boolean {
+    return this.store.ownedElsewhere(this.correlateSession(rawSessionId), rootId);
+  }
+
+  rootBound(rootId: string): boolean {
+    return this.store.rootBound(rootId);
+  }
+
   editWindowFileCount(rawSessionId: string): number {
     const task = this.store.getTask(this.correlateSession(rawSessionId));
     if (!task) return 0;
@@ -1204,6 +1216,9 @@ export class UnavailableContinuityService implements ContinuityGateway {
   ownsRoot(): boolean {
     throw new WorkflowContractError("CONTINUITY_UNAVAILABLE", msg("continuity.store.optionalUnavailable", {}), { reason: this.reason });
   }
+  /** Without the store no session's binding exists, so no root is another session's (the unowned behavior is kept). */
+  rootOwnedElsewhere(): boolean { return false; }
+  rootBound(): boolean { return false; }
   editWindowFileCount(): number { return 0; }
   recordWorkflowStartFailure(): void {}
   settleFinishedWorkflow(): void {}

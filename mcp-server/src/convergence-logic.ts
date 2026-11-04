@@ -410,6 +410,10 @@ export function conflictDetails(conflict: RootConflict): Record<string, unknown>
     workspaceId: conflict.root.frame.workspace.workspaceId,
     scope: conflict.root.taskEnvelope.scope.included,
     blockerState: conflict.root.state,
+    // For the reader only: no decision reads these times (a root is never released by its age).
+    rootCreatedAt: conflict.root.createdAt,
+    rootUpdatedAt: conflict.root.updatedAt,
+    rootRevision: conflict.root.revision,
     conflictKind: conflict.kind,
     ...(conflict.kind === "lineage-unresolved" ? { reason: "WORKSPACE_IDENTITY_UNRESOLVED" } : {}),
     requestedEntry: conflict.requested.entry,

@@ -38,6 +38,23 @@
         }
       }
     },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["releasedAt", "releasedBy", "releasedByOwner", "previousState", "ownerPresence", "ownerActors", "userApprovalRefs", "reason", "closedRunId"],
+      "properties": {
+        "releasedAt": { "type": "string", "format": "date-time" },
+        "releasedBy": { "type": ["string", "null"], "minLength": 1 },
+        "releasedByOwner": { "type": "boolean" },
+        "previousState": { "enum": ["open", "needs-review", "needs-user"] },
+        "ownerPresence": { "enum": ["online", "unreachable", "ended", "unknown", null] },
+        "presenceObservedAt": { "type": "string", "format": "date-time" },
+        "ownerActors": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "userApprovalRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "closedRunId": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
     "createdAt": { "type": "string", "format": "date-time" },
     "updatedAt": { "type": "string", "format": "date-time" }
   },
