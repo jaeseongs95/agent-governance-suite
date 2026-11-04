@@ -70,7 +70,7 @@
           {
             "type": "command",
             "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs\" --host-pid \"$PPID\"",
-            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\" --host-pid (Get-CimInstance Win32_Process -Filter \"ProcessId=$PID\").ParentProcessId",
+            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\" --host-shell-pid $PID",
             "timeout": 10,
             "additionalContextLimit": 8192
           }
@@ -143,7 +143,7 @@
           {
             "type": "command",
             "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs\" --host-pid \"$PPID\"",
-            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\" --host-pid (Get-CimInstance Win32_Process -Filter \"ProcessId=$PID\").ParentProcessId",
+            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\" --host-shell-pid $PID",
             "timeout": 10,
             "additionalContextLimit": 8192
           }
@@ -157,6 +157,16 @@
             "type": "command",
             "command": "node \"$PLUGIN_ROOT/mcp-server/dist/continuity-hook.mjs\"",
             "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\continuity-hook.mjs\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$PLUGIN_ROOT/mcp-server/dist/session-message-hook.mjs\" --host-pid \"$PPID\"",
+            "commandWindows": "node \"$env:PLUGIN_ROOT\\mcp-server\\dist\\session-message-hook.mjs\" --host-shell-pid $PID",
             "timeout": 10
           }
         ]
