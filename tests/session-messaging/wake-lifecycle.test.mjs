@@ -540,9 +540,9 @@ test('W05-r2 hook-before-outcome, adapter exception and new vendor use the same 
 
 test('W05-r2 host capabilities keep submission/observation distinct and deferred idle wake zero', async () => {
   assert.deepEqual(transportDeliveryCapabilities('claude-inbox'), { supportedInjection: ['peer-wake', 'tool-boundary', 'turn-end'], idleWake: 'silent' });
-  assert.deepEqual(transportDeliveryCapabilities('codex-queue'), { supportedInjection: ['peer-wake', 'tool-boundary'], idleWake: 'user-message' });
+  assert.deepEqual(transportDeliveryCapabilities('codex-queue'), { supportedInjection: ['peer-wake', 'tool-boundary', 'turn-end'], idleWake: 'user-message' });
   assert.deepEqual(transportDeliveryCapabilities('antigravity-queue'), { supportedInjection: ['peer-wake', 'tool-boundary'], idleWake: 'user-message' });
-  assert.deepEqual(transportDeliveryCapabilities('codex-deferred'), { supportedInjection: ['tool-boundary'], idleWake: 'none' });
+  assert.deepEqual(transportDeliveryCapabilities('codex-deferred'), { supportedInjection: ['tool-boundary', 'turn-end'], idleWake: 'none' });
   assert.deepEqual(transportDeliveryCapabilities('gemini-deferred'), { supportedInjection: ['tool-boundary'], idleWake: 'none' });
   assert.throws(() => transportDeliveryCapabilities('gemini-queue'), /unavailable/, '3.0 takes no 2.x transport name');
   assert.throws(() => transportDeliveryCapabilities('missing-adapter'), /unavailable/);
