@@ -556,12 +556,27 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       "claim_boundary_at = max(coalesce(claim_boundary_at, ''), ?)", [iso(nowMs)], nowMs);
   }
 
-  /** Reserve/start gates 4 and 5 (2.5): no prerequisite loss, backoff over, and quiet unless a body waited too long. */
+  /**
+   * 3.5.2: a prompt or a wake of this birth started a turn whose end has not run (observeNativeInput or claimHostWake,
+   * cleared by claimTurnEnd and clearDeferred). A host that reports no prompt or turn end never opens one.
+   */
+  private openTurnSince(key: WakePathKey): string | null {
+    const row = this.database.prepare("SELECT observed_at FROM input_observations WHERE host = ? AND session_id = ?")
+      .get(key.host, key.sessionId) as { observed_at: string } | undefined;
+    return row !== undefined && row.observed_at >= key.generation ? row.observed_at : null;
+  }
+
+  /**
+   * Reserve/start gates 4 and 5 (2.5): no prerequisite loss, backoff over, and quiet unless a body waited too long.
+   * Quiet is a recent claim boundary or an open turn: a marker rung into a running turn reaches the host after that
+   * turn's own boundary took the body, as an empty wake (3.5.2).
+   */
+  // ponytail: a turn ended without a turn-end hook (an interrupt) stays open until the oldest body waited WAKE_QUIET_MAX_MS.
   private wakePathOpen(key: WakePathKey, nowMs: number): boolean {
     const path = this.wakePath(key);
-    if (!path) return true;
-    if (path.prerequisite_missing !== null || (path.retry_not_before !== null && String(path.retry_not_before) > iso(nowMs))) return false;
-    if (path.claim_boundary_at === null || String(path.claim_boundary_at) < iso(nowMs - WAKE_QUIET_MS)) return true;
+    if (path && (path.prerequisite_missing !== null || (path.retry_not_before !== null && String(path.retry_not_before) > iso(nowMs)))) return false;
+    const recentBoundary = path?.claim_boundary_at != null && String(path.claim_boundary_at) >= iso(nowMs - WAKE_QUIET_MS);
+    if (!recentBoundary && this.openTurnSince(key) === null) return true;
     const now = iso(nowMs);
     const oldest = this.database.prepare(`SELECT min(created_at) AS oldest FROM messages WHERE target_host = ? AND target_session_id = ?
       AND acknowledged_at IS NULL AND expires_at > ? AND (claim_until IS NULL OR claim_until <= ?)`)
@@ -989,6 +1004,8 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     if (path?.claim_boundary_at != null && String(path.claim_boundary_at) > iso(nowMs - WAKE_QUIET_MS)) {
       return outlook("available", "recipient-active", path.claim_boundary_at);
     }
+    const openTurn = this.openTurnSince(birth);
+    if (openTurn !== null) return outlook("available", "recipient-active", openTurn);
     return outlook("available", "relay-live", relay.updatedAt);
   }
 
@@ -1415,6 +1432,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
           WHERE nonce_digest = ? AND state IN ${ACTIVE_WAKE_STATES}`).run(now, now, String(row.nonce_digest));
       }
       this.markClaimBoundary(target, nowMs);
+      // The wake starts a turn as a prompt does; its turn end clears this.
+      this.database.prepare(`INSERT INTO input_observations (host, session_id, deferred_tool_claim, observed_at) VALUES (?, ?, 0, ?)
+        ON CONFLICT (host, session_id) DO UPDATE SET observed_at = excluded.observed_at`).run(target.host, target.sessionId, now);
       this.updateWakePath(this.wakeAttempt(live[0]!), "streak = 0", [], nowMs);
       return { recognized: true, messages, binding: this.wakeAttempt(live[0]!), ...(messages.length === 0 && allEnded ? { retired: true as const } : {}),
         ...(observedNow ? { observedNow: true as const } : {}) };
