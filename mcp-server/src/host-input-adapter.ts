@@ -118,6 +118,11 @@ export interface HookHostAdapter {
   agentNoteRoots?: (environment: NodeJS.ProcessEnv) => string[];
   /** The model and effort the host reported for this tool call; hosts that report them nowhere omit it. */
   observeExecution?: (input: Record<string, unknown>, environment: NodeJS.ProcessEnv) => CallerExecution;
+  /**
+   * The host's turn-end hook continues the turn only through `decision: block` whose `reason` becomes the next
+   * instruction, and refuses any other output field. Hosts without it take the canonical additional context.
+   */
+  continuesTurnWithReason?: boolean;
 }
 
 // A host entry registers trusted adapter code in the same module namespace it consumes.
@@ -128,7 +133,8 @@ export function registerHookHostAdapter(host: string, adapter: HookHostAdapter):
     || !adapter || typeof adapter.deliveryProfile !== "function" || typeof adapter.processPid !== "function"
     || (adapter.adaptInput !== undefined && typeof adapter.adaptInput !== "function")
     || (adapter.ownsTool !== undefined && typeof adapter.ownsTool !== "function")
-    || (adapter.agentNoteRoots !== undefined && typeof adapter.agentNoteRoots !== "function")) throw hookHostFailure("adapter");
+    || (adapter.agentNoteRoots !== undefined && typeof adapter.agentNoteRoots !== "function")
+    || (adapter.continuesTurnWithReason !== undefined && typeof adapter.continuesTurnWithReason !== "boolean")) throw hookHostFailure("adapter");
   if (hookHostAdapters.has(host)) throw hookHostFailure("duplicate");
   hookHostAdapters.set(host, Object.freeze({ ...adapter }));
 }
@@ -165,6 +171,12 @@ export function hostDeliveryProfile(host: string, environment: NodeJS.ProcessEnv
   const adapter = selectedHookHostAdapter(host);
   if (!adapter) throw hookHostFailure("unavailable");
   return adapter.deliveryProfile(environment, diagnose, defaultQueueWake);
+}
+
+/** A turn-end hook's output that continues the turn with `text`, in the form the host's turn-end hook accepts. */
+export function turnEndContinuation(host: string, eventName: string, text: string): Record<string, unknown> {
+  return selectedHookHostAdapter(host)?.continuesTurnWithReason === true ? { decision: "block", reason: text }
+    : { hookSpecificOutput: { hookEventName: eventName, additionalContext: text } };
 }
 
 /** The host's own note directories; a host without the capability names none. */

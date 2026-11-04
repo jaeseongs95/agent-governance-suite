@@ -5,9 +5,9 @@ import { claudeInboxWakePort } from "./wake-transport-claude.js";
 import { codexQueueWakePort } from "./wake-transport-codex.js";
 
 /** idleWake none is reported as unsupported from the declaration; the relay never dispatches it. */
-function deferredWakePort(): WakeDispatchPort {
+function deferredWakePort(supportedInjection: DeliveryCapabilities["supportedInjection"]): WakeDispatchPort {
   return {
-    capabilities: { supportedInjection: ["tool-boundary"], idleWake: "none" },
+    capabilities: { supportedInjection, idleWake: "none" },
     resendBaseMs: 10 * 60_000, // Unused: a port that is never dispatched has no resend; the field is required.
     dispatch: async () => { throw new Error("Deferred wake transport has no idle wake."); },
   };
@@ -17,8 +17,9 @@ function deferredWakePort(): WakeDispatchPort {
 const ports: ReadonlyMap<string, WakeDispatchPort> = new Map<string, WakeDispatchPort>([
   ["claude-inbox", claudeInboxWakePort],
   ["codex-queue", codexQueueWakePort],
-  ["codex-deferred", deferredWakePort()],
-  ["gemini-deferred", deferredWakePort()],
+  // The Codex Stop hook claims at turn end (hooks/hooks.json Stop); Gemini and Antigravity have no such hook here.
+  ["codex-deferred", deferredWakePort(["tool-boundary", "turn-end"])],
+  ["gemini-deferred", deferredWakePort(["tool-boundary"])],
   ["antigravity-queue", antigravityQueueWakePort],
 ]);
 export const WAKE_TRANSPORTS: readonly string[] = Object.freeze([...ports.keys()]);

@@ -192,9 +192,11 @@ function observationDigest(event: InputObservation): `sha256:${string}` {
 }
 
 /** Uses existing, non-authorizing source provenance. No public tool issues this hook receipt. */
-export function recordWakeHookObservation(observation: InputObservation, nowMs = Date.now()): string {
+/** options.busyTimeoutMs: a budgeted hook passes 0 so its lock wait fails with its reason instead of passing the budget. */
+export function recordWakeHookObservation(observation: InputObservation, nowMs = Date.now(), options: { busyTimeoutMs?: number } = {}): string {
   if (!isWakeHookObservation(observation, observation)) throw new SessionMessageError(msg("services.sessionMessage.wake.hostObservationInvalid", {}));
-  const trust = new TrustStore(resolveTrustDatabasePath());
+  const trust = options.busyTimeoutMs === undefined ? new TrustStore(resolveTrustDatabasePath())
+    : new TrustStore(resolveTrustDatabasePath(), undefined, { busyTimeoutMs: options.busyTimeoutMs });
   try {
     return trust.recordInputSource({ originKind: "peer", host: observation.host, sessionId: observation.sessionId,
       eventId: `wake-hook-${randomUUID()}`, contentDigest: observationDigest(observation),

@@ -100,15 +100,20 @@ it("HOOK-6: every packaged hook that can receive a recovery hint passes the host
   const hostPid = (command: string | undefined) => / --host-pid .+$/u.exec(command ?? "")?.[0];
   // User input, the after-tool boundary and turn end are the hook events whose replies carry relayRecovery.
   const consumers = ["UserPromptSubmit", "PostToolUse", "Stop"];
-  // Codex passes its host explicitly; each consumer must pass the same host expression as SessionStart.
+  // Codex passes its host explicitly; each consumer must pass the same host expression as SessionStart. On Windows a
+  // consumer passes its own PowerShell PID instead, and the hook reads that shell's parent (the process SessionStart's
+  // expression names) only when recovery runs (3.6.0).
   const codex = read("hooks/hooks.json");
   const [start] = messageHooks(codex, "SessionStart");
   expect(hostPid(start?.command)).toBeTruthy();
-  expect(hostPid(start?.commandWindows)).toBeTruthy();
+  expect(start?.commandWindows).toMatch(/ --host-pid \(Get-CimInstance Win32_Process -Filter "ProcessId=\$PID"\)\.ParentProcessId$/u);
   expect(messageHooks(codex, "UserPromptSubmit")).toHaveLength(1);
-  for (const event of consumers) for (const hook of messageHooks(codex, event)) {
-    expect(hostPid(hook.command), event).toBe(hostPid(start!.command));
-    expect(hostPid(hook.commandWindows), event).toBe(hostPid(start!.commandWindows));
+  for (const event of consumers) {
+    expect(messageHooks(codex, event).length, event).toBeGreaterThan(0);
+    for (const hook of messageHooks(codex, event)) {
+      expect(hostPid(hook.command), event).toBe(hostPid(start!.command));
+      expect(hook.commandWindows, event).toMatch(/ --host-shell-pid \$PID$/u);
+    }
   }
   // Claude Code reads its host as the hook's direct parent, so its hooks start node with no shell in between.
   const claude = read("claude-overlay/hooks/hooks.json");

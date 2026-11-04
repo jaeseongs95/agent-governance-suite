@@ -30,10 +30,12 @@ it.each(["BROKER_DEADLINE_EXPIRED", "MESSAGING_BUSY"])("reports a messaging clai
   const diagnostic = vi.spyOn(console, "error").mockImplementation(() => {});
   f.request.mockRejectedValueOnce(hookFailure(reason, "The session message operation did not run."));
   expect(await runSessionMessageHookOutcome("claude-code", stop)).toEqual({ ok: false, output: "",
-    failure: { phase: "handle", reason, reasonBasis: "producer", producerReason: reason } });
+    failure: { phase: "handle", reason, reasonBasis: "producer", producerReason: reason, step: "claim-turn-end" } });
   expect(f.request).toHaveBeenCalledTimes(1);
   expect(diagnostic).toHaveBeenCalledTimes(1);
   expect(diagnostic.mock.calls[0]![0]).toContain('"phase":"handle","reason":"' + reason + '"');
+  // 3.6.0: the failure names the broker operation that was in progress.
+  expect(diagnostic.mock.calls[0]![0]).toContain('"step":"claim-turn-end"');
 });
 
 it("reports an input parse failure with its failed step", async () => {

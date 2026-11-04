@@ -81,9 +81,10 @@ function ringCodex(sessionId: string, message: string): Promise<WakeDispatchOutc
   });
 }
 
-/** Persistent host queue: a held marker survives, so a resend is useful only after a longer wait (design 3.2). */
+/** Persistent host queue: a held marker survives, so a resend is useful only after a longer wait (design 3.2).
+ * turn-end: the Codex Stop hook claims and continues the turn with the body (hooks/hooks.json Stop). */
 export const codexQueueWakePort: WakeDispatchPort = {
-  capabilities: { supportedInjection: ["peer-wake", "tool-boundary"], idleWake: "user-message" },
+  capabilities: { supportedInjection: ["peer-wake", "tool-boundary", "turn-end"], idleWake: "user-message" },
   resendBaseMs: 20 * 60_000,
   dispatch: (target, message) => ringCodex(target.sessionId, message),
   prerequisite: (environment) => codexLaunchPrerequisite(environment),

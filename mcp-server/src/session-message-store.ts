@@ -899,7 +899,9 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
       deliveryAttempts: Number(row.delivery_attempts),
       firstDeliveredAt: row.first_delivered_at ?? null,
       state: row.acknowledged_at ? "acknowledged" : row.claimed_at ? "delivered" : "queued",
-      wake: this.managedWakeStatus({ host: String(row.target_host), sessionId: String(row.target_session_id) }, nowMs),
+      // Only an attempt this message started (it was pending when the attempt started), or null (3.6.0).
+      wake: this.managedWakeStatus({ host: String(row.target_host), sessionId: String(row.target_session_id) }, nowMs,
+        { startedFrom: String(row.created_at), startedUntil: row.acknowledged_at === null ? null : String(row.acknowledged_at) }),
       autoWake: row.acknowledged_at ? null : this.autoWakeOutlook({ host: String(row.target_host), sessionId: String(row.target_session_id) }, nowMs),
     };
   }
@@ -1373,12 +1375,23 @@ export class SessionMessageStore<Input extends string | SharedModuleContext = st
     });
   }
 
-  managedWakeStatus(target: SessionIdentity, nowMs = AUTHORITY_NOW): Record<string, unknown> | null {
+  /**
+   * The target's latest wake attempt; with `started`, only an attempt a message caused: one that started while the
+   * message was pending (from its creation to its acknowledgement). A wake starts only while the target has a claimable
+   * body, so such an attempt rang for this message among others; an attempt of an earlier or later message is not shown.
+   * Times are the store's monotonic authority time in one ISO format, so they compare as text.
+   */
+  managedWakeStatus(target: SessionIdentity, nowMs = AUTHORITY_NOW, started?: { startedFrom: string; startedUntil: string | null }): Record<string, unknown> | null {
     boundedIdentity(target);
-    if (!this.inTransaction) return this.transaction(() => this.managedWakeStatus(target, nowMs));
-    const row = this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
-      ORDER BY CASE WHEN state IN ${ACTIVE_WAKE_STATES} THEN 0 ELSE 1 END, rowid DESC LIMIT 1`)
-      .get(target.host, target.sessionId) as Record<string, unknown> | undefined;
+    if (!this.inTransaction) return this.transaction(() => this.managedWakeStatus(target, nowMs, started));
+    const row = (started
+      ? this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ? AND started_at IS NOT NULL
+        AND started_at >= ? AND (? IS NULL OR started_at <= ?)
+        ORDER BY CASE WHEN state IN ${ACTIVE_WAKE_STATES} THEN 0 ELSE 1 END, rowid DESC LIMIT 1`)
+        .get(target.host, target.sessionId, started.startedFrom, started.startedUntil, started.startedUntil)
+      : this.database.prepare(`SELECT * FROM wake_nonces WHERE host = ? AND session_id = ?
+        ORDER BY CASE WHEN state IN ${ACTIVE_WAKE_STATES} THEN 0 ELSE 1 END, rowid DESC LIMIT 1`)
+        .get(target.host, target.sessionId)) as Record<string, unknown> | undefined;
     if (!row) return null;
     const active = ACTIVE_WAKE_STATE_LIST.includes(String(row.state));
     return { state: row.state, releaseReason: row.release_reason,

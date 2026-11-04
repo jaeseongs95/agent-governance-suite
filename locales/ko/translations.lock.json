@@ -913,7 +913,7 @@
   "tools.execute_state_cleanup.description": "b0640652a6fd93c31df52e3fd85c0423a223edacd9af485b3eb803219b106621",
   "tools.finalize_workflow.description": "ee0174b4f104cb55eebe0a4f941a8cd2ded9637bf217e0759b229d88b611cbfa",
   "tools.get_convergence_status.description": "b8a5ea84b890d85048df76619def249c813e8963ab6e01173c48e90a4d071df7",
-  "tools.get_session_message_status.description": "cc6b0bf6565500a881345d2d2f486e802f83a47430e5e9eebf88e0c663ea51e6",
+  "tools.get_session_message_status.description": "1db54030b3a8f3b67781944a28a3f1951949d6680866edee3ae5758341f20f2c",
   "tools.get_skill_inventory.description": "91c3189fb236f382a853af55050be5be135920aac50302dbcbf820140f5beeed",
   "tools.get_trust_capabilities.description": "acbc9b0c4587e4fce57d8c955614defdf1457c0b85792a4c84b53566819b5723",
   "tools.get_workflow_status.description": "026960cd7e8888717f81558c039d91f16a5ab1dcb71a271817f09a62a0dccbaa",

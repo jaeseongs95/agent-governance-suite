@@ -12,7 +12,7 @@ import { ContinuityService, minimalWorkflowStartExample, renderHookText, workflo
 import { ContinuityStoreError, SqliteContinuityStore } from "./continuity-store.js";
 import { hookFailureContext, hookFailureReason, retainHookFailureSecondary } from "./hook-error-diagnostics.js";
 import { failureReason } from "./failure-diagnostics.js";
-import { adaptHostInput, hostAgentNoteRoots, isGovernanceHookTool, resolveHookHost, type AdaptedHostInput, type ContinuityAction, type ForkHostParentRead, type ForkOriginRead, type LineageRead } from "./host-input-adapter.js";
+import { adaptHostInput, hostAgentNoteRoots, isGovernanceHookTool, resolveHookHost, turnEndContinuation, type AdaptedHostInput, type ContinuityAction, type ForkHostParentRead, type ForkOriginRead, type LineageRead } from "./host-input-adapter.js";
 import {
   assertDistinctDatabasePaths,
   resolveContinuityDatabasePath,
@@ -175,10 +175,9 @@ function isTurnEnd(input: NormalizedContinuityInput): boolean {
   return input.observation.kind === "turn-end" && input.lifecycle === "none" && input.action === undefined;
 }
 
-/** Codex Stop takes only JSON and continues with `reason`; the other hosts take the canonical context. */
+/** The adapter names the form its host's turn-end hook continues a turn with (decision/reason or context). */
 function stopOutput(host: string, eventName: string, cue: string | null): Record<string, unknown> {
-  if (!cue) return {};
-  return host === "codex" ? { decision: "block", reason: cue } : sessionOutput(eventName, cue);
+  return cue ? turnEndContinuation(host, eventName, cue) : {};
 }
 
 /** A file edit before it runs: the workflow gate (design ags30-phase-check 7.2). Exempt-only edits are not recorded. */
