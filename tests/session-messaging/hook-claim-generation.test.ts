@@ -79,9 +79,10 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
     start(birthA, now);
     const relayId = start(birthB, now + 2);
     const messageId = enqueue("replacement body remains intact", now + 4);
-    store.observeNativeInput(target, now + 6, generationB);
+    // 3.5.2: a prompt opens a turn that holds the ring, so the ring comes first.
     expect(store.reserveManagedWake({ ...target, transport, instanceId: generationB, relayId,
-      nonce: "hook-generation-replacement-wake-abcdefghijklmnop" }, now + 7).dispatch).toBe(true);
+      nonce: "hook-generation-replacement-wake-abcdefghijklmnop" }, now + 6).dispatch).toBe(true);
+    store.observeNativeInput(target, now + 7, generationB);
     const before = snapshot();
 
     expectMismatch(() => invoke(store, operation, now + 8, generationA));
@@ -185,9 +186,10 @@ describe("D0354 훅 본문 claim의 현재 프로세스 세대 결속", () => {
     start(birthA, now);
     const relayId = start(birthB, now + 2);
     const messageId = enqueue("body belongs to the replacement", now + 4);
-    store.observeNativeInput(target, now + 6, generationB);
+    // 3.5.2: a prompt opens a turn that holds the ring, so the ring comes first.
     expect(store.reserveManagedWake({ ...target, transport, instanceId: generationB, relayId,
-      nonce: "hook-generation-no-resurrection-abcdefghijklmnop" }, now + 7).dispatch).toBe(true);
+      nonce: "hook-generation-no-resurrection-abcdefghijklmnop" }, now + 6).dispatch).toBe(true);
+    store.observeNativeInput(target, now + 7, generationB);
     const later = now + 25_000;
     expect(store.presence(target, later)).toMatchObject({ state: "unreachable", instanceId: generationB, endedAt: null });
     expect(store.liveRelay(target, transport, later)).toBeNull();

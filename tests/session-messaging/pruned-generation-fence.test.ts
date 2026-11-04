@@ -63,9 +63,10 @@ describe("D0354 verified generation fence across retention", () => {
     const sender = { host: "peer", sessionId: "sender" };
     const prepared = f.store.prepare({ sender, target, body: "replacement body" }, now);
     f.store.submitPrepared(sender, prepared.messageId, now);
-    f.store.observeNativeInput(target, now, b.instanceId);
+    // 3.5.2: a prompt opens a turn that holds the ring, so the ring comes first.
     expect(f.store.reserveManagedWake({ ...target, transport, instanceId: b.instanceId, relayId: b.relayId!,
       nonce: "protected-birth-wake-abcdefghijklmnop" }, now).dispatch).toBe(true);
+    f.store.observeNativeInput(target, now, b.instanceId);
     const before = f.snapshot();
     expect(f.ensure(100, b.instanceId)).toEqual({ spawn: false, relayId: null, instanceId: a.instanceId, reason: "GENERATION_SUPERSEDED" });
     expect(f.ensure(100)).toEqual({ spawn: false, relayId: null, instanceId: a.instanceId, reason: "GENERATION_SUPERSEDED" });

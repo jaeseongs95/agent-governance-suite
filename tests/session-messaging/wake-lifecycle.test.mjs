@@ -518,6 +518,7 @@ test('W05-r2 hook-before-outcome, adapter exception and new vendor use the same 
   }), request), true);
   assert.equal(calls, 1); assert.equal(f.store.managedWakeStatus(target).state, 'observed', 'a late outcome never revives an observed row (I11)');
   f.store.acknowledge(target, ['body-0001'], undefined, receipts(claimed)); body(f.store, 'second-body');
+  f.store.clearDeferred(target); // The woken turn ends (3.5.2: a wake opens a turn and its turn-end hook closes it).
   const later = Date.now() + WAKE_QUIET_MS + 1;
   keepAlive(f, later);
   const timed = async (operation, payload) => {
@@ -734,6 +735,7 @@ function observedThenCurrent(f) {
   const claimed = hostClaim(f, oldReceipt, f.now + 4).messages;
   assert.deepEqual(claimed.map(message => message.messageId), ['already-observed-body']);
   f.store.acknowledge(target, ['already-observed-body'], f.now + 5, receipts(claimed));
+  f.store.clearDeferred(target, f.now + 5); // The woken turn ends (3.5.2: a wake opens a turn and its turn-end hook closes it).
   const oldRow = attemptRow(f.store, old);
   assert.equal(oldRow.state, 'observed');
   body(f.store, 'current-body', f.now + 6);

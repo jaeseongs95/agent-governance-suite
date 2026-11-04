@@ -117,6 +117,8 @@ test("a wake opens the turn too: a body that arrives during it waits for the tur
     prompt: `[agent-governance-suite:wake:${attempt.nonce}]`}, host).observation;
   const claimed = f.store.claimHostWake(target, observation, recordWakeHookObservation(observation, f.now + 5), wakeHookObservationReader, f.now + 6);
   assert.deepEqual(claimed.messages.map(message => message.body), ["first"]);
+  assert.equal(f.store.acknowledge(target, claimed.messages.map(message => message.messageId), f.now + 6,
+    claimed.messages.map(message => ({messageId: message.messageId, claimReceipt: message.claimReceipt!}))), 1);
   submit(f, "second", f.now + 7);
   const later = f.now + WAKE_QUIET_MS + 10_000;
   keep(f, f.now + 7, later);

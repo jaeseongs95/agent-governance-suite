@@ -222,10 +222,11 @@ it("keeps retirement, presence and autoWake identical to a run that deletes no p
   for (const current of [a, b]) {
     current.send({ sender: { host: "portable", sessionId: "sender" }, target: target("reborn"),
       messageId: "reborn-after-activity-body", body: "new pending body", ttlSeconds: 600 }, now + 1);
-    current.observeNativeInput(target("reborn"), now + 1);
     current.prune(now + 2);
     expect(current.reserveManagedWake({ ...target("reborn"), nonce: "reborn-after-activity-abcdefghijklmnop", instanceId: "same",
       transport: "portable", relayId: rebornRelay.get(current)!, resume: true }, now + 2).dispatch).toBe(true);
+    // 3.5.2: the activity comes after the ring (a prompt opens a turn that holds it) and still consumes no marker.
+    current.observeNativeInput(target("reborn"), now + 2);
     expect(rebornWakes(current)).toEqual([{ state: "reserved", release_reason: null, observed_at: null }]);
   }
   for (const sessionId of ["reborn", "split", "recent", "live"]) {

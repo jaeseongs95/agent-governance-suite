@@ -250,6 +250,7 @@ test("2: an outcome or start for an ended row is refused and never revives it (I
   // observed
   const observedAttempt = handOff(f, f.t0);
   assert.equal(observe(f, [observedAttempt.nonce], f.t0 + 1).recognized, true);
+  f.store.clearDeferred(target, f.t0 + 1); // The woken turn ends (3.5.2: a wake opens a turn and its turn-end hook closes it).
   // released by resend-due
   const t1 = f.t0 + 2 * MINUTE + WAKE_QUIET_MS;
   jump(f, t1); send(f, "terminal-body-2", t1);

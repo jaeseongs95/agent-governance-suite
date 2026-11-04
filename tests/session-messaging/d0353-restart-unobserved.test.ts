@@ -356,6 +356,7 @@ test("I8: consecutive unanswered hand-offs of one birth double the resend interv
   assert.equal(path(f)!.streak, 0);
   // The woken session acknowledges the parked body, so no live claim lease keeps a body in delivery (2.5 gate 2).
   assert.equal(f.store.acknowledge(target, [parked.messageId], thirdAt + 4, observed.messages.map(value => ({messageId: value.messageId, claimReceipt: value.claimReceipt!}))), 1);
+  f.store.clearDeferred(target, thirdAt + 4); // The woken turn ends (3.5.2: a wake opens a turn and its turn-end hook closes it).
   const fourthAt = thirdAt + 4 + WAKE_QUIET_MS + 1;
   keep(f, thirdAt + 3, fourthAt);
   submit(f, "after-observed-body", fourthAt);

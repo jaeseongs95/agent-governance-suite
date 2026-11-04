@@ -296,6 +296,7 @@ describe("peer wait policy boundaries", () => {
     }
     expect(decision(store)).toMatchObject({ action: "bounded", resume: "unknown" });
     store.acknowledge(sender, ["incoming-peer"], undefined, incomingClaim);
+    expect(dispatch(store, "clear-deferred", { target: sender, ...binding })).toMatchObject({ cleared: true }); // The woken turn ends (3.5.2: a wake opens a turn and its turn-end hook closes it).
     store.send({ sender: target, target: sender, messageId: "fresh-reply", body: "Fresh synthetic reply" });
     // The fresh wake rings only once the session is quiet again (design 2.5); the relay stays live meanwhile.
     const quietAt = T0 + 30_000 + WAKE_QUIET_MS + 1_000;
