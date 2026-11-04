@@ -154,10 +154,14 @@ PostgreSQL 전환(3.7.0)은 잠금 문제를 없애지만 위 PowerShell 조회,
 
 ## 검증
 
-<!-- TODO -->
+대상 커밋은 `4982457182cfe737d87d46f0b8d681b3afc2f3d4`다.
+
+- **CI:** run 41828340699, `Node 24 / ubuntu-latest`·`Node 24 / windows-latest` 모두 success.
+- **정적 검사 10종:** `i18n --check`, Claude·en 패키지 `--check`, `check-skill-context-optimization`, `check-source-lock`, `sync-release-metadata`, `check-bundle`, `validate-repository`, eslint, `tsc --noEmit` 모두 종료 코드 0.
+<!-- TODO Linux·Windows 시험 서버, 실호스트 A/B -->
 
 ### 이번에 고치지 않은 것
 
 - 서브에이전트에는 스킬 목적 안내가 닿지 않는다. 메시지마다 나가는 안내는 사용자 메시지(UserPromptSubmit)에서만 나가고, AGS는 서브에이전트 시작 이벤트(Claude Code `SubagentStart`)를 등록하지 않는다. 그래서 부모가 지시문에 스킬을 적지 않으면 서브에이전트는 스킬 대조 안내를 받지 못한다. workflow 변경 안내만 서브에이전트가 workflow 도구를 부를 때 닿는다. 다음 판에서 서브에이전트 시작 hook으로 고친다.
 - 메인 에이전트에게 서브에이전트 위임을 권하는 안내가 없다. 기본값은 직접 수행이고, 사용자가 요청하지 않으면 순이익 조건을 모두 확인해야 위임한다. 독립적으로 나눌 수 있는 일에서도 위임 검토로 이어지지 않는다. 위 서브에이전트 안내와 함께 다음 판에서 고친다.
-<!-- TODO agy 7분 정지 -->
+- 3.5.3 실호스트 시험에서 agy 실행 1회가 약 7분 동안 응답하지 않았다. 그동안 AGS hook 프로세스는 돌지 않았고, 원인은 확인하지 못했다. <!-- TODO A/B 재발 여부 -->
