@@ -1424,6 +1424,14 @@ async function runSingleHookStage(hookName, event, rawInput, currentToolInput, o
     return { output: canonicalOutput, updatedToolInput: currentToolInput, mutated: false };
   }
 
+  if (hookName === "intake") {
+    // The shared session-start intake (agy does not show MCP server instructions to the model, 2026-11-04).
+    const intakeHook = typeof options?.intakeHook === "function"
+      ? options.intakeHook
+      : (await import("../../mcp-server/dist/intake-hook.mjs")).intakeHookOutput;
+    return { output: intakeHook(canonicalInput, "antigravity"), updatedToolInput: currentToolInput, mutated: false };
+  }
+
   if (hookName === "continuity") {
     if (event === "Stop" && isNonContinuableStop(rawInput)) {
       return { output: {}, updatedToolInput: currentToolInput, mutated: false };
@@ -1646,7 +1654,7 @@ export async function executeAntigravityHookEvent(rawInput, explicitEvent, expli
     const stages = explicitHook
       ? [explicitHook]
       : event === "SessionStart"
-        ? ["session-message", "continuity"]
+        ? ["session-message", "intake", "continuity"]
         : ["session-message"];
     const injected = [];
     const seenTexts = new Set();

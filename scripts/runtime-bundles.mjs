@@ -36,6 +36,12 @@ export const RUNTIME_BUNDLES = Object.freeze([
     executable: true,
   }),
   Object.freeze({
+    id: "intake-hook",
+    entry: "mcp-server/src/intake-hook.ts",
+    output: "mcp-server/dist/intake-hook.mjs",
+    executable: true,
+  }),
+  Object.freeze({
     id: "host-attestation-hook",
     entry: "mcp-server/src/host-attestation-hook.ts",
     output: "mcp-server/dist/host-attestation-hook.mjs",
