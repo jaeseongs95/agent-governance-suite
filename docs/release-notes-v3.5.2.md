@@ -64,6 +64,14 @@ Codex 세션이 원격 Windows 시험 서버에 「GUI shell」을 붙이는 작
 
 ## 검증
 
+시험 대상은 55f627e8이다. 그 뒤로는 이 문서만 바뀌었다.
+
+- Linux 시험 서버: 전체 시험 `TEST_SERVER_EXIT=0`(1346초). vitest 파일 278개 통과·1개 skip, 시험 4124개 통과(skip 15, todo 8). node:test 499/499 통과.
+- Windows 시험 서버: 전체 시험 `TEST_SERVER_EXIT=0`(2436초). vitest 파일 277개 통과·2개 skip, 시험 4111개 통과(skip 28, todo 8). node:test 498개 통과·1개 skip·실패 0.
+- CI 41775137270(55f627e8): ubuntu-latest·windows-latest 모두 success.
+- 빈 wake 시험(Linux, e0799808): 새 시험 `tests/session-messaging/turn-open-wake.test.ts`는 고치기 전 `session-message-store.ts`(a3ff6640)에서 실패하고(exit 1), 후보에서 통과했다. `tests/session-messaging` 전체(118초)와 스킬 분류·문맥 검사 묶음(247초), mutation-risk-preflight node:test도 통과했다.
+- 빈 wake를 실제 Codex 대화형 세션에서 재현해 확인하지는 않았다. 확인 범위는 broker 시험(턴이 열린 동안 wake를 보내지 않고, 턴 끝 뒤 남은 메시지에만 보냄)까지다.
+
 ### 설계 전제 A/B(실호스트)
 
 Linux 시험 서버에서 Claude Code 2.1.314, codex-cli 0.166.0, agy 1.4.12로 headless 실행했다. A는 v3.5.1(76f49059), B는 3.5.2 후보(e0799808)다. 두 판의 차이는 이 릴리스의 세 항목이다. 각 호스트에서 판마다 과제 2개를 3회씩 돌려 모두 36회를 실행했다. 실행마다 새 저장소와 새 AGS 상태를 썼다. 하네스는 `/home/mcpops/ags-tests/premise-ab-r01/`에 있다.
