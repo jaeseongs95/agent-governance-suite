@@ -65,7 +65,7 @@ function context(output: Record<string, unknown>, event: string): string {
 }
 
 function expectCheckpointCue(text: string) {
-  expect(text).toContain("[Task continuity checkpoint check]");
+  expect(text).toMatch(/^\[AGS (?:턴 확인|turn check)\]$/mu);
   for (const tool of ["checkpoint_context", "inspect_context", "load_context"]) expect(text).toContain(tool);
   for (const forged of ["decision=DEFER", "decision=INJECT", "candidateToken=", "restoreToken", "_continuityBinding"])
     expect(text).not.toContain(forged);
@@ -230,36 +230,37 @@ describe("D0347 저장 유도의 현재 세대 재검증", () => {
 
 // The cue and the restore candidate are rendered by the hook in the host locale; key and params stay the same.
 describe("checkpoint cue and restore candidate locale", () => {
+  // The per-turn cue names the continuity tools directly; continuity is MCP tools and hooks, not a skill.
   const CUE_KO_TAIL = [
-    "현재 요청의 교정·제약·결정·남은 작업을 잃으면 다음 행동이 달라지는지 확인하라. 달라진 상태가 아직 저장되지 않았다면 그 판단·작업을 이어가기 전에 context-continuity 스킬과 기존 checkpoint_context로 필요한 상태와 근거 참조만 저장하라.",
-    "재개·fork·인계는 inspect_context와 정확한 후보의 load_context를 먼저 수행하고 최신 요청과 대조하라. 없는 이전 정보는 추측하지 말고 현재 실제 전달된 문맥만 사용하라. workflow 원장을 직접 스냅샷으로 복제하지 마라.",
-    "이 알림은 저장·복원 성공이 아니다. 실제 응답을 확인하고 실패·미저장 상태를 구분하라. 보존할 변경이 없으면 추가 저장하지 말고 작업을 계속하라.",
+    "이번 사용자 메시지가 교정, 새 결정·승인·금지, 추가 작업, 범위 변경 중 하나면 답하거나 다음 도구를 쓰기 전에 두 가지를 하라. (1) 바뀐 목표·범위·위험에 맞춰 스킬 선택을 다시 판단하고, 새로 필요한 스킬은 지금 호출한다. (2) checkpoint_context로 사용자 원문과 바뀐 남은 일을 저장한다.",
+    "압축·재개·fork 뒤라 앞의 결정·남은 일이 대화에 보이지 않으면 먼저 inspect_context를 호출하고, DEFER 후보는 load_context로 불러와 최신 요청과 대조하라.",
+    "이 알림은 저장·복원을 대신하지 않는다. 바뀐 것이 없는 메시지(질문·인사·진행 확인)에는 아무것도 더하지 말고 계속하라.",
   ];
   const CUE_EN_TAIL = [
-    "Check whether losing the current request's corrections, constraints, decisions and remaining work would change the next action. If that changed state is not saved yet, save only the needed state and evidence references with the context-continuity skill and the existing checkpoint_context before continuing that decision or work.",
-    "For a resume, fork or handoff, run inspect_context and load_context of the exact candidate first and reconcile them with the latest request. Do not guess earlier information that is not there; use only the context actually delivered now. Do not copy the workflow ledger into a snapshot yourself.",
-    "This notice is not a successful save or restore. Check the actual response and tell failed and unsaved states apart. If there is no change to keep, do not save again; continue the work.",
+    "If this user message is a correction, a new decision, approval or prohibition, more work, or a scope change, do two things before answering or using the next tool: (1) re-decide the skill selection for the changed goal, scope and risk, and call any newly needed skill now; (2) save the user's own words and the changed remaining work with checkpoint_context.",
+    "After compaction, resume or fork, if earlier decisions or remaining work are not visible in the conversation, call inspect_context first and load a DEFER candidate with load_context, then check it against the latest request.",
+    "This notice does not save or restore anything. For a message that changes nothing (a question, a greeting, a progress check) add nothing and continue.",
   ];
-  const cue = (status: string, tail: string[]) => ["[Task continuity checkpoint check]", status, ...tail].join("\n");
+  const cue = (status: string, tail: string[]) => [tail === CUE_KO_TAIL ? "[AGS 턴 확인]" : "[AGS turn check]", status, ...tail].join("\n");
 
   it("renders each cue state byte for byte in ko and in en", () => {
     const service = createService();
-    expect(renderHookText(service.checkpointCueForSession(session), "ko")).toBe(cue("현재 작업의 저장본: 없음.", CUE_KO_TAIL));
+    expect(renderHookText(service.checkpointCueForSession(session), "ko")).toBe(cue("이 세션의 작업 기록: 없음.", CUE_KO_TAIL));
     expect(renderHookText(service.checkpointCueForSession(session, true), "ko"))
       .toBe(cue("사전 저장본 없음: 이 알림은 압축으로 유실된 내용을 복원하지 않는다.", CUE_KO_TAIL));
-    expect(renderHookText(service.checkpointCueForSession(session), "en")).toBe(cue("Save of the current task: none.", CUE_EN_TAIL));
+    expect(renderHookText(service.checkpointCueForSession(session), "en")).toBe(cue("This session's work record: none.", CUE_EN_TAIL));
     expect(renderHookText(service.checkpointCueForSession(session, true), "en"))
       .toBe(cue("No prior save: this notice does not restore content lost to compaction.", CUE_EN_TAIL));
     checkpoint(service);
-    expect(renderHookText(service.checkpointCueForSession(session), "ko")).toBe(cue("현재 작업의 저장본: 있음.", CUE_KO_TAIL));
-    expect(renderHookText(service.checkpointCueForSession(session), "en")).toBe(cue("Save of the current task: present.", CUE_EN_TAIL));
+    expect(renderHookText(service.checkpointCueForSession(session), "ko")).toBe(cue("이 세션의 작업 기록: 있음.", CUE_KO_TAIL));
+    expect(renderHookText(service.checkpointCueForSession(session), "en")).toBe(cue("This session's work record: present.", CUE_EN_TAIL));
   });
 
   it("AGENT_GOVERNANCE_LOCALE=en renders the hook cue and the resume candidate in English", () => {
     const service = createService(), en = { AGENT_GOVERNANCE_LOCALE: "en" };
     const input = { hook_event_name: "UserPromptSubmit", session_id: session, prompt: "x" };
-    expect(context(handleContinuityHook(input, service, "codex", en), "UserPromptSubmit")).toBe(cue("Save of the current task: none.", CUE_EN_TAIL));
-    expect(context(handleContinuityHook(input, service, "codex", {}), "UserPromptSubmit")).toBe(cue("현재 작업의 저장본: 없음.", CUE_KO_TAIL));
+    expect(context(handleContinuityHook(input, service, "codex", en), "UserPromptSubmit")).toBe(cue("This session's work record: none.", CUE_EN_TAIL));
+    expect(context(handleContinuityHook(input, service, "codex", {}), "UserPromptSubmit")).toBe(cue("이 세션의 작업 기록: 없음.", CUE_KO_TAIL));
     checkpoint(service);
     const resume = { hook_event_name: "SessionStart", source: "resume", session_id: session };
     const english = context(handleContinuityHook(resume, service, "codex", en), "SessionStart").split("\n");

@@ -231,7 +231,8 @@ export function loadCurrentSourceBindings(repo: string) {
     revision: string; role: string;
     frozenFixture: {path: string; bytes: number; digest: string; oracleDigest: string};
     frozenSidecar: {path: string; bytes: number; digest: string};
-    bindings: {path: string; previousDigest: string; digest: string; bytes: number}[];
+    // A null digest retires the path: the source no longer exists and must stay absent.
+    bindings: {path: string; previousDigest: string; digest: string | null; bytes: number}[];
   };
   const files = [manifestPath];
   for (const predecessor of [manifest.frozenFixture, manifest.frozenSidecar]) {
@@ -315,27 +316,36 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, premise.frozenPredecessor.path) !== overwritePath || overwriteBytes.length !== premise.frozenPredecessor.bytes || hashBytes(overwriteBytes) !== premise.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings];
+  const retirePath = resolve(repo, "tests/skill-classification/fixtures.context-continuity-retirement-source-successor.json");
+  const retireBytes = readFileSync(retirePath);
+  if (hashBytes(retireBytes) !== "sha256:bb170e6860c96686dd7cfc19ac017c178a7bf3e9da751af3048cc148d6c387cf") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const retire = JSON.parse(retireBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, retire.frozenPredecessor.path) !== premisePath || premiseBytes.length !== retire.frozenPredecessor.bytes || hashBytes(premiseBytes) !== retire.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: premise.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath);
+  const currentManifest = {...manifest, revision: retire.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(premiseBytes),
-    resolveDigest(sourcePath: string, digest: string): string {
+    manifest: currentManifest, files, digest: hashBytes(retireBytes),
+    /** The current digest of a bound source, or null when the chain retires the path (the file must be absent). */
+    resolveDigest(sourcePath: string, digest: string): string | null {
       const chain = allBindings.filter(row => row.path === sourcePath);
       if (chain.length === 0) return digest;
       const start = chain.findIndex(row => row.previousDigest === digest);
       if (start < 0) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+      let current: string | null = digest;
       for (const binding of chain.slice(start)) {
-        if (binding.previousDigest !== digest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
-        digest = binding.digest;
+        if (binding.previousDigest !== current) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+        current = binding.digest;
       }
-      return digest;
+      return current;
     },
   };
 }

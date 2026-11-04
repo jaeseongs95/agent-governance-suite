@@ -206,7 +206,7 @@
 
 ### 로컬 task continuity
 
-컨텍스트 연속성은 전문 provider registry에 넣지 않고 `context-continuity` 인프라 스킬, 기존 MCP 프로세스와 Codex lifecycle Hook으로 구현했다. Workflow DB schema v6과 분리해 optional 상태는 같은 로컬 상태 디렉터리의 schema v2 `continuity.sqlite3`에 저장한다. snapshot에는 최소한 다음 내용을 포함한다.
+컨텍스트 연속성은 전문 provider registry에 넣지 않고 기존 MCP 프로세스의 도구(`checkpoint_context`, `inspect_context`, `load_context`, `suppress_context_restore`, `purge_direct_context`)와 lifecycle Hook으로 구현했다. 처음에는 `context-continuity` 인프라 스킬로 호출 시점을 안내했으나 모델이 그 스킬을 고르지 않아 쓰이지 않았으므로 3.6.0에서 스킬을 없애고 호출 조건을 도구 설명과 턴별 hook 안내에 적었다. Workflow DB schema v6과 분리해 optional 상태는 같은 로컬 상태 디렉터리의 schema v2 `continuity.sqlite3`에 저장한다. snapshot에는 최소한 다음 내용을 포함한다.
 
 - objective와 completion criteria
 - constraints와 decisions

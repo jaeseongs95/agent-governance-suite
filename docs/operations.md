@@ -60,9 +60,9 @@ check_for_updates { "force": false }
 - **복구 선택 시**: 원인이 확정된 실패에 대해 실행 가능한 복구안 2~3개를 비교하고, 새 작업 계약에 결속할 handoff를 만들 때 사용합니다.
 - **평가 전후**: 평가 실행 전에 동결한 설계의 실행 가능성을 확인하거나, 실행 뒤 결과·판정·집계 근거의 유효성을 감사할 때 사용합니다.
 
-## 공통 인프라 스킬
+## 작업 연속성
 
-[`context-continuity`](../skills/context-continuity/)는 전문 판단 provider가 아니라 로컬 lifecycle 인프라입니다. 긴 direct task에서 잃으면 범위·권한·분기·검증 판단이 달라질 상태만 선별해 replacement checkpoint를 작성합니다. Resume과 direct compact에서는 본문을 자동 주입하지 않고 metadata와 restore token만 제공하며, 본문은 `load_context`를 명시적으로 호출할 때만 반환합니다. Orchestrated workflow의 compact 복원은 기존 `TaskEnvelope`, receipt와 convergence root에서 투영한 bounded 구조 카드만 자동 주입합니다. 이 스킬은 `skills/registry.json`과 위 전문 스킬 수에 포함되지 않습니다.
+작업 연속성은 스킬이 아니라 MCP 도구와 lifecycle Hook으로 제공합니다. 예전 `context-continuity` 인프라 스킬은 모델이 스스로 고르지 않아 쓰이지 않았으므로 없앴고, 호출할 때를 각 도구 설명에 적었습니다. 사용자 교정, 새 결정·승인·금지, 추가 작업, 범위 변경이 생기면 그 턴에 `checkpoint_context`로 사용자 원문과 바뀐 남은 일을 저장합니다. workflow 진행 중에도 저장하며 workflow 원장을 복제하지 않습니다. 압축·재개·fork 뒤 앞의 결정·남은 일이 보이지 않으면 `inspect_context`로 후보를 확인하고 `load_context`로 정확한 후보를 불러옵니다. 턴마다 hook이 같은 도구를 안내합니다. checkpoint에는 잃으면 범위·권한·분기·검증 판단이 달라질 상태만 선별해 replacement snapshot으로 씁니다. Resume과 direct compact에서는 본문을 자동 주입하지 않고 metadata와 restore token만 제공하며, 본문은 `load_context`를 명시적으로 호출할 때만 반환합니다. Orchestrated workflow의 compact 복원은 기존 `TaskEnvelope`, receipt와 convergence root에서 투영한 bounded 구조 카드를 함께 보여 줍니다. 연속성 도구는 `skills/registry.json`과 위 전문 스킬 수에 포함되지 않습니다.
 
 Lifecycle Hook은 raw transcript를 읽거나 저장하지 않으며 raw session·turn·request 식별자 대신 설치별 HMAC correlation을 기록합니다. `clear`는 epoch를 회전해 이전 snapshot 복원을 억제하지만 payload를 자동 삭제하지 않습니다. `suppress_context_restore`는 후보 제공만 멈추고, 명시적인 `purge_direct_context`만 direct payload를 지우고 hash tombstone을 남깁니다. Continuity DB 오류는 workflow나 compaction을 막지 않습니다.
 

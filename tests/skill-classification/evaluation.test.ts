@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { aggregateLegacy as aggregate, canonicalSet, checkFamilySplit, evaluateLegacyLayers as evaluateLayers, fromLegacySelection as fromSelection, oracleDigest, loadCurrentSourceBindings, legacyPairedMatrix as pairedMatrix, scoreLegacyCase as scoreCase, scoreLegacyPairs as scorePairs, sameSet, type Layer, type LegacyObservation as Observation, type Oracle, type SemanticCase } from "./evaluation.js";
@@ -45,8 +45,10 @@ describe("pre-live frozen specification mapping", () => {
   it("binds oracle to actual source bytes and preserves O boundaries", () => {
     const binding = loadCurrentSourceBindings(fileURLToPath(new URL("../../", import.meta.url)));
     for (const s of corpus.sourceSkills) {
-      const bytes = readFileSync(new URL(`../../${s.path}`, import.meta.url));
-      expect(`sha256:${createHash("sha256").update(bytes).digest("hex")}`).toBe(binding.resolveDigest(s.path, s.digest));
+      const file = new URL(`../../${s.path}`, import.meta.url), expected = binding.resolveDigest(s.path, s.digest);
+      // A retired source (null) must be absent; every other source must have its current bound bytes.
+      if (expected === null) { expect(existsSync(file)).toBe(false); continue; }
+      expect(`sha256:${createHash("sha256").update(readFileSync(file)).digest("hex")}`).toBe(expected);
     }
     expect(fixture("SS04").oracle!.required).toEqual(["cs-engineering", "test-engineering", "orchestrator"]);
     expect(fixture("SS04").oracle!.allowed).toEqual(["ponytail"]);

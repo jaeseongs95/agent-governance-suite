@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -40,9 +42,6 @@ describe("skill context optimization", () => {
     "skills/blocker-diagnostician/references/entry-details.md",
     "skills/blocker-diagnostician/references/diagnosis-protocol.md",
     "skills/blocker-diagnostician/classification.json",
-    "skills/context-continuity/references/entry-details.md",
-    "skills/context-continuity/SKILL.md",
-    "skills/context-continuity/classification.json",
   ])("역사 기준을 바꾸지 않고 현재 호스트 지침의 한 바이트 변경을 거부한다: %s", async relative => {
     vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
       const bytes = readFileSync(file, ...args);
@@ -58,6 +57,56 @@ describe("skill context optimization", () => {
       expect(report.pass).toBe(false);
       expect(report.errors).toContain(`live host guidance successor bytes differ: ${relative}`);
     } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
+  });
+
+  // context-continuity is retired: continuity is the MCP tools and hooks. Its sources are gone from the tree and every
+  // pinned check reads them at the retirement revision, so a source that comes back or altered history fails.
+  const retiredSources = [
+    "skills/context-continuity/SKILL.md",
+    "skills/context-continuity/agents/openai.yaml",
+    "skills/context-continuity/classification.json",
+    "skills/context-continuity/references/entry-details.md",
+  ];
+  const retirementBytes = relative => execFileSync("git", ["show", `e6e313864a4fe1be15ac2b199fb56284dbc327a9:${relative}`], { cwd: fileURLToPath(new URL("../../", import.meta.url)) });
+  it("keeps the retired context-continuity sources out of the tree and reads them at their exact retirement bytes", () => {
+    const report = checkSkillContextOptimization();
+    expect(report).toMatchObject({ pass: true, errors: [] });
+    expect(report.retiredSkills).toMatchObject([{ revision: "e6e313864a4fe1be15ac2b199fb56284dbc327a9", skillIds: ["context-continuity"] }]);
+    expect(Object.keys(report.retiredSkills[0].hashes).toSorted()).toEqual(retiredSources);
+    for (const relative of retiredSources) {
+      expect(() => readFileSync(new URL(`../../${relative}`, import.meta.url)), relative).toThrow();
+      expect(createHash("sha256").update(retirementBytes(relative)).digest("hex"), relative).toBe(report.retiredSkills[0].hashes[relative]);
+      expect(readHistoricalSource(relative).length, relative).toBeGreaterThan(0);
+    }
+  });
+  it.each(retiredSources)("rejects a retired source that reappears, even with its retirement bytes: %s", async relative => {
+    const retired = retirementBytes(relative);
+    vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
+      if (String(file).replaceAll("\\", "/").endsWith(`/${relative}`)) return Buffer.from(retired);
+      return readFileSync(file, ...args);
+    } }));
+    try {
+      vi.resetModules();
+      const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      const report = checker.checkSkillContextOptimization();
+      expect(report.pass).toBe(false);
+      expect(report.errors).toContain(`retired skill source present: ${relative}`);
+    } finally { vi.doUnmock("node:fs"); vi.resetModules(); }
+  });
+  it("does not substitute altered retirement history for a retired source", async () => {
+    const { execFileSync } = await import("node:child_process");
+    const relative = "skills/context-continuity/SKILL.md";
+    vi.doMock("node:child_process", () => ({ execFileSync: (file, args, options) => {
+      const output = execFileSync(file, args, options);
+      if (file === "git" && args.at(-2) === "show" && args.at(-1) === `e6e313864a4fe1be15ac2b199fb56284dbc327a9:${relative}`) {
+        const altered = Buffer.from(output); altered[altered.length - 1] ^= 1; return altered;
+      }
+      return output;
+    } }));
+    try {
+      vi.resetModules(); const checker = await import("../../scripts/check-skill-context-optimization.mjs");
+      expect(() => checker.checkSkillContextOptimization()).toThrow(`Retired skill history differs: ${relative}`);
+    } finally { vi.doUnmock("node:child_process"); vi.resetModules(); }
   });
 
   it.each([

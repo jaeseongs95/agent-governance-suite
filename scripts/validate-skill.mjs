@@ -4,7 +4,7 @@ import { NAME_PATTERN, ROOT, parseArguments, readFrontmatter, readJson, walkFile
 
 const PLACEHOLDER_PATTERN = /\[TODO:[^\]]*\]|\bTODO\b|\bTBD\b/u;
 const LINK_PATTERN = /\[[^\]]+\]\((?!https?:|#|mailto:)([^)]+)\)/gu;
-const INFRASTRUCTURE_SKILLS = new Set(["context-continuity", "session-board"]);
+const INFRASTRUCTURE_SKILLS = new Set(["session-board"]);
 
 /** Stable reason for a failed file operation: the system error code, else the error class. */
 function failureCode(error) {

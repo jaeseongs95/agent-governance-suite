@@ -166,9 +166,9 @@ AGS 현황판의 현재 작업을 "AGS-DEMO-RESEARCH · 테스트 실행 방법 
 
 담당 세션은 자신이 진행한 조사와 결정의 맥락에서 다음 작업을 이어갑니다. 다른 세션과 공유할 때는 필요한 결론과 근거를 전달하고, 역할과 수정 책임을 명확히 나눕니다.
 
-긴 개별 작업에는 `context-continuity`로 범위·결정·미해결 사항·검증 참조를 로컬 checkpoint에 저장할 수 있습니다. 재개 시 저장 정보와 복원 선택지를 먼저 제시하고, 본문은 명시적인 `load_context` 호출로 불러옵니다. MCP로 관리하는 통합 작업은 기존 작업 계약과 실행 기록을 기준으로 이어갑니다.
+작업 연속성은 스킬이 아니라 MCP 도구와 hook으로 제공합니다. 사용자 교정, 새 결정·승인·금지, 추가 작업, 범위 변경이 생기면 그 턴에 `checkpoint_context`로 사용자 원문과 바뀐 남은 일을 로컬 checkpoint에 저장합니다. 압축·재개·fork 뒤에는 `inspect_context`로 저장 정보와 복원 선택지를 먼저 확인하고, 본문은 명시적인 `load_context` 호출로 불러옵니다. 복원 후보를 멈출 때는 `suppress_context_restore`, 저장본을 지울 때는 `purge_direct_context`를 씁니다. 각 도구 설명에 호출할 때가 적혀 있고, 턴마다 hook이 같은 도구를 안내합니다. MCP로 관리하는 통합 작업은 기존 작업 계약과 실행 기록을 기준으로 이어갑니다.
 
-관련 문서: [문맥 보존](skills/context-continuity/), [위임과 책임 관리](skills/coordinate-subagents/).
+관련 문서: [문맥 보존](docs/operations.md#작업-연속성), [위임과 책임 관리](skills/coordinate-subagents/).
 
 ### 현재 결과의 근거로 완료를 판단
 

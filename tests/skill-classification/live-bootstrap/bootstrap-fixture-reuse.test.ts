@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import {execFileSync} from "node:child_process";
 import {cp, mkdir, mkdtemp, readFile, rm, symlink, unlink, writeFile} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -85,13 +86,17 @@ describe("bootstrap fixture binding reuse", () => {
           ["source-binding", path.join(copiedRepo, "tests/skill-classification/fixtures.unavailable-source-successor.json"), "CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH"],
           ["live-host-source-binding", path.join(copiedRepo, "tests/skill-classification/fixtures.live-host-boundaries-source-successor.json"), "CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH"],
           ["handoff-source-binding", path.join(copiedRepo, "tests/skill-classification/fixtures.continuity-handoff-source-successor.json"), "CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH"],
-          ["handoff-source", path.join(copiedRepo, "skills/context-continuity/classification.json"), "ORACLE_SOURCE_MISMATCH"]] as const) {
+          ["retired-source", path.join(copiedRepo, "skills/context-continuity/SKILL.md"), "ORACLE_SOURCE_MISMATCH"]] as const) {
           const config = await readyMockFromBinding(api, copiedRepo, path.join(root, id), `fresh-${id}`, binding,
             first.prepared.api.evaluationConfig.createProviderEvaluationConfiguration, {requests: 1});
-          const bytes = await readFile(file);
+          // A retired source is absent; putting its last bytes back must fail admission.
+          const bytes = id === "retired-source" ? null : await readFile(file);
           let environmentReads = 0, sends = 0;
           try {
-            if (id === "source") await writeFile(file, Buffer.concat([bytes, Buffer.from("\n")]));
+            if (bytes === null) {
+              await mkdir(path.dirname(file), {recursive: true});
+              await writeFile(file, execFileSync("git", ["show", "e6e313864a4fe1be15ac2b199fb56284dbc327a9:skills/context-continuity/SKILL.md"], {cwd: repo}));
+            } else if (id === "source") await writeFile(file, Buffer.concat([bytes, Buffer.from("\n")]));
             else {
               const changed = JSON.parse(bytes.toString("utf8"));
               if (id === "oracle") changed.oracleDigest = "sha256:" + "0".repeat(64);
@@ -103,7 +108,10 @@ describe("bootstrap fixture binding reuse", () => {
               fetcher: async () => {sends++; throw new Error("FORBIDDEN_DISPATCH");}})).rejects.toThrow(error);
             expect(environmentReads).toBe(0);
             expect(sends).toBe(0);
-          } finally {await writeFile(file, bytes);}
+          } finally {
+            if (bytes === null) await rm(path.dirname(file), {recursive: true, force: true});
+            else await writeFile(file, bytes);
+          }
         }
       } finally {await unlink(dependencyLink);}
     });

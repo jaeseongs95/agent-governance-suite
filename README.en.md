@@ -172,9 +172,9 @@ Related documentation: [Session board](skills/session-board/), [Message lifecycl
 
 A responsible session can continue from its own investigations and decisions. When collaborating, sessions exchange the conclusions and evidence that matter and make roles and write ownership explicit.
 
-For long direct tasks, `context-continuity` can save scope, decisions, open issues, and evidence references in a local checkpoint. On resumption, it presents saved metadata and restoration options first; the body is loaded through an explicit `load_context` call. Integrated MCP workflows continue from their existing task contracts and execution records.
+Task continuity is provided by MCP tools and hooks, not by a skill. When a user correction, a new decision, approval or prohibition, more work, or a scope change arrives, `checkpoint_context` saves the user's own words and the changed remaining work in a local checkpoint in that turn. After compaction, resume or fork, `inspect_context` presents saved metadata and restoration options first; the body is loaded through an explicit `load_context` call. `suppress_context_restore` stops restore candidates and `purge_direct_context` deletes saved payloads. Each tool description says when to call it, and a hook points to the same tools every turn. Integrated MCP workflows continue from their existing task contracts and execution records.
 
-Related documentation: [Context continuity](skills/context-continuity/), [Delegation and ownership](skills/coordinate-subagents/).
+Related documentation: [Context continuity](docs/operations.md#작업-연속성), [Delegation and ownership](skills/coordinate-subagents/).
 
 ### Decide completion from evidence for the current result
 

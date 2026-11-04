@@ -263,8 +263,9 @@ export async function prepare(config: BootstrapConfig) {
   const corpus = JSON.parse(fixtureBytes.toString("utf8"));
   requireCondition(api.evaluation.oracleDigest(corpus) === corpus.oracleDigest, "FROZEN_ORACLE_DIGEST_MISMATCH");
   const currentSourceBinding = api.evaluation.loadCurrentSourceBindings(resolvedRepo);
-  for (const source of corpus.sourceSkills) requireCondition(hash(await readFile(path.join(config.repo, source.path))) === currentSourceBinding.resolveDigest(source.path, source.digest), "ORACLE_SOURCE_MISMATCH");
-  for (const source of currentSourceBinding.manifest.bindings) requireCondition(hash(await readFile(path.join(config.repo, source.path))) === source.digest, "ORACLE_SOURCE_MISMATCH");
+  // A retired source binds to null: it must be absent, and its absence reads as a null digest.
+  for (const source of corpus.sourceSkills) requireCondition(await fileDigestOrNull(path.join(config.repo, source.path)) === currentSourceBinding.resolveDigest(source.path, source.digest), "ORACLE_SOURCE_MISMATCH");
+  for (const source of currentSourceBinding.manifest.bindings) requireCondition(await fileDigestOrNull(path.join(config.repo, source.path)) === source.digest, "ORACLE_SOURCE_MISMATCH");
   const cases = corpus.cases.filter((row: {publicSynthetic: boolean; originalPrompt: unknown}) => row.publicSynthetic === true && typeof row.originalPrompt === "string" && row.originalPrompt.length > 0);
   requireCondition(cases.length === 21 && new Set(cases.map((row: {caseId: string}) => row.caseId)).size === 21, "PUBLIC_FIXTURE_SET_MISMATCH");
   const inventory = await api.inventory.loadSkillInventory({root: resolvedRepo});
