@@ -29,6 +29,7 @@ function git(...args) {
 // keeps checking the same chain. Altered bytes are never projected.
 // - 3.3.0 multi-workflow guidance (docs/ags30-phase-check-design.md 7.5)
 // - 3.4.0 JEV layer paragraph (docs/release-notes-v3.4.0.md): JEV is the advisory slot, TypeSafe one implementation.
+// - 3.5.1 intake line (docs/release-notes-v3.5.1.md): separate tasks start separate workflows with non-overlapping writeTargets.
 const GUIDANCE_SUCCESSORS = Object.freeze([
   Object.freeze({
     revision: "92f22e25d21eddff22c2400dabc0699d73700927",
@@ -41,6 +42,13 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
     revision: "b0fc2b4d69e2fee195e4146cf9fbd3de2f94fa5b",
     hashes: Object.freeze({
       "skills/orchestrator/references/skill-classification.md": ["f33cce4afc3ef2480c94799f46ae78e133c1576e3b57a257c1046f6956d811c9", "ccf0c8829325f2874447c67993f2c04edb02ea462713de10f3733eabc892c6ac"],
+    }),
+  }),
+  Object.freeze({
+    revision: "54ef451f2944a6d1b46033d233690238c7ca84a9",
+    hashes: Object.freeze({
+      "skills/orchestrator/SKILL.md": ["02b979178d585cd3396865a86703c4a1102263ff52c8c9739163ea763a03ce25", "59977f4d215a5a67192c010016c049e65fafdd38c7e12b528e60a1ca8167e31d"],
+      "skills/orchestrator/classification.json": ["fb1741dda17b431dd0a8c02935ba0a0b6f72989846ebc7df3761ef01ec04c487", "0bfffe499ca0d60c444f92205f3f8dbfff328e9070ae6ee551ab1c219d871f1d"],
     }),
   }),
 ]);

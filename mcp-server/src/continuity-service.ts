@@ -899,7 +899,7 @@ export class ContinuityService implements ContinuityGateway {
    */
   gateEditForSession(rawSessionId: string, targets: readonly string[], shown: readonly string[] = targets,
     example = minimalWorkflowStartExample(ROOT_LOCALE), unversioned: readonly string[] = []):
-    MessageRef<"hooks.editGate.denied" | "hooks.editGate.gatedRoot"> | null {
+    MessageRef<"hooks.editGate.denied" | "hooks.editGate.outsideScope" | "hooks.editGate.gatedRoot"> | null {
     const now = this.now().toISOString();
     const task = this.store.ensureTask(this.correlateSession(rawSessionId), now);
     const { taskCorrelation: c, currentEpoch: e } = task;
@@ -954,7 +954,9 @@ export class ContinuityService implements ContinuityGateway {
     }
     this.store.recordObservation(c, e, PHASE_DENY_EVENT, null, false, now);
     const paths = outside.map(index => shown[index] ?? targets[index]!).join(", ");
-    return msg("hooks.editGate.denied", { limit: WORKFLOW_FILE_LIMIT, paths, earlier: counted.size, example });
+    // With a running workflow the edit is outside its write scope, not "without a workflow": name the second workflow.
+    return msg(activity.length > 0 ? "hooks.editGate.outsideScope" : "hooks.editGate.denied",
+      { limit: WORKFLOW_FILE_LIMIT, paths, earlier: counted.size, example });
   }
 
   /** The session's active workflows: each bound root not completed or abandoned whose latest run is not terminal. */

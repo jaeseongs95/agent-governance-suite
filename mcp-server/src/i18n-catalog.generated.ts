@@ -58,6 +58,7 @@ export interface MessageParams {
   "hooks.editGate.denied": { "limit": number; "paths": NestedMessage | number | string; "earlier": number; "example": NestedMessage | number | string; };
   "hooks.editGate.gatedRoot": { "path": NestedMessage | number | string; "rootId": NestedMessage | number | string; "state": NestedMessage | number | string; };
   "hooks.editGate.goalPlaceholder": Record<string, never>;
+  "hooks.editGate.outsideScope": { "limit": number; "paths": NestedMessage | number | string; "earlier": number; "example": NestedMessage | number | string; };
   "hooks.editGate.unknownPath": { "tool": NestedMessage | number | string; };
   "hooks.editGate.writeTargetPlaceholder": Record<string, never>;
   "hooks.phaseCheck.continue": Record<string, never>;

@@ -7,6 +7,7 @@
   "hooks.editGate.denied": "[AGS] workflow 없이 제품 파일 {limit, number}개째 변경: {paths}{earlier, plural, =0 {} other { (앞서 바꾼 제품 파일 #개 포함)}}. 먼저 workflow를 시작하라(최소 시작 호출 예: {example}).",
   "hooks.editGate.gatedRoot": "[AGS] {path}은(는) 판정을 기다리는 workflow root {rootId}({state})의 쓰기 범위라 바꿀 수 없다. 이 범위는 resolve_convergence_gate로 그 root를 판정한 뒤에 바꾸고, 겹치지 않는 다른 부분의 작업은 계속하라.",
   "hooks.editGate.goalPlaceholder": "<목표>",
+  "hooks.editGate.outsideScope": "[AGS] 진행 중인 workflow의 writeTargets 밖 제품 파일 {limit, number}개째 변경: {paths}{earlier, plural, =0 {} other { (앞서 바꾼 범위 밖 제품 파일 #개 포함)}}. 진행 중인 작업과 다른 작업이면 겹치지 않는 writeTargets로 workflow를 하나 더 시작하라. 한 세션은 workflow 여러 개를 함께 진행할 수 있다(최소 시작 호출 예: {example}).",
   "hooks.editGate.unknownPath": "(경로 미확인: {tool})",
   "hooks.editGate.writeTargetPlaceholder": "<바꿀 경로>",
   "hooks.phaseCheck.continue": "이 목표가 아직 이뤄지지 않았으면 멈추지 말고 남은 작업을 이어서 하라. 방금 받은 요청을 끝냈어도 목표가 남았으면 이어서 한다. 단계 결과는 그 단계의 작업과 검증을 실제로 마친 뒤에만 기록하고, 기록만 하고 끝내지 마라.",

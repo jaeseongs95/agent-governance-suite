@@ -357,6 +357,17 @@ describe("several workflows in one session", () => {
     expect(isDeny(handleContinuityHook(write("c.ts"), target, "claude-code", NO_ENV))).toBe(true);
   });
 
+  it("refuses an edit outside a running workflow's write scope as outside that scope and names a second workflow", () => {
+    const target = service(workflowWith([{ state: "open", rootId: "root-alpha", runState: "running", scope: "alpha" }]));
+    target.prepareWorkflowStart(session, "root-alpha");
+    for (const name of ["alpha/1.ts", "a.ts", "b.ts"]) expect(handleContinuityHook(write(name), target, "claude-code", NO_ENV)).toEqual({});
+    expect(reason(handleContinuityHook(write("c.ts"), target, "claude-code", NO_ENV))).toBe(`[AGS] 진행 중인 workflow의 writeTargets 밖 제품 파일 3개째 변경: ${file("c.ts")} (앞서 바꾼 범위 밖 제품 파일 2개 포함). `
+      + `진행 중인 작업과 다른 작업이면 겹치지 않는 writeTargets로 workflow를 하나 더 시작하라. 한 세션은 workflow 여러 개를 함께 진행할 수 있다(최소 시작 호출 예: ${KO_EXAMPLE}).`);
+    expect(reason(handleContinuityHook(write("d.ts"), target, "claude-code", EN_ENV))).toBe(`[AGS] Changing a 3rd product file outside the writeTargets of the running workflows: ${file("d.ts")} `
+      + `(including 2 product files changed earlier outside them). If this is a different task from the running work, start another workflow with writeTargets that do not overlap. `
+      + `One session can run several workflows together (minimal start call: ${EN_EXAMPLE}).`);
+  });
+
   it("shows the pending stages and goal of every active root at Stop", () => {
     const target = service(workflowWith([
       { state: "open", rootId: "root-alpha", runState: "running", scope: "alpha" },

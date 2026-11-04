@@ -13,6 +13,18 @@ const successor = JSON.parse(readFileSync(new URL("./fixtures.source-successor.j
 const hash = (bytes: string | Buffer) => "sha256:" + createHash("sha256").update(bytes).digest("hex");
 const specialistBytes = readFileSync(new URL("./fixtures.specialist-behavior-source-successor.json", import.meta.url));
 const specialist = JSON.parse(specialistBytes.toString("utf8"));
+const multiBytes = readFileSync(new URL("./fixtures.orchestrator-multi-workflow-source-successor.json", import.meta.url));
+const multi = JSON.parse(multiBytes.toString("utf8"));
+const reboundAfterSpecialist = new Map<string, {previousDigest: string; digest: string}>(
+  multi.bindings.map((binding: {path: string; previousDigest: string; digest: string}) => [binding.path, binding]));
+/** A source as the specialist successor bound it: a file a later successor rebound reads at that successor's base. */
+function specialistSource(relativePath: string): Buffer {
+  const later = reboundAfterSpecialist.get(relativePath);
+  if (!later) return readFileSync(path.join(root, relativePath));
+  const bytes = execFileSync("git", ["show", `${multi.sourceBaseRevision}:${relativePath}`], {cwd: root, maxBuffer: 4 * 1024 * 1024});
+  expect(hash(bytes)).toBe(later.previousDigest);
+  return bytes;
+}
 type SourceSpan = {path: string; startLine: number; endLine: number; digest: string; startByte?: number; endByte?: number};
 type RecordedSpan = SourceSpan & {selectedBytes: number; selectedDigest: string};
 type SourcePin = {path: string; bytes: number; digest: string; gitBlob: string};
@@ -69,6 +81,48 @@ function selectedSource(bytes: Buffer, span: SourceSpan): Buffer {
   expect(() => new TextDecoder("utf-8", {fatal: true}).decode(selected)).not.toThrow();
   return selected;
 }
+it("chains the exact orchestrator multi-workflow source after specialist behavior, moving only the two widened spans", async () => {
+  expect(hash(multiBytes)).toBe("sha256:2cb48a780ad6edf78f1ff68d468c053947ac8ab81b3b00177fb4068d21488f1c");
+  expect(multiBytes.includes(Buffer.from("\r\n"))).toBe(false);
+  expect(multi.revision).toBe("orchestrator-multi-workflow-source-binding-r19");
+  expect(multi.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.specialist-behavior-source-successor.json",
+    bytes: specialistBytes.length, digest: hash(specialistBytes)});
+  expect(multi.bindings.map((binding: {path: string}) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json"]);
+  expect(multi.spanPreservation.changedSpans).toEqual(["applicability[5]", "exclusions[4]"]);
+  expect(multi.fixtureFileRewritten).toBe(false);
+  expect(multi.labelChanges).toEqual([]);
+  expect(multi.priceAndBudgetChanges).toEqual([]);
+  expect(multi.modelBehavior).toBe("NOT_RUN");
+  for (const binding of multi.bindings) {
+    const actual = readFileSync(path.join(root, binding.path));
+    expect(actual.length).toBe(binding.bytes);
+    expect(hash(actual)).toBe(binding.digest);
+    expect(hash(specialistSource(binding.path))).toBe(binding.previousDigest);
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
+    expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const before = JSON.parse(specialistSource("skills/orchestrator/classification.json").toString("utf8"));
+  const after = JSON.parse(readFileSync(path.join(root, "skills/orchestrator/classification.json"), "utf8"));
+  const stableFields = (value: Record<string, unknown>) =>
+    Object.fromEntries(Object.entries(value).filter(([key]) => !["applicability", "exclusions"].includes(key)));
+  expect(stableFields(after)).toEqual(stableFields(before));
+  const previousLines = specialistSource("skills/orchestrator/SKILL.md").toString("utf8").split(/\r?\n/);
+  const lines = readFileSync(path.join(root, "skills/orchestrator/SKILL.md"), "utf8").split(/\r?\n/);
+  const inventory = await loadSkillInventory({root});
+  const orchestrator = inventory.skills.find(skill => skill.skillId === "orchestrator")!;
+  expect(multi.spanPreservation.spans).toHaveLength(after.applicability.length + after.exclusions.length);
+  for (const span of multi.spanPreservation.spans) {
+    const current = after[span.group][span.index];
+    expect([current.startLine, current.endLine, current.startByte ?? 0]).toEqual([span.startLine, span.endLine, span.startByte]);
+    const selected = Buffer.from(lines.slice(span.startLine - 1, span.endLine).join("\n")).subarray(span.startByte, span.endByte);
+    expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
+    expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    const previous = Buffer.from(previousLines.slice(span.startLine - 1, span.endLine).join("\n")).subarray(span.previousStartByte, span.previousEndByte);
+    // Unchanged spans keep their exact text; the two widened spans differ only by the one inserted sentence.
+    if (!multi.spanPreservation.changedSpans.includes(`${span.group}[${span.index}]`)) expect(selected.equals(previous)).toBe(true);
+    else expect(selected.toString("utf8").replace("범위가 다른 작업은 겹치지 않는 writeTargets로 workflow를 따로 시작하며, 한 세션은 workflow 여러 개를 함께 진행할 수 있다. ", "")).toBe(previous.toString("utf8"));
+  }
+});
 it("appends the exact specialist behavior successor without changing frozen fixture semantics", () => {
   expect(specialistBytes.length).toBe(270309);
   expect(hash(specialistBytes)).toBe("sha256:2870d4bc84873ae1e9bc84d85607e932350dec9fbfe70a8253c44c036c4ab34a");
@@ -90,11 +144,13 @@ it("appends the exact specialist behavior successor without changing frozen fixt
   expect(new Set(specialist.bindings.map((binding: {path: string}) => binding.path)).size).toBe(58);
   for (const binding of specialist.bindings) {
     expect(hash(mainSource(binding.path))).toBe(binding.previousDigest);
-    const actual = readFileSync(path.join(root, binding.path));
+    const actual = specialistSource(binding.path);
     expect(actual.length).toBe(binding.bytes);
     expect(hash(actual)).toBe(binding.digest);
-    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
-    expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+    const later = reboundAfterSpecialist.get(binding.path);
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(later?.digest ?? binding.digest);
+    if (later) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(later.digest);
+    else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     expect(() => currentSourceBinding.resolveDigest(binding.path, "sha256:" + "0".repeat(64))).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
 });
@@ -115,7 +171,7 @@ it("rebinds all 215 spans from pinned main to valid current UTF-8 evidence and t
   let references = 0;
   for (const descriptorPath of descriptorPaths) {
     const before = JSON.parse(mainSource(descriptorPath).toString("utf8"));
-    const after = JSON.parse(readFileSync(path.join(root, descriptorPath), "utf8"));
+    const after = JSON.parse(specialistSource(descriptorPath).toString("utf8"));
     const stableFields = (value: Record<string, unknown>) => Object.fromEntries(Object.entries(value).filter(([key]) => !["applicability", "exclusions"].includes(key)));
     expect(stableFields(after)).toEqual(stableFields(before));
     for (const group of ["applicability", "exclusions"]) {
@@ -127,17 +183,18 @@ it("rebinds all 215 spans from pinned main to valid current UTF-8 evidence and t
   for (const span of spans) {
     const descriptorPath = `skills/${span.skillId}/classification.json`;
     const before = JSON.parse(mainSource(descriptorPath).toString("utf8"));
-    const after = JSON.parse(readFileSync(path.join(root, descriptorPath), "utf8"));
+    const after = JSON.parse(specialistSource(descriptorPath).toString("utf8"));
     expect(before[span.group][span.index]).toEqual(sourceRef(span.previous));
     expect(after[span.group][span.index]).toEqual(sourceRef(span.current));
     const previousSelected = selectedSource(mainSource(span.previous.path), span.previous);
     expect(previousSelected.length).toBe(span.previous.selectedBytes);
     expect(hash(previousSelected)).toBe(span.previous.selectedDigest);
-    const selected = selectedSource(readFileSync(path.join(root, span.current.path)), span.current);
+    const selected = selectedSource(specialistSource(span.current.path), span.current);
     expect(selected.length).toBe(span.current.selectedBytes);
     expect(hash(selected)).toBe(span.current.selectedDigest);
     expect(selected.toString("utf8")).toMatch(/[\p{L}\p{N}]/u);
-    expect(skills.get(span.skillId)![span.group]).toContain(selected.toString("utf8").trim());
+    // A source a later successor rebound is checked against the current inventory in that successor's test.
+    if (!reboundAfterSpecialist.has(span.current.path)) expect(skills.get(span.skillId)![span.group]).toContain(selected.toString("utf8").trim());
     if (span.change === "exact-excerpt") expect(selected.equals(previousSelected)).toBe(true);
   }
   expect(specialist.spanPreservation.changedSpans).toEqual(spans.filter(span => span.change !== "exact-excerpt").map(span => `${span.skillId}:${span.group}[${span.index}]`));
@@ -252,7 +309,7 @@ it("동결 판정 기준을 보존하고 인계 지침의 현재 바이트만 �
   expect(manifest.labelChanges).toEqual([]);
   expect(manifest.priceAndBudgetChanges).toEqual([]);
   expect(manifest.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: "specialist-behavior-source-binding-r18"});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: "orchestrator-multi-workflow-source-binding-r19"});
   expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
   for (const source of manifest.bindings) {
     const actual = readFileSync(path.join(root, source.path));
