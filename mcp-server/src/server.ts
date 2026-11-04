@@ -1,7 +1,7 @@
 import { ClassificationInitializationError } from "./skill-classification/runtime.js";
 import { admitCaller, RESERVED_CALLER_KEYS, type CallerIngress, type VerifiedCaller } from "./caller-identity.js";
 import { observedCaller } from "./caller-actor.js";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
@@ -25,6 +25,7 @@ import { contractSchemas } from "./schema-validator.js";
 import { contractFailure, failureContext, failureReason, retainFailureSecondary } from "./failure-diagnostics.js";
 import { inlineSchemaReferences } from "./tool-schema-inline.js";
 import { PLUGIN_INFO } from "./plugin-info.js";
+import { skillIntakeText } from "./skill-intake.js";
 import { PluginUpdateService } from "./plugin-update-service.js";
 import { type ContinuityGateway, UnavailableContinuityService } from "./continuity-service.js";
 import {
@@ -503,19 +504,8 @@ export function planWorkflowToolInputSchema(profile: ToolSchemaProfile = "defaul
   return usesInlineReferences(profile) ? schemas.planWorkflowInline : schemas.planWorkflow;
 }
 
-/** Both hosts receive the selection policy from the shared skill, not a second policy copy. */
-const intakeBlock = readFileSync(new URL("../../skills/orchestrator/SKILL.md", import.meta.url), "utf8")
-  .match(/<!-- skill-intake:start -->\n([\s\S]*?)\n<!-- skill-intake:end -->/u)?.[1];
-if (!intakeBlock) throw new Error("Shared skill intake instructions are missing.");
-const intake: string = intakeBlock;
-
-/**
- * The intake block stays the installed SKILL.md text, so it is in the package language (docs/i18n-design.md 4.2);
- * only the sentences around it follow `locale`.
- */
-export function skillIntakeServerInstructions(locale: SupportedLocale): string {
-  return render(msg("instructions.intake.frame", { intake }), locale);
-}
+/** Every host receives the selection policy from the shared skill, not a second policy copy (skill-intake.ts). */
+export const skillIntakeServerInstructions: (locale: SupportedLocale) => string = skillIntakeText;
 
 // Prompt-engineering: preserve messaging actions while separating advisory wake state from delivery evidence.
 export function sessionMessageServerInstructions(locale: SupportedLocale): string {

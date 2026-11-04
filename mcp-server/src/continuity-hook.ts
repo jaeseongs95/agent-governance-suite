@@ -20,6 +20,7 @@ import {
 } from "./runtime-config.js";
 import { SqliteWorkflowStore } from "./sqlite-workflow-store.js";
 import { msg, render, resolveHostLocale, type SupportedLocale } from "./i18n.js";
+import { skillIntakeText } from "./skill-intake.js";
 
 type HookInput = Record<string, unknown>;
 
@@ -170,6 +171,17 @@ function sessionOutput(eventName: string, additionalContext: string | null): Rec
   } : {};
 }
 
+/**
+ * Every session start (new, fork, clear, resume, compact) carries the shared intake ahead of the restore context, so the
+ * selection policy reaches the model on a host that does not show MCP server instructions. A host that does show them
+ * reads the same text twice. An unreadable intake is reported and leaves the restore context as before.
+ */
+function startOutput(eventName: string, locale: SupportedLocale, restoreContext: string | null): Record<string, unknown> {
+  let intake: string | null = null;
+  try { intake = skillIntakeText(locale); } catch (cause) { reportContinuityFailure("intake", cause); }
+  return sessionOutput(eventName, [intake, restoreContext].filter(Boolean).join("\n\n") || null);
+}
+
 /** The host's turn end (Stop); a session end (lifecycle end) is not a turn the agent can continue. */
 function isTurnEnd(input: NormalizedContinuityInput): boolean {
   return input.observation.kind === "turn-end" && input.lifecycle === "none" && input.action === undefined;
@@ -205,13 +217,13 @@ function handleNormalizedContinuityHook(input: NormalizedContinuityInput, servic
   if (isObservedSubagent(observation)) return isEditBoundary(observation) ? gateEdit(observation, service, host, environment, locale) : {};
   if (!actorAccess(observation.actor).allowed) return {};
   switch (action?.kind) {
-    case "startup": service.ensureSession(sessionId); return {};
-    case "fork": service.startFork(sessionId, readForkOrigin, readForkHostParent); return {};
-    case "clear": service.clearSession(sessionId); return {};
-    case "resume": return sessionOutput(outputEventName, renderHookText(service.formatCandidate(service.candidateForSession(sessionId)), locale));
+    case "startup": service.ensureSession(sessionId); return startOutput(outputEventName, locale, null);
+    case "fork": service.startFork(sessionId, readForkOrigin, readForkHostParent); return startOutput(outputEventName, locale, null);
+    case "clear": service.clearSession(sessionId); return startOutput(outputEventName, locale, null);
+    case "resume": return startOutput(outputEventName, locale, renderHookText(service.formatCandidate(service.candidateForSession(sessionId)), locale));
     case "compact":
       if (readLineage) service.reanchorAfterCompact(sessionId, readLineage);
-      return sessionOutput(outputEventName, renderHookText(service.compactContext(sessionId), locale));
+      return startOutput(outputEventName, locale, renderHookText(service.compactContext(sessionId), locale));
     case "pre-compact": service.markPreCompact(sessionId); return {};
     case "post-compact":
       service.recordPostCompact(sessionId, action.turnId, action.successful);
@@ -249,7 +261,7 @@ export function handleContinuityHook(input: HookInput, service: ContinuityServic
   return handleNormalizedContinuityHook(normalizedContinuityInput(adaptHostInput(input, host)), service, host, environment, locale);
 }
 
-type ContinuityHookPhase = "host-entry" | "stdin" | "input" | "storage" | "workflow-store" | "handle" | "close" | "stdout";
+type ContinuityHookPhase = "host-entry" | "stdin" | "input" | "storage" | "workflow-store" | "intake" | "handle" | "close" | "stdout";
 
 /** Bounded diagnostics only: stable reason codes and error metadata, never session IDs, inputs, SQL or paths. */
 function reportContinuityFailure(phase: ContinuityHookPhase, cause: unknown): void {
