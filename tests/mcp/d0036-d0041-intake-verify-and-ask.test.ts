@@ -44,7 +44,7 @@ describe("shared intake: verification cases first (AGS3-D-0036)", () => {
     expect(casesFirst).not.toBe("");
     // Not limited to code: any work that makes or changes something.
     expect(casesFirst).toContain("만들거나 바꾸기 전에");
-    expect(casesFirst).toContain("무엇을·어디서·어떤 결과면 성공인지 사례를 정한다");
+    expect(casesFirst).toContain("무엇을·어디서·어떤 결과면 성공인지 사례를 적는다");
     expect(casesFirst).not.toMatch(/코드|테스트/u);
   });
 });

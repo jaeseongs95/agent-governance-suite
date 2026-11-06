@@ -14,6 +14,15 @@ const bytes = readFileSync(path.join(root, file));
 const manifest = JSON.parse(bytes.toString("utf8"));
 const hash = (value: Buffer) => `sha256:${createHash("sha256").update(value).digest("hex")}`;
 const previous = (file: string) => execFileSync("git", ["show", `${manifest.sourceBaseRevision}:${file}`], {cwd: root});
+const writtenCases = JSON.parse(readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-written-cases-source-successor.json"), "utf8"));
+/** r34 assertions read its exact sources at the later r35 ancestor. */
+function intakeLengthSource(file: string): Buffer {
+  const binding = writtenCases.bindings.find((row: {path: string}) => row.path === file);
+  if (!binding) return readFileSync(path.join(root, file));
+  const source = execFileSync("git", ["show", `${writtenCases.sourceBaseRevision}:${file}`], {cwd: root});
+  expect(hash(source)).toBe(binding.previousDigest);
+  return source;
+}
 type Span = {path: string; startLine: number; endLine: number; startByte?: number; endByte?: number; digest: string};
 function selected(source: Buffer, span: Span): Buffer {
   expect(hash(source)).toBe(span.digest);
@@ -34,7 +43,7 @@ function body(source: Buffer): Buffer {
 
 it("D32 IL01 retains the original over-budget intake and binds the selected shorter body under the unchanged limits", () => {
   const entry = "skills/orchestrator/references/intake.md";
-  const was = body(previous(entry)), now = body(readFileSync(path.join(root, entry)));
+  const was = body(previous(entry)), now = body(intakeLengthSource(entry));
   expect([was.toString("utf8").length, was.length]).toEqual([5224, 11784]);
   expect(was.toString("utf8").length).toBeGreaterThan(4344); expect(was.length).toBeGreaterThan(9783);
   expect([now.toString("utf8").length, now.length]).toEqual([4315, 9662]);
@@ -52,16 +61,19 @@ it("D32 IL02-04 appends exact r34 bindings after frozen r33 and reselects only t
   expect(manifest.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.test-engineering-cli-source-successor.json", bytes: frozen.length, digest: hash(frozen)});
   expect(manifest.bindings.map((row: {path: string}) => row.path)).toEqual(["skills/orchestrator/classification.json", "skills/orchestrator/references/intake.md"]);
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: manifest.revision}, digest: hash(bytes)});
+  const writtenBytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-written-cases-source-successor.json"));
+  expect(current).toMatchObject({manifest: {revision: writtenCases.revision}, digest: hash(writtenBytes)});
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
-    const actual = readFileSync(path.join(root, binding.path));
+    const actual = intakeLengthSource(binding.path);
     expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
-    for (const unbound of [binding.digest, `sha256:${"0".repeat(64)}`]) expect(() => current.resolveDigest(binding.path, unbound)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+    const latest = writtenCases.bindings.find((row: {path: string}) => row.path === binding.path).digest;
+    expect(current.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
+    expect(current.resolveDigest(binding.path, binding.digest)).toBe(latest);
+    for (const unbound of [latest, `sha256:${"0".repeat(64)}`]) expect(() => current.resolveDigest(binding.path, unbound)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
   const descriptor = "skills/orchestrator/classification.json";
-  const before = JSON.parse(previous(descriptor).toString("utf8")), after = JSON.parse(readFileSync(path.join(root, descriptor), "utf8"));
+  const before = JSON.parse(previous(descriptor).toString("utf8")), after = JSON.parse(intakeLengthSource(descriptor).toString("utf8"));
   const stable = (value: Record<string, unknown>) => Object.fromEntries(Object.entries(value).filter(([key]) => !["applicability", "exclusions"].includes(key)));
   expect(stable(after)).toEqual(stable(before));
   const anchors = new Map([
@@ -80,7 +92,7 @@ it("D32 IL02-04 appends exact r34 bindings after frozen r33 and reselects only t
     expect(after[group]).toHaveLength(before[group].length);
     for (const [index, span] of (after[group] as Span[]).entries()) {
       const prior = selected(previous(before[group][index].path), before[group][index]);
-      const actual = selected(readFileSync(path.join(root, span.path)), span);
+      const actual = selected(intakeLengthSource(span.path), span);
       const id = `${group}[${index}]`, row = manifest.spanPreservation.spans.find((row: {group: string; index: number}) => row.group === group && row.index === index);
       if (span.path === "skills/orchestrator/references/intake.md") {
         expect(anchors.has(id)).toBe(true); expect(actual.toString("utf8")).toContain(anchors.get(id));
@@ -91,7 +103,9 @@ it("D32 IL02-04 appends exact r34 bindings after frozen r33 and reselects only t
       } else {
         expect(row).toBeUndefined(); expect(span).toEqual(before[group][index]); expect(actual.equals(prior)).toBe(true); unchanged++;
       }
-      expect(skill[group]).toContain(actual.toString("utf8").trim()); compared++;
+      const rebound = writtenCases.spanPreservation.spans.find((row: {group: string; index: number}) => row.group === group && row.index === index);
+      const live = rebound ? selected(readFileSync(path.join(root, rebound.current.path)), rebound.current) : actual;
+      expect(skill[group]).toContain(live.toString("utf8").trim()); compared++;
     }
   }
   expect([compared, unchanged, changed.length]).toEqual([18, 5, 13]);
