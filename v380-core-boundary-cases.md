@@ -38,3 +38,5 @@ RED는 이 사례 그대로 test-only SHA를 TEST에서 실행해 회수한다. 
 | CB-10 | 기존 board skill export | 메모리 SQLite; 현재입력·summary·role | 기존 공개 함수로 기록 후 summary만 갱신·재조회 | role 보존, summary 최신값, 별도 db handle 종료 | NOT_RUN |
 
 실행은 TEST/CI에서 `pnpm exec vitest run tests/mcp/ags38-core-boundary-shared.test.ts`. 기존 acceptance 내용ID/authority, 협업결정, 모델정책, board, unified-state 회귀도 TEST에서 실행한다. root 소유 index.ts/server.ts의 board import 2개는 정확 diff를 전달해 통합한다.
+
+후속 구현의 정적 확인: 공용 acceptance·catalog·collaboration·board 본문 4개가 기준의 동일 구현과 일치함을 import 경로·소유 설명 변경만 정규화해 비교했다(exit 0). acceptance의 `sourceEvidenceById` 원근거 authority digest와 최신 catalog의 `profile_only_keys` 거부를 그대로 보존했다. `node --check` 11개 및 `git diff --check` exit 0. core의 skill 실행파일 import 검색 잔존은 root 소유 index.ts/server.ts의 board import 2개이며 정확 변경을 전달했다. 제품 시험은 TEST 담당 실행 대기(NOT_RUN). 후속 test file SHA256은 `585d710dbec46f1bee41a9b25cd78cba863809061207cbe7a276f4ced0e0a8f5`다.

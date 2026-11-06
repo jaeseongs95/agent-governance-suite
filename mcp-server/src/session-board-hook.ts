@@ -5,7 +5,7 @@ import { hookFailureContext, hookFailureReason } from "./hook-error-diagnostics.
 import { failureReason } from "./failure-diagnostics.js";
 import { readFileSync } from "node:fs";
 
-import { BoardFormatError, openBoard, pruneBoard, recordInput } from "../../skills/session-board/scripts/board-store.mjs";
+import { BoardFormatError, openBoard, pruneBoard, recordInput } from "../../runtime/session-board-store.mjs";
 import { resolveSessionBoardDatabasePath } from "./runtime-config.js";
 import { sessionMessageRequest } from "./session-message-client.js";
 import { adaptHostInput, resolveHookHost } from "./host-input-adapter.js";

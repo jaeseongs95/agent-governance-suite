@@ -10,6 +10,7 @@ export const digest = (value) => digestBytes(canonical(value));
 export const targetDigest = (request) => digest(request.target);
 
 export function safeRelative(value) {
+  // eslint-disable-next-line no-control-regex -- C0 controls are forbidden in untrusted relative paths.
   return typeof value === "string" && value.length > 0 && !/[\\:\x00-\x1f]/u.test(value)
     && !value.startsWith("/") && value.split("/").every((part) => part && part !== "." && part !== "..");
 }

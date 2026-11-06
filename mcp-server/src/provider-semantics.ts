@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { type PlannedStageV1, type Sha256Digest, type StageResultV1, WorkflowContractError } from "../../contracts/types.js";
 import { msg, type MessageRef } from "./i18n.js";
-import { validateReportAgainstRequest } from "../../skills/acceptance-evidence-validator/scripts/core.mjs";
+import { validateReportAgainstRequest } from "../../runtime/provider-acceptance-semantics.mjs";
 import { validateSemantics as validateSecurityAudit } from "../../runtime/provider-security-semantics.mjs";
 import { convergenceDigest } from "./convergence-logic.js";
 import { loadStageOutputFile } from "./stage-output-file.js";
@@ -20,7 +20,7 @@ interface ProviderSemanticValidator {
   /** The validator's failure, and the same failure when the provider output is missing. */
   message: MessageRef;
   outputMissing: MessageRef;
-  /** Returns the skill validator's own errors; binding failures throw with their own code. */
+  /** Returns the shared provider-contract errors; binding failures throw with their own code. */
   validate(context: ProviderSemanticContext): string[];
 }
 
@@ -35,7 +35,7 @@ function field(value: unknown, key: string): unknown {
 }
 
 /**
- * Runs the skill's canonical report validator against the frozen request the stage recorded, then binds that
+ * Runs the shared report validator against the frozen request the stage recorded, then binds that
  * request to this task and to the target the signed plan declared, so a self-consistent report about another
  * target or another request cannot pass.
  */
@@ -76,8 +76,8 @@ function acceptanceEvidenceSemantics({ taskId, taskDigest, stage, result, output
 }
 
 /**
- * Skill-owned semantic validators, keyed by the name a descriptor declares as its gate validator or by the
- * capability it supplies. Each entry calls the skill's own script; the server does not re-implement it.
+ * Shared semantic contracts, keyed by the name a descriptor declares as its gate validator or by the
+ * capability it supplies. MCP and the skill facade consume one implementation in the common runtime.
  */
 const PROVIDER_SEMANTIC_VALIDATORS: Readonly<Record<string, ProviderSemanticValidator>> = {
   "software-security-audit": {
