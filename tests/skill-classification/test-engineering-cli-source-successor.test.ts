@@ -30,7 +30,9 @@ it("D36 appends two exact CLI-comment source bindings after frozen r32 and prese
   expect(manifest.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.native-procedure-source-successor.json", bytes: frozen.length, digest: hash(frozen)});
   expect(manifest.bindings.map((binding: {path: string}) => binding.path)).toEqual(["skills/test-engineering/classification.json", "skills/test-engineering/SKILL.md"]);
   const current = loadCurrentSourceBindings(root);
-  expect(current).toMatchObject({manifest: {revision: manifest.revision}, digest: hash(bytes)});
+  const intakeBytes = readFileSync(path.join(root, "tests/skill-classification/fixtures.intake-length-source-successor.json"));
+  const intake = JSON.parse(intakeBytes.toString("utf8"));
+  expect(current).toMatchObject({manifest: {revision: intake.revision}, digest: hash(intakeBytes)});
   for (const binding of manifest.bindings) {
     expect(hash(previous(binding.path))).toBe(binding.previousDigest);
     const actual = readFileSync(path.join(root, binding.path));

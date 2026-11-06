@@ -278,6 +278,14 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/test-engineering/SKILL.md": ["5dd09730e500965b8f64ef3cfde867b2231934dddbe0a454aa11c431a1723bd6", "2541f44e4683adec7ca7037e088943bc01da17e6f6cca844be22a992d64a076b"],
     }),
   }),
+  Object.freeze({
+    // Canonical r33 ancestor; reviewed D32 intake shortening keeps historical budgets and oracles frozen.
+    revision: "be0a71858068fce5696a11c902ae628512ac4ca9",
+    hashes: Object.freeze({
+      "skills/orchestrator/classification.json": ["16c5f554f7e727507ad7b60a9a13da5919bebb3f67039ea2b82d02d9f7ab47c7", "07453548c7174a13d3446a5b5f5589a8f7d32840a07fb8a77695bdcdb01d2c17"],
+      "skills/orchestrator/references/intake.md": ["97e76065910f25aceaa895c7d24e70da7d3f30a8b32679870932ed22a9958c0c", "ba3cfa9c8a85942f14e357ac7acc2297988f0e927cedb3e8fc0af353d257346d"],
+    }),
+  }),
 ]);
 const guidanceSuccessor = relative => GUIDANCE_SUCCESSORS.find(successor => Object.hasOwn(successor.hashes, relative));
 // Reviewed new context files: a file that had no predecessor is allowed only while it holds these exact bytes, or
