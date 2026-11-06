@@ -12,6 +12,7 @@ const bindingReportSchema = load("contracts/recovery-task-binding-report.v1.sche
 const providerResultSchema = load("integration/provider-result.v1.schema.json");
 const failureEpisodeSetSchema = load("../blocker-diagnostician/contracts/failure-episode-set.v1.schema.json");
 const diagnosisReportSchema = load("../blocker-diagnostician/contracts/diagnosis-report.v1.schema.json");
+const modelPolicySchema = load("../../contracts/model-policy.v1.schema.json");
 const taskEnvelopeSchema = load("../../contracts/task-envelope.v1.schema.json");
 const workflowPlanSchema = load("../../contracts/workflow-plan.v1.schema.json");
 const stageResultSchema = load("../../contracts/stage-result.v1.schema.json");
@@ -25,7 +26,7 @@ export const validateBindingReportSchema = ajv.compile(bindingReportSchema);
 export const validateDiagnosisReportSchema = ajv.compile(diagnosisReportSchema);
 export const validateTaskEnvelopeSchema = ajv.compile(taskEnvelopeSchema);
 const workflowAjv = new Ajv2020({ allErrors: true, strict: false });
-for (const schema of [taskEnvelopeSchema, workflowPlanSchema, stageResultSchema, workflowReceiptSchema]) workflowAjv.addSchema(schema);
+for (const schema of [modelPolicySchema, taskEnvelopeSchema, workflowPlanSchema, stageResultSchema, workflowReceiptSchema]) workflowAjv.addSchema(schema);
 export const validateWorkflowReceiptSchema = workflowAjv.getSchema(workflowReceiptSchema.$id);
 
 export function compileAllSchemas() {
@@ -38,7 +39,7 @@ export function compileAllSchemas() {
   isolated.compile(diagnosisReportSchema);
   isolated.compile(taskEnvelopeSchema);
   const isolatedWorkflow = new Ajv2020({ allErrors: true, strict: false });
-  for (const schema of [taskEnvelopeSchema, workflowPlanSchema, stageResultSchema, workflowReceiptSchema]) isolatedWorkflow.addSchema(schema);
+  for (const schema of [modelPolicySchema, taskEnvelopeSchema, workflowPlanSchema, stageResultSchema, workflowReceiptSchema]) isolatedWorkflow.addSchema(schema);
   isolatedWorkflow.getSchema(workflowReceiptSchema.$id);
 }
 
