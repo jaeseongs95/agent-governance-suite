@@ -120,7 +120,7 @@ function gitInfo(root) {
   if (probe.status !== 0 || probe.stdout.trim() !== "true") return { vcsType: "none", currentRef: null, dirtyState: "unknown", status: [] };
   const ref = spawnSync("git", ["-C", root, "rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8", windowsHide: true });
   const revision = spawnSync("git", ["-C", root, "rev-parse", "HEAD"], { encoding: "utf8", windowsHide: true });
-  const status = spawnSync("git", ["-C", root, "status", "--porcelain=v1", "--untracked-files=all"], { encoding: "utf8", windowsHide: true });
+  const status = spawnSync("git", ["-C", root, "status", "--porcelain=v1", "--untracked-files=all", "--", "."], { encoding: "utf8", windowsHide: true });
   const lines = status.status === 0 ? status.stdout.replaceAll("\r\n", "\n").split("\n").filter(Boolean).sort() : [];
   return { vcsType: "git", currentRef: ref.status === 0 ? ref.stdout.trim() : null, currentRevision: revision.status === 0 ? revision.stdout.trim() : null, dirtyState: status.status === 0 ? (lines.length ? "dirty" : "clean") : "unknown", status: lines };
 }
