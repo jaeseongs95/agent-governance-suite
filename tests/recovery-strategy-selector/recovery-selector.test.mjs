@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -15,7 +16,7 @@ import {
   validateRequest,
   validateTaskBinding,
 } from "../../skills/recovery-strategy-selector/scripts/core.mjs";
-import { compileAllSchemas, validateBindingReportSchema } from "../../skills/recovery-strategy-selector/scripts/schema-validation.mjs";
+import { compileAllSchemas, validateBindingReportSchema, validateWorkflowReceiptSchema } from "../../skills/recovery-strategy-selector/scripts/schema-validation.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const skillRoot = path.resolve(here, "..", "..", "skills", "recovery-strategy-selector");
@@ -87,6 +88,15 @@ function selectionRequest() {
     priorStrategyFingerprints: [],
     evidenceIndex: [{ evidenceRef: "cause-evidence", locator: "tool:file-stat", digest: digest({ mode: "readonly" }), verified: true }],
   };
+}
+
+function receiptWithEffort(effort) {
+  const value = selectionRequest().sourceWorkflow.receipt;
+  value.plan.bootstrapExecution = {
+    requirement: { policyId: "semantic-execution-assurance-v1", kind: "semantic", minimumModelClass: effort === null ? null : "general", minimumReasoningEffort: effort, observationRequired: true },
+    context: { schemaVersion: "1.0.0", model: "fixture-model", modelClass: "general", reasoningEffort: effort, source: "runtime", observedAt: "2026-11-07T00:00:00Z" },
+  };
+  return value;
 }
 
 function strategy(id, overrides = {}) {
@@ -487,5 +497,42 @@ describe("recovery strategy selector", () => {
     const execution = spawnSync(process.execPath, [path.join(skillRoot, "scripts", "digest-request.mjs")], { input: JSON.stringify(request), encoding: "utf8" });
     expect(execution.status).toBe(0);
     expect(JSON.parse(execution.stdout)).toEqual({ requestArtifactDigest: selectionRequestDigest(request) });
+  });
+
+  it.each(["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra", null])("workflow receipts preserve supported reasoning effort %s", (effort) => {
+    expect(validateWorkflowReceiptSchema(receiptWithEffort(effort)), JSON.stringify(validateWorkflowReceiptSchema.errors)).toBe(true);
+  });
+
+  it.each(["context-effort", "minimum-effort", "extra-field"])("workflow receipts reject invalid model policy input %s", (mutation) => {
+    const value = receiptWithEffort("high");
+    if (mutation === "context-effort") value.plan.bootstrapExecution.context.reasoningEffort = "unsupported";
+    else if (mutation === "minimum-effort") value.plan.bootstrapExecution.requirement.minimumReasoningEffort = "unsupported";
+    else value.plan.bootstrapExecution.context.undeclaredField = true;
+    expect(validateWorkflowReceiptSchema(value)).toBe(false);
+  });
+
+  it("runs the standalone digest CLI without node_modules and retains contract rejection", () => {
+    const directory = mkdtempSync(path.join(tmpdir(), "ags-recovery-runtime-"));
+    if (path.dirname(path.resolve(directory)) !== path.resolve(tmpdir())) throw new Error("Unexpected disposable fixture path");
+    try {
+      const repository = path.resolve(here, "../..");
+      mkdirSync(path.join(directory, "skills"));
+      for (const relative of ["contracts", "runtime", "skills/recovery-strategy-selector", "skills/blocker-diagnostician", "skills/task-contract"]) {
+        cpSync(path.join(repository, relative), path.join(directory, relative), { recursive: true });
+      }
+      expect(existsSync(path.join(directory, "node_modules"))).toBe(false);
+      const cli = path.join(directory, "skills", "recovery-strategy-selector", "scripts", "digest-request.mjs");
+      const request = selectionRequest();
+      const accepted = spawnSync(process.execPath, [cli], { cwd: directory, input: JSON.stringify(request), encoding: "utf8" });
+      expect(accepted.status, accepted.stderr).toBe(0);
+      expect(JSON.parse(accepted.stdout)).toEqual({ requestArtifactDigest: selectionRequestDigest(request) });
+      const rejected = spawnSync(process.execPath, [cli], { cwd: directory, input: JSON.stringify({ ...request, undeclaredField: true }), encoding: "utf8" });
+      expect(rejected.status, rejected.stderr).toBe(1);
+      expect(rejected.stdout).toBe("");
+      expect(rejected.stderr).toContain("RecoveryStrategySelectionRequest.v1");
+      expect(rejected.stderr).not.toMatch(/MissingRefError|can't resolve reference/u);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 });
