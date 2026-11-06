@@ -450,7 +450,7 @@ describe("SqliteWorkflowStore", () => {
     const databasePath = join(databaseDirectory, "workflow-state.sqlite3");
     const fixture = new DatabaseSync(databasePath);
     try {
-      fixture.exec("PRAGMA user_version = 7;");
+      fixture.exec("PRAGMA user_version = 8;");
     } finally {
       fixture.close();
     }
