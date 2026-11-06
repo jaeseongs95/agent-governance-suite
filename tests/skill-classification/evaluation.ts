@@ -403,17 +403,24 @@ export function loadCurrentSourceBindings(repo: string) {
   if (resolve(repo, nativeProcedure.frozenPredecessor.path) !== contractDocsPath || contractDocsBytes.length !== nativeProcedure.frozenPredecessor.bytes || hashBytes(contractDocsBytes) !== nativeProcedure.frozenPredecessor.digest) {
     throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
   }
-  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings, ...contractDocs.bindings, ...nativeProcedure.bindings];
+  const testEngineeringCliPath = resolve(repo, "tests/skill-classification/fixtures.test-engineering-cli-source-successor.json");
+  const testEngineeringCliBytes = readFileSync(testEngineeringCliPath);
+  if (hashBytes(testEngineeringCliBytes) !== "sha256:b90d799c3eb93212596549c0ac5910c8c3dd6f69e0b3941b3d60bef33b275546") throw new Error("CURRENT_SOURCE_BINDING_MANIFEST_MISMATCH");
+  const testEngineeringCli = JSON.parse(testEngineeringCliBytes.toString("utf8")) as typeof successor;
+  if (resolve(repo, testEngineeringCli.frozenPredecessor.path) !== nativeProcedurePath || nativeProcedureBytes.length !== testEngineeringCli.frozenPredecessor.bytes || hashBytes(nativeProcedureBytes) !== testEngineeringCli.frozenPredecessor.digest) {
+    throw new Error("FROZEN_SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  const allBindings = [...manifest.bindings, ...successor.bindings, ...handoff.bindings, ...preflight.bindings, ...platform.bindings, ...phase.bindings, ...enforce.bindings, ...specialist.bindings, ...multi.bindings, ...overwrite.bindings, ...premise.bindings, ...retire.bindings, ...role.bindings, ...purpose.bindings, ...move.bindings, ...blocked.bindings, ...verify.bindings, ...parent.bindings, ...integrated.bindings, ...domain.bindings, ...contractDocs.bindings, ...nativeProcedure.bindings, ...testEngineeringCli.bindings];
   const currentBindings = new Map<string, typeof manifest.bindings[number]>();
   for (const binding of allBindings) {
     const previous = currentBindings.get(binding.path);
     if (previous && previous.digest !== binding.previousDigest) throw new Error("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     currentBindings.set(binding.path, binding);
   }
-  const currentManifest = {...manifest, revision: nativeProcedure.revision, bindings: [...currentBindings.values()]};
-  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath, contractDocsPath, nativeProcedurePath);
+  const currentManifest = {...manifest, revision: testEngineeringCli.revision, bindings: [...currentBindings.values()]};
+  files.push(successorPath, handoffPath, preflightPath, platformPath, phasePath, enforcePath, specialistPath, multiPath, overwritePath, premisePath, retirePath, rolePath, purposePath, movePath, blockedPath, verifyPath, parentPath, neutralPath, integratedPath, domainPath, contractDocsPath, nativeProcedurePath, testEngineeringCliPath);
   return {
-    manifest: currentManifest, files, digest: hashBytes(nativeProcedureBytes),
+    manifest: currentManifest, files, digest: hashBytes(testEngineeringCliBytes),
     /** The current digest of a bound source, or null when the chain retires the path (the file must be absent). */
     resolveDigest(sourcePath: string, digest: string): string | null {
       const chain = allBindings.filter(row => row.path === sourcePath);

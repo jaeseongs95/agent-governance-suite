@@ -270,6 +270,14 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
       "skills/orchestrator/references/engineering-practices/cli.md": ["c23134f4ebce972f891e7b7bf93f9ac24a5c340e856e3f1192e58fb33aff3b2b", "3d3199bd429e074903e6b99385c5c82677d0c6a4a5ffce696f745000db393b65"],
     }),
   }),
+  Object.freeze({
+    // Release ancestor r32 bytes; four CLI example comments leave all six selected clauses unchanged.
+    revision: "d2ffc9af54cd1cb3f7a85061a3e7788287863654",
+    hashes: Object.freeze({
+      "skills/test-engineering/classification.json": ["b82827922ae2990887ed35b34e9c26c4668a367e05bc90dc5b5d46e9cecf036a", "1f0fd5742354b7d23d8656b34618786ff7502e08e4871595c08633df8c477d8c"],
+      "skills/test-engineering/SKILL.md": ["5dd09730e500965b8f64ef3cfde867b2231934dddbe0a454aa11c431a1723bd6", "2541f44e4683adec7ca7037e088943bc01da17e6f6cca844be22a992d64a076b"],
+    }),
+  }),
 ]);
 const guidanceSuccessor = relative => GUIDANCE_SUCCESSORS.find(successor => Object.hasOwn(successor.hashes, relative));
 // Reviewed new context files: a file that had no predecessor is allowed only while it holds these exact bytes, or

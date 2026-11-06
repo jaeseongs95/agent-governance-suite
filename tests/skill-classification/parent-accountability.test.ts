@@ -25,8 +25,9 @@ it("binds parent accountability after frozen r27 without changing prior source-s
     bytes: predecessor.length, digest: hash(predecessor)});
   const domain = JSON.parse(read("tests/skill-classification/fixtures.intake-domain-neutral-source-successor.json").toString("utf8"));
   const nativeProcedure = JSON.parse(read("tests/skill-classification/fixtures.native-procedure-source-successor.json").toString("utf8"));
+  const testEngineeringCli = JSON.parse(read("tests/skill-classification/fixtures.test-engineering-cli-source-successor.json").toString("utf8"));
   const current = loadCurrentSourceBindings(rootDirectory);
-  expect(current.manifest).toMatchObject({revision: "native-procedure-source-binding-r32"});
+  expect(current.manifest).toMatchObject({revision: testEngineeringCli.revision});
   expect(manifest.bindings.map((binding: {path: string}) => binding.path)).toEqual(previous.bindings.map((binding: {path: string}) => binding.path));
   for (const binding of manifest.bindings) {
     expect(binding.previousDigest).toBe(previous.bindings.find((row: {path: string}) => row.path === binding.path).digest);
