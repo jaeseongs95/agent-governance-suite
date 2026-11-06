@@ -9,10 +9,10 @@
 
 | 사례 | 공개 경계·입력·전제 | 절차 | 기대 결과·판정 | 실제 |
 | --- | --- | --- | --- | --- |
-| NP01 | `skillIntakeText`와 MCP `serverInstructions`, ko/en; 읽기 전용 또는 상태 쓰기 금지 요청 | 실제 공통 intake 전달문과 blocker 계약을 대조 | checkpoint는 읽기 전용·상태 쓰기 금지가 아닐 때만 요구. 기존 허용 저장 조건과 원 금지는 유지 | NOT_RUN |
-| NP02 | MCP `tools/list`의 checkpoint_context, ko/en | 실제 서버의 공개 도구 설명을 조회 | 각 locale 설명도 읽기 전용·상태 쓰기 금지를 우선하며 다른 schema/도구 정책을 변경하지 않음 | NOT_RUN |
-| NP03 | native가 읽는 test-engineering SKILL 본문·공통 CLI 안내 | 계획 저장·check-plan이 테스트 구현·실행보다 먼저 명시되는지 확인 | 사후 READY/CONSISTENT가 선작성 근거가 되지 않음. `--root` 절대경로와 그 아래 상대 파일 참조를 구분 | NOT_RUN |
-| NP04 | 기존 source classification, content lock, frozen successor chain | 공식 pin 갱신 또는 append successor로 현재 바이트를 결속하고 원 역사 파일은 비교 | D32 cap≤5229, 과거 원본 hash 불변, 현재 source hash·선택 span의 의도한 변경만 추적 | NOT_RUN |
+| NP01 | `skillIntakeText`와 MCP `serverInstructions`, ko/en; 읽기 전용 또는 상태 쓰기 금지 요청 | 실제 공통 intake 전달문과 blocker 계약을 대조 | checkpoint는 읽기 전용·상태 쓰기 금지가 아닐 때만 요구. 기존 허용 저장 조건과 원 금지는 유지 | d07 RED2 → 0626 GREEN2 |
+| NP02 | MCP `tools/list`의 checkpoint_context, ko/en | 실제 서버의 공개 도구 설명을 조회 | 각 locale 설명도 읽기 전용·상태 쓰기 금지를 우선하며 다른 schema/도구 정책을 변경하지 않음 | d07 RED2 → 0626 GREEN2 |
+| NP03 | native가 읽는 test-engineering SKILL 본문·공통 CLI 안내 | 계획 저장·check-plan이 테스트 구현·실행보다 먼저 명시되는지 확인 | 사후 READY/CONSISTENT가 선작성 근거가 되지 않음. `--root` 절대경로와 그 아래 상대 파일 참조를 구분 | d07 RED1 → 0626 GREEN1 |
+| NP04 | 기존 source classification, content lock, frozen successor chain | 공식 pin 갱신 또는 append successor로 현재 바이트를 결속하고 원 역사 파일은 비교 | D32 cap≤5229, 과거 원본 hash 불변, 현재 source hash·선택 span의 의도한 변경만 추적 | 0626 추적2 PASS; 역사 잔존3 FAIL → 83 대상3 PASS, 아래 참조 |
 | NP05 | 별도 TEST native T2/T4 재실행, root가 정한 동일 조건 | 실제 도구 순서와 상태 쓰기 유무를 관찰 | 계획이 RED/GREEN보다 앞서며 읽기 전용 진단에서 checkpoint 호출 0. 원 pilot FAIL은 덮지 않음 | NOT_RUN |
 
 NP01~04는 전달문·계약 검사이며 실제 모델 행동 성공을 뜻하지 않는다. NP05는 root와 조율한 TEST에서만 실행한다. 로컬 제품 시험은 금지된다. 원자료 읽기 조회 `9a24c89a55a6b7bbcad9f8c055492bc3f66081f36d7c13d7` 및 좁은 사건 추출 `e9107acd2b39c73b3256a6dae8133c5697f79400e9b926a1`은 exit0/cleanupComplete:true로 끝났다.
@@ -23,6 +23,8 @@ Windows TEST RED: test-only `d07db8b658944dd5008a8f60349107ad88c53b4e`, Node `v2
 
 해당 TypeScript·역사 checker의 실제 ESLint, `node --check`, `git diff --check`는 exit0이다. GREEN은 root의 공식 i18n catalog·bundle 생성 후 같은 TEST 파일로 실행한다. source locale 수정만으로 아직 생성하지 않은 `tools/list` 출력을 GREEN으로 보지 않는다. 실제 native 행동 NP05는 NOT_RUN으로 유지한다.
 
-Windows 통합 `0626bde1a4e3fedbd928312910b5e87c0082548a` 실행: 같은 원 TEST 파일 hash를 확인한 뒤 NP01~03 5/5가 GREEN이었다. r32 추적 2개, parent-accountability 1개, D31/D32 5개, D36~41 8개, retention 2개(기존 내부 13 oracle 포함)도 통과했다. 전체 7파일 48개는 **45 PASS·3 FAIL**, native exit1/87.84초/cleanupComplete:true다. 조회 `277c99146adf294b3750b41acc61601431cc90a0fa025537`를 보존한다. 실패 3개는 역사 source-binding의 옛 app[4]를 현재 inventory에서 찾는 두 소비자와 옛 test-engineering 전체 source digest를 현재 파일에 적용한 소비자다. 옛 바이트·hash 판정은 유지하고, 현재 inventory 대조만 승인된 r32 current span에 결속하며 quote-only 과거 판정은 당시 source로 읽도록 수정했다. 이 후속 후보의 실제 재실행은 아직 NOT_RUN이다.
+Windows 통합 `0626bde1a4e3fedbd928312910b5e87c0082548a` 실행: 같은 원 TEST 파일 hash를 확인한 뒤 NP01~03 5/5가 GREEN이었다. r32 추적 2개, parent-accountability 1개, D31/D32 5개, D36~41 8개, retention 2개(기존 내부 13 oracle 포함)도 통과했다. 전체 7파일 48개는 **45 PASS·3 FAIL**, native exit1/87.84초/cleanupComplete:true다. 조회 `277c99146adf294b3750b41acc61601431cc90a0fa025537`를 보존한다. 실패 3개는 역사 source-binding의 옛 app[4]를 현재 inventory에서 찾는 두 소비자와 옛 test-engineering 전체 source digest를 현재 파일에 적용한 소비자다. 옛 바이트·hash 판정은 유지하고, 현재 inventory 대조만 승인된 r32 current span에 결속하며 quote-only 과거 판정은 당시 source로 읽도록 수정했다. 후속 후보는 아래 별도 실행에 결속한다.
 
 CI `42266572948`의 양 OS 정적 검사에서도 test-engineering integrated checksum이 갱신되지 않은 실패가 있었다. `scripts/lib.mjs`의 기존 공식 `computeDirectoryChecksum`(상대 파일명과 정규화된 bytes 길이 framing)을 사용해 현재 `sha256:9bc323e3b34dec1131aa4e2c83861198562396cf6339517d30defe1590a0814d`를 계산했고 `skills/source-lock.json`의 해당 1개 값만 갱신했다. 이 source는 `internal`이라 upstream ref/checksum 필드가 없으며, 다른 모든 source 기록과 역사 anchor는 그대로다. `node scripts/check-source-lock.mjs`와 `node scripts/validate-repository.mjs`의 실제 정적 검사는 각각 exit0이었다. 패키지에 복사되는 source-lock 생성물은 root가 공식 생성한다.
+
+Windows 부족분 재실행: 새 exact `83c38441c8eabc149595f900099dbe9a905198c3` 작업본에서 `node C:/ags-330-test/repo/node_modules/vitest/vitest.mjs run tests/skill-classification/source-binding-successor.test.ts --maxWorkers=1 -t 'chains the intake blocked-step rule|chains the intake verify-and-ask rules|replaces both historical quote-only'`를 실행했다. 조회 `00b6148d7d34c20244a18547d850647f50d3fb3b5abff801`, native exit0/8.24초/cleanupComplete:true, 대상 3개 PASS이며 필터 밖 22개는 미선택이다. 0626의 전체 45 PASS·3 FAIL을 이 결과로 덮거나 83의 전체 48개 통과로 환산하지 않는다. 원 NP01~03의 5개 GREEN은 동일 TEST bytes의 0626 관측이고, 실제 모델 행동 NP05는 계속 NOT_RUN이다. Windows 추가 실행은 하지 않으며 evidence 담당자에게 종료를 공유했다.
