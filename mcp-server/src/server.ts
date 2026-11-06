@@ -1,6 +1,7 @@
 import { ClassificationInitializationError } from "./skill-classification/runtime.js";
 import { admitCaller, RESERVED_CALLER_KEYS, type CallerIngress, type VerifiedCaller } from "./caller-identity.js";
 import { observedCaller } from "./caller-actor.js";
+import { createRootApprovalHandler } from "./root-approval.js";
 import { existsSync } from "node:fs";
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -8,6 +9,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 
 import {
   type ApiResultV1,
+  type ConvergenceRootV1,
   type ErrorCode,
   type PluginUpdateStatusV1,
   type KoreanProseGlossaryLookupResultV1,
@@ -630,6 +632,8 @@ export function createMcpServer(
     { capabilities: { tools: {} }, instructions: serverInstructions(defaultLocale) },
   );
 
+  const rootOperation = createRootApprovalHandler(server, service);
+
   // Anthropic hosts cannot resolve $ref in tool schemas, so they receive fully inlined copies.
   const advertise = <T extends { inputSchema: Record<string, unknown> }>(tools: T[], locale: SupportedLocale): T[] => {
     const contractDocuments = Object.values(localizedContracts(locale)) as Array<Record<string, unknown>>;
@@ -859,7 +863,7 @@ export function createMcpServer(
     return { tools: toolsFor(locale), _meta: { [CONTENT_LANGUAGE_META]: locale } };
   });
 
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const locale = resolveRequestLocale(request.params._meta, defaultLocale);
     const respond = <T>(result: ApiResultV1<T>) => toolResult(result, locale);
     const handle = async () => {
@@ -991,15 +995,19 @@ export function createMcpServer(
         case "plan_workflow":
           result = attested("plan_workflow", (input) => service.planWorkflow(input, true));
           break;
-        case "open_convergence_root":
-          result = withMode("responseMode", () => {
-            const opened = service.openConvergenceRoot(domainArguments(args, "responseMode"), rootAccess);
-            if (opened.ok && opened.data && !continuity.bindOpenedRoot(caller, opened.data.rootId)) {
-              writeDiagnostic("server", "continuity-root-binding-unavailable", {});
-            }
-            return opened;
-          }, convergenceRootHandle);
+        case "open_convergence_root": {
+          const mode = responseMode(args, "responseMode");
+          if (mode === null) {
+            result = invalidInput(msg("server.call.responseModeInvalid", { field: "responseMode" }));
+            break;
+          }
+          const opened = await rootOperation("replace-root", domainArguments(args, "responseMode"), rootAccess, extra) as ApiResultV1<ConvergenceRootV1>;
+          if (opened.ok && opened.data && !continuity.bindOpenedRoot(caller, opened.data.rootId)) {
+            writeDiagnostic("server", "continuity-root-binding-unavailable", {});
+          }
+          result = projectResult(opened, mode, convergenceRootHandle);
           break;
+        }
         case "claim_workflow_attempt":
           result = service.claimWorkflowAttempt(args, true, observedCaller(caller), rootAccess);
           break;
@@ -1052,7 +1060,7 @@ export function createMcpServer(
           result = withMode("responseMode", () => service.abortWorkflow(String(args.runId ?? ""), integer(args.expectedRevision)), workflowStatusSummary);
           break;
         case "release_convergence_root":
-          result = service.releaseConvergenceRoot(args, rootAccess);
+          result = await rootOperation("release-root", args, rootAccess, extra);
           break;
         case "checkpoint_context":
           result = continuity.checkpointContext(args, caller);

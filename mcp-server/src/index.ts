@@ -72,7 +72,7 @@ export async function startMcpServer(
 
   const validator = new ContractValidator();
   const hostAttestation = executionAdapter ? new HostAttestationProvider(executionAdapter) : null;
-  // Neither bundled host currently exposes a cryptographically distinct direct-human approval event.
+  // Native form support is checked per client; actual user response provenance remains a host contract.
   const trust = new TrustService(trustStore);
   const service = new WorkflowService(
     new FileSkillRegistry(registryPath, validator),
