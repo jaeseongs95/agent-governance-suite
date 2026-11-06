@@ -235,7 +235,11 @@ describe("acceptance evidence report semantics at the MCP gate", () => {
     const request = await requestArtifact(directory, original);
     const weaker = structuredClone(original);
     const envelope = weaker.taskEnvelope as TaskEnvelopeV1;
-    if (mutation === "criteria") envelope.acceptanceCriteria = ["A weaker requirement."];
+    if (mutation === "criteria") {
+      envelope.acceptanceCriteria = ["A weaker requirement."];
+      // The replacement request is self-consistent; the signed task binding must still reject it.
+      weaker.criterionBindings = [{ criterionId: "AC-001", statement: "A weaker requirement." }];
+    }
     else envelope.artifactContracts![0]!.produced[0]!.schemaId = "weaker/v0";
     expect((weaker.taskEnvelope as TaskEnvelopeV1).taskId).toBe(receipt.plan.taskId);
     expect(weaker.target).toEqual(original.target);
@@ -245,6 +249,12 @@ describe("acceptance evidence report semantics at the MCP gate", () => {
     expect(swapped.digest).not.toBe(request.digest);
     const report = analyzeAcceptance(weaker);
     expect(report.verdict).toBe("PASS");
+    if (mutation === "criteria") {
+      expect((report.criteria as Array<Record<string, unknown>>)[0]).toMatchObject({
+        statement: "A weaker requirement.",
+        criterionId: `AC-${createHash("sha256").update("A weaker requirement.", "utf8").digest("hex").slice(0, 12)}`,
+      });
+    }
     const rejected = service.recordStageResult(stageResult(receipt, report, [swapped]));
     expect(rejected.error?.code).toBe("BINDING_INVALID");
     expect(rejected.error?.details).toMatchObject({ taskBound: false });

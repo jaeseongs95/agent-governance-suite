@@ -7,6 +7,7 @@ import test from "node:test";
 
 const cli = new URL("../../skills/acceptance-evidence-validator/scripts/cli.mjs", import.meta.url);
 const validator = new URL("../../skills/acceptance-evidence-validator/scripts/validate-report.mjs", import.meta.url);
+const requestSchemaId = "https://agent-governance-skills.local/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json";
 const idFor = (statement) => `AC-${createHash("sha256").update(statement, "utf8").digest("hex").slice(0, 12)}`;
 const digest = (value) => {
   const canonical = (v) => v && typeof v === "object"
@@ -46,10 +47,18 @@ test("E06-01/02/09 content IDs and evidence stay on the exact statement after re
   assert.deepEqual(reordered.body.criteria, [...original.body.criteria].reverse());
   const validation = {
     schemaVersion: "1.0.0", request: input,
-    requestArtifact: { artifactId: "request", schemaId: "fixture/v1", locator: "artifact://request", digest: digest(input) },
+    requestArtifact: { artifactId: "request", schemaId: requestSchemaId, locator: "artifact://request", digest: digest(input) },
     report: reordered.body,
   };
-  assert.equal(run(validation, validator).body.valid, true);
+  const valid = run(validation, validator);
+  assert.equal(valid.code, 0, JSON.stringify(valid.body));
+  assert.equal(valid.body.valid, true, JSON.stringify(valid.body));
+  const wrongSchema = structuredClone(validation);
+  wrongSchema.requestArtifact.schemaId = "fixture/v1";
+  const rejectedSchema = run(wrongSchema, validator);
+  assert.equal(rejectedSchema.code, 1);
+  assert.equal(rejectedSchema.body.valid, false);
+  assert.ok(rejectedSchema.body.errors.some((error) => error.includes("schemaId")), JSON.stringify(rejectedSchema.body));
   validation.report.criteria[0].statement = "replaced criterion";
   assert.equal(run(validation, validator).body.valid, false);
 });
