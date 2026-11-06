@@ -18,9 +18,12 @@ describe("skill context optimization", () => {
     const report = checkSkillContextOptimization();
     expect(report.contextContractPins).toHaveLength(1);
     expect(report.contextContractPins[0].authorityEffect).toBe("none");
-    expect(Object.keys(report.contextContractPins[0].hashes)).toHaveLength(18);
+    expect(Object.keys(report.contextContractPins[0].hashes)).toHaveLength(21);
     expect(Object.keys(report.contextContractPins[0].hashes).toSorted()).toEqual([
       "contracts/model-policy.v1.schema.json",
+      "runtime/collaboration-decision.d.mts",
+      "runtime/provider-acceptance-semantics.d.mts",
+      "runtime/session-board-store.d.mts",
       "skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json",
       "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json",
       "skills/acceptance-evidence-validator/scripts/core.d.mts",
@@ -51,15 +54,20 @@ describe("skill context optimization", () => {
     expect(report.baselineRevision).toBe("7bc7753012227938be2a46f68bf3e29d29d5ef34");
     expect(report.totals).toMatchObject({ skillCount: 20, baselineBytes: 115679, candidateBytes: 47606 });
   });
-  // D0006/D0020/D0029: the exact integrated documentation passes the existing reconstruction;
+  // D0006/D0007/D0020/D0029: exact integrated sources preserve the existing reconstruction;
   // one extra byte must not project onto a trusted predecessor or change that historical oracle.
   it.each([
+    "skills/acceptance-evidence-validator/classification.json",
+    "skills/session-board/classification.json",
+    "skills/acceptance-evidence-validator/scripts/core.d.mts",
+    "skills/session-board/scripts/board-store.d.mts",
+    "skills/orchestrator/scripts/collaboration-decision.d.mts",
     "skills/acceptance-evidence-validator/README.md",
     "skills/acceptance-evidence-validator/references/entry-details.md",
     "skills/acceptance-evidence-validator/references/evidence-protocol.md",
     "skills/iteration-frame-auditor/references/review-protocol.md",
     "skills/session-board/references/entry-details.md",
-  ])("rejects drift beyond the reviewed AGS38 documentation successor: %s", async relative => {
+  ])("rejects drift beyond the reviewed AGS38 source successor: %s", async relative => {
     vi.doMock("node:fs", () => ({ readdirSync, readFileSync: (file, ...args) => {
       const bytes = readFileSync(file, ...args);
       if (String(file).replaceAll("\\", "/").endsWith(`/${relative}`)) {
@@ -375,11 +383,12 @@ describe("skill context optimization", () => {
     }
   });
   it("rejects an unreviewed integration path reported by Git without modifying the source tree", async () => {
+    // D0026 leaves executable provenance to source-lock; unreviewed declaration contracts still fail here.
     const { execFileSync } = await import("node:child_process");
     vi.doMock("node:child_process", () => ({
       execFileSync: (file, args, options) => {
         if (file === "git" && args.includes("ls-files") && args.at(-1) === "skills/model-effort-advisor") {
-          return Buffer.from("skills/model-effort-advisor/scripts/unreviewed.mjs\n");
+          return Buffer.from("skills/model-effort-advisor/scripts/unreviewed.d.mts\n");
         }
         return execFileSync(file, args, options);
       },
@@ -389,7 +398,7 @@ describe("skill context optimization", () => {
       const checker = await import("../../scripts/check-skill-context-optimization.mjs");
       const report = checker.checkSkillContextOptimization();
       expect(report.pass).toBe(false);
-      expect(report.errors).toContain("model-effort-advisor: unexpected skill-owned changes: skills/model-effort-advisor/scripts/unreviewed.mjs");
+      expect(report.errors).toContain("model-effort-advisor: unexpected skill-owned changes: skills/model-effort-advisor/scripts/unreviewed.d.mts");
     } finally {
       vi.doUnmock("node:child_process");
       vi.resetModules();

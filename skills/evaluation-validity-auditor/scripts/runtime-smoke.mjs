@@ -39,7 +39,7 @@ try {
       error => { if (error.code !== "ENOENT") throw error; },
     );
   }
-  const result = await execute(process.execPath, ["--test", "tests/evaluation-validity-auditor/evaluation-validity.node.mjs"], {
+  const result = await execute(process.execPath, ["--test", "--test-reporter=tap", "tests/evaluation-validity-auditor/evaluation-validity.node.mjs"], {
     cwd: suiteRoot,
     encoding: "utf8",
     env: environment,

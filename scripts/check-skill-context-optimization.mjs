@@ -111,6 +111,19 @@ function changedBetween(from, to, path) {
 //   Only these five reviewed documentation deltas project onto the unchanged a2811393 context.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
+  // D0006/D0029 classification source bindings and the D0007 shared declaration move.
+  // These exact successors retain the preceding context oracle; the runtime declarations
+  // are independently pinned below so a re-export cannot hide changes to its contract.
+  Object.freeze({
+    revision: "586f6dcee12811536c84279dc658886ff3355da1",
+    hashes: Object.freeze({
+      "skills/acceptance-evidence-validator/classification.json": ["0f014b4abc19bfb98a78e9b736afd0785b59d97a6f24b8f5b3febced73880a8c", "4ce9af6edc26969b41c776135e591bc0674f5d366445207083baf73d2899aff7"],
+      "skills/session-board/classification.json": ["7df8a0d55377d9315899955ccae63d9623113517fdd49e91adb6201d2c25442e", "858968497e4d721fb34328db0ac67b3d27c19d97fe7bf9837b4ccfc4f6653e8a"],
+      "skills/acceptance-evidence-validator/scripts/core.d.mts": ["5ad79b91fd34d6d4f07321b1011e2b48b5311a89296d10c360ed108ed92f45cf", "f8252d0f9e1903b050707c04b07ed836ee73877ff4d05867d250f812727162f6"],
+      "skills/session-board/scripts/board-store.d.mts": ["87c8cbd745da273bee3bb9419b487173841d29f9f0bf83fe002f1d2ebd2ae1fe", "7df74618dd93dde5c8887145f216171a5764dab47ed6b5c1c0911e4b86cacec9"],
+      "skills/orchestrator/scripts/collaboration-decision.d.mts": ["2d7bac5952b67b52e4aaa23934cd396eda1ad9aa864f30bcd2eae455f4c50650", "811fe56a56d85bdd10abd1c9e78928f98e955cae64c29d7133aa7df5cc561104"],
+    }),
+  }),
   Object.freeze({
     revision: "a281139387af096e696f8d50cc089ad09e9291fc",
     hashes: Object.freeze({
@@ -895,6 +908,9 @@ const CONTEXT_CONTRACT_PINS = Object.freeze({
   authorityEffect: "none",
   hashes: Object.freeze({
   "contracts/model-policy.v1.schema.json": "90344943d41d95924b28b59969e9b87871354aea5966d8334ab13c146f2cb502",
+  "runtime/collaboration-decision.d.mts": "dfd4a99ed6dcdd8e06497f42beab103410d4082d1de3f6b98690fe7a1cec8c14",
+  "runtime/provider-acceptance-semantics.d.mts": "5ad79b91fd34d6d4f07321b1011e2b48b5311a89296d10c360ed108ed92f45cf",
+  "runtime/session-board-store.d.mts": "fb6dc871d6dc40f180d65ef770c27665f3b29ad2868ffce372cd511feb395067",
   "skills/acceptance-evidence-validator/contracts/acceptance-evidence-input.v1.schema.json": "c4a0f4080ed2d1605ec0d362d2abaf8c585d06d3a8e5d262aacd264be122686e",
   "skills/acceptance-evidence-validator/contracts/acceptance-evidence-report.v1.schema.json": "9054b1bbfc5c431ad61b1daddb44ace792c647328146feb8bb6d1087c4f16000",
   "skills/acceptance-evidence-validator/scripts/core.d.mts": "5ad79b91fd34d6d4f07321b1011e2b48b5311a89296d10c360ed108ed92f45cf",

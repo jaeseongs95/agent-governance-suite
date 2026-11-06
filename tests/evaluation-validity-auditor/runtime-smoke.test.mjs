@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { cp, mkdir, mkdtemp, rm } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, expect, it } from "vitest";
@@ -36,7 +36,18 @@ it("runs the public smoke from the current suite layout without installed depend
   const result = smoke(suite, directory);
   expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
   expect(result.stdout).toMatch(/# (?:pass|tests) [1-9][0-9]*/u);
+  expect(result.stdout).toContain("# fail 0");
   expect(result.stdout).toContain("node_modules-free runtime check passed");
+}, 40_000);
+
+it("propagates a native assertion failure instead of reporting a successful runtime check (D0019)", async () => {
+  const { suite, directory } = await suiteCopy();
+  await writeFile(path.join(suite, "tests/evaluation-validity-auditor/evaluation-validity.node.mjs"),
+    'import test from "node:test"; import assert from "node:assert/strict"; test("deliberate-native-assertion-failure", () => assert.equal(1, 2));\n');
+  const result = smoke(suite, directory);
+  expect(result.status).not.toBe(0);
+  expect(`${result.stdout}\n${result.stderr}`).toContain("deliberate-native-assertion-failure");
+  expect(result.stdout).not.toContain("node_modules-free runtime check passed");
 }, 40_000);
 
 it("does not borrow a missing runtime from the source checkout (D0019)", async () => {
