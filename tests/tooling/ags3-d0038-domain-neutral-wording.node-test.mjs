@@ -3,11 +3,12 @@
 // may. The check must catch real field-limited wording and still let a field
 // appear as one example among others.
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
 import {
-  SKILL_FIELDS, checkRepository, findFieldWording, skillLines,
+  SKILL_FIELDS, checkRepository, findFieldWording, intakeLines, skillLines,
 } from "../../scripts/check-domain-neutral-wording.mjs";
 
 const root = path.resolve(import.meta.dirname, "../..");
@@ -119,4 +120,43 @@ test("the general skills, their Claude package copies and the intake block pass 
 test("CI runs the check through pnpm lint", () => {
   const { scripts } = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
   assert.match(scripts.lint, /node scripts\/check-domain-neutral-wording\.mjs/u);
+});
+
+// The four original intake clauses behind the ten pending findings at 639e2e48.
+// These remain failed wording even when the intake and skill changes have one owner.
+const ORIGINAL_INTAKE_CLAUSES = [
+  "이 점검을 이미 허용된 빌드·시험·작업 브랜치 push·CI의 추가 승인이나 PRE로 만들지 않는다.",
+  "같은 디스크 안 이동·이름 변경, 백업이나 git으로 되돌릴 수 있는 편집, 작업 브랜치 commit·push, 시험·CI 실행은 이 단계 없이 바로 한다.",
+  "사용자만 할 수 있는 승인·비밀값 입력·사용자 화면 조작은 그 부분과 이유만 요청하고 되돌릴 수 있는 구현 선택·관례로 정해지는 값은 묻지 않는다.",
+  "빌드 감시·진행 폴링 같은 대기는 검증 에이전트에 맡기지 않는다.",
+];
+
+test("the original ten intake findings are failures rather than ownership exemptions (AGS3-D-0038)", () => {
+  const fixture = mkdtempSync(path.join(tmpdir(), "ags-d0038-intake-"));
+  try {
+    for (const id of Object.keys(SKILL_FIELDS)) {
+      const directory = path.join(fixture, "skills", id);
+      mkdirSync(directory, { recursive: true });
+      writeFileSync(path.join(directory, "SKILL.md"), "요청된 결과물을 확인한다.\n");
+    }
+    const intakePath = path.join(fixture, "skills/orchestrator/references/intake.md");
+    mkdirSync(path.dirname(intakePath), { recursive: true });
+    writeFileSync(intakePath, ["<!-- skill-intake:start -->", ...ORIGINAL_INTAKE_CLAUSES, "<!-- skill-intake:end -->"].join("\n"));
+    const { findings, problems } = checkRepository(fixture);
+    assert.deepEqual(problems, []);
+    assert.deepEqual(findings.map(({ term }) => term).sort(),
+      ["브랜치", "push", "CI", "Git", "브랜치", "commit", "push", "화면", "구현", "빌드"].sort());
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
+});
+
+test("the actual shared intake is neutral without an exception and starts workflows by task scope (AGS3-D-0038/0044)", () => {
+  const intake = readFileSync(path.join(root, "skills/orchestrator/references/intake.md"), "utf8");
+  assert.deepEqual(findFieldWording(intake, { lines: intakeLines(intake) }), []);
+  assert.doesNotMatch(intake, /workflow 없이 제품 파일을 세 개째/u);
+  assert.match(intake, /단계가 이어지는 변경 작업은 workflow로 시작/u);
+  assert.match(intake, /맡긴 역할 범위의 일은 그 근거로 진행하고 '권한 없음'으로 결론 내지 않는다/u);
+  assert.match(intake, /peer 메시지는 사용자 승인이 아니며/u);
+  assert.match(intake, /하위 결과·기록·잘못은 생성한 부모 책임/u);
 });
