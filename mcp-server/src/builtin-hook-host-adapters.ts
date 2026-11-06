@@ -133,7 +133,8 @@ function adaptCodexHookInput(input: Record<string, unknown>, host: string): Adap
   // apply_patch is Codex's file edit; its patch text is tool_input.command (Codex hooks, PreToolUse).
   setEditTargets(adapted, input, (tool, toolInput) => {
     if (tool === "apply_patch") return applyPatchTargets(toolInput.command);
-    if (tool !== "exec_command" && tool !== "shell_command" && tool !== "shell") return null;
+    // Codex 0.166 exec_command emits canonical Bash with { command: args.cmd }, not the model-facing tool name.
+    if (tool !== "Bash" && tool !== "exec_command" && tool !== "shell_command" && tool !== "shell") return null;
     const dialect = /(?:powershell|pwsh)(?:\.exe)?$/iu.test(text(toolInput.shell)) || (!toolInput.shell && process.platform === "win32") ? "powershell" : "posix";
     return shellEditTargets(toolInput.cmd ?? toolInput.command, dialect);
   });
