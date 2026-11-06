@@ -212,6 +212,12 @@ function selectedSource(bytes: Buffer, span: SourceSpan): Buffer {
   expect(() => new TextDecoder("utf-8", {fatal: true}).decode(selected)).not.toThrow();
   return selected;
 }
+/** Only an explicitly rebound r32 span uses its current selection in a live-inventory comparison. */
+function currentNativeSelection(span: {skillId: string; group: string; index: number}, historical: Buffer): Buffer {
+  const rebound = nativeProcedure.spanPreservation.spans.find((row: {skillId: string; group: string; index: number}) =>
+    row.skillId === span.skillId && row.group === span.group && row.index === span.index);
+  return rebound ? selectedSource(readFileSync(path.join(root, rebound.current.path)), rebound.current) : historical;
+}
 it("chains the exact orchestrator multi-workflow source after specialist behavior, moving only the two widened spans", async () => {
   expect(hash(multiBytes)).toBe("sha256:2cb48a780ad6edf78f1ff68d468c053947ac8ab81b3b00177fb4068d21488f1c");
   expect(multiBytes.includes(Buffer.from("\r\n"))).toBe(false);
@@ -804,7 +810,7 @@ it("chains the intake blocked-step rule after the intake move, rewording only in
     const selected = selectedSource(blockedSource(current.path), current);
     expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
     // A span the intake verify-and-ask successor changed is checked against the current inventory in that successor's test.
-    if (!verifyChanged(span.skillId, span.group, span.index) && !domainChanged(span.skillId, span.group, span.index)) expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    if (!verifyChanged(span.skillId, span.group, span.index) && !domainChanged(span.skillId, span.group, span.index)) expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(currentNativeSelection(span, selected).toString("utf8").trim());
     const previousSelected = selectedSource(sourceAt(blocked.sourceBaseRevision, previous.path, previous.digest), previous);
     const reworded = !selected.equals(previousSelected);
     expect(blockedChanged(span.skillId, span.group, span.index)).toBe(reworded);
@@ -869,7 +875,7 @@ it("chains the intake verify-and-ask rules after the blocked-step rule, rewordin
     expect([previous.path, previous.startLine, previous.endLine, previous.startByte ?? 0, previous.endByte]).toEqual([span.path, span.previousStartLine, span.previousEndLine, span.previousStartByte, span.previousEndByte]);
     const selected = selectedSource(verifySource(current.path), current);
     expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
-    if (!parentChanged(span.skillId, span.group, span.index) && !domainChanged(span.skillId, span.group, span.index)) expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    if (!parentChanged(span.skillId, span.group, span.index) && !domainChanged(span.skillId, span.group, span.index)) expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(currentNativeSelection(span, selected).toString("utf8").trim());
     const previousSelected = selectedSource(sourceAt(verify.sourceBaseRevision, previous.path, previous.digest), previous);
     const reworded = !selected.equals(previousSelected);
     expect(verifyChanged(span.skillId, span.group, span.index)).toBe(reworded);
@@ -1049,7 +1055,7 @@ it("replaces both historical quote-only applicability spans with actual activati
   expect(repaired.map(span => span.skillId)).toEqual([...expected.keys()]);
   for (const span of repaired) {
     expect(selectedSource(mainSource(span.previous.path), span.previous).toString("utf8")).toBe('"');
-    expect(selectedSource(readFileSync(path.join(root, span.current.path)), span.current).toString("utf8")).toBe(expected.get(span.skillId));
+    expect(selectedSource(specialistSource(span.current.path), span.current).toString("utf8")).toBe(expected.get(span.skillId));
     expect(span.group).toBe("applicability");
     expect(span.index).toBe(1);
   }
