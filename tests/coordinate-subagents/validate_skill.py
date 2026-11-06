@@ -49,7 +49,8 @@ POLICY_REQUIRED_CLAUSES = {
         "Apply the current mode and write restrictions to every delegated task.",
     ),
     "delegation.atomic-local": (
-        "Without an explicit delegation request, keep work local when the net-benefit conditions are not all confirmed, including multi-unit work that is sequential, shares a writer, needs the coordinator's full context, or would cost more to hand off and integrate.",
+        "Without an explicit delegation request, check the net-benefit conditions whenever an independent unit exists instead of keeping work local by default.",
+        "Keep work local when a checked condition does not hold, including multi-unit work that is sequential, shares a writer, needs the coordinator's full context, or would cost more to hand off and integrate, and name that condition.",
     ),
     "delegation.explicit-request": (
         "Implementation delegation is allowed only when the user explicitly requests it or every net-benefit condition below is satisfied:",

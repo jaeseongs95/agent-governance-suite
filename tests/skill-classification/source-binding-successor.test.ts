@@ -21,11 +21,13 @@ const premiseBytes = readFileSync(new URL("./fixtures.orchestrator-intake-premis
 const premise = JSON.parse(premiseBytes.toString("utf8"));
 const retireBytes = readFileSync(new URL("./fixtures.context-continuity-retirement-source-successor.json", import.meta.url));
 const retire = JSON.parse(retireBytes.toString("utf8"));
+const roleBytes = readFileSync(new URL("./fixtures.role-delegation-intake-source-successor.json", import.meta.url));
+const role = JSON.parse(roleBytes.toString("utf8"));
 /** A null digest retires the path: the source no longer exists. */
 type LaterBinding = {path: string; previousDigest: string; digest: string | null};
 /** For each file a successor after specialist behavior rebound: the first rebinding's base and predecessor, the last one's digest. */
 const reboundAfterSpecialist = new Map<string, {sourceBaseRevision: string; previousDigest: string; digest: string | null}>();
-for (const later of [multi, overwrite, premise, retire]) {
+for (const later of [multi, overwrite, premise, retire, role]) {
   for (const binding of later.bindings as LaterBinding[]) {
     const first = reboundAfterSpecialist.get(binding.path);
     reboundAfterSpecialist.set(binding.path, first ? {...first, digest: binding.digest}
@@ -56,6 +58,13 @@ function premiseSource(relativePath: string): Buffer {
   return sourceAt(retire.sourceBaseRevision, relativePath, later.previousDigest);
 }
 const retireChanged = (skillId: string, group: string, index: number) => retire.spanPreservation.changedSpans.includes(`${skillId}:${group}[${index}]`);
+/** A source as the retirement successor bound it: a file the role and delegation successor rebound reads at its base. */
+function retireSource(relativePath: string): Buffer {
+  const later = (role.bindings as LaterBinding[]).find(binding => binding.path === relativePath);
+  if (!later) return readFileSync(path.join(root, relativePath));
+  return sourceAt(role.sourceBaseRevision, relativePath, later.previousDigest);
+}
+const roleChanged = (skillId: string, group: string, index: number) => role.spanPreservation.changedSpans.includes(`${skillId}:${group}[${index}]`);
 /** A source as the multi-workflow successor bound it: a file the intake premise successor rebound reads at its base. */
 function multiSource(relativePath: string): Buffer {
   const later = (premise.bindings as LaterBinding[]).find(binding => binding.path === relativePath);
@@ -135,7 +144,7 @@ it("chains the exact orchestrator multi-workflow source after specialist behavio
     expect(actual.length).toBe(binding.bytes);
     expect(hash(actual)).toBe(binding.digest);
     expect(hash(specialistSource(binding.path))).toBe(binding.previousDigest);
-    const latest = latestDigest(binding.path, binding.digest, [premise, retire]);
+    const latest = latestDigest(binding.path, binding.digest, [premise, retire, role]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -164,7 +173,8 @@ it("chains the exact orchestrator multi-workflow source after specialist behavio
     const selected = Buffer.from(lines.slice(span.startLine - 1, span.endLine).join("\n")).subarray(span.startByte, span.endByte);
     expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
     // A span a later successor widened is checked against the current inventory in that successor's test.
-    if (!premise.spanPreservation.changedSpans.includes(`${span.group}[${span.index}]`) && !retireChanged("orchestrator", span.group, span.index)) {
+    if (!premise.spanPreservation.changedSpans.includes(`${span.group}[${span.index}]`) && !retireChanged("orchestrator", span.group, span.index)
+      && !roleChanged("orchestrator", span.group, span.index)) {
       expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
     }
     const previous = Buffer.from(previousLines.slice(span.startLine - 1, span.endLine).join("\n")).subarray(span.previousStartByte, span.previousEndByte);
@@ -247,7 +257,7 @@ it("chains the exact orchestrator intake premise source after the overwrite sour
     // The predecessor is the multi-workflow successor's exact bytes, read at this successor's base.
     expect(multi.bindings.find((row: LaterBinding) => row.path === binding.path).digest).toBe(binding.previousDigest);
     expect(hash(multiSource(binding.path))).toBe(binding.previousDigest);
-    const latest = latestDigest(binding.path, binding.digest, [retire]);
+    const latest = latestDigest(binding.path, binding.digest, [retire, role]);
     expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(latest);
     if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest)).toBe(latest);
     else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
@@ -286,7 +296,9 @@ it("chains the exact orchestrator intake premise source after the overwrite sour
     const selected = Buffer.from(lines.slice(span.startLine - 1, span.endLine).join("\n")).subarray(span.startByte, span.endByte);
     expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
     // A span the retirement successor widened is checked against the current inventory in that successor's test.
-    if (!retireChanged("orchestrator", span.group, span.index)) expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    if (!retireChanged("orchestrator", span.group, span.index) && !roleChanged("orchestrator", span.group, span.index)) {
+      expect(orchestrator[span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    }
     const previousSelected = Buffer.from(previousLines.slice(span.previousStartLine - 1, span.previousEndLine).join("\n")).subarray(span.previousStartByte, span.previousEndByte);
     const widened = span.startLine <= 25 && span.endLine >= 25;
     expect(premise.spanPreservation.changedSpans.includes(`${span.group}[${span.index}]`)).toBe(widened);
@@ -314,7 +326,7 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
   expect(retire.labelChanges).toEqual([]);
   expect(retire.priceAndBudgetChanges).toEqual([]);
   expect(retire.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: retire.revision});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: role.revision});
   const retiredPaths = ["skills/context-continuity/SKILL.md", "skills/context-continuity/classification.json", "skills/context-continuity/references/entry-details.md"];
   const tools = ["checkpoint_context", "inspect_context", "load_context", "suppress_context_restore", "purge_direct_context"];
   expect(retire.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json",
@@ -337,9 +349,11 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
       expect(binding.bytes).toBe(0);
       expect(existsSync(path.join(root, binding.path))).toBe(false);
     } else {
-      const actual = readFileSync(path.join(root, binding.path));
+      const actual = retireSource(binding.path);
       expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
-      expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+      const latest = latestDigest(binding.path, binding.digest, [role]);
+      if (latest !== binding.digest) expect(currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toBe(latest);
+      else expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
     }
   }
   expect(existsSync(path.join(root, "skills/context-continuity"))).toBe(false);
@@ -350,7 +364,7 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
   expect(retiredDescriptor.applicability.length + retiredDescriptor.exclusions.length).toBe(7);
   // orchestrator: line 20 names checkpoint_context instead of the retired skill and line 25 gains sentences; no line moves.
   const previousLines = base("skills/orchestrator/SKILL.md").toString("utf8").split(/\r?\n/);
-  const lines = readFileSync(path.join(root, "skills/orchestrator/SKILL.md"), "utf8").split(/\r?\n/);
+  const lines = retireSource("skills/orchestrator/SKILL.md").toString("utf8").split(/\r?\n/);
   expect(lines.length).toBe(previousLines.length);
   expect(lines.flatMap((line, index) => line === previousLines[index] ? [] : [index])).toEqual([19, 24]);
   expect(previousLines[19]).toContain("`context-continuity`");
@@ -358,7 +372,7 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
   expect(lines[19]).toContain("`checkpoint_context`");
   // coordinate-subagents: one paragraph and a blank line are inserted after line 53; nothing else changes.
   const previousDetail = base("skills/coordinate-subagents/references/entry-details.md").toString("utf8").split(/\r?\n/);
-  const detail = readFileSync(path.join(root, "skills/coordinate-subagents/references/entry-details.md"), "utf8").split(/\r?\n/);
+  const detail = retireSource("skills/coordinate-subagents/references/entry-details.md").toString("utf8").split(/\r?\n/);
   expect([...detail.slice(0, 53), ...detail.slice(55)]).toEqual(previousDetail);
   expect(detail[53]).toMatch(/^Give a verification agent [^\n]*\.$/u);
   expect(detail[54]).toBe("");
@@ -366,7 +380,7 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
   const skills = new Map(inventory.skills.map(skill => [skill.skillId, skill]));
   const descriptors = new Map(["orchestrator", "coordinate-subagents"].map(skillId => {
     const relative = `skills/${skillId}/classification.json`;
-    const before = JSON.parse(base(relative).toString("utf8")), after = JSON.parse(readFileSync(path.join(root, relative), "utf8"));
+    const before = JSON.parse(base(relative).toString("utf8")), after = JSON.parse(retireSource(relative).toString("utf8"));
     const stableFields = (value: Record<string, unknown>) =>
       Object.fromEntries(Object.entries(value).filter(([key]) => !["applicability", "exclusions"].includes(key)));
     expect(stableFields(after)).toEqual(stableFields(before));
@@ -379,9 +393,10 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
     expect([current.path, current.startLine, current.endLine, current.startByte ?? 0, current.endByte]).toEqual([span.path, span.startLine, span.endLine, span.startByte, span.endByte]);
     expect([previous.path, previous.startLine, previous.endLine, previous.startByte ?? 0, previous.endByte]).toEqual([span.path, span.previousStartLine, span.previousEndLine, span.previousStartByte, span.previousEndByte]);
     expect([span.startLine, span.endLine, span.startByte]).toEqual([span.previousStartLine, span.previousEndLine, span.previousStartByte]);
-    const selected = selectedSource(readFileSync(path.join(root, current.path)), current);
+    const selected = selectedSource(retireSource(current.path), current);
     expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
-    expect(skills.get(span.skillId)![span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    // A span the role and delegation successor widened is checked against the current inventory in that successor's test.
+    if (!roleChanged(span.skillId, span.group, span.index)) expect(skills.get(span.skillId)![span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
     const previousSelected = selectedSource(sourceAt(retire.sourceBaseRevision, previous.path, previous.digest), previous);
     const widened = (changedLines.get(span.path) ?? []).filter(index => index >= span.startLine - 1 && index <= span.endLine - 1);
     expect(retireChanged(span.skillId, span.group, span.index)).toBe(widened.length > 0);
@@ -397,6 +412,86 @@ it("retires context-continuity and chains the orchestrator and coordinate-subage
     }
   }
   expect(retire.spanPreservation.changedSpans).toEqual(["orchestrator:applicability[4]", "orchestrator:applicability[5]"]);
+});
+it("chains the role and delegation intake source after the retirement source, changing one line in each of two sources", async () => {
+  expect(hash(roleBytes)).toBe("sha256:53063904e18a416690da94ea5c54ae867586174028806e90202c76c61fcce2c8");
+  expect(roleBytes.includes(Buffer.from("\r\n"))).toBe(false);
+  expect(role.revision).toBe("role-delegation-intake-source-binding-r23");
+  expect(role.role).toBe("source-binding-only-not-evaluation-or-install-authority");
+  expect(role.sourceBaseRevision).toBe("4849bdd43fded206f6661b0fc952c398a0682856");
+  expect(role.frozenPredecessor).toEqual({path: "tests/skill-classification/fixtures.context-continuity-retirement-source-successor.json",
+    bytes: retireBytes.length, digest: hash(retireBytes)});
+  expect(role.fixtureFileRewritten).toBe(false);
+  expect(role.labelChanges).toEqual([]);
+  expect(role.priceAndBudgetChanges).toEqual([]);
+  expect(role.modelBehavior).toBe("NOT_RUN");
+  expect(currentSourceBinding.manifest).toMatchObject({revision: role.revision});
+  expect(role.bindings.map((binding: LaterBinding) => binding.path)).toEqual(["skills/orchestrator/SKILL.md", "skills/orchestrator/classification.json",
+    "skills/coordinate-subagents/classification.json", "skills/coordinate-subagents/references/entry-details.md"]);
+  const base = (relativePath: string) => sourceAt(role.sourceBaseRevision, relativePath,
+    role.bindings.find((binding: LaterBinding) => binding.path === relativePath).previousDigest);
+  for (const binding of role.bindings as (LaterBinding & {bytes: number})[]) {
+    // The predecessor is what the retirement successor bound last, read at this successor's base.
+    expect(latestDigest(binding.path, null, [retire])).toBe(binding.previousDigest);
+    base(binding.path);
+    const actual = readFileSync(path.join(root, binding.path));
+    expect([actual.length, hash(actual)]).toEqual([binding.bytes, binding.digest]);
+    expect(currentSourceBinding.resolveDigest(binding.path, binding.previousDigest)).toBe(binding.digest);
+    expect(() => currentSourceBinding.resolveDigest(binding.path, binding.digest!)).toThrow("SOURCE_BINDING_PREDECESSOR_MISMATCH");
+  }
+  // One line changes in each source; nothing moves. The orchestrator role line gains sentences between its first and
+  // last sentence (role, hand-over or ask, delegation review and brief rules); the coordinate-subagents default changes.
+  const changedLines = new Map([["skills/orchestrator/SKILL.md", 25], ["skills/coordinate-subagents/references/entry-details.md", 20]]);
+  const previousSources = new Map([...changedLines.keys()].map(relative => [relative, base(relative).toString("utf8").split(/\r?\n/)]));
+  const currentSources = new Map([...changedLines.keys()].map(relative => [relative, readFileSync(path.join(root, relative), "utf8").split(/\r?\n/)]));
+  for (const [relative, index] of changedLines) {
+    const before = previousSources.get(relative)!, after = currentSources.get(relative)!;
+    expect(after.length).toBe(before.length);
+    expect(after.flatMap((line, at) => line === before[at] ? [] : [at])).toEqual([index]);
+  }
+  const [wasRole, nowRole] = [previousSources.get("skills/orchestrator/SKILL.md")![25]!, currentSources.get("skills/orchestrator/SKILL.md")![25]!];
+  const firstSentence = wasRole.indexOf("다. ") + 3, lastSentence = wasRole.lastIndexOf("peer 메시지는");
+  expect(nowRole.startsWith(wasRole.slice(0, firstSentence)) && nowRole.endsWith(wasRole.slice(lastSentence))).toBe(true);
+  const inserted = nowRole.slice(firstSentence, nowRole.length - (wasRole.length - lastSentence));
+  for (const term of ["`update_session_status`의 `role`", "`list_session_status`", "`prepare_session_message`·`send_session_message`", "사용자에게 묻는다",
+    "`coordinate-subagents`의 위임 판단", "금지 구역", "검증 에이전트에 맡기지 않는다"]) expect(inserted).toContain(term);
+  expect(currentSources.get("skills/coordinate-subagents/references/entry-details.md")![20]).toMatch(/^Without an explicit delegation request, check the net-benefit conditions whenever an independent unit exists instead of keeping work local by default\. /u);
+  const inventory = await loadSkillInventory({root});
+  expect(inventory.issues).toEqual([]);
+  const skills = new Map(inventory.skills.map(skill => [skill.skillId, skill]));
+  const descriptors = new Map(["orchestrator", "coordinate-subagents"].map(skillId => {
+    const relative = `skills/${skillId}/classification.json`;
+    const before = JSON.parse(base(relative).toString("utf8")), after = JSON.parse(readFileSync(path.join(root, relative), "utf8"));
+    const stableFields = (value: Record<string, unknown>) =>
+      Object.fromEntries(Object.entries(value).filter(([key]) => !["applicability", "exclusions"].includes(key)));
+    expect(stableFields(after)).toEqual(stableFields(before));
+    return [skillId, {before, after}];
+  }));
+  expect(role.spanPreservation.spans).toHaveLength([...descriptors.values()].reduce((total, {after}) => total + after.applicability.length + after.exclusions.length, 0));
+  for (const span of role.spanPreservation.spans) {
+    const {before, after} = descriptors.get(span.skillId)!;
+    const current = after[span.group][span.index], previous = before[span.group][span.index];
+    expect([current.path, current.startLine, current.endLine, current.startByte ?? 0, current.endByte]).toEqual([span.path, span.startLine, span.endLine, span.startByte, span.endByte]);
+    expect([previous.path, previous.startLine, previous.endLine, previous.startByte ?? 0, previous.endByte]).toEqual([span.path, span.previousStartLine, span.previousEndLine, span.previousStartByte, span.previousEndByte]);
+    expect([span.startLine, span.endLine, span.startByte]).toEqual([span.previousStartLine, span.previousEndLine, span.previousStartByte]);
+    const selected = selectedSource(readFileSync(path.join(root, current.path)), current);
+    expect([selected.length, hash(selected)]).toEqual([span.bytes, span.digest]);
+    expect(skills.get(span.skillId)![span.group as "applicability" | "exclusions"]).toContain(selected.toString("utf8").trim());
+    const previousSelected = selectedSource(sourceAt(role.sourceBaseRevision, previous.path, previous.digest), previous);
+    const index = changedLines.get(span.path);
+    const widened = index !== undefined && index >= span.startLine - 1 && index <= span.endLine - 1;
+    expect(roleChanged(span.skillId, span.group, span.index)).toBe(widened);
+    if (!widened) {
+      expect(span.endByte).toBe(span.previousEndByte);
+      expect(selected.equals(previousSelected)).toBe(true);
+    } else {
+      // The span still selects the same line; only that line's text differs, and its end moves by the size change.
+      const was = previousSources.get(span.path)![index]!, now = currentSources.get(span.path)![index]!;
+      expect(selected.toString("utf8")).toBe(previousSelected.toString("utf8").replace(was, now));
+      expect(span.endByte - span.previousEndByte).toBe(Buffer.byteLength(now) - Buffer.byteLength(was));
+    }
+  }
+  expect(role.spanPreservation.changedSpans).toEqual(["orchestrator:applicability[5]", "coordinate-subagents:exclusions[4]"]);
 });
 it("appends the exact specialist behavior successor without changing frozen fixture semantics", () => {
   expect(specialistBytes.length).toBe(270309);
@@ -591,7 +686,7 @@ it("동결 판정 기준을 보존하고 인계 지침의 현재 바이트만 �
   expect(manifest.labelChanges).toEqual([]);
   expect(manifest.priceAndBudgetChanges).toEqual([]);
   expect(manifest.modelBehavior).toBe("NOT_RUN");
-  expect(currentSourceBinding.manifest).toMatchObject({revision: "context-continuity-retirement-source-binding-r22"});
+  expect(currentSourceBinding.manifest).toMatchObject({revision: "role-delegation-intake-source-binding-r23"});
   expect(hash(readFileSync(path.join(root, manifest.frozenPredecessor.path)))).toBe(manifest.frozenPredecessor.digest);
   for (const source of manifest.bindings) {
     const historical = mainSource(source.path);

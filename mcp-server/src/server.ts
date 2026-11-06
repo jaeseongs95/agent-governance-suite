@@ -472,11 +472,14 @@ async function sessionBoardResult(
   caller: VerifiedCaller,
 ): Promise<ApiResultV1<unknown>> {
   let summary: string | null = null;
+  // Omitted keeps the role already written; the schema admits only a role the board can store.
+  let role: string | undefined;
   const binding = { host: caller.host, sessionId: caller.sessionId };
   try {
     if (tool === "update_session_status") {
       const request = validator.updateSessionStatusRequest(args);
       summary = normalizeSummary(request.summary);
+      if (request.role !== undefined) role = request.role.trim();
     } else {
       validator.listSessionStatusRequest(args);
     }
@@ -492,7 +495,7 @@ async function sessionBoardResult(
     try {
       board = openBoard(databasePath);
       step = "write";
-      const written: SessionBoardUpdateV2 = setSummary(board, { ...self, now: new Date().toISOString() }, summary);
+      const written: SessionBoardUpdateV2 = setSummary(board, { ...self, now: new Date().toISOString() }, summary, role);
       step = "close";
       const opened = board;
       board = null;
@@ -548,6 +551,7 @@ async function sessionBoardResult(
       repo: locateRepository(cwd),
       summary: entry?.summary ?? null,
       summaryAt: entry?.summaryAt ?? null,
+      role: entry?.role ?? null,
       summaryStale: entry?.summaryStale ?? null,
       lastPromptAt: entry?.lastPromptAt ?? null,
       wake: item.autoWake ? { state: item.autoWake.state, reason: item.autoWake.reason } : null,

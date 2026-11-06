@@ -1,10 +1,12 @@
-// Session board core: per host session, the main session's one-line summary of its current work and the time of
-// its last user prompt. Liveness is not stored here: it comes from the session messaging presence.
+// Session board core: per host session, the main session's one-line summary of its current work, the role the user
+// gave the session and the time of its last user prompt. Liveness is not stored here: it comes from the session
+// messaging presence.
 import { mkdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 export const SUMMARY_MAX_LENGTH = 200;
+export const ROLE_MAX_LENGTH = 120;
 export const BOARD_FORMAT_VERSION = 1;
 const RETAIN_MS = 7 * 24 * 3600_000;
 const TABLE = "board_sessions";
@@ -18,8 +20,19 @@ const CREATE_TABLE = `CREATE TABLE IF NOT EXISTS ${TABLE} (
   summary_at TEXT,
   last_prompt_at TEXT,
   seen_at TEXT NOT NULL,
+  role TEXT,
   PRIMARY KEY (host, session_id)
 ) STRICT;`;
+
+/**
+ * The role column (3.8.0) is added in place to a board of the same format version: an older AGS on this computer keeps
+ * reading and writing the board (it names its columns and ignores the new one), so the version does not change.
+ */
+function ensureRoleColumn(db) {
+  if (!db.prepare(`PRAGMA table_info(${TABLE})`).all().some((column) => column.name === "role")) {
+    db.exec(`ALTER TABLE ${TABLE} ADD COLUMN role TEXT;`);
+  }
+}
 
 export class BoardFormatError extends Error {
   constructor(code, message) { super(message); this.name = "BoardFormatError"; this.code = code; }
@@ -40,6 +53,7 @@ export function openBoard(input, { busyTimeoutMs = 5000 } = {}) {
     shared.initialize(() => {
       shared.database.exec(`DROP TABLE IF EXISTS ${LEGACY_TABLE};`);
       shared.database.exec(CREATE_TABLE);
+      ensureRoleColumn(shared.database);
       shared.setSchemaVersion(BOARD_FORMAT_VERSION);
     });
     return shared.database;
@@ -53,7 +67,7 @@ export function openBoard(input, { busyTimeoutMs = 5000 } = {}) {
       const version = db.prepare("PRAGMA user_version").get().user_version;
       const present = tables(db);
       if (version === BOARD_FORMAT_VERSION && present.length === 1 && present[0] === TABLE) {
-        // Current format.
+        ensureRoleColumn(db);
       } else if (version === 0 && present.every((name) => name === LEGACY_TABLE)) {
         db.exec(`DROP TABLE IF EXISTS ${LEGACY_TABLE};`);
         db.exec(CREATE_TABLE);
@@ -97,14 +111,27 @@ export function normalizeSummary(value) {
   return line && !/[\r\n]/u.test(line) && line.length <= SUMMARY_MAX_LENGTH ? line : null;
 }
 
-export function setSummary(db, { host, sessionId, now }, summary) {
+export function normalizeRole(value) {
+  if (typeof value !== "string") return null;
+  const line = value.trim();
+  return line && !/[\r\n]/u.test(line) && line.length <= ROLE_MAX_LENGTH ? line : null;
+}
+
+/**
+ * Writes the summary and, when `role` is given, the session's role. An omitted role keeps the one already written, so
+ * a summary update never clears it.
+ */
+export function setSummary(db, { host, sessionId, now }, summary, role) {
   const line = normalizeSummary(summary);
   if (!line) throw new Error(`summary must be one non-empty line of at most ${SUMMARY_MAX_LENGTH} characters`);
+  const roleLine = role === undefined ? null : normalizeRole(role);
+  if (role !== undefined && !roleLine) throw new Error(`role must be one non-empty line of at most ${ROLE_MAX_LENGTH} characters`);
   return inTransaction(db, () => {
-    db.prepare(`INSERT INTO ${TABLE} (host, session_id, summary, summary_at, seen_at) VALUES (?, ?, ?, ?, ?)
+    db.prepare(`INSERT INTO ${TABLE} (host, session_id, summary, summary_at, seen_at, role) VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT (host, session_id) DO UPDATE SET summary = excluded.summary, summary_at = excluded.summary_at,
-        seen_at = excluded.seen_at`).run(host, sessionId, line, now, now);
-    return { summary: line, summaryAt: now };
+        seen_at = excluded.seen_at, role = coalesce(excluded.role, role)`).run(host, sessionId, line, now, now, roleLine);
+    const stored = db.prepare(`SELECT role FROM ${TABLE} WHERE host = ? AND session_id = ?`).get(host, sessionId);
+    return { summary: line, summaryAt: now, role: stored?.role ?? null };
   });
 }
 
@@ -120,6 +147,7 @@ function view(row) {
     cwd: row.cwd ?? null,
     summary: row.summary ?? null,
     summaryAt: row.summary_at ?? null,
+    role: row.role ?? null,
     lastPromptAt: row.last_prompt_at ?? null,
     // Unknown (null) when no prompt was ever observed, e.g. a host without a prompt hook.
     summaryStale: row.last_prompt_at == null ? null : row.summary_at == null || row.summary_at < row.last_prompt_at,

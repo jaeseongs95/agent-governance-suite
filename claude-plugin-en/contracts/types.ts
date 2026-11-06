@@ -317,6 +317,8 @@ export interface InputSourceReceiptV1 {
 export interface UpdateSessionStatusRequestV1 {
   schemaVersion: typeof CONTRACT_VERSION;
   summary: string;
+  /** The role the user's request or instructions gave this session; omitted keeps the role already written. */
+  role?: string;
 }
 
 export interface ListSessionStatusRequestV1 {
@@ -371,6 +373,8 @@ export interface SessionBoardEntryV2 {
   repo: { root: string; repoId: string; branch: string | null } | null;
   summary: string | null;
   summaryAt: string | null;
+  /** The role the user gave the session, as that session wrote it: a claim, not an authority. Null when none. */
+  role: string | null;
   /** Null when no user prompt was ever observed for the session. */
   summaryStale: boolean | null;
   lastPromptAt: string | null;
@@ -387,6 +391,8 @@ export interface SessionBoardListV2 {
 export interface SessionBoardUpdateV2 {
   summary: string;
   summaryAt: string;
+  /** The session's role after the update; null when none was ever written. */
+  role: string | null;
 }
 
 export interface StateCleanupPolicyV1 {

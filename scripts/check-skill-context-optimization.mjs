@@ -36,6 +36,9 @@ function git(...args) {
 //   skills each message, reconcile plans; coordinate-subagents gives a verification agent an independent judgment.
 // - 3.6.0 orchestrator stage line (155c3d15): a stage's provider is the contract its result is recorded under and does
 //   not limit the skills used in the stage.
+// - 3.8.0 intake role line (AGS3-D-0002/0003/0030): a session writes the role its user gave it, hands a request outside
+//   it to the session holding that role or asks the user, and reviews delegation for independent units with the brief
+//   rules; coordinate-subagents checks the net-benefit conditions instead of keeping work local by default.
 // A successor of an earlier successor projects onto it first, then along the earlier entry to its predecessor.
 const GUIDANCE_SUCCESSORS = Object.freeze([
   Object.freeze({
@@ -85,6 +88,16 @@ const GUIDANCE_SUCCESSORS = Object.freeze([
     revision: "155c3d1568e7e64a0b6640c80afc4bbf39d7cab3",
     hashes: Object.freeze({
       "skills/orchestrator/references/entry-details.md": ["d9bf7de0283d671735e7c4f4e9994df12a0d24bd6f3be97182394c5c247016ab", "9827e50e480fbd70813e9c6f9643029e17e6b50d577bebd38d14b0e803a775fa"],
+    }),
+  }),
+  Object.freeze({
+    revision: "4849bdd43fded206f6661b0fc952c398a0682856",
+    hashes: Object.freeze({
+      "skills/orchestrator/SKILL.md": ["03ca8869bbf594118eb2020868d19e3c1e5bf1f8be4ec0ec071f2f237b8b122e", "ff64ea71c558540a990a8be07e75af5259b79fd390c104eb39d961fdc5174e10"],
+      "skills/orchestrator/classification.json": ["7396c12527514eb07a892499cc9f2d55250228a06de7d6ba042a6a7b01fe2642", "7672db7d4e40ec4a8b8deb9f46ca8f0c8fe4253e9a537158de95de30b8712077"],
+      "skills/coordinate-subagents/classification.json": ["e39a699e1bf8a024513fc79de21cd3b960f345af068cd1e4d761474b570e65a0", "c474abe1127e6206ed72c94902c24691c0d106ae4395ea7bbcbc92006a84de8a"],
+      "skills/coordinate-subagents/references/entry-details.md": ["5769d6ee39c9396cac4e55ace84257a93219c0fc3e8b293f67c9973747a0dc88", "266ceb4fb5d7d3c553ef85485c93ac87c4df1bf0df5e2219fd99cc9a146bf882"],
+      "skills/orchestrator/references/collaboration.md": ["e590f6cd87e5a352c27740f60329dae51a6ba95505747d9edaae59e3557f2f0d", "5f4aa4dedb3019a4c3f3515dd1fdfd03f78e136de0bded19c3b0ce46b99ce22a"],
     }),
   }),
 ]);
@@ -406,7 +419,15 @@ const APPROVAL_EXPIRY_SUCCESSOR = Object.freeze({
     "skills/mutation-risk-preflight/scripts/evaluate-preflight.mjs": ["93c4f5dafe50c4718b6cd2898a872106e26d394ad4fc43a5635568f6a77d6bc5", "d79381c7888c91f452642e343f5603e7851eef9b874c4455c890d0a53ab3d8ca"],
   },
 });
-const DIGEST_SUCCESSORS = Object.freeze([APPROVAL_EXPIRY_SUCCESSOR, SCRIPT_I18N_SUCCESSOR]);
+// 3.8.0 (AGS3-D-0030): the board store declares the session role column and setSummary's optional role.
+const SESSION_ROLE_SUCCESSOR = Object.freeze({
+  revision: "session-board-role-r01",
+  authorityEffect: "none",
+  hashes: {
+    "skills/session-board/scripts/board-store.d.mts": ["df77f6a8d0ce1e576782c394ad6b78261003de23f32a03e9b6a4ef05de762bc0", "87c8cbd745da273bee3bb9419b487173841d29f9f0bf83fe002f1d2ebd2ae1fe"],
+  },
+});
+const DIGEST_SUCCESSORS = Object.freeze([SESSION_ROLE_SUCCESSOR, APPROVAL_EXPIRY_SUCCESSOR, SCRIPT_I18N_SUCCESSOR]);
 
 /** The digest pinned checks compare: reviewed bytes stand for the exact predecessor they replaced. */
 export function pinnedDigest(path, bytes) {
@@ -1474,6 +1495,14 @@ export function checkSkillContextOptimization() {
     for (const implementationPath of IMPLEMENTATION_PATHS) if (implementationPath.startsWith(`skills/${skillId}/`)) allowed.add(implementationPath);
     for (const currentPath of Object.keys(PREFLIGHT_ADDITIVE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     for (const currentPath of Object.keys(GOVERNANCE_SOURCE_SUCCESSOR.hashes)) if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
+    // A reference first changed by a reviewed guidance successor is allowed only while it holds that successor's bytes.
+    for (const { hashes } of GUIDANCE_SUCCESSORS) {
+      for (const [currentPath, [, successor]] of Object.entries(hashes)) {
+        if (!currentPath.startsWith(`skills/${skillId}/`)) continue;
+        const digest = createHash("sha256").update(readFileBytes(join(ROOT, ...currentPath.split("/")))).digest("hex");
+        if (digest === successor) allowed.add(currentPath);
+      }
+    }
     for (const currentPath of Object.keys(CONTEXT_CONTRACT_PINS.hashes)) {
       if (currentPath.startsWith(`skills/${skillId}/`)) allowed.add(currentPath);
     }
